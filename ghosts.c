@@ -407,7 +407,7 @@ void exchange_ghost()
     }
     if(n_send_ghosts[s_dir].e[c_max] > g_send_buf.max) 
       realloc_redParticles(&g_send_buf, n_send_ghosts[s_dir].e[c_max]);
-    
+
     /* copy ghosts to send buffer */
     for(c=0; c<c_max; c++) {
       pl = &(cells[send_cells[s_dir].e[c]].pList);
@@ -451,23 +451,22 @@ void exchange_ghost()
   }
 
   /* realloc pos/force buffers */
-  if(g_send_buf.max > g_recv_buf.max) {
-    g_send_buf.max *= 3;
-    g_recv_buf.max =  g_send_buf.max;
-  } 
-  else {
-    g_recv_buf.max *= 3;
-    g_send_buf.max =  g_recv_buf.max;
-  }
-  realloc_doublelist(&send_buf, g_send_buf.max);
-  realloc_doublelist(&recv_buf, g_recv_buf.max);
+  if(g_send_buf.max > g_recv_buf.max) 
+    send_buf.n = recv_buf.n = 3*g_send_buf.max;
+  else 
+    send_buf.n = recv_buf.n = 3*g_recv_buf.max;
+  
+  realloc_doublelist(&send_buf, send_buf.n);
+  realloc_doublelist(&recv_buf, recv_buf.n);
 
-  GHOST_TRACE(fprintf(stderr,"%d: ghost_send_size=(%d, %d, %d, %d, %d, %d), max=%d\n",this_node,
-		      ghost_send_size[0], ghost_send_size[1], ghost_send_size[2],
-		      ghost_send_size[3], ghost_send_size[4], ghost_send_size[5],g_send_buf.max));
-  GHOST_TRACE(fprintf(stderr,"%d: ghost_recv_size=(%d, %d, %d, %d, %d, %d), max=%d\n",this_node,
-		      ghost_recv_size[0], ghost_recv_size[1], ghost_recv_size[2],
-		      ghost_recv_size[3], ghost_recv_size[4], ghost_recv_size[5],g_recv_buf.max));
+  GHOST_TRACE(fprintf(stderr,"%d: ghost_send_size=(%d,%d,%d,%d,%d,%d), send_buf.max=%d\n",
+		      this_node,ghost_send_size[0], ghost_send_size[1], 
+		      ghost_send_size[2],ghost_send_size[3], ghost_send_size[4], 
+		      ghost_send_size[5],send_buf.max));
+  GHOST_TRACE(fprintf(stderr,"%d: ghost_recv_size=(%d,%d,%d,%d,%d,%d), recv_buf.max=%d\n",
+		      this_node,ghost_recv_size[0], ghost_recv_size[1], 
+		      ghost_recv_size[2],ghost_recv_size[3], ghost_recv_size[4], 
+		      ghost_recv_size[5],recv_buf.max));
 }
 
 void update_ghost_pos()
@@ -510,8 +509,8 @@ void update_ghost_pos()
     /* loop recv cells - copy positions from buffer */
     g=0;
     for(c=0; c<recv_cells[r_dir].n; c++) {
-        pl = &(cells[recv_cells[r_dir].e[c]].pList);
-	for(n=0; n< pl->n; n++) {
+      pl = &(cells[recv_cells[r_dir].e[c]].pList);
+      for(n=0; n< pl->n; n++) {
 	for(i=0;i<3;i++) pl->part[n].r.p[i] = recv_buf.e[g+i];
 	g += 3;
       }
@@ -698,14 +697,13 @@ void append_particles(void)
   for(i=0; i<p_recv_buf.n; i++) {
     c_ind = pos_to_cell_grid_ind(p_recv_buf.part[i].r.p);
     pl = &(cells[c_ind].pList);
-    append_particle(pl, &(p_recv_buf.part[i]));
-    part = &(pl->part[(pl->n) - 1]);
+    part = append_particle(pl, &(p_recv_buf.part[i]));
     local_particles[part->r.identity] = part;
-    part->bl.n = part->bl.max = b_recv_buf.e[b_ind];
+    part->bl.n = b_recv_buf.e[b_ind];
     b_ind++;
-    realloc_intlist(&(part->bl),part->bl.max);
+    realloc_intlist(&(part->bl),part->bl.n);
     if(part->bl.n > 0) { 
-      memcpy(&(part->bl),&(b_recv_buf.e[b_ind]), part->bl.n*sizeof(int));
+      memcpy(part->bl.e,&(b_recv_buf.e[b_ind]), part->bl.n*sizeof(int));
       b_ind += part->bl.n;
     }
   }

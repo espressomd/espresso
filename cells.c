@@ -292,10 +292,10 @@ void cells_exit()
 
 Particle *cells_got_particle(int id)
 {
-  int i;
+  int m,n,o;
   Particle *r;
-  for (i = 0; i < n_cells; i++) {
-    if ((r = got_particle(&cells[i].pList, id)))
+  INNER_CELLS_LOOP(m, n, o) {
+    if ((r = got_particle(&(CELL_PTR(m, n, o)->pList), id)))
       return r;
   }
   return NULL;
