@@ -343,10 +343,10 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
  
   }
   if (data->TAB_maxval != 0) {
-    Tcl_PrintDouble(interp, (double)(data->TAB_npoints), buffer);
-    Tcl_AppendResult(interp, "tabulated ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, (double)(data->TAB_startindex), buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    sprintf(buffer, "%d ", data->TAB_npoints);
+    Tcl_AppendResult(interp, "tabulated ", buffer, (char *) NULL);
+    sprintf(buffer, "%d ", data->TAB_startindex);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
     Tcl_PrintDouble(interp, data->TAB_minval, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, data->TAB_maxval, buffer);
@@ -440,9 +440,8 @@ void calc_maximal_cutoff()
       break;
     }
   }
+
   /* non bonded */
-
-
   for (i = 0; i < n_particle_types; i++)
      for (j = i; j < n_particle_types; j++) {
        if (checkIfParticlesInteract(i, j)) {
@@ -941,9 +940,12 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 			   int part_type_a, int part_type_b,
 			   int argc, char ** argv)
 {
+  int change;
+  double tmp;
+  /* parameters needed for LJ */
   double eps, sig, cut, shift, offset, cap_radius;
-  double k1, k2, mu, nu; /* parameters needed for Gay-Berne*/
-
+  /* parameters needed for Gay-Berne*/
+  double k1, k2, mu, nu;
   /* Parameters needed for tabulated force */
   char* filename = NULL;
   
@@ -958,153 +960,175 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 
   /* get interaction parameters */
 
-  /* parse 
-   *                        lennard-jones
-   * interaction
-   */
+  while (argc > 0) {
+    /* parse 
+     *                        lennard-jones
+     * interaction
+     */
 #ifdef LENNARD_JONES
-  if (ARG0_IS_S("lennard-jones")) {
+    if (ARG0_IS_S("lennard-jones")) {
 
-    /* get lennard-jones interaction type */
-    if (argc < 6 || argc > 7) {
-      Tcl_AppendResult(interp, "lennard-jones needs 5 parameters: "
-		       "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
-		       (char *) NULL);
-      return TCL_ERROR;
-    }
-
-    /* copy lennard-jones parameters */
-    if ((! ARG_IS_D(1, eps))   ||
-	(! ARG_IS_D(2, sig))   ||
-	(! ARG_IS_D(3, cut))   ||
-	(! ARG_IS_D(4, shift)) ||
-	(! ARG_IS_D(5, offset)    ))
-      {
-	Tcl_AppendResult(interp, "lennard-jones needs 5 DOUBLE parameters: "
+      /* get lennard-jones interaction type */
+      if (argc < 6) {
+	Tcl_AppendResult(interp, "lennard-jones needs 5 parameters: "
 			 "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
 			 (char *) NULL);
 	return TCL_ERROR;
       }
+
+      /* copy lennard-jones parameters */
+      if ((! ARG_IS_D(1, eps))   ||
+	  (! ARG_IS_D(2, sig))   ||
+	  (! ARG_IS_D(3, cut))   ||
+	  (! ARG_IS_D(4, shift)) ||
+	  (! ARG_IS_D(5, offset)    )) {
+	Tcl_AppendResult(interp, "lennard-jones needs 5 DOUBLE parameters: "
+			 "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
+			 (char *) NULL);
+	  return TCL_ERROR;
+      }
+      change = 6;
 	
-    cap_radius = -1.0;
-
-    if (argc == 7 && (! ARG_IS_D(6, cap_radius))) {
-      Tcl_AppendResult(interp, "invalid value for lennard-jones capradius",
-		       (char *) NULL);
-      return TCL_ERROR;
+      cap_radius = -1.0;
+      /* check wether there is an additional double, cap radius, and parse in */
+      if (argc >= 7 && ARG_IS_D(6, cap_radius))
+	change++;
+      else
+	Tcl_ResetResult(interp);
+      if (lennard_jones_set_params(part_type_a, part_type_b,
+				   eps, sig, cut, shift, offset,
+				   cap_radius) == TCL_ERROR) {
+	Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+	return TCL_ERROR;
+      }
     }
-
-    CHECK_VALUE(lennard_jones_set_params(part_type_a, part_type_b,
-					 eps, sig, cut, shift, offset,
-					 cap_radius),
-		"particle types must be nonnegative");
-  }
+#else
+    /* that's just for the else below... */
+    if (0);
 #endif
 
-  /* parse 
-   *                        lj-cos
-   * interaction
-   */
+    /* parse 
+     *                        lj-cos
+     * interaction
+     */
 #ifdef LJCOS
-  if (ARG0_IS_S("lj-cos")) {
-  	
-    /* this is a quick fix for the inconsistency in the ljcos parameters 
-       there are 7 parameters for ljcos, but you read in only four of them.
-       The rest is calculated in lj_cos_set_params.
-       This is a problem with the blockfile format (Mehmet) 
-    */
-
-    if (argc < 5 || argc > 8) {
-      Tcl_AppendResult(interp, "lj-cos needs 4 parameters: "
-		       "<ljcos_eps> <ljcos_sig> <ljcos_cut> <ljcos_offset>",
-		       (char *) NULL);
-      return TCL_ERROR;
-    }
-
-    /* copy lj-cos parameters */
-    if ((! ARG_IS_D(1, eps))   ||
-	(! ARG_IS_D(2, sig))   ||
-	(! ARG_IS_D(3, cut))   ||
-	(! ARG_IS_D(4, offset)    ))
-      {
-	Tcl_AppendResult(interp, "lj-cos needs 4 DOUBLE parameters: "
+    else if (ARG0_IS_S("lj-cos")) {
+      if (argc < 5) {
+	Tcl_AppendResult(interp, "lj-cos needs 4 parameters: "
 			 "<ljcos_eps> <ljcos_sig> <ljcos_cut> <ljcos_offset>",
 			 (char *) NULL);
 	return TCL_ERROR;
       }
 
-    CHECK_VALUE(lj_cos_set_params(part_type_a, part_type_b, eps, sig, cut, offset),
-		"particle types must be nonnegative");
-  }
+      /* copy lj-cos parameters */
+      if ((! ARG_IS_D(1, eps))   ||
+	  (! ARG_IS_D(2, sig))   ||
+	  (! ARG_IS_D(3, cut))   ||
+	  (! ARG_IS_D(4, offset)    )) {
+	Tcl_AppendResult(interp, "lj-cos needs 4 DOUBLE parameters: "
+			 "<ljcos_eps> <ljcos_sig> <ljcos_cut> <ljcos_offset>",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+      change = 5;
+
+      /* fix for the inconsistency in the ljcos parameters.
+	 There are 7 parameters for ljcos, but you read in only four of them.
+	 The rest is calculated in lj_cos_set_params.
+	 This is a problem with the blockfile format (Mehmet) 
+      */
+
+      if (argc >= 8 && ARG_IS_D(5, tmp) && ARG_IS_D(6, tmp) && ARG_IS_D(7, tmp))
+	change += 3;
+      else
+	Tcl_ResetResult(interp);
+
+      if (lj_cos_set_params(part_type_a, part_type_b, eps, sig, cut, offset) == TCL_ERROR) {
+	Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+	return TCL_ERROR;
+      }
+    }
 #endif
 
-  /* parse 
-   *                        gay-berne
-   * interaction
-   */
+    /* parse 
+     *                        gay-berne
+     * interaction
+     */
 #ifdef ROTATION
-  if (ARG0_IS_S("gay-berne")) {
-  	
-    /* there are 9 parameters for gay-berne, but you read in only 7 of them.
-       The rest is calculated in gay_berne_set_params.
-    */
+    else if (ARG0_IS_S("gay-berne")) {
 
-    if (argc < 8 || argc > 9) {
-      Tcl_AppendResult(interp, "gay-berne needs 7 parameters: "
-		       "<gb_eps> <gb_sig> <gb_cut> <gb_k1> <gb_k2> <gb_mu> <gb_nu>",
-		       (char *) NULL);
-      return TCL_ERROR;
-    }
+      /* there are 9 parameters for gay-berne, but you read in only 7 of them.
+	 The rest is calculated in gay_berne_set_params.
+      */
 
-    /* copy gay-berne parameters */
-    if ((! ARG_IS_D(1, eps))   ||
-	(! ARG_IS_D(2, sig))   ||
-	(! ARG_IS_D(3, cut))   ||
-	(! ARG_IS_D(4, k1 ))   ||
-	(! ARG_IS_D(5, k2 ))   ||
-	(! ARG_IS_D(6, mu ))   ||	
-	(! ARG_IS_D(7, nu )    ))
-      {
-	Tcl_AppendResult(interp, "gay-berne needs 7 DOUBLE parameters: "
+      if (argc < 8) {
+	Tcl_AppendResult(interp, "gay-berne needs 7 parameters: "
 			 "<gb_eps> <gb_sig> <gb_cut> <gb_k1> <gb_k2> <gb_mu> <gb_nu>",
 			 (char *) NULL);
 	return TCL_ERROR;
       }
 
-    CHECK_VALUE(gay_berne_set_params(part_type_a, part_type_b, eps, sig, cut, k1, k2, mu, nu),
-		"particle types must be nonnegative");
-  }
+      /* copy gay-berne parameters */
+      if ((! ARG_IS_D(1, eps))   ||
+	  (! ARG_IS_D(2, sig))   ||
+	  (! ARG_IS_D(3, cut))   ||
+	  (! ARG_IS_D(4, k1 ))   ||
+	  (! ARG_IS_D(5, k2 ))   ||
+	  (! ARG_IS_D(6, mu ))   ||	
+	  (! ARG_IS_D(7, nu )    )) {
+	Tcl_AppendResult(interp, "gay-berne needs 7 DOUBLE parameters: "
+			 "<gb_eps> <gb_sig> <gb_cut> <gb_k1> <gb_k2> <gb_mu> <gb_nu>",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+      change = 8;
+
+      if (gay_berne_set_params(part_type_a, part_type_b, eps, sig, cut, k1, k2, mu, nu) == TCL_ERROR) {
+	Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+	return TCL_ERROR;
+      }
+    }
 #endif
 
-  /* parse 
-   *                        tabulated
-   * interaction
-   */
+    /* parse 
+     *                        tabulated
+     * interaction
+     */
 #ifdef TABULATED
-  if (ARG0_IS_S("tabulated")) {
-  	
-    /* tabulated interactions should supply a file name for a file containing
-       both force and energy profiles as well as number of points, max
-       values etc.
-    */
-    if (argc != 2) {
-      Tcl_AppendResult(interp, "tabulated potentials require a filename: "
-		       "<filename>",
+    else if (ARG0_IS_S("tabulated")) {
+
+      /* tabulated interactions should supply a file name for a file containing
+	 both force and energy profiles as well as number of points, max
+	 values etc.
+      */
+      if (argc < 2) {
+	Tcl_AppendResult(interp, "tabulated potentials require a filename: "
+			 "<filename>",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+      change = 2;
+
+      /* copy tabulated parameters */
+      filename = argv[1];
+
+      if (tabulated_set_params(part_type_a, part_type_b, filename) == TCL_ERROR) {
+	Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+	return TCL_ERROR;
+      }
+    }
+#endif
+    else {
+      Tcl_AppendResult(interp, "excessive parameter/unknown interaction type \"", argv[0],
+		       "\" in parsing non bonded interaction",
 		       (char *) NULL);
       return TCL_ERROR;
     }
-    /* copy tabulated parameters */
 
-    filename = argv[1];
-
-    CHECK_VALUE(tabulated_set_params(part_type_a, part_type_b, filename),
-		"particle types must be nonnegative");
+    argc -= change;
+    argv += change;
   }
-#endif
-  
-  Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
-		   "\"", (char *)NULL);
-  return TCL_ERROR;
+  return TCL_OK;
 }
 
 int inter_print_partner_num(Tcl_Interp *interp, int bond_type)
@@ -1876,7 +1900,7 @@ int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 #ifdef ELECTROSTATICS
     return inter_parse_coulomb(interp, argc-1, argv+1);
 #else
-    Tcl_AppendResult(interp, "ELECTROSTTICS not compiled (see config.h)", (char *) NULL);
+    Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)", (char *) NULL);
 #endif
   }
 
@@ -1914,13 +1938,17 @@ int inter(ClientData _data, Tcl_Interp *interp,
 
     if (ARG1_IS_I(i))
       return inter_print_bonded(interp, i);
-    
+    else
+      Tcl_ResetResult(interp);
+
     if (ARG1_IS_D(dummy)) {
       Tcl_AppendResult(interp, "integer or string expected",
 		       (char *) NULL);
       return TCL_ERROR;
     }
-    
+    else
+      Tcl_ResetResult(interp);
+
     return inter_parse_rest(interp, argc-1, argv+1);
   }
   
@@ -1929,18 +1957,24 @@ int inter(ClientData _data, Tcl_Interp *interp,
     
     if (ARG_IS_I(1, i) && ARG_IS_I(2, j))
       return inter_print_non_bonded(interp, i, j);
-    
+    else
+      Tcl_ResetResult(interp);
+
     if (ARG_IS_I(1, i)) {
       Tcl_AppendResult(interp, "not enough arguments",
 		       (char *) NULL);
       return TCL_ERROR;
     }
-    
+    else
+      Tcl_ResetResult(interp);
+
     if (ARG1_IS_D(dummy)) {
       Tcl_AppendResult(interp, "integer or string expected",
 		       (char *) NULL);
       return TCL_ERROR;
     }
+    else
+      Tcl_ResetResult(interp);
       
     return inter_parse_rest(interp, argc-1, argv+1);
   }
@@ -1952,23 +1986,25 @@ int inter(ClientData _data, Tcl_Interp *interp,
   // non bonded interactions
   if (ARG_IS_I(1, i) && ARG_IS_I(2, j))
     return inter_parse_non_bonded(interp, i, j, argc-3, argv+3);
-
-  Tcl_ResetResult(interp);
+  else
+    Tcl_ResetResult(interp);
 
   // bonded interactions
   if (ARG_IS_I(1, i) && ! ARG_IS_D(2, dummy)) {
     Tcl_ResetResult(interp);
     return inter_parse_bonded(interp, i, argc-2, argv+2);
   }
-
-  Tcl_ResetResult(interp);
+  else
+    Tcl_ResetResult(interp);
 
   if (ARG_IS_D(1, dummy)) {
       Tcl_AppendResult(interp, "integer or string expected",
 		       (char *) NULL);
       return TCL_ERROR;
   }
-  
+  else
+    Tcl_ResetResult(interp);
+
   // named interactions
   return inter_parse_rest(interp, argc-1, argv+1);
 }
