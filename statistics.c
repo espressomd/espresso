@@ -137,29 +137,11 @@ double mindist(IntList *set1, IntList *set2)
 
 int aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_list, int *link_list, int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std)
 {
-  /* add check for:
-     single procesor
-     verlet method not N2
-     cut-off is larger than dist criteria 
-     check if start and finish mol_id's make senses
-  */
-
-  int c, np, n, i,j, pairid;
+  int c, np, n, i;
   Particle *p1, *p2, **pairs;
   double dist2, vec21[3];
-  int arr_size = n_molecules * (n_molecules+1 ) / 2;
-  float *minidist2;
-  int target1, target2, head_i;
-
-  minidist2 = malloc(arr_size*sizeof(float));
-
-  if(minidist2==NULL) return 3;
-
-  if (n_nodes > 1)
-    return 1;
-
-  if (cell_structure.type != CELL_STRUCTURE_DOMDEC)
-    return 2;
+  int target1, target2, head_p1;
+  int p1molid, p2molid;
 
   build_verlet_lists();
 
@@ -168,10 +150,6 @@ int aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_lis
     link_list[i]=-1;
     agg_id_list[i]=i;
     agg_size[i]=0;
-  }
-
-  for (i = 0; i < arr_size; i++) {
-    minidist2[i]=100. * box_l[0];
   }
   
   /* Loop local cells */
@@ -184,41 +162,28 @@ int aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_lis
       for(i=0; i<2*np; i+=2) {
 	p1 = pairs[i];                    /* pointer to particle 1 */
 	p2 = pairs[i+1];                  /* pointer to particle 2 */
-	if (((p1->p.mol_id <= f_mol_id) && (p1->p.mol_id >= s_mol_id)) && ((p2->p.mol_id <= f_mol_id) && (p2->p.mol_id >= s_mol_id))) {
-	  if ( p1->p.mol_id >= p2->p.mol_id ) {
-	    pairid =  p1->p.mol_id * (p1->p.mol_id + 1)/2 + p2->p.mol_id;
-	  } else {
-	    pairid =  p2->p.mol_id * (p2->p.mol_id + 1)/2 + p1->p.mol_id;
+	p1molid = p1->p.mol_id;
+	p2molid = p2->p.mol_id;
+	if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) && ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
+	  if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
+	    dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
+	    if (dist2 < dist_criteria2) {
+	      /* merge list containing p2molid into list containing p1molid*/
+	      target1=head_list[agg_id_list[p2molid]];
+	      head_list[agg_id_list[p2molid]]=-2;
+	      head_p1=head_list[agg_id_list[p1molid]];
+	      head_list[agg_id_list[p1molid]]=target1;
+	      agg_id_list[target1]=agg_id_list[p1molid];
+	      target2=link_list[target1];
+	      while(target2 != -1) {
+		target1=target2;
+		target2=link_list[target1];
+		agg_id_list[target1]=agg_id_list[p1molid];
+	      }
+	      agg_id_list[target1]=agg_id_list[p1molid];
+	      link_list[target1]=head_p1;
+	    }
 	  }
-	  
-	  dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
-	  if (dist2 < minidist2[pairid] ) { 
-	    minidist2[pairid] = dist2;
-	  }
-	}
-      }
-    }
-  }
-  
-  for (i = f_mol_id; i >= s_mol_id; i--) {
-    for (j = s_mol_id; j <= i; j++) {
-      if( minidist2[i*(i+1)/2+j]<dist_criteria2) {
-	if (agg_id_list[i] != agg_id_list[j]) {
-	  /* merge list containing j into list containing i*/
-	  target1=head_list[agg_id_list[j]];
-	  head_list[agg_id_list[j]]=-2;
-	  head_i=head_list[agg_id_list[i]];
-	  head_list[agg_id_list[i]]=target1;
-	  agg_id_list[target1]=agg_id_list[i];
-	  target2=link_list[target1];
-	  while(target2 != -1) {
-	    target1=target2;
-	    target2=link_list[target1];
-	    agg_id_list[target1]=agg_id_list[i];
-	  }
-	  agg_id_list[target1]=agg_id_list[i];
-	  link_list[target1]=head_i;
-
 	}
       }
     }
@@ -246,7 +211,6 @@ int aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_lis
     if (*agg_max < agg_size[i]) { *agg_max = agg_size[i]; }
   }
   
-  free (minidist2);
   return 0;
 }
 
@@ -1034,19 +998,30 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_ERROR);
   }
   
-  switch (aggregation(dist_criteria2, s_mol_id, f_mol_id, head_list, link_list, agg_id_list, 
-		      &agg_num, agg_size, &agg_max, &agg_min, &agg_avg, &agg_std)) {
-  case 1:
+  if (n_nodes > 1) {
     Tcl_AppendResult(interp, "aggregation can only be calculated on a single processor", (char *)NULL);
     return TCL_ERROR;
-  case 2:
+  }
+
+  if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
     Tcl_AppendResult(interp, "aggregation can only be calculated with the domain decomposition cell system", (char *)NULL);
     return TCL_ERROR;
-  case 3:
-    Tcl_AppendResult(interp, "don't be greedy, asking for too much memory!!!", (char *)NULL);
-    return TCL_ERROR;    
   }
-  
+
+  if ( (s_mol_id < 0) || (s_mol_id > n_molecules) || (f_mol_id < 0) || (f_mol_id > n_molecules) ) {
+    Tcl_AppendResult(interp, "check your start and finish molecule id's", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if ( max_range_non_bonded2 < dist_criteria2) {
+    Tcl_AppendResult(interp, "dist_criteria is larger than max_range_non_bonded.", (char *)NULL);
+    return TCL_ERROR;    
+    
+  }
+
+
+  aggregation(dist_criteria2, s_mol_id, f_mol_id, head_list, link_list, agg_id_list, 
+	      &agg_num, agg_size, &agg_max, &agg_min, &agg_avg, &agg_std);
 
   fagg_avg = (float) (agg_avg)/agg_num;
   sprintf (buffer, " MAX %d MIN %d AVG %f STD %f AGG_NUM %d AGGREGATES", 
