@@ -2215,7 +2215,7 @@ void try_delete_exclusion(Particle *part, int part2)
   for (i = 0; i < el->n;) {
     if (el->e[i] == part2) {
       el->n--;
-      memcpy(el->e + i, el->e + i + 1, el->n - i);
+      memcpy(el->e + i, el->e + i + 1, sizeof(int)*el->n - i);
       realloc_intlist(el, el->n);
       break;
     }
