@@ -6,6 +6,8 @@
 /** \file forces.h
     Force calculation. Header file for \ref forces.c "forces.c".
  */
+#include <tcl.h>
+
 /************************************************
  * exported variables
  ************************************************/
@@ -14,6 +16,8 @@
 /*@{*/
 /** the Bjerrum length for electrostatics */
 extern double Bjerrum;
+/** the minimum particle distance seen by the ramp potential. */
+extern double minimum_part_dist;
 /*@}*/
 
 /*******************  Functions  *******************/
@@ -33,6 +37,11 @@ void force_calc();
 
 /** Clean up the force part. */
 void force_exit(); 
+
+/** Callback for setmd bjerrum. If the Bjerrum length is 0, the cutoff is also set to 0
+    to avoid unnecessary computation of the electrostatics. */
+int bjerrum_callback(Tcl_Interp *interp, void *_data);
+
 /*@}*/
 
 #endif

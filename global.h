@@ -78,8 +78,12 @@ extern const Datafield fields[];
 #define FIELD_RANGE 10
 /** index of \ref friction_gamma in \ref fields */
 #define FIELD_GAMMA 11
-/** index of \ref rebuild_verletlist \ref fields */
+/** index of \ref rebuild_verletlist in \ref fields */
 #define FIELD_VERLET 12
+/** index of \ref Bjerrum in \ref fields */
+#define FIELD_BJERRUM 13
+/** index of \ref minimum_part_dist in \ref fields */
+#define FIELD_MINDST 14
 /*@}*/
 
 /**********************************************

@@ -15,18 +15,36 @@
 #include "utils.h"
 #include "interaction_data.h"
 
-double Bjerrum;
+double Bjerrum    = 1.68;
+double coul_r_cut = 20;
+double alpha      = 0;
+
+double minimum_part_dist = 0;
 
 void force_init()
 {
-
-  Bjerrum = 1.68;
-
   FORCE_TRACE(fprintf(stderr,"%d: force_init:\n",this_node));
   FORCE_TRACE(fprintf(stderr,"%d: found %d interaction types\n",
 		      this_node,n_interaction_types));
   FORCE_TRACE(fprintf(stderr,"%d: found %d particles types\n",
 		      this_node,n_particle_types));
+}
+
+int bjerrum_callback(Tcl_Interp *interp, void *_data)
+{
+  double data = *(double *)_data;
+
+  if (data < 0) {
+    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  Bjerrum = data;
+
+  if (Bjerrum == 0)
+    coul_r_cut = 0;
+
+  return (TCL_OK);
 }
 
 void force_calc()
@@ -39,11 +57,11 @@ void force_calc()
   extern int *verletList;
   double frac2,frac6,r_off;
   double fac, adist;
-  double coul_r_cut = 20.;
-  double Bjerrum = 1.68, alpha = 1.;
   double  erfc_part_ri;
 
   FORCE_TRACE(fprintf(stderr,"%d: force_calc: for %d (P %d,G %d)\n",this_node,n_particles+n_ghosts,n_particles,n_ghosts));
+
+  minimum_part_dist = 1e300;
 
   ia_params = get_ia_param(0,0);
   FORCE_TRACE(fprintf(stderr,"%d: interactions type:(0,0):\n",this_node));
@@ -89,7 +107,6 @@ void force_calc()
     }
     
     /* real space coulomb */
-    /*
     if(dist < coul_r_cut) {
       adist = alpha * dist;
       erfc_part_ri = AS_erfc_part(adist) / dist;
@@ -102,10 +119,12 @@ void force_calc()
       particles[id2].f[1] -= fac * d[1];
       particles[id2].f[2] -= fac * d[2];
     }
-    */
 
     /* ramp */
     if(dist < ia_params->ramp_cut) {
+      if (dist < minimum_part_dist)
+	minimum_part_dist = dist;
+
       if (dist < 1e-4) {
 	particles[id1].f[0] += ia_params->ramp_force;
 	particles[id1].f[1] += 0;

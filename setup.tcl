@@ -29,29 +29,30 @@ for {set i 0} { $i < $npart } { incr i} {
 }
 	
 # setup ramp ia
-#puts "setting up ramp interaction"
-#for {set ia1 0} { $ia1 <= 4 } { incr ia1 } {
-#    for {set ia2 0} { $ia2 <= 4 } { incr ia2 } {
-#	inter $ia1 $ia2 ramp 1 1
-#    }
-#}
+puts "setting up ramp interaction"
+# no electrostatics
+setmd bjerrum 0
 
-set gamma 0
-# write
-set f [open "|gzip -c - >setup.gz" w]
-for {set i 0} { $i < $npart } { incr i} {
-    puts $f [part $i]
+#pairwise ramp for all particles
+for {set ia1 0} { $ia1 <= 4 } { incr ia1 } {
+    for {set ia2 0} { $ia2 <= 4 } { incr ia2 } {
+	inter $ia1 $ia2 ramp 1 1
+    }
 }
-close $f
+
+# friction
+set gamma 1
 
 # relax
 puts "starting ramp integration"
 integrate init
 
-for {set i 0} { $i < 100} { incr i} {
-    puts "$i% done"
-    integrate 1
+for {set i 0} { [setmd mindist] < 0.5 } { incr i} {
+    puts "step ${i}00: minimum distance=[setmd mindist]"
+    integrate 100
 }
+
+puts "final: minimum distance=[setmd mindist]"
 
 # write
 set f [open "|gzip -c - >config.gz" w]
