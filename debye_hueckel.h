@@ -9,6 +9,7 @@
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
 */
 
+#ifdef ELECTROSTATICS
 
 /** \name Functions */
 /************************************************************/
@@ -57,5 +58,6 @@ MDINLINE double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 }
 
 /*@}*/
+#endif
 
 #endif

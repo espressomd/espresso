@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "config.h"
+#include "debug.h"
 #include "initialize.h"
 #include "global.h"
 #include "particle_data.h"
@@ -19,13 +20,13 @@
 #include "blockfile_tcl.h"
 #include "cells.h"
 #include "grid.h"
-#include "forces.h"
 #include "thermostat.h"
 #include "p3m.h"
 #include "fft.h"
 #include "ghosts.h"
 #include "debye_hueckel.h"
 #include "mmm1d.h"
+#include "forces.h"
 
 static void init_tcl(Tcl_Interp *interp);
 
@@ -39,8 +40,9 @@ int on_program_start(Tcl_Interp *interp)
   init_bit_random();
   cells_pre_init();
   ghost_pre_init();
+#ifdef ELECTROSTATICS
   fft_pre_init();
-
+#endif
 
   /*
     call all initializations to do only on the master node here.
@@ -78,6 +80,7 @@ void on_integration_start()
     thermo_init();
   }
 
+#ifdef ELECTROSTATICS
   if (interactions_changed || topology_changed) {
     if (coulomb.method == COULOMB_P3M)
       P3M_init();
@@ -97,6 +100,7 @@ void on_integration_start()
     if (coulomb.method == COULOMB_MMM1D)
       MMM1D_init();
   }
+#endif
 
   if (parameter_changed || particle_changed || interactions_changed || topology_changed) {
     rebuild_verletlist = 1;

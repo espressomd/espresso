@@ -1,3 +1,5 @@
+
+
 #include "mmm1d.h"
 #include "polynom.h"
 #include "specfunc.h"
@@ -5,6 +7,9 @@
 #include "cells.h"
 #include "grid.h"
 #include <mpi.h>
+
+#ifdef ELECTROSTATICS
+
 
 /*
   cwz-build-command: gmake
@@ -529,3 +534,5 @@ void MMM1D_calc_forces()
   free(recv_coords);
   free(recv_forces);
 }
+
+#endif

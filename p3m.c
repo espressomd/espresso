@@ -22,6 +22,8 @@
 #include "thermostat.h"
 #include "cells.h"
 
+#ifdef ELECTROSTATICS
+
 /************************************************
  * DEFINES
  ************************************************/
@@ -1353,3 +1355,5 @@ void p3m_print_p3m_struct(p3m_struct ps) {
   fprintf(stderr,"   a=(%f,%f,%f), ai=(%f,%f,%f)\n",
 	  ps.a[0],ps.a[1],ps.a[2],ps.ai[0],ps.ai[1],ps.ai[2]);
 }
+
+#endif

@@ -22,9 +22,10 @@ int n_particle_types = 0;
 int n_interaction_types = 0;
 IA_parameters *ia_params = NULL;
 
+#ifdef ELECTROSTATICS
 Coulomb_parameters coulomb = { 0.0, COULOMB_NONE };
-
 Debye_hueckel_params dh_params = { 0.0, 0.0, 0.0, 0.0 };
+#endif
 
 int n_bonded_ia = 0;
 Bonded_ia_parameters *bonded_ia_params = NULL;
@@ -256,6 +257,7 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 
 int printCoulombIAToResult(Tcl_Interp *interp) 
 {
+#ifdef ELECTROSTATICS
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
   if (coulomb.bjerrum == 0.0) {
     Tcl_ResetResult(interp);
@@ -302,6 +304,9 @@ int printCoulombIAToResult(Tcl_Interp *interp)
     Tcl_PrintDouble(interp, mmm1d.maxPWerror, buffer);
     Tcl_AppendResult(interp, buffer,(char *) NULL);
   }
+#else
+  Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)",(char *) NULL);
+#endif
   return (TCL_OK);
 }
 
@@ -341,11 +346,13 @@ void calc_maximal_cutoff()
 	    max_cut = data->ramp_cut;
 	}
      }
+#ifdef ELECTROSTATICS
   /* real space electrostatic */
   if(coulomb.method == COULOMB_P3M     && max_cut < p3m.r_cut) 
     max_cut = p3m.r_cut;
   else if(coulomb.method == COULOMB_DH && max_cut < dh_params.r_cut) 
     max_cut = dh_params.r_cut;
+#endif
 }
 
 int inter_print_all(Tcl_Interp *interp)
@@ -378,6 +385,7 @@ int inter_print_all(Tcl_Interp *interp)
 	Tcl_AppendResult(interp, "}", (char *)NULL);
       }
     }
+#ifdef ELECTROSTATICS
   if(coulomb.bjerrum > 0.0) {
     if (start) {
       Tcl_AppendResult(interp, "{", (char *)NULL);
@@ -388,6 +396,7 @@ int inter_print_all(Tcl_Interp *interp)
     printCoulombIAToResult(interp);
     Tcl_AppendResult(interp, "}", (char *)NULL);
   }
+#endif
   if(lj_force_cap != 0.0) {
     char buffer[TCL_DOUBLE_SPACE];
     
@@ -907,6 +916,7 @@ int inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
   return TCL_ERROR;
 }
 
+#ifdef ELECTROSTATICS
 void p3m_set_tune_params(double r_cut, int mesh, int cao,
 			 double alpha, double accuracy)
 {
@@ -1413,6 +1423,7 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 
   return TCL_ERROR;
 }
+#endif
 
 int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 {
@@ -1420,9 +1431,13 @@ int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
   if(ARG0_IS_S("ljforcecap"))
     return inter_parse_ljforcecap(interp, argc-1, argv+1);
   
-  if(ARG0_IS_S("coulomb"))
+  if(ARG0_IS_S("coulomb")) {
+#ifdef ELECTROSTATICS
     return inter_parse_coulomb(interp, argc-1, argv+1);
-  
+#else
+    Tcl_AppendResult(interp, "ELECTROSTTICS not compiled (see config.h)", (char *) NULL);
+#endif
+  }
 
   Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
 		   "\"", (char *) NULL);

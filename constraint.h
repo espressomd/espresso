@@ -10,8 +10,8 @@
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
  */
 
-
 #ifdef CONSTRAINTS
+
 MDINLINE void calculate_wall_dist(Particle *p1, Particle *c_p, Constraint_wall *c, double *dist, double *vec)
 {
   int i;
@@ -136,6 +136,7 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
      THIS HAS TO BE DONE FIRST SINCE LJ CHANGES vec!!!
   */
   /*  fprintf(stderr, "%d: bj %f q %f l %f\n", this_node, coulomb.bjerrum, p1->r.q, c->lambda);*/
+#ifdef ELECTROSTATICS
   if (coulomb.bjerrum > 0.0 && p1->r.q != 0.0 && c->lambda != 0.0) {
     fac = 2*coulomb.bjerrum*c->lambda*p1->r.q/c_dist_2;
     if (temperature > 0)
@@ -147,7 +148,7 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
     /* fprintf(stderr, "%d: vec %f %f -> f %f %f\n", this_node, vec[0], vec[1],
        fac*vec[0], fac*vec[1]); */
   }
-
+#endif
   if (ia_params->LJ_cut > 0. ) {
     /* put an infinite cylinder along z axis */
     c_dist = sqrt(c_dist_2);
@@ -268,7 +269,6 @@ MDINLINE double add_constraints_energy(Particle *p1, int n)
 
   return 0.;
 }
-#endif
 
 MDINLINE void init_constraint_forces()
 {
@@ -278,5 +278,6 @@ MDINLINE void init_constraint_forces()
     for (i = 0; i < 3; i++)
       constraints[n].part_rep.f[i] = 0;
 }
+#endif
 
 #endif

@@ -142,7 +142,9 @@ void init_particle(Particle *part)
 {
   part->r.identity = 0;
   part->r.type     = 0;
+#ifdef ELECTROSTATICS
   part->r.q        = 0.0;
+#endif
   part->r.p[0]     = 0.0;
   part->r.p[1]     = 0.0;
   part->r.p[2]     = 0.0;
@@ -410,8 +412,10 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_PrintDouble(interp, part.r.p[2], buffer);
   Tcl_AppendResult(interp, buffer, " type ", (char *)NULL);
   sprintf(buffer, "%d", part.r.type);
+#ifdef ELECTROSTATICS
   Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
   Tcl_PrintDouble(interp, part.r.q, buffer);
+#endif
   Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
   Tcl_PrintDouble(interp, part.v[0]/time_step, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
@@ -555,10 +559,12 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       sprintf(buffer, "%d", part.r.type);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
+#ifdef ELECTROSTATICS
     else if (ARG0_IS_S("q")) {
       Tcl_PrintDouble(interp, part.r.q, buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
+#endif
     else if (ARG0_IS_S("v")) {
       /* unscale velocities ! */
       Tcl_PrintDouble(interp, part.v[0]/time_step, buffer);

@@ -34,8 +34,12 @@
  *  see \ref p3m.c "p3m.c"
  */
 
+#include "config.h"
 #include "integrate.h"
 #include "debug.h"
+
+#ifdef ELECTROSTATICS
+
 
 /************************************************
  * data types
@@ -182,5 +186,6 @@ MDINLINE double p3m_coulomb_pair_energy(Particle *p1, Particle *p2,
 void   P3M_exit();
 
 /*@}*/
+#endif
 
 #endif

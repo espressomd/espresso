@@ -23,6 +23,10 @@
  *  For more information about FFT usage, see \ref fft.c "fft.c".  
 */
 
+#include "config.h"
+
+#ifdef ELECTROSTATICS
+
 /************************************************
  * data types
  ************************************************/
@@ -229,5 +233,6 @@ void unpack_block(double *in, double *out, int start[3], int size[3],
 void print_global_fft_mesh(fft_forw_plan plan, double *data, int element, int num);
 
 /*@}*/
+#endif
 
 #endif

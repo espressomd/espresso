@@ -4,6 +4,8 @@
  *
   *  For more information about FFT usage, see \ref fft.h "fft.h".  
 */
+
+
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +21,8 @@
 #include "utils.h"
 #include "fft.h"
 #include "p3m.h"
+
+#ifdef ELECTROSTATICS
 
 /************************************************
  * DEFINES
@@ -912,3 +916,5 @@ void print_global_fft_mesh(fft_forw_plan plan, double *data, int element, int nu
   }
 
 }
+
+#endif
