@@ -60,9 +60,10 @@ interface between the Tcl script and the MD code:
 	modifies variables declared in \ref #fields.
 	For more information, see \ref tcl_setmd.
 
-    <li>\verbatim t_random [{ int <n> | seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }] \endverbatim
-        random number generator.
-	For more information, see \ref tcl_t_random.
+    <li>\verbatim t_random [{ int <n> | seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }] 
+ bit_random [{ seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }]\endverbatim
+        different implementations of random number generators.
+	For more information, see \ref tcl_t_random or \ref tcl_bit_random.
         
     <li>\verbatim velocities <v_max> [start <part_id>] [count <N_T>] \endverbatim
 	Sets the velocities of the particles with particle ID (see \ref tcl_part) between <part_id> and <part_id>+<N_T> 
