@@ -288,7 +288,7 @@
 	     </td>
 	     </tr></table>
 
-	     <b> Tanulated bonded potentials:</b>
+	     <b> Tabulated bonded potentials:</b>
 	     \verbatim tabulated <type> <filename> \endverbatim
 
 	      Tabulated bonded potentials can be any potential for
