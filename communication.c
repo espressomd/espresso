@@ -861,8 +861,11 @@ void mpi_bcast_coulomb_params()
   mpi_issue(REQ_BCAST_COULOMB, 1, 0);
 
   MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, MPI_COMM_WORLD);
-  if(!strncmp(coulomb.method, "p3m", strlen(coulomb.method) )) {
+  if(coulomb.method == COULOMB_P3M) {
     MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+  }
+  else if(coulomb.method == COULOMB_DH) {
+    MPI_Bcast(&dh_params, sizeof(Debye_hueckel_params), MPI_BYTE, 0, MPI_COMM_WORLD);
   }
   on_ia_change();
 }
@@ -870,8 +873,11 @@ void mpi_bcast_coulomb_params()
 void mpi_bcast_coulomb_params_slave(int node, int parm)
 {   
   MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, MPI_COMM_WORLD);
-  if(!strncmp(coulomb.method, "p3m", strlen(coulomb.method) )) {
+  if(coulomb.method == COULOMB_P3M) {
     MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+  }
+  else if(coulomb.method == COULOMB_DH) {
+    MPI_Bcast(&dh_params, sizeof(Debye_hueckel_params), MPI_BYTE, 0, MPI_COMM_WORLD);
   }
   on_ia_change();
 }

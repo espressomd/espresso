@@ -20,6 +20,7 @@
 #include "lj.h"
 #include "fene.h"
 #include "angle.h"
+#include "debye_hueckel.h"
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref #analyze) */
 float *partCoord_g=NULL, *partCM_g=NULL;
@@ -312,7 +313,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       if(coulomb.bjerrum > 0.0) {
 	Tcl_PrintDouble(interp, energy.sum.e[p], buffer);
 	Tcl_AppendResult(interp, "{ coulomb ", buffer, (char *)NULL);
-	if(!strcmp(coulomb.method,"p3m")) {
+	if(coulomb.method == COULOMB_P3M) {
 	  Tcl_PrintDouble(interp, energy.sum.e[p+1], buffer);
 	  Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
 	  Tcl_PrintDouble(interp, energy.sum.e[p+2], buffer);
@@ -617,9 +618,11 @@ void calc_energy()
 	  energy.node.e[type_num] += lj_pair_energy(p1,p2,ia_params,d,dist);
 	  
 	  /* real space coulomb */
-	  if(p3m.bjerrum>0.0) 
+	  if(coulomb.method==COULOMB_P3M) 
 	    energy.node.e[s_coulomb+1] += p3m_coulomb_pair_energy(p1,p2,d,dist2,dist);
-	  
+	  else if(coulomb.method==COULOMB_DH)
+	    energy.node.e[s_coulomb] += dh_coulomb_pair_energy(p1,p2,dist);
+
 	  /* minimal particle distance calculation */
 	  if (dist < minimum_part_dist)
 	    minimum_part_dist = dist;
@@ -629,7 +632,7 @@ void calc_energy()
   }
 
   /* calculate k-space part of electrostatic interaction. */ 
-  if(p3m.bjerrum > 0.0 && (energy.ana_num == 0 || energy.ana_num >= s_coulomb) ) {
+  if(coulomb.method==COULOMB_P3M && (energy.ana_num == 0 || energy.ana_num >= s_coulomb) ) {
     energy.node.e[s_coulomb+2] = P3M_calc_kspace_forces(0,1);
     energy.node.e[s_coulomb] = energy.node.e[s_coulomb+1]+energy.node.e[s_coulomb+2];
   }
@@ -657,7 +660,7 @@ void init_energies()
   energy.n_bonded     = n_bonded_ia;
   energy.n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
   if(coulomb.bjerrum > 0.0)         energy.n_coulomb =  1;
-  if(!strcmp(coulomb.method,"p3m")) energy.n_coulomb += 2;
+  if(coulomb.method==COULOMB_P3M) energy.n_coulomb += 2;
   energy.n = energy.n_pre+energy.n_bonded+energy.n_non_bonded+energy.n_coulomb;
   realloc_doublelist(&(energy.node),energy.n);
   realloc_doublelist(&(energy.sum),energy.n);

@@ -22,6 +22,7 @@
 #include "lj.h"
 #include "fene.h"
 #include "angle.h"
+#include "debye_hueckel.h"
 
 /************************************************/
 /* Variables */
@@ -116,8 +117,10 @@ void force_calc()
 	add_lj_pair_force(p1,p2,ia_params,d,dist);
 
 	/* real space coulomb */
-	add_p3m_coulomb_pair_force(p1,p2,d,dist2,dist);
-
+	if(coulomb.method == COULOMB_P3M) 
+	  add_p3m_coulomb_pair_force(p1,p2,d,dist2,dist);
+	else if(coulomb.method == COULOMB_DH)
+	  add_dh_coulomb_pair_force(p1,p2,d,dist);
 	/* minimal particle distance calculation */
 	if (dist < minimum_part_dist)
 	  minimum_part_dist = dist;
@@ -126,7 +129,8 @@ void force_calc()
   }
 
   /* calculate k-space part of electrostatic interaction. */
-  if(p3m.bjerrum != 0.0) P3M_calc_kspace_forces(1,0);
+  if(coulomb.method == COULOMB_P3M) 
+    P3M_calc_kspace_forces(1,0);
 }
 
 /************************************************************/

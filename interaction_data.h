@@ -11,9 +11,31 @@
 #include <tcl.h>
 #include "particle_data.h"
 
-/************************************************
- * data types
- ************************************************/
+/** \name Defines */
+/************************************************************/
+/*@{*/
+
+/** Type of bonded interaction is a FENE potential. */
+#define BONDED_IA_FENE     0
+/** Type of bonded interaction is a angle potential. */
+#define BONDED_IA_ANGLE    1
+/** Type of bonded interaction is a dihedral potential. */
+#define BONDED_IA_DIHEDRAL 2
+/** This bonded interaction was not set. */
+#define BONDED_IA_NONE    -1
+
+/** Coulomb interation switched off (NONE). */
+#define COULOMB_NONE  0
+/** Coulomb method is Debye-Hueckel. */
+#define COULOMB_DH    1
+/** Coulomb method is P3M. */
+#define COULOMB_P3M   2
+
+/*@}*/
+
+/** \name Data Types */
+/************************************************************/
+/*@{*/
 
 /** field containing the interaction parameters for
  *  nonbonded interactions. Access via
@@ -37,18 +59,27 @@ typedef struct {
 typedef struct {
   /** Bjerrum length. */
   double bjerrum;
-  /** Method to treat coulomb interaction. */
-  char method[8];
+  /** Method to treat coulomb interaction. 
+      So far implemented: <ul>
+      <li> COULOMB_P3M see \ref p3m.h
+      <li> COULOMB_DH  see \ref debye_hueckel.h
+      </ul>
+   */
+  int method;
 } Coulomb_parameters;
 
-/** Type of bonded interaction is a FENE potential. */
-#define BONDED_IA_FENE     0
-/** Type of bonded interaction is a angle potential. */
-#define BONDED_IA_ANGLE    1
-/** Type of bonded interaction is a dihedral potential. */
-#define BONDED_IA_DIHEDRAL 2
-/** This bonded interaction was not set. */
-#define BONDED_IA_NONE    -1
+/** Structure to hold Debye-Hueckel Parameters. */
+typedef struct {
+  /** bjerrum length. */
+  double bjerrum;
+  /** Cutoff for Debey-Hueckel interaction. */
+  double r_cut;
+  /** Debye kappa (inverse Debye length) . */
+  double kappa;
+  /** bjerrum length times temperature. */
+  double prefac;
+} Debye_hueckel_params;
+
 
 /** Defines parameters for a bonded interaction. */
 typedef struct {
@@ -76,6 +107,9 @@ typedef struct {
   } p;
 } Bonded_ia_parameters;
 
+/*@}*/
+
+
 /************************************************
  * exported variables
  ************************************************/
@@ -90,6 +124,9 @@ extern IA_parameters *ia_params;
 
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;
+
+/** Structure containing the Debye-Hueckel parameters. */
+extern Debye_hueckel_params dh_params;
 
 /** number of bonded interactions. Not used so far. */
 extern int n_bonded_ia;

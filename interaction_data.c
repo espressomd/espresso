@@ -3,10 +3,11 @@
  */
 #include <string.h>
 #include <stdlib.h>
-#include "interaction_data.h"
 #include "debug.h"
+#include "interaction_data.h"
 #include "communication.h"
 #include "p3m.h"
+#include "debye_hueckel.h"
 
 /****************************************
  * variables
@@ -15,7 +16,9 @@ int n_particle_types = 0;
 int n_interaction_types = 0;
 IA_parameters *ia_params = NULL;
 
-Coulomb_parameters coulomb = { 0.0, "non" };
+Coulomb_parameters coulomb = { 0.0, COULOMB_NONE };
+
+Debye_hueckel_params dh_params = { 0.0, 0.0, 0.0, 0.0 };
 
 int n_bonded_ia = 0;
 Bonded_ia_parameters *bonded_ia_params = NULL;
@@ -209,10 +212,9 @@ int printCoulombIAToResult(Tcl_Interp *interp)
   }
   Tcl_PrintDouble(interp, coulomb.bjerrum, buffer);
   Tcl_AppendResult(interp, "coulomb ", buffer, " ", (char *) NULL);
-  Tcl_AppendResult(interp, coulomb.method, " ", (char *) NULL);
-  if (!strcmp(coulomb.method,"p3m")) {
+  if (coulomb.method == COULOMB_P3M) {
     Tcl_PrintDouble(interp, p3m.r_cut, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, "p3m ", buffer, " ", (char *) NULL);
     sprintf(buffer,"%d",p3m.mesh[0]);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
     sprintf(buffer,"%d",p3m.cao);
@@ -233,8 +235,11 @@ int printCoulombIAToResult(Tcl_Interp *interp)
     Tcl_PrintDouble(interp, p3m.mesh_off[2], buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
   }
-  else if  (!strcmp(coulomb.method,"dh")) {
-    Tcl_AppendResult(interp, "dh not implemented! ", (char *) NULL);
+  else if (coulomb.method == COULOMB_DH) {
+    Tcl_PrintDouble(interp, dh_params.kappa, buffer);
+    Tcl_AppendResult(interp, "dh ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, dh_params.r_cut, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
   }
   return (TCL_OK);
 }
@@ -268,11 +273,10 @@ void calc_maximal_cutoff()
 	}
      }
   /* real cpace electrostatic */
-  if(p3m.bjerrum > 0.0) {
-    if(max_cut < p3m.r_cut)
-      max_cut = p3m.r_cut;
-  }
-
+  if(coulomb.method == COULOMB_P3M     && max_cut < p3m.r_cut) 
+    max_cut = p3m.r_cut;
+  else if(coulomb.method == COULOMB_DH && max_cut < dh_params.r_cut) 
+    max_cut = dh_params.r_cut;
 }
 
 int inter(ClientData _data, Tcl_Interp *interp,
@@ -349,7 +353,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
     if ((Tcl_GetDouble(interp, argv[2], &(coulomb.bjerrum)) == TCL_ERROR)) {
       Tcl_ResetResult(interp);
       /* if p3m is set allready you can set additional optional p3m parameters */
-      if (!strcmp(coulomb.method, "p3m")) {
+      if (coulomb.method == COULOMB_P3M) {
 	argc -= 2;
 	argv += 2;
 	while (argc > 0) {
@@ -407,7 +411,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
     argv += 3;
 
     if(coulomb.bjerrum == 0.0) {
-      strcpy(coulomb.method,"non");
+      coulomb.method = COULOMB_NONE;
       mpi_bcast_coulomb_params();
       return (TCL_OK);
     }
@@ -426,8 +430,8 @@ int inter(ClientData _data, Tcl_Interp *interp,
       argc -= 1;
       argv += 1;
       
-      strcpy(coulomb.method,"p3m");
-      p3m.bjerrum = coulomb.bjerrum;
+      coulomb.method = COULOMB_P3M;
+      p3m.bjerrum    = coulomb.bjerrum;
 
       if(Tcl_GetDouble(interp, argv[0], &(p3m.r_cut)) == TCL_ERROR) {
 	/* must be tune, tune parameters */
@@ -476,18 +480,34 @@ int inter(ClientData _data, Tcl_Interp *interp,
     }
     else if (!strncmp(argv[0], "dh ", strlen(argv[0])) ||
 	     !strncmp(argv[0], "DH ", strlen(argv[0])) ) {
-      argc -= 3;
-      argv += 3;
+      argc -= 1;
+      argv += 1;
       
-      strcpy(coulomb.method,"dh");
-      Tcl_AppendResult(interp, "Debye-Hueckel not implemented yet",(char *) NULL);
-      return (TCL_ERROR);
+      coulomb.method = COULOMB_DH;
+      dh_params.bjerrum = coulomb.bjerrum;
+
+      if(argc < 2) {
+	Tcl_AppendResult(interp, "Not enough parameters: inter coulomb dh <kappa> <r_cut>", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if(Tcl_GetDouble(interp, argv[0], &(dh_params.kappa)) == TCL_ERROR ||
+	 Tcl_GetDouble(interp, argv[1], &(dh_params.r_cut)) == TCL_ERROR) 
+	return (TCL_ERROR);
+	
+      if(dh_params.kappa < 0.0) {
+	Tcl_AppendResult(interp, "dh kappa must be positiv.",(char *) NULL);
+	return (TCL_ERROR);
+      }
+      if(dh_params.r_cut < 0.0) {
+	Tcl_AppendResult(interp, "dh r_cut must be positiv.",(char *) NULL);
+	return (TCL_ERROR);
+      }
     }
     else {
       coulomb.bjerrum = 0.0;
+      coulomb.method  = COULOMB_NONE;
       /* communicate bjerrum length */
-      Tcl_AppendResult(interp, "Do not know coulomb method \"",argv[1],"\"",(char *) NULL);
-      return (TCL_ERROR);
+      Tcl_AppendResult(interp, "Do not know coulomb method \"",argv[1],"\": coulomb switched off",(char *) NULL);
     }
     mpi_bcast_coulomb_params();
     return (TCL_OK);

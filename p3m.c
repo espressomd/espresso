@@ -251,7 +251,7 @@ void   P3M_init()
 
     P3M_TRACE(fprintf(stderr,"%d: mesh=%d, cao=%d, mesh_off=(%f,%f,%f)\n",this_node,p3m.mesh[0],p3m.cao,p3m.mesh_off[0],p3m.mesh_off[1],p3m.mesh_off[2]));
 
-    p3m.prefactor = p3m.bjerrum*temperature; 
+    p3m.prefactor = p3m.bjerrum * temperature; 
     p3m.r_cut2    = p3m.r_cut*p3m.r_cut;
     for(i=0;i<3;i++) {
       p3m.ai[i]      = (double)p3m.mesh[i]/box_l[i]; 

@@ -22,6 +22,7 @@
 #include "p3m.h"
 #include "fft.h"
 #include "ghosts.h"
+#include "debye_hueckel.h"
 
 static void init_tcl(Tcl_Interp *interp);
 
@@ -73,6 +74,8 @@ void on_integration_start()
 
   if (parameter_changed || topology_changed) {
     thermo_init();
+    p3m.prefactor    = p3m.bjerrum * temperature; 
+    dh_params.prefac = dh_params.bjerrum * temperature; 
   }
 
   if (interactions_changed || topology_changed) {
