@@ -34,17 +34,17 @@ typedef struct {
   int *e;
   /** number of used elements in the integer field. */
   int n;
-  /** allocated size of the integere field. */
+  /** allocated size of the integer field. */
   int max;
 } IntList;
 
 /** Double list. */
 typedef struct {
-  /* Dynamically allocated integer field. */
+  /* Dynamically allocated double field. */
   double *e;
-  /** number of used elements in the integer field. */
+  /** number of used elements in the double field. */
   int n;
-  /** allocated size of the integere field. */
+  /** allocated size of the double field. */
   int max;
 } DoubleList;
 

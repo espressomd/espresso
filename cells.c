@@ -145,7 +145,7 @@ void cells_re_init()
   /* 2c: allocate cell structure */
   cells  = (Cell *)malloc(n_cells*sizeof(Cell));
   /* 2d: allocate particle arrays */
-  for(i=0;i<n_cells;i++) realloc_particles(&(cells[i].pList), 1);
+  for(i=0;i<n_cells;i++) realloc_particles(&(cells[i].pList), 0);
   /* 2e: init cell neighbors */
   for(i=0;i<n_cells;i++) init_cell_neighbors(i);
  

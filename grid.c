@@ -148,6 +148,7 @@ void grid_changed_topology()
   }
 
   cells_changed_topology();
+  calc_node_neighbors(this_node);
 
   rebuild_verletlist = 1;
 }
