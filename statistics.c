@@ -9,9 +9,13 @@
 #include "communication.h"
 #include "grid.h"
 #include "integrate.h"
+#include "debug.h"
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref analyze) */
 float *partCoord_g=NULL, *partCM_g=NULL;
+
+/** Particles' current configuration (updated if NULL, set to NULL by on_particle_change and on_integration_start) */
+Particle *partCfg=NULL;
 
 
 int mindist(ClientData data, Tcl_Interp *interp, int argc, char **argv)
@@ -55,7 +59,6 @@ int mindist(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-  Particle *partCfg;
   int N_P, MPC, N_CI, N_pS, N_nS;
   int mode, arg_i, i, j, p;
   double dx, dy, dz, dist = 0.0;
@@ -130,9 +133,12 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   }
       
 
-  /* Get the complete informations on all particles 
-     (this is supposed to be done by on_conf_change later on) */
-  mpi_gather_stats(2, &partCfg);
+  /* Get the complete informations on all particles if something's changed
+     (on_particle_change and on_integration_start set partCfg=NULL) */
+  if(partCfg==NULL) { 
+    STAT_TRACE(printf("Updating...\n"));
+    mpi_gather_stats(2, &partCfg); }
+  else STAT_TRACE(printf("Unchanged!\n"));
 
 
   switch(mode) {
