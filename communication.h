@@ -225,6 +225,9 @@ void mpi_random_seed(int cnt, long *seed);
 /** Issue REQ_RANDOM_STAT: read/set status of random number generators on each node. */
 void mpi_random_stat(int cnt, RandomStatus *stat);
 
+/** Issue REQ_BCAST_LJFORCECAP: initialize LJ force capping. */
+void mpi_lj_cap_forces(double force_cap);
+
 /*@}*/
 
 /** \name Event codes for \ref mpi_bcast_event

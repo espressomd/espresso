@@ -19,6 +19,7 @@
 #include "p3m.h"
 #include "statistics.h"
 #include "random.h"
+#include "lj.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -84,8 +85,10 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_RANDOM_SEED 22
 /** Action number for \ref mpi_random_stat */
 #define REQ_RANDOM_STAT 23
+/** Action number for \ref mpi_lj_cap_forces. */
+#define REQ_BCAST_LFC 24
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 24
+#define REQ_MAXIMUM 25
 
 /** \name Slave Callbacks
     These functions are the slave node counterparts for the
@@ -116,6 +119,7 @@ void mpi_remove_particle_slave(int node, int parm);
 void mpi_bcast_constraint_slave(int node, int parm);
 void mpi_random_seed_slave(int node, int parm);
 void mpi_random_stat_slave(int node, int parm);
+void mpi_lj_cap_forces_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -143,13 +147,13 @@ SlaveCallback *callbacks[] = {
   mpi_place_particle_slave,         /* 19: REQ_PLACE_NEW */
   mpi_remove_particle_slave,        /* 20: REQ_REM_PART */
   mpi_bcast_constraint_slave,       /* 21: REQ_BCAST_CONSTR */
-  mpi_random_seed_slave,             /* 22: REQ_RANDOM_SEED */
-  mpi_random_stat_slave             /* 23: REQ_RANDOM_STAT */
+  mpi_random_seed_slave,            /* 22: REQ_RANDOM_SEED */
+  mpi_lj_cap_forces_slave,          /* 23: REQ_RANDOM_STAT */
 };
 
 /** Names to be printed when communication debugging is on. */
 char *names[] = {
-  "TERM",       /*  0 */
+  "TERM"      , /*  0 */
   "BCAST_PAR" , /*  1 */
   "WHO_HAS"   , /*  2 */
   "EVENT"     , /*  3 */
@@ -169,10 +173,11 @@ char *names[] = {
   "BCAST_CIA" , /* 17 */
   "SEND_EXT"  , /* 18 */
   "PLACE_NEW" , /* 19 */
-  "REM_PART"    /* 20 */
+  "REM_PART"  , /* 20 */
   "BCAST_CON" , /* 21 */
   "RAND_SEED" , /* 22 */
   "RAND_STAT" , /* 23 */
+  "BCAST_LFC" , /* 24 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -1089,6 +1094,21 @@ void mpi_random_stat_slave(int pnode, int cnt) {
     RANDOM_TRACE(printf("%d: Received status %ld/%ld/...\n",this_node,this_stat.idum,this_stat.iy));
     init_random_stat(this_stat);
   }
+}
+
+/*************** REQ_BCAST_LJFORCECAP ************/
+void mpi_lj_cap_forces(double fc)
+{
+  lj_force_cap = fc;
+  mpi_issue(REQ_BCAST_LFC, 1, 0);
+  mpi_lj_cap_forces_slave(1, 0);
+}
+
+void mpi_lj_cap_forces_slave(int node, int parm)
+{
+  MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  calc_lj_cap_radii(lj_force_cap);
+  on_ia_change();
 }
 
 /*********************** MAIN LOOP for slaves ****************/

@@ -330,19 +330,58 @@ int inter(ClientData _data, Tcl_Interp *interp,
       printCoulombIAToResult(interp);
       Tcl_AppendResult(interp, "}", (char *)NULL);
     }
+    if(lj_force_cap != 0.0) {
+      char buffer[TCL_DOUBLE_SPACE];
+
+      if (start) {
+	Tcl_AppendResult(interp, "{", (char *)NULL);
+	start = 0;
+      }
+      else
+	Tcl_AppendResult(interp, " {", (char *)NULL);
+      if (lj_force_cap == -1.0)
+	Tcl_AppendResult(interp, "ljforcecap individual");
+      else {
+	Tcl_PrintDouble(interp, lj_force_cap, buffer);
+	Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
+      }
+      Tcl_AppendResult(interp, "}", (char *)NULL);
+    }
     return (TCL_OK);
   }
 
-  /* if first argument is not an integer -> must be coulomb */
-  if (Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) {
-    Tcl_ResetResult(interp);
-
-    /* parse coulomb interaction parameters */
-    if(strncmp(argv[1], "coulomb", strlen(argv[1]))) {
-      Tcl_AppendResult(interp, "Do not know interaction \"",argv[1],"\"",(char *) NULL);
-      return (TCL_ERROR);
+  if(!strncmp(argv[1], "ljforcecap", strlen(argv[1]))) {
+    if (argc == 2) {
+      char buffer[TCL_DOUBLE_SPACE];
+      if (lj_force_cap == -1.0)
+	Tcl_AppendResult(interp, "ljforcecap individual", (char *) NULL);
+      else {
+	Tcl_PrintDouble(interp, lj_force_cap, buffer);
+	Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
+      }
+      return TCL_OK;
     }
 
+    if (argc > 3) {
+      Tcl_AppendResult(interp, "inter ljforcecap takes at most 1 parameter", (char *) NULL);      
+      return TCL_ERROR;
+    }
+
+    if (!strncmp(argv[2], "individual", strlen(argv[2])))
+      lj_force_cap = -1.0;
+    else if (Tcl_GetDouble(interp, argv[2], &lj_force_cap) == TCL_ERROR || lj_force_cap < 0) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
+		       (char *) NULL);
+      return (TCL_ERROR);  
+    }
+
+    if (lj_force_cap != -1.0)
+      mpi_lj_cap_forces(lj_force_cap);
+    return (TCL_OK);
+  }
+
+  if(!strncmp(argv[1], "coulomb", strlen(argv[1]))) {
     /* print coulomb interaction parameters */
     if(argc < 3) {
       Tcl_AppendResult(interp, "{", (char *)NULL);
@@ -424,8 +463,6 @@ int inter(ClientData _data, Tcl_Interp *interp,
       return (TCL_ERROR);
     }
 
-    
-
     /* check method */
     if(!strncmp(argv[0], "p3m", strlen(argv[0])) || 
        !strncmp(argv[0], "P3M", strlen(argv[0])) ) {
@@ -434,14 +471,14 @@ int inter(ClientData _data, Tcl_Interp *interp,
       
       coulomb.method = COULOMB_P3M;
       p3m.bjerrum    = coulomb.bjerrum;
-
+      
 #ifdef PARTIAL_PERIODIC
       if(periodic[0]==0 || periodic[1]==0 || periodic[2]==0) {
 	Tcl_AppendResult(interp, "Need periodicity (1,1,1) with Coulomb P3M", (char *) NULL);
 	return (TCL_ERROR);  
       }
 #endif
-
+      
       if(Tcl_GetDouble(interp, argv[0], &(p3m.r_cut)) == TCL_ERROR) {
 	/* must be tune, tune parameters */
 	if(strncmp(argv[0], "tune", strlen(argv[0]))) {
@@ -451,7 +488,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "Automatic p3m tuning not implemented.",(char *) NULL);
 	return (TCL_ERROR);  
       }
-
+      
       /* parse p3m parameters */
       if(argc<3) {
 	Tcl_AppendResult(interp, "p3m needs at least 3 parameters: <r_cut> <mesh> <cao> [alpha] [accuracy]",(char *) NULL);
@@ -523,6 +560,12 @@ int inter(ClientData _data, Tcl_Interp *interp,
     return (TCL_OK);
   }
 
+  if (Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "don't know about \"",argv[1],"\"",(char *) NULL);
+    return (TCL_ERROR);
+  }
+  
   /* if second argument is not an integer -> bonded interaction.  */
   if (argc==2 || Tcl_GetInt(interp, argv[2], &j) == TCL_ERROR) {
     Tcl_ResetResult(interp);
@@ -696,6 +739,8 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	/* broadcast interaction parameters */
 	mpi_bcast_ia_params(i, j);
 	mpi_bcast_ia_params(j, i);
+	if (lj_force_cap != -1.0)
+	  mpi_lj_cap_forces(lj_force_cap);
       }
       else if (!strncmp(argv[0], "ramp", strlen(argv[0]))) {
 	/* set new ramp interaction type */
@@ -727,16 +772,6 @@ int inter(ClientData _data, Tcl_Interp *interp,
     }
   }
   return (TCL_OK);
-}
-
-int lj_force_cap_callback(Tcl_Interp *interp, void *data)
-{
-  lj_force_cap = *(double *)data;
-
-  mpi_bcast_parameter(FIELD_LJFORCECAP);
-  mpi_bcast_event(INTERACTION_CHANGED);
-  calc_lj_cap_radii(lj_force_cap);  /* this is usually done by force_init() in on_integration_start(),                 */
-  return (TCL_OK);                  /* but we have to do it now to prevent wrong output by '[inter i j lennard-jones]' */
 }
 
 #ifdef CONSTRAINTS

@@ -220,9 +220,6 @@ int constraint(ClientData _data, Tcl_Interp *interp,
 /** Callback for setmd niatypes. */
 int niatypes_callback(Tcl_Interp *interp, void *data);
 
-/** Callback for setmd lj_force_cap. */
-int lj_force_cap_callback(Tcl_Interp *interp, void *data);
-
 /** get interaction particles between particle sorts i and j */
 MDINLINE IA_parameters *get_ia_param(int i, int j) {
   extern IA_parameters *ia_params;

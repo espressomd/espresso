@@ -67,44 +67,42 @@ extern const Datafield fields[];
 #define FIELD_CELLSIZE    2
 /** index of \ref friction_gamma in \ref #fields */
 #define FIELD_GAMMA       3
-/** index of \ref lj_force_cap in \ref #fields */
-#define FIELD_LJFORCECAP  4
 /** index of \ref local_box_l in \ref #fields */
-#define FIELD_LBOXL       5
+#define FIELD_LBOXL       4
 /** index of \ref max_cut in \ref #fields */
-#define FIELD_MCUT        6
+#define FIELD_MCUT        5
 /** index of \ref transfer_rate  in \ref #fields */
-#define FIELD_MAXNUMCELLS 7
+#define FIELD_MAXNUMCELLS 6
 /** index of \ref max_seen_particle in \ref #fields */
-#define FIELD_MAXPART     8
+#define FIELD_MAXPART     7
 /** index of \ref max_range in \ref #fields */
-#define FIELD_MAXRANGE    9
+#define FIELD_MAXRANGE    8
 /** index of \ref max_skin in  \ref #fields */
-#define FIELD_MAXSKIN     10
+#define FIELD_MAXSKIN     9
 /** index of \ref n_nodes in \ref #fields */
-#define FIELD_NNODES      11
+#define FIELD_NNODES      10
 /** index of \ref n_total_particles in  \ref #fields */
-#define FIELD_NPART       12
+#define FIELD_NPART       11
 /** index of \ref n_particle_types in \ref #fields */
-#define FIELD_NPARTTYPE   13
+#define FIELD_NPARTTYPE   12
 /** index of \ref node_grid in \ref #fields */
-#define FIELD_NODEGRID    14
+#define FIELD_NODEGRID    13
 /** index of \ref #periodic in \ref #fields */
-#define FIELD_PERIODIC    15
+#define FIELD_PERIODIC    14
 /** index of \ref #skin in \ref #fields */
-#define FIELD_SKIN        16
+#define FIELD_SKIN        15
 /** index of \ref #temperature in \ref #fields */
-#define FIELD_TEMPERATURE 17
+#define FIELD_TEMPERATURE 16
 /** index of \ref sim_time in  \ref #fields */
-#define FIELD_SIMTIME     18
+#define FIELD_SIMTIME     17
 /** index of \ref time_step in \ref #fields */
-#define FIELD_TIMESTEP    19
+#define FIELD_TIMESTEP    18
 /** index of \ref transfer_rate  in \ref #fields */
-#define FIELD_TRANSFERRATE 20
+#define FIELD_TRANSFERRATE 19
 /** index of \ref rebuild_verletlist in \ref #fields */
-#define FIELD_VERLETFLAG   21
+#define FIELD_VERLETFLAG   20
 /** index of \ref verlet_reuse in  \ref #fields */
-#define FIELD_VERLETREUSE  22
+#define FIELD_VERLETREUSE  21
 /*@}*/
 
 /**********************************************
