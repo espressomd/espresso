@@ -350,8 +350,8 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
       }
       bond[0] = type_FENE; bond[1] = part_id - 1;
       if (place_particle(part_id, pos)==TCL_ERROR) return (-3);
-      if (set_particle_q(part_id, ((1 % cM_dist==0) ? val_cM : 0.0) )==TCL_ERROR) return (-3);
-      if (set_particle_type(part_id, ((1 % cM_dist==0) ? type_cM : type_nM) )==TCL_ERROR) return (-3);
+      if (set_particle_q(part_id, ((n % cM_dist==0) ? val_cM : 0.0) )==TCL_ERROR) return (-3);
+      if (set_particle_type(part_id, ((n % cM_dist==0) ? type_cM : type_nM) )==TCL_ERROR) return (-3);
       if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3);
       part_id++; max_cnt=imax(cnt1, max_cnt);
       POLY_TRACE(printf("M"); fflush(NULL));
