@@ -42,7 +42,7 @@ proc write_data {file} {
     set pressure [analyze pressure total]
     blockfile $f write tclvariable {energy pressure}
     blockfile $f write variable box_l
-    blockfile $f write particles {id pos f}
+    blockfile $f write particles {id type pos f}
     close $f
 }
 
