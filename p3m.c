@@ -102,7 +102,9 @@ int p3m_sum_qpart=0;
 double p3m_sum_q2 = 0.0;
 /** square of sum of charges (only on master node). */
 double p3m_square_sum_q = 0.0;
-
+#ifdef DIPOLES
+double p3m_sum_mu2 = 0.0;
+#endif
 
 /** local mesh. */
 static local_mesh lm;
@@ -115,6 +117,11 @@ int    ca_mesh_size;
 double *rs_mesh = NULL;
 /** k space mesh (local) for k space calculation and FFT.*/
 double *ks_mesh = NULL;
+
+#ifdef DIPOLES
+/** real space mesh (local) for CA/FFT of the dipolar field.*/
+double *rs_mesh_dip[3] = {NULL,NULL,NULL};
+#endif
 
 /** Field to store grid points to send. */
 double *send_grid = NULL; 
@@ -134,6 +141,8 @@ double *meshift = NULL;
 double *d_op = NULL;
 /** Optimal influence function (k-space) */
 double *g = NULL;
+/** Optimal influence function (k-space) for energy*/
+double *g2 = NULL;
 
 /** number of charged particles on the node. */
 int ca_num=0;
@@ -189,14 +198,14 @@ void p3m_print_send_mesh(send_mesh sm);
  *  After the charge assignment Each node needs to gather the
  *  information for the FFT grid in his spatial domain.
  */
-void gather_fft_grid();
+void gather_fft_grid(double* mesh);
 
 /** Spread force grid.
  *  After the k-space calculations each node needs to get all force
  *  information to reassigne the forces from the grid to the
  *  particles.
  */
-void spread_force_grid();
+void spread_force_grid(double* mesh);
 
 /** realloc charge assignment fields. */
 void realloc_ca_fields(int newsize);
@@ -233,6 +242,8 @@ void calc_differential_operator();
  *  different convention for the prefactors, which is described in
  *  Deserno/Holm. */
 void calc_influence_function();
+/** Calculates the influence function optimized for the energy.  */
+void calc_influence_function2();
 
 /** Calculates the aliasing sums for the optimal influence function.
  *
@@ -245,6 +256,7 @@ void calc_influence_function();
  * \return denominator aliasing sum in the denominator
  */
 MDINLINE double perform_aliasing_sums(int n[3], double nominator[3]);
+MDINLINE double perform_aliasing_sums2(int n[3]);
 /*@}*/
 
 
@@ -824,6 +836,7 @@ void   P3M_init()
     }
  
     calc_local_ca_mesh();
+
     calc_send_mesh();
     P3M_TRACE(p3m_print_local_mesh(lm));
     /* DEBUG */
@@ -846,15 +859,19 @@ void   P3M_init()
     /* FFT */
     P3M_TRACE(fprintf(stderr,"%d: rs_mesh ADR=%p\n",this_node,rs_mesh));
     ca_mesh_size = fft_init(&rs_mesh,lm.dim,lm.margin,&ks_pnum);
-    /* rs_mesh = (double *) realloc(rs_mesh, ca_mesh_size*sizeof(double)); */
     ks_mesh = (double *) realloc(ks_mesh, ca_mesh_size*sizeof(double));
+    
+#ifdef DIPOLES
+    for (n=0;n<3;n++)   
+       rs_mesh_dip[n] = (double *) realloc(rs_mesh_dip[n], ca_mesh_size*sizeof(double));
+#endif
 
     P3M_TRACE(fprintf(stderr,"%d: rs_mesh ADR=%p\n",this_node,rs_mesh));
  
     /* k-space part: */
     calc_differential_operator();
     calc_influence_function();
-
+    calc_influence_function2();
 
     P3M_count_charged_particles();
 
@@ -959,6 +976,10 @@ static void P3M_charge_assign()
   Particle *p;
   int i,c,np,d,i0,i1,i2;
   double q;
+#ifdef DIPOLES
+  double mu;
+#endif
+
   /* position of a particle in local mesh units */
   double pos;
   /* index of first assignment mesh point; argument for interpolated caf */
@@ -977,7 +998,15 @@ static void P3M_charge_assign()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-      if( (q=p[i].p.q) != 0.0 ) {
+      q=p[i].p.q;
+#ifdef DIPOLES
+      mu = p[i].r.quat[0]; 		//dipole moment of i^th particle
+#endif
+      if( q != 0.0
+#ifdef DIPOLES
+      || mu != 0.0
+#endif      
+       ) {
 	/* particle position in mesh coordinates */
 	for(d=0;d<3;d++) {
 	  pos    = ((p[i].r.p[d]-lm.ld_pos[d])*p3m.ai[d]) - pos_shift;
@@ -1003,11 +1032,23 @@ static void P3M_charge_assign()
 	ca_fmp[cp_cnt] = q_ind;
 	
 	for(i0=0; i0<p3m.cao; i0++) {
-	  tmp0 = q * int_caf[i0][arg[0]];
+	  tmp0 = int_caf[i0][arg[0]];
 	  for(i1=0; i1<p3m.cao; i1++) {
 	    tmp1 = tmp0 * int_caf[i1][arg[1]];
 	    for(i2=0; i2<p3m.cao; i2++) {
-	      rs_mesh[q_ind++] += (ca_frac[cf_cnt] = tmp1 * int_caf[i2][arg[2]]);
+#ifdef DIPOLES
+	      ca_frac[cf_cnt]  = tmp1 * int_caf[i2][arg[2]];
+	      if (q  != 0.0) rs_mesh[q_ind] += q * ca_frac[cf_cnt];
+	      if (mu != 0.0) {
+		  rs_mesh_dip[0][q_ind] += p[i].r.quat[1] * ca_frac[cf_cnt];
+		  rs_mesh_dip[1][q_ind] += p[i].r.quat[2] * ca_frac[cf_cnt];
+		  rs_mesh_dip[2][q_ind] += p[i].r.quat[3] * ca_frac[cf_cnt];
+	      }
+#else
+//In the case without dipoles, ca_frac[] contains an additionnal factor q!
+	      rs_mesh[q_ind] += (ca_frac[cf_cnt] = q * tmp1 * int_caf[i2][arg[2]]);
+#endif
+	      q_ind++;
 	      cf_cnt++;
 	    }
 	    q_ind += q_m_off;
@@ -1047,7 +1088,11 @@ static void P3M_assign_forces(double force_prefac, int d_rs)
 	for(i0=0; i0<p3m.cao; i0++) {
 	  for(i1=0; i1<p3m.cao; i1++) {
 	    for(i2=0; i2<p3m.cao; i2++) {
+#ifdef DIPOLES
+	      p[i].f.f[d_rs] -= force_prefac*q*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
+#else
 	      p[i].f.f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
+#endif
 	      cf_cnt++;
 	    }
 	    q_ind += q_m_off;
@@ -1062,6 +1107,109 @@ static void P3M_assign_forces(double force_prefac, int d_rs)
   }
 }
 
+#ifdef DIPOLES
+/* assign the torques obtained from k-space */
+static void P3M_assign_torques(double prefac, int d_rs)
+{
+  Cell *cell;
+  Particle *p;
+  int i,c,np,i0,i1,i2;
+  /* particle counter, charge fraction counter */
+  int cp_cnt=0, cf_cnt=0;
+  /* index, index jumps for rs_mesh array */
+  int q_ind;
+  int q_m_off = (lm.dim[2] - p3m.cao);
+  int q_s_off = lm.dim[2] * (lm.dim[1] - p3m.cao);
+
+  cp_cnt=0; cf_cnt=0;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i=0; i<np; i++) { 
+      if( (p[i].r.quat[0]) != 0.0 ) {  //quat[0] contains the norm of the dipole moment!
+	q_ind = ca_fmp[cp_cnt];
+	for(i0=0; i0<p3m.cao; i0++) {
+	  for(i1=0; i1<p3m.cao; i1++) {
+	    for(i2=0; i2<p3m.cao; i2++) {
+/*
+The following line would fill the torque with the k-space electric field
+(without the self-field term) [notice the minus sign!]:		  
+		    p[i].f.torque[d_rs] -= prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];;
+Since the torque is the dipole moment cross-product with E, we have:	
+*/
+              switch (d_rs) {
+		case 0:	//E_x
+		  p[i].f.torque[1] -= p[i].r.quat[3]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+		  p[i].f.torque[2] += p[i].r.quat[2]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+		  break;
+		case 1:	//E_y
+		  p[i].f.torque[0] += p[i].r.quat[3]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+		  p[i].f.torque[2] -= p[i].r.quat[1]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+		  break;
+		case 2:	//E_z
+		  p[i].f.torque[0] -= p[i].r.quat[2]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+		  p[i].f.torque[1] += p[i].r.quat[1]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+	      }
+	      q_ind++; 
+	      cf_cnt++;
+	    }
+	    q_ind += q_m_off;
+	  }
+	  q_ind += q_s_off;
+	}
+	cp_cnt++;
+
+	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],d_rs,-db_fsum));
+      }
+    }
+  }
+}
+
+/* assign the dipolar forces obtained from k-space */
+static void P3M_assign_forces_dip(double prefac, int d_rs)
+{
+  Cell *cell;
+  Particle *p;
+  int i,c,np,i0,i1,i2;
+  /* particle counter, charge fraction counter */
+  int cp_cnt=0, cf_cnt=0;
+  /* index, index jumps for rs_mesh array */
+  int q_ind;
+  int q_m_off = (lm.dim[2] - p3m.cao);
+  int q_s_off = lm.dim[2] * (lm.dim[1] - p3m.cao);
+
+  cp_cnt=0; cf_cnt=0;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i=0; i<np; i++) { 
+      if( (p[i].r.quat[0]) != 0.0 ) {  //quat[0] contains the norm of the dipole moment!
+	q_ind = ca_fmp[cp_cnt];
+	for(i0=0; i0<p3m.cao; i0++) {
+	  for(i1=0; i1<p3m.cao; i1++) {
+	    for(i2=0; i2<p3m.cao; i2++) {
+	      p[i].f.f[d_rs] += prefac*ca_frac[cf_cnt]*
+	                          (rs_mesh_dip[0][q_ind]*p[i].r.quat[1]
+		                  +rs_mesh_dip[1][q_ind]*p[i].r.quat[2]
+				  +rs_mesh_dip[2][q_ind]*p[i].r.quat[3]);
+	      q_ind++; 
+	      cf_cnt++;
+	    }
+	    q_ind += q_m_off;
+	  }
+	  q_ind += q_s_off;
+	}
+	cp_cnt++;
+
+	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],d_rs,-db_fsum));
+      }
+    }
+  }
+}
+#endif
+
 double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 {
   int i,n,d,d_rs,ind,j[3];
@@ -1070,29 +1218,58 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
   double force_prefac;
   /* k space energy */
   double k_space_energy=0.0, node_k_space_energy=0.0;
+#ifdef DIPOLES
+  double dipole_prefac;
+  double k_space_energy_dip=0.0, node_k_space_energy_dip=0.0;
+  double tmp0,tmp1;
+#endif
 
   P3M_TRACE(fprintf(stderr,"%d: p3m_perform: \n",this_node));
 
   /* prepare local FFT mesh */
-  for(n=0; n<lm.size; n++) rs_mesh[n] = 0.0;
+  if (p3m_sum_q2 > 0)
+    for(n=0; n<lm.size; n++) rs_mesh[n] = 0.0;
+#ifdef DIPOLES
+  for(i=0;i<3;i++)
+     for(n=0; n<lm.size; n++) rs_mesh_dip[i][n] = 0.0;
+#endif
 
   /* === charge assignment === */
   force_prefac = coulomb.prefactor / (double)(p3m.mesh[0]*p3m.mesh[1]*p3m.mesh[2]);
+#ifdef DIPOLES
+  dipole_prefac = coulomb.prefactor / (double)(p3m.mesh[0]*p3m.mesh[1]*p3m.mesh[2]);
+  //TO DO: replace coulomb.prefactor by something more appropriate !!!!!
+#endif
   P3M_charge_assign();
 
   /* Gather information for FFT grid inside the nodes domain (inner local mesh) */
-  gather_fft_grid();
-
-  /* === Perform forward 3D FFT (Charge Assignment Mesh) === */
-  fft_perform_forw(rs_mesh);
+  /* and Perform forward 3D FFT (Charge Assignment Mesh). */
+  if (p3m_sum_q2 > 0) {
+    gather_fft_grid(rs_mesh);
+    fft_perform_forw(rs_mesh);
+  }
+#ifdef DIPOLES
+  gather_fft_grid(rs_mesh_dip[0]);
+  gather_fft_grid(rs_mesh_dip[1]);
+  gather_fft_grid(rs_mesh_dip[2]);
+  fft_perform_forw(rs_mesh_dip[0]);
+  fft_perform_forw(rs_mesh_dip[1]);
+  fft_perform_forw(rs_mesh_dip[2]);
+#endif
+//Note: after these calls, the grids are in the order yzx and not xyz anymore!!!
 
   /* === K Space Calculations === */
   P3M_TRACE(fprintf(stderr,"%d: p3m_perform: k-Space\n",this_node));
 
   /* === K Space Energy Calculation  === */
   if(energy_flag) {
+/*********************
+   Coulomb energy
+**********************/
+   if (p3m_sum_q2 > 0) {
     ind = 0;
     for(i=0; i<fft_plan[3].new_size; i++) {
+      //Use green function g2 optimized for energy!
       node_k_space_energy += g[i] * ( SQR(rs_mesh[ind]) + SQR(rs_mesh[ind+1]) );
       ind += 2;
     }
@@ -1106,10 +1283,53 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
       /* net charge correction */
       k_space_energy -= coulomb.prefactor*(p3m_square_sum_q*PI / (2.0*box_l[0]*SQR(p3m.alpha_L)));
     }
-  }
+   }
+
+#ifdef DIPOLES
+/*********************
+   Dipolar energy
+**********************/
+if (p3m_sum_q2 > 0) {
+   printf("Warning: Charges are present, but are not supported by the current implementation of P3M-dipoles.\n");
+}
+    /* i*k differentiation for dipolar gradients: |(\Fourier{\vect{mu}}(k)\cdot \vect{k})|^2 */
+    ind=0;
+    i=0;
+    for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {
+      for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
+	for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {	 
+	  node_k_space_energy_dip += g2[i] * (
+	  SQR(rs_mesh_dip[0][ind]*d_op[j[2]+fft_plan[3].start[0]]+
+	      rs_mesh_dip[1][ind]*d_op[j[0]+fft_plan[3].start[1]]+
+	      rs_mesh_dip[2][ind]*d_op[j[1]+fft_plan[3].start[2]]
+	  ) +
+	  SQR(rs_mesh_dip[0][ind+1]*d_op[j[2]+fft_plan[3].start[0]]+
+	      rs_mesh_dip[1][ind+1]*d_op[j[0]+fft_plan[3].start[1]]+
+	      rs_mesh_dip[2][ind+1]*d_op[j[1]+fft_plan[3].start[2]]
+	      ));
+	  ind += 2;
+	  i++;
+	}
+      }
+    }
+    node_k_space_energy_dip *= dipole_prefac * PI / box_l[0];
+    MPI_Reduce(&node_k_space_energy_dip, &k_space_energy_dip, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);   
+    if(this_node==0) {
+      /* self energy correction */
+      k_space_energy_dip -= coulomb.prefactor*(p3m_sum_mu2*2*pow(p3m.alpha_L*box_l_i[0],3) * wupii/3.0);
+    }
+//Modify above 'coulomb.prefactor' by something more appropriate!
+fprintf(stderr,"k-space dipolar energy: %8.6f\n",k_space_energy_dip);
+fprintf(stderr,"   (with self-energy correction)\n");
+#endif
+  } //if (energy_flag)
 
   /* === K Space Force Calculation  === */
   if(force_flag) {
+ /***************************
+    COULOMB FORCES (k-space)
+****************************/ 
+    if (p3m_sum_q2 > 0) {
     /* Force preparation */
     ind = 0;
     for(i=0; i<fft_plan[3].new_size; i++) {
@@ -1137,18 +1357,145 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
       /* Back FFT force componenet mesh */
       fft_perform_back(rs_mesh);
       /* redistribute force componenet mesh */
-      spread_force_grid();
+      spread_force_grid(rs_mesh);
       /* Assign force component from mesh to particle */
       P3M_assign_forces(force_prefac, d_rs);
     }
-  }
+   }  // if(p3m_sum_q2>0)
 
-  if (p3m.epsilon != P3M_EPSILON_METALLIC)
+#ifdef DIPOLES
+/***************************
+   DIPOLAR TORQUES (k-space)
+****************************/
+
+    /* fill in ks_mesh array for torque calculation */
+    ind=0;
+    i=0;
+    for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {	     //j[0]=n_y
+      for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {    //j[1]=n_z
+	for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
+	  //tmp0 = Re(mu)*k,   tmp1 = Im(mu)*k
+	  tmp0 = rs_mesh_dip[0][ind]*d_op[j[2]+fft_plan[3].start[0]]+
+		 rs_mesh_dip[1][ind]*d_op[j[0]+fft_plan[3].start[1]]+
+		 rs_mesh_dip[2][ind]*d_op[j[1]+fft_plan[3].start[2]];
+	  tmp1 = rs_mesh_dip[0][ind+1]*d_op[j[2]+fft_plan[3].start[0]]+
+		 rs_mesh_dip[1][ind+1]*d_op[j[0]+fft_plan[3].start[1]]+
+		 rs_mesh_dip[2][ind+1]*d_op[j[1]+fft_plan[3].start[2]];
+	  ks_mesh[ind]   = tmp0*g[i];
+	  ks_mesh[ind+1] = tmp1*g[i];
+	  ind += 2;
+	  i++;
+	}
+      }
+    }
+        
+    /* Force component loop */
+    for(d=0;d<3;d++) {
+      d_rs = (d+ks_pnum)%3;
+      ind=0;
+      for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {
+	for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
+	  for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {
+	    rs_mesh[ind] = d_op[ j[d]+fft_plan[3].start[d] ]*ks_mesh[ind]; ind++;
+	    rs_mesh[ind] = d_op[ j[d]+fft_plan[3].start[d] ]*ks_mesh[ind]; ind++;
+	  }
+	}
+      }
+
+      /* Back FFT force component mesh */
+      fft_perform_back(rs_mesh);
+      /* redistribute force component mesh */
+      spread_force_grid(rs_mesh);
+      /* Assign force component from mesh to particle */
+      P3M_assign_torques(2*dipole_prefac*(2*PI/box_l[0]), d_rs);
+/* IMPORTANT NOTE:
+   The factor of 2 in the above formula is here only because I'm using the quaternions
+   with quat[0]=1=norm of the dipole moment and (quat[1],quat[2],quat[2])=(mu_x,mu_y,mu_z).
+   When we call 'integrate 0' in the tcl script, the quaternions are normalized to 1.
+   The factor of 2 in the above formula compensates the factor 1/sqrt(2)
+   that gets introduced in the quaternions by the normalization!
+*/
+    }
+    
+/***************************
+   DIPOLAR FORCES (k-space)
+****************************/
+//Compute forces after torques because the algorithm below overwrites the grids rs_mesh_dip !
+//Note: I'll do here 9 inverse FFTs. By symmetry, we can reduce this number to 6 !
+    /* fill in ks_mesh array for force calculation */
+    ind=0;
+    i=0;
+    for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {	     //j[0]=n_y
+      for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {    //j[1]=n_z
+	for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
+	  //tmp0 = Im(mu)*k,   tmp1 = -Re(mu)*k
+	  tmp0 = rs_mesh_dip[0][ind+1]*d_op[j[2]+fft_plan[3].start[0]]+
+		 rs_mesh_dip[1][ind+1]*d_op[j[0]+fft_plan[3].start[1]]+
+		 rs_mesh_dip[2][ind+1]*d_op[j[1]+fft_plan[3].start[2]];
+	  tmp1 = rs_mesh_dip[0][ind]*d_op[j[2]+fft_plan[3].start[0]]+
+		 rs_mesh_dip[1][ind]*d_op[j[0]+fft_plan[3].start[1]]+
+		 rs_mesh_dip[2][ind]*d_op[j[1]+fft_plan[3].start[2]];
+	  ks_mesh[ind]   = tmp0*g[i];
+	  ks_mesh[ind+1] = -tmp1*g[i];
+	  ind += 2;
+	  i++;
+	}
+      }
+    }
+
+    /* Force component loop */
+    for(d=0;d<3;d++) {       /* direction in k space: */
+    d_rs = (d+ks_pnum)%3;
+    ind=0;
+    for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {	     //j[0]=n_y
+      for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {    //j[1]=n_z
+	for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
+	  tmp0 = d_op[ j[d]+fft_plan[3].start[d] ]*ks_mesh[ind];
+	  rs_mesh_dip[0][ind] = d_op[ j[2]+fft_plan[3].start[d] ]*tmp0;
+	  rs_mesh_dip[1][ind] = d_op[ j[0]+fft_plan[3].start[d] ]*tmp0;
+	  rs_mesh_dip[2][ind] = d_op[ j[1]+fft_plan[3].start[d] ]*tmp0;
+	  ind++;
+	  tmp0 = d_op[ j[d]+fft_plan[3].start[d] ]*ks_mesh[ind];
+	  rs_mesh_dip[0][ind] = d_op[ j[2]+fft_plan[3].start[d] ]*tmp0;
+	  rs_mesh_dip[1][ind] = d_op[ j[0]+fft_plan[3].start[d] ]*tmp0;
+	  rs_mesh_dip[2][ind] = d_op[ j[1]+fft_plan[3].start[d] ]*tmp0;
+	  ind++;
+	}
+      }
+    }
+
+      /* Back FFT force component mesh */
+      fft_perform_back(rs_mesh_dip[0]);
+      fft_perform_back(rs_mesh_dip[1]);
+      fft_perform_back(rs_mesh_dip[2]);
+      /* redistribute force component mesh */
+      spread_force_grid(rs_mesh_dip[0]);
+      spread_force_grid(rs_mesh_dip[1]);
+      spread_force_grid(rs_mesh_dip[2]);
+      /* Assign force component from mesh to particle */
+      P3M_assign_forces_dip(2*dipole_prefac*pow(2*PI/box_l[0],2), d_rs); 
+/* IMPORTANT NOTE:
+   The factor of 2 in the above formula is here only because I'm using the quaternions
+   with quat[0]=1=norm of the dipole moment and (quat[1],quat[2],quat[2])=(mu_x,mu_y,mu_z).
+   When we call 'integrate 0' in the tcl script, the quaternions are normalized to 1.
+   The factor of 2 in the above formula compensates the factor 1/sqrt(2)
+   that gets introduced in the quaternions by the normalization!
+*/
+   }
+#endif
+  } // if(force_flag)
+
+  if (p3m.epsilon != P3M_EPSILON_METALLIC) {
     k_space_energy -= calc_dipole_term(force_flag, energy_flag);
+#ifdef DIPOLES
+    printf("ERROR: using non-metallic boundary condition, but this is currently not supported for a system with dipoles.\n");
+#endif
+  }
 
   return k_space_energy;
 }
 
+//Note: this functin P3m_exit is actually never called !!!
 void   P3M_exit()
 {
   int i;
@@ -1160,6 +1507,10 @@ void   P3M_exit()
   free(rs_mesh);
   free(ks_mesh); 
   for(i=0; i<p3m.cao; i++) free(int_caf[i]);
+  
+#ifdef DIPOLES
+  for (i=0;i<3;i++) free(rs_mesh_dip[i]);
+#endif
 }
 
 /************************************************************/
@@ -1346,7 +1697,7 @@ void p3m_print_send_mesh(send_mesh sm)
   }
 }
 
-void gather_fft_grid()
+void gather_fft_grid(double* themesh)
 {
   int s_dir,r_dir,evenodd;
   MPI_Status status;
@@ -1360,7 +1711,8 @@ void gather_fft_grid()
     else           r_dir = s_dir-1;
     /* pack send block */ 
     if(sm.s_size[s_dir]>0) 
-      pack_block(rs_mesh, send_grid, sm.s_ld[s_dir], sm.s_dim[s_dir], lm.dim, 1);
+      pack_block(themesh, send_grid, sm.s_ld[s_dir], sm.s_dim[s_dir], lm.dim, 1);
+      
     /* communication */
     if(node_neighbors[s_dir] != this_node) {
       for(evenodd=0; evenodd<2;evenodd++) {
@@ -1383,12 +1735,12 @@ void gather_fft_grid()
     }
     /* add recv block */
     if(sm.r_size[r_dir]>0) {
-      add_block(recv_grid, rs_mesh, sm.r_ld[r_dir], sm.r_dim[r_dir], lm.dim); 
+      add_block(recv_grid, themesh, sm.r_ld[r_dir], sm.r_dim[r_dir], lm.dim); 
     }
   }
 }
 
-void spread_force_grid()
+void spread_force_grid(double* themesh)
 {
   int s_dir,r_dir,evenodd;
   MPI_Status status;
@@ -1401,7 +1753,7 @@ void spread_force_grid()
     else           r_dir = s_dir-1;
     /* pack send block */ 
     if(sm.s_size[s_dir]>0) 
-      pack_block(rs_mesh, send_grid, sm.r_ld[r_dir], sm.r_dim[r_dir], lm.dim, 1);
+      pack_block(themesh, send_grid, sm.r_ld[r_dir], sm.r_dim[r_dir], lm.dim, 1);
     /* communication */
     if(node_neighbors[r_dir] != this_node) {
       for(evenodd=0; evenodd<2;evenodd++) {
@@ -1424,7 +1776,7 @@ void spread_force_grid()
     }
     /* un pack recv block */
     if(sm.s_size[s_dir]>0) {
-      unpack_block(recv_grid, rs_mesh, sm.s_ld[s_dir], sm.s_dim[s_dir], lm.dim, 1); 
+      unpack_block(recv_grid, themesh, sm.s_ld[s_dir], sm.s_dim[s_dir], lm.dim, 1); 
     }
   }
 }
@@ -1515,6 +1867,7 @@ void calc_influence_function()
     for(n[1]=fft_plan[3].start[1]; n[1]<end[1]; n[1]++) 
       for(n[2]=fft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
 	ind = (n[2]-fft_plan[3].start[2]) + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1]) + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
+
 	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
 	  g[ind] = 0.0;
 	else if( (n[0]%(p3m.mesh[0]/2)==0) && 
@@ -1564,6 +1917,71 @@ MDINLINE double perform_aliasing_sums(int n[3], double nominator[3])
     }
   }
   return denominator;
+}
+
+void calc_influence_function2()
+{
+  int i,n[3],ind;
+  int end[3];
+  int size=1;
+  double fak1;
+
+  calc_meshift();
+
+  for(i=0;i<3;i++) {
+    size *= fft_plan[3].new_mesh[i];
+    end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
+  }
+  g2 = (double *) realloc(g2, size*sizeof(double));
+
+  fak1  = p3m.mesh[0]*p3m.mesh[0]*p3m.mesh[0]*2.0/(box_l[0]*box_l[0]);
+
+  for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++) 
+    for(n[1]=fft_plan[3].start[1]; n[1]<end[1]; n[1]++) 
+      for(n[2]=fft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
+	ind = (n[2]-fft_plan[3].start[2]) + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1]) + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
+	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
+	  g2[ind] = 0.0;
+	else if( (n[0]%(p3m.mesh[0]/2)==0) && 
+		 (n[1]%(p3m.mesh[0]/2)==0) && 
+		 (n[2]%(p3m.mesh[0]/2)==0) )
+	  g2[ind] = 0.0;
+	else {
+	  g2[ind] = fak1*perform_aliasing_sums2(n);
+	}
+      }
+}
+
+MDINLINE double perform_aliasing_sums2(int n[3])
+{
+  double nominator=0.0,denominator=0.0;
+  /* lots of temporary variables... */
+  double sx,sy,sz,f1,f2,f3,mx,my,mz,nmx,nmy,nmz,nm2,expo;
+  double limit = 30;
+
+  f1 = 1.0/(double)p3m.mesh[0];
+  f2 = SQR(PI/(p3m.alpha_L));
+
+  for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
+    nmx = meshift[n[0]] + p3m.mesh[0]*mx;
+    sx  = pow(sinc(f1*nmx),2.0*p3m.cao);
+    for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
+      nmy = meshift[n[1]] + p3m.mesh[0]*my;
+      sy  = sx*pow(sinc(f1*nmy),2.0*p3m.cao);
+      for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
+	nmz = meshift[n[2]] + p3m.mesh[0]*mz;
+	sz  = sy*pow(sinc(f1*nmz),2.0*p3m.cao);
+	
+	nm2          =  SQR(nmx)+SQR(nmy)+SQR(nmz);
+	expo         =  f2*nm2;
+	f3           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
+
+	nominator += f3; 
+	denominator  += sz;
+      }
+    }
+  }
+  return nominator/SQR(denominator);
 }
 
 /************************************************
@@ -2134,9 +2552,18 @@ void P3M_count_charged_particles()
   Cell *cell;
   Particle *part;
   int i,c,np;
+#ifdef DIPOLES
+  double node_sums[4], tot_sums[4];
+#else
   double node_sums[3], tot_sums[3];
+#endif
 
-  for(i=0;i<3;i++) { node_sums[i]=0.0; tot_sums[i]=0.0;}
+#ifdef DIPOLES
+  for(i=0;i<4;i++)
+#else
+  for(i=0;i<3;i++)
+#endif
+    { node_sums[i]=0.0; tot_sums[i]=0.0;}
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -2148,16 +2575,29 @@ void P3M_count_charged_particles()
 	node_sums[1] += SQR(part[i].p.q);
 	node_sums[2] += part[i].p.q;
       }
+#ifdef DIPOLES
+//Note: quat[0] contains the norm of the dipole moment
+//and quat[1],quat[2],quat[3] are the xyz components !
+      if( part[i].r.quat[0] != 0.0 ) {
+	node_sums[3] += SQR(part[i].r.quat[1])
+	               +SQR(part[i].r.quat[2])
+		       +SQR(part[i].r.quat[3]);
+      }
+#endif
     }
   }
   
-  MPI_Reduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-  if(this_node==0) {
-    p3m_sum_qpart    = (int)(tot_sums[0]+0.1);
-    p3m_sum_q2       = tot_sums[1];
-    p3m_square_sum_q = SQR(tot_sums[2]);
-  }
+#ifdef DIPOLES
+  MPI_Allreduce(node_sums, tot_sums, 4, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+#else
+  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+#endif
+  p3m_sum_qpart    = (int)(tot_sums[0]+0.1);
+  p3m_sum_q2       = tot_sums[1];
+  p3m_square_sum_q = SQR(tot_sums[2]);
+#ifdef DIPOLES
+  p3m_sum_mu2 = tot_sums[3];
+#endif
 }
 
 

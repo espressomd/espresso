@@ -268,6 +268,7 @@ void convert_torqes_propagate_omega()
 /** convert the toques to the body-fixed frames before the integration loop */
 void convert_initial_torques()
 {
+#ifndef DIPOLES
   Particle *p;
   Cell *cell;
   int c,i, np;
@@ -291,5 +292,10 @@ tz = A[2][0]*p[i].f.torque[0] + A[2][1]*p[i].f.torque[1] + A[2][2]*p[i].f.torque
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));      
     }
   }  
+#else
+printf("Important note:\n");
+printf("  The function convert_initial_torques has been deactivated\n");
+printf("  for outputting the torques calculated by p3m!\n\n");
+#endif
 }
 #endif

@@ -383,6 +383,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
     }
     if(fft_init_tag==1) fftw_destroy_plan(fft_plan[i].fft_plan);
 #ifdef USEFFTW3
+//printf("fft_plan[%d].n_ffts=%d\n",i,fft_plan[i].n_ffts);
     fft_plan[i].fft_plan =
       fftw_plan_many_dft(1,&fft_plan[i].new_mesh[2],fft_plan[i].n_ffts,
                          c_data,NULL,1,fft_plan[i].new_mesh[2],
@@ -544,6 +545,14 @@ void fft_perform_forw(double *data)
 void fft_perform_back(double *data)
 {
   int i;
+  
+//The next 4 lines were added by Vincent:
+
+#ifndef USEFFTW3  
+  c_data     = (fftw_complex *) data;
+  c_data_buf = (fftw_complex *) data_buf;
+#endif
+  
   /* ===== third direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 3:\n",this_node));
 
@@ -582,9 +591,14 @@ void fft_perform_back(double *data)
   			   c_data, 1, fft_plan[1].new_mesh[2],
   			   c_data_buf, 1, fft_plan[1].new_mesh[2]);
 #endif
-  /* through away the (hopefully) empty complex component (in is data)*/
+  /* throw away the (hopefully) empty complex component (in is data)*/
   for(i=0;i<fft_plan[1].new_size;i++) {
     data_buf[i] = data[2*i]; /* real value */
+//Vincent:
+if (data[2*i+1]>1e-5) {
+printf("Complex value is not zero (i=%d,data=%g)!!!\n",i,data[2*i+1]);
+if (i>100) exit(-1);
+}
   }
   /* communicate (in is data_buf) */
   back_grid_comm(fft_plan[1],fft_back[1],data_buf,data);

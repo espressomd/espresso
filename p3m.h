@@ -193,6 +193,7 @@ MDINLINE double add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
   double fac1,fac2, adist, erfc_part_ri;
 
   if(dist < p3m.r_cut) {
+  if(dist > 0){		//Vincent
     adist = p3m.alpha * dist;
     erfc_part_ri = AS_erfc_part(adist) / dist;
     fac1 = coulomb.prefactor * p1->p.q * p2->p.q  * exp(-adist*adist);
@@ -207,7 +208,7 @@ MDINLINE double add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
 #ifdef NPT
     return fac1 * erfc_part_ri;
 #endif
-  }
+  }}
   return 0.0;
 }
 
@@ -224,6 +225,57 @@ MDINLINE double p3m_coulomb_pair_energy(Particle *p1, Particle *p2,
   }
   return 0.0;
 }
+
+#ifdef DIPOLES
+/** Calculate real space contribution of dipolar pair energy. */
+MDINLINE double p3m_dipol_pair_energy(Particle *p1, Particle *p2,
+				     double *d,double dist2,double dist)
+{
+  double adist,adist2;
+  double mu1_dot_mu2;
+  double rij[3];
+  double mu1_dot_rij;
+  double mu2_dot_rij;
+  int	i;
+  double B,C;
+  double erfc_ar;
+  double dist3 = dist*dist2;
+  
+
+
+  if(dist < p3m.r_cut) {
+
+    //Dot product between mu1 and mu2:
+    //Note: the 3 last components of the quaternions contains
+    //the dipole moment vector.
+    mu1_dot_mu2 = p1->r.quat[1]*p2->r.quat[1]
+        	 +p1->r.quat[2]*p2->r.quat[2]
+		 +p1->r.quat[3]*p2->r.quat[3];
+
+    //Relative vector position:
+    for (i=0;i<3;i++)
+       rij[i] = p2->r.p[i] - p1->r.p[i];
+
+    mu1_dot_rij =  p1->r.quat[1]*rij[0]
+        	 + p1->r.quat[2]*rij[1]
+		 + p1->r.quat[3]*rij[2];
+
+    mu2_dot_rij =  p2->r.quat[1]*rij[0]
+        	 + p2->r.quat[2]*rij[1]
+		 + p2->r.quat[3]*rij[2];
+
+    adist = p3m.alpha * dist;
+    adist2 = SQR(adist);
+    erfc_ar = AS_erfc_part(adist)*exp(-adist2);
+    B = erfc_ar/dist3 + exp(-adist2)*2*p3m.alpha/(dist2*wupi);
+    C = (3*erfc_ar + (2*p3m.alpha*dist*wupii)*(3+2*SQR(p3m.alpha*dist))*exp(-adist2))
+        /(dist3*dist2);
+    return coulomb.prefactor*(p1->r.quat[0]*p2->r.quat[0])*
+              (mu1_dot_mu2*B - mu1_dot_rij*mu2_dot_rij*C);
+  }
+  return 0.0;
+}
+#endif
 
 /** Clean up P3M memory allocations. */
 void   P3M_exit();
