@@ -101,9 +101,9 @@ extern Observable_stat p_tensor;
 /************************************************************/
 /*@{*/
 
-/** Callback for setting \ref piston */
+/** Callback for setting \ref nptiso_struct::piston */
 int piston_callback(Tcl_Interp *interp, void *_data);
-/** Callback for setting \ref p_ext */
+/** Callback for setting \ref nptiso_struct::p_ext */
 int p_ext_callback(Tcl_Interp *interp, void *_data);
 
 /** Calculates the pressure in the system from a virial expansion using the terms from \ref calculate_verlet_virials or \ref nsq_calculate_virials dependeing on the used cell system.<BR>
@@ -136,7 +136,9 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
     p1->f.f[i] = 0;
     F2[i] = p2->f.f[i];
     p2->f.f[i] = 0;
+#ifdef NPT
     p_vir[i] = nptiso.p_vir[i];
+#endif
   }
 
   /* lennard jones */
@@ -186,7 +188,9 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   for (i = 0; i < 3; i++) {
     p1->f.f[i] = F1[i];
     p2->f.f[i] = F2[i];
+#ifdef NPT
     nptiso.p_vir[i] = p_vir[i];
+#endif
   }
 }
 
@@ -201,9 +205,11 @@ MDINLINE void add_bonded_virials(Particle *p1)
   double ret, F1[3], F2[3], F3[3], p_vir[3], d[3];
   Particle *p2, *p3;
 
-  for (i = 0; i < 3; i++) {
-    F1[i] = p1->f.f[i];
-    p_vir[i] = nptiso.p_vir[i];
+  for (j = 0; j < 3; j++) {
+    F1[j] = p1->f.f[j];
+#ifdef NPT
+    p_vir[j] = nptiso.p_vir[j];
+#endif
   }
   
   i=0;
@@ -274,7 +280,9 @@ MDINLINE void add_bonded_virials(Particle *p1)
   
   for (j = 0; j < 3; j++) {
     p1->f.f[j] = F1[j];
-    nptiso.p_vir[i] = p_vir[i];
+#ifdef NPT
+    nptiso.p_vir[j] = p_vir[j];
+#endif
   }
 }
 
