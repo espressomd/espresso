@@ -6,7 +6,7 @@ interface between the Tcl script and the MD code:
 
 <ul>
   <li><b>Tools for creating a physical system:</b><ul>
-    <li>\verbatim part <particle_number> ( pos|type|q|v|f|[un]fix|ext_force|bond| [delete] <value>+ )* \endverbatim
+    <li>\verbatim part <particle_number> ( pos|type|q|v|f|quat|omega|torque|[un]fix <x> <y> <z> |ext_force|bond| [delete] <value>+ )* \endverbatim
 	modifies particle data.
 	For more information, see \ref tcl_part.
  

@@ -1,5 +1,5 @@
 /** \page tcl_part The part command
-    	\verbatim part <particle_number> ( pos|type|q|v|f|quat|omega|torque|[un]fix|ext_force|bond| [delete] <value>+ )* \endverbatim
+    	\verbatim part <particle_number> ( pos|type|q|v|f|quat|omega|torque|[un]fix <x> <y> <z> |ext_force|bond| [delete] <value>+ )* \endverbatim
 	modifies particle data, namely position, type (monomer, ion, ...),
 		    charge, velocity, force and bonds. 
 	Multiple properties can be changed at once. If you add a new
@@ -22,8 +22,13 @@
 	<li> \verbatim omega <x value> <y value> <z value> \endverbatim
 	<li> \verbatim torque <x value> <y value> <z value> \endverbatim
 	Fixes the particle in space (Needs \ref EXTERNAL_FORCES in config.h \ref config.h).
-	<li> \verbatim fix \endverbatim
-	Fixes the particle in space (Needs \ref EXTERNAL_FORCES in \ref config.h config.h).
+	<li> \verbatim fix <x> <y> <z> \endverbatim
+	Fixes the particle in space. By supplying a set of 3 integers
+	as arguments it is possible to fix motion in \a x, \a y , or \a z coordinates
+	independently.  For example <tt> fix 0 0 1 </tt> will fix
+	motion only in z.  Note that <tt> fix </tt> without
+	arguments is equivalent to <tt> fix 1 1 1 </tt> (Needs
+	\ref EXTERNAL_FORCES in \ref config.h config.h).
         <li> \verbatim ext_force <x value> <y value> <z value> \endverbatim
 	An additional exxternal force is applied to the particle
 	(Needs \ref EXTERNAL_FORCES in \ref config.h config.h).
