@@ -610,8 +610,6 @@ int parse_chain_structure_info(Tcl_Interp *interp, int argc, char **argv)
       topology[m].part.e[i] = pc++;
   }
  
-  mpi_update_mol_ids();
- 
   return TCL_OK;
 }
 
