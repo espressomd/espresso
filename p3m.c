@@ -783,12 +783,12 @@ int P3M_sanity_checks_boxl() {
     /* check k-space cutoff */
     if(p3m.cao_cut[i] >= 0.5*box_l[i]) {
       errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
-      sprintf(errtxt,"{P3M_init: k-space cutoff %f is larger than half of box dimension %f} ",p3m.cao_cut[i],box_l[i]);
+      ERROR_SPRINTF(errtxt,"{039 P3M_init: k-space cutoff %f is larger than half of box dimension %f} ",p3m.cao_cut[i],box_l[i]);
       ret = 1;
     }
     if(p3m.cao_cut[i] >= local_box_l[i]) {
       errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
-      sprintf(errtxt,"{P3M_init: k-space cutoff %f is larger than local box dimension %f} ",p3m.cao_cut[i],local_box_l[i]);
+      ERROR_SPRINTF(errtxt,"{040 P3M_init: k-space cutoff %f is larger than local box dimension %f} ",p3m.cao_cut[i],local_box_l[i]);
       ret = 1;
     }
   }
@@ -802,25 +802,25 @@ int P3M_sanity_checks()
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
     errtxt = runtime_error(128);
-    sprintf(errtxt, "{P3M requires periodicity 1 1 1} ");
+    ERROR_SPRINTF(errtxt, "{041 P3M requires periodicity 1 1 1} ");
     ret = 1;
   }
   
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
     errtxt = runtime_error(128);
-    sprintf(errtxt, "{P3M at present requires the domain decomposition cell system} ");
+    ERROR_SPRINTF(errtxt, "{042 P3M at present requires the domain decomposition cell system} ");
     ret = 1;
   }
   
   if( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
     errtxt = runtime_error(128);
-    sprintf(errtxt,"{P3M requires a cubic box} ");
+    ERROR_SPRINTF(errtxt,"{043 P3M requires a cubic box} ");
     ret = 1;
   }
 
   if( (p3m.mesh[0] != p3m.mesh[1]) || (p3m.mesh[1] != p3m.mesh[2]) ) {
     errtxt = runtime_error(128);
-    sprintf(errtxt, "{P3M requires a cubic mesh} ");
+    ERROR_SPRINTF(errtxt, "{044 P3M requires a cubic mesh} ");
     ret = 1;
   }
 
@@ -828,17 +828,17 @@ int P3M_sanity_checks()
 
   if( p3m.mesh[0] == 0) {
     errtxt = runtime_error(128);
-    sprintf(errtxt,"{P3M_init: mesh size is not yet set} ");
+    ERROR_SPRINTF(errtxt,"{045 P3M_init: mesh size is not yet set} ");
     ret = 1;
   }
   if( p3m.cao == 0) {
     errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
-    sprintf(errtxt,"{P3M_init: cao is not yet set} ");
+    ERROR_SPRINTF(errtxt,"{046 P3M_init: cao is not yet set} ");
     ret = 1;
   }
   if (skin == -1) {
     errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
-    sprintf(errtxt,"{P3M_init: skin is not yet set} ");
+    ERROR_SPRINTF(errtxt,"{047 P3M_init: skin is not yet set} ");
     ret = 1;
   }
 

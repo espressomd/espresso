@@ -216,7 +216,7 @@ MDINLINE void add_bonded_virials(Particle *p1)
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
       errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-      sprintf(errtxt,"{bond broken between particles %d and %d (particles not stored on the same node)} ",
+      ERROR_SPRINTF(errtxt,"{088 bond broken between particles %d and %d (particles not stored on the same node)} ",
 	      p1->p.identity, p1->bl.e[i-1]);
       return;
     }

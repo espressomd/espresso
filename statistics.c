@@ -770,7 +770,7 @@ void analyze_activate(int ind) {
     pos[2] = configs[ind][3*i+2];
     if (place_particle(i, pos)==TCL_ERROR) {
       char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
-      sprintf(errtxt, "{failed upon replacing particle %d in Espresso} ", i); 
+      ERROR_SPRINTF(errtxt, "{057 failed upon replacing particle %d in Espresso} ", i); 
     }
   }
 }
@@ -850,7 +850,7 @@ static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
   updatePartCfg(WITH_BONDS);
   if (!sortPartCfg()) {
     char *errtxt = runtime_error(128);
-    sprintf(errtxt, "{could not sort partCfg, particles have to start at 0 and have consecutive identities} ");
+    ERROR_SPRINTF(errtxt, "{058 could not sort partCfg, particles have to start at 0 and have consecutive identities} ");
     return TCL_ERROR;
   }
   coord = malloc(n_total_particles*3*sizeof(float));

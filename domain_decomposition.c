@@ -137,7 +137,7 @@ void dd_create_cell_grid()
     }
     if (n_local_cells < min_num_cells) {
       char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
-      sprintf(error_msg, "{number of cells %d is smaller than minimum %d (interaction range too large or max_num_cells too small)} ",
+      ERROR_SPRINTF(error_msg, "{001 number of cells %d is smaller than minimum %d (interaction range too large or max_num_cells too small)} ",
 	      n_local_cells, min_num_cells);
     }
   }
@@ -146,7 +146,7 @@ void dd_create_cell_grid()
   for(i=0;i<3;i++)
     if( dd.cell_grid[i] < 1 ) {
       char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
-      sprintf(error_msg, "{interaction range %f in direction %d is larger than the local box size %f} ",
+      ERROR_SPRINTF(error_msg, "{002 interaction range %f in direction %d is larger than the local box size %f} ",
 	      max_range, i, local_box_l[i]);
       n_local_cells = dd.cell_grid[0] = dd.cell_grid[1] = dd.cell_grid[2]=1;
     }
@@ -154,7 +154,7 @@ void dd_create_cell_grid()
   /* quit program if unsuccesful */
   if(n_local_cells > max_num_cells) {
     char *error_msg = runtime_error(128);
-    sprintf(error_msg, "{no suitable cell grid found} ");
+    ERROR_SPRINTF(error_msg, "{003 no suitable cell grid found} ");
   }
 
   /* now set all dependent variables */
@@ -796,7 +796,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
     } else {
       if(finished == 0) {
 	char *errtext = runtime_error(128);
-	sprintf(errtext,"{some particles moved more than min_local_box_l, reduce the time step} ");
+	ERROR_SPRINTF(errtext,"{004 some particles moved more than min_local_box_l, reduce the time step} ");
 	/* the bad guys are all in cell 0, but probably their interactions are of no importance anyways.
 	   However, their positions have to be made valid again. */
 	finished = 1;
@@ -844,7 +844,7 @@ Cell *dd_position_to_cell(double pos[3])
 #ifdef ADDITIONAL_CHECKS
     if(cpos[i] < 1 || cpos[i] >  dd.cell_grid[i]) {
       char *errtext = runtime_error(128 + TCL_INTEGER_SPACE + 3*TCL_DOUBLE_SPACE);
-      sprintf(errtext, "{particle @ (%f, %f, %f) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
+      ERROR_SPRINTF(errtext, "{005 particle @ (%f, %f, %f) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
       cpos[i] = 1;
     }
 #endif

@@ -209,7 +209,7 @@ MDINLINE void fold_coordinate(double pos[3], int image_box[3], int dir)
 	/* slow but safe */
 	if (fabs(pos[dir]*box_l_i[dir]) >= INT_MAX/2) {
 	  char *errtext = runtime_error(128 + TCL_INTEGER_SPACE);
-	  sprintf(errtext,"{particle coordinate out of range, image box = %d} ", image_box[dir]);
+	  ERROR_SPRINTF(errtext,"{086 particle coordinate out of range, image box = %d} ", image_box[dir]);
 	  image_box[dir] = 0;
 	  pos[dir] = 0;
 	  return;

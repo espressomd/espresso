@@ -31,6 +31,8 @@ extern int n_error_msg;
    @return where to put the (null-terminated) string */
 char *runtime_error(int errlen);
 
+#define ERROR_SPRINTF sprintf
+
 /** check for runtime errors on all nodes. This has to be called on all nodes synchronously.
     @return the number of characters in the error messages of all nodes together. */
 int check_runtime_errors();

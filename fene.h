@@ -78,7 +78,7 @@ MDINLINE int fene_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *
 
   if(dist2 >= iaparams->p.fene.r2) {
     char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-    sprintf(errtext,"{bond broken between particles %d and %d} ", p1->p.identity, p2->p.identity); 
+    ERROR_SPRINTF(errtext,"{077 bond broken between particles %d and %d} ", p1->p.identity, p2->p.identity); 
     return 1;
   }
 

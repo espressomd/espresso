@@ -553,7 +553,7 @@ int do_nonbonded(Particle *p1, Particle *p2);
 MDINLINE void complain_on_particle(int id)
 {
   char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
-  sprintf(errtxt,"{bond broken (particle %d has a bond to particle not stored on this node)} ", id); 
+  ERROR_SPRINTF(errtxt,"{087 bond broken (particle %d has a bond to particle not stored on this node)} ", id); 
 }
 
 

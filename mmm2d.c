@@ -1111,8 +1111,8 @@ void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
 
 #ifdef ADDITIONAL_CHECKS
   if (d[2] >box_l[1]/2) {
-    char *errtxt = runtime_error(128);
-    sprintf(errtxt, "{particle %d is out of virtual box, cannot calculate near formula} ", p1->p.identity);
+    char *errtxt = runtime_error(128 + TCL_DOUBLE_SPACE);
+    ERROR_SPRINTF(errtxt, "{024 particle %d is out of virtual box, cannot calculate near formula} ", p1->p.identity);
     return;
   }
 #endif
@@ -1490,14 +1490,14 @@ int MMM2D_sanity_checks()
 
   if (!PERIODIC(0) || !PERIODIC(1) || PERIODIC(2)) {
     errtxt = runtime_error(128);
-    sprintf(errtxt, "{MMM2D requires periodicity 1 1 0} ");
+    ERROR_SPRINTF(errtxt, "{025 MMM2D requires periodicity 1 1 0} ");
     return 1;
   }
   
   if (cell_structure.type != CELL_STRUCTURE_LAYERED &&
       cell_structure.type != CELL_STRUCTURE_NSQUARE) {
     errtxt = runtime_error(128);
-    sprintf(errtxt, "{MMM2D at present requires layered (or n-square) cellsystem} ");
+    ERROR_SPRINTF(errtxt, "{026 MMM2D at present requires layered (or n-square) cellsystem} ");
     return 1;
   }
   return 0;
@@ -1513,7 +1513,7 @@ void MMM2D_init()
   MMM2D_setup_constants();
   if ((err = MMM2D_tune_near(mmm2d_params.maxPWerror))) {
     errtxt = runtime_error(128);
-    sprintf(errtxt, "{MMM2D auto-retuning: %s} ", mmm2d_errors[err]);
+    ERROR_SPRINTF(errtxt, "{027 MMM2D auto-retuning: %s} ", mmm2d_errors[err]);
     coulomb.method = COULOMB_NONE;
     return;
   }
@@ -1524,7 +1524,7 @@ void MMM2D_init()
     if (mmm2d_params.far_calculated) {
       if ((err = MMM2D_tune_far(mmm2d_params.maxPWerror))) {
 	errtxt = runtime_error(128);
-	sprintf(errtxt, "{MMM2D auto-retuning: %s} ", mmm2d_errors[err]);
+	ERROR_SPRINTF(errtxt, "{028 MMM2D auto-retuning: %s} ", mmm2d_errors[err]);
 	coulomb.method = COULOMB_NONE;
 	return;
       }

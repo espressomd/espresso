@@ -297,7 +297,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
 	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	  sprintf(errtxt, "{wall constraint %d violated by particle %d} ", n, p1->p.identity);
+	  ERROR_SPRINTF(errtxt, "{061 wall constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
       break;
@@ -310,7 +310,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
 	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	  sprintf(errtxt, "{sphere constraint %d violated by particle %d} ", n, p1->p.identity);
+	  ERROR_SPRINTF(errtxt, "{062 sphere constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
       break;
@@ -323,7 +323,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
 	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	  sprintf(errtxt, "{cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
+	  ERROR_SPRINTF(errtxt, "{063 cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
         }
       }
       break;
@@ -335,7 +335,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
       }
       else {
 	errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	sprintf(errtxt, "{maze constraint %d violated by particle %d} ", n, p1->p.identity);
+	ERROR_SPRINTF(errtxt, "{064 maze constraint %d violated by particle %d} ", n, p1->p.identity);
       }
       break;
 
@@ -378,7 +378,7 @@ MDINLINE double add_constraints_energy(Particle *p1)
 	  lj_en = lj_pair_energy(p1, &constraints[n].part_rep, ia_params, vec, dist);
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	  sprintf(errtxt, "{wall constraint %d violated by particle %d} ", n, p1->p.identity);
+	  ERROR_SPRINTF(errtxt, "{065 wall constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
       break;
@@ -391,7 +391,7 @@ MDINLINE double add_constraints_energy(Particle *p1)
 	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	  sprintf(errtxt, "{sphere constraint %d violated by particle %d} ", n, p1->p.identity);
+	  ERROR_SPRINTF(errtxt, "{066 sphere constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
       break;
@@ -404,7 +404,7 @@ MDINLINE double add_constraints_energy(Particle *p1)
 	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	  sprintf(errtxt, "{cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
+	  ERROR_SPRINTF(errtxt, "{067 cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
       break;
@@ -416,7 +416,7 @@ MDINLINE double add_constraints_energy(Particle *p1)
       }
       else {
 	errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	sprintf(errtxt, "{maze constraint %d violated by particle %d} ", n, p1->p.identity);
+	ERROR_SPRINTF(errtxt, "{068 maze constraint %d violated by particle %d} ", n, p1->p.identity);
       }
       break;
 

@@ -102,27 +102,27 @@ void on_integration_start()
 
   if ( time_step < 0.0 ) {
     errtext = runtime_error(128);
-    sprintf(errtext, "{time_step not set} ");
+    ERROR_SPRINTF(errtext, "{010 time_step not set} ");
   }
   if ( skin < 0.0 ) {
     errtext = runtime_error(128);
-    sprintf(errtext,"{skin not set} ");
+    ERROR_SPRINTF(errtext,"{011 skin not set} ");
   }
   if ( temperature < 0.0 ) {
     errtext = runtime_error(128);
-    sprintf(errtext,"{thermostat not initialized} ");
+    ERROR_SPRINTF(errtext,"{012 thermostat not initialized} ");
   }
 
   for (i = 0; i < 3; i++)
     if (local_box_l[i] < max_range) {
       errtext = runtime_error(128 + TCL_INTEGER_SPACE);
-      sprintf(errtext,"{box_l in direction %d is still too small} ", i);
+      ERROR_SPRINTF(errtext,"{013 box_l in direction %d is still too small} ", i);
     }
   
 #ifdef NPT
   if((integ_switch == INTEG_METHOD_NPT_ISO) && (nptiso.piston <= 0.0)) {
     char *errtext = runtime_error(128);
-    sprintf(errtext,"{npt on, but piston mass not set} ");
+    ERROR_SPRINTF(errtext,"{014 npt on, but piston mass not set} ");
   }
 #endif
 

@@ -610,7 +610,7 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
 
 	if (get_particle_data(p1.bl.e[i++], &p2) == TCL_ERROR) {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	  sprintf(errtxt,"{particle %d has a bond to the nonexisting particle %d} ",
+	  ERROR_SPRINTF(errtxt,"{050 particle %d has a bond to the nonexisting particle %d} ",
 		  p1.p.identity, p1.bl.e[i-1]);
 	  return 0;
 	}

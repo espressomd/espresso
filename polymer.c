@@ -55,7 +55,7 @@ int mindist3(int part_id, double r_catch, int *ids) {
   for(i=0; i<n_total_particles; i++) if (partCfgMD[i].p.identity == part_id) me = i; 
   if (me == -1) {
     char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
-    sprintf(errtxt, "{failed to find desired particle %d} ",part_id);
+    ERROR_SPRINTF(errtxt, "{049 failed to find desired particle %d} ",part_id);
     return 0;
   }
   for (i=0; i<n_total_particles; i++) {

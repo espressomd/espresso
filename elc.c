@@ -739,12 +739,12 @@ int ELC_sanity_checks()
   char *errtxt;
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
     errtxt = runtime_error(128);
-    sprintf(errtxt, "{ELC requires periodicity 1 1 1} ");
+    ERROR_SPRINTF(errtxt, "{006 ELC requires periodicity 1 1 1} ");
     return 1;
   }
   if (coulomb.method != COULOMB_P3M) {
     errtxt = runtime_error(128);
-    sprintf(errtxt, "{ELC supports only P3M so far} ");
+    ERROR_SPRINTF(errtxt, "{007 ELC supports only P3M so far} ");
     return 1;
   }
   return 0;
@@ -758,7 +758,7 @@ void ELC_init()
   if (elc_params.far_calculated) {
     if (ELC_tune(elc_params.maxPWerror) == TCL_ERROR) {
       errtxt = runtime_error(128);
-      sprintf(errtxt, "{ELC auto-retuning failed, gap size too small} ");
+      ERROR_SPRINTF(errtxt, "{008 ELC auto-retuning failed, gap size too small} ");
     }
   }
 }
@@ -798,7 +798,7 @@ int ELC_set_params(double maxPWerror, double minimal_dist, double far_cut)
     elc_params.far_calculated = 1;
     if (ELC_tune(elc_params.maxPWerror) == TCL_ERROR) {
       char *errtxt = runtime_error(128);
-      sprintf(errtxt, "{ELC tuning failed, gap size too small} ");
+      ERROR_SPRINTF(errtxt, "{009 ELC tuning failed, gap size too small} ");
     }
   }
   coulomb.use_elc = 1;

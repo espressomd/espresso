@@ -249,13 +249,13 @@ int MMM1D_sanity_checks()
   char *errtxt;
   if (PERIODIC(0) || PERIODIC(1) || !PERIODIC(2)) {
     errtxt = runtime_error(128);
-    sprintf(errtxt, "{MMM1D requires periodicity 0 0 1} ");
+    ERROR_SPRINTF(errtxt, "{022 MMM1D requires periodicity 0 0 1} ");
     return 1;
   }
 
   if (cell_structure.type != CELL_STRUCTURE_NSQUARE) {
     errtxt = runtime_error(128);
-    sprintf(errtxt, "{MMM1D requires n-square cellsystem} ");
+    ERROR_SPRINTF(errtxt, "{023 MMM1D requires n-square cellsystem} ");
     return 1;
   }
   return 0;

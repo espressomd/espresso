@@ -148,7 +148,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
       errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-      sprintf(errtxt,"{bond broken between particles %d and %d (particles not stored on the same node)} ",
+      ERROR_SPRINTF(errtxt,"{069 bond broken between particles %d and %d (particles not stored on the same node)} ",
 	      p1->p.identity, p1->bl.e[i-1]);
       return;
     }
@@ -158,7 +158,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
 	errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-	sprintf(errtxt,"{bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
+	ERROR_SPRINTF(errtxt,"{070 bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
 		p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
       }
@@ -169,7 +169,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
 	errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
-	sprintf(errtxt,"{bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
+	ERROR_SPRINTF(errtxt,"{071 bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
 		p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
       }
@@ -217,14 +217,14 @@ MDINLINE void add_bonded_energy(Particle *p1)
 	break;
       default :
 	errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
-	sprintf(errtxt,"{add_bonded_energy: tabulated bond type of atom %d unknown\n", p1->p.identity);
+	ERROR_SPRINTF(errtxt,"{072 add_bonded_energy: tabulated bond type of atom %d unknown\n", p1->p.identity);
 	return;
       }
       break;
 #endif
     default :
       errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
-      sprintf(errtxt,"{add_bonded_energy: bond type of atom %d unknown\n", p1->p.identity);
+      ERROR_SPRINTF(errtxt,"{073 add_bonded_energy: bond type of atom %d unknown\n", p1->p.identity);
       return;
     }
 
@@ -232,7 +232,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
     case 1:
       if (bond_broken) {
 	char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	sprintf(errtext,"{bond broken between particles %d and %d} ",
+	ERROR_SPRINTF(errtext,"{074 bond broken between particles %d and %d} ",
 		p1->p.identity, p2->p.identity);
 	continue;
       }
@@ -240,7 +240,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
     case 2:
       if (bond_broken) {
 	char *errtext = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-	sprintf(errtext,"{bond broken between particles %d, %d and %d} ",
+	ERROR_SPRINTF(errtext,"{075 bond broken between particles %d, %d and %d} ",
 		p1->p.identity, p2->p.identity, p3->p.identity); 
 	continue;
       }
@@ -248,7 +248,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
     case 3:
       if (bond_broken) {
 	char *errtext = runtime_error(128 + 4*TCL_INTEGER_SPACE);
-	sprintf(errtext,"{bond broken between particles %d, %d, %d and %d} ",
+	ERROR_SPRINTF(errtext,"{076 bond broken between particles %d, %d, %d and %d} ",
 		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
 	continue;
       }

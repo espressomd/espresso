@@ -2504,12 +2504,12 @@ int Maggs_sanity_checks()
 
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
     errtxt = runtime_error(128);
-    sprintf(errtxt, "{Maggs requires domain-decomposition cellsystem} ");
+    ERROR_SPRINTF(errtxt, "{020 Maggs requires domain-decomposition cellsystem} ");
     return 1;
   }
   else if (dd.use_vList) {
     errtxt = runtime_error(128);
-    sprintf(errtxt, "{Maggs requires no Verlet Lists} ");
+    ERROR_SPRINTF(errtxt, "{021 Maggs requires no Verlet Lists} ");
     return 1;
   }    
   return 0;
