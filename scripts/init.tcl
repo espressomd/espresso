@@ -62,4 +62,4 @@ source blockfile_support.tcl
 # adds 'blockfile_read_auto_interactions'
 # adds 'blockfile_read_interactions'
 
-
+source pdb.tcl
