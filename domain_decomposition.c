@@ -72,29 +72,6 @@ double max_skin   = 0.0;
     n == 0 || n == dd.ghost_cell_grid[1] - 1 || \
     o == 0 || o == dd.ghost_cell_grid[2] - 1 ) 
 
-/** Calculate grid dimensions for the largest 3d grid in box where the
-    cell size is given by size. 
-    Help routine for \ref dd_create_cell_grid.
-    @param grid  resulting 3d grid.
-    @param box   box where the cell grid should fit in.
-    @param size  desired cell size.
-    @param max   maximal number of cells.
-*/
-int calc_3d_cell_grid(int grid[3], double box[3], double size[3], int max)
-{
-  int i,n_cells=1;
-  for(i=0;i<3;i++) {
-    grid[i] = (int)(box[i]/size[i]);
-    /* catch large integer case */
-    if( grid[i] > max) {
-      grid[0] = grid[1] = grid[2] = -1;
-      return (max+1);
-    }
-    n_cells *= grid[i];
-  }
-  return n_cells;
-}
-
 /** Calculate cell grid dimensions, cell sizes and number of cells.
  *  Calculates the cell grid, based on \ref local_box_l and \ref
  *  max_range. If the number of cells is larger than \ref
@@ -107,49 +84,75 @@ int calc_3d_cell_grid(int grid[3], double box[3], double size[3], int max)
  */
 void dd_create_cell_grid()
 {
-  int i,n_local_cells,new_cells,try=1;
-  double cell_range[3], min_box_l;
+  int i,n_local_cells,new_cells,min_ind;
+  double cell_range[3], min_box_l, min_size, scale, volume;
   CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid: max_range %f\n",this_node,max_range));
   CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid: local_box %f-%f, %f-%f, %f-%f,\n",this_node,my_left[0],my_right[0],my_left[1],my_right[1],my_left[2],my_right[2]));
   
   /* initialize */
   min_box_l = dmin(dmin(local_box_l[0],local_box_l[1]),local_box_l[2]);
   cell_range[0]=cell_range[1]=cell_range[2] = max_range;
-  n_local_cells = max_num_cells+1;
 
   if(max_range2 < 0.0) {
     /* this is the initialization case */
     n_local_cells = dd.cell_grid[0] = dd.cell_grid[1] = dd.cell_grid[2]=1;
   }
   else {
-    /* try finding a suitable cell grid. */
-    while(n_local_cells > max_num_cells && try) {
-      try=0;
-      /* Calculate cell grid */
-      n_local_cells = calc_3d_cell_grid(dd.cell_grid, local_box_l, cell_range, max_num_cells);
-      /* enlarge cell range */
-      for(i=0; i<3; i++) {
-	if(cell_range[i] < local_box_l[i]) {
-	  cell_range[i] = dmin(cell_range[i]*1.05,local_box_l[i]);
-	  try=1;
+    /* Calculate initial cell grid */
+    volume = local_box_l[0];
+    for(i=1;i<3;i++) volume *= local_box_l[i];
+    scale = pow(max_num_cells/volume, 1./3.);
+    for(i=0;i<3;i++) {
+      /* this is at least 1 */
+      dd.cell_grid[i] = (int)ceil(local_box_l[i]*scale);
+      cell_range[i] = local_box_l[i]/dd.cell_grid[i];
+
+      if ( cell_range[i] < max_range ) {
+	/* ok, too many cells for this direction, set to minimum */
+	dd.cell_grid[i] = (int)floor(local_box_l[i]/max_range);
+	if ( dd.cell_grid[i] < 1 ) {
+	  char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
+	  ERROR_SPRINTF(error_msg, "{002 interaction range %f in direction %d is larger than the local box size %f} ",
+			max_range, i, local_box_l[i]);
+	  dd.cell_grid[i] = 1;
 	}
+	cell_range[i] = local_box_l[i]/dd.cell_grid[i];
       }
     }
+
+    /* It may be necessary to asymmetrically assign the scaling to the coordinates, which the above approach will not do.
+       For a symmetric box, it gives a symmetric result. Here we correct that. */
+    for (;;) {
+      n_local_cells = dd.cell_grid[0];
+      for (i = 1; i < 3; i++)
+	n_local_cells *= dd.cell_grid[i];
+
+      /* done */
+      if (n_local_cells <= max_num_cells)
+	break;
+
+      /* find coordinate with the smallest cell range */
+      min_ind = 0;
+      min_size = cell_range[0];
+      for (i = 1; i < 3; i++)
+	if (dd.cell_grid[i] > 1 && cell_range[i] < min_size) {
+	  min_ind = i;
+	  min_size = cell_range[i];
+	}
+      CELL_TRACE(fprintf(stderr, "%d: minimal coordinate %d, size %f, grid %d\n", this_node,min_ind, min_size, dd.cell_grid[min_ind]));
+
+      dd.cell_grid[min_ind]--;
+      cell_range[min_ind] = local_box_l[min_ind]/dd.cell_grid[min_ind];
+    }
+    CELL_TRACE(fprintf(stderr, "%d: final %d %d %d\n", this_node, dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]));
+
+    /* sanity check */
     if (n_local_cells < min_num_cells) {
       char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
       ERROR_SPRINTF(error_msg, "{001 number of cells %d is smaller than minimum %d (interaction range too large or max_num_cells too small)} ",
-	      n_local_cells, min_num_cells);
+		    n_local_cells, min_num_cells);
     }
   }
-
-  /* sanity check */
-  for(i=0;i<3;i++)
-    if( dd.cell_grid[i] < 1 ) {
-      char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
-      ERROR_SPRINTF(error_msg, "{002 interaction range %f in direction %d is larger than the local box size %f} ",
-	      max_range, i, local_box_l[i]);
-      n_local_cells = dd.cell_grid[0] = dd.cell_grid[1] = dd.cell_grid[2]=1;
-    }
 
   /* quit program if unsuccesful */
   if(n_local_cells > max_num_cells) {
