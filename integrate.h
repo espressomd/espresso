@@ -82,11 +82,17 @@ int skin_callback(Tcl_Interp *interp, void *_data);
 */
 int time_step_callback(Tcl_Interp *interp, void *_data);
 
-/** Callback for start_time of the integration.
-    If no value is set the integration starts at start_time = 0.0.
+/** Callback for current time in the integration.
+    If no value is set the integration starts at time = 0.0.
     \return TCL status.
 */
 int time_callback(Tcl_Interp *interp, void *_data);
+
+/** Implements the tcl-command 'invalidate_system' which forces a system re-init by setting 
+    \ref particle_changed = \ref interactions_changed = \ref topology_changed = \ref parameter_changed = 1.
+    For more information, see \ref tcl_invalidate_system. */
+int invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
 
 /*@}*/
 
