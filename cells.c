@@ -384,6 +384,14 @@ void cells_update_ghosts()
   switch (cell_structure.type) {
     /* methods using skin rsp. rebuild_verletlist */
   case CELL_STRUCTURE_DOMDEC:
+    if(dd.use_vList) {
+      if (rebuild_verletlist == 1)
+      /* Communication step:  number of ghosts and ghost information */
+	cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
+    }
+    else 
+      cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
+    break;
     /* layered has a skin only in z in principle, but
        probably we can live very well with the standard skin */
   case CELL_STRUCTURE_LAYERED:
