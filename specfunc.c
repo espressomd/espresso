@@ -9,6 +9,7 @@
 /** \file specfunc.c
     Special functions, see \ref specfunc.h "specfunc.h"
 */
+#include <math.h>
 #include "specfunc.h"
 #include "polynom.h"
 #include "debug.h"
