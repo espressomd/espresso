@@ -698,6 +698,9 @@ int comforce_set_params(int part_type_a, int part_type_b,
 #ifdef COMFIXED
 int comfixed_set_params(int part_type_a, int part_type_b, int flag)
 {
+  Particle *p;
+  int i, j, np, c;
+  Cell *cell;
   IA_parameters *data, *data_sym;
 
   make_particle_type_exist(part_type_a);
@@ -717,23 +720,19 @@ int comfixed_set_params(int part_type_a, int part_type_b, int flag)
   mpi_bcast_ia_params(part_type_a, part_type_b);
   mpi_bcast_ia_params(part_type_b, part_type_a);
 
-  Particle *p;
-  int i, j, np, c;
-  Cell *cell;
-
-      for (c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        p  = cell->part;
-        np = cell->n;
-        for(i = 0; i < np; i++) {
-	 	      if(p[i].p.type==part_type_a) {
-      	    for(j = 0; j < 3; j++) {
-				      p[i].m.v[j] = 0.;
-				      p[i].f.f[j] = 0.;
-			      }
-		      }
-        }
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i = 0; i < np; i++) {
+      if(p[i].p.type==part_type_a) {
+	for(j = 0; j < 3; j++) {
+	  p[i].m.v[j] = 0.;
+	  p[i].f.f[j] = 0.;
+	}
       }
+    }
+  }
   
   return TCL_OK;
 }
