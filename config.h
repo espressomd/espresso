@@ -101,7 +101,10 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /* #define LJCOS */
 
 /** BUCKINGHAM potential */
-#define BUCKINGHAM 
+/* #define BUCKINGHAM */
+
+/** SOFT-SPHERE potential */
+/* #define SOFT_SPHERE */
 /*@}*/
 
 /************************************************/
@@ -243,6 +246,9 @@ MDINLINE int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef BUCKINGHAM
   Tcl_AppendResult(interp, "{ BUCKINGHAM } ", (char *) NULL);
+#endif
+#ifdef SOFT_SPHERE
+  Tcl_AppendResult(interp, "{ SOFT_SPHERE } ", (char *) NULL);
 #endif
 #ifdef LJCOS
   Tcl_AppendResult(interp, "{ LJCOS } ", (char *) NULL);

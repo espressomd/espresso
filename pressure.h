@@ -78,6 +78,7 @@ extern nptiso_struct nptiso;
 #include "p3m.h"
 #include "lj.h"
 #include "buckingham.h"
+#include "soft_sphere.h"
 #include "ljcos.h"
 #include "tab.h"
 #include "gb.h"
@@ -147,6 +148,10 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   /* buckingham*/
 #ifdef BUCKINGHAM
   add_buck_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+ /*soft-sphere potential*/
+#ifdef SOFT_SPHERE
+  add_soft_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
   /* lennard jones cosine */
 #ifdef LJCOS

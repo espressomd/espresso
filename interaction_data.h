@@ -152,6 +152,16 @@ typedef struct {
   /*@}*/
 #endif
 
+#ifdef SOFT_SPHERE
+  /** \name soft-sphere potential */
+  /*@{*/
+  double soft_a;
+  double soft_n;
+  double soft_cut;
+  double soft_offset;
+  /*@}*/
+#endif
+
 #ifdef LJCOS
   /** \name Lennard-Jones+Cos potential */
   /*@{*/

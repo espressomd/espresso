@@ -26,6 +26,7 @@
 #include "elc.h"
 #include "lj.h"
 #include "buckingham.h"
+#include "soft_sphere.h"
 #include "tab.h"
 #include "ljcos.h"
 #include "gb.h"
@@ -106,6 +107,13 @@ void initialize_ia_params(IA_parameters *params) {
     params->BUCK_F2 = 0;
 #endif
 
+#ifdef SOFT_SPHERE
+  params->soft_a =
+    params->soft_n =
+    params->soft_cut =
+    params->soft_offset = 0;
+#endif
+
 #ifdef LJCOS
   params->LJCOS_eps =
     params->LJCOS_sig =
@@ -173,6 +181,12 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->BUCK_F1 = src->BUCK_F1;
   dst->BUCK_F2 = src->BUCK_F2;
 #endif
+#ifdef SOFT_SPHERE
+  dst->soft_a = src->soft_a;
+  dst->soft_n = src->soft_n;
+  dst->soft_cut = src->soft_cut;
+  dst->soft_offset = src->soft_offset;
+#endif
 #ifdef LJCOS
   dst->LJCOS_eps = src->LJCOS_eps;
   dst->LJCOS_sig = src->LJCOS_sig;
@@ -231,7 +245,12 @@ int checkIfParticlesInteract(int i, int j) {
   if (data->BUCK_cut != 0)
     return 1;
 #endif
-  
+
+#ifdef SOFT_SPHERE
+  if (data->soft_cut != 0)
+    return 1;
+#endif  
+
 #ifdef LJCOS
   if (data->LJCOS_cut != 0)
     return 1;
@@ -436,6 +455,12 @@ void calc_maximal_cutoff()
 	 if (data->BUCK_cut != 0) {
 	   if(max_cut_non_bonded < data->BUCK_cut )
 	     max_cut_non_bonded = data->BUCK_cut;
+	 }
+#endif
+#ifdef SOFT_SPHERE
+	 if (data->soft_cut != 0) {
+	   if(max_cut_non_bonded < data->soft_cut )
+	     max_cut_non_bonded = data->soft_cut;
 	 }
 #endif
 #ifdef LJCOS
@@ -751,6 +776,9 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #ifdef BUCKINGHAM
   if (data->BUCK_cut != 0) printbuckIAToResult(interp,i,j);
 #endif
+#ifdef SOFT_SPHERE
+  if (data->soft_cut != 0) printsoftIAToResult(interp,i,j);
+#endif
 #ifdef ROTATION
   if (data->GB_cut != 0) printgbIAToResult(interp,i,j);
 #endif
@@ -975,6 +1003,11 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 #ifdef BUCKINGHAM
     else if (ARG0_IS_S("buckingham"))
       change = buckingham_parser(interp, part_type_a, part_type_b, argc, argv);
+#endif
+
+#ifdef SOFT_SPHERE
+    else if (ARG0_IS_S("soft-sphere"))
+      change = soft_parser(interp, part_type_a, part_type_b, argc, argv);
 #endif
 
 #ifdef COMFORCE

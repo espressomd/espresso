@@ -24,6 +24,7 @@
 #include "p3m.h"
 #include "lj.h"
 #include "buckingham.h"
+#include "soft_sphere.h"
 #include "ljcos.h"
 #include "tab.h"
 #include "gb.h"
@@ -75,6 +76,11 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 #ifdef BUCKINGHAM
   /* lennard jones */
   ret  += buck_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+
+#ifdef SOFT_SPHERE
+  /* soft-sphere */
+  ret  += soft_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
 #ifdef TABULATED
