@@ -9,11 +9,11 @@
 #ifndef PARTICLE_DATA_H
 #define PARTICLE_DATA_H
 /** \file particle_data.h
+    For more information on particle_data,
+    see \ref particle_data.c "particle_data.c"
 
     <b>Responsible:</b>
     <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
-    For more information on particle_data,
-    see \ref particle_data.c "particle_data.c"
  */
 
 #include <tcl.h>

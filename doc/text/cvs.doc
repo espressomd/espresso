@@ -26,14 +26,14 @@ Here a list of the most common cvs commands we need:
 	Shows differences of your local copy of \<file\> with respect
 	to the cvs version.	
 <li> \anchor cvs_log \verbatim cvs log <file> \endverbatim
-	Shows the log file for \<file\>, e.g. comments on changes that
+	Shows the log file for \<file\>, e. g. comments on changes that
 	have been made in the past and who is responsible for them.
 <li> \anchor cvs_remove \verbatim cvs remove <file> \endverbatim
 	removes a file from the cvsroot directory. That means, it is
 	still there and can be restored, but will not be contained in
 	future checkouts and updates. <b>Use with care!!!</b><BR>
 	For permanent deletion use \ref cvs_commit "commit" one final
-	time on that file, adding e.g. 'removed.' as comment. <b>Use
+	time on that file, adding e. g. 'removed.' as comment. <b>Use
 	with even more care!!!</b>
 <li> \anchor cvs_status \verbatim cvs status <file> \endverbatim
 	Reports the status of your local copy of \<file\> with respect
@@ -49,10 +49,10 @@ Here a list of the most common cvs commands we need:
 	by hand!</b> They contain sections like
 	\verbatim 
 <<<<<<< init.tcl
-Local version of the file (e.g. 'init.tcl')
+Local version of the file (e. g. 'init.tcl')
 as stored in your local directory
 =======
-CVS version of the file (e.g. release 1.5)
+CVS version of the file (e. g. release 1.5)
 from the repository in the cvsroot directory
 >>>>>>> 1.5
 	\endverbatim

@@ -6,6 +6,9 @@
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+/** \file statistics_chain.c
+    Implementation of \ref statistics_chain.h "statistics_chain.h".
+*/
 #include "statistics.h"
 #include "parser.h"
 #include "debug.h"
@@ -21,7 +24,9 @@ int n_part_g = 0, n_chains_g = 0;
 
 /** data for a system consisting of chains. TBRS. */
 /*@{*/
-int chain_start = 0, chain_n_chains = 0, chain_length = 0;
+int chain_start = 0;
+int chain_n_chains = 0;
+int chain_length = 0;
 /*@}*/
 
 void calc_re(double **_re)

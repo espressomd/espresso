@@ -6,6 +6,11 @@
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+/** \file mmm2d.c  MMM2D algorithm for long range coulomb interaction.
+ *
+ *  For more information about MMM2D, see \ref mmm2d.h "mmm2d.h".
+ */
+
 #include <math.h>
 #include <mpi.h>
 #include "communication.h"
@@ -35,63 +40,79 @@
  * LOCAL DEFINES
  ****************************************/
 
-/* Largest reasonable cutoff for far formula. A double cannot overflow
-   with this value. */
+/** Largest reasonable cutoff for far formula. A double cannot overflow
+    with this value. */
 #define MAXIMAL_FAR_CUT 100
 
-/* Largest reasonable cutoff for Bessel function. The Bessel functions
-   are quite slow, so do not make too large. */
+/** Largest reasonable cutoff for Bessel function. The Bessel functions
+    are quite slow, so do not make too large. */
 #define MAXIMAL_B_CUT 50
 
-/* Largest reasonable order of polygamma series. These are pretty fast,
-   so use more of them. Also, the real cutoff is determined at run time,
-   so normally we are faster */
+/** Largest reasonable order of polygamma series. These are pretty fast,
+    so use more of them. Also, the real cutoff is determined at run time,
+    so normally we are faster */
 #define MAXIMAL_POLYGAMMA 100
 
-
-/* internal relative precision of far formula. This controls how many
-   p,q vectors are done at once. This has nothing to do with the effective
-   precision, but rather controls how different values can be we add up without
-   loosing the smallest values. In principle one could choose smaller values, but
-   that would not make things faster */
+/** internal relative precision of far formula. This controls how many
+    p,q vectors are done at once. This has nothing to do with the effective
+    precision, but rather controls how different values can be we add up without
+    loosing the smallest values. In principle one could choose smaller values, but
+    that would not make things faster */
 #define FARRELPREC 1e-6
 
-/* number of steps in the complex cutoff table */
+/** number of steps in the complex cutoff table */
 #define COMPLEX_STEP 16
-/* map numbers from 0 to 1/sqrt(2) onto the complex cutoff table
-   (with security margin) */
+/** map numbers from 0 to 1/sqrt(2) onto the complex cutoff table
+    (with security margin) */
 #define COMPLEX_FAC (COMPLEX_STEP/(1/M_SQRT2 + 0.01))
 
 /****************************************
  * LOCAL VARIABLES
  ****************************************/
 
-/* up to that error the sums in the NF are evaluated */
+/** up to that error the sums in the NF are evaluated */
 static double part_error;
 
-/* cutoffs for the bessel sum */
+/** cutoffs for the bessel sum */
 static IntList besselCutoff = {NULL, 0, 0};
 
-/* cutoffs for the complex sum */
+/** cutoffs for the complex sum */
 static int  complexCutoff[COMPLEX_STEP];
+/** bernoulli numbers divided by n */
 static DoubleList  bon = {NULL, 0, 0};
 
-/* inverse box dimensions */
+/** inverse box dimensions */
+/*@{*/
 static double ux, ux2, uy, uy2, uz;
-/* maximal z for near formula, minimal z for far formula.
-   Is identical in the theory, but with the verlet tricks
-   this is no longer true, the skin has to be added/subtracted */
+/*@}*/
+
+/** maximal z for near formula, minimal z for far formula.
+    Is identical in the theory, but with the verlet tricks
+    this is no longer true, the skin has to be added/subtracted */
+/*@{*/
 static double max_near, min_far;
+/*@}*/
+
+///
 static double self_energy;
 
 MMM2D_struct mmm2d_params = { 1e100, 10, 1 };
 
+/** return codes for \ref MMM2D_tune_near and \ref MMM2D_tune_far */
+/*@{*/
+/** cell too large */
 #define ERROR_HEIGHT 1
+/** box too large */
 #define ERROR_BOXL 2
+/** no reasonable bessel cutoff found */
 #define ERROR_BESSEL 3
+/** no reasonable polygamma cutoff found */
 #define ERROR_POLY 4
+/** no reasonable cutoff for the far formula found */
 #define ERROR_FARC 5
+/*@}*/
 
+/** error messages, see above */
 static char *mmm2d_errors[] = {
   "ok",
   "Layer height too large for MMM2D near formula, increase n_layers",
@@ -105,9 +126,12 @@ static char *mmm2d_errors[] = {
  * LOCAL ARRAYS
  ****************************************/
 
-/* product decomposition data organization. For the cell blocks
-   it is assumed that the lower blocks part is in the lower half.
-   This has to have positive sign, so that has to be first. */
+/** \name Product decomposition data organization
+    For the cell blocks
+    it is assumed that the lower blocks part is in the lower half.
+    This has to have positive sign, so that has to be first. */
+/*@{*/
+
 #define POQESP 0
 #define POQECP 1
 #define POQESM 2
@@ -130,74 +154,78 @@ static char *mmm2d_errors[] = {
 #define ABEQQM 2
 #define ABEQZM 3
 
-/* number of local particles */
+/*@}*/
+
+/** number of local particles */
 static int n_localpart = 0;
 
-/* temporary buffers for product decomposition */
+/** temporary buffers for product decomposition */
 static double *partblk = NULL;
-/* for all local cells including ghosts */
+/** for all local cells including ghosts */
 static double *lclcblk = NULL;
-/* collected data from the cells above the top neighbor
-   of a cell rsp. below the bottom neighbor
-   (P=below, M=above, as the signs in the exp). */
+/** collected data from the cells above the top neighbor
+    of a cell rsp. below the bottom neighbor
+    (P=below, M=above, as the signs in the exp). */
 static double *gblcblk = NULL;
 
-/* structure for storing of sin and cos values */
 typedef struct {
   double s, c;
 } SCCache;
 
-/* sin/cos caching */ 
+/** sin/cos caching */ 
 static SCCache *scxcache = NULL;
 static int    n_scxcache;  
+/** sin/cos caching */ 
 static SCCache *scycache = NULL;
 static int    n_scycache;  
 
-/****************************************
- * LOCAL FUNCTIONS
- ****************************************/
 
-/* NEAR FORMULA */
-/****************/
+/** \name Local functions for the near formula */
+/************************************************************/
+/*@{*/
 
-/* complex evaluation */
+/** complex evaluation */
 static void prepareBernoulliNumbers(int nmax);
 
-/* cutoff error setup. Returns error code */
+/** cutoff error setup. Returns error code */
 static int MMM2D_tune_near(double error);
 
 /** energy of all local particles with their copies */
 void MMM2D_self_energy();
 
-/* FAR FORMULA */
-/***************/
-/* sin/cos storage */
+/*@}*/
+
+/** \name Local functions for the far formula */
+/************************************************************/
+/*@{*/
+
+/** sin/cos storage */
 static void prepare_scx_cache();
 static void prepare_scy_cache();
-/* common code */
+/** common code */
 static void distribute(int size);
-/* 2 pi sign(z) code */
+/** 2 pi sign(z) code */
 static void add_2pi_signz();
 static double twopi_z_energy();
-/* p=0 per frequency code */
+/** p=0 per frequency code */
 static void setup_P(int p, double omega);
 static void add_P_force();
 static double   P_energy(double omega);
-/* q=0 per frequency code */
+/** q=0 per frequency code */
 static void setup_Q(int q, double omega);
 static void add_Q_force();
 static double   Q_energy(double omega);
-/* p,q <> 0 per frequency code */
+/** p,q <> 0 per frequency code */
 static void setup_PQ(int p, int q, double omega);
 static void add_PQ_force(int p, int q, double omega);
 static double   PQ_energy(double omega);
 
-/* cutoff error setup. Returns error code */
+/** cutoff error setup. Returns error code */
 static int MMM2D_tune_far(double error);
 
-/* COMMON */
-/**********/
+/*@}*/
 
+///
 void MMM2D_setup_constants()
 {
   ux  = 1/box_l[0];

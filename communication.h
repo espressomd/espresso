@@ -9,23 +9,23 @@
 #ifndef COMM_H
 #define COMM_H
 /** \file communication.h
-    This file contains the random access MPI communication.
+    This file contains the asynchronous MPI communication.
  
     <b>Responsible:</b>
     <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 
     It is the header file for \ref communication.c "communication.c".
 
-    The random access MPI communication is used during script
+    The asynchronous MPI communication is used during the script
     evaluation. Except for the master node that interpretes the Tcl
-    script, all other nodes wait for the master node to issue an
-    action.  That is done by \ref mpi_loop, the main loop for all
-    slave nodes. It simply does an MPI_Bcast and therefore waits for
-    the master node to broadcast a command. A command consists of two
-    integers, the first one describing the action issued, the second
-    an arbitrary parameter depending on the action issued. The actions
-    are always issued by the master node, through the functions
-    exported below (e. g. \ref mpi_bcast_parameter).
+    script, all other nodes wait in \ref mpi_loop for the master node to
+    issue an action using \ref mpi_issue. \ref mpi_loop immediately
+    executes an MPI_Bcast and therefore waits for the master node to broadcast
+    a command, which is done by \ref mpi_issue. The request consists of
+    three integers, the first one describing the action issued, the second
+    and third an arbitrary parameter depending on the action issued. If applicable,
+    the second parameter is the node number of the slave this request is dedicated
+    to.
 
     Adding new actions (e. g. to implement new Tcl commands) is
     simple. First, the action has to be assigned a new action number

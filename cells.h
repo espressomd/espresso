@@ -9,48 +9,48 @@
 #ifndef CELLS_H
 #define CELLS_H
 /** \file cells.h
- *
- *  This file contains everything related to the cell structure / cell
- *  system.
- *
- *  <b>Responsible:</b>
- *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
- *
- *  The cell system (\ref Cell Structure) describes how particles are
- *  distributed on the cells and how particles of different cells
- *  (regardless if they reside on the same or different nodes)
- *  interact with each other. The following cell systems are implemented:
- *
- *  <ul>
- *  <li> domain decomposition: The simulation box is divided spatially
- *  ino cells (see \ref domain_decomposition.h). This is suitable for
- *  short range interctions.
- *  <li> nsquare: The particles are distributed equally on all nodes
- *  regardless their spatial position (see \ref nsquare.h). This is
- *  suitable for long range interactions that can not be treated by a
- *  special method like P3M (see \ref p3m.h).
- *  </ul>
- *
- *  One can switch between different cell systems with the tcl command
- *  \ref tcl_cellsystem implemented in \ref cells::cellsystem.
- *
- *  Some structures are common to all cell systems: 
- *
- * <ul>
- * <li> All cells are stored in the array \ref cells::cells with size \ref
- * n_cells. Th e size of this array has to be changed with \ref
- * realloc_cells.
- * <li> Their are two lists of cell pointers to acces particles and
- * ghost particles on a node: \ref local_cells contains pointers to
- * all cells containing the particles physically residing on that
- * node. \ref ghost_cells contains pointers to all cells containing
- * the ghost particles of that node. The size of these lists has to be
- * changed with \ref realloc_cellplist
- * <li> An example using the cell pointer lists to acces particle data
- * can be found in the function \ref
- * print_local_particle_positions. DO NOT INVENT YOUR OWN WAY!!!
- * </ul>
- */
+    This file contains everything related to the cell structure / cell
+    system.
+  
+    <b>Responsible:</b>
+    <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
+  
+    The cell system (\ref Cell Structure) describes how particles are
+    distributed on the cells and how particles of different cells
+    (regardless if they reside on the same or different nodes)
+    interact with each other. The following cell systems are implemented:
+  
+    <ul>
+    <li> domain decomposition: The simulation box is divided spatially
+    ino cells (see \ref domain_decomposition.h). This is suitable for
+    short range interctions.
+    <li> nsquare: The particles are distributed equally on all nodes
+    regardless their spatial position (see \ref nsquare.h). This is
+    suitable for long range interactions that can not be treated by a
+    special method like P3M (see \ref p3m.h).
+    <li> layered: in x and y directions, it uses a nsquared type of interaction calculation,
+                  but in z it has a domain decomposition into layers.
+    </ul>
+  
+    One can switch between different cell systems with the tcl command
+    \ref tcl_cellsystem implemented in \ref cells::cellsystem.
+  
+    Some structures are common to all cell systems: 
+  
+   <ul>
+   <li> All cells, real cells as well as ghost cells, are stored in the array \ref cells::cells with size \ref
+   n_cells. The size of this array has to be changed with \ref realloc_cells.
+   <li> Their are two lists of cell pointers to acces particles and
+   ghost particles on a node: \ref local_cells contains pointers to
+   all cells containing the particles physically residing on that
+   node. \ref ghost_cells contains pointers to all cells containing
+   the ghost particles of that node. The size of these lists has to be
+   changed with \ref realloc_cellplist
+   <li> An example using the cell pointer lists to acces particle data
+   can be found in the function \ref
+   print_local_particle_positions. DO NOT INVENT YOUR OWN WAY!!!
+   </ul>
+*/
 
 #include <tcl.h>
 #include "particle_data.h"
@@ -214,5 +214,3 @@ void print_ghost_positions();
 /*@}*/
 
 #endif
-
-

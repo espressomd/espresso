@@ -7,12 +7,12 @@ The following procedures are found in scripts/statistics.tcl.
 	creates a gnuplot of the column-wise stored data in \<file\>
 	writing it to \<file\>.ps by default.<BR>
 	Using gnuplot syntax, the columns x:y1,... are plotted
-	(e.g. '<tt>3:2 3:5 3:8</tt>' plots the 3rd column as x-axis,
+	(e. g. '<tt>3:2 3:5 3:8</tt>' plots the 3rd column as x-axis,
 	the 2nd, 5th and 8th column
 	in \<file\> as three independent data-series on the
 	y-axis). The scale of the axis may be given with an optional
 	flag using the
-	gnuplot keywords, e.g. '<tt>scale logscale xy</tt>' to enable
+	gnuplot keywords, e. g. '<tt>scale logscale xy</tt>' to enable
 	log-log-plotting; by default, <tt>nologscale xy</tt> is
 	assumed.<BR>
 
@@ -27,7 +27,7 @@ The following procedures are found in scripts/statistics.tcl.
 	of both tcl-lists must be equal.<BR>
 	For executing any other gnuplot-commands simply pass them as
 	one-liner using the '<tt>cmd \<gnuplot-command\></tt>'-option,
-	e.g.
+	e. g.
 	<tt>plotObs ... cmd "set key left"</tt> to adjust the titles on the left side.<BR>
 	To specify a different output-file than the default
 	\<file\>.ps, use the <tt>out \<out\></tt>-option; in that case

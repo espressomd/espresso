@@ -19,6 +19,17 @@
 
 #ifdef ELECTROSTATICS
 
+/** Structure to hold Debye-Hueckel Parameters. */
+typedef struct {
+  /** Cutoff for Debey-Hueckel interaction. */
+  double r_cut;
+  /** Debye kappa (inverse Debye length) . */
+  double kappa;
+} Debye_hueckel_params;
+
+/** Structure containing the Debye-Hueckel parameters. */
+extern Debye_hueckel_params dh_params;
+
 /** \name Functions */
 /************************************************************/
 /*@{*/

@@ -79,33 +79,46 @@ The ghost communicators are created in the init routines of the cell systems, th
 #include <mpi.h>
 #include "particle_data.h"
 
-/** \name Defines */
+/** \name Transfer types, for \ref GhostCommunicator::type */
 /************************************************************/
 /*@{*/
 
+/// send to a single node
 #define GHOST_SEND 0
+/// recv from a single node
 #define GHOST_RECV 1
+/// broadcast, the node entry gives the sender
 #define GHOST_BCST 2
+/// reduce, the node entry gives the receiver
 #define GHOST_RDCE 3
+/// transfer data from cell to cell on this node
 #define GHOST_LOCL 4
-#define GHOST_JOBMASK  15
-#define GHOST_PREFETCH 16
-#define GHOST_PSTSTORE 32
 
+/// mask to the job area of the transfer type
+#define GHOST_JOBMASK  15
+/// additional flag for prefetching
+#define GHOST_PREFETCH 16
+/// additional flag for poststoring
+#define GHOST_PSTSTORE 32
 /*@}*/
 
-/** \name Transfer data classes */
+
+/** \name Transfer data classes, for \ref GhostCommunication::type */
 /************************************************************/
 /*@{*/
-
+/// transfer \ref ParticleProperties
 #define GHOSTTRANS_PROPRTS  1
+/// transfer \ref ParticlePosition
 #define GHOSTTRANS_POSITION 2
-/** must be or'd together with \ref GHOSTTRANS_POSITION */
+/** flag for \ref GHOSTTRANS_POSITION, shift the positions by \ref GhostCommunication::shift.
+    Must be or'd together with \ref GHOSTTRANS_POSITION */
 #define GHOSTTRANS_POSSHFTD 4
+/// transfer \ref ParticleMomentum
 #define GHOSTTRANS_MOMENTUM 8
+/// transfer \ref ParticleForce
 #define GHOSTTRANS_FORCE    16
+/// resize the receiver particle arrays to the size of the senders
 #define GHOSTTRANS_PARTNUM  32
-
 /*@}*/
 
 /** \name Data Types */
@@ -116,7 +129,7 @@ typedef struct {
 
   /** Communication type. */
   int type;
-  /** Node to communicate with (to use with GHOST_SEND, GHOST_RECV). */
+  /** Node to communicate with (to use with all MPI operations). */
   int node;
   /** MPI communicator handle (to use with GHOST_BCST, GHOST_GATH, GHOST_RDCE). */
   MPI_Comm mpi_comm;

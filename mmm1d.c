@@ -6,6 +6,11 @@
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+/** \file mmm1d.c  MMM1D algorithm for long range coulomb interaction.
+ *
+ *  For more information about MMM1D, see \ref mmm1d.h "mmm1d.h".
+ */
+
 #include <mpi.h>
 #include <tcl.h>
 #include "mmm1d.h"
@@ -24,16 +29,19 @@
 
 #ifdef ELECTROSTATICS
 
-/* How many trial calculations */
+/** How many trial calculations */
 #define TEST_INTEGRATIONS 1000
 
-/* Largest reasonable cutoff for Bessel function */
+/** Largest reasonable cutoff for Bessel function */
 #define MAXIMAL_B_CUT 30
 
-/* Granularity of the radius scan in multiples of box_l[2] */
+/** Granularity of the radius scan in multiples of box_l[2] */
 #define RAD_STEPPING 0.1
 
+/** inverse box dimensions and other constants */
+/*@{*/
 static double uz, L2, uz2, prefuz2, prefL3_i;
+/*@}*/
 
 MMM1D_struct mmm1d_params = { 0.05, 5, 1, 1e-5 };
 

@@ -6,6 +6,10 @@
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+/** \file uwerr.c
+    Implementation of \ref uwerr.h "uwerr.h".
+*/
+
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>

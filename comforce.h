@@ -6,6 +6,12 @@
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+/** \file comforce.h
+ *  Routines to enable comforce
+ *
+ *  <b>Responsible:</b>
+ *  <a href="mailto:sayar@mpip-mainz.mpg.de">Mehmet</a>
+*/
 #include "utils.h"
 #include "particle_data.h"
 #include "statistics.h"

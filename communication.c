@@ -50,15 +50,12 @@ int n_nodes = -1;
  * slave callbacks.
  **********************************************/
 
-/*************************************
- * requests in random access mode
- * KEEP ORDER IN SYNC WITH callbacks[]
- * ALSO ADD FOR EVERY REQUEST
- * THE CALLBACK IN callbacks[]
- *************************************/
-/* slave callback procedure */
+/** slave callback procedure */
 typedef void (SlaveCallback)(int node, int param);
 
+/** \name request codes in asynchronous mode
+    <em> Keep this in sync with \ref callbacks and \ref names. </em> */
+/*@{*/
 /** Action number for \ref mpi_stop. */
 #define REQ_TERM      0
 /** Action number for \ref mpi_bcast_parameter. */
@@ -140,6 +137,7 @@ typedef void (SlaveCallback)(int node, int param);
 /** Total number of action numbers. */
 #define REQ_MAXIMUM 39
 
+/*@}*/
 
 /** \name Slave Callbacks
     These functions are the slave node counterparts for the

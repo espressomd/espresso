@@ -42,7 +42,7 @@ The scripts are located in scripts/aux.tcl and use \ref tcl_blockfile as file fo
 	\<part_list\> gives a string of the particle-properties (out of pos | type | q | v | f) to be saved to disk; if an empty string ' "" 'is provided, no particles, no bonds, and no interactions are written. Defaults (if omitted) to all particle-properties.<BR>
 	Depending on the file-name's suffix, the output will be compressed (if \<path\> ends with '.gz'), too.<BR>
 	Note, that 'polyBlockWrite' in combination with \ref tcl_convertMD2Deserno replaces the (undocumented) function 'polywr': 
-	To save the current configuration to a Deserno-compatible file (e.g. for use with 'poly2pdb') you may now use \ref tcl_polyBlockWrite
+	To save the current configuration to a Deserno-compatible file (e. g. for use with 'poly2pdb') you may now use \ref tcl_polyBlockWrite
 	to save your current configuration to a blockfile, and convert that with \ref tcl_convertMD2Deserno afterwards,
 	or you directly write a Deserno-compatible file by invoking
 	\verbatim convertMD2Deserno "-1" <output-filename>\endverbatim

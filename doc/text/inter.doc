@@ -3,16 +3,37 @@
 	sets the parameters for interactions.
 
 <ol>
-	<li> \anchor tcl_non_bonded <b>Non bonded interactions:</b> 
+	<li> \ref tcl_non_bonded "Non bonded interactions"
+
+		E. g. \ref tcl_lj "Lennard-Jones", \ref tcl_tabulated "tabulated potentials"
+	<li> \ref tcl_bonded  "Bonded interactions"
+
+		E. g. \ref tcl_fene "FENE", \ref tcl_harmonic "harmonic"
+	<li> \ref tcl_coulomb "Coulomb interaction"
+
+		E. g. \ref tcl_p3m "P3M", \ref tcl_mmm2d "ELC", \ref tcl_dh "Debye-Hückel"
+	<li> \ref tcl_other_inter "Other interaction types"
+</ol>
+
+\section tcl_non_bonded Non bonded interactions
 	\verbatim inter <particle_type_number1> <particle_type_number2> <interaction_type> <value>+ \endverbatim	
 	Non bonded interaction between particles of types
 	\<particle_type_number1\> and \<particle_type_number2\>
 	(the types are those set using \ref tcl_part).<BR>
+
+	If no \<interaction_type\> is given,
+	\verbatim inter <particle_type_number1> <particle_type_number2> \endverbatim
+	returns the parameters of the currently active potentials for
+	non-bonded interactions in the format
+	\verbatim 0 1 lennard-jones 1.0 2.0 1.1225 0.0 0.0 \endverbatim
+	which corresponds to the input-format of \ref tcl_inter.
+	Again the first two integers are \<particle_type_number1\> and \<particle_type_number2\>.
+
 	Currently known \<interaction_type\>s are:
 
-	<ul>
+\subsection tcl_lj Lennard Jones
 
-	   <li>\verbatim lennard-jones <epsilon> <sigma> <cutoff> <shift> <offset> \endverbatim
+	\verbatim lennard-jones <epsilon> <sigma> <cutoff> <shift> <offset> \endverbatim
 		the well known Lennard-Jones potential
 		\f[4 \epsilon \left(\left(\frac{\sigma}{r-offset}\right)^{12} -
 				 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
@@ -35,7 +56,8 @@
 		Lennard-Jones interactions regardless the particle
 		types.
 
-	   <li>\verbatim lj-cos <epsilon> <sigma> <cutoff> <offset> \endverbatim
+\subsection tcl_ljcos Lennard-Jones + cosine potential
+	\verbatim lj-cos <epsilon> <sigma> <cutoff> <offset> \endverbatim
 		the Lennard-Jones+Cosine potential (Soddemann
 		et. al. Eur. Phys. J. E. 6, 409-419 (2001))
 
@@ -58,7 +80,8 @@
 		The order of the parameters is
 		\f$\epsilon, \sigma, cutoff, offset\f$.
 
-	    <li>\verbatim tabulated <filename> \endverbatim	
+\subsection tcl_tabulated Tabulated potential
+	\verbatim tabulated <filename> \endverbatim	
 		An arbitrary tabulated non-bonded pair potential.
 		
 		To use this potential you must provide a file which
@@ -107,7 +130,8 @@
 		\warning This feature has not been fully
 		tested. Please use with care.
 
-            <li>\verbatim gay-berne <epsilon> <sigma> <cutoff> <k1> <k2> <mu> <nu> \endverbatim
+\subsection tcl_gb Gay-Berne potential
+	\verbatim gay-berne <epsilon> <sigma> <cutoff> <k1> <k2> <mu> <nu> \endverbatim
 		the Gay-Berne potential for prolate and oblate particles.
 		The Gay-Berne potential is an anisotropic version of the classic Lennard-Jones potential,
 		with orientational dependence in the range and well-depth functions 
@@ -173,32 +197,25 @@
 		paremeterizations exist; the original one being \f$
 		k_1 = 3 \f$, \f$ k_1 = 5 \f$, \f$ \mu = 2 \f$ and \f$
 		\nu = 1 \f$.
-	</ul>
 
-	     If no \<interaction_type\> is given,
-	     \verbatim inter <particle_type_number1> <particle_type_number2> \endverbatim
-	     returns the parameters of the currently active potentials for
-	     non-bonded interactions in the format
-	     \verbatim 0 1 lennard-jones 1.0 2.0 1.1225 0.0 0.0 \endverbatim
-	     which corresponds to the input-format of \ref tcl_inter.
-	     Again the first two integers are \<particle_type_number1\> and \<particle_type_number2\>.
-
-	<li> \anchor tcl_bonded <b>Bonded interactions: </b>
+\section tcl_bonded Bonded interactions
 	     \verbatim inter <bond_type_number> ( <interaction_type>|<num> ) <value>* \endverbatim
 	     Bonded interaction (bonds are set using \ref tcl_part).
 	     If \<num\> is given, the number of interaction partners is given (for example 1 for FENE).
 	     Currently known \<interaction_type\>s are:
 
 	     <b>Bond length potentials:</b> (two body interactions)
-	     <ul>
-		<li> \verbatim fene <K_fene> <R_fene> \endverbatim
-			FENE potential
+\subsection tcl_fene FENE potential
+		\verbatim fene <K_fene> <R_fene> \endverbatim
 			\f[ U^{FENE} = -\frac{1}{2} K_{FENE} R_{FENE}^2 \ln
 			\left( 1 - \left( \frac{r}{R_{FENE}} \right)^2 \right) \f]
-		<li> \verbatim harmonic <K_harmonic> <R_harmonic> \endverbatim
-			Harmonic potential
+
+\subsection tcl_harmonic Harmonic potential
+		\verbatim harmonic <K_harmonic> <R_harmonic> \endverbatim
 			\f[ U^{Harmonic} = \frac{1}{2} K_{harmonic} \left( r - R_{harmonic} \right)^2 \f]
-	     	<li> \verbatim subt_lj <K_subt_lj>  <R_subt_lj>  \endverbatim
+
+\subsection tcl_subtlj Subtractive Lennard-Jones
+	     	\verbatim subt_lj <K_subt_lj>  <R_subt_lj>  \endverbatim
 		    	This "bonded" interaction subtracts the Lennard-Jones force/energy of every bonded
 			pair from the total force/energy. The first parameter, \verbatim <K_subt_lj> \endverbatim
 			is a dummy and is not used. The second parameter, \verbatim <R_subt_lj> \endverbatim 
@@ -207,7 +224,6 @@
 			out a few lines in subt_lj.h .
 			When using this "bonded" interaction, it is worthwhile to consider capping the
 			Lennard-Jones potential appropriately so that round-off errors can be avoided. 
-	     </ul>
 
 	     <b>Bond angle potentials:</b> (three body interactions)<br>
 
@@ -234,8 +250,8 @@
 	     <img src="../figs/bond_angle.gif" width=50>
 	     </td>
 	     </tr></table>
-	     <ul>			
-		<li> \verbatim angle <bend> [<phi0>]\endverbatim
+\subsection tcl_angle Angle potential
+	\verbatim angle <bend> [<phi0>]\endverbatim
 		
 		\<bend\> is the bending constant in units of KT. The
 		optional parameter \<phi0\> = \f$ \phi_o \f$ is the
@@ -257,12 +273,11 @@
 			\f[ U^{bend}_{cossquare} = bend (\cos(\phi) - \cos(\phi_0))^2 \f]
 
 		</ul>
-	     </ul>
 
              <b>Torsional dihedral angle potentials:</b> (four body interactions)<br>
 
+\subsection tcl_dihedral Dihedral potential
              \verbatim dihedral <mult> <bend> <phase> \endverbatim
-	     Dihedral potential:
 
 	     \f[ U^{dihedral} = bend \, (1 + phase \, \, cos(mult \, \phi)) \f]
 
@@ -288,7 +303,7 @@
 	     </td>
 	     </tr></table>
 
-	     <b> Tabulated bonded potentials:</b>
+\subsection tcl_btab Tabulated bonded potentials
 	     \verbatim tabulated <type> <filename> \endverbatim
 
 	      Tabulated bonded potentials can be any potential for
@@ -350,13 +365,24 @@
 	     which again directly corresponds to the input-format of the respective
 	     interaction with the first integer being \<bond_type_number\>.
 
-	<li> \anchor tcl_coulomb <b> Coulomb interaction: </b>
+\section tcl_coulomb Coulomb interaction
 	     \verbatim inter	coulomb <bjerrum-length> <method> [parameters] \endverbatim
+		sets the method to calculate the electrostatic interaction.
+
+	    \verbatim inter	coulomb 0.0 \endverbatim
+	    disables coulomb interactions hence deactivating the electrostatic subsystem.
+	    \verbatim inter	coulomb \endverbatim
+	    returns the actual parameters of the coulomb interaction as a tcl-list, e. g.
+	    \verbatim {coulomb 1.0 p3m 7.75 8 5 0.1138 0.0} {coulomb epsilon 0.1 n_interpol 32768 mesh_off 0.5 0.5 0.5} \endverbatim
+	    which has the correct format to be used as input to 'inter' as well. If
+	    \verbatim coulomb 0.0 \endverbatim
+	    is returned, no electrostatics are active at the moment.
+
 
 	     Implemented Methods are: 
 
-	     <ul>
-		<li> \verbatim p3m <r_cut> <mesh> <cao> <alpha> \endverbatim
+\subsection tcl_p3m P3M
+	\verbatim p3m <r_cut> <mesh> <cao> <alpha> \endverbatim
 		     or
 		     \verbatim p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value> n_interpol <n>] \endverbatim	
 		     or
@@ -368,7 +394,7 @@
 		     Make sure you know how to tune p3m parameters before
 		     using the automatic tuning feature. Details are
 		     described in the documentation of \ref
-		     P3M_tune_parameters.
+		     P3M_tune_parameters rsp \ref P3M_adaptive_tune_parameters.
 
 		     Some additional p3m parameters have preset values:
 		     \verbatim epsilon = metallic \endverbatim 
@@ -386,22 +412,24 @@
 
 		     <b> Make sure that you know the relevance of the P3M parameters before using P3M !!!</b>
 
-		<li> \verbatim dh <kappa> <r_cut> \endverbatim
-		     Debye-Hueckel potential: 
+\subsection tcl_dh Debye-Hückel potential
+	\verbatim dh <kappa> <r_cut> \endverbatim
 		     \f[ U^{C-DH} = 	\ell_B T \frac{q_1 q_2 exp(-\kappa r)}{r} \f]
 		     For \f[ \kappa = 0 \f] this corresponds to the plain coulomb potential.
 
-		<li> \verbatim mmm2d <maximal pairwise error> {<fixed far cutoff>} \endverbatim
+\subsection tcl_mmm2d MMM2D
+	\verbatim mmm2d <maximal pairwise error> {<fixed far cutoff>} \endverbatim
 			MMM2D coulomb method for systems with periodicity 1 1 0. Needs the layered cell system.
 			The performance of the method depends on the number of slices of the cell system, which has
 			to be tuned manually. It is automatically ensured that the maximal pairwise error is smaller
 			than the given bound. The far cutoff setting should only be used for testing reasons, otherwise
 			you are more safe with the automatical tuning. If you even don't know what it is, do not even
-			think of touching the far cutoff. 
+			think of touching the far cutoff. For details, see \ref MMM_general.
 
 		     <b> Make sure that you read the papers on MMM2D before using it !!!</b>
-		
-		<li> \verbatim mmm1d <switch radius> {<bessel_cutoff>} <maximal pairwise error> \endverbatim or
+
+\subsection tcl_mmm1d MMM1D		
+	\verbatim mmm1d <switch radius> {<bessel_cutoff>} <maximal pairwise error> \endverbatim or
 		     \verbatim mmm1d tune <maximal pairwise error> \endverbatim
 			MMM1D coulomb method for systems with periodicity 0 0 1. Needs the nsquared cell system.
 			The first form sets parameters manually. The switch radius determines at which xy-distance
@@ -410,11 +438,13 @@
 			counts for the near formula. The second, tuning form just takes the maximal pairwise error and
 			tries out a lot of switching radii to find out the fastest one. If this takes too long, you can
 			change the value of the setmd variable "timings" which controls the number of test force calculations.
+			For details, see \ref MMM_general.
 
 		     <b> Make sure that you read the papers on MMM2D before using MMM1D (there are no papers on MMM1D yet,
 			 but it is pretty much the same) !!!</b>
 
-		<li> \verbatim maggs <f_mass> <mesh> <field_friction> \endverbatim
+\subsection tcl_maggs Maggs' method
+	\verbatim maggs <f_mass> <mesh> <field_friction> \endverbatim
 		     or
 		     \verbatim maggs <f_mass> <mesh> <field_friction> yukawa <kappa> <r_cut> \endverbatim	
 		     This is an implementation of the instantaneous 1/r Coulomb interaction
@@ -437,29 +467,22 @@
 
                     <a href="../maggs_doc/memd/memd.html"> Extended description of the method </a>
 
-	    </ul>		
-
+\subsection tcl_ELC ELC		
 	    \verbatim inter coulomb elc <maximal pairwise error> <gap size> {<far cutoff>} \endverbatim
 		This is a special procedure that converts a 3d method, i. e. P3M at the moment, to a 2d method, in computational order N. This
 		is definitely faster than MMM2D for larger numbers of particles (>400 at reasonable accuracy requirements). The
 		maximal pairwise error is the LUB error of the force between any two charges without prefactors (see the papers).
 		The gap size gives the height of the empty region between the system box and the neighboring artificial images
-		(again, see the paper). The far cutoff finally is only intended for testing and allows to directly set the cutoff.
-		In this case, the maximal pairwise error is ignored. The periodicity has to be set to 1 1 1 still, and the 3d method
-		has to be set to epsilon metallic, i.e. metallic boundary conditions.
+		(again, see the paper). Espresso does <em>not</em> make sure that the gap is actually empty, this is the users responsibility.
+	 	The method will compute fine of the condition is not fulfilled, however, the error bound will not be reached. Therefore you
+		should really make sure that the gap region is empty (e. g. by constraints). The far cutoff finally is only intended for
+		testing and allows to directly set the cutoff. In this case, the maximal pairwise error is ignored. The periodicity has to be
+		set to 1 1 1 still, and the 3d method has to be set to epsilon metallic, i.e. metallic boundary conditions. For details,
+		see \ref MMM_general.
 
 		<b> Make sure that you read the papers on ELC before using it !!!</b>
 
-	    \verbatim inter	coulomb 0.0 \endverbatim
-	    disables coulomb interactions hence deactivating the electrostatic subsystem.
-	    \verbatim inter	coulomb \endverbatim
-	    returns the actual parameters of the coulomb interaction as a tcl-list, e.g.
-	    \verbatim {coulomb 1.0 p3m 7.75 8 5 0.1138 0.0} {coulomb epsilon 0.1 n_interpol 32768 mesh_off 0.5 0.5 0.5} \endverbatim
-	    which has the correct format to be used as input to 'inter' as well. If
-	    \verbatim coulomb 0.0 \endverbatim
-	    is returned, no electrostatics are active at the moment.
-
-	<li> \anchor tcl_other_inter <b>Other interaction types:</b> 
+\section tcl_other_inter Other interaction types 
 	<ul>
 	    <li>\verbatim inter <particle_type_number1> <particle_type_number1> comfixed <comfixed_flag> \endverbatim
       This interaction type applies a constraint on particles of type particle_type_number1 such that during the integration the center of mass of these particles is fixed. This is accomplished as follows: The sum of all the forces acting on particles of type particle_type_number1 are calculated. These include all the forces due to other interaction types and also the thermostat. Next a force equal in magnitude, but in the oppositte direction is applied on the particles. This force is divided equally on all the particles of type particle_type_number1, since currently there is no mass concept in Espresso. Note that the syntax of the declaration of comfixed interaction requires the same particle type to be input twice. If different particle types are given in the input, the program exits with an error message. The comfixed_flag can be set to 1 (which turns on the interaction) or 0 (to turn off the interaction).
@@ -473,9 +496,7 @@
       comforce_fratio is used to set the ratio of the force applied on particles of t1 vs t2. This is useful if one has to keep the total applied force on the bundle and on the target molecule the same. A force of magnitude comforce_force is applied on t2 particles, and a force of magnitude (comforce_force * comforce_fratio) is applied on t1 particles.
 	</ul>
 
-</ol>
-
-\verbatim inter \endverbatim
+   \verbatim inter \endverbatim
 	returns a list of <i>all</i> bonded and non-bonded interactions as a Tcl-list,
 	in the same formats as above, e. g.
 	\verbatim {0 0 lennard-jones 1.0 2.0 1.1225 0.0 0.0} {0 FENE 7.0 2.0} {1 angle 1.0}\endverbatim	

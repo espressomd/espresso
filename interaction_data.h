@@ -214,14 +214,6 @@ typedef struct {
   int use_elc;
 } Coulomb_parameters;
 
-/** Structure to hold Debye-Hueckel Parameters. */
-typedef struct {
-  /** Cutoff for Debey-Hueckel interaction. */
-  double r_cut;
-  /** Debye kappa (inverse Debye length) . */
-  double kappa;
-} Debye_hueckel_params;
-
 /*@}*/
 
 /** Defines parameters for a bonded interaction. */
@@ -402,9 +394,6 @@ extern int n_interaction_types;
 
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;
-
-/** Structure containing the Debye-Hueckel parameters. */
-extern Debye_hueckel_params dh_params;
 
 /** number of bonded interactions. Not used so far. */
 extern int n_bonded_ia;

@@ -24,11 +24,14 @@
     The algorithm used for interaction calculation is parallelized,
     but a full communication is needed every time step. Let us assume
     that the number of nodes P is odd. Then a node p will do the
-    interaction calculation with another node q iff \f$(q-p)\,mod\,P = 0\f$.
+    interaction calculation with another node q iff \f$(q-p)\,mod\,P\f$ is even.
     Of course then every node has to do the same amount of work
     (provided the particles are distributed equally), and each
     interaction pair is done exactly once, since for odd P \f$r\,mod\,P\f$
-    odd iff \f$-r\,mod\,P\f$ is even.
+    odd iff \f$-r\,mod\,P\f$ is even. For an even number of nodes,
+    a virtual additional processor is assumed, with which no interactions occur.
+    This means, that each communication cycle, 1 processor is idle, which is
+    pretty ineffective.
 
     The second main part of this cell system is a load balancer which
     at the beginning of the integration is called and balances the

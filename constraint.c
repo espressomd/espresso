@@ -1,3 +1,6 @@
+/** \file constraint.c
+    Implementation of \ref constraint.h "constraint.h", here it's just the parsing stuff.
+*/
 #include "constraint.h"
 
 #ifdef CONSTRAINTS

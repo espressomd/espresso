@@ -9,7 +9,7 @@ The following procedures are found in scripts/convertDeserno.tcl.
 	The full particle information, bonds, interactions, and parameters will be converted and saved.<BR>
 	If \<destination_file\> is "-1", the data is only loaded into 'Espresso' and nothing is written to disk.<BR>
 	If \<destination_file\> has the suffix '.gz', the output-file will be compressed.<BR>
-	The script uses some assumptions, e.g. on the
+	The script uses some assumptions, e. g. on the
 	\<particle_type_number\>s of \ref tcl_part for polymers,
 	counter-ions, or on <i>sigma, shift, offset</i> for
 	Lennard-Jones-potentials (\ref tcl_inter; current defaults are 
@@ -21,7 +21,7 @@ The following procedures are found in scripts/convertDeserno.tcl.
 	complete list of assumptions.<BR>
 	However, if for some reasons different values need to be set,
 	it is possible to bypass the initialization routine and/or
-	override the default values, e.g. by explicitly executing
+	override the default values, e. g. by explicitly executing
 	<i>initConversion</i>, afterwards overwriting all variables
 	which need to be re-set, and manually invoking the main
 	conversion script

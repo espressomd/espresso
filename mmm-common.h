@@ -23,22 +23,23 @@
 #define C_2PISQR  C_2PI*C_2PI
 /*@}*/
 
-/* precision of polygamma functions. More is unnecessary, the Bessel
-   functions are not better anyways... */
+/** precision of polygamma functions. More is unnecessary, the Bessel
+    functions are not better anyways... */
 #define POLYGAMMA_EPS 1e-17
 
+/** table of the Taylor expansions of the modified polygamma functions */
 extern Polynom *modPsi;
 extern int      n_modPsi;
 
-///
+/** modified polygamma for even order 2*n, n >= 0 */
 MDINLINE double mod_psi_even(int n, double x)
 { return evaluateAsTaylorSeriesAt(&modPsi[2*n],x*x); }
 
-///
+/** modified polygamma for odd order 2*n+1, n>= 0 */
 MDINLINE double mod_psi_odd(int n, double x)
 { return x*evaluateAsTaylorSeriesAt(&modPsi[2*n+1], x*x); }
 
-///
+/** create the both the even and odd polygamma functions up to order 2*n */
 void create_mod_psi_up_to(int n);
 
 #endif

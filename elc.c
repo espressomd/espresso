@@ -6,6 +6,10 @@
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+/** \file elc.c
+ *
+ *  For more information about ELC, see \ref elc.h "elc.h".
+ */
 #include <math.h>
 #include <mpi.h>
 #include "communication.h"
@@ -30,14 +34,17 @@
  * LOCAL DEFINES
  ****************************************/
 
-/* Largest reasonable cutoff for far formula */
+/** Largest reasonable cutoff for far formula */
 #define MAXIMAL_FAR_CUT 50
 
 /****************************************
  * LOCAL VARIABLES
  ****************************************/
 
+/** \name Inverse box dimensions and derived constants */
+/*@{*/
 static double ux, ux2, uy, uy2, uz;
+/*@}*/
 
 ELC_struct elc_params = { 1e100, 10, 1 };
 
@@ -45,9 +52,11 @@ ELC_struct elc_params = { 1e100, 10, 1 };
  * LOCAL ARRAYS
  ****************************************/
 
-/* product decomposition data organization. For the cell blocks
-   it is assumed that the lower blocks part is in the lower half.
-   This has to have positive sign, so that has to be first. */
+/** \name Product decomposition data organization
+    For the cell blocks
+    it is assumed that the lower blocks part is in the lower half.
+    This has to have positive sign, so that has to be first. */
+/*@{*/
 #define POQESP 0
 #define POQECP 1
 #define POQESM 2
@@ -61,49 +70,62 @@ ELC_struct elc_params = { 1e100, 10, 1 };
 #define PQESCM 5
 #define PQECSM 6
 #define PQECCM 7
+/*@}*/
 
-/* number of local particles */
+/** number of local particles, equals the size of \ref partblk. */
 static int n_localpart = 0;
 
-/* temporary buffers for product decomposition */
+/** temporary buffers for product decomposition */
 static double *partblk = NULL;
-/* collected data from the other cells */
+/** collected data from the other cells */
 static double gblcblk[8];
 
-/* structure for storing of sin and cos values */
+/** structure for storing of sin and cos values */
 typedef struct {
   double s, c;
 } SCCache;
 
-/* sin/cos caching */ 
+/** sin/cos caching */ 
+/*@{*/
 static SCCache *scxcache = NULL;
 static int    n_scxcache;  
 static SCCache *scycache = NULL;
 static int    n_scycache;  
+/*@}*/
 
 /****************************************
  * LOCAL FUNCTIONS
  ****************************************/
 
-/* sin/cos storage */
+/** sin/cos storage */
+/*@{*/
 static void prepare_scx_cache();
 static void prepare_scy_cache();
-/* common code */
+/*@}*/
+/** common code */
+/*@{*/
 static void distribute(int size);
-/* p=0 per frequency code */
+/*@}*/
+/** p=0 per frequency code */
+/*@{*/
 static void setup_P(int p, double omega);
 static void add_P_force();
 static double   P_energy(double omega);
-/* q=0 per frequency code */
+/*@}*/
+/** q=0 per frequency code */
+/*@{*/
 static void setup_Q(int q, double omega);
 static void add_Q_force();
 static double   Q_energy(double omega);
-/* p,q <> 0 per frequency code */
+/*@}*/
+/** p,q <> 0 per frequency code */
+/*@{*/
 static void setup_PQ(int p, int q, double omega);
 static void add_PQ_force(int p, int q, double omega);
 static double   PQ_energy(double omega);
 static void add_dipole_force();
 static double dipole_energy();
+/*@}*/
 
 /* COMMON */
 /**********/

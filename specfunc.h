@@ -6,6 +6,20 @@
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+/** \file specfunc.h
+    This file contains implementations for some special functions which are needed by the MMM family of
+    algorithms. This are the modified Hurwitz zeta function and the modified Bessel functions of first
+    and second kind. The implementations are based on the GSL code (see \ref specfunc.c "specfunc.c"
+    for the original GSL header).
+
+    The Hurwitz zeta function is evaluated using the Euler-MacLaurin summation formula, the Bessel functions
+    are evaluated using several different Chebychev expansions. Both achieve a precision of nearly machine
+    precision, which is no problem for the Hurwitz zeta function, which is only used when determining the
+    coefficients for the modified polygamma functions (see \ref mmm-common.h "mmm-common.h"). However, the
+    Bessel functions are actually used in the near formula of MMM2D, which is therefore slightly slower than
+    necessary. On the other hand, the number of terms in the Bessel sum is quite small normally, so that a less
+    precise version will probably not generate a huge computational speed improvement.
+*/
 #ifndef SPECFUNC_H
 #define SPECFUNC_H
 

@@ -67,17 +67,8 @@ extern double verlet_reuse;
 /************************************************************/
 /*@{*/
 
-/** tcl procedure for integrator steering.
-    USAGE: 
-
-\verbatim
-integrate <INT n steps>
-integrate set
-integrate set nvt
-integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>]
-\endverbatim   
-
-    see also \ref tcl_integrate
+/** tcl procedure for integrator steering. For documentation,
+    see \ref tcl_integrate
 */
 int integrate(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
