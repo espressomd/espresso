@@ -2,9 +2,6 @@
 #define LAYERED_H
 #include "cells.h"
 
-#define LAYERED_FULL_EXCHANGE 0
-#define LAYERED_NBOR_EXCHANGE 1
-
 extern int n_layers, determine_n_layers;
 
 extern double layer_h, layer_h_i;

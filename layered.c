@@ -1,5 +1,6 @@
 #include <mpi.h>
 #include <string.h>
+#include "cells.h"
 #include "integrate.h"
 #include "layered.h"
 #include "global.h"
@@ -54,8 +55,10 @@
 #define LAYERED_BTM_NEIGHBOR ((layered_flags & LAYERED_BTM_MASK) != LAYERED_BOTTOM)
 
 int layered_flags = 0;
-int n_layers = -1, determine_n_layers = 1, btm, top;
+int n_layers = -1, determine_n_layers = 1;
 double layer_h = 0, layer_h_i = 0;
+
+static int btm, top;
 
 static void layered_get_mi_vector(double res[3], double a[3], double b[3])
 {
@@ -126,11 +129,11 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
 
     c = 0;
 
-    CELL_TRACE(fprintf(stderr, "%d: ghostrec new comm\n", this_node));
+    CELL_TRACE(fprintf(stderr, "%d: ghostrec new comm of size %d\n", this_node, n));
     /* downwards */
     for (even_odd = 0; even_odd < 2; even_odd++) {
       /* send */
-      if (this_node % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
+      if (this_node % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
 	comm->comm[c].type = GHOST_SEND;
 	/* round 1 use prefetched data */
 	if (c == 1)
@@ -158,7 +161,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
       }
       /* recv. Note we test r_node as we always have to test the sender
 	 as for odd n_nodes maybe we send AND receive. */
-      if (top % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
+      if (top % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
 	comm->comm[c].type = GHOST_RECV;
 	/* round 0 prefetch */
 	if (c == 0)
@@ -170,12 +173,13 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
 	}
 	else {
 	  comm->comm[c].part_lists[0] = &cells[n_layers + 1];
-	  CELL_TRACE(fprintf(stderr, "%d: ghostrec recv from %d topg\n", this_node, btm));
+	  CELL_TRACE(fprintf(stderr, "%d: ghostrec recv from %d topg\n", this_node, top));
 	}
 	c++;
       }
     }
 
+    CELL_TRACE(fprintf(stderr, "%d: ghostrec upwards\n", this_node));
     /* upwards */
     for (even_odd = 0; even_odd < 2; even_odd++) {
       /* send */
@@ -297,7 +301,7 @@ void layered_topology_init(CellPList *old)
     errexit();
   }
 
-  if (determine_n_layers) {
+  if (this_node == 0 && determine_n_layers) {
     if (max_range > 0) {
       n_layers = (int)floor(local_box_l[2]/max_range);
       if (n_layers < 1) {
@@ -310,9 +314,14 @@ void layered_topology_init(CellPList *old)
     else
       n_layers = 1;
   }
+  MPI_Bcast(&n_layers, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  top = (this_node == n_nodes - 1) ? 0 : this_node + 1;
-  btm = (this_node == 0) ? n_nodes - 1 : this_node - 1;
+  top = this_node + 1;
+  if (top == n_nodes && (layered_flags & LAYERED_PERIODIC))
+    top = 0;
+  btm = this_node - 1;
+  if (btm == -1 && (layered_flags & LAYERED_PERIODIC))
+    btm = n_nodes - 1;
 
   layer_h = local_box_l[2]/(double)(n_layers);
   layer_h_i = 1/layer_h;
@@ -375,7 +384,7 @@ static void layered_append_particles(ParticleList *pl)
   for(p = 0; p < pl->n; p++) {
     if (LAYERED_BTM_NEIGHBOR && pl->part[p].r.p[2] < my_left[2])
       continue;
-    if (LAYERED_TOP_NEIGHBOR && pl->part[p].r.p[2] > my_right[2])
+    if (LAYERED_TOP_NEIGHBOR && pl->part[p].r.p[2] >= my_right[2])
       continue;
 
     move_indexed_particle(layered_position_to_cell(pl->part[p].r.p), pl, p);
@@ -395,31 +404,29 @@ void layered_exchange_and_sort_particles(int global_flag)
 
   init_particlelist(&recv_buf);
 
-  for (;;) {
-    /* sort local particles */
-    for (c = 1; c <= n_layers; c++) {
-      oc = &cells[c];
+  /* sort local particles */
+  for (c = 1; c <= n_layers; c++) {
+    oc = &cells[c];
 
-      for (p = 0; p < oc->n; p++) {
-	part = &oc->part[p];
-	fold_position(part->r.p, part->l.i);
-	nc = layered_position_to_cell(part->r.p);
+    for (p = 0; p < oc->n; p++) {
+      part = &oc->part[p];
+      fold_position(part->r.p, part->l.i);
+      nc = layered_position_to_cell(part->r.p);
 
-	if (LAYERED_BTM_NEIGHBOR && part->r.p[2] < my_left[2])
-	  move_indexed_particle(&send_buf_dn, oc, p);
-	else if (LAYERED_TOP_NEIGHBOR && part->r.p[2] > my_right[2])
-	  move_indexed_particle(&send_buf_up, oc, p);
-	else {
-	  if (nc != oc) {
-	    move_indexed_particle(nc, oc, p);
-	    if (p < oc->n) p--;
-	  }
+      if (LAYERED_BTM_NEIGHBOR && part->r.p[2] < my_left[2])
+	move_indexed_particle(&send_buf_dn, oc, p);
+      else if (LAYERED_TOP_NEIGHBOR && part->r.p[2] >= my_right[2])
+	move_indexed_particle(&send_buf_up, oc, p);
+      else {
+	if (nc != oc) {
+	  move_indexed_particle(nc, oc, p);
+	  if (p < oc->n) p--;
 	}
       }
     }
+  }
 
-    CELL_TRACE(fprintf(stderr,"%d: exchange start transfer\n",this_node));
-
+  for (;;) {
     /* transfer */
     if (n_nodes > 1) {
       if (this_node % 2 == 0) {
@@ -471,16 +478,28 @@ void layered_exchange_and_sort_particles(int global_flag)
 #endif
     layered_append_particles(&recv_buf);
 
-    CELL_TRACE(fprintf(stderr,"%d: exchange redo transfer\n",this_node));
-
     /* handshake redo */
     flag = (recv_buf.n != 0);
 
-    if (global_flag == LAYERED_FULL_EXCHANGE) {
+    CELL_TRACE(if (flag) fprintf(stderr, "%d: requesting another exchange round\n", this_node));
+
+    if (global_flag == CELL_GLOBAL_EXCHANGE) {
       MPI_Allreduce(&flag, &redo, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
       if (!redo)
 	break;
       CELL_TRACE(fprintf(stderr, "%d: another exchange round\n", this_node));
+      /* sort left over particles into send cells */
+      for (p = 0; p < recv_buf.n; p++) {
+	part = &recv_buf.part[p];
+	fold_position(part->r.p, part->l.i);
+	if (LAYERED_BTM_NEIGHBOR && part->r.p[2] < my_left[2])
+	  move_indexed_particle(&send_buf_dn, &recv_buf, p);
+	else if (LAYERED_TOP_NEIGHBOR && part->r.p[2] >= my_right[2])
+	  move_indexed_particle(&send_buf_up, &recv_buf, p);
+	else {
+	  CELL_TRACE(fprintf(stderr, "%d: INTERNAL ERROR: particle was not sorted in correctly\n", this_node));
+	}
+      }
     }
     else {
       if (flag) {
@@ -521,7 +540,6 @@ void layered_calculate_ia()
 #endif
 
       /* cell itself and bonded / constraints */
-      CELL_TRACE(fprintf(stderr, "%d: inter local\n", this_node));
       for(j = i+1; j < npl; j++) {
 	layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
 	dist2 = sqrlen(d);
@@ -529,7 +547,6 @@ void layered_calculate_ia()
       }
 
       /* bottom neighbor */
-      CELL_TRACE(fprintf(stderr, "%d: inter bottom\n", this_node));
       for(j = 0; j < npb; j++) {
 	layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
 	dist2 = sqrlen(d);
