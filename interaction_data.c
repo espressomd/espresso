@@ -1050,18 +1050,25 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 			   int argc, char ** argv)
 {
   int change;
+#ifdef LJCOS
   double tmp;
+#endif
   /* parameters needed for LJ */
   double eps, sig, cut, shift, offset, cap_radius;
   /* parameters needed for Gay-Berne*/
+#ifdef ROTATION
   double k1, k2, mu, nu;
+#endif
   /* Parameters needed for tabulated force */
   char* filename = NULL;
+#ifdef COMFORCE
   /* parameters needed for comforce and comfixed */
-  int flag;
-  int dir; 
+  int flag, dir; 
   double force, fratio;
-
+#endif
+#ifdef COMFIXED
+  int flagc;
+#endif 
   
   Tcl_ResetResult(interp);
 
@@ -1219,7 +1226,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 	  }
 
     /* copy comfixed parameters */
-    if ((! ARG_IS_I(1, flag)) )
+    if ((! ARG_IS_I(1, flagc)) )
     {
 	    Tcl_AppendResult(interp, "comfixed needs 1 INTEGER parameter: "
 			  "<comfixed_flag>", (char *) NULL);
@@ -1228,7 +1235,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 
     change = 2;
 
-    if (comfixed_set_params(part_type_a, part_type_b, flag) == TCL_ERROR) {
+    if (comfixed_set_params(part_type_a, part_type_b, flagc) == TCL_ERROR) {
 	Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
 	return TCL_ERROR;
     }
