@@ -2,47 +2,165 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.8.Beta (Rebi & Azan)                                                              *
+* v1.8.6e (Rebi & Azan)                                                                *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.8.3d -
+- v1.8.6e -
 -----------
 
-(a) December 27th, 2004.
-(b) January  11th, 2005.
-(c) January  15th, 2005.
-(d) January  20th, 2005.
-(e) January  25th, 2005.
-(f) January  31st, 2005.
-(g) March     3rd, 2005.
-(h) March     8th, 2005.
+(e) March    15th, 2005.
+(d) March     8th, 2005.
+(c) March     3rd, 2005.
+(b) March     1st, 2005.
+(a) February 28th, 2005.
 
 New Features:
+(c) Added a new option for aggregation analysis tool: <min_contact> option defines a criteria 
+    for minimum number of contacts for two molecules to be considered being in the same aggregate.
+(c) Added new feature to aggregation analysis routine so that there is a 
+    'minimum number of contacts'-criteria
+
+Changes:
+(e) Deactivating superfluous output of 'analyze necklace'-command.
+(b) Speedup of the Bessel functions used for 'MMM1D'-calculations:
+    - improved Chebychev series evaluation
+    - 10^-14 precision adaptive routines
+    - Combo K0/1 routine
+(a) Updated the MMM1D testcase to contain maximal precision reference data.
+
+Bugfixes:
+(d) Fixed bug in aggregation analysis tool: 
+    For calculating distances 'distance2vec' was used (which ignores periodicity), 
+    but 'min_distance2' should have been used instead.
+(c) Fixed an n^2 loop in aggregation analysis tool.
+
+
+- v1.8.5f -
+-----------
+
+(f) February 15th, 2005.
+(e) February 14th, 2005.
+(d) February  4th, 2005.
+(c) January  31st, 2005.
+(b) January  30th, 2005.
+(a) January  28th, 2005.
+
+New Features:
+(e) The new grid allocation algorithm was added.
+(d) New functionality for the part command which returns the topology of a particle:
+    part <num> print connections [<range>]
+(c) Added an argument to 'analyze_fold_molecules' which shifts the system prior to folding.
+    This matches up with the tcl-command 'writepdbfoldtopo' which has an optional shift argument 
+    to allow such shifting. This is intended to assist with visualisation.
+(a) The advanced Lattice-Boltzmann enhancement to Espresso has been released, 
+    allowing to simulate a fluctuation Lattice-Boltzmann fluid with our code.
+
+Changes:
+(c) In the analysis routine the old "gyrationtensor" routine is renamed as "momentofinertia matrix".
+(c) Checking for 1x1xn node_grid when layered cellsystem is on.
+
+Bugfixes:
+(f) Fixed a problem that the initial 'min_num_cells' was illegal in general.
+(d) Fixed a bug in 'comforce.h'.
+(c) Bugs fixed and mass implemented related to the 'gyrationtensor'.
+(c) Fixed 'imd.c' so that the shift argument is supplied to 'analyze_fold_molecules' function.
+(b) Small fixes to lattice Boltzmann input parser.
+
+
+- v1.8.4e -
+-----------
+
+(e) January 25th, 2005.
+(d) January 24th, 2005.
+(c) January 21st, 2005.
+(b) January 20th, 2005.
+(a) January 19th, 2005.
+
+New Features:
+(a) Routines to compute dipolar energies, forces and torques with the P3M method
+    have been added, embedded within a compiler flag DIPOLES to activate them
+    (disabled by default, because this feature is still under development).
+(a) Introduced 'on_observable_calc' to enforce re-calculation of number of charges.
+
+Changes:
+(b) The Debye-Hueckel-testcase now uses the nsquared cell system.
+(b) Modified 'calc_3d_grid' such that it really returns an array in ascending order.
+
+Bugfixes:
+(e) Fixed 'comfixed.tcl' testsuite script. Now it actually integrates 
+    and checks if comfixed is really working.
+(e) Fixed a buffer overflow in MMM1D, P3M, pressure-calculation, 
+    statistics, statistics_chain, topology.
+(d) Fixed the molecule parser to accept its own output for particles not having a 'mol_id'.
+    "off" is also accepted, if anybody wants to set it explicitly.
+(c) Fixed a missing '#ifdef ELECTROSTATICS' in the 'initialize.c' file.
+(b) Fixed the 'min_num_cells' feature for multi node processing.
+(b) Fixed another P3M bug if the skin was changed after setting up P3M, so that
+    P3M now honours changes to the skin.
+(b) Fixed the additional checks in P3M to contain the skin.
+(a) Fixed a severe bug that the charges for P3M and Maggs were only counted when 
+    setting up the interaction. If the interactions were set up before setting up 
+    the particles, the count of charged particles was always zero. 
+    To help fixing this, a new 'on_observable_calc' was introduced.
+
+
+- v1.8.3f -
+-----------
+
+(f) January  14th, 2005.
+(e) January  15th, 2005.
+(d) January  11th, 2005.
+(c) January   6th, 2005.
+(b) January   4th, 2005.
+(a) December 27th, 2004.
+
+New Features:
+(f) Added background_error-codes: Every background error is now identified through its
+    individual error code, which is always returned as the first entry in the list element
+    containing the error message.
+(e) Added some checks for the non verlet domain decomposition case.
+(e) Added an entirely re-written version of the exclusions code.
+(e) Added a generic P3M test case.
+(c) Added option to specify position of 2nd monomer of first chain in the 'polymer'-command, 
+    in case a certain direction of the polymer is desired (option makes only sense 
+    if no more than one polymer is to be created).
+(b) Added 2nd spherical bond angle in 'polymer'-command to allow creation of helixes or DNA.
+(b) Added the Morse-potential to Espresso.
 (a) Added new analysis routine
     'analyze cell_gpb <Manning parameter> <outer cell radius> <inner cell radius> [<accuracy> [<# of interations>]]'
     for determining the numerical solution of the Poisson-Boltzmann equation in the cell model.
-(c) added a generic P3M test case.
-(g) new option for aggregation analysis tool. <min_contact> option defines a criteria for minimum number of contacts for two molecules 
-to be considered to be in the same aggregate.
 
 Changes:
-(c) removed the buggy, non-interpolating version of the P3M charge assignment.
-(c) some improvements in the P3M charge assignment.
-(f) In the analysis routined the old "gyrationtensor" routine is renamed as "momentofinertia matrix". Bugs fixed and mass implemented.
+(e) Removed the buggy, non-interpolating version of the P3M charge assignment;
+    anyways, the gain is only around 10%.
+(e) Some improvements in the P3M charge assignment.
+(d) Changed 'sprintf' in the runtime_errors to the new ERROR_SPRINTF-macro
+(c) Reduced the minimal number of cells to the correct number 8.
+(b) Reduced PARTICLE_INCREMENT to 8 as it does not cost anything, but reduces 
+    the amount of memory used.
+(b) RATTLE is slightly faster as the tolerance conditions are now verified 
+    while the correction vectors are calculated.
 
 Bugfixes:
-(b) Fixed a bug which crashed analyze energy and pressure if the bonded interactions had noncontigous numbers.
-(b) exclusions now also work without Verlet lists.
-(c) Fixed the square bug in P3M, which occurs for non-neutral systems.
-(c) Fixed a rare event bug in tunev2 which could result in wrong parameter sets.
-(d) P3M now honours changes to the skin
-(d) Fixed the additional checks in P3M to contain the skin
-(e) Fixed comfixed.tcl test suite script. Now it actually integrates and checks if comfixed is really working.
-(h) Fixed bug in aggregation analysis tool. For calculating distances distance2vec function (which ignores
-periodicity) was used. min_distance2 should have been used.
+(e) Fixed the square bug in P3M, which occurs for non-neutral systems.
+(e) Fixed a rare event bug in tunev2 which could result in wrong parameter sets
+    when there was only one possible parameter set for a mesh, and that was optimal.
+(d) Fixed a bug which crashed analyze energy and pressure if the bonded interactions 
+    had noncontigous numbers.
+(d) Exclusions now also work without Verlet lists.
+(d) Fixed the link cells routines to work with exclusions.
+(b) Fixed a bug in rigid_bond_set_params(), where the velocity tolerance was not 
+    multiplied by time_step; this led to inaccurate velocity corrections towards 
+    the correct velocity tolerance.
+(b) Fixed the handling of min_num_cells so that setting it updates the cell grid. 
+    The check for illegal values happens earlier, preventing some background errors.
+(b) Fixed a typographical error in on_ghost_flags_change() for activating the flag 
+    'ghosts_have_v' for the case when BOND_CONSTRAINT is compiled in.
+(b) Fixed the new tuning to correctly report the number of charges.
+
 
 - v1.8.2i -
 -----------
