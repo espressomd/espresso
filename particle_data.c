@@ -552,8 +552,16 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       sprintf(buffer, "%d", part.r.identity);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
-    else if (ARG0_IS_S("pos")) {
+    else if (ARG0_IS_S("position")) {
       unfold_particle(part.r.p, part.i);
+      Tcl_PrintDouble(interp, part.r.p[0], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.r.p[1], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.r.p[2], buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    else if (ARG0_IS_S("folded_position")) {
       Tcl_PrintDouble(interp, part.r.p[0], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
       Tcl_PrintDouble(interp, part.r.p[1], buffer);
