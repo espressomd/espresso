@@ -591,13 +591,12 @@ void calc_p_tensor(IntList *p_list, int flag) {
     }
 
     /* non-bonded interactions, electrostatics, and ideal gas contribution */
-    if(flag==1) { 
-      startj=p1->r.identity+1; endj=n_total_particles; } 
-    else { 
-      startj=indi+1; endj=n_p1; 
-    }
+    if(flag==1) { startj=0; endj=n_total_particles; } else { startj=indi+1; endj=n_p1; }
     for(indj=startj; indj<endj; indj++) {
-      if(flag==1) get_particle_data(indj, p2); else get_particle_data(p1_list[indj], p2);
+      if(flag==1) {
+	if((indj == p1->r.identity) || (intlist_contains(p_list,indj)==1)) continue;
+	get_particle_data(indj, p2); }
+      else get_particle_data(p1_list[indj], p2);
 
       /* save current force information */
       for(j=0;j<3;j++) { f1[j] = p1->f[j]; f2[j] = p2->f[j]; }
