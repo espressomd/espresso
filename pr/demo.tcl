@@ -1,6 +1,6 @@
 #!/bin/sh
 # tricking... the line after a these comments are interpreted as standard shell script \
-    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=1; fi
+    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=2; fi
 # OSF1 \
     if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $*
 # AIX \
@@ -166,6 +166,11 @@ proc imd_reconnect {case} {
     }
     after 1000
     exec vmd -e $case.script &
+    after 500
+    while { [catch {imd positions} res] } {
+	puts "connect failed: $res, retrying."
+	after 500
+    }
 }
 
 #############################################################
@@ -296,10 +301,16 @@ while { 1 } {
 #	set z  [expr [lindex $c1 2]-[lindex $c2 2]]
 #	puts "bond_l between 1 and 2 = [expr sqrt($x*$x + $y*$y + $z*$z)]"
 	integrate 100
-	catch [imd positions]
+	while { [catch {imd positions} res] } {
+	    puts "positions failed: $res, retrying."
+	    after 500
+	}
     } {
 	after 100
-	imd listen 1
+	while { [catch {imd listen 1} res] } {
+	    puts "listen failed: $res, retrying."
+	    after 500
+	}
     }
     if { $displayclock } {
 	set etime [expr [clock seconds] - $case2stime]
