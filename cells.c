@@ -133,12 +133,16 @@ void cells_re_init(int new_cs)
 		     this_node, cell_structure.type, new_cs));
 
   topology_release(cell_structure.type);
-  /* transfer old particle cells to tmp buffer */
+  /* MOVE old local_cell list to temporary buffer */
   memcpy(&tmp_local,&local_cells,sizeof(CellPList));
-  tmp_cells = cells;
-  tmp_n_cells = n_cells;
-
   init_cellplist(&local_cells);
+
+  /* MOVE old cells to temporary buffer */
+  tmp_cells   = cells;
+  tmp_n_cells = n_cells;
+  cells   = NULL;
+  n_cells = 0;
+
   topology_init(new_cs, &tmp_local);
 
   /* finally deallocate the old cells */
