@@ -83,7 +83,7 @@ proc veclen {v} {
 	set w [lindex $v $i]
 	set res [expr $res + $w*$w]
     }
-    return $res
+    return [expr sqrt($res)]
 }
 
 proc vecadd {a b} {
