@@ -307,7 +307,7 @@ int change_volume(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int dir = -1;
 
   if (argc < 2) {
-    Tcl_AppendResult(interp, "Wrong # of args! Usage: change_volume { <V_new> | <L_new> { x | y | z } }", (char *)NULL); return (TCL_ERROR);
+    Tcl_AppendResult(interp, "Wrong # of args! Usage: change_volume { <V_new> | <L_new> { x | y | z | xyz } }", (char *)NULL); return (TCL_ERROR);
   }
   if (Tcl_GetDouble(interp, argv[1], &d_new) == TCL_ERROR) return (TCL_ERROR);
   if (argc == 3) { 
