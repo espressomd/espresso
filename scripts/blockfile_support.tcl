@@ -171,9 +171,17 @@ proc blockfile_read_auto_seed {channel read auto} {
 # configs support
 ######################################
 
-proc blockfile_write_configs {channel write configs} {
+proc blockfile_write_configs {channel write configs {range "all"} } {
     blockfile $channel write start configs
-    puts $channel "\n\t{[join [analyze configs] "\}\n\t\{"]}\n\}"
+    if { "$range" == "all" } { set range 0 } else { set range [expr [analyze stored]-$range] }
+    puts -nonewline $channel "\n\t\{ "
+    if { ($range >= 0) && ([analyze stored] > 0) } {
+	for { set i $range } { $i < [expr [analyze stored]-1] } { incr i } { 
+	    puts -nonewline $channel "[analyze configs $i] \}\n\t\{ "
+	}
+	puts $channel "[analyze configs [expr [analyze stored]-1]] \}\n\}"
+    } else { puts $channel "\}\n\}" }
+    # puts $channel "\n\t\{[join [analyze configs $i] "\}\n\t\{"]\}\n\}"
 }
 
 proc blockfile_read_auto_configs {channel read auto} {
