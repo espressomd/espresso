@@ -8,9 +8,10 @@ What's new, what's been changed, what's been fixed
 Current working revision.
 
 
-- v1.5.1a -
+- v1.5.1d -
 -----------
 
+(d) February 14th, 2004.
 (c) February  9th, 2004.
 (b) February  6th, 2004.
 (a) January  30th, 2004.
@@ -48,6 +49,12 @@ New Features:
     Per default NEMD is not compiled in!
 (c) introducing new particle property 'molecule ID'.
 (c) introducing topoplogy concept.
+(d) Implemented an (N,p,T)-ensemble integrator, as published by
+    Kolb, Duenweg, J.Chem.Phys. 111(8) 4453 (1999).
+    To activate it, use the corresponding compiler-flag in 'config.h'
+    and set the new parameters 'piston', 'g0', 'gv', and 'p_ext'.
+(d) New global variable 'p_inst' returns the measure instantaneous pressure
+    if (N,p,T)-integration is used.
 
 Changes:
 (c) 'analyze set chains <start> <N_P> <MPC>' does now set the topology,
