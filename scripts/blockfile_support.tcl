@@ -168,6 +168,20 @@ proc blockfile_read_auto_seed {channel read auto} {
 }
 
 ######################################
+# configs support
+######################################
+
+proc blockfile_write_configs {channel write configs} {
+    blockfile $channel write start configs
+    puts $channel "\n\t{[join [analyze configs] "\}\n\t\{"]}\n\}"
+}
+
+proc blockfile_read_auto_configs {channel read auto} {
+    set data [blockfile $channel read toend]
+    foreach d $data { eval "analyze configs $d" }
+}
+
+######################################
 # setmd variables support
 ######################################
 
@@ -239,11 +253,11 @@ proc blockfile_write_tclvariable {channel write tclvariable {which "all"}} {
 # this is more tricky since we want to read old files
 proc blockfile_read_auto_tclvariable {channel read auto} {
     set vars [blockfile $channel read toend]
-    puts "--$vars"
+#    puts "--$vars"
     foreach vblock $vars {
 	set vname [lindex $vblock 0]
 	set data [lrange $vblock 1 end]
-	puts "----$vname-$data-"
+#	puts "----$vname-$data-"
 	global $vname
 	if {[catch {eval "set $vname $data"} error]} {
 	    if { $error != "" } {
