@@ -18,9 +18,13 @@ Espresso will try to open port 10000, but the port may be in use already by anot
 simulation. In that case it is a good idea to just try another port (see lj_liquid.tcl).
 
 Now while the simulation is running, you should execute
-\verbatim imd positions \endverbatim
+\verbatim imd positions <flag> \endverbatim
 from time to time, which will transfer the current coordinates to VMD, if it is connected.
-If not, nothing happens and imd connect just consumes a small amount of CPU time.
+If not, nothing happens and imd connect just consumes a small amount of CPU time. The optional 
+flag argument can take values \a -unfolded or \a -fold_chains.  By specifying \a -unfolded the unfolded 
+coordinates for each particle will be given to VMD.  Specifying \a -fold_chains causes imd to call the routine 
+\ref analyze_fold_chains which folds chains according to their centers of mass and retains bonding connectivity.  
+Note that this routine requires the chain structure to be specified first using the  analyze command.
 
 \verbatim imd listen <seconds> \endverbatim
 can be used to let the simulation wait for

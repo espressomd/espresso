@@ -16,7 +16,7 @@ description what they test.
 <li> <b> madelung.tcl </b><br>
      Calculates the energy of a NaCl crystal. Test case for the
      electrostatic energy / force.
-</ol>
+
 <li> <b> cell_model.tcl </b><br>
      This example shows the use of \ref tcl_constraint "constraints"
      and non periodic boundary conditions. It simulates a bundle of
