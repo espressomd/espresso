@@ -12,17 +12,19 @@
 
 #############################################################
 #                                                           #
-#  Template for Bundle Simulations                          #
+#  Simulation in a spherical cell                           #
+#  Test case for bundle simulation                          #
 #                                                           #
-#                                                           #
-#  Created:       23.01.2003 by HL                          #
-#  Last modified: 23.01.2003 by HL                          #
+#  Created:       01.04.2003 by HL                          #
+#  Last modified: 09.04.2003 by HL                          #
 #                                                           #
 #############################################################
 
+source ../scripts/bundle.tcl
+
 puts " "
 puts "======================================================="
-puts "=                bundle_temp.tcl                      ="
+puts "=                 cell_model.tcl                      ="
 puts "======================================================="
 puts " "
 
@@ -34,23 +36,28 @@ puts "Program Information: \n[code_info]\n"
 
 # System identification: 
 set name  "bundle"
-set ident "temp"
+set ident "_test"
 
 # System parameters
 #############################################################
 
+# number of Polyelectrolytes
 set n_poly        4
 
+# Polyelectrolyte backbone
 set l_back        40
-set c_dist        3
-set c_num         2
+set c_pat         {0 1 1}
 
+# Hairs
 set h_dist        3
 set h_length      3
 set h_dens        0.5
 
-set sphere_rad    25.0
-#set density       0.001
+# Counterions
+set ci_val       -1
+
+# Spherical simulation cell
+set density       0.0005
 
 # Interaction parameters
 #############################################################
@@ -64,8 +71,9 @@ set lja_eps       1.7
 set fene_r        2.0
 set fene_k        7.0
 
-set bend_k        10.0
+set bend_k        30.0
 
+# The real value for PPP would be around bjerrum=1.7
 set bjerrum       3.0
 set accuracy      1.0e-4
 
@@ -79,8 +87,8 @@ set warm_steps   100
 set warm_n_times 30
 set min_dist     0.9
 
-set ci_steps     100
-set ci_n_times   100
+set ci_steps     1000
+set ci_n_times   1000
 
 set int_steps    100
 set int_n_times  100
@@ -89,16 +97,44 @@ set int_n_times  100
 #############################################################
 set tcl_precision 6
 set mypi          3.141592653589793
-set vmd_output    "yes"
-set vmd_wait      10
+set vmd_output    "no"
+set vmd_wait      3
 
 #############################################################
 #  Setup System                                             #
 #############################################################
 
-set box_l       [expr 4.0*$sphere_rad + 6.0*$skin]
-set center      [expr $box_l/2.0]
-constraint sphere $center $center $center $sphere_rad 1.0 1.0 1.12246 1.0
+# Particle numbers
+# Backbone:      id: 0 - (n_mono-1)
+# Counterions:   id: n_mono - (hair_start-1)
+# Hairs:         id: hair_start - (n_part-1)  
+#############################################################
+set n_mono [expr $n_poly * $l_back]
+set n_hair [expr $n_poly * $h_length*int(($l_back/(1.0*$h_dist))+0.999)]
+set n_ci 0
+set n_charges 0
+for {set i 0} { $i < $l_back } {incr i} {
+    set pat_num [expr $i%[llength $c_pat]]
+    if { [lindex $c_pat $pat_num] != 0 } { 
+	set n_ci [ expr $n_ci + [lindex $c_pat $pat_num] ] 
+	incr n_charges
+    }
+}
+set n_ci [expr $n_ci*$n_poly]
+set n_charges [expr $n_charges*$n_poly]
+set back_charge $n_ci
+set n_ci [expr -$n_ci/$ci_val]
+set n_charges [expr $n_charges+$n_ci]
+if { $n_ci < 0 } { puts "Impossible ci valency" exit }
+set hair_start [expr $n_mono+$n_ci] 
+set n_part [expr $n_mono + $n_ci + $n_hair]
+
+# Simulation box
+set volume [expr $n_part/$density]
+set sphere_rad [expr pow((3.0*$volume)/(4.0*$mypi),1.0/3.0)]
+set  box_l       [expr 4.0*$sphere_rad + 6.0*$skin]
+set center [list [expr $box_l/2.0] [expr $box_l/2.0] [expr $box_l/2.0]]
+constraint sphere [expr $box_l/2.0] [expr $box_l/2.0] [expr $box_l/2.0] $sphere_rad 1.0 1.0 1.12246 1.0
 
 setmd box_l     $box_l $box_l $box_l
 setmd periodic  0 0 0
@@ -131,113 +167,48 @@ inter 1 angle $bend_k
 # Particle setup
 #############################################################
 
-# particle numbers
-set n_mono [expr $n_poly * $l_back]
-set n_hair [expr $n_poly * $h_length*int(($l_back/(1.0*$h_dist))+0.999)]
-set n_ci   [expr $n_poly * $c_num * ($l_back/$c_dist)]
-set tmp [expr ($l_back%$c_dist)-$c_dist+$c_num]
-if { $tmp > 0 } { set n_ci [expr $n_ci + $n_poly*$tmp] }
-set n_part [expr $n_mono + $n_ci + $n_hair]
+# Parameters for the counterion two state setuup
+set f_ppp 0
+for { set i 0 } {$i < [llength $c_pat] } { incr i } { set f_ppp [expr $f_ppp + [lindex $c_pat $i] ] }
+set f_ppp [expr $f_ppp/double([llength $c_pat])]
+set xi_bundle [expr $n_poly*$f_ppp*$bjerrum]
+# the factor 0.9 is an empiric correction due too the finite length of the bundle
+set man_frac [expr 0.9*(1.0-1.0/$xi_bundle)]
+set man_rad  [expr sqrt($sphere_rad)]
 
 # setup bundle cylinder
 set cyl_rad [expr 1.0+sqrt(($n_hair)/($mypi*$l_back*$h_dens))]
 
-set part_id 0
-set s_rad2 [expr $sphere_rad*$sphere_rad]
+bundle_backbone_setup   $n_poly $l_back $cyl_rad $c_pat $h_dist $center {0 2} 0
+bundle_counterion_two_state_setup $n_ci $sphere_rad $ci_val $center 1 $n_mono $man_rad $l_back $man_frac
+bundle_hair_setup       $n_poly $l_back $cyl_rad $h_dist $h_length $center 3 $hair_start 0
 
-# Backbone setup
-set off1  [expr -($h_dist/2.0-0.5)]
-set alpha [expr -(2.0*$mypi/$n_poly)]
-for {set i 0} { $i < $n_poly } {incr i} {
-    set posx [expr $center - $l_back/2.0 + $off1 + ($i%$h_dist)]
-    set posy [expr $center + $cyl_rad*sin($i*$alpha)]
-    set posz [expr $center + $cyl_rad*cos($i*$alpha)]
-    for {set j 0} { $j < $l_back } {incr j} {
-	part $part_id pos $posx $posy $posz type 0 fix
-	if { ($j%$c_dist) >= ($c_dist-$c_num) } {
-	    part $part_id type 2 q 1.0
-	}
-	if { $j > 0 } {
-	    part [expr $part_id-1] bond 0 $part_id
-	}
-	if { $j > 1 } {
-	    part [expr $part_id-1] bond 1 [expr $part_id-2] [expr $part_id]
-	}
-	set posx [expr $posx+1.0]
-	incr part_id
-    }
+# Control Loop
+for {set i 0} { $i < $n_part } {incr i} {
+#    puts "[part $i]"
 }
 
-# Counterions 
-for {set i 0} { $i < $n_ci } {incr i} {
-    set dist [expr $s_rad2 + 10.0]
-    while { $dist > [expr $s_rad2-(2.0*$sphere_rad-1.0)] } {
-        set posx [expr 2*$sphere_rad*[t_random]-$sphere_rad]
-        set posy [expr 2*$sphere_rad*[t_random]-$sphere_rad]
-        set posz [expr 2*$sphere_rad*[t_random]-$sphere_rad]
-        set dist [expr $posx*$posx + $posy*$posy + $posz*$posz]
-    }
-    part $part_id pos [expr $posx+$center] [expr $posy+$center] [expr $posz+$center] type 1 q -1.0
-    incr part_id
+# Checks
+if { $l_back > [expr 1.8*$sphere_rad] } { 
+    puts "Sphere too small!" 
+    exit 
 }
 
-# Hair setup
-set back_id 0
-for {set i 0} { $i < $n_poly } {incr i} {
-    for {set j 0} { $j < $l_back } {incr j} {
-	if { $j%$h_dist == 0 } {
-	    set back_pos [part $back_id print pos]
-	    set posx [lindex $back_pos 0]
-	    for {set k 1} { $k <= $h_length } {incr k} {
-		set posy [expr $center + ($cyl_rad-$k)*sin($i*$alpha)]
-		set posz [expr $center + ($cyl_rad-$k)*cos($i*$alpha)]
-		part $part_id pos $posx $posy $posz type 3
-		if { $k == 1 } {
-		    part $part_id bond 0 $back_id
-		} else {
-		    part $part_id bond 0 [expr $part_id-1]
-		}
-		incr part_id
-	    }
-	}
-	incr back_id
-    }
-}
-
-for {set i 0} { $i < $part_id } {incr i} {
-   # puts "[part $i]"
-}
-
-# Status report
+# Status report                                             #
+#############################################################
 puts "Simulate $n_part particles in a spherical cell with radius $sphere_rad"
-puts "$n_poly PE backbones of length $l_back and charge distance $c_dist"
-puts "with hairs of length $h_length every $h_dist monomer"
-puts "neutralized by $n_ci counterions."
-puts "Backbone monomers: $n_mono ($n_ci charged), Hair monomers: $n_hair."
-puts "Setup in centered cylinder with radius $cyl_rad."
-puts "Constraints:\n[constraint]"
+puts "    Micelle:         $n_poly PPPs of length $l_back. Cylinder radius: $cyl_rad"
+puts "    Charge pattern:  { $c_pat }, total backbone charge:  $back_charge"
+puts "    Hairs:           Length $h_length, distanvce on backbone: $h_dist monomer."
+puts "    Counterions:     $n_ci counterions with valency $ci_val."
+puts "    CI Setup:        Fraction $man_frac in cylinder with radius $man_rad around the bundle"
+puts "    Particles:       Total: $n_part, Charged: $n_charges, Uncharged [expr $n_part-$n_charges]"
+puts "\nConstraints:\n[constraint]"
 
 #  VMD connection                                           #
 #############################################################
 if { $vmd_output=="yes" } {
-    writepsf "$name$ident.psf"
-    writepdb "$name$ident.pdb"
-    for {set port 10000} { $port < 65000 } { incr port } {
-	catch {imd connect $port} res
-	if {$res == ""} break
-    }
-    set HOSTNAME [exec hostname]
-    set vmdout_file [open "vmdoutput.script" "w"]
-    puts $vmdout_file "mol load psf $name$ident.psf pdb $name$ident.pdb"
-    puts $vmdout_file "rotate stop"
-    puts $vmdout_file "imd connect $HOSTNAME $port"
-    puts $vmdout_file "mol modstyle 0 0 CPK 1.000000 0.300000 8.000000 6.000000"
-    puts $vmdout_file "mol modcolor 0 0 SegName"
-    close $vmdout_file
-    puts "PSF and PDB written. IMD connection on port $port"
-    puts "Start VMD in the same directory on the machine you like :"
-    puts "vmd -e vmdoutput.script &"
-    imd listen $vmd_wait
+    prepare_vmd_connection "$name$ident" $vmd_wait 1
 }
 
 #############################################################
@@ -248,7 +219,7 @@ puts "\nStart warmup integration: max $warm_n_times times $warm_steps steps"
 set act_min_dist [analyze mindist]
 set cap 20  
 inter ljforcecap $cap
-
+# fix backbone monomers
 for {set i 0} { $i < $warm_n_times  && $act_min_dist < $min_dist } { incr i} {
     puts -nonewline "Run $i at time=[setmd time] min_dist=$act_min_dist\r"
     flush stdout
@@ -264,6 +235,7 @@ puts "Warmup done: Minimal distance [analyze mindist]"
 #############################################################
 #  Counterion Equilibration                                #
 #############################################################
+for {set i 0} { $i < $n_mono } {incr i} { part $i fix }
 
 puts "\nStart Counterion Equilibration: $ci_n_times times $ci_steps steps"
 # remove LJ cap
@@ -277,6 +249,8 @@ for {set i 0} { $i < $ci_n_times  } { incr i} {
     puts -nonewline "Run $i at time=[setmd time]\r"
     flush stdout
     integrate $ci_steps
+    polyBlockWrite "$name$ident.[format %04d $i]" {time box_l} {id pos type}
+   
     if { $vmd_output=="yes" } { imd positions }
 }
 
@@ -287,16 +261,11 @@ puts "Counterion Equilibration done."
 #############################################################
 
 # free backbone monomers
-for {set i 0} { $i < $n_mono } {incr i} {
-    part $i v 0 0 0 unfix 
-}
+for {set i 0} { $i < $n_mono } {incr i} { part $i unfix }
 
-#for {set i 0} { $i < $part_id } {incr i} {
- #   puts "[part $i]"
-#}
-analyze set chains 0 $n_poly $l_back
 puts "\nStart integration: $int_n_times times $int_steps steps"
 
+analyze set chains 0 $n_poly $l_back
 for {set i 0} { $i < $int_n_times } { incr i} {
     puts -nonewline "Run $i at time=[setmd time], re = [analyze re]\r"
     flush stdout
