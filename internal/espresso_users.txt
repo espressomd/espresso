@@ -43,168 +43,164 @@ Users in MPI-P:
 External users:
 ===============================================================================
 
-name:    Cameron Abrams
-email:   cfa22@drexel.edu
-sent:    JUL 2003
+name:      Cameron Abrams
+email:     cfa22@drexel.edu
+institute: Drexel University, Philadelphia
+sent:      JUL 2003
 version:
 topic: 
 
 
-name:    Hendrik Meyer
-email:   hmeyer@ics.u-strasbg.fr
-sent:    2003
+name:      Hendrik Meyer
+email:     hmeyer@ics.u-strasbg.fr
+sent:      2003
 version:
 topic: 
 
 
-name:    Zuowei Wang 
-email:   wangzw@email.unc.com
-sent:    2003
+name:      Zuowei Wang 
+email:     wangzw@email.unc.com
+institute: University of North Carolina
+sent:      2003
 version:
 topic: 
 
 
-name:    Elena Jarkova
-email:   jarkova@mpip-mainz.mpg.de
-sent:    OKT 2003
+name:      Elena Jarkova
+email:     jarkova@mpip-mainz.mpg.de
+sent:      OKT 2003
 version:
 topic: 
 
 
-name:    Karel Prochazka
-email:   prochaz@vivien.natur.cuni.cz
-sent:    08.OKT.2003
+name:      Karel Prochazka
+email:     prochaz@vivien.natur.cuni.cz
+institute: Charles University Prague
+sent:      08.OKT.2003
 version:
 topic: 
 
 
-name:    Arijit Maitra / Andreas Heuer
-email:   andheuer@uni-muenster.de
-sent:    22.OKT.2003 - 12.MAY.2004
-version: 20040512-Espresso_v1.6.1d.tar.gz
-	 20041025-Espresso_v1.8.Beta.tar.gz
-CVS:	 remote-access (user-id: arijit)
-topic:   Polymers, e.g. PEO at Silica
+name:      Arijit Maitra / Andreas Heuer
+email:     andheuer@uni-muenster.de
+institute: Universitaet Muenster
+sent:      22.OKT.2003 - 12.MAY.2004
+version:   20040512-Espresso_v1.6.1d.tar.gz
+	   20041025-Espresso_v1.8.Beta.tar.gz
+CVS:	   remote-access (user-id: arijit)
+topic:     Polymers, e.g. PEO at Silica
 
 
-name:    Alexey Shipov
-email:   ashipov@mail.ru
-sent:    11.FEB.2004
-version: 20040129-Espresso_v1.5.Beta.tar.gz
-topic:   domain nucleation and growth in thin granular ferromagnetic films 
-         in PMMA
+name:      Alexey Shipov
+email:     ashipov@mail.ru
+sent:      11.FEB.2004
+version:   20040129-Espresso_v1.5.Beta.tar.gz
+topic:     domain nucleation and growth in thin granular ferromagnetic films 
+           in PMMA
 
 
-name:    Salvador LEON-Cabanillas 
-email:   leon@diquima.upm.es
-sent:    20.FEB.2004
+name:      Salvador LEON-Cabanillas 
+email:     leon@diquima.upm.es
+institute: Universidad Politecnica de Madrid
+sent:      20.FEB.2004
 version: 
 topic:   
 
 
-name:    Ralph Jaquet
-email:   theo@theo.chemie.uni-siegen.de
-sent:    09.MAR.2004
-version: 20040129-Espresso_v1.5.Beta.tar.gz
-topic:   Wir würden gerne auch im Rahmen von MD untersuchen, wie sich die 
-         smektische Phase ausrichtet (Direktor) und wie das 
-	 Temperaturverhalten ist.
+name:      Ralph Jaquet
+email:     theo@theo.chemie.uni-siegen.de
+institute: Universitaet Siegen
+sent:      09.MAR.2004
+version:   20040129-Espresso_v1.5.Beta.tar.gz
+topic:     Wir würden gerne auch im Rahmen von MD untersuchen, wie sich die 
+           smektische Phase ausrichtet (Direktor) und wie das 
+	   Temperaturverhalten ist.
 
 
-name:    Alexandre Diehl
-email:   diehl@fisica.ufc.br
-sent:    10.MAR.2004
-version: 20040129-Espresso_v1.5.Beta.tar.gz
-topic:   It's my intention to work on polyelectrolyte simulation
+name:      Alexandre Diehl
+email:     diehl@fisica.ufc.br
+institute: Universidade Federal do Ceara
+sent:      10.MAR.2004
+version:   20040129-Espresso_v1.5.Beta.tar.gz
+topic:     It's my intention to work on polyelectrolyte simulation
 
 
-name:    Frederic Tessier
-email:	 ftessier@physics.uottawa.ca
-sent:    15.MAR.2004
-version: 20040129-Espresso_v1.5.Beta.tar.gz
-topic:   simulations of EOF, Nanopore, polymer-polymer collisions
+name:      Frederic Tessier
+email:	   ftessier@physics.uottawa.ca
+institute: University of Ottawa
+sent:      15.MAR.2004
+version:   20040129-Espresso_v1.5.Beta.tar.gz
+topic:     simulations of EOF, Nanopore, polymer-polymer collisions
 
 
-name:    Baohua Ji
-email:   ji@mf.mpg.de
-sent:    29.MAR.2004
-version: 20040329-Espresso_v1.5.7c.tar.gz
-topic:   simulate the DNA and protein mechanics and deformation
+name:      Baohua Ji
+email:     ji@mf.mpg.de
+sent:      29.MAR.2004
+version:   20040329-Espresso_v1.5.7c.tar.gz
+topic:     simulate the DNA and protein mechanics and deformation
 
 
-name:    Ulf Schiller / Friederike Schmid
-email:   uschille@TechFak.Uni-Bielefeld.DE
-sent:    21.JUL.2004
-version: 20040715-Espresso_v1.6.5b.tar.gz
-topic:   Lipid-Doppelschicht, deren Koepfe zur Stabilisation an feste Waende gekoppelt; 
-	 spaeter soll dann eine Lipid-Doppelschicht in einer Loesungsmittelumgebung 
-	 simuliert werden, wobei zur Simulation des Loesungsmittels ein DPD-Thermostat
-	 angedacht ist
+name:      Olaf Lenz / Ulf Schiller / Friederike Schmid
+email:     olenz / uschille@Physik.Uni-Bielefeld.DE
+institute: Universitaet Bielefeld
+sent:      26.JAN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz and higher
+CVS:	   remote-access (user-id: olenz / uschille)
+topic:     Lipid-Doppelschicht, deren Koepfe zur Stabilisation an feste Waende gekoppelt; 
+	   spaeter soll dann eine Lipid-Doppelschicht in einer Loesungsmittelumgebung 
+	   simuliert werden, wobei zur Simulation des Loesungsmittels ein DPD-Thermostat
+	   angedacht ist, der eingehend untersucht wird
 
 
-name:    Pasichnyk, Igor
-email:   lekaigor@compuservice.de, pasichny@mpipks-dresden.mpg.de
+name:      Pasichnyk, Igor
+email:     lekaigor@compuservice.de, pasichny@mpipks-dresden.mpg.de
+institute: MPI fuer Physik komplexer Systeme Dresden
 sent:    
 version:    
 topic:    
 
 
-name:    Limbach, Hans Joerg
-email:   Hans-Joerg.Limbach@rdls.nestle.com
+name:      Limbach, Hans Joerg
+email:     Hans-Joerg.Limbach@rdls.nestle.com
+institute: 
 sent:    
 version:    
-CVS:	 remote-access (user-id: limbach)
+CVS:	   remote-access (user-id: limbach)
 topic:    
 
 
-name:    Kulic, Igor
+name:      Kulic, Igor
 email:    
 sent:    
 version:    
 topic:    
 
 
-name:    Sukumaran, Sathish Kumar
-email:   sathish@mpip-mainz.mpg.de, physks@leeds.ac.uk
+name:      Sukumaran, Sathish Kumar
+email:     sathish@mpip-mainz.mpg.de, physks@leeds.ac.uk
 sent:    
 version:    
-topic:   i would like to set up espresso here in leeds and use it. would that be ok with you?
+topic:     i would like to set up espresso here in leeds and use it. would that be ok with you?
 
 
-name:    Moran Wang
-email:   moralwang@jhu.edu
-sent:    08.DEC.2004
-version: 20041208-Espresso_v1.8.2d.tar.gz
-topic:   I am a postdoc researcher at the Johns Hopkins University. My current
-	 work has some relationship with electrically driven flow. I notice that
-	 your code can be able to work for this. So I wonder if I can get the code
-	 and have a try to deal with this task. I will cite your papers in any of
-	 my relative productions.
+name:      Moran Wang
+email:     moralwang@jhu.edu
+institute: Jhons Hopkins University
+sent:      08.DEC.2004
+version:   20041208-Espresso_v1.8.2d.tar.gz
+topic:     I am a postdoc researcher at the Johns Hopkins University. My current
+	   work has some relationship with electrically driven flow. I notice that
+	   your code can be able to work for this. So I wonder if I can get the code
+	   and have a try to deal with this task. I will cite your papers in any of
+	   my relative productions.
 
 
-name:    Leon Cabanillas, Salvador
-email:    leon@diquima.upm.es
-sent:    
-version:    
-topic:    
-
-
-name:    Olaf Lenz / Ulf Schiller / Friederike Schmid
-email:   olenz / uschille@Physik.Uni-Bielefeld.DE
-sent:    26.JAN.2005
-version: 20040924-Espresso_v1.7.5.Mezoti.tar.gz and higher
-CVS:	 remote-access (user-id: olenz / uschille)
-topic:   Lipid-Doppelschicht, deren Koepfe zur Stabilisation an feste Waende gekoppelt; 
-	 spaeter soll dann eine Lipid-Doppelschicht in einer Loesungsmittelumgebung 
-	 simuliert werden, wobei zur Simulation des Loesungsmittels ein DPD-Thermostat
-	 angedacht ist, der eingehend untersucht wird
-
-
-name:   Giovanni Giupponi
-email:   g.giupponi@ucl.ac.uk
-sent:    15.MAR.2005
-version: 20040924-Espresso_v1.7.5.Mezoti.tar.gz
-topic:   n.a.
+name:      Giovanni Giupponi
+email:     g.giupponi@ucl.ac.uk
+institute: University College London
+sent:      15.MAR.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     n.a.
 
 
 name:      Bernd Hannebauer
@@ -220,22 +216,21 @@ institute: UCD
 sent:      23.MAR.2005
 version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:     Just curious at the moment. I write my own MD code in Fortran 95 but also like C.
-topic2:  I am currently finishing a PhD on the diffusion of liquids in nanoscale pores. 
-	 These include water and salt diffusing through atomistic models of protein ion-channels. 
-	 For this I developed a suite of Fortran 95 programs including programs for 
-	 * Molecular Dynamics with Nose-Poincare Thermostat and Long range Electrostatics 
-	 (the model pore is infinite in one dimension) using the Lekner method.
-	 * Grand Canonical Ensemble Monte Carlo and Thermodynamic Integration for generating 
-	 initial conditions.
+topic2:    I am currently finishing a PhD on the diffusion of liquids in nanoscale pores. 
+	   These include water and salt diffusing through atomistic models of protein ion-channels. 
+	   For this I developed a suite of Fortran 95 programs including programs for 
+	   * Molecular Dynamics with Nose-Poincare Thermostat and Long range Electrostatics 
+	   (the model pore is infinite in one dimension) using the Lekner method.
+	   * Grand Canonical Ensemble Monte Carlo and Thermodynamic Integration for generating 
+	   initial conditions.
 
-	 I've also studied a hybrid hard-sphere/continuous liquid diffusing through a model 
-	 (MCM like)silica pore.
+	   I've also studied a hybrid hard-sphere/continuous liquid diffusing through a model 
+	   (MCM like)silica pore.
 
-	 I was interested in the Espresso source code mainly to see how a large scientific program 
-	 is organised/implemented in C. (Although I often write small 'tools' in C all my larger 
-	 program are implemented in Fortran 95 which I'm more familiar with and hence find much 
-	 simpler to use). 
-	 I don't plan to use Espresso in the short term as I'm still very busy running my own codes, 
-	 but hopefully in the future I'll get time to study the code and perhaps contribute to it.
-
+	   I was interested in the Espresso source code mainly to see how a large scientific program 
+	   is organised/implemented in C. (Although I often write small 'tools' in C all my larger 
+	   program are implemented in Fortran 95 which I'm more familiar with and hence find much 
+	   simpler to use). 
+	   I don't plan to use Espresso in the short term as I'm still very busy running my own codes, 
+	   but hopefully in the future I'll get time to study the code and perhaps contribute to it.
 
