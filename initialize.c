@@ -81,11 +81,6 @@ int on_program_start(Tcl_Interp *interp)
 
 void on_integration_start()
 {
-  
-  /* happens if 0 particles... */
-  if (!node_grid_is_set())
-    setup_node_grid();
-
   particle_invalidate_part_node();
 
   if (reinit_thermo) {
@@ -152,6 +147,8 @@ void on_constraint_change()
 
 void on_cell_structure_change()
 {
+  /* to enforce initialization of the ghost cells */
+  resort_particles = 1;
   on_coulomb_change();
 }
 
@@ -185,7 +182,7 @@ void on_parameter_change(int field)
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
-    if (field == FIELD_BOXL)
+    if (field == FIELD_BOXL || field == FIELD_MAXRANGE)
       cells_re_init(CELL_STRUCTURE_LAYERED);
     break;
   case CELL_STRUCTURE_DOMDEC:
