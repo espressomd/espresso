@@ -199,3 +199,11 @@ topic:   Lipid-Doppelschicht, deren Koepfe zur Stabilisation an feste Waende gek
 	 simuliert werden, wobei zur Simulation des Loesungsmittels ein DPD-Thermostat
 	 angedacht ist, der eingehend untersucht wird
 
+
+
+
+name:   Giovanni Giupponi
+email:   g.giupponi@ucl.ac.uk
+sent:    15.MAR.2005
+version: 20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:   n.a.
