@@ -107,7 +107,6 @@ proc writepdb {file {folded ""}} {
     close $f
 }
 
-
 # This routine writes a pdb file by folding according to molecule information #
 # Note that shifting might not work yet #
 proc writepdbfoldtopo { file  {shift 0 } } {
@@ -133,20 +132,31 @@ proc writepdbfoldtopo { file  {shift 0 } } {
     set mp [setmd max_part]
     set cnt 0
 
-    for { set m 0 } { $m < $n_molecules } { incr m } {
-	for { set p 1 } { $p < [llength [lindex $topo $m] ] } { incr p } { 
-	    set pid [lindex [lindex $topo $m] $p]
-	    set tp [part $pid p t]
-	    set pos [lindex $coord [part $pid p id]]
+#    set maxparts1 [expr $mp - $nparts2]
 
+    for {set p 0} { $p <= $mp } { incr p } {
+	set tp [part $p p t]
+	if { $tp != "na" } {
+	    set pos [lindex $coord $p]
 	    puts $f [format "ATOM %6d  FE  UNX F%4d    %8.3f%8.3f%8.3f  0.00  0.00      T%03d" \
-			 $cnt [expr $pid % 10000] [lindex $pos 1] [lindex $pos 2] [lindex $pos 3] $tp]
+			 $cnt [expr $p % 10000] [lindex $pos 1] [lindex $pos 2] [lindex $pos 3] $tp]
 	    incr cnt
 	}
-
     }
+
+#    for { set m 0 } { $m < $n_molecules } { incr m } {
+#	for { set p 1 } { $p < [llength [lindex $topo $m] ] } { incr p } { 
+#	    set pid [lindex [lindex $topo $m] $p]
+#	    set tp [part $pid p t]
+#	    set pos [lindex $coord [part $pid p id]]
+#	    puts $f [format "ATOM %6d  FE  UNX F%4d    %8.3f%8.3f%8.3f  0.00  0.00      T%03d" \			 
+#    $cnt [expr $cnt % 10000] [lindex $pos 1] [lindex $pos 2] [lindex $pos 3] $tp]
+#	    incr cnt
+#	}
+# }
     close $f
 }
+
 
 
 
