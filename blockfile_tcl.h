@@ -11,6 +11,8 @@
 #define BLOCKFILE_TCL_H
 #include <tcl.h>
 
+/** Implementation of the Tcl command \ref tcl_blockfile. Allows to read and write
+    blockfile comfortably from Tcl. */
 int blockfile(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
 #endif
