@@ -21,7 +21,12 @@ interface between the Tcl script and the MD code:
 	Most important commands: \ref tcl_analyze "analyze"
   </li>
   <li>\ref aux_funcs      "File I/O and utilities"
+
 	Most important commands: \ref tcl_blockfile "blockfile", \ref io "checkpoints"
+  </li>
+  <li>\ref tcl_procs      "Additional TCL-Procedures"
+
+	File format conversions, Math, Analysis, Graphics
   </li>
 </ul>
 
@@ -129,7 +134,7 @@ Section \ref errors "Errorhandling" describes the structure of error messages th
         get the error of errors of Monte Carlo simulations. (see \ref tcl_uwerr)
   </ul>
 
-\section aux_funcs File-I/O, checkpoints, and other auxiliary functions
+\section aux_funcs File-I/O, checkpoints
   <ul>
     <li>\verbatim blockfile <channel> ( read|write start|end|variable|auto|toend ) <param>?\endverbatim
         blockfile allows for convenient access to a block format structured file \<channel\>.
@@ -151,10 +156,12 @@ Section \ref errors "Errorhandling" describes the structure of error messages th
     <li>\verbatim bit_random [{ seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }] \endverbatim
     <li>\verbatim g_random \endverbatim
         different implementations of random number generators returning random deviates with a uniform probability distribution,
-	except for <tt>g_random</tt> which returns normally (Gaussian) distributed deviates with zero mean and unit variance,
+	except for <tt>gauss_random</tt> which returns normally (Gaussian) distributed deviates with zero mean and unit variance,
 	using <tt>t_random</tt> as the source of uniform deviates, and Numerical Recipes' Transformation Mehod (ch. 7.2).<br>
 	For details and more information, see \ref tcl_t_random or \ref tcl_bit_random.
   </ul>
+
+\section tcl_procs Additional TCL-Procedures
 
 At program start, Espresso reads in a starting script
 <i>'init.tcl'</i>. It is assumed to be located in a directory
