@@ -141,72 +141,32 @@ RandomStatus print_random_stat(void) {
 
 /*----------------------------------------------------------------------*/
 
-/**  A random generator for tcl.
- Usage: tcl_rand() for uniform double in ]0;1[
- tcl_rand(i <n>) for integer between 0 and n-1*/
-
-int tcl_rand(ClientData data, Tcl_Interp *interp,
-	  int argc, char **argv)
-{
-  int i_out;
-  double d_out;
-  char   buffer[TCL_DOUBLE_SPACE + 5];
-
-  if (argc > 1) {
-    switch(argv[1][0])
-      {
-      case 'i':
-	if(argc < 3){
-	  Tcl_AppendResult(interp, "wrong # args:  should be \"",
-			   argv[0], " ?variable type? ?parameter?\"",
-			   (char *) NULL);
-	  return (TCL_ERROR);
-	}else {
-	  Tcl_GetInt(interp, argv[2], &i_out);
-	  i_out = i_random(i_out);
-	  sprintf(buffer, "%d", i_out);
-	  Tcl_AppendResult(interp, buffer, (char *) NULL);
-	  return (TCL_OK);
-	} 
-      case 'd':
-	d_out = d_random();
-	sprintf(buffer, "%f", d_out);
-	Tcl_AppendResult(interp, buffer, (char *) NULL);
-	return (TCL_OK);
-      default:
-	Tcl_AppendResult(interp, "wrong # args:  should be \"",
-			 argv[0], " ?variable type? ?parameter?\"",
-			 (char *) NULL);
-	return (TCL_ERROR);
-      }
-  }else {
-   d_out = d_random();
-   sprintf(buffer, "%f", d_out);
-   Tcl_AppendResult(interp, buffer, (char *) NULL); 
-   return (TCL_OK);
-  }
-  printf("Error in tcl_rand(); this should never been shown\n");
-  return(TCL_ERROR);
-}
-
-
-/*----------------------------------------------------------------------*/
-
 
 /**  Implementation of the tcl-command
-     setmd_random { seed [<seed(0)> ... <seed(n_nodes)>] | stat [status-list] }
-     Without further arguments, it returns the current seeds/status of the nodes as a tcl-list;
-     otherwise it issues the parameters as the new seeds/status to the respective nodes. */
-int setmd_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+     t_random [{ int <n> | seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }]
+     <li> Without further arguments, it returns a random double between 0 and 1.
+     <li> If 'int <n>' is given, it returns a random integer between 0 and n-1.
+     <li> If 'seed'/'stat' is given without further arguments, it returns a tcl-list with
+          the current seeds/status of the n_nodes active nodes; otherwise it issues the 
+	  given parameters as the new seeds/status to the respective nodes. */
+int t_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-  int i,j,cnt;
+  int i,j,cnt, i_out; double d_out;
 
-  if (argc <= 1) {
-    sprintf(buffer, "Wrong # of args (%d)! Usage: setmd_random { seed [<seed(0)> ... <seed(%d)>] | stat [status-list] }", argc,n_nodes-1);
-    Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_ERROR); }
+  if (argc == 1) {                                          /* 't_random' */
+    d_out = d_random();
+    sprintf(buffer, "%f", d_out); Tcl_AppendResult(interp, buffer, (char *) NULL); return (TCL_OK); }
   else {
     argc--; argv++;
-    if (!strncmp(argv[0], "seed", strlen(argv[0]))) {
+    if (!strncmp(argv[0], "int", strlen(argv[0]))) {        /* 't_random int <n>' */
+      if(argc < 2){ Tcl_AppendResult(interp, "Wrong # of args: Usage: 't_random int <n>'", (char *) NULL); return (TCL_ERROR); }
+      else {
+	Tcl_GetInt(interp, argv[2], &i_out);
+	i_out = i_random(i_out);
+	sprintf(buffer, "%d", i_out); Tcl_AppendResult(interp, buffer, (char *) NULL); return (TCL_OK);
+      }
+    }
+    else if (!strncmp(argv[0], "seed", strlen(argv[0]))) {  /* 't_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
       long seed[n_nodes];
       if (argc <= 1) {
 	mpi_random_seed(0,seed);
@@ -215,7 +175,7 @@ int setmd_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	}
       }
       else if (argc < n_nodes+1) { 
-	sprintf(buffer, "Wrong # of args (%d)! Usage: setmd_random seed [<seed(0)> ... <seed(%d)>]", argc,n_nodes-1);
+	sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random seed [<seed(0)> ... <seed(%d)>]'", argc,n_nodes-1);
 	Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_ERROR); }
       else {
 	for (i=0; i < n_nodes; i++) { seed[i] = atol(argv[i+1]); }
@@ -225,7 +185,7 @@ int setmd_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
       // free(seed); 
       return(TCL_OK);
     }
-    else if (!strncmp(argv[0], "stat", strlen(argv[0]))) {
+    else if (!strncmp(argv[0], "stat", strlen(argv[0]))) {  /* 't_random stat [status-list]' */
       RandomStatus stat[n_nodes];
       if (argc <= 1) {
 	mpi_random_stat(0,stat);
@@ -238,7 +198,7 @@ int setmd_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	}
       }
       else if (argc < n_nodes*(NTAB_RANDOM+2)+1) { 
-	sprintf(buffer, "Wrong # of args (%d)! Usage: setmd_random stat [<idum> <iy> <iv[0]> ... <iv[%d]>]^%d", argc,NTAB_RANDOM-1,n_nodes);
+	sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random stat [<idum> <iy> <iv[0]> ... <iv[%d]>]^%d'", argc,NTAB_RANDOM-1,n_nodes);
 	Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_ERROR); }
       else {
 	cnt = 1;
@@ -252,8 +212,11 @@ int setmd_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
       // free(stat); 
       return(TCL_OK);
     }
-    else { Tcl_AppendResult(interp, "Unknown job '",argv[0],"' requested!", (char *)NULL); return (TCL_ERROR); }
+    else { 
+      sprintf(buffer, "Usage: 't_random [{ int <n> | seed [<seed(0)> ... <seed(%d)>] | stat [status-list] }]'",n_nodes-1);
+      Tcl_AppendResult(interp, "Unknown job '",argv[0],"' requested!\n",buffer, (char *)NULL); return (TCL_ERROR); 
+    }
   }
-  printf("Error in tcl_seed(); this should have never been shown!\n");
+  printf("Unknown error in tcl_seed(): This should have never been shown!\n");
   return(TCL_ERROR);
 }
