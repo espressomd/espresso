@@ -61,15 +61,15 @@ This will allow to use such particle properties as quart, omega, and torque. */
 
 /** Compiler flag to enable external forces. E.g. apply a fixed external force
     to a particle or fix a particle in space. */
-/* #define EXTERNAL_FORCES */
+#define EXTERNAL_FORCES
 
 
 /** Compiler Flag to enable constraints, eg walls, spheres.
     See \ref constraint.h and \ref interaction_data.h */
-/* #define CONSTRAINTS */
+#define CONSTRAINTS
 
 /** allow particles to have different masses. */
-/* #define MASS */
+#define MASS
 
 /** exclusion of nonbonded interactions for specific particle pairs
     currently works only with domain decomposition and Verlet lists */
@@ -82,8 +82,8 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /* #define COMFIXED */
 
 /** Compiler Flag to enable bond constraint.
-    See \ref rattle.h, merged but not tested. If you need this, I wish
-    you happy debugging. */
+    See \ref rattle.h, merged but not tested. 
+    If you need this, I wish you happy debugging. */
 /* #define BOND_CONSTRAINT */
 
 /************************************************/
@@ -96,7 +96,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /* #define TABULATED */
 
 /** Lennard-Jones */
-#define LENNARD_JONES */
+#define LENNARD_JONES
 
 /** Morse */
 #define MORSE
@@ -105,10 +105,10 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /* #define LJCOS */
 
 /** BUCKINGHAM potential */
-/* #define BUCKINGHAM */
+#define BUCKINGHAM
 
 /** SOFT-SPHERE potential */
-/* #define SOFT_SPHERE */
+#define SOFT_SPHERE
 /*@}*/
 
 /************************************************/
@@ -209,7 +209,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /** callback for version status. */
 MDINLINE int version_callback(Tcl_Interp *interp)
 {
-  Tcl_AppendResult(interp, "ESPRESSO: v1.8.Beta (Rebi & Azan), Last Change: 25.10.2004", (char *) NULL);
+  Tcl_AppendResult(interp, "ESPRESSO: v1.8.2b (Rebi & Azan), Last Change: 01.12.2004", (char *) NULL);
   return (TCL_OK);
 }
 

@@ -8,29 +8,69 @@ What's new, what's been changed, what's been fixed
 Current working revision.
 
 
-- v1.8.1e -
+- v1.8.2b -
 -----------
-(f) December 1st, 2004.
-(e) November 5th, 2004.
-(d) October 22nd, 2004.
-(c) October 20th, 2004.
-(b) October 19th, 2004.
-(a) October 18th, 2004.
+
+(b) December  1st, 2004.
+(a) November 30th, 2004.
 
 New Features:
-(e) Completely rewritten exclusions code. Ready for testing.
-    Allows for general exclusions and is stored particle bound, so it
-    should be faster.
-(e) The Morse potential for nonbonded interactions has been added.
+(b) Comfixed potential now also works with different masses on the particles.
+(b) Rewrote checkpointing to be able to save disk space by removing repeating informations:
+    Added new options 'COMPACT_CHK' to 'checkpoint_set', which'll take care of this, if enabled.
+
+Bugfixes:
+(b) Fixed yet another bug in 'pair_dist' which used to not use the 2nd particle's z-component,
+    while now (after HL's rewrite) taking the wrong particle identities to derive the distance.
+(b) Fixed wrong renormalization in 'analyze g3'.
+(a) Lots of fixes to the documentation.
+(a) Fixed missing #ifdef BOND_CONSTRAINT in the interaction processing.
+
+
+- v1.8.1l -
+-----------
+
+(l) November 16th, 2004.
+(k) November  9th, 2004.
+(j) November  5th, 2004.
+(i) November  5th, 2004.
+(h) October  29th, 2004.
+(g) October  28th, 2004.
+(f) October  26th, 2004.
+(e) October  25th, 2004.
+(d) October  22nd, 2004.
+(c) October  20th, 2004.
+(b) October  19th, 2004.
+(a) October  18th, 2004.
+
+New Features:
+(k) Added the missing RIGID_BOND parser and printing.
+(j) Completely rewritten exclusions code. Ready for testing. Allows for 
+    general exclusions and is stored particle bound, so it should be faster.
+(j) Added the testfake target for mpifake testsuite runs ('gmake testfake').
+(j) RATTLE is now compiling and MAY work.
+(i) The Morse potential for nonbonded interactions has been added, cap included.
+(g) Added masses into statistics facilities.
+(f) Added an additional error check to parse_sync_topo_part_info
+(e) Two new subroutines for structural analysis:
+    1) total structure factor S(q)
+    2) 'analyze rdfchain' for some useful chain statistics
 (d) Added the famous soft-sphere potential.
 (c) Now the P3M limit for the mesh size is configurable and defaults to 128.
 (a) The Buckingham potential has been added.
 (a) Rattle is in, but probably not yet working.
 
 Changes:
-(e) Flags for the compilers changed. gcc is more aggressive now, icc 8.1 should
-    not issue the silly warnings anymore.
-(e) Arijit's exclusion code has more or less been removed.
+(j) Bugfixes by Arijit in the docu, buckingham.h and in the thermostats.
+(j) Arijit's exclusion code has more or less been removed (and rewritten, see above).
+(j) Removed 'subt_lj' and 'FENE/harm'-combos, because new exclusions are more powerful.
+(j) Inlined the RNGs (random number generators) and some thermostats.
+(j) Flags for the compilers changed: gcc is more aggressive now, while 
+    icc 8.1 should no longer issue silly warnings anymore.
+(j) New compiler flags. Makes compiling slower, but the code faster.
+    gcc is more aggressive now, while for icc, a comment was added how to avoid the 
+    silly warnings with the recent 8.1 compiler.
+(h) Changed includedir order, so that mpifake works on Darwin.
 (c) Switched from POLYGAMMA_EPS to the commonly used ROUND_ERROR_PREC.
 (b) By request of too many users, grid.h now explicitely includes limits.h (which
     shouldn't be necessary on modern machines, but then you never know).
@@ -38,12 +78,14 @@ Changes:
     allocation problems (a 512 grid consumes roughly 3 GB memory!).
 
 Bugfixes:
-(f) Comfixed potential no works with different mass particles.
-(e) fixed a mem leak in partCfg, bonds (updatePartCfg(WITH_BONDS)) where never freed.
-(e) fixed the particle print out, not handling particles by reference.
-(e) fixed try_delete_bond, deleting bonds probably did not work for a long time.
-(e) fixed COM with masses, was off by three
-(e) Added #ifdef statements for TABULATED and BUCKINGHAM potentials in the interprintall()   
+(l) Fixed the complete mess in auto_exclusions, which essentially prevented it from working.
+(k) Fixed a bug which prevented tuning from working.
+(j) Fixed a mem leak in partCfg, bonds (updatePartCfg(WITH_BONDS)) where never freed.
+(j) Fixed the particle printout, not handling particles by reference.
+(j) Fixed try_delete_bond, deleting bonds probably did not work for a long time.
+(j) Fixed a bug in the center of mass (COM), where all coordinates were counted 
+    for the total weight, resulting in an off-by-3-error.
+(j) Added #ifdef statements for TABULATED and BUCKINGHAM potentials in the interprintall()   
 (b) Fixed the warning with the recent icc (Blade center).
 
 
