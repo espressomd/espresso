@@ -399,7 +399,7 @@ static void checkpoint(char *text, int p, int q, int e_size)
 static void add_2pi_signz()
 {
   int np, c, i;
-  double pref = C_2PI*ux*uy, add;
+  double pref = coulomb.prefactor*C_2PI*ux*uy, add;
   Particle *part;
   int e_size = 1, size = 2;
   double *othcblk;
@@ -436,7 +436,7 @@ static void add_2pi_signz()
 static double twopi_z_energy()
 {
   int np, c, i;
-  double pref = -C_2PI*ux*uy;
+  double pref = -coulomb.prefactor*C_2PI*ux*uy;
   Particle *part;
   int e_size = 2, size = 4;
   double *othcblk;
@@ -478,7 +478,7 @@ static void setup_P(int p, double omega)
 {
   int np, c, i, ic, o = (p-1)*n_localpart;
   Particle *part;
-  double pref = 4*M_PI*ux*uy;
+  double pref = coulomb.prefactor*4*M_PI*ux*uy;
   double e;
   double *llclcblk;
   int size = 4;
@@ -510,7 +510,7 @@ static void setup_Q(int q, double omega)
 {
   int np, c, i, ic, o = (q-1)*n_localpart;
   Particle *part;
-  double pref = 4*M_PI*ux*uy;
+  double pref = coulomb.prefactor*4*M_PI*ux*uy;
   double e;
   double *llclcblk;
   int size = 4;
@@ -652,7 +652,7 @@ static void setup_PQ(int p, int q, double omega)
 {
   int np, c, i, ic, ox = (p - 1)*n_localpart, oy = (q - 1)*n_localpart;
   Particle *part;
-  double pref = 8*M_PI*ux*uy;
+  double pref = coulomb.prefactor*8*M_PI*ux*uy;
   double e;
   double *llclcblk;
   int size = 8;
@@ -983,7 +983,7 @@ void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
 				  double d[3], double dl2, double dl)
 {
   double F[3];
-  double pref = p1->p.q*p2->p.q;
+  double pref = coulomb.prefactor*p1->p.q*p2->p.q;
   double z2   = d[2]*d[2];
   double rho2 = d[1]*d[1] + z2;
   int i;
@@ -1235,7 +1235,7 @@ MDINLINE double calc_mmm2d_copy_pair_energy(double d[3])
 double mmm2d_coulomb_pair_energy(Particle *p1, Particle *p2,
 				 double dv[3], double d2, double d)
 {
-  double eng, pref = p1->p.q*p2->p.q;
+  double eng, pref = coulomb.prefactor*p1->p.q*p2->p.q;
 
   if (pref != 0.0) {
     eng = calc_mmm2d_copy_pair_energy(dv);
@@ -1249,7 +1249,7 @@ void MMM2D_self_energy()
   int c, np, i;
   Particle *part;
   double dv[3] = {0, 0, 0};
-  double seng = calc_mmm2d_copy_pair_energy(dv);
+  double seng = coulomb.prefactor*calc_mmm2d_copy_pair_energy(dv);
   self_energy = 0;
 
   /* this one gives twice the real self energy, as it is used
