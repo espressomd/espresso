@@ -155,6 +155,11 @@ int try_delete_bond(Particle *part, int *bond)
 {
   IntList *bl = &part->bl;
   int i, j, type, partners;
+  if (!bond) {
+    realloc_intlist(bl, bl->n = 0);
+    return TCL_OK;
+  }
+
   for (i = 0; i < bl->n;) {
     type = bond[i];
     partners = bonded_ia_params[type].num;
@@ -614,9 +619,9 @@ int part(ClientData data, Tcl_Interp *interp,
 	/* Bond type number and the bond partner atoms are stored in this field. */
 	int *bond;
 	/* check number of arguments */
-	if (argc < 3) {
-	  Tcl_AppendResult(interp, "bond requires at least 2 arguments: "
-			   "[delete] <type_num> <partner>", (char *) NULL);
+	if (argc < 2) {
+	  Tcl_AppendResult(interp, "bond requires at least 1 arguments: "
+			   "[delete] { <type_num> <partner> }", (char *) NULL);
 	  return (TCL_ERROR);
 	}
 	/* parse away delete eventually */
@@ -626,38 +631,45 @@ int part(ClientData data, Tcl_Interp *interp,
 	  argv++;
 	}
 	/* check type_num */
-	if (Tcl_GetInt(interp, argv[1], &type_num) == TCL_ERROR)
-	  return (TCL_ERROR);
-	if(type_num < 0 || type_num >= n_bonded_ia) {
-	  Tcl_AppendResult(interp, "invalid bonded interaction type_num"
-			   "(Set bonded interaction parameters first)", (char *) NULL);
-	  return (TCL_ERROR);
+	if (argc <= 1 || Tcl_GetInt(interp, argv[1], &type_num) == TCL_ERROR) {
+	  if (delete == 0)
+	    return (TCL_ERROR);
+	  bond = NULL;
+	  // since there is not even a type...
+	  n_partners = -1;
 	}
-	/* check partners */ 
-	n_partners = bonded_ia_params[type_num].num;
-	if(argc < 2+n_partners) {
-	  char buffer[256 + 2*TCL_INTEGER_SPACE];
-	  sprintf(buffer, "bond type %d requires %d arguments.",
-		  type_num, n_partners+1);
-	  Tcl_AppendResult(interp, buffer, (char *) NULL);
-	  return (TCL_ERROR);
-	}
-	bond = (int *)malloc( (n_partners+1)*sizeof(int) );
-	bond[0] = type_num;
-	j=1;
-	while(j <= n_partners) {
-	  if (Tcl_GetInt(interp, argv[j+1], &(bond[j])) == TCL_ERROR) {
-	    free(bond);
+	else {
+	  if(type_num < 0 || type_num >= n_bonded_ia) {
+	    Tcl_AppendResult(interp, "invalid bonded interaction type_num"
+			     "(Set bonded interaction parameters first)", (char *) NULL);
 	    return (TCL_ERROR);
 	  }
-	  if(bond[j] > max_seen_particle || particle_node[bond[j]] == -1) {
-	    Tcl_AppendResult(interp, "partner atom %d (identity %d) not known"
-			     ,j+1,bond[j],
-			     "(Set all partner atoms first)", (char *) NULL);
-	    free(bond);
+	  /* check partners */ 
+	  n_partners = bonded_ia_params[type_num].num;
+	  if(argc < 2+n_partners) {
+	    char buffer[256 + 2*TCL_INTEGER_SPACE];
+	    sprintf(buffer, "bond type %d requires %d arguments.",
+		    type_num, n_partners+1);
+	    Tcl_AppendResult(interp, buffer, (char *) NULL);
 	    return (TCL_ERROR);
 	  }
-	  j++;
+	  bond = (int *)malloc( (n_partners+1)*sizeof(int) );
+	  bond[0] = type_num;
+	  j=1;
+	  while(j <= n_partners) {
+	    if (Tcl_GetInt(interp, argv[j+1], &(bond[j])) == TCL_ERROR) {
+	      free(bond);
+	      return (TCL_ERROR);
+	    }
+	    if(bond[j] > max_seen_particle || particle_node[bond[j]] == -1) {
+	      Tcl_AppendResult(interp, "partner atom %d (identity %d) not known"
+			       ,j+1,bond[j],
+			       "(Set all partner atoms first)", (char *) NULL);
+	      free(bond);
+	      return (TCL_ERROR);
+	    }
+	    j++;
+	  }
 	}
 	/* set/delete bond */ 
 	if (change_particle_bond(part_num, bond, delete) != TCL_OK) {
