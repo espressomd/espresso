@@ -219,6 +219,15 @@ void pack_block_permute2(double *in, double *out, int start[3], int size[3],
 void unpack_block(double *in, double *out, int start[3], int size[3], 
 		  int dim[3], int element);
 
+/** Debug function to print global fft mesh. 
+    Print a globaly distributed mesh contained in data. Element size is element. 
+ * \param plan     fft/communication plan (see \ref fft_forw_plan).
+ * \param data     mesh data.
+ * \param element  element size.
+ * \param num      element index to print.
+*/
+void print_global_fft_mesh(fft_forw_plan plan, double *data, int element, int num);
+
 /*@}*/
 
 #endif

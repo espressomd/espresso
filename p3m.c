@@ -30,6 +30,9 @@
 /** increment size of charge assignment fields. */
 #define CA_INCREMENT 50       
 
+/** Precision of mesh setup calculations. */
+#define SETUP_PREC 1.0e-14
+
 /* MPI tags for the p3m communications: */
 /** Tag for communication in P3M_init() -> send_calc_mesh(). */
 #define REQ_P3M_INIT   200
@@ -182,7 +185,7 @@ void calc_differential_operator();
 /** Calculates the optimal influence function of Hockney and Eastwood. 
  *
  *  Each node calculates only the values for its domain in k-space
- *  (see fft_plan[2].mesh and fft_plan[2].start).
+ *  (see fft_plan[3].mesh and fft_plan[3].start).
 
  *  See also: Hockney/Eastwood 8-22 (p275). Note the somewhat
  *  different convention for the prefactors, which is described in
@@ -388,7 +391,6 @@ void   P3M_calc_kspace_forces()
   gather_fft_grid();
 
 
-
   /* === Perform forward 3D FFT (Charge Assignment Mesh) === */
   fft_perform_forw(rs_mesh);
 
@@ -397,7 +399,7 @@ void   P3M_calc_kspace_forces()
 
   /* Force preparation */
   ind = 0;
-  for(i=0; i<fft_plan[2].new_size; i++) {
+  for(i=0; i<fft_plan[3].new_size; i++) {
     ks_mesh[ind] = g[i] * rs_mesh[ind]; ind++;
     ks_mesh[ind] = g[i] * rs_mesh[ind]; ind++;
   }
@@ -410,12 +412,12 @@ void   P3M_calc_kspace_forces()
     d_rs = (d+ks_pnum)%3;
     /* srqt(-1)*k differentiation */
     ind=0;
-    for(j[0]=0; j[0]<fft_plan[2].new_mesh[0]; j[0]++) {
-      for(j[1]=0; j[1]<fft_plan[2].new_mesh[1]; j[1]++) {
-	for(j[2]=0; j[2]<fft_plan[2].new_mesh[2]; j[2]++) {
+    for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {
+      for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
+	for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {
 	  /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */ 
-	  rs_mesh[ind] = -(ks_mesh[ind+1]*d_op[ j[d]+fft_plan[2].start[d] ]); ind++;
-	  rs_mesh[ind] =   ks_mesh[ind-1]*d_op[ j[d]+fft_plan[2].start[d] ];  ind++;
+	  rs_mesh[ind] = -(ks_mesh[ind+1]*d_op[ j[d]+fft_plan[3].start[d] ]); ind++;
+	  rs_mesh[ind] =   ks_mesh[ind-1]*d_op[ j[d]+fft_plan[3].start[d] ];  ind++;
 	}
       }
     }
@@ -484,8 +486,11 @@ void calc_local_ca_mesh() {
   /* inner up right grid point (global index) */
   for(i=0;i<3;i++) lm.in_ur[i] = (int)floor(my_right[i]*p3m.ai[i]-p3m.mesh_off[i]);
   
-  /* correct roundof errors at up right boundary */
-  for(i=0;i<3;i++) if((my_right[i]*p3m.ai[i]-p3m.mesh_off[i])-lm.in_ur[i]<1.0e-15) lm.in_ur[i]--;
+  /* correct roundof errors at boundary */
+  for(i=0;i<3;i++) {
+    if((my_right[i]*p3m.ai[i]-p3m.mesh_off[i])-lm.in_ur[i]<SETUP_PREC) lm.in_ur[i]--;
+    if(1.0+(my_left[i]*p3m.ai[i]-p3m.mesh_off[i])-lm.in_ld[i]<SETUP_PREC) lm.in_ld[i]--;
+  }
   /* inner grid dimensions */
   for(i=0;i<3;i++) lm.inner[i] = lm.in_ur[i] - lm.in_ld[i] + 1;
   /* index of left down grid point in global mesh */
@@ -517,16 +522,16 @@ void p3m_print_local_mesh(local_mesh l)
 {
   fprintf(stderr,"%d: local_mesh: dim=(%d,%d,%d), size=%d\n",this_node,
 	  l.dim[0],l.dim[1],l.dim[2],l.size);
-  fprintf(stderr,"    ld_ind=(%d,%d,%d), ld_pos=(%f,%f,%f)\n",
+  fprintf(stderr,"%d:    ld_ind=(%d,%d,%d), ld_pos=(%f,%f,%f)\n",this_node,
 	  l.ld_ind[0],l.ld_ind[1],l.ld_ind[2],
 	  l.ld_pos[0],l.ld_pos[1],l.ld_pos[2]);
-  fprintf(stderr,"    inner=(%d,%d,%d) [(%d,%d,%d)-(%d,%d,%d)]\n",
+  fprintf(stderr,"%d:    inner=(%d,%d,%d) [(%d,%d,%d)-(%d,%d,%d)]\n",this_node,
 	  l.inner[0],l.inner[1],l.inner[2],
 	  l.in_ld[0],l.in_ld[1],l.in_ld[2],
 	  l.in_ur[0],l.in_ur[1],l.in_ur[2]);
-  fprintf(stderr,"    margin = (%d,%d, %d,%d, %d,%d)\n",
+  fprintf(stderr,"%d:    margin = (%d,%d, %d,%d, %d,%d)\n",this_node,
 	  l.margin[0],l.margin[1],l.margin[2],l.margin[3],l.margin[4],l.margin[5]);
-  fprintf(stderr,"    r_margin=(%d,%d, %d,%d, %d,%d)\n",
+  fprintf(stderr,"%d:    r_margin=(%d,%d, %d,%d, %d,%d)\n",this_node,
 	  l.r_margin[0],l.r_margin[1],l.r_margin[2],l.r_margin[3],l.r_margin[4],l.r_margin[5]);
 }
 
@@ -608,8 +613,8 @@ void p3m_print_send_mesh(send_mesh sm)
   int i;
   fprintf(stderr,"%d: send_mesh: max=%d\n",this_node,sm.max);
   for(i=0;i<6;i++) {
-    fprintf(stderr,"  dir=%d: s_dim (%d,%d,%d)  s_ld (%d,%d,%d) s_ur (%d,%d,%d) s_size=%d\n",i,sm.s_dim[i][0],sm.s_dim[i][1],sm.s_dim[i][2],sm.s_ld[i][0],sm.s_ld[i][1],sm.s_ld[i][2],sm.s_ur[i][0],sm.s_ur[i][1],sm.s_ur[i][2],sm.s_size[i]);
-    fprintf(stderr,"         r_dim (%d,%d,%d)  r_ld (%d,%d,%d) r_ur (%d,%d,%d) r_size=%d\n",sm.r_dim[i][0],sm.r_dim[i][1],sm.r_dim[i][2],sm.r_ld[i][0],sm.r_ld[i][1],sm.r_ld[i][2],sm.r_ur[i][0],sm.r_ur[i][1],sm.r_ur[i][2],sm.r_size[i]);
+    fprintf(stderr,"%d:  dir=%d: s_dim (%d,%d,%d)  s_ld (%d,%d,%d) s_ur (%d,%d,%d) s_size=%d\n",this_node,i,sm.s_dim[i][0],sm.s_dim[i][1],sm.s_dim[i][2],sm.s_ld[i][0],sm.s_ld[i][1],sm.s_ld[i][2],sm.s_ur[i][0],sm.s_ur[i][1],sm.s_ur[i][2],sm.s_size[i]);
+    fprintf(stderr,"%d:         r_dim (%d,%d,%d)  r_ld (%d,%d,%d) r_ur (%d,%d,%d) r_size=%d\n",this_node,sm.r_dim[i][0],sm.r_dim[i][1],sm.r_dim[i][2],sm.r_ld[i][0],sm.r_ld[i][1],sm.r_ld[i][2],sm.r_ur[i][0],sm.r_ur[i][1],sm.r_ur[i][2],sm.r_size[i]);
   }
 }
 
@@ -853,17 +858,17 @@ void calc_influence_function()
   calc_meshift();
 
   for(i=0;i<3;i++) {
-    size *= fft_plan[2].new_mesh[i];
-    end[i] = fft_plan[2].start[i] + fft_plan[2].new_mesh[i];
+    size *= fft_plan[3].new_mesh[i];
+    end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
   }
   g = (double *) realloc(g, size*sizeof(double));
 
   fak1  = p3m.mesh[0]*p3m.mesh[0]*p3m.mesh[0]*2.0/(box_l[0]*box_l[0]);
 
-  for(n[0]=fft_plan[2].start[0]; n[0]<end[0]; n[0]++) 
-    for(n[1]=fft_plan[2].start[1]; n[1]<end[1]; n[1]++) 
-      for(n[2]=fft_plan[2].start[2]; n[2]<end[2]; n[2]++) {
-	ind = (n[2]-fft_plan[2].start[2]) + fft_plan[2].new_mesh[2] * ((n[1]-fft_plan[2].start[1]) + (fft_plan[2].new_mesh[1]*(n[0]-fft_plan[2].start[0])));
+  for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++) 
+    for(n[1]=fft_plan[3].start[1]; n[1]<end[1]; n[1]++) 
+      for(n[2]=fft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
+	ind = (n[2]-fft_plan[3].start[2]) + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1]) + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
 	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
 	  g[ind] = 0.0;
 	else if( (n[0]%(p3m.mesh[0]/2)==0) && 

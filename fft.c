@@ -152,14 +152,6 @@ void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in, doub
  * \param plan fft/communication plan (see \ref fft_forw_plan).
  */
 void print_fft_plan(fft_forw_plan pl);
-/** Debug function to print global fft mesh. 
-    Print a globaly distributed mesh contained in data. Element size is element. 
- * \param plan     fft/communication plan (see \ref fft_forw_plan).
- * \param data     mesh data.
- * \param element  element size.
- * \param num      element index to print.
-*/
-void print_global_fft_mesh(fft_forw_plan plan, double *data, int element, int num);
 
 /*@}*/
 /************************************************************/
@@ -235,6 +227,18 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
   for(i=1; i<4;i++) {
     fft_plan[i].g_size=find_comm_groups(n_grid[i-1], n_grid[i], n_id[i-1], n_id[i], 
 					fft_plan[i].group, n_pos[i], my_pos[i]);
+    if(fft_plan[i].g_size==-1) {
+      /* try permutation */
+      j = n_grid[i][(fft_plan[i].row_dir+1)%3];
+      n_grid[i][(fft_plan[i].row_dir+1)%3] = n_grid[i][(fft_plan[i].row_dir+2)%3];
+      n_grid[i][(fft_plan[i].row_dir+2)%3] = j;
+      fft_plan[i].g_size=find_comm_groups(n_grid[i-1], n_grid[i], n_id[i-1], n_id[i], 
+					  fft_plan[i].group, n_pos[i], my_pos[i]);
+      if(fft_plan[i].g_size==-1) {
+	fprintf(stderr,"find_comm_groups error\n");
+	errexit(1);
+      }
+    }
 
     fft_plan[i].send_block = (int *)realloc(fft_plan[i].send_block, 6*fft_plan[i].g_size*sizeof(int));
     fft_plan[i].send_size  = (int *)realloc(fft_plan[i].send_size, 1*fft_plan[i].g_size*sizeof(int));
@@ -404,11 +408,14 @@ void fft_perform_forw(double *data)
   /* ===== first direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_forw: dir 1:\n",this_node));
   
+
+
   c_data     = (fftw_complex *) data;
   c_data_buf = (fftw_complex *) data_buf;
 
   /* communication to current dir row format (in is data) */
   forw_grid_comm(fft_plan[1], data, data_buf);
+
 
   /*
     fprintf(stderr,"%d: start grid \n",this_node);
@@ -452,6 +459,8 @@ void fft_perform_forw(double *data)
   			   c_data, 1, fft_plan[3].new_mesh[2],
   			   c_data_buf, 1, fft_plan[3].new_mesh[2]);
 
+  //print_global_fft_mesh(fft_plan[3],data,1,0);
+
   /* REMARK: Result has to be in data. */
 }
 
@@ -460,6 +469,8 @@ void fft_perform_back(double *data)
   int i;
   /* ===== third direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 3:\n",this_node));
+
+
   /* perform FFT (in is data) */
   fft_back[3].fft_function(fft_back[3].fft_plan, fft_plan[3].n_ffts,
   			   c_data, 1, fft_plan[3].new_mesh[2],
@@ -488,6 +499,7 @@ void fft_perform_back(double *data)
   }
   /* communicate (in is data_buf) */
   back_grid_comm(fft_plan[1],fft_back[1],data_buf,data);
+
 
   /* REMARK: Result has to be in data. */
 }
@@ -643,6 +655,8 @@ int find_comm_groups(int grid1[3], int grid2[3], int *node_list1, int *node_list
   int my_group=0;
 
   FFT_TRACE(fprintf(stderr,"%d: find_comm_groups:\n",this_node));
+  FFT_TRACE(fprintf(stderr,"%d: for grid1=(%d,%d,%d) and grids=(%d,%d,%d)\n",
+		    this_node,grid1[0],grid1[1],grid1[2],grid2[0],grid2[1],grid2[2]));
 
   /* calculate dimension of comm. group cells for both grids */ 
   if( (grid1[0]*grid1[1]*grid1[2]) != (grid2[0]*grid2[1]*grid2[2]) ) return -1; /* unlike number of nodes */
@@ -710,6 +724,7 @@ int calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3], double mesh_off[3]
     last[i]  = (int)floor((mesh[i]/(double)n_grid[i])*(n_pos[i]+1) - mesh_off[i] );
     /* correct round off errors */
     if( (mesh[i]/(double)n_grid[i])*(n_pos[i]+1) - mesh_off[i] - last[i] < 1.0e-15 ) last[i]--;
+    if(1.0+ (mesh[i]/(double)n_grid[i])*n_pos[i]-mesh_off[i]-start[i] < 1.0e-15 ) start[i]--;
     loc_mesh[i] = last[i]-start[i]+1;
     size *= loc_mesh[i];
   }
@@ -813,20 +828,20 @@ void print_fft_plan(fft_forw_plan pl)
   fprintf(stderr,"%d: dir=%d, row_dir=%d, n_permute=%d, n_ffts=%d\n",
 	  this_node, pl.dir,  pl.row_dir, pl.n_permute, pl.n_ffts);
 
-  fprintf(stderr,"    local: old_mesh=(%d,%d,%d), new_mesh=(%d,%d,%d), start=(%d,%d,%d)\n",
+  fprintf(stderr,"%d:    local: old_mesh=(%d,%d,%d), new_mesh=(%d,%d,%d), start=(%d,%d,%d)\n",this_node,
 	  pl.old_mesh[0],  pl.old_mesh[1],  pl.old_mesh[2], 
 	  pl.new_mesh[0],  pl.new_mesh[1],  pl.new_mesh[2], 
 	  pl.start[0], pl.start[1],  pl.start[2]);
 
-  fprintf(stderr,"    g_size=%d group=(",pl.g_size);
+  fprintf(stderr,"%d:    g_size=%d group=(",this_node,pl.g_size);
   for(i=0;i<pl.g_size-1;i++) fprintf(stderr,"%d,", pl.group[i]);
   fprintf(stderr,"%d)\n",pl.group[pl.g_size-1]);
 
-  fprintf(stderr,"    send=[");
+  fprintf(stderr,"%d:    send=[",this_node);
   for(i=0;i<pl.g_size;i++) fprintf(stderr,"(%d,%d,%d)+(%d,%d,%d), ",
 				   pl.send_block[6*i+0], pl.send_block[6*i+1], pl.send_block[6*i+2],
 				   pl.send_block[6*i+3], pl.send_block[6*i+4], pl.send_block[6*i+5]);
-  fprintf(stderr,"]\n    recv=[");
+  fprintf(stderr,"]\n%d:    recv=[",this_node);
   for(i=0;i<pl.g_size;i++) fprintf(stderr,"(%d,%d,%d)+(%d,%d,%d), ",
 				   pl.recv_block[6*i+0], pl.recv_block[6*i+1], pl.recv_block[6*i+2],
 				   pl.recv_block[6*i+3], pl.recv_block[6*i+4], pl.recv_block[6*i+5]);
@@ -854,6 +869,11 @@ void print_global_fft_mesh(fft_forw_plan plan, double *data, int element, int nu
   if(this_node==0) fprintf(stderr,"All: Print Global Mesh: (%d of %d elements)\n",
 			   num+1,element);
   MPI_Barrier(MPI_COMM_WORLD);
+  for(i0=0;i0<n_nodes;i0++) {
+    MPI_Barrier(MPI_COMM_WORLD);
+    if(i0==this_node) fprintf(stderr,"%d: range (%d,%d,%d)-(%d,%d,%d)\n",this_node,st[0],st[1],st[2],en[0],en[1],en[2]);
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
   while(divide==0) {
     if(b*mesh > 7) {
       block1=b;
@@ -874,8 +894,13 @@ void print_global_fft_mesh(fft_forw_plan plan, double *data, int element, int nu
 	  if(my==1) {
 	   
 	    tmp=data[num+(element*((i2-st[2])+si[2]*((i1-st[1])+si[1]*(i0-st[0]))))];
-	    if(tmp<0) fprintf(stderr,"%1.2e",tmp);
-	    else      fprintf(stderr," %1.2e",tmp);
+	    if(fabs(tmp)>1.0e-15) {
+	      if(tmp<0) fprintf(stderr,"%1.2e",tmp);
+	      else      fprintf(stderr," %1.2e",tmp);
+	    }
+	    else {
+	      fprintf(stderr," %1.2e",0.0);
+	    }
 	  }
 	  MPI_Barrier(MPI_COMM_WORLD);
 	}
