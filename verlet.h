@@ -95,8 +95,11 @@ void build_verlet_lists_and_calc_verlet_ia();
 /** Nonbonded and bonded energy calculation using the verlet list */
 void calculate_verlet_energies();
 
-/** Nonbonded and bonded pressure calculation using the verlet list */
-void calculate_verlet_virials();
+/** Nonbonded and bonded pressure calculation using the verlet list
+    @param v_comp flag which enables (1) compensation of the velocities required 
+		  for deriving a pressure reflecting \ref nptiso_struct::p_inst;
+		  naturally it doesn't make sense to use it without NpT. */
+void calculate_verlet_virials(int v_comp);
 
 /** INSERT COMMENT */
 void anounce_rebuild_vlist();

@@ -651,7 +651,7 @@ void layered_calculate_virials()
       if (rebuild_verletlist)
 	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
-      add_kinetic_virials(p1);
+      add_kinetic_virials(p1,0);
 
       add_bonded_virials(p1);
 

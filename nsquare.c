@@ -314,7 +314,7 @@ void nsq_calculate_virials()
   /* calculate bonded interactions and non bonded node-node */
   for (p = 0; p < npl; p++) {
     pt1 = &partl[p];
-    add_kinetic_virials(pt1);
+    add_kinetic_virials(pt1,0);
     add_bonded_virials(pt1);
 
     /* other particles, same node */

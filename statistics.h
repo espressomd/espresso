@@ -27,8 +27,9 @@
 /*@{*/
 
 typedef struct {
-  /** Status flag for observable calculation. 0 re-initialize observable
-      struct, 1 every thing is fine, calculation can start. */
+  /** Status flag for observable calculation. 
+      For 'analyze energy': 0 re-initialize observable struct, else every thing is fine, calculation can start. 
+      For 'analyze pressure' and 'analyze p_inst': 0 or !(1+v_comp) re-initialize, else all OK. */
   int init_status;
 
   /** Array for observables on each node. */

@@ -1086,7 +1086,9 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   else if (ARG1_IS_S("energy"))
     return parse_and_print_energy(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("pressure"))
-    return parse_and_print_pressure(interp, argc - 2, argv + 2);
+    return parse_and_print_pressure(interp, argc - 2, argv + 2, 0);
+  else if (ARG1_IS_S("p_inst"))
+    return parse_and_print_pressure(interp, argc - 2, argv + 2, 1);
   else if (ARG1_IS_S("bins"))
     return parse_bins(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("p_IK1"))

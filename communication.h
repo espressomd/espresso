@@ -228,13 +228,14 @@ void mpi_bcast_n_particle_types(int s);
     <ul>
 	<li> 1 calculate and reduce (sum up) energies, using \ref energy_calc.
 	<li> 2 calculate and reduce (sum up) pressure, using \ref pressure_calc.
+	<li> 3 calculate and reduce (sum up) instantaneous pressure, using \ref pressure_calc.
     </ul>
     \param result where to store the gathered value(s):
-    <ul><li> job=0 a double *
-             usage: double *buf; mpi_gather_stats(0, buf);
-	<li> job=1 unused (the results are stored in a global 
+    <ul><li> job=1 unused (the results are stored in a global 
 	     energy array of type \ref Observable_stat)
 	<li> job=2 unused (the results are stored in a global 
+	     virials array of type \ref Observable_stat)
+	<li> job=3 unused (the results are stored in a global 
 	     virials array of type \ref Observable_stat)
     </ul>
 */

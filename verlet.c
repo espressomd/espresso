@@ -291,7 +291,7 @@ void calculate_verlet_energies()
 
 /************************************************************/
 
-void calculate_verlet_virials()
+void calculate_verlet_virials(int v_comp)
 {
   int c, np, n, i;
   Cell *cell;
@@ -307,7 +307,7 @@ void calculate_verlet_virials()
     np  = cell->n;
     /* calculate bonded interactions (loop local particles) */
     for(i = 0; i < np; i++)  {
-      add_kinetic_virials(&p1[i]);
+      add_kinetic_virials(&p1[i],v_comp);
       add_bonded_virials(&p1[i]);
     }
 
