@@ -1,0 +1,5 @@
+mol load psf case1.psf pdb case1.pdb
+rock y by -2
+mol modstyle 0 0 CPK 1.500000 0.600000 8.000000 6.000000
+mol modcolor 0 0 SegName
+imd connect localhost 10000

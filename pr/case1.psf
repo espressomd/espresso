@@ -1,0 +1,6 @@
+PSF
+       2 !NATOM
+       1 T000    0 UNX  FE   FE
+       2 T000    1 UNX  FE   FE
+       1 !NBOND
+       1       2
