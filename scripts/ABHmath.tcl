@@ -78,6 +78,7 @@ proc pair_dist { part_id1 part_id2 } {
 proc pair_vec { part_id1 part_id2 } {
 # pair_vec <part_id1> <part_id2>
 # returns a tcl list containing the vector bewteen <part_id1> and <part_id2>
+# this vector points from <part_id2>.pos to <part_id1>.pos.
 # namely: <part_id1>.pos - <part_id2>.pos
     set pos1 [part $part_id1 print pos]    
     set pos2 [part $part_id2 print pos]
@@ -94,6 +95,17 @@ proc veclen {v} {
 	set res [expr $res + $w*$w]
     }
     return [expr sqrt($res)]
+}
+
+proc veclensqr {v} {
+    set len [llength $v]
+    set w [lindex $v 0]
+    set res [expr $w*$w]
+    for {set i 1} {$i < $len} {incr i} {
+	set w [lindex $v $i]
+	set res [expr $res + $w*$w]
+    }
+    return $res
 }
 
 proc vecadd {a b} {
@@ -290,6 +302,38 @@ proc find_unit_vector { vec1 vec2} {
     return $u_vec
 }
 
+#############################################################
+#
+# calculate length of the vector connecting 2 points
+#
+#############################################################
+proc bond_length { pos1 pos2 } {
+    set dim [llength $pos1]
+    set res 0.0
+    for {set j 0} { $j < $dim } {incr j} {
+	set res [expr $res+ [sqr ([lindex $pos1 $j]-[lindex $pos2 $j])] ]
+    }
+    return [expr sqrt($res)]
+}
+
+#############################################################
+#
+# calculate minimal image length of the vector connecting 
+# 2 points inside periodic box box (slow and dirty!)
+#
+#############################################################
+proc min_img_bond_length { pos1 pos2 box} {
+    set dim [llength $pos1]
+    set res 0.0
+    for {set j 0} { $j < $dim } {incr j} {
+	set dist [expr abs([lindex $pos1 $j]-[lindex $pos2 $j])]
+	while { $dist > [expr [lindex $box $j]/2.0] } { 
+	    set dist [expr $dist - [lindex $box $j]] 
+	}
+	set res [expr $res+ [sqr $dist] ]
+    }
+    return [expr sqrt($res)]
+}
 
 #############################################################
 #
