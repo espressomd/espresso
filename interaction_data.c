@@ -35,6 +35,7 @@
 #include "cells.h"
 #include "comforce.h"
 #include "comfixed.h"
+#include "morse.h"
 
 /****************************************
  * variables
@@ -57,6 +58,7 @@ double max_cut;
 double max_cut_non_bonded;
 
 double lj_force_cap = 0.0;
+double morse_force_cap = 0.0;
 double tab_force_cap = 0.0;
 double buck_force_cap = 0.0;
 
@@ -92,6 +94,15 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJ_shift =
     params->LJ_offset =
     params->LJ_capradius = 0;
+#endif
+
+#ifdef MORSE
+  params->MORSE_eps = 
+    params->MORSE_alpha =
+    params->MORSE_rmin =
+    params->MORSE_cut = 
+    params->MORSE_rest = 
+    params->MORSE_capradius = 0;
 #endif
 
 #ifdef BUCKINGHAM
@@ -169,6 +180,16 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJ_offset = src->LJ_offset;
   dst->LJ_capradius = src->LJ_capradius;
 #endif
+
+#ifdef MORSE
+  dst->MORSE_eps = src->MORSE_eps;
+  dst->MORSE_alpha = src->MORSE_alpha;
+  dst->MORSE_rmin = src->MORSE_rmin;
+  dst->MORSE_cut = src->MORSE_cut;
+  dst->MORSE_rest = src->MORSE_rest;
+  dst->MORSE_capradius = src->MORSE_capradius;
+#endif
+
 #ifdef BUCKINGHAM
   dst->BUCK_A = src->BUCK_A;
   dst->BUCK_B = src->BUCK_B;
@@ -181,12 +202,14 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->BUCK_F1 = src->BUCK_F1;
   dst->BUCK_F2 = src->BUCK_F2;
 #endif
+
 #ifdef SOFT_SPHERE
   dst->soft_a = src->soft_a;
   dst->soft_n = src->soft_n;
   dst->soft_cut = src->soft_cut;
   dst->soft_offset = src->soft_offset;
 #endif
+
 #ifdef LJCOS
   dst->LJCOS_eps = src->LJCOS_eps;
   dst->LJCOS_sig = src->LJCOS_sig;
@@ -238,6 +261,11 @@ int checkIfParticlesInteract(int i, int j) {
 
 #ifdef LENNARD_JONES
   if (data->LJ_cut != 0)
+    return 1;
+#endif
+  
+#ifdef MORSE
+  if (data->MORSE_cut != 0)
     return 1;
 #endif
 
@@ -439,18 +467,28 @@ void calc_maximal_cutoff()
 	     max_cut_non_bonded = (data->LJ_cut+data->LJ_offset);
 	 }
 #endif
+
+#ifdef MORSE
+         if (data->MORSE_cut != 0) {
+           if(max_cut_non_bonded < (data->MORSE_cut) )
+             max_cut_non_bonded = (data->MORSE_cut);
+         }
+#endif
+
 #ifdef BUCKINGHAM
 	 if (data->BUCK_cut != 0) {
 	   if(max_cut_non_bonded < data->BUCK_cut )
 	     max_cut_non_bonded = data->BUCK_cut;
 	 }
 #endif
+
 #ifdef SOFT_SPHERE
 	 if (data->soft_cut != 0) {
 	   if(max_cut_non_bonded < data->soft_cut )
 	     max_cut_non_bonded = data->soft_cut;
 	 }
 #endif
+
 #ifdef LJCOS
 	 if (data->LJCOS_cut != 0) {
 	   if(max_cut_non_bonded < (data->LJCOS_cut+data->LJCOS_offset) )
@@ -746,6 +784,9 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #ifdef LENNARD_JONES
   if (data->LJ_cut != 0) printljIAToResult(interp,i,j);
 #endif
+#ifdef MORSE
+  if (data->MORSE_cut != 0) printmorseIAToResult(interp,i,j);
+#endif
 #ifdef LJCOS
   if (data->LJCOS_cut != 0) printljcosIAToResult(interp,i,j);
 #endif
@@ -857,6 +898,27 @@ int inter_print_all(Tcl_Interp *interp)
     Tcl_AppendResult(interp, "}", (char *)NULL);
   }
 
+#ifdef MORSE
+if(morse_force_cap != 0.0) {
+    char buffer[TCL_DOUBLE_SPACE];
+
+    if (start) {
+      Tcl_AppendResult(interp, "{", (char *)NULL);
+      start = 0;
+    }
+    else
+      Tcl_AppendResult(interp, " {", (char *)NULL);
+    if (morse_force_cap == -1.0)
+      Tcl_AppendResult(interp, "morseforcecap individual");
+    else {
+      Tcl_PrintDouble(interp, morse_force_cap, buffer);
+      Tcl_AppendResult(interp, "morseforcecap ", buffer, (char *) NULL);
+    }
+    Tcl_AppendResult(interp, "}", (char *)NULL);
+  }
+#endif
+
+#ifdef BUCKINGHAM 
   if(buck_force_cap != 0.0) {
     char buffer[TCL_DOUBLE_SPACE];
     
@@ -875,7 +937,9 @@ int inter_print_all(Tcl_Interp *interp)
     }
     Tcl_AppendResult(interp, "}", (char *)NULL);
   }
+#endif
 
+#ifdef TABULATED
   if(tab_force_cap != 0.0) {
     char buffer[TCL_DOUBLE_SPACE];
     if (start) {
@@ -892,6 +956,7 @@ int inter_print_all(Tcl_Interp *interp)
     }
     Tcl_AppendResult(interp, "}", (char *)NULL);
   }
+#endif
 
   return (TCL_OK);
 }
@@ -969,6 +1034,11 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 #else
     /* that's just for the else below... */
     if (0);
+#endif
+
+#ifdef MORSE
+    else if (ARG0_IS_S("morse"))
+      change = morse_parser(interp, part_type_a, part_type_b, argc, argv);
 #endif
 
 #ifdef LJCOS
@@ -1217,6 +1287,11 @@ int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 #ifdef LENNARD_JONES
   if(ARG0_IS_S("ljforcecap"))
     return inter_parse_ljforcecap(interp, argc-1, argv+1);
+#endif
+
+#ifdef MORSE
+  if(ARG0_IS_S("morseforcecap"))
+    return inter_parse_morseforcecap(interp, argc-1, argv+1);
 #endif
 
 #ifdef BUCKINGHAM
