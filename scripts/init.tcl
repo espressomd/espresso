@@ -11,7 +11,7 @@
 # by providing additional tcl-commands/-functions.          #
 #                                                           #
 # Created:       20.09.2002 by AxA                          #
-# Last modified: 23.09.2002 by BAM                          #
+# Last modified: 25.09.2002 by BAM                          #
 #                                                           #
 #############################################################
 
@@ -42,8 +42,8 @@ source convertDeserno.tcl
 # adds 'convertDeserno2MDmain' & 'convertMD2DesernoMain' for directly accessing the conversion scripts
 #       therefore bypassing and/or overriding the initialization procedure
 
-source countBounds.tcl
-# adds 'countBounds' returning a tcl-script with complete bonding-informations on any particle
+source countBonds.tcl
+# adds 'countBonds' returning a tcl-script with complete bonding-informations on any particle
 # adds 'findPropPos' to determine the index-position of a certain property in the output of 'part'
 # adds 'findBondPos' to do the same for property 'bonds'
 
