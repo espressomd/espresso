@@ -88,7 +88,7 @@ double distto(double posx, double posy, double posz, int pid);
     @return the end-to-end-distance */
 double calc_re();
 
-/** calculate the end-to-end-distance averaged over all configurations stored in 'configs'. 
+/** calculate the end-to-end-distance averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
     @return the averaged end-to-end-distance */
 double calc_re_av();
@@ -97,7 +97,7 @@ double calc_re_av();
     @return the radius of gyration */
 double calc_rg();
 
-/** calculate the radius of gyration averaged over all configurations stored in 'configs'. 
+/** calculate the radius of gyration averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
     @return the averaged radius of gyration */
 double calc_rg_av();
@@ -106,10 +106,19 @@ double calc_rg_av();
     @return the hydrodynamic radius */
 double calc_rh();
 
-/** calculate the hydrodynamic radius averaged over all configurations stored in 'configs'. 
+/** calculate the hydrodynamic radius averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
     @return the averaged hydrodynamic radius */
 double calc_rh_av();
+
+/** calculates the internal distances within a chain. Chain information \ref chain_start etc. must be set!
+    @param idf contains <tt>idf[0],...,idf[chain_length-1]</tt> */
+void calc_internal_dist(double **idf);
+
+/** calculates the internal distances within a chain averaged over all configurations stored in \ref #configs.
+    Chain information \ref chain_start etc. must be set!
+    @param idf contains <tt>idf[0],...,idf[chain_length-1]</tt> */
+void calc_internal_dist_av(double **idf);
 
 /** calculate g123. chain information \ref chain_start etc. must be set!
     @param g1 contains g1
@@ -118,21 +127,21 @@ double calc_rh_av();
 */
 void calc_g123(double *g1, double *g2, double *g3);
 
-/** calculate <g1> averaged over all configurations stored in 'configs'. 
+/** calculate <g1> averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
-    @param g1 contains g1[0],...,g1[n_configs-1]
+    @param g1 contains <tt>g1[0],...,g1[n_configs-1]</tt>
 */
 void calc_g1_av(double **g1);
 
-/** calculate <g2> averaged over all configurations stored in 'configs'. 
+/** calculate <g2> averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
-    @param g2 contains g2[0],...,g2[n_configs-1]
+    @param g2 contains <tt>g2[0],...,g2[n_configs-1]</tt>
 */
 void calc_g2_av(double **g2);
 
-/** calculate <g3> averaged over all configurations stored in 'configs'. 
+/** calculate <g3> averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
-    @param g3 contains g3[0],...,g3[n_configs-1]
+    @param g3 contains <tt>g3[0],...,g3[n_configs-1]</tt>
 */
 void calc_g3_av(double **g3);
 
@@ -141,10 +150,10 @@ void calc_g3_av(double **g3);
 */
 void init_g123();
 
-/** appends particles' positions in 'partCfg' to 'configs' */
+/** appends particles' positions in 'partCfg' to \ref #configs */
 void analyze_append();
 
-/** appends the configuration stored in 'config[3*count]' to 'configs'
+/** appends the configuration stored in 'config[3*count]' to \ref #configs
     @param config the configuration which should be added 
     @param count  how many particles in 'config' */
 void analyze_configs(double *config, int count);
@@ -153,11 +162,11 @@ void analyze_configs(double *config, int count);
 void analyze_push();
 
 /** replaces configs[ind] with current 'partCfg'
-    @param ind the entry in 'configs' to be replaced */
+    @param ind the entry in \ref #configs to be replaced */
 void analyze_replace(int ind);
 
 /** removes configs[ind] and shrinks the array accordingly
-    @param ind the entry in 'configs' to be removed */
+    @param ind the entry in \ref #configs to be removed */
 void analyze_remove(int ind);
 
 /** Calculates the distribution of particles around others. 
@@ -205,14 +214,14 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
 void init_virials();
 
 /** Calculates the virials of the system in parallel (hence it should be called by \ref mpi_gather_stats with job=2).<BR>
-    Due to the nature of a virial being Sum(i=0..n_total_particles)(Sum(j=i+1..n_total_particles)(r_ij*F_ij))
+    Due to the nature of a virial being <tt>Sum(i=0..n_total_particles)(Sum(j=i+1..n_total_particles)(r_ij*F_ij))</tt>
     this function is based on a merge of \ref force_calc into \ref calc_energy. */
 void calc_virials();
 
 /** Calculates the pressure in the system from a virial expansion using the terms from \ref calc_virials.<BR>
     Output is stored in the \ref #virials array, in which (on the first node) each component carries the corresponding pressure,
-    while virials.sum.e[0] contains the total pressure, virials.node.e[0] the sum of all squared pressure components,
-    virials.sum.e[1] the kinetic energy, and virials.node.e[1] the pressure of the ideal gas.
+    while <tt>virials.sum.e[0]</tt> contains the total pressure, <tt>virials.node.e[0]</tt> the sum of all squared pressure components,
+    <tt>virials.sum.e[1]</tt> the pressure of the ideal gas, and <tt>virials.node.e[1]</tt> the kinetic energy.
 */
 void calc_pressure(void);
 
