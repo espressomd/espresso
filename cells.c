@@ -173,6 +173,8 @@ void cells_re_init()
     CELL_TRACE(fprintf(stderr,"%d: cells_re_init: lost particles: old grid had %d new grid has %d particles.\n",this_node,part_cnt_old, part_cnt_new));
 #endif
 
+  CELL_TRACE(fprintf(stderr,"%d: cell_grid (%d %d %d) \n",this_node,cell_grid[0],cell_grid[1],cell_grid[2]));
+
   free(old_cells);
   /* cell structure initialized. */
   rebuild_verletlist = 1;
@@ -403,7 +405,7 @@ void init_cell_neighbors(int i)
 	  /* take the upper half of all neighbors 
 	     and add them to the neighbor list */
 	  if(j >= i) {
-	    CELL_TRACE(fprintf(stderr,"%d: cell %d neighbor %d\n",this_node,i,j));
+	    //CELL_TRACE(fprintf(stderr,"%d: cell %d neighbor %d\n",this_node,i,j));
 	    cells[i].nList[cnt].cell_ind = j;
 	    cells[i].nList[cnt].pList = &(cells[j].pList);
 	    init_pairList(&(cells[i].nList[cnt].vList));
