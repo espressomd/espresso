@@ -15,11 +15,7 @@ interface between the Tcl script and the MD code:
 <ul>
 <li>\verbatim setmd <variable> <value>+ \endverbatim
 modifies variables declared in \ref fields. More information can be
-<<<<<<< doxygen_header
 found in \ref global. The C implementation is \ref setmd. The
-=======
-found in  \ref global.c . The C implementation is \ref setmd. The
->>>>>>> 1.5
 following list explains the usage for the variables that are accesible 
 via setmd. Using \verbatim [setmd <variable>] \endverbatim gives the
 actual value of <variable> in the MD code back to the Tcl script.
@@ -125,11 +121,7 @@ Do not set variables which are specified as read only.
 	<b> <li> Bonded interactions: </b>
 
 	\verbatim inter <type_num> <interaction_type> <value>+ \endverbatim
-<<<<<<< doxygen_header
-	Bonded interaction (Bonds are set using \ref part (!not yet documented!)).
-=======
-	Bonded interaction (Bonds are set using \ref part ).
->>>>>>> 1.5
+	Bonded interaction (Bonds are set using \ref part).
 	Currently known interaction types are:
 
 	<ul>
