@@ -54,11 +54,11 @@ In <tt>statistics.c</tt>:<br>
     <li> \verbatim analyze aggregation [{ <dist_criteria> <s_mol_id>
     <f_mol_id> <min_contact>}] \endverbatim
 	 returns the aggregate size distribution for the molecules in the
-    molecule id range <s_mol_id> to <f_mol_id>. If any monomers in two
+    molecule id range \<s_mol_id\> to \<f_mol_id\>;. If any monomers in two
     different molecules are closer than dist_criteria they are considered to
-    be in the same aggregate. One can use the optional <min_contact> parameter
+    be in the same aggregate. One can use the optional \<min_contact\> parameter
     to specify a minimum number of contacts such that only molecules having at
-    least <min_contact> contacts will be considered to be in the same
+    least \<min_contact\> contacts will be considered to be in the same
     aggregate.The C implementation is \ref #aggregation; it is parsed by \ref #parse_aggregation.
     <li> \verbatim analyze find_principal_axis { <part_type> } \endverbatim
          returns the eigenvalues and eigenvectors of the moment of inertia
