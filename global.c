@@ -182,9 +182,17 @@ int alloc_particle()
 void fold_particle(double pos[3],int image_box[3])
 {
   int i;
+  int tmp;
   for(i=0;i<3;i++) {
-    image_box[i] += floor(pos[i]/box_l[i]);
-    pos[i]       = pos[i] - image_box[i]*box_l[i];    
+    image_box[i] += (tmp = (int)floor(pos[i]/box_l[i]));
+    /*pos[i]       = pos[i] - image_box[i]*box_l[i];    */
+    pos[i]       = pos[i] - tmp*box_l[i];    
+    if(pos[i] < 0. || pos[i] > box_l[i])
+      {
+	fprintf(stderr,"Warning fold_particle: Particle out of range image_box[%d] = %d\n",i,image_box[i]);
+	fprintf(stderr,"exiting!\n");
+	exit(1);
+      }
   }
 }
 
