@@ -145,13 +145,13 @@ proc replObsAv { fileN what } {
 #
 #############################################################
 
-proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA} {p7 NA} {p8 NA} } {
+proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA} {p7 NA} {p8 NA} {p9 NA} {p10 NA} } {
     # Creates a gnuplot of the data in $destination at positions $what.
-    # Syntax: 'plotObs <data> { x:y1 ... x:yn } [titles { "title.y1" ... "title.yn" }] [labels { "xlabel" "ylabel" }] [scale <gnuplot-scale>] [out <out>]'
-    set param [list $p1 $p2 $p3 $p4 $p5 $p6 $p7 $p8]
+    # Syntax: 'plotObs <data> { x:y1 ... x:yn } [titles { "title.y1" ... "title.yn" }] [labels { "xlabel" "ylabel" }] [scale <gnuplot-scale>] [out <out>] [cmd <gnuplot-command>]'
+    set param [list $p1 $p2 $p3 $p4 $p5 $p6 $p7 $p8 $p9 $p10]
     for {set i 0} {$i < [llength $what]} {incr i} { lappend titles "Data $i" }
-    set labels [list "x-values" "$destinations"]; set scale "nologscale xy"; set out [lindex $destinations end]
-    for {set i 0} {$i < 8} {incr i} {
+    set labels [list "x-values" "$destinations"]; set scale "nologscale xy"; set out [lindex $destinations end]; set cmd ""
+    for {set i 0} {$i < 10} {incr i} {
 	switch [lindex $param $i] {
 	    "titles" { incr i; set titles [lindex $param $i]
 		if { [llength $titles] > [llength $what] } { set titles [lrange $titles 0 [llength $what]] }
@@ -162,6 +162,7 @@ proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA}
 		if { [llength $labels]!=2 } { set labels [list "[lindex $labels 0]" "$destinations"] }  }
 	    "scale"  {incr i; set scale [lindex $param $i]  }
 	    "out"    {incr i; set out [lindex $param $i]    }
+	    "cmd"    {incr i; set cmd [lindex $param $i]    }
 	    default { if { [lindex $param $i]!="NA" } {
 		puts "The parameter set you supplied ($param) does not seem to be valid (stuck at: [lindex $param $i])!\nAborting...\n"; exit }
 	    }
@@ -178,6 +179,7 @@ proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA}
 	puts -nonewline $f "\"[lindex $destinations $i]\" using [lindex $what $i] title \"[lindex $titles $i]\" , "
     }
     puts -nonewline $f "\"[lindex $destinations end]\" using [lindex $what $i] title \"[lindex $titles $i]\"  \n"
+    if { $cmd != "" } { puts $f $cmd }
     puts $f "set out \"$out.ps\""
     puts $f "set terminal postscript color; replot"
     puts $f "\# !lpr -Pthps18 \"$out.ps\""
