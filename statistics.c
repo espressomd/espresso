@@ -568,7 +568,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       else if(!strncmp(argv[0], "ideal", strlen(argv[0]))) {
 	Tcl_PrintDouble(interp, virials.sum.e[virials.ana_num], buffer); 
 	Tcl_AppendResult(interp, buffer, (char *)NULL); }
-      else if(virials.ana_num > 0) {
+      else if(virials.ana_num > 0) {  /* this covers case 'coulomb' as well */
 	sprintf(buffer,"%f %f",virials.sum.e[virials.ana_num],virials.node.e[virials.ana_num]);
 	Tcl_AppendResult(interp, buffer, (char *)NULL); }
       else if(!strncmp(argv[0], "fene", strlen(argv[0]))) {
@@ -591,31 +591,33 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	sprintf(buffer,"%f %f",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
       else { Tcl_AppendResult(interp, "unknown feature of analyze pressure",(char *)NULL); return (TCL_ERROR); } }
     else {
+      int buf0, buf2, buf4;
       sprintf(buffer,"%f %f { ideal %f } { ",virials.sum.e[0],virials.node.e[0],virials.sum.e[1]); 
       Tcl_AppendResult(interp, buffer, (char *)NULL);
+      buf0 = buf2 = buf4 = 0;
       for(i=0;i<n_bonded_ia;i++) {
 	switch (bonded_ia_params[i].type) {
 	case BONDED_IA_FENE:
-	  buf[0] += virials.sum.e[virials.n_pre+i]; buf[1] += virials.node.e[virials.n_pre+i]; break;
+	  buf[0] += virials.sum.e[virials.n_pre+i]; buf[1] += virials.node.e[virials.n_pre+i]; buf0 = 1; break;
 	case BONDED_IA_ANGLE:
-	  buf[2] += virials.sum.e[virials.n_pre+i]; buf[3] += virials.node.e[virials.n_pre+i]; break;
+	  buf[2] += virials.sum.e[virials.n_pre+i]; buf[3] += virials.node.e[virials.n_pre+i]; buf2 = 1; break;
 	case BONDED_IA_HARMONIC:
-	  buf[4] += virials.sum.e[virials.n_pre+i]; buf[5] += virials.node.e[virials.n_pre+i]; break;
+	  buf[4] += virials.sum.e[virials.n_pre+i]; buf[5] += virials.node.e[virials.n_pre+i]; buf4 = 1; break;
 	default: break; }
       }
-      if(buf[0] != 0.) { sprintf(buffer,"{ FENE %f %f } ",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
-      if(buf[2] != 0.) { sprintf(buffer,"{ angle %f %f } ",buf[2],buf[3]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
-      if(buf[4] != 0.) { sprintf(buffer,"{ harmonic %f %f } ",buf[4],buf[5]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
-      buf[0] = buf[1] = 0.0; Tcl_AppendResult(interp, "}  { ", (char *)NULL);
+      if(buf0 != 0) { sprintf(buffer,"{ FENE %f %f } ",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+      if(buf2 != 0) { sprintf(buffer,"{ angle %f %f } ",buf[2],buf[3]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+      if(buf4 != 0) { sprintf(buffer,"{ harmonic %f %f } ",buf[4],buf[5]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+      buf[0] = buf[1] = 0.0; buf0 = 0; Tcl_AppendResult(interp, "}  { ", (char *)NULL);
       p = virials.n_pre+virials.n_bonded;
       for (i = 0; i < n_particle_types; i++) {
 	for (j = i; j < n_particle_types; j++) {
-	  if (checkIfParticlesInteract(i, j)) { buf[0] += virials.sum.e[p]; buf[1] += virials.node.e[p]; }
+	  if (checkIfParticlesInteract(i, j)) { buf[0] += virials.sum.e[p];  buf[1] += virials.node.e[p];  buf0 = 1; }
 	  p++;
 	}
       }
-      if(buf[0] != 0.) { sprintf(buffer, "lj %f %f } ",buf[0],buf[1]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
-      else Tcl_AppendResult(interp, "} ", (char *)NULL);
+      if(buf0 != 0) { sprintf(buffer, "lj %f %f }  ",buf[0],buf[1]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+      else Tcl_AppendResult(interp, "}  ", (char *)NULL);
       if(coulomb.bjerrum > 0.0) {
 	sprintf(buffer, "{ coulomb %f %f } ",virials.sum.e[p],virials.node.e[p]);
 	Tcl_AppendResult(interp, buffer,  (char *)NULL);
