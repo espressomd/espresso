@@ -69,11 +69,11 @@ double inv_cell_size[3];
     @param size  desired cell size.
     @param max   maximal number of cells.
 */
-int calc_3d_cell_grid(int grid[3], double box[3], double size, int max)
+int calc_3d_cell_grid(int grid[3], double box[3], double size[3], int max)
 {
   int i,n_cells=1;
   for(i=0;i<3;i++) {
-    grid[i] = (int)(box[i]/size);
+    grid[i] = (int)(box[i]/size[i]);
     /* catch large integer case */
     if( grid[i] > max) {
       grid[0] = grid[1] = grid[2] = -1;
@@ -94,18 +94,33 @@ int calc_3d_cell_grid(int grid[3], double box[3], double size, int max)
  */
 void dd_create_cell_grid()
 {
-  int i,n_local_cells,new_cells;
-  double cell_range, min_box_l;
-  CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid:\n",this_node));
+  int i,n_local_cells,new_cells,try=1;
+  double cell_range[3], min_box_l;
+  CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid: max_range %f\n",this_node,max_range));
   
   /* initialize */
   min_box_l = dmin(dmin(local_box_l[0],local_box_l[1]),local_box_l[2]);
-  cell_range = max_range;
+  cell_range[0]=cell_range[1]=cell_range[2] = max_range;
   n_local_cells = max_num_cells+1;
-  /* try finding a suitable cell grid. */
-  while(n_local_cells > max_num_cells && 2.0*cell_range <= min_box_l) {
-    n_local_cells = calc_3d_cell_grid(dd.cell_grid, local_box_l, cell_range, max_num_cells);
-    cell_range *= 1.05;
+
+  if(2.0*max_range > min_box_l) {
+    /* this is the initialization case */
+    n_local_cells = dd.cell_grid[0] = dd.cell_grid[1] = dd.cell_grid[2]=1;
+  }
+  else {
+    /* try finding a suitable cell grid. */
+    while(n_local_cells > max_num_cells && try) {
+      try=0;
+      /* Calculate cell grid */
+      n_local_cells = calc_3d_cell_grid(dd.cell_grid, local_box_l, cell_range, max_num_cells);
+      /* enlarge cell range */
+      for(i=0; i<3; i++) {
+	if(cell_range[i] < local_box_l[i]) {
+	  cell_range[i] = dmin(cell_range[i]*1.05,local_box_l[i]);
+	  try=1;
+	}
+      }
+    }
   }
   /* quit program if unsuccesful */
   if(n_local_cells > max_num_cells) {
@@ -124,8 +139,8 @@ void dd_create_cell_grid()
     dd.cell_size[i]       = local_box_l[i]/(double)dd.cell_grid[i];
     dd.inv_cell_size[i]   = 1.0 / dd.cell_size[i];
   }
-  cell_range = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]);
-  max_skin = cell_range - max_cut;
+  cell_range[0] = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]);
+  max_skin = cell_range[0] - max_cut;
 
   /* allocate cell array and cell pointer arrays */
   realloc_cells(new_cells);
@@ -171,13 +186,13 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3])
 /** Create communicators for cell structure domain decomposition. */
 void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 {
-  int dir,lr,i,cnt, num=12, n_comm_cells[3];
+  int dir,lr,i,cnt, num, n_comm_cells[3];
   int lc[3],hc[3],done[3]={0,0,0};
 
   /* calculate number of communications */
   num = 0;
-  for(dir=0; dir<3; dir++) 
-    for(lr=0; lr<2; lr++)
+  for(dir=0; dir<3; dir++) { 
+    for(lr=0; lr<2; lr++) {
 #ifdef PARTIAL_PERIODIC
       /* No communication for border of non periodic direction */
       if( (periodic[dir] == 1) || (boundary[2*dir+lr] == 0) ) 
@@ -186,7 +201,11 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	  if(node_grid[dir] == 1 ) num++;
 	  else num += 2;
 	}
+    }
+  }
+
   /* prepare communicator */
+  CELL_TRACE(fprintf(stderr,"%d Create Communicator: data_parts %d num %d\n",this_node,data_parts,num));
   prepare_comm(comm, data_parts, num);
 
   /* number of cells to communicate in a direction */
@@ -208,25 +227,29 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
     for(lr=0; lr<2; lr++) {
       if(node_grid[dir] == 1) {
 	/* just copy cells on a single node */
-	comm->comm[cnt].type          = GHOST_LOCL;
-	comm->comm[cnt].node          = this_node;
-	/* Buffer has to contain Send and Recv cells -> factor 2 */
-	comm->comm[cnt].part_lists    = malloc(2*n_comm_cells[dir]*sizeof(ParticleList *));
-	comm->comm[cnt].n_part_lists  = 2*n_comm_cells[dir];
-	/* prepare folding of ghost positions */
-	if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) 
-	  comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-	/* fill send comm cells */
-	lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
-	dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
-	//fprintf(stderr,"%d: comm %d copy to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
-	/* fill recv comm cells */
-	lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
-	/* place recieve cells after send cells */
-	dd_fill_comm_cell_lists(&comm->comm[cnt].part_lists[n_comm_cells[dir]],lc,hc);
-	//fprintf(stderr,"%d:        recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
-
-	cnt++;
+#ifdef PARTIAL_PERIODIC
+	if( (periodic[dir] == 1) || (boundary[2*dir+lr] == 0) ) 
+#endif
+	  {
+	    comm->comm[cnt].type          = GHOST_LOCL;
+	    comm->comm[cnt].node          = this_node;
+	    /* Buffer has to contain Send and Recv cells -> factor 2 */
+	    comm->comm[cnt].part_lists    = malloc(2*n_comm_cells[dir]*sizeof(ParticleList *));
+	    comm->comm[cnt].n_part_lists  = 2*n_comm_cells[dir];
+	    /* prepare folding of ghost positions */
+	    if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) 
+	      comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+	    /* fill send comm cells */
+	    lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
+	    dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
+	    //fprintf(stderr,"%d: comm %d copy to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
+	    /* fill recv comm cells */
+	    lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
+	    /* place recieve cells after send cells */
+	    dd_fill_comm_cell_lists(&comm->comm[cnt].part_lists[n_comm_cells[dir]],lc,hc);
+	    //fprintf(stderr,"%d:        recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
+	    cnt++;
+	  }
       }
       else {
 	/* i: send/recv loop */
@@ -395,15 +418,16 @@ void dd_topology_init(CellPList *old)
   int c,p,np;
   Particle *part;
 
-  CELL_TRACE(fprintf(stderr, "%d: dd_topology_init, Number of recieved cells=%d\n", this_node, old->n));
+  CELL_TRACE(fprintf(stderr, "%d: dd_topology_init: Number of recieved cells=%d\n", this_node, old->n));
   cell_structure.type             = CELL_STRUCTURE_DOMDEC;
   cell_structure.position_to_node = map_position_node_array;
   cell_structure.position_to_cell = dd_position_to_cell;
 
   /* not yet fully initialized */
   if(max_range <= 0) {
-    max_range  = min_local_box_l/2.0; 
+    max_range  = min_local_box_l;
     max_range2 = SQR(max_range); 
+    CELL_TRACE(fprintf(stderr,"%d:      max_range set to %f\n",this_node,max_range));
   }
 
   /* set up new domain decomposition cell structure */
@@ -504,7 +528,7 @@ void  dd_exchange_and_sort_particles()
 		}
 	    }
 	    /* Sort particles in cells of this node during last direction */
-	    else if(dir==3) {
+	    else if(dir==2) {
 	      sort_cell = dd_save_position_to_cell(part[p].r.p);
 	      if(sort_cell != cell) {
 		if(sort_cell==NULL) {
@@ -542,7 +566,36 @@ void  dd_exchange_and_sort_particles()
       }
       else {
 	/* Fold particles that have left the box */
-	
+	/* particle loop */
+	for(c=0; c<local_cells.n; c++) {
+	  cell = local_cells.cell[c];
+	  part = cell->part;
+	  for (p = 0; p < cell->n; p++) {
+#ifdef PARTIAL_PERIODIC 
+	    if(periodic[dir]==1) 
+#endif
+	      {
+		fold_coordinate(part[p].r.p, part[p].l.i, dir);
+	      }
+	    if (dir==2) {
+	      sort_cell = dd_save_position_to_cell(part[p].r.p);
+	      if(sort_cell != cell) {
+		if(sort_cell==NULL) {
+		  finished=0;
+		  sort_cell = local_cells.cell[0];
+		  if(sort_cell != cell) {
+		    move_unindexed_particle(sort_cell, cell, p);
+		    if(p < cell->n) p--;
+		  }      
+		}
+		else {
+		  move_unindexed_particle(sort_cell, cell, p);
+		  if(p < cell->n) p--;
+		}
+	      }
+	    }
+	  }
+	}
       }
     }
   }
