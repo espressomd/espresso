@@ -103,7 +103,7 @@ int integrate(ClientData data, Tcl_Interp *interp,
 void integrate_vv_init()
 {
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_init:\n",this_node));
-
+  
   /* sanity checks */
   if(time_step < 0.0 || skin < 0.0 ) {
     fprintf(stderr,"%d: ERROR: Can not initialize the integrator!:\n",this_node);
@@ -114,7 +114,7 @@ void integrate_vv_init()
     errexit();
   }
   else {
-
+    
     /* maximal interaction cutoff */
     calc_maximal_cutoff();
     calc_minimal_box_dimensions();
@@ -135,6 +135,17 @@ void integrate_vv_init()
       fprintf(stderr,"%d: ERROR: Maximal real space interaction %f is larger than minimal local box length %f\n",this_node,max_range,min_local_box_l);
       errexit();
     }
+
+#ifdef INTEG_DEBUG 
+    if(this_node==0) {
+      double n_inter;
+      n_inter = (4.0/3.0)* PI * (max_range*max_range*max_range); /* interaction volume */
+      n_inter /= (box_l[0]*box_l[1]*box_l[2]); /* particle density */
+      n_inter /= 2.0;
+      fprintf(stderr,"0: max_cut=%f, max_range+%f, n_inter/np^2=%f\n",max_cut,max_range,n_inter);
+      fflush(stderr);
+    }
+#endif
 
     /* start initialization */
 
@@ -367,9 +378,17 @@ void propagate_vel_pos()
 {
   Particle *p;
   int m,n,o,i, np;
-
   int *verlet_flags = malloc(sizeof(int)*n_nodes);
   double skin2;
+
+#ifdef ADDITIONAL_CHECKS
+  double db_force,db_vel,e_kin=0.0,tot_kin_energy=0.0;
+  double db_max_force=0.0, db_max_vel=0.0;
+  int db_maxf_id=0,db_maxv_id=0;
+  double *kin_energies=NULL;
+  FILE *stat;
+#endif
+
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
   rebuild_verletlist = 0;
   skin2 = SQR(skin);
@@ -378,19 +397,68 @@ void propagate_vel_pos()
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
+
       p[i].v[0] += p[i].f[0];
       p[i].v[1] += p[i].f[1];
       p[i].v[2] += p[i].f[2];
 
+#ifdef ADDITIONAL_CHECKS
+      /* fprintf(stderr,"%d: Propagate P %d from (%.4f,%.4f,%.4f) to (%.4f,%.4f,%.4f)\n",this_node,
+	 p[i].r.identity, p[i].r.p[0], p[i].r.p[1], p[i].r.p[2],
+	 p[i].r.p[0]+p[i].v[0], p[i].r.p[1]+p[i].v[1], p[i].r.p[2]+p[i].v[2]); */
+#endif
+
       p[i].r.p[0] += p[i].v[0];
       p[i].r.p[1] += p[i].v[1];
       p[i].r.p[2] += p[i].v[2];
+
+#ifdef ADDITIONAL_CHECKS
+      /* force check */
+      db_force = SQR(p[i].f[0])+SQR(p[i].f[1])+SQR(p[i].f[2]);
+      if(sqrt(db_force) > skin) 
+	fprintf(stderr,"%d: Part %d has force %f (%f,%f,%f)\n",
+		this_node,p[i].r.identity,sqrt(db_force),
+		p[i].f[0],p[i].f[1],p[i].f[2]);
+      if(db_force > db_max_force) { db_max_force=db_force; db_maxf_id=p[i].r.identity; }
+      /* velocity check */
+      db_vel   = SQR(p[i].v[0])+SQR(p[i].v[1])+SQR(p[i].v[2]);
+      if(sqrt(db_vel) > skin) 
+	fprintf(stderr,"%d: Part %d has velocity %f (%f,%f,%f)\n",
+		this_node,p[i].r.identity,sqrt(db_vel),
+		p[i].v[0],p[i].v[1],p[i].v[2]);
+      if(db_vel > db_max_vel) { db_max_vel=db_vel; db_maxv_id=p[i].r.identity; }
+      /* kinetic energy */
+      e_kin += db_vel;
+#endif
 
       /* Verlet criterion check */
       if(distance2(p[i].r.p,p[i].p_old) > skin2 )
 	rebuild_verletlist = 1; 
     }
   }
+
+#ifdef ADDITIONAL_CHECKS
+  if(this_node==0) {
+    stat=fopen("e_kin.dat","a");
+    kin_energies = malloc(sizeof(double)*n_nodes);
+    MPI_Gather(&e_kin, 1, MPI_DOUBLE, kin_energies, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    for(i=0;i<n_nodes;i++) tot_kin_energy += kin_energies[i];
+    fprintf(stat,"%e\n",tot_kin_energy/(2.0*time_step*time_step));
+    free(kin_energies);
+    fclose(stat); 
+  }
+  else {
+    MPI_Gather(&e_kin, 1, MPI_DOUBLE, NULL, 0, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  }
+  if(sqrt(db_max_force)>1e-5) 
+    fprintf(stderr,"%d: max_force=%e, part=%d f=(%e,%e,%e)\n",this_node,
+	    sqrt(db_max_force),db_maxf_id,local_particles[db_maxf_id]->f[0],
+	    local_particles[db_maxf_id]->f[1],local_particles[db_maxf_id]->f[2]);
+  if(sqrt(db_max_vel)>1e-3)
+    fprintf(stderr,"%d: max_vel=%e, part=%d v=(%e,%e,%e)\n",this_node,
+	    sqrt(db_max_vel),db_maxv_id,local_particles[db_maxv_id]->v[0],
+	    local_particles[db_maxv_id]->v[1],local_particles[db_maxv_id]->v[2]);
+#endif
 
   /* communicate verlet criterion */
   MPI_Gather(&rebuild_verletlist, 1, MPI_INT, verlet_flags, 1, 
