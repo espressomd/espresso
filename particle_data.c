@@ -1450,14 +1450,18 @@ int change_particle_bond(int part, int *bond, int delete)
 
   if (pnode == -1)
     return TCL_ERROR;
-  if(bond[0] < 0 ) {
-    fprintf(stderr, "ERROR: Failed upon changing bonds of particle %d due to invalid bonded interaction type_num %d (must be >0)!\n", part,bond[0]);
-    return TCL_ERROR; }
-  if(bond[0] >= n_bonded_ia) {
-    fprintf(stderr, "ERROR: Failed upon changing bonds of particle %d due to currently unknown bonded interaction %d!\n", part,bond[0]);
-    fprintf(stderr, "       Specify its parameters first (using 'inter <bond_type_number> { FENE | Angle | ... } <parameters> ...') "
-	    "before adding bonds of that type!\n");
-    return TCL_ERROR; 
+  if(delete != 0 || bond==NULL) { 
+    delete = 1; bond=NULL; }
+  else {
+    if(bond[0] < 0 ) {
+      fprintf(stderr, "ERROR: Failed upon changing bonds of particle %d due to invalid bonded interaction type_num %d (must be >0)!\n", part,bond[0]);
+      return TCL_ERROR; }
+    if(bond[0] >= n_bonded_ia) {
+      fprintf(stderr, "ERROR: Failed upon changing bonds of particle %d due to currently unknown bonded interaction %d!\n", part,bond[0]);
+      fprintf(stderr, "       Specify its parameters first (using 'inter <bond_type_number> { FENE | Angle | ... } <parameters> ...') "
+	      "before adding bonds of that type!\n");
+      return TCL_ERROR; 
+    }
   }
   return mpi_send_bond(pnode, part, bond, delete);
 }
