@@ -204,7 +204,7 @@ if { $warmup == 0 } {
     puts "start warmup integration"
     set cont 1
     for {set i 0} { $i < $maxtime && $cont} { incr i} {
-	set md [mindist]
+	set md [analyze mindist]
 	puts "step $i minimum distance = $md, force cap = $lj1_cap"
 	if {$md >= $mdst} { set cont 0 }
 	setmd lj_force_cap $lj1_cap
@@ -216,7 +216,7 @@ if { $warmup == 0 } {
     blockfile $f write variable box_l
     blockfile $f write particles "id pos type q" all
     close $f
-    puts "wrote [part number] particles to pe_warmup.gz with minimal distance [mindist]"
+    puts "wrote [part number] particles to pe_warmup.gz with minimal distance [analyze mindist]"
 }
 
 #############################################################
