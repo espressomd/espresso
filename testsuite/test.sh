@@ -1,6 +1,5 @@
 #!/bin/sh
-TESTCASES="lj.tcl lj-cos.tcl harm.tcl gb.tcl fene.tcl mmm1d.tcl dh.tcl madelung.tcl intpbc.tcl
-intppbc.tcl rotation.tcl"
+TESTCASES="lj.tcl lj-cos.tcl harm.tcl fene.tcl gb.tcl mmm1d.tcl dh.tcl madelung.tcl intpbc.tcl temp_test.tcl intppbc.tcl rotation.tcl"
 # lj-cos.tcl FENE.tcl harmonic.tcl... constraints thermosim energy pressure rotation gay-berne
 # 
 # List of testcases to be done (and people responsible for them):
