@@ -19,6 +19,7 @@ Released on April 29th, 2004.
 - v1.5.8e -
 -----------
 
+(f) May    5th, 2004.
 (e) April 29th, 2004.
 (d) April 28th, 2004.
 (c) April 26th, 2004.
@@ -26,6 +27,15 @@ Released on April 29th, 2004.
 (a) April 22nd, 2004.
 
 New Features / Changes / Bugfixes:
+
+(f) New NpT Feature: The NpT-Integrator now accepts two additional
+      arguments. The first is a set of three integers ( x y z ) each of which turns on or 
+      off the NpT integrator and thermostat in that direction.  A value of 1 turns box length motion
+      on and a value of 0 turns it off.  The second new argument is a
+      flag "-cubic_box".  When set, this flag ensures that box length changes
+      are completely isotropic in all directions even though box length
+      changes in one or more of these directions may in fact be decoupled
+      from the particle motion.
 (e) Final NpT-Update: The NpT-Integrator does now run efficiently and smoothly.
     + Unlocked faster re-scaling of just the geometrical parameters of the system
       instead of reinitialising the whole cell system more than necessary (i.e. only
