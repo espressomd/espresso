@@ -152,7 +152,9 @@ void core()
 {
   if (!core_done && !regular_exit) {
     fprintf(stderr, "%d: forcing core dump on irregular exit (%d / %d) \n", this_node, core_done, regular_exit);
-    kill(getpid(), SIGSEGV);
+    *(int *)0 = 0;
+    /* doesn't work on AMD64 */
+    /* kill(getpid(), SIGSEGV); */
     core_done = 1;
   }
 }
