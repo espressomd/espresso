@@ -23,7 +23,7 @@ all: $(PLATFORM) $(PLATFORM)/tcl_md $(PLATFORM)/libtcl_md.a
 ########### documentation
 doc: doxygen_header $(CFILES) $(CXXFILES)
 	doxygen doxygen_config
-	(cd doc/latex; make)
+	# (cd doc/latex; make)
 
 ########### output directory
 $(PLATFORM):
