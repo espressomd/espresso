@@ -49,6 +49,7 @@ typedef struct {
 
   /* periodically folded position */
   double p[3];
+  double p_old[3];
   /* index of the simulation box image where the particle really sits */
   int    i[3];
   double q;

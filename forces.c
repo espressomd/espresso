@@ -36,10 +36,14 @@ void force_calc()
 
   FORCE_TRACE(fprintf(stderr,"%d: force_calc: for %d (P %d,G %d)\n",this_node,n_particles+n_ghosts,n_particles,n_ghosts));
 
-  /* set forces to zero */
+  /* set forces to zero and define 'new old' coordinates*/
   for(i=0;i<n_particles+n_ghosts;i++)
     for(j=0;j<3;j++)
-      particles[i].f[j] = 0.0;
+      {
+	particles[i].f[j] = 0.0;
+	particles[i].p_old[j] = particles[i].p[j];
+      }
+
  
   /* loop verlet list */
   for(i=0;i<2*n_verletList;i=i+2) {
@@ -52,6 +56,7 @@ void force_calc()
     FORCE_TRACE(if(dist<0.01) fprintf(stderr,"P%d (%d,%d): dist %f\n",
 			i,particles[id1].identity,particles[id2].identity,dist));
     /* lennnard jones */
+
     if(dist < ia_params->LJ_cut+ia_params->LJ_offset) {
       r_off = dist - ia_params->LJ_offset;
       if(r_off>0.0) {
@@ -61,7 +66,15 @@ void force_calc()
 	for(j=0;j<3;j++) {
 	  particles[id1].f[j] += fac * d[j]/dist;
 	  particles[id2].f[j] -= fac * d[j]/dist;
-	}	  
+	}
+	/*debug*/
+	/*if(fac>100){
+	  printf("%d lj crash %f \n",this_node, dist);
+	  printf("%f %f %f\n",particles[id1].p[0],particles[id1].p[1],particles[id1].p[2]);
+	  printf("%f %f %f\n",particles[id2].p[0],particles[id2].p[1],particles[id2].p[2]);
+	  printf("%f %f %f\n",particles[id1].p_old[0],particles[id1].p_old[1],particles[id1].p_old[2]);
+	  printf("%f %f %f\n",particles[id2].p_old[0],particles[id2].p_old[1],particles[id2].p_old[2]);
+	  }*/
       }
     }
     
@@ -80,6 +93,7 @@ void force_calc()
     }
     
   }
+
 }
 
 void force_exit()

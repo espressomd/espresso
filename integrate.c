@@ -117,10 +117,12 @@ void integrate_vv(int n_steps)
   }
 
   /* integration loop */
+  printf("%d START INTEGRATION\n",this_node);
   for(i=0;i<n_steps;i++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
     propagate_velocities();
     propagate_positions();
+    //rebuild_verletlist = 1;
     if(rebuild_verletlist == 1) {
       exchange_part();
       sort_particles_into_cells();
@@ -149,11 +151,46 @@ void integrate_vv_exit()
 
 void propagate_velocities() 
 {
+  int i;
   INTEG_TRACE(fprintf(stderr,"%d: propagate_velocities:\n",this_node));
+  for(i=0;i<n_particles;i++)
+    {  
+      particles[i].v[0] += particles[i].f[0];
+      particles[i].v[1] += particles[i].f[1];
+      particles[i].v[2] += particles[i].f[2];
+    }
 }
 
 void propagate_positions() 
 {
+  int i;
+  int *verlet_flags = malloc(sizeof(int)*nprocs);
+  double d2[3], dist2;
   INTEG_TRACE(fprintf(stderr,"%d: propagate_positions:\n",this_node));
+  rebuild_verletlist = 0;
+  for(i=0;i<n_particles;i++)
+    {  
+      particles[i].p[0] += particles[i].v[0];
+      particles[i].p[1] += particles[i].v[1];
+      particles[i].p[2] += particles[i].v[2];
+      d2[0] = SQR(particles[i].p[0] - particles[i].p_old[0]);
+      d2[1] = SQR(particles[i].p[1] - particles[i].p_old[1]);
+      d2[2] = SQR(particles[i].p[2] - particles[i].p_old[2]);
+      dist2 = d2[0] + d2[1] + d2[2];
+      if( dist2 > SQR(skin) )
+	rebuild_verletlist = 1; 
+    }
+  MPI_Gather(&rebuild_verletlist, 1, MPI_INT, verlet_flags, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if(this_node == 0)
+    {
+      rebuild_verletlist = 0;
+      for(i=0;i<nprocs;i++)
+	if(verlet_flags[i]>0)
+	  {
+	    rebuild_verletlist = 1;
+	    break;
+	  }
+    }
+    MPI_Bcast(&rebuild_verletlist, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
