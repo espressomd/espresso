@@ -36,6 +36,7 @@ int extended[6] = {0, 0, 0, 0, 0, 0};
 int periodic[3]    = {1, 1, 1};
 
 double box_l[3]       = {1, 1, 1};
+double box_l_i[3]     = {1, 1, 1};
 double min_box_l;
 double local_box_l[3] = {1, 1, 1};
 double min_local_box_l;
@@ -80,7 +81,7 @@ int find_node(double pos[3])
   fold_particle(f_pos, im);
 
   for (i = 0; i < 3; i++) {
-    im[i] = (int)floor(node_grid[i]*f_pos[i]/box_l[i]);
+    im[i] = (int)floor(node_grid[i]*f_pos[i]*box_l_i[i]);
 #ifdef PARTIAL_PERIODIC
     if (!periodic[i]) {
       if (im[i] < 0)
@@ -146,6 +147,7 @@ void grid_changed_topology()
     local_box_l[i] = box_l[i]/(double)node_grid[i]; 
     my_left[i]   = node_pos[i]    *local_box_l[i];
     my_right[i]  = (node_pos[i]+1)*local_box_l[i];    
+    box_l_i[i] = 1/box_l[i];
   }
 
   calc_node_neighbors(this_node);

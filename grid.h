@@ -29,6 +29,7 @@
  *  For more information on the domain decomposition, see \ref grid.c "grid.c". 
 */
 #include <tcl.h>
+#include "utils.h"
 
 /** \name Exported Variables */
 /************************************************************/
@@ -50,6 +51,8 @@ extern int periodic[3];
 
 /** Simulation box dimensions. */ 
 extern double box_l[3];
+/** 1 / box dimensions. */ 
+extern double box_l_i[3];
 /** Smallest simulation box dimension (\ref box_l). 
     Remark: with PARTIAL_PERIODIC, only the periodic directions 
     are taken into account! */
@@ -152,5 +155,22 @@ int change_volume(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 /** rescales the box in dimension 'dir' to the new value 'd_new', and rescales the particles accordingly */
 void rescale_boxl(int dir, double d_new);
 
+/** get the minimal distance vector of two vectors in the current bc.
+    @param a the vector to subtract from
+    @param b the vector to subtract
+    @param res where to store the result
+*/
+MDINLINE void get_mi_vector(double res[3], double a[3], double b[3])
+{
+  int i;
+
+  for(i=0;i<3;i++) {
+    res[i] = a[i] - b[i];
+#ifdef PARTIAL_PERIODIC
+    if (periodic[i])
+#endif
+      res[i] -= dround(res[i]*box_l_i[i])*box_l[i];
+  }
+}
 /*@}*/
 #endif
