@@ -71,7 +71,7 @@ proc rewrite {in out} {
 	set gff [analyze formfactor 1 10 10]; set gff_av [analyze <formfactor> 1 10 10]; lappend listables $gff $gff_av
 	set g1v [analyze <g1>]; set g2v [analyze <g2>]; set g3v [analyze <g3>]; lappend listables $g1v $g2v $g3v
 	set f [open "|gzip - > $out.[eval format %02d $i].gz" w]
-	blockfile $f write variable all
+	blockfile $f write variable $sys_obs
 	blockfile $f write tclvariable observables
 	blockfile $f write tclvariable listables
 	blockfile $f write interactions
