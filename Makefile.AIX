@@ -8,12 +8,27 @@
 #  Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 # 
 ############ compiler settings
+### Enable ('yes') for the Garching
+GARCHING=no
+
+HOSTFLAGS=
+ifeq ($(GARCHING),yes)
+     HOSTFLAGS=-I. 
+endif
+
 
 # for MPI
 CC=mpcc
+ifeq ($(GARCHING), yes)
+  CC = mpcc_r
+endif
 
 # optimized compiler flags
-CFLAGS=-g -O2 -qcpluscmt -qmaxmem=16384
+CFLAGS=-O2 -qcpluscmt -qmaxmem=16384 $(HOSTFLAGS)
+
+# debug compiler flags
+# CFLAGS= -g -fno-inline -Wall $(HOSTFLAGS)
+
 
 ############ name of makedepend (or gcc -ME)
 DEPEND=makedepend
@@ -23,10 +38,26 @@ CXX=mpCC
 
 ############ linker settings
 LINK=$(CC)
-LDLIBS=-O3 /usr/lib/libtcl8.3.so -L/usr/local/lib -lrfftw -lfftw -lmpi -lm
+LDLIBS= -O3 -lm -lmpi
+########### FFTW
+LDLIBS+= -L/usr/local/lib -lrfftw -lfftw
+
+
+########### TCL
+ifeq ($(GARCHING),yes)
+     # LDLIBS+= -L/afs/ipp/@sys/soft/gnu/lib -ltcl8.4
+     LDLIBS+= /afs/ipp/@sys/soft/gnu/lib/libtcl8.4.so
+else
+     LDLIBS+= /usr/lib/libtcl8.3.so
+endif
+
 
 # FFTW. Note this is VERY specific for our cluster
-CFLAGS += -I/usr/local/include
+ifeq ($(GARCHING),yes)
+     CFLAGS += -I/afs/ipp/@sys/soft/gnu/include/ -I/usr/local/include/
+else
+     CFLAGS += -I/usr/local/include
+endif
 
 ############ MDINLINE defines how to declare inline functions
 CFLAGS+= -DMDINLINE="static"
@@ -34,3 +65,9 @@ CFLAGS+= -DMDINLINE="static"
 ############ special flags for C++ compilation
 CXX=mpCC
 CXXFLAGS=$(CFLAGS)
+
+
+
+
+
+
