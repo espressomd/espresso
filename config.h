@@ -98,9 +98,9 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /* NOTE: Turn on one and only one of the following switches!!! */
 
 /** Harmonic bond angle potential:      V = 1/2 k (phi - phi0)^2 */
-/* #define BOND_ANGLE_HARMONIC
+/* #define BOND_ANGLE_HARMONIC */
 /** Cosine bond angle potential:        V = k (1+cos(phi-phi0)) */
-#define BOND_ANGLE_COSINE */
+#define BOND_ANGLE_COSINE
 /** Cosine square bond angle potential: V = 1/2 k (cos(phi)-cos(phi0))^2 */
 /* #define BOND_ANGLE_COSSQUARE */
 
