@@ -458,7 +458,7 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   if (part.l.ext_flag & COORDS_FIX_MASK) {
     Tcl_AppendResult(interp, " fix ", (char *)NULL);
     for (i = 0; i < 3; i++)
-      if (COORD_FIXED(i))
+      if (part.l.ext_flag & COORD_FIXED(i))
 	Tcl_AppendResult(interp, "1 ", (char *)NULL);
       else
 	Tcl_AppendResult(interp, "0 ", (char *)NULL);
@@ -635,11 +635,12 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       }
     }
     else if (ARG0_IS_S("fix")) {
-      for (i = 0; i < 3; i++)
-	if (COORD_FIXED(i))
+      for (i = 0; i < 3; i++) {
+	if (part.l.ext_flag & COORD_FIXED(i))
 	  Tcl_AppendResult(interp, "1 ", (char *)NULL);
 	else
 	  Tcl_AppendResult(interp, "0 ", (char *)NULL);
+      }
     }
 #endif
     else if (ARG0_IS_S("bonds")) {
@@ -1002,7 +1003,6 @@ int part_parse_fix(Tcl_Interp *interp, int argc, char **argv,
 {
   int fixed_coord_flag[3] = {0, 0, 0};
   int ext_flag = 0;
-  double ext_force[3] = {0.0, 0.0, 0.0};
   int i;
 
   if (argc == 0) {
@@ -1029,7 +1029,7 @@ int part_parse_fix(Tcl_Interp *interp, int argc, char **argv,
     if (fixed_coord_flag[i])
       ext_flag |= COORD_FIXED(i);
 
-  if (set_particle_ext(part_num, ext_flag, ext_force ) == TCL_ERROR) {
+  if (set_particle_fix(part_num, ext_flag) == TCL_ERROR) {
     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);	
     return TCL_ERROR;
   }
