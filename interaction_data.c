@@ -10,6 +10,7 @@
 #include "grid.h"
 #include "p3m.h"
 #include "debye_hueckel.h"
+#include "lj.h"
 
 /****************************************
  * variables
@@ -666,7 +667,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
     /* set interaction parameters */
     argc -= 3;
     argv += 3;
-    
+   
     while (argc > 0) {
       if (!strncmp(argv[0], "lennard-jones", strlen(argv[0]))) {
 	/* set new lennard-jones interaction type */
@@ -692,7 +693,8 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	data_sym->LJ_offset  = data->LJ_offset;
 	argc -= 6;
 	argv += 6;
-	if (argc >= 1 && (Tcl_GetDouble(interp, argv[1], &data->LJ_offset) == TCL_OK)) {
+	if (argc >= 1 && (Tcl_GetDouble(interp, argv[0], &data->LJ_capradius) == TCL_OK)) {
+	  data_sym->LJ_capradius = data->LJ_capradius;
 	  argc--;
 	  argv++;
 	}
@@ -738,7 +740,8 @@ int lj_force_cap_callback(Tcl_Interp *interp, void *data)
 
   mpi_bcast_parameter(FIELD_LJFORCECAP);
   mpi_bcast_event(INTERACTION_CHANGED);
-  return (TCL_OK);
+  calc_lj_cap_radii(lj_force_cap);  /* this is usually done by force_init() in on_integration_start(),                 */
+  return (TCL_OK);                  /* but we have to do it now to prevent wrong output by '[inter i j lennard-jones]' */
 }
 
 #ifdef CONSTRAINTS
