@@ -673,6 +673,70 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     free(distribution);
     return (TCL_OK);
   }
+  else if (!strncmp(mode, "rdf", strlen(mode))) {
+    /* 'analyze rdf' (radial distribution function) */
+    /************************************************/
+    int tmp_argc;
+    char **tmp_argv;
+    IntList p1,p2;
+    double r_min=0, r_max=0;
+    int r_bins=0, fail=0;
+    double *rdf;
+
+    init_intlist(&p1); init_intlist(&p2);
+    /* parse arguments */
+    if( argc>0 ) {
+      Tcl_SplitList(interp,argv[0],&tmp_argc,&tmp_argv);
+      realloc_intlist(&p1,tmp_argc);
+      for(i=0;i<tmp_argc;i++) Tcl_GetInt(interp, tmp_argv[i], &(p1.e[i]));
+      argc--; argv++;
+    }
+    if( argc>0 ) {
+      Tcl_SplitList(interp,argv[0],&tmp_argc,&tmp_argv);
+      realloc_intlist(&p2,tmp_argc);
+      for(i=0;i<tmp_argc;i++) Tcl_GetInt(interp, tmp_argv[i], &(p2.e[i]));
+      argc--; argv++;
+    }
+    if(p1.max > 0 && p2.max >0) fail = 1;
+    if( argc>0 ) { Tcl_GetDouble(interp, argv[0], &r_min); argc--; argv++; }
+    if( argc>0 ) { Tcl_GetDouble(interp, argv[0], &r_max); argc--; argv++; }
+    if( argc>0 ) { Tcl_GetInt(interp, argv[0], &r_bins);   argc--; argv++; }
+    /* if not given use default */
+    if(r_min == 0.0 && r_max == 0.0 && r_bins == 0 ) {
+      r_min = 0; r_max = min_box_l/2.0; r_bins = n_total_particles / 20;
+    } 
+    /* give back what you do */
+    Tcl_AppendResult(interp, "{ analyze rdf { ", (char *)NULL);
+    for(i=0; i<p1.max; i++) { 
+      sprintf(buffer,"%d ",p1.e[i]);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    Tcl_AppendResult(interp,"} { ", (char *)NULL);
+    for(i=0; i<p2.max; i++) {
+      sprintf(buffer,"%d ",p2.e[i]);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    sprintf(buffer,"} %f %f %d",r_min,r_max,r_bins);
+    Tcl_AppendResult(interp, buffer," }", (char *)NULL);
+    rdf = malloc(r_bins*sizeof(double));
+    updatePartCfg();
+    calc_rdf(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf);
+    /* append result */
+    {
+      double bin_width=0.0, r=0.0;
+      bin_width     = (r_max-r_min) / (double)r_bins;
+      r = r_min + bin_width/2.0;
+      Tcl_AppendResult(interp, " {\n", (char *)NULL);
+      for(i=0; i<r_bins; i++) {
+	sprintf(buffer,"%f %f",r,rdf[i]);
+	Tcl_AppendResult(interp, "{ ",buffer," }\n", (char *)NULL);
+	r += bin_width;
+      }
+      Tcl_AppendResult(interp, "}\n", (char *)NULL);
+    }
+    free(rdf);
+    return (TCL_OK);
+  }
   else {
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "The operation \"", mode,
@@ -1269,10 +1333,12 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	min_dist2 = start_dist2;
 	/* particle loop: p2_types*/
 	for(j=0; j<n_total_particles; j++) {
-	  for(t2=0; t2<n_p2; t2++) {
-	    if(partCfg[j].r.type == p2_types[t2]) {
-	      act_dist2 =  min_distance2(partCfg[i].r.p, partCfg[j].r.p, box_l);
-	      if(act_dist2 < min_dist2) { min_dist2 = act_dist2; }
+	  if(j != i) {
+	    for(t2=0; t2<n_p2; t2++) {
+	      if(partCfg[j].r.type == p2_types[t2]) {
+		act_dist2 =  min_distance2(partCfg[i].r.p, partCfg[j].r.p, box_l);
+		if(act_dist2 < min_dist2) { min_dist2 = act_dist2; }
+	      }
 	    }
 	  }
 	}
@@ -1295,9 +1361,60 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
     }
   }
   
-  /* normalize */
+  /* normalization */
   *low /= (double)cnt;
   for(i=0;i<r_bins;i++) dist[i] /= (double)cnt;
 }
 
 
+void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
+	      double r_min, double r_max, int r_bins, double *rdf)
+{
+  int i,j,t1,t2,ind,cnt=0;
+  int mixed_flag=0,start;
+  double inv_bin_width=0.0,bin_width=0.0, dist;
+  double volume, bin_volume, r_in, r_out;
+
+  if(n_p1 == n_p2) {
+    for(i=0;i<n_p1;i++) 
+      if( p1_types[i] != p2_types[i] ) mixed_flag=1;
+  }
+  else mixed_flag=1;
+
+  bin_width     = (r_max-r_min) / (double)r_bins;
+  inv_bin_width = 1.0 / bin_width;
+  for(i=0;i<r_bins;i++) rdf[i] = 0.0;
+  /* particle loop: p1_types*/
+  for(i=0; i<n_total_particles; i++) {
+    for(t1=0; t1<n_p1; t1++) {
+      if(partCfg[i].r.type == p1_types[t1]) {
+	/* distinguish mixed and identical rdf's */
+	if(mixed_flag == 1) start = 0;
+	else                start = (i+1);
+	/* particle loop: p2_types*/
+	for(j=start; j<n_total_particles; j++) {
+	  for(t2=0; t2<n_p2; t2++) {
+	    if(partCfg[j].r.type == p2_types[t2]) {
+	      dist = min_distance(partCfg[i].r.p, partCfg[j].r.p, box_l);
+	      if(dist > r_min && dist < r_max) {
+		ind = (int) ( (dist - r_min)*inv_bin_width );
+		rdf[ind]++;
+	      }
+	      cnt++;
+	    }
+	  }
+	}
+
+      }
+    }
+  }
+
+  /* normalization */
+  volume = box_l[0]*box_l[1]*box_l[2];
+  for(i=0; i<r_bins; i++) {
+    r_in       = i*bin_width + r_min; 
+    r_out      = r_in + bin_width;
+    bin_volume = (4.0/3.0) * PI * ((r_out*r_out*r_out) - (r_in*r_in*r_in));
+    rdf[i] *= volume / (bin_volume * cnt);
+  }
+}
