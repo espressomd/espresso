@@ -12,11 +12,13 @@ Mann, Bernward
 
 Antypov, Dmytro
 
+Ballenegger, Vincent
+
+Galperin, Dmitry
+
 Sayar, Mehmet
 
 Stuehn, Torsten
-
-Lobaskin, Vladimir
 
 Andrienko, Denis
 
@@ -26,15 +28,12 @@ Deserno, Markus
 
 Dünweg, Burkhard
 
-Kulic, Igor
+Lobaskin, Vladimir
 
 Nowak, Christian
 
 Praprotnik, Mateij
 
-Ballenegger, Vincent
-
-Galperin, Dmitry
 
 ===============================================================================
 Users in MPI-P:
@@ -43,30 +42,6 @@ Users in MPI-P:
 ===============================================================================
 External users:
 ===============================================================================
-
-name:    Limbach, Hans Joerg
-email:    Hans-Joerg.Limbach@rdls.nestle.com
-sent:    
-version:    
-topic:    
-
-name:    Sukumaran, Sathish
-email:   sathish@mpip-mainz.mpg.d
-sent:    
-version:    
-topic:    
-
-name:    Leon Cabanillas, Salvador
-email:    leon@diquima.upm.es
-sent:    
-version:    
-topic:    
-
-name:    Pasichnyk, Igor
-email:    lekaigor@compuservice.de
-sent:    
-version:    
-topic:    
 
 name:    Cameron Abrams
 email:   cfa22@drexel.edu
@@ -108,6 +83,7 @@ email:   andheuer@uni-muenster.de
 sent:    22.OKT.2003 - 12.MAY.2004
 version: 20040512-Espresso_v1.6.1d.tar.gz
 	 20041025-Espresso_v1.8.Beta.tar.gz
+CVS:	 remote-access (user-id: arijit)
 topic:   Polymers, e.g. PEO at Silica
 
 
@@ -164,6 +140,35 @@ topic:   Lipid-Doppelschicht, deren Koepfe zur Stabilisation an feste Waende gek
 	 spaeter soll dann eine Lipid-Doppelschicht in einer Loesungsmittelumgebung 
 	 simuliert werden, wobei zur Simulation des Loesungsmittels ein DPD-Thermostat
 	 angedacht ist
+
+
+name:    Pasichnyk, Igor
+email:   lekaigor@compuservice.de, pasichny@mpipks-dresden.mpg.de
+sent:    
+version:    
+topic:    
+
+
+name:    Limbach, Hans Joerg
+email:   Hans-Joerg.Limbach@rdls.nestle.com
+sent:    
+version:    
+CVS:	 remote-access (user-id: limbach)
+topic:    
+
+
+name:    Kulic, Igor
+email:    
+sent:    
+version:    
+topic:    
+
+
+name:    Sukumaran, Sathish
+email:   sathish@mpip-mainz.mpg.d
+sent:    
+version:    
+topic:    
 
 
 name:    Moran Wang
