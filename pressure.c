@@ -74,7 +74,7 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
       }
       virials.ana_num = virials.n_pre+i;
     }
-    else if(ARG0_IS_S("nonbonded") || ARG0_IS_S("lj") || ARG0_IS_S("lj-cos") || ARG0_IS_S("gb")) {
+    else if(ARG0_IS_S("nonbonded") || ARG0_IS_S("lj") || ARG0_IS_S("lj-cos") || ARG0_IS_S("tabulated") || ARG0_IS_S("gb")) {
       if(argc<3) { virials.ana_num=0; }
       else {
 	if(!ARG_IS_I(1, i)) return (TCL_ERROR);

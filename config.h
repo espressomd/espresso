@@ -29,11 +29,11 @@
 
 #define ELECTROSTATICS
 
-/* to use LJCOS potential, by default excluded */
-/* #define LJCOS */
+/* to use LJCOS potential*/
+#define LJCOS
 
-/* to use tabulated potential, by default excluded */
-/* #define TABULATED */
+/* to use tabulated potential*/
+#define TABULATED
 
 /** Compiler flag to enable describing and processing particle orientations.
 
@@ -101,6 +101,12 @@ MDINLINE int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef ELECTROSTATICS
   Tcl_AppendResult(interp, "{ ELECTROSTATICS } ", (char *) NULL);
+#endif
+#ifdef LJCOS
+  Tcl_AppendResult(interp, "{ LJCOS } ", (char *) NULL);
+#endif
+#ifdef TABULATED
+  Tcl_AppendResult(interp, "{ TABULATED } ", (char *) NULL);
 #endif
 #ifdef EXTERNAL_FORCES
   Tcl_AppendResult(interp, "{ EXTERNAL_FORCES } ", (char *) NULL);

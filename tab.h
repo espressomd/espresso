@@ -26,15 +26,16 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
   int tablepos, table_start,j;
   double rescaled_force_cap = tab_force_cap/dist;
   fac = 0.0;
+  double maxval = ia_params->TAB_maxval;
 
+  if ( maxval > 0 ) {
+    double minval = ia_params->TAB_minval;
+    if ( dist < maxval){ 
+      table_start = ia_params->TAB_startindex;
+      dindex = (dist-minval)/ia_params->TAB_stepsize;
+      tablepos = (int)(floor(dindex));  
 
-
-  if ( dist < ia_params->TAB_maxval){ 
-    table_start = ia_params->TAB_startindex;
-    dindex = (dist-ia_params->TAB_minval)/ia_params->TAB_stepsize;
-    tablepos = (int)(floor(dindex));  
-
-    if ( dist > ia_params->TAB_minval ) {
+      if ( dist > minval ) {
        phi = dindex - tablepos;	  
        fac = tabulated_forces.e[table_start + tablepos]*(1-phi) + tabulated_forces.e[table_start + tablepos+1]*phi;
     }
@@ -43,8 +44,8 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
       if ( dist > 0 ) {
 	    tablepos = 0;
 	    phi = dindex - tablepos;	  
-	    fac = (tabulated_forces.e[table_start]*ia_params->TAB_minval)*(1-phi) + 
-	        (tabulated_forces.e[table_start+1]*(ia_params->TAB_minval+ia_params->TAB_stepsize))*phi;
+	    fac = (tabulated_forces.e[table_start]*minval)*(1-phi) + 
+	        (tabulated_forces.e[table_start+1]*(minval+ia_params->TAB_stepsize))*phi;
 	    fac = fac/dist;
       }
       else { /* Particles on top of each other .. leave fac as 0.0 */
@@ -55,14 +56,12 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
       fac = rescaled_force_cap;
     }
   }
-
-  /* Now update the forces */
-  
-  for(j=0;j<3;j++) {
-    p1->f[j] += fac * d[j];
-    p2->f[j] -= fac * d[j];
+  /* Now update the forces */  
+    for(j=0;j<3;j++) {
+      p1->f[j] += fac * d[j];
+      p2->f[j] -= fac * d[j];
+    }
   }
-  
 }
 
 /** Add a pair energy by linear interpolation from a table */
