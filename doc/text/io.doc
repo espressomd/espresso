@@ -2,27 +2,32 @@
 The following procedures may be used to save/restore checkpoints to minimize the hassel involved when your simulations crashes after long runs.
 The scripts are located in scripts/aux.tcl and use \ref tcl_blockfile as file format.
 <ul>
-    <li>\anchor checkpoint_set
+    <li>\anchor tcl_checkpoint_set
         \verbatim checkpoint_set <destination> [<# of configs> [<tclvar> [<ia_flag>]]]\endverbatim
         creates a checkpoint with path/filename <destination> (compressed if <destination> ends with '<tt>.gz</tt>'), saving the last <# of configs> 
 	which have been appended using \ref analyze_append (defaults to 'all'), adds all tcl-embedded variables specified in the tcl-list <tclvar>
 	(defaults to '-') and all interactions unless <ia_flag> is set to '-'.<BR>
+	When you're reading this, \ref tcl_checkpoint_set will be using \ref tcl_invalidate_system automatically; therefore continuing an integration
+	after setting a checkpoint or restarting it there by reading one should make absolutely no difference anymore, since the current state of
+	the random number generator(s) is/are completely (re)stored to (from) the checkpoint and the integrator is forced to re-init the forces
+	(incl. thermostat) no matter what.<BR>
 	It may be a good choice to use filenames such as '<tt>kremer_checkpoint.[eval format %05 $integration_step]</tt>' or 
 	'<tt>kremer_checkpoint.029.gz</tt>' for <destination> because the command stores all the names of checkpoints set to a file derived from 
 	<destination> by replacing the very last suffix plus maybe '.gz' with '.chk' (in the above examples: '<tt>kremer_checkpoint.chk</tt>') which
-	is used by \ref checkpoint_read to restore all checkpoints.<BR>
+	is used by \ref tcl_checkpoint_read to restore all checkpoints.<BR>
 	Although '<tt>checkpoint_set <destination></tt>' without the optional parameters will store a complete checkpoint sufficient for re-starting
 	the simulation later on, you may run out of memory while trying to save a huge number of timesteps appended (\ref analyze_append). Hence one
 	should rather only save those configurations <i>newly</i> added since the last checkpoint, i.e. if a checkpoint is created every 100,000 steps
 	while a configuration is appended every 500 steps you may want to use '<tt>checkpoint_set <destination> 200</tt>' which saves the current
-	configuration, all interactions, all bonds, and the last 200 entries appended to <tt>configs</tt> since the last checkpoint was created.
-	Since \ref checkpoint_read reads in successively the checkpoints given in the '.chk'-file, the <tt>configs</tt>-array will nevertheless be 
+	configuration, all interactions, all bonds, the precise state of the random number generator(s), and the last 200 entries appended 
+	to <tt>configs</tt> since the last checkpoint was created.
+	Since \ref tcl_checkpoint_read reads in successively the checkpoints given in the '.chk'-file, the <tt>configs</tt>-array will nevertheless be 
 	completely restored to its original state although each checkpoint-file contains only a fraction of the whole array.
 
-    <li>\anchor checkpoint_read
+    <li>\anchor tcl_checkpoint_read
         \verbatim checkpoint_read <origin>\endverbatim
 	restores all the checkpoints whose filenames are listed in <origin> in the order given therein, consequently putting the simulation into
-	the state it was in when \ref checkpoint_set was called. If parts of the <tt>configs</tt> array are given in the files listed in <origin>,
+	the state it was in when \ref tcl_checkpoint_set was called. If parts of the <tt>configs</tt> array are given in the files listed in <origin>,
 	it is assumed that they represent a fraction of the whole array.
 
 
