@@ -723,7 +723,8 @@ int tabulated_set_params(int part_type_a, int part_type_b,
     return TCL_ERROR;
   }
   if (strlen(filename) > MAXLENGTH_TABFILE_NAME-1 ) {
-    fprintf(stderr,"tabulated_set_params: the length of filename is %d but must be less than 256 characters \n", strlen(filename) );
+    fprintf(stderr,"tabulated_set_params: the length of filename is %d but must be less than 256 characters \n",
+	    (int) strlen(filename) );
     errexit();
   }
   /*Open the file containing force and energy tables */
@@ -1821,7 +1822,6 @@ int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
 
 int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
 {
-  int res;
   double maxPWerror;
 
   if (argc != 1) {
@@ -1832,12 +1832,7 @@ int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
   if (! ARG0_IS_D(maxPWerror))
     return TCL_ERROR;
 
-  res = TCL_ERROR; // set_mmm2d_params(interp, maxPWerror);
-  if (res != TCL_OK)
-    return res;
-
-  coulomb.method = COULOMB_MMM2D;
-  return TCL_OK;
+  return set_mmm2d_params(interp, maxPWerror);
 }
 
 int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)

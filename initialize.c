@@ -122,7 +122,7 @@ void on_coulomb_change()
     MMM1D_init();
     break;
   case COULOMB_MMM2D:
-    //MMM2D_init();
+    MMM2D_init();
     break;
   default: break;
   }
@@ -173,6 +173,10 @@ void on_parameter_change(int field)
     break;
   case COULOMB_MMM1D:
     if (field == FIELD_BOXL)
+      on_coulomb_change();
+    break;
+  case COULOMB_MMM2D:
+    if (field == FIELD_BOXL || field == FIELD_NLAYERS)
       on_coulomb_change();
     break;
   default: break;
