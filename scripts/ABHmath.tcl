@@ -17,15 +17,11 @@ proc PI { } {
     return 3.141592653589793
 }
 
-
-
 proc sqr { arg } {
 # sqr <arg>
 # Returns the square of <arg>.
     return [expr $arg*$arg]
 }
-
-
 
 proc min { arg1 arg2 } {
 # min <arg1> <arg2>
@@ -33,13 +29,31 @@ proc min { arg1 arg2 } {
     if { $arg1 < $arg2 } { return $arg1 } else { return $arg2 }
 }
 
-
-
 proc max { arg1 arg2 } {
 # max <arg1> <arg2>
 # Returns the maximum of <arg1> and <arg2>.
     if { $arg1 > $arg2 } { return $arg1 } else { return $arg2 }
 }
+
+proc sign { arg } {
+# returns the signum-function of <arg>
+    if { $arg==0 } { return $arg } { return [expr round($arg/abs($arg))] }
+}
+
+proc g_random { } {
+# returns random numbers which have a Gaussian distribution
+    set v1  [expr 2.0*[t_random]-1.0]
+    set v2  [expr 2.0*[t_random]-1.0]
+    set rsq [expr [sqr $v1]+[sqr $v2]]
+    while { $rsq >= 1.0 || $rsq == 0.0 } {
+	set v1  [expr 2.0*[t_random]-1.0]
+	set v2  [expr 2.0*[t_random]-1.0]
+	set rsq [expr [sqr $v1]+[sqr $v2]]
+    }
+    set fac [expr sqrt(-2.0*log($rsq)/$rsq)]
+    return [expr $v2*$fac]
+}
+
 
 proc pair_dist { part_id1 part_id2 } {
 # pair_dist <part_id1> <part_id2> 
