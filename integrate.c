@@ -111,7 +111,6 @@ void integrate_vv(int n_steps)
   }
   if(calc_forces_first == 1) {
     force_calc();
-    fprintf(stderr,"%d force calc done\n",this_node);
     MPI_Barrier(MPI_COMM_WORLD);
     collect_ghost_forces();
     calc_forces_first = 0;

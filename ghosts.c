@@ -175,13 +175,14 @@ void ghost_init()
   send_buf       = (double *)malloc(3*max_send_buf*sizeof(double));
   recv_buf       = (double *)malloc(3*max_recv_buf*sizeof(double));
 
-  /* debuging */
+  /* debuging 
   fflush(stderr);
   MPI_Barrier(MPI_COMM_WORLD) ; 
   for(i=0;i<nprocs;i++) {
     if(i==this_node) { ghost_memory_info(0); }
     MPI_Barrier(MPI_COMM_WORLD) ;
   }   
+  */
   
 }
 
