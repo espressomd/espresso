@@ -18,6 +18,28 @@
 			The order of the parameters is
 			\f$\epsilon, \sigma, cutoff, shift, offset\f$.
 
+	   	<li>\verbatim lj-cos <epsilon> <sigma> <cutoff> <offset> \endverbatim
+			the Lennard-Jones+Cosine potential (Soddemann et. al. Eur. Phys. J. E. 6, 409-419 (2001))
+
+            for \f$ r<r_{min}=offset+2^{1/6}*\sigma \f$
+            
+			\f[4 \epsilon \left(\left(\frac{\sigma}{r-offset}\right)^{12} -
+				 \left(\frac{\sigma}{r-offset}\right)^6 \right)\f]
+
+
+            for \f$ cutoff>r>r_{min}=offset+2^{1/6}*\sigma \f$
+            
+			\f[\frac{1} {2} \epsilon \left(\cos (\alpha {(r-offset)}^2 + \beta) -1 \right) \f]
+            
+            where \f$ \alpha \f$ and \f$ \beta \f$ are given by,
+            
+            \f[ \alpha= \frac {\pi} { {(cutoff-offset)}^2 - {(r_{min}-offset)}^2 } \f]
+            
+            \f[ \beta= \pi \left( 1 - \frac {{(r_{min}-offset)}^2} {{(cutoff-offset)}^2 - {(r_{min}-offset)}^2 } \right) \f]
+
+			The order of the parameters is
+			\f$\epsilon, \sigma, cutoff, offset\f$.
+
 		<li>\verbatim ramp <cutoff> <force_magnitude> \endverbatim
 			a simple step potential for initialization.<BR>
 			The parameters are the cutoff and the force

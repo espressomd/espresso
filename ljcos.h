@@ -1,13 +1,13 @@
 #ifndef LJCOS_H
 #define LJCOS_H
 
-/** \file lj.h
- *  Routines to calculate the lennard jones energy or/and and force 
+/** \file ljcos.h
+ *  Routines to calculate the lennard jones+cosine energy and/or force 
  *  for a particle pair.
  *  \ref forces.c
  *
  *  <b>Responsible:</b>
- *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
+ *  <a href="mailto:sayar@mpip-mainz.mpg.de">Mehmet</a>
 */
 
 MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,

@@ -2,7 +2,7 @@
 #define LJ_H
 
 /** \file lj.h
- *  Routines to calculate the lennard jones energy or/and and force 
+ *  Routines to calculate the lennard jones energy and/or  force 
  *  for a particle pair.
  *  \ref forces.c
  *
