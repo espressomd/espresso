@@ -192,6 +192,13 @@
 		<li> \verbatim harmonic <K_harmonic> <R_harmonic> \endverbatim
 			Harmonic potential
 			\f[ U^{Harmonic} = \frac{1}{2} K_{harmonic} \left( r - R_{harmonic} \right)^2 \f]
+	     	<li> \verbatim subt_lj <K_subt_lj>  <R_subt_lj>  \endverbatim
+		    	This "bonded" interaction subtracts the Lennard-Jones force/energy of every bonded
+			pair from the total force/energy. The first parameter, \verbatim <K_subt_lj> \endverbatim
+			is a dummy and is not used. The second parameter, \verbatim <R_subt_lj> \endverbatim 
+			is used as a check. If the any bond length in the system exceeds this value,
+			the program crashes. When not needed, this crashing can be disabled by commenting 
+			out a few lines in subt_lj.h . 
 	     </ul>
 
 	     <b>Bond angle potentials:</b> (three body interactions)<br>
