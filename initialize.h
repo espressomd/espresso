@@ -42,6 +42,10 @@ int on_program_start(Tcl_Interp *interp);
     when switching from Tcl to the simulation core. */
 void on_integration_start();
 
+/** called before calculating observables, i.e. energy, pressure or the 	     integrator (forces). Initialize any methods here which are not
+    initialized immediately (P3M, Maggs, etc.). */
+void on_observable_calc();
+
 /** called every time a particle property is changed via Tcl. */
 void on_particle_change();
 

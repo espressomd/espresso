@@ -13,6 +13,7 @@
 #include "parser.h"
 #include "cells.h"
 #include "integrate.h"
+#include "initialize.h"
 #include "domain_decomposition.h"
 #include "nsquare.h"
 #include "layered.h"
@@ -43,11 +44,8 @@ void energy_calc(double *result)
 
   init_energies(&energy);
 
-  if(resort_particles) {
-    cells_resort_particles(CELL_GLOBAL_EXCHANGE);
-    resort_particles = 0;
-  }
-
+  on_observable_calc();
+  
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
     layered_calculate_energies();

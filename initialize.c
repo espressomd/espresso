@@ -52,6 +52,7 @@
 
 /** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
+static int reinit_electrostatics = 0;
 
 static void init_tcl(Tcl_Interp *interp);
 
@@ -147,18 +148,38 @@ void on_integration_start()
   invalidate_obs();
   freePartCfg();
 
+  on_observable_calc();
+}
+
+void on_observable_calc()
+{
   /* Prepare particle structure: Communication step: number of ghosts and ghost information */
+
   if(resort_particles) {
     cells_resort_particles(CELL_GLOBAL_EXCHANGE);
     resort_particles = 0;
   }
   
+  if(reinit_electrostatics) {
+    EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
+    switch (coulomb.method) {
+    case COULOMB_P3M:
+      P3M_count_charged_particles();
+      break;
+    case COULOMB_MAGGS: 
+      Maggs_init(); 
+      break;
+    default: break;
+    }
+    reinit_electrostatics = 0;
+  }
 }
 
 void on_particle_change()
 {
   // EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
   resort_particles = 1;
+  reinit_electrostatics = 1;
   rebuild_verletlist = 1;
 
   invalidate_obs();
