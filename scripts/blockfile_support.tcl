@@ -6,7 +6,7 @@ proc blockfile_write_particles {channel write particles {info "id pos v q"} {ran
     blockfile $channel write start "particles"
     if {![regexp "pos" $info]} {set info "pos $info"}
     if {![regexp "id" $info]} {set info "id $info"}
-    if {[regexp "bonds" $info]} { error "bonding information cannot be written" }
+    if {[regexp "bond" $info]} { error "bonding information cannot be written" }
 
     puts $channel "{$info} "
     foreach list $range {
