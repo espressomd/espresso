@@ -50,7 +50,7 @@ int on_program_start(Tcl_Interp *interp)
 
   init_random();
   init_bit_random();
-  cells_pre_init();
+  cells_init();
   ghost_pre_init();
 #ifdef ELECTROSTATICS
   fft_pre_init();

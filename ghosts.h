@@ -97,7 +97,7 @@ typedef struct {
   /** Number of cells to communicate. */
   int n_cells;
   /** Pointer array to cells to communicate. */
-  Cell **cells;
+  struct Cell **cells;
 
 } GhostCommunication;
 

@@ -48,49 +48,19 @@
 #include <tcl.h>
 #include "particle_data.h"
 #include "domain_decomposition.h"
-#include "ghost.h"
+#include "ghosts.h"
+#include "verlet.h"
+
+/** which cell structure is used */
+/*@{*/
+#define CELL_STRUCTURE_DD 0
+#define CELL_STRUCTURE_N2 1
+/*@}*/
 
 /************************************************/
 /** \name Data Types */
 /************************************************/
 /*@{*/
-
-#define CELL_STRUCTURE_DD 0
-#define CELL_STRUCTURE_N2 1
-
-/** Describes a cell structure */
-typedef struct {
-  /** type descriptor */
-  int type;
-
-  /** Communicator to exchange ghost cell information. */
-  GhostCommunicator ghost_cells_comm;  
-  /** Communicator to exchange ghost particles. */
-  GhostCommunicator exchange_ghosts_comm;
-  /** Communicator to update ghost positions. */
-  GhostCommunicator update_ghost_pos_comm;
-  /** Communicator to collect ghost forces. */
-  GhostCommunicator collect_ghost_force_comm;
-
-  /** Called when the current cell structure is invalidated because for example the
-      box length has changed. This procedure may NOT destroy the old inner cells,
-      but it should free all other related data including the ghost cells. Note
-      that parameters like the box length or the node_grid may already have changed. */
-  void  (*topology_release)();
-  /** Initialize the topology. The argument is list of cells, which particles have to be
-      sorted into their cells. The particles might not belong to this node.
-      This procedure is used when particle data or cell structure has changed and
-      the cell structure has to be reinitialized. */
-  void  (*topology_init)(CellPList *cplist);
-  /** Just resort the particles. Used during integration. The particles are stored in
-      the cell structure. Domain decomposition can assume for example that particles
-      only have to be sent to neighboring nodes. */
-  void  (*exchange_and_sort_particles)();
-  ///
-  int   (*position_to_node)(double pos[3]);
-  ///
-  Cell *(*position_to_cell)(double pos[3]);
-} CellStructure;
 
 /** Structure containing information about non bonded interactions
     with particles in a neighbor cell. */
@@ -106,7 +76,7 @@ typedef struct {
 /** Structure containing information of a cell. Contains: cell
     neighbor information, particles in cell.
 */
-typedef struct {
+typedef struct Cell {
   /** number of interacting neighbor cells . 
 
       A word about the interacting neighbor cells:
@@ -139,6 +109,43 @@ typedef struct {
   int max;
 } CellPList;
 
+/** Describes a cell structure */
+typedef struct {
+  /** type descriptor */
+  int type;
+
+  /** Communicator to exchange ghost cell information. */
+  GhostCommunicator ghost_cells_comm;
+  /** Communicator to exchange ghost particles. */
+  GhostCommunicator exchange_ghosts_comm;
+  /** Communicator to update ghost positions. */
+  GhostCommunicator update_ghost_pos_comm;
+  /** Communicator to collect ghost forces. */
+  GhostCommunicator collect_ghost_force_comm;
+
+  /** Called when the current cell structure is invalidated because for example the
+      box length has changed. This procedure may NOT destroy the old inner and ghost
+      cells, but it should free all other organizational data. Note that parameters
+      like the box length or the node_grid may already have changed. Therefore
+      organizational data has to be stored independently from variables
+      that may be changed from outside. */
+  void  (*topology_release)();
+  /** Initialize the topology. The argument is list of cells, which particles have to be
+      sorted into their cells. The particles might not belong to this node.
+      This procedure is used when particle data or cell structure has changed and
+      the cell structure has to be reinitialized. This also includes setting up the
+      cell_structure array. */
+  void  (*topology_init)(CellPList *cplist);
+  /** Just resort the particles. Used during integration. The particles are stored in
+      the cell structure. Domain decomposition can assume for example that particles
+      only have to be sent to neighboring nodes. */
+  void  (*exchange_and_sort_particles)();
+  ///
+  int   (*position_to_node)(double pos[3]);
+  ///
+  Cell *(*position_to_cell)(double pos[3]);
+} CellStructure;
+
 /*@}*/
 
 /************************************************************/
@@ -161,13 +168,27 @@ extern CellStructure cell_structure;
 /************************************************************/
 /*@{*/
 
-/** initialize with a cell structure (domain decomposition) */
+/** initialize with a standard cell structure (domain decomposition) */
 void cells_init();
 
-/** initialize a cell structure.
- *  Use with care and ONLY for initialization! 
- *  @param cell  Pointer to cell to initialize. */
-void init_cell(Cell *cell);
+/** create a new initialized cell.*/
+Cell *alloc_cell();
+
+/** initialize a list of cell pointers */
+MDINLINE void init_cellplist(CellPList *cl) {
+  cl->n    = 0;
+  cl->max  = 0;
+  cl->cell = NULL;
+}
+
+/** reallocate a list of cell pointers */
+MDINLINE void realloc_cellplist(CellPList *cl, int size)
+{
+  if(size != cl->max) {
+    cl->max = size;
+    cl->cell = (Cell **) realloc(cl->cell, sizeof(int)*cl->max);
+  }
+}
 
 /** reinitialize link cell structures. 
  *
@@ -180,17 +201,12 @@ void init_cell(Cell *cell);
  */
 void cells_re_init();
 
+/** called when the topology has changed, so that the cell system can be reinitialized. */
+void cells_changed_topology();
+
 /** Calculate and return the total number of particles on this
     node. */
 int cells_get_n_particles();
-
-/** Convenient replace for loops over all local cells. */
-#define LOCAL_CELLS_LOOP(cell) \
-  for(cell=local_cells.cell; cell - local_cells.cell < local_cells.n; cell++)
-
-/** Convenient replace for loops over all ghost cells. */
-#define GHOST_CELLS_LOOP(cell) \
-  for(cell=ghost_cells.cell; cell - ghost_cells.cell < ghost_cells.n; cell++)
 
 /** debug function to print particle positions: */
 void print_particle_positions();

@@ -28,6 +28,7 @@
 #include "p3m.h"
 #include "imd.h"
 #include "tuning.h"
+#include "domain_decomposition.h"
 
 /**********************************************
  * description of variables
