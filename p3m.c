@@ -437,7 +437,7 @@ int inter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv)
   while(argc > 0) {
 
     if(ARG0_IS_S("r_cut")) {
-      if (! (argc > 1 && ARG1_IS_D(r_cut) && r_cut > 0)) {
+      if (! (argc > 1 && ARG1_IS_D(r_cut) && r_cut >= -1)) {
 	Tcl_AppendResult(interp, "r_cut expects a positive double",
 			 (char *) NULL);
 	return TCL_ERROR;
