@@ -156,7 +156,7 @@ counterions $n_counterions charge $ci_valency type 2
 #puts "[part]"
 set n_part [setmd n_part]
 for { set i 0 } { $i < $n_part } { incr i } {
-#    puts "[part $i]"
+    puts "[part $i]"
 }
 
 set act_min_dist [analyze mindist]
@@ -207,7 +207,9 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
     puts -nonewline "run $i at time=$time (LJ cap=$cap)\r "
     flush stdout
 
+    puts [analyze energy]
     integrate $warm_steps
+
     if { $vmd_output=="yes" } { imd positions }
 
     set act_min_dist [analyze mindist]
@@ -240,7 +242,7 @@ puts "Interactions are now: {[inter]}"
 
 #      Write blockfiles for restart
 #############################################################
-polyBlockWrite "$name$ident.set"   {box_l time_step skin temp gamma}
+polyBlockWrite "$name$ident.set"   {box_l time_step skin}
 polyBlockWrite "$name$ident.start" {time} {id pos type}
 
 # prepare observable output
@@ -252,7 +254,7 @@ set re_full [analyze re]
 set re [lindex $re_full 0]
 set j 0
 puts "\nStart Main integration: $int_n_times times $int_steps steps"
-for {set i 0} { $i < $int_n_times } { incr i} {
+for {set i 0} { $i <= $int_n_times } { incr i} {
     set time [setmd time]
     puts -nonewline "run $i at time=$time, R_E = $re_full (soll 15.0, deviation [expr $re/15.0])\r"
     flush stdout
@@ -276,7 +278,7 @@ for {set i 0} { $i < $int_n_times } { incr i} {
     if { $vmd_output=="yes" } { imd positions }
     #   write intermediate configuration
     if { $i%50==0 } {
-	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
+	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l time_step skin} {id pos type}
 	incr j
     }
 }

@@ -43,6 +43,10 @@ puts " "
 set name  "pe_solution"
 set ident "_s3"
 
+# If time_step and skin are not set in the blockfile, we set it here.
+setmd time_step 0.0125
+setmd skin      0.4
+
 # Specify which configurations to analyze
 set anaident ""
 set start 0
