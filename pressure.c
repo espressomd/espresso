@@ -26,7 +26,7 @@ nptiso_struct   nptiso   = { 0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0 };
 
 int piston_callback(Tcl_Interp *interp, void *_data) {
   double data = *(double *)_data;
-  if (data <= 0.0) { Tcl_AppendResult(interp, "the piston's mass must be positive.", (char *) NULL); return (TCL_ERROR); }
+  if (data < 0.0) { Tcl_AppendResult(interp, "the piston's mass must be positive.", (char *) NULL); return (TCL_ERROR); }
   nptiso.piston = data;
   mpi_bcast_parameter(FIELD_NPTISO_PISTON);
   return (TCL_OK);

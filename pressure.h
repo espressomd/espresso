@@ -171,7 +171,7 @@ MDINLINE void add_bonded_virials(Particle *p1)
     p2 = checked_particle_ptr(p1->bl.e[i+1]);
     
     for (j = 0; j < 3; j++) {
-      p1->f.f[i] = 0;
+      p1->f.f[j] = 0;
 
       F2[j] = p2->f.f[j];      
       p2->f.f[j] = 0;
