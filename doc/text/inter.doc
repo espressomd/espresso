@@ -34,9 +34,9 @@
 	Again the first two integers are <particle_type_number1> and <particle_type_number2>.
 
 	<b> <li> \anchor tcl_bonded Bonded interactions: </b>
-	\verbatim inter <bond_type_number> <interaction_type>|num <value>* \endverbatim
+	\verbatim inter <bond_type_number> ( <interaction_type>|<num> ) <value>* \endverbatim
 	Bonded interaction (bonds are set using \ref tcl_part).
-	If "num" is given, the number of interaction partners is given (e.g. 1 for FENE).
+	If <num> is given, the number of interaction partners is given (e.g. 1 for FENE).
 	Currently known <interaction_type>s are:
 
 	<ul>
@@ -72,7 +72,7 @@
 		\f[ U^{C-P3M} = \ell_B T \frac{q_1 q_2}{r} \f]
 		with help of the P3M Method described elsewhere. 
 
-		Make sure you know how to tune p3m parameters befor
+		Make sure you know how to tune p3m parameters before
 		using the automatic tuning feature. Details are
 		described in the documentation of \ref
 		P3M_tune_parameters.
@@ -91,17 +91,23 @@
 		<b> Make sure that you know the relevance of the P3M Parameters befor using P3M !!!</b>
 
 		<li> \verbatim dh <kappa> <r_cut> \endverbatim
-		Debye-H{\"u}ckel potential: 
+		Debye-Hueckel potential: 
 		\f[ U^{C-DH} = 	\ell_B T \frac{q_1 q_2 exp(-\kappa r)}{r} \f]
 		For \f[ \kappa = 0 \f] this corresponds to the plein coulomb potential.
 	</ul>		
 
+	\verbatim inter	coulomb 0.0 \endverbatim
+	disables coulomb interactions hence deactivating the electrostatic subsystem.
 	\verbatim inter	coulomb \endverbatim
-	returns the actual parameters of the coulomb interaction.
+	returns the actual parameters of the coulomb interaction as a tcl-list, e.g.
+	\verbatim {coulomb 1.0 p3m 7.75 8 5 0.1138 0.0} {coulomb epsilon 0.1 n_interpol 32768 mesh_off 0.5 0.5 0.5} \endverbatim
+	which has the correct format to be used as input to 'inter' as well. If
+	\verbatim coulomb 0.0 \endverbatim
+	is returned, no electrostatics are active at the moment.
 
 	</ol>
 	\verbatim inter \endverbatim
-	returns a list of \emph{all} bonded and non-bonded interactions as a Tcl-list,
+	returns a list of <i>all</i> bonded and non-bonded interactions as a Tcl-list,
 	in the same formats as above, e. g.
 	\verbatim {0 0 lennard-jones 1.0 2.0 1.1225 0.0 0.0} {0 FENE 7.0 2.0} {1 angle 1.0}\endverbatim	
 	The C implementation is \ref #inter.
