@@ -1,5 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
+#include <math.h>
 
 /* just some nice utilities... */
 /* and some constants...*/
@@ -38,6 +39,42 @@ MDINLINE double AS_erfc_part(double d)
   t = 1.0 / (1.0 + AS_p * d);
   
   return t * (AS_a1 + t * (AS_a2 + t * (AS_a3 + t * (AS_a4 + t * AS_a5) ) ) );
+}
+
+/** get the linear index from the position (a,b,c) in a 3D grid
+ *    (adim,bdim,cdim). returns linear index.
+ *
+ * @param a       x position 
+ * @param b       y position 
+ * @param c       z position 
+ * @param adim    x dimension of the underlying grid  
+ * @param bdim    y dimension of the underlying grid  
+ * @param cdim    z dimension of the underlying grid  
+*/
+MDINLINE int get_linear_index(int a, int b, int c, int adim, int bdim, int cdim)
+{
+  return (a + adim*(b + bdim*c));
+}
+
+/** get the position (a,b,c) from the linear index in a 3D grid
+ *    (adim,bdim,cdim).
+ *
+ * @param i       linear index
+ * @param a       x position (return value) 
+ * @param b       y position (return value) 
+ * @param c       z position (return value) 
+ * @param adim    x dimension of the underlying grid  
+ * @param bdim    y dimension of the underlying grid  
+ * @param cdim    z dimension of the underlying grid  
+ */
+MDINLINE void get_grid_pos(int i, int *a, int *b, int *c, 
+			   int adim, int bdim, int cdim)
+{
+  *a = i % adim;
+  i /= adim;
+  *b = i % bdim;
+  i /= bdim;
+  *c = i;
 }
 
 #endif

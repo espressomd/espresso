@@ -10,6 +10,7 @@
 #include "integrate.h"
 #include "particle_data.h"
 #include "communication.h"
+#include "utils.h"
 
 int   n_verletList;
 int max_verletList;

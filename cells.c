@@ -1,18 +1,30 @@
 /** \file cells.c
-
-    This file contains everything related to the link cell
-    algorithm. This modul strongly interacts with with the ghost
-    particle structure (ghosts.c) and the verlet list algorithm
-    (verlet.c). The initialization (cells_init()) and cleaning up
-    (cells_exit()) is done from the integrator (integrate.c).  
-
-    The domain of a node is split into a 3D cell grid with dimension
-    cell_grid. Together with one ghost cell layer on each side the
-    overall dimension of the ghost cell grid is ghos_cell_grid.
-    
-*/
-
-
+ *
+ *  This file contains everything related to the link cell
+ *  algorithm. This modul strongly interacts with the ghost particle
+ *  structure (ghosts.c) and the verlet list algorithm (verlet.c). The
+ *  initialization (cells_init()) and cleaning up (cells_exit()) is
+ *  done from the integrator (integrate.c).
+ *
+ *  The domain of a node is split into a 3D cell grid with dimension
+ *  cell_grid. Together with one ghost cell layer on each side the
+ *  overall dimension of the ghost cell grid is ghost_cell_grid.
+ *  You can see a 2D graphical representation of the linked cell grid below. 
+ *
+ *  <img src="../figs/linked_cells.gif" alt="pic test" align="middle" border=0 width=300 height=300> 
+ *
+ *  2D representation of a linked cell grid: n_cells = 64, cell_grid =
+ *  {4,4}, ghost_cell_grid = {6,6}
+ *
+ * Each cell has 3^D-1 neighbour cells (For cell 14 they are
+ * marked). Since we deal with pair forces, it is sufficient to
+ * calculate only half of the interactions (Newtons law: actio =
+ * reactio). I have chosen the upper half e.g. all neighbour cells with
+ * a higher linear index (For cell 14 they are marked in light
+ * blue). Caution: This implementation needs double sided ghost
+ * communication! For single sided ghost communication one would need
+ * some ghost-ghost cell interaction as well, which we do not need!
+ *   */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,24 +35,27 @@
 #include "interaction_data.h"
 #include "integrate.h"
 #include "communication.h"
+#include "utils.h"
+
+/************************************************
+ * defines
+ ************************************************/
 
 /** increment size of particle buffer */
 #define PART_INCREMENT 5
 /** half the number of cell neighbours in 3 Dimensions*/
 #define MAX_NEIGHBOURS 13
 
-/*******************  Variables  *******************/
+/************************************************
+ * variables
+ ************************************************/
 
-/** inner linked cell grid. */
 int cell_grid[3];
-/** linked cell grid with ghost frame. */
 int ghost_cell_grid[3];
-/** number of linked cells inside the domain of one node (inner cells). */
-int n_inner_cells;
 
-/** number of linked cells (inner+ghosts). */
+/** number of linked cells in processors spatial domain. */
+int n_inner_cells;
 int n_cells;
-/** linked cell list. */
 Cell *cells;
 
 /** cell size. */
@@ -48,16 +63,28 @@ double cell_size[3];
 /** inverse cell size. */
 double inv_cell_size[3];
 
-/*******************  privat functions  *******************/
+/************************************************
+ * privat functions (headers)
+ ************************************************/
 
-void init_cell_neighbours();
-int  is_inner_cell(int i, int adim, int bdim, int cdim);
+/** initializes the interacting neighbour cell list
+ *  (cells.neighbours).  the created list of interacting neighbour
+ *  cells is used by the verlet algorithm (see verlet.c) to build the
+ *  verlet list.
+ *
+ *  @param i linear index of a cell.  */
+void init_cell_neighbours(int i);
+ 
+/** check wether the cell with linear index i is an inner cell or not.
+ *  returns 1 if the cell is an inner cell and 0 if it is not.
+ *  @param i        linear index of the cell to test.
+ *  @param gcg[3]   ghost_cell_grid[3].
+ */
+int  is_inner_cell(int i, int gcg[3]);
 
-void cell_memory_info(int verb);
-void print_ifield(int *field, int size);
-void print_dfield(double *field, int size);
-
-/*******************  exported functions  *******************/
+/************************************************
+ * functions
+ ************************************************/
 
 void cells_init() 
 {
@@ -99,18 +126,6 @@ void cells_init()
   }
 }
 
-/*************************************************/
-
-void cells_exit() 
-{
-  int i;
-  CELL_TRACE(if(this_node<2) fprintf(stderr,"%d: cells_exit:\n",this_node));
-  for(i=0;i<n_cells;i++) {
-    if(cells[i].n_neighbours>0)  free(cells[i].neighbours);
-    if(cells[i].max_particles>0) free(cells[i].particles);
-  }
-  free(cells);
-}
 
 /*************************************************/
 
@@ -145,6 +160,18 @@ void sort_particles_into_cells()
   }
 }
 
+/*************************************************/
+
+void cells_exit() 
+{
+  int i;
+  CELL_TRACE(if(this_node<2) fprintf(stderr,"%d: cells_exit:\n",this_node));
+  for(i=0;i<n_cells;i++) {
+    if(cells[i].n_neighbours>0)  free(cells[i].neighbours);
+    if(cells[i].max_particles>0) free(cells[i].particles);
+  }
+  free(cells);
+}
 
 
 /*******************  privat functions  *******************/
@@ -155,7 +182,7 @@ void init_cell_neighbours(int i)
   int cg[3],p1[3],p2[3];
 
   memcpy(cg,ghost_cell_grid,3*sizeof(int));
-  if(is_inner_cell(i,cg[0],cg[1],cg[2])) { 
+  if(is_inner_cell(i,cg)) { 
     cells[i].neighbours = malloc(MAX_NEIGHBOURS*sizeof(int));    
     get_grid_pos(i,&p1[0],&p1[1],&p1[2],cg[0],cg[1],cg[2]);
     /* loop through all neighbours */
@@ -181,41 +208,17 @@ void init_cell_neighbours(int i)
 
 /*************************************************/
 
-int get_linear_index(int a, int b, int c, int adim, int bdim, int cdim)
-{
-  return (a + adim*(b + bdim*c));
-}
-
-/*************************************************/
-
-void get_grid_pos(int i, int *a, int *b, int *c, int adim, int bdim, int cdim)
-{
-  *a = i % adim;
-  i /= adim;
-  *b = i % bdim;
-  i /= bdim;
-  *c = i;
-}
-
-/*************************************************/
-
-/** check wether the cell with linear index i is an inner cell or not. */
-int  is_inner_cell(int i, int adim, int bdim, int cdim)
+int  is_inner_cell(int i, int gcg[3])
 {
   int pos[3];
-  get_grid_pos(i,&pos[0],&pos[1],&pos[2],adim,bdim,cdim);
-  return (pos[0]>0 && pos[0] < adim-1 &&
-	  pos[1]>0 && pos[1] < bdim-1 &&
-	  pos[2]>0 && pos[2] < cdim-1);
+  get_grid_pos(i,&pos[0],&pos[1],&pos[2],gcg[0],gcg[1],gcg[2]);
+  return (pos[0]>0 && pos[0] < gcg[0]-1 &&
+	  pos[1]>0 && pos[1] < gcg[1]-1 &&
+	  pos[2]>0 && pos[2] < gcg[2]-1);
 }
 
 /*************************************************/
 
-/** realloc cell particle array.
-    Step size for increase and decrease is PART_INCREMENT.
-    @param index    linear cell index.
-    @param size     desired size of the  particle array.
- */
 void realloc_cell_particles(int index, int size)
 {
   int incr;
@@ -234,45 +237,4 @@ void realloc_cell_particles(int index, int size)
     cells[index].particles = (int *)
       realloc(cells[index].particles, sizeof(int)*cells[index].max_particles);
   }
-}
-
-void cell_memory_info(int verb)
-{
-  int i;
-  
-  fprintf(stderr,"%d: Cell Memory Information:\n",this_node);
-  fprintf(stderr,"    Inner Cell Grid: "); print_ifield(cell_grid,3);
-  fprintf(stderr,"    Ghost Cell Grid: "); print_ifield(ghost_cell_grid,3);
-  fprintf(stderr,"    cells: n_cells = %d, n_inner_cells %d\n",
-	  n_cells,n_inner_cells); 
-  if(verb>0) {
-    for(i=0;i<n_cells;i++) {
-      fprintf(stderr,"    Cell %d: neighbours: ",i); 
-      print_ifield(cells[i].neighbours,cells[i].n_neighbours);
-      fprintf(stderr,"    Cell %d: particles: max_particles %d, ",
-	      i,cells[i].max_particles);
-      print_ifield(cells[i].particles,cells[i].n_particles);
-    }
-  }
-  fflush(stderr);
-}
-
-void print_ifield(int *field, int size)
-{
-  int i;
-  fprintf(stderr,"size = %d ",size);
-  if(size>0) {
-    fprintf(stderr,"{");
-    for(i=0;i<size-1;i++) fprintf(stderr,"%d ",field[i]);
-    fprintf(stderr,"%d}",field[size-1]);
-  }
-  fprintf(stderr,"\n");
-}
-
-void print_dfield(double *field, int size)
-{
-  int i;
-  fprintf(stderr,"size = %d {",size);
-  for(i=0;i<size-1;i++) fprintf(stderr,"%.2f ",field[i]);
-  fprintf(stderr,"%.2f}\n",field[size-1]);
 }

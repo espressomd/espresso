@@ -4,6 +4,7 @@
 
 #include "ghosts.h"
 #include "debug.h"
+#include "utils.h"
 
 /** Creates an linear index list of a sub grid.
     The sub grid is defined by its lower and upper corner:\\
