@@ -17,8 +17,6 @@
 */
 #ifdef COMFIXED
 
-extern int COM_on;
-
 MDINLINE int comfixed_set_params(int part_type_a, int part_type_b, int flag)
 {
   Particle *p;
@@ -32,9 +30,11 @@ MDINLINE int comfixed_set_params(int part_type_a, int part_type_b, int flag)
   data     = get_ia_param(part_type_a, part_type_b);
   data_sym = get_ia_param(part_type_b, part_type_a);
   
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
+  if (!data || !data_sym)
+    return 1;
+
+  if (n_nodes > 1)
+    return 2;
 
   /* COMFIXED should be symmetrically */
   data_sym->COMFIXED_flag    = data->COMFIXED_flag    = flag;
@@ -57,9 +57,7 @@ MDINLINE int comfixed_set_params(int part_type_a, int part_type_b, int flag)
     }
   }
   
-  COM_on = 1;
-
-  return TCL_OK;
+  return 0;
 }
 
 MDINLINE int printcomfixedIAToResult(Tcl_Interp *interp, int i, int j)
@@ -97,8 +95,12 @@ MDINLINE int comfixed_parser(Tcl_Interp * interp,
     return 0;
   }
 
-  if (comfixed_set_params(part_type_a, part_type_b, flagc) == TCL_ERROR) {
+  switch (comfixed_set_params(part_type_a, part_type_b, flagc)) {
+  case 1:
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+    return 0;
+  case 2:
+    Tcl_AppendResult(interp, "works only with a single CPU", (char *) NULL);
     return 0;
   }
   return 2;

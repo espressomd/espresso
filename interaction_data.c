@@ -59,11 +59,6 @@ int n_constraints       = 0;
 Constraint *constraints = NULL;
 #endif 
 
-#if defined(COMFORCE) || defined(COMFIXED)
-/** if any COM interaction is on, i. e. we cannot multiple processors */
-int COM_on = 0;
-#endif
-
 /** Array containing all tabulated forces*/
 DoubleList tabulated_forces;
 /** Corresponding array containing all tabulated energies*/
@@ -429,7 +424,6 @@ void calc_maximal_cutoff()
 
 int check_obs_calc_initialized()
 {
-  char *errtxt;
   /* set to zero if initialization was not successful. */
   int state = 1;
 
@@ -440,14 +434,6 @@ int check_obs_calc_initialized()
   case COULOMB_P3M: if (P3M_sanity_checks()) state = 0; break;
   }
   if (coulomb.use_elc && ELC_sanity_checks()) state = 0;
-#endif
-
-#if defined(COMFORCE) || defined(COMFIXED)
-  if (COM_on == 1 && n_nodes > 1) {
-    errtxt = runtime_error(128);
-    sprintf(errtxt, "COM force and fixed only work with a single CPU");
-    state = 0;
-  }
 #endif
 
   return state;

@@ -80,7 +80,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 double mindist(IntList *set1, IntList *set2);
 
 /** */
-void aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_list, int *link_list, int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std);
+int aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_list, int *link_list,
+		int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std);
 
 /** returns all particles within a given radius r_catch around a position.
     @param pos position of sphere of point

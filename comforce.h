@@ -13,8 +13,6 @@
 
 #ifdef COMFORCE
 
-extern int COM_on;
-
 MDINLINE int comforce_set_params(int part_type_a, int part_type_b,
 				 int flag, int dir, double force, double fratio)
 {
@@ -26,9 +24,12 @@ MDINLINE int comforce_set_params(int part_type_a, int part_type_b,
   data     = get_ia_param(part_type_a, part_type_b);
   data_sym = get_ia_param(part_type_b, part_type_a);
   
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
+  if (!data || !data_sym)
+    return 1;
+
+  if (n_nodes > 1)
+    return 2;
+
 
   /* COMFORCE should be symmetrically */
   data_sym->COMFORCE_flag    = data->COMFORCE_flag    = flag;
@@ -40,9 +41,7 @@ MDINLINE int comforce_set_params(int part_type_a, int part_type_b,
   mpi_bcast_ia_params(part_type_a, part_type_b);
   mpi_bcast_ia_params(part_type_b, part_type_a);
 
-  COM_on = 1;
-  
-  return TCL_OK;
+  return 0;
 }
 
 MDINLINE int printcomforceIAToResult(Tcl_Interp *interp, int i, int j)
@@ -90,8 +89,12 @@ MDINLINE int comforce_parser(Tcl_Interp * interp,
     
   change = 5;
     
-  if (comforce_set_params(part_type_a, part_type_b, flag, dir, force, fratio) == TCL_ERROR) {
+  switch (comforce_set_params(part_type_a, part_type_b, flag, dir, force, fratio)) {
+  case 1:
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+    return 0;
+  case 2:
+    Tcl_AppendResult(interp, "works only with a single CPU", (char *) NULL);
     return 0;
   }
   return change;

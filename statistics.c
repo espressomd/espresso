@@ -127,7 +127,7 @@ double mindist(IntList *set1, IntList *set2)
   return mindist;
 }
 
-void aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_list, int *link_list, int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std)
+int aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_list, int *link_list, int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std)
 {
   /* add check for:
      single procesor
@@ -142,6 +142,12 @@ void aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_li
   int arr_size = n_molecules * (n_molecules+1 ) / 2;
   double minidist2[arr_size];
   int target1, target2, head_i;
+
+  if (n_nodes > 1)
+    return 1;
+
+  if (cell_structure.type != CELL_STRUCTURE_DOMDEC)
+    return 2;
 
   build_verlet_lists();
 
@@ -228,7 +234,7 @@ void aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_li
     if (*agg_max < agg_size[i]) { *agg_max = agg_size[i]; }
   }
   
-  return ;
+  return 0;
 }
 
 
@@ -745,8 +751,15 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_ERROR);
   }
   
-  aggregation(dist_criteria2, s_mol_id, f_mol_id, head_list, link_list, agg_id_list, 
-	      &agg_num, agg_size, &agg_max, &agg_min, &agg_avg, &agg_std);
+  switch (aggregation(dist_criteria2, s_mol_id, f_mol_id, head_list, link_list, agg_id_list, 
+		      &agg_num, agg_size, &agg_max, &agg_min, &agg_avg, &agg_std)) {
+  case 1:
+    Tcl_AppendResult(interp, "aggregation can only be calculated on a single processor", (char *)NULL);
+    return TCL_ERROR;
+  case 2:
+    Tcl_AppendResult(interp, "aggregation can only be calculated with the domain decomposition cell system", (char *)NULL);
+    return TCL_ERROR;
+  }
   
   fagg_avg = (float) (agg_avg)/agg_num;
   sprintf (buffer, " MAX %d MIN %d AVG %f STD %f AGG_NUM %d AGGREGATES", 
