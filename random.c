@@ -5,20 +5,21 @@
 /** \file random.c A random generator. Be sure to run init_random() before
     you use any of the generators. */
 
-#define IA 16807
-#define IM 2147483647
-#define AM (1.0/IM)
-#define IQ 127773
-#define IR 2836
-#define NTAB 32
-#define NDIV (1+(IM-1)/NTAB)
-#define EPS 1.2e-7
-#define RNMX (1.0-EPS)
+# define NTAB_RANDOM  32
+
+
+const long     IA = 16807;
+const long     IM = 2147483647;
+const double   AM = (1.0/2147483647. );
+const long     IQ = 127773;
+const long     IR = 2836;
+const double NDIV = (double) (1+(2147483647-1)/NTAB_RANDOM);
+const double RNMX = (1.0-1.2e-7);
 
 
 static long  idum = 1;
 static long  iy=0;
-static long  iv[NTAB];
+static long  iv[NTAB_RANDOM];
 
 /*----------------------------------------------------------------------*/
 
@@ -54,7 +55,7 @@ int i_random(int maxint)
 
 /*----------------------------------------------------------------------*/
 
-double random(void)
+double d_random(void)
 {
   /* delivers a uniform double between 0 and 1 */
   double temp;
@@ -80,11 +81,11 @@ void init_random(void)
   seed = (seed/65536) % 32768;
   idum = (long) seed;
   printf("%d init random with seed %ld\n",this_node,idum);
-  for (j = NTAB + 7;j >= 0; j--) {
+  for (j = NTAB_RANDOM + 7;j >= 0; j--) {
     k = (idum) / IQ;
     idum = IA * (idum - k * IQ) - IR * k;
     if (idum < 0) idum += IM;
-    if (j < NTAB) iv[j] = idum;
+    if (j < NTAB_RANDOM) iv[j] = idum;
   }
   iy = iv[0];
 }
