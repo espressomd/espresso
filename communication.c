@@ -366,6 +366,9 @@ void mpi_bcast_event_slave(int node, int event)
   case TOPOLOGY_CHANGED:
     on_topology_change();  
     break;
+  case P3M_COUNT_CHARGES:
+    P3M_count_charged_particles();
+    break;
   default:;
   }
 }

@@ -239,6 +239,7 @@ void mpi_lj_cap_forces(double force_cap);
 #define INTERACTION_CHANGED 1
 #define PARAMETER_CHANGED 2
 #define TOPOLOGY_CHANGED 3
+#define P3M_COUNT_CHARGES 4
 /*@}*/
 
 #endif

@@ -120,10 +120,10 @@ const Datafield fields[] = {
 	<li> \verbatim skin double \endverbatim
 	     \ref #skin - Skin for the Verlet list.
 	<li> \verbatim temperature double \endverbatim
-	     \ref temperature - Temperature of the simulation.
+	     \ref #temperature - Temperature of the simulation.
 	     Enters the thermostat and the coulomb prefactor = bjerrum * temperature.
 	<li> \verbatim time double \endverbatim
-	     \ref time - The simulation time.
+	     \ref #time - The simulation time.
 	<li> \verbatim time_step double \endverbatim
 	     \ref time_step - Time step for MD integration
 	<li> \verbatim transfer_rate int (ro)\endverbatim
