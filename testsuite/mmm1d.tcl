@@ -45,6 +45,8 @@ proc require_feature {feature} {
 require_feature "ELECTROSTATICS"
 require_feature "PARTIAL_PERIODIC"
 
+cellsystem nsquare
+
 set epsilon 1e-4
 setmd temp 0
 setmd time_step 0.01
