@@ -19,6 +19,8 @@
 #include "thermostat.h"
 #include "cells.h"
 
+#ifdef ELECTROSTATICS
+
 /* MPI tags for the maggs communications: */
 /** Tag for communication in Maggs_init() -> calc_glue_patch(). */
 #define REQ_MAGGS_INIT   300
@@ -2354,30 +2356,6 @@ double calc_gauss_res()
   return gmaxres;
 }
 
-int parse_and_print_gauss_res(Tcl_Interp *interp, int argc, char **argv)
-{ 
-  /* analyze gauss_residual */
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
-  double gauss_res;
-
-#ifndef ELECTROSTATICS
-  Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
-  return (TCL_ERROR);
-#else
-  if(coulomb.method != COULOMB_MAGGS) {
-    Tcl_AppendResult(interp, "works only for Maggs method\n", (char *)NULL);
-    return (TCL_ERROR);
-  }
-  else {
-    gauss_res = calc_gauss_res();
-    /* print out results */ 
-    Tcl_PrintDouble(interp, gauss_res, buffer);
-    Tcl_AppendResult(interp, buffer, (char *)NULL);
-  }
-#endif  
-  return (TCL_OK);
-}
-
 double maggs_magnetic_energy()
 {
   int x, y, z, i;
@@ -2487,3 +2465,29 @@ void Maggs_exit()
   free(Efield);
   free(Bfield);
 }
+#endif
+
+int parse_and_print_gauss_res(Tcl_Interp *interp, int argc, char **argv)
+{ 
+#ifndef ELECTROSTATICS
+  Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
+  return (TCL_ERROR);
+#else
+  /* analyze gauss_residual */
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
+  double gauss_res;
+
+  if(coulomb.method != COULOMB_MAGGS) {
+    Tcl_AppendResult(interp, "works only for Maggs method\n", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  else {
+    gauss_res = calc_gauss_res();
+    /* print out results */ 
+    Tcl_PrintDouble(interp, gauss_res, buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+  }
+#endif  
+  return (TCL_OK);
+}
+
