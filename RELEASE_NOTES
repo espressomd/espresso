@@ -11,6 +11,7 @@ Current working revision.
 - v1.6.3b -
 -----------
 
+(c) June 21th, 2004
 (b) June 12th, 2004.
 (a) June 11th, 2004.
 
@@ -24,7 +25,8 @@ Changes:
 Bugfixes:
 (b) Fixed typo in array index causing nptiso.p_vel to be accidentially overwritten
     while deriving virials in 'add_bonded_virials'.
-
+(b) Fixed bug in inter_print_bonded and inter_print_bond_partners causing loss
+    of tabulated interaction data (Hanjo).
 
 - v1.6.2d -
 -----------

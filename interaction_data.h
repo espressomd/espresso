@@ -476,8 +476,9 @@ MDINLINE IA_parameters *get_ia_param(int i, int j) {
 void make_particle_type_exist(int type);
 
 /** Makes sure that \ref bonded_ia_params is large enough to cover the
-    parameters for the bonded interaction type. Attention: There is no
-    initialization done here. */
+    parameters for the bonded interaction type. Attention: 1: There is
+    no initialization done here. 2: Use only in connection with
+    creating new or overwriting old bond types*/
 void make_bond_type_exist(int type);
 
 /** This function increases the LOCAL ia_params field

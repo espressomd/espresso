@@ -697,8 +697,6 @@ int inter_print_bonded(Tcl_Interp *interp, int i)
     return (TCL_ERROR);
   }
   
-  make_bond_type_exist(i);
-      
   /* print specific interaction information */
   if(i<n_bonded_ia) {
     printBondedIAToResult(interp, i);
@@ -896,7 +894,6 @@ int tabulated_set_params(int part_type_a, int part_type_b,
 
   if (tab_force_cap != -1.0) {
     mpi_tab_cap_forces(tab_force_cap);}
-
   return TCL_OK;
 }
 #endif
@@ -1344,7 +1341,6 @@ int inter_print_partner_num(Tcl_Interp *interp, int bond_type)
 		     (char *) NULL);
     return TCL_ERROR;
   }
-  make_bond_type_exist(bond_type);
 
   if(bond_type < n_bonded_ia) {
     params = &bonded_ia_params[bond_type];
@@ -2344,6 +2340,8 @@ void make_particle_type_exist(int type)
   if (ns <= n_particle_types)
     return;
 
+  fprintf(stderr,"Create Particle type %d\n",type);
+
   mpi_bcast_n_particle_types(ns);
 }
 
@@ -2351,7 +2349,6 @@ void make_bond_type_exist(int type)
 {
   int i, ns = type + 1;
 
-  /* if bond type exists, free associated memory if necessary */
   if(ns <= n_bonded_ia) {
 #ifdef TABULATED
     if ( bonded_ia_params[type].type == BONDED_IA_TABULATED && 
@@ -2359,10 +2356,9 @@ void make_bond_type_exist(int type)
       free(bonded_ia_params[type].p.tab.f);
       free(bonded_ia_params[type].p.tab.e);
     }
-#endif
+#endif 
     return;
   }
-
   /* else allocate new memory */
   bonded_ia_params = (Bonded_ia_parameters *)realloc(bonded_ia_params,
 						     ns*sizeof(Bonded_ia_parameters));
@@ -2555,8 +2551,6 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
   }
   for(i=0;i<3;i++) con->c.wal.n[i] /= sqrt(norm);
 
-  make_particle_type_exist(con->type);
-
   return (TCL_OK);
 }
 
@@ -2625,8 +2619,6 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
-
-  make_particle_type_exist(con->type);
 
   return (TCL_OK);
 }
@@ -2734,9 +2726,6 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
 	con->c.cyl.axis[i] /= axis_len;
       }
       
-
-  make_particle_type_exist(con->type);
-
   return (TCL_OK);
 }
 
