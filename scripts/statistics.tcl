@@ -154,6 +154,9 @@ proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA}
 	    }
 	}
     }
+    if {[llength $destinations] < [llength $what]} {
+	for {set i [llength $destinations]} {$i < [llength $what]} {incr i} { lappend destinations [lindex $destinations end] }
+    }
     set f [open "plotObsTmp.p" "w"]
     puts $f "set xlabel \"[lindex $labels 0]\"; set ylabel \"[lindex $labels 1]\""
     puts $f "set $scale"
