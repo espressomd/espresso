@@ -25,6 +25,11 @@ int analyze_fold_chains(float *coord)
   /* check molecule information */
   if ( n_molecules < 0 ) return (TCL_ERROR);
 
+  if (!sortPartCfg()) {
+    fprintf(stderr,"analyze_fold_chains: Could not sort Particle config .. particle Id's not consecutive?");
+    errexit();
+  }
+
   /* loop molecules */
   for(m=0; m<n_molecules; m++) {
     mol_size = molecules[m].part.n;
@@ -66,9 +71,11 @@ void calc_center_of_mass(Molecule mol, double com[3])
 
   for(i=0;i<mol.part.n;i++) {
     id = mol.part.e[i];
-    for(j=0;j<3;j++) com[j]+= partCfg[id].r.p[j];
+    for(j=0;j<3;j++) { 
+      com[j]+= partCfg[id].r.p[j];
+    }
   }
-
+  
   for(j=0;j<3;j++) com[j] /= mol.part.n;
 
 }
