@@ -981,15 +981,25 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
 
 static int parse_Vkappa(Tcl_Interp *interp, int argc, char **argv)
 {
-  /* 'analyze Vkappa [reset]' */
+  /* 'analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }]' */
   double result = 0.0;
-  char buffer[TCL_DOUBLE_SPACE];  
+  char buffer[3*TCL_DOUBLE_SPACE];
 
   if (argc > 0)
     if (ARG0_IS_S("reset"))
       Vkappa.Vk1 = Vkappa.Vk2 = Vkappa.avk = 0.0;
-    else { 
-      Tcl_AppendResult(interp, "usage: analyze Vkappa [reset] ", (char *)NULL);  return TCL_ERROR;  }
+    else if (ARG0_IS_S("read")) {
+      sprintf(buffer,"%f %f %f ",Vkappa.Vk1,Vkappa.Vk2,Vkappa.avk);
+      Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_OK); }
+    else if (ARG0_IS_S("set")) {
+      if (argc < 4 || !ARG_IS_D(1,Vkappa.Vk1) || !ARG_IS_D(2,Vkappa.Vk2) || !ARG_IS_D(3,Vkappa.avk)) {
+        Tcl_AppendResult(interp, "usage: analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }] ", (char *)NULL);  return TCL_ERROR;  }
+      if (Vkappa.avk <= 0.0) {
+        Tcl_AppendResult(interp, "ERROR: # of averages <avk> must be positiv! Resetting values...", (char *)NULL);  return TCL_ERROR;
+        result = Vkappa.Vk1 = Vkappa.Vk2 = Vkappa.avk = 0.0; }
+      result = Vkappa.Vk2/Vkappa.avk - SQR(Vkappa.Vk1/Vkappa.avk); }
+    else {
+      Tcl_AppendResult(interp, "usage: analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }] ", (char *)NULL);  return TCL_ERROR;  }
   else {
     Vkappa.Vk1 += box_l[0]*box_l[1]*box_l[2];
     Vkappa.Vk2 += SQR(box_l[0]*box_l[1]*box_l[2]);
