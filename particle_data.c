@@ -486,6 +486,109 @@ void part_print_bonding_structure(Particle *part, char *buffer, Tcl_Interp *inte
   Tcl_AppendResult(interp, "} ", (char *)NULL);
 }
 
+/* keep a unique list for particle i. Particle j is only added if it is not i
+   and not already in the list. */
+MDINLINE void add_partner(IntList *il, int i, int j, int distance)
+{
+  int k;
+  if (j == i) return;
+  for (k = 0; k < il->n; k += 2)
+    if (il->e[k] == j)
+      return;
+  realloc_intlist(il, il->n + 2);
+  il->e[il->n++] = j;
+  il->e[il->n++] = distance;
+}
+
+/* Add a link of size size consisting of (link[l], p) */
+MDINLINE void add_link(IntList *il, IntList *link, int l, int p, int size)
+{
+  int i;
+  realloc_intlist(il, il->n + size);
+  for ( i = 0; i < size-1; i++ ) {
+    il->e[il->n++] = link->e[l+i];
+  } 
+  il->e[il->n++] = p;
+}
+ 
+/** Return all bond partners of a particle including bonds that are not stored at the particle itself up to a certain distance in numbers of bonds. Return a tcl list to the interpreter c*/
+void part_print_bond_partners(Particle *part, char *buffer, Tcl_Interp *interp, int distance)
+{
+  int c, p, i, p1, p2;
+  Bonded_ia_parameters *ia_params;
+  Particle *part1;
+  /* partners is a list containing the currently found bond partners and their distance in number of 
+     bonds for each particle */
+  IntList *partners;
+  /* link list for all linear connections up to a certain number of bonds for the particle requiested */
+  IntList *links;
+
+  /* setup bond partners and distance list. Since we need to identify particles via their identity,
+     we use a full sized array */
+  partners    = malloc((max_seen_particle + 1)*sizeof(IntList));
+  for (p = 0; p <= max_seen_particle; p++) init_intlist(&partners[p]);
+  updatePartCfg(WITH_BONDS);
+
+  /* determine initial connectivity */
+  for (p = 0; p < n_total_particles; p++) {
+    part1 = &partCfg[p];
+    p1    = part1->p.identity;
+    for (i = 0; i < part1->bl.n;) {
+      ia_params = &bonded_ia_params[part1->bl.e[i++]];
+      if (ia_params->num == 1) {
+	p2 = part1->bl.e[i++];
+	add_partner(&partners[p1], p1, p2, 1);
+	add_partner(&partners[p2], p2, p1, 1);
+      }
+      else
+	i += ia_params->num;
+    }
+  }
+
+  /* Create links to particle */
+  links    = malloc((distance+1)*sizeof(IntList));
+  for( c = 0; c <= distance; c++)  init_intlist(&links[c]);
+
+  p1 = part->p.identity;
+  add_link(&links[0], &links[0],0, p1, 1);
+
+  for (p = 0; p < partners[p1].n; p+=2) {
+     add_link(&links[1], &links[0], 0, partners[p1].e[p], 2);
+  }
+ 
+  for (c = 2; c <= distance; c++) {
+    for (i = 0; i < links[c-1].n; i+=c) {
+      p2 = links[c-1].e[c+i-1];
+      for (p = 0; p < partners[p2].n; p+=2) {
+	if( partners[p2].e[p] !=  links[c-1].e[c+i-2]) {
+	  add_link(&links[c], &links[c-1], i, partners[p2].e[p],(c+1));
+	}
+      }
+    }
+  }
+
+  p1 = part->p.identity;
+
+  for (c = 2; c <= distance; c++) {
+    Tcl_AppendResult(interp, " {", (char *)NULL);
+    for (i = 0; i < links[c-1].n; i+=c ) {
+      Tcl_AppendResult(interp, " { ", (char *)NULL);
+      for (p = 1; p < c; p++) {
+	sprintf(buffer, "%d ",links[c-1].e[i+p]);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      Tcl_AppendResult(interp, "}", (char *)NULL);
+    }
+    Tcl_AppendResult(interp, " }", (char *)NULL);
+  }
+
+  /* free memory */
+  for (p = 0; p <= max_seen_particle; p++) realloc_intlist(&partners[p], 0);
+  free(partners);
+  for(i=0;i<distance+1; i++) realloc_intlist(&links[i], 0);
+  free(links);
+}
+
 #ifdef EXCLUSIONS
 void part_print_exclusions(Particle *part, char *buffer, Tcl_Interp *interp)
 {
@@ -703,6 +806,14 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 
     else if (ARG0_IS_S("bonds"))
       part_print_bonding_structure(&part, buffer, interp);
+    else if (ARG0_IS_S("connections")) {
+      int distance = 1;
+      if (argc ==2) {
+	ARG1_IS_I(distance);
+	argc--; argv++;
+      }
+      part_print_bond_partners(&part, buffer, interp, distance);
+    }
     else {
       Tcl_ResetResult(interp);
       Tcl_AppendResult(interp, "unknown particle data \"", argv[0], "\" requested", (char *)NULL);
@@ -2168,20 +2279,6 @@ int change_exclusion(int part1, int part2, int delete)
 void remove_all_exclusions()
 {
   mpi_send_exclusion(-1, -1, 1);
-}
-
-/* keep a unique list for particle i. Particle j is only added if it is not i
-   and not already in the list. */
-MDINLINE void add_partner(IntList *il, int i, int j, int distance)
-{
-  int k;
-  if (j == i) return;
-  for (k = 0; k < il->n; k += 2)
-    if (il->e[k] == j)
-      return;
-  realloc_intlist(il, il->n + 2);
-  il->e[il->n++] = j;
-  il->e[il->n++] = distance;
 }
 
 void auto_exclusion(int distance)
