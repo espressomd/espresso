@@ -4,7 +4,7 @@ TESTCASES="madelung.tcl \
     lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl tabulated.tcl mmm1d.tcl gb.tcl rotation.tcl constraints.tcl \
     kinetic.tcl thermostat.tcl \
     intpbc.tcl intppbc.tcl layered.tcl nsquare.tcl \
-    analysis.tcl"
+    comforce.tcl comfixed.tcl analysis.tcl"
 
 # List of testcases to be done (and people responsible for them):
 #################################################################
@@ -37,11 +37,17 @@ TESTCASES="madelung.tcl \
 #   Testcases for the layered- and N^2-particle structures available since v1.5.
 # - Analysis: (BAM / Status: Done.)
 #   Checking checkpoints and analysis routines.
+# - comfixed: (MS / Status: Done.)
+#   Testing forces, energies, pressures of the comfixed.
+# - comforce: (MS / Status: Done.)
+#   Testing forces, energies, pressures of the comfixed.
 #
 #################################################################
 
 errf=_test.sh_error.$$
 
+#list of tests that work only on a single node
+singlenoders="comfixed.tcl comforce.tcl"
 # list of tests that are not supported by this version
 blacklist=
 # and what is missing for what test
@@ -55,6 +61,14 @@ for np in 1 2 3 4 6 8; do
 		break;
 	    fi
 	done
+  if test "$np" -ne 1; then
+	for ft in $singlenoders; do
+	    if test "$ft" = "$f"; then
+		ignore=1;
+		break;
+	    fi
+	done
+  fi
 	# only not blacklisted tests
 	if test $ignore -eq 0; then
 	    # this is removed if the script runs through
