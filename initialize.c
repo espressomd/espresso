@@ -151,6 +151,8 @@ void on_coulomb_change()
   switch (coulomb.method) {
   case COULOMB_P3M:
     P3M_init();
+    integrate_vv_recalc_maxrange();
+    on_parameter_change(FIELD_MAXRANGE);
     break;
   case COULOMB_MMM1D:
     MMM1D_init();
@@ -223,6 +225,11 @@ void on_parameter_change(int field)
   /* to prevent two on_coulomb_change */
   int cc;
 
+  if (field == FIELD_SKIN) {
+    integrate_vv_recalc_maxrange();
+    on_parameter_change(FIELD_MAXRANGE);
+  }
+
   if (field == FIELD_NODEGRID)
     grid_changed_n_nodes();
   if (field == FIELD_BOXL || field == FIELD_NODEGRID)
@@ -236,36 +243,30 @@ void on_parameter_change(int field)
   cc = 0;
   switch (coulomb.method) {
   case COULOMB_P3M:
-    if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID) {
-      on_coulomb_change();
+    if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID)
       cc = 1;
-    }
     else if (field == FIELD_BOXL) {
       P3M_scaleby_box_l();
       integrate_vv_recalc_maxrange(); 
     }
     break;
   case COULOMB_DH:
-    if (field == FIELD_TEMPERATURE) {
-      on_coulomb_change();
+    if (field == FIELD_TEMPERATURE)
       cc = 1;
-    }
     break;
   case COULOMB_MMM1D:
-    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL) {
-      on_coulomb_change();
+    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
       cc = 1;
-    }
     break;
   case COULOMB_MMM2D:
-    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL || field == FIELD_NLAYERS) {
-      on_coulomb_change();
+    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL || field == FIELD_NLAYERS)
       cc = 1;
-    }
     break;
   default: break;
   }
-  if (!cc && coulomb.use_elc && (field == FIELD_TEMPERATURE || field == FIELD_BOXL))
+  if (coulomb.use_elc && (field == FIELD_TEMPERATURE || field == FIELD_BOXL))
+    cc = 1;
+  if (cc)
     on_coulomb_change();
 #endif
 
@@ -279,7 +280,7 @@ void on_parameter_change(int field)
     break;
   case CELL_STRUCTURE_DOMDEC:
     if (field == FIELD_BOXL || field == FIELD_NODEGRID || field == FIELD_MAXRANGE ||
-	field == FIELD_MAXNUMCELLS || field == FIELD_SKIN || field == FIELD_THERMO_SWITCH)
+	field == FIELD_MAXNUMCELLS || field == FIELD_THERMO_SWITCH)
       cells_re_init(CELL_STRUCTURE_DOMDEC);
     break;
   }

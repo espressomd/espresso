@@ -2,24 +2,33 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.5.7e *
+* v1.5.7d *
 ***********
 
 Current working revision.
 
+Changes:
+    Electrostatic charged plane potential "plate" added.
+    The "rod" constraint now also is purely electrostatical.
+    Use a "cylinder" to create the excluded volume separately.
 
-- v1.5.7e -
+Bugfixes:
+    Fixed major bug that setting the skin does not change the
+    maximal interaction range, resulting in too small cells.
+    This happened if the skin was set last. The result might have
+    been left out interactions.
+    layered now also uses the rebuild_verletlist flag to avoid
+    unnecessary updates. 
+
+- v1.5.7d -
 -----------
 
-(e) April  5th, 2004.
 (d) April  1st, 2004.
 (c) March 29th, 2004.
 (b) March 22nd, 2004.
 (a) March 21st, 2004.
 
 Changes:
-(e) Moved verlet update to 'cells.c' making it more general as well;
-    the layered systems now also use the skin/rebuild_verletlist.
 (b) Setting 'setmd piston 0.0' now disables the nptiso-thermostat
     (if compiled in), otherwise it does no longer complain about
     that (essentially) improper value for compatibility reasons.
@@ -45,10 +54,6 @@ Bugfixes:
     by 0.5*timestep^2) the deviation to the true bonded pressure scales
     with the timestep: As smaller it was as less noticable this error
     should have been in your simulations.
-
-New Features:
-(e) Added 'analyze necklace' to identify pearl-necklace-like structures
-    as they occur e.g. on polyelectrolyte chains in poor solvent.
 
 
 - v1.5.6d -
