@@ -82,8 +82,7 @@ setmd gamma  0.0
 #set tcl_precision  6
 set slow     0
 
-### rewrite analysis_system.data analysis_system.data2; exit 0
-### rewrite analysis_system_BB.data analysis_system.data; exit 0
+# rewrite analysis_system.data analysis_system.data2; exit 0
 
 if { [catch {
     puts -nonewline "Reading the checkpoint... "; flush stdout
@@ -117,20 +116,24 @@ if { [catch {
 	set rel_error [expr abs(([eval $get_obs] - $obs)/$obs)]
 	puts "relative deviations upon evaluating '$get_obs': $rel_error  ([eval $get_obs] / $obs)"
 	if { $rel_error > $epsilon } {
-	    #error "relative error $rel_error too large upon evaluating '$get_obs'  ([eval $get_obs] / $obs)"
+	    error "relative error $rel_error too large upon evaluating '$get_obs'  ([eval $get_obs] / $obs)"
 	}
     }
     if { [setmd n_nodes]==1 || $slow==1 } {
 	# since 'analyze p_IK1' is effectively running on the master node only, it will be really slow for >1 nodes;
 	# hence it is not really necessary to check it there - but if you like, set 'slow' to 1
 	for { set i 0 } { $i < [setmd n_part] } { incr i } { lappend plist $i }
-	set p_IK1 [analyze p_IK1 $volume $plist 0]; set p_tot [analyze pressure total]
-	set ideal [lindex $p_IK1 3]; set p_ideal [expr [lindex $ideal 1] + [lindex $ideal 5] + [lindex $ideal 9]]
-	set p_tob [expr [lindex $p_IK1 0]-$p_ideal]; set rel_error [expr abs(($p_tob - $p_tot)/$p_tot)]
-	puts -nonewline "relative deviations upon comparing 'analyze p_IK1 <bin_volume> <ind_list> 0' to 'analyze pressure total': "
-	puts "$rel_error  ($p_tob+$p_ideal / $obs)"
+	set p_IK1_full [analyze p_IK1 $volume $plist 0];
+	set total [lindex $p_IK1_full 0]
+	set p_IK1 0
+	for {set i 0} {$i < 3} {incr i} {
+	    set p_IK1 [expr $p_IK1 + [lindex $total [expr 1 + 4*$i]]]
+	}
+	set p_tot [analyze pressure total]
+	set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure total': $rel_error"
 	if { $rel_error > $epsilon } {
-	    error "relative error $rel_error too large upon comparing the pressures  "
+	    error "relative error $rel_error too large upon comparing the pressures"
 	}
     }
 

@@ -77,17 +77,10 @@ if { [catch {
     # write_data "lj_system.data"
 
     # ensures that no other forces are on
-#    set cureng [expr [analyze energy lj 0 0] + [analyze energy lj 0 1] + [analyze energy lj 1 1]]
-    set cureng [expr [analyze energy nonbonded 0 0] + [analyze energy nonbonded 0 1] + [analyze energy nonbonded 1 1]]
-    # tbrs
-    
-    set curprs [expr [lindex [analyze pressure lj 0 0] 0] + \
-		[lindex [analyze pressure lj 0 1] 0] + \
-		[lindex [analyze pressure lj 1 1] 0]]
+    set cureng [expr [analyze   energy nonbonded 0 0] + [analyze   energy nonbonded 0 1] + [analyze   energy nonbonded 1 1]]
+    set curprs [expr [analyze pressure nonbonded 0 0] + [analyze pressure nonbonded 0 1] + [analyze pressure nonbonded 1 1]]
 
     ############## end
-
-
 
     set toteng [analyze energy total]
     set totprs [analyze pressure total]
