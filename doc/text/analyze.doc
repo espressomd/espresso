@@ -317,7 +317,7 @@ In <tt>statistics_chain.c</tt>:<br>
 	 { \<r-value\> \<rdf_1-value\> \<rdf_2-value\> \<rdf_3-value\>} ...  <br>
          The distance range is given by \<r_min\> and \<r_max\> and it is
          divided into \<r_bins\> equidistant bins. 
-	 The C implementation is \ref #calc_rdfchain; it is parsed by \ref #parse_rdfchain.	 
+	 The C implementation is \ref #analyze_rdfchain; it is parsed by \ref #parse_rdfchain.	 
     <li> \verbatim analyze g123 [-init] [<chain_start> <n_chains> <chain_length>] \endverbatim
          returns the mean-square displacement <i>g1(t)</i> of a monomer,
                  the mean-square displacement <i>g2(t)</i> in the center of gravity of the chain itself, and
