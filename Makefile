@@ -18,7 +18,7 @@ CFILES=$(CSOURCES:=.c)
 CXXFILES=$(CXXSOURCES:=.cc)
 
 default: $(PLATFORM) $(PLATFORM)/tcl_md $(PLATFORM)/libtcl_md.a
-all: $(PLATFORM) $(PLATFORM)/tcl_md
+all: $(PLATFORM) $(PLATFORM)/tcl_md $(PLATFORM)/libtcl_md.a
 
 ########### documentation
 doc: doxygen_header $(CFILES) $(CXXFILES)
