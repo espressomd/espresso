@@ -17,16 +17,24 @@
 	 it returns just that energy.
     <li> \verbatim analyze distribution { <part_type_list_a> } { <part_type_list_b> } [<r_min> <r_max> <r_bins> <log_flag> <int_flag>] \endverbatim
          returns its parameters and the distance distribution of
-         particles with types specified in part_type_list_a (group a)
-         around particles with types specified in part_type_list_b
-         (group b) with distances between r_min and r_max, binned into
-         r_bins bins. The bins are either equidistant (log_flag=0) or
-         logarytmically equidistant (log_flag=1). If an integrated
-         distribution is required use int_flag=1. The distance is
+         particles with types specified in <part_type_list_a> (group a)
+         around particles with types specified in <part_type_list_b>
+         (group b) with distances between <r_min> and <r_max>, binned into
+         <r_bins> bins. The bins are either equidistant (<log_flag>=0) or
+         logarytmically equidistant (<log_flag>=1). If an integrated
+         distribution is required use <int_flag>=1. The distance is
          defined as the minimal distance between a particle of group a
          to any of group b. The output corresponds to the blockfile
          format (\ref blockformat): <br>
 	 { parameters } { { <r-value> <distribution-value> } ... }
+    <li> \verbatim analyze rdf { <part_type_list_a> } { <part_type_list_b> } [<r_min> <r_max> <r_bins>] \endverbatim
+         returns its parameters and the radial distribution function (rdf) of
+         particles with types specified in <part_type_list_a> (group a)
+         around particles with types specified in <part_type_list_b>
+         (group b). The range is given by <r_min> and <r_max> and is
+         divided into <r_bins> equidistant bins. The output
+         corresponds to the blockfile format (\ref blockformat): <br>
+	 { parameters } { { <r-value> <rdf-value> } ... }
     <li> \verbatim analyze set <structure info> \endverbatim
          defines the structure of the current system. The second argument defines the topology to set, i. e. 'chains' at the moment.
 	 <ul>
