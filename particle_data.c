@@ -546,6 +546,7 @@ void part_print_bond_partners(Particle *part, char *buffer, Tcl_Interp *interp, 
   }
 
   /* Create links to particle */
+  distance++;
   links    = malloc((distance+1)*sizeof(IntList));
   for( c = 0; c <= distance; c++)  init_intlist(&links[c]);
 
