@@ -225,4 +225,28 @@ MDINLINE void permute_ifield(int *field, int size, int permute)
     permute--;
   }
 }
+
+/** returns the minimum distance between two particles */
+MDINLINE double distance(double pos1[3], double pos2[3])
+{
+  int i;
+  double dist = 0;
+  for(i=0;i<3;i++)
+      dist += SQR(pos1[0]-pos2[0]) + SQR(pos1[1]-pos2[1]) + SQR(pos1[2]-pos2[2]);
+  return sqrt(dist);
+}
+
+/** returns the distance between the unfolded coordintes of two particles */
+MDINLINE double unfolded_distance(double pos1[3], int image_box1[3], 
+				  double pos2[3], int image_box2[3], double box_l[3])
+{
+  int i;
+  double dist = 0;
+  for(i=0;i<3;i++){
+    pos1[i] += image_box1[i]*box_l[i];
+    pos2[i] += image_box2[i]*box_l[i];
+    dist += SQR(pos1[i]-pos2[i]);
+  }
+  return sqrt(dist);
+}
 #endif
