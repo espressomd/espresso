@@ -18,6 +18,7 @@
 #include "forces.h"
 #include "p3m.h"
 #include "statistics.h"
+#include "random.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -79,8 +80,12 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_REM_PART   20
 /** Action number for \ref mpi_bcast_constraint */
 #define REQ_BCAST_CONSTR 21
+/** Action number for \ref mpi_random_seed */
+#define REQ_RANDOM_SEED 22
+/** Action number for \ref mpi_random_stat */
+#define REQ_RANDOM_STAT 23
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 22
+#define REQ_MAXIMUM 24
 
 /** \name Slave Callbacks
     These functions are the slave node counterparts for the
@@ -109,6 +114,8 @@ void mpi_bcast_coulomb_params_slave(int node, int parm);
 void mpi_send_ext_slave(int node, int parm);
 void mpi_remove_particle_slave(int node, int parm);
 void mpi_bcast_constraint_slave(int node, int parm);
+void mpi_random_seed_slave(int node, int parm);
+void mpi_random_stat_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -135,7 +142,9 @@ SlaveCallback *callbacks[] = {
   mpi_send_ext_slave,               /* 18: REQ_SEND_EXT */
   mpi_place_particle_slave,         /* 19: REQ_PLACE_NEW */
   mpi_remove_particle_slave,        /* 20: REQ_REM_PART */
-  mpi_bcast_constraint_slave       /* 21: REQ_BCAST_CONSTR */
+  mpi_bcast_constraint_slave,       /* 21: REQ_BCAST_CONSTR */
+  mpi_random_seed_slave,             /* 22: REQ_RANDOM_SEED */
+  mpi_random_stat_slave             /* 23: REQ_RANDOM_STAT */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -162,6 +171,8 @@ char *names[] = {
   "PLACE_NEW" , /* 19 */
   "REM_PART"    /* 20 */
   "BCAST_CON" , /* 21 */
+  "RAND_SEED" , /* 22 */
+  "RAND_STAT" , /* 23 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -1020,6 +1031,64 @@ void mpi_bcast_constraint_slave(int node, int parm)
 
   on_ia_change();
 #endif
+}
+
+/*************** REQ_RANDOM_SEED ************/
+void mpi_random_seed(int cnt, long *seed) {
+  long this_idum = print_random_seed();
+
+  mpi_issue(REQ_RANDOM_SEED, -1, cnt);
+
+  if (cnt==0) {
+    RANDOM_TRACE(printf("%d: Have seed %ld\n",this_node,this_idum));
+    MPI_Gather(&this_idum,1,MPI_LONG,seed,1,MPI_LONG,0,MPI_COMM_WORLD); }
+  else {
+    MPI_Scatter(seed,1,MPI_LONG,&this_idum,1,MPI_LONG,0,MPI_COMM_WORLD);
+    RANDOM_TRACE(printf("%d: Received seed %ld\n",this_node,this_idum));
+    init_random_seed(this_idum);
+  }
+}
+
+void mpi_random_seed_slave(int pnode, int cnt) {
+  long this_idum = print_random_seed();
+
+  if (cnt==0) {
+    RANDOM_TRACE(printf("%d: Have seed %ld\n",this_node,this_idum));
+    MPI_Gather(&this_idum,1,MPI_LONG,NULL,0,MPI_LONG,0,MPI_COMM_WORLD); }
+  else {
+    MPI_Scatter(NULL,1,MPI_LONG,&this_idum,1,MPI_LONG,0,MPI_COMM_WORLD);
+    RANDOM_TRACE(printf("%d: Received seed %ld\n",this_node,this_idum));
+    init_random_seed(this_idum);
+  }
+}
+
+/*************** REQ_RANDOM_STAT ************/
+void mpi_random_stat(int cnt, RandomStatus *stat) {
+  RandomStatus this_stat = print_random_stat();
+
+  mpi_issue(REQ_RANDOM_STAT, -1, cnt);
+
+  if (cnt==0) {
+    RANDOM_TRACE(printf("%d: Have status %ld/%ld/...\n",this_node,this_stat.idum,this_stat.iy));
+    MPI_Gather(&this_stat,1*sizeof(RandomStatus),MPI_BYTE,stat,1*sizeof(RandomStatus),MPI_BYTE,0,MPI_COMM_WORLD); }
+  else {
+    MPI_Scatter(stat,1*sizeof(RandomStatus),MPI_BYTE,&this_stat,1*sizeof(RandomStatus),MPI_BYTE,0,MPI_COMM_WORLD);
+    RANDOM_TRACE(printf("%d: Received status %ld/%ld/...\n",this_node,this_stat.idum,this_stat.iy));
+    init_random_stat(this_stat);
+  }
+}
+
+void mpi_random_stat_slave(int pnode, int cnt) {
+  RandomStatus this_stat = print_random_stat();
+
+  if (cnt==0) {
+    RANDOM_TRACE(printf("%d: Have status %ld/%ld/...\n",this_node,this_stat.idum,this_stat.iy));
+    MPI_Gather(&this_stat,1*sizeof(RandomStatus),MPI_BYTE,NULL,0,MPI_BYTE,0,MPI_COMM_WORLD); }
+  else {
+    MPI_Scatter(NULL,0,MPI_BYTE,&this_stat,1*sizeof(RandomStatus),MPI_BYTE,0,MPI_COMM_WORLD);
+    RANDOM_TRACE(printf("%d: Received status %ld/%ld/...\n",this_node,this_stat.idum,this_stat.iy));
+    init_random_stat(this_stat);
+  }
 }
 
 /*********************** MAIN LOOP for slaves ****************/

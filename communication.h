@@ -40,6 +40,7 @@
    the global variables */
 #include "global.h"
 #include "particle_data.h"
+#include "random.h"
 
 /**************************************************
  * exported variables
@@ -217,6 +218,12 @@ void mpi_send_ext(int pnode, int part, int flag, double force[3]);
 
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_constraint(int del_num);
+
+/** Issue REQ_RANDOM_SEED: read/set seed of random number generators on each node. */
+void mpi_random_seed(int cnt, long *seed);
+
+/** Issue REQ_RANDOM_STAT: read/set status of random number generators on each node. */
+void mpi_random_stat(int cnt, RandomStatus *stat);
 
 /*@}*/
 
