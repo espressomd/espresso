@@ -6,15 +6,18 @@
 #define PART_INCREMENT 100
 
 /******************* variables ****************/
-double box_l[3]    = {1, 1, 1};
-double my_left[3]  = {0, 0, 0};
-double my_right[3] = {0, 0, 0};
+double box_l[3]       = {1, 1, 1};
+double local_box_l[3] = {1, 1, 1};
+double my_left[3]     = {0, 0, 0};
+double my_right[3]    = {1, 1, 1};
 
 int n_total_particles = 0;
 
 int     n_particles = 0;
 int   max_particles;
 Particle *particles;
+
+int *local_index;
 
 void init_data()
 {

@@ -11,6 +11,9 @@ void stop_mpi();
 /** process requests from master node */
 void mpi_loop();
 
+/** broadcast system parameters to all nodes. */
+void mpi_set_system_parameters();
+
 /** ask nodes for particle */
 int mpi_who_has(int particle);
 
@@ -29,14 +32,15 @@ void mpi_integrate(int n_steps);
 
 /* requests in random access mode */
 #define REQ_TERM      0
-#define REQ_WHO_HAS   1
-#define REQ_ATTACH    2
-#define REQ_SET_POS   3
-#define REQ_SET_V     4
-#define REQ_SET_F     5
-#define REQ_ADD_B2    6
-#define REQ_ADD_B3    7
-#define REQ_GET_PART  8
-#define REQ_INTEGRATE 9
+#define REQ_SYS_PAR   1
+#define REQ_WHO_HAS   2
+#define REQ_ATTACH    3
+#define REQ_SET_POS   4
+#define REQ_SET_V     5
+#define REQ_SET_F     6
+#define REQ_ADD_B2    7
+#define REQ_ADD_B3    8
+#define REQ_GET_PART  9
+#define REQ_INTEGRATE 10
 
 #endif

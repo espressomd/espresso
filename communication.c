@@ -26,6 +26,23 @@ void stop_mpi()
   MPI_Finalize();
 }
 
+void mpi_set_system_parameters()
+{
+  int req[2] = { REQ_SYS_PAR, 0 };
+  int i;
+
+  /* calculate dependend parameters. */
+  for(i=0;i<3;i++) local_box_l[i] = box_l[i]/(double)processor_grid[i]; 
+  /* start broadcasting. */
+  MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD); 
+  /* broadcast system parameters. */
+  MPI_Bcast(&n_total_particles, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+  MPI_Bcast(local_box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+  MPI_Bcast(processor_grid, 3, MPI_INT, 0, MPI_COMM_WORLD); 
+  return;
+}
+
 int mpi_who_has(int part)
 {
   int req[2]   = { REQ_WHO_HAS, part };
@@ -134,8 +151,13 @@ void mpi_integrate(int n_steps)
   MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
 
   task = req[1];
-  if(task==0) 
+  if(task==0) {
+    /* initialize integrator */
+    /* send some required variables */
+    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+    MPI_Bcast(processor_grid, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
     result = integrate_vv_init();
+  }
   else if(task > 0)
     /* => task = number of steps */
     result = integrate_vv(task);
@@ -161,6 +183,12 @@ void mpi_loop()
     case REQ_TERM:
       MPI_Finalize();
       return;
+    case REQ_SYS_PAR:
+      MPI_Bcast(&n_total_particles, 1, MPI_INT, 0, MPI_COMM_WORLD);
+      MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+      MPI_Bcast(local_box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+      MPI_Bcast(processor_grid, 3, MPI_INT, 0, MPI_COMM_WORLD); 
+      break;
     case REQ_WHO_HAS:
       sendbuf = got_particle(req[1]);
       MPI_Gather(&sendbuf,  1, MPI_INT,
@@ -191,8 +219,14 @@ void mpi_loop()
       break;
     case REQ_INTEGRATE:
       task = req[1];
-      if(task==0) 
+      if(task==0) {
+
+	/* the local box_l would be also fine */
+	MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+	MPI_Bcast(processor_grid, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+
 	result = integrate_vv_init();
+      }
       else if(task > 0)
 	result = integrate_vv(task);
       else if(task < 0)

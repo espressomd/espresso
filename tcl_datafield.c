@@ -10,23 +10,26 @@
    cwz-build-command: make
 */
 
-/* tcl procedure for datafield access */
+/** tcl procedure for datafield access */
 int setmd(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
-/* tcl procedure for particle access */
+/** tcl procedure for particle access */
 int part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
+/** tcl procedure to broadcast system parameters. */
+int set_syspar(ClientData data, Tcl_Interp *interp,
+	       int argc, char **argv);
 
-/* callback for n_total_particles */
+/** callback for n_total_particles */
 int npart_callback(Tcl_Interp *interp, void *data);
-/* callback for ro */
+/** callback for ro */
 int ro_callback(Tcl_Interp *interp, void *data);
-/* callback for procgrid */
+/** callback for procgrid */
 int pgrid_callback(Tcl_Interp *interp, void *data);
-/* callback for box_l */
+/** callback for box_l */
 int boxl_callback(Tcl_Interp *interp, void *data);
 
-/* maximal length of a writable datafield */
+/** maximal length of a writable datafield */
 #define MAX_DIMENSION 3
 Tcl_Datafield fields[] = {
   {&nprocs,    TYPE_INT,    1, "nprocs",    ro_callback },
@@ -43,6 +46,7 @@ void tcl_datafield_init(Tcl_Interp *interp)
 {
   Tcl_CreateCommand(interp, "setmd", setmd, 0, NULL);
   Tcl_CreateCommand(interp, "part", part, 0, NULL);
+  Tcl_CreateCommand(interp, "set_syspar", set_syspar, 0, NULL);
 }
 
 int setmd(ClientData data, Tcl_Interp *interp,
@@ -192,13 +196,14 @@ int part(ClientData data, Tcl_Interp *interp,
     setup_processor_grid();
 
   part_num = atol(argv[1]);
-  if ((part_num < 0) || (part_num > n_total_particles)) {
+  if ((part_num < 0) || (part_num >= n_total_particles)) {
     Tcl_AppendResult(interp, "illegal particle", (char *) NULL);
     return (TCL_ERROR);
   }
 
   node = mpi_who_has(part_num);
 
+  /* print out particle information */
   if (argc == 2) {
     Particle part;
     /* retrieve particle data */
@@ -207,12 +212,12 @@ int part(ClientData data, Tcl_Interp *interp,
       return (TCL_ERROR);
     }
     mpi_recv_part(node, part_num, &part);
-    sprintf(buffer, "%d %d {%10.6e %10.6e %10.6e} %10.6e ",
+    sprintf(buffer, "%d %d {%7.3e %7.3e %7.3e} %8.2e \n",
 	    node, part.type,
 	    part.p[0], part.p[1], part.p[2],
 	    part.q);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
-    sprintf(buffer, "{%10.6e %10.6e %10.6e} {%10.6e %10.6e %10.6e}",
+    sprintf(buffer, "       {%7.3e %7.3e %7.3e} {%7.3e %7.3e %7.3e}",
 	    part.v[0], part.v[1], part.v[2],
 	    part.f[0], part.f[1], part.f[2]);
     Tcl_AppendResult(interp, buffer, " {", (char *)NULL);
@@ -236,10 +241,11 @@ int part(ClientData data, Tcl_Interp *interp,
     for (j = 0; j < 3; j++) {
       if (Tcl_GetDouble(interp, argv[3 + j], &pos[j]) == TCL_ERROR)
 	return (TCL_ERROR);
-      if ((pos[j] < 0) || (pos[j] >= box_l[j])) {
-	Tcl_AppendResult(interp, "particle out of bounds", (char *)NULL);
-	return (TCL_ERROR);
-      }
+      /* wird eh gefaltet! */
+      //if ((pos[j] < 0) || (pos[j] >= box_l[j])) {
+      //Tcl_AppendResult(interp, "particle out of bounds", (char *)NULL);
+      //return (TCL_ERROR);
+      //}
     }
     
     if (node == -1) {
@@ -259,4 +265,15 @@ int part(ClientData data, Tcl_Interp *interp,
 
   Tcl_AppendResult(interp, "unknown job \"", argv[2],"\"", (char *)NULL);
   return (TCL_ERROR);
+}
+
+int set_syspar(ClientData data, Tcl_Interp *interp,
+	       int argc, char **argv)
+{
+  if (argc > 1) {
+    Tcl_AppendResult(interp, "No arguments expected. Any argument will be ignored ", (char *) NULL);
+  }
+  
+  mpi_set_system_parameters();
+  return (TCL_OK);
 }

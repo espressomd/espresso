@@ -1,7 +1,13 @@
+/************************************************/
+/*******************  GRID.C  *******************/
+/************************************************/
 #include "grid.h"
 #include <mpi.h>
 #include <stdio.h>
 #include <math.h>
+
+
+//#define DEBUG
 
 int setup_processor_grid()
 {
@@ -23,9 +29,17 @@ int processor_grid_is_set()
 
 int find_node(double pos[3])
 {
-  return map_array_node((int)floor(processor_grid[0]*pos[0]/box_l[0]),
-			(int)floor(processor_grid[1]*pos[1]/box_l[1]),
-			(int)floor(processor_grid[2]*pos[2]/box_l[2]));
+  int i;
+  double f_pos[3];
+  
+  for(i=0;i<3;i++) f_pos[i] = pos[i] - floor(pos[i]/box_l[i])*box_l[i];
+#ifdef DEBUG
+  fprintf(stderr,"(%e, %e, %e) folded to (%e,%e, %e)\n",
+	  pos[0],pos[1],pos[2],f_pos[0],f_pos[1],f_pos[2]);
+#endif
+  return map_array_node((int)floor(processor_grid[0]*f_pos[0]/box_l[0]),
+			(int)floor(processor_grid[1]*f_pos[1]/box_l[1]),
+			(int)floor(processor_grid[2]*f_pos[2]/box_l[2]));
 }
 
 void map_node_array(int node, int *a, int *b, int *c)

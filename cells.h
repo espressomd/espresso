@@ -1,8 +1,12 @@
+/*************************************************/
 /*******************  CELLS.H  *******************/
+/*************************************************/
 #ifndef CELLS_H
 #define CELLS_H
 #include "global.h"
 
+
+/*******************  Structures  *******************/
 
 /** link cell structure. */
 typedef struct {
@@ -22,6 +26,7 @@ typedef struct {
   int *particles;
 } Cell;
 
+/*******************  Variables  *******************/
 
 /** inner linked cell grid. */
 int cell_grid[3];
@@ -36,6 +41,8 @@ Cell *cells;
 double cell_size[3];
 /** inverse cell size. */
 double inv_cell_size[3];
+
+/*******************  Functions  *******************/
 
 /** initialize link cell structures. */
 void cells_init();

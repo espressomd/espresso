@@ -12,8 +12,10 @@ extern int nprocs;
 extern int processor_grid[3];
 extern int neighbors[6];
 
-/** box dimensions. */
+/** box dimensions (primary simulation box). */
 extern double box_l[3];
+/** size of local box. */
+extern double local_box_l[3];
 /** left corner of local box. */
 extern double my_left[3];
 /** right corner of local box. */
@@ -40,9 +42,16 @@ typedef struct {
 
 extern int     n_particles;
 extern int   max_particles;
+/** Field to hold particle information of local particles. */
 extern Particle *particles;
 
-
+/** Mapping between particle identity and local index. 
+ *    You find the local index of particle i 
+ *    at position i of this field. 
+ *    A particle that is not in the processors domain 
+ *    (including its ghostshell) is marked with -1.
+ */
+extern int *local_index;
 /* Integration */
 extern double time_step;
 extern double max_cut;
