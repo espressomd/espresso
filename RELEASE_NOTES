@@ -2,25 +2,30 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.6b *
+* v1.6.6e *
 ***********
 
 Current working revision.
 
-- v1.6.6c -
+
+- v1.6.6e -
 -----------
-(a) August 10th, 2004.
-
-Bugfixes:
-(a) Fixed bug in the mindist which only worked for symmetric sets.
-
-
-- v1.6.6b -
------------
-(b) July 27th, 2004.
-(a) July 27th, 2004.
+(e) August 12th, 2004.
+(d) August 10th, 2004.
+(c) August  2nd, 2004.
+(b) July   27th, 2004.
+(a) July   27th, 2004.
 
 New Features:
+(e) Added 'polyBlockRead <source>' to read in blockfile 'source'.
+(d) Added Maxwell velocity distribution. 
+(d) Added 'analyze activate' to activate one of the stored configurations.
+(c) Added a new check for the NPT integrator to the testsuite.  
+    The compressibility is calculated from volume fluctuations and compared 
+    with a previously calculated value; this value was also checked by calculating 
+    the compressibility from the change in pressure with changes in volume.  
+    The value obtained by this method deviates at the third significant figure;
+    hopefully this means the "fluctuation response theorem" holds for our NPT integrator.
 (b) Added new analysis command for lipid bilayers 'analyze lipid_orient_order'.
     It's another command that is really only useful for a bilayer system.
 (a) Introduced ghost system flags, at the moment just ghosts_have_v, which
@@ -30,11 +35,18 @@ New Features:
 (a) Added documentation for MMM2D, MMM1D and ELC, and the ghost communication stuff.
 
 Changes:
+(d) Changed classification of stray lipids to account for the fact that some lipids 
+    will become incorporated into periodic image bilayers. These lipids are still
+    discarded in modes analysis but are classified as "STRAY".  
+    Lipids which are genuinely floating in space are now classified as "REAL_STRAY".
 (a) Moved 'anounce_rebuild_vlist' to 'announce_rebuild_vlist' and changed the MPI
     communications' 'Reduce'/'Bcast' to 'Allreduce'.
 (a) Now errors in the 'integrate set' command are actually reported as errors.
 
 Bugfixes:
+(d) Fixed bug in the mindist which only worked for symmetric sets.
+(d) Fixed some bugs in the topology-mol_id sync command so that this now works 
+    properly on multiple nodes.
 (a) Fixed bug that 'thermostat set' crashes.
 
 
