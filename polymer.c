@@ -892,9 +892,9 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
 
 int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   /** Implementation of the tcl-command
-      diamond <a> <bond_length> <MPC> [counterions <N_CI>] [charges <val_cM> [<val_CI>]]
+      diamond <a> <bond_length> <MPC> [counterions <N_CI>] [charges <val_nodes> <val_cM> <val_CI>] [distance <cM_dist>]
   */
-  double a, bond_length; int MPC, N_CI = 0; double val_cM = 0.0, val_CI = 0.0;
+  double a, bond_length; int MPC, N_CI = 0; double val_nodes = 0.0, val_cM = 0.0, val_CI = 0.0; int cM_dist = 1;
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i, tmp_try;
 
@@ -907,21 +907,31 @@ int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	Tcl_AppendResult(interp, "The number of counterions must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
       else { i++; }
     }
-    /* [charges <val_cM> [<val_CI>]] */
+    /* [charges <val_nodes> <val_cM> <val_CI>] */
     else if (!strncmp(argv[i], "charges", strlen(argv[i]))) {
-      if (Tcl_GetDouble(interp, argv[i+1], &val_cM) == TCL_ERROR) { 
-	Tcl_AppendResult(interp, "The charge of the monomers must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-      else {
-	if ((i+2 >= argc) || (Tcl_GetDouble(interp, argv[i+2], &val_CI) == TCL_ERROR)) { Tcl_ResetResult(interp); i++; val_CI = -1.*val_cM; } 
-	else { i+=2; } }
+      if (i+3 >= argc) { Tcl_AppendResult(interp, "Wrong # of args! Usage: charges <val_nodes> <val_cM> <val_CI>!", (char *)NULL); return (TCL_ERROR); }
+      if (Tcl_GetDouble(interp, argv[i+1], &val_nodes) == TCL_ERROR) { 
+	Tcl_AppendResult(interp, "The charge of the nodes must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      if (Tcl_GetDouble(interp, argv[i+2], &val_cM) == TCL_ERROR) { 
+	Tcl_AppendResult(interp, "The charge of the monomers must be double (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
+      if (Tcl_GetDouble(interp, argv[i+3], &val_CI) == TCL_ERROR) { 
+	Tcl_AppendResult(interp, "The charge of the counterions must be double (got: ",argv[i+3],")!", (char *)NULL); return (TCL_ERROR); }
+      i+=3;
+    }
+    /* [distance <cM_dist>] */
+    else if (!strncmp(argv[i], "distance", strlen(argv[i]))) {
+      if (Tcl_GetInt(interp, argv[i+1], &cM_dist) == TCL_ERROR) { 
+	Tcl_AppendResult(interp, "The distance between two charged monomers' indices must be integer (got: ",argv[i+1],")!", (char *)NULL); 
+	return (TCL_ERROR); }
+      else { i++; }
     }
     /* default */
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
   }
 
-  POLY_TRACE(printf("double a %f, bond_length %f, int MPC %d, N_CI %d, double val_cM %f, val_CI %f\n", a, bond_length, MPC, N_CI, val_cM, val_CI));
+  POLY_TRACE(printf("double a %f, bond_length %f, int MPC %d, N_CI %d, double val_nodes %f, val_cM %f, val_CI %f, int cM_dist %d\n", a, bond_length, MPC, N_CI, val_nodes, val_cM, val_CI, cM_dist));
 
-  tmp_try = diamondC(a, bond_length, MPC, N_CI, val_cM, val_CI);
+  tmp_try = diamondC(a, bond_length, MPC, N_CI, val_nodes, val_cM, val_CI, cM_dist);
   if (tmp_try == -3) {
     sprintf(buffer, "Failed upon creating one of the monomers in Espresso!\nAborting...\n"); tmp_try = TCL_ERROR; }
   else if (tmp_try >= 0) {
@@ -933,9 +943,9 @@ int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 }
 
 
-int diamondC(double a, double bond_length, int MPC, int N_CI, double val_cM, double val_CI) {
+int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, double val_cM, double val_CI, int cM_dist) {
   /** C implementation of 'diamond <a> <bond_length> <MPC> [options]' */
-  int i,j,k, part_id, bond[2], type_FENE=0,type_node=0,type_cM=1,type_CI=2;
+  int i,j,k, part_id, bond[2], type_FENE=0,type_node=0,type_cM=1,type_nM=1, type_CI=2;
   double pos[3], off = bond_length/sqrt(3);
   double dnodes[8][3]  = {{0,0,0}, {1,1,1}, {2,2,0}, {0,2,2}, {2,0,2}, {3,3,1}, {1,3,3}, {3,1,3}};
   int    dchain[16][5] = {{0,1, +1,+1,+1}, {1,2, +1,+1,-1}, {1,3, -1,+1,+1}, {1,4, +1,-1,+1},
@@ -950,7 +960,7 @@ int diamondC(double a, double bond_length, int MPC, int N_CI, double val_cM, dou
       dnodes[i][j] *= a/4.; pos[j] = dnodes[i][j]; 
     }
     if (place_particle(part_id, pos)==TCL_ERROR) return (-3);
-    if (set_particle_q(part_id, val_cM)==TCL_ERROR) return (-3);
+    if (set_particle_q(part_id, val_nodes)==TCL_ERROR) return (-3);
     if (set_particle_type(part_id, type_node)==TCL_ERROR) return (-3);
     part_id++;
   }
@@ -960,8 +970,8 @@ int diamondC(double a, double bond_length, int MPC, int N_CI, double val_cM, dou
     for(k=1; k<=MPC; k++) {
       for(j=0; j<3; j++) pos[j] = dnodes[dchain[i][0]][j] + k*dchain[i][2+j]*off;
       if (place_particle(part_id, pos)==TCL_ERROR) return (-3);
-      if (set_particle_q(part_id, val_cM)==TCL_ERROR) return (-3);
-      if (set_particle_type(part_id, type_cM)==TCL_ERROR) return (-3);
+      if (set_particle_q(part_id, (k % cM_dist==0) ? val_cM : 0.0)==TCL_ERROR) return (-3);
+      if (set_particle_type(part_id, (k % cM_dist==0) ? type_cM : type_nM)==TCL_ERROR) return (-3);
       bond[0] = type_FENE; 
       if(k==1) bond[1] = dchain[i][0]; else bond[1] = part_id-1;
       if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3);
