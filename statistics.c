@@ -260,8 +260,8 @@ void centermass(int type, double *com)
     if (type == partCfg[j].p.type) {
       for (i=0; i<3; i++) {
       	com[i] += partCfg[j].r.p[i]*PMASS(partCfg[j]);
-        M += PMASS(partCfg[j]);
       }
+      M += PMASS(partCfg[j]);
     }
   }
   
