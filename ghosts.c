@@ -331,7 +331,7 @@ void exchange_part()
 	    part = CELL_PTR(m, n, o)->pList.part;
 	    np   = CELL_PTR(m, n, o)->pList.n;
 	    for(i=0 ; i<pl->n; i++) {
-	      if(part[i].r.p[dir] < my_left[dir] ) {
+	      if(part[i].r.p[d] < my_left[d] ) {
 		i = move_to_p_buf(pl,i); 
 	      }
 	    }
@@ -343,7 +343,7 @@ void exchange_part()
 	    part = CELL_PTR(m, n, o)->pList.part;
 	    np   = CELL_PTR(m, n, o)->pList.n;
 	    for(i=0 ; i<pl->n; i++) {
-	      if(part[i].r.p[dir] >=  my_right[dir]) {
+	      if(part[i].r.p[d] >=  my_right[d]) {
 		i = move_to_p_buf(pl,i);
 	      }
 	    }
@@ -376,6 +376,7 @@ void invalidate_ghosts()
 	 if( &(part[i]) == local_particles[part[i].r.identity] ) 
 	   local_particles[part[i].r.identity] = NULL;
        }
+       np   = CELL_PTR(m, n, o)->pList.n = 0;
     }
   }
 }
@@ -598,17 +599,19 @@ int sub_grid_indices(int* list, int start, int max,
 
 int move_to_p_buf(ParticleList *pl, int ind)
 {
-  int bonds=0;
-  /* bond array size */
-  bonds = pl->part[ind].bl.n;
-    
-  /* check buffer sizes */
-  if(p_send_buf.n >= p_send_buf.max) 
-    realloc_particles(&p_send_buf, p_send_buf.n + 2);
-  if( ((b_send_buf.n + bonds +1) >= b_send_buf.max) ) 
-    realloc_intlist(&b_send_buf, b_send_buf.n + bonds +1 );
+  int bonds;
 
-  /* copy particle from local array to send buffer */
+  GHOST_TRACE(fprintf(stderr,"%d: move_to_p_buf(List,%d): Move particle %d with %d bonds\n",
+		      this_node,ind,pl->part[ind].r.identity,pl->part[ind].bl.n));
+  GHOST_TRACE(fprintf(stderr,"%d: p_send_buf.n = %d, b_send_buf.n = %d\n",
+		      this_node,p_send_buf.n,b_send_buf.n));
+    
+  /* check bond  buffer sizes */
+  bonds = pl->part[ind].bl.n;
+  if( ((b_send_buf.n + bonds +1) >= b_send_buf.max) ) 
+    realloc_intlist(&b_send_buf, b_send_buf.n + bonds+1 );
+
+  /* copy bond information to b_send_buf */
   /* store bonds array size */
   b_send_buf.e[b_send_buf.n] = bonds;
   b_send_buf.n += 1;
@@ -617,12 +620,16 @@ int move_to_p_buf(ParticleList *pl, int ind)
     b_send_buf.n += bonds;
     realloc_intlist(&(pl->part[ind].bl), 0);
   }
+
+  /* move particle to p_send_buf and delete it from local_particles list */
   move_particle(&p_send_buf, pl, ind);
-  /* delete particle = 
-     1: update the local_particles list 
-     2: update index */
   local_particles[pl->part[ind].r.identity] = NULL;
-  if(ind < pl->n-1) ind--;
+
+  GHOST_TRACE(fprintf(stderr,"%d: p_send_buf.n = %d, b_send_buf.n = %d\n",
+		      this_node,p_send_buf.n,b_send_buf.n));
+
+
+  if(ind < (pl->n)-1) ind--;
   return ind;
 }
 
