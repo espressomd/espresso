@@ -930,6 +930,7 @@ void mpi_bcast_ia_params(int i, int j)
     MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
 	      0, MPI_COMM_WORLD);
 
+#ifdef TABULATED
     /* If there are tabulated forces broadcast those as well */
     if ( get_ia_param(i,j)->TAB_maxval > 0) {
       /* First let all nodes know the new size for force and energy tables */
@@ -940,6 +941,7 @@ void mpi_bcast_ia_params(int i, int j)
       MPI_Bcast(tabulated_forces.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
       MPI_Bcast(tabulated_energies.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
     }    
+#endif
   }
   else {
     /* bonded interaction parameters */
@@ -961,24 +963,27 @@ void mpi_bcast_ia_params(int i, int j)
 
 void mpi_bcast_ia_params_slave(int i, int j)
 {
-  int tablesize;
   if(j >= 0) { /* non-bonded interaction parameters */
     /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
     MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
 	      0, MPI_COMM_WORLD);
-    /* If there are tabulated forces broadcast those as well */
-    if ( get_ia_param(i,j)->TAB_maxval > 0) {
-      /* Determine the new size for force and energy tables */
-      MPI_Bcast(&tablesize,1,MPI_INT,0,MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD);
-      /* Allocate sizes accordingly */
-      realloc_doublelist(&tabulated_forces, tablesize);
-      realloc_doublelist(&tabulated_energies, tablesize);
-      /* Now communicate the data */
-      MPI_Bcast(tabulated_forces.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
-      MPI_Bcast(tabulated_energies.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
-
+#ifdef TABULATED
+    {
+      int tablesize;
+      /* If there are tabulated forces broadcast those as well */
+      if ( get_ia_param(i,j)->TAB_maxval > 0) {
+	/* Determine the new size for force and energy tables */
+	MPI_Bcast(&tablesize,1,MPI_INT,0,MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	/* Allocate sizes accordingly */
+	realloc_doublelist(&tabulated_forces, tablesize);
+	realloc_doublelist(&tabulated_energies, tablesize);
+	/* Now communicate the data */
+	MPI_Bcast(tabulated_forces.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+	MPI_Bcast(tabulated_energies.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+      }
     }
+#endif
   }
   else { /* bonded interaction parameters */
     make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
@@ -1455,9 +1460,11 @@ void mpi_lj_cap_forces(double fc)
 
 void mpi_lj_cap_forces_slave(int node, int parm)
 {
+#ifdef LENNARD_JONES
   MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   calc_lj_cap_radii(lj_force_cap);
   on_short_range_ia_change();
+#endif
 }
 
 /*************** REQ_BCAST_TABFORCECAP ************/

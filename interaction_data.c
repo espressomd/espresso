@@ -79,13 +79,15 @@ void force_and_energy_tables_init() {
 
 /** Initialize interaction parameters. */
 void initialize_ia_params(IA_parameters *params) {
+#ifdef LENNARD_JONES
   params->LJ_eps =
     params->LJ_sig =
     params->LJ_cut =
     params->LJ_shift =
     params->LJ_offset = 
     params->LJ_capradius = 0;
-  
+#endif
+
 #ifdef LJCOS
   params->LJCOS_eps =
     params->LJCOS_sig =
@@ -133,12 +135,14 @@ void initialize_ia_params(IA_parameters *params) {
 
 /** Copy interaction parameters. */
 void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
+#ifdef LENNARD_JONES
   dst->LJ_eps = src->LJ_eps;
   dst->LJ_sig = src->LJ_sig;
   dst->LJ_cut = src->LJ_cut;
   dst->LJ_shift = src->LJ_shift;
   dst->LJ_offset = src->LJ_offset;
   dst->LJ_capradius = src->LJ_capradius;
+#endif
 
 #ifdef LJCOS
   dst->LJCOS_eps = src->LJCOS_eps;
@@ -150,6 +154,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJCOS_rmin = src->LJCOS_rmin;
 #endif
   
+#ifdef ROTATION
   dst->GB_eps = src->GB_eps;
   dst->GB_sig = src->GB_sig;
   dst->GB_cut = src->GB_cut;
@@ -159,7 +164,9 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->GB_nu = src->GB_nu;
   dst->GB_chi1 = src->GB_chi1;
   dst->GB_chi2 = src->GB_chi2; 
+#endif
 
+#ifdef TABULATED
   dst->TAB_npoints = src->TAB_npoints;
   dst->TAB_startindex = src->TAB_startindex;
   dst->TAB_minval = src->TAB_minval;
@@ -168,6 +175,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->TAB_maxval2 = src->TAB_maxval2;
   dst->TAB_stepsize = src->TAB_stepsize;
   strcpy(dst->TAB_filename,src->TAB_filename);
+#endif
 
 #ifdef COMFORCE
   dst->COMFORCE_flag = src->COMFORCE_flag;
@@ -185,19 +193,25 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 int checkIfParticlesInteract(int i, int j) {
   IA_parameters *data = get_ia_param(i, j);
 
+#ifdef LENNARD_JONES
   if (data->LJ_cut != 0)
     return 1;
+#endif
   
 #ifdef LJCOS
   if (data->LJCOS_cut != 0)
     return 1;
 #endif
 
+#ifdef ROTATION
   if (data->GB_cut != 0)
     return 1;
+#endif
 
+#ifdef TABULATED
   if (data->TAB_maxval != 0)
     return 1;
+#endif
 
   return 0;
 }
@@ -371,24 +385,30 @@ void calc_maximal_cutoff()
      for (j = i; j < n_particle_types; j++) {
        if (checkIfParticlesInteract(i, j)) {
 	 IA_parameters *data = get_ia_param(i, j);
+#ifdef LENNARD_JONES
 	 if (data->LJ_cut != 0) {
 	   if(max_cut_non_bonded < (data->LJ_cut+data->LJ_offset) ) 
 	     max_cut_non_bonded = (data->LJ_cut+data->LJ_offset);
 	 }
+#endif
 #ifdef LJCOS
 	 if (data->LJCOS_cut != 0) {
 	   if(max_cut_non_bonded < (data->LJCOS_cut+data->LJCOS_offset) ) 
 	     max_cut_non_bonded = (data->LJCOS_cut+data->LJCOS_offset);
 	 }
 #endif
+#ifdef ROTATION
 	 if (data->GB_cut != 0) {
 	   if(max_cut_non_bonded < (data->GB_cut) ) 
 	     max_cut_non_bonded = (data->GB_cut);
 	 }
+#endif
+#ifdef TABULATED
 	 if (data->TAB_maxval != 0){
 	   if(max_cut_non_bonded < (data->TAB_maxval ))
 	     max_cut_non_bonded = data->TAB_maxval;
 	 }
+#endif
        }
      }
 #ifdef ELECTROSTATICS
@@ -613,6 +633,7 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
       return (TCL_OK);
     }
 #endif
+#ifdef LENNARD_JONES
   case BONDED_IA_SUBT_LJ:
     Tcl_PrintDouble(interp, params->p.subt_lj.k, buffer);
     Tcl_AppendResult(interp, "SUBT_LJ ", buffer, " ", (char *) NULL);
@@ -631,6 +652,7 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     Tcl_PrintDouble(interp, params->p.subt_lj_fene.r, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
+#endif
  case BONDED_IA_NONE:
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
@@ -667,8 +689,10 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #ifdef ROTATION
   if (data->GB_cut != 0) printgbIAToResult(interp,i,j);
 #endif
+#ifdef TABULATED
   if (data->TAB_maxval != 0)
     Tcl_AppendResult(interp, "tabulated \"", data->TAB_filename,"\"", (char *) NULL);
+#endif
 #ifdef COMFORCE
   if (data->COMFORCE_flag != 0) printcomforceIAToResult(interp,i,j);
 #endif
@@ -977,7 +1001,8 @@ int inter_parse_bonded(Tcl_Interp *interp,
       CHECK_VALUE(harmonic_set_params(bond_type, k, r), "bond type must be nonnegative");
   }  
   
-  
+#ifdef LENNARD_JONES  
+
   if (ARG0_IS_S("subt_lj")) {
 
       if (argc != 3) {
@@ -1028,7 +1053,9 @@ int inter_parse_bonded(Tcl_Interp *interp,
 
       CHECK_VALUE(subt_lj_fene_set_params(bond_type, k, r), "bond type must be nonnegative");
   }
-  
+
+#endif
+
   if (ARG0_IS_S("angle")) {
     /* the optional parameter phi0 is due to backwards compatibility and is set to PI if not given */
     if (argc != 2 && argc != 3) {

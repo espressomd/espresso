@@ -9,6 +9,8 @@
  *  <a href="mailto:sathish@mpip-mainz.mpg.de">sathish</a>
 */
 
+#ifdef LENNARD_JONES
+
 /************************************************************/
 
 /// parameters for the subtract LJ from a fene bond potential. Deprecated.
@@ -131,4 +133,5 @@ MDINLINE double subt_lj_fene_pair_energy(Particle *p1, Particle *p2, int type_nu
     return energy_fene-energy_lj;
   }
 
+#endif
 #endif

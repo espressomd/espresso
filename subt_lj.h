@@ -17,6 +17,8 @@
  *  <a href="mailto:sathish@mpip-mainz.mpg.de">sathish</a>
 */
 
+#ifdef LENNARD_JONES
+
 /************************************************************/
 
 /// set the parameters for the subtract LJ potential
@@ -129,5 +131,5 @@ MDINLINE double subt_lj_pair_energy(Particle *p1, Particle *p2, int type_num)
     	}
     return -energy_lj;
   }
-
+#endif
 #endif

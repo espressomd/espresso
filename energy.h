@@ -132,6 +132,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
     case BONDED_IA_HARMONIC:
       ret = harmonic_pair_energy(p1, p2, type_num);
       i+=2; break;
+#ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ_HARM:
       ret = subt_lj_harm_pair_energy(p1, p2, type_num);
       i+=2; break; 
@@ -141,6 +142,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
     case BONDED_IA_SUBT_LJ:
       ret = subt_lj_pair_energy(p1, p2, type_num);
       i+=2; break;
+#endif
     case BONDED_IA_ANGLE: {
       Particle *p3 = local_particles[p1->bl.e[i+2]];
       if (!p3) {

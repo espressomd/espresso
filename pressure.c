@@ -611,6 +611,7 @@ int calc_p_tensor(double volume, IntList *p_list, int flag) {
 	    for(l=0;l<3;l++)
 	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += p1.f.f[k]*d[l];
 	  i+=2; break;
+#ifdef LENNARD_JONES
 	case BONDED_IA_SUBT_LJ_HARM:
 	  add_subt_lj_harm_pair_force(&p1,&p2,type_num);
 	  for(k=0;k<3;k++)
@@ -629,6 +630,7 @@ int calc_p_tensor(double volume, IntList *p_list, int flag) {
 	    for(l=0;l<3;l++)
 	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += p1.f.f[k]*d[l];
 	  i+=2; break;
+#endif
 	case BONDED_IA_ANGLE:
 	  get_particle_data(p1.bl.e[i+2], &p3);
 	  for (j = 0; j < 3; j++)

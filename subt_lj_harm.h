@@ -17,6 +17,8 @@
  *  <a href="mailto:sathish@mpip-mainz.mpg.de">sathish</a>
 */
 
+#ifdef LENNARD_JONES
+
 /************************************************************/
 
 /// parameters for the subtract lj from a harmonic bond potential
@@ -126,4 +128,5 @@ MDINLINE double subt_lj_harm_pair_energy(Particle *p1, Particle *p2, int type_nu
     return energy_harm-energy_lj;
   }
 
+#endif
 #endif

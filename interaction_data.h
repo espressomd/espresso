@@ -119,6 +119,7 @@
  *  nonbonded interactions. Access via
  * get_ia_param(i, j), i,j < n_particle_types */
 typedef struct {
+#ifdef LENNARD_JONES
   /** \name Lennard-Jones with shift */
   /*@{*/
   double LJ_eps;
@@ -128,6 +129,7 @@ typedef struct {
   double LJ_offset;
   double LJ_capradius;
   /*@}*/
+#endif
 
 #ifdef LJCOS
   /** \name Lennard-Jones+Cos potential */
@@ -142,6 +144,7 @@ typedef struct {
   /*@}*/
 #endif
   
+#ifdef ROTATION
   /** \name Gay-Berne potential */
   /*@{*/
   double GB_eps;
@@ -154,7 +157,9 @@ typedef struct {
   double GB_chi1;
   double GB_chi2;
   /*@}*/  
+#endif
 
+#ifdef TABULATED
   /** \name Tabulated potential */
   /*@{*/
   int TAB_npoints;
@@ -167,6 +172,7 @@ typedef struct {
   /** The maximum allowable filename length for a tabulated potential file*/
 #define MAXLENGTH_TABFILE_NAME 256
   char TAB_filename[MAXLENGTH_TABFILE_NAME];
+#endif
 
   /*@}*/  
   
