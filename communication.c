@@ -482,6 +482,11 @@ void mpi_bcast_event_slave(int node, int event)
   case INVALIDATE_SYSTEM:
     local_invalidate_system();
     break;
+#ifdef ADDITIONAL_CHECKS
+  case CHECK_PARTICLES:
+    check_particles();
+    break;
+#endif
   default:;
   }
 }
@@ -498,7 +503,7 @@ void mpi_place_particle(int pnode, int part, int new, double p[3])
     mpi_issue(REQ_PLACE, pnode, part);
 
   if (pnode == this_node)
-    local_place_particle(part, p);
+    local_place_particle(part, p, new);
   else
     MPI_Send(p, 3, MPI_DOUBLE, pnode, REQ_PLACE, MPI_COMM_WORLD);
 
@@ -509,13 +514,14 @@ void mpi_place_particle_slave(int pnode, int part)
 {
   double p[3];
   MPI_Status status;
+  int new = (request[0] == REQ_PLACE_NEW); 
 
-  if (request[0] == REQ_PLACE_NEW)
+  if (new)
     added_particle(part);
 
   if (pnode == this_node) {
     MPI_Recv(p, 3, MPI_DOUBLE, 0, REQ_PLACE, MPI_COMM_WORLD, &status);
-    local_place_particle(part, p);
+    local_place_particle(part, p, new);
   }
 
   on_particle_change();

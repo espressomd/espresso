@@ -9,6 +9,7 @@
 /** \file debug.c
     Implements the malloc replacements as described in \ref debug.h "debug.h". */
 
+#include <mpi.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +22,7 @@
 #include "debug.h"
 #include "cells.h"
 #include "grid.h"
+#include "integrate.h"
 
 #if defined FORCE_CORE || defined MPI_CORE
 int regular_exit = 0;
@@ -204,8 +206,8 @@ void check_particle_consistency()
 	      this_node,c,cell->n);
     }
   }
-  CELL_TRACE(fprintf(stderr,"%d: check_particle_consistency: %d particles in cells.\n",
-		     this_node,cell_part_cnt));
+  CELL_TRACE(fprintf(stderr,"%d: check_particle_consistency: %d particles in cells, %d particles in ghost_cells.\n",
+		     this_node,cell_part_cnt, ghost_part_cnt));
   /* checks: local particle id */
   for(n=0; n< max_seen_particle+1; n++) {
     if(local_particles[n] != NULL) {
@@ -220,25 +222,6 @@ void check_particle_consistency()
   CELL_TRACE(fprintf(stderr,"%d: check_particle_consistency: %d particles in local_particles.\n",
 		     this_node,local_part_cnt));
 
-  /* check cell neighbor consistency
-  for(c=0; c<n_cells; c++) {
-    for(n=0; n< cells[c].n_neighbors; n++) {
-      if(is_inner_cell(c,ghost_cell_grid)) {
-	nc = cells[c].nList[n].cell_ind;
-	if( cells[c].nList[n].pList != &(cells[nc].pList) ) {
-	  fprintf(stderr,"%d: cell %d: neighbor_cell %d with c_ind %d: Location of pList changed wothout update!\n",this_node,c,n,nc);
-	  cell_err_cnt++;
-	}
-      }
-      else {
-	fprintf(stderr,"%d: ghost cell %d has more than zero neighbors = %d\n",
-		this_node,c,cells[c].n_neighbors);
-	cell_err_cnt++;
-      }
-    }
-  }
-  */
-
   /* EXIT on severe errors */
   if(cell_err_cnt>0) {
     fprintf(stderr,"%d: check_particle_consistency: %d ERRORS detected in cell structure!\n",this_node,cell_err_cnt);
@@ -246,7 +229,7 @@ void check_particle_consistency()
   }
   if(local_part_cnt != cell_part_cnt) {
     fprintf(stderr,"%d: check_particle_consistency: ERROR: %d parts in cells but %d parts in local_particles\n",
-	    this_node,local_part_cnt,cell_part_cnt);
+	    this_node,cell_part_cnt,local_part_cnt);
 
     for (c = 0; c < local_cells.n; c++) {
       for(p = 0; p < local_cells.cell[c]->n; p++)
@@ -264,6 +247,114 @@ void check_particle_consistency()
 	    this_node,ghost_part_cnt);
     errexit();
   }
+}
+
+void check_particles()
+{
+  Particle *part;
+  int *is_here;
+  Cell *cell;
+  int n, np, dir, c, p;
+  int cell_part_cnt=0, local_part_cnt=0;
+  int cell_err_cnt=0;
+
+  CELL_TRACE(fprintf(stderr, "%d: entering check_particles\n", this_node));
+
+  /* check the consistency of particle_nodes */
+  /* to this aim the array is broadcasted temporarily */
+  if (this_node != 0)
+    particle_node = malloc((max_seen_particle + 1)*sizeof(int));
+  is_here = malloc((max_seen_particle + 1)*sizeof(int));
+  memset(is_here, 0, (max_seen_particle + 1)*sizeof(int));
+
+  MPI_Bcast(particle_node, max_seen_particle + 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  /* checks: part_id, part_pos, local_particles id */
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    cell_part_cnt += cell->n;
+    part = cell->part;
+    np   = cell->n;
+    for(n=0; n<cell->n ; n++) {
+      if(part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
+	fprintf(stderr,"%d: check_particles: ERROR: Cell %d Part %d has corrupted id=%d\n",
+		this_node,c,n,cell->part[n].p.identity);
+	errexit();
+      }
+
+      is_here[part[n].p.identity] = 1;
+
+      for(dir=0;dir<3;dir++) {
+	if(PERIODIC(dir) && (part[n].r.p[dir] < -skin/2 || part[n].r.p[dir] > box_l[dir] + skin/2)) {
+	  fprintf(stderr,"%d: check_particles: ERROR: illegal pos[%d]=%f of part %d id=%d in cell %d\n",
+		  this_node,dir,part[n].r.p[dir],n,part[n].p.identity,c);
+	  errexit();
+	}
+      }
+      if(local_particles[part[n].p.identity] != &part[n]) {
+	fprintf(stderr,"%d: check_particles: ERROR: address mismatch for part id %d: local: %p cell: %p in cell %d\n",
+		this_node,part[n].p.identity,local_particles[part[n].p.identity],
+		&part[n],c);
+	errexit();
+      }
+      if (particle_node[part[n].p.identity] != this_node) {
+	fprintf(stderr,"%d: check_particles: ERROR: node for particle %d wrong\n",
+		this_node,part[n].p.identity);
+	errexit();
+      }
+    }
+  }
+  CELL_TRACE(fprintf(stderr,"%d: check_particles: %d particles in local cells.\n",
+		     this_node,cell_part_cnt));
+
+  /* checks: local particle id */
+  for(n = 0; n <= max_seen_particle; n++) {
+    if(local_particles[n] != NULL) {
+      local_part_cnt ++;
+      if(local_particles[n]->p.identity != n) {
+	fprintf(stderr,"%d: check_particles: ERROR: local_particles part %d has corrupted id %d\n",
+		this_node,n,local_particles[n]->p.identity);
+	errexit();
+      }
+    }
+  }
+  CELL_TRACE(fprintf(stderr,"%d: check_particles: %d particles in local_particles.\n",
+		     this_node,local_part_cnt));
+
+  /* EXIT on severe errors */
+  if(cell_err_cnt>0) {
+    fprintf(stderr,"%d: check_particles: %d ERRORS detected in cell structure!\n",this_node,cell_err_cnt);
+    errexit();
+  }
+
+  /* check whether the particles on my node are actually here */
+  for (p = 0; p <= max_seen_particle; p++) {
+    if (particle_node[p] == this_node) {
+      if (!is_here[p]) {
+ 	fprintf(stderr,"%d: check_particles: ERROR: particle %d on this node, but not in local cell\n", this_node, p);
+      }
+    }
+  }
+
+  free(is_here);
+
+  if (this_node != 0) {
+    free(particle_node);
+    particle_node = NULL;
+  }
+  else {
+    /* check whether the total count of particles is ok */
+    c = 0;
+    for (p = 0; p <= max_seen_particle; p++)
+      if (particle_node[p] != -1) c++;
+    if (c != n_total_particles) {
+      fprintf(stderr,"%d: check_particles: #particles in particle_node inconsistent\n", this_node);
+      errexit();
+    }
+    CELL_TRACE(fprintf(stderr,"%d: check_particles: %d particles in particle_node.\n",
+		       this_node,c));
+  }
+  CELL_TRACE(fprintf(stderr, "%d: leaving check_particles\n", this_node));
 }
 
 void print_particle_positions()

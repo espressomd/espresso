@@ -32,8 +32,6 @@
 #include "parser.h"
 #include "debug.h"
 
-/* cwz-build-command: make all
- */
 
 /************************************************
  * defines
@@ -1173,6 +1171,12 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 {
   int change = 0, err = TCL_OK;
 
+#ifdef ADDITIONAL_CHECKS
+  if (!particle_node)
+    build_particle_node();
+  mpi_bcast_event(CHECK_PARTICLES);
+#endif
+
   if (ARG0_IS_S("print"))
     err = part_parse_print(interp, argc-1, argv+1, part_num);
   else while (argc > 0) {
@@ -1238,6 +1242,10 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
     argc -= (change + 1);
     argv += (change + 1);
   }
+
+#ifdef ADDITIONAL_CHECKS
+  mpi_bcast_event(CHECK_PARTICLES);
+#endif
 
   return mpi_gather_runtime_errors(interp, err);
 }
@@ -1603,12 +1611,12 @@ void local_remove_particle(int part)
   pl->n--;
 }
 
-void local_place_particle(int part, double p[3])
+void local_place_particle(int part, double p[3], int new)
 {
   Cell *cell;
   double pp[3];
   int i[3], rl;
-  Particle *pt = (part <= max_seen_particle) ? local_particles[part] : NULL;
+  Particle *pt;
 
   i[0] = 0;
   i[1] = 0;
@@ -1618,7 +1626,7 @@ void local_place_particle(int part, double p[3])
   pp[2] = p[2];
   fold_position(pp, i);
   
-  if (!pt) {
+  if (new) {
     /* allocate particle anew */
     cell = cell_structure.position_to_cell(pp);
     if (!cell) {
@@ -1636,6 +1644,8 @@ void local_place_particle(int part, double p[3])
     else
       local_particles[pt->p.identity] = pt;
   }
+  else
+    pt = local_particles[part];
 
   PART_TRACE(fprintf(stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
 		     this_node, part, p[0], p[1], p[2]));

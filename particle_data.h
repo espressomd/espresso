@@ -440,8 +440,9 @@ int sortPartCfg();
     be on the local node!
     @param part the identity of the particle to move
     @param p    its new position
+    @param new  if true, the particle is allocated, else has to exists already
 */
-void local_place_particle(int part, double p[3]);
+void local_place_particle(int part, double p[3], int new);
 
 /** Used by \ref mpi_place_particle, should not be used elsewhere.
     Called if on a different node a new particle was added.

@@ -52,7 +52,7 @@
 
 /* #define COMM_DEBUG */
 /* #define EVENT_DEBUG */
-/* #define INTEG_DEBUG  */
+/* #define INTEG_DEBUG */
 /* #define CELL_DEBUG */
 /* #define GHOST_DEBUG */
 /* #define GRID_DEBUG */
@@ -108,11 +108,19 @@ int debug_callback(Tcl_Interp *interp);
 void core();
 #endif
 
+#ifdef ADDITIONAL_CHECKS
+
 /** this performs a lot of tests which will very likely detect corruptions of
     \ref local_particles and the cell structure.
 */
 void check_particle_consistency();
 
+/** check the consistency of the cells and particle_node. Called from
+    mpi_bcast_event(CHECK_PARTICLES)
+*/
+void check_particles();
+
+#endif
 
 /** Print all particle positions contained in \ref cells::cells array. */
 void print_particle_positions();
