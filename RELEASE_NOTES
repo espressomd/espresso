@@ -2,11 +2,45 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
+* v1.7.3d (Mezoti)                                                                     *
+****************************************************************************************
+
+Current working revision.
+
+
+- v1.7.3d -
+-----------
+
+(d) September 10th, 2004.
+(c) September  6th, 2004.
+(b) September  3rd, 2004.
+(a) September  2nd, 2004.
+
+New Features:
+(c) New auxiliary mathematical functions on tcl-script-level:
+    ABHmath.tcl: bond_length, veclensqr, min_img_bond_length, 
+    aux.tcl:     calc_aniso_box, system_com
+(b) Maggs algorithm for calculation of the electrostatics has been added.
+(b) The possibility to run domain decompostion without Verlet list has been added.
+
+Changes:
+(c) In 'energy_calc()' in the case of ELECTROSTATICS that energy now defaults to zero.
+(a) To prevent the new error handling to accidentally cause memory overflow, its error
+    status is now collected twice during each integration cycle (for NPT only at the moment).
+
+Bugfixes of errors introduced since 1.7.x:
+(d) Fixed bug in 'nemd'-code which did no longer properly check if only one CPU was used.
+(c) Fixed bug in 'add_bonded_virials' which prevented non-2-body-interactions to work properly.
+(c) Error in 'calc_link_cell_energies' has been fixed.
+(b) Fixed a bug which prevented usage of the p3m-tuning on more than one processor.
+
+
+****************************************************************************************
 * v1.7.2e (Mezoti)                                                                     *
 ****************************************************************************************
 
 Current working revision.
-Released on September 2nd, 2004.
+Released & tagged on September 2nd, 2004.
 
 
 - v1.7.2e -
