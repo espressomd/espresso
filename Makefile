@@ -3,7 +3,7 @@ PLATFORM=$(shell uname -s)
 include Makefile.$(PLATFORM)
 
 ########### list of source files
-CSOURCES= main initialize global slave
+CSOURCES= main initialize global communication tcl_datafield verlet grid
 CXXSOURCES=
 
 ########### RULES
@@ -31,9 +31,13 @@ mostclean: clean
 	rm -rf $(PLATFORM)
 
 ########### dependencies
-dep: $(PLATFORM) $(PLATFORM)/.depend
+dep: 
+	make $(PLATFORM)
+	rm -f $(PLATFORM)/.depend
+	$(MAKE) $(PLATFORM)/.depend
 
 $(PLATFORM)/.depend:
+	mkdir -p $(PLATFORM)
 	rm -f $@
 	touch $@
 	$(DEPEND) -f $@ -- $(CFLAGS) -- $(CFILES) $(CXXFILES) 2>/dev/null

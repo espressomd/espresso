@@ -10,7 +10,4 @@ CXXFLAGS=$(CFLAGS) -felide-constructors -fomit-frame-pointer -fno-rtti
 
 ############ linker settings
 LINK=$(CC)
-# tcl libraries
-LDLIBS=  -ltcl8.3
-# mpi libraries
-LDLIBS+=
+LDLIBS=-ltcl8.3

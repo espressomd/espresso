@@ -1,25 +1,19 @@
 #include <tcl.h>
 #include "initialize.h"
-#include <mpi.h>
 #include "global.h"
-#include "slave.h"
+#include "communication.h"
 
-/* initialize MPI and determine nprocs/node */
-void init_mpi(int *argc, char ***argv)
+void exitHandler(ClientData data)
 {
-  MPI_Init(argc, argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &node);
-  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+  stop_mpi();
 }
 
 int appinit(Tcl_Interp *interp)
 {
   if (Tcl_Init(interp) == TCL_ERROR)
     return (TCL_ERROR);
-#ifdef USE_TK
-  if (Tk_Init(interp) == TCL_ERROR)
-    return (TCL_ERROR);
-#endif
+  Tcl_CreateExitHandler(exitHandler, 0);
+
   if (initialize(interp) == TCL_ERROR)
     return (TCL_ERROR);
   return (TCL_OK);
@@ -29,14 +23,16 @@ int main(int argc, char **argv)
 {
   init_mpi(&argc, &argv);
 
-  if (node == 0) {
+  if (this_node == 0) {
     /* master node */
+    init_data();
     Tcl_Main(argc, argv, appinit);
     return 0;
   }
 
   /* slave node */
-  process_loop();
+  init_data();
+  mpi_loop();
 
   return 0;
 }
