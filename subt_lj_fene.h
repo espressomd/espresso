@@ -26,7 +26,7 @@ MDINLINE void add_subt_lj_fene_pair_force(Particle *p1, Particle *p2, int type_n
     dist=sqrt(dist2);
 
     if(dist >= bonded_ia_params[type_num].p.subt_lj_fene.r) {
-    fprintf(stderr,"%d: add_subt_lj_harm_pair_force: ERROR: FENE Bond between Pair (%d,%d) broken: dist=%f\n",this_node,
+    fprintf(stderr,"%d: add_subt_lj_fene_pair_force: ERROR: FENE Bond between Pair (%d,%d) broken: dist=%f\n",this_node,
 	    p1->r.identity,p2->r.identity,dist); 
     errexit();
         }
@@ -74,7 +74,7 @@ MDINLINE double subt_lj_fene_pair_energy(Particle *p1, Particle *p2, int type_nu
   dist=sqrt(dist2);
   
   if(dist >= bonded_ia_params[type_num].p.subt_lj_fene.r) {
-    fprintf(stderr,"%d: add_subt_lj_fene_pair_force: ERROR: FENE Bond between Pair (%d,%d) broken: dist=%f\n",
+    fprintf(stderr,"%d: add_subt_lj_fene_pair_energy: ERROR: FENE Bond between Pair (%d,%d) broken: dist=%f\n",
 	    this_node,p1->r.identity,p2->r.identity,dist); 
     errexit();
     	}
