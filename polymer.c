@@ -105,7 +105,7 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int N_P, MPC; double bond_length; int part_id = 0; double *posed = NULL;
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_cM = 0.0; int cM_dist = 1, type_nM = 0, type_cM = 1, type_FENE = 0;
-  double angle = -1.0;
+  double angle = -1.0, angle2 = -1.0;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
 
@@ -226,17 +226,23 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	  Tcl_ResetResult(interp);
 	  Tcl_AppendResult(interp, "The angle must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
 	else {
+	  if (angle<0) {
+	    Tcl_ResetResult(interp);
+	    Tcl_AppendResult(interp, "The angle must be positive (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
 	  while(angle >= 2*PI) angle -= 2*PI;
 	  i++;
-    	  /*if(i+1 < argc) {
+    	  if(i+1 < argc) {
 	    if (!ARG_IS_D(i+1, angle2)) {
 	      Tcl_AppendResult(interp);
 	      Tcl_AppendResult(interp, "The 2nd angle must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
 	    else {
+	      if (angle2<0) {
+		Tcl_ResetResult(interp);
+		Tcl_AppendResult(interp, "The 2nd angle must be positive (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
 	      while(angle2 >= 2*PI) angle2 -= 2*PI;
 	      i++;
 	    }
-	  }*/
+	  }
 	}
       }
       else {Tcl_AppendResult(interp, "Not enough arguments for angle", (char *)NULL); return (TCL_ERROR); }
@@ -246,9 +252,9 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   }
   if (val_cM < 1e-10) { val_cM = 0.0; type_cM = type_nM; }
 
-  POLY_TRACE(if (posed!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed %f/%f/%f, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle,angle2);  else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle));
+  POLY_TRACE(if (posed!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed %f/%f/%f, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle,angle2);  else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle, angle2));
 
-  tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle);
+  tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle, angle2);
   if (tmp_try == -1) {
     sprintf(buffer, "Failed to find a suitable place for the start-monomer for %d times!\nAborting...\n",max_try); tmp_try = TCL_ERROR; }
   else if (tmp_try == -2) {
@@ -268,9 +274,9 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 
 int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, int mode, double shield, int max_try, 
-	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle) {
+	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle, double angle2) {
   int p,n, cnt1,cnt2,max_cnt, bond[2];
-  double theta,phi,pos[3],poz[3],pot[3],a[3],M[3],c[3],absc,v1,v2;
+  double theta,phi,pos[3],poz[3],poy[3],pox[3],M[3],a[3],b[3],c[3],d[3],absc,absd,v1,v2,alpha;
 
   cnt1 = cnt2 = max_cnt = 0;
   for (p=0; p<N_P; p++) {
@@ -294,61 +300,85 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
       POLY_TRACE(printf("S"); fflush(NULL));
       
       /* place remaining monomers */
-      for (n=1; n<MPC; n++) {
-	if(angle > -1.0 && (/*angle2 > -1.0 || */n>1)) {
-	  pot[0]=poz[0]; pot[1]=poz[1]; pot[2]=poz[2]; }
-	poz[0]=pos[0]; poz[1]=pos[1]; poz[2]=pos[2];
-	for (cnt1=0; cnt1<max_try; cnt1++) {
-	  poz[0]=pos[0]; poz[1]=pos[1]; poz[2]=pos[2];
-	  if(angle > -1.0 && (/*angle2 > -1.0 ||*/ n>1)) {
-	    /* APPROACH FOR ROTATION MATRICES:  NOT WORKING YET AND PROPABLY NEVER WILL!!!
-	    if(angle > -1.0) {
-	      c=atan((poz[1]-pot[1])/(poz[0]-pot[0]));
-	      b=atan((poz[0]-pot[0])/(poz[2]-pot[2]));
-	      a=atan((poz[2]-pot[2])/(poz[1]-pot[1]));
-
-	      pot[0] = cos(b)*cos(c)*pos[0]+cos(b)*sin(c)*pos[1]-sin(b)*pos[2];
-	      pot[1] = sin(a)*sin(b)*cos(c)*pos[0]-cos(a)*sin(c)*pos[0]+sin(a)*sin(b)*sin(c)*pos[1]+cos(a)*cos(c)*pos[1]+sin(a)*cos(b)*pos[2];
-	      pos[2] = cos(a)*sin(b)*cos(c)*pos[0]+sin(a)*sin(c)*pos[0]+cos(a)*sin(b)*sin(c)*pos[1]-sin(a)*cos(c)*pos[1]+cos(a)*cos(b)*pos[2];
-	      pos[1] = pot[1];
-	      pos[0] = pot[0];
-	    }
-	    */
-	    a[0]=poz[0]-pot[0];
-	    a[1]=poz[1]-pot[1];
-	    a[2]=poz[2]-pot[2];
-	    /*	  if(angle2 > -1.0) {
-	    
+      for (n=1; n<MPC; n++) { 
+	if(angle2 > -1.0) {
+	  if(n==2) { /*if 2nd angle is set, construct preceding monomer with resulting plane perpendicular on the xy-plane*/
+	    poy[0]=2*poz[0]-pos[0];
+	    poy[1]=2*poz[1]-pos[1];
+	    if(pos[2]=poz[2])
+	      poy[2]=poz[2]+1;
+	    else
+	      poy[2]=poz[2];
 	  }
-	  else {
-	    v1 = 1-2*d_random();
-	    v2 = 1-2*d_random();
-	    }*/
-	    v1 = 1-2*d_random();
-	    v2 = 1-2*d_random();
-	    M[0] = cos(angle)*(a[0]);
-	    M[1] = cos(angle)*(a[1]);
-	    M[2] = cos(angle)*(a[2]);
+	  else if(n>2) { /*save 3rd last monomer*/
+	    pox[0]=poy[0]; pox[1]=poy[1]; pox[2]=poy[2]; }
+	}
+	if(angle > -1.0 && n>1) { /*save one but last monomer*/
+	  poy[0]=poz[0]; poy[1]=poz[1]; poy[2]=poz[2]; }
+	poz[0]=pos[0]; poz[1]=pos[1]; poz[2]=pos[2]; /*save last monomer*/
+	for (cnt1=0; cnt1<max_try; cnt1++) {
+	  if(angle > -1.0 &&  n>1) {
+	    a[0]=poz[0]-poy[0];
+	    a[1]=poz[1]-poy[1];
+	    a[2]=poz[2]-poy[2];
 
-	    if(a[0] != 0) {
-	      c[1] = v1;
-	      c[2] = v2;
-	      c[0] = -(a[1]*c[1]+a[2]*c[2])/a[0];
-	    }
-	    else if(a[1] !=0) {
-	      c[0] = v1;
-	      c[2] = v2;
-	      c[1] = -(a[0]*c[0]+a[2]*c[2])/a[1];
+	    if(angle2 > -1.0 && n>2) {
+	      b[0]=poy[0]-pox[0];
+	      b[1]=poy[1]-pox[1];
+	      b[2]=poy[2]-pox[2];
+
+	      alpha=acos((a[0]*b[0]+a[1]*b[1]+a[2]*b[2])/SQR(bond_length));
+
+	      d[0]=b[0]/cos(alpha);
+	      d[1]=b[1]/cos(alpha);
+	      d[2]=b[2]/cos(alpha);
+
+	      c[0]=a[1]*b[2]-a[2]*b[1];
+	      c[1]=a[2]*b[0]-a[0]*b[2];
+	      c[2]=a[0]*b[1]-a[1]*b[0];
+
+	      absd=sqrt(SQR(d[0])+SQR(d[1])+SQR(d[2]));
+	      absc=sqrt(SQR(c[0])+SQR(c[1])+SQR(c[2]));
+	      c[0]=c[0]*absd*tan(angle2)/absc;
+	      c[1]=c[1]*absd*tan(angle2)/absc;
+	      c[2]=c[2]*absd*tan(angle2)/absc;
+
+	      b[0]=a[0]+c[0]+d[0];
+	      b[1]=a[1]+c[1]+d[1];
+	      b[2]=a[2]+c[2]+d[2];
+
+	      c[0]=a[0]-((SQR(a[0])+SQR(a[1])+SQR(a[2]))/(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))*b[0];
+	      c[1]=a[1]-((SQR(a[0])+SQR(a[1])+SQR(a[2]))/(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))*b[1];
+	      c[2]=a[2]-((SQR(a[0])+SQR(a[1])+SQR(a[2]))/(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))*b[2];
 	    }
 	    else {
-	      c[1] = v1;
-	      c[0] = v2;
-	      c[2] = -(a[1]*c[1]+a[0]*c[0])/a[2];
+	      v1 = 1-2*d_random();
+	      v2 = 1-2*d_random();
+
+	      if(a[0] != 0) {
+		c[1] = v1;
+		c[2] = v2;
+		c[0] = -(a[1]*c[1]+a[2]*c[2])/a[0];
+	      }
+	      else if(a[1] !=0) {
+		c[0] = v1;
+		c[2] = v2;
+		c[1] = -(a[0]*c[0]+a[2]*c[2])/a[1];
+	      }
+	      else {
+		c[1] = v1;
+		c[0] = v2;
+		c[2] = -(a[1]*c[1]+a[0]*c[0])/a[2];
+	      }
 	    }
 	    absc = sqrt(SQR(c[0])+SQR(c[1])+SQR(c[2]));
 	    c[0] = (sin(angle)*bond_length/absc)*c[0];
 	    c[1] = (sin(angle)*bond_length/absc)*c[1];
 	    c[2] = (sin(angle)*bond_length/absc)*c[2];
+
+	    M[0] = cos(angle)*(a[0]);
+	    M[1] = cos(angle)*(a[1]);
+	    M[2] = cos(angle)*(a[2]);
 
 	    pos[0] += M[0]+c[0];
 	    pos[1] += M[1]+c[1];

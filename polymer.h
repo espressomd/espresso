@@ -85,11 +85,11 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv);
     @param  type_cM     = type number of charged monomers (default to '1') <br>
     @param  type_FENE   = type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0') <br>
     @param  angle       = desired bond-angle to be fixed <br>
-    @param  angle2      = secon spherical bond-angle <br>
+    @param  angle2      = secon spherical bond-angle (relative to the plane s*(preceding bondvectore)+t*[0,0,1])<br>
     @return Returns how often the attempt to place a monomer failed in the worst case. <br>
     If val_cM \< 1e-10, the charge is assumed to be zero, and type_cM = type_nM.  */
 int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, int mode, double shield, int max_try, 
-	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle);
+	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle, double angle2);
 
 /** Implementation of the tcl-command <br>
     counterions \<N_CI\> [start \<part_id\>] [mode { SAW | RW } [\<shield\> [\<max_try\>]]] [charge \<val_CI\>] [type \<type_CI\>] <br>
