@@ -170,6 +170,24 @@ MDINLINE double dround(double x) { return floor(x+0.5); }
 /** Calculates the SQuaRe of 'double' x, returning 'double'. */
 MDINLINE double SQR(double x) { return x*x; }
 
+/** calculates the squared length of a vector */
+MDINLINE double sqrlen(double v[3]) {
+  double d2 = 0.0;
+  int i;
+  for(i=0;i<3;i++)
+    d2 += SQR(v[i]);
+  return d2;
+}
+
+/** calculates the scalar product of two vectors */
+MDINLINE double scalar(double a[3], double b[3]) {
+  double d2 = 0.0;
+  int i;
+  for(i=0;i<3;i++)
+    d2 += a[i]*b[i];
+  return d2;
+}
+
 /** approximates exp(d^2)*erfc(d) by applying a formula from:
     Abramowitz/Stegun: Handbook of Mathematical Functions, 
     Dover (9. ed.), chapter 7 */
