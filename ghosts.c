@@ -263,7 +263,7 @@ void ghost_init()
 					     anz[i], lc, hc, gcg);
      /* recv from : right, up, back */
     lc[(i+0)%3] = 0;               hc[(i+0)%3] = 0;
-    recv_cells[(2*i)+1].n = sub_grid_indices(recv_cells[(2*i)+1].e, 0, 
+    recv_cells[(2*i)].n = sub_grid_indices(recv_cells[(2*i)].e, 0, 
 					     anz[i], lc, hc, gcg);
     /* send to :   right, up, back */
     lc[(i+0)%3] = cg[(i+0)%3];     hc[(i+0)%3] = cg[(i+0)%3];
@@ -271,7 +271,7 @@ void ghost_init()
 					     anz[i], lc, hc, gcg);
     /* recv from : left, down, for */
     lc[(i+0)%3] = cg[(i+0)%3]+1;   hc[(i+0)%3] = cg[(i+0)%3]+1;
-    recv_cells[(2*i)].n = sub_grid_indices(recv_cells[(2*i)].e, 0, 
+    recv_cells[(2*i)+1].n = sub_grid_indices(recv_cells[(2*i)+1].e, 0, 
 					   anz[i], lc, hc, gcg);
     done[i] = 1;
   }
@@ -354,6 +354,8 @@ void exchange_part()
       }
     }
   }
+
+  GHOST_TRACE(print_particle_positions());
 
 }
 
@@ -467,6 +469,8 @@ void exchange_ghost()
 		      this_node,ghost_recv_size[0], ghost_recv_size[1], 
 		      ghost_recv_size[2],ghost_recv_size[3], ghost_recv_size[4], 
 		      ghost_recv_size[5],recv_buf.max));
+
+  GHOST_TRACE(print_ghost_positions());
 }
 
 void update_ghost_pos()
@@ -602,8 +606,6 @@ int move_to_p_buf(ParticleList *pl, int ind)
 
   GHOST_TRACE(fprintf(stderr,"%d: move_to_p_buf(List,%d): Move particle %d with %d bonds\n",
 		      this_node,ind,pl->part[ind].r.identity,pl->part[ind].bl.n));
-  GHOST_TRACE(fprintf(stderr,"%d: p_send_buf.n = %d, b_send_buf.n = %d\n",
-		      this_node,p_send_buf.n,b_send_buf.n));
     
   /* check bond  buffer sizes */
   bonds = pl->part[ind].bl.n;
@@ -620,11 +622,11 @@ int move_to_p_buf(ParticleList *pl, int ind)
     realloc_intlist(&(pl->part[ind].bl), 0);
   }
 
-  /* move particle to p_send_buf and delete it from local_particles list */
-  move_particle(&p_send_buf, pl, ind);
+  /* delete it from local_particles list and move particle to p_send_buf */
   local_particles[pl->part[ind].r.identity] = NULL;
+  move_particle(&p_send_buf, pl, ind);
 
-  GHOST_TRACE(fprintf(stderr,"%d: p_send_buf.n = %d, b_send_buf.n = %d\n",
+  GHOST_TRACE(fprintf(stderr,"%d: now: p_send_buf.n = %d, b_send_buf.n = %d\n",
 		      this_node,p_send_buf.n,b_send_buf.n));
 
 
