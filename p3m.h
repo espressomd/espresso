@@ -104,7 +104,7 @@ extern p3m_struct p3m;
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm.
  */
-void   P3M_init();
+void P3M_init();
 
 /** Calculate number of charged particles, the sum of the squared
     charges and the squared sum of the charges. */
@@ -157,21 +157,21 @@ MDINLINE void add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
 				     double *d,double dist2,double dist)
 {
   int j;
-  double fac, adist, erfc_part_ri;
+  double fac1,fac2, adist, erfc_part_ri;
 
   if(dist < p3m.r_cut) {
     adist = p3m.alpha * dist;
     erfc_part_ri = AS_erfc_part(adist) / dist;
-    fac = coulomb.prefactor * p1->p.q * p2->p.q  * 
-      exp(-adist*adist) * (erfc_part_ri + 2.0*p3m.alpha*wupii) / dist2;
+    fac1 = coulomb.prefactor * p1->p.q * p2->p.q  * exp(-adist*adist);
+    fac2 = fac1 * (erfc_part_ri + 2.0*p3m.alpha*wupii) / dist2;
     for(j=0;j<3;j++) {
-      p1->f.f[j] += fac * d[j];
-      p2->f.f[j] -= fac * d[j];
-#ifdef NPT
-      if(integ_switch == INTEG_METHOD_NPT_ISO)
-	nptiso.p_vir[j] += fac*d[j] * d[j];
-#endif
+      p1->f.f[j] += fac2 * d[j];
+      p2->f.f[j] -= fac2 * d[j];
     }
+#ifdef NPT
+    if(integ_switch == INTEG_METHOD_NPT_ISO)
+      nptiso.p_vir[0] += fac1 * erfc_part_ri;
+#endif
     ESR_TRACE(fprintf(stderr,"%d: RSE: Pair (%d-%d) dist=%.3f: force (%.3e,%.3e,%.3e)\n",this_node,
 		      p1->p.identity,p2->p.identity,dist,fac*d[0],fac*d[1],fac*d[2]));
     ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
