@@ -87,6 +87,8 @@ proc blockfile_read_auto_particles {channel read auto} {
 	}
 	eval $cmd
     }
+
+    return "particles"
 }
 
 ######################################
@@ -140,6 +142,8 @@ proc blockfile_read_auto_bonds {channel read auto} {
 	part $pid bond delete
 	foreach inter $bl { eval [concat {part $pid bond} $inter] }
     }
+
+    return "bonds"
 }
 
 ######################################
@@ -169,6 +173,8 @@ proc blockfile_write_random {channel write random} {
 proc blockfile_read_auto_random {channel read auto} {
     set data [blockfile $channel read toend]
     eval t_random stat [eval concat $data]
+
+    return "random"
 }
 
 proc blockfile_write_seed {channel write seed} {
@@ -179,6 +185,8 @@ proc blockfile_write_seed {channel write seed} {
 proc blockfile_read_auto_seed {channel read auto} {
     set data [blockfile $channel read toend]
     eval t_random seed $data
+
+    return "seed"
 }
 
 # bit_random
@@ -190,6 +198,8 @@ proc blockfile_write_bitrandom {channel write bitrandom} {
 proc blockfile_read_auto_bitrandom {channel read auto} {
     set data [blockfile $channel read toend]
     eval bit_random stat [eval concat $data]
+
+    return "bitrandom"
 }
 
 proc blockfile_write_bitseed {channel write bitseed} {
@@ -200,6 +210,8 @@ proc blockfile_write_bitseed {channel write bitseed} {
 proc blockfile_read_auto_bitseed {channel read auto} {
     set data [blockfile $channel read toend]
     eval bit_random seed $data
+
+    return "bitseed"
 }
 
 ######################################
@@ -222,6 +234,8 @@ proc blockfile_write_configs {channel write configs {range "all"} } {
 proc blockfile_read_auto_configs {channel read auto} {
     set data [blockfile $channel read toend]
     foreach d $data { eval "analyze configs $d" }
+
+    return "configs"
 }
 
 ######################################
@@ -265,6 +279,8 @@ proc blockfile_read_auto_variable {channel read auto} {
 	    }   
 	}
     }
+
+    return "variable"
 }
 
 ######################################
@@ -308,5 +324,7 @@ proc blockfile_read_auto_tclvariable {channel read auto} {
 	    }
 	}   
     }
+
+    return "tclvariable"
 }
 
