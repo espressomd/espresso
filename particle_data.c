@@ -557,12 +557,24 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("position")) {
-      unfold_particle(part.r.p, part.i);
-      Tcl_PrintDouble(interp, part.r.p[0], buffer);
+      double ppos[3];
+      int img[3];
+      memcpy(ppos, part.r.p, 3*sizeof(double));
+      memcpy(img, part.i, 3*sizeof(int));
+      unfold_particle(ppos, img);
+      Tcl_PrintDouble(interp, ppos[0], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.r.p[1], buffer);
+      Tcl_PrintDouble(interp, ppos[1], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.r.p[2], buffer);
+      Tcl_PrintDouble(interp, ppos[2], buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    else if (ARG0_IS_S("force")) {
+      Tcl_PrintDouble(interp, part.f[0]/(0.5*time_step*time_step), buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.f[1]/(0.5*time_step*time_step), buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.f[2]/(0.5*time_step*time_step), buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("folded_position")) {
@@ -590,14 +602,6 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_PrintDouble(interp, part.v[1]/time_step, buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
       Tcl_PrintDouble(interp, part.v[2]/time_step, buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-    }
-    else if (ARG0_IS_S("f")) {
-      Tcl_PrintDouble(interp, part.f[0]/(0.5*time_step*time_step), buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.f[1]/(0.5*time_step*time_step), buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.f[2]/(0.5*time_step*time_step), buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 
