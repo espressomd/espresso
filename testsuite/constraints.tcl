@@ -123,6 +123,7 @@ proc setup_system {file new} {
 }
 
 require_feature "PARTIAL_PERIODIC"
+require_feature "CONSTRAINTS"
 
 
 proc read_data {file} {
