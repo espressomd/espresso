@@ -1,0 +1,79 @@
+/** \mainpage
+
+\section introduction Introduction
+
+tcl_md is a MPI parallel molecular dynamics program. It uses a
+<a href="http://tcl.activestate.com">Tcl</a> script for
+controlling details of the simulation to allow great flexibility.
+The standard Tcl language was extended by some commands which allow
+to perform a complete MD simulation. Details on the additional Tcl commands
+can be found \ref tcl "here".
+
+The script is interpreted on only one node,
+the master node. The other nodes wait for the master node to issue
+specific actions, i. e. we utilize a client-server model. More details
+can be found in \ref communication.h "communication.h". During the
+actual integration however the communication is done synchronous.
+For details see \ref integrate.c "integrate.c".
+
+\section start Getting Started
+
+<ol>
+<li> Get your PEP membership.
+<li> Add the following lines to your .cshrc file.
+\verbatim 
+##################################################################
+# Settings for TCL_MD
+##################################################################
+if ( (`uname` == "Linux") ) then
+    setenv PATH "${PATH}:.:/opt/lam/bin"
+endif
+# cvs root directory 
+setenv CVSROOT ~pep/cvsroot
+# TCL_MD source directory
+setenv TCLMD_SOURCE  "your_directory/tcl_md"
+# TCL_MD script directory
+setenv TCLMD_SCRIPTS "your_directory/tcl_md/scripts"
+\endverbatim
+Replace your_directory by the directory where you want to install tcl_md.
+<li> Get your local copy with:
+\verbatim cvs checkout tcl_md \endverbatim
+<li> Compile using 
+\verbatim gmake \endverbatim
+<li> Create actual documentation with (html, latex, man and rtf). This 
+command works only on our Linux PCs (needs doxygen).
+\verbatim gmake doc\endverbatim
+(Use touch somefile.c if it does not work rightaway)
+<li> Read the documentation carefully (Come on, there had been only 213 pages when I
+was writing these lines) !!!
+<li> Try the sample script files in testsuite directory: 
+setup.tcl which sets up a new configuration using the ramp potential.
+test.tcl Doing some MD on the new configuration. Try also the VMD
+connection included (set use_imd y).
+<li> Complain if you experience problems.
+</ol>
+
+\section restrictions Restrictions
+
+<ul>
+<li> The long range part is implemented for full periodicity, cubic
+box and cubic mesh only. The program will probably crash if you mix up 
+things here.
+</ul>
+
+\section bugs Bugs
+
+No bugs known at the moment.
+
+\section help More help about ...
+
+<ul>
+<li> \ref tcl
+<li> \ref variables_page
+<li> \ref our_cvs
+<li> \ref our_doxygen
+<li> \ref blockformat
+<li> \ref libtcl_md
+</ul>
+
+*/
