@@ -132,6 +132,12 @@ void calc_long_range_virials()
   case COULOMB_P3M:
     virials.coulomb[1] = P3M_calc_kspace_forces(0,1);
     break;
+  case COULOMB_MMM2D:
+    fprintf(stderr, "WARNING: pressure calculated, but MMM2D pressure not implemented\n");
+    break;
+  case COULOMB_MMM1D:
+    fprintf(stderr, "WARNING: pressure calculated, but MMM1D pressure not implemented\n");
+    break;
   }
 #endif
 }
