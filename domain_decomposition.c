@@ -174,14 +174,18 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
   int dir,lr,i,cnt, num=12, n_comm_cells[3];
   int lc[3],hc[3],done[3]={0,0,0};
 
-#ifdef PARTIAL_PERIODIC
   /* calculate number of communications */
   num = 0;
   for(dir=0; dir<3; dir++) 
-    for(lr=0; lr<2; lr++) 
-    if( (periodic[dir] == 1) || (boundary[2*dir+lr] == 0) ) num += 2;
+    for(lr=0; lr<2; lr++)
+#ifdef PARTIAL_PERIODIC
+      /* No communication for border of non periodic direction */
+      if( (periodic[dir] == 1) || (boundary[2*dir+lr] == 0) ) 
 #endif
-
+	{
+	  if(node_grid[dir] == 1 ) num++;
+	  else num += 2;
+	}
   /* prepare communicator */
   prepare_comm(comm, data_parts, num);
 
@@ -202,46 +206,69 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
        communication, simply by taking the lr loop only over one
        value */
     for(lr=0; lr<2; lr++) {
-      /* i: send/recv loop */
-      for(i=0; i<2; i++) {  
-#ifdef PARTIAL_PERIODIC
-	if( (periodic[dir] == 1) || (boundary[2*dir+lr] == 0) ) 
-#endif
-	  if((node_pos[dir]+i)%2==0) {
-	    comm->comm[cnt].type          = GHOST_SEND;
-	    comm->comm[cnt].node          = node_neighbors[2*dir+lr];
-	    comm->comm[cnt].part_lists    = malloc(n_comm_cells[dir]*sizeof(ParticleList *));
-	    comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
-	    /* prepare folding of ghost positions */
-	    if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) 
-	      comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+      if(node_grid[dir] == 1) {
+	/* just copy cells on a single node */
+	comm->comm[cnt].type          = GHOST_LOCL;
+	comm->comm[cnt].node          = this_node;
+	/* Buffer has to contain Send and Recv cells -> factor 2 */
+	comm->comm[cnt].part_lists    = malloc(2*n_comm_cells[dir]*sizeof(ParticleList *));
+	comm->comm[cnt].n_part_lists  = 2*n_comm_cells[dir];
+	/* prepare folding of ghost positions */
+	if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) 
+	  comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+	/* fill send comm cells */
+	lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
+	dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
+	//fprintf(stderr,"%d: comm %d copy to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
+	/* fill recv comm cells */
+	lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
+	/* place recieve cells after send cells */
+	dd_fill_comm_cell_lists(&comm->comm[cnt].part_lists[n_comm_cells[dir]],lc,hc);
+	//fprintf(stderr,"%d:        recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
 
-	    lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
-	    dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
-
-	    //fprintf(stderr,"%d: comm %d send to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
-	    cnt++;
-	  }
-#ifdef PARTIAL_PERIODIC
-	if( (periodic[dir] == 1) || (boundary[2*dir+(1-lr)] == 0) ) 
-#endif
-	  if((node_pos[dir]+(1-i))%2==0) {
-	    comm->comm[cnt].type          = GHOST_RECV;
-	    comm->comm[cnt].node          = node_neighbors[2*dir+(1-lr)];
-	    comm->comm[cnt].part_lists    = malloc(n_comm_cells[dir]*sizeof(ParticleList *));
-	    comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
-
-	    lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
-	    dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
-
-	    //fprintf(stderr,"%d: comm %d recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
-	    cnt++;
-	  }
+	cnt++;
       }
+      else {
+	/* i: send/recv loop */
+	for(i=0; i<2; i++) {  
+#ifdef PARTIAL_PERIODIC
+	  if( (periodic[dir] == 1) || (boundary[2*dir+lr] == 0) ) 
+#endif
+	    if((node_pos[dir]+i)%2==0) {
+	      comm->comm[cnt].type          = GHOST_SEND;
+	      comm->comm[cnt].node          = node_neighbors[2*dir+lr];
+	      comm->comm[cnt].part_lists    = malloc(n_comm_cells[dir]*sizeof(ParticleList *));
+	      comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
+	      /* prepare folding of ghost positions */
+	      if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) 
+		comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+	      
+	      lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
+	      dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
+	      
+	      //fprintf(stderr,"%d: comm %d send to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
+	      cnt++;
+	    }
+#ifdef PARTIAL_PERIODIC
+	  if( (periodic[dir] == 1) || (boundary[2*dir+(1-lr)] == 0) ) 
+#endif
+	    if((node_pos[dir]+(1-i))%2==0) {
+	      comm->comm[cnt].type          = GHOST_RECV;
+	      comm->comm[cnt].node          = node_neighbors[2*dir+(1-lr)];
+	      comm->comm[cnt].part_lists    = malloc(n_comm_cells[dir]*sizeof(ParticleList *));
+	      comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
+	      
+	      lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
+	      dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
+	      
+	      //fprintf(stderr,"%d: comm %d recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
+	      cnt++;
+	    }
+	}
+      }
+      done[dir]=1;
     }
-    done[dir]=1;
   }
-
 }
 
 /** Revert the order of a communicator: After calling this the
