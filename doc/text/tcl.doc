@@ -43,7 +43,7 @@ Section \ref errors "Errorhandling" describes the structure of error messages th
   <ul>
     <li>\verbatim polymer <N_P> <MPC> <bond_length> [start <part_id>] [pos <x> <y> <z>] [mode { SAW | RW } [<shield> [<max_try>]]] 
                                    [charge <val_cM>] [distance <cM_dist>] [types <type_nM> [<type_cM>]] [FENE <type_FENE>] 
-				   [angle <angle> [<angle2> [<x2><y2><z2>]]] \endverbatim
+				   [angle <angle> [<angle2> [<x2> <y2> <z2>]]] \endverbatim
 	creates \<N_P\> polymer chains with \<MPC\> monomers each \<bond_length\> apart in the simulation box.
 	For more information, see \ref tcl_polymer.
 
