@@ -10,6 +10,16 @@
 # \
     fi;
 
+set errf [lindex $argv 1]
+
+proc error_exit {error} {
+    global errf
+    set f [open $errf "w"]
+    puts $f "Error occured: $error"
+    close $f
+    exit -666
+}
+
 puts "Testcase temp_test.tcl running on [setmd n_nodes] nodes:"
 set epsilon 3e-2
 setmd temp 1
@@ -17,7 +27,7 @@ setmd gamma 1
 setmd time_step 0.01
 setmd skin 0.5
 set n_part 600
-set maxstep 1000
+set maxstep 200
 
 proc read_data {file} {
     set f [open $file "r"]
@@ -67,8 +77,8 @@ if { [catch {
     }
   
 } res ] } {
-    puts "Error occured: \"$res\""
-    exit -666
+    error_exit $res
 }
 
+exec rm -f $errf
 exit 0
