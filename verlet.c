@@ -116,7 +116,6 @@ void build_verlet_lists()
   {
     int sum,tot_sum=0;
     int cind1,cind2;
-    fprintf(stderr,"%d: Verlet list sizes: \n",this_node);
     INNER_CELLS_LOOP(m, n, o) {
       cell = CELL_PTR(m, n, o);
       cind1 = get_linear_index(m,n,o,ghost_cell_grid);
@@ -124,8 +123,7 @@ void build_verlet_lists()
       for(nc=0; nc<cell->n_neighbors; nc++) {
 	sum += cell->nList[nc].vList.n;
 	cind2 = cell->nList[nc].cell_ind;
-     }
-      fprintf(stderr,"%d: Cell (%d,%d,%d): sum = %d \n",this_node,m,n,o,sum);
+      }
       tot_sum += sum;
     }
     fprintf(stderr,"%d: total number of interaction pairs: %d\n",this_node,tot_sum);
