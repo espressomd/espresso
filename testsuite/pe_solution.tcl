@@ -12,7 +12,7 @@
 
 #############################################################
 #                                                           #
-#  Test System 3: Polyelectrolyte Solution                  #
+#  Test System 4: Polyelectrolyte Solution                  #
 #                 (Poor Solvent)                            #
 #                                                           #
 #  Created:       26.03.2003 by HL                          #
@@ -26,13 +26,15 @@ puts "=                 pe_solution.tcl                     ="
 puts "======================================================="
 puts " "
 
+puts "Program Information: \n[code_info]\n"
+
 #############################################################
 #  Parameters                                               #
 #############################################################
 
 # System identification: 
 set name  "pe_solution"
-set ident "_t3"
+set ident "_t4"
 
 # System parameters
 #############################################################
@@ -65,7 +67,7 @@ set fene_cut      2.0
 set fene_k        7.0
 
 # Coulomb
-set bjerrum       1.0
+set bjerrum       1.5
 set accuracy      1.0e-4
 
 # Integration parameters
@@ -83,15 +85,15 @@ set warm_n_times 30
 set min_dist     0.9
 
 # integration
-set int_steps    800
-set int_n_times  1000
+set int_steps    200
+set int_n_times  5000
 
 
 # More general Parameters
 #############################################################
 
 set tcl_precision 6
-set vmd_output    "yes"
+set vmd_output    "no"
 
 # Initial Bond length
 set bond_length   1.0
@@ -224,8 +226,8 @@ puts "Interactions are now: {[inter]}"
 
 #      Write blockfiles for restart
 #############################################################
-#polyBlockWrite "$name$ident.set"   {box_l time_step skin temp gamma}
-#polyBlockWrite "$name$ident.start" {time} {id pos type}
+polyBlockWrite "$name$ident.set"   {box_l time_step skin temp gamma}
+polyBlockWrite "$name$ident.start" {time} {id pos type}
 
 # prepare observable output
 set obs_file [open "$name$ident.obs" "w"]
@@ -233,7 +235,7 @@ puts $obs_file "\#$name$ident: Observables"
 puts $obs_file "\#Time     R_E         R_G         R_H         E_TOT       E_KIN       E_C_k"
 analyze set chains 0 $n_polymers $l_polymers
 set re [analyze re]
-
+set j 0
 puts "\nStart Main integration: $int_n_times times $int_steps steps"
 for {set i 0} { $i < $int_n_times } { incr i} {
     set time [setmd time]
@@ -242,12 +244,22 @@ for {set i 0} { $i < $int_n_times } { incr i} {
 
     integrate $int_steps
 
+    set f [open "distribution.dat" w]
+    puts -nonewline $f "\#"
+    puts $f "[analyze distribution ( 2 ) ( 0 1 ) 1.0 300.0 30 1 1]"
+    flush $f
+    close $f
+
     set energy [analyze energy]
     set re [analyze re]
     puts $obs_file [format "%.3e %.5e %.5e %.5e %.5e %.5e %.5e" $time $re [analyze rg] [analyze rh] [lindex [lindex $energy 0] 1] [lindex [lindex $energy 1] 1] [lindex [lindex $energy [expr [llength $energy]-1]] 1] ]
     flush $obs_file
     if { $vmd_output=="yes" } { imd positions }
-
+#   write intermediate configuration
+    if { $i%50==0 } {
+	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
+	incr j
+    }
 }
 
 puts "\nIntegration done."
