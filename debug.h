@@ -28,6 +28,7 @@
  <li> \verbatim #define GHOST_FORCE_DEBUG \endverbatim activate ??? debug output.
  <li> \verbatim #define ONE_PART_DEBUG \endverbatim activate ??? debug output.
  <li> \verbatim #define STAT_DEBUG \endverbatim activate statistics related debug output.
+ <li> \verbatim #define POLY_DEBUG \endverbatim activate polymer setup debug output.
  <li> \verbatim #define MPI_CORE \endverbatim generate a core dump when exiting abnormally due
  to MPI errors.
  <li> \verbatim #define FORCE_CORE \endverbatim generate a core dump even on regular termination.
@@ -58,6 +59,7 @@
 // #define GHOST_FORCE_DEBUG
 // #define ONEPART_DEBUG
 // #define STAT_DEBUG
+// #define POLY_DEBUG
 
 #define MPI_CORE
 #define FORCE_CORE
@@ -203,7 +205,15 @@ extern int check_id;
 #ifdef STAT_DEBUG
 #define STAT_TRACE(cmd) { cmd; }
 #else
+/** Equals { cmd } iff STAT_DEBUG is set. */
 #define STAT_TRACE(cmd)
+#endif
+
+#ifdef POLY_DEBUG
+#define POLY_TRACE(cmd) { cmd; }
+#else
+/** Equals { cmd } iff POLY_DEBUG is set. */
+#define POLY_TRACE(cmd)
 #endif
 
 
