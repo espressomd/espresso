@@ -79,11 +79,17 @@ void on_integration_start()
   if (parameter_changed || particle_changed || interactions_changed || topology_changed) {
     rebuild_verletlist = 1;
   }
+
+  /* the particle information is no longer valid */
+  free(partCfg); partCfg=NULL;
 }
 
 void on_particle_change()
 {
   particle_changed = 1;
+
+  /* the particle information is no longer valid */
+  free(partCfg); partCfg=NULL;
 }
 
 void on_topology_change()
