@@ -135,6 +135,13 @@ proc vecscale {a v} {
     return $res
 }
 
+
+proc average {list_to_average} {
+    set avg 0.0
+    foreach avg_i $list_to_average { set avg [expr $avg + $avg_i] }
+    return [expr $avg/(1.0*[llength $list_to_average])]
+}
+
 proc LinRegression {l} {
     # l is a list {{x1 y1} {x2 y2} ...} of points.
     # LinRegression returns the least-square linear fit a*x+b
