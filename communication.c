@@ -220,7 +220,6 @@ static int request[3];
 void mpi_core(MPI_Comm *comm, int *errcode,...) {
   fprintf(stderr, "Aborting due to MPI error %d, forcing core dump\n", *errcode);
   fflush(stderr);
-  sleep(10);
   core();
 }
 #endif
