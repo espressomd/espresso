@@ -204,6 +204,11 @@ Particle *cells_alloc_particle(int id, double pos[3]);
     \return linear cell grid index. */
 int pos_to_cell_grid_ind(double pos[3]);
 
+/** return ghost cell grid index for a position.
+    \param pos Position of e.g. a particle.
+    \return linear cell grid index. */
+int pos_to_ghost_cell_grid_ind(double pos[3]);
+
 /** debug function to print particle positions: */
 void print_particle_positions();
 

@@ -218,8 +218,9 @@ void sort_particles_into_cells()
   
   int c, n, ind;
   Particle *part;
+
 #ifdef ADDITIONAL_CHECKS
-  int part_cnt=0;
+  int cell_part_cnt=0,local_part_cnt=0;
 #endif
 
   CELL_TRACE(fprintf(stderr,"%d: sort_particles_into_cells:\n",this_node));
@@ -231,8 +232,11 @@ void sort_particles_into_cells()
       for(n=0; n<cells[c].pList.n ; n++) {
 	ind = pos_to_cell_grid_ind(cells[c].pList.part[n].r.p);
 	if(ind != c) {
+	  /* move particle from cell c to cell ind */
 	  part = move_particle(&(cells[ind].pList), &(cells[c].pList), n);
+	  /* fix address of moved particle in local_particles */
 	  local_particles[part->r.identity] = part;
+	  n--;
 	}
       }
     }
@@ -241,24 +245,34 @@ void sort_particles_into_cells()
 #ifdef ADDITIONAL_CHECKS
   for(c=0; c<n_cells; c++) {
     if(is_inner_cell(c,ghost_cell_grid)) {
-      part_cnt += cells[c].pList.n;
+      cell_part_cnt += cells[c].pList.n;
       for(n=0; n<cells[c].pList.n ; n++) {
-	if(cells[c].pList.part[n].r.identity < 0 || cells[c].pList.part[n].r.identity > max_seen_particle)
-	  CELL_TRACE(fprintf(stderr,"%d: Particle %d in cell %d has corrupted identity!\n",this_node,n,c));
+	if(cells[c].pList.part[n].r.identity < 0 || cells[c].pList.part[n].r.identity > max_seen_particle) {
+	  fprintf(stderr,"%d: sort_part_in_cells: ERROR: Cell %d Part %d has corrupted id=%d\n",
+		  this_node,c,n,cells[c].pList.part[n].r.identity);
+	  errexit();
+	}
       }
     }
   }
-  CELL_TRACE(fprintf(stderr,"%d: %d particles in cells.\n",this_node,part_cnt));
-  part_cnt=0;
-  for(n=0; n< max_seen_particle; n++) {
+  CELL_TRACE(fprintf(stderr,"%d: sort_part_in_cells: %d particles in cells.\n",
+		     this_node,cell_part_cnt));
+  for(n=0; n< max_seen_particle+1; n++) {
     if(local_particles[n] != NULL) {
-      part_cnt ++;
+      local_part_cnt ++;
       if(local_particles[n]->r.identity != n) {
-	CELL_TRACE(fprintf(stderr,"%d: Particle %d has corrupted identity!\n",this_node,n));
-	CELL_TRACE(fprintf(stderr,"%d: local_part check: part %d identity %d at adress %p\n",
-			   this_node,n,local_particles[n]->r.identity,local_particles[n]));
+	fprintf(stderr,"%d: sort_part_in_cells: ERROR: local_particles part %d has corrupted id %d\n",
+		this_node,n,local_particles[n]->r.identity);
+	errexit();
       }
     }
+  }
+  CELL_TRACE(fprintf(stderr,"%d: sort_part_in_cells: %d particles in local_particles.\n",
+		     this_node,local_part_cnt));
+  if(local_part_cnt != cell_part_cnt) {
+    fprintf(stderr,"%d: sort_part_in_cells: ERROR: %d parts in cells but %d parts in local_particles\n",
+	    this_node,local_part_cnt,cell_part_cnt);
+    errexit();
   }
 #endif
 
@@ -508,6 +522,36 @@ int pos_to_cell_grid_ind(double pos[3])
   }
   return get_linear_index(cpos[0],cpos[1],cpos[2], ghost_cell_grid);  
 }
+
+/*************************************************/
+
+int pos_to_ghost_cell_grid_ind(double pos[3])
+{
+  int i,cpos[3];
+  
+  for(i=0;i<3;i++) {
+    cpos[i] = (int)((pos[i]-my_left[i])*inv_cell_size[i])+1;
+
+#ifdef PARTIAL_PERIODIC
+    if (cpos[i] < 1)
+      cpos[i] = 1;
+    else if (cpos[i] > cell_grid[i])
+      cpos[i] = cell_grid[i];
+#endif
+
+#ifdef ADDITIONAL_CHECKS
+    if(cpos[i] < 0 || cpos[i] >  ghost_cell_grid[i]) {
+      fprintf(stderr,"%d: illegal ghost cell position cpos[%d]=%d, ghost_grid[%d]=%d for pos[%d]=%f\n",this_node,i,cpos[i],i,ghost_cell_grid[i],i,pos[i]);
+      errexit();
+    }
+#endif
+
+  }
+  return get_linear_index(cpos[0],cpos[1],cpos[2], ghost_cell_grid);  
+}
+
+
+
 
 void print_particle_positions()
 {
