@@ -18,6 +18,7 @@
 
 #include "domain_decomposition.h"
 #include "errorhandling.h"
+#include "forces.h"
 
 /************************************************/
 /** \name Defines */
@@ -34,7 +35,7 @@
 /************************************************/
 /*@{*/
 
-DomainDecomposition dd = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, NULL };
+DomainDecomposition dd = { 1, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, NULL };
 
 int max_num_cells = CELLS_MAX_NUM_CELLS;
 double max_skin   = 0.0;
@@ -572,6 +573,10 @@ void dd_topology_init(CellPList *old)
   Particle *part;
 
   CELL_TRACE(fprintf(stderr, "%d: dd_topology_init: Number of recieved cells=%d\n", this_node, old->n));
+
+  /** broadcast the flag for using verlet list */
+  MPI_Bcast(&dd.use_vList, 1, MPI_INT, 0, MPI_COMM_WORLD);
+ 
   cell_structure.type             = CELL_STRUCTURE_DOMDEC;
   cell_structure.position_to_node = map_position_node_array;
   cell_structure.position_to_cell = dd_position_to_cell;
@@ -857,3 +862,97 @@ int max_num_cells_callback(Tcl_Interp *interp, void *_data)
   mpi_bcast_parameter(FIELD_MAXNUMCELLS);
   return (TCL_OK);
 }
+
+/** calculate bonded and non-bonded forces 
+    using link-cell method without verlet lists 
+*/
+void calc_link_cell()
+{
+  int c, np1, n, np2, i ,j, j_start;
+  Cell *cell;
+  IA_Neighbor *neighbor;
+  Particle *p1, *p2;
+  double dist2, vec21[3];
+ 
+  /* Loop local cells */
+  for (c = 0; c < local_cells.n; c++) {
+
+    cell = local_cells.cell[c];
+    p1   = cell->part;
+    np1  = cell->n;
+    /* Loop cell neighbors */
+    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
+      neighbor = &dd.cell_inter[c].nList[n];
+      p2  = neighbor->pList->part;
+      np2 = neighbor->pList->n;
+      /* Loop cell particles */
+      for(i=0; i < np1; i++) {
+	j_start = 0;
+	/* Tasks within cell: bonded forces */
+	if(n == 0) {
+	  add_bonded_force(&p1[i]);
+#ifdef CONSTRAINTS
+	  add_constraints_forces(&p1[i]);
+#endif
+	  j_start = i+1;
+	}
+	/* Loop neighbor cell particles */
+	for(j = j_start; j < np2; j++) {
+	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
+	  if(dist2 <= max_range_non_bonded2) {
+	    /* calc non bonded interactions */
+	    add_non_bonded_pair_force(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
+	  }
+	}
+      }
+    }
+  }
+}
+
+/************************************************************/
+
+void calculate_link_cell_energies()
+{
+  int c, np1, np2, n, i, j, j_start;
+  Cell *cell;
+  IA_Neighbor *neighbor;
+  Particle *p1, *p2;
+  double dist2, vec21[3];
+
+  CELL_TRACE(fprintf(stderr,"%d: calculate link-cell energies\n",this_node));
+
+  /* Loop local cells */
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p1   = cell->part;
+    np1  = cell->n;
+    /* calculate bonded interactions (loop local particles) */
+    for(i = 0; i < np1; i++)  {
+      add_kinetic_energy(&p1[i]);
+      add_bonded_energy(&p1[i]);
+#ifdef CONSTRAINTS
+      add_constraints_energy(&p1[i]);
+#endif
+    }
+
+    CELL_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
+    /* Loop cell neighbors */
+    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
+      neighbor = &dd.cell_inter[c].nList[n];
+      p2  = neighbor->pList->part;
+      np2 = neighbor->pList->n;
+      /* Loop cell particles */
+      for(i=0; i < np1; i++) {
+	j_start = 0;
+	if(n == 0) j_start = i+1;
+	/* Loop neighbor cell particles */
+	for(j = j_start; j < np2; j++) {	
+	  dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
+	  add_non_bonded_pair_energy(p1, p2, vec21, sqrt(dist2), dist2);
+	}
+      }
+    }
+  }
+}
+
+/************************************************************/
