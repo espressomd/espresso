@@ -143,10 +143,12 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /* real space coulomb */
   switch (coulomb.method) {
   case COULOMB_P3M: {
-    double eng = calc_p3m_coulomb_pair_force(p1,p2,d,dist2,dist,force);
 #ifdef NPT
+    double eng = calc_p3m_coulomb_pair_force(p1,p2,d,dist2,dist,force);
     if(integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
+#else
+    calc_p3m_coulomb_pair_force(p1,p2,d,dist2,dist,force);
 #endif
     break;
   }
