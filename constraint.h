@@ -111,17 +111,17 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
   
   ia_params=get_ia_param(p1->r.type, c_p->r.type);
 
+  /* also needed for coulomb */
+  c_dist = 0.0;
+  for(i=0;i<2;i++) {
+    vec[i] = p1->r.p[i] - c->pos[i];
+    c_dist += SQR(vec[i]);
+  }
+  vec[2] = 0.;
+  c_dist = sqrt(c_dist);
+
   if (ia_params->LJ_eps > 0. ) {
     /* put an infinite cylinder along z axis */
-    c_dist = 0.0;
-
-    for(i=0;i<2;i++) {
-      vec[i] = p1->r.p[i] - c->pos[i];
-      c_dist += SQR(vec[i]);
-    }
-    vec[2] = 0.;
-
-    c_dist = sqrt(c_dist);
     dist = c_dist - c->rad;
 
     if (dist > 0) {
