@@ -9,6 +9,7 @@
 #include "elc.h"
 #include "mmm-common.h"
 #include "utils.h"
+#include "pressure.h"
 #include "p3m.h"
 
 #ifdef ELECTROSTATICS
