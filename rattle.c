@@ -459,7 +459,7 @@ void print_bond_len()
 	       Particle *p2 = local_particles[p[i].bl.e[k++]];
 	       if (!p2) {
 		 char *errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-		 ERROR_SPRINTF(errtxt,"{056 rigid bond broken between particles %d and %d (particles not stored on the same node)} ", p[i].p.identity, p[i].bl.e[k-1]));
+		 ERROR_SPRINTF(errtxt,"{056 rigid bond broken between particles %d and %d (particles not stored on the same node)} ", p[i].p.identity, p[i].bl.e[k-1]);
 		 return;
 	       }
 
