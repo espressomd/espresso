@@ -66,6 +66,10 @@ Do not set variables which are specified as read only.
 	coordinates (all values between 0.0 and 1.0).
 	<li> \verbatim [setmd transfer_rate] \endverbatim
 	Tranfer rate for VMD connection (read onle).
+	<li> \verbatim setmd max_num_cells <value >= 27> \endverbatim
+	Maximal number of cells for the link cell
+	algorithm. Reasonable values are between 125 and 1000, or for
+	some problems (n_total_particles/n_nodes).
 	<li> \verbatim setmd periodicity <flag> <flag> <flag>\endverbatim
 	Specifies periodicity for the three diractions. Only useable
 	together with the compiler flag PARTIAL_PERIODIC.

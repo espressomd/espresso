@@ -23,6 +23,8 @@ set configs 400
 setmd periodic 1 1 1
 setmd bjerrum 1.0
 setmd box_l 10.0 10.0 10.0
+setmd max_num_cells 512
+setmd skin 0.4
 
 
 # external tcl files 
