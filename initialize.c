@@ -11,6 +11,7 @@
 #include "binary_file.h"
 #include "integrate.h"
 #include "statistics.h"
+#include "polymer.h"
 #include "imd.h"
 #include "random.h"
 #include "communication.h"
@@ -138,7 +139,13 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "readmd", (Tcl_CmdProc *)readmd, 0, NULL);
   /* in file statistics.c */
   Tcl_CreateCommand(interp, "analyze", (Tcl_CmdProc *)analyze, 0, NULL);
-  /* in file imd.c */
+  /* in file polymer.c */
+  Tcl_CreateCommand(interp, "polymer", (Tcl_CmdProc *)polymer, 0, NULL);
+  Tcl_CreateCommand(interp, "counterions", (Tcl_CmdProc *)counterions, 0, NULL);
+  Tcl_CreateCommand(interp, "salt", (Tcl_CmdProc *)salt, 0, NULL);
+  Tcl_CreateCommand(interp, "velocities", (Tcl_CmdProc *)velocities, 0, NULL);
+  Tcl_CreateCommand(interp, "crosslink", (Tcl_CmdProc *)crosslink, 0, NULL);
+   /* in file imd.c */
   Tcl_CreateCommand(interp, "imd", (Tcl_CmdProc *)imd, 0, NULL);
   /* in file random.c */
   Tcl_CreateCommand(interp, "tcl_rand", (Tcl_CmdProc *)tcl_rand, 0, NULL);
