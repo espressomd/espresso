@@ -90,7 +90,7 @@ MDINLINE int comforce_parser(Tcl_Interp * interp,
 	  Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
 	  return TCL_ERROR;
   }
-
+  return TCL_OK;
 }
 
 MDINLINE void calc_comforce()
