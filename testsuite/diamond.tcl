@@ -38,7 +38,7 @@ set name  "diamond"
 set ident "_t6"
 
 # On 'yes' connects to 'vmd' visualizing current configuration
-set vmd_output "yes"
+set vmd_output "no"
 
 
 # System parameters
@@ -49,7 +49,8 @@ set N_P     16
 set MPC     20
 set N_CI    328
 set N_T     [expr $N_node + $N_P*$MPC + $N_CI]
-set packing { 0.0005 0.00075 0.001 0.0025 0.005 0.0075 0.01 0.025 0.05 0.1 }
+# set packing { 0.0005 0.00075 0.001 0.0025 0.005 0.0075 0.01 0.025 0.05 0.1 0.4 0.443 }
+set packing { 0.45 0.4 0.1 0.05 0.025 0.01 0.0075 0.005 0.0025 0.001 0.00075  }
 
 
 # Interaction parameters
@@ -68,7 +69,7 @@ set fene_r      1.25
 
 # electrostatics
 set bjerrum     1.75241
-set accuracy    1.0e-4
+set accuracy    1.0e-1
 
 
 
@@ -90,7 +91,7 @@ set min_loop    200
 
 # integration (with full LJ potential) for $int_time
 set int_step    1000
-set int_time    [expr 1000000*[setmd time_step]]
+set int_time    [expr 2000000*[setmd time_step]]
 
 
 # Other parameters
@@ -111,7 +112,10 @@ if { [file exists "$name$ident.DHN"] } {
 } else {
     set DHN_file [open "$name$ident.DHN" "w"]
     puts -nonewline $DHN_file "ID int_time pack_i density a_cube re rg rh re2/rg2 Temp mindist "
-    puts $DHN_file "p_total D(p_total) p_FENE D(p_FENE) p_lj D(p_lj) p_ideal p_osmotic"; flush $DHN_file
+    if { $bjerrum > 0.0 } { 
+	puts $DHN_file "p_total D(p_total) p_FENE D(p_FENE) p_lj D(p_lj) p_c D(p_c) p_ideal p_osmotic"
+    } else { puts $DHN_file "p_total D(p_total) p_FENE D(p_FENE) p_lj D(p_lj) p_ideal p_osmotic" }
+    flush $DHN_file
 }
 
 
@@ -170,7 +174,7 @@ foreach pack_i $packing {
     } else {
 	puts -nonewline "\nStart warm-up integration (capped LJ-interactions) for maximal [expr $warm_step*$warm_loop] timesteps in $warm_loop loops; "
 	puts "stop if minimal distance is larger than $min_dist."
-	setmd time 0; set tmp_cap $warm_cap1; inter ljforcecap $tmp_cap
+	setmd time 0; set tmp_cap $warm_cap1; inter ljforcecap $tmp_cap; inter coulomb 0.0
 	set obs_file [open "$name_i$ident.obs1" "w"]
 	puts $obs_file "t mindist re rg rh Temp"
 	puts $obs_file "[setmd time] [analyze mindist] [analyze re 8 $n_p_i $mpc_i] [analyze rg] [analyze rh] [setmd temp]"
@@ -200,8 +204,8 @@ foreach pack_i $packing {
 	set inp [open "$name_i$ident.end" r]
 	puts -nonewline "Skipping integration: Existing checkpoint found (currently reading it... "; flush stdout
 	while { [blockfile $inp read auto] != "eof" } {}
-	close $inp; puts "done) with [setmd n_part] particles ([expr $n_p_i*$mpc_i] expected)."
-	if { [expr $n_p_i*$mpc_i] != [setmd n_part] } { puts "WARNING: Configuration does not correspond to current case $i!"; exit }
+	close $inp; puts "done) with [setmd n_part] particles ($N_T expected)."
+	if { $N_T != [setmd n_part] } { puts "WARNING: Configuration does not correspond to current case $i!"; exit }
     } else {
 	setmd time 0; set int_loop [expr int($int_time_i/([setmd time_step]*$int_step_i)+0.56)]; set tmp_step 0
 	puts "\nStart integration (full interactions) with timestep [setmd time_step] until time t>=$int_time_i (-> $int_loop loops). "
@@ -223,7 +227,7 @@ foreach pack_i $packing {
 	} else {
 	    set tmp_start 0; set obs_file [open "$name_i$ident.obs2" "w"]
 	    set ptot [eval concat [eval concat [analyze pressure]]]; set p1 [lindex $ptot 0]
-	    puts $obs_file "t mindist re rg rh Temp p p2 ideal pid FENE pf pf2 lj plj plj2"
+	    puts $obs_file "t mindist re rg rh Temp p p2 ideal pid FENE pf pf2 lj plj plj2 coulomb pc pc2"
 	    puts $obs_file "[setmd time] [analyze mindist] [analyze re 8 $n_p_i $mpc_i] [analyze rg] [analyze rh] [setmd temp] $ptot"
 	    puts "    Analysis at t=[setmd time]: mindist=[analyze mindist], re=[analyze re], rg=[analyze rg], rh=[analyze rh], T=[setmd temp], p=$p1."
 	    analyze append; checkpoint_set "$name_i$ident.[eval format %0$sfx 0]" "all" "tmp_step"
@@ -236,7 +240,7 @@ foreach pack_i $packing {
 	    set tmp_Temp [expr [analyze energy kin]/$n_part/1.5]; puts -nonewline "Temp = $tmp_Temp"; flush stdout
 	    set ptot [eval concat [eval concat [analyze pressure]]]; set p1 [lindex $ptot 0]
 	    puts $obs_file "[setmd time] [analyze mindist] [analyze re] [analyze rg] [analyze rh] $tmp_Temp $ptot"
-	    set tmp_conf [analyze append]
+	    set tmp_conf [analyze append]; flush $obs_file
 	    # set partial checkpoint (will have previous 'configs' by [analyze append] => averages will be correct)
 	    if { [expr $tmp_step % $checkpoint]==0 } {
 		puts -nonewline "\r    \[$i\] Step $tmp_step: Checkpoint at time [setmd time]... "; flush stdout; flush $obs_file
@@ -253,22 +257,30 @@ foreach pack_i $packing {
 
 	puts -nonewline "\nFinished with current system; "
 	# derive ensemble averages
-	lappend what [calcObsAv $name_i$ident.obs2 { 1 5 6 7 9 11 12 14 15 } ]
-	set avg [findObsAv { Temp mindist p p2 pid pf pf2 plj plj2 } [lindex $what end]]
+	if { $bjerrum > 0.0 } {
+	    lappend what [calcObsAv $name_i$ident.obs2 { 1 5 6 7 9 11 12 14 15 17 18 } ]
+	    set avg [findObsAv { Temp mindist p p2 pid pf pf2 plj plj2 pc pc2 } [lindex $what end]]
+	    set pc1 [lindex $avg 10]; set pc2 [lindex $avg 11]
+	    set d_pc12 [expr sqrt(abs($pc2 - $pc1*$pc1)/([lindex $avg 0]-1))]
+	} else {
+	    lappend what [calcObsAv $name_i$ident.obs2 { 1 5 6 7 9 11 12 14 15 } ]
+	    set avg [findObsAv { Temp mindist p p2 pid pf pf2 plj plj2 } [lindex $what end]]
+	}
 	set tmp_Temp [lindex $avg 1]; set tmp_min [lindex $avg 2]
 	set p1 [lindex $avg 3]; set p2 [lindex $avg 4]; set pid [lindex $avg 5]; set p_os [expr $p1/$pid]
 	set pf1 [lindex $avg 6]; set pf2 [lindex $avg 7]; set plj1 [lindex $avg 8]; set plj2 [lindex $avg 9]
-	set d_p12 [expr sqrt(($p2 - $p1*$p1)/([lindex $avg 0]-1))]
-	set d_pf12 [expr sqrt(($pf2 - $pf1*$pf1)/([lindex $avg 0]-1))]
-	set d_plj12 [expr sqrt(($plj2 - $plj1*$plj1)/([lindex $avg 0]-1))]
+	set d_p12 [expr sqrt(abs($p2 - $p1*$p1)/([lindex $avg 0]-1))]
+	set d_pf12 [expr sqrt(abs($pf2 - $pf1*$pf1)/([lindex $avg 0]-1))]
+	set d_plj12 [expr sqrt(abs($plj2 - $plj1*$plj1)/([lindex $avg 0]-1))]
 	set tmp_re [analyze <re>]; set tmp_rg [analyze <rg>]; set tmp_rh [analyze <rh>]
 	set tmp_rat2 [expr $tmp_re*$tmp_re/($tmp_rg*$tmp_rg)]
 	puts -nonewline "<re> = $tmp_re, <rg> = $tmp_rg, <rh> = $tmp_rh, "
 	puts "<re2>/<rg2> = $tmp_rat2 (RW=6), <Temp> = $tmp_Temp, <p>=$p1+-$d_p12=$p_os."
 	# append ensemble averages to .DHN-file
-	puts -nonewline $DHN_file "$i $int_time_i $pack_i $density $a_cube "
-	puts -nonewline $DHN_file "$tmp_re $tmp_rg $tmp_rh $tmp_rat2 $tmp_Temp $tmp_min "
-	puts $DHN_file "$p1 $d_p12 $pf1 $d_pf12 $plj1 $d_plj12 $pid $p_os"; flush $DHN_file
+	puts -nonewline $DHN_file "$i $int_time_i $pack_i $density $a_cube $tmp_re $tmp_rg $tmp_rh $tmp_rat2 $tmp_Temp $tmp_min "
+	puts -nonewline $DHN_file "$p1 $d_p12 $pf1 $d_pf12 $plj1 $d_plj12 "
+	if {$bjerrum > 0.0} { puts $DHN_file "$pc1 $d_pc12 $pid $p_os" } else {	puts $DHN_file "$pid $p_os" }
+	flush $DHN_file
 	# sort <g1>, <g2>, and <g3> into .g123-file
 	set outG [open "$name_i$ident.g123" "w"]
 	for {set gx 1} {$gx<=3} {incr gx} { eval set tmp_g$gx [list [analyze <g$gx>]] }
@@ -278,26 +290,30 @@ foreach pack_i $packing {
 	close $outG
 	# look at internal distances
 	set outI [open "$name_i$ident.idf" "w"]; set tmp_idf [analyze <internal_dist>]
-	for {set gt 0} {$gt<[llength $tmp_idf]} {incr gt} { puts $outI "[expr $gt*[setmd time_step]] [lindex $tmp_idf $gt]" }
+	for {set gt 0} {$gt<[llength $tmp_idf]} {incr gt} { puts $outI "$gt [lindex $tmp_idf $gt]" }
 	close $outI
 	# create gnuplots
 	puts -nonewline "Creating a gnuplot from current results... "; flush stdout
 	plotObs $name_i$ident.obs2 {1:6 1:3 1:4 1:5 1:2} titles {Temp re rg rh mindist} labels [concat "time (tau)" "$name_i$ident.obs2"]
 	plotObs $name_i$ident.g123 {1:2 1:3 1:4} titles {<g1> <g2> <g3>} labels [concat "time (tau)" "$name_i$ident.g123"] scale "logscale xy"
-	plotObs $name_i$ident.idf {1:2} titles {<internal_dist>} labels [concat "time (tau)" "$name_i$ident.idf"] scale "logscale xy"
+	plotObs $name_i$ident.idf {1:2} titles {<internal_dist>} labels [concat "|i-j|" "$name_i$ident.idf"] scale "logscale xy"
 	lappend plotted "$name_i$ident.obs2"; lappend plotted "$name_i$ident.g123"; lappend plotted "$name_i$ident.idf"
 	puts "Done."
     }
     puts -nonewline "Cleaning up for next system... "; flush stdout; 
-    part deleteall; analyze remove; setmd time 0; incr i; puts "Done.\n"
+    part deleteall; analyze remove; setmd time 0; inter coulomb 0.0; incr i; puts "Done.\n"
 }
 # Final gnuplots
 puts -nonewline "Creating a gnuplot of the averaged quantities... "; flush stdout
-plotObs $name$ident.DHN {3:6 3:7 3:8 3:9} titles {"<re>" "<rg>" "<rh>" "<re2>/<rg2>" } labels { "packing fraction" } scale "logscale xy"
-plotObs $name$ident.DHN {3:12 3:14 3:16 3:18 3:19} titles {"<p>" "<p_FENE>" "<p_lj>" "<p_ideal>" "<p_osmotic>"} labels { "packing fraction" }
-lappend plotted "$name$ident.DHN"; lappend plotted "$name$ident.pres"; puts "Done."
+if {$bjerrum > 0.0} {
+    plotObs $name$ident.DHN2 {3:12 3:14 3:16 3:18 3:21 3:20} titles {"<p>" "<p_FENE>" "<p_lj>" "<p_c>" "<p_osmotic>" "<p_ideal>"} labels {"packing fraction"} scale "logscale x"
+} else {
+    plotObs $name$ident.DHN2 {3:12 3:14 3:16 3:18 3:19} titles {"<p>" "<p_FENE>" "<p_lj>" "<p_ideal>" "<p_osmotic>"} labels {"packing fraction"} scale "logscale x" }
+eval exec mv $name$ident.DHN2.ps $name$ident.DHN2.pres.ps
+plotObs $name$ident.DHN2 {3:6 3:7 3:8 3:9 3:4 3:10 3:11} titles {"<re>" "<rg>" "<rh>" "<re2>/<rg2>" "density" "Temp" "mindist"} labels { "packing fraction" } scale "logscale x"; eval exec mv $name$ident.DHN2.ps $name$ident.DHN2.obs2.ps
+lappend plotted "$name$ident.DHN2.pres"; lappend plotted "$name$ident.DHN2.obs2"; puts "Done."
 # puts -nonewline "Combining all plots into '$name_i$ident.final.ps'... "; flush stdout
 # plotJoin $plotted "$name_i$ident.final.ps"; puts "Done."
 # Wrapping up
-puts -nonewline "Closing files... "; close $DHN_file; close $VIR_file; puts "Done."
+puts -nonewline "Closing files... "; close $DHN_file; puts "Done."
 puts "\nThe Diamond Hydrogel Networks Testcase is now complete.\nThanks for watching, and Good Night!\n"
