@@ -29,6 +29,7 @@
 #include "rotation.h"
 #include "forces.h"
 
+#if 0
 
 /************************************************************/
 
@@ -206,3 +207,5 @@ void init_forces()
   init_constraint_forces();
 #endif
 }
+
+#endif

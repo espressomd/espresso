@@ -54,6 +54,8 @@ IntList b_send_buf;
 IntList b_recv_buf;
 /*@}*/
 
+#if 0
+
 /************************************************/
 /** \name Variables for ghost particle exchange */
 /************************************************/
@@ -988,3 +990,5 @@ void send_posforce(int s_dir, int send_size, int recv_size, int element_size)
     recv_buf.max = tmp;
   }
 }
+
+#endif

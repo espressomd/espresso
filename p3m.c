@@ -411,8 +411,8 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
   inter2 = (p3m.inter*2)+1;
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    p  = cell->pList.part;
-    np = cell->pList.n;
+    p  = cell->part;
+    np = cell->n;
     for(i = 0; i < np; i++) {
       if( (q=p[i].p.q) != 0.0 ) {
 
@@ -531,8 +531,8 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
       cp_cnt=0; cf_cnt=0;
       for (c = 0; c < local_cells.n; c++) {
 	cell = local_cells.cell[c];
-	p  = cell->pList.part;
-	np = cell->pList.n;
+	p  = cell->part;
+	np = cell->n;
 	for(i=0; i<np; i++) { 
 	  if( (q=p[i].p.q) != 0.0 ) {
 #ifdef ADDITIONAL_CHECKS
@@ -1191,8 +1191,8 @@ void P3M_count_charged_particles()
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    part = cell->pList.part;
-    np   = cell->pList.n;
+    part = cell->part;
+    np   = cell->n;
     for(i=0;i<np;i++) {
       if( part[i].p.q != 0.0 ) {
 	node_sums[0] += 1.0;

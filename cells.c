@@ -33,19 +33,75 @@
 
 /* Variables */
 
-/** list of all cells containing particles physically on the local node */
+/** list of all cells. */
+Cell *cells = NULL;
+/** size of \ref cells */
+int n_cells = 0;
+/** list of pointers to all cells containing particles physically on the local node. */
 CellPList local_cells = { NULL, 0, 0 };
-/** list of all cells containing ghosts */
+/** list of pointers to all cells containing ghosts. */
 CellPList ghost_cells = { NULL, 0, 0 };
 
 /** Type of cell structure in use */
 CellStructure cell_structure;
 
 /************************************************************/
+/** \name Privat Functions */
+/************************************************************/
+/*@{*/
+
+
+/*@}*/
+
+/************************************************************/
+void cells_pre_init()
+{
+  /* her local_cells has to be a NULL pointer */
+  if(&local_cells != NULL) {
+    fprintf(stderr,"Wrong usage of cells_pre_init!\n");
+    errexit();
+  }
+  dd_topology_init(&local_cells);
+}
+
+void realloc_cells(int size)
+{
+  int i;
+  /* free all memory associated with cells to be deleted. */
+  for(i=size; i<n_cells; i++) {
+    realloc_particles(&cells[i],0);
+  }
+  /* resize the cell list */
+  if(size != n_cells) {
+    cells = (Cell *) realloc(cells, sizeof(Cell)*size);
+  }
+  /* initialize new cells */
+  for(i=n_cells; i<size; i++) {
+    init_particleList(&cells[i]);
+  }
+  n_cells = size;
+}  
+
+/************************************************************/
+static void topology_release(int cs) {
+  switch (cs) {
+  case CELL_STRUCTURE_CURRENT:
+    topology_release(cell_structure.type);
+    break;
+  case CELL_STRUCTURE_DOMDEC:
+    dd_topology_release();
+    break;
+  default:
+    fprintf(stderr, "ERROR: attempting to sort the particles in an unknown way\n");
+    errexit();
+  }
+}
+
+/************************************************************/
 static void topology_init(int cs, CellPList *local) {
   switch (cs) {
   case CELL_STRUCTURE_CURRENT:
-    cell_structure.topology_init(local);
+    topology_init(cell_structure.type, local);
     break;
   case CELL_STRUCTURE_DOMDEC:
     dd_topology_init(local);
@@ -57,38 +113,27 @@ static void topology_init(int cs, CellPList *local) {
 }
 
 /************************************************************/
-void cells_init()
-{
-  /* here local_cells should be empty still */
-  dd_topology_init(&local_cells);
-}
-
-/************************************************************/
-static void free_cellplist(CellPList *cl)
-{
-  int i;
-  for (i = 0; i < cl->n; i++) {
-    realloc_particles(&cl->cell[i]->pList, 0);
-    free(cl->cell[i]->nList);
-    free(cl->cell[i]);
-  }
-  realloc_cellplist(cl, 0);
-}
-
-/************************************************************/
 void cells_re_init(int new_cs)
 {
   CellPList tmp_local;
-  cell_structure.topology_release();
+  Cell *tmp_cells;
+  int tmp_n_cells,i;
+
+  topology_release(cell_structure.type);
   /* transfer old particle cells to tmp buffer */
-  tmp_local = local_cells;
-  /* clear local cells */
+  memcpy(&tmp_local,&local_cells,sizeof(CellPList));
+  tmp_cells = cells;
+  tmp_n_cells = n_cells;
+
   init_cellplist(&local_cells);
-  /* deallocate the ghosts */
-  free_cellplist(&ghost_cells);
   topology_init(new_cs, &tmp_local);
+
   /* finally deallocate the old cells */
-  free_cellplist(&tmp_local);
+  realloc_cellplist(&tmp_local,0);
+  for(i=0;i<tmp_n_cells;i++) {
+    realloc_particles(&tmp_cells[i],0);
+  }
+  free(tmp_cells);
 }
 
 /*************************************************/
@@ -96,7 +141,7 @@ int cells_get_n_particles()
 {
   int c, cnt = 0;
   for (c = 0; c < local_cells.n; c++)
-    cnt += local_cells.cell[c]->pList.n;
+    cnt += local_cells.cell[c]->n;
   return cnt;
 }
 
@@ -126,8 +171,8 @@ void print_particle_positions()
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    part = cell->pList.part;
-    np   = cell->pList.n;
+    part = cell->part;
+    np   = cell->n;
     for(i=0 ; i < np; i++) {
       fprintf(stderr,"%d: local cell %d contains part id=%d pos=(%f,%f,%f)\n",
 	      this_node, c, part[i].p.identity,
@@ -147,8 +192,8 @@ void print_ghost_positions()
 
   for (c = 0; c < ghost_cells.n; c++) {
     cell = ghost_cells.cell[c];
-    part = cell->pList.part;
-    np   = cell->pList.n;
+    part = cell->part;
+    np   = cell->n;
     for(i=0 ; i < np; i++) {
       fprintf(stderr,"%d: local cell %d contains ghost id=%d pos=(%f,%f,%f)\n",
 	      this_node, c, part[i].p.identity,

@@ -94,10 +94,10 @@ typedef struct {
   /** MPI communicator handle (to use with GHOST_BCST, GHOST_GATH, GHOST_RDCE). */
   int mpi_comm;
 
-  /** Number of cells to communicate. */
-  int n_cells;
-  /** Pointer array to cells to communicate. */
-  struct Cell **cells;
+  /** Number of particle lists to communicate. */
+  int n_part_lists;
+  /** Pointer array to particle lists to communicate. */
+  ParticleList **part_lists;
 
 } GhostCommunication;
 

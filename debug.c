@@ -115,7 +115,6 @@ void core()
 
 void check_particle_consistency()
 {
-  ParticleList *pl;
   Particle *part;
   Cell *cell;
   int n, np, dir, c;
@@ -125,14 +124,13 @@ void check_particle_consistency()
   /* checks: part_id, part_pos, local_particles id */
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    cell_part_cnt += cell->pList.n;
-    pl   = &(cell->pList);
-    part = pl->part;
-    np   = pl->n;
-    for(n=0; n<cell->pList.n ; n++) {
+    cell_part_cnt += cell->n;
+    part = cell->part;
+    np   = cell->n;
+    for(n=0; n<cell->n ; n++) {
       if(part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
 	fprintf(stderr,"%d: sort_part_in_cells: ERROR: Cell %d Part %d has corrupted id=%d\n",
-		this_node,c,n,cell->pList.part[n].p.identity);
+		this_node,c,n,cell->part[n].p.identity);
 	errexit();
       }
       for(dir=0;dir<3;dir++) {
@@ -154,10 +152,10 @@ void check_particle_consistency()
 
   for (c = 0; c < ghost_cells.n; c++) {
     cell = ghost_cells.cell[c];
-    if(cell->pList.n>0) {
-      ghost_part_cnt += cell->pList.n;
+    if(cell->n>0) {
+      ghost_part_cnt += cell->n;
       fprintf(stderr,"%d: sort_part_in_cells: WARNING: ghost_cell %d contains %d particles!\n",
-	      this_node,c,cell->pList.n);
+	      this_node,c,cell->n);
     }
   }
   CELL_TRACE(fprintf(stderr,"%d: sort_part_in_cells: %d particles in cells.\n",

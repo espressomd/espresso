@@ -1475,7 +1475,7 @@ void local_remove_particle(int part)
      the cell the particle is located in by checking
      wether the particle address is inside the array */
   for (c = 0; c < local_cells.n; c++) {
-    tmp = &local_cells.cell[c]->pList;
+    tmp = local_cells.cell[c];
     ind = p - tmp->part;
     if (ind >= 0 && ind < tmp->n) {
       pl = tmp;
@@ -1509,7 +1509,6 @@ void local_place_particle(int part, double p[3])
   double pp[3];
   int i[3], rl;
   Particle *pt = (part <= max_seen_particle) ? local_particles[part] : NULL;
-  ParticleList *pl;
 
   i[0] = 0;
   i[1] = 0;
@@ -1527,15 +1526,14 @@ void local_place_particle(int part, double p[3])
 	      this_node, pp[0], pp[1], pp[2]);
       errexit();
     }
-    pl = &cell->pList;
-    pl->n++;
-    rl = realloc_particles(pl, pl->n);
-    pt = &pl->part[pl->n - 1];
+    cell->n++;
+    rl = realloc_particles(cell, cell->n);
+    pt = &cell->part[cell->n - 1];
     init_particle(pt);
 
     pt->p.identity = part;
     if (rl)
-      update_local_particles(pl);
+      update_local_particles(cell);
     else
       local_particles[pt->p.identity] = pt;
   }
@@ -1555,11 +1553,11 @@ void local_remove_all_particles()
   max_seen_particle = -1;
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    Particle *p = cell->pList.part;
-    int i,   np = cell->pList.n;
+    Particle *p = cell->part;
+    int i,   np = cell->n;
     for (i = 0; i < np; i++)
       realloc_intlist(&p[i].bl, 0);
-    cell->pList.n = 0;
+    cell->n = 0;
   }
 }
 
@@ -1570,8 +1568,8 @@ void local_rescale_particles(int dir, double scale) {
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    p  = cell->pList.part;
-    for(j = 0; j < cell->pList.n; j++) {
+    p  = cell->part;
+    for(j = 0; j < cell->n; j++) {
       p1 = &p[j];
       if(dir < 3) 
 	p1->r.p[dir] *= scale;
@@ -1627,8 +1625,8 @@ void remove_all_bonds_to(int identity)
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    np = cell->pList.n;
-    part = cell->pList.part;
+    np = cell->n;
+    part = cell->part;
     for (p = 0; p < np; p++) {
       IntList *bl = &part[p].bl;
       int i, j, partners;

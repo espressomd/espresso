@@ -366,8 +366,8 @@ void mpi_who_has()
     if (pnode == this_node) {
       for (c = 0; c < local_cells.n; c++) {
 	cell = local_cells.cell[c];
-	for (i = 0; i < cell->pList.n; i++)
-	  particle_node[cell->pList.part[i].p.identity] = this_node;
+	for (i = 0; i < cell->n; i++)
+	  particle_node[cell->part[i].p.identity] = this_node;
       }
     }
     else if (sizes[pnode] > 0) {
@@ -402,8 +402,8 @@ void mpi_who_has_slave(int node, int param)
   npart = 0;
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    for (i = 0; i < cell->pList.n; i++)
-      sendbuf[npart++] = cell->pList.part[i].p.identity;
+    for (i = 0; i < cell->n; i++)
+      sendbuf[npart++] = cell->part[i].p.identity;
   }
   MPI_Send(sendbuf, npart, MPI_INT, 0, REQ_WHO_HAS, MPI_COMM_WORLD);
   free(sendbuf);
@@ -965,8 +965,8 @@ void mpi_get_particles(Particle *result, IntList *bi)
       if (pnode == this_node) {
 	for (c = 0; c < local_cells.n; c++) {
 	  cell = local_cells.cell[c];
-	  Particle *part = cell->pList.part;
-	  int npart = cell->pList.n;
+	  Particle *part = cell->part;
+	  int npart = cell->n;
 	  memcpy(&result[g], part, npart*sizeof(Particle));
 	  g += npart;
 	  if (bi) {
@@ -1055,10 +1055,10 @@ void mpi_get_particles_slave(int pnode, int bi)
     g = 0;
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c];
-      Particle *part = cell->pList.part;
-      int npart = cell->pList.n;
+      Particle *part = cell->part;
+      int npart = cell->n;
       memcpy(&result[g],part,npart*sizeof(Particle));
-      g+=cell->pList.n;
+      g+=cell->n;
       if (bi) {
 	int pc;
 	for (pc = 0; pc < npart; pc++) {

@@ -34,6 +34,9 @@
 
 int rebuild_verletlist;
 
+
+#if 0
+
 /** \name Privat Functions */
 /************************************************************/
 /*@{*/
@@ -88,8 +91,8 @@ void build_verlet_lists()
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    p1   = cell->pList.part;
-    np1  = cell->pList.n;
+    p1   = cell->part;
+    np1  = cell->n;
     
     /* interactions within the cell (neighbor cell 0)*/
     pl  = &cell->nList[0].vList;
@@ -172,8 +175,8 @@ void build_verlet_lists_and_force_calc()
     cell = local_cells.cell[c];
 
     /* particle list of that cell */
-    p1   = cell->pList.part;
-    np1  = cell->pList.n;
+    p1   = cell->part;
+    np1  = cell->n;
 
     /* bonded interactions */
     calc_bonded_forces(p1, np1);
@@ -280,3 +283,5 @@ int rebuild_vlist_callback(Tcl_Interp *interp, void *_data)
   mpi_bcast_parameter(FIELD_VERLETFLAG);
   return (TCL_OK);
 }
+
+#endif

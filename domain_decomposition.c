@@ -1,3 +1,5 @@
+#include "integrate.h"
+#include "communication.h"
 #include "domain_decomposition.h"
 /************************************************/
 /** \name Defines */
@@ -27,6 +29,7 @@ double inv_cell_size[3];
 double max_skin=0.0;
 
 /*@}*/
+
 
 /************************************************************/
 /** \name Privat Functions */
@@ -66,6 +69,22 @@ void init_cell_neighbors(int i);
     n == 0 || n == ghost_cell_grid[1] - 1 || \
     o == 0 || o == ghost_cell_grid[2] - 1 ) 
 
+void dd_topology_init(CellPList *cl)
+{
+  /* not yet fully initialized */
+  if(max_range <= 0) {
+    max_range  = min_local_box_l/2.0; 
+    max_range2 = SQR(max_range); 
+ }
+
+  /* set up new domain decomposition cell structure */
+  calc_cell_grid();
+}
+
+void dd_topology_release()
+{
+
+}
 
 void calc_cell_grid()
 {
@@ -136,11 +155,13 @@ void calc_cell_grid()
 
   /* now set all dependent variables */
   for(i=0;i<3;i++) {
-    cell_grid[i] = ghost_cell_grid[i]-2;	
+    cell_grid[i]     = ghost_cell_grid[i]-2;	
     cell_size[i]     = local_box_l[i]/(double)cell_grid[i];
     inv_cell_size[i] = 1.0 / cell_size[i];
   }
 }
+
+#if 0
 
 /************************************************************/
 void init_cell_neighbors(int i)
@@ -249,6 +270,7 @@ void cells_changed_topology()
   }
   calc_cell_grid() etc.;
 }
+#endif
 
 /*************************************************/
 
@@ -261,8 +283,6 @@ int max_num_cells_callback(Tcl_Interp *interp, void *_data)
   }
   max_num_cells = data;
   mpi_bcast_parameter(FIELD_MAXNUMCELLS);
-  mpi_bcast_event(PARAMETER_CHANGED);
-  mpi_bcast_event(TOPOLOGY_CHANGED);
   return (TCL_OK);
 }
 
@@ -289,3 +309,4 @@ int find_node(double pos[3])
   }
   return map_array_node(im);
 }
+

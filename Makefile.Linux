@@ -40,11 +40,12 @@ MODEL=$(shell awk '/\`model name/ { \
 	print "Generic"; \
 	exit }' \/proc/cpuinfo)
 
+
 ifeq ($(HOSTFLAGS),)
 HOSTFLAGS=-march=i386
 
 ifeq ($(MODEL),Pentium-III)
-HOSTFLAGS= -march=pentium3 -mfpmath=sse -msse
+#HOSTFLAGS= -march=pentium3 -mfpmath=sse -msse
 endif
 
 ifeq ($(MODEL),Athlon-MP)
@@ -64,7 +65,7 @@ endif
 
 # optimized compiler flags
 
-CFLAGS=-g -O2 -Wall $(HOSTFLAGS) -finline-limit=10000000 \
+CFLAGS=-g -O2 -Wall $(HOSTFLAGS)  \
 	-fschedule-insns -fschedule-insns2 \
 	-funroll-loops -frerun-cse-after-loop -ffast-math
 

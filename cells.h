@@ -62,47 +62,12 @@
 /************************************************/
 /*@{*/
 
-/** Structure containing information about non bonded interactions
-    with particles in a neighbor cell. */
-typedef struct {
-  /** Just for transparency the index of the neighbor cell. */
-  int cell_ind;
-  /** Pointer to particle list of neighbor cell. */
-  ParticleList *pList;
-  /** Verlet list for non bonded interactions of a cell with a neighbor cell. */
-  PairList vList;
-} IA_Neighbor;
-
-/** Structure containing information of a cell. Contains: cell
-    neighbor information, particles in cell.
+/** A cell is a \ref particleList representing a particle group with
+    respect to the integration algorithm.
 */
-typedef struct Cell {
-  /** number of interacting neighbor cells . 
+typedef ParticleList Cell;
 
-      A word about the interacting neighbor cells:
-
-      In a 3D lattice each cell has 27 neighbors (including
-      itself!). Since we deal with pair forces, it is sufficient to
-      calculate only half of the interactions (Newtons law: actio =
-      reactio). For each cell 13+1=14 neighbors. This has only to be
-      done for the inner cells. 
-
-      Caution: This implementation needs double sided ghost
-      communication! For single sided ghost communication one would
-      need some ghost-ghost cell interaction as well, which we do not
-      need! 
-
-      It follows: inner cells: n_neighbors = 14
-      ghost cells:             n_neighbors = 0
-  */
-  int n_neighbors;
-  /** Interacting neighbor cell list  */
-  IA_Neighbor *nList;
-  /** particle list for particles in the cell. */
-  ParticleList pList;
-} Cell;
-
-/// List of cells
+/** List of cell pointers. */
 typedef struct {
   Cell **cell;
   int n;
@@ -123,8 +88,6 @@ typedef struct {
   /** Communicator to collect ghost forces. */
   GhostCommunicator collect_ghost_force_comm;
 
-  void  (*topology_release)();
-  void  (*topology_init)(CellPList *cplist);
   ///
   int   (*position_to_node)(double pos[3]);
   ///
@@ -138,6 +101,10 @@ typedef struct {
 /************************************************************/
 /*@{*/
 
+/** list of all cells. */
+extern Cell *cells;
+/** size of \ref cells */
+extern int n_cells;
 /** list of all cells containing particles physically on the local node */
 extern CellPList local_cells;
 /** list of all cells containing ghosts */
@@ -153,25 +120,25 @@ extern CellStructure cell_structure;
 /************************************************************/
 /*@{*/
 
-/** initialize with a standard cell structure (domain decomposition) */
-void cells_init();
+/** Initialize the cell structure on program start with the default cell structure of type domain decomposition. */
+void cells_pre_init();
 
-/** create a new initialized cell.*/
-Cell *alloc_cell();
+/** Reallocate the list of all cells (\ref cells). */
+void realloc_cells(int size);
 
 /** initialize a list of cell pointers */
-MDINLINE void init_cellplist(CellPList *cl) {
-  cl->n    = 0;
-  cl->max  = 0;
-  cl->cell = NULL;
+MDINLINE void init_cellplist(CellPList *cpl) {
+  cpl->n    = 0;
+  cpl->max  = 0;
+  cpl->cell = NULL;
 }
 
 /** reallocate a list of cell pointers */
-MDINLINE void realloc_cellplist(CellPList *cl, int size)
+MDINLINE void realloc_cellplist(CellPList *cpl, int size)
 {
-  if(size != cl->max) {
-    cl->max = size;
-    cl->cell = (Cell **) realloc(cl->cell, sizeof(int)*cl->max);
+  if(size != cpl->max) {
+    cpl->max = size;
+    cpl->cell = (Cell **) realloc(cpl->cell, sizeof(int)*cpl->max);
   }
 }
 
@@ -180,9 +147,6 @@ MDINLINE void realloc_cellplist(CellPList *cl, int size)
     \ref CELL_STRUCTURE_CURRENT for not changing it.
 */
 void cells_re_init(int new_cs);
-
-/** called when the topology has changed, so that the cell system can be reinitialized. */
-void cells_changed_topology();
 
 /** Calculate and return the total number of particles on this
     node. */

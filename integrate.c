@@ -43,11 +43,11 @@
 /*******************  variables  *******************/
 
 double time_step = -1.0;
-double sim_time = 0.0;
+double sim_time  = 0.0;
 
-double skin = -1.0;
-double max_range;
-double max_range2;
+double skin       = -1.0;
+double max_range  = -1.0;
+double max_range2 = -1.0;
 
 int    resort_particles = 1;
 int    recalc_forces = 1;
@@ -172,18 +172,18 @@ void integrate_vv(int n_steps)
 		      n_steps));
 
   if(resort_particles) {
-    invalidate_ghosts();
-    exchange_and_sort_part();
-    exchange_ghost();
+    //invalidate_ghosts();
+    //exchange_and_sort_part();
+    //exchange_ghost();
     recalc_forces = 1;
     resort_particles = 0;
   }
   if (recalc_forces) {
-    build_verlet_lists_and_force_calc();
+    //build_verlet_lists_and_force_calc();
 #ifdef ROTATION
     convert_initial_torques();
 #endif
-    collect_ghost_forces();
+    //collect_ghost_forces();
     rescale_forces();
     recalc_forces = 0;
   }
@@ -199,16 +199,16 @@ void integrate_vv(int n_steps)
     if(rebuild_verletlist == 1) {
       INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
       n_verlet_updates++;
-      invalidate_ghosts();
-      exchange_and_sort_part();
-      exchange_ghost();
-      build_verlet_lists_and_force_calc();
+      //invalidate_ghosts();
+      //exchange_and_sort_part();
+      //exchange_ghost();
+      //build_verlet_lists_and_force_calc();
     }
     else {
-      update_ghost_pos();
-      force_calc();         
+      //update_ghost_pos();
+      //force_calc();         
     }
-    collect_ghost_forces();
+    //collect_ghost_forces();
     rescale_forces_propagate_vel();
 #ifdef ROTATION
     convert_torqes_propagate_omega();
@@ -230,8 +230,8 @@ void rescale_velocities(double scale)
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    p  = cell->pList.part;
-    np = cell->pList.n;
+    p  = cell->part;
+    np = cell->n;
     for(i = 0; i < np; i++) {
       p[i].m.v[0] *= scale;
       p[i].m.v[1] *= scale;
@@ -291,8 +291,8 @@ void rescale_forces()
   INTEG_TRACE(fprintf(stderr,"%d: rescale_forces:\n",this_node));
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    p  = cell->pList.part;
-    np = cell->pList.n;
+    p  = cell->part;
+    np = cell->n;
     for(i = 0; i < np; i++) {
       p[i].f.f[0] *= scale;
       p[i].f.f[1] *= scale;
@@ -312,8 +312,8 @@ void propagate_velocities()
   INTEG_TRACE(fprintf(stderr,"%d: propagate_velocities:\n",this_node));
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    p  = cell->pList.part;
-    np = cell->pList.n;
+    p  = cell->part;
+    np = cell->n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
       if(p[i].l.ext_flag != PARTICLE_FIXED) 
@@ -339,8 +339,8 @@ void rescale_forces_propagate_vel()
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    p  = cell->pList.part;
-    np = cell->pList.n;
+    p  = cell->part;
+    np = cell->n;
     for(i = 0; i < np; i++) {
       p[i].f.f[0] *= scale;
       p[i].f.f[1] *= scale;
@@ -377,8 +377,8 @@ void propagate_positions()
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    p  = cell->pList.part;
-    np = cell->pList.n;
+    p  = cell->part;
+    np = cell->n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
       if(p[i].l.ext_flag != PARTICLE_FIXED) 
@@ -434,8 +434,8 @@ void propagate_vel_pos()
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    p  = cell->pList.part;
-    np = cell->pList.n;
+    p  = cell->part;
+    np = cell->n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
       if(p[i].l.ext_flag != PARTICLE_FIXED) 
