@@ -429,7 +429,7 @@ int change_particle_bond(int part, int *bond, int delete);
 
 #ifdef EXCLUSIONS
 /** Call only on the master node: change particle constraints.
-    @param part1    identity of particle for which the exclusion is set.
+    @param part     identity of particle for which the exclusion is set.
     @param part2    identity of particle for which the exclusion is set. If -1, delete all exclusions.
     @param delete   if true, do not add the exclusion, rather delete it if found
     @return TCL_OK on success or TCL_ERROR if no success
