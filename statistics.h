@@ -20,6 +20,7 @@
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "utils.h"
+#include "topology.h"
 
 /** \name Data Types */
 /************************************************************/
