@@ -469,6 +469,23 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     free(idf);
     return (TCL_OK);
   }
+  else if ( (!strncmp(mode, "bond_l", strlen(mode))) || (!strncmp(mode, "<bond_l>", strlen(mode))) ) {
+    /* 'analyze { bond_l | <bond_l> } [<chain_start> <n_chains> <chain_length>]' */
+    /*******************************************************************************************/
+    double *bond_l;
+
+    if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR) return TCL_ERROR;
+    if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
+    if (!strncmp(mode, "bond_l", strlen(mode))) calc_bond_l(&bond_l); 
+    else if (n_configs == 0) {
+      Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
+      Tcl_AppendResult(interp, "Use 'analyze append' to save some, or 'analyze bond_l' to only look at current state!", (char *)NULL);
+      return TCL_ERROR; }
+    else calc_bond_l_av(&bond_l);
+    sprintf(buffer,"%f %f",bond_l[0],bond_l[1]); Tcl_AppendResult(interp, buffer, (char *)NULL); 
+    free(bond_l);
+    return (TCL_OK);
+  }
   else if (!strncmp(mode, "g123", strlen(mode))) {
     /* 'analyze g123 [-init] [<chain_start> <n_chains> <chain_length>]' */
     /********************************************************************/
@@ -1246,6 +1263,56 @@ void calc_internal_dist_av(double **_idf) {
     }
     idf[k] = sqrt(idf[k] / (1.0*(chain_length-k)*chain_n_chains*n_configs));
   }
+}
+
+void calc_bond_l(double **_bond_l) {
+  int i,j;
+  double dx,dy,dz, tmp;
+  double *bond_l=NULL;
+  *_bond_l = bond_l = realloc(bond_l,2*sizeof(double));
+
+  bond_l[0] = bond_l[1] = 0.0;
+  for (i=0; i<chain_n_chains; i++) {
+    for (j=0; j < chain_length-1; j++) {
+      dx = partCfg[chain_start+i*chain_length + j+1].r.p[0]
+	- partCfg[chain_start+i*chain_length + j].r.p[0];
+      dy = partCfg[chain_start+i*chain_length + j+1].r.p[1]
+	- partCfg[chain_start+i*chain_length + j].r.p[1];
+      dz = partCfg[chain_start+i*chain_length + j+1].r.p[2]
+	- partCfg[chain_start+i*chain_length +j].r.p[2];
+      tmp = SQR(dx) + SQR(dy) + SQR(dz);
+      bond_l[0] += tmp;
+      bond_l[1] += tmp*tmp;
+    }
+  }
+  tmp = (double)(chain_length-1)*chain_n_chains;
+  bond_l[0] = sqrt(bond_l[0] / tmp);
+  bond_l[1] = 1./(2.*bond_l[0])*sqrt(bond_l[1]/tmp - pow(bond_l[0],4));
+}
+
+void calc_bond_l_av(double **_bond_l) {
+  int i,j,n, i1,i2;
+  double dx,dy,dz, tmp;
+  double *bond_l=NULL;
+  *_bond_l = bond_l = realloc(bond_l,2*sizeof(double));
+
+  bond_l[0] = bond_l[1] = 0.0;
+  for (n=0; n<n_configs; n++) {
+    for (i=0; i<chain_n_chains; i++) {
+      for (j=0; j < chain_length-1; j++) {
+	i2 = chain_start+i*chain_length + j; i1 = i2 + 1;
+	dx = configs[n][3*i1]   - configs[n][3*i2];
+	dy = configs[n][3*i1+1] - configs[n][3*i2+1];
+	dz = configs[n][3*i1+2] - configs[n][3*i2+2];
+	tmp = SQR(dx) + SQR(dy) + SQR(dz);
+	bond_l[0] += tmp;
+	bond_l[1] += tmp*tmp;
+      }
+    }
+  }
+  tmp = (double)(chain_length-1)*chain_n_chains*n_configs;
+  bond_l[0] = sqrt(bond_l[0] / tmp);
+  bond_l[1] = 1./(2.*bond_l[0])*sqrt(bond_l[1]/tmp - pow(bond_l[0],4));
 }
 
 void init_g123()
