@@ -48,11 +48,11 @@ In <tt>statistics.c</tt>:<br>
     <li> \verbatim analyze centermass { <part_type> } \endverbatim
          returns the center of mass of particles of given type.
 	 The C implementation is \ref #centermass; it is parsed by \ref #parse_centermass.
-    <li> \verbatim analyze gyrationtensor { <part_type> } \endverbatim
-         returns the gyration tensor for particles of given type. The output is a list of all the elements of the 3x3 matrix.
-	 The C implementation is \ref #gyrationtensor; it is parsed by \ref #parse_gyrationtensor.
+    <li> \verbatim analyze momentofinertiamatrix { <part_type> } \endverbatim
+         returns the moment of inertia matrix for particles of given type. The output is a list of all the elements of the 3x3 matrix.
+	 The C implementation is \ref #momentofinertiamatrix; it is parsed by \ref #parse_momentofinertiamatrix.
     <li> \verbatim analyze find_principal_axis { <part_type> } \endverbatim
-         returns the eigenvalues and eigenvectors of the gyrationtensor for particles of a given type. The C implementation is based on \ref #calc_eigenvalues_3x3 and \ref #calc_eigenvector_3x3; it is parsed by \ref #parse_find_principal_axis.
+         returns the eigenvalues and eigenvectors of the moment of inertia matrix for particles of a given type. The C implementation is based on \ref #calc_eigenvalues_3x3 and \ref #calc_eigenvector_3x3; it is parsed by \ref #parse_find_principal_axis.
 
 </ul>In <tt>energy.c</tt>:<ul>
     <li> \verbatim analyze energy [{ <interaction_type> [options] | kinetic | total }] \endverbatim

@@ -247,7 +247,7 @@ MDINLINE double min_distance(double pos1[3], double pos2[3]) {
 }
 
 void centermass(int type, double *com);
-void gyrationtensor(int type, double *gyrtensor);
+void momentofinertiamatrix(int type, double *MofImatrix);
 void calculate_verlet_neighbors();
 
 MDINLINE double *obsstat_bonded(Observable_stat *stat, int j)

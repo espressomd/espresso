@@ -239,34 +239,34 @@ void centermass(int type, double *com)
 }
 
 
-void gyrationtensor(int type, double *gyrtensor)
+void  momentofinertiamatrix(int type, double *MofImatrix)
 {
   int i,j,count;
-  double p1[3],com[3];
+  double p1[3],com[3],massi;
 
   count=0;
   updatePartCfg(WITHOUT_BONDS);
-  for(i=0;i<9;i++) gyrtensor[i]=0.;
-	centermass(type, com);
+  for(i=0;i<9;i++) MofImatrix[i]=0.;
+  centermass(type, com);
   for (j=0; j<n_total_particles; j++) {
     if (type == partCfg[j].p.type) {
       count ++;
       for (i=0; i<3; i++) {
       	p1[i] = partCfg[j].r.p[i] - com[i];
       }
-    	gyrtensor[0] += p1[0] * p1[0]; 
-    	gyrtensor[4] += p1[1] * p1[1];
-    	gyrtensor[8] += p1[2] * p1[2];
-    	gyrtensor[1] += p1[0] * p1[1];
-    	gyrtensor[2] += p1[0] * p1[2]; 
-    	gyrtensor[5] += p1[1] * p1[2];
-		}
-	}
+      massi= PMASS(partCfg[j]);
+      MofImatrix[0] += massi * (p1[1] * p1[1] + p1[2] * p1[2]) ; 
+      MofImatrix[4] += massi * (p1[0] * p1[0] + p1[2] * p1[2]);
+      MofImatrix[8] += massi * (p1[0] * p1[0] + p1[1] * p1[1]);
+      MofImatrix[1] -= massi * (p1[0] * p1[1]);
+      MofImatrix[2] -= massi * (p1[0] * p1[2]); 
+      MofImatrix[5] -= massi * (p1[1] * p1[2]);
+    }
+  }
   /* use symmetry */
-  gyrtensor[3] = gyrtensor[1]; 
-  gyrtensor[6] = gyrtensor[2]; 
-  gyrtensor[7] = gyrtensor[5];
-
+  MofImatrix[3] = MofImatrix[1]; 
+  MofImatrix[6] = MofImatrix[2]; 
+  MofImatrix[7] = MofImatrix[5];
   return;
 }
 
@@ -512,7 +512,7 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
 }
 
 void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
-	      double r_min, double r_max, int r_bins, double *rdf, int n_conf)
+		 double r_min, double r_max, int r_bins, double *rdf, int n_conf)
 {
   int i,j,k,l,t1,t2,ind,cnt=0,cnt_conf=1;
   int mixed_flag=0,start;
@@ -532,54 +532,54 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
   volume = box_l[0]*box_l[1]*box_l[2];
   for(l=0;l<r_bins;l++) rdf_tmp[l]=rdf[l] = 0.0;
 
- while(cnt_conf<=n_conf) {
-  for(l=0;l<r_bins;l++) rdf_tmp[l]=0.0;
-  cnt=0;
-  k=n_configs-cnt_conf;
-  for(i=0; i<n_total_particles; i++) {
-    for(t1=0; t1<n_p1; t1++) {
-      if(partCfg[i].p.type == p1_types[t1]) {
-	// distinguish mixed and identical rdf's
-	if(mixed_flag == 1) start = 0;
-	else                start = (i+1);
-	//particle loop: p2_types
-	for(j=start; j<n_total_particles; j++) {
-	  for(t2=0; t2<n_p2; t2++) {
-	    if(partCfg[j].p.type == p2_types[t2]) {
-	      p1[0]=configs[k][3*i  ];p1[1]=configs[k][3*i+1];p1[2]=configs[k][3*i+2];
-	      p2[0]=configs[k][3*j  ];p2[1]=configs[k][3*j+1];p2[2]=configs[k][3*j+2];
-	      dist =min_distance(p1, p2);
-	      if(dist > r_min && dist < r_max) {
-		ind = (int) ( (dist - r_min)*inv_bin_width );
-		rdf_tmp[ind]++;
+  while(cnt_conf<=n_conf) {
+    for(l=0;l<r_bins;l++) rdf_tmp[l]=0.0;
+    cnt=0;
+    k=n_configs-cnt_conf;
+    for(i=0; i<n_total_particles; i++) {
+      for(t1=0; t1<n_p1; t1++) {
+	if(partCfg[i].p.type == p1_types[t1]) {
+	  // distinguish mixed and identical rdf's
+	  if(mixed_flag == 1) start = 0;
+	  else                start = (i+1);
+	  //particle loop: p2_types
+	  for(j=start; j<n_total_particles; j++) {
+	    for(t2=0; t2<n_p2; t2++) {
+	      if(partCfg[j].p.type == p2_types[t2]) {
+		p1[0]=configs[k][3*i  ];p1[1]=configs[k][3*i+1];p1[2]=configs[k][3*i+2];
+		p2[0]=configs[k][3*j  ];p2[1]=configs[k][3*j+1];p2[2]=configs[k][3*j+2];
+		dist =min_distance(p1, p2);
+		if(dist > r_min && dist < r_max) {
+		  ind = (int) ( (dist - r_min)*inv_bin_width );
+		  rdf_tmp[ind]++;
+		}
+		cnt++;
 	      }
-	      cnt++;
 	    }
 	  }
 	}
       }
     }
-  }
-  // normalization
+    // normalization
   
-  for(i=0; i<r_bins; i++) {
-    r_in       = i*bin_width + r_min;
-    r_out      = r_in + bin_width;
-    bin_volume = (4.0/3.0) * PI * ((r_out*r_out*r_out) - (r_in*r_in*r_in));
-    rdf[i] += rdf_tmp[i]*volume / (bin_volume * cnt);
-  }
+    for(i=0; i<r_bins; i++) {
+      r_in       = i*bin_width + r_min;
+      r_out      = r_in + bin_width;
+      bin_volume = (4.0/3.0) * PI * ((r_out*r_out*r_out) - (r_in*r_in*r_in));
+      rdf[i] += rdf_tmp[i]*volume / (bin_volume * cnt);
+    }
 
-   cnt_conf++;
- } //cnt_conf loop
- for(i=0; i<r_bins; i++) {
+    cnt_conf++;
+  } //cnt_conf loop
+  for(i=0; i<r_bins; i++) {
     rdf[i] /= (cnt_conf-1);
- }
- free(rdf_tmp);
+  }
+  free(rdf_tmp);
 
 }
 
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
-	      double r_min, double r_max, int r_bins, double *rdf, int n_conf)
+			  double r_min, double r_max, int r_bins, double *rdf, int n_conf)
 {
   int i,j,k,l,t1,t2,ind,cnt=0,cnt_conf=1;
   int mixed_flag=0,start;
@@ -599,57 +599,57 @@ void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
   volume = box_l[0]*box_l[1]*box_l[2];
   for(l=0;l<r_bins;l++) rdf_tmp[l]=rdf[l] = 0.0;
 
- while(cnt_conf<=n_conf) {
-  for(l=0;l<r_bins;l++) rdf_tmp[l]=0.0;
-  cnt=0;
-  k=n_configs-cnt_conf;
-  for(i=0; i<n_total_particles; i++) {
-    for(t1=0; t1<n_p1; t1++) {
-      if(partCfg[i].p.type == p1_types[t1]) {
-	// distinguish mixed and identical rdf's
-	if(mixed_flag == 1) start = 0;
-	else                start = (i+1);
-	//particle loop: p2_types
-	for(j=start; j<n_total_particles; j++) {
-	  for(t2=0; t2<n_p2; t2++) {
-	    if(partCfg[j].p.type == p2_types[t2]) {
-	       /*see if particles i and j belong to different molecules*/
-              if(partCfg[i].p.mol_id!=partCfg[j].p.mol_id) {
-	        p1[0]=configs[k][3*i  ];p1[1]=configs[k][3*i+1];p1[2]=configs[k][3*i+2];
-	        p2[0]=configs[k][3*j  ];p2[1]=configs[k][3*j+1];p2[2]=configs[k][3*j+2];
-	        dist =min_distance(p1, p2);
-	        if(dist > r_min && dist < r_max) {
-		  ind = (int) ( (dist - r_min)*inv_bin_width );
-		  rdf_tmp[ind]++;
-	        }
-	        cnt++;
+  while(cnt_conf<=n_conf) {
+    for(l=0;l<r_bins;l++) rdf_tmp[l]=0.0;
+    cnt=0;
+    k=n_configs-cnt_conf;
+    for(i=0; i<n_total_particles; i++) {
+      for(t1=0; t1<n_p1; t1++) {
+	if(partCfg[i].p.type == p1_types[t1]) {
+	  // distinguish mixed and identical rdf's
+	  if(mixed_flag == 1) start = 0;
+	  else                start = (i+1);
+	  //particle loop: p2_types
+	  for(j=start; j<n_total_particles; j++) {
+	    for(t2=0; t2<n_p2; t2++) {
+	      if(partCfg[j].p.type == p2_types[t2]) {
+		/*see if particles i and j belong to different molecules*/
+		if(partCfg[i].p.mol_id!=partCfg[j].p.mol_id) {
+		  p1[0]=configs[k][3*i  ];p1[1]=configs[k][3*i+1];p1[2]=configs[k][3*i+2];
+		  p2[0]=configs[k][3*j  ];p2[1]=configs[k][3*j+1];p2[2]=configs[k][3*j+2];
+		  dist =min_distance(p1, p2);
+		  if(dist > r_min && dist < r_max) {
+		    ind = (int) ( (dist - r_min)*inv_bin_width );
+		    rdf_tmp[ind]++;
+		  }
+		  cnt++;
+		}
 	      }
 	    }
 	  }
 	}
       }
     }
-  }
-  // normalization
+    // normalization
 
+    for(i=0; i<r_bins; i++) {
+      r_in       = i*bin_width + r_min;
+      r_out      = r_in + bin_width;
+      bin_volume = (4.0/3.0) * PI * ((r_out*r_out*r_out) - (r_in*r_in*r_in));
+      rdf[i] += rdf_tmp[i]*volume / (bin_volume * cnt);
+    }
+
+    cnt_conf++;
+  } //cnt_conf loop
   for(i=0; i<r_bins; i++) {
-    r_in       = i*bin_width + r_min;
-    r_out      = r_in + bin_width;
-    bin_volume = (4.0/3.0) * PI * ((r_out*r_out*r_out) - (r_in*r_in*r_in));
-    rdf[i] += rdf_tmp[i]*volume / (bin_volume * cnt);
-  }
-
-   cnt_conf++;
- } //cnt_conf loop
- for(i=0; i<r_bins; i++) {
     rdf[i] /= (cnt_conf-1);
- }
- free(rdf_tmp);
+  }
+  free(rdf_tmp);
 
 }
 
 void analyze_structurefactor(int type, int order, double **_ff) {
-     int i, j, k, n, qi, p, order2, *fn=NULL;
+  int i, j, k, n, qi, p, order2, *fn=NULL;
   double qr, twoPI_L, C_sum, S_sum, *ff=NULL;
   
   order2 = order*order;
@@ -660,36 +660,36 @@ void analyze_structurefactor(int type, int order, double **_ff) {
   if ((type < 0) || (type > n_particle_types)) { fprintf(stderr,"WARNING: Type %i does not exist!",type); fflush(NULL); errexit(); }
   else if (order < 1) { fprintf(stderr,"WARNING: parameter \"order\" has to be a whole positive number"); fflush(NULL); errexit(); }
   else {
-  for(qi=1; qi<=order2; qi++) {
-     ff[qi] = 0.0;
-     fn[qi] = 0;
-  }
-  for(i=0; i<=order; i++) {
-     for(j=-order; j<=order; j++) {
+    for(qi=1; qi<=order2; qi++) {
+      ff[qi] = 0.0;
+      fn[qi] = 0;
+    }
+    for(i=0; i<=order; i++) {
+      for(j=-order; j<=order; j++) {
         for(k=-order; k<=order; k++) {
-	   n = i*i + j*j + k*k;
-	   if ((n<=order2) && (n>0)) {
-	      C_sum = S_sum = 0.0;
-	      for(p=0; p<n_total_particles; p++) {
-                 if (partCfg[p].p.type == type) {
-		    qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
-		    C_sum+= cos(qr);
-		    S_sum+= sin(qr);
-		 }
+	  n = i*i + j*j + k*k;
+	  if ((n<=order2) && (n>0)) {
+	    C_sum = S_sum = 0.0;
+	    for(p=0; p<n_total_particles; p++) {
+	      if (partCfg[p].p.type == type) {
+		qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
+		C_sum+= cos(qr);
+		S_sum+= sin(qr);
 	      }
-              ff[n]+= C_sum*C_sum + S_sum*S_sum;
-	      fn[n]++;
-	   }
+	    }
+	    ff[n]+= C_sum*C_sum + S_sum*S_sum;
+	    fn[n]++;
+	  }
 	}
-     }
-  }
-  n = 0;
-  for(p=0; p<n_total_particles; p++) {
-     if (partCfg[p].p.type == type) n++;
-  }
-  for(qi=0; qi<=order2; qi++) 
-     if (fn[qi]!=0) ff[qi]/= n*fn[qi];
-  free(fn);
+      }
+    }
+    n = 0;
+    for(p=0; p<n_total_particles; p++) {
+      if (partCfg[p].p.type == type) n++;
+    }
+    for(qi=0; qi<=order2; qi++) 
+      if (fn[qi]!=0) ff[qi]/= n*fn[qi];
+    free(fn);
   }
 }
 
@@ -907,15 +907,15 @@ static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
 	if ( !ARG_IS_I(1,mode_grid_3d[0]) || !ARG_IS_I(2,mode_grid_3d[1]) || !ARG_IS_I(3,mode_grid_3d[2]) ) {
 	  Tcl_ResetResult(interp);
 	  Tcl_AppendResult(interp,"usage: analyze get_lipid_orients [setgrid <xdim> <ydim> <zdim>] [setstray <stray_cut_off>]", (char *)NULL);
-	    return (TCL_ERROR);
-	  }
-	  STAT_TRACE(fprintf(stderr,"%d,setgrid has args %d,%d,%d \n",this_node,mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]));
-	  change = 4;
-	  /* Update global parameters */
-	  map_to_2dgrid();
-	  mode_grid_changed = 1;
-	  
+	  return (TCL_ERROR);
 	}
+	STAT_TRACE(fprintf(stderr,"%d,setgrid has args %d,%d,%d \n",this_node,mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]));
+	change = 4;
+	/* Update global parameters */
+	map_to_2dgrid();
+	mode_grid_changed = 1;
+	  
+      }
       if ( ARG0_IS_S("setstray") ) { 
 	if ( !ARG_IS_D(1,stray_cut_off) ) {
 	  Tcl_ResetResult(interp);
@@ -952,8 +952,8 @@ static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
 static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
 {
   STAT_TRACE(fprintf(stderr,"%d,parsing modes2d \n",this_node);)
-  /* 'analyze modes2d [setgrid <xdim> <ydim> <zdim>] [setstray <stray_cut_off>]]' */
-  char buffer[TCL_DOUBLE_SPACE];
+    /* 'analyze modes2d [setgrid <xdim> <ydim> <zdim>] [setstray <stray_cut_off>]]' */
+    char buffer[TCL_DOUBLE_SPACE];
   int i,j,change ;
   fftw_complex* result;
 
@@ -995,7 +995,7 @@ static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
       STAT_TRACE(fprintf(stderr,"%d,argc = %d \n",this_node, argc);)
 
 	
-    }
+	}
 
 
   result = malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex));
@@ -1018,7 +1018,7 @@ static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
       Tcl_PrintDouble(interp,result[j+i*(mode_grid_3d[ydir]/2+1)]FFTW_IMAG,buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
       Tcl_AppendResult(interp, " } ", (char *)NULL);
-      }
+    }
     Tcl_AppendResult(interp, " } ", (char *)NULL);
   }
 
@@ -1205,9 +1205,9 @@ static int parse_centermass(Tcl_Interp *interp, int argc, char **argv)
   }
 
   if (!ARG0_IS_I(p1)) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze centermass [<type>]", (char *)NULL);
-      return (TCL_ERROR);
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze centermass [<type>]", (char *)NULL);
+    return (TCL_ERROR);
   }
   
   centermass(p1, com);
@@ -1217,29 +1217,29 @@ static int parse_centermass(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
-static int parse_gyrationtensor(Tcl_Interp *interp, int argc, char **argv)
+static int parse_momentofinertiamatrix(Tcl_Interp *interp, int argc, char **argv)
 {
-  /* 'analyze gyrationtensor [<type>]' */
-  double gyrtensor[9];
+  /* 'analyze  momentofinertiamatrix [<type>]' */
+  double MofImatrix[9];
   char buffer[9*TCL_DOUBLE_SPACE+9];
   int p1;
 
   /* parse arguments */
   if (argc != 1) {
-    Tcl_AppendResult(interp, "usage: analyze gyrationtensor [<type>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze momentofinertiamatrix [<type>]", (char *)NULL);
     return (TCL_ERROR);
   }
 
   if (!ARG0_IS_I(p1)) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze gyrationtensor [<type>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze momentofinertiamatrix [<type>]", (char *)NULL);
     return (TCL_ERROR);
   }
-  gyrationtensor(p1, gyrtensor);
+  momentofinertiamatrix(p1, MofImatrix);
   
   sprintf(buffer,"%f %f %f %f %f %f %f %f %f",
-    gyrtensor[0],gyrtensor[1],gyrtensor[2],gyrtensor[3],gyrtensor[4],
-    gyrtensor[5],gyrtensor[6],gyrtensor[7],gyrtensor[8]);
+	  MofImatrix[0],MofImatrix[1],MofImatrix[2],MofImatrix[3],MofImatrix[4],
+	  MofImatrix[5],MofImatrix[6],MofImatrix[7],MofImatrix[8]);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_OK;
 }
@@ -1247,7 +1247,7 @@ static int parse_gyrationtensor(Tcl_Interp *interp, int argc, char **argv)
 static int parse_find_principal_axis(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze find_principal_axis [<type0>]' */
-  double gyrtensor[9],eva[3],eve[3];
+  double MofImatrix[9],eva[3],eve[3];
   char buffer[4*TCL_DOUBLE_SPACE+20];
   int p1,i,j;
 
@@ -1263,13 +1263,13 @@ static int parse_find_principal_axis(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_ERROR);
   }
 
-  gyrationtensor(p1, gyrtensor);
-  i=calc_eigenvalues_3x3(gyrtensor, eva);
+  momentofinertiamatrix(p1, MofImatrix);
+  i=calc_eigenvalues_3x3(MofImatrix, eva);
   
   sprintf(buffer,"{eigenval eigenvector} ");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   for (j= 0; j < 3; j++) {
-  	i=calc_eigenvector_3x3(gyrtensor,eva[j],eve);
+    i=calc_eigenvector_3x3(MofImatrix,eva[j],eve);
     sprintf(buffer," { %f { %f %f %f } }",eva[j],eve[0],eve[1],eve[2]);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
@@ -1552,18 +1552,18 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
   if( argc>0 ) { if (!ARG0_IS_D(r_max)) return (TCL_ERROR); argc--; argv++; }
   if( argc>0 ) { if (!ARG0_IS_I(r_bins)) return (TCL_ERROR); argc--; argv++; }
   if(average)
-  {
-     if (n_configs == 0) {
-      Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
-      Tcl_AppendResult(interp, "Use 'analyze append' to save some, or 'analyze rdf' to only look at current RDF!", (char *)NULL);
-      return TCL_ERROR;
-     }
-     if( argc>0 ) {
-          if (!ARG0_IS_I(n_conf)) return (TCL_ERROR); argc--; argv++;
-     }
-     else
+    {
+      if (n_configs == 0) {
+	Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
+	Tcl_AppendResult(interp, "Use 'analyze append' to save some, or 'analyze rdf' to only look at current RDF!", (char *)NULL);
+	return TCL_ERROR;
+      }
+      if( argc>0 ) {
+	if (!ARG0_IS_I(n_conf)) return (TCL_ERROR); argc--; argv++;
+      }
+      else
         n_conf  = n_configs;
-   }
+    }
 
   /* if not given use default */
   if(r_max  == -1.0)  r_max = min_box_l/2.0;
@@ -1577,10 +1577,10 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
   else if(average==2)
     Tcl_AppendResult(interp, "{ analyze <rdf-intermol> { ", (char *)NULL);
   else
-  {
-    Tcl_AppendResult(interp, "WRONG PARAMETER PASSED ", (char *)NULL);
-    return TCL_ERROR;
-  }
+    {
+      Tcl_AppendResult(interp, "WRONG PARAMETER PASSED ", (char *)NULL);
+      return TCL_ERROR;
+    }
 
   for(i=0; i<p1.max; i++) {
     sprintf(buffer,"%d ",p1.e[i]);
@@ -1594,11 +1594,11 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
   sprintf(buffer,"} %f %f %d",r_min,r_max,r_bins);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   if(average) {
-     sprintf(buffer," %d",n_conf);
-     Tcl_AppendResult(interp, buffer, " }",(char *)NULL);
+    sprintf(buffer," %d",n_conf);
+    Tcl_AppendResult(interp, buffer, " }",(char *)NULL);
   }
   else
-     Tcl_AppendResult(interp, " }", (char *)NULL);
+    Tcl_AppendResult(interp, " }", (char *)NULL);
   rdf = malloc(r_bins*sizeof(double));
 
   updatePartCfg(WITHOUT_BONDS);
@@ -1652,7 +1652,7 @@ int parse_structurefactor(Tcl_Interp *interp, int argc, char **argv)
   
   qfak = 2.0*PI/box_l[0];
   for(i=1; i<=order*order+1; i++) { 
-     if (sf[i]>1e-6) sprintf(buffer,"{%f %f} ",qfak*sqrt(i),sf[i]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+    if (sf[i]>1e-6) sprintf(buffer,"{%f %f} ",qfak*sqrt(i),sf[i]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
   free(sf);
   return (TCL_OK);
 }
@@ -1858,8 +1858,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     err = parse_aggregation(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("centermass"))
     err = parse_centermass(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("gyrationtensor"))
-    err = parse_gyrationtensor(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("momentofinertiamatrix"))
+    err = parse_momentofinertiamatrix(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("find_principal_axis"))
     err = parse_find_principal_axis(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("nbhood"))
