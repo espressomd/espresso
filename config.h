@@ -7,7 +7,7 @@
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
 
-/** \file config.h 
+/** \file config.h
  *
  *  This file contains all Precompiler Flags deciding which features
  *  of Espresso to turn on/off. It is recommended to turn everything
@@ -63,15 +63,27 @@ This will allow to use such particle properties as quart, omega, and torque. */
     to a particle or fix a particle in space. */
 #define EXTERNAL_FORCES
 
-/** Compiler Flag to enable constraints, eg walls, spheres. 
+
+/** Compiler Flag to enable constraints, eg walls, spheres.
     See \ref constraint.h and \ref interaction_data.h */
 #define CONSTRAINTS
+
+/** allow particles to have different masses. */
+#define MASS 
+
+/** exclusion of nonbonded interactions for specific particle pairs
+    currently works only with domain decomposition and Verlet lists */
+/* #define EXCLUSIONS */
 
 /** Compiler Flag to enable COMFORCE potential */
 /* #define COMFORCE */
 
 /** Compiler Flag to enable COMFIXED potential */
 /* #define COMFIXED */
+
+/** Compiler Flag to enable bond constraint.
+    See \ref rattle.h NOT YET MERGED, LEAVE OFF!!! */
+/* #define BOND_CONSTRAINT */
 
 /************************************************/
 /** \name available short--ranged potentials
@@ -88,6 +100,8 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /** Lennard-Jones with cosine tail */
 /* #define LJCOS */
 
+/** BUCKINGHAM potential */
+#define BUCKINGHAM 
 /*@}*/
 
 /************************************************/
@@ -159,8 +173,20 @@ This will allow to use such particle properties as quart, omega, and torque. */
 #define TINY_COS_VALUE 0.9999999999
 
 /*@}*/
+
+/************************************************/
+/** Derived constants from the settings,        */
+/*  no user servicable parts below.             */
+/************************************************/
+
 #ifndef CONFIG_H
 #define CONFIG_H
+
+#ifdef MASS
+#define PMASS(pt) (pt).p.mass
+#else
+#define PMASS(pt) 1
+#endif
 
 #include <tcl.h>
 /** callback for version status. */
@@ -192,6 +218,12 @@ MDINLINE int compilation_callback(Tcl_Interp *interp)
 #ifdef CONSTRAINTS
   Tcl_AppendResult(interp, "{ CONSTRAINTS } ", (char *) NULL);
 #endif
+#ifdef BOND_CONSTRAINT
+  Tcl_AppendResult(interp, "{ BOND_CONSTRAINT } ", (char *) NULL);
+#endif
+#ifdef EXCLUSIONS
+  Tcl_AppendResult(interp, "{ EXCLUSIONS } ", (char *) NULL);
+#endif
 #ifdef COMFORCE
   Tcl_AppendResult(interp, "{ COMFORCE } ", (char *) NULL);
 #endif
@@ -203,6 +235,9 @@ MDINLINE int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef LENNARD_JONES
   Tcl_AppendResult(interp, "{ LENNARD_JONES } ", (char *) NULL);
+#endif
+#ifdef BUCKINGHAM
+  Tcl_AppendResult(interp, "{ BUCKINGHAM } ", (char *) NULL);
 #endif
 #ifdef LJCOS
   Tcl_AppendResult(interp, "{ LJCOS } ", (char *) NULL);

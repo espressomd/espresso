@@ -234,6 +234,7 @@ int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
     }
     else if (ARG0_IS_S("nonbonded") ||
 	     ARG0_IS_S("lj") ||
+	     ARG0_IS_S("buckingham") ||
 	     ARG0_IS_S("lj-cos") ||
 	     ARG0_IS_S("gb") ||
 	     ARG0_IS_S("tabulated")) {

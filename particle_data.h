@@ -19,6 +19,7 @@
 #include <tcl.h>
 #include "config.h"
 #include "grid.h"
+#include "global.h"
 
 /************************************************
  * defines
@@ -58,6 +59,11 @@ typedef struct {
   /** particle type, used for non bonded interactions. */
   int    type;
 
+#ifdef MASS
+  /** particle mass */
+  double mass;
+#endif
+
 #ifdef ELECTROSTATICS
   /** charge. */
   double q;
@@ -69,10 +75,15 @@ typedef struct {
 typedef struct {
   /** periodically folded position. */
   double p[3];
-  
+
 #ifdef ROTATION
   /** quaternions to define particle orientation */
-  double quat[4]; 
+  double quat[4];
+#endif
+
+#ifdef BOND_CONSTRAINT
+  /**stores the particle position at the previous time step*/
+  double p_old[3];
 #endif
 } ParticlePosition;
 
@@ -94,7 +105,7 @@ typedef struct {
 typedef struct {
   /** velocity. */
   double v[3];
-  
+
 #ifdef ROTATION
   /** angular velocity */
   double omega[3];
@@ -110,8 +121,8 @@ typedef struct {
   int    i[3];
 
 #ifdef EXTERNAL_FORCES
-  /** flag whether to fix a particle in space. 
-      Values: 
+  /** flag whether to fix a particle in space.
+      Values:
       <ul> <li> 0 no external influence
            <li> 1 apply external force \ref ParticleLocal::ext_force
            <li> 2,3,4 fix particle coordinate 0,1,2
@@ -180,9 +191,15 @@ extern Particle   **local_particles;
     call \ref updatePartCfg or \ref sortPartCfg to allocate
     the data if necessary (which is decided by \ref updatePartCfg). */
 extern Particle *partCfg;
+
 /** if non zero, \ref partCfg is sorted by particle order, and
     the particles are stored consecutively starting with 0. */
 extern int partCfgSorted;
+
+/** Particles' current bond partners. \ref partBondPartners is
+    sorted by particle order, and the particles are stored
+    consecutively starting with 0. This array is global to all nodes*/
+extern int *partBondPartners;
 
 
 /************************************************
@@ -199,8 +216,8 @@ int part(ClientData data, Tcl_Interp *interp,
 
 /** Initialize a particle.
     This function just sets all values to the defaults (mostly zeros)!
-    Do NOT use this without setting the values of the  
-    \ref ParticleProperties::identity "identity" and \ref ParticlePosition::p "position" to 
+    Do NOT use this without setting the values of the
+    \ref ParticleProperties::identity "identity" and \ref ParticlePosition::p "position" to
     reasonable values. Also make sure that you update \ref local_particles.
 
     Add here all initializations you need to be done !!!
@@ -208,7 +225,7 @@ int part(ClientData data, Tcl_Interp *interp,
 */
 void init_particle(Particle *part);
 
-/** Deallocate the dynamic storage of a particle. */  
+/** Deallocate the dynamic storage of a particle. */
 void free_particle(Particle *part);
 
 /** Remove bond from particle if possible */
@@ -230,7 +247,7 @@ void init_particlelist(ParticleList *pList);
 int realloc_particlelist(ParticleList *plist, int size);
 
 /** Search for a specific particle.
-    \param plist the list on which to operate 
+    \param plist the list on which to operate
     \param id the identity of the particle to search
     \return a pointer to the particle structure or NULL if particle is
     not in this list */
@@ -240,7 +257,7 @@ Particle *got_particle(ParticleList *plist, int id);
     reallocates particles if necessary!
     This procedure does not care for \ref local_particles.
     \param plist List to append the particle to.
-    \param part  Particle to append.  
+    \param part  Particle to append.
     \return Pointer to new location of the particle. */
 Particle *append_unindexed_particle(ParticleList *plist, Particle *part);
 
@@ -248,7 +265,7 @@ Particle *append_unindexed_particle(ParticleList *plist, Particle *part);
     reallocates particles if necessary!
     This procedure cares for \ref local_particles.
     \param plist List to append the particle to.
-    \param part  Particle to append.  
+    \param part  Particle to append.
     \return Pointer to new location of the particle. */
 Particle *append_indexed_particle(ParticleList *plist, Particle *part);
 
@@ -328,6 +345,13 @@ int set_particle_v(int part, double v[3]);
     @return TCL_OK if particle existed
 */
 int set_particle_f(int part, double F[3]);
+
+/** Call only on the master node: set particle mass.
+    @param part the particle.
+    @param mass its new mass.
+    @return TCL_OK if particle existed
+*/
+int set_particle_mass(int part, double mass);
 
 /** Call only on the master node: set particle charge.
     @param part the particle.
@@ -476,7 +500,7 @@ void local_remove_all_particles();
     @param scale factor by which to rescale (>1: stretch, <1: contract)
 */
 void local_rescale_particles(int dir, double scale);
- 
+
 /** Synchronous send of a particle buffer to another node. The other node
     MUST call \ref recv_particles when this is called. The particles data
     is freed. */
@@ -487,6 +511,27 @@ void send_particles(ParticleList *particles, int node);
     APPENDED to the list, so it has to be a valid one */
 void recv_particles(ParticleList *particles, int node);
 
+#ifdef EXCLUSIONS
+/** Determines if particle ids i and j are connected by bonds
+   (e.g FENE, HAMONIC, RIGID_BOND etc ) and angles (e.g BOND_ANGLE_HARMONIC).
+    Note: Can be used only if non-bonded interaction exclusions are set, and is
+    probably pretty slow
+*/
+int is_bond_partner(int i, int j);
+#endif
+
+/** Invoked from \ref "create_bond_list(int w)" **/
+void recreate_bond_list(int w);
+
+/** Invoked from \ref "create_bond_list(int w)" */
+int  resort_bond_list(int w);
+
+/** Creates 1D array \ref partBondPartners of minimum size to store the bond
+    partners of each particle. For example; If particle j and k are bond partners
+    of i then partBondPartners[i]=j and partBondPartners[i+1]=k. But,
+    partBondPartners[j] and partBondPartners[k] do not contain i. */
+int  create_bond_list(int w);
+
 /** Complain about a missing bond partner. Just for convenience, replaces the old checked_particle_ptr.
     @param id particle identity.
  */
@@ -495,5 +540,6 @@ MDINLINE void complain_on_particle(int id)
   char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
   sprintf(errtxt,"{bond broken (particle %d has a bond to particle not stored on this node)} ", id); 
 }
+
 
 #endif

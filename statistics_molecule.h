@@ -8,10 +8,10 @@
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #ifndef STATISTICS_MOLECULE_H
 #define STATISTICS_MOLECULE_H
-/** \file statistics_molecule.h 
+/** \file statistics_molecule.h
 
     This file contains the code for statistics on the data using the
-    molecule information set with analyse set, as it is described in 
+    molecule information set with analyse set, as it is described in
     the file \ref topology.h.
 
     <b>Responsible:</b>
@@ -42,3 +42,8 @@ int analyze_fold_molecules(float *coord);
 
 /* calculate the center of mass of a molecule */
 void calc_mol_center_of_mass(Molecule mol, double com[3]);
+
+/* calculate the center of mass of a molecule as above but uses mass of the particles*/
+void mol_center_of_mass_(Molecule mol, double com[3]);
+
+

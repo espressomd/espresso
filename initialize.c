@@ -351,12 +351,12 @@ void on_ghost_flags_change()
   if (thermo_switch & THERMO_DPD)
     /* DPD needs also ghost velocities */
     ghosts_have_v = 1;
+  else if (n_rigidbonds != 0)
+    ghosts_have_v = 1;
 #ifdef ELECTROSTATICS
   /* Maggs electrostatics needs ghost velocities too */
-  else {
-    if(coulomb.method == COULOMB_MAGGS)
+  else if(coulomb.method == COULOMB_MAGGS)
       ghosts_have_v = 1;
-  }
 #endif
 }
 
@@ -413,6 +413,10 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "nemd", (Tcl_CmdProc *)nemd, 0, NULL);
   /* in thermostat.c */
   Tcl_CreateCommand(interp, "thermostat", (Tcl_CmdProc *)thermostat, 0, NULL);
+#ifdef EXCLUSIONS
+  /* in interaction_data.c */
+  Tcl_CreateCommand(interp, "exclusion", (Tcl_CmdProc *)exclusion, 0, NULL);
+#endif
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");

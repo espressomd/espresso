@@ -89,66 +89,70 @@ extern const Datafield fields[];
 #define FIELD_DPD_RCUT            4
 /** index of \ref langevin_gamma in  \ref #fields */
 #define FIELD_LANGEVIN_GAMMA      5
+/** index of \ref ia_excl in \ref #fields */
+#define FIELD_IA_EXCL             6
 /** index of \ref integ_switch in \ref #fields */
-#define FIELD_INTEG_SWITCH        6
+#define FIELD_INTEG_SWITCH        7
 /** index of \ref local_box_l in \ref #fields */
-#define FIELD_LBOXL               7
+#define FIELD_LBOXL               8
 /** index of \ref max_cut in \ref #fields */
-#define FIELD_MCUT                8
+#define FIELD_MCUT                9
 /** index of \ref max_num_cells  in \ref #fields */
-#define FIELD_MAXNUMCELLS         9
+#define FIELD_MAXNUMCELLS         10
 /** index of \ref max_seen_particle in \ref #fields */
-#define FIELD_MAXPART             10
+#define FIELD_MAXPART             11
 /** index of \ref max_range in \ref #fields */
-#define FIELD_MAXRANGE            11
+#define FIELD_MAXRANGE            12
 /** index of \ref max_skin in  \ref #fields */
-#define FIELD_MAXSKIN             12
+#define FIELD_MAXSKIN             13
 /** index of \ref min_num_cells  in \ref #fields */
-#define FIELD_MINNUMCELLS         13
+#define FIELD_MINNUMCELLS         14
 /** index of \ref n_layers in  \ref #fields */
-#define FIELD_NLAYERS             14
+#define FIELD_NLAYERS             15
 /** index of \ref n_nodes in \ref #fields */
-#define FIELD_NNODES              15
+#define FIELD_NNODES              16
 /** index of \ref n_total_particles in  \ref #fields */
-#define FIELD_NPART               16
+#define FIELD_NPART               17
 /** index of \ref n_particle_types in \ref #fields */
-#define FIELD_NPARTTYPE           17
+#define FIELD_NPARTTYPE           18
+/** index of \ref n_rigidbonds in \ref #fields */
+#define FIELD_RIGIDBONDS          19
 /** index of \ref node_grid in \ref #fields */
-#define FIELD_NODEGRID            18
+#define FIELD_NODEGRID            20
 /** index of \ref nptiso_gamma0 in \ref #fields */
-#define FIELD_NPTISO_G0           19
+#define FIELD_NPTISO_G0           21
 /** index of \ref nptiso_gammav in \ref #fields */
-#define FIELD_NPTISO_GV           20
+#define FIELD_NPTISO_GV           22
 /** index of \ref nptiso_struct::p_ext in \ref #fields */
-#define FIELD_NPTISO_PEXT         21      
+#define FIELD_NPTISO_PEXT         23      
 /** index of \ref nptiso_struct::p_inst in \ref #fields */
-#define FIELD_NPTISO_PINST        22     
+#define FIELD_NPTISO_PINST        24
 /** index of \ref nptiso_struct::p_inst_av in \ref #fields */
-#define FIELD_NPTISO_PINSTAV      23     
+#define FIELD_NPTISO_PINSTAV      25
 /** index of \ref nptiso_struct::p_diff in \ref #fields */
-#define FIELD_NPTISO_PDIFF        24      
+#define FIELD_NPTISO_PDIFF        26
 /** index of \ref nptiso_struct::piston in \ref #fields */
-#define FIELD_NPTISO_PISTON       25    
+#define FIELD_NPTISO_PISTON       27
 /** index of \ref #periodic in \ref #fields */
-#define FIELD_PERIODIC            26
+#define FIELD_PERIODIC            28
 /** index of \ref #skin in \ref #fields */
-#define FIELD_SKIN                27
+#define FIELD_SKIN                29
 /** index of \ref #temperature in \ref #fields */
-#define FIELD_TEMPERATURE         28
+#define FIELD_TEMPERATURE         30
 /** index of \ref thermo_switch in \ref #fields */
-#define FIELD_THERMO_SWITCH       29
+#define FIELD_THERMO_SWITCH       31
 /** index of \ref sim_time in  \ref #fields */
-#define FIELD_SIMTIME             30
+#define FIELD_SIMTIME             32
 /** index of \ref time_step in \ref #fields */
-#define FIELD_TIMESTEP            31
+#define FIELD_TIMESTEP            33
 /** index of \ref timing_samples in  \ref #fields */
-#define FIELD_TIMINGSAMP          32
+#define FIELD_TIMINGSAMP          34
 /** index of \ref transfer_rate  in \ref #fields */
-#define FIELD_TRANSFERRATE        33
+#define FIELD_TRANSFERRATE        35
 /** index of \ref rebuild_verletlist in \ref #fields */
-#define FIELD_VERLETFLAG          34
+#define FIELD_VERLETFLAG          36
 /** index of \ref verlet_reuse in  \ref #fields */
-#define FIELD_VERLETREUSE         35
+#define FIELD_VERLETREUSE         37
 
 /*@}*/
 

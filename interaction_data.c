@@ -25,6 +25,7 @@
 #include "maggs.h"
 #include "elc.h"
 #include "lj.h"
+#include "buckingham.h"
 #include "tab.h"
 #include "ljcos.h"
 #include "gb.h"
@@ -39,6 +40,8 @@
  *****************************************/
 int n_particle_types = 0;
 int n_interaction_types = 0;
+int n_rigidbonds = 0;
+int ia_excl = -1;
 IA_parameters *ia_params = NULL;
 
 #ifdef ELECTROSTATICS
@@ -54,11 +57,12 @@ double max_cut_non_bonded;
 
 double lj_force_cap = 0.0;
 double tab_force_cap = 0.0;
+double buck_force_cap = 0.0;
 
 #ifdef CONSTRAINTS
 int n_constraints       = 0;
 Constraint *constraints = NULL;
-#endif 
+#endif
 
 /** Array containing all tabulated forces*/
 DoubleList tabulated_forces;
@@ -85,17 +89,30 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJ_sig =
     params->LJ_cut =
     params->LJ_shift =
-    params->LJ_offset = 
+    params->LJ_offset =
     params->LJ_capradius = 0;
+#endif
+
+#ifdef BUCKINGHAM
+    params->BUCK_A =
+    params->BUCK_B =
+    params->BUCK_C =
+    params->BUCK_D =
+    params->BUCK_cut =
+    params->BUCK_discont =
+    params->BUCK_shift =
+    params->BUCK_capradius = 0;
+    params->BUCK_F1 = 0;
+    params->BUCK_F2 = 0;
 #endif
 
 #ifdef LJCOS
   params->LJCOS_eps =
     params->LJCOS_sig =
-    params->LJCOS_cut = 
-    params->LJCOS_offset = 
-    params->LJCOS_alfa = 
-    params->LJCOS_beta = 
+    params->LJCOS_cut =
+    params->LJCOS_offset =
+    params->LJCOS_alfa =
+    params->LJCOS_beta =
     params->LJCOS_rmin = 0 ;
 #endif
 
@@ -104,10 +121,10 @@ void initialize_ia_params(IA_parameters *params) {
     params->GB_sig =
     params->GB_cut =
     params->GB_k1 =
-    params->GB_k2 =   
-    params->GB_mu = 
+    params->GB_k2 =
+    params->GB_mu =
     params->GB_nu =
-    params->GB_chi1 = 
+    params->GB_chi1 =
     params->GB_chi2 = 0 ;
 #endif
 
@@ -144,7 +161,18 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJ_offset = src->LJ_offset;
   dst->LJ_capradius = src->LJ_capradius;
 #endif
-
+#ifdef BUCKINGHAM
+  dst->BUCK_A = src->BUCK_A;
+  dst->BUCK_B = src->BUCK_B;
+  dst->BUCK_C = src->BUCK_C;
+  dst->BUCK_D = src->BUCK_D;
+  dst->BUCK_cut = src->BUCK_cut;
+  dst->BUCK_discont = src->BUCK_discont;
+  dst->BUCK_shift  = src->BUCK_shift;
+  dst->BUCK_capradius = src->BUCK_capradius;
+  dst->BUCK_F1 = src->BUCK_F1;
+  dst->BUCK_F2 = src->BUCK_F2;
+#endif
 #ifdef LJCOS
   dst->LJCOS_eps = src->LJCOS_eps;
   dst->LJCOS_sig = src->LJCOS_sig;
@@ -160,7 +188,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->GB_sig = src->GB_sig;
   dst->GB_cut = src->GB_cut;
   dst->GB_k1 = src->GB_k1;
-  dst->GB_k2 = src->GB_k2; 
+  dst->GB_k2 = src->GB_k2;
   dst->GB_mu = src->GB_mu;
   dst->GB_nu = src->GB_nu;
   dst->GB_chi1 = src->GB_chi1;
@@ -196,6 +224,11 @@ int checkIfParticlesInteract(int i, int j) {
 
 #ifdef LENNARD_JONES
   if (data->LJ_cut != 0)
+    return 1;
+#endif
+
+#ifdef BUCKINGHAM
+  if (data->BUCK_cut != 0)
     return 1;
 #endif
   
@@ -235,6 +268,8 @@ char *get_name_of_bonded_ia(int i) {
     return "SUBT_LJ";
   case BONDED_IA_TABULATED:
     return "tabulated";
+  case BONDED_IA_RIGID_BOND:
+    return "RIGID_BOND";
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
 	    this_node, i);
@@ -317,6 +352,7 @@ void make_bond_type_exist(int type)
 void calc_maximal_cutoff()
 {
   int i, j;
+  double max_cut_tmp;
   max_cut = -1.0;
   max_cut_non_bonded = -1.0;
 
@@ -343,6 +379,10 @@ void calc_maximal_cutoff()
       if(max_cut < bonded_ia_params[i].p.subt_lj.r)
 	max_cut = bonded_ia_params[i].p.subt_lj.r;
       break;
+    case BONDED_IA_RIGID_BOND:
+      if(max_cut < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
+	max_cut = sqrt(bonded_ia_params[i].p.rigid_bond.d2);
+       break;
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
       if(bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
@@ -364,16 +404,16 @@ void calc_maximal_cutoff()
      potentials (both normal and tabulated ones) it follows, that the
      cutoff is TWO TIMES the maximal cutoff! That's what the following
      lines assure. */
-  
+  max_cut_tmp = 2.0*max_cut;
   for (i = 0; i < n_bonded_ia; i++) {
     switch (bonded_ia_params[i].type) {
     case BONDED_IA_DIHEDRAL:
-      max_cut = 2*max_cut;
-      break; 
+      max_cut = max_cut_tmp;
+      break;
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
       if(bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
-	max_cut = 2*max_cut;
+	max_cut = max_cut_tmp;
       break;
 #endif
     default:
@@ -388,19 +428,25 @@ void calc_maximal_cutoff()
 	 IA_parameters *data = get_ia_param(i, j);
 #ifdef LENNARD_JONES
 	 if (data->LJ_cut != 0) {
-	   if(max_cut_non_bonded < (data->LJ_cut+data->LJ_offset) ) 
+	   if(max_cut_non_bonded < (data->LJ_cut+data->LJ_offset) )
 	     max_cut_non_bonded = (data->LJ_cut+data->LJ_offset);
+	 }
+#endif
+#ifdef BUCKINGHAM
+	 if (data->BUCK_cut != 0) {
+	   if(max_cut_non_bonded < data->BUCK_cut )
+	     max_cut_non_bonded = data->BUCK_cut;
 	 }
 #endif
 #ifdef LJCOS
 	 if (data->LJCOS_cut != 0) {
-	   if(max_cut_non_bonded < (data->LJCOS_cut+data->LJCOS_offset) ) 
+	   if(max_cut_non_bonded < (data->LJCOS_cut+data->LJCOS_offset) )
 	     max_cut_non_bonded = (data->LJCOS_cut+data->LJCOS_offset);
 	 }
 #endif
 #ifdef ROTATION
 	 if (data->GB_cut != 0) {
-	   if(max_cut_non_bonded < (data->GB_cut) ) 
+	   if(max_cut_non_bonded < (data->GB_cut) )
 	     max_cut_non_bonded = (data->GB_cut);
 	 }
 #endif
@@ -416,11 +462,11 @@ void calc_maximal_cutoff()
   /* real space electrostatic */
   switch (coulomb.method) {
   case COULOMB_P3M:
-    if (max_cut_non_bonded < p3m.r_cut) 
+    if (max_cut_non_bonded < p3m.r_cut)
       max_cut_non_bonded = p3m.r_cut;
     break;
   case COULOMB_DH:
-    if (max_cut_non_bonded < dh_params.r_cut) 
+    if (max_cut_non_bonded < dh_params.r_cut)
       max_cut_non_bonded = dh_params.r_cut;
     break;
   case COULOMB_MMM1D:
@@ -702,6 +748,9 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #ifdef LJCOS
   if (data->LJCOS_cut != 0) printljcosIAToResult(interp,i,j);
 #endif
+#ifdef BUCKINGHAM
+  if (data->BUCK_cut != 0) printbuckIAToResult(interp,i,j);
+#endif
 #ifdef ROTATION
   if (data->GB_cut != 0) printgbIAToResult(interp,i,j);
 #endif
@@ -803,6 +852,26 @@ int inter_print_all(Tcl_Interp *interp)
     }
     Tcl_AppendResult(interp, "}", (char *)NULL);
   }
+
+  if(buck_force_cap != 0.0) {
+    char buffer[TCL_DOUBLE_SPACE];
+    
+    if (start) {
+      Tcl_AppendResult(interp, "{", (char *)NULL);
+      start = 0;
+    }
+    else
+      Tcl_AppendResult(interp, " {", (char *)NULL);
+
+    if (lj_force_cap == -1.0)
+      Tcl_AppendResult(interp, "buckforcecap individual");
+    else {
+      Tcl_PrintDouble(interp, buck_force_cap, buffer);
+      Tcl_AppendResult(interp, "buckforcecap ", buffer, (char *) NULL);
+    }
+    Tcl_AppendResult(interp, "}", (char *)NULL);
+  }
+
   if(tab_force_cap != 0.0) {
     char buffer[TCL_DOUBLE_SPACE];
     if (start) {
@@ -822,6 +891,7 @@ int inter_print_all(Tcl_Interp *interp)
 
   return (TCL_OK);
 }
+
 int inter_print_bonded(Tcl_Interp *interp, int i)
 {
   char buffer[TCL_INTEGER_SPACE];
@@ -900,6 +970,11 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 #ifdef LJCOS
     else if (ARG0_IS_S("lj-cos"))
       change = ljcos_parser(interp, part_type_a, part_type_b, argc, argv);
+#endif
+
+#ifdef BUCKINGHAM
+    else if (ARG0_IS_S("buckingham"))
+      change = buckingham_parser(interp, part_type_a, part_type_b, argc, argv);
 #endif
 
 #ifdef COMFORCE
@@ -1171,6 +1246,11 @@ int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
     return inter_parse_ljforcecap(interp, argc-1, argv+1);
 #endif
 
+#ifdef BUCKINGHAM
+  if(ARG0_IS_S("buckforcecap"))
+    return inter_parse_buckforcecap(interp, argc-1, argv+1);
+#endif
+
 #ifdef TABULATED
   if(ARG0_IS_S("tabforcecap"))
     return inter_parse_tabforcecap(interp, argc-1, argv+1);
@@ -1183,7 +1263,6 @@ int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
     Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)", (char *) NULL);
 #endif
   }
-
   Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
 		   "\"", (char *) NULL);
 
@@ -1196,8 +1275,8 @@ int inter(ClientData _data, Tcl_Interp *interp,
   int i, j, err_code = TCL_OK, is_i1, is_i2;
 
   Tcl_ResetResult(interp);
-  
-  /* first we handle the special cases 
+
+  /* first we handle the special cases
 
      1. no parameters
      2. one parameter
@@ -1259,4 +1338,86 @@ int inter(ClientData _data, Tcl_Interp *interp,
   }
   /* check for background errors which have not been handled so far */
   return mpi_gather_runtime_errors(interp, err_code);
+}
+
+#ifdef EXCLUSIONS
+int exclusion_parse(Tcl_Interp * interp, int argc, char ** argv)
+{
+  int i;
+  if(n_total_particles==0)
+  {
+    Tcl_AppendResult(interp, "ERROR!! Non bonded Interaction Exclusions could not be set as there are no particles in the system.\n", (char *) NULL);
+    Tcl_AppendResult(interp, "USAGE: inter exclusion {set|delete}", (char *) NULL);
+    return TCL_ERROR;
+  }
+  if(argc==0)
+  {
+    Tcl_AppendResult(interp, "ERROR!! Non bonded Interaction Exclusions could not be set.", (char *) NULL);
+    Tcl_AppendResult(interp, "USAGE: inter exclusion {set|delete}", (char *) NULL);
+    return TCL_ERROR;
+  }
+  else
+  {
+    for (i=0;i<argc;i++)
+    {
+      if      (ARG0_IS_S("set"))
+      {
+         /**Excludes non bonded interactions 1-2 and 1-3 only*/
+         /**parameter 4 in the function assumes that each particle can have a maximum of 4 distinguishable bond partners if only 1-2 and 1-3 interaction exclusions are considered.*/
+	 ia_excl = create_bond_list(4);
+	 mpi_bcast_parameter(FIELD_IA_EXCL);
+	 mpi_bcast_bond_partners(ia_excl, CURR_BOND_PARTNERS);
+	 i++;argc--;argv++;break;
+      }
+      else if (ARG0_IS_S("delete"))
+      {
+	 ia_excl = -1;
+	 mpi_bcast_parameter(FIELD_IA_EXCL);
+	 mpi_bcast_bond_partners(0, REALLOC_BOND_PARTNERS);
+	 i++;argc--;argv++;break;
+      }
+      else
+      {
+  	 Tcl_AppendResult(interp, "ERROR: Unknown 'interaction exclusion' argument \"", argv[i], "\"", (char *) NULL);
+	 return TCL_ERROR;
+      }
+    }
+
+  }
+
+  return TCL_OK;
+}
+
+int exclusion_print(Tcl_Interp *interp)
+{
+  int start=1;
+  if(ia_excl != -1) {
+      if (start) {
+        Tcl_AppendResult(interp, "{", (char *)NULL);
+        start = 0;
+      }
+      else
+        Tcl_AppendResult(interp, " {", (char *)NULL);
+      Tcl_AppendResult(interp, "exclusion set");
+      Tcl_AppendResult(interp, "}", (char *)NULL);
+  }
+  return (TCL_OK);
+}
+#endif
+
+int exclusion(ClientData _data, Tcl_Interp *interp, int argc, char **argv)
+{
+#ifdef EXCLUSIONS
+  if(n_total_particles==0)
+  {
+    Tcl_AppendResult(interp, "ERROR!! Non bonded Interaction Exclusions could be set only after all particles are set.\n", (char *) NULL);
+    Tcl_AppendResult(interp, "USAGE: exclude_nonbonded_ia {set|delete}", (char *) NULL);
+    return TCL_ERROR;
+  }
+  if(argc==1) return exclusion_print(interp);
+  else        return exclusion_parse(interp, argc-1, argv+1);
+#else
+  Tcl_AppendResult(interp, "EXCLUSIONS not compiled in", (char *) NULL);
+  return TCL_ERROR;
+#endif
 }

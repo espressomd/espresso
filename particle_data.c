@@ -24,7 +24,7 @@
 #include "global.h"
 #include "communication.h"
 #include "grid.h"
-#include "interaction_data.h" 
+#include "interaction_data.h"
 #include "integrate.h"
 #include "debug.h"
 #include "utils.h"
@@ -55,6 +55,7 @@ int max_local_particles = 0;
 Particle **local_particles = NULL;
 Particle *partCfg = NULL;
 int partCfgSorted = 0;
+int *partBondPartners = NULL;
 
 /************************************************
  * particle initialization functions
@@ -66,6 +67,11 @@ void init_particle(Particle *part)
   part->p.identity = -1;
   part->p.type     = 0;
   part->p.mol_id   = -1;
+
+#ifdef MASS
+  part->p.mass     = 1.0;
+#endif
+
 #ifdef ELECTROSTATICS
   part->p.q        = 0.0;
 #endif
@@ -74,6 +80,13 @@ void init_particle(Particle *part)
   part->r.p[0]     = 0.0;
   part->r.p[1]     = 0.0;
   part->r.p[2]     = 0.0;
+
+#ifdef BOND_CONSTRAINT
+  part->r.p_old[0] = 0.0;
+  part->r.p_old[1] = 0.0;
+  part->r.p_old[2] = 0.0;
+#endif
+
 #ifdef ROTATION
   part->r.quat[0]  = 1.0;
   part->r.quat[1]  = 0.0;
@@ -108,6 +121,7 @@ void init_particle(Particle *part)
   part->l.i[0]       = 0;
   part->l.i[1]       = 0;
   part->l.i[2]       = 0;
+
 #ifdef EXTERNAL_FORCES
   part->l.ext_flag   = 0;
   part->l.ext_force[0] = 0.0;
@@ -313,14 +327,14 @@ Particle *append_indexed_particle(ParticleList *l, Particle *part)
 {
   int re;
   Particle *p;
- 
+
   re = realloc_particlelist(l, ++l->n);
   p  = &l->part[l->n - 1];
 
   memcpy(p, part, sizeof(Particle));
 
-  if (re) 
-    update_local_particles(l); 
+  if (re)
+    update_local_particles(l);
   else
     local_particles[p->p.identity] = p;
   return p;
@@ -366,7 +380,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
     //fprintf(stderr, "%d: m_i_p: update source list after realloc\n",this_node);
     update_local_particles(sl); }
   else if ( src != end ) {
-    //fprintf(stderr, "%d: m_i_p: update loc_part entry for end particle (id %d)\n",this_node,src->p.identity);    
+    //fprintf(stderr, "%d: m_i_p: update loc_part entry for end particle (id %d)\n",this_node,src->p.identity);
     local_particles[src->p.identity] = src; }
   return dst;
 }
@@ -528,6 +542,10 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   sprintf(buffer, "%d", part.p.type);
   Tcl_AppendResult(interp, buffer, " molecule ", (char *)NULL);
   sprintf(buffer, "%d", part.p.mol_id);
+#ifdef MASS
+  Tcl_AppendResult(interp, buffer, " mass ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.p.mass, buffer);
+#endif
 #ifdef ELECTROSTATICS
   Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
   Tcl_PrintDouble(interp, part.p.q, buffer);
@@ -541,19 +559,19 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   /* print information about rotation */
   Tcl_AppendResult(interp, " quat ", (char *)NULL);
   part_print_quat(part, buffer, interp);
-             
+
   Tcl_AppendResult(interp, " omega ", (char *)NULL);
   part_print_omega(part, buffer, interp);
-               
+
   Tcl_AppendResult(interp, " torque ", (char *)NULL);
-  part_print_torque(part, buffer, interp);   
-#endif      
+  part_print_torque(part, buffer, interp);
+#endif
 
 #ifdef EXTERNAL_FORCES
   /* print external force information. */
   if (part.l.ext_flag & PARTICLE_EXT_FORCE) {
     Tcl_AppendResult(interp, " ext_force ", (char *)NULL);
-    part_print_ext_force(part, buffer, interp);  
+    part_print_ext_force(part, buffer, interp);
   }
 
   /* print fix information. */
@@ -603,14 +621,14 @@ int part_print_all(Tcl_Interp *interp)
 int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 		     int part_num)
 {
-  
+
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle part;
   IntList *bl = &(part.bl);
-    
+
   if (part_num > max_seen_particle) {
     Tcl_AppendResult(interp, "na", (char *)NULL);
-  
+
     return TCL_OK;
   }
 
@@ -625,11 +643,11 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("position"))
-      part_print_position(part, buffer, interp);   
+      part_print_position(part, buffer, interp);
     else if (ARG0_IS_S("force"))
-      part_print_f(part, buffer, interp);   
+      part_print_f(part, buffer, interp);
     else if (ARG0_IS_S("folded_position"))
-      part_print_folded_position(part, buffer, interp);   
+      part_print_folded_position(part, buffer, interp);
     else if (ARG0_IS_S("type")) {
       sprintf(buffer, "%d", part.p.type);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -638,6 +656,13 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       sprintf(buffer, "%d", part.p.mol_id);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
+#ifdef MASS
+    else if (ARG0_IS_S("mass")) {
+      Tcl_PrintDouble(interp, part.p.mass, buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+#endif
+
 #ifdef ELECTROSTATICS
     else if (ARG0_IS_S("q")) {
       Tcl_PrintDouble(interp, part.p.q, buffer);
@@ -645,16 +670,16 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     }
 #endif
     else if (ARG0_IS_S("v"))
-      part_print_v(part, buffer, interp);   
+      part_print_v(part, buffer, interp);
 
 #ifdef ROTATION
     else if (ARG0_IS_S("quat"))
-      part_print_quat(part, buffer, interp);   
+      part_print_quat(part, buffer, interp);
     else if (ARG0_IS_S("omega"))
-      part_print_omega(part, buffer, interp);   
+      part_print_omega(part, buffer, interp);
     else if (ARG0_IS_S("torque"))
-      part_print_torque(part, buffer, interp);   
-#endif         
+      part_print_torque(part, buffer, interp);
+#endif
 
 #ifdef EXTERNAL_FORCES
     else if (ARG0_IS_S("ext_force"))
@@ -672,12 +697,12 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     }
     if (argc > 1)
       Tcl_AppendResult(interp, " ", (char *)NULL);
-    
+
     argc--;
     argv++;
-    
+
   }
-  
+
   free_particle(&part);
   return TCL_OK;
 }
@@ -692,16 +717,16 @@ int part_cmd_delete(Tcl_Interp *interp, int argc, char **argv,
     sprintf(buffer, "particle %d", part_num);
     Tcl_AppendResult(interp, buffer, " does not exist and cannot be removed",
 		     (char *)NULL);
-    
+
     return TCL_ERROR;
   }
   if (argc > 0) {
     Tcl_AppendResult(interp, "part <id> delete does not expect parameters",
 		     (char *)NULL);
-    
+
     return TCL_ERROR;
   }
-  
+
   return TCL_OK;
 }
 
@@ -710,7 +735,7 @@ int part_parse_pos(Tcl_Interp *interp, int argc, char **argv,
 {
   double pos[3];
   int j;
-  
+
   *change = 3;
 
   if (argc < 3) {
@@ -732,6 +757,33 @@ int part_parse_pos(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
+#ifdef MASS
+int part_parse_mass(Tcl_Interp *interp, int argc, char **argv,
+		 int part_num, int * change)
+{
+    double mass;
+
+    *change = 1;
+
+    if (argc < 1) {
+      Tcl_AppendResult(interp, "mass requires 1 argument", (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    /* set mass */
+    if (! ARG0_IS_D(mass))
+      return TCL_ERROR;
+
+    if (set_particle_mass(part_num, mass) == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+      return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+#endif
+
 int part_parse_q(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
@@ -747,10 +799,10 @@ int part_parse_q(Tcl_Interp *interp, int argc, char **argv,
     /* set charge */
     if (! ARG0_IS_D(q))
       return TCL_ERROR;
-    
+
     if (set_particle_q(part_num, q) == TCL_ERROR) {
       Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-      
+
       return TCL_ERROR;
     }
 
@@ -766,7 +818,7 @@ int part_parse_v(Tcl_Interp *interp, int argc, char **argv,
 
   if (argc < 3) {
     Tcl_AppendResult(interp, "v requires 3 arguments", (char *) NULL);
-   
+
     return TCL_ERROR;
   }
 
@@ -779,15 +831,15 @@ int part_parse_v(Tcl_Interp *interp, int argc, char **argv,
 
   if (! ARG_IS_D(2, v[2]))
     return TCL_ERROR;
-      
+
   /* scale velocity with time step */
-  v[0] *= time_step; 
-  v[1] *= time_step; 
-  v[2] *= time_step; 
-  
+  v[0] *= time_step;
+  v[1] *= time_step;
+  v[2] *= time_step;
+
   if (set_particle_v(part_num, v) == TCL_ERROR) {
     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-    
+
     return TCL_ERROR;
   }
 
@@ -798,15 +850,15 @@ int part_parse_f(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
   double f[3];
-  
+
   *change = 3;
 
   if (argc < 3) {
     Tcl_AppendResult(interp, "f requires 3 arguments", (char *) NULL);
-   
+
     return TCL_ERROR;
   }
-  
+
   /* set f */
   if (! ARG_IS_D(0, f[0]))
     return TCL_ERROR;
@@ -821,10 +873,10 @@ int part_parse_f(Tcl_Interp *interp, int argc, char **argv,
   f[0] *= (0.5*time_step*time_step);
   f[1] *= (0.5*time_step*time_step);
   f[2] *= (0.5*time_step*time_step);
-  
+
   if (set_particle_f(part_num, f) == TCL_ERROR) {
     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-    
+
     return TCL_ERROR;
   }
 
@@ -835,7 +887,7 @@ int part_parse_type(Tcl_Interp *interp, int argc, char **argv,
 		    int part_num, int * change)
 {
   int type;
-  
+
   *change = 1;
 
   if (argc < 1 ) {
@@ -846,18 +898,18 @@ int part_parse_type(Tcl_Interp *interp, int argc, char **argv,
   /* set type */
   if (! ARG0_IS_I(type))
     return TCL_ERROR;
-      
+
   if (type < 0) {
     Tcl_AppendResult(interp, "invalid particle type", (char *) NULL);
-    return TCL_ERROR;	  
-  } 
-      
-  if (set_particle_type(part_num, type) == TCL_ERROR) {
-    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-    
     return TCL_ERROR;
   }
-  
+
+  if (set_particle_type(part_num, type) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+    return TCL_ERROR;
+  }
+
   return TCL_OK;
 }
 
@@ -865,7 +917,7 @@ int part_parse_mol_id(Tcl_Interp *interp, int argc, char **argv,
 		      int part_num, int * change)
 {
   int mid;
-  
+
   *change = 1;
 
   if (argc < 1 ) {
@@ -876,18 +928,18 @@ int part_parse_mol_id(Tcl_Interp *interp, int argc, char **argv,
   /* set mid */
   if (! ARG0_IS_I(mid))
     return TCL_ERROR;
-      
+
   if (mid < 0) {
     Tcl_AppendResult(interp, "invalid particle type", (char *) NULL);
-    return TCL_ERROR;	  
-  } 
-      
-  if (set_particle_mol_id(part_num, mid) == TCL_ERROR) {
-    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-    
     return TCL_ERROR;
   }
-  
+
+  if (set_particle_mol_id(part_num, mid) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+    return TCL_ERROR;
+  }
+
   return TCL_OK;
 }
 
@@ -897,7 +949,7 @@ int part_parse_quat(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   double quat[4];
-  
+
   *change = 4;
 
   if (argc < 4) {
@@ -913,16 +965,16 @@ int part_parse_quat(Tcl_Interp *interp, int argc, char **argv,
 
   if (! ARG_IS_D(2, quat[2]))
     return TCL_ERROR;
-    
+
   if (! ARG_IS_D(3, quat[3]))
-    return TCL_ERROR;  
-    
+    return TCL_ERROR;
+
   if (set_particle_quat(part_num, quat) == TCL_ERROR) {
    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-    
+
     return TCL_ERROR;
   }
-      
+
   return TCL_OK;
 }
 
@@ -930,7 +982,7 @@ int part_parse_omega(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   double omega[3];
-  
+
   *change = 3;
 
   if (argc < 3) {
@@ -946,13 +998,13 @@ int part_parse_omega(Tcl_Interp *interp, int argc, char **argv,
 
   if (! ARG_IS_D(2, omega[2]))
     return TCL_ERROR;
-    
+
    if (set_particle_omega(part_num, omega) == TCL_ERROR) {
    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-    
+
     return TCL_ERROR;
   }
-     
+
   return TCL_OK;
 }
 
@@ -960,7 +1012,7 @@ int part_parse_torque(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   double torque[3];
-  
+
   *change = 3;
 
   if (argc < 3) {
@@ -975,15 +1027,15 @@ int part_parse_torque(Tcl_Interp *interp, int argc, char **argv,
     return TCL_ERROR;
 
   if (! ARG_IS_D(2, torque[2]))
-    return TCL_ERROR; 
+    return TCL_ERROR;
 
   if (set_particle_torque(part_num, torque) == TCL_ERROR) {
    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-    
+
     return TCL_ERROR;
   }
-  
-      
+
+
   return TCL_OK;
 }
 #endif
@@ -1021,7 +1073,7 @@ int part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
     return TCL_ERROR;
   }
-      
+
   return TCL_OK;
 }
 
@@ -1042,7 +1094,7 @@ int part_parse_fix(Tcl_Interp *interp, int argc, char **argv,
   }
   else {
     if (argc < 3){
-      Tcl_AppendResult(interp, "fix has either 0 or 3 arguments: { <fixed_coord> <fixed_coord> <fixed_coord> }", (char *)NULL);    
+      Tcl_AppendResult(interp, "fix has either 0 or 3 arguments: { <fixed_coord> <fixed_coord> <fixed_coord> }", (char *)NULL);
       return TCL_ERROR;
     }
     /* first one already read in the if statement above */
@@ -1058,7 +1110,7 @@ int part_parse_fix(Tcl_Interp *interp, int argc, char **argv,
       ext_flag |= COORD_FIXED(i);
 
   if (set_particle_fix(part_num, ext_flag) == TCL_ERROR) {
-    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);	
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
     return TCL_ERROR;
   }
 
@@ -1072,7 +1124,7 @@ int part_parse_unfix(Tcl_Interp *interp, int argc, char **argv,
 
   if (set_particle_fix(part_num, 0) == TCL_ERROR) {
     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-    
+
     return TCL_ERROR;
   }
 
@@ -1107,13 +1159,13 @@ int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
     argv++;
     *change += 1;
   }
-  
+
   /* check type_num */
   if (argc <= 1 || ! ARG0_IS_I(type_num)) {
     if (delete == 0)
       return TCL_ERROR;
     bond = NULL;
-   
+
     // since there is not even a type...
     n_partners = -1;
   } else {
@@ -1122,7 +1174,7 @@ int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 		       "(Set bonded interaction parameters first)", (char *) NULL);
       return TCL_ERROR;
     }
-    /* check partners */ 
+    /* check partners */
     n_partners = bonded_ia_params[type_num].num;
     if(argc < 1+n_partners) {
       char buffer[256 + 2*TCL_INTEGER_SPACE];
@@ -1153,7 +1205,7 @@ int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
       j++;
     }
   }
-  /* set/delete bond */ 
+  /* set/delete bond */
   if (change_particle_bond(part_num, bond, delete) != TCL_OK) {
     Tcl_AppendResult(interp, "bond to delete did not exist", (char *)NULL);
     free(bond);
@@ -1191,7 +1243,10 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
     else if (ARG0_IS_S("molecule_id"))
       err = part_parse_mol_id(interp, argc-1, argv+1, part_num, &change);
-
+#ifdef MASS
+    else if (ARG0_IS_S("mass"))
+      err = part_parse_mass(interp, argc-1, argv+1, part_num, &change);
+#endif
     else if (ARG0_IS_S("q"))
       err = part_parse_q(interp, argc-1, argv+1, part_num, &change);
 
@@ -1213,7 +1268,7 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       err = part_parse_torque(interp, argc-1, argv+1, part_num, &change);
 
 #endif
-    
+
 #ifdef EXTERNAL_FORCES
 
     else if (ARG0_IS_S("unfix"))
@@ -1226,7 +1281,7 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       err = part_parse_ext_force(interp, argc-1, argv+1, part_num, &change);
 
 #endif
-   
+
     else if (ARG0_IS_S("bond"))
       err = part_parse_bond(interp, argc-1, argv+1, part_num, &change);
 
@@ -1267,7 +1322,7 @@ int part(ClientData data, Tcl_Interp *interp,
 
       return TCL_OK;
     }
-    
+
     if (ARG1_IS_I(part_num)) {
       if (printParticleToResult(interp, part_num) == TCL_ERROR)
 	Tcl_AppendResult(interp, "na", (char *)NULL);
@@ -1317,7 +1372,7 @@ int place_particle(int part, double p[3])
   if (part < 0)
     return TCL_ERROR;
 
-  if (!particle_node)      
+  if (!particle_node)
     build_particle_node();
 
   pnode = (part <= max_seen_particle) ? particle_node[part] : -1;
@@ -1373,6 +1428,24 @@ int set_particle_f(int part, double F[3])
   mpi_send_f(pnode, part, F);
   return TCL_OK;
 }
+
+#ifdef MASS
+int set_particle_mass(int part, double mass)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_mass(pnode, part, mass);
+  return TCL_OK;
+}
+#endif
 
 int set_particle_q(int part, double q)
 {
@@ -1524,7 +1597,7 @@ int change_particle_bond(int part, int *bond, int delete)
 
   if (pnode == -1)
     return TCL_ERROR;
-  if(delete != 0 || bond==NULL) { 
+  if(delete != 0 || bond==NULL) {
     delete = 1; bond=NULL; }
   else {
     if(bond[0] < 0 ) {
@@ -1534,7 +1607,7 @@ int change_particle_bond(int part, int *bond, int delete)
       fprintf(stderr, "ERROR: Failed upon changing bonds of particle %d due to currently unknown bonded interaction %d!\n", part,bond[0]);
       fprintf(stderr, "       Specify its parameters first (using 'inter <bond_type_number> { FENE | Angle | ... } <parameters> ...') "
 	      "before adding bonds of that type!\n");
-      return TCL_ERROR; 
+      return TCL_ERROR;
     }
   }
   return mpi_send_bond(pnode, part, bond, delete);
@@ -1578,7 +1651,7 @@ void local_remove_particle(int part)
   int ind, c;
   Particle *p = local_particles[part];
   ParticleList *pl = NULL, *tmp;
-  
+
   /* the tricky - say ugly - part: determine
      the cell the particle is located in by checking
      wether the particle address is inside the array */
@@ -1652,6 +1725,9 @@ void local_place_particle(int part, double p[3], int new)
 
   memcpy(pt->r.p, pp, 3*sizeof(double));
   memcpy(pt->l.i, i, 3*sizeof(int));
+  #ifdef BOND_CONSTRAINT
+    memcpy(pt->r.p_old, pp, 3*sizeof(double));
+  #endif
 }
 
 void local_remove_all_particles()
@@ -1674,7 +1750,7 @@ void local_remove_all_particles()
 
 void local_rescale_particles(int dir, double scale) {
   Particle *p,*p1;
-  int j, c; 
+  int j, c;
   Cell *cell;
 
   for (c = 0; c < local_cells.n; c++) {
@@ -1682,7 +1758,7 @@ void local_rescale_particles(int dir, double scale) {
     p  = cell->part;
     for(j = 0; j < cell->n; j++) {
       p1 = &p[j];
-      if(dir < 3) 
+      if(dir < 3)
 	p1->r.p[dir] *= scale;
       else {
 	p1->r.p[0] *= scale;
@@ -1694,7 +1770,7 @@ void local_rescale_particles(int dir, double scale) {
 }
 
 
-void added_particle(int part) 
+void added_particle(int part)
 {
   int i;
 
@@ -1715,7 +1791,7 @@ int local_change_bond(int part, int *bond, int delete)
   Particle *p;
   int bond_size;
   int i;
- 
+
   p = local_particles[part];
   if (delete)
     return try_delete_bond(p, bond);
@@ -1741,7 +1817,7 @@ void remove_all_bonds_to(int identity)
     for (p = 0; p < np; p++) {
       IntList *bl = &part[p].bl;
       int i, j, partners;
-      
+
       for (i = 0; i < bl->n;) {
 	partners = bonded_ia_params[bl->e[i]].num;
 	for(j = 1; j <= partners; j++)
@@ -1855,3 +1931,172 @@ void recv_particles(ParticleList *particles, int node)
     realloc_intlist(&local_bi, 0);
 }
 
+
+/**truncates the size (=number of bond partners) for each particle's bond list to w*/
+void recreate_bond_list(int w)
+{
+
+  int *tmp_partBondPartners;
+  int  i, j=0;
+  tmp_partBondPartners = (int *) malloc(n_total_particles*w*sizeof(int));
+
+  for(i=0;i<n_total_particles*w;i++)
+    *(tmp_partBondPartners+j)=-1;
+
+
+  for(i=0;i<n_total_particles;i++)
+  {
+    for(j=0;j<w;j++)
+       *(tmp_partBondPartners+i*w+j)= *(partBondPartners+i*(w+1)+j);
+  }
+
+  mpi_bcast_bond_partners(w, REALLOC_BOND_PARTNERS);
+
+  for(i=0;i<n_total_particles*w;i++)
+    *(partBondPartners+i) = *(tmp_partBondPartners+i);
+
+  free(tmp_partBondPartners);
+  tmp_partBondPartners=NULL;
+}
+
+/**Resorts the *partBondPartners array to minimise memory usage. Input parameter: current size of bondlist for each particle
+returns 0 if resort is not possible and 1 if possible. */
+int resort_bond_list(int w)
+{
+  int i, j, check=0;
+  if(w!=1)
+  {
+    for(i=0;i<n_total_particles;i++)
+    {
+      if (*(partBondPartners+i*w+w-1) != -1)
+      {
+        int flag=0;
+	for(j=0;j<w;j++)
+        {
+	   if(*(partBondPartners + *(partBondPartners+i*w+w-1)*w + j) == i)
+	   {
+	     *(partBondPartners + i*w + w - 1) = -1;
+	     check = 1;
+	     flag=1;
+	     break;
+	   }
+        }
+	if(!flag)
+	{
+	  for(j=0;j<w-1;j++)
+	  {
+	    if(*(partBondPartners + *(partBondPartners+i*w+w-1)*w + j) == -1)
+	    {
+	       *(partBondPartners + *(partBondPartners + i*w + w - 1)*w + j) = i;
+	       *(partBondPartners + i*w + w - 1) = -1;
+	       check = 1;
+	       break;
+
+	    }
+
+	  }
+	}
+
+      }
+    }
+  }
+  return(check);
+}
+
+/**returns the number of integers(or size) allocated for each particle*/
+int create_bond_list(int w)
+{
+  Particle *p;
+  int i=0, j, k, l, itr, loc;
+  IntList bl_tmp;
+  Particle *pcfg;
+  pcfg = (Particle *) malloc(n_total_particles*sizeof(Particle));
+
+  mpi_get_particles(pcfg, &bl_tmp);
+
+  if (n_total_particles != max_seen_particle + 1)
+    return 0;
+
+  mpi_bcast_bond_partners(w, REALLOC_BOND_PARTNERS);
+  for(i=0;i<w*n_total_particles;i++)
+    *(partBondPartners+i)=-1;
+
+  for (i=n_total_particles-1;i>=0;i--)
+  {
+    p = &pcfg[i];
+    loc = w*p->p.identity;
+    k=0;
+    j=0;
+      while (k<p->bl.n)
+      {
+        l=0;
+	while(l<bonded_ia_params[p->bl.e[k]].num && bonded_ia_params[p->bl.e[k]].num!=3)
+        {
+	   int condition = 0,jj ;
+	   for(jj=0;jj<j;jj++)
+	   {
+	      condition = condition || (*(partBondPartners + loc+jj) == p->bl.e[k+l+1]);
+	      if(condition) break;
+	   }
+	   if(!condition)
+	   {
+	     *(partBondPartners+loc+j) = p->bl.e[k+l+1];
+	     j++;
+	   }
+
+	   l++;
+        }
+        k+=(bonded_ia_params[p->bl.e[k]].num+1);
+
+      }
+  }
+  free(pcfg);
+  pcfg=NULL;
+  itr=1;
+  while(itr)
+  {
+    int check = 1;
+    for(i=w-1;i<n_total_particles;i=i+w)
+    {
+      check = check && (*(partBondPartners+i)==-1);
+      if(!check) break;
+    }
+    if(check)
+    {
+     recreate_bond_list(--w);
+     itr=1;
+    }
+    else
+     itr=resort_bond_list(w);
+
+  }
+  return(w);
+}
+
+#ifdef EXCLUSIONS
+/**returns 1 if i and j are bond partners, otherwise 0*/
+int is_bond_partner(int i, int j)
+{
+  int check=0, k;
+  if(ia_excl!=-1)
+  {
+    //checking if j is a bond partner of i
+    for(k=0;k<ia_excl;k++)
+    {
+      check = check || (*(partBondPartners + (i*ia_excl) +k) == j);
+      if(check) break;
+    }
+    //if j is not a bond partner of i then check if i is a bond partner of j
+    if(!check)
+    {
+      for(k=0;k<ia_excl;k++)
+      {
+        check = check || (*(partBondPartners + (j*ia_excl) +k) == i);
+        if(check) break;
+      }
+    }
+  }
+  VERLET_TRACE(if(check) fprintf(stderr,"%d: %d-%d pair excluded from verlet list \n", this_node, i, j));
+  return(check);
+}
+#endif

@@ -260,7 +260,7 @@ static void print_detailed_pressure(Tcl_Interp *interp)
 
 int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_comp)
 {
-  /* 'analyze pressure [{ fene <type_num> | harmonic <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | gb <type1> <type2> | coulomb | ideal | total }]' */
+  /* 'analyze pressure [{ bond <type_num> | nonbonded <type1> <type2> | coulomb | ideal | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   int i, j;
   double value, p_vel[3];
@@ -315,6 +315,7 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_co
     }
     else if (ARG0_IS_S("nonbonded") ||
 	     ARG0_IS_S("lj") ||
+	     ARG0_IS_S("buckingham") ||
 	     ARG0_IS_S("lj-cos") ||
 	     ARG0_IS_S("tabulated") ||
 	     ARG0_IS_S("gb")) {
@@ -402,7 +403,7 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv)
   int *elements;
   double *volumes;
 
-  if (ARG0_IS_S("sphere")) { 
+  if (ARG0_IS_S("sphere")) {
     argc--; argv++;
     if(argc < 6) { Tcl_AppendResult(interp,"Too few arguments! Usage: 'analyze bins sphere <r_min> <r_max> <r_bins> <center1> <center2> <center3> '",(char *)NULL); return (TCL_ERROR); }
     if( argc>0 ) { if (!ARG0_IS_D(r_min)) return (TCL_ERROR); argc--; argv++; }
@@ -411,14 +412,14 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv)
     if( argc>0 ) { if (!ARG0_IS_D(center[0])) return (TCL_ERROR); argc--; argv++; }
     if( argc>0 ) { if (!ARG0_IS_D(center[1])) return (TCL_ERROR); argc--; argv++; }
     if( argc>0 ) { if (!ARG0_IS_D(center[2])) return (TCL_ERROR); argc--; argv++; }
-    
-    
+
+
     /* if not given use default */
     if(r_max == -1.0) r_max = min_box_l/2.0;
     if(r_bins == -1) r_bins = n_total_particles / 20;
-    
+
     /* give back what you do */
-    
+
     elements = malloc(n_total_particles*sizeof(int));
     new_bin = malloc(r_bins*sizeof(int));
     volumes = malloc(r_bins*sizeof(double));
@@ -430,7 +431,7 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv)
       sprintf(buffer,"%le",volumes[0]);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
       Tcl_AppendResult(interp, " { ", (char *)NULL);
-      /* i->particles, j->bin, k->particle/bin */ 
+      /* i->particles, j->bin, k->particle/bin */
       for(i=0,j=0,k=0;i<n_total_particles;i++,k++){
 	if(k==new_bin[j] || new_bin[j] == 0){
 	  /* if all bins are full, rest of particles are outside r_min/r_max */
@@ -470,8 +471,8 @@ int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
   init_intlist(&p1);
 
   if(argc < 3) { Tcl_AppendResult(interp,"Too few arguments! Usage: 'analyze p_IK1 <bin_volume> { <ind_list> } <all>'",(char *)NULL); return (TCL_ERROR); }
-  if ((!ARG0_IS_D(volume)) || (!ARG1_IS_INTLIST(p1)) || (!ARG_IS_I(2, flag))) { 
-    Tcl_ResetResult(interp); Tcl_AppendResult(interp,"usage: 'analyze p_IK1 <bin_volume> { <ind_list> } <all>'",(char *)NULL); return (TCL_ERROR); 
+  if ((!ARG0_IS_D(volume)) || (!ARG1_IS_INTLIST(p1)) || (!ARG_IS_I(2, flag))) {
+    Tcl_ResetResult(interp); Tcl_AppendResult(interp,"usage: 'analyze p_IK1 <bin_volume> { <ind_list> } <all>'",(char *)NULL); return (TCL_ERROR);
   }
 
   init_p_tensor();
@@ -493,14 +494,14 @@ int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
     Tcl_PrintDouble(interp, value, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   }
-  Tcl_AppendResult(interp, "} ", (char *)NULL); 
+  Tcl_AppendResult(interp, "} ", (char *)NULL);
 
   Tcl_AppendResult(interp, "{ ideal ", (char *)NULL);
   for(j=0; j<9; j++) {
     Tcl_PrintDouble(interp, p_tensor.data.e[j], buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   }
-  Tcl_AppendResult(interp, "} ", (char *)NULL); 
+  Tcl_AppendResult(interp, "} ", (char *)NULL);
 
   for(i=0;i<n_bonded_ia;i++) {
     sprintf(buffer, "%d ", i);
@@ -510,7 +511,7 @@ int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
     }
     Tcl_AppendResult(interp, "} ", (char *)NULL);
-  } 
+  }
 
   for (i = 0; i < n_particle_types; i++)
     for (j = i; j < n_particle_types; j++) {
@@ -529,12 +530,12 @@ int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
 
 #ifdef ELECTROSTATICS
   if(coulomb.bjerrum > 0.0) {
-    Tcl_AppendResult(interp, "{ coulomb ", (char *)NULL); 
+    Tcl_AppendResult(interp, "{ coulomb ", (char *)NULL);
     for(j=0; j<9; j++) {
       Tcl_PrintDouble(interp, p_tensor.coulomb[j], buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
-    Tcl_AppendResult(interp, "} ", (char *)NULL); 
+    Tcl_AppendResult(interp, "} ", (char *)NULL);
   }
 #endif
 
@@ -591,7 +592,7 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
     /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
     for(k=0;k<3;k++)
       for(l=0;l<3;l++)
-	p_tensor.data.e[k*3 + l] += (p1.m.v[k])*(p1.m.v[l]);
+	p_tensor.data.e[k*3 + l] += (p1.m.v[k])*(p1.m.v[l])*PMASS(p1);
 
     /* bonded interactions */
     i=0;
@@ -643,6 +644,14 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
 	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*d[l];
 	  break;
 #endif
+        case BONDED_IA_ANGLE:
+          i++; break;
+        case BONDED_IA_DIHEDRAL:
+          i+=2; break;
+#ifdef BOND_CONSTRAINT
+	case BONDED_IA_RIGID_BOND:
+          i+=2; break;
+#endif
 	default :
 	  fprintf(stderr,"WARNING: Bond type %d of atom %d unhandled\n",type_num, p1.p.identity);
 	  break;
@@ -667,15 +676,19 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
       dist  = sqrt(dist2);
 
       /* non-bonded interactions */
-      if (checkIfParticlesInteract(p1.p.type, p2.p.type)) { 
+      if (checkIfParticlesInteract(p1.p.type, p2.p.type)) {
 	ia_params = get_ia_param(p1.p.type,p2.p.type);
 
-	for (j = 0; j < 3; j++)
-	  force[j] = 0;
+        for (j = 0; j < 3; j++)
+          force[j] = 0;
 
 	/* lennnard jones */
 #ifdef LENNARD_JONES
 	add_lj_pair_force(&p1,&p2,ia_params,d,dist,force);
+#endif
+	/* buckingham potential */
+#ifdef BUCKINGHAM
+	add_buck_pair_force(&p1,&p2,ia_params,d,dist,force);
 #endif
 	/* lennard jones cosine */
 #ifdef LJCOS

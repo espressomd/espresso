@@ -126,6 +126,14 @@ void mpi_send_v(int node, int part, double v[3]);
 */
 void mpi_send_f(int node, int part, double F[3]);
 
+/** Issue REQ_SET_M: send particle mass.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param m its new mass.
+*/
+void mpi_send_mass(int node, int part, double mass);
+
 /** Issue REQ_SET_Q: send particle charge.
     Also calls \ref on_particle_change.
     \param part the particle.
@@ -278,6 +286,9 @@ void mpi_random_stat(int cnt, RandomStatus *stat);
 /** Issue REQ_BCAST_LJFORCECAP: initialize LJ force capping. */
 void mpi_lj_cap_forces(double force_cap);
 
+/** Issue REQ_BCAST_BUCKFORCECAP: initialize Buckingham force capping. */
+void mpi_buck_cap_forces(double force_cap);
+
 /** Issue REQ_BCAST_TABFORCECAP: initialize tabulated force capping. */
 void mpi_tab_cap_forces(double force_cap);
 
@@ -299,6 +310,7 @@ void mpi_bcast_cell_structure(int cs);
 /** Issue REQ_BCAST_NPTISO_GEOM: broadcast nptiso geometry parameter to all nodes. */
 void mpi_bcast_nptiso_geom(void);
 
+
 /** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are
     in sync with the topology.  Note that this only makes sense if you
     have a simple topology such that each particle can only belong to
@@ -307,6 +319,10 @@ void mpi_update_mol_ids(void);
 
 /** Issue REQ_SYNC_TOPO: Update the molecules ids to that they correspond to the topology */
 int mpi_sync_topo_part_info(void);
+
+/** Issue REQ_BCAST_BOND_PARTNERS: Broadcast the sorted array containing the mapping of
+    particle and its bond partners */
+void mpi_bcast_bond_partners(int width, int parm);
 
 /** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result
     to these error messages. This called only on the master node.

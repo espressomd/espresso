@@ -38,6 +38,7 @@
 #include "domain_decomposition.h"
 #include "layered.h"
 #include "nemd.h"
+#include "rattle.h"
 #include "errorhandling.h"
 
 /************************************************
@@ -385,6 +386,10 @@ void integrate_vv(int n_steps)
   for(i=0;i<n_steps;i++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
 
+#ifdef BOND_CONSTRAINT
+    save_old_pos();
+#endif
+
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
        v(t+0.5*dt) = v(t) + 0.5*dt * f(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)
@@ -398,7 +403,13 @@ void integrate_vv(int n_steps)
     else
       propagate_vel_pos();
 #ifdef ROTATION
-    propagate_omega_quat(); 
+    propagate_omega_quat();
+#endif
+
+#ifdef BOND_CONSTRAINT
+    /**Correct those particle positions that participate in a rigid/constrained bond */
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    correct_pos_shake();
 #endif
 
 #ifdef ELECTROSTATICS
@@ -429,6 +440,11 @@ void integrate_vv(int n_steps)
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
+
+#ifdef BOND_CONSTRAINT
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    correct_vel_shake();
+#endif
 
 #ifdef ELECTROSTATICS
     if(coulomb.method == COULOMB_MAGGS) {
@@ -546,9 +562,9 @@ void rescale_forces()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-      p[i].f.f[0] *= scale;
-      p[i].f.f[1] *= scale;
-      p[i].f.f[2] *= scale;
+      p[i].f.f[0] *= scale/PMASS(p[i]);
+      p[i].f.f[1] *= scale/PMASS(p[i]);
+      p[i].f.f[2] *= scale/PMASS(p[i]);
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
@@ -556,7 +572,7 @@ void rescale_forces()
   }
 }
 
-void rescale_forces_propagate_vel() 
+void rescale_forces_propagate_vel()
 {
   Cell *cell;
   Particle *p;
@@ -576,10 +592,11 @@ void rescale_forces_propagate_vel()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-      /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated */
-      p[i].f.f[0] *= scale;
-      p[i].f.f[1] *= scale;
-      p[i].f.f[2] *= scale;
+
+      /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
+      p[i].f.f[0] *= scale/PMASS(p[i]);
+      p[i].f.f[1] *= scale/PMASS(p[i]);
+      p[i].f.f[2] *= scale/PMASS(p[i]);
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
@@ -589,8 +606,8 @@ void rescale_forces_propagate_vel()
 #endif
 #ifdef NPT
 	  if(integ_switch == INTEG_METHOD_NPT_ISO && ( nptiso.geometry & nptiso.nptgeom_dir[j] )) {
-	    nptiso.p_vel[j] += SQR(p[i].m.v[j]);
-	    p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j]); 	    
+	    nptiso.p_vel[j] += SQR(p[i].m.v[j])*PMASS(p[i]);
+	    p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/PMASS(p[i]);
 	  }
 	  else
 #endif
@@ -642,7 +659,7 @@ void propagate_press_box_pos_and_rescale_npt()
     int i, j, np, c;
     double scal[3], L_new=0.0;
 
-    rebuild_verletlist = 0; 
+    rebuild_verletlist = 0;
 
     /* finalize derivation of p_inst */
     finalize_p_inst_npt();
@@ -742,19 +759,20 @@ void propagate_vel()
 	  {
 #ifdef NPT
 	    if(integ_switch == INTEG_METHOD_NPT_ISO && (nptiso.geometry & nptiso.nptgeom_dir[j] )) {
-	      p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j]);
-	      nptiso.p_vel[j] += SQR(p[i].m.v[j]); }
+	      p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/PMASS(p[i]);
+	      nptiso.p_vel[j] += SQR(p[i].m.v[j])*PMASS(p[i]);
+	    }
 	    else
 #endif
 	      /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
 	      p[i].m.v[j] += p[i].f.f[j];
-	    
+
 	    /* SPECIAL TASKS in particle loop */
 #ifdef NEMD
 	    if(j==0) nemd_get_velocity(p[i]);
 #endif
 	  }
-	
+
 	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
@@ -763,7 +781,7 @@ void propagate_vel()
     }
   }
 #ifdef ADDITIONAL_CHECKS
-  force_and_velocity_display(); 
+  force_and_velocity_display();
 #endif
 
   /* SPECIAL TASKS after velocity propagation */
@@ -773,10 +791,10 @@ void propagate_vel()
 #endif
 }
 
-void propagate_pos() 
+void propagate_pos()
 {
   INTEG_TRACE(fprintf(stderr,"%d: propagate_pos:\n",this_node));
-  if(integ_switch == INTEG_METHOD_NPT_ISO) 
+  if(integ_switch == INTEG_METHOD_NPT_ISO)
     /* Special propagator for NPT ISOTROPIC */
     /* Propagate pressure, box_length (2 times) and positions, rescale
        positions and velocities and check verlet list criterion (only NPT) */
@@ -785,7 +803,7 @@ void propagate_pos()
     Cell *cell;
     Particle *p;
     int c, i, j, np;
-    
+
     rebuild_verletlist = 0;
 
     for (c = 0; c < local_cells.n; c++) {
@@ -795,26 +813,26 @@ void propagate_pos()
       for(i = 0; i < np; i++) {
 	for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
-	  if (!(p[i].l.ext_flag & COORD_FIXED(j)))	
+	  if (!(p[i].l.ext_flag & COORD_FIXED(j)))
 #endif
 	    {
 #ifdef NEMD
 	      /* change momentum of each particle in top and bottom slab */
 	      if(j==0) nemd_add_velocity(&p[i]);
-#endif	    
+#endif
 	      /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
 	      p[i].r.p[j] += p[i].m.v[j];
 	    }
 	}
 	/* Verlet criterion check */
-	if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) rebuild_verletlist = 1; 
+	if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) rebuild_verletlist = 1;
       }
     }
   }
   announce_rebuild_vlist();
 }
 
-void propagate_vel_pos() 
+void propagate_vel_pos()
 {
   Cell *cell;
   Particle *p;
@@ -831,7 +849,7 @@ void propagate_vel_pos()
     for(i = 0; i < np; i++) {
       for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
-	if (!(p[i].l.ext_flag & COORD_FIXED(j)))	
+	if (!(p[i].l.ext_flag & COORD_FIXED(j)))
 #endif
 	  {
 	    /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
@@ -841,16 +859,16 @@ void propagate_vel_pos()
 	    p[i].r.p[j] += p[i].m.v[j];
 	  }
       }
- 
+
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
-      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2])); 
-      
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
+
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
 #endif
 
       /* Verlet criterion check */
-      if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) rebuild_verletlist = 1; 
+      if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) rebuild_verletlist = 1;
     }
   }
 
@@ -861,7 +879,7 @@ void propagate_vel_pos()
 #endif
 }
 
-void force_and_velocity_check(Particle *p) 
+void force_and_velocity_check(Particle *p)
 {
 #ifdef ADDITIONAL_CHECKS
   int i;
@@ -879,25 +897,25 @@ void force_and_velocity_check(Particle *p)
 
   /* force check */
   db_force = SQR(p->f.f[0])+SQR(p->f.f[1])+SQR(p->f.f[2]);
-  if(db_force > skin2) 
+  if(db_force > skin2)
     fprintf(stderr,"%d: Part %d has force %f (%f,%f,%f)\n",
 	    this_node,p->p.identity,sqrt(db_force),
 	    p->f.f[0],p->f.f[1],p->f.f[2]);
   if(db_force > db_max_force) { db_max_force=db_force; db_maxf_id=p->p.identity; }
   /* velocity check */
   db_vel   = SQR(p->m.v[0])+SQR(p->m.v[1])+SQR(p->m.v[2]);
-  if(db_vel > skin2) 
+  if(db_vel > skin2)
 	fprintf(stderr,"%d: Part %d has velocity %f (%f,%f,%f)\n",
 		this_node,p->p.identity,sqrt(db_vel),
 		p->m.v[0],p->m.v[1],p->m.v[2]);
-  if(db_vel > db_max_vel) { db_max_vel=db_vel; db_maxv_id=p->p.identity; } 
+  if(db_vel > db_max_vel) { db_max_vel=db_vel; db_maxv_id=p->p.identity; }
 #endif
 }
 
-void force_and_velocity_display() 
+void force_and_velocity_display()
 {
 #ifdef ADDITIONAL_CHECKS
-  if(db_max_force > skin2) 
+  if(db_max_force > skin2)
     fprintf(stderr,"%d: max_force=%e, part=%d f=(%e,%e,%e)\n",this_node,
 	    sqrt(db_max_force),db_maxf_id,local_particles[db_maxf_id]->f.f[0],
 	    local_particles[db_maxf_id]->f.f[1],local_particles[db_maxf_id]->f.f[2]);

@@ -77,10 +77,12 @@ struct MDHeader {
 #define FY    7
 /** Row contains the z component of the force. */
 #define FZ    8
+/** Row contains the mass. */
+#define MASSES 9
 /** Row contains the charge. */
-#define Q     9
+#define Q     10
 /** Row contains the type. */
-#define TYPE  10
+#define TYPE  11
 /*@}*/
 
 /**************************************************************

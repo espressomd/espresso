@@ -64,6 +64,11 @@ int writemd(ClientData data, Tcl_Interp *interp,
     else if (!strncmp(*argv, "posz", strlen(*argv))) {
       row[i] = POSZ;
     }
+#ifdef MASS
+    else if (!strncmp(*argv, "mass", strlen(*argv))) {
+      row[i] = MASSES;
+    }
+#endif
     else if (!strncmp(*argv, "q", strlen(*argv))) {
       row[i] = Q;
     }
@@ -125,6 +130,9 @@ int writemd(ClientData data, Tcl_Interp *interp,
 	case FX:   Tcl_Write(channel, (char *)&data.f.f[0], sizeof(double)); break;
 	case FY:   Tcl_Write(channel, (char *)&data.f.f[1], sizeof(double)); break;
 	case FZ:   Tcl_Write(channel, (char *)&data.f.f[2], sizeof(double)); break;
+#ifdef MASS
+	case MASSES: Tcl_Write(channel, (char *)&data.p.mass, sizeof(double)); break;
+#endif
 #ifdef ELECTROSTATICS
 	case Q:    Tcl_Write(channel, (char *)&data.p.q, sizeof(double)); break;
 #endif
@@ -145,7 +153,7 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
 {
   char *row;
   int pos_row[3] = { -1 }, v_row[3] = { -1 }, f_row[3] = { -1 };
-  int av_pos = 0, av_v = 0, av_f = 0, av_q = 0, av_type = 0;
+  int av_pos = 0, av_v = 0, av_mass=0, av_f = 0, av_q = 0, av_type = 0;
   int node, i;
   struct MDHeader header;
   Particle data;
@@ -191,8 +199,9 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
     case   FX:   f_row[0] = i; break;
     case   FY:   f_row[1] = i; break;
     case   FZ:   f_row[2] = i; break;
-    case    Q:   av_q = 1; break;
-    case TYPE:   av_type = 1; break;
+    case MASSES: av_mass  = 1; break;
+    case    Q:   av_q     = 1; break;
+    case TYPE:   av_type  = 1; break;
     }
   }
 
@@ -234,6 +243,15 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
       case   FX: Tcl_Read(channel, (char *)&data.f.f[0], sizeof(double)); break;
       case   FY: Tcl_Read(channel, (char *)&data.f.f[1], sizeof(double)); break;
       case   FZ: Tcl_Read(channel, (char *)&data.f.f[2], sizeof(double)); break;
+      case MASSES:
+#ifdef MASS
+          Tcl_Read(channel, (char *)&data.p.mass, sizeof(double)); break;
+#else
+          {
+              double dummy_mass;
+              Tcl_Read(channel, (char *)&dummy_mass, sizeof(double)); break;
+          }
+#endif
 #ifdef ELECTROSTATICS
       case    Q: Tcl_Read(channel, (char *)&data.p.q, sizeof(double)); break;
 #endif
@@ -241,7 +259,7 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
       }
     }
 
-    node = (data.p.identity <= max_seen_particle) ? particle_node[data.p.identity] : -1; 
+    node = (data.p.identity <= max_seen_particle) ? particle_node[data.p.identity] : -1;
     if (node == -1) {
       if (!av_pos) {
 	Tcl_AppendResult(interp, "new particle without position data",
@@ -253,6 +271,10 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
 
     if (av_pos)
       place_particle(data.p.identity, data.r.p);
+#ifdef MASS
+    if (av_mass)
+      set_particle_mass(data.p.identity, data.p.mass);
+#endif
 #ifdef ELECTROSTATICS
     if (av_q)
       set_particle_q(data.p.identity, data.p.q);

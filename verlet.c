@@ -125,8 +125,13 @@ void build_verlet_lists()
 	}
 	/* Loop neighbor cell particles */
 	for(j = j_start; j < np2; j++) {
-	  dist2 = distance2(p1[i].r.p, p2[j].r.p);
-	  if(dist2 <= max_range_non_bonded2) add_pair(pl, &p1[i], &p2[j]); 
+#ifdef EXCLUSIONS
+          if(!is_bond_partner(p1[i].p.identity, p2[j].p.identity))
+#endif
+	  {
+	    dist2 = distance2(p1[i].r.p, p2[j].r.p);
+	    if(dist2 <= max_range_non_bonded2) add_pair(pl, &p1[i], &p2[j]);
+	  }
 	}
       }
       resize_verlet_list(pl);
@@ -221,6 +226,10 @@ void build_verlet_lists_and_calc_verlet_ia()
 	}
 	/* Loop neighbor cell particles */
 	for(j = j_start; j < np2; j++) {
+#ifdef EXCLUSIONS
+          if(!is_bond_partner(p1[i].p.identity, p2[j].p.identity))
+#endif
+	  {
 	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
 
 	  VERLET_TRACE(fprintf(stderr,"%d: pair %d %d has distance %f\n",this_node,p1[i].p.identity,p2[j].p.identity,sqrt(dist2)));
@@ -228,10 +237,11 @@ void build_verlet_lists_and_calc_verlet_ia()
 	    ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
 	    ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
 
-	    add_pair(pl, &p1[i], &p2[j]); 
+	    add_pair(pl, &p1[i], &p2[j]);
 	    /* calc non bonded interactions */
 	    add_non_bonded_pair_force(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
 	  }
+	 }
 	}
       }
       resize_verlet_list(pl);

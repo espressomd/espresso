@@ -23,6 +23,7 @@
 /* include the energy files */
 #include "p3m.h"
 #include "lj.h"
+#include "buckingham.h"
 #include "ljcos.h"
 #include "tab.h"
 #include "gb.h"
@@ -69,6 +70,11 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 #ifdef LENNARD_JONES
   /* lennard jones */
   ret += lj_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+
+#ifdef BUCKINGHAM
+  /* lennard jones */
+  ret  += buck_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
 #ifdef TABULATED
@@ -188,6 +194,12 @@ MDINLINE void add_bonded_energy(Particle *p1)
     case BONDED_IA_DIHEDRAL:
       bond_broken = dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
       break;
+#ifdef BOND_CONSTRAINT
+    case BONDED_IA_RIGID_BOND:
+      bond_broken = 0;
+      ret = 0;
+      break;
+#endif
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
       switch(iaparams->p.tab.type) {
@@ -249,7 +261,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
 MDINLINE void add_kinetic_energy(Particle *p1)
 {
   /* kinetic energy */
-  energy.data.e[0] += SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]);
+  energy.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
 
 #ifdef ROTATION
   /* the rotational part is added to the total kinetic energy;

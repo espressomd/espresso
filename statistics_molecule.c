@@ -6,9 +6,9 @@
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
-/** \file statistics_molecule.c 
+/** \file statistics_molecule.c
 
-    see \ref statistics_molecule.h    
+    see \ref statistics_molecule.h
 
     <b>Responsible:</b>
     <a href="mailto:hanjo@mpip-mainz.mpg.de">Hanjo</a>
@@ -18,7 +18,7 @@
 /* new version for new topology structure */
 int analyze_fold_molecules(float *coord)
 {
-  int m,p,i, tmp; 
+  int m,p,i, tmp;
   int mol_size, ind;
   double cm_tmp, com[3];
 
@@ -58,7 +58,7 @@ int analyze_fold_molecules(float *coord)
       }
     }
   }
-  return (TCL_OK); 
+  return (TCL_OK);
 }
 
 
@@ -104,4 +104,41 @@ double calc_mol_hydro_radius(Molecule mol)
     }
   }
   return 0.5*(mol.part.n*(mol.part.n-1))/rh;
+}
+
+
+//Added by Arijit
+/**Incorporates mass of each particle*/
+void mol_center_of_mass_(Molecule mol, double com[3])
+{
+  int i,j,id;
+  double M = 0.0;
+  for(j=0; j<3; j++) com[j]=0.0;
+
+  for(i=0; i<mol.part.n; i++) {
+    id = mol.part.e[i];
+    for(j=0; j<3; j++) com[j]+= partCfg[id].r.p[j]*PMASS(partCfg[id]);
+    M += PMASS(partCfg[id]);
+  }
+    for(j=0; j<3; j++) com[j] /= M;
+}
+
+
+//Added by Arijit
+/**Incorporates mass of each particle*/
+double mol_gyr_radius2_(Molecule mol)
+{
+  int i, id;
+  double rg=0.0, M=0.0, com[3], diff_vec[3];
+
+  mol_center_of_mass_(mol, com);
+
+  for(i=0; i<mol.part.n; i++) {
+    id = mol.part.e[i];
+    vecsub(partCfg[id].r.p, com, diff_vec);
+    rg += sqrlen(diff_vec);
+    M += PMASS(partCfg[id]);
+  }
+
+  return (rg/M);
 }

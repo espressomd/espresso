@@ -29,6 +29,7 @@
 /* include the force files */
 #include "p3m.h"
 #include "lj.h"
+#include "buckingham.h"
 #include "maggs.h"
 #include "tab.h"
 #include "ljcos.h"
@@ -66,6 +67,7 @@
  *       Loop all \ref IA_Neighbor::vList "verlet lists" of all \ref #cells.
  *       <ul>
  *       <li> Lennard-Jones.
+ *       <li> Buckingham.
  *       <li> Real space part: Coulomb.
  *       <li> Ramp.
  *       </ul>
@@ -111,6 +113,11 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /* lennard jones */
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+
+/* buckingham */
+#ifdef BUCKINGHAM
+  add_buck_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
 
   /* lennard jones cosine */
@@ -266,6 +273,12 @@ MDINLINE void add_bonded_force(Particle *p1)
     case BONDED_IA_DIHEDRAL:
       bond_broken = calc_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
       break;
+#ifdef BOND_CONSTRAINT
+    case BONDED_IA_RIGID_BOND:
+      //add_rigid_bond_pair_force(p1,p2, iaparams, force, force2);
+      bond_broken = 0; 
+      break;
+#endif
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
       switch(iaparams->p.tab.type) {

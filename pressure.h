@@ -77,6 +77,7 @@ extern nptiso_struct nptiso;
 /* include the potential files */
 #include "p3m.h"
 #include "lj.h"
+#include "buckingham.h"
 #include "ljcos.h"
 #include "tab.h"
 #include "gb.h"
@@ -142,6 +143,10 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   /* lennard jones */
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist, force);
+#endif
+  /* buckingham*/
+#ifdef BUCKINGHAM
+  add_buck_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
   /* lennard jones cosine */
 #ifdef LJCOS
@@ -228,11 +233,15 @@ MDINLINE void add_bonded_virials(Particle *p1)
       calc_subt_lj_pair_force(p1,p2,iaparams,dx,force);
       break;
 #endif
+      /* since it is not clear at the moment how to handle a many body interaction here, I skip it */
     case BONDED_IA_ANGLE:
       i++; force[0] = force[1] = force[2] = 0; break;
     case BONDED_IA_DIHEDRAL:
       i+=2; force[0] = force[1] = force[2] = 0; break;
-      /* since it is not clear at the moment how to handle a many body interaction here, I skip it */
+#ifdef BOND_CONSTRAINT
+    case BONDED_IA_RIGID_BOND:
+      i +=2; force[0] = force[1] = force[2] = 0; break;
+#endif
     default :
       fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of atom %d unhandled\n",bonded_ia_params[type_num].type,p1->p.identity);
       force[0] = force[1] = force[2] = 0;
@@ -253,9 +262,10 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
 {
   /* kinetic energy */
   if(v_comp)
-    virials.data.e[0] += SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]);
+    virials.data.e[0] += (SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
   else
-    virials.data.e[0] += SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]);
+    virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
+
 #ifdef ROTATION
   virials.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*SQR(time_step);
 #endif

@@ -244,6 +244,12 @@ extern int check_id;
 #define LJ_TRACE(cmd)
 #endif
 
+#ifdef BUCK_DEBUG
+#define BUCK_TRACE(cmd) { cmd; }
+#else
+#define BUCK_TRACE(cmd)
+#endif
+
 #ifdef ESR_DEBUG
 #define ESR_TRACE(cmd) { cmd; }
 #else
