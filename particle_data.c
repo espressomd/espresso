@@ -328,13 +328,18 @@ int part(ClientData data, Tcl_Interp *interp,
   int part_num = -1;
   int node, j;
 
+  if (!node_grid_is_set())
+    setup_node_grid();
+
   if (!particle_node)
     build_particle_node();
 
   /* if no further arguments are given, print out all stored particles */
   if (argc == 1) {
     int i = 0, start = 1;
+    fprintf(stderr, "max_seen %d\n", max_seen_particle);
     for (i = 0; i <= max_seen_particle ; i++) {
+      fprintf(stderr, "particle %d\n", i);
       if (particle_node[i] != -1) {
 	if (start) {
 	  Tcl_AppendResult(interp, "{", (char *)NULL);
@@ -359,9 +364,6 @@ int part(ClientData data, Tcl_Interp *interp,
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return (TCL_OK);
   }
-
-  if (!node_grid_is_set())
-    setup_node_grid();
 
   part_num = atol(argv[1]);
 

@@ -32,4 +32,4 @@ CFLAGS+= -DUSE_NON_CONST
 else
 TCLLIB=tcl8.3
 endif
-LDLIBS=-l$(TCLLIB) -L/usr/local/lib -lrfftw -lfftw -lm -lefence
+LDLIBS=-l$(TCLLIB) -L/usr/local/lib -lrfftw -lfftw -lm -L/people/thnfs/homes/arnold/progs/tcl_md/ElectricFence-2.2.2 -lefence -lpthread

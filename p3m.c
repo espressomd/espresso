@@ -327,10 +327,10 @@ void   P3M_calc_kspace_forces()
 
 	  P3M_TRACE(if( pos[d]<0.0 ) 
 		    fprintf(stderr,"%d: rs_mesh underflow! (P%d at %f)\n",
-			    this_node,particles[n].identity,particles[n].p[d]));
+			    this_node,p[i].r.identity,p[i].r.p[d]));
 	  P3M_TRACE(if( (first[d]+p3m.cao-1) > lm.dim[d] )
 		    fprintf(stderr,"%d: rs_mesh overflow!  (P%d at %f)\n",
-			    this_node,particles[n].identity,particles[n].p[d]));
+			    this_node,p[i].r.identity,p[i].r.p[d]));
 	}
 
 	/* charge assignment */

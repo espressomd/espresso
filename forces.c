@@ -65,8 +65,6 @@ void force_calc()
   /* electrostatic */
   double  erfc_part_ri;
 
-  FORCE_TRACE(fprintf(stderr,"%d: force_calc: for %d (P %d,G %d)\n",this_node,n_particles+n_ghosts,n_particles,n_ghosts));
-
   minimum_part_dist = box_l[0] + box_l[1] + box_l[2];
 
   /* initialize forces with thermostat forces and

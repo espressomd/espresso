@@ -34,11 +34,11 @@
 
 /* #define COMM_DEBUG */
 /* #define INTEG_DEBUG */
-/* #define CELL_DEBUG  */
-/* #define GHOST_DEBUG  */  
+/* #define CELL_DEBUG */
+/* #define GHOST_DEBUG */
 /* #define GRID_DEBUG */
 /* #define FORCE_DEBUG */
-/* #define VERLET_DEBUG  */
+/* #define VERLET_DEBUG */
 /* #define PARTICLE_DEBUG */
 /* #define P3M_DEBUG */
 /* #define FFT_DEBUG */
@@ -146,11 +146,10 @@ extern void _debug_free(void *p);
 #else
 /** Equals { cmd } iff FFT_DEBUG is set. */
 #define RANDOM_TRACE(cmd)
+#endif
 
 #ifdef FENE_DEBUG
 #define FENE_TRACE(cmd) { cmd; }
 #else
 #define FENE_TRACE(cmd)
-#endif
-
 #endif

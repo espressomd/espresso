@@ -61,6 +61,7 @@ setmd gamma [expr 1e4*[setmd time_step]]
 setmd temp 1.
 
 puts "starting ramp integration"
+puts [part]
 integrate init
 
 set cont 1
@@ -70,7 +71,7 @@ for {set i 0} { $i < $maxtime && $cont} { incr i} {
     if {$md >= $mdst} { set cont 0 }
     integrate $intsteps
 }
-
+puts [part 581]
 # write
 set f [open "|gzip -c - >config.gz" w]
 blockfile $f write variable box_l
