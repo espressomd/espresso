@@ -441,12 +441,15 @@ int check_obs_calc_initialized()
   }
   if (coulomb.use_elc && ELC_sanity_checks()) state = 0;
 #endif
-  
+
+#if defined(COMFORCE) || defined(COMFIXED)
   if (COM_on == 1 && n_nodes > 1) {
     errtxt = runtime_error(128);
     sprintf(errtxt, "COM force and fixed only work with a single CPU");
     state = 0;
   }
+#endif
+
   return state;
 }
 
