@@ -6,6 +6,6 @@
 int imd(ClientData data, Tcl_Interp *interp,
 	int argc, char **argv);
 
-int transfer_rate;
+extern int transfer_rate;
 
 #endif

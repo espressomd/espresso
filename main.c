@@ -5,19 +5,13 @@
 #include "communication.h"
 #include "debug.h"
 
-#ifdef FORCE_CORE
-int regular_exit = 0;
-static int core_done = 0;
-
-void core()
+void errexit()
 {
-  if (!core_done && !regular_exit) {
-    core_done = 1;
-    fprintf(stderr, "forcing core dump on irregular exit\n");
-    *(int *)0 = 0;
-  }
-}
+#ifdef FORCE_CORE
+  core();
 #endif
+  exit(1);
+}
 
 void exitHandler(ClientData data)
 {

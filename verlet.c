@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "config.h"
 #include "verlet.h"
 #include "debug.h"
 #include "cells.h"
@@ -64,7 +65,7 @@ void build_verlet_list()
   for(m=1; m<cell_grid[0]+1; m++)
     for(n=1; n<cell_grid[1]+1; n++)
       for(o=1; o<cell_grid[2]+1; o++) {
-	ci1 = get_linear_index(m,n,o,ghost_cell_grid[0],ghost_cell_grid[1],ghost_cell_grid[2]);
+	ci1 = get_linear_index(m,n,o,ghost_cell_grid);
 	/* interactions inside inner cells */
 	for(i=0; i < cells[ci1].n_particles; i++) {
 	  p1 = cells[ci1].particles[i];

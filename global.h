@@ -96,8 +96,8 @@ extern const Datafield fields[];
 #define FIELD_P3M_MESH_OFF 19
 /** index of \ref p3m.mesh_off  in \ref fields */
 #define FIELD_TRANSFER_RATE 20
-/** index of \ref minimum_part_dist in \ref fields */
-#define FIELD_MINDST 21
+/** index of \ref periodic in \ref fields */
+#define FIELD_PERIODIC 21
 /*@}*/
 
 /**********************************************

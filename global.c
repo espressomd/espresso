@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "config.h"
 #include "global.h"
 #include "debug.h"
 /* from these modules we modify variables: */
@@ -25,12 +26,6 @@
     If you choose this, the variable cannot be
     changed by Tcl script code. */
 int ro_callback(Tcl_Interp *interp, void *data);
-
-/** Callback for box_l. Sets the box dimensions. */
-int boxl_callback(Tcl_Interp *interp, void *_data);
-
-/** Callback for gamma. Sets the friction coefficient gamma. */
-int gamma_callback(Tcl_Interp *interp, void *_data);
 
 /** List of all Tcl accessible global variables. If you
     want to add a new variable, ADD IT ALWAYS AT THE END.
@@ -59,6 +54,11 @@ const Datafield fields[] = {
   {&(p3m.epsilon), TYPE_DOUBLE,   1, "p3m_epsilon", p3mepsilon_callback },
   {p3m.mesh_off, TYPE_DOUBLE,   3, "p3m_mesh_offset", p3mmeshoff_callback },
   {&transfer_rate, TYPE_INT,   1, "transfer_rate", ro_callback },
+#ifdef PARTIAL_PERIODIC
+  {&periodic, TYPE_INT,   3, "periodicity", per_callback },
+#else
+  {&periodic, TYPE_INT,   3, "periodicity", ro_callback },
+#endif
   { NULL, 0, 0, NULL, NULL }
 };
 
@@ -71,24 +71,6 @@ int ro_callback(Tcl_Interp *interp, void *data)
 {
   Tcl_AppendResult(interp, "variable is readonly", (char *)NULL);
   return (TCL_ERROR);
-}
-
-int boxl_callback(Tcl_Interp *interp, void *_data)
-{
-  double *data = _data;
-
-  if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
-    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  box_l[0] = data[0];
-  box_l[1] = data[1];
-  box_l[2] = data[2];
-
-  changed_topology();
-
-  return (TCL_OK);
 }
 
 int setmd(ClientData data, Tcl_Interp *interp,

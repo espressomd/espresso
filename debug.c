@@ -2,9 +2,11 @@
     Implements the malloc replacements as described in \ref debug.h "debug.h". */
 
 /* do NOT include debug.h !!!!!!! */
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 #include "communication.h"
 
 /** memory from malloc will initially be filled with this value. */
@@ -16,6 +18,18 @@ extern void *_debug_malloc(int size);
 extern void *_debug_realloc(void *p, int size);
 /** Replacement for free that logs the freed address. */
 extern void _debug_free(void *p);
+
+int regular_exit = 0;
+static int core_done = 0;
+
+void core()
+{
+  if (!core_done && !regular_exit) {
+    core_done = 1;
+    fprintf(stderr, "%d: forcing core dump on irregular exit\n", this_node);
+    kill(getpid(), SIGSEGV);
+  }
+}
 
 void *_debug_malloc(int size)
 {

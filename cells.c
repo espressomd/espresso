@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "config.h"
 #include "cells.h"
 #include "debug.h"
 #include "grid.h"
@@ -95,15 +96,24 @@ void cells_init()
   CELL_TRACE(fprintf(stderr,"%d: cells_init \n",this_node));
   /* set up dimensions of the cell grid */
 
-  map_node_array(this_node,&node_pos[0],&node_pos[1],&node_pos[2]);     
+  map_node_array(this_node,node_pos);     
   for(i=0;i<3;i++) {
     my_left[i]   = node_pos[i]    *local_box_l[i];
     my_right[i]  = (node_pos[i]+1)*local_box_l[i];    
     cell_grid[i] = (int)(local_box_l[i]/max_range);
-    if(cell_grid[i] < 1) 
-      fprintf(stderr,"%d: cells_init: Less than one cell in direction %d\n",
-	      this_node,i);
-    
+    if(cell_grid[i] < 1) {
+#ifdef PARTIAL_PERIODIC
+      if (!periodic[i])
+	cell_grid[i] = 1;
+      else
+#endif
+	{
+	  fprintf(stderr,"%d: cells_init: Less than one cell in direction %d\n",
+		  this_node,i);
+	  errexit();
+	}
+    }
+
     ghost_cell_grid[i] = cell_grid[i] + 2;
     cell_size[i]       = local_box_l[i]/(double)cell_grid[i];
     inv_cell_size[i]   = 1.0 / cell_size[i];
@@ -141,24 +151,35 @@ void sort_particles_into_cells()
 {
   
   int i,n;
-  int cpos[3], gcg[3];
+  int cpos[3];
   int ind;
 
   CELL_TRACE(fprintf(stderr,"%d: sort_particles_into_cells:\n",this_node));
  
-  for(i=0;i<3;i++) gcg[i] = ghost_cell_grid[i];
-
   /* remove cell particles */
   for(i=0;i<n_cells;i++) cells[i].n_particles=0;
   CELL_TRACE(fprintf(stderr,"%d: sort %d paricles \n",this_node,n_particles));
   /* particle loop */
   for(n=0;n<n_particles;n++) {
     /* calculate cell index */
-    for(i=0;i<3;i++) 
+    for(i=0;i<3;i++) {
       cpos[i] = (int)((particles[n].p[i]-my_left[i])*inv_cell_size[i])+1;
-    ind = get_linear_index(cpos[0],cpos[1],cpos[2], gcg[0],gcg[1],gcg[2]);
-    if(ind<0 || ind > n_cells)
-      fprintf(stderr,"%d: illigal cell index !(0<%d<%d)\n" ,this_node,ind, n_cells);
+#ifdef PARTIAL_PERIODIC
+      if (cpos[i] < 1)
+	cpos[i] = 1;
+      else if (cpos[i] > cell_grid[i])
+	cpos[i] = cell_grid[i];
+#endif
+    }
+    ind = get_linear_index(cpos[0],cpos[1],cpos[2], ghost_cell_grid);
+#ifdef ADDITIONAL_CHECKS
+    if(ind<0 || ind > n_cells) {
+      fprintf(stderr,"%d: illigal cell index %d %d %d, ghost_grid %d %d %d\n", this_node,
+	      cpos[0], cpos[1], cpos[2],
+	      ghost_cell_grid[0], ghost_cell_grid[1], ghost_cell_grid[2]);
+      errexit();
+    }
+#endif
     /* Append particle in particle list of that cell */
     if(cells[ind].n_particles >= cells[ind].max_particles-1) {
       realloc_cell_particles(ind,cells[ind].n_particles + 1);
@@ -188,18 +209,20 @@ void cells_exit()
 void init_cell_neighbours(int i)
 {
   int j,m,n,o,cnt=0;
-  int cg[3],p1[3],p2[3];
+  int p1[3],p2[3];
 
-  memcpy(cg,ghost_cell_grid,3*sizeof(int));
-  if(is_inner_cell(i,cg)) { 
+  if(is_inner_cell(i,ghost_cell_grid)) { 
     cells[i].neighbours = malloc(MAX_NEIGHBOURS*sizeof(int));    
-    get_grid_pos(i,&p1[0],&p1[1],&p1[2],cg[0],cg[1],cg[2]);
+    get_grid_pos(i,&p1[0],&p1[1],&p1[2], ghost_cell_grid);
     /* loop through all neighbours */
-    for(m=-1;m<2;m++) 
-      for(n=-1;n<2;n++) 
-	for(o=-1;o<2;o++) {
+    for(m = extended[0] ? 0 : -1;
+	m < (extended[1] ? 1 :  2); m++) 
+      for(n = extended[2] ? 0 : -1;
+	  n < (extended[3] ? 1 :  2); n++)
+	for(o = extended[4] ? 0 : -1;
+	    o < (extended[5] ? 1 :  2); o++) {
 	  p2[0] = p1[0]+m;   p2[1] = p1[1]+n;   p2[2] = p1[2]+o;
-	  j = get_linear_index(p2[0],p2[1],p2[2],cg[0],cg[1],cg[2]);
+	  j = get_linear_index(p2[0],p2[1],p2[2], ghost_cell_grid);
 	  /* take the upper half of all neighbours 
 	     and add them to the neighbour list */
 	  if(j > i) {
@@ -220,7 +243,7 @@ void init_cell_neighbours(int i)
 int  is_inner_cell(int i, int gcg[3])
 {
   int pos[3];
-  get_grid_pos(i,&pos[0],&pos[1],&pos[2],gcg[0],gcg[1],gcg[2]);
+  get_grid_pos(i,&pos[0],&pos[1],&pos[2],gcg);
   return (pos[0]>0 && pos[0] < gcg[0]-1 &&
 	  pos[1]>0 && pos[1] < gcg[1]-1 &&
 	  pos[2]>0 && pos[2] < gcg[2]-1);

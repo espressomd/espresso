@@ -133,7 +133,7 @@ static int request[2];
 #ifdef MPI_CORE
 void mpi_core(MPI_Comm *comm, int *errcode,...) {
   fprintf(stderr, "Aborting due to MPI error %d, forcing core dump\n", *errcode);
-  *(int *)0 = 0;  
+  core();
 }
 #endif
 
@@ -156,7 +156,6 @@ void mpi_init(int *argc, char ***argv)
 
 /**************** REQ_TERM ************/
 
-extern int regular_exit; /* main.c */
 static int terminated = 0;
 
 void mpi_stop()

@@ -17,6 +17,8 @@
  <li> \verbatim #define FORCE_CORE \endverbatim generate a core dump even on regular termination.
  <li> \verbatim #define MALLOC_DEBUG \endverbatim replaces malloc, realloc and free by version that
  log their actions. May help debugging issues and shows memory leaks. BUT YOU GET A LOT OF OUTPUT!!
+ <li> \verbatim #define ADDITIONAL_CHECKS \endverbatim adds additional checks which indicate failure
+ of the code.
  </ul>
 
  For every define there exists a macro that can be used to encapsulate short lines (like printf("...",...);)
@@ -25,7 +27,7 @@
 
 /* #define COMM_DEBUG */
 /* #define INTEG_DEBUG */
-/* #define CELL_DEBUG */ 
+#define CELL_DEBUG
 /* #define GHOST_DEBUG   */ 
 /* #define GRID_DEBUG */
 /* #define FORCE_DEBUG */
@@ -35,7 +37,19 @@
 #define MPI_CORE
 #define FORCE_CORE
 
+#define ADDITIONAL_CHECKS
+
 /* #define MALLOC_DEBUG */
+
+#if defined FORCE_CORE || defined MPI_CORE
+/// this functions kills the task with SIGSEGV
+extern void core();
+
+/** by setting this variable to 1, a regular exit is
+    indicated. In that case, no core dump is generated.
+*/
+extern int regular_exit;
+#endif
 
 #ifdef MALLOC_DEBUG
 extern void *_debug_malloc(int size);

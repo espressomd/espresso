@@ -17,6 +17,7 @@
 #include "grid.h"
 #include "interaction_data.h" 
 #include "debug.h"
+#include "utils.h"
 
 /************************************************
  * defines
@@ -157,14 +158,16 @@ void fold_particle(double pos[3],int image_box[3])
   int i;
   int tmp;
   for(i=0;i<3;i++) {
-    image_box[i] += (tmp = (int)floor(pos[i]/box_l[i]));
-    pos[i]       = pos[i] - tmp*box_l[i];    
-    if(pos[i] < 0. || pos[i] > box_l[i])
-      {
-	fprintf(stderr,"%d: Warning fold_particle: Particle out of range image_box[%d] = %d\n",this_node,i,image_box[i]);
-	fprintf(stderr,"exiting!\n");
-	exit(1);
+    if (periodic[i]) {
+      image_box[i] += (tmp = (int)floor(pos[i]/box_l[i]));
+      pos[i]       = pos[i] - tmp*box_l[i];    
+      if(pos[i] < 0 || pos[i] > box_l[i]) {
+	fprintf(stderr,"%d: fold_particle: Particle out of"
+		" range image_box[%d] = %d, exiting\n",
+		this_node,i,image_box[i]);
+	errexit();
       }
+    }
   }
 }
 

@@ -27,7 +27,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "config.h"
 #include "grid.h"
+#include "utils.h"
 #include "debug.h"
 #include "communication.h"
 #include "verlet.h"
@@ -41,7 +43,9 @@
 int node_grid[3] = { -1, -1, -1};
 int node_pos[3] = {-1,-1,-1};
 int node_neighbors[6] = {0, 0, 0, 0, 0, 0};
-double boundary[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+int boundary[6]   = {0, 0, 0, 0, 0, 0};
+int extended[6] = {0, 0, 0, 0, 0, 0};
+int periodic[3]    = {1, 1, 1};
 
 double box_l[3]       = {1, 1, 1};
 double local_box_l[3] = {1, 1, 1};
@@ -51,6 +55,41 @@ double my_right[3]    = {1, 1, 1};
 /**********************************************
  * procedures
  **********************************************/
+
+/* callback for box_l change */
+int boxl_callback(Tcl_Interp *interp, void *_data)
+{
+  double *data = _data;
+
+  if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
+    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  box_l[0] = data[0];
+  box_l[1] = data[1];
+  box_l[2] = data[2];
+
+  changed_topology();
+
+  return (TCL_OK);
+}
+
+#ifdef PARTIAL_PERIODIC
+/* callback for periodic change */
+int per_callback(Tcl_Interp *interp, void *_data)
+{
+  int i;
+  int *data = _data;
+
+  for (i = 0; i < 3; i++)
+    periodic[i] = (data[i] != 0);
+
+  mpi_bcast_parameter(FIELD_PERIODIC);
+
+  return (TCL_OK);
+}
+#endif
 
 /* callback for node grid */
 int node_grid_callback(Tcl_Interp *interp, void *_data)
@@ -93,55 +132,6 @@ int node_grid_is_set()
   return (node_grid[1] > 0);
 }
 
-int find_node(double pos[3])
-{
-  int i;
-  double f_pos[3];
-  
-  for(i=0;i<3;i++) f_pos[i] = pos[i] - floor(pos[i]/box_l[i])*box_l[i];
-  GRID_TRACE(fprintf(stderr,"(%e, %e, %e) folded to (%e,%e, %e)\n",
-		     pos[0],pos[1],pos[2],f_pos[0],f_pos[1],f_pos[2]));
-  return map_array_node((int)floor(node_grid[0]*f_pos[0]/box_l[0]),
-			(int)floor(node_grid[1]*f_pos[1]/box_l[1]),
-			(int)floor(node_grid[2]*f_pos[2]/box_l[2]));
-}
-
-void map_node_array(int node, int *x_pos, int *y_pos, int *z_pos)
-{
-  *x_pos = node % node_grid[0];
-  node /= node_grid[0];
-  *y_pos = node % node_grid[1];
-  node /= node_grid[1];
-  *z_pos = node;
-}
-
-int map_array_node(int x_pos, int y_pos, int z_pos) {
-  return (x_pos + node_grid[0]*(y_pos + node_grid[1]*z_pos));
-}
-
-void calc_node_neighbors(int node)
-{
-  int dir,j;
-  int n_pos[3];
-  
-  map_node_array(node,&node_pos[0],&node_pos[1],&node_pos[2]);
-  for(dir=0;dir<3;dir++) {
-    for(j=0;j<3;j++) n_pos[j]=node_pos[j];
-    /* left neighbor in direction dir */
-    n_pos[dir] = node_pos[dir] - 1;
-    if(n_pos[dir]<0) n_pos[dir] += node_grid[dir];
-    node_neighbors[2*dir]     = map_array_node(n_pos[0],n_pos[1],n_pos[2]);
-    /* right neighbor in direction dir */
-    n_pos[dir] = node_pos[dir] + 1;
-    if(n_pos[dir]>=node_grid[dir]) n_pos[dir] -= node_grid[dir];
-    node_neighbors[(2*dir)+1] = map_array_node(n_pos[0],n_pos[1],n_pos[2]);
-    /* left boundary ? */
-    if(node_pos[dir] == 0)                     boundary[2*dir] =   box_l[dir];
-    /* right boundary ? */
-    if(node_pos[dir] == node_grid[dir]-1) boundary[2*dir+1] = - box_l[dir];
-  }
-}
-
 void changed_topology()
 {
   int i;
@@ -156,4 +146,74 @@ void changed_topology()
   mpi_bcast_parameter(FIELD_BOXL);
   mpi_bcast_parameter(FIELD_LBOXL);
   mpi_bcast_parameter(FIELD_VERLET);
+}
+
+int find_node(double pos[3])
+{
+  int i, im[3];
+  double f_pos[3];
+
+  for (i = 0; i < 3; i++)
+    f_pos[i] = pos[i];
+  
+  fold_particle(f_pos, im);
+
+  for (i = 0; i < 3; i++) {
+    im[i] = (int)floor(node_grid[i]*f_pos[i]/box_l[i]);
+#ifdef PARTIAL_PERIODIC
+    if (!periodic[i]) {
+      if (im[i] < 0)
+	im[i] = 0;
+      else if (im[i] >= node_grid[i])
+	im[i] = node_grid[i] - 1;
+    }
+#endif
+  }
+  return map_array_node(im);
+}
+
+void map_node_array(int node, int pos[3])
+{
+  get_grid_pos(node, pos, pos + 1, pos + 2, node_grid);
+}
+
+int map_array_node(int pos[3]) {
+  return get_linear_index(pos[0], pos[1], pos[2], node_grid);
+}
+
+void calc_node_neighbors(int node)
+{
+  int dir,j;
+  int n_pos[3];
+  
+  map_node_array(node,node_pos);
+  for(dir=0;dir<3;dir++) {
+    for(j=0;j<3;j++) n_pos[j]=node_pos[j];
+    /* left neighbor in direction dir */
+    n_pos[dir] = node_pos[dir] - 1;
+    if(n_pos[dir]<0) n_pos[dir] += node_grid[dir];
+    node_neighbors[2*dir]     = map_array_node(n_pos);
+    /* right neighbor in direction dir */
+    n_pos[dir] = node_pos[dir] + 1;
+    if(n_pos[dir]>=node_grid[dir]) n_pos[dir] -= node_grid[dir];
+    node_neighbors[(2*dir)+1] = map_array_node(n_pos);
+    /* left boundary ? */
+    if (node_pos[dir] == 0) {
+      boundary[2*dir] = 1;
+      extended[2*dir] = periodic[dir] ? 0 : 1;
+    }
+    else {
+      boundary[2*dir] =
+	extended[2*dir] = 0;
+    }
+    /* right boundary ? */
+    if (node_pos[dir] == node_grid[dir]-1) {
+      boundary[2*dir+1] = -1;
+      extended[2*dir+1] = periodic[dir] ? 0 : 1;
+    }
+    else {
+      boundary[2*dir+1] =
+	extended[2*dir+1] = 0;
+    }
+  }
 }

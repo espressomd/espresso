@@ -8,6 +8,8 @@
 #include "imd.h"
 #include "communication.h"
 
+int transfer_rate = 0;
+
 #if ( INT_MAX == 2147483647 )
 typedef int     int32;
 #else
@@ -432,7 +434,7 @@ int imd(ClientData data, Tcl_Interp *interp,
 {
   if (argc < 2) {
     Tcl_AppendResult(interp, "wrong # args:  should be \"",
-		     argv[0], " connect|disconnect|stall|positions|energies ?values?\"",
+		     argv[0], " connect|disconnect|listen|positions|energies ?values?\"",
 		     (char *) NULL);
     return (TCL_ERROR);
   }
@@ -495,8 +497,9 @@ int imd(ClientData data, Tcl_Interp *interp,
     return (TCL_OK);
   }
 
-  if (!strncmp(argv[1], "stall", strlen(argv[1]))) {
-    int cnt;
+  if (!strncmp(argv[1], "listen", strlen(argv[1]))) {
+    /* wait until vmd connects */
+    int cnt = 3600;
     
     if (argc > 3) {
       Tcl_AppendResult(interp, "wrong # args:  should be \"",
@@ -513,12 +516,16 @@ int imd(ClientData data, Tcl_Interp *interp,
 	return (TCL_ERROR);
       sleep(1);
     }
+
     if (!sock)
       Tcl_AppendResult(interp, "no connection",
 		       (char *) NULL);
-    else
+    else {
+      if (imd_drain_socket(interp) == TCL_ERROR)
+	return (TCL_ERROR);
       Tcl_AppendResult(interp, "connected",
 		       (char *) NULL);
+    }
     return (TCL_OK);
   }
 

@@ -17,11 +17,16 @@ extern int node_grid[3];
 extern int node_pos[3];
 /** the six nearest neighbors of a node in the node grid. */
 extern int node_neighbors[6];
-/** Value for folding particles that leave local box in direction i. */
-extern double boundary[6];
+/** where to fold particles that leave local box in direction i. */
+extern int boundary[6];
+/** whether a node is infinitely extended in that direction
+    (necessary for non periodic coordinates). */
+extern int extended[6];
 
 /** Simulation box dimensions. */ 
 extern double box_l[3];
+/** Flags for all three dimensions wether pbc are applied (default). */ 
+extern int periodic[3];
 /** Dimensions of the box a single node is responsible for. */ 
 extern double local_box_l[3];
 /** Left (bottom, front) corner of this nodes local box. */ 
@@ -44,20 +49,16 @@ int node_grid_is_set();
 /** node mapping: array -> node. 
  *
  * @param node   number of the node you want to know the position for.
- * @param x_pos  x position of the node in node grid.        
- * @param y_pos  y position of the node in node grid.
- * @param z_pos  z position of the node in node grid.
+ * @param pos[3] position of the node in node grid.        
 */
-void map_node_array(int node, int *x_pos, int *y_pos, int *z_pos);
+void map_node_array(int node, int pos[3]);
 
 /** node mapping: node -> array. 
  *
- * @return       number of the node at position (x_pos, y_pos, z_pos).
- * @param x_pos  x position of the node in node grid.        
- * @param y_pos  y position of the node in node grid.
- * @param z_pos  z position of the node in node grid.
+ * @return       number of the node at position pos.
+ * @param pos[3]  position of the node in node grid.        
 */
-int map_array_node(int x_pos, int y_pos, int z_pos);
+int map_array_node(int pos[3]);
 
 /** map particle position to node. 
  *
@@ -66,8 +67,14 @@ int map_array_node(int x_pos, int y_pos, int z_pos);
 */
 int find_node(double pos[3]);
 
-/** datafield callback for node grid. */
+/** datafield callback for \ref node_grid. */
 int node_grid_callback(Tcl_Interp *interp, void *data);
+
+/** datafield callback for \ref box_l. Sets the box dimensions. */
+int boxl_callback(Tcl_Interp *interp, void *_data);
+
+/** datafield callback for \ref periodic. Determines wether a coordinate is pbc (default). */
+int per_callback(Tcl_Interp *interp, void *_data);
 
 /** fill neighbor lists of node. 
  *
