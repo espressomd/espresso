@@ -51,7 +51,7 @@
 #define REQ_P3M_SPREAD 202
 
 /** precision limit for the r_cut zero */
-#define P3M_RCUT_PREC 1e-2
+#define P3M_RCUT_PREC 1e-3
 /** granularity of the time measurement */
 #define P3M_TIME_GRAN 2
 
@@ -2095,6 +2095,9 @@ int P3M_adaptive_tune_parameters(Tcl_Interp *interp)
     return TCL_ERROR;
   }
 
+  /* preparation */
+  mpi_bcast_event(P3M_COUNT_CHARGES);
+
   /* Print Status */
   sprintf(b1,"%.5e",p3m.accuracy);
   Tcl_AppendResult(interp, "P3M tune parameters: Accuracy goal = ",b1,"\n", (char *) NULL);
@@ -2102,9 +2105,6 @@ int P3M_adaptive_tune_parameters(Tcl_Interp *interp)
   sprintf(b2,"%d",p3m_sum_qpart);
   Tcl_PrintDouble(interp, p3m_sum_q2, b3);
   Tcl_AppendResult(interp, "System: box_l = ",b1,", # charged part = ",b2," Sum[q_i^2] = ",b3,"\n", (char *) NULL);
-
-  /* preparation */
-  mpi_bcast_event(P3M_COUNT_CHARGES);
 
   /* parameter ranges */
   if (p3m.mesh[0] == 0 ) {
