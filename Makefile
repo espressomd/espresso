@@ -42,7 +42,7 @@ clean:
 	rm -f *~
 	(cd $(PLATFORM); rm -f $(OBJECTS) )
 mostclean: clean
-	rm -rf $(PLATFORM)
+	rm -rf $(PLATFORM) doc/html/* doc/rtf/*
 
 ########### dependencies
 dep: 
