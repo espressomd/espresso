@@ -24,41 +24,95 @@
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref #analyze) */
 float *partCoord_g=NULL, *partCM_g=NULL;
+int n_part_g = 0, n_chains_g = 0;
 
 /** data for a system consisting of chains */
 int chain_start = 0, chain_n_chains = 0, chain_length = 0;
 
 Energy_stat energy = {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
 
-static int get_chain_structure_info(Tcl_Interp *interp, int *argc, char ***argv)
+static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
+			       double *posx, double *posy, double *posz)
+{
+  int pid;
+
+  if (*argc < 3) {
+    Particle ref;
+    if (Tcl_GetInt(interp, (*argv)[0], &pid) == TCL_ERROR)
+      return TCL_ERROR;
+
+    if (get_particle_data(pid, &ref) != TCL_OK) {
+      Tcl_AppendResult(interp, "reference particle does not exist", (char *)NULL);
+      return TCL_ERROR;
+    }
+    *posx = ref.r.p[0];
+    *posy = ref.r.p[1];
+    *posz = ref.r.p[2];
+    realloc_intlist(&ref.bl, 0);
+    
+    (*argc)--;
+    (*argv)++;
+
+    return TCL_OK;
+  }
+  else {
+    if (Tcl_GetDouble(interp, (*argv)[0], posx) == TCL_ERROR ||
+	Tcl_GetDouble(interp, (*argv)[1], posy) == TCL_ERROR ||
+	Tcl_GetDouble(interp, (*argv)[2], posz) == TCL_ERROR)
+      return TCL_ERROR;
+
+    (*argc) -= 3;
+    (*argv) += 3;
+
+    return TCL_OK;
+  }
+}
+
+/** this function scans the arguments for a description of the chain structure,
+    i.e. start of chains, number of chains and chain length. Since this structure
+    requires the particles to be sorted, this is performed, too. */
+static int prepare_chain_structure_info(Tcl_Interp *interp, int *argc, char ***argv)
 {
   /* 'analyze set chains [<chain_start> <n_chains> <chain_length>]' */
-  if (*argc == 0)
-    return TCL_OK;
-  if (*argc < 3) {
-    Tcl_AppendResult(interp, "chain structure info consists of <start> <n> <length>", (char *)NULL);    
-    return TCL_ERROR;
+  if (*argc > 0) {
+    if (*argc < 3) {
+      Tcl_AppendResult(interp, "chain structure info consists of <start> <n> <length>", (char *)NULL);    
+      return TCL_ERROR;
+    }
+
+    if (Tcl_GetInt(interp, (*argv)[0], &chain_start) == TCL_ERROR ||
+	Tcl_GetInt(interp, (*argv)[1], &chain_n_chains) == TCL_ERROR ||
+	Tcl_GetInt(interp, (*argv)[2], &chain_length) == TCL_ERROR)
+      return TCL_ERROR;
+
+    (*argc) -= 3;
+    (*argv) += 3;
   }
 
-  if (Tcl_GetInt(interp, (*argv)[0], &chain_start) == TCL_ERROR ||
-      Tcl_GetInt(interp, (*argv)[1], &chain_n_chains) == TCL_ERROR ||
-      Tcl_GetInt(interp, (*argv)[2], &chain_length) == TCL_ERROR)
-    return TCL_ERROR;
-
-  *argc -= 3;
-  *argv += 3;
+  if (!sortPartCfg()) {
+    Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",
+		     (char *) NULL);
+    return (TCL_ERROR);      
+  }
 
   return TCL_OK;
 }
       
+static int check_chain_structure_info(Tcl_Interp *interp)
+{
+  if (max_seen_particle <= chain_start + chain_n_chains*chain_length) {
+    Tcl_AppendResult(interp, "not enough particles for chain structure", (char *)NULL);
+    return TCL_ERROR;
+  }
+}
+
 int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   char *mode;
   int  i, j, p;
   double *buf = NULL;
-  double mindist, xt, yt, zt, r_catch;
-  double dx, dy, dz;
+  double result, posx, posy, posz, r_catch;
 
   if (argc < 2) {
     Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze <what> ...", (char *)NULL);
@@ -88,7 +142,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
 	return TCL_OK;
       }
-      if (get_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
+      if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
 	return TCL_ERROR;
       return TCL_OK;
     }
@@ -100,54 +154,18 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     }
   }
   else if (!strncmp(mode, "mindist", strlen(mode))) {
-    /* 'analyze mindist' */
     if (n_total_particles <= 1) {
       Tcl_AppendResult(interp, "(not enough particles)",
 		       (char *)NULL);
       return (TCL_OK);
     }
-    /* minimal pair distance */
-    /* if the integrator already ran, check his result */
-    if (minimum_part_dist == -1)
-      mindist = box_l[0] + box_l[1] + box_l[2];
-    else {
-      /* get data from integrator */ 
-      buf = malloc(n_nodes*sizeof(double));
-      mpi_gather_stats(0, buf);
-      mindist = buf[0];
-      for (i = 1; i < n_nodes; i++) {
-	if (buf[i] < mindist)
-	  mindist = buf[i];
-      }
-      free(buf);
-    }
-
-    if (mindist >= box_l[0] + box_l[1] + box_l[2]) {
-      /* ok, the integrator has not been started, or the distance
-	 is larger than the real space cutoffs, so calculate directly */
-      mindist = box_l[0] + box_l[1] + box_l[2];
-      mindist *= mindist;
-      
-      updatePartCfg();
-
-      for (j=0; j<n_total_particles-1; j++) {
-	xt = partCfg[j].r.p[0]; yt = partCfg[j].r.p[1]; zt = partCfg[j].r.p[2];
-	for (i=j+1; i<n_total_particles; i++) {
-	  dx = xt - partCfg[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
-	  dy = yt - partCfg[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
-	  dz = zt - partCfg[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
-	  mindist = dmin(mindist, SQR(dx)+SQR(dy)+SQR(dz));
-	}
-      }
-      mindist = sqrt(mindist);
-    }
-    Tcl_PrintDouble(interp, mindist, buffer);
+    result = mindist();
+    Tcl_PrintDouble(interp, result, buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return TCL_OK;
   }
   else if (!strncmp(mode, "nbhood", strlen(mode))) {
-    /* 'analyze nbhood <part_id> <r_catch>' */
-    Particle ref;
+    IntList il;
 
     if (n_total_particles == 0) {
       Tcl_AppendResult(interp, "(no particles)",
@@ -155,34 +173,29 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       return (TCL_OK);
     }
 
-    updatePartCfg();
+    get_reference_point(interp, &argc, &argv, &posx, &posy, &posz);
 
-    r_catch = atof(argv[1]);
-    p = atoi(argv[0]);
-
-    if (get_particle_data(p, &ref) != TCL_OK) {
-      Tcl_AppendResult(interp, "particle does not exist", (char *)NULL);
+    if (argc != 1) {
+      Tcl_AppendResult(interp, "usage: nbhood { <partid> | <posx> <posy> <posz> } <r_catch>",
+		       (char *)NULL);
       return TCL_ERROR;
     }
 
-    xt = ref.r.p[0]; yt = ref.r.p[1]; zt = ref.r.p[2];
+    r_catch = atof(argv[0]);
 
-    for (i = 0; i<n_total_particles; i++) {
-      if (partCfg[i].r.identity != p) {
-	dx = xt - partCfg[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
-	dy = yt - partCfg[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
-	dz = zt - partCfg[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
-	if (sqrt(SQR(dx)+SQR(dy)+SQR(dz)) < r_catch) {
-	  sprintf(buffer, "%d ", partCfg[i].r.identity);
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
-	}
-      }
+    updatePartCfg();
+
+    nbhood(posx, posy, posz, r_catch, &il);
+    
+    for (i = 0; i < il.n; i++) {
+      sprintf(buffer, "%d ", il.e[i]);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
+    realloc_intlist(&il, 0);
     return (TCL_OK);
   }
   else if (!strncmp(mode, "distto", strlen(mode))) {
     /* 'analyze distto <posx> <posy> <posz>' */
-    xt = atof(argv[0]); yt = atof(argv[1]); zt = atof(argv[2]);
 
     if (n_total_particles == 0) {
       Tcl_AppendResult(interp, "(no particles)",
@@ -190,17 +203,18 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       return (TCL_OK);
     }
 
+    get_reference_point(interp, &argc, &argv, &posx, &posy, &posz);
+    if (argc != 0) {
+      Tcl_AppendResult(interp, "usage: distto { <partid> | <posx> <posy> <posz> }",
+		       (char *)NULL);
+      return TCL_ERROR;
+    }
+
     updatePartCfg();
 
-    /* larger than possible */
-    mindist=box_l[0] + box_l[1] + box_l[2];
-    for (i=0; i<n_total_particles; i++) {
-      dx = xt - partCfg[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
-      dy = yt - partCfg[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
-      dz = zt - partCfg[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
-      mindist = dmin(mindist, SQR(dx)+SQR(dy)+SQR(dz));
-    }
-    Tcl_PrintDouble(interp, sqrt(mindist), buffer);
+    result = distto(posx, posy, posz);
+
+    Tcl_PrintDouble(interp, result, buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return (TCL_OK);
   }
@@ -328,177 +342,69 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   }
   else if (!strncmp(mode, "re", strlen(mode))) {
     /* 'analyze re [<chain_start> <n_chains> <chain_length>]' */
-    double dist = 0;
-
     /* Averaged quadratic end-to-end-distance of the polymer chains */
-    if (get_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
+    if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
       return TCL_ERROR;
     if (argc != 0) {
       Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
       return TCL_ERROR;
     }
-    if (n_total_particles < chain_n_chains*chain_length) {
-      Tcl_AppendResult(interp, "not enough particles for chain structure", (char *)NULL);
-      return TCL_ERROR;
-    }
-
-    if (!sortPartCfg()) {
-      Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",
-		       (char *) NULL);
-      return (TCL_ERROR);      
-    }
-    
-    for (i=0; i<chain_n_chains; i++) {
-      dx = partCfg[chain_start+i*chain_length + chain_length-1].r.p[0] - partCfg[chain_start+i*chain_length].r.p[0];
-      dy = partCfg[chain_start+i*chain_length + chain_length-1].r.p[1] - partCfg[chain_start+i*chain_length].r.p[1];
-      dz = partCfg[chain_start+i*chain_length + chain_length-1].r.p[2] - partCfg[chain_start+i*chain_length].r.p[2];
-      dist += (SQR(dx) + SQR(dy) + SQR(dz));
-    }
-    Tcl_PrintDouble(interp, sqrt(dist/((double)chain_n_chains)), buffer);
+    result = calc_re();
+    Tcl_PrintDouble(interp, result, buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return (TCL_OK);
   }
   else if (!strncmp(mode, "rg", strlen(mode))) {
     /* 'analyze rg [<chain_start> <n_chains> <chain_length>]' */
-    double r_CM_x=0.0, r_CM_y=0.0, r_CM_z=0.0, r_G=0.0, doubMPC;
-
     /* Averaged radius of gyration */
-    if (get_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
+    if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
       return TCL_ERROR;
     if (argc != 0) {
       Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
       return TCL_ERROR;
     }
-    if (n_total_particles < chain_n_chains*chain_length) {
-      Tcl_AppendResult(interp, "not enough particles for chain structure", (char *)NULL);
-      return TCL_ERROR;
-    }
-
-    if (!sortPartCfg()) {
-      Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",
-		       (char *) NULL);
-      return (TCL_ERROR);      
-    }
-
-    doubMPC = (double)chain_length;
-    for (i=0; i<chain_n_chains; i++) {
-      for (j=0; j<chain_length; j++) {
-	r_CM_x += partCfg[chain_start+i*chain_length + j].r.p[0];
-	r_CM_y += partCfg[chain_start+i*chain_length + j].r.p[1];
-	r_CM_z += partCfg[chain_start+i*chain_length + j].r.p[2];
-      }
-      r_CM_x /= doubMPC;
-      r_CM_y /= doubMPC;
-      r_CM_z /= doubMPC;
-      for (j=0; j<chain_length; ++j) {
-	dx = partCfg[chain_start+i*chain_length + j].r.p[0] - r_CM_x;
-	dy = partCfg[chain_start+i*chain_length + j].r.p[1] - r_CM_y;
-	dz = partCfg[chain_start+i*chain_length + j].r.p[2] - r_CM_z;
-	r_G += (SQR(dx) + SQR(dy) + SQR(dz));
-      }
-    }
-    r_G /= (double)(chain_length*chain_n_chains);
-    Tcl_PrintDouble(interp, sqrt(r_G), buffer);
+    result = calc_rg();
+    Tcl_PrintDouble(interp, result, buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return (TCL_OK);
   }
   else if (!strncmp(mode, "rh", strlen(mode))) {
     /* 'analyze rh [<chain_start> <n_chains> <chain_length>]' */
-    double rh=0.0, ri=0.0;
-
     /* Averaged hydrodynamic radius */
-    if (get_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
+    if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
       return TCL_ERROR;
     if (argc != 0) {
       Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
       return TCL_ERROR;
     }
-    if (n_total_particles < chain_n_chains*chain_length) {
-      Tcl_AppendResult(interp, "not enough particles for chain structure", (char *)NULL);
-      return TCL_ERROR;
-    }
-
-    if (!sortPartCfg()) {
-      Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",
-		       (char *) NULL);
-      return (TCL_ERROR);      
-    }
-
-    for(p=0;p<chain_n_chains;p++) {
-      ri=0.0;
-      for(i=chain_start+chain_length*p;i<chain_start+chain_length*(p+1);i++) {
-	for(j=i+1;j<chain_start+chain_length*(p+1);j++) {
-	  dx = partCfg[i].r.p[0]-partCfg[j].r.p[0]; dx*=dx;
-	  dy = partCfg[i].r.p[1]-partCfg[j].r.p[1]; dy*=dy;
-	  dz = partCfg[i].r.p[2]-partCfg[j].r.p[2]; dz*=dz;
-	  ri += 1.0/sqrt(dx+dy+dz);
-	}
-      }
-      rh += 1.0/ri;
-    }
-    rh *= 0.5*(chain_length*(chain_length-1));
-    rh /= (double)chain_n_chains;
-    Tcl_PrintDouble(interp, rh, buffer);
+    result = calc_rh();
+    Tcl_PrintDouble(interp, result, buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return (TCL_OK);
   }
   else if (!strncmp(mode, "g123", strlen(mode))) {
-    /* 'analyze g123 [[-init] <chain_start> <n_chains> <chain_length>]' */
-    double g1=0.0, g2=0.0, g3=0.0, cm_tmp[3];
-    int init = 0;
+    /* 'analyze g123 [-init] [<chain_start> <n_chains> <chain_length>]' */
     /* - Mean square displacement of a monomer
        - Mean square displacement in the center of gravity of the chain itself
        - Motion of the center of mass */
+    int init = 0;
+    double g1, g2, g3;
 
-    if (!sortPartCfg()) {
-      Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",
-		       (char *) NULL);
-      return (TCL_ERROR);      
-    }
-
-    if (argc == 0) {
-      Tcl_AppendResult(interp, "too few arguments (usage: analyze g123 [[-init] <chain_start> <n_chains> <chain_length>])", (char *)NULL);
-      return TCL_ERROR;
-    }
-      
-    if (argc == 4 && !strncmp(argv[0], "-init", strlen(argv[0]))) {
+    if (argc >= 1 && !strncmp(argv[0], "-init", strlen(argv[0]))) {
       init = 1;
-      argc--; argv++;
-    }
-    else if (!strncmp(argv[0], "-init", strlen(argv[0]))) {
-      Tcl_AppendResult(interp, "too few arguments (if using '-init', chain structure '<chain_start> <n_chains> <chain_length>' required)", (char *)NULL);
-      return TCL_ERROR;
+      argc--;
+      argv++;
     }
 
-    if (get_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
+    if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
       return TCL_ERROR;
     if (argc != 0) {
       Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
       return TCL_ERROR;
     }
 
-    if (n_total_particles < chain_n_chains*chain_length) {
-      Tcl_AppendResult(interp, "not enough particles for chain structure", (char *)NULL);
-      return TCL_ERROR;
-    }
-
     if (init) {
-      /* Save particles' current positions 
-	 (which'll be used as initial position later on) */
-      partCoord_g = (float *) realloc(partCoord_g, 3*n_total_particles*sizeof(float));
-      partCM_g = (float *) realloc(partCM_g, 3*chain_n_chains*sizeof(float));
-      for(j=0; j<chain_n_chains; j++) {
-	cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
-	for(i=0; i<chain_length; i++) {
-	  p = chain_start+j*chain_length + i;
-	  partCoord_g[3*p]   = partCfg[p].r.p[0]; cm_tmp[0]+=partCfg[p].r.p[0];
-	  partCoord_g[3*p+1] = partCfg[p].r.p[1]; cm_tmp[1]+=partCfg[p].r.p[1];
-	  partCoord_g[3*p+2] = partCfg[p].r.p[2]; cm_tmp[2]+=partCfg[p].r.p[2];
-	}
-	partCM_g[3*j]   = cm_tmp[0]/(1.*chain_length);
-	partCM_g[3*j+1] = cm_tmp[1]/(1.*chain_length);
-	partCM_g[3*j+2] = cm_tmp[2]/(1.*chain_length);
-      }
+      init_g123();
       return TCL_OK;
     }
 
@@ -506,34 +412,237 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       Tcl_AppendResult(interp, "please call with -init first", (char *)NULL);
       return TCL_ERROR;
     }
-
-    for(j=0; j<chain_n_chains; j++) {
-      cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
-      for(i=0; i<chain_length; i++) {
-	p = chain_start+j*chain_length + i;
-	cm_tmp[0]+=partCfg[p].r.p[0]; cm_tmp[1]+=partCfg[p].r.p[1]; cm_tmp[2]+=partCfg[p].r.p[2];
-      }
-      cm_tmp[0] /= (1.*chain_length); cm_tmp[1] /= (1.*chain_length); cm_tmp[2] /= (1.*chain_length);
-      for(i=0; i<chain_length; i++) {
-	p = chain_start+j*chain_length + i;
-	g1 += SQR(partCfg[p].r.p[0]-partCoord_g[3*p]) + SQR(partCfg[p].r.p[1]-partCoord_g[3*p+1])
-	  + SQR(partCfg[p].r.p[2]-partCoord_g[3*p+2]);
-	g2 += SQR( (partCfg[p].r.p[0]-partCoord_g[3*p]) - (cm_tmp[0]-partCM_g[3*j]  ) ) 
-	  + SQR( (partCfg[p].r.p[1]-partCoord_g[3*p+1]) - (cm_tmp[1]-partCM_g[3*j+1]) ) 
-	  + SQR( (partCfg[p].r.p[2]-partCoord_g[3*p+2]) - (cm_tmp[2]-partCM_g[3*j+2]) );
-	g3 += SQR(cm_tmp[0]-partCM_g[3*j]) + SQR(cm_tmp[1]-partCM_g[3*j+1]) + SQR(cm_tmp[2]-partCM_g[3*j+2]);
-      }
+    if (chain_n_chains != n_chains_g ||
+	n_total_particles != n_part_g) {
+      fprintf(stderr, "%d %d %d %d\n", chain_n_chains, n_chains_g, n_total_particles, n_part_g);
+      Tcl_AppendResult(interp, "initial config has different topology",
+		       (char *)NULL);
+      return TCL_ERROR;      
     }
-    g1 /= (1.*chain_n_chains*chain_length); g2 /= (1.*chain_n_chains*chain_length); g3 /= (1.*chain_n_chains);
+
+    calc_g123(&g1, &g2, &g3);
     sprintf(buffer,"{%f %f %f}",g1, g2, g3);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return (TCL_OK);
   }
   else {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "The operation \"", mode, "\" you requested is not implemented.", (char *)NULL);
+    Tcl_AppendResult(interp, "The operation \"", mode,
+		     "\" you requested is not implemented.", (char *)NULL);
     return (TCL_ERROR);
   }
+}
+
+double mindist()
+{
+  double *buf = NULL;
+  double mindist, xt, yt, zt, dx, dy, dz;
+  int i, j;
+
+  /* minimal pair distance */
+  /* if the integrator already ran, check his result */
+  if (minimum_part_dist == -1)
+    mindist = box_l[0] + box_l[1] + box_l[2];
+  else {
+    /* get data from integrator */ 
+    buf = malloc(n_nodes*sizeof(double));
+    mpi_gather_stats(0, buf);
+    mindist = buf[0];
+    for (i = 1; i < n_nodes; i++) {
+      if (buf[i] < mindist)
+	mindist = buf[i];
+    }
+    free(buf);
+  }
+
+  if (mindist >= box_l[0] + box_l[1] + box_l[2]) {
+    /* ok, the integrator has not been started, or the distance
+       is larger than the real space cutoffs, so calculate directly */
+    mindist = box_l[0] + box_l[1] + box_l[2];
+    mindist *= mindist;
+    
+    updatePartCfg();
+
+    for (j=0; j<n_total_particles-1; j++) {
+      xt = partCfg[j].r.p[0]; yt = partCfg[j].r.p[1]; zt = partCfg[j].r.p[2];
+      for (i=j+1; i<n_total_particles; i++) {
+	dx = xt - partCfg[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
+	dy = yt - partCfg[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
+	dz = zt - partCfg[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
+	mindist = dmin(mindist, SQR(dx)+SQR(dy)+SQR(dz));
+      }
+    }
+    mindist = sqrt(mindist);
+  }
+  return mindist;
+}
+
+void nbhood(double xt, double yt, double zt, double r, IntList *il)
+{
+  double dx, dy, dz;
+  int i;
+
+  init_intlist(il);
+
+  updatePartCfg();
+
+  for (i = 0; i<n_total_particles; i++) {
+    dx = xt - partCfg[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
+    dy = yt - partCfg[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
+    dz = zt - partCfg[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
+    if (sqrt(SQR(dx)+SQR(dy)+SQR(dz)) < r) {
+      realloc_intlist(il, il->n + 1);
+      il->e[il->n] = partCfg[i].r.identity;
+      il->n++;
+    }
+  }
+}
+
+double distto(double xt, double yt, double zt)
+{
+  int i;
+  double dx, dy, dz;
+  double mindist;
+
+  /* larger than possible */
+  mindist=box_l[0] + box_l[1] + box_l[2];
+  for (i=0; i<n_total_particles; i++) {
+    dx = xt - partCfg[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
+    dy = yt - partCfg[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
+    dz = zt - partCfg[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
+    mindist = dmin(mindist, SQR(dx)+SQR(dy)+SQR(dz));
+  }
+  return sqrt(mindist);
+}
+
+double calc_re()
+{
+  int i;
+  double dx, dy, dz;
+  double dist = 0;
+
+  for (i=0; i<chain_n_chains; i++) {
+    dx = partCfg[chain_start+i*chain_length + chain_length-1].r.p[0]
+      - partCfg[chain_start+i*chain_length].r.p[0];
+    dy = partCfg[chain_start+i*chain_length + chain_length-1].r.p[1]
+      - partCfg[chain_start+i*chain_length].r.p[1];
+    dz = partCfg[chain_start+i*chain_length + chain_length-1].r.p[2]
+      - partCfg[chain_start+i*chain_length].r.p[2];
+    dist += (SQR(dx) + SQR(dy) + SQR(dz));
+  }
+  return sqrt(dist/((double)chain_n_chains));
+}
+
+double calc_rg()
+{
+  int i, j;
+  double dx, dy, dz;
+  double r_CM_x=0.0, r_CM_y=0.0, r_CM_z=0.0, r_G=0.0, doubMPC;
+
+  doubMPC = (double)chain_length;
+  for (i=0; i<chain_n_chains; i++) {
+    for (j=0; j<chain_length; j++) {
+      r_CM_x += partCfg[chain_start+i*chain_length + j].r.p[0];
+      r_CM_y += partCfg[chain_start+i*chain_length + j].r.p[1];
+      r_CM_z += partCfg[chain_start+i*chain_length + j].r.p[2];
+    }
+    r_CM_x /= doubMPC;
+    r_CM_y /= doubMPC;
+    r_CM_z /= doubMPC;
+    for (j=0; j<chain_length; ++j) {
+      dx = partCfg[chain_start+i*chain_length + j].r.p[0] - r_CM_x;
+      dy = partCfg[chain_start+i*chain_length + j].r.p[1] - r_CM_y;
+      dz = partCfg[chain_start+i*chain_length + j].r.p[2] - r_CM_z;
+      r_G += (SQR(dx) + SQR(dy) + SQR(dz));
+    }
+  }
+  r_G /= (double)(chain_length*chain_n_chains);
+  return sqrt(r_G);
+}
+
+double calc_rh()
+{
+  int i, j, p;
+  double dx, dy, dz;
+  double rh=0.0, ri=0.0;
+
+  for(p=0;p<chain_n_chains;p++) {
+    ri=0.0;
+    for(i=chain_start+chain_length*p;i<chain_start+chain_length*(p+1);i++) {
+      for(j=i+1;j<chain_start+chain_length*(p+1);j++) {
+	dx = partCfg[i].r.p[0]-partCfg[j].r.p[0]; dx*=dx;
+	dy = partCfg[i].r.p[1]-partCfg[j].r.p[1]; dy*=dy;
+	dz = partCfg[i].r.p[2]-partCfg[j].r.p[2]; dz*=dz;
+	ri += 1.0/sqrt(dx+dy+dz);
+      }
+    }
+    rh += 1.0/ri;
+  }
+  rh *= 0.5*(chain_length*(chain_length-1));
+  rh /= (double)chain_n_chains;
+  return rh;
+}
+
+void init_g123()
+{
+  int i, j, p;
+  double cm_tmp[3];
+
+  /* Save particles' current positions 
+     (which'll be used as initial position later on) */
+  partCoord_g = (float *) realloc(partCoord_g, 3*n_total_particles*sizeof(float));
+  partCM_g = (float *) realloc(partCM_g, 3*chain_n_chains*sizeof(float));
+  n_part_g = n_total_particles;
+  n_chains_g = chain_n_chains;
+  for(j=0; j<chain_n_chains; j++) {
+    cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
+    for(i=0; i<chain_length; i++) {
+      p = chain_start+j*chain_length + i;
+      partCoord_g[3*p]   = partCfg[p].r.p[0]; cm_tmp[0]+=partCfg[p].r.p[0];
+      partCoord_g[3*p+1] = partCfg[p].r.p[1]; cm_tmp[1]+=partCfg[p].r.p[1];
+      partCoord_g[3*p+2] = partCfg[p].r.p[2]; cm_tmp[2]+=partCfg[p].r.p[2];
+    }
+    partCM_g[3*j]   = cm_tmp[0]/(1.*chain_length);
+    partCM_g[3*j+1] = cm_tmp[1]/(1.*chain_length);
+    partCM_g[3*j+2] = cm_tmp[2]/(1.*chain_length);
+  }
+}
+
+void calc_g123(double *_g1, double *_g2, double *_g3)
+{
+  int i, j, p;
+  double g1=0.0, g2=0.0, g3=0.0, cm_tmp[3];
+
+  for(j=0; j<chain_n_chains; j++) {
+    cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
+    for(i=0; i<chain_length; i++) {
+      p = chain_start+j*chain_length + i;
+      cm_tmp[0]+=partCfg[p].r.p[0];
+      cm_tmp[1]+=partCfg[p].r.p[1];
+      cm_tmp[2]+=partCfg[p].r.p[2];
+    }
+    cm_tmp[0] /= (1.*chain_length);
+    cm_tmp[1] /= (1.*chain_length);
+    cm_tmp[2] /= (1.*chain_length);
+    for(i=0; i<chain_length; i++) {
+      p = chain_start+j*chain_length + i;
+      g1 += SQR(partCfg[p].r.p[0]-partCoord_g[3*p])
+	+ SQR(partCfg[p].r.p[1]-partCoord_g[3*p+1])
+	+ SQR(partCfg[p].r.p[2]-partCoord_g[3*p+2]);
+      g2 += SQR( (partCfg[p].r.p[0]-partCoord_g[3*p])
+		 - (cm_tmp[0]-partCM_g[3*j]  ) ) 
+	  + SQR( (partCfg[p].r.p[1]-partCoord_g[3*p+1])
+		 - (cm_tmp[1]-partCM_g[3*j+1]) ) 
+	  + SQR( (partCfg[p].r.p[2]-partCoord_g[3*p+2])
+		 - (cm_tmp[2]-partCM_g[3*j+2]) );
+      g3 += SQR(cm_tmp[0]-partCM_g[3*j])
+	+ SQR(cm_tmp[1]-partCM_g[3*j+1])
+	+ SQR(cm_tmp[2]-partCM_g[3*j+2]);
+    }
+  }
+  *_g1 = g1 / (1.*chain_n_chains*chain_length);
+  *_g2 = g2 / (1.*chain_n_chains*chain_length);
+  *_g3 = g3 / (1.*chain_n_chains);
 }
 
 void calc_energy()
