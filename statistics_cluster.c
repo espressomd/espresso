@@ -264,7 +264,7 @@ int cluster_join_to_substructures()
 */
 int analyze_necklace(Particle *part, int np) {
   int n_pearls;
-  fprintf(stderr," analyze_necklace:\n");
+  // fprintf(stderr," analyze_necklace:\n");
   /* initialize: step 1 in necklace cluster analyzation.*/
   cluster_init(part,np);
   /* perform step 2-4 in necklace cluster analyzation.*/
