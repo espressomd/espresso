@@ -159,7 +159,7 @@ void force_calc()
     }
     
     /* real space coulomb */
-    if(dist < p3m.r_cut2) {
+    if(dist < p3m.r_cut) {
       adist = p3m.alpha * dist;
       erfc_part_ri = AS_erfc_part(adist) / dist;
       fac = p3m.bjerrum * particles[id1].q * particles[id2].q  * 
