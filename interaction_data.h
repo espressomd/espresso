@@ -90,6 +90,8 @@
 
 /*@}*/
 
+
+
 /* Data Types */
 /************************************************************/
 
@@ -140,6 +142,10 @@ typedef struct {
   double TAB_maxval;
   double TAB_maxval2;
   double TAB_stepsize;
+  /** The maximum allowable filename length for a tabulated potential file*/
+#define MAXLENGTH_TABFILE_NAME 256
+  char TAB_filename[MAXLENGTH_TABFILE_NAME];
+
   /*@}*/  
   
   /** \name center of mass directed force */

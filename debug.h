@@ -49,33 +49,35 @@
 */
 
 #include <tcl.h>
+/*
+#define COMM_DEBUG 
+#define INTEG_DEBUG  
+#define CELL_DEBUG 
+#define GHOST_DEBUG    
+#define GRID_DEBUG 
+#define VERLET_DEBUG   
+#define PARTICLE_DEBUG
+#define P3M_DEBUG 
+#define FFT_DEBUG 
+#define RANDOM_DEBUG 
+#define FORCE_DEBUG 
+#define THERMO_DEBUG 
+#define LJ_DEBUG 
+#define ESR_DEBUG
+#define ESK_DEBUG
+#define FENE_DEBUG
+#define GHOST_FORCE_DEBUG
+#define ONEPART_DEBUG 7 
+#define STAT_DEBUG 
+#define POLY_DEBUG 
+#define MEM_DEBUG */
 
-// #define COMM_DEBUG
-// #define INTEG_DEBUG  
-// #define CELL_DEBUG  
-// #define GHOST_DEBUG    
-// #define GRID_DEBUG
-// #define VERLET_DEBUG  
-// #define PARTICLE_DEBUG
-// #define P3M_DEBUG
-// #define FFT_DEBUG
-// #define RANDOM_DEBUG
-// #define FORCE_DEBUG
-// #define THERMO_DEBUG
-// #define LJ_DEBUG
-// #define ESR_DEBUG
-// #define ESK_DEBUG
-// #define FENE_DEBUG
-// #define GHOST_FORCE_DEBUG
-// #define ONEPART_DEBUG 7 
-// #define STAT_DEBUG
-// #define POLY_DEBUG
-// #define MEM_DEBUG
+
 
 #define MPI_CORE
 #define FORCE_CORE
 
-// #define ADDITIONAL_CHECKS
+/*#define ADDITIONAL_CHECKS*/
 
 #ifdef MEM_DEBUG
 #ifdef __GNUC__

@@ -15,6 +15,7 @@
 #include <string.h>
 #include "statistics.h"
 #include "statistics_chain.h"
+#include "modes.h"
 #include "energy.h"
 #include "pressure.h"
 #include "communication.h"
@@ -395,6 +396,105 @@ void invalidate_obs()
 /****************************************************************************************
  *                                 basic observables parsing
  ****************************************************************************************/
+
+static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
+{
+#define WITHLIST 0
+#define NOLIST 1
+  /* 'analyze modes2d [setgrid <xdim> <ydim> <zdim>] [types <type_list>]' */
+
+  char buffer[TCL_DOUBLE_SPACE];
+  int i,j,change ;
+  int call_type;
+  IntList p1;
+  fftw_complex* result;
+
+  call_type = NOLIST;
+  init_intlist(&p1);
+  change = 0;
+
+  STAT_TRACE(fprintf(stderr,"%d,parsing modes2d \n",this_node);)
+
+  if (n_total_particles <= 2) {
+    Tcl_AppendResult(interp, "(not enough particles)",
+		     (char *)NULL);
+    return (TCL_OK);
+  }
+
+  while (argc > 0)
+    {
+      if ( ARG0_IS_S("setgrid") ) { 
+	if ( !ARG_IS_I(1,mode_grid_3d[0]) || !ARG_IS_I(2,mode_grid_3d[1]) || !ARG_IS_I(3,mode_grid_3d[2]) ) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp,"usage: analyze modes2d [setgrid <xdim> <ydim> <zdim>] [<type_list>]", (char *)NULL);
+	  return (TCL_ERROR);
+	}
+	STAT_TRACE(fprintf(stderr,"%d,setgrid has args %d,%d,%d \n",this_node,mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);)
+	  change = 4;
+	/* Update global parameters */
+	map_to_2dgrid();
+	mode_grid_changed = 1;
+	
+      }
+      if ( ARG0_IS_S("types") ) {	    
+	if (!ARG0_IS_INTLIST(p1)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "usage: analyze modes2d [setgrid <xdim> <ydim> <zdim>] [<type_list>]", (char *)NULL);
+	  return (TCL_ERROR);
+	}
+	change = 2;
+	call_type = WITHLIST;
+      }
+      argc -= change;
+      argv += change;
+      STAT_TRACE(fprintf(stderr,"%d,argc = %d \n",this_node, argc);)
+    }
+  result = malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex));
+  //  result = malloc((mode_grid_3d[xdir])*sizeof(fftw_complex*));  
+
+  if ( call_type == NOLIST ) {
+    STAT_TRACE(fprintf(stderr,"%d,analysing without type list \n",this_node));
+    if (!modes2d(NULL, result)) {
+      fprintf(stderr,"%d,mode analysis failed \n",this_node);
+    }
+    else {    STAT_TRACE(fprintf(stderr,"%d,mode analysis done \n",this_node));}
+  }
+  else {
+    if ( call_type == WITHLIST ){
+      STAT_TRACE(fprintf(stderr,"%d,analysing with type list \n",this_node));
+      if (!modes2d(&p1, result)) {
+	fprintf(stderr,"%d,mode analysis failed \n",this_node);
+      } else {
+	STAT_TRACE(fprintf(stderr,"%d,mode analysis done \n",this_node));
+      }
+    }
+  }
+
+  fprintf(stderr,"%d,writing modes \n",this_node);
+  Tcl_AppendResult(interp, "{ Modes ", (char *)NULL);
+
+  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+    for ( j = 0 ; j < mode_grid_3d[ydir]/2 + 1 ; j++) {
+     Tcl_AppendResult(interp, " { ", (char *)NULL);
+      Tcl_PrintDouble(interp,result[i+j*(mode_grid_3d[ydir]/2 + 1)].re,buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+      Tcl_AppendResult(interp, " ", (char *)NULL);
+      Tcl_PrintDouble(interp,result[i+j*(mode_grid_3d[ydir]/2 + 1)].im,buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+      Tcl_AppendResult(interp, " } ", (char *)NULL);
+    }
+  }
+  Tcl_AppendResult(interp, " } ", (char *)NULL);
+  fprintf(stderr,"%d,writen modes \n",this_node);
+
+  free(result);
+
+  return TCL_OK;
+
+#undef WITHLIST
+#undef NOLIST 
+
+}
 
 static int parse_mindist(Tcl_Interp *interp, int argc, char **argv)
 {
@@ -931,6 +1031,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
   if (ARG1_IS_S("set"))
     return parse_set_topology(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("modes2d"))
+    return parse_modes2d(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("mindist"))
     return parse_mindist(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("centermass"))

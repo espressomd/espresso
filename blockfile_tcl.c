@@ -130,6 +130,7 @@ int blockfile(ClientData data, Tcl_Interp *interp,
       strcat(name, title);
       exists = Tcl_GetCommandInfo(interp, name, &cmdInfo);
       free(name);
+
       if (exists)
 	return cmdInfo.proc(cmdInfo.clientData, interp,
 			    argc, argv);

@@ -103,6 +103,7 @@ void initialize_ia_params(IA_parameters *params) {
   params->TAB_maxval = 0.0;
   params->TAB_maxval2 = 0.0;
   params->TAB_stepsize = 0.0;
+  strcpy(params->TAB_filename,"");
 
   params->COMFORCE_flag = 0;
   params->COMFORCE_dir = 0;
@@ -146,6 +147,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->TAB_maxval = src->TAB_maxval;
   dst->TAB_maxval2 = src->TAB_maxval2;
   dst->TAB_stepsize = src->TAB_stepsize;
+  strcpy(dst->TAB_filename,src->TAB_filename);
 
   dst->COMFORCE_flag = src->COMFORCE_flag;
   dst->COMFORCE_dir = src->COMFORCE_dir;
@@ -358,16 +360,9 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
  
   }
   if (data->TAB_maxval != 0) {
-    sprintf(buffer, "%d ", data->TAB_npoints);
-    Tcl_AppendResult(interp, "tabulated ", buffer, (char *) NULL);
-    sprintf(buffer, "%d ", data->TAB_startindex);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, data->TAB_minval, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->TAB_maxval, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->TAB_stepsize, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    
+    Tcl_AppendResult(interp, "tabulated \"", data->TAB_filename,"\"", (char *) NULL);
+
   }
 #ifdef COMFORCE
   if (data->COMFORCE_flag != 0) {
@@ -820,7 +815,7 @@ int gay_berne_set_params(int part_type_a, int part_type_b,
     file.  ia_params and force/energy tables are then communicated to each
     node \warning No checking is performed for the file read!! */
 int tabulated_set_params(int part_type_a, int part_type_b,
-			     const char* filename)
+			     char* filename)
 {
   IA_parameters *data, *data_sym;
   FILE* fp;
@@ -840,17 +835,26 @@ int tabulated_set_params(int part_type_a, int part_type_b,
   if (!data || !data_sym) {
     return TCL_ERROR;
   }
-
+  if (strlen(filename) > MAXLENGTH_TABFILE_NAME-1 ) {
+    fprintf(stderr,"tabulated_set_params: the length of filename is %d but must be less than 256 characters \n", strlen(filename) );
+    errexit();
+  }
   /*Open the file containing force and energy tables */
   fp = fopen( filename , "r");
-
+  if ( !fp ) {
+    fprintf(stderr,"tabulated_set_params: attempt to open file %s failed \n", filename );
+    errexit();
+  }
 
   /*Look for a line starting with # */
   while ( token != EOF) {
     token = fgetc(fp);
     if ( token == 35 ) { break; } // magic number for # symbol
   }
-
+  if ( token == EOF ) { 
+    fprintf(stderr,"tabulated_set_params: attempt to read file %s failed. Could not find start the start token <#> \n", filename );
+    errexit();
+  }
 
   /* First read two important parameters we read in the data later*/
   fscanf( fp , "%d ", &npoints);
@@ -866,7 +870,7 @@ int tabulated_set_params(int part_type_a, int part_type_b,
     data->TAB_startindex = data_sym->TAB_startindex = tabulated_forces.max;
     newsize += npoints;
   } else {
-    // We have existing data for this potential check array sizing
+    // We have existing data for this pair of monomer types check array sizing
     if ( data->TAB_npoints != npoints ){
       fprintf(stderr,"\n%d: tabulated_set_params: Number of points for existing data %d does not match new data %d, exiting\n", this_node,data->TAB_npoints,npoints );
       errexit();
@@ -876,6 +880,9 @@ int tabulated_set_params(int part_type_a, int part_type_b,
   /* Update parameters symmetrically */
   data->TAB_maxval    = data_sym->TAB_maxval    = maxval;
   data->TAB_minval    = data_sym->TAB_minval    = minval;
+  strcpy(data->TAB_filename,filename);
+  strcpy(data_sym->TAB_filename,filename);
+
   /* Calculate dependent parameters */
   maxval2 = maxval*maxval;
   minval2 = minval*minval;
@@ -1059,7 +1066,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
   double k1, k2, mu, nu;
 #endif
   /* Parameters needed for tabulated force */
-  char* filename = NULL;
+  char* filename;
 #ifdef COMFORCE
   /* parameters needed for comforce and comfixed */
   int flag, dir; 
