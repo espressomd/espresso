@@ -185,7 +185,7 @@ int  is_inner_cell(int i, int gcg[3]);
 #define INNER_CELLS_LOOP(m,n,o) \
   for(o=1; o<cell_grid[2]+1; o++) \
     for(n=1; n<cell_grid[1]+1; n++) \
-      for(m=1; m<cell_grid[0]+1; m++) \
+      for(m=1; m<cell_grid[0]+1; m++)
 
 /** Convenient replace for loops over all particles and ghosts. */
 #define CELLS_LOOP(m,n,o) \
