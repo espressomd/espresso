@@ -13,7 +13,7 @@
 TK=no
 
 ### Intel C compiler instead of gcc
-ICC=yes
+ICC=no
 
 ### Enable ('yes') for the Blade-Center (see http://www.mpip-mainz.mpg.de/theory/computers/blade/index.html)
 ### This also enables the ICC-flag by default (since there is no 'gcc' on the Blade-Center).
@@ -27,7 +27,7 @@ BLADE=no
 MPICH=no
 
 ### use a simple fake MPI implementation for single node use only
-MPIFAKE=yes
+MPIFAKE=no
 
 ### static compilation for certain brain damaged blade clusters
 STATIC=no
