@@ -40,6 +40,7 @@ int piston_callback(Tcl_Interp *interp, void *_data) {
   mpi_bcast_parameter(FIELD_NPT_PISTON);
   return (TCL_OK);
 }
+
 int p_ext_callback(Tcl_Interp *interp, void *_data) {
   double data = *(double *)_data;
   p_ext = data;

@@ -285,6 +285,7 @@ int thermo_print(Tcl_Interp *interp)
 int thermo_usage(Tcl_Interp *interp, int argc, char **argv)
 {
   Tcl_AppendResult(interp, "Usage of tcl command thermostat:\n", (char *)NULL);
+  Tcl_AppendResult(interp, "\"", argv[0], "\" for status return or \n\"", (char *)NULL);
   Tcl_AppendResult(interp, "\"", argv[0], "off\" or \n\"", (char *)NULL);
   Tcl_AppendResult(interp, "\"", argv[0], "langevin <temp> <gamma>\" or \n", (char *)NULL);
 #ifdef DPD
