@@ -384,6 +384,6 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
 #endif
   }
   virials.init_status=1;
-  buf = realloc(buf,0);
+  free(buf);
   return (TCL_OK);
 }
