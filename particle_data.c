@@ -653,7 +653,7 @@ int part(ClientData data, Tcl_Interp *interp,
 	  j++;
 	}
 	/* set/delete bond */ 
-	if (!change_particle_bond(part_num, bond, delete)) {
+	if (change_particle_bond(part_num, bond, delete) != TCL_OK) {
 	  Tcl_AppendResult(interp, "bond to delete did not exist", (char *)NULL);
 	  free(bond);
 	  return (TCL_ERROR);
