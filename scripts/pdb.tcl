@@ -20,7 +20,12 @@ proc writepsf { file {N_P -1} {MPC -1} {N_CI -1} {N_pS -1} {N_nS -1} } {
 	for {set p 0} { $p <= $mp } { incr p } {
 	    set tp [part $p p t]
 	    if { $tp != "na" } {
-		puts $f [format "%8d T%03d %4d UNX  FE   FE"  $cnt $tp $p]
+		set l [format "%8d T%03d %4d UNX  FE   FE"  $cnt $tp $p]
+		if {[string length $l] < 50} {
+		    set pad [string repeat " " [expr 50 - [string length $l]]]
+		    set l "$l$pad"
+		}
+		puts $f $l
 		set count($p) $cnt
 		set bonds [part $p p b]
 		foreach bb $bonds {
@@ -40,7 +45,12 @@ proc writepsf { file {N_P -1} {MPC -1} {N_CI -1} {N_pS -1} {N_nS -1} } {
 	    for {set p $ja} {$p < $je} {incr p} {
 		set tp [part $p p t]
 		if { $tp != "na" } {
-		    puts $f [format "%8d T%03d %4d %03d  FE   FE"  $cnt $tp $p $ids]
+		    set l [format "%8d T%03d %4d %03d  FE   FE"  $cnt $tp $p $ids]
+		    if {[string length $l] < 50} {
+			set pad [string repeat " " [expr 50 - [string length $l]]]
+			set l "$l$pad"
+		    }
+		    puts $f $l
 		    set count($p) $cnt
 		    set bonds [part $p p b]
 		    foreach bb $bonds {
@@ -55,7 +65,7 @@ proc writepsf { file {N_P -1} {MPC -1} {N_CI -1} {N_pS -1} {N_nS -1} } {
 	}
     }
     #  write bonds
-    puts $f [format "%8d !NBOND" $bondcnt]
+    puts $f [format "%8d !NBOND                                      " $bondcnt]
     set bondlinecnt 0
     foreach b $bondlist {
 	set b [lindex $b 0]
