@@ -16,7 +16,15 @@ TK=yes
 ICC=no
 
 ### Enable ('yes') for the Blade-Center (see http://www.mpip-mainz.mpg.de/theory/computers/blade/index.html)
+### This also enables the ICC-flag by default (since there is no 'gcc' on the Blade-Center).
 BLADE=no
+
+### Use the 'mpich' implementation of MPI instead of the default 'lam' one.
+### This overrides the ICC-flag for obvious reasons.
+### This is overridden by the BLADE-flag (since there is no 'lam' on the Blade-Center).
+### Note that you'll need a link to the 'mpich'-implemented 'mpirun' in /opt/mpich/ch-p4/bin/mpirun
+###      to execute the resulting binary (the default 'mpirun' is currently /opt/lam/bin/mpirun).
+MPICH=no
 
 ### static compilation for certain brain damaged blade clusters
 STATIC=no
@@ -40,6 +48,11 @@ ifeq ($(BLADE),yes)
 else
      ifeq ($(ICC),yes)
           CC=icc
+     endif
+     ifeq ($(MPICH),yes)
+          CC=/opt/mpich/ch-p4/bin/mpicc
+	  CC=$$ESPRESSO_SOURCE/mpicc.modf
+	  ICC=no
      endif
 endif
 
@@ -123,8 +136,12 @@ DEPEND=makedepend
 ############ C++ compiler settings
 CXX=g++
 
-############ MDINLINE defines hwo to declare inline functions
-CFLAGS+= -DMDINLINE="inline static"
+############ MDINLINE defines how to declare inline functions
+ifeq ($(MPICH),yes)
+     CFLAGS+= "-DMDINLINE=\"inline static\""
+else
+     CFLAGS+= -DMDINLINE="inline static"
+endif
 
 ############ linker settings
 LINK=$(CC)
@@ -170,8 +187,13 @@ endif
 ifeq ($(ICC),yes)
      ifeq ($(BLADE),yes)
      else
-          CFLAGS+= -I/opt/lam/include
-          LDLIBS+= -L/opt/lam/lib -lmpi -llam
+          ifeq ($(MPICH),yes)
+	       CFLAGS+= -I/opt/mpich/chp4/include
+	       LDLIBS+= -L/opt/mpich/chp4/lib64 -lmpich
+	  else
+	       CFLAGS+= -I/opt/lam/include
+	       LDLIBS+= -L/opt/lam/lib -lmpi -llam
+	  endif
      endif
 endif
 
