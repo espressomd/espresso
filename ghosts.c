@@ -319,8 +319,6 @@ void exchange_and_sort_part()
 	  pl   = &(cell->pList);
 	  part = pl->part;
 	  for(i=0 ; i< pl->n; i++) {
-	    /*fprintf(stderr,"%d: exchange_part %d: Part id=%d co=%f\n",
-	      this_node,dir,part[i].r.identity,part[i].r.p[d]);*/
 	    if((lr == 1 && part[i].r.p[d] >=  my_right[d]) ||
 	       (lr == 0 && part[i].r.p[d] <  my_left[d])) {
 	      GHOST_TRACE(fprintf(stderr,"%d: exchange_part: Send Part id=%d to node %d\n",
@@ -352,7 +350,7 @@ void exchange_and_sort_part()
 	for(i=0 ; i<pl->n; i++) {
 	  fold_coordinate(part[i].r.p, part[i].i, d);
 
-	  if (d==3) {
+	  if (d==2) {
 	    /* sort particles not moved into their real cells */
 	    ind = pos_to_cell_grid_ind(part[i].r.p);
 	    if(ind != c) {
