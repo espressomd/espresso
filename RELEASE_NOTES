@@ -11,12 +11,28 @@ Current working revision.
 - v1.5.1d -
 -----------
 
+(e) February 20th, 2004.
 (d) February 14th, 2004.
 (c) February  9th, 2004.
 (b) February  6th, 2004.
 (a) January  30th, 2004.
 
 New Features:
+(e) New tcl command: thermostat to control the new thermostats:
+    Usage: thermostat langevin <temperature> <langevin_gamma>
+           thermostat dpd <temperature> <dpd_gamma> <dpd_r_cut> 
+           thermostat npt_isotropic <temperature> <nptiso_gamma0> <nptiso_gammav>
+           thermostat off
+	   thermostat
+    Notes: You can combine different thermostats.
+           At the moment they share a single temperature (if you are aware 
+	   of any problems where one would need different temperatures, 
+	   please let us know).
+	   thermostat off turns all thermostats off and sets all thermostat parameters to zero.
+           For NVE ensemble use thermostat off.
+	   DO NOT USE setmd temperature AND setmd gamma (:= langevin_gamma) IN NEW SCRIPTS!
+	   (even though they still work).
+	   For backwards compatibility ESPResSo starts with the Langevin thermostat turned on.
 (d) Implemented an (N,p,T)-ensemble integrator, as published by
     Kolb, Duenweg, J.Chem.Phys. 111(8) 4453 (1999).
     To activate it, use the corresponding compiler-flag in 'config.h'
