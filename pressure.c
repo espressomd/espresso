@@ -18,7 +18,7 @@ Observable_stat virials  = {0, {NULL,0,0}, 0,0,0,0};
 Observable_stat total_pressure = {0, {NULL,0,0}, 0,0,0,0};
 Observable_stat p_tensor = {0, {NULL,0,0},0,0,0,0};
 
-nptiso_struct   nptiso   = {0.0,0.0,0.0,0.0,0.0,0.0,{0.0,0.0,0.0},{0.0,0.0,0.0}, 0 ,{NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},0,0,0};
+nptiso_struct   nptiso   = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,{0.0,0.0,0.0},{0.0,0.0,0.0},1, 0 ,{NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},0,0,0};
 
 /************************************************************/
 /* callbacks for setmd                                      */
@@ -50,8 +50,12 @@ void calc_long_range_virials();
 /** Initializes a virials Observable stat. */
 void init_virials(Observable_stat *stat);
 
-/** on the master node: calc energies only if necessary */
-void master_pressure_calc();
+/** on the master node: calc energies only if necessary
+    @param v_comp flag which enables (1) compensation of the velocities required 
+		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
+		  (hence it only works with domain decomposition); naturally it
+		  therefore doesn't make sense to use it without NpT. */
+void master_pressure_calc(int v_comp);
 
 /** Does the binning for calc_p_tensor
     @param _new_bin   NOT_DOCUMENTED
@@ -82,7 +86,7 @@ void calc_p_tensor(double volume, IntList *p_list, int flag);
 /* Scalar Pressure */
 /*******************/
 
-void pressure_calc(double *result)
+void pressure_calc(double *result, int v_comp)
 {
   int n;
 
@@ -101,7 +105,7 @@ void pressure_calc(double *result)
     break;
   case CELL_STRUCTURE_DOMDEC:
     if (rebuild_verletlist) build_verlet_lists();
-    calculate_verlet_virials();
+    calculate_verlet_virials(v_comp);
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_calculate_virials();
@@ -116,7 +120,7 @@ void pressure_calc(double *result)
   calc_long_range_virials();
 
   for (n = 1; n < virials.data.n; n++)
-    virials.data.e[n] /= 3*volume;
+    virials.data.e[n] /= 3.0*volume;
 
   /* gather data */
   MPI_Reduce(virials.data.e, result, virials.data.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -166,10 +170,13 @@ void init_virials(Observable_stat *stat)
 
 /************************************************************/
 
-void master_pressure_calc() {
-  mpi_gather_stats(2, total_pressure.data.e);
+void master_pressure_calc(int v_comp) {
+  if(v_comp)
+    mpi_gather_stats(3, total_pressure.data.e);
+  else
+    mpi_gather_stats(2, total_pressure.data.e);
 
-  total_pressure.init_status=1;
+  total_pressure.init_status = 1+v_comp;
 }
 
 
@@ -238,12 +245,12 @@ static void print_detailed_pressure(Tcl_Interp *interp)
 
 /************************************************************/
 
-int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
+int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_comp)
 {
   /* 'analyze pressure [{ fene <type_num> | harmonic <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | gb <type1> <type2> | coulomb | ideal | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   int i, j;
-  double value;
+  double value, p_vel[3];
   value = 0.0;
 
   if (n_total_particles == 0) {
@@ -252,9 +259,22 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
 
-  if (total_pressure.init_status == 0) {
+  /* if desired (v_comp==1) replace ideal component with instantaneous one */
+  if (total_pressure.init_status != 1+v_comp ) {
     init_virials(&total_pressure);
-    master_pressure_calc();
+    // if(v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) && (abs(nptiso.volume - pow(box_l[nptiso.non_const_dim],nptiso.dimension)) < 1 )) {
+    if(v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) && !(nptiso.invalidate_p_vel)) {
+      if (total_pressure.init_status == 0) 
+	master_pressure_calc(0);
+      total_pressure.data.e[0] = 0.0;
+      MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+      for(i=0; i<3; i++) 
+	if(nptiso.geometry & nptiso.nptgeom_dir[i])
+	  total_pressure.data.e[0] += p_vel[i];
+      total_pressure.data.e[0] /= (nptiso.dimension*nptiso.volume);  
+      total_pressure.init_status = 1+v_comp;   }
+    else
+      master_pressure_calc(v_comp);
   }
 
   if (argc == 0)
