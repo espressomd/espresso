@@ -236,7 +236,6 @@ MDINLINE double rod_energy(Particle *p1, Particle *c_p, Constraint_rod *c)
     vec[i] = p1->r.p[i] - c->pos[i];
     c_dist_2 += SQR(vec[i]);
   }
-  vec[2] = 0.;
 
   if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->lambda != 0.0)
     return coulomb.prefactor*p1->p.q*c->lambda*(-log(c_dist_2*SQR(box_l_i[2])) + 2*(M_LN2 - C_GAMMA));
