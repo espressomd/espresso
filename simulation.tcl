@@ -184,7 +184,7 @@ set stat {mindist re rg rh g123}
    # 'g123'    returns the mean-square displacement g1(t) of a monomer, the mean-square displacement g2(t) of in the center of gravity of the chain itself,
    #                   the motion of the center of mass g3(t)as a tcl-list {g1(t) g2(t) g3(t)}
 
-set vmd_output no
+set vmd_output yes
    # 'yes' writes out .pdf- and .psf-files to which vmd can be connected
 
 set write movie
@@ -196,11 +196,8 @@ set write_loop_ljcp 1
 set write_loop_equl 1
 set write_loop_main 1
    # after this many integration-cycles (out of $ljcp_loop/$equl_loop) the current configuration may be saved if{$write=="yes" || $write=="movie"}
-set write_param { box_l cell_grid cell_size gamma lj_force_cap local_box_l max_cut max_num_cells max_part max_range max_skin n_nodes n_part n_part_types node_grid periodicity skin temperature time time_step transfer_rate verlet_flag verlet_reuse }
-   # sets which tcl-parameters (out of box_l|cell_grid|cell_size|gamma|lj_force_cap|...
-   # local_box_l|max_cut|max_num_cells|max_part|max_range|max_skin|n_nodes|n_part|n_part_types|...
-   # node_grid|periodicity|skin|temperature|time|time_step|transfer_rate|...
-   # verlet_flag|verlet_reuse) should be saved to disk
+set write_param all
+   # sets which tcl-parameters (out of { box_l cell_grid cell_size gamma local_box_l max_cut max_num_cells max_part max_range max_skin n_nodes n_part n_part_types node_grid periodicity skin temperature time time_step transfer_rate verlet_flag verlet_reuse } or "all") should be saved to disk
 set write_part "id pos type q v f"
    # sets which informations (out of pos|type|q|v|f) on the particles should be saved to disk
    # note that the newer versions of the blockfile-format do NOT allow to save bonds here, 
@@ -211,19 +208,19 @@ set write_part "id pos type q v f"
 #############################################################
 
 set input_path  ./configs/
-set input_file    polyNet_input1-WARM50005
+set input_file    simulation_input1-WARM5000
 
 set output_path ./configs/
-set output_prfx   polyNet_output
+set output_prfx   simulation_output
 
 set vmd_path    ./movie/
-set vmd_prfx      polyNet_vmd
+set vmd_prfx      simulation_vmd
 
 set movie_path  ./movie/
-set movie_prfx    polyNet_movies
+set movie_prfx    simulation_movies
 
 set stat_path   ./configs/
-set stat_prfx     polyNet_stats
+set stat_prfx     simulation_stats
 
 
 # tcl_md parameters
@@ -456,7 +453,7 @@ analysisInit $stat $stat_out $N_P $MPC $simtime
 
 if { $vmd_output=="yes" } {
     puts -nonewline "        Preparing connection of real-time visualization tool 'imd'... "; flush stdout
-    writepsf $vmd_path$vmd_prfx.psf
+    writepsf $vmd_path$vmd_prfx.psf $N_P $MPC $N_CI $N_pS $N_nS
     writepdb $vmd_path$vmd_prfx.pdb
     puts -nonewline "Output created, establishing link... "; flush stdout
     for {set port 10000} { $port < 65000 } { incr port } {
@@ -469,7 +466,7 @@ if { $vmd_output=="yes" } {
 	puts "        (2) Enter on vmd command line: 'mol load psf $vmd_prfx.psf pdb $vmd_prfx.pdb'"
 	set HOSTNAME [exec hostname]
 	puts "        (3) Enter on vmd command line: 'imd connect $HOSTNAME $port'"
-	puts "        (4) To have the chains coloured individually, use property 'SegName'"
+	puts "        (4) To have the chains coloured individually, set 'Coloring-Method' to 'ResName' in the 'Graphics'-menu"
 	imd listen 0
     }
 }
@@ -498,7 +495,7 @@ if { $warmup == 1 } {
     setmd time_step $ljcp_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... "
     puts -nonewline "        Capping all LJ-interactions... "; flush stdout
-    set tmp_cap $ljcp_cap1; setmd lj_force_cap $tmp_cap; puts "Done (cap initially at $tmp_cap)."
+    set tmp_cap $ljcp_cap1; inter ljforcecap $tmp_cap; puts "Done (cap initially at $tmp_cap)."
     puts -nonewline "        Making sure that electrostatics are disabled... "; flush stdout
     inter coulomb 0; puts "Done ([inter coulomb])."
     puts "    Preparation completed."
@@ -520,7 +517,7 @@ if { $warmup == 1 } {
 	if { $vmd_output=="yes" } { imd positions }
 
 	if { $tmp_dist >= $ljcp_dist } { break }
-	setmd lj_force_cap $tmp_cap; set tmp_cap [expr $tmp_cap + $ljcp_incr]
+	inter ljforcecap $tmp_cap; set tmp_cap [expr $tmp_cap + $ljcp_incr]
     }
     puts -nonewline "\n    Initial relaxation completed"
     if { [expr $i % $write_loop_ljcp != 0] || ($tmp_dist >= $ljcp_dist) } {
@@ -546,7 +543,7 @@ if { $equl_loop > 0 } {
     setmd time_step $equl_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... "
     puts -nonewline "        Remove capping of LJ-interactions... "; flush stdout
-    setmd lj_force_cap 0; puts "Done."
+    inter ljforcecap 0; puts "Done ([inter ljforcecap])."
     puts -nonewline "        Making sure that electrostatics are disabled... "; flush stdout
     inter coulomb 0; puts "Done ([inter coulomb])."
     if { $equl_zero==1 } { stopParticles } else { puts "        As requested, all particles' velocities and forces remain at their current values!" }
@@ -605,7 +602,8 @@ if { $main_loop > 0 } {
     setmd gamma $main_gamma;  puts -nonewline "friction Gamma=[setmd gamma], "; flush stdout
     setmd time_step $main_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... Done."
-    puts -nonewline "        Making sure that capping of the LJ-interactions is removed... "; flush stdout; setmd lj_force_cap 0; puts "Done."
+    puts -nonewline "        Making sure that capping of the LJ-interactions is removed... "; flush stdout; 
+    inter ljforcecap 0; puts "Done ([inter ljforcecap])."
     if { $bjerrum > 0 } {
 	puts -nonewline "        Activating p3m-subsystem & enabling full electrostatics... "; flush stdout
 	inter coulomb $bjerrum p3m $p3m_r_cut $p3m_mesh $p3m_cao $p3m_alpha; inter coulomb epsilon $p3m_epsilon
