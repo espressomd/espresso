@@ -653,6 +653,7 @@ void mpi_gather_stats(int job, void *result)
   int *sizes;
   float *cdata;
   float_packed_particle_data *fdata;
+  int m,n,o;
   Particle *gdata, **pgdata, *tdata, *tdat2;
   MPI_Status status;
 
@@ -744,11 +745,15 @@ void mpi_gather_stats(int job, void *result)
       if (sizes[pnode] > 0) {
 	if (pnode == this_node) {
 	  g = 0;
-	  for (c = 0; c < n_cells; c++)
-	    for (i = 0; i < cells[c].pList.n; i++) {
-	      memcpy(&tdata[g],&cells[c].pList.part[i],sizeof(Particle));
-	      g++;
-	    }
+	  // for (c = 0; c < n_cells; c++)
+	  //   for (i = 0; i < cells[c].pList.n; i++) {
+	  //     memcpy(&tdata[g],&cells[c].pList.part[i],sizeof(Particle));
+	  INNER_CELLS_LOOP(m, n, o) {
+	    memcpy(&tdata[g],CELL_PTR(m,n,o)->pList.part,(CELL_PTR(m,n,o)->pList.n)*sizeof(Particle));
+	    //	    memcpy(&tdata[g],CELL_PTR(m,n,o)->pList.part,sizes[pnode]*sizeof(Particle));
+	    COMM_TRACE(printf("%d -> %d,%d,%d: %dx (starting at %d with %d)\n",this_node,m,n,o,(CELL_PTR(m,n,o)->pList.n),g,tdata[g].r.identity));
+	    g+=CELL_PTR(m,n,o)->pList.n;
+	  }
 	}
 	else {
 	  MPI_Recv(tdata, sizes[pnode]*sizeof(Particle), MPI_BYTE, pnode, REQ_GATHER,
@@ -760,11 +765,13 @@ void mpi_gather_stats(int job, void *result)
 
     /* now sort the particle data according to the identity-numbers */
     tdata = tdat2;
-    for(i=0; i<tot_size; i++)
-	memcpy(&gdata[tdata[i].r.identity],&tdata[i],sizeof(Particle));
+    for(i=0; i<tot_size; i++) {
+      COMM_TRACE(printf("Sort particle %d from %d to gdata\n",tdata[i].r.identity,i));
+      memcpy(&gdata[tdata[i].r.identity],&tdata[i],sizeof(Particle));
+    }
     free(tdata);
 
-    /* perhaps add some debuggin output */
+    /* perhaps add some debugging output */
     COMM_TRACE(gdata = *pgdata;
 	       for(i=0; i<tot_size; i++) {
 		 printf("%d: %d %d %f (%f, %f, %f)\n",i,gdata[i].r.identity,gdata[i].r.type,gdata[i].r.q,gdata[i].r.p[0],gdata[i].r.p[1],gdata[i].r.p[2]);
@@ -780,6 +787,7 @@ void mpi_gather_stats_slave(int pnode, int job)
   int n_part;
   int i, c, g;
   float *cdata;
+  int m,n,o;
   Particle *gdata;
 
   switch (job) {
@@ -815,11 +823,15 @@ void mpi_gather_stats_slave(int pnode, int job)
     /* then get the particle information */
     gdata = malloc(n_part*sizeof(Particle));
     g = 0;
-    for (c = 0; c < n_cells; c++)
-      for (i = 0; i < cells[c].pList.n; i++) {
-        memcpy(&gdata[g],&cells[c].pList.part[i],sizeof(Particle));
-        g++;
-      }
+    //    for (c = 0; c < n_cells; c++)
+    //      for (i = 0; i < cells[c].pList.n; i++) {
+    //        memcpy(&gdata[g],&cells[c].pList.part[i],sizeof(Particle));
+    INNER_CELLS_LOOP(m, n, o) {
+      memcpy(&gdata[g],CELL_PTR(m,n,o)->pList.part,(CELL_PTR(m,n,o)->pList.n)*sizeof(Particle));
+      //      memcpy(&gdata[g],CELL_PTR(m,n,o)->pList.part,n_part*sizeof(Particle));
+      printf("%d -> %d,%d,%d: %dx (starting at %d with %d)\n",this_node,m,n,o,(CELL_PTR(m,n,o)->pList.n),g,gdata[g].r.identity);
+      g+=CELL_PTR(m,n,o)->pList.n;
+    }
     /* and send it back to the master node */
     MPI_Send(gdata, n_part*sizeof(Particle), MPI_BYTE, 0, REQ_GATHER,
 	     MPI_COMM_WORLD);
