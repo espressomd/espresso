@@ -79,6 +79,9 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
     @return the minimal distance of two particles */
 double mindist(IntList *set1, IntList *set2);
 
+/** */
+void aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_list, int *link_list, int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std);
+
 /** returns all particles within a given radius r_catch around a position.
     @param pos position of sphere of point
     @param r_catch the radius around the position
@@ -170,6 +173,7 @@ MDINLINE double min_distance(double pos1[3], double pos2[3]) {
 
 void centermass(int type, double *com);
 void gyrationtensor(int type, double *gyrtensor);
+void calculate_verlet_neighbors();
 
 MDINLINE double *obsstat_bonded(Observable_stat *stat, int j)
 {
