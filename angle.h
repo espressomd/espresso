@@ -117,6 +117,12 @@ MDINLINE double angle_energy(Particle *p_mid, Particle *p_left, Particle *p_righ
 #ifdef BOND_ANGLE_COSSQUARE
   return 0.5*bonded_ia_params[type_num].p.angle.bend*SQR(cosine+bonded_ia_params[type_num].p.angle.cos_phi0);
 #endif
+  
+  /* You should never end up here! */
+  fprintf(stderr, "ERROR: Function 'angle_energy' was invoked, but none of the angle-potentials seem to be defined!\n");
+  fprintf(stderr, "       Confused on what to do next, bailing out...\n");
+  errexit();
+  return 0.0;
 }
 
 
