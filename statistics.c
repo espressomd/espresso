@@ -529,20 +529,21 @@ static int parse_rdf(Tcl_Interp *interp, int argc, char **argv)
 
   if (argc < 2) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze distribution [<type_list> <type_list>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze rdf [<type_list> <type_list>]", (char *)NULL);
     return (TCL_ERROR);
   }
 
   if (!ARG0_IS_INTLIST(p1)) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze distribution [<type_list> <type_list>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze rdf [<type_list> <type_list>]", (char *)NULL);
     return (TCL_ERROR);
   }
   if (!ARG1_IS_INTLIST(p2)) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze distribution [<type_list> <type_list>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze rdf [<type_list> <type_list>]", (char *)NULL);
     return (TCL_ERROR);
   }
+  argc-=2; argv+=2;
 
   if( argc>0 ) { if (!ARG0_IS_D(r_min)) return (TCL_ERROR); argc--; argv++; }
   if( argc>0 ) { if (!ARG0_IS_D(r_max)) return (TCL_ERROR); argc--; argv++; }
