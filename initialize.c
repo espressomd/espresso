@@ -5,6 +5,7 @@
 #include "binary_file.h"
 #include "integrate.h"
 #include "statistics.h"
+#include "imd.h"
 
 int initialize(Tcl_Interp *interp)
 {
@@ -30,6 +31,8 @@ int initialize(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "readmd", readmd, 0, NULL);
   /* in file statistics.c */
   Tcl_CreateCommand(interp, "mindist", mindist, 0, NULL);
+  /* in file imd.c */
+  Tcl_CreateCommand(interp, "imd", imd, 0, NULL);
 
   /* in interaction_data.c: make sure 0<->0 ia always exists */
   make_particle_type_exist(0);

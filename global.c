@@ -12,6 +12,7 @@
 #include "thermostat.h"
 #include "forces.h"
 #include "verlet.h"
+#include "imd.h"
 
 /**********************************************
  * description of variables
@@ -50,6 +51,7 @@ const Datafield fields[] = {
   {&friction_gamma, TYPE_DOUBLE,   1, "gamma", gamma_callback },
   {&rebuild_verletlist, TYPE_INT,   1, "verletflag", ro_callback },
   {&Bjerrum, TYPE_DOUBLE,   1, "bjerrum", bjerrum_callback },
+  {&transfer_rate, TYPE_INT,   1, "transfer_rate", ro_callback },
   { NULL, 0, 0, NULL, NULL }
 };
 

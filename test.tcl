@@ -57,6 +57,10 @@ puts "nptypes = [setmd nptypes]"
 
 # integration
 ##################################################
+
+puts "imd: [imd connect 12345]"
+puts "imd: [imd stall 100]"
+
 integrate init
 set write_steps 10
 set configs 50
@@ -66,9 +70,12 @@ for {set i 0} { $i < $configs } { incr i } {
     if {"$write" == "yes" } {
 	polywrite [format "configs/t%04d.poly" $i]
     }
+    #puts "imd: [imd pos]"
 }
 
 integrate exit
+
+puts "imd: [imd disconnect]"
 
 # write
 set f [open "|gzip -c - >tconfig.gz" w]

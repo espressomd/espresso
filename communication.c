@@ -230,10 +230,8 @@ void mpi_who_has()
     COMM_TRACE(fprintf(stderr, "node %d reports %d particles\n",
 		       pnode, sizes[pnode]));
     if (pnode == this_node) {
-      for (i = 0; i < n_particles; i++) {
-	if (particles[i].identity != -1)
-	  particle_node[particles[i].identity] = pnode;
-      }
+      for (i = 0; i < n_particles; i++)
+	particle_node[particles[i].identity] = pnode;
     }
     else if (sizes[pnode] > 0) {
       if (pdata_s < sizes[pnode]) {
@@ -262,8 +260,7 @@ void mpi_who_has_slave(int ident)
   sendbuf = malloc(sizeof(int)*n_particles);
   npart = 0;
   for (i = 0; i < n_particles; i++)
-    if (particles[i].identity != -1)
-      sendbuf[npart++] = particles[i].identity;
+    sendbuf[npart++] = particles[i].identity;
   MPI_Send(sendbuf, npart, MPI_INT, 0, REQ_WHO_HAS, MPI_COMM_WORLD);
   free(sendbuf);
 }
@@ -650,21 +647,104 @@ void mpi_bcast_n_particle_types_slave(int ns)
 void mpi_gather_stats(int job, void *result)
 {
   int req[2];
+  int tot_size, i, pnode;
+  int *sizes;
+  int *pdata, pdata_s;
+  float *cdata;
+  float_packed_particle_data *fdata;
+  MPI_Status status;
+
   req[0] = REQ_GATHER;
   req[1] = job;
 
   COMM_TRACE(fprintf(stderr, "0: issuing GATHER %d\n", job));
   MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
-  if (job == 0)
-    MPI_Gather(&minimum_part_dist, 1, MPI_DOUBLE, result,
+  switch (job) {
+  case 0:
+    MPI_Gather(&minimum_part_dist, 1, MPI_DOUBLE, (double *)result,
 	       1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    break;
+  case 1:
+    /* similar to REQ_WHO_HAS */
+    sizes = malloc(sizeof(int)*n_nodes);
+    pdata = NULL;
+    pdata_s = 0;
+    fdata = (float_packed_particle_data *)result;
+
+    /* first collect number of particles on each node */
+    MPI_Gather(&n_particles, 1, MPI_INT, sizes, 1, MPI_INT,
+	       0, MPI_COMM_WORLD);
+    tot_size = 0;
+    for (i = 0; i < n_nodes; i++)
+      tot_size += sizes[i];
+
+    fdata->n_particles=tot_size;
+    fdata->coords =
+      cdata = malloc(tot_size*3*sizeof(float));
+
+    /* then fetch particle locations */
+    for (pnode = 0; pnode < n_nodes; pnode++) {
+      COMM_TRACE(fprintf(stderr, "node %d reports %d particles\n",
+			 pnode, sizes[pnode]));
+      if (sizes[pnode] > 0) {
+	if (pnode == this_node) {
+	  for (i = 0; i < n_particles; i++) {
+	    cdata[3*i    ] = particles[i].p[0];
+	    cdata[3*i + 1] = particles[i].p[1];
+	    cdata[3*i + 2] = particles[i].p[2];
+	  }
+	}
+	else {
+	  if (pdata_s < sizes[pnode]) {
+	    pdata_s = sizes[pnode];
+	    pdata = realloc(pdata, sizeof(int)*pdata_s);
+	  }
+
+	  MPI_Recv(pdata, 3*sizes[pnode], MPI_FLOAT, pnode, REQ_WHO_HAS,
+		   MPI_COMM_WORLD, &status);
+	  for (i = 0; i < 3*sizes[pnode]; i++)
+	    cdata[i] = pdata[i];
+	}
+	cdata += sizes[pnode];
+      }
+    }
+
+    free(pdata);
+    free(sizes);
+    break;
+  default: ;
+  }
 }
 
 void mpi_gather_stats_slave(int job)
 {
-  if (job == 0)
+  int i;
+  double *cdata;
+
+  switch (job) {
+  case 0:
     MPI_Gather(&minimum_part_dist, 1, MPI_DOUBLE, NULL,
 	       1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    break;
+  case 1:
+    /* similar to REQ_WHO_HAS */
+    /* first collect number of particles on each node */
+    MPI_Gather(&n_particles, 1, MPI_INT, NULL, 1, MPI_INT,
+	       0, MPI_COMM_WORLD);
+    cdata = malloc(3*n_particles*sizeof(float));
+    for (i = 0; i < n_particles; i++) {
+      cdata[3*i    ] = particles[i].p[0];
+      cdata[3*i + 1] = particles[i].p[1];
+      cdata[3*i + 2] = particles[i].p[2];
+    }
+    
+    MPI_Send(cdata, 3*n_particles, MPI_FLOAT, 0, REQ_WHO_HAS,
+	     MPI_COMM_WORLD);
+
+    free(cdata);
+    break;
+  default:;
+  }
 }
 
 /*********************** MAIN LOOP for slaves ****************/

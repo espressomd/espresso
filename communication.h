@@ -42,6 +42,15 @@
 #include "particle_data.h"
 
 /**************************************************
+ * data types
+ **************************************************/
+
+typedef struct {
+  int n_particles;
+  float *coords;
+} float_packed_particle_data;
+
+/**************************************************
  * exported variables
  **************************************************/
 
@@ -155,11 +164,20 @@ void mpi_bcast_ia_params(int i, int j);
 */
 void mpi_bcast_n_particle_types(int s);
 
-/** Issue REQ_GATHER: gather statistics. Currently only used for \ref mindist,
-    but should be extended later.
-    \param job what to do; currently only gathering \ref minimum_part_distance
-               is possible.
-    \param result where to store the gathered value(s), currently a double *.
+/** Issue REQ_GATHER: gather statistics. \ref job determines the job to
+    do, at the moment either gather \ref minimum_part_distance or
+    the coordinates.
+    \param job what to do:
+    \begin{list}
+    \item 0 gather \ref minimum_part_distance
+    \item 1 gather coordinates in float format
+    \end{list}
+    \param result where to store the gathered value(s):
+    \begin{list}
+    \item for job 0 a double *
+    \item for job 1 a float_packed_particle_data *
+    \end{list}
+
 */
 void mpi_gather_stats(int job, void *result);
 /*@}*/
