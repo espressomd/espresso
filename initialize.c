@@ -147,6 +147,8 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "integrate", (Tcl_CmdProc *)integrate, 0, NULL);
   /* in global.c */
   Tcl_CreateCommand(interp, "setmd", (Tcl_CmdProc *)setmd, 0, NULL);
+  /* in grid.c */
+  Tcl_CreateCommand(interp, "change_volume", (Tcl_CmdProc *)change_volume, 0, NULL);
   /* in interaction_data.c */
   Tcl_CreateCommand(interp, "code_info", (Tcl_CmdProc *)code_info, 0, NULL);
   /* in interaction_data.c */
