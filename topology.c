@@ -95,10 +95,16 @@ void sync_topo_part_info() {
 
 
 int parse_sync_topo_part_info(Tcl_Interp *interp) {
-  if (n_molecules < 0) {
+  
+  if (n_molecules <= 0) {
     Tcl_AppendResult(interp, "Can't sync molecules to particle info: No molecules defined ", (char *)NULL);
     return TCL_ERROR;
   }
+  if (n_total_particles <= 0) {
+    Tcl_AppendResult(interp, "Can't sync molecules to particle info: No particles defined ", (char *)NULL);
+    return TCL_ERROR;
+  }
+
   if ( !mpi_sync_topo_part_info( topology )) {
     Tcl_AppendResult(interp, "Error syncronising molecules to particle info", (char *)NULL);
     return TCL_ERROR;
@@ -114,6 +120,7 @@ int parse_analyze_set_topology(Tcl_Interp *interp, int argc, char **argv)
   if (ARG0_IS_S("chains")) {
     return parse_chain_structure_info(interp, argc - 1, argv + 1);
   } else if (ARG0_IS_S("topo_part_sync")) {
+
     return parse_sync_topo_part_info(interp);
   }
 

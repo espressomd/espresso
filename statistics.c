@@ -445,10 +445,6 @@ static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
   }
   zref = zref/(double)(n_total_particles);
   
-  printf("zref: %f \n", zref);
-  fflush(stdout);
-
-  
 
   //  Tcl_AppendResult(interp, "{ Lipid_orientations } { ", (char *)NULL);
   for ( i = 0 ; i < n_molecules ; i++) {

@@ -528,9 +528,9 @@ int imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
     tmpCoord[0] = partCfg[i].r.p[0];
     tmpCoord[1] = partCfg[i].r.p[1];
     tmpCoord[2] = partCfg[i].r.p[2];
-    if (flag == NONE)     // perform folding by particle
+    if (flag == NONE)  {   // perform folding by particle
       fold_position(tmpCoord, dummy);
-    
+    }
     j = 3*partCfg[i].p.identity;
     coord[j    ] = tmpCoord[0];
     coord[j + 1] = tmpCoord[1];
