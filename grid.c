@@ -70,7 +70,7 @@ int node_grid_is_set()
 
 int map_position_node_array(double pos[3])
 {
-  int i, im[3];
+  int i, im[3]={0,0,0};
   double f_pos[3];
 
   for (i = 0; i < 3; i++)
