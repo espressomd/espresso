@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.1c *
+* v1.6.1d *
 ***********
 
 Current working revision.
 
 
-- v1.6.1c -
+- v1.6.1d -
 -----------
 
+(d) May 11th, 2004.
 (c) May 10th, 2004.
 (b) May  5th, 2004.
 (a) May  3rd, 2004.
@@ -27,6 +28,10 @@ New Features:
     that box length changes are completely isotropic in all directions even 
     though box length changes in one or more of these directions may in fact 
     be decoupled from the particle motion.
+
+Changes:
+(d) 'writepdbfoldchains' now requires a list of 3 box lengths (as returned from 
+    [setmd box_l] ) - old scripts using these features need to be modified.
 
 Bugfixes:
 (c) Fixed problems of 'calcObsAv' when a "-" was part of the column headers.
