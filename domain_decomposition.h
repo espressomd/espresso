@@ -16,6 +16,9 @@
  *  <b>Responsible:</b>
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
  *
+ *  The simulation box is split into spatial domains for each node
+ *  according to a cartesian node grid (\ref node_grid).
+ *
  *  The domain of a node is split into a 3D cell grid with dimension
  *  \ref DomainDecomposition::cell_grid. Together with one ghost cell
  *  layer on each side the overall dimension of the ghost cell grid is
@@ -25,8 +28,8 @@
  *  system. You can see a 2D graphical representation of the linked
  *  cell grid below.
  *
- *  \image html linked_cells.gif "Linked cells structure"
- *  \image latex linked_cells.eps "Linked cells structure" \width=6cm
+ *  \image html  linked_cells.gif "Linked cells structure"
+ *  \image latex linked_cells.eps "Linked cells structure" 
  *
  *  2D representation of a linked cell grid: cell_grid =
  *  {4,4}, ghost_cell_grid = {6,6}
@@ -41,7 +44,7 @@
  * some ghost-ghost cell interaction as well, which we do not need!
  *
  *  For more information on cells,
- *  see \ref cells.c "cells.c"
+ *  see \ref cells.h 
 */
 
 #include "cells.h"
@@ -105,13 +108,11 @@ typedef struct {
   /** cell size. 
       Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range); \endverbatim */
   double cell_size[3];
-  /** inverse cell size = \see cell_size ^ -1. */
+  /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
   double inv_cell_size[3];
   /** Array containing information about the interactions between the cells. */
   IA_Neighbor_List *cell_inter;
 }  DomainDecomposition;
-
-
 
 
 /************************************************************/
@@ -122,16 +123,19 @@ typedef struct {
 /** Information about the domain decomposition. */
 extern DomainDecomposition dd;
 
-/** maximal skin size. */
+/** Maximal skin size. This is a global variable wwhich can be read
+    out by the user via \ref setmd in order to optimize the cell
+    grid */
 extern double max_skin;
+
 /** Maximal number of cells per node. In order to avoid memory
  *  problems due to the cell grid one has to specify the maximal
- *  number of \ref #cells . The corresponding callback function is
- *  \ref max_num_cells_callback. If the number of cells \ref n_cells,
- *  defined by \ref ghost_cell_grid is larger than max_num_cells the
- *  cell grid is reduced. max_num_cells has to be larger than 27, e.g
- *  one inner cell.  max_num_cells is initialized with the default
- *  value specified in \ref config.h: \ref CELLS_MAX_NUM_CELLS.
+ *  number of \ref cells::cells . The corresponding callback function
+ *  is \ref max_num_cells_callback. If the number of cells \ref
+ *  n_cells, is larger than max_num_cells the cell grid is
+ *  reduced. max_num_cells has to be larger than 27, e.g one inner
+ *  cell.  max_num_cells is initialized with the default value
+ *  specified in \ref config.h: \ref CELLS_MAX_NUM_CELLS.
  */
 extern int max_num_cells;
 
@@ -142,11 +146,15 @@ extern int max_num_cells;
 /************************************************************/
 /*@{*/
 
-/** Initialize the topology. The argument is list of cells, which particles have to be
-    sorted into their cells. The particles might not belong to this node.
-    This procedure is used when particle data or cell structure has changed and
-    the cell structure has to be reinitialized. This also includes setting up the
-    cell_structure array. */
+/** Initialize the topology. The argument is a list of cell pointers,
+    containing particles that have to be sorted into new cells. The
+    particles might not belong to this node.  This procedure is used
+    when particle data or cell structure has changed and the cell
+    structure has to be reinitialized. This also includes setting up
+    the cell_structure array.
+    \param cl List of cell pointers with particles to be stored in the
+    new cell system.
+*/
 void dd_topology_init(CellPList *cl);
 
 /** Called when the current cell structure is invalidated because for
@@ -168,16 +176,12 @@ void dd_topology_release();
 */
 void dd_exchange_and_sort_particles(int global_flag);
 
-/** implements \ref cell_structure::position_to_cell. */
+/** implements \ref CellStructure::position_to_cell. */
 Cell *dd_position_to_cell(double pos[3]);
-
-/** implements \ref cell_structure::position_to_cell. */
-Cell *dd_position_to_node(double pos[3]);
 
 /** Callback for setmd maxnumcells (maxnumcells >= 27). 
     see also \ref max_num_cells */
 int max_num_cells_callback(Tcl_Interp *interp, void *_data);
-
 
 /*@}*/
 

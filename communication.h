@@ -197,7 +197,7 @@ void mpi_recv_part(int node, int part, Particle *part_data);
 void mpi_integrate(int n_steps);
 
 /** Issue REQ_BCAST_IA: send new ia params.
-    Also calls \ref on_ia_change.
+    Also calls \ref on_short_range_ia_change.
 
     mpi_bcast_ia_params is used for both, bonded and non-bonded
     interaction parameters. Therefor i and j are used depending on
@@ -217,8 +217,8 @@ void mpi_bcast_n_particle_types(int s);
 /** Issue REQ_GATHER: gather data for analysis in \ref #analyze.
     \param job what to do:
     <ul>
-	<li> 1 calculate and reduce (sum up) energies, using \ref calc_energy.
-	<li> 2 calculate and reduce (sum up) virials, using \ref calc_virials.
+	<li> 1 calculate and reduce (sum up) energies, using \ref energy_calc.
+	<li> 2 calculate and reduce (sum up) pressure, using \ref pressure_calc.
     </ul>
     \param result where to store the gathered value(s):
     <ul><li> job=0 a double *

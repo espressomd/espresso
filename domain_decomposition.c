@@ -12,7 +12,6 @@
 /** half the number of cell neighbors in 3 Dimensions. */
 #define CELLS_MAX_NEIGHBORS 14
 
-
 /*@}*/
 
 /************************************************/
@@ -24,12 +23,6 @@ DomainDecomposition dd = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, NULL };
 
 int max_num_cells = CELLS_MAX_NUM_CELLS;
 double max_skin   = 0.0;
-
-/** cell size. 
-    Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range); \endverbatim */
-double cell_size[3];
-/** inverse cell size = \see cell_size ^ -1. */
-double inv_cell_size[3];
 
 /*@}*/
 
@@ -50,21 +43,21 @@ double inv_cell_size[3];
     for(n=1; n<dd.cell_grid[1]+1; n++) \
       for(m=1; m<dd.cell_grid[0]+1; m++)
 
-/** Convenient replace for inner cell check. usage: if(IS_INNER_CELL(m,n,o)) {...} */
+/** Convenient replace for inner cell check. usage: if(DD_IS_LOCAL_CELL(m,n,o)) {...} */
 #define DD_IS_LOCAL_CELL(m,n,o) \
   ( m > 0 && m < dd.ghost_cell_grid[0] - 1 && \
     n > 0 && n < dd.ghost_cell_grid[1] - 1 && \
     o > 0 && o < dd.ghost_cell_grid[2] - 1 ) 
 
-/** Convenient replace for ghost cell check. usage: if(IS_GHOST_CELL(m,n,o)) {...} */
-#define IS_GHOST_CELL(m,n,o) \
+/** Convenient replace for ghost cell check. usage: if(DD_IS_GHOST_CELL(m,n,o)) {...} */
+#define DD_IS_GHOST_CELL(m,n,o) \
   ( m == 0 || m == dd.ghost_cell_grid[0] - 1 || \
     n == 0 || n == dd.ghost_cell_grid[1] - 1 || \
     o == 0 || o == dd.ghost_cell_grid[2] - 1 ) 
 
 /** Calculate grid dimensions for the largest 3d grid in box where the
     cell size is given by size. 
-    Help routine for \ref dd_ccreate_cell_grid.
+    Help routine for \ref dd_create_cell_grid.
     @param grid  resulting 3d grid.
     @param box   box where the cell grid should fit in.
     @param size  desired cell size.
@@ -89,9 +82,11 @@ int calc_3d_cell_grid(int grid[3], double box[3], double size[3], int max)
  *  Calculates the cell grid, based on \ref local_box_l and \ref
  *  max_range. If the number of cells is larger than \ref
  *  max_num_cells, it increases max_range until the number of cells is
- *  smaller or equal \ref max_num_cells. It sets: \ref cell_grid, \ref
- *  ghost_cell_grid, \ref cell_size, \ref inv_cell_size, and \ref
- *  n_cells.
+ *  smaller or equal \ref max_num_cells. It sets: \ref
+ *  DomainDecomposition::cell_grid, \ref
+ *  DomainDecomposition::ghost_cell_grid, \ref
+ *  DomainDecomposition::cell_size, \ref
+ *  DomainDecomposition::inv_cell_size, and \ref n_cells.
  */
 void dd_create_cell_grid()
 {
@@ -154,7 +149,7 @@ void dd_create_cell_grid()
 
 /** Fill local_cells list and ghost_cells list for use with domain
     decomposition.  \ref cells is assumed to be a 3d grid with size
-    \ref dd.ghos_cell_grid. */
+    \ref DomainDecomposition::ghost_cell_grid . */
 void dd_mark_cells()
 {
   int m,n,o,cnt_c=0,cnt_l=0,cnt_g=0;
@@ -164,7 +159,15 @@ void dd_mark_cells()
   } 
 }
 
-/** Fill cell list */
+/** Fill a communication cell pointer list. Fill the cell pointers of
+    all cells which are inside a rectangular subgrid of the 3D cell
+    grid (\ref DomainDecomposition::ghost_cell_grid) starting from the
+    lower left corner lc up to the high top corner hc. The cell
+    pointer list part_lists must already be large enough.
+    \param part_lists  List of cell pointers to store the result.
+    \param lc          lower left corner of the subgrid.
+    \param hc          high up corner of the subgrid.
+ */
 int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3])
 {
   int i,m,n,o,c=0;
@@ -186,7 +189,7 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3])
   return c;
 }
 
-/** Create communicators for cell structure domain decomposition. */
+/** Create communicators for cell structure domain decomposition. (see \ref GhostCommunicator) */
 void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 {
   int dir,lr,i,cnt, num, n_comm_cells[3];
@@ -330,31 +333,34 @@ void dd_revert_comm_order(GhostCommunicator *comm)
 }
 
 /** Init cell interactions for cell system domain decomposition.
-    
-initializes the interacting neighbor cell list of a cell
- *  The created list of interacting neighbor
- *  cells is used by the verlet algorithm (see verlet.c) to build the
- *  verlet lists.
- *
- *  @param i linear index of the cell.  */
+ * initializes the interacting neighbor cell list of a cell The
+ * created list of interacting neighbor cells is used by the verlet
+ * algorithm (see verlet.c) to build the verlet lists.
+ */
 void dd_init_cell_interactions()
 {
   int m,n,o,p,q,r,ind1,ind2,c_cnt=0,n_cnt;
-  //fprintf(stderr,"%d: dd_init_cell_interactions: for %d cells\n",this_node,local_cells.n);
+ 
+  /* initialize cell neighbor structures */
   dd.cell_inter = (IA_Neighbor_List *) realloc(dd.cell_inter,local_cells.n*sizeof(IA_Neighbor_List));
-  for(m=0; m<local_cells.n; m++) { dd.cell_inter[m].nList = NULL; dd.cell_inter[m].n_neighbors=0; }
+  for(m=0; m<local_cells.n; m++) { 
+    dd.cell_inter[m].nList = NULL; 
+    dd.cell_inter[m].n_neighbors=0; 
+  }
+
+  /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m,n,o) {
-    //fprintf(stderr,"%d: cell %d is (%d,%d,%d)\n",this_node,c_cnt,m,n,o);
     dd.cell_inter[c_cnt].nList = (IA_Neighbor *) realloc(dd.cell_inter[c_cnt].nList, CELLS_MAX_NEIGHBORS*sizeof(IA_Neighbor));
     dd.cell_inter[c_cnt].n_neighbors = CELLS_MAX_NEIGHBORS;
+ 
     n_cnt=0;
     ind1 = get_linear_index(m,n,o,dd.ghost_cell_grid);
+    /* loop all neighbor cells */
     for(p=o-1; p<=o+1; p++)	
       for(q=n-1; q<=n+1; q++)
 	for(r=m-1; r<=m+1; r++) {   
 	  ind2 = get_linear_index(r,q,p,dd.ghost_cell_grid);
 	  if(ind2 >= ind1) {
-	    //fprintf(stderr,"%d: ind %d adr %p  neighbor %d is (%d,%d,%d) ind %d adr %p\n",this_node,ind1,&cells[ind1],n_cnt,p,q,r,ind2,&cells[ind2]);
 	    dd.cell_inter[c_cnt].nList[n_cnt].cell_ind = ind2;
 	    dd.cell_inter[c_cnt].nList[n_cnt].pList    = &cells[ind2];
 	    init_pairList(&dd.cell_inter[c_cnt].nList[n_cnt].vList);
@@ -363,10 +369,7 @@ void dd_init_cell_interactions()
 	}
     c_cnt++;
   }
-  //fprintf(stderr,"%d: dd_init_cell_interactions : done\n",this_node);
 }
-
-
 
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a NULL
@@ -443,7 +446,6 @@ int dd_append_particles(ParticleList *pl, int fold_dir)
 /* Public Functions */
 /************************************************************/
 
-/************************************************************/
 void dd_topology_init(CellPList *old)
 {
   int c,p,np;
@@ -470,7 +472,6 @@ void dd_topology_init(CellPList *old)
   dd_init_cell_interactions();
 
   /* copy particles */
-  //fprintf(stderr,"%d: copy particles from %d cells!\n",this_node,old->n);
   for (c = 0; c < old->n; c++) {
     part = old->cell[c]->part;
     np   = old->cell[c]->n;
@@ -478,7 +479,6 @@ void dd_topology_init(CellPList *old)
       append_unindexed_particle(cell_structure.position_to_cell(part[p].r.p), &part[p]);
     }
   }
-  //fprintf(stderr,"%d: update local particles\n",this_node);
   for(c=0; c<local_cells.n; c++) {
     update_local_particles(local_cells.cell[c]);
   }
@@ -599,9 +599,6 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	send_buf_r.n = 0;
 	recv_buf_l.n = 0;
 	recv_buf_r.n = 0;
-	MPI_Barrier(MPI_COMM_WORLD);
-	CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: exchange done dir=%d\n",this_node,dir));
-	MPI_Barrier(MPI_COMM_WORLD);
       }
       else {
 	/* Single node direction case (no communication) */
@@ -630,28 +627,14 @@ void  dd_exchange_and_sort_particles(int global_flag)
 		  }      
 		}
 		else {
-
-		  /* DEBUG */
 		  CELL_TRACE(fprintf(stderr, "%d: dd_exchange_and_sort_particles: move particle id %d\n", this_node,part[p].p.identity));
-		  //for(i=0;i<cell->n;i++) fprintf(stderr, "%d: old cell part %d at %p has id %d\n",this_node,i,&cell->part[i],cell->part[i].p.identity);
-		  //fprintf(stderr, "%d: move_indexed_particle\n",this_node);
-
 		  move_indexed_particle(sort_cell, cell, p);
-
-		  /* DEBUG */
-		  //for(i=0;i<cell->n;i++) fprintf(stderr, "%d: old cell part %d at %p has id %d\n",this_node,i,&cell->part[i],cell->part[i].p.identity);
-		  //for(i=0;i<sort_cell->n;i++) fprintf(stderr, "%d: new cell part %d at %p has id %d\n",this_node,i,&sort_cell->part[i],sort_cell->part[i].p.identity);
-
 		  if(p < cell->n) p--;
 		}
 	      }
 	    }
 	  }
 	}
-	MPI_Barrier(MPI_COMM_WORLD);
-	CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: (single node direction) exchange done dir=%d\n",this_node,dir));
-	MPI_Barrier(MPI_COMM_WORLD);
-
       }
     }
     /* Communicate wether particle exchange is finished */
@@ -680,6 +663,8 @@ void  dd_exchange_and_sort_particles(int global_flag)
   CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles finished\n",this_node));
 }
 
+/*************************************************/
+
 Cell *dd_position_to_cell(double pos[3])
 {
   int i,cpos[3];
@@ -707,42 +692,6 @@ Cell *dd_position_to_cell(double pos[3])
 
 }
 
-
-
-
-
-
-#if 0
-
-
-/*************************************************/
-int pos_to_capped_cell_grid_ind(double pos[3])
-{
-  int i,cpos[3];
-  
-  for(i=0;i<3;i++) {
-    cpos[i] = (int)((pos[i]-my_left[i])*inv_cell_size[i])+1;
-
-    if (cpos[i] < 1)
-      cpos[i] = 1;
-    else if (cpos[i] > cell_grid[i])
-      cpos[i] = cell_grid[i];
-  }
-  return get_linear_index(cpos[0],cpos[1],cpos[2], ghost_cell_grid);  
-}
-
-void cells_changed_topology()
-{
-  int i;
-
-  for(i=0;i<3;i++) {
-    cell_size[i] =  local_box_l[i];
-    inv_cell_size[i] = 1.0 / cell_size[i];
-  }
-  dd_create_cell_grid() etc.;
-}
-#endif
-
 /*************************************************/
 
 int max_num_cells_callback(Tcl_Interp *interp, void *_data)
@@ -756,28 +705,3 @@ int max_num_cells_callback(Tcl_Interp *interp, void *_data)
   mpi_bcast_parameter(FIELD_MAXNUMCELLS);
   return (TCL_OK);
 }
-
-int find_node(double pos[3])
-{
-  int i, im[3];
-  double f_pos[3];
-
-  for (i = 0; i < 3; i++)
-    f_pos[i] = pos[i];
-  
-  fold_position(f_pos, im);
-
-  for (i = 0; i < 3; i++) {
-    im[i] = (int)floor(node_grid[i]*f_pos[i]*box_l_i[i]);
-#ifdef PARTIAL_PERIODIC
-    if (!PERIODIC(i)) {
-      if (im[i] < 0)
-	im[i] = 0;
-      else if (im[i] >= node_grid[i])
-	im[i] = node_grid[i] - 1;
-    }
-#endif
-  }
-  return map_array_node(im);
-}
-

@@ -46,8 +46,7 @@ void energy_calc(double *result);
 /** Calculate non bonded energies between a pair of particles.
     @param p1        pointer to particle 1.
     @param p2        pointer to particle 2.
-    @param ia_params interaction parameters between p1 and p2. 
-    @param d[3]      vector between p1 and p2. 
+    @param d         vector between p1 and p2. 
     @param dist      distance between p1 and p2.
     @param dist2     distance squared between p1 and p2. */
 MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
