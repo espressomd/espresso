@@ -20,7 +20,7 @@
 
 
 
-proc average { origin what } {
+proc average_checkpoint { origin what } {
     # reads in a checkpoint, executing analysis-command 'what' after each file, averaging it in the end
     if { [file exists "$origin.chk"] } { set chk [open "$origin.chk" "r"] 
     } elseif { [file exists "$origin"] } { set chk [open "$origin" "r"] 
