@@ -36,6 +36,7 @@ int on_program_start(Tcl_Interp *interp)
   */
 
   init_random();
+  init_bit_random();
   cells_pre_init();
   ghost_pre_init();
   fft_pre_init();
@@ -167,6 +168,7 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "imd", (Tcl_CmdProc *)imd, 0, NULL);
   /* in file random.c */
   Tcl_CreateCommand(interp, "t_random", (Tcl_CmdProc *)t_random, 0, NULL);
+  Tcl_CreateCommand(interp, "bit_random", (Tcl_CmdProc *)bit_random, 0, NULL);
   /* in file blockfile_tcl.c */
   Tcl_CreateCommand(interp, "blockfile", (Tcl_CmdProc *)blockfile, 0, NULL);
   /* in interaction_data.c */
