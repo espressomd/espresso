@@ -11,9 +11,10 @@
 
 
 
-proc calcObsAv { fileN ind } {
+proc calcObsAv { fileN ind { startJ 0 } } {
     # derives time-averages of the observables at the columns $ind in file $fileN,
-    # returning '<amount of samples> { names (taken from header) } { averaged values }'
+    # returning '<amount of samples> { names (taken from header) } { averaged values }',
+    # skip the first <startJ>-lines before starting to average
     set f [open $fileN "r"]
     gets $f tmp_line
     foreach i $ind { 
@@ -22,6 +23,9 @@ proc calcObsAv { fileN ind } {
 	eval set $tmp 0
     }
     set N_av 0; set imax [lindex [lsort $ind] end]
+    # skip first $startJ-lines before starting to average
+    for {set i 0} {$i < $startJ} {incr i} { gets $f tmp_line }
+    # now average the remainders of the file
     while { [eof $f]==0 } { if { [gets $f tmp_line] > 0 } {
 	if {[llength $tmp_line] <= $imax } { puts "File corrupted, current line too short (got: '$tmp_line', but need at least $imax+1 entries)!" 
 	} else {
@@ -56,14 +60,14 @@ proc findObsAv { val what } {
     return $res
 }
 
-proc calcObAv { fileN ind } {
+proc calcObAv { fileN ind { startJ 0 } } {
     # does the same as 'calcObsAv', but for one observable only, hence returning only its value
     if { [llength $ind]!=1 } { puts "\nWARNING: Parameter '$ind' is too long - use 'calcObsAv' to average multiple observables!"; exit }
-    set what [calcObsAv $fileN $ind]
+    set what [calcObsAv $fileN $ind $startJ]
     return [lindex $what 2]
 }
 
-proc nameObsAv { fileN names } {
+proc nameObsAv { fileN names { startJ 0 } } {
     # does the same as 'calcObsAv', but expects the observables' column-names rather than their column-positions
     set f [open $fileN "r"]
     gets $f tmp_line
@@ -74,7 +78,7 @@ proc nameObsAv { fileN names } {
     }
     close $f
     if { [llength $names]!=[llength $ind2] } { puts "\nWARNING: Only [llength $ind2] of [llength $names] parameters have been found in $fileN!"; exit }
-    set what [calcObsAv $fileN $ind1]
+    set what [calcObsAv $fileN $ind1 $startJ]
     return [concat [lindex $what 0] [lindex $what 2]]
 }    
 
