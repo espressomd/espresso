@@ -193,7 +193,22 @@ MDINLINE void get_mi_vector(double res[3], double a[3], double b[3])
     Both pos and image_box are I/O,
     i. e. a previously folded position will be folded correctly.
 */
-void fold_coordinate(double pos[3], int image_box[3], int dir);
+MDINLINE void fold_coordinate(double pos[3], int image_box[3], int dir)
+{
+  int tmp;
+#ifdef PARTIAL_PERIODIC
+  if (PERIODIC(dir))
+#endif
+    {
+      image_box[dir] += (tmp = (int)floor(pos[dir]*box_l_i[dir]));
+      pos[dir]        = pos[dir] - tmp*box_l[dir];    
+      if(pos[dir] < 0 || pos[dir] > box_l[dir]) {
+	fprintf(stderr,"\n%d: fold_coordinate: Particle out of range (%f not in box_l %f) image_box[%d] = %d, exiting\n",
+		this_node,pos[dir],box_l[dir],dir,image_box[dir]);
+	errexit();
+      }
+    }
+}
 
 /** fold particle coordinates to primary simulation box.
     \param pos the position...

@@ -101,23 +101,6 @@ int map_array_node(int pos[3]) {
   return get_linear_index(pos[0], pos[1], pos[2], node_grid);
 }
 
-void fold_coordinate(double pos[3], int image_box[3], int dir)
-{
-  int tmp;
-#ifdef PARTIAL_PERIODIC
-  if (PERIODIC(dir))
-#endif
-    {
-      image_box[dir] += (tmp = (int)floor(pos[dir]*box_l_i[dir]));
-      pos[dir]        = pos[dir] - tmp*box_l[dir];    
-      if(pos[dir] < 0 || pos[dir] > box_l[dir]) {
-	fprintf(stderr,"\n%d: fold_coordinate: Particle out of range (%f not in box_l %f) image_box[%d] = %d, exiting\n",
-		this_node,pos[dir],box_l[dir],dir,image_box[dir]);
-	errexit();
-      }
-    }
-}
-
 void calc_node_neighbors(int node)
 {
   int dir,j;
