@@ -34,8 +34,11 @@
 /** rotation matrix */
 static double A[3][3];
 
-/** moment of inertia (at the moment it is defined in \ref init_torques "init_torques()") */
-static double I[3];
+/** moment of inertia. Currently we define the inertia tensor here to be constant.
+    If it is not spherical the angular velocities have to be refined several times
+    in the \ref convert_torqes_propagate_omega. Also the kinetic energy in file
+    \ref statistics.c is calculated assuming that I[0] =  I[1] =  I[2] = 1  */
+static double I[3] = { 1, 1, 1};
 
 /** first and second time derivative of a quaternion */
 static double Qd[4], Qdd[4];
@@ -63,45 +66,8 @@ void define_Qdd(Particle *p);
 
 /*@}*/
 
-/** set torques to zero for all particles and make sure the quaternions are of unit length */
-void init_torques()
-{
 #ifdef ROTATION
- Particle *p;
-   int np, m, n, o, i;
-double scale;
-/* currently we define the inertia tensor here. If it is not spherical
- the angular velocities have to be refined several times in the
- convert_torqes_propagate_omega(). See the bottom of this file.
- Also the kinetic energy in file statistics.c is calculated assuming
- that I[0] =  I[1] =  I[2] = 1  */
- 
- I[0] =  I[1] =  I[2] = 1;
 
-  CELLS_LOOP(m, n, o) {
-    p  = CELL_PTR(m, n, o)->pList.part;
-    np = CELL_PTR(m, n, o)->pList.n;
-    /* for all particles */
-    {
-      for (i = 0; i < np; i++) {
-    /* set torque to zero */
-	p[i].torque[0] = 0;
-	p[i].torque[1] = 0;
-	p[i].torque[2] = 0;
-    /* and rescale quaternion, so it is exactly of unit length */	
-	scale = sqrt( p[i].r.quat[0]*p[i].r.quat[0] + p[i].r.quat[1]*p[i].r.quat[1] +
-	              p[i].r.quat[2]*p[i].r.quat[2] + p[i].r.quat[3]*p[i].r.quat[3]);
-        p[i].r.quat[0]/= scale;
-        p[i].r.quat[1]/= scale;
-        p[i].r.quat[2]/= scale;
-        p[i].r.quat[3]/= scale;
-      }
-    }
-  }
-#endif
-}
-
-#ifdef ROTATION
 void define_rotation_matrix(Particle *p)
 {   
 /** Here we use quaternions to calculate the rotation matrix which

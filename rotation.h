@@ -10,6 +10,7 @@
 
 #include <tcl.h>
 #include "config.h"
+#include "particle_data.h"
 #include "thermostat.h"
 #include "gb.h"
 
@@ -18,9 +19,6 @@
  * ---------                                                 *
  *************************************************************/
  
-/**  Convert torqes to the body-fixed frame and add thermal flactuations */
-void init_torques();
-
 /** Propagate angular velocities and update quaternions */
 void propagate_omega_quat(); 
 

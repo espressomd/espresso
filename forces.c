@@ -77,9 +77,6 @@ void force_calc()
 {
   /* preparation */
   init_forces();
-#ifdef ROTATION
-  init_torques();
-#endif
 
   calculate_verlet_ia();
 
@@ -122,35 +119,60 @@ void calc_long_range_forces()
 
 void init_forces()
 {
-  Particle *p;
+  Particle *p, *part;
   int np, m, n, o, i;
+  int is_ghost;
+
   /* initialize forces with thermostat forces and
-     ghost forces with zero */
+     ghost forces with zero
+     set torque to zero for all and rescale quaternions
+  */
   CELLS_LOOP(m, n, o) {
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
-    /* ghost particle selection */
-    if (IS_GHOST_CELL(m, n, o)) {
-      for (i = 0; i < np; i++) {
-	p[i].f[0] = 0;
-	p[i].f[1] = 0;
-	p[i].f[2] = 0;
+    is_ghost = IS_GHOST_CELL(m, n, o);
+
+    for (i = 0; i < np; i++) {
+      part = &p[i];
+      if (is_ghost) {
+	/* ghost particle selection */
+	part->f[0] = 0;
+	part->f[1] = 0;
+	part->f[2] = 0;
       }
-    }
-    /* real particle selection */
-    else {
-      for (i = 0; i < np; i++) {
-       	friction_thermo(&p[i]);
+      else {
+	/* real particle selection */
+	friction_thermo(part);
 #ifdef EXTERNAL_FORCES   
-	if(p[i].ext_flag == PARTICLE_EXT_FORCE) {
-	  p[i].f[0] += p[i].ext_force[0];
-	  p[i].f[1] += p[i].ext_force[1];
-	  p[i].f[2] += p[i].ext_force[2];
+	if(part->ext_flag == PARTICLE_EXT_FORCE) {
+	  part->f[0] += part->ext_force[0];
+	  part->f[1] += part->ext_force[1];
+	  part->f[2] += part->ext_force[2];
 	}
 #endif
       }
+
+#ifdef ROTATION
+      /* rotation for both ghost and real */
+      {
+	double scale;
+	/* set torque to zero */
+	part->torque[0] = 0;
+	part->torque[1] = 0;
+	part->torque[2] = 0;
+
+	/* and rescale quaternion, so it is exactly of unit length */	
+	scale = sqrt( SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
+		      SQR(part->r.quat[2]) + SQR(part->r.quat[3]));
+	part->r.quat[0]/= scale;
+	part->r.quat[1]/= scale;
+	part->r.quat[2]/= scale;
+	part->r.quat[3]/= scale;
+      }
+#endif
     }
   }
+
 #ifdef CONSTRAINTS
   init_constraint_forces();
 #endif

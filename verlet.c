@@ -163,9 +163,6 @@ void build_verlet_lists_and_force_calc()
 
   /* preparation forces */
   init_forces();    
-#ifdef ROTATION
-  init_torques();
-#endif
 
   INNER_CELLS_LOOP(m, n, o) {
     cell = CELL_PTR(m, n, o);
