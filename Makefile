@@ -70,12 +70,13 @@ mostclean: clean docclean
 
 ########### transport
 TARFILE=Espresso-$(shell date -I).tgz
-EXCLUDES+= $(PLATFORMS:%=--exclude=%) $(DOC_RES:%=--exclude=%) \
+__EXCLUDES= $(PLATFORMS:%=--exclude=%) $(DOC_RES:%=--exclude=%) \
 	--exclude=*.avi --exclude=Espresso-*.tgz --exclude=*~ \
-	--exclude=core --exclude=core.* --exclude=.\#* --exclude=CVS --exclude=TclTutor
+	--exclude=core --exclude=core.* --exclude=.\#* --exclude=CVS --exclude=TclTutor \
+	$(EXCLUDES)
 
 transport:
-	(cd ..; tar -vchzf Espresso/$(TARFILE) Espresso $(EXCLUDES))
+	(cd ..; tar -vchzf Espresso/$(TARFILE) Espresso $(__EXCLUDES))
 
 ########### dependencies
 dep: 
