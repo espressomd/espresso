@@ -22,7 +22,7 @@
 	{verlet_reuse 0.0}
 }
 {interactions 
-	{0 harmonic 7.0 2.0}
+	{0 harmonic 70.0 1.0}
 	{0 0 lennard-jones 1.0 1.0 1.12246 1.0 0.0 0.0 }
 	{0 1 lennard-jones 1.0 1.0 1.12246 1.0 0.0 0.0 }
 	{0 2 lennard-jones 1.0 1.0 1.12246 1.0 0.0 0.0 }
@@ -33,7 +33,7 @@
 	{2 2 lennard-jones 1.0 1.0 1.12246 1.0 0.0 0.0 }
 	{2 3 lennard-jones 1.0 1.0 1.12246 1.0 0.0 0.0 }
 	{3 3 lennard-jones 1.0 1.0 1.12246 1.0 0.0 0.0 }
-	{coulomb 20 dh 0.0 40}
+	{coulomb 20 dh 0.0 80} 
 }
 {particles {id pos type q v f} 
 	{0 40.4509 41.2842 44.496 0 1.0 0.0 0.0 0.0 0.0 0.0 0.0}
