@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "statistics.h"
-#include "forces.h"
 #include "communication.h"
 #include "grid.h"
 #include "integrate.h"
@@ -24,6 +23,7 @@
 #include "harmonic.h"
 #include "angle.h"
 #include "debye_hueckel.h"
+#include "forces.h"
 #include "constraint.h"
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref #analyze) */
@@ -106,15 +106,17 @@ static int prepare_chain_structure_info(Tcl_Interp *interp, int *argc, char ***a
 
   return TCL_OK;
 }
-      
-static int check_chain_structure_info(Tcl_Interp *interp)
-{
-  if (max_seen_particle <= chain_start + chain_n_chains*chain_length) {
-    Tcl_AppendResult(interp, "not enough particles for chain structure", (char *)NULL);
-    return TCL_ERROR;
-  }
-  return TCL_OK;
-}
+
+/* This function seems to be unused at the moment (Hanjo)      
+   static int check_chain_structure_info(Tcl_Interp *interp)
+   {
+   if (max_seen_particle <= chain_start + chain_n_chains*chain_length) {
+   Tcl_AppendResult(interp, "not enough particles for chain structure", (char *)NULL);
+   return TCL_ERROR;
+   }
+   return TCL_OK;
+   }
+*/
 
 int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -303,7 +305,11 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	energy.ana_num = energy.n_pre+energy.n_bonded + ((2 * n_particle_types - 1 - i) * i) / 2  +  j;;
       }
       else if(!strncmp(argv[0], "coulomb", strlen(argv[0]))) {
+#ifdef ELECTROSTATICS
 	energy.ana_num = energy.n_pre+energy.n_bonded+energy.n_non_bonded;
+#else
+	Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
+#endif
       }
       else {
 	Tcl_AppendResult(interp, "unknown feature of: analyze energy",
@@ -377,6 +383,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	  }
 	  p++;
 	}
+#ifdef ELECTROSTATICS
       if(coulomb.bjerrum > 0.0) {
 	Tcl_PrintDouble(interp, energy.sum.e[p], buffer);
 	Tcl_AppendResult(interp, "{ coulomb ", buffer, (char *)NULL);
@@ -388,6 +395,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	}
 	Tcl_AppendResult(interp, " }", (char *)NULL);
       }
+#endif
     }
 
     energy.init_status=1;
@@ -571,7 +579,12 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	  virials.ana_num = virials.n_pre+virials.n_bonded + j -i;
 	  while(i>0) { virials.ana_num += n_particle_types - (i-1); i--; } } }
       else if(!strncmp(argv[0], "coulomb", strlen(argv[0]))) {
-	virials.ana_num = virials.n_pre+virials.n_bonded+virials.n_non_bonded; }
+#ifdef ELECTROSTATICS
+	virials.ana_num = virials.n_pre+virials.n_bonded+virials.n_non_bonded; 
+#else
+	Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
+#endif
+      }
       else {
 	Tcl_AppendResult(interp, "unknown feature of analyze pressure",(char *)NULL); return (TCL_ERROR);
       }
@@ -641,10 +654,12 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       }
       if(buf0 != 0) { sprintf(buffer, "lj %f %f }  ",buf[0],buf[1]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
       else Tcl_AppendResult(interp, "}  ", (char *)NULL);
+#ifdef ELECTROSTATICS
       if(coulomb.bjerrum > 0.0) {
 	sprintf(buffer, "{ coulomb %f %f } ",virials.sum.e[p],virials.node.e[p]);
 	Tcl_AppendResult(interp, buffer,  (char *)NULL);
       }
+#endif
     }
     virials.init_status=1;
     buf = realloc(buf,0);
@@ -969,29 +984,12 @@ double mindist()
   int i, j;
 
   /* minimal pair distance */
-  /* if the integrator already ran, check his result */
-  if (minimum_part_dist == -1)
-    mindist = box_l[0] + box_l[1] + box_l[2];
-  else {
-    /* get data from integrator */ 
-    buf = malloc(n_nodes*sizeof(double));
-    mpi_gather_stats(0, buf);
-    mindist = buf[0];
-    for (i = 1; i < n_nodes; i++) {
-      if (buf[i] < mindist)
-	mindist = buf[i];
-    }
-    free(buf);
-  }
-
-  if (mindist >= box_l[0] + box_l[1] + box_l[2]) {
+  if (minimum_part_dist == -1) {
     /* ok, the integrator has not been started, or the distance
        is larger than the real space cutoffs, so calculate directly */
-    mindist = box_l[0] + box_l[1] + box_l[2];
-    mindist *= mindist;
-    
-    updatePartCfg();
+    mindist = SQR(box_l[0] + box_l[1] + box_l[2]);
 
+    updatePartCfg();
     for (j=0; j<n_total_particles-1; j++) {
       xt = partCfg[j].r.p[0]; yt = partCfg[j].r.p[1]; zt = partCfg[j].r.p[2];
       for (i=j+1; i<n_total_particles; i++) {
@@ -1002,6 +1000,17 @@ double mindist()
       }
     }
     mindist = sqrt(mindist);
+  }
+  else {
+    /* get data from integrator */ 
+    buf = malloc(n_nodes*sizeof(double));
+    mpi_gather_stats(0, buf);
+    mindist = buf[0];
+    for (i = 1; i < n_nodes; i++) {
+      if (buf[i] < mindist)
+	mindist = buf[i];
+    }
+    free(buf);
   }
   return mindist;
 }
@@ -1034,7 +1043,7 @@ double distto(double xt, double yt, double zt, int pid)
   double mindist;
 
   /* larger than possible */
-  mindist=box_l[0] + box_l[1] + box_l[2];
+  mindist=SQR(box_l[0] + box_l[1] + box_l[2]);
   for (i=0; i<n_total_particles; i++) {
     if (pid != partCfg[i].r.identity) {
       dx = xt - partCfg[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
@@ -1463,7 +1472,7 @@ void calc_energy()
   Cell *cell;
   Particle *p, **pairs;
   Particle *p1, *p2;
-  int i, j, k,  m, n, o, np, size, q;
+  int i, j, k,  m, n, o, np, size;
   double d[3], dist2, dist;
   IA_parameters *ia_params;
   /* bonded interactions */
@@ -1519,18 +1528,20 @@ void calc_energy()
 	    break;
 	  }
 	}
+#ifdef CONSTRAINTS
 	/* constaint energies */
-	for (q=0; q< n_constraints ; q++) {
+	for (i=0; i< n_constraints ; i++) {
     
 	  type1 = p1->r.type;
-	  type2 = (&constraints[q].part_rep)->r.type;
+	  type2 = (&constraints[i].part_rep)->r.type;
 	  ia_params=get_ia_param(type1,type2);
 
 	  if(ia_params->LJ_cut > 0. ) {
             type_num = s_non_bonded + ((2 * n_particle_types - 1 - type1) * type1) / 2  +  type2;
-            energy.node.e[type_num] += add_constraints_energy(p1,q);
+            energy.node.e[type_num] += add_constraints_energy(p1,i);
 	  }
 	}
+#endif
       }
     }
 
@@ -1562,21 +1573,25 @@ void calc_energy()
 	  /* lennnard jones cosine */
 	  energy.node.e[type_num] += ljcos_pair_energy(p1,p2,ia_params,d,dist);
 	  
+#ifdef ELECTROSTATICS
 	  /* real space coulomb */
 	  if(coulomb.method==COULOMB_P3M) 
 	    energy.node.e[s_coulomb+1] += p3m_coulomb_pair_energy(p1,p2,d,dist2,dist);
 	  else if(coulomb.method==COULOMB_DH)
 	    energy.node.e[s_coulomb] += dh_coulomb_pair_energy(p1,p2,dist);
+#endif
 	} 
       }
     }
   }
 
+#ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */ 
   if(coulomb.method==COULOMB_P3M && (energy.ana_num == 0 || energy.ana_num >= s_coulomb) ) {
     energy.node.e[s_coulomb+2] = P3M_calc_kspace_forces(0,1);
     energy.node.e[s_coulomb] = energy.node.e[s_coulomb+1]+energy.node.e[s_coulomb+2];
   }
+#endif
 
   /* rescale kinetic energy */
   energy.node.e[1] /= (2.0*time_step*time_step);
@@ -1589,13 +1604,14 @@ void calc_energy()
   MPI_Reduce(energy.node.e, energy.sum.e, size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if(energy.ana_num==0 && this_node==0) {
+#ifdef ELECTROSTATICS
     if(coulomb.method==COULOMB_P3M) {
       for(i=1;i<energy.n-2;i++)
 	energy.sum.e[0] += energy.sum.e[i];
-    } else {
+    } else 
+#endif
       for(i=1;i<energy.n;i++)
 	energy.sum.e[0] += energy.sum.e[i];
-    }
   }
 }
 
@@ -1604,8 +1620,10 @@ void init_energies()
   energy.n_pre        = 2;
   energy.n_bonded     = n_bonded_ia;
   energy.n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
+#ifdef ELECTROSTATICS
   if(coulomb.bjerrum > 0.0)         energy.n_coulomb =  1;
   if(coulomb.method==COULOMB_P3M) energy.n_coulomb += 2;
+#endif
   energy.n = energy.n_pre+energy.n_bonded+energy.n_non_bonded+energy.n_coulomb;
   realloc_doublelist(&(energy.node),energy.n);
   realloc_doublelist(&(energy.sum),energy.n);
@@ -1784,8 +1802,10 @@ void init_virials() {
   virials.n_pre        = 2;
   virials.n_bonded     = n_bonded_ia;
   virials.n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
+#ifdef ELECTROSTATICS
   if(coulomb.bjerrum > 0.0)       virials.n_coulomb =  1;
   if(coulomb.method==COULOMB_P3M) virials.n_coulomb += 2;
+#endif
   virials.n = virials.n_pre+virials.n_bonded+virials.n_non_bonded+virials.n_coulomb;
   realloc_doublelist(&(virials.node),virials.n);
   realloc_doublelist(&(virials.sum),virials.n);
@@ -1895,20 +1915,24 @@ void calc_virials() {
 	  for(j=0;j<3;j++) { p1->f[j] -= (f1[j] = p1->f[j] - f1[j]); p2->f[j] -= (f2[j] = p2->f[j] - f2[j]); }
 	  virials.node.e[type_num] += d[0]*f1[0] + d[1]*f1[1] + d[2]*f1[2];
 	  
+#ifdef ELECTROSTATICS
 	  /* real space coulomb */
 	  if(coulomb.method==COULOMB_P3M) 
 	    virials.node.e[v_coulomb+1] += p3m_coulomb_pair_energy(p1,p2,d,dist2,dist);
 	  else if(coulomb.method==COULOMB_DH)
 	    virials.node.e[v_coulomb] += dh_coulomb_pair_energy(p1,p2,dist);
+#endif
 	} 
       }
     }
   }
+#ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */ 
   if(coulomb.method==COULOMB_P3M && (virials.ana_num == 0 || virials.ana_num >= v_coulomb) ) {
     virials.node.e[v_coulomb+2] = P3M_calc_kspace_forces(0,1);
     virials.node.e[v_coulomb] = virials.node.e[v_coulomb+1]+virials.node.e[v_coulomb+2];
   }
+#endif
   /* rescale kinetic energy  &  sum virials over nodes */
   virials.node.e[1] /= (2.0*time_step*time_step);
   size=virials.n;
@@ -1916,13 +1940,15 @@ void calc_virials() {
   MPI_Reduce(virials.node.e, virials.sum.e, size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if(this_node==0) {
+#ifdef ELECTROSTATICS
     if(coulomb.method==COULOMB_P3M) {
       for(i=virials.n_pre;i<virials.n-2;i++) 
 	virials.sum.e[0] += virials.sum.e[i];
-    } else {
+    } else 
+#endif
       for(i=virials.n_pre;i<virials.n;i++)   
 	virials.sum.e[0] += virials.sum.e[i];
-    }
+    
   }
 }
 
@@ -1968,12 +1994,15 @@ void calc_pressure() {
     }
   }
 
+
+#ifdef ELECTROSTATICS
   /* Contribution of electrostatics (if any) */
   if(coulomb.bjerrum > 0.0) {
     virials.sum.e[p]  /= 3.0*volume;
     virials.node.e[p]  = SQR(virials.sum.e[p]);
     p_total += virials.sum.e[p]; 
   }
+#endif
 
   /* Check and return */
   virials.sum.e[0] = virials.sum.e[0]/(3.0*volume) + virials.sum.e[1];
