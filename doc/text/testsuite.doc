@@ -1,0 +1,30 @@
+/** \page testsuite The Testsuite Directory
+
+In the directory tcl_md/testsuite you find several scripts that can serve as samples and tests for tcl_md.
+
+<ol>
+<li> <b> lj_liquid.tcl </b><br>
+     Simple Lennard-Jones particle liquid. Shows the basic features of
+     tcl_md: How to set up system parameters, particles and
+     interactions. How to warm up and integrate. How to write
+     parameters, configurations and observables to files. How to
+     handle the connection to VMD.
+
+<li> <b> kremerGrest.tcl </b><br>
+
+<li> <b> madelung.tcl </b><br>
+     Calculates the energy of a NaCl crystal. Test case for the
+     electrostatic energy.
+
+<li> <b> pe_solution.tcl </b><br>
+     Polyelectrolyte solution under poor solvent condition. Test case
+     for comparison with data produced by polysim9 from M.Deserno.
+     <ul>
+     <li> <b> pe_analyze.tcl </b><br>
+          Example for an analyzation after the actual simulation run
+          (offline analyzation). Calculates the integrated
+          iondistribution P(r).
+     </ul>
+</ol>
+
+*/
