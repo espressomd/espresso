@@ -6,13 +6,14 @@
 #include "debug.h"
 
 #ifdef FORCE_CORE
+int regular_exit = 0;
 static int core_done = 0;
 
 void core()
 {
-  if (!core_done) {
+  if (!core_done && !regular_exit) {
     core_done = 1;
-    fprintf(stderr, "forcing core dump on exit\n");
+    fprintf(stderr, "forcing core dump on irregular exit\n");
     *(int *)0 = 0;
   }
 }

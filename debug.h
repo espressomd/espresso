@@ -33,7 +33,7 @@
 /* #define PARTICLE_DEBUG */
 /* #define P3M_DEBUG */
 #define MPI_CORE
-/* #define FORCE_CORE */
+#define FORCE_CORE
 
 /* #define MALLOC_DEBUG */
 
