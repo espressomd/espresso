@@ -105,6 +105,8 @@ extern Observable_stat p_tensor;
 int piston_callback(Tcl_Interp *interp, void *_data);
 /** Callback for setting \ref nptiso_struct::p_ext */
 int p_ext_callback(Tcl_Interp *interp, void *_data);
+/** Callback for setting \ref nptiso_struct::p_diff */
+int p_diff_callback(Tcl_Interp *interp, void *_data);
 
 /** Calculates the pressure in the system from a virial expansion using the terms from \ref calculate_verlet_virials or \ref nsq_calculate_virials dependeing on the used cell system.<BR>
     @param result here all the data is stored

@@ -65,20 +65,21 @@ const Datafield fields[] = {
   {node_grid,           TYPE_INT, 3, "node_grid",     node_grid_callback, 2 },     /* 17 from grid.c */
   {&nptiso_gamma0,   TYPE_DOUBLE, 1, "nptiso_gamma0", ro_callback,    13 },        /* 18 from thermostat.c */
   {&nptiso_gammav,   TYPE_DOUBLE, 1, "nptiso_gammav", ro_callback,    13 },        /* 19 from thermostat.c */
-  {&nptiso.p_ext,    TYPE_DOUBLE, 1, "npt_p_ext",     ro_callback,    7 },         /* 20 from pressure.c */
+  {&nptiso.p_ext,    TYPE_DOUBLE, 1, "npt_p_ext",     ro_callback,     7 },        /* 20 from pressure.c */
   {&nptiso.p_inst,   TYPE_DOUBLE, 1, "npt_p_inst",    ro_callback,    10 },        /* 21 from pressure.c */
   {&nptiso.p_inst_av,TYPE_DOUBLE, 1, "npt_p_inst_av", ro_callback,    10 },        /* 22 from pressure.c */
-  {&nptiso.piston,   TYPE_DOUBLE, 1, "npt_piston",    piston_callback,6 },         /* 23 from pressure.c */
-  {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback,   1 },         /* 24 from grid.c */
-  {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback,  2 },         /* 25 from integrate.c */
-  {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback,  2 },         /* 26 from thermostat.c */
-  {&thermo_switch,      TYPE_INT, 1, "thermo_switch", ro_callback,    2 },         /* 27 from thermostat.c */
-  {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback,  4 },         /* 28 from integrate.c */
-  {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },     /* 29 from integrate.c */
-  {&timing_samples,     TYPE_INT, 1, "timings",       timings_callback, 4 },       /* 30 from tuning.c */
-  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback,    2 },         /* 31 from imd.c */
-  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback,    8 },         /* 32 from verlet.c */
-  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback,    8 },         /* 33 from integrate.c */
+  {&nptiso.p_diff,   TYPE_DOUBLE, 1, "npt_p_diff",    p_diff_callback, 7 },        /* 23 from pressure.c */
+  {&nptiso.piston,   TYPE_DOUBLE, 1, "npt_piston",    piston_callback, 6 },        /* 24 from pressure.c */
+  {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback,    1 },        /* 25 from grid.c */
+  {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback,   2 },        /* 26 from integrate.c */
+  {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback,   2 },        /* 27 from thermostat.c */
+  {&thermo_switch,      TYPE_INT, 1, "thermo_switch", ro_callback,     2 },        /* 28 from thermostat.c */
+  {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback,   4 },        /* 29 from integrate.c */
+  {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },     /* 30 from integrate.c */
+  {&timing_samples,     TYPE_INT, 1, "timings",       timings_callback, 4 },       /* 31 from tuning.c */
+  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback,     2 },        /* 32 from imd.c */
+  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback,     8 },        /* 33 from verlet.c */
+  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback,     8 },        /* 34 from integrate.c */
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 

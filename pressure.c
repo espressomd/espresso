@@ -39,6 +39,13 @@ int p_ext_callback(Tcl_Interp *interp, void *_data) {
   return (TCL_OK);
 }
 
+int p_diff_callback(Tcl_Interp *interp, void *_data) {
+  double data = *(double *)_data;
+  nptiso.p_diff = data;
+  mpi_bcast_parameter(FIELD_NPTISO_PDIFF);
+  return (TCL_OK);
+}
+
 
 /************************************************************/
 /* local prototypes                                         */

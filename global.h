@@ -123,28 +123,30 @@ extern const Datafield fields[];
 #define FIELD_NPTISO_PINST        21     
 /** index of \ref nptiso_struct::p_inst_av in \ref #fields */
 #define FIELD_NPTISO_PINSTAV      22     
+/** index of \ref nptiso_struct::p_diff in \ref #fields */
+#define FIELD_NPTISO_PDIFF        23      
 /** index of \ref nptiso_struct::piston in \ref #fields */
-#define FIELD_NPTISO_PISTON       23    
+#define FIELD_NPTISO_PISTON       24    
 /** index of \ref #periodic in \ref #fields */
-#define FIELD_PERIODIC            24
+#define FIELD_PERIODIC            25
 /** index of \ref #skin in \ref #fields */
-#define FIELD_SKIN                25
+#define FIELD_SKIN                26
 /** index of \ref #temperature in \ref #fields */
-#define FIELD_TEMPERATURE         26
+#define FIELD_TEMPERATURE         27
 /** index of \ref thermo_switch in \ref #fields */
-#define FIELD_THERMO_SWITCH       27
+#define FIELD_THERMO_SWITCH       28
 /** index of \ref sim_time in  \ref #fields */
-#define FIELD_SIMTIME             28
+#define FIELD_SIMTIME             29
 /** index of \ref time_step in \ref #fields */
-#define FIELD_TIMESTEP            29
+#define FIELD_TIMESTEP            30
 /** index of \ref timing_samples in  \ref #fields */
-#define FIELD_TIMINGSAMP          30
+#define FIELD_TIMINGSAMP          31
 /** index of \ref transfer_rate  in \ref #fields */
-#define FIELD_TRANSFERRATE        31
+#define FIELD_TRANSFERRATE        32
 /** index of \ref rebuild_verletlist in \ref #fields */
-#define FIELD_VERLETFLAG          32
+#define FIELD_VERLETFLAG          33
 /** index of \ref verlet_reuse in  \ref #fields */
-#define FIELD_VERLETREUSE         33
+#define FIELD_VERLETREUSE         34
 
 /*@}*/
 
