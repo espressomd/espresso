@@ -355,16 +355,18 @@ void calc_cell_grid()
 
     /* catch no inner cells case (even though this should never happen!!!) */
     if(cell_grid[i] < 1) {
-#ifdef PARTIAL_PERIODIC
-      if (!periodic[i])
-	cell_grid[i] = 1;
-      else
-#endif
+      /* what was the idea of that ????
+	 It kills Espresso since cg and gcg do not match
+	 #ifdef PARTIAL_PERIODIC
+	 if (!periodic[i])
+	 cell_grid[i] = 1;
+	 else
+	 #endif
 	{
-	  fprintf(stderr,"%d: cells_init: Less than one cell in direction %d\n",
-		  this_node,i);
-	  errexit();
-	}
+      */
+      fprintf(stderr,"%d: cells_init: Less than one cell in direction %d\n",
+	      this_node,i);
+      errexit();
     }
 
     cell_size[i]     = local_box_l[i]/(double)cell_grid[i];
