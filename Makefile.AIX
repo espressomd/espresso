@@ -10,10 +10,15 @@
 ############ compiler settings
 ### Enable ('yes') for the Garching
 GARCHING=no
+### Enable ('yes') for HAL
+HAL=yes
 
 HOSTFLAGS=
 ifeq ($(GARCHING),yes)
      HOSTFLAGS=-I. 
+endif
+ifeq ($(HAL),yes)
+     HOSTFLAGS=-qarch=pwr4 -qtune=pwr4 -qunroll
 endif
 
 
