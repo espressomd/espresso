@@ -147,6 +147,8 @@ void initialize_ghosts(int global_flag)
 {
   invalidate_ghosts();
 
+  particle_invalidate_part_node();
+
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
     layered_exchange_and_sort_particles(global_flag);

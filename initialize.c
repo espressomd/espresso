@@ -81,8 +81,6 @@ int on_program_start(Tcl_Interp *interp)
 
 void on_integration_start()
 {
-  particle_invalidate_part_node();
-
   if (reinit_thermo) {
     thermo_init();
     reinit_thermo = 0;
@@ -121,6 +119,9 @@ void on_coulomb_change()
     break;
   case COULOMB_MMM1D:
     MMM1D_init();
+    break;
+  case COULOMB_MMM2D:
+    //MMM2D_init();
     break;
   default: break;
   }

@@ -241,6 +241,8 @@ void cells_re_init(int new_cs)
 
   topology_init(new_cs, &tmp_local);
 
+  particle_invalidate_part_node();
+
   /* finally deallocate the old cells */
   realloc_cellplist(&tmp_local,0);
   for(i=0;i<tmp_n_cells;i++)
