@@ -618,7 +618,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
       if(this_node==0) {
 	int sum;
 	MPI_Reduce(&finished, &sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-	finished=sum;
+	if( sum < n_nodes ) finished=0; else finished=sum; 
       } else {
 	MPI_Reduce(&finished, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
       }
@@ -629,6 +629,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	errexit();
       }
     }
+    CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: finished value: %d\n",this_node,finished));
   }
   CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles finished\n",this_node));
 }
