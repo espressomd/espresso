@@ -784,8 +784,6 @@ void mpi_gather_stats(int job, void *result)
 
     /* then fetch particle informations into 'tdata' */
     for (pnode = 0; pnode < n_nodes; pnode++) {
-      COMM_TRACE(fprintf(stderr, "node %d reports %d particles\n",
-			 pnode, sizes[pnode]));
       if (sizes[pnode] > 0) {
 	if (pnode == this_node) {
 	  g = 0;
@@ -799,7 +797,7 @@ void mpi_gather_stats(int job, void *result)
 	  MPI_Recv(tdata, sizes[pnode]*sizeof(Particle), MPI_BYTE, pnode, REQ_GATHER,
 		   MPI_COMM_WORLD, &status);
 	}
-	tdata += 1*sizes[pnode];
+	tdata += sizes[pnode];
       }
     }
 
@@ -843,47 +841,51 @@ void mpi_gather_stats_slave(int pnode, int job)
     /* first collect number of particles on each node */
     MPI_Gather(&n_part, 1, MPI_INT, NULL, 1, MPI_INT,
 	       0, MPI_COMM_WORLD);
-    cdata = malloc(3*n_part*sizeof(float));
-    idata = malloc(n_part*sizeof(int));
+    if (n_part > 0) {
+      cdata = malloc(3*n_part*sizeof(float));
+      idata = malloc(n_part*sizeof(int));
 
-    g = 0; g2=0;
-    INNER_CELLS_LOOP(m, n, o) {
-      pl = &(CELL_PTR(m,n,o)->pList);
-      for (i = 0; i < pl->n; i++) {
-	idata[g2++]   = pl->part[i].r.identity;
-	cdata[g++] = pl->part[i].r.p[0] + pl->part[i].i[0]*box_l[0];
-	cdata[g++] = pl->part[i].r.p[1] + pl->part[i].i[1]*box_l[1];
-	cdata[g++] = pl->part[i].r.p[2] + pl->part[i].i[2]*box_l[2];
-	COMM_TRACE(fprintf(stderr, "%d: id=%d: %.3f %.3f %.3f\n",this_node,pl->part[i].r.identity,pl->part[i].r.p[0],pl->part[i].r.p[1],pl->part[i].r.p[2]));
+      g = 0; g2=0;
+      INNER_CELLS_LOOP(m, n, o) {
+	pl = &(CELL_PTR(m,n,o)->pList);
+	for (i = 0; i < pl->n; i++) {
+	  idata[g2++]   = pl->part[i].r.identity;
+	  cdata[g++] = pl->part[i].r.p[0] + pl->part[i].i[0]*box_l[0];
+	  cdata[g++] = pl->part[i].r.p[1] + pl->part[i].i[1]*box_l[1];
+	  cdata[g++] = pl->part[i].r.p[2] + pl->part[i].i[2]*box_l[2];
+	  COMM_TRACE(fprintf(stderr, "%d: id=%d: %.3f %.3f %.3f\n",this_node,pl->part[i].r.identity,pl->part[i].r.p[0],pl->part[i].r.p[1],pl->part[i].r.p[2]));
+	}
       }
-    }
-    MPI_Send(idata, n_part, MPI_INT, 0, REQ_GATHER,
-	     MPI_COMM_WORLD);
-    MPI_Send(cdata, 3*n_part, MPI_FLOAT, 0, REQ_GATHER,
-	     MPI_COMM_WORLD);
+      MPI_Send(idata, n_part, MPI_INT, 0, REQ_GATHER,
+	       MPI_COMM_WORLD);
+      MPI_Send(cdata, 3*n_part, MPI_FLOAT, 0, REQ_GATHER,
+	       MPI_COMM_WORLD);
 
-    free(cdata);
-    free(idata);
+      free(cdata);
+      free(idata);
+    }
     break;
   case 2:
-    /* get (unsorted) particle informations as an array of type 'particle' */
     n_part = cells_get_n_particles();
     /* first collect number of particles on each node */
     MPI_Gather(&n_part, 1, MPI_INT, NULL, 1, MPI_INT,
 	       0, MPI_COMM_WORLD);
-    /* then get the particle information */
-    gdata = malloc(n_part*sizeof(Particle));
-    g = 0;
-    INNER_CELLS_LOOP(m, n, o) {
-      memcpy(&gdata[g],CELL_PTR(m,n,o)->pList.part,(CELL_PTR(m,n,o)->pList.n)*sizeof(Particle));
-      COMM_TRACE(printf("%d -> %d,%d,%d: %dx (starting at %d with %d)\n",this_node,m,n,o,(CELL_PTR(m,n,o)->pList.n),g,gdata[g].r.identity));
-      g+=CELL_PTR(m,n,o)->pList.n;
-    }
-    /* and send it back to the master node */
-    MPI_Send(gdata, n_part*sizeof(Particle), MPI_BYTE, 0, REQ_GATHER,
-	     MPI_COMM_WORLD);
 
-    free(gdata);
+    if(n_part > 0) {
+      /* get (unsorted) particle informations as an array of type 'particle' */
+      /* then get the particle information */
+      gdata = malloc(n_part*sizeof(Particle));
+      g = 0;
+      INNER_CELLS_LOOP(m, n, o) {
+	memcpy(&gdata[g],CELL_PTR(m,n,o)->pList.part,(CELL_PTR(m,n,o)->pList.n)*sizeof(Particle));
+	COMM_TRACE(printf("%d -> %d,%d,%d: %dx (starting at %d with %d)\n",this_node,m,n,o,(CELL_PTR(m,n,o)->pList.n),g,gdata[g].r.identity));
+	g+=CELL_PTR(m,n,o)->pList.n;
+      }
+      /* and send it back to the master node */
+      MPI_Ssend(gdata, n_part*sizeof(Particle), MPI_BYTE, 0, REQ_GATHER, MPI_COMM_WORLD);
+
+      free(gdata);
+    }
     break;
   default:;
   }
