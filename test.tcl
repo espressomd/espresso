@@ -30,7 +30,9 @@ setmd p3m_mesh_off 0.5 0.5 0.5
 
 setmd box_l 10.0 10.0 10.0
 setmd max_num_cells 512
+# integrator
 setmd skin 0.4
+setmd time_step 0.0001
 
 # read particles
 ##################################################
@@ -68,7 +70,8 @@ puts "opened port $port"
 integrate init
 
 for {set i 0} { $i < $maxtime } { incr i } {
-    puts "step $i"
+    puts -nonewline "step $i\r"
+    flush stdout
     integrate $intsteps
     imd pos
 }
