@@ -12,11 +12,11 @@
 
 #############################################################
 #                                                           #
-#  Test System 1: NaCl crystal - Madelung constant         #
+#  Test System 2: NaCl crystal - Madelung constant         #
 #                                                           #
 #                                                           #
 #  Created:       18.03.2003 by HL                          #
-#  Last modified: 18.03.2003 by HL                          #
+#  Last modified: 24.03.2003 by HL                          #
 #                                                           #
 #############################################################
 
@@ -35,7 +35,7 @@ set madelung_nacl 1.747564594633182190636212035544397403481
 
 # System identification: 
 set name  "madelung"
-set ident "_t1"
+set ident "_t2"
 
 # System parameters
 #############################################################
@@ -56,6 +56,8 @@ set z0 0.0
 #############################################################
 
 set bjerrum   1.0
+set accuracy  1.0e-6
+# if you do not like the automatic tuning...
 set p3m_alpha 0.408905
 set p3m_rcut  7.95 
 set p3m_mesh  16
@@ -81,11 +83,6 @@ set tcl_precision 12
 
 set box_l [expr 2.0*$nacl_const*$nacl_repl]
 setmd box_l $box_l $box_l $box_l
-
-# Interaction setup
-#############################################################
-inter coulomb $bjerrum p3m $p3m_rcut $p3m_mesh $p3m_cao $p3m_alpha 0.0
-#inter coulomb mesh_off 0.0 0.0 0.0
 
 # Particle setup
 #############################################################
@@ -120,6 +117,11 @@ for {set i 0} { $i < $nacl_repl } {incr i} {
     }
 }
 
+puts -nonewline "P3M Parameter Tuning ... please wait\r"
+flush stdout
+puts "[inter coulomb $bjerrum p3m tune accuracy $accuracy mesh 32]"
+
+
 # print system specification
 set n_part [setmd n_part]
 puts "NaCl crystal with $n_part particle (grid $nc, replic $nacl_repl)"
@@ -135,8 +137,9 @@ integrate $int_steps
 set energy "[analyze energy]"
 puts "\nEnergy: $energy"
 set calc_mad_const [expr -2.0*$nacl_const*[lindex [lindex $energy 0] 1] / $n_part]
-puts "\nMadelung constant:      $calc_mad_const"
-puts "relative error:         [expr ($calc_mad_const-$madelung_nacl)/$madelung_nacl]"
+puts "\nExact value of the Madelung constant: $madelung_nacl"
+puts "Madelung constant:                    $calc_mad_const"
+puts "relative error:                       [expr ($calc_mad_const-$madelung_nacl)/$madelung_nacl]   (<$accuracy)"
 
 # check forces
 set max_force 0.0
@@ -149,4 +152,4 @@ for {set i 0} { $i < $n_part } {incr i} {
     set fz [lindex $force 2]
     if { $fz > $max_force } { set max_force $fz }
 }
-puts "Maximal force component: $max_force"
+puts "Maximal force component:              $max_force"

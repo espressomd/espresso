@@ -21,9 +21,9 @@
 #############################################################
 
 puts " "
-puts "==================================================="
-puts "=                lj_liquid.tcl                    ="
-puts "==================================================="
+puts "======================================================="
+puts "=                  lj_liquid.tcl                      ="
+puts "======================================================="
 puts " "
 
 puts "Program Information: \n[code_info]\n"
@@ -68,8 +68,8 @@ set warm_n_times 30
 set min_dist     0.9
 
 # integration
-set int_steps    200
-set int_n_times  100
+set int_steps    2000
+set int_n_times  50
 
 # Other parameters
 #############################################################
@@ -100,7 +100,7 @@ for {set i 0} { $i < $n_part } {incr i} {
     part $i pos $posx $posy $posz type 0
 }
 
-puts "simulate $n_part particles in a cubic simulation box "
+puts "Simulate $n_part particles in a cubic simulation box "
 puts "[setmd box_l] at density $density"
 puts "Interactions:\n[inter]"
 set act_min_dist [analyze mindist]
