@@ -301,7 +301,7 @@ int boxl_callback(Tcl_Interp *interp, void *_data)
 {
   double *data = _data;
 
-  if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
+  if ((data[0] <= 0) || (data[1] <= 0) || (data[2] <= 0)) {
     Tcl_AppendResult(interp, "illegal value", (char *) NULL);
     return (TCL_ERROR);
   }
