@@ -35,6 +35,15 @@ And now the full documentation on how \ref tcl_blockfile actually works:<BR>
 	    can be found in \ref variables_page), to <channel>.
 	<li>\verbatim blockfile <channel>  write variable all\endverbatim
             will write all variables known to \ref tcl_setmd to <channel>.
+	<li>\verbatim blockfile <channel>  write tclvariable {<varname1> <varname2> ...} \endverbatim
+            writes the tcl \emph{global} variables <varname1>, <varname2>,..., to <channel>. Global
+	    variables are those declared in the top scope or those declared global in procedures.
+	<li>\verbatim blockfile <channel>  write tclvariable all\endverbatim
+            will write all global variables to <channel>. The predefined globals from Tcl (tcl_version, argv,
+		argv0, tcl_interactive, auto_oldpath, errorCode, auto_path, errorInfo, auto_index, env,
+		tcl_pkgPath, tcl_patchLevel, argc, tcl_libPath, tcl_library and tcl_platform) are omitted.
+	<li>\verbatim blockfile <channel>  write tclvariable reallyall\endverbatim will even write those
+	    variables, which you probably almost never want...
 	<li>\anchor tcl_blockfile_write_particles
             \verbatim blockfile <channel> write particles <what> <range>\endverbatim
     	    writes particle information in a standardized format to the file <channel>.
