@@ -24,6 +24,8 @@
 
 static void init_tcl(Tcl_Interp *interp);
 
+int db_start=1;
+
 int on_program_start(Tcl_Interp *interp)
 {
   /*
@@ -50,14 +52,17 @@ int on_program_start(Tcl_Interp *interp)
 
 void on_integration_start()
 {
+  
   /* happens if 0 particles... */
   if (!node_grid_is_set())
     setup_node_grid();
 
-  fprintf(stderr,"%d: on_int_start: para_ch = %d inter_ch = %d top_ch %d part_ch =%d\n",this_node,
-	  parameter_changed,interactions_changed,topology_changed,particle_changed);
+  /*fprintf(stderr,"%d: on_int_start: para_ch = %d inter_ch = %d top_ch %d part_ch =%d\n"
+    ,this_node,parameter_changed,interactions_changed,topology_changed,particle_changed);
+  */
 
   particle_invalidate_part_node();
+
 
   if (parameter_changed || interactions_changed || topology_changed) {
     integrate_vv_recalc_maxrange();
