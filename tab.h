@@ -372,7 +372,8 @@ MDINLINE double tabulated_pair_energy(Particle *p1, Particle *p2, IA_parameters 
 				      double d[3], double dist) {
   double phi, dindex;
   int tablepos, table_start;
-
+  double x0, b;
+  
 
   if ( dist < ia_params->TAB_maxval){ 
     dindex = (dist-ia_params->TAB_minval)/ia_params->TAB_stepsize;
@@ -386,7 +387,6 @@ MDINLINE double tabulated_pair_energy(Particle *p1, Particle *p2, IA_parameters 
 	 This sould not occur too often, since it is quite expensive!
       */
       tablepos = 0;   
-      double x0, b;
       b = (tabulated_forces.e[table_start + tablepos + 1]-tabulated_forces.e[table_start + tablepos])/ia_params->TAB_stepsize;
       x0 = ia_params->TAB_minval-tabulated_forces.e[table_start + tablepos]/b;
       return ( (tabulated_energies.e[table_start + tablepos]

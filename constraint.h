@@ -247,9 +247,8 @@ MDINLINE double rod_energy(Particle *p1, Particle *c_p, Constraint_rod *c)
 
   if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->lambda != 0.0)
     return coulomb.prefactor*p1->p.q*c->lambda*(-log(c_dist_2*SQR(box_l_i[2])) + 2*(M_LN2 - C_GAMMA));
-  else
 #endif
-    return 0;
+  return 0;
 }
 
 MDINLINE void add_plate_force(Particle *p1, Particle *c_p, Constraint_plate *c)
@@ -271,9 +270,8 @@ MDINLINE double plate_energy(Particle *p1, Particle *c_p, Constraint_plate *c)
 #ifdef ELECTROSTATICS
   if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->sigma != 0.0)
     return 2*M_PI*coulomb.prefactor*c->sigma*p1->p.q*fabs(p1->r.p[2] < c->pos);
-  else
 #endif
-    return 0;
+  return 0;
 }
 
 MDINLINE void add_constraints_forces(Particle *p1)

@@ -288,8 +288,7 @@ int integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   /* perform integration */
   if (mpi_integrate(n_steps))
     return mpi_gather_runtime_errors(interp, TCL_OK);
-  else
-    return TCL_OK;
+  return TCL_OK;
 }
 
 /************************************************************/
@@ -628,7 +627,7 @@ void propagate_press_box_pos_and_rescale_npt()
 	char *errtxt = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
         sprintf(errtxt, "your choice of piston=%f, dt=%f, p_diff=%f just caused the volume to become negative, decrease dt.",
                 nptiso.piston,time_step,nptiso.p_diff);
-	nptiso.volume = box_l[1]*box_l[2]*box_l[3];
+	nptiso.volume = box_l[0]*box_l[1]*box_l[2];
       }
 
       L_new = pow(nptiso.volume,1.0/nptiso.dimension);

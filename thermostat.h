@@ -176,16 +176,14 @@ void thermo_cool_down();
 MDINLINE double friction_therm0_nptiso(double dt_vj) {
   if(thermo_switch & THERMO_NPT_ISO)   
     return ( nptiso_pref1*dt_vj + nptiso_pref2*(d_random()-0.5) );
-  else
-    return 0.0;
+  return 0.0;
 }
 
 /** add p_diff-dependend noise and friction for NpT-sims to \ref nptiso_struct::p_diff */
 MDINLINE double friction_thermV_nptiso(double p_diff) {
   if(thermo_switch & THERMO_NPT_ISO)   
     return ( nptiso_pref3*p_diff + nptiso_pref4*(d_random()-0.5) );
-  else
-    return 0.0;
+  return 0.0;
 }
 #endif
 

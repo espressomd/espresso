@@ -47,6 +47,6 @@ int parse_int_list(Tcl_Interp *interp, char *list, IntList *il);
         if (func == TCL_ERROR) { \
            Tcl_AppendResult(interp, errmsg, (char *)NULL); \
            return TCL_ERROR; \
-        } else \
-	  return TCL_OK;
+        } \
+	return TCL_OK;
 #endif

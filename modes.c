@@ -145,12 +145,12 @@ int orient_order(double* result)
   double dp;
   double len;
 
-  bilayer_cnt = 0;
-  *result = 0;
-
   IntList l_orient;
   init_intlist(&l_orient);
   realloc_intlist(&l_orient, n_molecules);
+
+  bilayer_cnt = 0;
+  *result = 0;
 
   stored_dirs = malloc(sizeof(double)*n_molecules*3);
 
@@ -251,6 +251,7 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
   double distance;
   double fdistance;
   double tailz;
+  double len;
 
   if ( xdir + ydir + zdir == -3 ) {
     tmpzdir = 2;
@@ -310,7 +311,7 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
       fflush(stdout);
   */
 
-  double len = 0;
+  len = 0;
   for ( i = 0 ; i < 3 ; i++ ) {
     director[i] = (partCfg[head_id].r.p[i] - 
 		   partCfg[tail_id].r.p[i]);

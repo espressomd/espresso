@@ -701,11 +701,10 @@ static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
     Tcl_PrintDouble(interp, result, buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return TCL_OK;
-  } else {
-    Tcl_AppendResult(interp, "Error calculating orientational order ", (char *)NULL);
-    return TCL_ERROR;
   }
 
+  Tcl_AppendResult(interp, "Error calculating orientational order ", (char *)NULL);
+  return TCL_ERROR;
 }
 
 

@@ -151,8 +151,7 @@ MDINLINE double dihedral_energy(Particle *p1, Particle *p2, Particle *p3, Partic
   phi = calc_dihedral_angle(p1, p2, p3, p4, vec1, &vecl1, vec2, &vecl2, 
 			    &cos1223, &cos2334, &cosphi);
 
-  if( phi == ANGLE_NOT_DEFINED ) { fprintf(stderr,"undefined\n"); return 0.0; }
-  else {
+  if( phi != ANGLE_NOT_DEFINED ) {
     fac = bonded_ia_params[type_num].p.dihedral.phase;
     /* treat the different multiplicities */
     switch (bonded_ia_params[type_num].p.dihedral.mult) {
@@ -173,6 +172,9 @@ MDINLINE double dihedral_energy(Particle *p1, Particle *p2, Particle *p3, Partic
     fac *= bonded_ia_params[type_num].p.dihedral.bend;
     return fac;
   }
+  /* angle undefined */
+  fprintf(stderr,"undefined\n");
+  return 0.0;
 }
 
 #endif
