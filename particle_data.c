@@ -337,9 +337,9 @@ int part(ClientData data, Tcl_Interp *interp,
   /* if no further arguments are given, print out all stored particles */
   if (argc == 1) {
     int i = 0, start = 1;
-    fprintf(stderr, "max_seen %d\n", max_seen_particle);
+    PART_TRACE(fprintf(stderr, "max_seen %d\n", max_seen_particle));
     for (i = 0; i <= max_seen_particle ; i++) {
-      fprintf(stderr, "particle %d\n", i);
+      PART_TRACE(fprintf(stderr, "particle %d\n", i));
       if (particle_node[i] != -1) {
 	if (start) {
 	  Tcl_AppendResult(interp, "{", (char *)NULL);
