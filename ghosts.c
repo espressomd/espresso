@@ -125,7 +125,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
 	  ParticlePosition *pp = insert;
 	  int i;
 	  memcpy(pp, &pt->r, sizeof(ParticlePosition));
-	  fprintf(stderr,"%d prep_send_buf: ghost %d shift %f,%f,%f\n",this_node,pt->p.identity,gc->shift[0],gc->shift[1],gc->shift[2]);
+	  //fprintf(stderr,"%d prep_send_buf: ghost %d shift %f,%f,%f\n",this_node,pt->p.identity,gc->shift[0],gc->shift[1],gc->shift[2]);
 	  for (i = 0; i < 3; i++)
 	    pp->p[i] += gc->shift[i];
 	  insert +=  sizeof(ParticlePosition);

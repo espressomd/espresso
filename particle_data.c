@@ -340,18 +340,24 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
   Particle *end = &sl->part[sl->n - 1];
 
   memcpy(dst, src, sizeof(Particle));
-  if (re)
-    update_local_particles(dl);
-  else
+  if (re) {
+    //fprintf(stderr, "%d: m_i_p: update destination list after realloc\n",this_node);
+    update_local_particles(dl); }
+  else {
+    //fprintf(stderr, "%d: m_i_p: update loc_part entry for moved particle (id %d)\n",this_node,dst->p.identity);
     local_particles[dst->p.identity] = dst;
-    
-  if ( src != end )
+  }
+  if ( src != end ) {
+    //fprintf(stderr, "%d: m_i_p: copy end particle in source list (id %d)\n",this_node,end->p.identity);
     memcpy(src, end, sizeof(Particle));
 
-  if (realloc_particlelist(sl, --sl->n))
-    update_local_particles(sl);
-  else
-    local_particles[src->p.identity] = src;
+  }
+  if (realloc_particlelist(sl, --sl->n)) {
+    //fprintf(stderr, "%d: m_i_p: update source list after realloc\n",this_node);
+    update_local_particles(sl); }
+  else if ( src != end ) {
+    //fprintf(stderr, "%d: m_i_p: update loc_part entry for end particle (id %d)\n",this_node,src->p.identity);    
+    local_particles[src->p.identity] = src; }
   return dst;
 }
 

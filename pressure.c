@@ -9,6 +9,8 @@
 #include "pressure.h"
 #include "parser.h"
 #include "cells.h"
+#include "integrate.h"
+#include "domain_decomposition.h"
 #include "nsquare.h"
 
 Observable_stat virials = {0, {NULL,0,0}, 0,0,0,0};
@@ -35,11 +37,15 @@ void pressure_calc(double *result)
 
   init_virials(&virials);
 
+  if(resort_particles) {
+    initialize_ghosts(DD_GLOBAL_EXCHANGE);
+    resort_particles = 0;
+  }
+
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    if (rebuild_verletlist)
-      build_verlet_lists();
-    // calculate_verlet_virials();
+    if (rebuild_verletlist) build_verlet_lists();
+    calculate_verlet_virials();
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_calculate_virials();

@@ -106,7 +106,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
 			 checked_particle_ptr(p1->bl.e[i+2]), type_num);
       i+=3; break;
     default :
-      fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->p.identity);
+      fprintf(stderr,"add_bonded_energy: WARNING: Bonds of atom %d unknown\n",p1->p.identity);
       ret = 0;
       i = p1->bl.n;
       break;

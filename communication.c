@@ -1119,6 +1119,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     errexit();
   }
   on_coulomb_change();
+  on_short_range_ia_change();
 #endif
 }
 

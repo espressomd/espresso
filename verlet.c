@@ -156,7 +156,7 @@ void calculate_verlet_ia()
     for(i = 0; i < np; i++)  {
       add_bonded_force(&p1[i]);
 #ifdef CONSTRAINTS
-      add_constraints_forces(p1);
+      add_constraints_forces(&p1[i]);
 #endif
     }
 
@@ -214,7 +214,7 @@ void build_verlet_lists_and_calc_verlet_ia()
 	if(n == 0) {
 	  add_bonded_force(&p1[i]);
 #ifdef CONSTRAINTS
-	  add_constraints_forces(p1);
+	  add_constraints_forces(&p1[i]);
 #endif
 	  memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 	  j_start = i+1;
@@ -265,7 +265,7 @@ void calculate_verlet_energies()
       add_kinetic_energy(&p1[i]);
       add_bonded_energy(&p1[i]);
 #ifdef CONSTRAINTS
-      add_constraints_energy(p1);
+      add_constraints_energy(&p1[i]);
 #endif
     }
 
@@ -290,7 +290,7 @@ void calculate_verlet_energies()
 
 /************************************************************/
 
-void calculate_verlet_pressure()
+void calculate_verlet_virials()
 {
   int c, np, n, i;
   Cell *cell;

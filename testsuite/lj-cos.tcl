@@ -32,7 +32,6 @@ proc error_exit {error} {
     exit -666
 }
 
-
 set epsilon 1e-4
 setmd temp 0
 setmd time_step 1

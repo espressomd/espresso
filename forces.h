@@ -130,7 +130,7 @@ MDINLINE void add_bonded_force(Particle *p1)
 		      checked_particle_ptr(p1->bl.e[i+2]), type_num);
       i+=3; break;
     default :
-      fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->p.identity);
+      fprintf(stderr,"add_bonded_force: WARNING: Bonds of atom %d unknown\n",p1->p.identity);
       i = p1->bl.n; 
       break;
     }

@@ -174,10 +174,11 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3])
     if(lc[i] > hc[i]) return 0;
   }
 
-  for(o=lc[2]; o<=hc[2]; o++) 
+  for(o=lc[0]; o<=hc[0]; o++) 
     for(n=lc[1]; n<=hc[1]; n++) 
-      for(m=lc[0]; m<=hc[0]; m++) {
+      for(m=lc[2]; m<=hc[2]; m++) {
 	i = get_linear_index(o,n,m,dd.ghost_cell_grid);
+	CELL_TRACE(fprintf(stderr,"%d: dd_fill_comm_cell_list: add cell %d\n",this_node,i));
 	part_lists[c] = &cells[i];
 	c++;
       }
@@ -239,16 +240,16 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	    comm->comm[cnt].n_part_lists  = 2*n_comm_cells[dir];
 	    /* prepare folding of ghost positions */
 	    if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) 
-	      comm->comm[cnt].shift[2-dir] = boundary[2*dir+lr]*box_l[dir];
+	      comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
 	    /* fill send comm cells */
 	    lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
 	    dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
-	    //fprintf(stderr,"%d: comm %d copy to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
+	    CELL_TRACE(fprintf(stderr,"%d: comm %d copy to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
 	    /* fill recv comm cells */
 	    lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
 	    /* place recieve cells after send cells */
 	    dd_fill_comm_cell_lists(&comm->comm[cnt].part_lists[n_comm_cells[dir]],lc,hc);
-	    //fprintf(stderr,"%d:        recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
+	    CELL_TRACE(fprintf(stderr,"%d:        recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
 	    cnt++;
 	  }
       }
@@ -265,12 +266,12 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	      comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
 	      /* prepare folding of ghost positions */
 	      if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) 
-		comm->comm[cnt].shift[2-dir] = boundary[2*dir+lr]*box_l[dir];
+		comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
 	      
 	      lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
 	      dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
 	      
-	      //fprintf(stderr,"%d: comm %d send to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
+	       CELL_TRACE(fprintf(stderr,"%d: comm %d send to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
 	      cnt++;
 	    }
 #ifdef PARTIAL_PERIODIC
@@ -285,7 +286,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	      lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
 	      dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
 	      
-	      //fprintf(stderr,"%d: comm %d recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
+	      CELL_TRACE(fprintf(stderr,"%d: comm %d recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
 	      cnt++;
 	    }
 	}
@@ -300,8 +301,12 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
     communication types GHOST_SEND <-> GHOST_RECV. */
 void dd_revert_comm_order(GhostCommunicator *comm)
 {
-  int i;
+  int i,j,nlist2;
   GhostCommunication tmp;
+  ParticleList *tmplist;
+
+  CELL_TRACE(fprintf(stderr,"%d: dd_revert_comm_order: anz comm: %d\n",this_node,comm->num));
+
   /* revert order */
   for(i=0; i<(comm->num/2); i++) {
     tmp = comm->comm[i];
@@ -311,7 +316,15 @@ void dd_revert_comm_order(GhostCommunicator *comm)
   /* exchange SEND/RECV */
   for(i=0; i<comm->num; i++) {
     if(comm->comm[i].type == GHOST_SEND) comm->comm[i].type = GHOST_RECV;
-    else if(comm->comm[i].type == GHOST_RECV)comm->comm[i].type = GHOST_SEND;
+    else if(comm->comm[i].type == GHOST_RECV) comm->comm[i].type = GHOST_SEND;
+    else if(comm->comm[i].type == GHOST_LOCL) {
+      nlist2=comm->comm[i].n_part_lists/2;
+      for(j=0;j<nlist2;j++) {
+	tmplist = comm->comm[i].part_lists[j];
+	comm->comm[i].part_lists[j] = comm->comm[i].part_lists[j+nlist2];
+	comm->comm[i].part_lists[j+nlist2] = tmplist;
+      }
+    }
   }
 }
 
@@ -487,7 +500,7 @@ void dd_topology_release()
 /************************************************************/
 void  dd_exchange_and_sort_particles(int global_flag)
 {
-  int dir, c, p, finished=0;
+  int dir, c, p, finished=0,i;
   ParticleList *cell,*sort_cell, send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
   Particle *part;
   CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles(%d):\n",this_node,global_flag));
@@ -570,9 +583,6 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	if(dd_append_particles(&recv_buf_l, 2*dir  ) && dir == 2) finished = 0;
 	if(dd_append_particles(&recv_buf_r, 2*dir+1) && dir == 2) finished = 0; 
 
-#ifdef ADDITIONAL_CHECKS
-	check_particle_consistency();
-#endif
       }
       else {
 	/* Single node direction case (no communication) */
@@ -596,12 +606,23 @@ void  dd_exchange_and_sort_particles(int global_flag)
 		  finished=0;
 		  sort_cell = local_cells.cell[0];
 		  if(sort_cell != cell) {
-		    move_unindexed_particle(sort_cell, cell, p);
+		    move_indexed_particle(sort_cell, cell, p);
 		    if(p < cell->n) p--;
 		  }      
 		}
 		else {
-		  move_unindexed_particle(sort_cell, cell, p);
+
+		  /* DEBUG */
+		  CELL_TRACE(fprintf(stderr, "%d: dd_exchange_and_sort_particles: move particle id %d\n", this_node,part[p].p.identity));
+		  //for(i=0;i<cell->n;i++) fprintf(stderr, "%d: old cell part %d at %p has id %d\n",this_node,i,&cell->part[i],cell->part[i].p.identity);
+		  //fprintf(stderr, "%d: move_indexed_particle\n",this_node);
+
+		  move_indexed_particle(sort_cell, cell, p);
+
+		  /* DEBUG */
+		  //for(i=0;i<cell->n;i++) fprintf(stderr, "%d: old cell part %d at %p has id %d\n",this_node,i,&cell->part[i],cell->part[i].p.identity);
+		  //for(i=0;i<sort_cell->n;i++) fprintf(stderr, "%d: new cell part %d at %p has id %d\n",this_node,i,&sort_cell->part[i],sort_cell->part[i].p.identity);
+
 		  if(p < cell->n) p--;
 		}
 	      }
@@ -628,6 +649,11 @@ void  dd_exchange_and_sort_particles(int global_flag)
     }
     CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: finished value: %d\n",this_node,finished));
   }
+
+#ifdef ADDITIONAL_CHECKS
+  check_particle_consistency();
+#endif
+
   CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles finished\n",this_node));
 }
 

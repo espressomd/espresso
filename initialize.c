@@ -43,10 +43,6 @@
 
 /** wether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
-/** wether to recalculate the maximal interaction range before integration */
-static int recalc_maxrange = 1;
-/** wether the coulomb method needs to be reset before integration */
-static int reinit_coulomb = 1;
 
 static void init_tcl(Tcl_Interp *interp);
 
@@ -87,38 +83,11 @@ void on_integration_start()
 
   particle_invalidate_part_node();
 
-  if (recalc_maxrange) {
-    integrate_vv_recalc_maxrange();
-    on_parameter_change(FIELD_MAXRANGE);
-    recalc_maxrange = 0;
-    recalc_forces = 1;
-  }
-
   if (reinit_thermo) {
     thermo_init();
     reinit_thermo = 0;
     recalc_forces = 1;
   }
-
-#ifdef ELECTROSTATICS
-  if (reinit_coulomb) {
-    if(temperature > 0.0)
-      coulomb.prefactor = coulomb.bjerrum * temperature; 
-    else
-      coulomb.prefactor = coulomb.bjerrum;
-    switch (coulomb.method) {
-    case COULOMB_P3M:
-      P3M_init();
-      break;
-    case COULOMB_MMM1D:
-      MMM1D_init();
-      break;
-    default: break;
-    }
-    reinit_coulomb = 0;
-    recalc_forces = 1;
-  }
-#endif
 
   invalidate_obs();
 
@@ -129,7 +98,8 @@ void on_integration_start()
 void on_particle_change()
 {
   resort_particles = 1;
-  
+  rebuild_verletlist = 1;
+
   invalidate_obs();
 
   /* the particle information is no longer valid */
@@ -140,14 +110,32 @@ void on_coulomb_change()
 {
   invalidate_obs();
 
-  reinit_coulomb = 1;
+#ifdef ELECTROSTATICS
+  if(temperature > 0.0)
+    coulomb.prefactor = coulomb.bjerrum * temperature; 
+  else
+    coulomb.prefactor = coulomb.bjerrum;
+  switch (coulomb.method) {
+  case COULOMB_P3M:
+    P3M_init();
+    break;
+  case COULOMB_MMM1D:
+    MMM1D_init();
+    break;
+  default: break;
+  }
+  recalc_forces = 1;
+#endif
 }
 
 void on_short_range_ia_change()
 {
   invalidate_obs();
 
-  recalc_maxrange = 1;  
+  integrate_vv_recalc_maxrange();
+  on_parameter_change(FIELD_MAXRANGE);
+
+  recalc_forces = 1;
 }
 
 void on_constraint_change()
@@ -159,7 +147,7 @@ void on_constraint_change()
 
 void on_cell_structure_change()
 {
-  reinit_coulomb = 1;
+  on_coulomb_change();
 }
 
 void on_parameter_change(int field)
@@ -171,21 +159,24 @@ void on_parameter_change(int field)
     reinit_thermo = 1;
 
   if (field == FIELD_TEMPERATURE)
-    reinit_coulomb = 1;
+    on_coulomb_change();
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_P3M:
     if (field == FIELD_BOXL || field == FIELD_NODEGRID)
-      reinit_coulomb = 1;
+      on_coulomb_change();
     break;
   case COULOMB_MMM1D:
     if (field == FIELD_BOXL)
-      reinit_coulomb = 1;
+      on_coulomb_change();
     break;
   default: break;
   }
 #endif
+
+  if (field == FIELD_MAXRANGE)
+    rebuild_verletlist = 1;
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:

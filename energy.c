@@ -9,6 +9,8 @@
 #include "energy.h"
 #include "parser.h"
 #include "cells.h"
+#include "integrate.h"
+#include "domain_decomposition.h"
 #include "nsquare.h"
 
 Observable_stat energy = {0, {NULL,0,0}, 0,0,0};
@@ -32,6 +34,11 @@ void master_energy_calc();
 void energy_calc(double *result)
 {
   init_energies(&energy);
+
+  if(resort_particles) {
+    initialize_ghosts(DD_GLOBAL_EXCHANGE);
+    resort_particles = 0;
+  }
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:

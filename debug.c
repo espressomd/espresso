@@ -173,7 +173,7 @@ void check_particle_consistency()
 	}
       }
       if(local_particles[part[n].p.identity] != &part[n]) {
-	fprintf(stderr,"%d: check_particle_consistency: ERROR: address mismatch for part id %d: %p %p in cell %d\n",
+	fprintf(stderr,"%d: check_particle_consistency: ERROR: address mismatch for part id %d: local: %p cell: %p in cell %d\n",
 		this_node,part[n].p.identity,local_particles[part[n].p.identity],
 		&part[n],c);
 	errexit();
@@ -284,7 +284,7 @@ void print_particle_forces()
     if(np>0) {
       fprintf(stderr,"%d: cell %d contains %d particles:\n",this_node,c,np);
       for(p=0;p<np;p++) {
-	fprintf(stderr,"%d: c%d p%d (id%d) pos %f %f %f\n",this_node,c,p,part[p].p.identity,part[p].f.f[0],part[p].f.f[1],part[p].f.f[2]);
+	fprintf(stderr,"%d: c%d p%d (id%d) force %f %f %f\n",this_node,c,p,part[p].p.identity,part[p].f.f[0],part[p].f.f[1],part[p].f.f[2]);
       }
     }
   }    

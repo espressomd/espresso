@@ -112,7 +112,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 */
 MDINLINE void add_bonded_virials(Particle *p1)
 {
-  int i, type_num;
+  int i,j, type_num;
   double ret, F1[3], F2[3], F3[3], d[3];
   Particle *p2, *p3;
 
@@ -125,9 +125,9 @@ MDINLINE void add_bonded_virials(Particle *p1)
   while(i<p1->bl.n) {
     p2 = checked_particle_ptr(p1->bl.e[i+1]);
 
-    for (i = 0; i < 3; i++) {
-      F2[i] = p2->f.f[i];
-      p2->f.f[i] = 0;
+    for (j = 0; j < 3; j++) {
+      F2[j] = p2->f.f[j];
+      p2->f.f[j] = 0;
     }
 
     get_mi_vector(d, p1->r.p, p2->r.p);
@@ -144,33 +144,33 @@ MDINLINE void add_bonded_virials(Particle *p1)
       i+=2; break;
     case BONDED_IA_ANGLE:
       p3 = checked_particle_ptr(p1->bl.e[i+2]);
-      for (i = 0; i < 3; i++) {
-	F3[i] = p3->f.f[i];
-	p3->f.f[i] = 0;
+      for (j = 0; j < 3; j++) {
+	F3[j] = p3->f.f[j];
+	p3->f.f[j] = 0;
       }
       add_angle_force(p1,p2,p3,type_num);
       ret = -d[0]*p2->f.f[0] - d[1]*p2->f.f[1] - d[2]*p2->f.f[2];
       get_mi_vector(d, p1->r.p, p3->r.p);
       ret += -d[0]*p3->f.f[0] - d[1]*p3->f.f[1] - d[2]*p3->f.f[2];
 
-      for (i = 0; i < 3; i++)
-	p3->f.f[i] = F3[i];
+      for (j = 0; j < 3; j++)
+	p3->f.f[j] = F3[j];
 
       i+=3; break;
     default :
-      fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->p.identity);
+      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d  of atom %d unknown\n",bonded_ia_params[type_num].type,p1->p.identity);
       ret = 0;
       i = p1->bl.n;
       break;
     }
     *obsstat_bonded(&virials, type_num) += ret;
 
-    for (i = 0; i < 3; i++)
-      p2->f.f[i] = F2[i];
+    for (j = 0; j < 3; j++)
+      p2->f.f[j] = F2[j];
   }
   
-  for (i = 0; i < 3; i++)
-    p1->f.f[i] = F1[i];
+  for (j = 0; j < 3; j++)
+    p1->f.f[j] = F1[j];
 }
 
 /** Calculate kinetic pressure (aka energy) for one particle.
