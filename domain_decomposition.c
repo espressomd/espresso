@@ -38,7 +38,7 @@
 DomainDecomposition dd = { 1, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, NULL };
 
 int max_num_cells = CELLS_MAX_NUM_CELLS;
-int min_num_cells = 0;
+int min_num_cells = 27;
 double max_skin   = 0.0;
 
 /*@}*/
@@ -137,7 +137,7 @@ void dd_create_cell_grid()
     }
     if (n_local_cells < min_num_cells) {
       char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
-      sprintf(error_msg, "{number of cells %d is smaller than minimum %d (interaction range too large)} ",
+      sprintf(error_msg, "{number of cells %d is smaller than minimum %d (interaction range too large or max_num_cells too small)} ",
 	      n_local_cells, min_num_cells);
     }
   }
@@ -860,9 +860,9 @@ Cell *dd_position_to_cell(double pos[3])
 int max_num_cells_callback(Tcl_Interp *interp, void *_data)
 {
   int data = *(int *)_data;
-  if (data < 27) {
-    Tcl_AppendResult(interp, "WARNING: max_num_cells has to be at least 27. Set max_num_cells = 27!", (char *) NULL);
-    data = 27;
+  if (data < min_num_cells) {
+    Tcl_AppendResult(interp, "max_num_cells cannot be smaller than min_num_cells", (char *) NULL);
+    return (TCL_ERROR);
   }
   max_num_cells = data;
   mpi_bcast_parameter(FIELD_MAXNUMCELLS);
@@ -872,6 +872,14 @@ int max_num_cells_callback(Tcl_Interp *interp, void *_data)
 int min_num_cells_callback(Tcl_Interp *interp, void *_data)
 {
   int data = *(int *)_data;
+  if (data < 27) {
+    Tcl_AppendResult(interp, "min_num_cells must be at least 27", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  if (data > max_num_cells) {
+    Tcl_AppendResult(interp, "min_num_cells cannot be larger than max_num_cells", (char *) NULL);
+    return (TCL_ERROR);
+  }
   min_num_cells = data;
   mpi_bcast_parameter(FIELD_MINNUMCELLS);
   return (TCL_OK);

@@ -337,7 +337,7 @@ void on_parameter_change(int field)
     break;
   case CELL_STRUCTURE_DOMDEC:
     if (field == FIELD_BOXL || field == FIELD_NODEGRID || field == FIELD_MAXRANGE ||
-	field == FIELD_MAXNUMCELLS || field == FIELD_THERMO_SWITCH)
+	field == FIELD_MINNUMCELLS || field == FIELD_MAXNUMCELLS || field == FIELD_THERMO_SWITCH)
       cells_re_init(CELL_STRUCTURE_DOMDEC);
     break;
   }
