@@ -966,7 +966,7 @@ static void P3M_charge_assign()
   /* charged particle counter, charge fraction counter */
   int cp_cnt=0, cf_cnt=0;
   /* index, index jumps for rs_mesh array */
-  int q_ind;
+  int q_ind = 0;
   int q_m_off = (lm.dim[2] - p3m.cao);
   int q_s_off = lm.dim[2] * (lm.dim[1] - p3m.cao);
   /* 2*p3m.inter + 1, the number of table points */
@@ -1882,7 +1882,7 @@ static double p3m_m_time(Tcl_Interp *interp, int mesh,
 			 double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
 			 double *_alpha_L, double *_accuracy)
 {
-  double best_time, tmp_time, tmp_r_cut_iL, tmp_alpha_L, tmp_accuracy;
+  double best_time = -1, tmp_time, tmp_r_cut_iL, tmp_alpha_L, tmp_accuracy;
   /* in which direction improvement is possible. Initially, we dont know it yet. */
   int final_dir = 0;
   int cao = *_cao;
