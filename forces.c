@@ -32,52 +32,6 @@
 
 /************************************************************/
 
-#if 0
-
-/** nonbonded and bonded force calculation using the verlet list */
-void calculate_verlet_ia()
-{
-  Cell *cell;
-  Particle *p, **pairs;
-  Particle *p1, *p2;
-  int k, i,j, c, np;
-  double d[3], dist2, dist;
-  IA_parameters *ia_params;
-
-  /* force calculation loop. */
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->pList.part;
-    np = cell->pList.n;
-
-    /* calculate bonded interactions (loop local particles) */
-    for(j = 0; j < np; j++) {
-      add_bonded_pair_force(&p[j]);
-    }
-
-    /* calculate non bonded interactions (loop verlet lists of neighbors) */
-    for (k = 0; k < cell->n_neighbors; k++) {
-      pairs = cell->nList[k].vList.pair;  /* verlet list */
-      np    = cell->nList[k].vList.n;     /* length of verlet list */
-
-      /* verlet list loop */
-      for(i=0; i<2*np; i+=2) {
-	p1 = pairs[i];                    /* pointer to particle 1 */
-	p2 = pairs[i+1];                  /* pointer to particle 2 */
-
-	ia_params = get_ia_param(p1->p.type,p2->p.type);
-	/* distance calculation */
-	for(j=0; j<3; j++) d[j] = p1->r.p[j] - p2->r.p[j];
-	dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
-	dist  = sqrt(dist2);
-
-	add_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2);
-      } 
-    }
-  }
-}
-#endif
-
 void force_calc()
 {
   /* preparation */
@@ -85,7 +39,7 @@ void force_calc()
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    //calculate_verlet_ia();
+    calculate_verlet_ia();
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_calculate_ia();

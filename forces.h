@@ -103,12 +103,12 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
 }
 
-/** Calculate bonded forces between a pair of particles.
+/** Calculate bonded forces for one particle.
     Also contains the constraint forces, which are treated
     as bonded interactions in Espresso.
     @param p1 particle for which to calculate forces
 */
-MDINLINE void add_bonded_pair_force(Particle *p1)
+MDINLINE void add_bonded_force(Particle *p1)
 {
   int i, type_num;
 

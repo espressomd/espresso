@@ -201,7 +201,7 @@ void integrate_vv(int n_steps)
       force_calc();
       break;
     case CELL_STRUCTURE_DOMDEC:
-      //   build_verlet_lists_and_force_calc();
+      build_verlet_lists_and_calc_verlet_ia();
       break;
     }
  
@@ -229,7 +229,7 @@ void integrate_vv(int n_steps)
       dd_exchange_and_sort_particles();
       ghost_communicator(&cell_structure.ghost_cells_comm);
       ghost_communicator(&cell_structure.exchange_ghosts_comm);
-      //build_verlet_lists_and_force_calc();
+      build_verlet_lists_and_calc_verlet_ia();
     }
     else {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);

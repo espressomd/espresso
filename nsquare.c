@@ -213,7 +213,7 @@ void nsq_calculate_ia()
   /* calculate bonded interactions and non bonded node-node */
   for (p = 0; p < npl; p++) {
     pt1 = &partl[p];
-    add_bonded_pair_force(pt1);
+    add_bonded_force(pt1);
 
     /* other particles, same node */
     for (p2 = p + 1; p2 < npl; p2++) {

@@ -334,12 +334,12 @@ void dd_init_cell_interactions()
     dd.cell_inter[c_cnt].n_neighbors = CELLS_MAX_NEIGHBORS;
     n_cnt=0;
     ind1 = get_linear_index(m,n,o,dd.ghost_cell_grid);
-    for(p=m-1; p<=m+1; p++)
+    for(p=o-1; p<=o+1; p++)	
       for(q=n-1; q<=n+1; q++)
-	for(r=o-1; r<=o+1; r++) {
-	  ind2 = get_linear_index(p,q,r,dd.ghost_cell_grid);
+	for(r=m-1; r<=m+1; r++) {   
+	  ind2 = get_linear_index(r,q,p,dd.ghost_cell_grid);
 	  if(ind2 >= ind1) {
-	    //fprintf(stderr,"%d: neighbor %d is (%d,%d,%d) ind %d\n",this_node,n_cnt,p,q,r,ind2);
+	    //fprintf(stderr,"%d: ind %d adr %p  neighbor %d is (%d,%d,%d) ind %d adr %p\n",this_node,ind1,&cells[ind1],n_cnt,p,q,r,ind2,&cells[ind2]);
 	    dd.cell_inter[c_cnt].nList[n_cnt].cell_ind = ind2;
 	    dd.cell_inter[c_cnt].nList[n_cnt].pList    = &cells[ind2];
 	    init_pairList(&dd.cell_inter[c_cnt].nList[n_cnt].vList);

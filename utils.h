@@ -418,6 +418,21 @@ MDINLINE double distance2(double pos1[3], double pos2[3])
   return SQR(pos1[0]-pos2[0]) + SQR(pos1[1]-pos2[1]) + SQR(pos1[2]-pos2[2]);
 }
 
+/** Returns the distance between two positions squared and stores the
+    distance vector pos1-pos2 in vec.
+ *  \param pos1[3] Position one.
+ *  \param pos2[3] Position two.
+ *  \param vec[3]  vecotr pos1-pos2.
+ *  \return distance squared
+*/
+MDINLINE double distance2vec(double pos1[3], double pos2[3], double vec[3])
+{
+  vec[0] = pos1[0]-pos2[0];
+  vec[1] = pos1[1]-pos2[1];
+  vec[2] = pos1[2]-pos2[2];
+  return SQR(vec[0]) + SQR(vec[1]) + SQR(vec[2]);
+}
+
 /** returns the distance between the unfolded coordintes of two particles. 
  *  \param pos1[3]       Position of particle one.
  *  \param image_box1[3] simulation box index of particle one .
