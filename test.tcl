@@ -24,7 +24,7 @@ puts "niatypes = [setmd niatypes]"
 
 # initialize and broadcast system parameters
 ##################################################
-set_syspar
+# done automagically
 
 # Set up particle positions
 ##################################################

@@ -25,4 +25,7 @@ int map_array_node(int a, int b, int c);
 /** map position to node */
 int find_node(double pos[3]);
 
+/** datafield callback for procgrid */
+int pgrid_callback(Tcl_Interp *interp, void *data);
+
 #endif

@@ -1,11 +1,12 @@
 #include <tcl.h>
+#include <stdlib.h>
 #include "initialize.h"
 #include "global.h"
 #include "communication.h"
 
 void exitHandler(ClientData data)
 {
-  stop_mpi();
+  mpi_stop();
 }
 
 int appinit(Tcl_Interp *interp)
@@ -21,10 +22,12 @@ int appinit(Tcl_Interp *interp)
 
 int main(int argc, char **argv)
 {
-  init_mpi(&argc, &argv);
+  mpi_init(&argc, &argv);
 
   if (this_node == 0) {
     /* master node */
+    atexit(mpi_stop);
+
     init_data();
     Tcl_Main(argc, argv, appinit);
     return 0;

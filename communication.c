@@ -5,46 +5,86 @@
 #include "integrate.h"
 #include "global.h"
 
-//#define DEBUG
+#define DEBUG
 
 int this_node = -1;
 int nprocs = -1;
-int processor_grid[3] = { -1, -1, -1};
-int neighbors[6] = {0, 0, 0, 0, 0, 0};
 
-void init_mpi(int *argc, char ***argv)
+/**********************************************
+ * slave callbacks.
+ **********************************************/
+
+SlaveCallback *callbacks[] = 
+{
+  mpi_stop_slave,
+  mpi_bcast_parameter_slave, 
+  mpi_who_has_slave,
+  mpi_attach_particle_slave,
+  mpi_send_pos_slave,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  mpi_recv_part_slave,
+  mpi_integrate_slave
+};
+
+
+/**********************************************
+ * procedures
+ **********************************************/
+
+void mpi_init(int *argc, char ***argv)
 {
   MPI_Init(argc, argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &this_node);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 }
 
-void stop_mpi()
+/**************** REQ_TERM ************/
+void mpi_stop()
 {
   int req[2] = { REQ_TERM, 0 };
   MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Finalize();
 }
 
-void mpi_set_system_parameters()
+void mpi_stop_slave(int param)
 {
-  int req[2] = { REQ_SYS_PAR, 0 };
-  int i;
-
-  /* calculate dependend parameters. */
-  for(i=0;i<3;i++) local_box_l[i] = box_l[i]/(double)processor_grid[i]; 
-  /* start broadcasting. */
-  MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD); 
-  /* broadcast system parameters. */
-  MPI_Bcast(&n_total_particles, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
-  MPI_Bcast(local_box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
-  MPI_Bcast(processor_grid, 3, MPI_INT, 0, MPI_COMM_WORLD); 
-  MPI_Bcast(&n_particle_types, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&n_interaction_types, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  return;
+#ifdef DEBUG
+  fprintf(stderr, "%d: exiting\n", this_node);
+#endif
+  MPI_Finalize();
+  exit(-1);
 }
 
+/*************** REQ_BCAST_PAR ************/
+void mpi_bcast_parameter(int i)
+{
+  int req[2] = { REQ_BCAST_PAR, i };
+
+  /* start broadcasting. */
+  MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
+
+  mpi_bcast_parameter_slave(i);
+}
+
+void mpi_bcast_parameter_slave(int i)
+{
+  switch (fields[i].type) {
+  case TYPE_INT:
+    MPI_Bcast((int *)fields[i].data, fields[i].dimension,
+	      MPI_INT, 0, MPI_COMM_WORLD);
+    break;
+  case TYPE_DOUBLE:
+    MPI_Bcast((double *)fields[i].data, fields[i].dimension,
+	      MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    break;
+  default: break;
+  }
+}
+
+/*************** REQ_WHO_HAS ****************/
 int mpi_who_has(int part)
 {
   int req[2]   = { REQ_WHO_HAS, part };
@@ -72,6 +112,18 @@ int mpi_who_has(int part)
   return (pnode == nprocs) ? -1 : pnode;
 }
 
+void mpi_who_has_slave(int ident)
+{
+  int sendbuf = got_particle(ident);
+  MPI_Gather(&sendbuf,  1, MPI_INT,
+	     NULL, nprocs, MPI_INT,
+	     0, MPI_COMM_WORLD);
+#ifdef DEBUG
+  fprintf(stderr, "%d: i got %d %d\n", this_node, ident, sendbuf);
+#endif
+}
+
+/**************** REQ_ATTACH ***********/
 void mpi_attach_particle(int part, int pnode)
 {
 #ifdef DEBUG
@@ -86,6 +138,19 @@ void mpi_attach_particle(int part, int pnode)
   }
 }
 
+void mpi_attach_particle_slave(int node)
+{
+  int part_num;
+  MPI_Status status;
+
+  if (node == this_node) {
+    MPI_Recv(&part_num, 1, MPI_INT, 0, REQ_ATTACH,
+	     MPI_COMM_WORLD, &status);
+    add_particle(part_num);
+  }
+}
+
+/****************** REQ_SET_POS ************/
 void mpi_send_pos(int pnode, int part, double p[3])
 {
   if (pnode == this_node) {
@@ -101,13 +166,26 @@ void mpi_send_pos(int pnode, int part, double p[3])
   }
 }
 
+void mpi_send_pos_slave(int part)
+{
+  int index = got_particle(part);
+  MPI_Status status;
+  if (index != -1) {
+    MPI_Recv(particles[index].p, 3, MPI_DOUBLE, 0, REQ_SET_POS,
+	     MPI_COMM_WORLD, &status);
+  }
+}
+
+/****************** REQ_SET_POS ************/
 void mpi_recv_part(int pnode, int part, Particle *pdata)
 {
   if (pnode == this_node) {
     int index = got_particle(part);
     memcpy(pdata, &particles[index], sizeof(Particle));
-    // for now, until we have a deep copy...
-    pdata->n_bond   = 0;
+    pdata->max_bonds = pdata->n_bonds;
+    pdata->bonds = malloc(sizeof(int)*pdata->n_bonds);
+    memcpy(pdata->bonds, particles[index].bonds,
+	   sizeof(int)*pdata->n_bonds);
   }
   else {
     int req[2] = { REQ_GET_PART, part };
@@ -124,14 +202,24 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
     MPI_Recv(pdata->f, 3, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-    // for now, until we have a deep copy...
-    pdata->n_bond   = 0;
+    MPI_Recv(&pdata->n_bonds, 1, MPI_INT, pnode,
+	     REQ_GET_PART, MPI_COMM_WORLD, &status);
+    pdata->max_bonds = pdata->n_bonds;
+    pdata->bonds = malloc(sizeof(int)*pdata->n_bonds);
+    MPI_Recv(pdata->bonds, pdata->n_bonds, MPI_INT, pnode,
+	     REQ_GET_PART, MPI_COMM_WORLD, &status);
   }
 }
 
-
-void mpi_send_pdata(Particle *pdata)
+void mpi_recv_part_slave(int part)
 {
+  int index;
+  Particle *pdata;
+
+  if ((index = got_particle(part)) == -1)
+    return;
+  pdata = &particles[index];
+  
   MPI_Send(&pdata->type, 1, MPI_INT, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
   MPI_Send(pdata->p, 3, MPI_DOUBLE, 0, REQ_GET_PART,
@@ -142,8 +230,13 @@ void mpi_send_pdata(Particle *pdata)
 	   MPI_COMM_WORLD);
   MPI_Send(pdata->f, 3, MPI_DOUBLE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
+  MPI_Send(&pdata->n_bonds, 1, MPI_INT, 0, REQ_GET_PART,
+	   MPI_COMM_WORLD);
+  MPI_Send(pdata->bonds, pdata->n_bonds, MPI_INT, 0, REQ_GET_PART,
+	   MPI_COMM_WORLD);
 }
 
+/*********************+ REQ_INTEGRATE ********/
 void mpi_integrate(int n_steps)
 {
   int req[2] = { REQ_INTEGRATE, n_steps };
@@ -154,9 +247,6 @@ void mpi_integrate(int n_steps)
   task = req[1];
   if(task==0) {
     /* initialize integrator */
-    /* send some required variables */
-    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
-    MPI_Bcast(processor_grid, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
     integrate_vv_init();
   }
   else if(task > 0)
@@ -166,81 +256,38 @@ void mpi_integrate(int n_steps)
     integrate_vv_exit();
 }
 
+void mpi_integrate_slave(int task)
+{
+  if(task==0) {
+    integrate_vv_init();
+  }
+  else if(task > 0)
+    integrate_vv(task);
+  else if(task < 0)
+    integrate_vv_exit();
+  
+#ifdef DEBUG
+  fprintf(stderr, "%d: integration task %d done.\n",
+	  this_node, task);
+#endif
+}
+
 void mpi_loop()
 {
   int    req[2];
-  int    sendbuf;
-  int    part_num, index;
-  int    task;
-  MPI_Status status;
 
   for (;;) {
     MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
-    switch (req[0]) {
-    case REQ_TERM:
-      MPI_Finalize();
-      return;
-    case REQ_SYS_PAR:
-      MPI_Bcast(&n_total_particles, 1, MPI_INT, 0, MPI_COMM_WORLD);
-      MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
-      MPI_Bcast(local_box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
-      MPI_Bcast(processor_grid, 3, MPI_INT, 0, MPI_COMM_WORLD); 
-      MPI_Bcast(&n_particle_types, 1, MPI_INT, 0, MPI_COMM_WORLD);
-      MPI_Bcast(&n_interaction_types, 1, MPI_INT, 0, MPI_COMM_WORLD);
-      break;
-    case REQ_WHO_HAS:
-      sendbuf = got_particle(req[1]);
-      MPI_Gather(&sendbuf,  1, MPI_INT,
-		 NULL, nprocs, MPI_INT,
-		 0, MPI_COMM_WORLD);
 #ifdef DEBUG
-      fprintf(stderr, "%d: answered part %d %d\n", this_node, req[1], sendbuf);
+    fprintf(stderr, "%d: processing request %d %d\n", this_node,
+	    req[0], req[1]);
 #endif
-      break;
-    case REQ_ATTACH:
-      if (req[1] == this_node) {
-	MPI_Recv(&part_num, 1, MPI_INT, 0, REQ_ATTACH,
-		 MPI_COMM_WORLD, &status);
-	add_particle(part_num);
-      }
-      break;
-    case REQ_SET_POS:
-      index = got_particle(req[1]);
-      if (index != -1) {
-	MPI_Recv(particles[index].p, 3, MPI_DOUBLE, 0, REQ_SET_POS,
-		 MPI_COMM_WORLD, &status);
-      }
-      break;
-    case REQ_GET_PART:
-      index = got_particle(req[1]);
-      if (index != -1)
-	mpi_send_pdata(&particles[index]);
-      break;
-    case REQ_INTEGRATE:
-      task = req[1];
-      if(task==0) {
-
-	/* the local box_l would be also fine */
-	MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
-	MPI_Bcast(processor_grid, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
-
-	integrate_vv_init();
-      }
-      else if(task > 0)
-	integrate_vv(task);
-      else if(task < 0)
-	integrate_vv_exit();
-
+    if ((req[0] < 0) || (req[0] >= REQ_MAXIMUM)) {
 #ifdef DEBUG
-      fprinf(stderr, "%d: integration task %d done.\n",
-	     this_node, req[1]);
+      fprintf(stderr, "%d: unknown request\n", this_node);
 #endif
-      break;
-    default:
-#ifdef DEBUG
-      fprintf(stderr, "%d: got unknown request %d\n", this_node, req[0]);
-#endif
-      break;
+      continue;
     }
+    callbacks[req[0]](req[1]);
   }
 }

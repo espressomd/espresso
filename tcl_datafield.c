@@ -16,43 +16,16 @@ int setmd(ClientData data, Tcl_Interp *interp,
 /** tcl procedure for particle access */
 int part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
-/** tcl procedure to broadcast system parameters. */
+/* tcl procedure to broadcast system parameters.
 int set_syspar(ClientData data, Tcl_Interp *interp,
 	       int argc, char **argv);
-
-/** callback for n_total_particles */
-int npart_callback(Tcl_Interp *interp, void *data);
-/* callback for n_particle_types */
-int nptypes_callback(Tcl_Interp *interp, void *data);
-/* callback for n_interaction_types */
-int niatypes_callback(Tcl_Interp *interp, void *data);
-/** callback for ro */
-int ro_callback(Tcl_Interp *interp, void *data);
-/** callback for procgrid */
-int pgrid_callback(Tcl_Interp *interp, void *data);
-/** callback for box_l */
-int boxl_callback(Tcl_Interp *interp, void *data);
-
-/** maximal length of a writable datafield */
-#define MAX_DIMENSION 3
-Tcl_Datafield fields[] = {
-  {&nprocs,    TYPE_INT,    1, "nprocs",    ro_callback },
-  {processor_grid, TYPE_INT, 3, "procgrid", pgrid_callback },
-  {neighbors, TYPE_INT,    6, "neighbors", ro_callback },
-  {box_l,     TYPE_DOUBLE, 3, "box_l",     boxl_callback },
-  {my_left,   TYPE_DOUBLE, 3, "my_left",   ro_callback },
-  {my_right,  TYPE_DOUBLE, 3, "my_right",  ro_callback },
-  {&n_total_particles, TYPE_INT, 1, "nparticles", npart_callback },
-  {&n_particle_types, TYPE_INT, 1, "nptypes", nptypes_callback },
-  {&n_interaction_types, TYPE_INT, 1, "niatypes", niatypes_callback },
-  { NULL, 0, 0, NULL, NULL }
-};
+*/
 
 void tcl_datafield_init(Tcl_Interp *interp)
 {
   Tcl_CreateCommand(interp, "setmd", setmd, 0, NULL);
   Tcl_CreateCommand(interp, "part", part, 0, NULL);
-  Tcl_CreateCommand(interp, "set_syspar", set_syspar, 0, NULL);
+  //  Tcl_CreateCommand(interp, "set_syspar", set_syspar, 0, NULL);
 }
 
 int setmd(ClientData data, Tcl_Interp *interp,
@@ -62,6 +35,7 @@ int setmd(ClientData data, Tcl_Interp *interp,
   int    ibuffer[MAX_DIMENSION];
   char   buffer[256];
   int i, j;
+  int status;
 
   if (argc < 2) {
     Tcl_AppendResult(interp, "wrong # args:  should be \"",
@@ -85,6 +59,7 @@ int setmd(ClientData data, Tcl_Interp *interp,
 	  return (TCL_ERROR);
 	}
 
+	/* get new value */
 	for (j = 0; j < fields[i].dimension; j++) {
 	  switch (fields[i].type) {
 	  case TYPE_INT:
@@ -102,13 +77,18 @@ int setmd(ClientData data, Tcl_Interp *interp,
 	/* call changeproc */
 	switch(fields[i].type) {
 	case TYPE_INT:
-	  return fields[i].changeproc(interp, ibuffer);
+	  status = fields[i].changeproc(interp, ibuffer);
 	  break;
 	case TYPE_DOUBLE:
-	  return fields[i].changeproc(interp, dbuffer);
+	  status = fields[i].changeproc(interp, dbuffer);
 	  break;
-	default: return (TCL_OK);
+	default:
+	  status = TCL_ERROR;
 	}
+	if (status != TCL_OK)
+	  return TCL_ERROR;
+
+	mpi_bcast_parameter(i);
       }
 
       /* get */
@@ -133,71 +113,6 @@ int setmd(ClientData data, Tcl_Interp *interp,
   Tcl_AppendResult(interp, "unkown variable \"",
 		   argv[1], "\"", (char *) NULL);
   return (TCL_ERROR);
-}
-
-/* callback for npart */
-int npart_callback(Tcl_Interp *interp, void *data)
-{
-  n_total_particles = *(int *)data;
-  return (TCL_OK);
-}
-
-/* callback for nptypes */
-int nptypes_callback(Tcl_Interp *interp, void *data)
-{
-  n_particle_types = *(int *)data;
-  return (TCL_OK);
-}
-
-/* callback for niatypes */
-int niatypes_callback(Tcl_Interp *interp, void *data)
-{
-  n_interaction_types = *(int *)data;
-  return (TCL_OK);
-}
-
-/* callback for ro */
-int ro_callback(Tcl_Interp *interp, void *data)
-{
-  Tcl_AppendResult(interp, "variable is readonly", (char *)NULL);
-  return (TCL_ERROR);
-}
-
-/* callback for procgrid */
-int pgrid_callback(Tcl_Interp *interp, void *_data)
-{
-  int *data = (int *)_data;
-  if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
-    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  processor_grid[0] = data[0];
-  processor_grid[1] = data[1];
-  processor_grid[2] = data[2];
-  if (!setup_processor_grid()) {
-    Tcl_AppendResult(interp, "processor grid does not fit nprocs", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  rebuild_verletlist = 1;
-  return (TCL_OK);
-}
-
-/* callback for box_l */
-int boxl_callback(Tcl_Interp *interp, void *_data)
-{
-  double *data = _data;
-  if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
-    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  box_l[0] = data[0];
-  box_l[1] = data[1];
-  box_l[2] = data[2];
-
-  rebuild_verletlist = 1;
-
-  return (TCL_OK);
 }
 
 int part(ClientData data, Tcl_Interp *interp,
@@ -241,12 +156,14 @@ int part(ClientData data, Tcl_Interp *interp,
 	    part.v[0], part.v[1], part.v[2],
 	    part.f[0], part.f[1], part.f[2]);
     Tcl_AppendResult(interp, buffer, " {", (char *)NULL);
-    for (j = 0; j < part.n_bond; j++) {
+    /*
+    for (j = 0; j < part.n_bonds; j++) {
       sprintf(buffer, "{%d %d}", part.bonds[j], part.bond_type[j]);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
       if (j < part.n_bond - 1)
 	Tcl_AppendResult(interp, " ", (char *)NULL);
     }
+    */
     Tcl_AppendResult(interp, "}", (char *)NULL);
     return (TCL_OK);
   }
@@ -261,11 +178,7 @@ int part(ClientData data, Tcl_Interp *interp,
     for (j = 0; j < 3; j++) {
       if (Tcl_GetDouble(interp, argv[3 + j], &pos[j]) == TCL_ERROR)
 	return (TCL_ERROR);
-      /* wird eh gefaltet! */
-      //if ((pos[j] < 0) || (pos[j] >= box_l[j])) {
-      //Tcl_AppendResult(interp, "particle out of bounds", (char *)NULL);
-      //return (TCL_ERROR);
-      //}
+      pos[j] -= floor(pos[j]/box_l[j])*box_l[j];
     }
     
     if (node == -1) {
@@ -287,6 +200,7 @@ int part(ClientData data, Tcl_Interp *interp,
   return (TCL_ERROR);
 }
 
+/*
 int set_syspar(ClientData data, Tcl_Interp *interp,
 	       int argc, char **argv)
 {
@@ -297,3 +211,4 @@ int set_syspar(ClientData data, Tcl_Interp *interp,
   mpi_set_system_parameters();
   return (TCL_OK);
 }
+*/

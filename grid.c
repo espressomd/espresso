@@ -3,9 +3,40 @@
 /************************************************/
 #include "grid.h"
 
-
+/**********************************************
+ * local settings
+ **********************************************/
 
 //#define DEBUG
+
+int processor_grid[3] = { -1, -1, -1};
+int neighbors[6] = {0, 0, 0, 0, 0, 0};
+
+/**********************************************
+ * procedures
+ **********************************************/
+
+/* callback for procgrid */
+int pgrid_callback(Tcl_Interp *interp, void *_data)
+{
+  int *data = (int *)_data;
+  if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
+    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  processor_grid[0] = data[0];
+  processor_grid[1] = data[1];
+  processor_grid[2] = data[2];
+  if (!setup_processor_grid()) {
+    Tcl_AppendResult(interp, "processor grid does not fit nprocs",
+		     (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  changed_topology();
+
+  return (TCL_OK);
+}
 
 int setup_processor_grid()
 {
