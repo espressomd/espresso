@@ -39,23 +39,23 @@ typedef struct {
 /*******************  Variables  *******************/
 
 /** number of linked cells inside the domain of one node (inner cells). */
-int n_inner_cells;
+extern int n_inner_cells;
 /** index list of the inner cells. */
-int  *inner_cells;
+extern int  *inner_cells;
 /** inner linked cell grid. */
-int cell_grid[3];
+extern int cell_grid[3];
 
 /** number of linked cells (inner+ghosts). */
-int n_cells;
+extern int n_cells;
 /** linked cell grid with ghost frame. */
-int ghost_cell_grid[3];
+extern int ghost_cell_grid[3];
 
 /** linked cell list. */
-Cell *cells;
+extern Cell *cells;
 /** cell size. */
-double cell_size[3];
+extern double cell_size[3];
 /** inverse cell size. */
-double inv_cell_size[3];
+extern double inv_cell_size[3];
 
 /*******************  Functions  *******************/
 

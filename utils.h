@@ -1,7 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-// just some nice utilities...
+/* just some nice utilities... */
 
 
 /* Maximum von  double a und  double b berechnen, gibt double zurueck. */

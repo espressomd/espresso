@@ -10,6 +10,27 @@
 /** half the number of cell neighbours in 3 Dimensions*/
 #define MAX_NEIGHBOURS 13
 
+/*******************  Variables  *******************/
+
+/** number of linked cells inside the domain of one node (inner cells). */
+int n_inner_cells;
+/** index list of the inner cells. */
+int  *inner_cells;
+/** inner linked cell grid. */
+int cell_grid[3];
+
+/** number of linked cells (inner+ghosts). */
+int n_cells;
+/** linked cell grid with ghost frame. */
+int ghost_cell_grid[3];
+
+/** linked cell list. */
+Cell *cells;
+/** cell size. */
+double cell_size[3];
+/** inverse cell size. */
+double inv_cell_size[3];
+
 /*******************  privat functions  *******************/
 
 void init_cell_neighbours();
@@ -124,9 +145,10 @@ void sort_particles_into_cells()
       cpos[i] = (int)((particles[n].p[i]-my_left[i])*inv_cell_size[i])+1;
     ind = get_linear_index(cpos[0],cpos[1],cpos[2],gcg[0],gcg[1],gcg[2]);
 #ifdef CELL_DEBUG
-    //fprintf(stderr,"%d: Sort Part (GI=%d LI=%d) (%.2e, %.2e, %.2e) in cell %d\n",
-    //	    this_node,particles[n].identity,n,particles[n].p[0],
-    //	    particles[n].p[1],particles[n].p[2],ind);
+    /* fprintf(stderr,"%d: Sort Part (GI=%d LI=%d) (%.2e, %.2e, %.2e) in cell %d\n",
+       this_node,particles[n].identity,n,particles[n].p[0],
+       particles[n].p[1],particles[n].p[2],ind);
+    */
 #endif  
 
     /* Append particle in particle list of that cell */

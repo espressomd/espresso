@@ -6,6 +6,8 @@
 #include "debug.h"
 #include "global.h"
 
+double Bjerrum;
+
 void force_init()
 {
 

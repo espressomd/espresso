@@ -1,17 +1,19 @@
 #!/bin/sh
 # tricking...\
     PLATFORM=`uname -s`;
+# OSF1 \
+    if test $PLATFORM = OSF1; then  MPIRUN=dmpirun; FLAGS="-np 8"
+# AIX \
+    elif test $PLATFORM = AIX; then MPIRUN=poe;     FLAGS="-procs 8"
+# Linux \
+    else                            MPIRUN=mpirun;  FLAGS="-np 8 -nsigs"; lamboot;
 # \
-    if test $PLATFORM = OSF1; then MPIRUN=dmpirun;
-# \
-    else MPIRUN=mpirun -nsigs; lamboot; fi
-# \
-    exec $MPIRUN -np 8 $PLATFORM/tcl_md $0 $*
+    fi; exec $MPIRUN $PLATFORM/tcl_md $0 $* $FLAGS
 
 ##################################################
 # settings
 ##################################################
-set npart 10000
+set npart 100 
 
 puts "starting"
 # data initialization

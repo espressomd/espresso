@@ -15,7 +15,7 @@
 #include "verlet.h"
 #include "utils.h"
 
-double Bjerrum;
+extern double Bjerrum;
 
 
 /*******************  Functions  *******************/

@@ -31,6 +31,60 @@ void unpack_ghost(Particle *p_array, int p_ind, Ghost *g_array, int g_ind);
 
 void send_posforce(int s_dir);
 
+/******************************** variables for  exchange Particles */
+
+/** Buffer for particles to send. */
+int       n_p_send_buf;
+int       max_p_send_buf;
+Particle *p_send_buf;
+/** Buffer for particles to recieve. */
+int       n_p_recv_buf;
+int       max_p_recv_buf;
+Particle *p_recv_buf;
+
+/******************************** variables for  exchange Ghosts */
+
+/** maximal number of cells to send. */
+int max_send_cells;
+/** number of cells to send in direction X. */
+int n_send_cells[6];
+/** list of cell indices to send. */
+int *send_cells;
+/** number of cells to receive from direction X. */
+int n_recv_cells[6];
+/** list of cell indices to receive. */
+int *recv_cells;
+/** start indices for cells to send/recv in/from direction X. */ 
+int cell_start[6];
+
+/** Number of ghosts in each send cell. */ 
+int *n_send_ghosts;
+/** Number of ghosts in each recv cell. */ 
+int *n_recv_ghosts;
+
+/** Buffer for Ghosts to send. */
+int   n_g_send_buf;
+int   max_g_send_buf;
+Ghost *g_send_buf;
+/** Buffer for Ghosts to recieve. */
+int   n_g_recv_buf;
+int   max_g_recv_buf;
+Ghost *g_recv_buf;
+
+/** number of ghosts to send in direction X */
+int ghost_send_size[6];
+/** number of ghosts to recv from direction X */
+int ghost_recv_size[6];
+
+/** Buffer for forces/coordinates to send. */
+double *send_buf;
+int max_send_buf;
+/** Buffer for forces/coordinates to recieve. */
+double *recv_buf;
+int max_recv_buf;
+
+/*************************************** end variables */
+
 void ghost_init()
 {
   int i;
@@ -338,6 +392,7 @@ int sub_grid_indices(int* list, int start, int max,
 	list[i] = get_linear_index(p0,p1,p2,gs[0],gs[1],gs[2]);
 	i++;
       }
+
   return size;
 }
 
