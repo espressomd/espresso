@@ -12,7 +12,7 @@
 
 #############################################################
 #                                                           #
-#  Test System 1: NaCl christal - Madelung constant         #
+#  Test System 1: NaCl crystal - Madelung constant         #
 #                                                           #
 #                                                           #
 #  Created:       18.03.2003 by HL                          #
@@ -40,7 +40,7 @@ set ident "_t1"
 # System parameters
 #############################################################
 
-# grid constant for NaCl christal
+# grid constant for NaCl crystal
 set nacl_const 2.0
 # replications of the unit cell in each direcrtion
 set nacl_repl  4
@@ -122,7 +122,7 @@ for {set i 0} { $i < $nacl_repl } {incr i} {
 }
 
 set n_part [setmd n_part]
-puts "NaCl christal with $n_part particle (grid $nc, replic $nacl_repl)"
+puts "NaCl crystal with $n_part particle (grid $nc, replic $nacl_repl)"
 puts "in cubic box of size $box_l"
 #puts "[part]"
 
