@@ -75,5 +75,5 @@ function nocomments(){
 }
 
 function para_match(s){
-	 return (split(s,a,"(") - split(s,b,")"))
+	 return (split(s,a,"(") - split(s,b,")"));
 }
