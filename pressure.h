@@ -225,7 +225,9 @@ MDINLINE void add_bonded_virials(Particle *p1)
       break;
 #endif
     case BONDED_IA_ANGLE:
+      i++; break;
     case BONDED_IA_DIHEDRAL:
+      i+=2; break;
       /* since it is not clear at the moment how to handle a many body interaction here, I skip it */
     default :
       fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of atom %d unhandled\n",bonded_ia_params[type_num].type,p1->p.identity);
