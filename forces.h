@@ -123,16 +123,12 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   add_gb_pair_force(p1,p2,ia_params,d,dist,force,p1->f.torque,p2->f.torque);
 #endif
 
-  /* everything before this contributes to the pressure */
-
-  for (j = 0; j < 3; j++) { 
-    p1->f.f[j] += force[j];
-    p2->f.f[j] -= force[j];
+  /* everything before this contributes to the virial pressure in NpT */
 #ifdef NPT
+  for (j = 0; j < 3; j++)
     if(integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[j] += force[j] * d[j];
 #endif
-  }
 
   /***********************************************/
   /* electrostatics                              */
@@ -169,15 +165,19 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
     break;
 
   case COULOMB_NONE:
-    for (j = 0; j < 3; j++)
-      force[j] = 0;
+    break;
   }
+
+#endif
+
+  /***********************************************/
+  /* add total nonbonded forces to particle      */
+  /***********************************************/
 
   for (j = 0; j < 3; j++) { 
     p1->f.f[j] += force[j];
     p2->f.f[j] -= force[j];
   }
-#endif
 }
 
 /** Calculate bonded forces for one particle.
