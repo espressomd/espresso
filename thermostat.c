@@ -18,14 +18,24 @@
 #include "integrate.h"
 #include "cells.h"
 #include "debug.h"
+#ifdef NPT
+#include "pressure.h"
+#endif
 
 /** Friction coefficient gamma. */
 double friction_gamma = 0.0;
+double friction_g0 = 0.0;
+double friction_gv = 0.0;
+
 /** Temperature */
 double temperature = -1.0;
 
 static double pref1;
 static double pref2;
+#ifdef NPT
+static double pref3;
+static double pref4;
+#endif
 
 #ifdef ROTATION
 static double friction_gamma_rotation;
@@ -47,6 +57,22 @@ int gamma_callback(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
+int g0_callback(Tcl_Interp *interp, void *_data) {
+  double data = *(double *)_data;
+  if (data < 0) { Tcl_AppendResult(interp, "Gamma_0 must be non negativ.", (char *) NULL); return (TCL_ERROR); }
+  friction_g0 = data;
+  mpi_bcast_parameter(FIELD_FRICTION_G0);
+  return (TCL_OK);
+}
+int gv_callback(Tcl_Interp *interp, void *_data) {
+  double data = *(double *)_data;
+  if (data < 0) { Tcl_AppendResult(interp, "Gamma_V must be non negativ.", (char *) NULL); return (TCL_ERROR); }
+  friction_gv = data;
+  mpi_bcast_parameter(FIELD_FRICTION_GV);
+  return (TCL_OK);
+}
+
+
 int temp_callback(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
@@ -66,6 +92,14 @@ void thermo_init()
 {
   pref1 = -friction_gamma/time_step;
   pref2 = sqrt(24.0*temperature*friction_gamma/time_step);
+#ifdef NPT
+  if (piston > 0.0) {
+    pref1 = -0.5*friction_g0;
+    pref2 = sqrt(12.0*temperature*friction_g0*time_step);
+    pref3 = -0.5*friction_gv*inv_piston*0.5*time_step;
+    pref4 = sqrt(12.0*temperature*friction_gv*time_step);
+  }
+#endif
 #ifdef ROTATION 
   friction_gamma_rotation = friction_gamma/3;
   pref2_rotation = sqrt(24.0*temperature*friction_gamma_rotation/time_step);
@@ -86,6 +120,13 @@ void friction_thermo(Particle *p)
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
   THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
 }
+
+#ifdef NPT
+double friction_thermo_NpT(void) {
+  return (p_diff  +  (p_inst-p_ext)*0.5*time_step + pref3*p_diff + pref4*(d_random()-0.5) );
+}
+#endif
+
 
 #ifdef ROTATION
 void friction_thermo_rotation(Particle *p)

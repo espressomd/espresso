@@ -122,6 +122,16 @@ extern const Datafield fields[];
 #define FIELD_VERLETFLAG   22
 /** index of \ref verlet_reuse in  \ref #fields */
 #define FIELD_VERLETREUSE  23
+/** index of \ref friction_g0 in \ref #fields */
+#define FIELD_FRICTION_G0  24
+/** index of \ref friction_gv in \ref #fields */
+#define FIELD_FRICTION_GV  25
+/** index of \ref piston in \ref #fields */
+#define FIELD_PISTON       26
+/** index of \ref p_ext in \ref #fields */
+#define FIELD_PEXT         27
+/** index of \ref p_inst in \ref #fields */
+#define FIELD_PINST        28
 /*@}*/
 
 /**********************************************

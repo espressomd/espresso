@@ -30,11 +30,11 @@
 #include "rotation.h"
 #include "ghosts.h"
 #include "debug.h"
+#include "forces.h"
 #include "p3m.h"
 #include "utils.h"
 #include "thermostat.h"
 #include "initialize.h"
-#include "forces.h"
 
 /****************************************************
  *                     DEFINES

@@ -21,6 +21,9 @@
 #include <tcl.h>
 #include "config.h"
 #include "thermostat.h"
+#ifdef NPT
+#include "pressure.h"
+#endif
 #include "communication.h"
 
 /* include the force files */

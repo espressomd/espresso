@@ -137,6 +137,10 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
 	    /* vector d is rescaled to length LJ_capradius */
 	    p1->f.f[j] += fac * d[j];
 	    p2->f.f[j] -= fac * d[j];
+#ifdef NPT
+	    if (piston > 0.0) 
+	      p_inst += fac*d[j] * d[j];
+#endif
       }
     }
     /* lennard-jones part of the potential. */
@@ -148,6 +152,10 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
       for(j=0;j<3;j++) {
 	    p1->f.f[j] += fac * d[j];
 	    p2->f.f[j] -= fac * d[j];
+#ifdef NPT
+	    if (piston > 0.0) 
+	      p_inst += fac*d[j] * d[j];
+#endif
       }
 #ifdef LJ_WARN_WHEN_CLOSE
       if(fac*dist > 1000) fprintf(stderr,"%d: LJCOS-Warning: Pair (%d-%d) force=%f dist=%f\n",
@@ -164,6 +172,10 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
 
       p1->f.f[0] += fac * ia_params->LJ_capradius;
       p2->f.f[0] -= fac * ia_params->LJ_capradius;
+#ifdef NPT
+      if (piston > 0.0) 
+	p_inst += fac*ia_params->LJ_capradius * ia_params->LJ_capradius;
+#endif
     }
 
     ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));

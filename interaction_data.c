@@ -16,6 +16,9 @@
 #include "interaction_data.h"
 #include "communication.h"
 #include "grid.h"
+#ifdef NPT
+#include "pressure.h"
+#endif
 #include "p3m.h"
 #include "debye_hueckel.h"
 #include "mmm1d.h"

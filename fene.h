@@ -45,6 +45,10 @@ MDINLINE void add_fene_pair_force(Particle *p1, Particle *p2, int type_num)
   for(i=0;i<3;i++) {
     p1->f.f[i] -= fac*dx[i];
     p2->f.f[i] += fac*dx[i];
+#ifdef NPT
+    if (piston > 0.0) 
+      p_inst -= fac*dx[i] * dx[i];
+#endif
   }
 
   ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: FENE f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,sqrt(dist2),fac));

@@ -18,6 +18,34 @@ Observable_stat virials = {0, {NULL,0,0}, 0,0,0,0};
 Observable_stat total_pressure = {0, {NULL,0,0}, 0,0,0,0};
 Observable_stat p_tensor= {0, {NULL,0,0},0,0,0,0};
 
+double piston      = 0.0;
+double inv_piston  = 0.0;
+double NpT_volume  = 0.0;
+
+double p_ext       = 0.0;
+double p_inst      = 0.0;
+double p_diff      = 0.0;
+
+
+/************************************************************/
+/* callbacks for setmd                                      */
+/************************************************************/
+
+int piston_callback(Tcl_Interp *interp, void *_data) {
+  double data = *(double *)_data;
+  if (data < 0) { Tcl_AppendResult(interp, "the piston's mass must be non negativ.", (char *) NULL); return (TCL_ERROR); }
+  piston = data;
+  mpi_bcast_parameter(FIELD_PISTON);
+  return (TCL_OK);
+}
+int p_ext_callback(Tcl_Interp *interp, void *_data) {
+  double data = *(double *)_data;
+  p_ext = data;
+  mpi_bcast_parameter(FIELD_PEXT);
+  return (TCL_OK);
+}
+
+
 /************************************************************/
 /* local prototypes                                         */
 /************************************************************/

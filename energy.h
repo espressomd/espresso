@@ -12,6 +12,9 @@
 #include "statistics.h"
 #include "thermostat.h"
 #include "communication.h"
+#ifdef NPT
+#include "pressure.h"
+#endif
 
 /* include the energy files */
 #include "p3m.h"

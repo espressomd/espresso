@@ -48,6 +48,10 @@ MDINLINE void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
     for(j=0;j<3;j++) {
       p1->f.f[j] += fac * d[j];
       p2->f.f[j] -= fac * d[j];
+#ifdef NPT
+      if (piston > 0.0) 
+	p_inst += fac*d[j] * d[j];
+#endif
     }
     ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: DH   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
     ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: DH   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));    

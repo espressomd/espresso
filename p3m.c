@@ -25,6 +25,9 @@
 #include "utils.h"
 #include "communication.h"
 #include "fft.h"
+#ifdef NPT
+#include "pressure.h"
+#endif
 #include "p3m.h"
 #include "thermostat.h"
 #include "cells.h"

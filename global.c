@@ -30,6 +30,7 @@
 #include "tuning.h"
 #include "domain_decomposition.h"
 #include "layered.h"
+#include "pressure.h"
 
 /**********************************************
  * description of variables
@@ -68,6 +69,11 @@ const Datafield fields[] = {
   {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback, 2 }     ,         /* 21 from imd.c */
   {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback, 8 },              /* 22 from verlet.c */
   {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback, 8 },              /* 23 from integrate.c */
+  {&friction_g0,     TYPE_DOUBLE, 1, "g0",            g0_callback, 1 },              /* 24 from thermostat.c */
+  {&friction_gv,     TYPE_DOUBLE, 1, "gv",            gv_callback, 1 },              /* 25 from thermostat.c */
+  {&piston,          TYPE_DOUBLE, 1, "piston",        piston_callback, 1 },          /* 26 from pressure.c */
+  {&p_ext,           TYPE_DOUBLE, 1, "p_ext",         p_ext_callback, 1 },           /* 27 from pressure.c */
+  {&p_inst,          TYPE_DOUBLE, 1, "p_inst",        ro_callback, 1 },              /* 28 from pressure.c */
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 
@@ -88,6 +94,10 @@ const Datafield fields[] = {
 	     \ref DomainDecomposition::cell_size - box length of a cell.
 	<li> \verbatim gamma double \endverbatim
 	     \ref friction_gamma - Friction constant.
+	<li> \verbatim g0 double \endverbatim
+	     \ref friction_g0 - Friction constant gamma_0.
+	<li> \verbatim gv double \endverbatim
+	     \ref friction_gv - Friction constant gamma_v.
 
 	<li> \verbatim local_box_l int[3] (ro) \endverbatim
 	     \ref local_box_l - Local simulation box length of the nodes.

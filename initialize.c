@@ -44,7 +44,7 @@
 #include "nsquare.h"
 #include "nemd.h"
 
-/** wether before integration the thermostat has to be reinitialized */
+/** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
 
 static void init_tcl(Tcl_Interp *interp);
@@ -82,6 +82,16 @@ int on_program_start(Tcl_Interp *interp)
 
 void on_integration_start()
 {
+#ifdef NPT
+  if (piston > 0.0) {
+    /* prepare NpT-integration */
+    inv_piston = 1/(1.0*piston);
+    NpT_volume = box_l[0]*box_l[1]*box_l[2];
+    if (recalc_forces) 
+      p_inst = 0.0;
+  }
+#endif
+
   if (reinit_thermo) {
     thermo_init();
     reinit_thermo = 0;
@@ -159,7 +169,8 @@ void on_parameter_change(int field)
   if (field == FIELD_BOXL || field == FIELD_NODEGRID)
     grid_changed_topology();
 
-  if (field == FIELD_TIMESTEP || field == FIELD_GAMMA || field == FIELD_TEMPERATURE)
+  if (field == FIELD_TIMESTEP || field == FIELD_GAMMA || field == FIELD_TEMPERATURE
+      || field == FIELD_FRICTION_G0 || field == FIELD_FRICTION_GV || field == FIELD_PISTON )
     reinit_thermo = 1;
 
   if (field == FIELD_TEMPERATURE)

@@ -109,6 +109,8 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /** NEMD (Non Eqilibrium Molecular Dynamics).
     This is used to perform shear simulations */
 /* #define NEMD */
+/** Allows to use (N,p,T)-ensembles during integration as well */
+/* #define NPT */
 
 /*@}*/
 

@@ -27,6 +27,9 @@
 #include "grid.h"
 #include "debug.h"
 #include "utils.h"
+#ifdef NPT
+#include "pressure.h"
+#endif
 #include "fft.h"
 #include "p3m.h"
 

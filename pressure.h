@@ -10,11 +10,13 @@
 #define PRESSURE_H
 
 
-
 #include "config.h"
 #include "statistics.h"
 #include "thermostat.h"
 #include "communication.h"
+
+extern double piston, inv_piston, NpT_volume;
+extern double p_ext, p_inst, p_diff;
 
 /* include the potential files */
 #include "p3m.h"
@@ -38,12 +40,20 @@
 extern Observable_stat virials, total_pressure;
 ///
 extern Observable_stat p_tensor;
+///
+//  extern double piston, inv_piston, volume;
+//  extern double p_ext, p_inst, p_diff;
 
 /*@}*/
 
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
+
+/** Callback for setting \ref piston */
+int piston_callback(Tcl_Interp *interp, void *_data);
+/** Callback for setting \ref p_ext */
+int p_ext_callback(Tcl_Interp *interp, void *_data);
 
 /** Calculates the pressure in the system from a virial expansion using the terms from \ref calculate_verlet_virials or \ref nsq_calculate_virials dependeing on the used cell system.<BR>
     @param result here all the data is stored

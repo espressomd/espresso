@@ -26,6 +26,8 @@
  ************************************************/
 
 extern double friction_gamma;
+extern double friction_g0;
+extern double friction_gv;
 extern double temperature;
 
 /************************************************
@@ -41,8 +43,13 @@ void thermo_init();
 */
 void friction_thermo(Particle *p);
 
-/** set the particle torques to the friction term, i.e. \f$\tau_i=-\gamma w_i + \xi_i\f$.
+#ifdef NPT
+/** add p_diff-dependend noise and friction for NpT-sims 
+    to p_diff */
+double friction_thermo_NpT(void);
+#endif
 
+/** set the particle torques to the friction term, i.e. \f$\tau_i=-\gamma w_i + \xi_i\f$.
 The same friction coefficient \f$\gamma\f$ is used as that for translation.
 */
 void friction_thermo_rotation(Particle *p);
@@ -51,5 +58,9 @@ void friction_thermo_rotation(Particle *p);
 int temp_callback(Tcl_Interp *interp, void *_data);
 /** Callback for setting \ref friction_gamma */
 int gamma_callback(Tcl_Interp *interp, void *_data);
+/** Callback for setting \ref friction_g0 */
+int g0_callback(Tcl_Interp *interp, void *_data);
+/** Callback for setting \ref friction_gv */
+int gv_callback(Tcl_Interp *interp, void *_data);
 
 #endif

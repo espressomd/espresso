@@ -27,6 +27,9 @@
 #include "rotation.h"
 #include "ghosts.h"
 #include "debug.h"
+#ifdef NPT
+#include "pressure.h"
+#endif
 #include "p3m.h"
 #include "utils.h"
 #include "thermostat.h"
@@ -57,6 +60,7 @@ int    resort_particles = 1;
 int    recalc_forces = 1;
 
 double verlet_reuse=0.0;
+
 
 /** \name Privat Functions */
 /************************************************************/
@@ -223,6 +227,10 @@ void integrate_vv(int n_steps)
     else
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
 
+#ifdef NPT
+    if (piston > 0.0) 
+      p_inst = 0.0;
+#endif
     force_calc();
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
@@ -236,6 +244,13 @@ void integrate_vv(int n_steps)
 #endif     
     if(this_node==0) sim_time += time_step;
   }
+#ifdef NPT
+  if (piston > 0.0) {
+    MPI_Bcast(&p_inst,     1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&p_diff,     1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&NpT_volume, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  }
+#endif
 
   if(n_verlet_updates>0) verlet_reuse = n_steps/(double) n_verlet_updates;
   else verlet_reuse = 0;
@@ -352,6 +367,9 @@ void rescale_forces_propagate_vel()
   Particle *p;
   int i, j, np, c;
   double scale;
+#ifdef NPT
+  double p_tmp=0.0;
+#endif
 
   scale = 0.5 * time_step * time_step;
   INTEG_TRACE(fprintf(stderr,"%d: rescale_forces_propagate_vel:\n",this_node));
@@ -372,6 +390,10 @@ void rescale_forces_propagate_vel()
 	if (!(p[i].l.ext_flag & COORD_FIXED(j)))
 #endif
 	  p[i].m.v[j] += p[i].f.f[j];
+#ifdef NPT
+	if (piston > 0.0) 
+	  p_tmp += SQR(p[i].m.v[j]);
+#endif
 #ifdef NEMD
 	if(j==2) nemd_store_velocity(p[i]);
 #endif
@@ -380,6 +402,17 @@ void rescale_forces_propagate_vel()
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
     }
   }
+#ifdef NPT
+  if (piston > 0.0) {
+    p_tmp /= SQR(time_step);
+    p_inst = p_inst+p_tmp;
+    MPI_Reduce(&p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (this_node == 0) {
+      p_inst = p_tmp/(3.0*NpT_volume);
+      p_diff = friction_thermo_NpT();
+    }
+  }
+#endif
 }
 
 void propagate_positions() 
@@ -439,12 +472,16 @@ void propagate_vel_pos()
   int c, i, j, np;
   int *verlet_flags = malloc(sizeof(int)*n_nodes);
   double skin2;
+#ifdef NPT
+  double p_tmp=0.0, scal[3], L_new;
+#endif
 
 #ifdef ADDITIONAL_CHECKS
   double db_force,db_vel;
   double db_max_force=0.0, db_max_vel=0.0;
   int db_maxf_id=0,db_maxv_id=0;
 #endif
+
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
   rebuild_verletlist = 0;
@@ -461,7 +498,12 @@ void propagate_vel_pos()
 #endif
 	  {
 	    p[i].m.v[j] += p[i].f.f[j];
-	    p[i].r.p[j] += p[i].m.v[j];
+#ifdef NPT
+	    if (piston > 0.0) 
+	      p_tmp += SQR(p[i].m.v[j]);
+	    else
+#endif
+	      p[i].r.p[j] += p[i].m.v[j];
 	  }
       }
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
@@ -489,6 +531,67 @@ void propagate_vel_pos()
 	rebuild_verletlist = 1; 
       }
   }
+
+#ifdef NPT
+  if (piston > 0.0) {
+    /* finalize derivation of p_inst */
+    p_tmp /= SQR(time_step);
+    p_inst = p_inst+p_tmp;
+    MPI_Reduce(&p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (this_node == 0) {
+      /* derive p_diff and adjust NpT_volume; prepare pos- and vel-rescaling */
+      p_inst = p_tmp/(3.0*NpT_volume);
+      p_diff = friction_thermo_NpT();
+      NpT_volume += inv_piston*p_diff*0.5*time_step;
+      scal[2] = SQR(box_l[0])/pow(NpT_volume,2.0/3.0);
+      NpT_volume += inv_piston*p_diff*0.5*time_step;
+      L_new = pow(NpT_volume,1.0/3.0);
+      scal[1] = L_new/box_l[0];
+      scal[0] = 1/scal[1];
+      box_l[0] = box_l[1] = box_l[2] = L_new;
+      //      local_box_l[0] = local_box_l[1] = local_box_l[2] *= scal[1];
+      //      cell_size[0] = cell_size[1] = cell_size[2] *= scal[1];
+    }
+    MPI_Bcast(scal,  3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    //    MPI_Bcast(local_box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    //    MPI_Bcast(cell_size, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    /* propagate positions while rescaling velocities */
+    for (c = 0; c < local_cells.n; c++) {
+      cell = local_cells.cell[c];
+      p  = cell->part;
+      np = cell->n;
+      for(i = 0; i < np; i++) {
+	for(j=0; j < 3; j++){
+#ifdef EXTERNAL_FORCES
+	  if (!(p[i].l.ext_flag & COORD_FIXED(j)))	
+#endif
+	    {
+		p[i].r.p[j]  = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
+		p[i].m.v[j] *= scal[0];
+	    }
+	}
+	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2])); 
+	
+#ifdef ADDITIONAL_CHECKS
+	/* velocity check */
+	db_vel   = SQR(p[i].m.v[0])+SQR(p[i].m.v[1])+SQR(p[i].m.v[2]);
+	if(db_vel > skin2) 
+	  fprintf(stderr,"%d: Part %d has velocity %f (%f,%f,%f)\n",
+		  this_node,p[i].p.identity,sqrt(db_vel),
+		  p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]);
+	if(db_vel > db_max_vel) { db_max_vel=db_vel; db_maxv_id=p[i].p.identity; }
+#endif
+	
+	/* Verlet criterion check */
+	if(distance2(p[i].r.p,p[i].l.p_old) > skin2 )
+	  rebuild_verletlist = 1; 
+      }
+    }
+  }
+#endif
 
 #ifdef ADDITIONAL_CHECKS
   if(db_max_force > skin2) 
