@@ -6,6 +6,7 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "config.h"
 #include "grid.h"
@@ -256,25 +257,6 @@ int node_grid_callback(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
-int boxl_callback(Tcl_Interp *interp, void *_data)
-{
-  double *data = _data;
-
-  if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
-    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  box_l[0] = data[0];
-  box_l[1] = data[1];
-  box_l[2] = data[2];
-
-  mpi_bcast_parameter(FIELD_BOXL);
-  mpi_bcast_event(TOPOLOGY_CHANGED);
-
-  return (TCL_OK);
-}
-
 #ifdef PARTIAL_PERIODIC
 int per_callback(Tcl_Interp *interp, void *_data)
 {
@@ -298,3 +280,78 @@ int per_callback(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 #endif
+
+int boxl_callback(Tcl_Interp *interp, void *_data)
+{
+  double *data = _data;
+
+  if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
+    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  box_l[0] = data[0];
+  box_l[1] = data[1];
+  box_l[2] = data[2];
+
+  mpi_bcast_parameter(FIELD_BOXL);
+  mpi_bcast_event(TOPOLOGY_CHANGED);
+
+  return (TCL_OK);
+}
+
+int change_volume(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+  char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char *mode;
+  double d_new; 
+  int dir = -1;
+
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "Wrong # of args! Usage: change_volume { <V_new> | <L_new> { x | y | z } }", (char *)NULL); return (TCL_ERROR);
+  }
+  if (Tcl_GetDouble(interp, argv[1], &d_new) == TCL_ERROR) return (TCL_ERROR);
+  if (argc == 3) { 
+    mode = argv[2];
+    if (!strncmp(mode, "x", strlen(mode))) dir = 0;
+    else if (!strncmp(mode, "y", strlen(mode))) dir = 1;
+    else if (!strncmp(mode, "z", strlen(mode))) dir = 2;
+    else if (!strncmp(mode, "xyz", strlen(mode))) dir = 3;
+  }
+  else if (argc > 3) {
+    Tcl_AppendResult(interp, "Wrong # of args! Usage: change_volume { <V_new> | <L_new> { x | y | z | xyz } }", (char *)NULL); return (TCL_ERROR);
+  }
+
+  if (dir < 0) {
+    d_new = pow(d_new,1./3.);
+    rescale_boxl(3,d_new);
+  }
+  else { 
+    rescale_boxl(dir,d_new); 
+  }
+  sprintf(buffer, "%f", box_l[0]*box_l[1]*box_l[2]);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return TCL_OK;
+}
+
+void rescale_boxl(int dir, double d_new) {
+  double scale = (dir-3) ? d_new/box_l[dir] : d_new/box_l[0];
+  printf("%d %f\n",dir,scale);
+  if (scale < 1.) {
+    mpi_rescale_particles(dir,scale);
+    if (dir < 3) 
+      box_l[dir] = d_new;
+    else
+      box_l[0] = box_l[1] = box_l[2] = d_new;
+    mpi_bcast_parameter(FIELD_BOXL);
+    mpi_bcast_event(TOPOLOGY_CHANGED);
+  }
+  else if (scale > 1.) {
+    if (dir < 3) 
+      box_l[dir] = d_new;
+    else
+      box_l[0] = box_l[1] = box_l[2] = d_new;
+    mpi_bcast_parameter(FIELD_BOXL);
+    mpi_bcast_event(TOPOLOGY_CHANGED);
+    mpi_rescale_particles(dir,scale);
+  }
+}
