@@ -1653,7 +1653,9 @@ void send_particles(ParticleList *particles, int node)
   int pc;
   IntList local_bi;
 
-  MPI_Send(&particles->n, 1, MPI_INT, 0, REQ_SNDRCV_PART, MPI_COMM_WORLD);
+  PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node, particles->n, node));
+
+  MPI_Send(&particles->n, 1, MPI_INT, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
   MPI_Send(particles->part, particles->n*sizeof(Particle),
 	   MPI_BYTE, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
 
@@ -1671,6 +1673,9 @@ void send_particles(ParticleList *particles, int node)
     local_particles[p->p.identity] = NULL;
     free_particle(p);
   }
+#ifdef ADDITIONAL_CHECKS
+  check_particle_consistency();
+#endif
 }
 
 void recv_particles(ParticleList *particles, int node)
@@ -1679,8 +1684,13 @@ void recv_particles(ParticleList *particles, int node)
   MPI_Status status;
   IntList local_bi;
 
+  PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
+
   MPI_Recv(&transfer, 1, MPI_INT, node,
 	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
+
+  PART_TRACE(fprintf(stderr, "%d: recv_particles get %d\n", this_node, transfer));
+
   realloc_particles(particles, particles->n + transfer);
   MPI_Recv(&particles->part[particles->n], transfer*sizeof(Particle), MPI_BYTE, node,
 	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
@@ -1704,5 +1714,8 @@ void recv_particles(ParticleList *particles, int node)
     transfer += p->bl.n;
   }
   realloc_intlist(&local_bi, 0);
+#ifdef ADDITIONAL_CHECKS
+  check_particle_consistency();
+#endif
 }
 

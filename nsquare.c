@@ -128,34 +128,34 @@ void nsq_balance_particles()
   int minshare = n_total_particles/n_nodes;
   int maxshare = minshare + 1;
 
-  
+  CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: load %d-%d\n", this_node, minshare, maxshare));
+
   MPI_Allgather(&pp, 1, MPI_INT, ppnode, 1, MPI_INT, MPI_COMM_WORLD);
   for (;;) {
     /* find node with most excessive particles */
-    surplus = 0;
+    surplus = -1;
     s_node = -1;
     for (n = 0; n < n_nodes; n++) {
-      tmp = ppnode[n] - maxshare;
+      tmp = ppnode[n] - minshare;
+      CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: node %d has %d\n", this_node, n, ppnode[n]));
       if (tmp > surplus) {
 	surplus = tmp;
 	s_node = n;
       }
     }
+    CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: excess %d on node %d\n", this_node, surplus, s_node));
 
-    /* find node with least excessive particles */
-    lack = 0;
+    /* find node with most lacking particles */
+    lack = -1;
     l_node = -1;
     for (n = 0; n < n_nodes; n++) {
-      tmp = minshare - ppnode[n];
-      if (tmp < lack) {
+      tmp = maxshare - ppnode[n];
+      if (tmp > lack) {
 	lack = tmp;
 	l_node = n;
       }
     }
-
-    /* all nodes ok */
-    if (s_node == -1 && l_node == -1)
-      break;
+    CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: lack %d on node %d\n", this_node, lack, l_node));
 
     /* should not happen: minshare or maxshare wrong or more likely,
        the algorithm */
@@ -163,6 +163,10 @@ void nsq_balance_particles()
       fprintf(stderr, "%d: Particle load balancing failed\n", this_node);
       break;
     }
+
+    /* exit if all nodes load is withing min and max share */
+    if (lack <= 1 && surplus <= 1)
+      break;
 
     transfer = lack < surplus ? lack : surplus;
 
@@ -177,12 +181,14 @@ void nsq_balance_particles()
       send_particles(&send_buf, l_node);
     }
     else if (l_node == this_node) {
-      recv_particles(local, n);
+      recv_particles(local, s_node);
     }
 
     ppnode[s_node] -= transfer;
     ppnode[l_node] += transfer;
   }
+  CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: done\n", this_node));
+
   free(ppnode);
 }
 
