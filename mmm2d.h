@@ -20,4 +20,6 @@ void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
 
 void MMM2D_init();
 
+void MMM2D_allocate_particle_buffers();
+
 #endif
