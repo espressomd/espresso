@@ -40,11 +40,10 @@ if {[setmd n_node] == 1} {
 }
 # setup random particles
 puts "setting up random particles"
-expr srand([pid])
 for {set i 0} { $i < $npart } { incr i} {
-    part $i pos [expr 10*rand()] [expr 10*rand()] [expr 10*rand()] \
+    part $i pos [expr 10*[tcl_rand]] [expr 10*[tcl_rand]] [expr 10*[tcl_rand]] \
 	q [ expr ($i % 2 == 1) ? -1 : 1 ] \
-	type [ expr round(rand()*3) ]
+	type [ expr round([tcl_rand]*3) ]
 }
 	
 # setup ramp ia
