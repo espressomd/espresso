@@ -215,6 +215,11 @@ void mpi_bcast_n_particle_types(int s);
 */
 void mpi_gather_stats(int job, void *result);
 
+/** Issue REQ_SET_TIME_STEP: send new \ref time_step and rescale the
+    velocities accordingly. 
+*/
+void mpi_set_time_step();
+
 /*@}*/
 
 #endif

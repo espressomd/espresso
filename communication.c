@@ -62,8 +62,10 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_BCAST_IA_SIZE  13
 /** Action number for \ref mpi_gather_stats. */
 #define REQ_GATHER  14
+/** Action number for \ref mpi_set_time_step. */
+#define REQ_SET_TIME_STEP  15
 /** Total number of action numbers. */
-#define REQ_MAXIMUM   15
+#define REQ_MAXIMUM   16
 
 /** \name Slave Callbacks
     These functions are the slave node counterparts for the
@@ -86,6 +88,7 @@ void mpi_integrate_slave(int node, int parm);
 void mpi_bcast_ia_params_slave(int node, int parm);
 void mpi_bcast_n_particle_types_slave(int node, int parm);
 void mpi_gather_stats_slave(int node, int parm);
+void mpi_set_time_step_slave(int node, int parm);
 /*@}*/
 
 /** A list of wich function has to be called for
@@ -105,7 +108,8 @@ SlaveCallback *callbacks[] = {
   mpi_integrate_slave,           /* 11: REQ_INTEGRATE */
   mpi_bcast_ia_params_slave,     /* 12: REQ_BCAST_IA */ 
   mpi_bcast_n_particle_types_slave, /* 13: REQ_BCAST_IA_SIZE */ 
-  mpi_gather_stats_slave         /* 14: REQ_GATHER */ 
+  mpi_gather_stats_slave,         /* 14: REQ_GATHER */ 
+  mpi_set_time_step_slave        /* 15: REQ_SET_TIME_STEP */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -125,6 +129,7 @@ char *names[] = {
   "BCAST_IA"  , /* 12 */
   "BCAST_IAS" , /* 13 */
   "GATHER"    , /* 14 */
+  "TIME_STEP" , /* 15 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -876,6 +881,26 @@ void mpi_gather_stats_slave(int pnode, int job)
   default:;
   }
 }
+
+/*************** REQ_SET_TIME_STEP ************/
+void mpi_set_time_step()
+{
+
+  mpi_issue(REQ_SET_TIME_STEP, -1, 0);
+  MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  rescale_velocities();
+}
+
+void mpi_set_time_step_slave(int node, int i)
+{
+
+  old_time_step = time_step;
+  MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  rescale_velocities();
+
+}
+
 
 /*********************** MAIN LOOP for slaves ****************/
 
