@@ -297,8 +297,8 @@ MDINLINE double rod_energy(Particle *p1, Particle *c_p, Constraint_rod *c, doubl
     }
     return lj_en;
   }
-  else
-    return 0;
+
+  return 0;
 }
 
 MDINLINE void add_constraints_forces(Particle *p1)

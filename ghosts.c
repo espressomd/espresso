@@ -90,7 +90,7 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts)
 
 void prepare_send_buffer(GhostCommunication *gc, int data_parts)
 {
-  void *insert;
+  char *insert;
   int pl, p, np;
   Particle *part, *pt;
 
@@ -122,7 +122,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
 	}
 	if (data_parts & GHOSTTRANS_POSSHFTD) {
 	  /* ok, this is not nice, but perhaps fast */
-	  ParticlePosition *pp = insert;
+	  ParticlePosition *pp = (ParticlePosition *)insert;
 	  int i;
 	  memcpy(pp, &pt->r, sizeof(ParticlePosition));
 	  //fprintf(stderr,"%d prep_send_buf: ghost %d shift %f,%f,%f\n",this_node,pt->p.identity,gc->shift[0],gc->shift[1],gc->shift[2]);
@@ -169,7 +169,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 {
   int pl, p, np;
   Particle *part, *pt;
-  void *retrieve;
+  char *retrieve;
 
   /* put back data */
   retrieve = r_buffer;
@@ -225,7 +225,7 @@ void add_forces_from_recv_buffer(GhostCommunication *gc)
 {
   int pl, p, np;
   Particle *part, *pt;
-  void *retrieve;
+  char *retrieve;
 
   /* put back data */
   retrieve = r_buffer;
