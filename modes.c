@@ -161,7 +161,7 @@ int orient_order(double* result)
 
   /* Update particles */
   updatePartCfg(WITHOUT_BONDS);
-  //Make sure particles are sorted 
+  /* Make sure particles are sorted */
   if (!sortPartCfg()) {
     fprintf(stderr,"%d,could not sort partCfg \n",this_node);
     errexit();
@@ -175,8 +175,6 @@ int orient_order(double* result)
   }
   zref = zref/(double)(n_total_particles);
   
-
-  //  Tcl_AppendResult(interp, "{ Lipid_orientations } { ", (char *)NULL);
 
   for ( i = 0 ; i < n_molecules ; i++) {
     atom = topology[i].part.e[0];
@@ -202,7 +200,7 @@ int orient_order(double* result)
 
 
   for ( i = 0 ; i < 3 ; i++) {
-    sumdir[i] = sumdir[i]/(double)(bilayer_cnt++);
+    sumdir[i] = sumdir[i]/(double)(bilayer_cnt);
   }
 
   for ( i = 0 ; i < n_molecules ; i++ ) {
@@ -213,20 +211,14 @@ int orient_order(double* result)
     if ( l_orient.e[i] != LIPID_STRAY ) {
       dp = scalar(dir,sumdir);
       *result += dp*dp*1.5-0.5;      
-      //     printf( "dp: %f, %f \n", dp, result );
     }
 
   }
-
-  printf("cnt %d sumdir %f \n ", bilayer_cnt, *result);
-  fflush(stdout);
 
   free(stored_dirs);
   realloc_intlist(&l_orient, 0);
 
   *result = *result/(double)(bilayer_cnt);
-  printf("cnt %d result %f \n ", bilayer_cnt, *result);
-  fflush(stdout);
   return TCL_OK;
 
 }
