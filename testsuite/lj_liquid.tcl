@@ -68,8 +68,8 @@ set warm_n_times 30
 set min_dist     0.9
 
 # integration
-set int_steps    2000
-set int_n_times  50
+set int_steps    50
+set int_n_times  2000
 
 # Other parameters
 #############################################################

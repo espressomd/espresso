@@ -12,7 +12,7 @@
 
 #############################################################
 #                                                           #
-#  Test System 2: NaCl crystal - Madelung constant         #
+#  Test System 3: NaCl crystal - Madelung constant         #
 #                                                           #
 #                                                           #
 #  Created:       18.03.2003 by HL                          #
@@ -26,6 +26,8 @@ puts "=                 madelung.tcl                    ="
 puts "==================================================="
 puts " "
 
+puts "Program Information: \n[code_info]\n"
+
 #############################################################
 #  Parameters                                               #
 #############################################################
@@ -35,7 +37,7 @@ set madelung_nacl 1.747564594633182190636212035544397403481
 
 # System identification: 
 set name  "madelung"
-set ident "_t2"
+set ident "_t3"
 
 # System parameters
 #############################################################
