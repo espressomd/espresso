@@ -1,6 +1,6 @@
 #!/bin/sh
 
-TESTCASES="npt.tcl \
+TESTCASES="nve_pe.tcl npt.tcl \
     madelung.tcl mmm1d.tcl p3m.tcl el2d.tcl dh.tcl \
     lj.tcl lj-cos.tcl harm.tcl fene.tcl tabulated.tcl gb.tcl rotation.tcl constraints.tcl \
     kinetic.tcl thermostat.tcl \
