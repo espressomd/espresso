@@ -191,6 +191,7 @@ proc blockfile_write_interactions {channel write interactions} {
 proc blockfile_read_auto_interactions {channel read auto} {
     set data [blockfile $channel read toend]
     foreach d $data { eval "inter $d" }
+    return "interactions"
 }
 
 ######################################
@@ -206,6 +207,7 @@ proc blockfile_write_integrate {channel write integrate} {
 proc blockfile_read_auto_integrate {channel read auto} {
     set data [blockfile $channel read toend]
     foreach d $data { eval "integrate $d" }
+    return "integrate"
 }
 
 ######################################
@@ -221,6 +223,7 @@ proc blockfile_write_thermostat {channel write thermostat} {
 proc blockfile_read_auto_thermostat {channel read auto} {
     set data [blockfile $channel read toend]
     foreach d $data { eval "thermostat $d" }
+    return "thermostat"
 }
 
 ######################################
@@ -236,6 +239,7 @@ proc blockfile_write_topology {channel write topology} {
 proc blockfile_read_auto_topology {channel read auto} {
     set data [string map {"\n" " "} [blockfile $channel read toend]]
     eval "analyze set $data"
+    return "topology"
 }
 
 ######################################
