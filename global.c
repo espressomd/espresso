@@ -9,6 +9,7 @@
 #include "debug.h"
 /* from these modules we modify variables: */
 #include "communication.h"
+#include "cells.h"
 #include "grid.h"
 #include "particle_data.h"
 #include "interaction_data.h"
@@ -36,16 +37,16 @@ int ro_callback(Tcl_Interp *interp, void *data);
     in \ref global.h.
 */
 const Datafield fields[] = {
-  {&n_nodes,    TYPE_INT,    1, "n_nodes",    ro_callback }, /* communication.c */
+  {&n_nodes,    TYPE_INT,    1, "n_nodes",    ro_callback },  /* communication.c */
   {node_grid, TYPE_INT, 3, "node_grid", node_grid_callback }, /* grid.c */
   {local_box_l, TYPE_DOUBLE, 3, "local_box_l", ro_callback }, /* global.c */
-  {box_l, TYPE_DOUBLE, 3, "box_l", boxl_callback },
-  {&max_seen_particle, TYPE_INT, 1, "maxpart", ro_callback },
-  {&n_particle_types, TYPE_INT, 1, "nptypes", ro_callback },
-  {&n_interaction_types, TYPE_INT, 1, "niatypes", niatypes_callback },
-  {&time_step, TYPE_DOUBLE, 1, "time_step", ro_callback }, /* integrator.c */
-  {&max_cut, TYPE_DOUBLE,   1, "max_cut", ro_callback },
-  {&skin, TYPE_DOUBLE,   1, "skin", skin_callback },
+  {box_l, TYPE_DOUBLE, 3, "box_l", boxl_callback },           /* grid.c */
+  {&max_seen_particle, TYPE_INT, 1, "maxpart", ro_callback }, /* particle_data.c */
+  {&n_particle_types, TYPE_INT, 1, "nptypes", ro_callback },  /* interaction_data.c */
+  {&n_interaction_types, TYPE_INT, 1, "niatypes", niatypes_callback }, /* interaction_data.c */
+  {&time_step, TYPE_DOUBLE, 1, "time_step", ro_callback },    /* integrator.c */
+  {&max_cut, TYPE_DOUBLE,   1, "max_cut", ro_callback },      /* integrator.c */
+  {&skin, TYPE_DOUBLE,   1, "skin", skin_callback },          /* integrator.c */
   {&max_range, TYPE_DOUBLE,   1, "max_range", ro_callback },
   {&friction_gamma, TYPE_DOUBLE,   1, "gamma", gamma_callback },
   {&rebuild_verletlist, TYPE_INT,   1, "verletflag", ro_callback },
@@ -57,6 +58,7 @@ const Datafield fields[] = {
   {&(p3m.epsilon), TYPE_DOUBLE,   1, "p3m_epsilon", p3mepsilon_callback },
   {p3m.mesh_off, TYPE_DOUBLE,   3, "p3m_mesh_offset", p3mmeshoff_callback },
   {&transfer_rate, TYPE_INT,   1, "transfer_rate", ro_callback },
+  {&max_num_cells, TYPE_INT,   1, "max_num_cells", max_num_cells_callback },
 #ifdef PARTIAL_PERIODIC
   {periodic, TYPE_INT,   3, "periodicity", per_callback },
 #else

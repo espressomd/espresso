@@ -37,6 +37,8 @@
  *  see \ref cells.c "cells.c"
  */
 
+#include <tcl.h>
+
 /************************************************
  * data types
  ************************************************/
@@ -78,6 +80,16 @@ extern int ghost_cell_grid[3];
 extern int n_cells;
 /** linked cell list. */
 extern Cell *cells;
+
+/** Maximal number of cells per node. 
+ *  In order to avoid memory problems due to the cell grid one has to
+ *  specify the maximal number of \ref cells. The corresponding
+ *  callback function is \ref max_num_cells_callback. If the number of
+ *  cells \ref n_cells, defined by \ref ghost_cell_grid is larger than
+ *  max_num_cells the cell grid is reduced. max_num_cells has to be
+ *  larger than 27, e.g one inner cell.
+ */
+extern int max_num_cells;
 
 /*@}*/
 
@@ -128,6 +140,10 @@ void cells_exit();
     @param size     desired size of the  particle array.
  */
 void realloc_cell_particles(int index, int size);
+
+/** Callback for setmd maxnumcells (maxnumcells >= 27). 
+    see also \ref max_num_cells */
+int max_num_cells_callback(Tcl_Interp *interp, void *_data);
 
 #endif
 

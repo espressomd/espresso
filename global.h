@@ -99,8 +99,10 @@ extern const Datafield fields[];
 #define FIELD_P3M_MESH_OFF 19
 /** index of \ref transfer_rate  in \ref fields */
 #define FIELD_TRANSFER_RATE 20
+/** index of \ref transfer_rate  in \ref fields */
+#define FIELD_MAXNUMCELLS 21
 /** index of \ref periodic in \ref fields */
-#define FIELD_PERIODIC 21
+#define FIELD_PERIODIC 22
 /*@}*/
 
 /**********************************************

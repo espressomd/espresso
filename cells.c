@@ -37,6 +37,7 @@ int cell_grid[3];
 int ghost_cell_grid[3];
 int n_cells;
 Cell *cells;
+int max_num_cells;
 
 /** number of linked cells in nodes spatial domain. */
 int n_inner_cells;
@@ -49,6 +50,16 @@ double inv_cell_size[3];
 /** \name Privat Functions */
 /************************************************************/
 /*@{*/
+
+/** Calculate cell grid dimensions, cell sizes and number of cells.
+ *  Calculates the cell grid, based on \ref local_box_l and \ref
+ *  max_range. If the number of cells is larger than \ref
+ *  max_num_cells, it increases max_range until the number of cells is
+ *  smaller or equal \ref max_num_cells. It sets: \ref cell_grid, \ref
+ *  ghost_cell_grid, \ref cell_size, \ref inv_cell_size, \ref
+ *  n_inner_cells and \ref n_cells.
+ */
+void calc_cell_grid();
 
 /** initializes the interacting neighbour cell list
  *  (cells.neighbours).  the created list of interacting neighbour
@@ -73,32 +84,16 @@ void cells_init()
   int i;
   int node_pos[3];
   CELL_TRACE(fprintf(stderr,"%d: cells_init \n",this_node));
-  /* set up dimensions of the cell grid */
 
-  map_node_array(this_node,node_pos);     
+  /* set up dimensions of the cell grid */
+  calc_cell_grid();
+ 
+  /* this could also go to grid.c ! */
+  map_node_array(this_node,node_pos);    
   for(i=0;i<3;i++) {
     my_left[i]   = node_pos[i]    *local_box_l[i];
     my_right[i]  = (node_pos[i]+1)*local_box_l[i];    
-    cell_grid[i] = (int)(local_box_l[i]/max_range);
-    if(cell_grid[i] < 1) {
-#ifdef PARTIAL_PERIODIC
-      if (!periodic[i])
-	cell_grid[i] = 1;
-      else
-#endif
-	{
-	  fprintf(stderr,"%d: cells_init: Less than one cell in direction %d\n",
-		  this_node,i);
-	  errexit();
-	}
-    }
-
-    ghost_cell_grid[i] = cell_grid[i] + 2;
-    cell_size[i]       = local_box_l[i]/(double)cell_grid[i];
-    inv_cell_size[i]   = 1.0 / cell_size[i];
   }
-  n_inner_cells = cell_grid[0]*cell_grid[1]*cell_grid[2];
-  n_cells = ghost_cell_grid[0]*ghost_cell_grid[1]*ghost_cell_grid[2];
 
   /* there should be a reasonable number of cells only!
      But we will deal with that later... */
@@ -115,12 +110,6 @@ void cells_init()
     cells[i].particles = malloc(cells[i].max_particles*sizeof(int));
     init_cell_neighbours(i);
   }
-
-  CELL_TRACE(fprintf(stderr,"%d: my box: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f)\n",
-		     this_node,my_left[0],my_left[1],my_left[2],
-		     my_right[0],my_right[1],my_right[2]));
-  CELL_TRACE(fprintf(stderr,"%d: cell grid (%d+2, %d+2, %d+2) \n",this_node,
-		     cell_grid[0],cell_grid[1],cell_grid[2]));
 }
 
 
@@ -182,8 +171,107 @@ void cells_exit()
   free(cells);
 }
 
+/*************************************************/
+
+void realloc_cell_particles(int index, int size)
+{
+  int incr;
+
+  if( size > cells[index].max_particles) {
+    incr = (size-cells[index].max_particles)/PART_INCREMENT + 1;
+    cells[index].max_particles += incr*PART_INCREMENT;
+  }
+  else if( size < (cells[index].max_particles-PART_INCREMENT) ) {
+    incr =(size-cells[index].max_particles)/PART_INCREMENT;
+    cells[index].max_particles += incr*PART_INCREMENT;
+  }
+  else incr=0;
+
+  if(incr != 0) {
+    cells[index].particles = (int *)
+      realloc(cells[index].particles, sizeof(int)*cells[index].max_particles);
+  }
+}
+
+/*************************************************/
+
+int max_num_cells_callback(Tcl_Interp *interp, void *_data)
+{
+  int data = *(int *)_data;
+  if (data < 27) {
+    Tcl_AppendResult(interp, "WARNING: max_num_cells has to be at least 27. Set max_num_cells = 27!", (char *) NULL);
+    data = 27;
+  }
+  max_num_cells = data;
+  mpi_bcast_parameter(FIELD_MAXNUMCELLS);
+  return (TCL_OK);
+}
 
 /*******************  privat functions  *******************/
+
+void calc_cell_grid()
+{
+  int i;
+
+  /* normal case */
+  n_cells=1;
+  for(i=0;i<3;i++) {
+    ghost_cell_grid[i] = (int)(local_box_l[i]/max_range) + 2;
+    n_cells *= ghost_cell_grid[i];
+  }
+
+  /* catch case, n_cells > max_num_cells */
+  if(n_cells > max_num_cells) {
+    double cell_range;
+    double step;
+    double min_box_l;
+    double max_box_l;
+
+    min_box_l = dmin(dmin(local_box_l[0],local_box_l[1]),local_box_l[2]);
+    max_box_l = dmax(dmax(local_box_l[0],local_box_l[1]),local_box_l[2]);
+    step = ((max_box_l/2.0)-max_range)/100; /* Maximal 100 trials! */
+    if(step<0.0) fprintf(stderr,"Error: negative step! Something went wrong in calc_cell_grid(). Ask your local Guru\n");
+    cell_range = max_range;
+
+    while(n_cells > max_num_cells) {
+      cell_range += step;
+      n_cells=1;
+      for(i=0;i<3;i++) {
+	ghost_cell_grid[i] = (int)(local_box_l[i]/cell_range) + 2;
+	n_cells *= ghost_cell_grid[i];
+      }
+    }
+    /* Give information about possible larger skin. */
+    cell_range = dmin(min_box_l,cell_range);
+    if( cell_range>max_range && this_node==0 ) {
+      fprintf(stderr,"Attention: Your parameters would allow a skin of %f instead of your setting %f\n",cell_range-max_cut,skin);
+    }
+  }
+
+  /* now set all dependent variables */
+  n_inner_cells=1;
+  for(i=0;i<3;i++) {
+    cell_grid[i] = ghost_cell_grid[i]-2;
+
+    /* catch no inner cells case */
+    if(cell_grid[i] < 1) {
+#ifdef PARTIAL_PERIODIC
+      if (!periodic[i])
+	cell_grid[i] = 1;
+      else
+#endif
+	{
+	  fprintf(stderr,"%d: cells_init: Less than one cell in direction %d\n",
+		  this_node,i);
+	  errexit();
+	}
+    }
+
+    n_cells *= cell_grid[i];
+    cell_size[i]     = local_box_l[i]/(double)cell_grid[i];
+    inv_cell_size[i] = 1.0 / cell_size[i];
+  }
+}
 
 void init_cell_neighbours(int i)
 {
@@ -230,22 +318,3 @@ int  is_inner_cell(int i, int gcg[3])
 
 /*************************************************/
 
-void realloc_cell_particles(int index, int size)
-{
-  int incr;
-
-  if( size > cells[index].max_particles) {
-    incr = (size-cells[index].max_particles)/PART_INCREMENT + 1;
-    cells[index].max_particles += incr*PART_INCREMENT;
-  }
-  else if( size < (cells[index].max_particles-PART_INCREMENT) ) {
-    incr =(size-cells[index].max_particles)/PART_INCREMENT;
-    cells[index].max_particles += incr*PART_INCREMENT;
-  }
-  else incr=0;
-
-  if(incr != 0) {
-    cells[index].particles = (int *)
-      realloc(cells[index].particles, sizeof(int)*cells[index].max_particles);
-  }
-}
