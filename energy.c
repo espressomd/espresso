@@ -72,6 +72,9 @@ void calc_long_range_energies()
   case COULOMB_P3M:
     energy.coulomb[1] = P3M_calc_kspace_forces(0,1);
     break;
+  case COULOMB_MMM2D:
+    *energy.coulomb += MMM2D_far_energy();
+    break;
   }
 #endif
 }

@@ -14,12 +14,13 @@
 
 #ifdef ELECTROSTATICS
 
-//#define CHECKPOINTS
+// #define CHECKPOINTS
 #if 0
 #define LOG_FORCES(x) x
 #else
 #define LOG_FORCES(x)
 #endif
+
 /****************************************
  * LOCAL DEFINES
  ****************************************/
@@ -55,6 +56,7 @@ static DoubleList  bon = {NULL, 0, 0};
 
 static double ux, ux2, uy, uy2, uz;
 static double cell_h;
+static double self_energy;
 
 MMM2D_struct mmm2d_params = { 1e100, 10, 1 };
 
@@ -82,10 +84,10 @@ MMM2D_struct mmm2d_params = { 1e100, 10, 1 };
 #define QQEQQP 0
 #define QQEQQM 1
 
-#define ABEQZP 0
-#define ABEQQP 1
-#define ABEQZM 2
-#define ABEQQM 3
+#define ABEQQP 0
+#define ABEQZP 1
+#define ABEQQM 2
+#define ABEQZM 3
 
 /* number of local particles */
 static int n_localpart = 0;
@@ -123,6 +125,9 @@ static void prepareBernoulliNumbers(int nmax);
 /* cutoff error setup. Returns error message or NULL */
 static char *MMM2D_tune_near(double error);
 
+/** energy of all local particles with their copies */
+void MMM2D_self_energy();
+
 /* FAR FORMULA */
 /***************/
 /* sin/cos storage */
@@ -132,15 +137,19 @@ static void prepare_scy_cache();
 static void distribute(int size);
 /* 2 pi sign(z) code */
 static void add_2pi_signz();
+static double twopi_z_energy();
 /* p=0 per frequency code */
 static void setup_P(int p, double omega);
 static void add_P_force();
+static double   P_energy(double omega);
 /* q=0 per frequency code */
 static void setup_Q(int q, double omega);
 static void add_Q_force();
+static double   Q_energy(double omega);
 /* p,q <> 0 per frequency code */
 static void setup_PQ(int p, int q, double omega);
 static void add_PQ_force(int p, int q, double omega);
+static double   PQ_energy(double omega);
 
 /* cutoff error setup. Returns error message or NULL */
 static char *MMM2D_tune_far(double error);
@@ -243,11 +252,11 @@ MDINLINE void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size)
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
 }
 
-MDINLINE void add_scaled_vec(double *pdc_d, double *pdc_s1, double scale, double *pdc_s2, int size)
+MDINLINE void scale_vec(double scale, double *pdc, int size)
 {
   int i;
   for (i = 0; i < size; i++)
-    pdc_d[i] = pdc_s1[i] + scale*pdc_s2[i];
+    pdc[i] *= scale;
 }
 
 MDINLINE double *block(double *p, int index, int size)
@@ -255,14 +264,14 @@ MDINLINE double *block(double *p, int index, int size)
   return &p[index*size];
 }
 
-MDINLINE double *blwentry(double *p, int index, int size)
+MDINLINE double *blwentry(double *p, int index, int e_size)
 {
-  return &p[2*index*size];
+  return &p[2*index*e_size];
 }
 
-MDINLINE double *abventry(double *p, int index, int size)
+MDINLINE double *abventry(double *p, int index, int e_size)
 {
-  return &p[(2*index + 1)*size];
+  return &p[(2*index + 1)*e_size];
 }
 
 void distribute(int e_size)
@@ -384,7 +393,7 @@ static void checkpoint(char *text, int p, int q, int e_size)
 #endif
 
 /*****************************************************************/
-/* 2 pi sign(z) */
+/* 2 pi (sign)(z) */
 /*****************************************************************/
 
 static void add_2pi_signz()
@@ -395,7 +404,7 @@ static void add_2pi_signz()
   int e_size = 1, size = 2;
   double *othcblk;
 
-  /* calculate local cellblks */
+  /* calculate local cellblks. partblks don't make sense */
   for (c = 1; c <= n_layers; c++) {
     np   = cells[c].n;
     part = cells[c].part;
@@ -405,13 +414,13 @@ static void add_2pi_signz()
     lclcblk[size*c] *= pref;
     /* just to be able to use the standard distribution. Here below
        and above terms are the same */
-    lclcblk[size*c + 1] = lclcblk[2*c];
+    lclcblk[size*c + 1] = lclcblk[size*c];
   }
 
-  distribute(1);
+  distribute(e_size);
 
   for (c = 1; c <= n_layers; c++) {
-    othcblk = blwentry(gblcblk, c - 1, e_size);
+    othcblk = block(gblcblk, c - 1, size);
     add = othcblk[QQEQQP] - othcblk[QQEQQM];
     np   = cells[c].n;
     part = cells[c].part;
@@ -422,6 +431,43 @@ static void add_2pi_signz()
 			 part[i].f.f[1], part[i].f.f[2]));
     }
   }
+}
+
+static double twopi_z_energy()
+{
+  int np, c, i;
+  double pref = -C_2PI*ux*uy;
+  Particle *part;
+  int e_size = 2, size = 4;
+  double *othcblk;
+  double eng = 0;
+
+  /* calculate local cellblks. partblks don't make sense */
+  for (c = 1; c <= n_layers; c++) {
+    np   = cells[c].n;
+    part = cells[c].part;
+    clear_vec(blwentry(lclcblk, c, e_size), e_size);
+    for (i = 0; i < np; i++) {
+      lclcblk[size*c + ABEQQP] += part[i].p.q;
+      lclcblk[size*c + ABEQZP] += part[i].p.q*part[i].r.p[2];
+    }
+    scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
+    /* just to be able to use the standard distribution. Here below
+       and above terms are the same */
+    copy_vec(abventry(lclcblk, c, e_size), blwentry(lclcblk, c, e_size), e_size);
+  }
+
+  distribute(e_size);
+
+  for (c = 1; c <= n_layers; c++) {
+    othcblk = block(gblcblk, c - 1, size);
+    np   = cells[c].n;
+    part = cells[c].part;
+    for (i = 0; i < np; i++)
+      eng += part[i].p.q*(part[i].r.p[2]*othcblk[ABEQQP] - othcblk[ABEQZP] -
+			  part[i].r.p[2]*othcblk[ABEQQM] + othcblk[ABEQZM]);
+  }
+  return eng;
 }
 
 /*****************************************************************/
@@ -453,9 +499,10 @@ static void setup_P(int p, double omega)
       partblk[size*ic + POQECM] = part[i].p.q*scxcache[o + ic].c/e;
       partblk[size*ic + POQECP] = part[i].p.q*scxcache[o + ic].c*e;
 
-      add_scaled_vec(llclcblk, llclcblk, pref, block(partblk, ic, size), size);
+      add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
       ic++;
     }
+    scale_vec(pref, llclcblk, size);
   }
 }
 
@@ -484,9 +531,10 @@ static void setup_Q(int q, double omega)
       partblk[size*ic + POQECM] = part[i].p.q*scycache[o + ic].c/e;
       partblk[size*ic + POQECP] = part[i].p.q*scycache[o + ic].c*e;
 
-      add_scaled_vec(llclcblk, llclcblk, pref, block(partblk, ic, size), size);
+      add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
       ic++;
     }
+    scale_vec(pref, llclcblk, size);
   }
 }
 
@@ -519,6 +567,30 @@ static void add_P_force()
   }
 }
 
+static double P_energy(double omega)
+{
+  int np, c, i, ic;
+  Particle *part;
+  double *othcblk;
+  int size = 4;
+  double eng = 0;
+  double pref = 1/omega;
+
+  ic = 0;
+  for (c = 1; c <= n_layers; c++) {
+    np   = cells[c].n;
+    part = cells[c].part;
+    othcblk = block(gblcblk, c - 1, size);
+
+    for (i = 0; i < np; i++) {
+      eng += pref*(partblk[size*ic + POQECM]*othcblk[POQECP] + partblk[size*ic + POQESM]*othcblk[POQESP] +
+		   partblk[size*ic + POQECP]*othcblk[POQECM] + partblk[size*ic + POQESP]*othcblk[POQESM]);
+      ic++;
+    }
+  }
+  return eng;
+}
+
 static void add_Q_force()
 {
   int np, c, i, ic;
@@ -546,6 +618,30 @@ static void add_Q_force()
       ic++;
     }
   }
+}
+
+static double Q_energy(double omega)
+{
+  int np, c, i, ic;
+  Particle *part;
+  double *othcblk;
+  int size = 4;
+  double eng = 0;
+  double pref = 1/omega;
+
+  ic = 0;
+  for (c = 1; c <= n_layers; c++) {
+    np   = cells[c].n;
+    part = cells[c].part;
+    othcblk = block(gblcblk, c - 1, size);
+
+    for (i = 0; i < np; i++) {
+      eng += pref*(partblk[size*ic + POQECM]*othcblk[POQECP] + partblk[size*ic + POQESM]*othcblk[POQESP] +
+		   partblk[size*ic + POQECP]*othcblk[POQECM] + partblk[size*ic + POQESP]*othcblk[POQESM]);
+      ic++;
+    }
+  }
+  return eng;
 }
 
 /*****************************************************************/
@@ -582,9 +678,10 @@ static void setup_PQ(int p, int q, double omega)
       partblk[size*ic + PQECSP] = scxcache[ox + ic].c*scycache[oy + ic].s*part[i].p.q*e;
       partblk[size*ic + PQECCP] = scxcache[ox + ic].c*scycache[oy + ic].c*part[i].p.q*e;
 
-      add_scaled_vec(llclcblk, llclcblk, pref, block(partblk, ic, size), size);
+      add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
       ic++;
     }
+    scale_vec(pref, llclcblk, size);
   }
 }
 
@@ -628,7 +725,37 @@ static void add_PQ_force(int p, int q, double omega)
   }
 }
 
-void MMM2D_add_far()
+static double PQ_energy(double omega)
+{
+  int np, c, i, ic;
+  Particle *part;
+  double *othcblk;
+  int size = 8;
+  double eng = 0;
+  double pref = 1/omega;
+
+  ic = 0;
+  for (c = 1; c <= n_layers; c++) {
+    np   = cells[c].n;
+    part = cells[c].part;
+    othcblk = block(gblcblk, c - 1, size);
+
+    for (i = 0; i < np; i++) {
+      eng += pref*(partblk[size*ic + PQECCM]*othcblk[PQECCP] + partblk[size*ic + PQECSM]*othcblk[PQECSP] +
+		   partblk[size*ic + PQESCM]*othcblk[PQESCP] + partblk[size*ic + PQESSM]*othcblk[PQESSP] +
+		   partblk[size*ic + PQECCP]*othcblk[PQECCM] + partblk[size*ic + PQECSP]*othcblk[PQECSM] +
+		   partblk[size*ic + PQESCP]*othcblk[PQESCM] + partblk[size*ic + PQESSP]*othcblk[PQESSM]);
+      ic++;
+    }
+  }
+  return eng;
+}
+
+/*****************************************************************/
+/* main loops */
+/*****************************************************************/
+
+void MMM2D_add_far_force()
 {
   int p, q;
   double omega;
@@ -668,6 +795,55 @@ void MMM2D_add_far()
       checkpoint("************distri pq", p, q, 4);
     }
   }
+}
+
+double MMM2D_far_energy()
+{
+  double eng;
+  int p, q;
+  double omega;
+
+  // It's not really far...
+  eng = self_energy;
+
+  if (cell_structure.type != CELL_STRUCTURE_LAYERED || n_nodes*n_layers < 3)
+    return 0.5*eng;
+
+  eng += twopi_z_energy();
+  checkpoint("E************2piz", 0, 0, 2);
+
+  prepare_scx_cache();
+  prepare_scy_cache();
+
+  /* the second condition is just for the case of numerical accident */
+  for (p = 1; ux*(p - 1) < mmm2d_params.far_cut && p <= n_scxcache; p++) {
+    omega = C_2PI*ux*p;
+    setup_P(p, omega);
+    distribute(2);
+    eng += P_energy(omega);
+    checkpoint("E************distri p", p, 0, 2);
+  }
+
+  for (q = 1; uy*(q - 1) < mmm2d_params.far_cut && q <= n_scycache; q++) {
+    omega = C_2PI*uy*q;
+    setup_Q(q, omega);
+    distribute(2);
+    eng += Q_energy(omega);
+    checkpoint("E************distri q", 0, q, 2);
+  }
+
+  for (p = 1; p - 1 < ux*mmm2d_params.far_cut  && p <= n_scxcache ; p++) {
+    for (q = 1; SQR(ux*(p - 1)) + SQR(uy*(q - 1)) < mmm2d_params.far_cut2 && q <= n_scycache; q++) {
+      omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
+      setup_PQ(p, q, omega);
+      distribute(4);
+      eng += PQ_energy(omega);
+      checkpoint("E************distri pq", p, q, 4);
+    }
+  }
+
+  /* we count both i<->j and j<->i, so return just half of it */
+  return 0.5*eng;
 }
 
 static char *MMM2D_tune_far(double error)
@@ -803,27 +979,170 @@ static void prepareBernoulliNumbers(int bon_order)
   }
 }
 
-MDINLINE void calc_mmm2d_copy_pair_force(double d[3], double *F)
+void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
+				  double d[3], double dl2, double dl)
 {
+  double F[3];
+  double pref = p1->p.q*p2->p.q;
+  double z2   = d[2]*d[2];
+  double rho2 = d[1]*d[1] + z2;
+  int i;
+
+  if (pref != 0.0) {
+    F[0] = F[1] = F[2] = 0;
+
+    /* Bessel sum */
+    {
+      int p, l;
+      double k1;
+      double k0Sum, k1ySum, k1Sum;
+      double freq;
+      double rho_l, ypl;
+      double c, s;
+
+      for (p = 1; p < besselCutoff.n; p++) {
+	k0Sum  = 0;
+	k1ySum = 0;
+	k1Sum  = 0;
+
+	freq = C_2PI*ux*p;
+
+	for (l = 1; l < besselCutoff.e[p-1]; l++) {
+	  ypl   = d[1] + l*box_l[1];
+	  rho_l = sqrt(ypl*ypl + z2);
+	  k0Sum  += K0(freq*rho_l);
+	  k1 = K1(freq*rho_l)/rho_l;
+	  k1Sum  += k1;
+	  k1ySum += k1*ypl;
+
+	  ypl   = d[1] - l*box_l[1];
+	  rho_l = sqrt(ypl*ypl + z2);
+	  k0Sum  += K0(freq*rho_l);
+	  k1 = K1(freq*rho_l)/rho_l;
+	  k1Sum  += k1;
+	  k1ySum += k1*ypl;
+	}
+
+	/* the ux is multiplied in to bessel, complex and psi at once, not here */
+	c = 4*freq*cos(freq*d[0]);
+	s = 4*freq*sin(freq*d[0]);
+	F[0] +=      s*k0Sum;
+	F[1] +=      c*k1ySum;
+	F[2] += d[2]*c*k1Sum;
+      }
+      // fprintf(stderr, " bessel force %f %f %f\n", F[0], F[1], F[2]);
+    }
+
+    /* complex sum */
+    {
+      double zeta_r, zeta_i;
+      double zet2_r, zet2_i;
+      double ztn_r,  ztn_i;
+      double tmp_r;
+      int end, n;
+
+      ztn_r = zeta_r = uy*d[2];
+      ztn_i = zeta_i = uy*d[1];
+      zet2_r = zeta_r*zeta_r - zeta_i*zeta_i;
+      zet2_i = 2*zeta_r*zeta_i;
+
+      end = complexCutoff[(int)ceil(COMPLEX_FAC*uy2*rho2)];
+      for (n = 0; n < end; n++) {
+	F[1] -= bon.e[n]*ztn_i;
+	F[2] += bon.e[n]*ztn_r;
+
+	tmp_r = ztn_r*zet2_r - ztn_i*zet2_i;
+	ztn_i = ztn_r*zet2_i + ztn_i*zet2_r;
+	ztn_r = tmp_r;
+      }
+      // fprintf(stderr, "complex force %f %f %f %d\n", F[0], F[1], F[2], end);
+    }
+
+    /* psi sum */
+    {
+      int n;
+      double uxx = ux*d[0];
+      double uxrho2 = ux2*rho2;
+      double uxrho_2n, uxrho_2nm2; /* rho^{2n-2} */
+      double mpe, mpo;
+
+      /* n = 0 inflicts only Fx and pot */
+      /* one ux is multiplied in to bessel, complex and psi at once, not here */
+      F[0] += ux*mod_psi_odd(0, uxx);
+
+      uxrho_2nm2 = 1.0;
+      for (n = 1;n < n_modPsi; n++) {
+	mpe    = mod_psi_even(n, uxx);
+	mpo    = mod_psi_odd(n, uxx);
+	uxrho_2n = uxrho_2nm2*uxrho2;
+
+	F[0] +=     ux *uxrho_2n  *mpo;
+	F[1] += 2*n*ux2*uxrho_2nm2*mpe*d[1];
+	F[2] += 2*n*ux2*uxrho_2nm2*mpe*d[2];
+
+	/* y < rho => ux2*uxrho_2nm2*d[1] < ux*uxrho_2n */
+	if (fabs(2*n*ux*uxrho_2n*mpe) < part_error)
+	  break;
+
+	uxrho_2nm2 = uxrho_2n;
+      }
+      // fprintf(stderr, "    psi force %f %f %f %d\n", F[0], F[1], F[2], n);
+    }
+
+
+    for (i = 0; i < 3; i++)
+      F[i] *= ux;
+
+    /* explicitly added potentials r_{-1,0} and r_{1,0} */
+    {
+      double cx    = d[0] + box_l[0];
+      double rinv2 = 1.0/(cx*cx + rho2), rinv = sqrt(rinv2);
+      double rinv3 = rinv*rinv2;
+      F[0] +=   cx*rinv3;
+      F[1] += d[1]*rinv3;
+      F[2] += d[2]*rinv3;
+
+      cx   = d[0] - box_l[0];
+      rinv2 = 1.0/(cx*cx + rho2); rinv = sqrt(rinv2);
+      rinv3 = rinv*rinv2;
+      F[0] +=   cx*rinv3;
+      F[1] += d[1]*rinv3;
+      F[2] += d[2]*rinv3;
+
+      rinv3 = 1/(dl2*dl);
+      F[0] += d[0]*rinv3;
+      F[1] += d[1]*rinv3;
+      F[2] += d[2]*rinv3;
+
+      // fprintf(stderr, "explcit force %f %f %f\n", F[0], F[1], F[2]);
+    }
+
+    for (i = 0; i < 3; i++) {
+      p1->f.f[i] += pref*F[i];
+      p2->f.f[i] -= pref*F[i];
+    }
+  }
+}
+
+MDINLINE double calc_mmm2d_copy_pair_energy(double d[3])
+{
+  double eng;
   double z2     = d[2]*d[2];
   double rho2   = d[1]*d[1] + z2;
-  int i;
+
+  /* the ux is multiplied in below */
+  eng = -2*log(4*M_PI*uy*box_l[0]);
 
   /* Bessel sum */
   {
     int p, l;
-    double k1;
-    double k0Sum, k1ySum, k1Sum;
+    double k0Sum;
     double freq;
     double rho_l, ypl;
-    double c, s;
-
-    F[0] = F[1] = F[2] = 0;
+    double c;
 
     for (p = 1; p < besselCutoff.n; p++) {
       k0Sum  = 0;
-      k1ySum = 0;
-      k1Sum  = 0;
 
       freq = C_2PI*ux*p;
 
@@ -831,26 +1150,17 @@ MDINLINE void calc_mmm2d_copy_pair_force(double d[3], double *F)
 	ypl   = d[1] + l*box_l[1];
 	rho_l = sqrt(ypl*ypl + z2);
 	k0Sum  += K0(freq*rho_l);
-	k1 = K1(freq*rho_l)/rho_l;
-	k1Sum  += k1;
-	k1ySum += k1*ypl;
 
 	ypl   = d[1] - l*box_l[1];
 	rho_l = sqrt(ypl*ypl + z2);
 	k0Sum  += K0(freq*rho_l);
-	k1 = K1(freq*rho_l)/rho_l;
-	k1Sum  += k1;
-	k1ySum += k1*ypl;
       }
 
       /* the ux is multiplied in to bessel, complex and psi at once, not here */
-      c = 4*freq*cos(freq*d[0]);
-      s = 4*freq*sin(freq*d[0]);
-      F[0] +=      s*k0Sum;
-      F[1] +=      c*k1ySum;
-      F[2] += d[2]*c*k1Sum;
+      c = 4*cos(freq*d[0]);
+      eng += c*k0Sum;
     }
-    // fprintf(stderr, " bessel force %f %f %f\n", F[0], F[1], F[2]);
+    // fprintf(stderr, " bessel energy %f\n", eng);
   }
 
   /* complex sum */
@@ -863,91 +1173,98 @@ MDINLINE void calc_mmm2d_copy_pair_force(double d[3], double *F)
 
     ztn_r = zeta_r = uy*d[2];
     ztn_i = zeta_i = uy*d[1];
+
     zet2_r = zeta_r*zeta_r - zeta_i*zeta_i;
     zet2_i = 2*zeta_r*zeta_i;
 
-    end = complexCutoff[(int)ceil(COMPLEX_FAC*uy2*rho2)];
-    for (n = 0; n < end; n++) {
-      F[1] -= bon.e[n]*ztn_i;
-      F[2] += bon.e[n]*ztn_r;
+    ztn_r = zet2_r;
+    ztn_i = zet2_i;
 
+    end = complexCutoff[(int)ceil(COMPLEX_FAC*uy2*rho2)];
+    for (n = 1; n <= end; n++) {
+      eng -= box_l[1]/(2*n)*bon.e[n-1]*ztn_r;
+ 
       tmp_r = ztn_r*zet2_r - ztn_i*zet2_i;
       ztn_i = ztn_r*zet2_i + ztn_i*zet2_r;
       ztn_r = tmp_r;
     }
-    // fprintf(stderr, "complex force %f %f %f %d\n", F[0], F[1], F[2], end);
+    // fprintf(stderr, "complex energy %f %d\n", eng, end);
   }
 
   /* psi sum */
   {
     int n;
+    double add;
     double uxx = ux*d[0];
     double uxrho2 = ux2*rho2;
-    double uxrho_2n, uxrho_2nm2; /* rho^{2n-2} */
-    double mpe, mpo;
+    double uxrho_2n;
 
     /* n = 0 inflicts only Fx and pot */
     /* one ux is multiplied in to bessel, complex and psi at once, not here */
-    F[0] += ux*mod_psi_odd(0, uxx);
+    eng -= mod_psi_even(0, uxx);
 
-    uxrho_2nm2 = 1.0;
-    for (n = 1;n < n_modPsi; n++) {
-      mpe    = mod_psi_even(n, uxx);
-      mpo    = mod_psi_odd(n, uxx);
-      uxrho_2n = uxrho_2nm2*uxrho2;
-
-      F[0] +=     ux *uxrho_2n  *mpo;
-      F[1] += 2*n*ux2*uxrho_2nm2*mpe*d[1];
-      F[2] += 2*n*ux2*uxrho_2nm2*mpe*d[2];
-
-      /* y < rho => ux2*uxrho_2nm2*d[1] < ux*uxrho_2n */
-      if (fabs(2*n*ux*uxrho_2n*mpe) < part_error)
+    uxrho_2n = uxrho2;
+    for (n = 1; n < n_modPsi; n++) {
+      add = uxrho_2n*mod_psi_even(n, uxx);
+      eng -= add;
+      if (fabs(add) < part_error)
 	break;
-
-      uxrho_2nm2 = uxrho_2n;
+      uxrho_2n *= uxrho2;
     }
-    // fprintf(stderr, "    psi force %f %f %f %d\n", F[0], F[1], F[2], n);
+    // fprintf(stderr, "    psi energy %f %d\n", eng, n);
   }
 
-
-  for (i = 0; i < 3; i++)
-    F[i] *= ux;
+  eng *= ux;
 
   /* explicitly added potentials r_{-1,0} and r_{1,0} */
   {
-    double cx    = d[0] + box_l[0];
-    double rinv2 = 1.0/(cx*cx + rho2), rinv = sqrt(rinv2);
-    double rinv3 = rinv*rinv2;
-    F[0] +=   cx*rinv3;
-    F[1] += d[1]*rinv3;
-    F[2] += d[2]*rinv3;
+    double cx   = d[0] + box_l[0];
+    double rinv = sqrt(1.0/(cx*cx + rho2));
+    eng += rinv;
 
     cx   = d[0] - box_l[0];
-    rinv2 = 1.0/(cx*cx + rho2); rinv = sqrt(rinv2);
-    rinv3 = rinv*rinv2;
-    F[0] +=   cx*rinv3;
-    F[1] += d[1]*rinv3;
-    F[2] += d[2]*rinv3;
+    rinv = sqrt(1.0/(cx*cx + rho2));
+    eng += rinv;
+
+    // fprintf(stderr, "explcit energy %f %f %f %f\n", d[0], d[1], d[2], eng);
   }
-  // fprintf(stderr, "explcit force %f %f %f\n", F[0], F[1], F[2]);
+
+  return eng;
 }
 
-void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
-				  double dv[3], double d2, double d)
+double mmm2d_coulomb_pair_energy(Particle *p1, Particle *p2,
+				 double dv[3], double d2, double d)
 {
-  int i;
-  double ri3;
-  double F[3], pref = p1->p.q*p2->p.q;
+  double eng, pref = p1->p.q*p2->p.q;
 
   if (pref != 0.0) {
-    calc_mmm2d_copy_pair_force(dv, F);
+    eng = calc_mmm2d_copy_pair_energy(dv);
+    return pref*(eng + 1/d);
+  }
+  return 0.0;
+}
 
-    ri3 = 1/(d2*d);
-    for (i = 0; i < 3; i++) {
-      p1->f.f[i] += pref*(F[i] + ri3*dv[i]);
-      p2->f.f[i] -= pref*(F[i] + ri3*dv[i]);
+void MMM2D_self_energy()
+{
+  int c, np, i;
+  Particle *part;
+  double dv[3] = {0, 0, 0};
+  double seng = calc_mmm2d_copy_pair_energy(dv);
+  self_energy = 0;
+
+  /* this one gives twice the real self energy, as it is used
+     in the far formula which counts everything twice and in
+     the end divides by two*/
+
+  // fprintf(stderr, "%d: self energy %g\n", this_node, seng);
+
+  for (c = 1; c <= n_layers; c++) {
+    np   = cells[c].n;
+    part = cells[c].part;
+
+    for (i = 0; i < np; i++) {
+      self_energy += seng*SQR(part[i].p.q);
     }
-    //    fprintf(stderr, "%d: %d<->%d / %f %f %f\n", this_node, p1->p.identity, p2->p.identity, dv[0], dv[1], dv[2]);
   }
 }
 
@@ -983,7 +1300,7 @@ void MMM2D_init()
   }
 }
 
-void MMM2D_allocate_particle_buffers()
+void MMM2D_on_resort_particles()
 {
   /* if we need MMM2D far formula, allocate caches */
   if (cell_structure.type == CELL_STRUCTURE_LAYERED) {
@@ -997,6 +1314,7 @@ void MMM2D_allocate_particle_buffers()
     lclcblk   = realloc(lclcblk,  n_cells*8*sizeof(double));
     gblcblk   = realloc(gblcblk,  n_layers*8*sizeof(double));
   }
+  MMM2D_self_energy();
 }
 
 int set_mmm2d_params(Tcl_Interp *interp, double maxPWerror, double far_cut)

@@ -181,7 +181,7 @@ void on_resort_particles()
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_MMM2D:
-    MMM2D_allocate_particle_buffers();
+    MMM2D_on_resort_particles();
     break;
   default: break;
   }

@@ -91,7 +91,7 @@ void calc_long_range_forces()
       P3M_calc_kspace_forces(1,0);
     break;
   case COULOMB_MMM2D:
-    MMM2D_add_far();
+    MMM2D_add_far_force();
   }
 #endif
 }
