@@ -124,14 +124,14 @@ proc blockfile_read_auto_bonds {channel read auto} {
 	}
 	set pid [lindex $line 1] 
 	set bl [lindex $line 2]
-	foreach inter $bl { eval [concat {part $pid bond} $inter] }
+	foreach inter $bl { part $pid bond delete; eval [concat {part $pid bond} $inter] }
     }
 }
 
 proc blockfile_read_bonds {channel read bonds} {
     set tag [blockfile $channel read start]
     if {$tag != "particles"} { error "blockfile read bonds did not find particle block in file $channel" }
-    blockfile_read_auto_interactions $channel read bonds
+    blockfile_read_auto_bonds $channel read bonds
 }
  
 proc blockfile_write_interactions {channel write interactions} {
