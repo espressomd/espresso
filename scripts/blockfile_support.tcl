@@ -383,7 +383,7 @@ proc blockfile_write_tclvariable {channel write tclvariable {which "all"}} {
 	puts -nonewline $channel " {$which [set $which]} "
     } {
 	puts $channel ""
-	foreach wh $which { global $wh; if { ! [array exists $wh] } { puts $channel "\t{$wh {[set $wh]}}" } }
+	foreach wh $which { global $wh; if { ! [array exists $wh] } { puts $channel "\t{$wh [set $wh]}" } }
     }
     puts $channel "\}"
 }
