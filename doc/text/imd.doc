@@ -7,8 +7,8 @@ In IMD, the simulation acts as a data server. That means that a simulation can p
 the possibility of connecting VMD, but VMD need not be connected all the time. You can
 watch the simulation just from time to time.
 
-In the following the setup up and using of IMD is described. For an example script
-look at testsuite/lj_liquid.tcl.
+In the following the setup up and using of IMD is described.
+
 
 \section imd_script IMD in the script
 In your simulation, the IMD connection is setup up using
@@ -34,7 +34,18 @@ will not free the port for some time, so that without disconnecting for some 10 
 will not be able to reuse the port.
 
 Additionally, you have to provide VMD with the structural information for your system. Therefore
-your program has to write out psf/pdb files using \ref tcl_writepsf and \ref tcl_writepdb.
+your program has to write out psf-/pdb-files using \ref tcl_writepsf and \ref tcl_writepdb.
+
+That hassle is greatly reduced by using the built-in auxiliary script
+\anchor tcl_prepare_vmd
+\verbatim prepare_vmd_connection [<filename> [<wait> [<start>]]] \endverbatim
+which writes out the necessary psf-/pdb-files to <tt><filename>.psf</tt> and <tt><filename>.pdb</tt>
+(default for <tt><filename</tt> is '<tt>vmd</tt>'), doing some nice stuff such as coloring the 
+molecules, bonds and counterions appropriately, rotating your viewpoint, and connecting your system
+to the visualization server. If <tt><start></tt> is 1 (the default), it does all that by itself; 
+otherwise it writes those steps out to a script-file '<tt>vmd_start.script</tt> 
+and waits for <tt><wait></tt> seconds (default: 0) for you to connect.
+
 
 \section imd_vmd Using IMD in VMD
 So after your simulation runs and has written the psf/pdb files, you start VMD.

@@ -2,8 +2,10 @@
 The following procedures are found in scripts/aux.tcl and scripts/countBonds.tcl. See \ref io for further functions as well.
 <ul>
     <li>\anchor tcl_stopparticles
-	\verbatim stopParticles \endverbatim
-	halts all particles in the current simulation, setting their velocities and forces to zero.
+	\verbatim stopParticles 
+ stop_particles \endverbatim
+	halts all particles in the current simulation, setting their velocities and forces to zero. 
+	The latter syntax does not provide feedback on the execution status.
 
     <li>\anchor tcl_countBonds
 	\verbatim countBonds <particle_list>\endverbatim

@@ -2,13 +2,30 @@
 The following procedures are found in scripts/ABHmath.tcl.
 <ul>
     <li> \anchor PI
-    \verbatim PI \endverbatim returns pi with 16 digits precision.
+    \verbatim PI \endverbatim returns \f$\pi\f$ with 16 digits precision.
+
     <li> \anchor sqr
-    \verbatim sqr <arg> \endverbatim returns the square of <arg>.
+    \verbatim sqr <arg> \endverbatim returns the square of <tt><arg></tt>.
+
     <li> \anchor min
-    \verbatim min <arg1> <arg2> \endverbatim returns the minimum of
-    <arg1> and <arg2>.
-    \verbatim max <arg1> <arg2> \endverbatim returns the maximum of
-    <arg1> and <arg2>.
+    \verbatim min <arg1> <arg2> \endverbatim 
+    returns the minimum of <tt><arg1></tt> and <tt><arg2></tt>.
+
+    <li> \anchor max
+    \verbatim max <arg1> <arg2> \endverbatim 
+    returns the maximum of <tt><arg1></tt> and <tt><arg2></tt>.
+
+    <li> \anchor sign
+    \verbatim sign <arg> \endverbatim
+    returns the signum-function of <tt><arg></tt>, namely +1 for <tt><arg></tt> >0, -1 for <0, and =0 otherwise.
+
+    <li> \anchor pair_dist
+    \verbatim pair_dist <part_id1> <part_id2> \endverbatim
+    returns the distance of two particles with identities <tt><part_id1></tt> and <tt><part_id2></tt>.
+
+    <li> \anchor LinRegression
+    \verbatim LinRegression <tcl-list> \endverbatim
+    returns the least-square linear fit <tt>a*x+b</tt> and the standard errors <tt>da</tt> and <tt>db</tt>
+    for a tcl-list of points <tt>{{x1 y1} {x2 y2} ...}</tt>.
 </ul>
 */
