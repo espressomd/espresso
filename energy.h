@@ -8,6 +8,7 @@
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #ifndef ENERGY_H
 #define ENERGY_H
+#include "integrate.h"
 #include "config.h"
 #include "statistics.h"
 #include "thermostat.h"

@@ -373,6 +373,143 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
   return dst;
 }
 
+#ifdef ROTATION
+void part_print_omega(Particle part, char *buffer, Tcl_Interp *interp)
+{
+  Tcl_PrintDouble(interp, part.m.omega[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.m.omega[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.m.omega[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return;
+}
+
+void part_print_torque(Particle part, char *buffer, Tcl_Interp *interp)
+{
+  Tcl_PrintDouble(interp, part.f.torque[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.f.torque[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.f.torque[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return;
+}
+
+void part_print_quat(Particle part, char *buffer, Tcl_Interp *interp)
+{
+  Tcl_PrintDouble(interp, part.r.quat[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.r.quat[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.r.quat[2], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.r.quat[3], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return;
+}
+#endif
+
+void part_print_v(Particle part, char *buffer, Tcl_Interp *interp)
+{
+  /* unscale velocities ! */
+  Tcl_PrintDouble(interp, part.m.v[0]/time_step, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.m.v[1]/time_step, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.m.v[2]/time_step, buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return;
+}
+
+void part_print_f(Particle part, char *buffer, Tcl_Interp *interp)
+{
+  /* unscale forces ! */
+  Tcl_PrintDouble(interp, part.f.f[0]/(0.5*time_step*time_step), buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.f.f[1]/(0.5*time_step*time_step), buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.f.f[2]/(0.5*time_step*time_step), buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return;
+}
+
+void part_print_position(Particle part, char *buffer, Tcl_Interp *interp)
+{
+  double ppos[3];
+  int img[3];
+  memcpy(ppos, part.r.p, 3*sizeof(double));
+  memcpy(img, part.l.i, 3*sizeof(int));
+  unfold_position(ppos, img);
+  Tcl_PrintDouble(interp, ppos[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, ppos[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, ppos[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return;
+}
+
+void part_print_folded_position(Particle part, char *buffer, Tcl_Interp *interp)
+{
+  Tcl_PrintDouble(interp, part.r.p[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.r.p[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.r.p[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return;
+}
+
+void part_print_bonding_structure(Particle part, char *buffer, Tcl_Interp *interp, IntList *bl)
+{
+  int i=0,j,size;
+  Tcl_AppendResult(interp, " { ", (char *)NULL);
+  while(i<bl->n) {
+    size = bonded_ia_params[bl->e[i]].num;
+    sprintf(buffer, "{%d ", bl->e[i]); i++;
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+    for(j=0;j<size-1;j++) {
+      sprintf(buffer, "%d ", bl->e[i]); i++;
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    sprintf(buffer, "%d} ", bl->e[i]); i++;
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+  }
+  Tcl_AppendResult(interp, "} ", (char *)NULL);
+  return;
+}
+
+#ifdef ROTATION
+void part_print_fix(Particle part, char *buffer, Tcl_Interp *interp)
+{
+  int i;
+  for (i = 0; i < 3; i++) {
+    if (part.l.ext_flag & COORD_FIXED(i))
+      Tcl_AppendResult(interp, "1 ", (char *)NULL);
+    else
+	    Tcl_AppendResult(interp, "0 ", (char *)NULL);
+  }
+  return;
+}
+
+void part_print_ext_force(Particle part, char *buffer, Tcl_Interp *interp)
+{
+  if(part.l.ext_flag & PARTICLE_EXT_FORCE) {
+    Tcl_PrintDouble(interp, part.l.ext_force[0], buffer);
+	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	  Tcl_PrintDouble(interp, part.l.ext_force[1], buffer);
+	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	  Tcl_PrintDouble(interp, part.l.ext_force[2], buffer);
+	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  }
+  else {
+    Tcl_AppendResult(interp, "0.0 0.0 0.0 ", (char *)NULL);
+  }
+  return;
+}
+#endif
+
 /** append particle data in ASCII form to the Tcl result.
     @param part_num the particle which data is appended
     @param interp   the Tcl interpreter to which result to add to */
@@ -385,16 +522,11 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   if (get_particle_data(part_num, &part) == TCL_ERROR)
     return (TCL_ERROR);
 
-  unfold_position(part.r.p, part.l.i);
-
   sprintf(buffer, "%d", part.p.identity);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.p[0], buffer);
-  Tcl_AppendResult(interp, " pos ", buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.p[1], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.p[2], buffer);
-  Tcl_AppendResult(interp, buffer, " type ", (char *)NULL);
+  Tcl_AppendResult(interp, " pos ", (char *)NULL);
+  part_print_position(part, buffer, interp);
+  Tcl_AppendResult(interp, " type ", (char *)NULL);
   sprintf(buffer, "%d", part.p.type);
   Tcl_AppendResult(interp, buffer, " molecule ", (char *)NULL);
   sprintf(buffer, "%d", part.p.mol_id);
@@ -403,87 +535,39 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_PrintDouble(interp, part.p.q, buffer);
 #endif
   Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.m.v[0]/time_step, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.m.v[1]/time_step, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.m.v[2]/time_step, buffer);
+  part_print_v(part, buffer, interp);
   Tcl_AppendResult(interp, buffer, " f ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f.f[0]/(0.5*time_step*time_step), buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f.f[1]/(0.5*time_step*time_step), buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f.f[2]/(0.5*time_step*time_step), buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  part_print_f(part, buffer, interp);
 
 #ifdef ROTATION
   /* print information about rotation */
   Tcl_AppendResult(interp, " quat ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.quat[0], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.quat[1], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.quat[2], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.quat[3], buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  part_print_quat(part, buffer, interp);
              
   Tcl_AppendResult(interp, " omega ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.m.omega[0], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.m.omega[1], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.m.omega[2], buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-              
+  part_print_omega(part, buffer, interp);
+               
   Tcl_AppendResult(interp, " torque ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f.torque[0], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f.torque[1], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f.torque[2], buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);       
+  part_print_torque(part, buffer, interp);   
 #endif      
 
 #ifdef EXTERNAL_FORCES
   /* print external force information. */
   if (part.l.ext_flag & PARTICLE_EXT_FORCE) {
-    Tcl_PrintDouble(interp, part.l.ext_force[0], buffer);
-    Tcl_AppendResult(interp, " ext_force ", buffer, " ", (char *)NULL);
-    Tcl_PrintDouble(interp, part.l.ext_force[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-    Tcl_PrintDouble(interp, part.l.ext_force[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *)NULL);
+    Tcl_AppendResult(interp, " ext_force ", (char *)NULL);
+    part_print_ext_force(part, buffer, interp);  
   }
 
   /* print fix information. */
   if (part.l.ext_flag & COORDS_FIX_MASK) {
-    int i;
     Tcl_AppendResult(interp, " fix ", (char *)NULL);
-    for (i = 0; i < 3; i++)
-      if (part.l.ext_flag & COORD_FIXED(i))
-	Tcl_AppendResult(interp, "1 ", (char *)NULL);
-      else
-	Tcl_AppendResult(interp, "0 ", (char *)NULL);
+    part_print_fix( part, buffer, interp);
   }
 #endif
 
   /* print bonding structure */
   if(bl->n > 0) {
-    int i=0,j,size;
-    Tcl_AppendResult(interp, " bonds { ", (char *)NULL);
-    while(i<bl->n) {
-      size = bonded_ia_params[bl->e[i]].num;
-      sprintf(buffer, "{%d ", bl->e[i]); i++;
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-      for(j=0;j<size-1;j++) {
-	sprintf(buffer, "%d ", bl->e[i]); i++;
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-      sprintf(buffer, "%d} ", bl->e[i]); i++;
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-    }
-    Tcl_AppendResult(interp, "} ", (char *)NULL);
+    part_print_bonding_structure(part, buffer, interp, bl);
   }
   free_particle(&part);
   return (TCL_OK);
@@ -542,35 +626,12 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       sprintf(buffer, "%d", part.p.identity);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
-    else if (ARG0_IS_S("position")) {
-      double ppos[3];
-      int img[3];
-      memcpy(ppos, part.r.p, 3*sizeof(double));
-      memcpy(img, part.l.i, 3*sizeof(int));
-      unfold_position(ppos, img);
-      Tcl_PrintDouble(interp, ppos[0], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, ppos[1], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, ppos[2], buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-    }
-    else if (ARG0_IS_S("force")) {
-      Tcl_PrintDouble(interp, part.f.f[0]/(0.5*time_step*time_step), buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.f.f[1]/(0.5*time_step*time_step), buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.f.f[2]/(0.5*time_step*time_step), buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-    }
-    else if (ARG0_IS_S("folded_position")) {
-      Tcl_PrintDouble(interp, part.r.p[0], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.r.p[1], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.r.p[2], buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-    }
+    else if (ARG0_IS_S("position"))
+      part_print_position(part, buffer, interp);   
+    else if (ARG0_IS_S("force"))
+      part_print_f(part, buffer, interp);   
+    else if (ARG0_IS_S("folded_position"))
+      part_print_folded_position(part, buffer, interp);   
     else if (ARG0_IS_S("type")) {
       sprintf(buffer, "%d", part.p.type);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -585,90 +646,26 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #endif
-    else if (ARG0_IS_S("v")) {
-      /* unscale velocities ! */
-      Tcl_PrintDouble(interp, part.m.v[0]/time_step, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.m.v[1]/time_step, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.m.v[2]/time_step, buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-    }
+    else if (ARG0_IS_S("v"))
+      part_print_v(part, buffer, interp);   
 
 #ifdef ROTATION
-    else if (ARG0_IS_S("quat")) {
-      Tcl_PrintDouble(interp, part.r.quat[0], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.r.quat[1], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.r.quat[2], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.r.quat[3], buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-    }
-    
-    else if (ARG0_IS_S("omega")) {
-      Tcl_PrintDouble(interp, part.m.omega[0], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.m.omega[1], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.m.omega[2], buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-    }
-    
-    else if (ARG0_IS_S("torque")) {
-      Tcl_PrintDouble(interp, part.f.torque[0], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.f.torque[1], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.f.torque[2], buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-    }
+    else if (ARG0_IS_S("quat"))
+      part_print_quat(part, buffer, interp);   
+    else if (ARG0_IS_S("omega"))
+      part_print_omega(part, buffer, interp);   
+    else if (ARG0_IS_S("torque"))
+      part_print_torque(part, buffer, interp);   
 #endif         
 
 #ifdef EXTERNAL_FORCES
-    else if (ARG0_IS_S("ext_force")) {
-      if(part.l.ext_flag & PARTICLE_EXT_FORCE) {
-	Tcl_PrintDouble(interp, part.l.ext_force[0], buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.l.ext_force[1], buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.l.ext_force[2], buffer);
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-      else {
-	Tcl_AppendResult(interp, "0.0 0.0 0.0 ", (char *)NULL);
-      }
-    }
-    else if (ARG0_IS_S("fix")) {
-      int i;
-      for (i = 0; i < 3; i++) {
-	if (part.l.ext_flag & COORD_FIXED(i))
-	  Tcl_AppendResult(interp, "1 ", (char *)NULL);
-	else
-	  Tcl_AppendResult(interp, "0 ", (char *)NULL);
-      }
-    }
+    else if (ARG0_IS_S("ext_force"))
+      part_print_ext_force(part,buffer,interp);
+    else if (ARG0_IS_S("fix"))
+      part_print_fix(part, buffer, interp);
 #endif
-    else if (ARG0_IS_S("bonds")) {
-      int i = 0, j, size;
-      Tcl_AppendResult(interp, "{", (char *)NULL);
-      while(i < bl->n) {
-	size = bonded_ia_params[bl->e[i]].num;
-	sprintf(buffer, "{%d ", bl->e[i]);
-	i++;
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-	for(j = 0; j < size - 1; j++) {
-	  sprintf(buffer, "%d ", bl->e[i]);
-	  i++;
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
-	}
-	sprintf(buffer, "%d} ", bl->e[i]);
-	i++;
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-      Tcl_AppendResult(interp, "}", (char *)NULL);
-    }
+    else if (ARG0_IS_S("bonds"))
+      part_print_bonding_structure(part, buffer, interp, bl);
     else {
       Tcl_ResetResult(interp);
       Tcl_AppendResult(interp, "unknown particle data \"", argv[0], "\" requested", (char *)NULL);

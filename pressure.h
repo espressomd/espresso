@@ -11,6 +11,7 @@
 
 
 #include "config.h"
+#include "integrate.h"
 #include "statistics.h"
 #include "thermostat.h"
 #include "communication.h"
