@@ -35,6 +35,16 @@
          divided into <r_bins> equidistant bins. The output
          corresponds to the blockfile format (\ref blockformat): <br>
 	 { parameters } { { <r-value> <rdf-value> } ... }
+    <li> \verbatim analyze pressure [{ total[s] | ideal | fene [<type_num>] | harmonic [<type_num>] | lj [<type1> [<type2>]] | coulomb }]\endverbatim
+         derives the <i>pressure</i> and all its contributions in the system. Return value is a tcl-list looking like
+	 \verbatim 0.002753 0.000008 { ideal 0.002000 } { { FENE -0.006172 0.000038 } }  { lj 0.005996 0.000023 } { coulomb 0.000930 0.000001 }\endverbatim
+	 specifying the pressure, its square, the ideal gas pressure, the contributions from bonded interactions, the contributions from 
+	 non-bonded interactions, the electrostatic contributions. If only certain contributions are desired, the additional options may be used
+	 to access those; in that case only a two-value tcl-list is returned (e.g. <tt>-0.006172 0.000038</tt> for <tt>analyze pressure fene</tt> 
+	 in the above example), consisting of the requested contribution and its square (except for <tt>analyze pressure total</tt> 
+	 which only returns the pressure, while <tt>analyze pressure totals</tt> returns both, e.g. <tt>0.002753 0.000008</tt> in the above example).
+	 If the <type_num> are given as well, only the contributions of interactions with that specific <type_num> are considered, returning e.g.
+	 <tt>0.006136 0.000023</tt> for <tt>analyze pressure lj 0</tt> and <tt>-0.006172 0.000038</tt> for <tt>analyze pressure fene 0</tt>.
     <li> \verbatim analyze set <structure info> \endverbatim
          defines the structure of the current system. The second argument defines the topology to set, i. e. 'chains' at the moment.
 	 <ul>
