@@ -450,8 +450,14 @@ void exchange_ghost()
   }
 
   /* realloc pos/force buffers */
-  if(g_send_buf.max > g_recv_buf.max) g_recv_buf.max = 3*g_send_buf.max;
-  else                                g_send_buf.max = 3*g_recv_buf.max;
+  if(g_send_buf.max > g_recv_buf.max) {
+    g_send_buf.max *= 3;
+    g_recv_buf.max =  g_send_buf.max;
+  } 
+  else {
+    g_recv_buf.max *= 3;
+    g_send_buf.max =  g_recv_buf.max;
+  }
   realloc_doublelist(&send_buf, g_send_buf.max);
   realloc_doublelist(&recv_buf, g_recv_buf.max);
 
@@ -514,28 +520,31 @@ void update_ghost_pos()
 
 void collect_ghost_forces()
 {
-  int dir, c, n, g, i;
+  int s_dir, r_dir;
+  int c, n, g, i;
   ParticleList *pl;
 
   GHOST_TRACE(fprintf(stderr,"%d: collect_ghost_forces:\n",this_node));
 
-  for(dir=5; dir>=0; dir--) {         /* direction loop backward */
+  for(s_dir=5; s_dir>=0; s_dir--) {         /* direction loop backward */
+    if(s_dir%2 == 0) r_dir = s_dir+1;
+    else             r_dir = s_dir-1;
+
     /* loop recv cells - copy forces to buffer*/
     g=0;
-    for(c=0; c<recv_cells[dir].n; c++) {
-      pl = &(cells[recv_cells[dir].e[c]].pList);
+    for(c=0; c<recv_cells[r_dir].n; c++) {
+      pl = &(cells[recv_cells[r_dir].e[c]].pList);
       for(n=0; n< pl->n; n++) {
 	for(i=0;i<3;i++) send_buf.e[g+i] = pl->part[n].f[i];
 	g += 3;
       }
     }
     /* send forces */
-    send_posforce(dir,3*recv_cells[dir].e[recv_cells[dir].n],
-		  3*send_cells[dir].e[send_cells[dir].n]);
+    send_posforce(r_dir, ghost_recv_size[r_dir], ghost_send_size[s_dir]);
     /* loop send cells - add buffer forces to local forces */
     g=0;
-    for(c=0; c<send_cells[dir].n; c++) {
-      pl = &(cells[send_cells[dir].e[c]].pList);
+    for(c=0; c<send_cells[s_dir].n; c++) {
+      pl = &(cells[send_cells[s_dir].e[c]].pList);
       for(n=0;n< pl->n;n++) {
 	for(i=0; i<3; i++) pl->part[n].f[i] += recv_buf.e[g+i];
 	g += 3;
@@ -716,7 +725,7 @@ void send_ghosts(int s_dir)
 	MPI_Send(n_send_ghosts[s_dir].e, n_send_ghosts[s_dir].n, MPI_INT,
 		 node_neighbors[s_dir], REQ_SEND_GHOSTS, MPI_COMM_WORLD);
 
-	ghost_send_size[s_dir] = n_send_ghosts[s_dir].e[n_send_ghosts[s_dir].n];
+	ghost_send_size[s_dir] = n_send_ghosts[s_dir].e[send_cells[s_dir].n];
   
 	MPI_Send(g_send_buf.part, ghost_send_size[s_dir]*sizeof(ReducedParticle), MPI_BYTE, 
 		 node_neighbors[s_dir], REQ_SEND_GHOSTS, MPI_COMM_WORLD);
@@ -725,7 +734,7 @@ void send_ghosts(int s_dir)
 	MPI_Recv(n_recv_ghosts[r_dir].e, n_recv_ghosts[r_dir].n, MPI_INT,
 		 node_neighbors[r_dir],REQ_SEND_GHOSTS,MPI_COMM_WORLD,&status);
 
-	ghost_recv_size[r_dir] = n_recv_ghosts[r_dir].e[n_recv_ghosts[r_dir].n];
+	ghost_recv_size[r_dir] = n_recv_ghosts[r_dir].e[recv_cells[r_dir].n];
 	if(ghost_recv_size[r_dir] > g_recv_buf.max) 
 	  realloc_redParticles(&g_recv_buf, ghost_recv_size[r_dir]);
 
@@ -738,17 +747,19 @@ void send_ghosts(int s_dir)
     
     fprintf(stderr,"%d: ghost exchange to same node: s_dir=%d r_dir=%d\n",this_node,s_dir,r_dir);
 
+    ghost_send_size[s_dir] = n_send_ghosts[s_dir].e[send_cells[s_dir].n];
+ 
     tmp_ip                    = n_send_ghosts[s_dir].e;
     n_send_ghosts[s_dir].e    = n_recv_ghosts[r_dir].e;
     n_recv_ghosts[r_dir].e    = tmp_ip;
     tmp                       = n_send_ghosts[s_dir].max;
     n_send_ghosts[s_dir].max  = n_recv_ghosts[r_dir].max;
-    n_recv_ghosts[r_dir].max  = tmp ;
+    n_recv_ghosts[r_dir].max  = tmp;
     tmp                       = n_send_ghosts[s_dir].n;
     n_send_ghosts[s_dir].n    = n_recv_ghosts[r_dir].n;
-    n_recv_ghosts[r_dir].n    = tmp ;
+    n_recv_ghosts[r_dir].n    = tmp;
 
-    ghost_recv_size[r_dir] = n_recv_ghosts[r_dir].e[n_recv_ghosts[r_dir].n];
+    ghost_recv_size[r_dir] = n_recv_ghosts[r_dir].e[recv_cells[r_dir].n];
     if(ghost_recv_size[r_dir] > g_recv_buf.max) 
       realloc_redParticles(&g_recv_buf, ghost_recv_size[r_dir]);
 
@@ -758,6 +769,9 @@ void send_ghosts(int s_dir)
     tmp             = g_send_buf.max;
     g_send_buf.max  = g_recv_buf.max; 
     g_recv_buf.max  = tmp;
+    tmp             = g_send_buf.n;
+    g_send_buf.n    = g_recv_buf.n; 
+    g_recv_buf.n    = tmp;
   }
 }
 

@@ -81,24 +81,33 @@ void build_verlet_lists()
     cell = CELL_PTR(m, n, o);
     p1   = cell->pList.part;
     np1  = cell->pList.n;
+    
+    /* interactions within the cell (neighbor cell 0)*/
+    pl  = &cell->nList[0].vList;
+    for(i=0; i < np1; i++) {
+      memcpy(p1[i].p_old, p1[i].r.p, 3*sizeof(double));
+      for(j = (i+1); j < np1; j++) {
+	dist2 = distance2(p1[i].r.p,p1[j].r.p);
+	if(dist2 <= max_range2) {
+	  add_pair(pl, &p1[i], &p1[j]);
+	}
+      }	
+      resize_verlet_list(pl);
+    }
 
-    for(nc=0; nc < cell->n_neighbors; nc++) {
+    /* interactions with neighbor cells */
+    for(nc=1; nc < cell->n_neighbors; nc++) {
       pl  = &cell->nList[nc].vList;
       p2  = cell->nList[nc].pList->part;
       np2 = cell->nList[nc].pList->n;
       for(i=0; i < np1; i++) {
-	/* set 'new old' coordinates */
-	if(nc == 0) memcpy(p1[i].p_old, 
-			   p1[i].r.p, 3*sizeof(double));
-
 	for(j = 0; j < np2; j++) {
 	  dist2 = distance2(p1[i].r.p,p2[j].r.p);
 	  if(dist2 <= max_range2) {
 	    add_pair(pl, &p1[i], &p2[j]);
 	  }
-	}
+	}	
       }
-      /* make the verlet list smaller again, if possible */
       resize_verlet_list(pl);
     }
   }
