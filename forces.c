@@ -38,11 +38,11 @@ void force_calc()
     for(j=0;j<3;j++)
       particles[i].f[j] = 0;
       
-  for(i=0;i<n_verletList;i=i+2)
+  for(i=0;i<2*n_verletList;i=i+2)
     {
       id1 = verletList[i];
       id2 = verletList[i+1];
-      ia_params = get_ia_param(id1,id2);
+      ia_params = get_ia_param(particles[id1].type,particles[id2].type);
       for(j=0;j<3;j++) d[j] = particles[id1].p[j] - particles[id2].p[j];
       dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
       dist = sqrt(dist2);

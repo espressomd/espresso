@@ -29,6 +29,13 @@ void ghost_init()
 
   GHOST_TRACE(fprintf(stderr,"%d: ghost_init:\n",this_node));
 
+  /* Init exchange particles */
+  max_send_le = max_recv_le = max_send_ri = max_recv_ri = PART_INCREMENT;
+  part_send_le_buf = (Particle *)malloc(max_send_le*sizeof(Particle));
+  part_recv_le_buf = (Particle *)malloc(max_recv_le*sizeof(Particle));
+  part_send_ri_buf = (Particle *)malloc(max_send_ri*sizeof(Particle));
+  part_recv_ri_buf = (Particle *)malloc(max_recv_ri*sizeof(Particle));
+
   /* preparation of help variables */
   for(i=0;i<3;i++) {
     gcg[i] = ghost_cell_grid[i];
@@ -92,22 +99,64 @@ void ghost_init()
   n_recv_ghosts = (int *)malloc(max_anz*sizeof(int));
  
 
-  /* particle, force/pos buffers */
-  buf_size = PART_INCREMENT;
-  
-  part_send_buf  = (Particle *)malloc(buf_size*sizeof(Particle));
-  part_recv_buf  = (Particle *)malloc(buf_size*sizeof(Particle));
-  part_send_buf2 = (Particle *)malloc(buf_size*sizeof(Particle));
-  part_recv_buf2 = (Particle *)malloc(buf_size*sizeof(Particle));
-  send_buf       = (double *)malloc(3*buf_size*sizeof(double));
-  recv_buf       = (double *)malloc(3*buf_size*sizeof(double));
+  /* init exchange forces/positions  */
+  max_send_buf = max_recv_buf = PART_INCREMENT;
+  send_buf       = (double *)malloc(3*max_send_buf*sizeof(double));
+  recv_buf       = (double *)malloc(3*max_recv_buf*sizeof(double));
   
   GHOST_TRACE(fprintf(stderr,"allocation done (exit ghost_init)\n"));
 }
 
 void exchange_part()
 {
+  int d,i,n;
+  int le_ind,ri_ind;
+  int recv_le,recv_ri;
+  int pe_pos[3];
+
   GHOST_TRACE(fprintf(stderr,"%d: exchange_part:\n",this_node));
+
+  map_node_array(this_node,&pe_pos[0],&pe_pos[1],&pe_pos[2]);
+
+  /* fold coordinates to primary simulation box */
+  for(n=0;n<n_particles;n++) fold_particle(particles[n].p,particles[n].i);
+
+  for(d=0;d<3;d++) {                           /* direction loop */  
+    le_ind=0; ri_ind=0;
+    for(n=0;n<n_particles;n++) {               /* particle loop */
+      if(particles[n].p[d] <  my_left[d] ) {   /* to the left */
+	if(le_ind > max_send_le) {       
+	  max_send_le += PART_INCREMENT;
+	  part_send_le_buf = (Particle *)realloc(part_send_le_buf,max_send_le*sizeof(Particle));
+	}
+	memcpy(&part_send_le_buf[le_ind],&particles[n],sizeof(Particle));
+	le_ind++;
+      }
+      if(particles[n].p[d] >= my_right[d]) {    /* to the right */
+	if(ri_ind > max_send_ri) {
+	  max_send_ri += PART_INCREMENT;
+	  part_send_ri_buf = (Particle *)realloc(part_send_ri_buf,max_send_ri*sizeof(Particle));
+	}
+	memcpy(&part_send_ri_buf[ri_ind],&particles[n],sizeof(Particle));
+	ri_ind++;
+      }
+    }
+    /* send/recieve particles */
+    /* First all processors with even pe grid position send their stuff 
+       and then all the odd ones.  */
+    //    if(pe_pos[d]%2==0) {
+    //  MPI_Send(&le_ind, 1, MPI_INT, le_neighbors[d],0 , MPI_COMM_WORLD);
+    //  MPI_Send(part_send_le_buf, le_ind, MPI_PARTICLE, le_neighbors[d]
+    //	       ,0 , MPI_COMM_WORLD);
+    //}
+    //else {
+    //  MPI_Recv(&max_recv_le, 1, MPI_INT, ri_neighbors[d],0 , MPI_COMM_WORLD);
+    //  part_recv_le_buf = (Particle *)realloc(part_recv_le_buf,max_recv_le*sizeof(Particle));
+    //  MPI_Recv(part_recv_le_buf, max_recv_le, MPI_PARTICLE, ri_neighbors[d]
+    //       ,0 , MPI_COMM_WORLD);
+    //}
+  }
+  
 }
 
 void exchange_ghost()
@@ -133,12 +182,6 @@ void ghost_exit()
   free(recv_cells);
   free(n_send_ghosts);
   free(n_recv_ghosts);
-  if(buf_size>0) {
-    free(part_send_buf);
-    free(part_recv_buf);
-    free(send_buf);
-    free(recv_buf);
-  } 
   
 }
 
@@ -185,3 +228,4 @@ int sub_grid_indices(int* list, int start, int max,
 
   return size;
 }
+

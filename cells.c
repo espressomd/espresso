@@ -119,8 +119,6 @@ void sort_particles_into_cells()
 
   /* particle loop */
   for(n=0;n<n_particles;n++) {
-    /* fold coordinates to primary simulation box */
-    fold_particle(particles[n].p,particles[n].i);
     /* calculate cell index */
     for(i=0;i<3;i++) 
       cpos[i] = (int)((particles[n].p[i]-my_left[i])*inv_cell_size[i])+1;

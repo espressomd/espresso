@@ -22,7 +22,8 @@ extern int nprocs;
  * topology from grid.c
  ****************************************/
 extern int processor_grid[3];
-extern int neighbors[6];
+extern int le_neighbors[3];
+extern int ri_neighbors[3];
 
 /****************************************
  * box dimensions from global.c

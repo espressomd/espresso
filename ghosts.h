@@ -24,6 +24,21 @@
    up    3    down  4
    back  5    for   6            */
 
+/* Exchange Particles */
+
+/** Buffer for particles to send to left. */
+Particle *part_send_le_buf;
+int       max_send_le;
+/** Buffer for particles to recieve from left. */
+Particle *part_recv_le_buf;
+int       max_recv_le;
+/** Buffer for particles to send.to right. */
+Particle *part_send_ri_buf;
+int       max_send_ri;
+/** Buffer for particles to recieve from right. */
+Particle *part_recv_ri_buf;
+int       max_recv_ri;
+
 /** number of cells to send in direction X. */
 int n_send_cells[6];
 /** list of cell indices to send. */
@@ -40,20 +55,13 @@ int *n_send_ghosts;
 /** Number of ghosts in each recv cell. */ 
 int *n_recv_ghosts;
 
-/** Size of send/recv buffers */
-int buf_size;
-/** Buffer for particles to send. */
-Particle *part_send_buf;
-/** Buffer for particles to recieve. */
-Particle *part_recv_buf;
-/** Buffer for particles to send. */
-Particle *part_send_buf2;
-/** Buffer for particles to recieve. */
-Particle *part_recv_buf2;
+
 /** Buffer for forces/coordinates to send. */
 double *send_buf;
+int max_send_buf;
 /** Buffer for forces/coordinates to recieve. */
 double *recv_buf;
+int max_recv_buf;
 
 /** initialize ghost particle structures. */
 void ghost_init();

@@ -15,10 +15,6 @@
 #include "verlet.h"
 #include "utils.h"
 
-extern int   n_verletList;
-extern int max_verletList;
-extern int    *verletList;
-extern Particle *particles;
 double Bjerrum;
 
 
