@@ -63,8 +63,8 @@ proc blockfile_read_auto_particles {channel read auto} {
 		 set type $idx; incr idx }
 	    "^m"      { if {![regexp "^$i" "molecule_id"]} { error " $i is not a particle property" }
 		 set mol $idx; incr idx }
-	    "^q$"      { set q $idx; incr idx }
-	    "^f"      { if {![regexp "^$i" "force"]} { error " $i is not a particle property" }
+	    "^q$"     { set q $idx; incr idx }
+	    "^fo"     { if {![regexp "^$i" "force"]} { error " $i is not a particle property" }
 		 set f $idx; incr idx 3 }
 	    "^v"      { if {![regexp "^$i" "v"]} { error " $i is not a particle property" }
 		 set v $idx; incr idx 3 }
