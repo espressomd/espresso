@@ -20,6 +20,8 @@
 	\verbatim constraint maze nsphere <n> dim <d> sphrad <r_s> cylrad <r_c> type 10 <id> \endverbatim
     The resulting surface is \<n\> spheres of radius \<r_s\> along each dimension, connected by cylinders of radius \<r_c\>. The spheres have simple cubic symmetry. The spheres are distributed evenly by dividing the \<box_l\> by \<n\>. Dimension of the maze can be controlled by \<d\>: 0 for one dimensional, 1 for two dimensional and 2 for three dimensional maze.
     
+	\verbatim constraint force <n> \endverbatim
+	gives the force actinng on the \<n\>ths constraint.
 	\verbatim constraint delete <num> \endverbatim
 	Delete constraint with number \<num\>. 
 	This may change the numbers of the other constraints. 
