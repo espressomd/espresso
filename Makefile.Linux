@@ -91,6 +91,8 @@ MODEL=$(shell awk '/\`model name/ { \
 	exit }' \/proc/cpuinfo)
 
 ifeq ($(ICC),yes)
+     version=$(shell icc --version)
+
      ifeq ($(BLADE),yes)
 # activate optimization for Blade-Xeon-Procs (see http://www.rzg.mpg.de/docs/languages/Intel_cc.html)
           HOSTFLAGS=-tpp7 -axW -xW -march=pentium4 -I. -I/afs/ipp/@sys/soft/fftw/f95i/include
@@ -109,7 +111,11 @@ ifeq ($(ICC),yes)
      endif
 
      CFLAGS=-O3 -ip -w1 $(HOSTFLAGS)
-     # if you get excessive warnings, try -wd 1572,1173
+     # switch off silly warnings for new 8.1 compiler
+     # note the space in the version number! Thanks, intel
+     ifeq ($(version),8.1 )
+	CFLAGS += -wd 1572,1173
+     endif
 
      # debug compiler flags
      ifeq ($(DEBUG),yes)
