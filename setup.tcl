@@ -12,14 +12,14 @@
     fi;
 
 ########### parameters
-set npart 100
-setmd box_l 10.0 10.0 8.0
+set npart 300
+setmd box_l 10.0 10.0 10.0
 set write finish
 set write_steps 10
 set mdst 1.2
 set maxtime 200
 
-setmd periodic 1 1 0
+setmd periodic 1 1 1
 setmd bjerrum 0
 
 source polywr.tcl

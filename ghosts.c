@@ -63,21 +63,21 @@
 /** \name Variables for particle exchange */
 /*@{*/
 /** Buffer for particles to send. */
-Particle *p_send_buf;
-int       n_p_send_buf;
-int       max_p_send_buf;
+static Particle *p_send_buf;
+static int       n_p_send_buf;
+static int       max_p_send_buf;
 /** Buffer for particles to recieve. */
-Particle *p_recv_buf;
-int       n_p_recv_buf;
-int       max_p_recv_buf;
+static Particle *p_recv_buf;
+static int       n_p_recv_buf;
+static int       max_p_recv_buf;
 /** Buffer for particles bonds to send. */
-int      *b_send_buf;
-int       n_b_send_buf;
-int       max_b_send_buf;
+static int      *b_send_buf;
+static int       n_b_send_buf;
+static int       max_b_send_buf;
 /** Buffer for particles bonds recieve. */
-int      *b_recv_buf;
-int       n_b_recv_buf;
-int       max_b_recv_buf;
+static int      *b_recv_buf;
+static int       n_b_recv_buf;
+static int       max_b_recv_buf;
 /*@}*/
 
 /** \name Variables for ghost particle exchange */

@@ -16,7 +16,7 @@
 #include <string.h> 
 #include <math.h>
 
-#ifdef PLAT_OSF1
+#ifdef HAS_OLD_FFTW
 #include <fftw.h>
 #include <rfftw.h>
 #else
@@ -46,18 +46,18 @@ fft_forw_plan fft_plan[4];
 fft_back_plan fft_back[4];
 
 /** Maximal size of the communication buffers. */
-int max_comm_size=0;
+static int max_comm_size=0;
 /** Maximal local mesh size. */
-int max_mesh_size=0;
+static int max_mesh_size=0;
 /** send buffer. */
-double *send_buf;
+static double *send_buf;
 /** receive buffer. */
-double *recv_buf;
+static double *recv_buf;
 /** Buffer for receive data. */
-double *data_buf;
+static double *data_buf;
 /** Complex data pointers. */
-fftw_complex *c_data;
-fftw_complex *c_data_buf;
+static fftw_complex *c_data;
+static fftw_complex *c_data_buf;
 
 /************************************************
  * privat functions
@@ -244,7 +244,7 @@ int fft_init(double *data)
 	fft_plan[i].recv_size[j] *= 2;
       }
     }
-    // DEBUG
+    /* DEBUG */
     for(j=0;j<n_nodes;j++) {
       MPI_Barrier(MPI_COMM_WORLD);
       if(j==this_node) FFT_TRACE(print_fft_plan(fft_plan[i]));

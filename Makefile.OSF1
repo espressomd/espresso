@@ -41,7 +41,7 @@ LDLIBS+=-lmpi
 
 ############ flags needed for FFTW
 # flags needed for FFTW. Note this is VERY specific for our cluster
-CFLAGS += -DPLAT_OSF1
+CFLAGS += -DHAS_OLD_FFTW
 CFLAGS += -I/usr/local/include
 
 ############ flags needed for Tcl

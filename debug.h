@@ -45,7 +45,7 @@
 /* #define MALLOC_DEBUG */
 
 #if defined FORCE_CORE || defined MPI_CORE
-/// this functions kills the task with SIGSEGV
+/** this functions kills the task with SIGSEGV */
 extern void core();
 
 /** by setting this variable to 1, a regular exit is

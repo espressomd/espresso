@@ -15,14 +15,14 @@
 # settings
 ##################################################
 set tcl_precision 5
-set use_imd y
+set use_imd n
 
 set write_steps 10
 set configs 5000
 
-setmd periodic 1 0 0
-setmd bjerrum 0
-setmd box_l 7.0 7.0 7.0
+setmd periodic 1 1 1
+setmd bjerrum 1
+setmd box_l 10.0 10.0 10.0
 
 # external tcl files 
 ##################################################

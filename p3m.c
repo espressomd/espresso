@@ -164,12 +164,12 @@ void   P3M_init()
 {
   int i,n;
 
-  if(p3m.bjerrum == 0.0) {       // no electrostatics !
+  if(p3m.bjerrum == 0.0) {       /* no electrostatics ! */
     p3m.r_cut  = 0.0;
     p3m.r_cut2 = 0.0;
     P3M_TRACE(fprintf(stderr,"%d: P3M_init: Bjerrum length is zero. Electrostatics switched off!\n",this_node));
   }
-  else {                         // prepare long range electrostatics
+  else {                         /* prepare long range electrostatics */
     /* DEBUG */
     MPI_Barrier(MPI_COMM_WORLD);   
     P3M_TRACE(fprintf(stderr,"%d: P3M Parameters: Bjerrum = %f, alpha = %f, r_cut = %f\n"
@@ -639,11 +639,6 @@ void calc_influence_function()
 	  fak2 /= ( ( SQR(d_op[n[0]])+SQR(d_op[n[1]])+SQR(d_op[n[2]]) ) * SQR(denominator) );
 	  g[ind] = fak1*fak2;
 	}
-	//	MPI_Barrier(MPI_COMM_WORLD);   
-	// P3M_TRACE(fprintf(stderr,"%d: g[%d](%d,%d,%d)=%.3e, nom=(%.3e,%.3e,%.3e) den=%.3e, d_op=(%d,%d,%d)\n",
-	//		  this_node,ind,n[0],n[1],n[2],g[ind],
-	//	  nominator[0],nominator[1],nominator[2],denominator,
-	//	  (int)d_op[n[0]],(int)d_op[n[1]],(int)d_op[n[2]]));
       }
   
 }
@@ -702,7 +697,7 @@ void add_block(double *in, double *out, int start[3], int size[3], int dim[3])
 
   for(s=0 ;s<size[0]; s++) {
     for(m=0; m<size[1]; m++) {
-      //  P3M_TRACE(fprintf(stderr,"s=%d m=%d: li_out=%d li_in=%d\n",s,m,li_out,li_in));
+      /*  P3M_TRACE(fprintf(stderr,"s=%d m=%d: li_out=%d li_in=%d\n",s,m,li_out,li_in)); */
       for(f=0; f<size[2]; f++) {
 	out[li_out++] += in[li_in++];
       }
