@@ -174,14 +174,7 @@ proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA}
     eval exec rm -f plotObsTmp.p
 }
 
-proc plotJoin { destinations final } {
-    for {set i 0} {$i < [llength $destinations]} {incr i} {
-	if {[expr $i+1]<[llength $destinations]} {
-	    eval exec gs -dNOPAUSE -sDEVICE=pswrite -sOutputFile=$final.$i.ps [lindex $destinations $i].ps [lindex $destinations [expr $i+1]].ps -c quit
-	    lappend destinationsJ "$final.$i.ps"
-	    incr i
-	} else { lappend destinationsJ [lindex $destinations $i] }
-    }
-    eval exec gs -dNOPAUSE -sDEVICE=pswrite -sOutputFile=$final.A.ps $destinationsJ -c quit
+proc plotJoin { sources final } {
+    eval exec  gs -dNOPAUSE -sDEVICE=pswrite -sOutputFile=$final.A.ps $sources -c quit
     eval exec pstops "2:0L@.7(21cm,0)+1L@.7(21cm,14.85cm)" $final.A.ps $final.B.ps
 }
