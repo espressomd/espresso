@@ -218,7 +218,7 @@ void calc_energies()
 
 int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
 {
-  /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | gb <type1> <type2> | coulomb | kinetic /total }]' */
+  /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | gb <type1> <type2> | coulomb | kinetic | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   int i, j, p;
   int out_mode=0;
