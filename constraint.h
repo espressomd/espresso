@@ -205,25 +205,16 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, Particle *c_p, Constraint_cy
 
 MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
 {
+#ifdef ELECTROSTATICS
   int i;
-  double fac, dist, vec[3], c_dist_2, c_dist;
-  IA_parameters *ia_params;
-  
-  ia_params=get_ia_param(p1->p.type, c_p->p.type);
+  double fac, vec[2], c_dist_2;
 
-  /* also needed for coulomb */
   c_dist_2 = 0.0;
   for(i=0;i<2;i++) {
     vec[i] = p1->r.p[i] - c->pos[i];
     c_dist_2 += SQR(vec[i]);
   }
-  vec[2] = 0.;
 
-  /* charge stuff. This happens even if the particle does not feel the constraint. The electrostatic
-     formulas for pbc highly dislike partial interactions anyways.
-     THIS HAS TO BE DONE FIRST SINCE LJ CHANGES vec!!!
-  */
-#ifdef ELECTROSTATICS
   if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->lambda != 0.0) {
     fac = 2*coulomb.prefactor*c->lambda*p1->p.q/c_dist_2;
     p1->f.f[0]  += fac*vec[0];
@@ -232,33 +223,14 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
     c_p->f.f[1] -= fac*vec[1];
   }
 #endif
-  if (ia_params->LJ_cut > 0. ) {
-    /* put an infinite cylinder along z axis */
-    c_dist = sqrt(c_dist_2);
-    dist = c_dist - c->rad;
-
-    if (dist > 0) {
-      fac = dist / c_dist;
-      for(i=0;i<2;i++) vec[i] *= fac;
-      add_lj_pair_force(p1, c_p, ia_params, vec, dist);
-    }
-    else {
-      fprintf(stderr,"CONSTRAINT ROD: ERROR! part %d at (%.2e,%.2e,%.2e) within rod!\n",
-	      p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-      errexit();
-    }
-  }
 }
 
-MDINLINE double rod_energy(Particle *p1, Particle *c_p, Constraint_rod *c, double *coulomb_en)
+MDINLINE double rod_energy(Particle *p1, Particle *c_p, Constraint_rod *c)
 {
+#ifdef ELECTROSTATICS
   int i;
-  double lj_en, fac, dist, vec[3], c_dist_2, c_dist;
-  IA_parameters *ia_params;
-  
-  ia_params=get_ia_param(p1->p.type, c_p->p.type);
+  double vec[2], c_dist_2;
 
-  /* also needed for coulomb */
   c_dist_2 = 0.0;
   for(i=0;i<2;i++) {
     vec[i] = p1->r.p[i] - c->pos[i];
@@ -266,39 +238,35 @@ MDINLINE double rod_energy(Particle *p1, Particle *c_p, Constraint_rod *c, doubl
   }
   vec[2] = 0.;
 
-  /* charge stuff. This happens even if the particle does not feel the constraint. The electrostatic
-     formulas for pbc highly dislike partial interactions anyways.
-     The constant gamma is formally necessary for MMM1D, although it just adds a constant to
-     the electrostatic energy. But since the rod formula here is for one--dimensional periodicity
-     anyways, this probably doesn't matter. 
-     THIS HAS TO BE DONE FIRST SINCE LJ CHANGES vec!!!
-  */
-#ifdef ELECTROSTATICS
-  fac = coulomb.prefactor*p1->p.q*c->lambda;
-  if (fac != 0.0)
-    *coulomb_en = fac*(-log(c_dist_2*SQR(box_l_i[2])) + 2*(M_LN2 - C_GAMMA));
+  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->lambda != 0.0)
+    return coulomb.prefactor*p1->p.q*c->lambda*(-log(c_dist_2*SQR(box_l_i[2])) + 2*(M_LN2 - C_GAMMA));
+  else
 #endif
-  if (ia_params->LJ_cut > 0. ) {
-    /* put an infinite cylinder along z axis */
-    c_dist = sqrt(c_dist_2);
-    dist = c_dist - c->rad;
+    return 0;
+}
 
-    if (dist > 0) {
-      fac = dist / c_dist;
-      for(i=0;i<2;i++) vec[i] *= fac;
-      lj_en = lj_pair_energy(p1, c_p, ia_params, vec, dist);
-    }
-    else {
-      /* prevent a warning */
-      lj_en = 0;
-      fprintf(stderr,"CONSTRAINT ROD: ERROR! part %d at (%.2e,%.2e,%.2e) within rod!\n",
-	      p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-      errexit();
-    }
-    return lj_en;
+MDINLINE void add_plate_force(Particle *p1, Particle *c_p, Constraint_plate *c)
+{
+#ifdef ELECTROSTATICS
+  double f;
+  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->sigma != 0.0) {
+    f = 2*M_PI*coulomb.prefactor*c->sigma*p1->p.q;
+    if (p1->r.p[2] < c->pos)
+      f = -f;
+    p1->f.f[2]  += f;
+    c_p->f.f[2] -= f;
   }
+#endif
+}
 
-  return 0;
+MDINLINE double plate_energy(Particle *p1, Particle *c_p, Constraint_plate *c)
+{
+#ifdef ELECTROSTATICS
+  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->sigma != 0.0)
+    return 2*M_PI*coulomb.prefactor*c->sigma*p1->p.q*fabs(p1->r.p[2] < c->pos);
+  else
+#endif
+    return 0;
 }
 
 MDINLINE void add_constraints_forces(Particle *p1)
@@ -365,9 +333,13 @@ MDINLINE void add_constraints_forces(Particle *p1)
       }
       break;
 
+      /* electrostatic "constraints" */
     case CONSTRAINT_ROD:
-      /* may be electrostatic as well as LJ, so calculate always */
       add_rod_force(p1, &constraints[n].part_rep, &constraints[n].c.rod);
+      break;
+
+    case CONSTRAINT_PLATE:
+      add_plate_force(p1, &constraints[n].part_rep, &constraints[n].c.plate);
       break;
     }
   }
@@ -375,7 +347,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
 
 MDINLINE double add_constraints_energy(Particle *p1)
 {
-  int n;
+  int n, type;
   double dist, vec[3];
   double lj_en, coulomb_en;
   IA_parameters *ia_params;
@@ -440,14 +412,19 @@ MDINLINE double add_constraints_energy(Particle *p1)
       }
       break;
 
-    case CONSTRAINT_ROD: {
-      /* may be electrostatic as well as LJ, so calculate always */
-      lj_en = rod_energy(p1, &constraints[n].part_rep, &constraints[n].c.rod, &coulomb_en);
+    case CONSTRAINT_ROD:
+      coulomb_en = rod_energy(p1, &constraints[n].part_rep, &constraints[n].c.rod);
+      break;
+
+    case CONSTRAINT_PLATE:
+      coulomb_en = plate_energy(p1, &constraints[n].part_rep, &constraints[n].c.plate);
       break;
     }
-    }
+
     energy.coulomb[0] += coulomb_en;
-    *obsstat_nonbonded(&energy, p1->p.type, (&constraints[n].part_rep)->p.type) += lj_en;
+    type = (&constraints[n].part_rep)->p.type;
+    if (type >= 0)
+      *obsstat_nonbonded(&energy, p1->p.type, type) += lj_en;
   }
   return 0.;
 }

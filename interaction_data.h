@@ -87,10 +87,12 @@
 #define CONSTRAINT_SPH 2
 /** (finite) cylinder shaped constraint applied */
 #define CONSTRAINT_CYL 3
-/** Rod-like constraint applied. In addition to the general cylinder the rod also allows for a line charge. */
+/** Rod-like charge. */
 #define CONSTRAINT_ROD 4
+/** Plate-like charge. */
+#define CONSTRAINT_PLATE 5
 /** maze-like constraint applied */
-#define CONSTRAINT_MAZE 5
+#define CONSTRAINT_MAZE 6
 
 /*@}*/
 
@@ -306,12 +308,19 @@ typedef struct {
 typedef struct {
   /** center of the cylinder in the x-y plane. */
   double pos[2];
-  /** cylinder radius. */
-  double rad;
   /** line charge density. Only makes sense if the axis along the rod is
-      periodically replicated */
+      periodically replicated and only with MMM1D. */
   double lambda;
 } Constraint_rod;
+
+/** Parameters for a PLATE constraint. */
+typedef struct {
+  /** height of plane in z-axis. */
+  double pos;
+  /** charge density. Only makes sense if the axis along the rod is
+      periodically replicated and only with MMM2D. */
+  double sigma;
+} Constraint_plate;
 
 /** Parameters for a MAZE constraint. */
 typedef struct {
@@ -335,6 +344,7 @@ typedef struct {
     Constraint_sphere sph;
     Constraint_cylinder cyl;
     Constraint_rod rod;
+    Constraint_plate plate;
     Constraint_maze maze;
   } c;
 

@@ -2235,12 +2235,14 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, "rod center ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, con->c.rod.pos[1], buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.rod.rad, buffer);
-    Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, con->c.rod.lambda, buffer);
     Tcl_AppendResult(interp, " lambda ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.p.type);
-    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    break;
+  case CONSTRAINT_PLATE:
+    Tcl_PrintDouble(interp, con->c.plate.pos, buffer);
+    Tcl_AppendResult(interp, "plate height ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.plate.sigma, buffer);
+    Tcl_AppendResult(interp, " sigma ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_MAZE:
     Tcl_PrintDouble(interp, con->c.maze.nsphere, buffer);
@@ -2542,11 +2544,9 @@ int constraint_rod(Constraint *con, Tcl_Interp *interp,
 		   int argc, char **argv)
 {
   con->type = CONSTRAINT_ROD;
-  /* invalid entries to start of */
-  con->c.rod.pos[0] = con->c.rod.pos[1] = 0;
-  con->c.rod.rad = -1;
-  con->c.rod.lambda = 0;
   con->part_rep.p.type = -1;
+  con->c.rod.pos[0] = con->c.rod.pos[1] = 0;
+  con->c.rod.lambda = 0;
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
       if(argc < 3) {
@@ -2559,22 +2559,12 @@ int constraint_rod(Constraint *con, Tcl_Interp *interp,
       argc -= 3; argv += 3;
     }
     else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint rod radius <r> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.rod.rad)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
+      Tcl_AppendResult(interp, "constraint rod radius <r> is deprecated, please a cylinder for LJ component", (char *) NULL);
+      return (TCL_ERROR);
     }
     else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint rod type <t> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
+      Tcl_AppendResult(interp, "constraint rod type <t> is deprecated, please a cylinder for LJ component", (char *) NULL);
+      return (TCL_ERROR);
     }
     else if(!strncmp(argv[0], "lambda", strlen(argv[0]))) {
       if (argc < 1) {
@@ -2588,14 +2578,38 @@ int constraint_rod(Constraint *con, Tcl_Interp *interp,
     else
       break;
   }
-  if (con->c.rod.rad < 0 || con->part_rep.p.type < 0) {
-    Tcl_AppendResult(interp, "usage: constraint rod center <px> <py> rad <r> type <t>",
-		     (char *) NULL);
-    return (TCL_ERROR);
+  return (TCL_OK);
+}
+
+int constraint_plate(Constraint *con, Tcl_Interp *interp,
+		     int argc, char **argv)
+{
+  con->type = CONSTRAINT_PLATE;
+  con->part_rep.p.type = -1;
+  con->c.plate.pos = 0;
+  con->c.plate.sigma = 0;
+  while (argc > 0) {
+    if(!strncmp(argv[0], "height", strlen(argv[0]))) {
+      if(argc < 2) {
+	Tcl_AppendResult(interp, "constraint plate height <pz> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.plate.pos)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "sigma", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint rod sigma <s> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.plate.sigma)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else
+      break;
   }
-
-  make_particle_type_exist(con->type);
-
   return (TCL_OK);
 }
 
@@ -2701,6 +2715,11 @@ int constraint(ClientData _data, Tcl_Interp *interp,
   }
   else if(!strncmp(argv[1], "rod", strlen(argv[1]))) {
     status = constraint_rod(generate_constraint(),interp, argc - 2, argv + 2);
+    mpi_bcast_constraint(-1);
+    return status;
+  }
+  else if(!strncmp(argv[1], "plate", strlen(argv[1]))) {
+    status = constraint_plate(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
     return status;
   }
