@@ -88,13 +88,17 @@ proc timeStamp { destination prefix postfix suffix } {
 
 proc polyBlockWrite { destination {write_param "all"} {write_part "id pos type q v f"} } {
 
-    # Open output-file - compressed, if desired
-    if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
-	set f [open "|gzip -c - >$destination" w]
-    } else {
-	set f [open "$destination" "w"]
+    # Open output-file - compressed, if desired, or even as an open stream
+    if { ![regexp "^!\(.*\)" $destination dummy f] } {
+	set stream 1
+    } {
+	set stream 0
+	if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
+	    set f [open "|gzip -c - >$destination" w]
+	} else {
+	    set f [open "$destination" "w"]
+	}
     }
-    
     # Write parameters and interactions, if desired
     if { "$write_param" != "{}" } {
 	foreach j $write_param {
@@ -112,14 +116,15 @@ proc polyBlockWrite { destination {write_param "all"} {write_part "id pos type q
     }
 
     # Close file
-    flush $f; close $f
+    flush $f
+    if {!$stream} { close $f }
 }
 
 
 proc polyBlockWriteAll { destination {tclvar "all"} {cfg "1"} {rdm "random"} } {
-    polyBlockWrite $destination
     if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
-	set f [open "|gzip -c - >$destination" a] } else { set f [open "$destination" "a"] }
+	set f [open "|gzip -c - >$destination" w] } else { set f [open "$destination" w] }
+    polyBlockWrite "!$f"
     # Write tcl-variables, if desired
     if { "$tclvar" != "-" } { foreach j $tclvar { blockfile $f write tclvariable $j } }
     
