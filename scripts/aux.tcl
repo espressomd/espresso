@@ -152,7 +152,11 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
     if { "$var" != "-" } { blockfile $f write variable $var }
     if { "$tclvar" != "-" } { foreach j $tclvar { blockfile $f write tclvariable $j } }
     if { "$ia" != "-" } { blockfile $f write interactions }
-    blockfile $f write particles "id pos type q v f fix ext_force"
+    set part_write "id pos type q v f "
+    if { [regexp "ROTATION" [code_info]]} { lappend part_write "quat omega torque " }
+    if { [regexp "CONSTRAINTS" [code_info]]} { lappend part_write "fix" }
+    if { [regexp "EXTERNAL_FORCES" [code_info]]} { lappend part_write "ext_force" }
+    blockfile $f write particles "$part_write"
     blockfile $f write bonds
     if { "$ran" != "-" } { blockfile $f write random }
     if { "$ran" != "-" } { blockfile $f write bitrandom }
