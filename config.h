@@ -14,3 +14,8 @@
     \ref cells_init and \ref sort_particles_into_cells.
 */
 #define PARTIAL_PERIODIC
+
+/** if defined, you will get a warning when particles approach nearer than
+    0.9 sigma, because then it's likely the integration will blow up.
+*/
+/* #define LJ_WARN_WHEN_CLOSE */
