@@ -2,21 +2,76 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.1d *
+* v1.6.2d *
 ***********
 
 Current working revision.
 
 
-- v1.6.1d -
+- v1.6.2d -
 -----------
 
+(d) June 11th, 2004.
+(c) June 10th, 2004.
+(b) June  9th, 2004.
+(a) June  8th, 2004.
+
+New Features:
+(b) Added new analysis routine 'analyze p_inst' which does exactly the same as
+    'analyze pressure' but compensates for the difference in the ideal component
+    between 'analyze pressure' and 'setmd npt_p_inst', hence more accurately displaying
+    the contributions to the instantaneous pressure while using NpT.
+    Note that you may use this function in both NpT- and NVT-ensembles, but be aware
+    that since it is reverting the last half timestep in the velocity propagation,
+    extra care is required to make sure that such a thing is valid upon execution.
+(b) Added new global variable 'setmd npt_p_inst_av' which displays the instantaneous
+    pressure of the NpT-integrator averaged over the last integration cycle.
+(a) Added flag to 'checkpoint_read <source> [<read_all>]' so that you don't have to 
+    read all checkpoints but can just read the last one.
+
+Changes:
+(d) Reverted 'add_non_bonded_virials'-calculation of the short range coulombic pressure
+    contribution to former potential term, but now nptiso.p_vir is also using it
+    in 'add_p3m_coulomb_pair_force' instead of the former virial expression r*F,
+    such that now both nptiso.p_vir and 'analyze pressure' and 'analyze p_inst' all
+    use U_c/(d*V) for the whole electrostatic pressure component (both r- and k-part).
+(c) Now 'add_non_bonded_virials' uses the virial expression r*F for the short range
+    coulombic interactions as well instead of the potential term (as for the k-part).
+(c) Now internal flag 'nptiso.invalidate_p_vel' helps to decide if there was already
+    an NpT-integration step (such that 'analyze p_inst' may use 'nptiso.p_vel') or if
+    the secondary timestep reversion has to be used (replaces former box_l-comparision).
+(c) Now 'analyze set chains' no longer automatically updates mol_ids.
+(a) particles mol_id is now initialized to -1, and this can be used to check whether 
+    the mol_id has been set. The topology sync function makes use of this.
+
+Bugfixes:
+(d) Fixed that a pressure calculation screwed up nptiso.p_vir when the following
+    integration step didn't recalculate the forces (which was possible after v1.6.2b).
+(b) Fixed bug that Espresso always recalculated the forces when leaving/reentering the sim loop.
+(b) Fixed NpT-integration of systems using electrostatic interactions:
+    + The bugs introduced in v1.6.1b by replacing the k-space-energy contribution to
+      nptiso.p_vir by some weird k-space-force-components have been undone, hence the
+      k-space component of the coulombic pressure should correctly enter p_inst now.
+    + The (inverse) mesh constant of the p3m-grid is now scaled with the box-length 
+      as well, adjusting lm.ld_pos accordingly to the grid's new position in the box.
+      This should prevent mysterious crashes randomly occuring in 'invalidate_ghosts' 
+      or 'P3M_calc_k_space_forces' due to invalid grid positions.
+    - Fixed output of 'integrate set' for nptiso-parameters.
+
+
+- v1.6.1g -
+-----------
+
+(g) May 18th, 2004.
+(f) May 17th, 2004.
+(e) May 13th, 2004.
 (d) May 11th, 2004.
 (c) May 10th, 2004.
 (b) May  5th, 2004.
 (a) May  3rd, 2004.
 
 New Features:
+(e) Added new option to synchronize topology and particle.mol_id information.
 (c) New command 'tune_cells' which adapts the cell-grid towards best performance.
 (c) New parameters 'integrator' and 'thermostat' for the 'blockfile'-command
     to also save the correct states (and parameters) of these two subsystems.
@@ -27,13 +82,20 @@ New Features:
     The second new argument is a flag "-cubic_box"; when set, this flag ensures 
     that box length changes are completely isotropic in all directions even 
     though box length changes in one or more of these directions may in fact 
-    be decoupled from the particle motion.
+    be decoupled from the particle motion. 
+    Internally this has been achieved by splitting up the virial part of the
+    instantaneous pressure to nptiso.p_vir[3] reflecting the three directions of
+    the pressure tensor. Note that due to its periodicity electrostatic systems
+    using p3m are still restricted to 3D-periodic and -isotropic systems!
+    
 
 Changes:
 (d) 'writepdbfoldchains' now requires a list of 3 box lengths (as returned from 
     [setmd box_l] ) - old scripts using these features need to be modified.
 
 Bugfixes:
+(g) Fixed problem with lipid flip-flop analysis that caused imd to fold incorrectly.
+(f) Fixed modes analysis so it doesn't crash ESPResSo when there is a hole in the membrane.
 (c) Fixed problems of 'calcObsAv' when a "-" was part of the column headers.
 (b) Fixed bug in the velocity rescaling on the master node.
 (b) Fixed warnings that occur if ELECTROSTATICS is not compiled in.
@@ -60,7 +122,6 @@ Released on April 29th, 2004.
 (a) April 22nd, 2004.
 
 New Features / Changes / Bugfixes:
-
 (e) Final NpT-Update: The NpT-Integrator does now run efficiently and smoothly.
     + Unlocked faster re-scaling of just the geometrical parameters of the system
       instead of reinitialising the whole cell system more than necessary (i.e. only
