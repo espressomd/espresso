@@ -51,6 +51,10 @@ void propagate_velocities();
 */
 void propagate_positions(); 
 
+void propagate_vel_pos();
+void rescale_forces_propagate_vel(); 
+
+
 void print_local_index();
 
 /*@}*/
@@ -192,8 +196,7 @@ void integrate_vv(int n_steps)
     INTEG_TRACE(fprintf(stderr,"%d START INTEGRATION\n",this_node));
     for(i=0;i<n_steps;i++) {
       INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
-      propagate_velocities();
-      propagate_positions();
+      propagate_vel_pos();
       if(rebuild_verletlist == 1) {
 	INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
 	INTEG_TRACE(fprintf(stderr,"%d: BEFOR: n_particles=%d, n_ghosts=%d, max_particles=%d\n",
@@ -211,8 +214,7 @@ void integrate_vv(int n_steps)
       }
       force_calc();
       collect_ghost_forces();
-      rescale_forces();
-      propagate_velocities();
+      rescale_forces_propagate_vel();
     }
   }
 }
@@ -292,6 +294,26 @@ void propagate_velocities()
     }
 }
 
+void rescale_forces_propagate_vel() 
+{
+  int i;
+  double scale;
+
+  scale = 0.5 * time_step * time_step;
+  INTEG_TRACE(fprintf(stderr,"%d: rescale_forces_propagate_vel:\n",this_node));
+  for(i=0;i<n_particles;i++)
+    {  
+
+      particles[i].f[0] *= scale;
+      particles[i].f[1] *= scale;
+      particles[i].f[2] *= scale;
+
+      particles[i].v[0] += particles[i].f[0];
+      particles[i].v[1] += particles[i].f[1];
+      particles[i].v[2] += particles[i].f[2];
+    }
+}
+
 void propagate_positions() 
 {
   int i;
@@ -303,6 +325,50 @@ void propagate_positions()
 
   for(i=0;i<n_particles;i++)
     {  
+      particles[i].p[0] += particles[i].v[0];
+      particles[i].p[1] += particles[i].v[1];
+      particles[i].p[2] += particles[i].v[2];
+
+      /* Verlet criterion check */
+      if(distance2(particles[i].p,particles[i].p_old) > skin2 )
+	rebuild_verletlist = 1; 
+    }
+
+  /* communicate verlet criterion */
+  MPI_Gather(&rebuild_verletlist, 1, MPI_INT, verlet_flags, 1, 
+	     MPI_INT, 0, MPI_COMM_WORLD);
+  if(this_node == 0)
+    {
+      rebuild_verletlist = 0;
+      for(i=0;i<n_nodes;i++)
+	if(verlet_flags[i]>0)
+	  {
+	    rebuild_verletlist = 1;
+	    break;
+	  }
+    }
+  MPI_Barrier(MPI_COMM_WORLD); 
+  MPI_Bcast(&rebuild_verletlist, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  INTEG_TRACE(fprintf(stderr,"%d: prop_pos: rebuild_verletlist=%d\n",this_node,rebuild_verletlist));
+
+  free(verlet_flags);
+}
+
+void propagate_vel_pos() 
+{
+  int i;
+  int *verlet_flags = malloc(sizeof(int)*n_nodes);
+  double skin2;
+  INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
+  rebuild_verletlist = 0;
+  skin2 = SQR(skin);
+
+  for(i=0;i<n_particles;i++)
+    {  
+      particles[i].v[0] += particles[i].f[0];
+      particles[i].v[1] += particles[i].f[1];
+      particles[i].v[2] += particles[i].f[2];
+
       particles[i].p[0] += particles[i].v[0];
       particles[i].p[1] += particles[i].v[1];
       particles[i].p[2] += particles[i].v[2];
