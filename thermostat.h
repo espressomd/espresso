@@ -54,7 +54,10 @@
 
     Consists of a friction and noise term coupled via the fluctuation
     dissipation theorem. The Friction term is a function of the
-    relative velocity of particle pairs. 
+    relative velocity of particle pairs.
+    DPD is better for dynamics, since it mimics hydrodynamics in the system.
+    Good values to choos are dpd_cutoff = \f$ 2^{\frac{1}{6}} \f$, namely the cutoff of the LJ interaction. That means the thermostat acts on the relative velocities between nearest neighbor particles. Larger cutoffs including next nearest neighbors or even more are unphysical.
+    dpd_gamma is basically an invers timescale on which the system thermally equilibrates. Values between 0.1 and 1 are o.k, but you propably want to try yourself to get a feeling for how fast temperature jumps during a simulation are. The dpd thermostat does not act on the system center of mass motion. So befor using dpd you have to stop the center of mass motion of your system, which you can achieve by using the command "galileiTransformParticles" in the file scripts/aux.tcl. This may be repeated once in a while for long runs due to round off errors (check with the command "system_com_vel").
 
     <li> NPT ISOTROPIC THERMOSTAT:
     
