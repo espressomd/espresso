@@ -484,7 +484,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 
     if(this_node==0) {
       /* self energy correction */
-      k_space_energy -= p3m.prefactor*(p3m_sum_q2*p3m.alpha / wupi);
+      k_space_energy -= p3m.prefactor*(p3m_sum_q2*p3m.alpha * wupii);
       /* net charge correction */
       k_space_energy -= p3m.prefactor*(p3m_square_sum_q*PI / (2.0*box_l[0]*box_l[1]*box_l[2]*SQR(p3m.alpha)));
       /* dipol correction TO BE IMPLEMENTED */

@@ -151,7 +151,7 @@ MDINLINE void add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
     adist = p3m.alpha * dist;
     erfc_part_ri = AS_erfc_part(adist) / dist;
     fac = p3m.prefactor * p1->r.q * p2->r.q  * 
-      exp(-adist*adist) * (erfc_part_ri + 2.0*p3m.alpha/wupi) / dist2;
+      exp(-adist*adist) * (erfc_part_ri + 2.0*p3m.alpha*wupii) / dist2;
     for(j=0;j<3;j++) {
       p1->f[j] += fac * d[j];
       p2->f[j] -= fac * d[j];
