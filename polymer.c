@@ -80,7 +80,9 @@ double mindist4(double pos[3]) {
     mindist = dmin(mindist, SQR(dx)+SQR(dy)+SQR(dz));
   }
   free(partCfgMD); 
-  if (mindist<30000.0) return (sqrt(mindist)); else return (-1.0);
+  if (mindist<30000.0)
+    return (sqrt(mindist));
+  return (-1.0);
 }
 
 
@@ -89,7 +91,8 @@ int collision(double pos[3], double shield) {
   /** Checks whether a particle at coordinates (<posx>, <posy>, <posz>) collides
       with any other particle due to a minimum image distance smaller than <shield>. 
       Returns '1' if there is a collision, '0' otherwise. */
-  if (mindist4(pos) > shield) return (0); else return (1);
+  if (mindist4(pos) > shield) return (0);
+  return (1);
 }
 
 
@@ -374,7 +377,8 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try, do
     POLY_TRACE(printf("C"); fflush(NULL));
   }
   POLY_TRACE(printf(" %d->%d \n",cnt1,max_cnt));
-  if (cnt1 >= max_try) return(-1); else return(imax(max_cnt,cnt1));
+  if (cnt1 >= max_try) return(-1);
+  return(imax(max_cnt,cnt1));
 }
 
 
@@ -507,7 +511,8 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
     POLY_TRACE(printf("N"); fflush(NULL));
   }
   POLY_TRACE(printf(" %d->%d \n",cnt1,max_cnt));
-  if (cnt1 >= max_try) return(-2); else return(imax(max_cnt,cnt1));
+  if (cnt1 >= max_try) return(-2);
+  return(imax(max_cnt,cnt1));
 }
 
 
@@ -807,7 +812,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
       size = 0;  ii = i*MPC + k*(MPC-1) + part_id;
       if (link[2*i+k] >= 0) {
 	for (j=0; j < link[2*i+k]; j++) {                     /* only monomers && ((same chain, but sufficiently far away) || (different chain)) */
-	  if ( (links[2*i+k][j] < N_P*MPC+part_id) && ( ((fabs(links[2*i+k][j] - ii) > chain_dist) || (fabs(links[2*i+k][j]-i*MPC) > (1.*MPC))) ) )
+	  if ( (links[2*i+k][j] < N_P*MPC+part_id) && ( ((abs(links[2*i+k][j] - ii) > chain_dist) || (abs(links[2*i+k][j]-i*MPC) > (1.*MPC))) ) )
 	    if ((links[2*i+k][j] % MPC != 0) && ((links[2*i+k][j]+1) % MPC != 0)) links[2*i+k][size++] = links[2*i+k][j];    /* no ends accepted */
 	}
 	link[2*i+k]  = size; 
@@ -830,7 +835,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
     for (i=0; i < 2*N_P; i++) {
       if (cross[i] >= 0) {
 	for (j=0; j < 2*N_P; j++) {       /* In the neighbourhood of each partner shall be no future crosslinks (preventing stiffness). */
-	  if ((j != i) && (cross[j] >=0) && (fabs(cross[j]-cross[i]) < link_dist)) {
+	  if ((j != i) && (cross[j] >=0) && (abs(cross[j]-cross[i]) < link_dist)) {
 	    cross[i] = -3; cross[j] = -3; crossL -= 2; POLY_TRACE(printf("%d->%d! ",i,j)); break;
 	  }
 	}
@@ -840,7 +845,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
 	else {                            /* In the neighbourhood of each partner there shall be no other crosslinks (preventing stiffness). */
 	  for (j = cross[i]-link_dist+1; j < cross[i]+link_dist-1; j++) {
 	    if ((j % MPC == 0) || ((j+1) % MPC == 0)) size = 1; else size = 2;
-	    if ((bond[j] > size) && (j - floor(i/2)*MPC < MPC)) {
+	    if ((bond[j] > size) && (j - floor(i/2.)*MPC < MPC)) {
 	      cross[i] = -3; crossL--; POLY_TRACE(printf("%d->link! ",i)); break; 
 	    }
 	  }
@@ -861,7 +866,9 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
   POLY_TRACE(for (i=0; i < 2*N_P; i++) printf("%d -> %d \t", i%2 ? (i+1)*MPC/2-1 : i*MPC/2, cross[i]); printf("=> %d\n",crossL); fflush(NULL) );
 
   /* Submit all lawful partners as new bonds to Espresso (observing that bonds are stored with the higher-ID particle only). */
-  if (k >= max_try) return(-1); else {
+  if (k >= max_try) return(-1);
+
+  {
     size = 0;
     for (i=0; i < N_P; i++) {
       if (cross[2*i] >= 0 ) {
