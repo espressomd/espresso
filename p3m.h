@@ -171,6 +171,8 @@ MDINLINE double p3m_coulomb_pair_energy(Particle *p1, Particle *p2,
     erfc_part_ri = AS_erfc_part(adist) / dist;
     return p3m.prefactor*p1->r.q*p2->r.q *erfc_part_ri*exp(-adist*adist);
   }
+  else
+    return 0;
 }
 
 /** Clean up P3M memory allocations. */
