@@ -170,7 +170,7 @@ int fft_init(double *data)
   for(i=0;i<n_nodes;i++) {
     n_id[0][i] = i;
     get_grid_pos(i,&(n_pos[0][3*i+0]),&(n_pos[0][3*i+1]),&(n_pos[0][3*i+2]),
-		 n_grid[0][0],n_grid[0][1],n_grid[0][2]);
+		 n_grid[0]);
   }
     
   /* FFT node grids (n_grid[1 - 3]) */
@@ -676,8 +676,8 @@ int find_comm_groups(int grid1[3], int grid2[3], int *node_list1, int *node_list
 	  p2[1] = (gi[1]*s2[1]) + ((i/s2[0])%s2[1]);
 	  p2[2] = (gi[2]*s2[2]) + (i/(s2[0]*s2[1]));
 
-	  n = node_list1[ get_linear_index(p1[0],p1[1],p1[2],grid1[0],grid1[1],grid1[2]) ];
-	  node_list2[ get_linear_index(p2[0],p2[1],p2[2],grid2[0],grid2[1],grid2[2]) ] = n ;
+	  n = node_list1[ get_linear_index(p1[0],p1[1],p1[2],grid1) ];
+	  node_list2[ get_linear_index(p2[0],p2[1],p2[2],grid2) ] = n ;
 
 	  pos[3*n+0] = p2[0];  pos[3*n+1] = p2[1];  pos[3*n+2] = p2[2];	  
 	  if(my_group==1) group[i] = n;

@@ -15,10 +15,16 @@
 # settings
 ##################################################
 set tcl_precision 5
+set use_imd y
+
+set write_steps 10
+set configs 5000
+
+setmd periodic 1 1 0
 
 # external tcl files 
 ##################################################
-set write yes
+set write no
 source polywr.tcl
 
 # data initialization
@@ -40,7 +46,12 @@ if { ![file exists "config.gz"]} {
 # read particles
 ##################################################
 
+puts "read particles"
+
 set f [open "|gzip -cd config.gz" r]
+
+puts "opened file"
+
 readmd $f
 
 puts "read [expr [setmd maxpart] + 1] particles from config.gz"
@@ -69,19 +80,22 @@ setmd p3m_mesh_off 0.5 0.5 0.5
 # integration
 ##################################################
 
+if { $use_imd == "y" } {
+	for {set port 10000} { $port < 65000 } { incr port } {
+		catch {imd connect $port} res
+		if {$res == ""} break
+		puts "imd port $port: result $res"
+	}
+	puts "opened port $port"
 
-for {set port 10000} { $port < 65000 } { incr port } {
-	catch {imd connect $port} res
-	if {$res == ""} break
-	puts "imd port $port: result $res"
-}
-puts "opened port $port"
 
-set result [imd stall 1]
-puts "imd: $result"
-if { $result == "connected" } {
-    puts "waiting 10 secs to let you modify the save frame rate"
-    after 10000
+	while { [imd listen 10] != "connected" } {
+		puts "wating for vmd to connect..."
+	}
+
+	while { [setmd transfer_rate] == 0 } {
+		imd listen 10
+	}
 }
 
 integrate init

@@ -13,11 +13,14 @@
 
 ########### parameters
 set npart 100
-setmd box_l 10.0 10.0 10.0
+setmd box_l 10.0 10.0 8.0
 set write finish
 set write_steps 10
 set mdst 1.2
 set maxtime 200
+
+setmd periodic 1 1 0
+setmd bjerrum 0
 
 source polywr.tcl
 
@@ -63,9 +66,9 @@ integrate init
 
 set cont y
 for {set i 0} { $i < 100 && $cont == "y" } { incr i} {
-    puts "step $i: minimum distance=[mindist] < $mdst"
+    puts "step $i: minimum distance=[mindist] !< $mdst"
     set md [mindist]
-    if {$md < $mdst || $md == "(> ramp cutoffs)"} { set cont n }
+    if {$md > $mdst || $md == "(> ramp cutoffs)"} { set cont n }
     integrate $write_steps
     if {"$write" == "yes" } {
 	polywrite [format "configs/c%04d.poly" $i]
@@ -83,6 +86,6 @@ if { $write == "finish" } {
     polywrite "configs/cfinal.poly"
 }
 if { $write  == "yes" || $write == "finish" } {
-    eval exec poly2pdb -poly [glob -noc "configs/c*"] \
-	-per -psf "movie/m" >/dev/null 2>&1
+    catch { eval exec poly2pdb -poly [glob -noc "configs/c*"] \
+	-per -psf "movie/m" >/dev/null 2>/dev/null }
 }

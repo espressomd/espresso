@@ -29,13 +29,13 @@
 
 /* #define COMM_DEBUG */
 /* #define INTEG_DEBUG */
-#define CELL_DEBUG
+/* #define CELL_DEBUG */
 /* #define GHOST_DEBUG   */ 
 /* #define GRID_DEBUG */
 /* #define FORCE_DEBUG */
 /* #define VERLET_DEBUG   */
 /* #define PARTICLE_DEBUG */
-/* #define P3M_DEBUG */
+#define P3M_DEBUG
 /* #define FFT_DEBUG */
 #define MPI_CORE
 #define FORCE_CORE
