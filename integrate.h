@@ -1,14 +1,17 @@
-/** \file integrate.h
-    undocumented
-*/
 #ifndef INTEGRATE_H
 #define INTEGRATE_H
-
+/** \file integrate.h    Molecular dynamics integrator.
+ *
+ *  <b>Responsible:</b>
+ *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
+ *
+ *  For more information see \ref integrate.c "integrate.c".
+*/   
 #include <tcl.h>
 
-/****************************************
- * exported variables
- ****************************************/
+/** \name Exported Variables */
+/************************************************************/
+/*@{*/
 
 /** Time step for the integration. */
 extern double time_step;
@@ -22,11 +25,13 @@ extern double max_range;
 extern double max_range2;
 /** Flag for integrator. If non-zero, the forces have to be calculated
     before the first step. */
-extern int calc_forces_first;
+extern int    calc_forces_first;
 
-/**********************************************
- * functions
- **********************************************/
+/*@}*/
+
+/** \name Exported Functions */
+/************************************************************/
+/*@{*/
 
 /** tcl procedure for integrator steering.
     USAGE: integrate <task>                       \\
@@ -34,7 +39,8 @@ extern int calc_forces_first;
     EXAMPLE for an integration:                   \\
            integrate init                         \\
            integrate 100                          \\
-           integrate exit                         
+           integrate exit      
+    \return TCL status.
 */
 int integrate(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
@@ -42,13 +48,19 @@ int integrate(ClientData data, Tcl_Interp *interp,
 /** initialize velocity verlet integrator. */
 void integrate_vv_init();
 
-/** integrate with velocity verlet integrator. */
+/** integrate with velocity verlet integrator.
+    \param n_steps number of steps to integrate.
+ */
 void integrate_vv(int n_steps);
 
 /** exit velocity verlet integrator. */
 void integrate_vv_exit();
 
-/** Callback for setmd skin*/
+/** Callback for setmd skin.
+    \return TCL status.
+*/
 int skin_callback(Tcl_Interp *interp, void *_data);
+
+/*@}*/
 
 #endif

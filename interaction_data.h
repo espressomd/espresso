@@ -1,6 +1,10 @@
 #ifndef IA_DATA_H
 #define IA_DATA_H
 /** \file interaction_data.h
+
+    <b>Responsible:</b>
+    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
+
     undocumented.
  */
 
@@ -65,7 +69,7 @@ typedef struct {
 /** Maximal particle type seen so far. */
 extern int n_particle_types;
 /** Array of the interaction parameters. Should be accessed only via
-    \ref get_ia_param or \ref safe_get_ia_param. */
+    \ref get_ia_param  */
 extern IA_parameters *ia_params;
 /* Number of nonbonded (short range) interactions. Not used so far.*/
 extern int n_interaction_types;

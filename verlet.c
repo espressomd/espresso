@@ -1,5 +1,5 @@
-/** \file verlet.c
-        Implementation of \ref verlet.h "verlet.h"
+/** \file verlet.c   Verlet list.
+ *  For more information see  \ref verlet.h "verlet.h"
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,21 +12,42 @@
 #include "communication.h"
 #include "utils.h"
 
+/** Granularity of the verlet list */
+#define LIST_INCREMENT 100
+
+/*****************************************
+ * Variables 
+ *****************************************/
+
 int   n_verletList;
 int max_verletList;
 int    *verletList;
 
 int rebuild_verletlist = 1;
 
-/** Granularity of the verlet list */
-#define LIST_INCREMENT 100
+/** \name Privat Functions */
+/************************************************************/
+/*@{*/
 
-/*******************  privat functions    *******************/
+/** Reallocate the verlet list. */
 void resize_verlet_list();
+
+/** Calculate the distance of two particles.
+ *  \param p1 Index of paricle one in \ref particles
+ *  \param p2 Index of paricle one in \ref particles
+ */
 double distance2(int p1, int p2);
+
+/** Add a particle pair to the verlet list.
+ *  \param p1 Index of paricle one in \ref particles
+ *  \param p2 Index of paricle one in \ref particles
+ */
 void add_pair(int p1, int p2);
 
+/*@}*/
+
 /*******************  exported functions  *******************/
+
 void verlet_init()
 {
   VERLET_TRACE(fprintf(stderr,"%d: verlet_init:\n",this_node));
@@ -111,6 +132,8 @@ void verlet_exit()
   max_verletList = 0; 
     
 }
+
+/************************************************************/
 
 void resize_verlet_list()
 {

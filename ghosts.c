@@ -1,44 +1,8 @@
-/** \file ghosts.c
+/** \file ghosts.c   Ghost particles and particle exchange.
  *
- *  Ghost particles and particle exchange.
- *
- *  In this file you find everything concerning the exchange of
- *  particle data (particles, ghosts, positions and forces) for short
- *  range interactions between the spacial domains of neighbouring
- *  nodes.
- *
- *  All structures are initialized by \ref ghost_init.  Exchanging
- *  particles that move from one to another node domain is done by
- *  \ref exchange_part. Setup of the ghost particle frame is done by
- *  \ref exchange_ghost. Call \ref sort_particles_into_cells before
- *  each use of \ref exchange_ghost. During integration using a verlet
- *  list ghost positions and forces are exchanged by \ref
- *  update_ghost_pos and \ref collect_ghost_forces. Before calling
- *  \ref ghost_init again tou should clean up with \ref ghost_exit.
- *
- *  Communication \anchor communication is done only between
- *  neighboring nodes. The communication scheme can be senn in the
- *  figure below.
- *
- *  \image html ghost_communication.gif "Scheme of ghost/particle communication"
- *  \image latex ghost_communication.eps "Scheme of ghost/particle communication" width=8cm 
- *
- *  To reduce the number of communications per node from 26 (number of
- *  neighbor nodes in 3 dimensions) to 6 the order of the
- *  communication is important:
- *  <ol> 
- *      <li> x-direction: left and right - MPI_Barrier
- *      <li> y-direction: forth and back - MPI_Barrier
- *      <li> z-direction: down and up - MPI_Barrier
- *  </ol>
- *  In this way also edges and corners are communicated
- *  (See also \ref directions for our conventions).
- *
- *  Source code: \include ghosts.c
- *
- *  \warning \b Since the ghost particle structures make use of the
- *  linked cell structure, \ref ghost_init has to be called after \ref
- *  cells_init */
+ *  For more information on ghosts,
+ *  see \ref ghosts.h "ghosts.h" 
+*/
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,12 +22,10 @@
 /**  granularity of the communication buffers. */
 #define PART_INCREMENT 20
 
-/************************************************
- * variables
- ************************************************/
-
 /** \name Variables for particle exchange */
+/************************************************************/
 /*@{*/
+
 /** Buffer for particles to send. */
 static Particle *p_send_buf;
 static int       n_p_send_buf;
@@ -83,14 +45,20 @@ static int       max_b_recv_buf;
 /*@}*/
 
 /** \name Variables for ghost particle exchange */
+/************************************************************/
 /*@{*/
-/** Buffer for Ghosts to send. */
+
+/** Ghost send buffer. */
 Ghost *g_send_buf;
+/** Number of ghosts in ghost send buffer. */
 int   n_g_send_buf;
+/** Allocation size of Ghost send buffer. */
 int   max_g_send_buf;
-/** Buffer for Ghosts to recieve. */
+/** Ghost receive buffer. */
 Ghost *g_recv_buf;
+/** Number of ghosts in ghost receive buffer. */
 int   n_g_recv_buf;
+/** Allocation size of Ghost receive buffer. */
 int   max_g_recv_buf;
 
 /** list of cell indices to send. */
@@ -121,18 +89,22 @@ int ghost_recv_size[6];
 /*@}*/
 
 /** \name Variables for ghost force/position exchange */
+/************************************************************/
 /*@{*/
 /** Buffer for forces/coordinates to send. */
 double *send_buf;
+/** Allocation size of forces/coordinates send buffer. */
 int max_send_buf;
 /** Buffer for forces/coordinates to recieve. */
 double *recv_buf;
+/** Allocation size of forces/coordinates recieve buffer. */
 int max_recv_buf;
 /*@}*/
 
-/************************************************
- * privat functions
- ************************************************/
+
+/** \name Privat Functions */
+/************************************************************/
+/*@{*/
 
 /** Creates a linear index list of a sub grid.
  *
@@ -218,7 +190,7 @@ void append_particles(void);
 
 /** Send ghost particles in direction s_dir.
  *
- *  subroutine of \ref exchange_ghosts. 
+ *  subroutine of \ref exchange_ghost. 
  *
  *  Does an unbuffered communication from all nodes to their neighbor
  *  node in direction s_dir.
@@ -278,9 +250,8 @@ void unpack_ghost(Particle *p_array, int p_ind, Ghost *g_array, int g_ind);
  */
 void send_posforce(int s_dir,int send_size, int recv_size);
 
-/************************************************
- * public functions
- ************************************************/
+/*@}*/
+/************************************************************/
 
 void ghost_init()
 {

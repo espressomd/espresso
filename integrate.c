@@ -1,5 +1,7 @@
-/** \file integrate.c
-    Implementation of \ref integrate.h "integrate.h"
+/** \file integrate.c   Molecular dynamics integrator.
+ *
+ *  For more information about the integrator 
+ *  see \ref integrate.h "integrate.h".
 */
 #include <mpi.h>
 #include <stdio.h>
@@ -24,13 +26,24 @@ double max_cut = 2.0;
 double skin = 0.4;
 double max_range;
 double max_range2;
-int calc_forces_first = 1;
-/* extern p3m_struct p3m; */
+int    calc_forces_first = 1;
 
-/*******************  functions  *******************/
+/** \name Privat Functions */
+/************************************************************/
+/*@{*/
+
+/** Rescale all particle forces with \f[ 0.5 \Delta t^2 \f]. */
 void rescale_forces();
+/** Propagate velocities: \f[ {\bf v} += {\bf f} \f]. */
 void propagate_velocities();
+/** Propagate positions: \f[ {\bf pos} += {\bf v} \f]. 
+    Here also the verlet criterion is checked and communicated.
+    \todo Put verlet criterion as inline function to verlet.h if possible.
+*/
 void propagate_positions(); 
+
+/*@}*/
+/************************************************************/
 
 int integrate(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv)
@@ -69,7 +82,6 @@ int integrate(ClientData data, Tcl_Interp *interp,
 
   return (TCL_OK);
 }
-
 
 void integrate_vv_init()
 {
@@ -153,6 +165,19 @@ void integrate_vv_exit()
   verlet_exit();
   force_exit();
 }
+int skin_callback(Tcl_Interp *interp, void *_data)
+{
+  double data = *(double *)_data;
+  if (data < 0) {
+    Tcl_AppendResult(interp, "skin must be positiv.", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  skin = data;
+  mpi_bcast_parameter(FIELD_SKIN);
+  return (TCL_OK);
+}
+
+/************************************************************/
 
 void rescale_forces()
 {
@@ -190,6 +215,8 @@ void propagate_positions()
       particles[i].p[0] += particles[i].v[0];
       particles[i].p[1] += particles[i].v[1];
       particles[i].p[2] += particles[i].v[2];
+
+      /* Verlet criterion check */
       d2[0] = SQR(particles[i].p[0] - particles[i].p_old[0]);
       d2[1] = SQR(particles[i].p[1] - particles[i].p_old[1]);
       d2[2] = SQR(particles[i].p[2] - particles[i].p_old[2]);
@@ -199,6 +226,7 @@ void propagate_positions()
 	rebuild_verletlist = 1; 
     }
 
+  /* communicate verlet criterion */
   MPI_Gather(&rebuild_verletlist, 1, MPI_INT, verlet_flags, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if(this_node == 0)
     {
@@ -216,17 +244,4 @@ void propagate_positions()
   INTEG_TRACE(fprintf(stderr,"%d: prop_pos: rebuild_verletlist=%d\n",this_node,rebuild_verletlist));
 
   free(verlet_flags);
-}
-
-
-int skin_callback(Tcl_Interp *interp, void *_data)
-{
-  double data = *(double *)_data;
-  if (data < 0) {
-    Tcl_AppendResult(interp, "skin must be positiv.", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  skin = data;
-  mpi_bcast_parameter(FIELD_SKIN);
-  return (TCL_OK);
 }

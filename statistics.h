@@ -2,6 +2,10 @@
 #define STATISTICS_H
 /** \file statistics.h
     This file contains the code for simply statistics on the data.
+
+    <b>Responsible:</b>
+    <a href="mailto:svanebor@mpip-mainz.mpg.de">Carsten</a>
+
 */
 
 #include <tcl.h>

@@ -1,4 +1,9 @@
 /** \file vmdsock.h
+
+    DO NOT CHANGE !!!
+
+    <b>Responsible:</b>
+    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 ***
 ***  Copyright (c) 1995, 1996, 1997, 1998, 1999, 2000 by
 ***  The Board of Trustees of the University of Illinois.

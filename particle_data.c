@@ -50,7 +50,7 @@ void map_particle_node(int part, int node)
   int old_max = n_particle_node, i;
   if (part > max_seen_particle) {
     max_seen_particle = part;
-    mpi_bcast_parameter(FIELD_NTOTAL);
+    mpi_bcast_parameter(FIELD_MAXPART);
 
     if (part >= n_particle_node) {
       /* round up part + 1 in granularity PART_INCREMENT */
@@ -60,7 +60,7 @@ void map_particle_node(int part, int node)
 	particle_node[i] = -1;
     }
   }
-  PART_TRACE(fprintf(stderr, "mapping %d -> %d (%d)\n", part, node, n_total_particles));
+  PART_TRACE(fprintf(stderr, "mapping %d -> %d (%d)\n", part, node, max_seen_particle));
   particle_node[part] = node;
 }
 
@@ -182,11 +182,11 @@ void unfold_particle(double pos[3],int image_box[3])
 
 void particle_finalize_data()
 {
-  /* if this is zero, n_total_particles didn't change */
+  /* if this is zero, \ref max_seen_particle didn't change */
   if (!particle_node)
     return;
 
-  mpi_bcast_parameter(FIELD_NTOTAL);
+  mpi_bcast_parameter(FIELD_MAXPART);
 
   /* invalidate particle->node data */
   if (particle_node) {

@@ -1,14 +1,42 @@
 #ifndef P3M_H 
 #define P3M_H 
-/** \file p3m.h
-    For more information about the p3m algorithm,
-    see \ref p3m.c "p3m.c"
+/** \file p3m.h   P3M algorithm for long range coulomb interaction.
+ *
+ *  <b>Responsible:</b>
+ *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
+ *
+ *  We use here a P3M (Particle-Particle Particle-Mesh) method based
+ *  on the Ewald summation. Details of the used method can be found in
+ *  Hockney/Eastwood and Deserno/Holm. The file p3m contains only the
+ *  Particle-Mesh part.
+ *
+ *  Further reading: 
+ *  <ul>
+ *  <li> P.P. Ewald,
+ *       <i>Die Berechnung optischer und elektrostatischer Gitterpotentiale</i>,
+ *       Ann. Phys. (64) 253-287, 1921
+ *  <li> R. W. Hockney and J. W. Eastwood, 
+ *       <i>Computer Simulation Using Particles</i>,
+ *       IOP, London, 1988
+ *  <li> M. Deserno and C. Holm,
+ *       <i>How to mesh up {E}wald sums. I. + II.</i>,
+ *       J. Chem. Phys. (109) 7678, 1998; (109) 7694, 1998
+ *  <li> M. Deserno, C. Holm and H. J. Limbach,
+ *       <i>How to mesh up {E}wald sums. </i>,
+ *       in Molecular Dynamics on Parallel Computers,
+ *       Ed. R. Esser et al., World Scientific, Singapore, 2000
+ *  <li> M. Deserno,
+ *       <i>Counterion condensation for rigid linear polyelectrolytes</i>,
+ *       PhdThesis, Universit{\"a}t Mainz, 2000
+ *  </ul>
+ *
+ *  For more information about the p3m algorithm,
+ *  see \ref p3m.c "p3m.c"
  */
 
 /************************************************
  * data types
  ************************************************/
-
 
 /** Structure to hold P3M parameters and some dependend variables. */
 typedef struct {
@@ -30,18 +58,26 @@ typedef struct {
   double ai[3];      /** inverse mesh constant. */
 } p3m_struct;
 
-/************************************************
- * exported variables
- ************************************************/
+/** \name Exported Variables */
+/************************************************************/
+/*@{*/
 
+/** P3M parameters. */
 extern p3m_struct p3m;
 
-/************************************************
- * exported functions
- ************************************************/
+/*@}*/
 
+/** \name Exported Functions */
+/************************************************************/
+/*@{*/
+
+/** Initialize all structures, parameters and arrays needed for the 
+ *  P3M algorithm.
+ */
 void   P3M_init();
-void   P3M_perform();
+/** Calculate the k-space contribution to the coulomb interaction forces. */ 
+void   P3M_calc_kspace_forces();
+/** Clean up P3M memory allocations. */
 void   P3M_exit();
 
 /** Callback for setmd bjerrum (bjerrum >= 0). 
@@ -60,5 +96,7 @@ int p3mcao_callback(Tcl_Interp *interp, void *_data);
 int p3mepsilon_callback(Tcl_Interp *interp, void *_data);
 /** Callback for setmd p3m_mesh_offset (all components between 0.0 and 1.0). */
 int p3mmeshoff_callback(Tcl_Interp *interp, void *_data);
+
+/*@}*/
 
 #endif

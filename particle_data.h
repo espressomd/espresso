@@ -1,6 +1,12 @@
 #ifndef PARTICLE_DATA_H
 #define PARTICLE_DATA_H
 /** \file particle_data.h
+
+    <b>Responsible:</b>
+    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
+ *
+ *  \todo Put ghost structure as a sub structure into the particle structure, so everybody knows whats going into the ghost communication.
+ *
     For more information on particle_data,
     see \ref particle_data.c "particle_data.c"
  */
@@ -59,7 +65,7 @@ extern int     n_ghosts;
 /** Local particle array. 
  *
  *  The figure shows how local particles and ghosts are stored in the
- *  particle array \anchor particle_array.  
+ *  particle array \anchor particle_array_fig.  
  *
  *  \image html particles.gif  "local particle array"
  *  \image latex particles.eps "local particle array" width=8cm
@@ -150,7 +156,7 @@ void map_particle_node(int part, int node);
 */
 void build_particle_node();
 
-/** update \ref n_total_particles on slave nodes and
+/** update \ref max_seen_particle on slave nodes and
     invalidate \ref particle_node. This has to be done
     at the beginning of the integration */
 void particle_finalize_data();

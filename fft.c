@@ -2,14 +2,8 @@
  *
  *  Routines, row decomposition, data structures and communication for the 3D-FFT. 
  *
- *  The 3D-FFT is split into 3 ond dimensional FFTs. The data is
- *  distributed in such a way, that for the actual direction of the
- *  FFT each node has a certain number of rows for which it performs a
- *  1D-FFT. After performing the FFT on theat direction the data is
- *  redistributed.
- *
- *  For simplicity at the moment I have implemented a full complex to complex FFT (even though a real to complex FFT would be sufficient)
- * */
+  *  For more information about FFT usage, see \ref fft.h "fft.h".  
+*/
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,13 +29,8 @@
  * variables
  ************************************************/
 
-/** Information about the three one dimensional FFTs and how the nodes
- *  have to communicate in between.
- *
- * NOTE: FFT numbering starts with 1 for technical reasons (because we
- *       have 4 node grids, the index 0 is used for the real space
- *       charge assignment grid).  */
 fft_forw_plan fft_plan[4];
+
 /** Information for Back FFTs (see fft_plan). */
 fft_back_plan fft_back[4];
 
@@ -59,9 +48,10 @@ static double *data_buf;
 static fftw_complex *c_data;
 static fftw_complex *c_data_buf;
 
-/************************************************
- * privat functions
- ************************************************/
+
+/** \name Privat Functions */
+/************************************************************/
+/*@{*/
 
 /** This ugly function does the bookkepping which nodes have to
  *  communicate to each other, when you change the node grid.
@@ -78,14 +68,14 @@ static fftw_complex *c_data_buf;
  *  other. see e.g. \ref calc_2d_grid in \ref grid.c for how to do
  *  this.).
  *
- * @param grid1       The node grid you start with (Input).
- * @param grid2       The node grid you want to have (Input).
- * @param node_list1  Linear node index list for grid1 (Input).
- * @param node_list2  Linear node index list for grid2 (Output).
- * @param group       communication group (node identity list) for the calling node  (Output).
- * @param pos        positions of the nodes in in grid2 (Output).
- * @param my_pos      position of this_node in  grid2.
- * @return Size of the communication group (Output of course!).  */
+ * \param grid1       The node grid you start with (Input).
+ * \param grid2       The node grid you want to have (Input).
+ * \param node_list1  Linear node index list for grid1 (Input).
+ * \param node_list2  Linear node index list for grid2 (Output).
+ * \param group       communication group (node identity list) for the calling node  (Output).
+ * \param pos        positions of the nodes in in grid2 (Output).
+ * \param my_pos      position of this_node in  grid2.
+ * \return Size of the communication group (Output of course!).  */
 int find_comm_groups(int grid1[3], int grid2[3], int *node_list1, int *node_list2, 
 		     int *group, int *pos, int *my_pos);
 
@@ -95,8 +85,14 @@ int find_comm_groups(int grid1[3], int grid2[3], int *node_list1, int *node_list
  *  mesh of size (mesh) and a mesh offset (mesh_off (in mesh units))
  *  and store also the first point (start) of the local mesh.
  *
- * @return size     number of mesh points in local mesh.
- * */
+ * \return size        number of mesh points in local mesh.
+ * \param  n_pos[3]    Position of the node in n_grid.
+ * \param  n_grid[3]   node grid.
+ * \param  mesh[3]     global mesh dimensions.
+ * \param  mesh_off[3] global mesh offset (see \ref p3m_struct).
+ * \param  loc_mesh[3] local mesh dimension (output).
+ * \param  start[3]    first point of local mesh in global mesh (output).
+*/
 int calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3], double mesh_off[3], 
 		     int loc_mesh[3], int start[3]);
 
@@ -113,28 +109,51 @@ int calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3], double mesh_off[3]
  *  pos1  - position of receiving node in the desired node grid.\\
  *  grid1 - desired node grid.\\
  *  pos2  - position of the node you intend to receive the data from in the actual node grid.\\
- *  grid2 - actual node grid.  */
+ *  grid2 - actual node grid.  
+ *
+ *  \return     size of the send block.
+ *  \param  pos1[3]     Position of send node in grid1.
+ *  \param  grid1[3]    node grid 1.
+ *  \param  pos2[3]     Position of recv node in grid2.
+ *  \param  grid2[3]    node grid 2.
+ *  \param  mesh[3]     global mesh dimensions.
+ *  \param  mesh_off[3] global mesh offset (see \ref p3m_struct).
+ *  \param  block[6]    send block specification.
+*/
 int calc_send_block(int pos1[3], int grid1[3], int pos2[3], int grid2[3], 
 		    int mesh[3], double mesh_off[3], int block[6]);
 
-/** communicate the grid data according to the given fft_forw_plan. */
+/** communicate the grid data according to the given fft_forw_plan. 
+ * \param plan communication plan (see \ref fft_forw_plan).
+ * \param in   input mesh.
+ * \param out  output mesh.
+*/
 void forw_grid_comm(fft_forw_plan plan, double *in, double *out);
 
-/** communicate the grid data according to the given fft_forw_plan/fft_bakc_plan. */
+/** communicate the grid data according to the given fft_forw_plan/fft_bakc_plan. 
+ * \param plan_f communication plan (see \ref fft_forw_plan).
+ * \param plan_b additional back plan (see \ref fft_back_plan).
+ * \param in     input mesh.
+ * \param out    output mesh.
+*/
 void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in, double *out);
 
-/** DEBUG function to print fft_forw_plan structure. */
+/** Debug function to print fft_forw_plan structure. 
+ * \param plan fft/communication plan (see \ref fft_forw_plan).
+ */
 void print_fft_plan(fft_forw_plan pl);
-/** DEBUG function to print global fft mesh. */
+/** Debug function to print global fft mesh. 
+    Print a globaly distributed mesh contained in data. Element size is element. 
+ * \param plan     fft/communication plan (see \ref fft_forw_plan).
+ * \param data     mesh data.
+ * \param element  element size.
+ * \param num      element index to print.
+*/
 void print_global_fft_mesh(fft_forw_plan plan, double *data, int element, int num);
 
-/************************************************
- * public functions
- ************************************************/
+/*@}*/
+/************************************************************/
 
-/** Initialize everything connected to the 3D-FFT.
-
- */
 int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
 {
   int i,j;
@@ -333,7 +352,6 @@ int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
   return max_mesh_size; 
 }
 
-/** perform the forward 3D FFT */
 void fft_perform_forw(double *data)
 {
   int i;
@@ -441,23 +459,6 @@ void fft_exit()
   free(data_buf);
 }
 
-/** Perform redistribution of the grid.
- *
- * @param plan     redistribution plan
- * @param data     data array
- */
-void redistribute_grid(fft_forw_plan plan, double *in, double *out)
-{
-  int i;
-
-  for(i=0; i<plan.g_size; i++) {
-    plan.pack_function(in, send_buf, &(plan.send_block[6*i]), &(plan.send_block[6*i+3]),
-		       plan.old_mesh, plan.element);
-     
-
-  }
-}
-
 void pack_block(double *in, double *out, int start[3], int size[3], int dim[3], int element)
 {
   /* mid and slow changing indices */
@@ -487,26 +488,6 @@ void pack_block(double *in, double *out, int start[3], int size[3], int dim[3], 
   }
 }
 
-/************************************************
- * privat functions
- ************************************************/
-
-/** pack a block with dimensions (size[0] * size[1] * aize[2]) starting
- *  at start[3] of an input 3d-grid with dimension dim[3] into an
- *  output 3d-grid with dimensions (size[2] * size[0] * size[1]), this
- *  is a simulatanous one-fold permutation of the indices.
- *
- * The permutation is defined as: 
- * slow_in -> fast_out, mid_in ->slow_out, fast_in -> mid_out
- *
- * An element (i0_in , i1_in , i2_in ) is then 
- * (i0_out = i1_in-start[1], i1_out = i2_in-start[2], i2_out = i0_in-start[0]) and
- * for the linear indices we have:                              \\
- * li_in = i2_in + size[2] * (i1_in + (size[1]*i0_in))          \\
- * li_out = i2_out + size[0] * (i1_out + (size[2]*i0_out)) 
- *
- * For index definition see \ref pack_block()
- */
 void pack_block_permute1(double *in, double *out, int start[3], int size[3], 
 			 int dim[3], int element)
 {
@@ -538,22 +519,6 @@ void pack_block_permute1(double *in, double *out, int start[3], int size[3],
 
 }
 
-/** pack a block with dimensions (size[0] * size[1] * aize[2]) starting
- *  at start[3] of an input 3d-grid with dimension dim[3] into an
- *  output 3d-grid with dimensions (size[2] * size[0] * size[1]), this
- *  is a simulatanous two-fold permutation of the indices.
- *
- * The permutation is defined as: 
- * slow_in -> mid_out, mid_in ->fast_out, fast_in -> slow_out
- *
- * An element (i0_in , i1_in , i2_in ) is then 
- * (i0_out = i2_in-start[2], i1_out = i0_in-start[0], i2_out = i1_in-start[1]) and
- * for the linear indices we have:                              \\
- * li_in = i2_in + size[2] * (i1_in + (size[1]*i0_in))          \\
- * li_out = i2_out + size[0] * (i1_out + (size[2]*i0_out)) 
- *
- * For index definition see \ref pack_block()
- */
 void pack_block_permute2(double *in, double *out, int start[3], int size[3], 
 			 int dim[3],int element)
 {
@@ -588,9 +553,6 @@ void pack_block_permute2(double *in, double *out, int start[3], int size[3],
 
 }
 
-/** unpack a 3d-grid input block (size[3]) into an output 3d-grid
- *  with dimension dim[3] at start position start[3].
- */
 void unpack_block(double *in, double *out, int start[3], int size[3], 
 		  int dim[3], int element)
 {
@@ -622,6 +584,9 @@ void unpack_block(double *in, double *out, int start[3], int size[3],
 
 }
 
+/************************************************
+ * privat functions
+ ************************************************/
 
 int find_comm_groups(int grid1[3], int grid2[3], int *node_list1, int *node_list2, 
 		     int *group, int *pos, int *my_pos)

@@ -1,5 +1,11 @@
 /** \file main.c
     Main file of tcl_md. Initialization of tcl interpreter and exit handling.
+
+    DO NOT CHANGE!!!
+
+    <b>Responsible:</b>
+    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
+
 */
 #include <tcl.h>
 #include <stdlib.h>

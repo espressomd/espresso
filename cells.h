@@ -65,9 +65,9 @@ typedef struct {
   int *particles;
 } Cell;
 
-/************************************************
- * exported variables
- ************************************************/
+/** \name Exported Variables */
+/************************************************************/
+/*@{*/
 
 /** linked cell grid in nodes spatial domain. */
 extern int cell_grid[3];
@@ -79,9 +79,11 @@ extern int n_cells;
 /** linked cell list. */
 extern Cell *cells;
 
-/************************************************
- * functions
- ************************************************/
+/*@}*/
+
+/** \name Exported Functions */
+/************************************************************/
+/*@{*/
 
 /** initialize link cell structures. 
  *
@@ -128,3 +130,5 @@ void cells_exit();
 void realloc_cell_particles(int index, int size);
 
 #endif
+
+/*@}*/

@@ -91,11 +91,11 @@ Do not set variables which are specified as read only.
 	<li> \verbatim f <x value> <y value> <z value> \endverbatim
 	</ul>
 
-<li>\verbatim inter \endverbatim
+<li> \anchor DH_inter \verbatim inter \endverbatim
 	sets the parameters for interactions.
 
 	<ol>
-	<b><li> Non bonded interactions:</b> 
+	<b><li> \anchor DH_non_bonded Non bonded interactions:</b> 
 
 	\verbatim inter <type1> <type2> <interaction_type> <value>+ \endverbatim	
 	Non bonded interaction between particles of
@@ -118,7 +118,7 @@ Do not set variables which are specified as read only.
 			given magnitude.
 	</ul>
 
-	<b> <li> Bonded interactions: </b>
+	<b> <li> \anchor DH_bonded Bonded interactions: </b>
 
 	\verbatim inter <type_num> <interaction_type> <value>+ \endverbatim
 	Bonded interaction (Bonds are set using \ref part).

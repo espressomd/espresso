@@ -1,7 +1,13 @@
 #ifndef THERMOSTAT_H
 #define THERMOSTAT_H
 /** \file thermostat.h
-    Contains all thermostats. Currently there is only the
+    Contains all thermostats. 
+
+    <b>Responsible:</b>
+    <a href="mailto:muehlbac@mpip-mainz.mpg.de">Frank</a>
+
+
+    Currently there is only the
     \ref friction_thermo.
 */
 #include <tcl.h>

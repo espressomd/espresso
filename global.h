@@ -3,6 +3,9 @@
 /** \file global.h
     This file contains the code for access to globally defined
     variables using the script command setmd.
+
+    <b>Responsible:</b>
+    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 */
 
 #include <tcl.h>
@@ -62,8 +65,8 @@ extern const Datafield fields[];
 #define FIELD_LBOXL  2
 /** index of \ref box_l in \ref fields */
 #define FIELD_BOXL   3
-/** index of \ref n_total_particles in \ref fields */
-#define FIELD_NTOTAL 4
+/** index of \ref max_seen_particle in \ref fields */
+#define FIELD_MAXPART 4
 /** index of \ref n_particle_types in \ref fields */
 #define FIELD_NPTYPE 5
 /** index of \ref n_interaction_types in \ref fields */
@@ -80,21 +83,21 @@ extern const Datafield fields[];
 #define FIELD_GAMMA 11
 /** index of \ref rebuild_verletlist in \ref fields */
 #define FIELD_VERLET 12
-/** index of \ref p3m.bjerrum in \ref fields */
+/** index of \ref p3m_struct::bjerrum in \ref fields */
 #define FIELD_BJERRUM 13
-/** index of \ref p3m.alpha  in \ref fields */
+/** index of \ref p3m_struct::alpha  in \ref fields */
 #define FIELD_P3M_ALPHA 14
-/** index of \ref p3m.r_cut in \ref fields */
+/** index of \ref p3m_struct::r_cut in \ref fields */
 #define FIELD_P3M_RCUT 15
-/** index of \ref p3m.mesh in \ref fields */
+/** index of \ref p3m_struct::mesh in \ref fields */
 #define FIELD_P3M_MESH 16
-/** index of \ref p3m.cao  in \ref fields */
+/** index of \ref p3m_struct::cao  in \ref fields */
 #define FIELD_P3M_CAO 17
-/** index of \ref p3m.epsilon  in \ref fields */
+/** index of \ref p3m_struct::epsilon  in \ref fields */
 #define FIELD_P3M_EPSILON 18
-/** index of \ref p3m.mesh_off  in \ref fields */
+/** index of \ref p3m_struct::mesh_off  in \ref fields */
 #define FIELD_P3M_MESH_OFF 19
-/** index of \ref p3m.mesh_off  in \ref fields */
+/** index of \ref transfer_rate  in \ref fields */
 #define FIELD_TRANSFER_RATE 20
 /** index of \ref periodic in \ref fields */
 #define FIELD_PERIODIC 21

@@ -1,28 +1,8 @@
-/** \file grid.c
+/** \file grid.c   Domain decomposition for parallel computing.
  *
- *  Domain decomposition for parallel computing.
- *
- *  The primary simulation box is divided into orthogonal rectangular
- *  subboxes which are assigned to the different nodes (or processes
- *  or processors or threads if you want). This grid is described in
- *  \ref node_grid. Each node has a number \ref this_node and a
- *  position \ref node_pos in that grid. Each node has also 6 nearest
- *  neighbors \ref node_neighbors which are necessary for the
- *  communication between the nodes (see also \ref ghosts.c and \ref
- *  p3m.c for more details about the communication.
- *
- *  For the 6 directions \anchor directions we have the following convention:
- *
- *  \image html directions.gif "Convention for the order of the directions"
- *  \image latex directions.eps "Convention for the order of the directions" width=6cm
- *
- *  The Figure illustrates the direction convetion used for arrays
- *  with 6 (e.g. \ref node_neighbors, \ref boundary) and 3 entries
- *  (e.g \ref node_grid, \ref box_l , \ref my_left,...).
- *  
- *  Attention: If you change anything of the simulation box dimensions
- *  you have to call \ref changed_topology.
- * */
+ *  For more information on the domain decomposition, 
+ *  see \ref grid.h "grid.h". 
+*/
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,70 +33,12 @@ double local_box_l[3] = {1, 1, 1};
 double my_left[3]     = {0, 0, 0};
 double my_right[3]    = {1, 1, 1};
 
-/**********************************************
- * procedures
- **********************************************/
+/** \name Privat Functions */
+/************************************************************/
+/*@{*/
 
-/* callback for box_l change */
-int boxl_callback(Tcl_Interp *interp, void *_data)
-{
-  double *data = _data;
-
-  if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
-    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  box_l[0] = data[0];
-  box_l[1] = data[1];
-  box_l[2] = data[2];
-
-  changed_topology();
-
-  return (TCL_OK);
-}
-
-#ifdef PARTIAL_PERIODIC
-/* callback for periodic change */
-int per_callback(Tcl_Interp *interp, void *_data)
-{
-  int i;
-  int *data = _data;
-
-  for (i = 0; i < 3; i++)
-    periodic[i] = (data[i] != 0);
-
-  mpi_bcast_parameter(FIELD_PERIODIC);
-
-  return (TCL_OK);
-}
-#endif
-
-/* callback for node grid */
-int node_grid_callback(Tcl_Interp *interp, void *_data)
-{
-  int *data = (int *)_data;
-  if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
-    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  if (data[0]*data[1]*data[2] != n_nodes) {
-    Tcl_AppendResult(interp, "node grid does not fit n_nodes",
-		     (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  sort_int_array(data,3);
-
-  node_grid[0] = data[0];
-  node_grid[1] = data[1];
-  node_grid[2] = data[2];
-
-  changed_topology();
-
-  return (TCL_OK);
-}
+/*@}*/
+/************************************************************/
 
 void setup_node_grid()
 {
@@ -133,20 +55,13 @@ int node_grid_is_set()
   return (node_grid[0] > 0);
 }
 
-void changed_topology()
+void map_node_array(int node, int pos[3])
 {
-  int i;
-  for(i = 0; i < 3; i++) {
-    local_box_l[i] = box_l[i]/(double)node_grid[i]; 
-  }
+  get_grid_pos(node, pos, pos + 1, pos + 2, node_grid);
+}
 
-  rebuild_verletlist = 1;
-
-  /* a little bit of overkill, but safe */
-  mpi_bcast_parameter(FIELD_NGRID);
-  mpi_bcast_parameter(FIELD_BOXL);
-  mpi_bcast_parameter(FIELD_LBOXL);
-  mpi_bcast_parameter(FIELD_VERLET);
+int map_array_node(int pos[3]) {
+  return get_linear_index(pos[0], pos[1], pos[2], node_grid);
 }
 
 int find_node(double pos[3])
@@ -171,15 +86,6 @@ int find_node(double pos[3])
 #endif
   }
   return map_array_node(im);
-}
-
-void map_node_array(int node, int pos[3])
-{
-  get_grid_pos(node, pos, pos + 1, pos + 2, node_grid);
-}
-
-int map_array_node(int pos[3]) {
-  return get_linear_index(pos[0], pos[1], pos[2], node_grid);
 }
 
 void calc_node_neighbors(int node)
@@ -217,6 +123,22 @@ void calc_node_neighbors(int node)
 	extended[2*dir+1] = 0;
     }
   }
+}
+
+void changed_topology()
+{
+  int i;
+  for(i = 0; i < 3; i++) {
+    local_box_l[i] = box_l[i]/(double)node_grid[i]; 
+  }
+
+  rebuild_verletlist = 1;
+
+  /* a little bit of overkill, but safe */
+  mpi_bcast_parameter(FIELD_NGRID);
+  mpi_bcast_parameter(FIELD_BOXL);
+  mpi_bcast_parameter(FIELD_LBOXL);
+  mpi_bcast_parameter(FIELD_VERLET);
 }
 
 void calc_2d_grid(int n, int grid[3])
@@ -269,3 +191,61 @@ int map_3don2d_grid(int g3d[3],int g2d[3], int mult[3])
   for(i=0;i<3;i++) mult[i]=g2d[i]/g3d[i];
   return row_dir;
 }
+
+int node_grid_callback(Tcl_Interp *interp, void *_data)
+{
+  int *data = (int *)_data;
+  if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
+    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  if (data[0]*data[1]*data[2] != n_nodes) {
+    Tcl_AppendResult(interp, "node grid does not fit n_nodes",
+		     (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  sort_int_array(data,3);
+
+  node_grid[0] = data[0];
+  node_grid[1] = data[1];
+  node_grid[2] = data[2];
+
+  changed_topology();
+
+  return (TCL_OK);
+}
+
+int boxl_callback(Tcl_Interp *interp, void *_data)
+{
+  double *data = _data;
+
+  if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
+    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  box_l[0] = data[0];
+  box_l[1] = data[1];
+  box_l[2] = data[2];
+
+  changed_topology();
+
+  return (TCL_OK);
+}
+
+#ifdef PARTIAL_PERIODIC
+int per_callback(Tcl_Interp *interp, void *_data)
+{
+  int i;
+  int *data = _data;
+
+  for (i = 0; i < 3; i++)
+    periodic[i] = (data[i] != 0);
+
+  mpi_bcast_parameter(FIELD_PERIODIC);
+
+  return (TCL_OK);
+}
+#endif

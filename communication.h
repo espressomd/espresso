@@ -2,6 +2,10 @@
 #define COMM_H
 /** \file communication.h
     This file contains the random access MPI communication.
+ 
+    <b>Responsible:</b>
+    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
+
     It is the header file for \ref communication.c "communication.c".
 
     The random access MPI communication is used during script
@@ -164,20 +168,19 @@ void mpi_bcast_ia_params(int i, int j);
 */
 void mpi_bcast_n_particle_types(int s);
 
-/** Issue REQ_GATHER: gather statistics. \ref job determines the job to
-    do, at the moment either gather \ref minimum_part_distance or
+/** Issue REQ_GATHER: gather statistics. job determines the job to
+    do, at the moment either gather \ref minimum_part_dist or
     the coordinates.
     \param job what to do:
-    \begin{list}
-    \item 0 gather \ref minimum_part_distance
-    \item 1 gather coordinates in float format
-    \end{list}
+    <ul>
+    <li> 0 gather \ref minimum_part_dist
+    <li> 1 gather coordinates in float format
+    </ul>
     \param result where to store the gathered value(s):
-    \begin{list}
-    \item for job 0 a double *
-    \item for job 1 a float_packed_particle_data *
-    \end{list}
-
+    <ul>
+    <li> for job 0 a double *
+    <li> for job 1 a float_packed_particle_data *
+    </ul>
 */
 void mpi_gather_stats(int job, void *result);
 /*@}*/

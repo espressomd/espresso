@@ -1,5 +1,6 @@
-/** \file forces.c
-    Implementation of \ref forces.h "forces.h".
+/** \file forces.c Force calculation.
+ *
+ *  For more information see \ref forces.h "forces.h".
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,7 +8,6 @@
 #include "forces.h"
 #include "debug.h"
 #include "thermostat.h"
-/* #include "p3m_parallel.h" */
 #include "communication.h"
 #include "ghosts.h" 
 #include "verlet.h"
@@ -198,7 +198,7 @@ void force_calc()
   }
 
   /* calculate k-space part of electrostatic interaction. */
-  if(p3m.bjerrum != 0.0) P3M_perform();
+  if(p3m.bjerrum != 0.0) P3M_calc_kspace_forces();
 }
 
 void force_exit()

@@ -32,23 +32,23 @@
  * variables
  ************************************************/
 
+
 int cell_grid[3];
 int ghost_cell_grid[3];
-
-/** number of linked cells in nodes spatial domain. */
-int n_inner_cells;
 int n_cells;
 Cell *cells;
 
+/** number of linked cells in nodes spatial domain. */
+int n_inner_cells;
 /** cell size. 
     Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range); \endverbatim */
 double cell_size[3];
 /** inverse cell size. */
 double inv_cell_size[3];
 
-/************************************************
- * privat functions (headers)
- ************************************************/
+/** \name Privat Functions */
+/************************************************************/
+/*@{*/
 
 /** initializes the interacting neighbour cell list
  *  (cells.neighbours).  the created list of interacting neighbour
@@ -65,9 +65,8 @@ void init_cell_neighbours(int i);
  */
 int  is_inner_cell(int i, int gcg[3]);
 
-/************************************************
- * functions
- ************************************************/
+/*@}*/
+/************************************************************/
 
 void cells_init() 
 {

@@ -1,5 +1,10 @@
 /** \file debug.h
- This file controls debug facilities. The implementation is found in
+ This file controls debug facilities. 
+
+ <b>Responsible:</b>
+ <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
+
+ The implementation is found in
  \ref debug.c "debug.c".
  This file contains a couple of commented out defines. If they are commented in,
  they activate debug output for various aspects:

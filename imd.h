@@ -1,6 +1,9 @@
 #ifndef IMD_H__
 #define IMD_H__
-/** \file imd.h */
+/** \file imd.h 
+    <b>Responsible:</b>
+    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
+*/
 
 #include <tcl.h>
 

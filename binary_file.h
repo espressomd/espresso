@@ -1,8 +1,11 @@
 #ifndef BINARYFILE_H
 #define BINARYFILE_H
-#include <tcl.h>
 /** \file binary_file.h
     This file defines a binary file format for the particle data.
+
+    <b>Responsible:</b>
+    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
+
     It is the header file for \ref binary_file.c "binary_file.c" and provides
     functions to read and write binary particle data to Tcl channels.
     It also defines the structures and constants necessary to interprete/
@@ -26,6 +29,7 @@
     of a subsequent particle).
     </ol>
 */
+#include <tcl.h>
 
 /** This string is to be put in the \ref MDHeader::magic field of \ref MDHeader
     to allow unique identification of binary packed MD data.

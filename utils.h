@@ -1,8 +1,14 @@
-/** \file utils.h
-    Small functions that are useful not only for one modul.
-*/
 #ifndef UTILS_H
 #define UTILS_H
+/** \file utils.h
+ *    Small functions that are useful not only for one modul.
+ *
+ *  <b>Responsible:</b>
+ *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
+ *
+ *  \todo General realloc function for dynamic arrays. So far these functions are spread all over the place and redone in nearly every modul.
+ *  \todo General Send/Recv routine for two-step communications.
+*/
 #include <math.h>
 
 /* just some nice utilities... */
