@@ -1394,6 +1394,7 @@ void mpi_bcast_cell_structure(int cs)
 void mpi_bcast_cell_structure_slave(int pnode, int cs)
 {
   cells_re_init(cs);
+  on_cell_structure_change();
 }
 
 /*********************** MAIN LOOP for slaves ****************/

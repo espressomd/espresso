@@ -45,6 +45,9 @@ void on_short_range_ia_change();
 /** called every time a constraint is changed. */
 void on_constraint_change();
 
+/** called every time the cell structure is changed. */
+void on_cell_structure_change();
+
 /** called every time other parameters (timestep,...) are changed. Note that
     this does not happen automatically. The callback procedure of the changed
     variable is responsible for that by calling \ref mpi_bcast_event (2).

@@ -66,13 +66,6 @@ void init_forces();
  */
 void force_calc();
 
-/** Calculate bonded interactions (forces) for Particle List p (length np).
-    This includes also the constraint forces.
-    @param p Particle List
-    @param np length of that list
-*/
-void calc_bonded_forces(Particle *p, int np);
-
 /** Calculate long range forces (P3M, MMM1D, MMM2d...). */
 void calc_long_range_forces();
 
@@ -84,9 +77,10 @@ void calc_long_range_forces();
     @param dist      distance between p1 and p2.
     @param dist2     distance squared between p1 and p2. */
 MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2, 
-					IA_parameters *ia_params, 
 					double d[3], double dist, double dist2)
 {
+  IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+
   /* lennard jones */
   add_lj_pair_force(p1,p2,ia_params,d,dist);
   /* lennard jones cosine */
@@ -108,6 +102,8 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 }
 
 /** Calculate bonded forces between a pair of particles.
+    Also contains the constraint forces, which are treated
+    as bonded interactions in Espresso.
     @param p1 particle for which to calculate forces
 */
 MDINLINE void add_bonded_pair_force(Particle *p1)
@@ -137,6 +133,10 @@ MDINLINE void add_bonded_pair_force(Particle *p1)
       break;
     }
   }
+  
+#ifdef CONSTRAINTS
+  add_constraints_forces(p1);
+#endif
 }
 
 /** add force to another. This is used when collecting ghost forces. */

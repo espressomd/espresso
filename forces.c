@@ -28,10 +28,11 @@
 #include "interaction_data.h"
 #include "rotation.h"
 #include "forces.h"
-
-#if 0
+#include "nsquare.h"
 
 /************************************************************/
+
+#if 0
 
 /** nonbonded and bonded force calculation using the verlet list */
 void calculate_verlet_ia()
@@ -49,8 +50,10 @@ void calculate_verlet_ia()
     p  = cell->pList.part;
     np = cell->pList.n;
 
-    /* calculate bonded interactions */
-    calc_bonded_forces(p, np);
+    /* calculate bonded interactions (loop local particles) */
+    for(j = 0; j < np; j++) {
+      add_bonded_pair_force(&p[j]);
+    }
 
     /* calculate non bonded interactions (loop verlet lists of neighbors) */
     for (k = 0; k < cell->n_neighbors; k++) {
@@ -73,13 +76,20 @@ void calculate_verlet_ia()
     }
   }
 }
+#endif
 
 void force_calc()
 {
   /* preparation */
   init_forces();
 
-  calculate_verlet_ia();
+  switch (cell_structure.type) {
+  case CELL_STRUCTURE_DOMDEC:
+    //calculate_verlet_ia();
+    break;
+  case CELL_STRUCTURE_NSQUARE:
+    nsq_calculate_ia();
+  }
 
   calc_long_range_forces();
 }
@@ -88,15 +98,6 @@ void force_calc()
 
 void calc_bonded_forces(Particle *p, int np)
 {
-  int j;
-
-  /* calculate bonded interactions (loop local particles) */
-  for(j = 0; j < np; j++) {
-    add_bonded_pair_force(&p[j]);
-#ifdef CONSTRAINTS
-    add_constraints_forces(&p[j]);
-#endif
-  }
 }
 
 /************************************************************/
@@ -108,9 +109,6 @@ void calc_long_range_forces()
   switch (coulomb.method) {
   case COULOMB_P3M:
     P3M_calc_kspace_forces(1,0);
-    break;
-  case COULOMB_MMM1D:
-    MMM1D_calc_forces();
     break;
   }
 #endif
@@ -186,8 +184,8 @@ void init_forces()
   */
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
-    p  = cell->pList.part;
-    np = cell->pList.n;
+    p  = cell->part;
+    np = cell->n;
     for (i = 0; i < np; i++)
       init_local_particle_force(&p[i]);
   }
@@ -197,8 +195,8 @@ void init_forces()
   */
   for (c = 0; c < ghost_cells.n; c++) {
     cell = ghost_cells.cell[c];
-    p  = cell->pList.part;
-    np = cell->pList.n;
+    p  = cell->part;
+    np = cell->n;
     for (i = 0; i < np; i++)
       init_ghost_force(&p[i]);
   }
@@ -207,5 +205,3 @@ void init_forces()
   init_constraint_forces();
 #endif
 }
-
-#endif

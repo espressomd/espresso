@@ -4,6 +4,7 @@
 #include "communication.h"
 #include "debug.h"
 #include "ghosts.h"
+#include "forces.h"
 
 Cell *local;
 CellPList me_do_ghosts;
@@ -68,8 +69,9 @@ void nsq_topology_init(CellPList *old)
     realloc_cellplist(&me_do_ghosts, ntodo);
     for (n = 0; n < n_nodes; n++) {
       diff = n - this_node;
-      /* simple load balancing formula. Basically diff % n, where n >= n_nodes, n odd. */
-      if (((diff >= 0 && (diff % 2) == 0) ||
+      /* simple load balancing formula. Basically diff % n, where n >= n_nodes, n odd.
+	 The node itself is also left out, as it is treated differently */
+      if (((diff > 0 && (diff % 2) == 0) ||
 	   (diff < 0 && ((-diff) % 2) == 1))) {
 	CELL_TRACE(fprintf(stderr, "%d: doing interactions with %d\n", this_node, n));
 	me_do_ghosts.cell[me_do_ghosts.n++] = &cells[n];
@@ -182,4 +184,45 @@ void nsq_balance_particles()
     ppnode[l_node] += transfer;
   }
   free(ppnode);
+}
+
+/** nonbonded and bonded force calculation using the verlet list */
+void nsq_calculate_ia()
+{
+  Particle *partl, *partg;
+  Particle *pt1, *pt2;
+  int p, p2, npl, npg, c;
+  double d[3], dist2, dist;
+
+  npl   = local->n;
+  partl = local->part;
+
+  /* calculate bonded interactions and non bonded node-node */
+  for (p = 0; p < npl; p++) {
+    pt1 = &partl[p];
+    add_bonded_pair_force(pt1);
+
+    /* other particles, same node */
+    for (p2 = p + 1; p2 < npl; p2++) {
+      pt2 = &partl[p2];
+      get_mi_vector(d, pt1->r.p, pt2->r.p);
+      dist2 = sqrlen(d);
+      dist = sqrt(dist2);
+      add_non_bonded_pair_force(pt1, pt2, d, dist, dist2);
+    }
+
+    /* calculate with my ghosts */
+    for (c = 0; c < me_do_ghosts.n; c++) {
+      npg   = me_do_ghosts.cell[c]->n;
+      partg = me_do_ghosts.cell[c]->part;
+
+      for (p2 = 0; p2 < npg; p2++) {
+	pt2 = &partg[p2];
+	get_mi_vector(d, pt1->r.p, pt2->r.p);
+	dist2 = sqrlen(d);
+	dist = sqrt(dist2);
+	add_non_bonded_pair_force(pt1, pt2, d, dist, dist2);
+      }
+    }
+  }
 }

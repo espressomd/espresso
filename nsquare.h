@@ -10,4 +10,5 @@ void nsq_topology_init(CellPList *local);
 
 void nsq_balance_particles();
 
+void nsq_calculate_ia();
 #endif

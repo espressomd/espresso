@@ -149,6 +149,11 @@ void on_constraint_change()
   recalc_forces = 1;  
 }
 
+void on_cell_structure_change()
+{
+  reinit_coulomb = 1;
+}
+
 void on_parameter_change(int field)
 {
   if (field == FIELD_BOXL || field == FIELD_NODEGRID)

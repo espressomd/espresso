@@ -145,20 +145,25 @@ void integrate_vv_recalc_maxrange()
   max_range  = max_cut + skin;
   max_range2 = max_range * max_range;
 
-  /* check real space interaction cutoff/range*/
-  if(max_cut < 0.0) {
-    fprintf(stderr,"%d: ERROR: You have to specify at least one interaction\n",this_node);
-    errexit();
-  }
-  if((min_box_l/2.0) < max_range) {
-    fprintf(stderr,"%d: ERROR: Maximal real space interaction %f is larger than half of the minimal box dimension %f\n",this_node,max_range,min_box_l);
-    errexit();
-  }
+  /* To domain_decomposition.
 
-  if(min_local_box_l < max_range) {
-    fprintf(stderr,"%d: ERROR: Maximal real space interaction %f is larger than minimal local box length %f\n",this_node,max_range,min_local_box_l);
-    errexit();
-  }
+
+     check real space interaction cutoff/range
+
+     if(max_cut < 0.0) {
+     fprintf(stderr,"%d: ERROR: You have to specify at least one interaction\n",this_node);
+     errexit();
+     }
+     if((min_box_l/2.0) < max_range) {
+     fprintf(stderr,"%d: ERROR: Maximal real space interaction %f is larger than half of the minimal box dimension %f\n",this_node,max_range,min_box_l);
+     errexit();
+     }
+     
+     if(min_local_box_l < max_range) {
+     fprintf(stderr,"%d: ERROR: Maximal real space interaction %f is larger than minimal local box length %f\n",this_node,max_range,min_local_box_l);
+     errexit();
+     }
+  */
 }
 
 /************************************************************/
@@ -183,15 +188,18 @@ void integrate_vv(int n_steps)
       //exchange_ghost();
       break;
     }
+    ghost_communicator(&cell_structure.ghost_cells_comm);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm);
+
     recalc_forces = 1;
     resort_particles = 0;
   }
   if (recalc_forces) {
-    //build_verlet_lists_and_force_calc();
+    force_calc();
 #ifdef ROTATION
     convert_initial_torques();
 #endif
-    //collect_ghost_forces();
+    ghost_communicator(&cell_structure.collect_ghost_force_comm);
     rescale_forces();
     recalc_forces = 0;
   }
@@ -203,8 +211,9 @@ void integrate_vv(int n_steps)
     propagate_vel_pos();
 #ifdef ROTATION
     propagate_omega_quat(); 
-#endif    
-    if(rebuild_verletlist == 1) {
+#endif
+    if(rebuild_verletlist == 1 &&
+       cell_structure.type == CELL_STRUCTURE_DOMDEC) {
       INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
       n_verlet_updates++;
       //invalidate_ghosts();
@@ -213,10 +222,10 @@ void integrate_vv(int n_steps)
       //build_verlet_lists_and_force_calc();
     }
     else {
-      //update_ghost_pos();
-      //force_calc();         
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+      force_calc();
     }
-    //collect_ghost_forces();
+    ghost_communicator(&cell_structure.collect_ghost_force_comm);
     rescale_forces_propagate_vel();
 #ifdef ROTATION
     convert_torqes_propagate_omega();
