@@ -187,14 +187,16 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 	if (data_parts & GHOSTTRANS_PROPRTS) {
 	  memcpy(&pt->p, retrieve, sizeof(ParticleProperties));
 	  retrieve +=  sizeof(ParticleProperties);
-	  GHOST_TRACE(fprintf(stderr, "%d: received ghost %d", this_node, pt->p.identity));
+	  /* GHOST_TRACE(fprintf(stderr, "%d: received ghost %d", this_node, pt->p.identity)); */
 	  if (local_particles[pt->p.identity] == NULL) {
-	    GHOST_TRACE(fprintf(stderr, ", using.\n"));
+	    /* GHOST_TRACE(fprintf(stderr, ", using.\n")); */
 	    local_particles[pt->p.identity] = pt;
 	  }
-	  else {
+	  /*
+	    else {
 	    GHOST_TRACE(fprintf(stderr, ", already here.\n"));
-	  }
+	    }
+	  */
 	}
 	if (data_parts & GHOSTTRANS_POSITION) {
 	  memcpy(&pt->r, retrieve, sizeof(ParticlePosition));
