@@ -2,6 +2,9 @@
 #define UTILS_H
 /** \file utils.h
  *    Small functions that are useful not only for one modul.
+
+ *  just some nice utilities... 
+ *  and some constants...
  *
  *  <b>Responsible:</b>
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
@@ -12,15 +15,70 @@
 #include <math.h>
 #include <stdlib.h>
 
-/* just some nice utilities... */
-/* and some constants...*/
+/************************************************
+ * defines
+ ************************************************/
+
 
 #define PI     3.14159265358979323846264338328 /* Pi */
 #define wupi   1.77245385090551602729816748334 /* root of PI */
 #define driwu2 1.25992104989487316476721060728 /* third root of 2 */
 
+/************************************************
+ * data types
+ ************************************************/
+
+/** Integer list. */
+typedef struct {
+  /* Dynamically allocated integer field. */
+  int *e;
+  /** number of used elements in the integer field. */
+  int n;
+  /** allocated size of the integere field. */
+  int max;
+} IntList;
+
+/** Double list. */
+typedef struct {
+  /* Dynamically allocated integer field. */
+  double *e;
+  /** number of used elements in the integer field. */
+  int n;
+  /** allocated size of the integere field. */
+  int max;
+} DoubleList;
+
+
+/************************************************
+ * functions: misc
+ ************************************************/
+
 /** exit ungracefully, core dump if switched on. Defined in main.c. */
 void errexit();
+
+/************************************************
+ * functions: lists
+ ************************************************/
+
+void realloc_intlist(IntList *il, int size)
+{
+  if(size != il->max) {
+    il->max = size;
+    il->e = (int *) realloc(il->e, sizeof(int)*il->max);
+  }
+}
+
+void realloc_doublelist(DoubleList *dl, int size)
+{
+  if(size != dl->max) {
+    dl->max = size;
+    dl->e = (double *) realloc(dl->e, sizeof(double)*dl->max);
+  }
+}
+
+/************************************************
+ * functions: math
+ ************************************************/
 
 /** Maximum von  double a und  double b berechnen, gibt double zurueck. */
 MDINLINE double dmax(double a, double b) { return (a>b) ? a : b; }
@@ -90,6 +148,30 @@ MDINLINE double sinc(double d)
   return 1.0;
 }
 
+/** factorizes small numbers up to a maximum of max factors. */
+MDINLINE int calc_factors(int n, int *factors, int max)
+{
+  int f=2,i=0;
+  while(n>1) {
+    while(f<=n) {
+      if(n%f==0) {
+	if(i>=max) return 0;
+	n /= f;
+	factors[i]=f;
+	i++;
+	f=n;
+      } 
+      f++;
+    }
+    f=2;
+  }
+  return i;
+}
+
+/************************************************
+ * functions: vectors and matrices
+ ************************************************/
+
 /** get the linear index from the position (a,b,c) in a 3D grid
  *  of dimensions adim[]. returns linear index.
  *
@@ -154,25 +236,23 @@ MDINLINE void sort_int_array(int *data,int size)
     }
 }
 
-/** factorizes small numbers up to a maximum of max factors. */
-MDINLINE int calc_factors(int n, int *factors, int max)
+MDINLINE void permute_ifield(int *field, int size, int permute)
 {
-  int f=2,i=0;
-  while(n>1) {
-    while(f<=n) {
-      if(n%f==0) {
-	if(i>=max) return 0;
-	n /= f;
-	factors[i]=f;
-	i++;
-	f=n;
-      } 
-      f++;
-    }
-    f=2;
+  int i,tmp;
+
+  if(permute==0) return;
+  if(permute<0) permute = (size + permute);
+  while(permute>0) {
+    tmp=field[0];
+    for(i=1;i<size;i++) field[i-1] = field[i];
+    field[size-1]=tmp;
+    permute--;
   }
-  return i;
 }
+
+/************************************************
+ * functions: Debugging
+ ************************************************/
 
 /** print a block of a 3D array.
  *  @param data   3D array.
@@ -213,19 +293,11 @@ MDINLINE void print_block(double *data, int start[3], int size[3], int dim[3], i
   }
 }
 
-MDINLINE void permute_ifield(int *field, int size, int permute)
-{
-  int i,tmp;
 
-  if(permute==0) return;
-  if(permute<0) permute = (size + permute);
-  while(permute>0) {
-    tmp=field[0];
-    for(i=1;i<size;i++) field[i-1] = field[i];
-    field[size-1]=tmp;
-    permute--;
-  }
-}
+
+/************************************************
+ * functions: Distance calculation
+ ************************************************/
 
 /** returns the distance between two position. 
  *  \param pos1[3] Position one.
