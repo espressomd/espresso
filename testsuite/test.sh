@@ -1,18 +1,19 @@
 #!/bin/sh
-TESTCASES="lj.tcl harm.tcl fene.tcl mmm1d.tcl dh.tcl madelung.tcl"
+TESTCASES="lj.tcl lj-cos.tcl harm.tcl fene.tcl mmm1d.tcl dh.tcl madelung.tcl"
 # lj-cos.tcl FENE.tcl harmonic.tcl... constraints thermosim energy pressure rotation gay-berne
 # 
 # List of testcases to be done (and people responsible for them):
 #################################################################
 #
-# - lj: (AxA / Status: Done/Scheduled.)
+# - lj: (AxA / Status: Done.)
 #   Testing forces, energies, pressures of the LJ-interaction.
-#   Enhancements scheduled: test of lj-cos, shift, offset, different sizes.
+# - lj-cos: (AxA / Status: Done.)
+#   Testing forces, energies, pressures of the LJ-cos-interaction.
 # - fene/harm: (BAM / Status: Finishing.)
 #   Testing forces, energies, pressures of the FENE-/harmonic-interaction.
 # - p3m/dh: (HL)
 #   Testing electrostatic interactions.
-# - mmm1D: (AxA / Status: Finishing.)
+# - mmm1d: (AxA / Status: Done.)
 #   Testing forces of the mmm1D-interaction.
 # - GB: (DmA / Status: Scheduled.)
 #   Testing forces, energies, pressures of the Gay-Berne-Potential.
