@@ -9,9 +9,9 @@ Current working revision.
 Released & tagged on September 24th, 2004.
 
 
-- v1.7.4f -
+- v1.7.4g -
 -----------
-
+(g) October 8th, 2004
 (f) September 23rd, 2004.
 (e) September 21th, 2004.
 (d) September 21th, 2004.
@@ -20,6 +20,11 @@ Released & tagged on September 24th, 2004.
 (a) September 14th, 2004.
 
 New Features:
+(g) Added support for FFTW version 3. When electrostatics/p3m is used, the Fast
+    Fourier Transform should run faster with the new version. Use switch
+    USEFFTW3=yes in the Makefile.$PLATFORM to use this feature. If fftw3 is not
+    installed on your system, use the default switch USEFFTW3=no or install fftw3,
+    which you can get at www.fftw.org.
 (f) Added a fake MPI implementation for single CPU jobs (currently only for Linux),
     called MPIFAKE: If set to 'yes', a simple fake MPI implementation (mpi.h/mpi.c)
     is used, which only works on one processor; since most MPI calls are simply 
