@@ -1,12 +1,12 @@
 #!/bin/sh
-# tricking...\
-    PLATFORM=`uname -s`;
+# tricking... the line after a these comments are interpreted as standard shell script \
+    PLATFORM=`uname -s`; if [ $# = 1 ]; then NP=$1; else NP=8; fi
 # OSF1 \
-    if test $PLATFORM = OSF1; then  exec dmpirun -np 8 $PLATFORM/tcl_md $0 $*
+    if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $PLATFORM/tcl_md $0 $*
 # AIX \
-    elif test $PLATFORM = AIX; then exec poe $PLATFORM/tcl_md $0 $* -procs 8
+    elif test $PLATFORM = AIX; then exec poe $PLATFORM/tcl_md $0 $* -procs $NP
 # Linux \
-    else lamboot; exec /usr/lib/lam/bin/mpirun -np 8 -nsigs $PLATFORM/tcl_md $0 $*;
+    else lamboot; exec /usr/lib/lam/bin/mpirun -np $NP -nsigs $PLATFORM/tcl_md $0 $*;
 
 # \
     fi;
@@ -18,7 +18,7 @@ set tcl_precision 5
 set use_imd n
 
 set write_steps 10
-set configs 1000
+set configs 400
 
 setmd periodic 1 1 1
 setmd bjerrum 1.0
@@ -32,14 +32,6 @@ source polywr.tcl
 
 # data initialization
 ##################################################
-puts "n_node = [setmd n_node]"
-
-puts "box =\{[setmd box]\}"
-if {[setmd n_node] == 8} {
-    setmd node_grid 2 2 2
-}
-puts "grid = \{[setmd node_grid]\}"
-
 if { ![file exists "config.gz"]} {
     error "please generate a configuration file with setup.tcl"
     exit
@@ -56,7 +48,10 @@ puts "opened file"
 
 readmd $f
 
-puts "read [expr [setmd maxpart] + 1] particles from config.gz"
+puts "n_part = [expr [setmd maxpart] + 1] (read from config.gz)"
+puts "grid   = \{[setmd node_grid]\}"
+puts "n_node = [setmd n_node]"
+puts "box    =\{[setmd box]\}"
 
 # setup interactions
 ##################################################
