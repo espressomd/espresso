@@ -14,6 +14,7 @@
 #include "config.h"
 #include "debug.h"
 #include "interaction_data.h"
+#include "rattle.h"
 #include "errorhandling.h"
 #include "communication.h"
 #include "grid.h"
@@ -745,6 +746,16 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
       return (TCL_OK);
     }
 #endif
+#ifdef BOND_CONSTRAINT
+  case BONDED_IA_RIGID_BOND:
+    Tcl_PrintDouble(interp, sqrt(params->p.rigid_bond.d2), buffer);
+    Tcl_AppendResult(interp, "RIGID_BOND ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.rigid_bond.p_tol, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.rigid_bond.v_tol, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
+#endif
 #ifdef LENNARD_JONES
   case BONDED_IA_SUBT_LJ:
     Tcl_PrintDouble(interp, params->p.subt_lj.k, buffer);
@@ -1122,7 +1133,7 @@ int inter_parse_bonded(Tcl_Interp *interp,
 		       int argc, char ** argv)
 {
   int mult;
-  double k, r, bend, phi0, phase;
+  double k, r, bend, phi0, phase, d, p_tol, v_tol;
 
   if (ARG0_IS_S("num")) {
     if (argc == 1)
@@ -1273,6 +1284,23 @@ int inter_parse_bonded(Tcl_Interp *interp,
     Tcl_AppendResult(interp, "Tabulated potentials not compiled in! see config.h\n", (char *) NULL);
     return (TCL_ERROR);
 #endif
+  }
+
+  if (ARG0_IS_S("rigid_bond")) {
+
+      if (argc != 4) {
+        Tcl_AppendResult(interp, "rigid bond needs 3 parameters: "
+                         "<constrained_bond_distance> <Positional_tolerance> <Velocity_tolerance>", (char *) NULL);
+        return TCL_ERROR;
+      }
+
+      if ((! ARG_IS_D(1, d)) || (! ARG_IS_D(2, p_tol)) || (! ARG_IS_D(3, v_tol)) ) {
+        Tcl_AppendResult(interp, "rigid bond needs 3 DOUBLE parameters: "
+                         "<constrained_bond_distance> <Positional_tolerance> <Velocity_tolerance>", (char *) NULL);
+        return TCL_ERROR;
+      }
+
+      CHECK_VALUE(rigid_bond_set_params(bond_type, d, p_tol, v_tol), "bond type must be nonnegative");
   }
 
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],

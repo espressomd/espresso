@@ -32,3 +32,6 @@ void correct_pos_shake();
 
 /** Correction of current velocities using RATTLE algorithm*/
 void correct_vel_shake();
+
+/** set the parameter for a rigid, aka RATTLE bond */
+int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol);
