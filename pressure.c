@@ -316,6 +316,7 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_co
     else if (ARG0_IS_S("nonbonded") ||
 	     ARG0_IS_S("lj") ||
 	     ARG0_IS_S("buckingham") ||
+             ARG0_IS_S("morse") ||
              ARG0_IS_S("soft-sphere") ||
 	     ARG0_IS_S("lj-cos") ||
 	     ARG0_IS_S("tabulated") ||
@@ -678,6 +679,10 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
 	/* buckingham potential */
 #ifdef BUCKINGHAM
 	add_buck_pair_force(&p1,&p2,ia_params,d,dist,force);
+#endif	
+	/* morse potential */
+#ifdef MORSE
+	add_morse_pair_force(&p1,&p2,ia_params,d,dist,force);
 #endif	
         /* soft-sphere potential */
 #ifdef SOFT_SPHERE
