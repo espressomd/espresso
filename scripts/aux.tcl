@@ -281,6 +281,58 @@ proc stopParticles { } {
 }
 
 #
+# center of mass motion
+# ---------------------
+#
+# Calculate the center of mass motion of the system stored in Espresso
+#
+#############################################################
+proc system_com { } {
+   set npart [setmd n_part]
+    
+    # calculate center of mass motion
+    set com_vel { 0 0 0 }
+    set part_cnt 0
+    set i 0
+    while { $part_cnt < $npart } {
+	if { [part $i] != "na" } {
+	    set part_vel [part $i print v] 
+	    set com_vel  [vecadd $com_vel $part_vel]
+	    incr part_cnt
+	}
+	incr i
+    }
+    return [vecscale [expr 1.0/$npart] $com_vel]
+}
+
+#
+# galileiTransformParticles 
+# -------------------------
+# 
+# Perform a Galilei Transformation on all Particles stored 
+# in Espresso such that the center of mass motion of the 
+# system is zero. Returns old center of mass motion.
+# Assumes particles of equal mass!
+#
+#############################################################
+
+proc galileiTransformParticles { } {
+    set com_vel [system_com]
+    
+    # subtract center of mass motion from particle velocities
+    set npart [setmd n_part]; set part_cnt 0; set i 0
+    while { $part_cnt < $npart } {
+	if { [part $i] != "na" } {
+	    set part_vel [vecsub [part $i print v] $com_vel]
+	    part $i v [lindex $part_vel 0] [lindex $part_vel 1] [lindex $part_vel 2]
+	    incr part_cnt
+	}
+	incr i
+    }
+    return $com_vel
+}
+
+#
 # Prepare Connection to VMD
 # -------------------------
 # 
