@@ -790,7 +790,7 @@ void MMM2D_add_far()
 
 static void MMM2D_tune_far(double error)
 {
-  fprintf(stderr, "!!!!!!!!!!!!!!!!!!!!!!!!!!! fixed far cutoff ten\n");
+  //  fprintf(stderr, "!!!!!!!!!!!!!!!!!!!!!!!!!!! fixed far cutoff ten\n");
   mmm2d_params.far_cut = 10;
   mmm2d_params.far_calculated = 1;
 }
