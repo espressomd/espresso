@@ -1301,8 +1301,6 @@ int inter_parse_bonded(Tcl_Interp *interp,
       return TCL_ERROR;
     }
 
-      //      CHECK_VALUE(rigid_bond_set_params(bond_type, d, p_tol, v_tol), "bond type must be nonnegative");
-    //      return TCL_OK;
     CHECK_VALUE(rigid_bond_set_params(bond_type, d, p_tol, v_tol), "bond type must be nonnegative");
   }
 #endif
