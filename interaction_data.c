@@ -1133,7 +1133,7 @@ int inter_parse_bonded(Tcl_Interp *interp,
 		       int argc, char ** argv)
 {
   int mult;
-  double k, r, bend, phi0, phase, d, p_tol, v_tol;
+  double k, r, bend, phi0, phase;
 
   if (ARG0_IS_S("num")) {
     if (argc == 1)
@@ -1285,24 +1285,25 @@ int inter_parse_bonded(Tcl_Interp *interp,
     return (TCL_ERROR);
 #endif
   }
-
+#ifdef BOND_CONSTRAINT
   if (ARG0_IS_S("rigid_bond")) {
+    double d, p_tol, v_tol;
+    
+    if (argc != 4) {
+      Tcl_AppendResult(interp, "rigid bond needs 3 parameters: "
+		       "<constrained_bond_distance> <Positional_tolerance> <Velocity_tolerance>", (char *) NULL);
+      return TCL_ERROR;
+    }
 
-      if (argc != 4) {
-        Tcl_AppendResult(interp, "rigid bond needs 3 parameters: "
-                         "<constrained_bond_distance> <Positional_tolerance> <Velocity_tolerance>", (char *) NULL);
-        return TCL_ERROR;
-      }
+    if ((! ARG_IS_D(1, d)) || (! ARG_IS_D(2, p_tol)) || (! ARG_IS_D(3, v_tol)) ) {
+      Tcl_AppendResult(interp, "rigid bond needs 3 DOUBLE parameters: "
+		       "<constrained_bond_distance> <Positional_tolerance> <Velocity_tolerance>", (char *) NULL);
+      return TCL_ERROR;
+    }
 
-      if ((! ARG_IS_D(1, d)) || (! ARG_IS_D(2, p_tol)) || (! ARG_IS_D(3, v_tol)) ) {
-        Tcl_AppendResult(interp, "rigid bond needs 3 DOUBLE parameters: "
-                         "<constrained_bond_distance> <Positional_tolerance> <Velocity_tolerance>", (char *) NULL);
-        return TCL_ERROR;
-      }
-
-      CHECK_VALUE(rigid_bond_set_params(bond_type, d, p_tol, v_tol), "bond type must be nonnegative");
+    CHECK_VALUE(rigid_bond_set_params(bond_type, d, p_tol, v_tol), "bond type must be nonnegative");
   }
-
+#endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);
   return TCL_ERROR;
