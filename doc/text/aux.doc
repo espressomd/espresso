@@ -17,7 +17,7 @@ The following procedures are found in scripts/aux.tcl and scripts/countBonds.tcl
 	However, this last paragraph now has only historical meaning (see \ref writepdb).
     <li>\anchor tcl_polyBlockWriteAll
         \verbatim polyBlockWriteAll <destination> [<tcl-var> [<rdm> [<configs>]]] \endverbatim
-	does even more than \ref tcl_polyBlockfile, i.e. it saves <i>all</i> current interactions, particles, bonds, tcl_md-variables to <destination>,
+	does even more than \ref tcl_polyBlockWrite, i.e. it saves <i>all</i> current interactions, particles, bonds, tcl_md-variables to <destination>,
 	but in addition it also saves the tcl-variables specified by <tcl-var> (if 'all', then all the variables in the active script are stored),
 	it saves the state of the random number generator if <rdm> is 'random' (= complete state) or 'seed' (= only the seeds),
 	and it saves all the particle configurations used for analysis purposes if <configs> is all but '-'.<BR>
