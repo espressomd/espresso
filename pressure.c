@@ -344,7 +344,92 @@ void calc_virials() {
     
   }
 }
+void calc_bins_sphere(int *new_bin,int *elements,double r_min,double r_max,int r_bins, double *center)
+{
+  int i,j,counter=0,*bins;
+  double d[3],dist;
+  double d_bin;
+  d_bin = (r_max-r_min)/r_bins;
+  bins = malloc(n_total_particles*sizeof(int));
+  for(i=0; i<n_total_particles; i++) {
+    get_mi_vector(d, center, partCfg[i].r.p);
+    dist = sqrt(sqrlen(d))-r_min;
+    bins[i] = floor(dist/d_bin);
+    if(dist > r_max-r_min) bins[i] = -1;
+  }
+  for(i=0;i<r_bins;i++){
+    new_bin[i] = 0;
+    for(j=0;j<n_total_particles;j++){
+      if(bins[j]==i){
+	elements[counter++] = partCfg[j].r.identity;
+	new_bin[i] += 1;
+      }
+    }
+  }
+}
 
+
+
+int parse_bins(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* bin particles for pressure calculation */
+  /******************************************/
+  /** Computes bins for pressure calculations, gives back lists
+      with particles for each bin in spherical geometry**/
+  char buffer[1000*TCL_INTEGER_SPACE];
+  double r_min=0, r_max=-1.0, center[3];
+  int r_bins=-1, i,j,k;
+  int *new_bin;
+  int *elements;
+
+  if (ARG0_IS_S("sphere")) { 
+    argc--; argv++;
+    if(argc < 6) { Tcl_AppendResult(interp,"Too few arguments! Usage: 'analyze bins sphere <r_min> <r_max> <r_bins> <center1> <center2> <center3> '",(char *)NULL); return (TCL_ERROR); }
+    if( argc>0 ) { if (!ARG0_IS_D(r_min)) return (TCL_ERROR); argc--; argv++; }
+    if( argc>0 ) { if (!ARG0_IS_D(r_max)) return (TCL_ERROR); argc--; argv++; }
+    if( argc>0 ) { if (!ARG0_IS_I(r_bins)) return (TCL_ERROR); argc--; argv++; }
+    if( argc>0 ) { if (!ARG0_IS_D(center[0])) return (TCL_ERROR); argc--; argv++; }
+    if( argc>0 ) { if (!ARG0_IS_D(center[1])) return (TCL_ERROR); argc--; argv++; }
+    if( argc>0 ) { if (!ARG0_IS_D(center[2])) return (TCL_ERROR); argc--; argv++; }
+    
+    
+    /* if not given use default */
+    if(r_max == -1.0) r_max = min_box_l/2.0;
+    if(r_bins == -1) r_bins = n_total_particles / 20;
+    
+    /* give back what you do */
+    
+    elements = malloc(n_total_particles*sizeof(int));
+    new_bin = malloc(r_bins*sizeof(int));
+    updatePartCfg();
+    calc_bins_sphere(new_bin,elements, r_min, r_max, r_bins, center);
+    /* append result */
+    {
+      Tcl_AppendResult(interp, " { ", (char *)NULL);
+      /* i->particles, j->bin, k->particle/bin */ 
+      for(i=0,j=0,k=0;i<n_total_particles;i++,k++){
+	if(k==new_bin[j] || new_bin[j] == 0){
+	  j++;k=0;
+	  /* if all bins are full, rest of particles are outside r_min/r_max */
+	  if(j==r_bins) break;
+	  Tcl_AppendResult(interp, "} { ", (char *)NULL);
+	}
+	sprintf(buffer,"%d ",elements[i]);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      Tcl_AppendResult(interp, "}\n", (char *)NULL);
+    }
+    free(new_bin);
+    free(elements);
+    return (TCL_OK);
+  }
+  else {
+    sprintf(buffer, "The feature 'analyze bins %s' you requested is not yet implemented.",argv[0]);
+    Tcl_AppendResult(interp,buffer,(char *)NULL);
+    return (TCL_ERROR);
+  }
+  return (TCL_ERROR);
+}
 
 /* Calculate the pressure from the virials */
 /*******************************************/

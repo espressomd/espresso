@@ -40,6 +40,15 @@ void calc_pressure(void);
 /** implementation of 'analyze pressure' */
 int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv);
 
+/** Does the binning for calc_p_tensor
+    @param r_min minimum distance for binning
+    @param r_max maximum distance for binning
+    @param r_bins number of bins
+    @param center 3 dim pointer to sphere origin 
+*/
+
+void calc_bins(int *_new_bin,int *_elements,double r_min,double r_max,int r_bins, double *center);
+int parse_bins(Tcl_Interp *interp, int argc, char **argv);
 
 /** Initializes extern Energy_stat \ref #p_tensor to be used by \ref calc_p_tensor. */
 void init_p_tensor();
