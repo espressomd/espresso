@@ -4,10 +4,10 @@
 
 #include "cells.h"
 
-#define DEBUG
+//#define DEBUG
 
 /** increment size of particle buffer */
-#define PART_INCREMENT 10
+#define PART_INCREMENT 2
 /** half the number of cell neighbours in 3 Dimensions*/
 #define MAX_NEIGHBOURS 13
 
@@ -15,6 +15,7 @@ int  get_linear_index(int a, int b, int c, int adim, int bdim, int cdim);
 void get_grid_pos(int i, int *a, int *b, int *c, int adim, int bdim, int cdim);
 void init_cell_neighbours();
 int  is_inner_cell(int i, int adim, int bdim, int cdim);
+void realloc_cell_particles(int index, int size);
 
 void cells_init() 
 {
@@ -55,11 +56,13 @@ void cells_init()
   for(i=0;i<n_cells;i++) {
     cells[i].n_particles=0;
     cells[i].max_particles = PART_INCREMENT;
-    cells[i].particles = malloc(PART_INCREMENT*sizeof(int));
+    cells[i].particles = malloc(cells[i].max_particles*sizeof(int));
     if(is_inner_cell(i,ghost_cell_grid[0],ghost_cell_grid[1],ghost_cell_grid[2])) 
       cells[i].neighbours = malloc(MAX_NEIGHBOURS*sizeof(int));
   }
   
+  init_cell_neighbours();
+
 #ifdef DEBUG
   if(this_node < 2) {
     fprintf(stderr,"cell_grid = (%d, %d, %d)\n",
@@ -74,34 +77,66 @@ void cells_init()
 	    my_left[0],my_left[1],my_left[2],my_right[0],my_right[1],my_right[2]);
   }
 #endif
-  init_cell_neighbours();
+}
 
+void cells_exit() 
+{
+  int i;
+#ifdef DEBUG
+  if(this_node<2) fprintf(stderr,"%d: cells_exit:\n",this_node); 
+#endif
+  for(i=0;i<n_cells;i++) {
+    free(cells[i].neighbours);
+    free(cells[i].particles);
+  }
+  free(cells);
 }
 
 
 void sort_particles_into_cells()
 {
   int i,n;
-  int cpos[3];
+  int cpos[3], gcg[3];
   int ind;
+
 #ifdef DEBUG
   if(this_node<2) fprintf(stderr,"%d: sort_particles_into_cells:\n",this_node); 
-#endif
+#endif  
+ 
+  for(i=0;i<3;i++) gcg[i] = ghost_cell_grid[i];
+
+  /* initialize cells */
+  for(i=0;i<n_cells;i++) cells[i].n_particles=0;
+
   /* particle loop */
   for(n=0;n<n_particles;n++) {
+    /* calculate cell index */
     for(i=0;i<3;i++) 
       cpos[i] = (int)((particles[n].p[i]-my_left[i])*inv_cell_size[i])+1;
-    ind = get_linear_index(cpos[0],cpos[1],cpos[2],ghost_cell_grid[0],ghost_cell_grid[1],ghost_cell_grid[2]);
-    fprintf(stderr,"%d: Part %d (%.2e, %.2e, %.2e) in cell %d\n",this_node,n,particles[n].p[0],particles[n].p[1],particles[n].p[2],ind);
+    ind = get_linear_index(cpos[0],cpos[1],cpos[2],gcg[0],gcg[1],gcg[2]);
+#ifdef DEBUG
+   fprintf(stderr,"%d: Sort Part (GI=%d LI=%d) (%.2e, %.2e, %.2e) in cell %d\n",
+	    this_node,particles[n].identity,n,particles[n].p[0],
+	    particles[n].p[1],particles[n].p[2],ind);
+#endif  
+
+    /* Append particle in particle list of that cell */
+    if(cells[ind].n_particles >= cells[ind].max_particles) 
+      realloc_cell_particles(ind,cells[ind].n_particles+PART_INCREMENT);
+    cells[ind].particles[cells[ind].n_particles] = n;
+    cells[ind].n_particles++;
+  }
+
+  /* resize particle arrays */
+  for(i=0;i<n_cells;i++) {
+    realloc_cell_particles(i,cells[i].n_particles);
+#ifdef DEBUG
+   if(this_node==0) fprintf(stderr,"0: Cell[%d] n_part = %d max_part = %d\n",
+			    i,cells[i].n_particles,cells[i].max_particles);
+#endif      
   }
 }
 
-void cells_exit() 
-{
-#ifdef DEBUG
-  if(this_node<2) fprintf(stderr,"%d: cells_exit:\n",this_node); 
-#endif
-}
 
 
 /*******************  privat functions  *******************/
@@ -179,4 +214,28 @@ int  is_inner_cell(int i, int adim, int bdim, int cdim)
     return 0;
 }
 
+/** realloc cell particle array.
+    Step size for increase and decrease is PART_INCREMENT.
+    @param index    linear cell index.
+    @param size     desired size of the  particle array.
+ */
+void realloc_cell_particles(int index, int size)
+{
+  int incr;
+
+  if( size > cells[index].max_particles) {
+    incr = (size-cells[index].max_particles)/PART_INCREMENT;
+    cells[index].max_particles += incr*PART_INCREMENT;
+  }
+  else if( size < (cells[index].max_particles-PART_INCREMENT) ) {
+    incr =(size-cells[index].max_particles)/PART_INCREMENT;
+    cells[index].max_particles += incr*PART_INCREMENT;
+  }
+  else incr=0;
+
+  if(incr != 0) {
+    cells[index].particles = (int *)
+      realloc(cells[index].particles,sizeof(int)*cells[index].max_particles);
+  }
+}
 

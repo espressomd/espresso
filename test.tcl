@@ -28,7 +28,7 @@ puts "niatypes = [setmd niatypes]"
 
 # Set up particle positions
 ##################################################
-part 0 pos 1.0 6.0 1.0
+part 0 pos 1.0 2.0 1.0
 puts "part 0 = [part 0]"
 part 1 pos 1.0 1.0 1.0
 puts "part 1 = [part 1]"
