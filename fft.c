@@ -20,8 +20,12 @@
 #include <string.h> 
 #include <math.h>
 
-#include <fftw.h>
-#include <rfftw.h>
+#ifdef USEFFTW3
+#  include <fftw3.h>
+#else
+#  include <fftw.h>
+#  include <rfftw.h>
+#endif
 
 #include "communication.h"
 #include "grid.h"
@@ -46,6 +50,10 @@
 #define REQ_FFT_FORW   301
 /** Tag for communication in back_grid_comm() */
 #define REQ_FFT_BACK   302
+#ifdef USEFFTW3
+/* Tag for wisdom file I/O */
+#  define FFTW_FAILURE 0
+#endif
 
 
 /************************************************
@@ -58,6 +66,11 @@ fft_forw_plan fft_plan[4];
 
 /** Information for Back FFTs (see fft_plan). */
 fft_back_plan fft_back[4];
+
+#ifdef USEFFTW3
+fft_forw_plan fft_plan_buf[4];
+fft_back_plan fft_back_buf[4];
+#endif
 
 /** Maximal size of the communication buffers. */
 static int max_comm_size=0;
@@ -198,7 +211,11 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
   /* FFTW WISDOM stuff. */
   char wisdom_file_name[255];
   FILE *wisdom_file;
+#ifdef USEFFTW3
+  int wisdom_status;
+#else
   fftw_status wisdom_status;
+#endif
 
   FFT_TRACE(fprintf(stderr,"%d: fft_init():\n",this_node));
 
@@ -358,25 +375,41 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
     /* FFT plan creation. 
        Attention: destroys contents of c_data/data and c_data_buf/data_buf. */
     wisdom_status   = FFTW_FAILURE;
-    sprintf(wisdom_file_name,"fftw_1d_wisdom_forw_n%d.file",
+    sprintf(wisdom_file_name,"fftw3_1d_wisdom_forw_n%d.file",
 	    fft_plan[i].new_mesh[2]);
     if( (wisdom_file=fopen(wisdom_file_name,"r"))!=NULL ) {
       wisdom_status = fftw_import_wisdom_from_file(wisdom_file);
       fclose(wisdom_file);
     }
     if(fft_init_tag==1) fftw_destroy_plan(fft_plan[i].fft_plan);
+#ifdef USEFFTW3
+    fft_plan[i].fft_plan =
+      fftw_plan_many_dft(1,&fft_plan[i].new_mesh[2],fft_plan[i].n_ffts,
+                         c_data,NULL,1,fft_plan[i].new_mesh[2],
+                         c_data,NULL,1,fft_plan[i].new_mesh[2],
+                         fft_plan[i].dir,FFTW_PATIENT);
+    fft_plan_buf[i].fft_plan =
+      fftw_plan_many_dft(1,&fft_plan[i].new_mesh[2],fft_plan[i].n_ffts,
+                         c_data_buf,NULL,1,fft_plan[i].new_mesh[2],
+                         c_data_buf,NULL,1,fft_plan[i].new_mesh[2],
+                         fft_plan[i].dir,FFTW_PATIENT);
+#else
     fft_plan[i].fft_plan = 
       fftw_create_plan_specific(fft_plan[i].new_mesh[2], fft_plan[i].dir,
 				FFTW_MEASURE | FFTW_IN_PLACE | FFTW_USE_WISDOM,
 				c_data, 1,c_data_buf, 1);
-
+#endif
     if( wisdom_status == FFTW_FAILURE && 
 	(wisdom_file=fopen(wisdom_file_name,"w"))!=NULL ) {
       fftw_export_wisdom_to_file(wisdom_file);
       fclose(wisdom_file);
     }
-
+#ifdef USEFFTW3
+    fft_plan[i].fft_function = fftw_execute;       
+    fft_plan_buf[i].fft_function = fftw_execute;       
+#else
     fft_plan[i].fft_function = fftw;       
+#endif
   }
 
   /* === The BACK Direction === */
@@ -384,23 +417,41 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
   for(i=1;i<4;i++) {
     fft_back[i].dir = FFTW_BACKWARD;
     wisdom_status   = FFTW_FAILURE;
-    sprintf(wisdom_file_name,"fftw_1d_wisdom_back_n%d.file",
+    sprintf(wisdom_file_name,"fftw3_1d_wisdom_back_n%d.file",
 	    fft_plan[i].new_mesh[2]);
     if( (wisdom_file=fopen(wisdom_file_name,"r"))!=NULL ) {
       wisdom_status = fftw_import_wisdom_from_file(wisdom_file);
       fclose(wisdom_file);
     }    
     if(fft_init_tag==1) fftw_destroy_plan(fft_back[i].fft_plan);
+#ifdef USEFFTW3
+    fft_back[i].fft_plan =
+      fftw_plan_many_dft(1,&fft_plan[i].new_mesh[2],fft_plan[i].n_ffts,
+                         c_data,NULL,1,fft_plan[i].new_mesh[2],
+                         c_data,NULL,1,fft_plan[i].new_mesh[2],
+                         fft_back[i].dir,FFTW_PATIENT);
+    fft_back_buf[i].fft_plan =
+      fftw_plan_many_dft(1,&fft_plan[i].new_mesh[2],fft_plan[i].n_ffts,
+                         c_data_buf,NULL,1,fft_plan[i].new_mesh[2],
+                         c_data_buf,NULL,1,fft_plan[i].new_mesh[2],
+                         fft_back[i].dir,FFTW_PATIENT);
+#else
     fft_back[i].fft_plan = 
       fftw_create_plan_specific(fft_plan[i].new_mesh[2], fft_back[i].dir,
 				FFTW_MEASURE | FFTW_IN_PLACE | FFTW_USE_WISDOM,
 				c_data, 1,c_data_buf, 1);
+#endif
     if( wisdom_status == FFTW_FAILURE && 
 	(wisdom_file=fopen(wisdom_file_name,"w"))!=NULL ) {
       fftw_export_wisdom_to_file(wisdom_file);
       fclose(wisdom_file);
     }
+#ifdef USEFFTW3
+    fft_back[i].fft_function = fftw_execute;
+    fft_back_buf[i].fft_function = fftw_execute;
+#else
     fft_back[i].fft_function = fftw;
+#endif
     fft_back[i].pack_function = pack_block_permute1;
     FFT_TRACE(fprintf(stderr,"%d: back plan[%d] permute 1 \n",this_node,i));
   }
@@ -424,11 +475,11 @@ void fft_perform_forw(double *data)
   /* int m,n,o; */
   /* ===== first direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_forw: dir 1:\n",this_node));
-  
 
-
+#ifndef USEFFTW3  
   c_data     = (fftw_complex *) data;
   c_data_buf = (fftw_complex *) data_buf;
+#endif
 
   /* communication to current dir row format (in is data) */
   forw_grid_comm(fft_plan[1], data, data_buf);
@@ -454,28 +505,37 @@ void fft_perform_forw(double *data)
     data[(2*i)+1] = 0;       /* complex value */
   }
   /* perform FFT (in/out is data)*/
+#ifdef USEFFTW3
+  fft_plan[1].fft_function(fft_plan[1].fft_plan);
+#else
   fft_plan[1].fft_function(fft_plan[1].fft_plan, fft_plan[1].n_ffts,
   			   c_data, 1, fft_plan[1].new_mesh[2],
   			   c_data_buf, 1, fft_plan[1].new_mesh[2]);
-  
+#endif
   /* ===== second direction ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_forw: dir 2:\n",this_node));
   /* communication to current dir row format (in is data) */
   forw_grid_comm(fft_plan[2], data, data_buf);
   /* perform FFT (in/out is data_buf)*/
+#ifdef USEFFTW3
+  fft_plan_buf[2].fft_function(fft_plan_buf[2].fft_plan);
+#else
   fft_plan[2].fft_function(fft_plan[2].fft_plan, fft_plan[2].n_ffts,
   			   c_data_buf, 1, fft_plan[2].new_mesh[2],
   			   c_data, 1, fft_plan[2].new_mesh[2]);
-
+#endif
   /* ===== third direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_forw: dir 3:\n",this_node));
   /* communication to current dir row format (in is data_buf) */
   forw_grid_comm(fft_plan[3], data_buf, data);
   /* perform FFT (in/out is data)*/
+#ifdef USEFFTW3
+  fft_plan[3].fft_function(fft_plan[3].fft_plan);
+#else
   fft_plan[3].fft_function(fft_plan[3].fft_plan, fft_plan[3].n_ffts,
   			   c_data, 1, fft_plan[3].new_mesh[2],
   			   c_data_buf, 1, fft_plan[3].new_mesh[2]);
-
+#endif
   //print_global_fft_mesh(fft_plan[3],data,1,0);
 
   /* REMARK: Result has to be in data. */
@@ -489,27 +549,39 @@ void fft_perform_back(double *data)
 
 
   /* perform FFT (in is data) */
+#ifdef USEFFTW3
+  fft_back[3].fft_function(fft_back[3].fft_plan);
+#else
   fft_back[3].fft_function(fft_back[3].fft_plan, fft_plan[3].n_ffts,
   			   c_data, 1, fft_plan[3].new_mesh[2],
   			   c_data_buf, 1, fft_plan[3].new_mesh[2]);
+#endif
   /* communicate (in is data)*/
   back_grid_comm(fft_plan[3],fft_back[3],data,data_buf);
  
   /* ===== second direction ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 2:\n",this_node));
   /* perform FFT (in is data_buf) */
+#ifdef USEFFTW3
+  fft_back_buf[2].fft_function(fft_back_buf[2].fft_plan);
+#else
   fft_back[2].fft_function(fft_back[2].fft_plan, fft_plan[2].n_ffts,
   			   c_data_buf, 1, fft_plan[2].new_mesh[2],
   			   c_data, 1, fft_plan[2].new_mesh[2]);
+#endif
   /* communicate (in is data_buf) */
   back_grid_comm(fft_plan[2],fft_back[2],data_buf,data);
 
   /* ===== first direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 1:\n",this_node));
   /* perform FFT (in is data) */
+#ifdef USEFFTW3
+  fft_back[1].fft_function(fft_back[1].fft_plan);
+#else
   fft_back[1].fft_function(fft_back[1].fft_plan, fft_plan[1].n_ffts,
   			   c_data, 1, fft_plan[1].new_mesh[2],
   			   c_data_buf, 1, fft_plan[1].new_mesh[2]);
+#endif
   /* through away the (hopefully) empty complex component (in is data)*/
   for(i=0;i<fft_plan[1].new_size;i++) {
     data_buf[i] = data[2*i]; /* real value */
