@@ -100,7 +100,8 @@
     appending these to 'configs', performing any analysis desired afterwards.
     <ul>
     <li> For manipulating the particles' configurations stored in 'configs' the following commands are provided:
-    <ul> <li> \verbatim analyze append \endverbatim
+    <ul> <li> \anchor analyze_append
+              \verbatim analyze append \endverbatim
               appends the current positions of the particles in 'partCfg' to 'configs[n_configs-1]', returning an updated 'n_configs'
 	      (= number of stored configurations)
 	 <li> \verbatim analyze push [<size>] \endverbatim
