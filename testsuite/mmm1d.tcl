@@ -10,6 +10,9 @@
 # \
     fi;
 
+puts "-------------------------------------------"
+puts "- Testcase mmm1d.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "-------------------------------------------"
 set errf [lindex $argv 1]
 
 proc error_exit {error} {

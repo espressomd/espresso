@@ -12,7 +12,7 @@
 
 #############################################################
 #                                                           #
-#  Test System 3: NaCl crystal - Madelung constant         #
+#  Test System: NaCl crystal - Madelung constant            #
 #                                                           #
 #                                                           #
 #  Created:       18.03.2003 by HL                          #
@@ -25,7 +25,9 @@ if { [setmd n_nodes] == 3 || [setmd n_nodes] == 6 } {
     exit 0
 }
 
-puts "Testcase madelung.tcl running on [setmd n_nodes] nodes:"
+puts "----------------------------------------------"
+puts "- Testcase madelung.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "----------------------------------------------"
 
 #############################################################
 #  Parameters                                               #

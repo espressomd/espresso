@@ -16,6 +16,9 @@ proc blubb {vec} {
    return [expr -1 * log([lindex $vec 1] / [lindex $vec 0])]
 }
 
+puts "-------------------------------------------"
+puts "- Testcase uwerr.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "-------------------------------------------"
 set df [open "uwerr_test.data" r]
 while {![eof $df]} {
    gets $df row
