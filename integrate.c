@@ -81,13 +81,10 @@ void integrate_vv_init()
   local_index = (int *)malloc(n_total_particles*sizeof(int));
   for(i=0;i<n_total_particles;i++) local_index[i] = -1;
   for(i=0;i<n_particles;i++) local_index[particles[i].identity] = i;
-
   /* initialize ghost structure */
   ghost_init();
-
   /* initialize verlet list structure */
   verlet_init();
-
   /* initialize force structure */
   force_init();
 }
@@ -101,18 +98,29 @@ void integrate_vv(int n_steps)
 
   /* check init */
   if(rebuild_verletlist == 1) {
+    sort_particles_into_cells();
+    exchange_ghost();
     build_verlet_list();
   }
   if(calc_forces_first == 1) {
     force_calc();
+    calc_forces_first = 0;
   }
 
   /* integration loop */
   for(i=0;i<n_steps;i++) {
     propagate_velocities();
     propagate_positions();
-    if(rebuild_verletlist == 1) build_verlet_list();
+    if(rebuild_verletlist == 1) {
+      sort_particles_into_cells();
+      exchange_ghost();
+      build_verlet_list();
+    }
+    else {
+      exchange_ghost_pos();
+    }
     force_calc();
+    exchange_ghost_forces();
     propagate_velocities();
   }
 
@@ -123,15 +131,24 @@ void integrate_vv_exit()
 #ifdef DEBUG
   if(this_node==0) fprintf(stderr,"%d: integrate_vv_exit\n",this_node);
 #endif
+  cells_exit();
+  free(local_index);
+  ghost_exit();
+  verlet_exit();
+  force_exit();
 }
 
 void propagate_velocities() 
 {
-
+#ifdef DEBUG
+  if(this_node==0) fprintf(stderr,"%d: propagate_velocities:\n",this_node);
+#endif
 }
 
 void propagate_positions() 
 {
-
+#ifdef DEBUG
+  if(this_node==0) fprintf(stderr,"%d: propagate_positions:\n",this_node);
+#endif
 }
 

@@ -12,8 +12,8 @@
 #include "global.h"
 #include "cells.h"
 #include "verlet.h"
-#include "forces.h"
 #include "ghosts.h"
+#include "forces.h"
 
 /** declare commands needed for steering the integrator. */
 void tcl_integrator_init(Tcl_Interp *interp);

@@ -2,9 +2,7 @@
 /*******************  GRID.C  *******************/
 /************************************************/
 #include "grid.h"
-#include <mpi.h>
-#include <stdio.h>
-#include <math.h>
+
 
 
 //#define DEBUG

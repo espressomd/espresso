@@ -1,14 +1,18 @@
 /**************************************************/
 /*******************  FORCES.H  *******************/
 /**************************************************/
-#ifdef FORCES_H
+#ifndef FORCES_H
 #define FORCES_H
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "communication.h"
+
 #include "global.h"
+#include "communication.h"
+#include "cells.h"
+#include "ghosts.h"
+#include "verlet.h"
 
 
 /*******************  Functions  *******************/

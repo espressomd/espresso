@@ -3,6 +3,11 @@
 /************************************************/
 #ifndef GRID_H
 #define GRID_H
+
+#include <mpi.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 #include "global.h"
 
 /** try to determine the processor grid and communicate it */

@@ -3,7 +3,7 @@ PLATFORM=$(shell uname -s)
 include Makefile.$(PLATFORM)
 
 ########### list of source files
-CSOURCES= main initialize global communication tcl_datafield verlet grid integrate cells forces ghosts
+CSOURCES= main initialize global communication tcl_datafield verlet grid integrate cells ghosts forces
 CXXSOURCES=
 
 ########### RULES

@@ -1,17 +1,13 @@
 /*************************************************/
 /*******************  CELLS.C  *******************/
 /*************************************************/
-#include <stdio.h>
-#include <stdlib.h>
-#include "global.h"
+
 #include "cells.h"
 
 //#define DEBUG
 
 /* increment size of particle buffer */
 #define PART_INCREMENT 100
-
-
 
 void cells_init() 
 {
@@ -53,5 +49,19 @@ void cells_init()
     fprintf(stderr,"cell_size = (%e, %e, %e)\n",
 	    cell_size[0],cell_size[1],cell_size[2]);
   }
+#endif
+}
+
+void sort_particles_into_cells()
+{
+#ifdef DEBUG
+  if(this_node<2) fprintf(stderr,"%d: sort_particles_into_cells:\n",this_node); 
+#endif
+}
+
+void cells_exit() 
+{
+#ifdef DEBUG
+  if(this_node<2) fprintf(stderr,"%d: cells_exit:\n",this_node); 
 #endif
 }

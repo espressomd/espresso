@@ -3,8 +3,11 @@
 /*************************************************/
 #ifndef CELLS_H
 #define CELLS_H
-#include "global.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "global.h"
 
 /*******************  Structures  *******************/
 
@@ -50,5 +53,7 @@ void cells_init();
 /** sort all particles into cells. */
 void sort_particles_into_cells();
 
+/** exit link cell structures. */
+void cells_exit();
 
 #endif
