@@ -8,8 +8,7 @@
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 /** \file cells.c
  *
- *  This file contains everything related to the link cell
- *  algorithm. 
+ *  This file contains functions for the cell system.
  *
  *  For more information on cells,
  *  see \ref cells.h "cells.h"
@@ -52,6 +51,8 @@ CellStructure cell_structure;
 /*@{*/
 
 #ifdef ADDITIONAL_CHECKS
+/** Extensive Debug function to check the consistency of the cells and
+    the particles theirin. Use with care! */
 static void check_cells_consistency()
 {
   int c, index;
@@ -103,42 +104,8 @@ static void check_cells_consistency()
 }
 #endif
 
-/*@}*/
-
-/************************************************************/
-void cells_pre_init()
-{
-  CellPList tmp_local;
-  CELL_TRACE(fprintf(stderr, "%d: cells_pre_init\n",this_node));
-  /* her local_cells has to be a NULL pointer */
-  if(local_cells.cell != NULL) {
-    fprintf(stderr,"Wrong usage of cells_pre_init!\n");
-    errexit();
-  }
-  memcpy(&tmp_local,&local_cells,sizeof(CellPList));
-  dd_topology_init(&tmp_local);
-}
-
-void realloc_cells(int size)
-{
-  int i;
-  CELL_TRACE(fprintf(stderr, "%d: realloc_cells %d\n", this_node, size));
-  /* free all memory associated with cells to be deleted. */
-  for(i=size; i<n_cells; i++) {
-    realloc_particlelist(&cells[i],0);
-  }
-  /* resize the cell list */
-  if(size != n_cells) {
-    cells = (Cell *) realloc(cells, sizeof(Cell)*size);
-  }
-  /* initialize new cells */
-  for(i=n_cells; i<size; i++) {
-    init_particleList(&cells[i]);
-  }
-  n_cells = size;
-}  
-
-/************************************************************/
+/** Switch for choosing the topology release function of a certain
+    cell system. */
 static void topology_release(int cs) {
   switch (cs) {
   case CELL_STRUCTURE_CURRENT:
@@ -156,7 +123,8 @@ static void topology_release(int cs) {
   }
 }
 
-/************************************************************/
+/** Switch for choosing the topology init function of a certain
+    cell system. */
 static void topology_init(int cs, CellPList *local) {
   switch (cs) {
   case CELL_STRUCTURE_CURRENT:
@@ -174,7 +142,47 @@ static void topology_init(int cs, CellPList *local) {
   }
 }
 
+/*@}*/
+
+/************************************************************
+ *            Exported Functions                            *
+ ************************************************************/
+
+int cellsystem(ClientData data, Tcl_Interp *interp,
+	       int argc, char **argv)
+{
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "usage: cellsystem <system> <params>", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if (ARG1_IS_S("domain_decomposition"))
+    mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC);
+  else if (ARG1_IS_S("nsquare"))
+    mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE);
+  else {
+    Tcl_AppendResult(interp, "unkown cell structure type \"", argv[0],"\"", (char *)NULL);
+    return TCL_ERROR;
+  }
+  return TCL_OK;
+}
+
 /************************************************************/
+
+void cells_pre_init()
+{
+  CellPList tmp_local;
+  CELL_TRACE(fprintf(stderr, "%d: cells_pre_init\n",this_node));
+  /* her local_cells has to be a NULL pointer */
+  if(local_cells.cell != NULL) {
+    fprintf(stderr,"Wrong usage of cells_pre_init!\n");
+    errexit();
+  }
+  memcpy(&tmp_local,&local_cells,sizeof(CellPList));
+  dd_topology_init(&tmp_local);
+}
+
+/************************************************************/
+
 void cells_re_init(int new_cs)
 {
   CellPList tmp_local;
@@ -228,7 +236,29 @@ void cells_re_init(int new_cs)
 #endif
 }
 
+/************************************************************/
+
+void realloc_cells(int size)
+{
+  int i;
+  CELL_TRACE(fprintf(stderr, "%d: realloc_cells %d\n", this_node, size));
+  /* free all memory associated with cells to be deleted. */
+  for(i=size; i<n_cells; i++) {
+    realloc_particlelist(&cells[i],0);
+  }
+  /* resize the cell list */
+  if(size != n_cells) {
+    cells = (Cell *) realloc(cells, sizeof(Cell)*size);
+  }
+  /* initialize new cells */
+  for(i=n_cells; i<size; i++) {
+    init_particleList(&cells[i]);
+  }
+  n_cells = size;
+}  
+
 /*************************************************/
+
 int cells_get_n_particles()
 {
   int c, cnt = 0;
@@ -238,25 +268,7 @@ int cells_get_n_particles()
 }
 
 /*************************************************/
-int cellsystem(ClientData data, Tcl_Interp *interp,
-	       int argc, char **argv)
-{
-  if (argc < 1) {
-    Tcl_AppendResult(interp, "usage: cellsystem <system> <params>", (char *)NULL);
-    return TCL_ERROR;
-  }
-  if (ARG1_IS_S("domain_decomposition"))
-    mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC);
-  else if (ARG1_IS_S("nsquare"))
-    mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE);
-  else {
-    Tcl_AppendResult(interp, "unkown cell structure type \"", argv[0],"\"", (char *)NULL);
-    return TCL_ERROR;
-  }
-  return TCL_OK;
-}
 
-/*************************************************/
 void print_local_particle_positions()
 {
   Cell *cell;
@@ -278,6 +290,7 @@ void print_local_particle_positions()
 }
 
 /*************************************************/
+
 void print_ghost_positions()
 {
   Cell *cell;

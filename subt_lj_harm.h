@@ -8,7 +8,7 @@
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #ifndef SUBT_LJ_HARM_H
 #define SUBT_LJ_HARM_H
-/** \file SUBT_LJ_HARM.h
+/** \file subt_lj_harm.h
  *  Routines to subtract the LENNARD-JONES Energy and/or the LENNARD-JONES force 
  *  from the HARMONIC Energy and/or the force for a particle pair.
  *  \ref forces.c

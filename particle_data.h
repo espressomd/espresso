@@ -23,6 +23,7 @@
 /************************************************
  * defines
  ************************************************/
+
 /**  bonds_flag "bonds_flag" value for updating particle config without bonding information */
 #define WITHOUT_BONDS 0
 /**  bonds_flag "bonds_flag" value for updating particle config with bonding information */
@@ -30,15 +31,15 @@
 
 
 #ifdef EXTERNAL_FORCES
-/** \ref Particle::ext_flag "ext_flag" value for unfixed particle.  */
+/** \ref ParticleLocal::ext_flag "ext_flag" value for unfixed particle.  */
 #define PARTICLE_UNFIXED   0
-/** \ref Particle::ext_flag "ext_flag" value for particle subject to an external force. */
+/** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an external force. */
 #define PARTICLE_EXT_FORCE 1
-/** \ref Particle::ext_flag "ext_flag" value for fixed particle. */
+/** \ref ParticleLocal::ext_flag "ext_flag" value for fixed particle. */
 #define PARTICLE_FIXED     2
-/** \ref Particle::fixed_coord_flag "fixed_coord_flag" value for fixed coordinate. */
+/** \ref ParticleLocal::fixed_coord_flag "fixed_coord_flag" value for fixed coordinate. */
 #define COORDINATE_FIXED  1
-/** \ref Particle::fixed_coord_flag "fixed_coord_flag" value for unfixed coordinate. */
+/** \ref ParticleLocal::fixed_coord_flag "fixed_coord_flag" value for unfixed coordinate. */
 #define COORDINATE_UNFIXED  0
 
 #endif
@@ -66,7 +67,8 @@ typedef struct {
 #endif
 } ParticleProperties;
 
-/// Positional information on a particle
+/** Positional information on a particle. Information that is
+    communicated to calculate interactions with ghost particles. */
 typedef struct {
   /** periodically folded position. */
   double p[3];
@@ -77,7 +79,8 @@ typedef struct {
 #endif
 } ParticlePosition;
 
-/// Force information on a particle
+/** Force information on a particle. Forces of ghost particles are
+    collected and added up to the force of the original particle. */
 typedef struct {
   /** force. */
   double f[3];
@@ -88,7 +91,9 @@ typedef struct {
 #endif
 } ParticleForce;
 
-/// Momentum information on a particle
+/** Momentum information on a particle. Information not contained in
+    communication of ghost particles so far, but a communication would
+    be necessary for velocity dependend potentials. */
 typedef struct {
   /** velocity. */
   double v[3];
@@ -111,7 +116,7 @@ typedef struct {
   /** flag whether to fix a particle in space. 
 Values: 
       <ul> <li> 0 no external influence
-           <li> 1 apply external force \ref Particle::ext_force
+           <li> 1 apply external force \ref ParticleLocal::ext_force
            <li> 2 fix particle in space (equivalent to setting all coordinate axes as fixed </ul> */
   int ext_flag;
   /** flag whether to fix the motion of the particle in one or more coordinate axes. 
@@ -120,13 +125,13 @@ Values:
       <li> <tt> 1 <\tt> no integration for this coordinate </ul> 
   */
   int fixed_coord_flag[3];
-  /** External force, apply if \ref Particle::ext_flag == 1. */
+  /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
   double ext_force[3];
 #endif
 
 } ParticleLocal;
 
-/// Struct holding all information for one particle.
+/** Struct holding all information for one particle. */
 typedef struct {
   ///
   ParticleProperties p;
@@ -167,14 +172,15 @@ typedef struct {
     is larger by 1.
 */
 extern int max_seen_particle;
-/** total number of particles. */
+/** total number of particles on all nodes. */
 extern int  n_total_particles;
 
 /** Capacity of the \ref particle_node / \ref local_particles. */
 extern int  max_particle_node;
 /** Used only on master node: particle->node mapping. */
 extern int  *particle_node;
-/** id->particle mapping on all nodes. */
+/** id->particle mapping on all nodes. This is used to find partners
+    of bonded interactions. */
 extern Particle   **local_particles;
 
 /** Particles' current configuration. Before using that
@@ -187,20 +193,19 @@ extern int partCfgSorted;
 
 
 /************************************************
- * functions
+ * Functions
  ************************************************/
 
-/** implementation of the tcl command \ref tcl_part. This command allows to
+/** Implementation of the tcl command \ref tcl_part. This command allows to
     modify particle data. */
 int part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
 
-/** initialize a particle list.
- *  Use with care and ONLY for initialization! */
-void init_particleList(ParticleList *pList);
+/*       Functions acting on Particles          */
+/************************************************/
 
-/** initialize a particle.
-    This function just sets all values to zero!
+/** Initialize a particle.
+    This function just sets all values to the defaults (mostly zeros)!
     Do NOT use this without setting the values of the  
     \ref ParticleProperties::identity "identity" and \ref ParticlePosition::p "position" to 
     reasonable values. Also make sure that you update \ref local_particles.
@@ -210,17 +215,20 @@ void init_particleList(ParticleList *pList);
 */
 void init_particle(Particle *part);
 
-/** ... and deallocate the dynamic storage of a particle. */  
+/** Deallocate the dynamic storage of a particle. */  
 void free_particle(Particle *part);
 
-/** allocate storage for local particles and ghosts.
-    \param plist the list on which to operate
-    \param size the size to provide at least. It is rounded
-    up to multiples of \ref PART_INCREMENT.
-    \return true iff particle adresses have changed */
-int realloc_and_init_particlelist(ParticleList *plist, int size);
+/** Remove bond from particle if possible */
+int try_delete_bond(Particle *part, int *bond);
 
-/** allocate storage for local particles and ghosts. This version
+/*    Functions acting on Particle Lists        */
+/************************************************/
+
+/** Initialize a particle list.
+ *  Use with care and ONLY for initialization! */
+void init_particleList(ParticleList *pList);
+
+/** Allocate storage for local particles and ghosts. This version
     does \em not care for the bond information to be freed if necessary.
     \param plist the list on which to operate
     \param size the size to provide at least. It is rounded
@@ -228,14 +236,14 @@ int realloc_and_init_particlelist(ParticleList *plist, int size);
     \return true iff particle adresses have changed */
 int realloc_particlelist(ParticleList *plist, int size);
 
-/** search for a specific particle.
+/** Search for a specific particle.
     \param plist the list on which to operate 
     \param id the identity of the particle to search
     \return a pointer to the particle structure or NULL if particle is
     not in this list */
 Particle *got_particle(ParticleList *plist, int id);
 
-/** append a particle at the end of a particle List.
+/** Append a particle at the end of a particle List.
     reallocates particles if necessary!
     This procedure does not care for \ref local_particles.
     \param plist List to append the particle to.
@@ -243,7 +251,7 @@ Particle *got_particle(ParticleList *plist, int id);
     \return Pointer to new location of the particle. */
 Particle *append_unindexed_particle(ParticleList *plist, Particle *part);
 
-/** append a particle at the end of a particle List.
+/** Append a particle at the end of a particle List.
     reallocates particles if necessary!
     This procedure cares for \ref local_particles.
     \param plist List to append the particle to.
@@ -251,10 +259,11 @@ Particle *append_unindexed_particle(ParticleList *plist, Particle *part);
     \return Pointer to new location of the particle. */
 Particle *append_indexed_particle(ParticleList *plist, Particle *part);
 
-/** remove a particle from one particle List and append it to another.
+/** Remove a particle from one particle List and append it to another.
     Refill the sourceList with last particle and update its entry in
     local_particles. reallocates particles if necessary.  This
     procedure does not care for \ref local_particles.
+    NOT IN USE AT THE MOMENT.
     \param destList   List where the particle is appended.
     \param sourceList List where the particle will be removed.
     \param ind        Index of the particle in the sourceList.
@@ -262,7 +271,7 @@ Particle *append_indexed_particle(ParticleList *plist, Particle *part);
  */
 Particle *move_unindexed_particle(ParticleList *destList, ParticleList *sourceList, int ind);
 
-/** remove a particle from one particle List and append it to another.
+/** Remove a particle from one particle List and append it to another.
     Refill the sourceList with last particle and update its entry in
     local_particles. Reallocates particles if necessary.  This
     procedure cares for \ref local_particles.
@@ -273,29 +282,29 @@ Particle *move_unindexed_particle(ParticleList *destList, ParticleList *sourceLi
  */
 Particle *move_indexed_particle(ParticleList *destList, ParticleList *sourceList, int ind);
 
-/** update the entries in \ref local_particles for all particles in the list pl.
+/*    Other Functions                           */
+/************************************************/
+
+/** Update the entries in \ref local_particles for all particles in the list pl.
     @param pl the list to put in.
 */
 void update_local_particles(ParticleList *pl);
 
-/** remove bond from particle if possible */
-int try_delete_bond(Particle *part, int *bond);
-
-/** rebuild \ref particle_node from scratch.
+/** Rebuild \ref particle_node from scratch.
     After a simulation step \ref particle_node has to be rebuild
     since the particles might have gone to a different node.
 */
 void build_particle_node();
 
-/** invalidate \ref particle_node. This has to be done
+/** Invalidate \ref particle_node. This has to be done
     at the beginning of the integration.
 */
 void particle_invalidate_part_node();
 
-/** realloc \ref local_particles. */
+/** Realloc \ref local_particles. */
 void realloc_local_particles();
 
-/** get particle data. Note that the bond intlist is
+/** Get particle data. Note that the bond intlist is
     allocated so that you are responsible to free it later.
     @param part the identity of the particle to fetch
     @param data where to store its contents.

@@ -1,5 +1,49 @@
+// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
+// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
+// and by which you are legally bound while utilizing this file in any form or way.
+// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// You should have received a copy of that license along with this program;
+// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
+// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
+// Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #ifndef DOMAIN_DECOMP_H
 #define DOMAIN_DECOMP_H
+
+/** \file domain_decomposition.h
+ *
+ *  This file contains everything related to the cell system: domain decomposition.
+ *
+ *  <b>Responsible:</b>
+ *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
+ *
+ *  The domain of a node is split into a 3D cell grid with dimension
+ *  \ref DomainDecomposition::cell_grid. Together with one ghost cell
+ *  layer on each side the overall dimension of the ghost cell grid is
+ *  \ref DomainDecomposition::ghost_cell_grid. The domain
+ *  decomposition enables one the use of the linked cell algorithm
+ *  which is in turn used for setting up the verlet list for the
+ *  system. You can see a 2D graphical representation of the linked
+ *  cell grid below.
+ *
+ *  \image html linked_cells.gif "Linked cells structure"
+ *  \image latex linked_cells.eps "Linked cells structure" \width=6cm
+ *
+ *  2D representation of a linked cell grid: cell_grid =
+ *  {4,4}, ghost_cell_grid = {6,6}
+ *
+ * Each cell has 3^D neighbor cells (For cell 14 they are
+ * marked). Since we deal with pair forces, it is sufficient to
+ * calculate only half of the interactions (Newtons law: actio =
+ * reactio). We have chosen the upper half e.g. all neighbor cells with
+ * a higher linear index (For cell 14 they are marked in light
+ * blue). Caution: This implementation needs double sided ghost
+ * communication! For single sided ghost communication one would need
+ * some ghost-ghost cell interaction as well, which we do not need!
+ *
+ *  For more information on cells,
+ *  see \ref cells.c "cells.c"
+*/
+
 #include "cells.h"
 
 

@@ -10,39 +10,46 @@
 #define CELLS_H
 /** \file cells.h
  *
- *  This file contains everything related to the link cell
- *  algorithm. 
+ *  This file contains everything related to the cell structure / cell
+ *  system.
  *
  *  <b>Responsible:</b>
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
  *
- *  This modul strongly interacts with the ghost particle
- *  structure (ghosts.c) and the verlet list algorithm (verlet.c). The
- *  initialization (cells_init()) and cleaning up (cells_exit()) is
- *  called from the integrator (integrate.c).
+ *  The cell system (\ref Cell Structure) describes how particles are
+ *  distributed on the cells and how particles of different cells
+ *  (regardless if they reside on the same or different nodes)
+ *  interact with each other. The following cell systems are implemented:
  *
- *  The domain of a node is split into a 3D cell grid with dimension
- *  cell_grid. Together with one ghost cell layer on each side the
- *  overall dimension of the ghost cell grid is ghost_cell_grid.
- *  You can see a 2D graphical representation of the linked cell grid below. 
+ *  <ul>
+ *  <li> domain decomposition: The simulation box is divided spatially
+ *  ino cells (see \ref domain_decomposition.h). This is suitable for
+ *  short range interctions.
+ *  <li> nsquare: The particles are distributed equally on all nodes
+ *  regardless their spatial position (see \ref nsquare.h). This is
+ *  suitable for long range interactions that can not be treated by a
+ *  special method like P3M (see \ref p3m.h).
+ *  </ul>
  *
- *  \image html linked_cells.gif "Linked cells structure"
- *  \image latex linked_cells.eps "Linked cells structure" \width=6cm
+ *  One can switch between different cell systems with the tcl command
+ *  \ref tcl_cellsystem implemented in \ref cells::cellsystem.
  *
- *  2D representation of a linked cell grid: n_cells = 64, cell_grid =
- *  {4,4}, ghost_cell_grid = {6,6}
+ *  Some structures are common to all cell systems: 
  *
- * Each cell has 3^D neighbor cells (For cell 14 they are
- * marked). Since we deal with pair forces, it is sufficient to
- * calculate only half of the interactions (Newtons law: actio =
- * reactio). I have chosen the upper half e.g. all neighbor cells with
- * a higher linear index (For cell 14 they are marked in light
- * blue). Caution: This implementation needs double sided ghost
- * communication! For single sided ghost communication one would need
- * some ghost-ghost cell interaction as well, which we do not need!
- *
- *  For more information on cells,
- *  see \ref cells.c "cells.c"
+ * <ul>
+ * <li> All cells are stored in the array \ref cells::cells with size \ref
+ * n_cells. Th e size of this array has to be changed with \ref
+ * realloc_cells.
+ * <li> Their are two lists of cell pointers to acces particles and
+ * ghost particles on a node: \ref local_cells contains pointers to
+ * all cells containing the particles physically residing on that
+ * node. \ref ghost_cells contains pointers to all cells containing
+ * the ghost particles of that node. The size of these lists has to be
+ * changed with \ref realloc_cellplist
+ * <li> An example using the cell pointer lists to acces particle data
+ * can be found in the function \ref
+ * print_local_particle_positions. DO NOT INVENT YOUR OWN WAY!!!
+ * </ul>
  */
 
 #include <tcl.h>
@@ -50,10 +57,14 @@
 #include "ghosts.h"
 #include "verlet.h"
 
-/** which cell structure is used */
+/** \name Cell Structure */
+/** Flag telling which cell structure is used at the moment. */
 /*@{*/
+/** Flag indicating that the current cell structure will be used furthor on */
 #define CELL_STRUCTURE_CURRENT 0
+/** cell structure domain decomposition */
 #define CELL_STRUCTURE_DOMDEC  1
+/** Cell structure n square */
 #define CELL_STRUCTURE_NSQUARE 2
 /*@}*/
 
@@ -62,7 +73,7 @@
 /************************************************/
 /*@{*/
 
-/** A cell is a \ref particleList representing a particle group with
+/** A cell is a \ref ParticleList representing a particle group with
     respect to the integration algorithm.
 */
 typedef ParticleList Cell;
@@ -74,7 +85,12 @@ typedef struct {
   int max;
 } CellPList;
 
-/** Describes a cell structure */
+/** Describes a cell structure / cell system. Contains information
+    about the communication of cell contents (particles, ghosts, ...) 
+    between different nodes and the relation between particle
+    positions and the cell system. All other properties of the cell
+    system which are not common between different cell systems have to
+    be stored in seperate structures. */
 typedef struct {
   /** type descriptor */
   int type;
@@ -88,9 +104,17 @@ typedef struct {
   /** Communicator to collect ghost forces. */
   GhostCommunicator collect_ghost_force_comm;
 
-  ///
+  /** Cell system dependent function to find the right node for a
+      particle at position pos. 
+      \param  pos Position of a particle.
+      \return number of the node where to put the particle. 
+  */
   int   (*position_to_node)(double pos[3]);
-  ///
+  /** Cell system dependent function to find the right cell for a
+      particle at position pos. 
+      \param  pos Position of a particle.
+      \return pointer to cell  where to put the particle.
+  */
   Cell *(*position_to_cell)(double pos[3]);
 } CellStructure;
 
@@ -103,14 +127,15 @@ typedef struct {
 
 /** list of all cells. */
 extern Cell *cells;
-/** size of \ref cells */
+/** size of \ref cells::cells */
 extern int n_cells;
-/** list of all cells containing particles physically on the local node */
+/** list of all cells containing particles physically on the local
+    node */
 extern CellPList local_cells;
 /** list of all cells containing ghosts */
 extern CellPList ghost_cells;
 
-/** Type of cell structure in use */
+/** Type of cell structure in use ( \ref Cell Structure ). */
 extern CellStructure cell_structure;
 
 /*@}*/
@@ -120,20 +145,31 @@ extern CellStructure cell_structure;
 /************************************************************/
 /*@{*/
 
-/** Initialize the cell structure on program start with the default cell structure of type domain decomposition. */
+/** implementation of the Tcl command \ref tcl_cellsystem */
+int cellsystem(ClientData data, Tcl_Interp *interp,
+	       int argc, char **argv);
+
+/** Initialize the cell structure on program start with the default
+    cell structure of type domain decomposition. */
 void cells_pre_init();
 
-/** Reallocate the list of all cells (\ref cells). */
+/** Reinitialize the cell structures.
+    @param new_cs gives the new topology to use afterwards. May be set to
+    \ref CELL_STRUCTURE_CURRENT for not changing it.
+*/
+void cells_re_init(int new_cs);
+
+/** Reallocate the list of all cells (\ref cells::cells). */
 void realloc_cells(int size);
 
-/** initialize a list of cell pointers */
+/** Initialize a list of cell pointers */
 MDINLINE void init_cellplist(CellPList *cpl) {
   cpl->n    = 0;
   cpl->max  = 0;
   cpl->cell = NULL;
 }
 
-/** reallocate a list of cell pointers */
+/** Reallocate a list of cell pointers */
 MDINLINE void realloc_cellplist(CellPList *cpl, int size)
 {
   if(size != cpl->max) {
@@ -142,25 +178,15 @@ MDINLINE void realloc_cellplist(CellPList *cpl, int size)
   }
 }
 
-/** reinitialize the cell structures.
-    @param new_cs gives the new topology to use afterwards. May be set to
-    \ref CELL_STRUCTURE_CURRENT for not changing it.
-*/
-void cells_re_init(int new_cs);
-
 /** Calculate and return the total number of particles on this
     node. */
 int cells_get_n_particles();
 
-/** debug function to print particle positions: */
+/** Debug function to print particle positions. */
 void print_local_particle_positions();
 
-/** debug function to print ghost positions: */
+/** Debug function to print ghost positions. */
 void print_ghost_positions();
-
-/** implementation of the Tcl command \ref tcl_cellsystem */
-int cellsystem(ClientData data, Tcl_Interp *interp,
-	       int argc, char **argv);
 /*@}*/
 
 #endif

@@ -1,6 +1,6 @@
 #ifndef SUBT_LJ_FENE_H
 #define SUBT_LJ_FENE_H
-/** \file SUBT_LJ_FENE.h
+/** \file subt_lj_fene.h
  *  Routines to subtract the LENNARD-JONES Energy and/or the LENNARD-JONES force 
  *  from the FENE Energy and/or the force for a particle pair.
  *  \ref forces.c
