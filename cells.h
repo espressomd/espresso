@@ -183,15 +183,15 @@ int  is_inner_cell(int i, int gcg[3]);
 
 /** Convenient replace for loops over all particles. */
 #define INNER_CELLS_LOOP(m,n,o) \
-  for(m=1; m<cell_grid[0]+1; m++) \
+  for(o=1; o<cell_grid[2]+1; o++) \
     for(n=1; n<cell_grid[1]+1; n++) \
-      for(o=1; o<cell_grid[2]+1; o++)
+      for(m=1; m<cell_grid[0]+1; m++) \
 
 /** Convenient replace for loops over all particles and ghosts. */
 #define CELLS_LOOP(m,n,o) \
-  for(m=0; m<ghost_cell_grid[0]; m++) \
+  for(o=0; o<ghost_cell_grid[2]; o++) \
     for(n=0; n<ghost_cell_grid[1]; n++) \
-      for(o=0; o<ghost_cell_grid[2]; o++)
+      for(m=0; m<ghost_cell_grid[0]; m++)
 
 /** Convenient replace for inner cell check. usage: if(IS_INNER_CELL(m,n,o)) {...} */
 #define IS_INNER_CELL(m,n,o) \
