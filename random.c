@@ -23,7 +23,7 @@ static long  iv[NTAB];
 long l_random(void)
 {
   /* 
-   *    from Numerical Recipes in C by Press et al., modified by Markus Deserno 
+   *    from Numerical Recipes in C by Press et al.,
    *    N O T E   T H A T   T H E R E   A R E   N O   S A F E T Y   C H E C K S  !!!
    */
   
@@ -36,7 +36,6 @@ long l_random(void)
   j = iy / NDIV;
   iy = iv[j];
   iv[j] = idum;
-  /*printf("%d long drawn: %ld\n",this_node,iy);*/
   return iy;
 }
 
@@ -46,7 +45,6 @@ double random(void)
 {
   double temp;
   iy = l_random();
-  printf("%d float drawn: %le\n",this_node,iy*AM);
   if ((temp = AM * iy) > RNMX) return RNMX; 
   else return temp;
 }
