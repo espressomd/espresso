@@ -7,6 +7,10 @@
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 
+/** \file modes.c
+    Implementation of \ref modes.h "modes.h"
+*/
+
 #include "modes.h"
 #include "communication.h"
 /** fftw plan for calculating the 2d mode analysis */
