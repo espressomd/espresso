@@ -13,7 +13,7 @@
 
 #include <tcl.h>
 #include "config.h"
-#include "utils.h"
+#include "grid.h"
 
 /************************************************
  * defines
