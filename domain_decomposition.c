@@ -158,7 +158,10 @@ void dd_create_cell_grid()
     dd.inv_cell_size[i]   = 1.0 / dd.cell_size[i];
   }
   cell_range[0] = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]);
-  max_skin = cell_range[0] - max_cut;
+  if (max_cut >= 0.0)
+    max_skin = cell_range[0] - max_cut;
+  else
+    max_skin = 0.0;
 
   /* allocate cell array and cell pointer arrays */
   realloc_cells(new_cells);
