@@ -4,7 +4,7 @@ TESTCASES="nve_pe.tcl npt.tcl madelung.tcl \
     lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl tabulated.tcl mmm1d.tcl gb.tcl rotation.tcl constraints.tcl \
     kinetic.tcl thermostat.tcl \
     intpbc.tcl intppbc.tcl layered.tcl nsquare.tcl \
-    comforce.tcl comfixed.tcl analysis.tcl"
+    comforce.tcl comfixed.tcl analysis.tcl p3m.tcl"
 
 # List of testcases to be done (and people responsible for them):
 #################################################################
@@ -56,6 +56,7 @@ else
 fi
 
 PLATFORM=`uname -s`
+
 # list of tests that are not supported by this version
 blacklist=
 # and what is missing for what test
