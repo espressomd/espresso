@@ -336,6 +336,10 @@ void calc_cell_grid()
       n_cells=1;
       for(i=0;i<3;i++) {
 	ghost_cell_grid[i] = (int)(local_box_l[i]/cell_range) + 2;
+	/* make sure that at least one inner cell exists in all directions.
+	   Helps with highly anisotropic systems. */
+	if (ghost_cell_grid[i] <= 2)
+	  ghost_cell_grid[i] = 3;
 	n_cells *= ghost_cell_grid[i];
       }
     }
@@ -351,24 +355,7 @@ void calc_cell_grid()
 
   /* now set all dependent variables */
   for(i=0;i<3;i++) {
-    cell_grid[i] = ghost_cell_grid[i]-2;
-
-    /* catch no inner cells case (even though this should never happen!!!) */
-    if(cell_grid[i] < 1) {
-      /* what was the idea of that ????
-	 It kills Espresso since cg and gcg do not match
-	 #ifdef PARTIAL_PERIODIC
-	 if (!periodic[i])
-	 cell_grid[i] = 1;
-	 else
-	 #endif
-	{
-      */
-      fprintf(stderr,"%d: cells_init: Less than one cell in direction %d\n",
-	      this_node,i);
-      errexit();
-    }
-
+    cell_grid[i] = ghost_cell_grid[i]-2;	
     cell_size[i]     = local_box_l[i]/(double)cell_grid[i];
     inv_cell_size[i] = 1.0 / cell_size[i];
   }
