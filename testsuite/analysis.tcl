@@ -67,13 +67,6 @@ proc rewrite {in out} {
     close $chk; puts " Done."
 }
 
-
-if { [setmd n_nodes] == 3 || [setmd n_nodes] == 5 || [setmd n_nodes] == 6 || [setmd n_nodes] == 7} {
-    puts "Testcase analysis.tcl does not run on 3,5,6 or 7 nodes"
-    exec rm -f $errf
-    exit 0
-}
-
 set epsilon  1e-4
 setmd temp   0.0
 setmd gamma  0.0
