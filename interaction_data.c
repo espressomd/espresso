@@ -14,7 +14,6 @@
 
 IA_parameters *ia_params = NULL;
 int n_particle_types = 0;
-int n_interaction_types = 0;
 
 int n_bonded_ia = 0;
 Bonded_ia_parameters *bonded_ia_params = NULL;
@@ -324,6 +323,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
     }
 
     /* set interaction parameters */
+
     argc -= 2;
     argv += 2;
 
@@ -472,18 +472,11 @@ int inter(ClientData _data, Tcl_Interp *interp,
   return (TCL_OK);
 }
 
-int niatypes_callback(Tcl_Interp *interp, void *data)
-{
-  n_interaction_types = *(int *)data;
-
-  mpi_bcast_parameter(FIELD_NITYPE);
-  return (TCL_OK);
-}
-
 int lj_force_cap_callback(Tcl_Interp *interp, void *data)
 {
   lj_force_cap = *(double *)data;
 
   mpi_bcast_parameter(FIELD_LJFORCECAP);
+  mpi_bcast_event(INTERACTION_CHANGED);
   return (TCL_OK);
 }

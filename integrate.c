@@ -21,6 +21,7 @@
 #include "p3m.h"
 #include "utils.h"
 #include "thermostat.h"
+#include "initialize.h"
 
 /************************************************
  * DEFINES
@@ -38,8 +39,10 @@ double sim_time = 0.0;
 double skin = -1.0;
 double max_range;
 double max_range2;
-int    calc_forces_first;
-int    vv_integrator_initialized = 0;
+int    particle_changed = 1;
+int    interactions_changed = 1;
+int    topology_changed = 1;
+int    parameter_changed = 1;
 
 /** \name Privat Functions */
 /************************************************************/
@@ -78,17 +81,13 @@ int integrate(ClientData data, Tcl_Interp *interp,
   }
 
   /* translate argument */
-  if (!strncmp(argv[1], "init", strlen(argv[1]))) n_steps=-1;
-  else if (!strncmp(argv[1], "exit", strlen(argv[1]))) n_steps=-2;
-  else n_steps = atol(argv[1]);
+  if (Tcl_GetInt(interp, argv[1], &n_steps) == TCL_ERROR)
+    return (TCL_ERROR);
 
-  if(n_steps < -2) {
+  if(n_steps < 0) {
     Tcl_AppendResult(interp, "illegal number of steps", (char *) NULL);
     return (TCL_ERROR);
   }
-
-  /* flush remaining information from master node to slaves */
-  particle_finalize_data();
 
   /* assume velocity verlet integration with langevin thermostat */
   if (argc != 2) {
@@ -102,10 +101,10 @@ int integrate(ClientData data, Tcl_Interp *interp,
   return (TCL_OK);
 }
 
-void integrate_vv_init()
+void integrate_vv_recalc_maxrange()
 {
-  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_init:\n",this_node));
-  
+  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_recalc_maxrange:\n",this_node));
+
   /* sanity checks */
   if(time_step < 0.0 || skin < 0.0 ) {
     fprintf(stderr,"%d: ERROR: Can not initialize the integrator!:\n",this_node);
@@ -115,57 +114,25 @@ void integrate_vv_init()
       fprintf(stderr,"%d: PROBLEM: You have to set the skin!\n",this_node);
     errexit();
   }
-  else {
-    
-    /* maximal interaction cutoff */
-    calc_maximal_cutoff();
-    calc_minimal_box_dimensions();
-    max_range  = max_cut + skin;
-    max_range2 = max_range* max_range;
 
-   /* check real space interaction cutoff/range*/
-    if(max_cut < 0.0) {
-      fprintf(stderr,"%d: ERROR: You have to specify at least one interaction\n",this_node);
-      errexit();
-    }
-    if((min_box_l/2.0) < max_range) {
-      fprintf(stderr,"%d: ERROR: Maximal real space interaction %f is larger than half of the minimal box dimension %f\n",this_node,max_range,min_box_l);
-      errexit();
-    }
+  /* maximal interaction cutoff */
+  calc_maximal_cutoff();
+  max_range  = max_cut + skin;
+  max_range2 = max_range* max_range;
 
-    if(min_local_box_l < max_range) {
-      fprintf(stderr,"%d: ERROR: Maximal real space interaction %f is larger than minimal local box length %f\n",this_node,max_range,min_local_box_l);
-      errexit();
-    }
+  /* check real space interaction cutoff/range*/
+  if(max_cut < 0.0) {
+    fprintf(stderr,"%d: ERROR: You have to specify at least one interaction\n",this_node);
+    errexit();
+  }
+  if((min_box_l/2.0) < max_range) {
+    fprintf(stderr,"%d: ERROR: Maximal real space interaction %f is larger than half of the minimal box dimension %f\n",this_node,max_range,min_box_l);
+    errexit();
+  }
 
-#ifdef INTEG_DEBUG 
-    if(this_node==0) {
-      double n_inter;
-      n_inter = (4.0/3.0)* PI * (max_range*max_range*max_range); /* interaction volume */
-      n_inter /= (box_l[0]*box_l[1]*box_l[2]); /* particle density */
-      n_inter /= 2.0;
-      fprintf(stderr,"0: max_cut=%f, max_range+%f, n_inter/np^2=%f\n",max_cut,max_range,n_inter);
-      fflush(stderr);
-    }
-#endif
-
-    /* start initialization */
-
-    /* initialize link cell structure */
-    cells_re_init();  
-    /* allocate and initialize local indizes */
-    local_particles_init();
-    /* initialize ghost structure */
-    ghost_init(); 
-    /* initialize force structure */
-    force_init(); 
-    /* initialize p3m */
-    P3M_init();
-    thermo_init();
-    /* update integrator status */
-    calc_forces_first         = 1;
-    rebuild_verletlist        = 1;
-    vv_integrator_initialized = 1;
+  if(min_local_box_l < max_range) {
+    fprintf(stderr,"%d: ERROR: Maximal real space interaction %f is larger than minimal local box length %f\n",this_node,max_range,min_local_box_l);
+    errexit();
   }
 }
 
@@ -173,63 +140,49 @@ void integrate_vv(int n_steps)
 {
   int i;
 
-  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv:\n",this_node));
-  if(vv_integrator_initialized == 0) {
-    fprintf(stderr,"%d: ERROR: Velocity verlet Integrator not initialized\n",
-	    this_node);
-    errexit();
+  on_integration_start();
+
+  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: integrating %d steps\n",this_node,
+		      n_steps));
+
+  if(particle_changed || topology_changed || interactions_changed) {
+    /* already here since exchange_part may destroy the ghost particles */
+    invalidate_ghosts();
+    exchange_and_sort_part();
+    exchange_ghost();
+    build_verlet_lists();
+
+    force_calc();
+    collect_ghost_forces();
+    rescale_forces();
   }
-  else {
-    INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: integrating %d steps\n",this_node,
-			n_steps));
-    /* check init */
+    
+  /* integration loop */
+  INTEG_TRACE(fprintf(stderr,"%d START INTEGRATION\n",this_node));
+  for(i=0;i<n_steps;i++) {
+    INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
+    propagate_vel_pos();
     if(rebuild_verletlist == 1) {
-      /* already here since exchange_part may destroy the ghost particles */
+      INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
       invalidate_ghosts();
-      exchange_part();
-      sort_particles_into_cells();
+      exchange_and_sort_part();
       exchange_ghost();
       build_verlet_lists();
     }
-    if(calc_forces_first == 1) {
-      force_calc();
-      collect_ghost_forces();
-      rescale_forces();
-      calc_forces_first = 0;
+    else {
+      update_ghost_pos();
     }
-    
-    /* integration loop */
-    INTEG_TRACE(fprintf(stderr,"%d START INTEGRATION\n",this_node));
-    for(i=0;i<n_steps;i++) {
-      INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
-      propagate_vel_pos();
-      if(rebuild_verletlist == 1) {
-	INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
-	invalidate_ghosts();
-	exchange_part();
-	sort_particles_into_cells(); 
-	exchange_ghost();
-	build_verlet_lists();
-      }
-      else {
-	update_ghost_pos();
-      }
-      force_calc();
-      collect_ghost_forces();
-      rescale_forces_propagate_vel();
-      if(this_node==0) sim_time += time_step;
-    }
+    force_calc();
+    collect_ghost_forces();
+    rescale_forces_propagate_vel();
+    if(this_node==0) sim_time += time_step;
   }
-}
 
-void integrate_vv_exit()
-{
-  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_exit\n",this_node));
-  local_particles_exit();
-  cells_exit();
-  ghost_exit();
-  force_exit();
-  vv_integrator_initialized = 0;
+  invalidate_ghosts();
+
+  particle_changed     = 0;
+  interactions_changed = 0;
+  topology_changed     = 0;
 }
 
 /* Callback functions */
@@ -240,11 +193,12 @@ int skin_callback(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
   if (data < 0) {
-    Tcl_AppendResult(interp, "skin must be positiv.", (char *) NULL);
+    Tcl_AppendResult(interp, "skin must be positive.", (char *) NULL);
     return (TCL_ERROR);
   }
   skin = data;
   mpi_bcast_parameter(FIELD_SKIN);
+  mpi_bcast_event(PARAMETER_CHANGED);
   return (TCL_OK);
 }
 
@@ -252,11 +206,12 @@ int time_step_callback(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
   if (data < 0.0) {
-    Tcl_AppendResult(interp, "time step must be positiv.", (char *) NULL);
+    Tcl_AppendResult(interp, "time step must be positive.", (char *) NULL);
     return (TCL_ERROR);
   }
   time_step = data;
   mpi_bcast_parameter(FIELD_TIME_STEP);
+  mpi_bcast_event(PARAMETER_CHANGED);
   return (TCL_OK);
 }
 
@@ -266,18 +221,6 @@ int start_time_callback(Tcl_Interp *interp, void *_data)
   start_time = data;
   sim_time = start_time;
   mpi_bcast_parameter(FIELD_START_TIME);
-  return (TCL_OK);
-}
-
-int calc_forces_first_callback(Tcl_Interp *interp, void *_data)
-{
-  int data = *(int *)_data;
-  if (data != 0 && data != 1) {
-    Tcl_AppendResult(interp, "calc_forces_first is an integrator flag and must be 0 or 1.", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  calc_forces_first = data;
-  mpi_bcast_parameter(FIELD_CALC_FORCES_FIRST);
   return (TCL_OK);
 }
 

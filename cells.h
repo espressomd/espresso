@@ -163,35 +163,8 @@ void cells_changed_topology();
  */
 void cells_re_init();
 
-/** sort all particles into inner cells (no ghosts!). 
- *
- *  In order to build the verlet list (verlet.c) from the link cell
- *  structure one has to sort the particles into the cells. This is
- *  done after the particle exchange (exchange_part()).  
- *
- *  Sorting: Go through local particle list (0...n_particles) and
- *  store the local index into the particle list of the corresponding
- *  cell. 
- *
- *  cell particle index buffer (cells[i].particles) is reallocated if
- *  necessary. ATTENTION: there is at the moment no routine that
- *  reduces the size of this list if it would be possible. You have to
- *  use cells_exit() for that and than reinitialize the cell structure
- *  with cells_init() again. */
-void sort_particles_into_cells();
-
-/** exit link cell structures.  
-    free space for linked cell structure.  */
-void cells_exit();
-
 /** calculate and return the total number of particles on this node. */
 int cells_get_n_particles();
-
-/** search for a specific particle in all cells.
-    \param id the identity of the particle to search
-    \return a pointer to the particle structure or NULL if particle is
-    not in this list */
-Particle *cells_got_particle(int id);
 
 /** allocate space for a particle.
     \param id the identity of the new particle
@@ -204,10 +177,12 @@ Particle *cells_alloc_particle(int id, double pos[3]);
     \return linear cell grid index. */
 int pos_to_cell_grid_ind(double pos[3]);
 
-/** return ghost cell grid index for a position.
+/** return cell grid index for a position.
+    positions out of bounds are capped to the
+    nearest valid cell.
     \param pos Position of e.g. a particle.
     \return linear cell grid index. */
-int pos_to_ghost_cell_grid_ind(double pos[3]);
+int pos_to_capped_cell_grid_ind(double pos[3]);
 
 /** debug function to print particle positions: */
 void print_particle_positions();
@@ -218,6 +193,12 @@ void print_ghost_positions();
 /** Callback for setmd maxnumcells (maxnumcells >= 27). 
     see also \ref max_num_cells */
 int max_num_cells_callback(Tcl_Interp *interp, void *_data);
+
+/** returns true iff cell i is not a ghost cell.
+    @param i the cell to test
+    @param gcg always ghost_cell_grid
+*/
+int  is_inner_cell(int i, int gcg[3]);
 
 /** Convience replace for loops over all particles. */
 #define INNER_CELLS_LOOP(m,n,o) \
@@ -230,6 +211,9 @@ int max_num_cells_callback(Tcl_Interp *interp, void *_data);
   for(m=0; m<ghost_cell_grid[0]; m++) \
     for(n=0; n<ghost_cell_grid[1]; n++) \
       for(o=0; o<ghost_cell_grid[2]; o++)
+
+/** get the cell index associated with the cell coordinates */
+#define CELL_IND(m,n,o) (get_linear_index(m,n,o,ghost_cell_grid))
 
 /** get a pointer to the cell associated with the cell coordinates */
 #define CELL_PTR(m,n,o) (&cells[get_linear_index(m,n,o,ghost_cell_grid)])

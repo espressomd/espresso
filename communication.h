@@ -24,12 +24,9 @@
     (the defines like \ref REQ_BCAST_PAR) by adding a new define and
     increasing \ref REQ_MAXIMUM. Then you write a mpi_* procedure that
     does a
-
-    \verbatim MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD)\endverbatim 
-
-    where 
-
-    \verbatim req[0]=<action number>; req[1]=<arbitrary>\endverbatim. 
+    \verbatim mpi_issue(request, node, param)\endverbatim
+    where pnode and param are arbitrary values which will be passed to the slave
+    procedure.
 
     After this your procedure is free to do anything. However, it has
     to be in (MPI) sync with what your new mpi_*_slave does.  This
@@ -90,18 +87,39 @@ void mpi_bcast_parameter(int i);
 /** Issue REQ_WHO_HAS: ask nodes for their attached particles. */
 void mpi_who_has();
 
-/** Issue REQ_CHTOPL: call this if you change the topology (box, grid, etc.).
- */
-void mpi_changed_topology();
+/** Issue REQ_EVENT: tells all clients of some system change.
+    The events are:
+    <ul>
+    <li> PARTICLE_CHANGED
+    <li> INTERACTION_CHANGED
+    <li> PARAMETER_CHANGED
+    <li> TOPOLOGY_CHANGED
+    </ul>
+    Then all nodes execute the respective on_* procedure from \ref initialize.c
+    Note that not all of these codes are used. Since some actions (like placing a
+    particle) include communication anyways, this is handled by the way.
+*/
+void mpi_bcast_event(int event);
+/** \name the event codes
+    These codes are used by \ref mpi_bcast_event.
+*/
+/*@{*/
+#define PARTICLE_CHANGED 0
+#define INTERACTION_CHANGED 1
+#define PARAMETER_CHANGED 2
+#define TOPOLOGY_CHANGED 3
+/*@}*/
 
 /** Issue REQ_PLACE: move particle to a position on a node.
-    \param id   the particle to move.
+    Also calls \ref on_particle_change.
+    \param id   the particle to move. a negative id denotes new particles.
     \param node the node to attach it to.
     \param pos  the particles position.
 */
 void mpi_place_particle(int node, int id, double pos[3]);
 
 /** Issue REQ_SET_V: send particle velocity.
+    Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
     \param v its new velocity.
@@ -109,6 +127,7 @@ void mpi_place_particle(int node, int id, double pos[3]);
 void mpi_send_v(int node, int part, double v[3]);
 
 /** Issue REQ_SET_F: send particle force.
+    Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
     \param F its new force.
@@ -116,6 +135,7 @@ void mpi_send_v(int node, int part, double v[3]);
 void mpi_send_f(int node, int part, double F[3]);
 
 /** Issue REQ_SET_Q: send particle charge.
+    Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
     \param q its new charge.
@@ -123,6 +143,7 @@ void mpi_send_f(int node, int part, double F[3]);
 void mpi_send_q(int node, int part, double q);
 
 /** Issue REQ_SET_TYPE: send particle type.
+    Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
     \param type its new type.
@@ -130,6 +151,7 @@ void mpi_send_q(int node, int part, double q);
 void mpi_send_type(int node, int part, int type);
 
 /** Issue REQ_SET_BOND: send bond.
+    Also calls \ref on_particle_change.
     \param part     identity of principal atom of the bond.
     \param node     node it is attached to.
     \param bond     field containing the bond type number and the identity of all bond partners (secundary atoms of the bond).
@@ -152,6 +174,7 @@ void mpi_recv_part(int node, int part, Particle *part_data);
 void mpi_integrate(int n_steps);
 
 /** Issue REQ_BCAST_IA: send new ia params.
+    Also calls \ref on_ia_change.
 
     mpi_bcast_ia_params is used for both, bonded and non-bonded
     interaction parameters. Therefor i and j are used depending on

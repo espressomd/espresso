@@ -27,9 +27,18 @@ extern double skin;
 extern double max_range;
 /** square of \ref max_range. */
 extern double max_range2;
-/** Flag for integrator. If non-zero, the forces have to be calculated
-    before the first step. */
-extern int    calc_forces_first;
+/** If non-zero, some particles have moved since last
+    integration. */
+extern int    particle_changed;
+/** If non-zero, some non-bonded interactions have changed since last
+    integration. */
+extern int    interactions_changed;
+/** If non-zero, the system topology has changed since last
+    integration. */
+extern int    topology_changed;
+/** If non-zero, some other parameter (e.g. time_step, skin) has changed
+    since last integration. */
+extern int    parameter_changed;
 
 /*@}*/
 
@@ -49,16 +58,13 @@ extern int    calc_forces_first;
 int integrate(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
 
-/** initialize velocity verlet integrator. */
-void integrate_vv_init();
+/** update maxrange etc. */
+void integrate_vv_recalc_maxrange();
 
 /** integrate with velocity verlet integrator.
     \param n_steps number of steps to integrate.
  */
 void integrate_vv(int n_steps);
-
-/** exit velocity verlet integrator. */
-void integrate_vv_exit();
 
 /** Callback for setmd skin.
     \return TCL status.

@@ -54,7 +54,8 @@ void setup_node_grid()
     /* auto setup, grid not set */
     calc_3d_grid(n_nodes,node_grid);
 
-    changed_topology();
+    mpi_bcast_parameter(FIELD_NGRID);
+    mpi_bcast_event(TOPOLOGY_CHANGED);
   }
 }
 
@@ -147,19 +148,8 @@ void grid_changed_topology()
     my_right[i]  = (node_pos[i]+1)*local_box_l[i];    
   }
 
-  cells_changed_topology();
   calc_node_neighbors(this_node);
-
-  rebuild_verletlist = 1;
-}
-
-void changed_topology()
-{
-  /* a little bit of overkill, but safe */
-  mpi_bcast_parameter(FIELD_NGRID);
-  mpi_bcast_parameter(FIELD_BOXL);
-  mpi_bcast_parameter(FIELD_VERLET);
-  mpi_changed_topology();
+  calc_minimal_box_dimensions();
 }
 
 void calc_minimal_box_dimensions()
@@ -251,7 +241,8 @@ int node_grid_callback(Tcl_Interp *interp, void *_data)
   node_grid[1] = data[1];
   node_grid[2] = data[2];
 
-  changed_topology();
+  mpi_bcast_parameter(FIELD_NGRID);
+  mpi_bcast_event(TOPOLOGY_CHANGED);
 
   return (TCL_OK);
 }
@@ -269,7 +260,8 @@ int boxl_callback(Tcl_Interp *interp, void *_data)
   box_l[1] = data[1];
   box_l[2] = data[2];
 
-  changed_topology();
+  mpi_bcast_parameter(FIELD_BOXL);
+  mpi_bcast_event(TOPOLOGY_CHANGED);
 
   return (TCL_OK);
 }
@@ -284,6 +276,7 @@ int per_callback(Tcl_Interp *interp, void *_data)
     periodic[i] = (data[i] != 0);
 
   mpi_bcast_parameter(FIELD_PERIODIC);
+  mpi_bcast_event(TOPOLOGY_CHANGED);
 
   return (TCL_OK);
 }

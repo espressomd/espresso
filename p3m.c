@@ -899,6 +899,7 @@ int bjerrum_callback(Tcl_Interp *interp, void *_data)
   }
   p3m.bjerrum = data;
   mpi_bcast_parameter(FIELD_BJERRUM);
+  mpi_bcast_event(INTERACTION_CHANGED);
   return (TCL_OK);
 }
 
@@ -911,6 +912,7 @@ int p3malpha_callback(Tcl_Interp *interp, void *_data)
   }
   p3m.alpha = data;
   mpi_bcast_parameter(FIELD_P3M_ALPHA);
+  mpi_bcast_event(INTERACTION_CHANGED);
   return (TCL_OK);
 }
 
@@ -923,6 +925,7 @@ int p3mrcut_callback(Tcl_Interp *interp, void *_data)
   }
   p3m.r_cut = data;
   mpi_bcast_parameter(FIELD_P3M_RCUT);
+  mpi_bcast_event(INTERACTION_CHANGED);
   return (TCL_OK);
 }
 
@@ -935,6 +938,7 @@ int p3mmesh_callback(Tcl_Interp *interp, void *_data)
   }
   for(i=0;i<3;i++) p3m.mesh[i] = data[i];
   mpi_bcast_parameter(FIELD_P3M_MESH);
+  mpi_bcast_event(INTERACTION_CHANGED);
   return (TCL_OK);
 }
 
@@ -948,6 +952,7 @@ int p3mcao_callback(Tcl_Interp *interp, void *_data)
   p3m.cao = data[0];
   p3m.inter = data[1];
   mpi_bcast_parameter(FIELD_P3M_CAO);
+  mpi_bcast_event(INTERACTION_CHANGED);
   return (TCL_OK);
 }
 
@@ -956,6 +961,7 @@ int p3mepsilon_callback(Tcl_Interp *interp, void *_data)
   double data = *(double *)_data;
   p3m.epsilon = data;
   mpi_bcast_parameter(FIELD_P3M_EPSILON);
+  mpi_bcast_event(INTERACTION_CHANGED);
   return (TCL_OK);
 }
 
@@ -968,6 +974,7 @@ int p3mmeshoff_callback(Tcl_Interp *interp, void *_data)
     return (TCL_ERROR);
   }  for(i=0;i<3;i++) p3m.mesh_off[i] = data[i];
   mpi_bcast_parameter(FIELD_P3M_MESH_OFF);
+  mpi_bcast_event(INTERACTION_CHANGED);
   return (TCL_OK);
 }
 

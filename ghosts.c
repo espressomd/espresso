@@ -181,7 +181,6 @@ void append_particles(int dir);
  *      <li> send ghost particle information:
  *           \ref g_send_buf to \ref g_recv_buf
  *  </ol>
- *  \ref g_recv_buf is reallocated if necessary.
  *
  *  If communication goes to the same node, just the pointers of the
  *  array pairs (\ref g_send_buf, \ref g_recv_buf) and the variable
@@ -289,11 +288,13 @@ void ghost_init()
   init_doublelist(&recv_buf);
 }
 
-void exchange_part()
+void exchange_and_sort_part()
 {
   ParticleList *pl;
-  Particle *part;
-  int d, i, m, n, o, np, dir, lr;
+  Particle *part = NULL;
+  Cell *cell = NULL;
+  int d, i = 0, m, n, o, np, dir, lr, ind, c;
+  int cell_part_cnt=0, ghost_part_cnt=0, local_part_cnt=0;
 
   GHOST_TRACE(fprintf(stderr,"%d: exchange_part:\n",this_node));
 
@@ -303,34 +304,27 @@ void exchange_part()
 	dir = 2*d + lr;
 	p_send_buf.n = p_recv_buf.n = 0;
 	b_send_buf.n = b_recv_buf.n = 0;
-	if(lr==0) {                                /* left */
-	  CELLS_LOOP(m, n, o) {
-	    pl   = &(CELL_PTR(m, n, o)->pList);
-	    part = CELL_PTR(m, n, o)->pList.part;
-	    np   = CELL_PTR(m, n, o)->pList.n;
-	    for(i=0 ; i<pl->n; i++) {
-	      /*	      fprintf(stderr,"%d: exchange_part %d: Part id=%d co=%f\n",
-			      this_node,dir,part[i].r.identity,part[i].r.p[d]);*/
-	      if(part[i].r.p[d] < my_left[d] ) {
-		GHOST_TRACE(fprintf(stderr,"%d: exchange_part: Send Part id=%d to node %d\n",
-			    this_node,part[i].r.identity,node_neighbors[dir]));
-		i = move_to_p_buf(pl,i); 
-	      }
+	INNER_CELLS_LOOP(m, n, o) {
+	  c    = CELL_IND(m, n, o);
+	  cell = &cells[c];
+	  pl   = &(cell->pList);
+	  part = pl->part;
+	  np   = pl->n;
+	  for(i=0 ; i< np; i++) {
+	    /*fprintf(stderr,"%d: exchange_part %d: Part id=%d co=%f\n",
+	      this_node,dir,part[i].r.identity,part[i].r.p[d]);*/
+	    if((lr == 1 && part[i].r.p[d] >=  my_right[d]) ||
+	       (lr == 0 && part[i].r.p[d] <  my_left[d])) {
+	      GHOST_TRACE(fprintf(stderr,"%d: exchange_part: Send Part id=%d to node %d\n",
+				  this_node,part[i].r.identity,node_neighbors[dir]));
+	      i = move_to_p_buf(pl,i);
 	    }
-	  }
-	}
-	else {                            	  /* right */
-	  CELLS_LOOP(m, n, o) {
-	    pl   = &(CELL_PTR(m, n, o)->pList);
-	    part = CELL_PTR(m, n, o)->pList.part;
-	    np   = CELL_PTR(m, n, o)->pList.n;
-	    for(i=0 ; i<pl->n; i++) {
-	      /*fprintf(stderr,"%d: exchange_part %d: Part id=%d co=%f\n",
-		this_node,dir,part[i].r.identity,part[i].r.p[d]);*/
-	      if(part[i].r.p[d] >=  my_right[d]) {
-		GHOST_TRACE(fprintf(stderr,"%d: exchange_part: Send Part id=%d to node %d\n",
-			    this_node,part[i].r.identity,node_neighbors[dir]));
-		i = move_to_p_buf(pl,i);
+	    else if (dir == 5) {
+	      /* sort particles not moved into their real cells */
+	      ind = pos_to_cell_grid_ind(part[i].r.p);
+	      if(ind != c) {
+		move_indexed_particle(&(cells[ind].pList), pl, i);
+		i--;
 	      }
 	    }
 	  }
@@ -339,38 +333,99 @@ void exchange_part()
 	append_particles(d);
       }
     }
-  }
+    else {
+      /* in case of single node grid, fold coordinates */
+      INNER_CELLS_LOOP(m, n, o) {
+	c    = CELL_IND(m, n, o);
+	cell = &cells[c];
+	pl   = &(cell->pList);
+	part = pl->part;
+	np   = pl->n;
+	for(i=0 ; i<np; i++) {
+	  fold_coordinate(part[i].r.p, part[i].i, d);
 
-  /* fold coordinates to primary simulation box */
-  CELLS_LOOP(m, n, o) {
-    part = CELL_PTR(m, n, o)->pList.part;
-    np   = CELL_PTR(m, n, o)->pList.n;
-    for(i=0 ; i<np; i++) {
-      fold_particle(part[i].r.p, part[i].i);
- 
-     /* check part array */
-#ifdef ADDITIONAL_CHECKS
-      if(part[i].r.identity <0 || part[i].r.identity > max_seen_particle) {
-	fprintf(stderr,"%d: exchange_part: ERROR: illegal id=%d of part %d in cell (%d,%d,%d)\n",
-		this_node,part[i].r.identity,i,m,n,o);
-	errexit();
-      }
-      for(dir=0;dir<3;dir++) {
-	if(periodic[dir] && (part[i].r.p[dir] < 0 || part[i].r.p[dir] > box_l[dir])) {
-	  fprintf(stderr,"%d: exchange_part: ERROR: illegal pos[%d]=%f of part %d id=%d in cell (%d,%d,%d)\n",
-		  this_node,dir,part[i].r.p[dir],i,part[i].r.identity,m,n,o);
-	  errexit();
+	  if (d==3) {
+	    /* sort particles not moved into their real cells */
+	    ind = pos_to_cell_grid_ind(part[i].r.p);
+	    if(ind != c) {
+	      move_indexed_particle(&(cells[ind].pList), pl, i);
+	      i--;
+	    }
+	  }
 	}
       }
-#endif
-
     }
   }
 
+  INNER_CELLS_LOOP(m, n, o)
+    update_local_particles(&(CELL_PTR(m, n, o)->pList));
 
 
-   GHOST_TRACE(print_particle_positions()); 
+#ifdef ADDITIONAL_CHECKS
+  for(c=0; c<n_cells; c++) {
+    if(is_inner_cell(c,ghost_cell_grid)) {
+      cell_part_cnt += cells[c].pList.n;
+      cell = &cells[c];
+      pl   = &(cell->pList);
+      part = pl->part;
+      np   = pl->n;
+      for(n=0; n<cells[c].pList.n ; n++) {
+	if(part[n].r.identity < 0 || part[n].r.identity > max_seen_particle) {
+	  fprintf(stderr,"%d: sort_part_in_cells: ERROR: Cell %d Part %d has corrupted id=%d\n",
+		  this_node,c,n,cells[c].pList.part[n].r.identity);
+	  errexit();
+	}
+	for(dir=0;dir<3;dir++) {
+	  if(periodic[dir] && (part[n].r.p[dir] < 0 || part[n].r.p[dir] > box_l[dir])) {
+	    fprintf(stderr,"%d: exchange_part: ERROR: illegal pos[%d]=%f of part %d id=%d in cell %d\n",
+		    this_node,dir,part[n].r.p[dir],n,part[n].r.identity,c);
+	    errexit();
+	  }
+	}
+	if(local_particles[part[n].r.identity] != &part[n]) {
+	    fprintf(stderr,"%d: exchange_part: ERROR: address mismatch for part id %d: %p %p in cell %d\n",
+		    this_node,part[n].r.identity,local_particles[part[n].r.identity],
+		    &part[n],c);
+	    errexit();
 
+	}
+      }
+    }
+    else {
+      if(cells[c].pList.n>0) {
+	ghost_part_cnt += cells[c].pList.n;
+	fprintf(stderr,"%d: sort_part_in_cells: WARNING: ghost_cell %d contains %d particles!\n",
+		this_node,c,cells[c].pList.n);
+      }
+    }
+  }
+  CELL_TRACE(fprintf(stderr,"%d: sort_part_in_cells: %d particles in cells.\n",
+		     this_node,cell_part_cnt));
+  for(n=0; n< max_seen_particle+1; n++) {
+    if(local_particles[n] != NULL) {
+      local_part_cnt ++;
+      if(local_particles[n]->r.identity != n) {
+	fprintf(stderr,"%d: sort_part_in_cells: ERROR: local_particles part %d has corrupted id %d\n",
+		this_node,n,local_particles[n]->r.identity);
+	errexit();
+      }
+    }
+  }
+  CELL_TRACE(fprintf(stderr,"%d: sort_part_in_cells: %d particles in local_particles.\n",
+		     this_node,local_part_cnt));
+  if(local_part_cnt != cell_part_cnt) {
+    fprintf(stderr,"%d: sort_part_in_cells: ERROR: %d parts in cells but %d parts in local_particles\n",
+	    this_node,local_part_cnt,cell_part_cnt);
+    if(ghost_part_cnt==0) errexit();
+  }
+  if(ghost_part_cnt>0) {
+    fprintf(stderr,"%d: sort_part_in_cells: ERROR: Found %d illegal ghost particles!\n",
+	    this_node,ghost_part_cnt);
+    errexit();
+  }
+#endif
+
+  GHOST_TRACE(print_particle_positions());
 }
 
 void invalidate_ghosts()
@@ -452,8 +507,8 @@ void exchange_ghost()
     cnt=0;
     for(c=0; c<c_max; c++) {
       pl    = &(cells[recv_cells[r_dir].e[c]].pList);
+      realloc_particles(pl, n_recv_ghosts[r_dir].e[c]);
       pl->n = n_recv_ghosts[r_dir].e[c];
-      realloc_particles(pl, pl->n);
       for(n=0; n < pl->n; n++) {
 	memcpy(&(pl->part[n].r), &(g_recv_buf.part[cnt]), sizeof(ReducedParticle));
 	/* Real Paricle Priority! 
@@ -599,11 +654,6 @@ void collect_ghost_forces()
 
 }
 
-void ghost_exit()
-{
-  GHOST_TRACE(fprintf(stderr,"%d: ghost_exit:\n",this_node));
-}
-
 /*******************  privat functions  *******************/
 
 /** Creates an linear index list of a sub grid.
@@ -666,7 +716,7 @@ int move_to_p_buf(ParticleList *pl, int ind)
 
   /* delete it from local_particles list and move particle to p_send_buf */
   local_particles[pl->part[ind].r.identity] = NULL;
-  move_particle(&p_send_buf, pl, ind);
+  move_unindexed_particle(&p_send_buf, pl, ind);
 
   GHOST_TRACE(fprintf(stderr,"%d: now: p_send_buf.n = %d, b_send_buf.n = %d\n",
 		      this_node,p_send_buf.n,b_send_buf.n));
@@ -744,13 +794,12 @@ void append_particles(int dir)
   
   for(i=0; i<p_recv_buf.n; i++) {
     fold_coordinate(p_recv_buf.part[i].r.p, p_recv_buf.part[i].i, dir);
-    c_ind = pos_to_ghost_cell_grid_ind(p_recv_buf.part[i].r.p);
+    c_ind = pos_to_capped_cell_grid_ind(p_recv_buf.part[i].r.p);
     pl = &(cells[c_ind].pList);
     GHOST_TRACE(fprintf(stderr,"%d: append part id=%d, pos=(%.3f,%.3f,%.3f) to cell %d\n",
 			this_node, p_recv_buf.part[i].r.identity, p_recv_buf.part[i].r.p[0],
 			p_recv_buf.part[i].r.p[1], p_recv_buf.part[i].r.p[2], c_ind));
-    part = append_particle(pl, &(p_recv_buf.part[i]));
-    local_particles[part->r.identity] = part;
+    part = append_unindexed_particle(pl, &(p_recv_buf.part[i]));
     part->bl.n = b_recv_buf.e[b_ind];
     b_ind++;
     realloc_intlist(&(part->bl),part->bl.n);

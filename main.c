@@ -33,7 +33,7 @@ int appinit(Tcl_Interp *interp)
     return (TCL_ERROR);
   Tcl_CreateExitHandler(exitHandler, 0);
 
-  if (initialize(interp) == TCL_ERROR)
+  if (on_program_start(interp) == TCL_ERROR)
     return (TCL_ERROR);
   return (TCL_OK);
 }
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     return 0;
   }
   else
-    initialize(0);
+    on_program_start(0);
 
   /* slave node */
   mpi_loop();

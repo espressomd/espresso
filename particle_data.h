@@ -88,6 +88,8 @@ typedef struct {
     is larger by 1.
 */
 extern int max_seen_particle;
+/** total number of particles. */
+extern int  n_total_particles;
 
 /** Capacity of the \ref particle_node / \ref local_index. */
 extern int  max_particle_node;
@@ -104,11 +106,6 @@ extern Particle   **local_particles;
 int part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
 
-/** get the total number of all particles on all nodes.
-    \return integer N_tot containing that number */
-int getParticleCount(void);
-
-
 /** initialize a particle list.
  *  Use with care and ONLY for initialization! */
 void init_particleList(ParticleList *pList);
@@ -116,8 +113,9 @@ void init_particleList(ParticleList *pList);
 /** allocate storage for local particles and ghosts.
     \param plist the list on which to operate
     \param size the size to provide at least. It is rounded
-    up to multiples of \ref PART_INCREMENT. */
-void realloc_particles(ParticleList *plist, int size);
+    up to multiples of \ref PART_INCREMENT.
+    \return true iff particle adresses have changed */
+int realloc_particles(ParticleList *plist, int size);
 
 /** search for a specific particle.
     \param plist the list on which to operate 
@@ -128,25 +126,46 @@ Particle *got_particle(ParticleList *plist, int id);
 
 /** append a particle at the end of a particle List.
     reallocates particles if necessary!
+    This procedure does not care for \ref local_particles.
     \param plist List to append the particle to.
     \param part  Particle to append.  
     \return Pointer to new location of the particle. */
-Particle *append_particle(ParticleList *plist, Particle *part);
+Particle *append_unindexed_particle(ParticleList *plist, Particle *part);
+
+/** append a particle at the end of a particle List.
+    reallocates particles if necessary!
+    This procedure cares for \ref local_particles.
+    \param plist List to append the particle to.
+    \param part  Particle to append.  
+    \return Pointer to new location of the particle. */
+Particle *append_indexed_particle(ParticleList *plist, Particle *part);
 
 /** remove a particle from one particle List and append it to  another.
     Refill the destList with last particle and update its entry in local_particles. 
     reallocates particles if necessary.
+    This procedure does not care for \ref local_particles.
     \param destList   List where the particle is appended.
     \param sourceList List where the particle will be removed.
     \param ind        Index of the particle in the sourceList.
     \return Pointer to new location of the particle.
  */
-Particle *move_particle(ParticleList *destList, ParticleList *sourceList, int ind);
+Particle *move_unindexed_particle(ParticleList *destList, ParticleList *sourceList, int ind);
 
-/** allocate space for a particle.
-    \param plist the list on which to operate
-    \return the new field index */
-Particle *alloc_particle(ParticleList *plist);
+/** remove a particle from one particle List and append it to  another.
+    Refill the destList with last particle and update its entry in local_particles. 
+    reallocates particles if necessary.
+    This procedure cares for \ref local_particles.
+    \param destList   List where the particle is appended.
+    \param sourceList List where the particle will be removed.
+    \param ind        Index of the particle in the sourceList.
+    \return Pointer to new location of the particle.
+ */
+Particle *move_indexed_particle(ParticleList *destList, ParticleList *sourceList, int ind);
+
+/** update the entries in \ref local_particles for all particles in the list pl.
+    @param pl the list to put in.
+*/
+void update_local_particles(ParticleList *pl);
 
 /** initialize a reduced particle list (ghosts).
  *  Use with care and ONLY for initialization! */
@@ -157,8 +176,6 @@ void init_redParticleList(RedParticleList *pList);
     \param size the size to provide at least. It is rounded
     up to multiples of \ref PART_INCREMENT. */
 void realloc_redParticles(RedParticleList *plist, int size);
-
-
 
 /** remove bond from particle if possible */
 int try_delete_bond(Particle *part, int *bond);
@@ -182,7 +199,6 @@ void fold_particle(double pos[3],int image_box[3]);
 */
 void fold_coordinate(double pos[3], int image_box[3], int dir);
 
-
 /** unfold particle coordinates to physical position.
     \param pos the position...
     \param image_box and the box
@@ -192,29 +208,92 @@ void fold_coordinate(double pos[3], int image_box[3], int dir);
 */
 void unfold_particle(double pos[3],int image_box[3]);
 
-/** add particle to \ref particle_node.
-    This procedure is only used on the master node in script mode.
-    \param part the identity of the particle
-    \param node the node it is stored on
-*/
-void map_particle_node(int part, int node);
-
 /** rebuild \ref particle_node from scratch.
     After a simulation step \ref particle_node has to be rebuild
     since the particles might have gone to a different node.
 */
 void build_particle_node();
 
-/** update \ref max_seen_particle on slave nodes and
-    invalidate \ref particle_node. This has to be done
+/** invalidate \ref particle_node. This has to be done
     at the beginning of the integration.
 */
-void particle_finalize_data();
+void particle_invalidate_part_node();
 
-/** initialize the \ref local_particles structure. Called from \ref integrate_vv_init */
-void local_particles_init();
+/** realloc \ref local_particles. */
+void realloc_local_particles();
 
-/** free the \ref local_particles structure. Called from \ref integrate_vv_exit */
-void local_particles_exit();
+/** get particle data. Note that the bond intlist is
+    allocated so that you are responsible to free it later.
+    @param part the identity of the particle to fetch
+    @param data where to store its contents.
+    @return TCL_OK if particle existed
+*/
+int get_particle_data(int part, Particle *data);
+
+/** Call only on the master node.
+    Move a particle to a new position.
+    If it does not exist, it is created.
+    @param part the identity of the particle to move
+    @param p    its new position
+    @return TCL_OK if particle existed, TCL_CONTINUE
+    if created and TCL_ERROR if id is illegal
+*/
+int place_particle(int part, double p[3]);
+
+/** Call only on the master node: set particle velocity.
+    @param part the particle.
+    @param v its new velocity.
+    @return TCL_OK if particle existed
+*/
+int set_particle_v(int part, double v[3]);
+
+/** Call only on the master node: set particle force.
+    @param part the particle.
+    @param F its new force.
+    @return TCL_OK if particle existed
+*/
+int set_particle_f(int part, double F[3]);
+
+/** Call only on the master node: set particle charge.
+    @param part the particle.
+    @param q its new charge.
+    @return TCL_OK if particle existed
+*/
+int set_particle_q(int part, double q);
+
+/** Call only on the master node: set particle type.
+    @param part the particle.
+    @param type its new type.
+    @return TCL_OK if particle existed
+*/
+int set_particle_type(int part, int type);
+
+/** Call only on the master node: change particle bond.
+    @param part     identity of principal atom of the bond.
+    @param bond     field containing the bond type number and the
+    identity of all bond partners (secundary atoms of the bond).
+    @param delete   if true, do not add the bond, rather delete it if found
+    @return TCL_OK on success or TCL_ERROR if no success
+    (e. g. particle or bond to delete does not exist)
+*/
+int change_particle_bond(int part, int *bond, int delete);
+
+/** Used by mpi_place_particle, should not be used elsewhere.
+    Move a particle to a new position.
+    If it does not exist, it is created. the position must
+    be on the local node!
+    @param part the identity of the particle to move
+    @param p    its new position
+*/
+void local_place_particle(int part, double p[3]);
+
+/** Used by mpi_send_bond, should not be used elsewhere.
+    Modify a bond.
+    @param part the identity of the particle to change
+    @param bond the bond to do
+    @param delete if true, delete the bond instead of add
+    @return TCL_OK for add or successful delete, TCL_ERROR else
+*/
+int local_change_bond(int part, int *bond, int delete);
 
 #endif

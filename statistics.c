@@ -58,14 +58,12 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   double r_CM_x=0.0, r_CM_y=0.0, r_CM_z=0.0, r_G=0.0, doubMPC;
   double rh=0.0, ri=0.0;
 
-  N_tot = getParticleCount();
-
   /* If no further arguments are given, perform a self-consistency-test */
   if (argc == 1) {
     sprintf(buffer,"%d",N_tot);
     Tcl_AppendResult(interp, "Hello World! You have ", buffer, " particles!", (char *)NULL);
     mpi_gather_stats(2, &gdata);
-    for(i=0; i<N_tot; i++) {
+    for(i=0; i<n_total_particles; i++) {
       if(gdata[i].r.identity!=i) { sprintf(buffer,"%d != %d \n",gdata[i].r.identity,i); Tcl_AppendResult(interp, buffer, (char *)NULL); }
       sprintf(buffer,"%d: %d %d %f (%f, %f, %f)\n",i,gdata[i].r.identity,gdata[i].r.type,gdata[i].r.q,gdata[i].r.p[0],gdata[i].r.p[1],gdata[i].r.p[2]);
       Tcl_AppendResult(interp,buffer, (char *)NULL);

@@ -39,8 +39,6 @@ int n_cells;
 Cell *cells;
 int max_num_cells = 512;
 
-int cells_init_flag = CELLS_FLAG_START;
-
 /** number of linked cells in nodes spatial domain. */
 int n_inner_cells;
 /** cell size. 
@@ -87,11 +85,6 @@ void cells_pre_init()
   int i;
   CELL_TRACE(fprintf(stderr,"%d: cells_pre_init():\n",this_node));
 
-  if(cells_init_flag != CELLS_FLAG_START) {
-    fprintf(stderr,"%d: cells_pre_init() is thought to be called only at program start or from within cells_exit()!\n",this_node);
-    errexit();
-  }
-
   /* set cell grid variables to a (1,1,1) grid */
   for(i=0;i<3;i++) {
     cell_grid[i] = 1;
@@ -103,9 +96,6 @@ void cells_pre_init()
   /* allocate space */
   cells = (Cell *)malloc(n_cells*sizeof(Cell));
   for(i=0; i<n_cells; i++) init_cell(&cells[i]);
-
-  /* cell structure pre initialized. */
-  cells_init_flag = CELLS_FLAG_PRE_INIT;
 }
 
 /************************************************************/
@@ -132,10 +122,6 @@ void cells_re_init()
 #endif
 
   CELL_TRACE(fprintf(stderr,"%d: cells_re_init \n",this_node));
-  if(cells_init_flag != CELLS_FLAG_PRE_INIT) {
-    fprintf(stderr,"%d: Cannot call cells_re_init without cells_pre_init()! \n",this_node);
-    errexit();
-  }
 
   /* 1: store old cell grid */
   old_cells = cells;
@@ -164,13 +150,10 @@ void cells_re_init()
   for(i=0;i<old_n_cells;i++) {
     if(is_inner_cell(i,old_ghost_cell_grid)) {
       pl = &(old_cells[i].pList);
-#ifdef ADDITIONAL_CHECKS
-      part_cnt += pl->n;
-#endif
       for(j=0; j<pl->n; j++) {
 	part = &(pl->part[j]);
 	ind  = pos_to_cell_grid_ind(part->r.p);
-	append_particle(&(cells[ind].pList),part);
+	append_unindexed_particle(&(cells[ind].pList),part);
       }
       if(pl->max>0) free(pl->part);
       if(old_cells[i].n_neighbors>0) {
@@ -179,13 +162,18 @@ void cells_re_init()
       }
     }
   }
+
+  for(i=0;i<n_cells;i++) {
+    if(is_inner_cell(i,ghost_cell_grid))
+      update_local_particles(&(cells[i].pList));
+  }
+
 #ifdef ADDITIONAL_CHECKS
   CELL_TRACE(fprintf(stderr,"%d: old_cell_grid: (%d, %d, %d)\n"
 		     ,this_node,old_ghost_cell_grid[0]-2
 		     ,old_ghost_cell_grid[1]-2,old_ghost_cell_grid[2]-2));
   CELL_TRACE(fprintf(stderr,"%d: had %d particles in old grid.\n"
 		     ,this_node,part_cnt));
-  part_cnt=0;
   for(i=0;i<n_cells;i++) {
     if(is_inner_cell(i,ghost_cell_grid)) {
       part_cnt += cells[i].pList.n;
@@ -201,7 +189,6 @@ void cells_re_init()
 
   /* cell structure initialized. */
   rebuild_verletlist = 1;
-  cells_init_flag = CELLS_FLAG_RE_INIT;
 
   CELL_TRACE(fprintf(stderr,"%d: cell_grid: (%d, %d, %d)\n"
 		     ,this_node,cell_grid[0],cell_grid[1],cell_grid[2]));
@@ -213,129 +200,14 @@ void cells_re_init()
 
 /*************************************************/
 
-void sort_particles_into_cells()
-{
-  
-  int c, n, ind;
-  Particle *part;
-
-#ifdef ADDITIONAL_CHECKS
-  int cell_part_cnt=0,local_part_cnt=0,ghost_part_cnt=0;
-#endif
-
-  CELL_TRACE(fprintf(stderr,"%d: sort_particles_into_cells:\n",this_node));
-
-  /* cell loop */
-  for(c=0; c<n_cells; c++) {
-    /* particle loop */
-    for(n=0; n<cells[c].pList.n ; n++) {
-      ind = pos_to_cell_grid_ind(cells[c].pList.part[n].r.p);
-      if(ind != c) {
-	/* move particle from cell c to cell ind */
-	part = move_particle(&(cells[ind].pList), &(cells[c].pList), n);
-	/* fix address of moved particle in local_particles */
-	local_particles[part->r.identity] = part;
-	n--;
-      }
-    }
-  }
-  
-
-#ifdef ADDITIONAL_CHECKS
-  for(c=0; c<n_cells; c++) {
-    if(is_inner_cell(c,ghost_cell_grid)) {
-      cell_part_cnt += cells[c].pList.n;
-      for(n=0; n<cells[c].pList.n ; n++) {
-	if(cells[c].pList.part[n].r.identity < 0 || cells[c].pList.part[n].r.identity > max_seen_particle) {
-	  fprintf(stderr,"%d: sort_part_in_cells: ERROR: Cell %d Part %d has corrupted id=%d\n",
-		  this_node,c,n,cells[c].pList.part[n].r.identity);
-	  errexit();
-	}
-      }
-    }
-    else {
-      if(cells[c].pList.n>0) {
-	ghost_part_cnt += cells[c].pList.n;
-	fprintf(stderr,"%d: sort_part_in_cells: WARNING: ghost_cell %d contains %d particles!\n",
-		this_node,c,cells[c].pList.n);
-      }
-    }
-  }
-  CELL_TRACE(fprintf(stderr,"%d: sort_part_in_cells: %d particles in cells.\n",
-		     this_node,cell_part_cnt));
-  for(n=0; n< max_seen_particle+1; n++) {
-    if(local_particles[n] != NULL) {
-      local_part_cnt ++;
-      if(local_particles[n]->r.identity != n) {
-	fprintf(stderr,"%d: sort_part_in_cells: ERROR: local_particles part %d has corrupted id %d\n",
-		this_node,n,local_particles[n]->r.identity);
-	errexit();
-      }
-    }
-  }
-  CELL_TRACE(fprintf(stderr,"%d: sort_part_in_cells: %d particles in local_particles.\n",
-		     this_node,local_part_cnt));
-  if(local_part_cnt != cell_part_cnt) {
-    fprintf(stderr,"%d: sort_part_in_cells: ERROR: %d parts in cells but %d parts in local_particles\n",
-	    this_node,local_part_cnt,cell_part_cnt);
-    if(ghost_part_cnt==0) errexit();
-  }
-  if(ghost_part_cnt>0) {
-    fprintf(stderr,"%d: sort_part_in_cells: ERROR: Found %d illegal ghost particles!\n",
-	    this_node,ghost_part_cnt);
-    errexit();
-  }
-#endif
-
-}
-
-/*************************************************/
-
-void cells_exit() 
-{
-  int i,j;
-  CELL_TRACE(fprintf(stderr,"%d: cells_exit:\n",this_node));
-
-  if(cells_init_flag != CELLS_FLAG_PRE_INIT && cells_init_flag != CELLS_FLAG_RE_INIT) {
-    fprintf(stderr,"%d: cells_exit: Nothing to be done.\n",this_node);
-    return;
-  }
-  
-  /* free memory */
-  for(i=0; i<n_cells; i++) {
-    if(cells[i].n_neighbors > 0) {
-      for(j=0; j<cells[i].n_neighbors; j++) free(cells[i].nList[j].vList.pair);
-      free(cells[i].nList);
-    }
-    if(cells[i].pList.max > 0) free(cells[i].pList.part);
-   }
-  free(cells);
-
-  cells_init_flag = CELLS_FLAG_START;
-  cells_pre_init(); 
-
-}
-
-
-/*************************************************/
-
-Particle *cells_got_particle(int id)
-{
-  int m,n,o;
-  Particle *r;
-  INNER_CELLS_LOOP(m, n, o) {
-    if ((r = got_particle(&(CELL_PTR(m, n, o)->pList), id)))
-      return r;
-  }
-  return NULL;
-}
-
-/*************************************************/
-
 Particle *cells_alloc_particle(int id, double pos[3])
 {
   int ind = pos_to_cell_grid_ind(pos);
-  Particle *pt = alloc_particle(&cells[ind].pList);
+  ParticleList *pl = &cells[ind].pList;
+  Particle *pt;
+  pl->n++;
+  int rl = realloc_particles(pl, pl->n);
+  pt = &pl->part[pl->n - 1];
   pt->r.identity = id;
   pt->r.type = 0;
   pt->r.q    = 0;
@@ -350,6 +222,11 @@ Particle *cells_alloc_particle(int id, double pos[3])
   pt->v[2]   = 0;
   memcpy(pt->r.p, pos, 3*sizeof(double));
   init_intlist(&(pt->bl));
+
+  if (rl)
+    update_local_particles(&cells[ind].pList);
+  else
+    local_particles[pt->r.identity] = pt;
   return pt;
 }
 
@@ -357,13 +234,15 @@ Particle *cells_alloc_particle(int id, double pos[3])
 void cells_changed_topology()
 {
   int i;
-  if(cells_init_flag == CELLS_FLAG_PRE_INIT) { 
+  if(max_range <= 0) {
+    /* not yet fully initialized */
     for(i=0;i<3;i++) {
       cell_size[i] =  local_box_l[i];
       inv_cell_size[i] = 1.0 / cell_size[i];
     }
   }
-  else calc_cell_grid();
+  else
+    calc_cell_grid();
 }
 
 /*************************************************/
@@ -387,6 +266,7 @@ int max_num_cells_callback(Tcl_Interp *interp, void *_data)
   }
   max_num_cells = data;
   mpi_bcast_parameter(FIELD_MAXNUMCELLS);
+  mpi_bcast_event(PARAMETER_CHANGED);
   return (TCL_OK);
 }
 
@@ -536,27 +416,24 @@ int pos_to_cell_grid_ind(double pos[3])
 
 /*************************************************/
 
-int pos_to_ghost_cell_grid_ind(double pos[3])
+int pos_to_capped_cell_grid_ind(double pos[3])
 {
   int i,cpos[3];
   
   for(i=0;i<3;i++) {
     cpos[i] = (int)((pos[i]-my_left[i])*inv_cell_size[i])+1;
 
-#ifdef PARTIAL_PERIODIC
-    if (cpos[i] < 1)
-      cpos[i] = 1;
-    else if (cpos[i] > cell_grid[i])
-      cpos[i] = cell_grid[i];
-#endif
-
 #ifdef ADDITIONAL_CHECKS
     if(cpos[i] < 0 || cpos[i] >  ghost_cell_grid[i]) {
-      fprintf(stderr,"%d: illegal ghost cell position cpos[%d]=%d, ghost_grid[%d]=%d for pos[%d]=%f\n",this_node,i,cpos[i],i,ghost_cell_grid[i],i,pos[i]);
+      fprintf(stderr,"%d: illegal cell position cpos[%d]=%d, ghost_grid[%d]=%d for pos[%d]=%f\n",this_node,i,cpos[i],i,ghost_cell_grid[i],i,pos[i]);
       errexit();
     }
 #endif
 
+    if (cpos[i] < 1)
+      cpos[i] = 1;
+    else if (cpos[i] > cell_grid[i])
+      cpos[i] = cell_grid[i];
   }
   return get_linear_index(cpos[0],cpos[1],cpos[2], ghost_cell_grid);  
 }

@@ -1,5 +1,5 @@
 #ifndef P3M_H 
-#define P3M_H 
+#define P3M_H
 /** \file p3m.h   P3M algorithm for long range coulomb interaction.
  *
  *  <b>Responsible:</b>
@@ -33,7 +33,10 @@
  *  For more information about the p3m algorithm,
  *  see \ref p3m.c "p3m.c"
  */
+
 #include "integrate.h"
+#include "debug.h"
+
 /************************************************
  * data types
  ************************************************/

@@ -35,44 +35,60 @@
  ************************************************/
 
 int max_seen_particle = -1;
+int n_total_particles = 0;
 int max_particle_node = 0;
 int *particle_node = NULL;
+int max_local_particles = 0;
 Particle **local_particles = NULL;
 
 /************************************************
  * functions
  ************************************************/
 
-void map_particle_node(int part, int node)
+/** resize \ref local_particles.
+    \param part the highest existing particle
+*/
+void realloc_local_particles(int part)
 {
-  if (part > max_seen_particle) {
-    int old_max = max_seen_particle, i;
+  int i;
+  if (part >= max_local_particles) {
+    /* round up part + 1 in granularity PART_INCREMENT */
+    max_local_particles = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
+    local_particles = (Particle **)realloc(local_particles, sizeof(Particle *)*max_local_particles);
+    for (i = part + 1; i < max_local_particles; i++)
+      local_particles[i] = NULL;
+  }
+}
 
-    max_seen_particle = part;
-    mpi_bcast_parameter(FIELD_MAXPART);
-
-    if (part >= max_particle_node) {
-      /* round up part + 1 in granularity PART_INCREMENT */
-      max_particle_node = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
-      particle_node = (int *)realloc(particle_node, sizeof(int)*max_particle_node);
-    }
-    for (i = old_max + 1; i < max_seen_particle; i++)
+/** resize \ref particle_node.
+    This procedure is only used on the master node in Tcl mode.
+    \param part the highest existing particle
+*/
+static void realloc_particle_node(int part)
+{
+  int i;
+  if (part >= max_particle_node) {
+    /* round up part + 1 in granularity PART_INCREMENT */
+    max_particle_node = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
+    particle_node = (int *)realloc(particle_node, sizeof(int)*max_particle_node);
+    for (i = max_seen_particle + 1; i < max_particle_node; i++)
       particle_node[i] = -1;
   }
-  PART_TRACE(fprintf(stderr, "mapping %d -> %d (%d)\n", part, node, max_seen_particle));
-  particle_node[part] = node;
+}
+
+void particle_invalidate_part_node()
+{
+  /* invalidate particle->node data */
+  if (particle_node) {
+    free(particle_node);
+    particle_node = NULL;
+    max_particle_node = 0;
+  }
 }
 
 void build_particle_node()
 {
-  if (max_seen_particle == -1)
-    return;
-  if (particle_node)
-    free(particle_node);
-
-  /* round up max_seen_particle + 1 in granularity PART_INCREMENT */
-  max_particle_node = PART_INCREMENT*((max_seen_particle + PART_INCREMENT)/PART_INCREMENT);
-  particle_node = malloc(max_particle_node*sizeof(int));
+  realloc_particle_node(max_seen_particle);
   mpi_who_has();
 }
 
@@ -83,9 +99,10 @@ void init_particleList(ParticleList *pList)
   pList->part = NULL;
 }
 
-void realloc_particles(ParticleList *l, int size)
+int realloc_particles(ParticleList *l, int size)
 {
   int old_max = l->max, i;
+  Particle *old_start = l->part;
   if (size < l->max) {
     /* shrink not as fast, just lose half, rounded up */
     l->max = PART_INCREMENT*(((l->n + size)/2 +
@@ -98,6 +115,15 @@ void realloc_particles(ParticleList *l, int size)
     l->part = (Particle *) realloc(l->part, sizeof(Particle)*l->max);
   for (i = old_max; i < l->max; i++)
     l->part[i].r.identity = -1;
+  return l->part != old_start;
+}
+
+void update_local_particles(ParticleList *pl)
+{
+  Particle *p = pl->part;
+  int n = pl->n, i;
+  for (i = 0; i < n; i++)
+    local_particles[p[i].r.identity] = &p[i];
 }
 
 void init_redParticleList(RedParticleList *pList)
@@ -142,12 +168,12 @@ int try_delete_bond(Particle *part, int *bond)
 	memcpy(bl->e + i, bl->e + i + 1 + partners,
 	       bl->n - i);
 	realloc_intlist(bl, bl->n);
-	return 1;
+	return TCL_OK;
       }
       i += 1 + partners;
     }
   }
-  return 0;
+  return TCL_ERROR;
 }
 
 Particle *got_particle(ParticleList *l, int id)
@@ -162,35 +188,61 @@ Particle *got_particle(ParticleList *l, int id)
   return &(l->part[i]);
 }
 
-Particle *alloc_particle(ParticleList *l)
+Particle *append_unindexed_particle(ParticleList *l, Particle *part)
 {
-  int index;
-
-  index = l->n++;
-  realloc_particles(l, l->n);
-
-  return &l->part[index];
-}
-
-Particle *append_particle(ParticleList *l, Particle *part)
-{
-  Particle *p = alloc_particle(l);
+  realloc_particles(l, ++l->n);
+  Particle *p = &l->part[l->n - 1];
   memcpy(p, part, sizeof(Particle));
   return p;
 }
 
-Particle *move_particle(ParticleList *dl, ParticleList *sl, int i)
+Particle *append_indexed_particle(ParticleList *l, Particle *part)
 {
-  Particle *dst = alloc_particle(dl);
+  int re = realloc_particles(l, ++l->n);
+  Particle *p = &l->part[l->n - 1];
+  memcpy(p, part, sizeof(Particle));
+  if (re)
+    update_local_particles(l);
+  else
+    local_particles[p->r.identity] = p;
+  return p;
+}
+
+Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i)
+{
+  realloc_particles(dl, ++dl->n);
+  Particle *dst = &dl->part[dl->n - 1];
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
   memcpy(dst, src, sizeof(Particle));
-  if ( src != end ) {
+  if ( src != end )
     memcpy(src, end, sizeof(Particle));
-    local_particles[src->r.identity] = src;
-  }
   sl->n -= 1;
   realloc_particles(sl, sl->n);
+  return dst;
+}
+
+Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
+{
+  int re = realloc_particles(dl, ++dl->n);
+  Particle *dst = &dl->part[dl->n - 1];
+  Particle *src = &sl->part[i];
+  Particle *end = &sl->part[sl->n - 1];
+
+  memcpy(dst, src, sizeof(Particle));
+  if (re)
+    update_local_particles(dl);
+  else
+    local_particles[dst->r.identity] = dst;
+    
+  if ( src != end )
+    memcpy(src, end, sizeof(Particle));
+
+  sl->n -= 1;
+  if (realloc_particles(sl, sl->n))
+    update_local_particles(sl);
+  else
+    local_particles[src->r.identity] = src;
   return dst;
 }
 
@@ -236,57 +288,6 @@ void unfold_particle(double pos[3],int image_box[3])
   }
 }
 
-void particle_finalize_data()
-{
-  /* happens if 0 particles... */
-  if (!node_grid_is_set())
-    setup_node_grid();
-
-  mpi_bcast_parameter(FIELD_MAXPART);
-
-  /* invalidate particle->node data */
-  if (particle_node) {
-    free(particle_node);
-    particle_node = NULL;
-  }
-}
-
-void local_particles_init()
-{
-  Particle *p;
-  int np, m, n, o, i;
-  if (max_seen_particle >= 0)
-    local_particles = (Particle **)malloc((max_seen_particle + 1)*sizeof(Particle *));
-  for(i = 0; i <= max_seen_particle; i++) local_particles[i] = NULL;
-  INNER_CELLS_LOOP(m, n, o) {
-    p = CELL_PTR(m, n, o)->pList.part;
-    np = CELL_PTR(m, n, o)->pList.n;
-    for(i = 0; i < np; i++) local_particles[p[i].r.identity] = & p[i];
-  }
-}
-
-void local_particles_exit()
-{
-  if (local_particles) {
-    free(local_particles);
-    local_particles = NULL;
-  }
-}
-
-/** get the total number of all particles on all nodes. */
-int getParticleCount(){
-  int i = 0, c = 0;
-
-  if (!particle_node)
-    build_particle_node();
-
-  for (i = 0; i <= max_seen_particle; i++)
-    if (particle_node[i] != -1)
-      c++;
-
-  return (c);
-}
-
 /** append particle data in ASCII form to the Tcl result.
     @param part_num the particle which data is appended
     @param interp   the Tcl interpreter to which result to add to */
@@ -295,19 +296,13 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle part;
   IntList *bl = &(part.bl);
-  int node;
-
-  if (part_num < 0 || part_num > max_seen_particle)
-    return (TCL_ERROR);
 
   if (!particle_node)
     build_particle_node();
 
-  node = particle_node[part_num];
-  if (node == -1)
+  if (get_particle_data(part_num, &part) == TCL_ERROR)
     return (TCL_ERROR);
 
-  mpi_recv_part(node, part_num, &part);
   sprintf(buffer, "%d", part.r.identity);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   Tcl_PrintDouble(interp, part.r.p[0], buffer);
@@ -357,8 +352,7 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
 int part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv)
 {
-  int part_num = -1;
-  int node, j;
+  int part_num = -1, j;
 
   if (!node_grid_is_set())
     setup_node_grid();
@@ -420,13 +414,10 @@ int part(ClientData data, Tcl_Interp *interp,
     if (!particle_node)
       build_particle_node();
 
-    node = particle_node[part_num];
-    if (node == -1) {
+    if (get_particle_data(part_num, &part) == TCL_ERROR) {
       Tcl_AppendResult(interp, "na", (char *)NULL);
       return (TCL_OK);
     }
-
-    mpi_recv_part(node, part_num, &part);
 
     argc -= 3;
     argv += 3;
@@ -504,11 +495,11 @@ int part(ClientData data, Tcl_Interp *interp,
     Tcl_AppendResult(interp, "particle identities must be positive", (char *)NULL);
     return (TCL_ERROR);
   }
-  node = (part_num <= max_seen_particle) ? particle_node[part_num] : -1;
 
   argc -= 2;
   argv += 2;
   while (argc > 0) {
+    int err = TCL_OK;
     if (!strncmp(argv[0], "pos", strlen(argv[0]))) {
       double pos[3];
       if (argc < 4) {
@@ -520,23 +511,13 @@ int part(ClientData data, Tcl_Interp *interp,
 	if (Tcl_GetDouble(interp, argv[1 + j], &pos[j]) == TCL_ERROR)
 	  return (TCL_ERROR);
       }
-    
-      if (node == -1) {
-	/* spatial position */
-	node = find_node(pos);
-	map_particle_node(part_num, node);
-      }
-      mpi_place_particle(node, part_num, pos);
+
+      err = (place_particle(part_num, pos) == TCL_ERROR) ? TCL_ERROR : TCL_OK;
 
       argc -= 4;
       argv += 4;
     }
     else {
-      if (node == -1) {
-	Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-	return (TCL_ERROR);
-      }
-      
       if (!strncmp(argv[0], "q", strlen(argv[0]))) {
 	double q;
 	if (argc < 2) {
@@ -547,7 +528,7 @@ int part(ClientData data, Tcl_Interp *interp,
 	if (Tcl_GetDouble(interp, argv[1], &q) == TCL_ERROR)
 	  return (TCL_ERROR);
 	
-	mpi_send_q(node, part_num, q);
+	err = set_particle_q(part_num, q);
 
 	argc -= 2;
 	argv += 2;
@@ -566,7 +547,7 @@ int part(ClientData data, Tcl_Interp *interp,
 	if (Tcl_GetDouble(interp, argv[3], &v[2]) == TCL_ERROR)
 	  return (TCL_ERROR);
 
-	mpi_send_v(node, part_num, v);
+	err = set_particle_v(part_num, v);
 
 	argc -= 4;
 	argv += 4;
@@ -585,7 +566,7 @@ int part(ClientData data, Tcl_Interp *interp,
 	if (Tcl_GetDouble(interp, argv[3], &f[2]) == TCL_ERROR)
 	  return (TCL_ERROR);
 
-	mpi_send_f(node, part_num, f);
+	err = set_particle_f(part_num, f);
 
 	argc -= 4;
 	argv += 4;
@@ -605,10 +586,7 @@ int part(ClientData data, Tcl_Interp *interp,
 	  return (TCL_ERROR);	  
 	} 
 
-	/* make sure type exists */
-	make_particle_type_exist(type);
-
-	mpi_send_type(node, part_num, type);
+	err = set_particle_type(part_num, type);
 
 	argc -= 2;
 	argv += 2;
@@ -619,11 +597,6 @@ int part(ClientData data, Tcl_Interp *interp,
 	int n_partners;
 	/* Bond type number and the bond partner atoms are stored in this field. */
 	int *bond;
-	/* check particle position */
-	if (node == -1) {
-	  Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-	  return (TCL_ERROR);
-	}
 	/* check number of arguments */
 	if (argc < 3) {
 	  Tcl_AppendResult(interp, "bond requires at least 2 arguments: "
@@ -671,7 +644,7 @@ int part(ClientData data, Tcl_Interp *interp,
 	  j++;
 	}
 	/* set/delete bond */ 
-	if (!mpi_send_bond(node, part_num, bond, delete)) {
+	if (!change_particle_bond(part_num, bond, delete)) {
 	  Tcl_AppendResult(interp, "bond to delete did not exist", (char *)NULL);
 	  free(bond);
 	  return (TCL_ERROR);
@@ -685,7 +658,175 @@ int part(ClientData data, Tcl_Interp *interp,
 	return (TCL_ERROR);
       }
     }
+    if (err == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+      return (TCL_ERROR);
+    }
   }
 
   return (TCL_OK);
+}
+
+int get_particle_data(int part, Particle *data)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+
+  pnode = particle_node[part];
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_recv_part(pnode, part, data);
+  return TCL_OK;
+}
+
+int place_particle(int part, double p[3])
+{
+  int pnode, retcode = TCL_OK;
+
+  if (part < 0)
+    return TCL_ERROR;
+
+  if (!particle_node)
+    build_particle_node();
+  pnode = (part <= max_seen_particle) ? particle_node[part] : -1;
+  if (pnode == -1) {
+    /* new particle, node by spatial position */
+    pnode = find_node(p);
+
+    if (part > max_seen_particle) {
+      realloc_particle_node(part);
+      realloc_local_particles(part);
+      max_seen_particle = part;
+      particle_node[part] = pnode;  
+    }
+    /* mark as new particle */
+    part = -part;
+    n_total_particles++;
+    retcode = TCL_CONTINUE;
+  }
+
+  mpi_place_particle(pnode, part, p);
+  return retcode;
+}
+
+int set_particle_v(int part, double v[3])
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_v(pnode, part, v);
+  return TCL_OK;
+}
+
+int set_particle_f(int part, double F[3])
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_f(pnode, part, F);
+  return TCL_OK;
+}
+
+int set_particle_q(int part, double q)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_q(pnode, part, q);
+  return TCL_OK;
+}
+
+int set_particle_type(int part, int type)
+{
+  int pnode;
+
+  make_particle_type_exist(type);
+
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_type(pnode, part, type);
+  return TCL_OK;
+}
+
+int change_particle_bond(int part, int *bond, int delete)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  return mpi_send_bond(pnode, part, bond, delete);
+}
+
+void local_place_particle(int part, double p[3])
+{
+  int i[3];
+  Particle *pt = (part <= max_seen_particle) ? local_particles[part] : NULL;
+
+  i[0] = 0;
+  i[1] = 0;
+  i[2] = 0;
+  fold_particle(p, i);
+  
+  if (!pt) {
+    pt = cells_alloc_particle(part, p);
+  }
+  memcpy(pt->r.p, p, 3*sizeof(double));
+  memcpy(pt->i, i, 3*sizeof(int));
+}
+
+int local_change_bond(int part, int *bond, int delete)
+{
+  IntList *bl;
+  Particle *p;
+  int bond_size;
+  int i;
+ 
+  p = local_particles[part];
+  if (delete)
+    return try_delete_bond(p, bond);
+
+  bond_size = bonded_ia_params[bond[0]].num + 1;
+  bl = &(p->bl);
+  realloc_intlist(bl, bl->n + bond_size);
+  for(i = 0; i < bond_size; i++)
+    bl->e[bl->n++] = bond[i];
+  return TCL_OK;
 }
