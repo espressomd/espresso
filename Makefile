@@ -65,6 +65,10 @@ $(PLATFORM)/.depend:
 
 include $(PLATFORM)/.depend
 
+########## tests
+test: $(PLATFORM)/Espresso
+	cd testsuite; ./test.sh
+
 ########## implicit rules
 vpath %.o  $(PLATFORM)
 
