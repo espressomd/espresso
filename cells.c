@@ -18,6 +18,7 @@
 #include "integrate.h"
 #include "communication.h"
 #include "utils.h"
+#include "verlet.h"
 
 /************************************************
  * defines
@@ -38,7 +39,7 @@ int n_cells;
 Cell *cells;
 int max_num_cells = 512;
 
-int cells_init_flag = -1;
+int cells_init_flag = CELLS_FLAG_START;
 
 /** number of linked cells in nodes spatial domain. */
 int n_inner_cells;
@@ -77,6 +78,11 @@ void init_cell_neighbors(int i);
  */
 int  is_inner_cell(int i, int gcg[3]);
 
+/** return cell grid index for a position.
+    \param pos Position of e.g. a particle.
+    \return linear cell grid index. */
+int pos_to_cell_grid_ind(double pos[3]);
+
 /*@}*/
 /************************************************************/
 
@@ -85,8 +91,8 @@ void cells_pre_init()
   int i;
   CELL_TRACE(fprintf(stderr,"%d: cells_pre_init():\n",this_node));
 
-  if(cells_init_flag != -2) {
-    fprintf(stderr,"%d: cells_pre_init() is thought to be called only at program start!\n");
+  if(cells_init_flag != CELLS_FLAG_START) {
+    fprintf(stderr,"%d: cells_pre_init() is thought to be called only at program start or from within cells_exit()!\n",this_node);
     errexit();
   }
 
@@ -99,90 +105,88 @@ void cells_pre_init()
 
   /* allocate space */
   cells = (Cell *)malloc(n_cells*sizeof(Cell));
-  realloc_particles(cells.pList,1);
+  realloc_particles(&(cells[0].pList),1);
+  cells[0].nList=NULL;
+  cells[0].n_neighbors=0;
 
   /* cell structure pre initialized. */
-  cells_init_flag = -1;
+  cells_init_flag = CELLS_FLAG_PRE_INIT;
 }
 
-void cells_init() 
-{
-  int i;
-  int node_pos[3];
-  CELL_TRACE(fprintf(stderr,"%d: cells_init \n",this_node));
+/************************************************************/
 
-  /* set up dimensions of the cell grid */
-  calc_cell_grid();
- 
-  /* this could also go to grid.c ! */
-  map_node_array(this_node,node_pos);    
-  for(i=0;i<3;i++) {
-    my_left[i]   = node_pos[i]    *local_box_l[i];
-    my_right[i]  = (node_pos[i]+1)*local_box_l[i];    
+void cells_re_init() 
+{
+  int i,j,ind;
+  Cell *old_cells;
+  int old_n_cells, old_ghost_cell_grid[3];
+
+  CELL_TRACE(fprintf(stderr,"%d: cells_re_init \n",this_node));
+  if(cells_init_flag != CELLS_FLAG_PRE_INIT) {
+    fprintf(stderr,"%d: Cannot call cells_re_init without cells_pre_init()! \n",this_node);
+    errexit();
   }
 
-  /* there should be a reasonable number of cells only!
+  /* 1: store old cell grid */
+  old_cells = cells;
+  old_n_cells = n_cells;
+  for(i=0;i<3;i++) old_ghost_cell_grid[i] = ghost_cell_grid[i];
+ 
+  /* 2: setup new cell grid */
+  calc_cell_grid();  /* 2a: set up dimensions of the cell grid */
+ 
+  /* 2b: there should be a reasonable number of cells only!
      But we will deal with that later... */
   if(this_node==0) {
     if(n_inner_cells > ((max_seen_particle + 1)/n_nodes)+1) 
       fprintf(stderr,"0: cells_init: WARNING: More cells per node %d than particles per node %d\n",n_inner_cells,((max_seen_particle + 1)/n_nodes)+1);
   }
 
-  /* allocate space for cell structure */
-  cells       = (Cell *)malloc(n_cells*sizeof(Cell));
-  for(i=0;i<n_cells;i++) {
-    cells[i].n_particles=0;
-    cells[i].max_particles = PART_INCREMENT;
-    cells[i].particles = malloc(cells[i].max_particles*sizeof(int));
-    init_cell_neighbors(i);
-  }
+  /* 2c: allocate cell structure */
+  cells  = (Cell *)malloc(n_cells*sizeof(Cell));
+  /* 2d: allocate particle arrays */
+  for(i=0;i<n_cells;i++) realloc_particles(&(cells[i].pList), 1);
+  /* 2e: init cell neighbors */
+  for(i=0;i<n_cells;i++) init_cell_neighbors(i);
+ 
   CELL_TRACE(if(this_node==0) { fprintf(stderr,"0: cell_grid: (%d, %d, %d)\n",cell_grid[0],cell_grid[1],cell_grid[2]); });
 
+  /* 3: Transfer Particle data from old to new cell grid */
+  for(i=0;i<old_n_cells;i++) {
+    if(old_n_cells == 1 || is_inner_cell(i,old_ghost_cell_grid)) {
+      for(j=0; j<old_cells[i].pList.n; j++) {
+	ind = pos_to_cell_grid_ind(old_cells[i].pList.part[j].r.p);
+	append_particle(&(cells[ind].pList),old_cells[i].pList.part[j]);
+      }
+      if(old_cells[i].pList.max>0) free(old_cells[i].pList.part);
+      if(old_cells[i].n_neighbors>0) {
+	for(j=0; j<old_cells[i].n_neighbors; j++) free(old_cells[i].nList[j].vList.pair);
+	free(old_cells[i].nList);
+      }
+    }
+  }
+  free(old_cells);
+  rebuild_verletlist = 1;
 }
-
 
 /*************************************************/
 
 void sort_particles_into_cells()
 {
   
-  int i,n;
-  int cpos[3];
-  int ind;
+  int c, n, ind;
 
   CELL_TRACE(fprintf(stderr,"%d: sort_particles_into_cells:\n",this_node));
  
-  /* remove cell particles */
-  for(i=0;i<n_cells;i++) cells[i].n_particles=0;
-  CELL_TRACE(fprintf(stderr,"%d: sort %d paricles \n",this_node,n_particles));
-  /* particle loop */
-  for(n=0;n<n_particles;n++) {
-    /* calculate cell index */
-    for(i=0;i<3;i++) {
-      cpos[i] = (int)((particles[n].p[i]-my_left[i])*inv_cell_size[i])+1;
-#ifdef PARTIAL_PERIODIC
-      if (cpos[i] < 1)
-	cpos[i] = 1;
-      else if (cpos[i] > cell_grid[i])
-	cpos[i] = cell_grid[i];
-#endif
+  /* cell loop */
+  for(c=0; c<n_cells; c++) {
+    if(is_inner_cell(c,ghost_cell_grid)) {
+      /* particle loop */
+      for(n=0; n<cells[c].pList.n ; n++) {
+	ind = pos_to_cell_grid_ind(cells[c].pList.part[n].r.p);
+	if(ind != c) move_particle(&(cells[ind].pList), &(cells[c].pList), n);
+      }
     }
-    ind = get_linear_index(cpos[0],cpos[1],cpos[2], ghost_cell_grid);
-#ifdef ADDITIONAL_CHECKS
-    if(ind<0 || ind > n_cells) {
-      fprintf(stderr,"%d: illegal cell index %d %d %d, ghost_grid %d %d %d\n", this_node,
-	      cpos[0], cpos[1], cpos[2],
-	      ghost_cell_grid[0], ghost_cell_grid[1], ghost_cell_grid[2]);
-      errexit();
-    }
-#endif
-    /* Append particle in particle list of that cell */
-    if(cells[ind].n_particles >= cells[ind].max_particles-1) {
-      realloc_cell_particles(ind,cells[ind].n_particles + 1);
-    }
-    cells[ind].particles[cells[ind].n_particles] = n;
-    CELL_TRACE(fprintf(stderr,"%d: Part %d at (%.2f, %.2f, %.2f) sorted in cell %d as No. %d\n",this_node,n,particles[n].p[0],particles[n].p[1],particles[n].p[2],ind,cells[ind].n_particles));
-    cells[ind].n_particles++;
   }
 }
 
@@ -190,36 +194,29 @@ void sort_particles_into_cells()
 
 void cells_exit() 
 {
-  int i;
-  CELL_TRACE(if(this_node<2) fprintf(stderr,"%d: cells_exit:\n",this_node));
-  for(i=0;i<n_cells;i++) {
-    if(cells[i].n_neighbors>0)  free(cells[i].neighbors);
-    if(cells[i].max_particles>0) free(cells[i].particles);
+  int i,j;
+  CELL_TRACE(fprintf(stderr,"%d: cells_exit:\n",this_node));
+
+  if(cells_init_flag != CELLS_FLAG_PRE_INIT && cells_init_flag != CELLS_FLAG_RE_INIT) {
+    fprintf(stderr,"%d: cells_exit: Nothing to be done.\n",this_node);
+    return;
   }
+  
+  /* free memory */
+  for(i=0; i<n_cells; i++) {
+    if(cells[i].n_neighbors > 0) {
+      for(j=0; j<cells[i].n_neighbors; j++) free(cells[i].nList[j].vList.pair);
+      free(cells[i].nList);
+    }
+    if(cells[i].pList.max > 0) free(cells[i].pList.part);
+   }
   free(cells);
+
+  cells_init_flag = CELLS_FLAG_START;
+  cells_pre_init(); 
+
 }
 
-/*************************************************/
-
-void realloc_cell_particles(int index, int size)
-{
-  int incr;
-
-  if( size > cells[index].max_particles) {
-    incr = (size-cells[index].max_particles)/PART_INCREMENT + 1;
-    cells[index].max_particles += incr*PART_INCREMENT;
-  }
-  else if( size < (cells[index].max_particles-PART_INCREMENT) ) {
-    incr =(size-cells[index].max_particles)/PART_INCREMENT;
-    cells[index].max_particles += incr*PART_INCREMENT;
-  }
-  else incr=0;
-
-  if(incr != 0) {
-    cells[index].particles = (int *)
-      realloc(cells[index].particles, sizeof(int)*cells[index].max_particles);
-  }
-}
 
 /*************************************************/
 
@@ -317,7 +314,7 @@ void init_cell_neighbors(int i)
   int p1[3],p2[3];
 
   if(is_inner_cell(i,ghost_cell_grid)) { 
-    cells[i].neighbors = malloc(MAX_NEIGHBORS*sizeof(int));    
+    cells[i].nList = malloc(MAX_NEIGHBORS*sizeof(IA_Neighbor));    
     get_grid_pos(i,&p1[0],&p1[1],&p1[2], ghost_cell_grid);
     /* loop through all neighbors */
     for(m = extended[0] ? 0 : -1;
@@ -330,16 +327,18 @@ void init_cell_neighbors(int i)
 	  j = get_linear_index(p2[0],p2[1],p2[2], ghost_cell_grid);
 	  /* take the upper half of all neighbors 
 	     and add them to the neighbor list */
-	  if(j > i) {
-	    cells[i].neighbors[cnt] = j;
+	  if(j >= i) {
+	    cells[i].nList[j].cell_ind = j;
+	    cells[i].nList[j].pList = &(cells[j].pList);
+	    realloc_pairList(&(cells[i].nList[j].vList), 1);
 	    cnt++;
 	  }
 	}
     cells[i].n_neighbors = cnt;
   }
-  else {
+  else { 
     cells[i].n_neighbors = 0;
-    cells[i].neighbors = NULL;
+    cells[i].nList = NULL;
   }   
 }
 
@@ -356,3 +355,27 @@ int  is_inner_cell(int i, int gcg[3])
 
 /*************************************************/
 
+int pos_to_cell_grid_ind(double pos[3])
+{
+  int i,cpos[3];
+  
+  for(i=0;i<3;i++) {
+    cpos[i] = (int)((pos[i]-my_left[i])*inv_cell_size[i])+1;
+
+#ifdef PARTIAL_PERIODIC
+    if (cpos[i] < 1)
+      cpos[i] = 1;
+    else if (cpos[i] > cell_grid[i])
+      cpos[i] = cell_grid[i];
+#endif
+
+#ifdef ADDITIONAL_CHECKS
+    if(cpos[i] < 1 || cpos[i] >  cell_grid[i]) {
+      fprintf(stderr,"%d: illegal cell position cpos[%d]=%d, ghost_grid[%d]=%d for pos[%d]=%f\n",this_node,i,cpos[i],i,ghost_cell_grid[i],i,pos[i]);
+      errexit();
+    }
+#endif
+
+  }
+  return get_linear_index(cpos[0],cpos[1],cpos[2], ghost_cell_grid);  
+}

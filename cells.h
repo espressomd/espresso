@@ -38,7 +38,16 @@
  */
 
 #include <tcl.h>
+#include "particle_data.h"
 #include "verlet.h"
+
+/************************************************
+ * defines
+ ************************************************/    
+
+#define CELLS_FLAG_START   -1
+#define CELLS_FLAG_PRE_INIT 0
+#define CELLS_FLAG_RE_INIT  1
 
 /************************************************
  * data types
@@ -47,6 +56,8 @@
 /** Structure containing information about non bonded interactions
     with particles in a neighbor cell. */
 typedef struct {
+  /** Just for transparency the index of the neighbor cell. */
+  int cell_ind;
   /** Pointer to particle list of neighbor cell. */
   ParticleList *pList;
   /** Verlet list for non bonded interactions of a cell with a neighbor cell. */
@@ -107,10 +118,10 @@ extern Cell *cells;
 extern int max_num_cells;
 
 /** cell initialization status. 
-    initialized:      cells_init_flag = -2.
-    cells_pre_init(): cells_init_flag = -1.
-    cells_init():     cells_init_flag = 1.
-    cells_exit():     cells_init_flag = 0.
+    initialized:      cells_init_flag = CELLS_FLAG_START.
+    cells_pre_init(): cells_init_flag = CELLS_FLAG_PRE_INIT
+    cells_init():     cells_init_flag = CELLS_FLAG_RE_INIT
+    cells_exit():     ruft am ende cells_pre_init() auf.
  */
 extern int cells_init_flag;
 
@@ -134,7 +145,7 @@ Recalculates the cell sizes.
 */
 void cells_changed_topology();
 
-/** initialize link cell structures. 
+/** re initialize link cell structures. 
  *
  *  cells_init calculates the cell grid dimension (cell_grid[3],
  *  ghost_cell_grid[3]) and allocates the space for the cell
@@ -148,7 +159,7 @@ void cells_changed_topology();
  *  (cells[i].particles) with size PART_INCREMENT and initializes the
  *  neighbor list for the cells (init_cell_neighbors()).  
  */
-void cells_init();
+void cells_re_init();
 
 /** sort all particles into inner cells (no ghosts!). 
  *
@@ -170,13 +181,6 @@ void sort_particles_into_cells();
 /** exit link cell structures.  
     free space for linked cell structure.  */
 void cells_exit();
-
-/** realloc cell particle array.
-    Step size for increase and decrease is PART_INCREMENT.
-    @param index    linear cell index.
-    @param size     desired size of the  particle array.
- */
-void realloc_cell_particles(int index, int size);
 
 /** Callback for setmd maxnumcells (maxnumcells >= 27). 
     see also \ref max_num_cells */
