@@ -405,6 +405,11 @@ void integrate_vv(int n_steps)
     }
 #endif
 
+#ifdef NPT
+    if (check_runtime_errors())
+      break;
+#endif
+
     cells_update_ghosts();
 
     /* Integration Step: Step 3 of Velocity Verlet scheme:
