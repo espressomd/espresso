@@ -60,6 +60,14 @@ void errexit();
  * functions: lists
  ************************************************/
 
+
+MDINLINE void init_intList(IntList *il)
+{
+  il->n   = 0;
+  il->max = 0;
+  il->e   = NULL;
+}
+
 MDINLINE void alloc_intlist(IntList *il, int size)
 {
   il->e = (int *) malloc(sizeof(int)*il->max);
@@ -79,6 +87,13 @@ MDINLINE void realloc_intlist(IntList *il, int size)
       il->e = (int *) realloc(il->e, sizeof(int)*il->max);
     }
   }
+}
+
+MDINLINE void init_doubleList(DoubleList *il)
+{
+  il->n   = 0;
+  il->max = 0;
+  il->e   = NULL;
 }
 
 MDINLINE void alloc_doublelist(DoubleList *dl, int size)

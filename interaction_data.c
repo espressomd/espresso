@@ -152,6 +152,7 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, "unknown bonded interaction type",(char *) NULL);
     return (TCL_ERROR);
   }
+  return (TCL_ERROR);
 }
 
 int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)

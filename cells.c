@@ -94,19 +94,27 @@ void cells_pre_init()
 
   /* set cell grid variables to a (1,1,1) grid */
   for(i=0;i<3;i++) {
-    cell_grid[i] = ghost_cell_grid[i] = 1;
+    cell_grid[i] = 1;
+    ghost_cell_grid[i] = 3;
   }
-  n_cells = 1;
+  n_cells = 27;
   n_inner_cells = 1;
 
   /* allocate space */
   cells = (Cell *)malloc(n_cells*sizeof(Cell));
-  realloc_particles(&(cells[0].pList),1);
-  cells[0].nList=NULL;
-  cells[0].n_neighbors=0;
+  for(i=0; i<n_cells; i++) init_cell(&cells[i]);
 
   /* cell structure pre initialized. */
   cells_init_flag = CELLS_FLAG_PRE_INIT;
+}
+
+/************************************************************/
+
+void init_cell(Cell *cell)
+{
+  cell->n_neighbors = 0;
+  cell->nList       = NULL;
+  init_particleList(&(cell->pList));
 }
 
 /************************************************************/
@@ -138,12 +146,12 @@ void cells_re_init()
       fprintf(stderr,"0: cells_init: WARNING: More cells per node %d than particles per node %d\n",n_inner_cells,((max_seen_particle + 1)/n_nodes)+1);
   }
 
-  /* 2c: allocate cell structure */
+  /* 2c: allocate new cell structure */
   cells  = (Cell *)malloc(n_cells*sizeof(Cell));
   /* 2d: allocate particle arrays */
-  for(i=0;i<n_cells;i++) realloc_particles(&(cells[i].pList), 0);
+  for(i=0; i<n_cells; i++) init_cell(&cells[i]);
   /* 2e: init cell neighbors */
-  for(i=0;i<n_cells;i++) init_cell_neighbors(i);
+  for(i=0; i<n_cells; i++) init_cell_neighbors(i);
  
   CELL_TRACE(if(this_node==0) { fprintf(stderr,"0: cell_grid: (%d, %d, %d)\n",cell_grid[0],cell_grid[1],cell_grid[2]); });
 
@@ -163,6 +171,10 @@ void cells_re_init()
   }
   free(old_cells);
   rebuild_verletlist = 1;
+
+  /* cell structure initialized. */
+  cells_init_flag = CELLS_FLAG_RE_INIT;
+
 }
 
 /*************************************************/
@@ -252,6 +264,14 @@ Particle *cells_alloc_particle(int id, double pos[3])
 /*************************************************/
 void cells_changed_topology()
 {
+  int i;
+  if(cells_init_flag == CELLS_FLAG_PRE_INIT) { 
+    for(i=0;i<3;i++) {
+      cell_size[i] =  local_box_l[i];
+      inv_cell_size[i] = 1.0 / cell_size[i];
+    }
+  }
+  else calc_cell_grid();
 }
 
 /*************************************************/
@@ -360,7 +380,7 @@ void init_cell_neighbors(int i)
   int p1[3],p2[3];
 
   if(is_inner_cell(i,ghost_cell_grid)) { 
-    cells[i].nList = malloc(MAX_NEIGHBORS*sizeof(IA_Neighbor));    
+    cells[i].nList = (IA_Neighbor *) realloc(cells[i].nList,MAX_NEIGHBORS*sizeof(IA_Neighbor));    
     get_grid_pos(i,&p1[0],&p1[1],&p1[2], ghost_cell_grid);
     /* loop through all neighbors */
     for(m = extended[0] ? 0 : -1;
@@ -374,10 +394,9 @@ void init_cell_neighbors(int i)
 	  /* take the upper half of all neighbors 
 	     and add them to the neighbor list */
 	  if(j >= i) {
-	    cells[i].nList[j].cell_ind = j;
-	    cells[i].nList[j].pList = &(cells[j].pList);
-	    cells[i].nList[j].vList.n = 0;
-	    cells[i].nList[j].vList.pair = NULL;
+	    cells[i].nList[cnt].cell_ind = j;
+	    cells[i].nList[cnt].pList = &(cells[j].pList);
+	    init_pairList(&(cells[i].nList[cnt].vList));
 	    cnt++;
 	  }
 	}
@@ -385,7 +404,6 @@ void init_cell_neighbors(int i)
   }
   else { 
     cells[i].n_neighbors = 0;
-    cells[i].nList = NULL;
   }   
 }
 

@@ -41,6 +41,10 @@ extern int rebuild_verletlist;
 /************************************************************/
 /*@{*/
 
+/** initialize a Pair List.
+ *  Use with care and ONLY for initialization! */
+void init_pairList(PairList *list);
+
 /** fill verlet tables. */
 void build_verlet_lists();
 

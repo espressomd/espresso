@@ -193,15 +193,11 @@ void integrate_vv(int n_steps)
       propagate_vel_pos();
       if(rebuild_verletlist == 1) {
 	INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
-	INTEG_TRACE(fprintf(stderr,"%d: BEFOR: n_particles=%d, n_ghosts=%d, max_particles=%d\n",
-			    this_node,n_particles,n_ghosts,max_particles));
 	invalidate_ghosts();
 	exchange_part();
 	sort_particles_into_cells(); 
 	exchange_ghost();
 	build_verlet_lists();
-	INTEG_TRACE(fprintf(stderr,"%d: AFTER: n_particles=%d, n_ghosts=%d, max_particles=%d\n",
-			    this_node,n_particles,n_ghosts,max_particles));
       }
       else {
 	update_ghost_pos();

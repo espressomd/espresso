@@ -139,10 +139,12 @@ cell on each node to be able to store the particle data there.
 */
 void cells_pre_init();
 
-/** Notify cell code of topology change. 
+/** initialize a cell structure.
+ *  Use with care and ONLY for initialization! */
+void init_cell(Cell *cell);
 
-Recalculates the cell sizes.
-*/
+/** Notify cell code of topology change. 
+  * Recalculates the cell sizes. */
 void cells_changed_topology();
 
 /** re initialize link cell structures. 

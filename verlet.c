@@ -54,6 +54,14 @@ void resize_verlet_list(PairList *pl);
 
 /*******************  exported functions  *******************/
 
+void init_pairList(PairList *list)
+{
+  list->n       = 0;
+  list->max     = 0;
+  list->pair = NULL;
+}
+
+
 void build_verlet_lists()
 {
   Cell *cell;

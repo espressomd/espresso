@@ -54,7 +54,7 @@ void map_particle_node(int part, int node)
     if (part >= max_particle_node) {
       /* round up part + 1 in granularity PART_INCREMENT */
       max_particle_node = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
-      particle_node = realloc(particle_node, sizeof(int)*max_particle_node);
+      particle_node = (int *)realloc(particle_node, sizeof(int)*max_particle_node);
     }
     for (i = old_max + 1; i < max_seen_particle; i++)
       particle_node[i] = -1;
@@ -76,6 +76,13 @@ void build_particle_node()
   mpi_who_has();
 }
 
+void init_particleList(ParticleList *pList)
+{
+  pList->n    = 0;
+  pList->max  = 0;
+  pList->part = NULL;
+}
+
 void realloc_particles(ParticleList *l, int size)
 {
   int old_max = l->max, i;
@@ -91,6 +98,30 @@ void realloc_particles(ParticleList *l, int size)
     l->part = (Particle *) realloc(l->part, sizeof(Particle)*l->max);
   for (i = old_max; i < l->max; i++)
     l->part[i].r.identity = -1;
+}
+
+void init_redParticleList(RedParticleList *pList)
+{
+  pList->n    = 0;
+  pList->max  = 0;
+  pList->part = NULL;
+}
+
+void realloc_redParticles(RedParticleList *pList, int size)
+{
+  int old_max = pList->max, i;
+  if (size < pList->max) {
+    /* shrink not as fast, just lose half, rounded up */
+    pList->max = PART_INCREMENT*(((pList->n + size)/2 +
+			      PART_INCREMENT - 1)/PART_INCREMENT);
+  }
+  else
+    /* round up */
+    pList->max = PART_INCREMENT*((size + PART_INCREMENT - 1)/PART_INCREMENT);
+  if (pList->max != old_max)
+    pList->part = (ReducedParticle *) realloc(pList->part, sizeof(ReducedParticle)*pList->max);
+  for (i = old_max; i < pList->max; i++)
+    pList->part[i].identity = -1;
 }
 
 int try_delete_bond(Particle *part, int *bond)

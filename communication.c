@@ -251,7 +251,7 @@ void mpi_who_has()
     else if (sizes[pnode] > 0) {
       if (pdata_s < sizes[pnode]) {
 	pdata_s = sizes[pnode];
-	pdata = realloc(pdata, sizeof(int)*pdata_s);
+	pdata = (int *)realloc(pdata, sizeof(int)*pdata_s);
       }
       MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, REQ_WHO_HAS,
 	       MPI_COMM_WORLD, &status);
@@ -449,6 +449,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete)
     MPI_Recv(&stat, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD, &status);
     return stat;
   }
+  return 0;
 }
 
 void mpi_send_bond_slave(int part)

@@ -94,7 +94,7 @@ extern int  max_particle_node;
 /** Used only on master node: particle->node mapping. */
 extern int  *particle_node;
 /** id->particle mapping on all nodes. */
-Particle   **local_particles;
+extern Particle   **local_particles;
 
 /************************************************
  * functions
@@ -103,6 +103,10 @@ Particle   **local_particles;
 /** implementation of the tcl command part */
 int part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
+
+/** initialize a particle list.
+ *  Use with care and ONLY for initialization! */
+void init_particleList(ParticleList *pList);
 
 /** allocate storage for local particles and ghosts.
     \param plist the list on which to operate
@@ -136,6 +140,18 @@ void move_particle(ParticleList *destList, ParticleList *sourceList, int ind);
     \param plist the list on which to operate
     \return the new field index */
 Particle *alloc_particle(ParticleList *plist);
+
+/** initialize a reduced particle list (ghosts).
+ *  Use with care and ONLY for initialization! */
+void init_redParticleList(RedParticleList *pList);
+
+/** allocate storage for reduced particles (ghosts).
+    \param plist the list on which to operate
+    \param size the size to provide at least. It is rounded
+    up to multiples of \ref PART_INCREMENT. */
+void realloc_redParticles(RedParticleList *plist, int size);
+
+
 
 /** remove bond from particle if possible */
 int try_delete_bond(Particle *part, int *bond);
