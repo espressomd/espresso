@@ -51,7 +51,7 @@ int mindist3(int part_id, double r_catch, int *ids) {
 
   partCfgMD = malloc(n_total_particles*sizeof(Particle));
   mpi_get_particles(partCfgMD, NULL);
-  me = -1;        /* Since 'mpi_get_particles' returns the particles unsorted, it's most likely that 'partCfgMD[i].r.identity != i' --> prevent that! */
+  me = -1;        /* Since 'mpi_get_particles' returns the particles unsorted, it's most likely that 'partCfgMD[i].p.identity != i' --> prevent that! */
   for(i=0; i<n_total_particles; i++) if (partCfgMD[i].p.identity == part_id) me = i; 
   if (me == -1) { 
     fprintf(stderr, "Failed to find desired particle %d within the %d known particles!\nAborting...\n",part_id,n_total_particles); errexit(); }

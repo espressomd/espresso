@@ -26,7 +26,9 @@ int regular_exit = 1;
 #endif
 static int core_done = 0;
 
-int check_id = 1;
+#ifdef ONEPART_DEBUG
+int check_id =  ONEPART_DEBUG ;
+#endif
 
 int debug_callback(Tcl_Interp *interp)
 {

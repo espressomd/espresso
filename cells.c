@@ -200,6 +200,7 @@ void cells_re_init(int new_cs)
     realloc_particles(&tmp_cells[i],0);
   }
   free(tmp_cells);
+  CELL_TRACE(fprintf(stderr, "%d: old cells deallocated\n",this_node));
 
 #ifdef ADDITIONAL_CHECKS
   check_cells_consistency();

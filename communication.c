@@ -629,9 +629,9 @@ void mpi_send_omega(int pnode, int part, double omega[3])
   if (pnode == this_node) {
    Particle *p = local_particles[part];
 /*  memcpy(p->omega, omega, 3*sizeof(double));*/
-    p->m.omega[0] = m.omega[0];
-    p->m.omega[1] = m.omega[1];
-    p->m.omega[2] = m.omega[2];
+    p->m.omega[0] = omega[0];
+    p->m.omega[1] = omega[1];
+    p->m.omega[2] = omega[2];
   }
   else {
     MPI_Send(omega, 3, MPI_DOUBLE, pnode, REQ_SET_OMEGA, MPI_COMM_WORLD);
@@ -664,9 +664,9 @@ void mpi_send_torque(int pnode, int part, double torque[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->torque[0] = torque[0];
-    p->torque[1] = torque[1];
-    p->torque[2] = torque[2];
+    p->f.torque[0] = torque[0];
+    p->f.torque[1] = torque[1];
+    p->f.torque[2] = torque[2];
   }
   else {
     MPI_Send(torque, 3, MPI_DOUBLE, pnode, REQ_SET_TORQUE, MPI_COMM_WORLD);
@@ -682,7 +682,7 @@ void mpi_send_torque_slave(int pnode, int part)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(p->torque, 3, MPI_DOUBLE, 0, REQ_SET_TORQUE,
+    MPI_Recv(p->f.torque, 3, MPI_DOUBLE, 0, REQ_SET_TORQUE,
 	     MPI_COMM_WORLD, &status);
   }
 

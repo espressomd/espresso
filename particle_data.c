@@ -575,20 +575,20 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     }
     
     else if (ARG0_IS_S("omega")) {
-      Tcl_PrintDouble(interp, part.omega[0], buffer);
+      Tcl_PrintDouble(interp, part.m.omega[0], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.omega[1], buffer);
+      Tcl_PrintDouble(interp, part.m.omega[1], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.omega[2], buffer);
+      Tcl_PrintDouble(interp, part.m.omega[2], buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     
     else if (ARG0_IS_S("torque")) {
-      Tcl_PrintDouble(interp, part.torque[0], buffer);
+      Tcl_PrintDouble(interp, part.f.torque[0], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.torque[1], buffer);
+      Tcl_PrintDouble(interp, part.f.torque[1], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.torque[2], buffer);
+      Tcl_PrintDouble(interp, part.f.torque[2], buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #endif         

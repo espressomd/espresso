@@ -74,7 +74,7 @@ ifeq ($(BLADE),yes)
 endif
 
 # debug compiler flags
-#CFLAGS= -g -fno-inline -Wall $(HOSTFLAGS)
+CFLAGS= -g -fno-inline -Wall $(HOSTFLAGS)
 
 
 ############ name of makedepend (or gcc -ME)

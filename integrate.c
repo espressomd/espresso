@@ -33,6 +33,7 @@
 #include "initialize.h"
 #include "forces.h"
 #include "nsquare.h"
+#include "domain_decomposition.h"
 
 /************************************************
  * DEFINES
@@ -185,9 +186,8 @@ void integrate_vv(int n_steps)
       nsq_balance_particles();
       break;
     case CELL_STRUCTURE_DOMDEC:
-      //exchange_and_sort_part();
-      //exchange_ghost();
-      break;
+      dd_exchange_and_sort_particles();
+     break;
     }
     ghost_communicator(&cell_structure.ghost_cells_comm);
     ghost_communicator(&cell_structure.exchange_ghosts_comm);
@@ -196,7 +196,15 @@ void integrate_vv(int n_steps)
     resort_particles = 0;
   }
   if (recalc_forces) {
-    force_calc();
+    switch (cell_structure.type) {
+    case CELL_STRUCTURE_NSQUARE:
+      force_calc();
+      break;
+    case CELL_STRUCTURE_DOMDEC:
+      //   build_verlet_lists_and_force_calc();
+      break;
+    }
+ 
 #ifdef ROTATION
     convert_initial_torques();
 #endif
@@ -217,9 +225,10 @@ void integrate_vv(int n_steps)
        cell_structure.type == CELL_STRUCTURE_DOMDEC) {
       INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
       n_verlet_updates++;
-      //invalidate_ghosts();
-      //exchange_and_sort_part();
-      //exchange_ghost();
+      invalidate_ghosts();
+      dd_exchange_and_sort_particles();
+      ghost_communicator(&cell_structure.ghost_cells_comm);
+      ghost_communicator(&cell_structure.exchange_ghosts_comm);
       //build_verlet_lists_and_force_calc();
     }
     else {
@@ -316,7 +325,7 @@ void rescale_forces()
       p[i].f.f[1] *= scale;
       p[i].f.f[2] *= scale;
 
-      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
     }
   }
@@ -364,7 +373,7 @@ void rescale_forces_propagate_vel()
       p[i].f.f[1] *= scale;
       p[i].f.f[2] *= scale;
 
-      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
 #ifdef EXTERNAL_FORCES
       if(p[i].l.ext_flag != PARTICLE_FIXED) 
@@ -375,7 +384,7 @@ void rescale_forces_propagate_vel()
 	  p[i].m.v[2] += p[i].f.f[2];
 	}
 
-      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
       
     }
   }
@@ -464,14 +473,14 @@ void propagate_vel_pos()
 	  p[i].m.v[2] += p[i].f.f[2];
 	
 
-	  ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 	  
 	  p[i].r.p[0] += p[i].m.v[0];
 	  p[i].r.p[1] += p[i].m.v[1];
 	  p[i].r.p[2] += p[i].m.v[2];
 	}
 
-      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
 
 
 #ifdef ADDITIONAL_CHECKS

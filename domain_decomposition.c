@@ -124,12 +124,12 @@ void dd_create_cell_grid()
   }
   /* quit program if unsuccesful */
   if(n_local_cells > max_num_cells) {
-      fprintf(stderr, "%d: dd_create_cell_grid: grid (%d,%d,%d), n_local_cells=%d\n",
-	      this_node,dd.cell_grid[0],dd.cell_grid[1],dd.cell_grid[2],n_local_cells);
-      fprintf(stderr, "    Error: no suitable cell grid found (max_num_cells = %d)\n",
-	      max_num_cells);
-      fflush(stderr);
-      errexit();
+    fprintf(stderr, "%d: dd_create_cell_grid: grid (%d,%d,%d), n_local_cells=%d\n",
+	    this_node,dd.cell_grid[0],dd.cell_grid[1],dd.cell_grid[2],n_local_cells);
+    fprintf(stderr, "    Error: no suitable cell grid found (max_num_cells = %d)\n",
+	    max_num_cells);
+    fflush(stderr);
+    errexit();
   } 
   /* now set all dependent variables */
   new_cells=1;
@@ -325,7 +325,7 @@ initializes the interacting neighbor cell list of a cell
 void dd_init_cell_interactions()
 {
   int m,n,o,p,q,r,ind1,ind2,c_cnt=0,n_cnt;
-  fprintf(stderr,"%d: dd_init_cell_interactions: for %d cells\n",this_node,local_cells.n);
+  //fprintf(stderr,"%d: dd_init_cell_interactions: for %d cells\n",this_node,local_cells.n);
   dd.cell_inter = (IA_Neighbor_List *) realloc(dd.cell_inter,local_cells.n*sizeof(IA_Neighbor_List));
   for(m=0; m<local_cells.n; m++) { dd.cell_inter[m].nList = NULL; dd.cell_inter[m].n_neighbors=0; }
   DD_LOCAL_CELLS_LOOP(m,n,o) {
@@ -348,7 +348,7 @@ void dd_init_cell_interactions()
 	}
     c_cnt++;
   }
-  fprintf(stderr,"%d: dd_init_cell_interactions : done\n",this_node);
+  //fprintf(stderr,"%d: dd_init_cell_interactions : done\n",this_node);
 }
 
 
@@ -446,7 +446,7 @@ void dd_topology_init(CellPList *old)
   dd_init_cell_interactions();
 
   /* copy particles */
-  fprintf(stderr,"%d: copy particles from %d cells!\n",this_node,old->n);
+  //fprintf(stderr,"%d: copy particles from %d cells!\n",this_node,old->n);
   for (c = 0; c < old->n; c++) {
     part = old->cell[c]->part;
     np   = old->cell[c]->n;
@@ -454,11 +454,11 @@ void dd_topology_init(CellPList *old)
       append_unindexed_particle(cell_structure.position_to_cell(part[p].r.p), &part[p]);
     }
   }
-  fprintf(stderr,"%d: update local particles\n",this_node);
+  //fprintf(stderr,"%d: update local particles\n",this_node);
   for(c=0; c<local_cells.n; c++) {
     update_local_particles(local_cells.cell[c]);
   }
-   fprintf(stderr,"%d: dd_topology_init: done\n",this_node);
+  //fprintf(stderr,"%d: dd_topology_init: done\n",this_node);
 }
 
 /************************************************************/
