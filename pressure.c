@@ -26,6 +26,8 @@
 #include "gb.h"
 #include "fene.h"
 #include "harmonic.h"
+#include "subt_lj_harm.h"
+#include "subt_lj_fene.h"
 #include "angle.h"
 #include "debye_hueckel.h"
 #include "forces.h"
@@ -58,7 +60,8 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
     if     (ARG0_IS_S("totals")) virials.ana_num=0;
     else if(ARG0_IS_S("ideal")) virials.ana_num=1;
     else if(ARG0_IS_S("bonded") || ARG0_IS_S("fene") ||
-	    ARG0_IS_S("harmonic")) {
+	    ARG0_IS_S("harmonic") || ARG0_IS_S("subt_lj_harm") ||
+	    ARG0_IS_S("subt_lj_fene")) {
       if(argc<2) { virials.ana_num=0; }
       else {
 	if(!ARG1_IS_I(i)) return (TCL_ERROR);
@@ -99,7 +102,7 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
 
   calc_pressure();
 
-  buf = malloc(6*sizeof(double)); buf[0]=buf[1]=buf[2]=buf[3]=buf[4]=buf[5] = 0.0;
+  buf = malloc(10*sizeof(double)); buf[0]=buf[1]=buf[2]=buf[3]=buf[4]=buf[5]=buf[6]=buf[7]=buf[8]=buf[9] = 0.0;
   if(argc > 0) {
     if(ARG0_IS_S("total")) {
       Tcl_PrintDouble(interp, virials.sum.e[virials.ana_num], buffer); 
@@ -127,6 +130,14 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
       for(i=0;i<n_bonded_ia;i++)
 	if(bonded_ia_params[i].type == BONDED_IA_HARMONIC) { buf[4] += virials.sum.e[virials.n_pre+i]; buf[5] += virials.node.e[virials.n_pre+i]; }
       sprintf(buffer,"%f %f",buf[4],buf[5]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+    else if(ARG0_IS_S("subt_lj_harm")) {
+      for(i=0;i<n_bonded_ia;i++)
+	if(bonded_ia_params[i].type == BONDED_IA_SUBT_LJ_HARM) { buf[6] += virials.sum.e[virials.n_pre+i]; buf[7] += virials.node.e[virials.n_pre+i]; }
+      sprintf(buffer,"%f %f",buf[6],buf[7]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+    else if(ARG0_IS_S("subt_lj_fene")) {
+      for(i=0;i<n_bonded_ia;i++)
+	if(bonded_ia_params[i].type == BONDED_IA_SUBT_LJ_FENE) { buf[8] += virials.sum.e[virials.n_pre+i]; buf[9] += virials.node.e[virials.n_pre+i]; }
+      sprintf(buffer,"%f %f",buf[8],buf[9]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
     else if(ARG0_IS_S("nonbonded") || ARG0_IS_S("lj")) {
       p = virials.n_pre+virials.n_bonded;
       if(argc == 2) Tcl_GetInt(interp, argv[1], &k); else k=-1;
@@ -139,10 +150,10 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
       sprintf(buffer,"%f %f",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
     else { Tcl_AppendResult(interp, "unknown feature of analyze pressure",(char *)NULL); return (TCL_ERROR); } }
   else {
-    int buf0, buf2, buf4;
+    int buf0, buf2, buf4, buf6, buf8;
     sprintf(buffer,"%f %f { ideal %f } { ",virials.sum.e[0],virials.node.e[0],virials.sum.e[1]); 
     Tcl_AppendResult(interp, buffer, (char *)NULL);
-    buf0 = buf2 = buf4 = 0;
+    buf0 = buf2 = buf4 = buf6 = buf8 =0;
     for(i=0;i<n_bonded_ia;i++) {
       switch (bonded_ia_params[i].type) {
       case BONDED_IA_FENE:
@@ -151,11 +162,17 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
 	buf[2] += virials.sum.e[virials.n_pre+i]; buf[3] += virials.node.e[virials.n_pre+i]; buf2 = 1; break;
       case BONDED_IA_HARMONIC:
 	buf[4] += virials.sum.e[virials.n_pre+i]; buf[5] += virials.node.e[virials.n_pre+i]; buf4 = 1; break;
+      case BONDED_IA_SUBT_LJ_HARM:
+	buf[6] += virials.sum.e[virials.n_pre+i]; buf[7] += virials.node.e[virials.n_pre+i]; buf6 = 1; break;
+      case BONDED_IA_SUBT_LJ_FENE:
+	buf[8] += virials.sum.e[virials.n_pre+i]; buf[9] += virials.node.e[virials.n_pre+i]; buf8 = 1; break;
       default: break; }
     }
     if(buf0 != 0) { sprintf(buffer,"{ FENE %f %f } ",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
     if(buf2 != 0) { sprintf(buffer,"{ angle %f %f } ",buf[2],buf[3]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
     if(buf4 != 0) { sprintf(buffer,"{ harmonic %f %f } ",buf[4],buf[5]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+    if(buf6 != 0) { sprintf(buffer,"{ subt_lj_harm %f %f } ",buf[6],buf[7]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+    if(buf8 != 0) { sprintf(buffer,"{ subt_lj_fene %f %f } ",buf[8],buf[9]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
     buf[0] = buf[1] = 0.0; buf0 = 0; Tcl_AppendResult(interp, "}  { ", (char *)NULL);
     p = virials.n_pre+virials.n_bonded;
     for (i = 0; i < n_particle_types; i++) {
@@ -257,6 +274,16 @@ void calc_virials() {
 	    i+=2; break;
 	  case BONDED_IA_HARMONIC:
 	    add_harmonic_pair_force(p1,p2,type_num);
+	    for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
+	    virials.node.e[type_num + virials.n_pre] += d[0]*f1[0] + d[1]*f1[1] + d[2]*f1[2];
+	    i+=2; break;
+	  case BONDED_IA_SUBT_LJ_HARM:
+	    add_subt_lj_harm_pair_force(p1,p2,type_num);
+	    for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
+	    virials.node.e[type_num + virials.n_pre] += d[0]*f1[0] + d[1]*f1[1] + d[2]*f1[2];
+	    i+=2; break;
+	  case BONDED_IA_SUBT_LJ_FENE:
+	    add_subt_lj_fene_pair_force(p1,p2,type_num);
 	    for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
 	    virials.node.e[type_num + virials.n_pre] += d[0]*f1[0] + d[1]*f1[1] + d[2]*f1[2];
 	    i+=2; break;
@@ -566,6 +593,16 @@ int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
       for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.node.e[p+i*9+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
       Tcl_AppendResult(interp, "} ", (char *)NULL);
       break;
+    case BONDED_IA_SUBT_LJ_HARM:
+      Tcl_AppendResult(interp, "{ SUBT_LJ_HARM ", (char *)NULL);
+      for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.node.e[p+i*9+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+      Tcl_AppendResult(interp, "} ", (char *)NULL);
+      break;
+    case BONDED_IA_SUBT_LJ_FENE:
+      Tcl_AppendResult(interp, "{ SUBT_LJ_FENE ", (char *)NULL);
+      for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.node.e[p+i*9+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+      Tcl_AppendResult(interp, "} ", (char *)NULL);
+      break;
     default: break; }
   }
   Tcl_AppendResult(interp, "} ", (char *)NULL); 
@@ -663,6 +700,22 @@ void calc_p_tensor(double volume, IntList *p_list, int flag) {
 	  i+=2; break;
 	case BONDED_IA_HARMONIC:
 	  add_harmonic_pair_force(p1,p2,type_num);
+	  for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
+	  for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
+	    p_tensor.node.e[p_tensor.n_pre+9*type_num + k*3 + l] += f1[k]*d[l];
+	    p_tensor.sum.e[p_tensor.n_pre+ k*3 + l] += f1[k]*d[l];
+	  } }
+	  i+=2; break;
+	case BONDED_IA_SUBT_LJ_HARM:
+	  add_subt_lj_harm_pair_force(p1,p2,type_num);
+	  for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
+	  for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
+	    p_tensor.node.e[p_tensor.n_pre+9*type_num + k*3 + l] += f1[k]*d[l];
+	    p_tensor.sum.e[p_tensor.n_pre+ k*3 + l] += f1[k]*d[l];
+	  } }
+	  i+=2; break;
+	case BONDED_IA_SUBT_LJ_FENE:
+	  add_subt_lj_fene_pair_force(p1,p2,type_num);
 	  for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
 	  for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
 	    p_tensor.node.e[p_tensor.n_pre+9*type_num + k*3 + l] += f1[k]*d[l];

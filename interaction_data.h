@@ -38,6 +38,10 @@
 #define BONDED_IA_DIHEDRAL 2
 /** Type of bonded interaction is a HARMONIC potential. */
 #define BONDED_IA_HARMONIC 3
+/** Type of bonded interaction is a (HARMONIC-LJ) potential. */
+#define BONDED_IA_SUBT_LJ_HARM 99
+/** Type of bonded interaction is a (FENE-LJ) potential. */
+#define BONDED_IA_SUBT_LJ_FENE 98
 /** This bonded interaction was not set. */
 #define BONDED_IA_NONE    -1
 
@@ -194,6 +198,18 @@ typedef struct {
       double r;
       double r2;
     } harmonic;
+   /** Parameters for HARMONIC-LJ Potential */
+    struct {
+      double k;
+      double r;
+      double r2;
+    } subt_lj_harm; 
+   /** Parameters for FENE-LJ Potential */
+    struct {
+      double k;
+      double r;
+      double r2;
+    } subt_lj_fene; 
   } p;
 } Bonded_ia_parameters;
 

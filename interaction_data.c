@@ -171,6 +171,10 @@ char *get_name_of_bonded_ia(int i) {
     return "dihedral";
   case BONDED_IA_HARMONIC:
     return "HARMONIC";
+  case BONDED_IA_SUBT_LJ_HARM:
+    return "SUBT_LJ_HARM";
+  case BONDED_IA_SUBT_LJ_FENE:
+    return "SUBT_LJ_FENE";
   default:
     fprintf(stderr, "%d: internal error: name of unknown interaction %d requested\n",
 	    this_node, i);
@@ -245,7 +249,19 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     Tcl_PrintDouble(interp, params->p.harmonic.r, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
-  case BONDED_IA_NONE:
+ case BONDED_IA_SUBT_LJ_HARM:
+    Tcl_PrintDouble(interp, params->p.subt_lj_harm.k, buffer);
+    Tcl_AppendResult(interp, "SUBT_LJ_HARM ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.subt_lj_harm.r, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
+ case BONDED_IA_SUBT_LJ_FENE:
+    Tcl_PrintDouble(interp, params->p.subt_lj_fene.k, buffer);
+    Tcl_AppendResult(interp, "SUBT_LJ_FENE ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.subt_lj_fene.r, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
+ case BONDED_IA_NONE:
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
 		     (char *) NULL);
@@ -408,6 +424,14 @@ void calc_maximal_cutoff()
     case BONDED_IA_HARMONIC:
       if(max_cut < bonded_ia_params[i].p.harmonic.r)
 	max_cut = bonded_ia_params[i].p.harmonic.r;
+      break;
+    case BONDED_IA_SUBT_LJ_HARM:
+      if(max_cut < bonded_ia_params[i].p.subt_lj_harm.r)
+	max_cut = bonded_ia_params[i].p.subt_lj_harm.r;
+      break;
+    case BONDED_IA_SUBT_LJ_FENE:
+      if(max_cut < bonded_ia_params[i].p.subt_lj_fene.r)
+	max_cut = bonded_ia_params[i].p.subt_lj_fene.r;
       break;
     default:
       break;
@@ -835,6 +859,43 @@ int fene_set_params(int bond_type, double k, double r)
   return TCL_OK;
 }
 
+int subt_lj_harm_set_params(int bond_type, double k, double r)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.subt_lj_harm.k = k;
+  bonded_ia_params[bond_type].p.subt_lj_harm.r = r;
+  bonded_ia_params[bond_type].type = BONDED_IA_SUBT_LJ_HARM;
+  bonded_ia_params[bond_type].p.subt_lj_harm.r2 = SQR(bonded_ia_params[bond_type].p.subt_lj_harm.r);
+  bonded_ia_params[bond_type].num  = 1;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return TCL_OK;
+}
+int subt_lj_fene_set_params(int bond_type, double k, double r)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.subt_lj_fene.k = k;
+  bonded_ia_params[bond_type].p.subt_lj_fene.r = r;
+  bonded_ia_params[bond_type].type = BONDED_IA_SUBT_LJ_FENE;
+  bonded_ia_params[bond_type].p.subt_lj_fene.r2 = SQR(bonded_ia_params[bond_type].p.subt_lj_fene.r);
+  bonded_ia_params[bond_type].num  = 1;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return TCL_OK;
+}
+
 int inter_print_non_bonded(Tcl_Interp * interp,
 			   int part_type_a, int part_type_b)
 {
@@ -856,7 +917,6 @@ int inter_print_non_bonded(Tcl_Interp * interp,
 
   return printNonbondedIAToResult(interp, part_type_a, part_type_b);
 }
-
 
 int inter_parse_non_bonded(Tcl_Interp * interp,
 			   int part_type_a, int part_type_b,
@@ -1095,6 +1155,40 @@ int inter_parse_bonded(Tcl_Interp *interp,
       }
 
       CHECK_VALUE(harmonic_set_params(bond_type, k, r), "bond type must be nonnegative");
+  }  
+  
+  if (ARG0_IS_S("subt_lj_harm")) {
+
+      if (argc != 3) {
+	Tcl_AppendResult(interp, "subt_lj_harm needs 2 parameters: "
+			 "<k_subt_lj_harm> <r_subt_lj_harm>", (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) {
+	Tcl_AppendResult(interp, "subt_lj_harm needs 2 DOUBLE parameters: "
+			 "<k_subt_lj_harm> <r_subt_lj_harm>", (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      CHECK_VALUE(subt_lj_harm_set_params(bond_type, k, r), "bond type must be nonnegative");
+  }  
+  
+  if (ARG0_IS_S("subt_lj_fene")) {
+
+      if (argc != 3) {
+	Tcl_AppendResult(interp, "subt_lj_fene needs 2 parameters: "
+			 "<k_subt_lj_fene> <r_subt_lj_fene>", (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) {
+	Tcl_AppendResult(interp, "subt_lj_fene needs 2 DOUBLE parameters: "
+			 "<k_subt_lj_fene> <r_subt_lj_fene>", (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      CHECK_VALUE(subt_lj_fene_set_params(bond_type, k, r), "bond type must be nonnegative");
   }
 
   if (ARG0_IS_S("angle")) {

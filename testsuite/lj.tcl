@@ -33,6 +33,7 @@ puts "----------------------------------------"
 puts "- Testcase lj.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------"
 
+
 set epsilon 1e-4
 setmd temp 0
 setmd time_step 1
@@ -54,6 +55,7 @@ proc write_data {file} {
     blockfile $f write particles {id type pos f}
     close $f
 }
+
 
 if { [catch {
     read_data "lj_system.data"
@@ -78,6 +80,7 @@ if { [catch {
 #    set cureng [expr [analyze energy lj 0 0] + [analyze energy lj 0 1] + [analyze energy lj 1 1]]
     set cureng [expr [analyze energy nonbonded 0 0] + [analyze energy nonbonded 0 1] + [analyze energy nonbonded 1 1]]
     # tbrs
+    
     set curprs [expr [lindex [analyze pressure lj 0 0] 0] + \
 		[lindex [analyze pressure lj 0 1] 0] + \
 		[lindex [analyze pressure lj 1 1] 0]]

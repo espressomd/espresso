@@ -26,6 +26,8 @@
 #include "gb.h"
 #include "fene.h"
 #include "harmonic.h"
+#include "subt_lj_harm.h"
+#include "subt_lj_fene.h"
 #include "angle.h"
 #include "debye_hueckel.h"
 #include "forces.h"
@@ -100,6 +102,14 @@ void calc_energy()
 	    energy.node.e[type_num + energy.n_pre] +=
 	      harmonic_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
 	    i+=2; break;
+	  case BONDED_IA_SUBT_LJ_HARM:
+	    energy.node.e[type_num + energy.n_pre] +=
+	      subt_lj_harm_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
+	    i+=2; break; 
+	  case BONDED_IA_SUBT_LJ_FENE:
+	    energy.node.e[type_num + energy.n_pre] +=
+	      subt_lj_fene_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
+	    i+=2; break; 
 	  case BONDED_IA_ANGLE:
 	    energy.node.e[type_num + energy.n_pre] +=
 	      angle_energy(p1, checked_particle_ptr(p1->bl.e[i+1]),
@@ -242,7 +252,7 @@ void calc_energies()
 
 int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
 {
-  /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | gb <type1> <type2> | coulomb | kinetic | total }]' */
+  /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | subt_lj_harm <type_num> | subt_lj_fene <type_num> / lj <type1> <type2> | ljcos <type1> <type2> | gb <type1> <type2> | coulomb | kinetic | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   int i, j, p;
   int out_mode=0;
@@ -260,7 +270,8 @@ int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
   if(argc>0) {
     if      (ARG0_IS_S("kinetic")) energy.ana_num = 1;
     else if (ARG0_IS_S("bonded") || ARG0_IS_S("fene") ||
-	     ARG0_IS_S("harmonic")) {
+	     ARG0_IS_S("harmonic") || ARG0_IS_S("subt_lj_harm") ||
+	     ARG0_IS_S("subt_lj_fene")) {
       if(argc<2) {
 	Tcl_AppendResult(interp, "wrong # arguments for: analyze energy bonded <type_num>",
 			 (char *)NULL);
