@@ -50,8 +50,16 @@ extern int periodic[3];
 
 /** Simulation box dimensions. */ 
 extern double box_l[3];
+/** Smallest simulation box dimension (\ref box_l). 
+    Remark: with PARTIAL_PERIODIC, only the periodic directions 
+    are taken into account! */
+extern double min_box_l;
 /** Dimensions of the box a single node is responsible for. */ 
 extern double local_box_l[3];
+/** Smallest local simulation box dimension (\ref local_box_l).
+    Remark: with PARTIAL_PERIODIC, only the periodic directions 
+    are taken into account! */
+extern double min_local_box_l;
 /** Left (bottom, front) corner of this nodes local box. */ 
 extern double my_left[3];
 /** Right (top, back) corner of this nodes local box. */ 
@@ -102,6 +110,15 @@ void calc_node_neighbors(int node);
 /** Call this if the topology (grid, box dim, ...) has changed. Only for master node,
     will be communicated. */
 void changed_topology();
+
+/** Calculates the smallest box and local box dimensions for periodic
+ * directions.  This is needed to check if the interaction ranges are
+ * compatible with the box dimensions and the node grid.  
+ * see also \ref box_l, \ref local_box_l, \ref min_box_l 
+ * and \ref min_local_box_l.
+ * Remark: In the apreiodic case min_box_l is set to 
+ * 2 * \ref MAX_INTERACTION_RANGE . */
+void calc_minimal_box_dimensions();
 
 /** calculate most square 2d grid. */
 void calc_2d_grid(int n, int grid[3]);

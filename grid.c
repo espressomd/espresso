@@ -14,8 +14,11 @@
 #include "communication.h"
 #include "verlet.h"
 #include "utils.h"
+/************************************************
+ * defines
+ ************************************************/    
 
-/* Rebuild the verlet list when topology changes. */
+#define MAX_INTERACTION_RANGE 1e100
 
 /**********************************************
  * variables
@@ -29,9 +32,13 @@ int extended[6] = {0, 0, 0, 0, 0, 0};
 int periodic[3]    = {1, 1, 1};
 
 double box_l[3]       = {1, 1, 1};
+double min_box_l;
 double local_box_l[3] = {1, 1, 1};
+double min_local_box_l;
 double my_left[3]     = {0, 0, 0};
 double my_right[3]    = {1, 1, 1};
+
+
 
 /** \name Privat Functions */
 /************************************************************/
@@ -139,6 +146,24 @@ void changed_topology()
   mpi_bcast_parameter(FIELD_BOXL);
   mpi_bcast_parameter(FIELD_LBOXL);
   mpi_bcast_parameter(FIELD_VERLET);
+}
+
+void calc_minimal_box_dimensions()
+{
+  int i;
+  min_box_l = 2*MAX_INTERACTION_RANGE;
+  min_local_box_l = MAX_INTERACTION_RANGE;
+  for(i=0;i<3;i++) {
+#ifdef PARTIAL_PERIODIC  
+    if(periodic[i]) { /* take only periodic directions into account */
+      min_box_l       = dmin(min_box_l, box_l[i]);
+      min_local_box_l = dmin(min_local_box_l, local_box_l[i]);
+    } 
+#else
+    min_box_l       = dmin(min_box_l, box_l[i]);
+    min_local_box_l = dmin(min_local_box_l, local_box_l[i]);
+#endif
+  }
 }
 
 void calc_2d_grid(int n, int grid[3])
