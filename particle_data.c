@@ -16,6 +16,7 @@
 #include "communication.h"
 #include "grid.h"
 #include "interaction_data.h" 
+#include "integrate.h"
 #include "debug.h"
 #include "utils.h"
 #include "cells.h"
@@ -452,11 +453,12 @@ int part(ClientData data, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (!strncmp(argv[0], "v", strlen(argv[0]))) {
-	Tcl_PrintDouble(interp, part.v[0], buffer);
+	/* unscale velocities ! */
+	Tcl_PrintDouble(interp, part.v[0]/time_step, buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.v[1], buffer);
+	Tcl_PrintDouble(interp, part.v[1]/time_step, buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.v[2], buffer);
+	Tcl_PrintDouble(interp, part.v[2]/time_step, buffer);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (!strncmp(argv[0], "f", strlen(argv[0]))) {
@@ -555,6 +557,11 @@ int part(ClientData data, Tcl_Interp *interp,
 	  return (TCL_ERROR);
 	if (Tcl_GetDouble(interp, argv[3], &v[2]) == TCL_ERROR)
 	  return (TCL_ERROR);
+
+	/* scale velocity with time step */
+	v[0] *= time_step; 
+	v[1] *= time_step; 
+	v[2] *= time_step; 
 
 	err = set_particle_v(part_num, v);
 
