@@ -27,7 +27,7 @@ setmd bjerrum 0
 source polywr.tcl
 
 if { $write  == "yes" || $write == "finish" } {
-    exec rm -f [glob -noc "configs/c*"] [glob -noc "movie/m*"]
+    exec rm -f [glob -nocomplain "configs/c*"] [glob -nocomplain "movie/m*"]
 }
  
 if {[setmd n_node] == 8} {
@@ -88,6 +88,6 @@ if { $write == "finish" } {
     polywrite "configs/cfinal.poly"
 }
 if { $write  == "yes" || $write == "finish" } {
-    catch { eval exec poly2pdb -poly [glob -noc "configs/c*"] \
+    catch { eval exec poly2pdb -poly [glob -nocomplain "configs/c*"] \
 	-per -psf "movie/m" >/dev/null 2>/dev/null }
 }
