@@ -2,20 +2,30 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.1.1  *
+* v1.1.2a *
 ***********
 
 Current working revision.
-FR: December 2nd, 2003.
+(a) December 19th, 2003.
 
 New Features:
+(a) tabulated lookup potentials
 
 
 Changes:
 
 
 Bugfixes:
+(a) 'part <ind> delete' now correctly deletes all bonds involved
+(a) 'part fix' fixed
 
+
+
+***********
+* v1.1.1  *
+***********
+
+Released on December 2nd, 2003.
 
 
 - v1.1.0e -
@@ -61,3 +71,4 @@ Released on October 20th, 2003.
 *******************
 
 Released on April 25th, 2003.
+
