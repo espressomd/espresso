@@ -15,12 +15,13 @@
     <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 
 */
+/* first, since we need the TK define */
+#include "utils.h"
 #include <tcl.h>
 #ifdef TK
 #include <tk.h>
 #endif
 #include <stdlib.h>
-#include "utils.h"
 #include "initialize.h"
 #include "global.h"
 #include "communication.h"
