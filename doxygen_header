@@ -162,8 +162,9 @@ interface between the Tcl script and the MD code:
 	Again the first two integers are <particle_type_number1> and <particle_type_number2>.
 
 	<b> <li> \anchor tcl_bonded Bonded interactions: </b>
-	\verbatim inter <bond_type_number> <interaction_type> <value>+ \endverbatim
+b	\verbatim inter <bond_type_number> <interaction_type>|num <value>* \endverbatim
 	Bonded interaction (bonds are set using \ref tcl_part).
+	If "num" is given, the number of interaction partners is given (e.g. 1 for FENE).
 	Currently known <interaction_type>s are:
 
 	<ul>
@@ -224,18 +225,27 @@ interface between the Tcl script and the MD code:
             writes a variable <variablename>
             which is known to \ref tcl_setmd to <channel>.
 	<li>\anchor tcl_blockfile_write_particles
-            \verbatim blockfile_write_particles <channel> <what> <range>\endverbatim
+            \verbatim blockfile <channel> write particles <what> <range>\endverbatim
     	    writes particle information in a standardized format to the file <channel>.
-	    <what> can be any list of parameters that \anchor tcl_part_print "part <x> print"
-	    takes. Notice that if "id" or "pos" is missing, this is added in the front to the
-	    list automatically. <range> is a Tcl list of ranges which particles to write. The
-	    range "all" is valid as well as a boundary of "end". For example
+	    <what> can be any list of parameters that \ref tcl_part_print "part <x> print"
+	    takes except for "bonds". Notice that if "id" or "pos" is missing, this is added
+	    in the front to the list automatically. <range> is a Tcl list of ranges which particles
+	    to write. The range "all" is valid as well as a boundary of "end". For example
 	    \verbatim blockfile file10 write particles "id pos q" "all 0-end 0" \endverbatim
 	    will write all particles two times to file10 and then particle 0 alone.
+	<li>\anchor tcl_blockfile_write_interactions
+            \verbatim blockfile <channel> write interactions\endverbatim
+    	    writes interactions information in a standardized format to the file <channel>.
+	<li>\anchor tcl_blockfile_write_bonds
+            \verbatim blockfile <channel> write bonds <range>\endverbatim
+    	    writes bonds information in a standardized format to the file <channel>. The involved
+	    particles and bond types must exist and be valid.
 	<li>\verbatim blockfile <channel> read start \endverbatim reads the start part of a block
             and returns the block title.
 	<li>\verbatim blockfile <channel> read toend \endverbatim reads the blocks data and returns
 	    it.
+	<li>\verbatim blockfile <channel> read particles|interactions|bonds\endverbatim
+	    reads one block, checks wether it contains data of the given type and reads it.
         <li>\verbatim blockfile <channel> read auto \endverbatim reads in one block and does the
             following:
 	<ol>
@@ -243,13 +253,15 @@ interface between the Tcl script and the MD code:
                  and "setvar <variablename>" is returned
             <li> if the block is a variable, it returns "uservar <variablename> <data>", where data
                  is the data block (normally _ival_ or _dval_).
+	    <li> if the block is a particle block, the particles are read in. The same applies to
+		 bonds and interactions blocks.
             <li> if the block has a different tag, it returns "usertag <tag> <rest of block>"
             <li> if the file is at end, it returns "eof"
 	</ol>
 </ol>
         If parameters different from "read|write ..." are given, a procedure "blockfile_arg1_arg2"
 	is searched for and called with the same argument as blockfile. For example
-	\verbatim blockfile <channel> write particles "id pos" all \endverbatim
+	\verbatim blockfile channel write particles "id pos" all \endverbatim
 	results in the evaluation of
 	\verbatim blockfile_write_particles channel write particles "id pos" all \endverbatim
 	while
