@@ -63,7 +63,7 @@ MDINLINE double fene_pair_energy(Particle *p1, Particle *p2, int type_num)
     errexit();
   }
 
-  energy = 0.5*bonded_ia_params[type_num].p.fene.k*bonded_ia_params[type_num].p.fene.r2;
+  energy = -0.5*bonded_ia_params[type_num].p.fene.k*bonded_ia_params[type_num].p.fene.r2;
   energy *= log((1.0 - dist2/bonded_ia_params[type_num].p.fene.r2));
   return energy;
 }

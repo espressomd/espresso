@@ -11,6 +11,43 @@
 #include <tcl.h>
 #include "particle_data.h"
 
+/** \name Data Types */
+/************************************************************/
+/*@{*/
+
+typedef struct {
+  /** Status flag for energy calculation. 0 re initialize energy
+      struct, 1 every thing is fine, calculation can start. */
+  int init_status;
+
+  /** Array for energies on each node. */
+  DoubleList node;
+  /** Array for energies summed over all nodes. */
+  DoubleList sum;
+
+  /** number of energies. */
+  int n;
+  /** number of energies befor specific interaction energies. */
+  int n_pre;
+  /** number of energies for bonded interactions. */
+  int n_bonded;
+  /** number of energies for non bonded interactions. */
+  int n_non_bonded;
+  /** number of energies for coulomb interaction. */
+  int n_coulomb;
+
+  /** analyze specified energy. */
+  int ana_num;
+} Energy_stat;
+
+/*@}*/
+
+/** \name Exported Variables */
+/************************************************************/
+/*@{*/
+extern Energy_stat energy;
+/*@}*/
+
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
@@ -30,6 +67,11 @@
 	 <li> 'analyze set chains [<chain_start> <n_chains> <chain_length>]'
               A set of equal-length chains. If no parameters are given, the ones currently stored are returned.
 	 </ul>
+    <li> 'analyze energy [interaction]' \\
+         returns the energies of the system. output is blockfile format: \\
+	 { energy <value> } { kinetic <value> } { interaction <value> } ... \\
+	 if you specify an interaction, e.g. fene <type_num> or lj <type1> <type2> or coulomb or kinetic
+	 it returns just that energy.
     All tasks below need the particles to be stored consecutively starting with identity 0.
     <li> 'analyze re [<chain_start> <n_chains> <chain_length>]'
          returns the quadratic end-to-end-distance averaged over all polymers (requires chain structure to be set).
@@ -46,6 +88,8 @@
 */
 int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
+void init_energies();
+void calc_energy();
 /*@}*/
 
 #endif

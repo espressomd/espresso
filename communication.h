@@ -175,14 +175,14 @@ void mpi_bcast_n_particle_types(int s);
 /** Issue REQ_GATHER: gather statistics. job determines the job to
     do, at the moment only gather \ref minimum_part_dist.
     \param job what to do:
-    <ul>
-    <li> 0 gather \ref minimum_part_dist
-    </ul>
+        <ul>
+        <li> 0 gather \ref minimum_part_dist
+        </ul>
     \param result where to store the gathered value(s):
-    <ul>
-    <li> for job 0 a double *
-         usage: double *buf; mpi_gather_stats(0, buf);
-    </ul>
+        <ul>
+        <li> job=0 a double *
+             usage: double *buf; mpi_gather_stats(0, buf);
+        </ul>
 */
 void mpi_gather_stats(int job, void *result);
 

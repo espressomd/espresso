@@ -11,8 +11,9 @@
 /****************************************
  * variables
  *****************************************/
-IA_parameters *ia_params = NULL;
 int n_particle_types = 0;
+int n_interaction_types = 0;
+IA_parameters *ia_params = NULL;
 
 Coulomb_parameters coulomb = { 0.0, "non" };
 

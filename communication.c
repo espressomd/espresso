@@ -16,6 +16,7 @@
 #include "initialize.h"
 #include "forces.h"
 #include "p3m.h"
+#include "statistics.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -675,6 +676,8 @@ void mpi_bcast_n_particle_types_slave(int pnode, int ns)
 /*************** REQ_GATHER ************/
 void mpi_gather_stats(int job, void *result)
 {
+  int task[2];
+
   mpi_issue(REQ_GATHER, -1, job);
 
   switch (job) {
@@ -682,6 +685,16 @@ void mpi_gather_stats(int job, void *result)
     /* gather minimum distance */
     MPI_Gather(&minimum_part_dist, 1, MPI_DOUBLE, (double *)result,
 	       1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    break;
+  case 1:
+    /* calculate and reduce (sum up) energies */
+    task[0] = energy.init_status;
+    task[1] = energy.ana_num;
+    MPI_Bcast(task, 2, MPI_INT, 0, MPI_COMM_WORLD);
+
+    calc_energy();
+    
+
     break;
   default:
     fprintf(stderr, "%d: illegal request %d for REQ_GATHER\n", this_node, job);
@@ -691,10 +704,20 @@ void mpi_gather_stats(int job, void *result)
 
 void mpi_gather_stats_slave(int pnode, int job)
 {
+  int task[2];
+
   switch (job) {
   case 0:
     MPI_Gather(&minimum_part_dist, 1, MPI_DOUBLE, NULL,
                1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    break;
+  case 1:
+    /* calculate and reduce (sum up) energies */
+    MPI_Bcast(task, 2, MPI_INT, 0, MPI_COMM_WORLD);
+    if( task[0]==0 ) init_energies();
+    energy.ana_num = task[1];
+    calc_energy();
+
     break;
   default:
     fprintf(stderr, "%d: illegal request %d for REQ_GATHER\n", this_node, job);

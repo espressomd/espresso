@@ -82,11 +82,11 @@ typedef struct {
 
 /** Maximal particle type seen so far. */
 extern int n_particle_types;
+/* Number of nonbonded (short range) interactions. Not used so far.*/
+extern int n_interaction_types;
 /** Array of the interaction parameters. Should be accessed only via
     \ref get_ia_param  */
 extern IA_parameters *ia_params;
-/* Number of nonbonded (short range) interactions. Not used so far.*/
-extern int n_interaction_types;
 
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;
@@ -147,5 +147,8 @@ void realloc_ia_params(int nsize);
 /** calculates the maximal cutoff of all real space interactions. 
     these are: bonded, non bonded + real space electrostatics. */
 void calc_maximal_cutoff();
+
+int checkIfParticlesInteract(int i, int j);
+ 
 
 #endif

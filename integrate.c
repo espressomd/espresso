@@ -152,9 +152,6 @@ void integrate_vv(int n_steps)
 		      n_steps));
 
   if(parameter_changed || particle_changed || topology_changed || interactions_changed) {
-    /* already here since exchange_part may destroy the ghost particles */
-    invalidate_ghosts();
-    exchange_and_sort_part();
     exchange_ghost();
     build_verlet_lists();
 
@@ -447,7 +444,7 @@ void propagate_vel_pos()
     }
   }
 
-#ifdef ADITIONAL_CHECKS
+#ifdef ADDITIONAL_CHECKS
   if(this_node==0) {
     stat=fopen("e_kin.dat","a");
     kin_energies = malloc(sizeof(double)*n_nodes);

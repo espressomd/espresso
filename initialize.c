@@ -91,11 +91,6 @@ void on_particle_change()
 {
   particle_changed = 1;
 
-  /* update some P3M parameters */
-  if(coulomb.bjerrum > 0.0 && !strcmp(coulomb.method,"p3m") ) {
-    P3M_count_charged_particles();
-  }
-
   /* the particle information is no longer valid */
   free(partCfg); partCfg=NULL;
 }
@@ -110,6 +105,7 @@ void on_topology_change()
 void on_ia_change()
 {
   interactions_changed = 1;
+  energy.init_status = 0;
 }
 
 void on_parameter_change()

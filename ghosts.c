@@ -127,8 +127,8 @@ int sub_grid_indices(int* list, int start, int max,
  *  
  *  Variable changes:
  *  <ul> 
- *    <li> \ref p_send_buf::n += 1
- *    <li> \ref b_send_buf::n += number of bond partners + 1
+ *    <li> \ref p_send_buf ->n += 1
+ *    <li> \ref b_send_buf ->n += number of bond partners + 1
  *    <li> remove particle from \ref local_particles field (set to -1)
  *    <li> move last particle and actualize \ref local_particles.
  *    <li> pl->n  -= 1

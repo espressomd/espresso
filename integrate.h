@@ -58,7 +58,7 @@ int integrate(ClientData data, Tcl_Interp *interp,
 
 /** Calculate maximal interaction range. 
     Uses \ref calc_maximal_cutoff.
-    \ref max_range  = \ref max_cut + \ref skin;
+    \ref max_range  = \ref max_cut + \ref #skin;
  */
 void integrate_vv_recalc_maxrange();
 

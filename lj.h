@@ -91,6 +91,7 @@ MDINLINE double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
       return 4.0*ia_params->LJ_eps*(SQR(frac6)-frac6+ia_params->LJ_shift);
     }
   }
+  return 0.0;
 }
 
 /** calculate lj_capradius from lj_force_cap */

@@ -20,11 +20,11 @@
  ************************************************/
 
 #ifdef EXTERNAL_FORCES
-/** \ref ext_flag value for unfixed particle. */
+/** \ref Particle::ext_flag "ext_flag" value for unfixed particle. */
 #define PARTICLE_UNFIXED   0
-/** \ref ext_flag value for particle subject to an external force. */
+/** \ref Particle::ext_flag "ext_flag" value for particle subject to an external force. */
 #define PARTICLE_EXT_FORCE 1
-/** \ref ext_flag value for fixed particle. */
+/** \ref Particle::ext_flag "ext_flag" value for fixed particle. */
 #define PARTICLE_FIXED     2
 #endif
 
@@ -145,8 +145,8 @@ void init_particleList(ParticleList *pList);
 
 /** initialize a particle.
     This function just sets all values to zero!
-    Do NOT use this without setting the values of the identity 
-    \ref Particle::r::identity and position \ref Particle::r::p to 
+    Do NOT use this without setting the values of the  
+    \ref ReducedParticle::identity "identity" and \ref ReducedParticle::p "position" to 
     reasonable values. Also make sure that you update \ref local_particles.
  */
 void init_particle(Particle *part);
@@ -369,5 +369,22 @@ void added_particle(int part);
     @return TCL_OK for add or successful delete, TCL_ERROR else
 */
 int local_change_bond(int part, int *bond, int delete);
+
+
+/** Check the existence of a bond partner on that node and return the
+    corresponding particle pointer or force exit.
+    @param id particle identity.
+    @return Particle pointer.
+ */
+MDINLINE Particle *checked_particle_ptr(int id)
+{
+  Particle *p = local_particles[id];
+  if(!p) {
+    fprintf(stderr,"ERROR: Atom %d has bond to unknown particle "
+	    "(probably on different node)\n", id); 
+    errexit();
+  }
+  return p;
+}
 
 #endif

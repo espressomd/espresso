@@ -37,13 +37,6 @@ double minimum_part_dist = -1;
     ghost particle forces with zero. */
 void init_forces();
 
-/** Check the existence of a bond partner on that node and return the
-    corresponding particle pointer or force exit.
-    @param id particle identity.
-    @return Particle pointer.
- */
-static Particle *checked_particle_ptr(int id);
-
 /*@}*/
 
 /************************************************************/
@@ -171,15 +164,4 @@ void init_forces()
   }
 }
 
-/************************************************************/
-static Particle *checked_particle_ptr(int id)
-{
-  Particle *p = local_particles[id];
-  if(!p) {
-    fprintf(stderr,"%d: ERROR: Atom %d has bond to unknown particle "
-	    "(probably on different node)\n",this_node, id); 
-    errexit();
-  }
-  return p;
-}
 
