@@ -29,6 +29,7 @@ proc codetag {tag} {
     toplevel .tag
     button .tag.btn -text "$tag reached!" -command "destroy .tag"
     pack .tag.btn
+    wm geometry .tag +60+0
     tkwait window .tag
     update
 }
@@ -57,7 +58,8 @@ proc mdparam {var min max init text cmd} {
 
     label .fr_$var.lab -text $text
 
-    scale .fr_$var.sc -orient h -from $min -to $max -resolution [expr ($max - $min)/10000] -command $cmd
+    scale .fr_$var.sc -orient h -from $min -to $max \
+	-resolution [expr ($max - $min)/10000] -command $cmd
     .fr_$var.sc set $init
 
     pack .fr_$var.lab .fr_$var.sc -in .fr_$var
