@@ -441,8 +441,6 @@ static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
   /* Find the mean z position and fold x y coordinates but not z*/
   zref = 0;
   for (i = 0 ; i < n_total_particles ; i++) {
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,xd);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,yd);
     zref += partCfg[i].r.p[zd];
   }
   zref = zref/(double)(n_total_particles);
