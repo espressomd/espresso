@@ -430,7 +430,6 @@ int imd_check_connect(Tcl_Interp *interp)
 int imd(ClientData data, Tcl_Interp *interp,
 	int argc, char **argv)
 {
-  
   if (argc < 2) {
     Tcl_AppendResult(interp, "wrong # args:  should be \"",
 		     argv[0], " connect|disconnect|stall|positions|energies ?values?\"",
@@ -455,8 +454,7 @@ int imd(ClientData data, Tcl_Interp *interp,
     vmdsock_init();
     initsock = vmdsock_create();
     if (vmdsock_bind(initsock, port) != 0) {
-      Tcl_AppendResult(interp, "IMD bind failed. Wrong port or VMD "
-		       "not running ? ",
+      Tcl_AppendResult(interp, "IMD bind failed. Port already in use ?",
 		       (char *) NULL);
       vmdsock_destroy(initsock);
       initsock = 0;
@@ -464,8 +462,7 @@ int imd(ClientData data, Tcl_Interp *interp,
     }
 
     if (vmdsock_listen(initsock)) {
-      Tcl_AppendResult(interp, "IMD listen failed. Wrong port or VMD "
-		       "not running ? ",
+      Tcl_AppendResult(interp, "IMD listen failed. Port already in use ?",
 		       (char *) NULL);
       vmdsock_destroy(initsock);
       initsock = 0;
@@ -490,6 +487,11 @@ int imd(ClientData data, Tcl_Interp *interp,
     if (initsock)
       vmdsock_destroy(initsock);
 
+    sock = 0;
+    initsock = 0;
+
+    Tcl_AppendResult(interp, "no connection",
+		     (char *) NULL);
     return (TCL_OK);
   }
 
@@ -511,6 +513,12 @@ int imd(ClientData data, Tcl_Interp *interp,
 	return (TCL_ERROR);
       sleep(1);
     }
+    if (!sock)
+      Tcl_AppendResult(interp, "no connection",
+		       (char *) NULL);
+    else
+      Tcl_AppendResult(interp, "connected",
+		       (char *) NULL);
     return (TCL_OK);
   }
 

@@ -67,19 +67,32 @@ setmd p3m_mesh_off 1.0 1.0 1.0
 # integration
 ##################################################
 
-puts "imd: [imd connect 12345]"
-puts "imd: [imd stall 1]"
+for {set port 10000} { $port < 65000 } { incr port } {
+	catch {imd connect $port} res
+	if {$res == ""} break
+	puts "imd port $port: result $res"
+}
+puts "opened port $port"
+
+set result [imd stall 1]
+puts "imd: $result"
+if { $result == "connected" } {
+    puts "waiting 10 secs to let you modify the save frame rate"
+    after 10000
+}
 
 integrate init
-set write_steps 2
-set configs 2
+
+set write_steps 10
+set configs 500
+
 for {set i 0} { $i < $configs } { incr i } {
     puts "step [expr $i*$write_steps]"
     integrate $write_steps
     if {"$write" == "yes" } {
 	polywrite [format "configs/t%04d.poly" $i]
     }
-    #puts "imd: [imd pos]"
+    imd pos
 }
 
 integrate exit
@@ -92,7 +105,7 @@ writemd $f posx posy posz type q
 close $f
 
 if {"$write" == "yes" } {
-    eval exec poly2pdb -poly [glob "configs/t*"] \
+    eval exec poly2pdb -poly [glob -noc "configs/t*"] \
 	-per -psf "movie/t" >/dev/null 2>&1
 }
 

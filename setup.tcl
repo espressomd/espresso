@@ -14,13 +14,17 @@
 ########### parameters
 set npart 100
 setmd box_l 10.0 10.0 10.0
-set write yes
+set write finish
 set write_steps 10
 set mdst 1.2
 set maxtime 200
 
 source polywr.tcl
 
+if { $write  == "yes" || $write == "finish" } {
+    exec rm -f [glob -noc "configs/c*"] [glob -noc "movie/m*"]
+}
+ 
 if {[setmd n_node] == 8} {
     setmd node_grid 2 2 2
 }
@@ -42,17 +46,11 @@ setmd bjerrum 0
 #pairwise ramp for all particles
 for {set ia1 0} { $ia1 <= 4 } { incr ia1 } {
     for {set ia2 0} { $ia2 <= 4 } { incr ia2 } {
-	inter $ia1 $ia2 ramp 1.2 100
+	inter $ia1 $ia2 ramp 1.3 100
     }
 }
 
 # test for bonded interaction parameters
-#puts "setting up bonded interactions "
-#inter 0 fene 7.0 2.0
-#inter 1 angle 3.0
-#inter 0
-#inter 1
-#puts "setting up bonded interactions - done "
 # friction
 setmd gamma 1e4
 
@@ -63,8 +61,11 @@ if {"$write" == "yes" } {
 puts "starting ramp integration"
 integrate init
 
-for {set i 0} { $i < 100 && [mindist] < $mdst } { incr i} {
-    puts "step ${i}00: minimum distance=[mindist]"
+set cont y
+for {set i 0} { $i < 100 && $cont == "y" } { incr i} {
+    puts "step $i: minimum distance=[mindist] < $mdst"
+    set md [mindist]
+    if {$md < $mdst || $md == "(> ramp cutoffs)"} { set cont n }
     integrate $write_steps
     if {"$write" == "yes" } {
 	polywrite [format "configs/c%04d.poly" $i]
@@ -78,7 +79,10 @@ set f [open "|gzip -c - >config.gz" w]
 writemd $f posx posy posz type q
 close $f
 
-if {"$write" == "yes" } {
-    eval exec poly2pdb -poly [glob "configs/c*"] \
+if { $write == "finish" } {
+    polywrite "configs/cfinal.poly"
+}
+if { $write  == "yes" || $write == "finish" } {
+    eval exec poly2pdb -poly [glob -noc "configs/c*"] \
 	-per -psf "movie/m" >/dev/null 2>&1
 }

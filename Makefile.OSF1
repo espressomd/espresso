@@ -11,7 +11,13 @@ CFLAGS=-g
 CFLAGS+=-check -msg_disable ignorecallval -msg_disable noparmlist \
 	-msg_disable uncalled -msg_disable alignment -msg_disable unknownmacro \
 	-msg_disable strctpadding -msg_disable unusedincl
-ifneq ($(findstring V6.2,$(shell cxx -V)),)
+ifneq ($(findstring V6.2,$(shell $(CC) -V)),)
+CFLAGS+= -msg_disable unusedtop -msg_disable unnecincl -msg_disable nestincl
+endif
+ifneq ($(findstring V6.3,$(shell $(CC) -V)),)
+CFLAGS+= -msg_disable unusedtop -msg_disable unnecincl -msg_disable nestincl
+endif
+ifneq ($(findstring V6.4,$(shell $(CC) -V)),)
 CFLAGS+= -msg_disable unusedtop -msg_disable unnecincl -msg_disable nestincl
 endif
 
