@@ -102,6 +102,15 @@ This will allow to use such particle properties as quart, omega, and torque. */
 
 /*@}*/
 
+/***********************************************************/
+/** \name Simulation methods, Integrators and Thermostats  */
+/***********************************************************/
+/*@{*/
+/** NEMD (Non Eqilibrium Molecular Dynamics).
+    This is used to perform shear simulations */
+/* #define NEMD */
+
+/*@}*/
 
 /************************************************/
 /** \name Default Parameter Settings            */
@@ -188,6 +197,9 @@ MDINLINE int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef BOND_ANGLE_COSSQUARE
   Tcl_AppendResult(interp, "{ BOND_ANGLE_COSSQUARE } ", (char *) NULL);
+#endif
+#ifdef NEMD
+  Tcl_AppendResult(interp, "{ NEMD } ", (char *) NULL);
 #endif
   Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);

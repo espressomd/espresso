@@ -42,6 +42,7 @@
 #include "uwerr.h"
 #include "utils.h"
 #include "nsquare.h"
+#include "nemd.h"
 
 /** wether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
@@ -242,6 +243,7 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "constraint", (Tcl_CmdProc *)constraint, 0, NULL);
   /* in uwerr.c */
   Tcl_CreateCommand(interp, "uwerr", (Tcl_CmdProc *)uwerr, 0, NULL);
+  Tcl_CreateCommand(interp, "nemd", (Tcl_CmdProc *)nemd, 0, NULL);
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");

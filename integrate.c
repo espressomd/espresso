@@ -35,6 +35,7 @@
 #include "nsquare.h"
 #include "domain_decomposition.h"
 #include "layered.h"
+#include "nemd.h"
 
 /************************************************
  * DEFINES
@@ -228,7 +229,11 @@ void integrate_vv(int n_steps)
     rescale_forces_propagate_vel();
 #ifdef ROTATION
     convert_torqes_propagate_omega();
-#endif             
+#endif        
+#ifdef NEMD
+    nemd_exchange_momentum();
+    nemd_store_velocity_profile();
+#endif     
     if(this_node==0) sim_time += time_step;
   }
 
@@ -367,6 +372,9 @@ void rescale_forces_propagate_vel()
 	if (!(p[i].l.ext_flag & COORD_FIXED(j)))
 #endif
 	  p[i].m.v[j] += p[i].f.f[j];
+#ifdef NEMD
+	if(j==2) nemd_store_velocity(p[i]);
+#endif
       }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
