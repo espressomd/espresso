@@ -77,3 +77,8 @@ email: prochaz@vivien.natur.cuni.cz
 send:  08.OKT.2003
 topic: 
 
+name:    Ira Cooke
+email:   Ira Cooke <ira.cooke@anu.edu.au>
+send:    2003-10-09  (v?? dated 2003-10-08 17:17h)
+remarks: will join Markus Deserno as a postdoc later in Oct/03,
+         therefore wants to familiarize himself with ESPResSo. 
