@@ -420,7 +420,9 @@ MDINLINE double add_constraints_energy(Particle *p1)
       break;
     }
 
-    energy.coulomb[0] += coulomb_en;
+    if (energy.n_coulomb > 0)
+      energy.coulomb[0] += coulomb_en;
+
     type = (&constraints[n].part_rep)->p.type;
     if (type >= 0)
       *obsstat_nonbonded(&energy, p1->p.type, type) += lj_en;
