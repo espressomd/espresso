@@ -10,6 +10,7 @@ CC=mpicc
 MODEL=$(shell awk '/\`model name/ { \
 	if ($$4 == "Pentium") print $$4"-"$$5; else \
 	if ($$4 == "AMD" && $$5 == "Athlon(TM)") print "Athlon-"$$6; else \
+	if ($$4 == "AMD" && $$5 == "Athlon(tm)") print "Athlon"; else \
 	print "Generic"; \
 	exit }' \/proc/cpuinfo)
 
@@ -27,8 +28,12 @@ ifeq ($(MODEL),Athlon-XP)
 HOSTFLAGS= -march=athlon-xp -mfpmath=sse -msse
 endif
 
+ifeq ($(MODEL),Athlon-)
+HOSTFLAGS= -march=athlon -mfpmath=sse -msse
+endif
+
 # optimized compiler flags
-CFLAGS=-g -O3 -Wall $(HOSTFLAGS) \
+CFLAGS=-g -O2 -Wall $(HOSTFLAGS) \
 	-fschedule-insns -fschedule-insns2 \
 	-funroll-loops -frerun-cse-after-loop -ffast-math
 
@@ -54,7 +59,7 @@ LDLIBS= -lm -lpthread
 # LDLIBS+= -lefence
 
 ########### FFTW
-LDLIBS+= -L/usr/local/lib -lrfftw -lfftw
+LDLIBS+= -L/usr/local/lib -ldrfftw -ldfftw
 
 ########### TCL
 CFLAGS+= -DUSE_NON_CONST
