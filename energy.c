@@ -22,7 +22,9 @@
 /* include the force files */
 #include "lj.h"
 #include "tab.h"
-#include "ljcos.h"
+#ifdef LJCOS
+  #include "ljcos.h"
+#endif
 #include "gb.h"
 #include "fene.h"
 #include "harmonic.h"
@@ -160,14 +162,18 @@ void calc_energy()
 	  dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
 	  dist  = sqrt(dist2);
 	  
+#ifdef TABULATED
 	  /* Tabulated */
 	  energy.node.e[type_num] += tabulated_pair_energy(p1,p2,ia_params,d,dist);
+#endif
 	  
 	  /* lennard jones */
 	  energy.node.e[type_num] += lj_pair_energy(p1,p2,ia_params,d,dist);
 	  
+#ifdef LJCOS
 	  /* lennnard jones cosine */
 	  energy.node.e[type_num] += ljcos_pair_energy(p1,p2,ia_params,d,dist);
+#endif
 
 #ifdef ROTATION	  
 	  /* gay-berne */

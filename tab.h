@@ -39,15 +39,15 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
        fac = tabulated_forces.e[table_start + tablepos]*(1-phi) + tabulated_forces.e[table_start + tablepos+1]*phi;
     }
     else {
-      // Use an extrapolation beyond the table
+      /* Use an extrapolation beyond the table */
       if ( dist > 0 ) {
-	tablepos = 0;
-	phi = dindex - tablepos;	  
-	fac = (tabulated_forces.e[table_start]*ia_params->TAB_minval)*(1-phi) + 
-	  (tabulated_forces.e[table_start+1]*(ia_params->TAB_minval+ia_params->TAB_stepsize))*phi;
-	fac = fac/dist;
+	    tablepos = 0;
+	    phi = dindex - tablepos;	  
+	    fac = (tabulated_forces.e[table_start]*ia_params->TAB_minval)*(1-phi) + 
+	        (tabulated_forces.e[table_start+1]*(ia_params->TAB_minval+ia_params->TAB_stepsize))*phi;
+	    fac = fac/dist;
       }
-      else { // Particles on top of each other .. leave fac as 0.0 }
+      else { /* Particles on top of each other .. leave fac as 0.0 */
       }
     }
     
@@ -56,14 +56,14 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
     }
   }
 
-  // Now update the forces
+  /* Now update the forces */
   
   for(j=0;j<3;j++) {
     p1->f[j] += fac * d[j];
     p2->f[j] -= fac * d[j];
   }
   
-};
+}
 
 /** Add a pair energy by linear interpolation from a table */
 MDINLINE double tabulated_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
@@ -77,7 +77,7 @@ MDINLINE double tabulated_pair_energy(Particle *p1, Particle *p2, IA_parameters 
     tablepos = (int)(floor(dindex)); 
 
     if ( tablepos < 0 ){
-      tablepos = 0; // Just gives a linear extrapolation in the region outside the table      
+      tablepos = 0; /* Just gives a linear extrapolation in the region outside the table */     
     }
 
     phi = (dindex - tablepos);
@@ -102,16 +102,16 @@ MDINLINE void check_tab_forcecap(double force_cap)
     for(j=0; j<n_particle_types; j++) {
       params = get_ia_param(i,j);
       startindex = params->TAB_startindex;
-      if ( tabulated_forces.max < (params->TAB_npoints + startindex )) { // Make sure forces are initialized
+      if ( tabulated_forces.max < (params->TAB_npoints + startindex )) { /* Make sure forces are initialized */
 	if(force_cap > 0.0 && params->TAB_maxval > 0.0 && tabulated_forces.e[startindex] > force_cap) {
 	  for ( i = 0 ; i < params->TAB_npoints ; i++) {
 	    if ( tabulated_forces.e[startindex + i] < force_cap ) {
-	      return; // Everything is OK nothing to say :)
+	      return; /* Everything is OK nothing to say :) */
 	    }	  
 	  }
 	  if ( i == params->TAB_npoints - 1) {
 	    tab_force_cap = -1.0;
-	    // Force cap is below all known forces .. turn force capping off
+	    /* Force cap is below all known forces .. turn force capping off */
 	  }
 	}    
 	if ( force_cap > tabulated_forces.e[startindex] ) {

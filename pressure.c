@@ -22,7 +22,9 @@
 /* include the force files */
 #include "lj.h"
 #include "tab.h"
-#include "ljcos.h"
+#ifdef LJCOS
+  #include "ljcos.h"
+#endif
 #include "gb.h"
 #include "fene.h"
 #include "harmonic.h"
@@ -332,7 +334,9 @@ void calc_virials() {
 	  add_tabulated_pair_force(p1,p2,ia_params,d,dist);
 
 	  add_lj_pair_force(p1,p2,ia_params,d,dist);
+#ifdef LJCOS
 	  add_ljcos_pair_force(p1,p2,ia_params,d,dist);
+#endif
 #ifdef ROTATION  
 	  add_gb_pair_force(p1,p2,ia_params,d,dist);
 #endif
@@ -773,7 +777,9 @@ void calc_p_tensor(double volume, IntList *p_list, int flag) {
 	
 	/* lennnard jones */
 	add_lj_pair_force(p1,p2,ia_params,d,dist);
+#ifdef LJCOS
 	add_ljcos_pair_force(p1,p2,ia_params,d,dist);
+#endif
 #ifdef ROTATION  
 	add_gb_pair_force(p1,p2,ia_params,d,dist);
 #endif

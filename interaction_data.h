@@ -107,6 +107,7 @@ typedef struct {
   double LJ_capradius;
   /*@}*/
 
+#ifdef LJCOS
   /** \name Lennard-Jones+Cos potential */
   /*@{*/
   double LJCOS_eps;
@@ -117,7 +118,8 @@ typedef struct {
   double LJCOS_beta;
   double LJCOS_rmin;
   /*@}*/
-  
+#endif
+
   /** \name Gay-Berne potential */
   /*@{*/
   double GB_eps;

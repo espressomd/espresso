@@ -21,7 +21,9 @@
 #include "mmm1d.h"
 #include "lj.h"
 #include "tab.h"
-#include "ljcos.h"
+#ifdef LJCOS
+  #include "ljcos.h"
+#endif
 #include "gb.h"
 #include "parser.h"
 #include "utils.h"
@@ -77,6 +79,7 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJ_offset = 
     params->LJ_capradius = 0;
   
+#ifdef LJCOS
   params->LJCOS_eps =
     params->LJCOS_sig =
     params->LJCOS_cut = 
@@ -84,7 +87,8 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJCOS_alfa = 
     params->LJCOS_beta = 
     params->LJCOS_rmin = 0 ;
-    
+#endif
+
   params->GB_eps =
     params->GB_sig =
     params->GB_cut =
@@ -102,7 +106,6 @@ void initialize_ia_params(IA_parameters *params) {
   params->TAB_maxval = 0.0;
   params->TAB_maxval2 = 0.0;
   params->TAB_stepsize = 0.0;
-
 }
 
 /** Copy interaction parameters. */
@@ -114,6 +117,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJ_offset = src->LJ_offset;
   dst->LJ_capradius = src->LJ_capradius;
 
+#ifdef LJCOS
   dst->LJCOS_eps = src->LJCOS_eps;
   dst->LJCOS_sig = src->LJCOS_sig;
   dst->LJCOS_cut = src->LJCOS_cut;
@@ -121,6 +125,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJCOS_alfa = src->LJCOS_alfa;
   dst->LJCOS_beta = src->LJCOS_beta;
   dst->LJCOS_rmin = src->LJCOS_rmin;
+#endif
   
   dst->GB_eps = src->GB_eps;
   dst->GB_sig = src->GB_sig;
@@ -149,8 +154,10 @@ int checkIfParticlesInteract(int i, int j) {
   if (data->LJ_cut != 0)
     return 1;
   
+#ifdef LJCOS
   if (data->LJCOS_cut != 0)
     return 1;
+#endif
 
   if (data->GB_cut != 0)
     return 1;
@@ -302,6 +309,7 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
     Tcl_PrintDouble(interp, data->LJ_capradius, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
   }
+#ifdef LJCOS
   if (data->LJCOS_cut != 0) {
     Tcl_PrintDouble(interp, data->LJCOS_eps, buffer);
     Tcl_AppendResult(interp, "lj-cos ", buffer, " ", (char *) NULL);
@@ -318,6 +326,7 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
     Tcl_PrintDouble(interp, data->LJCOS_rmin, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
   }
+#endif
   if (data->GB_cut != 0) {
     Tcl_PrintDouble(interp, data->GB_eps, buffer);
     Tcl_AppendResult(interp, "gay-berne ", buffer, " ", (char *) NULL);
@@ -448,10 +457,12 @@ void calc_maximal_cutoff()
 	   if(max_cut < (data->LJ_cut+data->LJ_offset) ) 
 	     max_cut = (data->LJ_cut+data->LJ_offset);
 	 }
+#ifdef LJCOS
 	 if (data->LJCOS_cut != 0) {
 	   if(max_cut < (data->LJCOS_cut+data->LJCOS_offset) ) 
 	     max_cut = (data->LJCOS_cut+data->LJCOS_offset);
 	 }
+#endif
 	 if (data->GB_cut != 0) {
 	   if(max_cut < (data->GB_cut) ) 
 	     max_cut = (data->GB_cut);
@@ -586,6 +597,7 @@ int inter_print_bonded(Tcl_Interp *interp, int i)
   return TCL_ERROR;
 }
 
+#ifdef LJCOS
 int lj_cos_set_params(int part_type_a, int part_type_b,
 		      double eps, double sig, double cut,
 		      double offset)
@@ -622,6 +634,7 @@ int lj_cos_set_params(int part_type_a, int part_type_b,
   
   return TCL_OK;
 }
+#endif
 
 int lennard_jones_set_params(int part_type_a, int part_type_b,
 			     double eps, double sig, double cut,
@@ -990,6 +1003,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
   }
 
 
+#ifdef LJCOS
   /* parse 
    *                        lj-cos
    * interaction
@@ -1024,6 +1038,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
     CHECK_VALUE(lj_cos_set_params(part_type_a, part_type_b, eps, sig, cut, offset),
 		"particle types must be nonnegative");
   }
+#endif
 
   /* parse 
    *                        gay-berne
@@ -1060,7 +1075,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
     CHECK_VALUE(gay_berne_set_params(part_type_a, part_type_b, eps, sig, cut, k1, k2, mu, nu),
 		"particle types must be nonnegative");
   }
-   
+
   /* parse 
    *                        tabulated
    * interaction

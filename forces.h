@@ -26,7 +26,9 @@
 #include "p3m.h"
 #include "lj.h"
 #include "tab.h"
-#include "ljcos.h"
+#ifdef LJCOS
+    #include "ljcos.h"
+#endif
 #include "gb.h"
 #include "fene.h"
 #include "harmonic.h"
@@ -94,14 +96,18 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 					double d[3], double dist, double dist2)
 {
 
+#ifdef TABULATED
   /* tabulated */
   add_tabulated_pair_force(p1,p2,ia_params,d,dist);
+#endif
 
   /* lennard jones */
   add_lj_pair_force(p1,p2,ia_params,d,dist);
 
+#ifdef LJCOS
   /* lennard jones cosine */
   add_ljcos_pair_force(p1,p2,ia_params,d,dist);
+#endif
   
 #ifdef ROTATION
   /* Gay-Berne */

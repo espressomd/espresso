@@ -32,7 +32,9 @@
 #include "random.h"
 #include "lj.h"
 #include "tab.h"
-#include "ljcos.h"
+#ifdef LJCOS
+  #include "ljcos.h"
+#endif
 #include "gb.h"
 #include "mmm1d.h"
 
