@@ -26,7 +26,6 @@ setmd box_l 10.0 10.0 10.0
 setmd max_num_cells 512
 setmd skin 0.4
 
-
 # external tcl files 
 ##################################################
 set write no
@@ -50,13 +49,15 @@ puts "opened file"
 
 readmd $f
 
-puts "n_part = [expr [setmd maxpart] + 1] (read from config.gz)"
+puts "max_seen_part = [setmd maxpart] (read from config.gz)"
+puts "n_part = [part number]"
 puts "grid   = \{[setmd node_grid]\}"
 puts "n_node = [setmd n_node]"
 puts "box    =\{[setmd box]\}"
-
 # setup interactions
 ##################################################
+inter 0 angle 2
+inter 1 fene 2 0
 inter 0 0 lennard-jones 1 1 2.0 0 0
 inter 1 1 lennard-jones 1 1 2.0 0 0
 inter 2 2 lennard-jones 1 1 2.0 0 0
@@ -64,7 +65,7 @@ inter 0 1 lennard-jones 1 1 2.0 0 0
 inter 0 2 lennard-jones 3 1 2.0 0 0
 inter 1 2 lennard-jones 2 1 1.2 0 0
 puts "nptypes = [setmd nptypes]"
-
+puts "interactions [inter]"
 setmd skin 0.200001
 
 setmd p3m_alpha 0.27

@@ -13,7 +13,8 @@
 
 ########### parameters
 
-set npart 100
+set maxpart 999
+set step 10
 setmd box_l 10.0 10.0 10.0
 
 set write finish
@@ -40,12 +41,13 @@ if {[setmd n_node] == 1} {
 }
 # setup random particles
 puts "setting up random particles"
-for {set i 0} { $i < $npart } { incr i} {
+for {set i 0} { $i <= $maxpart } { incr i $step} {
     part $i pos [expr 10*[tcl_rand]] [expr 10*[tcl_rand]] [expr 10*[tcl_rand]] \
 	q [ expr ($i % 2 == 1) ? -1 : 1 ] \
 	type [ expr round([tcl_rand]*3) ]
 }
-	
+puts "total [part number] particles"
+
 # setup ramp ia
 puts "setting up ramp interaction"
 # no electrostatics
