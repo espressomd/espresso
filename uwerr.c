@@ -167,12 +167,10 @@ double gammaq(double a, double x)
     if (x < a+1.0) {
 	gammaser(&retval, a, x);
 	return 1.0-retval;
-    } else {
-	gammacf(&retval, a, x);
-	return retval;
     }
-    /* keep the compiler happy */
-    return 0.0;
+    /* else */
+    gammacf(&retval, a, x);
+    return retval;
 }
 
 /** Sum up a vector.

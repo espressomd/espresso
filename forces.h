@@ -85,7 +85,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 					double d[3], double dist, double dist2)
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-  double force[3] = { 0, 0, 0 }, eng;
+  double force[3] = { 0, 0, 0 };
   int j;
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node, p1->p.identity, p2->p.identity, dist));
@@ -139,16 +139,17 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /***********************************************/
 
 #ifdef ELECTROSTATICS
+
   /* real space coulomb */
   switch (coulomb.method) {
-  case COULOMB_P3M:
-    eng = calc_p3m_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+  case COULOMB_P3M: {
+    double eng = calc_p3m_coulomb_pair_force(p1,p2,d,dist2,dist,force);
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
 #endif
     break;
-
+  }
   case COULOMB_DH:
     calc_dh_coulomb_pair_force(p1,p2,d,dist,force);
 #ifdef NPT

@@ -76,18 +76,16 @@ static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
     free_particle(&ref);
     return TCL_OK;
   }
-  else {
-    if (Tcl_GetDouble(interp, (*argv)[0], &pos[0]) == TCL_ERROR ||
-	Tcl_GetDouble(interp, (*argv)[1], &pos[1]) == TCL_ERROR ||
-	Tcl_GetDouble(interp, (*argv)[2], &pos[2]) == TCL_ERROR)
-      return TCL_ERROR;
+  /* else */
+  if (Tcl_GetDouble(interp, (*argv)[0], &pos[0]) == TCL_ERROR ||
+      Tcl_GetDouble(interp, (*argv)[1], &pos[1]) == TCL_ERROR ||
+      Tcl_GetDouble(interp, (*argv)[2], &pos[2]) == TCL_ERROR)
+    return TCL_ERROR;
 
-    (*argc) -= 3;
-    (*argv) += 3;
+  (*argc) -= 3;
+  (*argv) += 3;
 
-    return TCL_OK;
-  }
-  return TCL_ERROR;
+  return TCL_OK;
 }
 
 /****************************************************************************************
@@ -1002,8 +1000,8 @@ static int parse_Vkappa(Tcl_Interp *interp, int argc, char **argv)
       if (argc < 4 || !ARG_IS_D(1,Vkappa.Vk1) || !ARG_IS_D(2,Vkappa.Vk2) || !ARG_IS_D(3,Vkappa.avk)) {
         Tcl_AppendResult(interp, "usage: analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }] ", (char *)NULL);  return TCL_ERROR;  }
       if (Vkappa.avk <= 0.0) {
-        Tcl_AppendResult(interp, "ERROR: # of averages <avk> must be positiv! Resetting values...", (char *)NULL);  return TCL_ERROR;
-        result = Vkappa.Vk1 = Vkappa.Vk2 = Vkappa.avk = 0.0; }
+        Tcl_AppendResult(interp, "ERROR: # of averages <avk> must be positiv! Resetting values...", (char *)NULL);
+        result = Vkappa.Vk1 = Vkappa.Vk2 = Vkappa.avk = 0.0; return TCL_ERROR; }
       result = Vkappa.Vk2/Vkappa.avk - SQR(Vkappa.Vk1/Vkappa.avk); }
     else {
       Tcl_AppendResult(interp, "usage: analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }] ", (char *)NULL);  return TCL_ERROR;  }
@@ -1318,12 +1316,11 @@ static int parse_configs(Tcl_Interp *interp, int argc, char **argv)
     for(j=0; j < argc; j++)
       if (!ARG_IS_D(j, tmp_config[j])) return (TCL_ERROR);
     analyze_configs(tmp_config, n_part_conf); free(tmp_config);
-    sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK; }
-  else { 
-    sprintf(buffer,"Wrong # of args(%d)! Usage: analyze configs [x0 y0 z0 ... x%d y%d z%d]",argc,n_part_conf,n_part_conf,n_part_conf);
-    Tcl_AppendResult(interp,buffer,(char *)NULL); return TCL_ERROR;
+    sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
   }
-  /* keep the compiler happy */
+  /* else */
+  sprintf(buffer,"Wrong # of args(%d)! Usage: analyze configs [x0 y0 z0 ... x%d y%d z%d]",argc,n_part_conf,n_part_conf,n_part_conf);
+  Tcl_AppendResult(interp,buffer,(char *)NULL);
   return TCL_ERROR;
 }
 

@@ -790,17 +790,14 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete)
     on_particle_change();
     return stat;
   }
-  else {
-    MPI_Send(&bond_size, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
-    if (bond_size)
-      MPI_Send(bond, bond_size, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
-    MPI_Send(&delete, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
-    MPI_Recv(&stat, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD, &status);
-    on_particle_change();
-    return stat;
-  }
-
-  return 0;
+  /* else */
+  MPI_Send(&bond_size, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
+  if (bond_size)
+    MPI_Send(bond, bond_size, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
+  MPI_Send(&delete, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
+  MPI_Recv(&stat, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD, &status);
+  on_particle_change();
+  return stat;
 }
 
 void mpi_send_bond_slave(int pnode, int part)

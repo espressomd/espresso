@@ -189,70 +189,68 @@ int t_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
   if (argc == 1) {                                          /* 't_random' */
     d_out = d_random();
-    sprintf(buffer, "%f", d_out); Tcl_AppendResult(interp, buffer, (char *) NULL); return (TCL_OK); }
-  else {
-    argc--; argv++;
-    if (!strncmp(argv[0], "int", strlen(argv[0]))) {        /* 't_random int <n>' */
-      if(argc < 2){ Tcl_AppendResult(interp, "Wrong # of args: Usage: 't_random int <n>'", (char *) NULL); return (TCL_ERROR); }
-      else {
-	Tcl_GetInt(interp, argv[2], &i_out);
-	i_out = i_random(i_out);
-	sprintf(buffer, "%d", i_out); Tcl_AppendResult(interp, buffer, (char *) NULL); return (TCL_OK);
-      }
-    }
-    else if (!strncmp(argv[0], "seed", strlen(argv[0]))) {  /* 't_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
-      long *seed = malloc(n_nodes*sizeof(long));
-      if (argc <= 1) {
-	mpi_random_seed(0,seed);
-	for (i=0; i < n_nodes; i++) { 
-	  sprintf(buffer, "%ld ", seed[i]); Tcl_AppendResult(interp, buffer, (char *) NULL); 
-	}
-      }
-      else if (argc < n_nodes+1) { 
-	sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random seed [<seed(0)> ... <seed(%d)>]'", argc,n_nodes-1);
-	Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_ERROR); }
-      else {
-	for (i=0; i < n_nodes; i++) { seed[i] = atol(argv[i+1]); }
-	RANDOM_TRACE(printf("Got "); for(i=0;i<n_nodes;i++) printf("%ld ",seed[i]); printf("as new seeds.\n"));
-	mpi_random_seed(n_nodes,seed);
-      }
-      free(seed); 
-      return(TCL_OK);
-    }
-    else if (!strncmp(argv[0], "stat", strlen(argv[0]))) {  /* 't_random stat [status-list]' */
-      RandomStatus *stat = malloc(n_nodes*sizeof(RandomStatus));
-      if (argc <= 1) {
-	mpi_random_stat(0,stat);
-	for (i=0; i < n_nodes; i++) { 
-	  sprintf(buffer, "{"); Tcl_AppendResult(interp, buffer, (char *) NULL); 
-	  sprintf(buffer, "%ld %ld ", stat[i].idum,stat[i].iy); Tcl_AppendResult(interp, buffer, (char *) NULL);
-	  for (j=0; j < NTAB_RANDOM; j++) { 
-	    sprintf(buffer, "%ld ", stat[i].iv[j]); Tcl_AppendResult(interp, buffer, (char *) NULL); }
-	  sprintf(buffer, "} "); Tcl_AppendResult(interp, buffer, (char *) NULL);
-	}
-      }
-      else if (argc < n_nodes*(NTAB_RANDOM+2)+1) { 
-	sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random stat [<idum> <iy> <iv[0]> ... <iv[%d]>]^%d'", argc,NTAB_RANDOM-1,n_nodes);
-	Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_ERROR); }
-      else {
-	cnt = 1;
-	for (i=0; i < n_nodes; i++) {
-	  stat[i].idum = atol(argv[cnt++]); stat[i].iy = atol(argv[cnt++]);
-	  for (j=0; j < NTAB_RANDOM; j++) stat[i].iv[j] = atol(argv[cnt++]);
-	}
-	RANDOM_TRACE(printf("Got "); for(i=0;i<n_nodes;i++) printf("%ld/%ld/... ",stat[i].idum,stat[i].iy); printf("as new status.\n"));
-	mpi_random_stat(n_nodes,stat);
-      }
-      free(stat); 
-      return(TCL_OK);
-    }
-    else { 
-      sprintf(buffer, "Usage: 't_random [{ int <n> | seed [<seed(0)> ... <seed(%d)>] | stat [status-list] }]'",n_nodes-1);
-      Tcl_AppendResult(interp, "Unknown job '",argv[0],"' requested!\n",buffer, (char *)NULL); return (TCL_ERROR); 
+    sprintf(buffer, "%f", d_out); Tcl_AppendResult(interp, buffer, (char *) NULL); return (TCL_OK);
+  }
+  /* argc > 1 */
+  argc--; argv++;
+  if (!strncmp(argv[0], "int", strlen(argv[0]))) {        /* 't_random int <n>' */
+    if(argc < 2){ Tcl_AppendResult(interp, "Wrong # of args: Usage: 't_random int <n>'", (char *) NULL); return (TCL_ERROR); }
+    else {
+      Tcl_GetInt(interp, argv[2], &i_out);
+      i_out = i_random(i_out);
+      sprintf(buffer, "%d", i_out); Tcl_AppendResult(interp, buffer, (char *) NULL); return (TCL_OK);
     }
   }
-  printf("Unknown error in tcl_seed(): This should have never been shown!\n");
-  return(TCL_ERROR);
+  else if (!strncmp(argv[0], "seed", strlen(argv[0]))) {  /* 't_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
+    long *seed = malloc(n_nodes*sizeof(long));
+    if (argc <= 1) {
+      mpi_random_seed(0,seed);
+      for (i=0; i < n_nodes; i++) { 
+	sprintf(buffer, "%ld ", seed[i]); Tcl_AppendResult(interp, buffer, (char *) NULL); 
+      }
+    }
+    else if (argc < n_nodes+1) { 
+      sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random seed [<seed(0)> ... <seed(%d)>]'", argc,n_nodes-1);
+      Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_ERROR); }
+    else {
+      for (i=0; i < n_nodes; i++) { seed[i] = atol(argv[i+1]); }
+      RANDOM_TRACE(printf("Got "); for(i=0;i<n_nodes;i++) printf("%ld ",seed[i]); printf("as new seeds.\n"));
+      mpi_random_seed(n_nodes,seed);
+    }
+    free(seed); 
+    return(TCL_OK);
+  }
+  else if (!strncmp(argv[0], "stat", strlen(argv[0]))) {  /* 't_random stat [status-list]' */
+    RandomStatus *stat = malloc(n_nodes*sizeof(RandomStatus));
+    if (argc <= 1) {
+      mpi_random_stat(0,stat);
+      for (i=0; i < n_nodes; i++) { 
+	sprintf(buffer, "{"); Tcl_AppendResult(interp, buffer, (char *) NULL); 
+	sprintf(buffer, "%ld %ld ", stat[i].idum,stat[i].iy); Tcl_AppendResult(interp, buffer, (char *) NULL);
+	for (j=0; j < NTAB_RANDOM; j++) { 
+	  sprintf(buffer, "%ld ", stat[i].iv[j]); Tcl_AppendResult(interp, buffer, (char *) NULL); }
+	sprintf(buffer, "} "); Tcl_AppendResult(interp, buffer, (char *) NULL);
+      }
+    }
+    else if (argc < n_nodes*(NTAB_RANDOM+2)+1) { 
+      sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random stat [<idum> <iy> <iv[0]> ... <iv[%d]>]^%d'", argc,NTAB_RANDOM-1,n_nodes);
+      Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_ERROR); }
+    else {
+      cnt = 1;
+      for (i=0; i < n_nodes; i++) {
+	stat[i].idum = atol(argv[cnt++]); stat[i].iy = atol(argv[cnt++]);
+	for (j=0; j < NTAB_RANDOM; j++) stat[i].iv[j] = atol(argv[cnt++]);
+      }
+      RANDOM_TRACE(printf("Got "); for(i=0;i<n_nodes;i++) printf("%ld/%ld/... ",stat[i].idum,stat[i].iy); printf("as new status.\n"));
+      mpi_random_stat(n_nodes,stat);
+    }
+    free(stat); 
+    return(TCL_OK);
+  }
+  /* else */
+  sprintf(buffer, "Usage: 't_random [{ int <n> | seed [<seed(0)> ... <seed(%d)>] | stat [status-list] }]'",n_nodes-1);
+  Tcl_AppendResult(interp, "Unknown job '",argv[0],"' requested!\n",buffer, (char *)NULL);
+  return (TCL_ERROR); 
 }
 
 
@@ -381,61 +379,58 @@ int bit_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   if (argc == 1) {                                          /* 'bit_random' */
     d_out = bit_random_generator();
     sprintf(buffer, "%f", d_out); Tcl_AppendResult(interp, buffer, (char *) NULL); return (TCL_OK); }
-  else {
-    argc--; argv++;
-    if (!strncmp(argv[0], "seed", strlen(argv[0]))) {  /* 'bit_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
-      int *seed = malloc(n_nodes*sizeof(int));
-      if (argc <= 1) {
-	mpi_bit_random_seed(0,seed);
-	for (i=0; i < n_nodes; i++) { 
+  /* argc > 1 */
+  argc--; argv++;
+  if (!strncmp(argv[0], "seed", strlen(argv[0]))) {  /* 'bit_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
+    int *seed = malloc(n_nodes*sizeof(int));
+    if (argc <= 1) {
+      mpi_bit_random_seed(0,seed);
+      for (i=0; i < n_nodes; i++) { 
 	  sprintf(buffer, "%d ", seed[i]); Tcl_AppendResult(interp, buffer, (char *) NULL); 
-	}
       }
-      else if (argc < n_nodes+1) { 
-	sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random seed [<seed(0)> ... <seed(%d)>]'", argc,n_nodes-1);
-	Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_ERROR); }
-      else {
-	for (i=0; i < n_nodes; i++) { seed[i] = atoi(argv[i+1]); }
-	RANDOM_TRACE(printf("Got "); for(i=0;i<n_nodes;i++) printf("%d ",seed[i]); printf("as new seeds.\n"));
-	mpi_bit_random_seed(n_nodes,seed);
-      }
-      free(seed); 
-      return(TCL_OK);
     }
-    else if (!strncmp(argv[0], "stat", strlen(argv[0]))) {  /* 'bit_random stat [status-list]' */
-      BitRandomStatus *stat = malloc(n_nodes*sizeof(BitRandomStatus));
-      if (argc <= 1) {
-	mpi_bit_random_stat(0,stat);
-	for (i=0; i < n_nodes; i++) { 
-	  sprintf(buffer, "{"); Tcl_AppendResult(interp, buffer, (char *) NULL); 
-	  sprintf(buffer, "%d %d ", stat[i].random_pointer_1,stat[i].random_pointer_2); Tcl_AppendResult(interp, buffer, (char *) NULL);
-	  for (j=0; j < MERS_BIT_RANDOM; j++) { 
-	    sprintf(buffer, "%d ", stat[i].rand_w_array[j]); Tcl_AppendResult(interp, buffer, (char *) NULL); }
-	  sprintf(buffer, "} "); Tcl_AppendResult(interp, buffer, (char *) NULL);
-	}
-      }
-      else if (argc < n_nodes*(MERS_BIT_RANDOM+2)+1) { 
-	sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random stat [<idum> <iy> <iv[0]> ... <iv[%d]>]^%d'", argc,MERS_BIT_RANDOM-1,n_nodes);
-	Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_ERROR); }
-      else {
-	cnt = 1;
-	for (i=0; i < n_nodes; i++) {
-	  stat[i].random_pointer_1 = atoi(argv[cnt++]); stat[i].random_pointer_2 = atoi(argv[cnt++]);
-	  for (j=0; j < MERS_BIT_RANDOM; j++) stat[i].rand_w_array[j] = atoi(argv[cnt++]);
-	}
-	RANDOM_TRACE(printf("Got "); for(i=0;i<n_nodes;i++) printf("%d/%d/... as new status.\n",stat[i].random_pointer_1,stat[i].random_pointer_2));
-	mpi_bit_random_stat(n_nodes,stat);
-      }
-      free(stat); 
-      return(TCL_OK);
+    else if (argc < n_nodes+1) { 
+      sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random seed [<seed(0)> ... <seed(%d)>]'", argc,n_nodes-1);
+      Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_ERROR); }
+    else {
+      for (i=0; i < n_nodes; i++) { seed[i] = atoi(argv[i+1]); }
+      RANDOM_TRACE(printf("Got "); for(i=0;i<n_nodes;i++) printf("%d ",seed[i]); printf("as new seeds.\n"));
+      mpi_bit_random_seed(n_nodes,seed);
     }
-    else { 
-      sprintf(buffer, "Usage: 'bit_random [{ seed [<seed(0)> ... <seed(%d)>] | stat [status-list] }]'",n_nodes-1);
-      Tcl_AppendResult(interp, "Unknown job '",argv[0],"' requested!\n",buffer, (char *)NULL); return (TCL_ERROR); 
-    }
+    free(seed); 
+    return(TCL_OK);
   }
-  printf("Unknown error in tcl_seed(): This should have never been shown!\n");
-  return(TCL_ERROR);
+  else if (!strncmp(argv[0], "stat", strlen(argv[0]))) {  /* 'bit_random stat [status-list]' */
+    BitRandomStatus *stat = malloc(n_nodes*sizeof(BitRandomStatus));
+    if (argc <= 1) {
+      mpi_bit_random_stat(0,stat);
+      for (i=0; i < n_nodes; i++) { 
+	sprintf(buffer, "{"); Tcl_AppendResult(interp, buffer, (char *) NULL); 
+	sprintf(buffer, "%d %d ", stat[i].random_pointer_1,stat[i].random_pointer_2); Tcl_AppendResult(interp, buffer, (char *) NULL);
+	for (j=0; j < MERS_BIT_RANDOM; j++) { 
+	  sprintf(buffer, "%d ", stat[i].rand_w_array[j]); Tcl_AppendResult(interp, buffer, (char *) NULL); }
+	sprintf(buffer, "} "); Tcl_AppendResult(interp, buffer, (char *) NULL);
+      }
+    }
+    else if (argc < n_nodes*(MERS_BIT_RANDOM+2)+1) { 
+      sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random stat [<idum> <iy> <iv[0]> ... <iv[%d]>]^%d'", argc,MERS_BIT_RANDOM-1,n_nodes);
+      Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_ERROR); }
+    else {
+      cnt = 1;
+      for (i=0; i < n_nodes; i++) {
+	stat[i].random_pointer_1 = atoi(argv[cnt++]); stat[i].random_pointer_2 = atoi(argv[cnt++]);
+	for (j=0; j < MERS_BIT_RANDOM; j++) stat[i].rand_w_array[j] = atoi(argv[cnt++]);
+      }
+      RANDOM_TRACE(printf("Got "); for(i=0;i<n_nodes;i++) printf("%d/%d/... as new status.\n",stat[i].random_pointer_1,stat[i].random_pointer_2));
+      mpi_bit_random_stat(n_nodes,stat);
+    }
+    free(stat); 
+    return(TCL_OK);
+  }
+  /* else */
+  sprintf(buffer, "Usage: 'bit_random [{ seed [<seed(0)> ... <seed(%d)>] | stat [status-list] }]'",n_nodes-1);
+  Tcl_AppendResult(interp, "Unknown job '",argv[0],"' requested!\n",buffer, (char *)NULL);
+  return (TCL_ERROR); 
 }
 
 

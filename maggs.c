@@ -2479,6 +2479,6 @@ int parse_and_print_gauss_res(Tcl_Interp *interp, int argc, char **argv)
     Tcl_PrintDouble(interp, gauss_res, buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
-#endif  
   return (TCL_OK);
+#endif  
 }

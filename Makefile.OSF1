@@ -30,7 +30,7 @@ CXX=cxx
 CFLAGS+=-w0 -warnproto -check -msg_disable ignorecallval -msg_disable noparmlist \
 	-msg_disable uncalled -msg_disable alignment -msg_disable unknownmacro \
 	-msg_disable strctpadding -msg_disable unusedincl \
-        -msg_disable needconstext -msg_disable newlocale 
+        -msg_disable needconstext -msg_disable newlocale -msg_disable cxxcomment
 ifneq ($(findstring V6.2,$(shell $(CC) -V)),)
 CFLAGS+= -msg_disable unusedtop -msg_disable unnecincl -msg_disable nestincl
 endif

@@ -447,11 +447,9 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv)
     free(elements);
     return (TCL_OK);
   }
-  else {
-    sprintf(buffer, "The feature 'analyze bins %s' you requested is not yet implemented.",argv[0]);
-    Tcl_AppendResult(interp,buffer,(char *)NULL);
-    return (TCL_ERROR);
-  }
+  /* else */
+  sprintf(buffer, "The feature 'analyze bins %s' you requested is not yet implemented.",argv[0]);
+  Tcl_AppendResult(interp,buffer,(char *)NULL);
   return (TCL_ERROR);
 }
 

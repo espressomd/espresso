@@ -334,15 +334,12 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
     } else {
       return LIPID_UP;
     }
-  } else {
-    if (  distance  > stray_cut_off ) {
-      return LIPID_STRAY;
-    } else {
-      return LIPID_DOWN;
-    }
   }
-
-  return -1;
+  /* else */
+  if (  distance  > stray_cut_off )
+    return LIPID_STRAY;
+  /* else */
+  return LIPID_DOWN;
 }
 
 

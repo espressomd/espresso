@@ -65,20 +65,21 @@ static int writestring(FILE *f, char *s)
 
 static int findNonWs(FILETYPE f)
 {
-  int c;
-  for(;;) {
+  int c, cont = 1;
+  while (cont) {
     switch ((c = readchar(f))) {
     case 0:
-      return RETURN_CODE_EOF;
+      c = RETURN_CODE_EOF;
+      break;
     case -1:
-      return RETURN_CODE_ERROR;
+      c = RETURN_CODE_ERROR;
+      break;
     default: ;
     }
     if (!isspace(c))
-      return c;
+      break;
   }
-  /* never reached, Mr. cxx */
-  return 0;
+  return c;
 }
 
 static int readString(FILETYPE f, char *buffer, int size)

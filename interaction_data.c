@@ -658,11 +658,10 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
 		     (char *) NULL);
     return (TCL_ERROR);
-  default:
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "unknown bonded interaction type",(char *) NULL);
-    return (TCL_ERROR);
   }
+  /* if none of the above */
+  Tcl_ResetResult(interp);
+  Tcl_AppendResult(interp, "unknown bonded interaction type",(char *) NULL);
   return (TCL_ERROR);
 }
 
