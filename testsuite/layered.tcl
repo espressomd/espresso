@@ -56,7 +56,13 @@ proc write_data {file} {
     global energy pressure verlet_reuse op
     set f [open "|gzip > $file" "w"]
     set energy [analyze energy total]
-    set pressure [analyze pressure total]
+    if { [regexp "ROTATION" [code_info]]} { 
+	set pressrot [analyze pressure total]
+	set pressure [expr $pressrot - [analyze pressure ideal]]
+    } else {
+	set pressure [analyze pressure total]
+	set pressrot [expr $pressure - 0.5*[analyze pressure ideal]]
+    }
     set verlet_reuse [setmd verlet_reuse]
     blockfile $f write tclvariable {energy pressure verlet_reuse}
     blockfile $f write variable box_l
@@ -104,13 +110,14 @@ if { [catch {
     set totprs [analyze pressure total]
 
     set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
-    puts "relative energy deviations: $rel_eng_error"
+    puts "relative energy deviations: $rel_eng_error  ($toteng / $energy)"
     if { $rel_eng_error > $epsilon } {
 	error "relative energy error too large"
     }
 
+    if { [regexp "ROTATION" [code_info]]} { set pressure $pressrot }
     set rel_prs_error [expr abs(($totprs - $pressure)/$pressure)]
-    puts "relative pressure deviations: $rel_prs_error"
+    puts "relative pressure deviations: $rel_prs_error  ($totprs / $pressure)"
     if { $rel_prs_error > $epsilon } {
 	error "relative pressure error too large"
     }
