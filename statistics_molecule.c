@@ -32,17 +32,17 @@ int analyze_fold_molecules(float *coord)
 
   /* loop molecules */
   for(m=0; m<n_molecules; m++) {
-    mol_size = molecules[m].part.n;
+    mol_size = topology[m].part.n;
     if(mol_size > 0) {
       /* calc center of mass */
-      calc_mol_center_of_mass(molecules[m],com);
+      calc_mol_center_of_mass(topology[m],com);
       /* fold coordinates */
       for(i=0; i<3; i++) {
 	if ( PERIODIC(i) ) { 
 	  tmp = (int)floor(com[i]*box_l_i[i]);
 	  cm_tmp =0.0;
 	  for(p=0; p<mol_size; p++) {
-	    ind        = 3*molecules[m].part.e[p] + i;
+	    ind        = 3*topology[m].part.e[p] + i;
 	    coord[ind] -= tmp*box_l[i];
 	    cm_tmp     += coord[ind];
 	  }

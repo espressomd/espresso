@@ -20,6 +20,7 @@
 #include "statistics_chain.h"
 #include "particle_data.h"
 #include "cells.h"
+#include "communication.h"
 
 int     n_molecules = -1;
 Molecule *topology = NULL;
@@ -98,7 +99,7 @@ int parse_sync_topo_part_info(Tcl_Interp *interp) {
     Tcl_AppendResult(interp, "Can't sync molecules to particle info: No molecules defined ", (char *)NULL);
     return TCL_ERROR;
   }
-  if ( !mpi_sync_topo_part_info( &topology )) {
+  if ( !mpi_sync_topo_part_info( topology )) {
     Tcl_AppendResult(interp, "Error syncronising molecules to particle info", (char *)NULL);
     return TCL_ERROR;
   }

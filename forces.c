@@ -185,7 +185,7 @@ void init_forces()
       for (i = 0; i < np; i++)
 	init_local_particle_force(&p[i]);
     }
-  } 
+  }
   else {
     /* all other thermostates need forces and torques initialized with
        zero.  rescale quaternions. */

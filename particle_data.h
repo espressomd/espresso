@@ -56,7 +56,7 @@ typedef struct {
   /** Molecule identifier. */
   int    mol_id;
   /** particle type, used for non bonded interactions. */
-  int    type;  
+  int    type;
 
 #ifdef ELECTROSTATICS
   /** charge. */
