@@ -267,7 +267,7 @@ void calc_cell_grid()
 	}
     }
 
-    n_cells *= cell_grid[i];
+    n_inner_cells *= cell_grid[i];
     cell_size[i]     = local_box_l[i]/(double)cell_grid[i];
     inv_cell_size[i] = 1.0 / cell_size[i];
   }
