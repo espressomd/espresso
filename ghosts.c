@@ -248,7 +248,7 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
   int pl, p, np, offset;
   Particle *part1, *part2, *pt1, *pt2;
 
-  GHOST_TRACE(fprintf(stderr, "%d: local_transfer\n", this_node));
+  GHOST_TRACE(fprintf(stderr, "%d: local_transfer: type %d data_parts %d\n", this_node,gc->type,data_parts));
 
   /* transfer data */
   offset = gc->n_part_lists/2;

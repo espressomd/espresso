@@ -361,13 +361,14 @@ Cell *dd_save_position_to_cell(double pos[3])
   int dir,cpos[3];
   for(dir=0;dir<3;dir++) {
     cpos[dir] = (int)((pos[dir]-my_left[dir])*dd.inv_cell_size[dir])+1;
-
 #ifdef PARTIAL_PERIODIC
     if(periodic[dir] == 0) {
-      if (cpos[dir] < 1 && boundary[2*dir]==1)                 
+      if (cpos[dir] < 1 && boundary[2*dir]!=0) {   
 	cpos[dir] = 1;
-      else if (cpos[dir] > dd.cell_grid[dir] && boundary[2*dir+1]==1) 
+      }
+      else if (cpos[dir] > dd.cell_grid[dir] && boundary[2*dir+1]!=0) {
 	cpos[dir] = dd.cell_grid[dir];
+      }
     }
 #endif
     if(cpos[dir] < 1 || cpos[dir] >  dd.cell_grid[dir]) {

@@ -176,7 +176,7 @@ void build_verlet_lists_and_calc_verlet_ia()
  
 #ifdef VERLET_DEBUG 
   int estimate, sum=0;
-  fprintf(stderr,"%d: build_verlet_list_and_force_calc:\n",this_node);
+  fprintf(stderr,"%d: build_verlet_list_and_calc_verlet_ia:\n",this_node);
   /* estimate number of interactions: (0.5*n_part*ia_volume*density)/n_nodes */
   estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_range,3.0))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
 #endif
@@ -210,7 +210,9 @@ void build_verlet_lists_and_calc_verlet_ia()
 	for(j = j_start; j < np2; j++) {
 	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
 	  if(dist2 <= max_range2) {
-	    fprintf(stderr,"Cells %d %d Pair %d %d   ",c,n,p1[i].p.identity,p2[i].p.identity);
+	    ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
+	    ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
+
 	    add_pair(pl, &p1[i], &p2[j]); 
 	    /* calc non bonded interactions */
 	    add_non_bonded_pair_force(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
