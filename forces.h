@@ -102,6 +102,38 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
 }
 
+/** Calculate bonded forces between a pair of particles.
+    @param p1 particle for which to calculate forces
+*/
+MDINLINE void add_bonded_pair_force(Particle *p1)
+{
+  int i, type_num;
+
+  i=0;
+  while(i<p1->bl.n) {
+    type_num = p1->bl.e[i];
+    switch(bonded_ia_params[type_num].type) {
+    case BONDED_IA_FENE:
+      add_fene_pair_force(p1,
+			  checked_particle_ptr(p1->bl.e[i+1]), type_num);
+      i+=2; break;
+    case BONDED_IA_HARMONIC:
+      add_harmonic_pair_force(p1,
+			      checked_particle_ptr(p1->bl.e[i+1]), type_num);
+      i+=2; break;
+    case BONDED_IA_ANGLE:
+      add_angle_force(p1,
+		      checked_particle_ptr(p1->bl.e[i+1]),
+		      checked_particle_ptr(p1->bl.e[i+2]), type_num);
+      i+=3; break;
+    default :
+      fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->r.identity);
+      i = p1->bl.n; 
+      break;
+    }
+  }
+}
+
 /*@}*/
 
 #endif

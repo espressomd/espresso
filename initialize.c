@@ -31,6 +31,7 @@
 #include "mmm1d.h"
 #include "forces.h"
 #include "uwerr.h"
+#include "pairwise.h"
 
 static void init_tcl(Tcl_Interp *interp);
 
@@ -94,12 +95,12 @@ void on_integration_start()
     if(temperature > 0.0) {
       p3m.prefactor    = p3m.bjerrum * temperature; 
       dh_params.prefac = dh_params.bjerrum * temperature;
-      mmm1d.prefactor  = mmm1d.bjerrum * temperature;
+      mmm1d_params.prefactor = mmm1d_params.bjerrum * temperature;
     }
     else {
       p3m.prefactor    = p3m.bjerrum;
       dh_params.prefac = dh_params.bjerrum;
-      mmm1d.prefactor  = mmm1d.bjerrum;
+      mmm1d_params.prefactor = mmm1d_params.bjerrum;
     }
     if (coulomb.method == COULOMB_MMM1D)
       MMM1D_init();

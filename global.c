@@ -32,11 +32,7 @@
     changed by Tcl script code. */
 int ro_callback(Tcl_Interp *interp, void *data);
 
-/** List of all Tcl accessible global variables. If you
-    want to add a new variable, ADD IT ALWAYS AT THE END.
-    You should also add an \verbatim #define FIELD_*\endverbatim
-    in \ref global.h and a descriptive text in \ref variables_page.
-*/
+/// List of all Tcl accessible global variables
 const Datafield fields[] = {
   {box_l,            TYPE_DOUBLE, 3, "box_l",         boxl_callback, 1 },            /* 0 from grid.c */
   {cell_grid,           TYPE_INT, 3, "cell_grid",     ro_callback, 6 },              /* 1 from cells.c */
@@ -69,7 +65,7 @@ const Datafield fields[] = {
 };
 
 /** \page variables_page Global variables
-
+    \section desc_var Description of the global variables
      The following list explains the usage of the variables that are
      accessible via \ref tcl_setmd.  The list gives the setmd name of
      (hopefully) all available variables, the data type and a link to
@@ -140,6 +136,7 @@ const Datafield fields[] = {
 	<li> \verbatim verlet_reuse bool \endverbatim
 	     \ref verlet_reuse - Average number of integration steps the verlet list has been re-used.
 	</ul>    
+
  */
 
 /**********************************************
@@ -167,7 +164,7 @@ int setmd(ClientData data, Tcl_Interp *interp,
   for (i = 0; fields[i].data != NULL; i++) {
     if (all || !strncmp(argv[1], fields[i].name, strlen(argv[1]))) {
       if (!all) {
-	if (strlen(argv[1]) < fields[i].min_length) {
+	if ((int)strlen(argv[1]) < fields[i].min_length) {
 	  Tcl_AppendResult(interp, "Argument \"",argv[1],"\" not long ", (char *) NULL);
 	  Tcl_AppendResult(interp, "enough to identify a setmd variable!", (char *) NULL);
 	  return (TCL_ERROR);

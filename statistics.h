@@ -43,17 +43,15 @@ typedef struct {
 
 /*@}*/
 
-/** \name Exported Variables */
+/** \name Exported Variables
+    Previous particle configurations (needed for offline analysis
+    and correlation analysis in \ref #analyze)
+*/
 /************************************************************/
-/*@{*/
-
-/** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
 /*@{*/
 extern double **configs;
 extern int n_configs;
 extern int n_part_conf;
-/*@}*/
-
 /*@}*/
 
 /** \name Exported Functions */
@@ -72,21 +70,17 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 double mindist(IntList *set1, IntList *set2);
 
 /** returns all particles within a given radius r_catch around a position.
-    @param posx x-coordinate of point
-    @param posy y-coordinate of point
-    @param posz z-coordinate of point
+    @param pos position of sphere of point
     @param r_catch the radius around the position
     @param il the list where to store the particles indices */
-void nbhood(double posx, double posy, double posz, double r_catch, IntList *il);
+void nbhood(double pos[3], double r_catch, IntList *il);
 
 /** minimal distance to point.
-    @param posx x-coordinate of point
-    @param posy y-coordinate of point
-    @param posz z-coordinate of point
+    @param pos point
     @param pid  if a valid particle id, this particle is omitted from minimization
                 (this is a good idea if the posx, posy, posz is the position of a particle).
     @return the minimal distance of a particle to coordinates (<posx>, <posy>, <posz>). */
-double distto(double posx, double posy, double posz, int pid);
+double distto(double pos[3], int pid);
 
 
 /** appends particles' positions in 'partCfg' to \ref #configs */

@@ -12,7 +12,7 @@ typedef struct {
   double prefactor;
   double bjerrum;
 } MMM1D_struct;
-extern MMM1D_struct mmm1d;
+extern MMM1D_struct mmm1d_params;
 
 int set_mmm1d_params(Tcl_Interp *interp,
 		     double bjerrum, double switch_rad,

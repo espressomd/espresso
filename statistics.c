@@ -25,22 +25,13 @@ double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
 
 double min_distance2(double pos1[3], double pos2[3])
 {
-  int i;
-  double diff[3], dist = 0;
-  for(i=0;i<3;i++) {
-    diff[i] = pos1[i]-pos2[i];
-#ifdef PERIODIC
-    if (periodic[i])
-#endif
-      diff[i] -=  dround(diff[i]/box_l[i])*box_l[i];
-
-    dist += SQR(diff[i]);
-  }
-  return dist;
+  double diff[3];
+  get_mi_vector(diff, pos1, pos2);
+  return sqrt(sqrlen(diff));
 }
 
 static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
-			       double *posx, double *posy, double *posz, int *pid)
+			       double pos[3], int *pid)
 {
   *pid = -1;
 
@@ -53,9 +44,9 @@ static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
       Tcl_AppendResult(interp, "reference particle does not exist", (char *)NULL);
       return TCL_ERROR;
     }
-    *posx = ref.r.p[0];
-    *posy = ref.r.p[1];
-    *posz = ref.r.p[2];
+    pos[0] = ref.r.p[0];
+    pos[1] = ref.r.p[1];
+    pos[2] = ref.r.p[2];
     
     (*argc)--;
     (*argv)++;
@@ -64,9 +55,9 @@ static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
     return TCL_OK;
   }
   else {
-    if (Tcl_GetDouble(interp, (*argv)[0], posx) == TCL_ERROR ||
-	Tcl_GetDouble(interp, (*argv)[1], posy) == TCL_ERROR ||
-	Tcl_GetDouble(interp, (*argv)[2], posz) == TCL_ERROR)
+    if (Tcl_GetDouble(interp, (*argv)[0], &pos[0]) == TCL_ERROR ||
+	Tcl_GetDouble(interp, (*argv)[1], &pos[1]) == TCL_ERROR ||
+	Tcl_GetDouble(interp, (*argv)[2], &pos[2]) == TCL_ERROR)
       return TCL_ERROR;
 
     (*argc) -= 3;
@@ -103,9 +94,9 @@ double mindist(IntList *set1, IntList *set2)
   return mindist;
 }
 
-void nbhood(double xt, double yt, double zt, double r, IntList *il)
+void nbhood(double pt[3], double r, IntList *il)
 {
-  double dx, dy, dz;
+  double d[3];
   int i;
 
   init_intlist(il);
@@ -113,10 +104,8 @@ void nbhood(double xt, double yt, double zt, double r, IntList *il)
   updatePartCfg();
 
   for (i = 0; i<n_total_particles; i++) {
-    dx = xt - partCfg[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
-    dy = yt - partCfg[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
-    dz = zt - partCfg[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
-    if (sqrt(SQR(dx)+SQR(dy)+SQR(dz)) < r) {
+    get_mi_vector(d, pt, partCfg[i].r.p);
+    if (sqrt(sqrlen(d)) < r) {
       realloc_intlist(il, il->n + 1);
       il->e[il->n] = partCfg[i].r.identity;
       il->n++;
@@ -124,20 +113,18 @@ void nbhood(double xt, double yt, double zt, double r, IntList *il)
   }
 }
 
-double distto(double xt, double yt, double zt, int pid)
+double distto(double p[3], int pid)
 {
   int i;
-  double dx, dy, dz;
+  double d[3];
   double mindist;
 
   /* larger than possible */
   mindist=SQR(box_l[0] + box_l[1] + box_l[2]);
   for (i=0; i<n_total_particles; i++) {
     if (pid != partCfg[i].r.identity) {
-      dx = xt - partCfg[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
-      dy = yt - partCfg[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
-      dz = zt - partCfg[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
-      mindist = dmin(mindist, SQR(dx)+SQR(dy)+SQR(dz));
+      get_mi_vector(d, p, partCfg[i].r.p);
+      mindist = dmin(mindist, sqrlen(d));
     }
   }
   return sqrt(mindist);
@@ -364,7 +351,7 @@ static int parse_nbhood(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze nbhood { <partid> | <posx> <posy> <posz> } <r_catch>' */
   int p, i;
-  double posx, posy, posz;
+  double pos[3];
   double r_catch;
   char buffer[TCL_INTEGER_SPACE + 2];  
   IntList il;
@@ -375,7 +362,7 @@ static int parse_nbhood(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
 
-  get_reference_point(interp, &argc, &argv, &posx, &posy, &posz, &p);
+  get_reference_point(interp, &argc, &argv, pos, &p);
 
   if (argc != 1) {
     Tcl_AppendResult(interp, "usage: nbhood { <partid> | <posx> <posy> <posz> } <r_catch>",
@@ -388,7 +375,7 @@ static int parse_nbhood(Tcl_Interp *interp, int argc, char **argv)
 
   updatePartCfg();
 
-  nbhood(posx, posy, posz, r_catch, &il);
+  nbhood(pos, r_catch, &il);
   
   for (i = 0; i < il.n; i++) {
     sprintf(buffer, "%d ", il.e[i]);
@@ -403,7 +390,7 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
   /* 'analyze distto { <part_id> | <posx> <posy> <posz> }' */
   double result;
   int p;
-  double posx, posy, posz;
+  double pos[3];
   char buffer[TCL_DOUBLE_SPACE];  
 
   if (n_total_particles == 0) {
@@ -412,7 +399,7 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
 
-  get_reference_point(interp, &argc, &argv, &posx, &posy, &posz, &p);
+  get_reference_point(interp, &argc, &argv, pos, &p);
   if (argc != 0) {
     Tcl_AppendResult(interp, "usage: distto { <partid> | <posx> <posy> <posz> }",
 		     (char *)NULL);
@@ -421,7 +408,7 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
 
   updatePartCfg();
 
-  result = distto(posx, posy, posz, p);
+  result = distto(pos, p);
 
   Tcl_PrintDouble(interp, result, buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);

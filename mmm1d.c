@@ -90,7 +90,7 @@ static Polynom *modPsi = NULL;
 static int      n_modPsi = 0, eo_n_nodes = 0;
 static double L_i, L2, L2_i, prefL2_i, prefL3_i;
 
-MMM1D_struct mmm1d = { 0.05, 5, 1e-5, 1, 1};
+MMM1D_struct mmm1d_params = { 0.05, 5, 1e-5, 1, 1};
 
 MDINLINE double mod_psi_even(int n, double x)
 { return evaluateAsTaylorSeriesAt(&modPsi[2*n],x*x); }
@@ -200,20 +200,20 @@ int set_mmm1d_params(Tcl_Interp *interp, double bjerrum, double switch_rad,
 
   if (bessel_cutoff < 0 && switch_rad < 0) {
     /* determine besselcutoff and optimal switching radius */
-    mmm1d.bjerrum = 1;
+    mmm1d_params.bjerrum = 1;
     for (switch_rad = RAD_STEPPING*box_l[2]; switch_rad < maxrad; switch_rad += RAD_STEPPING*box_l[2]) {
-      mmm1d.bessel_cutoff = determine_bessel_cutoff(switch_rad, maxPWerror, MAXIMAL_B_CUT);
+      mmm1d_params.bessel_cutoff = determine_bessel_cutoff(switch_rad, maxPWerror, MAXIMAL_B_CUT);
       /* no reasonable cutoff possible */
-      if (mmm1d.bessel_cutoff == MAXIMAL_B_CUT)
+      if (mmm1d_params.bessel_cutoff == MAXIMAL_B_CUT)
 	continue;
-      mmm1d.far_switch_radius_2 = switch_rad*switch_rad;
+      mmm1d_params.far_switch_radius_2 = switch_rad*switch_rad;
 
       /* initialize mmm1d temporary structures */
       mpi_bcast_coulomb_params();
       /* perform force calculation test */
       int_time = time_force_calc(TEST_INTEGRATIONS);
 
-      sprintf(buffer, "r= %f c= %d t= %f ms\n", switch_rad, mmm1d.bessel_cutoff, int_time);
+      sprintf(buffer, "r= %f c= %d t= %f ms\n", switch_rad, mmm1d_params.bessel_cutoff, int_time);
       // fprintf(stderr, buffer);
       Tcl_AppendResult(interp, buffer, (char*)NULL);
 
@@ -251,11 +251,11 @@ int set_mmm1d_params(Tcl_Interp *interp, double bjerrum, double switch_rad,
     return TCL_ERROR;
   }
 
-  mmm1d.bjerrum = bjerrum;
-  mmm1d.far_switch_radius_2 = switch_rad*switch_rad;
-  mmm1d.bessel_cutoff = bessel_cutoff;
+  mmm1d_params.bjerrum = bjerrum;
+  mmm1d_params.far_switch_radius_2 = switch_rad*switch_rad;
+  mmm1d_params.bessel_cutoff = bessel_cutoff;
 
-  mmm1d.maxPWerror = maxPWerror;
+  mmm1d_params.maxPWerror = maxPWerror;
 
   mpi_bcast_coulomb_params();
 
@@ -291,7 +291,7 @@ void MMM1D_recalcTables()
     binom *= (-0.5 - n)/(double)(n+1);
     n++;
   }
-  while (err > 0.1*mmm1d.maxPWerror);
+  while (err > 0.1*mmm1d_params.maxPWerror);
 }
 
 void MMM1D_init()
@@ -303,7 +303,7 @@ void MMM1D_init()
   L_i  = 1/box_l[2];
   L2   = box_l[2]*box_l[2];
   L2_i = L_i*L_i;
-  prefL2_i = mmm1d.prefactor*L2_i;
+  prefL2_i = mmm1d_params.prefactor*L2_i;
   prefL3_i = prefL2_i*L_i;
 
   MMM1D_recalcTables();
@@ -323,7 +323,7 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
   r2     = rxy2 + dz*dz;
   r      = sqrt(r2);
 
-  if (rxy2 <= mmm1d.far_switch_radius_2) {
+  if (rxy2 <= mmm1d_params.far_switch_radius_2) {
     /* near range formula */
     double sr, sz, r2nm1, rt, rt2, shift_z;
     int n;
@@ -342,7 +342,7 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
       sz +=         r2n*mpo;
       sr += deriv*r2nm1*mpe;
 
-      if (fabs(deriv*r2nm1*mpe) < mmm1d.maxPWerror)
+      if (fabs(deriv*r2nm1*mpe) < mmm1d_params.maxPWerror)
 	break;
 
       r2nm1 = r2n;
@@ -354,7 +354,7 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
 
     /* real space parts */
 
-    pref = mmm1d.prefactor/(r2*r); 
+    pref = mmm1d_params.prefactor/(r2*r); 
     *Fx += pref*dx;
     *Fy += pref*dy;
     *Fz += pref*dz;
@@ -362,7 +362,7 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
     shift_z = dz + box_l[2];
     rt2 = rxy2 + shift_z*shift_z;
     rt  = sqrt(rt2);
-    pref = mmm1d.prefactor/(rt2*rt); 
+    pref = mmm1d_params.prefactor/(rt2*rt); 
     *Fx += pref*dx;
     *Fy += pref*dy;
     *Fz += pref*shift_z;
@@ -370,7 +370,7 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
     shift_z = dz - box_l[2];
     rt2 = rxy2 + shift_z*shift_z;
     rt  = sqrt(rt2);
-    pref = mmm1d.prefactor/(rt2*rt); 
+    pref = mmm1d_params.prefactor/(rt2*rt); 
     *Fx += pref*dx;
     *Fy += pref*dy;
     *Fz += pref*shift_z;
@@ -382,7 +382,7 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
     double sr = 0, sz = 0;
     int bp;
 
-    for (bp = 1; bp < mmm1d.bessel_cutoff; bp++) {
+    for (bp = 1; bp < mmm1d_params.bessel_cutoff; bp++) {
       double fq = C_2PI*bp;    
       sr += bp*K1(fq*rxy_d)*cos(fq*z_d);
       sz += bp*K0(fq*rxy_d)*sin(fq*z_d);
@@ -390,11 +390,11 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
     sr *= L2_i*4*C_2PI;
     sz *= L2_i*4*C_2PI;
     
-    pref = mmm1d.prefactor*(sr/rxy + 2*L_i/rxy2);
+    pref = mmm1d_params.prefactor*(sr/rxy + 2*L_i/rxy2);
 
     *Fx = pref*dx;
     *Fy = pref*dy;
-    *Fz = mmm1d.prefactor*sz;
+    *Fz = mmm1d_params.prefactor*sz;
   }
 }
 
@@ -425,7 +425,7 @@ void MMM1D_calc_forces()
   double dx, dy, dz;
   double Fx, Fy, Fz;
 
-  if (mmm1d.maxPWerror <= 0)
+  if (mmm1d_params.maxPWerror <= 0)
     return;
 
   if (periodic[0] != 0 || periodic[1] != 0 || periodic[2] != 1) {

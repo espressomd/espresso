@@ -2,7 +2,9 @@
 #define GLOBAL_H
 /** \file global.h
     This file contains the code for access to globally defined
-    variables using the script command setmd.
+    variables using the script command setmd. \ref add_vars "Here"
+    you can find details on how to add new variables in the interpreter's
+    space.
 
     <b>Responsible:</b>
     <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
@@ -56,7 +58,7 @@ extern const Datafield fields[];
 
 /** \name Field Enumeration
     These numbers identify the variables given in
-    \ref #fields for use with e. g. \ref mpi_bcast_parameter.
+    \ref #fields for use with \ref mpi_bcast_parameter.
 */
 /*@{*/
 /** index of \ref box_l in \ref #fields */
@@ -111,10 +113,7 @@ extern const Datafield fields[];
  * misc procedures
  **********************************************/
 
-/** Implements the Tcl command \ref tcl_setmd. It allows to modify simulation parameters.
-    These parameters must be declared in \ref #fields. If you write your own
-    callback, REMEMBER THE OTHER NODES!!! The value will only be set by you
-    and only on the master node. Using \ref mpi_bcast_parameter may be useful. */
+/// Implements the Tcl command \ref tcl_setmd. It allows to modify simulation parameters
 int setmd(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
 

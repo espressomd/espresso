@@ -1,17 +1,24 @@
 #ifndef IA_DATA_H
 #define IA_DATA_H
 /** \file interaction_data.h
+    Various procedures concerning interactions between particles.
 
     <b>Responsible:</b>
     <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 
-    undocumented.
- */
+    interaction_data.h contains the parser \ref #inter for the
+    \ref tcl_inter Tcl command. Therefore the parsing of bonded and nonbonded
+    interaction definition commands both is done here. It also contains
+    procedures for low-level interactions setup and some helper functions.
+    Moreover it contains code for the treatments of constraints.
+*/
 
 #include <tcl.h>
 #include "particle_data.h"
 
-/** \name Defines */
+/** \name Type codes of bonded interactions
+    Enumeration of implemented bonded interactions.
+*/
 /************************************************************/
 /*@{*/
 
@@ -26,40 +33,68 @@
 /** This bonded interaction was not set. */
 #define BONDED_IA_NONE    -1
 
+/*@}*/
+
+
+/** \name Type codes for the type of Coulomb interaction
+    Enumeration of implemented methods for the electrostatic
+    interaction.
+*/
+/************************************************************/
+/*@{*/
+
 /** Coulomb interation switched off (NONE). */
 #define COULOMB_NONE  0
 /** Coulomb method is Debye-Hueckel. */
 #define COULOMB_DH    1
+/** Coulomb method is Debye-Hueckel with parallel separate calculation. */
+#define COULOMB_DH_PW 2
 /** Coulomb method is P3M. */
-#define COULOMB_P3M   2
+#define COULOMB_P3M   3
 /** Coulomb method is one-dimensional MMM */
-#define COULOMB_MMM1D 3
+#define COULOMB_MMM1D 4
 
+/*@}*/
+
+
+/** \name Type codes for constraints
+    Enumeration of implemented constraint types.
+*/
+/************************************************************/
+/*@{*/
+
+/** No constraint applied */
 #define CONSTRAINT_NONE 0
+/** wall constraint applied */
 #define CONSTRAINT_WAL 1
+/** spherical constraint applied */
 #define CONSTRAINT_SPH 2
+/** (finite) cylinder shaped constraint applied */
 #define CONSTRAINT_CYL 3
+/** Rod-like constraint applied. In addition to the general cylinder the rod also allows for a line charge. */
 #define CONSTRAINT_ROD 4
 
 /*@}*/
 
-/** \name Data Types */
+/* Data Types */
 /************************************************************/
-/*@{*/
 
 /** field containing the interaction parameters for
  *  nonbonded interactions. Access via
  * get_ia_param(i, j), i,j < n_particle_types */
 typedef struct {
-  /** Lennard-Jones with shift */
+  /** \name Lennard-Jones with shift */
+  /*@{*/
   double LJ_eps;
   double LJ_sig;
   double LJ_cut;
   double LJ_shift;
   double LJ_offset;
   double LJ_capradius;
+  /*@}*/
 
-  /** Lennard-Jones+Cos potential */
+  /** \name Lennard-Jones+Cos potential */
+  /*@{*/
   double LJCOS_eps;
   double LJCOS_sig;
   double LJCOS_cut;
@@ -67,8 +102,10 @@ typedef struct {
   double LJCOS_alfa;
   double LJCOS_beta;
   double LJCOS_rmin;
+  /*@}*/
   
-  /** Gay-Berne potential */
+  /** \name Gay-Berne potential */
+  /*@{*/
   double GB_eps;
   double GB_sig;
   double GB_cut;
@@ -78,21 +115,19 @@ typedef struct {
   double GB_nu;
   double GB_chi1;
   double GB_chi2;
-  
+  /*@}*/  
   
 } IA_parameters;
+
+/** \name Compounds for Coulomb interactions */
+/*@{*/
 
 /** field containing the interaction parameters for
  *  the coulomb  interaction.  */
 typedef struct {
   /** Bjerrum length. */
   double bjerrum;
-  /** Method to treat coulomb interaction. 
-      So far implemented: <ul>
-      <li> COULOMB_P3M see \ref p3m.h
-      <li> COULOMB_DH  see \ref debye_hueckel.h
-      </ul>
-   */
+  /** Method to treat coulomb interaction. See \ref COULOMB_NONE "Type codes for Coulomb" */
   int method;
 } Coulomb_parameters;
 
@@ -108,40 +143,43 @@ typedef struct {
   double prefac;
 } Debye_hueckel_params;
 
+/*@}*/
+
 /** Defines parameters for a bonded interaction. */
 typedef struct {
-  /** bonded interaction type:  0 = FENE, 1 = ANGLE, 2 = DIHEDRAL, 3 = HARMONIC */
+  /** bonded interaction type. See \ref BONDED_IA_FENE "Type code for bonded" */
   int type;
   /** (Number of particles - 1) interacting for that type */ 
   int num;
   /** union to store the different bonded interaction parameters. */
   union {
-    /* Parameters for FENE Potential */
+    /** Parameters for FENE Potential */
     struct {
       double k;
       double r;
       double r2;
     } fene;
-    /* Parameters for Cosine bend potential */
+    /** Parameters for Cosine bend potential */
     struct {
       double bend;
     } angle;
-    /* Parameters for dihedral potential */
+    /** Parameters for dihedral potential */
     struct {
       int dummy;
     } dihedral;
-    /* Parameters for HARMONIC Potential */
+    /** Parameters for HARMONIC Potential */
     struct {
       double k;
       double r;
       double r2;
     } harmonic;
-	 
-
   } p;
 } Bonded_ia_parameters;
 
 #ifdef CONSTRAINTS
+/** \name Compounds for constraints */
+/*@{*/
+
 /** Parameters for a WALL constraint (or a plane if you like that more). */
 typedef struct {
   /** normal vector on the plane. */
@@ -292,5 +330,5 @@ void calc_maximal_cutoff();
 
 int checkIfParticlesInteract(int i, int j);
  
-
+char *get_name_of_bonded_ia(int i);
 #endif

@@ -1166,14 +1166,22 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
 {   
 #ifdef ELECTROSTATICS
   MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, MPI_COMM_WORLD);
-  if(coulomb.method == COULOMB_P3M) {
+  switch (coulomb.method) {
+  case COULOMB_NONE:
+    break;
+  case COULOMB_P3M:
     MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
-  }
-  else if(coulomb.method == COULOMB_DH) {
+    break;
+  case COULOMB_DH:
+  case COULOMB_DH_PW:
     MPI_Bcast(&dh_params, sizeof(Debye_hueckel_params), MPI_BYTE, 0, MPI_COMM_WORLD);
-  }
-  else if (coulomb.method == COULOMB_MMM1D) {
-    MPI_Bcast(&mmm1d, sizeof(MMM1D_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+    break;
+  case COULOMB_MMM1D:
+    MPI_Bcast(&mmm1d_params, sizeof(MMM1D_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+    break;
+  default:
+    fprintf(stderr, "cannot bcast coulomb params for unknown method %d\n", coulomb.method);
+    errexit();
   }
   on_ia_change();
 #endif

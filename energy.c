@@ -24,7 +24,6 @@
 
 Observable_stat energy = {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
 
-
 void calc_energy()
 {
   Cell *cell;
@@ -49,6 +48,18 @@ void calc_energy()
     energy.node.e[i] = 0.0;
     energy.sum.e[i]  = 0.0;
   }
+
+#ifdef ELECTROSTATICS
+  switch (coulomb.method) {
+  case COULOMB_NONE:
+  case COULOMB_P3M:
+  case COULOMB_DH: break;
+  default:
+    fprintf(stderr, "calc_energy: cannot calculate energy for coulomb method %d\n",
+	    coulomb.method);
+    errexit();
+  }
+#endif
 
   /* energy calculation loop. */
   INNER_CELLS_LOOP(m, n, o) {
@@ -304,39 +315,12 @@ int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
       Tcl_PrintDouble(interp, energy.sum.e[1], buffer);
       Tcl_AppendResult(interp, "{ kinetic ", buffer, " } ", (char *)NULL);
       for(i=0;i<n_bonded_ia;i++) {
-	switch (bonded_ia_params[i].type) {
-	case BONDED_IA_FENE:
-	  sprintf(buffer, "%d ", i);
-	  Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
-	  Tcl_PrintDouble(interp, energy.sum.e[energy.n_pre+i], buffer);
-	  Tcl_AppendResult(interp, "FENE ", buffer, " } ", (char *) NULL);
-	  break;
-	case BONDED_IA_ANGLE:
-	  sprintf(buffer, "%d ", i);
-	  Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
-	  Tcl_PrintDouble(interp, energy.sum.e[energy.n_pre+i], buffer);
-	  Tcl_AppendResult(interp, "angle ", buffer, " } ", (char *) NULL);
-	  break;
-	case BONDED_IA_DIHEDRAL:
-	  sprintf(buffer, "%d ", i);
-	  Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
-	  Tcl_PrintDouble(interp, energy.sum.e[energy.n_pre+i], buffer);
-	  Tcl_AppendResult(interp, "dihedral", buffer, " } ", (char *) NULL);
-	  break;
-	case BONDED_IA_HARMONIC:
-	  sprintf(buffer, "%d ", i);
-	  Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
-	  Tcl_PrintDouble(interp, energy.sum.e[energy.n_pre+i], buffer);
-	  Tcl_AppendResult(interp, "HARMONIC ", buffer, " } ", (char *) NULL);
-	  break;
-	default:
-	  sprintf(buffer, "%d ", i);
-	  Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
-	  Tcl_PrintDouble(interp, energy.sum.e[energy.n_pre+i], buffer);
-	  Tcl_AppendResult(interp, "unknown_type ", buffer, " } ", (char *) NULL);
-	  break;
-	  ;
-	}
+	sprintf(buffer, "%d ", i);
+	Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
+	Tcl_PrintDouble(interp, energy.sum.e[energy.n_pre+i], buffer);
+	Tcl_AppendResult(interp,
+			 get_name_of_bonded_ia(bonded_ia_params[i].type),
+			 " ", buffer, " } ", (char *) NULL);
       }
       p = energy.n_pre+energy.n_bonded;
       for (i = 0; i < n_particle_types; i++)

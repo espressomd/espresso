@@ -31,9 +31,17 @@ void init_virials() {
   virials.n_pre        = 2;
   virials.n_bonded     = n_bonded_ia;
   virials.n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
+
 #ifdef ELECTROSTATICS
-  if(coulomb.bjerrum > 0.0)       virials.n_coulomb =  1;
-  if(coulomb.method==COULOMB_P3M) virials.n_coulomb += 2;
+  switch (coulomb.method) {
+  case COULOMB_NONE: virials.n_coulomb = 0; break;
+  case COULOMB_P3M: virials.n_coulomb = 3; break;
+  case COULOMB_DH:  virials.n_coulomb = 1; break;
+  default:
+    fprintf(stderr, "%d: init_virials: cannot calculate virials for coulomb method %d\n",
+	    this_node, coulomb.method);
+    errexit();
+  }
 #endif
   virials.n = virials.n_pre+virials.n_bonded+virials.n_non_bonded+virials.n_coulomb;
   realloc_doublelist(&(virials.node),virials.n);
@@ -80,10 +88,7 @@ void calc_virials() {
 	  p2 = checked_particle_ptr(p1->bl.e[i+1]);
 	  f1[0] = p1->f[0]; f1[1] = p1->f[1]; f1[2] = p1->f[2];
 	  f2[0] = p2->f[0]; f2[1] = p2->f[1]; f2[2] = p2->f[2];
-	  for(k=0;k<3;k++) {
-	    d[k] = p1->r.p[k] - p2->r.p[k];
-	    d[k] -= dround(d[k]/box_l[k])*box_l[k];
-	  }
+	  get_mi_vector(d, p1->r.p, p2->r.p);
 	  type_num = p1->bl.e[i];
 	  switch(bonded_ia_params[type_num].type) {
 	  case BONDED_IA_FENE:
@@ -102,11 +107,8 @@ void calc_virials() {
 	    add_angle_force(p1,p2,p3,type_num);
 	    for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
 	    virials.node.e[type_num + virials.n_pre] += -d[0]*f2[0] - d[1]*f2[1] - d[2]*f2[2];
-	    for(k=0;k<3;k++) { 
-	      p3->f[k] -= (f3[k] = p3->f[k] - f3[k]);
-	      d[k] = p1->r.p[k] - p3->r.p[k];
-	      d[k] -= dround(d[k]/box_l[k])*box_l[k];
-	    }
+	    for(k=0;k<3;k++) { p3->f[k] -= (f3[k] = p3->f[k] - f3[k]); }
+	    get_mi_vector(d, p1->r.p, p3->r.p);
 	    virials.node.e[type_num + virials.n_pre] += -d[0]*f3[0] - d[1]*f3[1] - d[2]*f3[2];
 	    i+=3; break;
 	  default :

@@ -20,12 +20,9 @@
 MDINLINE void add_harmonic_pair_force(Particle *p1, Particle *p2, int type_num)
 {
   int i;
-  double dx[3], dist=0.0, dist2=0.0, fac;
-  for(i=0;i<3;i++) {
-    dx[i] = p1->r.p[i] - p2->r.p[i];
-    dx[i] -= dround(dx[i]/box_l[i])*box_l[i];
-    dist2 += SQR(dx[i]);
-  }
+  double dx[3], dist, dist2, fac;
+  get_mi_vector(dx, p1->r.p, p2->r.p);
+  dist2=sqrlen(dx);
   dist=sqrt(dist2);
 
   fac = bonded_ia_params[type_num].p.harmonic.k;
@@ -45,13 +42,9 @@ MDINLINE void add_harmonic_pair_force(Particle *p1, Particle *p2, int type_num)
 
 MDINLINE double harmonic_pair_energy(Particle *p1, Particle *p2, int type_num)
 {
-  int i;
   double dx[3], dist2=0.0, dist=0.0, energy;
-  for(i=0;i<3;i++) {
-    dx[i] = p1->r.p[i] - p2->r.p[i];
-    dx[i] -= dround(dx[i]/box_l[i])*box_l[i];
-    dist2 += SQR(dx[i]);
-  }
+  get_mi_vector(dx, p1->r.p, p2->r.p);
+  dist2=sqrlen(dx);
   dist=sqrt(dist2);
   
   energy = 0.5*bonded_ia_params[type_num].p.harmonic.k;

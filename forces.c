@@ -2,8 +2,10 @@
  *
  *  For more information see \ref forces.h "forces.h".
 */
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "config.h"
 #include "debug.h"
@@ -17,7 +19,7 @@
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "rotation.h"
-
+#include "pairwise.h"
 #include "forces.h"
 
 
@@ -30,8 +32,8 @@ void force_init()
 		      this_node,n_particle_types));
 }
 
-
-void force_calc()
+/** nonbonded and bonded force calculation using the verlet list */
+void calculate_verlet_ia()
 {
   Cell *cell;
   Particle *p, **pairs;
@@ -39,12 +41,6 @@ void force_calc()
   int k, i,j, m, n, o, np;
   double d[3], dist2, dist;
   IA_parameters *ia_params;
-  /* preparation */
-  init_forces();
-#ifdef ROTATION
-  init_torques();
-#endif
-
 
   /* force calculation loop. */
   INNER_CELLS_LOOP(m, n, o) {
@@ -75,6 +71,17 @@ void force_calc()
       } 
     }
   }
+}
+
+void force_calc()
+{
+  /* preparation */
+  init_forces();
+#ifdef ROTATION
+  init_torques();
+#endif
+
+  calculate_verlet_ia();
 
   calc_long_range_forces();
 }
@@ -83,37 +90,13 @@ void force_calc()
 
 void calc_bonded_forces(Particle *p, int np)
 {
-  Particle *p1;
-  int i, j, type_num;
+  int j;
 
   /* calculate bonded interactions (loop local particles) */
   for(j = 0; j < np; j++) {
-    p1 = &p[j];
-    i=0;
-    while(i<p1->bl.n) {
-      type_num = p1->bl.e[i];
-      switch(bonded_ia_params[type_num].type) {
-      case BONDED_IA_FENE:
-	add_fene_pair_force(p1,
-			    checked_particle_ptr(p1->bl.e[i+1]), type_num);
-	i+=2; break;
-      case BONDED_IA_HARMONIC:
-	add_harmonic_pair_force(p1,
-				checked_particle_ptr(p1->bl.e[i+1]), type_num);
-	i+=2; break;
-      case BONDED_IA_ANGLE:
-	add_angle_force(p1,
-			checked_particle_ptr(p1->bl.e[i+1]),
-			checked_particle_ptr(p1->bl.e[i+2]), type_num);
-	i+=3; break;
-      default :
-	fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->r.identity);
-	i = p1->bl.n; 
-	break;
-      }
-    }
+    add_bonded_pair_force(&p[j]);
 #ifdef CONSTRAINTS
-    add_constraints_forces(p1);
+    add_constraints_forces(&p[j]);
 #endif
   }
 }
@@ -124,10 +107,14 @@ void calc_long_range_forces()
 {
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
-  if(coulomb.method == COULOMB_P3M) 
+  switch (coulomb.method) {
+  case COULOMB_P3M:
     P3M_calc_kspace_forces(1,0);
-  else if (coulomb.method == COULOMB_MMM1D)
+    break;
+  case COULOMB_MMM1D:
     MMM1D_calc_forces();
+    break;
+  }
 #endif
 }
 
@@ -168,5 +155,3 @@ void init_forces()
   init_constraint_forces();
 #endif
 }
-
-

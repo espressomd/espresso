@@ -118,6 +118,25 @@ int checkIfParticlesInteract(int i, int j) {
   return 0;
 }
 
+char *get_name_of_bonded_ia(int i) {
+  switch (i) {
+  case BONDED_IA_FENE:
+    return "FENE";
+  case BONDED_IA_ANGLE:
+    return "angle ";
+  case BONDED_IA_DIHEDRAL:
+    return "dihedral";
+  case BONDED_IA_HARMONIC:
+    return "HARMONIC";
+  default:
+    fprintf(stderr, "%d: internal error: name of unknown interaction %d requested\n",
+	    this_node, i);
+    errexit();
+  }
+  /* just to keep the compiler happy */
+  return "";
+}
+
 /** This function increases the LOCAL ia_params field
     to the given size. This function is not exported
     since it does not do this on all nodes. Use
@@ -153,28 +172,6 @@ void realloc_ia_params(int nsize)
 
   n_particle_types = nsize;
   ia_params = new_params;
-}
-
-void make_particle_type_exist(int type)
-{
-  int ns = type + 1;
-  if (ns <= n_particle_types)
-    return;
-
-  mpi_bcast_n_particle_types(ns);
-}
-
-void make_bond_type_exist(int type)
-{
-  int i, ns = type + 1;
-  if(ns <= n_bonded_ia)
-    return;
-  bonded_ia_params = (Bonded_ia_parameters *)realloc(bonded_ia_params,
-						     ns*sizeof(Bonded_ia_parameters));
-  for (i = n_bonded_ia; i < ns; i++)
-    bonded_ia_params[i].type = BONDED_IA_NONE;
-
-  n_bonded_ia = ns;
 }
 
 int printBondedIAToResult(Tcl_Interp *interp, int i)
@@ -328,11 +325,11 @@ int printCoulombIAToResult(Tcl_Interp *interp)
     Tcl_AppendResult(interp, buffer, (char *) NULL);
   }
   else if (coulomb.method == COULOMB_MMM1D) {
-    Tcl_PrintDouble(interp, sqrt(mmm1d.far_switch_radius_2), buffer);
+    Tcl_PrintDouble(interp, sqrt(mmm1d_params.far_switch_radius_2), buffer);
     Tcl_AppendResult(interp, "mmm1d ", buffer, " ",(char *) NULL);
-    sprintf(buffer, "%d", mmm1d.bessel_cutoff);
+    sprintf(buffer, "%d", mmm1d_params.bessel_cutoff);
     Tcl_AppendResult(interp, buffer, " ",(char *) NULL);
-    Tcl_PrintDouble(interp, mmm1d.maxPWerror, buffer);
+    Tcl_PrintDouble(interp, mmm1d_params.maxPWerror, buffer);
     Tcl_AppendResult(interp, buffer,(char *) NULL);
   }
 #else
@@ -381,10 +378,21 @@ void calc_maximal_cutoff()
      }
 #ifdef ELECTROSTATICS
   /* real space electrostatic */
-  if(coulomb.method == COULOMB_P3M     && max_cut < p3m.r_cut) 
-    max_cut = p3m.r_cut;
-  else if(coulomb.method == COULOMB_DH && max_cut < dh_params.r_cut) 
-    max_cut = dh_params.r_cut;
+  switch (coulomb.method) {
+  case COULOMB_P3M:
+    if (max_cut < p3m.r_cut) 
+      max_cut = p3m.r_cut;
+    break;
+  case COULOMB_DH:
+    if (max_cut < dh_params.r_cut) 
+      max_cut = dh_params.r_cut;
+    break;
+  case COULOMB_MMM1D:
+    /* uses mi interactions anyways */
+    if (max_cut < 0)
+      max_cut = 0;
+    break;
+  }
 #endif
 }
 
@@ -1091,7 +1099,9 @@ int coulomb_set_bjerrum(double bjerrum)
 
     } else if (coulomb.method == COULOMB_MMM1D) {
 
-      mmm1d.maxPWerror = -1.0;
+      mmm1d_params.maxPWerror = 1e40;
+      mmm1d_params.bjerrum = 0.0;
+      mmm1d_params.bessel_cutoff = 0;
 
     }
  
@@ -1164,6 +1174,20 @@ int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
 {
   double r_cut, alpha, accuracy;
   int mesh, cao, i;
+
+  coulomb.method = COULOMB_P3M;
+  p3m.bjerrum    = coulomb.bjerrum;
+    
+#ifdef PARTIAL_PERIODIC
+  if(periodic[0] == 0 ||
+     periodic[1] == 0 ||
+     periodic[2] == 0)
+    {
+      Tcl_AppendResult(interp, "Need periodicity (1,1,1) with Coulomb P3M",
+		       (char *) NULL);
+      return TCL_ERROR;  
+    }
+#endif
 
   if (ARG0_IS_S("tune"))
     return inter_parse_p3m_tune_params(interp, argc-1, argv+1);
@@ -1352,7 +1376,12 @@ int inter_parse_dh(Tcl_Interp * interp, int argc, char ** argv)
     return TCL_ERROR;
   }
   
-  if((! ARG_IS_D(0, kappa)) || (! ARG_IS_D(1, r_cut)))
+  coulomb.method = COULOMB_DH;
+  dh_params.bjerrum = coulomb.bjerrum;
+
+  if(! ARG0_IS_D(kappa))
+    return TCL_ERROR;
+  if(! ARG1_IS_D(r_cut))
     return TCL_ERROR;
 
   if ( (i = dh_set_params(kappa, r_cut)) < 0) {
@@ -1383,6 +1412,8 @@ int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
     return TCL_ERROR;
   }
 
+  coulomb.method = COULOMB_MMM1D;
+
   if (ARG0_IS_S("tune")) {
     /* autodetermine bessel cutoff AND switching radius */
     if (! ARG_IS_D(1, maxPWerror))
@@ -1398,11 +1429,15 @@ int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
 	return TCL_ERROR;
       bessel_cutoff = -1;
     }
-    else {
+    else if (argc == 3) {
       if((! ARG_IS_D(0, switch_rad)) ||
 	 (! ARG_IS_I(1, bessel_cutoff)) ||
 	 (! ARG_IS_D(2, maxPWerror))) 
 	return TCL_ERROR;
+    }
+    else {
+      Tcl_AppendResult(interp, "Too many parameters: inter coulomb mmm1d <switch radius> {<bessel cutoff>} <maximal error for near formula> | tune  <maximal pairwise error>", (char *) NULL);
+      return TCL_ERROR;
     }
   }
 
@@ -1434,7 +1469,7 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   }
 
   if (coulomb_set_bjerrum(d1) == TCL_ERROR) {
-    Tcl_AppendResult(interp, argv[0], "bjerrum length must be positiv",
+    Tcl_AppendResult(interp, argv[0], "bjerrum length must be positive",
 		     (char *) NULL);
     return TCL_ERROR;
   }
@@ -1452,39 +1487,14 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   }
 
   /* check method */
-  if(ARG0_IS_S("p3m")) {
-      
-    coulomb.method = COULOMB_P3M;
-    p3m.bjerrum    = coulomb.bjerrum;
-    
-#ifdef PARTIAL_PERIODIC
-    if(periodic[0] == 0 ||
-       periodic[1] == 0 ||
-       periodic[2] == 0)
-      {
-	Tcl_AppendResult(interp, "Need periodicity (1,1,1) with Coulomb P3M",
-			 (char *) NULL);
-	return TCL_ERROR;  
-      }
-#endif
-    
+  if(ARG0_IS_S("p3m"))    
     return inter_parse_p3m(interp, argc-1, argv+1);
-  }
 
-  if (ARG0_IS_S("dh")) {
-      
-      coulomb.method = COULOMB_DH;
-      dh_params.bjerrum = coulomb.bjerrum;
-
-      return inter_parse_dh(interp, argc-1, argv+1);    
-  }
+  if (ARG0_IS_S("dh"))
+    return inter_parse_dh(interp, argc-1, argv+1);    
     
-  if (ARG0_IS_S("mmm1d")) {
-
-    coulomb.method = COULOMB_MMM1D;
-
+  if (ARG0_IS_S("mmm1d"))
     return inter_parse_mmm1d(interp, argc-1, argv+1);
-  }
 
   coulomb.bjerrum = 0.0;
   coulomb.method  = COULOMB_NONE;
@@ -1603,6 +1613,28 @@ int inter(ClientData _data, Tcl_Interp *interp,
   
   // named interactions
   return inter_parse_rest(interp, argc-1, argv+1);
+}
+
+void make_particle_type_exist(int type)
+{
+  int ns = type + 1;
+  if (ns <= n_particle_types)
+    return;
+
+  mpi_bcast_n_particle_types(ns);
+}
+
+void make_bond_type_exist(int type)
+{
+  int i, ns = type + 1;
+  if(ns <= n_bonded_ia)
+    return;
+  bonded_ia_params = (Bonded_ia_parameters *)realloc(bonded_ia_params,
+						     ns*sizeof(Bonded_ia_parameters));
+  for (i = n_bonded_ia; i < ns; i++)
+    bonded_ia_params[i].type = BONDED_IA_NONE;
+
+  n_bonded_ia = ns;
 }
 
 #ifdef CONSTRAINTS

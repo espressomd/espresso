@@ -25,17 +25,17 @@ MDINLINE void add_angle_force(Particle *p1, Particle *p2, Particle *p3, int type
 
   cosine=0.0;
   /* vector from p1 to p2 */
-  for(j=0;j<3;j++) vec1[j] = p2->r.p[j] - p1->r.p[j];
-  dist2 = SQR(vec1[0]) + SQR(vec1[1]) + SQR(vec1[2]);
+  get_mi_vector(vec1, p2->r.p, p1->r.p);
+  dist2 = sqrlen(vec1);
   d1i = 1.0 / sqrt(dist2);
   for(j=0;j<3;j++) vec1[j] *= d1i;
   /* vector from p1 to p3 */
-  for(j=0;j<3;j++) vec2[j] = p3->r.p[j] - p1->r.p[j];
-  dist2 = SQR(vec2[0]) + SQR(vec2[1]) + SQR(vec2[2]);
+  get_mi_vector(vec2, p3->r.p, p1->r.p);
+  dist2 = sqrlen(vec2);
   d2i = 1.0 / sqrt(dist2);
   for(j=0;j<3;j++) vec2[j] *= d2i;
   /* scalar produvt of vec1 and vec2 */
-  for(j=0;j<3;j++) cosine += vec1[j] * vec2[j];
+  cosine = scalar(vec1, vec2);
   /* apply bend forces */
   for(j=0;j<3;j++) {
     f1 = bonded_ia_params[type_num].p.angle.bend * (vec2[j] - cosine * vec1[j]) * d1i;
@@ -60,17 +60,17 @@ MDINLINE double angle_energy(Particle *p1, Particle *p2, Particle *p3, int type_
 
   cosine=0.0;
   /* vector from p1 to p2 */
-  for(j=0;j<3;j++) vec1[j] = p2->r.p[j] - p1->r.p[j];
-  dist2 = SQR(vec1[0]) + SQR(vec1[1]) + SQR(vec1[2]);
+  get_mi_vector(vec1, p2->r.p, p1->r.p);
+  dist2 = sqrlen(vec1);
   d1i = 1.0 / sqrt(dist2);
   for(j=0;j<3;j++) vec1[j] *= d1i;
   /* vector from p3 to p1 */
-  for(j=0;j<3;j++) vec2[j] = p1->r.p[j] - p3->r.p[j];
-  dist2 = SQR(vec2[0]) + SQR(vec2[1]) + SQR(vec2[2]);
+  get_mi_vector(vec2, p1->r.p, p3->r.p);
+  dist2 = sqrlen(vec2);
   d2i = 1.0 / sqrt(dist2);
   for(j=0;j<3;j++) vec2[j] *= d2i;
   /* scalar produvt of vec1 and vec2 */
-  for(j=0;j<3;j++) cosine += vec1[j] * vec2[j];
+  cosine = scalar(vec1, vec2);
   /* bond bond angle energy */
   return bonded_ia_params[type_num].p.angle.bend * ( 1 - cosine );
 }

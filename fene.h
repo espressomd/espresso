@@ -20,13 +20,10 @@
 MDINLINE void add_fene_pair_force(Particle *p1, Particle *p2, int type_num)
 {
   int i;
-  double dx[3], dist2=0.0, fac;
-  for(i=0;i<3;i++) {
-    dx[i] = p1->r.p[i] - p2->r.p[i];
-    dx[i] -= dround(dx[i]/box_l[i])*box_l[i];
-    dist2 += SQR(dx[i]);
-  }
-  
+  double dx[3], dist2, fac;
+  get_mi_vector(dx, p1->r.p, p2->r.p);
+  dist2=sqrlen(dx);
+
   if(dist2 >= bonded_ia_params[type_num].p.fene.r2) {
     fprintf(stderr,"%d: add_fene_pair_force: ERROR: FENE Bond between Pair (%d,%d) broken: dist=%f\n",this_node,
 	    p1->r.identity,p2->r.identity,sqrt(dist2)); 
@@ -49,13 +46,9 @@ MDINLINE void add_fene_pair_force(Particle *p1, Particle *p2, int type_num)
 
 MDINLINE double fene_pair_energy(Particle *p1, Particle *p2, int type_num)
 {
-  int i;
   double dx[3], dist2=0.0, energy;
-  for(i=0;i<3;i++) {
-    dx[i] = p1->r.p[i] - p2->r.p[i];
-    dx[i] -= dround(dx[i]/box_l[i])*box_l[i];
-    dist2 += SQR(dx[i]);
-  }
+  get_mi_vector(dx, p1->r.p, p2->r.p);
+  dist2=sqrlen(dx);
   
   if(dist2 >= bonded_ia_params[type_num].p.fene.r2) {
     fprintf(stderr,"%d: add_fene_pair_force: ERROR: FENE Bond between Pair (%d,%d) broken: dist=%f\n",
