@@ -137,7 +137,12 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
      (on_particle_change and on_integration_start set partCfg=NULL) */
   if(partCfg==NULL) { 
     STAT_TRACE(printf("Updating...\n"));
-    mpi_gather_stats(2, &partCfg); }
+    mpi_gather_stats(2, &partCfg); 
+    STAT_TRACE(printf("Unfolding...\n"));
+    for(j=0; j<N_P; j++) 
+      for(i=0; i<MPC; i++) 
+	unfold_particle(partCfg[j*MPC+i].r.p,partCfg[j*MPC+i].i);
+  }
   else STAT_TRACE(printf("Unchanged!\n"));
 
 
