@@ -344,7 +344,7 @@ void calc_virials() {
     
   }
 }
-void calc_bins_sphere(int *new_bin,int *elements,double r_min,double r_max,int r_bins, double *center)
+void calc_bins_sphere(int *new_bin,int *elements,double *volumes,double r_min,double r_max,int r_bins, double *center)
 {
   int i,j,counter=0,*bins;
   double d[3],dist;
@@ -359,12 +359,14 @@ void calc_bins_sphere(int *new_bin,int *elements,double r_min,double r_max,int r
   }
   for(i=0;i<r_bins;i++){
     new_bin[i] = 0;
+    volumes[i] = 4./3.*3.1415926536*(pow(r_min+(i+1.)*d_bin,3.)-pow(r_min+i*d_bin,3.));
     for(j=0;j<n_total_particles;j++){
       if(bins[j]==i){
 	elements[counter++] = partCfg[j].r.identity;
 	new_bin[i] += 1;
       }
     }
+    printf("vol %d %le\n",i,volumes[i]);
   }
 }
 
@@ -375,12 +377,13 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv)
   /* bin particles for pressure calculation */
   /******************************************/
   /** Computes bins for pressure calculations, gives back lists
-      with particles for each bin in spherical geometry**/
+      with particles and bin volumes for each bin in spherical geometry**/
   char buffer[1000*TCL_INTEGER_SPACE];
   double r_min=0, r_max=-1.0, center[3];
   int r_bins=-1, i,j,k;
   int *new_bin;
   int *elements;
+  double *volumes;
 
   if (ARG0_IS_S("sphere")) { 
     argc--; argv++;
@@ -401,18 +404,25 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv)
     
     elements = malloc(n_total_particles*sizeof(int));
     new_bin = malloc(r_bins*sizeof(int));
+    volumes = malloc(r_bins*sizeof(double));
     updatePartCfg();
-    calc_bins_sphere(new_bin,elements, r_min, r_max, r_bins, center);
+    calc_bins_sphere(new_bin,elements,volumes, r_min, r_max, r_bins, center);
     /* append result */
     {
+      Tcl_AppendResult(interp, " { ", (char *)NULL);
+      sprintf(buffer,"%le",volumes[0]);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
       Tcl_AppendResult(interp, " { ", (char *)NULL);
       /* i->particles, j->bin, k->particle/bin */ 
       for(i=0,j=0,k=0;i<n_total_particles;i++,k++){
 	if(k==new_bin[j] || new_bin[j] == 0){
-	  j++;k=0;
 	  /* if all bins are full, rest of particles are outside r_min/r_max */
+	  k=0,j++;
 	  if(j==r_bins) break;
-	  Tcl_AppendResult(interp, "} { ", (char *)NULL);
+	  Tcl_AppendResult(interp, "} } { ", (char *)NULL);
+	  sprintf(buffer,"%le",volumes[j]);
+	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+	  Tcl_AppendResult(interp, " { ", (char *)NULL);
 	}
 	sprintf(buffer,"%d ",elements[i]);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);

@@ -47,7 +47,7 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv);
     @param center 3 dim pointer to sphere origin 
 */
 
-void calc_bins(int *_new_bin,int *_elements,double r_min,double r_max,int r_bins, double *center);
+void calc_bins_sphere(int *_new_bin,int *_elements,double *_volumes,double r_min,double r_max,int r_bins, double *center);
 int parse_bins(Tcl_Interp *interp, int argc, char **argv);
 
 /** Initializes extern Energy_stat \ref #p_tensor to be used by \ref calc_p_tensor. */
