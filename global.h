@@ -80,10 +80,24 @@ extern const Datafield fields[];
 #define FIELD_GAMMA 11
 /** index of \ref rebuild_verletlist in \ref fields */
 #define FIELD_VERLET 12
-/** index of \ref Bjerrum in \ref fields */
+/** index of \ref p3m.bjerrum in \ref fields */
 #define FIELD_BJERRUM 13
+/** index of \ref p3m.alpha  in \ref fields */
+#define FIELD_P3M_ALPHA 14
+/** index of \ref p3m.r_cut in \ref fields */
+#define FIELD_P3M_RCUT 15
+/** index of \ref p3m.mesh in \ref fields */
+#define FIELD_P3M_MESH 16
+/** index of \ref p3m.cao  in \ref fields */
+#define FIELD_P3M_CAO 17
+/** index of \ref p3m.epsilon  in \ref fields */
+#define FIELD_P3M_EPSILON 18
+/** index of \ref p3m.mesh_off  in \ref fields */
+#define FIELD_P3M_MESH_OFF 19
+/** index of \ref p3m.mesh_off  in \ref fields */
+#define FIELD_TRANSFER_RATE 20
 /** index of \ref minimum_part_dist in \ref fields */
-#define FIELD_MINDST 14
+#define FIELD_MINDST 21
 /*@}*/
 
 /**********************************************

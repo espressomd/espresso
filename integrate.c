@@ -13,7 +13,7 @@
 #include "ghosts.h"
 #include "forces.h"
 #include "debug.h"
-#include "p3m_parallel.h"
+#include "p3m.h"
 #include "utils.h"
 
 /*******************  variables  *******************/
@@ -94,7 +94,8 @@ void integrate_vv_init()
   verlet_init(); fflush(stderr);  MPI_Barrier(MPI_COMM_WORLD);
   /* initialize force structure */
   force_init(); fflush(stderr);  MPI_Barrier(MPI_COMM_WORLD);
-  /* P3M_init(box_l,n_total_particles,&p3m); */
+  /* initialize p3m */
+  P3M_init();
 }
 
 void integrate_vv(int n_steps)

@@ -15,10 +15,7 @@
 #include "utils.h"
 #include "interaction_data.h"
 #include "grid.h"
-
-double Bjerrum    = 1.68;
-double coul_r_cut = 20;
-double alpha      = 0;
+#include "p3m.h"
 
 double minimum_part_dist = -1;
 
@@ -29,23 +26,6 @@ void force_init()
 		      this_node,n_interaction_types));
   FORCE_TRACE(fprintf(stderr,"%d: found %d particles types\n",
 		      this_node,n_particle_types));
-}
-
-int bjerrum_callback(Tcl_Interp *interp, void *_data)
-{
-  double data = *(double *)_data;
-
-  if (data < 0) {
-    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  Bjerrum = data;
-
-  if (Bjerrum == 0)
-    coul_r_cut = 0;
-
-  return (TCL_OK);
 }
 
 void force_calc()
@@ -74,7 +54,7 @@ void force_calc()
   FORCE_TRACE(fprintf(stderr,"%d: interactions type:(0,0):\n",this_node));
   FORCE_TRACE(fprintf(stderr,"    LJ: cut=%f, eps=%f, off=%f\n",
 		      ia_params->LJ_cut,ia_params->LJ_eps,ia_params->LJ_offset));
-  FORCE_TRACE(fprintf(stderr,"    ES: cut=%f,\n",coul_r_cut));
+  FORCE_TRACE(fprintf(stderr,"    ES: cut=%f,\n",p3m.r_cut));
   FORCE_TRACE(fprintf(stderr,"    RAMP: cut=%f\n",ia_params->ramp_cut));
 
 
@@ -180,11 +160,11 @@ void force_calc()
     }
     
     /* real space coulomb */
-    if(dist < coul_r_cut) {
-      adist = alpha * dist;
+    if(dist < p3m.r_cut2) {
+      adist = p3m.alpha * dist;
       erfc_part_ri = AS_erfc_part(adist) / dist;
-      fac = Bjerrum * particles[id1].q * particles[id2].q  * 
-	exp(-adist*adist) * (erfc_part_ri + 2.0*alpha/1.772453851) / dist2;
+      fac = p3m.bjerrum * particles[id1].q * particles[id2].q  * 
+	exp(-adist*adist) * (erfc_part_ri + 2.0*p3m.alpha/1.772453851) / dist2;
       particles[id1].f[0] += fac * d[0];
       particles[id1].f[1] += fac * d[1];
       particles[id1].f[2] += fac * d[2];
@@ -217,6 +197,10 @@ void force_calc()
       }
     }
   }
+
+  /* calculate long range interactions */
+  P3M_perform();
+
 }
 
 void force_exit()

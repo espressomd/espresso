@@ -12,6 +12,7 @@
 #include "thermostat.h"
 #include "forces.h"
 #include "verlet.h"
+#include "p3m.h"
 #include "imd.h"
 
 /**********************************************
@@ -50,7 +51,13 @@ const Datafield fields[] = {
   {&max_range, TYPE_DOUBLE,   1, "max_range", ro_callback },
   {&friction_gamma, TYPE_DOUBLE,   1, "gamma", gamma_callback },
   {&rebuild_verletlist, TYPE_INT,   1, "verletflag", ro_callback },
-  {&Bjerrum, TYPE_DOUBLE,   1, "bjerrum", bjerrum_callback },
+  {&(p3m.bjerrum), TYPE_DOUBLE,   1, "bjerrum", bjerrum_callback },
+  {&(p3m.alpha), TYPE_DOUBLE,   1, "p3m_alpha", p3malpha_callback },
+  {&(p3m.r_cut), TYPE_DOUBLE,   1, "p3m_r_cut", p3mrcut_callback },
+  {p3m.mesh, TYPE_INT,   3, "p3m_mesh", p3mmesh_callback },
+  {&(p3m.cao), TYPE_INT,   1, "p3m_cao", p3mcao_callback },
+  {&(p3m.epsilon), TYPE_DOUBLE,   1, "p3m_epsilon", p3mepsilon_callback },
+  {p3m.mesh_off, TYPE_DOUBLE,   3, "p3m_mesh_offset", p3mmeshoff_callback },
   {&transfer_rate, TYPE_INT,   1, "transfer_rate", ro_callback },
   { NULL, 0, 0, NULL, NULL }
 };

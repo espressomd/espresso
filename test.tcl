@@ -55,6 +55,15 @@ inter 0 2 lennard-jones 3 1 2.0 0 0
 inter 1 2 lennard-jones 2 1 1.2 0 0
 puts "nptypes = [setmd nptypes]"
 
+setmd bjerrum 1.54
+setmd p3m_alpha 0.27
+setmd p3m_r_cut 3.0
+setmd p3m_mesh 20 20 20
+setmd p3m_cao 5
+setmd p3m_epsilon 0.1
+setmd p3m_mesh_off 1.0 1.0 1.0
+
+
 # integration
 ##################################################
 
@@ -62,8 +71,8 @@ puts "imd: [imd connect 12345]"
 puts "imd: [imd stall 100]"
 
 integrate init
-set write_steps 10
-set configs 50
+set write_steps 2
+set configs 2
 for {set i 0} { $i < $configs } { incr i } {
     puts "step [expr $i*$write_steps]"
     integrate $write_steps

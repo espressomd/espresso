@@ -11,7 +11,7 @@ typedef struct {
   double rcut;      /** cutoff radius for real space electrostatics */
   double prefactor; /** Coulomb prefactor, e.g. Bjerrum*Temp */
   double epsilon;   /** epsilon of the "surrounding dielectric" */
-}p3m_struct;
+} p3m_struct;
 
 extern double skin; 
 extern void   setp3m();

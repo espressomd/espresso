@@ -1,3 +1,4 @@
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -19,6 +20,7 @@ int **meshift;
 /* stores the interpolation of the charge assignment functions */
 int MaxInterpol = 4*50048;
 double  **intCAF; 
+
 /* charge of the charged particles */
 double  *QP;
 
@@ -65,12 +67,11 @@ void calculate_meshift(void);
 void setp3m()
 {
   /* just for the building process, should happen in some script*/
-p3m.P = 7;
+p3m.P = 1;
 p3m.alpha = 0.2;
-p3m.mesh[0] = 150;
-p3m.mesh[1] = 150;
-p3m.mesh[2] = 150;
-printf("%d setp3m finished\n",this_node);
+p3m.mesh[0] = 16;
+p3m.mesh[1] = 16;
+p3m.mesh[2] = 16;
 
 }
 /*----------------------------------------------------------------------*/
@@ -78,12 +79,17 @@ void   P3M_init()
 {
   int i,j,k;
   setp3m();
-  /* compute local mesh for fixed processor box */
+  fprintf(stderr,"%d setp3m finished\n",this_node); fflush(stderr);
+  MPI_Barrier(MPI_COMM_WORLD);   
+   /* compute local mesh for fixed processor box */
   /* Direction of grid indicees in coordinate 2 is inconsistent!!!!!*/
   Hi = (double)(p3m.mesh[0]-1)/box_l[0];
 
-  compute_measures();
-  intCAF = malloc(sizeof(double *)*(p3m.P));
+  compute_measures(); 
+  MPI_Barrier(MPI_COMM_WORLD);   
+  fprintf(stderr,"%d measures computed \n",this_node);fflush(stderr);
+  MPI_Barrier(MPI_COMM_WORLD);   
+   intCAF = malloc(sizeof(double *)*(p3m.P));
   for(i=0;i<p3m.P;i++)
     intCAF[i] = malloc(sizeof(double)*(2*MaxInterpol+1));
 
@@ -120,8 +126,10 @@ void   P3M_init()
     exit(1);
   } break;
   }
-printf("%d P3M_init finished\n",this_node);
-
+  MPI_Barrier(MPI_COMM_WORLD);   
+  fprintf(stderr,"%d P3M_init finished\n",this_node);
+  MPI_Barrier(MPI_COMM_WORLD);   
+ 
 }
 /*----------------------------------------------------------------------*/
 void compute_measures()
@@ -133,8 +141,8 @@ void compute_measures()
       inner_left_gridpoint[i]  = ceil( (my_left[i]-skin) *Hi)/Hi - (my_left[i]-skin);
       inner_right_gridpoint[i] = floor((my_right[i]+skin)*Hi)/Hi - my_right[i]+skin;
     }
-  printf("loc: %f %f %f\n",local_box_l[0],skin,Hi);
-  printf("%d\n",local_mesh[0]);
+  fprintf(stderr,"loc: %f %f %f\n",local_box_l[0],skin,Hi);
+  fprintf(stderr,"%d\n",local_mesh[0]);
   for(i=0;i<6;i++)
     {
       if(i<=1) j=0;
@@ -155,14 +163,13 @@ void compute_measures()
       grid_margin[k] = (int) ((double) p3m.P/2. + ca_margin[k]);
       ext_mesh[i] = local_mesh[i] + grid_margin[j] + grid_margin[k];
     }
-  printf("thisnode: %d\n",this_node);
-  printf("local_grid: %d %d %d \n",local_mesh[0],local_mesh[1], local_mesh[2]);
-  printf("gridmargin: %d %d %d %d %d %d \n",grid_margin[0],grid_margin[1],grid_margin[2],
+  fprintf(stderr,"thisnode: %d\n",this_node);
+  fprintf(stderr,"local_grid: %d %d %d \n",local_mesh[0],local_mesh[1], local_mesh[2]);
+  fprintf(stderr,"gridmargin: %d %d %d %d %d %d \n",grid_margin[0],grid_margin[1],grid_margin[2],
 	 grid_margin[3],grid_margin[4],grid_margin[5]);
-  printf("ca_margin: %f\t%f\t%f\n%f\t%f\t%f\n",ca_margin[0],ca_margin[1],ca_margin[2],
+  fprintf(stderr,"ca_margin: %f\t%f\t%f\n%f\t%f\t%f\n",ca_margin[0],ca_margin[1],ca_margin[2],
 	 ca_margin[3],ca_margin[4],ca_margin[5]);
 
-  exit(0);
 
   ld[0][0]       =  0;
   ld[0][1]       =  0;
@@ -283,6 +290,7 @@ void compute_measures()
 
 
 }
+
 /*----------------------------------------------------------------------*/
 void P3M_perform()
 {
@@ -300,6 +308,9 @@ void P3M_perform()
   int Gi0, Gi1, Gi2;
   double T1, T2, T3;
 
+  MPI_Barrier(MPI_COMM_WORLD);   
+  fprintf(stderr,"%d: p3m perform\n",this_node);
+  MPI_Barrier(MPI_COMM_WORLD);   
 
 
   assignshift[0] = local_mesh[0]-(p3m.P-1)/2;  /* INTEGER division is vital here! */
@@ -350,8 +361,13 @@ void P3M_perform()
 	  for (l = 0; l < p3m.P; l++) {
 	    zpos = (Gi2 + l) % local_mesh[2];
 	    T3 = T2 * intCAF[l][zarg];
-	if(xpos<0) exit(1);
 	    Q_re[xpos][ypos][zpos] += T3;
+	    if(particles[global[i]].identity==0 && j==0 && k==0 && l==0) {
+	      fprintf(stderr,"%d: P0 POS (%f, %f, %f)\n",this_node,particles[global[i]].p[0]
+		   ,particles[global[i]].p[1]  ,particles[global[i]].p[2]);
+	      fprintf(stderr,"%d: P0 IND (%d, %d, %d)\n",this_node,xpos,ypos,zpos);
+	      fprintf(stderr,"%d: P0 ARG (%d, %d, %d)\n",this_node,xarg,yarg,zarg);
+	    }
 	  }
 	}
       }
