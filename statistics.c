@@ -140,8 +140,10 @@ int aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_lis
   Particle *p1, *p2, **pairs;
   double dist2, vec21[3];
   int arr_size = n_molecules * (n_molecules+1 ) / 2;
-  double minidist2[arr_size];
+  double *minidist2;
   int target1, target2, head_i;
+
+  minidist2 = malloc(arr_size*sizeof(double));
 
   if (n_nodes > 1)
     return 1;
@@ -720,12 +722,17 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
   /* 'analyze centermass [<type>]' */
   char buffer[256];
   int i, target1;
-  int agg_id_list[n_molecules];
+  int *agg_id_list;
   double dist_criteria, dist_criteria2;
-  int head_list[n_molecules], link_list[n_molecules];
-  int agg_num =0, agg_size[n_molecules], agg_min= n_molecules, agg_max = 0,  agg_std = 0, agg_avg = 0; 
+  int *head_list, *link_list;
+  int agg_num =0, *agg_size, agg_min= n_molecules, agg_max = 0,  agg_std = 0, agg_avg = 0; 
   float fagg_avg;
   int s_mol_id, f_mol_id;
+
+  agg_id_list = malloc(n_molecules *sizeof(double));
+  head_list =  malloc(n_molecules *sizeof(double));
+  link_list = malloc(n_molecules *sizeof(double));
+  agg_size = malloc(n_molecules *sizeof(double));
 
   /* parse arguments */
   if (argc != 3) {
