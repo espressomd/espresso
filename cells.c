@@ -171,6 +171,10 @@ int cellsystem(ClientData data, Tcl_Interp *interp,
     if (argc > 2) {
       if (!ARG_IS_I(2, n_layers))
 	return TCL_ERROR;
+      if (n_layers <= 0) {
+	Tcl_AppendResult(interp, "layer height should be positive", (char *)NULL);
+	return TCL_ERROR;
+      }
       determine_n_layers = 0;
     }
 
