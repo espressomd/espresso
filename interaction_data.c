@@ -417,7 +417,7 @@ int printCoulombIAToResult(Tcl_Interp *interp)
     return (TCL_OK);
   }
   Tcl_PrintDouble(interp, coulomb.bjerrum, buffer);
-  Tcl_AppendResult(interp, "coulomb ", buffer, " ", (char *) NULL);
+  Tcl_AppendResult(interp, "{coulomb ", buffer, " ", (char *) NULL);
   if (coulomb.method == COULOMB_P3M) {
     Tcl_PrintDouble(interp, p3m.r_cut, buffer);
     Tcl_AppendResult(interp, "p3m ", buffer, " ", (char *) NULL);
@@ -638,14 +638,13 @@ int inter_print_all(Tcl_Interp *interp)
     }
 #ifdef ELECTROSTATICS
   if(coulomb.bjerrum != 0.0) {
-    if (start) {
-      Tcl_AppendResult(interp, "{", (char *)NULL);
+    if (start) 
       start = 0;
-    }
     else
-      Tcl_AppendResult(interp, " {", (char *)NULL);
+      Tcl_AppendResult(interp, " ", (char *)NULL);
+    /* here the curled braces will be set inside \ref printCoulombIAToResult
+       because electrostatics might be using several lists */
     printCoulombIAToResult(interp);
-    Tcl_AppendResult(interp, "}", (char *)NULL);
   }
 #endif
   if(lj_force_cap != 0.0) {
