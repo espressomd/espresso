@@ -1,5 +1,7 @@
 #include "thermostat.h"
 #include "global.h"
+#include "particle_data.h"
+#include <math.h>
 
 /** Friction coefficient gamma. */
 double friction_gamma = 0;
