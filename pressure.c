@@ -254,7 +254,7 @@ void calc_pressure() {
 
 int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
 {
-  /* 'analyze pressure [{ fene [<type_num>] | harmonic [<type_num>] | lj [<type1> [<type2>]] | coulomb | ideal | total[s] }]' */
+  /* 'analyze pressure [{ <bonded> [<type_num>] | <nonbonded> [<type1> <type2>] | coulomb | ideal | total[s] }]' */
   /**************************************************************************************************************************/
   char buffer[3*TCL_DOUBLE_SPACE + 256];
   double *buf;
@@ -281,7 +281,7 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
       }
       virials.ana_num = virials.n_pre+i;
     }
-    else if(ARG0_IS_S("nonbonded") || ARG0_IS_S("lj")) {
+    else if(ARG0_IS_S("nonbonded") || ARG0_IS_S("lj") || ARG0_IS_S("lj-cos") || ARG0_IS_S("gb")) {
       if(argc<3) { virials.ana_num=0; }
       else {
 	if(!ARG_IS_I(1, i)) return (TCL_ERROR);
