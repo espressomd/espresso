@@ -18,6 +18,15 @@
 			The order of the parameters is
 			\f$\epsilon, \sigma, cutoff, shift, offset\f$.
 
+			For system warmup you can cap the Lennard-Jones potential with a maximal force which can be set with:
+			\verbatim inter ljforcecap <maxforce> \endverbatim
+			For particle distances which would lead to larger forces than \f$ maxforce \f$ the Lennard-Jones potential is replaced by
+			\f[ maxforce \;\;  r \f] 
+			Particles placed exactly on top of each other will be subject to a force of magnitude \f$ maxforce \f$ applied in \f$ \pm x \f$ direction.
+			To return to the uncapped potential you have to set \f$  maxforce \f$ to zero using
+			\verbatim inter ljforcecap 0 \endverbatim
+			Note that ljforcecap applies to all given Lennard-Jones interactions regardless the particle types.
+
 	   	<li>\verbatim lj-cos <epsilon> <sigma> <cutoff> <offset> \endverbatim
 			the Lennard-Jones+Cosine potential (Soddemann et. al. Eur. Phys. J. E. 6, 409-419 (2001))
 
