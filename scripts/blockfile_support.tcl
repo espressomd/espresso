@@ -53,18 +53,31 @@ proc blockfile_read_auto_particles {channel read auto} {
     set info "[blockfile $channel read start] [blockfile $channel read toend]"
     set idx 1
     foreach i $info {
-	case $i {
-	    "id"     { set id $idx; incr idx }
-	    "pos"    { set pos $idx; incr idx 3 }
-	    "type"   { set type $idx; incr idx }
-	    "q"      { set q $idx; incr idx }
-	    "f"      { set f $idx; incr idx 3 }
-	    "v"      { set v $idx; incr idx 3 }
-	    "quat"   { set quat $idx; incr idx 4 }
-	    "omega"  { set omega $idx; incr idx 3 }
-	    "torque" { set torque $idx; incr idx 3 }
-	    "fix"    { set fix $idx; incr idx 3 }
-	    "ext_force" { set ext_force $idx; incr idx 3 }
+	# the switch checks which property it MIGHT be at all, the second checks wether it is really a prefix
+	switch -regexp $i {
+	    "^i"      { if {![regexp "^$i" "identity"]} { error " $i is not a particle property" }
+		set id $idx; incr idx }
+	    "^p"      { if {![regexp "^$i" "position"]} { error " $i is not a particle property" }
+		 set pos $idx; incr idx 3 }
+	    "^ty"     { if {![regexp "^$i" "type"]} { error " $i is not a particle property" }
+		 set type $idx; incr idx }
+	    "^m"      { if {![regexp "^$i" "molecule_id"]} { error " $i is not a particle property" }
+		 set mol $idx; incr idx }
+	    "^q$"      { set q $idx; incr idx }
+	    "^f"      { if {![regexp "^$i" "force"]} { error " $i is not a particle property" }
+		 set f $idx; incr idx 3 }
+	    "^v"      { if {![regexp "^$i" "v"]} { error " $i is not a particle property" }
+		 set v $idx; incr idx 3 }
+	    "^qu"     { if {![regexp "^$i" "quat"]} { error " $i is not a particle property" }
+		 set quat $idx; incr idx 4 }
+	    "^o"      { if {![regexp "^$i" "omega"]} { error " $i is not a particle property" }
+		 set omega $idx; incr idx 3 }
+	    "^to"     { if {![regexp "^$i" "torque"]} { error " $i is not a particle property" }
+		 set torque $idx; incr idx 3 }
+	    "^fix"    { if {![regexp "^$i" "fix"]} { error " $i is not a particle property" }
+		 set fix $idx; incr idx 3 }
+	    "^e"      { if {![regexp "^$i" "ext_force"]} { error " $i is not a particle property" }
+		 set ext_force $idx; incr idx 3 }
 	    default { error " $i is not a particle property" }
 	}
     }
@@ -75,6 +88,8 @@ proc blockfile_read_auto_particles {channel read auto} {
              q \[lindex \$line $q\]" }
     if {[info exists type]} { set cmd "$cmd \
              type \[lindex \$line $type\]" }
+    if {[info exists mol]} { set cmd "$cmd \
+             molecule \[lindex \$line $mol\]" }
     if {[info exists v]} { set cmd "$cmd \
              v  \[lindex \$line $v\] \[lindex \$line [expr $v + 1]\] \[lindex \$line [expr $v + 2]\]"
     }
