@@ -1,14 +1,17 @@
 #!/bin/sh
-TESTCASES="lj.tcl madelung.tcl"
+TESTCASES="lj.tcl mmm1d.tcl dh.tcl madelung.tcl"
 # lj-cos.tcl FENE.tcl harmonic.tcl... constraints thermosim energy pressure rotation gay-berne
 
 for np in 1 2 3 4 6 8; do
     for f in $TESTCASES; do
-	if ! $f $np; then
+	if ! ./$f $np; then
 	    set error 1
 	    break
 	fi
     done
+    if test "$error" = "1"; then
+	break;
+    fi	
 done
 
 if test "$error" == "1"; then
