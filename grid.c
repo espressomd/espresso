@@ -88,16 +88,16 @@ void calc_neighbors(int node)
   int n_pos[3];
   
   map_node_array(node,&pe_pos[0],&pe_pos[1],&pe_pos[2]);
-
   for(dir=0;dir<3;dir++) {
     for(j=0;j<3;j++) n_pos[j]=pe_pos[j];
     /* left neighbor in direction dir */
-    n_pos[dir] -= 1;
+    n_pos[dir] = pe_pos[dir] - 1;
     if(n_pos[dir]<0) n_pos[dir] += processor_grid[dir];
     neighbors[2*dir]     = map_array_node(n_pos[0],n_pos[1],n_pos[2]);
     /* right neighbor in direction dir */
-    n_pos[dir] += 2;
+    n_pos[dir] = pe_pos[dir] + 1;
     if(n_pos[dir]>=processor_grid[dir]) n_pos[dir] -= processor_grid[dir];
     neighbors[(2*dir)+1] = map_array_node(n_pos[0],n_pos[1],n_pos[2]);
   }
+  
 }

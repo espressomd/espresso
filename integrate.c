@@ -77,17 +77,18 @@ void integrate_vv_init()
   max_range2 = max_range* max_range;
 
   /* initialize link cell structure */
-  cells_init();
+  cells_init();  fflush(stderr); MPI_Barrier(MPI_COMM_WORLD);
   /* allocate and initialize local indizes */
   local_index = (int *)malloc(n_total_particles*sizeof(int));
   for(i=0;i<n_total_particles;i++) local_index[i] = -1;
   for(i=0;i<n_particles;i++) local_index[particles[i].identity] = i;
   /* initialize ghost structure */
-  ghost_init();
+  ghost_init(); fflush(stderr);  MPI_Barrier(MPI_COMM_WORLD);
   /* initialize verlet list structure */
-  verlet_init();
+  verlet_init(); fflush(stderr);  MPI_Barrier(MPI_COMM_WORLD);
   /* initialize force structure */
-  force_init();
+  force_init(); fflush(stderr);  MPI_Barrier(MPI_COMM_WORLD);
+
 }
 
 void integrate_vv(int n_steps)
@@ -110,6 +111,8 @@ void integrate_vv(int n_steps)
   }
   if(calc_forces_first == 1) {
     force_calc();
+    fprintf(stderr,"%d force calc done\n",this_node);
+    MPI_Barrier(MPI_COMM_WORLD);
     collect_ghost_forces();
     calc_forces_first = 0;
   }

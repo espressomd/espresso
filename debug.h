@@ -1,9 +1,9 @@
 /* #define COMM_DEBUG */
-/* #define INTEG_DEBUG */
-/* #define CELL_DEBUG */
-/* #define GHOST_DEBUG */
+/* #define INTEG_DEBUG  */
+/* #define CELL_DEBUG  */
+/* #define GHOST_DEBUG  */
 /* #define GRID_DEBUG */
-/* #define FORCE_DEBUG  */
+/* #define FORCE_DEBUG   */
 /* #define VERLET_DEBUG */
 /* #define PARTICLE_DEBUG */
 
@@ -46,7 +46,7 @@
 #endif
 
 #ifdef FORCE_DEBUG
-#define FORCE_TRACE(cmd) { if (this_node < 2) { cmd; } }
+#define FORCE_TRACE(cmd) { if (this_node < 9) { cmd; } }
 #else
 #define FORCE_TRACE(cmd)
 #endif

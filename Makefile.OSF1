@@ -1,6 +1,8 @@
 ############ compiler settings
 CC=cc
+
 CFLAGS=-I/usr/local/include -DDEFINE_TCL_RAND -O3 -msg_warn level6 -fp_reorder -tune host
+
 DEPEND=makedepend
 
 CXX=cxx

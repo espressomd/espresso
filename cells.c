@@ -12,20 +12,18 @@
 
 /*******************  Variables  *******************/
 
-/** number of linked cells inside the domain of one node (inner cells). */
-int n_inner_cells;
-/** index list of the inner cells. */
-int  *inner_cells;
 /** inner linked cell grid. */
 int cell_grid[3];
+/** linked cell grid with ghost frame. */
+int ghost_cell_grid[3];
+/** number of linked cells inside the domain of one node (inner cells). */
+int n_inner_cells;
 
 /** number of linked cells (inner+ghosts). */
 int n_cells;
-/** linked cell grid with ghost frame. */
-int ghost_cell_grid[3];
-
 /** linked cell list. */
 Cell *cells;
+
 /** cell size. */
 double cell_size[3];
 /** inverse cell size. */
@@ -36,28 +34,28 @@ double inv_cell_size[3];
 void init_cell_neighbours();
 int  is_inner_cell(int i, int adim, int bdim, int cdim);
 
+void cell_memory_info(int verb);
+void print_ifield(int *field, int size);
+void print_dfield(double *field, int size);
+
 /*******************  exported functions  *******************/
 
 void cells_init() 
 {
   int i;
-  int cnt=0;
   int node_pos[3];
   CELL_TRACE(fprintf(stderr,"%d: cells_init \n",this_node));
-  CELL_TRACE(fprintf(stderr,"%d: l_box0 %f \n",this_node,local_box_l[0]));
-  
-  map_node_array(this_node,&node_pos[0],&node_pos[1],&node_pos[2]);
   /* set up dimensions of the cell grid */
+
+  map_node_array(this_node,&node_pos[0],&node_pos[1],&node_pos[2]);     
   for(i=0;i<3;i++) {
-    /* this should go to global.c */
-    local_box_l[i] = box_l[i]/((double)processor_grid[i]);
-    my_left[i] = node_pos[i]*local_box_l[i];
-    my_right[i] = (node_pos[i]+1)*local_box_l[i];
+    my_left[i]   = node_pos[i]    *local_box_l[i];
+    my_right[i]  = (node_pos[i]+1)*local_box_l[i];    
+    cell_grid[i] = (int)(local_box_l[i]/max_range);
+    if(cell_grid[i] < 1) 
+      fprintf(stderr,"%d: cells_init: Less than one cell in direction %d\n",
+	      this_node,i);
     
-    cell_grid[i]   = (int)(local_box_l[i]/max_range);
-    if(cell_grid[i] < 1) {
-      fprintf(stderr,"%d: cells_init: Less than one cell in direction %d\n",this_node,i);
-    }
     ghost_cell_grid[i] = cell_grid[i] + 2;
     cell_size[i]       = local_box_l[i]/(double)cell_grid[i];
     inv_cell_size[i]   = (double)cell_grid[i]/local_box_l[i];
@@ -73,37 +71,22 @@ void cells_init()
   }
 
   /* allocate space for cell structure */
-  cells = (Cell *)malloc(n_cells*sizeof(Cell));
-  inner_cells = (int *)malloc(n_inner_cells*sizeof(int));
+  cells       = (Cell *)malloc(n_cells*sizeof(Cell));
   for(i=0;i<n_cells;i++) {
     cells[i].n_particles=0;
     cells[i].max_particles = PART_INCREMENT;
     cells[i].particles = malloc(cells[i].max_particles*sizeof(int));
-    if(is_inner_cell(i,ghost_cell_grid[0],ghost_cell_grid[1],ghost_cell_grid[2])) {
-      cells[i].neighbours = malloc(MAX_NEIGHBOURS*sizeof(int));
-      inner_cells[cnt]=i;
-      cnt++;
-    }
+    init_cell_neighbours(i);
   }
-  if(cnt != n_inner_cells) 
-  fprintf(stderr,"Found %d inner cells instead of %d",cnt,n_inner_cells);
 
-  init_cell_neighbours();
-
-#ifdef CELL_DEBUG
-  if(this_node < 2) {
-    fprintf(stderr,"cell_grid = (%d, %d, %d)\n",
-	    cell_grid[0],cell_grid[1],cell_grid[2]);
-    fprintf(stderr,"ghost_cell_grid = (%d, %d, %d) = total %d cells\n",
-	    ghost_cell_grid[0],ghost_cell_grid[1],ghost_cell_grid[2],n_cells);
-    fprintf(stderr,"cell_size = (%e, %e, %e)\n",
-	    cell_size[0],cell_size[1],cell_size[2]);
-    fprintf(stderr,"local_box: size (%.2e, %.2e, %.2e)\n",
-	    local_box_l[0],local_box_l[1],local_box_l[2]);
-    fprintf(stderr,"           from (%.2e, %.2e, %.2e) to (%.2e, %.2e, %.2e)\n",
-	    my_left[0],my_left[1],my_left[2],my_right[0],my_right[1],my_right[2]);
+  /* debuging 
+  fflush(stderr);
+  MPI_Barrier(MPI_COMM_WORLD) ; 
+  for(i=0;i<nprocs;i++) {
+    if(i==this_node) { cell_memory_info(0); }
+    MPI_Barrier(MPI_COMM_WORLD) ;
   }
-#endif
+  */
 }
 
 /*************************************************/
@@ -132,94 +115,73 @@ void sort_particles_into_cells()
  
   for(i=0;i<3;i++) gcg[i] = ghost_cell_grid[i];
 
-  /* initialize inner cells */
-  for(i=0;i<n_inner_cells;i++) { 
-    ind = inner_cells[i];
-    cells[ind].n_particles=0;
-  }
-
+  /* remove cell particles */
+  for(i=0;i<n_cells;i++) cells[i].n_particles=0;
+  
   /* particle loop */
   for(n=0;n<n_particles;n++) {
     /* calculate cell index */
     for(i=0;i<3;i++) 
       cpos[i] = (int)((particles[n].p[i]-my_left[i])*inv_cell_size[i])+1;
     ind = get_linear_index(cpos[0],cpos[1],cpos[2],gcg[0],gcg[1],gcg[2]);
-#ifdef CELL_DEBUG
-    /* fprintf(stderr,"%d: Sort Part (GI=%d LI=%d) (%.2e, %.2e, %.2e) in cell %d\n",
-       this_node,particles[n].identity,n,particles[n].p[0],
-       particles[n].p[1],particles[n].p[2],ind);
-    */
-#endif  
-
+    if(ind<0 || ind > n_cells)
+      fprintf(stderr,"%d: illigal cell index %d\n" ,this_node,ind);
     /* Append particle in particle list of that cell */
-    if(cells[ind].n_particles >= cells[ind].max_particles) 
-    realloc_cell_particles(ind,cells[ind].n_particles+PART_INCREMENT);
+    if(cells[ind].n_particles >= cells[ind].max_particles-1) 
+    realloc_cell_particles(ind,cells[ind].n_particles+(2*PART_INCREMENT));
     cells[ind].particles[cells[ind].n_particles] = n;
     cells[ind].n_particles++;
   }
-
-  /* resize particle arrays for inner cells */
-  for(i=0;i<n_inner_cells;i++) { 
-    ind = inner_cells[i];
-    realloc_cell_particles(ind,cells[ind].n_particles);
-#ifdef CELL_DEBUG
-   if(this_node==0) fprintf(stderr,"0: Cell[%d] n_part = %d max_part = %d\n",
-			    ind,cells[ind].n_particles,cells[ind].max_particles);
-#endif      
-  }
+ 
+  /* debuging */
+  fflush(stderr);
+  MPI_Barrier(MPI_COMM_WORLD) ; 
+  for(i=0;i<nprocs;i++) {
+    if(i==this_node) { 
+      fprintf(stderr,"%d: Cell Memory Information:\n",this_node);
+      for(i=0;i<n_cells;i++) { 
+	if(cells[i].n_particles > 0) 
+	  fprintf(stderr,"C%d(np=%d - %d) ",i,cells[i].n_particles,cells[i].max_particles);
+      }
+      fprintf(stderr,"\n");
+      fflush(stderr);
+    }
+    MPI_Barrier(MPI_COMM_WORLD) ;
+  }  
 }
 
-void sort_ghosts_into_cells()
-{
-  CELL_TRACE(fprintf(stderr,"%d: sort_ghosts_into_cells:\n",this_node));
-}
 
 
 /*******************  privat functions  *******************/
 
-void init_cell_neighbours()
+void init_cell_neighbours(int i)
 {
-  int i,j,m,n,o;
-  int cg[3];
-  int p1[3],p2[3];
-  int cnt;
+  int j,m,n,o,cnt=0;
+  int cg[3],p1[3],p2[3];
 
-  cg[0] = ghost_cell_grid[0];
-  cg[1] = ghost_cell_grid[1];
-  cg[2] = ghost_cell_grid[2];
-
-  /* loop through all cells */
-  for(i=0;i<n_cells;i++) {
-    cnt=0;
+  memcpy(cg,ghost_cell_grid,3*sizeof(int));
+  if(is_inner_cell(i,cg[0],cg[1],cg[2])) { 
+    cells[i].neighbours = malloc(MAX_NEIGHBOURS*sizeof(int));    
     get_grid_pos(i,&p1[0],&p1[1],&p1[2],cg[0],cg[1],cg[2]);
-    /* is it an inner cell ? then find neighbours : set n_neighbours to 0*/
-    if(is_inner_cell(i,cg[0],cg[1],cg[2])) {
-      /* loop through all neighbours */
-      for(m=-1;m<2;m++) 
-	for(n=-1;n<2;n++) 
-	  for(o=-1;o<2;o++) {
-	    p2[0] = p1[0]+m;
-	    p2[1] = p1[1]+n;
-	    p2[2] = p1[2]+o;
-	    j = get_linear_index(p2[0],p2[1],p2[2],cg[0],cg[1],cg[2]);
-	    /* take the upper half of all neighbours 
-	       and add them to the neighbour list */
-	    if(j > i) {
-	      cells[i].neighbours[cnt] = j;
-	      cnt++;
-	    }
+    /* loop through all neighbours */
+    for(m=-1;m<2;m++) 
+      for(n=-1;n<2;n++) 
+	for(o=-1;o<2;o++) {
+	  p2[0] = p1[0]+m;   p2[1] = p1[1]+n;   p2[2] = p1[2]+o;
+	  j = get_linear_index(p2[0],p2[1],p2[2],cg[0],cg[1],cg[2]);
+	  /* take the upper half of all neighbours 
+	     and add them to the neighbour list */
+	  if(j > i) {
+	    cells[i].neighbours[cnt] = j;
+	    cnt++;
 	  }
-#ifdef CELL_DEBUG
-      if(this_node==0) {
-	fprintf(stderr,"Cell %d pos(%d,%d,%d) with %d neighbours: {",
-		i,p1[0],p1[1],p1[2],cnt);
-	for(m=0;m<cnt;m++) fprintf(stderr," %d",cells[i].neighbours[m]);
-	fprintf(stderr," }\n");     
-      }
-#endif
-    }
-    cells[i].n_neighbours = cnt; 
+	}
+    cells[i].n_neighbours = cnt;
   }
+  else {
+    cells[i].n_neighbours = 0;
+    cells[i].neighbours = NULL;
+  }   
 }
 
 /*************************************************/
@@ -282,3 +244,43 @@ void realloc_cell_particles(int index, int size)
   }
 }
 
+void cell_memory_info(int verb)
+{
+  int i;
+
+  fprintf(stderr,"%d: Cell Memory Information:\n",this_node);
+  fprintf(stderr,"    Inner Cell Grid: "); print_ifield(cell_grid,3);
+  fprintf(stderr,"    Ghost Cell Grid: "); print_ifield(ghost_cell_grid,3);
+  fprintf(stderr,"    cells: n_cells = %d, n_inner_cells %d\n",
+	  n_cells,n_inner_cells); 
+  if(verb>0) {
+    for(i=0;i<n_cells;i++) {
+      fprintf(stderr,"    Cell %d: neighbours: ",i); 
+      print_ifield(cells[i].neighbours,cells[i].n_neighbours);
+      fprintf(stderr,"    Cell %d: particles: max_particles %d, ",
+	      i,cells[i].max_particles);
+      print_ifield(cells[i].particles,cells[i].n_particles);
+    }
+  }
+  fflush(stderr);
+}
+
+void print_ifield(int *field, int size)
+{
+  int i;
+  fprintf(stderr,"size = %d ",size);
+  if(size>0) {
+    fprintf(stderr,"{");
+    for(i=0;i<size-1;i++) fprintf(stderr,"%d ",field[i]);
+    fprintf(stderr,"%d}",field[size-1]);
+  }
+  fprintf(stderr,"\n");
+}
+
+void print_dfield(double *field, int size)
+{
+  int i;
+  fprintf(stderr,"size = %d {",size);
+  for(i=0;i<size-1;i++) fprintf(stderr,"%.2f ",field[i]);
+  fprintf(stderr,"%.2f}\n",field[size-1]);
+}
