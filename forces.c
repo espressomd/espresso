@@ -162,10 +162,10 @@ void force_calc()
     /* lennnard jones */
 
     if(dist < ia_params->LJ_cut+ia_params->LJ_offset) {
-      fprintf(stderr, "%d: LJ %d(%d) %d(%d) %f @ %f %f %f - %f %f %f\n", this_node,
+      FORCE_TRACE(fprintf(stderr, "%d: LJ %d(%d) %d(%d) %f @ %f %f %f - %f %f %f\n", this_node,
 	      id1, particles[id1].identity, id2, particles[id2].identity, dist,
 	      particles[id1].p[0], particles[id1].p[1], particles[id1].p[2],
-	      particles[id2].p[0], particles[id2].p[1], particles[id2].p[2]);
+	      particles[id2].p[0], particles[id2].p[1], particles[id2].p[2]));
       
       r_off = dist - ia_params->LJ_offset;
       if(r_off>0.0) {
