@@ -1,31 +1,208 @@
 /** \page math Additional Tcl math-functions
 The following procedures are found in scripts/ABHmath.tcl.
 <ul>
-    <li> \anchor PI
-    \verbatim PI \endverbatim returns \f$\pi\f$ with 16 digits precision.
+    <li> CONSTANTS
+        <ul>   
+            <li> \anchor PI
+            \verbatim PI \endverbatim returns \f$\pi\f$ with 16 digits precision.
 
-    <li> \anchor sqr
-    \verbatim sqr \<arg\> \endverbatim returns the square of <tt>\<arg\></tt>.
+            <li> \anchor KBOLTZ
+            \verbatim KBOLTZ \endverbatim Returns Boltzmann constant in Joule/Kelvin
 
-    <li> \anchor min
-    \verbatim min <arg1> <arg2> \endverbatim 
-    returns the minimum of <tt>\<arg1\></tt> and <tt>\<arg2\></tt>.
+            <li> \anchor ECHARGE
+            \verbatim ECHARGE \endverbatim Returns elementary charge in Coulomb
 
-    <li> \anchor max
-    \verbatim max <arg1> <arg2> \endverbatim 
-    returns the maximum of <tt>\<arg1\></tt> and <tt>\<arg2\></tt>.
+            <li> \anchor NAVOGADRO
+            \verbatim NAVOGADRO \endverbatim Returns Avogadro number
 
-    <li> \anchor sign
-    \verbatim sign <arg> \endverbatim
-    returns the signum-function of <tt>\<arg\></tt>, namely +1 for <tt>\<arg\></tt> >0, -1 for <0, and =0 otherwise.
+            <li> \anchor  SPEEDOFLIGHT
+            \verbatim SPEEDOFLIGHT \endverbatim Returns speed of light in meter/second
 
-    <li> \anchor pair_dist
-    \verbatim pair_dist <part_id1> <part_id2> \endverbatim
-    returns the distance of two particles with identities <tt>\<part_id1\></tt> and <tt>\<part_id2\></tt>.
+            <li> \anchor ESPSLION0
+            \verbatim ESPSLION0 \endverbatim Returns dielectric constant of vaccum in Coulomb^2/(Joule meter)
+        </ul>
 
-    <li> \anchor LinRegression
-    \verbatim LinRegression <tcl-list> \endverbatim
-    returns the least-square linear fit <tt>a*x+b</tt> and the standard errors <tt>da</tt> and <tt>db</tt>
-    for a tcl-list of points <tt>{{x1 y1} {x2 y2} ...}</tt>.
+    <hr>
+   
+    <li> MATHEMATICAL FUNCTIONS
+        <ul>   
+            <li> \anchor sqr
+            \verbatim sqr \<arg\> \endverbatim returns the square of <tt>\<arg\></tt>.
+
+            <li> \anchor min
+            \verbatim min <arg1> <arg2> \endverbatim 
+            returns the minimum of <tt>\<arg1\></tt> and <tt>\<arg2\></tt>.
+
+            <li> \anchor max
+            \verbatim max <arg1> <arg2> \endverbatim 
+            returns the maximum of <tt>\<arg1\></tt> and <tt>\<arg2\></tt>.
+
+            <li> \anchor sign
+            \verbatim sign <arg> \endverbatim
+            returns the signum-function of <tt>\<arg\></tt>, namely +1 for <tt>\<arg\></tt> >0, -1 for <0, and =0 otherwise.
+        </ul>
+
+    <hr>
+
+   <li>  RANDOM FUNCTIONS
+        <ul>   
+            <li> \anchor gauss_random
+            \verbatim gauss_random \endverbatim 
+	    returns random numbers which have a Gaussian distribution
+
+            <li> \anchor vec_random
+            \verbatim vec_random [len] \endverbatim
+            returns a random vector of length [len]
+            (uniform distribution on a sphere)
+            This is done by chosing 3 uniformly distributed random numbers [-1,1]
+            If the length of the resulting vector is <= 1.0 the vector is taken and normalized
+            to the desired length, otherwise the procedure is repeated until succes.
+            On average the procedure needs 5.739 random numbers per vector.
+            (This is probably not the most efficient way, but it works!)
+            Ask your favorit mathematician for a proof!
+
+            <li> \anchor phivec_random
+            \verbatim phivec_random <v> <phi> [len]\endverbatim 
+	    return a random vector at angle \<phi\> with \<v\> and length \[len\]
+        </ul>
+
+    <hr>
+
+    <li>  PARTICLE OPERATIONS
+
+        Operations involving particle positions.
+        The parameters \<pi\> can either denote the particle identity 
+        (then the particle position is extracted with the \ref tcl_part command) 
+        or the particle position directly
+        When the optional \<box\> parameter for minimum image conventions is 
+        omited the functions use the \ref tcl_setmd box_l command.
+
+        <ul>  
+            <li> \anchor bond_vec
+            \verbatim bond_vec <p1> <p2> \endverbatim
+            Calculate bond vector pointing from  particles p2 to p1 <br>
+            return = (p1.pos - p2.pos)
+ 
+            <li> \anchor bond_vec_min
+            \verbatim bond_vec_min <p1> <p2> [box] \endverbatim
+            Calculate bond vector pointing from  particles p2 to p1 <br>
+            return = MinimumImage(p1.pos - p2.pos)
+
+            <li> \anchor bond_length
+            \verbatim bond_length <p1> <p2> \endverbatim
+            Calculate bond length between particles p1 and p2
+
+            <li> \anchor bond_length_min
+            \verbatim bond_length_min <p1> <p2> [box]\endverbatim
+	    Calculate minimum image bond length between particles p1 and p2
+
+            <li> \anchor bond_angle
+            \verbatim bond_angle <p1> <p2> <p3> \endverbatim
+            Calculate bond angle between particles p1, p2 and p3
+
+            <li> \anchor bond_dihedral
+            \verbatim bond_dihedral <p1> <p2> <p3> <p4> \endverbatim
+            Calculate bond dihedral between particles p1, p2, p3 and p4
+
+            <li> \anchor part_at_dist
+            \verbatim part_at_dist <p> <dist>\endverbatim
+            return position of a new particle at distance dist from p
+            with random orientation
+
+            <li> \anchor part_at_angle
+            \verbatim part_at_angle <p1> <p2> <phi> [len] \endverbatim
+            return position of a new particle at distance len (default=1.0) 
+	    from p2 which builds
+            a bond angle phi for (p1, p2, p-new) 
+
+            <li> \anchor part_at_dihedral
+            \verbatim part_at_dihedral <p1> <p2> <p3> <theta> [phi] [len]\endverbatim
+            return position of a new particle at distance len (default=1.0) 
+	    from p3 which builds
+            a bond angle phi (default=random) for (p2, p3, p-new) and a
+            dihedral angle theta for (p1, p2, p3, p-new) 
+        </ul>
+
+    <hr>
+
+    <li>  VECTOR OPERATIONS
+
+        A vector \<v\> is a tcl list of numbers with an arbitrary length
+        Some functions are provided only for three dimensional vectors. 
+        corresponding functions contain 3d at the end of the name.
+
+        <ul>  
+            <li> \anchor veclen
+            \verbatim veclen <v> \endverbatim return the length of a vector
+
+            <li> \anchor veclensqr
+            \verbatim veclensqr <v> \endverbatim return the length of a vector squared
+
+            <li> \anchor vecadd
+            \verbatim vecadd <a> <b> \endverbatim add vector a to vector b: return = (a+b)
+
+            <li> \anchor vecsub
+            \verbatim vecsub <a> <b> \endverbatim 
+            subtract vector b from vector a: return = (a-b)
+
+            <li> \anchor vecscale
+            \verbatim vecscale <s> <v> \endverbatim 
+            scale vector v with factor s: return = (s*v)
+
+            <li> \anchor vecdot_product
+            \verbatim vecdot_product <a> <b> \endverbatim 
+	    calculate dot product of vectors a and b: return = (a.b)
+
+            <li> \anchor veccross_product3d
+            \verbatim veccross_product3d <a> <b> \endverbatim
+            calculate the cross product of vectors a and b: return = (a x b)
+
+            <li> \anchor vecnorm
+            \verbatim vecnorm <v> [len] \endverbatim
+            normalize a vector to length len (default 1.0) 
+
+            <li> \anchor unitvec
+            \verbatim unitvec <p1> <p2> \endverbatim
+            return unit vector pointing from position p1 to position p2
+
+            <li> \anchor orthovec3d
+            \verbatim orthovec3d <v> [len] \endverbatim
+            return orthogonal vector to v with length len (default 1.0)
+            This vector does not have a random orientation in the plane perpendicular to v
+
+            <li> \anchor create_dihedral_vec
+            \verbatim create_dihedral_vec <v1> <v2> <theta> [phi] [len]\endverbatim
+             create last vector of a dihedral (v1, v2, res) with dihedral angle
+             theta and bond angle (v2, res) phi and length len (default 1.0).
+             If phi is ommited or set to <tt>rnd</tt> then phi is assigned a 
+	     random value between 0 and 2 Pi. 
+
+        </ul>
+
+    <hr>
+
+    <li>  TCL LIST OPERATIONS
+        <ul>
+            <li> \anchor average
+            \verbatim average <list> \endverbatim Returns the avarage of the provided List
+        </ul>
+
+    <hr>
+
+    <li> REGRESSION
+        <ul>
+            <li> \anchor LinRegression
+            \verbatim LinRegression <l> \endverbatim
+            l is a list {{x1 y1} {x2 y2} ...} of points.
+            LinRegression returns the least-square linear fit a*x+b
+            and the standard errors da and db.
+
+            <li> \anchor LinRegressionWithSigma
+            \verbatim LinRegressionWithSigma <l> \endverbatim
+            l is a list {{x1 y1 s1} {x2 y2 s2} ...} of points with standard deviations.
+            LinRegression returns the least-square linear fit a*x+b
+            plus the standard errors da and db, cov(a,b) and chi.
+        </ul>
 </ul>
+
 */
