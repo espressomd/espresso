@@ -7,7 +7,7 @@ TK=no
 CC=mpicc
 
 # optimized compiler flags
-CFLAGS=-g -pg -O3 -Wall -march=athlon -fschedule-insns -fschedule-insns2 \
+CFLAGS=-g -O3 -Wall -march=athlon-mp -mfpmath=sse -mmmx -m3dnow -msse -fschedule-insns -fschedule-insns2 \
        -funroll-loops -frerun-cse-after-loop -ffast-math
 
 # debug compiler flags
