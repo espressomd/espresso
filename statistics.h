@@ -249,4 +249,20 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff);
 
 /*@}*/
 
+/** returns the minimal squared distance between two positions in the perhaps periodic
+    simulation box.
+ *  \param pos1[3]  Position one.
+ *  \param pos2[3]  Position two.
+ */
+double min_distance2(double pos1[3], double pos2[3]);
+
+/** returns the minimal distance between two positions in the perhaps periodic
+    simulation box.
+ *  \param pos1[3]  Position one.
+ *  \param pos2[3]  Position two.
+ */
+MDINLINE double min_distance(double pos1[3], double pos2[3]) {
+  return sqrt(min_distance2(pos1, pos2));
+}
+
 #endif

@@ -40,6 +40,22 @@ int chain_start = 0, chain_n_chains = 0, chain_length = 0;
 Energy_stat energy = {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
 Energy_stat virials= {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
 
+double min_distance2(double pos1[3], double pos2[3])
+{
+  int i;
+  double diff[3], dist = 0;
+  for(i=0;i<3;i++) {
+    diff[i] = pos1[i]-pos2[i];
+#ifdef PERIODIC
+    if (periodic[i])
+#endif
+      diff[i] -=  dround(diff[i]/box_l[i])*box_l[i];
+
+    dist += SQR(diff[i]);
+  }
+  return dist;
+}
+
 static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
 			       double *posx, double *posy, double *posz, int *pid)
 {
@@ -1006,7 +1022,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 double mindist()
 {
   double *buf = NULL;
-  double mindist, xt, yt, zt, dx, dy, dz;
+  double mindist, pt[3];
   int i, j;
 
   /* minimal pair distance */
@@ -1017,13 +1033,11 @@ double mindist()
 
     updatePartCfg();
     for (j=0; j<n_total_particles-1; j++) {
-      xt = partCfg[j].r.p[0]; yt = partCfg[j].r.p[1]; zt = partCfg[j].r.p[2];
-      for (i=j+1; i<n_total_particles; i++) {
-	dx = xt - partCfg[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
-	dy = yt - partCfg[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
-	dz = zt - partCfg[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
-	mindist = dmin(mindist, SQR(dx)+SQR(dy)+SQR(dz));
-      }
+      pt[0] = partCfg[j].r.p[0];
+      pt[1] = partCfg[j].r.p[1];
+      pt[2] = partCfg[j].r.p[2];
+      for (i=j+1; i<n_total_particles; i++)
+	mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
     }
     mindist = sqrt(mindist);
   }
@@ -1752,7 +1766,7 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	  if(j != i) {
 	    for(t2=0; t2<n_p2; t2++) {
 	      if(partCfg[j].r.type == p2_types[t2]) {
-		act_dist2 =  min_distance2(partCfg[i].r.p, partCfg[j].r.p, box_l);
+		act_dist2 =  min_distance2(partCfg[i].r.p, partCfg[j].r.p);
 		if(act_dist2 < min_dist2) { min_dist2 = act_dist2; }
 	      }
 	    }
@@ -1810,7 +1824,7 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	for(j=start; j<n_total_particles; j++) {
 	  for(t2=0; t2<n_p2; t2++) {
 	    if(partCfg[j].r.type == p2_types[t2]) {
-	      dist = min_distance(partCfg[i].r.p, partCfg[j].r.p, box_l);
+	      dist = min_distance(partCfg[i].r.p, partCfg[j].r.p);
 	      if(dist > r_min && dist < r_max) {
 		ind = (int) ( (dist - r_min)*inv_bin_width );
 		rdf[ind]++;

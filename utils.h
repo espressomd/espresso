@@ -384,41 +384,6 @@ MDINLINE double distance2(double pos1[3], double pos2[3])
   return SQR(pos1[0]-pos2[0]) + SQR(pos1[1]-pos2[1]) + SQR(pos1[2]-pos2[2]);
 }
 
-/** returns the minimal distance between two position in a periodic box. 
- *  \param pos1[3]  Position one.
- *  \param pos2[3]  Position two.
- *  \param box_l[3] size of simulation box.
-*/
-MDINLINE double min_distance(double pos1[3], double pos2[3], double box_l[3])
-{
-  int i;
-  double diff[3], dist = 0;
-  for(i=0;i<3;i++) {
-    diff[i] = pos1[i]-pos2[i];
-    diff[i] -=  dround(diff[i]/box_l[i])*box_l[i];
-    dist += SQR(diff[i]);
-  }
-  return sqrt(dist);
-}
-
-/** returns the minimal distance between two position in a periodic box squared. 
- *  \param pos1[3]  Position one.
- *  \param pos2[3]  Position two.
- *  \param box_l[3] size of simulation box.
-*/
-MDINLINE double min_distance2(double pos1[3], double pos2[3], double box_l[3])
-{
-  int i;
-  double diff[3], dist = 0;
-  for(i=0;i<3;i++) {
-    diff[i] = pos1[i]-pos2[i];
-    diff[i] -=  dround(diff[i]/box_l[i])*box_l[i];
-    dist += SQR(diff[i]);
-  }
-  return dist;
-}
-
-
 /** returns the distance between the unfolded coordintes of two particles. 
  *  \param pos1[3]       Position of particle one.
  *  \param image_box1[3] simulation box index of particle one .
