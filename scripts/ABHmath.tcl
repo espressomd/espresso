@@ -69,10 +69,20 @@ proc pair_dist { part_id1 part_id2 } {
 # Returns the distance of two particles with identities <part_id1> and <part_id2>.
     set pos1 [part $part_id1 print pos]    
     set pos2 [part $part_id2 print pos]
-    set dist2 [expr sqr([lindex $pos1 0]- [lindex $pos2 0])]    
-    set dist2 [expr $dist2 + sqr([lindex $pos1 1]- [lindex $pos2 1])]
-    set dist2 [expr $dist2 + sqr([lindex $pos1 2]- [lindex $pos2 1])]
+    set dist2 [expr pow([lindex $pos1 0]- [lindex $pos2 0],2)]    
+    set dist2 [expr $dist2 + pow([lindex $pos1 1]- [lindex $pos2 1],2)]
+    set dist2 [expr $dist2 + pow([lindex $pos1 2]- [lindex $pos2 1],2)]
     return [expr sqrt($dist2)]
+}
+
+proc pair_vec { part_id1 part_id2 } {
+# pair_vec <part_id1> <part_id2>
+# returns a tcl list containing the vector bewteen <part_id1> and <part_id2>
+# namely: <part_id1>.pos - <part_id2>.pos
+    set pos1 [part $part_id1 print pos]    
+    set pos2 [part $part_id2 print pos]
+    foreach x1 $pos1 x2 $pos2 { lappend res [expr $x1-$x2] }
+    return $res
 }
 
 proc veclen {v} {
@@ -112,7 +122,6 @@ proc vecscale {a v} {
     }
     return $res
 }
-
 
 proc LinRegression {l} {
     # l is a list {{x1 y1} {x2 y2} ...} of points.
