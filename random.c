@@ -173,7 +173,7 @@ RandomStatus print_random_stat(void) {
           the current seeds/status of the n_nodes active nodes; otherwise it issues the 
 	  given parameters as the new seeds/status to the respective nodes. */
 int t_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[100 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE];
   int i,j,cnt, i_out; double d_out;
 
   if (argc == 1) {                                          /* 't_random' */
@@ -210,6 +210,7 @@ int t_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     }
     else if (!strncmp(argv[0], "stat", strlen(argv[0]))) {  /* 't_random stat [status-list]' */
       RandomStatus *stat = malloc(n_nodes*sizeof(RandomStatus));
+      printf("random: %d %d->%d\n", argc, n_nodes, n_nodes*(NTAB_RANDOM+2)+1);
       if (argc <= 1) {
 	mpi_random_stat(0,stat);
 	for (i=0; i < n_nodes; i++) { 
@@ -361,7 +362,7 @@ void init_bit_random_stat(BitRandomStatus tmp_stat) {
           the current seeds/status of the n_nodes active nodes; otherwise it issues the 
 	  given parameters as the new seeds/status to the respective nodes. */
 int bit_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[100 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE];
   int i,j,cnt; double d_out;
 
   if (argc == 1) {                                          /* 'bit_random' */
