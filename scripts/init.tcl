@@ -52,7 +52,7 @@ source countBonds.tcl
 # adds 'findPropPos' to determine the index-position of a certain property in the output of 'part'
 # adds 'findBondPos' to do the same for property 'bonds'
 
-source aux.tcl
+source auxiliary.tcl
 # adds 'checkpoint_set' and 'checkpoint_read'
 # adds 'prepare_vmd_connection' which aids in setting up a vmd-connection
 # adds 'timeStamp' which modifies a filestring to include a prefix and the current date as postfix before the suffix

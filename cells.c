@@ -16,16 +16,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "utils.h"
 #include "cells.h"
-#include "config.h"
-#include "debug.h"
 #include "grid.h"
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "integrate.h"
 #include "initialize.h"
 #include "communication.h"
-#include "utils.h"
 #include "verlet.h"
 #include "ghosts.h"
 #include "parser.h"

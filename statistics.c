@@ -13,6 +13,7 @@
 #include <tcl.h>
 #include <stdlib.h>
 #include <string.h>
+#include "utils.h"
 #include "statistics.h"
 #include "statistics_chain.h"
 #include "statistics_molecule.h"
@@ -21,22 +22,12 @@
 #include "modes.h"
 #include "pressure.h"
 #include "communication.h"
-#include "debug.h"
 #include "grid.h"
 #include "parser.h"
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "domain_decomposition.h"
 #include "verlet.h"
-
-/** Makro definition to handle the different complex types of FFTW2 and FFTW3 */
-#ifdef USEFFTW3
-#  define FFTW_REAL [0]
-#  define FFTW_IMAG [1]
-#else
-#  define FFTW_REAL .re
-#  define FFTW_IMAG .im
-#endif
 
 /** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
@@ -847,11 +838,11 @@ static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
   double shift[3];
   float *coord;
 
-  shift[0] = shift[1] = shift[2] = 0.0;
-
   enum flag { NONE , FOLD_MOLS};
 
   int flag;
+
+  shift[0] = shift[1] = shift[2] = 0.0;
   flag = NONE;
 
   change = 0;
@@ -1044,10 +1035,10 @@ static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, " { ", (char *)NULL);
     for ( j = 0 ; j < mode_grid_3d[ydir]/2 + 1 ; j++) {
       Tcl_AppendResult(interp, " { ", (char *)NULL);
-      Tcl_PrintDouble(interp,result[j+i*(mode_grid_3d[ydir]/2+1)]FFTW_REAL,buffer);
+      Tcl_PrintDouble(interp,FFTW_REAL(result[j+i*(mode_grid_3d[ydir]/2+1)]),buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
       Tcl_AppendResult(interp, " ", (char *)NULL);
-      Tcl_PrintDouble(interp,result[j+i*(mode_grid_3d[ydir]/2+1)]FFTW_IMAG,buffer);
+      Tcl_PrintDouble(interp,FFTW_IMAG(result[j+i*(mode_grid_3d[ydir]/2+1)]),buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
       Tcl_AppendResult(interp, " } ", (char *)NULL);
     }

@@ -8,42 +8,85 @@
 #  Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
 # 
 
-PLATFORMS=AIX Darwin Linux OSF1
+########### load platform dependent part
 
-########### list of source files
-CSOURCES= main initialize global communication binary_file interaction_data \
+PLATFORM=$(shell config/config.guess)
+OUTDIR=obj-$(PLATFORM)
+include Makefile.$(PLATFORM)
+
+########### list of fix source files
+CSOURCES= main config initialize global communication binary_file interaction_data \
 	  verlet grid integrate cells ghosts forces rotation debug particle_data \
 	  thermostat statistics statistics_chain energy pressure vmdsock imd \
 	  p3m fft random blockfile blockfile_tcl polymer specfunc mmm1d tuning \
 	  uwerr parser domain_decomposition nsquare layered mmm-common mmm2d \
 	  modes topology nemd statistics_cluster elc statistics_molecule \
 	  errorhandling constraint maggs rattle lb
-CXXSOURCES=
 
-LIBOBJECTS= c_blockfile.o
+# objects to include in the Espresso library
+LIBOBJECTS= c_blockfile.$(OBJEXT)
 
+# flag only used for Espresso, but not the Espresso library
+BIN_CFLAGS=-DTCL_FILE_IO
+
+# documentation directories created by doxygen
 DOC_RES= doc/html doc/rtf doc/latex doc/man
-
-########### load platform dependent part
-PLATFORM=$(shell uname -s)
-include Makefile.$(PLATFORM)
 
 ########### RULES
 #################
-TCLMD_CFLAGS=-DTCL_FILE_IO
-OBJECTS=$(CSOURCES:%=%.o) $(CXXSOURCES:%=%.o)
-CFILES=$(CSOURCES:=.c)
-CXXFILES=$(CXXSOURCES:=.cc)
-
+OBJECTS=$(CSOURCES:%=%.$(OBJEXT))
+CFILES=$(CSOURCES:%=%.c)
+HEADERS=$(shell ls *.h)
 DOCFILES=$(shell ls doc/text/*.doc)
 
-default: $(PLATFORM) $(PLATFORM)/Espresso $(PLATFORM)/libEspresso.a
-all: $(PLATFORM) $(PLATFORM)/Espresso $(PLATFORM)/libEspresso.a
+default: all
+all: $(OUTDIR)/Espresso_bin$(EXEEXT) $(OUTDIR)/libEspresso.a
+
+install: all
+	config/install-sh -c config/config.guess $(pkglibdir)/config.guess
+	echo "#!/bin/sh" > __common_Espresso
+	echo "export ESPRESSO_SOURCE=$(pkglibdir); export ESPRESSO_SCRIPTS=$(pkglibdir)/scripts" >> __common_Espresso
+	echo "$(pkglibdir)/obj-\`$(pkglibdir)/config.guess\`/Espresso $*" >> __common_Espresso
+	config/install-sh -m 755 __common_Espresso $(bindir)/Espresso
+	config/install-sh -c $(OUTDIR)/Espresso $(pkglibdir)/$(OUTDIR)/Espresso
+	config/install-sh -c $(OUTDIR)/Espresso_bin$(EXEEXT) $(pkglibdir)/$(OUTDIR)/Espresso_bin
+	config/install-sh -d $(OUTDIR)/scripts $(pkglibdir)/scripts
+
+install-doc:
+	config/install-sh -d doc/html $(pkglibdir)/html
+
+########### dependencies
+ifeq ($(DEPEND),makedepend)
+$(OUTDIR)/.depend:
+	rm -f $@
+	touch $@
+	makedepend -f $@ -- $(CFLAGS) -- $(CFILES)
+else
+ifeq ($(DEPEND),mkdep)
+$(OUTDIR)/.depend:
+	rm -f $@
+	touch $@
+	export CC=$(CC); mkdep -f $@ $(CFLAGS) $(CFILES)
+else
+ifeq ($(DEPEND),gcc)
+$(OUTDIR)/.depend:
+	rm -f $@
+	touch $@
+	$(CC) -MM -MF $@ $(CFLAGS) $(CFILES)
+else
+$(OUTDIR)/.depend:
+	rm -f $@
+	touch $@
+	@echo "***************************************************************************************"
+	@echo "dependencies cannot be built with this compiler, install makedepend or mkdep or use gcc"
+	@echo "***************************************************************************************"
+endif
+endif
+endif
 
 ########### documentation
 docu: doc/html/index.html
-
-doc/html/index.html: $(DOCFILES) $(CFILES) $(CXXFILES)
+doc/html/index.html: $(DOCFILES) $(CFILES) $(HEADERS)
 ################### BACKGROUND_ERROR-CODES
 	awk -f ./scripts/background_errors.awk *.c *.h
 	sort ./doc/text/background_errors_tmp.doc -o ./doc/text/background_errors_tmp.doc
@@ -55,69 +98,59 @@ doc/html/index.html: $(DOCFILES) $(CFILES) $(CXXFILES)
 	rm ./doc/text/background_errors_tmp.doc
 ################### END OF BACKGROUND_ERROR-CODES
 	doxygen doxygen_config | grep -ve "^\(Generating\|Parsing\|Preprocessing\)"
-#       (cd doc/latex; make)
 
 ########### output directory
-$(PLATFORM):
-	mkdir -p $(PLATFORM)
+$(OUTDIR):
+	mkdir -p $(OUTDIR)
 
-########### final target
-$(PLATFORM)/Espresso: $(OBJECTS)
-	(cd $(PLATFORM); $(LINK) $(LDFLAGS) -o Espresso $(OBJECTS) $(LDLIBS) $(STATIC_POSTLOAD))
+########### targets
+$(OUTDIR)/Espresso_bin$(EXEEXT): $(OBJECTS)
+	$(MAKE) $(OUTDIR)
+	(cd $(OUTDIR); $(LD) $(LDFLAGS) -o Espresso_bin$(EXEEXT) $(OBJECTS) $(LIBS))
 
-$(PLATFORM)/libEspresso.a: $(LIBOBJECTS)
-	(cd $(PLATFORM); ar -crs libEspresso.a $(LIBOBJECTS) )
+$(OUTDIR)/libEspresso.a: $(LIBOBJECTS)
+	$(MAKE) $(OUTDIR)
+	(cd $(OUTDIR); ar -crs libEspresso.a $(LIBOBJECTS))
+
+########### dependencies
+dep:
+	rm -f $(OUTDIR)/.depend
+	$(MAKE) $(OUTDIR)/.depend
+
+include $(OUTDIR)/.depend
+
+########## implicit rules
+vpath %.$(OBJEXT)  $(OUTDIR)
+
+%.$(OBJEXT): %.c
+	$(CC) $(CFLAGS) $(BIN_CFLAGS) -c -o $(OUTDIR)/$@ $<
+
+c_blockfile.$(OBJEXT): blockfile.c
+	$(CC) $(CFLAGS) -c -o $(OUTDIR)/$@ $<
 
 ########### clean
 clean:
 	rm -f *~
-	(cd $(PLATFORM); rm -f $(OBJECTS) )
+	(cd $(OUTDIR); rm -f $(OBJECTS))
 docclean:
 	rm -rf $(DOC_RES:=/*)
 mostclean: clean docclean
-	for platform in $(PLATFORMS); do \
-		rm -rf $$platform; \
+	for platform in obj-*; do \
+		if test -d $$platform; then \
+			rm -rf $$platform; \
+		fi \
 	done
 
-########### transport
+########### dist
 TARFILE=Espresso-$(shell date -I).tgz
-__EXCLUDES= $(PLATFORMS:%=--exclude=%) $(DOC_RES:%=--exclude=%) \
+__EXCLUDES= $(OUTDIRS:%=--exclude=%) $(DOC_RES:%=--exclude=%) --exclude=autom4te.cache --exclude=internal \
 	--exclude=*.avi --exclude=Espresso-*.tgz --exclude=*~ \
-	--exclude=core --exclude=core.* --exclude=.\#* --exclude=CVS --exclude=TclTutor \
+	--exclude=core --exclude=core.* --exclude=obj-* --exclude=.\#* --exclude=CVS --exclude=TclTutor \
 	$(EXCLUDES)
 
-transport:
+dist:
 	(cd ..; tar -vchzf Espresso/$(TARFILE) Espresso $(__EXCLUDES))
 
-########### dependencies
-dep: 
-	$(MAKE) $(PLATFORM)
-	rm -f $(PLATFORM)/.depend
-	$(MAKE) $(PLATFORM)/.depend
-
-$(PLATFORM)/.depend:
-	mkdir -p $(PLATFORM)
-	rm -f $@
-	touch $@
-	$(DEPEND) -f $@ -- $(CFLAGS) -- $(CFILES) $(CXXFILES) 2>/dev/null
-
-include $(PLATFORM)/.depend
-
 ########## tests
-test: $(PLATFORM)/Espresso
+test: $(OUTDIR)/Espresso_bin$(EXEEXT)
 	cd testsuite; ./test.sh
-
-testfake: $(PLATFORM)/Espresso
-	cd testsuite; ./test.sh -nompi
-
-########## implicit rules
-vpath %.o  $(PLATFORM)
-
-%.o: %.c
-	$(CC) $(CFLAGS) $(TCLMD_CFLAGS) -c -o $(PLATFORM)/$@ $<
-
-c_blockfile.o: blockfile.c
-	$(CC) $(CFLAGS) -c -o $(PLATFORM)/$@ $<
-
-%.o: %.cc
-	$(CXX) $(CXXFLAGS) $(TCLMD_CFLAGS) -c -o $(PLATFORM)/$@ $<

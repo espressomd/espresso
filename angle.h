@@ -17,7 +17,7 @@
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
 */
 
-#include "config.h"
+#include "utils.h"
 
 /************************************************************/
 

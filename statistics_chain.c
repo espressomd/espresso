@@ -10,8 +10,8 @@
     Implementation of \ref statistics_chain.h "statistics_chain.h".
 */
 #include "statistics.h"
+#include "utils.h"
 #include "parser.h"
-#include "debug.h"
 #include "topology.h"
 #include "communication.h"
 #include "cells.h"

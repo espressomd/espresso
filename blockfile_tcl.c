@@ -13,10 +13,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include "utils.h"
 #include "global.h"
 #include "blockfile.h"
 #include "blockfile_tcl.h"
-#include "debug.h"
 #include "communication.h"
 
 int blockfile(ClientData data, Tcl_Interp *interp,

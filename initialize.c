@@ -13,8 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "config.h"
-#include "debug.h"
+#include "utils.h"
 #include "initialize.h"
 #include "global.h"
 #include "particle_data.h"
@@ -44,7 +43,6 @@
 #include "debye_hueckel.h"
 #include "forces.h"
 #include "uwerr.h"
-#include "utils.h"
 #include "nsquare.h"
 #include "nemd.h"
 #include "domain_decomposition.h"

@@ -15,8 +15,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include "utils.h"
 #include "communication.h"
-#include "debug.h"
 #include "cells.h"
 #include "grid.h"
 #include "integrate.h"

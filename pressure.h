@@ -14,7 +14,7 @@
 #define PRESSURE_H
 
 
-#include "config.h"
+#include "utils.h"
 #include "integrate.h"
 #include "statistics.h"
 #include "thermostat.h"

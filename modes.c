@@ -509,11 +509,7 @@ int modes2d(fftw_complex* modes) {
 #ifdef USEFFTW3
   fftw_execute(mode_analysis_plan);
   /* Copy result to modes */
-  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
-    for ( j = 0 ; j < mode_grid_3d[ydir]/2 + 1 ; j++) {
-      modes[i*(mode_grid_3d[ydir]/2 + 1) + j] = result[i*(mode_grid_3d[ydir]/2 + 1) + j];
-    }
-  }
+  memcpy(modes, result, mode_grid_3d[xdir]*(mode_grid_3d[ydir]/2 + 1)*sizeof(fftw_complex));
 #else
   rfftwnd_one_real_to_complex(mode_analysis_plan, height_grid, modes);
 #endif

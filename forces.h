@@ -19,7 +19,7 @@
  *  For more information see \ref forces.c "forces.c".
  */
 #include <tcl.h>
-#include "config.h"
+#include "utils.h"
 #include "thermostat.h"
 #ifdef NPT
 #include "pressure.h"

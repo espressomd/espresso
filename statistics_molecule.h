@@ -20,8 +20,8 @@
 
 #endif
 #include "statistics.h"
+#include "utils.h"
 #include "parser.h"
-#include "debug.h"
 #include "topology.h"
 
 /** Using the topology information stored in \ref topology::topology

@@ -11,8 +11,7 @@
  */
 #include <string.h>
 #include <stdlib.h>
-#include "config.h"
-#include "debug.h"
+#include "utils.h"
 #include "rattle.h"
 #include "interaction_data.h"
 #include "errorhandling.h"
@@ -32,7 +31,6 @@
 #include "ljcos.h"
 #include "gb.h"
 #include "parser.h"
-#include "utils.h"
 #include "cells.h"
 #include "comforce.h"
 #include "comfixed.h"

@@ -15,9 +15,8 @@
 #include <string.h>
 #include <float.h>
 #include <stdio.h>
-
+#include "utils.h"
 #include "uwerr.h"
-#include "debug.h"
 
 
 /** This is eps from matlab */

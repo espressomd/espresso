@@ -1,5 +1,5 @@
 /** \page aux Auxiliary Tcl functions
-The following procedures are found in scripts/aux.tcl and scripts/countBonds.tcl. See \ref io for further functions as well.
+The following procedures are found in scripts/auxiliary.tcl and scripts/countBonds.tcl. See \ref io for further functions as well.
 <ul>
     <li>\anchor tcl_stopparticles
 	\verbatim stopParticles 

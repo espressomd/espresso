@@ -1,14 +1,6 @@
 #!/bin/sh
 # tricking... the line after a these comments are interpreted as standard shell script \
-    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=2; fi
-# OSF1 \
-    if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $*
-# AIX \
-    elif test $PLATFORM = AIX; then exec poe $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $* -procs $NP
-# Linux \
-    else export EF_ALLOW_MALLOC_0=1; exec mpirun -np $NP -nsigs $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $*;
-# \
-    fi;
+    exec $ESPRESSO_SOURCE/Espresso $0 $*
 # 
 #  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 #  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
@@ -140,7 +132,7 @@ set  box_l       [expr 4.0*$sphere_rad + 6.0*$skin]
 set shift_vec [list [expr $box_l/2.0] [expr $box_l/2.0] [expr $box_l/2.0]]
 
 setmd box_l     $box_l $box_l $box_l
-setmd periodic  0 0 0
+setmd periodic  1 1 1
 setmd time_step $time_step
 setmd skin      $skin
 setmd gamma     0.0
@@ -192,14 +184,18 @@ set n_part [expr $n_mono ]
 #flush stdout
 #puts "[inter coulomb $bjerrum p3m tune accuracy $accuracy]"
 
+puts "Particles:\n[part]\n[setmd cell_grid]"
+
 #Use pretuned p3m parameters:
 inter coulomb 2 p3m 125.07 8 6 0.0195788 9.47835e-07
 
+puts "Particles:\n[part]\n[setmd cell_grid]"
+
 # Status report
 puts "$n_poly PE chain of length $p_length and charge distance $b_length"
-#puts "Constraints:\n[constraint]"
+puts "Constraints:\n[constraint]"
 puts "Interactions:\n[inter]\n"
-#puts "Particles:\n[part]\n"
+puts "Particles:\n[part]\n"
 
 
 #############################################################

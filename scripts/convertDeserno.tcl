@@ -124,13 +124,13 @@ proc initConversion {} {
     } elseif { [lsearch [info procs] "polyBlockWrite"] == -1 } {
 	puts -nonewline "\n            Function 'polyBlockWrite' is missing - trying to reload... "
 	flush stdout
-	if { [catch [source aux.tcl]]!=0 } {
-	    if { [catch [source ./scripts/aux.tcl]]!=0 && [catch [source $ESPRESSO_SCRIPTS/aux.tcl]]!=0 } {
+	if { [catch [source auxiliary.tcl]]!=0 } {
+	    if { [catch [source ./scripts/auxiliary.tcl]]!=0 && [catch [source $ESPRESSO_SCRIPTS/auxiliary.tcl]]!=0 } {
 		puts "Failed.\n"
 		puts "----------------"
 		puts "--> Warning! <--"
 		puts "----------------"
-		puts "--> Could not find 'aux.tcl' which is required for execution!"
+		puts "--> Could not find 'auxiliary.tcl' which is required for execution!"
 		puts "Aborting..."
 		exit
 	    }

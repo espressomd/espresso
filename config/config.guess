@@ -1,0 +1,46 @@
+#!/bin/sh
+
+system=`uname -s`
+
+case $system in
+Linux)
+    # determines the type of CPU 0
+    MODEL=`awk '/\\\`model name/ { \
+	if ($4 == "Pentium") { if ($5 != "") print $4"-"$5; else print $4; } \
+	else if ($4 == "AMD" && $5 == "Opteron(tm)")   print "Opteron"; \
+	else if ($4 == "Intel(R)" && $5 == "Xeon(TM)") print "Xeon"; \
+	else { \
+	    if      ($4 == "Intel(R)" && $5 == "Pentium(R)")  model="Pentium"; \
+	    else if ($4 == "AMD"      && $5 == "Athlon(TM)")  model="Athlon"; \
+	    else if ($4 == "AMD"      && $5 == "Athlon(tm)")  model="Athlon"; \
+	    else                                              model="unknown"; \
+	    if ($6 == "") print model; else print model"_"$6; \
+	}; exit\
+	}' /proc/cpuinfo`
+    echo "$MODEL-pc-linux"
+    ;;
+OSF1)
+    # adapted from GNU config.guess
+    # According to Compaq, /usr/sbin/psrinfo has been available on
+    # OSF/1 and Tru64 systems produced since 1995.  I hope that
+    # covers most systems running today.  This code pipes the CPU
+    # types through head -n 1, so we only detect the type of CPU 0.
+    MODEL=`/usr/sbin/psrinfo -v | awk '/The alpha .* processor/ { print $3; exit }'`
+    echo $MODEL-dec-osf1
+    ;;
+AIX)
+    IBM_CPU_ID=`/usr/sbin/lsdev -C -c processor -S available | sed 1q | awk '{ print $1 }'`
+    MODEL=`/usr/sbin/lsattr -El ${IBM_CPU_ID} | awk '/type/ { \
+	model=$2; \
+	if (model=="PowerPC_POWER4") print "Power4"; else \
+	if (model=="PowerPC_POWER3") print "Power3"; \
+    }'`
+    echo $MODEL-ibm-aix5.2
+    ;;
+Darwin)
+    echo `uname -p | sed -e s/\ /_/ -e s/\-/_/`-apple-darwin`uname -r`
+    ;;
+*)
+    echo `uname -p | sed -e s/\ /_/ -e s/\-/_/`-unknown-`uname -s | sed -e s/\ /_/ -e s/\-/_/`
+    ;;
+esac

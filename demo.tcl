@@ -1,14 +1,6 @@
 #!/bin/sh
 # tricking... the line after a these comments are interpreted as standard shell script \
-    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=1; fi
-# OSF1 \
-    if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $PLATFORM/Espresso $0 $*
-# AIX \
-    elif test $PLATFORM = AIX; then exec poe $PLATFORM/Espresso $0 $* -procs $NP
-# Linux \
-    else export EF_ALLOW_MALLOC_0=1; lamboot; exec mpirun -np $NP -nsigs $PLATFORM/Espresso $0 $*;
-# \
-    fi;
+    exec $ESPRESSO_SOURCE/Espresso $0 $*
 
 #############################################################
 #                                                           #

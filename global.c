@@ -12,9 +12,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include "utils.h"
 #include "global.h"
-#include "debug.h"
 /* from these modules we modify variables: */
 #include "communication.h"
 #include "cells.h"

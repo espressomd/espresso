@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "blockfile.h"
-#include "debug.h"
+#include "utils.h"
 
 /** Used in the write commands as buffer size for sprintf.
     Possible incompatability. The current value allows for

@@ -17,15 +17,21 @@
     <a href="mailto:cooke@mpip-mainz.mpg.de">Ira Cooke</a>
 */
 
+#include "utils.h"
 #include "statistics.h"
 #include "parser.h"
-#include "debug.h"
-#include "utils.h"
 
 #ifdef USEFFTW3
+#ifdef _Complex_I
+#  warning the complex data type is predefined on your system, hoping it is compatible to a double[2]
+#endif
 #  include <fftw3.h>
+#  define FFTW_REAL(x) (((double *)(x))[0])
+#  define FFTW_IMAG(x) (((double *)(x))[1])
 #else
 #  include <rfftw.h>
+#  define FFTW_REAL(x) ((x).re)
+#  define FFTW_IMAG(x) ((x).im)
 #endif
 
 /** The full 3d grid for mode analysis */

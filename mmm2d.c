@@ -13,15 +13,13 @@
 
 #include <math.h>
 #include <mpi.h>
+#include "utils.h"
 #include "communication.h"
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "cells.h"
-#include "cells.h"
-#include "config.h"
 #include "mmm2d.h"
 #include "mmm-common.h"
-#include "utils.h"
 #include "specfunc.h"
 #include "integrate.h"
 #include "layered.h"

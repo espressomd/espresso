@@ -31,7 +31,7 @@
  *  For more information about FFT usage, see \ref fft.c "fft.c".  
 */
 
-#include "config.h"
+#include "utils.h"
 
 #ifdef ELECTROSTATICS
 

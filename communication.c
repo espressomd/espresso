@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include "utils.h"
 #include "communication.h"
 #include "interaction_data.h"
 #include "particle_data.h"
@@ -21,8 +21,6 @@
 #include "cells.h"
 #include "global.h"
 #include "grid.h"
-#include "debug.h"
-#include "utils.h"
 #include "initialize.h"
 #include "forces.h"
 #include "rotation.h"

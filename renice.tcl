@@ -1,6 +1,6 @@
 #!/bin/sh
 # tricking... the line after a these comments are interpreted as standard shell script \
-    export EF_ALLOW_MALLOC_0=1; exec tclsh8.4 $0 $*;
+    exec tclsh8.4 $0 $*;
 
 set places [list pckr27 pckr28 pckr33 pckrls pckr37 pckr38 pckr39 pckr40 pckr41 pckr42 pckr43 pckr44 pckr45 pckr46 pckr47 pckr48 pckr49 pckr50]
 set user [exec whoami]

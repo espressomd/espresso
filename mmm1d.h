@@ -15,7 +15,7 @@
 #ifndef MMM1D_H
 #define MMM1D_H
 
-#include "config.h"
+#include "utils.h"
 #include "particle_data.h"
 
 #ifdef ELECTROSTATICS

@@ -12,12 +12,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "utils.h"
 #include "binary_file.h"
 #include "global.h"
 #include "communication.h"
 #include "grid.h"
 #include "interaction_data.h"
-#include "debug.h"
 
 /* cwz-build-comman: ssh chakotay "builtin cd /nhomes/janeway/axel/progs/Espresso; make" 
    cwz-build-command: make

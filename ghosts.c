@@ -15,13 +15,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "utils.h"
 #include "ghosts.h"
-#include "debug.h"
 #include "global.h"
 #include "cells.h"
 #include "communication.h"
 #include "grid.h"
-#include "utils.h"
 #include "particle_data.h"
 #include "forces.h"
 
@@ -393,30 +392,32 @@ void ghost_communicator(GhostCommunicator *gc)
       /* transfer data */
       switch (comm_type) {
       case GHOST_RECV:
-	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm receive from %d\n", this_node, node));
+	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm receive from %d (%d bytes)\n", this_node, node, n_r_buffer));
 	MPI_Recv(r_buffer, n_r_buffer, MPI_BYTE, node, REQ_GHOST_SEND, MPI_COMM_WORLD, &status);
 	break;
       case GHOST_SEND:
-	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm send to %d\n", this_node, node));
+	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm send to %d (%d bytes)\n", this_node, node, n_s_buffer));
 	MPI_Send(s_buffer, n_s_buffer, MPI_BYTE, node, REQ_GHOST_SEND, MPI_COMM_WORLD);
 	break;
       case GHOST_BCST:
-	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm bcast from %d\n", this_node, node));
+	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm bcast from %d (%d bytes)\n", this_node, node,
+			    (node == this_node) ? n_s_buffer : n_r_buffer));
 	if (node == this_node)
 	  MPI_Bcast(s_buffer, n_s_buffer, MPI_BYTE, node, MPI_COMM_WORLD);
 	else
 	  MPI_Bcast(r_buffer, n_r_buffer, MPI_BYTE, node, MPI_COMM_WORLD);
 	break;
       case GHOST_RDCE:
-	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm reduce to %d\n", this_node, node));
+	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm reduce to %d (%d bytes)\n", this_node, node, n_s_buffer));
 	if (node == this_node)
 	  MPI_Reduce(s_buffer, r_buffer, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, MPI_COMM_WORLD);
 	else
 	  MPI_Reduce(s_buffer, NULL, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, MPI_COMM_WORLD);
 	break;
       }
+      GHOST_TRACE(MPI_Barrier(MPI_COMM_WORLD));
       GHOST_TRACE(fprintf(stderr, "%d: ghost_comm done\n", this_node));
-      
+
       /* recv op; write back data directly, if no PSTSTORE delay is requested. */
       if (is_recv_op(comm_type, node)) {
 	if (!poststore) {

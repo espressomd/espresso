@@ -30,6 +30,7 @@
  <li> \verbatim #define FORCE_DEBUG \endverbatim activate detailed Force debugging -> gives explicitely all forces.
  <li> \verbatim #define THERMO_DEBUG \endverbatim activate debug output for the theromostat.
  <li> \verbatim #define LJ_DEBUG \endverbatim activate debug output for the LJ-potential.
+ <li> \verbatim #define MORSE_DEBUG \endverbatim activate debug output for the MORSE-potential.
  <li> \verbatim #define ESR_DEBUG \endverbatim activate ??? debug output.
  <li> \verbatim #define ESK_DEBUG \endverbatim activate ??? debug output.
  <li> \verbatim #define FENE_DEBUG \endverbatim activate debug output for the FENE-potential.
@@ -37,13 +38,14 @@
  <li> \verbatim #define ONE_PART_DEBUG <part_id> \endverbatim activate debug output, tracing everything done with particle "<part_id>".
  <li> \verbatim #define STAT_DEBUG \endverbatim activate statistics related debug output.
  <li> \verbatim #define POLY_DEBUG \endverbatim activate polymer setup debug output.
+ <li> \verbatim #define MEM_DEBUG \endverbatim activate memory allocation/freeing logging. WARNING: This generates TONS of
+ output. This can only be used reasonably for a few time steps with a few particles.
+ <li> \verbatim #define MAGGS_DEBUG \endverbatim activate debugging output of the Maggs electrostatics/dynamics method.
  <li> \verbatim #define MPI_CORE \endverbatim generate a core dump when exiting abnormally due
  to MPI errors.
  <li> \verbatim #define FORCE_CORE \endverbatim generate a core dump even on regular termination.
  <li> \verbatim #define ADDITIONAL_CHECKS \endverbatim adds additional checks which indicate failure
  of the code.
- <li> \verbatim #define MORSE_DEBUG \endverbatim activate debug output for the MORSE-potential.
-
  </ul>
 
  For every define there exists a macro that can be used to encapsulate short lines (like printf("...",...);)

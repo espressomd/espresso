@@ -11,12 +11,12 @@
  */
 #include <mpi.h>
 #include <string.h>
+#include "utils.h"
 #include "cells.h"
 #include "integrate.h"
 #include "layered.h"
 #include "global.h"
 #include "communication.h"
-#include "debug.h"
 #include "ghosts.h"
 #include "forces.h"
 #include "pressure.h"

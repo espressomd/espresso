@@ -20,17 +20,15 @@
 #include <string.h>
 #include <math.h>
 #include <mpi.h>
+#include "utils.h"
 #include "particle_data.h"
 #include "global.h"
 #include "communication.h"
 #include "grid.h"
 #include "interaction_data.h"
 #include "integrate.h"
-#include "debug.h"
-#include "utils.h"
 #include "cells.h"
 #include "parser.h"
-#include "debug.h"
 
 
 /************************************************
@@ -1936,9 +1934,9 @@ void local_place_particle(int part, double p[3], int new)
 
   memcpy(pt->r.p, pp, 3*sizeof(double));
   memcpy(pt->l.i, i, 3*sizeof(int));
-  #ifdef BOND_CONSTRAINT
-    memcpy(pt->r.p_old, pp, 3*sizeof(double));
-  #endif
+#ifdef BOND_CONSTRAINT
+  memcpy(pt->r.p_old, pp, 3*sizeof(double));
+#endif
 }
 
 void local_remove_all_particles()

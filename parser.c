@@ -10,9 +10,8 @@
     Implementation of \ref parser.h "parser.h". \ref parse_int_list is too long for inlining.
  */
 
-#include "parser.h"
-#include "debug.h"
 #include "utils.h"
+#include "parser.h"
 
 int parse_int_list(Tcl_Interp *interp, char *list, IntList *il)
 {

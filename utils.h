@@ -21,6 +21,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "config.h"
 #include "debug.h"
 
 
@@ -122,6 +123,18 @@ MDINLINE void *pmalloc(int size)
 
 #endif
 /*@}*/
+
+/*************************************************************/
+/* mass helper macro                                         */
+/*************************************************************/
+
+#ifdef MASS
+/** macro for easy use of mass. If masses are not switched on, the particle mass is defined to 1,
+    so it should be compiled out in most cases. */
+#define PMASS(pt) (pt).p.mass
+#else
+#define PMASS(pt) 1
+#endif
 
 /*************************************************************/
 /** \name List operations .                                  */
@@ -297,12 +310,12 @@ MDINLINE double SQR(double x) { return x*x; }
     Dover (9. ed.), chapter 7 */
 MDINLINE double AS_erfc_part(double d)
 {
-  #define AS_a1  0.254829592
-  #define AS_a2 -0.284496736
-  #define AS_a3  1.421413741
-  #define AS_a4 -1.453152027
-  #define AS_a5  1.061405429
-  #define AS_p   0.3275911
+#define AS_a1  0.254829592
+#define AS_a2 -0.284496736
+#define AS_a3  1.421413741
+#define AS_a4 -1.453152027
+#define AS_a5  1.061405429
+#define AS_p   0.3275911
   double t;
   
   t = 1.0 / (1.0 + AS_p * d);
@@ -324,12 +337,12 @@ MDINLINE double AS_erfc_part(double d)
 */
 MDINLINE double sinc(double d)
 {
-  #define epsi 0.1
+#define epsi 0.1
 
-  #define c2 -0.1666666666667e-0
-  #define c4  0.8333333333333e-2
-  #define c6 -0.1984126984127e-3
-  #define c8  0.2755731922399e-5
+#define c2 -0.1666666666667e-0
+#define c4  0.8333333333333e-2
+#define c6 -0.1984126984127e-3
+#define c8  0.2755731922399e-5
 
   double PId = PI*d, PId2;
 
@@ -608,7 +621,7 @@ MDINLINE int malloc_3d_grid(double ****grid, int dim[3])
 MDINLINE void print_block(double *data, int start[3], int size[3], int dim[3], int element, int num)
 {
   int i0,i1,i2,b=1;
-  int divide=0,block1,start1;
+  int divide=0,block1=0,start1;
   double tmp;
 
   while(divide==0) {

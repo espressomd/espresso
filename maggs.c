@@ -13,15 +13,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "utils.h"
 #include "global.h"
-#include "debug.h"
 #include "grid.h"
 #include "integrate.h"
 #include "initialize.h"
 #include "interaction_data.h"
 #include "particle_data.h"
-#include "utils.h"
 #include "communication.h"
 #include "maggs.h"
 #include "thermostat.h"

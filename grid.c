@@ -16,15 +16,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "config.h"
-#include "grid.h"
 #include "utils.h"
-#include "debug.h"
+#include "grid.h"
 #include "communication.h"
 #include "verlet.h"
 #include "cells.h"
 #include "interaction_data.h"
-#include "utils.h"
 
 /************************************************
  * defines

@@ -9,13 +9,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include "utils.h"
 #include "global.h"
-#include "debug.h"
 #include "random.h"
 #include "tcl.h"
 #include "communication.h"
-#include "utils.h"
 
 /** \file random.c A random generator. 
     Be sure to run init_random() before you use any of the generators. */

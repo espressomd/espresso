@@ -13,9 +13,9 @@
 
 #include <mpi.h>
 #include <string.h>
+#include "utils.h"
 #include "nsquare.h"
 #include "communication.h"
-#include "debug.h"
 #include "ghosts.h"
 #include "forces.h"
 #include "pressure.h"

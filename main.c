@@ -20,10 +20,10 @@
 #include <tk.h>
 #endif
 #include <stdlib.h>
+#include "utils.h"
 #include "initialize.h"
 #include "global.h"
 #include "communication.h"
-#include "debug.h"
 
 void errexit()
 {

@@ -12,8 +12,8 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <tcl.h>
+#include "utils.h"
 #include "communication.h"
-#include "debug.h"
 #include "errorhandling.h"
 
 int timing_samples = 0;

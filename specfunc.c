@@ -10,9 +10,9 @@
     Special functions, see \ref specfunc.h "specfunc.h"
 */
 #include <math.h>
+#include "utils.h"
 #include "specfunc.h"
 #include "polynom.h"
-#include "debug.h"
 
 /* Original gsl header
  * specfunc/bessel_K0.c

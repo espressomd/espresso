@@ -377,7 +377,6 @@ J. Chem. Phys., 117 (2002), 2503-2512
 </ul>
 */
 #include "mmm-common.h"
-#include "config.h"
 #include "utils.h"
 
 Polynom *modPsi = NULL;

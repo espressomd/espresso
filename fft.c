@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h> 
 #include <math.h>
+#include "utils.h"
 
 #ifdef USEFFTW3
 #  include <fftw3.h>
@@ -29,8 +30,6 @@
 
 #include "communication.h"
 #include "grid.h"
-#include "debug.h"
-#include "utils.h"
 #ifdef NPT
 #include "pressure.h"
 #endif

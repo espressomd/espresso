@@ -8,9 +8,10 @@ What's new, what's been changed, what's been fixed
 Current working revision.
 
 
-- v1.8.6e -
+- v1.8.6f -
 -----------
 
+(f) March    23rd, 2005.
 (e) March    15th, 2005.
 (d) March     8th, 2005.
 (c) March     3rd, 2005.
@@ -18,12 +19,31 @@ Current working revision.
 (a) February 28th, 2005.
 
 New Features:
+(f) configure. For details see ./configure --help. Note that in course of this, also
+    the object file directory names have changed to obj-<cpu>-<vendor>-<os>. However
+    there is now an Espresso script in the source directory which will automatically
+    start the correct binary and mpi for the current architecture, provided it has been
+    configured and compiled successfully.
+(f) there is now a make install, which will install Espresso in the directories specified 
+    via configure. The installed script contains the correct settings for ESPRESSO_SOURCE
+    and -SCRIPTS. 
+(f) production/debug, MPI and FFTW status are now also included in code_info
+(d) there is now a make dist, which builds espresso-<date>.tgz and should contain everything
+    important to just take Espresso with you and compile it somewhere else.
 (c) Added a new option for aggregation analysis tool: <min_contact> option defines a criteria 
     for minimum number of contacts for two molecules to be considered being in the same aggregate.
 (c) Added new feature to aggregation analysis routine so that there is a 
     'minimum number of contacts'-criteria
 
 Changes:
+(f) aux.tcl is now auxiliary.tcl for a certain brain damaged operating system which doesn't like
+    the other name.
+(f) the format of config.h has changed. The documentation is separated from the flags as in debug.h
+    to allow a better overview on the compilation status.
+(f) changed FFTW_REAL and -IMAG for fftw3 to also work with systems where the complex data type
+    is used. 
+(f) utils.h alone includes debug.h and config.h and should be the one and only one of the three
+    to be included in ALL files.
 (e) Deactivating superfluous output of 'analyze necklace'-command.
 (b) Speedup of the Bessel functions used for 'MMM1D'-calculations:
     - improved Chebychev series evaluation
@@ -32,6 +52,7 @@ Changes:
 (a) Updated the MMM1D testcase to contain maximal precision reference data.
 
 Bugfixes:
+(f) Fixed some inportabilities such as spaces before #
 (d) Fixed bug in aggregation analysis tool: 
     For calculating distances 'distance2vec' was used (which ignores periodicity), 
     but 'min_distance2' should have been used instead.

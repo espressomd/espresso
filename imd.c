@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include "utils.h"
 #include "vmdsock.h"
 #include "imd.h"
 #include "communication.h"
@@ -22,15 +23,10 @@
 #include "parser.h"
 #include "statistics_chain.h"
 #include "statistics_molecule.h"
-#include "debug.h"
 
 int transfer_rate = 0;
 
-#if ( INT_MAX == 2147483647 )
-typedef int     int32;
-#else
-typedef short   int32;
-#endif
+#include <inttypes.h>
 
 typedef enum {
   IMD_DISCONNECT,
@@ -46,7 +42,7 @@ typedef enum {
 } IMDType;
 
 typedef struct {
-  int32 tstep;
+  int32_t tstep;
   float T;
   float Etot;
   float Epot;
@@ -63,25 +59,25 @@ int   imd_disconnect(void *);
 int   imd_pause(void *);
 int   imd_kill(void *);
 int   imd_handshake(void *);
-int   imd_trate(void *, int32);
+int   imd_trate(void *, int32_t);
 
 /* Send data */
-int   imd_send_mdcomm(void *, int32, const int32 *, const float *);
+int   imd_send_mdcomm(void *, int32_t, const int32_t *, const float *);
 int   imd_send_energies(void *, const IMDEnergies *);
-int   imd_send_fcoords(void *, int32, const float *);
+int   imd_send_fcoords(void *, int32_t, const float *);
 
 /* Receive header and data */
 int imd_recv_handshake(void *);
 
-IMDType imd_recv_header(void *, int32 *);
-int imd_recv_mdcomm(void *, int32, int32 *, float *);
+IMDType imd_recv_header(void *, int32_t *);
+int imd_recv_mdcomm(void *, int32_t, int32_t *, float *);
 int imd_recv_energies(void *, IMDEnergies *);
-int imd_recv_fcoords(void *, int32, float *);
+int imd_recv_fcoords(void *, int32_t, float *);
 
 
 typedef struct {
-  int32 type;
-  int32 length;
+  int32_t type;
+  int32_t length;
 } IMDheader;
 
 #define HEADERSIZE 8
@@ -107,8 +103,8 @@ static void swap4(char *data, int ndata) {
   }
 }
 
-static int32 imd_htonl(int32 h) {
-  int32 n;
+static int32_t imd_htonl(int32_t h) {
+  int32_t n;
   ((char *)&n)[0] = (h >> 24) & 0x0FF;
   ((char *)&n)[1] = (h >> 16) & 0x0FF;
   ((char *)&n)[2] = (h >> 8) & 0x0FF;
@@ -123,16 +119,16 @@ typedef struct {
   unsigned int lowest  : 8;
 } netint;
 
-static int32 imd_ntohl(int32 n) {
-  int32 h = 0;
+static int32_t imd_ntohl(int32_t n) {
+  int32_t h = 0;
   netint net;
   net = *((netint *)&n);
   h |= net.highest << 24 | net.high << 16 | net.low << 8 | net.lowest;
   return h;
 }
 
-static void fill_header(IMDheader *header, IMDType type, int32 length) {
-  header->type = imd_htonl((int32)type);
+static void fill_header(IMDheader *header, IMDType type, int32_t length) {
+  header->type = imd_htonl((int32_t)type);
   header->length = imd_htonl(length);
 }
 
@@ -141,9 +137,9 @@ static void swap_header(IMDheader *header) {
   header->length= imd_ntohl(header->length);
 }
 
-static int32 imd_readn(void *s, char *ptr, int32 n) {
-  int32 nleft;
-  int32 nread;
+static int32_t imd_readn(void *s, char *ptr, int32_t n) {
+  int32_t nleft;
+  int32_t nread;
  
   nleft = n;
   while (nleft > 0) {
@@ -160,9 +156,9 @@ static int32 imd_readn(void *s, char *ptr, int32 n) {
   return n-nleft;
 }
 
-static int32 imd_writen(void *s, const char *ptr, int32 n) {
-  int32 nleft;
-  int32 nwritten;
+static int32_t imd_writen(void *s, const char *ptr, int32_t n) {
+  int32_t nleft;
+  int32_t nwritten;
 
   nleft = n;
   while (nleft > 0) {
@@ -211,7 +207,7 @@ int imd_handshake(void *s) {
   return (imd_writen(s, (char *)&header, HEADERSIZE) != HEADERSIZE);
 }
 
-int imd_trate(void *s, int32 rate) {
+int imd_trate(void *s, int32_t rate) {
   IMDheader header;
   fill_header(&header, IMD_TRATE, rate);
   return (imd_writen(s, (char *)&header, HEADERSIZE) != HEADERSIZE);
@@ -219,8 +215,8 @@ int imd_trate(void *s, int32 rate) {
 
 /* Data methods */
 
-int imd_send_mdcomm(void *s,int32 n,const int32 *indices,const float *forces) {
-  int32 size = HEADERSIZE+16*n;
+int imd_send_mdcomm(void *s,int32_t n,const int32_t *indices,const float *forces) {
+  int32_t size = HEADERSIZE+16*n;
   char *buf = malloc(sizeof(char)*size);
   int rc;
 
@@ -233,7 +229,7 @@ int imd_send_mdcomm(void *s,int32 n,const int32 *indices,const float *forces) {
 }
 
 int imd_send_energies(void *s, const IMDEnergies *energies) {
-  int32 size = HEADERSIZE+sizeof(IMDEnergies);
+  int32_t size = HEADERSIZE+sizeof(IMDEnergies);
   char *buf = malloc(sizeof(char)*size);
   int rc;
 
@@ -244,8 +240,8 @@ int imd_send_energies(void *s, const IMDEnergies *energies) {
   return rc;
 }
 
-int imd_send_fcoords(void *s, int32 n, const float *coords) {
-  int32 size = HEADERSIZE+12*n;
+int imd_send_fcoords(void *s, int32_t n, const float *coords) {
+  int32_t size = HEADERSIZE+12*n;
   char *buf = malloc(sizeof(char)*size);
   int rc;
 
@@ -258,7 +254,7 @@ int imd_send_fcoords(void *s, int32 n, const float *coords) {
 
 /* The IMD receive functions */
 
-IMDType imd_recv_header_nolengthswap(void *s, int32 *length) {
+IMDType imd_recv_header_nolengthswap(void *s, int32_t *length) {
   IMDheader header;
   if (imd_readn(s, (char *)&header, HEADERSIZE) != HEADERSIZE)
     return IMD_IOERROR;
@@ -268,7 +264,7 @@ IMDType imd_recv_header_nolengthswap(void *s, int32 *length) {
 }
 
 int imd_recv_handshake(void *s) {
-  int32 buf;
+  int32_t buf;
   IMDType type;
 
   /* Wait 5 seconds for the handshake to come */
@@ -292,7 +288,7 @@ int imd_recv_handshake(void *s) {
   return -1; 
 }
 
-IMDType imd_recv_header(void *s, int32 *length) {
+IMDType imd_recv_header(void *s, int32_t *length) {
   IMDheader header;
   if (imd_readn(s, (char *)&header, HEADERSIZE) != HEADERSIZE)
     return IMD_IOERROR;
@@ -301,7 +297,7 @@ IMDType imd_recv_header(void *s, int32 *length) {
   return (IMDType)header.type; 
 }
 
-int imd_recv_mdcomm(void *s, int32 n, int32 *indices, float *forces) {
+int imd_recv_mdcomm(void *s, int32_t n, int32_t *indices, float *forces) {
   if (imd_readn(s, (char *)indices, 4*n) != 4*n) return 1;
   if (imd_readn(s, (char *)forces, 12*n) != 12*n) return 1;
   return 0;
@@ -312,7 +308,7 @@ int imd_recv_energies(void *s, IMDEnergies *energies) {
           != sizeof(IMDEnergies));
 }
 
-int imd_recv_fcoords(void *s, int32 n, float *coords) {
+int imd_recv_fcoords(void *s, int32_t n, float *coords) {
   return (imd_readn(s, (char *)coords, 12*n) != 12*n);
 }
 
@@ -321,7 +317,7 @@ int imd_recv_fcoords(void *s, int32 n, float *coords) {
 int imd_drain_socket(Tcl_Interp *interp)
 {
   while (vmdsock_selread(sock,0) > 0)  {
-    int32 length;
+    int32_t length;
     IMDType type = imd_recv_header(sock, &length);
     switch (type) {
     case IMD_MDCOMM:
@@ -332,15 +328,15 @@ int imd_drain_socket(Tcl_Interp *interp)
       /* Expect the msglength to give number of indicies, and the data
 	 message to consist of first the indicies, then the coordinates
 	 in xyz1 xyz2... format.
-	 int32 *addindices = new int32[length];
+	 int32_t *addindices = new int32_t[length];
 	 float *addforces = new float[3*length];
 
 	 if (imd_recv_mdcomm(sock, length, addindices, addforces))
 	 throw Error(IOERROR);
 	 oversized tmp buffer
-	 int32 *tmpindices = new int32[n_atoms + length];
+	 int32_t *tmpindices = new int32_t[n_atoms + length];
 	 float *tmpforces = new float[3*(n_atoms + length)];
-	 int32 tmpatoms = n_atoms;
+	 int32_t tmpatoms = n_atoms;
 	 for (int i = 0; i < tmpatoms; i++) {
 	 tmpindices[i]      = indices[i];
 	 tmpforces[3*i    ] = forces[3*i];
@@ -349,7 +345,7 @@ int imd_drain_socket(Tcl_Interp *interp)
 	 }
 
 	 for (int i = 0; i < length; i++) {
-	 int32 index = addindices[i];
+	 int32_t index = addindices[i];
 	 check if there is a force for this atom already
 	 int j;
 	 for (j = 0; j < tmpatoms; j++)
@@ -368,7 +364,7 @@ int imd_drain_socket(Tcl_Interp *interp)
 	 delete[] forces;
 	 }
 	 n_atoms = tmpatoms;
-	 indices = new int32[n_atoms];
+	 indices = new int32_t[n_atoms];
 	 forces  = new float[3*n_atoms];
 	 cout << "now forces are" << endl;
 	 for (int i = 0; i < n_atoms; i++) {
@@ -418,7 +414,7 @@ int imd_check_connect(Tcl_Interp *interp)
 {
   /* handshaking */
   if (vmdsock_selread(initsock, 0) > 0) {
-    int32 length;
+    int32_t length;
 
     sock = vmdsock_accept(initsock);
     if (imd_handshake(sock)) {
@@ -447,7 +443,8 @@ int imd_check_connect(Tcl_Interp *interp)
 
 int imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
 {
-  enum flag { NONE , UNFOLDED, FOLD_CHAINS};
+  enum flag {NONE, UNFOLDED, FOLD_CHAINS};
+  double shift[3] = {0.0,0.0,0.0};
 
   float *coord;
   int flag = NONE;
@@ -539,7 +536,6 @@ int imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
 
 
   // Use information from the analyse set command to fold chain molecules
-  double shift[3] = {0.0,0.0,0.0};
   if ( flag == FOLD_CHAINS ){
     if(analyze_fold_molecules(coord, shift ) != TCL_OK){
       Tcl_AppendResult(interp, "could not fold chains: \"analyze set chains <chain_start> <n_chains> <chain_length>\" must be used first",

@@ -17,15 +17,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "utils.h"
 #include "integrate.h"
-
 #include "global.h"
-#include "debug.h"
 #include "grid.h"
 #include "domain_decomposition.h"
-#include "integrate.h"
 #include "particle_data.h"
-#include "utils.h"
 #include "communication.h"
 #include "fft.h"
 #include "p3m.h"

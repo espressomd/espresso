@@ -1,0 +1,17 @@
+# Makefile template for architecture dependent flags
+# C flags for production code
+CC=@CC@
+CFLAGS=@CFLAGS@ @DEFS@
+LDFLAGS=@LDFLAGS@
+LIBS=@LIBS@
+LD=@LD@
+CSOURCES+=@ADD_SOURCES@
+DEPEND=@DEPEND@
+EXEEXT=@EXEEXT@
+OBJEXT=@OBJEXT@
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+libdir=@libdir@
+pkglibdir=@libdir@/@PACKAGE_NAME@

@@ -42,9 +42,7 @@
  *  see \ref p3m.c "p3m.c"
  */
 
-#include "config.h"
-#include "debug.h"
-
+#include "utils.h"
 #include "interaction_data.h"
 
 #ifdef ELECTROSTATICS

@@ -17,7 +17,7 @@
 */
 
 #include <tcl.h>
-#include "config.h"
+#include "utils.h"
 #include "particle_data.h"
 #include "thermostat.h"
 #include "gb.h"

@@ -15,14 +15,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "config.h"
-#include "debug.h"
+#include "utils.h"
 #include "thermostat.h"
 #include "pressure.h"
 #include "communication.h"
 #include "ghosts.h" 
 #include "verlet.h"
-#include "utils.h"
 #include "grid.h"
 #include "cells.h"
 #include "particle_data.h"

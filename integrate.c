@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "utils.h"
 #include "integrate.h"
 #include "interaction_data.h"
 #include "particle_data.h"
@@ -26,11 +27,9 @@
 #include "verlet.h"
 #include "rotation.h"
 #include "ghosts.h"
-#include "debug.h"
 #include "pressure.h"
 #include "p3m.h"
 #include "maggs.h"
-#include "utils.h"
 #include "thermostat.h"
 #include "initialize.h"
 #include "forces.h"
@@ -40,7 +39,7 @@
 #include "nemd.h"
 #include "rattle.h"
 #include "errorhandling.h"
-#include  "lb.h"
+#include "lb.h"
 
 /************************************************
  * DEFINES

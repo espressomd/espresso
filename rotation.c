@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "utils.h"
 #include "integrate.h"
 #include "interaction_data.h"
 #include "particle_data.h"
@@ -29,10 +30,8 @@
 #include "verlet.h"
 #include "rotation.h"
 #include "ghosts.h"
-#include "debug.h"
 #include "forces.h"
 #include "p3m.h"
-#include "utils.h"
 #include "thermostat.h"
 #include "initialize.h"
 

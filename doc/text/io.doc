@@ -1,6 +1,6 @@
 /** \page io Using Checkpoints, saving configurations
 The following procedures may be used to save/restore checkpoints to minimize the hassel involved when your simulations crashes after long runs.
-The scripts are located in scripts/aux.tcl and use \ref tcl_blockfile as file format.
+The scripts are located in scripts/auxiliary.tcl and use \ref tcl_blockfile as file format.
 <ul>
     <li>\anchor tcl_checkpoint_set
         \verbatim checkpoint_set <destination> [<# of configs> [<tclvar> [<ia_flag> [<var_flag> [<ran_flag]]]]]\endverbatim

@@ -12,15 +12,13 @@
  */
 #include <math.h>
 #include <mpi.h>
+#include "utils.h"
 #include "communication.h"
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "cells.h"
-#include "cells.h"
-#include "config.h"
 #include "elc.h"
 #include "mmm-common.h"
-#include "utils.h"
 #include "pressure.h"
 #include "p3m.h"
 #include "errorhandling.h"

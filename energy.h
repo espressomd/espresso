@@ -11,8 +11,8 @@
 */
 #ifndef ENERGY_H
 #define ENERGY_H
+#include "utils.h"
 #include "integrate.h"
-#include "config.h"
 #include "statistics.h"
 #include "thermostat.h"
 #include "communication.h"

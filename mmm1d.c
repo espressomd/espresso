@@ -13,6 +13,7 @@
 
 #include <mpi.h>
 #include <tcl.h>
+#include "utils.h"
 #include "mmm1d.h"
 #include "polynom.h"
 #include "specfunc.h"
@@ -20,9 +21,7 @@
 #include "cells.h"
 #include "grid.h"
 #include "tuning.h"
-#include "utils.h"
 #include "interaction_data.h"
-#include "debug.h"
 #include "mmm-common.h"
 #include "parser.h"
 #include "errorhandling.h"

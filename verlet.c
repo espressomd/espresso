@@ -12,15 +12,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include "utils.h"
 #include "verlet.h"
-#include "debug.h"
 #include "cells.h"
 #include "integrate.h"
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "communication.h"
-#include "utils.h"
 #include "grid.h"
 #include "forces.h"
 #include "energy.h"

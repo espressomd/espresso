@@ -6,149 +6,165 @@
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+#ifndef CONFIG_H
+#define CONFIG_H
 
 /** \file config.h
- *
- *  This file contains all Precompiler Flags deciding which features
- *  of Espresso to turn on/off. It is recommended to turn everything
- *  off which you do not need in order to optimize the performance of
- *  Espresso for your problem. 
- *
- *  There are also quite a number of features which are turned off by
- *  default since they are used only rarely.
- *
- *  You can get information on the compilation status of the code you
- *  are working with by using the tcl command \ref tcl_code_info
- *  "code_info" within your tcl_script. It is highly recommended to
- *  store this information with your simulation data in order to
- *  maintain the reproducibility of your results.
- *
- *  If you add a new compile flag you also have to add the
- *  corresponding lines in the function \ref compilation_callback.
- *
- *  \warning The documentation of this file only contains the
- *  precompiler flags that you have turned on. See the source code of
- *  this file for more options!
- *
- *  <b>Responsible:</b>
- *  <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
-*/
+ 
+   This file contains all Precompiler Flags deciding which features
+   of Espresso to turn on/off. It is recommended to turn everything
+   off which you do not need in order to optimize the performance of
+   Espresso for your problem. 
+ 
+   There are also quite a number of features which are turned off by
+   default since they are used only rarely.
+ 
+   You can get information on the compilation status of the code you
+   are working with by using the tcl command \ref tcl_code_info "code_info"
+   within your tcl_script. It is highly recommended to
+   store this information with your simulation data in order to
+   maintain the reproducibility of your results.
+ 
+   If you add a new compile flag you also have to add the
+   corresponding lines in the function \ref compilation_callback.
+ 
+   <b>Responsible:</b>
+   <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 
+   <h1> Configuration switches in this file </h1>
 
-
-/** if defined, the code will be slower, but with the \ref #periodic
+   <h2> Switches for basic features </h2>
+    <ul>
+    <li> \verbatim #define PARTIAL_PERIODIC \endverbatim
+    if defined, the code will be slower, but with the \ref #periodic
     array you can choose which coordinates are bound to p.b.c and
     which are not. If not defined, all coordinates are bound to
-    p.b.c. 
+    p.b.c.
 
     Has effect on: \ref per_callback, \ref #fields, and functions in
     \ref domain_decomposition.c, \ref grid.c, \ref interaction_data.c,
     \ref layered.c, \ref statistics_chain.c
-*/
-#define PARTIAL_PERIODIC
 
-/** if defined, you will get a warning when particles approach nearer than
-    0.9 sigma, because then it's likely the integration will blow up.
-*/
-/* #define LJ_WARN_WHEN_CLOSE */
+    <li> \verbatim #define ELECTROSTATICS \endverbatim
+    Compiler flag to enable charges and the various electrostatics algorithms.
 
-#define ELECTROSTATICS
+    <li> \verbatim #define ROTATION \endverbatim
+    Compiler flag to enable describing and processing particle orientations.
+    This will allow to use such particle properties as quart, omega, and torque.
+    
+    <li> \verbatim #define EXTERNAL_FORCES \endverbatim
+    Compiler flag to enable external forces. E.g. apply a fixed external force
+    to a particle or fix a particle in space.
 
-/** Compiler flag to enable describing and processing particle orientations.
+    <li> \verbatim #define CONSTRAINTS \endverbatim
+    Compiler Flag to enable constraints, eg walls, spheres.
+    See \ref constraint.h and \ref interaction_data.h
 
-This will allow to use such particle properties as quart, omega, and torque. */
-/* #define ROTATION */
+    <li> \verbatim #define MASS \endverbatim
+    allow particles to have different masses.
 
-/** Compiler flag to enable external forces. E.g. apply a fixed external force
-    to a particle or fix a particle in space. */
-#define EXTERNAL_FORCES
+    <li> \verbatim #define EXCLUSIONS \endverbatim
+    exclusion of nonbonded interactions for specific particle pairs
+    currently works only with domain decomposition and Verlet lists
 
+    <li> \verbatim #define COMFORCE \endverbatim
+    Compiler Flag to enable COMFIXED potential
 
-/** Compiler Flag to enable constraints, eg walls, spheres.
-    See \ref constraint.h and \ref interaction_data.h */
-#define CONSTRAINTS
+    <li> \verbatim #define COMFIXED \endverbatim
+    Compiler Flag to enable COMFIXED potential
 
-/** allow particles to have different masses. */
-/* #define MASS */
-
-/** exclusion of nonbonded interactions for specific particle pairs
-    currently works only with domain decomposition and Verlet lists */
-/* #define EXCLUSIONS */
-
-/** Compiler Flag to enable COMFORCE potential */
-/* #define COMFORCE */
-
-/** Compiler Flag to enable COMFIXED potential */
-/* #define COMFIXED */
-
-/** Compiler Flag to enable bond constraint.
+    <li> \verbatim #define BOND_CONSTRAINT \endverbatim
+    Compiler Flag to enable bond constraint.
     See \ref rattle.h, merged but not tested. 
-    If you need this, I wish you happy debugging. */
+    If you need this, I wish you happy debugging.
+
+    </ul>
+
+    <h2> Switches for the available short ranged potentials </h2>
+    For optimization it might be useful to switch off the ones you don't need
+    <ul>
+    <li> \verbatim #define  LENNARD_JONES \endverbatim
+    Lennard-Jones potential
+
+    <li> \verbatim #define  LJ_WARN_WHEN_CLOSE \endverbatim
+    if defined, you will get a warning when particles approach nearer than
+    0.9 sigma, because then it's likely the integration will blow up.
+
+    <li> \verbatim #define MORSE \endverbatim
+    Morse potential
+
+    <li> \verbatim #define LJCOS \endverbatim
+    Lennard-Jones potential with cosine tail
+
+    <li> \verbatim #define BUCKINGHAM \endverbatim
+    Buckingham potential
+    
+    <li> \verbatim #define SOFT_SPHERE \endverbatim
+    Soft sphere potential
+
+    </ul>
+
+    <h2> Options for the style of the angle potential </h2>
+    <ul>
+    <li> \verbatim #define BOND_ANGLE_HARMONIC \endverbatim
+    Harmonic bond angle potential:      V = 1/2 k (phi - phi0)^2
+
+    <li> \verbatim #define BOND_ANGLE_COSINE \endverbatim
+    Cosine bond angle potential:        V = k (1+cos(phi-phi0))
+
+    <li> \verbatim #define BOND_ANGLE_COSSQUARE \endverbatim
+    Cosine square bond angle potential: V = 1/2 k (cos(phi)-cos(phi0))^2
+
+    </ul>
+
+    <h2> Switches for simulation methods, Integrators and Thermostats </h2>
+    <ul>
+    <li> \verbatim #define NEMD \endverbatim
+    NEMD (Non Eqilibrium Molecular Dynamics).
+    This is used to perform shear simulations
+
+    <li> \verbatim #define NPT \endverbatim
+    Allows to use (N,p,T)-ensembles during integration as well
+
+    <li> \verbatim #define DPD \endverbatim
+    DPD Thermostat (Dissipative Particle Dynamics) 
+    Flag needed only because DPD acts like a short range potential
+
+    <li> \verbatim #define LB \endverbatim
+    LB Thermostat (fluctuating Lattice Boltzmann fluid)
+
+    </ul>
+*/
+
+#include <archconfig.h>
+
+#define PARTIAL_PERIODIC
+#define ELECTROSTATICS
+/* #define ROTATION */
+#define EXTERNAL_FORCES
+#define CONSTRAINTS
+/* #define MASS */
+/* #define EXCLUSIONS */
+/* #define COMFORCE */
+/* #define COMFIXED */
 /* #define BOND_CONSTRAINT */
 
-/************************************************/
-/** \name available short--ranged potentials
-    For optimization it might be useful to switch
-    off the ones you don't need */
-/*@{*/
-
-/** to use tabulated potential*/
 /* #define TABULATED */
-
-/** Lennard-Jones */
 #define LENNARD_JONES
-
-/** Morse */
+/* #define LJ_WARN_WHEN_CLOSE */
 /* #define MORSE */
-
-/** Lennard-Jones with cosine tail */
 /* #define LJCOS */
-
-/** BUCKINGHAM potential */
 /* #define BUCKINGHAM */
-
-/** SOFT-SPHERE potential */
 /* #define SOFT_SPHERE */
-/*@}*/
 
-/************************************************/
-/** \name Switches for bonded interactions      */
-/************************************************/
-/*@{*/
-
-/* NOTE: Turn on one and only one of the following switches!!! */
-
-/** Harmonic bond angle potential:      V = 1/2 k (phi - phi0)^2 */
 /* #define BOND_ANGLE_HARMONIC */
-/** Cosine bond angle potential:        V = k (1+cos(phi-phi0)) */
 #define BOND_ANGLE_COSINE
-/** Cosine square bond angle potential: V = 1/2 k (cos(phi)-cos(phi0))^2 */
 /* #define BOND_ANGLE_COSSQUARE */
 
-/*@}*/
-
-/***********************************************************/
-/** \name Simulation methods, Integrators and Thermostats  */
-/***********************************************************/
-/*@{*/
-
-/** NEMD (Non Eqilibrium Molecular Dynamics).
-    This is used to perform shear simulations */
 /* #define NEMD */
-
-/** Allows to use (N,p,T)-ensembles during integration as well */
 /* #define NPT */
-
-/** DPD Thermostat (Dissipative Particle Dynamics) 
-    Flag needed only because DPD acts like a short range potential
-*/
 /* #define DPD */
-
-/** LB Thermostat (fluctuating Lattice Boltzmann fluid) 
-*/
 /* #define LB */
-
-/*@}*/
 
 /************************************************/
 /** \name Default Parameter Settings            */
@@ -193,105 +209,17 @@ This will allow to use such particle properties as quart, omega, and torque. */
 
 /*@}*/
 
-/************************************************/
-/** Derived constants from the settings,        */
-/*  no user servicable parts below.             */
-/************************************************/
-
-#ifndef CONFIG_H
-#define CONFIG_H
-
-#ifdef MASS
-/** macro for easy use of mass. If masses are not switched on, the particle mass is defined to 1,
-    so it should be compiled out in most cases. */
-#define PMASS(pt) (pt).p.mass
-#else
-#define PMASS(pt) 1
-#endif
-
+/********************************************/
+/* \name exported functions of config.c     */
+/********************************************/
+/*@{*/
 #include <tcl.h>
+
 /** callback for version status. */
-MDINLINE int version_callback(Tcl_Interp *interp)
-{
-  Tcl_AppendResult(interp, "ESPRESSO: v1.8.6e (Rebi & Azan), Last Change: 15.03.2005", (char *) NULL);
-  return (TCL_OK);
-}
+int version_callback(Tcl_Interp *interp);
 
 /** callback for compilation status. */
-MDINLINE int compilation_callback(Tcl_Interp *interp)
-{
-  Tcl_AppendResult(interp, "{ Compilation status ", (char *) NULL);
-#ifdef PARTIAL_PERIODIC
-  Tcl_AppendResult(interp, "{ PARTIAL_PERIODIC } ", (char *) NULL);
-#endif
-#ifdef LJ_WARN_WHEN_CLOSE
-  Tcl_AppendResult(interp, "{ LJ_WARN_WHEN_CLOSE } ", (char *) NULL);
-#endif
-#ifdef ELECTROSTATICS
-  Tcl_AppendResult(interp, "{ ELECTROSTATICS } ", (char *) NULL);
-#endif
-#ifdef ROTATION
-  Tcl_AppendResult(interp, "{ ROTATION } ", (char *) NULL);
-#endif
-#ifdef EXTERNAL_FORCES
-  Tcl_AppendResult(interp, "{ EXTERNAL_FORCES } ", (char *) NULL);
-#endif
-#ifdef CONSTRAINTS
-  Tcl_AppendResult(interp, "{ CONSTRAINTS } ", (char *) NULL);
-#endif
-#ifdef BOND_CONSTRAINT
-  Tcl_AppendResult(interp, "{ BOND_CONSTRAINT } ", (char *) NULL);
-#endif
-#ifdef EXCLUSIONS
-  Tcl_AppendResult(interp, "{ EXCLUSIONS } ", (char *) NULL);
-#endif
-#ifdef COMFORCE
-  Tcl_AppendResult(interp, "{ COMFORCE } ", (char *) NULL);
-#endif
-#ifdef COMFIXED
-  Tcl_AppendResult(interp, "{ COMFIXED } ", (char *) NULL);
-#endif
-#ifdef TABULATED
-  Tcl_AppendResult(interp, "{ TABULATED } ", (char *) NULL);
-#endif
-#ifdef LENNARD_JONES
-  Tcl_AppendResult(interp, "{ LENNARD_JONES } ", (char *) NULL);
-#endif
-#ifdef MORSE
-  Tcl_AppendResult(interp, "{ MORSE } ", (char *) NULL);
-#endif
-#ifdef BUCKINGHAM
-  Tcl_AppendResult(interp, "{ BUCKINGHAM } ", (char *) NULL);
-#endif
-#ifdef SOFT_SPHERE
-  Tcl_AppendResult(interp, "{ SOFT_SPHERE } ", (char *) NULL);
-#endif
-#ifdef LJCOS
-  Tcl_AppendResult(interp, "{ LJCOS } ", (char *) NULL);
-#endif
-#ifdef BOND_ANGLE_HARMONIC
-  Tcl_AppendResult(interp, "{ BOND_ANGLE_HARMONIC } ", (char *) NULL);
-#endif
-#ifdef BOND_ANGLE_COSINE
-  Tcl_AppendResult(interp, "{ BOND_ANGLE_COSINE } ", (char *) NULL);
-#endif
-#ifdef BOND_ANGLE_COSSQUARE
-  Tcl_AppendResult(interp, "{ BOND_ANGLE_COSSQUARE } ", (char *) NULL);
-#endif
-#ifdef NEMD
-  Tcl_AppendResult(interp, "{ NEMD } ", (char *) NULL);
-#endif
-#ifdef NPT
-  Tcl_AppendResult(interp, "{ NPT } ", (char *) NULL);
-#endif
-#ifdef DPD
-  Tcl_AppendResult(interp, "{ DPD } ", (char *) NULL);
-#endif
-#ifdef LB
-  Tcl_AppendResult(interp, "{ LB } ", (char *) NULL);
-#endif
-  Tcl_AppendResult(interp, "}", (char *) NULL);
-  return (TCL_OK);
-}
+int compilation_callback(Tcl_Interp *interp);
+/*@}*/
 
 #endif

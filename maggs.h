@@ -12,9 +12,8 @@
  *  Calculation of the electrostatic forces using Maggs method.
  */
 
-#include "config.h"
+#include "utils.h"
 #include "integrate.h"
-#include "debug.h"
 #include "ghosts.h"
 
 #ifdef ELECTROSTATICS

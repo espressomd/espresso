@@ -22,15 +22,13 @@
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
-
+#include "utils.h"
 #include "polymer.h"
 #include "grid.h"
 #include "communication.h"
 #include "interaction_data.h"
 #include "random.h"
 #include "parser.h"
-#include "debug.h"
-#include "utils.h"
 #include "integrate.h"
 
 

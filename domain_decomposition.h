@@ -47,12 +47,12 @@
  *  see \ref cells.h 
 */
 
+#include "utils.h"
 #include "cells.h"
 #include "integrate.h"
 #include "communication.h"
 #include "verlet.h"
 #include "thermostat.h"
-#include "debug.h"
 
 /** Structure containing information about non bonded interactions
     with particles in a neighbor cell. */

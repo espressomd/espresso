@@ -2,28 +2,23 @@
  *  Lattice Boltzmann algorithm for solvent degrees of freedom.
  */
 
-
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "utils.h"
 #include "global.h"
-#include "debug.h"
 #include "grid.h"
 #include "integrate.h"
 #include "initialize.h"
 #include "interaction_data.h"
 #include "particle_data.h"
-#include "utils.h"
 #include "communication.h"
 #include "maggs.h"
 #include "thermostat.h"
 #include "cells.h"
 #include "lb.h"
-#include "communication.h" 
 #include "domain_decomposition.h"
-#include <signal.h>
 
 
 #ifdef LB
@@ -139,16 +134,6 @@ typedef enum  {TERM_continue = 0,
 	       TERM_sysstop  = 4,
 	       TERM_error    = 5,
 	       TERM_ok       = 6} T_TERM_FLAG;
-
-
-void  InstallSignalHandler (void);
-/*
-** Install the signal handler for the program, which captures
-** SIG_STOP, SIG_CPULIM, SIG_SHUTDN signal and checks for
-** the existance of the 'sysStop' file.
-** If one of these conditions are fullfilled the handler
-** sets the terminate flag.
-*/
 
 T_TERM_FLAG Terminate (void);
 /*

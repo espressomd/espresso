@@ -9,7 +9,7 @@
 #  
 #############################################################
 #                                                           #
-# aux.tcl                                                   #
+# auxiliary.tcl                                             #
 # =======                                                   #
 #                                                           #
 # Several additional auxiliary functions for Espresso.      #
