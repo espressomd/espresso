@@ -150,7 +150,7 @@ foreach pack_i $packing {
 	puts "Interaction Bonds: [inter 0]"
 
 	puts -nonewline "Creating diamond polymers of (initial) bond-length $bond_l... "; flush stdout
-	puts "Done ([diamond $a_cube $bond_l $mpc_i counterions $N_CI charges 1.])."
+	puts "Done ([diamond $a_cube $bond_l $mpc_i counterions $N_CI charges 1. 1. -1.])."
 	
 	if { $vmd_output=="yes" } {
 	    puts -nonewline "Write psf and pdb for VMD connection... "; flush stdout
@@ -171,19 +171,21 @@ foreach pack_i $packing {
 	if { $N_T != [setmd n_part] } { puts "WARNING: Configuration does not correspond to current case $i!"; exit }
     } else {
 	puts -nonewline "\nStart warm-up integration (capped LJ-interactions) for maximal [expr $warm_step*$warm_loop] timesteps in $warm_loop loops; "
-	puts "stop if minimal distance is larger than $min_dist."
+	puts "stop if minimal distance is larger than $min_dist after at least [expr $warm_step*$min_loop] timesteps."
 	setmd time 0; set tmp_cap $warm_cap1; inter ljforcecap $tmp_cap; inter coulomb 0.0
 	set obs_file [open "$name_i$ident.obs1" "w"]
 	puts $obs_file "t mindist re rg rh Temp"
 	puts $obs_file "[setmd time] [analyze mindist] [analyze re 8 $n_p_i $mpc_i] [analyze rg] [analyze rh] [setmd temp]"
-	puts "    Analysis at t=[setmd time]: mindist=[analyze mindist], re=[analyze re], rg=[analyze rg], rh=[analyze rh], T=[setmd temp]."
+	puts -nonewline "    Analysis at t=[setmd time]: mindist=[analyze mindist], "
+	puts "re=[lindex [analyze re] 0], rg=[lindex [analyze rg] 0], rh=[lindex [analyze rh] 0], T=[setmd temp]."
 	for { set j 0 } { $j < $warm_loop } { incr j } {
 	    integrate $warm_step; set tmp_dist [analyze mindist]
 	    if { $vmd_output=="yes" } { imd positions }
 	    puts -nonewline "    \[$i\] Step [expr ($j+1)*$warm_step]/[expr $warm_step*$warm_loop] (t=[setmd time]): "; flush stdout
 	    set tmp_Temp [expr [analyze energy kin]/$n_part/1.5]; puts -nonewline "LJ's cap = $tmp_cap, Temp = $tmp_Temp"; flush stdout
 	    puts $obs_file "[setmd time] [analyze mindist] [analyze re] [analyze rg] [analyze rh] $tmp_Temp"
-	    puts -nonewline ", mindist=[analyze mindist], re=[analyze re], rg=[analyze rg], rh=[analyze rh]...\r"; flush stdout
+	    puts -nonewline ", mindist=[analyze mindist], re=[lindex [analyze re] 0], rg=[lindex [analyze rg] 0], rh=[lindex [analyze rh] 0]...\r"
+	    flush stdout
 	    if { ($tmp_dist >= $min_dist) && ($j > $min_loop) } { break }
 	    inter ljforcecap $tmp_cap; set tmp_cap [expr $tmp_cap + $warm_incr]
 	}
@@ -208,7 +210,7 @@ foreach pack_i $packing {
 	setmd time 0; set int_loop [expr int($int_time_i/([setmd time_step]*$int_step_i)+0.56)]; set tmp_step 0
 	puts "\nStart integration (full interactions) with timestep [setmd time_step] until time t>=$int_time_i (-> $int_loop loops). "
 	puts -nonewline "    Activating electrostatics... "; flush stdout
-	puts "Done.\n[inter coulomb $bjerrum p3m tune accuracy $accuracy mesh 16]"
+	puts "Done.\n[inter coulomb $bjerrum p3m tune accuracy $accuracy]"
 	puts -nonewline "Remove capping of LJ-interactions... "; flush stdout; inter ljforcecap 0; puts "Done."
 	set sfx "[expr int(ceil(log10($int_loop*$int_step_i)))+1]d"
 	if { [file exists "$name_i$ident.chk" ] } {
@@ -221,13 +223,15 @@ foreach pack_i $packing {
 	    puts "done) at time [setmd time]: Skipping ahead to timestep [expr int($tmp_step+1)] in loop $tmp_start!"
 	    set obs_file [open "$name_i$ident.obs2" "a"]; analyze set chains 8 $n_p_i $mpc_i
 	    set ptot [eval concat [eval concat [analyze pressure]]]; set p1 [lindex $ptot 0]
-	    puts "    Analysis at t=[setmd time]: mindist=[analyze mindist], re=[analyze re], rg=[analyze rg], rh=[analyze rh], T=[setmd temp], p=$p1."
+	    puts -nonewline "    Analysis at t=[setmd time]: mindist=[analyze mindist], "
+	    puts "re=[lindex [analyze re] 0], rg=[lindex [analyze rg] 0], rh=[lindex [analyze rh] 0], T=[setmd temp], p=$p1."
 	} else {
 	    set tmp_start 0; set obs_file [open "$name_i$ident.obs2" "w"]
 	    set ptot [eval concat [eval concat [analyze pressure]]]; set p1 [lindex $ptot 0]
-	    puts $obs_file "t mindist re rg rh Temp p p2 ideal pid FENE pf pf2 lj plj plj2 coulomb pc pc2"
+	    puts $obs_file "t mindist re dre re2 dre2 rg drg rg2 drg2 rh drh Temp p p2 ideal pid FENE pf pf2 lj plj plj2 coulomb pc pc2"
 	    puts $obs_file "[setmd time] [analyze mindist] [analyze re 8 $n_p_i $mpc_i] [analyze rg] [analyze rh] [setmd temp] $ptot"
-	    puts "    Analysis at t=[setmd time]: mindist=[analyze mindist], re=[analyze re], rg=[analyze rg], rh=[analyze rh], T=[setmd temp], p=$p1."
+	    puts -nonewline "    Analysis at t=[setmd time]: mindist=[analyze mindist], "
+	    puts "re=[lindex [analyze re] 0], rg=[lindex [analyze rg] 0], rh=[lindex [analyze rh] 0], T=[setmd temp], p=$p1."
 	    analyze append; checkpoint_set "$name_i$ident.[eval format %0$sfx 0]" "all" "tmp_step"
 	}
 	for { set j $tmp_start } { $j < $int_loop } { incr j } {
@@ -245,8 +249,10 @@ foreach pack_i $packing {
 		checkpoint_set "$name_i$ident.[eval format %0$sfx $tmp_step]" [expr int($checkpoint/$int_step_i)] "tmp_step" "-"
 		puts -nonewline "set (with <re>=[analyze <re>], <rg>=[analyze <rg>] averaged over $tmp_conf configurations"
 		puts ", <p>=[lindex [nameObsAv $name_i$ident.obs2 p] 1])."
-	    } else { puts -nonewline ", mindist=[analyze mindist], re=[analyze re], rg=[analyze rg], rh=[analyze rh], p=$p1...\r"; 
-		flush stdout }
+	    } else { 
+		puts -nonewline ", mindist=[analyze mindist], re=[lindex [analyze re] 0], "
+		puts -nonewline "rg=[lindex [analyze rg] 0], rh=[lindex [analyze rh] 0], p=$p1...\r"; flush stdout 
+	    }
 	}
 	# write everything to disk (set checkpoint)
 	# (the whole configs-array is not included here for space constraints (it may exceed 1700MB),
@@ -269,10 +275,11 @@ foreach pack_i $packing {
 	set d_p12 [expr sqrt(abs($p2 - $p1*$p1)/([lindex $avg 0]-1))]
 	set d_pf12 [expr sqrt(abs($pf2 - $pf1*$pf1)/([lindex $avg 0]-1))]
 	set d_plj12 [expr sqrt(abs($plj2 - $plj1*$plj1)/([lindex $avg 0]-1))]
-	set tmp_re [analyze <re>]; set tmp_rg [analyze <rg>]; set tmp_rh [analyze <rh>]
+	set tre [analyze <re>]; set trg [analyze <rg>]; set trh [analyze <rh>]
+	set tmp_re [lindex $tre 0]; set tmp_rg [lindex $trg 0]; set tmp_rh [lindex $trh 0]
 	set tmp_rat2 [expr $tmp_re*$tmp_re/($tmp_rg*$tmp_rg)]
-	puts -nonewline "<re> = $tmp_re, <rg> = $tmp_rg, <rh> = $tmp_rh, "
-	puts "<re2>/<rg2> = $tmp_rat2 (RW=6), <Temp> = $tmp_Temp, <p>=$p1+-$d_p12=$p_os."
+	puts -nonewline "<re> = $tmp_re+-[lindex $tre 1], <rg> = $tmp_rg+-[lindex $trg 1], <rh> = $tmp_rh+-[lindex $trh 1], "
+#	puts "<re2>/<rg2> = $tmp_rat2 (RW=6), <Temp> = $tmp_Temp, <p>=$p1+-$d_p12=$p_os."
 	puts "<re2>/<rg2> = $tmp_rat2 (RW=6);"
 	puts "    <Temp> = $tmp_Temp, <p> = $p_os*p_id = $p1+-$d_p12 (=[expr 100*$d_p12/$p1]% error)."
 	# append ensemble averages to .DHN-file
