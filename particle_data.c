@@ -714,7 +714,7 @@ int place_particle(int part, double p[3])
       particle_node[part] = pnode;  
     }
     /* mark as new particle */
-    part = -part;
+    part = -part - 1;
     n_total_particles++;
     retcode = TCL_CONTINUE;
   }

@@ -112,7 +112,8 @@ void mpi_bcast_event(int event);
 
 /** Issue REQ_PLACE: move particle to a position on a node.
     Also calls \ref on_particle_change.
-    \param id   the particle to move. a negative id denotes new particles.
+    \param id   the particle to move. a negative id denotes new particles. Then
+    particle -1 corresponds to a new particle 0, -2 to a new 1, and so on.
     \param node the node to attach it to.
     \param pos  the particles position.
 */

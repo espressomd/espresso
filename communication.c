@@ -323,7 +323,7 @@ void mpi_place_particle(int pnode, int part, double p[3])
 
   if (pnode == this_node) {
     if (part < 0) {
-      part = -part;
+      part = -part - 1;
     }
     local_place_particle(abs(part), p);
   }
@@ -340,7 +340,7 @@ void mpi_place_particle_slave(int pnode, int part)
 
   /* happens here since ALL nodes have to do that */
   if (part < 0) {
-    part = -part;
+    part = -part - 1;
     n_total_particles++;
     if (part > max_seen_particle) {
       realloc_local_particles(part);
