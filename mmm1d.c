@@ -625,6 +625,7 @@ void MMM1D_calc_forces()
   free(send_forces);
   free(recv_coords);
   free(recv_forces);
+  free(sizes);
 }
 
 #endif
