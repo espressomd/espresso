@@ -16,7 +16,8 @@ set npart 100
 setmd box_l 10.0 10.0 10.0
 set write yes
 set write_steps 10
-set mdst 10
+set mdst 100
+set maxtime 200
 
 source polywr.tcl
 
@@ -46,17 +47,20 @@ for {set ia1 0} { $ia1 <= 4 } { incr ia1 } {
 }
 
 # friction
-set gamma 1
+setmd gamma 1e4
 
+if {"$write" == "yes" } {
+    exec rm -f "configs/*" "movie/*"
+}
 # relax
 puts "starting ramp integration"
 integrate init
 
-for {set i 0} { [setmd mindist] < $mdst } { incr i} {
+for {set i 0} { $i < 100 && [setmd mindist] < $mdst } { incr i} {
     puts "step ${i}00: minimum distance=[setmd mindist]"
     integrate $write_steps
     if {"$write" == "yes" } {
-	polywrite [format "config%04d.poly" $i]
+	polywrite [format "configs/c%04d.poly" $i]
     }
 }
 
@@ -66,3 +70,8 @@ puts "final: minimum distance=[setmd mindist]"
 set f [open "|gzip -c - >config.gz" w]
 writemd $f posx posy posz type q
 close $f
+
+if {"$write" == "yes" } {
+    eval exec poly2pdb -poly [glob "configs/c*"] \
+	-per -psf "movie/m" >/dev/null 2>&1
+}
