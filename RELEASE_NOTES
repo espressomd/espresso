@@ -10,6 +10,7 @@ Current working revision.
 
 - v1.6.6e -
 -----------
+(f) August 13th, 2004.
 (e) August 12th, 2004.
 (d) August 10th, 2004.
 (c) August  2nd, 2004.
@@ -17,6 +18,8 @@ Current working revision.
 (a) July   27th, 2004.
 
 New Features:
+(f) Added new analysis command "analyze aggregation" to analyze the aggregation 
+    state of molecules in the system.
 (e) Added 'polyBlockRead <source>' to read in blockfile 'source'.
 (d) Added Maxwell velocity distribution. 
 (d) Added 'analyze activate' to activate one of the stored configurations.
