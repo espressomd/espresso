@@ -393,102 +393,97 @@ static double hzeta_c[15] = {
 
 double I0(double x)
 {
-  double y = fabs(x);
-  
-  if(y <= 3.0)
-    return 2.75 + evaluateAsChebychevSeriesAt(&bi0_cs, y*y/4.5-1.0);
-  else {
-    double c = (y <= 8.0) ?
-      evaluateAsChebychevSeriesAt(&ai0_cs, (48.0/y-11.0)/5.0) :
-      evaluateAsChebychevSeriesAt(&ai02_cs, 16.0/y-1.0);
-    return exp(y) * (0.375 + c) / sqrt(y);
+  double c, y = fabs(x);
+  if(y <= 3.0) {
+    c = evaluateAsChebychevSeriesAt(&bi0_cs, y*y/4.5-1.0);
+    return 2.75 + c;
   }
+
+  c = (y <= 8.0) ?
+    evaluateAsChebychevSeriesAt(&ai0_cs, (48.0/y-11.0)/5.0) :
+    evaluateAsChebychevSeriesAt(&ai02_cs, 16.0/y-1.0);
+  return exp(y) * (0.375 + c) / sqrt(y);
 }
 
 double K0(double x)
 {
+  double c, I0;
   if(x <= 2.0) {
-    double c = evaluateAsChebychevSeriesAt(&bk0_cs, 0.5*x*x-1.0);
-    double I0 = 2.75 + evaluateAsChebychevSeriesAt(&bi0_cs, x*x/4.5-1.0);
+    c  = evaluateAsChebychevSeriesAt(&bk0_cs, 0.5*x*x-1.0);
+    I0 = 2.75 + evaluateAsChebychevSeriesAt(&bi0_cs, x*x/4.5-1.0);
     return (-log(x) + M_LN2)*I0 - 0.25 + c;
   }
-  else  {
-    double c = (x <= 8.0) ?
-      evaluateAsChebychevSeriesAt(&ak0_cs, (16.0/x-5.0)/3.0) :
-      evaluateAsChebychevSeriesAt(&ak02_cs, 16.0/x-1.0);
-    return exp(-x) * (1.25 + c) / sqrt(x);
-  } 
+  c = (x <= 8.0) ?
+    evaluateAsChebychevSeriesAt(&ak0_cs, (16.0/x-5.0)/3.0) :
+    evaluateAsChebychevSeriesAt(&ak02_cs, 16.0/x-1.0);
+  return exp(-x) * (1.25 + c) / sqrt(x); 
 }
 
 double I1(double x)
 {
-  double y = fabs(x);
-
-  if(y <= 3.0)
-    return x * (0.875 + evaluateAsChebychevSeriesAt(&bi1_cs, y*y/4.5-1.0));
-  else {
-    double c = (y <= 8.0) ?
-      evaluateAsChebychevSeriesAt(&ai1_cs, (48.0/y-11.0)/5.0) :
-      evaluateAsChebychevSeriesAt(&ai12_cs, 16.0/y-1.0);
-    c = (0.375 + c) / sqrt(y);
-    if (x < 0)
-      c = -c;
-    return exp(y)*c;
+  double c, y = fabs(x);
+  if(y <= 3.0) {
+    c = evaluateAsChebychevSeriesAt(&bi1_cs, y*y/4.5-1.0);
+    return x * (0.875 + c);
   }
+  c = (y <= 8.0) ?
+    evaluateAsChebychevSeriesAt(&ai1_cs, (48.0/y-11.0)/5.0) :
+    evaluateAsChebychevSeriesAt(&ai12_cs, 16.0/y-1.0);
+  c = (0.375 + c) / sqrt(y);
+  if (x < 0)
+    c = -c;
+  return exp(y)*c;
 }
 
 double K1(double x)
 {
+  double c, I1;
   if(x <= 2.0) {
-    double c = evaluateAsChebychevSeriesAt(&bk1_cs, 0.5*x*x-1.0);
-    double I1 = x * (0.875 + evaluateAsChebychevSeriesAt(&bi1_cs, x*x/4.5-1.0));
+    c = evaluateAsChebychevSeriesAt(&bk1_cs, 0.5*x*x-1.0);
+    I1 = x * (0.875 + evaluateAsChebychevSeriesAt(&bi1_cs, x*x/4.5-1.0));
     return (log(x) - M_LN2) * I1 + (0.75 + c)/x;
   }
-  else  {
-    double c = (x <= 8.0) ?
-      evaluateAsChebychevSeriesAt(&ak1_cs, (16.0/x-5.0)/3.0) :
-      evaluateAsChebychevSeriesAt(&ak12_cs, 16.0/x-1.0);
-    return exp(-x) * (1.25 + c) / sqrt(x);
-  }
+  c = (x <= 8.0) ?
+    evaluateAsChebychevSeriesAt(&ak1_cs, (16.0/x-5.0)/3.0) :
+    evaluateAsChebychevSeriesAt(&ak12_cs, 16.0/x-1.0);
+  return exp(-x) * (1.25 + c) / sqrt(x);
 }
 
 double hzeta(double s, double q)
 {
   double max_bits = 54.0;
+  int jmax = 12, kmax = 10;
+  int j, k;
+  double pmax, scp, pcp, ans;
 
   if((s > max_bits && q < 1.0) || (s > 0.5*max_bits && q < 0.25))
     return pow(q, -s);
-  else if(s > 0.5*max_bits && q < 1.0) {
+  if(s > 0.5*max_bits && q < 1.0) {
     double p1 = pow(q, -s);
     double p2 = pow(q/(1.0+q), s);
     double p3 = pow(q/(2.0+q), s);
     return p1 * (1.0 + p2 + p3);
   }
-  else {
-    /* Euler-Maclaurin summation formula 
-     * [Moshier, p. 400, with several typo corrections]
-     */
-    int jmax = 12;
-    int kmax = 10;
-    int j, k;
-    double pmax  = pow(kmax + q, -s);
-    double scp = s;
-    double pcp = pmax / (kmax + q);
-    double ans = pmax*((kmax+q)/(s-1.0) + 0.5);
+  /* Euler-Maclaurin summation formula 
+   * [Moshier, p. 400, with several typo corrections]
+   */
+  pmax  = pow(kmax + q, -s);
+  scp = s;
+  pcp = pmax / (kmax + q);
+  ans = pmax*((kmax+q)/(s-1.0) + 0.5);
 
-    for(k=0; k<kmax; k++) {
-      ans += pow(k + q, -s);
-    }
+  for(k=0; k<kmax; k++)
+    ans += pow(k + q, -s);
 
-    for(j=0; j<=jmax; j++) {
-      double delta = hzeta_c[j+1] * scp * pcp;
-      ans += delta;
-      scp *= (s+2*j+1)*(s+2*j+2);
-      pcp /= (kmax + q)*(kmax + q);
-    }
 
-    return ans;
+  for(j=0; j<=jmax; j++) {
+    double delta = hzeta_c[j+1] * scp * pcp;
+    ans += delta;
+    scp *= (s+2*j+1)*(s+2*j+2);
+    pcp /= (kmax + q)*(kmax + q);
   }
+
+  return ans;
 }
 
 
