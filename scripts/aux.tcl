@@ -213,3 +213,34 @@ proc stopParticles { } {
     }
     puts ".,. Done (stopped $old_e particles and as many forces)."
 }
+
+#
+# Prepare Connection to VMD
+# -------------------------
+# 
+#
+#############################################################
+
+proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } } {
+    writepsf "$filename.psf"
+    writepdb "$filename.pdb"
+    for {set port 10000} { $port < 65000 } { incr port } {
+	catch {imd connect $port} res
+	if {$res == ""} break
+    }
+    set HOSTNAME [exec hostname]
+    set vmdout_file [open "vmd_start.script" "w"]
+    puts $vmdout_file "mol load psf $filename.psf pdb $filename.pdb"
+    puts $vmdout_file "rotate stop"
+    puts $vmdout_file "mol modstyle 0 0 CPK 1.000000 0.300000 8.000000 6.000000"
+    puts $vmdout_file "mol modcolor 0 0 SegName"
+    puts $vmdout_file "imd connect $HOSTNAME $port"
+     close $vmdout_file
+    if { $start == 0 } {
+	puts "Start VMD in the same directory on the machine you with :"
+	puts "vmd -e vmd_start.script &"
+	imd listen $wait
+    } else {
+	exec vmd -e vmd_start.script &
+    }
+}
