@@ -2,7 +2,7 @@
 
 \section introduction Introduction
 
-tcl_md is a molecular dynamics program. It uses
+tcl_md is a parallel molecular dynamics program. It uses
 <a href="http://tcl.activestate.com">Tcl</a> as controlling language
 to allow great flexibility. bla bla bla
 
@@ -48,13 +48,25 @@ The C implementation is \ref setmd.
 <li>\verbatim writemd <channel> ( posx|posy|posz|q|type|vx|vy|vz|fx|fy|z )+\endverbatim
 	writes to the channel <channel> (previously opened using the Tcl commands open or
 	socket) the given properties for all particles.
+	The C implementation is \ref writemd.
 
 <li>\verbatim readmd <channel>\endverbatim reads back that data. All components
 	posx, posy and posz should be included since otherwise domain decomposition is
 	impossible.
+	The C implementation is \ref readmd.
 
 <li>\verbatim integrate init|<steps>|exit \endverbatim
 	init starts a new simulation, exit stops it, else the simulation will run for
 	<steps> steps. 
+	The C implementation is \ref integrate.
 </ul>
+
+\section comm Communication
+
+This program uses MPI for parallelization. The script is interpreted on only one node,
+the master node. The other nodes wait for the master node to issue specific actions,
+i. e. we utilize a client-server model. More details can be found in
+\ref communication.h "communication.h". During the actual integration however the
+communication is done synchronous.
+
 */

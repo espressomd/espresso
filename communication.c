@@ -7,6 +7,9 @@
 #include "integrate.h"
 #include "global.h"
 #include "debug.h"
+/** \file communication.c
+    Implementation of \ref communication.h "communication.h".
+*/
 
 int this_node = -1;
 int nprocs = -1;
@@ -24,20 +27,39 @@ int nprocs = -1;
 /* slave callback procedure */
 typedef void (SlaveCallback)(int param);
 
+/** Action number for \ref mpi_stop. */
 #define REQ_TERM      0
+/** Action number for \ref mpi_bcast_parameter. */
 #define REQ_BCAST_PAR 1
+/** Action number for \ref mpi_who_has. */
 #define REQ_WHO_HAS   2
+/** Action number for \ref mpi_attach_particle. */
 #define REQ_ATTACH    3
+/** Action number for \ref mpi_send_pos. */
 #define REQ_SET_POS   4
+/** Action number for \ref mpi_send_v. */
 #define REQ_SET_V     5
+/** Action number for \ref mpi_send_f. */
 #define REQ_SET_F     6
+/** Action number for \ref mpi_send_q. */
 #define REQ_SET_Q     7
+/** Action number for \ref mpi_send_type. */
 #define REQ_SET_TYPE  8
+/** Action number for \ref mpi_recv_part. */
 #define REQ_GET_PART  9
+/** Action number for \ref mpi_integrate. */
 #define REQ_INTEGRATE 10
+/** Action number for \ref mpi_bcast_ia_params. */
 #define REQ_BCAST_IA  11
+/** Total number of action numbers. */
 #define REQ_MAXIMUM   12
 
+/** \name Slave Callbacks
+    These functions are the slave node counterparts for the
+    commands the master node issues. The master node function *
+    corresponds to the slave node function *_slave.
+*/
+/*@{*/
 void mpi_stop_slave(int parm);
 void mpi_bcast_parameter_slave(int parm);
 void mpi_who_has_slave(int parm);
@@ -49,8 +71,11 @@ void mpi_send_q_slave(int parm);
 void mpi_send_type_slave(int parm);
 void mpi_recv_part_slave(int parm);
 void mpi_integrate_slave(int parm);
-void mpi_bcast_ia_params_slave(int i);
+void mpi_bcast_ia_params_slave(int parm);
+/*@}*/
 
+/** A list of wich function has to be called for
+    the issued command. */
 SlaveCallback *callbacks[] = {
   mpi_stop_slave,                /*  0: REQ_TERM */
   mpi_bcast_parameter_slave,     /*  1: REQ_BCAST_PAR */
@@ -66,6 +91,7 @@ SlaveCallback *callbacks[] = {
   mpi_bcast_ia_params_slave      /* 11: REQ_BCAST_IA */ 
 };
 
+/** Names to be printed when communication debugging is on. */
 char *names[] = {
   "TERM",      /*  0 */
   "BCAST_PAR", /*  1 */
@@ -401,9 +427,13 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
     
     memcpy(pdata, &particles[index], sizeof(Particle));
     pdata->max_bonds = pdata->n_bonds;
-    pdata->bonds = malloc(sizeof(int)*pdata->n_bonds);
-    memcpy(pdata->bonds, particles[index].bonds,
-	   sizeof(int)*particles[index].n_bonds);
+    if (pdata->n_bonds > 0) {
+      pdata->bonds = malloc(sizeof(int)*pdata->n_bonds);
+      memcpy(pdata->bonds, particles[index].bonds,
+	     sizeof(int)*particles[index].n_bonds);
+    }
+    else
+      pdata->bonds = NULL;
   }
   else {
     int req[2];
@@ -426,9 +456,13 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
     MPI_Recv(&pdata->n_bonds, 1, MPI_INT, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
     pdata->max_bonds = pdata->n_bonds;
-    pdata->bonds = malloc(sizeof(int)*pdata->n_bonds);
-    MPI_Recv(pdata->bonds, pdata->n_bonds, MPI_INT, pnode,
-	     REQ_GET_PART, MPI_COMM_WORLD, &status);
+    if (pdata->n_bonds > 0) {
+      pdata->bonds = malloc(sizeof(int)*pdata->n_bonds);
+      MPI_Recv(pdata->bonds, pdata->n_bonds, MPI_INT, pnode,
+	       REQ_GET_PART, MPI_COMM_WORLD, &status);
+    }
+    else
+      pdata->bonds = 0;
   }
 }
 
@@ -453,8 +487,9 @@ void mpi_recv_part_slave(int part)
 	   MPI_COMM_WORLD);
   MPI_Send(&pdata->n_bonds, 1, MPI_INT, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
-  MPI_Send(pdata->bonds, pdata->n_bonds, MPI_INT, 0, REQ_GET_PART,
-	   MPI_COMM_WORLD);
+  if (pdata->n_bonds > 0)
+    MPI_Send(pdata->bonds, pdata->n_bonds, MPI_INT, 0, REQ_GET_PART,
+	     MPI_COMM_WORLD);
 }
 
 /*********************+ REQ_INTEGRATE ********/

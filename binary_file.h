@@ -2,14 +2,15 @@
 #define BINARYFILE_H
 #include <tcl.h>
 /** \file binary_file.h
-    Binary file format.
-    This file is the header file for \ref binary_file.c "binary_file.c".
+    This file defines a binary file format for the particle data.
+    It is the header file for \ref binary_file.c "binary_file.c" and provides
+    functions to read and write binary particle data to Tcl channels.
     It also defines the structures and constants necessary to interprete/
-    generate such files. THE FILE FORMAT IS HARDWARE DEPENDENT, SINCE RAW
-    DOUBLES/INTS ARE WRITTEN!!!
+    generate particle data files in this format. THE FILE FORMAT IS HARDWARE
+    DEPENDENT, SINCE RAW DATA TYPES ARE WRITTEN!!!
 
     <p>
-    The file contains the following:
+    The file format conists of the following:
     <ol>
     <li> \ref MDHeader with \ref MDHeader::magic set to \ref MDMAGIC ("MD01") without trailing 0.
     <li> then \ref MDHeader::n_rows chars out of
@@ -71,12 +72,15 @@ struct MDHeader {
  * functions
  **************************************************************/
 
+/** \name Exported Functions */
+/*@{*/
 /** Implements the writemd Tcl command. The first argument gives the
     channel to write to, all subsequent arguments give the fields to write.
     The order of the data in the file is given by the argument order.
     The names of the field are the same as above in lowercase. */
 int writemd(ClientData data, Tcl_Interp *interp,
 	    int argc, char **argv);
+
 /** Implements the readmd Tcl command. Note that for reading in new particles,
     all three position fields are mandatory. It doesn't matter where they are
     put, readmd searches for them. readmd also takes care to initialize the
@@ -84,5 +88,6 @@ int writemd(ClientData data, Tcl_Interp *interp,
 */
 int readmd(ClientData data, Tcl_Interp *interp,
 	   int argc, char **argv);
+/*@}*/
 
 #endif

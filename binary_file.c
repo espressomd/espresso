@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+/** \file binary_file.c
+    Implementation of \ref binary_file.h "binary_file.h".
+*/
 
 /* cwz-build-comman: ssh chakotay "builtin cd /nhomes/janeway/axel/progs/tcl_md; make" 
    cwz-build-command: make

@@ -1,7 +1,27 @@
 #ifndef COMM_H
 #define COMM_H
 /** \file communication.h
-    MPI communication. Header file for \ref communication.c "communication.c".
+    This file contains the random access MPI communication.
+    It is the header file for \ref communication.c "communication.c".
+
+    The random access MPI communication is used during script evaluation. Except for the master node
+    that interpretes the Tcl script, all other nodes wait for the master node to issue an action.
+    That is done by \ref mpi_loop, the main loop for all slave nodes. It simply does an MPI_Bcast and
+    therefore waits for the master node to broadcast a command. A command consists of two integers,
+    the first one describing the action issued, the second an arbitrary parameter depending on the
+    action issued. The actions are always issued by the master node, through the functions exported
+    below (e. g. \ref mpi_bcast_parameter).
+
+    Adding new actions (e. g. to implement new Tcl commands) is simple. First, the action has to be
+    assigned a new action number (the defines like \ref REQ_BCAST_PAR) by adding a new define and increasing
+    \ref REQ_MAXIMUM. Then you write a mpi_* procedure that does a
+    \verbatim MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD)\endverbatim
+    where \verbatim req[0]=<action number>; req[1]=<arbitrary>\endverbatim. After this your procedure
+    is free to do anything. However, it has to be in (MPI) sync with what your new mpi_*_slave does.
+    This procedure is called immediately after the broadcast with the arbitrary integer as parameter.
+    To this aim it has also to be added to \ref callbacks (the array index gives your action number -
+    better not choose it too high...). Last but not least for debugging purposes you can add a nice
+    name to \ref names in the same way.
 */
 
 /* from here we borrow the enumeration of
@@ -15,9 +35,9 @@
 
 /** \name Exported Variables */
 /*@{*/
-/** the number of this node */
+/** The number of this node. */
 extern int this_node;
-/** the total number of nodes */
+/** The total number of nodes. */
 extern int nprocs;
 /*@}*/
 
@@ -35,10 +55,10 @@ void mpi_init(int *argc, char ***argv);
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
-/** Issue REQ_TERM: stop MPI and determine nprocs/node. */
+/** Issue REQ_TERM: stop tcl_md, all slave nodes exit. */
 void mpi_stop();
 
-/** Issue REQ_BCAST_PARM: broadcast a parameter from datafield.
+/** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.
     \param i the number from \ref global.h "global.h" referencing the datafield. */
 void mpi_bcast_parameter(int i);
 
