@@ -23,6 +23,10 @@
              type number of charged monomers to be used with \ref tcl_part (default to '1'); if unset, \<type_cM\> = \<type_nM\> is assumed
 	<li> \verbatim <type_FENE>     \endverbatim 
              type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0')
+	<li> \verbatim <angle>	       \endverbatim
+	     desired bond-angle to be fixed
+	<li> \verbatim <angle2>        \endverbatim
+	     second spherical bond-angle
     </ul>
     If \<val_cM\> is smaller than 1e-10, the charge is assumed to be zero, and the types are set to \<type_cM\> = \<type_nM\>.
 
