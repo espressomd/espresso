@@ -363,6 +363,12 @@ void on_parameter_change(int field)
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
+    if (field == FIELD_NODEGRID) {
+      if (node_grid[0] != 1 || node_grid[1] != 1) {
+	char *errtext = runtime_error(128);
+	ERROR_SPRINTF(errtext, "{091 layered cellsystem requires 1 1 n node grid} ");
+      }
+    }
     if (field == FIELD_BOXL || field == FIELD_MAXRANGE || field == FIELD_THERMO_SWITCH)
       cells_re_init(CELL_STRUCTURE_LAYERED);
     break;
