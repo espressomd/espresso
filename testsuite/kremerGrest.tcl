@@ -2,11 +2,11 @@
 # tricking... the line after a these comments are interpreted as standard shell script \
     PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=2; fi
 # OSF1 \
-    if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $TCLMD_SOURCE/$PLATFORM/Espresso $0 $*
+    if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $*
 # AIX \
-    elif test $PLATFORM = AIX; then exec poe $TCLMD_SOURCE/$PLATFORM/Espresso $0 $* -procs $NP
+    elif test $PLATFORM = AIX; then exec poe $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $* -procs $NP
 # Linux \
-    else export EF_ALLOW_MALLOC_0=1; exec mpirun -np $NP -nsigs $TCLMD_SOURCE/$PLATFORM/Espresso $0 $*;
+    else export EF_ALLOW_MALLOC_0=1; exec mpirun -np $NP -nsigs $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $*;
 # \
     fi;
 
@@ -191,7 +191,7 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 	# write everything to disk (set checkpoint)
 	puts -nonewline "\n    Warm-up complete; saving checkpoint to '$name_i$ident.wrm'... ";flush stdout
 	polyBlockWriteAll "$name_i$ident.wrm" "-"; puts "Done."
-	close $obs_file
+	flush $obs_file; close $obs_file
     }
  
 
@@ -206,17 +206,19 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 	close $inp; puts "done) with [setmd n_part] particles ([expr $n_p_i*$mpc_i] expected)."
 	if { [expr $n_p_i*$mpc_i] != [setmd n_part] } { puts "WARNING: Configuration does not correspond to current case $i!"; exit }
     } else {
-	setmd time 0; set int_loop [expr int($int_time_i/([setmd time_step]*$int_step)+0.56)]
+	setmd time 0; set int_loop [expr int($int_time_i/([setmd time_step]*$int_step)+0.56)]; set tmp_step 0
 	puts -nonewline "\nStart integration (full interactions) with timestep [setmd time_step] until time t>=$int_time_i (-> $int_loop loops); "
 	puts "aiming for re = [expr sqrt([lindex $re2 [expr $i-1]])] and rg = [expr sqrt([lindex $rg2 [expr $i-1]])]."
 	puts -nonewline "    Remove capping of LJ-interactions... "; flush stdout; inter ljforcecap 0; puts "Done."
+	set sfx "[expr int(ceil(log10($int_loop*$int_step)))+1]d"
 	if { [file exists "$name_i$ident.chk" ] } {
-	    set inp [open "$name_i$ident.chk" r]
 	    puts -nonewline "    Checkpoint found (currently reading it... "; flush stdout
-	    while { [blockfile $inp read auto] != "eof" } {}
+	    checkpoint_read "$name_i$ident"
 	    set tmp_start [expr int([setmd time]/[setmd time_step]/$int_step)]
-	    if { [expr $j+1] != $tmp_start } { puts "failed: Checkpoint corrupt, time_step is wrong! Expected: $tmp_start, got: [expr $j+1])"; exit }
-	    close $inp; puts "done) at time [setmd time]: Skipping ahead to timestep [expr int([setmd time]/[setmd time_step]+1)] in loop $tmp_start!"
+	    if { [expr $tmp_step/$int_step] != $tmp_start } { 
+		puts "failed: Checkpoint corrupt, time_step is wrong! Expected: $tmp_start, got: [expr $tmp_step/$int_step])"; exit 
+	    }
+	    puts "done) at time [setmd time]: Skipping ahead to timestep [expr int($tmp_step+1)] in loop $tmp_start!"
 	    set obs_file [open "$name_i$ident.obs2" "a"]; analyze set chains 0 $n_p_i $mpc_i
 	    puts "    Analysis at t=[setmd time]: mindist=[analyze mindist], re=[analyze re], rg=[analyze rg], rh=[analyze rh], T=[setmd temp]."
 	} else {
@@ -224,25 +226,28 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 	    puts $obs_file "t mindist re rg rh Temp"
 	    puts $obs_file "[setmd time] [analyze mindist] [analyze re 0 $n_p_i $mpc_i] [analyze rg] [analyze rh] [setmd temp]"
 	    puts "    Analysis at t=[setmd time]: mindist=[analyze mindist], re=[analyze re], rg=[analyze rg], rh=[analyze rh], T=[setmd temp]."
+	    analyze append; checkpoint_set "$name_i$ident.[eval format %0$sfx 0]" "all" "tmp_step"
 	}
-	analyze append
 	for { set j $tmp_start } { $j < $int_loop } { incr j } {
 	    integrate $int_step; set tmp_dist [analyze mindist]
 	    if { $vmd_output=="yes" } { imd positions }
-	    puts -nonewline "    \[$i\] Step [expr ($j+1)*$int_step]/[expr $int_step*$int_loop] (t=[setmd time]): "; flush stdout
+	    set tmp_step [expr ($j+1)*$int_step]
+	    puts -nonewline "    \[$i\] Step $tmp_step/[expr $int_step*$int_loop] (t=[setmd time]): "; flush stdout
 	    set tmp_Temp [expr [analyze energy kin]/$n_part/1.5]; puts -nonewline "Temp = $tmp_Temp"; flush stdout
 	    puts $obs_file "[setmd time] [analyze mindist] [analyze re] [analyze rg] [analyze rh] $tmp_Temp"
 	    set tmp_conf [analyze append]
 	    # set partial checkpoint (will have previous 'configs' by [analyze append] => averages will be correct)
-	    if { [expr (($j+1)*$int_step) % $checkpoint]==0 } {
-		puts -nonewline "\r    \[$i\] Step [expr ($j+1)*$int_step]: Checkpoint at time [setmd time]... "; flush stdout
-		polyBlockWriteAll "$name_i$ident.chk" "j"
+	    if { [expr $tmp_step % $checkpoint]==0 } {
+		puts -nonewline "\r    \[$i\] Step $tmp_step: Checkpoint at time [setmd time]... "; flush stdout; flush $obs_file
+		checkpoint_set "$name_i$ident.[eval format %0$sfx $tmp_step]" [expr int($checkpoint/$int_step)] "tmp_step" "-"
 		puts "set (with <re>=[analyze <re>], <rg>=[analyze <rg>] averaged over $tmp_conf configurations)."
 	    } else { puts -nonewline ", mindist=[analyze mindist], re=[analyze re], rg=[analyze rg], rh=[analyze rh]...\r"; flush stdout }
 	}
 	# write everything to disk (set checkpoint)
+	# (the whole configs-array is not included here for space constraints (it may exceed 700MB),
+	#  it is however stored fractionally in the partial checkpoints, so use 'checkpoint_read' to restore it)
 	puts -nonewline "\n    Integration complete; saving checkpoint to '$name_i$ident.end'... ";flush stdout
-	polyBlockWriteAll "$name_i$ident.end" "-"; puts "Done."; close $obs_file
+	polyBlockWriteAll "$name_i$ident.end" "-" "-"; puts "Done."; close $obs_file
 
 	puts -nonewline "\nFinished with current system; "
 	# derive ensemble averages
