@@ -78,7 +78,7 @@ proc timeStamp { destination prefix postfix suffix } {
 #############################################################
 
 proc polyBlockWrite { destination {write_param "all"} {write_part "id pos type q v f"} } {
-    
+
     # Open output-file - compressed, if desired
     if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
 	set f [open "|gzip -c - >$destination" w]
@@ -99,7 +99,26 @@ proc polyBlockWrite { destination {write_param "all"} {write_part "id pos type q
 	blockfile $f write particles $write_part all
 	blockfile $f write bonds all
     }
+
+    # Close file
+    close $f
+}
+
+
+proc polyBlockWriteAll { destination {tclvar "all"} {rdm "random"} {cfg "1"} } {
+    polyBlockWrite $destination
+    if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
+	set f [open "|gzip -c - >$destination" a] } else { set f [open "$destination" "a"] }
     
+    # Write tcl-variables, if desired
+    if { "$tclvar" != "-" } { foreach j $tclvar { blockfile $f write tclvariable $j } }
+    
+    # Write seed/status of random number generator, if desired
+    if { "$rdm" != "-" } { foreach j $rdm { blockfile $f write $j } }
+
+    # Write stored analysis-configurations, if desired
+    if { "$cfg" != "-" } { blockfile $f write configs }
+
     # Close file
     close $f
 }
@@ -172,6 +191,17 @@ proc analysis { stat stat_out N_P MPC simtime { noted "na" } } {
     puts $stat_out " "; flush $stat_out
 }
 
+
+
+
+#
+# stopParticles
+# -------------
+# 
+# Sets the velocities and forces of all particles currently
+# stored in tcl_md to zero.
+#
+#############################################################
 
 proc stopParticles { } {
     puts -nonewline "        Setting all particles' velocities and forces to zero... "; flush stdout
