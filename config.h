@@ -45,19 +45,19 @@
     \ref domain_decomposition.c, \ref grid.c, \ref interaction_data.c,
     \ref layered.c, \ref statistics_chain.c
 */
-//#define PARTIAL_PERIODIC
+/* #define PARTIAL_PERIODIC */
 
 /** if defined, you will get a warning when particles approach nearer than
     0.9 sigma, because then it's likely the integration will blow up.
 */
 /* #define LJ_WARN_WHEN_CLOSE */
 
-/* #define ELECTROSTATICS */
+#define ELECTROSTATICS
 
 /** Compiler flag to enable describing and processing particle orientations.
 
 This will allow to use such particle properties as quart, omega, and torque. */
-//#define ROTATION 
+/* #define ROTATION */
 
 /** Compiler flag to enable external forces. E.g. apply a fixed external force
     to a particle or fix a particle in space. */
@@ -65,13 +65,13 @@ This will allow to use such particle properties as quart, omega, and torque. */
 
 /** Compiler Flag to enable constraints, eg walls, spheres. 
     See \ref constraint.h and \ref interaction_data.h */
-//#define CONSTRAINTS
+/* #define CONSTRAINTS */
 
 /** Compiler Flag to enable COMFORCE potential */
-//#define COMFORCE
+/* #define COMFORCE */
 
 /** Compiler Flag to enable COMFIXED potential */
-//#define COMFIXED
+/* #define COMFIXED */
 
 /************************************************/
 /** \name available short--ranged potentials
@@ -80,13 +80,13 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /*@{*/
 
 /** to use tabulated potential*/
-#define TABULATED 
+/* #define TABULATED */
 
 /** Lennard-Jones */
 #define LENNARD_JONES
 
 /** Lennard-Jones with cosine tail */
-//#define LJCOS 
+/* #define LJCOS */
 
 /*@}*/
 
@@ -98,11 +98,11 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /* NOTE: Turn on one and only one of the following switches!!! */
 
 /** Harmonic bond angle potential:      V = 1/2 k (phi - phi0)^2 */
-//#define BOND_ANGLE_HARMONIC
+/* #define BOND_ANGLE_HARMONIC */
 /** Cosine bond angle potential:        V = k (1+cos(phi-phi0)) */
-#define BOND_ANGLE_COSINE    
+/* #define BOND_ANGLE_COSINE */
 /** Cosine square bond angle potential: V = 1/2 k (cos(phi)-cos(phi0))^2 */
-//#define BOND_ANGLE_COSSQUARE
+/* #define BOND_ANGLE_COSSQUARE */
 
 /*@}*/
 
@@ -113,15 +113,15 @@ This will allow to use such particle properties as quart, omega, and torque. */
 
 /** NEMD (Non Eqilibrium Molecular Dynamics).
     This is used to perform shear simulations */
-//#define NEMD
+/* #define NEMD */
 
 /** Allows to use (N,p,T)-ensembles during integration as well */
-#define NPT 
+/* #define NPT */
 
 /** DPD Thermostat (Dissipative Particle Dynamics) 
     Flag needed only because DPD acts like a short range potential
 */
-//#define DPD
+/* #define DPD */
 
 /*@}*/
 
@@ -166,7 +166,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /** callback for version status. */
 MDINLINE int version_callback(Tcl_Interp *interp)
 {
-  Tcl_AppendResult(interp, "ESPRESSO: v1.6.Gold (Icheb), Last Change: 29.04.2004", (char *) NULL);
+  Tcl_AppendResult(interp, "ESPRESSO: v1.6.1c (Icheb), Last Change: 10.05.2004", (char *) NULL);
   return (TCL_OK);
 }
 

@@ -2,10 +2,39 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.0  *
+* v1.6.1c *
 ***********
 
 Current working revision.
+
+
+- v1.6.1c -
+-----------
+
+(c) May 10th, 2004.
+(b) May  5th, 2004.
+(a) May  3rd, 2004.
+
+New Features:
+(c) New command 'tune_cells' which adapts the cell-grid towards best performance.
+(c) New parameters 'integrator' and 'thermostat' for the 'blockfile'-command
+    to also save the correct states (and parameters) of these two subsystems.
+(b) New NpT Feature: The NpT-Integrator now accepts two additional arguments. 
+    The first is a set of three integers ( x y z ) each of which turns on or off 
+    the NpT integrator and thermostat in that direction; a value of 1 turns on
+    the box length motion and a value of 0 turns it off.  
+    The second new argument is a flag "-cubic_box"; when set, this flag ensures 
+    that box length changes are completely isotropic in all directions even 
+    though box length changes in one or more of these directions may in fact 
+    be decoupled from the particle motion.
+
+Bugfixes:
+(c) Fixed problems of 'calcObsAv' when a "-" was part of the column headers.
+(b) Fixed bug in the velocity rescaling on the master node.
+(b) Fixed warnings that occur if ELECTROSTATICS is not compiled in.
+(a) Fixed a bug in the calculation of max_skin: Now it cannot be larger than local_box_l.
+(a) Fixed warnings in the ELC tuning routine.
+
 
 
 *********************
@@ -19,7 +48,6 @@ Released on April 29th, 2004.
 - v1.5.8e -
 -----------
 
-(f) May    5th, 2004.
 (e) April 29th, 2004.
 (d) April 28th, 2004.
 (c) April 26th, 2004.
@@ -28,14 +56,6 @@ Released on April 29th, 2004.
 
 New Features / Changes / Bugfixes:
 
-(f) New NpT Feature: The NpT-Integrator now accepts two additional
-      arguments. The first is a set of three integers ( x y z ) each of which turns on or 
-      off the NpT integrator and thermostat in that direction.  A value of 1 turns box length motion
-      on and a value of 0 turns it off.  The second new argument is a
-      flag "-cubic_box".  When set, this flag ensures that box length changes
-      are completely isotropic in all directions even though box length
-      changes in one or more of these directions may in fact be decoupled
-      from the particle motion.
 (e) Final NpT-Update: The NpT-Integrator does now run efficiently and smoothly.
     + Unlocked faster re-scaling of just the geometrical parameters of the system
       instead of reinitialising the whole cell system more than necessary (i.e. only
