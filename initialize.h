@@ -51,8 +51,9 @@ void on_constraint_change();
 /** called every time the cell structure is changed. */
 void on_cell_structure_change();
 
-/** called every time the NpT-integrator communicated the updated box-length. */
-void on_NpT_boxl_change();
+/** called every time the NpT-integrator communicated the updated box-length.
+    @param scal1 isotropic scaling factor by which each \ref box_l[i] changed. */
+void on_NpT_boxl_change(double scal1);
 
 /** called every time other parameters (timestep,...) are changed. Note that
     this does not happen automatically. The callback procedure of the changed

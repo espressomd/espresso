@@ -139,8 +139,9 @@ extern int max_num_cells;
 
 /** Re-derives the topology dimensions after the NpT-integrator
     changed the box-length. Note that no changes occur to the
-    cell structure itself, use \ref dd_create_cell_grid for that. */
-void dd_NpT_update_cell_grid();
+    cell structure itself, use \ref dd_create_cell_grid for that.
+    @param scal1 isotropic scaling factor by which each \ref box_l[i] changed. */
+void dd_NpT_update_cell_grid(double scal1);
 
 /** Initialize the topology. The argument is a list of cell pointers,
     containing particles that have to be sorted into new cells. The
@@ -148,7 +149,7 @@ void dd_NpT_update_cell_grid();
     when particle data or cell structure has changed and the cell
     structure has to be reinitialized. This also includes setting up
     the cell_structure array.
-    \param cl List of cell pointers with particles to be stored in the
+    @param cl List of cell pointers with particles to be stored in the
     new cell system.
 */
 void dd_topology_init(CellPList *cl);

@@ -443,19 +443,17 @@ void rescale_forces_propagate_vel()
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
       for(j = 0; j < 3 ; j++) {
-#ifdef NPT
-	if(integ_switch == INTEG_METHOD_NPT_ISO)
-	  nptiso.p_vel += SQR(p[i].m.v[j]);
-#endif
 #ifdef EXTERNAL_FORCES
 	if (!(p[i].l.ext_flag & COORD_FIXED(j)))
 #endif
-	  /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-	  p[i].m.v[j] += p[i].f.f[j];
 #ifdef NPT
-	if(integ_switch == INTEG_METHOD_NPT_ISO)
-	  p[i].m.v[j] += friction_therm0_nptiso(p[i].m.v[j]);
+	  if(integ_switch == INTEG_METHOD_NPT_ISO) {
+	    nptiso.p_vel += SQR(p[i].m.v[j]);
+	    p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j]); }
+	  else
 #endif
+	    /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
+	    p[i].m.v[j] += p[i].f.f[j];
       }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
@@ -463,6 +461,7 @@ void rescale_forces_propagate_vel()
   }
 #ifdef NPT
   finalize_p_inst_npt();
+  // if((integ_switch == INTEG_METHOD_NPT_ISO) && (this_node==0)) fprintf(stderr,"%d/B: p_inst=%f \n",this_node,nptiso.p_inst);
 #endif
 }
 
@@ -505,17 +504,21 @@ void propagate_press_box_pos_and_rescale_npt()
       scal[2] = SQR(box_l[0])/pow(nptiso.volume,2.0/3.0);
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       L_new = pow(nptiso.volume,1.0/3.0);
-      // fprintf(stderr, "%d: %f -> %f; volume: t=%f => L=%f || ",this_node,nptiso.p_inst,nptiso.p_diff,nptiso.volume,L_new);
+      if (nptiso.volume < 0.0) { 
+	fprintf(stderr, "%d: ERROR: Your choice of piston=%f, dt=%f, p_diff=%f just caused the volume to become negative!\nTry decreasing dt...\n",\
+		this_node,nptiso.piston,time_step,nptiso.p_diff); errexit(); }
+      //else fprintf(stderr, "Q=%f, dt=%f, p_diff=%f => L=%f (V=%f; p_inst=%f)\n",nptiso.piston,time_step,nptiso.p_diff,L_new,nptiso.volume,nptiso.p_inst);
       scal[1] = L_new/box_l[0];
       scal[0] = 1/scal[1];
-      box_l[0] = box_l[1] = box_l[2] = L_new;
+      //box_l[0] = box_l[1] = box_l[2] = L_new;
     }
+    //    scal[0] = scal[1] = scal[2] = 1.0;
+    //    nptiso.volume = box_l[0]*box_l[1]*box_l[2];
     MPI_Bcast(scal,  3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    on_NpT_boxl_change();
-    // fprintf(stderr, "box_l=%f \n ",box_l[0]);
+    //MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    //on_NpT_boxl_change(scal[1]);
 
-    /* propagate positions while rescaling velocities */
+    /* propagate positions while rescaling positions and velocities */
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c]; p  = cell->part; np = cell->n;
       for(i = 0; i < np; i++) {	for(j=0; j < 3; j++){
@@ -523,8 +526,9 @@ void propagate_press_box_pos_and_rescale_npt()
 	  if (!(p[i].l.ext_flag & COORD_FIXED(j)))	
 #endif
 	    {
-		p[i].r.p[j]  = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
-		p[i].m.v[j] *= scal[0];
+		p[i].r.p[j]      = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
+		p[i].l.p_old[i] *= scal[1];
+		p[i].m.v[j]     *= scal[0];
 	    }
 	}
 	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PV_1 v_new=(%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
@@ -537,6 +541,12 @@ void propagate_press_box_pos_and_rescale_npt()
 	  rebuild_verletlist = 1; 
       }
     }
+
+    /* Apply new volume to the box-length, communicate it, and account for necessary adjustments to the cell geometry */
+    if (this_node == 0) box_l[0] = box_l[1] = box_l[2] = L_new;
+    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    //    on_NpT_boxl_change(scal[1]);
+    on_NpT_boxl_change(0.0);
   }
 #endif
 }
@@ -562,17 +572,18 @@ void propagate_vel()
 	if (!(p[i].l.ext_flag & COORD_FIXED(j)))	
 #endif
 	  {
-	    /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-	    p[i].m.v[j] += p[i].f.f[j];
+#ifdef NPT
+	    if(integ_switch == INTEG_METHOD_NPT_ISO) {
+	      p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j]);
+	      nptiso.p_vel += SQR(p[i].m.v[j]); }
+	    else
+#endif
+	      /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
+	      p[i].m.v[j] += p[i].f.f[j];
 
 	    /* SPECIAL TASKS in particle loop */
 #ifdef NEMD
 	    if(j==0) nemd_get_velocity(p[i]);
-#endif
-#ifdef NPT
-	    if(integ_switch == INTEG_METHOD_NPT_ISO) {
-	      p[i].m.v[j] += friction_therm0_nptiso(p[i].m.v[j]);
-	      nptiso.p_vel += SQR(p[i].m.v[j]); }
 #endif
 	  }
 

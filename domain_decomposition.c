@@ -468,28 +468,23 @@ int dd_append_particles(ParticleList *pl, int fold_dir)
 /************************************************************/
 
 #ifdef NPT
-void dd_NpT_update_cell_grid() {
+void dd_NpT_update_cell_grid(double scal1) {
   int i;
-  double cell_range[3], min_box_l;
 
   /* if new box length leads to too small cells, redo cell structure */
-  if(max_range+skin > dmax(dmax(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2])) 
+  if(max_range > scal1*dmax(dmax(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2])) {
     cells_re_init(CELL_STRUCTURE_DOMDEC);
+    cells_resort_particles(CELL_GLOBAL_EXCHANGE); }
   else {
     CELL_TRACE(fprintf(stderr, "%d: dd_NpT_update_cell_grid: max_range %f\n",this_node,max_range));
     CELL_TRACE(fprintf(stderr, "%d: dd_NpT_update_cell_grid: local_box %f-%f, %f-%f, %f-%f,\n",this_node,my_left[0],my_right[0],my_left[1],my_right[1],my_left[2],my_right[2]));
-    
-    /* initialize */
-    min_box_l = dmin(dmin(local_box_l[0],local_box_l[1]),local_box_l[2]);
-    cell_range[0]=cell_range[1]=cell_range[2] = max_range;
     
     /* now set all dependent variables */
     for(i=0;i<3;i++) {
       dd.cell_size[i]       = local_box_l[i]/(double)dd.cell_grid[i];
       dd.inv_cell_size[i]   = 1.0 / dd.cell_size[i];
     }
-    cell_range[0] = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]);
-    max_skin = cell_range[0] - max_cut;
+    max_skin = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]) - max_cut;
     
     CELL_TRACE(fprintf(stderr, "%d: dd_NpT_update_cell_grid, n_cells=%d, local_cells.n=%d, ghost_cells.n=%d, dd.ghost_cell_grid=(%d,%d,%d)\n", this_node, n_cells,local_cells.n,ghost_cells.n,dd.ghost_cell_grid[0],dd.ghost_cell_grid[1],dd.ghost_cell_grid[2]));
   }
@@ -715,8 +710,8 @@ void  dd_exchange_and_sort_particles(int global_flag)
       MPI_Bcast(&finished, 1, MPI_INT, 0, MPI_COMM_WORLD);
     } else {
       if(finished == 0) {
-	fprintf(stderr,"%d: dd_exchange_and_sort_particles:\nUnexpected particle position requiers global exchange.\nWrong unsage of this function!\n", this_node);
-	errexit();
+	fprintf(stderr,"%d: dd_exchange_and_sort_particles:\n",this_node);
+	fprintf(stderr,"Unexpected particle position requiers global exchange.\nWrong unsage of this function!\n"); errexit();
       }
     }
     CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: finished value: %d\n",this_node,finished));

@@ -208,7 +208,7 @@ void on_resort_particles()
 }
 
 #ifdef NPT
-void on_NpT_boxl_change() {
+void on_NpT_boxl_change(double scal1) {
   grid_changed_box_l();
 
   if(coulomb.method == COULOMB_P3M) {
@@ -216,7 +216,7 @@ void on_NpT_boxl_change() {
     integrate_vv_recalc_maxrange();
   }
   if(cell_structure.type==CELL_STRUCTURE_DOMDEC)
-    dd_NpT_update_cell_grid();
+    dd_NpT_update_cell_grid(scal1);
 }
 #endif
 
