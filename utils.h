@@ -107,22 +107,22 @@ MDINLINE void realloc_doublelist(DoubleList *dl, int size)
  * functions: math
  ************************************************/
 
-/** Maximum von  double a und  double b berechnen, gibt double zurueck. */
+/** Calculates the maximum of 'double'-typed a and b, returning 'double'. */
 MDINLINE double dmax(double a, double b) { return (a>b) ? a : b; }
 
-/** Maximum von  double a und  double b berechnen, gibt double zurueck. */
+/** Calculates the minimum of 'double'-typed a and b, returning 'double'. */
 MDINLINE double dmin(double a, double b) { return (a<b) ? a : b; }
 
-/** Maximum von  int a und  int b berechnen, gibt int zurueck. */
+/** Calculates the maximum of 'int'-typed a and b, returning 'int'. */
 MDINLINE int imax(int a, int b) { return (a>b) ? a : b; }
 
-/** Maximum von  int a und  int b berechnen, gibt int zurueck. */
+/** Calculates the minimum of 'int'-typed a and b, returning 'int'. */
 MDINLINE int imin(int a, int b) { return (a<b) ? a : b; }
 
-/** Wert von double x runden, gibt double zurueck. */
+/** Mathematically rounds 'double'-typed x, returning 'double'. */
 MDINLINE double dround(double x) { return floor(x+0.5); }
 
-/** Berechnet das Quadrat von double x, gibt double zurueck. */
+/** Calculates the SQuaRe of 'double' x, returning 'double'. */
 MDINLINE double SQR(double x) { return x*x; }
 
 /** approximates exp(d^2)*erfc(d) by applying a formula from:
