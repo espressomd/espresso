@@ -68,16 +68,20 @@ else
      ifeq ($(HOSTFLAGS),)
           HOSTFLAGS=-march=i386
 
+          ifeq ($(MODEL),Pentium-M)
+               HOSTFLAGS= -malign-double -march=pentium4 -mfpmath=sse -msse2
+          endif
+
           ifeq ($(MODEL),Pentium-III)
-               HOSTFLAGS= -march=pentium3 -mfpmath=sse -msse
+               HOSTFLAGS= -malign-double -march=pentium3 -mfpmath=sse -msse
           endif
 
           ifeq ($(MODEL),Athlon-MP)
-               HOSTFLAGS= -march=athlon-mp -mfpmath=sse -msse
+               HOSTFLAGS= -malign-double -march=athlon-mp -mfpmath=sse -msse
           endif
 
           ifeq ($(MODEL),Athlon-XP)
-               HOSTFLAGS= -march=athlon-xp -mfpmath=sse -msse
+               HOSTFLAGS= -malign-double -march=athlon-xp -mfpmath=sse -msse
           endif
 
           ifeq ($(MODEL),Athlon-64)
@@ -85,12 +89,12 @@ else
           endif
 
           ifeq ($(MODEL),Athlon-Processor)
-               HOSTFLAGS= -march=athlon -mfpmath=sse -msse
+               HOSTFLAGS= -malign-double -march=athlon -mfpmath=sse -msse
           endif
      endif
 
      CFLAGS=-O3 -Wall $(HOSTFLAGS) -finline-limit=10000000 \
-	    -ffast-math
+	    -ffast-math -floop-optimize -funroll-loops
 endif
 
 
@@ -139,7 +143,7 @@ CFLAGS+= -DUSE_NON_CONST
 ifeq ($(BLADE),yes)
      LDLIBS+= -L/afs/ipp/@sys/soft/gnu/lib -ltcl8.4
 else
-     LDLIBS+= -L/usr/lib -ltcl8.4
+     LDLIBS+= -ltcl8.4
 endif
 
 ########### TK
