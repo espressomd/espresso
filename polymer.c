@@ -28,6 +28,7 @@
 #include "communication.h"
 #include "interaction_data.h"
 #include "random.h"
+#include "parser.h"
 #include "debug.h"
 #include "utils.h"
 #include "integrate.h"
@@ -43,9 +44,6 @@
 
 
 int mindist3(int part_id, double r_catch, int *ids) {
-  /** C implementation of 'mindist \<part_id\> \<r_catch\>',
-      which returns the size of an array \<ids\> of indices of particles which are 
-      less than \<r_catch\> away from the position of the particle \<part_id\>. */
   Particle *partCfgMD;
   double dx,dy,dz;
   int i, me, caught=0;
@@ -75,10 +73,6 @@ int mindist3(int part_id, double r_catch, int *ids) {
 
 
 double mindist4(double pos[3]) {
-  /** C implementation of 'mindist \<posx\> \<posy\> \<posz\>',
-      which returns the minimum distance of all current particles
-      to position (\<posx\>, \<posy\>, \<posz\>) as a double.
-      If it fails, return value equals -1. */
   Particle *partCfgMD;
   double mindist=30000.0, dx,dy,dz;
   int i;
@@ -101,9 +95,6 @@ double mindist4(double pos[3]) {
 
 
 int collision(double pos[3], double shield) {
-  /** Checks whether a particle at coordinates (\<posx\>, \<posy\>, \<posz\>) collides
-      with any other particle due to a minimum image distance smaller than \<shield\>. 
-      Returns '1' if there is a collision, '0' otherwise. */
   if (mindist4(pos) > shield) return (0);
   return (1);
 }
@@ -111,101 +102,153 @@ int collision(double pos[3], double shield) {
 
 
 int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  /** Implementation of the tcl-command
-      polymer \<N_P\> \<MPC\> \<bond_length\> [start \<part_id\>] [pos \<x\> \<y\> \<z\>] [mode { SAW | RW } [\<shield\> [\<max_try\>]]] 
-                                        [charge \<val_cM\>] [distance \<cM_dist\>] [types \<type_nM\> [\<type_cM\>]] [FENE \<type_FENE\>]
-      Creates some polymer chains within the simulation box,
-      and returns how often the attempt to place a monomer failed in the worst case.
-      Parameters:  \<N_P\>         = how many polymers to create
-                   \<MPC\>         = monomers per chain
-                   \<bond_length\> = length of the bonds between two monomers
-                   \<part_id\>     = particle number of the start monomer (defaults to '0')
-		   \<pos\>         = sets the position of the start monomer of the first chain (defaults to a randomly chosen value)
-		   \<mode\>        = selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW')
-		   \<shield\>      = shield around each particle another particle's position may not enter if using SAW (defaults to '0.0')
-		   \<max_try\>     = how often a monomer should be reset if current position collides with a previous particle (defaults to '30000')
-		   \<val_cM\>      = valency of charged monomers (defaults to '0.0')
-		   \<cM_dist\>     = distance between two charged monomers' indices (defaults to '1')
-		   \<type_{n|c}P\> = type number of {neutral|charged} monomers to be used with "part" (default to '0' and '1')
-		   \<type_FENE\>   = type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0') 
-      If \<val_cM\> \< 1e-10, the charge is assumed to be zero, and \<type_cM\> = \<type_nM\>.                                                    */
   int N_P, MPC; double bond_length; int part_id = 0; double *posed = NULL;
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_cM = 0.0; int cM_dist = 1, type_nM = 0, type_cM = 1, type_FENE = 0;
+  double angle = -1.0;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
 
   if (argc < 4) { Tcl_AppendResult(interp, "Wrong # of args! Usage: polymer <N_P> <MPC> <bond_length> [options]", (char *)NULL); return (TCL_ERROR); }
-  N_P = atoi(argv[1]); MPC = atoi(argv[2]); bond_length = atof(argv[3]);
+  if (!ARG_IS_I(1, N_P)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Number of polymers must be integer (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
+ }
+  else {
+    if(N_P < 0) {
+      Tcl_AppendResult(interp, "Number of polymers must be positive (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR); }
+  }
+  if (!ARG_IS_I(2, MPC)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Number of monomers must be integer (got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR); }
+  else {
+    if(MPC < 0) {
+      Tcl_AppendResult(interp, "Number of monomers must be positive (got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR); }
+  }
+  if (!ARG_IS_D(3, bond_length)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Bondlength must be double (got: ", argv[3],")!", (char *)NULL); return (TCL_ERROR); }
+  else {
+    if(bond_length < 0.0) {
+      Tcl_AppendResult(interp, "Bondlength  must be positive (got: ", argv[3],")!", (char *)NULL); return (TCL_ERROR); }
+  }
   for (i=4; i < argc; i++) {
     /* [start <part_id>] */
-    if (!strncmp(argv[i], "start", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &part_id) == TCL_ERROR) {	
-	Tcl_AppendResult(interp, "Index of polymer chain's first monomer must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-      else {
-	if (part_id < 0) {
-	  Tcl_AppendResult(interp, "Index of polymer chain's first monomer must be positive (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
-      i++;
+    if (ARG_IS_S(i, "start")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_I(i+1, part_id)) {	
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "Index of polymer chain's first monomer must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if (part_id < 0) {
+	    Tcl_AppendResult(interp, "Index of polymer chain's first monomer must be positive (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+	i++;
+      }
+      else { Tcl_AppendResult(interp, "Not enough arguments for start", (char *)NULL); return (TCL_ERROR); }
     }
     /* [pos <x> <y> <z>] */
-    else if (!strncmp(argv[i], "pos", strlen(argv[i]))) {
+    else if (ARG_IS_S(i, "pos")) {
       if (i+3 < argc) { 
 	posed = malloc(3*sizeof(double));
-	if ((Tcl_GetDouble(interp, argv[i+1], &posed[0]) == TCL_ERROR) || (Tcl_GetDouble(interp, argv[i+2], &posed[1]) == TCL_ERROR) 
-	    || (Tcl_GetDouble(interp, argv[i+3], &posed[2]) == TCL_ERROR)) { 
-	  Tcl_AppendResult(interp, "The first start monomers position must be double (got: ",argv[i+1],",",argv[i+2],",",argv[i+3],")!", (char *)NULL); 
+	if (!(ARG_IS_D(i+1, posed[0]) && ARG_IS_D(i+2, posed[1]) && ARG_IS_D(i+3, posed[2]))) {
+	  Tcl_ResetResult(interp);
+          Tcl_AppendResult(interp, "The first start monomers position must be double (got: ",argv[i+1],",",argv[i+2],",",argv[i+3],")!", (char *)NULL);
 	  return (TCL_ERROR); } else { i+=3; } }
       else { Tcl_AppendResult(interp, "The first start monomers position must be 3D!", (char *)NULL); return (TCL_ERROR); }
     }
     /* [mode { SAW | RW } [<shield> [max_try]]] */
-    else if (!strncmp(argv[i], "mode", strlen(argv[i]))) {
-      if (!strncmp(argv[i+1], "SAW", strlen(argv[i+1]))) {
-	mode = 0;
-	if ((i+2 >= argc) || (Tcl_GetDouble(interp, argv[i+2], &shield) == TCL_ERROR)) { Tcl_ResetResult(interp); i++; }
+    else if (ARG_IS_S(i, "mode")) {
+      if (i+1 < argc) {
+	if (ARG_IS_S(i+1, "SAW")) {
+	  mode = 0;
+	  if ((i+2 >= argc) || !ARG_IS_D(i+2, shield)) { Tcl_ResetResult(interp); i++; }
+	  else {
+	    if (shield < 0) { Tcl_AppendResult(interp, "The SAW-shield must be positive (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
+	    if ((i+3 >= argc) || !ARG_IS_I(i+3, max_try)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } } }
+	else if (ARG_IS_S(i+1, "RW")) {
+	  mode = 1;
+	  if ((i+2 >= argc) || !ARG_IS_D(i+2, shield)) { Tcl_ResetResult(interp); i++; }
+	      else if ((i+3 >= argc) || !ARG_IS_I(i+3, max_try)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } }
 	else {
-	  if (shield < 0) { Tcl_AppendResult(interp, "The SAW-shield must be positive (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
-	  if ((i+3 >= argc) || (Tcl_GetInt(interp, argv[i+3], &max_try) == TCL_ERROR)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } } }
-      else if (!strncmp(argv[i+1], "RW", strlen(argv[i+1]))) {
-	mode = 1;
-	if ((i+2 >= argc) || (Tcl_GetDouble(interp, argv[i+2], &shield) == TCL_ERROR)) { Tcl_ResetResult(interp); i++; }
-	else if ((i+3 >= argc) || (Tcl_GetInt(interp, argv[i+3], &max_try) == TCL_ERROR)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } }
-      else {
-	Tcl_AppendResult(interp, "The mode you specified does not exist (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	  Tcl_AppendResult(interp, "The mode you specified does not exist (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      }
+      else {Tcl_AppendResult(interp, "Not enough arguments for mode", (char *)NULL); return (TCL_ERROR); }
     }
     /* [charge <val_cM>] */
-    else if (!strncmp(argv[i], "charge", strlen(argv[i]))) {
-      if (Tcl_GetDouble(interp, argv[i+1], &val_cM) == TCL_ERROR) { 
-	Tcl_AppendResult(interp, "The charge of the chain's monomers must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-      else { i++; }
+    else if (ARG_IS_S(i, "charge")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_D(i+1, val_cM)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "The charge of the chain's monomers must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else { i++; }
+      }
+      else { Tcl_AppendResult(interp, "Not enough arguments for charge", (char *)NULL); return (TCL_ERROR); }
     }
     /* [distance <cM_dist>] */
-    else if (!strncmp(argv[i], "distance", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &cM_dist) == TCL_ERROR) { 
-	Tcl_AppendResult(interp, "The distance between two charged monomers' indices must be integer (got: ",argv[i+1],")!", (char *)NULL); 
-	return (TCL_ERROR); }
-      else { i++; }
+    else if (ARG_IS_S(i, "distance")) {
+      if(i+1 <argc) {
+	if (!ARG_IS_I(i+1, cM_dist)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "The distance between two charged monomers' indices must be integer (got: ",argv[i+1],")!", (char *)NULL); 
+	  return (TCL_ERROR); }
+	else {
+	  if(cM_dist < 0) { Tcl_AppendResult(interp, "The charge of the chain's monomers  must be positive (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
+	  else { i++; }
+	}
+      }
+      else { Tcl_AppendResult(interp, "Not enough arguments for distance", (char *)NULL); return (TCL_ERROR); }
     }
     /* [types <type_nM> [<type_cM>]] */
-    else if (!strncmp(argv[i], "types", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &type_nM) == TCL_ERROR) { 
-	Tcl_AppendResult(interp, "The type-# of neutral monomers must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-      else {
-	if ((i+2 >= argc) || (Tcl_GetInt(interp, argv[i+2], &type_cM) == TCL_ERROR)) { Tcl_ResetResult(interp); i++; } else { i+=2; } }
+    else if (ARG_IS_S(i, "types")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_I(i+1, type_nM)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "The type-# of neutral monomers must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if ((i+2 >= argc) || !ARG_IS_I(i+2, type_cM)) { Tcl_ResetResult(interp); i++; } else { i+=2; } }
+      }
+      else {Tcl_AppendResult(interp, "Not enough arguments for types", (char *)NULL); return (TCL_ERROR); }
     }
     /* [FENE <type_FENE>] */
-    else if (!strncmp(argv[i], "FENE", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &type_FENE) == TCL_ERROR) { 
-	Tcl_AppendResult(interp, "The type-# of the FENE-interaction must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-      else { i++; }
+    else if (ARG_IS_S(i, "FENE")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_I(i+1, type_FENE)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "The type-# of the FENE-interaction must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else { i++; }
+      }
+      else {Tcl_AppendResult(interp, "Not enough arguments for FENE", (char *)NULL); return (TCL_ERROR); }
     }
-    /* default */
+    /* [angle <angle> [\<angle2\>]] */
+    else if (ARG_IS_S(i, "angle")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_D(i+1, angle)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "The angle must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  while(angle >= 2*PI) angle -= 2*PI;
+	  i++;
+    	  /*if(i+1 < argc) {
+	    if (!ARG_IS_D(i+1, angle2)) {
+	      Tcl_AppendResult(interp);
+	      Tcl_AppendResult(interp, "The 2nd angle must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	    else {
+	      while(angle2 >= 2*PI) angle2 -= 2*PI;
+	      i++;
+	    }
+	  }*/
+	}
+      }
+      else {Tcl_AppendResult(interp, "Not enough arguments for angle", (char *)NULL); return (TCL_ERROR); }
+    }
+    /* Default */
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
   }
   if (val_cM < 1e-10) { val_cM = 0.0; type_cM = type_nM; }
 
-  POLY_TRACE(if (posed!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed %f/%f/%f, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE);  else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE));
+  POLY_TRACE(if (posed!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed %f/%f/%f, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle,angle2);  else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle));
 
-  tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE);
+  tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle);
   if (tmp_try == -1) {
     sprintf(buffer, "Failed to find a suitable place for the start-monomer for %d times!\nAborting...\n",max_try); tmp_try = TCL_ERROR; }
   else if (tmp_try == -2) {
@@ -225,11 +268,9 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 
 int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, int mode, double shield, int max_try, 
-	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE) {
-  /** C implementation of 'polymer \<N_P\> \<MPC\> \<bond_length\> [options]',
-      which returns how often the attempt to place a monomer failed in the worst case. */
+	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle) {
   int p,n, cnt1,cnt2,max_cnt, bond[2];
-  double theta,phi,pos[3],poz[3];
+  double theta,phi,pos[3],poz[3],pot[3],a[3],M[3],c[3],absc,v1,v2;
 
   cnt1 = cnt2 = max_cnt = 0;
   for (p=0; p<N_P; p++) {
@@ -254,13 +295,75 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
       
       /* place remaining monomers */
       for (n=1; n<MPC; n++) {
+	if(angle > -1.0 && (/*angle2 > -1.0 || */n>1)) {
+	  pot[0]=poz[0]; pot[1]=poz[1]; pot[2]=poz[2]; }
 	poz[0]=pos[0]; poz[1]=pos[1]; poz[2]=pos[2];
 	for (cnt1=0; cnt1<max_try; cnt1++) {
-	  theta  =     PI*d_random();
-	  phi    = 2.0*PI*d_random();
-	  pos[0] = poz[0] + bond_length*sin(theta)*cos(phi);
-	  pos[1] = poz[1] + bond_length*sin(theta)*sin(phi);
-	  pos[2] = poz[2] + bond_length*cos(theta);
+	  poz[0]=pos[0]; poz[1]=pos[1]; poz[2]=pos[2];
+	  if(angle > -1.0 && (/*angle2 > -1.0 ||*/ n>1)) {
+	    /* APPROACH FOR ROTATION MATRICES:  NOT WORKING YET AND PROPABLY NEVER WILL!!!
+	    if(angle > -1.0) {
+	      c=atan((poz[1]-pot[1])/(poz[0]-pot[0]));
+	      b=atan((poz[0]-pot[0])/(poz[2]-pot[2]));
+	      a=atan((poz[2]-pot[2])/(poz[1]-pot[1]));
+
+	      pot[0] = cos(b)*cos(c)*pos[0]+cos(b)*sin(c)*pos[1]-sin(b)*pos[2];
+	      pot[1] = sin(a)*sin(b)*cos(c)*pos[0]-cos(a)*sin(c)*pos[0]+sin(a)*sin(b)*sin(c)*pos[1]+cos(a)*cos(c)*pos[1]+sin(a)*cos(b)*pos[2];
+	      pos[2] = cos(a)*sin(b)*cos(c)*pos[0]+sin(a)*sin(c)*pos[0]+cos(a)*sin(b)*sin(c)*pos[1]-sin(a)*cos(c)*pos[1]+cos(a)*cos(b)*pos[2];
+	      pos[1] = pot[1];
+	      pos[0] = pot[0];
+	    }
+	    */
+	    a[0]=poz[0]-pot[0];
+	    a[1]=poz[1]-pot[1];
+	    a[2]=poz[2]-pot[2];
+	    /*	  if(angle2 > -1.0) {
+	    
+	  }
+	  else {
+	    v1 = 1-2*d_random();
+	    v2 = 1-2*d_random();
+	    }*/
+	    v1 = 1-2*d_random();
+	    v2 = 1-2*d_random();
+	    M[0] = cos(angle)*(a[0]);
+	    M[1] = cos(angle)*(a[1]);
+	    M[2] = cos(angle)*(a[2]);
+
+	    if(a[0] != 0) {
+	      c[1] = v1;
+	      c[2] = v2;
+	      c[0] = -(a[1]*c[1]+a[2]*c[2])/a[0];
+	    }
+	    else if(a[1] !=0) {
+	      c[0] = v1;
+	      c[2] = v2;
+	      c[1] = -(a[0]*c[0]+a[2]*c[2])/a[1];
+	    }
+	    else {
+	      c[1] = v1;
+	      c[0] = v2;
+	      c[2] = -(a[1]*c[1]+a[0]*c[0])/a[2];
+	    }
+	    absc = sqrt(SQR(c[0])+SQR(c[1])+SQR(c[2]));
+	    c[0] = (sin(angle)*bond_length/absc)*c[0];
+	    c[1] = (sin(angle)*bond_length/absc)*c[1];
+	    c[2] = (sin(angle)*bond_length/absc)*c[2];
+
+	    pos[0] += M[0]+c[0];
+	    pos[1] += M[1]+c[1];
+	    pos[2] += M[2]+c[2];
+	  }
+	  else {
+	    theta = PI*d_random();
+	    phi    = 2.0*PI*d_random();
+	    pos[0] += bond_length*sin(theta)*cos(phi);
+	    pos[1] += bond_length*sin(theta)*sin(phi);
+	    pos[2] += bond_length*cos(theta);
+	  }
+
+	  POLY_TRACE(printf("a=(%f,%f,%f) absa=%f M=(%f,%f,%f) c=(%f,%f,%f) absMc=%f a*c=%f)\n",a[0],a[1],a[2],sqrt(SQR(a[0])+SQR(a[1])+SQR(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(SQR(M[0]+c[0])+SQR(M[1]+c[1])+SQR(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2]));
+
 	  if ((mode!=0) || (collision(pos, shield)==0)) break;
 	  POLY_TRACE(printf("m"); fflush(NULL));
 	}
@@ -290,59 +393,67 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 
 
 int counterions (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  /** Implementation of the tcl-command
-      counterions \<N_CI\> [start \<part_id\>] [mode { SAW | RW } [\<shield\> [\<max_try\>]]] [charge \<val_CI\>] [type \<type_CI\>]
-      Creates \<N_CI\> counterions of charge \<val_CI\> within the simulation box,
-      and returns how often the attempt to place a particle failed in the worst case.
-      Parameters:  \<N_CI\>        = number of counterions to create
-                   \<part_id\>     = particle number of the first counterion (defaults to 'n_total_particles')
-		   \<mode\>        = selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW')
-		   \<shield\>      = shield around each particle another particle's position may not enter if using SAW (defaults to '0.0')
-		   \<max_try\>     = how often a monomer should be reset if current position collides with a previous particle (defaults to '30000')
-		   \<val_CI\>      = valency of the counterions (defaults to '-1.0')
-		   \<type_CI\>     = type number of the counterions to be used with "part" (default to '2') */
   int N_CI; int part_id = n_total_particles; 
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_CI = -1.0; int type_CI = 2;
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
 
   if (argc < 2) { Tcl_AppendResult(interp, "Wrong # of args! Usage: counterions <N_CI> [options]", (char *)NULL); return (TCL_ERROR); }
-  N_CI = atoi(argv[1]);
+  if (!ARG_IS_I(1, N_CI)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Number of conterions must be integer (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
+ }
+  else {
+    if(N_CI < 0) {
+      Tcl_AppendResult(interp, "Number of counterions must be positive (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR); }
+  }
   for (i=2; i < argc; i++) {
     /* [start <part_id>] */
-    if (!strncmp(argv[i], "start", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &part_id) == TCL_ERROR) {	
-	Tcl_AppendResult(interp, "Index of first counterion must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+    if (ARG_IS_S(i, "start")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_I(i+1, part_id)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "Index of first counterion must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if (part_id < 0) {
+	    Tcl_AppendResult(interp, "Index of first counterion must be positive (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+	i++;
+      }
       else {
-	if (part_id < 0) {
-	  Tcl_AppendResult(interp, "Index of first counterion must be positive (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
-      i++;
+	Tcl_AppendResult(interp, "Not enough arguments for start!", (char *)NULL); return (TCL_ERROR); }
     }
     /* [mode { SAW | RW } [<shield> [max_try]]] */
-    else if (!strncmp(argv[i], "mode", strlen(argv[i]))) {
-      if (!strncmp(argv[i+1], "SAW", strlen(argv[i+1]))) {
-	mode = 0;
-	if ((i+2 >= argc) || (Tcl_GetDouble(interp, argv[i+2], &shield) == TCL_ERROR)) { Tcl_ResetResult(interp); i++; }
-	else {
-	  if (shield < 0) { Tcl_AppendResult(interp, "The SAW-shield must be positive (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
-	  if ((i+3 >= argc) || (Tcl_GetInt(interp, argv[i+3], &max_try) == TCL_ERROR)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } } }
-      else if (!strncmp(argv[i+1], "RW", strlen(argv[i+1]))) {
-	mode = 1;
-	if ((i+2 >= argc) || (Tcl_GetDouble(interp, argv[i+2], &shield) == TCL_ERROR)) { Tcl_ResetResult(interp); i++; }
-	else if ((i+3 >= argc) || (Tcl_GetInt(interp, argv[i+3], &max_try) == TCL_ERROR)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } }
+    else if (ARG_IS_S(i, "mode")) {
+      if(i+1 < argc) {
+	if (ARG_IS_S(i+1, "SAW")) {
+	  mode = 0;
+	  if ((i+2 >= argc ) || !ARG_IS_D(i+2, shield)) { Tcl_ResetResult(interp); i++; }
+	  else {
+	    if (shield < 0) { Tcl_AppendResult(interp, "The SAW-shield must be positive (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
+	    if ((i+3) >= argc || !ARG_IS_I(i+3, max_try)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } }
+        }
+	else if (ARG_IS_S(i+1, "RW")) {
+	  mode = 1;
+	  if ((i+2 >= argc) || !ARG_IS_D(i+2, shield)) { Tcl_ResetResult(interp); i++; }
+	  else if ((i+3 >= argc) || !ARG_IS_I(i+3, max_try)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } }
+        else {
+	  Tcl_AppendResult(interp, "The mode you specified does not exist (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      }
       else {
-	Tcl_AppendResult(interp, "The mode you specified does not exist (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+        Tcl_AppendResult(interp, "Not enough arguments for mode!", (char *)NULL); return (TCL_ERROR); }
     }
     /* [charge <val_CI>] */
-    else if (!strncmp(argv[i], "charge", strlen(argv[i]))) {
-      if (Tcl_GetDouble(interp, argv[i+1], &val_CI) == TCL_ERROR) { 
+    else if (ARG_IS_S(i, "charge")) {
+      if (!ARG_IS_D(i+1, val_CI)) {
+	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The charge of the counterions must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
       else { i++; }
     }
     /* [type <type_CI>] */
-    else if (!strncmp(argv[i], "type", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &type_CI) == TCL_ERROR) { 
+    else if (ARG_IS_S(i, "type")) {
+      if (!ARG_IS_I(i+1, type_CI)) { 
+	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The type-# of the counterions must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
       else { i++; }
     }
@@ -368,8 +479,6 @@ int counterions (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 
 int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try, double val_CI, int type_CI) {
-  /** C implementation of 'counterions \<N_CI\> [options]',
-      which returns how often the attempt to place a counterion failed in the worst case. */
   int n, cnt1,max_cnt;
   double pos[3];
 
@@ -397,78 +506,103 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try, do
 
 
 int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  /** Implementation of the tcl-command
-      salt \<N_pS\> \<N_nS\> [start \<part_id\>] [mode { SAW | RW } [\<shield\> [\<max_try\>]]] [charges \<val_pS\> [\<val_nS\>]] [types \<type_pS\> [\<type_nS\>]] [rad \<rad>]
-      Creates \<N_pS\> positively and \<N_nS\> negatively charged salt ions of charge \<val_pS\> and \<val_nS\> within the simulation box,
-      and returns how often the attempt to place a particle failed in the worst case.
-      Parameters:  \<N_pS\>/\<N_nS\> = number of salt ions to create
-		   \<part_id\>     = particle number of the first salt ion (defaults to 'n_total_particles')
-		   \<mode\>        = selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW')
-		   \<shield\>      = shield around each particle another particle's position may not enter if using SAW (defaults to '0')
-		   \<max_try\>     = how often a monomer should be reset if current position collides with a previous particle (defaults to '30000')
-		   \<val_{p|n}S\>  = valencies of the salt ions (default to '1' and '-1', respectively); if \<val_nS\> is not given, \<val_nS\> = -1*\<val_pS\>
-		   \<type_{p|n}S\> = type numbers to be used with "part" (default to '3' and '4'); if \<type_nS\> is not given, \<type_nS\> = \<type_pS\> is assumed. 
-       \<rad> = radius of the cell for the cell model. */
   int N_pS, N_nS; int part_id = n_total_particles; 
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_pS = 1.0, val_nS = -1.0; int type_pS = 3, type_nS = 4;
   double rad=0.;
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
 
   if (argc < 3) { Tcl_AppendResult(interp, "Wrong # of args! Usage: salt <N_pS> <N_nS> [options]", (char *)NULL); return (TCL_ERROR); }
-  N_pS = atoi(argv[1]); N_nS = atoi(argv[2]);
+  if (!ARG_IS_I(1, N_pS)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Number of positive salt-ions must be integer (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
+  }
+  else {
+    if(N_pS < 0) {
+      Tcl_AppendResult(interp, "Number of positive salt-ions must be positive (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR); }
+  }
+  if (!ARG_IS_I(2, N_nS)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Number of negative salt-ions must be integer (got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR);
+  }
+  else {
+    if(N_nS < 0) {
+      Tcl_AppendResult(interp, "Number of negative salt-ions must be positive (got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR); }
+  }
   for (i=3; i < argc; i++) {
     /* [start <part_id>] */
-    if (!strncmp(argv[i], "start", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &part_id) == TCL_ERROR) {	
-	Tcl_AppendResult(interp, "Index of first salt ion must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+    if (ARG_IS_S(i, "start")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_I(i+1, part_id)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "Index of first salt ion must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if (part_id < 0) {
+	    Tcl_AppendResult(interp, "Index of first salt ion must be positive (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+	i++;
+      }
       else {
-	if (part_id < 0) {
-	  Tcl_AppendResult(interp, "Index of first salt ion must be positive (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
-      i++;
+	Tcl_AppendResult(interp, "Not enough arguments for start!",(char *)NULL); return (TCL_ERROR); }
     }
     /* [mode { SAW | RW } [<shield> [max_try]]] */
-    else if (!strncmp(argv[i], "mode", strlen(argv[i]))) {
-      if (!strncmp(argv[i+1], "SAW", strlen(argv[i+1]))) {
-	mode = 0;
-	if ((i+2 >= argc) || (Tcl_GetDouble(interp, argv[i+2], &shield) == TCL_ERROR)) { Tcl_ResetResult(interp); i++; }
+    else if (ARG_IS_S(i, "mode")) {
+      if(i+1 < argc) {
+	if (ARG_IS_S(i+1, "SAW")) {
+	  mode = 0;
+	  if ((i+2 >= argc) || !ARG_IS_D(i+2, shield)) { Tcl_ResetResult(interp); i++; }
+	  else {
+	    if (shield < 0) { Tcl_AppendResult(interp, "The SAW-shield must be positive (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
+	    if ((i+3 >= argc) || !ARG_IS_I(i+3, max_try)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } } }
+	else if (ARG_IS_S(i+1, "RW")) {
+	  mode = 1;
+	  if ((i+2 >= argc) || !ARG_IS_D(i+2, shield)) { Tcl_ResetResult(interp); i++; }
+	  else if ((i+3 >= argc) || !ARG_IS_I(i+3, max_try)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } }
 	else {
-	  if (shield < 0) { Tcl_AppendResult(interp, "The SAW-shield must be positive (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
-	  if ((i+3 >= argc) || (Tcl_GetInt(interp, argv[i+3], &max_try) == TCL_ERROR)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } } }
-      else if (!strncmp(argv[i+1], "RW", strlen(argv[i+1]))) {
-	mode = 1;
-	if ((i+2 >= argc) || (Tcl_GetDouble(interp, argv[i+2], &shield) == TCL_ERROR)) { Tcl_ResetResult(interp); i++; }
-	else if ((i+3 >= argc) || (Tcl_GetInt(interp, argv[i+3], &max_try) == TCL_ERROR)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } }
+	  Tcl_AppendResult(interp, "The mode you specified does not exist (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      }
       else {
-	Tcl_AppendResult(interp, "The mode you specified does not exist (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	Tcl_AppendResult(interp, "Not enough arguments for mode!",(char *)NULL); return (TCL_ERROR); }
     }
     /* [charges <val_pS> [val_nS]] */
-    else if (!strncmp(argv[i], "charges", strlen(argv[i]))) {
-      if (Tcl_GetDouble(interp, argv[i+1], &val_pS) == TCL_ERROR) { 
-	Tcl_AppendResult(interp, "The charge of positive salt ions must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+    else if (ARG_IS_S(i, "charges")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_D(i+1, val_pS)) { 
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "The charge of positive salt ions must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if ((i+2 >= argc) || !ARG_IS_D(i+2, val_nS)) { Tcl_ResetResult(interp); val_nS = -1.*val_pS; i++; } 
+	  else { i+=2; } }
+      }
       else {
-	if ((i+2 >= argc) || (Tcl_GetDouble(interp, argv[i+2], &val_nS) == TCL_ERROR)) { Tcl_ResetResult(interp); val_nS = -1.*val_pS; i++; } 
-	else { i+=2; } }
+	Tcl_AppendResult(interp, "Not enough arguments for charges!",(char *)NULL); return (TCL_ERROR); }
     }
     /* [types <type_pS> [<type_nS>]] */
-    else if (!strncmp(argv[i], "types", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &type_pS) == TCL_ERROR) { 
-	Tcl_AppendResult(interp, "The type-# of positive salt ions must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+    else if (ARG_IS_S(i, "types")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_I(i+1, type_pS)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "The type-# of positive salt ions must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if ((i+2 >= argc) || !ARG_IS_I(i+2, type_nS)) { Tcl_ResetResult(interp); type_nS = type_pS; i++; } 
+	  else { i+=2; } }
+      }
       else {
-	if ((i+2 >= argc) || (Tcl_GetInt(interp, argv[i+2], &type_nS) == TCL_ERROR)) { Tcl_ResetResult(interp); type_nS = type_pS; i++; } 
-	else { i+=2; } }
+	Tcl_AppendResult(interp, "Not enough arguments for types!",(char *)NULL); return (TCL_ERROR); }
     }
     /* [rad <rad> ] */
-    else if (!strncmp(argv[i], "rad", strlen(argv[i]))) {
-      if ((Tcl_GetDouble(interp, argv[i+1], &rad) || rad < 0.) == TCL_ERROR) { 
-	Tcl_AppendResult(interp, "The radius for the cell model must be positive double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+    else if (ARG_IS_S(i, "rad")) {
+      if(i+1 < argc) {
+	if ((!ARG_IS_D(i+1, rad)) || rad < 0.)  {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "The radius for the cell model must be positive double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else { i+=2; }
+      }
       else {
-	    i+=2;
-   }
+	Tcl_AppendResult(interp, "Not enough arguments for rad!",(char *)NULL); return (TCL_ERROR); }
     }
     /* default */
-    else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
+  else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
   }
   
   POLY_TRACE(printf("int N_pS %d, int N_nS %d, int part_id %d, int mode %d, double shield %f, int max_try %d, double val_pS %f, double val_nS %f, int type_pS %d, int type_nS %d, double rad %f\n", N_pS, N_nS, part_id, mode, shield, max_try, val_pS, val_nS, type_pS, type_nS, rad));
@@ -491,8 +625,6 @@ int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 
 int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try, double val_pS, double val_nS, int type_pS, int type_nS, double rad) {
-  /** C implementation of 'salt \<N_pS\> \<N_nS\> [options]',
-      which returns how often the attempt to place a salt ion failed in the worst case. */
   int n, cnt1,max_cnt;
   double pos[3], dis2;
 
@@ -563,40 +695,51 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
 
 
 int velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  /** Implementation of the tcl-command
-      velocities \<v_max\> [start \<part_id\>] [count \<N_T\>]
-      Sets the velocities of \<N_T\> particles to a random value [-vmax,vmax],
-      and returns the averaged velocity when done.
-      Parameters:  \<v_max\>       = maximum velocity to be used
-		   \<part_id\>     = particle number of the first of the \<N_T\> particles (defaults to '0') 
-		   \<N_T\>         = number of particles of which the velocities should be set (defaults to 'n_total_particles - part_id') */
   double v_max; int part_id = 0, N_T = n_total_particles;
   double tmp_try;
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
 
   if (argc < 2) { Tcl_AppendResult(interp, "Wrong # of args! Usage: velocities <v_max> [options]", (char *)NULL); return (TCL_ERROR); }
-  v_max = atof(argv[1]);
+  if (!ARG_IS_D(1, v_max)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Maximum velocity must be double (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
+  }
+  else {
+    if(v_max < 0) {
+      Tcl_AppendResult(interp, "Maximum velocity must be positive (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR); }
+  }
   for (i=2; i < argc; i++) {
     /* [start <part_id>] */
-    if (!strncmp(argv[i], "start", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &part_id) == TCL_ERROR) {	
-	Tcl_AppendResult(interp, "Index of first particle must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+    if (ARG_IS_S(i, "start")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_I(i+1, part_id)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "Index of first particle must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if ((part_id < 0) || (part_id>=n_total_particles)) {
+	    sprintf(buffer,"Index of first particle must be in [0,%d[ (got: ", n_total_particles);
+	    Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+	i++;
+      }
       else {
-	if ((part_id < 0) || (part_id>=n_total_particles)) {
-	  sprintf(buffer,"Index of first particle must be in [0,%d[ (got: ", n_total_particles);
-	  Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
-      i++;
+	Tcl_AppendResult(interp, "Not enough arguments for start!",(char *)NULL); return (TCL_ERROR); }
     }
     /* [count <N_T>] */
-    else if (!strncmp(argv[i], "count", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &N_T) == TCL_ERROR) {	
-	Tcl_AppendResult(interp, "The amount of particles to be set must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+    else if (ARG_IS_S(i, "count")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_I(i+1, N_T)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "The amount of particles to be set must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if ((N_T < 0) || (part_id+N_T > n_total_particles)) {
+	    sprintf(buffer,"The amount of particles to be set must be in [0,%d] (got: ",n_total_particles-part_id);
+	    Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+	i++;
+      }
       else {
-	if ((N_T < 0) || (part_id+N_T > n_total_particles)) {
-	  sprintf(buffer,"The amount of particles to be set must be in [0,%d] (got: ",n_total_particles-part_id);
-	  Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
-      i++;
+	Tcl_AppendResult(interp, "Not enough arguments for count!",(char *)NULL); return (TCL_ERROR); }
+
     }
     /* default */
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
@@ -613,8 +756,6 @@ int velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 
 double velocitiesC(double v_max, int part_id, int N_T) {
-  /** C implementation of 'velocities \<v_max\> [options]',
-      which returns the averaged velocity assigned. */
   double v[3], v_av[3];
   int i;
 
@@ -636,38 +777,40 @@ double velocitiesC(double v_max, int part_id, int N_T) {
 }
 
 int maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  /** Implementation of the tcl-command
-      maxwell_velocities [start \<part_id\>] [count \<N_T\>]
-      Sets the velocities of \<N_T\> particles to a random value with maxwell distribution,
-      and returns the averaged velocity when done.
-		   \<part_id\>     = particle number of the first of the \<N_T\> particles (defaults to '0') 
-		   \<N_T\>         = number of particles of which the velocities should be set (defaults to 'n_total_particles - part_id') */
   int part_id = 0, N_T = n_total_particles;
   double tmp_try;
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
 
   if (argc < 1) { Tcl_AppendResult(interp, "Wrong # of args! Usage: maxwell_velocities [options]", (char *)NULL); return (TCL_ERROR); }
   for (i=1; i < argc; i++) {
     /* [start <part_id>] */
-    if (!strncmp(argv[i], "start", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &part_id) == TCL_ERROR) {	
-	Tcl_AppendResult(interp, "Index of first particle must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+    if (ARG_IS_S(i, "start")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_I(i+1, part_id)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "Index of first particle must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if ((part_id < 0) || (part_id>=n_total_particles)) {
+	    sprintf(buffer,"Index of first particle must be in [0,%d[ (got: ", n_total_particles);
+	    Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+	i++;
+      }
       else {
-	if ((part_id < 0) || (part_id>=n_total_particles)) {
-	  sprintf(buffer,"Index of first particle must be in [0,%d[ (got: ", n_total_particles);
-	  Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
-      i++;
+	Tcl_AppendResult(interp, "Not enough arguments for start!",(char *)NULL); return (TCL_ERROR); }
     }
     /* [count <N_T>] */
-    else if (!strncmp(argv[i], "count", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &N_T) == TCL_ERROR) {	
-	Tcl_AppendResult(interp, "The amount of particles to be set must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-      else {
-	if ((N_T < 0) || (part_id+N_T > n_total_particles)) {
-	  sprintf(buffer,"The amount of particles to be set must be in [0,%d] (got: ",n_total_particles-part_id);
-	  Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
-      i++;
+    else if (ARG_IS_S(i, "count")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_I(i+1, N_T)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "The amount of particles to be set must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if ((N_T < 0) || (part_id+N_T > n_total_particles)) {
+	    sprintf(buffer,"The amount of particles to be set must be in [0,%d] (got: ",n_total_particles-part_id);
+	    Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+	i++;
+      }
     }
     /* default */
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
@@ -682,8 +825,6 @@ int maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc, char **ar
 }
 
 double maxwell_velocitiesC(int part_id, int N_T) {
-  /** C implementation of 'maxwell_velocities [options]',
-      which returns the averaged velocity assigned. */
   double v[3], v_av[3],uniran[2];
   int i;
   int flag=1;
@@ -717,50 +858,61 @@ double maxwell_velocitiesC(int part_id, int N_T) {
 }
 
 int crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  /** Implementation of the tcl-command
-      crosslink \<N_P\> \<MPC\> [start \<part_id\>] [catch \<r_catch\>] [distLink \<link_dist\>] [distChain \<chain_dist\>] [FENE \<type_FENE\>] [trials \<max_try\>]
-      Evaluates the current configuration and connects each chain's end to a random monomer of another chain at most \<r_catch\> away,
-      if the next crosslink from there is at least \<link_dist\> monomers away;
-      returns how many ends are now successfully linked.
-      Parameters:  \<N_P\>         = number of polymer chains
-                   \<MPC\>         = monomers per chain
-                   \<part_id\>     = particle number of the start monomer (defaults to '0')
-		   \<r_catch\>     = maximum length of a crosslink (defaults to '1.9')
-		   \<link_dist\>   = minimum distance between the indices of two crosslinked monomers with different binding partners (defaults to '2')
-		   \<chain_dist\>  = same as \<link_dist\>, but for monomers of the same bond (defaults to \<MPC\> =\> no bonds to the same chain allowed)
-		   \<type_FENE\>   = type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0') 
-		   \<max_try\>     = how often crosslinks should be removed if they are too close to other links (defaults to '30000') */
   int N_P, MPC; int part_id=0;
   double r_catch=1.9; int link_dist=2, chain_dist, type_FENE=0, tmp_try,max_try=30000; 
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
 
   if (argc < 3) { Tcl_AppendResult(interp, "Wrong # of args! Usage: crosslink <N_P> <MPC> [options]", (char *)NULL); return (TCL_ERROR); }
-  N_P = atoi(argv[1]); MPC = atoi(argv[2]); chain_dist = MPC;
+  if (!ARG_IS_I(1, N_P)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Number of polymer chains must be integer (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
+  }
+  else {
+    if(N_P <= 1) {
+      Tcl_AppendResult(interp, "Need at least 2 Polymers to crosslink (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR); }
+  }
+  if (!ARG_IS_I(2, MPC)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Monomers per chain must be integer (got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR);
+  }
+  else {
+    if(MPC <= 1) {
+      Tcl_AppendResult(interp, "Polymers must consist of at least 2 monomers per chain (got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR); }
+  }
+  chain_dist = MPC;
   for (i=3; i < argc; i++) {
     /* [start <part_id>] */
-    if (!strncmp(argv[i], "start", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &part_id) == TCL_ERROR) {	
-	Tcl_AppendResult(interp, "Index of first particle must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+    if (ARG_IS_S(i, "start")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_I(i+1, part_id)) {	
+	  Tcl_AppendResult(interp, "Index of first particle must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if ((part_id < 0) || (part_id > n_total_particles - N_P*MPC)) {
+	    sprintf(buffer,"Index of first particle must be in [0,%d] (got: ", n_total_particles - N_P*MPC);
+	    Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+	i++;
+      }
       else {
-	if ((part_id < 0) || (part_id > n_total_particles - N_P*MPC)) {
-	  sprintf(buffer,"Index of first particle must be in [0,%d] (got: ", n_total_particles - N_P*MPC);
-	  Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
-      i++;
+	Tcl_AppendResult(interp, "Not enough arguments for start!",(char *)NULL); return (TCL_ERROR); }
     }
     /* [catch <r_catch>] */
-    else if (!strncmp(argv[i], "catch", strlen(argv[i]))) {
-      if (Tcl_GetDouble(interp, argv[i+1], &r_catch) == TCL_ERROR) {	
-	Tcl_AppendResult(interp, "Catching radius must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+    else if (ARG_IS_S(i, "catch")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_D(i+1, r_catch)) {	
+	  Tcl_AppendResult(interp, "Catching radius must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if ((r_catch < 0.) || (r_catch > dmax(dmax(box_l[0],box_l[1]),box_l[2]) )) {
+	    sprintf(buffer,"Catching radius must be in [0,%f] (got: ", dmax(dmax(box_l[0],box_l[1]),box_l[2]) );
+	    Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+	i++;
+      }
       else {
-	if ((r_catch < 0.) || (r_catch > dmax(dmax(box_l[0],box_l[1]),box_l[2]) )) {
-	  sprintf(buffer,"Catching radius must be in [0,%f] (got: ", dmax(dmax(box_l[0],box_l[1]),box_l[2]) );
-	  Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
-      i++;
+	Tcl_AppendResult(interp, "Not enough arguments for catch!",(char *)NULL); return (TCL_ERROR); }
     }
     /* [distLink <link_dist>] */
-    else if (!strncmp(argv[i], "distLink", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &link_dist) == TCL_ERROR) {	
+    else if (ARG_IS_S(i, "distLink")) {
+      if (!ARG_IS_I(i+1, link_dist)) {	
 	Tcl_AppendResult(interp, "Minimum distance between bonds must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
       else {
 	if ((link_dist < 0) || (link_dist > MPC-1)) {
@@ -769,30 +921,42 @@ int crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
       i++;
     }
     /* [distChain <chain_dist>] */
-    else if (!strncmp(argv[i], "distChain", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &chain_dist) == TCL_ERROR) {	
-	Tcl_AppendResult(interp, "Minimum distance between partners must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+    else if (ARG_IS_S(i, "distChain")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_I(i+1, chain_dist)) {	
+	  Tcl_AppendResult(interp, "Minimum distance between partners must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if ((chain_dist < 0) || (chain_dist > MPC)) {
+	    sprintf(buffer,"Minimum distance between partners must be in [0,%d] (got: ",MPC);
+	    Tcl_AppendResult(interp, buffer,argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+	i++;
+      }
       else {
-	if ((chain_dist < 0) || (chain_dist > MPC)) {
-	  sprintf(buffer,"Minimum distance between partners must be in [0,%d] (got: ",MPC);
-	  Tcl_AppendResult(interp, buffer,argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
-      i++;
+	Tcl_AppendResult(interp, "Not enough arguments for distChain!",(char *)NULL); return (TCL_ERROR); }
     }
     /* [FENE <type_FENE>] */
-    else if (!strncmp(argv[i], "FENE", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &type_FENE) == TCL_ERROR) { 
-	Tcl_AppendResult(interp, "The type-# of the FENE-interaction must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-      else { i++; }
+    else if (ARG_IS_S(i, "FENE")) {
+      if(i+1 < argc) {
+	if (ARG_IS_I(i+1, type_FENE)) { 
+	  Tcl_AppendResult(interp, "The type-# of the FENE-interaction must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else { i++; }
+      }
+      else {
+	Tcl_AppendResult(interp, "Not enough arguments for FENE!",(char *)NULL); return (TCL_ERROR); }
     }
     /* [trials <max_try>] */
-    else if (!strncmp(argv[i], "trials", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &max_try) == TCL_ERROR) {	
-	Tcl_AppendResult(interp, "Amount of retries must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+    else if (ARG_IS_S(i, "trials")) {
+      if(i+1 < argc) {
+	if (!ARG_IS_I(i+1, max_try)) {	
+	  Tcl_AppendResult(interp, "Amount of retries must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+	else {
+	  if (max_try < 0) {
+	    sprintf(buffer,"Amount of retries must be positive (got: ");
+	    Tcl_AppendResult(interp, buffer,argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+	i++;
+      }
       else {
-	if (max_try < 0) {
-	  sprintf(buffer,"Amount of retries must be positive (got: ");
-	  Tcl_AppendResult(interp, buffer,argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
-      i++;
+	Tcl_AppendResult(interp, "Not enough arguments for trials!",(char *)NULL); return (TCL_ERROR); }
     }
     /* default */
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
@@ -818,8 +982,6 @@ int crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 
 int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond, int **bond_out, int ***bonds_out) {
-  /** Collects the bonds leading to and from the ending monomers of the chains (mode == 1) or
-      all the bonds leading to and from each monomer (mode == 2). */
   int i,j,k,ii,size, *bond=NULL, **bonds=NULL;
 
   /* Get particle and bonding informations. */
@@ -903,8 +1065,6 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond, int **b
 
 
 int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int chain_dist, int type_FENE, int max_try) {
-  /** C implementation of 'crosslink \<N_P\> \<MPC\> [options]',
-      which returns how many ends are now successfully linked.   */
   int i,j,k,ii,size, bondN[2], *bond, **bonds, *link, **links, *cross, crossL;
 
   /* Find all the bonds leading to and from each monomer. */
@@ -1016,42 +1176,63 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
 
 
 int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  /** Implementation of the tcl-command
-      diamond \<a\> \<bond_length\> \<MPC\> [counterions \<N_CI\>] [charges \<val_nodes\> \<val_cM\> \<val_CI\>] [distance \<cM_dist\>] [nonet]
-  */
   double a, bond_length; int MPC, N_CI = 0; double val_nodes = 0.0, val_cM = 0.0, val_CI = 0.0; int cM_dist = 1; int nonet = 0;
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i, tmp_try;
 
   if (argc < 4) { Tcl_AppendResult(interp, "Wrong # of args! Usage: diamond <a> <bond_length> <MPC> [options]", (char *)NULL); return (TCL_ERROR); }
-  a = atof(argv[1]); bond_length = atof(argv[2]); MPC = atoi(argv[3]);
+  if (!ARG_IS_D(1, a)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Unit cell spacing must be double (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
+  }
+  if (!ARG_IS_D(2, bond_length)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Bond length must be double (got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR);
+  }
+  else {
+    if(bond_length < 0) {
+      Tcl_AppendResult(interp, "Bond length must be positive (got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR); }
+  }
+  if (!ARG_IS_I(3, MPC)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Monomers per chain must be integer (got: ", argv[3],")!", (char *)NULL); return (TCL_ERROR);
+  }
+  else {
+    if(MPC < 0) {
+      Tcl_AppendResult(interp, "Monomers per chain must be positive (got: ", argv[3],")!", (char *)NULL); return (TCL_ERROR); }
+  }
   for (i=4; i < argc; i++) {
     /* [counterions <N_CI>] */
-    if (!strncmp(argv[i], "counterions", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &N_CI) == TCL_ERROR) { 
+    if (ARG_IS_S(i, "counterions")) {
+      if (!ARG_IS_I(i+1, N_CI)) {
+	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The number of counterions must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
       else { i++; }
     }
     /* [charges <val_nodes> <val_cM> <val_CI>] */
-    else if (!strncmp(argv[i], "charges", strlen(argv[i]))) {
+    else if (ARG_IS_S(i, "charges")) {
       if (i+3 >= argc) { Tcl_AppendResult(interp, "Wrong # of args! Usage: charges <val_nodes> <val_cM> <val_CI>!", (char *)NULL); return (TCL_ERROR); }
-      if (Tcl_GetDouble(interp, argv[i+1], &val_nodes) == TCL_ERROR) { 
+      if (ARG_IS_D(i+1, val_nodes)) {
+	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The charge of the nodes must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-      if (Tcl_GetDouble(interp, argv[i+2], &val_cM) == TCL_ERROR) { 
+      if (ARG_IS_D(i+2, val_cM)) { 
+	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The charge of the monomers must be double (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
-      if (Tcl_GetDouble(interp, argv[i+3], &val_CI) == TCL_ERROR) { 
+      if (ARG_IS_D(i+3, val_CI)) { 
+	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The charge of the counterions must be double (got: ",argv[i+3],")!", (char *)NULL); return (TCL_ERROR); }
       i+=3;
     }
     /* [distance <cM_dist>] */
-    else if (!strncmp(argv[i], "distance", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &cM_dist) == TCL_ERROR) { 
+    else if (ARG_IS_S(i, "distance")) {
+      if (ARG_IS_I(i+1, cM_dist)) { 
+	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The distance between two charged monomers' indices must be integer (got: ",argv[i+1],")!", (char *)NULL); 
 	return (TCL_ERROR); }
       else { i++; }
     }
     /* [nonet] */
-    else if (!strncmp(argv[i], "nonet", strlen(argv[i]))) {
+    else if (ARG_IS_S(i, "nonet")) {
       nonet = 1;
     }
     /* default */
@@ -1073,7 +1254,6 @@ int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 
 int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, double val_cM, double val_CI, int cM_dist, int nonet) {
-  /** C implementation of 'diamond \<a\> \<bond_length\> \<MPC\> [options]' */
   int i,j,k, part_id, bond[2], type_FENE=0,type_node=0,type_cM=1,type_nM=1, type_CI=2;
   double pos[3], off = bond_length/sqrt(3);
   double dnodes[8][3]  = {{0,0,0}, {1,1,1}, {2,2,0}, {0,2,2}, {2,0,2}, {3,3,1}, {1,3,3}, {3,1,3}};
@@ -1125,34 +1305,46 @@ int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, 
 
 
 int icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  /** Implementation of the tcl-command
-      icosaeder \<a\> \<MPC\> [counterions \<N_CI\>] [charges \<val_cM\> \<val_CI\>] [distance \<cM_dist\>]
-  */
   double a; int MPC, N_CI = 0; double val_cM = 0.0, val_CI = 0.0; int cM_dist = 1; 
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i, tmp_try;
 
   if (argc < 3) { Tcl_AppendResult(interp, "Wrong # of args! Usage: icosaeder <a> <MPC> [options]", (char *)NULL); return (TCL_ERROR); }
-  a = atof(argv[1]); MPC = atoi(argv[2]);
+  if (!ARG_IS_D(1, a)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "a must be double (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
+  }
+  if (!ARG_IS_I(2, MPC)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "Monomers per chain must be integer (got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR);
+  }
+  else {
+    if(MPC < 1) {
+      Tcl_AppendResult(interp, "Monomers per chain must be positive (got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR); }
+  }
   for (i=3; i < argc; i++) {
     /* [counterions <N_CI>] */
-    if (!strncmp(argv[i], "counterions", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &N_CI) == TCL_ERROR) { 
+    if (ARG_IS_S(i, "counterions")) {
+      if (!ARG_IS_I(i+1, N_CI)) { 
+	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The number of counterions must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
       else { i++; }
     }
     /* [charges <val_cM> <val_CI>] */
-    else if (!strncmp(argv[i], "charges", strlen(argv[i]))) {
+    else if (ARG_IS_S(i, "charges")) {
       if (i+2 >= argc) { Tcl_AppendResult(interp, "Wrong # of args! Usage: charges <val_cM> <val_CI>!", (char *)NULL); return (TCL_ERROR); }
-      if (Tcl_GetDouble(interp, argv[i+1], &val_cM) == TCL_ERROR) { 
+      if (!ARG_IS_D(i+1, val_cM)) { 
+	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The charge of the monomers must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-      if (Tcl_GetDouble(interp, argv[i+2], &val_CI) == TCL_ERROR) { 
+      if (!ARG_IS_D(i+2, val_CI)) { 
+	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The charge of the counterions must be double (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
       i+=2;
     }
     /* [distance <cM_dist>] */
-    else if (!strncmp(argv[i], "distance", strlen(argv[i]))) {
-      if (Tcl_GetInt(interp, argv[i+1], &cM_dist) == TCL_ERROR) { 
+    else if (ARG_IS_S(i, "distance")) {
+      if (!ARG_IS_I(i+1, cM_dist)) { 
+	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The distance between two charged monomers' indices must be integer (got: ",argv[i+1],")!", (char *)NULL); 
 	return (TCL_ERROR); }
       else { i++; }
@@ -1180,7 +1372,6 @@ int icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 
 int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI, int cM_dist) {
-  /** C implementation of 'icosaeder \<a\> \<bond_length\> \<MPC\> [options]' */
   int i,j,k,l, part_id, bond[2], type_FENE=0,type_cM=0,type_nM=1, type_CI=2;
   double pos[3],pos_shift[3], vec[3],e_vec[3],vec_l, bond_length=(2*ico_a/3.)/(1.*MPC);
   double ico_g=ico_a*(1+sqrt(5))/2.0, shift=0.0;
