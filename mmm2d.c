@@ -1065,6 +1065,13 @@ void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
   double rho2 = d[1]*d[1] + z2;
   int i;
 
+#ifdef ADDITIONAL_CHECKS
+  if (d[2] >box_l[1]/2) {
+	fprintf(stderr, "particle %d is out of virtual box, cannot calculate near formula\n", p1->p.identity);
+	errexit();
+  }
+#endif
+
   if (pref != 0.0) {
     F[0] = F[1] = F[2] = 0;
 
