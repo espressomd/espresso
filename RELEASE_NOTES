@@ -2,20 +2,42 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.5.8a *
+* v1.6.0  *
 ***********
 
 Current working revision.
 
 
-- v1.5.8a -
+*********************
+* v1.6.Gold (Icheb) *
+*********************
+
+Released on April 29th, 2004.
+
+
+
+- v1.5.8e -
 -----------
 
-(b) April 28th, 2004
+(e) April 29th, 2004.
+(d) April 28th, 2004.
+(c) April 26th, 2004.
+(b) April 23rd, 2004.
 (a) April 22nd, 2004.
 
 New Features / Changes / Bugfixes:
-(b) 1) New bonded potential: torsional dihedral angle potential.
+(e) Final NpT-Update: The NpT-Integrator does now run efficiently and smoothly.
+    + Unlocked faster re-scaling of just the geometrical parameters of the system
+      instead of reinitialising the whole cell system more than necessary (i.e. only
+      if max_range > cell_range) in every timestep.
+    + Added missing geometrical parameter 'shift' within the GhostCommunication-structures
+      within the GhostCommunicator-structures of the 'dd_exchange_and_sort_particles'-regime
+      to the rescaling tasks in 'dd_NpT_update_cell_grid'.
+    + Until a better criterion is found, the algorithm will renew the Verlet list
+      in every timestep - not perfect, but still much better than previous treatment.
+    + Finally, fixed a mean bug that rescaling the old positions at the wrong index
+      caused the bond-list to be accidentally overwritten with nonsense data.
+(d) 1) New bonded potential: torsional dihedral angle potential.
        Syntax is: inter i dihedral <mult> <bend> <phase>
        This is a four body interaction. The bond has to be stored at the
        second particle. For more information see the documentation of the
@@ -40,7 +62,6 @@ New Features / Changes / Bugfixes:
        then the maximal interaction range of bonded interactions in
        the system. This has no effect on the cell_structure nad the
        communication of ghost particles.
- 
 (a) Major NpT-Update: The NpT-Integrator does now work properly, though still not at top efficiency.
     + The code no longer crashes when updating ghost particles after enforcing a 'cells_re_init'.
     + Now the new box-length is communicated after the particles are rescaled.
@@ -51,6 +72,19 @@ New Features / Changes / Bugfixes:
     - Temporarily deactivated 'cells_re_init'-shortcut as it's not yet working;
       expect a speedup of 40x...90x once it's done.
     + Now the old particle positions are rescaled as well.
+
+New Features:
+(e) Added poststore and prefetch to domain decomposition.
+(d) Implemented cutoff and range variables for verlet pair algorithm.
+(c) Added EVENT_TRACEs.
+(b) Added warning when pressure is calculated while MMM2D/MMM1D are on.
+(b) Added ADDITIONAL_CHECK for particles outside the allowed box.
+
+Bugfixes:
+(e) Fixed bug that electrostatic energy was written even if no electrostatics
+    were set, causing a core dump.
+(c) Now box length can no longer be zero.
+(b) Bugfix that not the full sum over p,q was done.
 
 
 - v1.5.7h -
