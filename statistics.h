@@ -143,6 +143,11 @@ void init_g123();
 /** appends particles' positions in 'partCfg' to 'configs' */
 void analyze_append();
 
+/** appends the configuration stored in 'config[3*count]' to 'configs'
+    @param config the configuration which should be added 
+    @param count  how many particles in 'config' */
+void analyze_configs(double *config, int count);
+
 /** removes configs[0], pushes all entries forward, appends current 'partCfg' to last spot */
 void analyze_push();
 
