@@ -28,8 +28,9 @@
 #include "utils.h"
 #include "verlet.h"
 #include "ghosts.h"
-#include "domain_decomposition.h"
 #include "parser.h"
+#include "domain_decomposition.h"
+#include "nsquare.h"
 
 /* Variables */
 
@@ -57,7 +58,7 @@ CellStructure cell_structure;
 void cells_pre_init()
 {
   /* her local_cells has to be a NULL pointer */
-  if(&local_cells != NULL) {
+  if(local_cells.cell != NULL) {
     fprintf(stderr,"Wrong usage of cells_pre_init!\n");
     errexit();
   }
@@ -91,6 +92,9 @@ static void topology_release(int cs) {
   case CELL_STRUCTURE_DOMDEC:
     dd_topology_release();
     break;
+  case CELL_STRUCTURE_NSQUARE:
+    nsq_topology_release();
+    break;
   default:
     fprintf(stderr, "ERROR: attempting to sort the particles in an unknown way\n");
     errexit();
@@ -105,6 +109,9 @@ static void topology_init(int cs, CellPList *local) {
     break;
   case CELL_STRUCTURE_DOMDEC:
     dd_topology_init(local);
+    break;
+  case CELL_STRUCTURE_NSQUARE:
+    nsq_topology_init(local);
     break;
   default:
     fprintf(stderr, "ERROR: attempting to sort the particles in an unknown way\n");
@@ -153,8 +160,10 @@ int cellsystem(ClientData data, Tcl_Interp *interp,
     Tcl_AppendResult(interp, "usage: cellsystem <system> <params>", (char *)NULL);
     return TCL_ERROR;
   }
-  if (ARG0_IS_S("domain_decomposition"))
+  if (ARG1_IS_S("domain_decomposition"))
     mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC);
+  if (ARG1_IS_S("nsquare"))
+    mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE);
   else {
     Tcl_AppendResult(interp, "unkown cell structure type \"", argv[0],"\"", (char *)NULL);
     return TCL_ERROR;

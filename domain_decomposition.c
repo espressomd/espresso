@@ -71,6 +71,8 @@ void init_cell_neighbors(int i);
 
 void dd_topology_init(CellPList *cl)
 {
+  cell_structure.type = CELL_STRUCTURE_DOMDEC;
+
   /* not yet fully initialized */
   if(max_range <= 0) {
     max_range  = min_local_box_l/2.0; 
@@ -79,6 +81,9 @@ void dd_topology_init(CellPList *cl)
 
   /* set up new domain decomposition cell structure */
   calc_cell_grid();
+
+  // as long as nothing is done here
+  n_cells = 0;
 }
 
 void dd_topology_release()
