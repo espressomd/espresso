@@ -39,3 +39,5 @@ set data [lrange $data 0 end-1]
 puts "Expected values:"
 puts "0.190161129416 0.0149872743495 0.00120248945994 8.70337780606 1.27314416767 0.992579964046"
 puts [uwerr $data $nrep blubb plot]
+
+exit 1
