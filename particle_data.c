@@ -480,7 +480,7 @@ void part_print_bonding_structure(Particle part, char *buffer, Tcl_Interp *inter
   return;
 }
 
-#ifdef ROTATION
+#ifdef EXTERNAL_FORCES
 void part_print_fix(Particle part, char *buffer, Tcl_Interp *interp)
 {
   int i;
@@ -536,7 +536,7 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
 #endif
   Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
   part_print_v(part, buffer, interp);
-  Tcl_AppendResult(interp, buffer, " f ", (char *)NULL);
+  Tcl_AppendResult(interp, " f ", (char *)NULL);
   part_print_f(part, buffer, interp);
 
 #ifdef ROTATION
