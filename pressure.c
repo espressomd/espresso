@@ -560,12 +560,19 @@ void init_p_tensor() {
 
 /* Derive the p_tensor */
 /***********************/
-int calc_p_tensor(double volume, IntList *p_list, int flag) {
-  Particle p1, p2, p3;
+int calc_p_tensor(double volume, IntList *p_list, int flag)
+{
+  char *errtxt;
+  Particle p1, p2;
   int *p1_list, n_p1;
-  int i,j, k,l, indi,indj,startj,endj, type_num;
-  double d[3],dist,dist2;
+  int i,j, k,l, indi,indj,startj,endj, type_num, type;
+  double d[3],dist,dist2, force[3];
   IA_parameters *ia_params;
+  Bonded_ia_parameters *iaparams;
+
+#ifdef ROTATION
+  double t1[3], t2[3]; /* dummies */
+#endif
 
   if (!check_obs_calc_initialized())
     return 1;
@@ -589,65 +596,55 @@ int calc_p_tensor(double volume, IntList *p_list, int flag) {
     i=0;
     while(i < p1.bl.n) {
       if((flag==1) || intlist_contains(p_list,p1.bl.e[i+1])) {
-	get_particle_data(p1.bl.e[i+1], &p2);
-	for (j = 0; j < 3; j++) {
-	  p1.f.f[j] = 0;
-	  p2.f.f[j] = 0;
+	type_num = p1.bl.e[i++];
+	iaparams = &bonded_ia_params[type_num];
+	type = bonded_ia_params[type_num].type;
+
+	if (get_particle_data(p1.bl.e[i++], &p2) == TCL_ERROR) {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  sprintf(errtxt,"{particle %d has a bond to the nonexisting particle %d} ",
+		  p1.p.identity, p1.bl.e[i-1]);
+	  return 0;
 	}
 
 	get_mi_vector(d, p1.r.p, p2.r.p);
 
-	type_num = p1.bl.e[i];
-	switch(bonded_ia_params[type_num].type) {
+	switch(type) {
 	case BONDED_IA_FENE:
-	  add_fene_pair_force(&p1,&p2,type_num);
+	  calc_fene_pair_force(&p1,&p2,iaparams,d,force);
 	  for(k=0;k<3;k++)
 	    for(l=0;l<3;l++)
-	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += p1.f.f[k]*d[l];
-	  i+=2; break;
+	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*d[l];
+	  break;
 	case BONDED_IA_HARMONIC:
-	  add_harmonic_pair_force(&p1,&p2,type_num);
+	  calc_harmonic_pair_force(&p1,&p2,iaparams,d,force);
 	  for(k=0;k<3;k++)
 	    for(l=0;l<3;l++)
-	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += p1.f.f[k]*d[l];
-	  i+=2; break;
+	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*d[l];
+	  break;
 #ifdef LENNARD_JONES
 	case BONDED_IA_SUBT_LJ_HARM:
-	  add_subt_lj_harm_pair_force(&p1,&p2,type_num);
+	  calc_subt_lj_harm_pair_force(&p1,&p2,iaparams,d,force);
 	  for(k=0;k<3;k++)
 	    for(l=0;l<3;l++)
-	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += p1.f.f[k]*d[l];
-	  i+=2; break;
+	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*d[l];
+	  break;
 	case BONDED_IA_SUBT_LJ_FENE:
-	  add_subt_lj_fene_pair_force(&p1,&p2,type_num);
+	  calc_subt_lj_fene_pair_force(&p1,&p2,iaparams,d,force);
 	  for(k=0;k<3;k++)
 	    for(l=0;l<3;l++)
-	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += p1.f.f[k]*d[l];
-	  i+=2; break;
+	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*d[l];
+	  break;
 	case BONDED_IA_SUBT_LJ:
-	  add_subt_lj_pair_force(&p1,&p2,type_num);
+	  calc_subt_lj_pair_force(&p1,&p2,iaparams,d,force);
 	  for(k=0;k<3;k++)
 	    for(l=0;l<3;l++)
-	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += p1.f.f[k]*d[l];
-	  i+=2; break;
+	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*d[l];
+	  break;
 #endif
-	case BONDED_IA_ANGLE:
-	  get_particle_data(p1.bl.e[i+2], &p3);
-	  for (j = 0; j < 3; j++)
-	    p3.f.f[j] = 0;
-	  add_angle_force(&p1,&p2,&p3,type_num);
-	  for(k=0;k<3;k++)
-	    for(l=0;l<3;l++)
-	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += -p2.f.f[k]*d[l];
-	  get_mi_vector(d, p1.r.p, p3.r.p);
-	  for(k=0;k<3;k++)
-	    for(l=0;l<3;l++)
-	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += -p3.f.f[k]*d[l];
-	  free_particle(&p3);
-	  i+=3; break;
 	default :
-	  fprintf(stderr,"WARNING: Bond type %d of atom %d unknown\n",type_num, p1.p.identity);
-	  i = p1.bl.n; break;
+	  fprintf(stderr,"WARNING: Bond type %d of atom %d unhandled\n",type_num, p1.p.identity);
+	  break;
 	}
 	free_particle(&p2);
       }
@@ -663,11 +660,6 @@ int calc_p_tensor(double volume, IntList *p_list, int flag) {
       else
 	get_particle_data(p1_list[indj], &p2);
 
-      for (j = 0; j < 3; j++) {
-	p1.f.f[j] = 0;
-	p2.f.f[j] = 0;
-      }
-
       /* distance calculation */
       get_mi_vector(d, p1.r.p, p2.r.p);
       dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
@@ -677,39 +669,40 @@ int calc_p_tensor(double volume, IntList *p_list, int flag) {
       if (checkIfParticlesInteract(p1.p.type, p2.p.type)) { 
 	ia_params = get_ia_param(p1.p.type,p2.p.type);
 
+	for (j = 0; j < 3; j++)
+	  force[j] = 0;
+
 	/* lennnard jones */
 #ifdef LENNARD_JONES
-	add_lj_pair_force(&p1,&p2,ia_params,d,dist);
+	add_lj_pair_force(&p1,&p2,ia_params,d,dist,force);
 #endif
 	/* lennard jones cosine */
 #ifdef LJCOS
-	add_ljcos_pair_force(&p1,&p2,ia_params,d,dist);
+	add_ljcos_pair_force(&p1,&p2,ia_params,d,dist,force);
 #endif
 	/* tabulated */
 #ifdef TABULATED
-	add_tabulated_pair_force(&p1,&p2,ia_params,d,dist);
+	add_tabulated_pair_force(&p1,&p2,ia_params,d,dist,force);
 #endif
-
-#ifdef ROTATION  
-	add_gb_pair_force(&p1,&p2,ia_params,d,dist);
+	/* Gay-Berne */
+#ifdef ROTATION
+	add_gb_pair_force(&p1,&p2,ia_params,d,dist,force,t1,t2);
 #endif
 
 	for(k=0;k<3;k++)
 	  for(l=0;l<3;l++)
-	    obsstat_nonbonded(&p_tensor, p1.p.type, p2.p.type)[k*3 + l] += p1.f.f[k]*d[l];
+	    obsstat_nonbonded(&p_tensor, p1.p.type, p2.p.type)[k*3 + l] += force[k]*d[l];
       }
 
 #ifdef ELECTROSTATICS
       if (coulomb.method == COULOMB_DH) {
-	for (j = 0; j < 3; j++) {
-	  p1.f.f[j] = 0;
-	  p2.f.f[j] = 0;
-	}
+	for (j = 0; j < 3; j++)
+	  force[j] = 0;
 
-	add_dh_coulomb_pair_force(&p1,&p2,d,dist);
+	calc_dh_coulomb_pair_force(&p1,&p2,d,dist, force);
 	for(k=0;k<3;k++)
 	  for(l=0;l<3;l++)
-	    p_tensor.coulomb[k*3 + l] += p1.f.f[k]*d[l];
+	    p_tensor.coulomb[k*3 + l] += force[k]*d[l];
       }
 #endif
 

@@ -44,7 +44,8 @@ int MMM1D_sanity_checks();
 void MMM1D_init();
 
 ///
-void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist2, double dist);
+void calc_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist2,
+				   double dist, double force[3]);
 
 ///
 double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double r2, double r);

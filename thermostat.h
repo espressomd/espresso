@@ -200,7 +200,7 @@ int langevin_gamma_callback(Tcl_Interp *interp, void *_data);
 #ifdef DPD
 /** Calculate Random Force and Friction Force acting between particle
     p1 and p2 and add them to their forces. */
-MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist)
+MDINLINE void add_to_part_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist)
 {
   int j;
   /* velocity difference between p1 and p2 */

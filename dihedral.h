@@ -93,7 +93,9 @@ MDINLINE double calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Pa
 }
 
 
-MDINLINE void add_dihedral_force(Particle *p1, Particle *p2, Particle *p3, Particle *p4, int type_num)
+MDINLINE int calc_dihedral_force(Particle *p2, Particle *p1, Particle *p3, Particle *p4,
+				 Bonded_ia_parameters *iaparams, double force2[3],
+				 double force1[2], double force3[2])
 {
   int i;
   /* vectors in plane of particle triples (p1,p2,p3) and (p2,p3,p4) and thier length. */
@@ -105,13 +107,16 @@ MDINLINE void add_dihedral_force(Particle *p1, Particle *p2, Particle *p3, Parti
 
   phi = calc_dihedral_angle(p1, p2, p3, p4, vec1, &vecl1, vec2, &vecl2, 
 			    &cos1223, &cos2334, &cosphi);
-  fprintf(stderr,"add_dihedral_force: phi = %f, cosphi =%f\n",phi,cosphi);
+  /* fprintf(stderr,"add_dihedral_force: phi = %f, cosphi =%f\n",phi,cosphi); */
   
-  if( phi == ANGLE_NOT_DEFINED ) { fprintf(stderr,"undefined\n"); return; }
+  if( phi == ANGLE_NOT_DEFINED ) {
+    fprintf(stderr,"%d: calc_dihedral_force: undefined angle\n", this_node);
+    return 1;
+  }
   else {
-    fac = - bonded_ia_params[type_num].p.dihedral.bend* bonded_ia_params[type_num].p.dihedral.phase;
+    fac = - iaparams->p.dihedral.bend*iaparams->p.dihedral.phase;
     /* treat the different multiplicities */
-    switch (bonded_ia_params[type_num].p.dihedral.mult) {
+    switch (iaparams->p.dihedral.mult) {
     case 1:
       break;
     case 2:
@@ -131,15 +136,17 @@ MDINLINE void add_dihedral_force(Particle *p1, Particle *p2, Particle *p3, Parti
       f1 = fac * (vec2[i] - vec1[i]*cosphi) * vecl1;
       f4 = fac * (vec1[i] - vec2[i]*cosphi) * vecl2;
       f2 = (cos1223 - 1.0)*f1 - cos2334*f4;
-      p1->f.f[i] += f1;
-      p2->f.f[i] += f2;
-      p3->f.f[i] -= (f1 + f2 + f4);
-      p4->f.f[i] += f4;
+
+      force1[i] = f1;
+      force2[i] = f2;
+      force3[i] = -(f1 + f2 + f4);
     }
   }
+  return 0;
 }
 
-MDINLINE double dihedral_energy(Particle *p1, Particle *p2, Particle *p3, Particle *p4, int type_num) 
+MDINLINE int dihedral_energy(Particle *p1, Particle *p2, Particle *p3, Particle *p4,
+			     Bonded_ia_parameters *iaparams, double *_energy) 
 {
   /* vectors in plane of particle triples (p1,p2,p3) and (p2,p3,p4) and thier length. */
   double vec1[3], vecl1, vec2[3], vecl2;
@@ -152,9 +159,9 @@ MDINLINE double dihedral_energy(Particle *p1, Particle *p2, Particle *p3, Partic
 			    &cos1223, &cos2334, &cosphi);
 
   if( phi != ANGLE_NOT_DEFINED ) {
-    fac = bonded_ia_params[type_num].p.dihedral.phase;
+    fac = iaparams->p.dihedral.phase;
     /* treat the different multiplicities */
-    switch (bonded_ia_params[type_num].p.dihedral.mult) {
+    switch (iaparams->p.dihedral.mult) {
     case 1:
       fac *= cosphi; break;
     case 2:
@@ -169,12 +176,12 @@ MDINLINE double dihedral_energy(Particle *p1, Particle *p2, Particle *p3, Partic
       fac *= ((32.0*SQR(cosphi) - 48.0) * SQR(cosphi) + 18.0) * SQR(cosphi) - 1;  break; 
     }
     fac += 1.0;
-    fac *= bonded_ia_params[type_num].p.dihedral.bend;
-    return fac;
+    *_energy = fac * iaparams->p.dihedral.bend;
+    return 0;
   }
   /* angle undefined */
-  fprintf(stderr,"undefined\n");
-  return 0.0;
+  fprintf(stderr,"%d: calc_dihedral_force: undefined angle\n", this_node);
+  return 1;
 }
 
 #endif

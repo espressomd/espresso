@@ -43,46 +43,37 @@ MDINLINE int harmonic_set_params(int bond_type, double k, double r)
     force to the particle forces (see \ref #inter). 
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
-    @param type_num  bond type number of the harmonic interaction (see \ref #inter).
+    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param dx        particle distance vector
+    @param force     returns force of particle 1
+    @return 0.
 */
-MDINLINE void add_harmonic_pair_force(Particle *p1, Particle *p2, int type_num)
+MDINLINE int calc_harmonic_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
 {
   int i;
-  double dx[3], dist, dist2, fac;
-  get_mi_vector(dx, p1->r.p, p2->r.p);
-  dist2=sqrlen(dx);
-  dist=sqrt(dist2);
+  double fac;
+  double dist2 = sqrlen(dx);
+  double dist = sqrt(dist2);
 
-  fac = bonded_ia_params[type_num].p.harmonic.k;
-  fac *= (dist-bonded_ia_params[type_num].p.harmonic.r);
+  fac = -iaparams->p.harmonic.k*(dist - iaparams->p.harmonic.r);
   fac /= dist;
 
+  for(i=0;i<3;i++)
+    force[i] = fac*dx[i];
 
-  for(i=0;i<3;i++) {
-    p1->f.f[i] -= fac*dx[i];
-    p2->f.f[i] += fac*dx[i];
-#ifdef NPT
-    if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[i] -= fac*dx[i] * dx[i];
-#endif
-  }
+  ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist2,fac));
+  ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist2,fac));
 
-  ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,sqrt(dist2),fac));
-  ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,sqrt(dist2),fac));
 
+  return 0;
 }
 
-MDINLINE double harmonic_pair_energy(Particle *p1, Particle *p2, int type_num)
+MDINLINE int harmonic_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy)
 {
-  double dx[3], dist2=0.0, dist=0.0, energy;
-  get_mi_vector(dx, p1->r.p, p2->r.p);
-  dist2=sqrlen(dx);
-  dist=sqrt(dist2);
-  
-  energy = 0.5*bonded_ia_params[type_num].p.harmonic.k;
-  energy *= SQR(dist-bonded_ia_params[type_num].p.harmonic.r);
-  
-  return energy;
+  double dist2 = sqrlen(dx);
+  double dist = sqrt(dist2);
+  *_energy = 0.5*iaparams->p.harmonic.k*SQR(dist - iaparams->p.harmonic.r);
+  return 0;
 }
 
 #endif

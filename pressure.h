@@ -127,52 +127,36 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 					  double dist, double dist2)
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-  double F1[3], F2[3];
-  int i;
+  double force[3] = {0, 0, 0};
 #ifdef ELECTROSTATICS
   double ret; 
 #endif
-#ifdef NPT
-  double p_vir[3];
+#ifdef ROTATION
+  double t1[3], t2[3]; /* dummies */
 #endif
-
-  for (i = 0; i < 3; i++) {
-    F1[i] = p1->f.f[i];
-    p1->f.f[i] = 0;
-    F2[i] = p2->f.f[i];
-    p2->f.f[i] = 0;
-#ifdef NPT
-    p_vir[i] = nptiso.p_vir[i];
-#endif
-  }
 
   /* lennard jones */
 #ifdef LENNARD_JONES
-  add_lj_pair_force(p1,p2,ia_params,d,dist);
+  add_lj_pair_force(p1,p2,ia_params,d,dist, force);
 #endif
   /* lennard jones cosine */
 #ifdef LJCOS
-  add_ljcos_pair_force(p1,p2,ia_params,d,dist);
+  add_ljcos_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
   /* tabulated */
 #ifdef TABULATED
-  add_tabulated_pair_force(p1,p2,ia_params,d,dist);
+  add_tabulated_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
- 
-#ifdef ROTATION  
   /* Gay-Berne */
-  add_gb_pair_force(p1,p2,ia_params,d,dist);
+#ifdef ROTATION
+  add_gb_pair_force(p1,p2,ia_params,d,dist,force,t1,t2);
 #endif
-  *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d[0]*p1->f.f[0] + d[1]*p1->f.f[1] + d[2]*p1->f.f[2];
+
+  *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
 
 #ifdef ELECTROSTATICS
   /* real space coulomb */
   if (coulomb.method != COULOMB_NONE) {
-    for (i = 0; i < 3; i++) {
-      p1->f.f[i] = 0;
-      p2->f.f[i] = 0;
-    }
-
     switch (coulomb.method) {
     case COULOMB_P3M:
       ret = p3m_coulomb_pair_energy(p1,p2,d,dist2,dist);
@@ -189,14 +173,6 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
     virials.coulomb[0] += ret;
   }
 #endif
-  
-  for (i = 0; i < 3; i++) {
-    p1->f.f[i] = F1[i];
-    p2->f.f[i] = F2[i];
-#ifdef NPT
-    nptiso.p_vir[i] = p_vir[i];
-#endif
-  }
 }
 
 /** Calculate bonded virials for one particle.
@@ -206,108 +182,57 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 */
 MDINLINE void add_bonded_virials(Particle *p1)
 {
+  double dx[3], force[3];
   char *errtxt;
-
-  int i,j, type_num;
-  double ret, F1[3], F2[3], F3[3], d[3];
   Particle *p2;
-#ifdef NPT
-  double p_vir[3];
-#endif
+  Bonded_ia_parameters *iaparams;
 
-  for (j = 0; j < 3; j++) {
-    F1[j] = p1->f.f[j];
-#ifdef NPT
-    p_vir[j] = nptiso.p_vir[j];
-#endif
-  }
+  int i, type_num, type;
   
   i=0;
   while(i<p1->bl.n) {
-    p2 = local_particles[p1->bl.e[i+1]];
+    type_num = p1->bl.e[i++];
+    iaparams = &bonded_ia_params[type_num];
+    type = bonded_ia_params[type_num].type;
+
+    /* fetch particle 2 */
+    p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
       errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
       sprintf(errtxt,"{bond broken between particles %d and %d (particles not stored on the same node)} ",
-	      p1->p.identity, p1->bl.e[i+1]);
+	      p1->p.identity, p1->bl.e[i-1]);
       return;
     }
 
-    for (j = 0; j < 3; j++) {
-      p1->f.f[j] = 0;
+    get_mi_vector(dx, p1->r.p, p2->r.p);
 
-      F2[j] = p2->f.f[j];      
-      p2->f.f[j] = 0;
-    }
-
-    get_mi_vector(d, p1->r.p, p2->r.p);
-
-    type_num = p1->bl.e[i];
-    switch(bonded_ia_params[type_num].type) {
+    switch(type) {
     case BONDED_IA_FENE:
-      add_fene_pair_force(p1,p2,type_num);
-      ret = d[0]*p1->f.f[0] + d[1]*p1->f.f[1] + d[2]*p1->f.f[2];	    
-      i+=2; break;
+      calc_fene_pair_force(p1,p2,iaparams,dx,force);
+      break;
     case BONDED_IA_HARMONIC:
-      add_harmonic_pair_force(p1,p2,type_num);
-      ret = d[0]*p1->f.f[0] + d[1]*p1->f.f[1] + d[2]*p1->f.f[2];
-      i+=2; break;
+      calc_harmonic_pair_force(p1,p2,iaparams,dx,force);
+      break;
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ_HARM:
-      add_subt_lj_harm_pair_force(p1,p2,type_num);
-      ret = d[0]*p1->f.f[0] + d[1]*p1->f.f[1] + d[2]*p1->f.f[2]; 
-      i+=2; break;
+      calc_subt_lj_harm_pair_force(p1,p2,iaparams,dx,force);
+      break;
     case BONDED_IA_SUBT_LJ_FENE:
-      add_subt_lj_fene_pair_force(p1,p2,type_num);
-      ret = d[0]*p1->f.f[0] + d[1]*p1->f.f[1] + d[2]*p1->f.f[2];
-      i+=2; break;
+      calc_subt_lj_fene_pair_force(p1,p2,iaparams,dx,force);
+      break;
     case BONDED_IA_SUBT_LJ:
-      add_subt_lj_pair_force(p1,p2,type_num);
-      ret = d[0]*p1->f.f[0] + d[1]*p1->f.f[1] + d[2]*p1->f.f[2];
-      i+=2; break;
+      calc_subt_lj_pair_force(p1,p2,iaparams,dx,force);
+      break;
 #endif
-    case BONDED_IA_ANGLE: {
-      Particle *p3 = local_particles[p1->bl.e[i+2]];
-      if (!p3) {
-	errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	sprintf(errtxt,"{bond broken between particles %d and %d (particles not stored on the same node)} ",
-		p1->p.identity, p1->bl.e[i+2]);
-	return;
-      }
-      for (j = 0; j < 3; j++) {
-	F3[j] = p3->f.f[j];
-	p3->f.f[j] = 0;
-      }
-      add_angle_force(p1,p2,p3,type_num);
-      ret = -d[0]*p2->f.f[0] - d[1]*p2->f.f[1] - d[2]*p2->f.f[2];
-      get_mi_vector(d, p1->r.p, p3->r.p);
-      ret += -d[0]*p3->f.f[0] - d[1]*p3->f.f[1] - d[2]*p3->f.f[2];
-
-      for (j = 0; j < 3; j++)
-	p3->f.f[j] = F3[j];
-
-      i+=3; break;
-    }
+    case BONDED_IA_ANGLE:
     case BONDED_IA_DIHEDRAL:
-      /* since it is not clear at the moment how to handle a four body interaction here, I skip it */
-      ret = 0.0;
-      i+=4; break;
-   default :
-      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d  of atom %d unknown\n",bonded_ia_params[type_num].type,p1->p.identity);
-      ret = 0;
-      i = p1->bl.n;
+      /* since it is not clear at the moment how to handle a many body interaction here, I skip it */
+    default :
+      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of atom %d unhandled\n",bonded_ia_params[type_num].type,p1->p.identity);
+      force[0] = force[1] = force[2] = 0;
       break;
     }
-    *obsstat_bonded(&virials, type_num) += ret;
-
-    for (j = 0; j < 3; j++)
-      p2->f.f[j] = F2[j];
-  }
-  
-  for (j = 0; j < 3; j++) {
-    p1->f.f[j] = F1[j];
-#ifdef NPT
-    nptiso.p_vir[j] = p_vir[j];
-#endif
+    *obsstat_bonded(&virials, type_num) += dx[0]*force[0] + dx[1]*force[1] + dx[2]*force[2];
   }
 }
 

@@ -164,9 +164,10 @@ int P3M_tune_parameters(Tcl_Interp *interp);
     forces. */ 
 double P3M_calc_kspace_forces(int force_flag, int energy_flag);
 
-/** Calculate real space contribution of coulomb pair forces. */
-MDINLINE void add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
-					 double *d,double dist2,double dist)
+/** Calculate real space contribution of coulomb pair forces.
+    If NPT is compiled in, it returns the energy, which is needed for NPT. */
+MDINLINE double calc_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
+					    double *d,double dist2,double dist,double force[3])
 {
   int j;
   double fac1,fac2, adist, erfc_part_ri;
@@ -176,20 +177,18 @@ MDINLINE void add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
     erfc_part_ri = AS_erfc_part(adist) / dist;
     fac1 = coulomb.prefactor * p1->p.q * p2->p.q  * exp(-adist*adist);
     fac2 = fac1 * (erfc_part_ri + 2.0*p3m.alpha*wupii) / dist2;
-    for(j=0;j<3;j++) {
-      p1->f.f[j] += fac2 * d[j];
-      p2->f.f[j] -= fac2 * d[j];
-    }
-#ifdef NPT
-    if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += fac1 * erfc_part_ri;
-#endif
+    for(j=0;j<3;j++)
+      force[j] += fac2 * d[j];
     ESR_TRACE(fprintf(stderr,"%d: RSE: Pair (%d-%d) dist=%.3f: force (%.3e,%.3e,%.3e)\n",this_node,
 		      p1->p.identity,p2->p.identity,dist,fac*d[0],fac*d[1],fac*d[2]));
     ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
     ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
 
+#ifdef NPT
+    return fac1 * erfc_part_ri;
+#endif
   }
+  return 0.0;
 }
 
 /** Calculate real space contribution of coulomb pair energy. */

@@ -54,9 +54,13 @@ MDINLINE int angle_set_params(int bond_type, double bend, double phi0)
     @param p_mid     Pointer to second/middle particle.
     @param p_left    Pointer to first/left particle.
     @param p_right   Pointer to third/right particle.
-    @param type_num  bond type number of the angle interaction (see \ref #inter).
+    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param force1 returns force of particle 1
+    @param force2 returns force of particle 2
+    @return 0
 */
-MDINLINE void add_angle_force(Particle *p_mid, Particle *p_left, Particle *p_right, int type_num)
+MDINLINE int calc_angle_force(Particle *p_mid, Particle *p_left, Particle *p_right,
+			      Bonded_ia_parameters *iaparams, double force1[3], double force2[3])
 {
   double cosine, vec1[3], vec2[3], d1i, d2i, dist2,  fac, f1=0.0, f2=0.0;
   int j;
@@ -74,42 +78,45 @@ MDINLINE void add_angle_force(Particle *p_mid, Particle *p_left, Particle *p_rig
   for(j=0;j<3;j++) vec2[j] *= d2i;
   /* scalar produvt of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
-  fac    = bonded_ia_params[type_num].p.angle.bend;
+  fac    = iaparams->p.angle.bend;
+
 #ifdef BOND_ANGLE_HARMONIC
   {
     double phi,sinphi;
     phi =  acos(-cosine);
     sinphi = sin(phi);
     if ( sinphi < TINY_SIN_VALUE ) sinphi = TINY_SIN_VALUE;
-    fac *= (phi-bonded_ia_params[type_num].p.angle.phi0)/sinphi;
+    fac *= (phi - iaparams->p.angle.phi0)/sinphi;
   }
 #endif
 #ifdef BOND_ANGLE_COSINE
   if ( cosine >  TINY_COS_VALUE ) cosine = TINY_COS_VALUE;
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
-  fac *= bonded_ia_params[type_num].p.angle.sin_phi0 * (cosine/sqrt(1-SQR(cosine))) + bonded_ia_params[type_num].p.angle.cos_phi0;
+  fac *= iaparams->p.angle.sin_phi0 * (cosine/sqrt(1-SQR(cosine))) + iaparams->p.angle.cos_phi0;
 #endif
 #ifdef BOND_ANGLE_COSSQUARE
-  fac *= bonded_ia_params[type_num].p.angle.cos_phi0 + cosine;
+  fac *= iaparams->p.angle.cos_phi0 + cosine;
 #endif
-  /* apply bend forces */
   for(j=0;j<3;j++) {
     f1               = fac * (cosine * vec1[j] - vec2[j]) * d1i;
     f2               = fac * (cosine * vec2[j] - vec1[j]) * d2i;
-    p_left->f.f[j]  -= f1;
-    p_mid->f.f[j]   += (f1-f2);
-    p_right->f.f[j] += f2;
+
+    force1[j] = (f1-f2);
+    force2[j] = -f1;
   }
+  return 0;
 }
 
 /** Computes the three body angle interaction energy (see \ref #inter, \ref #analyze). 
     @param p_mid        Pointer to first particle.
     @param p_left        Pointer to second/middle particle.
     @param p_right        Pointer to third particle.
-    @param type_num  bond type number of the angle interaction (see \ref #inter).
-    @return energy   energy.
+    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param _energy   return energy pointer.
+    @return 0.
 */
-MDINLINE double angle_energy(Particle *p_mid, Particle *p_left, Particle *p_right, int type_num)
+MDINLINE int angle_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
+			     Bonded_ia_parameters *iaparams, double *_energy)
 {
   double cosine, vec1[3], vec2[3],  d1i, d2i, dist2;
   int j;
@@ -132,23 +139,16 @@ MDINLINE double angle_energy(Particle *p_mid, Particle *p_left, Particle *p_righ
   {
     double phi;
     phi =  acos(-cosine);
-    return 0.5*bonded_ia_params[type_num].p.angle.bend*SQR(phi-bonded_ia_params[type_num].p.angle.phi0);
+    *_energy = 0.5*iaparams->p.angle.bend*SQR(phi - iaparams->p.angle.phi0);
   }
 #endif
 #ifdef BOND_ANGLE_COSINE
-  {
-    return bonded_ia_params[type_num].p.angle.bend*(cosine*bonded_ia_params[type_num].p.angle.cos_phi0 - sqrt(1-SQR(cosine))*bonded_ia_params[type_num].p.angle.sin_phi0+1);
-  }
+  *_energy = iaparams->p.angle.bend*(cosine*iaparams->p.angle.cos_phi0 - sqrt(1-SQR(cosine))*iaparams->p.angle.sin_phi0+1);
 #endif
 #ifdef BOND_ANGLE_COSSQUARE
-  return 0.5*bonded_ia_params[type_num].p.angle.bend*SQR(cosine+bonded_ia_params[type_num].p.angle.cos_phi0);
+  *_energy = 0.5*iaparams->p.angle.bend*SQR(cosine + iaparams->p.angle.cos_phi0);
 #endif
-  
-  /* You should never end up here! */
-  fprintf(stderr, "ERROR: Function 'angle_energy' was invoked, but none of the angle-potentials seem to be defined!\n");
-  fprintf(stderr, "       Confused on what to do next, bailing out...\n");
-  errexit();
-  return 0.0;
+  return 0;
 }
 
 

@@ -128,7 +128,7 @@ MDINLINE int ljcos_parser(Tcl_Interp * interp,
 }
 
 MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
-				double d[3], double dist)
+				   double d[3], double dist, double force[3])
 {
   int j;
   double r_off, frac2, frac6, fac=0.0;
@@ -138,15 +138,8 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
     /* cos part of ljcos potential. */
     if(dist > ia_params->LJCOS_rmin+ia_params->LJCOS_offset) {
       fac   = (r_off/dist) * ia_params->LJCOS_alfa * ia_params->LJCOS_eps * (sin(ia_params->LJCOS_alfa * SQR(r_off) + ia_params->LJCOS_beta));
-      for(j=0;j<3;j++) {
-	    /* vector d is rescaled to length LJ_capradius */
-	    p1->f.f[j] += fac * d[j];
-	    p2->f.f[j] -= fac * d[j];
-#ifdef NPT
-	    if(integ_switch == INTEG_METHOD_NPT_ISO)
-	      nptiso.p_vir[j] += fac*d[j] * d[j];
-#endif
-      }
+      for(j=0;j<3;j++)
+	force[j] += fac * d[j];
     }
     /* lennard-jones part of the potential. */
     else if(dist > 0) {
@@ -154,14 +147,9 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
       frac6 = frac2*frac2*frac2;
       fac   = 48.0 * ia_params->LJCOS_eps * frac6*(frac6 - 0.5) / (r_off * dist);
 
-      for(j=0;j<3;j++) {
-	    p1->f.f[j] += fac * d[j];
-	    p2->f.f[j] -= fac * d[j];
-#ifdef NPT
-	    if(integ_switch == INTEG_METHOD_NPT_ISO)
-	      nptiso.p_vir[j] += fac*d[j] * d[j];
-#endif
-      }
+      for(j=0;j<3;j++)
+	force[j] += fac * d[j];
+
 #ifdef LJ_WARN_WHEN_CLOSE
       if(fac*dist > 1000) fprintf(stderr,"%d: LJCOS-Warning: Pair (%d-%d) force=%f dist=%f\n",
 				  this_node,p1->p.identity,p2->p.identity,fac*dist,dist);
@@ -175,12 +163,7 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
       frac6 = frac2*frac2*frac2;
       fac   = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / ia_params->LJ_capradius;
 
-      p1->f.f[0] += fac * ia_params->LJ_capradius;
-      p2->f.f[0] -= fac * ia_params->LJ_capradius;
-#ifdef NPT
-      if(integ_switch == INTEG_METHOD_NPT_ISO)
-	nptiso.p_vir[0] += fac*ia_params->LJ_capradius * ia_params->LJ_capradius;
-#endif
+      force[0] += fac * ia_params->LJ_capradius;
     }
 
     ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));

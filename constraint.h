@@ -179,12 +179,12 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, Particle *c_p, Constraint_cy
     if (d_per < d_par )  {
       *dist = d_per ;   
       for (i=0; i<3;i++) {
-	vec[i]= d_per_vec[i] * d_per /  (c->rad - d_per) ;
+	vec[i]= -d_per_vec[i] * d_per /  (c->rad - d_per) ;
       }
     } else {
       *dist = d_par ;
       for (i=0; i<3;i++) {
-	vec[i]= d_par_vec[i] * d_par /  (c->length - d_par) ;
+	vec[i]= -d_par_vec[i] * d_par /  (c->length - d_par) ;
       }
     }
   } else {
@@ -194,19 +194,20 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, Particle *c_p, Constraint_cy
     if (d_par < 0 )  {
       *dist = d_per ;   
       for (i=0; i<3;i++) {
-	vec[i]= - d_per_vec[i] * d_per /  (d_per + c->rad) ;
+	vec[i]= d_per_vec[i] * d_per /  (d_per + c->rad) ;
       }
     } else if ( d_per < 0) {
       *dist = d_par ;
       for (i=0; i<3;i++) {
-	vec[i]= - d_par_vec[i] * d_par /  (d_par + c->length) ;
+	vec[i]= d_par_vec[i] * d_par /  (d_par + c->length) ;
       }
     } else {
       *dist = sqrt( SQR(d_par) + SQR(d_per)) ;
       for (i=0; i<3;i++) {
-	vec[i]= - d_per_vec[i] * d_per /  (d_per + c->rad) ;
-	vec[i]+= - d_par_vec[i] * d_par /  (d_par + c->length) ;
-      }			
+	vec[i]=
+	  d_per_vec[i] * d_per /  (d_per + c->rad) +
+	  d_par_vec[i] * d_par /  (d_par + c->length) ;
+      }	
     }
   }
 }
@@ -276,21 +277,24 @@ MDINLINE double plate_energy(Particle *p1, Particle *c_p, Constraint_plate *c)
 
 MDINLINE void add_constraints_forces(Particle *p1)
 {
-  int n;
-  double dist, vec[3];
+  int n, j;
+  double dist, vec[3], force[3];
   IA_parameters *ia_params;
   char *errtxt;
 
   for(n=0;n<n_constraints;n++) {
     ia_params=get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
     dist=0.;
+    for (j = 0; j < 3; j++)
+      force[j] = 0;
 	
     switch(constraints[n].type) {
     case CONSTRAINT_WAL: 
       if(ia_params->LJ_cut > 0. ) {
 	calculate_wall_dist(p1, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
-	if (dist > 0)
-	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist);
+	if (dist > 0) {
+	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist, force);
+	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
 	  sprintf(errtxt, "{wall constraint %d violated by particle %d} ", n, p1->p.identity);
@@ -302,7 +306,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
       if(ia_params->LJ_cut > 0. ) {
 	calculate_sphere_dist(p1, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
 	if (dist > 0) {
-	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist);
+	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist, force);
 	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
@@ -313,9 +317,9 @@ MDINLINE void add_constraints_forces(Particle *p1)
     
     case CONSTRAINT_CYL: 
       if(ia_params->LJ_cut > 0. ) {
-	calculate_cylinder_dist(p1, &constraints[n].part_rep, &constraints[n].c.cyl, &dist , vec); 
+	calculate_cylinder_dist(p1, &constraints[n].part_rep, &constraints[n].c.cyl, &dist, vec); 
 	if ( dist > 0 ) {
-	  add_lj_pair_force(&constraints[n].part_rep, p1, ia_params, vec, dist);
+	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist, force);
 	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
@@ -327,7 +331,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
     case CONSTRAINT_MAZE: 
       calculate_maze_dist(p1, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
       if (dist > 0) {
-	add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist);
+	add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist, force);
       }
       else {
 	errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
@@ -343,6 +347,11 @@ MDINLINE void add_constraints_forces(Particle *p1)
     case CONSTRAINT_PLATE:
       add_plate_force(p1, &constraints[n].part_rep, &constraints[n].c.plate);
       break;
+    }
+
+    for (j = 0; j < 3; j++) {
+      p1->f.f[j] += force[j];
+      constraints[n].part_rep.f.f[j] -= force[j];
     }
   }
 }

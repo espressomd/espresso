@@ -92,7 +92,7 @@ MDINLINE int inter_parse_dh(Tcl_Interp * interp, int argc, char ** argv)
     @param d         Vector pointing from p1 to p2.
     @param dist      Distance between p1 and p2.
 */
-MDINLINE void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist)
+MDINLINE void calc_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
 {
   int j;
   double kappa_dist, fac;
@@ -107,16 +107,11 @@ MDINLINE void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
       /* pure coulomb case: */
       fac = coulomb.prefactor * p1->p.q * p2->p.q / (dist*dist*dist);
     }
-    for(j=0;j<3;j++) {
-      p1->f.f[j] += fac * d[j];
-      p2->f.f[j] -= fac * d[j];
-#ifdef NPT
-      if(integ_switch == INTEG_METHOD_NPT_ISO)
-	nptiso.p_vir[j] += fac*d[j] * d[j];
-#endif
-    }
+    for(j=0;j<3;j++)
+      force[j] += fac * d[j];
+
     ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: DH   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
-    ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: DH   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));    
+    ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: DH   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
   }
 }
 

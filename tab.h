@@ -317,7 +317,7 @@ MDINLINE int tab_parser(Tcl_Interp * interp,
 /** Add a non-bonded pair force by linear interpolation from a table.
     Needs feature TABULATED compiled in (see \ref config.h). */
 MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
-				       double d[3], double dist)
+				       double d[3], double dist, double force[3])
 {
   double phi, dindex, fac;
   int tablepos, table_start,j;
@@ -354,15 +354,8 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
 	fac = rescaled_force_cap;
       }
     }
-    /* Now update the forces */  
-    for(j=0;j<3;j++) {
-      p1->f.f[j] += fac * d[j];
-      p2->f.f[j] -= fac * d[j];
-#ifdef NPT
-      if(integ_switch == INTEG_METHOD_NPT_ISO)
-	nptiso.p_vir[j] += fac*d[j] * d[j];
-#endif
-    }
+    for(j=0;j<3;j++)
+      force[j] += fac * d[j];
   }
 }
 
@@ -452,22 +445,20 @@ MDINLINE void check_tab_forcecap(double force_cap)
     interpolation between the closest tabulated values. There is no
     check for the upper bound! 
     Needs feature TABULATED compiled in (see \ref config.h).*/
-MDINLINE double bonded_tab_force_lookup(double val, int type_num)
+MDINLINE double bonded_tab_force_lookup(double val, Bonded_ia_parameters *iaparams)
 {
 #ifdef TABULATED
   int    ind;
   double dind;
   
-  dind = (val - bonded_ia_params[type_num].p.tab.minval) 
-    * bonded_ia_params[type_num].p.tab.invstepsize;
+  dind = (val - iaparams->p.tab.minval)*iaparams->p.tab.invstepsize;
 
   if( dind < 0.0 ) ind = 0;
   else ind = (int)dind;
 
   dind = dind - ind;
   /* linear interpolation between data points */
-  return  bonded_ia_params[type_num].p.tab.f[ind]*(1.0-dind) 
-    + bonded_ia_params[type_num].p.tab.f[ind+1]*dind;
+  return  iaparams->p.tab.f[ind]*(1.0-dind) + iaparams->p.tab.f[ind+1]*dind;
 #else
   return 0.0;
 #endif
@@ -478,21 +469,19 @@ MDINLINE double bonded_tab_force_lookup(double val, int type_num)
     interpolation between the closest tabulated values. There is no
     check for the upper bound! 
     Needs feature TABULATED compiled in (see \ref config.h). */
-MDINLINE double bonded_tab_energy_lookup(double val, int type_num)
+MDINLINE double bonded_tab_energy_lookup(double val, Bonded_ia_parameters *iaparams)
 {
   int ind;
   double dind;
   
-  dind = (val - bonded_ia_params[type_num].p.tab.minval) 
-    * bonded_ia_params[type_num].p.tab.invstepsize;
+  dind = (val - iaparams->p.tab.minval)*iaparams->p.tab.invstepsize;
 
   if( dind < 0.0 ) ind = 0;
   else ind = (int)dind;
 
   dind = dind - ind;
   /* linear interpolation between data points */
-  return  bonded_ia_params[type_num].p.tab.e[ind]*(1.0-dind) 
-    + bonded_ia_params[type_num].p.tab.e[ind+1]*dind;
+  return iaparams->p.tab.e[ind]*(1.0-dind) + iaparams->p.tab.e[ind+1]*dind;
 }
 
 /** Calculate a tabulated bond length force with number type_num (see
@@ -502,34 +491,23 @@ MDINLINE double bonded_tab_energy_lookup(double val, int type_num)
     than the tabulated range it uses a linear extrapolation based on
     the first two tabulated force values.
     Needs feature TABULATED compiled in (see \ref config.h). */
-MDINLINE void add_tab_bond_force(Particle *p1, Particle *p2, int type_num) 
+MDINLINE int calc_tab_bond_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3]) 
 {
   int i;
-  double dx[3], dist, fac;
+  double fac, dist = sqrt(sqrlen(dx));
 
+  if(dist > iaparams->p.tab.maxval)
+    return 1;
 
-  get_mi_vector(dx, p1->r.p, p2->r.p);
-  dist=sqrt(sqrlen(dx));
-
-  if(dist > bonded_ia_params[type_num].p.tab.maxval) {
-    char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-    sprintf(errtext,"{bond broken between particles %d and %d} ", p1->p.identity, p2->p.identity); 
-    return;
-  }
-
-  fac = bonded_tab_force_lookup(dist, type_num)/dist;
+  fac = bonded_tab_force_lookup(dist, iaparams)/dist;
   
-  for(i=0;i<3;i++) {
-    p1->f.f[i] -= fac*dx[i];
-    p2->f.f[i] += fac*dx[i];
-#ifdef NPT
-    if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[i] -= fac*dx[i] * dx[i];
-#endif
-  }
+  for(i=0;i<3;i++)
+    force[i] = -fac*dx[i];
 
   ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: TAB BOND f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
   ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: TAB BOND f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
+
+  return 0;
 }
 
 /** Calculate and return a tabulated bond length energy with number
@@ -538,29 +516,29 @@ MDINLINE void add_tab_bond_force(Particle *p1, Particle *p2, int type_num)
     quadratic extrapolation based on the first two tabulated force
     values and the first tabulated energy value. 
     Needs feature TABULATED compiled in (see \ref config.h). */
-MDINLINE double tab_bond_energy(Particle *p1, Particle *p2, int type_num) 
+MDINLINE int tab_bond_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double *_energy) 
 {
-  double dx[3], dist;
+  double dist = sqrt(sqrlen(dx));
 
-  get_mi_vector(dx, p1->r.p, p2->r.p);
-  dist=sqrt(sqrlen(dx));
+  if(dist > iaparams->p.tab.maxval)
+    return 1;
 
   /* For distances smaller than the tabulated minimim take quadratic
      extrapolation from first two values of the force table! 
      This corresponds to the linear extrapolation of the force at that point.
      This sould not occur too often, since it is quite expensive!
   */
-  if( dist <  bonded_ia_params[type_num].p.tab.minval) {
+  if( dist <  iaparams->p.tab.minval) {
     double x0, b;
-    b = (bonded_ia_params[type_num].p.tab.f[1]-bonded_ia_params[type_num].p.tab.f[0])
-      *bonded_ia_params[type_num].p.tab.invstepsize;
-    x0 = bonded_ia_params[type_num].p.tab.minval-bonded_ia_params[type_num].p.tab.f[0]/b;
-    return ( (bonded_ia_params[type_num].p.tab.e[0]
-	      +0.5*b*SQR(bonded_ia_params[type_num].p.tab.minval-x0))
-	     -0.5*b*SQR(dist-x0) );
+    b = (iaparams->p.tab.f[1]-iaparams->p.tab.f[0])*iaparams->p.tab.invstepsize;
+    x0 = iaparams->p.tab.minval - iaparams->p.tab.f[0]/b;
+    *_energy = ( (iaparams->p.tab.e[0] + 0.5*b*SQR(iaparams->p.tab.minval-x0)) -
+		 0.5*b*SQR(dist-x0) );
   }
+  else
+    *_energy = bonded_tab_energy_lookup(dist, iaparams);
 
-  return bonded_tab_energy_lookup(dist, type_num);
+  return 0;
 }
 
 
@@ -574,8 +552,9 @@ MDINLINE double tab_bond_energy(Particle *p1, Particle *p2, int type_num)
     connecting vectors. It is assumed that the potential is tabulated
     for all angles between 0 and Pi. 
     Needs feature TABULATED compiled in (see \ref config.h). */
-MDINLINE void add_tab_angle_force(Particle *p_mid, Particle *p_left, 
-				  Particle *p_right, int type_num)
+MDINLINE int calc_tab_angle_force(Particle *p_mid, Particle *p_left, 
+				  Particle *p_right, Bonded_ia_parameters *iaparams,
+				  double force1[3], double force2[3])
 {
     double cosine, phi, invsinphi, vec1[3], vec2[3], d1i, d2i, dist2,  fac, f1=0.0, f2=0.0;
   int j;
@@ -597,15 +576,16 @@ MDINLINE void add_tab_angle_force(Particle *p_mid, Particle *p_left,
   if(invsinphi < TINY_SIN_VALUE) invsinphi = TINY_SIN_VALUE;
   invsinphi = 1.0/invsinphi;
   /* look up force factor */
-  fac = bonded_tab_force_lookup(phi, type_num);
+  fac = bonded_tab_force_lookup(phi, iaparams);
   /* apply bend forces */
   for(j=0;j<3;j++) {
     f1               = fac * (cosine * vec1[j] - vec2[j])*invsinphi * d1i;
     f2               = fac * (cosine * vec2[j] - vec1[j])*invsinphi * d2i;
-    p_left->f.f[j]  -= f1;
-    p_mid->f.f[j]   += (f1-f2);
-    p_right->f.f[j] += f2;
+    force1[j] = (f1-f2);
+    force2[j] = -f1;
   }
+
+  return 0;
 }
 
 /** Calculate and return tabulated bond angle energy with number
@@ -613,8 +593,9 @@ MDINLINE void add_tab_angle_force(Particle *p_mid, Particle *p_left,
     p_mid and p_right. It is assumed that the potential is tabulated
     for all angles between 0 and Pi. 
     Needs feature TABULATED compiled in (see \ref config.h). */
-MDINLINE double tab_angle_energy(Particle *p_mid, Particle *p_left, 
-				 Particle *p_right, int type_num)
+MDINLINE int tab_angle_energy(Particle *p_mid, Particle *p_left, 
+			      Particle *p_right, Bonded_ia_parameters *iaparams,
+			      double *_energy)
 {
   double phi, vec1[3], vec2[3], vl1, vl2; 
 
@@ -627,15 +608,18 @@ MDINLINE double tab_angle_energy(Particle *p_mid, Particle *p_left,
   /* calculate phi */
   phi = acos( scalar(vec1, vec2) / (vl1*vl2) );
 
-  return bonded_tab_energy_lookup(phi, type_num);
+  *_energy = bonded_tab_energy_lookup(phi, iaparams);
+
+  return 0;
 }
 
 /** Calculate a tabulated dihedral force with number type_num (see
     \ref Bonded_ia_parameters) between particles p1. p2, p3 and p4 and
     add it to the particle forces. This function is not tested yet.
     Needs feature TABULATED compiled in (see \ref config.h). */
-MDINLINE void add_tab_dihedral_force(Particle *p1, Particle *p2, 
-				     Particle *p3, Particle *p4, int type_num)
+MDINLINE int calc_tab_dihedral_force(Particle *p2, Particle *p1,
+				     Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams,
+				     double force2[3], double force1[3], double force3[3])
 {
   int i;
   /* vectors in plane of particle triples (p1,p2,p3) and (p2,p3,p4) and thier length. */
@@ -648,26 +632,29 @@ MDINLINE void add_tab_dihedral_force(Particle *p1, Particle *p2,
   phi = calc_dihedral_angle(p1, p2, p3, p4, vec1, &vecl1, vec2, &vecl2, 
 			    &cos1223, &cos2334, &cosphi);
 
-  fac = bonded_tab_force_lookup(phi, type_num);
+  fac = bonded_tab_force_lookup(phi, iaparams);
   /* apply dihedral forces */
   vecl1 = 1.0/vecl1; vecl2 = 1.0/vecl2;
   for(i=0;i<3;i++) {
     f1 = fac * (vec2[i] - vec1[i]*cosphi) * vecl1;
     f4 = fac * (vec1[i] - vec2[i]*cosphi) * vecl2;
     f2 = (cos1223 - 1.0)*f1 - cos2334*f4;
-    p1->f.f[i] += f1;
-    p2->f.f[i] += f2;
-    p3->f.f[i] -= (f1 + f2 + f4);
-    p4->f.f[i] += f4;
+
+    force1[i] = f1;
+    force2[i] = f2;
+    force3[i] = -(f1 + f2 + f4);
   }
+
+  return 0;
 }
 
 /** Calculate and return a tabulated dihedral energy with number
     type_num (see \ref Bonded_ia_parameters) between particles p1. p2,
     p3 and p4. This function is not tested yet. 
     Needs feature TABULATED compiled in (see \ref config.h). */
-MDINLINE double tab_dihedral_energy(Particle *p1, Particle *p2, 
-				  Particle *p3, Particle *p4, int type_num)
+MDINLINE int tab_dihedral_energy(Particle *p2, Particle *p1, 
+				 Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams,
+				 double *_energy)
 {
   /* vectors in plane of particle triples (p1,p2,p3) and (p2,p3,p4) and thier length. */
   double vec1[3], vecl1, vec2[3], vecl2;
@@ -677,7 +664,9 @@ MDINLINE double tab_dihedral_energy(Particle *p1, Particle *p2,
   phi = calc_dihedral_angle(p1, p2, p3, p4, vec1, &vecl1, vec2, &vecl2, 
 			    &cos1223, &cos2334, &cosphi);
 
-  return bonded_tab_energy_lookup(phi, type_num);
+  *_energy = bonded_tab_energy_lookup(phi, iaparams);
+
+  return 0;
 }
 #endif
 

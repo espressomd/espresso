@@ -1072,8 +1072,8 @@ static void prepareBernoulliNumbers(int bon_order)
   }
 }
 
-void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
-				  double d[3], double dl2, double dl)
+void calc_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
+				   double d[3], double dl2, double dl, double force[3])
 {
   double F[3];
   double pref = coulomb.prefactor*p1->p.q*p2->p.q;
@@ -1218,10 +1218,8 @@ void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
       // fprintf(stderr, "explcit force %f %f %f\n", F[0], F[1], F[2]);
     }
 
-    for (i = 0; i < 3; i++) {
-      p1->f.f[i] += pref*F[i];
-      p2->f.f[i] -= pref*F[i];
-    }
+    for (i = 0; i < 3; i++)
+      force[i] += pref*F[i];
   }
 }
 

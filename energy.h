@@ -64,7 +64,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 
 #ifdef LENNARD_JONES
   /* lennard jones */
-  ret  += lj_pair_energy(p1,p2,ia_params,d,dist);
+  ret += lj_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
 #ifdef TABULATED
@@ -111,90 +111,89 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 MDINLINE void add_bonded_energy(Particle *p1)
 {
   char *errtxt;
-  Particle *p2;
-  int i, type_num;
-  double ret;
+  Particle *p2, *p3 = NULL, *p4 = NULL;
+  Bonded_ia_parameters *iaparams;
+  int i, type_num, type, n_partners, bond_broken;
+  double ret, dx[3] = {0, 0, 0};
+
   i=0;
   while(i<p1->bl.n) {
-    type_num = p1->bl.e[i];
-    p2 = local_particles[p1->bl.e[i+1]];
+    type_num = p1->bl.e[i++];
+    iaparams = &bonded_ia_params[type_num];
+    type = iaparams->type;
+    n_partners = iaparams->num;
+    
+    /* fetch particle 2, which is always needed */
+    p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
       errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
       sprintf(errtxt,"{bond broken between particles %d and %d (particles not stored on the same node)} ",
-	      p1->p.identity, p1->bl.e[i+1]);
+	      p1->p.identity, p1->bl.e[i-1]);
       return;
     }
 
-    switch(bonded_ia_params[type_num].type) {
-    case BONDED_IA_FENE:
-      ret = fene_pair_energy(p1, p2, type_num);
-      i+=2; break;
-    case BONDED_IA_HARMONIC:
-      ret = harmonic_pair_energy(p1, p2, type_num);
-      i+=2; break;
-#ifdef LENNARD_JONES
-    case BONDED_IA_SUBT_LJ_HARM:
-      ret = subt_lj_harm_pair_energy(p1, p2, type_num);
-      i+=2; break; 
-    case BONDED_IA_SUBT_LJ_FENE:
-      ret = subt_lj_fene_pair_energy(p1, p2, type_num);
-      i+=2; break; 
-    case BONDED_IA_SUBT_LJ:
-      ret = subt_lj_pair_energy(p1, p2, type_num);
-      i+=2; break;
-#endif
-    case BONDED_IA_ANGLE: {
-      Particle *p3 = local_particles[p1->bl.e[i+2]];
+    /* fetch particle 3 eventually */
+    if (n_partners >= 2) {
+      p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
 	errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
 	sprintf(errtxt,"{bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
-		p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2]);
+		p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
       }
-      ret = angle_energy(p1, p2, p3, type_num);
-      i+=3; break;
     }
-    case BONDED_IA_DIHEDRAL: {
-      Particle *p3 = local_particles[p1->bl.e[i+2]],
-	*p4        = local_particles[p1->bl.e[i+3]];
-      if (!p3 || !p4) {
+
+    /* fetch particle 4 eventually */
+    if (n_partners >= 3) {
+      p4 = local_particles[p1->bl.e[i++]];
+      if (!p4) {
 	errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
 	sprintf(errtxt,"{bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
-		p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2], p1->bl.e[i+3]);
+		p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
       }
-      ret = dihedral_energy(p2, p1, p3, p4, type_num);
-      i+=4; break;
     }
+
+    /* similar to the force, we prepare the center-center vector */
+    if (n_partners == 1)
+      get_mi_vector(dx, p1->r.p, p2->r.p);
+
+    switch(type) {
+    case BONDED_IA_FENE:
+      bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
+      break;
+    case BONDED_IA_HARMONIC:
+      bond_broken = harmonic_pair_energy(p1, p2, iaparams, dx, &ret);
+      break;
+#ifdef LENNARD_JONES
+    case BONDED_IA_SUBT_LJ_HARM:
+      bond_broken = subt_lj_harm_pair_energy(p1, p2, iaparams, dx, &ret);
+      break; 
+    case BONDED_IA_SUBT_LJ_FENE:
+      bond_broken = subt_lj_fene_pair_energy(p1, p2, iaparams, dx, &ret);
+      break; 
+    case BONDED_IA_SUBT_LJ:
+      bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
+      break;
+#endif
+    case BONDED_IA_ANGLE:
+      bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
+      break;
+    case BONDED_IA_DIHEDRAL:
+      bond_broken = dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
+      break;
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
-      switch(bonded_ia_params[type_num].p.tab.type) {
+      switch(iaparams->p.tab.type) {
       case TAB_BOND_LENGTH:
-	ret = tab_bond_energy(p1, p2, type_num);
-	i+=2; break;
-      case TAB_BOND_ANGLE: {
-	Particle *p3 = local_particles[p1->bl.e[i+2]];
-	if (!p3) {
-	  errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-	  sprintf(errtxt,"{bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
-		  p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2]);
-	  return;
-	}
-	ret = tab_angle_energy(p1, p2, p3, type_num);
-	i+=3; break;
-      }
-      case TAB_BOND_DIHEDRAL: {
-	Particle *p3 = local_particles[p1->bl.e[i+2]],
-	  *p4        = local_particles[p1->bl.e[i+3]];
-	if (!p3 || !p4) {
-	  errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
-	  sprintf(errtxt,"{bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
-		  p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2], p1->bl.e[i+3]);
-	  return;
-	}
-	ret = tab_dihedral_energy(p2, p1, p3, p4, type_num);
-	i+=4; break;
-      }
+	bond_broken = tab_bond_energy(p1, p2, iaparams, dx, &ret);
+	break;
+      case TAB_BOND_ANGLE:
+	bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
+	break;
+      case TAB_BOND_DIHEDRAL:
+	bond_broken = tab_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
+	break;
       default :
 	errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
 	sprintf(errtxt,"{add_bonded_energy: tabulated bond type of atom %d unknown\n", p1->p.identity);
@@ -207,6 +206,33 @@ MDINLINE void add_bonded_energy(Particle *p1)
       sprintf(errtxt,"{add_bonded_energy: bond type of atom %d unknown\n", p1->p.identity);
       return;
     }
+
+    switch (n_partners) {
+    case 1:
+      if (bond_broken) {
+	char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	sprintf(errtext,"{bond broken between particles %d and %d} ",
+		p1->p.identity, p2->p.identity);
+	continue;
+      }
+      break;
+    case 2:
+      if (bond_broken) {
+	char *errtext = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	sprintf(errtext,"{bond broken between particles %d, %d and %d} ",
+		p1->p.identity, p2->p.identity, p3->p.identity); 
+	continue;
+      }
+      break;
+    case 3:
+      if (bond_broken) {
+	char *errtext = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	sprintf(errtext,"{bond broken between particles %d, %d, %d and %d} ",
+		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
+	continue;
+      }
+    }
+
     *obsstat_bonded(&energy, type_num) += ret;
   }
 }

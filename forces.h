@@ -85,52 +85,94 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 					double d[3], double dist, double dist2)
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+  double force[3] = { 0, 0, 0 }, eng;
+  int j;
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node, p1->p.identity, p2->p.identity, dist));
 
+  /***********************************************/
+  /* thermostat                                  */
+  /***********************************************/
+
 #ifdef DPD
   /* DPD thermostat forces */
-  add_dpd_thermo_pair_force(p1,p2,d,dist);
+  add_to_part_dpd_thermo_pair_force(p1,p2,d,dist);
 #endif
+
+  /***********************************************/
+  /* non bonded pair potentials                  */
+  /***********************************************/
 
 #ifdef TABULATED
   /* tabulated */
-  add_tabulated_pair_force(p1,p2,ia_params,d,dist);
+  add_tabulated_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
 
   /* lennard jones */
 #ifdef LENNARD_JONES
-  add_lj_pair_force(p1,p2,ia_params,d,dist);
+  add_lj_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
 
   /* lennard jones cosine */
 #ifdef LJCOS
-  add_ljcos_pair_force(p1,p2,ia_params,d,dist);
+  add_ljcos_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
 
 #ifdef ROTATION
   /* Gay-Berne */
-  add_gb_pair_force(p1,p2,ia_params,d,dist);
+  add_gb_pair_force(p1,p2,ia_params,d,dist,force,p1->f.torque,p2->f.torque);
 #endif
+
+  /* everything before this contributes to the pressure */
+
+  for (j = 0; j < 3; j++) { 
+    p1->f.f[j] += force[j];
+    p2->f.f[j] -= force[j];
+#ifdef NPT
+    if(integ_switch == INTEG_METHOD_NPT_ISO)
+      nptiso.p_vir[j] += force[j] * d[j];
+#endif
+  }
+
+  /***********************************************/
+  /* electrostatics                              */
+  /***********************************************/
 
 #ifdef ELECTROSTATICS
   /* real space coulomb */
   switch (coulomb.method) {
   case COULOMB_P3M:
-    add_p3m_coulomb_pair_force(p1,p2,d,dist2,dist);
+    eng = calc_p3m_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+#ifdef NPT
+    if(integ_switch == INTEG_METHOD_NPT_ISO)
+      nptiso.p_vir[0] += eng;
+#endif
     break;
+
   case COULOMB_DH:
-    add_dh_coulomb_pair_force(p1,p2,d,dist);
+    calc_dh_coulomb_pair_force(p1,p2,d,dist,force);
+#ifdef NPT
+    if(integ_switch == INTEG_METHOD_NPT_ISO)
+      nptiso.p_vir[j] += force[j] * d[j];
+#endif
     break;
+
   case COULOMB_MMM1D:
-    add_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist);
+    calc_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist,force);
     break;
+
   case COULOMB_MMM2D:
-    add_mmm2d_coulomb_pair_force(p1,p2,d,dist2,dist);
+    calc_mmm2d_coulomb_pair_force(p1,p2,d,dist2,dist,force);
     break;
-  case COULOMB_MAGGS:
-    if (maggs.yukawa == 1) add_maggs_yukawa_pair_force(p1,p2,d,dist2, dist);
-    break;
+
+  case COULOMB_NONE:
+    for (j = 0; j < 3; j++)
+      force[j] = 0;
+  }
+
+  for (j = 0; j < 3; j++) { 
+    p1->f.f[j] += force[j];
+    p2->f.f[j] -= force[j];
   }
 #endif
 }
@@ -140,92 +182,93 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 */
 MDINLINE void add_bonded_force(Particle *p1)
 {
+  double dx[3], force[3], force2[3], force3[3];
   char *errtxt;
-  Particle *p2;
-  int i, type_num;
+  Particle *p2, *p3 = NULL, *p4 = NULL;
+  Bonded_ia_parameters *iaparams;
+  int i, j, type_num, type, n_partners, bond_broken;
 
   i=0;
   while(i<p1->bl.n) {
-    type_num = p1->bl.e[i];
-    p2 = local_particles[p1->bl.e[i+1]];
+    type_num = p1->bl.e[i++];
+    iaparams = &bonded_ia_params[type_num];
+    type = iaparams->type;
+    n_partners = iaparams->num;
+
+    /* fetch particle 2, which is always needed */
+    p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
       errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
       sprintf(errtxt,"{bond broken between particles %d and %d (particles not stored on the same node)} ",
-	      p1->p.identity, p1->bl.e[i+1]);
+	      p1->p.identity, p1->bl.e[i-1]);
       return;
     }
 
-    switch(bonded_ia_params[type_num].type) {
-    case BONDED_IA_FENE:
-      add_fene_pair_force(p1, p2, type_num);
-      i+=2; break;
-    case BONDED_IA_HARMONIC:
-      add_harmonic_pair_force(p1, p2, type_num);
-      i+=2; break;
-#ifdef LENNARD_JONES
-    case BONDED_IA_SUBT_LJ_HARM:
-      add_subt_lj_harm_pair_force(p1, p2, type_num);
-      i+=2; break;
-    case BONDED_IA_SUBT_LJ_FENE:
-      add_subt_lj_fene_pair_force(p1, p2, type_num);
-      i+=2; break;
-    case BONDED_IA_SUBT_LJ:
-      add_subt_lj_pair_force(p1, p2, type_num);
-      i+=2; break;
-#endif
-    case BONDED_IA_ANGLE: {
-      Particle *p3 = local_particles[p1->bl.e[i+2]];
+    /* fetch particle 3 eventually */
+    if (n_partners >= 2) {
+      p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
 	errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
 	sprintf(errtxt,"{bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
-		p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2]);
+		p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
       }
-
-      add_angle_force(p1, p2, p3, type_num);
-      i+=3; break;
     }
-    case BONDED_IA_DIHEDRAL: {
-      Particle *p3 = local_particles[p1->bl.e[i+2]],
-	*p4        = local_particles[p1->bl.e[i+3]];
-      if (!p3 || !p4) {
+
+    /* fetch particle 4 eventually */
+    if (n_partners >= 3) {
+      p4 = local_particles[p1->bl.e[i++]];
+      if (!p4) {
 	errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
 	sprintf(errtxt,"{bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
-		p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2], p1->bl.e[i+3]);
+		p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
       }
-      add_dihedral_force(p2, p1, p3, p4, type_num);
-      i+=4; break;
     }
+
+    if (n_partners == 1) {
+      /* because of the NPT pressure calculation for pair forces, we need the
+	 1->2 distance vector here. For many body interactions this vector is not needed,
+	 and the pressure calculation not yet clear. */
+      get_mi_vector(dx, p1->r.p, p2->r.p);
+    }
+
+    switch (type) {
+    case BONDED_IA_FENE:
+      bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
+      break;
+    case BONDED_IA_HARMONIC:
+      bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
+      break;
+#ifdef LENNARD_JONES
+    case BONDED_IA_SUBT_LJ_HARM:
+      bond_broken = calc_subt_lj_harm_pair_force(p1, p2, iaparams, dx, force);
+      break;
+    case BONDED_IA_SUBT_LJ_FENE:
+      bond_broken = calc_subt_lj_fene_pair_force(p1, p2, iaparams, dx, force);
+      break;
+    case BONDED_IA_SUBT_LJ:
+      bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
+      break;
+#endif
+    case BONDED_IA_ANGLE:
+      bond_broken = calc_angle_force(p1, p2, p3, iaparams, force, force2);
+      break;
+    case BONDED_IA_DIHEDRAL:
+      bond_broken = calc_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
+      break;
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
-      switch(bonded_ia_params[type_num].p.tab.type) {
+      switch(iaparams->p.tab.type) {
       case TAB_BOND_LENGTH:
-	add_tab_bond_force(p1, p2, type_num);
-	i+=2; break;
-      case TAB_BOND_ANGLE: {
-	Particle *p3 = local_particles[p1->bl.e[i+2]];
-	if (!p3) {
-	  errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-	  sprintf(errtxt,"{bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
-		  p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2]);
-	  return;
-	}	
-	add_tab_angle_force(p1, p2, p3, type_num);
-	i+=3; break;
-      }
-      case TAB_BOND_DIHEDRAL: {
-	Particle *p3 = local_particles[p1->bl.e[i+2]],
-	  *p4        = local_particles[p1->bl.e[i+3]];
-	if (!p3 || !p4) {
-	  errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
-	  sprintf(errtxt,"{bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
-		  p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2], p1->bl.e[i+3]);
-	  return;
-	}
-	add_tab_dihedral_force(p2, p1, p3, p4, type_num);
-	i+=4; break;
-      }
+	bond_broken = calc_tab_bond_force(p1, p2, iaparams, dx, force);
+	break;
+      case TAB_BOND_ANGLE:
+	bond_broken = calc_tab_angle_force(p1, p2, p3, iaparams, force, force2);
+	break;
+      case TAB_BOND_DIHEDRAL:
+	bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
+	break;
       default:
 	errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
 	sprintf(errtxt,"{add_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
@@ -237,6 +280,55 @@ MDINLINE void add_bonded_force(Particle *p1)
       errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
       sprintf(errtxt,"{add_bonded_force: bond type of atom %d unknown\n", p1->p.identity);
       return;
+    }
+
+    switch (n_partners) {
+    case 1:
+      if (bond_broken) {
+	char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	sprintf(errtext,"{bond broken between particles %d and %d} ",
+		p1->p.identity, p2->p.identity); 
+	continue;
+      }
+      
+      for (j = 0; j < 3; j++) {
+	p1->f.f[j] += force[j];
+	p2->f.f[j] -= force[j];
+#ifdef NPT
+	if(integ_switch == INTEG_METHOD_NPT_ISO)
+	  nptiso.p_vir[j] += force[j] * dx[j];
+#endif
+      }
+      break;
+    case 2:
+      if (bond_broken) {
+	char *errtext = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	sprintf(errtext,"{bond broken between particles %d, %d and %d} ",
+		p1->p.identity, p2->p.identity, p3->p.identity); 
+	continue;
+      }
+
+      for (j = 0; j < 3; j++) {
+	p1->f.f[j] += force[j];
+	p2->f.f[j] += force2[j];
+	p3->f.f[j] -= (force[j] + force2[j]);
+      }
+      break;
+    case 3:
+      if (bond_broken) {
+	char *errtext = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	sprintf(errtext,"{bond broken between particles %d, %d, %d and %d} ",
+		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
+	continue;
+      }
+
+      for (j = 0; j < 3; j++) {
+	p1->f.f[j] += force[j];
+	p2->f.f[j] += force2[j];
+	p3->f.f[j] += force3[j];
+	p4->f.f[j] -= (force[j] + force2[j] + force3[j]);
+      }
+      break;
     }
   }
 }  
