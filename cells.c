@@ -315,6 +315,12 @@ void calc_cell_grid()
        Helps with highly anisotropic systems. */
     if (ghost_cell_grid[i] <= 2)
       ghost_cell_grid[i] = 3;
+    /* for very large systems we might get integer multiplication overflow.
+       but normally max_num_cells^3 is still ok */
+    if (ghost_cell_grid[i] >= max_num_cells) {
+      n_cells = max_num_cells + 1;
+      break;
+    }
     n_cells *= ghost_cell_grid[i];
   }
 
@@ -344,6 +350,12 @@ void calc_cell_grid()
 	   Helps with highly anisotropic systems. */
 	if (ghost_cell_grid[i] <= 2)
 	  ghost_cell_grid[i] = 3;
+	/* for very large systems we might get integer multiplication overflow.
+	   but normally max_num_cells^3 is still ok */
+	if (ghost_cell_grid[i] >= max_num_cells) {
+	  n_cells = max_num_cells + 1;
+	  break;
+	}
 	n_cells *= ghost_cell_grid[i];
       }
     }
