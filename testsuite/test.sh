@@ -1,5 +1,5 @@
 #!/bin/sh
-TESTCASES="lj.tcl lj-cos.tcl harm.tcl fene.tcl mmm1d.tcl dh.tcl madelung.tcl"
+TESTCASES="lj.tcl lj-cos.tcl harm.tcl fene.tcl mmm1d.tcl dh.tcl madelung.tcl intpbc.tcl intppbc.tcl"
 # lj-cos.tcl FENE.tcl harmonic.tcl... constraints thermosim energy pressure rotation gay-berne
 # 
 # List of testcases to be done (and people responsible for them):
@@ -25,9 +25,9 @@ TESTCASES="lj.tcl lj-cos.tcl harm.tcl fene.tcl mmm1d.tcl dh.tcl madelung.tcl"
 #   Small check of velocities, forces and kinetic energy for a two-particle-electrostatic system
 # - thermo: (FRM / Status: Scheduled.)
 #   10000 timesteps only thermostat - does the given temperature (i.e. Ekin) remain constant?
-# - Int-PBC: (AxA / Status: Scheduled.)
+# - Int-PBC: (AxA / Status: Done.)
 #   Periodic Boundary Integration.
-# - Int-PPBC: (AxA / Status: Scheduled.)
+# - Int-PPBC: (AxA / Status: Done.)
 #   Partial Periodic Boundary Integration.
 # - Anal: (BAM / Status: Scheduled.)
 #   Checking checkpoints and anlysis routines.
