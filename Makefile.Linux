@@ -24,7 +24,7 @@ BLADE=no
 ### This is overridden by the BLADE-flag (since there is no 'lam' on the Blade-Center).
 ### Note that you'll need a link to the 'mpich'-implemented 'mpirun' in /opt/mpich/ch-p4/bin/mpirun
 ###      to execute the resulting binary (the default 'mpirun' is currently /opt/lam/bin/mpirun).
-MPICH=no
+MPICH=yes
 
 ### static compilation for certain brain damaged blade clusters
 STATIC=no
@@ -51,7 +51,7 @@ else
      endif
      ifeq ($(MPICH),yes)
           CC=/opt/mpich/ch-p4/bin/mpicc
-	  CC=$$ESPRESSO_SOURCE/mpicc.modf
+	  CC=$$ESPRESSO_SOURCE/internal/mpicc.modf
 	  ICC=no
      endif
 endif
