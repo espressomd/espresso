@@ -355,7 +355,7 @@ int part(ClientData data, Tcl_Interp *interp,
 	} 
 
 	/* make sure type exists */
-	realloc_ia_params(type);
+	realloc_ia_params(type + 1);
 
 	mpi_send_type(node, part_num, type);
 
