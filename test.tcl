@@ -6,7 +6,7 @@
 # AIX \
     elif test $PLATFORM = AIX; then exec poe $PLATFORM/tcl_md $0 $* -procs $NP
 # Linux \
-    else lamboot; exec mpirun -np $NP -nsigs $PLATFORM/tcl_md $0 $*;
+    else lamboot -v hostfile; exec mpirun -c2c -toff -O -np $NP -nsigs $PLATFORM/tcl_md $0 $*;
 
 # \
     fi;
@@ -17,7 +17,7 @@
 set tcl_precision 5
 
 set intsteps 100
-set maxtime  20
+set maxtime  50
 
 setmd periodic 1 1 1
 setmd bjerrum 1.0
@@ -44,41 +44,50 @@ if { ![file exists "config.gz"]} {
 set f [open "|gzip -cd config.gz" r]
 while {[blockfile $f read auto] != "eof" } {}
 close $f
-
 puts "n_part = [part number]"
 puts "grid   = \{[setmd node_grid]\}"
 puts "box    = \{[setmd box]\}"
 
 # setup interactions
 ##################################################
-inter 0 0 lennard-jones 1 1 2.0 0 0
-inter 1 1 lennard-jones 1 1 2.0 0 0
-inter 2 2 lennard-jones 1 1 2.0 0 0
-inter 0 1 lennard-jones 1 1 2.0 0 0
-inter 0 2 lennard-jones 3 1 2.0 0 0
-inter 1 2 lennard-jones 2 1 1.2 0 0
+inter 0 0 lennard-jones 1 1 1.12246 0 0
+inter 1 1 lennard-jones 1 1 1.12246 0 0
+inter 2 2 lennard-jones 1 1 1.12246 0 0
+inter 0 1 lennard-jones 1 1 1.12246 0 0
+inter 0 2 lennard-jones 1 1 1.12246 0 0
+inter 1 2 lennard-jones 1 1 1.12246 0 0
+
+inter 1 fene 1 2
+
+puts "add first bond"
+part 1 bond 1 3
+puts [part 1]
+part 1 bond delete 1 3
+puts [part 1]
 
 # integration
 ##################################################
 
-for {set port 10000} { $port < 65000 } { incr port } {
-    catch {imd connect $port} res
-    if {$res == ""} break
-}
-puts "opened port $port"
+#for {set port 10000} { $port < 65000 } { incr port } {
+#    catch {imd connect $port} res
+#    if {$res == ""} break
+#}
+#puts "opened port $port"
 
 integrate init
 
-for {set i 0} { $i < $maxtime } { incr i } {
-    puts -nonewline "step $i\r"
-    flush stdout
-    integrate $intsteps
-    imd pos
-}
+puts [time {
+  for {set i 0} { $i < $maxtime } { incr i } {
+      puts "step $i"
+      integrate $intsteps
+  #   imd pos
+  puts "mindist=[mindist]"
+  }
+}]
 
 integrate exit
 
-puts "imd: [imd disconnect]"
+#puts "imd: [imd disconnect]"
 
 # exit
 ##################################################

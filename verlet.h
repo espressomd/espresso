@@ -19,7 +19,7 @@
     Access using \ref realloc_pairList.
 */
 typedef struct {
-  /** The pair payload (two integers per pair) */
+  /** The pair payload (two pointers per pair) */
   Particle **pair;
   /** Number of pairs contained */
   int n;
@@ -43,9 +43,6 @@ extern int rebuild_verletlist;
 
 /** fill verlet tables. */
 void build_verlet_lists();
-
-/** reallocate a verlet pair list to a new size. */
-void realloc_pairList(PairList *list, int size);
 
 /** Callback for integrator flag tcl:verletflag c:rebuild_verletlist (= 0 or 1).
     <ul>

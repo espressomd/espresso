@@ -107,8 +107,7 @@ int find_node(double pos[3]);
  * \param node number of the node.  */
 void calc_node_neighbors(int node);
 
-/** Call this if the topology (grid, box dim, ...) has changed. Only for master node,
-    will be communicated. */
+/** called from \ref mpi_changed_topology . */
 void changed_topology();
 
 /** Calculates the smallest box and local box dimensions for periodic

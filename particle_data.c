@@ -19,30 +19,24 @@
 #include "debug.h"
 #include "utils.h"
 
-/* cwz-build-command: gmake all
+/* cwz-build-command: make all
  */
 
 /************************************************
  * defines
  ************************************************/
 
-/** granularity of the particle buffer in particles */
-#define PART_INCREMENT 256
+/** granularity of the particle buffers in particles */
+#define PART_INCREMENT 32
 
 /************************************************
  * variables
  ************************************************/
 
 int max_seen_particle = -1;
-int n_particle_node = 0;
+int max_particle_node = 0;
 int *particle_node = NULL;
-
-int     n_particles = 0;
-int   max_particles = 0;
-int        n_ghosts = 0;
-Particle *particles = NULL;
-
-int *local_index;
+Particle **local_particles = NULL;
 
 /************************************************
  * functions
@@ -56,10 +50,10 @@ void map_particle_node(int part, int node)
     max_seen_particle = part;
     mpi_bcast_parameter(FIELD_MAXPART);
 
-    if (part >= n_particle_node) {
+    if (part >= max_particle_node) {
       /* round up part + 1 in granularity PART_INCREMENT */
-      n_particle_node = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
-      particle_node = realloc(particle_node, sizeof(int)*n_particle_node);
+      max_particle_node = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
+      particle_node = realloc(particle_node, sizeof(int)*max_particle_node);
     }
     for (i = old_max + 1; i < max_seen_particle; i++)
       particle_node[i] = -1;
@@ -76,85 +70,75 @@ void build_particle_node()
     free(particle_node);
 
   /* round up max_seen_particle + 1 in granularity PART_INCREMENT */
-  n_particle_node = PART_INCREMENT*((max_seen_particle + PART_INCREMENT)/PART_INCREMENT);
-  particle_node = malloc(n_particle_node*sizeof(int));
+  max_particle_node = PART_INCREMENT*((max_seen_particle + PART_INCREMENT)/PART_INCREMENT);
+  particle_node = malloc(max_particle_node*sizeof(int));
   mpi_who_has();
 }
 
-void realloc_particles(int size)
+void realloc_particles(ParticleList *l, int size)
 {
-  int old_max = max_particles, i;
-  if (size < max_particles) {
+  int old_max = l->max, i;
+  if (size < l->max) {
     /* shrink not as fast, just lose half, rounded up */
-    max_particles = PART_INCREMENT*(((n_particles + size)/2 +
-				     PART_INCREMENT - 1)/PART_INCREMENT);
+    l->max = PART_INCREMENT*(((l->n + size)/2 +
+			      PART_INCREMENT - 1)/PART_INCREMENT);
   }
   else
     /* round up */
-    max_particles = PART_INCREMENT*((size + PART_INCREMENT - 1)/PART_INCREMENT);
-  if (max_particles != old_max)
-    particles = (Particle *) realloc(particles, sizeof(Particle)*max_particles);
-  for (i = old_max; i < max_particles; i++)
-    particles[i].identity = -1;
+    l->max = PART_INCREMENT*((size + PART_INCREMENT - 1)/PART_INCREMENT);
+  if (l->max != old_max)
+    l->part = (Particle *) realloc(l->part, sizeof(Particle)*l->max);
+  for (i = old_max; i < l->max; i++)
+    l->part[i].r.identity = -1;
 }
 
-void realloc_part_bonds(int part, int new_size)
+void realloc_part_bonds(Particle *p, int new_size)
 {
   /* make sure, that n_bonds is not larger than new_size */
-  if(particles[part].n_bonds > new_size) particles[part].n_bonds = new_size;
-  if (new_size != particles[part].max_bonds) {
-    particles[part].bonds = (int *) realloc(particles[part].bonds,new_size*sizeof(int));
-    particles[part].max_bonds = new_size;
+  if(p->n_bonds > new_size) p->n_bonds = new_size;
+  if (new_size != p->max_bonds) {
+    p->bonds = (int *) realloc(p->bonds,new_size*sizeof(int));
+    p->max_bonds = new_size;
   }
 }
 
-int got_particle(int part)
+Particle *got_particle(ParticleList *l, int id)
 {
   int i;
-  for (i = 0; i < n_particles; i++)
-    if (particles[i].identity == part)
+
+  for (i = 0; i < l->n; i++)
+    if (l->part[i].r.identity == id)
       break;
-  if (i == n_particles)
-    i = -1;
-  return i;
+  if (i == l->n)
+    return NULL;
+  return &(l->part[i]);
 }
 
-int add_particle(int part)
+Particle *alloc_particle(ParticleList *l)
 {
   int index;
-  if ((index = got_particle(part)) != -1)
-    return index;
-  index = alloc_particle();
-  particles[index].identity = part;
-  particles[index].type = 0;
-  particles[index].q    = 0;
-  particles[index].p[0] = 0;
-  particles[index].p[1] = 0;
-  particles[index].p[2] = 0;
-  particles[index].v[0] = 0;
-  particles[index].v[1] = 0;
-  particles[index].v[2] = 0;
-  particles[index].f[0] = 0;
-  particles[index].f[1] = 0;
-  particles[index].f[2] = 0;
-  return index;
+
+  index = l->n++;
+  realloc_particles(l, l->n);
+
+  return &l->part[index];
 }
 
-int alloc_particle()
+void append_particle(ParticleList *l, Particle *part)
 {
-  int i,index;
+  Particle *p = alloc_particle(l);
+  memcpy(p, part, sizeof(Particle));
+}
 
-  /* add at end */
-  index = n_particles++;
-
-  realloc_particles(n_particles);
-    
-  particles[index].n_bonds = 0;
-  particles[index].max_bonds = 0;
-  particles[index].bonds  = NULL;
-  for(i = 0; i < 3; i++)
-    particles[index].i[i] = 0;
-  return index;
+void move_particle(ParticleList *dl, ParticleList *sl, int i)
+{
+  Particle *dst = alloc_particle(dl);
+  Particle *src = &sl->part[i];
+  Particle *end = &sl->part[sl->n - 1];
+  memcpy(dst, src, sizeof(Particle));
+  if (--sl->n > 0)
+    memcpy(src, end, sizeof(Particle));
+  realloc_particles(sl, sl->n);
 }
 
 void fold_particle(double pos[3],int image_box[3])
@@ -199,6 +183,31 @@ void particle_finalize_data()
   }
 }
 
+void local_particles_init()
+{
+  Particle *p;
+  int np, m, n, o, i;
+  if (max_seen_particle >= 0)
+    local_particles = (Particle **)malloc((max_seen_particle + 1)*sizeof(Particle *));
+  for(i = 0; i <= max_seen_particle; i++) local_index[i] = NULL;
+  INNER_CELLS_LOOP(m, n, o) {
+    p = CELL_PTR(m, n, o)->pList.part;
+    np = CELL_PTR(m, n, o)->pList.n;
+    for(i = 0; i < np; i++) local_particles[p[i].r.identity] = & p[i];
+  }
+}
+
+void local_particles_exit()
+{
+  if (local_particles) {
+    free(local_particles);
+    local_particles = NULL;
+  }
+}
+
+/** append particle data in ASCII form to the Tcl result.
+    @param part_num the particle which data is appended
+    @param interp   the Tcl interpreter to which result to add to */
 int printParticleToResult(Tcl_Interp *interp, int part_num)
 {
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -216,17 +225,17 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
     return (TCL_ERROR);
 
   mpi_recv_part(node, part_num, &part);
-  sprintf(buffer, "%d", part.identity);
+  sprintf(buffer, "%d", part.r.identity);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  Tcl_PrintDouble(interp, part.p[0], buffer);
+  Tcl_PrintDouble(interp, part.r.p[0], buffer);
   Tcl_AppendResult(interp, " pos ", buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.p[1], buffer);
+  Tcl_PrintDouble(interp, part.r.p[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.p[2], buffer);
+  Tcl_PrintDouble(interp, part.r.p[2], buffer);
   Tcl_AppendResult(interp, buffer, " type ", (char *)NULL);
-  sprintf(buffer, "%d", part.type);
+  sprintf(buffer, "%d", part.r.type);
   Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.q, buffer);
+  Tcl_PrintDouble(interp, part.r.q, buffer);
   Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
   Tcl_PrintDouble(interp, part.v[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
@@ -234,11 +243,11 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, part.v[2], buffer);
   Tcl_AppendResult(interp, buffer, " f ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f[0], buffer);
+  Tcl_PrintDouble(interp, part.r.f[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f[1], buffer);
+  Tcl_PrintDouble(interp, part.r.f[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f[2], buffer);
+  Tcl_PrintDouble(interp, part.r.f[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 
   /* print bonding structure */
@@ -336,23 +345,23 @@ int part(ClientData data, Tcl_Interp *interp,
     argv += 3;
     while (argc > 0) {
       if (!strncmp(argv[0], "identity", strlen(argv[0]))) {
-	sprintf(buffer, "%d", part.identity);
+	sprintf(buffer, "%d", part.r.identity);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (!strncmp(argv[0], "pos", strlen(argv[0]))) {
-	Tcl_PrintDouble(interp, part.p[0], buffer);
+	Tcl_PrintDouble(interp, part.r.p[0], buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.p[1], buffer);
+	Tcl_PrintDouble(interp, part.r.p[1], buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.p[2], buffer);
+	Tcl_PrintDouble(interp, part.r.p[2], buffer);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (!strncmp(argv[0], "type", strlen(argv[0]))) {
-	sprintf(buffer, "%d", part.type);
+	sprintf(buffer, "%d", part.r.type);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (!strncmp(argv[0], "q", strlen(argv[0]))) {
-	Tcl_PrintDouble(interp, part.q, buffer);
+	Tcl_PrintDouble(interp, part.r.q, buffer);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (!strncmp(argv[0], "v", strlen(argv[0]))) {
@@ -364,11 +373,11 @@ int part(ClientData data, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (!strncmp(argv[0], "f", strlen(argv[0]))) {
-	Tcl_PrintDouble(interp, part.f[0], buffer);
+	Tcl_PrintDouble(interp, part.r.f[0], buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.f[1], buffer);
+	Tcl_PrintDouble(interp, part.r.f[1], buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.f[2], buffer);
+	Tcl_PrintDouble(interp, part.r.f[2], buffer);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (!strncmp(argv[0], "bonds", strlen(argv[0]))) {
@@ -429,11 +438,9 @@ int part(ClientData data, Tcl_Interp *interp,
       if (node == -1) {
 	/* spatial position */
 	node = find_node(pos);
-	mpi_attach_particle(part_num, node);
 	map_particle_node(part_num, node);
       }
-
-      mpi_send_pos(node, part_num, pos);
+      mpi_place_particle(node, part_num, pos);
 
       argc -= 4;
       argv += 4;

@@ -12,6 +12,7 @@
  */
 
 #include <tcl.h>
+#include "config.h"
 
 /************************************************
  * data types
@@ -70,6 +71,8 @@ typedef struct {
   Particle *part;
   /** Number of particles contained */
   int n;
+  /** Number of ghosts contained */
+  int ghosts;
   /** Number of particles that fit in until a resize is needed */
   int max;
 } ParticleList;
@@ -86,10 +89,12 @@ typedef struct {
 */
 extern int max_seen_particle;
 
-/** Capacity of the particle_node array. */
+/** Capacity of the \ref particle_node / \ref local_index. */
 extern int  max_particle_node;
 /** Used only on master node: particle->node mapping. */
 extern int  *particle_node;
+/** id->particle mapping on all nodes. */
+Particle   **local_particles;
 
 /************************************************
  * functions
@@ -112,17 +117,11 @@ void realloc_particles(ParticleList *plist, int size);
     not in this list */
 Particle *got_particle(ParticleList *plist, int id);
 
-/** add a particle and initialize it.
-    \param plist the list on which to operate
-    \param id the identity of the particle to add
-    \return a pointer to the new particle */
-Particle *add_particle(ParticleList *plist, int id);
-
 /** append a particle at the end of a particle List.
     reallocates particles if necessary!
     \param plist List to append the particle to.
     \param part  Particle to append. */
-void append_particle(ParticleList *plist, Particle part);
+void append_particle(ParticleList *plist, Particle *part);
 
 /** remove a particle from one particle List and append it to  another.
     Refill the destList with last particle. 
@@ -131,7 +130,7 @@ void append_particle(ParticleList *plist, Particle part);
     \param sourceList List where the particle will be removed.
     \param ind        Index of the particle in the sourceList.
  */
-void move_particle(ParticleList *destList,ParticleList *sourceList, int ind);
+void move_particle(ParticleList *destList, ParticleList *sourceList, int ind);
 
 /** allocate space for a particle.
     \param plist the list on which to operate
@@ -181,5 +180,11 @@ void build_particle_node();
     at the beginning of the integration.
 */
 void particle_finalize_data();
+
+/** initialize the \ref local_particles structure. Called from \ref integrate_vv_init */
+void local_particles_init();
+
+/** free the \ref local_particles structure. Called from \ref integrate_vv_exit */
+void local_particles_exit();
 
 #endif

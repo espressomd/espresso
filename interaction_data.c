@@ -134,8 +134,6 @@ void make_particle_type_exist(int type)
   if (ns <= n_particle_types)
     return;
 
-  realloc_ia_params(ns);
-
   mpi_bcast_n_particle_types(ns);
 }
 

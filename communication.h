@@ -90,18 +90,16 @@ void mpi_bcast_parameter(int i);
 /** Issue REQ_WHO_HAS: ask nodes for their attached particles. */
 void mpi_who_has();
 
-/** Issue REQ_ATTACH: move particle to a node.
-    \param part the particle to move.
-    \param node the node to attach it to.
-*/
-void mpi_attach_particle(int part, int node);
+/** Issue REQ_CHTOPL: call this if you change the topology (box, grid, etc.).
+ */
+void mpi_changed_topology();
 
-/** Issue REQ_SET_POS: send particle position.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param pos its new position.
+/** Issue REQ_PLACE: move particle to a position on a node.
+    \param id   the particle to move.
+    \param node the node to attach it to.
+    \param pos  the particles position.
 */
-void mpi_send_pos(int node, int part, double pos[3]);
+void mpi_place_particle(int node, int id, double pos[3]);
 
 /** Issue REQ_SET_V: send particle velocity.
     \param part the particle.
@@ -176,7 +174,7 @@ void mpi_bcast_n_particle_types(int s);
     \param job what to do:
     <ul>
     <li> 0 gather \ref minimum_part_dist
-    <li> 1 gather coordinates in float format
+    <li> 1 gather coordinates in packed float format (imd)
     </ul>
     \param result where to store the gathered value(s):
     <ul>
@@ -185,6 +183,7 @@ void mpi_bcast_n_particle_types(int s);
     </ul>
 */
 void mpi_gather_stats(int job, void *result);
+
 /*@}*/
 
 #endif

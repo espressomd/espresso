@@ -156,7 +156,7 @@ void cells_re_init()
     if(old_n_cells == 1 || is_inner_cell(i,old_ghost_cell_grid)) {
       for(j=0; j<old_cells[i].pList.n; j++) {
 	ind = pos_to_cell_grid_ind(old_cells[i].pList.part[j].r.p);
-	append_particle(&(cells[ind].pList),old_cells[i].pList.part[j]);
+	append_particle(&(cells[ind].pList),&(old_cells[i].pList.part[j]));
       }
       if(old_cells[i].pList.max>0) free(old_cells[i].pList.part);
       if(old_cells[i].n_neighbors>0) {
@@ -215,6 +215,56 @@ void cells_exit()
   cells_init_flag = CELLS_FLAG_START;
   cells_pre_init(); 
 
+}
+
+
+/*************************************************/
+
+Particle *cells_got_particle(int id)
+{
+  int i;
+  Particle *r;
+  for (i = 0; i < n_cells; i++) {
+    if ((r = got_particle(&cells[i].pList, id)))
+      return r;
+  }
+  return NULL;
+}
+
+/*************************************************/
+
+Particle *cells_alloc_particle(int id, double pos[3])
+{
+  int ind = pos_to_cell_grid_ind(pos);
+  Particle *pt = alloc_particle(&cells[ind].pList);
+  pt->r.identity = id;
+  pt->r.type = 0;
+  pt->r.q    = 0;
+  pt->r.f[0] = 0;
+  pt->r.f[1] = 0;
+  pt->r.f[2] = 0;
+  pt->i[0]   = 0;
+  pt->i[1]   = 0;
+  pt->i[2]   = 0;
+  pt->v[0]   = 0;
+  pt->v[1]   = 0;
+  pt->v[2]   = 0;
+  memcpy(pt->r.p, pos, 3*sizeof(double));
+  return pt;
+}
+
+/*************************************************/
+void cells_changed_topology()
+{
+}
+
+/*************************************************/
+int cells_get_n_particles()
+{
+  int cnt = 0, m, n, o;
+  INNER_CELLS_LOOP(m, n, o)
+    cnt += CELL_PTR(m, n, o)->pList.n;
+  return cnt;
 }
 
 
@@ -330,7 +380,8 @@ void init_cell_neighbors(int i)
 	  if(j >= i) {
 	    cells[i].nList[j].cell_ind = j;
 	    cells[i].nList[j].pList = &(cells[j].pList);
-	    realloc_pairList(&(cells[i].nList[j].vList), 1);
+	    cells[i].nList[j].vList.n = 0;
+	    cells[i].nList[j].vList.pair = NULL;
 	    cnt++;
 	  }
 	}

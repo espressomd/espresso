@@ -182,9 +182,39 @@ void sort_particles_into_cells();
     free space for linked cell structure.  */
 void cells_exit();
 
+/** calculate and return the total number of particles on this node. */
+int cells_get_n_particles();
+
+/** search for a specific particle in all cells.
+    \param id the identity of the particle to search
+    \return a pointer to the particle structure or NULL if particle is
+    not in this list */
+Particle *cells_got_particle(int id);
+
+/** allocate space for a particle.
+    \param id the identity of the new particle
+    \param pos its position
+    \return the new particle structure */
+Particle *cells_alloc_particle(int id, double pos[3]);
+
 /** Callback for setmd maxnumcells (maxnumcells >= 27). 
     see also \ref max_num_cells */
 int max_num_cells_callback(Tcl_Interp *interp, void *_data);
+
+/** Convience replace for loops over all particles. */
+#define INNER_CELLS_LOOP(m,n,o) \
+  for(m=1; m<cell_grid[0]+1; m++) \
+    for(n=1; n<cell_grid[1]+1; n++) \
+      for(o=1; o<cell_grid[2]+1; o++)
+
+/** Convience replace for loops over all particles and ghosts. */
+#define CELLS_LOOP(m,n,o) \
+  for(m=0; m<ghost_cell_grid[0]; m++) \
+    for(n=0; n<ghost_cell_grid[1]; n++) \
+      for(o=0; o<ghost_cell_grid[2]; o++)
+
+/** get a pointer to the cell associated with the cell coordinates */
+#define CELL_PTR(m,n,o) (&cells[get_linear_index(m,n,o,ghost_cell_grid)])
 
 #endif
 

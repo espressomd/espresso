@@ -104,24 +104,24 @@ int writemd(ClientData data, Tcl_Interp *interp,
       /* fetch particle data */
       mpi_recv_part(node, p, &data);
       for (i = 0; i < 3; i++)
-	data.p[i] += data.i[i]*box_l[i];
+	data.r.p[i] += data.i[i]*box_l[i];
 
       /* write particle index */
       Tcl_Write(channel, (char *)&p, sizeof(int));
 
       for (i = 0; i < header.n_rows; i++) {
 	switch (row[i]) {
-	case POSX: Tcl_Write(channel, (char *)&data.p[0], sizeof(double)); break;
-	case POSY: Tcl_Write(channel, (char *)&data.p[1], sizeof(double)); break;
-	case POSZ: Tcl_Write(channel, (char *)&data.p[2], sizeof(double)); break;
+	case POSX: Tcl_Write(channel, (char *)&data.r.p[0], sizeof(double)); break;
+	case POSY: Tcl_Write(channel, (char *)&data.r.p[1], sizeof(double)); break;
+	case POSZ: Tcl_Write(channel, (char *)&data.r.p[2], sizeof(double)); break;
 	case VX:   Tcl_Write(channel, (char *)&data.v[0], sizeof(double)); break;
 	case VY:   Tcl_Write(channel, (char *)&data.v[1], sizeof(double)); break;
 	case VZ:   Tcl_Write(channel, (char *)&data.v[2], sizeof(double)); break;
-	case FX:   Tcl_Write(channel, (char *)&data.f[0], sizeof(double)); break;
-	case FY:   Tcl_Write(channel, (char *)&data.f[1], sizeof(double)); break;
-	case FZ:   Tcl_Write(channel, (char *)&data.f[2], sizeof(double)); break;
-	case Q:    Tcl_Write(channel, (char *)&data.q, sizeof(double)); break;
-	case TYPE: Tcl_Write(channel, (char *)&data.type, sizeof(int)); break;
+	case FX:   Tcl_Write(channel, (char *)&data.r.f[0], sizeof(double)); break;
+	case FY:   Tcl_Write(channel, (char *)&data.r.f[1], sizeof(double)); break;
+	case FZ:   Tcl_Write(channel, (char *)&data.r.f[2], sizeof(double)); break;
+	case Q:    Tcl_Write(channel, (char *)&data.r.q, sizeof(double)); break;
+	case TYPE: Tcl_Write(channel, (char *)&data.r.type, sizeof(int)); break;
 	}
       }
       free(data.bonds);
@@ -205,13 +205,13 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
   }
 
   while (!Tcl_Eof(channel)) {
-    Tcl_Read(channel, (char *)&data.identity, sizeof(int));
-    if (data.identity == -1)
+    Tcl_Read(channel, (char *)&data.r.identity, sizeof(int));
+    if (data.r.identity == -1)
       break;
 
     /* printf("id=%d\n", data.identity); */
 
-    if (data.identity < 0) {
+    if (data.r.identity < 0) {
       Tcl_AppendResult(interp, "illegal data format in data file \"", argv[1],
 		       "\", perhaps wrong file?",
 		       (char *) NULL);
@@ -221,21 +221,21 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
 
     for (i = 0; i < header.n_rows; i++) {
       switch (row[i]) {
-      case POSX: Tcl_Read(channel, (char *)&data.p[0], sizeof(double)); break;
-      case POSY: Tcl_Read(channel, (char *)&data.p[1], sizeof(double)); break;
-      case POSZ: Tcl_Read(channel, (char *)&data.p[2], sizeof(double)); break;
+      case POSX: Tcl_Read(channel, (char *)&data.r.p[0], sizeof(double)); break;
+      case POSY: Tcl_Read(channel, (char *)&data.r.p[1], sizeof(double)); break;
+      case POSZ: Tcl_Read(channel, (char *)&data.r.p[2], sizeof(double)); break;
       case   VX: Tcl_Read(channel, (char *)&data.v[0], sizeof(double)); break;
       case   VY: Tcl_Read(channel, (char *)&data.v[1], sizeof(double)); break;
       case   VZ: Tcl_Read(channel, (char *)&data.v[2], sizeof(double)); break;
-      case   FX: Tcl_Read(channel, (char *)&data.f[0], sizeof(double)); break;
-      case   FY: Tcl_Read(channel, (char *)&data.f[1], sizeof(double)); break;
-      case   FZ: Tcl_Read(channel, (char *)&data.f[2], sizeof(double)); break;
-      case    Q: Tcl_Read(channel, (char *)&data.q, sizeof(double)); break;
-      case TYPE: Tcl_Read(channel, (char *)&data.type, sizeof(int)); break;
+      case   FX: Tcl_Read(channel, (char *)&data.r.f[0], sizeof(double)); break;
+      case   FY: Tcl_Read(channel, (char *)&data.r.f[1], sizeof(double)); break;
+      case   FZ: Tcl_Read(channel, (char *)&data.r.f[2], sizeof(double)); break;
+      case    Q: Tcl_Read(channel, (char *)&data.r.q, sizeof(double)); break;
+      case TYPE: Tcl_Read(channel, (char *)&data.r.type, sizeof(int)); break;
       }
     }
 
-    node = (data.identity <= max_seen_particle) ? particle_node[data.identity] : -1; 
+    node = (data.r.identity <= max_seen_particle) ? particle_node[data.r.identity] : -1; 
     if (node == -1) {
       if (!av_pos) {
 	Tcl_AppendResult(interp, "new particle without position data",
@@ -244,22 +244,21 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
 	return (TCL_ERROR);
       }
 
-      node = find_node(data.p);
-      mpi_attach_particle(data.identity, node);
-      map_particle_node(data.identity, node);
+      node = find_node(data.r.p);
+      map_particle_node(data.r.identity, node);
     }
 
     if (av_pos)
-      mpi_send_pos(node, data.identity, data.p);
+      mpi_place_particle(node, data.r.identity, data.r.p);
     if (av_q)
-      mpi_send_q(node, data.identity, data.q);
+      mpi_send_q(node, data.r.identity, data.r.q);
     if (av_v)
-      mpi_send_v(node, data.identity, data.v);
+      mpi_send_v(node, data.r.identity, data.v);
     if (av_f)
-      mpi_send_f(node, data.identity, data.f);
+      mpi_send_f(node, data.r.identity, data.r.f);
     if (av_type) {
-      make_particle_type_exist(data.type);
-      mpi_send_type(node, data.identity, data.type);
+      make_particle_type_exist(data.r.type);
+      mpi_send_type(node, data.r.identity, data.r.type);
     }
   }
 

@@ -32,23 +32,23 @@ int rebuild_verletlist;
  *  \param p2 Pointer to paricle two.
  *  \param vl Pointer to the verlet pair list.
  */
-MDINLINE void add_pair(PairList *vl, Particle *p1, Particle *p2)
+MDINLINE void add_pair(PairList *pl, Particle *p1, Particle *p2)
 {
   /* check size of verlet List */
-  if( (*vl).n+1 > (*vl).max ) {
-    (*vl).max += LIST_INCREMENT;
-    (*vl).pair = (Particle **)realloc((*vl).pair, 2*sizeof(Particle *)*(*vl).max);
+  if(pl->n >= pl->max) {
+    pl->max += LIST_INCREMENT;
+    pl->pair = (Particle **)realloc(pl->pair, 2*pl->max*sizeof(Particle *));
   }
   /* add pair */
-  (*vl).pair[(*vl).n * 2]       = p1;
-  (*vl).pair[((*vl).n * 2) + 1] = p2;
+  pl->pair[2*pl->n  ] = p1;
+  pl->pair[2*pl->n+1] = p2;
   /* increase number of pairs */
-  (*vl).n++;
+  pl->n++;
 }
 
 /** Resizes a verlet pair list according to the actual content (*vl).n. 
     \param vl Pointer to the verlet pair list. */
-void resize_verlet_list(PairList *vl);
+void resize_verlet_list(PairList *pl);
 
 /*@}*/
 
@@ -56,40 +56,48 @@ void resize_verlet_list(PairList *vl);
 
 void build_verlet_list()
 {
-  int c, nc, p1, p2;
-  ParticleList *pl1, *pl2;
-  PairList *vl;
+  Cell *cell;
+  PairList *pl;
+  int i,j,nc;
+  /* cell position */
+  int m,n,o;
+  /* particle lists */
+  Particle *p1, *p2;
+  int np1, np2;
+  /* pair distance square */
   double dist2;
 
   VERLET_TRACE(fprintf(stderr,"%d: build_verlet_list:\n",this_node));
 
-  /* loop cells */
-  for(c=0; c<n_cells; c++) {
-    pl1 = &(cells[c].pList);
-    /* loop neighbor cells */
-    for(nc=0; nc<cells[c].n_neighbors; nc++) {
-      pl2 = cells[c].nList[nc].pList;
-      vl  = &(cells[c].nList[nc].vList);
-      /* loop cell particles */
-      for(p1=0; p1<(*pl1).n; p1++) {
+  INNER_CELLS_LOOP(m, n, o) {
+    cell = CELL_PTR(m, n, o);
+    p1   = cell->pList.part;
+    np1  = cell->pList.n;
+
+    for(nc=0; nc < cell->n_neighbors; nc++) {
+      pl  = &cell->nList[nc].vList;
+      p2  = cell->nList[nc].pList->part;
+      np2 = cell->nList[nc].pList->n;
+      for(i=0; i < np1; i++) {
 	/* set 'new old' coordinates */
-	if(nc==0) memcpy((*pl1).part[p1].p_old, 
-			 (*pl1).part[p1].r.p, 3*sizeof(double));
-	/* loop neighbor cell particles */
-	for(p2=0; p2<(*pl2).n; p2++) {
-	  dist2 = distance2((*pl1).part[p1].r.p, (*pl2).part[p2].r.p);
+	if(nc == 0) memcpy(p1[i].p_old, 
+			   p1[i].r.p, 3*sizeof(double));
+
+	for(j = 0; j < np2; j++) {
+	  dist2 = distance2(p1[i].r.p,p2[j].r.p);
 	  if(dist2 <= max_range2) {
-	    add_pair(vl, &((*pl1).part[p1]), &((*pl2).part[p2]));
+	    add_pair(pl, &p1[i], &p2[j]);
 	  }
 	}
       }
-      resize_verlet_list(vl);
+      /* make the verlet list smaller again, if possible */
+      resize_verlet_list(pl);
     }
   }
 
 #ifdef VERLET_DEBUG 
   {
-    int sum,tot_sum=0;
+    int c, sum,tot_sum=0;
     fprintf(stderr,"%d: Verlet list sizes: \n",this_node);
     for(c=0; c<n_cells; c++) { 
       sum=0;
@@ -102,31 +110,19 @@ void build_verlet_list()
     fprintf(stderr,"%d: total number of interaction pairs: %d\n",this_node,tot_sum)
   }
 #endif 
-
   rebuild_verletlist = 0;
-}
-
-/* preliminary routine ! */
-void realloc_pairList(PairList *list, int size)
-{
-  int b_size;
-  b_size = (LIST_INCREMENT*((size / LIST_INCREMENT)+1));
-  if(b_size != (*list).max && b_size > (*list).n) {
-    (*list).pair = (Particle **) realloc((*list).pair, 2*sizeof(Particle *)*b_size);
-    (*list).max = b_size;
-  }
 }
 
 /************************************************************/
 
-void resize_verlet_list(PairList *vl)
+void resize_verlet_list(PairList *pl)
 {
   int diff;
-  diff = (*vl).max - (*vl).n;
+  diff = pl->max - pl->n;
   if( diff > 2*LIST_INCREMENT ) {
     diff = (diff/LIST_INCREMENT)-1;
-    (*vl).max -= diff*LIST_INCREMENT;
-    (*vl).pair = (Particle **)realloc((*vl).pair, 2*sizeof(Particle *)*(*vl).max);
+    pl->max -= diff*LIST_INCREMENT;
+    pl->pair = (Particle **)realloc(pl->pair, 2*pl->max*sizeof(Particle *));
   }
 }
 
@@ -144,6 +140,3 @@ int rebuild_vlist_callback(Tcl_Interp *interp, void *_data)
   mpi_bcast_parameter(FIELD_VERLET);
   return (TCL_OK);
 }
-
-
-

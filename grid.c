@@ -13,6 +13,7 @@
 #include "debug.h"
 #include "communication.h"
 #include "verlet.h"
+#include "cells.h"
 #include "utils.h"
 /************************************************
  * defines
@@ -132,20 +133,32 @@ void calc_node_neighbors(int node)
   }
 }
 
-void changed_topology()
+/* executed on every node */
+void grid_changed_topology()
 {
   int i;
+  int node_pos[3];
+
+  /* this could also go to grid.c ! */
+  map_node_array(this_node,node_pos);    
   for(i = 0; i < 3; i++) {
     local_box_l[i] = box_l[i]/(double)node_grid[i]; 
+    my_left[i]   = node_pos[i]    *local_box_l[i];
+    my_right[i]  = (node_pos[i]+1)*local_box_l[i];    
   }
 
-  rebuild_verletlist = 1;
+  cells_changed_topology();
 
+  rebuild_verletlist = 1;
+}
+
+void changed_topology()
+{
   /* a little bit of overkill, but safe */
   mpi_bcast_parameter(FIELD_NGRID);
   mpi_bcast_parameter(FIELD_BOXL);
-  mpi_bcast_parameter(FIELD_LBOXL);
   mpi_bcast_parameter(FIELD_VERLET);
+  mpi_changed_topology();
 }
 
 void calc_minimal_box_dimensions()
