@@ -52,6 +52,7 @@ int initialize(Tcl_Interp *interp)
     Tcl_CreateCommand(interp, "readmd", (Tcl_CmdProc *)readmd, 0, NULL);
     /* in file statistics.c */
     Tcl_CreateCommand(interp, "mindist", (Tcl_CmdProc *)mindist, 0, NULL);
+    Tcl_CreateCommand(interp, "analyze", (Tcl_CmdProc *)analyze, 0, NULL);
     /* in file imd.c */
     Tcl_CreateCommand(interp, "imd", (Tcl_CmdProc *)imd, 0, NULL);
     /* in file random.c */
