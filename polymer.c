@@ -96,15 +96,15 @@ int collision(double pos[3], double shield) {
 
 int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   /** Implementation of the tcl-command
-      polymer <N_P> <MPC> <bond_length> [start <part_id>] [mode { SAW | RW } [<shield> [<max_try>]]] 
+      polymer <N_P> <MPC> <bond_length> [start <part_id>] [pos <x> <y> <z>] [mode { SAW | RW } [<shield> [<max_try>]]] 
                                         [charge <val_cM>] [distance <cM_dist>] [types <type_nM> [<type_cM>]] [FENE <type_FENE>]
       Creates some polymer chains within the simulation box,
       and returns how often the attempt to place a monomer failed in the worst case.
       Parameters:  <N_P>         = how many polymers to create
                    <MPC>         = monomers per chain
                    <bond_length> = length of the bonds between two monomers
-                   <box_length>  = length of the simulation box
                    <part_id>     = particle number of the start monomer (defaults to '0')
+		   <pos>         = sets the position of the start monomer of the first chain (defaults to a randomly chosen value)
 		   <mode>        = selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW')
 		   <shield>      = shield around each particle another particle's position may not enter if using SAW (defaults to '0.0')
 		   <max_try>     = how often a monomer should be reset if current position collides with a previous particle (defaults to '30000')
@@ -113,7 +113,7 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 		   <type_{n|c}P> = type number of {neutral|charged} monomers to be used with "part" (default to '0' and '1')
 		   <type_FENE>   = type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0') 
       If <val_cM> < 1e-10, the charge is assumed to be zero, and <type_cM> = <type_nM>.                                                    */
-  int N_P, MPC; double bond_length; int part_id = 0; 
+  int N_P, MPC; double bond_length; int part_id = 0; double posx,posy,posz,*posed; posx=posy=posz=-1.; posed=NULL;
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_cM = 0.0; int cM_dist = 1, type_nM = 0, type_cM = 1, type_FENE = 0;
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -130,6 +130,16 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	if (part_id < 0) {
 	  Tcl_AppendResult(interp, "Index of polymer chain's first monomer must be positive (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
       i++;
+    }
+    /* [pos <x> <y> <z>] */
+    else if (!strncmp(argv[i], "pos", strlen(argv[i]))) {
+      if (i+3 < argc) { 
+	posed = malloc(3*sizeof(int));
+	if ((Tcl_GetDouble(interp, argv[i+1], &posx) == TCL_ERROR) || (Tcl_GetDouble(interp, argv[i+2], &posy) == TCL_ERROR) 
+	    || (Tcl_GetDouble(interp, argv[i+3], &posz) == TCL_ERROR)) { 
+	  Tcl_AppendResult(interp, "The first start monomers position must be double (got: ",argv[i+1],",",argv[i+2],",",argv[i+3],")!", (char *)NULL); 
+	  return (TCL_ERROR); } else { i+=3; } }
+      else { Tcl_AppendResult(interp, "The first start monomers position must be 3D!", (char *)NULL); return (TCL_ERROR); }
     }
     /* [mode { SAW | RW } [<shield> [max_try]]] */
     else if (!strncmp(argv[i], "mode", strlen(argv[i]))) {
@@ -176,10 +186,11 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
   }
   if (val_cM < 1e-10) { val_cM = 0.0; type_cM = type_nM; }
+  if (posed!=NULL) { posed[0] = posx; posed[1] = posy; posed[2] = posz; }
 
-  POLY_TRACE(printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE));
+  POLY_TRACE(printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed %f/%f/%f, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE));
 
-  tmp_try = polymerC(N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE);
+  tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE);
   if (tmp_try == -1) {
     sprintf(buffer, "Failed to find a suitable place for the start-monomer for %d times!\nAborting...\n",max_try); tmp_try = TCL_ERROR; }
   else if (tmp_try == -2) {
@@ -196,7 +207,7 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 
 
-int polymerC(int N_P, int MPC, double bond_length, int part_id, int mode, double shield, int max_try, 
+int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, int mode, double shield, int max_try, 
 	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE) {
   /** C implementation of 'polymer <N_P> <MPC> <bond_length> [options]',
       which returns how often the attempt to place a monomer failed in the worst case. */
@@ -207,14 +218,17 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, int mode, double
   for (p=0; p<N_P; p++) {
     for (cnt2=0; cnt2<max_try; cnt2++) {
       /* place start monomer */
-      for (cnt1=0; cnt1<max_try; cnt1++) {
-	pos[0]=box_l[0]*d_random();
-	pos[1]=box_l[1]*d_random();
-	pos[2]=box_l[2]*d_random();
-	if ((mode!=0) || (collision(pos, shield)==0)) break;
-	POLY_TRACE(printf("s"); fflush(NULL));
+      if ((p==0) && (posed!=NULL)) { pos[0]=posed[0]; pos[1]=posed[1]; pos[2]=posed[2]; }
+      else {
+	for (cnt1=0; cnt1<max_try; cnt1++) {
+	  pos[0]=box_l[0]*d_random();
+	  pos[1]=box_l[1]*d_random();
+	  pos[2]=box_l[2]*d_random();
+	  if ((mode!=0) || (collision(pos, shield)==0)) break;
+	  POLY_TRACE(printf("s"); fflush(NULL));
+	}
+	if (cnt1 >= max_try) return (-1);
       }
-      if (cnt1 >= max_try) return (-1);
       if (place_particle(part_id, pos)==TCL_ERROR) return (-3);
       if (set_particle_q(part_id, val_cM)==TCL_ERROR) return (-3);
       if (set_particle_type(part_id, type_cM)==TCL_ERROR) return (-3);
