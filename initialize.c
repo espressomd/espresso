@@ -175,8 +175,10 @@ static void init_tcl(Tcl_Interp *interp)
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");
+  fprintf(stderr,"%d: Script directory: %s\n",this_node,scriptdir);
   if (!scriptdir)
     scriptdir= "scripts";
+
 
   if ((getcwd(cwd, 1024) == NULL) || (chdir(scriptdir) != 0)) {
     fprintf(stderr,
