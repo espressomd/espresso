@@ -1,6 +1,8 @@
 /** \file lb.c  
  *  Lattice Boltzmann algorithm for solvent degrees of freedom.
  */
+
+
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,8 +25,9 @@
 #include "domain_decomposition.h"
 #include <signal.h>
 
-#define ONE           1.0
-#define ZERO          0.0
+
+#ifdef LB
+
 
 /* MPI tags for the lb communications: */
 /** Tag for communication in CopyPlane */
@@ -38,6 +41,159 @@
 #define PART_INCREMENT  32
 
 /* default parameters which are used in case you do not specify s.th else in the input file, for meaning, cf. itypes.h */
+
+/*******************************************************************/
+typedef signed int         T_INT32;
+
+#ifndef FALSE
+#define FALSE      ((LBT_BOOL)0)
+#endif
+
+#ifndef TRUE
+#define TRUE       ((LBT_BOOL)-1)
+#endif
+
+
+#define MAXCOMTYPE    4              /* max type of commands and max # of commands */
+#define MAXCOMMAND    20
+#define SPACE_DIM     3
+#define D_SPACE_DIM   3.0
+#define SQRT2         1.4142135624
+#define INVSQRT2      0.70710678119
+#define SPACE_DIM_INV 0.33333333333333
+#define MASSRATIO     0.5           /* mass ratio of fluid particles and monomers (fluid/mono) */
+#define max_corr      900           /* max. correlation time for fluid correlations */ 
+#define max_n_veloc   30            /* not more than 30 velocities for particles to take */
+#define MAX_CHAIN     1200         /* max. length of one chain */
+#define MAX_FOURIER   400           /* max. of k-vectors in StrFct calc. */
+#define MAX_FOUR      40           /* max. of k-vectors in Fourier transform. */
+#define N_MODE        3             /* number k-values for Fourier transform */
+#define BOTT          1e-10         /* for comparison with DOUBLE zero */   
+#define MAX_RANREPEATE 3
+
+
+/* data structure definitions for whole program */
+
+typedef int      T_IVECTOR [SPACE_DIM];
+typedef double   T_DVECTOR [SPACE_DIM];
+typedef double   T_DMATRIX [SPACE_DIM][SPACE_DIM];
+typedef T_INT32  T_GRIDPOS [SPACE_DIM+1];
+typedef double T_RANSTORE [MAX_RANREPEATE][SPACE_DIM];
+
+
+
+/* UNITS:
+ *  
+ * I. lattice part:
+ *
+ * length scale is fixed by a which is the grid distance (in LJ units)           *
+ * time   scale is fixed by tau which is the time step for propagation           *
+ * mass   of particles is always one                                             *
+ * energy scale is then given as a/tau^2                                         *
+ *                                                                               *
+ * in the lattice code all calculations are done with a and tau equal one,	 *
+ * the end results are then multiplied by suitable a and tau powers		 *
+ * to give the real world result and vice versa						 *
+ * for convenience, after all physical variables, the factor for transforming    *
+ * from lattice boltzmann to physical units is given.                            *
+
+ * II. polymer part:
+ *
+ * All stuff is in LJ units which is therefore what we called the real world     *
+ * above. in the coupling routine, we transform first the lattice results to     *
+ * LJ units and then backwards when calculating the fluid particle shift         *
+ * 
+ * By this procedure each part can work in units where most used constants r ONE */
+
+
+typedef struct {
+
+  int offset;
+  int doffset;
+  int stride;
+  int skip;
+  int nblocks;
+} T_PLANEINFO;
+
+
+
+void halo_init();
+
+/*
+** init halo stuff (plane information)
+**/
+
+
+void halo_update(); 
+/* 
+** update halo region
+**/
+
+
+void finishMPI();
+
+typedef enum  {TERM_continue = 0,
+	       TERM_kill     = 1, 
+	       TERM_cpulimit = 2,
+	       TERM_shutdown = 3,
+	       TERM_sysstop  = 4,
+	       TERM_error    = 5,
+	       TERM_ok       = 6} T_TERM_FLAG;
+
+
+void  InstallSignalHandler (void);
+/*
+** Install the signal handler for the program, which captures
+** SIG_STOP, SIG_CPULIM, SIG_SHUTDN signal and checks for
+** the existance of the 'sysStop' file.
+** If one of these conditions are fullfilled the handler
+** sets the terminate flag.
+*/
+
+T_TERM_FLAG Terminate (void);
+/*
+** Returns the status of the terminate flag
+*/
+		  
+void FatalError (int numPe, char* where, char* what);
+/*
+** Prints an error message and exits the program
+*/
+
+void RecoverableError (int numPe, char* where, char* what);
+/*
+** Prints an error message
+*/
+
+void Warning (int numPe, char* where, char* what);
+/*
+** Prints a warning message
+*/
+
+void ExitProgram (T_TERM_FLAG termFlag);
+/*
+** Stop the program, showing a message according to the status of 'termFlag'
+*/
+
+
+/*************************** some simple macros ******************************/
+
+#define sqr(a)         ((a)*(a))
+#define cube(a)        ((a)*(a)*(a))
+#define quad(a)        (((a)*(a))*((a)*(a)))
+
+#ifndef max
+#define max(a,b)       ((a) > (b) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b)       ((a) < (b) ? (a) : (b))
+#endif
+
+#define max3(a,b,c)    (max(max(a,b),c))
+#define min3(a,b,c)    (min(min(a,b),c))
+
+
 
 int     defaultgridpoints = 30;
 double  defaultrho        = 1.0;  
@@ -84,14 +240,14 @@ int      defaultchainlen    = 5000;
 int      n_abs_veloc;
 double   defaultfriction    = 20.;
 double   fluidstep;
-double   lambda;
+double   lblambda;
 double   viscos;
 double   c_sound_sq; 
-T_BOOL   defaultboundary   = FALSE;
-T_BOOL   fluct;
-T_BOOL   siminit = FALSE; 
-T_BOOL   boundary1;                        /* yes if there is some other than periodic boundary */
-T_BOOL   fixmom = FALSE;                        /* yes if there is some other than periodic boundary */
+LBT_BOOL   defaultboundary   = FALSE;
+LBT_BOOL   fluct;
+LBT_BOOL   siminit = FALSE; 
+LBT_BOOL   boundary1;                        /* yes if there is some other than periodic boundary */
+LBT_BOOL   fixmom = FALSE;                        /* yes if there is some other than periodic boundary */
 
 int*     n_abs_which;
 double*  coef_eq;  
@@ -137,7 +293,7 @@ T_TERM_FLAG terminateFlag = TERM_continue;
 T_IVECTOR nPesPerDir;              /* number of PEs in each Dir */
 T_IVECTOR offset;                  /* offset of local box */
 
-LB_structure  compar;                   /* this is the struct where all the parameters of the simulation are stored */
+LB_structure  lbpar;                   /* this is the struct where all the parameters of the simulation are stored */
 
 int    counter;                         /* current step after equilibration */ 
 int    ranseed;                         /* seed for random number generator */
@@ -151,7 +307,7 @@ int    chainlen,nMono;                  /* chainlength and # of chains to be sim
 int    gridbegin;                       /* local start of real info (w.o. halo */
 int    gridsurface;                     /* surface of loacl box */
 int    Npart;        /* number of particles */
-double friction,noise;                  /* obvious */
+double lbfriction,lbnoise;                  /* obvious */
 double agrid,tau;                       /* lattice length & time (in LJ units) */
 double current_time;                    /* current time (LJ) */
 double ampl;                            /* amplitude for stochastic motion */
@@ -248,13 +404,13 @@ void freemem(void){
 
 #define MAXRANDINV (1.0/2147483647.0)
 static T_INT32 ibm = 1;
-
+/*
 static double mibmran (void) {
 
   ibm *= 16807;
   return ibm*MAXRANDINV;
 }
-
+*/
 /*
 static int GetLinearIndex (int multiIndex[], int vol[]) {
 
@@ -275,21 +431,21 @@ void ibmset (int iseed) {
 /*********  intialize important variables       **********************/
 static void InitCommand() {
 
-    compar.ranseed    = defaultranseed;
-    compar.current_type= defaultcurrent_type ;
-    strcpy(compar.currentpar,defaultcurrentpar);
+    lbpar.ranseed    = defaultranseed;
+    lbpar.current_type= defaultcurrent_type ;
+    strcpy(lbpar.currentpar,defaultcurrentpar);
 
-    compar.chainlen   = defaultchainlen;  
-    compar.boundary   = defaultboundary;
-    compar.lambda     = defaultlambda;
-    compar.c_sound_sq = defaultc_sound_sq; 
+    lbpar.chainlen   = defaultchainlen;  
+//    lbpar.boundary   = defaultboundary;
+    lbpar.lblambda     = defaultlambda;
+    lbpar.c_sound_sq = defaultc_sound_sq; 
 
-//    compar.agrid      = defaultagrid;       
-//    compar.rho        = defaultrho;
-//    compar.gridpoints = defaultgridpoints;
-//    compar.tau        = defaulttau;  		   
-//    compar.friction   = defaultfriction;
-//    compar.viscos     = defaultviscos  ;
+//    lbpar.agrid      = defaultagrid;       
+//    lbpar.rho        = defaultrho;
+//    lbpar.gridpoints = defaultgridpoints;
+//    lbpar.tau        = defaulttau;  		   
+//    lbpar.lbfriction   = defaultfriction;
+//    lbpar.viscos     = defaultviscos  ;
 }							       
 
 
@@ -327,7 +483,7 @@ if (!myNum) fflush(stdout);
 }
 	     
 
-void calcfields(double* n,T_BOOL calc_pi){
+void calcfields(double* n,LBT_BOOL calc_pi){
 
   /***********************************************************
    calculate hydrodynamic fields rho und j from distribution n
@@ -623,7 +779,7 @@ void new(){
 
   /*define variables  (maybe global variables later) */  
 
-  double   rho_bar=compar.rho;        
+  double   rho_bar=lbpar.rho;        
   T_IVECTOR* c_g=defaultc_g;
   int      i,k;
 
@@ -633,14 +789,14 @@ void new(){
 
   /* initialize global variables, allocate memory */
 
-  gridpoints = compar.gridpoints;
-  chainlen   = compar.chainlen;
+  gridpoints = lbpar.gridpoints;
+  chainlen   = lbpar.chainlen;
   n_veloc    = defaultn_veloc; 
-  boundary1   = compar.boundary;
+//  boundary1   = lbpar.boundary;
   if (boundary1)  { if(!myNum) fprintf(stderr,"ERROR in NEW: boundaries are specified but not included in this version\n"); ExitProgram(TERM_error);}
-  agrid      = compar.agrid;
-  tau        = compar.tau;
-  ranseed    = compar.ranseed;
+  agrid      = lbpar.agrid;
+  tau        = lbpar.tau;
+  ranseed    = lbpar.ranseed;
   gridpa     = gridpoints*agrid;
   invgridpa  = 1.0/gridpa;
 
@@ -673,7 +829,7 @@ void new(){
 
   /* setup the fields according to input parameters */
 
-  calccurrent(compar.current_type,compar.currentpar,gridpoints,j);   /* current field setup */
+  calccurrent(lbpar.current_type,lbpar.currentpar,gridpoints,j);   /* current field setup */
   for(i=0;i<xyzcube+gridsurface;i++) rho[i]=rho_bar*agrid*agrid*agrid/MASSRATIO;   /*  density setup + unit change */ 
 
 #if DEBUG
@@ -894,7 +1050,7 @@ static void propagate_n(){
 
 /**************************************************************/
 
-static void add_fluct(double lambda,double rho,double pi_lin[]){
+static void add_fluct(double lblambda,double rho,double pi_lin[]){
 
 
   /**************************************************************
@@ -948,7 +1104,7 @@ static void add_fluct(double lambda,double rho,double pi_lin[]){
  
 static void calc_collis(int n_abs_veloc,
 		 int* n_abs_which, double* coef_eq, int* c_abs_sq_g, 
-		 double c_sound_sq, double lambda,T_BOOL fluct){
+		 double c_sound_sq, double lblambda,LBT_BOOL fluct){
 
 
   /******************************************************************
@@ -966,7 +1122,7 @@ static void calc_collis(int n_abs_veloc,
 
 
   static int failcounter = 0;   /* counts the number of discarded randoms ONLY for D3Q18 */
-  T_BOOL badrandoms;              /* tells if randoms lead to negative n's ONLY for D3Q18 */
+  LBT_BOOL badrandoms;              /* tells if randoms lead to negative n's ONLY for D3Q18 */
 
   double   local_rho,rhoc_sq;
   T_DVECTOR  local_j;
@@ -1055,7 +1211,7 @@ static void calc_collis(int n_abs_veloc,
 #ifdef D3Q18
 
     {
-      double onepluslambda = 1.0 + lambda;
+      double onepluslambda = 1.0 + lblambda;
       rhoc_sq = local_rho*c_sound_sq;
       local_pi_lin[0] = onepluslambda*(local_pi_lin[0]-rhoc_sq);
       local_pi_lin[2] = onepluslambda*(local_pi_lin[2]-rhoc_sq);
@@ -1070,10 +1226,10 @@ static void calc_collis(int n_abs_veloc,
     rhoc_sq=local_rho*c_sound_sq;                     
     for(m=0;m<3;m++) {
       for(h=0;h<m;h++){
-	local_pi_lin[o]=(1.+lambda)*(local_pi_lin[o]);
+	local_pi_lin[o]=(1.+lblambda)*(local_pi_lin[o]);
 	o++;
       }
-      local_pi_lin[o]=rhoc_sq+(1.+lambda)*(local_pi_lin[o]-rhoc_sq);
+      local_pi_lin[o]=rhoc_sq+(1.+lblambda)*(local_pi_lin[o]-rhoc_sq);
       o++;
     }
 
@@ -1087,11 +1243,11 @@ static void calc_collis(int n_abs_veloc,
       help=rhoc_sq;
       help2=local_j[m]/local_rho;          
       help=local_j[m]*help2+rhoc_sq; 
-      local_pi[m][m]=help+(1.+lambda)*(local_pi[m][m]-help);
+      local_pi[m][m]=help+(1.+lblambda)*(local_pi[m][m]-help);
       trace_eq+=help;
       for(h=0;h<m;h++){  
 	help=local_j[h]*help2;
-	local_pi[m][h]=help+(1.+lambda)*(local_pi[m][h]-help);
+	local_pi[m][h]=help+(1.+lblambda)*(local_pi[m][h]-help);
       }
     }
 
@@ -1118,7 +1274,7 @@ static void calc_collis(int n_abs_veloc,
     }
     l=savel;
 
-    if (fluct) add_fluct(lambda,local_rho,local_pi_lin);         /* add random fluctuations to stress tensor */
+    if (fluct) add_fluct(lblambda,local_rho,local_pi_lin);         /* add random fluctuations to stress tensor */
 
 
     do {           /* add fluctuations only if they do not lead to neg. n's */
@@ -1278,7 +1434,7 @@ static void calc_collis(int n_abs_veloc,
 	  }
 	  l=savel;
  
-	  add_fluct(lambda,local_rho,local_pi_lin);         /* try new random fluctuations to stress tensor */
+	  add_fluct(lblambda,local_rho,local_pi_lin);         /* try new random fluctuations to stress tensor */
 	}
 	else {
 	  fprintf(stderr,"ERROR in calc_collis: n is getting negative and no random numbers are present (time: %f)\n",current_time);
@@ -1292,7 +1448,7 @@ static void calc_collis(int n_abs_veloc,
 
   l-=n_veloc;   /* update velocity distribution at one gridpoint */
   
-  if (fluct) add_fluct(lambda,local_rho,local_pi_lin);         /* add random fluctuations to stress tensor */
+  if (fluct) add_fluct(lblambda,local_rho,local_pi_lin);         /* add random fluctuations to stress tensor */
 
   off3=0;
     for(k=0;k<n_abs_veloc;k++){
@@ -1343,7 +1499,7 @@ static void calc_fourier(char* rawfilename){
   static double  kmin;
   static int     nx;
   static double  deltak;
-  static T_BOOL    virginity=TRUE;  
+  static LBT_BOOL    virginity=TRUE;  
   
 
   if (counter>=0){
@@ -1411,7 +1567,7 @@ void print_status(char* fromroutine){
   printf("| current    step: %d\n\n",counter);
   printf("| LB simulation parameters:\n");
   printf("| -------------------------\n");
-  printf("| lamdba       = %f\n",compar.lambda);
+  printf("| lamdba       = %f\n",lbpar.lblambda);
   printf("| gridpoints   = %d\n",gridpoints);
   printf("| a_grid(LJ)   = %f\n",agrid);
   printf("| t_grid(LJ)   = %f\n",tau);
@@ -1448,7 +1604,7 @@ void prerun(){
    Author: Ahlrichs, 30/10/97; Lobaskin 10/09/04
    *********************************************************/
 
-  double   viscos=compar.viscos;
+  double   viscos=lbpar.viscos;
   double   dummy[1];
   int i,k;
   
@@ -1456,43 +1612,43 @@ void prerun(){
   if (!myNum) printf("You're now in routine PRERUN\n");
 #endif
   /* initialization of global variables, unit transfers to grid units for fluid part */
-  agrid     = compar.agrid;
-  tau       = compar.tau;
+  agrid     = lbpar.agrid;
+  tau       = lbpar.tau;
 
   /* derived quantities for particles stuff */
 
   gridpa    = agrid*gridpoints;
   invgridpa = 1.0/gridpa; 
 
-  c_sound_sq = compar.c_sound_sq; 
+  c_sound_sq = lbpar.c_sound_sq; 
   n_abs_veloc= defaultn_abs_veloc;
   n_abs_which= defaultn_abs_which;
   c_g        = defaultc_g;
   coef_eq    = defaultcoef_eq;  
   c_abs_sq_g = defaultc_abs_sq_g;
 
-  if (compar.gridpoints!= gridpoints) {
+  if (lbpar.gridpoints!= gridpoints) {
     if (!myNum) fprintf(stderr,"*** ERROR in RUN: You are not allowed to change gridpoints in this stage");
     ExitProgram(TERM_error);
   }
   n_veloc    = defaultn_veloc; 
 
-  friction   = compar.friction;
-  noise      = sqrt(6.0*friction*temperature/time_step);
+  lbfriction   = lbpar.lbfriction;
+  lbnoise      = sqrt(6.0*lbfriction*temperature/time_step);
 
   /*  if ((defaultlambda-lambda)<BOTT){ lambda overrules viscosity as input par. */
-    lambda=-2./(6.*viscos*tau/(agrid*agrid)+1.);
-    compar.lambda=lambda;
+    lblambda=-2./(6.*viscos*tau/(agrid*agrid)+1.);
+    lbpar.lblambda=lblambda;
 
 #ifdef DB
-    printf("tau %f viscos %f agrid %f lambda %f\n",tau,viscos,agrid,lambda);
-    if (!myNum ) printf("prerun: lambda changed according to input viscosity new value: lambda = %f\n",lambda);
+    printf("tau %f viscos %f agrid %f lambda %f\n",tau,viscos,agrid,lblambda);
+    if (!myNum ) printf("prerun: lambda changed according to input viscosity new value: lambda = %f\n",lblambda);
 #endif        
     /*  }*/
   
   if (temperature>BOTT) {  /* fluctuating hydrodynamics ? */
     fluct=TRUE; 
-    ampl=sqrt(3.*2.*(-1./6.)*(2./lambda+1.)*temperature*lambda*lambda*tau*tau/(agrid*agrid*agrid*agrid*MASSRATIO)); 
+    ampl=sqrt(3.*2.*(-1./6.)*(2./lblambda+1.)*temperature*lblambda*lblambda*tau*tau/(agrid*agrid*agrid*agrid*MASSRATIO)); 
                                 /* amplitude for stochastic part, cf. Ladd + unit conversion */
                                 /* caveat:3 comes from the fact */       
                                 /* that random numbers must have variance 1  */ 
@@ -1564,7 +1720,7 @@ void prerun(){
   }
 #endif
 
-  ranseed=(myNum+1)*(compar.ranseed);   /* initialize ran3 */
+  ranseed=(myNum+1)*(lbpar.ranseed);   /* initialize ran3 */
   if (ranseed>0) {
 //    if (!myNum) fprintf(stderr, "WARNING: ranseed is positive -> changing sign\n");
     ranseed=-ranseed;
@@ -1580,8 +1736,8 @@ void prerun(){
 
   /*  if (boundary) InitBoundary(next,c_g,c_abs_sq_g);     initialize additional boundary */
 
-    friction = compar.friction;            /* equilibration with total friction */
-    noise = sqrt(6.0*friction*temperature/time_step);
+    lbfriction = lbpar.lbfriction;            /* equilibration with total friction */
+    lbnoise = sqrt(6.0*lbfriction*temperature/time_step);
 }
 
 /******************************************************************************/
@@ -1609,7 +1765,7 @@ void LB_propagate () {
 	fluidstep=0.;
 	calc_collis(n_abs_veloc, 
 		    n_abs_which, coef_eq, c_abs_sq_g, c_sound_sq, 
-		    lambda,fluct);
+		    lblambda,fluct);
 	halo_update();
 	propagate_n();   /* shift distribution  */
         halo_update();
@@ -1799,18 +1955,18 @@ void calc_fluid_chain_interaction(int iamghost){
 
   double* nlocal;
 
-  T_BOOL badrandoms;
+  LBT_BOOL badrandoms;
   static int failcounter = 0;
   int localfails;
     
   for (ip=0;ip<nMono+MAX_RANREPEATE;ip++) {
     for (jp=0;jp<MAX_RANREPEATE;jp++) {
-      store_rans[ip][jp][0] = noise*(2.0*d_random()-1.0);
-      store_rans[ip][jp][1] = noise*(2.0*d_random()-1.0);
-      store_rans[ip][jp][2] = noise*(2.0*d_random()-1.0);
+      store_rans[ip][jp][0] = lbnoise*(2.0*d_random()-1.0);
+      store_rans[ip][jp][1] = lbnoise*(2.0*d_random()-1.0);
+      store_rans[ip][jp][2] = lbnoise*(2.0*d_random()-1.0);
     }
   }
-  store_rans[nMono+MAX_RANREPEATE-1][MAX_RANREPEATE-1][0] = -1.0-noise; /* for checking if store of random number is used up */
+  store_rans[nMono+MAX_RANREPEATE-1][MAX_RANREPEATE-1][0] = -1.0-lbnoise; /* for checking if store of random number is used up */
 
   for(jp=0;jp<nMono;jp++){
 
@@ -1822,9 +1978,9 @@ void calc_fluid_chain_interaction(int iamghost){
     y_int=(xint[jp][1]);
     z_int=(xint[jp][2]);
 
-    help_x=ONE-xrel[jp][0];
-    help_y=ONE-xrel[jp][1];
-    help_z=ONE-xrel[jp][2];
+    help_x=1.0-xrel[jp][0];
+    help_y=1.0-xrel[jp][1];
+    help_z=1.0-xrel[jp][2];
 
     /* calculate fluid current at that point by linear interpolation */
 
@@ -1834,15 +1990,15 @@ void calc_fluid_chain_interaction(int iamghost){
     help_index_y=(neighbor[y_int][1]-y_int)*yperiod;
     help_index_z=(neighbor[z_int][2]-z_int)*zperiod;
    
-    save_j[0]=ZERO;    /* interpolated value of u (!) at monomer pos. */
-    save_j[1]=ZERO;
-    save_j[2]=ZERO;
+    save_j[0]=0.0;    /* interpolated value of u (!) at monomer pos. */
+    save_j[1]=0.0;
+    save_j[2]=0.0;
 
     off4 = 0;
     for(k=0;k<2;k++){
       for(l=0;l<2;l++){
 	for(m=0;m<2;m++){
-	  help_rho = ONE/rho[index];
+	  help_rho = 1.0/rho[index];
 	  save_j[0] += help_x*help_y*help_z*j[index][0]*help_rho;
 	  save_j[1] += help_x*help_y*help_z*j[index][1]*help_rho;
 	  save_j[2] += help_x*help_y*help_z*j[index][2]*help_rho;
@@ -1852,15 +2008,15 @@ void calc_fluid_chain_interaction(int iamghost){
 	  off4+=18;
 	  
 	  index+=help_index_x;
-	  help_x=ONE-help_x;
+	  help_x=1.0-help_x;
 	  help_index_x=-help_index_x;
 	}
 	index+=help_index_y;
-	help_y=ONE-help_y;
+	help_y=1.0-help_y;
 	help_index_y=-help_index_y;
       }
       index+=help_index_z;
-      help_z=ONE-help_z;
+      help_z=1.0-help_z;
       help_index_z=-help_index_z;
     }
     index18 = index*n_veloc;
@@ -1875,7 +2031,7 @@ void calc_fluid_chain_interaction(int iamghost){
 
     for(i=0;i<3;i++) {   /* friction forces from velocity differ. */
       
-      local_j[i] = -friction*(v[jp][i]-agrid*invh*save_j[i]);  
+      local_j[i] = -lbfriction*(v[jp][i]-agrid*invh*save_j[i]);  
 #ifdef DB
       printf("i %d  v[i] %12.6e %12.6e %12.6e save_j[i] %12.6e  local %12.6e rans %f\n",jp,v[jp][i],agrid,invh,save_j[i],local_j[i],store_rans[ip][0][i]);
 #endif
@@ -1936,7 +2092,7 @@ void calc_fluid_chain_interaction(int iamghost){
 	    if (*nlocal++<0.0) { 
 	      if (failcounter%999==0) {fprintf(stdout,
 	      "Warning: %d n negative (fluid_chain_interaction=> new randoms (time: %f, failcounter: %d) noise %f\n",
-	      this_node, current_time,failcounter,noise); 
+	      this_node, current_time,failcounter,lbnoise); 
 	      }
 	      badrandoms = TRUE; localfails++;
 	      store_rans[ip][0][0] = store_rans[ip][localfails][0]; 
@@ -1944,7 +2100,7 @@ void calc_fluid_chain_interaction(int iamghost){
 	      store_rans[ip][0][2] = store_rans[ip][localfails][2];
 	      failcounter++; 
 
-	      if (store_rans[ip][0][0]<-noise) {
+	      if (store_rans[ip][0][0]<-lbnoise) {
 		fprintf(stderr, "%d ERROR in calc_fluid_chain_interaction: too many ranfails => INCREASE MAX_RANREPEATE\n",this_node);
 		ExitProgram(TERM_error);
 	      } 
@@ -1958,7 +2114,7 @@ void calc_fluid_chain_interaction(int iamghost){
 	      store_rans[ip][0][1] = store_rans[ip][localfails][1]; 
 	      store_rans[ip][0][2] = store_rans[ip][localfails][2];
               failcounter++; 
-              if (store_rans[ip][0][0]<-noise) { 
+              if (store_rans[ip][0][0]<-lbnoise) { 
                 fprintf(stderr, "ERROR in calc_fluid_chain_interaction: too many ranfails=> INCREASE MAX_RANREPEATE\n"); 
                 ExitProgram(TERM_error); 
               }
@@ -1973,7 +2129,7 @@ void calc_fluid_chain_interaction(int iamghost){
 	      store_rans[ip][0][1] = store_rans[ip][localfails][1]; 
 	      store_rans[ip][0][2] = store_rans[ip][localfails][2];
               failcounter++;  
-              if (store_rans[ip][0][0]<-noise) {  
+              if (store_rans[ip][0][0]<-lbnoise) {  
                 fprintf(stderr, "ERROR in calc_fluid_chain_interaction: too many ranfails=> INCREASE MAX_RANREPEATE\n");  
                 ExitProgram(TERM_error);  
               }
@@ -2013,15 +2169,15 @@ void calc_fluid_chain_interaction(int iamghost){
 #endif
 
 	  index18+=help_index_x;
-	  help_x=ONE-help_x;
+	  help_x=1.0-help_x;
 	  help_index_x=-help_index_x;
 	}
 	index18+=help_index_y;
-	help_y=ONE-help_y;
+	help_y=1.0-help_y;
 	help_index_y=-help_index_y;
       }
       index18+=help_index_z;
-      help_z=ONE-help_z;
+      help_z=1.0-help_z;
       help_index_z=-help_index_z;
     }      
 
@@ -2256,3 +2412,4 @@ void ExitProgram (T_TERM_FLAG why) {
   }
 }
 
+#endif /* LB */

@@ -1805,19 +1805,21 @@ void mpi_sync_topo_part_info_slave(int node,int parm ) {
 
 }
 
-int lb_set_params(double temp, double friction, double viscosity, double tgrid,
+int lb_set_params(double temp, double lbfriction, double viscosity, double tgrid,
 		  double density, double agrid)
 {
-  temperature     = temp;
-  compar.friction = friction;
-  compar.viscos   = viscosity;
-  compar.agrid    = agrid;
-  compar.tau        = tgrid;
-  compar.rho        = density;  
-  compar.gridpoints = box_l[2]/agrid;  
+#ifdef LB
+  temperature      = temp;
+  lbpar.lbfriction = lbfriction;
+  lbpar.viscos     = viscosity;
+  lbpar.agrid      = agrid;
+  lbpar.tau        = tgrid;
+  lbpar.rho        = density;  
+  lbpar.gridpoints = box_l[2]/agrid;  
 
   mpi_issue(REQ_LB_BCAST, 1, 0);
   mpi_bcast_lb_params_slave(-1, 0);
+#endif  
   return TCL_OK;
 }
 
@@ -1825,9 +1827,10 @@ int lb_set_params(double temp, double friction, double viscosity, double tgrid,
 void mpi_bcast_lb_params_slave(int node, int parm)
 {
   /* broadcast lb parameters */
-  
-  MPI_Bcast(&compar, sizeof(LB_structure), MPI_BYTE, 0, MPI_COMM_WORLD);
+#ifdef LB  
+  MPI_Bcast(&lbpar, sizeof(LB_structure), MPI_BYTE, 0, MPI_COMM_WORLD);
   thermo_init_lb();
+#endif  
 }
 
 /******************* REQ_GET_ERRS ********************/

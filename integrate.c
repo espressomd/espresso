@@ -364,7 +364,9 @@ void integrate_vv(int n_steps)
      Calculate forces f(t) as function of positions p(t) ( and velocities v(t) ) */
   if (recalc_forces) {
     thermo_heat_up();
+#ifdef LB
     transfer_momentum = 0;
+#endif    
     force_calc(); 
 #ifdef ROTATION
     convert_initial_torques();
@@ -430,7 +432,9 @@ void integrate_vv(int n_steps)
 
     /* Integration Step: Step 3 of Velocity Verlet scheme:
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities v(t+0.5*dt) ) */
+#ifdef LB
     transfer_momentum = 1;
+#endif    
     force_calc();
 
     /* Communication step: ghost forces */

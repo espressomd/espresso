@@ -285,15 +285,15 @@ int thermo_print(Tcl_Interp *interp)
   if(thermo_switch & THERMO_LB) {
     Tcl_PrintDouble(interp, temperature, buffer);
     Tcl_AppendResult(interp,"{ lb ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, compar.friction, buffer);
+    Tcl_PrintDouble(interp, lbpar.lbfriction, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, compar.viscos, buffer);
+    Tcl_PrintDouble(interp, lbpar.viscos, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, compar.tau, buffer);
+    Tcl_PrintDouble(interp, lbpar.tau, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, compar.rho, buffer);
+    Tcl_PrintDouble(interp, lbpar.rho, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, compar.agrid, buffer);
+    Tcl_PrintDouble(interp, lbpar.agrid, buffer);
     Tcl_AppendResult(interp," ",buffer, " } ", (char *)NULL);
   }
 #endif
@@ -439,8 +439,8 @@ void thermo_cool_down()
 
 int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
 {
-  double temp, friction, viscosity, tgrid, density, agrid, gamma = 0.0;
-
+#ifdef LB
+  double temp, lbfriction, viscosity, tgrid, density, agrid, gamma = 0.0;
   /* get lb interaction type */
   if (argc < 7) {
     Tcl_AppendResult(interp, "lattice-Boltzmann needs 6 parameters: "
@@ -451,7 +451,7 @@ int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
 
   /* copy lattice-boltzmann parameters */
   if ((! ARG_IS_D(1, temp))   ||
-      (! ARG_IS_D(2, friction))   ||
+      (! ARG_IS_D(2, lbfriction))   ||
       (! ARG_IS_D(3, viscosity))   ||
       (! ARG_IS_D(4, tgrid))   ||
       (! ARG_IS_D(5, density)) ||
@@ -462,7 +462,7 @@ int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
     return TCL_ERROR;
   }
 
-  if ( temp < 0.0 ||  viscosity <= 0.0 ||  density <= 0.0 || friction <= 0.0 || tgrid < 0.0 || agrid < 0.0 )
+  if ( temp < 0.0 ||  viscosity <= 0.0 ||  density <= 0.0 || lbfriction <= 0.0 || tgrid < 0.0 || agrid < 0.0 )
   {
     Tcl_AppendResult(interp, "these parameters must be non-negative "
 		     "<temperature> <friction> <viscosity> <tgrid> <density> <gridsize> ",
@@ -471,7 +471,7 @@ int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
   }
 	
   Tcl_ResetResult(interp);
-  if (lb_set_params(temp, friction, viscosity, tgrid, density, agrid) == TCL_ERROR) {
+  if (lb_set_params(temp, lbfriction, viscosity, tgrid, density, agrid) == TCL_ERROR) {
     Tcl_AppendResult(interp, "lb simulation set", (char *) NULL);
     return 0;
   }
@@ -480,6 +480,6 @@ int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
   if(langevin_gamma_callback(interp, &gamma) == TCL_ERROR) return (TCL_ERROR);
   thermo_switch = ( (thermo_switch ^ THERMO_LANGEVIN) | THERMO_LB);
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
-
+#endif LB
   return TCL_OK;
 }
