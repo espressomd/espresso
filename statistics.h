@@ -120,11 +120,27 @@ void calc_internal_dist(double **idf);
     @param idf contains <tt>idf[0],...,idf[chain_length-1]</tt> */
 void calc_internal_dist_av(double **idf);
 
-/** */
+/** calculates the bond length between two neighbouring monomers (i.e. idf[1] in \ref calc_internal_dist).
+    Chain information \ref chain_start etc. must be set!
+    @param bond_l returns the bond length */
 void calc_bond_l(double **_bond_l);
 
-/** */
+/** calculates the averaged bond length between two neighbouring monomers (i.e. idf[1] in \ref calc_internal_dist_av).
+    Chain information \ref chain_start etc. must be set!
+    @param bond_l returns the bond length */
 void calc_bond_l_av(double **_bond_l);
+
+/** calculates the internal distances within a chain measured from monomer <ind_n>.
+    Chain information \ref chain_start etc. must be set!
+    @param bdf   contains <tt>bdf[0],...,bdf[(chain_length-1) - ind_n]</tt> 
+    @param ind_n the index of the monomer from where all distances are taken */
+void calc_bond_dist(double **bdf, int ind_n);
+
+/** calculates the internal distances within a chain measured from monomer <ind_n> averaged over all configurations stored in \ref #configs.
+    Chain information \ref chain_start etc. must be set!
+    @param bdf contains <tt>bdf[0],...,bdf[(chain_length-1) - ind_n]</tt> 
+    @param ind_n the index of the monomer from where all distances are taken */
+void calc_bond_dist_av(double **bdf, int ind_n);
 
 /** calculate g123. chain information \ref chain_start etc. must be set!
     @param g1 contains g1
