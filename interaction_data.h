@@ -39,6 +39,7 @@
 #define CONSTRAINT_WAL 1
 #define CONSTRAINT_SPH 2
 #define CONSTRAINT_CYL 3
+#define CONSTRAINT_ROD 4
 
 /*@}*/
 
@@ -134,8 +135,6 @@ typedef struct {
 #ifdef CONSTRAINTS
 /** Parameters for a WALL constraint (or a plane if you like that more). */
 typedef struct {
-  /** origin for the plane. */
-  double pos[3];
   /** normal vector on the plane. */
   double n[3];
   /** distance of the wall from the origin. */
@@ -160,6 +159,17 @@ typedef struct {
   double rad;
 } Constraint_cylinder;
 
+/** Parameters for a ROD constraint. */
+typedef struct {
+  /** center of the cylinder in the x-y plane. */
+  double pos[2];
+  /** cylinder radius. */
+  double rad;
+  /** line charge density. Only makes sense if the axis along the rod is
+      periodically replicated */
+  double lambda;
+} Constraint_rod;
+
 /** Structure to specify a constraint. */
 typedef struct {
   /** type of the constraint. */
@@ -169,10 +179,12 @@ typedef struct {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
+    Constraint_rod rod;
   } c;
 
-  /** particle type of this constraint */
-  int particle_type;
+  /** particle representation of this constraint. Actually needed are only the identity,
+      the type and the force. */
+  Particle part_rep;
 } Constraint;
 #endif
 /*@}*/

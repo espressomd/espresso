@@ -12,13 +12,13 @@
 
 
 #ifdef CONSTRAINTS
-MDINLINE void add_wall_force(Particle *p1, Particle *c_p, Constraint_wall *c, int type)
+MDINLINE void add_wall_force(Particle *p1, Particle *c_p, Constraint_wall *c)
 {
   int i;
   double dist, vec[3];
   IA_parameters *ia_params;
 
-  ia_params=get_ia_param(p1->r.type, type);
+  ia_params=get_ia_param(p1->r.type, c_p->r.type);
 
   if (ia_params->LJ_eps > 0. ) {
     dist = -c->d;
@@ -26,102 +26,149 @@ MDINLINE void add_wall_force(Particle *p1, Particle *c_p, Constraint_wall *c, in
   
     for(i=0;i<3;i++) vec[i] = c->n[i]*dist;
   
-    if (dist > 0) {
-        add_lj_pair_force(p1, c_p, ia_params, vec, dist);
-    }
-    else if ((dist * c->d)< 0) {
-        fprintf(stderr,"CONSTRAINT WALL : ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-	    errexit();    
+    if (dist > 0)
+      add_lj_pair_force(p1, c_p, ia_params, vec, dist);
+    else {
+      fprintf(stderr,"CONSTRAINT WALL : ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+	      p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+      errexit();
     }
   }
 }
 
 
-MDINLINE void add_sphere_force(Particle *p1, Particle *c_p, Constraint_sphere *c, int type)
+MDINLINE void add_sphere_force(Particle *p1, Particle *c_p, Constraint_sphere *c)
 {
   int i;
-  double dist, vec[3], c_dist;
+  double fac, dist, vec[3], c_dist;
+
   IA_parameters *ia_params;
  
-  ia_params=get_ia_param(p1->r.type, type);
-
+  ia_params=get_ia_param(p1->r.type, c_p->r.type);
+ 
   if (ia_params->LJ_eps > 0. ) {
-    dist = c->rad;
     c_dist=0.0;
-  
     for(i=0;i<3;i++) {
-        vec[i] =  c->pos[i] - p1->r.p[i] ;
-        c_dist += SQR(vec[i]);
+      vec[i] = c->pos[i] - p1->r.p[i];
+      c_dist += SQR(vec[i]);
     }
 
     c_dist = sqrt(c_dist);
-    dist -= c_dist;
-  
-    /* Assume that if there is a particle at the center, there is no interaction with the constraint */
+    dist = c->rad - c_dist;
+
     if (dist > 0) {
-        for(i=0;i<3;i++) vec[i] *= (dist/c_dist);
-        add_lj_pair_force(p1, c_p, ia_params, vec, dist);
+      fac = dist / c_dist;
+      for(i=0;i<3;i++) vec[i] *= fac;  
+      add_lj_pair_force(p1, c_p, ia_params, vec, dist);
     }
-    else if (dist < 0) {
-        fprintf(stderr,"CONSTRAINT SPHERE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-	    errexit();
+    else {
+      fprintf(stderr,"CONSTRAINT SPHERE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+	      p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+      errexit();
     }
   }
 }
 
-MDINLINE void add_cylinder_force(Particle *p1, Particle *c_p, Constraint_cylinder *c, int type)
+MDINLINE void add_cylinder_force(Particle *p1, Particle *c_p, Constraint_cylinder *c)
 {
   int i;
-  double dist, vec[3], c_dist;
+  double fac, dist, vec[3], c_dist;
   IA_parameters *ia_params;
   
-  ia_params=get_ia_param(p1->r.type, type);
+  ia_params=get_ia_param(p1->r.type, c_p->r.type);
 
   if (ia_params->LJ_eps > 0. ) {
     /* put an infinite cylinder along z axis */
-    dist = c->rad;
     c_dist = 0.0;
-  
+    
     for(i=0;i<2;i++) {
-        vec[i] = c->pos[i] - p1->r.p[i];
-        c_dist += SQR(vec[i]);
+      vec[i] = c->pos[i] - p1->r.p[i];
+      c_dist += SQR(vec[i]);
     }
     vec[2] = 0.;
 
     c_dist = sqrt(c_dist);
-    dist -= c_dist;
-    /* Assume that if there is a particle at the center, there is no interaction with the constraint */
-    if ( dist > 0 ) {
-        for(i=0;i<3;i++) vec[i] *= (dist/c_dist);
-        add_lj_pair_force(p1, c_p, ia_params, vec, dist);
+    dist = c->rad - c_dist;
+
+    if (dist > 0) {
+      fac = dist / c_dist;
+      for(i=0;i<2;i++) vec[i] *= fac;
+      add_lj_pair_force(p1, c_p, ia_params, vec, dist);
     }
-    else if (dist < 0) {
-        fprintf(stderr,"CONSTRAINT CYLINDER: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-	    errexit();
+    else {
+      fprintf(stderr,"CONSTRAINT CYLINDER: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+	      p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+      errexit();
     }
+  }
+}
+
+MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
+{
+  int i;
+  double fac, dist, vec[3], c_dist;
+  IA_parameters *ia_params;
+  
+  ia_params=get_ia_param(p1->r.type, c_p->r.type);
+
+  if (ia_params->LJ_eps > 0. ) {
+    /* put an infinite cylinder along z axis */
+    c_dist = 0.0;
+
+    for(i=0;i<2;i++) {
+      vec[i] = p1->r.p[i] - c->pos[i];
+      c_dist += SQR(vec[i]);
+    }
+    vec[2] = 0.;
+
+    c_dist = sqrt(c_dist);
+    dist = c_dist - c->rad;
+
+    if (dist > 0) {
+      fac = dist / c_dist;
+      for(i=0;i<2;i++) vec[i] *= fac;
+      add_lj_pair_force(p1, c_p, ia_params, vec, dist);
+    }
+    else {
+      fprintf(stderr,"CONSTRAINT ROD: ERROR! part %d at (%.2e,%.2e,%.2e) within rod!\n",
+	      p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+      errexit();
+    }
+  }
+
+  /* charge stuff. This happens even if the particle does not feel the constraint. The electrostatic
+     formulas for pbc highly dislike partial interactions anyways */
+  if (coulomb.bjerrum > 0.0) {
+    fac = -2*coulomb.bjerrum*c->lambda*p1->r.q/c_dist;
+    p1->f[0]  += fac*vec[0];
+    p1->f[1]  += fac*vec[1];
+    c_p->f[0] -= fac*vec[0];
+    c_p->f[1] -= fac*vec[1];
   }
 }
 
 MDINLINE void add_constraints_forces(Particle *p1)
 {
   int n;
-  /* dummy particle for constraint. Later we will use this to
-     get the force information on the constraint */
-  Particle c_p;
 
   for(n=0;n<n_constraints;n++) {
-    c_p.r.identity = -n;
     switch(constraints[n].type) {
-    case CONSTRAINT_WAL: add_wall_force(p1, &c_p, &constraints[n].c.wal, constraints[n].particle_type); break;
-    case CONSTRAINT_SPH: add_sphere_force(p1, &c_p, &constraints[n].c.sph, constraints[n].particle_type); break;
-    case CONSTRAINT_CYL: add_cylinder_force(p1, &c_p, &constraints[n].c.cyl, constraints[n].particle_type); break;
+    case CONSTRAINT_WAL: add_wall_force(p1, &constraints[n].part_rep, &constraints[n].c.wal); break;
+    case CONSTRAINT_SPH: add_sphere_force(p1, &constraints[n].part_rep, &constraints[n].c.sph); break;
+    case CONSTRAINT_CYL: add_cylinder_force(p1, &constraints[n].part_rep, &constraints[n].c.cyl); break;
+    case CONSTRAINT_ROD: add_rod_force(p1, &constraints[n].part_rep, &constraints[n].c.rod); break;
     }
-  }  
+  }
 }
 #endif
 
+MDINLINE void init_constraint_forces()
+{
+  int n, i;
+  
+  for (n = 0; n < n_constraints; n++)
+    for (i = 0; i < 3; i++)
+      constraints[n].part_rep.f[i] = 0;
+}
 
 #endif

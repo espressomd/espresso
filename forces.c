@@ -181,6 +181,8 @@ void init_forces()
       }
     }
   }
+
+  init_constraint_forces();
 }
 
 

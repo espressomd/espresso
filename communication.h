@@ -257,6 +257,9 @@ void mpi_random_stat(int cnt, RandomStatus *stat);
 /** Issue REQ_BCAST_LJFORCECAP: initialize LJ force capping. */
 void mpi_lj_cap_forces(double force_cap);
 
+/** Issue REQ_GET_CONSFOR: get force acting on constraint */
+void mpi_get_constraint_force(int constraint, double force[3]);
+
 /** Issue REQ_BIT_RANDOM_SEED: read/set seed of the bit random number generators on each node. */
 void mpi_bit_random_seed(int cnt, int *seed);
 

@@ -93,19 +93,21 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_BIT_RANDOM_SEED 25
 /** Action number for \ref mpi_random_stat */
 #define REQ_BIT_RANDOM_STAT 26
+/** Action number for \ref mpi_get_constraint_force. */
+#define REQ_GET_CONSFOR 27
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 27
+#define REQ_MAXIMUM 28
 
 #ifdef DIPOLAR_INTERACTION
 /** Action number for \ref mpi_send_quat. */
-#define REQ_SET_QUAT 27
+#define REQ_SET_QUAT 28
 /** Action number for \ref mpi_send_lambda. */
-#define REQ_SET_LAMBDA 28
+#define REQ_SET_LAMBDA 29
 /** Action number for \ref mpi_send_torque. */
-#define REQ_SET_TORQUE 29
+#define REQ_SET_TORQUE 30
 /** Total number of action numbers. */
 #undef REQ_MAXIMUM
-#define REQ_MAXIMUM 30
+#define REQ_MAXIMUM 31
 #endif
 
 /** \name Slave Callbacks
@@ -143,6 +145,7 @@ void mpi_bcast_constraint_slave(int node, int parm);
 void mpi_random_seed_slave(int node, int parm);
 void mpi_random_stat_slave(int node, int parm);
 void mpi_lj_cap_forces_slave(int node, int parm);
+void mpi_get_constraint_force_slave(int node, int parm);
 void mpi_bit_random_seed_slave(int node, int parm);
 void mpi_bit_random_stat_slave(int node, int parm);
 /*@}*/
@@ -177,10 +180,11 @@ SlaveCallback *callbacks[] = {
   mpi_lj_cap_forces_slave,          /* 24: REQ_BCAST_LFC */
   mpi_bit_random_seed_slave,        /* 25: REQ_RANDOM_SEED */
   mpi_bit_random_stat_slave,        /* 26: REQ_RANDOM_STAT */
+  mpi_get_constraint_force_slave,   /* 27: REQ_GET_CONSFOR */
 #ifdef DIPOLAR_INTERACTION
-  mpi_send_quat_slave,              /* 27: REQ_SET_QUAT */
-  mpi_send_lambda_slave,            /* 28: REQ_SET_LAMBDA */
-  mpi_send_torque_slave,            /* 29: REQ_SET_TORQUE */
+  mpi_send_quat_slave,              /* 28: REQ_SET_QUAT */
+  mpi_send_lambda_slave,            /* 29: REQ_SET_LAMBDA */
+  mpi_send_torque_slave,            /* 30: REQ_SET_TORQUE */
 #endif  
 };
 
@@ -1290,6 +1294,18 @@ void mpi_lj_cap_forces_slave(int node, int parm)
   MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   calc_lj_cap_radii(lj_force_cap);
   on_ia_change();
+}
+
+/*************** REQ_GET_CONSFOR ************/
+void mpi_get_constraint_force(int cons, double force[3])
+{
+  mpi_issue(REQ_GET_CONSFOR, -1, cons);
+  MPI_Reduce(constraints[cons].part_rep.f, force, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+}
+
+void mpi_get_constraint_force_slave(int node, int parm)
+{
+  MPI_Reduce(constraints[parm].part_rep.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 }
 
 /*************** REQ_BIT_RANDOM_SEED ************/

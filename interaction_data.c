@@ -546,7 +546,7 @@ int dihedral_set_params(int bond_type, double bend)
   bonded_ia_params[bond_type].type = BONDED_IA_DIHEDRAL;
   bonded_ia_params[bond_type].num = 0;
 
-  bend;
+  bend = 0;
 
   mpi_bcast_ia_params(bond_type, -1); 
 
@@ -1556,7 +1556,7 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     return (TCL_OK);
   }
 
-  Tcl_PrintDouble(interp, con->particle_type, buffer);
+  Tcl_PrintDouble(interp, con->part_rep.r.type, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   return (TCL_OK);
  
@@ -1574,11 +1574,28 @@ int constraint_print_all(Tcl_Interp *interp)
   return (TCL_OK);
 }
 
+void printConstraintForceToResult(Tcl_Interp *interp, int con)
+{
+  double f[3];
+  char buffer[TCL_DOUBLE_SPACE];
+
+  mpi_get_constraint_force(con, f);
+
+  Tcl_PrintDouble(interp, f[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, f[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, f[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *) NULL);
+}
+
 Constraint *generate_constraint()
 {
   n_constraints++;
   constraints = realloc(constraints,n_constraints*sizeof(Constraint));
   constraints[n_constraints-1].type = CONSTRAINT_NONE;
+  constraints[n_constraints-1].part_rep.r.identity = -n_constraints;
+  
   return &constraints[n_constraints-1];
 }
 
@@ -1593,7 +1610,7 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
     con->c.wal.n[1] = 
     con->c.wal.n[2] = 0;
   con->c.wal.d = 0;
-  con->particle_type = -1;
+  con->part_rep.r.type = -1;
   while (argc > 0) {
     if(!strncmp(argv[0], "normal", strlen(argv[0]))) {
       if(argc < 4) {
@@ -1620,7 +1637,7 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "constraint wall type <t> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(con->particle_type)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.r.type)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -1628,7 +1645,7 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
       break;
   }
   norm = SQR(con->c.wal.n[0])+SQR(con->c.wal.n[1])+SQR(con->c.wal.n[2]);
-  if (norm < 1e-10 || con->particle_type < 0) {
+  if (norm < 1e-10 || con->part_rep.r.type < 0) {
     Tcl_AppendResult(interp, "usage: constraint wall normal <nx> <ny> <nz> dist <d> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);    
@@ -1642,7 +1659,7 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
 
 int constraint_sphere(Constraint *con, Tcl_Interp *interp,
 		      int argc, char **argv)
-{  
+{
   con->type = CONSTRAINT_SPH;
 
   /* invalid entries to start of */
@@ -1650,7 +1667,7 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
     con->c.sph.pos[1] = 
     con->c.sph.pos[2] = 0;
   con->c.sph.rad = 0;
-  con->particle_type = -1;
+  con->part_rep.r.type = -1;
 
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
@@ -1678,7 +1695,7 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "constraint sphere type <t> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(con->particle_type)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.r.type)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -1686,7 +1703,7 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
       break;
   }
 
-  if (con->c.sph.rad < 0. || con->particle_type < 0) {
+  if (con->c.sph.rad < 0. || con->part_rep.r.type < 0) {
     Tcl_AppendResult(interp, "usage: constraint sphere center <x> <y> <z> radius <d> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);    
@@ -1695,25 +1712,8 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
   make_particle_type_exist(con->type);
 
   return (TCL_OK);
-        
-    
-    /*
-    if(argc < 10) {
-      Tcl_AppendResult(interp, "wrong # args! Usage: constraint sphere <px> <py> <pz> <rad> <lj_eps> <lj_sig> <lj_cut> <lj_shift>", (char *) NULL);
-      return (TCL_ERROR);
-    }
-    n_constraints++;
-    constraints = realloc(constraints,n_constraints*sizeof(Constraint));
-    con = &constraints[n_constraints-1];
-    con->type = CONSTRAINT_SPH;
-     if(Tcl_GetDouble(interp, argv[2], &(con->c.sph.pos[0])) == TCL_ERROR ||
-       Tcl_GetDouble(interp, argv[3], &(con->c.sph.pos[1])) == TCL_ERROR ||
-       Tcl_GetDouble(interp, argv[4], &(con->c.sph.pos[2])) == TCL_ERROR ||
-       Tcl_GetDouble(interp, argv[5], &(con->c.sph.rad)) == TCL_ERROR)
-      return (TCL_ERROR);
-    if(con->c.sph.rad < 0.0) return (TCL_ERROR);
-    */
 }
+
 int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
 		    int argc, char **argv)
 {
@@ -1726,7 +1726,7 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
     con->c.cyl.axis[1] = 
     con->c.cyl.axis[2] = 0;
   con->c.cyl.rad = 0;
-  con->particle_type = -1;
+  con->part_rep.r.type = -1;
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
       if(argc < 4) {
@@ -1764,7 +1764,7 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "constraint cylinder type <t> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(con->particle_type)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.r.type)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -1772,7 +1772,7 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
       break;
   }
 
-  if (con->c.cyl.rad < 0. || con->particle_type < 0) {
+  if (con->c.cyl.rad < 0. || con->part_rep.r.type < 0) {
     Tcl_AppendResult(interp, "usage: constraint cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);    
@@ -1781,23 +1781,67 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
   make_particle_type_exist(con->type);
 
   return (TCL_OK);
+}
 
-/*
-    if(argc < 10) {
-      Tcl_AppendResult(interp, "wrong # args! Usage: constraint cylinder <px> <py> <pz> <rad> <lj_eps> <lj_sig> <lj_cut> <lj_shift>", (char *) NULL);
-      return (TCL_ERROR);
+int constraint_rod(Constraint *con, Tcl_Interp *interp,
+		   int argc, char **argv)
+{
+  con->type = CONSTRAINT_ROD;
+  /* invalid entries to start of */
+  con->c.rod.pos[0] = con->c.rod.pos[1] = 0;
+  con->c.rod.rad = -1;
+  con->c.rod.lambda = 0;
+  con->part_rep.r.type = -1;
+  while (argc > 0) {
+    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
+      if(argc < 3) {
+	Tcl_AppendResult(interp, "constraint rod center <px> <py> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.rod.pos[0])) == TCL_ERROR ||
+	  Tcl_GetDouble(interp, argv[2], &(con->c.rod.pos[1])) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 3; argv += 3;
     }
-    n_constraints++;
-    constraints = realloc(constraints,n_constraints*sizeof(Constraint));
-    con = &constraints[n_constraints-1];
-    con->type = CONSTRAINT_CYL;
-     if(Tcl_GetDouble(interp, argv[2], &(con->c.cyl.pos[0])) == TCL_ERROR ||
-       Tcl_GetDouble(interp, argv[3], &(con->c.cyl.pos[1])) == TCL_ERROR ||
-       Tcl_GetDouble(interp, argv[4], &(con->c.cyl.pos[2])) == TCL_ERROR ||
-       Tcl_GetDouble(interp, argv[5], &(con->c.cyl.rad)) == TCL_ERROR)
-      return (TCL_ERROR);
-    if(con->c.cyl.rad < 0.0) return (TCL_ERROR);
-*/
+    else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint rod radius <r> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.rod.rad)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint rod type <t> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.r.type)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "lambda", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint rod lambda <l> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.rod.lambda)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else
+      break;
+  }
+  if (con->c.rod.rad < 0 || con->part_rep.r.type < 0) {
+    Tcl_AppendResult(interp, "usage: constraint rod center <px> <py> rad <r> type <t>",
+		     (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  make_particle_type_exist(con->type);
+
+  return (TCL_OK);
 }
 
 #endif
@@ -1806,7 +1850,7 @@ int constraint(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv)
 {
 #ifdef CONSTRAINTS
-  int status, del_num;
+  int status, c_num;
 
   if (argc < 2) return constraint_print_all(interp);
   
@@ -1825,18 +1869,36 @@ int constraint(ClientData _data, Tcl_Interp *interp,
     mpi_bcast_constraint(-1);
     return status;
   }
+  else if(!strncmp(argv[1], "rod", strlen(argv[1]))) {
+    status = constraint_rod(generate_constraint(),interp, argc - 2, argv + 2);
+    mpi_bcast_constraint(-1);
+    return status;
+  }
+  else if(!strncmp(argv[1], "force", strlen(argv[1]))) {
+    if(argc < 3) {
+      Tcl_AppendResult(interp, "which particles force?",(char *) NULL);
+      return (TCL_ERROR);
+    }
+    if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
+    if(c_num < 0 || c_num >= n_constraints) {
+      Tcl_AppendResult(interp, "constraint does not exist",(char *) NULL);
+      return (TCL_ERROR);
+    }
+    printConstraintForceToResult(interp, c_num);
+    return (TCL_OK);
+  }
   else if(!strncmp(argv[1], "delete", strlen(argv[1]))) {
     if(argc < 3) {
       /* delete all */
       mpi_bcast_constraint(-2);
       return (TCL_OK);
     }
-    if(Tcl_GetInt(interp, argv[2], &(del_num)) == TCL_ERROR) return (TCL_ERROR);
-    if(del_num >= n_constraints) {
+    if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
+    if(c_num < 0 || c_num >= n_constraints) {
       Tcl_AppendResult(interp, "Can not delete non existing constraint",(char *) NULL);
       return (TCL_ERROR);
     }
-    mpi_bcast_constraint(del_num);
+    mpi_bcast_constraint(c_num);
     return (TCL_OK);    
   }
 
