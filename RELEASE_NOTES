@@ -2,17 +2,25 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.4a *
+* v1.6.4c *
 ***********
 
 Current working revision.
 
 
-- v1.6.4a -
+- v1.6.4c -
 -----------
+(c) July  9th, 2004.
+(b) July  5th, 2004.
 (a) July  5th, 2004.
 
+Changes:
+(c) Now BOND_ANGLE_COSINE is the default three-body bonded potential (if you don't like
+    this, change it in 'config.h' and recompile).
+
 Bugfixes:
+(c) Fixed unintialized image box in 'map_position_node_array' before calling 'fold_position'.
+(b) Fixed bug dealing with the initialization of 'lipid_orientation' command.
 (a) Fixed pointer mismatch in 'dd_exchange_and_sort_particles' which in the rare event
     that more than half of the particles left the current cell had that cell resized,
     rendering the 'part = cell->part' pointer used invalid.
