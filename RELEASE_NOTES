@@ -2,21 +2,39 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.7.4d (Mezoti)                                                                     *
+* v1.7.5  (Mezoti)                                                                     *
 ****************************************************************************************
 
 Current working revision.
+Released & tagged on September 24th, 2004.
 
 
-- v1.7.4d -
+- v1.7.4f -
 -----------
 
+(f) September 23rd, 2004.
+(e) September 21th, 2004.
 (d) September 21th, 2004.
 (c) September 20th, 2004.
 (b) September 16th, 2004.
 (a) September 14th, 2004.
 
 New Features:
+(f) Added a fake MPI implementation for single CPU jobs (currently only for Linux),
+    called MPIFAKE: If set to 'yes', a simple fake MPI implementation (mpi.h/mpi.c)
+    is used, which only works on one processor; since most MPI calls are simply 
+    empty, single CPU jobs run MUCH faster than before. 
+    No fake mpirun is provided, start scripts by 'Linux/Espresso <scriptname>' directly. 
+    The testsuite script has a flag -nompi, which does this, to test the fake MPI.
+    Of course this does not need a lamd or whatever running in the background...
+(e) P3M now has a second tuning mechanism, tunev2, which should be faster than the old
+    one in general, but tests possible parameters more thoroughly. It uses a bisection
+    to determine r_cut, but, however, still the slow error estimate.
+(e) P3M can now be started without interpolation. Setting 'n_interpol' to 0 (which is now 
+    also a tuning parameter) switches off both the interpolation of the charge assignment 
+    function as well as the saving of the charge fractions. 
+    For charge assignment orders below 5 this is faster than the interpolation, while
+    higher charge assignment orders are rarely used.
 (c) Added ASYNC_BARRIER for easier debugging of the async comm mode. At the beginning 
     of each comm step, there is an MPI_Barrier, which ensure that all nodes have finished 
     the previous command, so that synchronization errors are detected earlier.
@@ -27,6 +45,13 @@ New Features:
     with electrostatics, LJ, Fene, and Cosine angular potential.
 
 Bugfixes:
+(e) Fixed the bug fix in v1.7.3e regarding force calculation within the new framework: 
+    The short ranged parts of electrostatics methods in 'forces.h' are now divided 
+    into short and long ranged methods. For the first ones, constituting of just DH, 
+    a virial pressure calculation is used, while for the others, currently just P3M, 
+    a separate approach is used. All electrostatics methods are now ADDING forces, 
+    but the long range ones have to take care of the pressure themselves.
+(e) Fixed memory leakage in aggregation routine.
 (d) Fixed a bug in cells_update_ghosts which prevented ghost updates using the DOMDEC.
 (b) Error in cells_udate_ghosts() for the case of no_verlet_lists has been removed.
 (b) Error in the calculation of Yukawa self-forces in the Maggs algorithm has been removed.
