@@ -1554,9 +1554,11 @@ void local_remove_all_particles()
   n_total_particles = 0;
   max_seen_particle = -1;
   for (c = 0; c < local_cells.n; c++) {
+    Particle *p;
+    int i,   np;
     cell = local_cells.cell[c];
-    Particle *p = cell->part;
-    int i,   np = cell->n;
+    p = cell->part;
+    np = cell->n;
     for (i = 0; i < np; i++)
       realloc_intlist(&p[i].bl, 0);
     cell->n = 0;

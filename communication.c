@@ -16,6 +16,7 @@
 #include "config.h"
 #include "communication.h"
 #include "interaction_data.h"
+#include "particle_data.h"
 #include "integrate.h"
 #include "cells.h"
 #include "global.h"
@@ -955,9 +956,11 @@ void mpi_get_particles(Particle *result, IntList *bi)
     if (sizes[pnode] > 0) {
       if (pnode == this_node) {
 	for (c = 0; c < local_cells.n; c++) {
+	  Particle *part;
+	  int npart;
 	  cell = local_cells.cell[c];
-	  Particle *part = cell->part;
-	  int npart = cell->n;
+	  part = cell->part;
+	  npart = cell->n;
 	  memcpy(&result[g], part, npart*sizeof(Particle));
 	  g += npart;
 	  if (bi) {
@@ -1045,10 +1048,12 @@ void mpi_get_particles_slave(int pnode, int bi)
     
     g = 0;
     for (c = 0; c < local_cells.n; c++) {
+      Particle *part;
+      int npart;
       cell = local_cells.cell[c];
-      Particle *part = cell->part;
-      int npart = cell->n;
-      memcpy(&result[g],part,npart*sizeof(Particle));
+      part = cell->part;
+      npart = cell->n;
+     memcpy(&result[g],part,npart*sizeof(Particle));
       g+=cell->n;
       if (bi) {
 	int pc;

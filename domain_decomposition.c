@@ -98,6 +98,7 @@ void dd_create_cell_grid()
   int i,n_local_cells,new_cells,try=1;
   double cell_range[3], min_box_l;
   CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid: max_range %f\n",this_node,max_range));
+  CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid: local_box %f-%f, %f-%f, %f-%f,\n",this_node,my_left[0],my_right[0],my_left[1],my_right[1],my_left[2],my_right[2]));
   
   /* initialize */
   min_box_l = dmin(dmin(local_box_l[0],local_box_l[1]),local_box_l[2]);
@@ -410,13 +411,23 @@ int dd_append_particles(ParticleList *pl, int fold_dir)
 
       if (cpos[dir] < 1) { 
 	cpos[dir] = 1;
-	flag=1;
-	CELL_TRACE(if(fold_coord==2){fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) not inside node domain.\n", this_node,pl->part[p].p.identity,pl->part[p].r.p[0],pl->part[p].r.p[1],pl->part[p].r.p[2]);});
+#ifdef PARTIAL_PERIODIC 
+	if( PERIODIC(dir) ) 
+#endif
+	  {
+	    flag=1;
+	    CELL_TRACE(if(fold_coord==2){fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) not inside node domain.\n", this_node,pl->part[p].p.identity,pl->part[p].r.p[0],pl->part[p].r.p[1],pl->part[p].r.p[2]);});
+	  }
       }
       else if (cpos[dir] > dd.cell_grid[dir]) {
 	cpos[dir] = dd.cell_grid[dir];
-	flag=1;
-	CELL_TRACE(if(fold_coord==2){fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) not inside node domain.\n", this_node,pl->part[p].p.identity,pl->part[p].r.p[0],pl->part[p].r.p[1],pl->part[p].r.p[2]);});
+#ifdef PARTIAL_PERIODIC 
+	if( PERIODIC(dir) ) 
+#endif
+	  {
+	    flag=1;
+	    CELL_TRACE(if(fold_coord==2){fprintf(stderr, "%d: dd_append_particles: particle %d (%f,%f,%f) not inside node domain.\n", this_node,pl->part[p].p.identity,pl->part[p].r.p[0],pl->part[p].r.p[1],pl->part[p].r.p[2]);});
+	  }
       }
     }
     c = get_linear_index(cpos[0],cpos[1],cpos[2], dd.ghost_cell_grid);
@@ -500,7 +511,7 @@ void dd_topology_release()
 /************************************************************/
 void  dd_exchange_and_sort_particles(int global_flag)
 {
-  int dir, c, p, finished=0,i;
+  int dir, c, p, finished=0;
   ParticleList *cell,*sort_cell, send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
   Particle *part;
   CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles(%d):\n",this_node,global_flag));
@@ -526,6 +537,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	      if( PERIODIC(dir) || (boundary[2*dir]==0) ) 
 #endif
 		{
+		  CELL_TRACE(fprintf(stderr,"%d: dd_ex_and_sort_p: send part left %d\n",this_node,part[p].p.identity));
 		  local_particles[part[p].p.identity] = NULL;
 		  move_indexed_particle(&send_buf_l, cell, p);
 		  if(p < cell->n) p--;
@@ -537,6 +549,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	      if( PERIODIC(dir) || (boundary[2*dir+1]==0) ) 
 #endif
 		{
+		  CELL_TRACE(fprintf(stderr,"%d: dd_ex_and_sort_p: send part right %d\n",this_node,part[p].p.identity));
 		  local_particles[part[p].p.identity] = NULL;
 		  move_indexed_particle(&send_buf_r, cell, p);
 		  if(p < cell->n) p--;
@@ -579,10 +592,16 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	  send_particles(&send_buf_r, node_neighbors[2*dir+1]);
 	}
 	/* sort received particles to cells */
-	CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: exchange done dir=%d\n",this_node,dir));
 	if(dd_append_particles(&recv_buf_l, 2*dir  ) && dir == 2) finished = 0;
 	if(dd_append_particles(&recv_buf_r, 2*dir+1) && dir == 2) finished = 0; 
-
+	/* reset send/recv buffers */
+	send_buf_l.n = 0;
+	send_buf_r.n = 0;
+	recv_buf_l.n = 0;
+	recv_buf_r.n = 0;
+	MPI_Barrier(MPI_COMM_WORLD);
+	CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: exchange done dir=%d\n",this_node,dir));
+	MPI_Barrier(MPI_COMM_WORLD);
       }
       else {
 	/* Single node direction case (no communication) */
@@ -629,6 +648,10 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	    }
 	  }
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: (single node direction) exchange done dir=%d\n",this_node,dir));
+	MPI_Barrier(MPI_COMM_WORLD);
+
       }
     }
     /* Communicate wether particle exchange is finished */

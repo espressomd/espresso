@@ -425,8 +425,8 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double
     /* far range formula */
     double rxy   = sqrt(rxy2);
     double rxy_d = rxy*L_i;
-    E = 0;
     int bp;
+    E = 0;
 
     for (bp = 1; bp < mmm1d_params.bessel_cutoff; bp++) {
       double fq = C_2PI*bp;    
