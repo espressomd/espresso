@@ -55,19 +55,10 @@ void force_calc()
     layered_calculate_ia();
     break;
   case CELL_STRUCTURE_DOMDEC:
-#ifdef ELECTROSTATICS
-    /* for Maggs electrostatics no verlet lists! */
-    if(coulomb.method != COULOMB_MAGGS) {
-#endif
     if (rebuild_verletlist)
       build_verlet_lists_and_calc_verlet_ia();
     else
       calculate_verlet_ia();
-#ifdef ELECTROSTATICS
-    }
-    else
-      calc_link_cell();
-#endif
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_calculate_ia();
@@ -100,12 +91,10 @@ void calc_long_range_forces()
 #endif
       P3M_calc_kspace_forces(1,0);
     break;
-  case COULOMB_MAGGS:
-    maggs_calc_e_forces();
-    break;
   case COULOMB_MMM2D:
     MMM2D_add_far_force();
   }
+
   if (coulomb.use_elc)
     ELC_add_force();
 #endif
