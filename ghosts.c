@@ -353,6 +353,7 @@ void ghost_communicator(GhostCommunicator *gc)
 	    if (is_send_op(comm_type2, node2) && prefetch2) {
 	      GHOST_TRACE(fprintf(stderr, "%d: prefetch comm with/from %d\n", this_node, node2));
 	      prepare_send_buffer(gcn2, data_parts);
+	      break;
 	    }
 	  }
 	}
