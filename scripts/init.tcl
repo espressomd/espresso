@@ -11,7 +11,7 @@
 # by providing additional tcl-commands/-functions.          #
 #                                                           #
 # Created:       20.09.2002 by AxA                          #
-# Last modified: 15.10.2002 by BAM                          #
+# Last modified: 08.11.2002 by BAM                          #
 #                                                           #
 #############################################################
 
@@ -48,9 +48,18 @@ source countBonds.tcl
 
 source aux.tcl
 # adds 'timeStamp' which modifies a filestring to include a prefix and the current date as postfix before the suffix
+# adds 'polyBlockWrite' which writes a given 'tcl_md'-configuration to disk
+#      (this function in combination with 'convertMD2Deserno' replaces 'polywr.tcl')
 
 source blockfile_support.tcl
 # adds 'blockfile_write_particles'
 # adds 'blockfile_read_auto_particles'
 # adds 'blockfile_read_particles'
+# adds 'blockfile_write_bonds'
+# adds 'blockfile_read_auto_bonds'
+# adds 'blockfile_read_bonds'
+# adds 'blockfile_write_interactions'
+# adds 'blockfile_read_auto_interactions'
+# adds 'blockfile_read_interactions'
+
 
