@@ -21,11 +21,14 @@ proc calcObsAv { fileN ind } {
 	set tmp "[lindex $tmp_line $i]_av"; lappend var_av $tmp
 	eval set $tmp 0
     }
-    set N_av 0
+    set N_av 0; set imax [lindex [lsort $ind] end]
     while { [eof $f]==0 } { if { [gets $f tmp_line] > 0 } {
-	foreach i $ind j $var_av k $var { 
-	    set tmp [lindex $tmp_line $i]; set $j [eval expr $$j + $tmp] }
-	incr N_av
+	if {[llength $tmp_line] <= $imax } { puts "File corrupted, current line too short (got: '$tmp_line', but need at least $imax+1 entries)!" 
+	} else {
+	    foreach i $ind j $var_av k $var { 
+		set tmp [lindex $tmp_line $i]; set $j [eval expr $$j + $tmp] }
+	    incr N_av
+	}
     } }
     close $f
     set res1 ""; set res2 ""; foreach i $var { lappend res1 $i }
@@ -150,8 +153,9 @@ proc plotJoin { destinations final } {
 	if {[expr $i+1]<[llength $destinations]} {
 	    eval exec gs -dNOPAUSE -sDEVICE=pswrite -sOutputFile=$final.$i.ps [lindex $destinations $i].ps [lindex $destinations [expr $i+1]].ps -c quit
 	    lappend destinationsJ "$final.$i.ps"
+	    incr i
 	} else { lappend destinationsJ [lindex $destinations $i] }
     }
-    eval exec gs -dNOPAUSE -sDEVICE=pswrite -sOutputFile=$final.1.ps $destinationsJ -c quit
-    eval exec pstops '2:0L@.7(21cm,0)+1L@.7(21cm,14.85cm)' $final.1.ps $final.2.ps
+    eval exec gs -dNOPAUSE -sDEVICE=pswrite -sOutputFile=$final.A.ps $destinationsJ -c quit
+    eval exec pstops "2:0L@.7(21cm,0)+1L@.7(21cm,14.85cm)" $final.A.ps $final.B.ps
 }
