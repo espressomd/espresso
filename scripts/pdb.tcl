@@ -135,15 +135,16 @@ proc writepdbfoldchains { file  { chain_start } { n_chains } { chain_length } { 
 # Now fold the particles by chain
     for { set chainid 0 } { $chainid < $n_chains } { incr chainid } {
 	for { set j 0 } { $j < 3 } { incr j } {
-	    set arg [expr double([lindex $cm_pos $chainid $j]/double($box_l))]
+	    set Lj [lindex $box_l $j]
+	    set arg [expr double([lindex $cm_pos $chainid $j])/$Lj ]
 	    set tmp [expr floor($arg)]
 	    set cm_tmp 0.0
 	    for { set i 0 } { $i < $chain_length } { incr i } {
 		set index [expr $chainid*$chain_length + $i] 
-		lset coord $index $j [expr [lindex $coord $index $j] - $tmp*$box_l]
+		lset coord $index $j [expr [lindex $coord $index $j] - $tmp*$Lj]
 		set $cm_tmp  [expr $cm_tmp + [lindex $coord $index $j]/$chain_length];
 	    }
-	    if { $cm_tmp < 0 || $cm_tmp > $box_l } {
+	    if { $cm_tmp < 0 || $cm_tmp > $Lj } {
 		put "chain center of mass is out of range"
 	    }
 	}
