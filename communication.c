@@ -38,9 +38,9 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_BCAST_PAR 1
 /** Action number for \ref mpi_who_has. */
 #define REQ_WHO_HAS   2
-/** Action number for \ref mpi_attach_particle. */
+/** Action number for \ref mpi_bcast_event. */
 #define REQ_EVENT    3
-/** Action number for \ref mpi_send_pos. */
+/** Action number for \ref mpi_place_particle. */
 #define REQ_PLACE     4
 /** Action number for \ref mpi_send_v. */
 #define REQ_SET_V     5
@@ -94,7 +94,7 @@ void mpi_set_time_step_slave(int node, int parm);
 void mpi_get_particles_slave(int node, int parm);
 /*@}*/
 
-/** A list of wich function has to be called for
+/** A list of which function has to be called for
     the issued command. */
 SlaveCallback *callbacks[] = {
   mpi_stop_slave,                /*  0: REQ_TERM */
@@ -732,7 +732,7 @@ void mpi_get_particles(Particle *result)
 	}
       }
       else {
-	MPI_Recv(&result[g], sizes[pnode]*sizeof(Particle), MPI_BYTE, pnode, REQ_GATHER,
+	MPI_Recv(&result[g], sizes[pnode]*sizeof(Particle), MPI_BYTE, pnode, REQ_GETPARTS,
 		 MPI_COMM_WORLD, &status);
 	g += sizes[pnode];
       }
@@ -774,7 +774,7 @@ void mpi_get_particles_slave(int pnode, int job)
       g+=CELL_PTR(m,n,o)->pList.n;
     }
     /* and send it back to the master node */
-    MPI_Send(result, n_part*sizeof(Particle), MPI_BYTE, 0, REQ_GATHER, MPI_COMM_WORLD);
+    MPI_Send(result, n_part*sizeof(Particle), MPI_BYTE, 0, REQ_GETPARTS, MPI_COMM_WORLD);
     free(result);
   }
 }

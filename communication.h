@@ -32,10 +32,9 @@
     to be in (MPI) sync with what your new mpi_*_slave does.  This
     procedure is called immediately after the broadcast with the
     arbitrary integer as parameter.  To this aim it has also to be
-    added to \ref callbacks (the array index gives your action number
-    - better not choose it too high...). Last but not least for
-    debugging purposes you can add a nice name to \ref names in the
-    same way.  */
+    added to \ref callbacks (the array index gives your action number.
+    Last but not least for debugging purposes you can add a nice name
+    to \ref names in the same way.  */
 
 /* from here we borrow the enumeration of
    the global variables */
@@ -91,16 +90,6 @@ void mpi_who_has();
     particle) include communication anyways, this is handled by the way.
 */
 void mpi_bcast_event(int event);
-/** \name the event codes
-    These codes are used by \ref mpi_bcast_event.
-*/
-/*@{*/
-#define PARTICLE_CHANGED 0
-#define INTERACTION_CHANGED 1
-#define PARAMETER_CHANGED 2
-#define TOPOLOGY_CHANGED 3
-/*@}*/
-
 /** Issue REQ_PLACE: move particle to a position on a node.
     Also calls \ref on_particle_change.
     \param id   the particle to move. a negative id denotes new particles. Then
@@ -144,8 +133,8 @@ void mpi_send_type(int node, int part, int type);
 
 /** Issue REQ_SET_BOND: send bond.
     Also calls \ref on_particle_change.
+    \param pnode    node it is attached to.
     \param part     identity of principal atom of the bond.
-    \param node     node it is attached to.
     \param bond     field containing the bond type number and the identity of all bond partners (secundary atoms of the bond).
     \param delete   if true, do not add the bond, rather delete it if found
     \return 1 on success or 0 if not (e. g. bond to delete does not exist)
@@ -208,6 +197,17 @@ void mpi_get_particles(Particle *result);
 */
 void mpi_set_time_step();
 
+/*@}*/
+
+/** \name Event codes for \ref mpi_bcast_event
+    These codes are used by \ref mpi_bcast_event to notify certain changes
+    of the systems state to all nodes.
+*/
+/*@{*/
+#define PARTICLE_CHANGED 0
+#define INTERACTION_CHANGED 1
+#define PARAMETER_CHANGED 2
+#define TOPOLOGY_CHANGED 3
 /*@}*/
 
 #endif
