@@ -358,9 +358,6 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Particle part;
   IntList *bl = &(part.bl);
 
-  if (!particle_node)
-    build_particle_node();
-
   if (get_particle_data(part_num, &part) == TCL_ERROR)
     return (TCL_ERROR);
 
@@ -463,6 +460,9 @@ int part_print_all(Tcl_Interp *interp)
 {
   int i = 0, start = 1;
 
+  if (!particle_node)
+    build_particle_node();
+
   PART_TRACE(fprintf(stderr, "max_seen %d\n", max_seen_particle));
 
   for (i = 0; i <= max_seen_particle ; i++) {
@@ -499,9 +499,6 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     return TCL_OK;
   }
 
-  if (!particle_node)
-    build_particle_node();
-    
   if (get_particle_data(part_num, &part) == TCL_ERROR) {
     Tcl_AppendResult(interp, "na", (char *)NULL);
     return TCL_OK;
@@ -1063,6 +1060,9 @@ int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
       return TCL_ERROR;
     }
 
+    if (!particle_node)
+      build_particle_node();
+
     bond = (int *)malloc( (n_partners+1)*sizeof(int) );
     bond[0] = type_num;
     j=1;
@@ -1171,12 +1171,6 @@ int part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv)
 {
   int part_num = -1;
-
-  if (!node_grid_is_set())
-    setup_node_grid();
-
-  if (!particle_node)
-    build_particle_node();
 
   /* if no further arguments are given, print out all stored particles */
   if (argc == 1)

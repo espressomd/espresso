@@ -126,6 +126,9 @@ void cells_re_init(int new_cs)
   Cell *tmp_cells;
   int tmp_n_cells,i;
 
+  CELL_TRACE(fprintf(stderr, "%d: cells_re_init(%d->%d)",
+		     this_node, cell_structure.type, new_cs));
+
   topology_release(cell_structure.type);
   /* transfer old particle cells to tmp buffer */
   memcpy(&tmp_local,&local_cells,sizeof(CellPList));

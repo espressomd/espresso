@@ -32,6 +32,13 @@ void nsq_topology_init(CellPList *old)
 
   local = &cells[0];
 
+  /* mark cells */
+  realloc_cellplist(&local_cells, local_cells.n = 1);
+  local_cells.cell[0] = local;
+  realloc_cellplist(&ghost_cells, ghost_cells.n = n_nodes - 1);
+  for (c = 1; c < n_nodes; c++)
+    ghost_cells.cell[c - 1] = &cells[c];
+
   /* copy particles */
   for (c = 0; c < old->n; c++) {
     part = old->cell[c]->part;
