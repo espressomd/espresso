@@ -198,7 +198,9 @@
 			is a dummy and is not used. The second parameter, \verbatim <R_subt_lj> \endverbatim 
 			is used as a check. If the any bond length in the system exceeds this value,
 			the program crashes. When not needed, this crashing can be disabled by commenting 
-			out a few lines in subt_lj.h . 
+			out a few lines in subt_lj.h .
+			When using this "bonded" interaction, it is worthwhile to consider capping the
+			Lennard-Jones potential appropriately so that round-off errors can be avoided. 
 	     </ul>
 
 	     <b>Bond angle potentials:</b> (three body interactions)<br>
