@@ -56,6 +56,29 @@ proc findObsAv { val what } {
     return $res
 }
 
+proc calcObAv { fileN ind } {
+    # does the same as 'calcObsAv', but for one observable only, hence returning only its value
+    if { [llength $ind]!=1 } { puts "\nWARNING: Parameter '$ind' is too long - use 'calcObsAv' to average multiple observables!"; exit }
+    set what [calcObsAv $fileN $ind]
+    return [lindex $what 2]
+}
+
+proc nameObsAv { fileN names } {
+    # does the same as 'calcObsAv', but expects the observables' column-names rather than their column-positions
+    set f [open $fileN "r"]
+    gets $f tmp_line
+    for { set j 0 } { $j<[llength $names] } { incr j } {
+	for { set i 0 } { $i<[llength $tmp_line] } { incr i } {
+	    if { "[lindex $tmp_line $i]" == "[lindex $names $j]" } { lappend ind1 $i; lappend ind2 $j }
+	}
+    }
+    close $f
+    if { [llength $names]!=[llength $ind2] } { puts "\nWARNING: Only [llength $ind2] of [llength $names] parameters have been found in $fileN!"; exit }
+    set what [calcObsAv $fileN $ind1]
+    return [concat [lindex $what 0] [lindex $what 2]]
+}    
+
+
 proc replObsAv { fileN what } {
     # replaces the values for 're' and 'rg' in $fileN by their time-averages
     # using the output-list from 'calcObsAv', writing the result to '$fileN.av'
