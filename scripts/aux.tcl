@@ -146,7 +146,9 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } } 
 
 
 proc checkpoint_read { origin } {
-    set chk [open "$origin.chk" "r"]
+    if { [file exists "$origin.chk"] } { set chk [open "$origin.chk" "r"] 
+    } elseif { [file exists "$origin"] } { set chk [open "$origin" "r"] 
+    } else { puts "ERROR: Could not find checkpoint-list $origin!\nAborting..."; exit }
     while { [eof $chk]==0 } { if { [gets $chk source] > 0 } {
 	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -c - >$source" r]
 	} else { set f [open "$source" "r"] }
