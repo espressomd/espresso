@@ -208,3 +208,11 @@ sent:    15.MAR.2005
 version: 20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:   n.a.
 
+
+
+
+name:   Thomas
+email:   tomemcd@yahoo.com
+sent:    23.MAR.2005
+version: 20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:   Just curious at the moment. I write my own MD code in Fortran 95 but also like C.
