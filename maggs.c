@@ -777,7 +777,7 @@ void exchange_surface_patch(double *field, int dim, int e_equil)
 {
   static int init = 1;
   static int init_yuk = 1;
-  //  static int flag_free = 1;
+  static int flag_free = 1;
   static MPI_Datatype xyPlane,xzPlane,yzPlane; 
   static MPI_Datatype xzPlane2D, xyPlane2D, yzPlane2D;
   //  int coord[2];
