@@ -21,6 +21,7 @@
 #include "particle_data.h"
 #include "parser.h"
 #include "statistics_chain.h"
+#include "statistics_molecule.h"
 #include "debug.h"
 
 int transfer_rate = 0;
