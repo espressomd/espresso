@@ -162,12 +162,14 @@ void init_particle(Particle *part)
   part->v[1]       = 0.0;
   part->v[2]       = 0.0;
 
-#ifdef DIPOLAR_INTERACTION
-  part->quat[0]   = 0.0;
-  part->quat[1]   = 0.0;
-  part->quat[2]   = 0.0;
-  part->quat[3]   = 0.0;
-  part->lambda     = 0.0;
+#ifdef ROTATION
+  part->r.quat[0]   = 1.0;
+  part->r.quat[1]   = 0.0;
+  part->r.quat[2]   = 0.0;
+  part->r.quat[3]   = 0.0;
+  part->omega[0]  = 0.0;
+  part->omega[1]  = 0.0;
+  part->omega[2]  = 0.0;
   part->torque[0]  = 0.0;
   part->torque[1]  = 0.0;
   part->torque[2]  = 0.0;
@@ -430,20 +432,24 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_PrintDouble(interp, part.f[2]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 
-#ifdef DIPOLAR_INTERACTION
-  /* print information about dipolar interactions */
+#ifdef ROTATION
+  /* print information about rotation */
       Tcl_AppendResult(interp, " quat ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.quat[0], buffer);
+       Tcl_PrintDouble(interp, part.r.quat[0], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.quat[1], buffer);
+       Tcl_PrintDouble(interp, part.r.quat[1], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.quat[2], buffer);
+       Tcl_PrintDouble(interp, part.r.quat[2], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.quat[3], buffer);
+       Tcl_PrintDouble(interp, part.r.quat[3], buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
              
-      Tcl_AppendResult(interp, " lambda ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.lambda, buffer);
+      Tcl_AppendResult(interp, " omega ", (char *)NULL);
+       Tcl_PrintDouble(interp, part.omega[0], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+       Tcl_PrintDouble(interp, part.omega[1], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+       Tcl_PrintDouble(interp, part.omega[2], buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
               
       Tcl_AppendResult(interp, " torque ", (char *)NULL);
@@ -453,7 +459,7 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
        Tcl_PrintDouble(interp, part.torque[2], buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);       
-#endif
+#endif      
 
 #ifdef EXTERNAL_FORCES
   /* print external force information. */
@@ -583,20 +589,24 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 
-#ifdef DIPOLAR_INTERACTION
+#ifdef ROTATION
     else if (ARG0_IS_S("quat")) {
-      Tcl_PrintDouble(interp, part.quat[0], buffer);
+      Tcl_PrintDouble(interp, part.r.quat[0], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.quat[1], buffer);
+      Tcl_PrintDouble(interp, part.r.quat[1], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.quat[2], buffer);
+      Tcl_PrintDouble(interp, part.r.quat[2], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.quat[3], buffer);
+      Tcl_PrintDouble(interp, part.r.quat[3], buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     
-    else if (ARG0_IS_S("lambda")) {
-      Tcl_PrintDouble(interp, part.lambda, buffer);
+    else if (ARG0_IS_S("omega")) {
+      Tcl_PrintDouble(interp, part.omega[0], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.omega[1], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.omega[2], buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     
@@ -852,6 +862,103 @@ int part_parse_type(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
+#ifdef ROTATION
+
+int part_parse_quat(Tcl_Interp *interp, int argc, char **argv,
+			 int part_num, int * change)
+{
+  double quat[4];
+  
+  *change = 4;
+
+  if (argc < 4) {
+    Tcl_AppendResult(interp, "quaternion requires 4 arguments", (char *) NULL);
+    return TCL_ERROR;
+  }
+  /* set orientation */
+  if (! ARG_IS_D(0, quat[0]))
+    return TCL_ERROR;
+
+  if (! ARG_IS_D(1, quat[1]))
+    return TCL_ERROR;
+
+  if (! ARG_IS_D(2, quat[2]))
+    return TCL_ERROR;
+    
+  if (! ARG_IS_D(3, quat[3]))
+    return TCL_ERROR;  
+    
+  if (set_particle_quat(part_num, quat) == TCL_ERROR) {
+   Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    
+    return TCL_ERROR;
+  }
+      
+  return TCL_OK;
+}
+
+int part_parse_omega(Tcl_Interp *interp, int argc, char **argv,
+			 int part_num, int * change)
+{
+  double omega[3];
+  
+  *change = 3;
+
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "omega requires 3 arguments", (char *) NULL);
+    return TCL_ERROR;
+  }
+  /* set angular velocity */
+  if (! ARG_IS_D(0, omega[0]))
+    return TCL_ERROR;
+
+  if (! ARG_IS_D(1, omega[1]))
+    return TCL_ERROR;
+
+  if (! ARG_IS_D(2, omega[2]))
+    return TCL_ERROR;
+    
+   if (set_particle_omega(part_num, omega) == TCL_ERROR) {
+   Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    
+    return TCL_ERROR;
+  }
+     
+  return TCL_OK;
+}
+
+int part_parse_torque(Tcl_Interp *interp, int argc, char **argv,
+			 int part_num, int * change)
+{
+  double torque[3];
+  
+  *change = 3;
+
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "torque requires 3 arguments", (char *) NULL);
+    return TCL_ERROR;
+  }
+  /* set torque */
+  if (! ARG_IS_D(0, torque[0]))
+    return TCL_ERROR;
+
+  if (! ARG_IS_D(1, torque[1]))
+    return TCL_ERROR;
+
+  if (! ARG_IS_D(2, torque[2]))
+    return TCL_ERROR; 
+
+  if (set_particle_torque(part_num, torque) == TCL_ERROR) {
+   Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    
+    return TCL_ERROR;
+  }
+  
+      
+  return TCL_OK;
+}
+#endif
+
 #ifdef EXTERNAL_FORCES
 
 int part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
@@ -1032,6 +1139,19 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
     else if (ARG0_IS_S("f"))
       err = part_parse_f(interp, argc-1, argv+1, part_num, &change);
+
+#ifdef ROTATION
+
+    else if (ARG0_IS_S("quat"))
+      err = part_parse_quat(interp, argc-1, argv+1, part_num, &change);
+
+    else if (ARG0_IS_S("omega"))
+      err = part_parse_omega(interp, argc-1, argv+1, part_num, &change);
+
+    else if (ARG0_IS_S("torque"))
+      err = part_parse_torque(interp, argc-1, argv+1, part_num, &change);
+
+#endif
     
 #ifdef EXTERNAL_FORCES
 
@@ -1234,7 +1354,7 @@ int set_particle_type(int part, int type)
   return TCL_OK;
 }
 
-#ifdef DIPOLAR_INTERACTION
+#ifdef ROTATION
 int set_particle_quat(int part, double quat[4])
 {
   int pnode;
@@ -1251,7 +1371,7 @@ int set_particle_quat(int part, double quat[4])
   return TCL_OK;
 }
 
-int set_particle_lambda(int part, double lambda)
+int set_particle_omega(int part, double omega[3])
 {
   int pnode;
   if (!particle_node)
@@ -1263,7 +1383,7 @@ int set_particle_lambda(int part, double lambda)
 
   if (pnode == -1)
     return TCL_ERROR;
-  mpi_send_lambda(pnode, part, lambda);
+  mpi_send_omega(pnode, part, omega);
   return TCL_OK;
 }
 

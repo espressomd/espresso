@@ -100,11 +100,11 @@ typedef void (SlaveCallback)(int node, int param);
 /** Total number of action numbers. */
 #define REQ_MAXIMUM 29
 
-#ifdef DIPOLAR_INTERACTION
+#ifdef ROTATION
 /** Action number for \ref mpi_send_quat. */
 #define REQ_SET_QUAT 29
-/** Action number for \ref mpi_send_lambda. */
-#define REQ_SET_LAMBDA 30
+/** Action number for \ref mpi_send_omega. */
+#define REQ_SET_OMEGA 30
 /** Action number for \ref mpi_send_torque. */
 #define REQ_SET_TORQUE 31
 /** Total number of action numbers. */
@@ -126,9 +126,9 @@ void mpi_place_particle_slave(int node, int parm);
 void mpi_send_v_slave(int node, int parm);
 void mpi_send_f_slave(int node, int parm);
 void mpi_send_q_slave(int node, int parm);
-#ifdef DIPOLAR_INTERACTION
+#ifdef ROTATION
 void mpi_send_quat_slave(int node, int parm);
-void mpi_send_lambda_slave(int node, int parm);
+void mpi_send_omega_slave(int node, int parm);
 void mpi_send_torque_slave(int node, int parm);
 #endif
 void mpi_send_type_slave(int node, int parm);
@@ -185,9 +185,9 @@ SlaveCallback *callbacks[] = {
   mpi_bit_random_stat_slave,        /* 26: REQ_RANDOM_STAT */
   mpi_get_constraint_force_slave,   /* 27: REQ_GET_CONSFOR */
   mpi_rescale_particles_slave,      /* 28: REQ_RESCALE_PART */
-#ifdef DIPOLAR_INTERACTION
+#ifdef ROTATION
   mpi_send_quat_slave,              /* 29: REQ_SET_QUAT */
-  mpi_send_lambda_slave,            /* 30: REQ_SET_LAMBDA */
+  mpi_send_omega_slave,             /* 30: REQ_SET_OMEGA */
   mpi_send_torque_slave,            /* 31: REQ_SET_TORQUE */
 #endif  
 };
@@ -223,9 +223,9 @@ char *names[] = {
   "BIT_RAND_STAT",  /* 26 */
   "GET_CONSTR",     /* 27 */
   "RESCALE_PART",   /* 28 */
-#ifdef DIPOLAR_INTERACTION  
+#ifdef ROTATION  
   "SET_QUAT"  ,     /* 29 */
-  "SET_LAMBDA",     /* 30 */
+  "SET_OMEGA",      /* 30 */
   "SET_TORQUE",     /* 31 */
 #endif  
 };
@@ -585,7 +585,7 @@ void mpi_send_type_slave(int pnode, int part)
   on_particle_change();
 }
 
-#ifdef DIPOLAR_INTERACTION
+#ifdef ROTATION
 
 /********************* REQ_SET_QUAT ********/
 
@@ -595,7 +595,10 @@ void mpi_send_quat(int pnode, int part, double quat[4])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    memcpy(p->quat, quat, 4*sizeof(double));
+    p->r.quat[0] = quat[0];
+    p->r.quat[1] = quat[1];
+    p->r.quat[2] = quat[2];
+    p->r.quat[3] = quat[3];    
   }
   else {
     MPI_Send(quat, 4, MPI_DOUBLE, pnode, REQ_SET_QUAT, MPI_COMM_WORLD);
@@ -609,37 +612,39 @@ void mpi_send_quat_slave(int pnode, int part)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(p->quat, 4, MPI_DOUBLE, 0, REQ_SET_QUAT,
+    MPI_Recv(p->r.quat, 4, MPI_DOUBLE, 0, REQ_SET_QUAT,
 	     MPI_COMM_WORLD, &status);
   }
 
   on_particle_change();
 }
 
+/********************* REQ_SET_OMEGA ********/
 
-/********************* REQ_SET_LAMBDA ********/
-
-void mpi_send_lambda(int pnode, int part, double lambda)
+void mpi_send_omega(int pnode, int part, double omega[3])
 {
-  mpi_issue(REQ_SET_LAMBDA, pnode, part);
+  mpi_issue(REQ_SET_OMEGA, pnode, part);
 
   if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    memcpy(&p->lambda, &lambda, 1*sizeof(double));
+   Particle *p = local_particles[part];
+/*  memcpy(p->omega, omega, 3*sizeof(double));*/
+    p->omega[0] = omega[0];
+    p->omega[1] = omega[1];
+    p->omega[2] = omega[2];
   }
   else {
-    MPI_Send(&lambda, 1, MPI_DOUBLE, pnode, REQ_SET_LAMBDA, MPI_COMM_WORLD);
+    MPI_Send(omega, 3, MPI_DOUBLE, pnode, REQ_SET_OMEGA, MPI_COMM_WORLD);
   }
 
   on_particle_change();
 }
 
-void mpi_send_lambda_slave(int pnode, int part)
+void mpi_send_omega_slave(int pnode, int part)
 {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(&p->lambda, 1, MPI_DOUBLE, 0, REQ_SET_LAMBDA,
+    MPI_Recv(p->omega, 3, MPI_DOUBLE, 0, REQ_SET_OMEGA,
 	     MPI_COMM_WORLD, &status);
   }
 
@@ -654,7 +659,10 @@ void mpi_send_torque(int pnode, int part, double torque[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    memcpy(p->torque, torque, 3*sizeof(double));
+/*  memcpy(p->torque, torque, 3*sizeof(double)); */
+    p->torque[0] = torque[0];
+    p->torque[1] = torque[1];
+    p->torque[2] = torque[2];
   }
   else {
     MPI_Send(torque, 3, MPI_DOUBLE, pnode, REQ_SET_TORQUE, MPI_COMM_WORLD);
@@ -757,10 +765,10 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
 #endif   
     MPI_Recv(pdata->f, 3, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-#ifdef DIPOLAR_INTERACTION	      
-    MPI_Recv(pdata->quat, 4, MPI_DOUBLE, pnode,
+#ifdef ROTATION	      
+    MPI_Recv(pdata->r.quat, 4, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);     
-    MPI_Recv(&pdata->lambda, 1, MPI_DOUBLE, pnode,
+    MPI_Recv(pdata->omega, 3, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);     
     MPI_Recv(pdata->torque, 3, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
@@ -800,10 +808,10 @@ void mpi_recv_part_slave(int pnode, int part)
 #endif
   MPI_Send(p->f, 3, MPI_DOUBLE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
-#ifdef DIPOLAR_INTERACTION
-  MPI_Send(p->quat, 4, MPI_DOUBLE, 0, REQ_GET_PART,
+#ifdef ROTATION
+  MPI_Send(p->r.quat, 4, MPI_DOUBLE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
-  MPI_Send(&p->lambda, 1, MPI_DOUBLE, 0, REQ_GET_PART,
+  MPI_Send(p->omega, 3, MPI_DOUBLE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);	   
   MPI_Send(p->torque, 3, MPI_DOUBLE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);

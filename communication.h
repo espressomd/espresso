@@ -125,7 +125,7 @@ void mpi_send_f(int node, int part, double F[3]);
 */
 void mpi_send_q(int node, int part, double q);
 
-#ifdef DIPOLAR_INTERACTION
+#ifdef ROTATION
 /** Issue REQ_SET_QUAT: send particle orientation.
     Also calls \ref on_particle_change.
     \param part the particle.
@@ -134,13 +134,13 @@ void mpi_send_q(int node, int part, double q);
 */
 void mpi_send_quat(int node, int part, double quat[4]);
 
-/** Issue REQ_SET_LAMBDA: send particle's lambda parameter related to its dipolar moment.
+/** Issue REQ_SET_LAMBDA: send particle angular velocity.
     Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
-    \param lambda its new lambda value.
+    \param omega its new angular velocity.
 */
-void mpi_send_lambda(int node, int part, double lambda);
+void mpi_send_omega(int node, int part, double omega[3]);
 
 /** Issue REQ_SET_TORQUE: send particle torque.
     Also calls \ref on_particle_change.

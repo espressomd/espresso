@@ -46,6 +46,12 @@ typedef struct {
 
   /** periodically folded position. */
   double p[3];
+  
+#ifdef ROTATION
+/** quaternions to define particle orientation */
+  double quat[4]; 
+#endif
+  
 } ReducedParticle;
 
 /** Struct holding all particle information
@@ -64,12 +70,9 @@ typedef struct {
   /** velocity. */
   double v[3];
   
-#ifdef DIPOLAR_INTERACTION
-/** quaternions */
-  double quat[4];
-
-/** lambda =  mu^2 / sigma^3 / Temperature */
-  double lambda;
+#ifdef ROTATION
+/** angular velocity */
+  double omega[3];
   
 /** torque */
   double torque[3];
@@ -322,7 +325,7 @@ int set_particle_q(int part, double q);
 */
 int set_particle_type(int part, int type);
 
-#ifdef DIPOLAR_INTERACTION
+#ifdef ROTATION
 /** Call only on the master node: set particle orientation using quaternions.
     @param part the particle.
     @param quat its new value for quaternions.
@@ -330,15 +333,14 @@ int set_particle_type(int part, int type);
 */
 int set_particle_quat(int part, double quat[4]);
 
-/** Call only on the master node: set particle lambda parameter which is
-    rwlated to the dipole moment.
+/** Call only on the master node: set particle angular velocity.
     @param part the particle.
-    @param lambda its lambda = mu^2 / sigma^3 / Temperature.
+    @param omega its new angular velocity.
     @return TCL_OK if particle existed
 */
-int set_particle_lambda(int part, double lambda);
+int set_particle_omega(int part, double omega[3]);
 
-/** Call only on the master node: set particle orientation using quaternions.
+/** Call only on the master node: set particle torque.
     @param part the particle.
     @param torque its new torque.
     @return TCL_OK if particle existed
