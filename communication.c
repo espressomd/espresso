@@ -742,7 +742,21 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    memcpy(pdata, p, sizeof(Particle));
+
+    /* add new properties here */
+    pdata->r.identity = p->r.identity;
+    pdata->r.type = p->r.type;
+    memcpy(pdata->r.p, p->r.p, 3*sizeof(double));
+    pdata->r.q = p->r.q;
+    memcpy(pdata->f, p->f, 3*sizeof(double));
+    memcpy(pdata->i, p->i, 3*sizeof(double));
+    memcpy(pdata->v, p->v, 3*sizeof(double));
+#ifdef ROTATION
+    memcpy(pdata->r.quat = p->r.quat, 4*sizeof(double));
+    memcpy(pdata->torque = p->torque, 3*sizeof(double));
+    memcpy(pdata->omega = p->omega, 3*sizeof(double));
+#endif
+
     bl->max = bl->n;
     if (bl->n > 0) {
       alloc_intlist(bl, bl->n);
@@ -753,6 +767,8 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
   }
   else {
     mpi_issue(REQ_GET_PART, pnode, part);
+
+    /* add new properties here */
 
     pdata->r.identity = part;
     MPI_Recv(&pdata->r.type, 1, MPI_INT, pnode,

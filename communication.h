@@ -228,7 +228,7 @@ void mpi_gather_stats(int job, void *result);
     the bonding information is also fetched and stored in a single intlist
     pointed to by il. The particles bonding information references this array,
     which is the only data you have to free later (besides the result array
-    you allocated).
+    you allocated). YOU MUST NOT CALL \ref free_particle on any of these particles!
   \param result where to store the gathered particles
   \param il if non-NULL, the integerlist where to store the bonding info
 */
