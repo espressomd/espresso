@@ -1,37 +1,51 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-
-* v1.1.0b *
+***********
+* v1.1.1  *
 ***********
 
 Current working revision.
-(d) November 18th, 2003
-(c) November 13th, 2003
-(b) November 11th, 2003.
-(a) November 3rd, 2003.
-
+FR: December 2nd, 2003.
 
 New Features:
-(d) command 'imd positions' has new optional flag '-fold_chains'
-(c) command 'part fix <x> <y> <z>' replaces 'part fix'
-(b) command 'analyze p_IK1' replacing 'analyze p_bin'
-(a) command 'analyze p_bin' to derive the pressure tensor of a given particle list
-(a) command 'analyze bin' to create a particle list distributed into spherical bins
-
-
 
 
 Changes:
 
 
 Bugfixes:
+
+
+
+- v1.1.0e -
+-----------
+
+(e) December 2nd, 2003.
+(d) November 18th, 2003.
+(c) November 13th, 2003.
+(b) November 11th, 2003.
+(a) November 3rd, 2003.
+
+New Features:
+(d) command 'imd positions' has new optional flag '-fold_chains'
+(c) command 'part fix' has new optional parameters, i.e. 'part fix [<x> <y> <z>]'
+(b) command 'analyze p_IK1' replacing 'analyze p_bin'
+(a) command 'analyze p_bin' to derive the pressure tensor of a given particle list
+(a) command 'analyze bin' to create a particle list distributed into spherical bins
+
+Changes:
+(-) none
+
+Bugfixes:
+(e) fixed that 'communication.c' would not compile without electrostatics-flag on
 (b) fixed implementation of 'analyze p_bin' to correspond to Kirkwood's IK1-scheme
 (a) fixed that 'analyze <g1>' and 'analyze <g2>' derived all of <g1>, <g2>, and <g3>
     and always returned <g3> only
 
 
 
+*********************
 * v1.1.Gold (Naomi) *
 *********************
 
@@ -39,6 +53,7 @@ Released on October 20th, 2003.
 
 
 
+*******************
 * v1.0.Gold (Kim) *
 *******************
 

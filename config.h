@@ -42,6 +42,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
     See \ref constraint.h and \ref interaction_data.h */
 #define CONSTRAINTS
 
+
 /************************************************/
 /** \name Default Parameter Settings            */
 /************************************************/
@@ -78,7 +79,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /** callback for version status. */
 MDINLINE int version_callback(Tcl_Interp *interp)
 {
-  Tcl_AppendResult(interp, "ESPRESSO: v1.1.0b (Naomi), Last Change: 11.11.2003", (char *) NULL);
+  Tcl_AppendResult(interp, "ESPRESSO: v1.1.1 (Naomi), Last Change: 01.12.2003", (char *) NULL);
   return (TCL_OK);
 }
 
