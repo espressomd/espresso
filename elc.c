@@ -22,7 +22,7 @@
 
 #ifdef ELECTROSTATICS
 
-//#define CHECKPOINTS
+// #define CHECKPOINTS
 // #define LOG_FORCES
 
 /****************************************
@@ -640,13 +640,12 @@ double ELC_energy()
 
 static char *ELC_tune(double error)
 {
-  double err, step;
+  double err;
   double h = box_l[2] - elc_params.minimal_dist,
     dst1 = elc_params.minimal_dist,
     dst2 = 2*box_l[2] - elc_params.minimal_dist;
-  elc_params.far_cut = 2;
-  /* so it is at least at one border optimal */
-  step = dmin(ux, uy);
+  double min_inv_boxl = dmin(ux, uy);
+  elc_params.far_cut = min_inv_boxl;
   do {
     err = 0.5*(exp(2*M_PI*elc_params.far_cut*h)/dst1*
 	       (C_2PI*elc_params.far_cut + 2*(ux + uy) + 1/dst1)/
@@ -654,13 +653,13 @@ static char *ELC_tune(double error)
 	       exp(-2*M_PI*elc_params.far_cut*h)/dst2*
 	       (C_2PI*elc_params.far_cut + 2*(ux + uy) + 1/dst2)/
 	       (exp(2*M_PI*elc_params.far_cut*box_l[2])- 1));
-    elc_params.far_cut += step;
+    elc_params.far_cut += min_inv_boxl;
   }
   while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
   if (elc_params.far_cut >= MAXIMAL_FAR_CUT)
     return "Far cutoff too large, increase gap size";
   // fprintf(stderr, "far cutoff %g %g\n", elc_params.far_cut, err);
-  elc_params.far_cut -= step;
+  elc_params.far_cut -= min_inv_boxl;
   elc_params.far_cut2 = SQR(elc_params.far_cut);
   return NULL;
 }
