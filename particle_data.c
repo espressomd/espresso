@@ -355,6 +355,21 @@ int part(ClientData data, Tcl_Interp *interp,
 	argc -= 2;
 	argv += 2;
       }
+      else if (!strncmp(argv[0], "bond", strlen(argv[0]))) {
+	int type_num;
+	if (argc < 3) {
+	  Tcl_AppendResult(interp, "bond requires at least 2 arguments: "
+			   "<type_num> <partner>", (char *) NULL);
+	  return (TCL_ERROR);
+	}
+	/* set type_num */
+	if (Tcl_GetInt(interp, argv[1], &type_num) == TCL_ERROR)
+	  return (TCL_ERROR);
+	if(type_num < 0 || type_num >= n_bonded_ia) {
+	  Tcl_AppendResult(interp, "invalid bonded interaction type_num"
+			   "(Set bonded interaction parameters first)", (char *) NULL);
+	}
+      }
       else {
 	Tcl_AppendResult(interp, "unknown particle parameter \"", argv[0],"\"", (char *)NULL);
 	return (TCL_ERROR);

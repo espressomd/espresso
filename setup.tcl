@@ -21,8 +21,8 @@ set maxtime 200
 
 source polywr.tcl
 
-if {[setmd nproc] == 8} {
-    setmd procgrid 2 2 2
+if {[setmd n_node] == 8} {
+    setmd node_grid 2 2 2
 }
 
 # setup random particles
@@ -46,6 +46,13 @@ for {set ia1 0} { $ia1 <= 4 } { incr ia1 } {
     }
 }
 
+# test for bonded interaction parameters
+#puts "setting up bonded interactions "
+#inter 0 fene 7.0 2.0
+#inter 1 angle 3.0
+#inter 0
+#inter 1
+#puts "setting up bonded interactions - done "
 # friction
 setmd gamma 1e4
 

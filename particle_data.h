@@ -16,11 +16,12 @@
 typedef struct {
   /** unique identifier for the particle */
   int    identity;
+  /** particle type, used for non bonded interactions. */
   int    type;
 
   /** periodically folded position */
   double p[3];
-  /** position in the last time step for Verlet list*/
+  /** position in the last time step befor last Verlet list update */
   double p_old[3];
   /** index of the simulation box image where the particle really sits */
   int    i[3];
@@ -32,8 +33,16 @@ typedef struct {
   /** force */
   double f[3];
 
+  /** size of field \ref bonds. */
   int   n_bonds;
+  /** allocated size of field \ref bonds. */
   int max_bonds;
+  /** field containing the bond information for the particle.
+   * 
+   * For each bond, where the particle is the main particle, bonds
+   * contains the type of the bonded interaction and the identity of
+   * the other participating particles.  
+   */
   int    *bonds;
 } Particle;
 
@@ -47,7 +56,14 @@ extern int   max_particles;
 extern int     n_particles;
 /** Number of ghost particle belonging to that node. */
 extern int     n_ghosts;
-/** Local particle array. */
+/** Local particle array. 
+ *
+ *  The figure shows how local particles and ghosts are stored in the
+ *  particle array \anchor particle_array.  
+ *
+ *  \image html particles.gif  "local particle array"
+ *  \image latex particles.eps "local particle array" width=8cm
+*/
 extern Particle *particles;
 
 /** Highest particle number seen so far. If you leave out some

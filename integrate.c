@@ -75,7 +75,7 @@ void integrate_vv_init()
   int i;
 
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_init\n",this_node));
-  INTEG_TRACE(fprintf(stderr,"%d: nproc =%d npart=%d\n",
+  INTEG_TRACE(fprintf(stderr,"%d: n_node =%d npart=%d\n",
 		      this_node,n_nodes,max_seen_particle));
   INTEG_TRACE(fprintf(stderr,"%d: n_particles = %d\n",
 		      this_node, n_particles));
@@ -102,22 +102,17 @@ void integrate_vv(int n_steps)
   int i;
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: %d steps\n",this_node,
 		      n_steps));
-
+  /* this is just for security reasons */
   MPI_Barrier(MPI_COMM_WORLD);
-
   /* check init */
   if(rebuild_verletlist == 1) {
     exchange_part();
-    MPI_Barrier(MPI_COMM_WORLD);
     sort_particles_into_cells();
-    MPI_Barrier(MPI_COMM_WORLD);
     exchange_ghost();
-    MPI_Barrier(MPI_COMM_WORLD);
     build_verlet_list();
   }
   if(calc_forces_first == 1) {
     force_calc();
-    MPI_Barrier(MPI_COMM_WORLD);
     collect_ghost_forces();
     rescale_forces();
     calc_forces_first = 0;

@@ -24,25 +24,53 @@ The C implementation is \ref setmd.
 	returns the properties of the particle if it exists.
 	The C implementation is \ref part.
 
-<li>\verbatim inter <type1> <type2> <interaction_type> <value>+ \endverbatim
-	sets the parameters
-	for the different non-bonded interactions between particles of
+<li>\verbatim inter \endverbatim
+	sets the parameters for interactions.
+
+	<ol>
+	<b><li> Non bonded interactions:</b> 
+
+	\verbatim inter <type1> <type2> <interaction_type> <value>+ \endverbatim	
+	Non bonded interaction between particles of
 	types type1 and type2 (the types are those set using \ref part).
 	Currently known interaction types are:
-	<ul>
-   	<li>\verbatim lennard-jones \endverbatim
-		the known Lennard-Jones potential
-		\f[24 \epsilon \left(2 \left(\frac{\sigma}{r-offset}\right)^{12} -
-			 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
-		The order of the paramters is
-		\f$\epsilon, \sigma, cutoff, shift, offset\f$.
 
-	<li>\verbatim ramp \endverbatim
-		a simple step potential for initialization.
-		The parameters are the cutoff
-		and the force magnitude. If two particles are within the cutoff, they feel
-		a constant repulsion of the given magnitude.
+	<ul>
+	   	<li>\verbatim lennard-jones \endverbatim
+			the known Lennard-Jones potential
+			\f[24 \epsilon \left(2 \left(\frac{\sigma}{r-offset}\right)^{12} -
+				 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
+			The order of the paramters is
+			\f$\epsilon, \sigma, cutoff, shift, offset\f$.
+
+		<li>\verbatim ramp \endverbatim
+			a simple step potential for initialization.
+			The parameters are the cutoff and the force
+			magnitude. If two particles are within the
+			cutoff, they feel a constant repulsion of the
+			given magnitude.
 	</ul>
+
+	<b> <li> Bonded interactions: </b>
+
+	\verbatim inter <type_num> <interaction_type> <value>+ \endverbatim
+	Bonded interaction (Bonds are set using \ref part (!!!not
+	implemented!!!)).
+	Currently known interaction types are:
+
+	<ul>
+		<li> \verbatim fene <K_fene> <R_fene> \endverbatim
+			FENE potential
+			\f[ U^{FENE} = -\frac{1}{2} K_{FENE} R_{FENE}^2 \ln
+			\left( 1 - \left( \frac{r}{R_{FENE}} \right)^2 \right) \f]
+		<li> \verbatim angle <bend> \endverbatim
+			cosine bend potential  
+			\f[ U^{bend} = bend (1-\cos(\alpha))
+			\f]
+			with \f$ \alpha \f$ being the angle between two
+			neighboring bonds.
+	</ul>
+	</ol>		
 	The C implementation is \ref inter.
 
 <li>\verbatim writemd <channel> ( posx|posy|posz|q|type|vx|vy|vz|fx|fy|z )+\endverbatim

@@ -547,9 +547,17 @@ void mpi_bcast_ia_params(int i, int j)
   COMM_TRACE(fprintf(stderr, "0: issuing BCAST_IA %d %d\n", i, j));
   MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&j,  1, MPI_INT, 0, MPI_COMM_WORLD);
-  /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
-  MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
-	    0, MPI_COMM_WORLD);
+
+  if(j>=0) { /* non-bonded interaction parameters */
+    /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
+    MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
+	      0, MPI_COMM_WORLD);
+  }
+  else { /* bonded interaction parameters */
+    /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
+    MPI_Bcast(&(bonded_ia_params[i]),sizeof(Bonded_ia_parameters), MPI_BYTE,
+	      0, MPI_COMM_WORLD);
+  }
 }
 
 void mpi_bcast_ia_params_slave(int i)
@@ -557,9 +565,16 @@ void mpi_bcast_ia_params_slave(int i)
   int j;
   MPI_Bcast(&j,  1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
-  MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
-	    0, MPI_COMM_WORLD);
+  if(j>=0) { /* non-bonded interaction parameters */
+    /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
+    MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
+	      0, MPI_COMM_WORLD);
+  }
+  else { /* bonded interaction parameters */
+    make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
+    MPI_Bcast(&(bonded_ia_params[i]),sizeof(Bonded_ia_parameters), MPI_BYTE,
+	      0, MPI_COMM_WORLD);
+  }
 }
 
 /*************** REQ_BCAST_IA_SIZE ************/

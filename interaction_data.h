@@ -22,22 +22,36 @@ typedef struct {
   double ramp_force;
 } IA_parameters;
 
-/** Type of bonded interaction is a dihedral potential. */
-#define BONDED_IA_DIHEDRAL 0
+/** Type of bonded interaction is a FENE potential. */
+#define BONDED_IA_FENE     0
 /** Type of bonded interaction is a angle potential. */
 #define BONDED_IA_ANGLE    1
+/** Type of bonded interaction is a dihedral potential. */
+#define BONDED_IA_DIHEDRAL 2
 
-/** Defines a parameters for a bonded interaction. Not used so far. */
+/** Defines parameters for a bonded interaction. */
 typedef struct {
-  int bonded_ia_type;
+  /** bonded interaction type:  0 = FENE, 1 = ANGLE, 2 = DIHEDRAL */
+  int type;
+  /** (Number of particles - 1) interacting for that type */ 
+  int num;
+  /** union to store the different bonded interaction parameters. */
   union {
+    /* Parameters for FENE Potential */
+    struct {
+      double k_fene;
+      double r_fene;
+    } fene;
+    /* Parameters for Cosine bend potential */
+    struct {
+      double bend;
+    } angle;
+    /* Parameters for dihedral potential */
     struct {
       int dummy;
     } dihedral;
-    struct {
-      int dummy;
-    } angle;
-  } body;
+
+  } p;
 } Bonded_ia_parameters;
 
 /************************************************
@@ -83,11 +97,15 @@ MDINLINE IA_parameters *get_ia_param(int i, int j) {
     such that no physical interaction occurs. */
 void make_particle_type_exist(int type);
 
+/** Makes sure that \ref bonded_ia_params is large enough to cover the
+    parameters for the bonded interaction type. Attention: There is no
+    initialization done here. */
+void make_bond_type_exist(int type);
+
 /** This function increases the LOCAL ia_params field
     to the given size. Better use
     \ref make_particle_type_exist since it takes care of
-    the other nodes.
-*/
+    the other nodes.  */
 void realloc_ia_params(int nsize);
 
 /** Initialize interaction parameters. */

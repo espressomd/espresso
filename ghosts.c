@@ -7,19 +7,36 @@
  *  range interactions between the spacial domains of neighbouring
  *  nodes.
  *
- *  For YOU HAVE BEEN WORKING HERE !!!!!!!!!
-
- *  \image html directions.gif "Convention for the order of the directions"
- *  \image latex directions.eps "Convention for the order of the directions" width=6cm
+ *  All structures are initialized by \ref ghost_init.  Exchanging
+ *  particles that move from one to another node domain is done by
+ *  \ref exchange_part. Setup of the ghost particle frame is done by
+ *  \ref exchange_ghost. Call \ref sort_particles_into_cells before
+ *  each use of \ref exchange_ghost. During integration using a verlet
+ *  list ghost positions and forces are exchanged by \ref
+ *  update_ghost_pos and \ref collect_ghost_forces. Before calling
+ *  \ref ghost_init again tou should clean up with \ref ghost_exit.
+ *
+ *  Communication \anchor communication is done only between
+ *  neighboring nodes. The communication scheme can be senn in the
+ *  figure below.
  *
  *  \image html ghost_communication.gif "Scheme of ghost/particle communication"
  *  \image latex ghost_communication.eps "Scheme of ghost/particle communication" width=8cm 
  *
+ *  To reduce the number of communications per node from 26 (number of
+ *  neighbor nodes in 3 dimensions) to 6 the order of the
+ *  communication is important:
+ *  <ol> 
+ *      <li> x-direction: left and right - MPI_Barrier
+ *      <li> y-direction: forth and back - MPI_Barrier
+ *      <li> z-direction: down and up - MPI_Barrier
+ *  </ol>
+ *  In this way also edges and corners are communicated
+ *  (See also \ref directions for our conventions).
+ *
  *  \warning \b Since the ghost particle structures make use of the
- *  linked cell structure, ghost_init() has to be called after
- *  cells_init()
-
-*/
+ *  linked cell structure, \ref ghost_init has to be called after \ref
+ *  cells_init */
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,9 +95,9 @@ int   max_g_recv_buf;
 int *send_cells;
 /** list of cell indices to receive. */
 int *recv_cells;
-
 /** total number of send/recv cells */
 int ntot_send_cells;
+
 /** maximal number of cells to send in one direction. */
 int max_send_cells;
 /** number of cells to send in direction X. */
@@ -124,22 +141,23 @@ int max_recv_buf;
  *  in list starting from position start. max should be the 
  *  total length of list to ensure that the indices fit into list.
  *
- * @return         size of the subgrid
+ * @return         size of the subgrid.
  * @param *list    array to store the indices of the sub grid.
- * @param start    start index for sub grid indices
- * @param max      size of the array list
- * @param lc[3]    lower corner of sub grid
- * @param hc[3]    upper corner of sub grid
- * @param gs[3]    grid dimension 
+ * @param start    start index for sub grid indices.
+ * @param max      size of the array list.
+ * @param lc[3]    lower corner of sub grid.
+ * @param hc[3]    upper corner of sub grid.
+ * @param gs[3]    grid dimension .
  */  
 int sub_grid_indices(int* list, int start, int max,
 		     int lc[3], int hc[3], int gs[3]);
 
-/** moves particle (ind) to the send buffers.  
- *  subroutine of exchange_part().  
+/** moves particle (ind) to the send buffers. 
+ * 
+ *  subroutine of \ref exchange_part .  
  *
  *  Moves one particle (struct: Particle, local index: ind) to the
- *  send buffer (p_send_buf, b_send_buf) and remove it from the local
+ *  send buffer (p_send_buf, b_send_buf) and removes it from the local
  *  particle field. The empty space in the local particle field is
  *  then filled with the last particle (See illustration).
  *
@@ -164,7 +182,7 @@ int move_to_p_buf(int ind);
 
 /** send particles in direction s_dir.
  *
- *  subroutine of exchange_part(). 
+ *  subroutine of \refexchange_part. 
  *
  *  Check if communication goes to a different node.
  *  <ol>
@@ -185,29 +203,77 @@ void send_particles(int s_dir);
 
 /** appends recieved particles to local particle array.
  *
- *  subroutine of exchange_part(). 
+ *  subroutine of \ref exchange_part. 
  *
  *  Reallocate particle buffer (particles) if necessary. Copy
- *  particles and theier bonds from recieve buffers to local particle
+ *  particles and their bonds from recieve buffers to local particle
  *  buffer.
  *
- * \warning \b Supports only two particle bonds at the moment
+ * \warning \b Supports only two particle bonds at the moment.
  *
 */
 void append_particles(void);
 
 /** Send ghost particles in direction s_dir.
  *
- *  subroutine of exchange_ghosts(). 
+ *  subroutine of \ref exchange_ghosts. 
  *
- * @param s_dir    send direction. 
- */
+ *  Does an unbuffered communication from all nodes to their neighbor
+ *  node in direction s_dir.
+ *  <ol>
+ *      <li> send number of ghost in each send cell for this direction:
+ *           \ref n_send_ghosts to \ref n_recv_ghosts.
+ *           The total number of ghosts to send/receive is in 
+ *           \ref n_send_ghosts[\ref max_send_cells].
+ *      <li> send ghost particle information:
+ *           \ref g_send_buf to \ref g_recv_buf
+ *  </ol>
+ *  \ref g_recv_buf is reallocated if necessary.
+ *
+ *  If communication goes to the same node, just the pointers of the
+ *  array pairs (\ref g_send_buf, \ref g_recv_buf) and the variable
+ *  pairs (\ref max_g_send_buf, \ref max_g_recv_buf) and (\ref
+ *  n_g_send_buf, \ref n_g_recv_buf) are exchanged.
+ *
+ * @param s_dir send direction.  
+*/
 void send_ghosts(int s_dir);
 
+/** Copy identity, type, position and charge from particle to ghost array.
+ * 
+ *  Attention: no array checks are performed.
+ *
+ * @param g_array   ghost particle array.
+ * @param g_ind     index for ghost particle.
+ * @param p_array   particle array.
+ * @param p_ind     index of particle.
+ */
 void pack_ghost(Ghost *g_array, int g_ind, Particle *p_array, int p_ind);
 
+/** Copy identity, type, position and charge from ghost to particle array.
+ * 
+ *  Attention: no array checks are performed.
+ *
+ * @param p_array   particle array.
+ * @param p_ind     index for particle.
+ * @param g_array   ghost particle array.
+ * @param g_ind     index of ghost particle.
+ */
 void unpack_ghost(Particle *p_array, int p_ind, Ghost *g_array, int g_ind);
 
+/** send positions/forces in direction s_dir.
+ *
+ *  Does an unbuffered communication from all nodes to their neighbor
+ *  node in direction s_dir.
+ *
+ *  send positions / forces: \ref send_buf to \ref recv_buf.
+ *  If communication goes to the same node just the pointers 
+ *  of \ref send_buf and \ref recv_buf are exchanged.
+ *
+ * @param s_dir       direction to send to/recv from.
+ * @param send_size   number of positions/forces to send. 
+ * @param recv_size   number of positions/forces to receive.
+ */
 void send_posforce(int s_dir,int send_size, int recv_size);
 
 /************************************************
@@ -315,26 +381,28 @@ void exchange_part()
   }
 
   for(d=0; d<3; d++) {                           /* direction loop */  
-    for(lr=0; lr<2; lr++) {
-      dir = 2*d + lr;
-      n_p_send_buf = n_p_recv_buf = 0;
-      n_b_send_buf = n_b_recv_buf = 0;
-      if(lr==0) {                                /* left */
-	for(n=0;n<n_particles;n++)
-	  if(particles[n].p[d] <   my_left[d] ) {
-	    n = move_to_p_buf(n); 
-	  }
+    if(node_grid[d] > 1) { /* catch single node case for direction d! */
+      for(lr=0; lr<2; lr++) {
+	dir = 2*d + lr;
+	n_p_send_buf = n_p_recv_buf = 0;
+	n_b_send_buf = n_b_recv_buf = 0;
+	if(lr==0) {                                /* left */
+	  for(n=0;n<n_particles;n++)
+	    if(particles[n].p[d] <   my_left[d] ) {
+	      n = move_to_p_buf(n); 
+	    }
+	}
+	else {                                     /* right */
+	  for(n=0;n<n_particles;n++)                  
+	    if(particles[n].p[d] >=  my_right[d]) {
+	      n = move_to_p_buf(n);
+	    }
+	}
+	send_particles(dir);
+	append_particles();
       }
-      else {                                     /* right */
-	for(n=0;n<n_particles;n++)                  
-	  if(particles[n].p[d] >=  my_right[d]) {
-	    n = move_to_p_buf(n);
-	  }
-      }
-      send_particles(dir);
-      append_particles();
+      MPI_Barrier(MPI_COMM_WORLD);
     }
-    MPI_Barrier(MPI_COMM_WORLD);
   }
 
 }
@@ -498,12 +566,18 @@ void collect_ghost_forces()
 void ghost_exit()
 {
   GHOST_TRACE(fprintf(stderr,"%d: ghost_exit:\n",this_node));
-  
-  free(send_cells);
-  free(recv_cells);
-  free(n_send_ghosts);
-  free(n_recv_ghosts);
-  
+  if(max_p_send_buf>0)  free(p_send_buf);
+  if(max_p_recv_buf>0)  free(p_recv_buf);
+  if(max_b_send_buf>0)  free(b_send_buf);
+  if(max_b_recv_buf>0)  free(b_recv_buf);
+  if(ntot_send_cells>0) free(send_cells);
+  if(ntot_send_cells>0) free(recv_cells);
+  if(max_send_cells>0)  free(n_send_ghosts);
+  if(max_send_cells>0)  free(n_recv_ghosts);
+  if(max_g_send_buf>0)  free(g_send_buf);
+  if(max_g_recv_buf>0)  free(g_recv_buf);
+  if(max_send_buf>0)    free(send_buf);
+  if(max_recv_buf>0)    free(recv_buf);
 }
 
 /*******************  privat functions  *******************/

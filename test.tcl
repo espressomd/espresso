@@ -18,14 +18,14 @@ set tcl_precision 5
 
 # data initialization
 ##################################################
-puts "nproc = [setmd nproc]"
+puts "n_node = [setmd n_node]"
 
 setmd box_l 10.0 10.0 10.0
 puts "box =\{[setmd box]\}"
-if {[setmd nproc] == 8} {
-    setmd procgrid 2 2 2
+if {[setmd n_node] == 8} {
+    setmd node_grid 2 2 2
 }
-puts "grid = \{[setmd proc]\}"
+puts "grid = \{[setmd node_grid]\}"
 
 if { ![file exists "config.gz"]} {
     error "please generate a configuration file with setup.tcl"

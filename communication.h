@@ -4,25 +4,37 @@
     This file contains the random access MPI communication.
     It is the header file for \ref communication.c "communication.c".
 
-    The random access MPI communication is used during script evaluation. Except for the master node
-    that interpretes the Tcl script, all other nodes wait for the master node to issue an action.
-    That is done by \ref mpi_loop, the main loop for all slave nodes. It simply does an MPI_Bcast and
-    therefore waits for the master node to broadcast a command. A command consists of two integers,
-    the first one describing the action issued, the second an arbitrary parameter depending on the
-    action issued. The actions are always issued by the master node, through the functions exported
-    below (e. g. \ref mpi_bcast_parameter).
+    The random access MPI communication is used during script
+    evaluation. Except for the master node that interpretes the Tcl
+    script, all other nodes wait for the master node to issue an
+    action.  That is done by \ref mpi_loop, the main loop for all
+    slave nodes. It simply does an MPI_Bcast and therefore waits for
+    the master node to broadcast a command. A command consists of two
+    integers, the first one describing the action issued, the second
+    an arbitrary parameter depending on the action issued. The actions
+    are always issued by the master node, through the functions
+    exported below (e. g. \ref mpi_bcast_parameter).
 
-    Adding new actions (e. g. to implement new Tcl commands) is simple. First, the action has to be
-    assigned a new action number (the defines like \ref REQ_BCAST_PAR) by adding a new define and increasing
-    \ref REQ_MAXIMUM. Then you write a mpi_* procedure that does a
-    \verbatim MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD)\endverbatim
-    where \verbatim req[0]=<action number>; req[1]=<arbitrary>\endverbatim. After this your procedure
-    is free to do anything. However, it has to be in (MPI) sync with what your new mpi_*_slave does.
-    This procedure is called immediately after the broadcast with the arbitrary integer as parameter.
-    To this aim it has also to be added to \ref callbacks (the array index gives your action number -
-    better not choose it too high...). Last but not least for debugging purposes you can add a nice
-    name to \ref names in the same way.
-*/
+    Adding new actions (e. g. to implement new Tcl commands) is
+    simple. First, the action has to be assigned a new action number
+    (the defines like \ref REQ_BCAST_PAR) by adding a new define and
+    increasing \ref REQ_MAXIMUM. Then you write a mpi_* procedure that
+    does a
+
+    \verbatim MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD)\endverbatim 
+
+    where 
+
+    \verbatim req[0]=<action number>; req[1]=<arbitrary>\endverbatim. 
+
+    After this your procedure is free to do anything. However, it has
+    to be in (MPI) sync with what your new mpi_*_slave does.  This
+    procedure is called immediately after the broadcast with the
+    arbitrary integer as parameter.  To this aim it has also to be
+    added to \ref callbacks (the array index gives your action number
+    - better not choose it too high...). Last but not least for
+    debugging purposes you can add a nice name to \ref names in the
+    same way.  */
 
 /* from here we borrow the enumeration of
    the global variables */
@@ -119,8 +131,15 @@ void mpi_recv_part(int node, int part, Particle *part_data);
 void mpi_integrate(int n_steps);
 
 /** Issue REQ_BCAST_IA: send new ia params.
-    \param i,j the particle types whose parameters are to be sent.
-*/
+
+    mpi_bcast_ia_params is used for both, bonded and non-bonded
+    interaction parameters. Therefor i and j are used depending on
+    their value:
+
+    \param i   particle type for non bonded interaction parameters / 
+               bonded interaction type number.
+    \param j   if not negative: particle type for non bonded interaction parameters /
+               if negative: flag for bonded interaction */
 void mpi_bcast_ia_params(int i, int j);
 
 /** Issue REQ_BCAST_IA_SIZE: send new size of \ref ia_params.
