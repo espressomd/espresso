@@ -1,6 +1,6 @@
 #!/bin/sh
 # tricking... the line after a these comments are interpreted as standard shell script \
-    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=3; fi
+    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=2; fi
 # OSF1 \
     if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $*
 # AIX \
@@ -39,6 +39,7 @@ setmd time_step 0.01
 setmd skin 0.5
 set n_part 100
 set maxstep 100
+set intstep [expr round(20*$maxstep/100)]
 
 proc read_data {file} {
     set f [open $file "r"]
@@ -68,9 +69,9 @@ if { [catch {
     set temp0   [expr $eng0/$n_part/($deg_free/2.)]
     set curtemp1 0
 
-    for {set i 0} { $i < $maxstep} { incr i } {
-    integrate 20
-	puts -nonewline "$i percent done\r"
+    for {set i 0} { $i < 100} { incr i } {
+    integrate $intstep
+	puts -nonewline " $i percent done\r"
 	flush stdout
 	set toteng [analyze energy total]
 	set cureng [analyze energy kin] 
