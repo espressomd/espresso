@@ -1005,19 +1005,20 @@ int part_parse_fix(Tcl_Interp *interp, int argc, char **argv,
   int ext_flag = 0;
   int i;
 
-  if (argc == 0) {
+  if (argc == 0 || !ARG_IS_I(0,fixed_coord_flag[0])) {
+    Tcl_ResetResult(interp);
+
     fixed_coord_flag[0] = 1;
     fixed_coord_flag[1] = 1;
     fixed_coord_flag[2] = 1;
     *change = 0;
   }
   else {
-    if (argc != 3){
+    if (argc < 3){
       Tcl_AppendResult(interp, "fix has either 0 or 3 arguments: { <fixed_coord> <fixed_coord> <fixed_coord> }", (char *)NULL);    
       return TCL_ERROR;
     }
-    if (! ARG_IS_I(0,fixed_coord_flag[0] ))
-      return TCL_ERROR;
+    /* first one already read in the if statement above */
     if (! ARG_IS_I(1,fixed_coord_flag[1] ))
       return TCL_ERROR;
     if (! ARG_IS_I(2,fixed_coord_flag[2] ))
