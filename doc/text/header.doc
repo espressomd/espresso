@@ -1,5 +1,28 @@
 /** \mainpage
 
+<hr>
+<center>
+\image html  logo.gif 
+\image latex logo.eps \width=6cm
+\htmlonly
+<h1>
+<font color="#0000FF"> <b>E</b></font>xpandable
+<font color="#0000FF"> <b>S</b></font>imulation
+<font color="#0000FF"> <b>P</b></font>ackage <br>
+for <font color="#0000FF"> <b>Res</b></font>earch
+on <font color="#0000FF"> <b>So</b></font>ft matter
+</h1>
+\endhtmlonly
+\latexonly
+{Large
+{\Huge E}xpandable
+{\Huge S}imulation
+{\Huge P}ackage <br>
+{\Huge Res}earch
+{\Huge So}ft matter
+\endlatexonly
+</center>
+<hr>
 \section introduction Introduction
 
 Espresso is a MPI parallel molecular dynamics program. It uses a
