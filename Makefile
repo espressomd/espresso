@@ -6,7 +6,7 @@ include Makefile.$(PLATFORM)
 CSOURCES= main initialize global communication binary_file interaction_data \
 	  verlet grid integrate cells ghosts forces debug particle_data \
 	  thermostat statistics vmdsock imd p3m fft random blockfile blockfile_tcl \
-	  polymer
+	  polymer specfunc
 CXXSOURCES=
 
 LIBOBJECTS=c_blockfile.o
