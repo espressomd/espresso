@@ -113,9 +113,9 @@ extern const Datafield fields[];
 #define FIELD_NPARTTYPE           16
 /** index of \ref node_grid in \ref #fields */
 #define FIELD_NODEGRID            17
-/** index of \ref nptiso_g0 in \ref #fields */
+/** index of \ref nptiso_gamma0 in \ref #fields */
 #define FIELD_NPTISO_G0           18
-/** index of \ref nptiso__gv in \ref #fields */
+/** index of \ref nptiso_gammav in \ref #fields */
 #define FIELD_NPTISO_GV           19
 /** index of \ref p_ext in \ref #fields */
 #define FIELD_NPT_PEXT            20      

@@ -297,7 +297,7 @@
 	    \verbatim coulomb 0.0 \endverbatim
 	    is returned, no electrostatics are active at the moment.
 
-	<li> \anchor tcl_non_bonded <b>Other interaction types:</b> 
+	<li> \anchor tcl_other_inter <b>Other interaction types:</b> 
 	<ul>
 	    <li>\verbatim inter <particle_type_number1> <particle_type_number1> comfixed <comfixed_flag> \endverbatim
       This interaction type applies a constraint on particles of type particle_type_number1 such that during the integration the center of mass of these particles is fixed. This is accomplished as follows: The sum of all the forces acting on particles of type particle_type_number1 are calculated. These include all the forces due to other interaction types and also the thermostat. Next a force equal in magnitude, but in the oppositte direction is applied on the particles. This force is divided equally on all the particles of type particle_type_number1, since currently there is no mass concept in Espresso. Note that the syntax of the declaration of comfixed interaction requires the same particle type to be input twice. If different particle types are given in the input, the program exits with an error message. The comfixed_flag can be set to 1 (which turns on the interaction) or 0 (to turn off the interaction).

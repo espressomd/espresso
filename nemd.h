@@ -17,10 +17,14 @@
 
     Usage:
     <ul>
-    <li> \verbatim nemd \endverbatim
-    Return nemd status.
-    <li> 
-
+    <li> \verbatim nemd \endverbatim        Return nemd status.
+    <li> \verbatim nemd off \endverbatim    Turn off nemd.
+    <li> \verbatim nemd exchange <INT n_slabs> <INT n_exchange> \endverbatim
+         enable method exchange momentum.
+    <li> \verbatim nemd shearrate <INT n_slabs> <DOUBLE shearrate> \endverbatim
+         enable method with fixed shear rate.
+    <li> \verbatim nemd profile \endverbatim    Return the velocity profile.
+    <li> \verbatim nemd viscosity \endverbatim  Return the viscosity.
     </ul>
 
     Notes:
@@ -143,7 +147,7 @@ int nemd(ClientData data, Tcl_Interp *interp,
 void nemd_change_momentum();
 
 /** Store the mean value of the velocity x-component of all slabs in
-    \ref nemddata::velocity_profile. */ 
+    \ref Nemd::velocity_profile. */ 
 void nemd_store_velocity_profile();
 
 /** Store the x-componenet of the velocity of particle part into the

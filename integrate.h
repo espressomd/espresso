@@ -61,12 +61,12 @@ extern double verlet_reuse;
 /** tcl procedure for integrator steering.
     USAGE: 
 
-\begin{verbatim}
+\verbatim
 integrate <INT n steps>
 integrate set
 integrate set nvt
 integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>]
-\end{verbatim}   
+\endverbatim   
 
     see also \ref tcl_integrate
 */

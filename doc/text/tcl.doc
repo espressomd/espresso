@@ -59,29 +59,37 @@ interface between the Tcl script and the MD code:
 
 <br>
   <li><b>Running the simulation:</b><ul>
-    <li>\anchor tcl_integrate \verbatim integrate <steps> \endverbatim
-	run \<steps\> integration steps. 
-	The C implementation is \ref #integrate.
+    <li> \anchor tcl_integrate \verbatim integrate { <steps> | set <method> <parameter>+ } \endverbatim
+	 Run \<steps\> integration steps or set an integration method.
+	 The C implementation is \ref #integrate.
 
-    <li>\verbatim change_volume { <V_new> | <L_new> { x | y | z | xyz } } \endverbatim
-        changes the volume of either a cubic simulation box to the new volume <tt>\<V_new\></tt> 
-	or its given x-/y-/z-/xyz-extension to the new box-length <tt>\<L_new\></tt>, 
-	and isotropically adjusts the particles coordinates as well. 
-	The function returns the new volume of the deformed simulation box.
-	The C implementation is \ref change_volume.
+    <li> \anchor tcl_thermostat \verbatim thermostat { <method> <parameter>+ | off } \endverbatim
+         Change thermostat settings. See also \ref thermostat.h
+	 The C implementation is \ref #thermostat.
 
-    <li>\verbatim invalidate_system \endverbatim
-        forces a system re-init which, among others, helps to ensure continuity upon working with checkpoints.
-	For more information, see \ref tcl_invalidate_system.
+    <li> \verbatim change_volume { <V_new> | <L_new> { x | y | z | xyz } } \endverbatim
+         changes the volume of either a cubic simulation box to the new volume <tt>\<V_new\></tt> 
+	 or its given x-/y-/z-/xyz-extension to the new box-length <tt>\<L_new\></tt>, 
+	 and isotropically adjusts the particles coordinates as well. 
+	 The function returns the new volume of the deformed simulation box.
+	 The C implementation is \ref change_volume.
 
-    <li>\verbatim cellsystem \endverbatim
-        Changes the data structure to the desired cell system.
-	For more information, see \ref tcl_cellsystem.
+    <li> \verbatim invalidate_system \endverbatim
+         forces a system re-init which, among others, helps to ensure continuity upon working with checkpoints.
+	 For more information, see \ref tcl_invalidate_system.
 
-    <li>\verbatim imd ( connect|disconnect|listen|positions ) <param>\endverbatim
-    <li>\verbatim prepare_vmd_connection [<filename> [<wait> [<start>]]] \endverbatim
-        network connection handling to the visual interface program VMD.
-	For more information, see \ref tcl_imd.
+    <li> \verbatim cellsystem \endverbatim
+         Changes the data structure to the desired cell system.
+	 For more information, see \ref tcl_cellsystem.
+
+    <li> \anchor tcl_nemd \verbatim nemd { <method> <parameter>+ | off | profile | viscosity } \endverbatim
+         Use NEMD (Non Equilibrium Molecular Dynamics) to simulate a system under shear. See also \ref nemd.h.
+	 The C implementation is \ref #nemd.
+    <li> \verbatim imd ( connect|disconnect|listen|positions ) <param>\endverbatim
+
+    <li> \verbatim prepare_vmd_connection [<filename> [<wait> [<start>]]] \endverbatim
+         network connection handling to the visual interface program VMD.
+	 For more information, see \ref tcl_imd.
     </ul>
 
 <br>
@@ -140,3 +148,4 @@ between the tcl-script and the MD-code. For details on these procedures see
 <li> \ref blade
 </ul>
 */
+

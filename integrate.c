@@ -89,9 +89,9 @@ void propagate_vel_pos();
     \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t) \f] */
 void rescale_forces_propagate_vel();
 
-/** Integrator stability check (\ref ADDITIONAL_CHECKS). */
+/** Integrator stability check (see compile flag ADDITIONAL_CHECKS). */
 void force_and_velocity_check(Particle *p); 
-/** Integrator stability check (\ref ADDITIONAL_CHECKS). */
+/** Integrator stability check (see compile flag ADDITIONAL_CHECKS). */
 void force_and_velocity_display();
  
 void finalize_p_inst_npt();

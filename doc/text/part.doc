@@ -21,20 +21,20 @@
 	<li> \verbatim quat <q1> <q2> <q3> <q4> \endverbatim
 	<li> \verbatim omega <x value> <y value> <z value> \endverbatim
 	<li> \verbatim torque <x value> <y value> <z value> \endverbatim
-	Fixes the particle in space (Needs \ref EXTERNAL_FORCES in config.h \ref config.h).
+	Fixes the particle in space (Needs compile flag EXTERNAL_FORCES in config.h \ref config.h).
 	<li> \verbatim fix <x> <y> <z> \endverbatim
 	Fixes the particle in space. By supplying a set of 3 integers
 	as arguments it is possible to fix motion in \a x, \a y , or \a z coordinates
 	independently.  For example <tt> fix 0 0 1 </tt> will fix
 	motion only in z.  Note that <tt> fix </tt> without
 	arguments is equivalent to <tt> fix 1 1 1 </tt> (Needs
-	\ref EXTERNAL_FORCES in \ref config.h config.h).
+	compile flag EXTERNAL_FORCES in \ref config.h config.h).
         <li> \verbatim ext_force <x value> <y value> <z value> \endverbatim
 	An additional exxternal force is applied to the particle
-	(Needs \ref EXTERNAL_FORCES in \ref config.h config.h).
+	(Needs compile flag EXTERNAL_FORCES in \ref config.h config.h).
         <li> \verbatim unfix \endverbatim
 	Release any external influence from the particle 
-	(Needs \ref EXTERNAL_FORCES in \ref config.h config.h).
+	(Needs compile flag EXTERNAL_FORCES in \ref config.h config.h).
 	<li> \verbatim bond <bond_type_number> <partner>+ \endverbatim
 	Restrictions: \<bond_type_number\> \>= 0; partner must be an existing particle.<BR>
 	The \<bond_type_number\> is used for \ref tcl_inter to define bonded interactions.

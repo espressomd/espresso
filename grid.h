@@ -31,8 +31,6 @@
  *  with 6 (e.g. \ref node_neighbors, \ref #boundary) and 3 entries
  *  (e.g \ref node_grid, \ref box_l , \ref my_left,...).
  *  
- *  Attention: If you change anything of the simulation box dimensions
- *  you have to call \ref grid_changed_topology.
  *
  *  For more information on the domain decomposition, see \ref grid.c "grid.c". 
 */

@@ -257,7 +257,6 @@ int cluster_join_to_substructures()
 /** Perform necklace cluster algorithm. 
     \param   part    pointer to first particle
     \param   np      Number of particles
-    \param   result  Array to store the found cluster sizes
     \return          Number of pearls in necklace structure
 */
 int analyze_necklace(Particle *part, int np) {

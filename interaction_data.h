@@ -331,8 +331,8 @@ typedef struct {
       the type and the force. */
   Particle part_rep;
 } Constraint;
-#endif
 /*@}*/
+#endif
 
 
 /************************************************

@@ -172,7 +172,7 @@ In <tt>statistics.c</tt>:
 	      current topological informations; these functions reside
 	      in <tt>statistics_chain.c</tt>.
 	 </ul>
-     <li> The C implementation is \ref #parse_set_topology.
+     <li> UPDATE DOCUMENTATION for SET_TOPOLOGY....
 </ul>
 
 In <tt>statistics_chain.c</tt>:<br>
