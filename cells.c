@@ -365,6 +365,7 @@ void cells_update_ghosts()
     else
       /* Communication step: ghost information */
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    break;
   case CELL_STRUCTURE_NSQUARE:
     /* the particles probably are still balanced... */
     ghost_communicator(&cell_structure.update_ghost_pos_comm);    
