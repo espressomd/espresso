@@ -134,8 +134,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "{unknown bonded interaction number  ",buffer,"}",
 			 (char *) NULL);
 	return (TCL_ERROR);
-     }
-      return (TCL_OK);
+      }
     }
 
     /* set interaction parameters */
