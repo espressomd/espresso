@@ -710,7 +710,10 @@ int place_particle(int part, double p[3])
   if (part < 0)
     return TCL_ERROR;
 
-  if (!particle_node)
+  if (!node_grid_is_set()) 
+    setup_node_grid();
+
+  if (!particle_node)      
     build_particle_node();
 
   pnode = (part <= max_seen_particle) ? particle_node[part] : -1;
