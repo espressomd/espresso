@@ -766,7 +766,9 @@ void calc_energy()
   MPI_Reduce(energy.node.e, energy.sum.e, size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if(energy.ana_num==0 && this_node==0) {
-    for(i=1;i<energy.n;i++)
+    int cnt = energy.n;
+    if(coulomb.method==COULOMB_P3M) cnt -= 2;
+    for(i=1;i<cnt;i++)
       energy.sum.e[0] += energy.sum.e[i];
   }
 
