@@ -54,15 +54,17 @@ proc blockfile_read_auto_particles {channel read auto} {
     set idx 1
     foreach i $info {
 	case $i {
-	    "id"    { set id $idx; incr idx }
-	    "pos"   { set pos $idx; incr idx 3 }
-	    "type"  { set type $idx; incr idx }
-	    "q"     { set q $idx; incr idx }
-	    "f"     { set f $idx; incr idx 3 }
-	    "v"     { set v $idx; incr idx 3 }
-	    "quat"  { set quat $idx; incr idx 4 }
-	    "omega" { set omega $idx; incr idx 3 }
+	    "id"     { set id $idx; incr idx }
+	    "pos"    { set pos $idx; incr idx 3 }
+	    "type"   { set type $idx; incr idx }
+	    "q"      { set q $idx; incr idx }
+	    "f"      { set f $idx; incr idx 3 }
+	    "v"      { set v $idx; incr idx 3 }
+	    "quat"   { set quat $idx; incr idx 4 }
+	    "omega"  { set omega $idx; incr idx 3 }
 	    "torque" { set torque $idx; incr idx 3 }
+	    "fix"    { set fix $idx; incr idx 3 }
+	    "ext_force" { set ext_force $idx; incr idx 3 }
 	    default { error " $i is not a particle property" }
 	}
     }
@@ -87,6 +89,12 @@ proc blockfile_read_auto_particles {channel read auto} {
     }
     if {[info exists torque]} { set cmd "$cmd \
              torque \[lindex \$line $torque\] \[lindex \$line [expr $torque + 1]\] \[lindex \$line [expr $torque + 2]\]"
+    }    
+    if {[info exists fix]} { set cmd "$cmd \
+             fix \[lindex \$line $fix\] \[lindex \$line [expr $fix + 1]\] \[lindex \$line [expr $fix + 2]\]"
+    }
+    if {[info exists ext_force]} { set cmd "$cmd \
+             ext_force \[lindex \$line $ext_force\] \[lindex \$line [expr $ext_force + 1]\] \[lindex \$line [expr $ext_force + 2]\]"
     }    
     while {1} {
 	set line [blockfile $channel read auto]
