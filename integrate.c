@@ -29,7 +29,6 @@
 #include "debug.h"
 #include "pressure.h"
 #include "p3m.h"
-#include "maggs.h"
 #include "utils.h"
 #include "thermostat.h"
 #include "initialize.h"
@@ -347,11 +346,6 @@ void integrate_vv(int n_steps)
   int i;
   /* Prepare the Integrator */
   on_integration_start();
-
-#ifdef ELECTROSTATICS
-  /* for Maggs electrostatics no verlet lists! */
-  if(coulomb.method != COULOMB_MAGGS)
-#endif
   /* Verlet list criterion */
   skin2 = SQR(skin/2.0);
 
@@ -376,12 +370,9 @@ void integrate_vv(int n_steps)
     recalc_forces = 0;
   }
 
-#ifdef ELECTROSTATICS
-  /* for Maggs electrostatics no verlet lists! */
-  if(coulomb.method != COULOMB_MAGGS)
-#endif
   if (check_runtime_errors())
     return;
+
   n_verlet_updates = 0;
 
   /* Integration loop */
@@ -403,13 +394,6 @@ void integrate_vv(int n_steps)
 #ifdef ROTATION
     propagate_omega_quat(); 
 #endif
-#ifdef ELECTROSTATICS
-    if(coulomb.method == COULOMB_MAGGS) {
-      propagate_B_field(0.5*time_step); 
-      if(maggs.yukawa)
-	maggs_propagate_psi_vel_pos(time_step);
-    }
-#endif
 
     cells_update_ghosts();
 
@@ -426,17 +410,6 @@ void integrate_vv(int n_steps)
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
-#ifdef ELECTROSTATICS
-    if(coulomb.method == COULOMB_MAGGS) {
-      propagate_B_field(0.5*time_step); 
-      if(maggs.yukawa)
-	maggs_propagate_psi_vel(0.5*time_step);
-      MAGGS_TRACE( 
-		  check_gauss_law();
-		  ); 
-    }
-#endif
-    
 #ifdef ROTATION
     convert_torqes_propagate_omega();
 #endif
@@ -453,16 +426,9 @@ void integrate_vv(int n_steps)
      resort_particles sets recalc_forces to 1 */
   recalc_forces = 0;
 
-#ifdef ELECTROSTATICS
-  /* for Maggs electrostatics no verlet lists! */
-  if(coulomb.method != COULOMB_MAGGS) {
-#endif
   /* verlet list statistics */
   if(n_verlet_updates>0) verlet_reuse = n_steps/(double) n_verlet_updates;
   else verlet_reuse = 0;
-#ifdef ELECTROSTATICS
-  }
-#endif
 
 #ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO) {
@@ -825,10 +791,6 @@ void propagate_vel_pos()
   int c, i, j, np;
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
-
-#ifdef ELECTROSTATICS
-  if(coulomb.method != COULOMB_MAGGS)
-#endif
   rebuild_verletlist = 0;
 
   for (c = 0; c < local_cells.n; c++) {
@@ -856,17 +818,10 @@ void propagate_vel_pos()
       force_and_velocity_check(&p[i]);
 #endif
 
-#ifdef ELECTROSTATICS
-      if(coulomb.method != COULOMB_MAGGS)
-#endif      
       /* Verlet criterion check */
       if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) rebuild_verletlist = 1; 
     }
   }
-
-#ifdef ELECTROSTATICS
-  if(coulomb.method != COULOMB_MAGGS)
-#endif
   announce_rebuild_vlist();
 
 #ifdef ADDITIONAL_CHECKS
