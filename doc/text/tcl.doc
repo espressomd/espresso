@@ -18,7 +18,8 @@ interface between the Tcl script and the MD code:
 	For more information, see \ref tcl_constraint.
 
     <li>\verbatim code_info \endverbatim
-
+        returns information on the version and compilation status of
+        the used tcl_md programm.
     <li>\verbatim counterions <N_CI> [start <part_id>] [mode { SAW | RW } [<shield> [<max_try>]]] [charge <val_CI>] [type <type_CI>] \endverbatim
 	creates <N_CI> counterions in the simulation box. For more informations, see \ref tcl_counterions.
 
