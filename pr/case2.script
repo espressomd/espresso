@@ -10,6 +10,7 @@ axes location off
 mol load psf case2.psf pdb case2.pdb
 rock off
 rotate y by 90
+scale by 2.1 
 mol modstyle 0 0 CPK 1.500000 0.600000 8.000000 6.000000
 mol modcolor 0 0 SegName
 
