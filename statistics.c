@@ -320,8 +320,10 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     }
     else energy.ana_num=0;
 
+    /* calculate energies (in parallel) */
     mpi_gather_stats(1, NULL);
 
+    /* print out results */
     if(energy.ana_num > 0) {
       Tcl_PrintDouble(interp, energy.sum.e[0], buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -365,12 +367,20 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       for (i = 0; i < n_particle_types; i++)
 	for (j = i; j < n_particle_types; j++) {
 	  if (checkIfParticlesInteract(i, j)) {
+	    IA_parameters *data;
 	    sprintf(buffer, "%d ", i);
 	    Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
 	    sprintf(buffer, "%d ", j);
 	    Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
 	    Tcl_PrintDouble(interp, energy.sum.e[p], buffer);
-	    Tcl_AppendResult(interp, "lj ", buffer, " } ", (char *)NULL);
+	    /* distinguish lj and lj-cos */
+	    data = get_ia_param(i,j);
+	    if(data->LJ_cut > 0.0 && data->LJCOS_cut > 0.0) 
+	      Tcl_AppendResult(interp, "lj+lj-cos ", buffer, " } ", (char *)NULL);	    
+	    else if(data->LJ_cut > 0.0) 
+	      Tcl_AppendResult(interp, "lj ", buffer, " } ", (char *)NULL);	    
+	    else 
+	      Tcl_AppendResult(interp, "lj-cos ", buffer, " } ", (char *)NULL);	    
 	  }
 	  p++;
 	}
