@@ -503,6 +503,22 @@ int inter(ClientData _data, Tcl_Interp *interp,
     argv += 3;
 
     if(coulomb.bjerrum == 0.0) {
+      if(coulomb.method == COULOMB_P3M) {
+	p3m.bjerrum = 0.0;
+	p3m.alpha = 0.0;
+	p3m.r_cut = 0.0;
+	p3m.mesh[0] = 0;
+	p3m.mesh[1] = 0;
+	p3m.mesh[2] = 0;
+	p3m.cao     = 0;
+	mpi_bcast_coulomb_params();
+      }
+      if(coulomb.method == COULOMB_DH) {
+	dh_params.bjerrum = 0.0;
+	dh_params.r_cut   = 0.0;
+	dh_params.kappa   = 0.0;
+	mpi_bcast_coulomb_params();
+      } 
       coulomb.method = COULOMB_NONE;
       mpi_bcast_coulomb_params();
       return (TCL_OK);
@@ -873,6 +889,8 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	  mpi_lj_cap_forces(lj_force_cap);
       }
       else if (!strncmp(argv[0], "lj-cos", strlen(argv[0]))) {
+        double fac1;
+        double facsq;
   	    if (argc < 5) {
 	        Tcl_AppendResult(interp, "lj-cos needs 4 parameters: "
 			   "<ljcos_eps> <ljcos_sig> <ljcos_cut> <ljcos_offset>",
@@ -885,8 +903,8 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	        (Tcl_GetDouble(interp, argv[3], &data->LJCOS_cut)  == TCL_ERROR) ||
             (Tcl_GetDouble(interp, argv[4], &data->LJCOS_offset)  == TCL_ERROR)) {
 	    return (TCL_ERROR);}
-        double fac1=1.122462*(data->LJCOS_sig);
-        double facsq=fac1*fac1;
+        fac1=1.122462*(data->LJCOS_sig);
+        facsq=fac1*fac1;
         data->LJCOS_rmin= fac1 ;
         data->LJCOS_alfa=3.1415927/(SQR(data->LJCOS_cut)-facsq);
         data->LJCOS_beta=3.1415927*(1.-(1./(SQR(data->LJCOS_cut)/facsq-1.)));
