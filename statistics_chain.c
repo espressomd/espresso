@@ -826,11 +826,11 @@ int parse_g_av(Tcl_Interp *interp, int what, int argc, char **argv)
   if (n_configs == 0) { Tcl_AppendResult(interp, "no configurations found! Use 'analyze append' to save some!", (char *)NULL); return TCL_ERROR; }
   switch (what) {
   case 1:
-    calc_g1_av(&gx);
+    calc_g1_av(&gx); break;
   case 2:
-    calc_g2_av(&gx);
+    calc_g2_av(&gx); break;
   case 3:
-    calc_g3_av(&gx);
+    calc_g3_av(&gx); break;
   default: ;
   }
   for (i=0; i<n_configs; i++) { 
