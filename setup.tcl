@@ -22,13 +22,15 @@ setmd box_l 20.0 20.0 20.0
 # number of particle types
 set ntypes 2
 # minimal distance of particles at finish
-set mdst "guess"
+#set mdst "guess"
+set mdst 1.0
 # consecutive integration steps between two tests
 set intsteps 100
 # how many tests for minimal distance
 set maxtime 200
+# integrator
 setmd skin 1
-
+setmd time_step 0.0001
 
 #######################################################\
 
