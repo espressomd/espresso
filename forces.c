@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "config.h"
 #include "forces.h"
 #include "debug.h"
 #include "thermostat.h"
@@ -148,6 +149,11 @@ void force_calc()
       
       r_off = dist - ia_params->LJ_offset;
       if(r_off>0.0) {
+#ifdef LJ_WARN_WHEN_CLOSE
+	if (r_off < 0.9*ia_params->LJ_sig) {
+	  fprintf(stderr, "Lennard-Jones warning: particles getting close\n");
+	}
+#endif
 	frac2 = SQR(ia_params->LJ_sig/r_off);
 	frac6 = frac2*frac2*frac2;
 	fac = 48.* ia_params->LJ_eps * frac6*(frac6 - 0.5)*frac2;
