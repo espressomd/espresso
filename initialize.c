@@ -221,10 +221,13 @@ void on_resort_particles()
 void on_NpT_boxl_change(double scal1) {
   grid_changed_box_l();
 
+#ifdef ELECTROSTATICS
   if(coulomb.method == COULOMB_P3M) {
     P3M_scaleby_box_l();
     integrate_vv_recalc_maxrange();
   }
+#endif
+
   if(cell_structure.type==CELL_STRUCTURE_DOMDEC)
     dd_NpT_update_cell_grid(scal1);
 }
@@ -233,7 +236,9 @@ void on_NpT_boxl_change(double scal1) {
 void on_parameter_change(int field)
 {
   /* to prevent two on_coulomb_change */
+#ifdef ELECTROSTATICS
   int cc;
+#endif
 
   EVENT_TRACE(fprintf(stderr, "%d: on_parameter_change %s\n", this_node, fields[field].name));
 

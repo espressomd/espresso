@@ -181,7 +181,8 @@ int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
   /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | subt_lj_harm <type_num> | subt_lj_fene <type_num> | subt_lj <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | gb <type1> <type2> | coulomb | kinetic | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   int i, j;
-
+  double value;
+  value = 0.0;
   if (n_total_particles == 0) {
     Tcl_AppendResult(interp, "(no particles)",
 		     (char *)NULL);
@@ -196,7 +197,7 @@ int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
   if (argc == 0)
     print_detailed_energies(interp);
   else {
-    double value;
+
     if      (ARG0_IS_S("kinetic"))
       value = total_energy.data.e[0];
     else if (ARG0_IS_S("bonded") ||

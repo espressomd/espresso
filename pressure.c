@@ -182,6 +182,7 @@ static void print_detailed_pressure(Tcl_Interp *interp)
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   double value;
   int i, j;
+  value = 0.0;
 
   value = total_pressure.data.e[0];
   for (i = 1; i < total_pressure.data.n; i++)
@@ -242,6 +243,8 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
   /* 'analyze pressure [{ fene <type_num> | harmonic <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | gb <type1> <type2> | coulomb | ideal | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   int i, j;
+  double value;
+  value = 0.0;
 
   if (n_total_particles == 0) {
     Tcl_AppendResult(interp, "(no particles)",
@@ -257,7 +260,7 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
   if (argc == 0)
     print_detailed_pressure(interp);
   else {
-    double value;
+
     if      (ARG0_IS_S("ideal"))
       value = total_pressure.data.e[0];
     else if (ARG0_IS_S("bonded") ||

@@ -52,7 +52,7 @@
 */
 /* #define LJ_WARN_WHEN_CLOSE */
 
-#define ELECTROSTATICS
+/* #define ELECTROSTATICS */
 
 /** Compiler flag to enable describing and processing particle orientations.
 
@@ -80,7 +80,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /*@{*/
 
 /** to use tabulated potential*/
-/* #define TABULATED */
+#define TABULATED 
 
 /** Lennard-Jones */
 #define LENNARD_JONES
@@ -116,7 +116,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 //#define NEMD
 
 /** Allows to use (N,p,T)-ensembles during integration as well */
-/* #define NPT */
+#define NPT 
 
 /** DPD Thermostat (Dissipative Particle Dynamics) 
     Flag needed only because DPD acts like a short range potential
