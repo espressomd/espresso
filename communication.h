@@ -297,11 +297,13 @@ void mpi_bcast_cell_structure(int cs);
 void mpi_bcast_nptiso_geom(void);
 
 /** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are
-    in sync with the topology from analyze set chains */
+    in sync with the topology.  Note that this only makes sense if you
+    have a simple topology such that each particle can only belong to
+    a single molecule */
 void mpi_update_mol_ids(void); 
 
 /** Issue REQ_SYNC_TOPO: Update the molecules ids to that they correspond to the topology */
-int mpi_sync_topo_part_info(Molecule* topology);
+int mpi_sync_topo_part_info(void);
 
 /*@}*/
 

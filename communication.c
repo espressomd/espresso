@@ -222,7 +222,7 @@ SlaveCallback *callbacks[] = {
   mpi_send_mol_id_slave,            /* 34: REQ_SET_MOLID */
   mpi_bcast_nptiso_geom_slave,      /* 35: REQ_BCAST_NPTISO_GEOM */
   mpi_update_mol_ids_slave,         /* 36: REQ_UPDATE_MOL_IDS */
-  mpi_sync_topo_part_info_slave     /* 37: REQ_UPDATE_MOL_IDS */
+  mpi_sync_topo_part_info_slave     /* 37: REQ_SYNC_TOPO */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -1097,10 +1097,12 @@ void mpi_get_particles(Particle *result, IntList *bi)
   }
 
   /* perhaps add some debugging output */
+#ifdef ELECTROSTATICS
   COMM_TRACE(for(i = 0; i < tot_size; i++) {
     printf("%d: %d -> %d %d %f (%f, %f, %f)\n", this_node, i, result[i].p.identity, result[i].p.type,
 	   result[i].p.q, result[i].r.p[0], result[i].r.p[1], result[i].r.p[2]);
   });
+#endif
 
   /* gather bonding information */
   if (bi) {
@@ -1599,15 +1601,24 @@ void mpi_update_mol_ids_slave(int node,int parm)
 }
 
 /******************* REQ_SYNC_TOPO ********************/
-int mpi_sync_topo_part_info( Molecule *topology ) {
+int mpi_sync_topo_part_info() {
   int i;
-  MPI_Bcast(&n_molecules,1,MPI_INT,0,MPI_COMM_WORLD);
-  for ( i = 0 ; i < n_molecules ; i++){
+  int molsize;
+  int moltype;
+  int n_mols;
+  mpi_issue(REQ_SYNC_TOPO,-1,0);
+  n_mols = n_molecules;
+  MPI_Bcast(&n_mols,1,MPI_INT,0,MPI_COMM_WORLD);
+
+  for ( i = 0 ; i < n_molecules ; i++) {
+    molsize = topology[i].part.n;
+    moltype = topology[i].type;
+    MPI_Bcast(&molsize,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&moltype,1,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Bcast(topology[i].part.e,topology[i].part.n,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Bcast(&topology[i].type,1,MPI_INT,0,MPI_COMM_WORLD);
+    
   }
-
-  mpi_issue(REQ_SYNC_TOPO,-1,0);
   
   sync_topo_part_info();
   return 1;
@@ -1615,12 +1626,24 @@ int mpi_sync_topo_part_info( Molecule *topology ) {
 
 void mpi_sync_topo_part_info_slave(int node,int parm ) {
   int i;
-  MPI_Bcast(&n_molecules,1,MPI_INT,0,MPI_COMM_WORLD);
-  realloc_topology(n_molecules);
-  for ( i = 0 ; i < n_molecules ; i++){
+  int molsize;
+  int moltype;
+  int n_mols;
+
+  MPI_Bcast(&n_mols,1,MPI_INT,0,MPI_COMM_WORLD);
+  realloc_topology(n_mols);
+  for ( i = 0 ; i < n_molecules ; i++) {
+
+    MPI_Bcast(&molsize,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&moltype,1,MPI_INT,0,MPI_COMM_WORLD);
+    topology[i].type = moltype;
+    realloc_intlist(&topology[i].part,topology[i].part.n = molsize);
+
     MPI_Bcast(topology[i].part.e,topology[i].part.n,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Bcast(&topology[i].type,1,MPI_INT,0,MPI_COMM_WORLD);
+
   }
+  
 
   sync_topo_part_info();
 

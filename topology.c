@@ -28,8 +28,10 @@ Molecule *topology = NULL;
 void realloc_topology(int size)
 {
   int m;
-  for(m = size; m < n_molecules; m++)
+
+  for(m = size ; m < n_molecules; m++)
     realloc_intlist(&topology[m].part, 0);
+
 
   topology = realloc(topology, size*sizeof(Molecule));
 
@@ -37,8 +39,9 @@ void realloc_topology(int size)
     n_molecules = 0;
   for(m = n_molecules; m < size; m++)
     init_intlist(&topology[m].part);
-
+  
   n_molecules = size;
+
 }
 
 int print_structure_info(Tcl_Interp *interp)
@@ -86,7 +89,9 @@ void sync_topo_part_info() {
   Particle* p;
   for ( i = 0 ; i < n_molecules ; i ++ ) {
     for ( j = 0 ; j < topology[i].part.n ; j++ ) {
-      if ( (p = checked_particle_ptr(topology[i].part.e[j])) ) {
+      p = local_particles[topology[i].part.e[j]];
+      if(!p) { /* Do nothing */ } 
+      else {
 	p->p.mol_id = i;
       }
     }
@@ -105,7 +110,7 @@ int parse_sync_topo_part_info(Tcl_Interp *interp) {
     return TCL_ERROR;
   }
 
-  if ( !mpi_sync_topo_part_info( topology )) {
+  if ( !mpi_sync_topo_part_info()) {
     Tcl_AppendResult(interp, "Error syncronising molecules to particle info", (char *)NULL);
     return TCL_ERROR;
   }

@@ -444,7 +444,7 @@ static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
 
   /* Update particles */
   updatePartCfg(WITHOUT_BONDS);
-  //Make sure particles are sorted 
+  /* Make sure particles are sorted */
   if (!sortPartCfg()) {
     fprintf(stderr,"%d,could not sort partCfg \n",this_node);
     errexit();
@@ -459,17 +459,10 @@ static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
   zref = zref/(double)(n_total_particles);
   
 
-  //  Tcl_AppendResult(interp, "{ Lipid_orientations } { ", (char *)NULL);
   for ( i = 0 ; i < n_molecules ; i++) {
     atom = topology[i].part.e[0];
-    //    printf("atom: %d \n", atom );
     l_orient.e[i] = lipid_orientation(atom,partCfg,zref,dir);
-    //   printf("lorient: %d \n", l_orient.e[i] );
-    //    Tcl_AppendResult(interp, " ", l_orient, (char *)NULL);
   }
-  //  Tcl_AppendResult(interp, " } ", (char *)NULL);
-
-
   Tcl_AppendResult(interp, "{ Lipid_orientations } { ", (char *)NULL);
   for ( i = 0 ; i < n_molecules ; i++) {
     sprintf(buffer, "%d ", l_orient.e[i]);
@@ -580,11 +573,6 @@ static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
   }
 
   if ( orient_order(&result) == TCL_OK ) {
-    // Put in an error message here
-
-    printf(" res %f \n", result);
-    fflush(stdout);
-
     Tcl_PrintDouble(interp, result, buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return TCL_OK;
