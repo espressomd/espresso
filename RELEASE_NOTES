@@ -2,21 +2,28 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.7.3d (Mezoti)                                                                     *
+* v1.7.3e (Mezoti)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.7.3d -
+- v1.7.3e -
 -----------
 
+(e) September 13th, 2004.
 (d) September 10th, 2004.
 (c) September  6th, 2004.
 (b) September  3rd, 2004.
 (a) September  2nd, 2004.
 
 New Features:
+(e) New function 'average <tcl-list>' averages the contents of a tcl-list of values.
+(e) Re-entered new function 'polyBlockRead <source>' to read in blockfile 'source'
+    which was first added for v1.6.6e but removed in v1.7.3c accidentally.
+(e) Re-entered enhancement to 'checkpoint_read <read_all_checkpoints> <write_pdb> <pdb_sfx>'
+    to also be able to convert the whole checkpoint-series into a trajectorie / vmd-movie
+    which was first added for v1.6.6e but removed in v1.7.3c accidentally.
 (c) New auxiliary mathematical functions on tcl-script-level:
     ABHmath.tcl: bond_length, veclensqr, min_img_bond_length, 
     aux.tcl:     calc_aniso_box, system_com
@@ -24,11 +31,17 @@ New Features:
 (b) The possibility to run domain decompostion without Verlet list has been added.
 
 Changes:
+(e) Function 'average_checkpoint <origin> <what>' replaces former 'average' to more properly 
+    display what the function is doing, avoiding confusion with new function 'average' (s.a.).
 (c) In 'energy_calc()' in the case of ELECTROSTATICS that energy now defaults to zero.
 (a) To prevent the new error handling to accidentally cause memory overflow, its error
     status is now collected twice during each integration cycle (for NPT only at the moment).
 
 Bugfixes of errors introduced since 1.7.x:
+(e) Fixed a major bug which caused the force-derivation to overestimate all nonbonded forces
+    by a factor of 2 if both nonbonded and electrostatic interactions were present and active;
+    this bug was introduced with the new force interface in v1.7.2a and did not affect statics,
+    while all trajectories (hence forces, energies) became wrong under the given circumstances.
 (d) Fixed bug in 'nemd'-code which did no longer properly check if only one CPU was used.
 (c) Fixed bug in 'add_bonded_virials' which prevented non-2-body-interactions to work properly.
 (c) Error in 'calc_link_cell_energies' has been fixed.
