@@ -98,9 +98,8 @@ int debug_callback(Tcl_Interp *interp)
 
 void core()
 {
-  fprintf(stderr, "%d: trying to write core (%d / %d) \n", this_node, core_done, regular_exit);
   if (!core_done && !regular_exit) {
-    fprintf(stderr, "%d: forcing core dump on irregular exit\n", this_node);
+    fprintf(stderr, "%d: forcing core dump on irregular exit (%d / %d) \n", this_node, core_done, regular_exit);
     kill(getpid(), SIGSEGV);
     core_done = 1;
   }
