@@ -396,9 +396,9 @@ void init_g123()
     M=0.0;
     for(i=0; i<chain_length; i++) {
       p = chain_start+j*chain_length + i;
-      partCoord_g[3*p]   = partCfg[p].r.p[0]*PMASS(partCfg[p]); cm_tmp[0]+=partCfg[p].r.p[0]*PMASS(partCfg[p]);
-      partCoord_g[3*p+1] = partCfg[p].r.p[1]*PMASS(partCfg[p]); cm_tmp[1]+=partCfg[p].r.p[1]*PMASS(partCfg[p]);
-      partCoord_g[3*p+2] = partCfg[p].r.p[2]*PMASS(partCfg[p]); cm_tmp[2]+=partCfg[p].r.p[2]*PMASS(partCfg[p]);
+      partCoord_g[3*p]   = partCfg[p].r.p[0]; cm_tmp[0]+=partCfg[p].r.p[0]*PMASS(partCfg[p]);
+      partCoord_g[3*p+1] = partCfg[p].r.p[1]; cm_tmp[1]+=partCfg[p].r.p[1]*PMASS(partCfg[p]);
+      partCoord_g[3*p+2] = partCfg[p].r.p[2]; cm_tmp[2]+=partCfg[p].r.p[2]*PMASS(partCfg[p]);
       M += PMASS(partCfg[p]);
     }
     partCM_g[3*j]   = cm_tmp[0]/M;
