@@ -41,8 +41,8 @@ static Particle *checked_particle_ptr(int id)
 {
   Particle *p = local_particles[id];
   if(!p) {
-    fprintf(stderr,"%d: ERROR: Atom %d has bond to unknown particle (probably on different node)\n",
-	    this_node, id); 
+    fprintf(stderr,"%d: ERROR: Atom %d has bond to unknown particle "
+	    "(probably on different node)\n",this_node, id); 
     errexit();
   }
   return p;

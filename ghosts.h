@@ -46,28 +46,6 @@
  */
 #include "particle_data.h"
 
-/************************************************
- * data types
- ************************************************/
-
-/** Structure to hold ghost particle information. 
- *  If this changes also the functions pack_gost/unpack_ghost 
- *  have to be reweritten. */
-typedef struct {
-  int identity;
-  int type;
-  double p[3];
-  double q;
-} Ghost;
-
-/** Mapping between particle identity and local index. 
-    You find the local index of particle i at position
-    i of this field. 
-    A particle that is not in the nodes domain 
-    (including its ghostshell) has a NULL pointer.
-*/
-extern Particle *local_index;
-
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/

@@ -78,10 +78,6 @@ void init_cell_neighbors(int i);
  */
 int  is_inner_cell(int i, int gcg[3]);
 
-/** return cell grid index for a position.
-    \param pos Position of e.g. a particle.
-    \return linear cell grid index. */
-int pos_to_cell_grid_ind(double pos[3]);
 
 /*@}*/
 /************************************************************/

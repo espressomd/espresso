@@ -197,6 +197,12 @@ Particle *cells_got_particle(int id);
     \return the new particle structure */
 Particle *cells_alloc_particle(int id, double pos[3]);
 
+/** return cell grid index for a position.
+    \param pos Position of e.g. a particle.
+    \return linear cell grid index. */
+int pos_to_cell_grid_ind(double pos[3]);
+
+
 /** Callback for setmd maxnumcells (maxnumcells >= 27). 
     see also \ref max_num_cells */
 int max_num_cells_callback(Tcl_Interp *interp, void *_data);

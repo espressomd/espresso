@@ -70,6 +70,7 @@ MDINLINE void realloc_intlist(IntList *il, int size)
   if(size != il->max) {
     if (size == 0) {
       il->max = 0;
+      il->n   = 0;
       free(il->e);
       il->e = NULL;
     }
@@ -90,6 +91,7 @@ MDINLINE void realloc_doublelist(DoubleList *dl, int size)
   if(size != dl->max) {
     if (size == 0) {
       dl->max = 0;
+      dl->n   = 0;
       free(dl->e);
       dl->e = NULL;
     }
