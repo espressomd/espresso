@@ -167,7 +167,7 @@ void integrate_vv(int n_steps)
   }
     
   /* integration loop */
-  INTEG_TRACE(fprintf(stderr,"%d START INTEGRATION\n",this_node));
+  INTEG_TRACE(fprintf(stderr,"%d START INTEGRATION: %d steps\n",this_node,n_steps));
   for(i=0;i<n_steps;i++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
     propagate_vel_pos();
@@ -188,7 +188,8 @@ void integrate_vv(int n_steps)
     if(this_node==0) sim_time += time_step;
   }
 
-  verlet_reuse = n_steps/(double) n_verlet_updates;
+  if(n_verlet_updates>0) verlet_reuse = n_steps/(double) n_verlet_updates;
+  else verlet_reuse = 0;
   particle_changed     = 0; 
   interactions_changed = 0;
   topology_changed     = 0;
