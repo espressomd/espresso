@@ -168,7 +168,7 @@ proc blockfile_read_auto_seed {channel read auto} {
 }
 
 ######################################
-# variables support
+# setmd variables support
 ######################################
 
 proc blockfile_write_variable {channel write variable {which "all"}} {
@@ -176,9 +176,14 @@ proc blockfile_write_variable {channel write variable {which "all"}} {
     if { $which == "all" } {
 	puts $channel "\n\t{[join [setmd] "\}\n\t\{"]}"
     } {
-	foreach wh $which { puts $channel "{$wh [setmd $wh]}" }
+	if {[llength $which] == 1} {
+	    puts -nonewline $channel " {$which [setmd $which]} "
+	} {
+	    puts $channel ""
+	    foreach wh $which { puts $channel "\t{$wh [setmd $wh]}" }
+	}
     }
-    puts $channel "\n\}"
+    puts $channel "\}"
 }
 
 # this is more tricky since we want to read old files
@@ -198,9 +203,53 @@ proc blockfile_read_auto_variable {channel read auto} {
 	    set data [lrange $vblock 1 end]
 	    if {[catch {eval "setmd $vname $data"} error]} {
 		if { $error != "variable is readonly" } {
-		    error "setmd $vname $data reported: $error"
+		    error "blockfile_read_auto_variable: setmd $vname $data reported: $error"
 		}
 	    }   
 	}
     }
 }
+
+######################################
+# set variables support
+######################################
+
+proc blockfile_write_tclvariable {channel write tclvariable {which "all"}} {
+    blockfile $channel write start tclvariable
+    if { $which == "reallyall" } { set which [info globals] }
+    if { $which == "all" } {
+	# filter tcl system variables
+	set which [info globals]
+	foreach i {tcl_version argv argv0 tcl_interactive auto_oldpath errorCode auto_path errorInfo tcl_pkgPath
+	    tcl_patchLevel argc tcl_libPath tcl_library} {
+	    set ind [lsearch -exact $which $i]
+	    set which [lreplace $which $ind $ind]
+	}
+    }
+    if {[llength $which] == 1} {
+	global $which
+	puts -nonewline $channel " {$which [set $which]} "
+    } {
+	puts $channel ""
+	foreach wh $which { global $wh; if { ! [array exists $wh] } { puts $channel "\t{$wh {[set $wh]}}" } }
+    }
+    puts $channel "\}"
+}
+
+# this is more tricky since we want to read old files
+proc blockfile_read_auto_tclvariable {channel read auto} {
+    set vars [blockfile $channel read toend]
+    puts "--$vars"
+    foreach vblock $vars {
+	set vname [lindex $vblock 0]
+	set data [lrange $vblock 1 end]
+	puts "----$vname-$data-"
+	global $vname
+	if {[catch {eval "set $vname $data"} error]} {
+	    if { $error != "" } {
+		error "blockfile_read_auto_tclvariable: set $vname $data reported: $error"
+	    }
+	}   
+    }
+}
+
