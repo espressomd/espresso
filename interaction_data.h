@@ -35,6 +35,7 @@
 /** Coulomb method is one-dimensional MMM */
 #define COULOMB_MMM1D 3
 
+#define CONSTRAINT_NONE 0
 #define CONSTRAINT_WAL 1
 #define CONSTRAINT_SPH 2
 #define CONSTRAINT_CYL 3
@@ -131,52 +132,47 @@ typedef struct {
 } Bonded_ia_parameters;
 
 #ifdef CONSTRAINTS
+/** Parameters for a WALL constraint (or a plane if you like that more). */
+typedef struct {
+  /** origin for the plane. */
+  double pos[3];
+  /** normal vector on the plane. */
+  double n[3];
+  /** distance of the wall from the origin. */
+  double d;
+} Constraint_wall;
+
+/** Parameters for a SPHERE constraint. */
+typedef struct {
+  /** sphere center. */
+  double pos[3];
+  /** sphere radius. */
+  double rad;
+} Constraint_sphere;
+
+/** Parameters for a CYLINDER constraint. */
+typedef struct {
+  /** center of the cylinder. */
+  double pos[3];
+  /** Axis of the cylinder .*/
+  double axis[3];
+  /** cylinder radius. */
+  double rad;
+} Constraint_cylinder;
+
 /** Structure to specify a constraint. */
 typedef struct {
   /** type of the constraint. */
   int type;
 
   union {
-    /** Parameters for a WALL constraint (or a plane if you like that more). */
-    struct {
-     /** normal vector on the plane. */
-      double n[3];
-      /** distance of the wall from the origin. */
-      double d;
-    } wal;
-    /** Parameters for a SPHERE constraint. */
-    struct {
-      /** sphere center. */
-      double pos[3];
-      /** sphere radius. */
-      double rad;
-    } sph;
-    /** Parameters for a CYLINDER constraint. */
-    struct {
-      /** center of the sphere. */
-      double pos[3];
-      /** Axis of the cylinder .*/
-      double axis[3];
-      /** cylinder radius. */
-      double rad;
-      /** cylinder length (infinite if negativ). */
-      double length;
-      /** cylinder cap type (0 flat, 1 half spheres). */
-      int cap;
-      /** help points. */
-      double pt[3],pb[3];
-    } cyl;
+    Constraint_wall wal;
+    Constraint_sphere sph;
+    Constraint_cylinder cyl;
   } c;
 
-  /* LJ interaction */
-  /** LJ epsilon */
-  double LJ_eps;
-  /** LJ sigma */
-  double LJ_sig;
-  /** LJ cutoff */
-  double LJ_cut;
-  /** LJ energy shift */
-  double LJ_shift;
+  /** particle type of this constraint */
+  int particle_type;
 } Constraint;
 #endif
 /*@}*/

@@ -1167,8 +1167,14 @@ void mpi_bcast_constraint(int del_num)
 #ifdef CONSTRAINTS
   mpi_issue(REQ_BCAST_CONSTR, 0, del_num);
 
-  if(del_num < 0) {
+  if (del_num == -1) {
+    /* bcast new constraint */
     MPI_Bcast(&constraints[n_constraints-1], sizeof(Constraint), MPI_BYTE, 0, MPI_COMM_WORLD);
+  }
+  else if (del_num == -2) {
+    /* delete all constraints */
+    n_constraints = 0;
+    constraints = realloc(constraints,n_constraints*sizeof(Constraint));
   }
   else {
     memcpy(&constraints[del_num],&constraints[n_constraints-1],sizeof(Constraint));
@@ -1183,10 +1189,15 @@ void mpi_bcast_constraint(int del_num)
 void mpi_bcast_constraint_slave(int node, int parm)
 {   
 #ifdef CONSTRAINTS
-  if(parm < 0) {
+  if(parm == -1) {
     n_constraints++;
     constraints = realloc(constraints,n_constraints*sizeof(Constraint));
     MPI_Bcast(&constraints[n_constraints-1], sizeof(Constraint), MPI_BYTE, 0, MPI_COMM_WORLD);
+  }
+  else if (parm == -2) {
+    /* delete all constraints */
+    n_constraints = 0;
+    constraints = realloc(constraints,n_constraints*sizeof(Constraint));
   }
   else {
     memcpy(&constraints[parm],&constraints[n_constraints-1],sizeof(Constraint));

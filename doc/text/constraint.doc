@@ -1,21 +1,28 @@
 /** \page tcl_constraint The constraint command
         \verbatim constraint <type_name | delete> [parameters] \endverbatim
-	A constraint is a surface which interacts with all particles via a Lennard-Jones potential.
+	A constraint is a surface which interacts with the desired particles via a Lennard-Jones potential.
 	\f[4 \epsilon \left(\left(\frac{\sigma}{r}\right)^{12} -
 	\left(\frac{\sigma}{r}\right)^6 + shift\right)\f]
 	with r being the distance of the center of the particle to the surface. 
-	The corresponding force acts in direction of the normal vector of the surcafe.
-	Possible usages are:
-	\verbatim constraint wall <n_x> <n_y> <n_z> <d> <lj_eps> <lj_sig> <lj_cut> <lj_shift> \endverbatim
+	The corresponding force acts in direction of the normal vector of the surface. The constraints are identified like a particle for the lennard-jones force calculation.
+	Possible surfaces are:
+	\verbatim constraint wall normal <n_x> <n_y> <n_z> dist <d> type <id>  \endverbatim
 	The resulting surface is a plane defined by the normal vector 
-	<n_x> <n_y> <n_z> and the distnace <d> from the origin
-	\verbatim constraint sphere <c_x> <c_y> <c_z> <rad> <lj_eps> <lj_sig> <lj_cut> <lj_shift> \endverbatim
+	<n_x> <n_y> <n_z> and the distance <d> from the origin.     
+	\verbatim constraint sphere center <c_x> <c_y> <c_z> radius <rad> type <id> \endverbatim
 	The resulting surface is a sphere with center <c_x> <c_y> <c_z> 
 	and radius <rad>. The force is pointing inwards.
+	\verbatim constraint cylinder center <c_x> <c_y> <c_z> axis <rx> <ry> <rz> radius <rad> type <id> \endverbatim
+	The resulting surface is a cylinder with center <c_x> <c_y> <c_z> 
+	and radius <rad>. The axis is by defaults along the z-axis for now (choice of axis orientation will be added in the future). The force is pointing inwards.
+    
+    
 	\verbatim constraint delete <num> \endverbatim
 	Delete constraint with number <num>. 
 	This may change the numbers of the other constraints. 
 	The contraint numbers can be obtained with:
 	\verbatim constraint \endverbatim
 	Print out all constraint information.
+    
+    After a type is defined for each constraint one has to define the interaction of all different particle types with the constraint using the \verbatim inter \endverbatim command.
 */
