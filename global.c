@@ -19,6 +19,9 @@ int ro_callback(Tcl_Interp *interp, void *data);
 /* callback for box_l */
 int boxl_callback(Tcl_Interp *interp, void *_data);
 
+/* callback for gamma */
+int gamma_callback(Tcl_Interp *interp, void *_data);
+
 /* do not change order !!!
  * and if you add something, also add an #define FIELD_* in
  * global.h
@@ -35,6 +38,7 @@ const Datafield fields[] = {
   {&max_cut, TYPE_DOUBLE,   1, "max_cut", ro_callback },
   {&skin, TYPE_DOUBLE,   1, "skin", ro_callback },
   {&max_range, TYPE_DOUBLE,   1, "max_range", ro_callback },
+  {&friction_gamma, TYPE_DOUBLE,   1, "gamma", gamma_callback },
   { NULL, 0, 0, NULL, NULL }
 };
 
@@ -89,6 +93,18 @@ int boxl_callback(Tcl_Interp *interp, void *_data)
 
   changed_topology();
 
+  return (TCL_OK);
+}
+
+int gamma_callback(Tcl_Interp *interp, void *_data)
+{
+  double data = *(double *)_data;
+
+  if (data < 0) {
+    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  friction_gamma = data;
   return (TCL_OK);
 }
 

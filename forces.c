@@ -5,6 +5,7 @@
 #include "forces.h"
 #include "debug.h"
 #include "global.h"
+#include "thermostat.h"
 
 double Bjerrum;
 
@@ -36,15 +37,14 @@ void force_calc()
 
   FORCE_TRACE(fprintf(stderr,"%d: force_calc: for %d (P %d,G %d)\n",this_node,n_particles+n_ghosts,n_particles,n_ghosts));
 
-  /* set forces to zero and define 'new old' coordinates*/
+  /* define 'new old' coordinates*/
   for(i=0;i<n_particles+n_ghosts;i++)
     for(j=0;j<3;j++)
-      {
-	particles[i].f[j] = 0.0;
 	particles[i].p_old[j] = particles[i].p[j];
-      }
 
- 
+  /* initialize forces with thermostat forces */
+  friction_thermo();
+
   /* loop verlet list */
   for(i=0;i<2*n_verletList;i=i+2) {
     id1 = verletList[i];

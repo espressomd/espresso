@@ -112,7 +112,7 @@ void integrate_vv(int n_steps)
   }
 
   /* integration loop */
-  printf("%d START INTEGRATION\n",this_node);
+  INTEG_TRACE(printf("%d START INTEGRATION\n",this_node));
   for(i=0;i<n_steps;i++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
     propagate_velocities();

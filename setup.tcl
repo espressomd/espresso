@@ -36,6 +36,7 @@ for {set ia1 0} { $ia1 <= 4 } { incr ia1 } {
     }
 }
 
+set gamma 1
 # write
 set f [open "|gzip -c - >setup.gz" w]
 for {set i 0} { $i < $npart } { incr i} {

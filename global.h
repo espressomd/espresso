@@ -40,6 +40,13 @@ extern double my_left[3];
 extern double my_right[3];
 
 /****************************************
+ * thermostat data from thermostat.c
+ *****************************************/
+
+/** friction coefficient */
+extern double friction_gamma;
+
+/****************************************
  * particle data from global.c
  ****************************************/
 
@@ -175,6 +182,7 @@ extern const Datafield fields[];
 #define FIELD_MCUT   8
 #define FIELD_SKIN   9
 #define FIELD_RANGE 10
+#define FIELD_GAMMA 11
 
 /**********************************************
  * misc procedures

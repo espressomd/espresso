@@ -4,7 +4,8 @@ include Makefile.$(PLATFORM)
 
 ########### list of source files
 CSOURCES= main initialize global communication binary_file interaction_data \
-	  verlet grid integrate cells ghosts forces debug particle_data
+	  verlet grid integrate cells ghosts forces debug particle_data \
+	  thermostat
 CXXSOURCES=
 
 ########### RULES
