@@ -30,9 +30,8 @@ MDINLINE void add_wall_force(Particle *p1, Particle *c_p, Constraint_wall *c, in
         add_lj_pair_force(p1, c_p, ia_params, vec, dist);
     }
     else if ((dist * c->d)< 0) {
-        fprintf(stderr,"CONSTRAINT: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+        fprintf(stderr,"CONSTRAINT WALL : ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
 		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-          fprintf(stderr,"%f %f %f %f %f\n", vec[0],vec[1],vec[2],dist,c->d);
 	    errexit();    
     }
   }
@@ -65,7 +64,7 @@ MDINLINE void add_sphere_force(Particle *p1, Particle *c_p, Constraint_sphere *c
         add_lj_pair_force(p1, c_p, ia_params, vec, dist);
     }
     else if (dist < 0) {
-        fprintf(stderr,"CONSTRAINT: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+        fprintf(stderr,"CONSTRAINT SPHERE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
 		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
 	    errexit();
     }
@@ -99,7 +98,7 @@ MDINLINE void add_cylinder_force(Particle *p1, Particle *c_p, Constraint_cylinde
         add_lj_pair_force(p1, c_p, ia_params, vec, dist);
     }
     else if (dist < 0) {
-        fprintf(stderr,"CONSTRAINT: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+        fprintf(stderr,"CONSTRAINT CYLINDER: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
 		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
 	    errexit();
     }
