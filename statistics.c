@@ -599,6 +599,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	}
       }
       if(buf[0] != 0.) { sprintf(buffer, "lj %f %f } ",buf[0],buf[1]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+      else Tcl_AppendResult(interp, "} ", (char *)NULL);
       if(coulomb.bjerrum > 0.0) {
 	sprintf(buffer, "{ coulomb %f %f } ",virials.sum.e[p],virials.node.e[p]);
 	Tcl_AppendResult(interp, buffer,  (char *)NULL);
