@@ -42,6 +42,8 @@ int main(int argc, char **argv)
     Tcl_Main(argc, argv, appinit);
     return 0;
   }
+  else
+    initialize(0);
 
   /* slave node */
   mpi_loop();

@@ -6,6 +6,8 @@
 #include "integrate.h"
 #include "statistics.h"
 #include "imd.h"
+#include "random.h"
+#include "communication.h"
 
 int initialize(Tcl_Interp *interp)
 {
@@ -13,11 +15,12 @@ int initialize(Tcl_Interp *interp)
     call the initialization of the modules here
   */
 
+  init_random();
 
   /*
     installation of tcl commands
   */
-
+  if(this_node==0){
   /* in integrate.c */
   Tcl_CreateCommand(interp, "integrate", integrate, 0, NULL);
   /* in global.c */
@@ -36,6 +39,6 @@ int initialize(Tcl_Interp *interp)
 
   /* in interaction_data.c: make sure 0<->0 ia always exists */
   make_particle_type_exist(0);
-
+  }
   return TCL_OK;
 }
