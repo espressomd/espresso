@@ -173,6 +173,9 @@ MDINLINE double p3m_coulomb_pair_energy(Particle *p1, Particle *p2,
   }
   else
     return 0;
+  /* supposed to be an error */
+  errexit();
+  return 0.0;
 }
 
 /** Clean up P3M memory allocations. */
