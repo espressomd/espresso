@@ -940,12 +940,15 @@ int part_parse_mol_id(Tcl_Interp *interp, int argc, char **argv,
   }
 
   /* set mid */
-  if (! ARG0_IS_I(mid))
-    return TCL_ERROR;
-
-  if (mid < 0) {
-    Tcl_AppendResult(interp, "invalid particle type", (char *) NULL);
-    return TCL_ERROR;
+  if (ARG0_IS_S("off"))
+    mid = -1;
+  else {
+    /* number >= -1 (off)*/
+    if (!ARG0_IS_I(mid) || mid < -1) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "invalid molecule id, must be integer or \"off\"", (char *) NULL);
+      return TCL_ERROR;
+    }
   }
 
   if (set_particle_mol_id(part_num, mid) == TCL_ERROR) {
