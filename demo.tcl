@@ -1,6 +1,6 @@
 #!/bin/sh
 # tricking... the line after a these comments are interpreted as standard shell script \
-    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=2; fi
+    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=1; fi
 # OSF1 \
     if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $PLATFORM/tcl_md $0 $*
 # AIX \
@@ -52,17 +52,24 @@ pack .sim
 proc mdparam {var min max init text cmd} {
     global $var
     eval "set $var $init"
-    label .lab_$var -text $text
-    scale .sc_$var -orient h -from $min -to $max -resolution [expr ($max - $min)/10000] -command $cmd
-    .sc_$var set $init
-    pack .lab_$var .sc_$var
+
+    frame .fr_$var -borderwidth 4 -relief raised
+
+    label .fr_$var.lab -text $text
+
+    scale .fr_$var.sc -orient h -from $min -to $max -resolution [expr ($max - $min)/10000] -command $cmd
+    .fr_$var.sc set $init
+
+    pack .fr_$var.lab .fr_$var.sc -in .fr_$var
+
+    pack .fr_$var -fill x
 }
 
 proc set_time_step {ts} {
     setmd time_step [expr pow(10, $ts)]
 }
 
-mdparam time_step -6 -2 -6 "log time step" set_time_step
+mdparam time_step -4 -2 -4 "log time step" set_time_step
 
 #############################################################
 #  Parameters                                               #
@@ -74,9 +81,9 @@ set vmd_output "yes"
 #############################################################
 
 # Number of polymers
-set n_polymers 4
+set n_polymers 1
 # length of polymers
-set l_polymers 49
+set l_polymers 99
 # Bond length
 set bond_length 1.0
 # distance between charged monomers
@@ -103,7 +110,7 @@ setmd skin      0.3
 # Integration parameters
 #############################################################
 
-set intsteps 100
+set intsteps 10
 set maxtime 1000
 
 setmd gamma 1.0
@@ -148,7 +155,7 @@ proc setup_ia {what val} {
 	}
     }
 }
-mdparam lj1_cut 1 2.5 1.12246 "epsilon for LJ" {setup_ia lj1_cut}
+mdparam lj1_cut 1 2.5 1.12246 "cutoff for LJ" {setup_ia lj1_cut}
 mdparam lj1_epsilon 0.5 2 1.0 "epsilon for LJ" {setup_ia lj1_epsilon}
 
 # LJ force capping
@@ -286,7 +293,6 @@ while { 1 } {
 	.lab_RE conf -text "RE: $RE"
 	.lab_RG conf -text "RG: $RG"
 	puts $f "[setmd time]\t$md $RE $RG"
-	sdfsfd time
 	flush $f
     } {
 	imd listen 1
