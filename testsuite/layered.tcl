@@ -34,10 +34,11 @@ puts "- Testcase layered.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------"
 
 if { [setmd n_nodes] >= 6 } {
-    puts "Testcase dh.tcl does not run on more than 6 nodes -- too many cells"
+    puts "Testcase layered.tcl does not run on more than 6 nodes -- too many cells"
     exec rm -f $errf
     exit 0
 }
+
 cellsystem layered
 
 set epsilon 1e-4
