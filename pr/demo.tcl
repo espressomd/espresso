@@ -179,6 +179,23 @@ proc enableStarts {} {
 #      Helpers                                              #
 #############################################################
 
+proc read_highscore { } {
+    set f [open highscore.txt r]
+    while {[eof $f]==0} { if { [expr [gets $f inp] > 0] } { lappend highscore [list [lindex $inp 0] [concat [lrange $inp 1 end]]] } }
+    close $f
+    return $highscore
+}
+
+proc write_highscore { highscore } {
+    set f [open highscore.txt w]
+    for {set i 0} {$i < [llength $highscore]} {incr i} {
+	set tmp [lindex $highscore $i]
+	puts $f "[lindex $tmp 0]  [lindex $tmp 1]"
+	puts "[lindex $tmp 0]  [lindex $tmp 1]"
+    }
+    close $f
+}
+
 proc imd_reconnect {case} {
     imd disconnect
 
@@ -344,6 +361,7 @@ disableCase2
 
 set displayclock 0
 set run_sim 0
+set firework 250
 
 while { 1 } {
     if { $run_sim > 0 } {
@@ -356,13 +374,31 @@ while { 1 } {
     if { $displayclock } {
 	set nbh [analyze nbhood $Rx $Ry $Rz [expr 1.25*$Rt]]
 	if { [llength $nbh] > $N4 } {
+	    set etime [expr [clock seconds] - $case2stime]
 	    disableCase2; set run_sim -2
-	    .case2.status configure -text "Gewonnen!"; update
+	    .case2.status configure -text "Gewonnen nach [clock format $etime -format "%M:%S"]!"; update
 	    for {set i [expr $N0]} {$i < [expr $N0+$N1+$N2+$N3 +$N4]} {incr i} { part $i unfix }
 	    setmd temp 1.0
-	    for {set i 0} {$i < 500} {incr i} {
+	    for {set i 0} {$i < $firework} {incr i} {
 		integrate 10; while { [catch {imd positions} res] } { puts "positions failed: $res, retrying."; after 500 }
 	    }
+	    set highscore [read_highscore]
+	    if { $etime < [lindex [lindex $highscore end] 0] } {
+		for {set i 0} {$i < [llength $highscore]} {incr i} {
+		    if { $etime < [lindex [lindex $highscore $i] 0] } {
+			set victor [clock format [clock seconds]]
+			set victory [list $etime $victor]
+			break
+		    }
+		}
+		for {set j $i} {$j < [llength $highscore]} {incr j} {
+		    if { [expr $j+1] < [llength $highscore] } { set old [lindex $highscore $j] }
+		    set highscore [lreplace $highscore $j $j $victory]
+		    if { [expr $j+1] < [llength $highscore] } { set victory $old }
+		}
+		puts "New Highscore (Rank \#$i)!!!"
+		write_highscore $highscore
+	    } 
 	} else {
 	    set etime [expr [clock seconds] - $case2stime]
 	    .case2.status configure -text [clock format $etime -format "%M:%S"]
