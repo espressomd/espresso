@@ -49,7 +49,7 @@ proc findObsAv { val what } {
 	    if { [lindex $tmp1 $i] == $j } { lappend res [lindex $tmp2 $i] }
 	}
     }
-    if { [llength $val]!=[llength $res] } { puts "\nWARNING: Not all values ($val) have been found in $what!\n" }
+    if { [llength $val]!=[llength $res]-1 } { puts "\nWARNING: Not all values ($val) have been found in $what!\n" }
     return $res
 }
 
@@ -106,77 +106,51 @@ proc replObsAv { fileN what } {
 #
 #############################################################
 
-proc plotObs { destinations } {
-    set f [open "plotObsTmp.p" "w"]
-    foreach destination $destinations {
-	# Creates a gnuplot of the observables stored in $destination
-	# assuming they are stored in the order 'time mindist re rg rh g123 Temp'
-	# (as after a call to '[analysis ... [analyze energy kin]/$n_part/1.5]')
-	if {[string first "KKG" $destination] == -1} {
-	    puts $f "set xlabel \"time (LJ-time)\"; set ylabel \"$destination.a\""
-	    puts $f "set nologscale xy"
-	    puts -nonewline $f "plot \"$destination\" using 1:2 title \"mindist\" , "
-	    puts -nonewline $f "\"$destination\" using 1:3 title \"R_e\" , "
-	    puts -nonewline $f "\"$destination\" using 1:4 title \"R_g\" , "
-	    puts -nonewline $f "\"$destination\" using 1:5 title \"R_h\" , "
-	    puts -nonewline $f "\"$destination\" using 1:9 title \"Temp\"  \n"
-	    puts $f "set out \"$destination.a.ps\""
-	    puts $f "set terminal postscript color; replot"
-	    puts $f "\# !lpr -Pthps18 \"$destination.a.ps\""
-	    puts $f "set terminal x11"
-	    puts $f " "
-	    puts $f " "
-	    puts $f "set xlabel \"time (LJ-time)\"; set ylabel \"$destination.b\""
-	    puts $f "set logscale xy"
-	    puts -nonewline $f "plot \"< tr '\{' ' ' < $destination\" using 1:6 title \"g1\" , "
-	    puts -nonewline $f " \"< tr '\{' ' ' < $destination\" using 1:7 title \"g2\" , "
-	    puts -nonewline $f " \"< tr '\{' ' ' < $destination\" using 1:8 title \"g3\"   \n"
-	    puts $f "set out \"$destination.b.ps\""
-	    puts $f "set terminal postscript color; replot"
-	    puts $f "\# !lpr -Pthps18 \"$destination.b.ps\""
-	    puts $f "set terminal x11"
-	    puts $f " "
-	    puts $f " "
-	} else {
-	    # Same as above, but for the (hopefully time-averaged) <re> and <rg> compared to
-	    # the original KKG-values
-	    puts $f "set xlabel \"monomers per chain\"; set ylabel \"$destination\""
-	    puts $f "set logscale xy"
-	    puts -nonewline $f "plot \"$destination\" using 3:6 title \"R_e\" w linespoints , "
-	    puts -nonewline $f " \"$destination\" using 3:8 title \"R_e_KG\" w linespoints , "
-	    puts -nonewline $f " \"$destination\" using 3:9 title \"R_g\" w linespoints , "
-	    puts -nonewline $f " \"$destination\" using 3:11 title \"R_g_KG\" w linespoints  \n"
-	    puts $f "set out \"$destination.ps\""
-	    puts $f "set terminal postscript color; replot"
-	    puts $f "\# !lpr -Pthps18 \"$destination.ps\""
-	    puts $f "set terminal x11"
-	    puts $f " "
-	    puts $f " "
-	    puts $f "set xlabel \"monomers per chain\"; set ylabel \"deviation in $destination\" "
-	    puts $f "set logscale x; set nologscale y "
-	    puts -nonewline $f "plot \"$destination\" using 3:7 title \"<R_e>-Re_KG\" , "
-	    puts -nonewline $f " \"$destination\" using 3:10 title \"<R_g>-Rg_KG\" \n"
-	    puts $f "set out \"$destination.div.ps\" "
-	    puts $f "set terminal postscript color; replot "
-	    puts $f "\# !lpr -Pthps18 \"$destination.div.ps\" "
-	    puts $f "set terminal x11"
-	    puts $f " "
-	    puts $f " "
+proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA} {p7 NA} {p8 NA} } {
+    # Creates a gnuplot of the data in $destination at positions $what.
+    # Syntax: 'plotObs <data> { x:y1 ... x:yn } [titles { "title.y1" ... "title.yn" }] [labels { "xlabel" "ylabel" }] [scale <gnuplot-scale>] [out <out>]'
+    set param [list $p1 $p2 $p3 $p4 $p5 $p6 $p7 $p8]
+    for {set i 0} {$i < [llength $what]} {incr i} { lappend titles "Data $i" }
+    set labels [list "x-values" "$destinations"]; set scale "nologscale xy"; set out [lindex $destinations end]
+    for {set i 0} {$i < 8} {incr i} {
+	switch [lindex $param $i] {
+	    "titles" { incr i; set titles [lindex $param $i]
+		if { [llength $titles] > [llength $what] } { set titles [lrange $titles 0 [llength $what]] }
+		if { [llength $titles] < [llength $what] } { 
+		    for {set j [llength $titles]} {$j < [llength $what]} {incr j} {lappend titles "Data $j"}
+		}  }
+	    "labels" { incr i; set labels [lindex $param $i]
+		if { [llength $labels]!=2 } { set labels [list "[lindex $labels 0]" "$destinations"] }  }
+	    "scale"  {incr i; set scale [lindex $param $i]  }
+	    "out"    {incr i; set out [lindex $param $i]    }
+	    default { if { [lindex $param $i]!="NA" } {
+		puts "The parameter set you supplied ($param) does not seem to be valid (stuck at: [lindex $param $i])!\nAborting...\n"; exit }
+	    }
 	}
     }
+    set f [open "plotObsTmp.p" "w"]
+    puts $f "set xlabel \"[lindex $labels 0]\"; set ylabel \"[lindex $labels 1]\""
+    puts $f "set $scale"
+    puts -nonewline $f "plot "
+    for {set i 0} {$i < [expr [llength $what]-1]} {incr i} {
+	puts -nonewline $f "\"[lindex $destinations $i]\" using [lindex $what $i] title \"[lindex $titles $i]\" , "
+    }
+    puts -nonewline $f "\"[lindex $destinations end]\" using [lindex $what $i] title \"[lindex $titles $i]\"  \n"
+    puts $f "set out \"$out.ps\""
+    puts $f "set terminal postscript color; replot"
+    puts $f "\# !lpr -Pthps18 \"$out.ps\""
+    puts $f "set terminal x11"
     close $f
     eval exec gnuplot plotObsTmp.p
     eval exec rm -f plotObsTmp.p
 }
 
 proc plotJoin { destinations final } {
-    foreach destination $destinations {
-	if {[string first "KKG" $destination] == -1} {
-	    eval exec gs -dNOPAUSE -sDEVICE=pswrite -sOutputFile=$destination.j.ps $destination.a.ps $destination.b.ps -c quit
-	} else { 
-	    eval exec gs -dNOPAUSE -sDEVICE=pswrite -sOutputFile=$destination.j.ps $destination.ps $destination.div.ps -c quit    
-	}
-	lappend destinationsJ "$destination.j.ps"
+    for {set i 0} {$i < [llength $destinations]} {incr i} {
+	if {[expr $i+1]<[llength $destinations]} {
+	    eval exec gs -dNOPAUSE -sDEVICE=pswrite -sOutputFile=$final.$i.ps [lindex $destinations $i].ps [lindex $destinations [expr $i+1]].ps -c quit
+	    lappend destinationsJ "$final.$i.ps"
+	} else { lappend destinationsJ [lindex $destinations $i] }
     }
     eval exec gs -dNOPAUSE -sDEVICE=pswrite -sOutputFile=$final.1.ps $destinationsJ -c quit
     eval exec pstops '2:0L@.7(21cm,0)+1L@.7(21cm,14.85cm)' $final.1.ps $final.2.ps
