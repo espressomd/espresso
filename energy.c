@@ -12,6 +12,7 @@
 #include "integrate.h"
 #include "domain_decomposition.h"
 #include "nsquare.h"
+#include "layered.h"
 
 Observable_stat energy = {0, {NULL,0,0}, 0,0,0};
 Observable_stat total_energy = {0, {NULL,0,0}, 0,0,0};
@@ -41,6 +42,9 @@ void energy_calc(double *result)
   }
 
   switch (cell_structure.type) {
+  case CELL_STRUCTURE_LAYERED:
+    layered_calculate_energies();
+    break;
   case CELL_STRUCTURE_DOMDEC:
     if (rebuild_verletlist)
       build_verlet_lists();
