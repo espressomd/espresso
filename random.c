@@ -47,7 +47,7 @@ int i_random(int maxint)
 {
   /* delivers an integer between 0 and maxint-1 */
   int temp;
-  temp =  (int)( ( maxint * l_random() )* AM );
+  temp =  (int)( ( (double) maxint * l_random() )* AM );
   return temp;
 }
   
