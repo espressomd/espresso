@@ -592,10 +592,17 @@ int imd(ClientData data, Tcl_Interp *interp,
     /* sort partcles according to identities */
     coord = malloc(n_total_particles*3*sizeof(float));
     for (i = 0; i < n_total_particles; i++) {
+      int dummy[3];
+      double tmpCoord[3];
+      tmpCoord[0] = partCfg[i].r.p[0];
+      tmpCoord[1] = partCfg[i].r.p[1];
+      tmpCoord[2] = partCfg[i].r.p[2];
+      fold_particle(tmpCoord, dummy);
+      
       j = 3*partCfg[i].r.identity;
-      coord[j    ] = partCfg[i].r.p[0];
-      coord[j + 1] = partCfg[i].r.p[1];
-      coord[j + 2] = partCfg[i].r.p[2];
+      coord[j    ] = tmpCoord[0];
+      coord[j + 1] = tmpCoord[1];
+      coord[j + 2] = tmpCoord[2];
     }
 
     if (imd_send_fcoords(sock, n_total_particles, coord)) {
