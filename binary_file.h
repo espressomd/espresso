@@ -84,7 +84,7 @@ int writemd(ClientData data, Tcl_Interp *interp,
 /** Implements the readmd Tcl command. Note that for reading in new particles,
     all three position fields are mandatory. It doesn't matter where they are
     put, readmd searches for them. readmd also takes care to initialize the
-    \ref particle_node map and the \ref processor_grid, if necessary.
+    \ref particle_node map and the \ref node_grid, if necessary.
 */
 int readmd(ClientData data, Tcl_Interp *interp,
 	   int argc, char **argv);

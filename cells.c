@@ -11,7 +11,8 @@
  *  overall dimension of the ghost cell grid is ghost_cell_grid.
  *  You can see a 2D graphical representation of the linked cell grid below. 
  *
- *  <img src="../figs/linked_cells.gif" alt="pic test" align="middle" border=0 width=300 height=300> 
+ *  \image html linked_cells.gif "Linked cells structure"
+ *  \image latex linked_cells.eps "Linked cells structure" \width=6cm
  *
  *  2D representation of a linked cell grid: n_cells = 64, cell_grid =
  *  {4,4}, ghost_cell_grid = {6,6}
@@ -53,12 +54,13 @@
 int cell_grid[3];
 int ghost_cell_grid[3];
 
-/** number of linked cells in processors spatial domain. */
+/** number of linked cells in nodes spatial domain. */
 int n_inner_cells;
 int n_cells;
 Cell *cells;
 
-/** cell size. */
+/** cell size. 
+    Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range); \endverbatim */
 double cell_size[3];
 /** inverse cell size. */
 double inv_cell_size[3];
@@ -112,8 +114,8 @@ void cells_init()
   /* there should be a reasonable number of cells only!
      But we will deal with that later... */
   if(this_node==0) {
-    if(n_inner_cells > ((max_seen_particle + 1)/nprocs)+1) 
-      fprintf(stderr,"0: cells_init: WARNING: More cells per node %d than particles per node %d\n",n_inner_cells,((max_seen_particle + 1)/nprocs)+1);
+    if(n_inner_cells > ((max_seen_particle + 1)/n_nodes)+1) 
+      fprintf(stderr,"0: cells_init: WARNING: More cells per node %d than particles per node %d\n",n_inner_cells,((max_seen_particle + 1)/n_nodes)+1);
   }
 
   /* allocate space for cell structure */

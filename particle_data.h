@@ -66,7 +66,7 @@ extern int  *particle_node;
 /** Mapping between particle identity and local index. 
     You find the local index of particle i at position
     i of this field. 
-    A particle that is not in the processors domain 
+    A particle that is not in the nodes domain 
     (including its ghostshell) is marked with -1.
 */
 extern int *local_index;

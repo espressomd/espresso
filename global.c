@@ -36,8 +36,8 @@ int gamma_callback(Tcl_Interp *interp, void *_data);
     in \ref global.h.
 */
 const Datafield fields[] = {
-  {&nprocs,    TYPE_INT,    1, "nprocs",    ro_callback }, /* communication.c */
-  {processor_grid, TYPE_INT, 3, "procgrid", pgrid_callback }, /* grid.c */
+  {&n_nodes,    TYPE_INT,    1, "n_nodes",    ro_callback }, /* communication.c */
+  {node_grid, TYPE_INT, 3, "node_grid", node_grid_callback }, /* grid.c */
   {local_box_l, TYPE_DOUBLE, 3, "local_box_l", ro_callback }, /* global.c */
   {box_l, TYPE_DOUBLE, 3, "box_l", boxl_callback },
   {&max_seen_particle, TYPE_INT, 1, "maxpart", ro_callback },

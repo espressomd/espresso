@@ -12,7 +12,7 @@
 */
 
 int this_node = -1;
-int nprocs = -1;
+int n_nodes = -1;
 
 /**********************************************
  * slave callbacks.
@@ -131,7 +131,7 @@ void mpi_init(int *argc, char ***argv)
 
   MPI_Init(argc, argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &this_node);
-  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+  MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
 
 #ifdef MPI_CORE
   MPI_Errhandler_create((MPI_Handler_function *)mpi_core, &mpi_errh);
@@ -202,7 +202,7 @@ void mpi_bcast_parameter_slave(int i)
 void mpi_who_has()
 {
   int req[2] = { REQ_WHO_HAS, 0};
-  int *sizes = malloc(sizeof(int)*nprocs);
+  int *sizes = malloc(sizeof(int)*n_nodes);
   int *pdata = NULL;
   int pdata_s = 0, i;
   int pnode;
@@ -216,7 +216,7 @@ void mpi_who_has()
   MPI_Gather(&n_particles, 1, MPI_INT, sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   /* then fetch particle locations */
-  for (pnode = 0; pnode < nprocs; pnode++) {
+  for (pnode = 0; pnode < n_nodes; pnode++) {
     COMM_TRACE(fprintf(stderr, "node %d reports %d particles\n",
 		       pnode, sizes[pnode]));
     if (pnode == this_node) {

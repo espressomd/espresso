@@ -37,7 +37,7 @@ typedef struct {
  * exported variables
  ************************************************/
 
-/** linked cell grid in processors spatial domain. */
+/** linked cell grid in nodes spatial domain. */
 extern int cell_grid[3];
 /** linked cell grid with ghost frame. */
 extern int ghost_cell_grid[3];
@@ -58,7 +58,7 @@ extern Cell *cells;
  *  structure: cells.  Further it calculates the values for:
  *  cell_size[3], inv_cell_size[3], n_cells, n_inner_cells.
  *
- *  At the moment it also calculates the edges of the processors
+ *  At the moment it also calculates the edges of the nodes
  *  spatial domain: my_left[3] and my_right[3].
  *
  *  Then it allocates space for the particle index list of each cell

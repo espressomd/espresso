@@ -38,7 +38,7 @@
 /** The number of this node. */
 extern int this_node;
 /** The total number of nodes. */
-extern int nprocs;
+extern int n_nodes;
 /*@}*/
 
 /**************************************************
@@ -49,7 +49,7 @@ extern int nprocs;
 
 /** \name Exported Functions */
 /*@{*/
-/** Initialize MPI and determine \ref nprocs and \ref this_node. */
+/** Initialize MPI and determine \ref n_nodes and \ref this_node. */
 void mpi_init(int *argc, char ***argv);
 
 /** Process requests from master node. Slave nodes main loop. */

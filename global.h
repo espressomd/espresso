@@ -54,10 +54,10 @@ extern const Datafield fields[];
     \ref fields for use with e. g. \ref mpi_bcast_parameter.
 */
 /*@{*/
-/** index of \ref nprocs in \ref fields */
-#define FIELD_NPROCS 0
-/** index of \ref processor_grid in \ref fields */
-#define FIELD_PGRID  1
+/** index of \ref n_nodes in \ref fields */
+#define FIELD_NNODES 0
+/** index of \ref node_grid in \ref fields */
+#define FIELD_NGRID  1
 /** index of \ref local_box_l in \ref fields */
 #define FIELD_LBOXL  2
 /** index of \ref box_l in \ref fields */

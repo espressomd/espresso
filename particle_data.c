@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <tcl.h>
 #include "particle_data.h"
 #include "global.h"
 #include "communication.h"
@@ -195,8 +194,8 @@ int part(ClientData data, Tcl_Interp *interp,
 		     argv[0], " <part num> ?what? ?value?\"", (char *) NULL);
     return (TCL_ERROR);
   }
-  if (!processor_grid_is_set())
-    setup_processor_grid();
+  if (!node_grid_is_set())
+    setup_node_grid();
 
   part_num = atol(argv[1]);
   if (part_num < 0) {

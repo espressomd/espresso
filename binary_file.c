@@ -171,8 +171,8 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
   if (!particle_node)
     build_particle_node();
 
-  if (!processor_grid_is_set())
-    setup_processor_grid();
+  if (!node_grid_is_set())
+    setup_node_grid();
 
   /* parse rows */
   row = malloc(header.n_rows*sizeof(char));

@@ -1,10 +1,10 @@
 /*****************************************************/
 /*******************  INTEGRATE.C  *******************/
 /*****************************************************/
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tcl.h>
 #include <math.h>
 #include "integrate.h"
 #include "communication.h"
@@ -76,7 +76,7 @@ void integrate_vv_init()
 
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_init\n",this_node));
   INTEG_TRACE(fprintf(stderr,"%d: nproc =%d npart=%d\n",
-		      this_node,nprocs,max_seen_particle));
+		      this_node,n_nodes,max_seen_particle));
   INTEG_TRACE(fprintf(stderr,"%d: n_particles = %d\n",
 		      this_node, n_particles));
   max_range  = max_cut + skin;
@@ -182,7 +182,7 @@ void propagate_velocities()
 void propagate_positions() 
 {
   int i;
-  int *verlet_flags = malloc(sizeof(int)*nprocs);
+  int *verlet_flags = malloc(sizeof(int)*n_nodes);
   double d2[3], dist2;
   INTEG_TRACE(fprintf(stderr,"%d: propagate_positions:\n",this_node));
   rebuild_verletlist = 0;
@@ -204,7 +204,7 @@ void propagate_positions()
   if(this_node == 0)
     {
       rebuild_verletlist = 0;
-      for(i=0;i<nprocs;i++)
+      for(i=0;i<n_nodes;i++)
 	if(verlet_flags[i]>0)
 	  {
 	    rebuild_verletlist = 1;
