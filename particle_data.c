@@ -1702,7 +1702,7 @@ int change_particle_bond(int part, int *bond, int delete)
   if (bond != NULL) {
     if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
       char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt, "048 invalid/unknown bonded interaction type %d", bond[0]);
+      ERROR_SPRINTF(errtxt, "{048 invalid/unknown bonded interaction type %d}", bond[0]);
       return TCL_ERROR;
     }
   }
