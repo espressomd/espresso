@@ -26,6 +26,19 @@
 #include "p3m.h"
 
 /************************************************
+ * DEFINES
+ ************************************************/
+
+/* MPI tags for the fft communications: */
+/** Tag for communication in fft_init() */
+#define REQ_FFT_INIT   300
+/** Tag for communication in forw_grid_comm() */
+#define REQ_FFT_FORW   301
+/** Tag for communication in back_grid_comm() */
+#define REQ_FFT_BACK   302
+
+
+/************************************************
  * variables
  ************************************************/
 
@@ -169,9 +182,7 @@ int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
   FILE *wisdom_file;
   fftw_status wisdom_status;
 
-  MPI_Barrier(MPI_COMM_WORLD);
   FFT_TRACE(fprintf(stderr,"%d: fft_init():\n",this_node));
-  MPI_Barrier(MPI_COMM_WORLD);
  
   /* === allocation === */
   for(i=0;i<4;i++) {
@@ -265,7 +276,7 @@ int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
     }
     /* DEBUG */
     for(j=0;j<n_nodes;j++) {
-      MPI_Barrier(MPI_COMM_WORLD);
+      /* MPI_Barrier(MPI_COMM_WORLD); */
       if(j==this_node) FFT_TRACE(print_fft_plan(fft_plan[i]));
     }
   }
@@ -357,9 +368,7 @@ void fft_perform_forw(double *data)
   int i;
 
   /* ===== first direction  ===== */
-  MPI_Barrier(MPI_COMM_WORLD);   
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_forw: dir 1:\n",this_node));
-  MPI_Barrier(MPI_COMM_WORLD);   
 
   c_data     = (fftw_complex *) data;
   c_data_buf = (fftw_complex *) data_buf;
@@ -377,9 +386,7 @@ void fft_perform_forw(double *data)
   			   c_data_buf, 1, fft_plan[1].new_mesh[2]);
   
   /* ===== second direction ===== */
-  MPI_Barrier(MPI_COMM_WORLD);   
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_forw: dir 2:\n",this_node));
-  MPI_Barrier(MPI_COMM_WORLD);   
   /* communication to current dir row format (in is data) */
   forw_grid_comm(fft_plan[2], data, data_buf);
   /* perform FFT (in/out is data_buf)*/
@@ -388,9 +395,7 @@ void fft_perform_forw(double *data)
   			   c_data, 1, fft_plan[2].new_mesh[2]);
 
   /* ===== third direction  ===== */
-  MPI_Barrier(MPI_COMM_WORLD);   
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_forw: dir 3:\n",this_node));
-  MPI_Barrier(MPI_COMM_WORLD);   
   /* communication to current dir row format (in is data_buf) */
   forw_grid_comm(fft_plan[3], data_buf, data);
   /* perform FFT (in/out is data)*/
@@ -405,9 +410,7 @@ void fft_perform_back(double *data)
 {
   int i;
   /* ===== third direction  ===== */
-  MPI_Barrier(MPI_COMM_WORLD);   
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 3:\n",this_node));
-  MPI_Barrier(MPI_COMM_WORLD);   
   /* perform FFT (in is data) */
   fft_back[3].fft_function(fft_back[3].fft_plan, fft_plan[3].n_ffts,
   			   c_data, 1, fft_plan[3].new_mesh[2],
@@ -416,9 +419,7 @@ void fft_perform_back(double *data)
   back_grid_comm(fft_plan[3],fft_back[3],data,data_buf);
  
   /* ===== second direction ===== */
-  MPI_Barrier(MPI_COMM_WORLD);   
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 2:\n",this_node));
-  MPI_Barrier(MPI_COMM_WORLD);   
   /* perform FFT (in is data_buf) */
   fft_back[2].fft_function(fft_back[2].fft_plan, fft_plan[2].n_ffts,
   			   c_data_buf, 1, fft_plan[2].new_mesh[2],
@@ -427,9 +428,7 @@ void fft_perform_back(double *data)
   back_grid_comm(fft_plan[2],fft_back[2],data_buf,data);
 
   /* ===== first direction  ===== */
-  MPI_Barrier(MPI_COMM_WORLD);   
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 1:\n",this_node));
-  MPI_Barrier(MPI_COMM_WORLD);   
   /* perform FFT (in is data) */
   fft_back[1].fft_function(fft_back[1].fft_plan, fft_plan[1].n_ffts,
   			   c_data, 1, fft_plan[1].new_mesh[2],
@@ -714,15 +713,15 @@ void forw_grid_comm(fft_forw_plan plan, double *in, double *out)
 
     if(plan.group[i]<this_node) {       /* send first, receive second */
       MPI_Send(send_buf, plan.send_size[i], MPI_DOUBLE, 
-	       plan.group[i], 0, MPI_COMM_WORLD);
+	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD);
       MPI_Recv(recv_buf, plan.recv_size[i], MPI_DOUBLE, 
-	       plan.group[i], 0, MPI_COMM_WORLD, &status); 	
+	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD, &status); 	
     }
     else if(plan.group[i]>this_node) {  /* receive first, send second */
       MPI_Recv(recv_buf, plan.recv_size[i], MPI_DOUBLE, 
-	       plan.group[i], 0, MPI_COMM_WORLD, &status); 	
+	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD, &status); 	
       MPI_Send(send_buf, plan.send_size[i], MPI_DOUBLE, 
-	       plan.group[i], 0, MPI_COMM_WORLD);      
+	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD);      
     }
     else {                              /* Self communication... */   
       tmp_ptr  = send_buf;
@@ -751,15 +750,15 @@ void back_grid_comm(fft_forw_plan plan_f,  fft_back_plan plan_b, double *in, dou
 
     if(plan_f.group[i]<this_node) {       /* send first, receive second */
       MPI_Send(send_buf, plan_f.recv_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], 0, MPI_COMM_WORLD);
+	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD);
       MPI_Recv(recv_buf, plan_f.send_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], 0, MPI_COMM_WORLD, &status); 	
+	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD, &status); 	
     }
     else if(plan_f.group[i]>this_node) {  /* receive first, send second */
       MPI_Recv(recv_buf, plan_f.send_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], 0, MPI_COMM_WORLD, &status); 	
+	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD, &status); 	
       MPI_Send(send_buf, plan_f.recv_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], 0, MPI_COMM_WORLD);      
+	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD);      
     }
     else {                                /* Self communication... */   
       tmp_ptr  = send_buf;
