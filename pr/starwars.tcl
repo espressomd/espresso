@@ -23,7 +23,7 @@
 #  Initialization                                           #
 #############################################################
 
-source /usr/people/limbach/Espresso/scripts/bundle.tcl
+source ../scripts/bundle.tcl
 
 global name level
 set name ""
