@@ -374,7 +374,7 @@ void calc_self_energy_coeffs()
 		      if(sxyz > 0)
 			{
 			  alpha[i][j] += cos(nomx + nomy + nomz) / sxyz;
-			}
+ 			}
 		      if(maggs.yukawa == 1)
 			beta[i][j] += cos(nomx + nomy + nomz) / (sxyz + SQR(maggs.kappa*maggs.a));
 		    }
@@ -438,7 +438,7 @@ void calc_part_yukawa_force(double *grad, double *force, int index)
     help_index[0]=-help_index[0];
   }
   FOR3D(j) {
-    local_f[j] *= +maggs.prefactor * maggs.inva;
+    local_f[j] *= +maggs.prefactor * maggs.inva; // sign is important for BD_Yukawa !!!
     force[j] += local_f[j];
   }
 }
@@ -455,7 +455,7 @@ void calc_part_self_force(double *grad, double *rho, double *force)
       temp = rho[i]*grad[i*SPACE_DIM + k];
       self += alpha[i][i] * temp;
       if(maggs.yukawa == 1)
-      	self -= beta[i][i] * temp;
+	self -= beta[i][i] * temp;
 
       for(j=i+1;j<8;j++) {
 	temp = rho[i]*grad[j*SPACE_DIM + k] + rho[j]*grad[i*SPACE_DIM + k];
@@ -2023,9 +2023,7 @@ void maggs_calc_e_forces()
 
   if(!init) {
     MAGGS_TRACE(fprintf(stderr, "running symplectic update\n"));
-    //    if(sim_time>120.) fprintf(stderr, "time = %f, couple_current init\n", sim_time);
     symplect_couple_current_to_efield();
-    //    if(sim_time>120.) fprintf(stderr, "time = %f, couple_current passed\n", sim_time);
     add_transverse_field_to_e_field(time_step);  
   }
   else init = 0;
@@ -2421,14 +2419,14 @@ double maggs_electric_energy()
 	for(ind1=0; ind1<8; ind1++) {
 	  temp = rho[ind1]*rho[ind1];
 	  self_energy += alpha[ind1][ind1] * temp;
-	  //	  if(maggs.yukawa == 1)
-	  //	    self_energy -= beta[ind1][ind2] * temp;
+	  if(maggs.yukawa == 1)
+	    self_energy -= beta[ind1][ind1] * temp;
 	  
 	  for(ind2 = ind1+1; ind2<8; ind2++) {
 	    temp = rho[ind1]*rho[ind2];
 	    self_energy += 2.* alpha[ind1][ind2] * temp;
-	    //	    if(maggs.yukawa == 1)
-	    //	      self_energy -= 2.* beta[ind1][ind2] * temp;
+	    if(maggs.yukawa == 1)
+	      self_energy -= 2.* beta[ind1][ind2] * temp;
 	  }
 	}
       }
