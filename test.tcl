@@ -2,7 +2,7 @@
 # tricking...\
     PLATFORM=`uname -s`;
 # OSF1 \
-    if test $PLATFORM = OSF1; then  exec dmpirun -np 8 $PLATFORM/tcl_md $0 $*
+    if test $PLATFORM = OSF1; then  exec dmpirun -np 1 $PLATFORM/tcl_md $0 $*
 # AIX \
     elif test $PLATFORM = AIX; then exec poe $PLATFORM/tcl_md $0 $* -procs 8
 # Linux \

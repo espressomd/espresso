@@ -17,7 +17,7 @@ int sub_grid_indices(int* list, int start, int max,
 		     int lc[3], int hc[3], int gs[3]);
 /** moves particle (ind) to the send buffers.
     subroutine of exchange_part(). */
-void move_to_p_buf(int ind);
+int move_to_p_buf(int ind);
 /** send particles in direction s_dir.
     subroutine of exchange_part(). */
 void send_particles(int s_dir);
@@ -191,8 +191,10 @@ void exchange_part()
   int d, lr, dir, n;
   GHOST_TRACE(fprintf(stderr,"%d: exchange_part:\n",this_node));
 
+
   /* fold coordinates to primary simulation box */
   for(n=0;n<n_particles;n++) fold_particle(particles[n].p,particles[n].i);
+
 
   /* check part array */
   for(n=0;n<n_particles;n++) {
@@ -214,15 +216,13 @@ void exchange_part()
       if(lr==0) {                                /* left */
 	for(n=0;n<n_particles;n++)
 	  if(particles[n].p[d] <   my_left[d] ) {
-	    particles[n].p[d] += boundary[dir];
-	    move_to_p_buf(n);
+	    n = move_to_p_buf(n); 
 	  }
       }
       else {                                     /* right */
- 	for(n=0;n<n_particles;n++)                  
+	for(n=0;n<n_particles;n++)                  
 	  if(particles[n].p[d] >=  my_right[d]) {
-	    particles[n].p[d] += boundary[dir];
-	    move_to_p_buf(n);
+	    n = move_to_p_buf(n);
 	  }
       }
       /* GHOST_TRACE(fprintf(stderr,"%d: send %d part with %d bond partners to dir %d\n",
@@ -234,6 +234,7 @@ void exchange_part()
     }
     MPI_Barrier(MPI_COMM_WORLD);
   }
+
 }
 
 void exchange_ghost()
@@ -460,7 +461,7 @@ int sub_grid_indices(int* list, int start, int max,
   return size;
 }
 
-void move_to_p_buf(int ind)
+int move_to_p_buf(int ind)
 {
   int bonds=0,i;
   /* count bond partners */
@@ -489,11 +490,18 @@ void move_to_p_buf(int ind)
   n_p_send_buf++;
   /* delete particle = 
      1: update the local_index list 
-     2: move last particle (n_particles-1) to the free position (ind) */
+     2: move last particle (n_particles-1) to the free position (ind)
+        ... if there is anything to move */
   local_index[particles[ind].identity] = -1;
-  local_index[particles[n_particles-1].identity] = ind;
-  memcpy(&particles[ind],&particles[n_particles-1],sizeof(Particle));
+  if(ind < n_particles-1) {
+    local_index[particles[n_particles-1].identity] = ind;
+    memcpy(&particles[ind],&particles[n_particles-1],sizeof(Particle));
+    /* decrease return value in order to 
+       continue the particle loop at the right place */
+    ind--;
+  }
   n_particles--;
+  return ind;
 }
 
 void send_particles(int s_dir)

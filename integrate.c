@@ -186,6 +186,7 @@ void propagate_positions()
 	    break;
 	  }
     }
-    MPI_Bcast(&rebuild_verletlist, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&rebuild_verletlist, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  free(verlet_flags);
 }
 
