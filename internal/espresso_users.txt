@@ -91,6 +91,7 @@ name:    Arijit Maitra / Andreas Heuer
 email:   andheuer@uni-muenster.de
 sent:    22.OKT.2003 - 12.MAY.2004
 version: 20040512-Espresso_v1.6.1d.tar.gz
+	 20041025-Espresso_v1.8.Beta.tar.gz
 topic:   Polymers, e.g. PEO at Silica
 
 
@@ -147,3 +148,16 @@ topic:   Lipid-Doppelschicht, deren Koepfe zur Stabilisation an feste Waende gek
 	 spaeter soll dann eine Lipid-Doppelschicht in einer Loesungsmittelumgebung 
 	 simuliert werden, wobei zur Simulation des Loesungsmittels ein DPD-Thermostat
 	 angedacht ist
+
+
+name:    Moran Wang
+email:   moralwang@jhu.edu
+sent:    08.DEC.2004
+version: 20041208-Espresso_v1.8.2d.tar.gz
+topic:   I am a postdoc researcher at the Johns Hopkins University. My current
+	 work has some relationship with electrically driven flow. I notice that
+	 your code can be able to work for this. So I wonder if I can get the code
+	 and have a try to deal with this task. I will cite your papers in any of
+	 my relative productions.
+
+
