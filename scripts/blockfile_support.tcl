@@ -318,7 +318,7 @@ proc blockfile_read_auto_tclvariable {channel read auto} {
 	set data [lrange $vblock 1 end]
 #	puts "----$vname-$data-"
 	global $vname
-	if {[catch {eval "set $vname $data"} error]} {
+	if {[catch {eval "set $vname \"$data\""} error]} {
 	    if { $error != "" } {
 		error "blockfile_read_auto_tclvariable: set $vname $data reported: $error"
 	    }
