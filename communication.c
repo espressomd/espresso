@@ -32,6 +32,7 @@
 #include "pressure.h"
 #include "random.h"
 #include "lj.h"
+#include "morse.h"
 #include "buckingham.h"
 #include "tab.h"
 #include "ljcos.h"
@@ -139,10 +140,12 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_BCAST_BOND_PARTNERS  39
 /** Action number for \ref mpi_buck_cap_forces. */
 #define REQ_BCAST_BFC 40
+/**Action number for \ref mpi_morse_cap_forces. */
+#define REQ_BCAST_MFC 41
 /** Action number for \ref mpi_gather_runtime_errors  */
-#define REQ_GET_ERRS 41
+#define REQ_GET_ERRS 42
 /** Total number of action numbers. */
-#define REQ_MAXIMUM   42
+#define REQ_MAXIMUM   43
 
 /*@}*/
 
@@ -176,6 +179,7 @@ void mpi_bcast_constraint_slave(int node, int parm);
 void mpi_random_seed_slave(int node, int parm);
 void mpi_random_stat_slave(int node, int parm);
 void mpi_lj_cap_forces_slave(int node, int parm);
+void mpi_morse_cap_forces_slave(int node, int parm);
 void mpi_tab_cap_forces_slave(int node, int parm);
 void mpi_bit_random_seed_slave(int node, int parm);
 void mpi_bit_random_stat_slave(int node, int parm);
@@ -236,11 +240,12 @@ SlaveCallback *callbacks[] = {
   mpi_send_mol_id_slave,            /* 34: REQ_SET_MOLID */
   mpi_bcast_nptiso_geom_slave,      /* 35: REQ_BCAST_NPTISO_GEOM */
   mpi_update_mol_ids_slave,         /* 36: REQ_UPDATE_MOL_IDS */
-  mpi_sync_topo_part_info_slave,    /* 37: REQ_UPDATE_MOL_IDS */
+  mpi_sync_topo_part_info_slave,    /* 37: REQ_SYNC_TOPO */
   mpi_send_mass_slave,              /* 38: REQ_SET_MASS */
   mpi_bcast_bond_partners_slave,    /* 39: REQ_BCAST_BOND_PARTNERS*/
-  mpi_buck_cap_forces_slave,        /* 40: REQ_BCAST_LFC */
-  mpi_gather_runtime_errors_slave,  /* 41: REQ_GET_ERRS */
+  mpi_buck_cap_forces_slave,        /* 40: REQ_BCAST_BFC */
+  mpi_morse_cap_forces_slave,       /* 41: REQ_BCAST_MFC */
+  mpi_gather_runtime_errors_slave,  /* 42: REQ_GET_ERRS */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -286,7 +291,8 @@ char *names[] = {
   "SET_MASS"        /* 38 */
   "BCAST_BOND_PARTNERS" /* 39*/
   "BCAST_BFC" ,     /* 40 */
-  "GET_ERRS",       /* 41 */
+  "BCAST_MFC" ,     /* 41 */
+  "GET_ERRS",       /* 42 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -1525,6 +1531,23 @@ void mpi_lj_cap_forces_slave(int node, int parm)
 #ifdef LENNARD_JONES
   MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   calc_lj_cap_radii(lj_force_cap);
+  on_short_range_ia_change();
+#endif
+}
+
+/*************** REQ_BCAST_MORSEFORCECAP ************/
+void mpi_morse_cap_forces(double fc)
+{
+  morse_force_cap = fc;
+  mpi_issue(REQ_BCAST_MFC, 1, 0);
+  mpi_morse_cap_forces_slave(1, 0);
+}
+
+void mpi_morse_cap_forces_slave(int node, int parm)
+{
+#ifdef MORSE
+  MPI_Bcast(&morse_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  calc_morse_cap_radii(morse_force_cap);
   on_short_range_ia_change();
 #endif
 }
