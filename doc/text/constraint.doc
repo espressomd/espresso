@@ -12,9 +12,10 @@
 	\verbatim constraint sphere center <c_x> <c_y> <c_z> radius <rad> type <id> \endverbatim
 	The resulting surface is a sphere with center <c_x> <c_y> <c_z> 
 	and radius <rad>. The force is pointing inwards.
-	\verbatim constraint cylinder center <c_x> <c_y> <c_z> axis <rx> <ry> <rz> radius <rad> type <id> \endverbatim
+	\verbatim constraint cylinder center <c_x> <c_y> <c_z> axis <rx> <ry> <rz> radius <rad>
+     length <length> direction <direction> type <id> \endverbatim
 	The resulting surface is a cylinder with center <c_x> <c_y> <c_z> 
-	and radius <rad>. The axis is by defaults along the z-axis for now (choice of axis orientation will be added in the future). The force is pointing inwards.
+	and radius <rad>. The <axis> is a vector along the cylinder axis, which is normalized in the program. The <direction> determines the force direction, -1 for inward and +1 for outward.
     
     
 	\verbatim constraint delete <num> \endverbatim
