@@ -385,7 +385,6 @@ int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
       Creates <N_pS> positively and <N_nS> negatively charged salt ions of charge <val_pS> and <val_nS> within the simulation box,
       and returns how often the attempt to place a particle failed in the worst case.
       Parameters:  <N_pS>/<N_nS> = number of salt ions to create
-                   <box_length>  = length of the simulation box
 		   <part_id>     = particle number of the first salt ion (defaults to 'n_total_particles')
 		   <mode>        = selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW')
 		   <shield>      = shield around each particle another particle's position may not enter if using SAW (defaults to '0')
