@@ -27,7 +27,7 @@ float *partCoord_g=NULL, *partCM_g=NULL;
 int n_part_g = 0, n_chains_g = 0;
 
 /** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
-float **configs = NULL; int n_configs = 0;
+double **configs = NULL; int n_configs = 0;
 
 /** data for a system consisting of chains */
 int chain_start = 0, chain_n_chains = 0, chain_length = 0;
@@ -355,36 +355,46 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     energy.init_status=1;
     return (TCL_OK);
   }
-  else if (!strncmp(mode, "re", strlen(mode))) {
-    /* 'analyze re [<chain_start> <n_chains> <chain_length>]' */
-    /**********************************************************/
+  else if ( (!strncmp(mode, "re", strlen(mode))) || (!strncmp(mode, "<re>", strlen(mode))) ) {
+    /* 'analyze { re | <re> } [<chain_start> <n_chains> <chain_length>]' */
+    /*********************************************************************/
     if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
       return TCL_ERROR;
     if (argc != 0) {
       Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
       return TCL_ERROR;
     }
-    result = calc_re();
+    if (!strncmp(mode, "re", strlen(mode))) result = calc_re(); 
+    else if (n_configs == 0) {
+      Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
+      Tcl_AppendResult(interp, "Use 'analyze append' to save some, or 'analyze re' to only look at current state!", (char *)NULL);
+      return TCL_ERROR; }
+    else result = calc_re_av();
     Tcl_PrintDouble(interp, result, buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return (TCL_OK);
   }
-  else if (!strncmp(mode, "rg", strlen(mode))) {
-    /* 'analyze rg [<chain_start> <n_chains> <chain_length>]' */
-    /**********************************************************/
+  else if ( (!strncmp(mode, "rg", strlen(mode))) || (!strncmp(mode, "<rg>", strlen(mode))) ) {
+    /* 'analyze { rg | <rg> } [<chain_start> <n_chains> <chain_length>]' */
+    /*********************************************************************/
     if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
       return TCL_ERROR;
     if (argc != 0) {
       Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
       return TCL_ERROR;
     }
-    result = calc_rg();
+    if (!strncmp(mode, "rg", strlen(mode))) result = calc_rg(); 
+    else if (n_configs == 0) {
+      Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
+      Tcl_AppendResult(interp, "Use 'analyze append' to save some, or 'analyze rg' to only look at current state!", (char *)NULL);
+      return TCL_ERROR; }
+    else result = calc_rg_av();
     Tcl_PrintDouble(interp, result, buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return (TCL_OK);
   }
-  else if (!strncmp(mode, "rh", strlen(mode))) {
-    /* 'analyze rh [<chain_start> <n_chains> <chain_length>]' */
+  else if ( (!strncmp(mode, "rh", strlen(mode))) || (!strncmp(mode, "<rh>", strlen(mode))) ) {
+    /* 'analyze { rh | <rh> } [<chain_start> <n_chains> <chain_length>]' */
     /**********************************************************/
     if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
       return TCL_ERROR;
@@ -393,6 +403,12 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       return TCL_ERROR;
     }
     result = calc_rh();
+    if (!strncmp(mode, "rh", strlen(mode))) result = calc_rh(); 
+    else if (n_configs == 0) {
+      Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
+      Tcl_AppendResult(interp, "Use 'analyze append' to save some, or 'analyze rh' to only look at current state!", (char *)NULL);
+      return TCL_ERROR; }
+    else result = calc_rh_av();
     Tcl_PrintDouble(interp, result, buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return (TCL_OK);
@@ -438,18 +454,39 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return (TCL_OK);
   }
+  else if ( (!strncmp(mode, "<g1>", strlen(mode))) || (!strncmp(mode, "<g2>", strlen(mode))) || (!strncmp(mode, "<g3>", strlen(mode))) ){
+    /* 'analyze { <g1> | <g2> | <g3> } [<chain_start> <n_chains> <chain_length>]' */
+    /************************************************************/
+    int i; double *gx; 
+
+    if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR) return TCL_ERROR;
+    if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
+    if (!strncmp(mode, "<g1>", strlen(mode))) 
+      calc_g1_av(&gx);
+    else if (!strncmp(mode, "<g2>", strlen(mode))) 
+      calc_g2_av(&gx);
+    else if (!strncmp(mode, "<g3>", strlen(mode))) 
+      calc_g3_av(&gx);
+    for (i=0; i<n_configs; i++) { 
+      sprintf(buffer,"%f ",gx[i]); Tcl_AppendResult(interp, buffer, (char *)NULL); 
+    }
+    free(gx);
+    return (TCL_OK);
+  }
   else if (!strncmp(mode, "append", strlen(mode))) {
     /* 'analyze append' */
     /********************/
-    if (argc != 0) {
+    if (argc != 0) { 
       Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze append", (char *)NULL); return TCL_ERROR; 
     }
+    if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
     analyze_append();
     sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
   }
   else if (!strncmp(mode, "push", strlen(mode))) {
     /* 'analyze push [<size>]' */
     /*****************************/
+    if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
     if (argc == 1) { 
       Tcl_GetInt(interp, argv[0], &i); argc--; argv++;
       if (n_configs < i) analyze_append(); else analyze_push();
@@ -466,6 +503,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     if (argc != 1) {
       Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze replace <index>", (char *)NULL); return TCL_ERROR; 
     }
+    if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
     Tcl_GetInt(interp, argv[0], &i); argc--; argv++;
     if((n_configs == 0) && (i==0)) analyze_append();
     else if ((n_configs == 0) && (i!=0)) {
@@ -479,6 +517,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   else if (!strncmp(mode, "remove", strlen(mode))) {
     /* 'analyze remove [<index>]' */
     /******************************/
+    if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
     if (argc == 0) { for (i = n_configs-1; i >= 0; i--) analyze_remove(i); }
     else if (argc == 1) {
       Tcl_GetInt(interp, argv[0], &i); argc--; argv++;
@@ -613,6 +652,26 @@ double calc_re()
   return sqrt(dist/((double)chain_n_chains));
 }
 
+double calc_re_av()
+{
+  int i,j;
+  double dx,dy,dz;
+  double dist = 0.0;
+
+  for (j=0; j<n_configs; j++) {
+    for (i=0; i<chain_n_chains; i++) {
+      dx = configs[j][3*(chain_start+i*chain_length + chain_length-1)]     
+	- configs[j][3*(chain_start+i*chain_length)];
+      dy = configs[j][3*(chain_start+i*chain_length + chain_length-1) + 1] 
+	- configs[j][3*(chain_start+i*chain_length) + 1];
+      dz = configs[j][3*(chain_start+i*chain_length + chain_length-1) + 2] 
+	- configs[j][3*(chain_start+i*chain_length) + 2];
+      dist += (SQR(dx) + SQR(dy) + SQR(dz));
+    }
+  }
+  return sqrt(dist/((double)chain_n_chains*n_configs));
+}
+
 double calc_rg()
 {
   int i, j;
@@ -637,8 +696,34 @@ double calc_rg()
       r_G += (SQR(dx) + SQR(dy) + SQR(dz));
     }
   }
-  r_G /= (double)(chain_length*chain_n_chains);
-  return sqrt(r_G);
+  return sqrt(r_G / (double)(chain_length*chain_n_chains));
+}
+
+double calc_rg_av()
+{
+  int i, j, k;
+  double dx,dy,dz;
+  double r_CM_x,r_CM_y,r_CM_z, r_G=0.0, doubMPC;
+
+  doubMPC = (double)chain_length;
+  for (k=0; k<n_configs; k++) {
+    for (i=0; i<chain_n_chains; i++) {
+      r_CM_x = r_CM_y = r_CM_z = 0.0;
+      for (j=0; j<chain_length; j++) {
+	r_CM_x += configs[k][3*(chain_start+i*chain_length + j)];
+	r_CM_y += configs[k][3*(chain_start+i*chain_length + j) + 1];
+	r_CM_z += configs[k][3*(chain_start+i*chain_length + j) + 2];
+      }
+      r_CM_x /= doubMPC; r_CM_y /= doubMPC; r_CM_z /= doubMPC;
+      for (j=0; j<chain_length; ++j) {
+	dx = configs[k][3*(chain_start+i*chain_length + j)]     - r_CM_x;
+	dy = configs[k][3*(chain_start+i*chain_length + j) + 1] - r_CM_y;
+	dz = configs[k][3*(chain_start+i*chain_length + j) + 2] - r_CM_z;
+	r_G += (SQR(dx) + SQR(dy) + SQR(dz));
+      }
+    }
+  }
+  return sqrt(r_G / (double)(chain_length*chain_n_chains*n_configs));
 }
 
 double calc_rh()
@@ -659,9 +744,30 @@ double calc_rh()
     }
     rh += 1.0/ri;
   }
-  rh *= 0.5*(chain_length*(chain_length-1));
-  rh /= (double)chain_n_chains;
-  return rh;
+  return rh * 0.5*(chain_length*(chain_length-1)) / (double)chain_n_chains;
+}
+
+double calc_rh_av()
+{
+  int i, j, p, k;
+  double dx, dy, dz;
+  double rh=0.0, ri=0.0;
+
+  for(k=0; k<n_configs; k++) {
+    for(p=0;p<chain_n_chains;p++) {
+      ri=0.0;
+      for(i=chain_start+chain_length*p;i<chain_start+chain_length*(p+1);i++) {
+	for(j=i+1;j<chain_start+chain_length*(p+1);j++) {
+	  dx = configs[k][3*i]  -configs[k][3*j];
+	  dy = configs[k][3*i+1]-configs[k][3*j+1];
+	  dz = configs[k][3*i+2]-configs[k][3*j+2];
+	  ri += 1.0/sqrt(dx*dx + dy*dy + dz*dz);
+	}
+      }
+      rh += 1.0/ri;
+    }
+  }
+  return rh * 0.5*(chain_length*(chain_length-1)) / ((double)chain_n_chains*n_configs);
 }
 
 void init_g123()
@@ -719,14 +825,89 @@ void calc_g123(double *_g1, double *_g2, double *_g3)
 		 - (cm_tmp[1]-partCM_g[3*j+1]) ) 
 	  + SQR( (partCfg[p].r.p[2]-partCoord_g[3*p+2])
 		 - (cm_tmp[2]-partCM_g[3*j+2]) );
-      g3 += SQR(cm_tmp[0]-partCM_g[3*j])
-	+ SQR(cm_tmp[1]-partCM_g[3*j+1])
-	+ SQR(cm_tmp[2]-partCM_g[3*j+2]);
     }
+    g3 += SQR(cm_tmp[0]-partCM_g[3*j])
+      + SQR(cm_tmp[1]-partCM_g[3*j+1])
+      + SQR(cm_tmp[2]-partCM_g[3*j+2]);
   }
   *_g1 = g1 / (1.*chain_n_chains*chain_length);
   *_g2 = g2 / (1.*chain_n_chains*chain_length);
   *_g3 = g3 / (1.*chain_n_chains);
+}
+
+void calc_g1_av(double **_g1) {
+  int i, j, p, t,k;
+  double *g1=NULL;
+  *_g1 = g1 = realloc(g1,n_configs*sizeof(double));
+
+  for(k=0; k < n_configs; k++) {
+    g1[k] = 0.0;
+    for(t=0; t < n_configs-k; t++) {
+      for(j=0; j<chain_n_chains; j++) {
+	for(i=0; i<chain_length; i++) {
+	  p = chain_start+j*chain_length + i;
+	  g1[k] += SQR(configs[t+k][3*p]-configs[t][3*p])
+	    + SQR(configs[t+k][3*p+1]-configs[t][3*p+1])
+	    + SQR(configs[t+k][3*p+2]-configs[t][3*p+2]);
+	}
+      }
+    }
+    g1[k] /= ((double)chain_n_chains*chain_length*(n_configs-k));
+  }
+}
+
+void calc_g2_av(double **_g2) {
+  int i, j, p, t,k;
+  double *g2=NULL, cm_tmp[3];
+  *_g2 = g2 = realloc(g2,n_configs*sizeof(double));
+
+  for(k=0; k < n_configs; k++) {
+    g2[k] = 0.0;
+    for(t=0; t < n_configs-k; t++) {
+      for(j=0; j<chain_n_chains; j++) {
+	cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
+	for(i=0; i<chain_length; i++) {
+	  p = chain_start+j*chain_length + i;
+	  cm_tmp[0] += configs[t+k][3*p]   - configs[t][3*p];
+	  cm_tmp[1] += configs[t+k][3*p+1] - configs[t][3*p+1];
+	  cm_tmp[2] += configs[t+k][3*p+2] - configs[t][3*p+2];
+	}
+	cm_tmp[0] /= (1.*chain_length);	cm_tmp[1] /= (1.*chain_length);	cm_tmp[2] /= (1.*chain_length);
+	for(i=0; i<chain_length; i++) {
+	  p = chain_start+j*chain_length + i;
+	  g2[k] += SQR( (configs[t+k][3*p]-configs[t][3*p]) - cm_tmp[0] )
+	    + SQR( (configs[t+k][3*p+1]-configs[t][3*p+1])  - cm_tmp[1] ) 
+	    + SQR( (configs[t+k][3*p+2]-configs[t][3*p+2])  - cm_tmp[2] );
+	}
+      }
+    }
+    g2[k] /= ((double)chain_n_chains*chain_length*(n_configs-k));
+  }
+}
+
+void calc_g3_av(double **_g3) {
+  int i, j, p, t,k;
+  double *g3=NULL, cm_tmp[3];
+  *_g3 = g3 = realloc(g3,n_configs*sizeof(double));
+
+  for(k=0; k < n_configs; k++) {
+    g3[k] = 0.0;
+    for(t=0; t < n_configs-k; t++) {
+      for(j=0; j<chain_n_chains; j++) {
+	cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
+	for(i=0; i<chain_length; i++) {
+	  p = chain_start+j*chain_length + i;
+	  cm_tmp[0] += configs[t+k][3*p]   - configs[t][3*p];
+	  cm_tmp[1] += configs[t+k][3*p+1] - configs[t][3*p+1];
+	  cm_tmp[2] += configs[t+k][3*p+2] - configs[t][3*p+2];
+	}
+	g3[k] += SQR(cm_tmp[0] / (1.*chain_length)) 
+	  + SQR(cm_tmp[1] / (1.*chain_length)) 
+	  + SQR(cm_tmp[2] / (1.*chain_length));
+      }
+    }
+    g3[k] /= ((double)chain_n_chains*chain_length*(n_configs-k));
+  }
 }
 
 void calc_energy()
@@ -875,8 +1056,8 @@ void init_energies()
 
 void analyze_append() {
   int i;
-  configs = realloc(configs,(n_configs+1)*sizeof(float *));
-  configs[n_configs] = (float *) malloc(3*n_total_particles*sizeof(float));
+  configs = realloc(configs,(n_configs+1)*sizeof(double *));
+  configs[n_configs] = (double *) malloc(3*n_total_particles*sizeof(double));
   for(i=0; i<n_total_particles; i++) {
     configs[n_configs][3*i]   = partCfg[i].r.p[0];
     configs[n_configs][3*i+1] = partCfg[i].r.p[1];
@@ -891,7 +1072,7 @@ void analyze_push() {
   for(i=0; i<n_configs-1; i++) {
     configs[i]=configs[i+1];
   }
-  configs[n_configs-1] = (float *) malloc(3*n_total_particles*sizeof(float));
+  configs[n_configs-1] = (double *) malloc(3*n_total_particles*sizeof(double));
   for(i=0; i<n_total_particles; i++) {
     configs[n_configs-1][3*i]   = partCfg[i].r.p[0];
     configs[n_configs-1][3*i+1] = partCfg[i].r.p[1];
@@ -915,5 +1096,5 @@ void analyze_remove(int ind) {
     configs[i]=configs[i+1];
   }
   n_configs--;
-  configs = realloc(configs,n_configs*sizeof(float *));
+  configs = realloc(configs,n_configs*sizeof(double *));
 }
