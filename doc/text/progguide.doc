@@ -231,6 +231,8 @@
 	the background errors are returned. Whenever a Tcl command returns, instead of "return TCL_OK/TCL_ERROR" you should use
 	\verbatim return mpi_gather_runtime_errors(interp, TCL_OK/TCL_ERROR); \endverbatim
 
+	For a full list of background-errors visit the \ref background_errors page
+
 	\section add_other Adding other stuff
 	Here you are mostly on your own. Contacting the original developers might \em really help.
 	Nevertheless the next two sections contain some information you very likely will need.

@@ -207,4 +207,6 @@ between the tcl-script and the MD-code. For details on these procedures see
 
 	In each case, the current action was not fulfilled, and possibly other parts of the internal data also had to be
 	changed to allow Espresso to continue, so you should really know what you do if you try and catch these errors.
+	
+	For a full list of background-errors visit the \ref background_errors page
 */
