@@ -18,13 +18,44 @@
 #                                                           #
 #############################################################
 
-
+#############################################################
+# CONSTANTS
+#############################################################
 
 proc PI { } {
 # PI
 # Returns an approximate value of the mathematical constant pi.
     return 3.141592653589793
 }
+
+proc KBOLTZ { } {
+    # Returns Boltzmann constant in Joule/Kelvin
+    return 1.380658e-23
+}
+
+proc ECHARGE { } {
+    # Returns elementary charge in Coulomb
+    return 1.60217733e-19
+}
+
+proc NAVOGADRO { } {
+    # Returns Avogadro number
+    return 6.0221367e23
+}
+
+proc SPEEDOFLIGHT { } {
+    # Returns speed of light in meter/second
+    return 2.99792458e8
+}
+
+proc ESPSLION0 { } {
+    # Returns dielectric constant of vaccum in Coulomb^2/(Joule meter)
+    return 8.854187817e-12
+}
+
+#############################################################
+# MATHEMATICAL FUNCTIONS
+#############################################################
 
 proc sqr { arg } {
 # sqr <arg>
@@ -49,8 +80,12 @@ proc sign { arg } {
     if { $arg==0 } { return $arg } { return [expr round($arg/abs($arg))] }
 }
 
-proc g_random { } {
-# returns random numbers which have a Gaussian distribution
+#############################################################
+# RANDOM FUNCTIONS
+#############################################################
+
+proc gauss_random { } {
+    # returns random numbers which have a Gaussian distribution
     set v1  [expr 2.0*[t_random]-1.0]
     set v2  [expr 2.0*[t_random]-1.0]
     set rsq [expr [sqr $v1]+[sqr $v2]]
@@ -63,84 +98,276 @@ proc g_random { } {
     return [expr $v2*$fac]
 }
 
-
-proc pair_dist { part_id1 part_id2 } {
-# pair_dist <part_id1> <part_id2> 
-# Returns the distance of two particles with identities <part_id1> and <part_id2>.
-    set pos1 [part $part_id1 print pos]    
-    set pos2 [part $part_id2 print pos]
-    set dist2 [expr pow([lindex $pos1 0]- [lindex $pos2 0],2)]    
-    set dist2 [expr $dist2 + pow([lindex $pos1 1]- [lindex $pos2 1],2)]
-    set dist2 [expr $dist2 + pow([lindex $pos1 2]- [lindex $pos2 1],2)]
-    return [expr sqrt($dist2)]
+proc vec_random { {len "1.0"} } {
+    # returns a random vector of length len
+    # (uniform distribution on a sphere)
+    # This is done by chosing 3 uniformly distributed random numbers [-1,1]
+    # If the length of the resulting vector is <= 1.0 the vector is taken and normalized
+    # to the desired length, otherwise the procedure is repeated until succes.
+    # On average the procedure needs 5.739 random numbers per vector.
+    # (This is probably not the most efficient way, but it works!)
+    # Ask your favorit mathematician for a proof!
+    while {1} {
+        for {set i 0} {$i<3} {incr i} { lappend vec [expr 2.0*[t_random]-1.0] }
+        if { [veclen $vec] <= 1.0 } { break }
+        unset vec
+    }
+    return [vecnorm $vec $len]
 }
 
-proc pair_vec { part_id1 part_id2 } {
-# pair_vec <part_id1> <part_id2>
-# returns a tcl list containing the vector bewteen <part_id1> and <part_id2>
-# this vector points from <part_id2>.pos to <part_id1>.pos.
-# namely: <part_id1>.pos - <part_id2>.pos
-    set pos1 [part $part_id1 print pos]    
-    set pos2 [part $part_id2 print pos]
-    foreach x1 $pos1 x2 $pos2 { lappend res [expr $x1-$x2] }
-    return $res
+proc phivec_random { v phi {len "1.0"} } {
+    # return a random vector at angle phi with v and length len
+    # find orthonormal basis
+    set v  [vecnorm $v] 
+    set bas1 [orthovec3d $v]
+    set bas2 [veccross_product3d $v $bas1]
+    # select random angle theta
+    set theta [expr [t_random]*[PI]*2.0]
+    # build vector
+    set res [vecnorm $v [expr -cos($phi)]]
+    set res [vecadd $res [vecnorm $bas1 [expr sin($phi)*cos($theta)]] ]
+    set res [vecadd $res [vecnorm $bas2 [expr sin($phi)*sin($theta)]] ]
+    # normalize to length
+    return [vecnorm $res $len]
 }
+
+
+#############################################################
+# PARTICLE OPERATIONS
+#############################################################
+
+# Operations involving particle positions.
+# The parameters pi can either denote the particle identity 
+# (then the particle position is extracted with the part command) 
+# or the particle position directly
+# When the optional box parameter for minimum image conventions is 
+# omited the functions use the setmd box_l command.
+
+proc bond_vec { p1 p2 } {
+    # Calculate bond vector pointing from  particles p2 to p1
+    # return = (p1.pos - p2.pos)
+    if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
+    if { [llength $p2]==1 } { set p2 [part $p2 print pos] }
+    return [vecsub $p1 $p2]
+}
+
+proc bond_vec_min { p1 p2 {box ""} } {
+    # Calculate bond vector pointing from  particles p2 to p1
+    # return = (p1.pos - p2.pos)
+    if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
+    if { [llength $p2]==1 } { set p2 [part $p2 print pos] }
+    if { $box == "" }       { set box [setmd box_l] }
+    set vec [vecsub $p1 $p2]
+    # apply minimal image convention
+    foreach v $vec b $box { lappend add [expr -floor(($v/$b)+0.5)*$b] }
+    return [vecadd $vec $add]
+}
+
+proc bond_length { p1 p2 } {
+    # Calculate bond length between particles p1 and p2
+    if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
+    if { [llength $p2]==1 } { set p2 [part $p2 print pos] }
+    set vec [vecsub $p1 $p2]
+    return [veclen $vec]
+}
+
+proc bond_length_min { p1 p2 {box ""} } {
+    # Calculate minimum image bond length between particles p1 and p2
+    if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
+    if { [llength $p2]==1 } { set p2 [part $p2 print pos] }
+    if { $box == "" }       { set box [setmd box_l] }
+    set vec [vecsub $p1 $p2]
+    # apply minimal image convention
+    foreach v $vec b $box { lappend add [expr -floor(($v/$b)+0.5)*$b] }
+    set vec [vecadd $vec $add]
+    return [veclen $vec]
+}
+
+proc bond_angle { p1 p2 p3 } {
+    # Calculate bond angle between particles p1, p2 and p3
+    if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
+    if { [llength $p2]==1 } { set p2 [part $p2 print pos] }
+    if { [llength $p3]==1 } { set p3 [part $p3 print pos] }
+    set vec1 [unitvec $p1 $p2]
+    set vec2 [unitvec $p3 $p2]
+    return [expr acos([vecdot_product $vec1 $vec2])]
+}
+
+proc bond_dihedral { p1 p2 p3 p4 } {
+    # Calculate bond dihedral between particles p1, p2, p3 and p4
+    if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
+    if { [llength $p2]==1 } { set p2 [part $p2 print pos] }
+    if { [llength $p3]==1 } { set p3 [part $p3 print pos] }
+    if { [llength $p4]==1 } { set p4 [part $p4 print pos] }
+
+    set r_12 [unitvec $p2 $p1]
+    set r_32 [unitvec $p2 $p3]
+    set r_34 [unitvec $p4 $p3]
+
+    set dot1 [vecdot_product $r_12 $r_32]
+    set dot2 [vecdot_product $r_34 $r_32]
+
+    set r_im [vecsub $r_12 [vecscale $dot1 $r_32] ]
+    set r_ln [vecsub [vecscale $dot2 $r_32] $r_34 ]
+
+    set s    [vecdot_product $r_12 [veccross_product3d $r_32 $r_34] ]
+    set s    [sign $s]
+
+    set res  [vecdot_product $r_im $r_ln]
+    return   [expr $s* acos($res) ]
+}
+
+proc part_at_dist { p dist } {
+    # return position of a new particle at distance dist from p
+    # with random orientation
+    if { [llength $p]==1 } { set p [part $p print pos] }
+    set vec [vec_random $dist]
+    return [vecadd $p $vec]
+}
+
+proc part_at_angle { p1 p2 phi {len "1.0"} } {
+    # return particle at distance len (default=1.0) from p2 which builds
+    # a bond angle phi for (p1, p2, res) 
+    if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
+    if { [llength $p2]==1 } { set p2 [part $p2 print pos] }
+    set vec [ phivec_random [bond_vec $p2 $p1] $phi $len ]
+    return [vecadd $p2 $vec]
+}
+
+proc part_at_dihedral { p1 p2 p3 theta {phi "rnd"} {len "1.0"} } {
+    # return particle at distance len (default=1.0) from p3 which builds
+    # a bond angle phi (default=random) for (p2, p3, res) and a
+    # dihedral angle theta for (p1, p2, p3, res) 
+    if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
+    if { [llength $p2]==1 } { set p2 [part $p2 print pos] }
+    if { [llength $p3]==1 } { set p3 [part $p3 print pos] }
+    set v12 [bond_vec $p2 $p1]
+    set v23 [bond_vec $p3 $p2]
+    set vec [createdihedralvec $v12 $v23 $theta $phi $len]
+    return [vecadd $p3 $vec]
+}
+
+#############################################################
+# VECTOR OPERATIONS
+#############################################################
+
+# A vector is a tcl list of numbers
+# Some functions are provided only for three dimensional vectors.
+# corresponding functions contain 3d at the end of the name
 
 proc veclen {v} {
-    set len [llength $v]
-    set w [lindex $v 0]
-    set res [expr $w*$w]
-    for {set i 1} {$i < $len} {incr i} {
-	set w [lindex $v $i]
-	set res [expr $res + $w*$w]
-    }
+    # return the length of a vector
+    set res 0
+    foreach e $v { set res [expr $res + ($e*$e)] } 
     return [expr sqrt($res)]
 }
 
 proc veclensqr {v} {
-    set len [llength $v]
-    set w [lindex $v 0]
-    set res [expr $w*$w]
-    for {set i 1} {$i < $len} {incr i} {
-	set w [lindex $v $i]
-	set res [expr $res + $w*$w]
-    }
+    # return the length of a vector squared
+    set res 0
+    foreach e $v { set res [expr $res + ($e*$e)] } 
     return $res
 }
 
 proc vecadd {a b} {
-    set len [llength $a]
-    set res [expr [lindex $a 0] + [lindex $b 0]]
-    for {set i 1} {$i < $len} {incr i} {
-	set res "$res [expr [lindex $a $i] + [lindex $b $i]]"
-    }
+    # add vector a to vector b: return = (a+b)
+    foreach ai $a bi $b { lappend res [expr $ai + $bi] }
     return $res
 }
 
 proc vecsub {a b} {
-    set len [llength $a]
-    set res [expr [lindex $a 0] - [lindex $b 0]]
-    for {set i 1} {$i < $len} {incr i} {
-	set res "$res [expr [lindex $a $i] - [lindex $b $i]]"
+    # subtract vector b from vector a: return = (a-b)
+    foreach ai $a bi $b { lappend res [expr $ai - $bi] }
+    return $res
+}
+
+proc vecscale {s v} {
+    # scale vector v with factor s: return = (s*v)
+    foreach e $v { lappend res [expr $s * $e] } 
+    return $res
+}
+
+proc vecdot_product { a b } {
+    # calculate dot product of vectors a and b: return = (a.b)
+    set res 0
+    foreach ai $a bi $b { set res [expr $res + ($ai*$bi)] }
+    return $res
+}
+
+proc veccross_product3d { a b } {
+    # calculate the cross product of vectors a and b: return = (a x b)
+    for {set i 0} {$i<3} {incr i} { 
+	lappend res [expr [lindex $a [expr ($i+1)%3]]*[lindex $b [expr ($i+2)%3]] - [lindex $a [expr ($i+2)%3]]*[lindex $b [expr ($i+1)%3]] ]
     }
     return $res
 }
 
-proc vecscale {a v} {
-    set len [llength $v]
-    set res [expr $a*[lindex $v 0]]
-    for {set i 1} {$i < $len} {incr i} {
-	set res "$res [expr $a*[lindex $v $i]]"
-    }
-    return $res
+proc vecnorm { v {len "1.0"} } {
+    # normalize a vector to length len (default 1.0) 
+    set scale [expr $len/[veclen $v]]
+    return [vecscale $scale $v]
 }
 
+proc unitvec { p1 p2 } {
+    # return unit vector pointing from p1 to p2
+    set res [vecsub $p2 $p1]
+    return [vecnorm $res]
+}
+
+proc orthovec3d { v {len "1.0"} } {
+    # return orthogonal vector to v with length len (default 1.0)
+    # This vector does not have a random orientation in the plane perpendicular to v
+    set nzero 0
+    for { set i 0 } { $i < 3 } { incr i } {
+	if { [lindex $v $i] == 0  } { 
+	    incr nzero; set zind $i
+	} else { set nzind $i }   
+    }
+    if { $nzero == 0 } {
+	set res [lindex $v 0]
+	lappend res [lindex $v 1]
+	set tmp [expr [sqr [lindex $v 0]]+[sqr [lindex $v 1]]]
+	lappend res [expr -$tmp/[lindex $v 2] ]
+    }
+    if { $nzero == 1 } { set res { 0 0 0 }; lset res $zind  1 }
+    if { $nzero == 2 } { set res { 1 1 1 }; lset res $nzind 0 }
+    if { $nzero == 3 } {
+	puts "Can not handle null vector"
+	return TCL_ERROR
+    }
+    return [vecnorm $res $len]
+}
+
+proc create_dihedral_vec { vec1 vec2 theta {phi "rnd"} {len "1.0"} } {
+    # create last vector of a dihedral (vec1, vec2, res) with dihedral angle
+    # theta and bond angle (vec2, res) phi and length len.
+    # construct orthogonal basis (vec2, b, c)
+    set a [vecscale [vecdot_product $vec1 $vec2] $vec2]
+    set b [vecsub $a $vec1]
+    set c [veccross_product3d $vec2 $b]
+    # place dihedral angle theta in plane
+    set d [vecadd [vecscale [expr cos($theta)] $b] [vecscale [expr sin($theta)] $c] ]
+    # choose bond angle phi
+    if { $phi == "rnd" } { set phi [expr 1.0*[PI]*[t_random]] }
+    set res [vecadd [vecscale [expr sin($phi)] $d] [vecscale [expr -cos($phi)] $vec2]]
+    
+    return [vecnorm $res $len]
+}
+
+#############################################################
+# TCL LIST OPERATIONS
+#############################################################
 
 proc average {list_to_average} {
+    # Returns the avarage of the provided List
     set avg 0.0
     foreach avg_i $list_to_average { set avg [expr $avg + $avg_i] }
     return [expr $avg/(1.0*[llength $list_to_average])]
 }
+
+#############################################################
+# REGRESSION
+#############################################################
 
 proc LinRegression {l} {
     # l is a list {{x1 y1} {x2 y2} ...} of points.
@@ -175,7 +402,25 @@ proc LinRegression {l} {
     set ssxx [expr $sumx2 - $num*$avgx*$avgx]
     if { $ssxx < 1e-4 } {
 	error "data points too close together"
+    }proc find_unit_vector { vec1 vec2} {
+    set dim [llength $vec1]
+    set vec {0. 0. 0.}
+    for {set j 0} { $j < $dim } {incr j} {
+        lset vec $j [expr [lindex $vec2 $j] - [lindex $vec1 $j] ]
     }
+
+    set sum [expr sqrt([lsqr $vec])]
+
+    set u_vec { 0. 0. 0. }
+
+    for {set j 0} { $j < $dim } {incr j} {
+        lset u_vec $j [expr [lindex $vec $j] / ($sum)]
+    }
+
+    return $u_vec
+}
+
+
     set ssyy [expr $sumy2 - $num*$avgy*$avgy]
     set ssxy [expr $sumxy - $num*$avgx*$avgy]
 
@@ -246,81 +491,65 @@ proc LinRegressionWithSigma {l} {
     return "$a $b $da $db $covab $chi"
 }
 
+
+
+
 #############################################################
-#  calculate magnitude^2 of a vector                        #
+# Compatibility Issues
 #############################################################
+
+# !!!!!!!!!!
+# DO NOT USE THE FOLLOWING PROCEDURES ANYMORE
+# THEY ARE ONLY HERE DUE TO BACKWARDS COMPATIBILITY
+# !!!!!!!!!!
+
 proc lsqr { arg } {
-    set dim [llength $arg]
-    set sum 0.0
-    for {set i 0} {$i < $dim} {incr i} {
-        set sum [expr $sum + [lindex $arg $i] * [lindex $arg $i] ]
-    }
-    return $sum
+    # return the length of a vector squared
+    set res 0
+    foreach e $v { set res [expr $res + ($e*$e)] } 
+    return $res
 }
 
-#############################################################
-#  calculate dot product                                 #
-#############################################################
-proc dot_product { vec1 vec2 } {
-    set dim [llength $vec1]
-    set sum 0.0
-    for {set i 0} {$i < $dim} {incr i} {
-        set sum [expr $sum + [lindex $vec1 $i] * [lindex $vec2 $i] ]
-    }
-    return $sum
+proc dot_product { a b } {
+    # calculate dot product of vectors a and b: return = (a.b)
+    set res 0
+    foreach ai $a bi $b { set res [expr $res + ($ai*$bi)] }
+    return $res
 }
 
-#############################################################
-#
-# find vector mag among two points
-#
-#############################################################
+proc find_unit_vector { vec1 vec2 } {
+    return [unitvec $vec1 $vec2]
+}
+
+proc pair_vec { part_id1 part_id2 } {
+    return [bond_vec $part_id1 $part_id2]
+}
+
+proc pair_dist { part_id1 part_id2 } {
+    # Calculate bond length between particles p1 and p2
+    if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
+    if { [llength $p2]==1 } { set p2 [part $p2 print pos] }
+    set vec [vecsub $p1 $p2]
+    return [veclen $vec]
+}
+
 proc find_vector_mag { vec1 vec2} {
-    set dim [llength $vec1]
-    set vec {0. 0. 0.}
-    for {set j 0} { $j < $dim } {incr j} {
-        lset vec $j [expr [lindex $vec2 $j] - [lindex $vec1 $j] ]
-    }
-    
-    set sum [expr sqrt([lsqr $vec])]
-    return $sum
+    # Definition of these two functions is opposite
+    return [bond_vec $vec2 $vec1]
 }
 
-#############################################################
-#
-# find unit vector among two points pointing from vec1 too vec2
-#
-#############################################################
-proc find_unit_vector { vec1 vec2} {
-    set dim [llength $vec1]
-    set vec {0. 0. 0.}
-    for {set j 0} { $j < $dim } {incr j} {
-        lset vec $j [expr [lindex $vec2 $j] - [lindex $vec1 $j] ]
+proc g_random { } {
+    # returns random numbers which have a Gaussian distribution
+    set v1  [expr 2.0*[t_random]-1.0]
+    set v2  [expr 2.0*[t_random]-1.0]
+    set rsq [expr [sqr $v1]+[sqr $v2]]
+    while { $rsq >= 1.0 || $rsq == 0.0 } {
+	set v1  [expr 2.0*[t_random]-1.0]
+	set v2  [expr 2.0*[t_random]-1.0]
+	set rsq [expr [sqr $v1]+[sqr $v2]]
     }
-    
-    set sum [expr sqrt([lsqr $vec])]
-
-    set u_vec { 0. 0. 0. }
-    
-    for {set j 0} { $j < $dim } {incr j} {
-        lset u_vec $j [expr [lindex $vec $j] / ($sum)]
-    }
-    
-    return $u_vec
-}
-
-#############################################################
-#
-# calculate length of the vector connecting 2 points
-#
-#############################################################
-proc bond_length { pos1 pos2 } {
-    set dim [llength $pos1]
-    set res 0.0
-    for {set j 0} { $j < $dim } {incr j} {
-	set res [expr $res+ [sqr ([lindex $pos1 $j]-[lindex $pos2 $j])] ]
-    }
-    return [expr sqrt($res)]
+    set fac [expr sqrt(-2.0*log($rsq)/$rsq)]
+    return [expr $v2*$fac]
 }
 
 #############################################################
@@ -340,37 +569,4 @@ proc min_img_bond_length { pos1 pos2 box} {
 	set res [expr $res+ [sqr $dist] ]
     }
     return [expr sqrt($res)]
-}
-
-#############################################################
-#
-# calculate bond angle between the vectors connecting 3 points
-#
-#############################################################
-proc bond_angle { pos1 pos2 pos3 } {
-    set vec1 [find_unit_vector $pos1 $pos2]
-    set vec2 [find_unit_vector $pos2 $pos3]
-    return [expr acos([dot_product $vec1 $vec2])]
-}
-
-#############################################################
-#
-# calculate bond dihedral between vectors connecting 4 points
-#
-#############################################################
-proc bond_dihedral { pos1 pos2 pos3 pos4 } {
-
-    set vec12 [find_unit_vector $pos1 $pos2]
-    set vec23 [find_unit_vector $pos2 $pos3]
-    set vec34 [find_unit_vector $pos3 $pos4]
-
-    set dot1 [dot_product $vec12 $vec23]
-    set dot2 [dot_product $vec23 $vec34]
-
-    for {set j 0} { $j < 3 } {incr j} {
-	lset vec1 $j [expr  [lindex vec12 $j] - $dot1*[lindex vec23 $j] ]
-	lset vec2 $j [expr -[lindex vec34 $j] + $dot2*[lindex vec23 $j] ]
-    }
-
-    return  [expr acos([dot_product $vec1 $vec2])]
 }
