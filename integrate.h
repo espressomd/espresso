@@ -3,18 +3,29 @@
 /*****************************************************/
 #ifndef INTEGRATE_H
 #define INTEGRATE_H
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <tcl.h>
-#include <math.h>
-#include "communication.h"
-#include "global.h"
-#include "cells.h"
-#include "verlet.h"
-#include "ghosts.h"
-#include "forces.h"
+
+/****************************************
+ * exported variables
+ ****************************************/
+
+/** Time step for the integration. */
+extern double time_step;
+/** Maximal interaction cutoff. */
+extern double max_cut;
+/** Verlet list skin. */
+extern double skin;
+/** Maximal interaction range (max_cut + skin). */
+extern double max_range;
+/** square of \ref max_range. */
+extern double max_range2;
+/** Flag for integrator. If non-zero, the forces have to be calculated
+    before the first step. */
+extern int calc_forces_first;
+
+/**********************************************
+ * functions
+ **********************************************/
 
 /** tcl procedure for integrator steering.
     USAGE: integrate <task>                       \\

@@ -1,5 +1,4 @@
 #include "interaction_data.h"
-#include "global.h"
 #include "communication.h"
 #include <string.h>
 #include <stdlib.h>
@@ -8,12 +7,12 @@
  * variables
  *****************************************/
 
-/** Array of the interaction parameters. Should be accessed only via
-    \ref get_ia_param or \ref safe_get_ia_param. */
 IA_parameters *ia_params = NULL;
-
-/** Maximal particle type seen so far. */
 int n_particle_types = 0;
+int n_interaction_types = 0;
+
+int n_bonded_ia;
+Bonded_ia_parameters *bonded_ia_params;
 
 /*****************************************
  * functions

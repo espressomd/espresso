@@ -3,26 +3,27 @@
 /**************************************************/
 #ifndef FORCES_H
 #define FORCES_H
- 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+/** \file forces.h
+    Force calculation. Header file for \ref forces.c "forces.c".
+ */
+/************************************************
+ * exported variables
+ ************************************************/
 
-#include "global.h"
-#include "communication.h"
-#include "cells.h"
-#include "ghosts.h" 
-#include "verlet.h"
-#include "utils.h"
-
+/** \name Exported Variables */
+/*@{*/
+/** the Bjerrum length for electrostatics */
 extern double Bjerrum;
-
+/*@}*/
 
 /*******************  Functions  *******************/
 
-/** initialization of force calculation. 
- *  init interaction matrices for short range forces. 
- *  init long range forces (P3M, MMM, etc).
+/** \name Exported Functions */
+/*@{*/
+
+/** Initialization of force calculation. 
+    init interaction matrices for short range forces. 
+    init long range forces (P3M, MMM, etc).
 */
 void force_init();
  
@@ -30,7 +31,8 @@ void force_init();
 /** Calculate forces (and energies). */
 void force_calc();
 
-/** clean up the force part.*/
+/** Clean up the force part. */
 void force_exit(); 
+/*@}*/
 
 #endif

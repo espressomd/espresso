@@ -3,8 +3,13 @@
 #include <string.h>
 #include "global.h"
 #include "debug.h"
+/* from these modules we modify variables: */
 #include "communication.h"
 #include "grid.h"
+#include "particle_data.h"
+#include "interaction_data.h"
+#include "integrate.h"
+#include "thermostat.h"
 
 /**********************************************
  * description of variables
@@ -45,28 +50,7 @@ const Datafield fields[] = {
 };
 
 /**********************************************
- * variables
- **********************************************/
-
-/** Simulation box dimensions. */ 
-double box_l[3]       = {1, 1, 1};
-/** Dimensions of the box a single node is responsible for. */ 
-double local_box_l[3] = {1, 1, 1};
-/** Left top corner of this nodes local box. */ 
-double my_left[3]     = {0, 0, 0};
-/** Right bottom corner of this nodes local box. */ 
-double my_right[3]    = {1, 1, 1};
-
-/** Number of nonbonded (short range) interactions. Not used so far.*/
-int n_interaction_types = 0;
-
-/** number of bonded interactions. Not used so far. */
-int n_bonded_ia;
-/** Field containing the paramters of the bonded ia types */
-Bonded_ia_parameters *bonded_ia_params;
-
-/**********************************************
- * procedures
+ * functions
  **********************************************/
 
 int ro_callback(Tcl_Interp *interp, void *data)

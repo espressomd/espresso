@@ -2,21 +2,21 @@
 /*******************  VERLET.C  *******************/
 /**************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
 #include "verlet.h"
 #include "debug.h"
 #include "cells.h"
-#include "global.h"
+#include "integrate.h"
+#include "particle_data.h"
 
-/** Actual number of pairs in the verlet list. */
 int   n_verletList;
-/** Maximal number of pairs in the verlet list. */
 int max_verletList;
-/** Verlet list. */
 int    *verletList;
 
-/** flag for rebuilding the verlet list. */
 int rebuild_verletlist = 1;
 
+/** Granularity of the verlet list */
 #define LIST_INCREMENT 100
 
 /*******************  privat functions    *******************/

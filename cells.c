@@ -2,9 +2,16 @@
 /*******************  CELLS.C  *******************/
 /*************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "cells.h"
 #include "debug.h"
-#include <string.h>
+#include "grid.h"
+#include "particle_data.h"
+#include "interaction_data.h"
+#include "integrate.h"
+#include "communication.h"
 
 /** increment size of particle buffer */
 #define PART_INCREMENT 5

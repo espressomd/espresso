@@ -1,19 +1,29 @@
 /************************************************/
 /*******************  GRID.C  *******************/
 /************************************************/
+#include <mpi.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 #include "grid.h"
 #include "debug.h"
 #include "communication.h"
+/* Rebuild the verlet list when topology changes. */
+#include "verlet.h"
 
 /**********************************************
- * local settings
+ * variables
  **********************************************/
 
-/** the number of nodes for all three spatial dimensions */
 int processor_grid[3] = { -1, -1, -1};
 int pe_pos[3] = {-1,-1,-1};
 int neighbors[6] = {0, 0, 0, 0, 0, 0};
 double boundary[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+double box_l[3]       = {1, 1, 1};
+double local_box_l[3] = {1, 1, 1};
+double my_left[3]     = {0, 0, 0};
+double my_right[3]    = {1, 1, 1};
 
 /**********************************************
  * procedures

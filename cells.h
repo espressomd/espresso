@@ -4,12 +4,6 @@
 #ifndef CELLS_H
 #define CELLS_H
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "global.h"
-#include "grid.h"
-
 /*******************  Structures  *******************/
 
 /** link cell structure. */

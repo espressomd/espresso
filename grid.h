@@ -3,12 +3,30 @@
 /************************************************/
 #ifndef GRID_H
 #define GRID_H
+#include <tcl.h>
+/**************************************************
+ * exported variables
+ **************************************************/
 
-#include <mpi.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include "global.h"
+/** The number of nodes in each spatial dimension. */
+extern int processor_grid[3];
+extern int pe_pos[3];
+extern int neighbors[6];
+extern double boundary[6];
+
+/** Simulation box dimensions. */ 
+extern double box_l[3];
+/** Dimensions of the box a single node is responsible for. */ 
+extern double local_box_l[3];
+/** Left top corner of this nodes local box. */ 
+extern double my_left[3];
+/** Right bottom corner of this nodes local box. */ 
+extern double my_right[3];
+
+
+/**************************************************
+ * functions
+ **************************************************/
 
 /** try to determine the processor grid and communicate it */
 int setup_processor_grid();

@@ -2,18 +2,54 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "communication.h"
+#include "interaction_data.h"
 #include "integrate.h"
 #include "global.h"
 #include "debug.h"
 
-/** the number of this node */
 int this_node = -1;
-/** the total number of nodes */
 int nprocs = -1;
 
 /**********************************************
  * slave callbacks.
  **********************************************/
+
+/*************************************
+ * requests in random access mode
+ * KEEP ORDER IN SYNC WITH callbacks[]
+ * ALSO ADD FOR EVERY REQUEST
+ * THE CALLBACK IN callbacks[]
+ *************************************/
+/* slave callback procedure */
+typedef void (SlaveCallback)(int param);
+
+#define REQ_TERM      0
+#define REQ_BCAST_PAR 1
+#define REQ_WHO_HAS   2
+#define REQ_ATTACH    3
+#define REQ_SET_POS   4
+#define REQ_SET_V     5
+#define REQ_SET_F     6
+#define REQ_SET_Q     7
+#define REQ_SET_TYPE  8
+#define REQ_GET_PART  9
+#define REQ_INTEGRATE 10
+#define REQ_BCAST_IA  11
+#define REQ_MAXIMUM   12
+
+void mpi_stop_slave(int parm);
+void mpi_bcast_parameter_slave(int parm);
+void mpi_who_has_slave(int parm);
+void mpi_attach_particle_slave(int parm);
+void mpi_send_pos_slave(int parm);
+void mpi_send_v_slave(int parm);
+void mpi_send_f_slave(int parm);
+void mpi_send_q_slave(int parm);
+void mpi_send_type_slave(int parm);
+void mpi_recv_part_slave(int parm);
+void mpi_integrate_slave(int parm);
+void mpi_bcast_ia_params_slave(int i);
+
 SlaveCallback *callbacks[] = {
   mpi_stop_slave,                /*  0: REQ_TERM */
   mpi_bcast_parameter_slave,     /*  1: REQ_BCAST_PAR */
@@ -66,7 +102,7 @@ void mpi_init(int *argc, char ***argv)
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
 #ifdef MPI_CORE
-  MPI_Errhandler_create(mpi_core, &mpi_errh);
+  MPI_Errhandler_create((MPI_Handler_function *)mpi_core, &mpi_errh);
   MPI_Errhandler_set(MPI_COMM_WORLD, mpi_errh);
 #endif
 

@@ -6,6 +6,7 @@
  */
 
 #include <tcl.h>
+
 /************************************************
  * data types
  ************************************************/
@@ -35,6 +36,32 @@ typedef struct {
   int max_bonds;
   int    *bonds;
 } Particle;
+
+/************************************************
+ * exported variables
+ ************************************************/
+
+/** size of local particle array. */
+extern int   max_particles;
+/** number of particles belonging to that node. */
+extern int     n_particles;
+/** number of ghost particle belonging to that node. */
+extern int     n_ghosts;
+/** local particle array. */
+extern Particle *particles;
+
+/* total number of particles in the system. */
+extern int n_total_particles;
+/* used only on master node: particle->node mapping */
+extern int  *particle_node;
+
+/** Mapping between particle identity and local index. 
+ *    You find the local index of particle i 
+ *    at position i of this field. 
+ *    A particle that is not in the processors domain 
+ *    (including its ghostshell) is marked with -1.
+ */
+extern int *local_index;
 
 /************************************************
  * functions

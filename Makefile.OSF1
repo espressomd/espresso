@@ -1,37 +1,45 @@
 ############ compiler settings
 CC=cc
-
-# optimized compiler flags
-#CFLAGS=-I/usr/local/include -DDEFINE_TCL_RAND -O3 -fp_reorder -tune host
-
-# debug compiler flags
-CFLAGS=-I/usr/local/include -g
-
-# flags needed for MPI
-
-# warnings
-MSG_FLAGS=-check -msg_disable ignorecallval -msg_disable noparmlist \
-	  -msg_disable uncalled -msg_disable alignment -msg_disable unknownmacro \
-	  -msg_disable strctpadding -msg_disable unusedincl
-
-ifneq ($(findstring V6.2,$(shell cxx -V)),)
-MSG_FLAGS += -msg_disable unusedtop -msg_disable unnecincl -msg_disable nestincl
-endif
-
-CFLAGS+= $(MSG_FLAGS)
-
-# MDINLINE defines hwo to declare inline functions
-CFLAGS+= -DMDINLINE="static"
-
-# name of makedepend (or gcc -ME)
-DEPEND=makedepend
-
 CXX=cxx
 
-# special flags for C++ compilation
+## optimized compiler flags
+#CFLAGS=-DDEFINE_TCL_RAND -O3 -fp_reorder -tune host
+## debug compiler flags
+CFLAGS=-g
+
+## warnings
+CFLAGS+=-check -msg_disable ignorecallval -msg_disable noparmlist \
+	-msg_disable uncalled -msg_disable alignment -msg_disable unknownmacro \
+	-msg_disable strctpadding -msg_disable unusedincl
+ifneq ($(findstring V6.2,$(shell cxx -V)),)
+CFLAGS+= -msg_disable unusedtop -msg_disable unnecincl -msg_disable nestincl
+endif
+
+## MDINLINE defines hwo to declare inline functions
+CFLAGS+= -DMDINLINE="static"
+
+## name of makedepend (or gcc -ME)
+DEPEND=makedepend
+
+## special flags for C++ compilation
 CXXFLAGS=$(CFLAGS) -D_RWSTD_NO_NEW_HEADER -D__USE_STD_IOSTREAM
 
 ############ linker settings
+
 LINK=$(CC)
 LDFLAGS=-g
-LDLIBS=-ltcl -lmpi -lm
+LDLIBS=-lm
+
+############ flags needed for MPI
+LDFLAGS+=-lmpi
+
+############ flags needed for Tcl
+
+# flags needed for Tcl. Note this is VERY specific for our cluster
+ifeq ($(shell uname -r),V4.0)
+CFLAGS += -I/sw/axp_osf_40/tcl8.2/include
+LDFLAGS+=/sw/axp_osf_40/tcl8.2/shlib/libtcl.so
+else
+LDFLAGS+=-ltcl
+endif
+

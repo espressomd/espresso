@@ -1,4 +1,6 @@
 #include "initialize.h"
+#include "global.h"
+#include "particle_data.h"
 #include "interaction_data.h"
 #include "binary_file.h"
 #include "integrate.h"

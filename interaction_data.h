@@ -10,7 +10,7 @@
  *  nonbonded interactions. Access via
  * get_ia_param(i, j), i,j < n_particle_types */
 typedef struct {
-  /* Lennard-Jones with shift */
+  /** Lennard-Jones with shift */
   double LJ_eps;
   double LJ_sig;
   double LJ_cut;
@@ -21,6 +21,41 @@ typedef struct {
   double ramp_cut;
   double ramp_force;
 } IA_parameters;
+
+/** Type of bonded interaction is a dihedral potential. */
+#define BONDED_IA_DIHEDRAL 0
+/** Type of bonded interaction is a angle potential. */
+#define BONDED_IA_ANGLE    1
+
+/** Defines a parameters for a bonded interaction. Not used so far. */
+typedef struct {
+  int bonded_ia_type;
+  union {
+    struct {
+      int dummy;
+    } dihedral;
+    struct {
+      int dummy;
+    } angle;
+  } body;
+} Bonded_ia_parameters;
+
+/************************************************
+ * exported variables
+ ************************************************/
+
+/** Maximal particle type seen so far. */
+extern int n_particle_types;
+/** Array of the interaction parameters. Should be accessed only via
+    \ref get_ia_param or \ref safe_get_ia_param. */
+extern IA_parameters *ia_params;
+/* Number of nonbonded (short range) interactions. Not used so far.*/
+extern int n_interaction_types;
+
+/** number of bonded interactions. Not used so far. */
+extern int n_bonded_ia;
+/** Field containing the paramters of the bonded ia types */
+extern Bonded_ia_parameters *bonded_ia_params;
 
 /************************************************
  * functions

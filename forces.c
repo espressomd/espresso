@@ -2,10 +2,18 @@
 /*******************  FORCES.C  *******************/
 /**************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 #include "forces.h"
 #include "debug.h"
-#include "global.h"
 #include "thermostat.h"
+#include "communication.h"
+#include "cells.h"
+#include "ghosts.h" 
+#include "verlet.h"
+#include "utils.h"
+#include "interaction_data.h"
 
 double Bjerrum;
 

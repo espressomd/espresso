@@ -1,6 +1,25 @@
 #ifndef COMM_H
 #define COMM_H
+/** \file communication.h
+    MPI communication. Header file for \ref communication.c "communication.c".
+*/
+
+/* from here we borrow the enumeration of
+   the global variables */
 #include "global.h"
+#include "particle_data.h"
+
+/**************************************************
+ * exported variables
+ **************************************************/
+
+/** \name Exported Variables */
+/*@{*/
+/** the number of this node */
+extern int this_node;
+/** the total number of nodes */
+extern int nprocs;
+/*@}*/
 
 /**************************************************
  * for every procedure requesting a MPI negotiation
@@ -8,83 +27,81 @@
  * the slave nodes. It is denoted by *_slave.
  **************************************************/
 
-/** initialize MPI and determine nprocs/node */
+/** \name Exported Functions */
+/*@{*/
+/** Initialize MPI and determine \ref nprocs and \ref this_node. */
 void mpi_init(int *argc, char ***argv);
 
-/** process requests from master node */
+/** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
-/** REQ_TERM: stop MPI and determine nprocs/node */
+/** Issue REQ_TERM: stop MPI and determine nprocs/node. */
 void mpi_stop();
-void mpi_stop_slave(int parm);
 
-/** REQ_BCAST_PARM: broadcast a parameter from datafield */
+/** Issue REQ_BCAST_PARM: broadcast a parameter from datafield.
+    \param i the number from \ref global.h "global.h" referencing the datafield. */
 void mpi_bcast_parameter(int i);
-void mpi_bcast_parameter_slave(int parm);
 
-/** REQ_WHO_HAS: ask nodes for particles */
+/** Issue REQ_WHO_HAS: ask nodes for their attached particles. */
 void mpi_who_has();
-void mpi_who_has_slave(int parm);
 
-/** REQ_ATTACH: move particle to a node */
+/** Issue REQ_ATTACH: move particle to a node.
+    \param part the particle to move.
+    \param node the node to attach it to.
+*/
 void mpi_attach_particle(int part, int node);
-void mpi_attach_particle_slave(int parm);
 
-/** REQ_SET_POS: send particle position */
+/** Issue REQ_SET_POS: send particle position.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param pos its new position.
+*/
 void mpi_send_pos(int node, int part, double pos[3]);
-void mpi_send_pos_slave(int parm);
 
-/** REQ_SET_V: send particle velocity */
+/** Issue REQ_SET_V: send particle velocity.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param v its new velocity.
+*/
 void mpi_send_v(int node, int part, double v[3]);
-void mpi_send_v_slave(int parm);
 
-/** REQ_SET_F: send particle force */
+/** Issue REQ_SET_F: send particle force.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param F its new force.
+*/
 void mpi_send_f(int node, int part, double F[3]);
-void mpi_send_f_slave(int parm);
 
-/** REQ_SET_Q: send particle charge */
+/** Issue REQ_SET_Q: send particle charge.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param q its new charge.
+*/
 void mpi_send_q(int node, int part, double q);
-void mpi_send_q_slave(int parm);
 
-/** REQ_SET_TYPE: send particle type */
+/** Issue REQ_SET_TYPE: send particle type.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param type its new type.
+*/
 void mpi_send_type(int node, int part, int type);
-void mpi_send_type_slave(int parm);
 
-/** REQ_GET_PART: recv particle data */
+/** Issue REQ_GET_PART: recv particle data.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param part_data where to store the received data.
+*/
 void mpi_recv_part(int node, int part, Particle *part_data);
-void mpi_recv_part_slave(int parm);
 
-/** REQ_INTEGRATE: start integrator */
+/** Issue REQ_INTEGRATE: start integrator.
+    \param n_steps how many steps to do.
+*/
 void mpi_integrate(int n_steps);
-void mpi_integrate_slave(int parm);
 
-/** REQ_BCAST_IA: send new ia params */
+/** Issue REQ_BCAST_IA: send new ia params.
+    \param i,j the particle types whose parameters are to be sent.
+*/
 void mpi_bcast_ia_params(int i, int j);
-void mpi_bcast_ia_params_slave(int i);
-
-/*************************************
- * requests in random access mode
- * KEEP ORDER IN SYNC WITH callbacks[]
- * ALSO ADD FOR EVERY REQUEST
- * THE CALLBACK IN callbacks[]
- *************************************/
-/* slave callback procedure */
-typedef void (SlaveCallback)(int param);
-
-#define REQ_TERM      0
-#define REQ_BCAST_PAR 1
-#define REQ_WHO_HAS   2
-#define REQ_ATTACH    3
-#define REQ_SET_POS   4
-#define REQ_SET_V     5
-#define REQ_SET_F     6
-#define REQ_SET_Q     7
-#define REQ_SET_TYPE  8
-#define REQ_GET_PART  9
-#define REQ_INTEGRATE 10
-#define REQ_BCAST_IA  11
-#define REQ_MAXIMUM   12
-
-extern SlaveCallback *callbacks[];
+/*@}*/
 
 #endif

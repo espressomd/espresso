@@ -1,25 +1,27 @@
 /*****************************************************/
 /*******************  INTEGRATE.C  *******************/
 /*****************************************************/
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <tcl.h>
+#include <math.h>
 #include "integrate.h"
+#include "communication.h"
+#include "cells.h"
+#include "verlet.h"
+#include "ghosts.h"
+#include "forces.h"
 #include "debug.h"
+#include "utils.h"
 
 /*******************  variables  *******************/
 
-/** Time step for the integration. */
 double time_step = 0.001;
-/** Maximal interaction cutoff. */
 double max_cut = 2.0;
-/** Verlet list skin. */
 double skin = 0.4;
-/** Maximal interaction range (max_cut + skin). */
 double max_range;
-/** square of \ref max_range. */
 double max_range2;
-
-/** Flag for integrator. If non-zero, the forces have to be calculated
-    before the first step. */
 int calc_forces_first = 1;
 
 /*******************  functions  *******************/
