@@ -13,6 +13,7 @@
 #include "mmm1d.h"
 #include "lj.h"
 #include "ljcos.h"
+#include "parser.h"
 
 /****************************************
  * variables
@@ -347,642 +348,1163 @@ void calc_maximal_cutoff()
     max_cut = dh_params.r_cut;
 }
 
-int inter(ClientData _data, Tcl_Interp *interp,
-	  int argc, char **argv)
+int inter_print_all(Tcl_Interp *interp)
 {
-  int i, j;
+  int i, j, start = 1;
 
-  /* no argument -> print all interaction informations. */
-  if (argc == 1) {
-    int start = 1;
-    for (i = 0; i < n_bonded_ia; i++) {
-      if (bonded_ia_params[i].type != BONDED_IA_NONE) {
+  for (i = 0; i < n_bonded_ia; i++) {
+    if (bonded_ia_params[i].type != BONDED_IA_NONE) {
+      if (start) {
+	Tcl_AppendResult(interp, "{", (char *)NULL);
+	start = 0;
+      }
+      else
+	Tcl_AppendResult(interp, " {", (char *)NULL);
+
+      printBondedIAToResult(interp, i);
+      Tcl_AppendResult(interp, "}", (char *)NULL);
+    }
+  }
+  for (i = 0; i < n_particle_types; i++)
+    for (j = i; j < n_particle_types; j++) {
+      if (checkIfParticlesInteract(i, j)) {
 	if (start) {
 	  Tcl_AppendResult(interp, "{", (char *)NULL);
 	  start = 0;
 	}
 	else
 	  Tcl_AppendResult(interp, " {", (char *)NULL);
-	printBondedIAToResult(interp, i);
+	printNonbondedIAToResult(interp, i, j);
 	Tcl_AppendResult(interp, "}", (char *)NULL);
       }
     }
-    for (i = 0; i < n_particle_types; i++)
-      for (j = i; j < n_particle_types; j++) {
-	if (checkIfParticlesInteract(i, j)) {
-	  if (start) {
-	    Tcl_AppendResult(interp, "{", (char *)NULL);
-	    start = 0;
-	  }
-	  else
-	    Tcl_AppendResult(interp, " {", (char *)NULL);
-	  printNonbondedIAToResult(interp, i, j);
-	  Tcl_AppendResult(interp, "}", (char *)NULL);
-	}
-      }
-    if(coulomb.bjerrum > 0.0) {
-      if (start) {
-	Tcl_AppendResult(interp, "{", (char *)NULL);
-	start = 0;
-      }
-      else
-	Tcl_AppendResult(interp, " {", (char *)NULL);
-      printCoulombIAToResult(interp);
-      Tcl_AppendResult(interp, "}", (char *)NULL);
-    }
-    if(lj_force_cap != 0.0) {
-      char buffer[TCL_DOUBLE_SPACE];
-
-      if (start) {
-	Tcl_AppendResult(interp, "{", (char *)NULL);
-	start = 0;
-      }
-      else
-	Tcl_AppendResult(interp, " {", (char *)NULL);
-      if (lj_force_cap == -1.0)
-	Tcl_AppendResult(interp, "ljforcecap individual");
-      else {
-	Tcl_PrintDouble(interp, lj_force_cap, buffer);
-	Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
-      }
-      Tcl_AppendResult(interp, "}", (char *)NULL);
-    }
-    return (TCL_OK);
-  }
-
-  if(!strncmp(argv[1], "ljforcecap", strlen(argv[1]))) {
-    if (argc == 2) {
-      char buffer[TCL_DOUBLE_SPACE];
-      if (lj_force_cap == -1.0)
-	Tcl_AppendResult(interp, "ljforcecap individual", (char *) NULL);
-      else {
-	Tcl_PrintDouble(interp, lj_force_cap, buffer);
-	Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
-      }
-      return TCL_OK;
-    }
-
-    if (argc > 3) {
-      Tcl_AppendResult(interp, "inter ljforcecap takes at most 1 parameter", (char *) NULL);      
-      return TCL_ERROR;
-    }
-
-    if (!strncmp(argv[2], "individual", strlen(argv[2])))
-      lj_force_cap = -1.0;
-    else if (Tcl_GetDouble(interp, argv[2], &lj_force_cap) == TCL_ERROR || lj_force_cap < 0) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
-		       (char *) NULL);
-      return (TCL_ERROR);  
-    }
-
-    if (lj_force_cap != -1.0)
-      mpi_lj_cap_forces(lj_force_cap);
-    return (TCL_OK);
-  }
-
-  if(!strncmp(argv[1], "coulomb", strlen(argv[1]))) {
-    /* print coulomb interaction parameters */
-    if(argc < 3) {
+  if(coulomb.bjerrum > 0.0) {
+    if (start) {
       Tcl_AppendResult(interp, "{", (char *)NULL);
-      printCoulombIAToResult(interp);
-      Tcl_AppendResult(interp, "}", (char *)NULL);
-      return (TCL_OK);
+      start = 0;
     }
-
-    /* check bjerrum length */
-    if ((Tcl_GetDouble(interp, argv[2], &(coulomb.bjerrum)) == TCL_ERROR)) {
-      Tcl_ResetResult(interp);
-      /* if p3m is set already you can set additional optional p3m parameters */
-      if (coulomb.method == COULOMB_P3M) {
-	argc -= 2;
-	argv += 2;
-	while (argc > 0) {
-	  /* p3m parameter: inter */
-	  if (!strncmp(argv[0], "n_interpol", strlen(argv[0]))) {
-	    if(argc<2) return (TCL_ERROR);
-	    if ((Tcl_GetInt(interp, argv[1], &(p3m.inter)) == TCL_ERROR)) 
-	      return (TCL_ERROR);
-	    if (p3m.inter < 0) return (TCL_ERROR);
-	    argc -= 2;
-	    argv += 2;
-	  }
-	  /* p3m parameter: mesh_off */
-	  else if (!strncmp(argv[0], "mesh_off", strlen(argv[0]))) {
-	    if(argc<4) return (TCL_ERROR);
-	    if ((Tcl_GetDouble(interp, argv[1], &(p3m.mesh_off[0])) == TCL_ERROR) ||
-		(Tcl_GetDouble(interp, argv[2], &(p3m.mesh_off[1])) == TCL_ERROR) ||
-		(Tcl_GetDouble(interp, argv[3], &(p3m.mesh_off[2])) == TCL_ERROR) ) 
-	      return (TCL_ERROR);
-	    if(p3m.mesh_off[0] < 0.0 || p3m.mesh_off[0] > 1.0 ||
-	       p3m.mesh_off[1] < 0.0 || p3m.mesh_off[1] > 1.0 ||
-	       p3m.mesh_off[2] < 0.0 || p3m.mesh_off[2] > 1.0 )
-	      return (TCL_ERROR);
-	    argc -= 4;
-	    argv += 4;
-	  }
-	  /* p3m parameter: epsilon */
-	  else if(!strncmp(argv[0], "epsilon", strlen(argv[0]))) {
-	    if(argc<2) return (TCL_ERROR);
-	    if ((Tcl_GetDouble(interp, argv[1], &(p3m.epsilon)) == TCL_ERROR))
-	      return (TCL_ERROR);
-	    argc -= 2;
-	    argv += 2;	    
-	  }
-	  else {
-	    Tcl_AppendResult(interp, "Unknown coulomb p3m parameter: \"",argv[0],"\"",(char *) NULL);
-	    return (TCL_ERROR);
-	  }
-	}
-      }
-      else {
-	Tcl_AppendResult(interp, "Expect: inter coulomb <bjerrum> || <p3m-parameter>",(char *) NULL);
-	return (TCL_ERROR);
-      }
-      mpi_bcast_coulomb_params();
-      return (TCL_OK);
-    }
-    
-    /* check bjerrum length */
-    if(coulomb.bjerrum < 0.0) {
-      Tcl_AppendResult(interp, "bjerrum length must be positiv",(char *) NULL);
-      return (TCL_ERROR);
-    }
-    argc -= 3;
-    argv += 3;
-
-    if(coulomb.bjerrum == 0.0) {
-      if(coulomb.method == COULOMB_P3M) {
-	p3m.bjerrum = 0.0;
-	p3m.alpha = 0.0;
-	p3m.r_cut = 0.0;
-	p3m.mesh[0] = 0;
-	p3m.mesh[1] = 0;
-	p3m.mesh[2] = 0;
-	p3m.cao     = 0;
-	mpi_bcast_coulomb_params();
-      }
-      if(coulomb.method == COULOMB_DH) {
-	dh_params.bjerrum = 0.0;
-	dh_params.r_cut   = 0.0;
-	dh_params.kappa   = 0.0;
-	mpi_bcast_coulomb_params();
-      } 
-      coulomb.method = COULOMB_NONE;
-      mpi_bcast_coulomb_params();
-      return (TCL_OK);
-    }
-
-    /* check number of parameters */
-    if(argc < 1) {
-      Tcl_AppendResult(interp, "wrong # args for inter coulomb.", (char *) NULL);
-      return (TCL_ERROR);
-    }
-
-    /* check method */
-    if(!strncmp(argv[0], "p3m", strlen(argv[0])) || 
-       !strncmp(argv[0], "P3M", strlen(argv[0])) ) {
-      argc -= 1;
-      argv += 1;
-      
-      coulomb.method = COULOMB_P3M;
-      p3m.bjerrum    = coulomb.bjerrum;
-      
-#ifdef PARTIAL_PERIODIC
-      if(periodic[0]==0 || periodic[1]==0 || periodic[2]==0) {
-	Tcl_AppendResult(interp, "Need periodicity (1,1,1) with Coulomb P3M", (char *) NULL);
-	return (TCL_ERROR);  
-      }
-#endif
-      
-      if(Tcl_GetDouble(interp, argv[0], &(p3m.r_cut)) == TCL_ERROR) {
-	Tcl_ResetResult(interp);
-	/* must be tune, tune parameters */
-	if(strncmp(argv[0], "tune", strlen(argv[0]))) {
-	  Tcl_AppendResult(interp, "Unknown p3m parameter \"",argv[0],"\"",(char *) NULL);
-	  return (TCL_ERROR);  
-	}
-	argc -= 1;
-	argv += 1;
-	/* parse tune parameters */
-	while(argc > 0) {
-	  if(!strncmp(argv[0], "r_cut", strlen(argv[0]))) {
-	    if(argc > 1) {
-	      if(Tcl_GetDouble(interp, argv[1], &(p3m.r_cut)) == TCL_ERROR) 
-		return (TCL_ERROR); 
-	    }
-	    else return (TCL_ERROR); 
-	  }
-	  else if(!strncmp(argv[0], "mesh", strlen(argv[0]))) {
-	    if(argc > 1) { 
-	      if(Tcl_GetInt(interp, argv[1], &(p3m.mesh[0])) == TCL_ERROR) 
-		return (TCL_ERROR);
-	    } 
-	    else return (TCL_ERROR); 
-	  }
-	  else if(!strncmp(argv[0], "cao", strlen(argv[0]))) {
-	    if(argc > 1) {
-	      if(Tcl_GetInt(interp, argv[1], &(p3m.cao)) == TCL_ERROR) 
-		return (TCL_ERROR);
-	    } 
-	    else return (TCL_ERROR); 
-	  }
-	  else if(!strncmp(argv[0], "accuracy", strlen(argv[0]))) {
-	    if(argc > 1) { 
-	      if(Tcl_GetDouble(interp, argv[1], &(p3m.accuracy)) == TCL_ERROR) 
-		return (TCL_ERROR);
-	    } 
-	    else return (TCL_ERROR); 
-	  }
-	  else {
-	    Tcl_AppendResult(interp, "Unkwon p3m tune parameter \"",argv[0],"\"",(char *) NULL);
-	    return (TCL_ERROR);  
-	  }
-	  argc-=2;
-	  argv+=2;
-	}
-	/* check tune parameters */
-	if(p3m.accuracy <= 0.0) {
-	  Tcl_AppendResult(interp, "You have to give p3m tune a positive value for accuracy!",(char *) NULL);
-	  return (TCL_ERROR);
-	}
-	if(p3m.r_cut < 0.0) {
-	  Tcl_AppendResult(interp, "p3m tune r_cut must be positiv.",(char *) NULL);
-	  return (TCL_ERROR);
-	}
-	if(p3m.mesh[0] < 0) {
-	  Tcl_AppendResult(interp, "p3m tune mesh must be positiv.",(char *) NULL);
-	  return (TCL_ERROR);
-	}
-	p3m.mesh[2] = p3m.mesh[1] = p3m.mesh[0];
-	if(p3m.cao < 0 || p3m.cao > 7) {
-	  Tcl_AppendResult(interp, "p3m tune cao must be in between 1 and 7",(char *) NULL);
-	  return (TCL_ERROR);
-	}
-	if(P3M_tune_parameters(interp) == TCL_ERROR) 
-	  return (TCL_ERROR);
-      }
-      else {
-	/* parse p3m parameters */
-	if(argc<3) {
-	  Tcl_AppendResult(interp, "p3m needs at least 3 parameters: <r_cut> <mesh> <cao> [alpha] [accuracy]",(char *) NULL);
-	  return (TCL_ERROR);  
-	}
-	if(Tcl_GetInt(interp, argv[1], &(p3m.mesh[0])) == TCL_ERROR ||
-	   Tcl_GetInt(interp, argv[2], &(p3m.cao    )) == TCL_ERROR ) 
-	  return (TCL_ERROR);
-	
-	if(p3m.mesh[0] < 0) {
-	  Tcl_AppendResult(interp, "p3m mesh must be positiv.",(char *) NULL);
-	  return (TCL_ERROR);
-	}
-	p3m.mesh[2] = p3m.mesh[1] = p3m.mesh[0];
-	if(p3m.cao < 1 || p3m.cao > 7) {
-	  Tcl_AppendResult(interp, "p3m cao must be between 1 and 7.",(char *) NULL);
-	  return (TCL_ERROR);
-	}
-	if(p3m.cao > p3m.mesh[0] )  {
-	  Tcl_AppendResult(interp, "p3m cao can not be larger than p3m mesh",(char *) NULL);
-	  return (TCL_ERROR);
-	}
-	if(argc>3) {
-	  if(Tcl_GetDouble(interp, argv[3], &(p3m.alpha)) == TCL_ERROR )
-	    return (TCL_ERROR);
-	}
-	else {
-	  Tcl_AppendResult(interp, "Automatic p3m tuning not implemented.",(char *) NULL);
-	  return (TCL_ERROR);  
-	}
-	if(argc>4) {
-	  if(Tcl_GetDouble(interp, argv[4], &(p3m.accuracy)) == TCL_ERROR )
-	    return (TCL_ERROR);
-	}
-      }
-    }
-    else if (!strncmp(argv[0], "dh ", strlen(argv[0])) ||
-	     !strncmp(argv[0], "DH ", strlen(argv[0])) ) {
-      argc -= 1;
-      argv += 1;
-      
-      coulomb.method = COULOMB_DH;
-      dh_params.bjerrum = coulomb.bjerrum;
-
-      if(argc < 2) {
-	Tcl_AppendResult(interp, "Not enough parameters: inter coulomb dh <kappa> <r_cut>", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if(Tcl_GetDouble(interp, argv[0], &(dh_params.kappa)) == TCL_ERROR ||
-	 Tcl_GetDouble(interp, argv[1], &(dh_params.r_cut)) == TCL_ERROR) 
-	return (TCL_ERROR);
-	
-      if(dh_params.kappa < 0.0) {
-	Tcl_AppendResult(interp, "dh kappa must be positiv.",(char *) NULL);
-	return (TCL_ERROR);
-      }
-      if(dh_params.r_cut < 0.0) {
-	Tcl_AppendResult(interp, "dh r_cut must be positiv.",(char *) NULL);
-	return (TCL_ERROR);
-      }
-    }
-    else if (!strncmp(argv[0], "mmm1d ", strlen(argv[0])) ||
-	     !strncmp(argv[0], "MMM1D ", strlen(argv[0])) ) {
-      double switch_rad, maxPWerror;
-      int bessel_cutoff;
-
-      coulomb.method = COULOMB_MMM1D;
-
-      if(argc < 4) {
-	Tcl_AppendResult(interp, "Not enough parameters: inter coulomb mmm1d <switch radius> <bessel cutoff> <maximal error for near formula>", (char *) NULL);
-	return (TCL_ERROR);
-      }
-
-      if(Tcl_GetDouble(interp, argv[1], &(switch_rad)) == TCL_ERROR ||
-	 Tcl_GetInt(interp, argv[2], &(bessel_cutoff)) == TCL_ERROR ||
-	 Tcl_GetDouble(interp, argv[3], &(maxPWerror)) == TCL_ERROR) 
-	return (TCL_ERROR);
-
-      set_mmm1d_params(coulomb.bjerrum, switch_rad,
-		       bessel_cutoff, maxPWerror);
-    }
-    else {
-      coulomb.bjerrum = 0.0;
-      coulomb.method  = COULOMB_NONE;
-      /* communicate bjerrum length */
-      Tcl_AppendResult(interp, "Do not know coulomb method \"",argv[1],"\": coulomb switched off",(char *) NULL);
-      return (TCL_ERROR);
-    }
-    mpi_bcast_coulomb_params();
-    return (TCL_OK);
+    else
+      Tcl_AppendResult(interp, " {", (char *)NULL);
+    printCoulombIAToResult(interp);
+    Tcl_AppendResult(interp, "}", (char *)NULL);
   }
+  if(lj_force_cap != 0.0) {
+    char buffer[TCL_DOUBLE_SPACE];
+    
+    if (start) {
+      Tcl_AppendResult(interp, "{", (char *)NULL);
+      start = 0;
+    }
+    else
+      Tcl_AppendResult(interp, " {", (char *)NULL);
+    if (lj_force_cap == -1.0)
+      Tcl_AppendResult(interp, "ljforcecap individual");
+    else {
+      Tcl_PrintDouble(interp, lj_force_cap, buffer);
+      Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
+    }
+    Tcl_AppendResult(interp, "}", (char *)NULL);
+  }
+  return (TCL_OK);
+}
 
-  if (Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "don't know about \"",argv[1],"\"",(char *) NULL);
+int inter_print_bonded(Tcl_Interp *interp, int i)
+{
+  char buffer[TCL_INTEGER_SPACE];
+
+  Tcl_ResetResult(interp);
+
+  if(i < 0) {
+    Tcl_AppendResult(interp, "interaction type must be nonnegative",
+		     (char *) NULL);
     return (TCL_ERROR);
   }
   
-  /* if second argument is not an integer -> bonded interaction.  */
-  if (argc==2 || Tcl_GetInt(interp, argv[2], &j) == TCL_ERROR) {
-    Tcl_ResetResult(interp);
+  make_bond_type_exist(i);
+      
+  /* print specific interaction information */
+  if(i<n_bonded_ia) {
+    printBondedIAToResult(interp, i);
+    return TCL_OK;
+  }
 
-    if (argc < 2) {
-      Tcl_AppendResult(interp, "wrong # args:  should be \"",
-		       argv[0], " <type>  ?interaction? ?values?\"",
+  sprintf(buffer, "%d", i);
+  Tcl_AppendResult(interp, "unknown bonded interaction number ", buffer,
+		   (char *) NULL);
+  return TCL_ERROR;
+}
+
+int ramp_set_params(int part_type_a, int part_type_b,
+		    double cut, double force)
+{
+  IA_parameters *data, *data_sym;
+
+  make_particle_type_exist(part_type_a);
+  make_particle_type_exist(part_type_b);
+    
+  data     = get_ia_param(part_type_a, part_type_b);
+  data_sym = get_ia_param(part_type_b, part_type_a);
+
+  if (!data || !data_sym)
+    return TCL_ERROR;
+
+  /* ramp should be symmetrically */
+  data_sym->ramp_cut   = data->ramp_cut   = cut;
+  data_sym->ramp_force = data->ramp_force = force;
+
+  /* broadcast interaction parameters */	
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+  mpi_bcast_ia_params(part_type_b, part_type_a);
+   
+  return TCL_OK;
+}
+
+int lj_cos_set_params(int part_type_a, int part_type_b,
+		      double eps, double sig, double cut,
+		      double offset)
+{
+  IA_parameters *data, *data_sym;
+
+  double fac1, facsq;
+
+  make_particle_type_exist(part_type_a);
+  make_particle_type_exist(part_type_b);
+    
+  data     = get_ia_param(part_type_a, part_type_b);
+  data_sym = get_ia_param(part_type_b, part_type_a);
+  
+  if (!data || !data_sym) {
+    return TCL_ERROR;
+  }
+
+  fac1  = 1.122462 * sig;
+  facsq = fac1 * fac1;
+
+  data->LJCOS_rmin = fac1;
+  data->LJCOS_alfa = 3.1415927/(SQR(data->LJCOS_cut)-facsq);
+  data->LJCOS_beta = 3.1415927*(1.-(1./(SQR(data->LJCOS_cut)/facsq-1.)));
+	
+  /* LJCOS should be symmetrically */
+  data_sym->LJCOS_eps    = data->LJCOS_eps    = eps;
+  data_sym->LJCOS_sig    = data->LJCOS_sig    = sig;
+  data_sym->LJCOS_cut    = data->LJCOS_cut    = cut;
+  data_sym->LJCOS_offset = data->LJCOS_offset = offset;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+  mpi_bcast_ia_params(part_type_b, part_type_a);
+  
+  return TCL_OK;
+}
+
+int lennard_jones_set_params(int part_type_a, int part_type_b,
+			     double eps, double sig, double cut,
+			     double shift, double offset,
+			     double cap_radius)
+{
+  IA_parameters *data, *data_sym;
+
+  make_particle_type_exist(part_type_a);
+  make_particle_type_exist(part_type_b);
+    
+  data     = get_ia_param(part_type_a, part_type_b);
+  data_sym = get_ia_param(part_type_b, part_type_a);
+
+  if (!data || !data_sym) {
+    return TCL_ERROR;
+  }
+
+  /* LJ should be symmetrically */
+  data->LJ_eps    = data_sym->LJ_eps    = eps;
+  data->LJ_sig    = data_sym->LJ_sig    = sig;
+  data->LJ_cut    = data_sym->LJ_cut    = cut;
+  data->LJ_shift  = data_sym->LJ_shift  = shift;
+  data->LJ_offset = data_sym->LJ_offset = offset;
+ 
+  if (cap_radius > 0) {
+    data->LJ_capradius = cap_radius;
+    data_sym->LJ_capradius = cap_radius;
+  }
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+  mpi_bcast_ia_params(part_type_b, part_type_a);
+
+  if (lj_force_cap != -1.0)
+    mpi_lj_cap_forces(lj_force_cap);
+
+  return TCL_OK;
+}
+
+int dihedral_set_params(int bond_type, double bend)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].type = BONDED_IA_DIHEDRAL;
+  bonded_ia_params[bond_type].num = 0;
+
+  bend;
+
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return TCL_OK;
+}
+
+int angle_set_params(int bond_type, double bend)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.angle.bend = bend;
+  bonded_ia_params[bond_type].type = BONDED_IA_ANGLE;
+  bonded_ia_params[bond_type].num = 2;
+ 
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return TCL_OK;
+}
+
+int harmonic_set_params(int bond_type, double k, double r)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.harmonic.k = k;
+  bonded_ia_params[bond_type].p.harmonic.r = r;
+  bonded_ia_params[bond_type].type = BONDED_IA_HARMONIC;
+  bonded_ia_params[bond_type].p.harmonic.r2 = SQR(bonded_ia_params[bond_type].p.harmonic.r);
+  bonded_ia_params[bond_type].num  = 1;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return TCL_OK;
+}
+
+int fene_set_params(int bond_type, double k, double r)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.fene.k = k;
+  bonded_ia_params[bond_type].p.fene.r = r;
+
+  bonded_ia_params[bond_type].type = BONDED_IA_FENE;
+  bonded_ia_params[bond_type].p.fene.r2 = SQR(bonded_ia_params[bond_type].p.fene.r);
+  bonded_ia_params[bond_type].num  = 1;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+  
+  return TCL_OK;
+}
+
+int inter_print_non_bonded(Tcl_Interp * interp,
+			   int part_type_a, int part_type_b)
+{
+  IA_parameters *data, *data_sym;
+
+  Tcl_ResetResult(interp);
+
+  make_particle_type_exist(part_type_a);
+  make_particle_type_exist(part_type_b);
+    
+  data     = get_ia_param(part_type_a, part_type_b);
+  data_sym = get_ia_param(part_type_b, part_type_a);
+
+  if (!data || !data_sym) {
+    Tcl_AppendResult(interp, "particle types must be nonnegative",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  return printNonbondedIAToResult(interp, part_type_a, part_type_b);
+}
+
+
+int inter_parse_non_bonded(Tcl_Interp * interp,
+			   int part_type_a, int part_type_b,
+			   int argc, char ** argv)
+{
+  double eps, sig, cut, shift, offset, cap_radius, force;
+
+  Tcl_ResetResult(interp);
+
+  if (argc <= 0) {
+    Tcl_AppendResult(interp, "wrong # args:  should be \"",
+		     "inter <type 1> <type 2> ?interaction? ?values?\"",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* get interaction parameters */
+
+  /* parse 
+   *                        lennard-jones
+   * interaction
+   */
+  if (ARG0_IS_S("lennard-jones")) {
+
+    /* get lennard-jones interaction type */
+    if (argc < 6 || argc > 7) {
+      Tcl_AppendResult(interp, "lennard-jones needs 5 parameters: "
+		       "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
 		       (char *) NULL);
-      return (TCL_ERROR);
+      return TCL_ERROR;
     }
-    if(i < 0) {
-      Tcl_AppendResult(interp, "interaction type must be nonnegative",
+
+    /* copy lennard-jones parameters */
+    if ((! ARG_IS_D(1, eps))   ||
+	(! ARG_IS_D(2, sig))   ||
+	(! ARG_IS_D(3, cut))   ||
+	(! ARG_IS_D(4, shift)) ||
+	(! ARG_IS_D(5, offset)    ))
+      {
+	Tcl_AppendResult(interp, "lennard-jones needs 5 DOUBLE parameters: "
+			 "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+	
+    cap_radius = -1.0;
+
+    if (argc == 7 && (! ARG_IS_D(6, cap_radius))) {
+      Tcl_AppendResult(interp, "invalid value for lennard-jones capradius",
 		       (char *) NULL);
-      return (TCL_ERROR);
-    }
-    make_bond_type_exist(i);
-
-    if (argc == 2) {
-      char buffer[TCL_INTEGER_SPACE];
-      /* print specific interaction information */
-      if(i<n_bonded_ia) {
-	printBondedIAToResult(interp, i);
-	return (TCL_OK);
-      }
-      else {
-	sprintf(buffer, "%d", i);
-	Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
-			 (char *) NULL);
-	return (TCL_ERROR);
-      }
+      return TCL_ERROR;
     }
 
-    if (argc == 3 && !strncmp(argv[2], "num", strlen(argv[2]))) {
-      char buffer[TCL_INTEGER_SPACE];
-      /* print interaction partner number */
-      if(i<n_bonded_ia) {
-	Bonded_ia_parameters *params = &bonded_ia_params[i];
-	sprintf(buffer, "%d", params->num);
-	Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
-			 (char *) NULL);
-	return (TCL_OK);
-      }
-      else {
-	sprintf(buffer, "%d", i);
-	Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
-			 (char *) NULL);
-	return (TCL_ERROR);
-      }
+    CHECK_VALUE(lennard_jones_set_params(part_type_a, part_type_b,
+					 eps, sig, cut, shift, offset,
+					 cap_radius),
+		"particle types must be nonnegative");
+  }
+
+
+  /* parse 
+   *                        lj-cos
+   * interaction
+   */
+  if (ARG0_IS_S("lj-cos")) {
+  	
+    /* this is a quick fix for the inconsistency in the ljcos parameters 
+       there are 7 parameters for ljcos, but you read in only four of them.
+       The rest is calculated in lj_cos_set_params.
+       This is a problem with the blockfile format (Mehmet) 
+    */
+
+    if (argc < 5 || argc > 7) {
+      Tcl_AppendResult(interp, "lj-cos needs 4 parameters: "
+		       "<ljcos_eps> <ljcos_sig> <ljcos_cut> <ljcos_offset>",
+		       (char *) NULL);
+      return TCL_ERROR;
     }
 
-    /* set interaction parameters */
+    /* copy lj-cos parameters */
+    if ((! ARG_IS_D(1, eps))   ||
+	(! ARG_IS_D(2, sig))   ||
+	(! ARG_IS_D(3, cut))   ||
+	(! ARG_IS_D(4, offset)    ))
+      {
+	Tcl_AppendResult(interp, "lj-cos needs 4 DOUBLE parameters: "
+			 "<ljcos_eps> <ljcos_sig> <ljcos_cut> <ljcos_offset>",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
 
-    argc -= 2;
-    argv += 2;
+    CHECK_VALUE(lj_cos_set_params(part_type_a, part_type_b, eps, sig, cut, offset),
+		"particle types must be nonnegative");
+  }
+      
+  /* parse 
+   *                        ramp
+   * interaction
+   */
+  if (ARG_IS_S(0, "ramp")) {
+    
+    /* get new ramp interaction type */
+    if (argc != 3) {
+      Tcl_AppendResult(interp, "ramp potential needs 2 parameters: "
+		       "<ramp_cut> <ramp_force>",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+	
+    if ((! ARG_IS_D(1, cut))  ||
+	(! ARG_IS_D(2, force)   ))
+      {
+	Tcl_AppendResult(interp, "ramp potential needs 2 DOUBLE parameters: "
+			 "<ramp_cut> <ramp_force>",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+    
+    CHECK_VALUE(ramp_set_params(part_type_a, part_type_b, cut, force),
+		"particle types must be nonnegative");
+  }
 
-    if (!strncmp(argv[0], "FENE", strlen(argv[0])) || 
-	!strncmp(argv[0], "fene", strlen(argv[0]))) {
-      /* set new FENE interaction type */
+  Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
+		   "\"", (char *)NULL);
+  return TCL_ERROR;
+}
+
+int inter_print_partner_num(Tcl_Interp *interp, int bond_type)
+{
+  Bonded_ia_parameters * params;
+  char buffer[TCL_INTEGER_SPACE];
+
+  if(bond_type < 0) {
+    Tcl_AppendResult(interp, "interaction type must be nonnegative",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+  make_bond_type_exist(bond_type);
+
+  if(bond_type < n_bonded_ia) {
+    params = &bonded_ia_params[bond_type];
+    sprintf(buffer, "%d", params->num);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return TCL_OK;
+  }
+ 
+  sprintf(buffer, "%d", bond_type);
+  Tcl_AppendResult(interp, "unknown bonded interaction number ", buffer,
+		   (char *) NULL);
+  return TCL_ERROR;
+}
+
+int inter_parse_bonded(Tcl_Interp *interp,
+		       int bond_type,
+		       int argc, char ** argv)
+{
+  double k, r, bend;
+
+  if (ARG0_IS_S("num")) {
+    if (argc == 1)
+      return inter_print_partner_num(interp, bond_type);
+    else {
+	Tcl_AppendResult(interp, "to manny parameters",
+			 (char *) NULL);
+	return TCL_ERROR;
+    }
+  }
+  
+  if (ARG0_IS_S("fene")) {
+
       if (argc != 3) {
 	Tcl_AppendResult(interp, "fene needs 2 parameters: "
 			 "<k_fene> <r_fene>", (char *) NULL);
-	return (TCL_ERROR);
+	return TCL_ERROR;
       }
-      /* copy FENE parameters */
-      if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.fene.k)) == 
-	   TCL_ERROR) ||
-	  (Tcl_GetDouble(interp, argv[2], &(bonded_ia_params[i].p.fene.r))  == 
-	   TCL_ERROR) ) 
-	return (TCL_ERROR);
-      bonded_ia_params[i].type = BONDED_IA_FENE;
-      bonded_ia_params[i].p.fene.r2 = SQR(bonded_ia_params[i].p.fene.r);
-      bonded_ia_params[i].num  = 1;
-      /* broadcast interaction parameters */
-      mpi_bcast_ia_params(i,-1); 
-    }
-    else if (!strncmp(argv[0], "HARMONIC", strlen(argv[0])) || 
-	!strncmp(argv[0], "harmonic", strlen(argv[0]))) {
-      /* set new HARMONIC interaction type */
+
+      if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) 
+	{
+	  Tcl_AppendResult(interp, "fene needs 2 DOUBLE parameters: "
+			   "<k_fene> <r_fene>", (char *) NULL);
+	  return TCL_ERROR;
+	}
+
+      CHECK_VALUE(fene_set_params(bond_type, k, r), "bond type must be nonnegative");
+  }
+    
+  if (ARG0_IS_S("harmonic")) {
+
       if (argc != 3) {
 	Tcl_AppendResult(interp, "harmonic needs 2 parameters: "
 			 "<k_harmonic> <r_harmonic>", (char *) NULL);
-	return (TCL_ERROR);
+	return TCL_ERROR;
       }
-      /* copy HARMONIC parameters */
-      if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.harmonic.k)) == 
-	   TCL_ERROR) ||
-	  (Tcl_GetDouble(interp, argv[2], &(bonded_ia_params[i].p.harmonic.r))  == 
-	   TCL_ERROR) ) 
-	return (TCL_ERROR);
-      bonded_ia_params[i].type = BONDED_IA_HARMONIC;
-      bonded_ia_params[i].p.harmonic.r2 = SQR(bonded_ia_params[i].p.harmonic.r);
-      bonded_ia_params[i].num  = 1;
-      /* broadcast interaction parameters */
-      mpi_bcast_ia_params(i,-1); 
-    }
-    else if (!strncmp(argv[0], "angle", strlen(argv[0]))) {
-      /* set new ANGLE interaction type */
-      if (argc != 2) {
-	Tcl_AppendResult(interp, "angle needs 1 parameter: "
-			 "<bend> ", (char *) NULL);
-	return (TCL_ERROR);
+
+      if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) {
+	Tcl_AppendResult(interp, "harmonic needs 2 DOUBLE parameters: "
+			 "<k_harmonic> <r_harmonic>", (char *) NULL);
+	return TCL_ERROR;
       }
-      /* copy ANGLE parameters */
-      if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.angle.bend)) == 
-	   TCL_ERROR) )
-	return (TCL_ERROR);
-      bonded_ia_params[i].type = BONDED_IA_ANGLE;
-      bonded_ia_params[i].num = 2;
-      /* broadcast interaction parameters */
-      mpi_bcast_ia_params(i,-1); 
+
+      CHECK_VALUE(harmonic_set_params(bond_type, k, r), "bond type must be nonnegative");
+  }
+
+  if (ARG0_IS_S("angle")) {
+
+    if (argc != 2) {
+      Tcl_AppendResult(interp, "angle needs 1 parameter: "
+		       "<bend> ", (char *) NULL);
+      return (TCL_ERROR);
     }
-    else if (!strncmp(argv[0], "dihedral", strlen(argv[0]))) {
+
+    if (! ARG_IS_D(1, bend)) {
+      Tcl_AppendResult(interp, "angle needs 1 DOUBLE parameter: "
+		       "<bend> ", (char *) NULL);
+      return TCL_ERROR;
+    }
+    
+    CHECK_VALUE(angle_set_params(bond_type, bend), "bond type must be nonnegative");
+  }
+    
+  if (ARG0_IS_S("dihedral")) {
  
       /* remove this lines after the implementation of dihedral */
       Tcl_AppendResult(interp, "Do not use interaction type \"", argv[0],
 		       "\"", (char *) NULL);
-      return (TCL_ERROR);
+      return TCL_ERROR;
 
-      bonded_ia_params[i].type = BONDED_IA_DIHEDRAL;
-      bonded_ia_params[i].num = 0;
-      mpi_bcast_ia_params(i,-1); 
-      return (TCL_OK);
+      CHECK_VALUE(dihedral_set_params(bond_type, bend), "bond type must be nonnegative");
+  }
+
+  Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
+		   "\"", (char *) NULL);
+  return TCL_ERROR;
+}
+
+int ljforcecap_set_params(double ljforcecap)
+{
+  if (lj_force_cap != -1.0)
+    mpi_lj_cap_forces(lj_force_cap);
+
+  return TCL_OK;
+}
+
+int inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+
+  if (argc == 0) {
+    if (lj_force_cap == -1.0)
+      Tcl_AppendResult(interp, "ljforcecap individual", (char *) NULL);
+    else {
+      Tcl_PrintDouble(interp, lj_force_cap, buffer);
+      Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
+    }
+    return TCL_OK;
+  }
+
+  if (argc > 1) {
+    Tcl_AppendResult(interp, "inter ljforcecap takes at most 1 parameter",
+		     (char *) NULL);      
+    return TCL_ERROR;
+  }
+  
+  if (ARG0_IS_S("individual"))
+      lj_force_cap = -1.0;
+  else if (! ARG0_IS_D(lj_force_cap) || lj_force_cap < 0) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  CHECK_VALUE(ljforcecap_set_params(lj_force_cap),
+	      "If you can read this, you should change it. (Use the source Luke!)");
+}
+
+void p3m_set_tune_params(double r_cut, int mesh, int cao,
+			 double alpha, double accuracy)
+{
+  if (r_cut >= 0)
+    p3m.r_cut = r_cut;
+
+  if (mesh >= 0)
+    p3m.mesh[2] = p3m.mesh[1] = p3m.mesh[0] = mesh;
+
+  if (cao >= 0)
+    p3m.cao = cao;
+
+  if (alpha >= 0)
+    p3m.alpha = alpha;
+
+  if (accuracy >= 0)
+    p3m.accuracy = accuracy;
+
+  mpi_bcast_coulomb_params();
+}
+
+int p3m_set_params(double r_cut, int mesh, int cao,
+		   double alpha, double accuracy)
+{
+  if(r_cut < 0)
+    return -1;
+
+  if(mesh < 0)
+    return -2;
+
+  if(cao < 1 || cao > 7 || cao > mesh)
+    return -3;
+
+  p3m.r_cut = r_cut;
+  p3m.mesh[2] = p3m.mesh[1] = p3m.mesh[0] = mesh;
+  p3m.cao = cao;
+
+  if (alpha > 0)
+    p3m.alpha = alpha;
+  else
+    if (alpha != -1.0)
+      return -4;
+
+  if (accuracy > 0)
+    p3m.accuracy = accuracy;
+  else
+    if (accuracy != -1.0)
+      return -5;
+
+  mpi_bcast_coulomb_params();
+
+  return 0;
+}
+
+int p3m_set_mesh_offset(double x, double y, double z)
+{
+  if(x < 0.0 || x > 1.0 ||
+     y < 0.0 || y > 1.0 ||
+     z < 0.0 || z > 1.0 )
+    return TCL_ERROR;
+
+  p3m.mesh_off[0] = x;
+  p3m.mesh_off[1] = y;
+  p3m.mesh_off[2] = z;
+
+  mpi_bcast_coulomb_params();
+
+  return TCL_OK;
+}
+
+int p3m_set_eps(double eps)
+{
+  p3m.epsilon = eps;
+
+  mpi_bcast_coulomb_params();
+
+  return TCL_OK;
+}
+
+int p3m_set_ninterpol(int n)
+{
+  if (n < 0)
+    return TCL_ERROR;
+
+  p3m.inter = n;
+
+  mpi_bcast_coulomb_params();
+
+  return TCL_OK;
+}
+
+int coulomb_set_bjerrum(double bjerrum)
+{
+  if (bjerrum < 0.0)
+    return TCL_ERROR;
+  
+  coulomb.bjerrum = bjerrum;
+
+  if (coulomb.bjerrum == 0.0) {
+
+    if (coulomb.method == COULOMB_P3M) {
+
+      p3m.bjerrum = 0.0;
+      p3m.alpha   = 0.0;
+      p3m.r_cut   = 0.0;
+      p3m.mesh[0] = 0;
+      p3m.mesh[1] = 0;
+      p3m.mesh[2] = 0;
+      p3m.cao     = 0;
+
+    } else if (coulomb.method == COULOMB_DH) {
+
+      dh_params.bjerrum = 0.0;
+      dh_params.r_cut   = 0.0;
+      dh_params.kappa   = 0.0;
+
+    } else if (coulomb.method == COULOMB_MMM1D) {
+
+      mmm1d.maxPWerror = -1.0;
+
+    }
+ 
+    mpi_bcast_coulomb_params();
+    coulomb.method = COULOMB_NONE;
+    mpi_bcast_coulomb_params();
+
+  }
+
+  return TCL_OK;
+}
+
+int inter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv)
+{
+  int mesh, cao;
+  double r_cut, accuracy;
+
+  mesh = cao = -1;
+  r_cut = accuracy = -1.0;
+
+  while(argc > 0) {
+
+    if(ARG0_IS_S("r_cut")) {
+      if (! (argc > 1 && ARG1_IS_D(r_cut))) {
+	  Tcl_AppendResult(interp, "r_cut expects double",
+			   (char *) NULL);
+	  return TCL_ERROR;
+      }
+ 
+    } else if(ARG0_IS_S("mesh")) {
+      if(! (argc > 1 && ARG1_IS_I(mesh))) {
+	Tcl_AppendResult(interp, "mesh expects integer",
+			   (char *) NULL);
+	return TCL_ERROR;
+      }
+      
+    } else if(ARG0_IS_S("cao")) {
+      if(! (argc > 1 && ARG1_IS_I(cao))) {
+	Tcl_AppendResult(interp, "cao expects integer",
+			   (char *) NULL);
+	return TCL_ERROR;
+      } 
+
+    } else if(ARG0_IS_S("accuracy")) {
+      if(! (argc > 1 && ARG1_IS_D(accuracy))) {
+	Tcl_AppendResult(interp, "accuracy expects double",
+			 (char *) NULL);
+	  return TCL_ERROR;
+      }
+
+    } else {
+      Tcl_AppendResult(interp, "Unkwon p3m tune parameter \"",argv[0],"\"",
+		       (char *) NULL);
+      return TCL_ERROR;  
+    }
+    
+    argc -= 2;
+    argv += 2;
+  }
+
+  p3m_set_tune_params(r_cut, mesh, cao, -1.0, accuracy);
+
+  if(P3M_tune_parameters(interp) == TCL_ERROR) 
+    return TCL_ERROR;
+
+  return TCL_OK;
+}
+
+int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double r_cut, alpha, accuracy;
+  int mesh, cao, i;
+
+  if (ARG0_IS_S("tune"))
+    return inter_parse_p3m_tune_params(interp, argc-1, argv+1);
+      
+  if(! ARG0_IS_D(r_cut)) {
+    Tcl_AppendResult(interp, "Unknown p3m parameter \"", argv[0],"\"",
+		     (char *) NULL);
+    return TCL_ERROR;  
+  }
+
+  if(argc < 3) {
+    Tcl_AppendResult(interp, "p3m needs at least 3 parameters: <r_cut> <mesh> <cao> [<alpha> [accuracy]]",
+		     (char *) NULL);
+    return TCL_ERROR;  
+  }
+
+  if((! ARG_IS_I(1, mesh)) || (! ARG_IS_I(2, cao))) {
+    Tcl_AppendResult(interp, "integer expected", (char *) NULL);
+    return TCL_ERROR;
+  }
+	
+  if(argc > 3) {
+    if(! ARG_IS_D(3, alpha))
+      return TCL_ERROR;
+  }
+  else {
+    Tcl_AppendResult(interp, "Automatic p3m tuning not implemented.",
+		     (char *) NULL);
+    return TCL_ERROR;  
+  }
+
+  if(argc > 4) {
+    if(! ARG_IS_D(4, accuracy)) {
+      Tcl_AppendResult(interp, "double expected", (char *) NULL);
+      return TCL_ERROR;
+    }
+  }
+
+  if ((i = p3m_set_params(r_cut, mesh, cao, alpha, accuracy)) < 0) {
+    switch (i) {
+    case -1:
+      Tcl_AppendResult(interp, "r_cut must be positive", (char *) NULL);
+      break;
+    case -2:
+      Tcl_AppendResult(interp, "mesh must be positive", (char *) NULL);
+      break;
+    case -3:
+      Tcl_AppendResult(interp, "cao must be between 1 and 7 and less than mesh",
+		       (char *) NULL);
+      break;
+    case -4:
+      Tcl_AppendResult(interp, "alpha must be positive", (char *) NULL);
+      break;
+    case -5:
+      Tcl_AppendResult(interp, "accuracy must be positive", (char *) NULL);
+      break;
+    default:;
+      Tcl_AppendResult(interp, "unspecified error", (char *) NULL);
+    }
+
+    return TCL_ERROR;
+
+  } else
+
+    return TCL_OK;
+}
+
+int inter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv)
+{
+  int i; double d1, d2, d3;
+
+  Tcl_ResetResult(interp);
+
+  while (argc > 0) {
+    /* p3m parameter: inter */
+    if (ARG0_IS_S("n_interpol")) {
+      
+      if(argc < 2) {
+	Tcl_AppendResult(interp, argv[0], " needs 1 parameter",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+      
+      if (! ARG1_IS_I(i)) {
+	Tcl_AppendResult(interp, argv[0], " needs 1 INTEGER parameter",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+      
+      if (p3m_set_ninterpol(i) == TCL_ERROR) {
+	Tcl_AppendResult(interp, argv[0], " argument must be positive",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      argc -= 2;
+      argv += 2;
+    }
+    
+    /* p3m parameter: mesh_off */
+    else if (ARG0_IS_S("mesh_off")) {
+      
+      if(argc < 4) {
+	Tcl_AppendResult(interp, argv[0], " needs 3 parameters",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+	
+      if ((! ARG_IS_D(1, d1)) ||
+	  (! ARG_IS_D(2, d2)) ||
+	  (! ARG_IS_D(3, d3)))
+	{
+	  Tcl_AppendResult(interp, argv[0], " needs 3 DOUBLE parameters",
+			   (char *) NULL);
+	  return TCL_ERROR;
+	}
+
+      if (p3m_set_mesh_offset(d1, d2 ,d3) == TCL_ERROR)
+	{
+	  Tcl_AppendResult(interp, argv[0], " parameters have to be between 0.0 an 1.0",
+			   (char *) NULL);
+	  return TCL_ERROR;
+	}
+
+      argc -= 4;
+      argv += 4;
+    }
+    
+    /* p3m parameter: epsilon */
+    else if(ARG0_IS_S( "epsilon")) {
+
+      if(argc < 2) {
+	Tcl_AppendResult(interp, argv[0], " needs 1 parameter",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      if (! ARG1_IS_D(d1)) {
+	Tcl_AppendResult(interp, argv[0], " needs 1 DOUBLE parameter",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+	
+      if (p3m_set_eps(d1) == TCL_ERROR) {
+	Tcl_AppendResult(interp, argv[0], " There is no error msg yet!",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      argc -= 2;
+      argv += 2;	    
     }
     else {
-      Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
-		       "\"", (char *) NULL);
-      return (TCL_ERROR);
+      Tcl_AppendResult(interp, "Unknown coulomb p3m parameter: \"",argv[0],"\"",(char *) NULL);
+      return TCL_ERROR;
     }
   }
 
-  /* second argument is an integer -> non bonded interaction. */
-  else {
-    IA_parameters *data, *data_sym;
+  return TCL_OK;
+}
 
-    if (argc < 3) {
-      Tcl_AppendResult(interp, "wrong # args:  should be \"",
-		       argv[0], " <type 1> <type 2> ?interaction? ?values?\"",
-		       (char *) NULL);
-      return (TCL_ERROR);
+int dh_set_params(double kappa, double r_cut)
+{
+  if(dh_params.kappa < 0.0)
+    return -1;
+
+  if(dh_params.r_cut < 0.0)
+    return -2;
+
+  dh_params.kappa = kappa;
+  dh_params.r_cut = r_cut;
+
+  mpi_bcast_coulomb_params();
+
+  return 1;
+}
+
+int inter_parse_dh(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double kappa, r_cut;
+  int i;
+
+  if(argc < 2) {
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb dh <kappa> <r_cut>", (char *) NULL);
+    return TCL_ERROR;
+  }
+  
+  if((! ARG_IS_D(0, kappa)) || (! ARG_IS_D(1, r_cut)))
+    return TCL_ERROR;
+
+  if ( (i = dh_set_params(kappa, r_cut)) < 0) {
+    switch (i) {
+    case -1:
+      Tcl_AppendResult(interp, "dh kappa must be positiv.",(char *) NULL);
+      break;
+    case -2:
+      Tcl_AppendResult(interp, "dh r_cut must be positiv.",(char *) NULL);
+      break;
+    default:
+      Tcl_AppendResult(interp, "unspecified error",(char *) NULL);
     }
-
-    make_particle_type_exist(i);
-    make_particle_type_exist(j);
     
-    data     = get_ia_param(i, j);
-    data_sym = get_ia_param(j, i);
+    return TCL_ERROR;
+  }
 
-    if (!data || !data_sym) {
-      Tcl_AppendResult(interp, "particle types must be nonnegative",
+  return TCL_OK;
+}
+
+int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double switch_rad, maxPWerror;
+  int bessel_cutoff;
+  if(argc < 4) {
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb mmm1d <switch radius> <bessel cutoff> <maximal error for near formula>", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if((! ARG_IS_D(1, switch_rad)) ||
+     (! ARG_IS_I(2, bessel_cutoff)) ||
+     (! ARG_IS_D(3, maxPWerror))) 
+    return TCL_ERROR;
+
+  set_mmm1d_params(coulomb.bjerrum, switch_rad,
+		   bessel_cutoff, maxPWerror);
+
+  return TCL_OK;
+}
+
+int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double d1;
+
+  Tcl_ResetResult(interp);
+
+  if(argc == 0) {
+    Tcl_AppendResult(interp, "{", (char *)NULL);
+    printCoulombIAToResult(interp);
+    Tcl_AppendResult(interp, "}", (char *)NULL);
+    return TCL_OK;
+  }
+  
+  if (! ARG0_IS_D(d1)) {
+    if (coulomb.method == COULOMB_P3M)
+      return inter_parse_p3m_opt_params(interp, argc, argv);
+    else {
+      Tcl_AppendResult(interp, "(P3M not enabled) Expect: inter coulomb <bjerrum>",
 		       (char *) NULL);
-      return (TCL_ERROR);
-    }
-    /* print specific interaction information */
-    if (argc == 3) {
-      return printNonbondedIAToResult(interp, i, j);
-    }    
-    /* set interaction parameters */
-    argc -= 3;
-    argv += 3;
-   
-    while (argc > 0) {
-      if (!strncmp(argv[0], "lennard-jones", strlen(argv[0]))) {
- 	/* set new lennard-jones interaction type */
-	if (argc < 6) {
-	  Tcl_AppendResult(interp, "lennard-jones needs 5 parameters: "
-			   "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
-			   (char *) NULL);
-	return (TCL_ERROR);
-	}
-	/* copy lennard-jones parameters */
-	if ((Tcl_GetDouble(interp, argv[1], &data->LJ_eps) == TCL_ERROR) ||
-	    (Tcl_GetDouble(interp, argv[2], &data->LJ_sig)  == TCL_ERROR) ||
-	    (Tcl_GetDouble(interp, argv[3], &data->LJ_cut)  == TCL_ERROR) ||
-	    (Tcl_GetDouble(interp, argv[4], &data->LJ_shift)   == TCL_ERROR) ||
-	    (Tcl_GetDouble(interp, argv[5], &data->LJ_offset)  == TCL_ERROR))
-	  return (TCL_ERROR);
-	
-	/* LJ should be symmetrically */
-	data_sym->LJ_eps = data->LJ_eps;
-	data_sym->LJ_sig = data->LJ_sig;
-	data_sym->LJ_cut = data->LJ_cut;
-	data_sym->LJ_shift   = data->LJ_shift;
-	data_sym->LJ_offset  = data->LJ_offset;
-	argc -= 6;
-	argv += 6;
-	if (argc >= 1 && (Tcl_GetDouble(interp, argv[0], &data->LJ_capradius) == TCL_OK)) {
-	  data_sym->LJ_capradius = data->LJ_capradius;
-	  argc--;
-	  argv++;
-	}
-	/* broadcast interaction parameters */
-	mpi_bcast_ia_params(i, j);
-	mpi_bcast_ia_params(j, i);
-	if (lj_force_cap != -1.0)
-	  mpi_lj_cap_forces(lj_force_cap);
-      }
-      else if (!strncmp(argv[0], "lj-cos", strlen(argv[0]))) {
-        double fac1;
-        double facsq;
-  	    if (argc < 5) {
-	        Tcl_AppendResult(interp, "lj-cos needs 4 parameters: "
-			   "<ljcos_eps> <ljcos_sig> <ljcos_cut> <ljcos_offset>",
-		    (char *) NULL);
-	        return (TCL_ERROR);
-	    }
- 	    /* copy lj-cos parameters */
-	    if ((Tcl_GetDouble(interp, argv[1], &data->LJCOS_eps) == TCL_ERROR) ||
-	        (Tcl_GetDouble(interp, argv[2], &data->LJCOS_sig)  == TCL_ERROR) ||
-	        (Tcl_GetDouble(interp, argv[3], &data->LJCOS_cut)  == TCL_ERROR) ||
-            (Tcl_GetDouble(interp, argv[4], &data->LJCOS_offset)  == TCL_ERROR)) {
-	    return (TCL_ERROR);}
-        fac1=1.122462*(data->LJCOS_sig);
-        facsq=fac1*fac1;
-        data->LJCOS_rmin= fac1 ;
-        data->LJCOS_alfa=3.1415927/(SQR(data->LJCOS_cut)-facsq);
-        data->LJCOS_beta=3.1415927*(1.-(1./(SQR(data->LJCOS_cut)/facsq-1.)));
-	
-	/* LJCOS should be symmetrically */
-	data_sym->LJCOS_eps = data->LJCOS_eps;
-	data_sym->LJCOS_sig = data->LJCOS_sig;
-	data_sym->LJCOS_cut = data->LJCOS_cut;
-	data_sym->LJCOS_offset = data->LJCOS_offset;
-/* this is a quick fix for the inconsistency in the ljcos parameters 
-there are 7 parameters for ljcos, but you read in only four of them. The rest is calculated above. This is a problem with the blockfile format (Mehmet)*/
-/* 	argc -= 5; */
- 	argc = 0;
-	argv += 5;
-
-	/* broadcast interaction parameters */
-	mpi_bcast_ia_params(i, j);
-	mpi_bcast_ia_params(j, i);
-      }
-      else if (!strncmp(argv[0], "ramp", strlen(argv[0]))) {
-	/* set new ramp interaction type */
-	if (argc < 3) {
-	  Tcl_AppendResult(interp, "ramp potential needs 2 parameters: "
-			   "<ramp_cut> <ramp_force>",
-			   (char *) NULL);
-	  return (TCL_ERROR);
-	}
-	
-	if ((Tcl_GetDouble(interp, argv[1], &data->ramp_cut) == TCL_ERROR) ||
-	    (Tcl_GetDouble(interp, argv[2], &data->ramp_force)  == TCL_ERROR))
-	  return (TCL_ERROR);
-	
-	/* ramp should be symmetrically */
-	data_sym->ramp_cut = data->ramp_cut;
-	data_sym->ramp_force = data->ramp_force;
-	argc -= 3;
-	argv += 3;
-	/* broadcast interaction parameters */	
-	mpi_bcast_ia_params(i, j);
-	mpi_bcast_ia_params(j, i);
-      }
-      else {
-	Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
-			 "\"", (char *)NULL);
-	return (TCL_ERROR);
-      }
+      return TCL_ERROR;
     }
   }
-  return (TCL_OK);
+
+  if (coulomb_set_bjerrum(d1) == TCL_ERROR) {
+    Tcl_AppendResult(interp, argv[0], "bjerrum length must be positiv",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+    
+  argc -= 1;
+  argv += 1;
+
+  if(argc < 1 && d1 != 0.0) {
+    Tcl_AppendResult(interp, "wrong # args for inter coulomb.",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* check method */
+  if(ARG0_IS_S("p3m")) {
+      
+    coulomb.method = COULOMB_P3M;
+    p3m.bjerrum    = coulomb.bjerrum;
+    
+#ifdef PARTIAL_PERIODIC
+    if(periodic[0] == 0 ||
+       periodic[1] == 0 ||
+       periodic[2] == 0)
+      {
+	Tcl_AppendResult(interp, "Need periodicity (1,1,1) with Coulomb P3M",
+			 (char *) NULL);
+	return TCL_ERROR;  
+      }
+#endif
+    
+    return inter_parse_p3m(interp, argc-1, argv+1);
+  }
+
+  if (ARG0_IS_S("dh")) {
+      
+      coulomb.method = COULOMB_DH;
+      dh_params.bjerrum = coulomb.bjerrum;
+
+      return inter_parse_dh(interp, argc-1, argv+1);    
+  }
+    
+  if (ARG0_IS_S("mmm1d ")) {
+
+    coulomb.method = COULOMB_MMM1D;
+
+    return inter_parse_mmm1d(interp, argc-1, argv+1);
+  }
+
+  coulomb.bjerrum = 0.0;
+  coulomb.method  = COULOMB_NONE;
+
+  mpi_bcast_coulomb_params();
+
+  Tcl_AppendResult(interp, "Do not know coulomb method \"",argv[1],
+		   "\": coulomb switched off", (char *) NULL);
+
+  return TCL_ERROR;
+}
+
+int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
+{
+
+  if(ARG0_IS_S("ljforcecap"))
+    return inter_parse_ljforcecap(interp, argc-1, argv+1);
+  
+  if(ARG0_IS_S("coulomb"))
+    return inter_parse_coulomb(interp, argc-1, argv+1);
+  
+
+  Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
+		   "\"", (char *) NULL);
+
+  return TCL_ERROR;
+}
+
+int inter(ClientData _data, Tcl_Interp *interp,
+	  int argc, char **argv)
+{
+  int i, j;
+  double dummy;
+
+  Tcl_ResetResult(interp);
+  
+  /* first we handle the special cases 
+
+     1. no parameters
+     2. one parameter
+     3. two parameters
+
+     then the bonded interactions
+     then the non bonded interactions
+     then the rest
+   */
+
+  /* no argument -> print all interaction informations. */
+  if (argc == 1)
+    return inter_print_all(interp);
+
+  /* There is only 1 parameter */
+  if (argc == 2) {
+
+    if (ARG1_IS_I(i))
+      return inter_print_bonded(interp, i);
+    
+    if (ARG1_IS_D(dummy)) {
+      Tcl_AppendResult(interp, "integer or string expected",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+    
+    return inter_parse_rest(interp, argc-1, argv+1);
+  }
+  
+  /* There are only 2 parameters */
+  if (argc == 3) {
+    
+    if (ARG_IS_I(1, i) && ARG_IS_I(2, j))
+      return inter_print_non_bonded(interp, i, j);
+    
+    if (ARG_IS_I(1, i)) {
+      Tcl_AppendResult(interp, "not enough arguments",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+    
+    if (ARG1_IS_D(dummy)) {
+      Tcl_AppendResult(interp, "integer or string expected",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+      
+    return inter_parse_rest(interp, argc-1, argv+1);
+  }
+
+  /****************************************************
+   * Here we have more than 2 parameters
+   ****************************************************/
+
+  // non bonded interactions
+    if (ARG_IS_I(1, i) && ARG_IS_I(2, j))
+    return inter_parse_non_bonded(interp, i, j, argc-3, argv+3);
+
+  // bonded interactions
+  if (ARG_IS_I(1, i) && ! ARG_IS_D(2, dummy))
+    return inter_parse_bonded(interp, i, argc-2, argv+2);
+
+  if (ARG_IS_D(1, dummy)) {
+      Tcl_AppendResult(interp, "integer or string expected",
+		       (char *) NULL);
+      return TCL_ERROR;
+  }
+  
+  // named interactions
+  return inter_parse_rest(interp, argc-1, argv+1);
 }
 
 #ifdef CONSTRAINTS
@@ -1322,4 +1844,3 @@ int constraint(ClientData _data, Tcl_Interp *interp,
   return (TCL_ERROR);
 #endif
 }
-
