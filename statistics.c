@@ -477,19 +477,21 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
   }
   else if (!strncmp(mode, "remove", strlen(mode))) {
-    /* 'analyze remove <index>' */
-    /****************************/
-    if (argc != 1) {
-      Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze remove <index>", (char *)NULL); return TCL_ERROR; 
+    /* 'analyze remove [<index>]' */
+    /******************************/
+    if (arc == 0) { for (i = n_configs-1; i >= 0; i--) analyze_remove(i); }
+    else if (argc == 1) {
+      Tcl_GetInt(interp, argv[0], &i); argc--; argv++;
+      if(n_configs == 0) {
+	Tcl_AppendResult(interp, "Nice try, but there are no stored configurations that could be removed!", (char *)NULL); return TCL_ERROR; }
+      else if((i < 0) || (i > n_configs-1)) {
+	sprintf(buffer,"Index %d out of range (must be in [0,%d])!",i,n_configs-1);
+	Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_ERROR; }
+      analyze_remove(i);
     }
-    Tcl_GetInt(interp, argv[0], &i); argc--; argv++;
-    if(n_configs == 0) {
-      Tcl_AppendResult(interp, "Nice try, but there are no stored configurations that could be removed!", (char *)NULL); return TCL_ERROR; }
-    else if((i < 0) || (i > n_configs-1)) {
-      sprintf(buffer,"Index %d out of range (must be in [0,%d])!",i,n_configs-1);
-      Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_ERROR;
+    else {
+      Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze remove [<index>]", (char *)NULL); return TCL_ERROR; 
     }
-    analyze_remove(i);
     sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
   }
   else if (!strncmp(mode, "stored", strlen(mode))) {
