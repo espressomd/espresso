@@ -1,0 +1,65 @@
+/** \page our_cvs How to use CVS
+
+<b>Befor checking in any changes you should make sure that</b>
+<ol>
+<li> your file contains no conflicts with the cvs version.
+<li> the code compiles without warning on Linux and OSF1.
+<li> the not yet written maketest "test procedure" runs. 
+<li> you have informed the responsible person of that file about major
+changes.
+</ol>
+
+Here a list of the most common cvs commands we need:
+
+<ul>
+<li> \anchor cvs_add \verbatim cvs add <file> \endverbatim
+	Adds <file> to the cvsroot directory. You have to use 
+	\ref cvs_commit "commit" to make your add complete. 
+<li> \anchor cvs_checkout \verbatim cvs checkout <project> \endverbatim
+	This will create a new directory <project> in the CWD, containing an
+	up-to-date version of <project>.
+<li> \anchor cvs_commit \verbatim cvs commit <file> \endverbatim
+	Puts your changes into the cvsroot directory and makes them
+	available for the others. 
+	<b>Use with care and write a senseful comment!!!</b>
+<li> \anchor cvs_diff \verbatim cvs diff <file> \endverbatim
+	Shows differences of your local copy of <file> with respect
+	to the cvs version.	
+<li> \anchor cvs_log \verbatim cvs log <file> \endverbatim
+	Shows the log file for <file>, e.g. comments on changes that
+	have been made in the past and who is responsible for them.
+<li> \anchor cvs_remove \verbatim cvs remove <file> \endverbatim
+	removes a file from the cvsroot directory. That means, it is
+	still there and can be restored, but will not be contained in
+	future checkouts and updates. <b>Use with care!!!</b><BR>
+	For permanent deletion use \ref cvs_commit "commit" one final
+	time on that file, adding e.g. 'removed.' as comment. <b>Use
+	with even more care!!!</b>
+<li> \anchor cvs_status \verbatim cvs status <file> \endverbatim
+	Reports the status of your local copy of <file> with respect
+	to the cvs version.	
+<li> \anchor cvs_update \verbatim cvs update \endverbatim
+	Get the current version of all files from the cvsroot
+	directory. There will be a U in front of files that are
+	updated, a M before files where cvs merges your local copy
+	with the cvs version and a ? if there are files in your local
+	directory which are not known to cvs. You will get a warning 
+	\verbatim conflicts during merge \endverbatim for files where
+	cvs is not able to merge. <b>You have to look at these files
+	by hand!</b> They contain sections like
+	\verbatim 
+<<<<<<< init.tcl
+Local version of the file (e.g. 'init.tcl')
+as stored in your local directory
+=======
+CVS version of the file (e.g. release 1.5)
+from the repository in the cvsroot directory
+>>>>>>> 1.5
+	\endverbatim
+	You have to <b>think first</b> and then decide how to combine
+	the two versions.
+</ul>
+
+For more help on CVS, see 
+<a href="http://www.mpip-mainz.mpg.de/www/theory/computers/pdsoftie/doc/cvs/cvs_toc.html">CVS Manual</a>
+*/
