@@ -3,10 +3,13 @@ The following procedures may be used to save/restore checkpoints to minimize the
 The scripts are located in scripts/aux.tcl and use \ref tcl_blockfile as file format.
 <ul>
     <li>\anchor tcl_checkpoint_set
-        \verbatim checkpoint_set <destination> [<# of configs> [<tclvar> [<ia_flag>]]]\endverbatim
+        \verbatim checkpoint_set <destination> [<# of configs> [<tclvar> [<ia_flag> [<var_flag> [<ran_flag]]]]]\endverbatim
         creates a checkpoint with path/filename <destination> (compressed if <destination> ends with '<tt>.gz</tt>'), saving the last <# of configs> 
 	which have been appended using \ref analyze_append (defaults to 'all'), adds all tcl-embedded variables specified in the tcl-list <tclvar>
-	(defaults to '-') and all interactions unless <ia_flag> is set to '-'.<BR>
+	(defaults to '-'), all interactions (\ref tcl_inter) / Espresso-variables (\ref tcl_setmd) / random-number-generator 
+	informations (\ref tcl_t_random etc.) unless their respective flags <ia_flag> / <var_flag> / <ran_flag> are set to '-'; 
+	you may however choose to only include certain Espresso-variables (\ref tcl_setmd) by providing their names as a tcl-list 
+	in place of <var_flag>.<BR>
 	When you're reading this, \ref tcl_checkpoint_set will be using \ref tcl_invalidate_system automatically; therefore continuing an integration
 	after setting a checkpoint or restarting it there by reading one should make absolutely no difference anymore, since the current state of
 	the random number generator(s) is/are completely (re)stored to (from) the checkpoint and the integrator is forced to re-init the forces

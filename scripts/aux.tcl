@@ -124,7 +124,7 @@ proc polyBlockWriteAll { destination {tclvar "all"} {cfg "1"} {rdm "random"} } {
 }
 
 
-proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } } {
+proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { var "all" } { ran "all" } } {
     if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
 	set f [open "|gzip -c - >$destination" w]
 	set chk [open "[join [lrange [split $destination .] 0 [expr [llength [split $destination .]]-3]] .].chk" a]
@@ -132,13 +132,13 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } } 
 	set f [open "$destination" "w"]
 	set chk [open "[join [lrange [split $destination .] 0 [expr [llength [split $destination .]]-2]] .].chk" "a"]
     }
-    blockfile $f write variable
+    if { "$var" != "-" } { blockfile $f write variable $var }
     if { "$tclvar" != "-" } { foreach j $tclvar { blockfile $f write tclvariable $j } }
     if { "$ia" != "-" } { blockfile $f write interactions }
     blockfile $f write particles "id pos type q v f"
     blockfile $f write bonds
-    blockfile $f write random
-    blockfile $f write bitrandom
+    if { "$ran" != "-" } { blockfile $f write random }
+    if { "$ran" != "-" } { blockfile $f write bitrandom }
     flush $f
     if { "$cnt" == "all" } { blockfile $f write configs } else { blockfile $f write configs $cnt }
     flush $f; close $f
