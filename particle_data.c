@@ -401,17 +401,17 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
   Tcl_PrintDouble(interp, part.r.q, buffer);
   Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.v[0], buffer);
+  Tcl_PrintDouble(interp, part.v[0]/time_step, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.v[1], buffer);
+  Tcl_PrintDouble(interp, part.v[1]/time_step, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.v[2], buffer);
+  Tcl_PrintDouble(interp, part.v[2]/time_step, buffer);
   Tcl_AppendResult(interp, buffer, " f ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f[0], buffer);
+  Tcl_PrintDouble(interp, part.f[0]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f[1], buffer);
+  Tcl_PrintDouble(interp, part.f[1]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f[2], buffer);
+  Tcl_PrintDouble(interp, part.f[2]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 
 #ifdef EXTERNAL_FORCES
@@ -550,11 +550,11 @@ int part(ClientData data, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (!strncmp(argv[0], "f", strlen(argv[0]))) {
-	Tcl_PrintDouble(interp, part.f[0], buffer);
+	Tcl_PrintDouble(interp, part.f[0]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.f[1], buffer);
+	Tcl_PrintDouble(interp, part.f[1]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.f[2], buffer);
+	Tcl_PrintDouble(interp, part.f[2]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
 #ifdef EXTERNAL_FORCES
