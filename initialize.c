@@ -14,6 +14,7 @@
 #include "random.h"
 #include "communication.h"
 #include "blockfile_tcl.h"
+#include "cells.h"
 
 int initialize(Tcl_Interp *interp)
 {
