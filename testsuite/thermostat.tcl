@@ -39,7 +39,7 @@ setmd time_step 0.01
 setmd skin 0.5
 set n_part 100
 set maxstep 100
-set intstep [expr round(20*$maxstep/100)]
+set intstep [expr round(50*$maxstep/100)]
 
 proc read_data {file} {
     set f [open $file "r"]
