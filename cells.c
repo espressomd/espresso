@@ -51,6 +51,55 @@ CellStructure cell_structure;
 /************************************************************/
 /*@{*/
 
+static void check_cells_consistency()
+{
+  int c, index;
+  IntList used;
+  alloc_intlist(&used, n_cells);
+  memset(used.e, 0, n_cells*sizeof(int));
+  
+  for (c = 0; c < local_cells.n; c++) {
+    index = (void *)local_cells.cell[c] - (void *)cells;
+    if ((index % sizeof(Cell)) != 0) {
+      fprintf(stderr, "%d: local cell pointer not even aligned, certainly wrong (local_cell[%d], index=%d).\n", this_node, c, index);
+      errexit();
+    }
+    index /= sizeof(Cell);
+    if (index < 0 || index >= n_cells) {
+      fprintf(stderr, "%d: local cell pointer out of range, maybe old leftover (local_cell[%d]).\n", this_node, c);
+      errexit();
+    }
+    if (used.e[index]) {
+      fprintf(stderr, "%d: local cell is already pointed to (local_cell[%d]).\n", this_node, c);
+      errexit();
+    }
+    used.e[index] = 1;
+  }
+
+  for (c = 0; c < ghost_cells.n; c++) {
+    index = (void *)ghost_cells.cell[c] - (void *)cells;
+    if ((index % sizeof(Cell)) != 0) {
+      fprintf(stderr, "%d: ghost cell pointer not even aligned, certainly wrong (ghost_cell[%d], index=%d).\n", this_node, c, index);
+      errexit();
+    }
+    index /= sizeof(Cell);
+    if (index < 0 || index >= n_cells) {
+      fprintf(stderr, "%d: ghost cell pointer out of range, maybe old leftover (ghost_cell[%d]).\n", this_node, c);
+      errexit();
+    }
+    if (used.e[index]) {
+      fprintf(stderr, "%d: ghost cell is already pointed to (ghost_cell[%d]).\n", this_node, c);
+      errexit();
+    }
+    used.e[index] = 1;
+  }
+  for (c = 0; c < n_cells; c++)
+    if (!used.e[c]) {
+      fprintf(stderr, "%d: cell %d is not used anywhere.\n", this_node, c);
+      errexit();
+    }
+  realloc_intlist(&used, 0);
+}
 
 /*@}*/
 
@@ -151,6 +200,10 @@ void cells_re_init(int new_cs)
     realloc_particles(&tmp_cells[i],0);
   }
   free(tmp_cells);
+
+#ifdef ADDITIONAL_CHECKS
+  check_cells_consistency();
+#endif
 }
 
 /*************************************************/

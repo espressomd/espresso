@@ -65,8 +65,9 @@
 #define GHOST_SEND 0
 #define GHOST_RECV 1
 #define GHOST_BCST 2
-#define GHOST_GATH 3
-#define GHOST_RDCE 4
+#define GHOST_RDCE 3
+#define GHOST_JOBMASK  15
+#define GHOST_PREFETCH 16
 
 /*@}*/
 

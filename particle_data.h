@@ -433,6 +433,16 @@ void local_remove_all_particles();
     @param scale factor by which to rescale (>1: stretch, <1: contract)
 */
 void local_rescale_particles(int dir, double scale);
+ 
+/** Synchronous send of a particle buffer to another node. The other node
+    MUST call \ref recv_particles when this is called. The particles data
+    is freed. */
+void send_particles(ParticleList *particles, int node);
+
+/** Synchronous receive of a particle buffer from another node. The other node
+    MUST call \ref send_particles when this is called. The particles are
+    APPENDED to the list, so it has to be a valid one */
+void recv_particles(ParticleList *particles, int node);
 
 /** Check the existence of a bond partner on that node and return the
     corresponding particle pointer or force exit.

@@ -22,6 +22,24 @@
 #include "communication.h"
 #include "grid.h"
 #include "utils.h"
+#include "particle_data.h"
+
+/** Tag for communication in ghost_comm. */
+#define REQ_GHOST_SEND 100
+
+static int n_s_buffer = 0;
+static int max_s_buffer = 0;
+/** send buffer. Just grows, which should be ok */
+static void *s_buffer = NULL;
+
+static int n_r_buffer = 0;
+static int max_r_buffer = 0;
+/** recv buffer. Just grows, which should be ok */
+static void *r_buffer = NULL;
+
+/************************************************************
+ * Exported Functions
+ ************************************************************/
 
 void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
 {
@@ -38,36 +56,131 @@ void free_comm(GhostCommunicator *comm)
   free(comm->comm);
 }
 
-/************************************************/
-/** \name Defines */
-/************************************************/
-/*@{*/
+int calc_transmit_size(GhostCommunication *gc, int data_parts)
+{
+  int p, n_buffer_new;
 
-/* MPI tags for the ghost communications: */
-/** Tag for communication in send_particles(). */
-#define REQ_SEND_PART   100
-/** Tag for communication in send_ghosts(). */
-#define REQ_SEND_GHOSTS 101
-/** Tag for communication in send_posforce(). */
-#define REQ_SEND_POS    102
+  if (data_parts == GHOSTTRANS_PARTNUM)
+    n_buffer_new = sizeof(int)*gc->n_part_lists;
+  else {
+    int count = 0;
+    for (p = 0; p < gc->n_part_lists; p++)
+      count += gc->part_lists[p]->n;
 
-/*@}*/
+    n_buffer_new = 0;
+    if (data_parts & GHOSTTRANS_PROPRTS)
+      n_buffer_new += sizeof(ParticleProperties);
+    if (data_parts & GHOSTTRANS_POSITION)
+      n_buffer_new += sizeof(ParticlePosition);
+    if (data_parts & GHOSTTRANS_MOMENTUM)
+      n_buffer_new += sizeof(ParticleMomentum);
+    if (data_parts & GHOSTTRANS_FORCE)
+      n_buffer_new += sizeof(ParticleForce);
+    n_buffer_new *= count;
+  }
+  return n_buffer_new;
+}
 
-/************************************************/
-/** \name Variables for particle exchange */
-/************************************************/
-/*@{*/
+void prepare_send_buffer(GhostCommunication *gc, int data_parts)
+{
+  int pl, p, np, insert;
+  Particle *part, *pt;
 
-/** Particle send buffer. */
-ParticleList p_send_buf;
-/** Particle recieve buffer. */
-ParticleList p_recv_buf;
+  /* reallocate send buffer */
+  n_s_buffer = calc_transmit_size(gc, data_parts);
+  if (n_s_buffer > max_s_buffer) {
+    max_s_buffer = n_s_buffer;
+    s_buffer = realloc(s_buffer, max_s_buffer);
+  }
+  /* put in data */
+  insert = 0;
+  for (pl = 0; pl < gc->n_part_lists; pl++) {
+    np   = gc->part_lists[pl]->n;
+    if (data_parts == GHOSTTRANS_PARTNUM) {
+      *(int *)(s_buffer + insert) = np;
+      insert += sizeof(int);
+    }
+    else {
+      part = gc->part_lists[pl]->part;
+      for (p = 0; p < np; p++) {
+	pt = &part[p];
+	if (data_parts & GHOSTTRANS_PROPRTS) {
+	  memcpy(s_buffer + insert, &pt->p, sizeof(ParticleProperties));
+	  insert +=  sizeof(ParticleProperties);
+	}
+	if (data_parts & GHOSTTRANS_POSITION) {
+	  memcpy(s_buffer + insert, &pt->r, sizeof(ParticlePosition));
+	  insert +=  sizeof(ParticlePosition);
+	}
+	if (data_parts & GHOSTTRANS_MOMENTUM) {
+	  memcpy(s_buffer + insert, &pt->m, sizeof(ParticleMomentum));
+	  insert +=  sizeof(ParticleMomentum);
+	}
+	if (data_parts & GHOSTTRANS_FORCE) {
+	  memcpy(s_buffer + insert, &pt->f, sizeof(ParticleForce));
+	  insert +=  sizeof(ParticleForce);
+	}
+      }
+    }
+  }
+#ifdef ADDITIONAL_CHECKS
+  if (insert != n_s_buffer) {
+    fprintf(stderr, "%d: send buffer size %d differs from what I put in %d\n", this_node, n_s_buffer, insert);
+    errexit();
+  }
+#endif
+}
 
-/** Bond send buffer. */
-IntList b_send_buf;
-/** Bond recieve buffer. */
-IntList b_recv_buf;
-/*@}*/
+void prepare_recv_buffer(GhostCommunication *gc, int data_parts)
+{
+  /* reallocate recv buffer */
+  n_r_buffer = calc_transmit_size(gc, data_parts);
+  if (n_r_buffer > max_r_buffer) {
+    max_r_buffer = n_r_buffer;
+    r_buffer = realloc(r_buffer, max_r_buffer);
+  }
+}
+
+void ghost_communicator(GhostCommunicator *gc)
+{
+  int n, n2;
+  for (n = 0; n < gc->num; n++) {
+    int comm_type = gc->comm[n].type & GHOST_JOBMASK;
+
+    /* prepare send buffer if necessary */
+    if ((comm_type == GHOST_SEND) || (comm_type == GHOST_RDCE) ||
+	(comm_type == GHOST_BCST && gc->comm[n].node == this_node)) {
+      /* ok, we send this step, prepare send buffer if not yet done */
+      if (!(gc->comm[n].type & GHOST_PREFETCH))
+	prepare_send_buffer(&gc->comm[n], gc->data_parts);
+    }
+    else {
+      /* we do not send this time, let's look for a prefetch */
+      if (gc->comm[n].type & GHOST_PREFETCH) {
+	for (n2 = n+1; n2 < gc->num; n2++) {
+	  int comm_type2 = gc->comm[n2].type & GHOST_JOBMASK;
+	  /* find next action where we send and which has PREFETCH set */
+	  if (((comm_type2 == GHOST_SEND) || (comm_type2 == GHOST_RDCE) ||
+	       (comm_type2 == GHOST_BCST && gc->comm[n2].node == this_node)) &&
+	      gc->comm[n2].type & GHOST_PREFETCH)
+	    prepare_send_buffer(&gc->comm[n2], gc->data_parts);
+	}
+      }
+    }
+
+    /* recv buffer for recv and multinode operations to this node */
+    if ((comm_type == GHOST_RECV) ||
+	(comm_type == GHOST_RDCE && gc->comm[n].node == this_node) ||
+	(comm_type == GHOST_BCST))
+      prepare_recv_buffer(&gc->comm[n], gc->data_parts);
+
+    /* transfer data */
+    
+  }
+}
+
+
+
 
 #if 0
 

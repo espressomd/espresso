@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <mpi.h>
 #include "particle_data.h"
 #include "global.h"
 #include "communication.h"
@@ -40,6 +41,9 @@
 
 /** granularity of the particle buffers in particles */
 #define PART_INCREMENT 32
+
+/** my magic MPI code for send/recv_particles */
+#define REQ_SNDRCV_PART 0xaa
 
 /************************************************
  * variables
@@ -1234,9 +1238,6 @@ int place_particle(int part, double p[3])
   if (part < 0)
     return TCL_ERROR;
 
-  if (!node_grid_is_set()) 
-    setup_node_grid();
-
   if (!particle_node)      
     build_particle_node();
 
@@ -1646,3 +1647,62 @@ void remove_all_bonds_to(int identity)
     }
   }
 }
+
+void send_particles(ParticleList *particles, int node)
+{
+  int pc;
+  IntList local_bi;
+
+  MPI_Send(&particles->n, 1, MPI_INT, 0, REQ_SNDRCV_PART, MPI_COMM_WORLD);
+  MPI_Send(particles->part, particles->n*sizeof(Particle),
+	   MPI_BYTE, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
+
+  for (pc = 0; pc < particles->n; pc++) {
+    Particle *p = &particles->part[pc];
+    realloc_intlist(&local_bi, local_bi.n + p->bl.n);
+    memcpy(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
+    local_bi.n += p->bl.n;
+  }
+  MPI_Send(&local_bi.e, local_bi.n*sizeof(Particle),
+	   MPI_BYTE, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
+
+  for (pc = 0; pc < particles->n; pc++) {
+    Particle *p = &particles->part[pc];
+    local_particles[p->p.identity] = NULL;
+    free_particle(p);
+  }
+}
+
+void recv_particles(ParticleList *particles, int node)
+{
+  int transfer, pc;
+  MPI_Status status;
+  IntList local_bi;
+
+  MPI_Recv(&transfer, 1, MPI_INT, node,
+	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
+  realloc_particles(particles, particles->n + transfer);
+  MPI_Recv(&particles->part[particles->n], transfer*sizeof(Particle), MPI_BYTE, node,
+	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
+  particles->n += transfer;
+
+  transfer = 0;
+  for (pc = 0; pc < particles->n; pc++) {
+    Particle *p = &particles->part[pc];
+    local_particles[p->p.identity] = p;
+    transfer += p->bl.n;
+  }
+
+  alloc_intlist(&local_bi, transfer);
+  MPI_Recv(&particles->part[particles->n], transfer*sizeof(Particle), MPI_BYTE, node,
+	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
+  transfer = 0;
+  for (pc = 0; pc < particles->n; pc++) {
+    Particle *p = &particles->part[pc];
+    alloc_intlist(&p->bl, p->bl.n);
+    memcpy(p->bl.e, &local_bi.e[transfer], p->bl.n*sizeof(int));
+    transfer += p->bl.n;
+  }
+  realloc_intlist(&local_bi, 0);
+}
+

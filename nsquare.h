@@ -8,4 +8,6 @@ void nsq_topology_release();
 
 void nsq_topology_init(CellPList *local);
 
+void nsq_balance_particles();
+
 #endif

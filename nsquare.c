@@ -1,7 +1,9 @@
 #include <mpi.h>
+#include <string.h>
 #include "nsquare.h"
 #include "communication.h"
 #include "debug.h"
+#include "ghosts.h"
 
 Cell *local;
 CellPList me_do_ghosts;
@@ -79,12 +81,28 @@ void nsq_topology_init(CellPList *old)
     nsq_prepare_comm(&cell_structure.exchange_ghosts_comm,     GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
     nsq_prepare_comm(&cell_structure.update_ghost_pos_comm,    GHOSTTRANS_POSITION);
     nsq_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
+
     /* here we just decide what to transfer where */
-    for (n = 0; n < n_nodes; n++) {
-      cell_structure.ghost_cells_comm.comm[n].type      = GHOST_BCST;
-      cell_structure.exchange_ghosts_comm.comm[n].type  = GHOST_BCST;
-      cell_structure.update_ghost_pos_comm.comm[n].type = GHOST_BCST;
-      cell_structure.collect_ghost_force_comm.comm[n].type   = GHOST_RDCE;
+    /* first round: all nodes prefetch their send data */
+    cell_structure.ghost_cells_comm.comm[n].type         = GHOST_BCST | GHOST_PREFETCH;
+    cell_structure.exchange_ghosts_comm.comm[n].type     = GHOST_BCST | GHOST_PREFETCH;
+    cell_structure.update_ghost_pos_comm.comm[n].type    = GHOST_BCST | GHOST_PREFETCH;
+    /* here all nodes send every comm step, no prefetch */
+    cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
+
+    for (n = 1; n < n_nodes; n++) {
+      /* use the prefetched send buffers */
+      if (this_node != n) {
+	cell_structure.ghost_cells_comm.comm[n].type         = GHOST_BCST;
+	cell_structure.exchange_ghosts_comm.comm[n].type     = GHOST_BCST;
+	cell_structure.update_ghost_pos_comm.comm[n].type    = GHOST_BCST;
+      }
+      else {
+	cell_structure.ghost_cells_comm.comm[n].type         = GHOST_BCST | GHOST_PREFETCH;
+	cell_structure.exchange_ghosts_comm.comm[n].type     = GHOST_BCST | GHOST_PREFETCH;
+	cell_structure.update_ghost_pos_comm.comm[n].type    = GHOST_BCST | GHOST_PREFETCH;
+      }
+      cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
     }
   }
 
@@ -96,4 +114,72 @@ void nsq_topology_init(CellPList *old)
       append_unindexed_particle(local, &part[p]);
   }
   update_local_particles(local);
+}
+
+void nsq_balance_particles()
+{
+  int i, n, surplus, s_node, tmp, lack, l_node, transfer;
+
+  int pp = cells_get_n_particles();
+  int *ppnode = malloc(n_nodes*sizeof(int));
+  /* minimal difference between node shares */
+  int minshare = n_total_particles/n_nodes;
+  int maxshare = minshare + 1;
+
+  
+  MPI_Allgather(&pp, 1, MPI_INT, ppnode, 1, MPI_INT, MPI_COMM_WORLD);
+  for (;;) {
+    /* find node with most excessive particles */
+    surplus = 0;
+    s_node = -1;
+    for (n = 0; n < n_nodes; n++) {
+      tmp = ppnode[n] - maxshare;
+      if (tmp > surplus) {
+	surplus = tmp;
+	s_node = n;
+      }
+    }
+
+    /* find node with least excessive particles */
+    lack = 0;
+    l_node = -1;
+    for (n = 0; n < n_nodes; n++) {
+      tmp = minshare - ppnode[n];
+      if (tmp < lack) {
+	lack = tmp;
+	l_node = n;
+      }
+    }
+
+    /* all nodes ok */
+    if (s_node == -1 && l_node == -1)
+      break;
+
+    /* should not happen: minshare or maxshare wrong or more likely,
+       the algorithm */
+    if (s_node == -1 || l_node == -1) {
+      fprintf(stderr, "%d: Particle load balancing failed\n", this_node);
+      break;
+    }
+
+    transfer = lack < surplus ? lack : surplus;
+
+    if (s_node == this_node) {
+      ParticleList send_buf;
+      init_particleList(&send_buf);
+      realloc_particles(&send_buf, send_buf.n = transfer);
+      for (i = 0; i < transfer; i++) {
+	memcpy(&send_buf.part[i], &local->part[--local->n], sizeof(Particle));
+      }
+      realloc_particles(local, local->n);
+      send_particles(&send_buf, l_node);
+    }
+    else if (l_node == this_node) {
+      recv_particles(local, n);
+    }
+
+    ppnode[s_node] -= transfer;
+    ppnode[l_node] += transfer;
+  }
+  free(ppnode);
 }

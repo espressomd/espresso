@@ -39,6 +39,7 @@
 #include "mmm1d.h"
 #include "forces.h"
 #include "uwerr.h"
+#include "nsquare.h"
 
 /** wether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
@@ -84,7 +85,10 @@ void on_integration_start()
     setup_node_grid();
 
   particle_invalidate_part_node();
-  
+
+  if (cell_structure.type == CELL_STRUCTURE_NSQUARE)
+    nsq_balance_particles();
+
   if (recalc_maxrange) {
     integrate_vv_recalc_maxrange();
     on_parameter_change(FIELD_MAXRANGE);

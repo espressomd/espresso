@@ -32,6 +32,7 @@
 #include "thermostat.h"
 #include "initialize.h"
 #include "forces.h"
+#include "nsquare.h"
 
 /************************************************
  * DEFINES
@@ -172,9 +173,16 @@ void integrate_vv(int n_steps)
 		      n_steps));
 
   if(resort_particles) {
-    //invalidate_ghosts();
-    //exchange_and_sort_part();
-    //exchange_ghost();
+    switch (cell_structure.type) {
+    case CELL_STRUCTURE_NSQUARE:
+      nsq_balance_particles();
+      break;
+    case CELL_STRUCTURE_DOMDEC:
+      //invalidate_ghosts();
+      //exchange_and_sort_part();
+      //exchange_ghost();
+      break;
+    }
     recalc_forces = 1;
     resort_particles = 0;
   }
@@ -461,16 +469,16 @@ void propagate_vel_pos()
       db_force = SQR(p[i].f.f[0])+SQR(p[i].f.f[1])+SQR(p[i].f.f[2]);
       if(db_force > skin2) 
 	fprintf(stderr,"%d: Part %d has force %f (%f,%f,%f)\n",
-		this_node,p[i].r.identity,sqrt(db_force),
+		this_node,p[i].p.identity,sqrt(db_force),
 		p[i].f.f[0],p[i].f.f[1],p[i].f.f[2]);
-      if(db_force > db_max_force) { db_max_force=db_force; db_maxf_id=p[i].r.identity; }
+      if(db_force > db_max_force) { db_max_force=db_force; db_maxf_id=p[i].p.identity; }
       /* velocity check */
       db_vel   = SQR(p[i].m.v[0])+SQR(p[i].m.v[1])+SQR(p[i].m.v[2]);
       if(db_vel > skin2) 
 	fprintf(stderr,"%d: Part %d has velocity %f (%f,%f,%f)\n",
-		this_node,p[i].r.identity,sqrt(db_vel),
+		this_node,p[i].p.identity,sqrt(db_vel),
 		p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]);
-      if(db_vel > db_max_vel) { db_max_vel=db_vel; db_maxv_id=p[i].r.identity; }
+      if(db_vel > db_max_vel) { db_max_vel=db_vel; db_maxv_id=p[i].p.identity; }
 #endif
 
       /* Verlet criterion check */
@@ -482,12 +490,12 @@ void propagate_vel_pos()
 #ifdef ADDITIONAL_CHECKS
   if(db_max_force > skin2) 
     fprintf(stderr,"%d: max_force=%e, part=%d f=(%e,%e,%e)\n",this_node,
-	    sqrt(db_max_force),db_maxf_id,local_particles[db_maxf_id]->f[0],
-	    local_particles[db_maxf_id]->f[1],local_particles[db_maxf_id]->f[2]);
+	    sqrt(db_max_force),db_maxf_id,local_particles[db_maxf_id]->f.f[0],
+	    local_particles[db_maxf_id]->f.f[1],local_particles[db_maxf_id]->f.f[2]);
   if(db_max_vel > skin2)
     fprintf(stderr,"%d: max_vel=%e, part=%d v=(%e,%e,%e)\n",this_node,
-	    sqrt(db_max_vel),db_maxv_id,local_particles[db_maxv_id]->v[0],
-	    local_particles[db_maxv_id]->v[1],local_particles[db_maxv_id]->v[2]);
+	    sqrt(db_max_vel),db_maxv_id,local_particles[db_maxv_id]->m.v[0],
+	    local_particles[db_maxv_id]->m.v[1],local_particles[db_maxv_id]->m.v[2]);
 #endif
 
   /* communicate verlet criterion */

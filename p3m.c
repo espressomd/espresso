@@ -426,13 +426,13 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 #ifdef ADDITIONAL_CHECKS
 	  if( pos[d]<0.0 ) {
 	    fprintf(stderr,"%d: rs_mesh underflow! (P%d at %f)\n",
-		    this_node,p[i].r.identity,p[i].r.p[d]);
+		    this_node,p[i].p.identity,p[i].r.p[d]);
 	    fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
 		    this_node,my_left[d],my_right[d]);	    
 	  }
 	  if( (first[d]+p3m.cao) > lm.dim[d] ) {
 	    fprintf(stderr,"%d: rs_mesh overflow! dir=%d (P_id=%d at %f) first=%d\n",
-		    this_node,d,p[i].r.identity,p[i].r.p[d],first[d]);
+		    this_node,d,p[i].p.identity,p[i].r.p[d],first[d]);
 	    fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
 		    this_node,my_left[d],my_right[d]);
 	  }    

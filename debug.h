@@ -54,9 +54,9 @@
 // #define INTEG_DEBUG
 #define CELL_DEBUG
 // #define GHOST_DEBUG
-// #define GRID_DEBUG
+#define GRID_DEBUG
 // #define VERLET_DEBUG
-// #define PARTICLE_DEBUG
+#define PARTICLE_DEBUG
 // #define P3M_DEBUG
 // #define FFT_DEBUG
 // #define RANDOM_DEBUG
@@ -71,10 +71,10 @@
 // #define STAT_DEBUG
 // #define POLY_DEBUG
 
-//#define MPI_CORE
-//#define FORCE_CORE
+#define MPI_CORE
+#define FORCE_CORE
 
-//#define ADDITIONAL_CHECKS
+#define ADDITIONAL_CHECKS
 
 /** callback for debug status. */
 int debug_callback(Tcl_Interp *interp);
