@@ -49,9 +49,10 @@
 
 int    integ_switch     = INTEG_METHOD_NVT;
 
+int n_verlet_updates    = 0;
+
 double time_step        = -1.0;
 double sim_time         = 0.0;
-
 double skin             = -1.0;
 double skin2;
 double max_range        = -1.0;
@@ -249,7 +250,6 @@ void integrate_ensemble_init()
 void integrate_vv(int n_steps)
 {
   int i;
-  int n_verlet_updates = 0;
 
   /* Prepare the Integrator */
   on_integration_start();
@@ -273,6 +273,8 @@ void integrate_vv(int n_steps)
     recalc_forces = 0;
   }
 
+  n_verlet_updates = 0;
+
   /* Integration loop */
   for(i=0;i<n_steps;i++) {
 
@@ -294,18 +296,7 @@ void integrate_vv(int n_steps)
     propagate_omega_quat(); 
 #endif
 
-    /* Check verlet list criterion */
-    if(rebuild_verletlist == 1 &&
-       cell_structure.type == CELL_STRUCTURE_DOMDEC) {
-      INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
-      n_verlet_updates++;
-      /* Communication step:  number of ghosts and ghost information */
-      cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
-    }
-    else {
-      /* Communication step: ghost information */
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    }
+    cells_update_ghosts();
 
     /* Integration Step: Step 3 of Velocity Verlet scheme:
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities v(t+0.5*dt) ) */

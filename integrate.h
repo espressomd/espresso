@@ -28,6 +28,9 @@
 /** Switch determining which Integrator to use. */
 extern int integ_switch;
 
+/** incremented if a Verlet update is done, aka particle resorting. */
+extern int n_verlet_updates;
+
 /** Time step for the integration. */
 extern double time_step;
 /** Old time step needed for rescaling of forces. */

@@ -18,6 +18,7 @@
 #include "mmm-common.h"
 #include "utils.h"
 #include "specfunc.h"
+#include "integrate.h"
 #include "layered.h"
 
 #ifdef ELECTROSTATICS
@@ -33,14 +34,18 @@
  * LOCAL DEFINES
  ****************************************/
 
-/* Largest reasonable cutoff for far formula */
-#define MAXIMAL_FAR_CUT 50
+/* Largest reasonable cutoff for far formula. A double cannot overflow
+   with this value. */
+#define MAXIMAL_FAR_CUT 100
 
-/* Largest reasonable cutoff for Bessel function */
-#define MAXIMAL_B_CUT 20
+/* Largest reasonable cutoff for Bessel function. The Bessel functions
+   are quite slow, so do not make too large. */
+#define MAXIMAL_B_CUT 50
 
-/* Largest reasonable order of polygamma series */
-#define MAXIMAL_POLYGAMMA 50
+/* Largest reasonable order of polygamma series. These are pretty fast,
+   so use more of them. Also, the real cutoff is determined at run time,
+   so normally we are faster */
+#define MAXIMAL_POLYGAMMA 100
 
 /* number of steps in the complex cutoff table */
 #define COMPLEX_STEP 16
@@ -62,8 +67,12 @@ static IntList besselCutoff = {NULL, 0, 0};
 static int  complexCutoff[COMPLEX_STEP];
 static DoubleList  bon = {NULL, 0, 0};
 
+/* inverse box dimensions */
 static double ux, ux2, uy, uy2, uz;
-static double cell_h;
+/* maximal z for near formula, minimal z for far formula.
+   Is identical in the theory, but with the verlet tricks
+   this is no longer true, the skin has to be added/subtracted */
+static double max_near, min_far;
 static double self_energy;
 
 MMM2D_struct mmm2d_params = { 1e100, 10, 1 };
@@ -175,13 +184,17 @@ void MMM2D_setup_constants()
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_NSQUARE:
-    cell_h = box_l[2];
+    max_near = box_l[2];
+    /* not used */
+    min_far = 0.0;
     break;
   case CELL_STRUCTURE_LAYERED:
-    cell_h = layer_h;
+    max_near = layer_h + skin;
+    min_far  = layer_h - skin;
     break;
   default:
-    cell_h = 0;
+    fprintf(stderr, "%d: INTERNAL MMM2D ERROR: setup for cell structure it should reject\n", this_node);
+    errexit();
   }
 }
 
@@ -768,7 +781,7 @@ void MMM2D_add_far_force()
   int p, q;
   double omega;
 
-  if (cell_structure.type != CELL_STRUCTURE_LAYERED || n_nodes*n_layers < 3)
+  if (mmm2d_params.far_cut == 0.0)
     return;
 
   add_2pi_signz();
@@ -794,7 +807,7 @@ void MMM2D_add_far_force()
     checkpoint("************distri q", 0, q, 2);
   }
 
-  for (p = 1; p - 1 < ux*mmm2d_params.far_cut  && p <= n_scxcache ; p++) {
+  for (p = 1; ux*(p - 1) < mmm2d_params.far_cut  && p <= n_scxcache ; p++) {
     for (q = 1; SQR(ux*(p - 1)) + SQR(uy*(q - 1)) < mmm2d_params.far_cut2 && q <= n_scycache; q++) {
       omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
       setup_PQ(p, q, omega);
@@ -814,7 +827,7 @@ double MMM2D_far_energy()
   // It's not really far...
   eng = self_energy;
 
-  if (cell_structure.type != CELL_STRUCTURE_LAYERED || n_nodes*n_layers < 3)
+  if (mmm2d_params.far_cut == 0.0)
     return 0.5*eng;
 
   eng += twopi_z_energy();
@@ -840,7 +853,7 @@ double MMM2D_far_energy()
     checkpoint("E************distri q", 0, q, 2);
   }
 
-  for (p = 1; p - 1 < ux*mmm2d_params.far_cut  && p <= n_scxcache ; p++) {
+  for (p = 1; ux*(p - 1) < mmm2d_params.far_cut  && p <= n_scxcache ; p++) {
     for (q = 1; SQR(ux*(p - 1)) + SQR(uy*(q - 1)) < mmm2d_params.far_cut2 && q <= n_scycache; q++) {
       omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
       setup_PQ(p, q, omega);
@@ -856,20 +869,19 @@ double MMM2D_far_energy()
 
 static char *MMM2D_tune_far(double error)
 {
-  double err, step;
-  mmm2d_params.far_cut = 2;
-  /* so it is at least at one border optimal */
-  step = dmin(ux, uy);
+  double err;
+  double min_inv_boxl = dmin(ux, uy);
+  mmm2d_params.far_cut = min_inv_boxl;
   do {
-    err = exp(-2*M_PI*mmm2d_params.far_cut*cell_h)/cell_h*
-      (C_2PI*mmm2d_params.far_cut + 2*(ux + uy) + 1/cell_h);
-    mmm2d_params.far_cut += step;
+    err = exp(-2*M_PI*mmm2d_params.far_cut*min_far)/min_far*
+      (C_2PI*mmm2d_params.far_cut + 2*(ux + uy) + 1/min_far);
+    mmm2d_params.far_cut += min_inv_boxl;
   }
-  while (err > error && mmm2d_params.far_cut < MAXIMAL_FAR_CUT);
-  if (mmm2d_params.far_cut >= MAXIMAL_FAR_CUT)
+  while (err > error && mmm2d_params.far_cut*box_l[2] < MAXIMAL_FAR_CUT);
+  if (mmm2d_params.far_cut*box_l[2] >= MAXIMAL_FAR_CUT*uz)
     return "Far cutoff too large, decrease n_layers or the error bound";
   // fprintf(stderr, "far cutoff %g %g\n", mmm2d_params.far_cut, err);
-  mmm2d_params.far_cut -= step;
+  mmm2d_params.far_cut -= min_inv_boxl;
   mmm2d_params.far_cut2 = SQR(mmm2d_params.far_cut);
   return NULL;
 }
@@ -887,7 +899,7 @@ static char *MMM2D_tune_near(double error)
   double L, sum;
 
   /* yes, it's y only... */
-  if (cell_h > box_l[1]/2)
+  if (max_near > box_l[1]/2)
     return "Layer height too large for MMM2D near formula, increase n_layers";
   if (ux*box_l[1] >= 3/M_SQRT2 )
     return "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and y";
@@ -1266,9 +1278,9 @@ void MMM2D_self_energy()
 
   // fprintf(stderr, "%d: self energy %g\n", this_node, seng);
 
-  for (c = 1; c <= n_layers; c++) {
-    np   = cells[c].n;
-    part = cells[c].part;
+  for (c = 0; c < local_cells.n; c++) {
+    np   = local_cells.cell[c]->n;
+    part = local_cells.cell[c]->part;
 
     for (i = 0; i < np; i++) {
       self_energy += seng*SQR(part[i].p.q);
@@ -1291,7 +1303,7 @@ void MMM2D_init()
   
   if (cell_structure.type != CELL_STRUCTURE_LAYERED &&
       cell_structure.type != CELL_STRUCTURE_NSQUARE) {
-    fprintf(stderr, "ERROR: MMM2D requires layered (or n-square) cellsystem\n");
+    fprintf(stderr, "ERROR: MMM2D at present requires layered (or n-square) cellsystem\n");
     errexit();
   }
 
@@ -1300,10 +1312,15 @@ void MMM2D_init()
     fprintf(stderr, "ERROR: MMM2D auto-retuning: %s\n", err);
     errexit();
   }
-  if (mmm2d_params.far_calculated) {
-    if ((err = MMM2D_tune_far(mmm2d_params.maxPWerror))) {
-      fprintf(stderr, "ERROR: MMM2D auto-retuning: %s\n", err);
-      errexit();
+  if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
+      (cell_structure.type == CELL_STRUCTURE_LAYERED && n_nodes*n_layers < 3))
+    mmm2d_params.far_cut = 0.0;
+  else {
+    if (mmm2d_params.far_calculated) {
+      if ((err = MMM2D_tune_far(mmm2d_params.maxPWerror))) {
+	fprintf(stderr, "ERROR: MMM2D auto-retuning: %s\n", err);
+	errexit();
+      }
     }
   }
 }
@@ -1339,18 +1356,24 @@ int set_mmm2d_params(Tcl_Interp *interp, double maxPWerror, double far_cut)
     return TCL_ERROR;
   }
 
-  if (far_cut >= 0) {
-    mmm2d_params.far_cut = far_cut;
-    mmm2d_params.far_cut2 = SQR(far_cut);
-    mmm2d_params.far_calculated = 0;
-  }
+  /* if we cannot do the far formula, force off */
+  if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
+      (cell_structure.type == CELL_STRUCTURE_LAYERED && n_nodes*n_layers < 3))
+    mmm2d_params.far_cut = 0.0;
   else {
-    if ((err = MMM2D_tune_far(maxPWerror))) {
-      coulomb.method = COULOMB_NONE;
-      Tcl_AppendResult(interp, err, NULL);
-      return TCL_ERROR;
+    if (far_cut >= 0) {
+      mmm2d_params.far_cut = far_cut;
+      mmm2d_params.far_cut2 = SQR(far_cut);
+      mmm2d_params.far_calculated = 0;
     }
-    mmm2d_params.far_calculated = 1;    
+    else {
+      if ((err = MMM2D_tune_far(maxPWerror))) {
+	coulomb.method = COULOMB_NONE;
+	Tcl_AppendResult(interp, err, NULL);
+	return TCL_ERROR;
+      }
+      mmm2d_params.far_calculated = 1;    
+    }
   }
 
   coulomb.method = COULOMB_MMM2D;

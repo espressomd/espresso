@@ -326,6 +326,8 @@ void cells_resort_particles(int global_flag)
 
   particle_invalidate_part_node();
 
+  n_verlet_updates++;
+
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
     layered_exchange_and_sort_particles(global_flag);
@@ -345,6 +347,28 @@ void cells_resort_particles(int global_flag)
 
   rebuild_verletlist = 1;
   recalc_forces = 1;
+}
+
+/*************************************************/
+
+void cells_update_ghosts()
+{
+  switch (cell_structure.type) {
+    /* methods using skin rsp. rebuild_verletlist */
+  case CELL_STRUCTURE_DOMDEC:
+    /* layered has a skin only in z in principle, but
+       probably we can live very well with the standard skin */
+  case CELL_STRUCTURE_LAYERED:
+    if (rebuild_verletlist == 1)
+      /* Communication step:  number of ghosts and ghost information */
+      cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
+    else
+      /* Communication step: ghost information */
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  case CELL_STRUCTURE_NSQUARE:
+    /* the particles probably are still balanced... */
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);    
+  }
 }
 
 /*************************************************/

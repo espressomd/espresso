@@ -198,6 +198,10 @@ MDINLINE void realloc_cellplist(CellPList *cpl, int size)
     arbitrarly, otherwise the change should have been smaller then skin.  */
 void cells_resort_particles(int global_flag);
 
+/** update ghost information. If \ref rebuild_verletlist == 1, for some cell structures also a
+    resorting of the particles takes place. */
+void cells_update_ghosts();
+
 /** Calculate and return the total number of particles on this
     node. */
 int cells_get_n_particles();

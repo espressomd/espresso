@@ -25,7 +25,7 @@
 
 /* precision of polygamma functions. More is unnecessary, the Bessel
    functions are not better anyways... */
-#define POLYGAMMA_EPS 1e-10
+#define POLYGAMMA_EPS 1e-17
 
 extern Polynom *modPsi;
 extern int      n_modPsi;

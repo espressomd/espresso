@@ -16,7 +16,15 @@ typedef struct {
 } MMM2D_struct;
 extern MMM2D_struct mmm2d_params;
 
-/** set parameters for MMM2D */
+/** set parameters for MMM2D. This assumes that the particles do NOT leave the box.
+    For the near formula (nsquared cell structure), precision might be lost, while
+    the far formula might have problems with overflows. 
+    @param maxPWerror   the maximal error for the pairwise interactions. Both for
+    potential and force components. The potential is therefore always slightly
+    more precise
+    @param far_cut      sets the cutoff for the far formula in inverse lengths.
+    if -1, the far cutoff is determined by maxPWerror. Probably only good for testing
+*/
 int set_mmm2d_params(Tcl_Interp *interp, double maxPWerror, double far_cut);
 
 /** the actual long range force calculation */
