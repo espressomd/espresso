@@ -97,6 +97,41 @@ void   P3M_init();
     charges and the squared sum of the charges. */
 void P3M_count_charged_particles();
 
+/** Tune P3M parameters to desired accuracy.
+
+    Usage:
+    \verbatim inter coulomb <bjerrum> p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value>] \endverbatim
+
+    The parameters are tuned to obtain the desired accuracy in best
+    time, by running mpi_integrate(0) for several parameter sets.
+
+    The function utilizes the analytic expression of the error estimate 
+    for the P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in 
+    order to obtain the rms error in the force for a system of N randomly 
+    distributed particles in a cubic box.
+    For the real space error the estimate of Kolafa/Perram is used. 
+
+    Parameter range if not given explicit values: For \ref p3m_struct::r_cut
+    the function uses the values (\ref min_local_box_l -\ref #skin) /
+    n, n being an integer (this implies the assumption that \ref
+    p3m_struct::r_cut is the largest cutoff in the system!). For \ref
+    p3m_struct::mesh the function uses the two values which matches best the
+    equation: number of mesh point = number of charged particles. For
+    \ref p3m_struct::cao the function considers all possible values.
+
+    For each setting \ref p3m_struct::alpha is calculated assuming that the
+    error contributions of real and reciprocal space should be equal.
+
+    After checking if the total error fulfils the accuracy goal the
+    time needed for one force calculation (including verlet list
+    update) is measured via \ref mpi_integrate(0).
+
+    The function returns a log of the performed tuning.
+
+    The function is based on routines of the program HE_Q.c written by M. Deserno.
+ */
+int P3M_tune_parameters(Tcl_Interp *interp);
+
 /** Calculate the k-space contribution to the coulomb interaction
     forces. */ 
 double P3M_calc_kspace_forces(int force_flag, int energy_flag);

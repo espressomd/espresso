@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
 
 #include "global.h"
 #include "debug.h"
@@ -126,6 +127,10 @@ int *ca_fmp = NULL;
 /** number of permutations in k_space */
 int ks_pnum;
 
+/* timing helper variables */
+static struct rusage time1, time2;
+
+
 /** \name Privat Functions */
 /************************************************************/
 /*@{*/
@@ -209,9 +214,72 @@ void calc_influence_function();
  * \return denominator aliasing sum in the denominator
  */
 MDINLINE double perform_aliasing_sums(int n[3], double nominator[3]);
-
-
 /*@}*/
+
+
+/** \name P3M Tuning Functions (privat)*/
+/************************************************************/
+/*@{*/
+
+/** Calculates the real space contribution to the rms error in the force (as described 
+   by Kolafa and Perram). 
+   \param box_size size of cubic simulation box. 
+   \param prefac   Prefactor of coulomb interaction.
+   \param r_cut    real space cutoff for p3m method.
+   \param n_c_part number of charged particles in the system.
+   \param sum_q2   sum of square of charges in the system
+   \param alpha    ewald splittng parameter.
+   \return real space error
+*/
+double P3M_real_space_error(double box_size, double prefac, double r_cut, 
+			    int n_c_part, double sum_q2, double alpha);
+
+/** Calculate the analytic expression of the error estimate for the
+    P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
+    order to obtain the rms error in the force for a system of N
+    randomly distributed particles in a cubic box (k space part).
+    \param box_size size of cubic simulation box. 
+    \param prefac   Prefactor of coulomb interaction.
+    \param mesh     number of mesh points in one direction.
+    \param cao      charge assignment order.
+    \param n_c_part number of charged particles in the system.
+    \param sum_q2   sum of square of charges in the system
+    \param alpha    ewald splittng parameter.
+    \return reciprocal (k) space error
+*/
+
+double P3M_k_space_error(double box_size, double prefac, int mesh, 
+			 int cao, int n_c_part, double sum_q2, double alpha);
+
+/** One of the aliasing sums used by \ref P3M_k_space_error. 
+    (fortunately the one which is most important (because it converges
+    most slowly, since it is not damped exponentially)) can be
+    calculated analytically. The result (which depends on the order of
+    the spline interpolation) can be written as an even trigonometric
+    polynomial. The results are tabulated here (The employed formula
+    is Eqn. 7.66 in the book of Hockney and Eastwood). */
+double analytic_cotangent_sum(int n, int mesh, int cao);
+
+/** aliasing sum used by \ref P3M_k_space_error. */
+void P3M_tune_aliasing_sums(int nx, int ny, int nz, 
+			    double box_size, int mesh, int cao, double alpha , 
+			    double *alias1, double *alias2);
+
+/** set a time marker. */
+void markTime()
+{
+  time2 = time1;
+  getrusage(RUSAGE_SELF, &time1);
+}
+
+/** calculate milliseconds between last two calls to markTime. */
+double diffTime()
+{
+  return 1e-3*(time1.ru_utime.tv_usec - time2.ru_utime.tv_usec) +
+    1e3*(time1.ru_utime.tv_sec - time2.ru_utime.tv_sec);
+}
+/*@}*/
+
 
 /************************************************************/
 
@@ -272,6 +340,7 @@ void   P3M_init()
       }
     }
     /* initialize ca fields to size CA_INCREMENT: ca_frac and ca_fmp */
+    ca_num = 0;
     if(ca_num < CA_INCREMENT) {
       ca_num = 0;
       realloc_ca_fields(CA_INCREMENT);
@@ -966,40 +1035,163 @@ MDINLINE double perform_aliasing_sums(int n[3], double nominator[3])
  * This tuning is based on P3M_tune by M. Deserno
  ************************************************/
 
-int P3M_tune_parameters(void)
+#define P3M_TUNE_MAX_CUTS 10
+
+int P3M_tune_parameters(Tcl_Interp *interp)
 {
-  int i;
-  double r_cut, r_cut_min, r_cut_max;
-  int    mesh , mesh_min , mesh_max;
-  int    cao  , cao_min  , cao_max;
-  double alpha, alpha_min, alpha_max;
+  int i,j,ind, try=0, best_try=0, n_cuts;
+  double r_cut, r_cut_min, r_cut_max, r_cut_best=0, cuts[P3M_TUNE_MAX_CUTS], cut_start;
+  int    mesh , mesh_min , mesh_max,  mesh_best=0;
+  int    cao  , cao_min  , cao_max,   cao_best=0;
+  double alpha, alpha_best=0, accuracy, accuracy_best=0;
+  double mesh_size, k_cut;
+  double rs_err, rs_err_best=0, ks_err, ks_err_best=0;
+  double int_time=0, min_time=1e20, int_num;
+  char b1[TCL_DOUBLE_SPACE + 12],b2[TCL_DOUBLE_SPACE + 12],b3[TCL_DOUBLE_SPACE + 12];
  
-  P3M_TRACE(fprintf(stderr,"%d: P3M_tune_parameters\n",this_node)); 
+  P3M_TRACE(fprintf(stderr,"%d: P3M_tune_parameters\n",this_node));
   
-  P3M_count_charged_particles();
+  /* preparation */
+  mpi_bcast_event(P3M_COUNT_CHARGES);
+  if(temperature > 0.0) p3m.prefactor    = p3m.bjerrum * temperature; 
+  else p3m.prefactor    = p3m.bjerrum;
 
-  /* calculate possible parameter range */
-  if(p3m.r_cut == 0.0) { r_cut_min = 0.0; r_cut_max = min_box_l-skin; }
-  else                 { r_cut_min = r_cut_max = p3m.r_cut; }
-
+  /* calculate r_cut tune range */
+  if(p3m.r_cut == 0.0) { 
+    n_cuts = P3M_TUNE_MAX_CUTS;
+    for(i=0;i<n_cuts;i++) {
+      if(min_local_box_l == min_box_l) 
+	cuts[i] = min_local_box_l/(i+2.0)-(skin);
+      else 
+	cuts[i] = min_local_box_l/(i+1.0)-(skin);
+    }
+    r_cut_max = cuts[0];
+    r_cut_min = cuts[n_cuts-1];
+  }
+  else { 
+    n_cuts = 1;
+    r_cut_min = r_cut_max = p3m.r_cut; 
+    cuts[0] = p3m.r_cut;
+  }
+  /* calculate mesh tune range */
   if(p3m.mesh[0] == 0 ) {
     double expo;
     expo = log(pow((double)p3m_sum_qpart,(1.0/3.0)))/log(2.0);
     mesh_min = (int)(pow(2.0,(double)((int)expo))+0.1);
-    mesh_max*=2;
+    mesh_max = mesh_min*2;
     if(mesh_min < 8) { mesh_min = mesh_max = 8; }
-    P3M_TRACE(fprintf(stderr,"%d: expo=%f, mesh_min=%d, mesh_max=%d\n",this_node,expo,mesh_min,mesh_max)); 
   }
   else { mesh_min = mesh_max = p3m.mesh[0]; }
-
-  if(p3m.cao == 0) { cao_min = 0; cao_max = 7; }
+  /* calculate cao tune range */
+  if(p3m.cao == 0) { cao_min = 1; cao_max = 7; }
   else             { cao_min = cao_max = p3m.cao; }
 
-  if(p3m.alpha == 0.0) { alpha_min = 0.0; alpha_max = 1.0; }
-  else                 { alpha_min = alpha_max = p3m.alpha; } 
+  /* Print Status */
+  sprintf(b1,"%.5e",p3m.accuracy);
+  Tcl_AppendResult(interp, "P3M tune parameters: Accuracy goal = ",b1,"\n", (char *) NULL);
+  Tcl_PrintDouble(interp, box_l[0], b1);
+  sprintf(b2,"%d",p3m_sum_qpart);
+  Tcl_PrintDouble(interp, p3m_sum_q2, b3);
+  Tcl_AppendResult(interp, "System: box_l = ",b1,", # charged part = ",b2," Sum[q_i^2] = ",b3,"\n", (char *) NULL);
+  Tcl_PrintDouble(interp, r_cut_min, b1);  Tcl_PrintDouble(interp, r_cut_max, b2);
+  Tcl_AppendResult(interp, "Range for p3m.r_cut: [",b1,"-",b2,"]","\n", (char *) NULL);
+  sprintf(b1,"%d",mesh_min);  sprintf(b2,"%d",mesh_max);
+  Tcl_AppendResult(interp, "Range for p3m.mesh:  [",b1,"-",b2,"]","\n", (char *) NULL);
+  sprintf(b1,"%d",cao_min);  sprintf(b2,"%d",cao_max);
+  Tcl_AppendResult(interp, "Range for p3m.cao:   [",b1,"-",b2,"]","\n\n", (char *) NULL);
+  Tcl_AppendResult(interp, "set mesh cao r_cut        alpha        err          ks_err     rs_err     time [ms]\n", (char *) NULL);
 
-  i=1; r_cut=0.0; mesh=0;cao=0;alpha=0.0;
-  return 1;
+  /* Tuning Loops */
+  for(mesh = mesh_min; mesh <= mesh_max; mesh*=2) { /* mesh loop */
+    cut_start = box_l[0];
+    if(mesh < 32 || p3m_sum_qpart > 2000) int_num=5; else int_num=1;
+    for(cao = cao_min; cao <= cao_max; cao++) {     /* cao loop */
+      mesh_size = box_l[0]/(double)mesh;
+      k_cut =  mesh_size*cao/2.0;
+      if(cao < mesh && k_cut < dmin(min_box_l,min_local_box_l)-skin) {
+	ind=0;
+	for(i=0;i<P3M_TUNE_MAX_CUTS-1;i++) {
+	  if(cut_start <= cuts[i]) ind=i+1;
+	}
+	while (ind < P3M_TUNE_MAX_CUTS) {           /* r_cut loop */
+	  r_cut = cuts[ind];
+	  /* calc maximal real space error for setting */
+	  rs_err = P3M_real_space_error(box_l[0],p3m.prefactor,r_cut,p3m_sum_qpart,p3m_sum_q2,0);
+	  if(sqrt(2.0)*rs_err > p3m.accuracy) {
+	    /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha */
+	    alpha = sqrt(log(sqrt(2.0)*rs_err/p3m.accuracy)) / r_cut;
+	    /* calculate real space and k space error for this alpha */
+	    rs_err = P3M_real_space_error(box_l[0],p3m.prefactor,r_cut,p3m_sum_qpart,p3m_sum_q2,alpha);
+	    ks_err = P3M_k_space_error(box_l[0],p3m.prefactor,mesh,cao,p3m_sum_qpart,p3m_sum_q2,alpha);
+	    accuracy = sqrt(SQR(rs_err)+SQR(ks_err));
+	    /* check if this matches the accuracy goal */
+	    if(accuracy <= p3m.accuracy) {
+	      cut_start = cuts[ind];		
+	      /* broadcast p3m parameters for test run */
+	      p3m.r_cut   = r_cut;
+	      p3m.mesh[0] = p3m.mesh[1] = p3m.mesh[2] = mesh;
+	      p3m.cao     = cao;
+	      p3m.alpha   = alpha;
+	      /* initialize p3m structures */
+	      mpi_bcast_coulomb_params();
+	      mpi_integrate(0);
+	      /* perform force calculation test */
+	      markTime();
+	      for(j=0;j<int_num;j++) {
+		mpi_bcast_event(PARTICLE_CHANGED);		
+		mpi_integrate(0);
+	      }
+	      markTime();
+	      int_time = diffTime()/int_num;
+	      try++;
+	      P3M_TRACE(fprintf(stderr,"%d ",try));
+	      /* print result */
+	      sprintf(b1,"%-3d",try); sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
+	      Tcl_AppendResult(interp, b1," ", b2," ", b3," ", (char *) NULL);
+	      sprintf(b1,"%.5e",r_cut); sprintf(b2,"%.5e",alpha); sprintf(b3,"%.5e",accuracy);
+	      Tcl_AppendResult(interp, b1,"  ", b2,"  ", b3,"  ", (char *) NULL);
+	      sprintf(b1,"%.3e",rs_err); sprintf(b2,"%.3e",ks_err); sprintf(b3,"%-8d",(int)int_time);
+	      Tcl_AppendResult(interp, b1,"  ", b2,"  ", b3,"\n", (char *) NULL);
+	      if(int_time <= min_time) {
+		min_time      = int_time;
+		r_cut_best    = r_cut;
+		mesh_best     = mesh;
+		cao_best      = cao;
+		alpha_best    = alpha;
+		accuracy_best = sqrt(SQR(rs_err)+SQR(ks_err));
+		rs_err_best   = rs_err;
+		ks_err_best   = ks_err;
+		best_try      = try;
+	      }
+	    }
+	  }
+	  ind++;
+	}
+      }
+    }
+  }
+  P3M_TRACE(fprintf(stderr,"\n"));
+  if(try==0) {
+    Tcl_AppendResult(interp, "\nFailed to tune P3M parameters to required accuracy ! \n", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  /* set tuned p3m parameters */
+  p3m.r_cut    = r_cut_best;
+  p3m.mesh[0]  = p3m.mesh[1] = p3m.mesh[2] = mesh_best;
+  p3m.cao      = cao_best;
+  p3m.alpha    = alpha_best;
+  p3m.accuracy = accuracy_best;
+  sprintf(b1,"%d",try);
+  Tcl_AppendResult(interp, "\nTune results of ",b1," trials:\n", (char *) NULL);
+  sprintf(b1,"%-3d",best_try); sprintf(b2,"%-4d",mesh_best); sprintf(b3,"%-3d",cao_best);
+  Tcl_AppendResult(interp, b1," ", b2," ", b3," ", (char *) NULL);
+  sprintf(b1,"%.5e",r_cut_best); sprintf(b2,"%.5e",alpha_best); sprintf(b3,"%.5e",accuracy_best);
+  Tcl_AppendResult(interp, b1,"  ", b2,"  ", b3,"  ", (char *) NULL);
+  sprintf(b1,"%.3e",rs_err_best); sprintf(b2,"%.3e",ks_err_best); sprintf(b3,"%-8d",(int)min_time);
+  Tcl_AppendResult(interp, b1,"  ", b2,"  ", b3,"\n", (char *) NULL);
+
+  return (TCL_OK);
 }
 
 void P3M_count_charged_particles()
@@ -1031,6 +1223,112 @@ void P3M_count_charged_particles()
   }
 
 }
+
+
+double P3M_real_space_error(double box_size, double prefac, double r_cut, 
+			    int n_c_part, double sum_q2, double alpha)
+{
+  return (2.0*prefac*sum_q2*exp(-SQR(r_cut*alpha))) / sqrt(n_c_part*r_cut*box_size*box_size*box_size);
+}
+
+double P3M_k_space_error(double box_size, double prefac, int mesh, 
+			 int cao, int n_c_part, double sum_q2, double alpha)
+{
+  int  nx, ny, nz;
+  double he_q = 0.0;
+  double alias1, alias2, n2, cs;
+
+  /*   fprintf(stderr,"KS ERR: box %.8f, prefac %.8f, mesh %d, cao %d\n",
+	  box_size,prefac,mesh,cao); 
+  fprintf(stderr,"        n_c_part %d, sum_q2 %.8f,  alpha %.8f\n", 
+  n_c_part,sum_q2,alpha); */
+
+  for (nx=-mesh/2; nx<mesh/2; nx++)
+    for (ny=-mesh/2; ny<mesh/2; ny++)
+      for (nz=-mesh/2; nz<mesh/2; nz++)
+	if((nx!=0) || (ny!=0) || (nz!=0)) {
+	  n2 = SQR(nx) + SQR(ny) + SQR(nz);
+	  cs = analytic_cotangent_sum(nx,mesh,cao)*
+ 	       analytic_cotangent_sum(ny,mesh,cao)*
+	       analytic_cotangent_sum(nz,mesh,cao);
+	  P3M_tune_aliasing_sums(nx,ny,nz,box_size,mesh,cao,alpha,&alias1,&alias2);
+	  he_q += (alias1  -  SQR(alias2/cs) / n2);
+	  /* fprintf(stderr,"%d %d %d he_q = %.20f %.20f %.20f %.20f\n",nx,ny,nz,he_q,cs,alias1,alias2); */
+	}
+  return 2.0*prefac*sum_q2*sqrt(he_q/(double)n_c_part) / SQR(box_size);
+}
+
+double analytic_cotangent_sum(int n, int mesh, int cao)
+{
+  double c, res=0.0;
+  c = SQR(cos(PI*(double)n/(double)mesh));
+
+  switch (cao) {
+  case 1 : { 
+    res = 1; 
+    break; }
+  case 2 : { 
+    res = (1.0+c*2.0)/3.0; 
+    break; }
+  case 3 : { 
+    res = (2.0+c*(11.0+c*2.0))/15.0; 
+    break; }
+  case 4 : { 
+    res = (17.0+c*(180.0+c*(114.0+c*4.0)))/315.0; 
+    break; }
+  case 5 : { 
+    res = (62.0+c*(1072.0+c*(1452.0+c*(247.0+c*2.0))))/2835.0; 
+    break; }
+  case 6 : { 
+    res = (1382.0+c*(35396.0+c*(83021.0+c*(34096.0+c*(2026.0+c*4.0)))))/155925.0; 
+    break; }
+  case 7 : { 
+    res = (21844.0+c*(776661.0+c*(2801040.0+c*(2123860.0+c*(349500.0+c*(8166.0+c*4.0))))))/6081075.0; 
+    break; }
+  default : {
+    fprintf(stderr,"The value %d for the interpolation order is not allowed!\n",cao);
+    errexit(1);
+  }
+  }
+  
+  return res;
+}
+
+void P3M_tune_aliasing_sums(int nx, int ny, int nz, 
+			    double box_size, int mesh, int cao, double alpha , 
+			    double *alias1, double *alias2)
+{
+
+  int    mx,my,mz;
+  double nmx,nmy,nmz;
+  double fnmx,fnmy,fnmz;
+
+  double ex,ex2,nm2,U2,factor1,factor2;
+
+  factor1 = SQR(PI/(alpha*box_size));
+  factor2 = 1.0/(double)mesh;
+
+  *alias1 = *alias2 = 0.0;
+  for (mx=-P3M_BRILLOUIN; mx<=P3M_BRILLOUIN; mx++) {
+    fnmx = factor2 * (nmx = nx + mx*mesh);
+    for (my=-P3M_BRILLOUIN; my<=P3M_BRILLOUIN; my++) {
+      fnmy = factor2 * (nmy = ny + my*mesh);
+      for (mz=-P3M_BRILLOUIN; mz<=P3M_BRILLOUIN; mz++) {
+	fnmz = factor2 * (nmz = nz + mz*mesh);
+	
+	nm2 = SQR(nmx) + SQR(nmy) + SQR(nmz);
+	ex2 = SQR( ex = exp(-factor1*nm2) );
+	
+	U2 = pow(sinc(fnmx)*sinc(fnmy)*sinc(fnmz), 2.0*cao);
+	
+	*alias1 += ex2 / nm2;
+	*alias2 += U2 * ex * (nx*nmx + ny*nmy + nz*nmz) / nm2;
+	/* fprintf(stderr,"%d %d %d : %d %d %d alias %.20f %.20f\n",nx,ny,nz,mx,my,mz,*alias1,*alias2); */
+      }
+    }
+  }
+}
+
 
 /************************************************
  * Debug functions printing p3m structures 

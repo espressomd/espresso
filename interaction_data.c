@@ -214,7 +214,7 @@ int printCoulombIAToResult(Tcl_Interp *interp)
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
   if (coulomb.bjerrum == 0.0) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "coulomb interaction does not exist",
+    Tcl_AppendResult(interp, "coulomb 0.0",
 		     (char *) NULL);
     return (TCL_OK);
   }
@@ -480,48 +480,107 @@ int inter(ClientData _data, Tcl_Interp *interp,
 #endif
       
       if(Tcl_GetDouble(interp, argv[0], &(p3m.r_cut)) == TCL_ERROR) {
+	Tcl_ResetResult(interp);
 	/* must be tune, tune parameters */
 	if(strncmp(argv[0], "tune", strlen(argv[0]))) {
 	  Tcl_AppendResult(interp, "Unknown p3m parameter \"",argv[0],"\"",(char *) NULL);
 	  return (TCL_ERROR);  
 	}
-	Tcl_AppendResult(interp, "Automatic p3m tuning not implemented.",(char *) NULL);
-	return (TCL_ERROR);  
-      }
-      
-      /* parse p3m parameters */
-      if(argc<3) {
-	Tcl_AppendResult(interp, "p3m needs at least 3 parameters: <r_cut> <mesh> <cao> [alpha] [accuracy]",(char *) NULL);
-	return (TCL_ERROR);  
-      }
-      if(Tcl_GetInt(interp, argv[1], &(p3m.mesh[0])) == TCL_ERROR ||
-	 Tcl_GetInt(interp, argv[2], &(p3m.cao    )) == TCL_ERROR ) 
-	return (TCL_ERROR);
-      
-      if(p3m.mesh[0] < 0) {
-	Tcl_AppendResult(interp, "p3m mesh must be positiv.",(char *) NULL);
-	return (TCL_ERROR);
-      }
-      p3m.mesh[2] = p3m.mesh[1] = p3m.mesh[0];
-      if(p3m.cao < 0 || p3m.cao > 7) {
-	Tcl_AppendResult(interp, "p3m cao must be between 0 and 7.",(char *) NULL);
-	return (TCL_ERROR);
-      }
-      if(p3m.cao > p3m.mesh[0] )  {
-	Tcl_AppendResult(interp, "p3m cao can not be larger than p3m mesh",(char *) NULL);
-	return (TCL_ERROR);
-      }
-      if(argc>3) {
-	if(Tcl_GetDouble(interp, argv[3], &(p3m.alpha)) == TCL_ERROR )
+	argc -= 1;
+	argv += 1;
+	/* parse tune parameters */
+	while(argc > 0) {
+	  if(!strncmp(argv[0], "r_cut", strlen(argv[0]))) {
+	    if(argc > 1) {
+	      if(Tcl_GetDouble(interp, argv[1], &(p3m.r_cut)) == TCL_ERROR) 
+		return (TCL_ERROR); 
+	    }
+	    else return (TCL_ERROR); 
+	  }
+	  else if(!strncmp(argv[0], "mesh", strlen(argv[0]))) {
+	    if(argc > 1) { 
+	      if(Tcl_GetInt(interp, argv[1], &(p3m.mesh[0])) == TCL_ERROR) 
+		return (TCL_ERROR);
+	    } 
+	    else return (TCL_ERROR); 
+	  }
+	  else if(!strncmp(argv[0], "cao", strlen(argv[0]))) {
+	    if(argc > 1) {
+	      if(Tcl_GetInt(interp, argv[1], &(p3m.cao)) == TCL_ERROR) 
+		return (TCL_ERROR);
+	    } 
+	    else return (TCL_ERROR); 
+	  }
+	  else if(!strncmp(argv[0], "accuracy", strlen(argv[0]))) {
+	    if(argc > 1) { 
+	      if(Tcl_GetDouble(interp, argv[1], &(p3m.accuracy)) == TCL_ERROR) 
+		return (TCL_ERROR);
+	    } 
+	    else return (TCL_ERROR); 
+	  }
+	  else {
+	    Tcl_AppendResult(interp, "Unkwon p3m tune parameter \"",argv[0],"\"",(char *) NULL);
+	    return (TCL_ERROR);  
+	  }
+	  argc-=2;
+	  argv+=2;
+	}
+	/* check tune parameters */
+	if(p3m.accuracy <= 0.0) {
+	  Tcl_AppendResult(interp, "You have to give p3m tune a positive value for accuracy!",(char *) NULL);
+	  return (TCL_ERROR);
+	}
+	if(p3m.r_cut < 0.0) {
+	  Tcl_AppendResult(interp, "p3m tune r_cut must be positiv.",(char *) NULL);
+	  return (TCL_ERROR);
+	}
+	if(p3m.mesh[0] < 0) {
+	  Tcl_AppendResult(interp, "p3m tune mesh must be positiv.",(char *) NULL);
+	  return (TCL_ERROR);
+	}
+	p3m.mesh[2] = p3m.mesh[1] = p3m.mesh[0];
+	if(p3m.cao < 0 || p3m.cao > 7) {
+	  Tcl_AppendResult(interp, "p3m tune cao must be in between 1 and 7",(char *) NULL);
+	  return (TCL_ERROR);
+	}
+	if(P3M_tune_parameters(interp) == TCL_ERROR) 
 	  return (TCL_ERROR);
       }
       else {
-	Tcl_AppendResult(interp, "Automatic p3m tuning not implemented.",(char *) NULL);
-	return (TCL_ERROR);  
-      }
-      if(argc>4) {
-	if(Tcl_GetDouble(interp, argv[4], &(p3m.accuracy)) == TCL_ERROR )
+	/* parse p3m parameters */
+	if(argc<3) {
+	  Tcl_AppendResult(interp, "p3m needs at least 3 parameters: <r_cut> <mesh> <cao> [alpha] [accuracy]",(char *) NULL);
+	  return (TCL_ERROR);  
+	}
+	if(Tcl_GetInt(interp, argv[1], &(p3m.mesh[0])) == TCL_ERROR ||
+	   Tcl_GetInt(interp, argv[2], &(p3m.cao    )) == TCL_ERROR ) 
 	  return (TCL_ERROR);
+	
+	if(p3m.mesh[0] < 0) {
+	  Tcl_AppendResult(interp, "p3m mesh must be positiv.",(char *) NULL);
+	  return (TCL_ERROR);
+	}
+	p3m.mesh[2] = p3m.mesh[1] = p3m.mesh[0];
+	if(p3m.cao < 1 || p3m.cao > 7) {
+	  Tcl_AppendResult(interp, "p3m cao must be between 1 and 7.",(char *) NULL);
+	  return (TCL_ERROR);
+	}
+	if(p3m.cao > p3m.mesh[0] )  {
+	  Tcl_AppendResult(interp, "p3m cao can not be larger than p3m mesh",(char *) NULL);
+	  return (TCL_ERROR);
+	}
+	if(argc>3) {
+	  if(Tcl_GetDouble(interp, argv[3], &(p3m.alpha)) == TCL_ERROR )
+	    return (TCL_ERROR);
+	}
+	else {
+	  Tcl_AppendResult(interp, "Automatic p3m tuning not implemented.",(char *) NULL);
+	  return (TCL_ERROR);  
+	}
+	if(argc>4) {
+	  if(Tcl_GetDouble(interp, argv[4], &(p3m.accuracy)) == TCL_ERROR )
+	    return (TCL_ERROR);
+	}
       }
     }
     else if (!strncmp(argv[0], "dh ", strlen(argv[0])) ||
