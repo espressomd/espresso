@@ -32,7 +32,7 @@
 /** Compiler flag to enable describing and processing particle orientations.
 
 This will allow to use such particle properties as quart, omega, and torque. */
-#define ROTATION
+//#define ROTATION
 
 /** Compiler flag to enable external forces. E.g. apply a fixed external force
     to a particle or fix a particle in space. */
@@ -50,13 +50,13 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /*@{*/
 
 /* to use tabulated potential*/
-#define TABULATED
+//#define TABULATED
 
 /** Lennard-Jones */
 #define LENNARD_JONES
 
 /** Lennard-Jones with cosine tail */
-#define LJCOS
+//#define LJCOS
 
 /*@}*/
 

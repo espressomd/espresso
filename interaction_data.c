@@ -1100,12 +1100,12 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
     CHECK_VALUE(tabulated_set_params(part_type_a, part_type_b, filename),
 		"particle types must be nonnegative");
   }
+#endif
   
   Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
 		   "\"", (char *)NULL);
   return TCL_ERROR;
 }
-#endif
 
 int inter_print_partner_num(Tcl_Interp *interp, int bond_type)
 {
