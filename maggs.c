@@ -19,17 +19,12 @@
 #include "thermostat.h"
 #include "cells.h"
 
-#ifdef ELECTROSTATICS
-
 /* MPI tags for the maggs communications: */
 /** Tag for communication in Maggs_init() -> calc_glue_patch(). */
-#define REQ_MAGGS_INIT   300
-/** Tag for communication in gather_glue_patch_data(). */
-#define REQ_MAGGS_GATHER 301
-#define REQ_MAGGS_SPREAD 302
-#define REQ_MAGGS_MIN    303
-#define REQ_MAGGS_CHARGE 304
-#define REQ_MAGGS_EQUIL  305
+#define REQ_MAGGS_SPREAD 300
+#define REQ_MAGGS_EQUIL  301
+
+#ifdef ELECTROSTATICS // later to remove!!!!
 
 /************************************************
  * data types
@@ -476,7 +471,6 @@ void calc_part_point_forces(Particle *p, double *grad, double *rho, int lat_inde
   double grad2[24];
  
 
-  fprintf(stderr, "we are in point forces\n");
   if(init) {
     //    calc_self_energy_coeffs(alpha); 
     calc_self_energy_coeffs(); 
@@ -2005,7 +1999,6 @@ void maggs_calc_e_forces()
   /* charge gradient (number of neighbor sites X number of dimensions) */
   static  double *grad;
 
-  fprintf(stderr,"begin calc forces\n");
   if(init) Npart_old = 0;
 
   Npart = cells_get_n_particles();
@@ -2014,7 +2007,6 @@ void maggs_calc_e_forces()
     Npart_old = Npart;
   }
 
-  fprintf(stderr,"before grad and point forces\n");
   calc_grad_and_point_forces(grad);
 
   if(maggs.yukawa)
@@ -2490,4 +2482,3 @@ int parse_and_print_gauss_res(Tcl_Interp *interp, int argc, char **argv)
 #endif  
   return (TCL_OK);
 }
-
