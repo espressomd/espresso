@@ -551,12 +551,12 @@ int imd(ClientData data, Tcl_Interp *interp,
     int i, j;
 
     if (argc == 3) {
-      if (!ARG1_IS_S("-unfolded")) {
+      if (!ARG_IS_S(2,"-unfolded")) {
 	Tcl_AppendResult(interp, "wrong # args:  should be \"",
 			 argv[0], " positions [-unfolded]\"",
 			 (char *) NULL);
 	return (TCL_ERROR);
-      }
+      } 
       unfolded = 1;
     }
     if (!initsock) {
