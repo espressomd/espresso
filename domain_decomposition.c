@@ -384,8 +384,9 @@ Cell *dd_save_position_to_cell(double pos[3])
 int dd_append_particles(ParticleList *pl)
 {
   int p, dir, c, cpos[3], flag=0;
-   Particle *part;
+  Particle *part;
 
+  CELL_TRACE(fprintf(stderr, "%d: dd_append_particles %d\n", this_node, pl->n));
 
   for(p=0; p<pl->n; p++) {
     for(dir=0;dir<3;dir++) {
@@ -401,8 +402,7 @@ int dd_append_particles(ParticleList *pl)
       }
     }
     c = get_linear_index(cpos[0],cpos[1],cpos[2], dd.ghost_cell_grid);
-    part = append_unindexed_particle(&cells[c],&pl->part[p]);
-    local_particles[part->p.identity] = part;
+    part = append_indexed_particle(&cells[c],&pl->part[p]);
   }
   return flag;
 }
@@ -459,7 +459,9 @@ void dd_topology_init(CellPList *old)
   for(c=0; c<local_cells.n; c++) {
     update_local_particles(local_cells.cell[c]);
   }
-  //fprintf(stderr,"%d: dd_topology_init: done\n",this_node);
+  /* Triggers full initialization of the integrator! */
+  resort_particles = 1;
+  CELL_TRACE(fprintf(stderr,"%d: dd_topology_init: done\n",this_node));
 }
 
 /************************************************************/
@@ -533,6 +535,7 @@ void  dd_exchange_and_sort_particles()
 	      sort_cell = dd_save_position_to_cell(part[p].r.p);
 	      if(sort_cell != cell) {
 		if(sort_cell==NULL) {
+		  CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: Take another loop",this_node));
 		  finished=0;
 		  sort_cell = local_cells.cell[0];
 		  if(sort_cell != cell) {
@@ -548,6 +551,7 @@ void  dd_exchange_and_sort_particles()
 	    }
 	  }      
 	}
+
 	/* Exchange particles */
 	if(node_pos[dir]%2==0) {
 	  send_particles(&send_buf_l, node_neighbors[2*dir]);
@@ -562,8 +566,12 @@ void  dd_exchange_and_sort_particles()
 	  send_particles(&send_buf_r, node_neighbors[2*dir+1]);
 	}
 	/* sort received particles to cells */
-	if((dd_append_particles(&recv_buf_l) || dd_append_particles(&recv_buf_r) ) 
-	   && dir == 3) finished = 0;
+	if(dd_append_particles(&recv_buf_l) && dir == 3) finished = 0;
+	if(dd_append_particles(&recv_buf_r) && dir == 3) finished = 0; 
+
+#ifdef ADDITIONAL_CHECKS
+	check_particle_consistency();
+#endif
       }
       else {
 	/* Fold particles that have left the box */
@@ -600,6 +608,7 @@ void  dd_exchange_and_sort_particles()
       }
     }
   }
+  CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles finished\n",this_node));
 }
 
 Cell *dd_position_to_cell(double pos[3])

@@ -51,6 +51,7 @@ CellStructure cell_structure;
 /************************************************************/
 /*@{*/
 
+#ifdef ADDITIONAL_CHECKS
 static void check_cells_consistency()
 {
   int c, index;
@@ -100,6 +101,7 @@ static void check_cells_consistency()
     }
   realloc_intlist(&used, 0);
 }
+#endif
 
 /*@}*/
 
@@ -182,6 +184,16 @@ void cells_re_init(int new_cs)
   CELL_TRACE(fprintf(stderr, "%d: cells_re_init: convert type (%d->%d)\n",
 		     this_node, cell_structure.type, new_cs));
 
+  invalidate_ghosts();
+
+  CELL_TRACE({
+    int p;
+    for (p = 0; p < n_total_particles; p++)
+      if (local_particles[p])
+	fprintf(stderr, "%d: cells_re_init: got particle %d\n", this_node, p);
+  }
+	     );
+    
   topology_release(cell_structure.type);
   /* MOVE old local_cell list to temporary buffer */
   memcpy(&tmp_local,&local_cells,sizeof(CellPList));
@@ -202,6 +214,14 @@ void cells_re_init(int new_cs)
 
   free(tmp_cells);
   CELL_TRACE(fprintf(stderr, "%d: old cells deallocated\n",this_node));
+
+  CELL_TRACE({
+    int p;
+    for (p = 0; p < n_total_particles; p++)
+      if (local_particles[p])
+	fprintf(stderr, "%d: cells_re_init: now got particle %d\n", this_node, p);
+  }
+	     );
 
 #ifdef ADDITIONAL_CHECKS
   check_cells_consistency();

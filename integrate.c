@@ -190,10 +190,10 @@ void integrate_vv(int n_steps)
 {
   int i;
   int n_verlet_updates = 0;
-
-  on_integration_start();
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: integrating %d steps\n",this_node,
 		      n_steps));
+
+  on_integration_start();
 
   if(resort_particles) {
     initialize_ghosts();

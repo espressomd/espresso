@@ -187,9 +187,15 @@ void nsq_balance_particles()
       }
       realloc_particlelist(local, local->n);
       send_particles(&send_buf, l_node);
+#ifdef ADDITIONAL_CHECKS
+      check_particle_consistency();
+#endif
     }
     else if (l_node == this_node) {
       recv_particles(local, s_node);
+#ifdef ADDITIONAL_CHECKS
+      check_particle_consistency();
+#endif
     }
     ppnode[s_node] -= transfer;
     ppnode[l_node] += transfer;

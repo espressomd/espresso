@@ -149,7 +149,7 @@ void check_particle_consistency()
 {
   Particle *part;
   Cell *cell;
-  int n, np, dir, c;
+  int n, np, dir, c, p;
   int cell_part_cnt=0, ghost_part_cnt=0, local_part_cnt=0;
   int cell_err_cnt=0;
 
@@ -233,6 +233,16 @@ void check_particle_consistency()
   if(local_part_cnt != cell_part_cnt) {
     fprintf(stderr,"%d: check_particle_consistency: ERROR: %d parts in cells but %d parts in local_particles\n",
 	    this_node,local_part_cnt,cell_part_cnt);
+
+    for (c = 0; c < local_cells.n; c++) {
+      for(p = 0; p < local_cells.cell[c]->n; p++)
+	fprintf(stderr, "%d: got particle %d in cell %d\n", this_node, local_cells.cell[c]->part[p].p.identity, c);
+    }
+    
+    for(p = 0; p < n_total_particles; p++)
+      if (local_particles[p])
+	fprintf(stderr, "%d: got particle %d in local_particles\n", this_node, p);
+
     if(ghost_part_cnt==0) errexit();
   }
   if(ghost_part_cnt>0) {
