@@ -19,6 +19,26 @@
 
 /************************************************************/
 
+/// set the parameters for the harmonic potential
+MDINLINE int harmonic_set_params(int bond_type, double k, double r)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.harmonic.k = k;
+  bonded_ia_params[bond_type].p.harmonic.r = r;
+  bonded_ia_params[bond_type].type = BONDED_IA_HARMONIC;
+  bonded_ia_params[bond_type].p.harmonic.r2 = SQR(bonded_ia_params[bond_type].p.harmonic.r);
+  bonded_ia_params[bond_type].num  = 1;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return TCL_OK;
+}
+
 /** Computes the HARMONIC pair force and adds this
     force to the particle forces (see \ref #inter). 
     @param p1        Pointer to first particle.

@@ -123,7 +123,7 @@ static void topology_release(int cs) {
     layered_topology_release();
     break;
   default:
-    fprintf(stderr, "ERROR: attempting to sort the particles in an unknown way\n");
+    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way\n");
     errexit();
   }
 }
@@ -145,7 +145,7 @@ static void topology_init(int cs, CellPList *local) {
     layered_topology_init(local);
     break;
   default:
-    fprintf(stderr, "ERROR: attempting to sort the particles in an unknown way\n");
+    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way\n");
     errexit();
   }
 }
@@ -159,6 +159,8 @@ static void topology_init(int cs, CellPList *local) {
 int cellsystem(ClientData data, Tcl_Interp *interp,
 	       int argc, char **argv)
 {
+  int err = 0;
+
   if (argc < 1) {
     Tcl_AppendResult(interp, "usage: cellsystem <system> <params>", (char *)NULL);
     return TCL_ERROR;
@@ -182,16 +184,19 @@ int cellsystem(ClientData data, Tcl_Interp *interp,
     if (node_grid[0] != 1 || node_grid[1] != 1) {
       node_grid[0] = node_grid[1] = 1;
       node_grid[2] = n_nodes;
-      mpi_bcast_parameter(FIELD_NODEGRID);
+      err = mpi_bcast_parameter(FIELD_NODEGRID);
     }
+    else
+      err = 0;
 
-    mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED);
+    if (!err)
+      mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED);
   }
   else {
     Tcl_AppendResult(interp, "unkown cell structure type \"", argv[0],"\"", (char *)NULL);
     return TCL_ERROR;
   }
-  return TCL_OK;
+  return mpi_gather_runtime_errors(interp, TCL_OK);
 }
 
 /************************************************************/
@@ -202,7 +207,7 @@ void cells_pre_init()
   CELL_TRACE(fprintf(stderr, "%d: cells_pre_init\n",this_node));
   /* her local_cells has to be a NULL pointer */
   if(local_cells.cell != NULL) {
-    fprintf(stderr,"Wrong usage of cells_pre_init!\n");
+    fprintf(stderr,"INTERNAL ERROR: wrong usage of cells_pre_init!\n");
     errexit();
   }
   memcpy(&tmp_local,&local_cells,sizeof(CellPList));

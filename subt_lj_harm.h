@@ -19,6 +19,26 @@
 
 /************************************************************/
 
+/// parameters for the subtract lj from a harmonic bond potential
+MDINLINE int subt_lj_harm_set_params(int bond_type, double k, double r)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.subt_lj_harm.k = k;
+  bonded_ia_params[bond_type].p.subt_lj_harm.r = r;
+  bonded_ia_params[bond_type].type = BONDED_IA_SUBT_LJ_HARM;
+  bonded_ia_params[bond_type].p.subt_lj_harm.r2 = SQR(bonded_ia_params[bond_type].p.subt_lj_harm.r);
+  bonded_ia_params[bond_type].num  = 1;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return TCL_OK;
+}
+
 /** Computes the difference between the HARMONIC and the LENNARD-JONES pair forces 
     and adds this force to the particle forces (see \ref #inter). 
     @param p1        Pointer to first particle.

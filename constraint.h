@@ -11,6 +11,7 @@
 #include "statistics.h"
 #include "energy.h"
 #include "grid.h"
+#include "errorhandling.h"
 
 /** \file constraint.h
  *  Routines for handling of constraints. Implemented are walls, cylinders and spheres.
@@ -22,6 +23,13 @@
  */
 
 #ifdef CONSTRAINTS
+#ifndef LENNARD_JONES
+#error **********************************
+#error
+#error CONSTRAINTS requires LENNARD_JONES
+#error
+#error **********************************
+#else
 
 #define C_GAMMA   0.57721566490153286060651209008
 
@@ -273,7 +281,8 @@ MDINLINE void add_constraints_forces(Particle *p1)
   int n;
   double dist, vec[3];
   IA_parameters *ia_params;
-    
+  char *errtxt;
+
   for(n=0;n<n_constraints;n++) {
     ia_params=get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
     dist=0.;
@@ -285,9 +294,8 @@ MDINLINE void add_constraints_forces(Particle *p1)
 	if (dist > 0)
 	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist);
 	else {
-	  fprintf(stderr,"CONSTRAINT WALL : ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		  p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-	  errexit();
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  sprintf(errtxt, "{wall constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
       break;
@@ -299,9 +307,8 @@ MDINLINE void add_constraints_forces(Particle *p1)
 	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist);
 	}
 	else {
-	  fprintf(stderr,"CONSTRAINT SPHERE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		  p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-	  errexit();
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  sprintf(errtxt, "{sphere constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
       break;
@@ -313,9 +320,8 @@ MDINLINE void add_constraints_forces(Particle *p1)
 	  add_lj_pair_force(&constraints[n].part_rep, p1, ia_params, vec, dist);
 	}
 	else {
-	  fprintf(stderr,"CONSTRAINT CYLINDER: ERROR! part %d at (%.2e,%.2e,%.2e) violated the constraint! dist= %f\n",
-		  p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2],dist);
-	  errexit();
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  sprintf(errtxt, "{cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
         }
       }
       break;
@@ -326,9 +332,8 @@ MDINLINE void add_constraints_forces(Particle *p1)
 	add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist);
       }
       else {
-	fprintf(stderr,"CONSTRAINT MAZE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-	errexit();
+	errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	sprintf(errtxt, "{maze constraint %d violated by particle %d} ", n, p1->p.identity);
       }
       break;
 
@@ -350,6 +355,7 @@ MDINLINE double add_constraints_energy(Particle *p1)
   double dist, vec[3];
   double lj_en, coulomb_en;
   IA_parameters *ia_params;
+  char *errtxt;
 
   for(n=0;n<n_constraints;n++) { 
     ia_params = get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
@@ -364,9 +370,8 @@ MDINLINE double add_constraints_energy(Particle *p1)
 	if (dist > 0)
 	  lj_en = lj_pair_energy(p1, &constraints[n].part_rep, ia_params, vec, dist);
 	else {
-	  fprintf(stderr,"CONSTRAINT WALL : ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		  p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-	  errexit();
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  sprintf(errtxt, "{wall constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
       break;
@@ -378,9 +383,8 @@ MDINLINE double add_constraints_energy(Particle *p1)
 	  lj_en = lj_pair_energy(p1, &constraints[n].part_rep, ia_params, vec, dist);
 	}
 	else {
-	  fprintf(stderr,"CONSTRAINT SPHERE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		  p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-	  errexit();
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  sprintf(errtxt, "{sphere constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
       break;
@@ -392,9 +396,8 @@ MDINLINE double add_constraints_energy(Particle *p1)
 	  lj_en = lj_pair_energy(&constraints[n].part_rep, p1, ia_params, vec, dist);
 	}
 	else {
-	  fprintf(stderr,"CONSTRAINT CYLINDER: ERROR! part %d at (%.2e,%.2e,%.2e) violated the constraint! dist= %f\n",
-		  p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2],dist);
-	  errexit();
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  sprintf(errtxt, "{cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
       break;
@@ -405,9 +408,8 @@ MDINLINE double add_constraints_energy(Particle *p1)
 	lj_en = lj_pair_energy(&constraints[n].part_rep, p1, ia_params, vec, dist);
       }
       else {
-	fprintf(stderr,"CONSTRAINT MAZE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-	errexit();
+	errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	sprintf(errtxt, "{maze constraint %d violated by particle %d} ", n, p1->p.identity);
       }
       break;
 
@@ -440,4 +442,5 @@ MDINLINE void init_constraint_forces()
 }
 #endif
 
+#endif
 #endif

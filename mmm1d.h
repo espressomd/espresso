@@ -22,11 +22,25 @@ typedef struct {
 } MMM1D_struct;
 extern MMM1D_struct mmm1d_params;
 
-int set_mmm1d_params(Tcl_Interp *interp, double switch_rad,
-		     int bessel_cutoff, double maxPWerror);
+///
+int printMMM1DToResult(Tcl_Interp *interp);
 
+///
+int inter_parse_mmm1d(Tcl_Interp *interp, int argc, char **argv);
+
+///
+int MMM1D_set_params(double switch_rad, int bessel_cutoff, double maxPWerror);
+
+///
+int MMM1D_tune(Tcl_Interp *interp);
+
+///
 void MMM1D_recalcTables();
 
+///
+int MMM1D_sanity_checks();
+
+///
 void MMM1D_init();
 
 ///

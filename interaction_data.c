@@ -59,15 +59,21 @@ int n_constraints       = 0;
 Constraint *constraints = NULL;
 #endif 
 
+#if defined(COMFORCE) || defined(COMFIXED)
+/** if any COM interaction is on, i. e. we cannot multiple processors */
+int COM_on = 0;
+#endif
+
 /** Array containing all tabulated forces*/
 DoubleList tabulated_forces;
 /** Corresponding array containing all tabulated energies*/
 DoubleList tabulated_energies;
 
-
+///
+int printCoulombIAToResult(Tcl_Interp *interp);
 
 /*****************************************
- * functions
+ * general lowlevel functions
  *****************************************/
 
 /** Initialize force and energy tables */
@@ -95,6 +101,7 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJCOS_rmin = 0 ;
 #endif
 
+#ifdef ROTATION
   params->GB_eps =
     params->GB_sig =
     params->GB_cut =
@@ -104,7 +111,9 @@ void initialize_ia_params(IA_parameters *params) {
     params->GB_nu =
     params->GB_chi1 = 
     params->GB_chi2 = 0 ;
+#endif
 
+#ifdef TABULATED
   params->TAB_npoints = 0;
   params->TAB_startindex = 0;
   params->TAB_minval = 0.0;
@@ -113,6 +122,7 @@ void initialize_ia_params(IA_parameters *params) {
   params->TAB_maxval2 = 0.0;
   params->TAB_stepsize = 0.0;
   strcpy(params->TAB_filename,"");
+#endif
 
 #ifdef COMFORCE
   params->COMFORCE_flag = 0;
@@ -216,7 +226,7 @@ char *get_name_of_bonded_ia(int i) {
   case BONDED_IA_TABULATED:
     return "tabulated";
   default:
-    fprintf(stderr, "%d: internal error: name of unknown interaction %d requested\n",
+    fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
 	    this_node, i);
     errexit();
   }
@@ -261,227 +271,37 @@ void realloc_ia_params(int nsize)
   ia_params = new_params;
 }
 
-int printBondedIAToResult(Tcl_Interp *interp, int i)
+void make_particle_type_exist(int type)
 {
-  Bonded_ia_parameters *params = &bonded_ia_params[i];
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  int ns = type + 1;
+  if (ns <= n_particle_types)
+    return;
 
-  sprintf(buffer, "%d ", i);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-  
-  switch (params->type) {
-  case BONDED_IA_FENE:
-    Tcl_PrintDouble(interp, params->p.fene.k, buffer);
-    Tcl_AppendResult(interp, "FENE ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.fene.r, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
-  case BONDED_IA_HARMONIC:
-    Tcl_PrintDouble(interp, params->p.harmonic.k, buffer);
-    Tcl_AppendResult(interp, "HARMONIC ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.harmonic.r, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
-  case BONDED_IA_ANGLE:
-    Tcl_PrintDouble(interp, params->p.angle.bend, buffer);
-    Tcl_AppendResult(interp, "angle ", buffer," ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.angle.phi0, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
-  case BONDED_IA_DIHEDRAL:  
-    sprintf(buffer, "%d", params->p.dihedral.mult);
-    Tcl_AppendResult(interp, "dihedral ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.dihedral.bend, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.dihedral.phase, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
+  mpi_bcast_n_particle_types(ns);
+}
+
+void make_bond_type_exist(int type)
+{
+  int i, ns = type + 1;
+
+  if(ns <= n_bonded_ia) {
 #ifdef TABULATED
-  case BONDED_IA_TABULATED:
-    switch (params->p.tab.type) {
-    case TAB_BOND_LENGTH:
-      Tcl_AppendResult(interp, "tabulated bond \"",params->p.tab.filename,"\"",(char *) NULL);
-      return (TCL_OK);
-    case TAB_BOND_ANGLE:
-      Tcl_AppendResult(interp, "tabulated angle \"",params->p.tab.filename,"\"",(char *) NULL);
-      return (TCL_OK);
-    case TAB_BOND_DIHEDRAL:
-      Tcl_AppendResult(interp, "tabulated dihedral \"",params->p.tab.filename,"\"",(char *) NULL);
-      return (TCL_OK);
+    if ( bonded_ia_params[type].type == BONDED_IA_TABULATED && 
+	 bonded_ia_params[type].p.tab.npoints > 0 ) {
+      free(bonded_ia_params[type].p.tab.f);
+      free(bonded_ia_params[type].p.tab.e);
     }
-#endif
-  case BONDED_IA_SUBT_LJ:
-    Tcl_PrintDouble(interp, params->p.subt_lj.k, buffer);
-    Tcl_AppendResult(interp, "SUBT_LJ ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.subt_lj.r, buffer);
-    Tcl_AppendResult(interp, buffer,(char *) NULL);
-    return (TCL_OK);
-  case BONDED_IA_SUBT_LJ_HARM:
-    Tcl_PrintDouble(interp, params->p.subt_lj_harm.k, buffer);
-    Tcl_AppendResult(interp, "SUBT_LJ_HARM ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.subt_lj_harm.r, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
-  case BONDED_IA_SUBT_LJ_FENE:
-    Tcl_PrintDouble(interp, params->p.subt_lj_fene.k, buffer);
-    Tcl_AppendResult(interp, "SUBT_LJ_FENE ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.subt_lj_fene.r, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
- case BONDED_IA_NONE:
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
-		     (char *) NULL);
-    return (TCL_ERROR);
-  default:
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "unknown bonded interaction type",(char *) NULL);
-    return (TCL_ERROR);
+#endif 
+    return;
   }
-  return (TCL_ERROR);
-}
-
-int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
-{
-  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
-  IA_parameters *data = get_ia_param(i, j);
-
-  if (!data) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "interaction does not exist",
-		     (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  sprintf(buffer, "%d %d ", i, j);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
-  if (data->LJ_cut != 0) {
-    Tcl_PrintDouble(interp, data->LJ_eps, buffer);
-    Tcl_AppendResult(interp, "lennard-jones ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJ_sig, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJ_cut, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJ_shift, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJ_offset, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJ_capradius, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
-  }
-#ifdef LJCOS
-  if (data->LJCOS_cut != 0) printljcosIAToResult(interp,i,j);
-#endif
-  if (data->GB_cut != 0) {
-    Tcl_PrintDouble(interp, data->GB_eps, buffer);
-    Tcl_AppendResult(interp, "gay-berne ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->GB_sig, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->GB_cut, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->GB_k1, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->GB_k2, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->GB_mu, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->GB_nu, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->GB_chi1, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->GB_chi2, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  /* else allocate new memory */
+  bonded_ia_params = (Bonded_ia_parameters *)realloc(bonded_ia_params,
+						     ns*sizeof(Bonded_ia_parameters));
+  /* set bond types not used as undefined */
+  for (i = n_bonded_ia; i < ns; i++)
+    bonded_ia_params[i].type = BONDED_IA_NONE;
  
-  }
-  if (data->TAB_maxval != 0) {
-    
-    Tcl_AppendResult(interp, "tabulated \"", data->TAB_filename,"\"", (char *) NULL);
-
-  }
-#ifdef COMFORCE
-  if (data->COMFORCE_flag != 0) printcomforceIAToResult(interp,i,j);
-#endif
-
-#ifdef COMFIXED
-  if (data->COMFIXED_flag != 0) printcomfixedIAToResult(interp,i,j);
-#endif
-
-  return (TCL_OK);
-}
-
-int printCoulombIAToResult(Tcl_Interp *interp) 
-{
-#ifdef ELECTROSTATICS
-  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
-  if (coulomb.bjerrum == 0.0) {
-    Tcl_AppendResult(interp, "coulomb 0.0", (char *) NULL);
-    return (TCL_OK);
-  }
-  Tcl_PrintDouble(interp, coulomb.bjerrum, buffer);
-  Tcl_AppendResult(interp, "{coulomb ", buffer, " ", (char *) NULL);
-  if (coulomb.method == COULOMB_P3M) {
-    Tcl_PrintDouble(interp, p3m.r_cut, buffer);
-    Tcl_AppendResult(interp, "p3m ", buffer, " ", (char *) NULL);
-    sprintf(buffer,"%d",p3m.mesh[0]);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    sprintf(buffer,"%d",p3m.cao);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, p3m.alpha, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, p3m.accuracy, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-
-    Tcl_AppendResult(interp, "} {coulomb epsilon ", (char *) NULL);
-    if (p3m.epsilon == P3M_EPSILON_METALLIC)
-      Tcl_AppendResult(interp, " metallic ", (char *) NULL);
-    else {
-      Tcl_PrintDouble(interp, p3m.epsilon, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    }
-    sprintf(buffer,"%d",p3m.inter);
-    Tcl_AppendResult(interp, "n_interpol ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, p3m.mesh_off[0], buffer);
-    Tcl_AppendResult(interp, "mesh_off ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, p3m.mesh_off[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, p3m.mesh_off[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-  }
-  else if (coulomb.method == COULOMB_DH) {
-    Tcl_PrintDouble(interp, dh_params.kappa, buffer);
-    Tcl_AppendResult(interp, "dh ", buffer, " ",(char *) NULL);
-    Tcl_PrintDouble(interp, dh_params.r_cut, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-  }
-  else if (coulomb.method == COULOMB_MMM1D) {
-    Tcl_PrintDouble(interp, sqrt(mmm1d_params.far_switch_radius_2), buffer);
-    Tcl_AppendResult(interp, "mmm1d ", buffer, " ",(char *) NULL);
-    sprintf(buffer, "%d", mmm1d_params.bessel_cutoff);
-    Tcl_AppendResult(interp, buffer, " ",(char *) NULL);
-    Tcl_PrintDouble(interp, mmm1d_params.maxPWerror, buffer);
-    Tcl_AppendResult(interp, buffer,(char *) NULL);
-  }
-  else if (coulomb.method == COULOMB_MMM2D) {
-    Tcl_PrintDouble(interp, mmm2d_params.maxPWerror, buffer);
-    Tcl_AppendResult(interp, "mmm2d ", buffer,(char *) NULL);
-    Tcl_PrintDouble(interp, mmm2d_params.far_cut, buffer);
-    Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
-  }
-
-  if (coulomb.use_elc) {
-    Tcl_PrintDouble(interp, elc_params.maxPWerror, buffer);
-    Tcl_AppendResult(interp, "} {coulomb elc ", buffer,(char *) NULL);
-    Tcl_PrintDouble(interp, elc_params.minimal_dist, buffer);
-    Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
-    Tcl_PrintDouble(interp, elc_params.far_cut, buffer);
-    Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
-  }
-  Tcl_AppendResult(interp, "}",(char *) NULL);
-
-#else
-  Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)",(char *) NULL);
-#endif
-  return (TCL_OK);
+  n_bonded_ia = ns;
 }
 
 void calc_maximal_cutoff()
@@ -607,6 +427,295 @@ void calc_maximal_cutoff()
 
 }
 
+int check_obs_calc_initialized()
+{
+  char *errtxt;
+  /* set to zero if initialization was not successful. */
+  int state = 1;
+
+#ifdef ELECTROSTATICS
+  switch (coulomb.method) {
+  case COULOMB_MMM1D: if (MMM1D_sanity_checks()) state = 0; break;
+  case COULOMB_MMM2D: if (MMM2D_sanity_checks()) state = 0; break;
+  case COULOMB_P3M: if (P3M_sanity_checks()) state = 0; break;
+  }
+  if (coulomb.use_elc && ELC_sanity_checks()) state = 0;
+#endif
+  
+  if (COM_on == 1 && n_nodes > 1) {
+    errtxt = runtime_error(128);
+    sprintf(errtxt, "COM force and fixed only work with a single CPU");
+    state = 0;
+  }
+  return state;
+}
+
+
+#ifdef ELECTROSTATICS
+
+/********************************************************************************/
+/*                                 electrostatics                               */
+/********************************************************************************/
+
+int coulomb_set_bjerrum(double bjerrum)
+{
+  if (bjerrum < 0.0)
+    return TCL_ERROR;
+  
+  coulomb.bjerrum = bjerrum;
+
+  if (coulomb.bjerrum == 0.0) {
+
+    if (coulomb.method == COULOMB_P3M) {
+
+      p3m.alpha    = 0.0;
+      p3m.alpha_L  = 0.0;
+      p3m.r_cut    = 0.0;
+      p3m.r_cut_iL = 0.0;
+      p3m.mesh[0]  = 0;
+      p3m.mesh[1]  = 0;
+      p3m.mesh[2]  = 0;
+      p3m.cao      = 0;
+
+    } else if (coulomb.method == COULOMB_DH) {
+
+      dh_params.r_cut   = 0.0;
+      dh_params.kappa   = 0.0;
+
+    } else if (coulomb.method == COULOMB_MMM1D) {
+
+      mmm1d_params.maxPWerror = 1e40;
+      mmm1d_params.bessel_cutoff = 0;
+
+    }
+ 
+    mpi_bcast_coulomb_params();
+    coulomb.method = COULOMB_NONE;
+    mpi_bcast_coulomb_params();
+
+  }
+
+  return TCL_OK;
+}
+
+int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double d1;
+
+  Tcl_ResetResult(interp);
+
+  if(argc == 0) {
+    printCoulombIAToResult(interp);
+    return TCL_OK;
+  }
+  
+  if (! ARG0_IS_D(d1)) {
+    Tcl_ResetResult(interp);
+    if (ARG0_IS_S("elc") && (coulomb.method == COULOMB_P3M))
+      return inter_parse_elc_params(interp, argc - 1, argv + 1);
+    if (coulomb.method == COULOMB_P3M)
+      return inter_parse_p3m_opt_params(interp, argc, argv);
+    else {
+      Tcl_AppendResult(interp, "expect: inter coulomb <bjerrum>",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+  }
+
+  coulomb.use_elc = 0;
+  coulomb.method  = COULOMB_NONE;
+
+  if (coulomb_set_bjerrum(d1) == TCL_ERROR) {
+    Tcl_AppendResult(interp, argv[0], "bjerrum length must be positive",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+    
+  argc -= 1;
+  argv += 1;
+
+  if (d1 == 0.0 && argc == 0) {
+    mpi_bcast_coulomb_params();
+    return TCL_OK;
+  }
+
+  if(argc < 1) {
+    Tcl_AppendResult(interp, "wrong # args for inter coulomb.",
+		     (char *) NULL);
+    mpi_bcast_coulomb_params();
+    return TCL_ERROR;
+  }
+
+  /* check method */
+  if(ARG0_IS_S("p3m"))    
+    return inter_parse_p3m(interp, argc-1, argv+1);
+
+  if (ARG0_IS_S("dh"))
+    return inter_parse_dh(interp, argc-1, argv+1);    
+    
+  if (ARG0_IS_S("mmm1d"))
+    return inter_parse_mmm1d(interp, argc-1, argv+1);
+
+  if (ARG0_IS_S("mmm2d"))
+    return inter_parse_mmm2d(interp, argc-1, argv+1);
+
+  /* fallback */
+  coulomb.bjerrum = 0.0;
+
+  mpi_bcast_coulomb_params();
+
+  Tcl_AppendResult(interp, "do not know coulomb method \"",argv[0],
+		   "\": coulomb switched off", (char *) NULL);
+  
+  return TCL_ERROR;
+}
+#endif
+
+/********************************************************************************/
+/*                                       printing                               */
+/********************************************************************************/
+
+int printBondedIAToResult(Tcl_Interp *interp, int i)
+{
+  Bonded_ia_parameters *params = &bonded_ia_params[i];
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+
+  sprintf(buffer, "%d ", i);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  
+  switch (params->type) {
+  case BONDED_IA_FENE:
+    Tcl_PrintDouble(interp, params->p.fene.k, buffer);
+    Tcl_AppendResult(interp, "FENE ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.fene.r, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
+  case BONDED_IA_HARMONIC:
+    Tcl_PrintDouble(interp, params->p.harmonic.k, buffer);
+    Tcl_AppendResult(interp, "HARMONIC ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.harmonic.r, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
+  case BONDED_IA_ANGLE:
+    Tcl_PrintDouble(interp, params->p.angle.bend, buffer);
+    Tcl_AppendResult(interp, "angle ", buffer," ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.angle.phi0, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
+  case BONDED_IA_DIHEDRAL:  
+    sprintf(buffer, "%d", params->p.dihedral.mult);
+    Tcl_AppendResult(interp, "dihedral ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.dihedral.bend, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.dihedral.phase, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
+#ifdef TABULATED
+  case BONDED_IA_TABULATED:
+    switch (params->p.tab.type) {
+    case TAB_BOND_LENGTH:
+      Tcl_AppendResult(interp, "tabulated bond \"",params->p.tab.filename,"\"",(char *) NULL);
+      return (TCL_OK);
+    case TAB_BOND_ANGLE:
+      Tcl_AppendResult(interp, "tabulated angle \"",params->p.tab.filename,"\"",(char *) NULL);
+      return (TCL_OK);
+    case TAB_BOND_DIHEDRAL:
+      Tcl_AppendResult(interp, "tabulated dihedral \"",params->p.tab.filename,"\"",(char *) NULL);
+      return (TCL_OK);
+    }
+#endif
+  case BONDED_IA_SUBT_LJ:
+    Tcl_PrintDouble(interp, params->p.subt_lj.k, buffer);
+    Tcl_AppendResult(interp, "SUBT_LJ ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.subt_lj.r, buffer);
+    Tcl_AppendResult(interp, buffer,(char *) NULL);
+    return (TCL_OK);
+  case BONDED_IA_SUBT_LJ_HARM:
+    Tcl_PrintDouble(interp, params->p.subt_lj_harm.k, buffer);
+    Tcl_AppendResult(interp, "SUBT_LJ_HARM ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.subt_lj_harm.r, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
+  case BONDED_IA_SUBT_LJ_FENE:
+    Tcl_PrintDouble(interp, params->p.subt_lj_fene.k, buffer);
+    Tcl_AppendResult(interp, "SUBT_LJ_FENE ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.subt_lj_fene.r, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
+ case BONDED_IA_NONE:
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
+		     (char *) NULL);
+    return (TCL_ERROR);
+  default:
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "unknown bonded interaction type",(char *) NULL);
+    return (TCL_ERROR);
+  }
+  return (TCL_ERROR);
+}
+
+int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
+{
+  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
+  IA_parameters *data = get_ia_param(i, j);
+
+  if (!data) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "interaction does not exist",
+		     (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  sprintf(buffer, "%d %d ", i, j);
+  Tcl_AppendResult(interp, buffer, (char *) NULL);
+#ifdef LENNARD_JONES
+  if (data->LJ_cut != 0) printljIAToResult(interp,i,j);
+#endif
+#ifdef LJCOS
+  if (data->LJCOS_cut != 0) printljcosIAToResult(interp,i,j);
+#endif
+#ifdef ROTATION
+  if (data->GB_cut != 0) printgbIAToResult(interp,i,j);
+#endif
+  if (data->TAB_maxval != 0)
+    Tcl_AppendResult(interp, "tabulated \"", data->TAB_filename,"\"", (char *) NULL);
+#ifdef COMFORCE
+  if (data->COMFORCE_flag != 0) printcomforceIAToResult(interp,i,j);
+#endif
+
+#ifdef COMFIXED
+  if (data->COMFIXED_flag != 0) printcomfixedIAToResult(interp,i,j);
+#endif
+
+  return (TCL_OK);
+}
+
+int printCoulombIAToResult(Tcl_Interp *interp) 
+{
+#ifdef ELECTROSTATICS
+  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
+  if (coulomb.method == COULOMB_NONE) {
+    Tcl_AppendResult(interp, "coulomb 0.0", (char *) NULL);
+    return (TCL_OK);
+  }
+  Tcl_PrintDouble(interp, coulomb.bjerrum, buffer);
+  Tcl_AppendResult(interp, "{coulomb ", buffer, " ", (char *) NULL);
+  if (coulomb.method == COULOMB_P3M) printP3MToResult(interp);
+  else if (coulomb.method == COULOMB_DH) printdhToResult(interp);
+  else if (coulomb.method == COULOMB_MMM1D) printMMM1DToResult(interp);
+  else if (coulomb.method == COULOMB_MMM2D) printMMM2DToResult(interp);
+
+  if (coulomb.use_elc) printELCToResult(interp);
+
+  Tcl_AppendResult(interp, "}",(char *) NULL);
+
+#else
+  Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)",(char *) NULL);
+#endif
+  return (TCL_OK);
+}
+
 int inter_print_all(Tcl_Interp *interp)
 {
   int i, j, start = 1;
@@ -638,7 +747,7 @@ int inter_print_all(Tcl_Interp *interp)
       }
     }
 #ifdef ELECTROSTATICS
-  if(coulomb.bjerrum != 0.0) {
+  if(coulomb.method != COULOMB_NONE) {
     if (start) 
       start = 0;
     else
@@ -708,430 +817,6 @@ int inter_print_bonded(Tcl_Interp *interp, int i)
   return TCL_ERROR;
 }
 
-#ifdef LENNARD_JONES
-int lennard_jones_set_params(int part_type_a, int part_type_b,
-			     double eps, double sig, double cut,
-			     double shift, double offset,
-			     double cap_radius)
-{
-  IA_parameters *data, *data_sym;
-
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
-
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* LJ should be symmetrically */
-  data->LJ_eps    = data_sym->LJ_eps    = eps;
-  data->LJ_sig    = data_sym->LJ_sig    = sig;
-  data->LJ_cut    = data_sym->LJ_cut    = cut;
-  data->LJ_shift  = data_sym->LJ_shift  = shift;
-  data->LJ_offset = data_sym->LJ_offset = offset;
- 
-  if (cap_radius > 0) {
-    data->LJ_capradius = cap_radius;
-    data_sym->LJ_capradius = cap_radius;
-  }
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
-
-  if (lj_force_cap != -1.0)
-    mpi_lj_cap_forces(lj_force_cap);
-
-  return TCL_OK;
-}
-#endif
-
-#ifdef ROTATION
-int gay_berne_set_params(int part_type_a, int part_type_b,
-			     double eps, double sig, double cut,
-			     double k1, double k2,
-			     double mu, double nu)
-{
-  IA_parameters *data, *data_sym;
-
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
-
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* GB should be symmetrically */
-  data->GB_eps    = data_sym->GB_eps    = eps;
-  data->GB_sig    = data_sym->GB_sig    = sig;
-  data->GB_cut    = data_sym->GB_cut    = cut;
-  data->GB_k1     = data_sym->GB_k1     = k1;
-  data->GB_k2     = data_sym->GB_k2     = k2;
-  data->GB_mu     = data_sym->GB_mu     = mu;
-  data->GB_nu     = data_sym->GB_nu     = nu;
- 
-   /* Calculate dependent parameters */
-
-  data->GB_chi1 = data_sym->GB_chi1 = ((data->GB_k1*data->GB_k1) - 1) / ((data->GB_k1*data->GB_k1) + 1);
-  data->GB_chi2 = data_sym->GB_chi2 = (pow(data->GB_k2,(1/data->GB_mu))-1)/(pow(data->GB_k2,(1/data->GB_mu))+1);
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
-
-  return TCL_OK;
-}
-#endif
-
-
-#ifdef TABULATED
-/** Non-Bonded tabulated potentials:
-    Reads tabulated parameters and force and energy tables from a
-    file.  ia_params and force/energy tables are then communicated to each
-    node \warning No checking is performed for the file read!! */
-int tabulated_set_params(int part_type_a, int part_type_b,
-			     char* filename)
-{
-  IA_parameters *data, *data_sym;
-  FILE* fp;
-  int npoints;
-  double minval,minval2, maxval, maxval2;
-  int i, newsize;
-  int token;
-  double dummr;
-  token = 0;
-
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
-
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-  if (strlen(filename) > MAXLENGTH_TABFILE_NAME-1 ) {
-    fprintf(stderr,"tabulated_set_params: the length of filename is %d but must be less than 256 characters \n",
-	    (int) strlen(filename) );
-    errexit();
-  }
-  /*Open the file containing force and energy tables */
-  fp = fopen( filename , "r");
-  if ( !fp ) {
-    fprintf(stderr,"tabulated_set_params: attempt to open file %s failed \n", filename );
-    errexit();
-  }
-
-  /*Look for a line starting with # */
-  while ( token != EOF) {
-    token = fgetc(fp);
-    if ( token == 35 ) { break; } // magic number for # symbol
-  }
-  if ( token == EOF ) { 
-    fprintf(stderr,"tabulated_set_params: attempt to read file %s failed. Could not find start the start token <#> \n", filename );
-    errexit();
-  }
-
-  /* First read two important parameters we read in the data later*/
-  fscanf( fp , "%d ", &npoints);
-  fscanf( fp, "%lf ", &minval);
-  fscanf( fp, "%lf ", &maxval);
-
-  // Set the newsize to the same as old size : only changed if a new force table is being added.
-  newsize = tabulated_forces.max;
-
-  if ( data->TAB_npoints == 0){
-    // A new potential will be added so set the number of points, the startindex and newsize
-    data->TAB_npoints    = data_sym->TAB_npoints    = npoints;
-    data->TAB_startindex = data_sym->TAB_startindex = tabulated_forces.max;
-    newsize += npoints;
-  } else {
-    // We have existing data for this pair of monomer types check array sizing
-    if ( data->TAB_npoints != npoints ){
-      fprintf(stderr,"\n%d: tabulated_set_params: Number of points for existing data %d does not match new data %d, exiting\n", this_node,data->TAB_npoints,npoints );
-      errexit();
-    }
-  }
-
-  /* Update parameters symmetrically */
-  data->TAB_maxval    = data_sym->TAB_maxval    = maxval;
-  data->TAB_minval    = data_sym->TAB_minval    = minval;
-  strcpy(data->TAB_filename,filename);
-  strcpy(data_sym->TAB_filename,filename);
-
-  /* Calculate dependent parameters */
-  maxval2 = maxval*maxval;
-  minval2 = minval*minval;
-  data->TAB_maxval2 = data_sym->TAB_maxval2 = maxval2;
-  data->TAB_minval2 = data_sym->TAB_minval2 = minval2;
-  data->TAB_stepsize = data_sym->TAB_stepsize = (maxval-minval)/(double)(data->TAB_npoints - 1);
-
-
-  /* Allocate space for new data */
-  realloc_doublelist(&tabulated_forces,newsize);
-  realloc_doublelist(&tabulated_energies,newsize);
-
-  /* Read in the new force and energy table data */
-  for (i =0 ; i < npoints ; i++)
-    {
-      fscanf(fp,"%lf",&dummr);
-      fscanf(fp,"%lf", &(tabulated_forces.e[i+data->TAB_startindex]));
-      fscanf(fp,"%lf", &(tabulated_energies.e[i+data->TAB_startindex]));
-    }
-
-  fclose(fp);
-
-  /* broadcast interaction parameters including force and energy tables*/
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
-
-  if (tab_force_cap != -1.0) {
-    mpi_tab_cap_forces(tab_force_cap);}
-  return TCL_OK;
-}
-#endif
-
-#ifdef TABULATED
-/** Bonded tabulated potentials: Reads tabulated parameters and force
-    and energy tables from a file.  ia_params and force/energy tables
-    are then communicated to each node \warning No checking is
-    performed for the file read!! */
-int bonded_tabulated_set_params(int bond_type, int tab_type, char * filename) 
-{
-  int i, token = 0, size;
-  double dummr;
-  FILE* fp;
-
-  if(bond_type < 0)
-    return TCL_ERROR;
-  
-  make_bond_type_exist(bond_type);
-
-  fp = fopen( filename , "r");
-  if ( !fp ) {
-    fprintf(stderr,"bonded_tabulated_set_params: attempt to open file %s failed \n", filename );
-    errexit();
-  }
-  
-  /*Look for a line starting with # */
-  while ( token != EOF) {
-    token = fgetc(fp);
-    if ( token == 35 ) { break; } // magic number for # symbol
-  }
-  if ( token == EOF ) { 
-    fprintf(stderr,"bonded_tabulated_set_params: attempt to read file %s failed. Could not find start the start token <#> \n", filename );
-    errexit();
-  }
-
-  /* set types */
-  bonded_ia_params[bond_type].type       = BONDED_IA_TABULATED;
-  bonded_ia_params[bond_type].p.tab.type = tab_type;
-
-  /* set number of interaction partners */
-  if(tab_type == TAB_BOND_LENGTH)   bonded_ia_params[bond_type].num = 1;
-  if(tab_type == TAB_BOND_ANGLE)    bonded_ia_params[bond_type].num = 2;
-  if(tab_type == TAB_BOND_DIHEDRAL) bonded_ia_params[bond_type].num = 3;
-
-  /* copy filename */
-  size = strlen(filename);
-  bonded_ia_params[bond_type].p.tab.filename = (char*)malloc(size*sizeof(char));
-  strcpy(bonded_ia_params[bond_type].p.tab.filename,filename);
-
-  /* read basic parameters from file */
-  fscanf( fp , "%d ", &size);
-  bonded_ia_params[bond_type].p.tab.npoints = size;
-  fscanf( fp, "%lf ", &bonded_ia_params[bond_type].p.tab.minval);
-  fscanf( fp, "%lf ", &bonded_ia_params[bond_type].p.tab.maxval);
-
-  /* Check interval for angle and dihedral potentials.  With adding
-     ROUND_ERROR_PREC to the upper boundary we make sure, that during
-     the calculation we do not leave the defined table!
-  */
-  if(tab_type == TAB_BOND_ANGLE ) {
-    if( bonded_ia_params[bond_type].p.tab.minval != 0.0 || 
-	abs(bonded_ia_params[bond_type].p.tab.maxval-PI) > 1e-5 ) {
-      fprintf(stderr,"bonded_tabulated_set_params: Tabulated bond angle potential has to be defined in the interval 0.0 to %f!\n",PI);
-      errexit();
-    }
-    bonded_ia_params[bond_type].p.tab.maxval = PI+ROUND_ERROR_PREC;
-  }
-  /* check interval for angle and dihedral potentials */
-  if(tab_type == TAB_BOND_DIHEDRAL ) {
-    if( bonded_ia_params[bond_type].p.tab.minval != 0.0 || 
-	abs(bonded_ia_params[bond_type].p.tab.maxval-(2*PI)) > 1e-5 ) {
-      fprintf(stderr,"bonded_tabulated_set_params: Tabulated bond angle potential has to be defined in the interval 0.0 to %f!\n",(2*PI));
-      errexit();
-    }
-    bonded_ia_params[bond_type].p.tab.maxval = (2*PI)+ROUND_ERROR_PREC;
-  }
-
-
-				    
-
-  /* calculate dependent parameters */
-  bonded_ia_params[bond_type].p.tab.invstepsize = (double)(size-1)/(bonded_ia_params[bond_type].p.tab.maxval-bonded_ia_params[bond_type].p.tab.minval);
-
-  /* allocate force and energy tables */
-  bonded_ia_params[bond_type].p.tab.f = (double*)malloc(size*sizeof(double));
-  bonded_ia_params[bond_type].p.tab.e = (double*)malloc(size*sizeof(double));
-
-  /* Read in the new force and energy table data */
-  for (i =0 ; i < size ; i++) {
-      fscanf(fp,"%lf", &dummr);
-      fscanf(fp,"%lf", &bonded_ia_params[bond_type].p.tab.f[i]);
-      fscanf(fp,"%lf", &bonded_ia_params[bond_type].p.tab.e[i]);
-  }
-  fclose(fp);
-
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  return TCL_OK;
-}
-#endif
-
-
-int dihedral_set_params(int bond_type, int mult, double bend, double phase)
-{
-  if(bond_type < 0)
-    return TCL_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].type = BONDED_IA_DIHEDRAL;
-  bonded_ia_params[bond_type].num  = 3;
-  bonded_ia_params[bond_type].p.dihedral.mult = mult;
-  bonded_ia_params[bond_type].p.dihedral.bend = bend;
-  bonded_ia_params[bond_type].p.dihedral.phase = phase;
-
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  return TCL_OK;
-}
-
-int angle_set_params(int bond_type, double bend, double phi0)
-{
-  if(bond_type < 0)
-    return TCL_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.angle.bend = bend;
-  bonded_ia_params[bond_type].p.angle.phi0 = phi0;
-#ifdef BOND_ANGLE_COSINE
-  bonded_ia_params[bond_type].p.angle.cos_phi0 = cos(phi0);
-  bonded_ia_params[bond_type].p.angle.sin_phi0 = sin(phi0);
-#endif
-#ifdef BOND_ANGLE_COSSQUARE
-  bonded_ia_params[bond_type].p.angle.cos_phi0 = cos(phi0);
-#endif
-  bonded_ia_params[bond_type].type = BONDED_IA_ANGLE;
-  bonded_ia_params[bond_type].num = 2;
- 
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  return TCL_OK;
-}
-
-int harmonic_set_params(int bond_type, double k, double r)
-{
-  if(bond_type < 0)
-    return TCL_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.harmonic.k = k;
-  bonded_ia_params[bond_type].p.harmonic.r = r;
-  bonded_ia_params[bond_type].type = BONDED_IA_HARMONIC;
-  bonded_ia_params[bond_type].p.harmonic.r2 = SQR(bonded_ia_params[bond_type].p.harmonic.r);
-  bonded_ia_params[bond_type].num  = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  return TCL_OK;
-}
-
-int fene_set_params(int bond_type, double k, double r)
-{
-  if(bond_type < 0)
-    return TCL_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.fene.k = k;
-  bonded_ia_params[bond_type].p.fene.r = r;
-
-  bonded_ia_params[bond_type].type = BONDED_IA_FENE;
-  bonded_ia_params[bond_type].p.fene.r2 = SQR(bonded_ia_params[bond_type].p.fene.r);
-  bonded_ia_params[bond_type].num  = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
-  
-  return TCL_OK;
-}
-
-int subt_lj_harm_set_params(int bond_type, double k, double r)
-{
-  if(bond_type < 0)
-    return TCL_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.subt_lj_harm.k = k;
-  bonded_ia_params[bond_type].p.subt_lj_harm.r = r;
-  bonded_ia_params[bond_type].type = BONDED_IA_SUBT_LJ_HARM;
-  bonded_ia_params[bond_type].p.subt_lj_harm.r2 = SQR(bonded_ia_params[bond_type].p.subt_lj_harm.r);
-  bonded_ia_params[bond_type].num  = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  return TCL_OK;
-}
-int subt_lj_fene_set_params(int bond_type, double k, double r)
-{
-  if(bond_type < 0)
-    return TCL_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.subt_lj_fene.k = k;
-  bonded_ia_params[bond_type].p.subt_lj_fene.r = r;
-  bonded_ia_params[bond_type].type = BONDED_IA_SUBT_LJ_FENE;
-  bonded_ia_params[bond_type].p.subt_lj_fene.r2 = SQR(bonded_ia_params[bond_type].p.subt_lj_fene.r);
-  bonded_ia_params[bond_type].num  = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  return TCL_OK;
-}
-int subt_lj_set_params(int bond_type, double k, double r)
-{
-  if(bond_type < 0)
-    return TCL_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.subt_lj.k = k;
-  bonded_ia_params[bond_type].p.subt_lj.r = r;
-  bonded_ia_params[bond_type].type = BONDED_IA_SUBT_LJ;  
-  bonded_ia_params[bond_type].p.subt_lj.r2 = SQR(bonded_ia_params[bond_type].p.subt_lj.r);
-  bonded_ia_params[bond_type].num = 1;
-
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  return TCL_OK;
-}
-
 int inter_print_non_bonded(Tcl_Interp * interp,
 			   int part_type_a, int part_type_b)
 {
@@ -1159,18 +844,6 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 			   int argc, char ** argv)
 {
   int change;
-#ifdef LENNARD_JONES
-  /* parameters needed for LJ */
-  double eps, sig, cut, shift, offset, cap_radius;
-#endif
-#ifdef ROTATION
-  /* parameters needed for Gay-Berne*/
-  double k1, k2, mu, nu;
-#endif
-#ifdef TABULATED
-  /* Parameters needed for tabulated force */
-  char* filename = NULL;
-#endif
   
   Tcl_ResetResult(interp);
 
@@ -1184,138 +857,40 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
   /* get interaction parameters */
 
   while (argc > 0) {
-    /* parse 
-     *                        lennard-jones
-     * interaction
-     */
+    /* The various parsers return the number of parsed parameters.
+       If an error occured, 0 should be returned, since none of the parameters were
+       understood */
 #ifdef LENNARD_JONES
-    if (ARG0_IS_S("lennard-jones")) {
-
-      /* get lennard-jones interaction type */
-      if (argc < 6) {
-	Tcl_AppendResult(interp, "lennard-jones needs 5 parameters: "
-			 "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
-			 (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      /* copy lennard-jones parameters */
-      if ((! ARG_IS_D(1, eps))   ||
-	  (! ARG_IS_D(2, sig))   ||
-	  (! ARG_IS_D(3, cut))   ||
-	  (! ARG_IS_D(4, shift)) ||
-	  (! ARG_IS_D(5, offset)    )) {
-	Tcl_AppendResult(interp, "lennard-jones needs 5 DOUBLE parameters: "
-			 "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
-			 (char *) NULL);
-	  return TCL_ERROR;
-      }
-      change = 6;
-	
-      cap_radius = -1.0;
-      /* check wether there is an additional double, cap radius, and parse in */
-      if (argc >= 7 && ARG_IS_D(6, cap_radius))
-	change++;
-      else
-	Tcl_ResetResult(interp);
-      if (lennard_jones_set_params(part_type_a, part_type_b,
-				   eps, sig, cut, shift, offset,
-				   cap_radius) == TCL_ERROR) {
-	Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-	return TCL_ERROR;
-      }
-    }
+    if (ARG0_IS_S("lennard-jones"))
+      change = lj_parser(interp, part_type_a, part_type_b, argc, argv);
 #else
     /* that's just for the else below... */
     if (0);
 #endif
 
-    /* parse 
-     *                        lj-cos
-     * interaction
-     */
 #ifdef LJCOS
-    else if (ARG0_IS_S("lj-cos")) ljcos_parser(interp,
-			   part_type_a, part_type_b, argc, argv, &change);
+    else if (ARG0_IS_S("lj-cos"))
+      change = ljcos_parser(interp, part_type_a, part_type_b, argc, argv);
 #endif
 
 #ifdef COMFORCE
-  else if (ARG0_IS_S("comforce")) comforce_parser(interp,
-			   part_type_a, part_type_b, argc, argv, &change);
+    else if (ARG0_IS_S("comforce"))
+      change = comforce_parser(interp, part_type_a, part_type_b, argc, argv);
 #endif
 
 #ifdef COMFIXED
-  else if (ARG0_IS_S("comfixed")) comfixed_parser(interp,
-			   part_type_a, part_type_b, argc, argv, &change);
+    else if (ARG0_IS_S("comfixed"))
+      change = comfixed_parser(interp, part_type_a, part_type_b, argc, argv);
 #endif
 
-    /* parse 
-     *                        gay-berne
-     * interaction
-     */
 #ifdef ROTATION
-    else if (ARG0_IS_S("gay-berne")) {
-
-      /* there are 9 parameters for gay-berne, but you read in only 7 of them.
-	 The rest is calculated in gay_berne_set_params.
-      */
-
-      if (argc < 8) {
-	Tcl_AppendResult(interp, "gay-berne needs 7 parameters: "
-			 "<gb_eps> <gb_sig> <gb_cut> <gb_k1> <gb_k2> <gb_mu> <gb_nu>",
-			 (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      /* copy gay-berne parameters */
-      if ((! ARG_IS_D(1, eps))   ||
-	  (! ARG_IS_D(2, sig))   ||
-	  (! ARG_IS_D(3, cut))   ||
-	  (! ARG_IS_D(4, k1 ))   ||
-	  (! ARG_IS_D(5, k2 ))   ||
-	  (! ARG_IS_D(6, mu ))   ||	
-	  (! ARG_IS_D(7, nu )    )) {
-	Tcl_AppendResult(interp, "gay-berne needs 7 DOUBLE parameters: "
-			 "<gb_eps> <gb_sig> <gb_cut> <gb_k1> <gb_k2> <gb_mu> <gb_nu>",
-			 (char *) NULL);
-	return TCL_ERROR;
-      }
-      change = 8;
-
-      if (gay_berne_set_params(part_type_a, part_type_b, eps, sig, cut, k1, k2, mu, nu) == TCL_ERROR) {
-	Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-	return TCL_ERROR;
-      }
-    }
+    else if (ARG0_IS_S("gay-berne"))
+      change = gb_parser(interp, part_type_a, part_type_b, argc, argv);
 #endif
 
-    /* parse 
-     *                        tabulated
-     * interaction
-     */
 #ifdef TABULATED
-    else if (ARG0_IS_S("tabulated")) {
-
-      /* tabulated interactions should supply a file name for a file containing
-	 both force and energy profiles as well as number of points, max
-	 values etc.
-      */
-      if (argc < 2) {
-	Tcl_AppendResult(interp, "tabulated potentials require a filename: "
-			 "<filename>",
-			 (char *) NULL);
-	return TCL_ERROR;
-      }
-      change = 2;
-
-      /* copy tabulated parameters */
-      filename = argv[1];
-
-      if (tabulated_set_params(part_type_a, part_type_b, filename) == TCL_ERROR) {
-	Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-	return TCL_ERROR;
-      }
-    }
+    else if (ARG0_IS_S("tabulated"))
+      change = tab_parser(interp, part_type_a, part_type_b, argc, argv);
 #endif
     else {
       Tcl_AppendResult(interp, "excessive parameter/unknown interaction type \"", argv[0],
@@ -1323,6 +898,9 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 		       (char *) NULL);
       return TCL_ERROR;
     }
+
+    if (change <= 0)
+      return TCL_ERROR;
 
     argc -= change;
     argv += change;
@@ -1353,6 +931,10 @@ int inter_print_partner_num(Tcl_Interp *interp, int bond_type)
 		   (char *) NULL);
   return TCL_ERROR;
 }
+
+/********************************************************************************/
+/*                                       parsing                                */
+/********************************************************************************/
 
 int inter_parse_bonded(Tcl_Interp *interp,
 		       int bond_type,
@@ -1471,6 +1053,7 @@ int inter_parse_bonded(Tcl_Interp *interp,
 		       "<bend> ", (char *) NULL);
       return TCL_ERROR;
     }
+
     /* special treatment of the optional parameter phi0 */
     if (argc == 3) {
       if (! ARG_IS_D(2, phi0)) {
@@ -1498,6 +1081,7 @@ int inter_parse_bonded(Tcl_Interp *interp,
   
    CHECK_VALUE(dihedral_set_params(bond_type, mult, bend, phase), "bond type must be nonnegative");
   }
+
   if (ARG0_IS_S("tabulated")) {
 #ifdef TABULATED
     int tab_type = TAB_UNKNOWN;
@@ -1517,701 +1101,39 @@ int inter_parse_bonded(Tcl_Interp *interp,
       return (TCL_ERROR);
     }
 
-    CHECK_VALUE(bonded_tabulated_set_params(bond_type, tab_type, argv[2]), "bond type must be nonnegative");
+    switch (bonded_tabulated_set_params(bond_type, tab_type, argv[2])) {
+    case 1:
+      Tcl_AppendResult(interp, "illegal bond type", (char *)NULL);
+      return TCL_ERROR;
+    case 2:
+      Tcl_AppendResult(interp, "cannot open \"", argv[2], "\"", (char *)NULL);
+      return TCL_ERROR;
+    case 3:
+      Tcl_AppendResult(interp, "attempt to read file \"", argv[2], "\" failed."
+		       "Could not find start the start token <#>", (char *)NULL);
+      return TCL_ERROR;
+    case 4:
+      Tcl_AppendResult(interp, "bond angle potential has to be defined in the interval 0 to pi", (char *)NULL);
+      return TCL_ERROR;
+    case 5:
+      Tcl_AppendResult(interp, "bond angle potential has to be defined in the interval 0 to 2pi", (char *)NULL);
+      return TCL_ERROR;
+    default:
+      return TCL_OK;
+    }
 #else
     Tcl_AppendResult(interp, "Tabulated potentials not compiled in! see config.h\n", (char *) NULL);
     return (TCL_ERROR);
 #endif
   }
 
-  Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
+  Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);
   return TCL_ERROR;
 }
 
-int ljforcecap_set_params(double ljforcecap)
-{
-  if (lj_force_cap != -1.0)
-    mpi_lj_cap_forces(lj_force_cap);
-
-  return TCL_OK;
-}
-
-int tabforcecap_set_params(double tabforcecap)
-{
-  if (tab_force_cap != -1.0)
-    mpi_tab_cap_forces(tab_force_cap);
-
-  return TCL_OK;
-}
-
-int inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-
-  if (argc == 0) {
-    if (lj_force_cap == -1.0)
-      Tcl_AppendResult(interp, "ljforcecap individual", (char *) NULL);
-    else {
-      Tcl_PrintDouble(interp, lj_force_cap, buffer);
-      Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
-    }
-    return TCL_OK;
-  }
-
-  if (argc > 1) {
-    Tcl_AppendResult(interp, "inter ljforcecap takes at most 1 parameter",
-		     (char *) NULL);      
-    return TCL_ERROR;
-  }
-  
-  if (ARG0_IS_S("individual"))
-      lj_force_cap = -1.0;
-  else if (! ARG0_IS_D(lj_force_cap) || lj_force_cap < 0) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  CHECK_VALUE(ljforcecap_set_params(lj_force_cap),
-	      "If you can read this, you should change it. (Use the source Luke!)");
-  return TCL_ERROR;
-}
-
-int inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-
-
-  if (argc == 0) {
-    if (tab_force_cap == -1.0)
-      Tcl_AppendResult(interp, "tabforcecap individual", (char *) NULL);
-    else {
-      Tcl_PrintDouble(interp, tab_force_cap, buffer);
-      Tcl_AppendResult(interp, "tabforcecap ", buffer, (char *) NULL);
-    }
-    return TCL_OK;
-  }
-
-  if (argc > 1) {
-    Tcl_AppendResult(interp, "inter tabforcecap takes at most 1 parameter",
-		     (char *) NULL);      
-    return TCL_ERROR;
-  }
-  
-  if (ARG0_IS_S("individual"))
-      tab_force_cap = -1.0;
-  else if (! ARG0_IS_D(tab_force_cap) || tab_force_cap < 0) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  CHECK_VALUE(tabforcecap_set_params(tab_force_cap),
-	      "If you can read this, you should change it. (Use the source Luke!)");
-  return TCL_ERROR;
-}
-
-
-#ifdef ELECTROSTATICS
-
-int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
-{
-  double pwerror;
-  double minimal_distance;
-  double far_cut = -1;
-
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>} expected, not \"",
-		     argv[0], "\"", (char *)NULL);
-    return TCL_ERROR;
-  }
-  if (!ARG0_IS_D(pwerror))
-    return TCL_ERROR;
-  if (!ARG1_IS_D(minimal_distance))
-    return TCL_ERROR;
-  if (argc > 2 && !ARG_IS_D(2, far_cut))
-    return TCL_ERROR;
-
-  return set_elc_params(interp, pwerror, minimal_distance, far_cut);
-}
-
-void p3m_set_tune_params(double r_cut, int mesh, int cao,
-			 double alpha, double accuracy)
-{
-  if (r_cut >= 0) {
-    p3m.r_cut    = r_cut;
-    p3m.r_cut_iL = r_cut*box_l_i[0];
-  }
-
-  if (mesh >= 0)
-    p3m.mesh[2] = p3m.mesh[1] = p3m.mesh[0] = mesh;
-
-  if (cao >= 0)
-    p3m.cao = cao;
-
-  if (alpha >= 0) {
-    p3m.alpha   = alpha;
-    p3m.alpha_L = alpha*box_l[0];
-  }
-
-  if (accuracy >= 0)
-    p3m.accuracy = accuracy;
-
-  mpi_bcast_coulomb_params();
-}
-
-int p3m_set_params(double r_cut, int mesh, int cao,
-		   double alpha, double accuracy)
-{
-  if(r_cut < 0)
-    return -1;
-
-  if(mesh < 0)
-    return -2;
-
-  if(cao < 1 || cao > 7 || cao > mesh)
-    return -3;
-
-  p3m.r_cut    = r_cut;
-  p3m.r_cut_iL = r_cut*box_l_i[0];
-  p3m.mesh[2]  = p3m.mesh[1] = p3m.mesh[0] = mesh;
-  p3m.cao      = cao;
-
-  if (alpha > 0) {
-    p3m.alpha   = alpha;
-    p3m.alpha_L = alpha*box_l[0];
-  }
-  else
-    if (alpha != -1.0)
-      return -4;
-
-  if (accuracy >= 0)
-    p3m.accuracy = accuracy;
-  else
-    if (accuracy != -1.0)
-      return -5;
-
-  mpi_bcast_coulomb_params();
-
-  return 0;
-}
-
-int p3m_set_mesh_offset(double x, double y, double z)
-{
-  if(x < 0.0 || x > 1.0 ||
-     y < 0.0 || y > 1.0 ||
-     z < 0.0 || z > 1.0 )
-    return TCL_ERROR;
-
-  p3m.mesh_off[0] = x;
-  p3m.mesh_off[1] = y;
-  p3m.mesh_off[2] = z;
-
-  mpi_bcast_coulomb_params();
-
-  return TCL_OK;
-}
-
-int p3m_set_eps(double eps)
-{
-  p3m.epsilon = eps;
-
-  mpi_bcast_coulomb_params();
-
-  return TCL_OK;
-}
-
-int p3m_set_ninterpol(int n)
-{
-  if (n < 0)
-    return TCL_ERROR;
-
-  p3m.inter = n;
-
-  mpi_bcast_coulomb_params();
-
-  return TCL_OK;
-}
-
-int coulomb_set_bjerrum(double bjerrum)
-{
-  if (bjerrum < 0.0)
-    return TCL_ERROR;
-  
-  coulomb.bjerrum = bjerrum;
-
-  if (coulomb.bjerrum == 0.0) {
-
-    if (coulomb.method == COULOMB_P3M) {
-
-      p3m.alpha    = 0.0;
-      p3m.alpha_L  = 0.0;
-      p3m.r_cut    = 0.0;
-      p3m.r_cut_iL = 0.0;
-      p3m.mesh[0]  = 0;
-      p3m.mesh[1]  = 0;
-      p3m.mesh[2]  = 0;
-      p3m.cao      = 0;
-
-    } else if (coulomb.method == COULOMB_DH) {
-
-      dh_params.r_cut   = 0.0;
-      dh_params.kappa   = 0.0;
-
-    } else if (coulomb.method == COULOMB_MMM1D) {
-
-      mmm1d_params.maxPWerror = 1e40;
-      mmm1d_params.bessel_cutoff = 0;
-
-    }
- 
-    mpi_bcast_coulomb_params();
-    coulomb.method = COULOMB_NONE;
-    mpi_bcast_coulomb_params();
-
-  }
-
-  return TCL_OK;
-}
-
-int inter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv)
-{
-  int mesh, cao;
-  double r_cut, accuracy;
-
-  mesh = cao = -1;
-  r_cut = accuracy = -1.0;
-
-  while(argc > 0) {
-
-    if(ARG0_IS_S("r_cut")) {
-      if (! (argc > 1 && ARG1_IS_D(r_cut))) {
-	  Tcl_AppendResult(interp, "r_cut expects double",
-			   (char *) NULL);
-	  return TCL_ERROR;
-      }
- 
-    } else if(ARG0_IS_S("mesh")) {
-      if(! (argc > 1 && ARG1_IS_I(mesh))) {
-	Tcl_AppendResult(interp, "mesh expects integer",
-			   (char *) NULL);
-	return TCL_ERROR;
-      }
-      
-    } else if(ARG0_IS_S("cao")) {
-      if(! (argc > 1 && ARG1_IS_I(cao))) {
-	Tcl_AppendResult(interp, "cao expects integer",
-			   (char *) NULL);
-	return TCL_ERROR;
-      } 
-
-    } else if(ARG0_IS_S("accuracy")) {
-      if(! (argc > 1 && ARG1_IS_D(accuracy))) {
-	Tcl_AppendResult(interp, "accuracy expects double",
-			 (char *) NULL);
-	  return TCL_ERROR;
-      }
-
-    } else {
-      Tcl_AppendResult(interp, "Unknown p3m tune parameter \"",argv[0],"\"",
-                       (char *) NULL);
-      return TCL_ERROR;
-    }
-    
-    argc -= 2;
-    argv += 2;
-  }
-
-  p3m_set_tune_params(r_cut, mesh, cao, -1.0, accuracy);
-
-  if(P3M_tune_parameters(interp) == TCL_ERROR) 
-    return TCL_ERROR;
-  
-  return TCL_OK;
-}
-
-int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
-{
-  double r_cut, alpha, accuracy = -1.0;
-  int mesh, cao, i;
-
-  coulomb.method = COULOMB_P3M;
-    
-#ifdef PARTIAL_PERIODIC
-  if(PERIODIC(0) == 0 ||
-     PERIODIC(1) == 0 ||
-     PERIODIC(2) == 0)
-    {
-      Tcl_AppendResult(interp, "Need periodicity (1,1,1) with Coulomb P3M",
-		       (char *) NULL);
-      return TCL_ERROR;  
-    }
-#endif
-
-  if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
-    Tcl_AppendResult(interp, "Node grid not suited for Coulomb P3M. Node grid must be sorted, largest first.", (char *) NULL);
-    return TCL_ERROR;  
-  }
-
-  if (ARG0_IS_S("tune"))
-    return inter_parse_p3m_tune_params(interp, argc-1, argv+1);
-      
-  if(! ARG0_IS_D(r_cut)) {
-    Tcl_AppendResult(interp, "Unknown p3m parameter \"", argv[0],"\"",
-		     (char *) NULL);
-    return TCL_ERROR;  
-  }
-
-  if(argc < 3) {
-    Tcl_AppendResult(interp, "p3m needs at least 3 parameters: <r_cut> <mesh> <cao> [<alpha> [accuracy]]",
-		     (char *) NULL);
-    return TCL_ERROR;  
-  }
-
-  if((! ARG_IS_I(1, mesh)) || (! ARG_IS_I(2, cao))) {
-    Tcl_AppendResult(interp, "integer expected", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
-  if(argc > 3) {
-    if(! ARG_IS_D(3, alpha))
-      return TCL_ERROR;
-  }
-  else {
-    Tcl_AppendResult(interp, "Automatic p3m tuning not implemented.",
-		     (char *) NULL);
-    return TCL_ERROR;  
-  }
-
-  if(argc > 4) {
-    if(! ARG_IS_D(4, accuracy)) {
-      Tcl_AppendResult(interp, "double expected", (char *) NULL);
-      return TCL_ERROR;
-    }
-  }
-
-  if ((i = p3m_set_params(r_cut, mesh, cao, alpha, accuracy)) < 0) {
-    switch (i) {
-    case -1:
-      Tcl_AppendResult(interp, "r_cut must be positive", (char *) NULL);
-      break;
-    case -2:
-      Tcl_AppendResult(interp, "mesh must be positive", (char *) NULL);
-      break;
-    case -3:
-      Tcl_AppendResult(interp, "cao must be between 1 and 7 and less than mesh",
-		       (char *) NULL);
-      break;
-    case -4:
-      Tcl_AppendResult(interp, "alpha must be positive", (char *) NULL);
-      break;
-    case -5:
-      Tcl_AppendResult(interp, "accuracy must be positive", (char *) NULL);
-      break;
-    default:;
-      Tcl_AppendResult(interp, "unspecified error", (char *) NULL);
-    }
-
-    return TCL_ERROR;
-
-  }
-
-  return TCL_OK;
-}
-
-int inter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv)
-{
-  int i; double d1, d2, d3;
-
-  Tcl_ResetResult(interp);
-
-  while (argc > 0) {
-    /* p3m parameter: inter */
-    if (ARG0_IS_S("n_interpol")) {
-      
-      if(argc < 2) {
-	Tcl_AppendResult(interp, argv[0], " needs 1 parameter",
-			 (char *) NULL);
-	return TCL_ERROR;
-      }
-      
-      if (! ARG1_IS_I(i)) {
-	Tcl_AppendResult(interp, argv[0], " needs 1 INTEGER parameter",
-			 (char *) NULL);
-	return TCL_ERROR;
-      }
-      
-      if (p3m_set_ninterpol(i) == TCL_ERROR) {
-	Tcl_AppendResult(interp, argv[0], " argument must be positive",
-			 (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      argc -= 2;
-      argv += 2;
-    }
-    
-    /* p3m parameter: mesh_off */
-    else if (ARG0_IS_S("mesh_off")) {
-      
-      if(argc < 4) {
-	Tcl_AppendResult(interp, argv[0], " needs 3 parameters",
-			 (char *) NULL);
-	return TCL_ERROR;
-      }
-	
-      if ((! ARG_IS_D(1, d1)) ||
-	  (! ARG_IS_D(2, d2)) ||
-	  (! ARG_IS_D(3, d3)))
-	{
-	  Tcl_AppendResult(interp, argv[0], " needs 3 DOUBLE parameters",
-			   (char *) NULL);
-	  return TCL_ERROR;
-	}
-
-      if (p3m_set_mesh_offset(d1, d2 ,d3) == TCL_ERROR)
-	{
-	  Tcl_AppendResult(interp, argv[0], " parameters have to be between 0.0 an 1.0",
-			   (char *) NULL);
-	  return TCL_ERROR;
-	}
-
-      argc -= 4;
-      argv += 4;
-    }
-    
-    /* p3m parameter: epsilon */
-    else if(ARG0_IS_S( "epsilon")) {
-
-      if(argc < 2) {
-	Tcl_AppendResult(interp, argv[0], " needs 1 parameter",
-			 (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      if (ARG1_IS_S("metallic")) {
-	d1 = P3M_EPSILON_METALLIC;
-      }
-      else {
-	if (! ARG1_IS_D(d1)) {
-	  Tcl_AppendResult(interp, argv[0], " needs 1 DOUBLE parameter or \"metallic\"",
-			   (char *) NULL);
-	  return TCL_ERROR;
-	}
-	
-	if (p3m_set_eps(d1) == TCL_ERROR) {
-	  Tcl_AppendResult(interp, argv[0], " There is no error msg yet!",
-			   (char *) NULL);
-	  return TCL_ERROR;
-	}
-      }
-
-      argc -= 2;
-      argv += 2;	    
-    }
-    else {
-      Tcl_AppendResult(interp, "Unknown coulomb p3m parameter: \"",argv[0],"\"",(char *) NULL);
-      return TCL_ERROR;
-    }
-  }
-
-  return TCL_OK;
-}
-
-int dh_set_params(double kappa, double r_cut)
-{
-  if(dh_params.kappa < 0.0)
-    return -1;
-
-  if(dh_params.r_cut < 0.0)
-    return -2;
-
-  dh_params.kappa = kappa;
-  dh_params.r_cut = r_cut;
-
-  mpi_bcast_coulomb_params();
-
-  return 1;
-}
-
-int inter_parse_dh(Tcl_Interp * interp, int argc, char ** argv)
-{
-  double kappa, r_cut;
-  int i;
-
-  if(argc < 2) {
-    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb dh <kappa> <r_cut>", (char *) NULL);
-    return TCL_ERROR;
-  }
-  
-  coulomb.method = COULOMB_DH;
-
-  if(! ARG0_IS_D(kappa))
-    return TCL_ERROR;
-  if(! ARG1_IS_D(r_cut))
-    return TCL_ERROR;
-
-  if ( (i = dh_set_params(kappa, r_cut)) < 0) {
-    switch (i) {
-    case -1:
-      Tcl_AppendResult(interp, "dh kappa must be positiv.",(char *) NULL);
-      break;
-    case -2:
-      Tcl_AppendResult(interp, "dh r_cut must be positiv.",(char *) NULL);
-      break;
-    default:
-      Tcl_AppendResult(interp, "unspecified error",(char *) NULL);
-    }
-    
-    return TCL_ERROR;
-  }
-
-  return TCL_OK;
-}
-
-int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
-{
-  double switch_rad, maxPWerror;
-  int bessel_cutoff;
-
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb mmm1d <switch radius> {<bessel cutoff>} <maximal error for near formula> | tune  <maximal pairwise error>", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  if (ARG0_IS_S("tune")) {
-    /* autodetermine bessel cutoff AND switching radius */
-    if (! ARG_IS_D(1, maxPWerror))
-      return TCL_ERROR;
-    bessel_cutoff = -1;
-    switch_rad = -1;
-  }
-  else {
-    if (argc == 2) {
-      /* autodetermine bessel cutoff */
-      if ((! ARG_IS_D(0, switch_rad)) ||
-	  (! ARG_IS_D(1, maxPWerror))) 
-	return TCL_ERROR;
-      bessel_cutoff = -1;
-    }
-    else if (argc == 3) {
-      if((! ARG_IS_D(0, switch_rad)) ||
-	 (! ARG_IS_I(1, bessel_cutoff)) ||
-	 (! ARG_IS_D(2, maxPWerror))) 
-	return TCL_ERROR;
-    }
-    else {
-      Tcl_AppendResult(interp, "Too many parameters: inter coulomb mmm1d <switch radius> {<bessel cutoff>} <maximal error for near formula> | tune  <maximal pairwise error>", (char *) NULL);
-      return TCL_ERROR;
-    }
-  }
-
-  return set_mmm1d_params(interp, switch_rad, bessel_cutoff, maxPWerror);
-}
-
-int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
-{
-  double maxPWerror;
-  double far_cut;
-
-  if (argc > 2) {
-    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb mmm2d <maximal pairwise error> {<fixed far cutoff>}", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  if (! ARG0_IS_D(maxPWerror))
-    return TCL_ERROR;
-
-  if (argc == 2) {
-    if (! ARG1_IS_D(far_cut))
-      return TCL_ERROR;
-  }
-  else
-    far_cut = -1;
-
-  return set_mmm2d_params(interp, maxPWerror, far_cut);
-}
-
-int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
-{
-  double d1;
-
-  Tcl_ResetResult(interp);
-
-  if(argc == 0) {
-    printCoulombIAToResult(interp);
-    return TCL_OK;
-  }
-  
-  if (! ARG0_IS_D(d1)) {
-    Tcl_ResetResult(interp);
-    if (ARG0_IS_S("elc") && (coulomb.method == COULOMB_P3M))
-      return inter_parse_elc_params(interp, argc - 1, argv + 1);
-    if (coulomb.method == COULOMB_P3M)
-      return inter_parse_p3m_opt_params(interp, argc, argv);
-    else {
-      Tcl_AppendResult(interp, "(P3M not enabled) Expect: inter coulomb <bjerrum>",
-		       (char *) NULL);
-      return TCL_ERROR;
-    }
-  }
-
-  coulomb.use_elc = 0;
-  coulomb.method  = COULOMB_NONE;
-
-  if (coulomb_set_bjerrum(d1) == TCL_ERROR) {
-    Tcl_AppendResult(interp, argv[0], "bjerrum length must be positive",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-    
-  argc -= 1;
-  argv += 1;
-
-  if (d1 == 0.0 && argc == 0) {
-    mpi_bcast_coulomb_params();
-    return TCL_OK;
-  }
-
-  if(argc < 1) {
-    Tcl_AppendResult(interp, "wrong # args for inter coulomb.",
-		     (char *) NULL);
-    mpi_bcast_coulomb_params();
-    return TCL_ERROR;
-  }
-
-  /* check method */
-  if(ARG0_IS_S("p3m"))    
-    return inter_parse_p3m(interp, argc-1, argv+1);
-
-  if (ARG0_IS_S("dh"))
-    return inter_parse_dh(interp, argc-1, argv+1);    
-    
-  if (ARG0_IS_S("mmm1d"))
-    return inter_parse_mmm1d(interp, argc-1, argv+1);
-
-  if (ARG0_IS_S("mmm2d"))
-    return inter_parse_mmm2d(interp, argc-1, argv+1);
-
-  /* fallback */
-  coulomb.bjerrum = 0.0;
-
-  mpi_bcast_coulomb_params();
-
-  Tcl_AppendResult(interp, "Do not know coulomb method \"",argv[1],
-		   "\": coulomb switched off", (char *) NULL);
-
-  return TCL_ERROR;
-}
-#endif
-
 int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 {
-
-
   if(ARG0_IS_S("ljforcecap"))
     return inter_parse_ljforcecap(interp, argc-1, argv+1);
   
@@ -2235,8 +1157,7 @@ int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 int inter(ClientData _data, Tcl_Interp *interp,
 	  int argc, char **argv)
 {
-  int i, j;
-  double dummy;
+  int i, j, err_code = TCL_OK, is_i1, is_i2;
 
   Tcl_ResetResult(interp);
   
@@ -2251,703 +1172,55 @@ int inter(ClientData _data, Tcl_Interp *interp,
      then the rest
    */
 
-  /* no argument -> print all interaction informations. */
-  if (argc == 1)
-    return inter_print_all(interp);
-
-  /* There is only 1 parameter */
-  if (argc == 2) {
+  if (argc == 1) {
+    /* no argument -> print all interaction informations. */
+    err_code = inter_print_all(interp);
+  }
+  else if (argc == 2) {
+    /* There is only 1 parameter, bonded ia printing or force caps */
 
     if (ARG1_IS_I(i))
-      return inter_print_bonded(interp, i);
-    else
+      err_code = inter_print_bonded(interp, i);
+    else {
       Tcl_ResetResult(interp);
-
-    if (ARG1_IS_D(dummy)) {
-      Tcl_AppendResult(interp, "integer or string expected",
-		       (char *) NULL);
-      return TCL_ERROR;
+      err_code = inter_parse_rest(interp, argc-1, argv+1);
     }
-    else
-      Tcl_ResetResult(interp);
-
-    return inter_parse_rest(interp, argc-1, argv+1);
   }
-  
-  /* There are only 2 parameters */
-  if (argc == 3) {
+  else if (argc == 3) {
+    /* There are only 2 parameters, non_bonded printing */
     
-    if (ARG_IS_I(1, i) && ARG_IS_I(2, j))
-      return inter_print_non_bonded(interp, i, j);
+    is_i1 = ARG_IS_I(1, i);
+    is_i2 = ARG_IS_I(2, j);
+
+    Tcl_ResetResult(interp);
+
+    if (is_i1 && is_i2)
+      err_code = inter_print_non_bonded(interp, i, j);
+    else if (is_i1)
+      err_code = inter_parse_bonded(interp, i, argc-2, argv+2);
     else
-      Tcl_ResetResult(interp);
-
-    if (ARG_IS_I(1, i)) {
-      Tcl_AppendResult(interp, "not enough arguments",
-		       (char *) NULL);
-      return TCL_ERROR;
-    }
-    else
-      Tcl_ResetResult(interp);
-
-    if (ARG1_IS_D(dummy)) {
-      Tcl_AppendResult(interp, "integer or string expected",
-		       (char *) NULL);
-      return TCL_ERROR;
-    }
-    else
-      Tcl_ResetResult(interp);
-      
-    return inter_parse_rest(interp, argc-1, argv+1);
+      err_code = inter_parse_rest(interp, argc-1, argv+1);
   }
+  else {
+    /****************************************************
+     * Here we have more than 2 parameters
+     ****************************************************/
 
-  /****************************************************
-   * Here we have more than 2 parameters
-   ****************************************************/
+    is_i1 = ARG_IS_I(1, i);
+    is_i2 = ARG_IS_I(2, j);
 
-  // non bonded interactions
-  if (ARG_IS_I(1, i) && ARG_IS_I(2, j))
-    return inter_parse_non_bonded(interp, i, j, argc-3, argv+3);
-  else
     Tcl_ResetResult(interp);
-
-  // bonded interactions
-  if (ARG_IS_I(1, i) && ! ARG_IS_D(2, dummy)) {
-    Tcl_ResetResult(interp);
-    return inter_parse_bonded(interp, i, argc-2, argv+2);
-  }
-  else
-    Tcl_ResetResult(interp);
-
-  if (ARG_IS_D(1, dummy)) {
-      Tcl_AppendResult(interp, "integer or string expected",
-		       (char *) NULL);
-      return TCL_ERROR;
-  }
-  else
-    Tcl_ResetResult(interp);
-
-  // named interactions
-  return inter_parse_rest(interp, argc-1, argv+1);
-}
-
-void make_particle_type_exist(int type)
-{
-  int ns = type + 1;
-  if (ns <= n_particle_types)
-    return;
-
-  mpi_bcast_n_particle_types(ns);
-}
-
-void make_bond_type_exist(int type)
-{
-  int i, ns = type + 1;
-
-  if(ns <= n_bonded_ia) {
-#ifdef TABULATED
-    if ( bonded_ia_params[type].type == BONDED_IA_TABULATED && 
-	 bonded_ia_params[type].p.tab.npoints > 0 ) {
-      free(bonded_ia_params[type].p.tab.f);
-      free(bonded_ia_params[type].p.tab.e);
-    }
-#endif 
-    return;
-  }
-  /* else allocate new memory */
-  bonded_ia_params = (Bonded_ia_parameters *)realloc(bonded_ia_params,
-						     ns*sizeof(Bonded_ia_parameters));
-  /* set bond types not used as undefined */
-  for (i = n_bonded_ia; i < ns; i++)
-    bonded_ia_params[i].type = BONDED_IA_NONE;
  
-  n_bonded_ia = ns;
-}
-
-#ifdef CONSTRAINTS
-int printConstraintToResult(Tcl_Interp *interp, int i)
-{
-  Constraint *con = &constraints[i];
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-  sprintf(buffer, "%d ", i);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-  
-  switch (con->type) {
-  case CONSTRAINT_WAL:
-    Tcl_PrintDouble(interp, con->c.wal.n[0], buffer);
-    Tcl_AppendResult(interp, "wall normal ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.wal.n[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.wal.n[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.wal.d, buffer);
-    Tcl_AppendResult(interp, " dist ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.p.type);
-    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
-    break;
-  case CONSTRAINT_SPH:
-    Tcl_PrintDouble(interp, con->c.sph.pos[0], buffer);
-    Tcl_AppendResult(interp, "sphere center ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.sph.pos[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.sph.pos[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.sph.rad, buffer);
-    Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.sph.direction, buffer);
-    Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.p.type);
-    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
-    break;
-  case CONSTRAINT_CYL:
-    Tcl_PrintDouble(interp, con->c.cyl.pos[0], buffer);
-    Tcl_AppendResult(interp, "cylinder center ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.pos[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.pos[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.axis[0], buffer);
-    Tcl_AppendResult(interp, " axis ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.axis[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.axis[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.rad, buffer);
-    Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.length, buffer);
-    Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.direction, buffer);
-    Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.p.type);
-    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
-    break;
-  case CONSTRAINT_ROD:
-    Tcl_PrintDouble(interp, con->c.rod.pos[0], buffer);
-    Tcl_AppendResult(interp, "rod center ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.rod.pos[1], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.rod.lambda, buffer);
-    Tcl_AppendResult(interp, " lambda ", buffer, (char *) NULL);
-    break;
-  case CONSTRAINT_PLATE:
-    Tcl_PrintDouble(interp, con->c.plate.pos, buffer);
-    Tcl_AppendResult(interp, "plate height ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.plate.sigma, buffer);
-    Tcl_AppendResult(interp, " sigma ", buffer, (char *) NULL);
-    break;
-  case CONSTRAINT_MAZE:
-    Tcl_PrintDouble(interp, con->c.maze.nsphere, buffer);
-    Tcl_AppendResult(interp, "maze nsphere ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.maze.dim, buffer);
-    Tcl_AppendResult(interp, " dim ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.maze.sphrad, buffer);
-    Tcl_AppendResult(interp, " sphrad ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.maze.cylrad, buffer);
-    Tcl_AppendResult(interp, " cylrad ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.p.type);
-    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
-    break;
-  default:
-    sprintf(buffer, "%d", con->type);
-    Tcl_AppendResult(interp, "unknown constraint type ", buffer, ".", (char *) NULL);
-    return (TCL_OK);
-  }
-
-  return (TCL_OK);
-}
-
-int constraint_print_all(Tcl_Interp *interp)
-{
-  int i;
-  if(n_constraints>0) Tcl_AppendResult(interp, "{", (char *)NULL);
-  for (i = 0; i < n_constraints; i++) {
-    if(i>0) Tcl_AppendResult(interp, " {", (char *)NULL);
-    printConstraintToResult(interp, i);
-    Tcl_AppendResult(interp, "}", (char *)NULL);
-  }
-  return (TCL_OK);
-}
-
-void printConstraintForceToResult(Tcl_Interp *interp, int con)
-{
-  double f[3];
-  char buffer[TCL_DOUBLE_SPACE];
-
-  mpi_get_constraint_force(con, f);
-
-  Tcl_PrintDouble(interp, f[0], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, f[1], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, f[2], buffer);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
-}
-
-Constraint *generate_constraint()
-{
-  n_constraints++;
-  constraints = realloc(constraints,n_constraints*sizeof(Constraint));
-  constraints[n_constraints-1].type = CONSTRAINT_NONE;
-  constraints[n_constraints-1].part_rep.p.identity = -n_constraints;
-  
-  return &constraints[n_constraints-1];
-}
-
-int constraint_wall(Constraint *con, Tcl_Interp *interp,
-		    int argc, char **argv)
-{
-  int i;
-  double norm;
-  con->type = CONSTRAINT_WAL;
-  /* invalid entries to start of */
-  con->c.wal.n[0] = 
-    con->c.wal.n[1] = 
-    con->c.wal.n[2] = 0;
-  con->c.wal.d = 0;
-  con->part_rep.p.type = -1;
-  while (argc > 0) {
-    if(!strncmp(argv[0], "normal", strlen(argv[0]))) {
-      if(argc < 4) {
-	Tcl_AppendResult(interp, "constraint wall normal <nx> <ny> <nz> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.wal.n[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(con->c.wal.n[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(con->c.wal.n[2])) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 4; argv += 4;
-    }
-    else if(!strncmp(argv[0], "dist", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint wall dist <d> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.wal.d)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint wall type <t> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
+    // non bonded interactions
+    if (is_i1 && is_i2)
+      err_code = inter_parse_non_bonded(interp, i, j, argc-3, argv+3);
+    else if (is_i1)
+      // bonded interactions
+      err_code = inter_parse_bonded(interp, i, argc-2, argv+2);
     else
-      break;
+      // named interactions
+      err_code = inter_parse_rest(interp, argc-1, argv+1);
   }
-  norm = SQR(con->c.wal.n[0])+SQR(con->c.wal.n[1])+SQR(con->c.wal.n[2]);
-  if (norm < 1e-10 || con->part_rep.p.type < 0) {
-    Tcl_AppendResult(interp, "usage: constraint wall normal <nx> <ny> <nz> dist <d> type <t>",
-		     (char *) NULL);
-    return (TCL_ERROR);    
-  }
-  for(i=0;i<3;i++) con->c.wal.n[i] /= sqrt(norm);
-
-  return (TCL_OK);
-}
-
-int constraint_sphere(Constraint *con, Tcl_Interp *interp,
-		      int argc, char **argv)
-{
-  con->type = CONSTRAINT_SPH;
-
-  /* invalid entries to start of */
-  con->c.sph.pos[0] = 
-    con->c.sph.pos[1] = 
-    con->c.sph.pos[2] = 0;
-  con->c.sph.rad = 0;
-  con->c.sph.direction = -1;
-  con->part_rep.p.type = -1;
-
-  while (argc > 0) {
-    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
-      if(argc < 4) {
-	Tcl_AppendResult(interp, "constraint sphere center <x> <y> <z> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.sph.pos[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(con->c.sph.pos[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(con->c.sph.pos[2])) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 4; argv += 4;
-    }
-    else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint sphere radius <r> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.sph.rad)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "direction", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "1/-1 or inside/outside is expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (!strncmp(argv[1], "inside", strlen(argv[1])))
-	con->c.sph.direction = -1;
-      else if (!strncmp(argv[1], "outside", strlen(argv[1])))
-	con->c.sph.direction = 1;
-      else if (Tcl_GetDouble(interp, argv[1], &(con->c.sph.direction)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint sphere type <t> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else
-      break;
-  }
-
-  if (con->c.sph.rad < 0. || con->part_rep.p.type < 0) {
-    Tcl_AppendResult(interp, "usage: constraint sphere center <x> <y> <z> radius <d> direction <direction> type <t>",
-		     (char *) NULL);
-    return (TCL_ERROR);    
-  }
-
-  return (TCL_OK);
-}
-
-int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
-		    int argc, char **argv)
-{
-  double axis_len;
-  int i;
-
-  con->type = CONSTRAINT_CYL;
-  /* invalid entries to start of */
-  con->c.cyl.pos[0] = 
-    con->c.cyl.pos[1] = 
-    con->c.cyl.pos[2] = 0;
-  con->c.cyl.axis[0] = 
-    con->c.cyl.axis[1] = 
-    con->c.cyl.axis[2] = 0;
-  con->c.cyl.rad = 0;
-  con->c.cyl.length = 0;
-  con->c.cyl.direction = 0;
-  con->part_rep.p.type = -1;
-  while (argc > 0) {
-    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
-      if(argc < 4) {
-	Tcl_AppendResult(interp, "constraint cylinder center <x> <y> <z> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.pos[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(con->c.cyl.pos[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(con->c.cyl.pos[2])) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 4; argv += 4;
-    }
-    else if(!strncmp(argv[0], "axis", strlen(argv[0]))) {
-      if(argc < 4) {
-	Tcl_AppendResult(interp, "constraint cylinder axis <rx> <ry> <rz> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.axis[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(con->c.cyl.axis[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(con->c.cyl.axis[2])) == TCL_ERROR)
-	return (TCL_ERROR);
-
-      argc -= 4; argv += 4;    
-    }
-    else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint cylinder radius <rad> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.rad)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "length", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint cylinder length <len> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.length)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "direction", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint cylinder direction <dir> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (!strncmp(argv[1], "inside", strlen(argv[1])))
-	con->c.cyl.direction = -1;
-      else if (!strncmp(argv[1], "outside", strlen(argv[1])))
-	con->c.cyl.direction = 1;
-      else if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.direction)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint cylinder type <t> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else
-      break;
-  }
-
-  axis_len=0.;
-  for (i=0;i<3;i++)
-    axis_len += SQR(con->c.cyl.axis[i]);
-
-  if (con->c.cyl.rad < 0. || con->part_rep.p.type < 0 || axis_len < 1e-30 ||
-      con->c.cyl.direction == 0 || con->c.cyl.length <= 0) {
-    Tcl_AppendResult(interp, "usage: constraint cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t>",
-		     (char *) NULL);
-    return (TCL_ERROR);    
-  }
-
-  /*normalize the axis vector */
-      axis_len = sqrt (axis_len);
-      for (i=0;i<3;i++) {
-	con->c.cyl.axis[i] /= axis_len;
-      }
-      
-  return (TCL_OK);
-}
-
-int constraint_rod(Constraint *con, Tcl_Interp *interp,
-		   int argc, char **argv)
-{
-  con->type = CONSTRAINT_ROD;
-  con->part_rep.p.type = -1;
-  con->c.rod.pos[0] = con->c.rod.pos[1] = 0;
-  con->c.rod.lambda = 0;
-  while (argc > 0) {
-    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
-      if(argc < 3) {
-	Tcl_AppendResult(interp, "constraint rod center <px> <py> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.rod.pos[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(con->c.rod.pos[1])) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 3; argv += 3;
-    }
-    else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
-      Tcl_AppendResult(interp, "constraint rod radius <r> is deprecated, please a cylinder for LJ component", (char *) NULL);
-      return (TCL_ERROR);
-    }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      Tcl_AppendResult(interp, "constraint rod type <t> is deprecated, please a cylinder for LJ component", (char *) NULL);
-      return (TCL_ERROR);
-    }
-    else if(!strncmp(argv[0], "lambda", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint rod lambda <l> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.rod.lambda)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else
-      break;
-  }
-  return (TCL_OK);
-}
-
-int constraint_plate(Constraint *con, Tcl_Interp *interp,
-		     int argc, char **argv)
-{
-  con->type = CONSTRAINT_PLATE;
-  con->part_rep.p.type = -1;
-  con->c.plate.pos = 0;
-  con->c.plate.sigma = 0;
-  while (argc > 0) {
-    if(!strncmp(argv[0], "height", strlen(argv[0]))) {
-      if(argc < 2) {
-	Tcl_AppendResult(interp, "constraint plate height <pz> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.plate.pos)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "sigma", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint rod sigma <s> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.plate.sigma)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else
-      break;
-  }
-  return (TCL_OK);
-}
-
-
-int constraint_maze(Constraint *con, Tcl_Interp *interp,
-		      int argc, char **argv)
-{
-  con->type = CONSTRAINT_MAZE;
-
-  /* invalid entries to start of */
-  con->c.maze.nsphere = 0.;
-  con->c.maze.dim = -1.;
-  con->c.maze.sphrad = 0.;
-  con->c.maze.cylrad = -1.;
-  con->part_rep.p.type = -1;
-
-  while (argc > 0) {
-    if(!strncmp(argv[0], "nsphere", strlen(argv[0]))) {
-      if(argc < 4) {
-	Tcl_AppendResult(interp, "constraint maze nsphere <n> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.maze.nsphere)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "dim", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint maze dim <d> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.maze.dim)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "sphrad", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint maze sphrad <r> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.maze.sphrad)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "cylrad", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint maze cylrad <r> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.maze.cylrad)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint maze type <t> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else
-      break;
-  }
-
-  if (con->c.maze.sphrad < 0. || con->c.maze.cylrad < 0. || con->part_rep.p.type < 0 || con->c.maze.dim < 0) {
-    Tcl_AppendResult(interp, "usage: constraint maze nsphere <n> dim <d> sphrad <r> cylrad <r> type <t>",
-		     (char *) NULL);
-    return (TCL_ERROR);    
-  }
-
-  make_particle_type_exist(con->type);
-
-  return (TCL_OK);
-}
-
-#endif
-
-
-int constraint(ClientData _data, Tcl_Interp *interp,
-	       int argc, char **argv)
-{
-#ifdef CONSTRAINTS
-  int status, c_num;
-
-  if (argc < 2) return constraint_print_all(interp);
-  
-  if(!strncmp(argv[1], "wall", strlen(argv[1]))) {
-    status = constraint_wall(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-    return status;
-  }
-  else if(!strncmp(argv[1], "sphere", strlen(argv[1]))) {
-    status = constraint_sphere(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-    return status;
-  }
-  else if(!strncmp(argv[1], "cylinder", strlen(argv[1]))) {
-    status = constraint_cylinder(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-    return status;
-  }
-  else if(!strncmp(argv[1], "rod", strlen(argv[1]))) {
-    status = constraint_rod(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-    return status;
-  }
-  else if(!strncmp(argv[1], "plate", strlen(argv[1]))) {
-    status = constraint_plate(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-    return status;
-  }
-  else if(!strncmp(argv[1], "maze", strlen(argv[1]))) {
-    status = constraint_maze(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-    return status;
-  }
-  else if(!strncmp(argv[1], "force", strlen(argv[1]))) {
-    if(argc < 3) {
-      Tcl_AppendResult(interp, "which particles force?",(char *) NULL);
-      return (TCL_ERROR);
-    }
-    if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
-    if(c_num < 0 || c_num >= n_constraints) {
-      Tcl_AppendResult(interp, "constraint does not exist",(char *) NULL);
-      return (TCL_ERROR);
-    }
-    printConstraintForceToResult(interp, c_num);
-    return (TCL_OK);
-  }
-  else if(!strncmp(argv[1], "delete", strlen(argv[1]))) {
-    if(argc < 3) {
-      /* delete all */
-      mpi_bcast_constraint(-2);
-      return (TCL_OK);
-    }
-    if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
-    if(c_num < 0 || c_num >= n_constraints) {
-      Tcl_AppendResult(interp, "Can not delete non existing constraint",(char *) NULL);
-      return (TCL_ERROR);
-    }
-    mpi_bcast_constraint(c_num);
-    return (TCL_OK);    
-  }
-  else if (argc == 2 && Tcl_GetInt(interp, argv[1], &c_num) == TCL_OK) {
-    printConstraintToResult(interp, c_num);
-    return (TCL_OK);
-  }
-
-  Tcl_AppendResult(interp, "possible constraints: wall sphere cylinder maze or constraint delete {c} to delete constraint(s)",(char *) NULL);
-  return (TCL_ERROR);
-#else
-  Tcl_AppendResult(interp, "Constraints not compiled in!" ,(char *) NULL);
-  return (TCL_ERROR);
-#endif
+  /* check for background errors which have not been handled so far */
+  return mpi_gather_runtime_errors(interp, err_code);
 }

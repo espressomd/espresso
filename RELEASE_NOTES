@@ -10,6 +10,7 @@ Current working revision.
 
 - v1.6.6e -
 -----------
+(g) August 19th, 2004.
 (f) August 13th, 2004.
 (e) August 12th, 2004.
 (d) August 10th, 2004.
@@ -18,6 +19,7 @@ Current working revision.
 (a) July   27th, 2004.
 
 New Features:
+(g) Added error handling code.
 (f) Added new analysis command "analyze aggregation" to analyze the aggregation 
     state of molecules in the system.
 (e) Added 'polyBlockRead <source>' to read in blockfile 'source'.
@@ -38,6 +40,10 @@ New Features:
 (a) Added documentation for MMM2D, MMM1D and ELC, and the ghost communication stuff.
 
 Changes:
+(g) Changed a lot of errexit()s to using the new runtime_error facility.
+(g) The parsers for the tabulated potentials now generate Tcl errors instead of
+    errexit()s.
+(g) All parsers for interactions have been moved to the corresponding force files.
 (d) Changed classification of stray lipids to account for the fact that some lipids 
     will become incorporated into periodic image bilayers. These lipids are still
     discarded in modes analysis but are classified as "STRAY".  
@@ -47,6 +53,9 @@ Changes:
 (a) Now errors in the 'integrate set' command are actually reported as errors.
 
 Bugfixes:
+(g) A lot all over, mostly in the parsers.
+(g) The layered cell system now is able to deal with moving particles.
+(g) Setting bonds now generates an on_particle_change on ALL nodes.
 (d) Fixed bug in the mindist which only worked for symmetric sets.
 (d) Fixed some bugs in the topology-mol_id sync command so that this now works 
     properly on multiple nodes.

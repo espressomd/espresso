@@ -18,6 +18,12 @@ typedef struct {
 } MMM2D_struct;
 extern MMM2D_struct mmm2d_params;
 
+/// print the mmm2d parameters to the interpreters result
+int printMMM2DToResult(Tcl_Interp *interp);
+
+/// parse the mmm2d parameters
+int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv);
+
 /** set parameters for MMM2D. This assumes that the particles do NOT leave the box.
     For the near formula (nsquared cell structure), precision might be lost, while
     the far formula might have problems with overflows. 
@@ -28,7 +34,7 @@ extern MMM2D_struct mmm2d_params;
     @param far_cut      sets the cutoff for the far formula in inverse lengths.
     if -1, the far cutoff is determined by maxPWerror. Probably only good for testing
 */
-int set_mmm2d_params(Tcl_Interp *interp, double maxPWerror, double far_cut);
+int MMM2D_set_params(double maxPWerror, double far_cut);
 
 /** the general long range force/energy calculation */
 double MMM2D_add_far(int f, int e);
@@ -50,6 +56,9 @@ void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
 /** pairwise calculated parts of MMM2D force (near neighbors) */
 double mmm2d_coulomb_pair_energy(Particle *p1, Particle *p2,
 				 double dv[3], double d2, double d);
+
+/// sanity checks
+int MMM2D_sanity_checks();
 
 void MMM2D_init();
 

@@ -8,6 +8,8 @@
 // Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
 #ifndef FENE_H
 #define FENE_H
+#include "errorhandling.h"
+
 /** \file fene.h
  *  Routines to calculate the FENE Energy or/and FENE force 
  *  for a particle pair.
@@ -18,6 +20,27 @@
 */
 
 /************************************************************/
+
+/// set the parameters for the fene potential
+MDINLINE int fene_set_params(int bond_type, double k, double r)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.fene.k = k;
+  bonded_ia_params[bond_type].p.fene.r = r;
+
+  bonded_ia_params[bond_type].type = BONDED_IA_FENE;
+  bonded_ia_params[bond_type].p.fene.r2 = SQR(bonded_ia_params[bond_type].p.fene.r);
+  bonded_ia_params[bond_type].num  = 1;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+  
+  return TCL_OK;
+}
 
 /** Computes the FENE pair force and adds this
     force to the particle forces (see \ref #inter). 
@@ -33,9 +56,9 @@ MDINLINE void add_fene_pair_force(Particle *p1, Particle *p2, int type_num)
   dist2=sqrlen(dx);
 
   if(dist2 >= bonded_ia_params[type_num].p.fene.r2) {
-    fprintf(stderr,"%d: add_fene_pair_force: ERROR: FENE Bond between Pair (%d,%d) broken: dist=%f\n",this_node,
-	    p1->p.identity,p2->p.identity,sqrt(dist2)); 
-    errexit();
+    char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+    sprintf(errtext,"{bond broken between particles %d and %d} ", p1->p.identity, p2->p.identity); 
+    return;
   }
   fac = bonded_ia_params[type_num].p.fene.k;
   fac /= (1.0 - dist2/bonded_ia_params[type_num].p.fene.r2);
@@ -63,9 +86,9 @@ MDINLINE double fene_pair_energy(Particle *p1, Particle *p2, int type_num)
   dist2=sqrlen(dx);
   
   if(dist2 >= bonded_ia_params[type_num].p.fene.r2) {
-    fprintf(stderr,"%d: add_fene_pair_force: ERROR: FENE Bond between Pair (%d,%d) broken: dist=%f\n",
-	    this_node,p1->p.identity,p2->p.identity,sqrt(dist2)); 
-    errexit();
+    char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+    sprintf(errtext,"{bond broken between particles %d and %d} ", p1->p.identity, p2->p.identity); 
+    return 0;
   }
 
   energy = -0.5*bonded_ia_params[type_num].p.fene.k*bonded_ia_params[type_num].p.fene.r2;

@@ -152,6 +152,9 @@ int ks_pnum;
 */
 void P3M_init_a_ai_cao_cut();
 
+/** checks for correctness of the cao_cut, necessary when the box length changes */
+int P3M_sanity_checks_boxl();
+
 /** Calculate the spacial position of the left down mesh point of the local mesh, to be
     stored in \ref local_mesh::ld_pos; function called by \ref calc_local_ca_mesh once
     and by \ref P3M_scaleby_box_l whenever the \ref box_l changed. */
@@ -294,11 +297,391 @@ void P3M_tune_aliasing_sums(int nx, int ny, int nz,
 
 /************************************************************/
 
+int printP3MToResult(Tcl_Interp *interp)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+
+  Tcl_PrintDouble(interp, p3m.r_cut, buffer);
+  Tcl_AppendResult(interp, "p3m ", buffer, " ", (char *) NULL);
+  sprintf(buffer,"%d",p3m.mesh[0]);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  sprintf(buffer,"%d",p3m.cao);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, p3m.alpha, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, p3m.accuracy, buffer);
+  Tcl_AppendResult(interp, buffer, (char *) NULL);
+
+  Tcl_AppendResult(interp, "} {coulomb epsilon ", (char *) NULL);
+  if (p3m.epsilon == P3M_EPSILON_METALLIC)
+    Tcl_AppendResult(interp, " metallic ", (char *) NULL);
+  else {
+    Tcl_PrintDouble(interp, p3m.epsilon, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  }
+  sprintf(buffer,"%d",p3m.inter);
+  Tcl_AppendResult(interp, "n_interpol ", buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, p3m.mesh_off[0], buffer);
+  Tcl_AppendResult(interp, "mesh_off ", buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, p3m.mesh_off[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, p3m.mesh_off[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *) NULL);
+
+  return TCL_OK;
+}
+
+void p3m_set_tune_params(double r_cut, int mesh, int cao,
+			 double alpha, double accuracy)
+{
+  if (r_cut >= 0) {
+    p3m.r_cut    = r_cut;
+    p3m.r_cut_iL = r_cut*box_l_i[0];
+  }
+
+  if (mesh >= 0)
+    p3m.mesh[2] = p3m.mesh[1] = p3m.mesh[0] = mesh;
+
+  if (cao >= 0)
+    p3m.cao = cao;
+
+  if (alpha >= 0) {
+    p3m.alpha   = alpha;
+    p3m.alpha_L = alpha*box_l[0];
+  }
+
+  if (accuracy >= 0)
+    p3m.accuracy = accuracy;
+
+  mpi_bcast_coulomb_params();
+}
+
+int p3m_set_params(double r_cut, int mesh, int cao,
+		   double alpha, double accuracy)
+{
+  if(r_cut < 0)
+    return -1;
+
+  if(mesh < 0)
+    return -2;
+
+  if(cao < 1 || cao > 7 || cao > mesh)
+    return -3;
+
+  p3m.r_cut    = r_cut;
+  p3m.r_cut_iL = r_cut*box_l_i[0];
+  p3m.mesh[2]  = p3m.mesh[1] = p3m.mesh[0] = mesh;
+  p3m.cao      = cao;
+
+  if (alpha > 0) {
+    p3m.alpha   = alpha;
+    p3m.alpha_L = alpha*box_l[0];
+  }
+  else
+    if (alpha != -1.0)
+      return -4;
+
+  if (accuracy >= 0)
+    p3m.accuracy = accuracy;
+  else
+    if (accuracy != -1.0)
+      return -5;
+
+  mpi_bcast_coulomb_params();
+
+  return 0;
+}
+
+int p3m_set_mesh_offset(double x, double y, double z)
+{
+  if(x < 0.0 || x > 1.0 ||
+     y < 0.0 || y > 1.0 ||
+     z < 0.0 || z > 1.0 )
+    return TCL_ERROR;
+
+  p3m.mesh_off[0] = x;
+  p3m.mesh_off[1] = y;
+  p3m.mesh_off[2] = z;
+
+  mpi_bcast_coulomb_params();
+
+  return TCL_OK;
+}
+
+int p3m_set_eps(double eps)
+{
+  p3m.epsilon = eps;
+
+  mpi_bcast_coulomb_params();
+
+  return TCL_OK;
+}
+
+int p3m_set_ninterpol(int n)
+{
+  if (n < 0)
+    return TCL_ERROR;
+
+  p3m.inter = n;
+
+  mpi_bcast_coulomb_params();
+
+  return TCL_OK;
+}
+
+int inter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv)
+{
+  int mesh, cao;
+  double r_cut, accuracy;
+
+  mesh = cao = -1;
+  r_cut = accuracy = -1.0;
+
+  while(argc > 0) {
+
+    if(ARG0_IS_S("r_cut")) {
+      if (! (argc > 1 && ARG1_IS_D(r_cut) && r_cut > 0)) {
+	Tcl_AppendResult(interp, "r_cut expects a positive double",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+      
+    } else if(ARG0_IS_S("mesh")) {
+      if(! (argc > 1 && ARG1_IS_I(mesh) && mesh >= -1)) {
+	Tcl_AppendResult(interp, "mesh expects an integer >= -1",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+      
+    } else if(ARG0_IS_S("cao")) {
+      if(! (argc > 1 && ARG1_IS_I(cao) && cao >= -1 && cao < 7)) {
+	Tcl_AppendResult(interp, "cao expects an integer between -1 and 7",
+			 (char *) NULL);
+	return TCL_ERROR;
+      } 
+
+    } else if(ARG0_IS_S("accuracy")) {
+      if(! (argc > 1 && ARG1_IS_D(accuracy) && accuracy > 0)) {
+	Tcl_AppendResult(interp, "accuracy expects an positive double",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+
+    } else {
+      Tcl_AppendResult(interp, "Unknown p3m tune parameter \"",argv[0],"\"",
+                       (char *) NULL);
+      return TCL_ERROR;
+    }
+    
+    argc -= 2;
+    argv += 2;
+  }
+
+  p3m_set_tune_params(r_cut, mesh, cao, -1.0, accuracy);
+
+  if(P3M_tune_parameters(interp) == TCL_ERROR) 
+    return TCL_ERROR;
+  
+  return TCL_OK;
+}
+
+int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double r_cut, alpha, accuracy = -1.0;
+  int mesh, cao, i;
+
+  coulomb.method = COULOMB_P3M;
+    
+#ifdef PARTIAL_PERIODIC
+  if(PERIODIC(0) == 0 ||
+     PERIODIC(1) == 0 ||
+     PERIODIC(2) == 0)
+    {
+      Tcl_AppendResult(interp, "Need periodicity (1,1,1) with Coulomb P3M",
+		       (char *) NULL);
+      return TCL_ERROR;  
+    }
+#endif
+
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "expected: inter coulomb <bjerrum> p3m tune | <r_cut> <mesh> <cao> [<alpha> [accuracy]]",
+		     (char *) NULL);
+    return TCL_ERROR;  
+  }
+
+  if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+    Tcl_AppendResult(interp, "Node grid not suited for Coulomb P3M. Node grid must be sorted, largest first.", (char *) NULL);
+    return TCL_ERROR;  
+  }
+
+  if (ARG0_IS_S("tune"))
+    return inter_parse_p3m_tune_params(interp, argc-1, argv+1);
+      
+  if(! ARG0_IS_D(r_cut))
+    return TCL_ERROR;  
+
+  if(argc < 3 || argc > 5) {
+    Tcl_AppendResult(interp, "wrong # arguments: inter coulomb <bjerrum> p3m <r_cut> <mesh> <cao> [<alpha> [accuracy]]",
+		     (char *) NULL);
+    return TCL_ERROR;  
+  }
+
+  if((! ARG_IS_I(1, mesh)) || (! ARG_IS_I(2, cao))) {
+    Tcl_AppendResult(interp, "integer expected", (char *) NULL);
+    return TCL_ERROR;
+  }
+	
+  if(argc > 3) {
+    if(! ARG_IS_D(3, alpha))
+      return TCL_ERROR;
+  }
+  else {
+    Tcl_AppendResult(interp, "Automatic p3m tuning not implemented.",
+		     (char *) NULL);
+    return TCL_ERROR;  
+  }
+
+  if(argc > 4) {
+    if(! ARG_IS_D(4, accuracy)) {
+      Tcl_AppendResult(interp, "double expected", (char *) NULL);
+      return TCL_ERROR;
+    }
+  }
+
+  if ((i = p3m_set_params(r_cut, mesh, cao, alpha, accuracy)) < 0) {
+    switch (i) {
+    case -1:
+      Tcl_AppendResult(interp, "r_cut must be positive", (char *) NULL);
+      break;
+    case -2:
+      Tcl_AppendResult(interp, "mesh must be positive", (char *) NULL);
+      break;
+    case -3:
+      Tcl_AppendResult(interp, "cao must be between 1 and 7 and less than mesh",
+		       (char *) NULL);
+      break;
+    case -4:
+      Tcl_AppendResult(interp, "alpha must be positive", (char *) NULL);
+      break;
+    case -5:
+      Tcl_AppendResult(interp, "accuracy must be positive", (char *) NULL);
+      break;
+    default:;
+      Tcl_AppendResult(interp, "unspecified error", (char *) NULL);
+    }
+
+    return TCL_ERROR;
+
+  }
+
+  return TCL_OK;
+}
+
+int inter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv)
+{
+  int i; double d1, d2, d3;
+
+  Tcl_ResetResult(interp);
+
+  while (argc > 0) {
+    /* p3m parameter: inter */
+    if (ARG0_IS_S("n_interpol")) {
+      
+      if(argc < 2) {
+	Tcl_AppendResult(interp, argv[0], " needs 1 parameter",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+      
+      if (! ARG1_IS_I(i)) {
+	Tcl_AppendResult(interp, argv[0], " needs 1 INTEGER parameter",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+      
+      if (p3m_set_ninterpol(i) == TCL_ERROR) {
+	Tcl_AppendResult(interp, argv[0], " argument must be positive",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      argc -= 2;
+      argv += 2;
+    }
+    
+    /* p3m parameter: mesh_off */
+    else if (ARG0_IS_S("mesh_off")) {
+      
+      if(argc < 4) {
+	Tcl_AppendResult(interp, argv[0], " needs 3 parameters",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+	
+      if ((! ARG_IS_D(1, d1)) ||
+	  (! ARG_IS_D(2, d2)) ||
+	  (! ARG_IS_D(3, d3)))
+	{
+	  Tcl_AppendResult(interp, argv[0], " needs 3 DOUBLE parameters",
+			   (char *) NULL);
+	  return TCL_ERROR;
+	}
+
+      if (p3m_set_mesh_offset(d1, d2 ,d3) == TCL_ERROR)
+	{
+	  Tcl_AppendResult(interp, argv[0], " parameters have to be between 0.0 an 1.0",
+			   (char *) NULL);
+	  return TCL_ERROR;
+	}
+
+      argc -= 4;
+      argv += 4;
+    }
+    
+    /* p3m parameter: epsilon */
+    else if(ARG0_IS_S( "epsilon")) {
+
+      if(argc < 2) {
+	Tcl_AppendResult(interp, argv[0], " needs 1 parameter",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      if (ARG1_IS_S("metallic")) {
+	d1 = P3M_EPSILON_METALLIC;
+      }
+      else {
+	if (! ARG1_IS_D(d1)) {
+	  Tcl_AppendResult(interp, argv[0], " needs 1 DOUBLE parameter or \"metallic\"",
+			   (char *) NULL);
+	  return TCL_ERROR;
+	}
+	
+	if (p3m_set_eps(d1) == TCL_ERROR) {
+	  Tcl_AppendResult(interp, argv[0], " There is no error msg yet!",
+			   (char *) NULL);
+	  return TCL_ERROR;
+	}
+      }
+
+      argc -= 2;
+      argv += 2;	    
+    }
+    else {
+      Tcl_AppendResult(interp, "Unknown coulomb p3m parameter: \"",argv[0],"\"",(char *) NULL);
+      return TCL_ERROR;
+    }
+  }
+
+  return TCL_OK;
+}
+
 void P3M_scaleby_box_l() {
   p3m.r_cut = p3m.r_cut_iL* box_l[0];
   p3m.alpha = p3m.alpha_L * box_l_i[0];
   P3M_init_a_ai_cao_cut();
   calc_lm_ld_pos();
+  P3M_sanity_checks_boxl();
 }
 
 void calc_lm_ld_pos() {
@@ -315,16 +698,59 @@ void P3M_init_a_ai_cao_cut() {
     p3m.ai[i]      = (double)p3m.mesh[i]/box_l[i]; 
     p3m.a[i]       = 1.0/p3m.ai[i];
     p3m.cao_cut[i] = 0.5*p3m.a[i]*p3m.cao;
+  }
+}
+
+int P3M_sanity_checks_boxl() {
+  char *errtxt;
+  int i;
+  for(i=0;i<3;i++) {
     /* check k-space cutoff */
     if(p3m.cao_cut[i] >= 0.5*box_l[i]) {
-      fprintf(stderr,"%d: P3M_init: ERROR: k-space cutoff %f is larger than half of box dimension %f\n",this_node,p3m.cao_cut[i],box_l[i]);
-      errexit();
+      errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
+      sprintf(errtxt,"{P3M_init: k-space cutoff %f is larger than half of box dimension %f} ",p3m.cao_cut[i],box_l[i]);
+      return 1;
     }
     if(p3m.cao_cut[i] >= local_box_l[i]) {
-      fprintf(stderr,"%d: P3M_init: ERROR: k-space cutoff %f is larger than local box dimension %f\n",this_node,p3m.cao_cut[i],local_box_l[i]);
-      errexit();
+      errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
+      sprintf(errtxt,"{P3M_init: k-space cutoff %f is larger than local box dimension %f} ",p3m.cao_cut[i],local_box_l[i]);
+      return 1;
     }
   }
+  return 0;
+}
+
+int P3M_sanity_checks()
+{
+  char *errtxt;
+
+  if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
+    errtxt = runtime_error(128);
+    sprintf(errtxt, "{P3M requires periodicity 1 1 1} ");
+    return 1;
+  }
+  
+  if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+    errtxt = runtime_error(128);
+    sprintf(errtxt, "{P3M at present requires the domain decomposition cell system} ");
+    return 1;
+  }
+  
+  if( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
+    errtxt = runtime_error(128);
+    sprintf(errtxt,"{P3M requires a cubic box} ");
+    return 1;
+  }
+
+  if( (p3m.mesh[0] != p3m.mesh[1]) || (p3m.mesh[1] != p3m.mesh[2]) ) {
+    errtxt = runtime_error(128);
+    sprintf(errtxt, "{P3M requires a cubic mesh} ");
+    return 1;
+  }
+
+  if (P3M_sanity_checks_boxl()) return 1;
+
+  return 0;
 }
 
 void   P3M_init()
@@ -339,37 +765,14 @@ void   P3M_init()
 		fprintf(stderr,"   Electrostatics switched off!\n"));
   }
   else {  
+    if (P3M_sanity_checks()) return;
+
     if( p3m.mesh[0] == 0 || p3m.cao == 0 ) {
       P3M_TRACE(fprintf(stderr,"%d: P3M_init: Not enough data: return\n",this_node));
       return;
     }
 
-    if( PERIODIC(0)!=1 || PERIODIC(1)!=1 || PERIODIC(2)!=1) {
-      fprintf(stderr,"Need periodicity (1,1,1) with Coulomb P3M\n");
-      errexit();
-    }
-
     P3M_TRACE(fprintf(stderr,"%d: P3M_init: \n",this_node));
-    /* parameter checks */
-    if( (p3m.mesh[0] != p3m.mesh[1]) || (p3m.mesh[1] != p3m.mesh[2]) ) {
-      if(this_node==0) {
-	fprintf(stderr,"0: P3M_init: WARNING: Non cubic mesh found!\n");
-	fprintf(stderr,"   use p3m.mesh[0]=%d as cubic mesh size!\n)",p3m.mesh[0]);
-      }
-      p3m.mesh[1] = p3m.mesh[0];
-      p3m.mesh[2] = p3m.mesh[0];
-    }
-    if( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
-      if(this_node==0) {
-	fprintf(stderr,"0: P3M_init: SERIOUS WARNING:\n"); 
-	fprintf(stderr,"   No long range interactions for non cubic box.\n"); 
-	fprintf(stderr,"   Switch off long range interactions! \n");
-      }
-      coulomb.bjerrum =  0.0;
-      p3m.r_cut    = 0.0;
-      p3m.r_cut_iL = 0.0;
-      return ;
-    }
 
     P3M_TRACE(fprintf(stderr,"%d: mesh=%d, cao=%d, mesh_off=(%f,%f,%f)\n",this_node,p3m.mesh[0],p3m.cao,p3m.mesh_off[0],p3m.mesh_off[1],p3m.mesh_off[2]));
 
@@ -1381,8 +1784,8 @@ double analytic_cotangent_sum(int n, int mesh, int cao)
     res = (21844.0+c*(776661.0+c*(2801040.0+c*(2123860.0+c*(349500.0+c*(8166.0+c*4.0))))))/6081075.0; 
     break; }
   default : {
-    fprintf(stderr,"The value %d for the interpolation order is not allowed!\n",cao);
-    errexit(1);
+    fprintf(stderr,"%d: INTERNAL_ERROR: The value %d for the interpolation order should not occur!\n",this_node, cao);
+    errexit();
   }
   }
   

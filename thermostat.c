@@ -10,6 +10,7 @@
     Implementation of \ref thermostat.h "thermostat.h"
  */
 #include "thermostat.h"
+#include "communication.h"
 
 /* thermostat switch */
 int thermo_switch = THERMO_LANGEVIN;
@@ -300,16 +301,12 @@ int thermo_usage(Tcl_Interp *interp, int argc, char **argv)
 
 int thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
+  int err = TCL_OK;
   THERMO_TRACE(fprintf(stderr,"%d: thermostat:\n",this_node));
 
   /* print thermostat status */
   if(argc == 1) return thermo_print(interp);
   
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "wrong # args: \n", (char *)NULL);
-    return thermo_usage(interp, argc, argv);
-  }
-
   if ( ARG1_IS_S("set") )          {
     argc--;
     argv++;
@@ -319,17 +316,23 @@ int thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       return thermo_usage(interp, argc, argv);
     }
   }
-  if ( ARG1_IS_S("off") )            return thermo_parse_off(interp, argc, argv);
-  if ( ARG1_IS_S("langevin"))        return thermo_parse_langevin(interp, argc, argv);
+  if ( ARG1_IS_S("off") )
+    err = thermo_parse_off(interp, argc, argv);
+  else if ( ARG1_IS_S("langevin"))
+    err = thermo_parse_langevin(interp, argc, argv);
 #ifdef DPD
-  if ( ARG1_IS_S("dpd") )            return thermo_parse_dpd(interp, argc, argv);
+  else if ( ARG1_IS_S("dpd") )
+    err = thermo_parse_dpd(interp, argc, argv);
 #endif
 #ifdef NPT
-  if ( ARG1_IS_S("npt_isotropic") )  return thermo_parse_nptiso(interp, argc, argv);
+  else if ( ARG1_IS_S("npt_isotropic") )
+    err = thermo_parse_nptiso(interp, argc, argv);
 #endif
-
-  Tcl_AppendResult(interp, "Unknown thermostat ", argv[1], "\n", (char *)NULL);
-  return thermo_usage(interp, argc, argv);
+  else {
+    Tcl_AppendResult(interp, "Unknown thermostat ", argv[1], "\n", (char *)NULL);
+    return thermo_usage(interp, argc, argv);
+  }
+  return mpi_gather_runtime_errors(interp, err);
 }
 
 

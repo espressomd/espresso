@@ -21,6 +21,34 @@
 
 /************************************************************/
 
+/** set parameters for the angle potential. The type of the angle potential
+    is chosen via config.h and cannot be changed at runtime.
+*/
+MDINLINE int angle_set_params(int bond_type, double bend, double phi0)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.angle.bend = bend;
+  bonded_ia_params[bond_type].p.angle.phi0 = phi0;
+#ifdef BOND_ANGLE_COSINE
+  bonded_ia_params[bond_type].p.angle.cos_phi0 = cos(phi0);
+  bonded_ia_params[bond_type].p.angle.sin_phi0 = sin(phi0);
+#endif
+#ifdef BOND_ANGLE_COSSQUARE
+  bonded_ia_params[bond_type].p.angle.cos_phi0 = cos(phi0);
+#endif
+  bonded_ia_params[bond_type].type = BONDED_IA_ANGLE;
+  bonded_ia_params[bond_type].num = 2;
+ 
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return TCL_OK;
+}
+
 /** Computes the three body angle interaction force and adds this
     force to the particle forces (see \ref #inter). 
     @param p_mid     Pointer to second/middle particle.

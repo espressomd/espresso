@@ -19,6 +19,7 @@
 #include "utils.h"
 #include "pressure.h"
 #include "p3m.h"
+#include "errorhandling.h"
 
 #ifdef ELECTROSTATICS
 
@@ -638,50 +639,101 @@ double ELC_energy()
   return 0.5*eng;
 }
 
-static char *ELC_tune(double error)
+int ELC_tune(double error)
 {
   double err;
   double h = box_l[2] - elc_params.minimal_dist,
     dst1 = elc_params.minimal_dist,
     dst2 = 2*box_l[2] - elc_params.minimal_dist;
   double min_inv_boxl = dmin(ux, uy);
-  elc_params.far_cut = min_inv_boxl;
-  do {
-    err = 0.5*(exp(2*M_PI*elc_params.far_cut*h)/dst1*
-	       (C_2PI*elc_params.far_cut + 2*(ux + uy) + 1/dst1)/
-	       (exp(2*M_PI*elc_params.far_cut*box_l[2])- 1) +
-	       exp(-2*M_PI*elc_params.far_cut*h)/dst2*
-	       (C_2PI*elc_params.far_cut + 2*(ux + uy) + 1/dst2)/
-	       (exp(2*M_PI*elc_params.far_cut*box_l[2])- 1));
-    elc_params.far_cut += min_inv_boxl;
+
+  if (elc_params.far_cut < 0) {
+    elc_params.far_calculated = 1;    
+
+    elc_params.far_cut = min_inv_boxl;
+    do {
+      err = 0.5*(exp(2*M_PI*elc_params.far_cut*h)/dst1*
+		 (C_2PI*elc_params.far_cut + 2*(ux + uy) + 1/dst1)/
+		 (exp(2*M_PI*elc_params.far_cut*box_l[2])- 1) +
+		 exp(-2*M_PI*elc_params.far_cut*h)/dst2*
+		 (C_2PI*elc_params.far_cut + 2*(ux + uy) + 1/dst2)/
+		 (exp(2*M_PI*elc_params.far_cut*box_l[2])- 1));
+      elc_params.far_cut += min_inv_boxl;
+    }
+    while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
+    if (elc_params.far_cut >= MAXIMAL_FAR_CUT)
+      return TCL_ERROR;
+    // fprintf(stderr, "far cutoff %g %g\n", elc_params.far_cut, err);
+    elc_params.far_cut -= min_inv_boxl;
+    elc_params.far_cut2 = SQR(elc_params.far_cut);
   }
-  while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
-  if (elc_params.far_cut >= MAXIMAL_FAR_CUT)
-    return "Far cutoff too large, increase gap size";
-  // fprintf(stderr, "far cutoff %g %g\n", elc_params.far_cut, err);
-  elc_params.far_cut -= min_inv_boxl;
-  elc_params.far_cut2 = SQR(elc_params.far_cut);
-  return NULL;
+  return TCL_OK;
 }
 
 /****************************************
  * COMMON PARTS
  ****************************************/
 
+int printELCToResult(Tcl_Interp *interp)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+
+  Tcl_PrintDouble(interp, elc_params.maxPWerror, buffer);
+  Tcl_AppendResult(interp, "} {coulomb elc ", buffer,(char *) NULL);
+  Tcl_PrintDouble(interp, elc_params.minimal_dist, buffer);
+  Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
+  Tcl_PrintDouble(interp, elc_params.far_cut, buffer);
+  Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
+
+  return TCL_OK;
+}
+
+int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double pwerror;
+  double minimal_distance;
+  double far_cut = -1;
+
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>} expected, not \"",
+		     argv[0], "\"", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if (!ARG0_IS_D(pwerror))
+    return TCL_ERROR;
+  if (!ARG1_IS_D(minimal_distance))
+    return TCL_ERROR;
+  if (argc > 2 && !ARG_IS_D(2, far_cut))
+    return TCL_ERROR;
+
+  CHECK_VALUE(ELC_set_params(pwerror, minimal_distance, far_cut), "choose a 3d electrostatics method prior to ELC");
+}
+
+int ELC_sanity_checks()
+{
+  char *errtxt;
+  if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
+    errtxt = runtime_error(128);
+    sprintf(errtxt, "{ELC requires periodicity 1 1 1} ");
+    return 1;
+  }
+  if (coulomb.method != COULOMB_P3M) {
+    errtxt = runtime_error(128);
+    sprintf(errtxt, "{ELC supports only P3M so far} ");
+    return 1;
+  }
+  return 0;
+}
+
 void ELC_init()
 {
-  char *err;
-
-  if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-    fprintf(stderr, "ERROR: ELC requires periodicity 1 1 1\n");
-    errexit();
-  }
+  char *errtxt;
 
   ELC_setup_constants();
   if (elc_params.far_calculated) {
-    if ((err = ELC_tune(elc_params.maxPWerror))) {
-      fprintf(stderr, "ERROR: ELC auto-retuning: %s\n", err);
-      errexit();
+    if (ELC_tune(elc_params.maxPWerror) == TCL_ERROR) {
+      errtxt = runtime_error(128);
+      sprintf(errtxt, "{ELC auto-retuning failed, gap size too small} ");
     }
   }
 }
@@ -697,10 +749,8 @@ void ELC_on_resort_particles()
   partblk   = realloc(partblk,  n_localpart*8*sizeof(double));
 }
 
-int set_elc_params(Tcl_Interp *interp, double maxPWerror, double minimal_dist, double far_cut)
+int ELC_set_params(double maxPWerror, double minimal_dist, double far_cut)
 {
-  char *err;
-
   elc_params.maxPWerror = maxPWerror;
   elc_params.minimal_dist = minimal_dist;
 
@@ -708,31 +758,15 @@ int set_elc_params(Tcl_Interp *interp, double maxPWerror, double minimal_dist, d
 
   switch (coulomb.method) {
   case COULOMB_P3M:
-    if (p3m.epsilon != P3M_EPSILON_METALLIC) {
-      fprintf(stderr, "WARNING: Forcing P3M to metallic boundary conditions for ELC\n");
-      p3m.epsilon = P3M_EPSILON_METALLIC;
-    }
+    p3m.epsilon = P3M_EPSILON_METALLIC;
     break;
-  case COULOMB_NONE:
-    Tcl_AppendResult(interp, "please choose 3d electrostatics method before enabling ELC", (char *)NULL);
-    return TCL_ERROR;
   default:
-    Tcl_AppendResult(interp, "electrostatic method not supported with ELC\n ", (char *)NULL);
     return TCL_ERROR;
   }
 
-  if (far_cut >= 0) {
-    elc_params.far_cut = far_cut;
-    elc_params.far_cut2 = SQR(far_cut);
-    elc_params.far_calculated = 0;
-  }
-  else {
-    if ((err = ELC_tune(maxPWerror))) {
-      Tcl_AppendResult(interp, err, NULL);
-      return TCL_ERROR;
-    }
-    elc_params.far_calculated = 1;    
-  }
+  elc_params.far_cut = far_cut;
+  elc_params.far_cut2 = SQR(far_cut);
+  elc_params.far_calculated = 0;
 
   coulomb.use_elc = 1;
 

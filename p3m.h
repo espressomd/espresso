@@ -101,6 +101,18 @@ extern p3m_struct p3m;
 /************************************************************/
 /*@{*/
 
+/// print the p3m parameters to the interpreters result
+int printP3MToResult(Tcl_Interp *interp);
+
+/// parse the optimization parameters of p3m and the tuner
+int inter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
+
+/// parse the basic p3m parameters
+int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv);
+  
+/// sanity checks
+int P3M_sanity_checks();
+
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm.
  */
@@ -154,7 +166,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag);
 
 /** Calculate real space contribution of coulomb pair forces. */
 MDINLINE void add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
-				     double *d,double dist2,double dist)
+					 double *d,double dist2,double dist)
 {
   int j;
   double fac1,fac2, adist, erfc_part_ri;
@@ -191,10 +203,6 @@ MDINLINE double p3m_coulomb_pair_energy(Particle *p1, Particle *p2,
     erfc_part_ri = AS_erfc_part(adist) / dist;
     return coulomb.prefactor*p1->p.q*p2->p.q *erfc_part_ri*exp(-adist*adist);
   }
-  else
-    return 0;
-  /* supposed to be an error */
-  errexit();
   return 0.0;
 }
 

@@ -17,12 +17,20 @@ typedef struct {
 } ELC_struct;
 extern ELC_struct elc_params;
 
+/// print the elc parameters to the interpreters result
+int printELCToResult(Tcl_Interp *interp);
+
+/// parse the elc parameters
+int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv);
+
 /** set parameters for ELC */
-int set_elc_params(Tcl_Interp *interp, double maxPWerror, double min_dist, double far_cut);
+int ELC_set_params(double maxPWerror, double min_dist, double far_cut);
 
 void ELC_add_force();
 
 double ELC_energy();
+
+int ELC_sanity_checks();
 
 void ELC_init();
 

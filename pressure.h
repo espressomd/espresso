@@ -167,7 +167,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 
 #ifdef ELECTROSTATICS
   /* real space coulomb */
-  if (coulomb.bjerrum != 0.0) {
+  if (coulomb.method != COULOMB_NONE) {
     for (i = 0; i < 3; i++) {
       p1->f.f[i] = 0;
       p2->f.f[i] = 0;
@@ -206,9 +206,11 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 */
 MDINLINE void add_bonded_virials(Particle *p1)
 {
+  char *errtxt;
+
   int i,j, type_num;
   double ret, F1[3], F2[3], F3[3], d[3];
-  Particle *p2, *p3;
+  Particle *p2;
 #ifdef NPT
   double p_vir[3];
 #endif
@@ -222,8 +224,14 @@ MDINLINE void add_bonded_virials(Particle *p1)
   
   i=0;
   while(i<p1->bl.n) {
-    p2 = checked_particle_ptr(p1->bl.e[i+1]);
-    
+    p2 = local_particles[p1->bl.e[i+1]];
+    if (!p2) {
+      errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+      sprintf(errtxt,"{bond broken between particles %d and %d (particles not stored on the same node)} ",
+	      p1->p.identity, p1->bl.e[i+1]);
+      return;
+    }
+
     for (j = 0; j < 3; j++) {
       p1->f.f[j] = 0;
 
@@ -255,8 +263,14 @@ MDINLINE void add_bonded_virials(Particle *p1)
       add_subt_lj_pair_force(p1,p2,type_num);
       ret = d[0]*p1->f.f[0] + d[1]*p1->f.f[1] + d[2]*p1->f.f[2];
       i+=2; break;
-   case BONDED_IA_ANGLE:
-      p3 = checked_particle_ptr(p1->bl.e[i+2]);
+    case BONDED_IA_ANGLE: {
+      Particle *p3 = local_particles[p1->bl.e[i+2]];
+      if (!p3) {
+	errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	sprintf(errtxt,"{bond broken between particles %d and %d (particles not stored on the same node)} ",
+		p1->p.identity, p1->bl.e[i+2]);
+	return;
+      }
       for (j = 0; j < 3; j++) {
 	F3[j] = p3->f.f[j];
 	p3->f.f[j] = 0;
@@ -270,6 +284,7 @@ MDINLINE void add_bonded_virials(Particle *p1)
 	p3->f.f[j] = F3[j];
 
       i+=3; break;
+    }
     case BONDED_IA_DIHEDRAL:
       /* since it is not clear at the moment how to handle a four body interaction here, I skip it */
       ret = 0.0;

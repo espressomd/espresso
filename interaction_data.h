@@ -496,6 +496,9 @@ void realloc_ia_params(int nsize);
     verlet.h). */
 void calc_maximal_cutoff();
 
+/** check whether all force calculation routines are properly initialized. */
+int check_obs_calc_initialized();
+
 int checkIfParticlesInteract(int i, int j);
  
 char *get_name_of_bonded_ia(int i);

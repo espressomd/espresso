@@ -136,72 +136,101 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 */
 MDINLINE void add_bonded_force(Particle *p1)
 {
+  char *errtxt;
+  Particle *p2;
   int i, type_num;
 
   i=0;
   while(i<p1->bl.n) {
     type_num = p1->bl.e[i];
+    p2 = local_particles[p1->bl.e[i+1]];
+    if (!p2) {
+      errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+      sprintf(errtxt,"{bond broken between particles %d and %d (particles not stored on the same node)} ",
+	      p1->p.identity, p1->bl.e[i+1]);
+      return;
+    }
+
     switch(bonded_ia_params[type_num].type) {
     case BONDED_IA_FENE:
-      add_fene_pair_force(p1,
-			  checked_particle_ptr(p1->bl.e[i+1]), type_num);
+      add_fene_pair_force(p1, p2, type_num);
       i+=2; break;
     case BONDED_IA_HARMONIC:
-      add_harmonic_pair_force(p1,
-			      checked_particle_ptr(p1->bl.e[i+1]), type_num);
+      add_harmonic_pair_force(p1, p2, type_num);
       i+=2; break;
     case BONDED_IA_SUBT_LJ_HARM:
-      add_subt_lj_harm_pair_force(p1,
-			      checked_particle_ptr(p1->bl.e[i+1]), type_num);
+      add_subt_lj_harm_pair_force(p1, p2, type_num);
       i+=2; break;
     case BONDED_IA_SUBT_LJ_FENE:
-      add_subt_lj_fene_pair_force(p1,
-			      checked_particle_ptr(p1->bl.e[i+1]), type_num);
+      add_subt_lj_fene_pair_force(p1, p2, type_num);
       i+=2; break;
     case BONDED_IA_SUBT_LJ:
-      add_subt_lj_pair_force(p1,
-			      checked_particle_ptr(p1->bl.e[i+1]), type_num);
+      add_subt_lj_pair_force(p1, p2, type_num);
       i+=2; break;
-    case BONDED_IA_ANGLE:
-      add_angle_force(p1,
-		      checked_particle_ptr(p1->bl.e[i+1]),
-		      checked_particle_ptr(p1->bl.e[i+2]), type_num);
+    case BONDED_IA_ANGLE: {
+      Particle *p3 = local_particles[p1->bl.e[i+2]];
+      if (!p3) {
+	errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	sprintf(errtxt,"{bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
+		p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2]);
+	return;
+      }
+
+      add_angle_force(p1, p2, p3, type_num);
       i+=3; break;
-    case BONDED_IA_DIHEDRAL:
-      add_dihedral_force(checked_particle_ptr(p1->bl.e[i+1]),
-			 p1,
-			 checked_particle_ptr(p1->bl.e[i+2]),
-			 checked_particle_ptr(p1->bl.e[i+3]), type_num);
+    }
+    case BONDED_IA_DIHEDRAL: {
+      Particle *p3 = local_particles[p1->bl.e[i+2]],
+	*p4        = local_particles[p1->bl.e[i+3]];
+      if (!p3 || !p4) {
+	errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	sprintf(errtxt,"{bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
+		p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2], p1->bl.e[i+3]);
+	return;
+      }
+      add_dihedral_force(p2, p1, p3, p4, type_num);
       i+=4; break;
+    }
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
       switch(bonded_ia_params[type_num].p.tab.type) {
       case TAB_BOND_LENGTH:
-	add_tab_bond_force(p1,
-			   checked_particle_ptr(p1->bl.e[i+1]), type_num);
+	add_tab_bond_force(p1, p2, type_num);
 	i+=2; break;
-      case TAB_BOND_ANGLE:
-	add_tab_angle_force(p1,
-			    checked_particle_ptr(p1->bl.e[i+1]),
-			    checked_particle_ptr(p1->bl.e[i+2]), type_num);
+      case TAB_BOND_ANGLE: {
+	Particle *p3 = local_particles[p1->bl.e[i+2]];
+	if (!p3) {
+	  errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	  sprintf(errtxt,"{bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
+		  p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2]);
+	  return;
+	}	
+	add_tab_angle_force(p1, p2, p3, type_num);
 	i+=3; break;
-      case TAB_BOND_DIHEDRAL:
-	add_tab_dihedral_force(checked_particle_ptr(p1->bl.e[i+1]),
-			       p1,
-			       checked_particle_ptr(p1->bl.e[i+2]),
-			       checked_particle_ptr(p1->bl.e[i+3]), type_num);
+      }
+      case TAB_BOND_DIHEDRAL: {
+	Particle *p3 = local_particles[p1->bl.e[i+2]],
+	  *p4        = local_particles[p1->bl.e[i+3]];
+	if (!p3 || !p4) {
+	  errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	  sprintf(errtxt,"{bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
+		  p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2], p1->bl.e[i+3]);
+	  return;
+	}
+	add_tab_dihedral_force(p2, p1, p3, p4, type_num);
 	i+=4; break;
-      default :
-	fprintf(stderr,"add_bonded_force: WARNING: Tabulated Bond type  of atom %d unknown\n",p1->p.identity);
-	i = p1->bl.n; 
-	break;
+      }
+      default:
+	errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+	sprintf(errtxt,"{add_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
+	return;
       }
       break;
 #endif
     default :
-      fprintf(stderr,"add_bonded_force: WARNING: Bonds of atom %d unknown\n",p1->p.identity);
-      i = p1->bl.n; 
-      break;
+      errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      sprintf(errtxt,"{add_bonded_force: bond type of atom %d unknown\n", p1->p.identity);
+      return;
     }
   }
 }  

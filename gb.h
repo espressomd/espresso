@@ -20,6 +20,118 @@
 
 #ifdef ROTATION
 
+MDINLINE int gay_berne_set_params(int part_type_a, int part_type_b,
+				  double eps, double sig, double cut,
+				  double k1, double k2,
+				  double mu, double nu)
+{
+  IA_parameters *data, *data_sym;
+
+  make_particle_type_exist(part_type_a);
+  make_particle_type_exist(part_type_b);
+    
+  data     = get_ia_param(part_type_a, part_type_b);
+  data_sym = get_ia_param(part_type_b, part_type_a);
+
+  if (!data || !data_sym) {
+    return TCL_ERROR;
+  }
+
+  /* GB should be symmetrically */
+  data->GB_eps    = data_sym->GB_eps    = eps;
+  data->GB_sig    = data_sym->GB_sig    = sig;
+  data->GB_cut    = data_sym->GB_cut    = cut;
+  data->GB_k1     = data_sym->GB_k1     = k1;
+  data->GB_k2     = data_sym->GB_k2     = k2;
+  data->GB_mu     = data_sym->GB_mu     = mu;
+  data->GB_nu     = data_sym->GB_nu     = nu;
+ 
+   /* Calculate dependent parameters */
+
+  data->GB_chi1 = data_sym->GB_chi1 = ((data->GB_k1*data->GB_k1) - 1) / ((data->GB_k1*data->GB_k1) + 1);
+  data->GB_chi2 = data_sym->GB_chi2 = (pow(data->GB_k2,(1/data->GB_mu))-1)/(pow(data->GB_k2,(1/data->GB_mu))+1);
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+  mpi_bcast_ia_params(part_type_b, part_type_a);
+
+  return TCL_OK;
+}
+
+MDINLINE int printgbIAToResult(Tcl_Interp *interp, int i, int j)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+  IA_parameters *data = get_ia_param(i, j);
+
+  Tcl_PrintDouble(interp, data->GB_eps, buffer);
+  Tcl_AppendResult(interp, "gay-berne ", buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->GB_sig, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->GB_cut, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->GB_k1, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->GB_k2, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->GB_mu, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->GB_nu, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->GB_chi1, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->GB_chi2, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+
+  return TCL_OK;
+}
+
+MDINLINE int gb_parser(Tcl_Interp * interp,
+		       int part_type_a, int part_type_b,
+		       int argc, char ** argv)
+{
+  double tmp;
+  double eps, sig, cut;
+  double k1, k2, mu, nu;
+  int change;
+
+  /* there are 9 parameters for gay-berne, but you read in only 7 of them.
+     The rest is calculated in gay_berne_set_params.
+  */
+
+  if (argc < 8) {
+    Tcl_AppendResult(interp, "gay-berne needs 7 parameters: "
+		     "<gb_eps> <gb_sig> <gb_cut> <gb_k1> <gb_k2> <gb_mu> <gb_nu>",
+		     (char *) NULL);
+    return 0;
+  }
+
+  /* copy gay-berne parameters */
+  if ((! ARG_IS_D(1, eps))   ||
+      (! ARG_IS_D(2, sig))   ||
+      (! ARG_IS_D(3, cut))   ||
+      (! ARG_IS_D(4, k1 ))   ||
+      (! ARG_IS_D(5, k2 ))   ||
+      (! ARG_IS_D(6, mu ))   ||	
+      (! ARG_IS_D(7, nu )    )) {
+    Tcl_AppendResult(interp, "gay-berne needs 7 DOUBLE parameters: "
+		     "<gb_eps> <gb_sig> <gb_cut> <gb_k1> <gb_k2> <gb_mu> <gb_nu>",
+		     (char *) NULL);
+    return 0;
+  }
+  change = 8;
+
+  if (argc >= 10 && ARG_IS_D(8, tmp) && ARG_IS_D(9, tmp))
+    change += 2;
+  else
+    Tcl_ResetResult(interp);
+
+  if (gay_berne_set_params(part_type_a, part_type_b, eps, sig, cut, k1, k2, mu, nu) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+    return TCL_ERROR;
+  }
+  return change;
+}
+
 MDINLINE void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
                                  double d[3], double dist)
 

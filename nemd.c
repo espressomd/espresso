@@ -15,6 +15,7 @@
  */
 #include "nemd.h"
 #include "integrate.h"
+#include "communication.h"
 
 /************************************************************/
 
@@ -83,10 +84,12 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate)
   INTEG_TRACE(fprintf(stderr,"%d: nemd_init: n_slabs=%d n_exchange=%d\n",this_node, n_slabs, n_exchange));
 
   /* check node grid */
-  if( this_node > 0 ) {
-    fprintf(stderr,"%d: NEMD is a single node feature. Exiting.\n",this_node);
-    errexit();
+  if( n_nodes > 0 ) {
+    char *errtxt = runtime_error(128);
+    sprintf(errtxt, "{NEMD is a single node feature} ");
+    return;
   }
+
   /* first free old structures befor initializing new ones */
   if(nemddata.n_slabs > -1) nemd_free();
   /* exit nemd integration */
@@ -281,38 +284,38 @@ int nemd_print_viscosity(Tcl_Interp *interp)
 int nemd(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
 #ifdef NEMD
+  int status = TCL_OK;
+
   INTEG_TRACE(fprintf(stderr,"%d: nemd:\n",this_node));
   Tcl_ResetResult(interp);
 
   /* print nemd status */
   if(argc == 1) {
-    return nemd_print_status(interp) ;
-  }
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "wrong # args:  \n", (char *)NULL);
-    return nemd_usage(interp);
+    status = nemd_print_status(interp) ;
   }
   else if (ARG1_IS_S("off")) {
     nemd_method = NEMD_METHOD_OFF;
-    return nemd_free();
+    status = nemd_free();
   }  
   else if (ARG1_IS_S("exchange")) {
-    return nemd_set_exchange(interp,argc,argv);
+    status = nemd_set_exchange(interp,argc,argv);
   } 
   else if (ARG1_IS_S("shearrate")) {
-    return nemd_set_shearrate(interp,argc,argv);
+    status = nemd_set_shearrate(interp,argc,argv);
   } 
   else if (ARG1_IS_S("profile")) {
-    return nemd_print_profile(interp);
+    status = nemd_print_profile(interp);
   } 
   else if (ARG1_IS_S("viscosity")) {
-    return nemd_print_viscosity(interp);
+    status = nemd_print_viscosity(interp);
   } 
   else {
     Tcl_AppendResult(interp, "Unkwnown keyword: \n", (char *)NULL);
     return nemd_usage(interp);
   }
-  return (TCL_ERROR);
+
+  return mpi_gather_runtime_errors(interp, status);
+
 #endif
   INTEG_TRACE(fprintf(stderr,"%d: call to nemd but not compiled in!\n",this_node));
   return nemd_usage(interp);
@@ -339,8 +342,10 @@ void nemd_change_momentum()
     INTEG_TRACE(fprintf(stderr,"%d: parts_in_slabs: top %d mid %d\n",this_node,top_slab->n_parts_in_slab,mid_slab->n_parts_in_slab));
     if(mid_slab->n_fastest != nemddata.n_exchange || 
        top_slab->n_fastest != nemddata.n_exchange) {
-      fprintf(stderr,"%d: nemd_exchange_momentum: Not enough particles in slab!\n",this_node);
-      errexit();
+      char *errtxt = runtime_error(128);
+      sprintf(errtxt,"%d: nemd_exchange_momentum: Not enough particles in slab!\n",this_node);
+      /* cannot continue */
+      return;
     }
 
     /* perform momentum exchange */

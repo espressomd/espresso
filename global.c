@@ -194,7 +194,7 @@ int setmd(ClientData data, Tcl_Interp *interp,
   char databuf[MAX_DIMENSION*(sizeof(int) + sizeof(double))];
   char buffer[TCL_DOUBLE_SPACE + 5];
   int i, j;
-  int all = (argc == 1);
+  int all = (argc == 1), writing = (argc >= 3);
 
   /* loop over all global variables. Has two purposes:
      either we write al variables or search for the one
@@ -207,7 +207,7 @@ int setmd(ClientData data, Tcl_Interp *interp,
 	  Tcl_AppendResult(interp, "enough to identify a setmd variable!", (char *) NULL);
 	  return (TCL_ERROR);
 	}
-	if (argc >= 3) {
+	if (writing) {
 	  /* set */
 	  /* parse in data */
 	  if (argc != 2 + fields[i].dimension) {
@@ -246,7 +246,8 @@ int setmd(ClientData data, Tcl_Interp *interp,
 	  }
 
 	  if (fields[i].changeproc(interp, databuf) != TCL_OK)
-	    return TCL_ERROR;
+	    return mpi_gather_runtime_errors(interp, TCL_ERROR);
+	  /* fall through to write out the set value immediately again */
 	}
       }
 
@@ -281,11 +282,14 @@ int setmd(ClientData data, Tcl_Interp *interp,
       if (all)
 	Tcl_AppendResult(interp, "}", (char *)NULL);
       /* wrote out one value, so skip rest */
-      if (!all)
-	return (TCL_OK);
+      if (!all) {
+	if (writing)
+	  return mpi_gather_runtime_errors(interp, TCL_OK);
+	else
+	  return (TCL_OK);
+      }
     }
   }
-
   if (all)
     return TCL_OK;
 

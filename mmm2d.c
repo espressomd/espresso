@@ -20,6 +20,7 @@
 #include "specfunc.h"
 #include "integrate.h"
 #include "layered.h"
+#include "parser.h"
 
 #ifdef ELECTROSTATICS
 
@@ -85,6 +86,21 @@ static double self_energy;
 
 MMM2D_struct mmm2d_params = { 1e100, 10, 1 };
 
+#define ERROR_HEIGHT 1
+#define ERROR_BOXL 2
+#define ERROR_BESSEL 3
+#define ERROR_POLY 4
+#define ERROR_FARC 5
+
+static char *mmm2d_errors[] = {
+  "ok",
+  "Layer height too large for MMM2D near formula, increase n_layers",
+  "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and y",
+  "Could find not reasonable Bessel cutoff. Please decrease n_layers or the error bound",
+  "Could find not reasonable Polygamma cutoff. Consider exchanging x and y",
+  "Far cutoff too large, decrease n_layers or the error bound"
+};
+
 /****************************************
  * LOCAL ARRAYS
  ****************************************/
@@ -147,8 +163,8 @@ static int    n_scycache;
 /* complex evaluation */
 static void prepareBernoulliNumbers(int nmax);
 
-/* cutoff error setup. Returns error message or NULL */
-static char *MMM2D_tune_near(double error);
+/* cutoff error setup. Returns error code */
+static int MMM2D_tune_near(double error);
 
 /** energy of all local particles with their copies */
 void MMM2D_self_energy();
@@ -176,8 +192,8 @@ static void setup_PQ(int p, int q, double omega);
 static void add_PQ_force(int p, int q, double omega);
 static double   PQ_energy(double omega);
 
-/* cutoff error setup. Returns error message or NULL */
-static char *MMM2D_tune_far(double error);
+/* cutoff error setup. Returns error code */
+static int MMM2D_tune_far(double error);
 
 /* COMMON */
 /**********/
@@ -201,7 +217,7 @@ void MMM2D_setup_constants()
     min_far  =   layer_h - skin;
     break;
   default:
-    fprintf(stderr, "%d: INTERNAL MMM2D ERROR: setup for cell structure it should reject\n", this_node);
+    fprintf(stderr, "%d: INTERNAL ERROR: MMM2D setup for cell structure it should reject\n", this_node);
     errexit();
   }
 }
@@ -924,7 +940,7 @@ double MMM2D_add_far(int f, int e)
   return 0.5*eng;
 }
 
-static char *MMM2D_tune_far(double error)
+static int MMM2D_tune_far(double error)
 {
   double err;
   double min_inv_boxl = dmin(ux, uy);
@@ -936,18 +952,18 @@ static char *MMM2D_tune_far(double error)
   }
   while (err > error && mmm2d_params.far_cut*box_l[2] < MAXIMAL_FAR_CUT);
   if (mmm2d_params.far_cut*box_l[2] >= MAXIMAL_FAR_CUT)
-    return "Far cutoff too large, decrease n_layers or the error bound";
+    return ERROR_FARC;
   // fprintf(stderr, "far cutoff %g %g %g\n", mmm2d_params.far_cut, err, min_far);
   mmm2d_params.far_cut -= min_inv_boxl;
   mmm2d_params.far_cut2 = SQR(mmm2d_params.far_cut);
-  return NULL;
+  return 0;
 }
 
 /****************************************
  * NEAR FORMULA
  ****************************************/
 
-static char *MMM2D_tune_near(double error)
+static int MMM2D_tune_near(double error)
 {
   int P, n, i;
   double uxrho2m2max, uxrhomax2;
@@ -957,9 +973,9 @@ static char *MMM2D_tune_near(double error)
 
   /* yes, it's y only... */
   if (max_near > box_l[1]/2)
-    return "Layer height too large for MMM2D near formula, increase n_layers";
+    return ERROR_HEIGHT;
   if (ux*box_l[1] >= 3/M_SQRT2 )
-    return "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and y";
+    return ERROR_BOXL;
 
   /* error is split into three parts:
      one part for bessel, one for complex
@@ -982,7 +998,7 @@ static char *MMM2D_tune_near(double error)
   while (err > part_error && (P - 1) < MAXIMAL_B_CUT);
   P--;
   if (P == MAXIMAL_B_CUT)
-    return "Could find not reasonable Bessel cutoff. Please decrease n_layers or the error bound";
+    return ERROR_BESSEL;
   // fprintf(stderr, "bessel cutoff %d %g\n", P, err);
 
   realloc_intlist(&besselCutoff, besselCutoff.n = P);
@@ -1008,10 +1024,10 @@ static char *MMM2D_tune_near(double error)
   }
   while (err > 0.1*part_error && n < MAXIMAL_POLYGAMMA);
   if (n == MAXIMAL_POLYGAMMA)
-    return "Could find not reasonable Polygamma cutoff. Consider exchanging x and y";
+    return ERROR_POLY;
   // fprintf(stderr, "polygamma cutoff %d %g\n", n, err);
 
-  return NULL;
+  return 0;
 }
 
 static void prepareBernoulliNumbers(int bon_order)
@@ -1067,8 +1083,9 @@ void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
 
 #ifdef ADDITIONAL_CHECKS
   if (d[2] >box_l[1]/2) {
-	fprintf(stderr, "particle %d is out of virtual box, cannot calculate near formula\n", p1->p.identity);
-	errexit();
+    char *errtxt = runtime_error(128);
+    sprintf(errtxt, "{particle %d is out of virtual box, cannot calculate near formula} ", p1->p.identity);
+    return;
   }
 #endif
 
@@ -1356,25 +1373,123 @@ void MMM2D_self_energy()
  * COMMON PARTS
  ****************************************/
 
-void MMM2D_init()
+int printMMM2DToResult(Tcl_Interp *interp)
 {
-  char *err;
+  char buffer[TCL_DOUBLE_SPACE];
+
+  Tcl_PrintDouble(interp, mmm2d_params.maxPWerror, buffer);
+  Tcl_AppendResult(interp, "mmm2d ", buffer,(char *) NULL);
+  Tcl_PrintDouble(interp, mmm2d_params.far_cut, buffer);
+  Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
+
+  return TCL_OK;
+}
+
+int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
+{
+  int err;
+  double maxPWerror;
+  double far_cut;
+
+  if (argc < 1 || argc > 2) {
+    Tcl_AppendResult(interp, "wrong # arguments: inter coulomb mmm2d <maximal pairwise error> {<fixed far cutoff>}", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if (! ARG0_IS_D(maxPWerror))
+    return TCL_ERROR;
+
+  if (argc == 2) {
+    if (! ARG1_IS_D(far_cut))
+      return TCL_ERROR;
+  }
+  else
+    far_cut = -1;
+
+  if (cell_structure.type != CELL_STRUCTURE_NSQUARE &&
+      cell_structure.type != CELL_STRUCTURE_LAYERED) {
+    Tcl_AppendResult(interp, "MMM2D requires layered of nsquare cell structure", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if ((err = MMM2D_set_params(maxPWerror, far_cut)) > 0) {
+    Tcl_AppendResult(interp, mmm2d_errors[err], (char *)NULL);
+    return TCL_ERROR;
+  }
+  return TCL_OK;
+}
+
+int MMM2D_set_params(double maxPWerror, double far_cut)
+{
+  int err;
+
+  if (cell_structure.type != CELL_STRUCTURE_NSQUARE &&
+      cell_structure.type != CELL_STRUCTURE_LAYERED) {
+    return TCL_ERROR;
+  }
+
+  mmm2d_params.maxPWerror = maxPWerror;
+
+  MMM2D_setup_constants();
+
+  if ((err = MMM2D_tune_near(maxPWerror)))
+    return err;
+
+  /* if we cannot do the far formula, force off */
+  if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
+      (cell_structure.type == CELL_STRUCTURE_LAYERED && n_nodes*n_layers < 3))
+    mmm2d_params.far_cut = 0.0;
+  else {
+    mmm2d_params.far_cut = far_cut;
+    mmm2d_params.far_cut2 = SQR(far_cut);
+    if (mmm2d_params.far_cut > 0)
+      mmm2d_params.far_calculated = 0;
+    else {
+      if ((err = MMM2D_tune_far(maxPWerror)))
+	return err;
+      mmm2d_params.far_calculated = 1;    
+    }
+  }
+
+  coulomb.method = COULOMB_MMM2D;
+
+  mpi_bcast_coulomb_params();
+
+  return TCL_OK;
+}
+
+int MMM2D_sanity_checks()
+{
+  char *errtxt;
 
   if (!PERIODIC(0) || !PERIODIC(1) || PERIODIC(2)) {
-    fprintf(stderr, "ERROR: MMM2D requires periodicity 1 1 0\n");
-    errexit();
+    errtxt = runtime_error(128);
+    sprintf(errtxt, "{MMM2D requires periodicity 1 1 0} ");
+    return 1;
   }
   
   if (cell_structure.type != CELL_STRUCTURE_LAYERED &&
       cell_structure.type != CELL_STRUCTURE_NSQUARE) {
-    fprintf(stderr, "ERROR: MMM2D at present requires layered (or n-square) cellsystem\n");
-    errexit();
+    errtxt = runtime_error(128);
+    sprintf(errtxt, "{MMM2D at present requires layered (or n-square) cellsystem} ");
+    return 1;
   }
+  return 0;
+}
+
+void MMM2D_init()
+{
+  int err;
+  char *errtxt;
+
+  if (MMM2D_sanity_checks()) return;
 
   MMM2D_setup_constants();
   if ((err = MMM2D_tune_near(mmm2d_params.maxPWerror))) {
-    fprintf(stderr, "ERROR: MMM2D auto-retuning: %s\n", err);
-    errexit();
+    errtxt = runtime_error(128);
+    sprintf(errtxt, "{MMM2D auto-retuning: %s} ", mmm2d_errors[err]);
+    coulomb.method = COULOMB_NONE;
+    return;
   }
   if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
       (cell_structure.type == CELL_STRUCTURE_LAYERED && n_nodes*n_layers < 3))
@@ -1382,8 +1497,10 @@ void MMM2D_init()
   else {
     if (mmm2d_params.far_calculated) {
       if ((err = MMM2D_tune_far(mmm2d_params.maxPWerror))) {
-	fprintf(stderr, "ERROR: MMM2D auto-retuning: %s\n", err);
-	errexit();
+	errtxt = runtime_error(128);
+	sprintf(errtxt, "{MMM2D auto-retuning: %s} ", mmm2d_errors[err]);
+	coulomb.method = COULOMB_NONE;
+	return;
       }
     }
   }
@@ -1404,53 +1521,6 @@ void MMM2D_on_resort_particles()
     gblcblk   = realloc(gblcblk,  n_layers*8*sizeof(double));
   }
   MMM2D_self_energy();
-}
-
-int set_mmm2d_params(Tcl_Interp *interp, double maxPWerror, double far_cut)
-{
-  char *err;
-
-  if (cell_structure.type != CELL_STRUCTURE_NSQUARE &&
-      cell_structure.type != CELL_STRUCTURE_LAYERED) {
-	Tcl_AppendResult(interp, "MMM2D requires layered of nsquare cell structure", (char *)NULL);
-	return TCL_ERROR;
-  }
-
-  mmm2d_params.maxPWerror = maxPWerror;
-
-  MMM2D_setup_constants();
-
-  if ((err = MMM2D_tune_near(maxPWerror))) {
-    coulomb.method = COULOMB_NONE;
-    Tcl_AppendResult(interp, err, NULL);
-    return TCL_ERROR;
-  }
-
-  /* if we cannot do the far formula, force off */
-  if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
-      (cell_structure.type == CELL_STRUCTURE_LAYERED && n_nodes*n_layers < 3))
-    mmm2d_params.far_cut = 0.0;
-  else {
-    if (far_cut >= 0) {
-      mmm2d_params.far_cut = far_cut;
-      mmm2d_params.far_cut2 = SQR(far_cut);
-      mmm2d_params.far_calculated = 0;
-    }
-    else {
-      if ((err = MMM2D_tune_far(maxPWerror))) {
-	coulomb.method = COULOMB_NONE;
-	Tcl_AppendResult(interp, err, NULL);
-	return TCL_ERROR;
-      }
-      mmm2d_params.far_calculated = 1;    
-    }
-  }
-
-  coulomb.method = COULOMB_MMM2D;
-
-  mpi_bcast_coulomb_params();
-
-  return TCL_OK;
 }
 
 #endif

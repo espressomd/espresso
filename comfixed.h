@@ -16,6 +16,9 @@
  *  <a href="mailto:sayar@mpip-mainz.mpg.de">Mehmet</a>
 */
 #ifdef COMFIXED
+
+extern int COM_on;
+
 MDINLINE int comfixed_set_params(int part_type_a, int part_type_b, int flag)
 {
   Particle *p;
@@ -54,52 +57,51 @@ MDINLINE int comfixed_set_params(int part_type_a, int part_type_b, int flag)
     }
   }
   
+  COM_on = 1;
+
   return TCL_OK;
 }
 
 MDINLINE int printcomfixedIAToResult(Tcl_Interp *interp, int i, int j)
 {
-  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
+  char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
 
-    sprintf(buffer,"%d",data->COMFIXED_flag);
-    Tcl_AppendResult(interp, "comfixed ", buffer, " ", (char *) NULL);
+  sprintf(buffer,"%d",data->COMFIXED_flag);
+  Tcl_AppendResult(interp, "comfixed ", buffer, " ", (char *) NULL);
     
-    return TCL_OK;
+  return TCL_OK;
 }
 
 MDINLINE int comfixed_parser(Tcl_Interp * interp,
-			   int part_type_a, int part_type_b,
-			   int argc, char ** argv, int *change)
+			     int part_type_a, int part_type_b,
+			     int argc, char ** argv)
 {
   int flagc;
   	
   if (argc != 2) {
     Tcl_AppendResult(interp, "comfixed needs 1 parameters: "
 		     "<comfixed_flag> ", (char *) NULL);
-    return TCL_ERROR;
+    return 0;
   }
 	 
-	if (part_type_a != part_type_b) {
-	  Tcl_AppendResult(interp, "comfixed must be among same type interactions", (char *) NULL);
-	  return TCL_ERROR;
-	}
+  if (part_type_a != part_type_b) {
+    Tcl_AppendResult(interp, "comfixed must be among same type interactions", (char *) NULL);
+    return 0;
+  }
 
   /* copy comfixed parameters */
-  if ((! ARG_IS_I(1, flagc)) )
-  {
-	  Tcl_AppendResult(interp, "comfixed needs 1 INTEGER parameter: "
-			"<comfixed_flag>", (char *) NULL);
-	  return TCL_ERROR;
+  if ((! ARG_IS_I(1, flagc)) ) {
+    Tcl_AppendResult(interp, "comfixed needs 1 INTEGER parameter: "
+		     "<comfixed_flag>", (char *) NULL);
+    return 0;
   }
-
-  *change = 2;
 
   if (comfixed_set_params(part_type_a, part_type_b, flagc) == TCL_ERROR) {
-	  Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-	  return TCL_ERROR;
+    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+    return 0;
   }
-  return TCL_OK;
+  return 2;
 }
 
 MDINLINE void calc_comfixed()

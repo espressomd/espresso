@@ -17,6 +17,7 @@
  */
 
 #include "domain_decomposition.h"
+#include "errorhandling.h"
 
 /************************************************/
 /** \name Defines */
@@ -135,20 +136,20 @@ void dd_create_cell_grid()
   }
 
   /* sanity check */
-  for(i=0;i<3;i++) if( dd.cell_grid[i] < 1 ) {
-    fprintf(stderr, "%d: dd_create_cell_grid: interaction range larger than local box in direction %d: max_range %f local_box %f\n",this_node,i,max_range,local_box_l[i]);
-    errexit();
-  }
+  for(i=0;i<3;i++)
+    if( dd.cell_grid[i] < 1 ) {
+      char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
+      sprintf(error_msg, "{interaction range %f in direction %d is larger than the local box size %f} ",
+	      max_range, i, local_box_l[i]);
+      n_local_cells = dd.cell_grid[0] = dd.cell_grid[1] = dd.cell_grid[2]=1;
+    }
 
   /* quit program if unsuccesful */
   if(n_local_cells > max_num_cells) {
-    fprintf(stderr, "%d: dd_create_cell_grid: grid (%d,%d,%d), n_local_cells=%d\n",
-	    this_node,dd.cell_grid[0],dd.cell_grid[1],dd.cell_grid[2],n_local_cells);
-    fprintf(stderr, "    Error: no suitable cell grid found (max_num_cells = %d)\n",
-	    max_num_cells);
-    fflush(stderr);
-    errexit();
-  } 
+    char *error_msg = runtime_error(128);
+    sprintf(error_msg, "{no suitable cell grid found} ");
+  }
+
   /* now set all dependent variables */
   new_cells=1;
   for(i=0;i<3;i++) {
@@ -584,11 +585,6 @@ void dd_topology_init(CellPList *old)
 
   exchange_data = (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
   update_data   = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
-  if (thermo_switch & THERMO_DPD) {
-    /* DPD needs also ghost velocities */
-    exchange_data = (exchange_data | GHOSTTRANS_MOMENTUM);
-    update_data   = (update_data   | GHOSTTRANS_MOMENTUM);
-  }
   dd_prepare_comm(&cell_structure.exchange_ghosts_comm,  exchange_data);
   dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data);
 
@@ -775,6 +771,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	}
       }
     }
+
     /* Communicate wether particle exchange is finished */
     if(global_flag == CELL_GLOBAL_EXCHANGE) {
       if(this_node==0) {
@@ -787,8 +784,9 @@ void  dd_exchange_and_sort_particles(int global_flag)
       MPI_Bcast(&finished, 1, MPI_INT, 0, MPI_COMM_WORLD);
     } else {
       if(finished == 0) {
-	fprintf(stderr,"%d: dd_exchange_and_sort_particles:\n",this_node);
-	fprintf(stderr,"Unexpected particle position requiers global exchange.\nWrong unsage of this function!\n"); errexit();
+	char *errtext = runtime_error(128);
+	sprintf(errtext,"{some particles moved more than min_local_box_l, reduce the time step} ");
+	/* the bad guys are all in cell 0, but probably their interactions are of no importance anyways */
       }
     }
     CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: finished value: %d\n",this_node,finished));
@@ -824,8 +822,9 @@ Cell *dd_position_to_cell(double pos[3])
 
 #ifdef ADDITIONAL_CHECKS
     if(cpos[i] < 1 || cpos[i] >  dd.cell_grid[i]) {
-      fprintf(stderr,"%d: illegal cell position cpos[%d]=%d, ghost_grid[%d]=%d for pos[%d]=%f\n",this_node,i,cpos[i],i,dd.ghost_cell_grid[i],i,pos[i]);
-      errexit();
+      char *errtext = runtime_error(128 + TCL_INTEGER_SPACE + 3*TCL_DOUBLE_SPACE);
+      sprintf(errtext, "{particle @ (%f, %f, %f) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
+      cpos[i] = 1;
     }
 #endif
 

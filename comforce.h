@@ -12,8 +12,11 @@
 #include "parser.h"
 
 #ifdef COMFORCE
+
+extern int COM_on;
+
 MDINLINE int comforce_set_params(int part_type_a, int part_type_b,
-		      int flag, int dir, double force, double fratio)
+				 int flag, int dir, double force, double fratio)
 {
   IA_parameters *data, *data_sym;
 
@@ -36,13 +39,15 @@ MDINLINE int comforce_set_params(int part_type_a, int part_type_b,
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
   mpi_bcast_ia_params(part_type_b, part_type_a);
+
+  COM_on = 1;
   
   return TCL_OK;
 }
 
 MDINLINE int printcomforceIAToResult(Tcl_Interp *interp, int i, int j)
 {
-  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
+  char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
 
   sprintf(buffer,"%d",data->COMFORCE_flag);
@@ -58,38 +63,38 @@ MDINLINE int printcomforceIAToResult(Tcl_Interp *interp, int i, int j)
 }
 
 MDINLINE int comforce_parser(Tcl_Interp * interp,
-			   int part_type_a, int part_type_b,
-			   int argc, char ** argv, int *change)
+			     int part_type_a, int part_type_b,
+			     int argc, char ** argv)
 {
-  int flag, dir; 
+  int flag, dir, change; 
   double force, fratio;
-  	
+
   if (argc != 5) {
     Tcl_AppendResult(interp, "comforce needs 4 parameters: "
-       "<comforce_flag> <comforce_dir> <comforce_force> <comforce_fratio>",
-       (char *) NULL);
-    return TCL_ERROR;
+		     "<comforce_flag> <comforce_dir> <comforce_force> <comforce_fratio>",
+		     (char *) NULL);
+    return 0;
   }
-	 
-	if (part_type_a == part_type_b) {
-	  Tcl_AppendResult(interp, "comforce needs 2 different types ", (char *) NULL);
-	  return TCL_ERROR;
-	}
+  
+  if (part_type_a == part_type_b) {
+    Tcl_AppendResult(interp, "comforce needs 2 different types ", (char *) NULL);
+    return 0;
+  }
 
   /* copy comforce parameters */
   if ((! ARG_IS_I(1, flag)) || (! ARG_IS_I(2, dir)) || (! ARG_IS_D(3, force)) || (! ARG_IS_D(4, fratio)) ) {
-	  Tcl_AppendResult(interp, "comforce needs 2 INTEGER 1 DOUBLE parameter: "
-			"<comforce_flag> <comforce_dir> <comforce_force> <comforce_fratio>", (char *) NULL);
-	  return TCL_ERROR;
+    Tcl_AppendResult(interp, "comforce needs 2 INTEGER 1 DOUBLE parameter: "
+		     "<comforce_flag> <comforce_dir> <comforce_force> <comforce_fratio>", (char *) NULL);
+    return 0;
   }
     
-  *change = 5;
+  change = 5;
     
   if (comforce_set_params(part_type_a, part_type_b, flag, dir, force, fratio) == TCL_ERROR) {
-	  Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-	  return TCL_ERROR;
+    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+    return 0;
   }
-  return TCL_OK;
+  return change;
 }
 
 MDINLINE void calc_comforce()

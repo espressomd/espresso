@@ -40,6 +40,7 @@
 #include "elc.h"
 #include "statistics_chain.h"
 #include "topology.h"
+#include "errorhandling.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -129,12 +130,14 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_MOLID 34
 /** Action number for \ref mpi_bcast_nptiso_geom */
 #define REQ_BCAST_NPTISO_GEOM 35
-/**Action number for \ref mpi_update_mol_ids  */
+/** Action number for \ref mpi_update_mol_ids  */
 #define REQ_UPDATE_MOL_IDS 36
-/**Action number for \ref mpi_sync_topo_part_info  */
+/** Action number for \ref mpi_sync_topo_part_info  */
 #define REQ_SYNC_TOPO 37
+/** Action number for \ref mpi_gather_runtime_errors  */
+#define REQ_GET_ERRS 38
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 38
+#define REQ_MAXIMUM 39
 
 
 /** \name Slave Callbacks
@@ -180,6 +183,8 @@ void mpi_send_mol_id_slave(int node, int parm);
 void mpi_bcast_nptiso_geom_slave(int node, int parm);
 void mpi_update_mol_ids_slave(int node, int parm);
 void mpi_sync_topo_part_info_slave(int node, int parm);
+void mpi_gather_runtime_errors_slave(int node, int parm);
+
 /*@}*/
 
 /** A list of which function has to be called for
@@ -222,7 +227,8 @@ SlaveCallback *callbacks[] = {
   mpi_send_mol_id_slave,            /* 34: REQ_SET_MOLID */
   mpi_bcast_nptiso_geom_slave,      /* 35: REQ_BCAST_NPTISO_GEOM */
   mpi_update_mol_ids_slave,         /* 36: REQ_UPDATE_MOL_IDS */
-  mpi_sync_topo_part_info_slave     /* 37: REQ_SYNC_TOPO */
+  mpi_sync_topo_part_info_slave,    /* 37: REQ_SYNC_TOPO */
+  mpi_gather_runtime_errors_slave,  /* 38: REQ_GET_ERRS */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -265,6 +271,7 @@ char *names[] = {
   "BCAST_NPT_GEOM", /* 35 */
   "UPDATE_MOL_IDS", /* 36 */
   "SYNC_TOPO",      /* 37 */
+  "GET_ERRS",       /* 38 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -350,14 +357,7 @@ void mpi_stop_slave(int node, int param)
 }
 
 /*************** REQ_BCAST_PAR ************/
-void mpi_bcast_parameter(int i)
-{
-  mpi_issue(REQ_BCAST_PAR, -1, i);
-
-  mpi_bcast_parameter_slave(-1, i);
-}
-
-void mpi_bcast_parameter_slave(int node, int i)
+static void common_bcast_parameter(int i)
 {
   switch (fields[i].type) {
   case TYPE_INT:
@@ -376,6 +376,21 @@ void mpi_bcast_parameter_slave(int node, int i)
   }
 
   on_parameter_change(i);
+}
+
+int mpi_bcast_parameter(int i)
+{
+  mpi_issue(REQ_BCAST_PAR, -1, i);
+
+  common_bcast_parameter(i);
+
+  return check_runtime_errors();
+}
+
+void mpi_bcast_parameter_slave(int node, int i)
+{
+  common_bcast_parameter(i);
+  check_runtime_errors();
 }
 
 /*************** REQ_WHO_HAS ****************/
@@ -765,8 +780,10 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete)
   bond_size = (bond) ? bonded_ia_params[bond[0]].num + 1 : 0;
 
   if (pnode == this_node) {
+    stat = local_change_bond(part, bond, delete);
     on_particle_change();
-    return local_change_bond(part, bond, delete); }
+    return stat;
+  }
   else {
     MPI_Send(&bond_size, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
     if (bond_size)
@@ -785,21 +802,22 @@ void mpi_send_bond_slave(int pnode, int part)
   int bond_size, *bond, delete, stat;
   MPI_Status status;
 
-  if (pnode != this_node)
-    return;
-
-  MPI_Recv(&bond_size, 1, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
-  if (bond_size) {
-    bond = (int *)malloc(bond_size*sizeof(int));
-    MPI_Recv(bond, bond_size, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
+  if (pnode == this_node) {
+    MPI_Recv(&bond_size, 1, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
+    if (bond_size) {
+      bond = (int *)malloc(bond_size*sizeof(int));
+      MPI_Recv(bond, bond_size, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
+    }
+    else
+      bond = NULL;
+    MPI_Recv(&delete, 1, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
+    stat = local_change_bond(part, bond, delete);
+    if (bond)
+      free(bond);
+    MPI_Send(&stat, 1, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD);
   }
-  else
-    bond = NULL;
-  MPI_Recv(&delete, 1, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
-  stat = local_change_bond(part, bond, delete);
-  if (bond)
-    free(bond);
-  MPI_Send(&stat, 1, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD);
+
+  on_particle_change();
 }
 
 /****************** REQ_GET_PART ************/
@@ -880,19 +898,22 @@ void mpi_remove_particle_slave(int pnode, int part)
 }
 
 /********************* REQ_INTEGRATE ********/
-void mpi_integrate(int n_steps)
+int mpi_integrate(int n_steps)
 {
   mpi_issue(REQ_INTEGRATE, -1, n_steps);
 
-  mpi_integrate_slave(-1, n_steps);
+  integrate_vv(n_steps);
+  COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", this_node, n_steps));
+
+  return check_runtime_errors();
 }
 
 void mpi_integrate_slave(int pnode, int task)
 {
   integrate_vv(task);
+  COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", this_node, task));
 
-  COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n",
-		     this_node, task));
+  check_runtime_errors();
 }
 
 /*************** REQ_BCAST_IA ************/
@@ -1009,7 +1030,7 @@ void mpi_gather_stats(int job, void *result)
     pressure_calc(result,1);
     break;
   default:
-    fprintf(stderr, "%d: illegal request %d for REQ_GATHER\n", this_node, job);
+    fprintf(stderr, "%d: INTERNAL ERROR: illegal request %d for REQ_GATHER\n", this_node, job);
     errexit();
   }
 }
@@ -1030,7 +1051,7 @@ void mpi_gather_stats_slave(int ana_num, int job)
     pressure_calc(NULL,1);
     break;
   default:
-    fprintf(stderr, "%d: illegal request %d for REQ_GATHER\n", this_node, job);
+    fprintf(stderr, "%d: INTERNAL ERROR: illegal request %d for REQ_GATHER\n", this_node, job);
     errexit();
   }
 }
@@ -1058,7 +1079,7 @@ void mpi_get_particles(Particle *result, IntList *bi)
     tot_size += sizes[i];
 
   if (tot_size!=n_total_particles) {
-    fprintf(stderr,"%d: mpi_get_particles: n_total_particles %d, but I counted %d. Exiting...\n",
+    fprintf(stderr,"%d: ERROR: mpi_get_particles: n_total_particles %d, but I counted %d. Exiting...\n",
 	    this_node, n_total_particles, tot_size);
     errexit();
   }
@@ -1259,7 +1280,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     MPI_Bcast(&mmm2d_params, sizeof(MMM2D_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
   default:
-    fprintf(stderr, "cannot bcast coulomb params for unknown method %d\n", coulomb.method);
+    fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast coulomb params for unknown method %d\n", this_node, coulomb.method);
     errexit();
   }
   if (coulomb.use_elc) {
@@ -1649,6 +1670,82 @@ void mpi_sync_topo_part_info_slave(int node,int parm ) {
 
 }
 
+/******************* REQ_GET_ERRS ********************/
+
+int mpi_gather_runtime_errors(Tcl_Interp *interp, int error_code)
+{
+  char nr_buf[TCL_INTEGER_SPACE + 3];
+  char *other_error_msg;
+  int *errcnt;
+  int node, n_other_error_msg;
+  MPI_Status status;
+
+  mpi_issue(REQ_GET_ERRS, -1, 0);
+
+  if (!check_runtime_errors())
+    return error_code;
+
+  if (error_code != TCL_ERROR)
+    Tcl_ResetResult(interp);
+  else
+    Tcl_AppendResult(interp, " ");
+
+  Tcl_AppendResult(interp, "background_errors ", (char *) NULL);
+
+  /* gather the maximum length of the error messages, and allocate transfer space */
+  errcnt = malloc(n_nodes*sizeof(int));
+  MPI_Gather(&n_error_msg, 1, MPI_INT, errcnt, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  /* allocate transfer buffer for maximal error message length */
+  n_other_error_msg = n_error_msg;
+  for (node = 1; node < n_nodes; node++)
+    if (errcnt[node] > n_other_error_msg)
+      n_other_error_msg = errcnt[node];
+  other_error_msg = malloc(n_other_error_msg);
+
+  /* first handle node master errors. */
+  if (n_error_msg > 0)
+    Tcl_AppendResult(interp, "0 ", error_msg, (char *) NULL);
+    
+  for (node = 1; node < n_nodes; node++) {
+    if (errcnt[node] > 0) {
+      MPI_Recv(other_error_msg, errcnt[node], MPI_CHAR, node, 0, MPI_COMM_WORLD, &status);
+
+      sprintf(nr_buf, "%d ", node);
+
+      /* check wether it's the same message as from the master, then just consent */
+      if (strcmp(other_error_msg, error_msg) == 0) {
+	Tcl_AppendResult(interp, nr_buf, "<consent> ", (char *) NULL);
+      }
+      else {
+	Tcl_AppendResult(interp, nr_buf, other_error_msg, (char *) NULL);
+      }
+    }
+  }
+
+  /* reset error message on master node */
+  error_msg = realloc(error_msg, n_error_msg = 0);
+  free(other_error_msg);
+  free(errcnt);
+
+  return TCL_ERROR;
+}
+
+void mpi_gather_runtime_errors_slave(int node, int parm)
+{
+  if (!check_runtime_errors())
+    return;
+  
+  MPI_Gather(&n_error_msg, 1, MPI_INT, NULL, 0, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (n_error_msg > 0) {
+    MPI_Send(error_msg, n_error_msg, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
+    /* reset error message on slave node */
+    error_msg = realloc(error_msg, n_error_msg = 0);
+  }
+}
+
+
 /*********************** MAIN LOOP for slaves ****************/
 
 void mpi_loop()
@@ -1659,7 +1756,7 @@ void mpi_loop()
 		       names[request[0]], request[1]));
  
     if ((request[0] < 0) || (request[0] >= REQ_MAXIMUM)) {
-      fprintf(stderr, "%d: FATAL internal error: unknown request %d\n", this_node, request[0]);
+      fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
       errexit();
     }
     callbacks[request[0]](request[1], request[2]);

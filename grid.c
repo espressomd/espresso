@@ -345,7 +345,7 @@ int change_volume(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   }
   sprintf(buffer, "%f", box_l[0]*box_l[1]*box_l[2]);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return TCL_OK;
+  return mpi_gather_runtime_errors(interp, TCL_OK);
 }
 
 void rescale_boxl(int dir, double d_new) {

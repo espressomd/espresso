@@ -163,7 +163,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
   }
 #ifdef ADDITIONAL_CHECKS
   if (insert - s_buffer != n_s_buffer) {
-    fprintf(stderr, "%d: send buffer size %d differs from what I put in %d\n", this_node, n_s_buffer, insert - s_buffer);
+    fprintf(stderr, "%d: INTERNAL ERROR: send buffer size %d differs from what I put in %d\n", this_node, n_s_buffer, insert - s_buffer);
     errexit();
   }
 #endif

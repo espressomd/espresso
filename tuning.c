@@ -11,6 +11,7 @@
 #include <tcl.h>
 #include "communication.h"
 #include "debug.h"
+#include "errorhandling.h"
 
 int timing_samples = 0;
 
@@ -44,12 +45,15 @@ double time_force_calc(int default_samples)
   int i;
 
   mpi_integrate(0);
+  if (check_runtime_errors())
+    return -1;
 
   /* perform force calculation test */
   markTime();
   for (i = 0; i < rds; i++) {
     mpi_bcast_event(INVALIDATE_SYSTEM);
-    mpi_integrate(0);
+    if (!mpi_integrate(0))
+      return -1;
   }
   markTime();
   return diffTime()/rds;

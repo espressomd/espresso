@@ -486,20 +486,13 @@ void send_particles(ParticleList *particles, int node);
     APPENDED to the list, so it has to be a valid one */
 void recv_particles(ParticleList *particles, int node);
 
-/** Check the existence of a bond partner on that node and return the
-    corresponding particle pointer or force exit.
+/** Complain about a missing bond partner. Just for convenience, replaces the old checked_particle_ptr.
     @param id particle identity.
-    @return Particle pointer.
  */
-MDINLINE Particle *checked_particle_ptr(int id)
+MDINLINE void complain_on_particle(int id)
 {
-  Particle *p = local_particles[id];
-  if(!p) {
-    fprintf(stderr,"ERROR: Atom %d has bond to unknown particle "
-	    "(probably on different node)\n", id); 
-    errexit();
-  }
-  return p;
+  char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+  sprintf(errtxt,"{bond broken (particle %d has a bond to particle not stored on this node)} ", id); 
 }
 
 #endif

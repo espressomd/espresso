@@ -85,8 +85,9 @@ void init_p_tensor();
     @param volume the volume of the bin to be considered
     @param p_list contains the list of particles to look at
     @param flag   decides whether to derive the interactions of the particles in p_list to <i>all</i> other particles (=1) or not (=0).
+    @return error code 
 */
-void calc_p_tensor(double volume, IntList *p_list, int flag);
+int calc_p_tensor(double volume, IntList *p_list, int flag);
 
 
 /*******************/
@@ -96,8 +97,10 @@ void calc_p_tensor(double volume, IntList *p_list, int flag);
 void pressure_calc(double *result, int v_comp)
 {
   int n;
-
   double volume = box_l[0]*box_l[1]*box_l[2];
+  
+  if (!check_obs_calc_initialized())
+    return;
 
   init_virials(&virials);
 
@@ -164,10 +167,10 @@ void init_virials(Observable_stat *stat)
 
   n_coulomb    = 0;
 #ifdef ELECTROSTATICS
-  if(coulomb.bjerrum != 0.0) {
-    n_coulomb  = 1;
-    if(coulomb.method==COULOMB_P3M)
-      n_coulomb += 1;
+  switch (coulomb.method) {
+  case COULOMB_NONE: n_coulomb = 0; break;
+  case COULOMB_P3M:  n_coulomb = 2; break;
+  default: n_coulomb  = 1;
   }
 #endif
 
@@ -230,7 +233,7 @@ static void print_detailed_pressure(Tcl_Interp *interp)
     }
   
 #ifdef ELECTROSTATICS
-  if(coulomb.bjerrum != 0.0) {
+  if(coulomb.method != COULOMB_NONE) {
     /* total Coulomb pressure */
     value = total_pressure.coulomb[0];
     for (i = 1; i < total_pressure.n_coulomb; i++)
@@ -471,7 +474,16 @@ int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
   }
 
   init_p_tensor();
-  calc_p_tensor(volume,&p1,flag);
+  switch (calc_p_tensor(volume,&p1,flag)) {
+  case 1: /* background errors. can only come from the master node, but asking the others does not hurt. */
+    return mpi_gather_runtime_errors(interp, TCL_ERROR);
+  case 2:
+    Tcl_AppendResult(interp, "cannot calculate the p_tensor for the current coulomb method", (char *)NULL);
+    return TCL_ERROR;
+  case 3:
+    Tcl_AppendResult(interp, "particle does not exist", (char *)NULL);
+    return TCL_ERROR;
+  }
 
   Tcl_AppendResult(interp, "{ pressure ", (char *)NULL);
   for(j=0; j<9; j++) {
@@ -536,18 +548,10 @@ void init_p_tensor() {
 
   n_pre        = 1;
   n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
-
+  
   n_coulomb    = 0;
 #ifdef ELECTROSTATICS
-  if(coulomb.bjerrum != 0.0) {
-    switch (coulomb.method) {
-    case COULOMB_DH:   n_coulomb = 1; break;
-    default:
-      fprintf(stderr, "%d: init_p_tensor: cannot calculate p_tensor for coulomb method %d\n",
-	      this_node, coulomb.method);
-      errexit();
-    }
-  }
+  if (coulomb.method == COULOMB_DH) n_coulomb = 1;
 #endif
 
   obsstat_realloc_and_clear(&p_tensor, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, 9);
@@ -556,17 +560,25 @@ void init_p_tensor() {
 
 /* Derive the p_tensor */
 /***********************/
-void calc_p_tensor(double volume, IntList *p_list, int flag) {
+int calc_p_tensor(double volume, IntList *p_list, int flag) {
   Particle p1, p2, p3;
   int *p1_list, n_p1;
   int i,j, k,l, indi,indj,startj,endj, type_num;
   double d[3],dist,dist2;
   IA_parameters *ia_params;
 
+  if (!check_obs_calc_initialized())
+    return 1;
+
+#ifdef ELECTROSTATICS
+  if (coulomb.method != COULOMB_NONE && coulomb.method != COULOMB_DH)
+    return 2;
+#endif
+
   p1_list = p_list->e; n_p1 = p_list->n;
 
   for(indi=0; indi<n_p1; indi++) {
-    if (get_particle_data(p1_list[indi], &p1) != TCL_OK) { fprintf(stderr,"The particle %d you requested does not exist! ",p1_list[indi]); errexit(); }
+    if (get_particle_data(p1_list[indi], &p1) != TCL_OK) return 3;
 
     /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
     for(k=0;k<3;k++)
@@ -664,7 +676,9 @@ void calc_p_tensor(double volume, IntList *p_list, int flag) {
 	ia_params = get_ia_param(p1.p.type,p2.p.type);
 
 	/* lennnard jones */
+#ifdef LENNARD_JONES
 	add_lj_pair_force(&p1,&p2,ia_params,d,dist);
+#endif
 	/* lennard jones cosine */
 #ifdef LJCOS
 	add_ljcos_pair_force(&p1,&p2,ia_params,d,dist);
@@ -684,7 +698,7 @@ void calc_p_tensor(double volume, IntList *p_list, int flag) {
       }
 
 #ifdef ELECTROSTATICS
-      if (coulomb.bjerrum != 0.0 && coulomb.method == COULOMB_DH) {
+      if (coulomb.method == COULOMB_DH) {
 	for (j = 0; j < 3; j++) {
 	  p1.f.f[j] = 0;
 	  p2.f.f[j] = 0;
@@ -716,5 +730,7 @@ void calc_p_tensor(double volume, IntList *p_list, int flag) {
     p_tensor.data.e[i]  /= 3.0*volume;
 
   p_tensor.init_status=1;
+
+  return 0;
 }
 

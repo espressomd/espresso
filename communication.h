@@ -81,8 +81,10 @@ void mpi_loop();
 void mpi_stop();
 
 /** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.
-    \param i the number from \ref global.h "global.h" referencing the datafield. */
-void mpi_bcast_parameter(int i);
+    @param i the number from \ref global.h "global.h" referencing the datafield.
+    @return nonzero on error
+*/
+int mpi_bcast_parameter(int i);
 
 /** Issue REQ_WHO_HAS: ask nodes for their attached particles. */
 void mpi_who_has();
@@ -201,9 +203,10 @@ void mpi_remove_particle(int node, int id);
 void mpi_recv_part(int node, int part, Particle *part_data);
 
 /** Issue REQ_INTEGRATE: start integrator.
-    \param n_steps how many steps to do.
+    @param n_steps how many steps to do.
+    @return nonzero on error
 */
-void mpi_integrate(int n_steps);
+int mpi_integrate(int n_steps);
 
 /** Issue REQ_BCAST_IA: send new ia params.
     Also calls \ref on_short_range_ia_change.
@@ -304,6 +307,17 @@ void mpi_update_mol_ids(void);
 
 /** Issue REQ_SYNC_TOPO: Update the molecules ids to that they correspond to the topology */
 int mpi_sync_topo_part_info(void);
+
+/** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result
+    to these error messages. This called only on the master node.
+    The errors are append to the result, if ret_state == TCL_ERROR, otherwise the result is overwritten.
+    Therefore you should end any Tcl command handler by return gather_runtime_errors(<return_value>).
+    This code uses asynchronous communication.
+    @param ret_state return value of the procedure
+    @param interp where to put the errors
+    @return new return value after the background errors, if any, have been handled
+*/
+int mpi_gather_runtime_errors(Tcl_Interp *interp, int ret_state);
 
 /*@}*/
 

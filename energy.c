@@ -35,6 +35,9 @@ void master_energy_calc();
 
 void energy_calc(double *result)
 {
+  if (!check_obs_calc_initialized())
+    return;
+
   init_energies(&energy);
 
   if(resort_particles) {
@@ -93,10 +96,10 @@ void init_energies(Observable_stat *stat)
 
   n_coulomb    = 0;
 #ifdef ELECTROSTATICS
-  if(coulomb.bjerrum != 0.0) {
-    n_coulomb  = 1;
-    if(coulomb.method==COULOMB_P3M)
-      n_coulomb += 1;
+  switch (coulomb.method) {
+  case COULOMB_NONE: n_coulomb = 0; break;
+  case COULOMB_P3M:  n_coulomb = 2; break;
+  default: n_coulomb  = 1;
   }
 #endif
   
@@ -154,7 +157,7 @@ static void print_detailed_energies(Tcl_Interp *interp)
     }
 
 #ifdef ELECTROSTATICS
-  if(coulomb.bjerrum != 0.0) {
+  if(coulomb.method != COULOMB_NONE) {
     /* total Coulomb energy */
     value = total_energy.coulomb[0];
     for (i = 1; i < total_energy.n_coulomb; i++)

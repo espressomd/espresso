@@ -23,6 +23,68 @@
 /************************************************************/
 /*@{*/
 
+MDINLINE int printdhToResult(Tcl_Interp *interp)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+  Tcl_PrintDouble(interp, dh_params.kappa, buffer);
+  Tcl_AppendResult(interp, "dh ", buffer, " ",(char *) NULL);
+  Tcl_PrintDouble(interp, dh_params.r_cut, buffer);
+  Tcl_AppendResult(interp, buffer, (char *) NULL);
+
+  return TCL_OK;
+}
+
+MDINLINE int dh_set_params(double kappa, double r_cut)
+{
+  if(dh_params.kappa < 0.0)
+    return -1;
+
+  if(dh_params.r_cut < 0.0)
+    return -2;
+
+  dh_params.kappa = kappa;
+  dh_params.r_cut = r_cut;
+
+  mpi_bcast_coulomb_params();
+
+  return 1;
+}
+
+MDINLINE int inter_parse_dh(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double kappa, r_cut;
+  int i;
+
+  if(argc < 2) {
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb dh <kappa> <r_cut>", (char *) NULL);
+    return TCL_ERROR;
+  }
+  
+  coulomb.method = COULOMB_DH;
+
+  if(! ARG0_IS_D(kappa))
+    return TCL_ERROR;
+  if(! ARG1_IS_D(r_cut))
+    return TCL_ERROR;
+
+  if ( (i = dh_set_params(kappa, r_cut)) < 0) {
+    switch (i) {
+    case -1:
+      Tcl_AppendResult(interp, "dh kappa must be positiv.",(char *) NULL);
+      break;
+    case -2:
+      Tcl_AppendResult(interp, "dh r_cut must be positiv.",(char *) NULL);
+      break;
+    default:
+      Tcl_AppendResult(interp, "unspecified error",(char *) NULL);
+    }
+    
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
 /** Computes the Debye_Hueckel pair force and adds this
     force to the particle forces (see \ref #inter). 
     @param p1        Pointer to first particle.

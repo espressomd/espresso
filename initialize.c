@@ -46,6 +46,7 @@
 #include "nsquare.h"
 #include "nemd.h"
 #include "domain_decomposition.h"
+#include "errorhandling.h"
 
 /** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
@@ -86,28 +87,48 @@ int on_program_start(Tcl_Interp *interp)
 
 void on_integration_start()
 {
+  char *errtext;
+  int i;
+
   EVENT_TRACE(fprintf(stderr, "%d: on_integration_start\n", this_node));
   INTEG_TRACE(fprintf(stderr,"%d: on_integration_start: reinit_thermo = %d, resort_particles=%d\n",
 		      this_node,reinit_thermo,resort_particles));
 
-  /* sanity checks */
-  if(time_step < 0.0 || skin < 0.0 || temperature < 0.0 ) {
-    fprintf(stderr,"%d: ERROR: on_integration_start: Cannot initialize the integrator!:\n",this_node);
-    if( time_step < 0.0 ) fprintf(stderr,"%d: PROBLEM: You have to set the time_step!\n",this_node);
-    if( skin < 0.0 ) fprintf(stderr,"%d: PROBLEM: You have to set the skin!\n",this_node);
-    if( temperature < 0.0 ) fprintf(stderr,"%d: PROBLEM: You have to initialize a thermostat!\n",this_node);
-    errexit();
+  /********************************************/
+  /* sanity checks                            */
+  /********************************************/
+
+  if ( time_step < 0.0 ) {
+    errtext = runtime_error(128);
+    sprintf(errtext, "{time_step not set} ");
   }
+  if ( skin < 0.0 ) {
+    errtext = runtime_error(128);
+    sprintf(errtext,"{skin not set} ");
+  }
+  if ( temperature < 0.0 ) {
+    errtext = runtime_error(128);
+    sprintf(errtext,"{thermostat not initialized} ");
+  }
+
+  for (i = 0; i < 3; i++)
+    if (local_box_l[i] < max_range) {
+      errtext = runtime_error(128 + TCL_INTEGER_SPACE);
+      sprintf(errtext,"{box_l in direction %d is still too small} ", i);
+    }
+  
 #ifdef NPT
   if((integ_switch == INTEG_METHOD_NPT_ISO) && (nptiso.piston <= 0.0)) {
-    fprintf(stderr,"%d: ERROR: on_integration_start: Cannot initialize the integrator!:\n",this_node);
-    if( nptiso.piston <= 0.0 ) { 
-      fprintf(stderr,"%d: PROBLEM: You have to set <piston>! Please use the following: \n",this_node);
-      fprintf(stderr,"%d: 'integrate set npt_isotropic <DOUBLE p_ext> <DOUBLE piston> [<INT, INT, INT system_geometry>]' for enabling isotropic NPT integration \n",this_node); 
-    }
-    errexit();
+    char *errtext = runtime_error(128);
+    sprintf(errtext,"{npt on, but piston mass not set} ");
   }
 #endif
+
+  if (!check_obs_calc_initialized()) return;
+
+  /********************************************/
+  /* end sanity checks                        */
+  /********************************************/
 
 
   /* Prepare the thermostat */
@@ -368,11 +389,13 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "bit_random", (Tcl_CmdProc *)bit_random, 0, NULL);
   /* in file blockfile_tcl.c */
   Tcl_CreateCommand(interp, "blockfile", (Tcl_CmdProc *)blockfile, 0, NULL);
-  /* in interaction_data.c */
+  /* in constraint.c */
   Tcl_CreateCommand(interp, "constraint", (Tcl_CmdProc *)constraint, 0, NULL);
   /* in uwerr.c */
   Tcl_CreateCommand(interp, "uwerr", (Tcl_CmdProc *)uwerr, 0, NULL);
+  /* in nemd.c */
   Tcl_CreateCommand(interp, "nemd", (Tcl_CmdProc *)nemd, 0, NULL);
+  /* in thermostat.c */
   Tcl_CreateCommand(interp, "thermostat", (Tcl_CmdProc *)thermostat, 0, NULL);
 
   /* evaluate the Tcl initialization script */

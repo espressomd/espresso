@@ -19,6 +19,29 @@
 
 #define ANGLE_NOT_DEFINED -100
 
+
+
+
+/// set dihedral parameters
+MDINLINE int dihedral_set_params(int bond_type, int mult, double bend, double phase)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].type = BONDED_IA_DIHEDRAL;
+  bonded_ia_params[bond_type].num  = 3;
+  bonded_ia_params[bond_type].p.dihedral.mult = mult;
+  bonded_ia_params[bond_type].p.dihedral.bend = bend;
+  bonded_ia_params[bond_type].p.dihedral.phase = phase;
+
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return TCL_OK;
+}
+
+
 /** Calculates the dihedral angle between particel quadriple p1, p2,
 p3 and p4. The dihedral angle is the angel between the planes
 specified by the particle triples (p1,p2,p3) and (p2,p3,p4). Additional information is stored in:

@@ -11,6 +11,26 @@
 
 /************************************************************/
 
+/// parameters for the subtract LJ from a fene bond potential. Deprecated.
+MDINLINE int subt_lj_fene_set_params(int bond_type, double k, double r)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.subt_lj_fene.k = k;
+  bonded_ia_params[bond_type].p.subt_lj_fene.r = r;
+  bonded_ia_params[bond_type].type = BONDED_IA_SUBT_LJ_FENE;
+  bonded_ia_params[bond_type].p.subt_lj_fene.r2 = SQR(bonded_ia_params[bond_type].p.subt_lj_fene.r);
+  bonded_ia_params[bond_type].num  = 1;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return TCL_OK;
+}
+
 /** Computes the difference between the FENE and the LENNARD-JONES pair forces 
     and adds this force to the particle forces (see \ref #inter). 
     @param p1        Pointer to first particle.
@@ -29,9 +49,9 @@ MDINLINE void add_subt_lj_fene_pair_force(Particle *p1, Particle *p2, int type_n
   dist=sqrt(dist2);
 
   if(dist >= bonded_ia_params[type_num].p.subt_lj_fene.r) {
-    fprintf(stderr,"%d: add_subt_lj_fene_pair_force: ERROR: FENE Bond between Pair (%d,%d) broken: dist=%f\n",this_node,
-	    p1->p.identity,p2->p.identity,dist); 
-    errexit();
+    char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+    sprintf(errtext,"{bond broken between particles %d and %d} ", p1->p.identity, p2->p.identity); 
+    return;
   }
 
   fac_fene = bonded_ia_params[type_num].p.subt_lj_fene.k;
@@ -84,10 +104,10 @@ MDINLINE double subt_lj_fene_pair_energy(Particle *p1, Particle *p2, int type_nu
   dist=sqrt(dist2);
   
   if(dist >= bonded_ia_params[type_num].p.subt_lj_fene.r) {
-    fprintf(stderr,"%d: add_subt_lj_fene_pair_energy: ERROR: FENE Bond between Pair (%d,%d) broken: dist=%f\n",
-	    this_node,p1->p.identity,p2->p.identity,dist); 
-    errexit();
-    	}
+    char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+    sprintf(errtext,"{bond broken between particles %d and %d} ", p1->p.identity, p2->p.identity); 
+    return 0;
+  }
   
   energy_fene = -0.5*bonded_ia_params[type_num].p.subt_lj_fene.k*bonded_ia_params[type_num].p.subt_lj_fene.r2;
   energy_fene *= log((1.0 - dist2/bonded_ia_params[type_num].p.subt_lj_fene.r2));

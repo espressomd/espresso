@@ -504,8 +504,8 @@ void analyze_activate(int ind) {
     pos[1] = configs[ind][3*i+1];
     pos[2] = configs[ind][3*i+2];
     if (place_particle(i, pos)==TCL_ERROR) {
-      fprintf(stderr, "Failed upon replacing particle in Espresso "); 
-      fprintf(stderr, "Aborting...\n"); errexit();
+      char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      sprintf(errtxt, "{failed upon replacing particle %d in Espresso} ", i); 
     }
   }
 }
@@ -1332,115 +1332,119 @@ static int parse_activate(Tcl_Interp *interp, int argc, char **argv)
 
 int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
+  int err = TCL_OK;
   if (argc < 2) {
     Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze <what> ...", (char *)NULL);
     return (TCL_ERROR);
   }
 
   if (ARG1_IS_S("set"))
-    return parse_analyze_set_topology(interp, argc - 2, argv + 2);
+    err = parse_analyze_set_topology(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("modes2d"))
-    return parse_modes2d(interp, argc - 2, argv + 2);
+    err = parse_modes2d(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("get_lipid_orients"))
-    return parse_get_lipid_orients(interp,argc-2,argv+2);
+    err = parse_get_lipid_orients(interp,argc-2,argv+2);
   else if (ARG1_IS_S("lipid_orient_order"))
-    return parse_lipid_orient_order(interp,argc-2,argv+2);
+    err = parse_lipid_orient_order(interp,argc-2,argv+2);
   else if (ARG1_IS_S("mindist"))
-    return parse_mindist(interp, argc - 2, argv + 2);
+    err = parse_mindist(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("aggregation"))
-    return parse_aggregation(interp, argc - 2, argv + 2);
+    err = parse_aggregation(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("centermass"))
-    return parse_centermass(interp, argc - 2, argv + 2);
+    err = parse_centermass(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("gyrationtensor"))
-    return parse_gyrationtensor(interp, argc - 2, argv + 2);
+    err = parse_gyrationtensor(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("find_principal_axis"))
-    return parse_find_principal_axis(interp, argc - 2, argv + 2);
+    err = parse_find_principal_axis(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("nbhood"))
-    return parse_nbhood(interp, argc - 2, argv + 2);
+    err = parse_nbhood(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("distto"))
-    return parse_distto(interp, argc - 2, argv + 2);
+    err = parse_distto(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("Vkappa"))
-    return parse_Vkappa(interp, argc - 2, argv + 2);
+    err = parse_Vkappa(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("energy"))
-    return parse_and_print_energy(interp, argc - 2, argv + 2);
+    err = parse_and_print_energy(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("pressure"))
-    return parse_and_print_pressure(interp, argc - 2, argv + 2, 0);
+    err = parse_and_print_pressure(interp, argc - 2, argv + 2, 0);
   else if (ARG1_IS_S("p_inst"))
-    return parse_and_print_pressure(interp, argc - 2, argv + 2, 1);
+    err = parse_and_print_pressure(interp, argc - 2, argv + 2, 1);
   else if (ARG1_IS_S("bins"))
-    return parse_bins(interp, argc - 2, argv + 2);
+    err = parse_bins(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("p_IK1"))
-    return parse_and_print_p_IK1(interp, argc - 2, argv + 2);
+    err = parse_and_print_p_IK1(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("re"))
-    return parse_re(interp, 0, argc - 2, argv + 2);
+    err = parse_re(interp, 0, argc - 2, argv + 2);
   else if (ARG1_IS_S("<re>"))
-    return parse_re(interp, 1, argc - 2, argv + 2);
+    err = parse_re(interp, 1, argc - 2, argv + 2);
   else if (ARG1_IS_S("rg"))
-    return parse_rg(interp, 0, argc - 2, argv + 2);
+    err = parse_rg(interp, 0, argc - 2, argv + 2);
   else if (ARG1_IS_S("<rg>"))
-    return parse_rg(interp, 1, argc - 2, argv + 2);
+    err = parse_rg(interp, 1, argc - 2, argv + 2);
   else if (ARG1_IS_S("rh"))
-    return parse_rh(interp, 0, argc - 2, argv + 2);
+    err = parse_rh(interp, 0, argc - 2, argv + 2);
   else if (ARG1_IS_S("<rh>"))
-    return parse_rh(interp, 1, argc - 2, argv + 2);
+    err = parse_rh(interp, 1, argc - 2, argv + 2);
   else if (ARG1_IS_S("internal_dist"))
-    return parse_intdist(interp, 0, argc - 2, argv + 2);
+    err = parse_intdist(interp, 0, argc - 2, argv + 2);
   else if (ARG1_IS_S("<internal_dist>"))
-    return parse_intdist(interp, 1, argc - 2, argv + 2);
+    err = parse_intdist(interp, 1, argc - 2, argv + 2);
   else if (ARG1_IS_S("bond_l"))
-    return parse_bond_l(interp, 0, argc - 2, argv + 2);
+    err = parse_bond_l(interp, 0, argc - 2, argv + 2);
   else if (ARG1_IS_S("<bond_l>"))
-    return parse_bond_l(interp, 1, argc - 2, argv + 2);
+    err = parse_bond_l(interp, 1, argc - 2, argv + 2);
   else if (ARG1_IS_S("bond_dist"))
-    return parse_bond_dist(interp, 0, argc - 2, argv + 2);
+    err = parse_bond_dist(interp, 0, argc - 2, argv + 2);
   else if (ARG1_IS_S("<bond_dist>"))
-    return parse_bond_dist(interp, 1, argc - 2, argv + 2);
+    err = parse_bond_dist(interp, 1, argc - 2, argv + 2);
   else if (ARG1_IS_S("g123"))
-    return parse_g123(interp, 1, argc - 2, argv + 2);    
+    err = parse_g123(interp, 1, argc - 2, argv + 2);    
   else if (ARG1_IS_S("<g1>"))
-    return parse_g_av(interp, 1, argc - 2, argv + 2);    
+    err = parse_g_av(interp, 1, argc - 2, argv + 2);    
   else if (ARG1_IS_S("<g2>"))
-    return parse_g_av(interp, 2, argc - 2, argv + 2);    
+    err = parse_g_av(interp, 2, argc - 2, argv + 2);    
   else if (ARG1_IS_S("<g3>"))
-    return parse_g_av(interp, 3, argc - 2, argv + 2);
+    err = parse_g_av(interp, 3, argc - 2, argv + 2);
   else if (ARG1_IS_S("formfactor"))
-    return parse_formfactor(interp, 0, argc - 2, argv + 2);
+    err = parse_formfactor(interp, 0, argc - 2, argv + 2);
   else if (ARG1_IS_S("<formfactor>")) 
-    return parse_formfactor(interp, 1, argc - 2, argv + 2);    
-   else if (ARG1_IS_S("necklace")) 
-    return parse_necklace_analyzation(interp, argc - 2, argv + 2);   
+    err = parse_formfactor(interp, 1, argc - 2, argv + 2);    
+  else if (ARG1_IS_S("necklace")) 
+    err = parse_necklace_analyzation(interp, argc - 2, argv + 2);   
   else if (ARG1_IS_S("distribution"))
-    return parse_distribution(interp, argc - 2, argv + 2);
+    err = parse_distribution(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("rdf"))
-    return parse_rdf(interp, argc - 2, argv + 2);
+    err = parse_rdf(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("append"))
-    return parse_append(interp, argc - 2, argv + 2);
+    err = parse_append(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("push"))
-    return parse_push(interp, argc - 2, argv + 2);
+    err = parse_push(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("replace"))
-    return parse_replace(interp, argc - 2, argv + 2);
+    err = parse_replace(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("activate"))
-    return parse_activate(interp, argc - 2, argv + 2);
+    err = parse_activate(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("remove"))
-    return parse_remove(interp, argc - 2, argv + 2);
+    err = parse_remove(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("stored")) {
     /* 'analyze stored' */
     /********************/
     char buffer[TCL_INTEGER_SPACE];
     if (argc != 2) {
-      Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze stored", (char *)NULL); return TCL_ERROR; 
+      Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze stored", (char *)NULL);
+      err = TCL_ERROR; 
     }
-    sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
+    sprintf(buffer,"%d",n_configs);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+    err = TCL_OK;
   }
   else if (ARG1_IS_S("configs"))
-    return parse_configs(interp, argc - 2, argv + 2);
+    err = parse_configs(interp, argc - 2, argv + 2);
   else {
     /* the default */
     /***************/
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "The operation \"", argv[1],
 		     "\" you requested is not implemented.", (char *)NULL);
-    return (TCL_ERROR);
+    err = (TCL_ERROR);
   }
-  return (TCL_ERROR);
+  return mpi_gather_runtime_errors(interp, err);
 }

@@ -13,6 +13,8 @@
 
 #include "modes.h"
 #include "communication.h"
+#include "errorhandling.h"
+
 /** fftw plan for calculating the 2d mode analysis */
 rfftwnd_plan mode_analysis_plan;
 /** Flag to indicate when the grid size has changed*/
@@ -58,19 +60,19 @@ void map_to_2dgrid() {
   for ( i = 0 ; i < 3 ; i++) {
     if ( mode_grid_3d[i] == 0 ) {
       if (zdir != -1 ) { /* grid normal must be unique */ 
-	fprintf(stderr,
-		"%d, fft_modes_init: grid dimensions are <%d,%d,%d> one and only one must be = 0 \n",
-		this_node, mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);
-	errexit();
+	char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	sprintf(errtxt, "{fft_modes_init: grid dimensions are <%d,%d,%d>, but one and only one must be = 0} ",
+		mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);
+	return;
       } else {
 	zdir = i;
       }
     } 
     else if ( mode_grid_3d[i] < 0 ) {
-      fprintf(stderr,
-	      "%d, fft_modes_init: grid dimensions are <%d,%d,%d> and all must be >= 0 \n",
-	      this_node, mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);
-	errexit();
+      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      sprintf(errtxt, "{fft_modes_init: grid dimensions are <%d,%d,%d>, but all must be >= 0} ",
+	      mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);
+      return;
     }
     else {
       if (  xdir == -1 ) {xdir = i;}
@@ -79,10 +81,10 @@ void map_to_2dgrid() {
   }
   /* Check that grid normal was found */
   if ( zdir == -1 ) {
-    fprintf(stderr,
-	    "%d, fft_modes_init: grid dimensions are <%d,%d,%d>. One and only one must be 0 \n",
-	    this_node, mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);
-    errexit();
+    char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+    sprintf(errtxt, "{fft_modes_init: grid dimensions are <%d,%d,%d>, but one and only one must be = 0} ",
+	    mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);
+    return;
   }
   STAT_TRACE(fprintf(stderr,
 		     "%d,map_to_2dgrid found the following mapping: xdir = %d, ydir = %d, zdir = %d \n",
@@ -91,21 +93,19 @@ void map_to_2dgrid() {
 
   /* Now that we know the grid normal check that the other two dimensions are equal and multiples of 2 */
   if ( mode_grid_3d[xdir] != mode_grid_3d[ydir] ) {
-        fprintf(stderr,
-		"%d, fft_modes_init: grid dimensions are <%d,%d,%d>. Two must be equal and the other 0 \n",
-		this_node, mode_grid_3d[xdir],mode_grid_3d[ydir],mode_grid_3d[zdir]);
-	errexit();
+    char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+    sprintf(errtxt, "{fft_modes_init: grid dimensions are <%d,%d,%d>, but two must be equal and the other 0} ",
+	    mode_grid_3d[xdir],mode_grid_3d[ydir],mode_grid_3d[zdir]);
+    return;
   }
 
   if ( (mode_grid_3d[xdir]/2.0 - floor(mode_grid_3d[xdir]/2.0) > MODES2D_NUM_TOL) 
        || (mode_grid_3d[ydir]/2.0 - floor(mode_grid_3d[ydir]/2.0) > MODES2D_NUM_TOL) ) {
-    fprintf(stderr,
-	    "%d, fft_modes_init: grid dimensions are <%d,%d,%d>. All non zero values must be integer multiples of 2 \n",
-	    this_node, mode_grid_3d[xdir],mode_grid_3d[ydir],mode_grid_3d[zdir]);
-    errexit();
+    char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+    sprintf(errtxt, "{fft_modes_init: grid dimensions are <%d,%d,%d>. All non zero values must be integer multiples of 2} ",
+	    mode_grid_3d[xdir],mode_grid_3d[ydir],mode_grid_3d[zdir]);
+    return;
   }
-
-
 }
 
 /** 
@@ -114,18 +114,19 @@ void map_to_2dgrid() {
     subsequent fft and destroys any existing plan that might exist
 */
 void fft_modes_init() {
-  STAT_TRACE(fprintf(stderr,"%d,initializing fftw for mode analysis \n",this_node);)
+  STAT_TRACE(fprintf(stderr,"%d,initializing fftw for mode analysis \n",this_node));
     if ( xdir + ydir + zdir == -3 ) {
-      fprintf(stderr,"%d,attempt to perform mode analysis with uninitialized grid \n",this_node);
-      errexit();
+      char *errtxt = runtime_error(128);
+      sprintf(errtxt,"{attempt to perform mode analysis with uninitialized grid} ");
+      return;
     }
 
-  STAT_TRACE(fprintf(stderr,"%d,destroying old fftw plan \n",this_node);)
+  STAT_TRACE(fprintf(stderr,"%d,destroying old fftw plan \n",this_node));
   rfftwnd_destroy_plan(mode_analysis_plan);
 
 
   mode_analysis_plan = rfftw2d_create_plan(mode_grid_3d[xdir], mode_grid_3d[ydir], FFTW_REAL_TO_COMPLEX,FFTW_MEASURE);
-  STAT_TRACE(fprintf(stderr,"%d,created new fftw plan \n",this_node);)
+  STAT_TRACE(fprintf(stderr,"%d,created new fftw plan \n",this_node));
   mode_grid_changed = 0;  
 }
 
@@ -163,8 +164,9 @@ int orient_order(double* result)
   updatePartCfg(WITHOUT_BONDS);
   /* Make sure particles are sorted */
   if (!sortPartCfg()) {
-    fprintf(stderr,"%d,could not sort partCfg \n",this_node);
-    errexit();
+    char *errtxt = runtime_error(128);
+    sprintf(errtxt, "{could not sort partCfg, particles have to start at 0 and have consecutive identities} ");
+    return TCL_ERROR;
   }
 
 
@@ -229,7 +231,6 @@ int orient_order(double* result)
 
   *result = *result/(double)(bilayer_cnt);
   return TCL_OK;
-
 }
 
 
@@ -354,8 +355,9 @@ int get_lipid_orients(IntList* l_orient) {
   int* grid_parts;
 
   if ( xdir + ydir + zdir == -3 || mode_grid_3d[xdir] <= 0 || mode_grid_3d[ydir] <= 0 ) {
-    fprintf(stderr,"%d,attempt to get lipid orientations with uninitialized grid \n",this_node);
-    errexit();
+    char *errtxt = runtime_error(128);
+    sprintf(errtxt,"{cannot lipid orientations with uninitialized grid} ");
+    return TCL_ERROR;
   }
 
   /* Allocate memory for height grid arrays and initialize these arrays */

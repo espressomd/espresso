@@ -17,6 +17,7 @@
 #include "blockfile.h"
 #include "blockfile_tcl.h"
 #include "debug.h"
+#include "communication.h"
 
 int blockfile(ClientData data, Tcl_Interp *interp,
 	      int argc, char *argv[])
@@ -131,9 +132,11 @@ int blockfile(ClientData data, Tcl_Interp *interp,
       exists = Tcl_GetCommandInfo(interp, name, &cmdInfo);
       free(name);
 
-      if (exists)
-	return cmdInfo.proc(cmdInfo.clientData, interp,
-			    argc, argv);
+      if (exists) {
+	int err = cmdInfo.proc(cmdInfo.clientData, interp,
+			       argc, argv);
+	return mpi_gather_runtime_errors(interp, err);
+      }
 
       Tcl_AppendResult(interp, "usertag ", title, (char *) NULL);
       if (openbrackets != 0) {
@@ -184,6 +187,7 @@ int blockfile(ClientData data, Tcl_Interp *interp,
       exists = Tcl_GetCommandInfo(interp, name, &cmdInfo);
       free(name);
       if (exists) {
+	int err;
 	if (!((openbrackets = block_startread(channel, title)) == 1) ||
 	    strncmp(title,argv[3], strlen(argv[3]))) {
 	  Tcl_AppendResult(interp, "\"", argv[1], "\" did not contain block\"", argv[3],"\" you indicated",
@@ -191,8 +195,8 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 	  return (TCL_ERROR);
 	}
 
-	return cmdInfo.proc(cmdInfo.clientData, interp,
-			    argc, argv);
+        err = cmdInfo.proc(cmdInfo.clientData, interp, argc, argv);
+	return mpi_gather_runtime_errors(interp, err);
       }
     }
   }
@@ -208,8 +212,8 @@ int blockfile(ClientData data, Tcl_Interp *interp,
   exists = Tcl_GetCommandInfo(interp, name, &cmdInfo);
   free(name);
   if (exists) {
-    return cmdInfo.proc(cmdInfo.clientData, interp,
-			argc, argv);
+    int err = cmdInfo.proc(cmdInfo.clientData, interp, argc, argv);
+    return mpi_gather_runtime_errors(interp, err);
   }
   Tcl_AppendResult(interp, "unknown action \"", argv[2], " ", argv[3],
 		   "\"", (char *)NULL);  

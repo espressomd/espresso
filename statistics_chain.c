@@ -511,19 +511,52 @@ void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff) {
   *_ff = ff = realloc(ff,(qbins+1)*sizeof(double));
   r_ij = realloc(r_ij,chain_length*(chain_length-1)/2*sizeof(double));
 
-  if(qmin <= 0.) { fprintf(stderr,"WARNING: Formfactor S(q) requires qmin > 0 (you supplied: %f)!",qmin); fflush(NULL); errexit(); }
-  else if(qmax <= qmin) { fprintf(stderr,"WARNING: Formfactor S(q) requires qmin < qmax (you supplied: %f >= %f)!",qmin,qmax); fflush(NULL); errexit(); }
-  else {
-    qfak = pow((qmax/qmin),(1.0/qbins));
-    for(qi=0; qi<=qbins; qi++) ff[qi] = 0.0;
+  qfak = pow((qmax/qmin),(1.0/qbins));
+  for(qi=0; qi<=qbins; qi++) ff[qi] = 0.0;
+  for(k=0; k < chain_n_chains; k++) {
+    cnt = 0;
+    /* Prepare distance matrice r_ij for current chain k */
+    for(i=chain_start+k*chain_length; i<chain_start+(k+1)*chain_length; i++) {
+      for(j=i+1; j<chain_start+(k+1)*chain_length;j++) {
+	dx = partCfg[i].r.p[0]-partCfg[j].r.p[0]; dx*=dx;
+	dy = partCfg[i].r.p[1]-partCfg[j].r.p[1]; dy*=dy;
+	dz = partCfg[i].r.p[2]-partCfg[j].r.p[2]; dz*=dz;
+	r_ij[cnt++] = sqrt(dx + dy + dz);
+      }
+    }
+    q = qmin; cnt_max = cnt;
+    /* Derive spherically averaged S(q) = 1/chain_length * Sum(i,j=1..chain_length)[sin(q*r_ij)/q*r_ij] for current chain k */
+    for(qi=0; qi<=qbins; qi++) {
+      ff[qi] += chain_length;
+      for(cnt=0; cnt<cnt_max; cnt++) {
+	qr = q*r_ij[cnt];
+	ff[qi] += 2*sin(qr)/qr;
+      }
+      q *= qfak;
+    }
+  }
+  for(qi=0; qi<=qbins; qi++) ff[qi] /= ((double)chain_length*chain_n_chains);
+  free(r_ij);
+}
+
+
+void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff) {
+  int i,j,k,n,qi, cnt,cnt_max;
+  double q,qfak, qr, dx,dy,dz, *r_ij=NULL, *ff=NULL;
+  *_ff = ff = realloc(ff,(qbins+1)*sizeof(double));
+  r_ij = realloc(r_ij,chain_length*(chain_length-1)/2*sizeof(double));
+
+  qfak = pow((qmax/qmin),(1.0/qbins));
+  for(qi=0; qi<=qbins; qi++) ff[qi] = 0.0;
+  for(n=0; n < n_configs; n++) {
     for(k=0; k < chain_n_chains; k++) {
       cnt = 0;
-      /* Prepare distance matrice r_ij for current chain k */
+      /* Prepare distance matrice r_ij for current chain k of configuration n */
       for(i=chain_start+k*chain_length; i<chain_start+(k+1)*chain_length; i++) {
 	for(j=i+1; j<chain_start+(k+1)*chain_length;j++) {
-	  dx = partCfg[i].r.p[0]-partCfg[j].r.p[0]; dx*=dx;
-	  dy = partCfg[i].r.p[1]-partCfg[j].r.p[1]; dy*=dy;
-	  dz = partCfg[i].r.p[2]-partCfg[j].r.p[2]; dz*=dz;
+	  dx = configs[n][3*i]  -configs[n][3*j];   dx*=dx;
+	  dy = configs[n][3*i+1]-configs[n][3*j+1]; dy*=dy;
+	  dz = configs[n][3*i+2]-configs[n][3*j+2]; dz*=dz;
 	  r_ij[cnt++] = sqrt(dx + dy + dz);
 	}
       }
@@ -538,50 +571,9 @@ void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff) {
 	q *= qfak;
       }
     }
-    for(qi=0; qi<=qbins; qi++) ff[qi] /= ((double)chain_length*chain_n_chains);
-    free(r_ij);
   }
-}
-
-
-void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff) {
-  int i,j,k,n,qi, cnt,cnt_max;
-  double q,qfak, qr, dx,dy,dz, *r_ij=NULL, *ff=NULL;
-  *_ff = ff = realloc(ff,(qbins+1)*sizeof(double));
-  r_ij = realloc(r_ij,chain_length*(chain_length-1)/2*sizeof(double));
-
-  if(qmin <= 0.) { fprintf(stderr,"WARNING: Formfactor S(q) requires qmin > 0 (you supplied: %f)!",qmin); fflush(NULL); errexit(); }
-  else if(qmax <= qmin) { fprintf(stderr,"WARNING: Formfactor S(q) requires qmin < qmax (you supplied: %f >= %f)!",qmin,qmax); fflush(NULL); errexit(); }
-  else {
-    qfak = pow((qmax/qmin),(1.0/qbins));
-    for(qi=0; qi<=qbins; qi++) ff[qi] = 0.0;
-    for(n=0; n < n_configs; n++) {
-      for(k=0; k < chain_n_chains; k++) {
-	cnt = 0;
-	/* Prepare distance matrice r_ij for current chain k of configuration n */
-	for(i=chain_start+k*chain_length; i<chain_start+(k+1)*chain_length; i++) {
-	  for(j=i+1; j<chain_start+(k+1)*chain_length;j++) {
-	    dx = configs[n][3*i]  -configs[n][3*j];   dx*=dx;
-	    dy = configs[n][3*i+1]-configs[n][3*j+1]; dy*=dy;
-	    dz = configs[n][3*i+2]-configs[n][3*j+2]; dz*=dz;
-	    r_ij[cnt++] = sqrt(dx + dy + dz);
-	  }
-	}
-	q = qmin; cnt_max = cnt;
-	/* Derive spherically averaged S(q) = 1/chain_length * Sum(i,j=1..chain_length)[sin(q*r_ij)/q*r_ij] for current chain k */
-	for(qi=0; qi<=qbins; qi++) {
-	  ff[qi] += chain_length;
-	  for(cnt=0; cnt<cnt_max; cnt++) {
-	    qr = q*r_ij[cnt];
-	    ff[qi] += 2*sin(qr)/qr;
-	  }
-	  q *= qfak;
-	}
-      }
-    }
-    for(qi=0; qi<=qbins; qi++) ff[qi] /= ((double)chain_length*chain_n_chains*n_configs);
-    free(r_ij);
-  }
+  for(qi=0; qi<=qbins; qi++) ff[qi] /= ((double)chain_length*chain_n_chains*n_configs);
+  free(r_ij);
 }
 
 /****************************************************************************************
@@ -894,7 +886,16 @@ int parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv)
   if (qbins <=0) {
     Tcl_AppendResult(interp, "Nothing to be done - choose <qbins> greater zero to get S(q)!",(char *)NULL); return TCL_ERROR;
   }
-  
+
+  if (qmin <= 0.) {
+    Tcl_AppendResult(interp, "formfactor S(q) requires qmin > 0", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if (qmax <= qmin) {
+    Tcl_AppendResult(interp, "formfactor S(q) requires qmin < qmax", (char *)NULL);
+    return TCL_ERROR;
+  }
+
   if (!average) analyze_formfactor(qmin, qmax, qbins, &ff);
   else if (n_configs == 0) {
     Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);

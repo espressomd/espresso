@@ -84,7 +84,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
   *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) += ret;
 
 #ifdef ELECTROSTATICS
-  if (coulomb.bjerrum != 0.0) {
+  if (coulomb.method != COULOMB_NONE) {
     /* real space coulomb */
     switch (coulomb.method) {
     case COULOMB_P3M:
@@ -110,70 +110,103 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 */
 MDINLINE void add_bonded_energy(Particle *p1)
 {
+  char *errtxt;
+  Particle *p2;
   int i, type_num;
   double ret;
   i=0;
   while(i<p1->bl.n) {
     type_num = p1->bl.e[i];
+    p2 = local_particles[p1->bl.e[i+1]];
+    if (!p2) {
+      errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+      sprintf(errtxt,"{bond broken between particles %d and %d (particles not stored on the same node)} ",
+	      p1->p.identity, p1->bl.e[i+1]);
+      return;
+    }
+
     switch(bonded_ia_params[type_num].type) {
     case BONDED_IA_FENE:
-      ret = fene_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
+      ret = fene_pair_energy(p1, p2, type_num);
       i+=2; break;
     case BONDED_IA_HARMONIC:
-      ret = harmonic_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
+      ret = harmonic_pair_energy(p1, p2, type_num);
       i+=2; break;
     case BONDED_IA_SUBT_LJ_HARM:
-      ret = subt_lj_harm_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
+      ret = subt_lj_harm_pair_energy(p1, p2, type_num);
       i+=2; break; 
     case BONDED_IA_SUBT_LJ_FENE:
-      ret = subt_lj_fene_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
+      ret = subt_lj_fene_pair_energy(p1, p2, type_num);
       i+=2; break; 
     case BONDED_IA_SUBT_LJ:
-      ret = subt_lj_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
+      ret = subt_lj_pair_energy(p1, p2, type_num);
       i+=2; break;
-    case BONDED_IA_ANGLE:
-      ret = angle_energy(p1,
-			 checked_particle_ptr(p1->bl.e[i+1]),
-			 checked_particle_ptr(p1->bl.e[i+2]), type_num);
+    case BONDED_IA_ANGLE: {
+      Particle *p3 = local_particles[p1->bl.e[i+2]];
+      if (!p3) {
+	errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	sprintf(errtxt,"{bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
+		p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2]);
+	return;
+      }
+      ret = angle_energy(p1, p2, p3, type_num);
       i+=3; break;
-    case BONDED_IA_DIHEDRAL:
-      ret = dihedral_energy(checked_particle_ptr(p1->bl.e[i+1]),
-			    p1,
-			    checked_particle_ptr(p1->bl.e[i+2]),
-			    checked_particle_ptr(p1->bl.e[i+3]), type_num);
+    }
+    case BONDED_IA_DIHEDRAL: {
+      Particle *p3 = local_particles[p1->bl.e[i+2]],
+	*p4        = local_particles[p1->bl.e[i+3]];
+      if (!p3 || !p4) {
+	errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	sprintf(errtxt,"{bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
+		p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2], p1->bl.e[i+3]);
+	return;
+      }
+      ret = dihedral_energy(p2, p1, p3, p4, type_num);
       i+=4; break;
+    }
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
       switch(bonded_ia_params[type_num].p.tab.type) {
       case TAB_BOND_LENGTH:
-	ret = tab_bond_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
+	ret = tab_bond_energy(p1, p2, type_num);
 	i+=2; break;
-      case TAB_BOND_ANGLE:
-	ret = tab_angle_energy(p1, checked_particle_ptr(p1->bl.e[i+1]),
-			 checked_particle_ptr(p1->bl.e[i+2]), type_num);
+      case TAB_BOND_ANGLE: {
+	Particle *p3 = local_particles[p1->bl.e[i+2]];
+	if (!p3) {
+	  errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	  sprintf(errtxt,"{bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
+		  p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2]);
+	  return;
+	}
+	ret = tab_angle_energy(p1, p2, p3, type_num);
 	i+=3; break;
-      case TAB_BOND_DIHEDRAL:
-	ret = tab_dihedral_energy(checked_particle_ptr(p1->bl.e[i+1]),
-			    p1, checked_particle_ptr(p1->bl.e[i+2]),
-			    checked_particle_ptr(p1->bl.e[i+3]), type_num);
+      }
+      case TAB_BOND_DIHEDRAL: {
+	Particle *p3 = local_particles[p1->bl.e[i+2]],
+	  *p4        = local_particles[p1->bl.e[i+3]];
+	if (!p3 || !p4) {
+	  errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	  sprintf(errtxt,"{bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
+		  p1->p.identity, p1->bl.e[i+1], p1->bl.e[i+2], p1->bl.e[i+3]);
+	  return;
+	}
+	ret = tab_dihedral_energy(p2, p1, p3, p4, type_num);
 	i+=4; break;
+      }
       default :
-	fprintf(stderr,"add_bonded_energy: WARNING: Tabulated Bond type  of atom %d unknown\n",p1->p.identity);
-	ret = 0;
-	i = p1->bl.n; 
-	break;
+	errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+	sprintf(errtxt,"{add_bonded_energy: tabulated bond type of atom %d unknown\n", p1->p.identity);
+	return;
       }
       break;
 #endif
     default :
-      fprintf(stderr,"add_bonded_energy: WARNING: Bonds of atom %d unknown\n",p1->p.identity);
-      ret = 0;
-      i = p1->bl.n;
-      break;
+      errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      sprintf(errtxt,"{add_bonded_energy: bond type of atom %d unknown\n", p1->p.identity);
+      return;
     }
     *obsstat_bonded(&energy, type_num) += ret;
   }
-
 }
 
 /** Calculate kinetic energies for one particle.

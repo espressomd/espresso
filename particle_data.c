@@ -1173,11 +1173,10 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 {
   int change = 0, err = TCL_OK;
 
-  while (argc > 0) {
-    if (ARG0_IS_S("print"))
-      return part_parse_print(interp, argc-1, argv+1, part_num);
-
-    else if (ARG0_IS_S("delete"))
+  if (ARG0_IS_S("print"))
+    err = part_parse_print(interp, argc-1, argv+1, part_num);
+  else while (argc > 0) {
+    if (ARG0_IS_S("delete"))
       err = part_cmd_delete(interp, argc-1, argv+1, part_num, &change);
 
     else if (ARG0_IS_S("pos"))
@@ -1230,18 +1229,17 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
     else {
       Tcl_AppendResult(interp, "unknown particle parameter \"",
 		       argv[0],"\"", (char *)NULL);
-
-      return TCL_ERROR;
+      err = TCL_ERROR;
     }
-  
+    
+    if (err == TCL_ERROR)
+      break;
+
     argc -= (change + 1);
     argv += (change + 1);
-
-    if (err == TCL_ERROR)
-      return TCL_ERROR;
   }
 
-  return TCL_OK;
+  return mpi_gather_runtime_errors(interp, err);
 }
 
 int part(ClientData data, Tcl_Interp *interp,
@@ -1585,7 +1583,7 @@ void local_remove_particle(int part)
     }
   }
   if (!pl) {
-    fprintf(stderr, "%d: could not find cell of particle %d, exiting\n",
+    fprintf(stderr, "%d: INTERNAL ERROR: could not find cell of particle %d, exiting\n",
 	    this_node, part);
     errexit();
   }
@@ -1749,7 +1747,7 @@ void remove_all_bonds_to(int identity)
           i += 1 + partners;
       }
       if (i != bl->n) {
-	fprintf(stderr, "%d: bond information corrupt for particle %d, exiting...\n",
+	fprintf(stderr, "%d: INTERNAL ERROR: bond information corrupt for particle %d, exiting...\n",
 		this_node, part[p].p.identity);
 	errexit();
       }

@@ -61,38 +61,40 @@ MDINLINE int lj_cos_set_params(int part_type_a, int part_type_b,
 
 MDINLINE int printljcosIAToResult(Tcl_Interp *interp, int i, int j)
 {
-  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
+  char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
 
-    Tcl_PrintDouble(interp, data->LJCOS_eps, buffer);
-    Tcl_AppendResult(interp, "lj-cos ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJCOS_sig, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJCOS_cut, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJCOS_offset, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJCOS_alfa, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJCOS_beta, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJCOS_rmin, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
+  Tcl_PrintDouble(interp, data->LJCOS_eps, buffer);
+  Tcl_AppendResult(interp, "lj-cos ", buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->LJCOS_sig, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->LJCOS_cut, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->LJCOS_offset, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->LJCOS_alfa, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->LJCOS_beta, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->LJCOS_rmin, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
     
-    return TCL_OK;
+  return TCL_OK;
 }
 
 MDINLINE int ljcos_parser(Tcl_Interp * interp,
-			   int part_type_a, int part_type_b,
-			   int argc, char ** argv, int *change)
+			  int part_type_a, int part_type_b,
+			  int argc, char ** argv)
 {
   double tmp;
   double eps, sig, cut, offset;
+  int change;
+
   if (argc < 5) {
     Tcl_AppendResult(interp, "lj-cos needs 4 parameters: "
 		     "<ljcos_eps> <ljcos_sig> <ljcos_cut> <ljcos_offset>",
 		     (char *) NULL);
-    return TCL_ERROR;
+    return 0;
   }
 
   /* copy lj-cos parameters */
@@ -103,27 +105,26 @@ MDINLINE int ljcos_parser(Tcl_Interp * interp,
     Tcl_AppendResult(interp, "lj-cos needs 4 DOUBLE parameters: "
 		     "<ljcos_eps> <ljcos_sig> <ljcos_cut> <ljcos_offset>",
 		     (char *) NULL);
-    return TCL_ERROR;
+    return 0;
   }
-  *change = 5;
+  change = 5;
 
   /* fix for the inconsistency in the ljcos parameters.
      There are 7 parameters for ljcos, but you read in only four of them.
      The rest is calculated in lj_cos_set_params.
      This is a problem with the blockfile format (Mehmet) 
   */
-
   if (argc >= 8 && ARG_IS_D(5, tmp) && ARG_IS_D(6, tmp) && ARG_IS_D(7, tmp))
-    *change += 3;
+    change += 3;
   else
     Tcl_ResetResult(interp);
 
   if (lj_cos_set_params(part_type_a, part_type_b, eps, sig, cut, offset) == TCL_ERROR) {
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-    return TCL_ERROR;
+    return 0;
   }
 
-  return TCL_OK;
+  return change;
 }
 
 MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,

@@ -18,6 +18,160 @@
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
 */
 
+#ifdef LENNARD_JONES
+
+MDINLINE int printljIAToResult(Tcl_Interp *interp, int i, int j)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+  IA_parameters *data = get_ia_param(i, j);
+
+  Tcl_PrintDouble(interp, data->LJ_eps, buffer);
+  Tcl_AppendResult(interp, "lennard-jones ", buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->LJ_sig, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->LJ_cut, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->LJ_shift, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->LJ_offset, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->LJ_capradius, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
+  
+  return TCL_OK;
+}
+
+/** set the force cap for the LJ interaction.
+    @param ljforcecap the maximal force, 0 to disable, -1 for individual cutoff
+    for each of the interactions.
+*/
+MDINLINE int ljforcecap_set_params(double ljforcecap)
+{
+  if (lj_force_cap != -1.0)
+    mpi_lj_cap_forces(lj_force_cap);
+  
+  return TCL_OK;
+}
+
+MDINLINE int lennard_jones_set_params(int part_type_a, int part_type_b,
+				      double eps, double sig, double cut,
+				      double shift, double offset,
+				      double cap_radius)
+{
+  IA_parameters *data, *data_sym;
+
+  make_particle_type_exist(part_type_a);
+  make_particle_type_exist(part_type_b);
+    
+  data     = get_ia_param(part_type_a, part_type_b);
+  data_sym = get_ia_param(part_type_b, part_type_a);
+
+  if (!data || !data_sym) {
+    return TCL_ERROR;
+  }
+
+  /* LJ should be symmetrically */
+  data->LJ_eps    = data_sym->LJ_eps    = eps;
+  data->LJ_sig    = data_sym->LJ_sig    = sig;
+  data->LJ_cut    = data_sym->LJ_cut    = cut;
+  data->LJ_shift  = data_sym->LJ_shift  = shift;
+  data->LJ_offset = data_sym->LJ_offset = offset;
+ 
+  if (cap_radius > 0) {
+    data->LJ_capradius = cap_radius;
+    data_sym->LJ_capradius = cap_radius;
+  }
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+  mpi_bcast_ia_params(part_type_b, part_type_a);
+
+  if (lj_force_cap != -1.0)
+    mpi_lj_cap_forces(lj_force_cap);
+
+  return TCL_OK;
+}
+
+/// parser for the forcecap
+MDINLINE int inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+
+  if (argc == 0) {
+    if (lj_force_cap == -1.0)
+      Tcl_AppendResult(interp, "ljforcecap individual", (char *) NULL);
+    else {
+      Tcl_PrintDouble(interp, lj_force_cap, buffer);
+      Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
+    }
+    return TCL_OK;
+  }
+
+  if (argc > 1) {
+    Tcl_AppendResult(interp, "inter ljforcecap takes at most 1 parameter",
+		     (char *) NULL);      
+    return TCL_ERROR;
+  }
+  
+  if (ARG0_IS_S("individual"))
+      lj_force_cap = -1.0;
+  else if (! ARG0_IS_D(lj_force_cap) || lj_force_cap < 0) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  CHECK_VALUE(ljforcecap_set_params(lj_force_cap),
+	      "If you can read this, you should change it. (Use the source Luke!)");
+  return TCL_ERROR;
+}
+
+MDINLINE int lj_parser(Tcl_Interp * interp,
+		       int part_type_a, int part_type_b,
+		       int argc, char ** argv)
+{
+  /* parameters needed for LJ */
+  double eps, sig, cut, shift, offset, cap_radius;
+  int change;
+
+  /* get lennard-jones interaction type */
+  if (argc < 6) {
+    Tcl_AppendResult(interp, "lennard-jones needs 5 parameters: "
+		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
+		     (char *) NULL);
+    return 0;
+  }
+
+  /* copy lennard-jones parameters */
+  if ((! ARG_IS_D(1, eps))   ||
+      (! ARG_IS_D(2, sig))   ||
+      (! ARG_IS_D(3, cut))   ||
+      (! ARG_IS_D(4, shift)) ||
+      (! ARG_IS_D(5, offset)    )) {
+    Tcl_AppendResult(interp, "lennard-jones needs 5 DOUBLE parameters: "
+		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+  change = 6;
+	
+  cap_radius = -1.0;
+  /* check wether there is an additional double, cap radius, and parse in */
+  if (argc >= 7 && ARG_IS_D(6, cap_radius))
+    change++;
+  else
+    Tcl_ResetResult(interp);
+  if (lennard_jones_set_params(part_type_a, part_type_b,
+			       eps, sig, cut, shift, offset,
+			       cap_radius) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+    return 0;
+  }
+  return change;
+}
+
+
 /** Calculate lennard Jones force between particle p1 and p2 and add
     it to their force. */
 MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
@@ -154,4 +308,5 @@ MDINLINE void calc_lj_cap_radii(double force_cap)
   }
 }
 
+#endif /* ifdef LENNARD_JONES */
 #endif

@@ -250,8 +250,8 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
       fft_plan[i].g_size=find_comm_groups(n_grid[i-1], n_grid[i], n_id[i-1], n_id[i], 
 					  fft_plan[i].group, n_pos[i], my_pos[i]);
       if(fft_plan[i].g_size==-1) {
-	fprintf(stderr,"find_comm_groups error\n");
-	errexit(1);
+	fprintf(stderr,"%d: INTERNAL ERROR: find_comm_groups error\n", this_node);
+	errexit();
       }
     }
 

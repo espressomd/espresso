@@ -52,8 +52,8 @@
 
 /* #define COMM_DEBUG */
 /* #define EVENT_DEBUG */
-/*   #define INTEG_DEBUG 
-     #define CELL_DEBUG */
+/* #define INTEG_DEBUG  */
+/* #define CELL_DEBUG */
 /* #define GHOST_DEBUG */
 /* #define GRID_DEBUG */
 /* #define VERLET_DEBUG */
@@ -76,7 +76,7 @@
 #define MPI_CORE
 #define FORCE_CORE
 
-// #define ADDITIONAL_CHECKS
+/* #define ADDITIONAL_CHECKS */
 
 #ifdef MEM_DEBUG
 #ifdef __GNUC__

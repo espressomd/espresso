@@ -37,6 +37,7 @@
 #include "domain_decomposition.h"
 #include "layered.h"
 #include "nemd.h"
+#include "errorhandling.h"
 
 /************************************************
  * DEFINES
@@ -285,9 +286,10 @@ int integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return integrate_usage(interp);;
   }
   /* perform integration */
-  mpi_integrate(n_steps);
-
-  return (TCL_OK);
+  if (mpi_integrate(n_steps))
+    return mpi_gather_runtime_errors(interp, TCL_OK);
+  else
+    return TCL_OK;
 }
 
 /************************************************************/
@@ -323,7 +325,7 @@ void integrate_ensemble_init()
     nptiso.inv_piston = 1/(1.0*nptiso.piston);
     nptiso.p_inst_av = 0.0;
     if ( nptiso.dimension == 0 ) {
-      fprintf(stderr,"npt integrator was called but dimension not yet set. this should not happen. ");
+      fprintf(stderr,"%d: INTERNAL ERROR: npt integrator was called but dimension not yet set. this should not happen. ", this_node);
       errexit();
     }
 
@@ -369,6 +371,9 @@ void integrate_vv(int n_steps)
     recalc_forces = 0;
   }
 
+  if (check_runtime_errors())
+    return;
+
   n_verlet_updates = 0;
 
   /* Integration loop */
@@ -399,6 +404,9 @@ void integrate_vv(int n_steps)
 
     /* Communication step: ghost forces */
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
+
+    if (check_runtime_errors())
+      break;
 
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
@@ -617,9 +625,10 @@ void propagate_press_box_pos_and_rescale_npt()
       scal[2] = SQR(box_l[nptiso.non_const_dim])/pow(nptiso.volume,2.0/nptiso.dimension);
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       if (nptiso.volume < 0.0) {
-        fprintf(stderr,
-		"%d: ERROR: Your choice of piston=%f, dt=%f, p_diff=%f just caused the volume to become negative!\nTry decreasing dt...\n",
-                this_node,nptiso.piston,time_step,nptiso.p_diff); errexit();
+	char *errtxt = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
+        sprintf(errtxt, "your choice of piston=%f, dt=%f, p_diff=%f just caused the volume to become negative, decrease dt.",
+                nptiso.piston,time_step,nptiso.p_diff);
+	nptiso.volume = box_l[1]*box_l[2]*box_l[3];
       }
 
       L_new = pow(nptiso.volume,1.0/nptiso.dimension);

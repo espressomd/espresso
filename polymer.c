@@ -52,10 +52,14 @@ int mindist3(int part_id, double r_catch, int *ids) {
 
   partCfgMD = malloc(n_total_particles*sizeof(Particle));
   mpi_get_particles(partCfgMD, NULL);
-  me = -1;        /* Since 'mpi_get_particles' returns the particles unsorted, it's most likely that 'partCfgMD[i].p.identity != i' --\> prevent that! */
+  me = -1; /* Since 'mpi_get_particles' returns the particles unsorted, it's most likely that 'partCfgMD[i].p.identity != i'
+	      --> prevent that! */
   for(i=0; i<n_total_particles; i++) if (partCfgMD[i].p.identity == part_id) me = i; 
-  if (me == -1) { 
-    fprintf(stderr, "Failed to find desired particle %d within the %d known particles!\nAborting...\n",part_id,n_total_particles); errexit(); }
+  if (me == -1) {
+    char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+    sprintf(errtxt, "{failed to find desired particle %d} ",part_id);
+    return 0;
+  }
   for (i=0; i<n_total_particles; i++) {
     if (i != me) {
       dx = partCfgMD[me].r.p[0] - partCfgMD[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
@@ -215,7 +219,7 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return (tmp_try);
+  return mpi_gather_runtime_errors(interp, tmp_try);
 }
 
 
@@ -358,7 +362,7 @@ int counterions (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return (tmp_try);
+  return mpi_gather_runtime_errors(interp, tmp_try);
 }
 
 
@@ -481,7 +485,7 @@ int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return (tmp_try);
+  return mpi_gather_runtime_errors(interp, tmp_try);
 }
 
 
@@ -603,7 +607,7 @@ int velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
   tmp_try = velocitiesC(v_max, part_id, N_T);
   sprintf(buffer, "%f", tmp_try); Tcl_AppendResult(interp, buffer, (char *)NULL); 
-  return (TCL_OK);
+  return mpi_gather_runtime_errors(interp, TCL_OK);
 }
 
 
@@ -623,7 +627,8 @@ double velocitiesC(double v_max, int part_id, int N_T) {
     } while ( sqrt(SQR(v[0])+SQR(v[1])+SQR(v[2])) > v_max);
     v_av[0]+=v[0]; v_av[1]+=v[1]; v_av[2]+=v[2];
     if (set_particle_v(i, v)==TCL_ERROR) {
-      fprintf(stderr, "Failed upon setting one of the velocities in Espresso (current average: %f)!\n",sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2]))); 
+      fprintf(stderr, "INTERNAL ERROR: failed upon setting one of the velocities in Espresso (current average: %f)!\n",
+	      sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2]))); 
       fprintf(stderr, "Aborting...\n"); errexit();
     }
   }
@@ -673,7 +678,7 @@ int maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc, char **ar
 
   tmp_try = maxwell_velocitiesC(part_id, N_T);
   sprintf(buffer, "%f", tmp_try); Tcl_AppendResult(interp, buffer, (char *)NULL); 
-  return (TCL_OK);
+  return mpi_gather_runtime_errors(interp, TCL_OK);
 }
 
 double maxwell_velocitiesC(int part_id, int N_T) {
@@ -704,7 +709,7 @@ double maxwell_velocitiesC(int part_id, int N_T) {
     //printf("%f \n %f \n %f \n",v[0],v[1],v[2]);
     v_av[0]+=v[0]; v_av[1]+=v[1]; v_av[2]+=v[2];
     if (set_particle_v(i, v)==TCL_ERROR) {
-      fprintf(stderr, "Failed upon setting one of the velocities in Espresso (current average: %f)!\n",sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2]))); 
+      fprintf(stderr, "INTERNAL ERROR: failed upon setting one of the velocities in Espresso (current average: %f)!\n",sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2]))); 
       fprintf(stderr, "Aborting...\n"); errexit();
     }
   }
@@ -807,7 +812,7 @@ int crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return (tmp_try);
+  return mpi_gather_runtime_errors(interp, tmp_try);
 }
 
 
@@ -1063,7 +1068,7 @@ int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return (tmp_try);
+  return mpi_gather_runtime_errors(interp, tmp_try);
 }
 
 
@@ -1170,7 +1175,7 @@ int icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return (tmp_try);
+  return mpi_gather_runtime_errors(interp, tmp_try);
 }
 
 
@@ -1264,7 +1269,10 @@ int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI, in
       if(i > ico_NN[i][j]) {
 	bond[0] = type_FENE;
 	for(l=0; l<5; l++) if(ico_NN[ico_NN[i][j]][l] == i) break;
-	if(l==5) { fprintf(stderr,"WARNING: Couldn't find my neighbouring edge upon creating the icosaeder!\n"); errexit(); }
+	if(l==5) {
+	  fprintf(stderr, "INTERNAL ERROR: Couldn't find my neighbouring edge upon creating the icosaeder!\n");
+	  errexit();
+	}
 	bond[1] = ico_ind[ico_NN[i][j]][l+5] + (MPC-2);
 	if (change_particle_bond(ico_ind[i][j], bond, 0)==TCL_ERROR) return (-1);
       }
