@@ -434,6 +434,13 @@ void local_remove_particle(int part);
  */
 void local_remove_all_particles();
 
+/** Used by \ref mpi_rescale_particles, should not be used elsewhere.
+    Locally rescale all particles on current node.
+    @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
+    @param scale factor by which to rescale (>1: stretch, <1: contract)
+*/
+void local_rescale_particles(int dir, double scale);
+
 /** Check the existence of a bond partner on that node and return the
     corresponding particle pointer or force exit.
     @param id particle identity.
