@@ -18,7 +18,7 @@
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref analyze) */
 extern float *partCoord_g, *partCM_g;
 
-/** Particles' current configuration (updated if NULL, set to NULL by on_particle_change) */
+/** Particles' current configuration (updated if NULL, set to NULL by on_particle_change and on_integration_start) */
 extern Particle *partCfg;
 
 /*@}*/
