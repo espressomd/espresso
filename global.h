@@ -117,12 +117,12 @@ extern const Datafield fields[];
 #define FIELD_NPTISO_G0           18
 /** index of \ref nptiso_gammav in \ref #fields */
 #define FIELD_NPTISO_GV           19
-/** index of \ref p_ext in \ref #fields */
-#define FIELD_NPT_PEXT            20      
-/** index of \ref p_inst in \ref #fields */
-#define FIELD_NPT_PINST           21     
-/** index of \ref piston in \ref #fields */
-#define FIELD_NPT_PISTON          22    
+/** index of \ref nptiso_struct::p_ext in \ref #fields */
+#define FIELD_NPTISO_PEXT         20      
+/** index of \ref nptiso_struct::p_inst in \ref #fields */
+#define FIELD_NPTISO_PINST        21     
+/** index of \ref nptiso_struct::piston in \ref #fields */
+#define FIELD_NPTISO_PISTON       22    
 /** index of \ref #periodic in \ref #fields */
 #define FIELD_PERIODIC            23
 /** index of \ref #skin in \ref #fields */

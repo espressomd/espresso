@@ -65,9 +65,9 @@ const Datafield fields[] = {
   {node_grid,           TYPE_INT, 3, "node_grid",     node_grid_callback, 2 },     /* 17 from grid.c */
   {&nptiso_gamma0,   TYPE_DOUBLE, 1, "nptiso_gamma0", ro_callback,    13 },        /* 18 from thermostat.c */
   {&nptiso_gammav,   TYPE_DOUBLE, 1, "nptiso_gammav", ro_callback,    13 },        /* 19 from thermostat.c */
-  {&p_ext,           TYPE_DOUBLE, 1, "npt_p_ext",     ro_callback,    7 },         /* 20 from pressure.c */
-  {&p_inst,          TYPE_DOUBLE, 1, "npt_p_inst",    ro_callback,    7 },         /* 21 from pressure.c */
-  {&piston,          TYPE_DOUBLE, 1, "npt_piston",    piston_callback,    6 },         /* 22 from pressure.c */
+  {&nptiso.p_ext,    TYPE_DOUBLE, 1, "npt_p_ext",     ro_callback,    7 },         /* 20 from pressure.c */
+  {&nptiso.p_inst,   TYPE_DOUBLE, 1, "npt_p_inst",    ro_callback,    7 },         /* 21 from pressure.c */
+  {&nptiso.piston,   TYPE_DOUBLE, 1, "npt_piston",    piston_callback,6 },         /* 22 from pressure.c */
   {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback,   1 },         /* 23 from grid.c */
   {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback,  2 },         /* 24 from integrate.c */
   {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback,  2 },         /* 25 from thermostat.c */
@@ -139,11 +139,11 @@ const Datafield fields[] = {
 	<li> \verbatim nptiso_gammav double (ro)\endverbatim
 	     \ref nptiso_gammav - INSERT COMMENT
 	<li> \verbatim npt_p_ext double (ro)\endverbatim
-	     \ref p_ext - Pressure for NPT simulations.
+	     \ref nptiso_struct::p_ext - Pressure for NPT simulations.
 	<li> \verbatim npt_p_inst double \endverbatim
-	     \ref p_inst Pressure calculated during an NPT_isotropic integration.
+	     \ref nptiso_struct::p_inst Pressure calculated during an NPT_isotropic integration.
 	<li> \verbatim piston double (ro)\endverbatim
-	     \ref piston - Mass off the box when using NPT_isotropic integrator.
+	     \ref nptiso_struct::piston - Mass off the box when using NPT_isotropic integrator.
 	<li> \verbatim periodicity bool[3]\endverbatim
              \ref #periodic - Specifies periodicity for the three directions.
              If the compiler flag PARTIAL_PERIODIC from \ref config.h "config.h" is set,

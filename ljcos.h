@@ -142,8 +142,8 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
 	    p1->f.f[j] += fac * d[j];
 	    p2->f.f[j] -= fac * d[j];
 #ifdef NPT
-	    if (piston != 0.0) 
-	      p_vir += fac*d[j] * d[j];
+	    if(integ_switch == INTEG_METHOD_NPT_ISO)
+	      nptiso.p_vir += fac*d[j] * d[j];
 #endif
       }
     }
@@ -157,8 +157,8 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
 	    p1->f.f[j] += fac * d[j];
 	    p2->f.f[j] -= fac * d[j];
 #ifdef NPT
-	    if (piston != 0.0) 
-	      p_vir += fac*d[j] * d[j];
+	    if(integ_switch == INTEG_METHOD_NPT_ISO)
+	      nptiso.p_vir += fac*d[j] * d[j];
 #endif
       }
 #ifdef LJ_WARN_WHEN_CLOSE
@@ -177,8 +177,8 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
       p1->f.f[0] += fac * ia_params->LJ_capradius;
       p2->f.f[0] -= fac * ia_params->LJ_capradius;
 #ifdef NPT
-      if (piston != 0.0) 
-	p_vir += fac*ia_params->LJ_capradius * ia_params->LJ_capradius;
+      if(integ_switch == INTEG_METHOD_NPT_ISO)
+	nptiso.p_vir += fac*ia_params->LJ_capradius * ia_params->LJ_capradius;
 #endif
     }
 

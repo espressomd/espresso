@@ -114,12 +114,12 @@ void local_invalidate_system()
 /**  Hand over integrate usage information to tcl interpreter. */
 int integrate_usage(Tcl_Interp *interp) 
 {
-  Tcl_AppendResult(interp, "Usage of tcl command integrate:\n", (char *)NULL);
-  Tcl_AppendResult(interp, "\"integrate <INT n steps>\" for integrating n steps or\n", (char *)NULL);
-  Tcl_AppendResult(interp, "\"integrate set\" for printing integrator status or\n", (char *)NULL);
-  Tcl_AppendResult(interp, "\"integrate set nvt\" for enabaling NVT integration or \n" , (char *)NULL);
+  Tcl_AppendResult(interp, "Usage of tcl-command integrate:\n", (char *)NULL);
+  Tcl_AppendResult(interp, "'integrate <INT n steps>' for integrating n steps \n", (char *)NULL);
+  Tcl_AppendResult(interp, "'integrate set' for printing integrator status \n", (char *)NULL);
+  Tcl_AppendResult(interp, "'integrate set nvt' for enabling NVT integration or \n" , (char *)NULL);
 #ifdef NPT
-  Tcl_AppendResult(interp, "\"integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>]\" for enabaling isotropic NPT integration\n" , (char *)NULL);
+  Tcl_AppendResult(interp, "'integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>]' for enabling isotropic NPT integration \n" , (char *)NULL);
 #endif
   return (TCL_OK);
 }
@@ -130,13 +130,13 @@ int integrate_print_status(Tcl_Interp *interp)
   char buffer[TCL_INTEGER_SPACE+TCL_DOUBLE_SPACE];
   switch (integ_switch) {
   case INTEG_METHOD_NVT:
-    Tcl_AppendResult(interp, "set nvt", (char *)NULL);
+    Tcl_AppendResult(interp, "{ set nvt }", (char *)NULL);
     return (TCL_OK);
   case INTEG_METHOD_NPT_ISO:
-    Tcl_PrintDouble(interp, p_ext, buffer);
-    Tcl_AppendResult(interp, "set npt_isotropic ", buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, piston, buffer);
-    Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, nptiso.p_ext, buffer);
+    Tcl_AppendResult(interp, "{ set npt_isotropic ", buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, nptiso.piston, buffer);
+    Tcl_AppendResult(interp, " ", buffer, " } ", (char *)NULL);
     return (TCL_OK);
   }
   return (TCL_ERROR);
@@ -157,11 +157,16 @@ int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, "wrong # args: \n", (char *)NULL);
     return integrate_usage(interp);
   }  
-  /* set paramters p_ext and piston */
-  if ( !ARG_IS_D(3, p_ext) )               return integrate_usage(interp);
-  if ( argc > 4 && !ARG_IS_D(4, piston) )  return integrate_usage(interp);
-  p_ext_callback(interp, &p_ext);
-  piston_callback(interp, &piston);
+  /* set parameters p_ext and piston */
+  if ( !ARG_IS_D(3, nptiso.p_ext) )  return integrate_usage(interp);
+  if ( argc > 4 ) { 
+    if(!ARG_IS_D(4, nptiso.piston) ) return integrate_usage(interp);
+    piston_callback(interp, &nptiso.piston); }
+  else if ( nptiso.piston <= 0.0 ) {
+    Tcl_AppendResult(interp, "You must set <piston> as well before you can use this integrator! \n", (char *)NULL);
+    return integrate_usage(interp);
+  }
+  p_ext_callback(interp, &nptiso.p_ext);
   /* set integrator switch */
   integ_switch = INTEG_METHOD_NPT_ISO;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
@@ -174,10 +179,10 @@ int integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   
   INTEG_TRACE(fprintf(stderr,"%d: integrate:\n",this_node));
 
-  if (argc < 2) {
+  if (argc < 1) {
     Tcl_AppendResult(interp, "wrong # args: \n\"", (char *) NULL);
-    return integrate_usage(interp);
-  }
+    return integrate_usage(interp);  }
+  else if (argc < 2) {                    return integrate_print_status(interp); }
 
   if (ARG1_IS_S("set")) {
     if      (argc < 3)                    return integrate_print_status(interp);
@@ -186,7 +191,7 @@ int integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     else if (ARG_IS_S(2,"npt_isotropic")) return integrate_parse_npt_isotropic(interp, argc, argv);
 #endif
     else {
-      Tcl_AppendResult(interp, "unkown integrator method:\n", (char *)NULL);
+      Tcl_AppendResult(interp, "unknown integrator method:\n", (char *)NULL);
       return integrate_usage(interp);
     }
   } else if ( !ARG_IS_I(1,n_steps) ) return integrate_usage(interp);
@@ -221,14 +226,14 @@ void integrate_vv_recalc_maxrange()
 void integrate_ensemble_init()
 {
 #ifdef NPT
-  if (piston != 0.0) {
+  if(integ_switch == INTEG_METHOD_NPT_ISO) {
     /* prepare NpT-integration */
-    inv_piston = 1/(1.0*piston);
-    NpT_volume = box_l[0]*box_l[1]*box_l[2];
+    nptiso.inv_piston = 1/(1.0*nptiso.piston);
+    nptiso.volume     = box_l[0]*box_l[1]*box_l[2];
     if (recalc_forces) { 
-      p_inst = 0.0;  
-      p_vir  = 0.0; 
-      p_vel  = 0.0; 
+      nptiso.p_inst = 0.0;  
+      nptiso.p_vir  = 0.0; 
+      nptiso.p_vel  = 0.0; 
     }
   }
 #endif
@@ -325,10 +330,10 @@ void integrate_vv(int n_steps)
   else verlet_reuse = 0;
 
 #ifdef NPT
-  if (piston != 0.0) {
-    MPI_Bcast(&p_inst,     1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&p_diff,     1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&NpT_volume, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  if(integ_switch == INTEG_METHOD_NPT_ISO) {
+    MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
 #endif
 }
@@ -427,8 +432,8 @@ void rescale_forces_propagate_vel()
   double scale;
 
 #ifdef NPT
-  if (piston != 0.0) 
-    p_vel = 0.0;
+  if(integ_switch == INTEG_METHOD_NPT_ISO)
+    nptiso.p_vel = 0.0;
 #endif
 
   scale = 0.5 * time_step * time_step;
@@ -453,8 +458,8 @@ void rescale_forces_propagate_vel()
 	  /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
 	  p[i].m.v[j] += p[i].f.f[j];
 #ifdef NPT
-	if (piston != 0.0) 
-	  p_vel += SQR(p[i].m.v[j]);
+	if(integ_switch == INTEG_METHOD_NPT_ISO)
+	  nptiso.p_vel += SQR(p[i].m.v[j]);
 #endif
       }
 
@@ -469,16 +474,17 @@ void rescale_forces_propagate_vel()
 void finalize_p_inst_npt()
 {
 #ifdef NPT
-  if (piston != 0.0) {
+  if(integ_switch == INTEG_METHOD_NPT_ISO) {
     double p_tmp=0.0;
     /* finalize derivation of p_inst */
-    p_vel /= SQR(time_step);
-    p_inst = p_vir+p_vel;
-    MPI_Reduce(&p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    nptiso.p_vel /= SQR(time_step);
+    nptiso.p_inst = nptiso.p_vir + nptiso.p_vel;
+    // fprintf(stderr,"%d: p_inst=%f+%f=%f",this_node,nptiso.p_vir/(3.*nptiso.volume),nptiso.p_vel/(3.*nptiso.volume),nptiso.p_inst/(3.*nptiso.volume));
+    MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     if (this_node == 0) {
-      p_inst = p_tmp/(3.0*NpT_volume);
-      p_diff = p_diff  +  (p_inst-p_ext)*0.5*time_step + friction_thermo_nptiso();
-// fprintf(stderr, "%d: %f -> %f \n",this_node,p_inst,p_diff);
+      nptiso.p_inst = p_tmp/(3.0*nptiso.volume);
+      nptiso.p_diff = nptiso.p_diff  +  (nptiso.p_inst-nptiso.p_ext)*0.5*time_step + friction_thermo_nptiso();
+      // fprintf(stderr, " = %f -> %f  (volume: %f)\n",nptiso.p_inst,nptiso.p_diff,nptiso.volume/(box_l[0]*box_l[1]*box_l[2]));
     }
   }
 
@@ -488,7 +494,7 @@ void finalize_p_inst_npt()
 void propagate_press_box_pos_and_rescale_npt()
 {
 #ifdef NPT
-  if (piston != 0.0) {
+  if(integ_switch == INTEG_METHOD_NPT_ISO) {
     Cell *cell;
     Particle *p;
     int i, j, np, c;
@@ -497,13 +503,13 @@ void propagate_press_box_pos_and_rescale_npt()
     /* finalize derivation of p_inst */
     finalize_p_inst_npt();
 
-    /* adjust NpT_volume; prepare pos- and vel-rescaling */
+    /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and vel-rescaling */
     if (this_node == 0) {
-      NpT_volume += inv_piston*p_diff*0.5*time_step;
-      scal[2] = SQR(box_l[0])/pow(NpT_volume,2.0/3.0);
-      NpT_volume += inv_piston*p_diff*0.5*time_step;
-      L_new = pow(NpT_volume,1.0/3.0);
-// fprintf(stderr, "%d: %f -> %f; volume: t=%f => L=%f || ",this_node,p_inst,p_diff,NpT_volume,L_new);
+      nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
+      scal[2] = SQR(box_l[0])/pow(nptiso.volume,2.0/3.0);
+      nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
+      L_new = pow(nptiso.volume,1.0/3.0);
+// fprintf(stderr, "%d: %f -> %f; volume: t=%f => L=%f || ",this_node,nptiso.p_inst,nptiso.p_diff,nptiso.volume,L_new);
       scal[1] = L_new/box_l[0];
       scal[0] = 1/scal[1];
       box_l[0] = box_l[1] = box_l[2] = L_new;
@@ -544,7 +550,7 @@ void propagate_vel()
   Particle *p;
   int c, i, j, np;
 #ifdef NPT
-  p_vel = 0.0;
+  nptiso.p_vel = 0.0;
 #endif
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel:\n",this_node));
@@ -566,7 +572,8 @@ void propagate_vel()
 	    if(j==0) nemd_get_velocity(p[i]);
 #endif
 #ifdef NPT
-	    if (piston != 0.0) p_vel += SQR(p[i].m.v[j]);
+	    if(integ_switch == INTEG_METHOD_NPT_ISO) 
+	      nptiso.p_vel += SQR(p[i].m.v[j]);
 #endif
 	  }
 

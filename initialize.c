@@ -87,13 +87,23 @@ void on_integration_start()
 		      this_node,reinit_thermo,resort_particles));
 
   /* sanity checks */
-  if(time_step < 0.0 || skin < 0.0 || temperature < 0.0) {
-    fprintf(stderr,"%d: ERROR: on_integration_start: Can not initialize the integrator!:\n",this_node);
+  if(time_step < 0.0 || skin < 0.0 || temperature < 0.0 ) {
+    fprintf(stderr,"%d: ERROR: on_integration_start: Cannot initialize the integrator!:\n",this_node);
     if( time_step < 0.0 ) fprintf(stderr,"%d: PROBLEM: You have to set the time_step!\n",this_node);
     if( skin < 0.0 ) fprintf(stderr,"%d: PROBLEM: You have to set the skin!\n",this_node);
     if( temperature < 0.0 ) fprintf(stderr,"%d: PROBLEM: You have to initialize a thermostat!\n",this_node);
     errexit();
   }
+#ifdef NPT
+  if((integ_switch == INTEG_METHOD_NPT_ISO) && (nptiso.piston <= 0.0)) {
+    fprintf(stderr,"%d: ERROR: on_integration_start: Cannot initialize the integrator!:\n",this_node);
+    if( nptiso.piston <= 0.0 ) { 
+      fprintf(stderr,"%d: PROBLEM: You have to set <piston>! Please use the following: \n",this_node);
+      fprintf(stderr,"%d: 'integrate set npt_isotropic <DOUBLE p_ext> <DOUBLE piston>' for enabling isotropic NPT integration \n",this_node); 
+    }
+    errexit();
+  }
+#endif
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
@@ -209,7 +219,7 @@ void on_parameter_change(int field)
     grid_changed_box_l();
     
   if (field == FIELD_TIMESTEP || field == FIELD_TEMPERATURE || field == FIELD_LANGEVIN_GAMMA
-      || FIELD_DPD_GAMMA || field == FIELD_NPTISO_G0 || field == FIELD_NPTISO_GV || field == FIELD_NPT_PISTON )
+      || FIELD_DPD_GAMMA || field == FIELD_NPTISO_G0 || field == FIELD_NPTISO_GV || field == FIELD_NPTISO_PISTON )
     reinit_thermo = 1;
 
 #ifdef ELECTROSTATICS

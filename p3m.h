@@ -166,8 +166,8 @@ MDINLINE void add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
       p1->f.f[j] += fac * d[j];
       p2->f.f[j] -= fac * d[j];
 #ifdef NPT
-      if (piston != 0.0) 
-	p_vir += fac*d[j] * d[j];
+      if(integ_switch == INTEG_METHOD_NPT_ISO)
+	nptiso.p_vir += fac*d[j] * d[j];
 #endif
     }
     ESR_TRACE(fprintf(stderr,"%d: RSE: Pair (%d-%d) dist=%.3f: force (%.3e,%.3e,%.3e)\n",this_node,

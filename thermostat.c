@@ -284,15 +284,15 @@ int thermo_print(Tcl_Interp *interp)
 
 int thermo_usage(Tcl_Interp *interp, int argc, char **argv)
 {
-  Tcl_AppendResult(interp, "Usage of tcl command thermostat:\n", (char *)NULL);
-  Tcl_AppendResult(interp, "\"", argv[0], "\" for status return or \n\"", (char *)NULL);
-  Tcl_AppendResult(interp, "\"", argv[0], "off\" or \n\"", (char *)NULL);
-  Tcl_AppendResult(interp, "\"", argv[0], "langevin <temp> <gamma>\" or \n", (char *)NULL);
+  Tcl_AppendResult(interp, "Usage of tcl-command thermostat:\n", (char *)NULL);
+  Tcl_AppendResult(interp, "'", argv[0], "' for status return or \n ", (char *)NULL);
+  Tcl_AppendResult(interp, "'", argv[0], " off' to deactivate it (=> NVE-ensemble) \n ", (char *)NULL);
+  Tcl_AppendResult(interp, "'", argv[0], " set langevin <temp> <gamma>' or \n ", (char *)NULL);
 #ifdef DPD
-  Tcl_AppendResult(interp, "\"", argv[0], "dpd <temp> <gamma> <r_cut>\" or \n", (char *)NULL);
+  Tcl_AppendResult(interp, "'", argv[0], " set dpd <temp> <gamma> <r_cut>' or \n ", (char *)NULL);
 #endif
 #ifdef NPT
-  Tcl_AppendResult(interp, "\"", argv[0], "npt_isotropic <temp> <gamma0> <gammav>\"", (char *)NULL);
+  Tcl_AppendResult(interp, "'", argv[0], " set npt_isotropic <temp> <gamma0> <gammav>' ", (char *)NULL);
 #endif
   return (TCL_ERROR);
 }
@@ -309,16 +309,17 @@ int thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return thermo_usage(interp, argc, argv);
   }
 
-  if ( ARG1_IS_S("off") )           return thermo_parse_off(interp, argc, argv);
-  if ( ARG1_IS_S("langevin") )      return thermo_parse_langevin(interp, argc, argv);
+  if ( ARG1_IS_S("set") )          { argc--; argv++; }
+  if ( ARG1_IS_S("off") )            return thermo_parse_off(interp, argc, argv);
+  if ( ARG1_IS_S("langevin"))        return thermo_parse_langevin(interp, argc, argv);
 #ifdef DPD
-  if ( ARG1_IS_S("dpd") )           return thermo_parse_dpd(interp, argc, argv);
+  if ( ARG1_IS_S("dpd") )            return thermo_parse_dpd(interp, argc, argv);
 #endif
 #ifdef NPT
   if ( ARG1_IS_S("npt_isotropic") )  return thermo_parse_nptiso(interp, argc, argv);
 #endif
   
-  Tcl_AppendResult(interp, "Unkwon thermostat:\n", (char *)NULL);
+  Tcl_AppendResult(interp, "Unknown thermostat:\n", (char *)NULL);
   return thermo_usage(interp, argc, argv);
 }
 
@@ -353,10 +354,10 @@ void thermo_init_dpd()
 #ifdef NPT
 void thermo_init_npt_isotropic()
 {
-  if (piston != 0.0) {
+  if (nptiso.piston != 0.0) {
     nptiso_pref1 = -0.5*nptiso_gamma0;
     nptiso_pref2 = sqrt(12.0*temperature*nptiso_gamma0*time_step);
-    nptiso_pref3 = -0.5*nptiso_gammav*(1.0/piston)*0.5*time_step;
+    nptiso_pref3 = -0.5*nptiso_gammav*(1.0/nptiso.piston)*0.5*time_step;
     nptiso_pref4 = sqrt(12.0*temperature*nptiso_gammav*time_step);
   }
   THERMO_TRACE(fprintf(stderr,"%d: thermo_init_npt_isotropic: nptiso_pref1=%f, nptiso_pref2=%f, nptiso_pref3=%f, nptiso_pref4=%f",nptiso_pref1,nptiso_pref2,nptiso_pref3,nptiso_pref4));
@@ -408,7 +409,7 @@ void friction_thermo_langevin_rotation(Particle *p)
 
 #ifdef NPT
 double friction_thermo_nptiso(void) {
-  return ( nptiso_pref3*p_diff + nptiso_pref4*(d_random()-0.5) );
+  return ( nptiso_pref3*nptiso.p_diff + nptiso_pref4*(d_random()-0.5) );
 }
 #endif
 

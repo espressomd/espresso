@@ -84,8 +84,8 @@ void calc_long_range_forces()
   switch (coulomb.method) {
   case COULOMB_P3M:
 #ifdef NPT
-    if (piston != 0.0)
-      p_vir += P3M_calc_kspace_forces(1,1);
+    if(integ_switch == INTEG_METHOD_NPT_ISO)
+      nptiso.p_vir += P3M_calc_kspace_forces(1,1);
     else
 #endif
       P3M_calc_kspace_forces(1,0);
@@ -166,8 +166,8 @@ void init_forces()
 
 #ifdef NPT
   /* reset virial part of instantaneous pressure */
-  if (piston != 0.0)
-    p_vir = 0.0;
+  if(integ_switch == INTEG_METHOD_NPT_ISO)
+    nptiso.p_vir = 0.0;
 #endif
 
   if ( thermo_switch & THERMO_LANGEVIN ) {

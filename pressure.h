@@ -16,9 +16,31 @@
 #include "thermostat.h"
 #include "communication.h"
 
-/** FOR EACH A LINE AND A COMMENT! */
-extern double piston, inv_piston, NpT_volume;
-extern double p_ext, p_inst, p_diff, p_vir, p_vel;
+/************************************************
+ * data types
+ ************************************************/
+
+/** Structure to hold all variables related to the isotropic NpT-integration scheme. */
+typedef struct { 
+  /** mass of a virtual piston representing the shaken box */
+  double piston;
+  /** inverse of \ref piston */
+  double inv_piston;
+  /** isotropic volume */
+  double volume;
+
+  /** desired pressure to which the algorithm strives to */
+  double p_ext;
+  /** instantaneous pressure the system currently has */
+  double p_inst;
+  /** difference between \ref p_ext and \ref p_inst */
+  double p_diff;
+  /** virial (short-range) components of \ref p_inst */
+  double p_vir;
+  /** ideal gas components of \ref p_inst, derived from the velocities */
+  double p_vel;
+} nptiso_struct;
+extern nptiso_struct nptiso;
 
 /* include the potential files */
 #include "p3m.h"

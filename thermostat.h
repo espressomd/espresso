@@ -150,8 +150,7 @@ void thermo_init();
 void friction_thermo_langevin(Particle *p);
 
 #ifdef NPT
-/** add p_diff-dependend noise and friction for NpT-sims 
-    to p_diff */
+/** add p_diff-dependend noise and friction for NpT-sims to \ref nptiso_struct::p_diff */
 double friction_thermo_nptiso(void);
 #endif
 
