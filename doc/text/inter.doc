@@ -12,7 +12,7 @@
 
 	<ul>
 	   	<li>\verbatim lennard-jones <epsilon> <sigma> <cutoff> <shift> <offset> \endverbatim
-			the known Lennard-Jones potential
+			the well known Lennard-Jones potential
 			\f[4 \epsilon \left(\left(\frac{\sigma}{r-offset}\right)^{12} -
 				 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
 			The order of the parameters is
@@ -39,6 +39,46 @@
 
 			The order of the parameters is
 			\f$\epsilon, \sigma, cutoff, offset\f$.
+
+                <li>\verbatim gay-berne <epsilon> <sigma> <cutoff> <k1> <k2> <mu> <nu> \endverbatim
+		   the Gay-Berne potential for prolate and oblate particles.
+		   The Gay-Berne potential is an anisotropic version of the classic Lennard-Jones potential,
+		   with orientational dependence in the range and well-depth functions \f$\sigma\f$ and \f$\epsilon\f$:
+		   \f[ U(\mathbf{r}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j) = 
+		   4 \epsilon(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)
+\left[ \left(\frac {\sigma_0}{\mathbf{r}_{ij}-\sigma(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)+\sigma_0}\right)^{12}-
+       \left(\frac {\sigma_0}{\mathbf{r}_{ij}-\sigma(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)+\sigma_0}\right)^{6} 
+\right]} \f]
+
+where
+
+\f[ \sigma( \mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j) =
+		\sigma_{0} \left\{ 1 - \frac{1}{2} \chi \left[
+		\frac{ \left( \mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_i  +  \mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_j \right)^{2}  }
+			{1 + \chi \left(  \mathbf{\hat{u}}_i.\mathbf{\hat{u}}_j \right)  } 
+		+ \frac{ \left( \mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_i  -  \mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_j \right)^{2}  }
+			{1 - \chi \left(  \mathbf{\hat{u}}_i \cdot \mathbf{\hat{u}}_j \right)  } 
+		\right] \right\}^{-\frac{1}{2}} \f]
+
+and
+
+\f[ \epsilon(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j) =
+		\epsilon_0 \left( 1- \chi^{2}(\mathbf{\hat{u}}_i \cdot \mathbf{\hat{u}}_j) \right)^{-\frac {\nu}{2}}
+		\left[1-\frac {\chi'}{2} \left( \frac { (\mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_i+
+		\mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_j)^{2}} {1+\chi' \, \mathbf{\hat{u}}_i \cdot \mathbf{\hat{u}}_j }+
+		\frac {(\mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_i-\mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_j)^{2}}
+		{1-\chi' \, \mathbf{\hat{u}}_i \cdot \mathbf{\hat{u}}_j } \right) \right]^{\mu} \f]
+
+Here unit vectors \f$ \mathbf{\hat{u}}_i \f$ and \f$ \mathbf{\hat{u}}_j \f$ give the orientation of the two particles and
+vector \f$ \mathbf{r}_{ij} = r_{ij} \mathbf{\hat{r}}_{ij} \f$ is the intermolecular vector.
+
+The parameters \f$ \chi =  \frac{k_1^{2} - 1}{k_1^{2} + 1 } \f$ and \f$ \chi' =
+\frac{k_2^{1/\mu} - 1}{k_2^{1/\mu} + 1 } \f$ 	       
+are responsible for the degree of anisotropy of the molecular properties. \f$ k_1 \f$ is the
+molecular elongation, and \f$ k_2 \f$ is the ratio of the potential well depths 
+for the side-by-side and end-to-end configurations. Exponents \f$ \mu \f$ and \f$ \nu \f$
+are adjastable parameters of the potential. There are several Gay-Berne paremeterizations exist;
+the original one being \f$ k_1 = 3 \f$, \f$ k_1 = 5 \f$, \f$ \mu = 2 \f$ and \f$ \nu = 1 \f$.
 
 		<li>\verbatim ramp <cutoff> <force_magnitude> \endverbatim
 			a simple step potential for initialization.<BR>
