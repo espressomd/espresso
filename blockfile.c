@@ -139,7 +139,7 @@ int block_continueread(FILETYPE f, int brace_count, char *data, int size,
   int i;
 
   if (!data || !size)
-    return RETURN_CODE_ERROR ;
+    return RETURN_CODE_ERROR;
 
   data[0] = 0;
 
@@ -149,15 +149,10 @@ int block_continueread(FILETYPE f, int brace_count, char *data, int size,
   /* scan block data until brace_count = 0 or space eaten up */
   i = 0;
   while (i < size - 1) {
-    if (i == 0) {
-      if ((c = findNonWs(f)) <= 0)
-	return RETURN_CODE_ERROR;
+    if ((c = readchar(f)) <= 0) {
+      data[i] = 0;
+      return RETURN_CODE_ERROR;
     }
-    else
-      if ((c = readchar(f)) <= 0) {
-	data[i] = 0;
-	return RETURN_CODE_ERROR;
-      }
  
     if (c == '{') brace_count++;
     if (c == '}') {
