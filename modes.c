@@ -18,21 +18,13 @@
 /** fftw plan for calculating the 2d mode analysis */
 
 #ifdef USEFFTW3
-
 #  ifdef FFTW_ENABLE_FLOAT
 typedef float fftw_real;
 #  else
 typedef double fftw_real;
 #  endif
-
-fftw_plan mode_analysis_plan;
-/** Input values for the fft */
-double* height_grid;
-/** Output values for the fft */
-fftw_complex* result;
-#else
-rfftwnd_plan mode_analysis_plan;
 #endif
+
 
 /** Flag to indicate when the grid size has changed*/
 int mode_grid_changed = 1;
@@ -124,43 +116,11 @@ void map_to_2dgrid() {
   }
 }
 
-/** 
-    Initialising routine for modes2d.  Called every time a change is
-    made to the grid. This routine calculates the fftw plan for the
-    subsequent fft and destroys any existing plan that might exist
-*/
-void fft_modes_init() {
-  STAT_TRACE(fprintf(stderr,"%d,initializing fftw for mode analysis \n",this_node));
-    if ( xdir + ydir + zdir == -3 ) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt,"{034 attempt to perform mode analysis with uninitialized grid} ");
-      return;
-    }
 
-  STAT_TRACE(fprintf(stderr,"%d,destroying old fftw plan \n",this_node));
-
-#ifdef USEFFTW3
-  /* Make sure all memory is free and old plan is destroyed */
-  fftw_free(result);
-  fftw_free(height_grid);
-  fftw_destroy_plan(mode_analysis_plan);
-  fftw_cleanup(); 
-  /* Allocate memory for input and output arrays */
-  height_grid = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
-  result = malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex)); 
-  mode_analysis_plan = fftw_plan_dft_r2c_2d(mode_grid_3d[xdir],mode_grid_3d[ydir],height_grid, result,FFTW_ESTIMATE);
-#else
-  rfftwnd_destroy_plan(mode_analysis_plan);
-  mode_analysis_plan = rfftw2d_create_plan(mode_grid_3d[xdir], mode_grid_3d[ydir], FFTW_REAL_TO_COMPLEX,FFTW_MEASURE);
-#endif
-
-  STAT_TRACE(fprintf(stderr,"%d,created new fftw plan \n",this_node));
-  mode_grid_changed = 0;  
-}
 
 /**
    This routine calculates the orientational order parameter for a
-   lipid bilayer as defined in Brannigan and Brown 2004
+   lipid bilayer 
 */
 int orient_order(double* result)
 {
@@ -234,13 +194,13 @@ int orient_order(double* result)
     len += sumdir[i]*sumdir[i];
   }
 
-  printf("<n>: ");
+  //  printf("<n>: ");
   for ( i = 0 ; i < 3 ; i++) {
     sumdir[i] = sumdir[i]/sqrt(len);
-    printf("%f ",sumdir[i]); 
+    //    printf("%f ",sumdir[i]); 
   }
-  printf("\n");
-  fflush(stdout);
+  //  printf("\n");
+  //  fflush(stdout);
 
   for ( i = 0 ; i < n_molecules ; i++ ) {
     dir[0] = stored_dirs[i*3];
@@ -383,7 +343,7 @@ int get_lipid_orients(IntList* l_orient) {
 
   if ( xdir + ydir + zdir == -3 || mode_grid_3d[xdir] <= 0 || mode_grid_3d[ydir] <= 0 ) {
     char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{036 cannot lipid orientations with uninitialized grid} ");
+    ERROR_SPRINTF(errtxt,"{036 cannot calculate lipid orientations with uninitialized grid} ");
     return TCL_ERROR;
   }
 
@@ -472,6 +432,102 @@ int get_lipid_orients(IntList* l_orient) {
     modes2d command.  A breakdown of what the routine does is as
     follows
 
+    \li fftw plans and in / out arrays are initialized as required
+
+    \li calculate height function is called
+
+    \li The height function is fourier transformed using the fftw library.
+*/
+int modes2d(fftw_complex* modes) {
+  int i, j;
+#ifdef USEFFTW3
+  /* All these variables need to be static so that the fftw3 plan can
+     be initialised and reused */
+  static  fftw_plan mode_analysis_plan;
+  /** Input values for the fft */
+  static  double* height_grid;
+  /** Output values for the fft */
+  static  fftw_complex* result;
+#else 
+  static double* height_grid;
+  static  rfftwnd_plan mode_analysis_plan;
+#endif
+  
+/** 
+    Every time a change is made to the grid calculate the fftw plan
+    for the subsequent fft and destroy any existing plans
+*/
+  if ( mode_grid_changed ) {
+    STAT_TRACE(fprintf(stderr,"%d,initializing fftw for mode analysis \n",this_node));
+    if ( xdir + ydir + zdir == -3 ) {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt,"{092 attempt to perform mode analysis with uninitialized grid} ");
+      return -1;
+    }
+
+    STAT_TRACE(fprintf(stderr,"%d,destroying old fftw plan \n",this_node));
+
+#ifdef USEFFTW3
+    /* Make sure all memory is free and old plan is destroyed. It's ok
+       to call these functions on uninitialised pointers I think */
+    fftw_free(result); 
+    fftw_free(height_grid); 
+    fftw_destroy_plan(mode_analysis_plan);
+    fftw_cleanup(); 
+    /* Allocate memory for input and output arrays */
+    height_grid = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
+    result = malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex)); 
+    mode_analysis_plan = fftw_plan_dft_r2c_2d(mode_grid_3d[xdir],mode_grid_3d[ydir],height_grid, result,FFTW_ESTIMATE);
+#else
+    /* Make sure the height grid is allocated */
+    if ( height_grid != NULL ) { free(height_grid); };
+    height_grid = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
+    rfftwnd_destroy_plan(mode_analysis_plan);
+    mode_analysis_plan = rfftw2d_create_plan(mode_grid_3d[xdir], mode_grid_3d[ydir], FFTW_REAL_TO_COMPLEX,FFTW_MEASURE);
+#endif
+
+    STAT_TRACE(fprintf(stderr,"%d,created new fftw plan \n",this_node));
+    mode_grid_changed = 0;  
+    
+  }
+
+  /* Initialize the height grid */
+  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+      height_grid[j+i*mode_grid_3d[xdir]] = 0;
+    }
+  }
+
+  if ( !calc_height_grid(height_grid) ) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
+    return -1;
+  }
+
+  STAT_TRACE(fprintf(stderr,"%d,calling fftw \n",this_node));
+
+#ifdef USEFFTW3
+  fftw_execute(mode_analysis_plan);
+  /* Copy result to modes */
+  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+    for ( j = 0 ; j < mode_grid_3d[ydir]/2 + 1 ; j++) {
+      modes[i*(mode_grid_3d[ydir]/2 + 1) + j] = result[i*(mode_grid_3d[ydir]/2 + 1) + j];
+    }
+  }
+#else
+  rfftwnd_one_real_to_complex(mode_analysis_plan, height_grid, modes);
+#endif
+  STAT_TRACE(fprintf(stderr,"%d,called fftw \n",this_node));
+    
+    
+  return 1;
+    
+}
+
+
+/**
+   This routine calculates an average height for the bilayer in each grid square as follows;
+
     \li Calculates the average bead position in the height dimension \ref modes::zdir
 
     \li Calculates the average height of each bilayer leaflet above or
@@ -480,16 +536,13 @@ int get_lipid_orients(IntList* l_orient) {
     calculating this height function, checks are made for grid cells
     that contain no lipids. In such cases a value equal to the mean of
     surrounding cells is substituted.
-
-    \li The height function is fourier transformed using the fftw library.
-
 */
-int modes2d(fftw_complex* modes) {
-  STAT_TRACE(fprintf(stderr,"%d,executing modes2d \n",this_node);)
+
+int calc_height_grid ( double* height_grid ) {
+  STAT_TRACE(fprintf(stderr,"%d,calculating height grid \n",this_node);)
   int i,j, gi, gj;
   double grid_size[2];
-  double direction[3];
-  fftw_real* height_grid;
+  double direction[3];  
   double* height_grid_up;
   double* height_grid_down;
   int* grid_parts;
@@ -503,15 +556,17 @@ int modes2d(fftw_complex* modes) {
   int l_orient;
   double norm, shift;
   int xi, yi;
-  double meanval ;
+  double meanval;
   int nonzerocnt, gapcnt;
 
-  if ( mode_grid_changed ) {    
-    fft_modes_init();
+  if ( height_grid == NULL ) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{093 you must initialize the height grid first} ");
+    return -1;
   }
 
   /* Allocate memory for height grid arrays and initialize these arrays */
-  height_grid = malloc((mode_grid_3d[xdir])*sizeof(fftw_real)*mode_grid_3d[ydir]);
+
   height_grid_up = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
   height_grid_down = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
   grid_parts_up = malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
@@ -536,9 +591,11 @@ int modes2d(fftw_complex* modes) {
   updatePartCfg(WITHOUT_BONDS);
   //Make sure particles are sorted
     if (!sortPartCfg()) {
-      fprintf(stderr,"%d,could not sort partCfg \n",this_node);
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
       return -1;
     }
+
   
 
     /* Find the mean z position of unfolded coordinates */ 
@@ -568,9 +625,6 @@ int modes2d(fftw_complex* modes) {
     zref = zref/(double)(n_total_particles);
 
 
-
-
-
     /* Calculate an initial height function of all particles */
     for (i = 0 ; i < n_total_particles ; i++) {
       gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
@@ -578,7 +632,6 @@ int modes2d(fftw_complex* modes) {
       height_grid[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir];
       grid_parts[gj + gi*mode_grid_3d[xdir]] += 1;
     }
-
 
     /* Normalise the initial height function */
     for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
@@ -590,8 +643,7 @@ int modes2d(fftw_complex* modes) {
 	}
       }
     }
-    
-    
+        
     /* Calculate the non normalized height function of tail lipids */
     nup = ndown = nstray = nrealstray = 0;
     for (i = 0 ; i < n_total_particles ; i++) {
@@ -620,7 +672,6 @@ int modes2d(fftw_complex* modes) {
 	  nstray++;
 	}
       }
-      fflush(stdout);
       unfold_position(partCfg[i].r.p,partCfg[i].l.i);    
     }
     if ( nrealstray > 0 || nstray > 0) {
@@ -707,8 +758,8 @@ int modes2d(fftw_complex* modes) {
 	    }
 	  }
 	  if ( nonzerocnt == 0 ) { 
-	    fprintf(stderr,"Error: hole in membrane \n ");
-	    fflush(stdout);
+	    char *errtxt = runtime_error(128);
+	    ERROR_SPRINTF(errtxt,"{095 hole in membrane } ");
 	    return -1;
 	  }
 	  gapcnt++;
@@ -720,19 +771,6 @@ int modes2d(fftw_complex* modes) {
       fflush(stdout);
     }
     
-    
-    
-    STAT_TRACE(fprintf(stderr,"%d,calling fftw \n",this_node));
-
-#ifdef USEFFTW3
-    fftw_execute(mode_analysis_plan);
-#else
-    rfftwnd_one_real_to_complex(mode_analysis_plan, height_grid, modes);
-#endif
-    STAT_TRACE(fprintf(stderr,"%d,called fftw \n",this_node));
-    
-    
-    free(height_grid);
     free(grid_parts);
     free(height_grid_up);
     free(height_grid_down);
@@ -740,8 +778,10 @@ int modes2d(fftw_complex* modes) {
     free(grid_parts_down);
     
     return 1;
-    
+
 }
+
+
 
 #undef MODES2D_NUM_TOL
 

@@ -55,13 +55,6 @@ extern int mode_grid_changed;
     left the membrane the default value is set in \ref modes.c */
 extern double stray_cut_off;
 
-#ifdef USEFFTW3
-/** Input values for the fft */
-extern double* height_grid;
-/** Output values for the fft */
-extern fftw_complex* result;
-#endif
-
 /* Exported Functions */
 int modes2d(fftw_complex* result);
 void map_to_2dgrid();
@@ -87,6 +80,11 @@ int orient_order(double* result);
 
 /* Get the list of lipid orientations */
 int get_lipid_orients(IntList* l_orient);
+
+/**
+   Calculate the average height of lipids for each value in a grid
+*/
+int calc_height_grid ( double* height_grid );
 
 #endif
 
