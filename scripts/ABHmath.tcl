@@ -269,7 +269,7 @@ proc find_vector_mag { vec1 vec2} {
 
 #############################################################
 #
-# find unit vector among two points
+# find unit vector among two points pointing from vec1 too vec2
 #
 #############################################################
 proc find_unit_vector { vec1 vec2} {
@@ -288,4 +288,38 @@ proc find_unit_vector { vec1 vec2} {
     }
     
     return $u_vec
+}
+
+
+#############################################################
+#
+# calculate bond angle between the vectors connecting 3 points
+#
+#############################################################
+proc bond_angle { pos1 pos2 pos3 } {
+    set vec1 [find_unit_vector $pos1 $pos2]
+    set vec2 [find_unit_vector $pos2 $pos3]
+    return [expr acos([dot_product $vec1 $vec2])]
+}
+
+#############################################################
+#
+# calculate bond dihedral between vectors connecting 4 points
+#
+#############################################################
+proc bond_dihedral { pos1 pos2 pos3 pos4 } {
+
+    set vec12 [find_unit_vector $pos1 $pos2]
+    set vec23 [find_unit_vector $pos2 $pos3]
+    set vec34 [find_unit_vector $pos3 $pos4]
+
+    set dot1 [dot_product $vec12 $vec23]
+    set dot2 [dot_product $vec23 $vec34]
+
+    for {set j 0} { $j < 3 } {incr j} {
+	lset vec1 $j [expr  [lindex vec12 $j] - $dot1*[lindex vec23 $j] ]
+	lset vec2 $j [expr -[lindex vec34 $j] + $dot2*[lindex vec23 $j] ]
+    }
+
+    return  [expr acos([dot_product $vec1 $vec2])]
 }
