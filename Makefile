@@ -28,7 +28,7 @@ all: $(PLATFORM) $(PLATFORM)/Espresso $(PLATFORM)/libEspresso.a
 docu: doc/html/index.html
 
 doc/html/index.html: $(DOCFILES) $(CFILES) $(CXXFILES)
-	doxygen doxygen_config
+	doxygen doxygen_config | grep -ve "^\(Generating\|Parsing\|Preprocessing\)"
 #       (cd doc/latex; make)
 
 ########### output directory
