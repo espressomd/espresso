@@ -153,7 +153,7 @@ proc polyBlockRead { source } {
 }
 
 
-proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { var "all" } { ran "all" } } {
+proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { var "all" } { ran "all" } { COMPACT_CHK 0 } } {
     if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
 	set f [open "|gzip -c - >$destination" w]
 	set chk [open "[join [lrange [split $destination .] 0 [expr [llength [split $destination .]]-3]] .].chk" a]
@@ -161,19 +161,22 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
 	set f [open "$destination" "w"]
 	set chk [open "[join [lrange [split $destination .] 0 [expr [llength [split $destination .]]-2]] .].chk" "a"]
     }
+    if { $COMPACT_CHK } { variable ::ENABLE_COMPACT_CHECKPOINTS $COMPACT_CHK; blockfile $f write tclvariable ENABLE_COMPACT_CHECKPOINTS }
     if { "$var" != "-" } { blockfile $f write variable $var }
     if { "$tclvar" != "-" } { foreach j $tclvar { blockfile $f write tclvariable $j } }
     if { "$ia" != "-" } { blockfile $f write interactions; blockfile $f write integrate; blockfile $f write thermostat }
-    set part_write "id pos type q v f "
+    set part_write "id pos type q v f "; if { $COMPACT_CHK } { set part_write "id pos v f " }
+    if { [regexp "MASS" [code_info]]} { lappend part_write "mass " }
     if { [regexp "ROTATION" [code_info]]} { lappend part_write "quat omega torque " }
-    if { [regexp "CONSTRAINTS" [code_info]]} { lappend part_write "fix" }
-    if { [regexp "EXTERNAL_FORCES" [code_info]]} { lappend part_write "ext_force" }
+    if { [regexp "CONSTRAINTS" [code_info]]} { lappend part_write "fix " }
+    if { [regexp "EXTERNAL_FORCES" [code_info]]} { lappend part_write "ext_force " }
     blockfile $f write particles "$part_write"
-    blockfile $f write bonds
+    if { $COMPACT_CHK != 1 } { blockfile $f write bonds }
     if { "$ran" != "-" } { blockfile $f write random }
     if { "$ran" != "-" } { blockfile $f write bitrandom }
-    flush $f
+#   if { $COMPACT_CHK && [set n_configs [analyze stored]] > 0 } { set all_configs [analyze configs]; analyze remove [expr $n_configs-1] }
     if { "$cnt" == "all" } { blockfile $f write configs } else { blockfile $f write configs $cnt }
+#   if { $COMPACT_CHK && $n_configs > 0 } { analyze configs $all_configs }
     flush $f; close $f
     puts $chk "$destination"; flush $chk; close $chk
     invalidate_system
@@ -185,6 +188,15 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
 # 'write_pdb' == 0 (do nothing, ignore 'pdb_sfx'), != 0 (if all [e.g. 459] checkpoints should be converted to $write_pdb0000.pdb ... $write_pdb0459.pdb),
 # and 'pdb_sfx' (giving the number of digits to be used in enumbering the .pdb-files)
 proc checkpoint_read { origin { read_all_chks 1 } { write_pdb 0 } { pdb_sfx 5 }} {
+    variable ::ENABLE_COMPACT_CHECKPOINTS 0; global ENABLE_COMPACT_CHECKPOINTS
+    proc read_checkpoint_in { source write_pdb pdb_sfx } { global pdb_ind ENABLE_COMPACT_CHECKPOINTS
+	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -cd $source" r] } else { set f [open "$source" "r"] }
+	if { [blockfile $f read auto] == "eof" } { puts "\nERROR: Blockfile '$source' doesn't contain anything! Exiting..."; exit }
+	if { $ENABLE_COMPACT_CHECKPOINTS != 1 } { part deleteall }
+	while { [blockfile $f read auto] != "eof" } {}; puts -nonewline "."; flush stdout; # puts "read $source"
+	close $f
+	if { $write_pdb !=0 } { if {$pdb_ind==0} {writepsf "$write_pdb.psf"}; writepdb "$write_pdb[format $pdb_sfx $pdb_ind].pdb"; incr pdb_ind }
+    }
     if { [file exists "$origin.chk"] } { 
 	set chk [open "$origin.chk" "r"] 
     } elseif { 
@@ -192,24 +204,15 @@ proc checkpoint_read { origin { read_all_chks 1 } { write_pdb 0 } { pdb_sfx 5 }}
     } else { 
 	puts "ERROR: Could not find checkpoint-list $origin!\nAborting..."; exit 
     }
-    if { $write_pdb !=0 } { set pdb_ind 0; set pdb_sfx [join [list "%0" $pdb_sfx "d"] ""] }
+    if { $write_pdb !=0 } { set pdb_ind 0; set pdb_sfx [join [list "%0" $pdb_sfx "d"] ""] } else { set pdb_ind 0 }
     if { $read_all_chks } {
 	while { [eof $chk]==0 } { 
 	    if { [gets $chk source] > 0 } {
-		if { [string compare [lindex [split $source "."] end] "gz"]==0 } { 
-		    set f [open "|gzip -cd $source" r] 
-		} else { 
-		    set f [open "$source" "r"] 
-		}
-		part deleteall
-		while { [blockfile $f read auto] != "eof" } {}
-		puts -nonewline "."; flush stdout; # puts "read $source"
-		close $f
-		if { $write_pdb !=0 } { if {$pdb_ind==0} {writepsf "$write_pdb.psf"}; writepdb "$write_pdb[format $pdb_sfx $pdb_ind].pdb"; incr pdb_ind }
+		read_checkpoint_in $source $write_pdb $pdb_sfx
 	    }
 	}
     } else {
-	puts " Reading just one chkpnt " 
+	puts -nonewline "(ATN: Reading just one checkpoint!)"; flush stdout
 	set tmp_chk "NA"
 	while { [eof $chk]==0 } { 
 	    if { [gets $chk source] > 0 } { 
@@ -221,16 +224,7 @@ proc checkpoint_read { origin { read_all_chks 1 } { write_pdb 0 } { pdb_sfx 5 }}
 	} else { 
 	    set source $tmp_chk 
 	}
-	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { 
-	    set f [open "|gzip -cd $source" r]
-	} else { 
-	    set f [open "$source" "r"] 
-	}
-	part deleteall
-	while { [blockfile $f read auto] != "eof" } {}
-	puts -nonewline "."; flush stdout; # puts "read $source"
-	close $f
-	if { $write_pdb !=0 } { if {$pdb_ind==0} {writepsf "$write_pdb.psf"}; writepdb "$write_pdb[format $pdb_sfx $pdb_ind].pdb"; incr pdb_ind }
+	read_checkpoint_in $source $write_pdb $pdb_sfx
     }
     close $chk
 }
