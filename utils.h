@@ -361,6 +361,15 @@ MDINLINE int calc_factors(int n, int *factors, int max)
 /*************************************************************/
 /*@{*/
 
+/** Subtracts vector v2 from vector v1 and stores resuld in vector dv */
+MDINLINE void vecsub(double v1[3], double v2[3], double dv[3])
+{
+  dv[0] = v1[0] - v2[0];
+  dv[1] = v1[1] - v2[1];
+  dv[2] = v1[2] - v2[2];
+}
+
+
 /** calculates the squared length of a vector */
 MDINLINE double sqrlen(double v[3]) {
   double d2 = 0.0;

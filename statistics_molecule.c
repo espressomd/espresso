@@ -16,7 +16,7 @@
 #include "statistics_molecule.h"
 
 /* new version for new topology structure */
-int analyze_fold_chains(float *coord)
+int analyze_fold_molecules(float *coord)
 {
   int m,p,i, tmp; 
   int mol_size, ind;
@@ -26,7 +26,7 @@ int analyze_fold_chains(float *coord)
   if ( n_molecules < 0 ) return (TCL_ERROR);
 
   if (!sortPartCfg()) {
-    fprintf(stderr,"analyze_fold_chains: Could not sort Particle config .. particle Id's not consecutive?");
+    fprintf(stderr,"analyze_fold_molecules: Could not sort Particle config .. particle Id's not consecutive?");
     errexit();
   }
 
@@ -35,15 +35,9 @@ int analyze_fold_chains(float *coord)
     mol_size = molecules[m].part.n;
     if(mol_size > 0) {
       /* calc center of mass */
-      /*      com[0] = 0.0; com[1] = 0.0; com[2] = 0.0;
-      for(p=0; p<mol_size; p++) {
-	ind = 3*molecules[m].part.e[p];
-	for(i=0;i<3;i++) com[i] += coord[ind+i];
-      }		   
-      for(i=0;i<3;i++) com[i] /= (double)mol_size; */
-      calc_center_of_mass(molecules[m],com);
+      calc_mol_center_of_mass(molecules[m],com);
       /* fold coordinates */
-      for(i=0;i<3;i++) {
+      for(i=0; i<3; i++) {
 	if ( PERIODIC(i) ) { 
 	  tmp = (int)floor(com[i]*box_l_i[i]);
 	  cm_tmp =0.0;
@@ -54,7 +48,7 @@ int analyze_fold_chains(float *coord)
 	  }
 	  cm_tmp /= (double)mol_size;
 	  if(cm_tmp < -10e-6 || cm_tmp > box_l[i]+10e-6) {
-	    fprintf(stderr,"\n: analyse_fold_chains: chain center of mass is out of range (coord %d: %.14f not in box_l %.14f), exiting\n",i,cm_tmp,box_l[i]);
+	    fprintf(stderr,"\n: analyse_fold_molecules: chain center of mass is out of range (coord %d: %.14f not in box_l %.14f), exiting\n",i,cm_tmp,box_l[i]);
 	    errexit();
 	  }
 	}
@@ -64,18 +58,47 @@ int analyze_fold_chains(float *coord)
   return (TCL_OK); 
 }
 
-void calc_center_of_mass(Molecule mol, double com[3])
+
+void calc_mol_center_of_mass(Molecule mol, double com[3])
 {
   int i,j,id;
-  for(j=0;j<3;j++) com[j]=0.0;
+  for(j=0; j<3; j++) com[j]=0.0;
 
-  for(i=0;i<mol.part.n;i++) {
+  for(i=0; i<mol.part.n; i++) {
     id = mol.part.e[i];
-    for(j=0;j<3;j++) { 
-      com[j]+= partCfg[id].r.p[j];
+    for(j=0; j<3; j++) com[j]+= partCfg[id].r.p[j];
+  }
+  for(j=0; j<3; j++) com[j] /= mol.part.n;
+}
+
+double calc_mol_gyr_radius2(Molecule mol) 
+{
+  int i, id;
+  double rg=0.0, com[3], diff_vec[3];
+
+  calc_mol_center_of_mass(mol, com);
+
+  for(i=0; i<mol.part.n; i++) {
+    id = mol.part.e[i];
+    vecsub(partCfg[id].r.p, com, diff_vec);
+    rg += sqrlen(diff_vec);
+  }
+
+  return rg/(double)mol.part.n;
+} 
+
+double calc_mol_hydro_radius(Molecule mol) 
+{
+  int i, j, id1, id2;
+  double rh=0.0, diff_vec[3];
+
+  for(i=0; i<mol.part.n; i++) {
+    id1 = mol.part.e[i];
+    for(j=i+1; j<mol.part.n; j++) {
+      id2 = mol.part.e[i];
+      vecsub(partCfg[id1].r.p, partCfg[id2].r.p, diff_vec);
+      rh += 1.0/sqrt(sqrlen(diff_vec));
     }
   }
-  
-  for(j=0;j<3;j++) com[j] /= mol.part.n;
-
+  return 0.5*(mol.part.n*(mol.part.n-1))/rh;
 }

@@ -38,7 +38,7 @@ All bonded particles must also have sequential identities corresponding to seque
 @param coord is an array specifying the full coordinates of all particles.
 
 */
-int analyze_fold_chains(float *coord);
+int analyze_fold_molecules(float *coord);
 
 /* calculate the center of mass of a molecule */
-void calc_center_of_mass(Molecule mol, double com[3]);
+void calc_mol_center_of_mass(Molecule mol, double com[3]);
