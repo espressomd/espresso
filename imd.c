@@ -509,9 +509,9 @@ int imd(ClientData data, Tcl_Interp *interp,
     /* wait until vmd connects */
     int cnt = 3600;
     
-    if (argc > 3) {
+    if (argc != 3) {
       Tcl_AppendResult(interp, "wrong # args:  should be \"",
-		       argv[0], " stall <secs>\"",
+		       argv[0], " listen <secs>\"",
 		       (char *) NULL);
       return (TCL_ERROR);
     } 
