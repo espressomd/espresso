@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "global.h"
+#include "debug.h"
 #include "grid.h"
 #include "particle_data.h"
 #include "utils.h"
@@ -74,13 +75,12 @@ send_mesh srm;
 void   P3M_init()
 {
   MPI_Barrier(MPI_COMM_WORLD);   
-  fprintf(stderr,"%d: P3M Parameters: Bjerrum = %f, alpha = %f, r_cut = %f\n"
-	  ,this_node,p3m.bjerrum,p3m.alpha,p3m.r_cut);
-  fprintf(stderr,"        mesh (%d, %d, %d) CAO = %d\n"
-	  ,p3m.mesh[0],p3m.mesh[1],p3m.mesh[2],p3m.cao);
-  fprintf(stderr,"        meshoff (%f, %f, %f) epsiolon = %f\n"
-	  ,p3m.mesh_off[0],p3m.mesh_off[1],p3m.mesh_off[2],p3m.epsilon);
-  
+  P3M_TRACE(fprintf(stderr,"%d: P3M Parameters: Bjerrum = %f, alpha = %f, r_cut = %f\n"
+	  ,this_node,p3m.bjerrum,p3m.alpha,p3m.r_cut));
+  P3M_TRACE(fprintf(stderr,"        mesh (%d, %d, %d) CAO = %d\n"
+	  ,p3m.mesh[0],p3m.mesh[1],p3m.mesh[2],p3m.cao));
+  P3M_TRACE(fprintf(stderr,"        meshoff (%f, %f, %f) epsiolon = %f\n"
+	  ,p3m.mesh_off[0],p3m.mesh_off[1],p3m.mesh_off[2],p3m.epsilon));
   MPI_Barrier(MPI_COMM_WORLD);   
 }
 

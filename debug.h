@@ -31,6 +31,7 @@
 /* #define FORCE_DEBUG */
 /* #define VERLET_DEBUG   */
 /* #define PARTICLE_DEBUG */
+/* #define P3M_DEBUG */
 #define MPI_CORE
 /* #define FORCE_CORE */
 
@@ -99,4 +100,11 @@ extern void _debug_free(void *p);
 #else
 /** Equals { cmd } iff VERLET_DEBUG is set. */
 #define VERLET_TRACE(cmd)
+#endif
+
+#ifdef P3M_DEBUG
+#define P3M_TRACE(cmd) { if (this_node == 2) { cmd; } }
+#else
+/** Equals { cmd } iff P3M_DEBUG is set. */
+#define P3M_TRACE(cmd)
 #endif

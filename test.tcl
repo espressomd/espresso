@@ -68,7 +68,7 @@ setmd p3m_mesh_off 1.0 1.0 1.0
 ##################################################
 
 puts "imd: [imd connect 12345]"
-puts "imd: [imd stall 100]"
+puts "imd: [imd stall 1]"
 
 integrate init
 set write_steps 2
@@ -84,7 +84,7 @@ for {set i 0} { $i < $configs } { incr i } {
 
 integrate exit
 
-puts "imd: [imd disconnect]"
+# puts "imd: [imd disconnect]"
 
 # write
 set f [open "|gzip -c - >tconfig.gz" w]
