@@ -33,17 +33,23 @@
 */
 
 /* #define COMM_DEBUG */
-/* #define INTEG_DEBUG */
-/* #define CELL_DEBUG */
-/* #define GHOST_DEBUG */
-/* #define GRID_DEBUG */
-/* #define FORCE_DEBUG */
-/* #define VERLET_DEBUG */
+/* #define INTEG_DEBUG  */
+/* #define CELL_DEBUG  */
+/* #define GHOST_DEBUG  */
+/* #define GRID_DEBUG  */
+/* #define VERLET_DEBUG  */
 /* #define PARTICLE_DEBUG */
-/* #define P3M_DEBUG */
-/* #define FFT_DEBUG */
+/*#define P3M_DEBUG  */
+/* #define FFT_DEBUG  */
 /* #define RANDOM_DEBUG */
-/* #define FENE_DEBUG */
+#define FORCE_DEBUG  
+/* Detailed Force debugging -> Gives expilitely all forces! */
+/* #define THERMO_DEBUG   */
+/* #define LJ_DEBUG  */
+/* #define ESR_DEBUG   */
+/* #define ESK_DEBUG  */
+/* #define FENE_DEBUG  */
+/* #define GHOST_FORCE_DEBUG */
 
 #define MPI_CORE
 #define FORCE_CORE
@@ -144,12 +150,41 @@ extern void _debug_free(void *p);
 #ifdef RANDOM_DEBUG
 #define RANDOM_TRACE(cmd) { cmd; }
 #else
-/** Equals { cmd } iff FFT_DEBUG is set. */
 #define RANDOM_TRACE(cmd)
+#endif
+
+#ifdef THERMO_DEBUG
+#define THERMO_TRACE(cmd) { cmd; }
+#else
+#define THERMO_TRACE(cmd)
+#endif
+
+#ifdef LJ_DEBUG
+#define LJ_TRACE(cmd) { cmd; }
+#else
+#define LJ_TRACE(cmd)
+#endif
+
+#ifdef ESR_DEBUG
+#define ESR_TRACE(cmd) { cmd; }
+#else
+#define ESR_TRACE(cmd)
+#endif
+
+#ifdef ESK_DEBUG
+#define ESK_TRACE(cmd) { cmd; }
+#else
+#define ESK_TRACE(cmd)
 #endif
 
 #ifdef FENE_DEBUG
 #define FENE_TRACE(cmd) { cmd; }
 #else
 #define FENE_TRACE(cmd)
+#endif
+
+#ifdef GHOST_FORCE_DEBUG
+#define GHOST_FORCE_TRACE(cmd) { cmd; }
+#else
+#define GHOST_FORCE_TRACE(cmd)
 #endif
