@@ -110,7 +110,7 @@ proc writepdb {file {folded ""}} {
 
 # This routine writes a pdb file by folding according to molecule information #
 # Note that shifting might not work yet #
-proc writepdbfoldtopo { file  { box_l } {shift 0 } } {
+proc writepdbfoldtopo { file  {shift 0 } } {
 
     if { $shift == 0 } {
 	set coord [analyze get_folded_positions -molecule ]
