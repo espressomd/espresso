@@ -23,7 +23,7 @@ CXX=mpiCC
 
 ############ linker settings
 LINK=$(CC)
-LDLIBS=-O3 -L/usr/local/lib -lfftw -lrfftw -lmpi -lm -ltcl -llam
+LDLIBS=-O3 -L/usr/local/lib -lrfftw -lfftw -lmpi -lm -ltcl -llam
 
 # FFTW. Note this is VERY specific for our cluster
 CFLAGS += -I/usr/local/include
