@@ -1,0 +1,185 @@
+:TITLE: Numeric Comparisons 101 - if
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+Tcl uses an if construct similar to that used by other languages.
+The syntax is:
+<P><UL>
+<B>if</B> <I>expr1</I> ?then? <I>body1</I><B> elseif</B><I> expr2</I> ?then? 
+<I>body2</I><B> elseif</B> ... 
+<B>?else?</B> <I>?bodyN?</I>
+</UL>
+<P>
+The words <CODE>then</CODE> and <CODE>else</CODE> are optional, and may be included if you
+think they improve the readability of the code, or left out, as you prefer.
+<P>
+The test expression following the word <CODE>if</CODE> is evaluated in the same manner
+as in the <B>expr</B> command.  Hex strings 0xXX will be converted to their numeric
+equivalent before evaluation.
+<P>
+The test expression following <CODE>if</CODE> should return one of:
+<PRE>
+<B>                      False            True
+                      -------          ------ </B>
+ a numeric value      0                all others
+ yes/no               no               yes 
+ true/false           false            true
+<P></PRE>
+ The case of a textual return is not checked.
+	 
+<P>
+  The test expression following the word <CODE>if</CODE> is evaluated in
+the same manner as in the <B>expr</B> command.  Hex strings 0xXX will be
+converted to their numeric equivalent before evaluation. 
+<P>
+The test expression following <CODE>if</CODE> may be enclosed within
+quotes, or braces.  If it is enclosed within braces, it will be
+evaluated within the if command, and if enclosed within quotes it will
+be evaluated during the substitution phase, and then another round of
+substitutions will be done within the <B>if</B> command. 
+:TEXT_END:
+<P>
+:LESSON_TEXT_START_LEVEL 1:
+Like most languages, Tcl supports an if command.  The syntax is:
+<P><UL>
+<B>if</B> <I>expr1</I> ?then? <I>body1</I><B> elseif</B><I> expr2</I> ?then? 
+<I>body2</I><B> elseif</B> ... 
+<B>?else?</B> <I>?bodyN?</I>
+</UL>
+<P>
+The words <CODE>then</CODE> and <CODE>else</CODE> are optional, and may be included if you
+think they improve the readability or left out.  If you are used to
+programming in a shell language, you may want to leave them in.  If you
+are used to C, you will prefer leaving them out.
+<P>
+The test expression following <CODE>if</CODE> should return one of:
+<PRE>
+<B>                      False            True
+                      -------          ------ </B>
+ a numeric value      0                all others
+ yes/no               no               yes 
+ true/false           false            true
+<P></PRE>
+  If the test expression returns a string "yes"/"no" or "true"/"false", the
+case of the return is not checked.  True/FALSE or YeS/nO are legitimate
+returns. 
+<P>
+  If the test expression evaluates to True, then <I>body1</I> will be 
+executed.  
+<P>
+  If the test expression evaluates to False, then the word after
+<I>body1</I> will be examined.  If the next word is 
+<CODE>elseif</CODE>, then the next test expression will be tested as a
+condition.  If the next word is <CODE>else</CODE> then the final <I>body</I>
+will be evaluated as a command.
+<P>
+  The test expression following the word <CODE>if</CODE> is evaluated in the same manner
+as in the <B>expr</B> command.  Hex strings 0xXX will be converted to their numeric
+equivalent before evaluation.
+<P>
+The test expression following <CODE>if</CODE> may be enclosed within
+quotes, or braces.  If it is enclosed within braces, it will be
+evaluated within the if command, and if enclosed within quotes it will
+be evaluated during the substitution phase, and then another round of
+substitutions will be done within the <B>if</B> command. 
+:TEXT_END:
+<P>
+:LESSON_TEXT_START_LEVEL 2:
+The switch command allows you to compare a string to other strings and
+find a match.  Another feature of most computer languages is the ability
+to choose between two courses of action based on a numeric test.  
+Like most other languages, Tcl supports this functionality with 
+the <I>if</I> command.  
+<P>
+The syntax for the <I>if</I> command is:
+<P><UL>
+<B>if</B> <I>expr1</I> ?then? <I>body1</I><B> elseif</B><I> expr2</I> ?then? 
+<I>body2</I><B> elseif</B> ... 
+<B>?else?</B> <I>?bodyN?</I>
+</UL>
+<P>
+The words <CODE>then</CODE> and <CODE>else</CODE> are optional, you
+may include them if you
+think they improve the readability of your code, or leave them out if you
+think that looks better.
+<P>
+When an <CODE>if</CODE> command is encountered the Tcl interpreter
+evaluates <I>test1</I> using the <B>expr</B> command.  If that test is
+true, the Tcl interpreter executes <I>body1</I>.  If the test expression 
+evaluates to
+False, then the word after <I>body1</I> will be examined.  If the
+next word is <CODE>elseif</CODE>, then the next expression will be
+evaluated as a test condition.  If the next word is <CODE>else</CODE> then the
+final <I>body</I> will be evaluated as a command.   
+<P>
+The test expression following <CODE>if</CODE> should return one of
+these values:
+<PRE>
+<B>                      False            True
+                      -------          ------ </B>
+ a numeric value      0                all others
+ yes/no               no               yes 
+ true/false           false            true
+<P></PRE>
+  If the test expression returns a character string like "yes", "no", "true"
+or "false", the case of the return is not checked.  "True", "FALSE",
+"YeS" or "nO" are legitimate returns. 
+<P>
+  The test following <CODE>if</CODE> may be enclosed within quotes, or
+braces.  If it is enclosed within braces, it will be parsed by expr
+within the <B>if</B> command.  If the test is enclosed within quotes
+substitutions will be done during the Tcl parsing substitution phase,
+and then another round of substitutions will be done within the <B>if</B>
+command.
+<P>
+  Since the test in an <CODE>if</CODE> is evaluated in the same manner
+as in the <B>expr</B> command, hex strings 0xXX will be converted to their
+numeric equivalent before evaluation.  You can think of the <I>test</I> in
+the <CODE>if</CODE> command as being executed by expr, and all the same rules
+will apply.
+<P>
+<CODE>if {$i == 1} {puts "MATCH}</CODE>
+<P>is the same as:<P>
+<CODE>if {[expr $i == 1]} {puts "MATCH}</CODE>
+<P>
+  The <I>body</I> code may be enclosed within quotes or braces. 
+Since <I>body</I> will be evaluated just like any other Tcl
+command, <I>body</I> can be placed within braces and variable
+substitution will still occur.  Note that the opening quote or bracket
+must be on the same line as the if command, however. 
+<P>
+:TEXT_END:
+
+:CODE_START:
+set x 1;
+
+if {$x == 2} {puts "$x is 2"} else {puts "$x is not 2"}
+
+if {$x != 1} {
+  puts "$x is != 1"
+  } else {
+  puts "$x is 1"
+  }
+
+if $x==1 {puts "GOT 1"}
+
+;# Two passes of substitution will be done on this test string
+;#  The initial pass replaces $y with x
+;#  Within the if statement, $x is replaced with 1
+
+set y x;
+if "$$y != 1" {
+  puts "$$y is != 1"
+  } else {
+  puts "$$y is 1"
+  }
+
+:TEXT_END:
+
+

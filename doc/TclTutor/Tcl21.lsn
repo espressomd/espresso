@@ -1,0 +1,249 @@
+:TITLE: More Quoting Hell - Regular Expressions 102
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+The regular expression (<I>exp</I>) in the two regular expression parsing
+commands is evaluated by the Tcl parser during the Tcl substitution phase.
+This can provide a great deal of power, and also requires a great deal
+of care.
+<P>
+These examples show some of the trickier aspects of regular expression
+evaluation.  The fields in each example are discussed in painful detail in
+the most verbose level.
+<DL>
+<B><DT>regexp</B> <I>?switches? exp string ?matchVar? ?subMatch1 ... subMatchN?</I>
+<DD>Searches <I>string</I> for the regular expression <I>exp</I>.  If a 
+parameter <I>matchVar</I> is given, then the substring that matches the 
+regular expression is copied to <I>matchVar</I>.  If <I>subMatchN</I> variables
+exist, then the parenthetical parts of the matching string are copied to the
+<I>subMatch</I> variables, working from left to right.
+<B><DT>regsub</B> <I>?switches? exp string subSpec varName</I>
+<DD>Searches <I>string</I> for substrings that match the regular
+expression <I>exp</I> and replaces them with <I>subSpec</I>.  The
+resulting string is copied into <I>varName</I>.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+<DL>
+<B><DT>regexp</B> <I>?switches? exp string ?matchVar? ?subMatch1 ... subMatchN?</I>
+<DD>Searches <I>string</I> for the regular expression <I>exp</I>.  If a 
+parameter <I>matchVar</I> is given, then the substring that matches the 
+regular expression is copied to <I>matchVar</I>.  If <I>subMatchN</I> variables
+exist, then the parenthetical parts of the matching string are copied to the
+<I>subMatch</I> variables, working from left to right.
+<B><DT>regsub</B> <I>?switches? exp string subSpec varName</I>
+<DD>Searches <I>string</I> for substrings that match the regular
+expression <I>exp</I> and replaces them with <I>subSpec</I>.  The
+resulting string is copied into <I>varName</I>.
+</DL>
+<P>
+The regular expression (<I>exp</I>) in the two regular expression parsing
+commands is evaluated by the Tcl parser during the Tcl substitution phase.
+This can provide a great deal of power, and also requires a great deal
+of care.
+<P>
+These examples show some of the trickier aspects of regular expression
+evaluation.  The fields in each example are discussed in painful detail in
+the most verbose level.
+<P>
+The points to remember as you read the examples are:
+<UL>
+<LI> A left square 
+bracket has meaning to the substitution phase, and to the regular expression
+parser. 
+<LI> A set of parentheses, a plus sign, and a star have meaning to the 
+regular expression parser, but not the Tcl substitution phase.
+<LI> A backslash sequence (\n, \t, etc) has meaning to the Tcl substitution 
+phase, but not to  the regular expression parser.
+<LI> A backslash escaped character (\[) has meaning to both the Tcl substitution
+phase and the regular expression parser.
+</UL>
+<P>
+The phase at which a character has meaning affects how many 
+escapes are necessary to match the character you wish to match.  An escape
+can be either enclosing the phrase in braces, or placing a backslash before
+the escaped character.
+<P>
+To pass a left bracket to the regular expression parser to evaluate as a
+range of characters takes 1 escape.  To have the regular expression
+parser match a literal left bracket takes 2 escapes (one to escape the
+bracket in the Tcl substitution phase, and one to escape the bracket in
+the regular expression parsing.).  If you have the string placed within
+quotes, then a backslash that you wish passed to the regular expression
+parser must also be escaped with a backslash. 
+<P>
+If you haven't already done so, hit the run example button, and examine 
+the output.  If something in the code or output isn't obvious, the next
+level of verbosity goes into painful detail on each field of the examples.
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+If you haven't already done so, hit the run example button, and look at
+the output while you read the rest of this lesson.
+<P>
+The <B>exp</B> argument to <CODE>regexp </CODE> or <CODE>regsub</CODE> is
+processed by the Tcl substitution pass.  This affects the mechanics of how
+regular expressions can be formed.  If the regular expression has no
+backslash sequences that you wish to have converted by the Tcl substitution
+phase, then the <B>exp</B> argument can be enclosed in braces.  If you wish
+any substitutions to occur, however, the <B>exp</B> argument must be enclosed
+within quotes.  In this case, characters that have meaning to the Tcl 
+substitution phase must be escaped with a backslash.  
+<P>
+<H4>Example 1</H4>
+In the first example, the regular expression is placed within braces.  
+This could be done in this case because there were no backslash sequences
+to be expanded by the substitution phase.  The first sequence of the
+regular expression (<CODE>[^ ]*</CODE>) will match any number of any character
+except a space.  In the example text, this is the <CODE>/dev/wd0*</CODE>
+portion of each line.
+<P>
+The second sequence (<CODE> *</CODE>) matches any number of spaces.  In this
+case, the spaces between the device and the first set of numbers.
+<P>
+The third sequence (<CODE>([0-9]+)</CODE>) will match any quantity of any
+digit.  This matches to the first number in each line.  The parentheses
+around this sequence cause the subset of characters in the string that match
+this sequence to be copied into the first of the <B>subSpec</B> variables.
+In this example, this is the variable size.
+<P>
+The fourth sequence (<CODE>[^/]*</CODE>) will match to any character 
+except a slash.  This matches the spaces and numbers and percent signs
+up to the final word in each line.
+<P>
+The fifth sequence (<CODE>(/[a-z]*)</CODE>) matches to any string of 
+lower case letters preceeded by a slash.  In this example, this matches
+to the mountpoints of the disks.  Because this sequence is enclosed in
+parentheses, the matching subset of characters is copied to the second
+of the <B>subSpec</B> variables, in this case <CODE>mounted</CODE>.
+<P>
+<H4>Example 2</H4>
+The second example uses backslash sequences, so it has to be enclosed
+within quotes.  It is also matching characters in the string that have
+special meaning to the regular expression parser.  This is why the
+backslash escaping is so extensive.
+<P>
+It's not obvious, but there is a tab between the <CODE>?</CODE> and the 
+<CODE>[32</CODE> in this example.
+<P>
+Taking the regular expression sequences in order, the first expression
+(<CODE>\[^\t]+</CODE>) selects any character except a tab character.
+This matches everything in the string up to the tab before the <CODE>[32</CODE>
+The initial square bracket in the regular expression is escaped by the backslash
+to allow it to be passed to the regular expression parser, instead of having
+the substitution phase attempt to execute the the string between the brackets
+as a command.
+<P>
+The second sequence is simply (<CODE>\t</CODE>), which matches the tab character.
+<P>
+The third sequence, (<CODE>\\\[\[0-9]+</CODE>), is a bit tricky.  The
+goal is to have the regular expression parser match the <B>left-bracket
+number</B> portion of the string ([32).  Because the substitution phase
+will convert backslash escaped sequences to single characters, there
+needs to be three backslashes before the square bracket.  The first two
+backslashes will be converted into a single backslash by the Tcl
+substitution phase, then the backslash left-bracket (\[) will be
+converted into a single bracket.  The regular expression parser will
+see the string <CODE>\[[0-9]+</CODE>, which will match to a left bracket
+followed by one or more digits.
+<P>
+The fourth sequence is (<CODE>\\\(0x</CODE>, which is converted by the
+Tcl substitution phase to <CODE>\(0x</CODE>, which will match to a left
+parentheses zero x.
+<P>
+The next sequence <CODE>(\[0-9a-fA-F]+)</CODE> is almost trivial at this point.
+It matches to an unknown quantity of hexadecimal digits, but at least one
+digit.  The sequence of characters that match this sequence will be put into
+the first <B>subSpec</B> variable.
+<P>
+The next sequence is the <CODE>\\\)</CODE> which is converted to <CODE>\)</CODE>.
+This matches to a literal right parentheses.  The regular expression parsing
+code counts right and left parentheses that are not escaped, and will complain
+if the counts do not match.
+<P>
+The final sequence is just a right square bracket, which matches to a literal
+right square bracket.  This could also be written as <CODE>\\\[</CODE>, but
+the regular expression parser does not count brackets the way it counts 
+parentheses.
+<P>
+The third and fourth examples show how placement of the caret affects what
+is matched.  
+<H4>Example 3</H4>
+In the first of these examples, the regular expression <CODE>\[^a-f]*def</CODE> 
+matches any count of any characters except a-f, and then the letters def.
+This matches the <B>^def</B> in the sample string.
+<H4>Example 4</H4>
+The regular expression in the fourth example (<CODE>\[a-f^]*def</CODE>)
+has the caret moved to the end of the sequence.  This sequence matches any
+count of any characters in the range from a to f, and the caret followed
+by the letters <B>def</B>.  This matches the entire string.
+<H4>Example 5</H4>
+Examples 5 and six show regsub being used to match a literal caret.
+<P>
+Example 5 has the regular expression enclosed within braces.  This provides
+one level of escape, so the backslash caret is the exact string passed to
+the regular expression parser.  This matches to the literal caret.
+<H4>Example 6</H4>
+In example 6, the regular expression is enclosed within quotes, which requires
+more backslash escapes in order to get the expected string to the regular
+expression parser.
+<P>
+The first sequence in the example is <CODE>(\[a-f]+)</CODE>.  The left
+parentheses is not evaluated by the Tcl substitution phase, and should
+be evaluated by the regular expression parser for grouping, so it does
+not need to be escaped.  The left square bracket would be evaluated by
+the Tcl substitution phase as the result from executing the command within
+the brackets.  We want the bracketed phrase to be evaluated by the regular
+expression parser, therefore, it is escaped with a single backslash.
+<P>
+The second sequence, <CODE>\\^</CODE>, is escaped with two backslashes
+because the two backslashes will be evaluated by the Tcl substitution phase,
+and will be converted into a single backslash.  The backslash caret will
+be passed to the regular expression parser, which will match the caret
+to a literal caret, instead of evaluating it as 'any character but'.
+<P>
+The final sequence, <CODE>(\[a-f]+)</CODE> is the same as the first, and
+is escaped for the same reasons.
+<P>
+Experiment a bit with changing the grouping from quotes to braces and
+back and understand the way that characters need to be escaped.
+:TEXT_END:
+
+:CODE_START:
+set list1 [list {/dev/wd0a        17086    10958     5272    68%    /}\
+{/dev/wd0f       179824   127798    48428    73%    /news}\
+{/dev/wd0h      1249244   967818   218962    82%    /usr}\
+{/dev/wd0g        98190    32836    60444    35%    /var}]
+
+foreach line $list1 {
+  regexp {[^ ]* *([0-9]+)[^/]*(/[a-z]*)} $line match size mounted;
+  puts "$mounted is $size blocks"
+  }
+
+
+set line {Interrupt Vector?	[32(0x20)]}
+regexp "\[^\t]+\t\\\[\[0-9]+\\(0x(\[0-9a-fA-F]+)\\)]" $line match hexval
+puts "Hex Default is: 0x$hexval"
+
+set str2 "abc^def"
+regexp "\[^a-f]*def" $str2 match
+puts "using \[^a-f] the match is: $match"
+
+regexp "\[a-f^]*def" $str2 match
+puts "using \[a-f^] the match is: $match"
+
+regsub {\^} $str2 " is followed by: " str3
+puts "$str2 with the ^ substituted is: \"$str3\""
+
+regsub "(\[a-f]+)\\^(\[a-f]+)" $str2 "\\2 follows \\1" str3
+puts "$str2 is converted to \"$str3\""
+
+:TEXT_END:
+

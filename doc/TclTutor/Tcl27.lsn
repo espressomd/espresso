@@ -1,0 +1,244 @@
+:TITLE: Learning the existence of commands and variables ? - info 
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+The <B>info</B> command allows a Tcl program to obtain information from the
+Tcl interpreter about the current state of the interpreter.  The next three
+lessons cover aspects of the <B>info</B> command.
+<P>
+This lesson covers the <B>info</B> subcommands that return information about
+which procs, variables, or commands are currently in existence in this
+instance of the interpreter. By using these subcommands
+you can determine if a variable or proc exists before you try to access it. 
+<P>
+<B> Info commands that return lists of visible commands and variables.</B>
+<DL>
+<B><DT>info commands</B> <I>?pattern?</I>
+<DD>Returns a list of the commands that match <I>pattern</I>, using the
+<B>string match</B> rules.  If <I>pattern</I> is not provided, a list
+of all commands is returned.
+<B><DT>info exists</B> <I>varName</I>
+<DD>Returns 1 if <I>varName</I> exists as a variable in the current context,
+otherwise returns 0.
+<B><DT>info globals</B> <I>?pattern?</I>
+<DD>Returns a list of the global variables that match <I>pattern</I>, using the
+<B>string match</B> rules.  If <I>pattern</I> is not provided, a list
+of all global variables is returned.
+<B><DT>info locals</B> <I>?pattern?</I>
+<DD>Returns a list of the local variables that match <I>pattern</I>, using the
+<B>string match</B> rules.  If <I>pattern</I> is not provided, a list
+of all local variables is returned.
+<B><DT>info procs</B> <I>?pattern?</I>
+<DD>Returns a list of the procs that match <I>pattern</I>, using the
+<B>string match</B> rules.  If <I>pattern</I> is not provided, a list
+of all procs is returned.
+<B><DT>info vars</B> <I>?pattern?</I>
+<DD>Returns a list of the variables that match <I>pattern</I>, using the
+<B>string match</B> rules.  If <I>pattern</I> is not provided, a list
+of all variables is returned.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+The <B>info</B> command allows a Tcl program to obtain information from the
+Tcl interpreter about the current state of the interpreter.  The next three
+lessons cover aspects of the <B>info</B> command.
+<P>
+This lesson covers the <B>info</B> subcommands that return information about
+which procs, variables, or commands are currently in existence in this
+instance of the interpreter. By using these subcommands
+you can determine if a variable or proc exists before you try to access it. 
+<P>
+The example code shows how to use the <B>info exists</B> command to 
+make an incr that will never return a <B>no such variable</B> error, since
+it checks to be certain that the variable exists before incrementing it.
+<P>
+<B> Info commands that return lists of visible commands and variables.</B>
+<DL>
+<B><DT>info commands</B> <I>?pattern?</I>
+<DD>Returns a list of the commands that match <I>pattern</I>, using the
+<B>string match</B> rules.  If <I>pattern</I> is not provided, a list
+of all commands is returned.
+<B><DT>info exists</B> <I>varName</I>
+<DD>Returns 1 if <I>varName</I> exists as a variable in the current context,
+otherwise returns 0.
+<B><DT>info globals</B> <I>?pattern?</I>
+<DD>Returns a list of the global variables that match <I>pattern</I>, using the
+<B>string match</B> rules.  If <I>pattern</I> is not provided, a list
+of all global variables is returned.
+<B><DT>info locals</B> <I>?pattern?</I>
+<DD>Returns a list of the local variables that match <I>pattern</I>, using the
+<B>string match</B> rules.  If <I>pattern</I> is not provided, a list
+of all local variables is returned.
+<B><DT>info procs</B> <I>?pattern?</I>
+<DD>Returns a list of the procs that match <I>pattern</I>, using the
+<B>string match</B> rules.  If <I>pattern</I> is not provided, a list
+of all procs is returned.
+<B><DT>info vars</B> <I>?pattern?</I>
+<DD>Returns a list of the variables that match <I>pattern</I>, using the
+<B>string match</B> rules.  If <I>pattern</I> is not provided, a list
+of all variables is returned.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+The Tcl interpreter has many tables of information that it keeps track of
+while the interpreter is executing.  These tables include lists of all 
+the procs and commands that have been defined, lists of global variables,
+and lists of variables that are visible to the current proc.  
+<P>
+This lesson
+covers the <B>info</B> subcommands that return these lists of what procs,
+commands, and variables are available.  By using these subcommands
+you can determine if a variable or proc exists before you try to access it. 
+<P>
+For instance, consider what would happen if you tried to increment a
+variable that hadn't been defined yet.  This can happen easily if you
+use the associative arrays to build a histogram from raw statistical data,
+for example.
+<P>
+The example code shows how to use the <B>info exists</B> command to 
+make an incr that will never return a <B>no such variable</B> error, since
+it checks to be certain that the variable exists before incrementing it.
+<P>
+Run the example, and look at the output while you read this description
+of the code.
+<P>
+The first proc is the <B>safeIncr</B> proc.  It takes two arguments, the
+second of which defaults to a value of 1.  The first argument is the name
+of a variable that may exist in the calling program.  These are the same
+arguments that you would use when calling the normal <B>incr</B> command.
+<P>
+After using the <B>upvar</B> command to link the local scope of the
+variable to the level above, <B>info exists</B> is called to determine
+if the variable exists.  If it exists, then <B>incr</B> is called.  If
+<B>info exists</B> returns false, then the variable is initialized to
+the increment value. 
+<P>
+The next line shows how you can use the <B>info procs</B> command to
+find out if a proc exists before you invoke it.  <B>Info procs</B> will
+return a list of procs that match a string, or a list of all procs if 
+there is no second argument.
+<P>
+After this are several lines that demonstrate <B>safeIncr</B> working.
+<P>
+Next, <B>info vars</B> and <B>info globals</B> are used to list all the
+variables that are available in the current scope.  These lists are identical
+because all variables at the top level are global.
+<P>
+Next, <B>info procs</B> is used to test for a proc that hasn't been
+defined yet.
+<P>
+<B>Localproc</B> shows the differences in variables that are defined 
+within a procedure.  Only the <B>loc1</B> and <B>loc2</B> are local to the proc,
+while <B>argv</B> is available because it is declared as a global.
+<P>
+If <B>argv</B> were not declared global, but were just used in this
+function, a local <B>argv</B> variable would be created for use inside
+this proc.  This local <B>argv</B> would not have the value that the global
+<B>argv</B> has, and any modifications made to <B>argv</B> would be lost
+when this proc returned.
+<P>
+After <B>localproc</B> is defined, <B>info procs</B> is used again to show
+that the proc now exists.
+<P>
+Finally, <B>localproc</B> is called, and the variables visible from inside
+a proc are displayed.
+<P>
+ <B> Info commands that return lists of visible commands and
+variables.</B> <DL> 
+<B><DT>info commands</B> <I>?pattern?</I>
+
+<DD>Returns a list of the commands that match <I>pattern</I>, using the
+<B>string match</B> rules.  If <I>pattern</I> is not provided, a list of
+all commands is returned.  
+<B><DT>info exists</B> <I>varName</I>
+<DD>Returns 1 if <I>varName</I> exists as a variable in the current
+context, otherwise returns 0.  
+<B><DT>info globals</B> <I>?pattern?</I>
+<DD>Returns a list of the global variables that match <I>pattern</I>,
+using the <B>string match</B> rules.  If <I>pattern</I> is not provided,
+a list of all global variables is returned.  
+<B><DT>info locals</B> <I>?pattern?</I> 
+<DD>Returns a list of the local variables that match
+<I>pattern</I>, using the <B>string match</B> rules.  If <I>pattern</I>
+is not provided, a list of all local variables is returned.  
+<B><DT>info procs</B> <I>?pattern?</I> 
+<DD>Returns a list of the procs that match
+<I>pattern</I>, using the <B>string match</B> rules.  If <I>pattern</I>
+is not provided, a list of all procs is returned.  
+<B><DT>info vars</B><I>?pattern?</I> 
+<DD>Returns a list of the variables that match
+<I>pattern</I>, using the <B>string match</B> rules.  If <I>pattern</I>
+is not provided, a list of all variables is returned.  
+</DL> 
+:TEXT_END:
+
+:CODE_START:
+;#
+;# safeIncr checks for a variables existence before
+;# it tries to increment it.  If the variable does not exist,
+;# it is initialized and returned.
+
+proc safeIncr {val {amt 1}} {
+  upvar $val v
+  if {[info exists v]} { incr v $amt}  else { set v $amt }
+  }
+
+
+;#
+;# Check that the safeIncr proc exists before invoking it.
+
+if {[info procs safeIncr] == "safeIncr"} {
+  safeIncr a
+  }
+
+puts "After calling SafeIncr with a non existent variable: $a"
+
+set a 100
+safeIncr a
+puts "After calling SafeIncr with a variable with a value of 100: $a"
+
+safeIncr b -3
+puts "After calling safeIncr with a non existent variable by -3: $b"
+
+set b 100
+safeIncr b -3
+puts "After calling safeIncr with a variable whose value is 100 by -3: $b"
+
+puts "\nThese variables have been defined: [lsort [info vars]]"
+puts "\nThese globals have been defined:   [lsort [info globals]]"
+
+;#
+;# Check for the existence of localproc
+;#
+
+set exist [info procs localproc];
+if {$exist == ""} {
+  puts "\nlocalproc does not exist at point 1"
+  }
+
+proc localproc {} {
+  global argv;
+
+  set loc1 1;
+  set loc2 2;
+  puts "\nLocal variables accessible in this proc are: [lsort [info locals]]"
+  puts "\nVariables accessible from this proc are:     [lsort [info vars]]"
+  puts "\nGlobal variables visible from this proc are: [lsort [info globals]]"
+  }
+
+set exist [info procs localproc];
+if {$exist != ""} {
+  puts "localproc does exist at point 2"
+  }
+
+localproc;
+:TEXT_END:
+

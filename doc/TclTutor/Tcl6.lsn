@@ -1,0 +1,440 @@
+:TITLE: Results of a command - Math 101 
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+The command for doing math type operations is <CODE>expr</CODE>.
+
+<P>
+
+Here's some excerpts from the man page.
+
+<P>
+
+Expr concatenates arg's (adding separator spaces between them),
+evaluates the result as a Tcl expression, and returns  the
+value.   The  operators permitted in Tcl expressions are a
+subset of the operators permitted in  C  expressions,  and
+they  have  the  same meaning and precedence as the corresponding C operators.   Expressions  almost  always  yield
+numeric  results  (integer or floating-point values).  For
+example, the expression
+
+<P>
+
+<CODE>expr 8.2 + 6</CODE>
+
+<P>
+
+evaluates to 14.2.  Tcl expressions differ from C  expressions  in  the way that operands are specified.  Also, Tcl
+expressions support non-numeric operands and  string  comparisons.
+
+<P>
+
+<B>OPERANDS</B><P> A Tcl expression consists of a combination of
+operands, operators, and parentheses.  White space may be used between
+the operands and operators and parentheses; it is ignored by the
+expression processor.  Where possible, operands are interpreted as
+integer values.  Integer values may be specified in decimal (the normal
+case), in octal (if the first character of the operand is 0), or in
+hexadecimal (if the first two characters of the operand are 0x).
+<P> Note that the octal and hexadecimal conversion takes place differently
+in the expr command than in the Tcl substitution phase.
+<P>If an
+operand does not have one of the integer formats given above, then it is
+treated as a floating-point number if that is possible.  Floating-point
+numbers may be specified in any of the ways accepted by an ANSI-
+compliant C compiler.  For example, all
+of the following are valid floating-point numbers: 2.1, 3., 6e4,
+7.91e+16.  If no numeric interpretation is possible, then an operand is
+left as a string (and only a limited set of operators may be applied to
+it). 
+
+<P>
+
+Operands may be specified in any of the following ways:
+<UL>
+<LI>          As  an  numeric  value, either integer or floating-
+              point.
+<LI>          As a Tcl variable, using standard $ notation.   The
+              variable's value will be used as the operand.
+</UL><P>
+
+<B>OPERATORS</B><P>
+       The valid operators are listed below, grouped in  decreasing order of precedence:
+<DL><DT>
+       -  +  ~  !          <DD>Unary minus, unary plus, bit-wise NOT,
+                           logical NOT.  None of  these  operands
+                           may be applied to string operands, and
+                           bit-wise NOT may be  applied  only  to
+                           integers.
+<DT>
+       *  /  %             <DD>Multiply,  divide, remainder.  None of
+                           these  operands  may  be  applied   to
+                           string  operands, and remainder may be
+                           applied only to integers.  The remainder  will always have the same sign as
+                           the  divisor  and  an  absolute  value
+                           smaller than the divisor.
+<DT>
+       +  -                <DD>Add   and  subtract.   Valid  for  any
+                           numeric operands.
+<DT>
+       &lt;&lt;  &gt;&gt;              <DD>Left and right shift.  Valid for integer operands only.
+<DT>
+       &amp;                   <DD>Bit-wise   AND.    Valid  for  integer
+                           operands only.
+<DT>
+       ^                   <DD>Bit-wise  exclusive  OR.   Valid   for
+                           integer operands only.
+<DT>
+       |                   <DD>Bit-wise   OR.    Valid   for  integer
+                           operands only.
+<DT>
+       &amp;&amp;                  <DD>Logical AND.  Produces a 1  result  if
+                           both  operands  are non-zero, 0 otherwise.  Valid for numeric operands only
+                           (integers or floating-point).
+<DT>
+       ||                  <DD>Logical  OR.   Produces  a 0 result if
+                           both operands are zero,  1  otherwise.
+                           Valid for numeric operands only (integers or floating-point).
+<DT>
+       x?y:z               <DD>If-then-else, as in C.  If x evaluates
+                           to  non-zero,  then  the result is the
+                           value of y.  Otherwise the  result  is
+                           the  value  of  z.  The x operand must
+                           have a numeric value.
+<P></UL>
+<B>MATH FUNCTIONS</B><P>
+      Tcl  supports  the  following  mathematical  functions  in
+      expressions:
+<PRE>
+             acos        cos         hypot      sinh
+             asin        cosh        log        sqrt
+             atan        exp         log10      tan
+             atan2       floor       pow        tanh
+             ceil        fmod        sin
+</PRE>
+<B>TYPE CONVERSIONS</B><P>
+	Tcl supports the following functions to convert from one
+	representation of a number to another:
+<PRE>
+ 	abs double int round </PRE>
+
+<P> If you haven't hit the <B>Run Example</B> button yet, do so now, and
+examine the results of the example.  Play around a bit with the example
+code, and then go on to the next lesson. 
+
+:TEXT_END: 
+
+:LESSON_TEXT_START_LEVEL 1:
+The command for doing math type operations
+is <CODE>expr</CODE>.  The following discussion of the <CODE>expr</CODE>
+command is extracted and adapted from the <CODE>expr</CODE> man page. 
+
+
+<P>
+
+<CODE>Expr</CODE> concatenates arg's (adding separator spaces
+between them), evaluates the result as a Tcl expression, and returns the
+value.  The operators permitted in Tcl expressions include all the
+standard math functions.  Expressions almost always yield numeric
+results (integer or floating-point values).  
+
+<P>
+
+ <B>OPERANDS</B> 
+
+<P>
+
+ A
+Tcl expression consists of a combination of operands, operators, and
+parentheses.  White space may be used between the operands and operators
+and parentheses; it is ignored by the expression processor.  Where
+possible, operands are interpreted as integer values.  Integer values
+may be specified in decimal (the normal case), in octal (if the first
+character of the operand is 0), or in hexadecimal (if the first two
+characters of the operand are 0x).  
+<P> Note that the octal and hexadecimal conversion takes place differently
+in the expr command than in the Tcl substitution phase.  In the substitution
+phase, a <B>\x32</B> would be converted to an ascii "2",   while the <CODE>expr</CODE>
+command would covert a <B>0x32</B> to a decimal 50.
+<P>
+
+If an operand does not have one of the integer formats given above, then
+it is treated as a floating-point number if that is possible. 
+Floating-point numbers may be specified in any of the ways accepted by
+an ANSI-compliant C compiler.  For example, all of the following are
+valid floating-point numbers: 2.1, 3., 6e4, 7.91e+16.  If no numeric
+interpretation is possible, then an operand is left as a string (and
+only a limited set of operators may be applied to it). 
+
+<P>
+
+
+ Operands may be specified in any of the following ways:
+<UL>
+<LI>          As  an  numeric  value, either integer or floating-
+              point.
+<LI>          As a Tcl variable, using standard $ notation.   The
+              variable's value will be used as the operand.
+</UL>
+
+<P>
+
+
+<B>OPERATORS</B>
+
+<P>
+
+
+       The valid operators are listed below, grouped in  decreasing order of precedence:
+<DL><DT>
+       -  +  ~  !          <DD>Unary minus, unary plus, bit-wise NOT,
+                           logical NOT.  None of  these  operands
+                           may be applied to string operands, and
+                           bit-wise NOT may be  applied  only  to
+                           integers.
+<DT>
+       *  /  %             <DD>Multiply,  divide, remainder.  None of
+                           these  operands  may  be  applied   to
+                           string  operands, and remainder may be
+                           applied only to integers.  The remainder  will always have the same sign as
+                           the  divisor  and  an  absolute  value
+                           smaller than the divisor.
+<DT>
+       +  -                <DD>Add   and  subtract.   Valid  for  any
+                           numeric operands.
+<DT>
+       &lt;&lt;  &gt;&gt;              <DD>Left and right shift.  Valid for integer operands only.
+<DT>
+       &amp;                   <DD>Bit-wise   AND.    Valid  for  integer
+                           operands only.
+<DT>
+       ^                   <DD>Bit-wise  exclusive  OR.   Valid   for
+                           integer operands only.
+<DT>
+       |                   <DD>Bit-wise   OR.    Valid   for  integer
+                           operands only.
+<DT>
+       &amp;&amp;                  <DD>Logical AND.  Produces a 1  result  if
+                           both  operands  are non-zero, 0 otherwise.  Valid for numeric operands only
+                           (integers or floating-point).
+<DT>
+       ||                  <DD>Logical  OR.   Produces  a 0 result if
+                           both operands are zero,  1  otherwise.
+                           Valid for numeric operands only (integers or floating-point).
+<DT>
+       x?y:z               <DD>If-then-else, as in C.  If x evaluates
+                           to  non-zero,  then  the result is the
+                           value of y.  Otherwise the  result  is
+                           the  value  of  z.  The x operand must
+                           have a numeric value.
+
+
+<P>
+
+</UL>
+<B>MATH FUNCTIONS</B><P>
+      Tcl  supports  the  following  mathematical  functions  in
+      expressions:
+<PRE>
+             acos        cos         hypot      sinh
+             asin        cosh        log        sqrt
+             atan        exp         log10      tan
+             atan2       floor       pow        tanh
+             ceil        fmod        sin
+</PRE>
+<B>TYPE CONVERSIONS</B><P>
+	Tcl supports the following functions to convert from one
+	representation of a number to another:
+<PRE>
+ 	abs double int round </PRE>
+<P>
+If you haven't hit the <B>Run Example</B> button yet, do so now, and examine
+the results of the example.  Play around a bit with the example code, and
+then go on to the next lesson.
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+The driving force for using a computer has traditionally been to perform
+mathematic manipulations of data.  Some languages like BASIC or C do
+math operations whenever they appear in an expression.  Tcl, however,
+has a special command for doing math operations.  The command for doing
+mathematic operations is <CODE>expr</CODE>.  The following discussion of the <CODE>expr</CODE>
+command is extracted and adapted from the <CODE>expr</CODE> man page. 
+
+<P>
+
+Expr accepts the strings that follow it, evaluates them as a Tcl
+expression, and returns the value.  The operators permitted in Tcl
+expressions include all the standard math functions.  Mathematic
+expressions always yield numeric results (integer or floating-point
+values) while logical operations which return boolean (true or false)
+results. 
+
+<P>
+
+Like regular arithmetic, the Tcl math expression consists of operators,
+operands, and parentheses.  White space may be used between the operands,
+operators and parentheses. 
+
+<P>
+
+An operand is:
+<UL>
+<LI>  An integer value.
+<LI>  A floating point value.
+<LI>  A $variable_name
+<LI>  A text string.
+</UL>
+<P>
+
+Where possible, operands are interpreted as integer values.  Integer
+values may be specified in decimal (the normal case), in octal (if the
+first character of the operand is 0), or in hexadecimal (if the first
+two characters of the operand are 0x).
+<P> 
+
+Note that the octal and hexadecimal conversion takes place differently
+in the expr command than in the Tcl substitution phase.
+<P>
+
+For example, in the Tcl substitution phase, a <B>\x32</B> (the ascii
+code for the number 2) would be converted to an ascii "2" while
+<B>0x32</B> would be converted within the <CODE>expr</CODE> command to a
+decimal 50. 
+
+<P>
+This code is a true
+statement: <P><CODE> expr \x32 == 0x2</CODE><P> It is true because
+during the substitution phase the \x32 was replaced with an ascii "2",
+while the 0x2 was passed to <CODE>expr</CODE> unchanged.  <CODE>Expr</CODE>
+then interprets 0x2 as a hexadecimal 2,
+compares decimal 2 to hexadecimal 2, and finds that
+they are equal, which is obviously true. 
+
+<P>
+  If an operand does not have one of the integer formats given above,
+then it is treated as a floating-point number if that is possible. 
+Floating-point numbers may be specified in any of the ways accepted by
+an ANSI-compliant C compiler.  For example, all of the following are
+valid floating-point numbers: 2.1, 3., 6e4, 7.91e+16.  If no numeric
+interpretation is possible, then an operand is left as a string (and
+only a limited set of operators may be applied to it). 
+
+<P>
+
+If there are no parentheses to explicitly declare the order of
+operations, then Tcl does arithmetic operations in a particular order,
+just as you would do them on paper.  This is called the order of
+precedence of the operators.  
+
+<P>
+
+As you see in the list below, the command <CODE> expr "5 + -3 * 4" </CODE> is evaluated in
+this order:
+<OL>
+<LI> The unary minus sign in front of the 3 (3 is negative)
+<LI> The multiplication sign (-3 is multiplied 4)
+<LI> The plus sign ( add 5 to the product of -3 and 4)
+</OL>
+<P>
+Operands may be specified in any of the following ways:
+<UL>
+<LI>          As  an  numeric  value, either integer or floating-
+              point.
+<LI>          As a Tcl variable, using standard $ notation.   The
+              variable's value will be used as the operand.
+</UL><P>
+
+<B>OPERATORS</B><P>
+       The valid operators are listed below, grouped in  decreasing order of precedence:
+<DL><DT>
+       -  +  ~  !          <DD>Unary minus, unary plus, bit-wise NOT,
+                           logical NOT.  None of  these  operands
+                           may be applied to string operands, and
+                           bit-wise NOT may be  applied  only  to
+                           integers.
+<DT>
+       *  /  %             <DD>Multiply,  divide, remainder.  None of
+                           these  operands  may  be  applied   to
+                           string  operands, and remainder may be
+                           applied only to integers.  The remainder  will always have the same sign as
+                           the  divisor  and  an  absolute  value
+                           smaller than the divisor.
+<DT>
+       +  -                <DD>Add   and  subtract.   Valid  for  any
+                           numeric operands.
+<DT>
+       &lt;&lt;  &gt;&gt;              <DD>Left and right shift.  Valid for integer operands only.
+<DT>
+       &amp;                   <DD>Bit-wise   AND.    Valid  for  integer
+                           operands only.
+<DT>
+       ^                   <DD>Bit-wise  exclusive  OR.   Valid   for
+                           integer operands only.
+<DT>
+       |                   <DD>Bit-wise   OR.    Valid   for  integer
+                           operands only.
+<DT>
+       &amp;&amp;                  <DD>Logical AND.  Produces a 1  result  if
+                           both  operands  are non-zero, 0 otherwise.  Valid for numeric operands only
+                           (integers or floating-point).
+<DT>
+       ||                  <DD>Logical  OR.   Produces  a 0 result if
+                           both operands are zero,  1  otherwise.
+                           Valid for numeric operands only (integers or floating-point).
+<DT>
+       x?y:z               <DD>If-then-else, as in C.  If x evaluates
+                           to  non-zero,  then  the result is the
+                           value of y.  Otherwise the  result  is
+                           the  value  of  z.  The x operand must
+                           have a numeric value.
+<P></UL>
+<B>MATH FUNCTIONS</B><P>
+      Tcl  supports  the  following  mathematical  functions  in
+      expressions:
+<PRE>
+             acos        cos         hypot      sinh
+             asin        cosh        log        sqrt
+             atan        exp         log10      tan
+             atan2       floor       pow        tanh
+             ceil        fmod        sin
+</PRE>
+<B>TYPE CONVERSIONS</B><P>
+	Tcl supports the following functions to convert from one
+	representation of a number to another:
+<PRE>
+ 	abs double int round </PRE>
+The <CODE>expr</CODE> command supports most of the standard C library math calls.  
+
+<P>
+
+If you haven't hit the <B>Run Example</B> button yet, do so now, and examine
+the results of the example.  Play around a bit with the example code, and
+then go on to the next lesson.
+:TEXT_END:
+
+:CODE_START:
+set X 100;
+set Y 256;
+set Z [expr "$Y + $X"]
+set Z_LABEL "$Y plus $X is "
+
+puts "$Z_LABEL $Z"
+puts "The square root of $Y is [expr sqrt($Y)]\n"
+
+puts "Because of the precedence rules \"5 + -3 * 4\"   is: [expr -3 * 4 + 5]"
+puts "Because of the parentheses      \"(5 + -3) * 4\" is: [expr (5 + -3) * 4]"
+
+puts "\n................. more examples of differences between  \" and \{"
+puts {$Z_LABEL [expr $Y + $X]}
+puts "$Z_LABEL {[expr $Y + $X]}"
+puts "The command to add two numbers is: \[expr \$a + \$b]"
+:TEXT_END:
+
+

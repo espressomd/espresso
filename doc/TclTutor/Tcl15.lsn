@@ -1,0 +1,159 @@
+:TITLE:  Adding & Deleting members of a list
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+The commands for adding and deleting list members are:
+<DL>
+<B><DT>concat</B> <I>?arg1 arg2 ... argn?</I>
+
+<DD> Concatenates the <I>args</I> into a single list.  It also
+eliminates leading and trailing spaces in the arg's and adds a single
+separator space between arg's.  <I>Args</I> to <CODE>concat</CODE> may
+be either individual elements, or lists.  If an <I>arg</I> is already a
+list, the contents of that list is concatenated with the other
+<I>args</I>.
+
+
+<B><DT>lappend</B> <I>listName ?arg1 arg2 ... argn?</I>
+<DD> Appends the <I>args</I> to the list <I>listName</I> treating each
+<I>arg</I> as a list element.
+<B><DT>linsert</B> <I>listName index arg1 ?arg2 ... argn? </I>
+<DD> Returns a new list with the new listelements inserted just before the 
+indexth  element  of  <I>listName</I>. Each element argument will 
+become a separate element of the new list.  If index is less than or equal 
+to zero, then the new elements are inserted at the beginning of the list.  If
+index has the value end, or if it is greater than or equal to the number
+of elements in the list, then the new elements are appended to the list. 
+<B><DT>lreplace</B> <I>listName first last ?arg1 ... argn?</I>
+<DD>Returns a new list with N elements of <I>listName</I> replaced by the 
+<I>args</I>.
+If <I>first</I> is less than or equal to 0, lreplace starts replacing from 
+the first
+element of the list.  If <I>first</I> is greater than the end of the list,
+or the word <B>end</B>, then lreplace behaves like lappend.  If there are
+fewer <I>args</I> than the number of positions between <I>first</I> and
+<I>last</I>, then the positions for which there are no <I>args</I> are
+deleted.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+The commands for adding and deleting list members are:
+<DL>
+<B><DT>concat</B> <I>?arg1 arg2 ... argn?</I>
+
+<DD> Concatenates the <I>args</I> into a single list.  It also
+eliminates leading and trailing spaces in the arg's and adds a single
+separator space between arg's.  <I>Args</I> to <CODE>concat</CODE> may
+be either individual elements, or lists.  If an <I>arg</I> is already a
+list, the contents of that list is concatenated with the other
+<I>args</I>.
+<B><DT>lappend</B> <I>listName ?arg1 arg2 ... argn?</I>
+<DD> Appends the <I>args</I> to the list <I>listName</I> treating each
+<I>arg</I> as a list element.
+<B><DT>linsert</B> <I>listName index arg1 ?arg2 ... argn? </I>
+<DD> Returns a new list with the new listelements inserted just before the 
+indexth  element  of  <I>listName</I>. Each element argument will 
+become a separate element of the new list.  If index is less than or equal 
+to zero, then the new elements are inserted at the beginning of the list.  If
+index has the value end, or if it is greater than or equal to the number
+of elements in the list, then the new elements are appended to the list. 
+<B><DT>lreplace</B> <I>listName first last ?arg1 ... argn?</I>
+<DD>Returns a new list with N elements of <I>listName</I> replaced by the 
+<I>args</I>.
+If <I>first</I> is less than or equal to 0, lreplace starts replacing from 
+the first
+element of the list.  If <I>first</I> is greater than the end of the list,
+or the word <B>end</B>, then lreplace behaves like lappend.  If there are
+fewer <I>args</I> than the number of positions between <I>first</I> and
+<I>last</I>, then the positions for which there are no <I>args</I> are
+deleted.
+</DL>
+Take a look at the example code, and pay special attention to the way
+that sets of characters are grouped into single list elements.
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+The list would be useful even if the only actions you could perform on it
+were to create and access members.  However there are also a set of functions
+that allow you to add and delete items from a list.
+<P>
+These commands are:
+<DL>
+<B><DT>concat</B> <I>?arg1 arg2 ... argn?</I>
+<DD> Concatenates the <I>args</I> into a single list.  It also
+eliminates leading and trailing spaces in the arg's and adds a single
+separator space between arg's.  <I>Args</I> to <CODE>concat</CODE> may
+be either individual elements, or lists.  If an <I>arg</I> is already a
+list, the contents of that list is concatenated with the other
+<I>args</I>.
+<B><DT>lappend</B> <I>listName ?arg1 arg2 ... argn?</I>
+<DD> Appends the <I>args</I> to the list <I>listName</I> treating each
+<I>arg</I> as a list element.
+<B><DT>linsert</B> <I>listName index arg1 ?arg2 ... argn? </I>
+<DD> Returns a new list with the new listelements inserted just before the 
+indexth  element  of  <I>listName</I>. Each element argument will 
+become a separate element of the new list.  If index is less than or equal 
+to zero, then the new elements are inserted at the beginning of the list.  If
+index has the value end, or if it is greater than or equal to the number
+of elements in the list, then the new elements are appended to the list. 
+<B><DT>lreplace</B> <I>listName first last ?arg1 ... argn?</I>
+<DD>Returns a new list with N elements of <I>listName</I> replaced by the 
+<I>args</I>.
+If <I>first</I> is less than or equal to 0, lreplace starts replacing from 
+the first
+element of the list.  If <I>first</I> is greater than the end of the list,
+or the word <B>end</B>, then lreplace behaves like lappend.  If there are
+fewer <I>args</I> than the number of positions between <I>first</I> and
+<I>last</I>, then the positions for which there are no <I>args</I> are
+deleted.  
+<P>You can use this feature delete items from a list by giving the indexes
+of the range of items you wish to delete, and supplying *no* <I>args</I>.
+</DL>
+<P>
+Run the example, and examine it while you read the rest of this lesson.
+<P>
+Examine the way that list items are grouped in the example code.  The 
+<CODE>{c d e}</CODE> in the first example is a three element list consisting 
+of three letters, while <CODE> {f {g h}}</CODE> is a two element list consisting
+of one letter, and a list of two letters.  When these are joined into one 
+list with the <CODE>list</CODE> command, each list within the string becomes
+an individual list element.  
+<P>When the string is converted to a list with
+the <CODE>split</CODE> command, it splits on the whitespace, but treats the
+braces as meaningless characters.  In order to keep other list commands from
+trying to interpret the braces as grouping operators, they are escaped
+with backslashes.  Try using braces as the <I>splitChars</I>, and see what
+list gets created then.
+<P>
+Finally, when the lists are grouped with <CODE>concat</CODE>, the list elements
+of the lists are concat'ed into one list.
+:TEXT_END:
+
+:CODE_START:
+set b [list a b {c d e} {f {g h}}]
+puts "Treated as a list: $b\n"
+
+set b [split "a b {c d e} {f {g h}}"]
+puts "Transformed by split: $b\n"
+
+set a [concat a b {c d e} {f {g h}}]
+puts "Concated: $a\n"
+
+lappend a {ij K lm}			;# Note: {ij K lm} is a single element
+puts "After lappending: $a\n"
+
+set b [linsert $a 3 "1 2 3"]		;# "1 2 3" is a single element
+puts "After linsert at position 3: $b\n"
+
+;# "AA" and "BB" are two list elements.
+set b [lreplace $b 3 5 "AA" "BB"]  
+puts "After lreplacing 3 positions with 2 values at position 3: $b\n"
+:TEXT_END:
+

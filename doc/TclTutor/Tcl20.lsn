@@ -1,0 +1,318 @@
+:TITLE: Regular Expressions 101
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+<P>
+Tcl also supports string operations that use the regular expressions package
+written by Henry Spencer.  Several commands can access these methods with
+a -regexp argument, see the man pages for which commands support regular
+expressions.  
+<P>
+There are also two explicit commands for parsing regular expressions.
+<DL>
+<B><DT>regexp</B> <I>?switches? exp string ?matchVar? ?subMatch1 ... subMatchN?</I>
+<DD>Searches <I>string</I> for the regular expression <I>exp</I>.  If a 
+parameter <I>matchVar</I> is given, then the substring that matches the 
+regular expression is copied to <I>matchVar</I>.  If <I>subMatchN</I> variables
+exist, then the parenthetical parts of the matching string are copied to the
+<I>subMatch</I> variables, working from left to right.
+<B><DT>regsub</B> <I>?switches? exp string subSpec varName</I>
+<DD>Searches <I>string</I> for substrings that match the regular
+expression <I>exp</I> and replaces them with <I>subSpec</I>.  The
+resulting string is copied into <I>varName</I>.
+</DL>
+Regular expressions can be expressed in just a few rules.
+<DL>
+<DT>^
+<DD>Matches the beginning of a string
+<DT>$
+<DD>Matches the end of a string
+<DT>.
+<DD>Matches any single character
+<DT>*
+<DD>Matches any count (0-n) of the previous character
+<DT>+
+<DD>Matches any count, but at least 1 of the previous character
+<DT>[...]
+<DD>Matches any character of a set of characters
+<DT>[^...]
+<DD>Matches any character *NOT* a member of the set of characters 
+following the ^.
+<DT>(...)
+<DD>Groups a set of characters into a subSpec.
+</DL>
+<P>
+Regular expressions are similar to the globbing that was discussed in
+lessons 15 and 17.  The main difference is in the way that sets of matched
+characters are handled.  In globbing the only way to select sets of unknown
+text is the <B>*</B> symbol.  This matches to any quantity of any character.
+<P>
+In regular expression parsing, the <B>*</B> symbol matches zero or more
+occurrences of the character immediately proceeding the <B>*</B>.  For example
+<B>a*</B> would match a, aaaaa, or a blank string.  If the character directly before
+the <B>*</B> is a set of characters within square brackets, then the <B>*</B>
+will match any quantity of all of these characters.  For example, <B>[a-c]*</B>
+would match aa, abc, aabcabc, or again, an empty string.
+<P>
+The <B>+</B> symbol behaves roughly the same as the <B>*</B>, except that
+it requires at least one character to match.  For example,  <B>[a-c]*</B>
+would match aa, abc, or aabcabc, but not an empty string.
+<P>
+The <B>regexp</B>command is similar to the <B>string match</B> command in
+that it matches an <B>exp</B> against a string.  It is different in that
+it can match a portion of a string, instead of the entire string, and
+will place the characters matched into the <B>matchVar</B> variable.
+<P>
+If a match is found to the portion of a regular expression
+enclosed within parentheses, <B>regexp</B> will copy the subset of matching 
+characters is to the <B>subSpec</B> argument.  This can be used to
+parse simple strings.
+<P>
+<B>Regsub</B> will copy the contents of the string to a new variable,
+substituting the characters that match <B>exp</B> with the characters in
+<B>subSpec</B>.  If <I>subSpec</I> contains a <B>&</B> or <B>\0</B>, then
+those characters will be replaced by the characters that matched <I>exp</I>.
+If the number following a backslash is 1-9, then that backslash sequence
+will be replaced by the appropriate portion of <I>exp</I> that is enclosed
+within parentheses.
+
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+Tcl also supports string operations that use the regular expressions package
+written by Henry Spencer.  Several commands can access these methods with
+a -regexp argument, see the man pages for which commands support regular
+expressions.  
+<P>
+There are also two explicit commands for parsing regular expressions.
+<DL>
+<B><DT>regexp</B> <I>?switches? exp string ?matchVar? ?subMatch1 ... subMatchN?</I>
+<DD>Searches <I>string</I> for the regular expression <I>exp</I>.  If a 
+parameter <I>matchVar</I> is given, then the substring that matches the 
+regular expression is copied to <I>matchVar</I>.  If <I>subMatchN</I> variables
+exist, then the parenthetical parts of the matching string are copied to the
+<I>subMatch</I> variables, working from left to right.
+<B><DT>regsub</B> <I>?switches? exp string subSpec varName</I>
+<DD>Searches <I>string</I> for substrings that match the regular
+expression <I>exp</I> and replaces them with <I>subSpec</I>.  The
+resulting string is copied into <I>varName</I>.
+</DL>
+Regular expressions can be expressed in just a few rules.
+<DL>
+<DT>^
+<DD>Matches the beginning of a string
+<DT>$
+<DD>Matches the end of a string
+<DT>.
+<DD>Matches any single character
+<DT>*
+<DD>Matches any count (0-n) of the previous character
+<DT>+
+<DD>Matches any count, but at least 1 of the previous character
+<DT>[...]
+<DD>Matches any character of a set of characters
+<DT>[^...]
+<DD>Matches any character *NOT* a member of the set of characters 
+following the ^.
+<DT>(...)
+<DD>Groups a set of characters into a subSpec.
+</DL>
+<P>
+Regular expressions are similar to the globbing that was discussed in
+lessons 15 and 17.  The main difference is in the way that sets of matched
+characters are handled.  In globbing the only way to select sets of unknown
+text is the <B>*</B> symbol.  This matches to any quantity of any character.
+<P>
+In regular expression parsing, the <B>*</B> symbol matches zero or more
+occurrences of the character immediately proceeding the <B>*</B>.  For example
+<B>a*</B> would match a, aaaaa, or a blank string.  If the character directly before
+the <B>*</B> is a set of characters within square brackets, then the <B>*</B>
+will match any quantity of all of these characters.  For example, <B>[a-c]*</B>
+would match aa, abc, aabcabc, or again, an empty string.
+<P>
+The <B>+</B> symbol behaves roughly the same as the <B>*</B>, except that
+it requires at least one character to match.  For example,  <B>[a-c]+</B>
+would match a, abc, or aabcabc, but not an empty string.
+<P>
+Regular expression parsing has a more powerful manner of parsing square 
+brackets than globbing.  With globbing you can use the square brackets to
+enclose a set of characters any of which will be a match.  Regular expression
+parsing also includes a method of selecting any character not in a set.  If
+the first character after the <B>[</B> is a caret (<B>^</B>), then the
+regular expression parser will match any character not in the set of
+characters between the square brackets.  A caret can be included in the set
+of characters to match (or not) by placing it in any position other than
+the first.
+<P>
+The <B>regexp</B>command is similar to the <B>string match</B> command in
+that it matches an <B>exp</B> against a string.  It is different in that
+it can match a portion of a string, instead of the entire string, and
+will place the characters matched into the <B>matchVar</B> variable.
+<P>
+If a match is found to the portion of a regular expression
+enclosed within parentheses, <B>regexp</B> will copy the subset of matching 
+characters is to the <B>subSpec</B> argument.  This can be used to
+parse simple strings.
+<P>
+<B>Regsub</B> will copy the contents of the string to a new variable,
+substituting the characters that match <B>exp</B> with the characters in
+<B>subSpec</B>.  If <I>subSpec</I> contains a <B>&</B> or <B>\0</B>, then
+those characters will be replaced by the characters that matched <I>exp</I>.
+If the number following a backslash is 1-9, then that backslash sequence
+will be replaced by the appropriate portion of <I>exp</I> that is enclosed
+within parentheses.
+<P>
+Note that the <B>exp</B> argument to <CODE>regexp </CODE> or <CODE>regsub</CODE> is
+processed by the Tcl substitution pass, and be certain to escape characters
+as required.
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+<P>
+Tcl also supports string operations that use the regular expressions package
+written by Henry Spencer.  Several commands can access these methods with
+a -regexp argument, see the man pages for which commands support regular
+expressions.  
+<P>
+There are also two explicit commands for parsing regular expressions.
+<DL>
+<B><DT>regexp</B> <I>?switches? exp string ?matchVar? ?subMatch1 ... subMatchN?</I>
+<DD>Searches <I>string</I> for the regular expression <I>exp</I>.  If a 
+parameter <I>matchVar</I> is given, then the substring that matches the 
+regular expression is copied to <I>matchVar</I>.  If <I>subMatchN</I> variables
+exist, then the parenthetical parts of the matching string are copied to the
+<I>subMatch</I> variables, working from left to right.
+<B><DT>regsub</B> <I>?switches? exp string subSpec varName</I>
+<DD>Searches <I>string</I> for substrings that match the regular
+expression <I>exp</I> and replaces them with <I>subSpec</I>.  The
+resulting string is copied into <I>varName</I>.
+</DL>
+Regular expressions can be expressed in just a few rules.
+<DL>
+<DT>^
+<DD>Matches the beginning of a string
+<DT>$
+<DD>Matches the end of a string
+<DT>.
+<DD>Matches any single character
+<DT>*
+<DD>Matches any count (0-n) of the previous character
+<DT>+
+<DD>Matches any count, but at least 1 of the previous character
+<DT>[...]
+<DD>Matches any character of a set of characters
+<DT>[^...]
+<DD>Matches any character *NOT* a member of the set of characters 
+following the ^.
+<DT>(...)
+<DD>Groups a set of characters into a subSpec.
+</DL>
+<P>
+Regular expressions are similar to the globbing that was discussed in
+lessons 15 and 17.  The main difference is in the way that sets of matched
+characters are handled.  In globbing the only way to select sets of unknown
+text is the <B>*</B> symbol.  This matches to any quantity of any character.
+<P>
+In regular expression parsing, the <B>*</B> symbol matches zero or more
+occurrences of the character immediately proceeding the <B>*</B>.  For example
+<B>a*</B> would match a, aaaaa, or a blank string.  If the character directly before
+the <B>*</B> is a set of characters within square brackets, then the <B>*</B>
+will match any quantity of all of these characters.  For example, <B>[a-c]*</B>
+would match aa, abc, aabcabc, or again, an empty string.
+<P>
+The <B>+</B> symbol behaves roughly the same as the <B>*</B>, except that
+it requires at least one character to match.  For example,  <B>[a-c]+</B>
+would match a, abc, or aabcabc, but not an empty string.
+<P>
+Regular expression parsing has a more powerful manner of parsing square 
+brackets than globbing.  With globbing you can use the square brackets to
+enclose a set of characters any of which will be a match.  Regular expression
+parsing also includes a method of selecting any character not in a set.  If
+the first character after the <B>[</B> is a caret (<B>^</B>), then the
+regular expression parser will match any character not in the set of
+characters between the square brackets.  A caret can be included in the set
+of characters to match (or not) by placing it in any position other than
+the first.
+<P>
+The <B>regexp</B>command is similar to the <B>string match</B> command in
+that it matches an <B>exp</B> against a string.  It is different in that
+it can match a portion of a string, instead of the entire string, and
+will place the characters matched into the <B>matchVar</B> variable.
+<P>
+If a match is found to the portion of a regular expression
+enclosed within parentheses, <B>regexp</B> will copy the subset of matching 
+characters is to the <B>subSpec</B> argument.  This can be used to
+parse simple strings.
+<P>
+<B>Regsub</B> will copy the contents of the string to a new variable,
+substituting the characters that match <B>exp</B> with the characters in
+<B>subSpec</B>.  If <I>subSpec</I> contains a <B>&</B> or <B>\0</B>, then
+those characters will be replaced by the characters that matched <I>exp</I>.
+If the number following a backslash is 1-9, then that backslash sequence
+will be replaced by the appropriate portion of <I>exp</I> that is enclosed
+within parentheses.
+<P>
+If you haven't already done so, hit the run example button, and look at
+the output while you read the rest of this lesson.
+<P>
+The <B>exp</B> argument to <CODE>regexp </CODE> or <CODE>regsub</CODE> is
+processed by the Tcl substitution pass.  This affects the mechanics of how
+regular expressions can be formed.  If the regular expression has no
+backslash sequences that you wish to have converted by the Tcl substitution
+phase, then the <B>exp</B> argument can be enclosed in braces.  If you wish
+any substitutions to occur, however, the <B>exp</B> argument must be enclosed
+within quotes.  In this case, characters that have meaning to the Tcl 
+substitution phase must be escaped with a backslash.  
+<P>
+In these examples, there are no backslash sequences, so either braces or
+quotes could be used to group the <I>exp</I> string.  In the first two
+examples, the square bracket is used to define a range of acceptable 
+characters, so it is simpler to use the brackets in these cases.
+<P>
+The first example simply matches the first set of lowercase characters.  It
+won't match an upper case character, and it won't match a space.  So, the 
+match is "here", the first four lower case letters, bounded on one end by
+the upper case "W", and on the other end by the space.
+<P>
+The second example shows the first 2 words of the phrase being parsed 
+into separate variables.  The sequence <CODE>([A-Za-z]+)</CODE> selects
+any number (but at least one) of upper or lowercase letters.  The parentheses
+around this sequence causes the characters that match this regular expression
+to be copied into the first of the <I>subSpec</I> variables.  In this case,
+the letters "Where" are copied into <CODE>sub1</CODE>.
+<P>
+The next sequence is the "<CODE> +</CODE>".  This matches any number of 
+spaces, but at least one space.
+<P>
+The last sequence in the <I>exp</I> is <CODE>([a-z]+)</CODE>, which matches
+any quantity (but at least one) of lower case letters, and copied the
+matching characters into the second <I>subSpec</I> variable.
+<P>
+The last example shows a trivial regular expression <CODE>"way"</CODE> being
+replaced by the string "lawsuit" in the sample phrase.
+<P>
+Try changing the <CODE>"way"</CODE> to a generalized regular expression,
+and see what happens.
+
+:TEXT_END:
+
+:CODE_START:
+set sample "Where there is a will, There is a way."
+
+set result [regexp {[a-z]+} $sample match]
+puts "Result: $result match: $match"
+
+set result [regexp {([A-Za-z]+) +([a-z]+)} $sample match sub1 sub2 ]
+puts "Result: $result Match: $match 1: $sub1 2: $sub2"
+
+regsub "way" $sample "lawsuit" sample2
+puts "New: $sample2"
+
+:TEXT_END:
+

@@ -1,0 +1,255 @@
+:TITLE: More command construction - format, list
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+The main point to be aware of when constructing command strings for <B>eval</B>
+is how the arguments will be grouped when the command is evaluated.
+<P>
+For instance <PRE><CODE>
+eval puts OK
+</PRE></CODE>
+would print the string OK.  However,<PRE><CODE>
+eval puts Not OK
+</PRE></CODE>
+will generate an error.
+<P>
+The reason that the second command generates an error is 
+that the <B>eval</B> uses <B> concat</B> to merge its arguments 
+into a command string.  This causes the two words <B>Not</B> and <B>OK</B> to
+be treated as two arguments to <B>puts</B>.  If there is more
+than one argument to <B>puts</B>, the first argument must
+be a file pointer.
+<P>
+Correct ways to write the second command include these:<PRE><CODE>
+eval [list puts {Not OK}]
+eval [list puts "Not OK"]
+set cmd "puts" ; lappend cmd {Not OK}; eval $cmd
+</PRE></CODE>
+<P>
+As long as you keep track of how the arguments you present to <B>eval</B>
+will be grouped, you can use many methods of creating the strings for <B>eval</B>,
+including the string commands and format.
+<P> 
+The completeness of a command can be checked with <B>info complete</B>.  
+<B>Info complete</B> can also be used in an interactive program to determine if 
+the line being typed in is a complete command, or the user just entered a 
+newline to format the command better.
+<DL>
+<B><DT>info complete</B> <I>string</I>
+<DD>If <I>string</I> has no unmatched brackets, braces or parentheses,
+then a value of 1 is returned, else 0 is returned.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+There may be some unexpected results when you try to compose command strings
+for <B>eval</B>.
+<P>
+For instance <PRE><CODE>
+eval puts OK
+</PRE></CODE>
+would print the string OK.  However,<PRE><CODE>
+eval puts Not OK
+</PRE></CODE>
+will generate an error.
+<P>
+The reason that the second command generates an error is 
+that the <B>eval</B> uses <B> concat</B> to merge its arguments 
+into a command string.  This causes the two words <B>Not OK</B> to
+be treated as two arguments to <B>puts</B>.  If there is more
+than one argument to <B>puts</B>, the first argument must
+be a file pointer.
+<P>
+Correct ways to write the second command include these:<PRE><CODE>
+eval [list puts {Not OK}]
+eval [list puts "Not OK"]
+set cmd "puts" ; lappend cmd {Not OK}; eval $cmd
+</PRE></CODE>
+<P>
+As long as you keep track of how the arguments you present to <B>eval</B>
+will be grouped, you can use many methods of creating the strings for <B>eval</B>,
+including the <B>string</B> commands and <B>format</B>.
+<P>
+The recommended methods of constructing commands for <B>eval</B> is to use
+the <B>list</B> and <B>lappend</B> commands.  These commands become difficult
+to use, however if you need to put braces in the command, as was done in the
+previous lesson.
+<P>
+The example from the previous lesson is re-implemented in the example code
+using lappend.
+<P> 
+The completeness of a command can be checked with <B>info complete</B>.  
+<B>Info complete</B> can also be used in an interactive program to determine if 
+the line being typed in is a complete command, or the user just entered a 
+newline to format the command better.
+<DL>
+<B><DT>info complete</B> <I>string</I>
+<DD>If <I>string</I> has no unmatched brackets, braces or parentheses,
+then a value of 1 is returned, else 0 is returned.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+The <B>eval</B> command is very powerful, but you need to keep track of
+exactly what string is being evaluated when you use this command.  
+<P>
+For instance <PRE><CODE>
+eval puts OK
+</PRE></CODE>
+would print the string OK.  However,<PRE><CODE>
+eval puts Not OK
+</PRE></CODE>
+will generate an error.
+<P>
+The reason that the second command generates an error is 
+that the <B>eval</B> uses <B> concat</B> to merge its arguments 
+into a command string.  This causes the two words <B>Not OK</B> to
+be treated as two arguments to <B>puts</B>.  If there is more
+than one argument to <B>puts</B>, the first argument must
+be a file pointer.
+<P>
+Correct ways to write the second command include these:<PRE><CODE>
+eval [list puts {Not OK}]
+eval [list puts "Not OK"]
+set cmd "puts" ; lappend cmd {Not OK}; eval $cmd
+</PRE></CODE>
+<P>
+You can run into problems with this feature when you are using
+the contents of variables to construct the command string.  For instance:
+<PRE><CODE>
+set x "OK"
+eval puts $x
+
+set x "NOT OK" 
+eval puts $x </PRE></CODE> 
+
+Again the first time <B>eval</B> is called, it will print <B>OK</B>, and
+the second time it will generate an error.  In this case, it's because
+the $x is substituted with <B>NOT OK</B> in the Tcl substitution phase. 
+<P>
+
+Again, this code will work: 
+<PRE><CODE> 
+set x "NOT OK" 
+eval [list puts $x] 
+</PRE></CODE> 
+
+<P>
+ As long as you keep track of how the arguments you
+present to <B>eval</B> will be grouped, you can use many methods of
+creating the strings for <B>eval</B>, including the <B>string</B>
+commands and <B>format</B>.  
+<P>
+The best methods of constructing
+commands for <B>eval</B> is to use the <B>list</B> and <B>lappend</B>
+commands.  These commands become difficult to use, however if you need
+to put braces in the command, as was done in the previous lesson.  
+<P>
+The example from the previous lesson is re-implemented in the example
+code here using lappend.
+<P>
+The completeness of a command can be checked with <B>info complete</B>.  
+<B>Info complete</B> can also be used in an interactive program to determine if 
+the line being typed in is a complete command, or the user just entered a 
+newline to format the command better.
+<DL>
+<B><DT>info complete</B> <I>string</I>
+<DD>If <I>string</I> has no unmatched brackets, braces or parentheses,
+then a value of 1 is returned, else 0 is returned.
+</DL>
+<P>
+As usual, run the example, and follow the code and output.
+<P>
+The first <B>eval</B> command shows a trivial use of <B>eval</B> that works.
+<P>
+The next <B>eval</B> command uses <B>lappend</B> to make a multiple word
+puts that will also work.
+<P>
+The next command demonstrates how a trivial use of <B>eval</B> can fail.
+Again, this fails because there is nothing in the command to group
+<B>NOT OK</B> into one argument.  When <B>eval</B> invokes <B>concat</B> it
+will treat the two words as two arguments.  Try a few methods of making
+this command correct.
+<P>
+The <B>format</B> command in the next example creates the string
+<CODE> puts "Even This Works"</CODE>.  In this example, the second argument
+<B>"Even This Works"</B> is grouped by the quotes into a single argument,
+instead of being treated as three arguments.
+<P>
+The next example uses a variable to demonstrate the same process.
+<P>
+The next example uses lappend to create the tempFileName proc that
+was used in the previous lesson.  Remember that a Tcl command is really
+a list, and this example becomes a bit more obvious.
+<P>
+The first line, <CODE>set cmd {proc tempFileName }</CODE> initializes the
+command string to just contain <B>proc tempFileName</B>.  
+<P>
+The next line, <CODE>lappend cmd ""</CODE> appends an empty list item to
+<B>cmd</B>.  The empty list item is <CODE>{}</CODE>, which is an empty argument
+field.  At this point <B>cmd</B> contains the string <B>proc tempFileName {}</B>.  
+<P>
+The next line is the body of the proc.  The things to note here are the escaped
+quotes and dollar signs.  If the body of the proc were enclosed in braces,
+then the escapes wouldn't be needed. However, in that case 
+the <CODE>[pid]</CODE> would not be evaluated, and the <CODE>[pid]</CODE>
+would be part of the proc, instead of having the pid number placed in the
+string.
+<P>
+After this, the body of the proc is displayed for your viewing pleasure.
+<P>
+Next, the format command is used to create the proc definition command.
+The first line just initializes the command string, as before.
+<P>
+The subsequent lines append the body of the proc to the command.  The
+last line uses <B>format</B> to merge the results of the
+<CODE>[pid]</CODE> into the command line.  
+:TEXT_END:
+
+:CODE_START:
+;# This works
+set cmd "OK"
+eval puts $cmd
+
+;# This also works
+set cmd "puts" ; lappend cmd {Also OK}; eval $cmd
+
+;# This generates an error
+set cmd "NOT OK"
+eval puts $cmd
+
+eval [format {%s "%s"} puts "Even This Works"]
+
+set cmd "And even this can be made to work"
+
+eval [format {%s "%s"} puts $cmd ]
+
+set tmpFileNum 0;
+
+;# Creating the tempFileName proc with lappend
+
+set cmd {proc tempFileName }
+lappend cmd ""  
+lappend cmd "global num; incr num; return \"/tmp/TMP.[pid].\$num\""
+eval  $cmd
+
+puts "\nThis is the body of the proc definition:"
+puts "[info body tempFileName]\n"
+
+;# Now, show an incomplete command being caught by info complete
+
+set cmd {puts "This is Cool!}
+
+if {[info complete $cmd]} {
+  eval $cmd
+  } else {
+  puts "INCOMPLETE COMMAND: $cmd"
+  }
+:TEXT_END:
+

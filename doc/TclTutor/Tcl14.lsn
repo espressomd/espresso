@@ -1,0 +1,184 @@
+:TITLE: Tcl Data Structures 101 - The list
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+The list is the basic data structure to Tcl.  A list is simply an ordered 
+collection of stuff; numbers, words, strings, etc.  For example, a command in Tcl is
+just a list in which the first list entry is the name of a proc, and subsequent
+members of the list are the arguments to the proc.
+<P>
+Lists can be created in several ways:
+<UL>
+<LI>by setting a variable to be a list of values
+<LI>with the <B>split</B> command
+<LI>with the <B>list</B> command.
+</UL>
+The number of list elements in a list will be returned by the <CODE>llength</CODE>
+command.
+An individual list member can be accessed with the <CODE>lindex</CODE>
+command.
+<P>
+The brief description of these commands is:
+<DL>
+<B><DT>list</B> <I>?arg1 arg2 ...?</I>
+<DD> makes a list of the arguments
+<B><DT>split</B> <I>string ?splitChars?</I>
+<DD> Splits the <I>string</I> at <I>splitChars</I>.  <I>SplitChars</I> defaults
+to being whitespace.  Note that two of the <I>splitChars</I> in a row will
+both be parsed as marking a list entry, and will create an empty entry in the 
+list.
+<B><DT>lindex </B><I> list index</I>
+<DD> returns the <I>index</I>'th item from the list.  The first item is 0.
+<B><DT>llength</B> <I>list</I>
+<DD>Returns the number of elements in a list.
+</DL>
+<P>
+The items in list can be iterated through using the <CODE>foreach</CODE> command.
+<P>
+<B>foreach</B> <I>varname list body</I>
+<P>
+<CODE>Foreach</CODE> will execute the <I>body</I> code one time for each 
+list item in <I>list</I>.  On each pass, <I>varname</I> will contain the
+value of the next <I>list</I> item.
+
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+The list is the basic data structure to Tcl.  A list is simply an ordered 
+collection of stuff; numbers, words, strings, etc.  For instance, a command in Tcl is
+just a list in which the first list entry is the name of a proc, and subsequent
+members of the list are the arguments to the proc.
+<P>
+Lists can be created in several ways:
+<DL>
+<DT>by setting a variable to be a list of values
+<DD> set lst {{item 1} {item 2} {item 3}}
+<DT>with the <B>split</B> command
+<DD> set lst [split "item 1.item 2.item 3" "."]
+<DT>with the <B>list</B> command.
+<DD> set lst [list "item 1" "item 2" "item 3"]
+</DL>
+An individual list member can be accessed with the <CODE>lindex</CODE>
+command.
+<P>
+The brief description of these commands is:
+<DL>
+<B><DT>list</B> <I>?arg1 arg2 ...?</I>
+<DD> makes a list of the arguments
+<B><DT>split</B> <I>string ?splitChars?</I>
+<DD> Splits the <I>string</I> into a list of items at <I>splitChars</I>.  <I>SplitChars</I> defaults
+to being whitespace.  Note that if there are two <I>splitChars</I> in a row
+in the string being split, then
+each be parsed as marking a list entry, and will create an empty entry in the 
+list.  If <I>splitChars</I> is a string, then each member of the string will
+be used to split <I>string</I> into list members. Ie:<PRE> <CODE>split "1234567" "36"]</CODE></PRE>
+would split into a list composed of <CODE>{12 45 7}</CODE>.
+<B><DT>lindex </B><I> list index</I>
+<DD> returns the <I>index</I>'th item from the list.  The first item is 0.
+<B><DT>llength</B> <I>list</I>
+<DD>Returns the number of elements in a list.
+</DL>
+<P>
+The items in list can be iterated through using the <CODE>foreach</CODE> command.
+<P>
+<B>foreach</B> <I>varname list body</I>
+<P>
+<CODE>Foreach</CODE> will execute the <I>body</I> code one time for each 
+list item in <I>list</I>.  On each pass, <I>varname</I> will contain the
+value of the next <I>list</I> item.
+
+<P>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+The list is the basic data structure to Tcl.  A list is simply an
+ordered collection of stuff; numbers, words, strings, etc.  Each entry
+in a list is treated as a single unit, even though it may be composed
+of several words or even multiple lines of text.  For
+example, a command in Tcl is a list in which the first list entry
+is the name of a command, and subsequent members of the list are the
+arguments to the command.  
+<P> The
+entries in a list are separated by white space.  If an entry has white
+space within it, then that entry is enclosed within braces to make a single
+entry.  An empty list entry is denoted by a pair of braces with nothing
+between them ({}).
+<P>
+Lists can be created in several ways:
+<DL>
+<DT>by setting a variable to be a list of values
+<DD> set lst {{item 1} {item 2} {item 3}}
+<DT>with the <B>split</B> command
+<DD> set lst [split "item 1.item 2.item 3" "."]
+<DT>with the <B>list</B> command.
+<DD> set lst [list "item 1" "item 2" "item 3"]
+</DL>
+An individual list member can be accessed with the <CODE>lindex</CODE>
+command.
+<P>
+The brief description of these commands is:
+<DL>
+<B><DT>list</B> <I>?arg1 arg2 ...?</I>
+<DD> makes a list of the arguments
+<B><DT>split</B> <I>string ?splitChars?</I>
+<DD> Splits the <I>string</I> into a list of items at <I>splitChars</I>.  <I>SplitChars</I> defaults
+to being whitespace.  Note that if there are two <I>splitChars</I> in a row
+in the string being split, then
+each be parsed as marking a list entry, and will create an empty entry in the 
+list.  If <I>splitChars</I> is a string, then each member of the string will
+be used to split <I>string</I> into list members. Ie:<PRE> <CODE>split "1234567" "36"]</CODE></PRE>
+would split into a list composed of <CODE>{12 45 7}</CODE>.
+<B><DT>lindex </B><I> list index</I>
+<DD> returns the <I>index</I>'th item from the list.  The first item is 0.
+<B><DT>llength</B> <I>list</I>
+<DD>Returns the number of elements in a list.
+</DL>
+<P>
+The items in list can be iterated through using the <CODE>foreach</CODE> command.
+<P>
+<B>foreach</B> <I>varname list body</I>
+<P>
+<CODE>Foreach</CODE> will execute the <I>body</I> code one time for each 
+list item in <I>list</I>.  On each pass, <I>varname</I> will contain the
+value of the next <I>list</I> item.
+<P>
+The <CODE>foreach</CODE> example code is the equivalent of:
+<PRE><CODE>
+for {set i 0} {$i < [llength $x]} {incr i} {
+  puts "[lindex $x $i] is item number $i in list x"
+  }
+</PRE></CODE>
+The <CODE>foreach</CODE> command runs about twice as fast as the
+<CODE>for</CODE> in this example.  This is a good reason to use the
+<CODE>foreach</CODE> in place of a <CODE>for</CODE> loop when it is
+appropriate. 
+<P>
+Even though you can create a list by simply setting a variable to a string
+of words, it is better to use the <CODE>list</CODE> command when you are
+creating lists because this will ensure that the items are grouped the
+way you expect them to be grouped.
+:TEXT_END:
+
+:CODE_START:
+set x "a b c"
+puts "Item 2 of the list {$x} is: [lindex $x 2]\n"
+
+set y [split 7/4/1776 "/"]
+puts "We celebrate on the [lindex $y 1]'th day of the [lindex $y 0]'th month\n"
+
+set z [list puts "arg 2 is $y" ]
+puts "A command resembles: $z\n"
+
+set i 0;
+foreach j $x {
+  puts "$j is item number $i in list x"
+  incr i;
+  }
+:TEXT_END:
+

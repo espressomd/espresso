@@ -1,0 +1,302 @@
+:TITLE: Building Libraries of procs - unknown, info library
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+::CMD:: if {([info exists tcl_platform])} {
+  switch $tcl_platform(platform) {
+    unix        {
+                set Tutor(lsn.codeMod) {
+                }
+        }
+    windows     {
+                set Tutor(lsn.codeMod) {
+		    {regsub {cat} $line {command.com /C type} line}
+                    {if {[glob -nocomplain C:/temp] != ""} {
+                      regsub "/tmp" $line {C:/temp} line
+		    }
+		    }
+                    {if {[glob -nocomplain C:/windows/temp] != ""} {
+                      regsub "/tmp" $line {C:/windows/temp} line
+		    }
+		    }
+                    {if {[glob -nocomplain C:/winnt/temp] != ""} {
+                      regsub "/tmp" $line {C:/winnt/temp} line
+		    }
+		    }
+                }         
+        }
+    mac         {
+                set Tutor(lsn.codeMod) {
+		}
+                }
+    default     {
+                puts "I don't recognize the platform: $tcl_platform(platform)"
+                puts "Can't set platform specific parameters"
+                }
+    } 
+  }
+
+:LESSON_TEXT_START_LEVEL 0:
+Tcl provides a facility for automatically loading procs when they are
+first accessed, instead of sourceing them when the application starts.
+This can shorten an application's startup time, and even shrink the
+memory usage if not all procs are accessed during the application's use.
+<P>
+The mechanism for this process is that files are placed in a directory
+included in the <B>auto_path</B> list of directories.  Each of these
+directories needs an index, which is created by the <B>auto_mkindex</B>
+command.  When an unrecognized proc is called, it generates a call to
+the <B>unknown</B> proc, which searches through the index files in the
+list of directories until it finds a match to the unknown proc.  When
+a match is found, the <B>unknown</B> proc automatically loads that file,
+and evaluates the proc, returning control to the original script as though
+the proc had been there all along.
+<P>
+<DL>
+<B><DT>auto_mkindex</B> <I>libdir file1 ... filen</I>
+<DD>Creates an index file (tclIndex) in <I>libdir</I> from the source
+code modules listed as <I>file1 - filen</I>.  Each proc in the files
+will be listed in the index file, with a reference to the source code
+module that contains it.
+<P>
+The file descriptors may be any number of strings using the same
+format as arguments to the <B>glob</B> command.
+<P>
+This proc is defined in <B>init.tcl</B> which is loaded from the
+default library directory when the Tcl shell is initialized.
+<B><DT>info library</B>
+<DD>Returns the name of the library directory in which the standard
+Tcl scripts are stored.
+<P>
+Tcl procs that are in files in the Tcl library directory are loaded
+automatically when they are executed.  
+<P>
+Tcl expects to find init.tcl in the default library location,
+defined when the Tcl interpreter is built.  This path can be
+changed by setting the environment variable TCL_LIBRARY.
+<B><DT>unknown</B> <I>args</I>
+<DD>This proc is called by the interpreter when it encounters a
+command that can be parsed, but the command name is not in the tables.
+Unknown attempts the following steps to execute the command
+<UL COMPACT>
+<LI> Checks the index in the directories listed in auto_path to see
+if the proc exists in a file.  If the proc is found, the script is loaded
+with the <B>auto_load</B> proc, and the proc is executed.
+<LI>If the interpreter is running interactively, Tcl attempts to <B>exec</B>
+the command with the <B>auto_exec</B> proc.
+<LI>If the command is a unique prefix to a Tcl command, <B>unknown</B>
+completes the command name, and executes that command
+</UL>
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+When a Tcl script starts executing, you can immediately source
+all the files that may need to be accessed during the execution of
+the script, or you can wait until procs are actually called and source
+the files at that time.
+<P>
+Tcl provides a facility for automatically loading procs when they are
+first accessed, instead of sourceing them when the application starts. 
+Delaying the source call can shorten an application's startup time, and
+even shrink the memory usage if not all procs are accessed during the
+application's use. 
+<P>
+The procedure to follow to enable Tcl to automatically load files is this:
+<OL COMPACT>
+<LI>Place the source files in a single directory
+<LI>Create an index file (tclIndex) in that directory using <B>auto_mkindex</B>
+<LI>Add this directory path to the list of directories to be searched by
+<B>lappending</B> this path to the <B>auto_path</B> global variable in
+your application script.
+</OL>
+<P>
+When an unrecognized proc is called, Tcl generates a call to
+the <B>unknown</B> proc.  <B>Unknown</B> searches through the index files in the
+directory list <B>auto_path</B> until it finds a match to the unknown proc.
+When a match is found, <B>unknown</B> automatically loads that file,
+and evaluates the proc, returning control to the original script as though
+the proc had been there all along.
+<P>
+<DL>
+<B><DT>auto_mkindex</B> <I>libdir file1 ... filen</I>
+<DD>Creates an index file (tclIndex) in <I>libdir</I> from the source
+code modules listed as <I>file1 - filen</I>.  Each proc in the files
+will be listed in the index file, with a reference to the source code
+module that contains it.
+<P>
+The file descriptors may be any number of strings using the same
+format as arguments to the <B>glob</B> command.
+<P>
+This proc is defined in <B>init.tcl</B> which is loaded from the
+default library directory when the Tcl shell is initialized.
+<B><DT>info library</B>
+<DD>Returns the name of the library directory in which the standard
+Tcl scripts are stored.
+<P>
+Tcl procs that are in files in the Tcl library directory are loaded
+automatically when they are executed.  
+<P>
+Tcl expects to find init.tcl in the default library location,
+defined when the Tcl interpreter is built.  This path can be
+changed by setting the environment variable TCL_LIBRARY.
+<B><DT>unknown</B> <I>args</I>
+<DD>This proc is called by the interpreter when it encounters a
+command that can be parsed, but the command name is not in the tables.
+Unknown attempts the following steps to execute the command
+<UL COMPACT>
+<LI> Checks the index in the directories listed in auto_path to see
+if the proc exists in a file.  If the proc is found, the script is loaded
+with the <B>auto_load</B> proc, and the proc is executed.
+<LI>If the interpreter is running interactively, Tcl attempts to <B>exec</B>
+the command with the <B>auto_exec</B> proc.
+<LI>If the command is a unique prefix to a Tcl command, <B>unknown</B>
+completes the command name, and executes that command
+</UL>
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+When a Tcl script starts executing, you can immediately source
+all the files that contain procs that may be accessed during the execution of
+the script, or you can wait until procs are actually called and source
+the files at that time.  
+<P>
+sourceing all the files when you first start an application can make
+the application start up very slowly.
+<P>
+Checking that each proc exists before you call it, and sourceing the file
+at that time makes a lot of extra code, and makes an application run
+slowly.
+<P>
+Tcl provides a facility for automatically loading procs when they are
+first accessed, instead of sourceing them when the application starts. 
+This lets you shorten your applications startup time without adding
+any extra code to check that procs have been defined.
+sourceing modules only when necessary may also reduce a tasks memory
+requirements since not all procs may be needed each time it runs.
+<P>
+The procedure to follow to enable Tcl to automatically load files is this:
+<OL COMPACT>
+<LI>Copy all the source files in a single directory.
+<LI>Create an index file (tclIndex) in that directory using <B>auto_mkindex</B>.
+<LI>Add this directory path to the list of directories to be searched by
+<B>lappending</B> this path to the <B>auto_path</B> global variable in
+your application script.
+</OL>
+<P>
+When the Tcl interpreter encounters a proc that hasn't been defined, it
+calls 
+the <B>unknown</B> proc.  <B>Unknown</B> searches through the index files in the
+directory list stored in the global variable <B>auto_path</B> until it finds a match to the unknown proc.
+When a match is found, <B>unknown</B> automatically loads that file,
+and evaluates the proc, returning control to the original script as though
+the proc had been there all along.
+<P>
+Run the example, and examine the code and output while you read the
+description here.
+<P>
+The first portion of the example just creates a temporary file, the same
+way that it was created in the previous lesson.
+<P>
+After this, <B>/tmp</B> is appended to the list of directories to search
+when an undefined proc is encountered.  Then that list is printed.  It
+will probably have two entries on your machine.  The first two will be the
+library paths where the Tcl and Tk interpreters expect to find 
+initialization files. After that will be <B>/tmp</B>, the directory we just added.
+<P>
+After this, the compiler default library directory is printed .  This
+directory will be one of the two first libraries from the previous output.
+<P>
+The next line makes the index file.  In this case, it defines only one
+file to be placed in the index.  The second argument could be <B>*.tcl</B>,
+in which case any files ending in <B>.tcl</B> would be added to the index.
+<P>
+After this, the code confirms that <B>testproc</B> has not been defined,
+and then executes <B>testproc</B> anyhow.  The output shows that <B>testproc</B>
+wasn't defined originally, but executed OK.  After <B>testproc</B> was called,
+the code confirms that it still exists.
+<P>
+Finally, the temporary files are cleaned up.
+<DL>
+<B><DT>auto_mkindex</B> <I>libdir file1 ... filen</I>
+<DD>Creates an index file (tclIndex) in <I>libdir</I> from the source
+code modules listed as <I>file1 - filen</I>.  Each proc in the files
+will be listed in the index file, with a reference to the source code
+module that contains it.
+<P>
+The file descriptors may be any number of strings using the same
+format as arguments to the <B>glob</B> command.
+<P>
+This proc is defined in <B>init.tcl</B> which is loaded from the
+default library directory when the Tcl shell is initialized.
+<B><DT>info library</B>
+<DD>Returns the name of the library directory in which the standard
+Tcl scripts are stored.
+<P>
+Tcl procs that are in files in the Tcl library directory are loaded
+automatically when they are executed.  
+<P>
+Tcl expects to find init.tcl in the default library location,
+defined when the Tcl interpreter is built.  This path can be
+changed by setting the environment variable TCL_LIBRARY.
+<B><DT>unknown</B> <I>args</I>
+<DD>This proc is called by the interpreter when it encounters a
+command that can be parsed, but the command name is not in the tables.
+Unknown attempts the following steps to execute the command
+<UL COMPACT>
+<LI> Checks the index in the directories listed in auto_path to see
+if the proc exists in a file.  If the proc is found, the script is loaded
+with the <B>auto_load</B> proc, and the proc is executed.
+<LI>If the interpreter is running interactively, Tcl attempts to <B>exec</B>
+the command with the <B>auto_exec</B> proc.
+<LI>If the command is a unique prefix to a Tcl command, <B>unknown</B>
+completes the command name, and executes that command
+</UL>
+</DL>
+:TEXT_END:
+
+:CODE_START:
+;# Set up a temporary file with a test proc.
+
+set filename "/tmp/TT_[pid]"
+set outfile [open "$filename" "w"];
+
+puts $outfile {set scr [info script]}
+puts $outfile "proc testproc {} {"
+puts $outfile "global scr;"
+puts $outfile "puts \"testproc source file: \$scr.\""
+puts $outfile "puts \"testproc executing from \[info script]\n\""
+puts $outfile "}"
+
+close $outfile;
+
+puts "The directories in the auto path are: $auto_path\n"
+puts "The default library is: [info library]\n";
+
+auto_mkindex "/tmp" [file tail $filename]
+
+# With Tcl8.3, this must come after auto_mkindex.
+
+lappend auto_path "/tmp"
+
+if { [info procs testproc] == ""} {
+  puts "testproc does not exist\n"
+  }
+
+testproc
+
+if { [info procs testproc] != ""} {
+  puts "\ntestproc does exist now"
+  }
+
+file delete /tmp/tclIndex
+file delete $filename 
+
+:TEXT_END:
+
