@@ -154,6 +154,7 @@ proc checkpoint_read { origin } {
     while { [eof $chk]==0 } { if { [gets $chk source] > 0 } {
 	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -cd $source" r]
 	} else { set f [open "$source" "r"] }
+	part deleteall
 	while { [blockfile $f read auto] != "eof" } {}
 	puts -nonewline "."; flush stdout; # puts "read $source"
 	close $f
