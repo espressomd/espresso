@@ -1,23 +1,105 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-- v1.7.5a -
+****************************************************************************************
+* v1.8.Beta (Rebi & Azan)                                                              *
+****************************************************************************************
+
+Current working revision.
+
+
+- v1.8.1d -
 -----------
-(a) October 08th, 2004.
+
+(d) October 22nd, 2004.
+(c) October 20th, 2004.
+(b) October 19th, 2004.
+(a) October 18th, 2004.
 
 New Features:
-(a) Added support for FFTW version 3. When electrostatics/p3m is used, the Fast
+(d) Added the famous soft-sphere potential.
+(c) Now the P3M limit for the mesh size is configurable and defaults to 128.
+(a) The Buckingham potential has been added.
+(a) Rattle is in, but probably not yet working.
+
+Changes:
+(c) Switched from POLYGAMMA_EPS to the commonly used ROUND_ERROR_PREC.
+(b) By request of too many users, grid.h now explicitely includes limits.h (which
+    shouldn't be necessary on modern machines, but then you never know).
+(a) The new tuning now refuses to use meshes larger than 256, to avoid memory
+    allocation problems (a 512 grid consumes roughly 3 GB memory!).
+
+Bugfixes:
+(b) Fixed the warning with the recent icc (Blade center).
+
+
+- v1.8.0  -
+-----------
+
+(a) October 18th, 2004.
+
+New Features:
+(a) Masses have been added to ESPResSo which may be enabled using the compilerflag MASS
+    in config.h (the usual place for such flags). 
+    This also required introduction of a macro PMASS, representing the mass of a particle,
+    which returns 1 if masses are disabled; all these products the compiler should then
+    optimize away such that without masses nothing should've changed in the final binary.
+    Nevertheless the introduction of masses naturally demands a thorough re-write of the
+    entire code to make sure that no spot where masses belong is overlooked.
+    So far the core system (I/O, integration with thermostat, NpT, pressure) works, but 
+    most of the analysis routines, the blockfile procedures, checkpointing, and all of
+    the non-standard additions have not yet been adapted; other mass-dependent stuff
+    has already been added (e.g. Rattle) without being fully functional yet.
+
+
+
+****************************************************************************************
+* v1.8.Beta (Rebi & Azan)                                                              *
+****************************************************************************************
+
+First preview released on October 18th, 2004.
+
+
+
+- v1.7.6e -
+-----------
+
+(e) October   17th, 2004.
+(d) October   11th, 2004.
+(c) October    8th, 2004.
+(b) October    6th, 2004.
+(a) September 28th, 2004.
+
+New Features:
+(d) Added Xeon CPU to the list of platforms to optimize for.
+(c) Added support for FFTW version 3. When electrostatics/p3m is used, the Fast
     Fourier Transform should run faster with the new version. Use switch
     USEFFTW3=yes in the Makefile.$PLATFORM to use this feature. If fftw3 is not
     installed on your system, use the default switch USEFFTW3=no or install fftw3,
     which you can get at www.fftw.org.
+    Be aware of different definition of fftw_complex type in fftw2 and fftw3.
+(b) Documentation update including new sections in the Programmer's Guide 
+    and informations on the cellsystem.
+
+Changes:
+(e) Two changes to avoid memory starvation due to too small cells:
+    - min_num_cells allows to define a minimal number of cells.
+    - p3m tunev2 honors this by ignoring impossible r_cuts.
+(a) Some changes in the automatic documentation system:
+    DOT is now again off, since e.g. interaction_data.h is unreadable otherwise.
+    Some features like electrostatics are now turned on in the documentation,
+    which prevents contentless pages for e.g. P3M, and lots of warnings.
+
+Bugfixes:
+(c) Fixed a bug in ELC which effectively prevented the tuning.
+(a) Fixed Makefile such that you can change the compiler and still use MPIFAKE or MPICH.
+
 
 ****************************************************************************************
 * v1.7.5  (Mezoti)                                                                     *
 ****************************************************************************************
 
-Current working revision.
-Released & tagged on September 24th, 2004.
+Released & re-tagged on September 24th, 2004.
 
 
 - v1.7.4f -
