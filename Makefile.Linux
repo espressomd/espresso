@@ -6,9 +6,31 @@ TK=no
 ############ compiler settings
 CC=mpicc
 
+# architecture dependent flags for gcc 3
+MODEL=$(shell awk '/\`model name/ { \
+	if ($$4 == "Pentium") print $$4"-"$$5; else \
+	if ($$4 == "AMD" && $$5 == "Athlon(TM)") print "Athlon-"$$6; else \
+	print "Generic"; \
+	exit }' \/proc/cpuinfo)
+
+HOSTFLAGS=-march=i386
+
+ifeq ($(MODEL),Pentium-III)
+HOSTFLAGS= -march=pentium3 -mfpmath=sse -msse
+endif
+
+ifeq ($(MODEL),Athlon-MP)
+HOSTFLAGS= -march=athlon-mp -mfpmath=sse -msse
+endif
+
+ifeq ($(MODEL),Athlon-XP)
+HOSTFLAGS= -march=athlon-xp -mfpmath=sse -msse
+endif
+
 # optimized compiler flags
-CFLAGS=-g -O3 -Wall -march=athlon-mp -mfpmath=sse -mmmx -m3dnow -msse -fschedule-insns -fschedule-insns2 \
-       -funroll-loops -frerun-cse-after-loop -ffast-math
+CFLAGS=-g -O3 -Wall $(HOSTFLAGS) \
+	-fschedule-insns -fschedule-insns2 \
+	-funroll-loops -frerun-cse-after-loop -ffast-math
 
 # debug compiler flags
 # CFLAGS= -g -fno-inline -Wall
@@ -29,7 +51,7 @@ LDFLAGS=-pg
 LDLIBS= -lm -lpthread
 
 ########### ElectricFence
-#LDLIBS+= -lefence
+# LDLIBS+= -lefence
 # FFTW
 LDLIBS+= -L/usr/local/lib -lrfftw -lfftw
 
