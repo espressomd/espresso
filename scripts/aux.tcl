@@ -138,11 +138,12 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } } 
     blockfile $f write particles "id pos type q v f"
     blockfile $f write bonds
     blockfile $f write random
+    blockfile $f write bitrandom
     flush $f
     if { "$cnt" == "all" } { blockfile $f write configs } else { blockfile $f write configs $cnt }
     flush $f; close $f
     puts $chk "$destination"; flush $chk; close $chk
-    invalidate_forces
+    invalidate_system
 }
 
 
