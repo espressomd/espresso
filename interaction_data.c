@@ -89,13 +89,13 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 int checkIfParticlesInteract(int i, int j) {
   IA_parameters *data = get_ia_param(i, j);
 
-  if (data->LJ_eps != 0)
+  if (data->LJ_cut != 0)
     return 1;
   
   if (data->ramp_cut > 0)
     return 1;
 
-  if (data->LJCOS_eps != 0)
+  if (data->LJCOS_cut != 0)
     return 1;
 
   return 0;
@@ -215,7 +215,7 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 
   sprintf(buffer, "%d %d ", i, j);
   Tcl_AppendResult(interp, buffer, (char *) NULL);
-  if (data->LJ_eps != 0) {
+  if (data->LJ_cut != 0) {
     Tcl_PrintDouble(interp, data->LJ_eps, buffer);
     Tcl_AppendResult(interp, "lennard-jones ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, data->LJ_sig, buffer);
@@ -229,7 +229,7 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
     Tcl_PrintDouble(interp, data->LJ_capradius, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
   }
-  if (data->LJCOS_eps != 0) {
+  if (data->LJCOS_cut != 0) {
     Tcl_PrintDouble(interp, data->LJCOS_eps, buffer);
     Tcl_AppendResult(interp, "lj-cos ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, data->LJCOS_sig, buffer);
@@ -329,11 +329,11 @@ void calc_maximal_cutoff()
      for (j = i; j < n_particle_types; j++) {
        	if (checkIfParticlesInteract(i, j)) {
 	  IA_parameters *data = get_ia_param(i, j);
-    if (data->LJ_eps != 0) {
+    if (data->LJ_cut != 0) {
 	    if(max_cut < (data->LJ_cut+data->LJ_offset) ) 
 	      max_cut = (data->LJ_cut+data->LJ_offset);
 	  }
-	  if (data->LJCOS_eps != 0) {
+	  if (data->LJCOS_cut != 0) {
 	    if(max_cut < (data->LJCOS_cut+data->LJCOS_offset) ) 
 	      max_cut = (data->LJCOS_cut+data->LJCOS_offset);
 	  }
