@@ -287,6 +287,11 @@ void   P3M_init()
 		fprintf(stderr,"   Electrostatics switched off!\n"));
   }
   else {  
+    if( p3m.mesh[0] == 0 || p3m.cao == 0 ) {
+      P3M_TRACE(fprintf(stderr,"%d: P3M_init: Not enough data: return\n",this_node));
+      return;
+    }
+
     if( PERIODIC(0)!=1 || PERIODIC(1)!=1 || PERIODIC(2)!=1) {
       fprintf(stderr,"Need periodicity (1,1,1) with Coulomb P3M\n");
       errexit();
