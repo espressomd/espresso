@@ -89,7 +89,7 @@ proc timeStamp { destination prefix postfix suffix } {
 proc polyBlockWrite { destination {write_param "all"} {write_part "id pos type q v f"} } {
 
     # Open output-file - compressed, if desired, or even as an open stream
-    if { ![regexp "^!\(.*\)" $destination dummy f] } {
+    if { [regexp "^!\(.*\)" $destination dummy f] } {
 	set stream 1
     } {
 	set stream 0
