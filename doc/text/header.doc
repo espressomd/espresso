@@ -132,7 +132,7 @@ befor the compilation.
 In the documentation the most important page for the beginning is the
 description of the \ref tcl "Tcl Extensions". The most convenient way
 is probably to go through the examples in the 
-\ref testsuite "testsuite directory" in order to see how you can write your own
+\ref samples "samples directory" in order to see how you can write your own
 simulation scripts. We hope you will have fun using ESPResSo.
 
 \section mpi_help Additional information for MPI-P ESPResSo users.
@@ -170,7 +170,7 @@ for the latest cvs snapshot in the case you want to work on the code.
 Use touch file_name.c if this does not work right away)
 <li> Read the documentation carefully (Come on, there had been only 213 pages when I
 was writing these lines) !!!
-<li> Try the sample script files in \ref testsuite "testsuite directory".
+<li> Try the sample script files in \ref samples "samples directory".
 <li> Complain if you experience problems.
 </ol>
 

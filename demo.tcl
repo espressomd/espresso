@@ -196,10 +196,10 @@ if { [file exists "pe_initial.gz"]} {
     close $f
 
     puts "Found file pe_initial.gz with:"
-    puts "n_part = [part number]"
+    puts "n_part = [setmd n_part]"
     puts "grid   = \{[setmd node_grid]\}"
     puts "box    = \{[setmd box]\}" 
-    if { $npart != [part number] } {
+    if { $npart != [setmd n_part] } {
 	error "Configuration differs from this setup!"
     }
 } {
@@ -251,7 +251,7 @@ if { [file exists "pe_initial.gz"]} {
     blockfile $f write particles "id pos type q" all
     blockfile $f write bonds all
     close $f
-    puts "wrote [part number] particles to pe_initial.gz"
+    puts "wrote [setmd n_part] particles to pe_initial.gz"
 }
 
 #############################################################

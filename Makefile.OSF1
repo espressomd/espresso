@@ -2,7 +2,7 @@
 CC=cc
 
 ## optimized compiler flags
-CFLAGS=-pg -O3 -fp_reorder -tune host
+CFLAGS= -O3 -fp_reorder -tune host
 ## debug compiler flags
 #CFLAGS=-g
 

@@ -155,3 +155,7 @@ for {set i 0} { $i < $n_part } {incr i} {
     if { $fz > $max_force } { set max_force $fz }
 }
 puts "Maximal force component:              $max_force"
+
+set out [open "mad_variables.txt" "w"]
+blockfile $out write tclvariable all
+close $out

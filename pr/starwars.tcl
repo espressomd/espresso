@@ -35,7 +35,7 @@ set level 0
 
 bind . <Destroy> onExitHandler
 
-wm geometry . -0+0
+wm geometry . +0+0
 
 # star
 #############################################################
@@ -370,6 +370,8 @@ proc set_bjerrum {val} {
 
 proc simulation {} {
     global name bjerrum lj_cut lj_eps n_arms l_arms vmd_on
+    global cobs_name
+    set cobs_name "jhdjuyuw"
     set vmd_on 0
 
     frame .star.sim -relief raised -border 1
@@ -393,7 +395,9 @@ proc simulation {} {
     button .star.sim.graphic.vmd -text "VMD" -command "start_vmd"
     button .star.sim.graphic.re -text "RE Graph" -command "create_obs_window re t RE 0 200 400 500 300"
     button .star.sim.graphic.et -text "Energy Graph" -command "create_obs_window totenergy t E_t 0 200 200 500 300"
-    pack .star.sim.graphic.title .star.sim.graphic.vmd .star.sim.graphic.re .star.sim.graphic.et -expand 1 -fill both -in .star.sim.graphic
+    button .star.sim.graphic.cus -text "Custom Graph" -command "customize_obs_window"
+
+    pack .star.sim.graphic.title .star.sim.graphic.vmd .star.sim.graphic.re .star.sim.graphic.et .star.sim.graphic.cus -expand 1 -fill both -in .star.sim.graphic
 
     pack .star.sim.title .star.sim.warmup .star.sim.integ .star.sim.graphic \
 	-expand 1 -fill both -in .star.sim
@@ -457,6 +461,9 @@ proc simulation {} {
 	    set tot_e [lindex [lindex $energy 0] 1]
 	    add_data_point totenergy $time $tot_e
 	}
+	if { [winfo exists .$cobs_name] } {
+	    get_data_point
+	}
 	update
 	incr step
     }
@@ -495,9 +502,12 @@ proc create_obs_window {obs xlabel ylabel xrange yrange max_points width height 
     set bmarg_$obs 40
     # data range
     global xrng_$obs yrng_$obs pmax_$obs
+    global ymin_$obs ymax_$obs
     set xrng_$obs $xrange
     set yrng_$obs $yrange
     set pmax_$obs $max_points
+    # data
+    global data_$obs show_$obs
 
     # Window elements
     toplevel .$obs
@@ -507,7 +517,8 @@ proc create_obs_window {obs xlabel ylabel xrange yrange max_points width height 
     button .$obs.b1 -text "PS-File" -command "obs_window_to_ps $obs"
     button .$obs.b2 -text "Options" -command "puts \"Sorry not ready yet!\""
 #    button .$obs.b2 -text "Options" -command "obs_window_options $obs"
-    button .$obs.b3 -text "Close"   -command "destroy .$obs"
+    button .$obs.b3 -text "Close"   -command \
+	"destroy .$obs; unset data_$obs show_$obs ymin_$obs ymax_$obs"
     pack .$obs.b1 .$obs.b2 .$obs.b3 -side left -fill both -in .$obs.b
     pack .$obs.c .$obs.b -in .$obs
 
@@ -564,6 +575,144 @@ proc obs_window_options {obs} {
 proc change_var {obs var val} {
     set var $val
 } 
+
+
+proc customize_obs_window {} {
+    global ycmd yres
+    set cobs_name ""
+    set ycmd "set dummy 0 "
+    
+
+    toplevel .cobs
+
+    label .cobs.title -text "Customize new observable window" -height 2 -bg lightyellow
+
+    frame .cobs.name
+    label .cobs.name.t -text "Name:         "
+    entry .cobs.name.i  -width 30
+    .cobs.name.i insert 0 "custom" 
+    pack .cobs.name.t .cobs.name.i -side left -fill both -in .cobs.name
+
+    frame .cobs.ycmd
+    label .cobs.ycmd.t -text "Y-Command:"
+    entry .cobs.ycmd.i -width 30
+    .cobs.ycmd.i insert 0 "analyze" 
+    pack .cobs.ycmd.t .cobs.ycmd.i -side left -fill both -in .cobs.ycmd
+    
+    frame .cobs.yfct
+    label .cobs.yfct.t -text "Y-Function:  "
+    entry .cobs.yfct.i -width 30
+    .cobs.yfct.i insert 0 "\$y" 
+    pack .cobs.yfct.t .cobs.yfct.i  -side left -fill both -in .cobs.yfct
+
+    frame .cobs.size
+    label .cobs.size.t -text "Size (w h):  "
+    entry .cobs.size.i -width 30
+    .cobs.size.i insert 0 "300 200" 
+    pack .cobs.size.t .cobs.size.i  -side left -fill both -in .cobs.size
+
+    frame .cobs.num
+    label .cobs.num.t -text "Data Points:"
+    entry .cobs.num.i -width 30
+    .cobs.num.i insert 0 "100" 
+    pack .cobs.num.t .cobs.num.i  -side left -fill both -in .cobs.num
+
+    button .cobs.b1 -text "OK" -command "get_ycmd"
+
+    frame .cobs.yres 
+    label .cobs.yres.t0  -text "Instructions:"
+    label .cobs.yres.t1  -text ""
+    label .cobs.yres.t2  -text ""
+    label .cobs.yres.t3  -text ""
+    pack .cobs.yres.t0 .cobs.yres.t1 .cobs.yres.t2 .cobs.yres.t3  -in .cobs.yres
+
+    pack .cobs.title  .cobs.name .cobs.ycmd .cobs.yfct .cobs.size .cobs.num .cobs.b1 .cobs.yres -expand 1 -fill both -in  .cobs
+}
+
+proc get_ycmd {} {
+    global ycmd yfct cobs_name 
+    update
+    set cobs_name [ .cobs.name.i get ]
+    set ycmd [ .cobs.ycmd.i get ]
+    set yfct [ .cobs.yfct.i get ]
+
+    if { $cobs_name == "" || [winfo exists .$cobs_name] } {
+	label .cobs.yres.t1  -text ""
+	label .cobs.yres.t2  -text "Need another name!"
+	label .cobs.yres.t3  -text ""
+	return
+    }
+    set size [ .cobs.size.i get ]
+    if { [llength $size] < 1 } {
+	set size_x [lindex $size 0]
+	set size_y [lindex $size 1]
+	if { ![string is integer -strict $size_x] || ![string is integer -strict $size_y] ||
+	     $size_x < 20 || $size_y < 20 } {
+	    label .cobs.yres.t1  -text ""
+	    label .cobs.yres.t2  -text "Wrong size! (must be larger than 20 20)"
+	    label .cobs.yres.t3  -text ""
+	    return
+	}
+    }
+    set size_x [lindex $size 0]
+    set size_y [lindex $size 1]
+    set data_num [ .cobs.num.i get ]
+    if { ![string is integer -strict $data_num] || $data_num < 1} {
+	    label .cobs.yres.t1  -text ""
+	    label .cobs.yres.t2  -text "Need at least 1 data point!"
+	    label .cobs.yres.t3  -text ""
+	    return
+    }
+    if { $ycmd == "analyze" } {
+	    label .cobs.yres.t1  -text ""
+	    label .cobs.yres.t2  -text "You have to modify the Y-command!"
+	    label .cobs.yres.t3  -text ""
+	    return
+    }
+    if { $ycmd != "analyze" } {
+	set yres [eval $ycmd] 
+	if { [llength $yres] > 1 } { 
+	    .cobs.yres.t1 conf -text "Observable structure:\nElement   Structure"
+	    set tmp "0\t[lindex $yres 0]"
+	    for { set i 1 } { $i < [llength $yres] } {incr i} {
+		set tmp "$tmp\n$i\t[lindex $yres $i]"
+	    }
+	    .cobs.yres.t2 conf -justify left -text "$tmp"
+	    .cobs.yres.t3 conf -text "Choose an element!"
+	    .cobs.ycmd.i insert 0 "lindex \["
+	    .cobs.ycmd.i insert end "\] 0"
+	    return
+	}
+	if { [string is double -strict [eval $ycmd]] } { 
+	    set y [eval $ycmd]
+	    if { [string is double -strict [expr $yfct]] } { 
+		.cobs.yres.t0 conf -text ""
+		.cobs.yres.t1 conf -text ""
+		.cobs.yres.t2 conf -text "Start Graphic"
+		.cobs.yres.t3 conf -text ""
+		.cobs.b1 conf -text "Close Window" -command "destroy .cobs"
+		create_obs_window $cobs_name t $cobs_name 0 100 $data_num $size_x $size_y
+	    } else {
+		.cobs.yres.t1 conf -text "Y-Function does not result a double"
+		.cobs.yres.t2 conf -text "Change Y-Function entry!"
+		.cobs.yres.t3 conf -text ""
+	    } 
+	} else {
+	    .cobs.yres.t1 conf -text "Y-Command does not result a double"
+	    .cobs.yres.t2 conf -text "Change Y-Command entry!"
+	    .cobs.yres.t3 conf -text ""
+	}
+
+    }
+}
+
+proc get_data_point {} {
+    global ycmd yfct cobs_name
+    set time [setmd time]
+    set y [eval $ycmd]
+    set yval [expr $yfct]
+    add_data_point $cobs_name $time $yval
+}
 
 proc add_data_point {obs xdat ydat} {
     global data_$obs show_$obs

@@ -41,6 +41,18 @@ proc max { arg1 arg2 } {
     if { $arg1 > $arg2 } { return $arg1 } else { return $arg2 }
 }
 
+proc pair_dist { part_id1 part_id2 } {
+# pair_dist <part_id1> <part_id2> 
+# Returns the distance of two particles with identities <part_id1> and <part_id2>.
+    set pos1 [part $part_id1 print pos]    
+    set pos2 [part $part_id2 print pos]
+    set dist2 [expr sqr([lindex $pos1 0]- [lindex $pos2 0])]    
+    set dist2 [expr $dist2 + sqr([lindex $pos1 1]- [lindex $pos2 1])]
+    set dist2 [expr $dist2 + sqr([lindex $pos1 2]- [lindex $pos2 1])]
+    return [expr sqrt($dist2)]
+}
+
+
 proc LinRegression {l} {
     # l is a list {{x1 y1} {x2 y2} ...} of points.
     # the LinRegression returns the least-square linear fit a*x+b
@@ -88,4 +100,3 @@ proc LinRegression {l} {
 
     return "$a $b $da $db"
 }
-

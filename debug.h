@@ -61,10 +61,10 @@
 // #define STAT_DEBUG
 // #define POLY_DEBUG
 
-#define MPI_CORE
-#define FORCE_CORE
+//#define MPI_CORE
+//#define FORCE_CORE
 
-#define ADDITIONAL_CHECKS
+//#define ADDITIONAL_CHECKS
 
 /** callback for debug status. */
 int debug_callback(Tcl_Interp *interp);

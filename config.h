@@ -22,6 +22,7 @@
 #define ELECTROSTATICS
 
 /** Compiler flag to enable describing and processing particle orientations.
+
 This will allow to use such particle properties as quart, omega, and torque. */
 /* #define ROTATION */
 

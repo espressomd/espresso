@@ -12,5 +12,5 @@ for np in 1 2 3 4 6 8; do
 done
 
 if test "$error" == "1"; then
-    echo "Testcase $f failed."
+    echo "Testcase $f failed for $np nodes."
 fi

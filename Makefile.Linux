@@ -1,7 +1,7 @@
 ############ general settings
 
 ### Tk (graphical interface)
-TK=no
+TK=yes
 
 ### Enable ('yes') for the Blade-Center (see http://www.mpip-mainz.mpg.de/theory/computers/blade/index.html)
 BLADE=no
@@ -54,15 +54,17 @@ endif
 
 
 # optimized compiler flags
+
 CFLAGS=-g -O2 -Wall $(HOSTFLAGS) -finline-limit=10000000 \
 	-fschedule-insns -fschedule-insns2 \
 	-funroll-loops -frerun-cse-after-loop -ffast-math
+
 ifeq ($(BLADE),yes)
      CFLAGS=-g -O2 -Wall $(HOSTFLAGS)
 endif
 
 # debug compiler flags
-# CFLAGS= -g -fno-inline -Wall
+#CFLAGS= -g -fno-inline -Wall $(HOSTFLAGS)
 
 
 ############ name of makedepend (or gcc -ME)

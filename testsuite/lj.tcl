@@ -10,6 +10,7 @@
 # \
     fi;
 
+puts "Testcase lj.tcl running on [setmd n_nodes] nodes:"
 set epsilon 1e-4
 setmd temp 0
 setmd time_step 1
