@@ -43,6 +43,7 @@ const Datafield fields[] = {
   {box_l, TYPE_DOUBLE, 3, "box_l", boxl_callback },                    /* grid.c */
   {&max_seen_particle, TYPE_INT, 1, "maxpart", ro_callback },          /* particle_data.c */
   {&n_particle_types, TYPE_INT, 1, "nptypes", ro_callback },           /* interaction_data.c */
+  {&sim_time, TYPE_DOUBLE, 1, "time", ro_callback },                   /* integrate.c */
   {&time_step, TYPE_DOUBLE, 1, "time_step", time_step_callback },      /* integrate.c */
   {&max_cut, TYPE_DOUBLE,   1, "max_cut", ro_callback },               /* interaction_data.c */
   {&skin, TYPE_DOUBLE,   1, "skin", skin_callback },                   /* integrate.c */
@@ -66,7 +67,6 @@ const Datafield fields[] = {
   {&temperature, TYPE_DOUBLE, 1, "temp", temp_callback },              /* thermostat.c */
   {&lj_force_cap, TYPE_DOUBLE, 1, "lj_force_cap", lj_force_cap_callback },  /* interaction.c */
   {&start_time, TYPE_DOUBLE, 1, "start_time", start_time_callback }, /* integrate.c */
-  {&sim_time, TYPE_DOUBLE, 1, "time", ro_callback },                 /* integrate.c */
   { NULL, 0, 0, NULL, NULL }
 };
 
