@@ -11,7 +11,6 @@
 
 #ifndef LJCOS_H
 #define LJCOS_H
-
 /** \file ljcos.h
  *  Routines to calculate the lennard jones+cosine energy and/or force 
  *  for a particle pair.
@@ -20,6 +19,8 @@
  *  <b>Responsible:</b>
  *  <a href="mailto:sayar@mpip-mainz.mpg.de">Mehmet</a>
 */
+
+#ifdef LJCOS
 
 MDINLINE int lj_cos_set_params(int part_type_a, int part_type_b,
 		      double eps, double sig, double cut,
@@ -216,5 +217,5 @@ MDINLINE double ljcos_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_
   return 0.0;
 }
 
-
+#endif
 #endif
