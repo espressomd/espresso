@@ -385,17 +385,20 @@ void MMM1D_calc_forces()
 	  dz = part1->r.p[2] - part2->r.p[2];
 	  chpref = part1->r.q*part2->r.q;
 
-	  calc_pw_force(dx, dy, dz, &Fx, &Fy, &Fz);
+	  if (chpref != 0.0) {
+	    calc_pw_force(dx, dy, dz, &Fx, &Fy, &Fz);
 
-	  Fx *= chpref;
-	  Fy *= chpref;
-	  Fz *= chpref;
-	  part1->f[0] += Fx;
-	  part1->f[1] += Fy;
-	  part1->f[2] += Fz;
-	  part2->f[0] -= Fx;
-	  part2->f[1] -= Fy;
-	  part2->f[2] -= Fz;
+	    Fx *= chpref;
+	    Fy *= chpref;
+	    Fz *= chpref;
+
+	    part1->f[0] += Fx;
+	    part1->f[1] += Fy;
+	    part1->f[2] += Fz;
+	    part2->f[0] -= Fx;
+	    part2->f[1] -= Fy;
+	    part2->f[2] -= Fz;
+	  }
 	}
       }
     }
@@ -450,17 +453,19 @@ void MMM1D_calc_forces()
 	    dz = part1->r.p[2] - recv_coords[4*p2 + 2];
 	    chpref = part1->r.q*recv_coords[4*p2 + 3];
 
-	    calc_pw_force(dx, dy, dz, &Fx, &Fy, &Fz);
+	    if (chpref != 0.0) {
+	      calc_pw_force(dx, dy, dz, &Fx, &Fy, &Fz);
 
-	    Fx *= chpref;
-	    Fy *= chpref;
-	    Fz *= chpref;
-	    part1->f[0] += Fx;
-	    part1->f[1] += Fy;
-	    part1->f[2] += Fz;
-	    recv_forces[3*p2    ] -= Fx;
-	    recv_forces[3*p2 + 1] -= Fy;
-	    recv_forces[3*p2 + 2] -= Fz;
+	      Fx *= chpref;
+	      Fy *= chpref;
+	      Fz *= chpref;
+	      part1->f[0] += Fx;
+	      part1->f[1] += Fy;
+	      part1->f[2] += Fz;
+	      recv_forces[3*p2    ] -= Fx;
+	      recv_forces[3*p2 + 1] -= Fy;
+	      recv_forces[3*p2 + 2] -= Fz;
+	    }
 	    /*
 	      fprintf(stderr, "%d: sendf %f %f %f\n", this_node,
 	      recv_forces[3*p2    ],
@@ -507,4 +512,5 @@ void MMM1D_calc_forces()
   free(send_forces);
   free(recv_coords);
   free(recv_forces);
+
 }

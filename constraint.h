@@ -138,7 +138,7 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
 
   /* charge stuff. This happens even if the particle does not feel the constraint. The electrostatic
      formulas for pbc highly dislike partial interactions anyways */
-  if (coulomb.bjerrum > 0.0) {
+  if (coulomb.bjerrum > 0.0 && p1->r.q != 0.0) {
     fac = -2*coulomb.bjerrum*c->lambda*p1->r.q/c_dist;
     p1->f[0]  += fac*vec[0];
     p1->f[1]  += fac*vec[1];
