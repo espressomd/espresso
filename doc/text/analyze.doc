@@ -83,6 +83,14 @@
 	 where the index corresponds to the distance between the two monomers considered (1 = next neighbours, 2 = one monomer in between,...).
 	 The values are averaged over all chains, if '<tt><internal_dist></tt>' is used averaged over all <tt>n_config</tt> appended configurations
 	 as well.
+    <li> \verbatim analyze { formfactor | <formfactor> } <qmin> <qmax> <qbins> [<chain_start> <n_chains> <chain_length>] \endverbatim
+         derives the spherically averaged formfactor <tt>S(q) = 1/chain_length * Sum(i,j=1..chain_length)[sin(q*r_ij)/q*r_ij]</tt> of a single chain,
+	 averaged over all \ref chain_n_chains currently allocated (-> chain information must be set!) for <qbin>+1 logarithmically spaced q-vectors
+	 <qmin>,...,<qmax> where <qmin> must be >0 and <qmax> must be greater than <qmin>. If '<tt><formfactor></tt>' is used instead of 
+	 '<tt>formfactor</tt>', the average is taken over all \ref n_configs stored configurations in \ref #configs as well. It returns a tcl-list,
+	 e.g. for '<tt>analyze <formfactor> 0.09 3 5</tt>'
+	 \verbatim {0.090000 92.893516} {0.181476 74.906876} {0.365927 36.951854} {0.737853 10.791177} {1.487803 2.397301} {3.000000 0.609425} \endverbatim
+	 of pairs '<tt>{q S(q)}</tt>' for <tt>q=<qmin>,...,<qmax></tt>.
     <li> \verbatim analyze g123 [-init] [<chain_start> <n_chains> <chain_length>] \endverbatim
          returns the mean-square displacement <i>g1(t)</i> of a monomer,
                  the mean-square displacement <i>g2(t)</i> in the center of gravity of the chain itself, and
@@ -92,44 +100,44 @@
     <li> \verbatim analyze { <g1> | <g2> | <g3> } [<chain_start> <n_chains> <chain_length>] \endverbatim
          returns, depending on which flag has been specified, the mean-square displacement <g1(t)> of a monomer, 
 	 the mean-square displacement <g2(t)> in the center of gravity of the chain itself, <b>or</b> the motion of 
-	 the center of mass <g3(t)> as a tcl-list '<tt>gi(0*dt) gi(1*dt) ... gi((n_configs-1)*dt)</tt>' where i=1,2,3 is the
-	 chosen observable, <tt>dt</tt> is the timestep (which must not have been changed), and <tt>n_configs</tt> is the number of
+	 the center of mass <g3(t)> as a tcl-list '<tt>gi(0*dt) gi(1*dt) ... gi((\ref n_configs - 1)*dt)</tt>' where i=1,2,3 is the
+	 chosen observable, <tt>dt</tt> is the timestep (which must not have been changed), and \ref n_configs is the number of
 	 configurations stored by 'analyze append' which are used to derive the observable.<BR>
 	 Again, note that the stored configurations are assumed to be equidistant in time (i.e. you have to call 'analyze append' 
 	 in equidistant intervalls), and that changes in the particle setup must not have been made in between (i.e. no call to
 	 \ref tcl_part).
     </ul>
     Some observables (i.e. non-static ones) require knowledge of the particles' positions at more than one or two times. Hence it is
-    possible to store the currently active configuration 'partCfg' to the array 'configs' for later analysis. Using these mechanisms
+    possible to store the currently active configuration \ref partCfg to the array \ref #configs for later analysis. Using these mechanisms
     the program is also able to work quasi-offline by successively reading in previously saved checkpoints (see \ref blockformat) and
-    appending these to 'configs', performing any analysis desired afterwards.
+    appending these to \ref #configs, performing any analysis desired afterwards.
     <ul>
-    <li> For manipulating the particles' configurations stored in 'configs' the following commands are provided:
+    <li> For manipulating the particles' configurations stored in \ref #configs the following commands are provided:
     <ul> <li> \anchor analyze_append
               \verbatim analyze append \endverbatim
-              appends the current positions of the particles in 'partCfg' to 'configs[n_configs-1]', returning an updated 'n_configs'
+              appends the current positions of the particles in \ref partCfg to \ref #configs[\ref n_configs - 1], returning an updated \ref n_configs
 	      (= number of stored configurations)
 	 <li> \verbatim analyze push [<size>] \endverbatim
-	      adds the current configuration at the end of 'configs' and removes its very first (=oldest) entry.<BR>
-	      If <size> is specified, configurations are merely appended until 'n_configs' equals <size>; from there they are pushed
-	      such that 'configs' always contains the <size> most recently stored configurations (this implies that if 'analyze push <size>'
-	      is called while <i>n_configs > size</i>, all <i>n_configs - size</i> uppermost (=oldest) configurations are removed to
+	      adds the current configuration at the end of \ref #configs and removes its very first (=oldest) entry.<BR>
+	      If <size> is specified, configurations are merely appended until \ref n_configs equals <size>; from there they are pushed
+	      such that \ref #configs always contains the <size> most recently stored configurations (this implies that if <tt>analyze push <size></tt>'
+	      is called while \ref n_configs<tt> > <size></tt>, all \ref n_configs<tt>-<size></tt> uppermost (=oldest) configurations are removed to
 	      end up with <size> recent entries).<BR>
-	      The return value is 'n_configs'.
+	      The return value is \ref n_configs.
 	 <li> \verbatim analyze replace <index> \endverbatim
-              replaces the <index>th entry in 'configs' with the current configuration in 'partCfg' and returns an updated 'n_configs'
+              replaces the <index>th entry in \ref #configs with the current configuration in \ref partCfg and returns an updated \ref n_configs
          <li> \verbatim analyze remove [<index>] \endverbatim
-              removes the <index>th entry from 'configs' and returns an updated 'n_configs'. If no <index> is given, everything is removed.
+              removes the <index>th entry from \ref #configs and returns an updated \ref n_configs. If no <index> is given, everything is removed.
          <li> \verbatim analyze configs [<config>] \endverbatim
-	      returns all configuration currently stored in 'configs' as a tcl-list '{x1 y1 z1 ... xN yN zN} ... {...}'. 
-	      If <config> is given, it is expected to be such a configuration covering all particles, and it is appended to 'configs'
+	      returns all configuration currently stored in \ref #configs as a tcl-list '<tt>{x1 y1 z1 ... xN yN zN} ... {...}</tt>'. 
+	      If <config> is given, it is expected to be such a configuration covering all particles, and it is appended to \ref #configs
 	      (similar to <tt>analyze append</tt> but without taking the <i>current</i> configuration but <config>).<BR>
 	      This command is mainly needed for setting/restoring checkpoints, i.e. to do some off-line analysis one can simply load the 
 	      very last checkpoint of the simulation run by using \ref tcl_blockfile (if it was written including a call to 
-	      <tt>blockfile $out write configs</tt>) - then everything is restored to 'configs', and all the <tt>analyze</tt> function
+	      <tt>blockfile $out write configs</tt>) - then everything is restored to \ref #configs, and all the <tt>analyze</tt> function
 	      are available!
          <li> \verbatim analyze stored \endverbatim
-              returns 'n_configs', the number of currently stored particles' configurations
+              returns \ref n_configs, the number of currently stored particles' configurations
          </ul>
     </ul>
     The C implementation is \ref #analyze.
