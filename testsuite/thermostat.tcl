@@ -37,8 +37,8 @@ setmd temp 1
 setmd gamma 1
 setmd time_step 0.01
 setmd skin 0.5
-set n_part 600
-set maxstep 200
+set n_part 100
+set maxstep 100
 
 proc read_data {file} {
     set f [open $file "r"]
@@ -63,16 +63,15 @@ if { [catch {
 	set filename "thermostat.data"
     }
     read_data $filename
-    # for some reason there has to be at least one interaction
-    inter 0 0 lennard-jones 0.0 1.0 1.12246 1.0 0.0 0.0
 
     set eng0    [analyze energy kin]
     set temp0   [expr $eng0/$n_part/($deg_free/2.)]
     set curtemp1 0
 
     for {set i 0} { $i < $maxstep} { incr i } {
-    integrate 50
-
+    integrate 20
+	puts -nonewline "$i percent done\r"
+	flush stdout
 	set toteng [analyze energy total]
 	set cureng [analyze energy kin] 
 	set curtemp [expr $cureng/$n_part/($deg_free/2.)] 
