@@ -270,7 +270,7 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     return (TCL_OK);
   case BONDED_IA_ANGLE:
     Tcl_PrintDouble(interp, params->p.angle.bend, buffer);
-    Tcl_AppendResult(interp, "angle ", buffer, (char *) NULL);
+    Tcl_AppendResult(interp, "angle ", buffer," ", (char *) NULL);
     Tcl_PrintDouble(interp, params->p.angle.phi0, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
