@@ -142,6 +142,7 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } } 
     if { "$cnt" == "all" } { blockfile $f write configs } else { blockfile $f write configs $cnt }
     flush $f; close $f
     puts $chk "$destination"; flush $chk; close $chk
+    invalidate_forces
 }
 
 
@@ -153,6 +154,7 @@ proc checkpoint_read { origin } {
 	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -c - >$source" r]
 	} else { set f [open "$source" "r"] }
 	while { [blockfile $f read auto] != "eof" } {}
+	puts -nonewline "."; flush stdout; # puts "read $source"
 	close $f
     } }
     close $chk
