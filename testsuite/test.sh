@@ -1,5 +1,5 @@
 #!/bin/sh
-TESTCASES="madelung.tcl kinetic.tcl lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl mmm1d.tcl constraints.tcl gb.tcl rotation.tcl thermostat.tcl intpbc.tcl intppbc.tcl analysis.tcl"
+TESTCASES="madelung.tcl kinetic.tcl lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl mmm1d.tcl gb.tcl rotation.tcl constraints.tcl thermostat.tcl intpbc.tcl intppbc.tcl analysis.tcl"
 # 
 # List of testcases to be done (and people responsible for them):
 #################################################################
@@ -10,7 +10,7 @@ TESTCASES="madelung.tcl kinetic.tcl lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl m
 #   Testing forces, energies, pressures of the LJ-cos-interaction.
 # - fene/harm: (BAM / Status: Done.)
 #   Testing forces, energies, pressures of the FENE-/harmonic-interaction.
-# - p3m/dh: (HL / Status: Scheduled.)
+# - p3m/dh: (HL / Status: Done.)
 #   Testing electrostatic interactions.
 # - mmm1d: (AxA / Status: Done.)
 #   Testing forces of the mmm1D-interaction.
@@ -18,11 +18,11 @@ TESTCASES="madelung.tcl kinetic.tcl lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl m
 #   Testing forces, energies, pressures of the Gay-Berne-Potential.
 # - rotation: (DmA / Status: Done.)
 #   Testing system with rotational degrees of freedom.
-# - const: (HL / Status: Scheduled.)
+# - const: (HL / Status: Done.)
 #   Check if constraints are working.
 # - Ekin: (BAM / Status: Done.)
 #   Small check of velocities, forces and kinetic energy for a two-particle-electrostatic system
-# - thermo: (FRM / Status: Scheduled.)
+# - thermo: (FRM / Status: Done.)
 #   10000 timesteps only thermostat - does the given temperature (i.e. Ekin) remain constant?
 # - Int-PBC: (AxA / Status: Done.)
 #   Periodic Boundary Integration.
