@@ -8,22 +8,57 @@ What's new, what's been changed, what's been fixed
 Current working revision.
 
 
-- v1.8.2d -
+- v1.8.3a -
 -----------
-(f) December 14th, 2004.
+
+(a) December 27th, 2004.
+
+New Features:
+(a) Added new analysis routine
+    'analyze cell_gpb <Manning parameter> <outer cell radius> <inner cell radius> [<accuracy> [<# of interations>]]'
+    for determining the numerical solution of the Poisson-Boltzmann equation in the cell model.
+
+
+- v1.8.2i -
+-----------
+
+(i) December 23rd, 2004.
+(h) December 21st, 2004.
+(g) December 14th, 2004.
+(f) December 10th, 2004.
+(e) December  9th, 2004.
 (d) December  6th, 2004.
 (c) December  2nd, 2004.
 (b) December  1st, 2004.
 (a) November 30th, 2004.
 
 New Features:
+(i) Added new optional option 'angle <angle>' to the polymer command, allowing to create
+    polymers within the freely-rotating chain model.
+(e) Added a new 'writepdbtopo' which uses the new 'analyze get_folded_positions'-function 
+    to write a pdb file using folded molecule information.
+(e) Added a new 'analyze' command 'get_folded_positions' which allows the user to get 
+    folded particle positions out to the tcl level.  The most important flag to this 
+    is '-molecule' which folds the system using topology information before constructing 
+    the output. It is also possible to shift in x, y, or z directions prior to folding.
 (c) Masses have now also been added to the 'chain_rdf' function.
 (b) Comfixed potential now also works with different masses on the particles.
 (b) Rewrote checkpointing to be able to save disk space by removing repeating informations:
     Added new options 'COMPACT_CHK' to 'checkpoint_set', which'll take care of this, if enabled.
 
+Changes:
+(g) Replaced the O(N^2)-loop in the aggregation analysis tool.
+
 Bugfixes:
-(f) Fixed a memory allocation bug in aggregation analysis tool
+(h) Updated the data of the 'analysis'-testcase to include the 'analyze <g3>' corrected in v1.8.2d
+(h) Fixed a bug that actually prevented reconstruction of the data files in the 'analysis'-testcase.
+(g) Removed quotes from appended items to 'part_write' in 'poly_block_write'. Use of quotes 
+    resulted in a tcl list being appended rather than a single item thereby preventing the 
+    'part'-command to execute.  Also added an extra check for ELECTROSTATICS.
+(g) Fixed a memory allocation bug in the aggregation analysis tool.
+(g) Fixed a buffer overflow in the 'polymer'-command on Darwin occuring when the bonded potential
+    to be used had not been created before execution of the command.
+(f) The 'analyze aggregation'-command now calculates correct standard deviation.
 (d) Re-fixed wrong renormalization in 'analyze g3'.
 (b) Fixed yet another bug in 'pair_dist' which used to not use the 2nd particle's z-component,
     while now (after HL's rewrite) taking the wrong particle identities to derive the distance.
