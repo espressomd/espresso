@@ -15,12 +15,14 @@
 # settings
 ##################################################
 set tcl_precision 5
-set use_imd n
+set use_imd y
 
 set write_steps 10
 set configs 5000
 
-setmd periodic 1 1 0
+setmd periodic 1 0 0
+setmd bjerrum 0
+setmd box_l 7.0 7.0 7.0
 
 # external tcl files 
 ##################################################
@@ -31,7 +33,6 @@ source polywr.tcl
 ##################################################
 puts "n_node = [setmd n_node]"
 
-setmd box_l 10.0 10.0 10.0
 puts "box =\{[setmd box]\}"
 if {[setmd n_node] == 8} {
     setmd node_grid 2 2 2
@@ -68,7 +69,6 @@ puts "nptypes = [setmd nptypes]"
 
 setmd skin 0.200001
 
-setmd bjerrum 0.0
 setmd p3m_alpha 0.27
 setmd p3m_r_cut 3.0
 setmd p3m_mesh 8 8 8
@@ -101,7 +101,6 @@ if { $use_imd == "y" } {
 integrate init
 
 set write_steps 2
-set configs 2
 
 for {set i 0} { $i < $configs } { incr i } {
     puts "step [expr $i*$write_steps]"

@@ -453,6 +453,13 @@ int imd(ClientData data, Tcl_Interp *interp,
       if (Tcl_GetInt(interp, argv[2], &port) == TCL_ERROR)
 	return (TCL_ERROR);
 
+    if (sock)
+      vmdsock_destroy(sock);
+    if (initsock)
+      vmdsock_destroy(initsock);
+    sock = 0;
+    initsock = 0;
+
     vmdsock_init();
     initsock = vmdsock_create();
     if (vmdsock_bind(initsock, port) != 0) {
@@ -481,14 +488,10 @@ int imd(ClientData data, Tcl_Interp *interp,
       return (TCL_ERROR);
     }
 
-    if (imd_drain_socket(interp) == TCL_ERROR)
-      return (TCL_ERROR);
-
     if (sock)
       vmdsock_destroy(sock);
     if (initsock)
       vmdsock_destroy(initsock);
-
     sock = 0;
     initsock = 0;
 
@@ -511,7 +514,7 @@ int imd(ClientData data, Tcl_Interp *interp,
     if (Tcl_GetInt(interp, argv[2], &cnt) == TCL_ERROR)
       return (TCL_ERROR);
 
-    while (!sock && cnt--) {
+    while (initsock && !sock && cnt--) {
       if (imd_check_connect(interp) == TCL_ERROR)
 	return (TCL_ERROR);
       sleep(1);
@@ -531,6 +534,12 @@ int imd(ClientData data, Tcl_Interp *interp,
 
   if (!strncmp(argv[1], "positions", strlen(argv[1]))) {
     float_packed_particle_data coord;
+    
+    if (!initsock) {
+      Tcl_AppendResult(interp, "no connection",
+		       (char *) NULL);
+      return (TCL_OK);
+    }
 
     if (argc > 2) {
       Tcl_AppendResult(interp, "wrong # args:  should be \"",
