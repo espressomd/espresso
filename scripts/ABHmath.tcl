@@ -503,7 +503,7 @@ proc LinRegressionWithSigma {l} {
 # THEY ARE ONLY HERE DUE TO BACKWARDS COMPATIBILITY
 # !!!!!!!!!!
 
-proc lsqr { arg } {
+proc lsqr { v } {
     # return the length of a vector squared
     set res 0
     foreach e $v { set res [expr $res + ($e*$e)] } 
@@ -528,9 +528,9 @@ proc pair_vec { part_id1 part_id2 } {
 proc pair_dist { part_id1 part_id2 } {
     # pair_dist <part_id1> <part_id2> 
     # Returns the distance between two particles with identities <part_id1> and <part_id2>.
-    if { [llength $part_id1]==1 } { set p1 [part $part_id1 print pos] }
-    if { [llength $part_id2]==1 } { set p2 [part $part_id2 print pos] }
-    set vec [vecsub $p1 $p2]
+    if { [llength $part_id1]==1 } { set part_id1 [part $part_id1 print pos] }
+    if { [llength $part_id2]==1 } { set part_id2 [part $part_id2 print pos] }
+    set vec [vecsub $part_id1 $part_id2]
     return [veclen $vec]
 }
 
