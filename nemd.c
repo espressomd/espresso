@@ -244,6 +244,7 @@ int nemd_print_profile(Tcl_Interp *interp)
   return (TCL_OK);
 }
 
+/** Gives back the calculated viscosity */
 int nemd_print_viscosity(Tcl_Interp *interp)
 {
   double shear_rate=0.0, mean_force, viscosity;
