@@ -83,6 +83,7 @@ endif
 MODEL=$(shell awk '/\`model name/ { \
 	if ($$4 == "Pentium") print $$4"-"$$5; else \
 	if ($$4 == "Intel(R)" && $$5 == "Pentium(R)") print "Pentium-"$$6; else \
+	if ($$4 == "Intel(R)" && $$5 == "Xeon(TM)") print "Xeon"; else \
 	if ($$4 == "AMD" && $$5 == "Athlon(TM)") print "Athlon-"$$6; else \
 	if ($$4 == "AMD" && $$5 == "Athlon(tm)") print "Athlon-"$$6; else \
 	if ($$4 == "AMD" && $$5 == "Opteron(tm)") print "Opteron"; else \
@@ -94,6 +95,10 @@ ifeq ($(ICC),yes)
 # activate optimization for Blade-Xeon-Procs (see http://www.rzg.mpg.de/docs/languages/Intel_cc.html)
           HOSTFLAGS=-tpp7 -axW -xW -march=pentium4 -I. -I/afs/ipp/@sys/soft/fftw/f95i/include
      else
+          ifeq ($(MODEL),Xeon)
+          	HOSTFLAGS=-tpp7 -march=pentium4 -xW
+          endif
+
           ifeq ($(MODEL),Athlon-MP)
                HOSTFLAGS= -tpp6 -xK -march=pentiumiii
           endif
@@ -115,6 +120,10 @@ else
           HOSTFLAGS=-march=i386
 
           ifeq ($(MODEL),Pentium-M)
+               HOSTFLAGS= -malign-double -march=pentium4 -mfpmath=sse -msse2
+          endif
+
+          ifeq ($(MODEL),Xeon)
                HOSTFLAGS= -malign-double -march=pentium4 -mfpmath=sse -msse2
           endif
 
@@ -245,6 +254,11 @@ ifeq ($(PROFIL),yes)
      LDFLAGS+= -pg
 endif
 
+############# additional includes for icc
+
+ifeq ($(ICC),yes)
+	CFLAGS+= -I/usr/local/include
+endif
 
 ############# special flags for C++ compilation
 CXXFLAGS=$(CFLAGS) -felide-constructors -fomit-frame-pointer -fno-rtti
