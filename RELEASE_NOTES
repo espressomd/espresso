@@ -2,19 +2,48 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.5c *
+* v1.6.6b *
 ***********
 
 Current working revision.
 
 
-- v1.6.5c -
+- v1.6.6b -
 -----------
+(b) July 27th, 2004.
+(a) July 27th, 2004.
+
+New Features:
+(b) Added new analysis command for lipid bilayers 'analyze lipid_orient_order'.
+    It's another command that is really only useful for a bilayer system.
+(a) Introduced ghost system flags, at the moment just ghosts_have_v, which
+    determines wether when updating the position also the velocity is updated.
+    Needed for DPD and RATTLE. Do not directly change the variable, but modify
+    the procedure on_ghost_flags_change() and call that.
+(a) Added documentation for MMM2D, MMM1D and ELC, and the ghost communication stuff.
+
+Changes:
+(a) Moved 'anounce_rebuild_vlist' to 'announce_rebuild_vlist' and changed the MPI
+    communications' 'Reduce'/'Bcast' to 'Allreduce'.
+(a) Now errors in the 'integrate set' command are actually reported as errors.
+
+Bugfixes:
+(a) Fixed bug that 'thermostat set' crashes.
+
+
+- v1.6.5d -
+-----------
+(d) July 26th, 2004.
 (c) July 22nd, 2004.
 (b) July 15th, 2004.
 (a) July 13th, 2004.
 
 New Features:
+(d) Enhanced 'checkpoint_read <read_all_checkpoints> <write_pdb> <pdb_sfx>' to also
+    be able to convert the whole checkpoint-series into a trajectorie / vmd-movie 
+    '<write_pdb>0000.pdb' ... '<write_pdb>0359.pdb' (if e.g. 360 files were given)
+    if <write_pdb>!=0; <pdb_sfx> determines the # of digits to be used while
+    enumerating the configurations (defaults to 5).
 (c) Enhanced analysis routine for estimating volume fluctuations and the systems'
     compressibility to 'analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }]'
     allowing the user to save/restore the measurement.
