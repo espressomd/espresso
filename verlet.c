@@ -23,7 +23,7 @@ int   n_verletList;
 int max_verletList;
 int    *verletList;
 
-int rebuild_verletlist = 1;
+int rebuild_verletlist;
 
 /** \name Privat Functions */
 /************************************************************/
@@ -31,12 +31,6 @@ int rebuild_verletlist = 1;
 
 /** Reallocate the verlet list. */
 void resize_verlet_list();
-
-/** Calculate the distance of two particles.
- *  \param p1 Index of paricle one in \ref particles
- *  \param p2 Index of paricle one in \ref particles
- */
-double distance2(int p1, int p2);
 
 /** Add a particle pair to the verlet list.
  *  \param p1 Index of paricle one in \ref particles
@@ -91,7 +85,7 @@ void build_verlet_list()
 	  p1 = cells[ci1].particles[i];
 	  for(j=i+1; j < cells[ci1].n_particles; j++) {
 	    p2 = cells[ci1].particles[j];
-	    dist2 = distance2(p1,p2);
+	    dist2 = distance2(particles[p1].p,particles[p2].p);
 	    VERLET_TRACE(fprintf(stderr,"%d: Pair (%d, %d) Dist %.2f",this_node,p1,p2,sqrt(dist2)));
 	    if(dist2 <= max_range2) {
 	      add_pair(p1,p2);
@@ -107,7 +101,7 @@ void build_verlet_list()
 	    p1 = cells[ci1].particles[i];
 	    for(j=0; j < cells[ci2].n_particles; j++) {
 	      p2 = cells[ci2].particles[j];
-	      dist2 = distance2(p1,p2);
+	      dist2 = distance2(particles[p1].p,particles[p2].p);
 	      VERLET_TRACE(fprintf(stderr,"%d: Pair (%d, %d) Dist %.2f",this_node,p1,p2,sqrt(dist2)));
 	      if(dist2 <= max_range2) {
 		add_pair(p1,p2);
@@ -133,6 +127,22 @@ void verlet_exit()
     
 }
 
+/* Callback functions */
+/************************************************************/
+
+int rebuild_vlist_callback(Tcl_Interp *interp, void *_data)
+{
+  int data = *(int *)_data;
+  if (data != 0 && data != 1) {
+    Tcl_AppendResult(interp, "verletflag is an integrator flag and must be 0 or 1.", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  rebuild_verletlist = data;
+  mpi_bcast_parameter(FIELD_VERLET);
+  return (TCL_OK);
+}
+
+
 /************************************************************/
 
 void resize_verlet_list()
@@ -144,16 +154,6 @@ void resize_verlet_list()
     max_verletList -= diff*LIST_INCREMENT;
     verletList = (int *)realloc(verletList, 2*max_verletList*sizeof(int));
   }
-}
-
-double distance2(int p1, int p2) 
-{
-  double dx,dy,dz;
- 
-  dx = particles[p1].p[0] - particles[p2].p[0];
-  dy = particles[p1].p[1] - particles[p2].p[1];
-  dz = particles[p1].p[2] - particles[p2].p[2];
-  return (dx*dx + dy*dy + dz*dz);
 }
 
 void add_pair(int p1, int p2)
