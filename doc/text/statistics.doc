@@ -17,20 +17,22 @@ The following procedures are found in scripts/statistics.tcl.
 	joins the .ps-files given by the tcl-list <destinations> into one single .ps-file '<final>.ps' while placing any two files on one page.<BR>
 	Note that the resulting files may be huge and therefore hard to print!
 
-    <li>\verbatim calcObAv <file> <index>\endverbatim
-        returns the average of the column with index <index> in <file>.
+    <li>\verbatim calcObAv <file> <index> [<start>]\endverbatim
+        returns the average of the column with index <index> in <file>.<BR>
+	If the optional parameter <start> is given, the first <start> lines are discarded, the average is only taken for the remaining data in <file>.
     <li>\anchor tcl_calcObsAv
-	\verbatim calcObsAv <file> { <i1> <i2> ... } \endverbatim
+	\verbatim calcObsAv <file> { <i1> <i2> ... } [<start>] \endverbatim
 	derives column-averages of the observables stored at columns with index <i1>, <i2>,... in <file>,
 	returning a tcl-list 
 	\verbatim<amount of samples> { names (taken from the first line) } { averaged values }\endverbatim
 	This is most effective if you are using '<tt>puts $file-handle "[setmd time] $observable1 $observable 2 ..."</tt>' in
-	your tcl-script to create the data file <file>, and you need the averages of the observables afterwards.
+	your tcl-script to create the data file <file>, and you need the averages of the observables afterwards.<BR>
+	Again, if <start> is given, as many lines are skipped before the derivation of the average commences.
     <li>\anchor tcl_findObsAv
         \verbatim findObsAv <val> <what>\endverbatim
         extracts the values whose names are given in the tcl-list <val> at their respective positions in <what>, where
 	<what> has the list-format as returned by \ref tcl_calcObsAv, returning just these values as tiny tcl-list.
-    <li>\verbatim nameObsAv <file> { <name1> <name2> ... } \endverbatim
+    <li>\verbatim nameObsAv <file> { <name1> <name2> ... } [<start>] \endverbatim
         combines \ref tcl_calcObsAv and \ref tcl_findObsAv by accepting the header-names '<tt><name1>...</tt>' as input argument, returning
 	the averages as a tiny tcl-list 
 	\endverbatim<# of samples> <average of name1> <average of name2> ...\endverbatim
