@@ -54,7 +54,7 @@ endif
 
 
 # optimized compiler flags
-CFLAGS=-g -O2 -Wall $(HOSTFLAGS) \
+CFLAGS=-g -O2 -Wall $(HOSTFLAGS) -finline-limit=10000000 \
 	-fschedule-insns -fschedule-insns2 \
 	-funroll-loops -frerun-cse-after-loop -ffast-math
 ifeq ($(BLADE),yes)
