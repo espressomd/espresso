@@ -29,7 +29,7 @@ LDFLAGS=-pg
 LDLIBS= -lm -lpthread
 
 ########### ElectricFence
-LDLIBS+= -lefence
+#LDLIBS+= -lefence
 # FFTW
 LDLIBS+= -L/usr/local/lib -lrfftw -lfftw
 
