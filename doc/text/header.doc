@@ -13,12 +13,13 @@ on <font color="#0000FF"> <b>So</b></font>ft matter
 </h1>
 \endhtmlonly
 \latexonly
-{Large
+{\Large
 {\Huge E}xpandable
 {\Huge S}imulation
-{\Huge P}ackage <br>
-{\Huge Res}earch
+{\Huge P}ackage for
+{\Huge Res}earch in
 {\Huge So}ft matter
+}
 \endlatexonly
 </center>
 <hr>

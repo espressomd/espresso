@@ -215,6 +215,7 @@
 	     costly \f$ \arccos \f$ and \f$ \sin \f$ operations.
 	     </td>	     
 	     <td>
+	     \image latex bond_angle.eps "Linked cells structure" width=5cm
 	     <img src="../figs/bond_angle.gif" width=50>
 	     </td>
 	     </tr></table>
