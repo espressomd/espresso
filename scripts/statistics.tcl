@@ -21,13 +21,13 @@ proc calcObsAv { fileN ind } {
 	set tmp "[lindex $tmp_line $i]_av"; lappend var_av $tmp
 	eval set $tmp 0
     }
+    set N_av 0
     while { [eof $f]==0 } { if { [gets $f tmp_line] > 0 } {
-	    foreach i $ind j $var_av k $var {
-		set tmp [lindex $tmp_line $i]; set $j [eval expr $$j + $tmp]; lappend $k $tmp
-	    }
+	foreach i $ind j $var_av k $var { 
+	    set tmp [lindex $tmp_line $i]; set $j [eval expr $$j + $tmp] }
+	incr N_av
     } }
     close $f
-    set N_av [llength $Temp]
     set res1 ""; set res2 ""; foreach i $var { lappend res1 $i }
     foreach j $var_av {	eval set $j [eval expr $$j / $N_av]; eval lappend res2 $$j }
     set res "$N_av \{ $res1 \} \{ $res2 \}"
