@@ -30,11 +30,10 @@ proc require_feature {feature} {
     }
 }
 
-require_feature "ROTATION"
-
 puts "----------------------------------------------"
 puts "- Testcase rotation.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------------"
+require_feature "ROTATION"
 
 set epsilon 5e-4
 setmd temp 0
