@@ -2,38 +2,78 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.5.7d *
+* v1.5.8a *
 ***********
 
 Current working revision.
 
-Changes:
-    Electrostatic charged plane potential "plate" added.
-    The "rod" constraint now also is purely electrostatical.
-    Use a "cylinder" to create the excluded volume separately.
 
-Bugfixes:
-    Fixed major bug that setting the skin does not change the
-    maximal interaction range, resulting in too small cells.
-    This happened if the skin was set last. The result might have
-    been left out interactions.
-    layered now also uses the rebuild_verletlist flag to avoid
-    unnecessary updates. 
-
-- v1.5.7d -
+- v1.5.8a -
 -----------
 
+(a) April 22nd, 2004.
+
+New Features / Changes / Bugfixes:
+(a) Major NpT-Update: The NpT-Integrator does now work properly, though still not at top efficiency.
+    + The code no longer crashes when updating ghost particles after enforcing a 'cells_re_init'.
+    + Now the new box-length is communicated after the particles are rescaled.
+    + Fixed wrong p_vel that always had p_vel updated after velocities were propagated.
+    + Fixed wrong friction_g0-contribution due to new (instead of old) velocities as arguments.
+    - Slimlined 'dd_NpT_update_cell_grid' to increase processing speed; it also got the scaling
+      factor as argument (passed by 'on_NpT_boxl_change') to improve the 'max_range'-criterion.
+    - Temporarily deactivated 'cells_re_init'-shortcut as it's not yet working;
+      expect a speedup of 40x...90x once it's done.
+    + Now the old particle positions are rescaled as well.
+
+
+- v1.5.7h -
+-----------
+
+(h) April 22nd, 2004.
+(g) April 19th, 2004.
+(f) April 13th, 2004.
+(e) April 10th, 2004.
 (d) April  1st, 2004.
 (c) March 29th, 2004.
 (b) March 22nd, 2004.
 (a) March 21st, 2004.
 
+New Features:
+(g) Writing out of far cut of MMM2D/ELC.
+(f) Electrostatic charged plane potential 'plate' added.
+(f) Added check for too far movement to ADDITIONAL_CHECKS.
+(f) Now TK and other graphical output is also supported on Darwin
+    using darwinlink.sh: adds Mac OS resource fork after linking.
+(f) Optimized compiler-flags for Pentium-M and -III on Linux.
+(e) Added new analyzation command 'analyze necklace' to examine 
+    the structure of e.g. polyelectrolytes in poor solvent.
+
 Changes:
+(g) Cell structure 'layered' now also uses the 'rebuild_verletlist' 
+    flag to avoid unnecessary updates.
+(f) Changed constraint 'rod' to be purely electrostatic;
+    Use a 'cylinder' to create the excluded volume separately.
+(f) Reversed vector treatment ('mmm2d.c').
+(f) Added check for too far movement to ADDITIONAL_CHECKS.
+(e) Moved verlet update to 'cells.c'; now it is also more general, 
+    as is 'layered.c'.
 (b) Setting 'setmd piston 0.0' now disables the nptiso-thermostat
     (if compiled in), otherwise it does no longer complain about
     that (essentially) improper value for compatibility reasons.
 
 Bugfixes:
+(h) Fixed a bug in 'cells_update_ghosts' that caused the ghost-communicator
+    to be executed twice; hence, the code should be faster now.
+(g) Fixed major bug that setting the skin too late in the script file
+    did not change the maximal interaction range, resulting in cells
+    becoming too small; as a consequence, interactions might have
+    been omitted on course of the simulation.
+(g) Fixed bug that switching off electrostatics was sometimes not possible.
+(g) Fixed bug that max range was not set often enough.
+(g) Fixed bug in constraint rod.
+(f) Fixed debug statements when THERMO_DEBUG is switched on.
+(f) Fixed bug in 'layered.c' that p_old was not updated.
+(f) Fixed bug in near formula for precisions below 10^-10 ('mmm2d.c').
 (d) MPI_GET_PARTICLES fixed to allow empty nodes and bonds.
 (c) Fixed several compiler issues on the OSF1-architectures in
     'Makefile.OSF1' (now enforcing std.C which in turn enables
