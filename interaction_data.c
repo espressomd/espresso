@@ -465,7 +465,7 @@ int lj_cos_set_params(int part_type_a, int part_type_b,
 {
   IA_parameters *data, *data_sym;
 
-  double fac1, facsq;
+  double facsq;
 
   make_particle_type_exist(part_type_a);
   make_particle_type_exist(part_type_b);
@@ -477,18 +477,17 @@ int lj_cos_set_params(int part_type_a, int part_type_b,
     return TCL_ERROR;
   }
 
-  fac1  = 1.122462 * sig;
-  facsq = fac1 * fac1;
-
-  data->LJCOS_rmin = fac1;
-  data->LJCOS_alfa = 3.1415927/(SQR(data->LJCOS_cut)-facsq);
-  data->LJCOS_beta = 3.1415927*(1.-(1./(SQR(data->LJCOS_cut)/facsq-1.)));
-	
   /* LJCOS should be symmetrically */
   data_sym->LJCOS_eps    = data->LJCOS_eps    = eps;
   data_sym->LJCOS_sig    = data->LJCOS_sig    = sig;
   data_sym->LJCOS_cut    = data->LJCOS_cut    = cut;
   data_sym->LJCOS_offset = data->LJCOS_offset = offset;
+
+  /* Calculate dependent parameters */
+  facsq = driwu2*SQR(sig);
+  data_sym->LJCOS_rmin = data->LJCOS_rmin = sqrt(driwu2)*sig;
+  data_sym->LJCOS_alfa = data->LJCOS_alfa = PI/(SQR(data->LJCOS_cut)-facsq);
+  data_sym->LJCOS_beta = data->LJCOS_beta = PI*(1.-(1./(SQR(data->LJCOS_cut)/facsq-1.)));
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
