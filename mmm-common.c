@@ -377,6 +377,7 @@ J. Chem. Phys., 117 (2002), 2503-2512
 </ul>
 */
 #include "mmm-common.h"
+#include "config.h"
 #include "utils.h"
 
 Polynom *modPsi = NULL;
@@ -399,7 +400,7 @@ static void preparePolygammaEven(int n, double binom, Polynom *series)
     for (order = 1;; order += 1) {
       x_order = 2*order;
       coeff = -2*hzeta(x_order + 1, 2);
-      if (fabs(maxx*coeff)*(4.0/3.0) < POLYGAMMA_EPS)
+      if (fabs(maxx*coeff)*(4.0/3.0) < ROUND_ERROR_PREC)
 	break;
       realloc_doublelist(series, order + 1);
       series->e[order] = coeff;
@@ -416,7 +417,7 @@ static void preparePolygammaEven(int n, double binom, Polynom *series)
       // only even exponents of x
       x_order = 2*order;
       coeff = pref*hzeta(1 + deriv + x_order, 2);
-      if ((fabs(maxx*coeff)*(4.0/3.0) < POLYGAMMA_EPS) && (x_order > deriv))
+      if ((fabs(maxx*coeff)*(4.0/3.0) < ROUND_ERROR_PREC) && (x_order > deriv))
 	break;
       realloc_doublelist(series, order + 1);
       series->e[order] = -binom*coeff;
@@ -443,7 +444,7 @@ static void preparePolygammaOdd(int n, double binom, Polynom *series)
     // only odd exponents of x
     x_order = 2*order + 1;
     coeff = pref*hzeta(1 + deriv + x_order, 2);
-    if ((fabs(maxx*coeff)*(4.0/3.0) < POLYGAMMA_EPS) && (x_order > deriv))
+    if ((fabs(maxx*coeff)*(4.0/3.0) < ROUND_ERROR_PREC) && (x_order > deriv))
       break;
     realloc_doublelist(series, order + 1);
     series->e[order] = -binom*coeff;

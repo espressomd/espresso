@@ -23,10 +23,6 @@
 #define C_2PISQR  C_2PI*C_2PI
 /*@}*/
 
-/** precision of polygamma functions. More is unnecessary, the Bessel
-    functions are not better anyways... */
-#define POLYGAMMA_EPS 1e-17
-
 /** table of the Taylor expansions of the modified polygamma functions */
 extern Polynom *modPsi;
 extern int      n_modPsi;
