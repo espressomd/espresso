@@ -1237,6 +1237,21 @@ void local_remove_all_particles()
   }
 }
 
+void local_rescale_particles(int dir, double scale) {
+  Particle *p; int m, n, o; 
+  INNER_CELLS_LOOP(m, n, o) {
+    p = CELL_PTR(m, n, o)->pList.part;
+    if(dir < 3) 
+      p->r.p[dir] *= scale;
+    else {
+      p->r.p[0] *= scale;
+      p->r.p[1] *= scale;
+      p->r.p[2] *= scale;
+    }
+  }
+}
+
+
 void added_particle(int part) 
 {
   int i;
