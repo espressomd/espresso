@@ -1,6 +1,6 @@
 #!/bin/sh
-TESTCASES="lj.tcl lj-cos.tcl harm.tcl fene.tcl gb.tcl mmm1d.tcl dh.tcl madelung.tcl intpbc.tcl temp_test.tcl intppbc.tcl rotation.tcl"
-# lj-cos.tcl FENE.tcl harmonic.tcl... constraints thermosim energy pressure rotation gay-berne
+TESTCASES="madelung.tcl lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl mmm1d.tcl gb.tcl rotation.tcl thermostat.tcl intpbc.tcl intppbc.tcl"
+# constraints energy pressure
 # 
 # List of testcases to be done (and people responsible for them):
 #################################################################
@@ -9,9 +9,9 @@ TESTCASES="lj.tcl lj-cos.tcl harm.tcl fene.tcl gb.tcl mmm1d.tcl dh.tcl madelung.
 #   Testing forces, energies, pressures of the LJ-interaction.
 # - lj-cos: (AxA / Status: Done.)
 #   Testing forces, energies, pressures of the LJ-cos-interaction.
-# - fene/harm: (BAM / Status: Completed.)
+# - fene/harm: (BAM / Status: Done.)
 #   Testing forces, energies, pressures of the FENE-/harmonic-interaction.
-# - p3m/dh: (HL)
+# - p3m/dh: (HL / Status: Scheduled.)
 #   Testing electrostatic interactions.
 # - mmm1d: (AxA / Status: Done.)
 #   Testing forces of the mmm1D-interaction.
@@ -29,8 +29,8 @@ TESTCASES="lj.tcl lj-cos.tcl harm.tcl fene.tcl gb.tcl mmm1d.tcl dh.tcl madelung.
 #   Periodic Boundary Integration.
 # - Int-PPBC: (AxA / Status: Done.)
 #   Partial Periodic Boundary Integration.
-# - Anal: (BAM / Status: Scheduled.)
-#   Checking checkpoints and anlysis routines.
+# - Analysis: (BAM / Status: Done.)
+#   Checking checkpoints and analysis routines.
 # - Vol: (BAM / Status: Planned.)
 #   Testing systems with resizing boxes.
 #
