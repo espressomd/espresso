@@ -2,11 +2,11 @@
 # tricking... the line after a these comments are interpreted as standard shell script \
     PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=1; fi
 # OSF1 \
-    if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $PLATFORM/Espresso $0 $*
+    if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $*
 # AIX \
-    elif test $PLATFORM = AIX; then exec poe $PLATFORM/Espresso $0 $* -procs $NP
+    elif test $PLATFORM = AIX; then exec poe $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $* -procs $NP
 # Linux \
-    else export EF_ALLOW_MALLOC_0=1; lamboot; exec mpirun -np $NP -nsigs $PLATFORM/Espresso $0 $*;
+    else export EF_ALLOW_MALLOC_0=1; exec mpirun -np $NP -nsigs $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $*;
 # \
     fi;
 
@@ -19,6 +19,8 @@
 #  Last modified: 23.01.2003 by HL                          #
 #                                                           #
 #############################################################
+
+set case2timeout 120
 
 #############################################################
 #  Setup GUI                                                #
@@ -55,19 +57,6 @@ pack .case1.slider .case1.label -fill x -in .case1
 set disabledfg [.case1.label cget -disabledforeground]
 set normalfg  [.case1.label cget -foreground]
 
-proc disableCase1 {} {
-    global disabledfg
-    .case1.label configure -state disabled
-    .case1.slider configure -state disabled -foreground $disabledfg 
-}
-
-proc enableCase1 {} {
-    global normalfg
-    .case1.label configure -state normal
-    .case1.slider configure -state normal -foreground $normalfg 
-    .case1.slider set 0
-}
-
 ##### case 2
 frame .case2 -relief raised -border 2
 pack .case2 -expand 1 -fill both -in .
@@ -99,8 +88,23 @@ pack .case2.slider3 .case2.label3 -fill x -in .case2
 label .case2.status -justify left -text ""
 pack .case2.status -fill x -in .case2
 
-proc disableCase2 {} {
+proc disableCase1 {} {
     global disabledfg
+    .case1.label configure -state disabled
+    .case1.slider configure -state disabled -foreground $disabledfg 
+}
+
+proc enableCase1 {} {
+    global normalfg
+    .case1.label configure -state normal
+    .case1.slider configure -state normal -foreground $normalfg 
+    .case1.slider set 0
+
+    .case2.status configure -text ""
+}
+
+proc disableCase2 {} {
+    global disabledfg displayclock
     .case2.label1 configure -state disabled
     .case2.slider1 configure -state disabled -foreground $disabledfg
     .case2.label2 configure -state disabled
@@ -109,6 +113,7 @@ proc disableCase2 {} {
     .case2.slider3 configure -state disabled -foreground $disabledfg
 
     .case2.status configure -text ""
+    set displayclock 0
 }
 
 proc enableCase2 {} {
@@ -124,31 +129,83 @@ proc enableCase2 {} {
     .case2.slider3 set 0
 }
 
+proc disableStarts {} {
+    .case1.title.b configure -state disabled
+    .case2.title.b configure -state disabled
+}
+
+proc enableStarts {} {
+    .case1.title.b configure -state normal
+    .case2.title.b configure -state normal
+}
+
+#############################################################
+#      Helpers                                              #
+#############################################################
+
+proc imd_reconnect {case} {
+    global vmd_pid
+
+    imd disconnect
+
+    catch {exec killall vmd_LINUX}
+    writepsf "$case.psf"
+    writepdb "$case.pdb"
+
+    while { [catch {imd connect 10000} res] } {
+	.case2.status configure -text "Waiting for port to unbind...\nerror: $res"
+	update
+	after 500
+    }
+    after 1000
+    exec vmd -e $case.script &
+}
+
 #############################################################
 #      Events                                               #
 #############################################################
 
 proc Case1Start {} {
+    .case2.status configure -text "Starte..."    
+    update
+
+    disableStarts
     disableCase1
     disableCase2
 
     # sim aufsetzen vmd restart,imd reset
 
+    imd_reconnect case1
+
     enableCase1
+    enableStarts
+
+    .case2.status configure -text "Fertig"
 }
 
+set displayclock 0
 proc Case2Start {} {
+    global case2stime displayclock
+
     .case2.status configure -text "Starte..."    
+    update
+
+    disableStarts
     disableCase1
     disableCase2
-    update
 
     # vmd restart,imd reset
 
-    after 4000
+    imd_reconnect case2
+
+    after 1000
 
     enableCase2
-    .case2.status configure -text "Los!"    
+    enableStarts
+
+    .case2.status configure -text "Los!"
+    set case2stime [clock seconds]
+    set displayclock 1
 }
 
 proc Case1BjerrumChange {l} {
@@ -171,11 +228,29 @@ proc Case2Wall3ChargeChange {c} {
 disableCase1
 disableCase2
 
+set displayclock 0
 set run_sim 0
+
+inter 1 harmonic 1 1
+part 1 pos 0 0 0
+part 0 pos .5 0 0 bond 1 1
+
 while { 1 } {
     if { $run_sim } {
 	integrate 100
 	imd positions
+    } {
+	after 100
+	imd listen 1
+    }
+    if { $displayclock } {
+	set etime [expr [clock seconds] - $case2stime]
+	.case2.status configure -text [clock format $etime -format "%M:%S"]
+	if { $etime > $case2timeout } {
+	    .case2.status configure -text "Verloren!"
+	    set displayclock 0
+	    set run_sim 0
+	}
     }
     update
 }
