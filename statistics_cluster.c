@@ -327,6 +327,7 @@ int parse_necklace_analyzation(Tcl_Interp *interp, int argc, char **argv)
 
   /* preparation */
   space_distance2 = SQR(space_dist);
+  sortPartCfg();
   part = &partCfg[first];
 
   /* perform necklace cluster algorithm */
@@ -335,14 +336,16 @@ int parse_necklace_analyzation(Tcl_Interp *interp, int argc, char **argv)
   /* Append result to tcl interpreter */
   sprintf(buffer,"%d",n_pearls);
   Tcl_AppendResult(interp, buffer, " pearls { ", (char *)NULL);
-  cluster = first_cluster;
-  sprintf(buffer,"%d",cluster->size);
-  Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
-  cluster = cluster->next;
-  while(cluster->prev != last_cluster) { 
+  if( n_pearls > 0 ) {
+    cluster = first_cluster;
     sprintf(buffer,"%d",cluster->size);
     Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
     cluster = cluster->next;
+    while(cluster->prev != last_cluster) { 
+      sprintf(buffer,"%d",cluster->size);
+      Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
+      cluster = cluster->next;
+    }
   }
   Tcl_AppendResult(interp, "} ", (char *)NULL);
 
