@@ -745,12 +745,8 @@ void mpi_gather_stats(int job, void *result)
       if (sizes[pnode] > 0) {
 	if (pnode == this_node) {
 	  g = 0;
-	  // for (c = 0; c < n_cells; c++)
-	  //   for (i = 0; i < cells[c].pList.n; i++) {
-	  //     memcpy(&tdata[g],&cells[c].pList.part[i],sizeof(Particle));
 	  INNER_CELLS_LOOP(m, n, o) {
 	    memcpy(&tdata[g],CELL_PTR(m,n,o)->pList.part,(CELL_PTR(m,n,o)->pList.n)*sizeof(Particle));
-	    //	    memcpy(&tdata[g],CELL_PTR(m,n,o)->pList.part,sizes[pnode]*sizeof(Particle));
 	    COMM_TRACE(printf("%d -> %d,%d,%d: %dx (starting at %d with %d)\n",this_node,m,n,o,(CELL_PTR(m,n,o)->pList.n),g,tdata[g].r.identity));
 	    g+=CELL_PTR(m,n,o)->pList.n;
 	  }
@@ -823,13 +819,9 @@ void mpi_gather_stats_slave(int pnode, int job)
     /* then get the particle information */
     gdata = malloc(n_part*sizeof(Particle));
     g = 0;
-    //    for (c = 0; c < n_cells; c++)
-    //      for (i = 0; i < cells[c].pList.n; i++) {
-    //        memcpy(&gdata[g],&cells[c].pList.part[i],sizeof(Particle));
     INNER_CELLS_LOOP(m, n, o) {
       memcpy(&gdata[g],CELL_PTR(m,n,o)->pList.part,(CELL_PTR(m,n,o)->pList.n)*sizeof(Particle));
-      //      memcpy(&gdata[g],CELL_PTR(m,n,o)->pList.part,n_part*sizeof(Particle));
-      printf("%d -> %d,%d,%d: %dx (starting at %d with %d)\n",this_node,m,n,o,(CELL_PTR(m,n,o)->pList.n),g,gdata[g].r.identity);
+      COMM_TRACE(printf("%d -> %d,%d,%d: %dx (starting at %d with %d)\n",this_node,m,n,o,(CELL_PTR(m,n,o)->pList.n),g,gdata[g].r.identity));
       g+=CELL_PTR(m,n,o)->pList.n;
     }
     /* and send it back to the master node */
