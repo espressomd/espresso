@@ -16,6 +16,8 @@ int regular_exit = 1;
 #endif
 static int core_done = 0;
 
+int check_id = 97;
+
 void core()
 {
   if (!core_done && !regular_exit) {

@@ -21,8 +21,11 @@ MDINLINE void add_fene_pair_force(Particle *p1, Particle *p2, int type_num)
     dist2 += SQR(dx[i]);
   }
   
-  FENE_TRACE(if(dist2 >= SQR(bonded_ia_params[type_num].p.fene.r_fene)) fprintf(stderr,"FENE Bond between Pair (%d,%d) broken: dist=%f\n",p1->r.identity,p2->r.identity,sqrt(dist2)) );
-  
+  if(dist2 >= SQR(bonded_ia_params[type_num].p.fene.r_fene)) {
+    fprintf(stderr,"%d: add_fene_pair_force: ERROR: FENE Bond between Pair (%d,%d) broken: dist=%f\n",this_node,
+	    p1->r.identity,p2->r.identity,sqrt(dist2)); 
+    errexit();
+  }
   fac = bonded_ia_params[type_num].p.fene.k_fene;
   fac /= (1.0 - dist2/SQR(bonded_ia_params[type_num].p.fene.r_fene));
 
@@ -32,6 +35,10 @@ MDINLINE void add_fene_pair_force(Particle *p1, Particle *p2, int type_num)
     p1->f[i] -= fac*dx[i];
     p2->f[i] += fac*dx[i];
   }
+
+  ONEPART_TRACE(if(p1->r.identity==check_id) fprintf(stderr,"%d: OPT: FENE f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f[0],p1->f[1],p1->f[2],p2->r.identity,sqrt(dist2),fac));
+  ONEPART_TRACE(if(p2->r.identity==check_id) fprintf(stderr,"%d: OPT: FENE f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f[0],p2->f[1],p2->f[2],p1->r.identity,sqrt(dist2),fac));
+
 }
 
 #endif

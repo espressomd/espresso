@@ -202,11 +202,13 @@ void cells_re_init()
 
 Particle *cells_alloc_particle(int id, double pos[3])
 {
+  int rl;
   int ind = pos_to_cell_grid_ind(pos);
   ParticleList *pl = &cells[ind].pList;
   Particle *pt;
+
   pl->n++;
-  int rl = realloc_particles(pl, pl->n);
+  rl = realloc_particles(pl, pl->n);
   pt = &pl->part[pl->n - 1];
   pt->r.identity = id;
   pt->r.type = 0;

@@ -240,6 +240,9 @@ void rescale_forces()
       p[i].f[0] *= scale;
       p[i].f[1] *= scale;
       p[i].f[2] *= scale;
+
+      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f[0],p[i].f[1],p[i].f[2],p[i].v[0],p[i].v[1],p[i].v[2]));
+
     }
   }
 }
@@ -277,9 +280,14 @@ void rescale_forces_propagate_vel()
       p[i].f[1] *= scale;
       p[i].f[2] *= scale;
 
+      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f[0],p[i].f[1],p[i].f[2],p[i].v[0],p[i].v[1],p[i].v[2]));
+
       p[i].v[0] += p[i].f[0];
       p[i].v[1] += p[i].f[1];
       p[i].v[2] += p[i].f[2];
+
+      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].v[0],p[i].v[1],p[i].v[2]));
+      
     }
   }
 }
@@ -357,6 +365,9 @@ void propagate_vel_pos()
       p[i].v[1] += p[i].f[1];
       p[i].v[2] += p[i].f[2];
 
+      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].v[0],p[i].v[1],p[i].v[2]));
+
+
 #ifdef ADDITIONAL_CHECKS
       /* fprintf(stderr,"%d: Propagate P %d from (%.4f,%.4f,%.4f) to (%.4f,%.4f,%.4f)\n",this_node,
 	 p[i].r.identity, p[i].r.p[0], p[i].r.p[1], p[i].r.p[2],
@@ -366,6 +377,9 @@ void propagate_vel_pos()
       p[i].r.p[0] += p[i].v[0];
       p[i].r.p[1] += p[i].v[1];
       p[i].r.p[2] += p[i].v[2];
+
+      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
+
 
 #ifdef ADDITIONAL_CHECKS
       /* force check */

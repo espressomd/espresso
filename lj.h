@@ -23,12 +23,15 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
       frac2 = SQR(ia_params->LJ_sig/r_off);
       frac6 = frac2*frac2*frac2;
       fac   = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5)*frac2 * (r_off/dist);
+
+
       for(j=0;j<3;j++) {
 	p1->f[j] += fac * d[j];
 	p2->f[j] -= fac * d[j];
       }
       if(fac*dist > 1000) fprintf(stderr,"%d: LJ-Warning: Pair (%d-%d) force=%f dist=%f\n",
 				  this_node,p1->r.identity,p2->r.identity,fac*dist,dist);
+
     }
     /* capped part of lj potential. */
     else if(dist > 0.0) {
@@ -54,6 +57,10 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
       p2->f[0] -= fac * ia_params->LJ_capradius;
 
     }
+
+    ONEPART_TRACE(if(p1->r.identity==check_id) fprintf(stderr,"%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f[0],p1->f[1],p1->f[2],p2->r.identity,dist,fac));
+    ONEPART_TRACE(if(p2->r.identity==check_id) fprintf(stderr,"%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f[0],p2->f[1],p2->f[2],p1->r.identity,dist,fac));
+
     LJ_TRACE(fprintf(stderr,"%d: LJ: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
 		     this_node,p1->r.identity,p2->r.identity,dist,fac*d[0],fac*d[1],fac*d[2]));
   }
