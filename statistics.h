@@ -87,7 +87,7 @@ void nbhood(double pos[3], double r_catch, IntList *il);
     @param pos point
     @param pid  if a valid particle id, this particle is omitted from minimization
                 (this is a good idea if the posx, posy, posz is the position of a particle).
-    @return the minimal distance of a particle to coordinates (<posx>, <posy>, <posz>). */
+    @return the minimal distance of a particle to coordinates (\<posx\>, \<posy\>, \<posz\>). */
 double distto(double pos[3], int pid);
 
 /** appends particles' positions in 'partCfg' to \ref #configs */
@@ -152,15 +152,15 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
 
 /** returns the minimal squared distance between two positions in the perhaps periodic
     simulation box.
- *  \param pos1[3]  Position one.
- *  \param pos2[3]  Position two.
+ *  \param pos1  Position one.
+ *  \param pos2  Position two.
  */
 double min_distance2(double pos1[3], double pos2[3]);
 
 /** returns the minimal distance between two positions in the perhaps periodic
     simulation box.
- *  \param pos1[3]  Position one.
- *  \param pos2[3]  Position two.
+ *  \param pos1  Position one.
+ *  \param pos2  Position two.
  */
 MDINLINE double min_distance(double pos1[3], double pos2[3]) {
   return sqrt(min_distance2(pos1, pos2));

@@ -181,9 +181,9 @@ void realloc_ca_fields(int newsize);
  *
  *  \param in          Pointer to first element of input block data.
  *  \param out         Pointer to first element of output grid.
- *  \param start[3]    Start position of block in output grid.
- *  \param size[3]     Dimensions of the block
- *  \param dim[3]      Dimensions of the output grid.
+ *  \param start       Start position of block in output grid.
+ *  \param size        Dimensions of the block
+ *  \param dim         Dimensions of the output grid.
 */
 void add_block(double *in, double *out, int start[3], int size[3], int dim[3]);
 

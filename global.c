@@ -83,9 +83,9 @@ const Datafield fields[] = {
 	<li> \verbatim box_l double[3] \endverbatim
              \ref box_l - Simulation box length.
 	<li> \verbatim cell_grid int[3] (ro) \endverbatim
-             \ref #cell_grid - dimension of the inner cell grid.
+             \ref DomainDecomposition::cell_grid - dimension of the inner cell grid.
 	<li> \verbatim cell_size double[3] (ro) \endverbatim
-	     \ref #cell_size - box length of a cell.
+	     \ref DomainDecomposition::cell_size - box length of a cell.
 	<li> \verbatim gamma double \endverbatim
 	     \ref friction_gamma - Friction constant.
 
@@ -105,7 +105,7 @@ const Datafield fields[] = {
 	     \ref max_range - Maximal range of real space interactions: max_cut + skin.
 	<li> \verbatim max_skin double (ro)\endverbatim
 	     \ref max_skin - Maximal skin to be used for the link cell/verlet algorithm.
-	     This is Min(\ref #cell_size) - \ref max_range.
+	     This is Min(\ref DomainDecomposition::cell_size) - \ref max_range.
 	<li> \verbatim n_nodes int (ro) \endverbatim
   	     \ref n_nodes - Number of nodes.
 	<li> \verbatim n_part int (ro) \endverbatim
@@ -128,7 +128,7 @@ const Datafield fields[] = {
 	     \ref #temperature - Temperature of the simulation.
 	     Enters the thermostat and the coulomb prefactor = bjerrum * temperature.
 	<li> \verbatim time double \endverbatim
-	     \ref #time - The simulation time.
+	     \ref sim_time - The simulation time.
 	<li> \verbatim time_step double \endverbatim
 	     \ref time_step - Time step for MD integration
 	<li> \verbatim timings int \endverbatim

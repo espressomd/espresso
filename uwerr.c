@@ -239,7 +239,7 @@ double UWerr_dsum_int(int * v, double * w, int len)
 int uwerr_read_double_vector(Tcl_Interp *interp, char * data_in ,
 			     double ** data_out, int * len);
 
-/** Create a string with enough space for \emph in_len doubles
+/** Create a string with enough space for in_len doubles
  */
 int uwerr_create_tcl_vector(char ** out, int in_len)
 {
@@ -331,7 +331,7 @@ int UWerr_proj(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
 
     The function implementing the algorithm described in
 
-    arXiv:hep-lat/0306017 v1 13 Jun 2003 \em Wolff, U. \endem Monte Carlo errors with less errors.
+    arXiv:hep-lat/0306017 v1 13 Jun 2003 \em Wolff, U. \em Monte Carlo errors with less errors.
 */
 int UWerr_f(Tcl_Interp *interp, Tcl_CmdInfo * cmdInfo, int argc, char ** argv,
 	    double ** data, int rows, int cols,

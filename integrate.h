@@ -53,7 +53,7 @@ extern double verlet_reuse;
 /*@{*/
 
 /** tcl procedure for integrator steering.
-    USAGE: integrate <steps> \\   
+    USAGE: integrate \<steps\>   
     see also \ref tcl_integrate
 */
 int integrate(ClientData data, Tcl_Interp *interp,
@@ -93,12 +93,11 @@ int time_step_callback(Tcl_Interp *interp, void *_data);
 */
 int time_callback(Tcl_Interp *interp, void *_data);
 
-/** Implements the tcl-command 'invalidate_system' which forces a system re-init by setting 
-    \ref particle_changed = \ref interactions_changed = \ref topology_changed = \ref parameter_changed = 1.
+/** Implements the tcl-command 'invalidate_system' which forces a system re-init. 
     For more information, see \ref tcl_invalidate_system. */
 int invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-/** local routine of \ref invalidate system */
+/** local routine of \ref invalidate_system */
 void local_invalidate_system();
 
 /*@}*/

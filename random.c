@@ -175,11 +175,14 @@ RandomStatus print_random_stat(void) {
 
 /**  Implementation of the tcl-command
      t_random [{ int <n> | seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }]
+     <ul>
      <li> Without further arguments, it returns a random double between 0 and 1.
-     <li> If 'int <n>' is given, it returns a random integer between 0 and n-1.
+     <li> If 'int \<n\>' is given, it returns a random integer between 0 and n-1.
      <li> If 'seed'/'stat' is given without further arguments, it returns a tcl-list with
           the current seeds/status of the n_nodes active nodes; otherwise it issues the 
-	  given parameters as the new seeds/status to the respective nodes. */
+	  given parameters as the new seeds/status to the respective nodes.     
+     </ul>
+ */
 int t_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   char buffer[100 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE];
   int i,j,cnt, i_out; double d_out;
@@ -364,10 +367,13 @@ void init_bit_random_stat(BitRandomStatus tmp_stat) {
 
 /**  Implementation of the tcl-command
      bit_random [{ seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }]
+     <ul>
      <li> Without further arguments, it returns a random double between 0 and 1.
      <li> If 'seed'/'stat' is given without further arguments, it returns a tcl-list with
           the current seeds/status of the n_nodes active nodes; otherwise it issues the 
-	  given parameters as the new seeds/status to the respective nodes. */
+	  given parameters as the new seeds/status to the respective nodes. 
+     </ul>
+*/
 int bit_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   char buffer[100 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE];
   int i,j,cnt; double d_out;

@@ -107,13 +107,13 @@ int find_comm_groups(int grid1[3], int grid2[3], int *node_list1, int *node_list
  *  mesh of size (mesh) and a mesh offset (mesh_off (in mesh units))
  *  and store also the first point (start) of the local mesh.
  *
- * \return size        number of mesh points in local mesh.
- * \param  n_pos[3]    Position of the node in n_grid.
- * \param  n_grid[3]   node grid.
- * \param  mesh[3]     global mesh dimensions.
- * \param  mesh_off[3] global mesh offset (see \ref p3m_struct).
- * \param  loc_mesh[3] local mesh dimension (output).
- * \param  start[3]    first point of local mesh in global mesh (output).
+ * \return size     number of mesh points in local mesh.
+ * \param  n_pos    Position of the node in n_grid.
+ * \param  n_grid   node grid.
+ * \param  mesh     global mesh dimensions.
+ * \param  mesh_off global mesh offset (see \ref p3m_struct).
+ * \param  loc_mesh local mesh dimension (output).
+ * \param  start    first point of local mesh in global mesh (output).
 */
 int calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3], double mesh_off[3], 
 		     int loc_mesh[3], int start[3]);
@@ -127,20 +127,20 @@ int calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3], double mesh_off[3]
  *  via its size (mesh) and its mesh offset (mesh_off (in mesh
  *  units)).
  *
- *  For the calculation of a receive block you have to change the arguments in the following way:\\
- *  pos1  - position of receiving node in the desired node grid.\\
- *  grid1 - desired node grid.\\
- *  pos2  - position of the node you intend to receive the data from in the actual node grid.\\
- *  grid2 - actual node grid.  
+ *  For the calculation of a receive block you have to change the arguments in the following way: <br>
+ *  pos1  - position of receiving node in the desired node grid. <br>
+ *  grid1 - desired node grid. <br>
+ *  pos2  - position of the node you intend to receive the data from in the actual node grid. <br>
+ *  grid2 - actual node grid.  <br>
  *
- *  \return     size of the send block.
- *  \param  pos1[3]     Position of send node in grid1.
- *  \param  grid1[3]    node grid 1.
- *  \param  pos2[3]     Position of recv node in grid2.
- *  \param  grid2[3]    node grid 2.
- *  \param  mesh[3]     global mesh dimensions.
- *  \param  mesh_off[3] global mesh offset (see \ref p3m_struct).
- *  \param  block[6]    send block specification.
+ *  \return          size of the send block.
+ *  \param  pos1     Position of send node in grid1.
+ *  \param  grid1    node grid 1.
+ *  \param  pos2     Position of recv node in grid2.
+ *  \param  grid2    node grid 2.
+ *  \param  mesh     global mesh dimensions.
+ *  \param  mesh_off global mesh offset (see \ref p3m_struct).
+ *  \param  block    send block specification.
 */
 int calc_send_block(int pos1[3], int grid1[3], int pos2[3], int grid2[3], 
 		    int mesh[3], double mesh_off[3], int block[6]);

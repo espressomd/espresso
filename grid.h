@@ -100,14 +100,14 @@ int node_grid_is_set();
 /** node mapping: array -> node. 
  *
  * \param node   number of the node you want to know the position for.
- * \param pos[3] position of the node in node grid.        
+ * \param pos    position of the node in node grid.        
 */
 void map_node_array(int node, int pos[3]);
 
 /** node mapping: node -> array. 
  *
  * \return       number of the node at position pos.
- * \param pos[3]  position of the node in node grid.        
+ * \param pos   position of the node in node grid.        
 */
 int map_array_node(int pos[3]);
 

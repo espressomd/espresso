@@ -173,8 +173,8 @@ void pack_block(double *in, double *out, int start[3], int size[3],
  *
  * An element (i0_in , i1_in , i2_in ) is then 
  * (i0_out = i1_in-start[1], i1_out = i2_in-start[2], i2_out = i0_in-start[0]) and
- * for the linear indices we have:                              \\
- * li_in = i2_in + size[2] * (i1_in + (size[1]*i0_in))          \\
+ * for the linear indices we have:                              <br>
+ * li_in = i2_in + size[2] * (i1_in + (size[1]*i0_in))          <br>
  * li_out = i2_out + size[0] * (i1_out + (size[2]*i0_out)) 
  *
  * For index definition see \ref pack_block.
@@ -199,8 +199,8 @@ void pack_block_permute1(double *in, double *out, int start[3], int size[3],
  *
  * An element (i0_in , i1_in , i2_in ) is then 
  * (i0_out = i2_in-start[2], i1_out = i0_in-start[0], i2_out = i1_in-start[1]) and
- * for the linear indices we have:                              \\
- * li_in = i2_in + size[2] * (i1_in + (size[1]*i0_in))          \\
+ * for the linear indices we have:                              <br>
+ * li_in = i2_in + size[2] * (i1_in + (size[1]*i0_in))          <br>
  * li_out = i2_out + size[0] * (i1_out + (size[2]*i0_out)) 
  *
  * For index definition see \ref pack_block.

@@ -36,7 +36,7 @@
     space, tab and return are ok.
 
     The keyword variable should be used to indicate that a variable definition follows in the
-    form <name> <data>. <data> itself is a block with title _ival_ or _dval_ denoting integer
+    form \<name\> \<data\>. \<data\> itself is a block with title _ival_ or _dval_ denoting integer
     rsp. double values, which then follow in a whitespace separated list. Such blocks can be
     read in conveniently using \ref block_read_data and written using \ref block_write_data.
 

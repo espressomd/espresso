@@ -494,7 +494,7 @@ MDINLINE void get_grid_pos(int i, int *a, int *b, int *c, int adim[3])
 
 /** Malloc a 3d grid for doubles with dimension dim[3] . 
  * @param grid    pointer to grid.
- * @param dim[3]  dimension of the grid.
+ * @param dim  dimension of the grid.
 */
 MDINLINE int malloc_3d_grid(double ****grid, int dim[3])
 {
@@ -591,8 +591,8 @@ MDINLINE void print_block(double *data, int start[3], int size[3], int dim[3], i
  ************************************************/
 
 /** returns the distance between two position. 
- *  \param pos1[3] Position one.
- *  \param pos2[3] Position two.
+ *  \param pos1 Position one.
+ *  \param pos2 Position two.
 */
 MDINLINE double distance(double pos1[3], double pos2[3])
 {
@@ -600,8 +600,8 @@ MDINLINE double distance(double pos1[3], double pos2[3])
 }
 
 /** returns the distance between two positions squared.
- *  \param pos1[3] Position one.
- *  \param pos2[3] Position two.
+ *  \param pos1 Position one.
+ *  \param pos2 Position two.
 */
 MDINLINE double distance2(double pos1[3], double pos2[3])
 {
@@ -610,9 +610,9 @@ MDINLINE double distance2(double pos1[3], double pos2[3])
 
 /** Returns the distance between two positions squared and stores the
     distance vector pos1-pos2 in vec.
- *  \param pos1[3] Position one.
- *  \param pos2[3] Position two.
- *  \param vec[3]  vecotr pos1-pos2.
+ *  \param pos1 Position one.
+ *  \param pos2 Position two.
+ *  \param vec  vecotr pos1-pos2.
  *  \return distance squared
 */
 MDINLINE double distance2vec(double pos1[3], double pos2[3], double vec[3])
@@ -624,11 +624,11 @@ MDINLINE double distance2vec(double pos1[3], double pos2[3], double vec[3])
 }
 
 /** returns the distance between the unfolded coordintes of two particles. 
- *  \param pos1[3]       Position of particle one.
- *  \param image_box1[3] simulation box index of particle one .
- *  \param pos2[3]       Position of particle two.
- *  \param image_box2[3] simulation box index of particle two .
- *  \param box_l[3]      size of simulation box.
+ *  \param pos1       Position of particle one.
+ *  \param image_box1 simulation box index of particle one .
+ *  \param pos2       Position of particle two.
+ *  \param image_box2 simulation box index of particle two .
+ *  \param box_l      size of simulation box.
 */
 MDINLINE double unfolded_distance(double pos1[3], int image_box1[3], 
 				  double pos2[3], int image_box2[3], double box_l[3])

@@ -17,8 +17,9 @@
     which are not. If not defined, all coordinates are bound to
     p.b.c. 
 
-    Has effect on: \ref per_callback, \ref find_node, \ref #fields, 
-    \ref #cells_init and \ref #sort_particles_into_cells.
+    Has effect on: \ref per_callback, \ref #fields, and functions in
+    \ref domain_decomposition.c, \ref grid.c, \ref interaction_data.c,
+    \ref layered.c, \ref statistics_chain.c
 */
 #define PARTIAL_PERIODIC
 

@@ -32,10 +32,13 @@ void init_virials(Observable_stat *stat);
 void master_pressure_calc();
 
 /** Does the binning for calc_p_tensor
-    @param r_min minimum distance for binning
-    @param r_max maximum distance for binning
-    @param r_bins number of bins
-    @param center 3 dim pointer to sphere origin 
+    @param _new_bin   NOT_DOCUMENTED
+    @param _elements  NOT_DOCUMENTED
+    @param _volumes   NOT_DOCUMENTED
+    @param r_min      minimum distance for binning
+    @param r_max      maximum distance for binning
+    @param r_bins     number of bins
+    @param center     3 dim pointer to sphere origin 
 */
 void calc_bins_sphere(int *_new_bin,int *_elements,double *_volumes,double r_min,double r_max,int r_bins, double *center);
 

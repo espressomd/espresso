@@ -41,7 +41,7 @@
 /** Maximal size of an array in \ref Datafield. */
 #define MAX_DIMENSION 64
 
-/** \type int (SetCallback)(Tcl_Interp *interp, void *data)
+/** type int (SetCallback)(Tcl_Interp *interp, void *data)
     Type for the write callback procedure of \ref Datafield */
 typedef int (SetCallback)(Tcl_Interp *interp, void *data);
 
@@ -76,9 +76,9 @@ extern const Datafield fields[];
 /*@{*/
 /** index of \ref box_l in \ref #fields */
 #define FIELD_BOXL        0  
-/** index of \ref #cell_grid in  \ref #fields */
+/** index of \ref DomainDecomposition::cell_grid in  \ref #fields */
 #define FIELD_CELLGRID    1
-/** index of \ref #cell_size in  \ref #fields */
+/** index of \ref DomainDecomposition::cell_size in  \ref #fields */
 #define FIELD_CELLSIZE    2
 /** index of \ref friction_gamma in \ref #fields */
 #define FIELD_GAMMA       3
@@ -132,7 +132,7 @@ extern const Datafield fields[];
 int setmd(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
 
-/** Implements the Tcl command \ref #tcl_code_info.  It provides information on the
+/** Implements the Tcl command \ref tcl_code_info.  It provides information on the
     Version, Compilation status and the debug status of the used
     code. */
 int code_info(ClientData data, Tcl_Interp *interp,

@@ -18,42 +18,9 @@
  *  range interactions between the spacial domains of neighbouring
  *  nodes.
  *
- *  All structures are initialized by \ref ghost_pre_init and \ref
- *  ghost_init.
+ *  All structures are initialized by \ref ghost_init.
  *
- *  Exchanging particles that move from one cell to another including
- *  crossing of node domain boundaries is done by \ref
- *  exchange_and_sort_part. 
  *
- *  Setup of the ghost particle frame is done by \ref exchange_ghost.
- *
- *  During integration the ghost positions and forces are exchanged by
- *  \ref update_ghost_pos and \ref collect_ghost_forces.
- *
- *  Communication \anchor communication is done only between
- *  neighboring nodes. The communication scheme can be seen in the
- *  figure below.
- *
- *  \image html ghost_communication.gif "Scheme of ghost/particle communication"
- *  \image latex ghost_communication.eps "Scheme of ghost/particle communication" width=8cm 
- *
- *  To reduce the number of communications per node from 26 (number of
- *  neighbor nodes in 3 dimensions) to 6 the order of the
- *  communication is important:
- *  <ol> 
- *      <li> x-direction: left and right
- *      <li> y-direction: forth and back 
- *      <li> z-direction: down and up 
- *  </ol>
- *  In this way also edges and corners are communicated
- *  (See also \ref directions for our conventions).
- *
- *  \warning \b Since the ghost particle structures make use of the
- *  linked cell structure, \ref ghost_init has to be called after \ref
- *  cells_re_init 
- *
- *  For more information on ghosts,
- *  see \ref ghosts.c "ghosts.c"
  */
 #include <mpi.h>
 #include "particle_data.h"
