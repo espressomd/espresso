@@ -130,7 +130,7 @@ void mpi_send_f(int node, int part, double F[3]);
     Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
-    \param m its new mass.
+    \param mass its new mass.
 */
 void mpi_send_mass(int node, int part, double mass);
 

@@ -56,7 +56,7 @@ int n_nodes = -1;
 typedef void (SlaveCallback)(int node, int param);
 
 /** \name request codes in asynchronous mode
-    <em> Keep this in sync with \ref callbacks and \ref names. </em> */
+    <em> Keep this in sync with \ref communication::callbacks and \ref communication::names. </em> */
 /*@{*/
 /** Action number for \ref mpi_stop. */
 #define REQ_TERM      0

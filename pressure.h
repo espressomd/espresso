@@ -28,7 +28,7 @@
 typedef struct { 
   /** mass of a virtual piston representing the shaken box */
   double piston;
-  /** inverse of \ref piston */
+  /** inverse of piston */
   double inv_piston;
   /** isotropic volume.  Note that we use the term volume throughout
       although for a 2d or 1d system we mean Area and Length
@@ -61,7 +61,7 @@ typedef struct {
   /** The number of dimensions in which npt boxlength motion is coupled to particles */
   int dimension;
   /** Set this flag if you want all box dimensions to be identical. Needed for electrostatics.  
-      If the value of \ref dimension is less than 3 then box length motion in one or more
+      If the value of dimension is less than 3 then box length motion in one or more
       directions will be decoupled from the particle motion */
   int cubic_box;
   /** An index to one of the non_constant dimensions. handy if you just want the variable box_l */

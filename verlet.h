@@ -15,13 +15,16 @@
  *
  *  For the non-bonded interactions, the integrator uses verlet pair
  *  lists which contain all particle pairs with a distance smaller
- *  than \ref max_range_non_bonded = \ref max_cut_non_bonded + \ref
- *  skin. This allows one to use these verlet pair lists for several
- *  time steps, as long no particle has moved further than \ref skin /
- *  2.0. You can tune the verlet pair algorithm with the variable \ref
- *  skin which you can set via the \ref setmd command. You can also
+ *  than \ref max_range_non_bonded = \ref max_cut_non_bonded + 
+ *  \ref integrate::skin .
+ *  This allows one to use these verlet pair lists for several
+ *  time steps, as long no particle has moved further than 
+ *  \ref integrate::skin /
+ *  2.0. You can tune the verlet pair algorithm with the variable
+ *  \ref integrate::skin 
+ *  which you can set via the \ref global::setmd command. You can also
  *  acces the average number of integration steps the verlet lists
- *  have been reused with \ref setmd \ref verlet_reuse.
+ *  have been reused with \ref global::setmd \ref verlet_reuse.
  *
  *  The verlet algorithm uses the data type \ref PairList to store
  *  interacting particle pairs.

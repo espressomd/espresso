@@ -41,9 +41,11 @@ int mode_grid_changed = 1;
     coordinate axis.  Note that at present this should be a symmetric
     square */
 int mode_grid_3d[3] = {0,0,0};
-/** Integer labels for grid axes compared to real axes*/
+/** Integer label x  for grid axes compared to real axes */
 int xdir = -1;
+/** Integer label y  for grid axes compared to real axes */
 int ydir = -1;
+/** Integer label z  for grid axes compared to real axes */
 int zdir = -1;
 
 /** Numerical tolerance to be used only in modes2d*/
@@ -470,10 +472,10 @@ int get_lipid_orients(IntList* l_orient) {
     modes2d command.  A breakdown of what the routine does is as
     follows
 
-    \li Calculates the average bead position in the height dimension \ref zdir
+    \li Calculates the average bead position in the height dimension \ref modes::zdir
 
     \li Calculates the average height of each bilayer leaflet above or
-    below \ref zdir separately.  These averages are then averaged
+    below \ref modes::zdir separately.  These averages are then averaged
     together to create a height function over the 2d grid. In
     calculating this height function, checks are made for grid cells
     that contain no lipids. In such cases a value equal to the mean of

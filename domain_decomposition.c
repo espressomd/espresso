@@ -180,7 +180,7 @@ void dd_create_cell_grid()
 }
 
 /** Fill local_cells list and ghost_cells list for use with domain
-    decomposition.  \ref cells is assumed to be a 3d grid with size
+    decomposition.  \ref cells::cells is assumed to be a 3d grid with size
     \ref DomainDecomposition::ghost_cell_grid . */
 void dd_mark_cells()
 {

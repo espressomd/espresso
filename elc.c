@@ -72,7 +72,7 @@ ELC_struct elc_params = { 1e100, 10, 1 };
 #define PQECCM 7
 /*@}*/
 
-/** number of local particles, equals the size of \ref partblk. */
+/** number of local particles, equals the size of \ref elc::partblk. */
 static int n_localpart = 0;
 
 /** temporary buffers for product decomposition */

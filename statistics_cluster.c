@@ -25,7 +25,7 @@
 /************************************************************/
 /*@{*/
 
-
+/** Structure for cluster element */
 struct StructClusterElement{  
   /** Element identity */
   int id;
@@ -33,8 +33,10 @@ struct StructClusterElement{
   struct StructClusterElement *next;
 };
 
+/** Cluster Element */
 typedef struct StructClusterElement ClusterElement;
 
+/** Structure for Cluster */
 struct StructCluster {  
   /** Cluster identity */
   int id;
@@ -48,6 +50,7 @@ struct StructCluster {
   struct StructCluster *prev;
 };
 
+/** Cluster */
 typedef struct StructCluster Cluster;
 
 /*@}*/
@@ -58,11 +61,11 @@ typedef struct StructCluster Cluster;
 
 /** NULL terminated linked list of elements of a cluster (indices in particle list) */
 ClusterElement *element;
-/** Double linked list of clusters */
+/** Double linked list of \ref statistics_cluster::Cluster */
 Cluster        *cluster;
-/** first cluster in list of \ref cluster */
+/** first cluster in list of \ref statistics_cluster::Cluster */
 Cluster        *first_cluster;
-/** last cluster in list of \ref cluster */
+/** last cluster in list of \ref statistics_cluster::Cluster */
 Cluster        *last_cluster;
 
 /** parameter of necklace cluster algorithm */

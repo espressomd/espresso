@@ -116,7 +116,7 @@ typedef struct {
 extern DomainDecomposition dd;
 
 /** Maximal skin size. This is a global variable wwhich can be read
-    out by the user via \ref setmd in order to optimize the cell
+    out by the user via \ref global::setmd in order to optimize the cell
     grid */
 extern double max_skin;
 

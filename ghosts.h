@@ -18,7 +18,7 @@ particle data (particles, ghosts, positions and forces) for short
 range interactions between the spacial domains of neighbouring
 nodes.
 
-\section ghost_comm_use How does this work
+<h2> How does this work </h2>
 The ghost communication transfers data from cells on one node to cells on another node during
 the integration process. Note that data can only be transferred from one cell to one other, and
 the contents of the other cell will be overwritten. This communication is invoked by the integrator,

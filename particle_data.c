@@ -74,7 +74,7 @@ void try_add_exclusion(Particle *part, int part2);
 
 /** Automatically add the next \<distance\> neighbors in each molecule to the exclusion list.
     This uses the bond topology obtained directly from the particles, since only this contains
-    the full topology, in contrast to \ref topology. To easily setup the bonds, all data
+    the full topology, in contrast to \ref topology::topology. To easily setup the bonds, all data
     should be on a single node, therefore the \ref partCfg array is used. With large amounts
     of particles, you should avoid this function and setup exclusions manually. */
 void auto_exclusion(int distance);
