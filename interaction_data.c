@@ -244,7 +244,7 @@ int printCoulombIAToResult(Tcl_Interp *interp)
   }
   else if (coulomb.method == COULOMB_DH) {
     Tcl_PrintDouble(interp, dh_params.kappa, buffer);
-    Tcl_AppendResult(interp, "dh ", buffer, (char *) NULL);
+    Tcl_AppendResult(interp, "dh ", buffer, " ",(char *) NULL);
     Tcl_PrintDouble(interp, dh_params.r_cut, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
   }

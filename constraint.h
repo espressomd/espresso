@@ -58,6 +58,13 @@ MDINLINE void add_constraints_forces(Particle *p1)
 	
 	/* fprintf(stderr,"CONSTRAINT: part %d at pos (%.2f,%.2f,%.2f) dist %.2f force (%.2e,%.2e,%.2e)\n",
 	   p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2],dist,fac*vec[0],fac*vec[1],fac*vec[2]); */
+#ifdef ADDITIONAL_CHECKS
+	if(dist<0.0) {
+	  fprintf(stderr,"CONSTRAINT: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+	  errexit();
+	}
+#endif
       }
       break;
     case CONSTRAINT_CYL:

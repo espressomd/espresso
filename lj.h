@@ -29,9 +29,10 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
 	p1->f[j] += fac * d[j];
 	p2->f[j] -= fac * d[j];
       }
+#ifdef LJ_WARN_WHEN_CLOSE
       if(fac*dist > 1000) fprintf(stderr,"%d: LJ-Warning: Pair (%d-%d) force=%f dist=%f\n",
 				  this_node,p1->r.identity,p2->r.identity,fac*dist,dist);
-
+#endif
     }
     /* capped part of lj potential. */
     else if(dist > 0.0) {
