@@ -210,7 +210,6 @@ int t_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     }
     else if (!strncmp(argv[0], "stat", strlen(argv[0]))) {  /* 't_random stat [status-list]' */
       RandomStatus *stat = malloc(n_nodes*sizeof(RandomStatus));
-      printf("random: %d %d->%d\n", argc, n_nodes, n_nodes*(NTAB_RANDOM+2)+1);
       if (argc <= 1) {
 	mpi_random_stat(0,stat);
 	for (i=0; i < n_nodes; i++) { 
