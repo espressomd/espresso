@@ -344,8 +344,10 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
   recv_buf = (double *)realloc(recv_buf, max_comm_size*sizeof(double));
   (*data)  = (double *)realloc((*data), max_mesh_size*sizeof(double));
   data_buf = (double *)realloc(data_buf, max_mesh_size*sizeof(double));
-  if(!(*data) || !data_buf || !recv_buf || !send_buf) 
+  if(!(*data) || !data_buf || !recv_buf || !send_buf) {
     fprintf(stderr,"%d: Could not allocate FFT data arays\n",this_node);
+    errexit();
+  }
 
   c_data     = (fftw_complex *) (*data);
   c_data_buf = (fftw_complex *) data_buf;

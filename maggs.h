@@ -148,7 +148,7 @@ int Maggs_sanity_checks();
 
 /** Calculate real space contribution of Yukawa pair forces. */
 MDINLINE void add_maggs_yukawa_pair_force(Particle *p1, Particle *p2,
-					  double *d,double dist2,double dist)
+					  double *d,double dist2,double dist,double force[3])
 {
   int j;
   double fac, temp;
@@ -159,10 +159,8 @@ MDINLINE void add_maggs_yukawa_pair_force(Particle *p1, Particle *p2,
     fac = maggs.pref2 * p1->p.q * p2->p.q * 
       exp(-temp) * (1. + temp) / (dist2*dist);
 
-    FOR3D(j) {
-      p1->f.f[j] += fac * d[j];
-      p2->f.f[j] -= fac * d[j];
-    }
+    FOR3D(j) force[j] += fac * d[j];
+
     MAGGS_TRACE(
       fprintf(stderr, "%d: Yukawa: pair (%d-%d) dist=%.3f, q1=%.1f, q2=%.1f, force+-: (%.3e,%.3e,%.3e)\n",
 	      this_node,p1->p.identity,p2->p.identity,dist, p1->p.q, p2->p.q, fac*d[0],fac*d[1],fac*d[2]);

@@ -123,7 +123,19 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   add_gb_pair_force(p1,p2,ia_params,d,dist,force,p1->f.torque,p2->f.torque);
 #endif
 
-  /* everything before this contributes to the virial pressure in NpT */
+  /***********************************************/
+  /* short range electrostatics                  */
+  /***********************************************/
+
+#ifdef ELECTROSTATICS
+  if (coulomb.method == COULOMB_DH)
+    add_dh_coulomb_pair_force(p1,p2,d,dist,force);
+#endif
+
+  /*********************************************************************/
+  /* everything before this contributes to the virial pressure in NpT, */
+  /* but nothing afterwards                                            */
+  /*********************************************************************/
 #ifdef NPT
   for (j = 0; j < 3; j++)
     if(integ_switch == INTEG_METHOD_NPT_ISO)
@@ -131,7 +143,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #endif
 
   /***********************************************/
-  /* electrostatics                              */
+  /* long range electrostatics                   */
   /***********************************************/
 
 #ifdef ELECTROSTATICS
@@ -140,33 +152,23 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   switch (coulomb.method) {
   case COULOMB_P3M: {
 #ifdef NPT
-    double eng = calc_p3m_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+    double eng = add_p3m_coulomb_pair_force(p1,p2,d,dist2,dist,force);
     if(integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
 #else
-    calc_p3m_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+    add_p3m_coulomb_pair_force(p1,p2,d,dist2,dist,force);
 #endif
     break;
   }
-  case COULOMB_DH:
-    calc_dh_coulomb_pair_force(p1,p2,d,dist,force);
-#ifdef NPT
-    if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[j] += force[j] * d[j];
-#endif
-    break;
-
   case COULOMB_MMM1D:
-    calc_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+    add_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist,force);
     break;
-
   case COULOMB_MMM2D:
-    calc_mmm2d_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+    add_mmm2d_coulomb_pair_force(p1,p2,d,dist2,dist,force);
     break;
-
   case COULOMB_MAGGS:
     if(maggs.yukawa == 1)
-      add_maggs_yukawa_pair_force(p1,p2,d,dist2,dist);
+      add_maggs_yukawa_pair_force(p1,p2,d,dist2,dist,force);
     break;
   case COULOMB_NONE:
     break;

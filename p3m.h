@@ -160,14 +160,17 @@ void P3M_scaleby_box_l();
  */
 int P3M_tune_parameters(Tcl_Interp *interp);
 
+/** a probably faster adaptive tuning method */
+int P3M_adaptive_tune_parameters(Tcl_Interp *interp);
+
 /** Calculate the k-space contribution to the coulomb interaction
     forces. */ 
 double P3M_calc_kspace_forces(int force_flag, int energy_flag);
 
 /** Calculate real space contribution of coulomb pair forces.
     If NPT is compiled in, it returns the energy, which is needed for NPT. */
-MDINLINE double calc_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
-					    double *d,double dist2,double dist,double force[3])
+MDINLINE double add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
+					   double *d,double dist2,double dist,double force[3])
 {
   int j;
   double fac1,fac2, adist, erfc_part_ri;

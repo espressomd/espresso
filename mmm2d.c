@@ -1072,8 +1072,8 @@ static void prepareBernoulliNumbers(int bon_order)
   }
 }
 
-void calc_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
-				   double d[3], double dl2, double dl, double force[3])
+void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
+				  double d[3], double dl2, double dl, double force[3])
 {
   double F[3];
   double pref = coulomb.prefactor*p1->p.q*p2->p.q;

@@ -49,6 +49,11 @@
 /** Tag for communication in spread_force_grid(). */
 #define REQ_P3M_SPREAD 202
 
+/** precision limit for the r_cut zero */
+#define P3M_RCUT_PREC 1e-2
+/** granularity of the time measurement */
+#define P3M_TIME_GRAN 2
+
 /************************************************
  * data types
  ************************************************/
@@ -283,11 +288,11 @@ double P3M_k_space_error(double box_size, double prefac, int mesh,
     the spline interpolation) can be written as an even trigonometric
     polynomial. The results are tabulated here (The employed formula
     is Eqn. 7.66 in the book of Hockney and Eastwood). */
-double analytic_cotangent_sum(int n, int mesh, int cao);
+double analytic_cotangent_sum(int n, double mesh_i, int cao);
 
 /** aliasing sum used by \ref P3M_k_space_error. */
 void P3M_tune_aliasing_sums(int nx, int ny, int nz, 
-			    int mesh, int cao, double alpha_L , 
+			    int mesh, double mesh_i, int cao, double alpha_L_i, 
 			    double *alias1, double *alias2);
 /*@}*/
 
@@ -329,7 +334,7 @@ int printP3MToResult(Tcl_Interp *interp)
 }
 
 void p3m_set_tune_params(double r_cut, int mesh, int cao,
-			 double alpha, double accuracy)
+			 double alpha, double accuracy, int n_interpol)
 {
   if (r_cut >= 0) {
     p3m.r_cut    = r_cut;
@@ -350,7 +355,10 @@ void p3m_set_tune_params(double r_cut, int mesh, int cao,
   if (accuracy >= 0)
     p3m.accuracy = accuracy;
 
-  mpi_bcast_coulomb_params();
+  if (n_interpol != -1)
+    p3m.inter = n_interpol;
+
+  coulomb.prefactor = (temperature > 0) ? temperature*coulomb.bjerrum : coulomb.bjerrum;
 }
 
 int p3m_set_params(double r_cut, int mesh, int cao,
@@ -426,16 +434,12 @@ int p3m_set_ninterpol(int n)
   return TCL_OK;
 }
 
-int inter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv)
+int inter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv, int adaptive)
 {
-  int mesh, cao;
-  double r_cut, accuracy;
-
-  mesh = cao = -1;
-  r_cut = accuracy = -1.0;
+  int mesh = -1, cao = -1, n_interpol = -1;
+  double r_cut = -1, accuracy = -1;
 
   while(argc > 0) {
-
     if(ARG0_IS_S("r_cut")) {
       if (! (argc > 1 && ARG1_IS_D(r_cut) && r_cut >= -1)) {
 	Tcl_AppendResult(interp, "r_cut expects a positive double",
@@ -464,21 +468,36 @@ int inter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv)
 	return TCL_ERROR;
       }
 
-    } else {
-      Tcl_AppendResult(interp, "Unknown p3m tune parameter \"",argv[0],"\"",
-                       (char *) NULL);
-      return TCL_ERROR;
+    } else if (ARG0_IS_S("n_interpol")) {
+      if (! (argc > 1 && ARG1_IS_I(n_interpol) && n_interpol >= 0)) {
+	Tcl_AppendResult(interp, "n_interpol expects an nonnegative integer",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
     }
+    /* unknown parameter. Probably one of the optionals */
+    else break;
     
     argc -= 2;
     argv += 2;
   }
+  p3m_set_tune_params(r_cut, mesh, cao, -1.0, accuracy, n_interpol);
 
-  p3m_set_tune_params(r_cut, mesh, cao, -1.0, accuracy);
+  /* check for optional parameters */
+  if (argc > 0) {
+    if (inter_parse_p3m_opt_params(interp, argc, argv) == TCL_ERROR)
+      return TCL_ERROR;
+  }
 
-  if(P3M_tune_parameters(interp) == TCL_ERROR) 
-    return TCL_ERROR;
-  
+  if (adaptive) {
+    if(P3M_adaptive_tune_parameters(interp) == TCL_ERROR) 
+      return TCL_ERROR;
+  }
+  else {
+    if(P3M_tune_parameters(interp) == TCL_ERROR) 
+      return TCL_ERROR;
+  }
+
   return TCL_OK;
 }
 
@@ -512,7 +531,10 @@ int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
   }
 
   if (ARG0_IS_S("tune"))
-    return inter_parse_p3m_tune_params(interp, argc-1, argv+1);
+    return inter_parse_p3m_tune_params(interp, argc-1, argv+1, 0);
+
+  if (ARG0_IS_S("tunev2"))
+    return inter_parse_p3m_tune_params(interp, argc-1, argv+1, 1);
       
   if(! ARG0_IS_D(r_cut))
     return TCL_ERROR;  
@@ -673,6 +695,61 @@ int inter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv)
   return TCL_OK;
 }
 
+/************************************* method ********************************/
+/*****************************************************************************/
+
+static double caf_10(double x) { return 1.0; }
+
+static double caf_20(double x) { return 0.5-x; }
+static double caf_21(double x) { return 0.5+x; }
+
+static double caf_30(double x) { return 0.5*SQR(0.5 - x); }
+static double caf_31(double x) { return 0.75 - SQR(x); }
+static double caf_32(double x) { return 0.5*SQR(0.5 + x); }
+
+static double caf_40(double x) { return ( 1.0+x*( -6.0+x*( 12.0-x* 8.0)))/48.0; }
+static double caf_41(double x) { return (23.0+x*(-30.0+x*(-12.0+x*24.0)))/48.0; }
+static double caf_42(double x) { return (23.0+x*( 30.0+x*(-12.0-x*24.0)))/48.0; }
+static double caf_43(double x) { return ( 1.0+x*(  6.0+x*( 12.0+x* 8.0)))/48.0; }
+
+static double caf_50(double x) { return (  1.0+x*( -8.0+x*(  24.0+x*(-32.0+x*16.0))))/384.0; }
+static double caf_51(double x) { return ( 19.0+x*(-44.0+x*(  24.0+x*( 16.0-x*16.0))))/ 96.0; }
+static double caf_52(double x) { return (115.0+x*       x*(-120.0+x*       x*48.0))  /192.0; }
+static double caf_53(double x) { return ( 19.0+x*( 44.0+x*(  24.0+x*(-16.0-x*16.0))))/ 96.0; }
+static double caf_54(double x) { return (  1.0+x*(  8.0+x*(  24.0+x*( 32.0+x*16.0))))/384.0; }
+
+static double caf_60(double x) { return (  1.0+x*( -10.0+x*(  40.0+x*( -80.0+x*(  80.0-x* 32.0)))))/3840.0; }
+static double caf_61(double x) { return (237.0+x*(-750.0+x*( 840.0+x*(-240.0+x*(-240.0+x*160.0)))))/3840.0; }
+static double caf_62(double x) { return (841.0+x*(-770.0+x*(-440.0+x*( 560.0+x*(  80.0-x*160.0)))))/1920.0; }
+static double caf_63(double x) { return (841.0+x*(+770.0+x*(-440.0+x*(-560.0+x*(  80.0+x*160.0)))))/1920.0; }
+static double caf_64(double x) { return (237.0+x*( 750.0+x*( 840.0+x*( 240.0+x*(-240.0-x*160.0)))))/3840.0; }
+static double caf_65(double x) { return (  1.0+x*(  10.0+x*(  40.0+x*(  80.0+x*(  80.0+x* 32.0)))))/3840.0; }
+
+static double caf_70(double x) { return (    1.0+x*(   -12.0+x*(   60.0+x*( -160.0+x*(  240.0+x*(-192.0+x* 64.0))))))/46080.0; }
+static double caf_71(double x) { return (  361.0+x*( -1416.0+x*( 2220.0+x*(-1600.0+x*(  240.0+x*( 384.0-x*192.0))))))/23040.0; }
+static double caf_72(double x) { return (10543.0+x*(-17340.0+x*( 4740.0+x*( 6880.0+x*(-4080.0+x*(-960.0+x*960.0))))))/46080.0; }
+static double caf_73(double x) { return ( 5887.0+x*          x*(-4620.0+x*         x*( 1680.0-x*        x*320.0)))   /11520.0; }
+static double caf_74(double x) { return (10543.0+x*( 17340.0+x*( 4740.0+x*(-6880.0+x*(-4080.0+x*( 960.0+x*960.0))))))/46080.0; }
+static double caf_75(double x) { return (  361.0+x*(  1416.0+x*( 2220.0+x*( 1600.0+x*(  240.0+x*(-384.0-x*192.0))))))/23040.0; }
+static double caf_76(double x) { return (    1.0+x*(    12.0+x*(   60.0+x*(  160.0+x*(  240.0+x*( 192.0+x* 64.0))))))/46080.0; }
+
+static double caf_no(double x) {
+  fprintf(stderr,"%d: INTERNAL ERROR: Charge assignment function for order %d incorrect.\n",this_node,p3m.cao);
+  errexit(); return 0;
+}
+
+typedef double (CAOfunction)(double x);
+static CAOfunction *charge_assignment_function[8][8] = {
+  { caf_no },
+  { caf_10, caf_no },
+  { caf_20, caf_21, caf_no },
+  { caf_30, caf_31, caf_32, caf_no },
+  { caf_40, caf_41, caf_42, caf_43, caf_no },
+  { caf_50, caf_51, caf_52, caf_53, caf_54, caf_no },
+  { caf_60, caf_61, caf_62, caf_63, caf_64, caf_65, caf_no },
+  { caf_70, caf_71, caf_72, caf_73, caf_74, caf_75, caf_76, caf_no }
+};
+
 void P3M_scaleby_box_l() {
   p3m.r_cut = p3m.r_cut_iL* box_l[0];
   p3m.alpha = p3m.alpha_L * box_l_i[0];
@@ -700,54 +777,71 @@ void P3M_init_a_ai_cao_cut() {
 
 int P3M_sanity_checks_boxl() {
   char *errtxt;
-  int i;
+  int i, ret = 0;
   for(i=0;i<3;i++) {
     /* check k-space cutoff */
     if(p3m.cao_cut[i] >= 0.5*box_l[i]) {
       errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
       sprintf(errtxt,"{P3M_init: k-space cutoff %f is larger than half of box dimension %f} ",p3m.cao_cut[i],box_l[i]);
-      return 1;
+      ret = 1;
     }
     if(p3m.cao_cut[i] >= local_box_l[i]) {
       errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
       sprintf(errtxt,"{P3M_init: k-space cutoff %f is larger than local box dimension %f} ",p3m.cao_cut[i],local_box_l[i]);
-      return 1;
+      ret = 1;
     }
   }
-  return 0;
+  return ret;
 }
 
 int P3M_sanity_checks()
 {
   char *errtxt;
+  int ret = 0;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
     errtxt = runtime_error(128);
     sprintf(errtxt, "{P3M requires periodicity 1 1 1} ");
-    return 1;
+    ret = 1;
   }
   
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
     errtxt = runtime_error(128);
     sprintf(errtxt, "{P3M at present requires the domain decomposition cell system} ");
-    return 1;
+    ret = 1;
   }
   
   if( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
     errtxt = runtime_error(128);
     sprintf(errtxt,"{P3M requires a cubic box} ");
-    return 1;
+    ret = 1;
   }
 
   if( (p3m.mesh[0] != p3m.mesh[1]) || (p3m.mesh[1] != p3m.mesh[2]) ) {
     errtxt = runtime_error(128);
     sprintf(errtxt, "{P3M requires a cubic mesh} ");
-    return 1;
+    ret = 1;
   }
 
-  if (P3M_sanity_checks_boxl()) return 1;
+  if (P3M_sanity_checks_boxl()) ret = 1;
 
-  return 0;
+  if( p3m.mesh[0] == 0) {
+    errtxt = runtime_error(128);
+    sprintf(errtxt,"{P3M_init: mesh size is not yet set} ");
+    ret = 1;
+  }
+  if( p3m.cao == 0) {
+    errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
+    sprintf(errtxt,"{P3M_init: cao is not yet set} ");
+    ret = 1;
+  }
+  if (skin == -1) {
+    errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
+    sprintf(errtxt,"{P3M_init: skin is not yet set} ");
+    ret = 1;
+  }
+
+  return ret;
 }
 
 void   P3M_init()
@@ -762,14 +856,11 @@ void   P3M_init()
 		fprintf(stderr,"   Electrostatics switched off!\n"));
   }
   else {  
+    P3M_TRACE(fprintf(stderr,"%d: P3M_init: \n",this_node));
+
     if (P3M_sanity_checks()) return;
 
-    if( p3m.mesh[0] == 0 || p3m.cao == 0 ) {
-      P3M_TRACE(fprintf(stderr,"%d: P3M_init: Not enough data: return\n",this_node));
-      return;
-    }
-
-    P3M_TRACE(fprintf(stderr,"%d: P3M_init: \n",this_node));
+    P3M_TRACE(fprintf(stderr,"%d: P3M_init: starting\n",this_node));
 
     P3M_TRACE(fprintf(stderr,"%d: mesh=%d, cao=%d, mesh_off=(%f,%f,%f)\n",this_node,p3m.mesh[0],p3m.cao,p3m.mesh_off[0],p3m.mesh_off[1],p3m.mesh_off[2]));
 
@@ -797,7 +888,9 @@ void   P3M_init()
       recv_grid = (double *) realloc(recv_grid, sizeof(double)*sm.max);
     }
 
-    interpolate_charge_assignment_function();
+    if (p3m.inter)
+      interpolate_charge_assignment_function();
+
     /* position offset for calc. of first meshpoint */
     pos_shift = (double)((p3m.cao-1)/2) - (p3m.cao%2)/2.0;
     P3M_TRACE(fprintf(stderr,"%d: pos_shift = %f\n",this_node,pos_shift)); 
@@ -827,18 +920,25 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
   Particle *p;
   int i,c,n, np,d,d_rs,i0,i1,i2,ind,j[3];
   double q;
+  /********** variables for the interpolating version ***********/
   /* position of a particle in local mesh units */
   double pos[3];
   /* index of first assignment mesh point; argument for interpolated caf */
-  int first[3],arg[3];
-  /* index, index jumps for rs_mesh array */
-  int q_ind, q_m_off, q_s_off;
-  /* (2*p3m.inter) + 1 */
-  int inter2;
-  /* tmp variables */
-  double tmp0,tmp1;
+  int first[3], arg[3];
   /* charged particle counter, charge fraction counter */
   int cp_cnt=0, cf_cnt=0;
+  /* (2*p3m.inter) + 1 */
+  int inter2;
+  /******* variables for the noninterpolating version ***********/
+  double n_pos;
+  /* position relative to the first point */
+  double n_arg[3];
+  int n_first;
+  /**************************************************************/
+  /* index, index jumps for rs_mesh array */
+  int q_ind, q_m_off, q_s_off;
+  /* tmp variables */
+  double tmp0,tmp1;
   /* Prefactor for force */
   double force_prefac;
   /* k space energy */
@@ -861,59 +961,82 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
     for(i = 0; i < np; i++) {
       if( (q=p[i].p.q) != 0.0 ) {
 
-	/* particle position in mesh coordinates */
-	for(d=0;d<3;d++) {
-	  pos[d]   = ((p[i].r.p[d]-lm.ld_pos[d])*p3m.ai[d]) - pos_shift;
-	  first[d] = (int) pos[d];
-	  ca_fmp[(3*cp_cnt)+d] = first[d];
-	  arg[d]   = (int) ((pos[d]-first[d])*inter2);
+	/* charge assignment */
+	if (p3m.inter) {
+	  /* old, interpolating method */
+
+	  /* particle position in mesh coordinates */
+	  for(d=0;d<3;d++) {
+	    pos[d]   = ((p[i].r.p[d]-lm.ld_pos[d])*p3m.ai[d]) - pos_shift;
+	    first[d] = (int) pos[d];
+	    ca_fmp[(3*cp_cnt)+d] = first[d];
+	    arg[d]   = (int) ((pos[d]-first[d])*inter2);
 
 #ifdef ADDITIONAL_CHECKS
-	  if( pos[d]<0.0 ) {
-	    fprintf(stderr,"%d: rs_mesh underflow! (P%d at %f)\n",
-		    this_node,p[i].p.identity,p[i].r.p[d]);
-	    fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
-		    this_node,my_left[d],my_right[d]);	    
-	  }
-	  if( (first[d]+p3m.cao) > lm.dim[d] ) {
-	    fprintf(stderr,"%d: rs_mesh overflow! dir=%d (P_id=%d at %f) first=%d\n",
-		    this_node,d,p[i].p.identity,p[i].r.p[d],first[d]);
-	    fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
-		    this_node,my_left[d],my_right[d]);
-	  }    
-#endif
-
-	}
-
-	/* charge assignment */
-	q_ind = first[2] + lm.dim[2]*(first[1] + (lm.dim[1]*first[0]));
-	for(i0=0; i0<p3m.cao; i0++) {
-	  tmp0 = q * int_caf[i0][arg[0]];
-	  for(i1=0; i1<p3m.cao; i1++) {
-	    tmp1 = tmp0 * int_caf[i1][arg[1]];
-	    for(i2=0; i2<p3m.cao; i2++) {
-	      ca_frac[cf_cnt] = tmp1 * int_caf[i2][arg[2]];
-	      /*
-		P3M_TRACE(fprintf(stderr,"%d Frac %d = %f add tp [%d,%d,%d] (%d)\n",
-		this_node,cf_cnt,ca_frac[cf_cnt],
-		first[0]+i0,first[1]+i1,first[2]+i2,q_ind));
-	      */
-	      rs_mesh[q_ind++] += ca_frac[cf_cnt++];
+	    if( pos[d]<0.0 ) {
+	      fprintf(stderr,"%d: rs_mesh underflow! (P%d at %f)\n",
+		      this_node,p[i].p.identity,p[i].r.p[d]);
+	      fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
+		      this_node,my_left[d],my_right[d]);	    
 	    }
-	    q_ind += q_m_off;
+	    if( (first[d]+p3m.cao) > lm.dim[d] ) {
+	      fprintf(stderr,"%d: rs_mesh overflow! dir=%d (P_id=%d at %f) first=%d\n",
+		      this_node,d,p[i].p.identity,p[i].r.p[d],first[d]);
+	      fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
+		      this_node,my_left[d],my_right[d]);
+	    }    
+#endif
 	  }
-	  q_ind += q_s_off;
+
+	  q_ind = first[2] + lm.dim[2]*(first[1] + (lm.dim[1]*first[0]));
+	  for(i0=0; i0<p3m.cao; i0++) {
+	    tmp0 = q * int_caf[i0][arg[0]];
+	    for(i1=0; i1<p3m.cao; i1++) {
+	      tmp1 = tmp0 * int_caf[i1][arg[1]];
+	      for(i2=0; i2<p3m.cao; i2++) {
+		ca_frac[cf_cnt] = tmp1 * int_caf[i2][arg[2]];
+		/*
+		  P3M_TRACE(fprintf(stderr,"%d Frac %d = %f add tp [%d,%d,%d] (%d)\n",
+		  this_node,cf_cnt,ca_frac[cf_cnt],
+		  first[0]+i0,first[1]+i1,first[2]+i2,q_ind));
+		*/
+		rs_mesh[q_ind++] += ca_frac[cf_cnt++];
+	      }
+	      q_ind += q_m_off;
+	    }
+	    q_ind += q_s_off;
+	  }
+	  cp_cnt++;
+	  if( (cp_cnt+1)>ca_num ) realloc_ca_fields(cp_cnt+1);
 	}
-	cp_cnt++;
-	if( (cp_cnt+1)>ca_num ) realloc_ca_fields(cp_cnt+1);
+	else {
+	  /* new, noninterpolating method */
+	  /* particle position in mesh coordinates */
+	  for(d=0;d<3;d++) {
+	    n_pos    = ((p[i].r.p[d]-lm.ld_pos[d])*p3m.ai[d]) - pos_shift;
+	    n_first  = (int) n_pos;
+	    n_arg[d] = n_pos - n_first;
+	    q_ind = (d == 0) ? n_first : n_first + lm.dim[d]*q_ind;
+	  }
+
+	  for(i0=0; i0<p3m.cao; i0++) {
+	    tmp0 = q * charge_assignment_function[p3m.cao][i0](n_arg[0]);
+	    for(i1=0; i1<p3m.cao; i1++) {
+	      tmp1 = tmp0 * charge_assignment_function[p3m.cao][i1](n_arg[1]);
+	      for(i2=0; i2<p3m.cao; i2++)
+		rs_mesh[q_ind++] += tmp1 * charge_assignment_function[p3m.cao][i2](n_arg[2]);
+	      q_ind += q_m_off;
+	    }
+	    q_ind += q_s_off;
+	  }
+	}
       }
     }
   }
-  if( (cp_cnt+CA_INCREMENT)<ca_num ) realloc_ca_fields(cp_cnt+CA_INCREMENT);
+  if(p3m.inter && (cp_cnt+CA_INCREMENT)<ca_num ) realloc_ca_fields(cp_cnt+CA_INCREMENT);
 
   /* Gather information for FFT grid inside the nodes domain (inner local mesh) */
   gather_fft_grid();
-
 
   /* === Perform forward 3D FFT (Charge Assignment Mesh) === */
   fft_perform_forw(rs_mesh);
@@ -978,28 +1101,41 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 	np = cell->n;
 	for(i=0; i<np; i++) { 
 	  if( (q=p[i].p.q) != 0.0 ) {
-#ifdef ADDITIONAL_CHECKS
-	    double db_fsum=0.0;
-#endif
-	    
-	    q_ind = ca_fmp[(3*cp_cnt)+2] + lm.dim[2]*(ca_fmp[(3*cp_cnt)+1] + (lm.dim[1]*ca_fmp[(3*cp_cnt)+0]));
-	    for(i0=0; i0<p3m.cao; i0++) {
-	      for(i1=0; i1<p3m.cao; i1++) {
-		for(i2=0; i2<p3m.cao; i2++) {
-#ifdef ADDITIONAL_CHECKS
-		  db_fsum += force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
-#endif
-		  p[i].f.f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
-		  cf_cnt++;
+	    if (p3m.inter) {
+	      /* old, interpolating method */
+	      q_ind = ca_fmp[(3*cp_cnt)+2] + lm.dim[2]*(ca_fmp[(3*cp_cnt)+1] + (lm.dim[1]*ca_fmp[(3*cp_cnt)+0]));
+	      for(i0=0; i0<p3m.cao; i0++) {
+		for(i1=0; i1<p3m.cao; i1++) {
+		  for(i2=0; i2<p3m.cao; i2++) {
+		    p[i].f.f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
+		    cf_cnt++;
+		  }
+		  q_ind += q_m_off;
 		}
-		q_ind += q_m_off;
+		q_ind += q_s_off;
 	      }
-	      q_ind += q_s_off;
+	      cp_cnt++;
 	    }
-	    cp_cnt++;
-#ifdef ADDITIONAL_CHECKS
-	    /*	    if(fabs(db_fsum)> 1.0) fprintf(stderr,"%d: Part %d: k-space-force = %e\n",this_node,p[i].p.identity,db_fsum); */
-#endif
+	    else {
+	      /* new, recalculating method */
+	      for(d=0;d<3;d++) {
+		n_pos    = ((p[i].r.p[d]-lm.ld_pos[d])*p3m.ai[d]) - pos_shift;
+		n_first  = (int) n_pos;
+		n_arg[d] = n_pos - n_first;
+		q_ind = (d == 0) ? n_first : n_first + lm.dim[d]*q_ind;
+	      }
+
+	      for(i0=0; i0<p3m.cao; i0++) {
+		tmp0 = q * charge_assignment_function[p3m.cao][i0](n_arg[0]);
+		for(i1=0; i1<p3m.cao; i1++) {
+		  tmp1 = tmp0 * charge_assignment_function[p3m.cao][i0](n_arg[1]);
+		  for(i2=0; i2<p3m.cao; i2++)
+		    p[i].f.f[d_rs] -= force_prefac*tmp1*charge_assignment_function[p3m.cao][i2](n_arg[2])*rs_mesh[q_ind++]; 
+		  q_ind += q_m_off;
+		}
+		q_ind += q_s_off;
+	      }
+	    }
 	    ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],d_rs,-db_fsum));
 	  }
 	}
@@ -1306,7 +1442,7 @@ void realloc_ca_fields(int newsize)
     if(ca_num<CA_INCREMENT) ca_num = CA_INCREMENT;
     ca_frac = (double *)realloc(ca_frac, p3m.cao*p3m.cao*p3m.cao*ca_num*sizeof(double));
     ca_fmp  = (int *)realloc(ca_fmp, 3*ca_num*sizeof(int));
-  }  
+  }
 }
 
 void add_block(double *in, double *out, int start[3], int size[3], int dim[3])
@@ -1684,6 +1820,372 @@ int P3M_tune_parameters(Tcl_Interp *interp)
   return (TCL_OK);
 }
 
+/** get the minimal error for this combination of parameters. In fact, the real space error is tuned such that it
+    contributes half of the total error, and then the Fourier space error is calculated. Returns the error and the
+    optimal alpha, or 0 if this combination does not work at all */
+static double get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L, double *_rs_err, double *_ks_err)
+{
+  double rs_err, ks_err;
+  double alpha_L;
+  P3M_TRACE(fprintf(stderr, "get_accuracy: mesh %d, cao %d, r_cut %f ", mesh, cao, r_cut_iL));
+
+  /* calc maximal real space error for setting */
+  rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,0);
+  if(M_SQRT2*rs_err > p3m.accuracy)
+    /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
+    alpha_L = sqrt(log(M_SQRT2*rs_err/p3m.accuracy)) / r_cut_iL;
+  else
+    /* even alpha=0 is ok, however, we cannot choose it since it kills the k-space error formula.
+       Anyways, this very likely NOT the optimal solution */
+    alpha_L = 0.1;
+
+  *_alpha_L = alpha_L;
+  /* calculate real space and k space error for this alpha_L */
+  rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,alpha_L);
+  ks_err = P3M_k_space_error(box_l[0],coulomb.prefactor,mesh,cao,p3m_sum_qpart,p3m_sum_q2,alpha_L);
+  *_rs_err = rs_err;
+  *_ks_err = ks_err;
+  P3M_TRACE(fprintf(stderr, "resulting: %f -> %f %f\n", alpha_L, rs_err, ks_err));
+  return sqrt(SQR(rs_err)+SQR(ks_err));
+}
+
+/** get the optimal alpha and the corresponding computation time for fixed mesh, cao, r_cut and alpha */
+static double p3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
+{
+  /* rounded up 2000/n_charges timing force evaluations */
+  int int_num = (1999 + p3m_sum_qpart)/p3m_sum_qpart;
+
+  /* broadcast p3m parameters for test run */
+  p3m.r_cut_iL = r_cut_iL;
+  p3m.mesh[0]  = p3m.mesh[1] = p3m.mesh[2] = mesh;
+  p3m.cao      = cao;
+  p3m.alpha_L  = alpha_L;
+  P3M_scaleby_box_l();
+  /* initialize p3m structures */
+  mpi_bcast_coulomb_params();
+  /* perform force calculation test */
+  return time_force_calc(int_num);    
+}
+
+/** get the optimal alpha and the corresponding computation time for fixed mesh, cao. The r_cut is determined via
+    a simple bisection. Returns -1 if the force evaluation does not work, -2 if there is no valid r_cut, and -3 if
+    the charge assigment order is to large for this grid */
+static double p3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
+			  double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
+			  double *_alpha_L, double *_accuracy)
+{
+  double int_time;
+  double r_cut_iL;
+  double rs_err, ks_err, mesh_size, k_cut;
+  char b1[TCL_DOUBLE_SPACE + 12],b2[TCL_DOUBLE_SPACE + 12],b3[TCL_DOUBLE_SPACE + 12];
+  /* initial checks. */
+  mesh_size = box_l[0]/(double)mesh;
+  k_cut =  mesh_size*cao/2.0;
+  P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh=%d, cao=%d, rmin=%f, rmax=%f\n",
+		    mesh, cao, r_cut_iL_min, r_cut_iL_max));
+  if(cao >= mesh || k_cut >= dmin(min_box_l,min_local_box_l) - skin) {
+    /* print result */
+    sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
+    Tcl_AppendResult(interp, b2," ", b3," cao too large for this mesh\n", (char *) NULL);
+    return -3;
+  }
+
+  /* Either low and high boundary are equal (for fixed cut), or the low border is initially 0 and therefore
+     has infinite error estimate, as required. Therefore if the high boundary fails, there is no possible r_cut */
+  if ((*_accuracy = get_accuracy(mesh, cao, r_cut_iL_max, _alpha_L, &rs_err, &ks_err)) > p3m.accuracy) {
+    /* print result */
+    sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
+    Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
+    sprintf(b1,"%.5e",r_cut_iL_max); sprintf(b2,"%.5e",*_alpha_L); sprintf(b3,"%.5e",*_accuracy);
+    Tcl_AppendResult(interp, b1,"  ", b2,"  ",b3," ", (char *) NULL);
+    sprintf(b1,"%.3e",rs_err); sprintf(b2,"%.3e",ks_err);
+    Tcl_AppendResult(interp, b1,"  ", b2,"  accuracy not achieved\n", (char *) NULL);
+    return -2;
+  }
+
+  for (;;) {
+    P3M_TRACE(fprintf(stderr, "p3m_mc_time: interval [%f,%f]\n", r_cut_iL_min, r_cut_iL_max));
+    r_cut_iL = 0.5*(r_cut_iL_min + r_cut_iL_max);
+
+    if (r_cut_iL_max - r_cut_iL_min < P3M_RCUT_PREC)
+      break;
+
+    /* bisection */
+    if (get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err) > p3m.accuracy)
+      r_cut_iL_min = r_cut_iL;
+    else
+      r_cut_iL_max = r_cut_iL;
+  }
+  /* final result is always the upper interval boundary, since only there
+     we know that the desired minimal accuracy is obtained */
+  *_r_cut_iL = r_cut_iL = r_cut_iL_max;
+
+  int_time = p3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
+  if (int_time == -1) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "tuning failed, test integration not possible", (char *)NULL);
+    return -1;
+  }
+
+  *_accuracy = get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err);
+
+  P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh %d cao %d r_cut %f time %f\n", mesh, cao, r_cut_iL, int_time));
+  /* print result */
+  sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
+  Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
+  sprintf(b1,"%.5e",r_cut_iL); sprintf(b2,"%.5e",*_alpha_L); sprintf(b3,"%.5e",*_accuracy);
+  Tcl_AppendResult(interp, b1,"  ", b2,"  ",b3," ", (char *) NULL);
+  sprintf(b1,"%.3e",rs_err); sprintf(b2,"%.3e",ks_err); sprintf(b3,"%-8d",(int)int_time);
+  Tcl_AppendResult(interp, b1,"  ", b2,"  ", b3,"\n", (char *) NULL);
+
+  return int_time;
+}
+
+/** get the optimal alpha and the corresponding computation time for fixed mesh. *cao
+    should contain an initial guess, which is then adapted by stepping up and down. Returns the time
+    upon completion, -1 if the force evaluation does not work, and -2 if the accuracy cannot be met */
+static double p3m_m_time(Tcl_Interp *interp, int mesh,
+			 int cao_min, int cao_max, int *_cao,
+			 double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
+			 double *_alpha_L, double *_accuracy)
+{
+  double best_time, tmp_time, tmp_r_cut_iL, tmp_alpha_L, tmp_accuracy;
+  /* in which direction improvement is possible. Initially, we dont know it yet. */
+  int final_dir = 0;
+  int cao = *_cao;
+
+  P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=%d, cao_min=%d, cao_max=%d, rmin=%f, rmax=%f\n",
+		    mesh, cao_min, cao_max, r_cut_iL_min, r_cut_iL_max));
+  /* the initial step sets a timing mark. If there is no valid r_cut, we can only try
+     to increase cao to increase the obtainable precision of the far formula. */
+  do {
+    best_time = p3m_mc_time(interp, mesh, cao,  r_cut_iL_min, r_cut_iL_max, _r_cut_iL, _alpha_L, _accuracy);
+    /* bail out if the force evaluation is not working */
+    if (best_time == -1) return -1;
+    /* cao is too large for this grid, but still the accuracy cannot be achieved, give up */
+    if (best_time == -3) {
+      P3M_TRACE(fprintf(stderr, "p3m_m_time: no possible cao found\n"));
+      return -2;
+    }
+    /* we have a valid time, start optimising from there */
+    if (best_time >= 0) break;
+    /* the required accuracy could not be obtained, try higher caos. Therefore optimisation can only be
+       obtained with even higher caos, but not lower ones */
+    P3M_TRACE(fprintf(stderr, "p3m_m_time: doesn't give precision, step up\n"));
+    cao++;
+    final_dir = 1;
+  }
+  while (cao <= cao_max);
+  /* with this mesh, the required accuracy cannot be obtained. */
+  if (best_time < 0) return -2;
+
+  /* at the boundaries, only the opposite direction can be used for optimisation */
+  if (cao == cao_min)      final_dir = 1;
+  else if (cao == cao_max) final_dir = -1;
+
+  P3M_TRACE(fprintf(stderr, "p3m_m_time: final constraints dir %d\n", final_dir));
+
+  if (final_dir == 0) {
+    /* check in which direction we can optimise. Both directions are possible */
+    double dir_times[3];
+    for (final_dir = -1; final_dir <= 1; final_dir += 2) {
+      dir_times[final_dir + 1] = tmp_time =
+	p3m_mc_time(interp, mesh, cao + final_dir,  r_cut_iL_min, r_cut_iL_max,
+		    &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+      /* bail out on errors, as usual */
+      if (tmp_time == -1) return -1;
+      /* in this direction, we cannot optimise, since we get into precision trouble */
+      if (tmp_time < 0) continue;
+      if (tmp_time < best_time) {
+	best_time  = tmp_time;
+	*_r_cut_iL = tmp_r_cut_iL;
+	*_alpha_L  = tmp_alpha_L;
+	*_accuracy = tmp_accuracy;
+	*_cao      = cao + final_dir;
+      }
+    }
+    /* choose the direction which was optimal, if any of the two */
+    if      (dir_times[0] == best_time) { final_dir = -1; }
+    else if (dir_times[2] == best_time) { final_dir = 1; }
+    else {
+      /* no improvement in either direction, however if one is only marginally worse, we can still try*/
+      /* down is possible and not much worse, while up is either illegal or even worse */
+      if ((dir_times[0] >= 0 && dir_times[0] < best_time + P3M_TIME_GRAN) &&
+	  (dir_times[2] < 0 || dir_times[2] > dir_times[0]))
+	final_dir = -1;
+      /* same for up */
+      else if ((dir_times[2] >= 0 && dir_times[2] < best_time + P3M_TIME_GRAN) &&
+	       (dir_times[0] < 0 || dir_times[0] > dir_times[2]))
+	final_dir = 1;
+      else {
+	/* really no chance for optimisation */
+	P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=%d final cao=%d time=%f\n",mesh, cao, best_time));
+	return best_time;
+      }
+    }
+    /* we already checked the initial cao and its neighbor */
+    cao += 2*final_dir;
+  }
+  else {
+    /* here some constraint is active, and we only checked the initial cao itself */
+    cao += final_dir;
+  }
+
+  P3M_TRACE(fprintf(stderr, "p3m_m_time: optimise in direction %d\n", final_dir));
+
+  /* move cao into the optimisation direction until we do not gain anymore. */
+  for (; cao >= cao_min && cao <= cao_max; cao += final_dir) {
+    tmp_time = p3m_mc_time(interp, mesh, cao,  r_cut_iL_min, r_cut_iL_max,
+			   &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+    /* bail out on errors, as usual */
+    if (tmp_time == -1) return -1;
+    /* if we cannot meet the precision anymore, give up */
+    if (tmp_time < 0) break;
+
+    if (tmp_time < best_time) {
+      best_time  = tmp_time;
+      *_r_cut_iL = tmp_r_cut_iL;
+      *_alpha_L  = tmp_alpha_L;
+      *_accuracy = tmp_accuracy;
+      *_cao      = cao;
+    }
+    /* no hope of further optimisation */
+    else if (tmp_time > best_time + P3M_TIME_GRAN)
+      break;
+  }
+  P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=%d final cao=%d time=%f\n",mesh, *_cao, best_time));
+  return best_time;
+}
+
+int P3M_adaptive_tune_parameters(Tcl_Interp *interp)
+{
+  int    mesh_max,                   mesh     = -1, tmp_mesh;
+  double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL;
+  int    cao_min, cao_max,           cao      = -1, tmp_cao;
+
+  double                             alpha_L  = -1, tmp_alpha_L;
+  double                             accuracy = -1, tmp_accuracy;
+  double                            time_best=1e20, tmp_time;
+  char
+    b1[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12],
+    b2[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12],
+    b3[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12];
+ 
+  P3M_TRACE(fprintf(stderr,"%d: P3M_adaptive_tune_parameters\n",this_node));
+
+  if (skin == -1) {
+    Tcl_AppendResult(interp, "p3m cannot be tuned, since the skin is not yet set", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* Print Status */
+  sprintf(b1,"%.5e",p3m.accuracy);
+  Tcl_AppendResult(interp, "P3M tune parameters: Accuracy goal = ",b1,"\n", (char *) NULL);
+  Tcl_PrintDouble(interp, box_l[0], b1);
+  sprintf(b2,"%d",p3m_sum_qpart);
+  Tcl_PrintDouble(interp, p3m_sum_q2, b3);
+  Tcl_AppendResult(interp, "System: box_l = ",b1,", # charged part = ",b2," Sum[q_i^2] = ",b3,"\n", (char *) NULL);
+
+  /* preparation */
+  mpi_bcast_event(P3M_COUNT_CHARGES);
+
+  /* parameter ranges */
+  if (p3m.mesh[0] == 0 ) {
+    double expo;
+    expo = log(pow((double)p3m_sum_qpart,(1.0/3.0)))/log(2.0);
+    tmp_mesh = (int)(pow(2.0,(double)((int)expo))+0.1);
+    /* this limits the tried meshes if the accuracy cannot
+       be obtained with smaller meshes, but normally not all these
+       meshes have to be tested */
+    mesh_max = tmp_mesh * 256;
+  }
+  else {
+    sprintf(b1, "%d", p3m.mesh[0]);
+    Tcl_AppendResult(interp, "fixed mesh ", b1, "\n", (char *)NULL);
+    tmp_mesh = mesh_max = p3m.mesh[0];
+  }
+
+  if(p3m.r_cut_iL == 0.0) {
+    r_cut_iL_min = 0;
+    r_cut_iL_max = min_local_box_l/2 - skin;
+  }
+  else {
+    sprintf(b1, "%f", p3m.r_cut_iL);
+    Tcl_AppendResult(interp, "fixed r_cut_iL ", b1, "\n", (char *)NULL);
+    r_cut_iL_min = r_cut_iL_max = p3m.r_cut_iL;
+  }
+  r_cut_iL_min *= box_l_i[0];
+  r_cut_iL_max *= box_l_i[0];
+
+  if(p3m.cao == 0) {
+    cao_min = 1;
+    cao_max = 7;
+    cao = 3;
+  }
+  else {
+    sprintf(b1, "%d", p3m.cao);
+    Tcl_AppendResult(interp, "fixed cao ", b1, "\n", (char *)NULL);
+    cao_min = cao_max = cao = p3m.cao;
+  }
+
+  Tcl_AppendResult(interp, "mesh cao r_cut_iL     alpha_L      err          rs_err     ks_err     time [ms]\n", (char *) NULL);
+
+  /* mesh loop */
+  for (;tmp_mesh <= mesh_max; tmp_mesh *= 2) {
+    tmp_cao = cao;
+    tmp_time = p3m_m_time(interp, tmp_mesh,
+			  cao_min, cao_max, &tmp_cao,
+			  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
+			  &tmp_alpha_L, &tmp_accuracy);
+    /* some error occured during the tuning force evaluation */
+    if (tmp_time == -1) return TCL_ERROR;
+    /* this mesh does not work at all */
+    if (tmp_time == -2) continue;
+
+    /* the optimum r_cut for this mesh is the upper limit for higher meshes,
+       everything else is slower */
+    r_cut_iL_max = tmp_r_cut_iL;
+
+    /* new optimum */
+    if (tmp_time < time_best) {
+      time_best = tmp_time;
+      mesh      = tmp_mesh;
+      cao       = tmp_cao;
+      r_cut_iL  = tmp_r_cut_iL;
+      alpha_L   = tmp_alpha_L;
+      accuracy  = tmp_accuracy;
+    }
+    /* no hope of further optimisation */
+    else if (tmp_time > time_best + P3M_TIME_GRAN)
+      break;
+  }
+  
+  P3M_TRACE(fprintf(stderr,"finshed tuning\n"));
+  if(time_best == 1e20) {
+    Tcl_AppendResult(interp, "failed to tune P3M parameters to required accuracy", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  /* set tuned p3m parameters */
+  p3m.r_cut_iL = r_cut_iL;
+  p3m.mesh[0]  = p3m.mesh[1] = p3m.mesh[2] = mesh;
+  p3m.cao      = cao;
+  p3m.alpha_L  = alpha_L;
+  p3m.accuracy = accuracy;
+  P3M_scaleby_box_l();
+  /* broadcast tuned p3m parameters */
+  mpi_bcast_coulomb_params();
+  /* Tell the user about the outcome */
+  Tcl_AppendResult(interp, "\nresulting parameters:\n", (char *) NULL);
+  sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
+  Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
+  sprintf(b1,"%.5e",r_cut_iL); sprintf(b2,"%.5e",alpha_L); sprintf(b3,"%.5e",accuracy);
+  Tcl_AppendResult(interp, b1,"  ", b2,"  ", b3,"  ", (char *) NULL);
+  sprintf(b3,"                 %-8d",(int)time_best);
+  Tcl_AppendResult(interp, b3, (char *) NULL);
+  return (TCL_OK);
+}
+
 void P3M_count_charged_particles()
 {  
   Cell *cell;
@@ -1713,7 +2215,6 @@ void P3M_count_charged_particles()
     p3m_sum_q2       = tot_sums[1];
     p3m_square_sum_q = tot_sums[2];
   }
-
 }
 
 
@@ -1727,33 +2228,28 @@ double P3M_k_space_error(double box_size, double prefac, int mesh,
 			 int cao, int n_c_part, double sum_q2, double alpha_L)
 {
   int  nx, ny, nz;
-  double he_q = 0.0;
+  double he_q = 0.0, mesh_i = 1./mesh, alpha_L_i = 1./alpha_L;
   double alias1, alias2, n2, cs;
-
-  /*   fprintf(stderr,"KS ERR: box %.8f, prefac %.8f, mesh %d, cao %d\n",
-	  box_size,prefac,mesh,cao); 
-  fprintf(stderr,"        n_c_part %d, sum_q2 %.8f,  alpha_L %.8f\n", 
-  n_c_part,sum_q2,alpha_L); */
 
   for (nx=-mesh/2; nx<mesh/2; nx++)
     for (ny=-mesh/2; ny<mesh/2; ny++)
       for (nz=-mesh/2; nz<mesh/2; nz++)
 	if((nx!=0) || (ny!=0) || (nz!=0)) {
 	  n2 = SQR(nx) + SQR(ny) + SQR(nz);
-	  cs = analytic_cotangent_sum(nx,mesh,cao)*
- 	       analytic_cotangent_sum(ny,mesh,cao)*
-	       analytic_cotangent_sum(nz,mesh,cao);
-	  P3M_tune_aliasing_sums(nx,ny,nz,mesh,cao,alpha_L,&alias1,&alias2);
+	  cs = analytic_cotangent_sum(nx,mesh_i,cao)*
+ 	       analytic_cotangent_sum(ny,mesh_i,cao)*
+	       analytic_cotangent_sum(nz,mesh_i,cao);
+	  P3M_tune_aliasing_sums(nx,ny,nz,mesh,mesh_i,cao,alpha_L_i,&alias1,&alias2);
 	  he_q += (alias1  -  SQR(alias2/cs) / n2);
 	  /* fprintf(stderr,"%d %d %d he_q = %.20f %.20f %.20f %.20f\n",nx,ny,nz,he_q,cs,alias1,alias2); */
 	}
   return 2.0*prefac*sum_q2*sqrt(he_q/(double)n_c_part) / SQR(box_size);
 }
 
-double analytic_cotangent_sum(int n, int mesh, int cao)
+double analytic_cotangent_sum(int n, double mesh_i, int cao)
 {
   double c, res=0.0;
-  c = SQR(cos(PI*(double)n/(double)mesh));
+  c = SQR(cos(PI*mesh_i*(double)n));
 
   switch (cao) {
   case 1 : { 
@@ -1787,7 +2283,7 @@ double analytic_cotangent_sum(int n, int mesh, int cao)
 }
 
 void P3M_tune_aliasing_sums(int nx, int ny, int nz, 
-			    int mesh, int cao, double alpha_L , 
+			    int mesh, double mesh_i, int cao, double alpha_L_i, 
 			    double *alias1, double *alias2)
 {
 
@@ -1795,18 +2291,17 @@ void P3M_tune_aliasing_sums(int nx, int ny, int nz,
   double nmx,nmy,nmz;
   double fnmx,fnmy,fnmz;
 
-  double ex,ex2,nm2,U2,factor1,factor2;
+  double ex,ex2,nm2,U2,factor1;
 
-  factor1 = SQR(PI/(alpha_L));
-  factor2 = 1.0/(double)mesh;
+  factor1 = SQR(PI*alpha_L_i);
 
   *alias1 = *alias2 = 0.0;
   for (mx=-P3M_BRILLOUIN; mx<=P3M_BRILLOUIN; mx++) {
-    fnmx = factor2 * (nmx = nx + mx*mesh);
+    fnmx = mesh_i * (nmx = nx + mx*mesh);
     for (my=-P3M_BRILLOUIN; my<=P3M_BRILLOUIN; my++) {
-      fnmy = factor2 * (nmy = ny + my*mesh);
+      fnmy = mesh_i * (nmy = ny + my*mesh);
       for (mz=-P3M_BRILLOUIN; mz<=P3M_BRILLOUIN; mz++) {
-	fnmz = factor2 * (nmz = nz + mz*mesh);
+	fnmz = mesh_i * (nmz = nz + mz*mesh);
 	
 	nm2 = SQR(nmx) + SQR(nmy) + SQR(nmz);
 	ex2 = SQR( ex = exp(-factor1*nm2) );

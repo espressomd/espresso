@@ -697,7 +697,7 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
 	for (j = 0; j < 3; j++)
 	  force[j] = 0;
 
-	calc_dh_coulomb_pair_force(&p1,&p2,d,dist, force);
+	add_dh_coulomb_pair_force(&p1,&p2,d,dist, force);
 	for(k=0;k<3;k++)
 	  for(l=0;l<3;l++)
 	    p_tensor.coulomb[k*3 + l] += force[k]*d[l];

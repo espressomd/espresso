@@ -268,7 +268,7 @@ void MMM1D_init()
   MMM1D_recalcTables();
 }
 
-void calc_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double r2, double r, double force[3])
+void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double r2, double r, double force[3])
 {
   int dim;
   double F[3];
@@ -364,7 +364,7 @@ void calc_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], doub
   }
 
   for (dim = 0; dim < 3; dim++)
-    force[dim] = chpref * F[dim];
+    force[dim] += chpref * F[dim];
 }
 
 double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double r2, double r)

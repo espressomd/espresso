@@ -50,8 +50,8 @@ MDINLINE double MMM2D_far_energy() {
 }
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-void calc_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
-				   double dv[3], double d2, double d, double f[3]);
+void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
+				  double dv[3], double d2, double d, double f[3]);
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
 double mmm2d_coulomb_pair_energy(Particle *p1, Particle *p2,
