@@ -445,10 +445,8 @@ int printCoulombIAToResult(Tcl_Interp *interp)
   else if (coulomb.method == COULOMB_MMM2D) {
     Tcl_PrintDouble(interp, mmm2d_params.maxPWerror, buffer);
     Tcl_AppendResult(interp, "mmm2d ", buffer,(char *) NULL);
-    if (!mmm2d_params.far_calculated) {
-      Tcl_PrintDouble(interp, mmm2d_params.far_cut, buffer);
-      Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
-    }
+    Tcl_PrintDouble(interp, mmm2d_params.far_cut, buffer);
+    Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
   }
 
   if (coulomb.use_elc) {
@@ -456,10 +454,8 @@ int printCoulombIAToResult(Tcl_Interp *interp)
     Tcl_AppendResult(interp, "} {coulomb elc ", buffer,(char *) NULL);
     Tcl_PrintDouble(interp, elc_params.minimal_dist, buffer);
     Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
-    if (!elc_params.far_calculated) {
-      Tcl_PrintDouble(interp, elc_params.far_cut, buffer);
-      Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
-    }
+    Tcl_PrintDouble(interp, elc_params.far_cut, buffer);
+    Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
   }
 
 #else
