@@ -58,9 +58,9 @@ const Datafield fields[] = {
   {&n_particle_types,   TYPE_INT, 1, "n_part_types",  ro_callback, 8 },              /* 12 from interaction_data.c */
   {node_grid,           TYPE_INT, 3, "node_grid",     node_grid_callback, 2 },       /* 13 from grid.c */
 #ifdef PARTIAL_PERIODIC
-  {periodic,            TYPE_INT, 3, "periodicity",   per_callback, 1 },             /* 14 from grid.c */
+  {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback, 1 },             /* 14 from grid.c */
 #else
-  {periodic,            TYPE_INT, 3, "periodicity",   ro_callback, 1 },              /* 14 from grid,c */
+  {&periodic,          TYPE_BOOL, 3, "periodicity",   ro_callback, 1 },              /* 14 from grid,c */
 #endif
   {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback, 2 },            /* 15 from integrate.c */
   {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback, 2 },            /* 16 from thermostat.c */
@@ -68,7 +68,7 @@ const Datafield fields[] = {
   {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },       /* 18 from integrate.c */
   {&timing_samples,     TYPE_INT, 1, "timings",       timings_callback, 4 },         /* 19 from tuning.c */
   {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback, 2 }     ,         /* 20 from imd.c */
-  {&rebuild_verletlist, TYPE_INT, 1, "verlet_flag",   ro_callback, 8 },              /* 21 from verlet.c */
+  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback, 8 },              /* 21 from verlet.c */
   {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback, 8 },              /* 22 from integrate.c */
   { NULL, 0, 0, NULL, NULL, 0 }
 };
@@ -198,6 +198,16 @@ int setmd(ClientData data, Tcl_Interp *interp,
 	      if (Tcl_GetInt(interp, argv[2 + j], (int *)databuf + j) == TCL_ERROR)
 		return (TCL_ERROR);
 	      break;
+	    case TYPE_BOOL: {
+	      int dta;
+	      if (Tcl_GetInt(interp, argv[2 + j], &dta))
+		return (TCL_ERROR);
+	      if (dta)
+		*(int *)databuf |= (1L << j);
+	      else
+		*(int *)databuf &= ~(1L << j);
+	      break;
+	    }
 	    case TYPE_DOUBLE:
 	      if (Tcl_GetDouble(interp, argv[2 + j], (double *)databuf + j))
 		return (TCL_ERROR);
@@ -222,6 +232,13 @@ int setmd(ClientData data, Tcl_Interp *interp,
 	case TYPE_INT:
 	  sprintf(buffer, "%d", ((int *)fields[i].data)[j]);
 	  break;
+	case TYPE_BOOL: {
+	  if ((*(int *)fields[i].data) & (1L << j))
+	    strcpy(buffer, "1");
+	  else
+	    strcpy(buffer, "0");
+	  break;
+	}
 	case TYPE_DOUBLE:
 	  Tcl_PrintDouble(interp, ((double *)fields[i].data)[j], buffer);
 	  break;

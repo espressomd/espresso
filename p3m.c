@@ -287,7 +287,7 @@ void   P3M_init()
 		fprintf(stderr,"   Electrostatics switched off!\n"));
   }
   else {  
-    if( periodic[0]!=1 || periodic[1]!=1 || periodic[2]!=1) {
+    if( PERIODIC(0)!=1 || PERIODIC(1)!=1 || PERIODIC(2)!=1) {
       fprintf(stderr,"Need periodicity (1,1,1) with Coulomb P3M\n");
       errexit();
     }

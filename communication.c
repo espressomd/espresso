@@ -332,6 +332,10 @@ void mpi_bcast_parameter_slave(int node, int i)
     MPI_Bcast((int *)fields[i].data, fields[i].dimension,
 	      MPI_INT, 0, MPI_COMM_WORLD);
     break;
+  case TYPE_BOOL:
+    MPI_Bcast((int *)fields[i].data, 1,
+	      MPI_INT, 0, MPI_COMM_WORLD);
+    break;
   case TYPE_DOUBLE:
     MPI_Bcast((double *)fields[i].data, fields[i].dimension,
 	      MPI_DOUBLE, 0, MPI_COMM_WORLD);

@@ -41,7 +41,7 @@ int node_pos[3] = {-1,-1,-1};
 int node_neighbors[6] = {0, 0, 0, 0, 0, 0};
 int boundary[6]   = {0, 0, 0, 0, 0, 0};
 int extended[6] = {0, 0, 0, 0, 0, 0};
-int periodic[3]    = {1, 1, 1};
+int periodic  = 7;
 
 double box_l[3]       = {1, 1, 1};
 double box_l_i[3]     = {1, 1, 1};
@@ -81,7 +81,7 @@ int map_position_node_array(double pos[3])
   for (i = 0; i < 3; i++) {
     im[i] = (int)floor(node_grid[i]*f_pos[i]*box_l_i[i]);
 #ifdef PARTIAL_PERIODIC
-    if (!periodic[i]) {
+    if (!PERIODIC(i)) {
       if (im[i] < 0)
 	im[i] = 0;
       else if (im[i] >= node_grid[i])
@@ -105,7 +105,7 @@ void fold_coordinate(double pos[3], int image_box[3], int dir)
 {
   int tmp;
 #ifdef PARTIAL_PERIODIC
-  if (periodic[dir])
+  if (PERIODIC(dir))
 #endif
     {
       image_box[dir] += (tmp = (int)floor(pos[dir]*box_l_i[dir]));
@@ -137,7 +137,7 @@ void calc_node_neighbors(int node)
     /* left boundary ? */
     if (node_pos[dir] == 0) {
       boundary[2*dir] = 1;
-      extended[2*dir] = periodic[dir] ? 0 : 1;
+      extended[2*dir] = PERIODIC(dir) ? 0 : 1;
     }
     else {
       boundary[2*dir] =
@@ -146,7 +146,7 @@ void calc_node_neighbors(int node)
     /* right boundary ? */
    if (node_pos[dir] == node_grid[dir]-1) {
       boundary[2*dir+1] = -1;
-      extended[2*dir+1] = periodic[dir] ? 0 : 1;
+      extended[2*dir+1] = PERIODIC(dir) ? 0 : 1;
     }
     else {
       boundary[2*dir+1] =
@@ -287,19 +287,7 @@ int node_grid_callback(Tcl_Interp *interp, void *_data)
 #ifdef PARTIAL_PERIODIC
 int per_callback(Tcl_Interp *interp, void *_data)
 {
-  int i;
-  int *data = _data;
-
-  for (i = 0; i < 3; i++)
-    periodic[i] = (data[i] != 0);
-
-  /*
-  if( (periodic[0]==1 && (periodic[1]==0 || periodic[2]==0)) ||
-      (periodic[0]==0 && (periodic[1]==1 || periodic[2]==1)) ) {
-    fprintf(stderr,"Periodicity must be (1,1,1) or (0,0,0)\n");
-    errexit();
-  }
-  */
+  periodic = *(int *)_data;
 
   mpi_bcast_parameter(FIELD_PERIODIC);
 

@@ -1183,9 +1183,9 @@ int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
   coulomb.method = COULOMB_P3M;
     
 #ifdef PARTIAL_PERIODIC
-  if(periodic[0] == 0 ||
-     periodic[1] == 0 ||
-     periodic[2] == 0)
+  if(PERIODIC(0) == 0 ||
+     PERIODIC(1) == 0 ||
+     PERIODIC(2) == 0)
     {
       Tcl_AppendResult(interp, "Need periodicity (1,1,1) with Coulomb P3M",
 		       (char *) NULL);

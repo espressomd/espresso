@@ -166,7 +166,7 @@ void check_particle_consistency()
 	errexit();
       }
       for(dir=0;dir<3;dir++) {
-	if(periodic[dir] && (part[n].r.p[dir] < 0 || part[n].r.p[dir] > box_l[dir])) {
+	if(PERIODIC(dir) && (part[n].r.p[dir] < 0 || part[n].r.p[dir] > box_l[dir])) {
 	  fprintf(stderr,"%d: check_particle_consistency: ERROR: illegal pos[%d]=%f of part %d id=%d in cell %d\n",
 		  this_node,dir,part[n].r.p[dir],n,part[n].p.identity,c);
 	  errexit();

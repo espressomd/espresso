@@ -39,6 +39,13 @@
 #include <tcl.h>
 #include "utils.h"
 
+/** Macro that tests for a coordinate being periodic or not. */
+#ifdef PARTIAL_PERIODIC
+#define PERIODIC(coord) (periodic & (1L << coord))
+#else
+#define PERIODIC(coord) 1
+#endif
+
 /** \name Exported Variables */
 /************************************************************/
 /*@{*/
@@ -54,8 +61,9 @@ extern int boundary[6];
 /** whether a node is infinitely extended in that direction
     (necessary for non periodic coordinates). */
 extern int extended[6];
-/** Flags for all three dimensions wether pbc are applied (default). */ 
-extern int periodic[3];
+/** Flags for all three dimensions wether pbc are applied (default).
+    The first three bits give the periodicity */
+extern int periodic;
 
 /** Simulation box dimensions. */ 
 extern double box_l[3];
@@ -171,7 +179,7 @@ MDINLINE void get_mi_vector(double res[3], double a[3], double b[3])
   for(i=0;i<3;i++) {
     res[i] = a[i] - b[i];
 #ifdef PARTIAL_PERIODIC
-    if (periodic[i])
+    if (PERIODIC(i))
 #endif
       res[i] -= dround(res[i]*box_l_i[i])*box_l[i];
   }

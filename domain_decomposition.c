@@ -195,7 +195,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
     for(lr=0; lr<2; lr++) {
 #ifdef PARTIAL_PERIODIC
       /* No communication for border of non periodic direction */
-      if( (periodic[dir] == 1) || (boundary[2*dir+lr] == 0) ) 
+      if( (PERIODIC(dir) == 1) || (boundary[2*dir+lr] == 0) ) 
 #endif
 	{
 	  if(node_grid[dir] == 1 ) num++;
@@ -228,7 +228,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
       if(node_grid[dir] == 1) {
 	/* just copy cells on a single node */
 #ifdef PARTIAL_PERIODIC
-	if( (periodic[dir] == 1) || (boundary[2*dir+lr] == 0) ) 
+	if( (PERIODIC(dir) == 1) || (boundary[2*dir+lr] == 0) ) 
 #endif
 	  {
 	    comm->comm[cnt].type          = GHOST_LOCL;
@@ -255,7 +255,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	/* i: send/recv loop */
 	for(i=0; i<2; i++) {  
 #ifdef PARTIAL_PERIODIC
-	  if( (periodic[dir] == 1) || (boundary[2*dir+lr] == 0) ) 
+	  if( (PERIODIC(dir) == 1) || (boundary[2*dir+lr] == 0) ) 
 #endif
 	    if((node_pos[dir]+i)%2==0) {
 	      comm->comm[cnt].type          = GHOST_SEND;
@@ -273,7 +273,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	      cnt++;
 	    }
 #ifdef PARTIAL_PERIODIC
-	  if( (periodic[dir] == 1) || (boundary[2*dir+(1-lr)] == 0) ) 
+	  if( (PERIODIC(dir) == 1) || (boundary[2*dir+(1-lr)] == 0) ) 
 #endif
 	    if((node_pos[dir]+(1-i))%2==0) {
 	      comm->comm[cnt].type          = GHOST_RECV;
@@ -362,7 +362,7 @@ Cell *dd_save_position_to_cell(double pos[3])
   for(dir=0;dir<3;dir++) {
     cpos[dir] = (int)((pos[dir]-my_left[dir])*dd.inv_cell_size[dir])+1;
 #ifdef PARTIAL_PERIODIC
-    if(periodic[dir] == 0) {
+    if(PERIODIC(dir) == 0) {
       if (cpos[dir] < 1 && boundary[2*dir]!=0) {   
 	cpos[dir] = 1;
       }
@@ -509,7 +509,7 @@ void  dd_exchange_and_sort_particles()
 	    /* Move particles to the left side */
 	    if(part[p].r.p[dir] <   my_left[dir]) {
 #ifdef PARTIAL_PERIODIC 
-	      if( (periodic[dir]==1) || (boundary[2*dir]==0) ) 
+	      if( (PERIODIC(dir)==1) || (boundary[2*dir]==0) ) 
 #endif
 		{
 		  local_particles[part[p].p.identity] = NULL;
@@ -520,7 +520,7 @@ void  dd_exchange_and_sort_particles()
 	    /* Move particles to the right side */
 	    else if(part[p].r.p[dir] >=  my_right[dir]) {
 #ifdef PARTIAL_PERIODIC 
-	      if( (periodic[dir]==1) || (boundary[2*dir+1]==0) ) 
+	      if( (PERIODIC(dir)==1) || (boundary[2*dir+1]==0) ) 
 #endif
 		{
 		  local_particles[part[p].p.identity] = NULL;
@@ -573,7 +573,7 @@ void  dd_exchange_and_sort_particles()
 	  part = cell->part;
 	  for (p = 0; p < cell->n; p++) {
 #ifdef PARTIAL_PERIODIC 
-	    if(periodic[dir]==1) 
+	    if(PERIODIC(dir)==1) 
 #endif
 	      {
 		fold_coordinate(part[p].r.p, part[p].l.i, dir);
@@ -610,7 +610,7 @@ Cell *dd_position_to_cell(double pos[3])
     cpos[i] = (int)((pos[i]-my_left[i])*dd.inv_cell_size[i])+1;
 
 #ifdef PARTIAL_PERIODIC
-    if(periodic[i] == 0) {
+    if(PERIODIC(i) == 0) {
       if (cpos[i] < 1)                 cpos[i] = 1;
       else if (cpos[i] > dd.cell_grid[i]) cpos[i] = dd.cell_grid[i];
     }
@@ -696,7 +696,7 @@ int find_node(double pos[3])
   for (i = 0; i < 3; i++) {
     im[i] = (int)floor(node_grid[i]*f_pos[i]*box_l_i[i]);
 #ifdef PARTIAL_PERIODIC
-    if (!periodic[i]) {
+    if (!PERIODIC(i)) {
       if (im[i] < 0)
 	im[i] = 0;
       else if (im[i] >= node_grid[i])
