@@ -151,8 +151,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     /* Averaged quadratic end-to-end-distance of the polymer chains */
     for (i=0; i<N_P; i++) {
       dx = partCfg[(i+1)*MPC-1].r.p[0] - partCfg[i*MPC].r.p[0];
-      dy = partCfg[(i+1)*MPC-1].r.p[1] - partCfg[i*MPC].r.p[0];
-      dz = partCfg[(i+1)*MPC-1].r.p[2] - partCfg[i*MPC].r.p[0];
+      dy = partCfg[(i+1)*MPC-1].r.p[1] - partCfg[i*MPC].r.p[1];
+      dz = partCfg[(i+1)*MPC-1].r.p[2] - partCfg[i*MPC].r.p[2];
       dist += (SQR(dx) + SQR(dy) + SQR(dz));
     }
     Tcl_PrintDouble(interp, sqrt(dist/((double)N_P)), buffer);
