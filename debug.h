@@ -50,8 +50,9 @@
 
 #include <tcl.h>
 /* #define COMM_DEBUG */
+/* #define EVENT_DEBUG */
 /* #define INTEG_DEBUG   */
-/* #define CELL_DEBUG   */
+/* #define CELL_DEBUG */
 /* #define GHOST_DEBUG  */   
 /* #define GRID_DEBUG */
 /* #define VERLET_DEBUG   */
@@ -73,7 +74,7 @@
 #define MPI_CORE
 #define FORCE_CORE
 
-/* #define ADDITIONAL_CHECKS */
+// #define ADDITIONAL_CHECKS
 
 #ifdef MEM_DEBUG
 #ifdef __GNUC__
@@ -129,6 +130,13 @@ extern int check_id;
 #else
 /** Equals { cmd } iff COMM_DEBUG is set. */
 #define COMM_TRACE(cmd)
+#endif
+
+#ifdef EVENT_DEBUG
+#define EVENT_TRACE(cmd) { cmd; }
+#else
+/** Equals { cmd } iff EVENT_DEBUG is set. */
+#define EVENT_TRACE(cmd)
 #endif
 
 #ifdef PARTICLE_DEBUG

@@ -54,6 +54,7 @@ static void init_tcl(Tcl_Interp *interp);
 
 int on_program_start(Tcl_Interp *interp)
 {
+  EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
   /*
     call the initialization of the modules here
   */
@@ -85,6 +86,7 @@ int on_program_start(Tcl_Interp *interp)
 
 void on_integration_start()
 {
+  EVENT_TRACE(fprintf(stderr, "%d: on_integration_start\n", this_node));
   INTEG_TRACE(fprintf(stderr,"%d: on_integration_start: reinit_thermo = %d, resort_particles=%d\n",
 		      this_node,reinit_thermo,resort_particles));
 
@@ -130,6 +132,7 @@ void on_integration_start()
 
 void on_particle_change()
 {
+  // EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
   resort_particles = 1;
   rebuild_verletlist = 1;
 
@@ -141,6 +144,7 @@ void on_particle_change()
 
 void on_coulomb_change()
 {
+  EVENT_TRACE(fprintf(stderr, "%d: on_coulomb_change\n", this_node));
   invalidate_obs();
 
 #ifdef ELECTROSTATICS
@@ -171,6 +175,7 @@ void on_coulomb_change()
 
 void on_short_range_ia_change()
 {
+  EVENT_TRACE(fprintf(stderr, "%d: on_short_range_ia_changes\n", this_node));
   invalidate_obs();
 
   integrate_vv_recalc_maxrange();
@@ -181,6 +186,7 @@ void on_short_range_ia_change()
 
 void on_constraint_change()
 {
+  EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
 
   recalc_forces = 1;  
@@ -188,6 +194,7 @@ void on_constraint_change()
 
 void on_cell_structure_change()
 {
+  EVENT_TRACE(fprintf(stderr, "%d: on_cell_structure_change\n", this_node));
   /* to enforce initialization of the ghost cells */
   resort_particles = 1;
   on_coulomb_change();
@@ -195,6 +202,7 @@ void on_cell_structure_change()
 
 void on_resort_particles()
 {
+  EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_MMM2D:
@@ -224,6 +232,8 @@ void on_parameter_change(int field)
 {
   /* to prevent two on_coulomb_change */
   int cc;
+
+  EVENT_TRACE(fprintf(stderr, "%d: on_parameter_change %s\n", this_node, fields[field].name));
 
   if (field == FIELD_SKIN) {
     integrate_vv_recalc_maxrange();
