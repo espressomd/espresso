@@ -2380,6 +2380,7 @@ double maggs_electric_energy()
   int ind1, ind2;
   double result = 0.;
   double self_energy = 0.;
+  double temp;
   double rho[8], q;
   int first[3];
   double pos[3], rel[3];
@@ -2400,8 +2401,6 @@ double maggs_electric_energy()
     result += SQR(Efield[i*3]   - Ek_0[0]) 
            +  SQR(Efield[i*3+1] - Ek_0[1]) 
            +  SQR(Efield[i*3+2] - Ek_0[2]);
-
-    result = result;
   }
   result *= 0.5 * a_3;
 
@@ -2420,9 +2419,17 @@ double maggs_electric_energy()
 
 	interpolate_part_charge(q, rel, rho);
 	for(ind1=0; ind1<8; ind1++) {
-	  self_energy += (alpha[ind1][ind1]*rho[ind1]*rho[ind1]);
-	  for(ind2 = ind1+1; ind2<8; ind2++)
-	    self_energy += 2.* (alpha[ind1][ind2]*rho[ind1]*rho[ind2]);
+	  temp = rho[ind1]*rho[ind1];
+	  self_energy += alpha[ind1][ind1] * temp;
+	  //	  if(maggs.yukawa == 1)
+	  //	    self_energy -= beta[ind1][ind2] * temp;
+	  
+	  for(ind2 = ind1+1; ind2<8; ind2++) {
+	    temp = rho[ind1]*rho[ind2];
+	    self_energy += 2.* alpha[ind1][ind2] * temp;
+	    //	    if(maggs.yukawa == 1)
+	    //	      self_energy -= 2.* beta[ind1][ind2] * temp;
+	  }
 	}
       }
     }
@@ -2430,8 +2437,8 @@ double maggs_electric_energy()
   //  fprintf(stderr,"%6.2f %10.5f %10.5f\n",sim_time, self_energy*maggs.a, result);
   result -= self_energy * maggs.a;
 
-  /* subtract transverse degree of freedom (in accord with equipartit. theorem) */
-  result -= (float) (lparam.inner_vol-1)*temperature;
+  /* subtract transverse degrees of freedom (in accord with equipartit. theorem) */
+  result -= (lparam.inner_vol-1)*temperature;
   return result;
 }
 
