@@ -398,6 +398,85 @@ void invalidate_obs()
  *                                 basic observables parsing
  ****************************************************************************************/
 
+static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
+{
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  int i , atom;
+  IntList l_orient;
+  int xd, yd, zd;
+  double zref;
+
+  init_intlist(&l_orient);
+
+  STAT_TRACE(fprintf(stderr,"%d,parsing get_lipid_orients \n",this_node);)
+
+    if ( !ARG_IS_I(0,xd) || !ARG_IS_I(1,yd) || !ARG_IS_I(2,zd) ) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp,"usage: analyze get_lipid_orients <xd> <yd> <zd> [setstray <stray_cut_off>]", (char *)NULL);
+      return (TCL_ERROR);
+    }
+  STAT_TRACE(fprintf(stderr,"%d,setaxes has args %d,%d,%d \n",this_node,mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]));
+
+  
+  if ( argc == 5 ) {
+    if ( ARG_IS_S(3,"setstray") ) { 
+      if ( !ARG_IS_D(5,stray_cut_off) ) {
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp,"usage: analyze get_lipid_orients <xd> <yd> <zd> [setstray <stray_cut_off>]", (char *)NULL);
+	return (TCL_ERROR);
+      }
+      STAT_TRACE(fprintf(stderr,"%d,setgrid has args %d,%d,%d \n",this_node,mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]));
+    }
+  }
+
+  /* Update particles */
+  updatePartCfg(WITHOUT_BONDS);
+  //Make sure particles are sorted 
+  if (!sortPartCfg()) {
+    fprintf(stderr,"%d,could not sort partCfg \n",this_node);
+    errexit();
+  }
+
+  realloc_intlist(&l_orient, n_molecules);
+  /* Find the mean z position and fold x y coordinates but not z*/
+  zref = 0;
+  for (i = 0 ; i < n_total_particles ; i++) {
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,xd);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,yd);
+    zref += partCfg[i].r.p[zd];
+  }
+  zref = zref/(double)(n_total_particles);
+  
+  printf("zref: %f \n", zref);
+  fflush(stdout);
+
+  
+
+  //  Tcl_AppendResult(interp, "{ Lipid_orientations } { ", (char *)NULL);
+  for ( i = 0 ; i < n_molecules ; i++) {
+    atom = topology[i].part.e[0];
+    //    printf("atom: %d \n", atom );
+    l_orient.e[i] = lipid_orientation(atom,partCfg,zref);
+    //   printf("lorient: %d \n", l_orient.e[i] );
+    //    Tcl_AppendResult(interp, " ", l_orient, (char *)NULL);
+  }
+  //  Tcl_AppendResult(interp, " } ", (char *)NULL);
+
+
+  Tcl_AppendResult(interp, "{ Lipid_orientations } { ", (char *)NULL);
+  for ( i = 0 ; i < n_molecules ; i++) {
+    sprintf(buffer, "%d ", l_orient.e[i]);
+    Tcl_AppendResult(interp, buffer , (char *)NULL);
+  }
+  Tcl_AppendResult(interp, "} ", (char *)NULL);
+
+
+  realloc_intlist(&l_orient,0);
+
+  return TCL_OK;
+
+}
+
 static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
 {
   STAT_TRACE(fprintf(stderr,"%d,parsing modes2d \n",this_node);)
@@ -451,6 +530,7 @@ static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
 
   if (!modes2d(result)) {
     fprintf(stderr,"%d,mode analysis failed \n",this_node);
+    return TCL_ERROR;
   }
   else {    STAT_TRACE(fprintf(stderr,"%d,mode analysis done \n",this_node));}
   
@@ -995,6 +1075,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return parse_analyze_set_topology(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("modes2d"))
     return parse_modes2d(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("get_lipid_orients"))
+    return parse_get_lipid_orients(interp,argc-2,argv+2);
   else if (ARG1_IS_S("mindist"))
     return parse_mindist(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("centermass"))

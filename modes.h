@@ -30,6 +30,16 @@ extern int mode_grid_3d[3];
 extern int xdir;
 extern int ydir;
 extern int zdir;
+
+/** Enumerated constant indicating a Lipid in the top leaflet*/
+#define LIPID_UP 0
+/** Enumerated constant indicating a Lipid in the bottom leaflet*/
+#define LIPID_DOWN 1
+/** Enumerated constant indicating a Lipid that has left the bilayer*/
+#define LIPID_STRAY 2
+/** The atom type corresponding to a lipid head group */
+#define LIPID_HEAD_TYPE 0
+
 /** Flag to indicate when the mode_grid is changed */
 extern int mode_grid_changed;
 
@@ -40,6 +50,19 @@ extern double stray_cut_off;
 /* Exported Functions */
 int modes2d(fftw_complex* result);
 void map_to_2dgrid();
+/** 
+    This routine performs a simple check to see whether a lipid is
+    oriented up or down or if it has escaped the bilayer.  In order
+    for this routine to work it is essential that the lipids head
+    groups are of atom type LIPID_HEAD_TYPE
+
+    \param id The particle identifier
+    \param partCfg An array of sorted particles
+    \param zref The average z position of all particles
+
+
+ */
+int lipid_orientation( int id, Particle* partCfg , double zref);
 
 #endif
 

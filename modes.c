@@ -27,14 +27,7 @@ int xdir = -1;
 int ydir = -1;
 int zdir = -1;
 
-/** Enumerated constant indicating a Lipid in the top leaflet*/
-#define LIPID_UP 0
-/** Enumerated constant indicating a Lipid in the bottom leaflet*/
-#define LIPID_DOWN 1
-/** Enumerated constant indicating a Lipid that has left the bilayer*/
-#define LIPID_STRAY 2
-/** The atom type corresponding to a lipid head group */
-#define LIPID_HEAD_TYPE 0
+
 
 
 /** Numerical tolerance to be used only in modes2d*/
@@ -298,10 +291,10 @@ int modes2d(fftw_complex* modes) {
 
   /* Update particles */
   updatePartCfg(WITHOUT_BONDS);
-  //Sorting no longer necessary since we now have the molecule information
+  //Make sure particles are sorted
     if (!sortPartCfg()) {
       fprintf(stderr,"%d,could not sort partCfg \n",this_node);
-      errexit();
+      return -1;
     }
   
 
@@ -346,7 +339,7 @@ int modes2d(fftw_complex* modes) {
   if ( nstray > 0 ) {
     printf("Warning: there were %d stray lipids in height calculation \n",nstray);
   }
-  printf(" Lipids up = %d , Lipids down = %d \n",nup, ndown);
+  //  printf(" Lipids up = %d , Lipids down = %d \n",nup, ndown);
 
   STAT_TRACE(fprintf(stderr,"%d, Lipids up = %d , Lipids down = %d \n",this_node, nup, ndown));
 
@@ -362,7 +355,7 @@ int modes2d(fftw_complex* modes) {
   int NGrid = 8;
   double Norm = 1/8.0;
   //  int NGrid2 = 4;
-  double BoxLength = 30.0;
+  double BoxLength = 28.75;
   for ( i = 0 ; i < 8 ; i++) {
     for ( j = 0 ; j < 8 ; j++) {
       height_grid[j+i*8] = 0.0;
@@ -379,20 +372,23 @@ int modes2d(fftw_complex* modes) {
       height_grid[j+i*NGrid] *= Norm;
     }
   }
-  */
+  
   // End debugging code
-
+  */
 
   /* Norm we normalize the height function according the number of
      points in each grid cell */
-  norm = 1.0/(double)(mode_grid_3d[xdir]);
+  //  norm = 1.0/(double)(mode_grid_3d[xdir]);
+
+  
+  norm = 1.0;
   for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
     for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
-
+      
       if ( ( grid_parts_up[j + i*mode_grid_3d[xdir]] > 0 ) && ( grid_parts_down[j + i*mode_grid_3d[xdir]] > 0 ) ) {
 	height_grid[j+i*mode_grid_3d[xdir]] = 
 	  0.5*norm*((height_grid_up[j+i*mode_grid_3d[xdir]])/(double)(grid_parts_up[j + i*mode_grid_3d[xdir]]) + 
-	  (height_grid_down[j+i*mode_grid_3d[xdir]])/(double)(grid_parts_down[j + i*mode_grid_3d[xdir]]));
+		    (height_grid_down[j+i*mode_grid_3d[xdir]])/(double)(grid_parts_down[j + i*mode_grid_3d[xdir]]));
 	grid_parts[j+i*mode_grid_3d[xdir]] = grid_parts_up[j + i*mode_grid_3d[xdir]] + grid_parts_down[j + i*mode_grid_3d[xdir]];
       } else {
 	// Either upper or lower layer has no lipids
@@ -401,7 +397,7 @@ int modes2d(fftw_complex* modes) {
       }
     }
   }
-
+  
 
   /* Check height grid for zero values and substitute mean of surrounding cells */
   gapcnt = 0;
@@ -421,7 +417,7 @@ int modes2d(fftw_complex* modes) {
 	if ( nonzerocnt == 0 ) { 
 	  fprintf(stderr,"Error: hole in membrane \n ");
 	  fflush(stdout);
-	  errexit();
+	  return -1;
 	}
 	gapcnt++;
       }      
