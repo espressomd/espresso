@@ -259,7 +259,7 @@ for {set i 0} { $i < $int_n_times } { incr i} {
 
     integrate $int_steps
 
-    set f [open "$name$ident_dist.dat" w]
+    set f [open "$name$ident\_dist.dat" w]
     puts -nonewline $f "\#"
     puts $f "[analyze distribution 2 {0 1} 1.0 300.0 30 1 1]"
     flush $f
