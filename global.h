@@ -72,7 +72,7 @@ extern const Datafield fields[];
 /** index of \ref n_interaction_types in \ref fields */
 #define FIELD_NITYPE 6
 /** index of \ref time_step in \ref fields */
-#define FIELD_TSTEP  7
+#define FIELD_TIME_STEP  7
 /** index of \ref max_cut in \ref fields */
 #define FIELD_MCUT   8
 /** index of \ref skin in \ref fields */
@@ -105,6 +105,8 @@ extern const Datafield fields[];
 #define FIELD_PERIODIC 22
 /** index of \ref temperature in \ref fields */
 #define FIELD_TEMPERATURE 23
+/** index of \ref calc_forces_first in \ref fields */
+#define FIELD_CALC_FORCES_FIRST 24
 /*@}*/
 
 /**********************************************

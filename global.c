@@ -37,34 +37,35 @@ int ro_callback(Tcl_Interp *interp, void *data);
     in \ref global.h and a descriptive text in \ref variables_page.
 */
 const Datafield fields[] = {
-  {&n_nodes,    TYPE_INT,    1, "n_nodes",    ro_callback },  /* communication.c */
-  {node_grid, TYPE_INT, 3, "node_grid", node_grid_callback }, /* grid.c */
-  {local_box_l, TYPE_DOUBLE, 3, "local_box_l", ro_callback }, /* global.c */
-  {box_l, TYPE_DOUBLE, 3, "box_l", boxl_callback },           /* grid.c */
-  {&max_seen_particle, TYPE_INT, 1, "maxpart", ro_callback }, /* particle_data.c */
-  {&n_particle_types, TYPE_INT, 1, "nptypes", ro_callback },  /* interaction_data.c */
+  {&n_nodes,    TYPE_INT,    1, "n_nodes",    ro_callback },           /* communication.c */
+  {node_grid, TYPE_INT, 3, "node_grid", node_grid_callback },          /* grid.c */
+  {local_box_l, TYPE_DOUBLE, 3, "local_box_l", ro_callback },          /* global.c */
+  {box_l, TYPE_DOUBLE, 3, "box_l", boxl_callback },                    /* grid.c */
+  {&max_seen_particle, TYPE_INT, 1, "maxpart", ro_callback },          /* particle_data.c */
+  {&n_particle_types, TYPE_INT, 1, "nptypes", ro_callback },           /* interaction_data.c */
   {&n_interaction_types, TYPE_INT, 1, "niatypes", niatypes_callback }, /* interaction_data.c */
-  {&time_step, TYPE_DOUBLE, 1, "time_step", ro_callback },    /* integrator.c */
-  {&max_cut, TYPE_DOUBLE,   1, "max_cut", ro_callback },      /* integrator.c */
-  {&skin, TYPE_DOUBLE,   1, "skin", skin_callback },          /* integrator.c */
-  {&max_range, TYPE_DOUBLE,   1, "max_range", ro_callback },
-  {&friction_gamma, TYPE_DOUBLE,   1, "gamma", gamma_callback },
-  {&rebuild_verletlist, TYPE_INT,   1, "verletflag", ro_callback },
-  {&(p3m.bjerrum), TYPE_DOUBLE,   1, "bjerrum", bjerrum_callback },
-  {&(p3m.alpha), TYPE_DOUBLE,   1, "p3m_alpha", p3malpha_callback },
-  {&(p3m.r_cut), TYPE_DOUBLE,   1, "p3m_r_cut", p3mrcut_callback },
-  {p3m.mesh, TYPE_INT,   3, "p3m_mesh", p3mmesh_callback },
-  {&(p3m.cao), TYPE_INT,   2, "p3m_cao", p3mcao_callback },
-  {&(p3m.epsilon), TYPE_DOUBLE,   1, "p3m_epsilon", p3mepsilon_callback },
-  {p3m.mesh_off, TYPE_DOUBLE,   3, "p3m_mesh_offset", p3mmeshoff_callback },
-  {&transfer_rate, TYPE_INT,   1, "transfer_rate", ro_callback },
-  {&max_num_cells, TYPE_INT,   1, "max_num_cells", max_num_cells_callback },
+  {&time_step, TYPE_DOUBLE, 1, "time_step", time_step_callback },      /* integrate.c */
+  {&max_cut, TYPE_DOUBLE,   1, "max_cut", ro_callback },               /* interaction_data.c */
+  {&skin, TYPE_DOUBLE,   1, "skin", skin_callback },                   /* integrate.c */
+  {&max_range, TYPE_DOUBLE,   1, "max_range", ro_callback },           /* integrate.c */
+  {&friction_gamma, TYPE_DOUBLE,   1, "gamma", gamma_callback },       /* thermostat.c */
+  {&rebuild_verletlist, TYPE_INT, 1, "verletflag", rebuild_vlist_callback }, /* verlet.c */
+  {&(p3m.bjerrum), TYPE_DOUBLE,   1, "bjerrum", bjerrum_callback },    /* p3m.c */
+  {&(p3m.alpha), TYPE_DOUBLE,   1, "p3m_alpha", p3malpha_callback },   /* p3m.c */
+  {&(p3m.r_cut), TYPE_DOUBLE,   1, "p3m_r_cut", p3mrcut_callback },    /* p3m.c */
+  {p3m.mesh, TYPE_INT,   3, "p3m_mesh", p3mmesh_callback },            /* p3m.c */
+  {&(p3m.cao), TYPE_INT,   2, "p3m_cao", p3mcao_callback },            /* p3m.c */
+  {&(p3m.epsilon), TYPE_DOUBLE,   1, "p3m_epsilon", p3mepsilon_callback },    /* p3m.c */
+  {p3m.mesh_off, TYPE_DOUBLE,   3, "p3m_mesh_offset", p3mmeshoff_callback },  /* p3m.c */
+  {&transfer_rate, TYPE_INT,   1, "transfer_rate", ro_callback },             /* imd.c */
+  {&max_num_cells, TYPE_INT,   1, "max_num_cells", max_num_cells_callback },  /* cells.c */
 #ifdef PARTIAL_PERIODIC
-  {periodic, TYPE_INT,   3, "periodicity", per_callback },
+  {periodic, TYPE_INT,   3, "periodicity", per_callback },             /* grid,c */
 #else
-  {periodic, TYPE_INT,   3, "periodicity", ro_callback },
+  {periodic, TYPE_INT,   3, "periodicity", ro_callback },              /* grid,c */
 #endif
-  {&temperature, TYPE_DOUBLE, 1, "temp", temp_callback },   
+  {&temperature, TYPE_DOUBLE, 1, "temp", temp_callback },              /* thermostat.c */
+  {&calc_forces_first, TYPE_INT, 1, "calc_forces_first", calc_forces_first_callback }, /* integrate.c */
   { NULL, 0, 0, NULL, NULL }
 };
 
