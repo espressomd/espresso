@@ -1062,6 +1062,10 @@ int P3M_tune_parameters(Tcl_Interp *interp)
 	cuts[i] = min_local_box_l/(i+2.0)-(skin);
       else 
 	cuts[i] = min_local_box_l/(i+1.0)-(skin);
+      if( cuts[i] <= 0.0 ) {
+	n_cuts = i; 
+	break;
+      } 
     }
     r_cut_max = cuts[0];
     r_cut_min = cuts[n_cuts-1];
@@ -1108,10 +1112,10 @@ int P3M_tune_parameters(Tcl_Interp *interp)
       k_cut =  mesh_size*cao/2.0;
       if(cao < mesh && k_cut < dmin(min_box_l,min_local_box_l)-skin) {
 	ind=0;
-	for(i=0;i<P3M_TUNE_MAX_CUTS-1;i++) {
+	for(i=0;i< n_cuts -1;i++) {
 	  if(cut_start <= cuts[i]) ind=i+1;
 	}
-	while (ind < P3M_TUNE_MAX_CUTS) {           /* r_cut loop */
+	while (ind < n_cuts) {           /* r_cut loop */
 	  r_cut = cuts[ind];
 	  /* calc maximal real space error for setting */
 	  rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut,p3m_sum_qpart,p3m_sum_q2,0);
@@ -1143,7 +1147,7 @@ int P3M_tune_parameters(Tcl_Interp *interp)
 	      Tcl_AppendResult(interp, b1,"  ", b2,"  ", b3,"  ", (char *) NULL);
 	      sprintf(b1,"%.3e",rs_err); sprintf(b2,"%.3e",ks_err); sprintf(b3,"%-8d",(int)int_time);
 	      Tcl_AppendResult(interp, b1,"  ", b2,"  ", b3,"\n", (char *) NULL);
-	      if(int_time <= min_time) {
+	      if(int_time <= min_time  && r_cut > 0) {
 		min_time      = int_time;
 		r_cut_best    = r_cut;
 		mesh_best     = mesh;
