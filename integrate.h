@@ -65,9 +65,6 @@ int integrate(ClientData data, Tcl_Interp *interp,
  */
 void integrate_vv_recalc_maxrange();
 
-/** Initialize the ghost particle structures. */
-void initialize_ghosts(int global_flag);
-
 /** integrate with velocity verlet integrator.
     \param n_steps number of steps to integrate.
  */

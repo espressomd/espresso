@@ -37,7 +37,7 @@ void energy_calc(double *result)
   init_energies(&energy);
 
   if(resort_particles) {
-    initialize_ghosts(CELL_GLOBAL_EXCHANGE);
+    cells_resort_particles(CELL_GLOBAL_EXCHANGE);
     resort_particles = 0;
   }
 

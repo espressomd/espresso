@@ -147,31 +147,6 @@ void integrate_vv_recalc_maxrange()
 
 /************************************************************/
 
-void initialize_ghosts(int global_flag)
-{
-  invalidate_ghosts();
-
-  particle_invalidate_part_node();
-
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_LAYERED:
-    layered_exchange_and_sort_particles(global_flag);
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    nsq_balance_particles();
-    break;
-  case CELL_STRUCTURE_DOMDEC:
-    dd_exchange_and_sort_particles(global_flag);
-    break;
-  }
-
-  ghost_communicator(&cell_structure.ghost_cells_comm);
-  ghost_communicator(&cell_structure.exchange_ghosts_comm);
-
-  rebuild_verletlist = 1;
-  recalc_forces = 1;
-}
-
 void integrate_vv(int n_steps)
 {
   int i;
@@ -195,7 +170,7 @@ void integrate_vv(int n_steps)
   on_integration_start();
 
   if(resort_particles) {
-    initialize_ghosts(CELL_GLOBAL_EXCHANGE);
+    cells_resort_particles(CELL_GLOBAL_EXCHANGE);
     resort_particles = 0;
   }
   if (recalc_forces) {
@@ -220,7 +195,7 @@ void integrate_vv(int n_steps)
        cell_structure.type == CELL_STRUCTURE_DOMDEC) {
       INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
       n_verlet_updates++;
-      initialize_ghosts(CELL_NEIGHBOR_EXCHANGE);
+      cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
     }
     else
       ghost_communicator(&cell_structure.update_ghost_pos_comm);

@@ -23,6 +23,7 @@
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "integrate.h"
+#include "initialize.h"
 #include "communication.h"
 #include "utils.h"
 #include "verlet.h"
@@ -171,7 +172,6 @@ int cellsystem(ClientData data, Tcl_Interp *interp,
       if (!ARG_IS_I(2, n_layers))
 	return TCL_ERROR;
       determine_n_layers = 0;
-      mpi_bcast_parameter(FIELD_NLAYERS);
     }
 
     /* check node grid. All we can do is 1x1xn. */
@@ -316,6 +316,35 @@ void print_local_particle_positions()
     }
   }
   fprintf(stderr,"%d: found %d particles\n",this_node,cnt);
+}
+
+/*************************************************/
+
+void cells_resort_particles(int global_flag)
+{
+  invalidate_ghosts();
+
+  particle_invalidate_part_node();
+
+  switch (cell_structure.type) {
+  case CELL_STRUCTURE_LAYERED:
+    layered_exchange_and_sort_particles(global_flag);
+    break;
+  case CELL_STRUCTURE_NSQUARE:
+    nsq_balance_particles();
+    break;
+  case CELL_STRUCTURE_DOMDEC:
+    dd_exchange_and_sort_particles(global_flag);
+    break;
+  }
+
+  ghost_communicator(&cell_structure.ghost_cells_comm);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm);
+
+  on_resort_particles();
+
+  rebuild_verletlist = 1;
+  recalc_forces = 1;
 }
 
 /*************************************************/

@@ -193,6 +193,11 @@ MDINLINE void realloc_cellplist(CellPList *cpl, int size)
   }
 }
 
+/** sort the particles into the cells and initialize the ghost particle structures.
+    @param global_flag if this is CELLS_GLOBAL_EXCHANGE, particle positions can have changed
+    arbitrarly, otherwise the change should have been smaller then skin.  */
+void cells_resort_particles(int global_flag);
+
 /** Calculate and return the total number of particles on this
     node. */
 int cells_get_n_particles();
