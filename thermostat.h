@@ -28,7 +28,7 @@ extern double temperature;
 */
 void friction_thermo();
 
-/** Callback for setting \ref tmperature */
+/** Callback for setting \ref temperature */
 int temp_callback(Tcl_Interp *interp, void *_data);
 /** Callback for setting \ref friction_gamma */
 int gamma_callback(Tcl_Interp *interp, void *_data);
