@@ -12,11 +12,26 @@
 
     This file contains the implementation of the NEMD (Non Equilibrium
     Molecular Dynamics) algorithm. It allows one to shear a system
-    with help of an unphysical momentum exchange between two slabs in
-    the system.
+    with help of an unphysical momentum change in two slabs in the
+    system.
 
-    The slabs are oriented perpendicualr to the z direction!
+    Usage:
+    <ul>
+    <li> \verbatim nemd \endverbatim
+    Return nemd status.
+    <li> 
 
+    </ul>
+
+    Notes:
+    <ul>
+    <li> The slabs are oriented perpendicualr to the z direction.
+    <li> The velocity profile is generated in x direction.
+    <li> Do not use other special features like part fix or 
+         constraints inside the top and middle slab.
+    <li> Use only with a DPD thermostat.
+    </ul>
+    
     <b>Responsible:</b>
     <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
  */
@@ -28,11 +43,10 @@
 #include "grid.h"
 #include "global.h"
 #include "parser.h"
-#include "integrate.h"
 
 #ifdef NEMD
 
-#define NEMD_METHOD_NOTSET    0
+#define NEMD_METHOD_OFF       0
 #define NEMD_METHOD_EXCHANGE  1
 #define NEMD_METHOD_SHEARRATE 2
 
@@ -83,9 +97,6 @@ typedef struct {
   /** Number of profiles stored */
   int profile_norm;
 
-  /** used method to create the shear */
-  int method;
-
  /* method 1: exchange momentum */
   /** Number of particle momentums to exchange */
   int n_exchange;
@@ -109,8 +120,9 @@ typedef struct {
 /** Structure containing the nemd relevant information */
 extern Nemd nemddata;
 /*@}*/
-
 #endif
+
+extern int nemd_method;
 
 /************************************************************/
 /** \name Exported Functions */
@@ -123,49 +135,44 @@ extern Nemd nemddata;
 */
 int nemd(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
-/** Initialize nemd data structure \ref nemddata for the values
-    n_slabs and n_exchange. If n_slabs is 0 it frees the nemd data
-    structure \ref nemddata and turns of the nemd part of the
-    integrator. Called by \ref nemd. */
-void nemd_init(int n_slabs, int n_exchange, double shear_rate);
 
-/** Free an old nemd data structure \ref nemddata and set its value to
-    the initialization values. Called by nemd_init. */
-void nemd_free();
+#ifdef NEMD 
 
-/** Exchange momentum between top an middle slab. */
+/** Change momentum in top an middle slab. How this is done depends on
+    nemd method. */
 void nemd_change_momentum();
 
 /** Store the mean value of the velocity x-component of all slabs in
     \ref nemddata::velocity_profile. */ 
 void nemd_store_velocity_profile();
 
-/** Print out velocity profile to tcl */
-int nemd_print_profile(Tcl_Interp *interp);
-
 /** Store the x-componenet of the velocity of particle part into the
     nemd data structure \ref nemddata. */
-MDINLINE void nemd_store_velocity(Particle part) {
-#ifdef NEMD 
-  int slab_num, i;
+MDINLINE void nemd_get_velocity(Particle part) 
+{
+  int  slab_num, i;
   Slab *slab;
 
-  if(nemddata.n_slabs == -1 ) return;
-  if(nemddata.method == NEMD_METHOD_EXCHANGE && nemddata.n_exchange==0 ) return;
-  //  INTEG_TRACE(fprintf(stderr,"%d: nemd_store_velocity: Part %d in %d slabs\n",this_node,part.p.identity,nemddata.n_slabs));
+  if(nemd_method == NEMD_METHOD_OFF ) return;
+  if(nemd_method == NEMD_METHOD_EXCHANGE && nemddata.n_exchange==0 ) return;
 
-
+  /* calculate slab_num */
   slab_num = part.r.p[2]*nemddata.invthickness;
   /* THIS IS A SINGLE NODE CORRECTION !!! */
   if(slab_num == nemddata.n_slabs) slab_num = 0;
   if(part.r.p[2] < 0.0) slab_num = nemddata.n_slabs-1;
-
   slab = &nemddata.slab[slab_num];
   
-  if(nemddata.method == NEMD_METHOD_EXCHANGE) {
-    /* look for largest negative x componenet */
+  /* Add velocity to mean velocity of that slab */
+  slab->v_mean          += part.m.v[0];
+  slab->n_parts_in_slab ++;
+
+  /* Collect the n_exchange particles with largest velocities for top
+     and middle slab if nemd method is exchange */
+  if(nemd_method == NEMD_METHOD_EXCHANGE) {
     if(slab_num == nemddata.top_slab) {
-    
+      /* top slab: look for largest negative x componenet */
+   
       /* first fill fastest array as particles com in */
       if(slab->n_fastest < nemddata.n_exchange) {     
 	slab->fastest[slab->n_fastest] = part.p.identity;
@@ -187,9 +194,9 @@ MDINLINE void nemd_store_velocity(Particle part) {
 	    slab->ind_min = i;
 	  }       
       } 
-      /* look for largest positive x componenet */
     } else if(slab_num == nemddata.mid_slab) {
-      
+      /* midlle slab: look for largest positive x componenet */
+
       /* first fill fastest array as particles com in */
       if(slab->n_fastest < nemddata.n_exchange) {
 	slab->fastest[slab->n_fastest] = part.p.identity;
@@ -212,41 +219,29 @@ MDINLINE void nemd_store_velocity(Particle part) {
 	  }
       }    
     } 
-    /* Add the velocities to mean velocity of that slab */
-    slab->v_mean          += part.m.v[0];
-    slab->n_parts_in_slab ++;
   }
-  else if(nemddata.method == NEMD_METHOD_SHEARRATE) {
-    if(slab_num == nemddata.top_slab || slab_num == nemddata.mid_slab) {
-      part.m.v[0] += slab->vel_diff;
-    } 
-    /* Add the velocities = velocity+force to mean velocity of that slab */
-    slab->v_mean          += part.m.v[0] + part.f.f[0];
-    slab->n_parts_in_slab ++;
-
-  }
-#endif
 }
-
 
 MDINLINE void nemd_add_velocity (Particle *part) {
-#ifdef NEMD 
-  int slab_num;
-  Slab *slab;
+  if( !(nemd_method == NEMD_METHOD_SHEARRATE) ) {
+    return;
+  } else {
+    int slab_num;
+    Slab *slab;
 
-  if( !(nemddata.method == NEMD_METHOD_SHEARRATE) ) return;
-
-  slab_num = part->r.p[2]*nemddata.invthickness;
-  slab = &nemddata.slab[slab_num];
-
-  if(slab_num == nemddata.top_slab || slab_num == nemddata.mid_slab) {
-    part->f.f[0] += slab->vel_diff;
+    slab_num = part->r.p[2]*nemddata.invthickness;
+    slab = &nemddata.slab[slab_num];
+    
+    if(slab_num == nemddata.top_slab || slab_num == nemddata.mid_slab) {
+      part->m.v[0] += slab->vel_diff;
+    }
   }
-#endif
 }
 
+/* endif NEMD */
+#endif
 
 /*@}*/
 
-
+/* endif NEMD_H */
 #endif

@@ -14,105 +14,68 @@
     <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
  */
 #include "nemd.h"
+#include "integrate.h"
 
 /************************************************************/
 
+int nemd_method = NEMD_METHOD_OFF;
+
 #ifdef NEMD
-Nemd nemddata = { -1, 0, 0, 0.0, 1.0, NULL, 0, NEMD_METHOD_NOTSET, 0, NULL, 0.0, 0.0};
+Nemd nemddata = { -1, 0, 0, 0.0, 1.0, NULL, 0, 0, NULL, 0.0, 0.0};
 #endif
 
 /************************************************************/
 
-int nemd(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
+/************************************************************/
+/** \name Privat Functions */
+/************************************************************/
+/*@{*/
+
+/** Hand over nemd usage information to tcl interpreter. */
+int nemd_usage(Tcl_Interp *interp) 
 {
 #ifdef NEMD
-  int n_slabs, n_exchange=0;
-  double shearrate=0.0;
-  char buffer[TCL_INTEGER_SPACE+TCL_DOUBLE_SPACE];
-
-  INTEG_TRACE(fprintf(stderr,"%d: nemd:\n",this_node));
-  Tcl_ResetResult(interp);
-
- /* print nemd status */
-  if(argc == 1) {
-    sprintf(buffer, "%d", nemddata.n_slabs);
-    Tcl_AppendResult(interp, "nemd ", buffer," ", (char *)NULL);
-    if(nemddata.method == NEMD_METHOD_EXCHANGE) {
-      sprintf(buffer, "%d", nemddata.n_exchange);
-      Tcl_AppendResult(interp, "exchange ", buffer, (char *)NULL);
-    }
-    else if (nemddata.method == NEMD_METHOD_SHEARRATE) {
-      sprintf(buffer, "%f", nemddata.shear_rate);
-      Tcl_AppendResult(interp, "shearrate ", buffer, (char *)NULL);
-    }
-    return (TCL_OK);
-  }
-
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
-		     argv[0], " <n_slabs> <method> <value>\" or \n\"",
-		     argv[0], " profile\"", (char *)NULL);
-    return (TCL_ERROR);
-  }
-
-  /* print velocity profile */
-  if (ARG1_IS_S("profile")) {
-    return nemd_print_profile(interp);
-  }  
-  /* set nemd parameters */
-  else {
-    /* check number of arguments */
-    if (argc < 3) {
-      Tcl_AppendResult(interp, "wrong # args:  should be \"",
-		       argv[0], " <n_slabs> <method> <value> \"", (char *)NULL);
-      return (TCL_ERROR);
-    }
-    /* copy parameters */
-    if ( ! ARG_IS_I(1, n_slabs) ) {
-      Tcl_AppendResult(interp, "first parameter of nemd is <n_slabs> of type",
-		       " <INT> or \"profile\"", (char *)NULL);
-      return (TCL_ERROR);
-    }
-    if ( ARG_IS_S(2,"exchange") ) {
-      if ( ! ARG_IS_I(3, n_exchange) ) {
-	Tcl_AppendResult(interp, "third parameter of nemd exchange is n_exchange",
-			 " of type <INT> ", (char *)NULL);
-	return (TCL_ERROR);
-      }
-      nemddata.method = NEMD_METHOD_EXCHANGE;
-    }
-    else if ( ARG_IS_S(2,"shearrate") ) {
-      if ( ! ARG_IS_D(3, shearrate) ) {
-	Tcl_AppendResult(interp, "third parameter of nemd shearrate is shearrate",
-			 " of type <DOUBLE> ", (char *)NULL);
-	return (TCL_ERROR);
-      }
-      nemddata.method = NEMD_METHOD_SHEARRATE;
-    }
-
-    /* parameter sanity */
-    if ( n_slabs<0 || n_slabs%2!=0 ) {
-      Tcl_AppendResult(interp, "nemd <n_slabs> must be non negative and even!",(char *)NULL);
-      return (TCL_ERROR);
-    }  
-    if ( n_slabs > 0 && n_exchange < 0 ) {
-      Tcl_AppendResult(interp, "nemd <n_exchange> must be positive!",(char *)NULL);
-      return (TCL_ERROR);
-    } 
-    
-    /* communicat eparameters here */
-    
-    nemd_init(n_slabs, n_exchange, shearrate);
-  }
+  Tcl_AppendResult(interp, "Usage of tcl command nemd:\n", (char *)NULL);
+  Tcl_AppendResult(interp, "\"nemd\" for returning the status or \n", (char *)NULL);
+  Tcl_AppendResult(interp, "\"nemd off\" \n", (char *)NULL);
+  Tcl_AppendResult(interp, "\"nemd exchange <INT n_slabs> <INT n_exchange>\" \n", (char *)NULL);
+  Tcl_AppendResult(interp, "\"nemd shearrate <INT n_slabs> <DOUBLE shearrate>\" \n", (char *)NULL);
+  Tcl_AppendResult(interp, "\"nemd profile\" for returning the velocity profile \n", (char *)NULL);
+  Tcl_AppendResult(interp, "\"nemd viscosity\" for returning the viscosity \n", (char *)NULL);
+  return (TCL_ERROR);
 #endif
+  Tcl_AppendResult(interp, "nemd not compiled in!", (char *)NULL);
+  return (TCL_ERROR);
+}
+
+#ifdef NEMD
+/** Free all associated memory. */
+int nemd_free(void) 
+{
+  INTEG_TRACE(fprintf(stderr,"%d: nemd_free\n",this_node));
+  if(nemddata.n_exchange > 0) {
+    free(nemddata.slab[nemddata.mid_slab].fastest);
+    free(nemddata.slab[nemddata.top_slab].fastest);
+  }
+  free(nemddata.velocity_profile);
+  free(nemddata.slab);
+  nemddata.n_slabs          = -1;
+  nemddata.mid_slab         = 0;
+  nemddata.top_slab         = 0;
+  nemddata.thickness        = 0.0;
+  nemddata.invthickness     = 1.0;
+  nemddata.velocity_profile = NULL;
+  nemddata.profile_norm     = 0;
+  nemddata.n_exchange       = 0;
+  nemddata.slab             = NULL;
+  nemddata.shear_rate       = 0.0;
+  nemddata.slab_vel         = 0.0;
   return (TCL_OK);
 }
 
-/************************************************************/
-
+/** Initialize all data structures for nemd. */
 void nemd_init(int n_slabs, int n_exchange, double shear_rate) 
 {
-#ifdef NEMD
   int i;
   
   INTEG_TRACE(fprintf(stderr,"%d: nemd_init: n_slabs=%d n_exchange=%d\n",this_node, n_slabs, n_exchange));
@@ -166,63 +129,193 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate)
   }
   nemddata.slab[nemddata.top_slab].v_min   = -1e10;
   nemddata.slab[nemddata.mid_slab].v_min   = +1e10;
-#endif
 }
 
-/************************************************************/
+/** Hand over nemd status information to tcl interpreter. */
+int nemd_print_status(Tcl_Interp *interp) 
+{
+  char buffer[TCL_INTEGER_SPACE+TCL_DOUBLE_SPACE];
+  switch (nemd_method) {
+  case NEMD_METHOD_OFF:
+    Tcl_AppendResult(interp, "off", (char *)NULL);
+    return (TCL_OK);
+    break;
+  case NEMD_METHOD_EXCHANGE:
+    sprintf(buffer, "%d", nemddata.n_slabs);
+    Tcl_AppendResult(interp, "exchange ",buffer, (char *)NULL);
+    sprintf(buffer, "%d", nemddata.n_exchange);
+    Tcl_AppendResult(interp, " ",buffer, (char *)NULL);
+    return (TCL_OK);
+    break;
+  case NEMD_METHOD_SHEARRATE:
+    sprintf(buffer, "%d", nemddata.n_slabs);
+    Tcl_AppendResult(interp, "shearrate ",buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, nemddata.n_exchange, buffer);
+    Tcl_AppendResult(interp, " ",buffer, (char *)NULL);
+    return (TCL_OK);
+    break;
+  default:
+    return (TCL_ERROR);
+  }
+  return (TCL_ERROR);
+}
 
-void nemd_free() 
+/** Set nemd method to exchange and set nemd parameters */
+int nemd_set_exchange(Tcl_Interp *interp, int argc, char **argv) 
+{
+  int n_slabs, n_exchange;
+  if (argc < 4) {
+    Tcl_AppendResult(interp, "wrong # args:  ", (char *)NULL);
+    return nemd_usage(interp);
+  }
+  if ( !ARG_IS_I(2, n_slabs) || !ARG_IS_I(3, n_exchange) ) {
+    Tcl_AppendResult(interp, "wrong argument type:  ", (char *)NULL);
+    return nemd_usage(interp);
+  }
+  /* parameter sanity */
+  if ( n_slabs<0 || n_slabs%2!=0 ) {
+    Tcl_AppendResult(interp, "nemd <n_slabs> must be non negative and even!",(char *)NULL);
+    return (TCL_ERROR);
+  }  
+  if ( n_slabs > 0 && n_exchange < 0 ) {
+    Tcl_AppendResult(interp, "nemd <n_exchange> must be positive!",(char *)NULL);
+    return (TCL_ERROR);
+  } 
+
+  nemd_method = NEMD_METHOD_EXCHANGE;
+  nemd_init(n_slabs, n_exchange, 0.0);
+  return (TCL_OK);
+}
+
+/** Set nemd method to shearrate and set nemd parameters */
+int nemd_set_shearrate(Tcl_Interp *interp, int argc, char **argv) 
+{
+  int n_slabs;
+  double shearrate;
+  if (argc < 4) {
+    Tcl_AppendResult(interp, "wrong # args:  ", (char *)NULL);
+    return nemd_usage(interp);
+  }
+  if ( !ARG_IS_I(2, n_slabs) || !ARG_IS_D(3, shearrate) ) {
+    Tcl_AppendResult(interp, "wrong argument type:  ", (char *)NULL);
+    return nemd_usage(interp);
+  }
+ /* parameter sanity */
+  if ( n_slabs<0 || n_slabs%2!=0 ) {
+    Tcl_AppendResult(interp, "nemd <n_slabs> must be non negative and even!",(char *)NULL);
+    return (TCL_ERROR);
+  }  
+   nemd_method = NEMD_METHOD_SHEARRATE;
+  nemd_init(n_slabs, 0, shearrate);
+  return (TCL_OK);
+}
+
+/** Hand over velocity profile to tcl interpreter */
+int nemd_print_profile(Tcl_Interp *interp)
+{
+  int i;
+  double val;
+  char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  
+  INTEG_TRACE(fprintf(stderr,"%d: nemd_print_profile:\n",this_node));
+  if(nemd_method == NEMD_METHOD_OFF) {
+    Tcl_AppendResult(interp, "nemd is off", (char *)NULL);
+    return (TCL_OK);
+  }
+  
+  for(i=0;i<nemddata.n_slabs;i++) {
+    /* note: output velocities as usual have to be resacled by 1/time_step! */
+    val = nemddata.velocity_profile[i]/(nemddata.profile_norm*time_step);
+    Tcl_PrintDouble(interp, val, buffer);
+    Tcl_AppendResult(interp," ", buffer, (char *)NULL);
+    
+    nemddata.velocity_profile[i] = 0.0;
+  }
+  
+  nemddata.profile_norm = 0;
+  return (TCL_OK);
+}
+
+int nemd_print_viscosity(Tcl_Interp *viscosity)
+{
+  INTEG_TRACE(fprintf(stderr,"%d: nemd_print_viscosity:\n",this_node));
+  return (TCL_OK);
+}
+#endif
+
+/*@}*/
+
+/************************************************************
+ *            Exported Functions                            *
+ ************************************************************/
+
+int nemd(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
 #ifdef NEMD
-  INTEG_TRACE(fprintf(stderr,"%d: nemd_free\n",this_node));
-  if(nemddata.n_exchange > 0) {
-    free(nemddata.slab[nemddata.mid_slab].fastest);
-    free(nemddata.slab[nemddata.top_slab].fastest);
+  INTEG_TRACE(fprintf(stderr,"%d: nemd:\n",this_node));
+  Tcl_ResetResult(interp);
+
+  /* print nemd status */
+  if(argc == 1) {
+    return nemd_print_status(interp) ;
   }
-  free(nemddata.velocity_profile);
-  free(nemddata.slab);
-  nemddata.n_slabs          = -1;
-  nemddata.mid_slab         = 0;
-  nemddata.top_slab         = 0;
-  nemddata.thickness        = 0.0;
-  nemddata.invthickness     = 1.0;
-  nemddata.n_exchange       = 0;
-  nemddata.slab             = NULL;
-  nemddata.velocity_profile = NULL;
-  nemddata.profile_norm     = 0;
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "wrong # args:  \n", (char *)NULL);
+    return nemd_usage(interp);
+  }
+  else if (ARG1_IS_S("off")) {
+    nemd_method = NEMD_METHOD_OFF;
+    return nemd_free();
+  }  
+  else if (ARG1_IS_S("exchange")) {
+    return nemd_set_exchange(interp,argc,argv);
+  } 
+  else if (ARG1_IS_S("shearrate")) {
+    return nemd_set_shearrate(interp,argc,argv);
+  } 
+  else if (ARG1_IS_S("profile")) {
+    return nemd_print_profile(interp);
+  } 
+  else if (ARG1_IS_S("viscosity")) {
+    return nemd_print_viscosity(interp);
+  } 
+  else {
+    Tcl_AppendResult(interp, "Unkwnown keyword: \n", (char *)NULL);
+    return nemd_usage(interp);
+  }
+  return (TCL_ERROR);
 #endif
+  INTEG_TRACE(fprintf(stderr,"%d: call to nemd but not compiled in!\n",this_node));
+  return nemd_usage(interp);
 }
 
 /************************************************************/
+#ifdef NEMD
 
 void nemd_change_momentum() 
 {
-#ifdef NEMD
   int i;
   double tmp_v0;
   Slab *mid_slab, *top_slab;
 
-  if(nemddata.n_slabs == -1) return;
+  if(nemd_method == NEMD_METHOD_OFF) return;
 
-  INTEG_TRACE(fprintf(stderr,"%d: nemd_change_momentum:\n",this_node));
+  INTEG_TRACE(fprintf(stderr,"%d: nemd_change_momentum: Method %d\n",this_node,nemd_method));
 
   mid_slab = &nemddata.slab[nemddata.mid_slab];
   top_slab = &nemddata.slab[nemddata.top_slab];
 
-  if(nemddata.method == NEMD_METHOD_EXCHANGE ) {
-
+  if(nemd_method == NEMD_METHOD_EXCHANGE ) {
+    /* exit if there are not enough particles */
+    INTEG_TRACE(fprintf(stderr,"%d: parts_in_slabs: top %d mid %d\n",this_node,top_slab->n_parts_in_slab,mid_slab->n_parts_in_slab));
     if(mid_slab->n_fastest != nemddata.n_exchange || 
        top_slab->n_fastest != nemddata.n_exchange) {
       fprintf(stderr,"%d: nemd_exchange_momentum: Not enough particles in slab!\n",this_node);
       errexit();
     }
 
-    INTEG_TRACE(fprintf(stderr,"%d: parts_in_slabs: top %d mid %d\n",this_node,top_slab->n_parts_in_slab,mid_slab->n_parts_in_slab));
-    
+    /* perform momentum exchange */
     for(i=0;i<nemddata.n_exchange;i++) {
-
-      INTEG_TRACE(fprintf(stderr,"%d: Exchange part[%d].m.v[0]=%f and part[%d].m.v[0]=%f\n",this_node,local_particles[mid_slab->fastest[i]]->p.identity,local_particles[mid_slab->fastest[i]]->m.v[0],local_particles[top_slab->fastest[i]]->p.identity,local_particles[top_slab->fastest[i]]->m.v[0]));
-
       tmp_v0 = local_particles[mid_slab->fastest[i]]->m.v[0];
       local_particles[mid_slab->fastest[i]]->m.v[0] = local_particles[top_slab->fastest[i]]->m.v[0];
       local_particles[top_slab->fastest[i]]->m.v[0] = tmp_v0;
@@ -234,21 +327,20 @@ void nemd_change_momentum()
     mid_slab->n_fastest = 0;
     mid_slab->v_min     = 1e10;
   }
-  else if (nemddata.method ==  NEMD_METHOD_SHEARRATE) {
+  else if (nemd_method ==  NEMD_METHOD_SHEARRATE) {
     double vel_mean; 
+    /* calculate velocity difference vel_diff = vel_required - vel_actual */
     vel_mean = top_slab->v_mean/(double)top_slab->n_parts_in_slab;
     top_slab->vel_diff = nemddata.slab_vel - vel_mean;
     vel_mean = mid_slab->v_mean/(double)mid_slab->n_parts_in_slab;
     mid_slab->vel_diff = - nemddata.slab_vel - vel_mean;
   }
-#endif
 }
 
 /************************************************************/
 
 void nemd_store_velocity_profile() 
 {
-#ifdef NEMD
   int i;
 
   if(nemddata.n_slabs == -1) return;
@@ -261,37 +353,9 @@ void nemd_store_velocity_profile()
     nemddata.slab[i].n_parts_in_slab = 0;
   }
   nemddata.profile_norm++;
-#endif
 }
 
 /************************************************************/
 
-int nemd_print_profile(Tcl_Interp *interp)
-{
-#ifdef NEMD
-  int i;
-  double val;
-  char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-  
-  INTEG_TRACE(fprintf(stderr,"%d: nemd_print_profile:\n",this_node));
-  
-  if(nemddata.n_slabs == -1) {
-    Tcl_AppendResult(interp, "{ nemd is off }", (char *)NULL);
-    return (TCL_OK);
-  }
-  
-  if(nemddata.profile_norm==0) return (TCL_OK);
-
-  for(i=0;i<nemddata.n_slabs;i++) {
-    /* note: output velocities as usual have to be resacled by 1/time_step! */
-    val = nemddata.velocity_profile[i]/(nemddata.profile_norm*time_step);
-    Tcl_PrintDouble(interp, val, buffer);
-    Tcl_AppendResult(interp,buffer, " ", (char *)NULL);
-    
-    nemddata.velocity_profile[i] = 0.0;
-  }
-  
-  nemddata.profile_norm = 0;
 #endif
-  return (TCL_OK);
-}
+
