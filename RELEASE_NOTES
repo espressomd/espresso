@@ -11,6 +11,7 @@ Current working revision.
 - v1.5.1d -
 -----------
 
+(f) February 25th, 2004.
 (e) February 20th, 2004.
 (d) February 14th, 2004.
 (c) February  9th, 2004.
@@ -18,21 +19,31 @@ Current working revision.
 (a) January  30th, 2004.
 
 New Features:
+(f) Extension of the tcl command integrate. "integrate" is now 
+    also used to set the integration method and parameters of 
+    this methods. The general parameters <time_step> and <skin> 
+    remained at the 'setmd' command. The usage of integrate is now:
+        integrate <INT n steps>
+	integrate set
+	integrate set nvt
+	integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>]
 (e) New tcl command: thermostat to control the new thermostats:
     Usage: thermostat langevin <temperature> <langevin_gamma>
            thermostat dpd <temperature> <dpd_gamma> <dpd_r_cut> 
            thermostat npt_isotropic <temperature> <nptiso_gamma0> <nptiso_gammav>
            thermostat off
 	   thermostat
-    Notes: You can combine different thermostats.
-           At the moment they share a single temperature (if you are aware 
-	   of any problems where one would need different temperatures, 
-	   please let us know).
-	   thermostat off turns all thermostats off and sets all thermostat parameters to zero.
-           For NVE ensemble use thermostat off.
-	   DO NOT USE setmd temperature AND setmd gamma (:= langevin_gamma) IN NEW SCRIPTS!
-	   (even though they still work).
-	   For backwards compatibility ESPResSo starts with the Langevin thermostat turned on.
+    Notes: - You can combine different thermostats.
+           - At the moment they share a single temperature (if you are aware 
+	     of any problems where one would need different temperatures, 
+	     please let us know).
+	   - thermostat off turns all thermostats off and sets all 
+	     thermostat parameters to zero.
+           - For NVE ensemble use thermostat off.
+	   - DO NOT USE setmd temperature AND setmd gamma (:= langevin_gamma) 
+	     IN NEW SCRIPTS! (even though they still work).
+	   - For backwards compatibility ESPResSo starts with the 
+	     Langevin thermostat turned on.
 (d) Implemented an (N,p,T)-ensemble integrator, as published by
     Kolb, Duenweg, J.Chem.Phys. 111(8) 4453 (1999).
     To activate it, use the corresponding compiler-flag in 'config.h'
@@ -46,20 +57,23 @@ New Features:
     of the system. For more information see for example Evans/Morriss:
     Statistical mechanics of Nonequilibrium Liwuids (Academic Press, London,
     1990) or Soddemann/Duenweg/Kremer (Phys. Rev. E; 68; 2003).
-    All procedures reside in the fiiles nemd.c/h. There is also a new tcl
-    command:
+    All procedures reside in the fiiles nemd.c/h. 
+    Usage of the new tcl command nemd:
+         nemd - returning nemd status
+	 nemd off - turn off nemd
          nemd <n_slabs> <n_exchange>
-         Turn NEMD on with n_slabs slabs and n_exchange momentum exchanges per
-         integration step.
-         nemd profile
-         Returns the velocity profile along the slabs.
-         nemd 0
-         Turns NEMD off
-    Slabs are perpendicular to the z-direction and the shear is applied in
-    x-direction.
-    This method is only useful for either NVE ensemble or has to be used with
-    the yet to be installed DPD thermostat to run a NVT ensemble.
-    Per default NEMD is not compiled in!
+	 nemd exchange <INT n_slabs> <INT n_exchange>
+              - enable method exchange momentum 
+	 nemd shearrate <INT n_slabs> <DOUBLE shearrate>
+              - enable method with fixed shear rate
+	 nemd profile - return the velocity profile
+	 nemd viscosity - return the viscosity
+    Notes: - The slabs are oriented perpendicualr to the z direction.
+           - The shear is applied in x direction
+           - Use only with a DPD thermostat or in an NVE ensemble.
+           - Do not use other special features like part fix or 
+	     constraints inside the top and middle slab.
+	   - Per default NEMD is not compiled in.
 (a) The bond angle potential can now be used also for equilibrium angles different
     from 180 degree (stretched configuration). This should not affect any previous
     simulations (except numerical errors). The default potential form is now:
