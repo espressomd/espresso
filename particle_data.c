@@ -202,11 +202,26 @@ int part(ClientData data, Tcl_Interp *interp,
   int node, j;
   char buffer[50 + TCL_DOUBLE_SPACE];
 
-  if (argc < 2) {
+  if (argc < 1) {
     Tcl_AppendResult(interp, "wrong # args:  should be \"",
 		     argv[0], " <part num> ?what? ?value?\"", (char *) NULL);
     return (TCL_ERROR);
   }
+
+  /* if no further arguments are given, print out all stored particles */
+  if (argc == 1) {
+    int i=0,j=0;
+    char *tmp_buffer[2];
+    tmp_buffer[0]=argv[0];
+    for(i=0;i<max_seen_particle;i++) {
+      sprintf(buffer,"%d",i);
+      tmp_buffer[1]=buffer;
+      j=part(data,interp,argc+1,tmp_buffer);
+    }
+    return (TCL_OK);
+  }
+
+  /* if there's at least one argument, evaluate it */
   if (!node_grid_is_set())
     setup_node_grid();
 
@@ -215,7 +230,6 @@ int part(ClientData data, Tcl_Interp *interp,
     Tcl_AppendResult(interp, "illegal particle", (char *) NULL);
     return (TCL_ERROR);
   }
-
   if (!particle_node)
     build_particle_node();
 
@@ -232,7 +246,7 @@ int part(ClientData data, Tcl_Interp *interp,
     }
     mpi_recv_part(node, part_num, &part);
     Tcl_PrintDouble(interp, part.p[0], buffer);
-    Tcl_AppendResult(interp, "p ", buffer, " ", (char *)NULL);
+    Tcl_AppendResult(interp, "{pos ", buffer, " ", (char *)NULL);
     Tcl_PrintDouble(interp, part.p[1], buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
     Tcl_PrintDouble(interp, part.p[2], buffer);
@@ -257,20 +271,22 @@ int part(ClientData data, Tcl_Interp *interp,
     /* print bonding structure */
     if(part.n_bonds > 0) {
       int i=0,j,size;
-      Tcl_AppendResult(interp, buffer, " bonds ", (char *)NULL);
+      Tcl_AppendResult(interp, " bonds { ", (char *)NULL);
       while(i<part.n_bonds) {
 	size = bonded_ia_params[part.bonds[i]].num;
-	sprintf(buffer, "%d(", part.bonds[i]); i++;
+	sprintf(buffer, "{%d ", part.bonds[i]); i++;
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
 	for(j=0;j<size-1;j++) {
-	  sprintf(buffer, "%d, ", part.bonds[i]); i++;
+	  sprintf(buffer, "%d ", part.bonds[i]); i++;
 	  Tcl_AppendResult(interp, buffer, (char *)NULL);
 	}
-	sprintf(buffer, "%d)", part.bonds[i]); i++;
+	sprintf(buffer, "%d} ", part.bonds[i]); i++;
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
+      Tcl_AppendResult(interp, "} ", (char *)NULL);
       free(part.bonds);
      }
+    Tcl_AppendResult(interp, "} ", (char *)NULL);
     return (TCL_OK);
   }
   
