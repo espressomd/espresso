@@ -3,6 +3,7 @@
  */
 #include <string.h>
 #include <stdlib.h>
+#include "config.h"
 #include "debug.h"
 #include "interaction_data.h"
 #include "communication.h"
@@ -27,6 +28,11 @@ Bonded_ia_parameters *bonded_ia_params = NULL;
 double max_cut;
 
 double lj_force_cap = 0.0;
+
+#ifdef CONSTRAINTS
+int n_constraints       = 0;
+Constraint *constraints = NULL;
+#endif 
 
 /*****************************************
  * functions
@@ -730,3 +736,150 @@ int lj_force_cap_callback(Tcl_Interp *interp, void *data)
   mpi_bcast_event(INTERACTION_CHANGED);
   return (TCL_OK);
 }
+
+#ifdef CONSTRAINTS
+int printConstraintToResult(Tcl_Interp *interp, int i)
+{
+  Constraint con = constraints[i];
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+
+  sprintf(buffer, "%d ", i);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  
+  switch (con.type) {
+  case CONSTRAINT_WAL:
+    Tcl_PrintDouble(interp, con.c.wal.n[0], buffer);
+    Tcl_AppendResult(interp, "wall ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con.c.wal.n[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con.c.wal.n[2], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con.c.wal.d, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    break;
+  case CONSTRAINT_SPH:
+    Tcl_PrintDouble(interp, con.c.sph.pos[0], buffer);
+    Tcl_AppendResult(interp, "sphere ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con.c.sph.pos[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con.c.sph.pos[2], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con.c.sph.rad, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    break;
+  case CONSTRAINT_CYL:
+    Tcl_AppendResult(interp, "cylinder not implemented", (char *) NULL);
+    return (TCL_OK);
+  default:
+    Tcl_AppendResult(interp, "unknown constraint type", (char *) NULL);
+    return (TCL_OK);
+  }
+
+  Tcl_PrintDouble(interp, con.LJ_eps, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, con.LJ_sig, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, con.LJ_cut, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, con.LJ_shift, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  return (TCL_OK);
+ 
+}
+#endif
+
+int constraint(ClientData _data, Tcl_Interp *interp,
+	       int argc, char **argv)
+{
+#ifdef CONSTRAINTS
+  int i, del_num = -1;
+  double norm;
+  Constraint *con=NULL;
+
+  /* no argument -> print constraint information */
+  if (argc == 1) {
+    if(n_constraints>0) Tcl_AppendResult(interp, "{", (char *)NULL);
+    for (i = 0; i < n_constraints; i++) {
+      if(i>0) Tcl_AppendResult(interp, " {", (char *)NULL);
+      printConstraintToResult(interp, i);
+      Tcl_AppendResult(interp, "}", (char *)NULL);
+    }
+    return (TCL_OK);
+  }
+  
+  if(!strncmp(argv[1], "wall", strlen(argv[1]))) {
+    if(argc < 10) {
+      Tcl_AppendResult(interp, "wrong # args! Usage: constraint wall <nx> <ny> <nz> <d> <lj_eps> <lj_sig> <lj_cut> <lj_shift>", 
+		       (char *) NULL);
+      return (TCL_ERROR);
+    }
+    n_constraints++;
+    constraints = realloc(constraints,n_constraints*sizeof(Constraint));
+    con = &constraints[n_constraints-1];
+    con->type = CONSTRAINT_WAL;
+    if(Tcl_GetDouble(interp, argv[2], &(con->c.wal.n[0])) == TCL_ERROR ||
+       Tcl_GetDouble(interp, argv[3], &(con->c.wal.n[1])) == TCL_ERROR ||
+       Tcl_GetDouble(interp, argv[4], &(con->c.wal.n[2])) == TCL_ERROR ||
+       Tcl_GetDouble(interp, argv[5], &(con->c.wal.d)) == TCL_ERROR)
+      return (TCL_ERROR);
+    norm = SQR(con->c.wal.n[0])+SQR(con->c.wal.n[1])+SQR(con->c.wal.n[2]);
+    for(i=0;i<3;i++) con->c.wal.n[i]/sqrt(norm);
+  }
+  else if(!strncmp(argv[1], "sphere", strlen(argv[1]))) {
+    if(argc < 10) {
+      Tcl_AppendResult(interp, "wrong # args! Usage: constraint sphere <px> <py> <pz> <rad> <lj_eps> <lj_sig> <lj_cut> <lj_shift>", (char *) NULL);
+      return (TCL_ERROR);
+    }
+    n_constraints++;
+    constraints = realloc(constraints,n_constraints*sizeof(Constraint));
+    con = &constraints[n_constraints-1];
+    con->type = CONSTRAINT_SPH;
+     if(Tcl_GetDouble(interp, argv[2], &(con->c.sph.pos[0])) == TCL_ERROR ||
+       Tcl_GetDouble(interp, argv[3], &(con->c.sph.pos[1])) == TCL_ERROR ||
+       Tcl_GetDouble(interp, argv[4], &(con->c.sph.pos[2])) == TCL_ERROR ||
+       Tcl_GetDouble(interp, argv[5], &(con->c.sph.rad)) == TCL_ERROR)
+      return (TCL_ERROR);
+    if(con->c.sph.rad < 0.0) return (TCL_ERROR);
+   }
+  else if(!strncmp(argv[1], "delete", strlen(argv[1]))) {
+    if(argc < 3) {
+      /* delete all constraints */
+      n_constraints = 0;
+      constraints = realloc(constraints,n_constraints*sizeof(Constraint));
+    }
+    if(Tcl_GetInt(interp, argv[2], &(del_num)) == TCL_ERROR) return (TCL_ERROR);
+    if(del_num >= n_constraints) {
+      Tcl_AppendResult(interp, "Can not delete non existing constraint",(char *) NULL);
+      return (TCL_OK);
+    }
+  }
+  else {
+    Tcl_AppendResult(interp, "unknown feature of constraints! Usage:\n",(char *) NULL);
+    Tcl_AppendResult(interp, "constraint wall <nx> <ny> <nz> <d> <lj_eps> <lj_sig> <lj_cut> <lj_shift>\n",(char *) NULL);
+    Tcl_AppendResult(interp, "constraint sphere <px> <py> <pz> <rad> <lj_eps> <lj_sig> <lj_cut> <lj_shift>\n",(char *) NULL);
+    Tcl_AppendResult(interp, "constraint delete <num>",(char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  /* set the LJ parameters */
+  if(del_num<0) {
+    if(Tcl_GetDouble(interp, argv[6], &(con->LJ_eps)) == TCL_ERROR ||
+       Tcl_GetDouble(interp, argv[7], &(con->LJ_sig)) == TCL_ERROR ||
+       Tcl_GetDouble(interp, argv[8], &(con->LJ_cut)) == TCL_ERROR ||
+       Tcl_GetDouble(interp, argv[9], &(con->LJ_shift)) == TCL_ERROR)
+    return (TCL_ERROR);
+    if(con->LJ_eps<0.0 || con->LJ_sig < 0.0 || con->LJ_cut < 0.0) {
+      Tcl_AppendResult(interp, "Wrong constraint LJ parameters",(char *) NULL);
+      return (TCL_ERROR);
+    }
+  }
+
+
+  mpi_bcast_constraint(del_num);
+  return (TCL_OK);
+#else
+  Tcl_AppendResult(interp, "Constraints not compiled in!" ,(char *) NULL);
+  return (TCL_ERROR);
+#endif
+}
+

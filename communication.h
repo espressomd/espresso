@@ -215,6 +215,9 @@ void mpi_bcast_coulomb_params();
 /** Issue REQ_SEND_EXT: send nex external flag and external force. */
 void mpi_send_ext(int pnode, int part, int flag, double force[3]);
 
+/** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
+void mpi_bcast_constraint(int del_num);
+
 /*@}*/
 
 /** \name Event codes for \ref mpi_bcast_event

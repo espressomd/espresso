@@ -793,9 +793,9 @@ void send_ghosts(int s_dir)
 		 node_neighbors[s_dir], REQ_SEND_GHOSTS, MPI_COMM_WORLD);
 
 	ghost_send_size[s_dir] = n_send_ghosts[s_dir].e[send_cells[s_dir].n];
-  
-	MPI_Send(g_send_buf.part, ghost_send_size[s_dir]*sizeof(ReducedParticle), MPI_BYTE, 
-		 node_neighbors[s_dir], REQ_SEND_GHOSTS, MPI_COMM_WORLD);
+	if(ghost_send_size[s_dir]>0) 
+	  MPI_Send(g_send_buf.part, ghost_send_size[s_dir]*sizeof(ReducedParticle), MPI_BYTE, 
+		   node_neighbors[s_dir], REQ_SEND_GHOSTS, MPI_COMM_WORLD);
       }
       else {
 	MPI_Recv(n_recv_ghosts[r_dir].e, n_recv_ghosts[r_dir].n, MPI_INT,
@@ -804,9 +804,9 @@ void send_ghosts(int s_dir)
 	ghost_recv_size[r_dir] = n_recv_ghosts[r_dir].e[recv_cells[r_dir].n];
 	if(ghost_recv_size[r_dir] > g_recv_buf.max) 
 	  realloc_redParticles(&g_recv_buf, ghost_recv_size[r_dir]);
-
-	MPI_Recv(g_recv_buf.part, ghost_recv_size[r_dir]*sizeof(ReducedParticle), MPI_BYTE,
-		 node_neighbors[r_dir],REQ_SEND_GHOSTS,MPI_COMM_WORLD,&status);
+	if(ghost_recv_size[r_dir]>0)
+	  MPI_Recv(g_recv_buf.part, ghost_recv_size[r_dir]*sizeof(ReducedParticle), MPI_BYTE,
+		   node_neighbors[r_dir],REQ_SEND_GHOSTS,MPI_COMM_WORLD,&status);
       }
     }
   }
@@ -853,12 +853,16 @@ void send_posforce(int s_dir, int send_size, int recv_size)
     else             r_dir = s_dir-1;
     /* two step communication: first all even positions than all odd */
     for(evenodd=0; evenodd<2;evenodd++) {
-      if((node_pos[s_dir/2]+evenodd)%2==0) 
-	MPI_Send(send_buf.e, 3*send_size, MPI_DOUBLE, 
-		 node_neighbors[s_dir],REQ_SEND_POS,MPI_COMM_WORLD);
-      else 
-	MPI_Recv(recv_buf.e, 3*recv_size, MPI_DOUBLE,
-		 node_neighbors[r_dir],REQ_SEND_POS,MPI_COMM_WORLD,&status);    
+      if((node_pos[s_dir/2]+evenodd)%2==0) { 
+	if(send_size>0) 
+	  MPI_Send(send_buf.e, 3*send_size, MPI_DOUBLE, 
+		   node_neighbors[s_dir],REQ_SEND_POS,MPI_COMM_WORLD);
+      }
+      else { 
+	if(recv_size>0) 
+	  MPI_Recv(recv_buf.e, 3*recv_size, MPI_DOUBLE,
+		   node_neighbors[r_dir],REQ_SEND_POS,MPI_COMM_WORLD,&status);    
+      }
     }
   }
   else {                  /* communication goes to the same node! */ 

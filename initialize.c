@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include "config.h"
 #include "initialize.h"
 #include "global.h"
 #include "particle_data.h"
@@ -151,6 +152,8 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "tcl_rand", (Tcl_CmdProc *)tcl_rand, 0, NULL);
   /* in file blockfile_tcl.c */
   Tcl_CreateCommand(interp, "blockfile", (Tcl_CmdProc *)blockfile, 0, NULL);
+  /* in interaction_data.c */
+  Tcl_CreateCommand(interp, "constraint", (Tcl_CmdProc *)constraint, 0, NULL);
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("TCLMD_SCRIPTS");

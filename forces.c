@@ -23,6 +23,7 @@
 #include "fene.h"
 #include "angle.h"
 #include "debye_hueckel.h"
+#include "constraint.h"
 
 /************************************************/
 /* Variables */
@@ -96,6 +97,11 @@ void force_calc()
 	  break;
 	}
       }
+
+#ifdef CONSTRAINTS
+      add_constraints_forces(p1);
+#endif
+
     }
 
     /* calculate non bonded interactions (loop verlet lists of neighbors) */

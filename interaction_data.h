@@ -31,6 +31,10 @@
 /** Coulomb method is P3M. */
 #define COULOMB_P3M   2
 
+#define CONSTRAINT_WAL 1
+#define CONSTRAINT_SPH 2
+#define CONSTRAINT_CYL 3
+
 /*@}*/
 
 /** \name Data Types */
@@ -80,7 +84,6 @@ typedef struct {
   double prefac;
 } Debye_hueckel_params;
 
-
 /** Defines parameters for a bonded interaction. */
 typedef struct {
   /** bonded interaction type:  0 = FENE, 1 = ANGLE, 2 = DIHEDRAL */
@@ -107,6 +110,55 @@ typedef struct {
   } p;
 } Bonded_ia_parameters;
 
+#ifdef CONSTRAINTS
+/** Structure to specify a constraint. */
+typedef struct {
+  /** type of the constraint. */
+  int type;
+
+  union {
+    /** Parameters for a WALL constraint (or a plane if you like that more). */
+    struct {
+     /** normal vector on the plane. */
+      double n[3];
+      /** distance of the wall from the origin. */
+      double d;
+    } wal;
+    /** Parameters for a SPHERE constraint. */
+    struct {
+      /** sphere center. */
+      double pos[3];
+      /** sphere radius. */
+      double rad;
+    } sph;
+    /** Parameters for a CYLINDER constraint. */
+    struct {
+      /** center of the sphere. */
+      double pos[3];
+      /** Axis of the cylinder .*/
+      double axis[3];
+      /** cylinder radius. */
+      double rad;
+      /** cylinder length (infinite if negativ). */
+      double length;
+      /** cylinder cap type (0 flat, 1 half spheres). */
+      int cap;
+      /** help points. */
+      double pt[3],pb[3];
+    } cyl;
+  } c;
+
+  /* LJ interaction */
+  /** LJ epsilon */
+  double LJ_eps;
+  /** LJ sigma */
+  double LJ_sig;
+  /** LJ cutoff */
+  double LJ_cut;
+  /** LJ energy shift */
+  double LJ_shift;
+} Constraint;
+#endif
 /*@}*/
 
 
@@ -141,16 +193,29 @@ extern double max_cut;
     details (who wants to wite that?).*/
 extern double lj_force_cap;
 
+#ifdef CONSTRAINTS
+/** numnber of constraints. */
+extern int n_constraints;
+/** field containing constraints. */
+extern Constraint *constraints;
+#endif
+
 /************************************************
  * exportet functions
  ************************************************/
 
 /** Implementation of the Tcl function inter. This function
-    allows to modify the interaction parameters for nonbonded
-    interactions like Lennard-Jones.
+    allows to modify the interaction parameters.
  */
 int inter(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
+
+
+/** Implementation of the Tcl function constraint. This function
+    allows to set and delete constraints.
+ */
+int constraint(ClientData _data, Tcl_Interp *interp,
+	       int argc, char **argv);
 
 /** Callback for setmd niatypes. */
 int niatypes_callback(Tcl_Interp *interp, void *data);
