@@ -17,27 +17,36 @@
  * data types
  ************************************************/
 
-/** Struct holding all particle information
- *  of the particles. */
 typedef struct {
   /** unique identifier for the particle. */
   int    identity;
   /** particle type, used for non bonded interactions. */
-  int    type;
+  int    type;  
+
+#ifdef ELECTROSTATICS
+  /** charge. */
+  double q;
+#endif
 
   /** periodically folded position. */
   double p[3];
+
+  /** force. */
+  double f[3];
+} ReducedParticle;
+
+/** Struct holding all particle information
+ *  of the particles. */
+typedef struct {
+  ReducedParticle r;
+
   /** position in the last time step befor last Verlet list update. */
   double p_old[3];
   /** index of the simulation box image where the particle really sits. */
   int    i[3];
-  /** charge. */
-  double q;
 
   /** velocity. */
   double v[3];
-  /** force. */
-  double f[3];
 
   /** size of field \ref bonds. */
   int   n_bonds;
