@@ -71,8 +71,10 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_BCAST_COULOMB 17
 /** Action number for \ref mpi_send_ext. */
 #define REQ_SET_EXT 18
+/** Action number for \ref mpi_place_particle. */
+#define REQ_PLACE_NEW   19
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 19
+#define REQ_MAXIMUM 20
 
 /** \name Slave Callbacks
     These functions are the slave node counterparts for the
@@ -122,7 +124,8 @@ SlaveCallback *callbacks[] = {
   mpi_set_time_step_slave,          /* 15: REQ_SET_TIME_STEP */
   mpi_get_particles_slave,          /* 16: REQ_GETPARTS */
   mpi_bcast_coulomb_params_slave,   /* 17: REQ_BCAST_COULOMB */
-  mpi_send_ext_slave                /* 18: REQ_SEND_EXT */
+  mpi_send_ext_slave,               /* 18: REQ_SEND_EXT */
+  mpi_place_particle_slave          /* 19: REQ_PLACE_NEW */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -145,7 +148,8 @@ char *names[] = {
   "TIME_STEP" , /* 15 */
   "GET_PARTS" , /* 16 */
   "BCAST_CIA" , /* 17 */
-  "SEND_EXT"    /* 18 */
+  "SEND_EXT"  , /* 18 */
+  "PLACE_NEW"   /* 19 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -337,18 +341,19 @@ void mpi_bcast_event_slave(int node, int event)
   }
 }
 
-/****************** REQ_SET_POS ************/
+/****************** REQ_PLACE/RE_PLACE_NEW ************/
 
-void mpi_place_particle(int pnode, int part, double p[3])
+void mpi_place_particle(int pnode, int part, int new, double p[3])
 {
-  mpi_issue(REQ_PLACE, pnode, part);
-
-  if (pnode == this_node) {
-    if (part < 0) {
-      part = -part - 1;
-    }
-    local_place_particle(abs(part), p);
+  if (new) {
+    mpi_issue(REQ_PLACE_NEW, pnode, part);
+    added_particle(part);
   }
+  else
+    mpi_issue(REQ_PLACE, pnode, part);
+
+  if (pnode == this_node)
+    local_place_particle(part, p);
   else
     MPI_Send(p, 3, MPI_DOUBLE, pnode, REQ_PLACE, MPI_COMM_WORLD);
 
@@ -360,15 +365,8 @@ void mpi_place_particle_slave(int pnode, int part)
   double p[3];
   MPI_Status status;
 
-  /* happens here since ALL nodes have to do that */
-  if (part < 0) {
-    part = -part - 1;
-    n_total_particles++;
-    if (part > max_seen_particle) {
-      realloc_local_particles(part);
-      max_seen_particle = part;
-    }
-  }
+  if (request[0] == REQ_PLACE_NEW)
+    added_particle(part);
 
   if (pnode == this_node) {
     MPI_Recv(p, 3, MPI_DOUBLE, 0, REQ_PLACE, MPI_COMM_WORLD, &status);

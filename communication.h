@@ -92,12 +92,12 @@ void mpi_who_has();
 void mpi_bcast_event(int event);
 /** Issue REQ_PLACE: move particle to a position on a node.
     Also calls \ref on_particle_change.
-    \param id   the particle to move. a negative id denotes new particles. Then
-    particle -1 corresponds to a new particle 0, -2 to a new 1, and so on.
+    \param id   the particle to move.
+    \param new  if non-zero, the particle is new
     \param node the node to attach it to.
     \param pos  the particles position.
 */
-void mpi_place_particle(int node, int id, double pos[3]);
+void mpi_place_particle(int node, int id, int new, double pos[3]);
 
 /** Issue REQ_SET_V: send particle velocity.
     Also calls \ref on_particle_change.

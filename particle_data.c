@@ -860,6 +860,7 @@ int get_particle_data(int part, Particle *data)
 
 int place_particle(int part, double p[3])
 {
+  int new;
   int pnode, retcode = TCL_OK;
 
   if (part < 0)
@@ -872,23 +873,19 @@ int place_particle(int part, double p[3])
     build_particle_node();
 
   pnode = (part <= max_seen_particle) ? particle_node[part] : -1;
-  if (pnode == -1) {
+  new = (pnode == -1);
+  if (new) {
     /* new particle, node by spatial position */
     pnode = find_node(p);
 
-    if (part > max_seen_particle) {
-      realloc_particle_node(part);
-      realloc_local_particles(part);
-      max_seen_particle = part;
-      particle_node[part] = pnode;  
-    }
-    /* mark as new particle */
-    part = -part - 1;
-    n_total_particles++;
+    /* master node specific stuff */
+    realloc_particle_node(part);
+    particle_node[part] = pnode;
+
     retcode = TCL_CONTINUE;
   }
 
-  mpi_place_particle(pnode, part, p);
+  mpi_place_particle(pnode, part, new, p);
 
   return retcode;
 }
@@ -1008,6 +1005,16 @@ void local_place_particle(int part, double p[3])
 
   memcpy(pt->r.p, p, 3*sizeof(double));
   memcpy(pt->i, i, 3*sizeof(int));
+}
+
+void added_particle(int part) 
+{
+  n_total_particles++;
+
+  if (part > max_seen_particle) {
+    realloc_local_particles(part);
+    max_seen_particle = part;
+  }
 }
 
 int local_change_bond(int part, int *bond, int delete)

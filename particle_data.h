@@ -355,6 +355,12 @@ int sortPartCfg();
 */
 void local_place_particle(int part, double p[3]);
 
+/** Used by mpi_place_particle, should not be used elsewhere.
+    Called if on a different node a new particle was added.
+    @param part the identity of the particle added
+*/
+void added_particle(int part);
+
 /** Used by mpi_send_bond, should not be used elsewhere.
     Modify a bond.
     @param part the identity of the particle to change
