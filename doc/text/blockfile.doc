@@ -9,10 +9,12 @@ e.g. for creating and using checkpoints. Hence you can transfer all accessible i
  blockfile $out write random
  blockfile $out write particles "id pos type q v f" all
  blockfile $out write bonds all
+ blockfile $out write configs
  close $out \endverbatim
         This example writes all variables accessible by \ref tcl_setmd, all interactions known to \ref tcl_inter, the full current state 
 	of the random number generator (\ref tcl_t_random), all informations (i.e. id, position, type-number, charge, velocity, forces, 
-	bonds) on all particles	to the file 'checkpoint.block.gz' which is even being compressed on-the-fly (if you don't want that, 
+	bonds) on all particles, and all particle configurations appended (using e.g. <tt>analyze append</tt>) for offline-analysis purposes
+	to the file 'checkpoint.block.gz' which is even being compressed on-the-fly (if you don't want that, 
 	use '<tt>set out [open "checkpoint.block" "w"]</tt>' instead).<BR>
 	Note that interactions must be stored before particles before bonding informations, as for the bonds to be set all particles and
 	all interactions must already be known to tcl_md.
@@ -71,18 +73,24 @@ And now the full documentation on how \ref tcl_blockfile actually works:<BR>
 	    where they were left, because \ref tcl_t_random also uses a table of previous random
 	    numbers to determine the next one; to also save that information use 
 	    \ref tcl_blockfile_write_random.
+	<li>\verbatim blockfile <channel> write configs\endverbatim
+	    writes the complete content of the 'configs'-array in statistics.c to <channel>, thereby
+	    saving all particle configurations appended (e.g. using <tt>analyze append</tt>) for analysis-purposes.<BR>
+	    Using this offline-analysis is quite easy: Just append regularly the current configurations, include this command
+	    after the derivation of the last time step, and <tt>blockfile read auto</tt> will load them later on
+	    resetting 'configs' to the state needed for most of the more complex <tt>analyze</tt>-commands.
 	<li>\verbatim blockfile <channel> read start \endverbatim reads the start part of a block
             and returns the block title.
 	<li>\verbatim blockfile <channel> read toend \endverbatim reads the blocks data and returns
 	    it.
-	<li>\verbatim blockfile <channel> read particles|interactions|bonds|variable|seed|random\endverbatim
+	<li>\verbatim blockfile <channel> read particles|interactions|bonds|variable|seed|random|configs\endverbatim
 	    reads one block, checks wether it contains data of the given type and reads it.
         <li>\verbatim blockfile <channel> read auto \endverbatim reads in one block and does the
             following:
 	<ol>
             <li> if a procedure blockfile_read_auto_<tag> exists, this procedure takes over
 	         (<tag> is the first expression in the block). For most block types, at least
-		 all mentioned above, i. e. particles, interactions, bonds, seed, random, and
+		 all mentioned above, i. e. particles, interactions, bonds, seed, random, configs, and
 		 variable, the corresponding procedure will overwrite the current information with
 		 the information from the block.
             <li> if the procedure does not exist, it returns "usertag <tag> <rest of block>"
