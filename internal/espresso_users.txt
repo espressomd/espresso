@@ -1,0 +1,79 @@
+List of people using ESPResSo
+
+===============================================================================
+Users in the Kremer Group:
+===============================================================================
+
+Holm, Christian
+
+Arnold, Axel
+
+Limbach, Hans Jörg
+
+Mann, Bernward
+
+Antypov, Dmytro
+
+Sayar, Mehmet
+
+Lobaskin, Vladimir
+
+Mühlbacher, Frank
+
+
+
+Deserno, Markus
+
+Dünweg, Burkhard
+
+Kremer, Kurt
+
+Kulic, Igor
+
+Leon Cabanillas, Salvador
+
+Nowak, Christian
+
+Pasichnyk, Igor
+
+Sukumaran, Sathish
+
+
+
+===============================================================================
+Users in MPI-P:
+===============================================================================
+
+===============================================================================
+External users:
+===============================================================================
+
+name:  Cameron Abrams
+email: cfa22@drexel.edu
+send:  JUL 2003
+topic: 
+
+
+name:  Hendrik Meyer
+email: hmeyer@ics.u-strasbg.fr
+send:  2003
+topic: 
+
+
+name:  Zuowei Wang 
+email: wangzw@email.unc.com
+send:  2003
+topic: 
+
+
+name:  Elena Jarkova
+email: jarkova@mpip-mainz.mpg.de
+send:  OKT 2003
+topic: 
+
+
+name:  Karel Prochazka
+email: prochaz@vivien.natur.cuni.cz
+send:  08.OKT.2003
+topic: 
+
