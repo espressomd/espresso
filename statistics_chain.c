@@ -9,6 +9,7 @@
 #include "statistics.h"
 #include "parser.h"
 #include "debug.h"
+#include "topology.h"
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref #analyze) */
 /*@{*/
@@ -16,7 +17,7 @@ float *partCoord_g=NULL, *partCM_g=NULL;
 int n_part_g = 0, n_chains_g = 0;
 /*@}*/
 
-/** data for a system consisting of chains */
+/** data for a system consisting of chains. TBRS. */
 /*@{*/
 int chain_start = 0, chain_n_chains = 0, chain_length = 0;
 /*@}*/
@@ -647,37 +648,36 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff) {
  *                                 chain structure commands parsing
  ****************************************************************************************/
 
-int print_chain_structure_info(Tcl_Interp *interp)
+int parse_chain_structure_info(Tcl_Interp *interp, int argc, char **argv)
 {
-  /* 'analyze set chains' */
-  char buffer[TCL_INTEGER_SPACE + 2];
+  int m, i, pc;
+  /* 'analyze set chains <chain_start> <n_chains> <chain_length>' */
+  
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "chain structure info consists of <start> <n> <length>", (char *)NULL);    
+    return TCL_ERROR;
+  }
 
-  sprintf(buffer, "%d ", chain_start);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-  sprintf(buffer, "%d ", chain_n_chains);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-  sprintf(buffer, "%d ", chain_length);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  if (! (ARG0_IS_I(chain_start) && ARG1_IS_I(chain_n_chains) && ARG_IS_I(2, chain_length)))
+    return TCL_ERROR;
+
+  realloc_molecules(chain_n_chains);
+  pc = 0;
+  for (m = 0; m < n_molecules; m++) {
+    molecules[m].type = 0;
+    realloc_intlist(&molecules[m].part, molecules[m].part.n = chain_length);
+    for (i = 0; i < chain_length; i++)
+      molecules[m].part.e[i] = pc++;
+  }
+  
   return TCL_OK;
 }
 
-int parse_chain_structure_info(Tcl_Interp *interp, int *_argc, char ***_argv)
+int check_and_parse_chain_structure_info(Tcl_Interp *interp, int argc, char **argv)
 {
-  /* 'analyze set chains <chain_start> <n_chains> <chain_length>' */
-  int argc = *_argc;
-  char **argv = *_argv;
-
-  if (argc > 0) {
-    if (argc < 3) {
-      Tcl_AppendResult(interp, "chain structure info consists of <start> <n> <length>", (char *)NULL);    
+  if (argc > 0)
+    if (parse_chain_structure_info(interp, argc, argv) != TCL_OK)
       return TCL_ERROR;
-    }
-    
-    if (! (ARG0_IS_I(chain_start) && ARG1_IS_I(chain_n_chains) && ARG_IS_I(2, chain_length)))
-      return TCL_ERROR;
-    
-    (*_argc) -= 3; (*_argv) += 3;
-  }
   
   if (!sortPartCfg()) {
     Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",
@@ -694,7 +694,7 @@ int parse_re(Tcl_Interp *interp, int average, int argc, char **argv)
   char buffer[4*TCL_DOUBLE_SPACE+4];
   double *re;
 
-  if (parse_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
+  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
   if (argc != 0) {
     Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
@@ -725,7 +725,7 @@ int parse_rg(Tcl_Interp *interp, int average, int argc, char **argv)
   /* 'analyze { rg | <rg> } [<chain_start> <n_chains> <chain_length>]' */
   char buffer[4*TCL_DOUBLE_SPACE+4];
   double *rg;
-  if (parse_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
+  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
   if (argc != 0) {
     Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
@@ -754,7 +754,7 @@ int parse_rh(Tcl_Interp *interp, int average, int argc, char **argv)
   /* 'analyze { rh | <rh> } [<chain_start> <n_chains> <chain_length>]' */
   char buffer[2*TCL_DOUBLE_SPACE+2];
   double *rh;
-  if (parse_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
+  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
   if (argc != 0) {
     Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
@@ -786,7 +786,7 @@ int parse_intdist(Tcl_Interp *interp, int average, int argc, char **argv)
   int i;
   double *idf;
 
-  if (parse_chain_structure_info(interp, &argc, &argv) == TCL_ERROR) return TCL_ERROR;
+  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   if (!average)
     calc_internal_dist(&idf); 
@@ -815,7 +815,7 @@ int parse_bond_l(Tcl_Interp *interp, int average, int argc, char **argv)
   char buffer[2*TCL_DOUBLE_SPACE+2];
   double *bond_l;
 
-  if (parse_chain_structure_info(interp, &argc, &argv) == TCL_ERROR) return TCL_ERROR;
+  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   if (!average) calc_bond_l(&bond_l); 
   else if (n_configs == 0) {
@@ -836,7 +836,7 @@ int parse_bond_dist(Tcl_Interp *interp, int average, int argc, char **argv)
   double *bdf; int ind_n=0, i;
 
   if (argc >= 1 && !strncmp(argv[0], "index", strlen(argv[0]))) { ind_n = atoi(argv[1]); argc-=2; argv+=2; }
-  if (parse_chain_structure_info(interp, &argc, &argv) == TCL_ERROR) return TCL_ERROR;
+  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   if (ind_n < 0 || ind_n > chain_length-1) { 
     sprintf(buffer,"%d!",chain_length-1);
@@ -867,7 +867,7 @@ int parse_g123(Tcl_Interp *interp, int average, int argc, char **argv)
   if (argc > 0 && ARG0_IS_S("-init")) {
     init = 1; argc--; argv++; 
   }
-  if (parse_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
+  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
   if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   
@@ -893,7 +893,7 @@ int parse_g_av(Tcl_Interp *interp, int what, int argc, char **argv)
   char buffer[TCL_DOUBLE_SPACE+2];
   double *gx;
 
-  if (parse_chain_structure_info(interp, &argc, &argv) == TCL_ERROR) return TCL_ERROR;
+  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   if (n_configs == 0) { Tcl_AppendResult(interp, "no configurations found! Use 'analyze append' to save some!", (char *)NULL); return TCL_ERROR; }
   switch (what) {
@@ -933,7 +933,7 @@ int parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv)
       return (TCL_ERROR);
     argc-=3; argv+=3;
   }
-  if (parse_chain_structure_info(interp, &argc, &argv) == TCL_ERROR) return TCL_ERROR;
+  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   if (qbins <=0) {
     Tcl_AppendResult(interp, "Nothing to be done - choose <qbins> greater zero to get S(q)!",(char *)NULL); return TCL_ERROR;
   }

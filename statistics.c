@@ -1001,31 +1001,6 @@ static int parse_configs(Tcl_Interp *interp, int argc, char **argv)
  *                                 main parser for analyze
  ****************************************************************************************/
 
-static int parse_set_topology(Tcl_Interp *interp, int argc, char **argv)
-{
-  /* 'analyze set ...' */
-  if (argc == 0) {
-    Tcl_AppendResult(interp, "which topology are you interested in?", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if (ARG0_IS_S("chains")) {
-    if (argc == 1)
-      return print_chain_structure_info(interp);
-    argc--; argv++;
-    if (parse_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
-      return TCL_ERROR;
-    return TCL_OK;
-  }
-  else {
-    Tcl_AppendResult(interp, "The topology \"", argv[0],
-		     "\" you requested is not implemented.", (char *)NULL);
-    return (TCL_ERROR);
-  }
-  /* keep the compiler happy */
-  return TCL_ERROR;
-}
-
 int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
   if (argc < 2) {
@@ -1034,7 +1009,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   }
 
   if (ARG1_IS_S("set"))
-    return parse_set_topology(interp, argc - 2, argv + 2);
+    return parse_analyze_set_topology(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("modes2d"))
     return parse_modes2d(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("mindist"))

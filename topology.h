@@ -42,11 +42,25 @@ typedef struct {
 /*@{*/
 
 /** Number of molecules in the system */
-extern int n_molecules;
+extern int     n_molecules;
 /** List of molecules. */
-extern Molecule *topology;
+extern Molecule *molecules;
 
 /*@{*/
+
+/************************************************************/
+/** \name Exported Functions */
+/************************************************************/
+/*@{*/
+
+/** reallocate the topology information. All unnecessary entries
+    will be freed correctly, all new entries have a zero size
+    particle list. */    
+void realloc_molecules(int new_size);
+
+int parse_analyze_set_topology(Tcl_Interp *interp, int argc, char **argv);
+
+/*@}*/
 
 
 #endif

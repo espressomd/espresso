@@ -146,7 +146,11 @@ int print_chain_structure_info(Tcl_Interp *interp);
 /** this function scans the arguments for a description of the chain structure,
     i.e. start of chains, number of chains and chain length. Since this structure
     requires the particles to be sorted, this is performed, too. */
-int parse_chain_structure_info(Tcl_Interp *interp, int *_argc, char ***_argv);
+int parse_chain_structure_info(Tcl_Interp *interp, int argc, char **argv);
+
+/** same as \ref parse_chain_structure_info, but also allows for chain_structure info
+    not to be given. You either get an error or chain topology is safe to be used. */
+int check_and_parse_chain_structure_info(Tcl_Interp *interp, int argc, char **argv);
 
 ///
 int parse_re(Tcl_Interp *interp, int average, int argc, char **argv);
