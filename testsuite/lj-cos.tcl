@@ -32,6 +32,17 @@ proc error_exit {error} {
     exit -666
 }
 
+proc require_feature {feature} {
+    global errf
+    if { ! [regexp $feature [code_info]]} {
+	set f [open $errf "w"]
+	puts $f "not compiled in: $feature"
+	close $f
+	exit -42
+    }
+}
+
+require_feature "LJCOS"
 
 set epsilon 1e-4
 setmd temp 0
