@@ -3,9 +3,9 @@ CC=cc
 
 MSG_FLAGS=-check -msg_disable ignorecallval -msg_disable noparmlist \
 	  -msg_disable uncalled -msg_disable alignment -msg_disable unknownmacro \
-	  -msg_disable strctpadding
+	  -msg_disable strctpadding -msg_disable unusedtop
 #CFLAGS=-I/usr/local/include -DDEFINE_TCL_RAND -O3 $(MSG_FLAGS) -fp_reorder -tune host
-CFLAGS=-I/usr/local/include -DDEFINE_TCL_RAND $(MSG_FLAGS) -g
+CFLAGS=-I/usr/local/include $(MSG_FLAGS) -g
 
 DEPEND=makedepend
 
@@ -15,4 +15,4 @@ CXXFLAGS=$(CFLAGS) -D_RWSTD_NO_NEW_HEADER -D__USE_STD_IOSTREAM
 ############ linker settings
 LINK=$(CC)
 LDFLAGS=-g
-LDLIBS=-ltcl8.0 -lmpi -lm
+LDLIBS=-ltcl -lmpi -lm
