@@ -13,6 +13,7 @@
  *  \todo General Send/Recv routine for two-step communications.
 */
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 /************************************************
@@ -82,6 +83,24 @@ MDINLINE void realloc_intlist(IntList *il, int size)
   }
 }
 
+MDINLINE void alloc_grained_intlist(IntList *il, int size, int grain)
+{
+  il->max = grain*((size + grain - 1)/grain);
+  il->e = (int *) malloc(sizeof(int)*il->max);
+}
+
+MDINLINE void realloc_grained_intlist(IntList *il, int size, int grain)
+{
+  if(size >= il->max)
+    il->max = grain*((size + grain - 1)/grain);
+  else
+    /* shrink not as fast, just lose half, rounded up */
+    il->max = grain*(((il->max + size + 1)/2 +
+		      grain - 1)/grain);
+
+  il->e = (int *) realloc(il->e, sizeof(int)*il->max);
+}
+
 MDINLINE void init_doublelist(DoubleList *il)
 {
   il->n   = 0;
@@ -101,6 +120,24 @@ MDINLINE void realloc_doublelist(DoubleList *dl, int size)
     dl->max = size;
     dl->e = (double *) realloc(dl->e, sizeof(double)*dl->max);
   }
+}
+
+MDINLINE void alloc_grained_doublelist(DoubleList *dl, int size, int grain)
+{
+  dl->max = grain*((size + grain - 1)/grain);
+  dl->e = (double *) malloc(sizeof(double)*dl->max);
+}
+
+MDINLINE void realloc_grained_doublelist(DoubleList *dl, int size, int grain)
+{
+  if(size >= dl->max)
+    dl->max = grain*((size + grain - 1)/grain);
+  else
+    /* shrink not as fast, just lose half, rounded up */
+    dl->max = grain*(((dl->max + size + 1)/2 +
+		      grain - 1)/grain);
+
+  dl->e = (double *) realloc(dl->e, sizeof(double)*dl->max);
 }
 
 /************************************************
