@@ -10,7 +10,7 @@
 ############ general settings
 
 ### Tk (graphical interface)
-TK=yes
+TK=no
 
 ############ compiler settings
 
