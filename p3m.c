@@ -29,8 +29,10 @@
  * MACROS
  ************************************************/
 
-/* number of Brillouin zones in the aliasing sums*/
+/** number of Brillouin zones in the aliasing sums. */
 #define BRILLOUIN 1       
+/** increment size of charge assignment fields. */
+#define CA_INCREMENT 10       
 
 /************************************************
  * data types
@@ -76,28 +78,35 @@ static local_mesh lm;
 static send_mesh  sm;
 
 /** size of linear array for local CA/FFT mesh . */
-static int    ca_mesh_size;
+int    ca_mesh_size;
 /** real space mesh (local) for CA/FFT.*/
-static double *rs_mesh;
+double *rs_mesh;
 /** k space mesh (local) for k space calculation and FFT.*/
-static double *ks_mesh;
+double *ks_mesh;
 
 /** Field to store grid points to send */
-static double *send_grid; 
+double *send_grid; 
 /** Field to store grid points to recv */
-static double *recv_grid;
+double *recv_grid;
 
 /** interpolation of the charge assignment function. */
-static double *int_caf[7];
+double *int_caf[7];
 /** position shift for calc. of first assignment mesh point. */
-static double pos_shift;
+double pos_shift;
 
 /** help variable for calculation of aliasing sums */
-static double *meshift;
+double *meshift;
 /** Spatial differential operator in k-space. We use an i*k differentiation. */
-static double *d_op;
+double *d_op;
 /** Optimal influence function (k-space) */
-static double *g;
+double *g;
+
+/** number of charged particles on the node. */
+int ca_num;
+/** Charge fractions for mesh assignment. */
+double *ca_frac;
+/** first mesh point for charge assignment. */
+int *ca_fmp;
 
 /************************************************
  * privat functions
@@ -115,6 +124,9 @@ void calc_send_mesh();
 void p3m_print_send_mesh(send_mesh sm);
 
 void gather_fft_grid();
+void spread_force_grid();
+/** realloc charge assignment fields. */
+void realloc_ca_fields(int newsize);
 /** Add values of a 3d-grid input block (size[3]) to values of 3d-grid
  *  ouput array with dimension dim[3] at start position start[3].  
 */
@@ -200,7 +212,9 @@ void   P3M_init()
       p3m.a[i]       = 1.0/p3m.ai[i];
       p3m.cao_cut[i] = p3m.a[i]*p3m.cao/2.0;
     }
-    
+    ca_frac = malloc(p3m.cao*p3m.cao*p3m.cao*CA_INCREMENT*sizeof(double));
+    ca_fmp  = malloc(3*CA_INCREMENT*sizeof(int));
+
     calc_local_ca_mesh();
     P3M_TRACE(p3m_print_local_mesh(lm));
     calc_send_mesh();
@@ -233,7 +247,7 @@ void   P3M_init()
 
 void   P3M_perform()
 {
-  int i,n,d,i0,i1,i2,ind;
+  int i,n,d,i0,i1,i2,ind,j[3];
   double q;
   /* position of a particle in local mesh units */
   double pos[3];
@@ -247,6 +261,10 @@ void   P3M_perform()
   double tmp0,tmp1;
   /* Energy */
   double energy=0.0;
+  /* charged particle counter, charge fraction counter */
+  int cp_cnt=0, cf_cnt=0;
+  /* Prefactor for force */
+  double force_prefac;
 
   MPI_Barrier(MPI_COMM_WORLD);   
   P3M_TRACE(fprintf(stderr,"%d: p3m_perform: \n",this_node));
@@ -258,14 +276,16 @@ void   P3M_perform()
   q_s_off = lm.dim[2] * (lm.dim[1] - p3m.cao);
   
   /* === charge assignment === */
+  force_prefac = p3m.prefactor / (double)(p3m.mesh[0]*p3m.mesh[1]*p3m.mesh[2]);
   inter2 = (p3m.inter*2)+1;
-  for(n=0; n<n_particles; n++)  
+  for(n=0; n<n_particles; n++) {
     if( (q=particles[n].q) != 0.0 ) {
 
       /* particle position in mesh coordinates */
       for(d=0;d<3;d++) {
 	pos[d]   = (particles[n].p[d]-(lm.ld_pos[d]+pos_shift))*p3m.ai[d];
 	first[d] = (int) pos[d];
+	ca_fmp[(3*cp_cnt)+d] = first[d];
 	arg[d]   = (int) ((pos[d]-first[d])*inter2);
 
 	P3M_TRACE(if( pos[d]<0.0 ) 
@@ -283,15 +303,20 @@ void   P3M_perform()
 	for(i1=0; i1<p3m.cao; i1++) {
 	  tmp1 = tmp0 * int_caf[i1][arg[1]];
 	  for(i2=0; i2<p3m.cao; i2++) {
-	    rs_mesh[q_ind++] += tmp1 * int_caf[i2][arg[2]];
+	    ca_frac[cf_cnt] = tmp1 * int_caf[i2][arg[2]];
+	    rs_mesh[q_ind++] += ca_frac[cf_cnt];
+	    cf_cnt++;
 	  }
 	  q_ind += q_m_off;
 	}
 	q_ind += q_s_off;
       }
-
+      cp_cnt++;
+      if( (cp_cnt+1)>ca_num ) realloc_ca_fields(cp_cnt+1);
     }
-  
+  }
+  if( (cp_cnt+CA_INCREMENT)<ca_num ) realloc_ca_fields(cp_cnt+CA_INCREMENT);
+
   /* Gather information for FFT grid inside the nodes domain (inner local mesh) */
   gather_fft_grid();
 
@@ -315,20 +340,53 @@ void   P3M_perform()
   }
 
   /* === 3 Fold backward 3D FFT (Force Component Meshs) === */
-  /* reuse rs_mesh as force componenet array */
 
-  for(d=0;d<3;d++) {     /* Force component loop */
-    
+  /* Force component loop */
+  for(d=0;d<3;d++) {  
+    /* srqt(-1)*k differentiation */
+    ind=0;
+    for(j[0]=0; j[0]<fft_plan[2].new_mesh[0]; j[0]++) {
+      for(j[1]=0; j[1]<fft_plan[2].new_mesh[1]; j[1]++) {
+	for(j[2]=0; j[2]<fft_plan[2].new_mesh[2]; j[2]++) {
+	  /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */ 
+	  rs_mesh[ind] = -(ks_mesh[ind+1]*d_op[ j[d]+fft_plan[2].start[d] ]); ind++;
+	  rs_mesh[ind] =   ks_mesh[ind-1]*d_op[ j[d]+fft_plan[2].start[d] ];  ind++;
+	}
+      }
+    }
+    /* Back FFT force componenet mesh */
+    fft_perform_back(rs_mesh);
+    /* redistribute force componenet mesh */
+    spread_force_grid();
+    /* Assign force component from mesh to particle */
+    cp_cnt=0; cf_cnt=0;
+    for(n=0; n<n_particles; n++) { 
+      if( (q=particles[n].q) != 0.0 ) {
+	q_ind = ca_fmp[(3*cp_cnt)+2] + lm.dim[2]*(ca_fmp[(3*cp_cnt)+1] + (lm.dim[1]*ca_fmp[(3*cp_cnt)+0]));
+	for(i0=0; i0<p3m.cao; i0++) {
+	  for(i1=0; i1<p3m.cao; i1++) {
+	    for(i2=0; i2<p3m.cao; i2++) {
+	      particles[n].f[d] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
+	      cf_cnt++;
+	    }
+	    q_ind += q_m_off;
+	  }
+	  q_ind += q_s_off;
+	}
+	cp_cnt++;
+      }
+    }
   }
 
-  /* For debug we just perform one backward FFT */
-  fft_perform_back(rs_mesh);
+
 }
 
 void   P3M_exit()
 {
   int i;
   /* free memory */
+  free(ca_frac);
+  free(ca_fmp);
   free(send_grid);
   free(recv_grid);
   free(rs_mesh);
@@ -485,6 +543,49 @@ void gather_fft_grid()
     /* add recv block */
     if(sm.r_size[r_dir]>0) {
       add_block(recv_grid, rs_mesh, sm.r_ld[r_dir], sm.r_dim[r_dir], lm.dim); 
+    }
+  }
+}
+
+void spread_force_grid()
+{
+  int s_dir,r_dir,evenodd;
+  MPI_Status status;
+  double *tmp_ptr;
+  MPI_Barrier(MPI_COMM_WORLD);   
+  P3M_TRACE(fprintf(stderr,"%d: spread_force_grid:\n",this_node));
+  MPI_Barrier(MPI_COMM_WORLD);   
+
+  /* direction loop */
+  for(s_dir=5; s_dir>=0; s_dir--) {
+    if(s_dir%2==0) r_dir = s_dir+1;
+    else           r_dir = s_dir-1;
+    /* pack send block */ 
+    if(sm.s_size[s_dir]>0) 
+      pack_block(rs_mesh, send_grid, sm.r_ld[r_dir], sm.r_dim[r_dir], lm.dim, 1);
+    /* communication */
+    if(node_neighbors[r_dir] != this_node) {
+      for(evenodd=0; evenodd<2;evenodd++) {
+	if((node_pos[r_dir/2]+evenodd)%2==0) {
+	  if(sm.r_size[r_dir]>0) 
+	    MPI_Send(send_grid, sm.r_size[r_dir], MPI_DOUBLE, 
+		     node_neighbors[r_dir], 0, MPI_COMM_WORLD);
+   	}
+	else {
+	  if(sm.s_size[s_dir]>0) 
+	    MPI_Recv(recv_grid, sm.s_size[s_dir], MPI_DOUBLE, 
+		     node_neighbors[s_dir], 0, MPI_COMM_WORLD, &status); 	    
+	}
+      }
+    }
+    else {
+      tmp_ptr = recv_grid;
+      recv_grid = send_grid;
+      send_grid = tmp_ptr;
+    }
+    /* un pack recv block */
+    if(sm.s_size[s_dir]>0) {
+      unpack_block(recv_grid, rs_mesh, sm.s_ld[s_dir], sm.s_dim[s_dir], lm.dim, 1); 
     }
   }
 }
@@ -668,6 +769,19 @@ MDINLINE double perform_aliasing_sums(int n[3], double nominator[3])
     }
   }
   return denominator;
+}
+
+void realloc_ca_fields(int newsize)
+{
+  int incr = 0;
+  if( newsize > ca_num ) incr = (newsize - ca_num)/CA_INCREMENT +1;
+  else if( newsize < ca_num ) incr = (newsize - ca_num)/CA_INCREMENT;
+  if(incr != 0) {
+    ca_num += incr;
+    if(ca_num<CA_INCREMENT) ca_num = CA_INCREMENT;
+    ca_frac = (double *)realloc(ca_frac, p3m.cao*p3m.cao*p3m.cao*ca_num*sizeof(double));
+    ca_fmp  = (int *)realloc(ca_fmp, 3*ca_num*sizeof(int));
+  }  
 }
 
 /** Add values of a 3d-grid input block (size[3]) to values of 3d-grid

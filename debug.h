@@ -35,7 +35,7 @@
 /* #define FORCE_DEBUG */
 /* #define VERLET_DEBUG   */
 /* #define PARTICLE_DEBUG */
-#define P3M_DEBUG
+/* #define P3M_DEBUG */
 /* #define FFT_DEBUG */
 #define MPI_CORE
 #define FORCE_CORE

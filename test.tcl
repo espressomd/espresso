@@ -18,7 +18,7 @@ set tcl_precision 5
 set use_imd n
 
 set write_steps 10
-set configs 1
+set configs 1000
 
 setmd periodic 1 1 1
 setmd bjerrum 1.0

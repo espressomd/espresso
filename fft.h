@@ -108,4 +108,6 @@ void pack_block_permute1(double *in, double *out, int start[3], int size[3],
 
 void pack_block_permute2(double *in, double *out, int start[3], int size[3], 
 			 int dim[3],int element);
+void unpack_block(double *in, double *out, int start[3], int size[3], 
+		  int dim[3], int element);
 #endif

@@ -198,9 +198,8 @@ void force_calc()
     }
   }
 
-  /* calculate long range interactions */
+  /* calculate k-space part of electrostatic interaction. */
   if(p3m.bjerrum != 0.0) P3M_perform();
-
 }
 
 void force_exit()
