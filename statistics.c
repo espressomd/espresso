@@ -27,7 +27,7 @@ double min_distance2(double pos1[3], double pos2[3])
 {
   double diff[3];
   get_mi_vector(diff, pos1, pos2);
-  return sqrt(sqrlen(diff));
+  return sqrlen(diff);
 }
 
 static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
@@ -86,8 +86,9 @@ double mindist(IntList *set1, IntList *set2)
     pt[2] = partCfg[j].r.p[2];
     if (!set1 || intlist_contains(set1, partCfg[j].r.type)) {
       for (i=j+1; i<n_total_particles; i++)
-	if (!set2 || intlist_contains(set2, partCfg[i].r.type))
+	if (!set2 || intlist_contains(set2, partCfg[i].r.type)) {
 	  mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
+	}
     }
   }
   mindist = sqrt(mindist);
