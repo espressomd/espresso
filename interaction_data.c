@@ -1358,7 +1358,10 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   argc -= 1;
   argv += 1;
 
-  if(argc < 1 && d1 != 0.0) {
+  if (d1 == 0.0 && argc == 0)
+    return TCL_OK;
+
+  if(argc < 1) {
     Tcl_AppendResult(interp, "wrong # args for inter coulomb.",
 		     (char *) NULL);
     return TCL_ERROR;
