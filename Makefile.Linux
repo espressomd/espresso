@@ -10,7 +10,7 @@
 ############ general settings
 
 ### Tk (graphical interface)
-TK=no
+TK=yes
 
 ### Intel C compiler instead of gcc
 ICC=no
@@ -60,9 +60,18 @@ ifeq ($(ICC),yes)
           ifeq ($(MODEL),Athlon-MP)
                HOSTFLAGS= -tpp6 -xK -march=pentiumiii
           endif
+
+          ifeq ($(MODEL),Pentium-M)
+               HOSTFLAGS= -tpp7 -xB
+          endif
      endif
 
-     CFLAGS=-g -O3 -ip -w1 $(HOSTFLAGS)
+     CFLAGS=-O3 -ip -w1 $(HOSTFLAGS)
+
+     # debug compiler flags
+     ifeq ($(DEBUG),yes)
+          CFLAGS += -g -fno-inline
+     endif
 else
 # gcc optimization
      ifeq ($(HOSTFLAGS),)
@@ -95,13 +104,13 @@ else
 
      CFLAGS=-O3 -Wall $(HOSTFLAGS) -finline-limit=10000000 \
 	    -ffast-math -floop-optimize -funroll-loops
+
+     # debug compiler flags
+     ifeq ($(DEBUG),yes)
+          CFLAGS= -g -fno-inline -Wall $(HOSTFLAGS)
+     endif
 endif
 
-
-# debug compiler flags
-ifeq ($(DEBUG),yes)
-     CFLAGS= -g -fno-inline -Wall $(HOSTFLAGS)
-endif
 
 ############ name of makedepend (or gcc -ME)
 DEPEND=makedepend
@@ -120,9 +129,9 @@ ifeq ($(STATIC),yes)
 	LDFLAGS+=-static
 	STATIC_POSTLOAD=-lm -ldl
 endif
-ifeq ($(BLADE),yes)
+ifeq ($(ICC),yes)
      # in Blade-Center, include optimized math-libraries (see http://dbforums.com/t564728.html)
-     LDFLAGS+=-lsvml
+     LDLIBS+=-L/usr/local/lib/intel/lib -lsvml
 endif
 
 ########### ElectricFence
