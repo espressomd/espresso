@@ -40,6 +40,8 @@
  of code that should be executed iff the respective *_DEBUG macro is defined.
 */
 
+#include <tcl.h>
+
 // #define COMM_DEBUG
 // #define INTEG_DEBUG
 // #define CELL_DEBUG
