@@ -305,7 +305,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	  if(n==2) { /*if 2nd angle is set, construct preceding monomer with resulting plane perpendicular on the xy-plane*/
 	    poy[0]=2*poz[0]-pos[0];
 	    poy[1]=2*poz[1]-pos[1];
-	    if(pos[2]=poz[2])
+	    if(pos[2]==poz[2])
 	      poy[2]=poz[2]+1;
 	    else
 	      poy[2]=poz[2];
