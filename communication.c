@@ -266,7 +266,8 @@ void mpi_who_has()
 
 void mpi_who_has_slave(int ident)
 {
-  int npart, i, c;
+  Cell *c;
+  int npart, i, m, n, o;
   int *sendbuf;
   int n_part;
 
@@ -277,9 +278,11 @@ void mpi_who_has_slave(int ident)
 
   sendbuf = malloc(sizeof(int)*n_part);
   npart = 0;
-  for (c = 0; c < n_cells; c++)
-    for (i = 0; i < cells[c].pList.n; i++)
-      sendbuf[npart++] = cells[c].pList.part[i].r.identity;
+  INNER_CELLS_LOOP(m,n,o) {
+    c = CELL_PTR(m,n,o);
+    for (i = 0; i < c->pList.n; i++)
+      sendbuf[npart++] = c->pList.part[i].r.identity;
+  }
   MPI_Send(sendbuf, npart, MPI_INT, 0, REQ_WHO_HAS, MPI_COMM_WORLD);
   free(sendbuf);
 }
