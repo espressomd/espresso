@@ -589,11 +589,12 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       }
       return (TCL_OK); }
     else if ((argc == 3*n_part_conf) || (n_part_conf == 0)) {
+      double *tmp_config;
       if ((n_part_conf == 0) && (argc % 3 == 0)) n_part_conf = argc/3;
       else if (argc != 3*n_part_conf) {
 	sprintf(buffer,"Wrong # of args(%d)! Usage: analyze configs [x0 y0 z0 ... x%d y%d z%d]",argc,n_part_conf,n_part_conf,n_part_conf);
 	Tcl_AppendResult(interp,buffer,(char *)NULL); return TCL_ERROR; }
-      double *tmp_config; tmp_config = malloc(3*n_part_conf*sizeof(double));
+      tmp_config = malloc(3*n_part_conf*sizeof(double));
       for(j=0; j < argc; j++) {
 	Tcl_GetDouble(interp, argv[j], &(tmp_config[j]));
       }
