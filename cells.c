@@ -185,8 +185,10 @@ void cells_changed_topology()
       inv_cell_size[i] = 1.0 / cell_size[i];
     }
   }
-  else
+  else {
+    max_range = min_local_box_l/2.0; 
     cells_re_init();
+  }
 }
 
 /*************************************************/
