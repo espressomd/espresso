@@ -1,3 +1,11 @@
+// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
+// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
+// and by which you are legally bound while utilizing this file in any form or way.
+// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// You should have received a copy of that license along with this program;
+// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
+// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
+// Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 /** \file p3m.c  P3M algorithm for long range coulomb interaction.
  *
  *  For more information about the p3m algorithm,
@@ -1024,7 +1032,7 @@ MDINLINE double perform_aliasing_sums(int n[3], double nominator[3])
  * This tuning is based on P3M_tune by M. Deserno
  ************************************************/
 
-#define P3M_TUNE_MAX_CUTS 10
+#define P3M_TUNE_MAX_CUTS 50
 
 int P3M_tune_parameters(Tcl_Interp *interp)
 {
@@ -1067,7 +1075,7 @@ int P3M_tune_parameters(Tcl_Interp *interp)
     double expo;
     expo = log(pow((double)p3m_sum_qpart,(1.0/3.0)))/log(2.0);
     mesh_min = (int)(pow(2.0,(double)((int)expo))+0.1);
-    mesh_max = mesh_min*2;
+    mesh_max = mesh_min*4;
     if(mesh_min < 8) { mesh_min = 8; mesh_max = 16; }
   }
   else { mesh_min = mesh_max = p3m.mesh[0]; }
@@ -1093,7 +1101,7 @@ int P3M_tune_parameters(Tcl_Interp *interp)
   /* Tuning Loops */
   for(mesh = mesh_min; mesh <= mesh_max; mesh*=2) { /* mesh loop */
     cut_start = box_l[0];
-    if(mesh < 32 || p3m_sum_qpart > 2000) int_num=5; else int_num=1;
+    if(mesh <= 32 || p3m_sum_qpart > 2000) int_num=5; else int_num=1;
     for(cao = cao_min; cao <= cao_max; cao++) {     /* cao loop */
       mesh_size = box_l[0]/(double)mesh;
       k_cut =  mesh_size*cao/2.0;
