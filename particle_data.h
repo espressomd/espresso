@@ -70,8 +70,6 @@ typedef struct {
   Particle *part;
   /** Number of particles contained */
   int n;
-  /** Number of ghosts contained */
-  int ghosts;
   /** Number of particles that fit in until a resize is needed */
   int max;
 } ParticleList;

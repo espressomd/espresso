@@ -18,6 +18,7 @@
 #include "interaction_data.h" 
 #include "debug.h"
 #include "utils.h"
+#include "cells.h"
 
 /* cwz-build-command: make all
  */
@@ -189,7 +190,7 @@ void local_particles_init()
   int np, m, n, o, i;
   if (max_seen_particle >= 0)
     local_particles = (Particle **)malloc((max_seen_particle + 1)*sizeof(Particle *));
-  for(i = 0; i <= max_seen_particle; i++) local_index[i] = NULL;
+  for(i = 0; i <= max_seen_particle; i++) local_particles[i] = NULL;
   INNER_CELLS_LOOP(m, n, o) {
     p = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
