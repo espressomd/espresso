@@ -18,6 +18,7 @@ Current working revision.
 (e) January  25th, 2005.
 (f) January  31st, 2005.
 (g) March     3rd, 2005.
+(h) March     8th, 2005.
 
 New Features:
 (a) Added new analysis routine
@@ -40,6 +41,8 @@ Bugfixes:
 (d) P3M now honours changes to the skin
 (d) Fixed the additional checks in P3M to contain the skin
 (e) Fixed comfixed.tcl test suite script. Now it actually integrates and checks if comfixed is really working.
+(h) Fixed bug in aggregation analysis tool. For calculating distances distance2vec function (which ignores
+periodicity) was used. min_distance2 should have been used.
 
 - v1.8.2i -
 -----------
