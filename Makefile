@@ -5,16 +5,19 @@ include Makefile.$(PLATFORM)
 ########### list of source files
 CSOURCES= main initialize global communication binary_file interaction_data \
 	  verlet grid integrate cells ghosts forces debug particle_data \
-	  thermostat statistics vmdsock imd p3m fft random
+	  thermostat statistics vmdsock imd p3m fft random blockfile blockfile_tcl
 CXXSOURCES=
+
+LIBOBJECTS=c_blockfile.o
 
 ########### RULES
 #################
+TCLMD_CFLAGS=-DTCL_FILE_IO
 OBJECTS=$(CSOURCES:%=%.o) $(CXXSOURCES:%=%.o)
 CFILES=$(CSOURCES:=.c)
 CXXFILES=$(CXXSOURCES:=.cc)
 
-default: $(PLATFORM) $(PLATFORM)/tcl_md
+default: $(PLATFORM) $(PLATFORM)/tcl_md $(PLATFORM)/libtcl_md.a
 all: $(PLATFORM) $(PLATFORM)/tcl_md
 
 ########### documentation
@@ -29,6 +32,9 @@ $(PLATFORM):
 ########### final target
 $(PLATFORM)/tcl_md: $(OBJECTS)
 	(cd $(PLATFORM); $(LINK) $(LDFLAGS) -o tcl_md $(OBJECTS) $(LDLIBS) )
+
+$(PLATFORM)/libtcl_md.a: $(LIBOBJECTS)
+	(cd $(PLATFORM); ar -crs libtcl_md.a $(LIBOBJECTS) )
 
 ########### clean
 clean:
@@ -55,7 +61,10 @@ include $(PLATFORM)/.depend
 vpath %.o  $(PLATFORM)
 
 %.o: %.c
+	$(CC) $(CFLAGS) $(TCLMD_CFLAGS) -c -o $(PLATFORM)/$@ $<
+
+c_blockfile.o: blockfile.c
 	$(CC) $(CFLAGS) -c -o $(PLATFORM)/$@ $<
 
 %.o: %.cc
-	$(CXX) $(CXXFLAGS) -c -o $(PLATFORM)/$@ $<
+	$(CXX) $(CXXFLAGS) $(TCLMD_CFLAGS) -c -o $(PLATFORM)/$@ $<

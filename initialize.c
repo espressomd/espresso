@@ -13,6 +13,7 @@
 #include "imd.h"
 #include "random.h"
 #include "communication.h"
+#include "blockfile_tcl.h"
 
 int initialize(Tcl_Interp *interp)
 {
@@ -52,6 +53,8 @@ int initialize(Tcl_Interp *interp)
     Tcl_CreateCommand(interp, "imd", imd, 0, NULL);
     /* in file random.c */
     Tcl_CreateCommand(interp, "tcl_rand", tcl_rand, 0, NULL);
+    /* in file blockfile_tcl.c */
+    Tcl_CreateCommand(interp, "blockfile", blockfile, 0, NULL);
 
     /* evaluate the Tcl initialization script */
     scriptdir = getenv("TCLMD_SCRIPTS");
