@@ -97,12 +97,14 @@ extern const Datafield fields[];
 #define FIELD_SIMTIME     17
 /** index of \ref time_step in \ref #fields */
 #define FIELD_TIMESTEP    18
+/** index of \ref timing_samples in  \ref #fields */
+#define FIELD_TIMINGSAMP   19
 /** index of \ref transfer_rate  in \ref #fields */
-#define FIELD_TRANSFERRATE 19
+#define FIELD_TRANSFERRATE 20
 /** index of \ref rebuild_verletlist in \ref #fields */
-#define FIELD_VERLETFLAG   20
+#define FIELD_VERLETFLAG   21
 /** index of \ref verlet_reuse in  \ref #fields */
-#define FIELD_VERLETREUSE  21
+#define FIELD_VERLETREUSE  22
 /*@}*/
 
 /**********************************************

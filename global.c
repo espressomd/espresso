@@ -19,6 +19,7 @@
 #include "verlet.h"
 #include "p3m.h"
 #include "imd.h"
+#include "tuning.h"
 
 /**********************************************
  * description of variables
@@ -60,9 +61,10 @@ const Datafield fields[] = {
   {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback, 2 },            /* 16 from thermostat.c */
   {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback, 4 },            /* 17 from integrate.c */
   {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },       /* 18 from integrate.c */
-  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback, 2 }     ,         /* 19 from imd.c */
-  {&rebuild_verletlist, TYPE_INT, 1, "verlet_flag",   ro_callback, 8 },              /* 20 from verlet.c */
-  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback, 8 },              /* 21 from integrate.c */
+  {&timing_samples,     TYPE_INT, 1, "timings",       timings_callback, 4 },         /* 19 from tuning.c */
+  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback, 2 }     ,         /* 20 from imd.c */
+  {&rebuild_verletlist, TYPE_INT, 1, "verlet_flag",   ro_callback, 8 },              /* 21 from verlet.c */
+  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback, 8 },              /* 22 from integrate.c */
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 
@@ -126,6 +128,8 @@ const Datafield fields[] = {
 	     \ref #time - The simulation time.
 	<li> \verbatim time_step double \endverbatim
 	     \ref time_step - Time step for MD integration
+	<li> \verbatim timings int \endverbatim
+	     \ref timing_samples - number of timing samples to take into account if set.
 	<li> \verbatim transfer_rate int (ro)\endverbatim
  	     \ref transfer_rate - Transfer rate for VMD connection. You can use this
 	     to transfer any integer value to the simulation from VMD.
