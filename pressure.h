@@ -15,6 +15,7 @@
 /*@{*/
 ///
 extern Observable_stat virials;
+extern Observable_stat p_tensor;
 /*@}*/
 
 /** \name Exported Functions */
@@ -36,8 +37,24 @@ void calc_virials();
 */
 void calc_pressure(void);
 
-/** implementation of analyze pressure */
+/** implementation of 'analyze pressure' */
 int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv);
+
+
+/** Initializes extern Energy_stat \ref #p_tensor to be used by \ref calc_p_tensor. */
+void init_p_tensor();
+
+/** Calculates the pressure in the system from a virial expansion as a tensor.<BR>
+    Output is stored in the \ref #p_tensor array, in which the <tt>p_tensor.sum</tt>-components contain the sum of the component-tensors
+    stored in <tt>p_tensor.node</tt>. The function is executed on the master node only and uses sort of a N^2-loop to calculate the virials,
+    so it is rather slow.
+    @param p_list contains the list of particles to look at
+    @param flag   decides whether to derive the interactions of the particles in \ref p_list to <i>all</i> other particles (=1) or not (=0).
+*/
+void calc_p_tensor(IntList *p_list, int flag);
+
+/** implementation of 'analyze p_bin' */
+int parse_and_print_p_bin(Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
 

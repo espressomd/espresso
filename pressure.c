@@ -31,8 +31,155 @@
 #include "constraint.h"
 
 
-Observable_stat virials= {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
+Observable_stat virials = {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
+Observable_stat p_tensor= {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
 
+
+/*******************/
+/* Scalar Pressure */
+/*******************/
+
+int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze pressure [{ <bonded> [<type_num>] | <nonbonded> [<type1> <type2>] | coulomb | ideal | total[s] }]' */
+  /**************************************************************************************************************************/
+  char buffer[3*TCL_DOUBLE_SPACE + 256];
+  double *buf;
+  int i, j, p, k;
+
+  if (n_total_particles == 0) { Tcl_AppendResult(interp, "(no particles)",(char *)NULL); return (TCL_OK); }
+
+  init_virials();
+
+  if(argc == 0)
+    virials.ana_num=0;
+  else {
+    if     (ARG0_IS_S("totals")) virials.ana_num=0;
+    else if(ARG0_IS_S("ideal")) virials.ana_num=1;
+    else if(ARG0_IS_S("bonded") || ARG0_IS_S("fene") ||
+	    ARG0_IS_S("harmonic")) {
+      if(argc<2) { virials.ana_num=0; }
+      else {
+	if(!ARG1_IS_I(i)) return (TCL_ERROR);
+	if(i >= virials.n_bonded) { 
+	  Tcl_AppendResult(interp,"bond type does not exist!",(char *)NULL);
+	  return (TCL_ERROR);
+	}
+      }
+      virials.ana_num = virials.n_pre+i;
+    }
+    else if(ARG0_IS_S("nonbonded") || ARG0_IS_S("lj") || ARG0_IS_S("lj-cos") || ARG0_IS_S("gb")) {
+      if(argc<3) { virials.ana_num=0; }
+      else {
+	if(!ARG_IS_I(1, i)) return (TCL_ERROR);
+	if(!ARG_IS_I(2, j)) return (TCL_ERROR);
+	if(i >= n_particle_types || j >= n_particle_types) {
+	  Tcl_AppendResult(interp, "particle type does not exist",
+			   (char *)NULL);
+	  return (TCL_ERROR);
+	}
+	virials.ana_num = virials.n_pre+virials.n_bonded + j -i;
+	while(i>0) {
+	  virials.ana_num += n_particle_types - (i-1); i--;
+	}
+      }
+    }
+    else if(ARG0_IS_S("coulomb")) {
+#ifdef ELECTROSTATICS
+      virials.ana_num = virials.n_pre+virials.n_bonded+virials.n_non_bonded; 
+#else
+      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
+#endif
+    }
+    else {
+      Tcl_AppendResult(interp, "unknown feature of analyze pressure",(char *)NULL); return (TCL_ERROR);
+    }
+  }
+
+  calc_pressure();
+
+  buf = malloc(6*sizeof(double)); buf[0]=buf[1]=buf[2]=buf[3]=buf[4]=buf[5] = 0.0;
+  if(argc > 0) {
+    if(ARG0_IS_S("total")) {
+      Tcl_PrintDouble(interp, virials.sum.e[virials.ana_num], buffer); 
+      Tcl_AppendResult(interp, buffer, (char *)NULL); }
+    else if(ARG0_IS_S("totals")) {
+      sprintf(buffer,"%f %f",virials.sum.e[virials.ana_num],virials.node.e[virials.ana_num]); 
+      Tcl_AppendResult(interp, buffer, (char *)NULL); }
+    else if(ARG0_IS_S("ideal")) {
+      Tcl_PrintDouble(interp, virials.sum.e[virials.ana_num], buffer); 
+      Tcl_AppendResult(interp, buffer, (char *)NULL); }
+    else if(virials.ana_num > 0) {  /* this covers case 'coulomb' as well */
+      sprintf(buffer,"%f %f",virials.sum.e[virials.ana_num],virials.node.e[virials.ana_num]);
+      Tcl_AppendResult(interp, buffer, (char *)NULL); }
+    else if(ARG0_IS_S("bonded")) {
+      for(i=0;i<n_bonded_ia;i++) {
+	buf[0] += virials.sum.e[virials.n_pre+i];
+	buf[1] += virials.node.e[virials.n_pre+i]; 
+      }
+      sprintf(buffer,"%f %f",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+    else if(ARG0_IS_S("fene")) {
+      for(i=0;i<n_bonded_ia;i++)
+	if(bonded_ia_params[i].type == BONDED_IA_FENE) { buf[0] += virials.sum.e[virials.n_pre+i]; buf[1] += virials.node.e[virials.n_pre+i]; }
+      sprintf(buffer,"%f %f",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+    else if(ARG0_IS_S("harmonic")) {
+      for(i=0;i<n_bonded_ia;i++)
+	if(bonded_ia_params[i].type == BONDED_IA_HARMONIC) { buf[4] += virials.sum.e[virials.n_pre+i]; buf[5] += virials.node.e[virials.n_pre+i]; }
+      sprintf(buffer,"%f %f",buf[4],buf[5]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+    else if(ARG0_IS_S("nonbonded") || ARG0_IS_S("lj")) {
+      p = virials.n_pre+virials.n_bonded;
+      if(argc == 2) Tcl_GetInt(interp, argv[1], &k); else k=-1;
+      for (i = 0; i < n_particle_types; i++) 
+	if((k==-1) || (k==i))
+	  for (j = i; j < n_particle_types; j++) {
+	    if(checkIfParticlesInteract(i,j)) { buf[0] += virials.sum.e[p]; buf[1] += virials.node.e[p]; }
+	    p++;
+	  }
+      sprintf(buffer,"%f %f",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+    else { Tcl_AppendResult(interp, "unknown feature of analyze pressure",(char *)NULL); return (TCL_ERROR); } }
+  else {
+    int buf0, buf2, buf4;
+    sprintf(buffer,"%f %f { ideal %f } { ",virials.sum.e[0],virials.node.e[0],virials.sum.e[1]); 
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+    buf0 = buf2 = buf4 = 0;
+    for(i=0;i<n_bonded_ia;i++) {
+      switch (bonded_ia_params[i].type) {
+      case BONDED_IA_FENE:
+	buf[0] += virials.sum.e[virials.n_pre+i]; buf[1] += virials.node.e[virials.n_pre+i]; buf0 = 1; break;
+      case BONDED_IA_ANGLE:
+	buf[2] += virials.sum.e[virials.n_pre+i]; buf[3] += virials.node.e[virials.n_pre+i]; buf2 = 1; break;
+      case BONDED_IA_HARMONIC:
+	buf[4] += virials.sum.e[virials.n_pre+i]; buf[5] += virials.node.e[virials.n_pre+i]; buf4 = 1; break;
+      default: break; }
+    }
+    if(buf0 != 0) { sprintf(buffer,"{ FENE %f %f } ",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+    if(buf2 != 0) { sprintf(buffer,"{ angle %f %f } ",buf[2],buf[3]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+    if(buf4 != 0) { sprintf(buffer,"{ harmonic %f %f } ",buf[4],buf[5]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+    buf[0] = buf[1] = 0.0; buf0 = 0; Tcl_AppendResult(interp, "}  { ", (char *)NULL);
+    p = virials.n_pre+virials.n_bonded;
+    for (i = 0; i < n_particle_types; i++) {
+      for (j = i; j < n_particle_types; j++) {
+	if (checkIfParticlesInteract(i, j)) { buf[0] += virials.sum.e[p];  buf[1] += virials.node.e[p];  buf0 = 1; }
+	p++;
+      }
+    }
+    if(buf0 != 0) { sprintf(buffer, "lj %f %f }  ",buf[0],buf[1]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+    else Tcl_AppendResult(interp, "}  ", (char *)NULL);
+#ifdef ELECTROSTATICS
+    if(coulomb.bjerrum > 0.0) {
+      sprintf(buffer, "{ coulomb %f %f } ",virials.sum.e[p],virials.node.e[p]);
+      Tcl_AppendResult(interp, buffer,  (char *)NULL);
+    }
+#endif
+  }
+  virials.init_status=1;
+  free(buf);
+  return (TCL_OK);
+}
+
+
+/* Initialize the Virials */
+/**************************/
 void init_virials() {
   if (virials.init_status != 0 && ! interactions_changed)
     return;
@@ -57,6 +204,9 @@ void init_virials() {
   virials.init_status = 0;
 }
 
+
+/* Derive the Virials */
+/**********************/
 void calc_virials() {
   Cell *cell;
   Particle *p, **pairs, *p1,*p2,*p3;
@@ -196,6 +346,8 @@ void calc_virials() {
 }
 
 
+/* Calculate the pressure from the virials */
+/*******************************************/
 void calc_pressure() {
   /** Remarks:
       <ul><li> The ideal gas pressure P_ig is assumed to be the pressure which the system 
@@ -260,140 +412,282 @@ void calc_pressure() {
   virials.node.e[0] = SQR(p_total);
 }
 
-int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
+
+
+/**********************/
+/* Tensorial Pressure */
+/**********************/
+
+int parse_and_print_p_bin(Tcl_Interp *interp, int argc, char **argv)
 {
-  /* 'analyze pressure [{ <bonded> [<type_num>] | <nonbonded> [<type1> <type2>] | coulomb | ideal | total[s] }]' */
-  /**************************************************************************************************************************/
-  char buffer[3*TCL_DOUBLE_SPACE + 256];
-  double *buf;
-  int i, j, p, k;
+  /* 'analyze p_bin { <ind_list> } <all>' */
+  /****************************************/
+  char buffer[9*TCL_DOUBLE_SPACE + 256];
+  int i,j,p, flag=0;
+  IntList p1;
 
   if (n_total_particles == 0) { Tcl_AppendResult(interp, "(no particles)",(char *)NULL); return (TCL_OK); }
+  init_p_tensor();
+  init_intlist(&p1);
 
-  init_virials();
-
-  if(argc == 0)
-    virials.ana_num=0;
-  else {
-    if     (ARG0_IS_S("totals")) virials.ana_num=0;
-    else if(ARG0_IS_S("ideal")) virials.ana_num=1;
-    else if(ARG0_IS_S("bonded") || ARG0_IS_S("fene") ||
-	    ARG0_IS_S("harmonic")) {
-      if(argc<2) { virials.ana_num=0; }
-      else {
-	if(!ARG1_IS_I(i)) return (TCL_ERROR);
-	if(i >= virials.n_bonded) { 
-	  Tcl_AppendResult(interp,"bond type does not exist!",(char *)NULL);
-	  return (TCL_ERROR);
-	}
-      }
-      virials.ana_num = virials.n_pre+i;
-    }
-    else if(ARG0_IS_S("nonbonded") || ARG0_IS_S("lj") || ARG0_IS_S("lj-cos") || ARG0_IS_S("gb")) {
-      if(argc<3) { virials.ana_num=0; }
-      else {
-	if(!ARG_IS_I(1, i)) return (TCL_ERROR);
-	if(!ARG_IS_I(2, j)) return (TCL_ERROR);
-	if(i >= n_particle_types || j >= n_particle_types) {
-	  Tcl_AppendResult(interp, "particle type does not exist",
-			   (char *)NULL);
-	  return (TCL_ERROR);
-	}
-	virials.ana_num = virials.n_pre+virials.n_bonded + j -i;
-	while(i>0) {
-	  virials.ana_num += n_particle_types - (i-1); i--;
-	}
-      }
-    }
-    else if(ARG0_IS_S("coulomb")) {
-#ifdef ELECTROSTATICS
-      virials.ana_num = virials.n_pre+virials.n_bonded+virials.n_non_bonded; 
-#else
-      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
-#endif
-    }
-    else {
-      Tcl_AppendResult(interp, "unknown feature of analyze pressure",(char *)NULL); return (TCL_ERROR);
-    }
+  if(argc < 2) { Tcl_AppendResult(interp,"Too few arguments! Usage: 'analyze p_bin { <ind_list> } <all>'",(char *)NULL); return (TCL_ERROR); }
+  if (!ARG0_IS_INTLIST(p1)) { 
+    Tcl_ResetResult(interp); Tcl_AppendResult(interp,"usage: 'analyze p_bin { <ind_list> } <all>'",(char *)NULL); return (TCL_ERROR); 
   }
+  if(!ARG_IS_I(1, flag)) return (TCL_ERROR);
 
-  calc_pressure();
+  p_tensor.ana_num=0;
+  calc_p_tensor(&p1,flag);
 
-  buf = malloc(6*sizeof(double)); buf[0]=buf[1]=buf[2]=buf[3]=buf[4]=buf[5] = 0.0;
-  if(argc > 0) {
-    if(ARG0_IS_S("total")) {
-      Tcl_PrintDouble(interp, virials.sum.e[virials.ana_num], buffer); 
-      Tcl_AppendResult(interp, buffer, (char *)NULL); }
-    else if(ARG0_IS_S("totals")) {
-      sprintf(buffer,"%f %f",virials.sum.e[virials.ana_num],virials.node.e[virials.ana_num]); 
-      Tcl_AppendResult(interp, buffer, (char *)NULL); }
-    else if(ARG0_IS_S("ideal")) {
-      Tcl_PrintDouble(interp, virials.sum.e[virials.ana_num], buffer); 
-      Tcl_AppendResult(interp, buffer, (char *)NULL); }
-    else if(virials.ana_num > 0) {  /* this covers case 'coulomb' as well */
-      sprintf(buffer,"%f %f",virials.sum.e[virials.ana_num],virials.node.e[virials.ana_num]);
-      Tcl_AppendResult(interp, buffer, (char *)NULL); }
-    else if(ARG0_IS_S("bonded")) {
-      for(i=0;i<n_bonded_ia;i++) {
-	buf[0] += virials.sum.e[virials.n_pre+i];
-	buf[1] += virials.node.e[virials.n_pre+i]; 
-      }
-      sprintf(buffer,"%f %f",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
-    else if(ARG0_IS_S("fene")) {
-      for(i=0;i<n_bonded_ia;i++)
-	if(bonded_ia_params[i].type == BONDED_IA_FENE) { buf[0] += virials.sum.e[virials.n_pre+i]; buf[1] += virials.node.e[virials.n_pre+i]; }
-      sprintf(buffer,"%f %f",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
-    else if(ARG0_IS_S("harmonic")) {
-      for(i=0;i<n_bonded_ia;i++)
-	if(bonded_ia_params[i].type == BONDED_IA_HARMONIC) { buf[4] += virials.sum.e[virials.n_pre+i]; buf[5] += virials.node.e[virials.n_pre+i]; }
-      sprintf(buffer,"%f %f",buf[4],buf[5]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
-    else if(ARG0_IS_S("nonbonded") || ARG0_IS_S("lj")) {
-      p = virials.n_pre+virials.n_bonded;
-      if(argc == 2) Tcl_GetInt(interp, argv[1], &k); else k=-1;
-      for (i = 0; i < n_particle_types; i++) 
-	if((k==-1) || (k==i))
-	  for (j = i; j < n_particle_types; j++) {
-	    if(checkIfParticlesInteract(i,j)) { buf[0] += virials.sum.e[p]; buf[1] += virials.node.e[p]; }
-	    p++;
-	  }
-      sprintf(buffer,"%f %f",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
-    else { Tcl_AppendResult(interp, "unknown feature of analyze pressure",(char *)NULL); return (TCL_ERROR); } }
-  else {
-    int buf0, buf2, buf4;
-    sprintf(buffer,"%f %f { ideal %f } { ",virials.sum.e[0],virials.node.e[0],virials.sum.e[1]); 
-    Tcl_AppendResult(interp, buffer, (char *)NULL);
-    buf0 = buf2 = buf4 = 0;
-    for(i=0;i<n_bonded_ia;i++) {
-      switch (bonded_ia_params[i].type) {
-      case BONDED_IA_FENE:
-	buf[0] += virials.sum.e[virials.n_pre+i]; buf[1] += virials.node.e[virials.n_pre+i]; buf0 = 1; break;
-      case BONDED_IA_ANGLE:
-	buf[2] += virials.sum.e[virials.n_pre+i]; buf[3] += virials.node.e[virials.n_pre+i]; buf2 = 1; break;
-      case BONDED_IA_HARMONIC:
-	buf[4] += virials.sum.e[virials.n_pre+i]; buf[5] += virials.node.e[virials.n_pre+i]; buf4 = 1; break;
-      default: break; }
-    }
-    if(buf0 != 0) { sprintf(buffer,"{ FENE %f %f } ",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
-    if(buf2 != 0) { sprintf(buffer,"{ angle %f %f } ",buf[2],buf[3]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
-    if(buf4 != 0) { sprintf(buffer,"{ harmonic %f %f } ",buf[4],buf[5]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
-    buf[0] = buf[1] = 0.0; buf0 = 0; Tcl_AppendResult(interp, "}  { ", (char *)NULL);
-    p = virials.n_pre+virials.n_bonded;
-    for (i = 0; i < n_particle_types; i++) {
-      for (j = i; j < n_particle_types; j++) {
-	if (checkIfParticlesInteract(i, j)) { buf[0] += virials.sum.e[p];  buf[1] += virials.node.e[p];  buf0 = 1; }
-	p++;
-      }
-    }
-    if(buf0 != 0) { sprintf(buffer, "lj %f %f }  ",buf[0],buf[1]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
-    else Tcl_AppendResult(interp, "}  ", (char *)NULL);
-#ifdef ELECTROSTATICS
-    if(coulomb.bjerrum > 0.0) {
-      sprintf(buffer, "{ coulomb %f %f } ",virials.sum.e[p],virials.node.e[p]);
-      Tcl_AppendResult(interp, buffer,  (char *)NULL);
-    }
-#endif
+  sprintf(buffer,"%f %f { total ",p_tensor.node.e[0],p_tensor.node.e[1]); Tcl_AppendResult(interp, buffer, (char *)NULL);
+  for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.sum.e[j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+  Tcl_AppendResult(interp, "} ", (char *)NULL); 
+
+  Tcl_AppendResult(interp, "{ ideal ", (char *)NULL);
+  for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.sum.e[9+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+  Tcl_AppendResult(interp, "} ", (char *)NULL); 
+
+  p = p_tensor.n_pre;
+  Tcl_AppendResult(interp, "{ bonded ", (char *)NULL); 
+  for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.sum.e[p+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+  for(i=0;i<n_bonded_ia;i++) {
+    switch (bonded_ia_params[i].type) {
+    case BONDED_IA_FENE:
+      Tcl_AppendResult(interp, "{ FENE ", (char *)NULL);
+      for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.node.e[p+i*9+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+      Tcl_AppendResult(interp, "} ", (char *)NULL);
+      break;
+    case BONDED_IA_ANGLE:
+      Tcl_AppendResult(interp, "{ ANGLE ", (char *)NULL);
+      for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.node.e[p+i*9+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+      Tcl_AppendResult(interp, "} ", (char *)NULL);
+      break;
+    case BONDED_IA_HARMONIC:
+      Tcl_AppendResult(interp, "{ HARMONIC ", (char *)NULL);
+      for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.node.e[p+i*9+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+      Tcl_AppendResult(interp, "} ", (char *)NULL);
+      break;
+    default: break; }
   }
-  virials.init_status=1;
-  free(buf);
+  Tcl_AppendResult(interp, "} ", (char *)NULL); 
+
+  p = p_tensor.n_pre+p_tensor.n_bonded;
+  Tcl_AppendResult(interp, "{ nonbonded ", (char *)NULL); 
+  for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.sum.e[p+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+  Tcl_AppendResult(interp, "} ", (char *)NULL); 
+
+#ifdef ELECTROSTATICS
+  p = p_tensor.n_pre+p_tensor.n_bonded+p_tensor.n_non_bonded;
+  if(coulomb.bjerrum > 0.0) {
+    Tcl_AppendResult(interp, "{ coulomb ", (char *)NULL); 
+    for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.sum.e[p+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+    Tcl_AppendResult(interp, "} ", (char *)NULL); 
+  }
+#endif
+
+  p_tensor.init_status=1;
   return (TCL_OK);
+}
+
+
+/* Initialize the p_tensor */
+/***************************/
+void init_p_tensor() {
+  if (p_tensor.init_status != 0 && ! interactions_changed)
+    return;
+  p_tensor.n_pre        = 9+9;
+  p_tensor.n_bonded     = 9*n_bonded_ia;
+  p_tensor.n_non_bonded = 9*(n_particle_types*(n_particle_types+1))/2;
+
+#ifdef ELECTROSTATICS
+  switch (coulomb.method) {
+  case COULOMB_NONE: p_tensor.n_coulomb = 0; break;
+  case COULOMB_P3M: p_tensor.n_coulomb = 9; break;
+  case COULOMB_DH:  p_tensor.n_coulomb = 9; break;
+  default:
+    fprintf(stderr, "%d: init_p_tensor: cannot calculate p_tensor for coulomb method %d\n",
+	    this_node, coulomb.method);
+    errexit();
+  }
+#endif
+  p_tensor.n = p_tensor.n_pre+p_tensor.n_bonded+p_tensor.n_non_bonded+p_tensor.n_coulomb;
+  realloc_doublelist(&(p_tensor.node),p_tensor.n);
+  realloc_doublelist(&(p_tensor.sum),p_tensor.n);
+  p_tensor.init_status = 0;
+}
+
+
+/* Derive the p_tensor */
+/***********************/
+void calc_p_tensor(IntList *p_list, int flag) {
+  Particle *p1, *p2, *p3;
+  int *p1_list, n_p1;
+  int i,j,k,l, pp, indi,indj,startj,endj, type_num, type1,type2;
+  double d[3],dist,dist2, f1[3],f2[3],f3[3], volume;
+  
+  p1=malloc(1*sizeof(Particle)); p2=malloc(1*sizeof(Particle)); p3=malloc(1*sizeof(Particle)); 
+  p1_list = p_list->e; n_p1 = p_list->n;
+  for(i=0;i<p_tensor.n;i++) {
+    p_tensor.node.e[i] = 0.0;
+    p_tensor.sum.e[i]  = 0.0;
+  }
+  volume = box_l[0]*box_l[1]*box_l[2];
+
+  if (parameter_changed || interactions_changed || topology_changed || particle_changed) {
+    mpi_integrate(0);
+  }
+
+  for(indi=0; indi<n_p1; indi++) {
+    if (get_particle_data(p1_list[indi], p1) != TCL_OK) { fprintf(stderr,"The particle %d you requested does not exist! ",p1_list[indi]); errexit(); }
+
+    /* bonded interactions */
+    i=0;
+    while(i < p1->bl.n) {
+      if((flag==1) || (intlist_contains(p_list,p1->bl.e[i+1])==1)) {
+	get_particle_data(p1->bl.e[i+1], p2);
+	f1[0] = p1->f[0]; f1[1] = p1->f[1]; f1[2] = p1->f[2];
+	f2[0] = p2->f[0]; f2[1] = p2->f[1]; f2[2] = p2->f[2];
+	get_mi_vector(d, p1->r.p, p2->r.p);
+	type_num = p1->bl.e[i];
+	switch(bonded_ia_params[type_num].type) {
+	case BONDED_IA_FENE:
+	  add_fene_pair_force(p1,p2,type_num);
+	  for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
+	  for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
+	    p_tensor.node.e[p_tensor.n_pre+9*type_num + k*3 + l] += f1[k]*d[l];
+	    p_tensor.sum.e[p_tensor.n_pre+ k*3 + l] += f1[k]*d[l];
+	  } }
+	  i+=2; break;
+	case BONDED_IA_HARMONIC:
+	  add_harmonic_pair_force(p1,p2,type_num);
+	  for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
+	  for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
+	    p_tensor.node.e[p_tensor.n_pre+9*type_num + k*3 + l] += f1[k]*d[l];
+	    p_tensor.sum.e[p_tensor.n_pre+ k*3 + l] += f1[k]*d[l];
+	  } }
+	  i+=2; break;
+	case BONDED_IA_ANGLE:
+	  get_particle_data(p1->bl.e[i+2], p3);
+	  f3[0] = p3->f[0]; f3[1] = p3->f[1]; f3[2] = p3->f[2];
+	  add_angle_force(p1,p2,p3,type_num);
+	  for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
+	  for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
+	    p_tensor.node.e[p_tensor.n_pre+9*type_num + k*3 + l] += -f2[k]*d[l];
+	    p_tensor.sum.e[p_tensor.n_pre+ k*3 + l] += -f2[k]*d[l];
+	  } }
+	  for(k=0;k<3;k++) { p3->f[k] -= (f3[k] = p3->f[k] - f3[k]); }
+	  get_mi_vector(d, p1->r.p, p3->r.p);
+	  for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
+	    p_tensor.node.e[p_tensor.n_pre+9*type_num + k*3 + l] += -f3[k]*d[l];
+	    p_tensor.sum.e[p_tensor.n_pre+ k*3 + l] += -f3[k]*d[l];
+	  } }
+	  if (p3->bl.n > 0) { realloc_intlist(&(p3->bl),0); }
+	  i+=3; break;
+	default :
+	  fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->r.identity);
+	  i = p1->bl.n; break;
+	}
+      }
+    }
+
+    /* non-bonded interactions, electrostatics, and ideal gas contribution */
+    if(flag==1) { 
+      startj=p1->r.identity+1; endj=n_total_particles; } 
+    else { 
+      startj=indi+1; endj=n_p1; 
+    }
+    for(indj=startj; indj<endj; indj++) {
+      if(flag==1) get_particle_data(indj, p2); else get_particle_data(p1_list[indj], p2);
+
+      /* save current force information */
+      for(j=0;j<3;j++) { f1[j] = p1->f[j]; f2[j] = p2->f[j]; }
+
+      /* distance calculation */
+      get_mi_vector(d, p1->r.p, p2->r.p);                 // for(j=0; j<3; j++) d[j] = p1->r.p[j] - p2->r.p[j];
+      dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
+      dist  = sqrt(dist2);
+
+      /* non-bonded interactions */
+      pp = p_tensor.n_pre+p_tensor.n_bonded;
+      if (checkIfParticlesInteract(p1->r.type, p2->r.type)) { 
+	ia_params = get_ia_param(p1->r.type,p2->r.type);
+
+	/* derive index 'type_num' */
+	if(p1->r.type > p2->r.type) { type1 = p2->r.type; type2 = p1->r.type; } else { type2 = p2->r.type; type1 = p1->r.type; }
+	type_num = pp + 9*( ((2 * n_particle_types - 1 - type1) * type1) / 2  +  type2);
+	
+	/* lennnard jones */
+	add_lj_pair_force(p1,p2,ia_params,d,dist);
+	add_ljcos_pair_force(p1,p2,ia_params,d,dist);
+#ifdef ROTATION  
+	add_gb_pair_force(p1,p2,ia_params,d,dist);
+#endif
+	for(j=0;j<3;j++) { p1->f[j] -= (f1[j] = p1->f[j] - f1[j]); p2->f[j] -= (f2[j] = p2->f[j] - f2[j]); }
+	for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
+	  p_tensor.node.e[type_num + k*3 + l] += f1[k]*d[l];
+	  p_tensor.sum.e[pp+ k*3 + l] += f1[k]*d[l];
+	} }
+      }
+	
+#ifdef ELECTROSTATICS
+      /* real space coulomb */
+      pp = p_tensor.n_pre+p_tensor.n_bonded+p_tensor.n_non_bonded;
+      if(coulomb.method==COULOMB_P3M) {
+	add_p3m_coulomb_pair_force(p1,p2,d,dist2,dist);
+	for(j=0;j<3;j++) { p1->f[j] -= (f1[j] = p1->f[j] - f1[j]); p2->f[j] -= (f2[j] = p2->f[j] - f2[j]); }
+	for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
+	  p_tensor.sum.e[pp+ k*3 + l] += f1[k]*d[l];
+	} }
+      }
+      else if(coulomb.method==COULOMB_DH) {
+	add_dh_coulomb_pair_force(p1,p2,d,dist);
+	for(j=0;j<3;j++) { p1->f[j] -= (f1[j] = p1->f[j] - f1[j]); p2->f[j] -= (f2[j] = p2->f[j] - f2[j]); }
+	for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
+	  p_tensor.sum.e[pp+ k*3 + l] += f1[k]*d[l];
+	} }
+      }
+#endif
+
+      /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
+      for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
+	p_tensor.sum.e[9+ k*3 + l] += (p1->v[k])*(p2->v[l]);
+      } }
+    } 
+  }
+
+  /* Rescale entries and sum all contributions */
+  for(i=9; i<2*9; i++) { 
+    p_tensor.sum.e[i] /= 2.0*volume*SQR(time_step); 
+    p_tensor.sum.e[i%9] += p_tensor.sum.e[i];
+  }
+  for(i=p_tensor.n_pre;i<p_tensor.n;i++) {
+    p_tensor.node.e[i]  /= 3.0*volume;
+  }
+  pp=p_tensor.n_pre+p_tensor.n_bonded;
+  for(i=p_tensor.n_pre; i<pp; i++) {
+    p_tensor.sum.e[i]   /= 3.0*volume;
+    p_tensor.sum.e[i%9] += p_tensor.sum.e[i];
+  }
+  pp+=p_tensor.n_non_bonded;
+  for(i=pp-p_tensor.n_non_bonded; i<pp; i++) {
+    p_tensor.sum.e[i]   /= 3.0*volume;
+    p_tensor.sum.e[i%9] += p_tensor.sum.e[i];
+  }
+#ifdef ELECTROSTATICS
+  pp+=p_tensor.n_coulomb;
+  for(i=pp-p_tensor.n_coulomb; i<pp; i++) {
+    p_tensor.sum.e[i]   /= 3.0*volume;
+    p_tensor.sum.e[i%9] += p_tensor.sum.e[i];
+  }
+#endif
+
+  /* Total Sum = Trace of 1st tensor */
+  p_tensor.node.e[0] = p_tensor.sum.e[0] + p_tensor.sum.e[4] + p_tensor.sum.e[8];
+  p_tensor.node.e[1] = SQR(p_tensor.node.e[0]);
+
+  /* Clean up particles */
+  if (p1->bl.n > 0) { realloc_intlist(&(p1->bl),0); }
+  //  if (p2->bl.n > 0) { realloc_intlist(&(p2->bl),0); }
+  //  free_particle(p1); free_particle(p2); free_particle(p3); 
+  free(p1); free(p2); free(p3); 
 }
