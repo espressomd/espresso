@@ -29,12 +29,6 @@
 
 #define ELECTROSTATICS
 
-/* to use LJCOS potential*/
-#define LJCOS
-
-/* to use tabulated potential*/
-#define TABULATED
-
 /** Compiler flag to enable describing and processing particle orientations.
 
 This will allow to use such particle properties as quart, omega, and torque. */
@@ -55,11 +49,14 @@ This will allow to use such particle properties as quart, omega, and torque. */
     off the ones you don't need */
 /*@{*/
 
+/* to use tabulated potential*/
+#define TABULATED
+
 /** Lennard-Jones */
 #define LENNARD_JONES
 
 /** Lennard-Jones with cosine tail */
-#define LJ_COS
+#define LJCOS
 
 /*@}*/
 

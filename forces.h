@@ -88,7 +88,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #endif
 
   /* lennard jones cosine */
-#ifdef LJ_COS
+#ifdef LJCOS
   add_ljcos_pair_force(p1,p2,ia_params,d,dist);
 #endif
 

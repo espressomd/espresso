@@ -1005,7 +1005,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
    *                        lj-cos
    * interaction
    */
-#ifdef LJ_COS
+#ifdef LJCOS
   if (ARG0_IS_S("lj-cos")) {
   	
     /* this is a quick fix for the inconsistency in the ljcos parameters 
