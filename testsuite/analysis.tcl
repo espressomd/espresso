@@ -58,7 +58,7 @@ proc rewrite {in out} {
 
 	analyze set chains 0 20 30; set observables ""; set listables ""
 	set mindist1 [analyze mindist]; set mindist2 [analyze mindist 0 0]; lappend observables $mindist1 $mindist2
-	set nbhood [analyze nbhood 13 2.5]; lappend listables $nbhood
+	set nbhood [lsort -integer [analyze nbhood 13 2.5]]; lappend listables $nbhood
 	set distto [analyze distto 13]; lappend observables $distto
 	set energy [analyze energy total]; lappend observables $energy
 	set pressure [analyze pressure total]; lappend observables $pressure
@@ -82,7 +82,7 @@ setmd gamma  0.0
 #set tcl_precision  6
 set slow     0
 
-# rewrite analysis_system.data analysis_system.data2; exit 0
+# rewrite analysis_system.data2 analysis_system.data; exit 0
 
 if { [catch {
     puts -nonewline "Reading the checkpoint... "; flush stdout
