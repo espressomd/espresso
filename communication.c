@@ -93,21 +93,23 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_BIT_RANDOM_SEED 25
 /** Action number for \ref mpi_random_stat */
 #define REQ_BIT_RANDOM_STAT 26
-/** Action number for \ref mpi_get_constraint_force. */
+/** Action number for \ref mpi_get_constraint_force */
 #define REQ_GET_CONSFOR 27
+/** Action number for \ref mpi_rescale_particles */
+#define REQ_RESCALE_PART 28
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 28
+#define REQ_MAXIMUM 29
 
 #ifdef DIPOLAR_INTERACTION
 /** Action number for \ref mpi_send_quat. */
-#define REQ_SET_QUAT 28
+#define REQ_SET_QUAT 29
 /** Action number for \ref mpi_send_lambda. */
-#define REQ_SET_LAMBDA 29
+#define REQ_SET_LAMBDA 30
 /** Action number for \ref mpi_send_torque. */
-#define REQ_SET_TORQUE 30
+#define REQ_SET_TORQUE 31
 /** Total number of action numbers. */
 #undef REQ_MAXIMUM
-#define REQ_MAXIMUM 31
+#define REQ_MAXIMUM 32
 #endif
 
 /** \name Slave Callbacks
@@ -145,9 +147,10 @@ void mpi_bcast_constraint_slave(int node, int parm);
 void mpi_random_seed_slave(int node, int parm);
 void mpi_random_stat_slave(int node, int parm);
 void mpi_lj_cap_forces_slave(int node, int parm);
-void mpi_get_constraint_force_slave(int node, int parm);
 void mpi_bit_random_seed_slave(int node, int parm);
 void mpi_bit_random_stat_slave(int node, int parm);
+void mpi_get_constraint_force_slave(int node, int parm);
+void mpi_rescale_particles_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -181,10 +184,11 @@ SlaveCallback *callbacks[] = {
   mpi_bit_random_seed_slave,        /* 25: REQ_RANDOM_SEED */
   mpi_bit_random_stat_slave,        /* 26: REQ_RANDOM_STAT */
   mpi_get_constraint_force_slave,   /* 27: REQ_GET_CONSFOR */
+  mpi_rescale_particles_slave,      /* 28: REQ_RESCALE_PART */
 #ifdef DIPOLAR_INTERACTION
-  mpi_send_quat_slave,              /* 28: REQ_SET_QUAT */
-  mpi_send_lambda_slave,            /* 29: REQ_SET_LAMBDA */
-  mpi_send_torque_slave,            /* 30: REQ_SET_TORQUE */
+  mpi_send_quat_slave,              /* 29: REQ_SET_QUAT */
+  mpi_send_lambda_slave,            /* 30: REQ_SET_LAMBDA */
+  mpi_send_torque_slave,            /* 31: REQ_SET_TORQUE */
 #endif  
 };
 
@@ -215,12 +219,14 @@ char *names[] = {
   "RAND_SEED" ,     /* 22 */
   "RAND_STAT" ,     /* 23 */
   "BCAST_LFC" ,     /* 24 */
-  "BIT_RAND_SEED" , /* 25 */
-  "BIT_RAND_STAT" , /* 26 */
+  "BIT_RAND_SEED",  /* 25 */
+  "BIT_RAND_STAT",  /* 26 */
+  "GET_CONSTR",     /* 27 */
+  "RESCALE_PART",   /* 28 */
 #ifdef DIPOLAR_INTERACTION  
-  "SET_QUAT"  ,     /* 27 */
-  "SET_LAMBDA",     /* 28 */
-  "SET_TORQUE",     /* 29 */
+  "SET_QUAT"  ,     /* 29 */
+  "SET_LAMBDA",     /* 30 */
+  "SET_TORQUE",     /* 31 */
 #endif  
 };
 
@@ -429,7 +435,7 @@ void mpi_bcast_event_slave(int node, int event)
   }
 }
 
-/****************** REQ_PLACE/RE_PLACE_NEW ************/
+/****************** REQ_PLACE/REQ_PLACE_NEW ************/
 
 void mpi_place_particle(int pnode, int part, int new, double p[3])
 {
@@ -1364,6 +1370,29 @@ void mpi_bit_random_stat_slave(int pnode, int cnt) {
     RANDOM_TRACE(printf("%d: Received status %d/%d/...\n",this_node,this_stat.random_pointer_1,this_stat.random_pointer_2));
     init_bit_random_stat(this_stat);
   }
+}
+
+/****************** REQ_RESCALE_PART ************/
+
+void mpi_rescale_particles(int dir, double scale) {
+  int pnode;
+
+  mpi_issue(REQ_RESCALE_PART, -1, dir);
+  for (pnode = 0; pnode < n_nodes; pnode++) {
+    if (pnode == this_node)
+      local_rescale_particles(dir, scale);
+    else
+      MPI_Send(&scale, 1, MPI_DOUBLE, pnode, REQ_PLACE, MPI_COMM_WORLD);
+  }
+  on_particle_change();
+}
+
+void mpi_rescale_particles_slave(int pnode, int dir) {
+  double scale; MPI_Status status;
+
+  MPI_Recv(&scale, 1, MPI_DOUBLE, 0, REQ_PLACE, MPI_COMM_WORLD, &status);
+  local_rescale_particles(dir, scale);
+  on_particle_change();
 }
 
 /*********************** MAIN LOOP for slaves ****************/
