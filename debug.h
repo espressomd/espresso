@@ -26,15 +26,15 @@
  <li> \verbatim #define PARTICLE_DEBUG \endverbatim activate particle data related debug output.
  <li> \verbatim #define P3M_DEBUG \endverbatim activate P3M related debug output.
  <li> \verbatim #define FFT_DEBUG \endverbatim activate FFT related debug output.
- <li> \verbatim #define RANDOM_DEBUG \endverbatim activate ??? debug output.
+ <li> \verbatim #define RANDOM_DEBUG \endverbatim activate debug output for the random number generator.
  <li> \verbatim #define FORCE_DEBUG \endverbatim activate detailed Force debugging -> gives explicitely all forces.
- <li> \verbatim #define THERMO_DEBUG \endverbatim activate ??? debug output.
- <li> \verbatim #define LJ_DEBUG \endverbatim activate ??? debug output.
+ <li> \verbatim #define THERMO_DEBUG \endverbatim activate debug output for the theromostat.
+ <li> \verbatim #define LJ_DEBUG \endverbatim activate debug output for the LJ-potential.
  <li> \verbatim #define ESR_DEBUG \endverbatim activate ??? debug output.
  <li> \verbatim #define ESK_DEBUG \endverbatim activate ??? debug output.
- <li> \verbatim #define FENE_DEBUG \endverbatim activate ??? debug output.
- <li> \verbatim #define GHOST_FORCE_DEBUG \endverbatim activate ??? debug output.
- <li> \verbatim #define ONE_PART_DEBUG \endverbatim activate ??? debug output.
+ <li> \verbatim #define FENE_DEBUG \endverbatim activate debug output for the FENE-potential.
+ <li> \verbatim #define GHOST_FORCE_DEBUG \endverbatim activate debug output for ghost forces.
+ <li> \verbatim #define ONE_PART_DEBUG <part_id> \endverbatim activate debug output, tracing everything done with particle <part_id>.
  <li> \verbatim #define STAT_DEBUG \endverbatim activate statistics related debug output.
  <li> \verbatim #define POLY_DEBUG \endverbatim activate polymer setup debug output.
  <li> \verbatim #define MPI_CORE \endverbatim generate a core dump when exiting abnormally due
@@ -53,9 +53,9 @@
 /* #define EVENT_DEBUG */
 /* #define INTEG_DEBUG   */
 /* #define CELL_DEBUG */
-/* #define GHOST_DEBUG  */   
+/* #define GHOST_DEBUG */
 /* #define GRID_DEBUG */
-/* #define VERLET_DEBUG   */
+/* #define VERLET_DEBUG */
 /* #define PARTICLE_DEBUG */
 /* #define P3M_DEBUG*/
 /* #define FFT_DEBUG */
@@ -67,7 +67,7 @@
 /* #define ESK_DEBUG */
 /* #define FENE_DEBUG */
 /* #define GHOST_FORCE_DEBUG */
-/* #define ONEPART_DEBUG 7  */
+/* #define ONEPART_DEBUG 13 */
 /* #define STAT_DEBUG */ 
 /* #define POLY_DEBUG */
 /* #define MEM_DEBUG */
