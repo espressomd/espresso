@@ -25,6 +25,7 @@
 #include "fft.h"
 #include "ghosts.h"
 #include "debye_hueckel.h"
+#include "mmm1d.h"
 
 static void init_tcl(Tcl_Interp *interp);
 
@@ -67,8 +68,6 @@ void on_integration_start()
 
   if (parameter_changed || interactions_changed || topology_changed) {
     integrate_vv_recalc_maxrange();
-    invalidate_ghosts();
-    exchange_and_sort_part();
     cells_re_init();
     ghost_init();
     force_init();
@@ -76,26 +75,26 @@ void on_integration_start()
 
   if (parameter_changed || topology_changed) {
     thermo_init();
-    if(temperature > 0.0) {
-      p3m.prefactor    = p3m.bjerrum * temperature; 
-      dh_params.prefac = dh_params.bjerrum * temperature;
-    }
-    else {
-      p3m.prefactor    = p3m.bjerrum;
-      dh_params.prefac = dh_params.bjerrum;
-    }
   }
 
   if (interactions_changed || topology_changed) {
-    P3M_init();
+    if (coulomb.method == COULOMB_P3M)
+      P3M_init();
+  }
+
+  if (interactions_changed || parameter_changed || topology_changed) {
     if(temperature > 0.0) {
       p3m.prefactor    = p3m.bjerrum * temperature; 
       dh_params.prefac = dh_params.bjerrum * temperature;
+      mmm1d.prefactor  = mmm1d.bjerrum * temperature;
     }
     else {
       p3m.prefactor    = p3m.bjerrum;
       dh_params.prefac = dh_params.bjerrum;
+      mmm1d.prefactor  = mmm1d.bjerrum;
     }
+    if (coulomb.method == COULOMB_MMM1D)
+      MMM1D_init();
   }
 
   if (parameter_changed || particle_changed || interactions_changed || topology_changed) {

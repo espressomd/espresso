@@ -284,16 +284,13 @@ int per_callback(Tcl_Interp *interp, void *_data)
   for (i = 0; i < 3; i++)
     periodic[i] = (data[i] != 0);
 
+  /*
   if( (periodic[0]==1 && (periodic[1]==0 || periodic[2]==0)) ||
       (periodic[0]==0 && (periodic[1]==1 || periodic[2]==1)) ) {
     fprintf(stderr,"Periodicity must be (1,1,1) or (0,0,0)\n");
     errexit();
   }
-  if( (periodic[0]==0 || periodic[1]==0 || periodic[2]==0) && 
-      coulomb.method==COULOMB_P3M ) {
-    fprintf(stderr,"Need periodicity (1,1,1) with Coulomb P3M\n");
-    errexit();
-  }
+  */
 
   mpi_bcast_parameter(FIELD_PERIODIC);
   mpi_bcast_event(TOPOLOGY_CHANGED);

@@ -295,6 +295,11 @@ void   P3M_init()
 		fprintf(stderr,"   Electrostatics switched off!\n"));
   }
   else {  
+    if( periodic[0]!=1 || periodic[1]!=1 || periodic[2]!=1) {
+      fprintf(stderr,"Need periodicity (1,1,1) with Coulomb P3M\n");
+      errexit();
+    }
+
     P3M_TRACE(fprintf(stderr,"%d: P3M_init: \n",this_node));
     /* parameter checks */
     if( (p3m.mesh[0] != p3m.mesh[1]) || (p3m.mesh[1] != p3m.mesh[2]) ) {

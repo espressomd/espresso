@@ -19,6 +19,7 @@
 #include "communication.h"
 #include "utils.h"
 #include "verlet.h"
+#include "ghosts.h"
 
 /************************************************/
 /** \name Defines */
@@ -111,6 +112,11 @@ void cells_re_init()
 #ifdef ADDITIONAL_CHECKS
   int part_cnt_old, part_cnt_new;
 #endif
+
+  /* first move particles to their nodes. Necessary if
+     box length has changed. */
+  invalidate_ghosts();
+  exchange_and_sort_part();
 
   CELL_TRACE(fprintf(stderr,"%d: cells_re_init \n",this_node));
 
