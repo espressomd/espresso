@@ -69,7 +69,7 @@ interface between the Tcl script and the MD code:
 At program start, Espresso reads in a starting script
 <i>'init.tcl'</i>. It is assumed to be located in a directory
 <i>"scripts"</i>, but this default value can be overridden by the
-environment variable TCLMD_SCRIPTS.<BR>
+environment variable ESPRESSO_SCRIPTS.<BR>
 It also includes some useful tcl-scripts (which should always be
 located in the same directory <i>"scripts"</i>) providing additional
 commands which are implemented in tcl and enhance the interface

@@ -7,9 +7,9 @@
 # -----------------                                         #
 # Reads in an (initial) particle configuration given in     #
 # Deserno-format (e.g. created by 'polygelSetup') and       #
-# converts it for 'Espresso', setting up global variables     #
+# converts it for 'Espresso', setting up global variables   #
 # corresponding to the parameters and broadcasting the      #
-# appropriate values to the 'Espresso' program, including     #
+# appropriate values to the 'Espresso' program, including   #
 # particle configuration and interactions.                  #
 #                                                           #
 # Input:                                                    #
@@ -18,10 +18,10 @@
 #   supplied as parameter containing the full path.         #
 #                                                           #
 # Output:                                                   #
-# - A gzipped file $destination ready for use with 'Espresso' #
-#   supplied in AxA's-blockfile-format;                     #
+# - A gzipped file $destination ready for use with          # 
+#   'Espresso' supplied in AxA's-blockfile-format;          #
 #   the output file is suppressed if{$destination=="-1"}.   #
-# - Global variables for use with any Espresso-script, i.e.:  #
+# - Global variables for use with any Espresso-script, i.e.:#
 #   + lists 'conf' & 'corr', which contain the parameter's  #
 #     names in Deserno's and A&L's world, respectively      #
 #   + bunch of parameters having the same names as in       #
@@ -37,11 +37,11 @@
 # i.e. it reads in a configuration file in AxA's new        #
 # 'Espresso'-blockfileformat and creates a Deserno-compatible # 
 # style-file $destination ( if{$origin=="-1"} no input-file #
-# is used, informations are taken from 'Espresso' instead).   #
+# is used, informations are taken from 'Espresso' instead). #
 # Meanwhile, the blockfile-format does also provide info's  #
 # about interactions etc., therefore if $origin is provided #
 # as an input file, additional informations may not be      #
-# required to be taken from 'Espresso'.                       #
+# required to be taken from 'Espresso'.                     #
 # Since Deserno needs to know the chain-structure of the    #
 # (sometimes crosslinked) polymers, this script does also   #
 # have to analyze the topology of the given network/melt.   #
@@ -65,11 +65,11 @@
 # ! - It is possible to bypass initialization by directly ! #
 # !   accessing the 'XXXmain'-scripts, which comes handy  ! #
 # !   in particular when using 'MD2Deserno' on course of  ! #
-# !   a simulation run with 'Espresso', because everything  ! #
+# !   a simulation run with 'Espresso', because everything! #
 # !   needed for a Deserno-compatible output is available ! #
 # !   in some program's variable by then - all missing    ! #
 # !   informations not extractable from $origin or        ! #
-# !   'Espresso' itself (such as 'saveConfig' etc.) may be  ! #
+# !   'Espresso' itself (such as 'saveConfig' etc.) may be! #
 # !   manually added (e.g. by setting 'saveConfig' in the ! #
 # !   main script before calling the conversion-script)   ! #
 # !   and will be included in the Deserno-file.           ! #
@@ -78,7 +78,7 @@
 # !   unexpected behaviour may occur!                     ! #
 # !   A recommendable good compromise would be:           ! #
 # !   + manually invoke 'initConversion'                  ! #
-# !   + change all the parameters you know but 'Espresso'   ! #
+# !   + change all the parameters you know but 'Espresso' ! #
 # !     doesn't (such as 'saveConfig', 'seed', etc.)      ! #
 # !   + continue with 'conversionMD2DesernoMain'          ! #
 #                                                           #
@@ -101,7 +101,7 @@ proc initConversion {} {
 	puts -nonewline "\n            Function 'countBonds' is missing - trying to reload... "
 	flush stdout
 	if { [catch [source countBonds.tcl]]!=0 } {
-	    if { [catch [source ./scripts/countBonds.tcl]]!=0 && [catch [source $TCLMD_SCRIPTS/countBonds.tcl]]!=0 } {
+	    if { [catch [source ./scripts/countBonds.tcl]]!=0 && [catch [source $ESPRESSO_SCRIPTS/countBonds.tcl]]!=0 } {
 		puts "Failed.\n"
 		puts "----------------"
 		puts "--> Warning! <--"
@@ -116,7 +116,7 @@ proc initConversion {} {
 	puts -nonewline "\n            Function 'polyBlockWrite' is missing - trying to reload... "
 	flush stdout
 	if { [catch [source aux.tcl]]!=0 } {
-	    if { [catch [source ./scripts/aux.tcl]]!=0 && [catch [source $TCLMD_SCRIPTS/aux.tcl]]!=0 } {
+	    if { [catch [source ./scripts/aux.tcl]]!=0 && [catch [source $ESPRESSO_SCRIPTS/aux.tcl]]!=0 } {
 		puts "Failed.\n"
 		puts "----------------"
 		puts "--> Warning! <--"

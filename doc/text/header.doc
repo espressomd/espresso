@@ -54,9 +54,9 @@ endif
 # cvs root directory 
 setenv CVSROOT ~pep/cvsroot
 # TCL_MD source directory
-setenv TCLMD_SOURCE  "your_directory/Espresso"
+setenv ESPRESSO_SOURCE  "your_directory/Espresso"
 # TCL_MD script directory
-setenv TCLMD_SCRIPTS "your_directory/Espresso/scripts"
+setenv ESPRESSO_SCRIPTS "your_directory/Espresso/scripts"
 \endverbatim
 Replace your_directory by the directory where you want to install Espresso.
 <li> Get your local copy with:
