@@ -167,7 +167,7 @@ int t_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
       }
     }
     else if (!strncmp(argv[0], "seed", strlen(argv[0]))) {  /* 't_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
-      long seed[n_nodes];
+      long *seed = malloc(n_nodes*sizeof(long));
       if (argc <= 1) {
 	mpi_random_seed(0,seed);
 	for (i=0; i < n_nodes; i++) { 
@@ -182,11 +182,11 @@ int t_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	RANDOM_TRACE(printf("Got "); for(i=0;i<n_nodes;i++) printf("%ld ",seed[i]); printf("as new seeds.\n"));
 	mpi_random_seed(n_nodes,seed);
       }
-      // free(seed); 
+      free(seed); 
       return(TCL_OK);
     }
     else if (!strncmp(argv[0], "stat", strlen(argv[0]))) {  /* 't_random stat [status-list]' */
-      RandomStatus stat[n_nodes];
+      RandomStatus *stat = malloc(n_nodes*sizeof(RandomStatus));
       if (argc <= 1) {
 	mpi_random_stat(0,stat);
 	for (i=0; i < n_nodes; i++) { 
@@ -209,7 +209,7 @@ int t_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	RANDOM_TRACE(printf("Got "); for(i=0;i<n_nodes;i++) printf("%ld/%ld/... ",stat[i].idum,stat[i].iy); printf("as new status.\n"));
 	mpi_random_stat(n_nodes,stat);
       }
-      // free(stat); 
+      free(stat); 
       return(TCL_OK);
     }
     else { 
