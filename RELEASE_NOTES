@@ -27,6 +27,7 @@ New Features:
 Changes:
 (c) removed the buggy, non-interpolating version of the P3M charge assignment.
 (c) some improvements in the P3M charge assignment.
+(f) In the analysis routined the old "gyrationtensor" routine is renamed as "momentofinertia matrix". Bugs fixed and mass implemented.
 
 Bugfixes:
 (b) Fixed a bug which crashed analyze energy and pressure if the bonded interactions had noncontigous numbers.
