@@ -97,3 +97,22 @@
     </ul>
     The C implementation is \ref #crosslink.
 */
+
+
+/** \page tcl_diamond The diamond command
+    \verbatim diamond <a> <bond_length> <MPC> [counterions <N_CI>] [charges <val_cM> [<val_CI>]] \endverbatim
+    Sets up 8 tetra-functional nodes of particle type 0 on the edges of a diamond lattice with box length <a>, squeezing 2*8 polymer chains
+    with <MPC> monomers and <bond_length> each in between the nodes, optionally adding <N_CI> counterions to the system (defaults to '0')
+    and charging monomers and counterions with <val_cM> and <val_CI>, respectively (both default to '0'); if only <val_cM> is given, then
+    <val_CI> is assumed to be -1.*<val_cM>.
+    <ul>
+        <li> \verbatim <a>           \endverbatim box length of the unit cell
+	<li> \verbatim <bond_length> \endverbatim (initial) bond length between the monomers -> sqrt(3*(a/4)^2)/(<MPC>+1)
+	<li> \verbatim <MPC>         \endverbatim monomers on each of the 2*8 polymer chains connecting the nodes
+	<li> \verbatim <N_CI>        \endverbatim number of counterions to add to the system (defaults to '0')
+	<li> \verbatim <val_cM>      \endverbatim charge carried by nodes and chain monomers (defaults to '0')
+	<li> \verbatim <val_CI>      \endverbatim charge carried by the counterions (defaults to '0'); if only <val_cM> is given, then
+	                                          <val_CI> is assumed to be -1.*<val_cM>
+    </ul>
+    The C implementation is \ref #diamond.
+*/
