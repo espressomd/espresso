@@ -1053,9 +1053,9 @@ void mpi_get_particles(Particle *result, IntList *bi)
 
   /* perhaps add some debugging output */
   COMM_TRACE(for(i = 0; i < tot_size; i++) {
-	       printf("%d: %d %d %f (%f, %f, %f)\n", i, result[i].p.identity, result[i].p.type,
-		      result[i].p.q, result[i].r.p[0], result[i].r.p[1], result[i].r.p[2]);
-	     });
+    printf("%d: %d -> %d %d %f (%f, %f, %f)\n", this_node, i, result[i].p.identity, result[i].p.type,
+	   result[i].p.q, result[i].r.p[0], result[i].r.p[1], result[i].r.p[2]);
+  });
 
   /* gather bonding information */
   if (bi) {
@@ -1091,12 +1091,13 @@ void mpi_get_particles(Particle *result, IntList *bi)
     realloc_intlist(&local_bi, 0);
   }
 
+  COMM_TRACE(fprintf(stderr, "%d: finished\n", this_node));
+
   free(sizes); 
 }
 
 void mpi_get_particles_slave(int pnode, int bi)
 {
-  IntList local_bi;
   int n_part;
   int g;
   Particle *result;
@@ -1104,11 +1105,16 @@ void mpi_get_particles_slave(int pnode, int bi)
   int c;
 
   n_part = cells_get_n_particles();
+
+  COMM_TRACE(fprintf(stderr, "%d: get_particles_slave, %d particles\n", this_node, n_part));
+
   /* first collect number of particles on each node */
   MPI_Gather(&n_part, 1, MPI_INT, NULL, 1, MPI_INT,
 	     0, MPI_COMM_WORLD);
 
   if (n_part > 0) {
+    IntList local_bi;
+
     /* get (unsorted) particle informations as an array of type 'particle' */
     /* then get the particle information */
     result = malloc(n_part*sizeof(Particle));
@@ -1139,11 +1145,18 @@ void mpi_get_particles_slave(int pnode, int bi)
     free(result);
 
     if (bi) {
+      COMM_TRACE(fprintf(stderr, "%d: sending bonds\n", this_node));
+
       MPI_Gather(&local_bi.n, 1, MPI_INT, NULL, 1, MPI_INT, 0, MPI_COMM_WORLD);      
       if (local_bi.n > 0)
 	MPI_Send(local_bi.e, local_bi.n, MPI_INT, 0, REQ_GETPARTS, MPI_COMM_WORLD);
       realloc_intlist(&local_bi, 0);
     }
+  }
+  else {
+    /* inform master node that we do not have bonds (as we don't have particles) */
+    g = 0;
+    MPI_Gather(&g, 1, MPI_INT, NULL, 1, MPI_INT, 0, MPI_COMM_WORLD);      
   }
 }
 
