@@ -180,7 +180,7 @@ void mpi_bcast_ia_params(int i, int j);
 */
 void mpi_bcast_n_particle_types(int s);
 
-/** Issue REQ_GATHER: gather data for analysis in \ref analyze.
+/** Issue REQ_GATHER: gather data for analysis in \ref #analyze.
     \param job what to do:
     <ul><li> 0 gather \ref minimum_part_dist
 	<li> 1 calculate and reduce (sum up) energies, using \ref calc_energy.
