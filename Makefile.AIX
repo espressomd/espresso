@@ -32,7 +32,7 @@ endif
 CFLAGS=-O2 -g -qarch=pwr4 -qcpluscmt -qmaxmem=16384 $(HOSTFLAGS)
 
 # debug compiler flags
-# CFLAGS= -g -fno-inline -Wall $(HOSTFLAGS)
+# CFLAGS= -g -fno-inline -qcpluscmt $(HOSTFLAGS)
 
 
 ############ name of makedepend (or gcc -ME)
