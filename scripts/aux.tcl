@@ -77,7 +77,7 @@ proc timeStamp { destination prefix postfix suffix } {
 # 
 #############################################################
 
-proc polyBlockWrite { destination {write_param {box_l time_step skin temp gamma lj_force_cap max_num_cells node_grid periodicity}} {write_part "id pos type q v f"} } {
+proc polyBlockWrite { destination {write_param "all"} {write_part "id pos type q v f"} } {
     
     # Open output-file - compressed, if desired
     if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
@@ -103,6 +103,7 @@ proc polyBlockWrite { destination {write_param {box_l time_step skin temp gamma 
     # Close file
     close $f
 }
+
 
 proc polyConfMovWriteInit { write prfx polyConfAux } {
     if { $write=="yes" || $write=="movie" } {
@@ -143,7 +144,7 @@ proc polyConfMovWrite { write prfx digit step polyConfAux } {
 }
 
 
-proc analysisInit { stat stat_out N_P MPC simtime { noted "na" } { notedD "na" } } {
+proc analysisInit { stat stat_out N_P MPC simtime } {
     if {[llength $stat]>0} {
 	puts -nonewline "    Analyzing at t=$simtime: "; flush stdout
 	puts -nonewline "Init all ([analyze set chains 0 $N_P $MPC]): "; flush stdout
@@ -154,27 +155,25 @@ proc analysisInit { stat stat_out N_P MPC simtime { noted "na" } { notedD "na" }
 	    puts -nonewline $stat_out "$i "; set tmp_stat "$tmp_stat $tmp_var"
 	    puts -nonewline "$i=$tmp_var; "; flush stdout
 	}
-	if { $noted != "na" } { puts -nonewline $stat_out "$noted "; set tmp_stat "$tmp_stat $notedD" }
 	puts $stat_out "\n$tmp_stat"; flush $stat_out
 	puts "Done."
     }
 }
 
-proc analysis { stat stat_out N_P MPC simtime { noted "na" } } {
+proc analysis { stat stat_out N_P MPC simtime } {
     puts -nonewline $stat_out "$simtime "
     foreach i $stat {
 	set tmp_stat [analyze $i]
 	puts -nonewline ", $i=$tmp_stat"; flush stdout
 	puts -nonewline $stat_out "$tmp_stat "
     }
-    if { $noted != "na" } { puts -nonewline $stat_out "$noted " }
     puts $stat_out " "; flush $stat_out
 }
 
 
 proc stopParticles { } {
     puts -nonewline "        Setting all particles' velocities and forces to zero... "; flush stdout
-    set old_i 0; set old_e [setmd n_part]; set old [expr 10*$old_e]
+    set old_i 0; set old_e [setmd npart]; set old [expr 10*$old_e]
     for { set i 0} { $i < $old_e } {incr i} {
 	if { [expr $old_i*100]>=$old } { set old [expr $old + 10*$old_e]; puts -nonewline ".,."; flush stdout }; incr old_i
 	part $i v 0 0 0
