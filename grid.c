@@ -33,8 +33,6 @@ int pgrid_callback(Tcl_Interp *interp, void *_data)
     return (TCL_ERROR);
   }
 
-  changed_topology();
-
   return (TCL_OK);
 }
 
@@ -44,11 +42,10 @@ int setup_processor_grid()
     fprintf(stderr, "not implemented: setup_processor_grid()\n");
     processor_grid[0] = nprocs;
     processor_grid[1] = processor_grid[2] = 1;
-    return 1;
   }
-  if (processor_grid[0]*processor_grid[1]*processor_grid[2] != nprocs)
-    return 0;
-  return 1;
+  changed_topology();
+  
+  return (processor_grid[0]*processor_grid[1]*processor_grid[2] == nprocs);
 }
 
 int processor_grid_is_set()
