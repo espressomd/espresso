@@ -78,6 +78,17 @@ int add_particle(int part)
     return index;
   index = alloc_particle();
   particles[index].identity = part;
+  particles[index].type = 0;
+  particles[index].q    = 0;
+  particles[index].p[0] = 0;
+  particles[index].p[1] = 0;
+  particles[index].p[2] = 0;
+  particles[index].v[0] = 0;
+  particles[index].v[1] = 0;
+  particles[index].v[2] = 0;
+  particles[index].f[0] = 0;
+  particles[index].f[1] = 0;
+  particles[index].f[2] = 0;
   return index;
 }
 

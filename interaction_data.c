@@ -77,6 +77,11 @@ int inter(ClientData _data, Tcl_Interp *interp,
     Tcl_PrintDouble(interp, data->LJ_shift, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, data->LJ_offset, buffer);
+    Tcl_AppendResult(interp, buffer, "} ", (char *) NULL);
+
+    Tcl_PrintDouble(interp, data->ramp_cut, buffer);
+    Tcl_AppendResult(interp, "{ramp ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->ramp_force, buffer);
     Tcl_AppendResult(interp, buffer, "}", (char *) NULL);
     return (TCL_OK);
   }
@@ -88,7 +93,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
   while (argc > 0) {
     if (!strncmp(argv[0], "lennard-jones", strlen(argv[0]))) {
       if (argc < 6) {
-	Tcl_AppendResult(interp, "lennard-jones needs 4 parameters: "
+	Tcl_AppendResult(interp, "lennard-jones needs 5 parameters: "
 			 "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
 			 (char *) NULL);
 	return (TCL_ERROR);
@@ -111,6 +116,28 @@ int inter(ClientData _data, Tcl_Interp *interp,
       argv += 6;
 
       mpi_bcast_ia_params(i, j);
+      mpi_bcast_ia_params(j, i);
+    }
+    else if (!strncmp(argv[0], "ramp", strlen(argv[0]))) {
+      if (argc < 3) {
+	Tcl_AppendResult(interp, "lennard-jones needs 2 parameters: "
+			 "<ramp_cut> <ramp_force>",
+			 (char *) NULL);
+	return (TCL_ERROR);
+      }
+      
+      if ((Tcl_GetDouble(interp, argv[1], &data->ramp_cut) == TCL_ERROR) ||
+	  (Tcl_GetDouble(interp, argv[2], &data->ramp_force)  == TCL_ERROR))
+	return (TCL_ERROR);
+
+      /* ramp should be symmetrically */
+      data_sym->ramp_cut = data->ramp_cut;
+      data_sym->ramp_force = data->ramp_force;
+      argc -= 3;
+      argv += 3;
+
+      mpi_bcast_ia_params(i, j);
+      mpi_bcast_ia_params(j, i);
     }
     else {
       Tcl_AppendResult(interp, "unknown interaction type \"", argv[3],

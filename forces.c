@@ -92,6 +92,26 @@ void force_calc()
       particles[id2].f[2] -= fac * d[2];
     }
     
+    /* ramp */
+    if(dist < ia_params->ramp_cut) {
+      if (dist < 1e-4) {
+	particles[id1].f[0] += ia_params->ramp_force;
+	particles[id1].f[1] += 0;
+	particles[id1].f[2] += 0;
+	particles[id2].f[0] -= ia_params->ramp_force;
+	particles[id2].f[1] -= 0;
+	particles[id2].f[2] -= 0;
+      }
+      else {
+	fac = ia_params->ramp_force/dist;
+	particles[id1].f[0] += fac * d[0];
+	particles[id1].f[1] += fac * d[1];
+	particles[id1].f[2] += fac * d[2];
+	particles[id2].f[0] -= fac * d[0];
+	particles[id2].f[1] -= fac * d[1];
+	particles[id2].f[2] -= fac * d[2];
+      }
+    }
   }
 
 }
