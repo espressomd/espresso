@@ -11,15 +11,15 @@
 #include "imd.h"
 #include "random.h"
 #include "communication.h"
+#include "tcl_rand.h"
 
 int initialize(Tcl_Interp *interp)
 {
   /*
     call the initialization of the modules here
   */
-
   init_random();
-
+ 
   /*
     installation of tcl commands
   */
@@ -39,6 +39,8 @@ int initialize(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "mindist", mindist, 0, NULL);
   /* in file imd.c */
   Tcl_CreateCommand(interp, "imd", imd, 0, NULL);
+  /* in file tcl_rand.c */
+  Tcl_CreateCommand(interp, "tcl_rand", tcl_rand, 0, NULL);
 
   /* in interaction_data.c: make sure 0<->0 ia always exists */
   make_particle_type_exist(0);
