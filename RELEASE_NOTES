@@ -7,6 +7,13 @@ What's new, what's been changed, what's been fixed
 
 Current working revision.
 
+- v1.6.6c -
+-----------
+(a) August 10th, 2004.
+
+Bugfixes:
+(a) Fixed bug in the mindist which only worked for symmetric sets.
+
 
 - v1.6.6b -
 -----------
