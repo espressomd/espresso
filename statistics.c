@@ -195,7 +195,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   else if (!strncmp(mode, "distto", strlen(mode))) {
-    /* 'analyze distto <posx> <posy> <posz>' */
+    /* 'analyze distto { <part_id> | <posx> <posy> <posz> }' */
 
     if (n_total_particles == 0) {
       Tcl_AppendResult(interp, "(no particles)",
@@ -537,10 +537,11 @@ double calc_rg()
 {
   int i, j;
   double dx, dy, dz;
-  double r_CM_x=0.0, r_CM_y=0.0, r_CM_z=0.0, r_G=0.0, doubMPC;
+  double r_CM_x,r_CM_y,r_CM_z, r_G=0.0, doubMPC;
 
   doubMPC = (double)chain_length;
   for (i=0; i<chain_n_chains; i++) {
+    r_CM_x = r_CM_y = r_CM_z = 0.0;
     for (j=0; j<chain_length; j++) {
       r_CM_x += partCfg[chain_start+i*chain_length + j].r.p[0];
       r_CM_y += partCfg[chain_start+i*chain_length + j].r.p[1];
@@ -766,9 +767,7 @@ void calc_energy()
   MPI_Reduce(energy.node.e, energy.sum.e, size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if(energy.ana_num==0 && this_node==0) {
-    int cnt = energy.n;
-    if(coulomb.method==COULOMB_P3M) cnt -= 2;
-    for(i=1;i<cnt;i++)
+    for(i=1;i<energy.n;i++)
       energy.sum.e[0] += energy.sum.e[i];
   }
 
