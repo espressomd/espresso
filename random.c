@@ -9,9 +9,11 @@
 #include "communication.h"
 #include "utils.h"
 
-/** \file random.c A random generator. Be sure to run init_random() before
-    you use any of the generators. */
+/** \file random.c A random generator. 
+    Be sure to run init_random() before you use any of the generators. */
 
+
+/* Stuff for Franks ran1-generator from the Numerical Recipes */
 const long     IA = 16807;
 const long     IM = 2147483647;
 const double   AM = (1.0/2147483647. );
@@ -20,11 +22,27 @@ const long     IR = 2836;
 const double NDIV = (double) (1+(2147483647-1)/NTAB_RANDOM);
 const double RNMX = (1.0-1.2e-7);
 
-
 static long  idum = -1;
 static long  idumInit = -1;
 static long  iy=0;
 static long  iv[NTAB_RANDOM];
+
+
+/* Stuff for Burkhards r250-generator */
+const long        MERS1 = 147;
+const long         NBIT = 32;
+const long   BIGINTEGER = 2147483647;
+const double   BIGFLOAT = 2147483647.;
+const double     FACTOR = 4.6566128752457969e-10;
+const double   MULTIPLY = 16807.;
+const long        NWARM = 10000;
+
+static int bit_seed = -1;
+static int rand_w_array[MERS_BIT_RANDOM];
+static int random_pointer_1 = -1;
+static int random_pointer_2 = -1;
+
+
 
 /*----------------------------------------------------------------------*/
 
@@ -147,7 +165,6 @@ RandomStatus print_random_stat(void) {
 
 /*----------------------------------------------------------------------*/
 
-
 /**  Implementation of the tcl-command
      t_random [{ int <n> | seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }]
      <li> Without further arguments, it returns a random double between 0 and 1.
@@ -226,3 +243,186 @@ int t_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   printf("Unknown error in tcl_seed(): This should have never been shown!\n");
   return(TCL_ERROR);
 }
+
+
+/*----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------*/
+
+
+double bit_random_generator() {
+  /* Creates random numbers by XOR-ing two lines in a big matrix of linear independent rows/columns -> 'R250' 
+   It's extremely fast, but has some Triplett-Correlations. */
+  //  extern int rand_w_array[MERS_BIT_RANDOM];
+  //  extern int random_pointer_1;
+  //  extern int random_pointer_2;
+  double random_number;
+
+  rand_w_array[random_pointer_1] = rand_w_array[random_pointer_1] ^ rand_w_array[random_pointer_2];
+  random_number = FACTOR * rand_w_array[random_pointer_1];
+  ++random_pointer_1;
+  ++random_pointer_2;
+  if(random_pointer_1 == MERS_BIT_RANDOM)      random_pointer_1 = 0;
+  else if(random_pointer_2 == MERS_BIT_RANDOM) random_pointer_2 = 0;
+
+  return(random_number);
+}
+
+/*----------------------------------------------------------------------*/
+
+void init_bit_random(void) {
+  /* initializes the bit random number generator. You MUST NOT FORGET THIS! */
+  
+  unsigned long seed;
+  seed = (10*this_node+1)*1103515245 + 12345;
+  seed = (seed/65536) % 32768;
+  init_bit_random_generator((int)seed);
+}
+
+/*----------------------------------------------------------------------*/
+
+void init_bit_random_generator(int iseed) {
+  /* Initializes the matrix for the bit_random_generator with a random but linear independent bit-pattern */
+  //  extern double bit_random_generator();
+  //  extern int rand_w_array[MERS_BIT_RANDOM];
+  int i = 0;
+  int imask1 = 0;
+  int imask2 = 0;
+  double rmod = (double) iseed;
+  bit_seed = iseed;
+  random_pointer_1 = 0;
+  random_pointer_2 = MERS1;
+
+  /* Warm up the modulo generator */
+  for(i = 0; i < NWARM; ++i) {
+    rmod = MULTIPLY * rmod;
+    rmod = rmod - (double) ( (int) (rmod * FACTOR) ) * BIGFLOAT;
+    rmod = (double) ( (int) (rmod + 0.1) );
+  }
+
+  /* Put random numbers on the working array */
+  for(i = 0; i < MERS_BIT_RANDOM; ++i) {
+    rmod = MULTIPLY * rmod;
+    rmod = rmod - (double) ( (int) (rmod * FACTOR) ) * BIGFLOAT;
+    rand_w_array[i] = (int) (rmod + 0.1);
+    rmod = (double) ( rand_w_array[i] );
+  }
+
+  /* Ensure linear independence of the array/matrix */
+  imask1 = 1;
+  imask2 = BIGINTEGER;
+  for(i = NBIT - 2; i > 0; --i) {
+    rand_w_array[i] = ( rand_w_array[i] | imask1 ) & imask2;
+    imask2 = imask2 ^ imask1;
+    imask1 = imask1 * 2;
+  }
+  rand_w_array[0] = imask1;
+
+  /* Warm up */
+  for(i = 0; i < NWARM; ++i) bit_random_generator();
+}
+
+/*----------------------------------------------------------------------*/
+
+int print_bit_random_seed(void) {
+  /* returns the seed originally used upon last initialize of the generator */
+  return(bit_seed);
+}
+
+/*----------------------------------------------------------------------*/
+
+BitRandomStatus print_bit_random_stat(void) {
+  /* returns current status of the bit random number generator */
+  BitRandomStatus tmp_stat; int i;
+
+  tmp_stat.random_pointer_1 = random_pointer_1;
+  tmp_stat.random_pointer_2 = random_pointer_2;
+  for(i = 0; i < MERS_BIT_RANDOM; i++) tmp_stat.rand_w_array[i] = rand_w_array[i];
+  return(tmp_stat);
+}
+
+/*----------------------------------------------------------------------*/
+
+void init_bit_random_stat(BitRandomStatus tmp_stat) {
+  /* initializes the bit random number generator to a given status */
+  int i;
+
+  random_pointer_1 = tmp_stat.random_pointer_1;
+  random_pointer_2 = tmp_stat.random_pointer_2;
+  for(i = 0; i < MERS_BIT_RANDOM; i++) rand_w_array[i] = tmp_stat.rand_w_array[i];
+}
+
+/*----------------------------------------------------------------------*/
+
+/**  Implementation of the tcl-command
+     bit_random [{ seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }]
+     <li> Without further arguments, it returns a random double between 0 and 1.
+     <li> If 'seed'/'stat' is given without further arguments, it returns a tcl-list with
+          the current seeds/status of the n_nodes active nodes; otherwise it issues the 
+	  given parameters as the new seeds/status to the respective nodes. */
+int bit_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  int i,j,cnt; double d_out;
+
+  if (argc == 1) {                                          /* 'bit_random' */
+    d_out = bit_random_generator();
+    sprintf(buffer, "%f", d_out); Tcl_AppendResult(interp, buffer, (char *) NULL); return (TCL_OK); }
+  else {
+    argc--; argv++;
+    if (!strncmp(argv[0], "seed", strlen(argv[0]))) {  /* 'bit_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
+      int *seed = malloc(n_nodes*sizeof(int));
+      if (argc <= 1) {
+	mpi_bit_random_seed(0,seed);
+	for (i=0; i < n_nodes; i++) { 
+	  sprintf(buffer, "%d ", seed[i]); Tcl_AppendResult(interp, buffer, (char *) NULL); 
+	}
+      }
+      else if (argc < n_nodes+1) { 
+	sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random seed [<seed(0)> ... <seed(%d)>]'", argc,n_nodes-1);
+	Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_ERROR); }
+      else {
+	for (i=0; i < n_nodes; i++) { seed[i] = atoi(argv[i+1]); }
+	RANDOM_TRACE(printf("Got "); for(i=0;i<n_nodes;i++) printf("%d ",seed[i]); printf("as new seeds.\n"));
+	mpi_bit_random_seed(n_nodes,seed);
+      }
+      free(seed); 
+      return(TCL_OK);
+    }
+    else if (!strncmp(argv[0], "stat", strlen(argv[0]))) {  /* 'bit_random stat [status-list]' */
+      BitRandomStatus *stat = malloc(n_nodes*sizeof(BitRandomStatus));
+      if (argc <= 1) {
+	mpi_bit_random_stat(0,stat);
+	for (i=0; i < n_nodes; i++) { 
+	  sprintf(buffer, "{"); Tcl_AppendResult(interp, buffer, (char *) NULL); 
+	  sprintf(buffer, "%d %d ", stat[i].random_pointer_1,stat[i].random_pointer_2); Tcl_AppendResult(interp, buffer, (char *) NULL);
+	  for (j=0; j < MERS_BIT_RANDOM; j++) { 
+	    sprintf(buffer, "%d ", stat[i].rand_w_array[j]); Tcl_AppendResult(interp, buffer, (char *) NULL); }
+	  sprintf(buffer, "} "); Tcl_AppendResult(interp, buffer, (char *) NULL);
+	}
+      }
+      else if (argc < n_nodes*(MERS_BIT_RANDOM+2)+1) { 
+	sprintf(buffer, "Wrong # of args (%d)! Usage: 't_random stat [<idum> <iy> <iv[0]> ... <iv[%d]>]^%d'", argc,MERS_BIT_RANDOM-1,n_nodes);
+	Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_ERROR); }
+      else {
+	cnt = 1;
+	for (i=0; i < n_nodes; i++) {
+	  stat[i].random_pointer_1 = atoi(argv[cnt++]); stat[i].random_pointer_2 = atoi(argv[cnt++]);
+	  for (j=0; j < MERS_BIT_RANDOM; j++) stat[i].rand_w_array[j] = atoi(argv[cnt++]);
+	}
+	RANDOM_TRACE(printf("Got "); for(i=0;i<n_nodes;i++) printf("%d/%d/... as new status.\n",stat[i].random_pointer_1,stat[i].random_pointer_2));
+	mpi_bit_random_stat(n_nodes,stat);
+      }
+      free(stat); 
+      return(TCL_OK);
+    }
+    else { 
+      sprintf(buffer, "Usage: 'bit_random [{ seed [<seed(0)> ... <seed(%d)>] | stat [status-list] }]'",n_nodes-1);
+      Tcl_AppendResult(interp, "Unknown job '",argv[0],"' requested!\n",buffer, (char *)NULL); return (TCL_ERROR); 
+    }
+  }
+  printf("Unknown error in tcl_seed(): This should have never been shown!\n");
+  return(TCL_ERROR);
+}
+
+
+
