@@ -40,15 +40,15 @@
  of code that should be executed iff the respective *_DEBUG macro is defined.
 */
 
-//#define COMM_DEBUG
-//#define INTEG_DEBUG
-//#define CELL_DEBUG
-//#define GHOST_DEBUG
+// #define COMM_DEBUG
+// #define INTEG_DEBUG
+// #define CELL_DEBUG
+// #define GHOST_DEBUG
 // #define GRID_DEBUG
-//#define VERLET_DEBUG
+// #define VERLET_DEBUG
 // #define PARTICLE_DEBUG
-//#define P3M_DEBUG
-//#define FFT_DEBUG
+// #define P3M_DEBUG
+// #define FFT_DEBUG
 // #define RANDOM_DEBUG
 // #define FORCE_DEBUG
 // #define THERMO_DEBUG
