@@ -302,8 +302,9 @@ proc blockfile_write_tclvariable {channel write tclvariable {which "all"}} {
     if { $which == "all" } {
 	# filter tcl system variables
 	set which [info globals]
-	foreach ixx {tcl_version argv argv0 tcl_interactive auto_oldpath errorCode auto_path errorInfo tcl_pkgPath
-	    tcl_patchLevel argc tcl_libPath tcl_library} {
+	foreach ixx {tcl_version argv argv0 tcl_interactive auto_oldpath errorCode 
+	    auto_path errorInfo tcl_pkgPath tcl_patchLevel argc tcl_libPath 
+	    tcl_library tk_strictMotif tk_library tk_version tk_patchLevel} {
 	    set ind [lsearch -exact $which $ixx]
 	    set which [lreplace $which $ind $ind]
 	}
