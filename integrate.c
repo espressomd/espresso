@@ -309,19 +309,22 @@ void rescale_forces()
 void propagate_velocities() 
 {
   Particle *p;
-  int m,n,o,i, np;
+  int m,n,o,i,j, np;
   INTEG_TRACE(fprintf(stderr,"%d: propagate_velocities:\n",this_node));
   INNER_CELLS_LOOP(m, n, o) {
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
-      if(p[i].ext_flag != PARTICLE_FIXED) 
+      if (p[i].ext_flag != PARTICLE_FIXED)
 #endif
 	{
-	  p[i].v[0] += p[i].f[0];
-	  p[i].v[1] += p[i].f[1];
-	  p[i].v[2] += p[i].f[2];
+	  for(j = 0; j < 3 ; j++){
+#ifdef EXTERNAL_FORCES
+	    if (p[i].fixed_coord_flag[j] != COORDINATE_FIXED)
+#endif
+	      {p[i].v[j] += p[i].f[j];}
+	  }
 	}
     }
   }
@@ -330,7 +333,7 @@ void propagate_velocities()
 void rescale_forces_propagate_vel() 
 {
   Particle *p;
-  int m,n,o,i, np;
+  int m,n,o,i,j, np;
   double scale;
 
   scale = 0.5 * time_step * time_step;
@@ -347,14 +350,17 @@ void rescale_forces_propagate_vel()
       ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f[0],p[i].f[1],p[i].f[2],p[i].v[0],p[i].v[1],p[i].v[2]));
 
 #ifdef EXTERNAL_FORCES
-      if(p[i].ext_flag != PARTICLE_FIXED) 
+      if (p[i].ext_flag != PARTICLE_FIXED)
 #endif
 	{
-	  p[i].v[0] += p[i].f[0];
-	  p[i].v[1] += p[i].f[1];
-	  p[i].v[2] += p[i].f[2];
+	  for(j = 0; j < 3 ; j++) {
+#ifdef EXTERNAL_FORCES
+	    if (p[i].fixed_coord_flag[j] != COORDINATE_FIXED)
+#endif
+	      {  p[i].v[j] += p[i].f[j];}
+	    
+	  }
 	}
-
       ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].v[0],p[i].v[1],p[i].v[2]));
       
     }
@@ -364,7 +370,7 @@ void rescale_forces_propagate_vel()
 void propagate_positions() 
 {
   Particle *p;
-  int m,n,o,i, np;
+  int m,n,o,i,j, np;
 
   int *verlet_flags = malloc(sizeof(int)*n_nodes);
   double skin2;
@@ -377,12 +383,15 @@ void propagate_positions()
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
-      if(p[i].ext_flag != PARTICLE_FIXED) 
+      if (p[i].ext_flag != PARTICLE_FIXED)
 #endif
 	{
-	  p[i].r.p[0] += p[i].v[0];
-	  p[i].r.p[1] += p[i].v[1];
-	  p[i].r.p[2] += p[i].v[2];
+	  for (j=0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+	    if (p[i].fixed_coord_flag[j] != COORDINATE_FIXED)
+#endif
+	      {p[i].r.p[j] += p[i].v[j];}
+	  }
 	}
       /* Verlet criterion check */
       if(distance2(p[i].r.p,p[i].p_old) > skin2 )
@@ -413,7 +422,7 @@ void propagate_positions()
 void propagate_vel_pos() 
 {
   Particle *p;
-  int m,n,o,i, np;
+  int m,n,o,i,j, np;
   int *verlet_flags = malloc(sizeof(int)*n_nodes);
   double skin2;
 
@@ -432,23 +441,33 @@ void propagate_vel_pos()
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
-      if(p[i].ext_flag != PARTICLE_FIXED) 
+      if (p[i].ext_flag != PARTICLE_FIXED)
 #endif
 	{
-	  p[i].v[0] += p[i].f[0];
-	  p[i].v[1] += p[i].f[1];
-	  p[i].v[2] += p[i].f[2];
-	
-
-	  ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].v[0],p[i].v[1],p[i].v[2]));
-	  
-	  p[i].r.p[0] += p[i].v[0];
-	  p[i].r.p[1] += p[i].v[1];
-	  p[i].r.p[2] += p[i].v[2];
+	  for(j=0; j < 3; j++){
+#ifdef EXTERNAL_FORCES
+	    if (p[i].fixed_coord_flag[j] != COORDINATE_FIXED)	
+#endif
+	      { p[i].v[j] += p[i].f[j];}
+	    
+	  }
 	}
+      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].v[0],p[i].v[1],p[i].v[2]));
 
+#ifdef EXTERNAL_FORCES
+      if (p[i].ext_flag != PARTICLE_FIXED)
+#endif
+	{
+	  for(j=0; j < 3; j++){
+#ifdef EXTERNAL_FORCES
+	    if (p[i].fixed_coord_flag[j] != COORDINATE_FIXED)	
+#endif
+	      {p[i].r.p[j] += p[i].v[j];}
+	  }
+	}
       ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
 
+ 
 
 #ifdef ADDITIONAL_CHECKS
       /* force check */
@@ -470,7 +489,7 @@ void propagate_vel_pos()
       /* Verlet criterion check */
       if(distance2(p[i].r.p,p[i].p_old) > skin2 )
 	rebuild_verletlist = 1; 
-    }
+      }
   }
 
 #ifdef ADDITIONAL_CHECKS

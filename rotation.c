@@ -160,7 +160,8 @@ void define_Qdd(Particle *p)
 		   p->r.quat[0] * Wd[2] ) - p->r.quat[3] * S1;
 }
 
-/** propagate angular velocities and quaternions */
+/** propagate angular velocities and quaternions \todo implement for
+       fixed_coord_flag */
 void propagate_omega_quat() 
 {
   Particle *p;
@@ -179,6 +180,7 @@ dtdt2 = dtdt*0.5;
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
+
       if(p[i].ext_flag != PARTICLE_FIXED) 
 #endif
 	{ define_Qd(&p[i]); 

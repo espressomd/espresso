@@ -294,7 +294,7 @@ extern Constraint *constraints;
  ************************************************/
 
 /** Implementation of the tcl command \ref tcl_inter. This function
-    allows to modify the interaction parameters.
+    allows the interaction parameters to be modified.
  */
 int inter(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);

@@ -188,6 +188,8 @@ void mpi_remove_particle(int node, int id);
     \param part the particle.
     \param node the node it is attached to.
     \param part_data where to store the received data.
+    \note Gets a copy of the particle data not a pointer to the actual particle
+    used in integration
 */
 void mpi_recv_part(int node, int part, Particle *part_data);
 
@@ -252,6 +254,9 @@ void mpi_bcast_coulomb_params();
 
 /** Issue REQ_SEND_EXT: send nex external flag and external force. */
 void mpi_send_ext(int pnode, int part, int flag, double force[3]);
+
+/** Issue REQ_SEND_FIX: send new coordinate axes to be fixed. */
+void mpi_send_fix(int pnode, int part, int coord_flag[3]);
 
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_constraint(int del_num);

@@ -89,39 +89,41 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_BCAST_COULOMB 17
 /** Action number for \ref mpi_send_ext. */
 #define REQ_SET_EXT 18
+/** Action number for \ref mpi_send_fix. */
+#define REQ_SET_FIX 19
 /** Action number for \ref mpi_place_particle. */
-#define REQ_PLACE_NEW   19
+#define REQ_PLACE_NEW   20
 /** Action number for \ref mpi_remove_particle */
-#define REQ_REM_PART   20
+#define REQ_REM_PART   21
 /** Action number for \ref mpi_bcast_constraint */
-#define REQ_BCAST_CONSTR 21
+#define REQ_BCAST_CONSTR 22
 /** Action number for \ref mpi_random_seed */
-#define REQ_RANDOM_SEED 22
+#define REQ_RANDOM_SEED 23
 /** Action number for \ref mpi_random_stat */
-#define REQ_RANDOM_STAT 23
+#define REQ_RANDOM_STAT 24
 /** Action number for \ref mpi_lj_cap_forces. */
-#define REQ_BCAST_LFC 24
+#define REQ_BCAST_LFC 25
 /** Action number for \ref mpi_random_seed */
-#define REQ_BIT_RANDOM_SEED 25
+#define REQ_BIT_RANDOM_SEED 26
 /** Action number for \ref mpi_random_stat */
-#define REQ_BIT_RANDOM_STAT 26
+#define REQ_BIT_RANDOM_STAT 27
 /** Action number for \ref mpi_get_constraint_force */
-#define REQ_GET_CONSFOR 27
+#define REQ_GET_CONSFOR 28
 /** Action number for \ref mpi_rescale_particles */
-#define REQ_RESCALE_PART 28
+#define REQ_RESCALE_PART 29
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 29
+#define REQ_MAXIMUM 30
 
 #ifdef ROTATION
 /** Action number for \ref mpi_send_quat. */
-#define REQ_SET_QUAT 29
+#define REQ_SET_QUAT 30
 /** Action number for \ref mpi_send_omega. */
-#define REQ_SET_OMEGA 30
+#define REQ_SET_OMEGA 31
 /** Action number for \ref mpi_send_torque. */
-#define REQ_SET_TORQUE 31
+#define REQ_SET_TORQUE 32
 /** Total number of action numbers. */
 #undef REQ_MAXIMUM
-#define REQ_MAXIMUM 32
+#define REQ_MAXIMUM 33
 #endif
 
 /** \name Slave Callbacks
@@ -154,6 +156,7 @@ void mpi_set_time_step_slave(int node, int parm);
 void mpi_get_particles_slave(int node, int parm);
 void mpi_bcast_coulomb_params_slave(int node, int parm);
 void mpi_send_ext_slave(int node, int parm);
+void mpi_send_fix_slave(int node, int parm);
 void mpi_remove_particle_slave(int node, int parm);
 void mpi_bcast_constraint_slave(int node, int parm);
 void mpi_random_seed_slave(int node, int parm);
@@ -187,20 +190,21 @@ SlaveCallback *callbacks[] = {
   mpi_get_particles_slave,          /* 16: REQ_GETPARTS */
   mpi_bcast_coulomb_params_slave,   /* 17: REQ_BCAST_COULOMB */
   mpi_send_ext_slave,               /* 18: REQ_SEND_EXT */
-  mpi_place_particle_slave,         /* 19: REQ_PLACE_NEW */
-  mpi_remove_particle_slave,        /* 20: REQ_REM_PART */
-  mpi_bcast_constraint_slave,       /* 21: REQ_BCAST_CONSTR */
-  mpi_random_seed_slave,            /* 22: REQ_RANDOM_SEED */
-  mpi_random_stat_slave,            /* 23: REQ_RANDOM_STAT */
-  mpi_lj_cap_forces_slave,          /* 24: REQ_BCAST_LFC */
-  mpi_bit_random_seed_slave,        /* 25: REQ_RANDOM_SEED */
-  mpi_bit_random_stat_slave,        /* 26: REQ_RANDOM_STAT */
-  mpi_get_constraint_force_slave,   /* 27: REQ_GET_CONSFOR */
-  mpi_rescale_particles_slave,      /* 28: REQ_RESCALE_PART */
+  mpi_send_fix_slave,               /* 19: REQ_SEND_FIX */
+  mpi_place_particle_slave,         /* 20: REQ_PLACE_NEW */
+  mpi_remove_particle_slave,        /* 21: REQ_REM_PART */
+  mpi_bcast_constraint_slave,       /* 22: REQ_BCAST_CONSTR */
+  mpi_random_seed_slave,            /* 23: REQ_RANDOM_SEED */
+  mpi_random_stat_slave,            /* 24: REQ_RANDOM_STAT */
+  mpi_lj_cap_forces_slave,          /* 25: REQ_BCAST_LFC */
+  mpi_bit_random_seed_slave,        /* 26: REQ_RANDOM_SEED */
+  mpi_bit_random_stat_slave,        /* 27: REQ_RANDOM_STAT */
+  mpi_get_constraint_force_slave,   /* 28: REQ_GET_CONSFOR */
+  mpi_rescale_particles_slave,      /* 29: REQ_RESCALE_PART */
 #ifdef ROTATION
-  mpi_send_quat_slave,              /* 29: REQ_SET_QUAT */
-  mpi_send_omega_slave,             /* 30: REQ_SET_OMEGA */
-  mpi_send_torque_slave,            /* 31: REQ_SET_TORQUE */
+  mpi_send_quat_slave,              /* 30: REQ_SET_QUAT */
+  mpi_send_omega_slave,             /* 31: REQ_SET_OMEGA */
+  mpi_send_torque_slave,            /* 32: REQ_SET_TORQUE */
 #endif  
 };
 
@@ -225,20 +229,21 @@ char *names[] = {
   "GET_PARTS" ,     /* 16 */
   "BCAST_CIA" ,     /* 17 */
   "SEND_EXT"  ,     /* 18 */
-  "PLACE_NEW" ,     /* 19 */
-  "REM_PART"  ,     /* 20 */
-  "BCAST_CON" ,     /* 21 */
-  "RAND_SEED" ,     /* 22 */
-  "RAND_STAT" ,     /* 23 */
-  "BCAST_LFC" ,     /* 24 */
-  "BIT_RAND_SEED",  /* 25 */
-  "BIT_RAND_STAT",  /* 26 */
-  "GET_CONSTR",     /* 27 */
-  "RESCALE_PART",   /* 28 */
+  "SEND_FIX"  ,     /* 19 */
+  "PLACE_NEW" ,     /* 20 */
+  "REM_PART"  ,     /* 21 */
+  "BCAST_CON" ,     /* 22 */
+  "RAND_SEED" ,     /* 23 */
+  "RAND_STAT" ,     /* 24 */
+  "BCAST_LFC" ,     /* 25 */
+  "BIT_RAND_SEED",  /* 26 */
+  "BIT_RAND_STAT",  /* 27 */
+  "GET_CONSTR",     /* 28 */
+  "RESCALE_PART",   /* 29 */
 #ifdef ROTATION  
-  "SET_QUAT"  ,     /* 29 */
-  "SET_OMEGA",      /* 30 */
-  "SET_TORQUE",     /* 31 */
+  "SET_QUAT"  ,     /* 30 */
+  "SET_OMEGA",      /* 31 */
+  "SET_TORQUE",     /* 32 */
 #endif  
 };
 
@@ -766,6 +771,11 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
     memcpy(pdata->torque, p->torque, 3*sizeof(double));
     memcpy(pdata->omega, p->omega, 3*sizeof(double));
 #endif
+#ifdef EXTERNAL_FORCES
+    pdata->ext_flag = p->ext_flag;
+    memcpy(pdata->fixed_coord_flag, p->fixed_coord_flag, 3*sizeof(int));
+#endif
+
 
     bl->max = bl->n = p->bl.n;
 
@@ -799,7 +809,13 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);     
     MPI_Recv(pdata->torque, 3, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-#endif   
+#endif 
+#ifdef EXTERNAL_FORCES
+    MPI_Recv(pdata->fixed_coord_flag, 3, MPI_INT, pnode,
+	     REQ_GET_PART, MPI_COMM_WORLD, &status); 
+    MPI_Recv(&pdata->ext_flag, 1, MPI_INT, pnode,
+	     REQ_GET_PART, MPI_COMM_WORLD, &status);
+#endif
     MPI_Recv(pdata->i, 3, MPI_INT, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
     MPI_Recv(pdata->v, 3, MPI_DOUBLE, pnode,
@@ -841,6 +857,12 @@ void mpi_recv_part_slave(int pnode, int part)
   MPI_Send(p->omega, 3, MPI_DOUBLE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);	   
   MPI_Send(p->torque, 3, MPI_DOUBLE, 0, REQ_GET_PART,
+	   MPI_COMM_WORLD);
+#endif
+#ifdef EXTERNAL_FORCES
+  MPI_Send(p->fixed_coord_flag, 3, MPI_INT, 0, REQ_GET_PART,
+	   MPI_COMM_WORLD);
+  MPI_Send(&p->ext_flag, 1, MPI_INT, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
 #endif	 
   MPI_Send(p->i, 3, MPI_INT, 0, REQ_GET_PART,
@@ -1229,6 +1251,37 @@ void mpi_send_ext_slave(int pnode, int part)
 #endif
 }
 
+void mpi_send_fix(int pnode, int part, int coord_flag[3])
+{
+#ifdef EXTERNAL_FORCES
+  mpi_issue(REQ_SET_FIX, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    memcpy(p->fixed_coord_flag, coord_flag, 3*sizeof(int));
+  }
+  else {
+    MPI_Send(coord_flag, 3, MPI_INT, pnode, REQ_SET_FIX, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_fix_slave(int pnode, int part)
+{
+#ifdef EXTERNAL_FORCES
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(p->fixed_coord_flag, 3, MPI_INT, 0, REQ_SET_FIX, MPI_COMM_WORLD, &status);
+  }
+
+  on_particle_change();
+#endif
+
+}
+
 /*************** REQ_BCAST_CONSTR ************/
 void mpi_bcast_constraint(int del_num)
 {
@@ -1465,3 +1518,4 @@ void mpi_loop()
 		       names[request[0]], request[1], request[2]));
   }
 }
+

@@ -77,13 +77,18 @@ void thermo_init()
 
 void friction_thermo(Particle *p)
 {
+  int j;
 #ifdef EXTERNAL_FORCES
   if(p->ext_flag != PARTICLE_FIXED) 
 #endif
     {
-      p->f[0] = pref1*p->v[0] + pref2*(d_random()-0.5);
-      p->f[1] = pref1*p->v[1] + pref2*(d_random()-0.5);
-      p->f[2] = pref1*p->v[2] + pref2*(d_random()-0.5);
+      for ( j = 0 ; j < 3 ; j++)
+	{
+#ifdef EXTERNAL_FORCES
+	  if (p->fixed_coord_flag[j] != COORDINATE_FIXED )
+#endif
+	    p->f[j] = pref1*p->v[j] + pref2*(d_random()-0.5);
+	}
 
       ONEPART_TRACE(if(p->r.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f[0],p->f[1],p->f[2]));
 
