@@ -234,3 +234,12 @@ topic2:    I am currently finishing a PhD on the diffusion of liquids in nanosca
 	   I don't plan to use Espresso in the short term as I'm still very busy running my own codes, 
 	   but hopefully in the future I'll get time to study the code and perhaps contribute to it.
 
+
+
+name:      Neeraj Rai
+email:     rai@chem.umn.edu
+institute: University of Minnesota
+sent:      26.MAR.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     MC/MD simulations
+
