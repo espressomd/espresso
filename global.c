@@ -156,11 +156,9 @@ int ro_callback(Tcl_Interp *interp, void *data)
 int setmd(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv)
 {
-  double dbuffer[MAX_DIMENSION];
-  int    ibuffer[MAX_DIMENSION];
-  char   buffer[TCL_DOUBLE_SPACE + 5];
+  char databuf[MAX_DIMENSION*(sizeof(int) + sizeof(double))];
+  char buffer[TCL_DOUBLE_SPACE + 5];
   int i, j;
-  int status;
 
   if (argc < 2) {
     Tcl_AppendResult(interp, "wrong # args:  should be \"",
@@ -188,29 +186,18 @@ int setmd(ClientData data, Tcl_Interp *interp,
 	for (j = 0; j < fields[i].dimension; j++) {
 	  switch (fields[i].type) {
 	  case TYPE_INT:
-	    if (Tcl_GetInt(interp, argv[2 + j], &ibuffer[j]) == TCL_ERROR)
+	    if (Tcl_GetInt(interp, argv[2 + j], (int *)databuf + j) == TCL_ERROR)
 	      return (TCL_ERROR);
 	    break;
 	  case TYPE_DOUBLE:
-	    if (Tcl_GetDouble(interp, argv[2 + j], &dbuffer[j]))
+	    if (Tcl_GetDouble(interp, argv[2 + j], (double *)databuf + j))
 	      return (TCL_ERROR);
 	    break;
 	  default: ;
 	  }
 	}
 
-	/* call changeproc */
-	switch(fields[i].type) {
-	case TYPE_INT:
-	  status = fields[i].changeproc(interp, ibuffer);
-	  break;
-	case TYPE_DOUBLE:
-	  status = fields[i].changeproc(interp, dbuffer);
-	  break;
-	default:
-	  status = TCL_ERROR;
-	}
-	if (status != TCL_OK)
+	if (fields[i].changeproc(interp, databuf) != TCL_OK)
 	  return TCL_ERROR;
       }
 

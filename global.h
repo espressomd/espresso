@@ -36,7 +36,7 @@ typedef struct {
   void        *data;
   /** Type of the variable, either \ref TYPE_INT or \ref TYPE_DOUBLE.*/
   int          type;
-  /** Dimension of the variable. */
+  /** Dimension of the variable. Limited to \ref MAX_DIMENSION */
   int          dimension;
   /** Name used in the Tcl script. */
   const char  *name;
