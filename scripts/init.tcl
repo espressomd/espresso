@@ -47,3 +47,4 @@ source countBonds.tcl
 # adds 'findPropPos' to determine the index-position of a certain property in the output of 'part'
 # adds 'findBondPos' to do the same for property 'bonds'
 
+source blockfile_support.tcl
