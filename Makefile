@@ -7,6 +7,9 @@
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 #  Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 # 
+
+PLATFORMS=AIX Linux OSF1
+
 ########### load platform dependent part
 PLATFORM=$(shell uname -s)
 include Makefile.$(PLATFORM)
@@ -19,7 +22,9 @@ CSOURCES= main initialize global communication binary_file interaction_data \
 	  uwerr parser domain_decomposition nsquare
 CXXSOURCES=
 
-LIBOBJECTS=c_blockfile.o
+LIBOBJECTS= c_blockfile.o
+
+DOC_RES= doc/html doc/rtf doc/latex doc/man
 
 ########### RULES
 #################
@@ -56,9 +61,19 @@ clean:
 	rm -f *~
 	(cd $(PLATFORM); rm -f $(OBJECTS) )
 docclean:
-	rm -rf doc/html/* doc/rtf/* doc/latex/* doc/man/*
+	rm -rf $(DOC_RES:=/*)
 mostclean: clean docclean
-	rm -rf $(PLATFORM)
+	for platform in $(PLATFORMS); do \
+		rm -rf $$platform; \
+	done
+
+########### transport
+EXCLUDES=$(PLATFORMS:%=--exclude=%) $(DOC_RES:%=--exclude=%) \
+	--exclude=*.avi --exclude=transport.tgz --exclude=*~ \
+	--exclude=CVS
+
+transport:
+	(cd ..; tar -vczf Espresso/transport.tgz Espresso $(EXCLUDES))
 
 ########### dependencies
 dep: 
