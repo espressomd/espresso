@@ -5,7 +5,7 @@
 #include "integrate.h"
 #include "global.h"
 
-#define DEBUG
+//#define DEBUG
 
 int this_node = -1;
 int nprocs = -1;
@@ -42,11 +42,23 @@ void mpi_init(int *argc, char ***argv)
 }
 
 /**************** REQ_TERM ************/
+
+int terminated = 0;
+
 void mpi_stop()
 {
   int req[2] = { REQ_TERM, 0 };
+
+  if (terminated)
+    return;
+
   MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
+#ifdef DEBUG
+  fprintf(stderr, "%d: sent TERM\n", this_node);
+#endif
+  MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
+  terminated = 1;
 }
 
 void mpi_stop_slave(int param)
@@ -54,6 +66,7 @@ void mpi_stop_slave(int param)
 #ifdef DEBUG
   fprintf(stderr, "%d: exiting\n", this_node);
 #endif
+  MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
   exit(-1);
 }

@@ -147,11 +147,6 @@ extern double max_range2;
 extern int calc_forces_first;
 
 /****************************************
- * ghost communication from ghost.c
- *****************************************/
-extern int double_sided;
-
-/****************************************
  * Verlet list from verlet.c
  ****************************************/
 extern int   n_verletList;

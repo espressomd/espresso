@@ -4,7 +4,7 @@
 
 #include "forces.h"
 
-#define DEBUG
+//#define DEBUG
 
 void force_init()
 {

@@ -14,6 +14,15 @@
 
 /** link cell structure. */
 typedef struct {
+  /* A word about the interacting neighbour cells:\\
+     In a 3D lattice each cell has 26 neighbours. Since we deal 
+     with pair forces, it is sufficient to calculate only half 
+     of the interactions (Newtons law: actio = reactio). For each 
+     cell 13 neighbours. This has only to be done for the inner 
+     cells. Caution: This implementation needs double sided ghost 
+     communication! For single sided ghost communication one 
+     would need some ghost-ghost cell interaction as well, which 
+     we do not need!   */
   /** number of interacting neighbour cells . */
   int n_neighbours;
   /** interacting neighbour cell list (linear indices) */

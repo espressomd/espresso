@@ -4,7 +4,7 @@
 
 #include "ghosts.h"
 
-#define DEBUG_GHOSTS
+//#define DEBUG_GHOSTS
 
 /** flag for double sided ghost frame. */
 int double_sided = 0;

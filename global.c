@@ -214,9 +214,9 @@ int boxl_callback(Tcl_Interp *interp, void *_data)
 void changed_topology()
 {
   int i;
-  for(i = 0; i < 3; i++)
+  for(i = 0; i < 3; i++) {
     local_box_l[i] = box_l[i]/(double)processor_grid[i]; 
-
+  }
   rebuild_verletlist = 1;
 }
 
