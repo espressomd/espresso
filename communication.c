@@ -148,7 +148,8 @@ SlaveCallback *callbacks[] = {
   mpi_remove_particle_slave,        /* 20: REQ_REM_PART */
   mpi_bcast_constraint_slave,       /* 21: REQ_BCAST_CONSTR */
   mpi_random_seed_slave,            /* 22: REQ_RANDOM_SEED */
-  mpi_lj_cap_forces_slave,          /* 23: REQ_RANDOM_STAT */
+  mpi_random_stat_slave,            /* 23: REQ_RANDOM_STAT */
+  mpi_lj_cap_forces_slave,          /* 24: REQ_BCAST_LFC */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -1120,8 +1121,10 @@ void mpi_loop()
     COMM_TRACE(fprintf(stderr, "%d: processing %s %d...\n", this_node,
 		       names[request[0]], request[1]));
  
-    if ((request[0] < 0) || (request[0] >= REQ_MAXIMUM))
-      continue;
+    if ((request[0] < 0) || (request[0] >= REQ_MAXIMUM)) {
+      fprintf(stderr, "%d: FATAL internal error: unknown request %d\n", this_node, request[0]);
+      errexit();
+    }
     callbacks[request[0]](request[1], request[2]);
     COMM_TRACE(fprintf(stderr, "%d: finished %s %d %d\n", this_node,
 		       names[request[0]], request[1], request[2]));
