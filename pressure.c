@@ -12,6 +12,7 @@
 #include "integrate.h"
 #include "domain_decomposition.h"
 #include "nsquare.h"
+#include "layered.h"
 
 Observable_stat virials = {0, {NULL,0,0}, 0,0,0,0};
 Observable_stat total_pressure = {0, {NULL,0,0}, 0,0,0,0};
@@ -70,6 +71,9 @@ void pressure_calc(double *result)
   }
 
   switch (cell_structure.type) {
+  case CELL_STRUCTURE_LAYERED:
+    layered_calculate_virials();
+    break;
   case CELL_STRUCTURE_DOMDEC:
     if (rebuild_verletlist) build_verlet_lists();
     calculate_verlet_virials();
