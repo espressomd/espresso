@@ -1,0 +1,60 @@
+/** \mainpage
+
+\section introduction Introduction
+
+tcl_md is a molecular dynamics program. It uses
+<a href="http://tcl.activestate.com">Tcl</a> as controlling language
+to allow great flexibility. bla bla bla
+
+\section tcl Using Tcl
+
+The program tcl_md is an enhanced Tcl interpreter. Additionally to the standard commands
+of Tcl it offers the following commands, which are implemented in C and provide the
+interface between the Tcl script and the MD code:
+
+<ul>
+<li>\verbatim setmd <variable> <value>+ \endverbatim
+modifies variables declared in \ref fields.
+The C implementation is \ref setmd.
+
+<li>\verbatim part <particle_number> ( q|type|pos|v|f <value>+ )* \endverbatim
+	modifies particle data, namely
+	charge, type, position, velocity and force. Multiple properties can be changed
+	at once. If no property is given, \verbatim part <particle_number> \endverbatim 
+	returns the properties of the particle if it exists.
+	The C implementation is \ref part.
+
+<li>\verbatim inter <type1> <type2> <interaction_type> <value>+ \endverbatim
+	sets the parameters
+	for the different non-bonded interactions between particles of
+	types type1 and type2 (the types are those set using \ref part).
+	Currently known interaction types are:
+	<ul>
+   	<li>\verbatim lennard-jones \endverbatim
+		the known Lennard-Jones potential
+		\f[24 \epsilon \left(2 \left(\frac{\sigma}{r-offset}\right)^{12} -
+			 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
+		The order of the paramters is
+		\f$\epsilon, \sigma, cutoff, shift, offset\f$.
+
+	<li>\verbatim ramp \endverbatim
+		a simple step potential for initialization.
+		The parameters are the cutoff
+		and the force magnitude. If two particles are within the cutoff, they feel
+		a constant repulsion of the given magnitude.
+	</ul>
+	The C implementation is \ref inter.
+
+<li>\verbatim writemd <channel> ( posx|posy|posz|q|type|vx|vy|vz|fx|fy|z )+\endverbatim
+	writes to the channel <channel> (previously opened using the Tcl commands open or
+	socket) the given properties for all particles.
+
+<li>\verbatim readmd <channel>\endverbatim reads back that data. All components
+	posx, posy and posz should be included since otherwise domain decomposition is
+	impossible.
+
+<li>\verbatim integrate init|<steps>|exit \endverbatim
+	init starts a new simulation, exit stops it, else the simulation will run for
+	<steps> steps. 
+</ul>
+*/

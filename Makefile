@@ -17,6 +17,11 @@ CXXFILES=$(CXXSOURCES:=.cc)
 default: $(PLATFORM) $(PLATFORM)/tcl_md
 all: $(PLATFORM) $(PLATFORM)/tcl_md
 
+########### documentation
+doc: doxygen_header $(CFILES) $(CXXFILES)
+	doxygen doxygen_config
+	(cd doc/latex; make)
+
 ########### output directory
 $(PLATFORM):
 	mkdir -p $(PLATFORM)
