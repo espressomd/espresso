@@ -10,7 +10,10 @@
 ############ general settings
 
 ### Tk (graphical interface)
-TK=no
+TK=yes
+
+### use a simple fake MPI implementation for single node use only
+MPIFAKE=yes
 
 ### which version of fftw to use, default is use fftw2
 USEFFTW3=no
@@ -21,7 +24,7 @@ USEFFTW3=no
 CC=cc
 
 # optimized compiler flags
-CFLAGS=-g -O3 -qcpluscmt -qarch=g5
+CFLAGS=-g -O3 -qcpluscmt -qaltivec -qarch=auto
 
 ############ name of makedepend (or gcc -ME)
 DEPEND=makedepend
@@ -36,6 +39,12 @@ CFLAGS+= -I/Library/Frameworks/Tcl.framework/Headers
 export DARWINLINK=$(CC)
 LINK=../darwinlink.sh
 LDLIBS=-O3 -L/usr/local/lib -lmpi -lm -ltcl -llam
+
+############ fake mpi
+ifeq ($(MPIFAKE),yes)
+        CSOURCES += mpi
+        CFLAGS += -I.
+endif
 
 # FFTW. Note this is VERY specific for our cluster
 CFLAGS += -I/usr/local/include
