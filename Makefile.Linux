@@ -108,7 +108,7 @@ ifeq ($(ICC),yes)
           endif
      endif
 
-     CFLAGS=-O3 -ip -w1 $(HOSTFLAGS)
+     CFLAGS=-O3 -ip -w1 -wd 1572,1173 $(HOSTFLAGS)
 
      # debug compiler flags
      ifeq ($(DEBUG),yes)

@@ -289,13 +289,13 @@ MDINLINE double SQR(double x) { return x*x; }
     Dover (9. ed.), chapter 7 */
 MDINLINE double AS_erfc_part(double d)
 {
-  static double AS_a1 =  0.254829592;
-  static double AS_a2 = -0.284496736;
-  static double AS_a3 =  1.421413741;
-  static double AS_a4 = -1.453152027;
-  static double AS_a5 =  1.061405429;
-  static double AS_p  =  0.3275911;
-  static double t;
+  #define AS_a1  0.254829592
+  #define AS_a2 -0.284496736
+  #define AS_a3  1.421413741
+  #define AS_a4 -1.453152027
+  #define AS_a5  1.061405429
+  #define AS_p   0.3275911
+  double t;
   
   t = 1.0 / (1.0 + AS_p * d);
   
@@ -316,12 +316,12 @@ MDINLINE double AS_erfc_part(double d)
 */
 MDINLINE double sinc(double d)
 {
-  static double epsi =  0.1;
+  #define epsi 0.1
 
-  static double   c2 = -0.1666666666667e-0;
-  static double   c4 =  0.8333333333333e-2;
-  static double   c6 = -0.1984126984127e-3;
-  static double   c8 =  0.2755731922399e-5;
+  #define c2 -0.1666666666667e-0
+  #define c4  0.8333333333333e-2
+  #define c6 -0.1984126984127e-3
+  #define c8  0.2755731922399e-5
 
   double PId = PI*d, PId2;
 
