@@ -10,6 +10,29 @@
 # \
     fi;
 
+set errf [lindex $argv 1]
+
+proc error_exit {error} {
+    global errf
+    set f [open $errf "w"]
+    puts $f "Error occured: $error"
+    close $f
+    exit -666
+}
+
+proc require_feature {feature} {
+    global errf
+    if { ! [regexp $feature [code_info]]} {
+	set f [open $errf "w"]
+	puts $f "not compiled in: $feature"
+	close $f
+	exit -42
+    }
+}
+
+require_feature "ELECTROSTATICS"
+require_feature "PARTIAL_PERIODIC"
+
 set epsilon 1e-4
 setmd temp 0
 setmd time_step 1
@@ -163,8 +186,7 @@ if { [catch {
 	error "force error too large"
     }
 } res ] } {
-    puts "Error occured: \"$res\""
-    exit -666
+    error_exit $res
 }
 
 exit 0
