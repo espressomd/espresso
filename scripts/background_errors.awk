@@ -32,12 +32,12 @@
   if(i == 1 && j == 0) {
     if(match($0,/[a-zA-Z0-9_]+\(.*\).*{/) == 0)
       $0 = buf $0
-#print
     x = match($0,/\(/)
     $0 = substr($0,1,x-1)
     x = split($0,s)
     fname = s[x]
-print fname
+    if(match(fname,/\*/) == 1)
+      fname = substr(fname,2,length(fname)-1)
   }
   buf = $0
   j = i
