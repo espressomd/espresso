@@ -18,10 +18,15 @@
 #include "p3m.h"
 #include "cells.h"
 /* include the force files */
+#include "lj.h"
 #include "fene.h"
 #include "angle.h"
 
 double minimum_part_dist = -1;
+
+/** initialize real particle forces with thermostat forces and
+    ghost particle forces with zero. */
+void init_forces();
 
 /************************************************************/
 
@@ -32,6 +37,10 @@ void force_init()
 		      this_node,n_interaction_types));
   FORCE_TRACE(fprintf(stderr,"%d: found %d particles types\n",
 		      this_node,n_particle_types));
+  FORCE_TRACE(fprintf(stderr,"%d: lj_force_cap = %f\n",this_node,lj_force_cap));
+
+  calc_lj_cap_radii(lj_force_cap);
+
 }
 
 
@@ -58,37 +67,14 @@ void force_calc()
   int k, i,j, m, n, o, np;
   double d[3], dist2, dist;
   IA_parameters *ia_params;
-  double frac2,frac6,r_off;
-  double fac, adist;
   /* bonded interactions */
   int type_num;
-  /* electrostatic */
-  double  erfc_part_ri;
 
+  /* preparation */
   minimum_part_dist = box_l[0] + box_l[1] + box_l[2];
+  init_forces();
 
-  /* initialize forces with thermostat forces and
-     ghost forces with zero */
-
-  CELLS_LOOP(m, n, o) {
-    p  = CELL_PTR(m, n, o)->pList.part;
-    np = CELL_PTR(m, n, o)->pList.n;
-    /* ghost selection */
-    if (m == 0 || m == ghost_cell_grid[0] - 1 ||
-	n == 0 || n == ghost_cell_grid[1] - 1 ||
-	o == 0 || o == ghost_cell_grid[2] - 1) {
-      for (i = 0; i < np; i++) {
-	p[i].f[0] = 0;
-	p[i].f[1] = 0;
-	p[i].f[2] = 0;
-      }
-    }
-    else {
-      for (i = 0; i < np; i++)
-	friction_thermo(&p[i]);
-    }
-  }
-
+  /* force calculation loop. */
   INNER_CELLS_LOOP(m, n, o) {
     cell = CELL_PTR(m, n, o);
     p  = cell->pList.part;
@@ -120,70 +106,25 @@ void force_calc()
 
     /* calculate non bonded interactions (loop verlet lists of neighbors) */
     for (k = 0; k < cell->n_neighbors; k++) {
-      pairs = cell->nList[k].vList.pair;
-      np    = cell->nList[k].vList.n;
-      for (i = 0; i < np; i++) {
-	p1 = pairs[2*i];
-	p2 = pairs[2*i+1];
+      pairs = cell->nList[k].vList.pair;  /* verlet list */
+      np    = cell->nList[k].vList.n;     /* length of verlet list */
+
+      /* verlet list loop */
+      for(i=0; i<2*np; i+=2) {
+	p1 = pairs[i];                    /* pointer to particle 1 */
+	p2 = pairs[i+1];                  /* pointer to particle 2 */
 	ia_params = get_ia_param(p1->r.type,p2->r.type);
-	for(j=0;j<3;j++)
-	  d[j] = p1->r.p[j] - p2->r.p[j];
+	/* distance calculation */
+	for(j=0; j<3; j++) d[j] = p1->r.p[j] - p2->r.p[j];
 	dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
-	dist = sqrt(dist2);
+	dist  = sqrt(dist2);
 
 	/* lennnard jones */
-	if(dist < ia_params->LJ_cut+ia_params->LJ_offset) {
-	  r_off = dist - ia_params->LJ_offset;
-	  if(r_off>0.0) {
-#ifdef LJ_WARN_WHEN_CLOSE
-	    if (r_off < 0.9*ia_params->LJ_sig) {
-	      fprintf(stderr, "Lennard-Jones warning: particles getting close\n");
-	    }
-#endif
-	    frac2 = SQR(ia_params->LJ_sig/r_off);
-	    frac6 = frac2*frac2*frac2;
-	    fac = 48.* ia_params->LJ_eps * frac6*(frac6 - 0.5)*frac2;
-	    for(j=0;j<3;j++) {
-	      p1->f[j] += fac * d[j];
-	      p2->f[j] -= fac * d[j];
-	    }
-	  }
-	}
+	add_lj_pair_force(p1,p2,ia_params,d,dist);
 
 	/* real space coulomb */
-	if(dist < p3m.r_cut) {
-	  adist = p3m.alpha * dist;
-	  erfc_part_ri = AS_erfc_part(adist) / dist;
-	  fac = p3m.bjerrum * p1->r.q * p2->r.q  * 
-	    exp(-adist*adist) * (erfc_part_ri + 2.0*p3m.alpha/1.772453851) / dist2;
-	  p1->f[0] += fac * d[0];
-	  p1->f[1] += fac * d[1];
-	  p1->f[2] += fac * d[2];
-	  p2->f[0] -= fac * d[0];
-	  p2->f[1] -= fac * d[1];
-	  p2->f[2] -= fac * d[2];
-	}
+	add_coulomb_pair_force(p1,p2,d,dist2,dist);
 
-	/* ramp */
-	if(dist < ia_params->ramp_cut) {
-	  if (dist < 1e-4) {
-	    p1->f[0] += ia_params->ramp_force;
-	    p1->f[1] += 0;
-	    p1->f[2] += 0;
-	    p2->f[0] -= ia_params->ramp_force;
-	    p2->f[1] -= 0;
-	    p2->f[2] -= 0;
-	  }
-	  else {
-	    fac = ia_params->ramp_force/dist;
-	    p1->f[0] += fac * d[0];
-	    p1->f[1] += fac * d[1];
-	    p1->f[2] += fac * d[2];
-	    p2->f[0] -= fac * d[0];
-	    p2->f[1] -= fac * d[1];
-	    p2->f[2] -= fac * d[2];
-	  }
-	}
 	/* minimal particle distance calculation */
 	if (dist < minimum_part_dist)
 	  minimum_part_dist = dist;
@@ -196,6 +137,33 @@ void force_calc()
 }
 
 /************************************************************/
+
+void init_forces()
+{
+  Particle *p;
+  int np, m, n, o, i;
+  /* initialize forces with thermostat forces and
+     ghost forces with zero */
+  CELLS_LOOP(m, n, o) {
+    p  = CELL_PTR(m, n, o)->pList.part;
+    np = CELL_PTR(m, n, o)->pList.n;
+    /* ghost particle selection */
+    if (m == 0 || m == ghost_cell_grid[0] - 1 ||
+	n == 0 || n == ghost_cell_grid[1] - 1 ||
+	o == 0 || o == ghost_cell_grid[2] - 1) {
+      for (i = 0; i < np; i++) {
+	p[i].f[0] = 0;
+	p[i].f[1] = 0;
+	p[i].f[2] = 0;
+      }
+    }
+    /* real particle selection */
+    else {
+      for (i = 0; i < np; i++)
+	friction_thermo(&p[i]);
+    }
+  }
+}
 
 void force_exit()
 {
