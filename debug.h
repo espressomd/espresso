@@ -51,12 +51,10 @@
 /* #define FENE_DEBUG */
 /* #define GHOST_FORCE_DEBUG */
 
-/* #define MPI_CORE */
-/* #define FORCE_CORE */
+#define MPI_CORE
+#define FORCE_CORE
 
-/* #define ADDITIONAL_CHECKS */
-
-/* #define MALLOC_DEBUG */
+#define ADDITIONAL_CHECKS
 
 #if defined FORCE_CORE || defined MPI_CORE
 /** this functions kills the task with SIGSEGV */
@@ -67,15 +65,6 @@ extern void core();
     indicated. In that case, no core dump is generated.
 */
 extern int regular_exit;
-
-#ifdef MALLOC_DEBUG
-extern void *_debug_malloc(int size);
-#define malloc(x) _debug_malloc(x)
-extern void *_debug_realloc(void *p, int size);
-#define realloc(x,y) _debug_realloc(x,y)
-extern void _debug_free(void *p);
-#define free(x) _debug_free(x)
-#endif
 
 #ifdef COMM_DEBUG
 #define COMM_TRACE(cmd) { cmd; }
