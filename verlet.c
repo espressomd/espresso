@@ -364,4 +364,3 @@ int rebuild_vlist_callback(Tcl_Interp *interp, void *_data)
   mpi_bcast_parameter(FIELD_VERLETFLAG);
   return (TCL_OK);
 }
-

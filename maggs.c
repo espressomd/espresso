@@ -1,5 +1,13 @@
+// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
+// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
+// and by which you are legally bound while utilizing this file in any form or way.
+// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// You should have received a copy of that license along with this program;
+// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
+// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
+// Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
 /** \file maggs.c  
- *  Local algorithm for long range coulomb interaction.
+ *  Local Maggs algorithm for long range coulomb interaction.
  */
 #include <mpi.h>
 #include <stdio.h>
@@ -18,6 +26,7 @@
 #include "maggs.h"
 #include "thermostat.h"
 #include "cells.h"
+#include "domain_decomposition.h"
 
 /* MPI tags for the maggs communications: */
 /** Tag for communication in Maggs_init() -> calc_glue_patch(). */
@@ -2481,4 +2490,21 @@ int parse_and_print_gauss_res(Tcl_Interp *interp, int argc, char **argv)
   }
   return (TCL_OK);
 #endif  
+}
+
+int Maggs_sanity_checks()
+{
+  char *errtxt;
+
+  if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+    errtxt = runtime_error(128);
+    sprintf(errtxt, "{Maggs requires domain-decomposition cellsystem} ");
+    return 1;
+  }
+  else if (dd.use_vList) {
+    errtxt = runtime_error(128);
+    sprintf(errtxt, "{Maggs requires no Verlet Lists} ");
+    return 1;
+  }    
+  return 0;
 }

@@ -32,6 +32,7 @@
 #include "elc.h"
 #include "nsquare.h"
 #include "layered.h"
+#include "domain_decomposition.h"
 
 /************************************************************/
 /* local prototypes                                         */
@@ -49,16 +50,19 @@ void init_forces();
 void force_calc()
 {
   init_forces();
-
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
     layered_calculate_ia();
     break;
   case CELL_STRUCTURE_DOMDEC:
-    if (rebuild_verletlist)
-      build_verlet_lists_and_calc_verlet_ia();
+    if(dd.use_vList) {
+      if (rebuild_verletlist)
+	build_verlet_lists_and_calc_verlet_ia();
+      else
+	calculate_verlet_ia();
+    }
     else
-      calculate_verlet_ia();
+      calc_link_cell();
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_calculate_ia();
@@ -90,6 +94,9 @@ void calc_long_range_forces()
     else
 #endif
       P3M_calc_kspace_forces(1,0);
+    break;
+  case COULOMB_MAGGS:
+    maggs_calc_e_forces();
     break;
   case COULOMB_MMM2D:
     MMM2D_add_far_force();

@@ -22,6 +22,7 @@
 #include "debye_hueckel.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
+#include "maggs.h"
 #include "elc.h"
 #include "lj.h"
 #include "tab.h"
@@ -434,6 +435,15 @@ void calc_maximal_cutoff()
     if (max_cut_non_bonded < 0)
       max_cut_non_bonded = 0;
     break;
+  case COULOMB_MAGGS:
+    /* for the Yukawa subtraction scheme 
+       the real cut off is needed */
+    if((maggs.yukawa == 1) && (max_cut_non_bonded < maggs.r_cut))
+      max_cut_non_bonded = maggs.r_cut;
+    /* the cell size depends also on the grid spacing */
+    if((maggs.yukawa == 0) && (max_cut < maggs.a))
+      max_cut = maggs.a;  
+    break;
   }
 #endif
 
@@ -452,6 +462,7 @@ int check_obs_calc_initialized()
   case COULOMB_MMM1D: if (MMM1D_sanity_checks()) state = 0; break;
   case COULOMB_MMM2D: if (MMM2D_sanity_checks()) state = 0; break;
   case COULOMB_P3M: if (P3M_sanity_checks()) state = 0; break;
+  case COULOMB_MAGGS: if (Maggs_sanity_checks()) state = 0; break;
   }
   if (coulomb.use_elc && ELC_sanity_checks()) state = 0;
 #endif
@@ -567,6 +578,12 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 
   if (ARG0_IS_S("mmm2d"))
     return inter_parse_mmm2d(interp, argc-1, argv+1);
+
+  if (ARG0_IS_S("maggs")) {
+
+    coulomb.method = COULOMB_MAGGS;
+    return inter_parse_maggs(interp, argc-1, argv+1);
+  }
 
   /* fallback */
   coulomb.bjerrum = 0.0;
@@ -717,7 +734,7 @@ int printCoulombIAToResult(Tcl_Interp *interp)
   else if (coulomb.method == COULOMB_DH) printdhToResult(interp);
   else if (coulomb.method == COULOMB_MMM1D) printMMM1DToResult(interp);
   else if (coulomb.method == COULOMB_MMM2D) printMMM2DToResult(interp);
-
+  else if (coulomb.method == COULOMB_MAGGS) printMaggsToResult(interp);
   if (coulomb.use_elc) printELCToResult(interp);
 
   Tcl_AppendResult(interp, "}",(char *) NULL);

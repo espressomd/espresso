@@ -29,6 +29,7 @@
 #include "debug.h"
 #include "pressure.h"
 #include "p3m.h"
+#include "maggs.h"
 #include "utils.h"
 #include "thermostat.h"
 #include "initialize.h"
@@ -346,8 +347,9 @@ void integrate_vv(int n_steps)
   int i;
   /* Prepare the Integrator */
   on_integration_start();
+
   /* Verlet list criterion */
-  skin2 = SQR(skin/2.0);
+  skin2 = SQR(0.5 * skin);
 
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: integrating %d steps (recalc_forces=%d)\n",
 		      this_node, n_steps, recalc_forces));
@@ -395,6 +397,14 @@ void integrate_vv(int n_steps)
     propagate_omega_quat(); 
 #endif
 
+#ifdef ELECTROSTATICS
+    if(coulomb.method == COULOMB_MAGGS) {
+      propagate_B_field(0.5*time_step); 
+      if(maggs.yukawa)
+	maggs_propagate_psi_vel_pos(time_step);
+    }
+#endif
+
     cells_update_ghosts();
 
     /* Integration Step: Step 3 of Velocity Verlet scheme:
@@ -410,6 +420,16 @@ void integrate_vv(int n_steps)
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
+
+#ifdef ELECTROSTATICS
+    if(coulomb.method == COULOMB_MAGGS) {
+      propagate_B_field(0.5*time_step); 
+      if(maggs.yukawa)
+	maggs_propagate_psi_vel(0.5*time_step);
+      MAGGS_TRACE(check_gauss_law();); 
+    }
+#endif
+
 #ifdef ROTATION
     convert_torqes_propagate_omega();
 #endif
@@ -792,6 +812,7 @@ void propagate_vel_pos()
   int c, i, j, np;
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
+
   rebuild_verletlist = 0;
 
   for (c = 0; c < local_cells.n; c++) {
@@ -823,7 +844,8 @@ void propagate_vel_pos()
       if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) rebuild_verletlist = 1; 
     }
   }
-  announce_rebuild_vlist();
+
+  if(dd.use_vList) announce_rebuild_vlist();
 
 #ifdef ADDITIONAL_CHECKS
   force_and_velocity_display();

@@ -37,6 +37,7 @@
 #include "gb.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
+#include "maggs.h"
 #include "elc.h"
 #include "statistics_chain.h"
 #include "topology.h"
@@ -477,7 +478,10 @@ void mpi_bcast_event_slave(int node, int event)
 #ifdef ELECTROSTATICS
   case P3M_COUNT_CHARGES:
     P3M_count_charged_particles();
-    break;
+    break; 
+  case MAGGS_COUNT_CHARGES:
+    maggs_count_charged_particles();
+    break; 
 #endif
   case INVALIDATE_SYSTEM:
     local_invalidate_system();
@@ -1288,6 +1292,9 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     break;
   case COULOMB_MMM2D:
     MPI_Bcast(&mmm2d_params, sizeof(MMM2D_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+    break;  
+  case COULOMB_MAGGS:
+    MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, MPI_COMM_WORLD); 
     break;
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast coulomb params for unknown method %d\n", this_node, coulomb.method);

@@ -37,6 +37,7 @@
 #include "fft.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
+#include "maggs.h"
 #include "elc.h"
 #include "ghosts.h"
 #include "debye_hueckel.h"
@@ -187,6 +188,9 @@ void on_coulomb_change()
   case COULOMB_MMM2D:
     MMM2D_init();
     break;
+  case COULOMB_MAGGS: 
+    Maggs_init(); 
+    break;
   default: break;
   }
   if (coulomb.use_elc)
@@ -303,6 +307,11 @@ void on_parameter_change(int field)
     if (field == FIELD_TEMPERATURE || field == FIELD_BOXL || field == FIELD_NLAYERS)
       cc = 1;
     break;
+  case COULOMB_MAGGS:
+    /* Maggs electrostatics needs ghost velocities */
+    on_ghost_flags_change();
+    cells_re_init(CELL_STRUCTURE_CURRENT);    
+    break;
   default: break;
   }
   if (coulomb.use_elc && (field == FIELD_TEMPERATURE || field == FIELD_BOXL))
@@ -342,6 +351,13 @@ void on_ghost_flags_change()
   if (thermo_switch & THERMO_DPD)
     /* DPD needs also ghost velocities */
     ghosts_have_v = 1;
+#ifdef ELECTROSTATICS
+  /* Maggs electrostatics needs ghost velocities too */
+  else {
+    if(coulomb.method == COULOMB_MAGGS)
+      ghosts_have_v = 1;
+  }
+#endif
 }
 
 static void init_tcl(Tcl_Interp *interp)
