@@ -847,8 +847,9 @@ void mpi_integrate_slave(int pnode, int task)
 /*************** REQ_BCAST_IA ************/
 void mpi_bcast_ia_params(int i, int j)
 {
-  mpi_issue(REQ_BCAST_IA, i, j);
   int tablesize;
+
+  mpi_issue(REQ_BCAST_IA, i, j);
   tablesize = tabulated_forces.max;
 
   if (j>=0) {

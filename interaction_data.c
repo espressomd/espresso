@@ -720,8 +720,10 @@ int tabulated_set_params(int part_type_a, int part_type_b,
   FILE* fp;
   int npoints;
   double minval,minval2, maxval, maxval2;
-  int i;
+  int i, newsize;
+  int token;
   double dummr;
+  token = 0;
 
   make_particle_type_exist(part_type_a);
   make_particle_type_exist(part_type_b);
@@ -736,7 +738,7 @@ int tabulated_set_params(int part_type_a, int part_type_b,
   /*Open the file containing force and energy tables */
   fp = fopen( filename , "r");
 
-  int token = 0;
+
   /*Look for a line starting with # */
   while ( token != EOF) {
     token = fgetc(fp);
@@ -750,7 +752,7 @@ int tabulated_set_params(int part_type_a, int part_type_b,
   fscanf( fp, "%lf ", &maxval);
 
   // Set the newsize to the same as old size : only changed if a new force table is being added.
-  int newsize = tabulated_forces.max;
+  newsize = tabulated_forces.max;
 
   if ( data->TAB_npoints == 0){
     // A new potential will be added so set the number of points, the startindex and newsize

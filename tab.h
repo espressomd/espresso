@@ -18,6 +18,8 @@
  *  <a href="mailto:cooke@mpip-mainz.mpg.de">Ira</a>
 */
 
+#include "utils.h"
+
 /** Add a pair force by linear interpolation from a table */
 MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
@@ -25,11 +27,12 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
   double phi, dindex, fac;
   int tablepos, table_start,j;
   double rescaled_force_cap = tab_force_cap/dist;
-  fac = 0.0;
   double maxval = ia_params->TAB_maxval;
+  double minval = ia_params->TAB_minval;
+
+  fac = 0.0;
 
   if ( maxval > 0 ) {
-    double minval = ia_params->TAB_minval;
     if ( dist < maxval){ 
       table_start = ia_params->TAB_startindex;
       dindex = (dist-minval)/ia_params->TAB_stepsize;
