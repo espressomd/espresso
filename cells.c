@@ -23,21 +23,22 @@
  * defines
  ************************************************/
 
-/** increment size of particle buffer */
-#define PART_INCREMENT 5
-/** half the number of cell neighbours in 3 Dimensions*/
-#define MAX_NEIGHBOURS 13
+/** increment size for lists */
+#define LIST_INCREMENT 5
+/** half the number of cell neighbors in 3 Dimensions*/
+#define MAX_NEIGHBORS 14
 
 /************************************************
  * variables
  ************************************************/
-
 
 int cell_grid[3];
 int ghost_cell_grid[3];
 int n_cells;
 Cell *cells;
 int max_num_cells = 512;
+
+int cells_init_flag = -1;
 
 /** number of linked cells in nodes spatial domain. */
 int n_inner_cells;
@@ -61,13 +62,13 @@ double inv_cell_size[3];
  */
 void calc_cell_grid();
 
-/** initializes the interacting neighbour cell list
- *  (cells.neighbours).  the created list of interacting neighbour
+/** initializes the interacting neighbor cell list
+ *  (cells.neighbors).  the created list of interacting neighbor
  *  cells is used by the verlet algorithm (see verlet.c) to build the
  *  verlet list.
  *
  *  @param i linear index of a cell.  */
-void init_cell_neighbours(int i);
+void init_cell_neighbors(int i);
  
 /** check wether the cell with linear index i is an inner cell or not.
  *  returns 1 if the cell is an inner cell and 0 if it is not.
@@ -78,6 +79,31 @@ int  is_inner_cell(int i, int gcg[3]);
 
 /*@}*/
 /************************************************************/
+
+void cells_pre_init()
+{
+  int i;
+  CELL_TRACE(fprintf(stderr,"%d: cells_pre_init():\n",this_node));
+
+  if(cells_init_flag != -2) {
+    fprintf(stderr,"%d: cells_pre_init() is thought to be called only at program start!\n");
+    errexit();
+  }
+
+  /* set cell grid variables to a (1,1,1) grid */
+  for(i=0;i<3;i++) {
+    cell_grid[i] = ghost_cell_grid[i] = 1;
+  }
+  n_cells = 1;
+  n_inner_cells = 1;
+
+  /* allocate space */
+  cells = (Cell *)malloc(n_cells*sizeof(Cell));
+  realloc_particles(cells.pList,1);
+
+  /* cell structure pre initialized. */
+  cells_init_flag = -1;
+}
 
 void cells_init() 
 {
@@ -108,7 +134,7 @@ void cells_init()
     cells[i].n_particles=0;
     cells[i].max_particles = PART_INCREMENT;
     cells[i].particles = malloc(cells[i].max_particles*sizeof(int));
-    init_cell_neighbours(i);
+    init_cell_neighbors(i);
   }
   CELL_TRACE(if(this_node==0) { fprintf(stderr,"0: cell_grid: (%d, %d, %d)\n",cell_grid[0],cell_grid[1],cell_grid[2]); });
 
@@ -167,7 +193,7 @@ void cells_exit()
   int i;
   CELL_TRACE(if(this_node<2) fprintf(stderr,"%d: cells_exit:\n",this_node));
   for(i=0;i<n_cells;i++) {
-    if(cells[i].n_neighbours>0)  free(cells[i].neighbours);
+    if(cells[i].n_neighbors>0)  free(cells[i].neighbors);
     if(cells[i].max_particles>0) free(cells[i].particles);
   }
   free(cells);
@@ -285,15 +311,15 @@ void calc_cell_grid()
   }
 }
 
-void init_cell_neighbours(int i)
+void init_cell_neighbors(int i)
 {
   int j,m,n,o,cnt=0;
   int p1[3],p2[3];
 
   if(is_inner_cell(i,ghost_cell_grid)) { 
-    cells[i].neighbours = malloc(MAX_NEIGHBOURS*sizeof(int));    
+    cells[i].neighbors = malloc(MAX_NEIGHBORS*sizeof(int));    
     get_grid_pos(i,&p1[0],&p1[1],&p1[2], ghost_cell_grid);
-    /* loop through all neighbours */
+    /* loop through all neighbors */
     for(m = extended[0] ? 0 : -1;
 	m < (extended[1] ? 1 :  2); m++) 
       for(n = extended[2] ? 0 : -1;
@@ -302,18 +328,18 @@ void init_cell_neighbours(int i)
 	    o < (extended[5] ? 1 :  2); o++) {
 	  p2[0] = p1[0]+m;   p2[1] = p1[1]+n;   p2[2] = p1[2]+o;
 	  j = get_linear_index(p2[0],p2[1],p2[2], ghost_cell_grid);
-	  /* take the upper half of all neighbours 
-	     and add them to the neighbour list */
+	  /* take the upper half of all neighbors 
+	     and add them to the neighbor list */
 	  if(j > i) {
-	    cells[i].neighbours[cnt] = j;
+	    cells[i].neighbors[cnt] = j;
 	    cnt++;
 	  }
 	}
-    cells[i].n_neighbours = cnt;
+    cells[i].n_neighbors = cnt;
   }
   else {
-    cells[i].n_neighbours = 0;
-    cells[i].neighbours = NULL;
+    cells[i].n_neighbors = 0;
+    cells[i].neighbors = NULL;
   }   
 }
 

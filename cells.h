@@ -24,10 +24,10 @@
  *  2D representation of a linked cell grid: n_cells = 64, cell_grid =
  *  {4,4}, ghost_cell_grid = {6,6}
  *
- * Each cell has 3^D-1 neighbour cells (For cell 14 they are
+ * Each cell has 3^D neighbor cells (For cell 14 they are
  * marked). Since we deal with pair forces, it is sufficient to
  * calculate only half of the interactions (Newtons law: actio =
- * reactio). I have chosen the upper half e.g. all neighbour cells with
+ * reactio). I have chosen the upper half e.g. all neighbor cells with
  * a higher linear index (For cell 14 they are marked in light
  * blue). Caution: This implementation needs double sided ghost
  * communication! For single sided ghost communication one would need
@@ -43,29 +43,43 @@
  * data types
  ************************************************/
 
-/** link cell structure. */
+/** Structure containing information of a cell. Contains: cell
+    neighbor information, particles in cell.
+*/
 typedef struct {
-  /** number of interacting neighbour cells . 
-      A word about the interacting neighbour cells:\\
-      In a 3D lattice each cell has 26 neighbours. Since we deal 
-      with pair forces, it is sufficient to calculate only half 
-      of the interactions (Newtons law: actio = reactio). For each 
-      cell 13 neighbours. This has only to be done for the inner 
-      cells. Caution: This implementation needs double sided ghost 
-      communication! For single sided ghost communication one 
-      would need some ghost-ghost cell interaction as well, which 
-      we do not need! */
-  int n_neighbours;
-  /** interacting neighbour cell list (linear indices) */
-  int *neighbours;
+  /** number of interacting neighbor cells . 
 
-  /** number of particles in the cell. */
-  int n_particles;
-  /** size of particle index array. */
-  int max_particles;
-  /** particle index array (local index!). */
-  int *particles;
+      A word about the interacting neighbor cells:
+
+      In a 3D lattice each cell has 27 neighbors (including
+      itself!). Since we deal with pair forces, it is sufficient to
+      calculate only half of the interactions (Newtons law: actio =
+      reactio). For each cell 13+1=14 neighbors. This has only to be
+      done for the inner cells. 
+
+      Caution: This implementation needs double sided ghost
+      communication! For single sided ghost communication one would
+      need some ghost-ghost cell interaction as well, which we do not
+      need! 
+
+      It follows: inner cells: n_neighbors=14
+      ghost cells: n_neighbors=0
+  */
+  int n_neighbors;
+  /** Interacting neighbor cell list  */
+  IA_Neighbor *nList;
+  /** particle list for particles in the cell. */
+  ParticleList pList;
 } Cell;
+
+/** Structure containing information about non bonded interactions
+    with particles in a neighbor cell. */
+typedef struct {
+  /** Pointer to particle list of neighbor cell. */
+  ParticleList *pList;
+  /** Verlet list for non bonded interactions of a cell with a neighbor cell. */
+  PairList vList;
+} IA_Neighbor;
 
 /** \name Exported Variables */
 /************************************************************/
@@ -91,11 +105,27 @@ extern Cell *cells;
  */
 extern int max_num_cells;
 
+/** cell initialization status. 
+    initialized:      cells_init_flag = -2.
+    cells_pre_init(): cells_init_flag = -1.
+    cells_init():     cells_init_flag = 1.
+    cells_exit():     cells_init_flag = 0.
+ */
+extern int cells_init_flag;
+
 /*@}*/
 
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
+
+
+/** Pre initialization of the link cell structure. 
+
+Function called in modul initialize.c initialize().  Initializes one
+cell on each node to be able to store the particle data there.
+*/
+void cells_pre_init();
 
 /** initialize link cell structures. 
  *
@@ -109,7 +139,7 @@ extern int max_num_cells;
  *
  *  Then it allocates space for the particle index list of each cell
  *  (cells[i].particles) with size PART_INCREMENT and initializes the
- *  neighbour list for the cells (init_cell_neighbours()).  
+ *  neighbor list for the cells (init_cell_neighbors()).  
  */
 void cells_init();
 
