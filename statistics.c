@@ -7,10 +7,11 @@
 #include "forces.h"
 #include "communication.h"
 #include "grid.h"
+#include "integrate.h"
 
 int mindist(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
-  char buffer[TCL_DOUBLE_SPACE];
+  char buffer[TCL_DOUBLE_SPACE + 1];
   double *buf;
   double mindist;
   int i;
@@ -21,7 +22,6 @@ int mindist(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   }
 
   if (minimum_part_dist == -1) {
-    /* here we could use a double loop (over ALL particles) to calculate... */
     Tcl_AppendResult(interp, "(not yet set)", (char *)NULL);
     return (TCL_OK);
   }
@@ -36,8 +36,8 @@ int mindist(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   free(buf);
 
   if (mindist >= box_l[0] + box_l[1] + box_l[2]) {
-    /* here we could use a double loop (over ALL particles) to calculate... */
-    Tcl_AppendResult(interp, "(> ramp cutoffs)", (char *)NULL);
+    Tcl_PrintDouble(interp, max_range, buffer);
+    Tcl_AppendResult(interp, "> ", buffer, (char *)NULL);
     return (TCL_OK);
   }
 

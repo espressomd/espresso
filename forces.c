@@ -158,9 +158,6 @@ void force_calc()
 
     /* ramp */
     if(dist < ia_params->ramp_cut) {
-      if (dist < minimum_part_dist)
-	minimum_part_dist = dist;
-
       if (dist < 1e-4) {
 	particles[ind1].f[0] += ia_params->ramp_force;
 	particles[ind1].f[1] += 0;
@@ -179,6 +176,9 @@ void force_calc()
 	particles[ind2].f[2] -= fac * d[2];
       }
     }
+    /* minimal particle distance calculation */
+    if (dist < minimum_part_dist)
+      minimum_part_dist = dist;
   }
 
   /* calculate k-space part of electrostatic interaction. */
