@@ -209,7 +209,7 @@ proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA}
     }
     puts -nonewline $f "\"[lindex $destinations end]\" using [lindex $what $i] title \"[lindex $titles $i]\"  \n"
     if { $cmd != "" } { puts $f $cmd }
-    puts $f "replot"
+    # puts $f "replot"
     puts $f "\# !lpr -Pthps18 \"$out.ps\""
     puts $f "set terminal x11"
     close $f
