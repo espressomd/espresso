@@ -404,6 +404,10 @@ void integrate_vv(int n_steps)
     if(this_node==0) sim_time += time_step;
   }
 
+  /* after simulating the forces are necessarily set. Necessary since
+     resort_particles sets recalc_forces to 1 */
+  recalc_forces = 0;
+
   /* verlet list statistics */
   if(n_verlet_updates>0) verlet_reuse = n_steps/(double) n_verlet_updates;
   else verlet_reuse = 0;
