@@ -1,5 +1,5 @@
 #!/bin/sh
-TESTCASES="lj.tcl mmm1d.tcl dh.tcl madelung.tcl"
+TESTCASES="lj.tcl harm.tcl fene.tcl mmm1d.tcl dh.tcl madelung.tcl"
 # lj-cos.tcl FENE.tcl harmonic.tcl... constraints thermosim energy pressure rotation gay-berne
 # 
 # List of testcases to be done (and people responsible for them):
@@ -67,7 +67,7 @@ for np in 1 2 3 4 6 8; do
 		fi
 	    fi
 	else
-	    echo "Test $f is blacklisted, ignoring"
+	    echo "Test $f is blacklisted, ignoring..."
 	fi
     done
 done
@@ -78,5 +78,5 @@ if test "$missing" != ""; then
     echo -e $missing
 fi
 
-echo -e "\n\n*******************************************\n\n"
-echo -e "     Gratulations! Espresso seems to be ok."
+echo -e "\n\n********************************************\n\n"
+echo -e "   Gratulations! Espresso seems to be ok."
