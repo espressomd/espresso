@@ -1,4 +1,4 @@
-nb// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
+// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 // It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
 // and by which you are legally bound while utilizing this file in any form or way.
 // There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
