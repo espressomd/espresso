@@ -144,6 +144,30 @@ proc blockfile_read_auto_interactions {channel read auto} {
 }
 
 ######################################
+# random/seed support
+######################################
+
+proc blockfile_write_random {channel write random} {
+    blockfile $channel write start random
+    puts $channel "\n\t{[join [t_random stat] "\} \{"]}\n\}"
+}
+
+proc blockfile_read_auto_random {channel read auto} {
+    set data [blockfile $channel read toend]
+    eval t_random stat [eval concat $data]
+}
+
+proc blockfile_write_seed {channel write seed} {
+    blockfile $channel write start seed
+    puts $channel "\n\t{[join [t_random seed] "\} \{"]}\n\}"
+}
+
+proc blockfile_read_auto_seed {channel read auto} {
+    set data [blockfile $channel read toend]
+    eval t_random seed $data
+}
+
+######################################
 # variables support
 ######################################
 
