@@ -5,4 +5,4 @@ rock off
 rotate y by 90
 mol modstyle 0 0 CPK 1.500000 0.600000 8.000000 6.000000
 mol modcolor 0 0 SegName
-imd connect localhost 10000
+while { [catch {imd connect localhost 10000}] } { after 500 }
