@@ -17,6 +17,10 @@
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
 */
 
+
+#define TINY_SIN_VALUE 1e-9
+#define TINY_COS_VALUE 0.9999999999
+
 /************************************************************/
 
 /** Computes the three body angle interaction force and adds this
@@ -50,22 +54,22 @@ MDINLINE void add_angle_force(Particle *p_mid, Particle *p_left, Particle *p_rig
     double phi,sinphi;
     phi =  acos(-cosine);
     sinphi = sin(phi);
-    if ( sinphi < 0.00000001 ) sinphi = 0.00000001;
-    fac *= (bonded_ia_params[type_num].p.angle.phi0-phi)/sinphi;
+    if ( sinphi < TINY_SIN_VALUE ) sinphi = TINY_SIN_VALUE;
+    fac *= (phi-bonded_ia_params[type_num].p.angle.phi0)/sinphi;
   }
 #endif
 #ifdef BOND_ANGLE_COSINE
-  if ( cosine >  0.999999999 ) cosine =  0.999999999;
-  if ( cosine < -0.999999999 ) cosine = -0.999999999;
-  fac *= bonded_ia_params[type_num].p.angle.cos_phi0 - bonded_ia_params[type_num].p.angle.sin_phi0 * (cosine/sqrt(1-SQR(cosine)));
+  if ( cosine >  TINY_COS_VALUE ) cosine = TINY_COS_VALUE;
+  if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
+  fac *= bonded_ia_params[type_num].p.angle.sin_phi0 * (cosine/sqrt(1-SQR(cosine))) + bonded_ia_params[type_num].p.angle.cos_phi0;
 #endif
 #ifdef BOND_ANGLE_COSSQUARE
-  fac *= bonded_ia_params[type_num].p.angle.cos_phi0 - cosine;
+  fac *= bonded_ia_params[type_num].p.angle.cos_phi0 + cosine;
 #endif
   /* apply bend forces */
   for(j=0;j<3;j++) {
-    f1               = fac * (vec2[j] - cosine * vec1[j]) * d1i;
-    f2               = fac * (vec1[j] - cosine * vec2[j]) * d2i;
+    f1               = fac * (cosine * vec1[j] - vec2[j]) * d1i;
+    f2               = fac * (cosine * vec2[j] - vec1[j]) * d2i;
     p_left->f.f[j]  -= f1;
     p_mid->f.f[j]   += (f1-f2);
     p_right->f.f[j] += f2;
@@ -91,7 +95,7 @@ MDINLINE double angle_energy(Particle *p_mid, Particle *p_left, Particle *p_righ
   d1i = 1.0 / sqrt(dist2);
   for(j=0;j<3;j++) vec1[j] *= d1i;
   /* vector from p_right to p_mid */
-  get_mi_vector(vec2, p_mid->r.p, p_right->r.p);
+  get_mi_vector(vec2, p_right->r.p, p_mid->r.p);
   dist2 = sqrlen(vec2);
   d2i = 1.0 / sqrt(dist2);
   for(j=0;j<3;j++) vec2[j] *= d2i;
@@ -111,7 +115,7 @@ MDINLINE double angle_energy(Particle *p_mid, Particle *p_left, Particle *p_righ
   }
 #endif
 #ifdef BOND_ANGLE_COSSQUARE
-  return 0.5*bonded_ia_params[type_num].p.angle.bend*SQR(cosine-bonded_ia_params[type_num].p.angle.cos_phi0);
+  return 0.5*bonded_ia_params[type_num].p.angle.bend*SQR(cosine+bonded_ia_params[type_num].p.angle.cos_phi0);
 #endif
 }
 
