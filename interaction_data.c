@@ -1635,6 +1635,8 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     Tcl_PrintDouble(interp, con->c.sph.rad, buffer);
     Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.sph.direction, buffer);
+    Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
     sprintf(buffer, "%d", con->part_rep.r.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
@@ -1786,6 +1788,7 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
     con->c.sph.pos[1] = 
     con->c.sph.pos[2] = 0;
   con->c.sph.rad = 0;
+  con->c.sph.direction = -1;
   con->part_rep.r.type = -1;
 
   while (argc > 0) {
@@ -1809,6 +1812,19 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "direction", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "1/-1 or inside/outside is expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (!strncmp(argv[1], "inside", strlen(argv[1])))
+	con->c.sph.direction = -1;
+      else if (!strncmp(argv[1], "outside", strlen(argv[1])))
+	con->c.sph.direction = 1;
+      else if (Tcl_GetDouble(interp, argv[1], &(con->c.sph.direction)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
     else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
       if (argc < 1) {
 	Tcl_AppendResult(interp, "constraint sphere type <t> expected", (char *) NULL);
@@ -1823,7 +1839,7 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
   }
 
   if (con->c.sph.rad < 0. || con->part_rep.r.type < 0) {
-    Tcl_AppendResult(interp, "usage: constraint sphere center <x> <y> <z> radius <d> type <t>",
+    Tcl_AppendResult(interp, "usage: constraint sphere center <x> <y> <z> radius <d> direction <direction> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }

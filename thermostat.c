@@ -19,6 +19,11 @@ double temperature = -1.0;
 static double pref1;
 static double pref2;
 
+#ifdef ROTATION
+static double friction_gamma_rotation;
+static double pref2_rotation;
+#endif
+
 int gamma_callback(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
@@ -55,6 +60,10 @@ void thermo_init()
 {
   pref1 = -friction_gamma/time_step;
   pref2 = sqrt(24.0*temperature*friction_gamma/time_step);
+#ifdef ROTATION 
+  friction_gamma_rotation = friction_gamma/3;
+  pref2_rotation = sqrt(24.0*temperature*friction_gamma_rotation/time_step);
+#endif
   /* fprintf(stderr,"%d: pref1=%f, pref2=%f\n",this_node,pref1,pref2); */
 }
 

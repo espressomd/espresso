@@ -40,11 +40,19 @@ MDINLINE void calculate_sphere_dist(Particle *p1, Particle *c_p, Constraint_sphe
     vec[i] = c->pos[i] - p1->r.p[i];
     c_dist += SQR(vec[i]);
   }
-
   c_dist = sqrt(c_dist);
-  *dist = c->rad - c_dist;
-  fac = *dist / c_dist;
-  for(i=0;i<3;i++) vec[i] *= fac;  
+  
+  if ( c->direction == -1 ) {
+  /* apply force towards inside the sphere */
+    *dist = c->rad - c_dist;
+    fac = *dist / c_dist;
+    for(i=0;i<3;i++) vec[i] *= fac;}
+  else  {
+   /* apply force towards outside the sphere */
+    *dist = c_dist - c->rad;
+    fac = *dist / c_dist;
+    for(i=0;i<3;i++) vec[i] *= -fac;
+  }
 }
 
 MDINLINE void calculate_cylinder_dist(Particle *p1, Particle *c_p, Constraint_cylinder *c, double *dist, double *vec)

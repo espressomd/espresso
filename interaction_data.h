@@ -155,7 +155,9 @@ typedef struct {
   /** sphere center. */
   double pos[3];
   /** sphere radius. */
-  double rad;
+  double rad;  
+  /** sphere direction. (+1 outside -1 inside interaction direction)*/
+  double direction;
 } Constraint_sphere;
 
 /** Parameters for a CYLINDER constraint. */
