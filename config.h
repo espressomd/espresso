@@ -101,7 +101,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /** callback for version status. */
 MDINLINE int version_callback(Tcl_Interp *interp)
 {
-  Tcl_AppendResult(interp, "ESPRESSO: v1.5.Alpha (Neelix), Last Change: 07.01.2004", (char *) NULL);
+  Tcl_AppendResult(interp, "ESPRESSO: v1.5.Alpha (Neelix), Last Change: 15.01.2004", (char *) NULL);
   return (TCL_OK);
 }
 
@@ -134,7 +134,7 @@ MDINLINE int compilation_callback(Tcl_Interp *interp)
   Tcl_AppendResult(interp, "{ CONSTRAINTS } ", (char *) NULL);
 #endif
 #ifdef ROTATION
-  Tcl_AppendResult(interp, "{ ROTATION} ", (char *) NULL);
+  Tcl_AppendResult(interp, "{ ROTATION } ", (char *) NULL);
 #endif
   Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);
