@@ -28,7 +28,7 @@
 #     'polygelSetup.c'                                      #
 #                                                           #
 # Created:       16.08.2002 by BAM                          #
-# Last modified: 08.11.2002 by BAM                          #
+# Last modified: 20.01.2003 by BAM                          #
 #                                                           #
 #                                                           #
 # convertMD2Deserno                                         #
@@ -174,7 +174,7 @@ proc initConversion {} {
     # Specify additional parameters for the potentials
     global pot_bend pot_LJ_sigma pot_LJ_shift pot_LJ_offset pot_ramp_cut pot_ramp_fmax
     set pot_bend 1
-    set pot_LJ_sigma 2.0
+    set pot_LJ_sigma 1.0
     set pot_LJ_shift 0
     set pot_LJ_offset 0
     set pot_ramp_cut 1.3
@@ -187,9 +187,14 @@ proc initConversion {} {
        # N_nS = [expr $N_Salt*$val_nS] is the number of negatively charged salt ions
        # N_S = [expr $N_pS+$N_nS] is the total number of salt ions 
        #       (not to be confused with N_Salt, which is the number of salt _molecules_)
-    global step
+    # Define auxiliary parameters
+    global step foldCoord
        # step = amount of integration steps taken so far
        #        (only used for MD2Deserno; has to be supplied by user)
+    set foldCoord 0
+       # foldCoord = decides whether to periodically fold the particle's coordinates before working with them; 
+       #             this is important, since 'polygelSetup' by default creates an unfolded system of polymers,
+       #             centered in a box with boxlenght L, but extending outside, too.
     puts "Done."
 
     # Mark this initialization procedure as being completed
@@ -231,6 +236,7 @@ proc convertDeserno2MDmain {origin destination} {
     global type_FENE type_bend
     global pot_bend pot_LJ_sigma pot_LJ_shift pot_LJ_offset pot_ramp_cut pot_ramp_fmax
     global MPC N_CI N_pS N_nS N_S
+    global foldCoord
 
 
     # Check the supplied file-names for existence and correctness
@@ -415,7 +421,13 @@ proc convertDeserno2MDmain {origin destination} {
 		    if { $j>0 } { gets $in tmp_var }
 
 		    # Submit the data to 'tcl_md'
-		    part $j pos [lindex $tmp_var 0] [lindex $tmp_var 1] [lindex $tmp_var 2]
+		    if { $foldCoord == 1 } {
+			part $j pos [expr [lindex $tmp_var 0] - floor([lindex $tmp_var 0] / $boxLen)*$boxLen] \
+			    [expr [lindex $tmp_var 1] - floor([lindex $tmp_var 1] / $boxLen)*$boxLen] \
+			    [expr [lindex $tmp_var 2] - floor([lindex $tmp_var 2] / $boxLen)*$boxLen]
+		    } else {
+			part $j pos [lindex $tmp_var 0] [lindex $tmp_var 1] [lindex $tmp_var 2]
+		    }
 		    part $j v   [lindex $tmp_var 3] [lindex $tmp_var 4] [lindex $tmp_var 5]
 		    part $j q   [lindex $tmp_var 6]
 		    part $j type $type_P
@@ -450,7 +462,13 @@ proc convertDeserno2MDmain {origin destination} {
 		    } 
 		    gets $in tmp_var
 		    # Submit the data to 'tcl_md'
-		    part $j pos [lindex $tmp_var 0] [lindex $tmp_var 1] [lindex $tmp_var 2]
+		    if { $foldCoord == 1 } {
+			part $j pos [expr [lindex $tmp_var 0] - floor([lindex $tmp_var 0] / $boxLen)*$boxLen] \
+			    [expr [lindex $tmp_var 1] - floor([lindex $tmp_var 1] / $boxLen)*$boxLen] \
+			    [expr [lindex $tmp_var 2] - floor([lindex $tmp_var 2] / $boxLen)*$boxLen]
+		    } else {
+			part $j pos [lindex $tmp_var 0] [lindex $tmp_var 1] [lindex $tmp_var 2]
+		    }
 		    part $j v   [lindex $tmp_var 3] [lindex $tmp_var 4] [lindex $tmp_var 5]
 		    part $j q   [lindex $tmp_var 6]
 		    part $j type $type_CI
@@ -474,7 +492,13 @@ proc convertDeserno2MDmain {origin destination} {
 		    } 
 		    gets $in tmp_var
 		    # Submit the data to 'tcl_md'
-		    part $j pos [lindex $tmp_var 0] [lindex $tmp_var 1] [lindex $tmp_var 2]
+		    if { $foldCoord == 1 } {
+			part $j pos [expr [lindex $tmp_var 0] - floor([lindex $tmp_var 0] / $boxLen)*$boxLen] \
+			    [expr [lindex $tmp_var 1] - floor([lindex $tmp_var 1] / $boxLen)*$boxLen] \
+			    [expr [lindex $tmp_var 2] - floor([lindex $tmp_var 2] / $boxLen)*$boxLen]
+		    } else {
+			part $j pos [lindex $tmp_var 0] [lindex $tmp_var 1] [lindex $tmp_var 2]
+		    }
 		    part $j v   [lindex $tmp_var 3] [lindex $tmp_var 4] [lindex $tmp_var 5]
 		    part $j q   [lindex $tmp_var 6]
 		    part $j type $type_S
