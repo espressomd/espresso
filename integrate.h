@@ -15,6 +15,8 @@
 
 /** Time step for the integration. */
 extern double time_step;
+/** Old time step needed for rescaling of forces. */
+extern double old_time_step;
 /** Physical start time of the simulation. */
 extern double start_time;
 /** Actual simulation time (only on MASTER NODE). */
@@ -92,6 +94,10 @@ int start_time_callback(Tcl_Interp *interp, void *_data);
     \return TCL status.
 */
 int calc_forces_first_callback(Tcl_Interp *interp, void *_data);
+
+/** function that rescales all velocities on one node according to a new time step. */
+void rescale_velocities(); 
+
 /*@}*/
 
 #endif

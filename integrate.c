@@ -44,6 +44,8 @@ int    interactions_changed = 1;
 int    topology_changed = 1;
 int    parameter_changed = 1;
 
+double old_time_step;
+
 /** \name Privat Functions */
 /************************************************************/
 /*@{*/
@@ -141,7 +143,6 @@ void integrate_vv(int n_steps)
   int i;
 
   on_integration_start();
-
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: integrating %d steps\n",this_node,
 		      n_steps));
 
@@ -208,8 +209,10 @@ int time_step_callback(Tcl_Interp *interp, void *_data)
     Tcl_AppendResult(interp, "time step must be positive.", (char *) NULL);
     return (TCL_ERROR);
   }
+  old_time_step = time_step;
   time_step = data;
-  mpi_bcast_parameter(FIELD_TIME_STEP);
+  mpi_set_time_step();
+
   mpi_bcast_event(PARAMETER_CHANGED);
   return (TCL_OK);
 }
@@ -399,6 +402,9 @@ void propagate_vel_pos()
       e_kin += db_vel;
 #endif
 
+
+
+
       /* Verlet criterion check */
       if(distance2(p[i].r.p,p[i].p_old) > skin2 )
 	rebuild_verletlist = 1; 
@@ -418,11 +424,11 @@ void propagate_vel_pos()
   else {
     MPI_Gather(&e_kin, 1, MPI_DOUBLE, NULL, 0, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
-  if(sqrt(db_max_force)>1e-2) 
+  if(sqrt(db_max_force)>skin) 
     fprintf(stderr,"%d: max_force=%e, part=%d f=(%e,%e,%e)\n",this_node,
 	    sqrt(db_max_force),db_maxf_id,local_particles[db_maxf_id]->f[0],
 	    local_particles[db_maxf_id]->f[1],local_particles[db_maxf_id]->f[2]);
-  if(sqrt(db_max_vel)>1e-1)
+  if(sqrt(db_max_vel)>skin)
     fprintf(stderr,"%d: max_vel=%e, part=%d v=(%e,%e,%e)\n",this_node,
 	    sqrt(db_max_vel),db_maxv_id,local_particles[db_maxv_id]->v[0],
 	    local_particles[db_maxv_id]->v[1],local_particles[db_maxv_id]->v[2]);
@@ -446,4 +452,22 @@ void propagate_vel_pos()
   INTEG_TRACE(fprintf(stderr,"%d: prop_pos: rebuild_verletlist=%d\n",this_node,rebuild_verletlist));
 
   free(verlet_flags);
+}
+
+void rescale_velocities() 
+{
+  Particle *p;
+  int m,n,o,i, np;
+  double scale;
+
+  scale = time_step / old_time_step;
+  INNER_CELLS_LOOP(m, n, o) {
+    p  = CELL_PTR(m, n, o)->pList.part;
+    np = CELL_PTR(m, n, o)->pList.n;
+    for(i = 0; i < np; i++) {
+      p[i].v[0] *= scale;
+      p[i].v[1] *= scale;
+      p[i].v[2] *= scale;
+    }
+  }
 }
