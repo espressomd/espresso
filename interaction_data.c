@@ -738,6 +738,7 @@ int comfixed_set_params(int part_type_a, int part_type_b, int flag)
 }
 #endif
 
+#ifdef LENNARD_JONES
 int lennard_jones_set_params(int part_type_a, int part_type_b,
 			     double eps, double sig, double cut,
 			     double shift, double offset,
@@ -776,7 +777,9 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
 
   return TCL_OK;
 }
+#endif
 
+#ifdef ROTATION
 int gay_berne_set_params(int part_type_a, int part_type_b,
 			     double eps, double sig, double cut,
 			     double k1, double k2,
@@ -814,8 +817,10 @@ int gay_berne_set_params(int part_type_a, int part_type_b,
 
   return TCL_OK;
 }
+#endif
 
 
+#ifdef TABULATED
 /** Reads tabulated parameters and force and energy tables from a
     file.  ia_params and force/energy tables are then communicated to each
     node \warning No checking is performed for the file read!! */
@@ -919,6 +924,8 @@ int tabulated_set_params(int part_type_a, int part_type_b,
 
   return TCL_OK;
 }
+#endif
+
 
 int dihedral_set_params(int bond_type, double bend)
 {
@@ -1060,14 +1067,18 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 #ifdef LJCOS
   double tmp;
 #endif
+#ifdef LENNARD_JONES
   /* parameters needed for LJ */
   double eps, sig, cut, shift, offset, cap_radius;
-  /* parameters needed for Gay-Berne*/
+#endif
 #ifdef ROTATION
+  /* parameters needed for Gay-Berne*/
   double k1, k2, mu, nu;
 #endif
+#ifdef TABULATED
   /* Parameters needed for tabulated force */
-  char* filename;
+  char* filename = NULL;
+#endif
 #ifdef COMFORCE
   /* parameters needed for comforce and comfixed */
   int flag, dir; 

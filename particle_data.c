@@ -379,7 +379,6 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
 {
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle part;
-  int i;
   IntList *bl = &(part.bl);
 
   if (get_particle_data(part_num, &part) == TCL_ERROR)
@@ -456,6 +455,7 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
 
   /* print fix information. */
   if (part.l.ext_flag & COORDS_FIX_MASK) {
+    int i;
     Tcl_AppendResult(interp, " fix ", (char *)NULL);
     for (i = 0; i < 3; i++)
       if (part.l.ext_flag & COORD_FIXED(i))
@@ -521,7 +521,6 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
   
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle part;
-  int i;
   IntList *bl = &(part.bl);
     
   if (part_num > max_seen_particle) {
@@ -635,6 +634,7 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       }
     }
     else if (ARG0_IS_S("fix")) {
+      int i;
       for (i = 0; i < 3; i++) {
 	if (part.l.ext_flag & COORD_FIXED(i))
 	  Tcl_AppendResult(interp, "1 ", (char *)NULL);
