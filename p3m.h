@@ -89,6 +89,26 @@ extern p3m_struct p3m;
 void   P3M_init();
 /** Calculate the k-space contribution to the coulomb interaction forces. */ 
 void   P3M_calc_kspace_forces();
+
+/** Calculate real space contribution of coulomb pair forces. */
+MDINLINE void add_coulomb_pair_force(Particle *p1, Particle *p2,
+				     double *d,double dist2,double dist)
+{
+  int j;
+  double fac, adist, erfc_part_ri;
+
+  if(dist < p3m.r_cut) {
+    adist = p3m.alpha * dist;
+    erfc_part_ri = AS_erfc_part(adist) / dist;
+    fac = p3m.bjerrum * p1->r.q * p2->r.q  * 
+      exp(-adist*adist) * (erfc_part_ri + 2.0*p3m.alpha/1.772453851) / dist2;
+    for(j=0;j<3;j++) {
+      p1->f[j] += fac * d[j];
+      p2->f[j] -= fac * d[j];
+    }
+  }
+}
+
 /** Clean up P3M memory allocations. */
 void   P3M_exit();
 
