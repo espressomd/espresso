@@ -479,7 +479,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   else if (!strncmp(mode, "remove", strlen(mode))) {
     /* 'analyze remove [<index>]' */
     /******************************/
-    if (arc == 0) { for (i = n_configs-1; i >= 0; i--) analyze_remove(i); }
+    if (argc == 0) { for (i = n_configs-1; i >= 0; i--) analyze_remove(i); }
     else if (argc == 1) {
       Tcl_GetInt(interp, argv[0], &i); argc--; argv++;
       if(n_configs == 0) {
