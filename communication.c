@@ -456,7 +456,7 @@ void mpi_send_bond_slave(int part)
 {
   IntList *bl = NULL;
   Particle *p = cells_got_particle(part);
-  int bond_size, delete, stat, *insert;
+  int start, bond_size, delete, stat, *insert;
   MPI_Status status;
 
   if (!p)
@@ -470,9 +470,10 @@ void mpi_send_bond_slave(int part)
     insert = (int *)malloc(bond_size*sizeof(int));
   else {
     bl = &(p->bl);
-    insert = bl->e + bl->n;
+    start = bl->n;
     bl->n += bond_size;
     realloc_intlist(bl, bl->n);
+    insert = bl->e + start;
   }
   MPI_Recv(insert, bond_size, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
   if (delete) {
