@@ -19,7 +19,7 @@
 # '[part]', i.e. '{ {type partner} {type partner} ... }'    #
 #                                                           #
 # Created:       17.09.2002 by BAM                          #
-# Last modified: 18.09.2002 by BAM                          #
+# Last modified: 26.09.2002 by BAM                          #
 #                                                           #
 #                                                           #
 # findBondPos                                               #
@@ -101,17 +101,19 @@ proc countBonds { part_all } {
     puts "    Analysis of topology in progress..."
 
     puts -nonewline "        Preparing environement... "
+    flush stdout
     # total number of particles submitted to this function
     set N_T [llength $part_all]
-    # Initialize the bonds-list with 'NA's
-    # => if procedure is over, entries still containing 'NA' don't have any bonds
+    # Initialize the bonds-list with the particle_number (taken from $part_all)
+    # => if procedure is over, entries of llength==1 don't have any bonds
     for {set i 0} {$i<$N_T} {incr i} {
-	lappend bonds "NA"
+	lappend bonds [lindex [lindex $part_all $i] 0]
     }
     puts "Done."
 
     # Find the position of the bonds within 'part_all'
     puts -nonewline "        Looking for position of bond-informations... "
+    flush stdout
     for { set i 0 } {$i<$N_T} {incr i} {
 	if { [findBondPos [lindex $part_all $i]]!=-1} {
 	    set bond_pos [findBondPos [lindex $part_all $i]]
@@ -119,7 +121,7 @@ proc countBonds { part_all } {
 	}
     }
     if { $i==$N_T } {
-	puts " "
+	puts "Failed.\n"
 	puts "----------------"
 	puts "--> Warning! <--"
 	puts "----------------"
@@ -156,20 +158,36 @@ proc countBonds { part_all } {
 		# Add bonding informations to the particle...
 		set bond_old "[lindex $bonds $i]"
 		set bond_new "[lindex $bond_i $j]"
-		if { [string compare $bond_old "NA"]==0 } {
-		    set bonds [lreplace $bonds $i $i "{$bond_new}"]
-		} else {
-		    set bonds [lreplace $bonds $i $i "$bond_old {$bond_new}"]
-		}
+		set bonds [lreplace $bonds $i $i "$bond_old {$bond_new}"]
 
 		# ...and its respective partner.
 		set bond_j [lindex [lindex $bond_i $j] 1]
-		set bond_old "[lindex $bonds $bond_j]"
-		set bond_new "[lindex [lindex $bond_i $j] 0] $i"
-		if { [string compare $bond_old "NA"]==0 } {
-		    set bonds [lreplace $bonds $bond_j $bond_j "{$bond_new}"]
-		} else {
+		set bond_j_f -1
+		for {set k 0} {$k<$N_T} {incr k} {
+		    # since the particle_number does not have to correspond to the index of that particle in $part_all
+		    # (e.g. particle 45 might be stored at [lindex $part_all 113], for whatever strange reason)
+		    # one has to find the tcl-list-index for $bond_j to know where to save its bonding informations
+		    if { [lindex [lindex $part_all $k] 0]==$bond_j } {
+			set bond_j_f $k
+			break
+		    }
+		}
+		if { $bond_j_f > -1 } {
+		    set bond_j $bond_j_f
+		    set bond_old "[lindex $bonds $bond_j]"
+		    set bond_new "[lindex [lindex $bond_i $j] 0] [lindex [lindex $part_all $i] 0]"
 		    set bonds [lreplace $bonds $bond_j $bond_j "$bond_old {$bond_new}"]
+		} else {
+		    puts "Failed.\n"
+		    puts "----------------"
+		    puts "--> Warning! <--"
+		    puts "----------------"
+		    puts "--> Cannot find an entry for particle $bond_j in the supplied list of $N_T particles!"
+		    puts -nonewline "--> (Got:"
+		    for {set k 0} {$k<$N_T} {incr k} { puts -nonewline " [lindex [lindex $part_all $k]]" }
+		    puts ")"
+		    puts "Aborting...\n"
+		    exit
 		}
 
 		# Count the amount of bonds set.
