@@ -7,11 +7,11 @@
 #include "cells.h"
 #include "global.h"
 
-/** actual number of pairs in the verlet list. */
+/** Actual number of pairs in the verlet list. */
 int   n_verletList;
-/** maximal number of pairs in the verlet list. */
+/** Maximal number of pairs in the verlet list. */
 int max_verletList;
-/** verlet list. */
+/** Verlet list. */
 int    *verletList;
 
 /** flag for rebuilding the verlet list. */

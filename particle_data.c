@@ -24,6 +24,36 @@
 /** granularity of the particle buffer in particles */
 #define PART_INCREMENT 256
 
+/************************************************
+ * variables
+ ************************************************/
+
+/** Maximal identity of particles on all nodes. */
+int n_total_particles = 0;
+/** For every particle (identity) the node where it is stored.
+    Only available when executing scripts, during the integration
+    this pointer is NULL. */
+int *particle_node = NULL;
+
+/** Number of particles on this node. */
+int     n_particles = 0;
+/** Physical size of \ref particles. */
+int   max_particles = 0;
+/** Number of ghosts additionally in \ref particles. */
+int        n_ghosts = 0;
+/** Data of local particles. */
+Particle *particles = NULL;
+
+/** For every particle (identity) the index on this node. If the particle is not
+    stored on this node, neither physical nor as ghost, the index is -1. Only
+    valid during the simulation.
+*/
+int *local_index;
+
+/************************************************
+ * functions
+ ************************************************/
+
 void map_particle_node(int part, int node)
 {
   int old_max = n_total_particles, i;

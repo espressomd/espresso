@@ -12,20 +12,22 @@
  * comes from.
  **********************************************/
 
-/** read only callback. If you choose this, the
-    variable cannot be changed from Tcl */
+/** Read-only callback for \ref fields.
+    If you choose this, the variable cannot be
+    changed by Tcl script code. */
 int ro_callback(Tcl_Interp *interp, void *data);
 
-/* callback for box_l */
+/** Callback for box_l. Sets the box dimensions. */
 int boxl_callback(Tcl_Interp *interp, void *_data);
 
-/* callback for gamma */
+/** Callback for gamma. Sets the friction coefficient gamma. */
 int gamma_callback(Tcl_Interp *interp, void *_data);
 
-/* do not change order !!!
- * and if you add something, also add an #define FIELD_* in
- * global.h
- */
+/** List of all Tcl accessible global variables. If you
+    want to add a new variable, ADD IT ALWAYS AT THE END.
+    You should also add an \verbatim #define FIELD_*\endverbatim
+    in \ref global.h.
+*/
 const Datafield fields[] = {
   {&nprocs,    TYPE_INT,    1, "nprocs",    ro_callback }, /* communication.c */
   {processor_grid, TYPE_INT, 3, "procgrid", pgrid_callback }, /* grid.c */
@@ -46,27 +48,22 @@ const Datafield fields[] = {
  * variables
  **********************************************/
 
-/* simulation box and domain decompostion */ 
+/** Simulation box dimensions. */ 
 double box_l[3]       = {1, 1, 1};
+/** Dimensions of the box a single node is responsible for. */ 
 double local_box_l[3] = {1, 1, 1};
+/** Left top corner of this nodes local box. */ 
 double my_left[3]     = {0, 0, 0};
+/** Right bottom corner of this nodes local box. */ 
 double my_right[3]    = {1, 1, 1};
 
-/* particles */
-int n_total_particles = 0;
-int *particle_node = NULL;
-
-int     n_particles = 0;
-int   max_particles = 0;
-int        n_ghosts = 0;
-Particle *particles = NULL;
-
-int *local_index;
-
-/* nonbonded (short range) interactions */
-int n_particle_types = 0;
+/** Number of nonbonded (short range) interactions. Not used so far.*/
 int n_interaction_types = 0;
-IA_parameters *ia_params = NULL;
+
+/** number of bonded interactions. Not used so far. */
+int n_bonded_ia;
+/** Field containing the paramters of the bonded ia types */
+Bonded_ia_parameters *bonded_ia_params;
 
 /**********************************************
  * procedures

@@ -1,6 +1,7 @@
 #include "thermostat.h"
 #include "global.h"
 
+/** Friction coefficient gamma. */
 double friction_gamma = 0;
 
 void friction_thermo()

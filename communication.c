@@ -6,13 +6,14 @@
 #include "global.h"
 #include "debug.h"
 
+/** the number of this node */
 int this_node = -1;
+/** the total number of nodes */
 int nprocs = -1;
 
 /**********************************************
  * slave callbacks.
  **********************************************/
-
 SlaveCallback *callbacks[] = {
   mpi_stop_slave,                /*  0: REQ_TERM */
   mpi_bcast_parameter_slave,     /*  1: REQ_BCAST_PAR */

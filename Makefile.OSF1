@@ -2,18 +2,22 @@
 CC=cc
 
 # optimized compiler flags
-#CFLAGS=-I/usr/local/include -DDEFINE_TCL_RAND -O3 $(MSG_FLAGS) -fp_reorder -tune host
+#CFLAGS=-I/usr/local/include -DDEFINE_TCL_RAND -O3 -fp_reorder -tune host
 
 # debug compiler flags
-CFLAGS=-I/usr/local/include $(MSG_FLAGS) -g
+CFLAGS=-I/usr/local/include -g
 
 # flags needed for MPI
 
 # warnings
 MSG_FLAGS=-check -msg_disable ignorecallval -msg_disable noparmlist \
 	  -msg_disable uncalled -msg_disable alignment -msg_disable unknownmacro \
-	  -msg_disable strctpadding -msg_disable unusedincl -msg_disable unusedtop \
-	  -msg_disable unnecincl -msg_disable nestincl
+	  -msg_disable strctpadding -msg_disable unusedincl
+
+ifneq ($(findstring V6.2,$(shell cxx -V)),)
+MSG_FLAGS += -msg_disable unusedtop -msg_disable unnecincl -msg_disable nestincl
+endif
+
 CFLAGS+= $(MSG_FLAGS)
 
 # MDINLINE defines hwo to declare inline functions

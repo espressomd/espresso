@@ -9,6 +9,7 @@
  * local settings
  **********************************************/
 
+/** the number of nodes for all three spatial dimensions */
 int processor_grid[3] = { -1, -1, -1};
 int pe_pos[3] = {-1,-1,-1};
 int neighbors[6] = {0, 0, 0, 0, 0, 0};

@@ -39,7 +39,7 @@ mostclean: clean
 
 ########### dependencies
 dep: 
-	make $(PLATFORM)
+	$(MAKE) $(PLATFORM)
 	rm -f $(PLATFORM)/.depend
 	$(MAKE) $(PLATFORM)/.depend
 

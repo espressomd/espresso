@@ -4,6 +4,21 @@
 #include <string.h>
 #include <stdlib.h>
 
+/****************************************
+ * variables
+ *****************************************/
+
+/** Array of the interaction parameters. Should be accessed only via
+    \ref get_ia_param or \ref safe_get_ia_param. */
+IA_parameters *ia_params = NULL;
+
+/** Maximal particle type seen so far. */
+int n_particle_types = 0;
+
+/*****************************************
+ * functions
+ *****************************************/
+
 IA_parameters *safe_get_ia_param(int i, int j)
 {
   if ((i < 0) || (j < 0))
