@@ -24,6 +24,7 @@ extern int nprocs;
 extern int processor_grid[3];
 extern int pe_pos[3];
 extern int neighbors[6];
+extern double boundary[6];
 
 /****************************************
  * box dimensions from global.c

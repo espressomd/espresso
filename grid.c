@@ -11,6 +11,7 @@
 int processor_grid[3] = { -1, -1, -1};
 int pe_pos[3] = {-1,-1,-1};
 int neighbors[6] = {0, 0, 0, 0, 0, 0};
+double boundary[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 /**********************************************
  * procedures
@@ -95,6 +96,9 @@ void calc_neighbors(int node)
     n_pos[dir] = pe_pos[dir] + 1;
     if(n_pos[dir]>=processor_grid[dir]) n_pos[dir] -= processor_grid[dir];
     neighbors[(2*dir)+1] = map_array_node(n_pos[0],n_pos[1],n_pos[2]);
+    /* left boundary ? */
+    if(pe_pos[dir] == 0)                     boundary[2*dir] =   box_l[dir];
+    /* right boundary ? */
+    if(pe_pos[dir] == processor_grid[dir]-1) boundary[2*dir+1] = - box_l[dir];
   }
-  
 }

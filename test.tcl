@@ -14,7 +14,7 @@
 ##################################################
 # settings
 ##################################################
-set npart 1000
+set npart 10000
 set tcl_precision 5
 set writemethod ascii
 
@@ -63,9 +63,12 @@ puts "niatypes = [setmd niatypes]"
 
 # setup interactions
 ##################################################
+inter 0 0 lennard-jones 1 1 1.2 0 0
+inter 1 1 lennard-jones 1 1 1.2 0 0
+inter 2 2 lennard-jones 1 1 1.2 0 0
 inter 0 1 lennard-jones 1 1 1.2 0 0
-inter 1 2 lennard-jones 2 1 1.2 0 0
 inter 0 2 lennard-jones 3 1 1.2 0 0
+inter 1 2 lennard-jones 2 1 1.2 0 0
 puts "nptypes = [setmd nptypes]"
 
 # Set up particle positions

@@ -97,7 +97,7 @@ void verlet_exit()
 void resize_verlet_list()
 {
   int diff;
-  diff = max_verletList-n_verletList;
+  diff = max_verletList - n_verletList;
   if( diff > 2*LIST_INCREMENT ) {
     diff = (diff/LIST_INCREMENT)-1;
     max_verletList -= diff*LIST_INCREMENT;

@@ -213,11 +213,17 @@ void exchange_part()
       n_b_send_buf = n_b_recv_buf = 0;
       if(lr==0) {                                /* left */
 	for(n=0;n<n_particles;n++)
-	  if(particles[n].p[d] <   my_left[d] )  move_to_p_buf(n);
+	  if(particles[n].p[d] <   my_left[d] ) {
+	    particles[n].p[d] += boundary[dir];
+	    move_to_p_buf(n);
+	  }
       }
       else {                                     /* right */
  	for(n=0;n<n_particles;n++)                  
-	  if(particles[n].p[d] >=  my_right[d])  move_to_p_buf(n);
+	  if(particles[n].p[d] >=  my_right[d]) {
+	    particles[n].p[d] += boundary[dir];
+	    move_to_p_buf(n);
+	  }
       }
       /* GHOST_TRACE(fprintf(stderr,"%d: send %d part with %d bond partners to dir %d\n",
 	 this_node,n_p_send_buf,n_b_send_buf,dir)); */
@@ -262,34 +268,15 @@ void exchange_ghost()
     /* send cell loop - pack ghosts */
     for(c=0; c<n_send_cells[dir]; c++) {
       c_ind = send_cells[cell_start[dir]+c];
-      for (d = 0; d < ntot_send_cells; d++) {
-	int j;
-	for (j = 0; j < cells[send_cells[d]].n_particles; j++)
-	  if (cells[send_cells[d]].particles[j] < 0 ||
-	      cells[send_cells[d]].particles[j] >= n_particles + n_ghosts)
-	    *(int *)0 = 0;
-      }
-
       for(n=0;n<cells[c_ind].n_particles;n++) {
-	if(n_g_send_buf > max_g_send_buf) fprintf(stderr,"n_g_send_buf = %d!!!\n",n_g_send_buf);
 	pack_ghost(g_send_buf,n_g_send_buf,particles,cells[c_ind].particles[n]);
 	n_g_send_buf++;
-	for (d = 0; d < ntot_send_cells; d++) {
-	  int j;
-	  for (j = 0; j < cells[send_cells[d]].n_particles; j++)
-	    if (cells[send_cells[d]].particles[j] < 0 ||
-		cells[send_cells[d]].particles[j] >= n_particles + n_ghosts)
-	      *(int *)0 = 0;
-	}
       }
-      for (d = 0; d < ntot_send_cells; d++) {
-	int j;
-	for (j = 0; j < cells[send_cells[d]].n_particles; j++)
-	  if (cells[send_cells[d]].particles[j] < 0 ||
-	      cells[send_cells[d]].particles[j] >= n_particles + n_ghosts)
-	    *(int *)0 = 0;
-      }
-
+    }
+    /* fold ghost coordinates if they cross the boundary */
+    if(boundary[dir] != 0.0) {
+      d=dir/2;
+      for(n=0;n<n_g_send_buf;n++) g_send_buf[n].p[d] += boundary[dir];
     }
     /* send ghosts */
     send_ghosts(dir);
@@ -370,6 +357,10 @@ void update_ghost_pos()
 	for(i=0;i<3;i++) send_buf[g+i] = particles[cells[c_ind].particles[n]].p[i];
 	g += 3;
       }
+    }
+    /* fold positions if they cross the boundary */
+    if(boundary[dir] != 0.0) {
+      for(n=dir/2; n<g; n+=3) send_buf[n] += boundary[dir];
     }
     /* send buffer */
     send_posforce(dir,3*ghost_send_size[dir],3*ghost_recv_size[dir]);
