@@ -840,7 +840,7 @@ void mpi_get_particles(Particle *result, IntList *bi)
       result[i].bl.e = bonds;
       bonds += result[i].bl.n;
       COMM_TRACE(if (result[i].bl.n > 0) {
-	printf("part %d: bonds ", i);
+	printf("(%d) part %d: bonds ", i, result[i].r.identity);
 	for(g = 0; g < result[i].bl.n; g++) printf("%d ", result[i].bl.e[g]);
 	printf("\n");
       });
