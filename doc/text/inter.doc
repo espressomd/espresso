@@ -48,7 +48,7 @@
 		   4 \epsilon(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)
 \left[ \left(\frac {\sigma_0}{\mathbf{r}_{ij}-\sigma(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)+\sigma_0}\right)^{12}-
        \left(\frac {\sigma_0}{\mathbf{r}_{ij}-\sigma(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)+\sigma_0}\right)^{6} 
-\right]} \f]
+\right] \f]
 
 where
 
