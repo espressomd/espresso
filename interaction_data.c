@@ -1742,6 +1742,9 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
 int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
 		    int argc, char **argv)
 {
+  double axis_len;
+  int i;
+
   con->type = CONSTRAINT_CYL;
   /* invalid entries to start of */
   con->c.cyl.pos[0] = 
@@ -1767,8 +1770,6 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
       argc -= 4; argv += 4;
     }
     else if(!strncmp(argv[0], "axis", strlen(argv[0]))) {
-      double temp;
-      int i;
       if(argc < 4) {
 	Tcl_AppendResult(interp, "constraint cylinder axis <rx> <ry> <rz> expected", (char *) NULL);
 	return (TCL_ERROR);
@@ -1778,16 +1779,6 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
 	  Tcl_GetDouble(interp, argv[3], &(con->c.cyl.axis[2])) == TCL_ERROR)
 	return (TCL_ERROR);
 
-      /*normalize the axis vector */
-      temp=0.;
-      for (i=0;i<3;i++) {
-	temp += SQR(con->c.cyl.axis[i]);
-      }
-      temp = sqrt (temp);
-      for (i=0;i<3;i++) {
-	con->c.cyl.axis[i] /= temp;
-      }
-      
       argc -= 4; argv += 4;    
     }
     else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
@@ -1801,7 +1792,7 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
     }
     else if(!strncmp(argv[0], "length", strlen(argv[0]))) {
       if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint cylinder length <rad> expected", (char *) NULL);
+	Tcl_AppendResult(interp, "constraint cylinder length <len> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
       if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.length)) == TCL_ERROR)
@@ -1810,10 +1801,14 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
     }
     else if(!strncmp(argv[0], "direction", strlen(argv[0]))) {
       if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint cylinder direction <rad> expected", (char *) NULL);
+	Tcl_AppendResult(interp, "constraint cylinder direction <dir> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.direction)) == TCL_ERROR)
+      if (!strncmp(argv[1], "inside", strlen(argv[1])))
+	con->c.cyl.direction = -1;
+      else if (!strncmp(argv[1], "outside", strlen(argv[1])))
+	con->c.cyl.direction = 1;
+      else if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.direction)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -1830,11 +1825,23 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
       break;
   }
 
-  if (con->c.cyl.rad < 0. || con->part_rep.r.type < 0) {
+  axis_len=0.;
+  for (i=0;i<3;i++)
+    axis_len += SQR(con->c.cyl.axis[i]);
+
+  if (con->c.cyl.rad < 0. || con->part_rep.r.type < 0 || axis_len < 1e-30 ||
+      con->c.cyl.direction == 0 || con->c.cyl.length <= 0) {
     Tcl_AppendResult(interp, "usage: constraint cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
+
+  /*normalize the axis vector */
+      axis_len = sqrt (axis_len);
+      for (i=0;i<3;i++) {
+	con->c.cyl.axis[i] /= axis_len;
+      }
+      
 
   make_particle_type_exist(con->type);
 
