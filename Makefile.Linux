@@ -1,20 +1,27 @@
 ############ general settings
 
-# Tk (graphical interface)
+### Tk (graphical interface)
 TK=no
+
+### Enable ('yes') for the Blade-Center (see http://www.mpip-mainz.mpg.de/theory/computers/blade/index.html)
+BLADE=no
 
 ### static compilation for certain brain damaged blade clusters
 STATIC=no
-# for the blade center
-# STATIC=yes
 
 ### fixed target architecture (same reason as above)
 HOSTFLAGS=
-# for the blade center
-# HOSTFLAGS=-march=pentium4 -mfpmath=sse -msse2
+ifeq ($(BLADE),yes)
+     # activate optimization for Blade-Xeon-Procs (see http://www.rzg.mpg.de/docs/languages/Intel_cc.html)
+     HOSTFLAGS=-tpp7 -axW -xW -march=pentium4 -I. -I/afs/ipp/@sys/soft/fftw/f95i/include
+endif
 
 ############ compiler settings
 CC=mpicc
+ifeq ($(BLADE),yes)
+     # CC=/afs/ipp/@sys/soft/mpich-1.2.4/gnu/bin/mpicc
+     CC=mpicci
+endif 
 
 # architecture dependent flags for gcc 3
 MODEL=$(shell awk '/\`model name/ { \
@@ -50,6 +57,9 @@ endif
 CFLAGS=-g -O2 -Wall $(HOSTFLAGS) \
 	-fschedule-insns -fschedule-insns2 \
 	-funroll-loops -frerun-cse-after-loop -ffast-math
+ifeq ($(BLADE),yes)
+     CFLAGS=-g -O2 -Wall $(HOSTFLAGS)
+endif
 
 # debug compiler flags
 # CFLAGS= -g -fno-inline -Wall
@@ -71,16 +81,29 @@ ifeq ($(STATIC),yes)
 	LDFLAGS+=-static
 	STATIC_POSTLOAD=-lm -ldl
 endif
+ifeq ($(BLADE),yes)
+     # in Blade-Center, include optimized math-libraries (see http://dbforums.com/t564728.html)
+     LDFLAGS+=-lsvml
+endif
 
 ########### ElectricFence
 # LDLIBS+= -lefence
 
 ########### FFTW
-LDLIBS+= -L/usr/local/lib -ldrfftw -ldfftw
+ifeq ($(BLADE),yes)
+     # LDLIBS+= -L/afs/ipp-garching.mpg.de/home/b/bhm/Espresso -lrfftw -lfftw
+     LDLIBS+= -L/afs/ipp/@sys/soft/fftw/f95i/lib -lrfftw -lfftw
+else
+     LDLIBS+= -L/usr/local/lib -ldrfftw -ldfftw
+endif
 
 ########### TCL
 CFLAGS+= -DUSE_NON_CONST
-LDLIBS+= -ltcl8.4
+ifeq ($(BLADE),yes)
+     LDLIBS+= -L/afs/ipp/@sys/soft/gnu/lib -ltcl8.4
+else
+     LDLIBS+= -ltcl8.4
+endif
 
 ########### TK
 ifeq ($(TK),yes)
