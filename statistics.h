@@ -86,30 +86,30 @@ double distto(double posx, double posy, double posz, int pid);
 
 /** calculate the end-to-end-distance. chain information \ref chain_start etc. must be set!
     @return the end-to-end-distance */
-double calc_re();
+void calc_re(double **re);
 
 /** calculate the end-to-end-distance averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
     @return the averaged end-to-end-distance */
-double calc_re_av();
+void calc_re_av(double **re);
 
 /** calculate the radius of gyration. chain information \ref chain_start etc. must be set!
     @return the radius of gyration */
-double calc_rg();
+void calc_rg(double **rg);
 
 /** calculate the radius of gyration averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
     @return the averaged radius of gyration */
-double calc_rg_av();
+void calc_rg_av(double **rg);
 
 /** calculate the hydrodynamic radius. chain information \ref chain_start etc. must be set!
     @return the hydrodynamic radius */
-double calc_rh();
+void calc_rh(double **rh);
 
 /** calculate the hydrodynamic radius averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
     @return the averaged hydrodynamic radius */
-double calc_rh_av();
+void calc_rh_av(double **rh);
 
 /** calculates the internal distances within a chain. Chain information \ref chain_start etc. must be set!
     @param idf contains <tt>idf[0],...,idf[chain_length-1]</tt> */
