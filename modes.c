@@ -261,7 +261,12 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
   fflush(stdout);
   */
 
-  // Search the molecule for head and tail beads
+  /* Search the molecule for head and tail beads. Ordinarily we should
+     be able to assume that the first bead in every molecule is the
+     head bead BUT for backwards compatibility with some older data we
+     need to check for any bead with atom type 0 and assume that such
+     atoms are head beads.  */
+
   head_id = 0 ;
   tail_id = 0;
   for ( i = 0 ; i < mol_size ; i++ ) {
@@ -276,11 +281,19 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
       } else {
 	tail_id = topology[mol_id].part.e[0];
       }
+      /*      printf("head: %d, tail %d \n", head_id, tail_id); */
       break;
     }
+
   }
 
-  /*  printf("head: %d, tail %d", head_id, tail_id); */
+  /* If the head and tail id's were not found above then assume the
+     head atom is the first and tail is the last in the molecule */
+  if ( head_id == 0 && tail_id == 0 ) {
+    head_id = topology[mol_id].part.e[0];
+    tail_id = topology[mol_id].part.e[mol_size -1];
+  }
+
 
   /*
   if ( mol_type == 0 ) { 

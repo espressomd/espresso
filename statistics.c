@@ -869,7 +869,7 @@ static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
       STAT_TRACE(fprintf(stderr,"%d,argc = %d \n",this_node, argc));
     }
 
-
+  freePartCfg();
   updatePartCfg(WITH_BONDS);
   if (!sortPartCfg()) {
     char *errtxt = runtime_error(128);
