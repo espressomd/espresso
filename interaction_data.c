@@ -248,8 +248,10 @@ int inter(ClientData _data, Tcl_Interp *interp,
     if (argc == 2) {
       char buffer[TCL_INTEGER_SPACE];
       /* print interaction information */
-      if(i<n_bonded_ia)
+      if(i<n_bonded_ia) {
 	printBondedIAToResult(interp, i);
+	return (TCL_OK);
+      }
       else {
 	Tcl_PrintDouble(interp, (double)i, buffer);
 	Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
