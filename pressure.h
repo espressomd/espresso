@@ -52,6 +52,7 @@ extern nptiso_struct nptiso;
 #include "harmonic.h"
 #include "subt_lj_harm.h"
 #include "subt_lj_fene.h"
+#include "subt_lj.h"
 #include "angle.h"
 #include "debye_hueckel.h"
 #include "mmm1d.h"
@@ -194,6 +195,10 @@ MDINLINE void add_bonded_virials(Particle *p1)
       i+=2; break;
     case BONDED_IA_SUBT_LJ_FENE:
       add_subt_lj_fene_pair_force(p1,p2,type_num);
+      ret = d[0]*p1->f.f[0] + d[1]*p1->f.f[1] + d[2]*p1->f.f[2];
+      i+=2; break;
+    case BONDED_IA_SUBT_LJ:
+      add_subt_lj_pair_force(p1,p2,type_num);
       ret = d[0]*p1->f.f[0] + d[1]*p1->f.f[1] + d[2]*p1->f.f[2];
       i+=2; break;
    case BONDED_IA_ANGLE:

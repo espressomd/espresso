@@ -258,6 +258,7 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
 	     ARG0_IS_S("fene") ||
 	     ARG0_IS_S("subt_lj_harm") ||
 	     ARG0_IS_S("subt_lj_fene") ||
+	     ARG0_IS_S("subt_lj") ||
 	     ARG0_IS_S("harmonic")) {
       if(argc<2 || ! ARG1_IS_I(i)) {
 	Tcl_ResetResult(interp);
@@ -571,6 +572,12 @@ void calc_p_tensor(double volume, IntList *p_list, int flag) {
 	  i+=2; break;
 	case BONDED_IA_SUBT_LJ_FENE:
 	  add_subt_lj_fene_pair_force(&p1,&p2,type_num);
+	  for(k=0;k<3;k++)
+	    for(l=0;l<3;l++)
+	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += p1.f.f[k]*d[l];
+	  i+=2; break;
+	case BONDED_IA_SUBT_LJ:
+	  add_subt_lj_pair_force(&p1,&p2,type_num);
 	  for(k=0;k<3;k++)
 	    for(l=0;l<3;l++)
 	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += p1.f.f[k]*d[l];

@@ -27,6 +27,7 @@
 #include "harmonic.h"
 #include "subt_lj_harm.h"
 #include "subt_lj_fene.h"
+#include "subt_lj.h"
 #include "angle.h"
 #include "debye_hueckel.h"
 #include "mmm1d.h"
@@ -126,6 +127,9 @@ MDINLINE void add_bonded_energy(Particle *p1)
     case BONDED_IA_SUBT_LJ_FENE:
       ret = subt_lj_fene_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
       i+=2; break; 
+    case BONDED_IA_SUBT_LJ:
+      ret = subt_lj_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
+      i+=2; break;
     case BONDED_IA_ANGLE:
       ret = angle_energy(p1,
 			 checked_particle_ptr(p1->bl.e[i+1]),

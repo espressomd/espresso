@@ -42,6 +42,8 @@
 #define BONDED_IA_SUBT_LJ_HARM 99
 /** Type of bonded interaction is a (FENE-LJ) potential. */
 #define BONDED_IA_SUBT_LJ_FENE 98
+/** Type of bonded interaction is a (-LJ) potential. */
+#define BONDED_IA_SUBT_LJ 97
 /** This bonded interaction was not set. */
 #define BONDED_IA_NONE    -1
 
@@ -254,7 +256,13 @@ typedef struct {
       double k;
       double r;
       double r2;
-    } subt_lj_fene; 
+    } subt_lj_fene;   
+    /** Dummy parameters for -LJ Potential */
+   struct {
+      double k;
+      double r;
+      double r2;
+    } subt_lj;  
   } p;
 } Bonded_ia_parameters;
 
