@@ -39,11 +39,15 @@ interface between the Tcl script and the MD code:
 	run <steps> integration steps. 
 	The C implementation is \ref #integrate.
 
-    <li> \verbatim inter ( <particle_type_number1> <particle_type_number2> | <bond_type_number> ) <interaction_type> <value>+ \endverbatim
+    <li>\verbatim inter ( <particle_type_number1> <particle_type_number2> | <bond_type_number> ) <interaction_type> <value>+ \endverbatim
 	sets the parameters for interactions.
 	For more information, see \ref tcl_inter.
 
-    <li> \verbatim part <particle_number> ( pos|type|q|v|f|[un]fix|ext_force|bond| [delete] <value>+ )* \endverbatim
+    <li>\verbatim invalidate_system \endverbatim
+        forces a system re-init which, among others, helps to ensure continuity upon working with checkpoints.
+	For more information, see \ref tcl_invalidate_system.
+
+    <li>\verbatim part <particle_number> ( pos|type|q|v|f|[un]fix|ext_force|bond| [delete] <value>+ )* \endverbatim
 	modifies particle data.
 	For more information, see \ref tcl_part.
  
