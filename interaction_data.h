@@ -48,6 +48,8 @@
 #define BONDED_IA_TABULATED 4
 /** Type of bonded interaction is a (-LJ) potential. */
 #define BONDED_IA_SUBT_LJ   5
+/** Type of a Rigid/Constrained bond*/
+#define BONDED_IA_RIGID_BOND  6
 
 /* !!! DO NOT USE ANY MORE !!! */
 /** Type of bonded interaction is a (HARMONIC-LJ) potential (DO NOT USE). */
@@ -112,7 +114,8 @@
 
 /*@}*/
 
-
+#define REALLOC_BOND_PARTNERS 0
+#define CURR_BOND_PARTNERS    1
 
 /* Data Types */
 /************************************************************/
@@ -130,6 +133,22 @@ typedef struct {
   double LJ_shift;
   double LJ_offset;
   double LJ_capradius;
+  /*@}*/
+#endif
+
+#ifdef BUCKINGHAM
+  /** \name Buckingham potential */
+  /*@{*/
+  double BUCK_A;
+  double BUCK_B;
+  double BUCK_C;
+  double BUCK_D;
+  double BUCK_cut;
+  double BUCK_discont;
+  double BUCK_shift;
+  double BUCK_capradius;
+  double BUCK_F1;
+  double BUCK_F2;
   /*@}*/
 #endif
 
@@ -251,7 +270,7 @@ typedef struct {
       double cos_phi0;
       double sin_phi0;
 #endif
-#ifdef BOND_ANGLE_COSSQUARE 
+#ifdef BOND_ANGLE_COSSQUARE
       double cos_phi0;
 #endif
     } angle;
@@ -291,7 +310,18 @@ typedef struct {
       double k;
       double r;
       double r2;
-    } subt_lj_harm; 
+    } subt_lj_harm;
+    /**Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/
+    struct {
+      /**Length of rigid bond/Constrained Bond*/
+      //double d;
+      /**Square of the length of Constrained Bond*/
+      double d2;
+      /**Positional Tolerance/Accuracy value for termination of RATTLE/SHAKE iterations during position corrections*/
+      double p_tol;
+      /**Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations during velocity corrections */
+      double v_tol;
+    } rigid_bond;
   } p;
 } Bonded_ia_parameters;
 
@@ -356,7 +386,7 @@ typedef struct {
   /** dimension of the maze. */
   double dim;
   /** sphere radius. */
-  double sphrad;  
+  double sphrad;
   /** cylinder (connecting the spheres) radius*/
   double cylrad;
 } Constraint_maze;
@@ -392,6 +422,9 @@ extern int n_particle_types;
 /* Number of nonbonded (short range) interactions. Not used so far.*/
 extern int n_interaction_types;
 
+/**Contains the number of rigid bonds set so far*/
+extern int n_rigidbonds;
+
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;
 
@@ -415,11 +448,16 @@ extern double max_cut_non_bonded;
     details (who wants to wite that?).*/
 extern double lj_force_cap;
 
+/** For warm up integration, the maximum force between any two particles
+interacting via Buckingham potential can be set and this magnitude of max
+force is stored in buck_force_cap*/
+extern double buck_force_cap;
+
 /** For the warmup you can cap any tabulated potential at the value
     tab_force_cap.  This works for most common potentials where a
     singularity in the force occurs at small separations.  If you have
     more specific requirements calculate a separate lookup table for
-    each stage of the warm up.  
+    each stage of the warm up.
 
     \note If the maximum value of the tabulated force at small
     separations is less than the force cap then a warning will be
@@ -436,6 +474,8 @@ extern int n_constraints;
 /** field containing constraints. */
 extern Constraint *constraints;
 #endif
+/**Switch for nonbonded interaction exclusion*/
+extern int ia_excl;
 
 /************************************************
  * exported functions
@@ -449,12 +489,17 @@ void force_and_energy_tables_init();
 int inter(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
 
-
 /** Implementation of the Tcl function constraint. This function
     allows to set and delete constraints.
  */
 int constraint(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv);
+
+/** Implementation of the Tcl function exclusion. This function
+    allows to set and delete exclusions of non bonded interactions between bonded particles
+    (currently supported exclusions are for only 1-2 and 1-3 interactions).
+ */
+int exclusion(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Callback for setmd niatypes. */
 int niatypes_callback(Tcl_Interp *interp, void *data);
@@ -496,6 +541,6 @@ void calc_maximal_cutoff();
 int check_obs_calc_initialized();
 
 int checkIfParticlesInteract(int i, int j);
- 
+
 char *get_name_of_bonded_ia(int i);
 #endif
