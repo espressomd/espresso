@@ -11,9 +11,17 @@ Current working revision.
 - v1.5.6c -
 -----------
 
+(d) March 19th, 2004.
 (c) March 18th, 2004.
 (b) March 17th, 2004.
 (a) March  5th, 2004.
+
+New Features: 
+(d) Added a new analysis command [analyze modes2d] which is designed
+    to allow a fluctuation analysis of a lipid membrane system.  This
+    command is currently restricted to a special type of membrane
+    configuration.  A more generalized command and related tcl scripts for
+    processing the results will be added later.
 
 Changes:
 (b) [analyze bond_l] now returns a four member list with the average, standard deviation, 
