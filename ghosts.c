@@ -278,7 +278,7 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
 	if (data_parts & GHOSTTRANS_MOMENTUM)
 	  memcpy(&pt2->m, &pt1->m, sizeof(ParticleMomentum));
 	if (data_parts & GHOSTTRANS_FORCE)
-	  memcpy(&pt1->f, &pt1->f, sizeof(ParticleForce));
+	  add_force(&pt2->f, &pt1->f);
       }
     }
   }
