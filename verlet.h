@@ -49,15 +49,30 @@ extern int rebuild_verletlist;
 /************************************************************/
 /*@{*/
 
-/** initialize a Pair List.
+/** Initialize a Pair List.
  *  Use with care and ONLY for initialization! */
 void init_pairList(PairList *list);
 
-/** fill verlet tables (old version of build_verlet_lists_and_force_calc()). */
+/** Free a Pair List . */
+void free_pairList(PairList *list);
+
+/** Fill verlet tables. */
 void build_verlet_lists();
 
-/** fill verlet tables and calculate forces. */
-void build_verlet_lists_and_force_calc();
+/** Nonbonded and bonded force calculation using the verlet list */
+void calculate_verlet_ia();
+
+/** Fill verlet tables and Calculate nonbonded and bonded forces. This
+    is a combination of \ref build_verlet_lists and
+    \ref calculate_verlet_ia.
+*/
+void build_verlet_lists_and_calc_verlet_ia();
+
+/** Nonbonded and bonded energy calculation using the verlet list */
+void calculate_verlet_energies();
+
+/** Nonbonded and bonded pressure calculation using the verlet list */
+void calculate_verlet_virials();
 
 /** Callback for integrator flag tcl:verletflag c:rebuild_verletlist (= 0 or 1).
     <ul>

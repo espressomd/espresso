@@ -92,9 +92,9 @@ double mindist(IntList *set1, IntList *set2)
     pt[0] = partCfg[j].r.p[0];
     pt[1] = partCfg[j].r.p[1];
     pt[2] = partCfg[j].r.p[2];
-    if (!set1 || intlist_contains(set1, partCfg[j].r.type)) {
+    if (!set1 || intlist_contains(set1, partCfg[j].p.type)) {
       for (i=j+1; i<n_total_particles; i++)
-	if (!set2 || intlist_contains(set2, partCfg[i].r.type)) {
+	if (!set2 || intlist_contains(set2, partCfg[i].p.type)) {
 	  mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
 	}
     }
@@ -116,7 +116,7 @@ void nbhood(double pt[3], double r, IntList *il)
     get_mi_vector(d, pt, partCfg[i].r.p);
     if (sqrt(sqrlen(d)) < r) {
       realloc_intlist(il, il->n + 1);
-      il->e[il->n] = partCfg[i].r.identity;
+      il->e[il->n] = partCfg[i].p.identity;
       il->n++;
     }
   }
@@ -131,7 +131,7 @@ double distto(double p[3], int pid)
   /* larger than possible */
   mindist=SQR(box_l[0] + box_l[1] + box_l[2]);
   for (i=0; i<n_total_particles; i++) {
-    if (pid != partCfg[i].r.identity) {
+    if (pid != partCfg[i].p.identity) {
       get_mi_vector(d, p, partCfg[i].r.p);
       mindist = dmin(mindist, sqrlen(d));
     }
@@ -157,13 +157,13 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
   /* particle loop: p1_types*/
   for(i=0; i<n_total_particles; i++) {
     for(t1=0; t1<n_p1; t1++) {
-      if(partCfg[i].r.type == p1_types[t1]) {
+      if(partCfg[i].p.type == p1_types[t1]) {
 	min_dist2 = start_dist2;
 	/* particle loop: p2_types*/
 	for(j=0; j<n_total_particles; j++) {
 	  if(j != i) {
 	    for(t2=0; t2<n_p2; t2++) {
-	      if(partCfg[j].r.type == p2_types[t2]) {
+	      if(partCfg[j].p.type == p2_types[t2]) {
 		act_dist2 =  min_distance2(partCfg[i].r.p, partCfg[j].r.p);
 		if(act_dist2 < min_dist2) { min_dist2 = act_dist2; }
 	      }
@@ -214,14 +214,14 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
   /* particle loop: p1_types*/
   for(i=0; i<n_total_particles; i++) {
     for(t1=0; t1<n_p1; t1++) {
-      if(partCfg[i].r.type == p1_types[t1]) {
+      if(partCfg[i].p.type == p1_types[t1]) {
 	/* distinguish mixed and identical rdf's */
 	if(mixed_flag == 1) start = 0;
 	else                start = (i+1);
 	/* particle loop: p2_types*/
 	for(j=start; j<n_total_particles; j++) {
 	  for(t2=0; t2<n_p2; t2++) {
-	    if(partCfg[j].r.type == p2_types[t2]) {
+	    if(partCfg[j].p.type == p2_types[t2]) {
 	      dist = min_distance(partCfg[i].r.p, partCfg[j].r.p);
 	      if(dist > r_min && dist < r_max) {
 		ind = (int) ( (dist - r_min)*inv_bin_width );
@@ -309,6 +309,33 @@ void analyze_configs(double *tmp_config, int count) {
     configs[n_configs][3*i+2] = tmp_config[3*i+2];
   }
   n_configs++;
+}
+
+/****************************************************************************************
+ *                                 Observables handling
+ ****************************************************************************************/
+
+void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded, int n_non_bonded,
+			       int n_coulomb, int c_size)
+{
+  int i, total = c_size*(n_pre + n_bonded_ia + n_non_bonded + n_coulomb);
+
+  realloc_doublelist(&(stat->data), stat->data.n = total);
+  stat->chunk_size = c_size;
+  stat->n_coulomb    = n_coulomb;
+  stat->n_non_bonded = n_non_bonded;
+  stat->bonded     = stat->data.e + c_size*n_pre;
+  stat->non_bonded = stat->bonded + c_size*n_bonded_ia;
+  stat->coulomb    = stat->non_bonded + c_size*n_non_bonded;
+
+  for(i = 0; i < total; i++)
+    stat->data.e[i] = 0.0;
+}
+
+void invalidate_obs()
+{
+  total_energy.init_status = 0;
+  total_pressure.init_status = 0;
 }
 
 /****************************************************************************************

@@ -43,7 +43,6 @@ int gamma_callback(Tcl_Interp *interp, void *_data)
   friction_gamma = data;
 
   mpi_bcast_parameter(FIELD_GAMMA);
-  mpi_bcast_event(PARAMETER_CHANGED);
 
   return (TCL_OK);
 }
@@ -59,7 +58,6 @@ int temp_callback(Tcl_Interp *interp, void *_data)
   temperature = data;
 
   mpi_bcast_parameter(FIELD_TEMPERATURE);
-  mpi_bcast_event(PARAMETER_CHANGED);
 
   return (TCL_OK);
 }
@@ -79,37 +77,42 @@ void friction_thermo(Particle *p)
 {
   int j;
 #ifdef EXTERNAL_FORCES
-  if(p->ext_flag != PARTICLE_FIXED) 
+  if(p->l.ext_flag != PARTICLE_FIXED) 
 #endif
     {
       for ( j = 0 ; j < 3 ; j++)
 	{
 #ifdef EXTERNAL_FORCES
-	  if (p->fixed_coord_flag[j] != COORDINATE_FIXED )
+	  if (p->l.fixed_coord_flag[j] != COORDINATE_FIXED )
 #endif
-	    p->f[j] = pref1*p->v[j] + pref2*(d_random()-0.5);
+	    p->f.f[j] = pref1*p->m.v[j] + pref2*(d_random()-0.5);
 	}
 
-      ONEPART_TRACE(if(p->r.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f[0],p->f[1],p->f[2]));
+      ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
 
-      THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=( %.3e, %.3e, %.3e )\n",this_node,p->r.identity,p->f[0],p->f[1],p->f[2]));
+      THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
     }
 }
 
 #ifdef ROTATION
 void friction_thermo_rotation(Particle *p)
 {
+  int j;
 #ifdef EXTERNAL_FORCES
-  if(p->ext_flag != PARTICLE_FIXED) 
+  if(p->l.ext_flag != PARTICLE_FIXED) 
 #endif
     {
-      p->torque[0] = -friction_gamma*p->omega[0] + pref2*(d_random()-0.5);
-      p->torque[1] = -friction_gamma*p->omega[1] + pref2*(d_random()-0.5);
-      p->torque[2] = -friction_gamma*p->omega[2] + pref2*(d_random()-0.5);
+      for ( j = 0 ; j < 3 ; j++)
+	{
+#ifdef EXTERNAL_FORCES
+	  if (p->l.fixed_coord_flag[j] != COORDINATE_FIXED )
+#endif
+	    p->f.torque[j] = -friction_gamma*p->m.omega[j] + pref2*(d_random()-0.5);
+	}
 
-      ONEPART_TRACE(if(p->r.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f[0],p->f[1],p->f[2]));
+      ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
 
-      THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->r.identity,p->f[0],p->f[1],p->f[2]));
+      THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
     }
 }
 #endif

@@ -36,8 +36,8 @@ int n_interaction_types = 0;
 IA_parameters *ia_params = NULL;
 
 #ifdef ELECTROSTATICS
-Coulomb_parameters coulomb = { 0.0, COULOMB_NONE };
-Debye_hueckel_params dh_params = { 0.0, 0.0, 0.0, 0.0 };
+Coulomb_parameters coulomb = { 0.0, 0.0, COULOMB_NONE };
+Debye_hueckel_params dh_params = { 0.0, 0.0 };
 #endif
 
 int n_bonded_ia = 0;
@@ -485,7 +485,7 @@ void calc_maximal_cutoff()
       max_cut = dh_params.r_cut;
     break;
   case COULOMB_MMM1D:
-    /* uses mi interactions anyways */
+    /* needs n-squared calculation anyways */
     if (max_cut < 0)
       max_cut = 0;
     break;
@@ -524,7 +524,7 @@ int inter_print_all(Tcl_Interp *interp)
       }
     }
 #ifdef ELECTROSTATICS
-  if(coulomb.bjerrum > 0.0) {
+  if(coulomb.bjerrum != 0.0) {
     if (start) {
       Tcl_AppendResult(interp, "{", (char *)NULL);
       start = 0;
@@ -965,6 +965,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
    *                        lennard-jones
    * interaction
    */
+#ifdef LENNARD_JONES
   if (ARG0_IS_S("lennard-jones")) {
 
     /* get lennard-jones interaction type */
@@ -1001,13 +1002,13 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 					 cap_radius),
 		"particle types must be nonnegative");
   }
+#endif
 
-
-#ifdef LJCOS
   /* parse 
    *                        lj-cos
    * interaction
    */
+#ifdef LJ_COS
   if (ARG0_IS_S("lj-cos")) {
   	
     /* this is a quick fix for the inconsistency in the ljcos parameters 
@@ -1436,7 +1437,6 @@ int coulomb_set_bjerrum(double bjerrum)
 
     if (coulomb.method == COULOMB_P3M) {
 
-      p3m.bjerrum = 0.0;
       p3m.alpha   = 0.0;
       p3m.r_cut   = 0.0;
       p3m.mesh[0] = 0;
@@ -1446,14 +1446,12 @@ int coulomb_set_bjerrum(double bjerrum)
 
     } else if (coulomb.method == COULOMB_DH) {
 
-      dh_params.bjerrum = 0.0;
       dh_params.r_cut   = 0.0;
       dh_params.kappa   = 0.0;
 
     } else if (coulomb.method == COULOMB_MMM1D) {
 
       mmm1d_params.maxPWerror = 1e40;
-      mmm1d_params.bjerrum = 0.0;
       mmm1d_params.bessel_cutoff = 0;
 
     }
@@ -1529,12 +1527,11 @@ int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
   int mesh, cao, i;
 
   coulomb.method = COULOMB_P3M;
-  p3m.bjerrum    = coulomb.bjerrum;
     
 #ifdef PARTIAL_PERIODIC
-  if(periodic[0] == 0 ||
-     periodic[1] == 0 ||
-     periodic[2] == 0)
+  if(PERIODIC(0) == 0 ||
+     PERIODIC(1) == 0 ||
+     PERIODIC(2) == 0)
     {
       Tcl_AppendResult(interp, "Need periodicity (1,1,1) with Coulomb P3M",
 		       (char *) NULL);
@@ -1735,7 +1732,6 @@ int inter_parse_dh(Tcl_Interp * interp, int argc, char ** argv)
   }
   
   coulomb.method = COULOMB_DH;
-  dh_params.bjerrum = coulomb.bjerrum;
 
   if(! ARG0_IS_D(kappa))
     return TCL_ERROR;
@@ -1799,8 +1795,7 @@ int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
     }
   }
 
-  return set_mmm1d_params(interp, coulomb.bjerrum, switch_rad,
-			  bessel_cutoff, maxPWerror);
+  return set_mmm1d_params(interp, switch_rad, bessel_cutoff, maxPWerror);
 }
 
 int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
@@ -2017,7 +2012,7 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     Tcl_PrintDouble(interp, con->c.wal.d, buffer);
     Tcl_AppendResult(interp, " dist ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.r.type);
+    sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_SPH:
@@ -2031,7 +2026,7 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, con->c.sph.direction, buffer);
     Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.r.type);
+    sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_CYL:
@@ -2053,7 +2048,7 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, con->c.cyl.direction, buffer);
     Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.r.type);
+    sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_ROD:
@@ -2065,7 +2060,7 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, con->c.rod.lambda, buffer);
     Tcl_AppendResult(interp, " lambda ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.r.type);
+    sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_MAZE:
@@ -2077,7 +2072,7 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, " sphrad ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, con->c.maze.cylrad, buffer);
     Tcl_AppendResult(interp, " cylrad ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.r.type);
+    sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
   default:
@@ -2121,7 +2116,7 @@ Constraint *generate_constraint()
   n_constraints++;
   constraints = realloc(constraints,n_constraints*sizeof(Constraint));
   constraints[n_constraints-1].type = CONSTRAINT_NONE;
-  constraints[n_constraints-1].part_rep.r.identity = -n_constraints;
+  constraints[n_constraints-1].part_rep.p.identity = -n_constraints;
   
   return &constraints[n_constraints-1];
 }
@@ -2137,7 +2132,7 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
     con->c.wal.n[1] = 
     con->c.wal.n[2] = 0;
   con->c.wal.d = 0;
-  con->part_rep.r.type = -1;
+  con->part_rep.p.type = -1;
   while (argc > 0) {
     if(!strncmp(argv[0], "normal", strlen(argv[0]))) {
       if(argc < 4) {
@@ -2164,7 +2159,7 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "constraint wall type <t> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.r.type)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -2172,7 +2167,7 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
       break;
   }
   norm = SQR(con->c.wal.n[0])+SQR(con->c.wal.n[1])+SQR(con->c.wal.n[2]);
-  if (norm < 1e-10 || con->part_rep.r.type < 0) {
+  if (norm < 1e-10 || con->part_rep.p.type < 0) {
     Tcl_AppendResult(interp, "usage: constraint wall normal <nx> <ny> <nz> dist <d> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);    
@@ -2195,7 +2190,7 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
     con->c.sph.pos[2] = 0;
   con->c.sph.rad = 0;
   con->c.sph.direction = -1;
-  con->part_rep.r.type = -1;
+  con->part_rep.p.type = -1;
 
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
@@ -2236,7 +2231,7 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "constraint sphere type <t> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.r.type)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -2244,7 +2239,7 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
       break;
   }
 
-  if (con->c.sph.rad < 0. || con->part_rep.r.type < 0) {
+  if (con->c.sph.rad < 0. || con->part_rep.p.type < 0) {
     Tcl_AppendResult(interp, "usage: constraint sphere center <x> <y> <z> radius <d> direction <direction> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);    
@@ -2272,7 +2267,7 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
   con->c.cyl.rad = 0;
   con->c.cyl.length = 0;
   con->c.cyl.direction = 0;
-  con->part_rep.r.type = -1;
+  con->part_rep.p.type = -1;
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
       if(argc < 4) {
@@ -2333,7 +2328,7 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "constraint cylinder type <t> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.r.type)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -2345,7 +2340,7 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
   for (i=0;i<3;i++)
     axis_len += SQR(con->c.cyl.axis[i]);
 
-  if (con->c.cyl.rad < 0. || con->part_rep.r.type < 0 || axis_len < 1e-30 ||
+  if (con->c.cyl.rad < 0. || con->part_rep.p.type < 0 || axis_len < 1e-30 ||
       con->c.cyl.direction == 0 || con->c.cyl.length <= 0) {
     Tcl_AppendResult(interp, "usage: constraint cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t>",
 		     (char *) NULL);
@@ -2372,7 +2367,7 @@ int constraint_rod(Constraint *con, Tcl_Interp *interp,
   con->c.rod.pos[0] = con->c.rod.pos[1] = 0;
   con->c.rod.rad = -1;
   con->c.rod.lambda = 0;
-  con->part_rep.r.type = -1;
+  con->part_rep.p.type = -1;
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
       if(argc < 3) {
@@ -2398,7 +2393,7 @@ int constraint_rod(Constraint *con, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "constraint rod type <t> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.r.type)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -2414,7 +2409,7 @@ int constraint_rod(Constraint *con, Tcl_Interp *interp,
     else
       break;
   }
-  if (con->c.rod.rad < 0 || con->part_rep.r.type < 0) {
+  if (con->c.rod.rad < 0 || con->part_rep.p.type < 0) {
     Tcl_AppendResult(interp, "usage: constraint rod center <px> <py> rad <r> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);
@@ -2436,7 +2431,7 @@ int constraint_maze(Constraint *con, Tcl_Interp *interp,
   con->c.maze.dim = -1.;
   con->c.maze.sphrad = 0.;
   con->c.maze.cylrad = -1.;
-  con->part_rep.r.type = -1;
+  con->part_rep.p.type = -1;
 
   while (argc > 0) {
     if(!strncmp(argv[0], "nsphere", strlen(argv[0]))) {
@@ -2480,7 +2475,7 @@ int constraint_maze(Constraint *con, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "constraint maze type <t> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.r.type)) == TCL_ERROR)
+      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -2488,7 +2483,7 @@ int constraint_maze(Constraint *con, Tcl_Interp *interp,
       break;
   }
 
-  if (con->c.maze.sphrad < 0. || con->c.maze.cylrad < 0. || con->part_rep.r.type < 0 || con->c.maze.dim < 0) {
+  if (con->c.maze.sphrad < 0. || con->c.maze.cylrad < 0. || con->part_rep.p.type < 0 || con->c.maze.dim < 0) {
     Tcl_AppendResult(interp, "usage: constraint maze nsphere <n> dim <d> sphrad <r> cylrad <r> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);    

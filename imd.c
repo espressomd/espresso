@@ -21,6 +21,7 @@
 #include "particle_data.h"
 #include "parser.h"
 #include "statistics_chain.h"
+#include "debug.h"
 
 int transfer_rate = 0;
 
@@ -527,9 +528,9 @@ int imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
     tmpCoord[1] = partCfg[i].r.p[1];
     tmpCoord[2] = partCfg[i].r.p[2];
     if (flag == NONE)     // perform folding by particle
-      fold_particle(tmpCoord, dummy);
+      fold_position(tmpCoord, dummy);
     
-    j = 3*partCfg[i].r.identity;
+    j = 3*partCfg[i].p.identity;
     coord[j    ] = tmpCoord[0];
     coord[j + 1] = tmpCoord[1];
     coord[j + 2] = tmpCoord[2];

@@ -39,6 +39,13 @@
 #include <tcl.h>
 #include "utils.h"
 
+/** Macro that tests for a coordinate being periodic or not. */
+#ifdef PARTIAL_PERIODIC
+#define PERIODIC(coord) (periodic & (1L << coord))
+#else
+#define PERIODIC(coord) 1
+#endif
+
 /** \name Exported Variables */
 /************************************************************/
 /*@{*/
@@ -54,8 +61,9 @@ extern int boundary[6];
 /** whether a node is infinitely extended in that direction
     (necessary for non periodic coordinates). */
 extern int extended[6];
-/** Flags for all three dimensions wether pbc are applied (default). */ 
-extern int periodic[3];
+/** Flags for all three dimensions wether pbc are applied (default).
+    The first three bits give the periodicity */
+extern int periodic;
 
 /** Simulation box dimensions. */ 
 extern double box_l[3];
@@ -103,12 +111,8 @@ void map_node_array(int node, int pos[3]);
 */
 int map_array_node(int pos[3]);
 
-/** map particle position to node. 
- *
- * \return       number of the node where the particle is (should be) located.
- * \param pos[3] particle position
-*/
-int find_node(double pos[3]);
+/** map a spatial position to the node grid */
+int map_position_node_array(double pos[3]);
 
 /** fill neighbor lists of node. 
  *
@@ -175,10 +179,51 @@ MDINLINE void get_mi_vector(double res[3], double a[3], double b[3])
   for(i=0;i<3;i++) {
     res[i] = a[i] - b[i];
 #ifdef PARTIAL_PERIODIC
-    if (periodic[i])
+    if (PERIODIC(i))
 #endif
       res[i] -= dround(res[i]*box_l_i[i])*box_l[i];
   }
 }
+
+/** fold a coordinate to primary simulation box.
+    \param pos         the position...
+    \param image_box   and the box
+    \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z coordinate.
+
+    Both pos and image_box are I/O,
+    i. e. a previously folded position will be folded correctly.
+*/
+void fold_coordinate(double pos[3], int image_box[3], int dir);
+
+/** fold particle coordinates to primary simulation box.
+    \param pos the position...
+    \param image_box and the box
+
+    Both pos and image_box are I/O,
+    i. e. a previously folded position will be folded correctly.
+*/
+MDINLINE void fold_position(double pos[3],int image_box[3])
+{
+  int i;
+  for(i=0;i<3;i++)
+    fold_coordinate(pos, image_box, i);
+}
+
+/** unfold coordinates to physical position.
+    \param pos the position...
+    \param image_box and the box
+
+    Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
+    afterwards.
+*/
+MDINLINE void unfold_position(double pos[3],int image_box[3])
+{
+  int i;
+  for(i=0;i<3;i++) {
+    pos[i]       = pos[i] + image_box[i]*box_l[i];    
+    image_box[i] = 0;
+  }
+}
+
 /*@}*/
 #endif

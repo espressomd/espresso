@@ -32,6 +32,11 @@
 #define TYPE_INT    0
 /** Field is of type double in \ref Datafield. */
 #define TYPE_DOUBLE 1
+/** Field is of type bool, i.e. bit array, in \ref Datafield.
+    Note that the field is stored in whatever an integer is.
+    I guess you can at least assume 16 bits...
+*/
+#define TYPE_BOOL 2
 
 /** Maximal size of an array in \ref Datafield. */
 #define MAX_DIMENSION 64

@@ -7,6 +7,7 @@
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #include "parser.h"
+#include "debug.h"
 
 int parse_int_list(Tcl_Interp *interp, char *list, IntList *il)
 {

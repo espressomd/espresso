@@ -45,6 +45,7 @@
 #include "config.h"
 #include "integrate.h"
 #include "debug.h"
+#include "interaction_data.h"
 
 #ifdef ELECTROSTATICS
 
@@ -55,8 +56,6 @@
 
 /** Structure to hold P3M parameters and some dependend variables. */
 typedef struct {
-  /** Bjerrum-length (>0). */
-  double bjerrum;
   /** Ewald splitting parameter (0<alpha<1). */
   double alpha;
   /** Cutoff radius for real space electrostatics (>0). */
@@ -75,8 +74,6 @@ typedef struct {
 
   /** epsilon of the "surrounding dielectric". */
   double epsilon;
-  /** Coulomb prefactor, e.g. Bjerrum*Temp. */
-  double prefactor;
   /** Cutoff radius squared. */
   double r_cut2;
   /** Cutoff for charge assignment. */
@@ -158,16 +155,16 @@ MDINLINE void add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
   if(dist < p3m.r_cut) {
     adist = p3m.alpha * dist;
     erfc_part_ri = AS_erfc_part(adist) / dist;
-    fac = p3m.prefactor * p1->r.q * p2->r.q  * 
+    fac = coulomb.prefactor * p1->p.q * p2->p.q  * 
       exp(-adist*adist) * (erfc_part_ri + 2.0*p3m.alpha*wupii) / dist2;
     for(j=0;j<3;j++) {
-      p1->f[j] += fac * d[j];
-      p2->f[j] -= fac * d[j];
+      p1->f.f[j] += fac * d[j];
+      p2->f.f[j] -= fac * d[j];
     }
     ESR_TRACE(fprintf(stderr,"%d: RSE: Pair (%d-%d) dist=%.3f: force (%.3e,%.3e,%.3e)\n",this_node,
-		      p1->r.identity,p2->r.identity,dist,fac*d[0],fac*d[1],fac*d[2]));
-    ONEPART_TRACE(if(p1->r.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f[0],p1->f[1],p1->f[2],p2->r.identity,dist,fac));
-    ONEPART_TRACE(if(p2->r.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f[0],p2->f[1],p2->f[2],p1->r.identity,dist,fac));
+		      p1->p.identity,p2->p.identity,dist,fac*d[0],fac*d[1],fac*d[2]));
+    ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
+    ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
 
   }
 }
@@ -181,7 +178,7 @@ MDINLINE double p3m_coulomb_pair_energy(Particle *p1, Particle *p2,
   if(dist < p3m.r_cut) {
     adist = p3m.alpha * dist;
     erfc_part_ri = AS_erfc_part(adist) / dist;
-    return p3m.prefactor*p1->r.q*p2->r.q *erfc_part_ri*exp(-adist*adist);
+    return coulomb.prefactor*p1->p.q*p2->p.q *erfc_part_ri*exp(-adist*adist);
   }
   else
     return 0;

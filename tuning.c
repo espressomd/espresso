@@ -10,6 +10,7 @@
 #include <sys/resource.h>
 #include <tcl.h>
 #include "communication.h"
+#include "debug.h"
 
 int timing_samples = 0;
 
@@ -47,7 +48,7 @@ double time_force_calc(int default_samples)
   /* perform force calculation test */
   markTime();
   for (i = 0; i < rds; i++) {
-    mpi_bcast_event(PARTICLE_CHANGED);		
+    mpi_bcast_event(INVALIDATE_SYSTEM);
     mpi_integrate(0);
   }
   markTime();

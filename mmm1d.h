@@ -10,6 +10,7 @@
 #define MMM1D_H
 
 #include "config.h"
+#include "particle_data.h"
 
 #ifdef ELECTROSTATICS
 
@@ -17,21 +18,21 @@ typedef struct {
   double far_switch_radius_2;
   int    bessel_cutoff;
   double maxPWerror;
-  double prefactor;
-  double bjerrum;
 } MMM1D_struct;
 extern MMM1D_struct mmm1d_params;
 
-int set_mmm1d_params(Tcl_Interp *interp,
-		     double bjerrum, double switch_rad,
+int set_mmm1d_params(Tcl_Interp *interp, double switch_rad,
 		     int bessel_cutoff, double maxPWerror);
 
 void MMM1D_recalcTables();
 
-void MMM1D_calc_forces();
-
 void MMM1D_init();
 
-#endif
+///
+void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist2, double dist);
 
+///
+double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double r2, double r);
+
+#endif
 #endif

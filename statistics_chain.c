@@ -8,6 +8,7 @@
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #include "statistics.h"
 #include "parser.h"
+#include "debug.h"
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref #analyze) */
 /*@{*/
@@ -508,9 +509,9 @@ int analyze_fold_chains(float *coord)
 
   // First check that the chains are linear and of a uniform size
   for ( i = 0 ; i < n_total_particles; i++){
-    if ( partCfg[i].r.identity >= chain_start ){
+    if ( partCfg[i].p.identity >= chain_start ){
       // Check for a break in the sequence
-      if ((int)fmod(partCfg[i].r.identity + 1 - chain_start,chain_length) == 0){      
+      if ((int)fmod(partCfg[i].p.identity + 1 - chain_start,chain_length) == 0){      
 	if (partCfg[i].bl.n != 0){
 	  return (TCL_ERROR);
 	}
@@ -521,18 +522,18 @@ int analyze_fold_chains(float *coord)
 	  return (TCL_ERROR);
 	}
 	else {
-	  if ( partCfg[i].bl.e[1] != (partCfg[i].r.identity+1) ){
+	  if ( partCfg[i].bl.e[1] != (partCfg[i].p.identity+1) ){
 	    return (TCL_ERROR);
 	  }
 	}
       }
       
       // Identify the chain corresponding to the particle
-      chainid = (int)floor((double)(partCfg[i].r.identity -chain_start)/(double)(chain_length));
+      chainid = (int)floor((double)(partCfg[i].p.identity -chain_start)/(double)(chain_length));
       
       // Calculate and store the centers of mass for this chain
       for ( j = 0 ; j < 3 ; j++){
-	cm_pos[3*chainid + j] += coord[partCfg[i].r.identity*3 + j]/(double)(chain_length);
+	cm_pos[3*chainid + j] += coord[partCfg[i].p.identity*3 + j]/(double)(chain_length);
 
       }
     }
@@ -543,7 +544,7 @@ int analyze_fold_chains(float *coord)
   // Now fold the particles by chain
   for ( chain = 0 ; chain < chain_n_chains ; chain++){
     for(i=0;i<3;i++) {
-      if (periodic[i]) { 
+      if ( PERIODIC(i) ) { 
 	tmp = (int)floor(cm_pos[chain*3 + i]*box_l_i[i]);
 	cm_tmp =0.0;
 	for ( j = 0 ; j < chain_length ; j++){

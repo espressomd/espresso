@@ -36,17 +36,24 @@ void on_integration_start();
 /** called every time a particle property is changed via Tcl. */
 void on_particle_change();
 
-/** called every time the system topology changes. */
-void on_topology_change();
+/** called every time the coulomb parameters are changed. */
+void on_coulomb_change();
 
-/** called every time interaction parameters are changed. */
-void on_ia_change();
+/** called every time short ranged interaction parameters are changed. */
+void on_short_range_ia_change();
+
+/** called every time a constraint is changed. */
+void on_constraint_change();
+
+/** called every time the cell structure is changed. */
+void on_cell_structure_change();
 
 /** called every time other parameters (timestep,...) are changed. Note that
     this does not happen automatically. The callback procedure of the changed
     variable is responsible for that by calling \ref mpi_bcast_event (2).
+    @param parameter is the FIELD_* identifier of the field changed.
 */
-void on_parameter_change();
+void on_parameter_change(int parameter);
 
 /*@}*/
 

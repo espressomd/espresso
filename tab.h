@@ -58,8 +58,8 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
   }
   /* Now update the forces */  
     for(j=0;j<3;j++) {
-      p1->f[j] += fac * d[j];
-      p2->f[j] -= fac * d[j];
+      p1->f.f[j] += fac * d[j];
+      p2->f.f[j] -= fac * d[j];
     }
   }
 }

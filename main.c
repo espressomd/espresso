@@ -56,6 +56,11 @@ int appinit(Tcl_Interp *interp)
 
 int main(int argc, char **argv)
 {
+#ifdef EFENCE
+  extern int EF_ALLOW_MALLOC_0;
+  EF_ALLOW_MALLOC_0 = 1;
+#endif
+
   mpi_init(&argc, &argv);
 
   if (this_node == 0) {

@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <mpi.h>
 #include "particle_data.h"
 #include "global.h"
 #include "communication.h"
@@ -41,6 +42,9 @@
 /** granularity of the particle buffers in particles */
 #define PART_INCREMENT 32
 
+/** my magic MPI code for send/recv_particles */
+#define REQ_SNDRCV_PART 0xaa
+
 /************************************************
  * variables
  ************************************************/
@@ -55,9 +59,77 @@ Particle *partCfg = NULL;
 int partCfgSorted = 0;
 
 /************************************************
- * functions
+ * particle initialization functions
  ************************************************/
 
+void init_particle(Particle *part) 
+{
+  /* ParticleProperties */
+  part->p.identity = -1;
+  part->p.type     = 0;
+#ifdef ELECTROSTATICS
+  part->p.q        = 0.0;
+#endif
+
+  /* ParticlePosition */
+  part->r.p[0]     = 0.0;
+  part->r.p[1]     = 0.0;
+  part->r.p[2]     = 0.0;
+#ifdef ROTATION
+  part->r.quat[0]  = 1.0;
+  part->r.quat[1]  = 0.0;
+  part->r.quat[2]  = 0.0;
+  part->r.quat[3]  = 0.0;
+#endif
+
+  /* ParticleMomentum */
+  part->m.v[0]     = 0.0;
+  part->m.v[1]     = 0.0;
+  part->m.v[2]     = 0.0;
+#ifdef ROTATION
+  part->m.omega[0] = 0.0;
+  part->m.omega[1] = 0.0;
+  part->m.omega[2] = 0.0;
+#endif
+
+  /* ParticleForce */
+  part->f.f[0]     = 0.0;
+  part->f.f[1]     = 0.0;
+  part->f.f[2]     = 0.0;
+#ifdef ROTATION
+  part->f.torque[0] = 0.0;
+  part->f.torque[1] = 0.0;
+  part->f.torque[2] = 0.0;
+#endif
+
+  /* ParticleLocal */
+  part->l.p_old[0]   = 0.0;
+  part->l.p_old[1]   = 0.0;
+  part->l.p_old[2]   = 0.0;
+  part->l.i[0]       = 0;
+  part->l.i[1]       = 0;
+  part->l.i[2]       = 0;
+#ifdef EXTERNAL_FORCES
+  part->l.ext_flag   = 0;
+  part->l.fixed_coord_flag[0] = COORDINATE_UNFIXED;
+  part->l.fixed_coord_flag[1] = COORDINATE_UNFIXED;
+  part->l.fixed_coord_flag[2] = COORDINATE_UNFIXED;
+  part->l.ext_force[0] = 0.0;
+  part->l.ext_force[1] = 0.0;
+  part->l.ext_force[2] = 0.0;
+#endif
+
+  init_intlist(&(part->bl));
+}
+
+void free_particle(Particle *part) {
+  realloc_intlist(&(part->bl), 0);
+}
+
+
+/************************************************
+ * organizational functions
+ ************************************************/
 
 void updatePartCfg(int bonds_flag )
 {
@@ -76,7 +148,7 @@ void updatePartCfg(int bonds_flag )
     mpi_get_particles(partCfg,&bl);
   }
   for(j=0; j<n_total_particles; j++)
-    unfold_particle(partCfg[j].r.p,partCfg[j].i);
+    unfold_position(partCfg[j].r.p,partCfg[j].l.i);
 
   partCfgSorted = 0;
 }
@@ -97,7 +169,7 @@ int sortPartCfg()
 
   sorted = malloc(n_total_particles*sizeof(Particle));
   for(i = 0; i < n_total_particles; i++)
-    memcpy(&sorted[partCfg[i].r.identity], &partCfg[i], sizeof(Particle));
+    memcpy(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
   free(partCfg);
   partCfg = sorted;
 
@@ -154,64 +226,14 @@ void init_particleList(ParticleList *pList)
   pList->part = NULL;
 }
 
-void init_particle(Particle *part) 
+int realloc_particlelist(ParticleList *l, int size)
 {
-  part->r.identity = 0;
-  part->r.type     = 0;
-#ifdef ELECTROSTATICS
-  part->r.q        = 0.0;
-#endif
-  part->r.p[0]     = 0.0;
-  part->r.p[1]     = 0.0;
-  part->r.p[2]     = 0.0;
-
-  part->p_old[0]   = 0.0;
-  part->p_old[1]   = 0.0;
-  part->p_old[2]   = 0.0;
-  part->i[0]       = 0;
-  part->i[1]       = 0;
-  part->i[2]       = 0;
-  part->f[0]       = 0.0;
-  part->f[1]       = 0.0;
-  part->f[2]       = 0.0;
-  part->v[0]       = 0.0;
-  part->v[1]       = 0.0;
-  part->v[2]       = 0.0;
-
-#ifdef ROTATION
-  part->r.quat[0]   = 1.0;
-  part->r.quat[1]   = 0.0;
-  part->r.quat[2]   = 0.0;
-  part->r.quat[3]   = 0.0;
-  part->omega[0]  = 0.0;
-  part->omega[1]  = 0.0;
-  part->omega[2]  = 0.0;
-  part->torque[0]  = 0.0;
-  part->torque[1]  = 0.0;
-  part->torque[2]  = 0.0;
-#endif
-
-#ifdef EXTERNAL_FORCES
-  part->ext_flag   = 0;
-  part->fixed_coord_flag[0] = COORDINATE_UNFIXED;
-  part->fixed_coord_flag[1] = COORDINATE_UNFIXED;
-  part->fixed_coord_flag[2] = COORDINATE_UNFIXED;
-  part->ext_force[0] = 0.0;
-  part->ext_force[1] = 0.0;
-  part->ext_force[2] = 0.0;
-#endif
-
-  init_intlist(&(part->bl));
-}
-
-void free_particle(Particle *part) {
-  realloc_intlist(&(part->bl), 0);
-}
-
-int realloc_particles(ParticleList *l, int size)
-{
-  int old_max = l->max, i;
+  int old_max = l->max;
   Particle *old_start = l->part;
+
+  PART_TRACE(fprintf(stderr, "%d: realloc_particlelist %p: %d/%d->%d\n", this_node,
+		     l, l->n, l->max, size));
+
   if (size < l->max) {
     /* shrink not as fast, just lose half, rounded up */
     l->max = PART_INCREMENT*(((l->max + size + 1)/2 +
@@ -222,8 +244,6 @@ int realloc_particles(ParticleList *l, int size)
     l->max = PART_INCREMENT*((size + PART_INCREMENT - 1)/PART_INCREMENT);
   if (l->max != old_max)
     l->part = (Particle *) realloc(l->part, sizeof(Particle)*l->max);
-  for (i = old_max; i < l->max; i++)
-    l->part[i].r.identity = -1;
   return l->part != old_start;
 }
 
@@ -232,31 +252,7 @@ void update_local_particles(ParticleList *pl)
   Particle *p = pl->part;
   int n = pl->n, i;
   for (i = 0; i < n; i++)
-    local_particles[p[i].r.identity] = &p[i];
-}
-
-void init_redParticleList(RedParticleList *pList)
-{
-  pList->n    = 0;
-  pList->max  = 0;
-  pList->part = NULL;
-}
-
-void realloc_redParticles(RedParticleList *pList, int size)
-{
-  int old_max = pList->max, i;
-  if (size < pList->max) {
-    /* shrink not as fast, just lose half, rounded up */
-    pList->max = PART_INCREMENT*(((pList->max + size + 1)/2 +
-				  PART_INCREMENT - 1)/PART_INCREMENT);
-  }
-  else
-    /* round up */
-    pList->max = PART_INCREMENT*((size + PART_INCREMENT - 1)/PART_INCREMENT);
-  if (pList->max != old_max)
-    pList->part = (ReducedParticle *) realloc(pList->part, sizeof(ReducedParticle)*pList->max);
-  for (i = old_max; i < pList->max; i++)
-    pList->part[i].identity = -1;
+    local_particles[p[i].p.identity] = &p[i];
 }
 
 int try_delete_bond(Particle *part, int *bond)
@@ -295,7 +291,7 @@ Particle *got_particle(ParticleList *l, int id)
   int i;
 
   for (i = 0; i < l->n; i++)
-    if (l->part[i].r.identity == id)
+    if (l->part[i].p.identity == id)
       break;
   if (i == l->n)
     return NULL;
@@ -306,7 +302,7 @@ Particle *append_unindexed_particle(ParticleList *l, Particle *part)
 {
   Particle *p;
 
-  realloc_particles(l, ++l->n);
+  realloc_particlelist(l, ++l->n);
   p = &l->part[l->n - 1];
 
   memcpy(p, part, sizeof(Particle));
@@ -318,14 +314,15 @@ Particle *append_indexed_particle(ParticleList *l, Particle *part)
   int re;
   Particle *p;
  
-  re = realloc_particles(l, ++l->n);
+  re = realloc_particlelist(l, ++l->n);
   p  = &l->part[l->n - 1];
 
   memcpy(p, part, sizeof(Particle));
-  if (re)
-    update_local_particles(l);
+
+  if (re) 
+    update_local_particles(l); 
   else
-    local_particles[p->r.identity] = p;
+    local_particles[p->p.identity] = p;
   return p;
 }
 
@@ -333,7 +330,7 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i)
 {
   Particle *dst, *src, *end;
 
-  realloc_particles(dl, ++dl->n);
+  realloc_particlelist(dl, ++dl->n);
   dst = &dl->part[dl->n - 1];
   src = &sl->part[i];
   end = &sl->part[sl->n - 1];
@@ -341,72 +338,37 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i)
   if ( src != end )
     memcpy(src, end, sizeof(Particle));
   sl->n -= 1;
-  realloc_particles(sl, sl->n);
+  realloc_particlelist(sl, sl->n);
   return dst;
 }
 
 Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
 {
-  int re = realloc_particles(dl, ++dl->n);
+  int re = realloc_particlelist(dl, ++dl->n);
   Particle *dst = &dl->part[dl->n - 1];
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
 
   memcpy(dst, src, sizeof(Particle));
-  if (re)
-    update_local_particles(dl);
-  else
-    local_particles[dst->r.identity] = dst;
-    
-  if ( src != end )
+  if (re) {
+    //fprintf(stderr, "%d: m_i_p: update destination list after realloc\n",this_node);
+    update_local_particles(dl); }
+  else {
+    //fprintf(stderr, "%d: m_i_p: update loc_part entry for moved particle (id %d)\n",this_node,dst->p.identity);
+    local_particles[dst->p.identity] = dst;
+  }
+  if ( src != end ) {
+    //fprintf(stderr, "%d: m_i_p: copy end particle in source list (id %d)\n",this_node,end->p.identity);
     memcpy(src, end, sizeof(Particle));
 
-  sl->n -= 1;
-  if (realloc_particles(sl, sl->n))
-    update_local_particles(sl);
-  else
-    local_particles[src->r.identity] = src;
+  }
+  if (realloc_particlelist(sl, --sl->n)) {
+    //fprintf(stderr, "%d: m_i_p: update source list after realloc\n",this_node);
+    update_local_particles(sl); }
+  else if ( src != end ) {
+    //fprintf(stderr, "%d: m_i_p: update loc_part entry for end particle (id %d)\n",this_node,src->p.identity);    
+    local_particles[src->p.identity] = src; }
   return dst;
-}
-
-void fold_particle(double pos[3],int image_box[3])
-{
-  int i;
-  int tmp;
-  for(i=0;i<3;i++) {
-    if (periodic[i]) {
-      image_box[i] += (tmp = (int)floor(pos[i]*box_l_i[i]));
-      pos[i]       = pos[i] - tmp*box_l[i];    
-      if(pos[i] < 0 || pos[i] > box_l[i]) {
-	fprintf(stderr,"\n%d: fold_particle: Particle out of range (%f not in box_l %f) image_box[%d] = %d, exiting\n",
-		this_node,pos[i],box_l[i],i,image_box[i]);
-	errexit();
-      }
-    }
-  }
-}
-
-void fold_coordinate(double pos[3], int image_box[3], int dir)
-{
-  int tmp;
-  if (periodic[dir]) {
-    image_box[dir] += (tmp = (int)floor(pos[dir]*box_l_i[dir]));
-    pos[dir]        = pos[dir] - tmp*box_l[dir];    
-    if(pos[dir] < 0 || pos[dir] > box_l[dir]) {
-      fprintf(stderr,"\n%d: fold_coordinate: Particle out of range (%f not in box_l %f) image_box[%d] = %d, exiting\n",
-	      this_node,pos[dir],box_l[dir],dir,image_box[dir]);
-      errexit();
-    }
-  }
-}
-
-void unfold_particle(double pos[3],int image_box[3])
-{
-  int i;
-  for(i=0;i<3;i++) {
-    pos[i]       = pos[i] + image_box[i]*box_l[i];    
-    image_box[i] = 0;
-  }
 }
 
 /** append particle data in ASCII form to the Tcl result.
@@ -419,15 +381,12 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Particle part;
   IntList *bl = &(part.bl);
 
-  if (!particle_node)
-    build_particle_node();
-
   if (get_particle_data(part_num, &part) == TCL_ERROR)
     return (TCL_ERROR);
 
-  unfold_particle(part.r.p, part.i);
+  unfold_position(part.r.p, part.l.i);
 
-  sprintf(buffer, "%d", part.r.identity);
+  sprintf(buffer, "%d", part.p.identity);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   Tcl_PrintDouble(interp, part.r.p[0], buffer);
   Tcl_AppendResult(interp, " pos ", buffer, " ", (char *)NULL);
@@ -435,95 +394,95 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, part.r.p[2], buffer);
   Tcl_AppendResult(interp, buffer, " type ", (char *)NULL);
-  sprintf(buffer, "%d", part.r.type);
+  sprintf(buffer, "%d", part.p.type);
 #ifdef ELECTROSTATICS
   Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.q, buffer);
+  Tcl_PrintDouble(interp, part.p.q, buffer);
 #endif
   Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.v[0]/time_step, buffer);
+  Tcl_PrintDouble(interp, part.m.v[0]/time_step, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.v[1]/time_step, buffer);
+  Tcl_PrintDouble(interp, part.m.v[1]/time_step, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.v[2]/time_step, buffer);
+  Tcl_PrintDouble(interp, part.m.v[2]/time_step, buffer);
   Tcl_AppendResult(interp, buffer, " f ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f[0]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part.f.f[0]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f[1]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part.f.f[1]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f[2]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part.f.f[2]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 
 #ifdef ROTATION
   /* print information about rotation */
-      Tcl_AppendResult(interp, " quat ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.r.quat[0], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.r.quat[1], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.r.quat[2], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.r.quat[3], buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
+  Tcl_AppendResult(interp, " quat ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.r.quat[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.r.quat[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.r.quat[2], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.r.quat[3], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
              
-      Tcl_AppendResult(interp, " omega ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.omega[0], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.omega[1], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.omega[2], buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
+  Tcl_AppendResult(interp, " omega ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.m.omega[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.m.omega[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.m.omega[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
               
-      Tcl_AppendResult(interp, " torque ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.torque[0], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.torque[1], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.torque[2], buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);       
+  Tcl_AppendResult(interp, " torque ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.f.torque[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.f.torque[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.f.torque[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);       
 #endif      
 
 #ifdef EXTERNAL_FORCES
   /* print external force information. */
-      switch (part.ext_flag)
-	{
-	case PARTICLE_UNFIXED:
-	  {
-	    // First check if particle is partially fixed
-	    if(part.fixed_coord_flag[0] == COORDINATE_FIXED || 
-	       part.fixed_coord_flag[1] == COORDINATE_FIXED ||
-	       part.fixed_coord_flag[2] == COORDINATE_FIXED){
-	      Tcl_AppendResult(interp, " fix ", (char *)NULL);
-	      sprintf(buffer, "%d", part.fixed_coord_flag[0]);
-	      Tcl_AppendResult(interp, buffer, (char *)NULL);
-	      Tcl_AppendResult(interp, " ", (char *)NULL);
-	      sprintf(buffer, "%d", part.fixed_coord_flag[1]);
-	      Tcl_AppendResult(interp, buffer, (char *)NULL);
-	      Tcl_AppendResult(interp, " ", (char *)NULL);
-	      sprintf(buffer, "%d", part.fixed_coord_flag[2]);
-	      Tcl_AppendResult(interp, buffer, (char *)NULL);
-	    }
-	    else{
-	      Tcl_AppendResult(interp, " unfix", (char *)NULL); 	    
-	    }
-	    break;
-	  }
-	case PARTICLE_FIXED:
-	  {
-	    Tcl_AppendResult(interp, " fix ", (char *)NULL);
-	    break;
-	  }
-	case PARTICLE_EXT_FORCE:
-	  {
-	    Tcl_PrintDouble(interp, part.ext_force[0], buffer);
-	    Tcl_AppendResult(interp, " ext_force ", buffer, " ", (char *)NULL);
-	    Tcl_PrintDouble(interp, part.ext_force[1], buffer);
-	    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	    Tcl_PrintDouble(interp, part.ext_force[2], buffer);
-	    Tcl_AppendResult(interp, buffer, (char *)NULL);
-	    break;
-	  }
+  switch (part.l.ext_flag)
+    {
+    case PARTICLE_UNFIXED:
+      {
+	// First check if particle is partially fixed
+	if(part.l.fixed_coord_flag[0] == COORDINATE_FIXED || 
+	   part.l.fixed_coord_flag[1] == COORDINATE_FIXED ||
+	   part.l.fixed_coord_flag[2] == COORDINATE_FIXED){
+	  Tcl_AppendResult(interp, " fix ", (char *)NULL);
+	  sprintf(buffer, "%d", part.l.fixed_coord_flag[0]);
+	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+	  Tcl_AppendResult(interp, " ", (char *)NULL);
+	  sprintf(buffer, "%d", part.l.fixed_coord_flag[1]);
+	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+	  Tcl_AppendResult(interp, " ", (char *)NULL);
+	  sprintf(buffer, "%d", part.l.fixed_coord_flag[2]);
+	  Tcl_AppendResult(interp, buffer, (char *)NULL);
 	}
+	else{
+	  Tcl_AppendResult(interp, " unfix", (char *)NULL); 	    
+	}
+	break;
+      }
+    case PARTICLE_FIXED:
+      {
+	Tcl_AppendResult(interp, " fix ", (char *)NULL);
+	break;
+      }
+    case PARTICLE_EXT_FORCE:
+      {
+	Tcl_PrintDouble(interp, part.l.ext_force[0], buffer);
+	Tcl_AppendResult(interp, " ext_force ", buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.l.ext_force[1], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.l.ext_force[2], buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+	break;
+      }
+    }
 #endif
 
   /* print bonding structure */
@@ -550,6 +509,9 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
 int part_print_all(Tcl_Interp *interp)
 {
   int i = 0, start = 1;
+
+  if (!particle_node)
+    build_particle_node();
 
   PART_TRACE(fprintf(stderr, "max_seen %d\n", max_seen_particle));
 
@@ -587,9 +549,6 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     return TCL_OK;
   }
 
-  if (!particle_node)
-    build_particle_node();
-    
   if (get_particle_data(part_num, &part) == TCL_ERROR) {
     Tcl_AppendResult(interp, "na", (char *)NULL);
     return TCL_OK;
@@ -597,15 +556,15 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 
   while (argc > 0) {
     if (ARG0_IS_S("identity")) {
-      sprintf(buffer, "%d", part.r.identity);
+      sprintf(buffer, "%d", part.p.identity);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("position")) {
       double ppos[3];
       int img[3];
       memcpy(ppos, part.r.p, 3*sizeof(double));
-      memcpy(img, part.i, 3*sizeof(int));
-      unfold_particle(ppos, img);
+      memcpy(img, part.l.i, 3*sizeof(int));
+      unfold_position(ppos, img);
       Tcl_PrintDouble(interp, ppos[0], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
       Tcl_PrintDouble(interp, ppos[1], buffer);
@@ -614,11 +573,11 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("force")) {
-      Tcl_PrintDouble(interp, part.f[0]/(0.5*time_step*time_step), buffer);
+      Tcl_PrintDouble(interp, part.f.f[0]/(0.5*time_step*time_step), buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.f[1]/(0.5*time_step*time_step), buffer);
+      Tcl_PrintDouble(interp, part.f.f[1]/(0.5*time_step*time_step), buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.f[2]/(0.5*time_step*time_step), buffer);
+      Tcl_PrintDouble(interp, part.f.f[2]/(0.5*time_step*time_step), buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("folded_position")) {
@@ -630,22 +589,22 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("type")) {
-      sprintf(buffer, "%d", part.r.type);
+      sprintf(buffer, "%d", part.p.type);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #ifdef ELECTROSTATICS
     else if (ARG0_IS_S("q")) {
-      Tcl_PrintDouble(interp, part.r.q, buffer);
+      Tcl_PrintDouble(interp, part.p.q, buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #endif
     else if (ARG0_IS_S("v")) {
       /* unscale velocities ! */
-      Tcl_PrintDouble(interp, part.v[0]/time_step, buffer);
+      Tcl_PrintDouble(interp, part.m.v[0]/time_step, buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.v[1]/time_step, buffer);
+      Tcl_PrintDouble(interp, part.m.v[1]/time_step, buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.v[2]/time_step, buffer);
+      Tcl_PrintDouble(interp, part.m.v[2]/time_step, buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 
@@ -662,32 +621,32 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     }
     
     else if (ARG0_IS_S("omega")) {
-      Tcl_PrintDouble(interp, part.omega[0], buffer);
+      Tcl_PrintDouble(interp, part.m.omega[0], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.omega[1], buffer);
+      Tcl_PrintDouble(interp, part.m.omega[1], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.omega[2], buffer);
+      Tcl_PrintDouble(interp, part.m.omega[2], buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     
     else if (ARG0_IS_S("torque")) {
-      Tcl_PrintDouble(interp, part.torque[0], buffer);
+      Tcl_PrintDouble(interp, part.f.torque[0], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.torque[1], buffer);
+      Tcl_PrintDouble(interp, part.f.torque[1], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.torque[2], buffer);
+      Tcl_PrintDouble(interp, part.f.torque[2], buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #endif         
 
 #ifdef EXTERNAL_FORCES
     else if (ARG0_IS_S("ext_force")) {
-      if(part.ext_flag == PARTICLE_EXT_FORCE) {
-	Tcl_PrintDouble(interp, part.ext_force[0]/(0.5*time_step*time_step), buffer);
+      if(part.l.ext_flag == PARTICLE_EXT_FORCE) {
+	Tcl_PrintDouble(interp, part.l.ext_force[0]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.ext_force[1]/(0.5*time_step*time_step), buffer);
+	Tcl_PrintDouble(interp, part.l.ext_force[1]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.ext_force[2]/(0.5*time_step*time_step), buffer);
+	Tcl_PrintDouble(interp, part.l.ext_force[2]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else {
@@ -695,22 +654,22 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       }
     }
     else if (ARG0_IS_S("fix")) {
-      switch (part.ext_flag)
+      switch (part.l.ext_flag)
 	{
 	case PARTICLE_UNFIXED:
 	  {
 	    // First check if particle is partially fixed
-	    if(part.fixed_coord_flag[0] == COORDINATE_FIXED || 
-	       part.fixed_coord_flag[1] == COORDINATE_FIXED ||
-	       part.fixed_coord_flag[2] == COORDINATE_FIXED){
+	    if(part.l.fixed_coord_flag[0] == COORDINATE_FIXED || 
+	       part.l.fixed_coord_flag[1] == COORDINATE_FIXED ||
+	       part.l.fixed_coord_flag[2] == COORDINATE_FIXED){
 	      Tcl_AppendResult(interp, " fix ", (char *)NULL);
-	      sprintf(buffer, "%d", part.fixed_coord_flag[0]);
+	      sprintf(buffer, "%d", part.l.fixed_coord_flag[0]);
 	      Tcl_AppendResult(interp, buffer, (char *)NULL);
 	      Tcl_AppendResult(interp, " ", (char *)NULL);
-	      sprintf(buffer, "%d", part.fixed_coord_flag[1]);
+	      sprintf(buffer, "%d", part.l.fixed_coord_flag[1]);
 	      Tcl_AppendResult(interp, buffer, (char *)NULL);
 	      Tcl_AppendResult(interp, " ", (char *)NULL);
-	      sprintf(buffer, "%d", part.fixed_coord_flag[2]);
+	      sprintf(buffer, "%d", part.l.fixed_coord_flag[2]);
 	      Tcl_AppendResult(interp, buffer, (char *)NULL);
 	    }
 	    else{
@@ -725,11 +684,11 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 	  }
 	case PARTICLE_EXT_FORCE:
 	  {
-	    Tcl_PrintDouble(interp, part.ext_force[0], buffer);
+	    Tcl_PrintDouble(interp, part.l.ext_force[0], buffer);
 	    Tcl_AppendResult(interp, " ext_force ", buffer, " ", (char *)NULL);
-	    Tcl_PrintDouble(interp, part.ext_force[1], buffer);
+	    Tcl_PrintDouble(interp, part.l.ext_force[1], buffer);
 	    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	    Tcl_PrintDouble(interp, part.ext_force[2], buffer);
+	    Tcl_PrintDouble(interp, part.l.ext_force[2], buffer);
 	    Tcl_AppendResult(interp, buffer, (char *)NULL);
 	    break;
 	  }
@@ -1216,6 +1175,9 @@ int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
       return TCL_ERROR;
     }
 
+    if (!particle_node)
+      build_particle_node();
+
     bond = (int *)malloc( (n_partners+1)*sizeof(int) );
     bond[0] = type_num;
     j=1;
@@ -1325,12 +1287,6 @@ int part(ClientData data, Tcl_Interp *interp,
 {
   int part_num = -1;
 
-  if (!node_grid_is_set())
-    setup_node_grid();
-
-  if (!particle_node)
-    build_particle_node();
-
   /* if no further arguments are given, print out all stored particles */
   if (argc == 1)
     return part_print_all(interp);
@@ -1393,9 +1349,6 @@ int place_particle(int part, double p[3])
   if (part < 0)
     return TCL_ERROR;
 
-  if (!node_grid_is_set()) 
-    setup_node_grid();
-
   if (!particle_node)      
     build_particle_node();
 
@@ -1403,7 +1356,7 @@ int place_particle(int part, double p[3])
   new = (pnode == -1);
   if (new) {
     /* new particle, node by spatial position */
-    pnode = find_node(p);
+    pnode = cell_structure.position_to_node(p);
 
     /* master node specific stuff */
     realloc_particle_node(part);
@@ -1637,15 +1590,15 @@ int remove_particle(int part)
 
 void local_remove_particle(int part)
 {
-  int ind, m, n, o;
+  int ind, c;
   Particle *p = local_particles[part];
   ParticleList *pl = NULL, *tmp;
   
   /* the tricky - say ugly - part: determine
      the cell the particle is located in by checking
      wether the particle address is inside the array */
-  INNER_CELLS_LOOP(m, n, o) {
-    tmp = &CELL_PTR(m,n,o)->pList;
+  for (c = 0; c < local_cells.n; c++) {
+    tmp = local_cells.cell[c];
     ind = p - tmp->part;
     if (ind >= 0 && ind < tmp->n) {
       pl = tmp;
@@ -1661,13 +1614,13 @@ void local_remove_particle(int part)
   free_particle(p);
 
   /* remove local_particles entry */
-  local_particles[p->r.identity] = NULL;
+  local_particles[p->p.identity] = NULL;
 
   if (&pl->part[pl->n - 1] != p) {
     /* move last particle to free position */
     memcpy(p, &pl->part[pl->n - 1], sizeof(Particle));
     /* update the local_particles array for the moved particle */
-    local_particles[p->r.identity] = p;
+    local_particles[p->p.identity] = p;
   }
 
   pl->n--;
@@ -1675,9 +1628,9 @@ void local_remove_particle(int part)
 
 void local_place_particle(int part, double p[3])
 {
+  Cell *cell;
   double pp[3];
-
-  int i[3];
+  int i[3], rl;
   Particle *pt = (part <= max_seen_particle) ? local_particles[part] : NULL;
 
   i[0] = 0;
@@ -1686,36 +1639,61 @@ void local_place_particle(int part, double p[3])
   pp[0] = p[0];
   pp[1] = p[1];
   pp[2] = p[2];
-  fold_particle(pp, i);
+  fold_position(pp, i);
   
-  if (!pt)
-    pt = cells_alloc_particle(part, pp);
+  if (!pt) {
+    /* allocate particle anew */
+    cell = cell_structure.position_to_cell(pp);
+    if (!cell) {
+      fprintf(stderr, "%d: INTERNAL ERROR: particle at %f %f %f does not belong on this node\n",
+	      this_node, pp[0], pp[1], pp[2]);
+      errexit();
+    }
+    rl = realloc_particlelist(cell, ++cell->n);
+    pt = &cell->part[cell->n - 1];
+    init_particle(pt);
+
+    pt->p.identity = part;
+    if (rl)
+      update_local_particles(cell);
+    else
+      local_particles[pt->p.identity] = pt;
+  }
 
   PART_TRACE(fprintf(stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
 		     this_node, part, p[0], p[1], p[2]));
+
   memcpy(pt->r.p, pp, 3*sizeof(double));
-  memcpy(pt->i, i, 3*sizeof(int));
+  memcpy(pt->l.i, i, 3*sizeof(int));
 }
 
 void local_remove_all_particles()
 {
-  int m, n, o;
+  Cell *cell;
+  int c;
   n_total_particles = 0;
   max_seen_particle = -1;
-  INNER_CELLS_LOOP(m, n, o) {
-    Particle *p = CELL_PTR(m, n, o)->pList.part;
-    int i,   np = CELL_PTR(m, n, o)->pList.n;
+  for (c = 0; c < local_cells.n; c++) {
+    Particle *p;
+    int i,   np;
+    cell = local_cells.cell[c];
+    p = cell->part;
+    np = cell->n;
     for (i = 0; i < np; i++)
       realloc_intlist(&p[i].bl, 0);
-    CELL_PTR(m, n, o)->pList.n = 0;
+    cell->n = 0;
   }
 }
 
 void local_rescale_particles(int dir, double scale) {
-  Particle *p,*p1; int j, m,n,o; 
-  INNER_CELLS_LOOP(m, n, o) {
-    p  = CELL_PTR(m, n, o)->pList.part;
-    for(j = 0; j < CELL_PTR(m, n, o)->pList.n; j++) {
+  Particle *p,*p1;
+  int j, c; 
+  Cell *cell;
+
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    for(j = 0; j < cell->n; j++) {
       p1 = &p[j];
       if(dir < 3) 
 	p1->r.p[dir] *= scale;
@@ -1765,12 +1743,15 @@ int local_change_bond(int part, int *bond, int delete)
 
 void remove_all_bonds_to(int identity)
 {
-  int m, n, o, p;
-  INNER_CELLS_LOOP(m, n, o) {
-    Cell *cell = CELL_PTR(m, n, o);
-    int n = cell->pList.n;
-    Particle *part = cell->pList.part;
-    for (p = 0; p < n; p++) {
+  Cell *cell;
+  int p, np, c;
+  Particle *part;
+
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    np = cell->n;
+    part = cell->part;
+    for (p = 0; p < np; p++) {
       IntList *bl = &part[p].bl;
       int i, j, partners;
       
@@ -1790,9 +1771,91 @@ void remove_all_bonds_to(int identity)
       }
       if (i != bl->n) {
 	fprintf(stderr, "%d: bond information corrupt for particle %d, exiting...\n",
-		this_node, part[p].r.identity);
+		this_node, part[p].p.identity);
 	errexit();
       }
     }
   }
 }
+
+void send_particles(ParticleList *particles, int node)
+{
+  int pc;
+  IntList local_bi;
+
+  PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node, particles->n, node));
+
+  MPI_Send(&particles->n, 1, MPI_INT, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
+  MPI_Send(particles->part, particles->n*sizeof(Particle),
+	   MPI_BYTE, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
+
+  init_intlist(&local_bi);
+  for (pc = 0; pc < particles->n; pc++) {
+    Particle *p = &particles->part[pc];
+    realloc_intlist(&local_bi, local_bi.n + p->bl.n);
+    memcpy(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
+    local_bi.n += p->bl.n;
+  }
+  PART_TRACE(fprintf(stderr, "%d: send_particles sending %d bond ints\n", this_node, local_bi.n));
+  MPI_Send(local_bi.e, local_bi.n*sizeof(int),
+	   MPI_BYTE, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
+
+  /* remove particles from this nodes local list */
+  for (pc = 0; pc < particles->n; pc++) {
+    local_particles[particles->part[pc].p.identity] = NULL;
+    free_particle(&particles->part[pc]);
+  }
+
+  realloc_particlelist(particles, 0);
+  realloc_intlist(&local_bi, 0);
+}
+
+void recv_particles(ParticleList *particles, int node)
+{
+  int transfer, read, pc;
+  MPI_Status status;
+  IntList local_bi;
+
+  PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
+
+  MPI_Recv(&transfer, 1, MPI_INT, node,
+	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
+
+  PART_TRACE(fprintf(stderr, "%d: recv_particles get %d\n", this_node, transfer));
+
+  realloc_particlelist(particles, particles->n + transfer);
+  MPI_Recv(&particles->part[particles->n], transfer*sizeof(Particle), MPI_BYTE, node,
+	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
+  particles->n += transfer;
+
+  local_bi.n = 0;
+  for (pc = particles->n - transfer; pc < particles->n; pc++) {
+    Particle *p = &particles->part[pc];
+    local_bi.n += p->bl.n;
+
+    PART_TRACE(fprintf(stderr, "%d: recv_particles got particle %d\n", this_node, p->p.identity));
+#ifdef ADDITIONAL_CHECKS
+    if (local_particles[p->p.identity] != NULL) {
+      fprintf(stderr, "%d: transmitted particle %d is already here...\n", this_node, p->p.identity);
+      errexit();
+    }
+#endif
+  }
+
+  update_local_particles(particles);
+
+  PART_TRACE(fprintf(stderr, "%d: recv_particles expecting %d bond ints\n", this_node, local_bi.n));
+  alloc_intlist(&local_bi, local_bi.n);
+  MPI_Recv(local_bi.e, local_bi.n*sizeof(int), MPI_BYTE, node,
+	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
+  read = 0;
+  for (pc = particles->n - transfer; pc < particles->n; pc++) {
+    Particle *p = &particles->part[pc];
+    alloc_intlist(&p->bl, p->bl.n);
+    memcpy(p->bl.e, &local_bi.e[read], p->bl.n*sizeof(int));
+    read += p->bl.n;
+  }
+
+  realloc_intlist(&local_bi, 0);
+}
+

@@ -21,6 +21,7 @@
 #include <tcl.h>
 #include "config.h"
 #include "thermostat.h"
+#include "communication.h"
 
 /* include the force files */
 #include "p3m.h"
@@ -42,13 +43,6 @@
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-
-/** Calculates lj cap radii */
-void force_init();
-
-/** initialize real particle forces with thermostat forces and
-    ghost particle forces with zero. */
-void init_forces();
 
 /** Calculate forces.
  *
@@ -74,16 +68,6 @@ void init_forces();
  */
 void force_calc();
 
-/** Calculate bonded interactions (forces) for Particle List p (length np).
-    This includes also the constraint forces.
-    @param p Particle List
-    @param np length of that list
-*/
-void calc_bonded_forces(Particle *p, int np);
-
-/** Calculate long range forces (P3M, MMM1D, MMM2d...). */
-void calc_long_range_forces();
-
 /** Calculate non bonded forces between a pair of particles.
     @param p1        pointer to particle 1.
     @param p2        pointer to particle 2.
@@ -92,9 +76,9 @@ void calc_long_range_forces();
     @param dist      distance between p1 and p2.
     @param dist2     distance squared between p1 and p2. */
 MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2, 
-					IA_parameters *ia_params, 
 					double d[3], double dist, double dist2)
 {
+  IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
 
 #ifdef TABULATED
   /* tabulated */
@@ -102,10 +86,12 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #endif
 
   /* lennard jones */
+#ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist);
+#endif
 
-#ifdef LJCOS
   /* lennard jones cosine */
+#ifdef LJ_COS
   add_ljcos_pair_force(p1,p2,ia_params,d,dist);
 #endif
   
@@ -116,19 +102,24 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
 #ifdef ELECTROSTATICS
   /* real space coulomb */
-  if(coulomb.method == COULOMB_P3M) 
+  switch (coulomb.method) {
+  case COULOMB_P3M:
     add_p3m_coulomb_pair_force(p1,p2,d,dist2,dist);
-  else if(coulomb.method == COULOMB_DH)
+    break;
+  case COULOMB_DH:
     add_dh_coulomb_pair_force(p1,p2,d,dist);
+    break;
+  case COULOMB_MMM1D:
+    add_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist);
+    break;
+  }
 #endif
-
-
 }
 
-/** Calculate bonded forces between a pair of particles.
+/** Calculate bonded forces for one particle.
     @param p1 particle for which to calculate forces
 */
-MDINLINE void add_bonded_pair_force(Particle *p1)
+MDINLINE void add_bonded_force(Particle *p1)
 {
   int i, type_num;
 
@@ -158,11 +149,23 @@ MDINLINE void add_bonded_pair_force(Particle *p1)
 		      checked_particle_ptr(p1->bl.e[i+2]), type_num);
       i+=3; break;
     default :
-      fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->r.identity);
+      fprintf(stderr,"add_bonded_force: WARNING: Bonds of atom %d unknown\n",p1->p.identity);
       i = p1->bl.n; 
       break;
     }
   }
+}  
+
+/** add force to another. This is used when collecting ghost forces. */
+MDINLINE void add_force(ParticleForce *F_to, ParticleForce *F_add)
+{
+  int i;
+  for (i = 0; i < 3; i++)
+    F_to->f[i] += F_add->f[i];
+#ifdef ROTATION
+  for (i = 0; i < 3; i++)
+    F_to->torque[i] += F_add->torque[i];
+#endif
 }
 
 /*@}*/

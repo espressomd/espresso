@@ -12,9 +12,6 @@
 
     <b>Responsible:</b>
     <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
- *
- *  \todo Put ghost structure as a sub structure into the particle structure, so everybody knows whats going into the ghost communication.
- *
     For more information on particle_data,
     see \ref particle_data.c "particle_data.c"
  */
@@ -51,6 +48,12 @@
  * data types
  ************************************************/
 
+/** Properties of a particle which are not supposed to
+    change during the integration, but have to be known
+    for all ghosts. Ghosts are particles which are
+    needed in the interaction calculation, but are just copies of
+    particles stored on different nodes.
+*/
 typedef struct {
   /** unique identifier for the particle. */
   int    identity;
@@ -61,40 +64,48 @@ typedef struct {
   /** charge. */
   double q;
 #endif
+} ParticleProperties;
 
+/// Positional information on a particle
+typedef struct {
   /** periodically folded position. */
   double p[3];
   
 #ifdef ROTATION
-/** quaternions to define particle orientation */
+  /** quaternions to define particle orientation */
   double quat[4]; 
 #endif
-  
-} ReducedParticle;
+} ParticlePosition;
 
-/** Struct holding all particle information
- *  of the particles. \warning When adding new particle properties don't forget to update mpi_recv_part */
+/// Force information on a particle
 typedef struct {
-  ReducedParticle r;
-
-  /** position in the last time step befor last Verlet list update. */
-  double p_old[3];
-  /** index of the simulation box image where the particle really sits. */
-  int    i[3];
-
   /** force. */
   double f[3];
-  
+
+#ifdef ROTATION
+  /** torque */
+  double torque[3];
+#endif
+} ParticleForce;
+
+/// Momentum information on a particle
+typedef struct {
   /** velocity. */
   double v[3];
   
 #ifdef ROTATION
-/** angular velocity */
+  /** angular velocity */
   double omega[3];
-  
-/** torque */
-  double torque[3];
 #endif
+} ParticleMomentum;
+
+/** Information on a particle that is needed only on the
+    node the particle belongs to */
+typedef struct {
+  /** position in the last time step befor last Verlet list update. */
+  double p_old[3];
+  /** index of the simulation box image where the particle really sits. */
+  int    i[3];
 
 #ifdef EXTERNAL_FORCES
   /** flag whether to fix a particle in space. 
@@ -113,13 +124,28 @@ Values:
   double ext_force[3];
 #endif
 
+} ParticleLocal;
+
+/// Struct holding all information for one particle.
+typedef struct {
+  ///
+  ParticleProperties p;
+  ///
+  ParticlePosition r;
+  ///
+  ParticleMomentum m;
+  ///
+  ParticleForce f;
+  ///
+  ParticleLocal l;
+
   /** bonded interactions list. */
   IntList bl;
 } Particle;
 
 /** List of particles. The particle array is resized using a sophisticated
     (we hope) algorithm to avoid unnecessary resizes.
-    Access using \ref realloc_particles, \ref got_particle,...
+    Access using \ref realloc_particlelist, \ref got_particle,...
 */
 typedef struct {
   /** The particles payload */
@@ -129,17 +155,6 @@ typedef struct {
   /** Number of particles that fit in until a resize is needed */
   int max;
 } ParticleList;
-
-/** List of reduced particles (e.g. ghost particles). */
-typedef struct {
-  /** The reduced particles payload */
-  ReducedParticle *part;
-  /** Number of reduced particles contained */
-  int n;
-  /** Number of reduced particles that fit in until a resize is needed */
-  int max;
-} RedParticleList;
-
 
 /************************************************
  * exported variables
@@ -187,7 +202,7 @@ void init_particleList(ParticleList *pList);
 /** initialize a particle.
     This function just sets all values to zero!
     Do NOT use this without setting the values of the  
-    \ref ReducedParticle::identity "identity" and \ref ReducedParticle::p "position" to 
+    \ref ParticleProperties::identity "identity" and \ref ParticlePosition::p "position" to 
     reasonable values. Also make sure that you update \ref local_particles.
 
     Add here all initializations you need to be done !!!
@@ -203,7 +218,15 @@ void free_particle(Particle *part);
     \param size the size to provide at least. It is rounded
     up to multiples of \ref PART_INCREMENT.
     \return true iff particle adresses have changed */
-int realloc_particles(ParticleList *plist, int size);
+int realloc_and_init_particlelist(ParticleList *plist, int size);
+
+/** allocate storage for local particles and ghosts. This version
+    does \em not care for the bond information to be freed if necessary.
+    \param plist the list on which to operate
+    \param size the size to provide at least. It is rounded
+    up to multiples of \ref PART_INCREMENT.
+    \return true iff particle adresses have changed */
+int realloc_particlelist(ParticleList *plist, int size);
 
 /** search for a specific particle.
     \param plist the list on which to operate 
@@ -228,10 +251,10 @@ Particle *append_unindexed_particle(ParticleList *plist, Particle *part);
     \return Pointer to new location of the particle. */
 Particle *append_indexed_particle(ParticleList *plist, Particle *part);
 
-/** remove a particle from one particle List and append it to  another.
-    Refill the destList with last particle and update its entry in local_particles. 
-    reallocates particles if necessary.
-    This procedure does not care for \ref local_particles.
+/** remove a particle from one particle List and append it to another.
+    Refill the sourceList with last particle and update its entry in
+    local_particles. reallocates particles if necessary.  This
+    procedure does not care for \ref local_particles.
     \param destList   List where the particle is appended.
     \param sourceList List where the particle will be removed.
     \param ind        Index of the particle in the sourceList.
@@ -239,10 +262,10 @@ Particle *append_indexed_particle(ParticleList *plist, Particle *part);
  */
 Particle *move_unindexed_particle(ParticleList *destList, ParticleList *sourceList, int ind);
 
-/** remove a particle from one particle List and append it to  another.
-    Refill the destList with last particle and update its entry in local_particles. 
-    reallocates particles if necessary.
-    This procedure cares for \ref local_particles.
+/** remove a particle from one particle List and append it to another.
+    Refill the sourceList with last particle and update its entry in
+    local_particles. Reallocates particles if necessary.  This
+    procedure cares for \ref local_particles.
     \param destList   List where the particle is appended.
     \param sourceList List where the particle will be removed.
     \param ind        Index of the particle in the sourceList.
@@ -255,46 +278,8 @@ Particle *move_indexed_particle(ParticleList *destList, ParticleList *sourceList
 */
 void update_local_particles(ParticleList *pl);
 
-/** initialize a reduced particle list (ghosts).
- *  Use with care and ONLY for initialization! */
-void init_redParticleList(RedParticleList *pList);
-
-/** allocate storage for reduced particles (ghosts).
-    \param plist the list on which to operate
-    \param size the size to provide at least. It is rounded
-    up to multiples of \ref PART_INCREMENT. */
-void realloc_redParticles(RedParticleList *plist, int size);
-
 /** remove bond from particle if possible */
 int try_delete_bond(Particle *part, int *bond);
-
-/** fold particle coordinates to primary simulation box.
-    \param pos the position...
-    \param image_box and the box
-
-    Both pos and image_box are I/O,
-    i. e. a previously folded position will be folded correctly.
-*/
-void fold_particle(double pos[3],int image_box[3]);
-
-/** fold a particle coordinate to primary simulation box.
-    \param pos         the position...
-    \param image_box   and the box
-    \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z coordinate.
-
-    Both pos and image_box are I/O,
-    i. e. a previously folded position will be folded correctly.
-*/
-void fold_coordinate(double pos[3], int image_box[3], int dir);
-
-/** unfold particle coordinates to physical position.
-    \param pos the position...
-    \param image_box and the box
-
-    Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
-    afterwards.
-*/
-void unfold_particle(double pos[3],int image_box[3]);
 
 /** rebuild \ref particle_node from scratch.
     After a simulation step \ref particle_node has to be rebuild
@@ -481,6 +466,16 @@ void local_remove_all_particles();
     @param scale factor by which to rescale (>1: stretch, <1: contract)
 */
 void local_rescale_particles(int dir, double scale);
+ 
+/** Synchronous send of a particle buffer to another node. The other node
+    MUST call \ref recv_particles when this is called. The particles data
+    is freed. */
+void send_particles(ParticleList *particles, int node);
+
+/** Synchronous receive of a particle buffer from another node. The other node
+    MUST call \ref send_particles when this is called. The particles are
+    APPENDED to the list, so it has to be a valid one */
+void recv_particles(ParticleList *particles, int node);
 
 /** Check the existence of a bond partner on that node and return the
     corresponding particle pointer or force exit.

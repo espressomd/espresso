@@ -8,6 +8,7 @@
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #include "specfunc.h"
 #include "polynom.h"
+#include "debug.h"
 
 /* Original gsl header
  * specfunc/bessel_K0.c

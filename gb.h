@@ -98,13 +98,13 @@ if (X < 1.25) { /* 1.25 corresponds to the interparticle penetration of 0.2 unit
  FikY = -dU_dr*d[1] - dU_da*u1y - dU_db*u2y;
  FikZ = -dU_dr*d[2] - dU_da*u1z - dU_db*u2z;
  
-    p1->f[0] += FikX;
-    p1->f[1] += FikY;
-    p1->f[2] += FikZ;
+    p1->f.f[0] += FikX;
+    p1->f.f[1] += FikY;
+    p1->f.f[2] += FikZ;
    
-    p2->f[0] -= FikX;
-    p2->f[1] -= FikY;
-    p2->f[2] -= FikZ;
+    p2->f.f[0] -= FikX;
+    p2->f.f[1] -= FikY;
+    p2->f.f[2] -= FikZ;
     
 /* calculate torque:  torque = u_1 x G   */
 
@@ -112,9 +112,9 @@ if (X < 1.25) { /* 1.25 corresponds to the interparticle penetration of 0.2 unit
   Gy = -dU_da*d[1] - dU_dc*u2y;
   Gz = -dU_da*d[2] - dU_dc*u2z;
   
-p1->torque[0]+= u1y*Gz - u1z*Gy;
-p1->torque[1]+= u1z*Gx - u1x*Gz;
-p1->torque[2]+= u1x*Gy - u1y*Gx;
+p1->f.torque[0]+= u1y*Gz - u1z*Gy;
+p1->f.torque[1]+= u1z*Gx - u1x*Gz;
+p1->f.torque[2]+= u1x*Gy - u1y*Gx;
 
 /* calculate torque:  torque = u_2 x G     */
 
@@ -122,20 +122,20 @@ p1->torque[2]+= u1x*Gy - u1y*Gx;
   Gy = -dU_db*d[1] - dU_dc*u1y;
   Gz = -dU_db*d[2] - dU_dc*u1z;
 
-p2->torque[0]+= u2y*Gz - u2z*Gy;
-p2->torque[1]+= u2z*Gx - u2x*Gz;
-p2->torque[2]+= u2x*Gy - u2y*Gx;
+p2->f.torque[0]+= u2y*Gz - u2z*Gy;
+p2->f.torque[1]+= u2z*Gx - u2x*Gz;
+p2->f.torque[2]+= u2x*Gy - u2y*Gx;
         }
 else { /* the particles are too close to each other */
        Koef1  = 100;
        
-    p1->f[0] += Koef1 * d[0];
-    p1->f[1] += Koef1 * d[1];
-    p1->f[2] += Koef1 * d[2];
+    p1->f.f[0] += Koef1 * d[0];
+    p1->f.f[1] += Koef1 * d[1];
+    p1->f.f[2] += Koef1 * d[2];
    
-    p2->f[0] -= Koef1 * d[0];
-    p2->f[1] -= Koef1 * d[1];
-    p2->f[2] -= Koef1 * d[2];
+    p2->f.f[0] -= Koef1 * d[0];
+    p2->f.f[1] -= Koef1 * d[1];
+    p2->f.f[2] -= Koef1 * d[2];
       }
   }
 }

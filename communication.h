@@ -91,8 +91,6 @@ void mpi_who_has();
     <ul>
     <li> PARTICLE_CHANGED
     <li> INTERACTION_CHANGED
-    <li> PARAMETER_CHANGED
-    <li> TOPOLOGY_CHANGED
     </ul>
     Then all nodes execute the respective on_* procedure from \ref initialize.c
     Note that not all of these codes are used. Since some actions (like placing a
@@ -285,18 +283,18 @@ void mpi_bit_random_stat(int cnt, BitRandomStatus *stat);
 /** Issue REQ_RESCALE_PART: rescales all particle positions in direction 'dir' by a factor 'scale'. */
 void mpi_rescale_particles(int dir, double scale);
 
+/** Issue REQ_BCAST_CS: change the cell structure on all nodes. */
+void mpi_bcast_cell_structure(int cs);
+
 /*@}*/
 
 /** \name Event codes for \ref mpi_bcast_event
     These codes are used by \ref mpi_bcast_event to notify certain changes
-    of the systems state to all nodes.
+    of doing something now.
 */
 /*@{*/
-#define PARTICLE_CHANGED 0
-#define INTERACTION_CHANGED 1
-#define PARAMETER_CHANGED 2
-#define TOPOLOGY_CHANGED 3
-#define P3M_COUNT_CHARGES 4
+#define P3M_COUNT_CHARGES 0
+#define INVALIDATE_SYSTEM 1
 /*@}*/
 
 #endif

@@ -38,7 +38,7 @@
 /** Compiler flag to enable describing and processing particle orientations.
 
 This will allow to use such particle properties as quart, omega, and torque. */
-/* #define ROTATION */
+#define ROTATION
 
 /** Compiler flag to enable external forces. E.g. apply a fixed external force
     to a particle or fix a particle in space. */
@@ -50,12 +50,26 @@ This will allow to use such particle properties as quart, omega, and torque. */
 
 
 /************************************************/
+/** \name available short--ranged potentials
+    For optimization it might be useful to switch
+    off the ones you don't need */
+/*@{*/
+
+/** Lennard-Jones */
+#define LENNARD_JONES
+
+/** Lennard-Jones with cosine tail */
+#define LJ_COS
+
+/*@}*/
+
+/************************************************/
 /** \name Default Parameter Settings            */
 /************************************************/
 /*@{*/
 
 /** CELLS: Default value for the maximal number of cells per node. */
-#define CELLS_MAX_NUM_CELLS 512
+#define CELLS_MAX_NUM_CELLS 216
 
 /** P3M: Default for number of interpolation points of the charge
     assignment function. */
@@ -85,7 +99,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /** callback for version status. */
 MDINLINE int version_callback(Tcl_Interp *interp)
 {
-  Tcl_AppendResult(interp, "ESPRESSO: v1.1.2a (Naomi), Last Change: 19.12.2003", (char *) NULL);
+  Tcl_AppendResult(interp, "ESPRESSO: v1.1.2b (Naomi with Experimental), Last Change: 19.12.2003", (char *) NULL);
   return (TCL_OK);
 }
 

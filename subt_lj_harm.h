@@ -59,8 +59,8 @@ MDINLINE void add_subt_lj_harm_pair_force(Particle *p1, Particle *p2, int type_n
     fac = fac_harm + fac_lj;
     	
     for(i=0;i<3;i++) {
-    	    p1->f[i] -= fac*dx[i];
-    	    p2->f[i] += fac*dx[i];
+    	    p1->f.f[i] -= fac*dx[i];
+    	    p2->f.f[i] += fac*dx[i];
     	    }
 
   ONEPART_TRACE(if(p1->r.identity==check_id) fprintf(stderr,"%d: OPT: SUBT_LJ_HARM f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f[0],p1->f[1],p1->f[2],p2->r.identity,sqrt(dist2),fac));

@@ -83,9 +83,9 @@ typedef struct {
  * variables
  ************************************************/
 
-p3m_struct p3m = { 0.0, 0.0, 0.0, 
+p3m_struct p3m = { 0.0, 0.0, 
 		   {0,0,0}, {P3M_MESHOFF, P3M_MESHOFF, P3M_MESHOFF}, 
-		   0, P3M_N_INTERPOL, 0.0, P3M_EPSILON, 0.0, 0.0, 
+		   0, P3M_N_INTERPOL, 0.0, P3M_EPSILON, 0.0, 
 		   {0.0,0.0,0.0}, {0.0,0.0,0.0}, {0.0,0.0,0.0} };
 
 /** number of charged particles (only on master node). */
@@ -279,7 +279,7 @@ void   P3M_init()
 {
   int i,n;
 
-  if(p3m.bjerrum == 0.0) {       
+  if(coulomb.bjerrum == 0.0) {       
     p3m.r_cut  = 0.0;
     p3m.r_cut2 = 0.0;
     if(this_node==0) 
@@ -287,7 +287,7 @@ void   P3M_init()
 		fprintf(stderr,"   Electrostatics switched off!\n"));
   }
   else {  
-    if( periodic[0]!=1 || periodic[1]!=1 || periodic[2]!=1) {
+    if( PERIODIC(0)!=1 || PERIODIC(1)!=1 || PERIODIC(2)!=1) {
       fprintf(stderr,"Need periodicity (1,1,1) with Coulomb P3M\n");
       errexit();
     }
@@ -308,18 +308,13 @@ void   P3M_init()
 	fprintf(stderr,"   No long range interactions for non cubic box.\n"); 
 	fprintf(stderr,"   Switch off long range interactions! \n");
       }
-      p3m.bjerrum =  0.0;
+      coulomb.bjerrum =  0.0;
       p3m.r_cut  = 0.0;
       p3m.r_cut2 = 0.0;
       return ;
     }
 
     P3M_TRACE(fprintf(stderr,"%d: mesh=%d, cao=%d, mesh_off=(%f,%f,%f)\n",this_node,p3m.mesh[0],p3m.cao,p3m.mesh_off[0],p3m.mesh_off[1],p3m.mesh_off[2]));
-
-    if(temperature > 0.0) 
-      p3m.prefactor = p3m.bjerrum * temperature; 
-    else
-      p3m.prefactor = p3m.bjerrum;
 
     p3m.r_cut2    = p3m.r_cut*p3m.r_cut;
     for(i=0;i<3;i++) {
@@ -383,8 +378,9 @@ void   P3M_init()
 
 double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 {
+  Cell *cell;
   Particle *p;
-  int i,m,n,o,np,d,d_rs,i0,i1,i2,ind,j[3];
+  int i,c,n, np,d,d_rs,i0,i1,i2,ind,j[3];
   double q;
   /* position of a particle in local mesh units */
   double pos[3];
@@ -411,13 +407,14 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
   q_s_off = lm.dim[2] * (lm.dim[1] - p3m.cao);
   
   /* === charge assignment === */
-  force_prefac = p3m.prefactor / (double)(p3m.mesh[0]*p3m.mesh[1]*p3m.mesh[2]);
+  force_prefac = coulomb.prefactor / (double)(p3m.mesh[0]*p3m.mesh[1]*p3m.mesh[2]);
   inter2 = (p3m.inter*2)+1;
-  INNER_CELLS_LOOP(m, n, o) {
-    p  = CELL_PTR(m, n, o)->pList.part;
-    np = CELL_PTR(m, n, o)->pList.n;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
     for(i = 0; i < np; i++) {
-      if( (q=p[i].r.q) != 0.0 ) {
+      if( (q=p[i].p.q) != 0.0 ) {
 
 	/* particle position in mesh coordinates */
 	for(d=0;d<3;d++) {
@@ -429,13 +426,13 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 #ifdef ADDITIONAL_CHECKS
 	  if( pos[d]<0.0 ) {
 	    fprintf(stderr,"%d: rs_mesh underflow! (P%d at %f)\n",
-		    this_node,p[i].r.identity,p[i].r.p[d]);
+		    this_node,p[i].p.identity,p[i].r.p[d]);
 	    fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
 		    this_node,my_left[d],my_right[d]);	    
 	  }
 	  if( (first[d]+p3m.cao) > lm.dim[d] ) {
 	    fprintf(stderr,"%d: rs_mesh overflow! dir=%d (P_id=%d at %f) first=%d\n",
-		    this_node,d,p[i].r.identity,p[i].r.p[d],first[d]);
+		    this_node,d,p[i].p.identity,p[i].r.p[d],first[d]);
 	    fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
 		    this_node,my_left[d],my_right[d]);
 	  }    
@@ -492,9 +489,9 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 
     if(this_node==0) {
       /* self energy correction */
-      k_space_energy -= p3m.prefactor*(p3m_sum_q2*p3m.alpha * wupii);
+      k_space_energy -= coulomb.prefactor*(p3m_sum_q2*p3m.alpha * wupii);
       /* net charge correction */
-      k_space_energy -= p3m.prefactor*(p3m_square_sum_q*PI / (2.0*box_l[0]*box_l[1]*box_l[2]*SQR(p3m.alpha)));
+      k_space_energy -= coulomb.prefactor*(p3m_square_sum_q*PI / (2.0*box_l[0]*box_l[1]*box_l[2]*SQR(p3m.alpha)));
       /* dipol correction TO BE IMPLEMENTED */
       k_space_energy -= 0.0;
     }
@@ -532,11 +529,12 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
       spread_force_grid();
       /* Assign force component from mesh to particle */
       cp_cnt=0; cf_cnt=0;
-      INNER_CELLS_LOOP(m, n, o) {
-	p  = CELL_PTR(m, n, o)->pList.part;
-	np = CELL_PTR(m, n, o)->pList.n;
+      for (c = 0; c < local_cells.n; c++) {
+	cell = local_cells.cell[c];
+	p  = cell->part;
+	np = cell->n;
 	for(i=0; i<np; i++) { 
-	  if( (q=p[i].r.q) != 0.0 ) {
+	  if( (q=p[i].p.q) != 0.0 ) {
 #ifdef ADDITIONAL_CHECKS
 	    double db_fsum=0.0;
 #endif
@@ -548,7 +546,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 #ifdef ADDITIONAL_CHECKS
 		  db_fsum += force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
 #endif
-		  p[i].f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
+		  p[i].f.f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
 		  cf_cnt++;
 		}
 		q_ind += q_m_off;
@@ -557,9 +555,9 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 	    }
 	    cp_cnt++;
 #ifdef ADDITIONAL_CHECKS
-	    /*	    if(fabs(db_fsum)> 1.0) fprintf(stderr,"%d: Part %d: k-space-force = %e\n",this_node,p[i].r.identity,db_fsum); */
+	    /*	    if(fabs(db_fsum)> 1.0) fprintf(stderr,"%d: Part %d: k-space-force = %e\n",this_node,p[i].p.identity,db_fsum); */
 #endif
-	    ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",this_node,p[i].f[0],p[i].f[1],p[i].f[2],d_rs,-db_fsum));
+	    ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],d_rs,-db_fsum));
 	  }
 	}
       }
@@ -1050,8 +1048,6 @@ int P3M_tune_parameters(Tcl_Interp *interp)
   
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
-  if(temperature > 0.0) p3m.prefactor    = p3m.bjerrum * temperature; 
-  else p3m.prefactor    = p3m.bjerrum;
 
   /* calculate r_cut tune range */
   if(p3m.r_cut == 0.0) { 
@@ -1113,13 +1109,13 @@ int P3M_tune_parameters(Tcl_Interp *interp)
 	while (ind < P3M_TUNE_MAX_CUTS) {           /* r_cut loop */
 	  r_cut = cuts[ind];
 	  /* calc maximal real space error for setting */
-	  rs_err = P3M_real_space_error(box_l[0],p3m.prefactor,r_cut,p3m_sum_qpart,p3m_sum_q2,0);
+	  rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut,p3m_sum_qpart,p3m_sum_q2,0);
 	  if(sqrt(2.0)*rs_err > p3m.accuracy) {
 	    /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha */
 	    alpha = sqrt(log(sqrt(2.0)*rs_err/p3m.accuracy)) / r_cut;
 	    /* calculate real space and k space error for this alpha */
-	    rs_err = P3M_real_space_error(box_l[0],p3m.prefactor,r_cut,p3m_sum_qpart,p3m_sum_q2,alpha);
-	    ks_err = P3M_k_space_error(box_l[0],p3m.prefactor,mesh,cao,p3m_sum_qpart,p3m_sum_q2,alpha);
+	    rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut,p3m_sum_qpart,p3m_sum_q2,alpha);
+	    ks_err = P3M_k_space_error(box_l[0],coulomb.prefactor,mesh,cao,p3m_sum_qpart,p3m_sum_q2,alpha);
 	    accuracy = sqrt(SQR(rs_err)+SQR(ks_err));
 	    /* check if this matches the accuracy goal */
 	    if(accuracy <= p3m.accuracy) {
@@ -1186,20 +1182,22 @@ int P3M_tune_parameters(Tcl_Interp *interp)
 
 void P3M_count_charged_particles()
 {  
+  Cell *cell;
   Particle *part;
-  int i,m,n,o,np;
+  int i,c,np;
   double node_sums[3], tot_sums[3];
 
   for(i=0;i<3;i++) { node_sums[i]=0.0; tot_sums[i]=0.0;}
 
-  INNER_CELLS_LOOP(m, n, o) {
-    part = CELL_PTR(m,n,o)->pList.part;
-    np   = CELL_PTR(m,n,o)->pList.n;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    part = cell->part;
+    np   = cell->n;
     for(i=0;i<np;i++) {
-      if( part[i].r.q != 0.0 ) {
+      if( part[i].p.q != 0.0 ) {
 	node_sums[0] += 1.0;
-	node_sums[1] += SQR(part[i].r.q);
-	node_sums[2] += part[i].r.q;
+	node_sums[1] += SQR(part[i].p.q);
+	node_sums[2] += part[i].p.q;
       }
     }
   }
@@ -1326,13 +1324,13 @@ void P3M_tune_aliasing_sums(int nx, int ny, int nz,
 
 void p3m_print_p3m_struct(p3m_struct ps) {
   fprintf(stderr,"%d: p3m_struct: \n",this_node);
-  fprintf(stderr,"   bjerrum=%f, alpha=%f, r_cut=%f, r_cut2=%f\n",
-	  ps.bjerrum,ps.alpha,ps.r_cut,ps.r_cut2);
+  fprintf(stderr,"   alpha=%f, r_cut=%f, r_cut2=%f\n",
+	  ps.alpha,ps.r_cut,ps.r_cut2);
   fprintf(stderr,"   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n",
 	  ps.mesh[0],ps.mesh[1],ps.mesh[2],
 	  ps.mesh_off[0],ps.mesh_off[1],ps.mesh_off[2]);
-  fprintf(stderr,"   cao=%d, inter=%d, epsilon=%f, prefactor=%f\n",
-	  ps.cao,ps.inter,ps.epsilon,ps.prefactor);
+  fprintf(stderr,"   cao=%d, inter=%d, epsilon=%f\n",
+	  ps.cao,ps.inter,ps.epsilon);
   fprintf(stderr,"   cao_cut=(%f,%f,%f)\n",
 	  ps.cao_cut[0],ps.cao_cut[1],ps.cao_cut[2]);
   fprintf(stderr,"   a=(%f,%f,%f), ai=(%f,%f,%f)\n",

@@ -47,52 +47,52 @@
 
 #include <tcl.h>
 #include "particle_data.h"
+#include "ghosts.h"
 #include "verlet.h"
+
+/** which cell structure is used */
+/*@{*/
+#define CELL_STRUCTURE_CURRENT 0
+#define CELL_STRUCTURE_DOMDEC  1
+#define CELL_STRUCTURE_NSQUARE 2
+/*@}*/
 
 /************************************************/
 /** \name Data Types */
 /************************************************/
 /*@{*/
 
-/** Structure containing information about non bonded interactions
-    with particles in a neighbor cell. */
-typedef struct {
-  /** Just for transparency the index of the neighbor cell. */
-  int cell_ind;
-  /** Pointer to particle list of neighbor cell. */
-  ParticleList *pList;
-  /** Verlet list for non bonded interactions of a cell with a neighbor cell. */
-  PairList vList;
-} IA_Neighbor;
-
-/** Structure containing information of a cell. Contains: cell
-    neighbor information, particles in cell.
+/** A cell is a \ref particleList representing a particle group with
+    respect to the integration algorithm.
 */
+typedef ParticleList Cell;
+
+/** List of cell pointers. */
 typedef struct {
-  /** number of interacting neighbor cells . 
+  Cell **cell;
+  int n;
+  int max;
+} CellPList;
 
-      A word about the interacting neighbor cells:
+/** Describes a cell structure */
+typedef struct {
+  /** type descriptor */
+  int type;
 
-      In a 3D lattice each cell has 27 neighbors (including
-      itself!). Since we deal with pair forces, it is sufficient to
-      calculate only half of the interactions (Newtons law: actio =
-      reactio). For each cell 13+1=14 neighbors. This has only to be
-      done for the inner cells. 
+  /** Communicator to exchange ghost cell information. */
+  GhostCommunicator ghost_cells_comm;
+  /** Communicator to exchange ghost particles. */
+  GhostCommunicator exchange_ghosts_comm;
+  /** Communicator to update ghost positions. */
+  GhostCommunicator update_ghost_pos_comm;
+  /** Communicator to collect ghost forces. */
+  GhostCommunicator collect_ghost_force_comm;
 
-      Caution: This implementation needs double sided ghost
-      communication! For single sided ghost communication one would
-      need some ghost-ghost cell interaction as well, which we do not
-      need! 
-
-      It follows: inner cells: n_neighbors = 14
-      ghost cells:             n_neighbors = 0
-  */
-  int n_neighbors;
-  /** Interacting neighbor cell list  */
-  IA_Neighbor *nList;
-  /** particle list for particles in the cell. */
-  ParticleList pList;
-} Cell;
+  ///
+  int   (*position_to_node)(double pos[3]);
+  ///
+  Cell *(*position_to_cell)(double pos[3]);
+} CellStructure;
 
 /*@}*/
 
@@ -101,30 +101,17 @@ typedef struct {
 /************************************************************/
 /*@{*/
 
-/** linked cell grid in nodes spatial domain. */
-extern int cell_grid[3];
-/** linked cell grid with ghost frame. */
-extern int ghost_cell_grid[3];
-/** number of linked cells (inner+ghosts). */
-extern int n_cells;
-/** size of a cell. */
-extern double cell_size[3];
-/** maximal skin size. */
-extern double max_skin;
-
-/** Maximal number of cells per node. In order to avoid memory
- *  problems due to the cell grid one has to specify the maximal
- *  number of \ref #cells . The corresponding callback function is
- *  \ref max_num_cells_callback. If the number of cells \ref n_cells,
- *  defined by \ref ghost_cell_grid is larger than max_num_cells the
- *  cell grid is reduced. max_num_cells has to be larger than 27, e.g
- *  one inner cell.  max_num_cells is initialized with the default
- *  value specified in \ref config.h: \ref CELLS_MAX_NUM_CELLS.
- */
-extern int max_num_cells;
-
-/** linked cell list. */
+/** list of all cells. */
 extern Cell *cells;
+/** size of \ref cells */
+extern int n_cells;
+/** list of all cells containing particles physically on the local node */
+extern CellPList local_cells;
+/** list of all cells containing ghosts */
+extern CellPList ghost_cells;
+
+/** Type of cell structure in use */
+extern CellStructure cell_structure;
 
 /*@}*/
 
@@ -133,98 +120,47 @@ extern Cell *cells;
 /************************************************************/
 /*@{*/
 
-/** Pre initialization of the link cell structure. Function called in
-    modul initialize.c initialize().  Initializes one cell on each
-    node to be able to store the particle data there. */
+/** Initialize the cell structure on program start with the default cell structure of type domain decomposition. */
 void cells_pre_init();
 
-/** re initialize link cell structures. 
- *
- *  cells_re_init calculates cell grid parameters: \ref cell_grid,
- *  \ref ghost_cell_grid \ref cell_size, \ref inv_cell_size, \ref
- *  n_cells (via calling \ref calc_cell_grid).
- *
- *  It reallocates the cell structure (\ref #cells) and initializes
- *  the contained cell neighbor structure, verlet lists and particle
- *  lists (see \ref init_cell and \ref init_cell_neighbors).
- *
- *  Then it transfers the particles from the old cell structure to the
- *  new one. 
- */
-void cells_re_init();
+/** Reallocate the list of all cells (\ref cells). */
+void realloc_cells(int size);
 
-/** Notify cell code of topology change. Reinits cell cstructure if
-  * necesarry (\ref cells_re_init). */
-void cells_changed_topology();
+/** initialize a list of cell pointers */
+MDINLINE void init_cellplist(CellPList *cpl) {
+  cpl->n    = 0;
+  cpl->max  = 0;
+  cpl->cell = NULL;
+}
+
+/** reallocate a list of cell pointers */
+MDINLINE void realloc_cellplist(CellPList *cpl, int size)
+{
+  if(size != cpl->max) {
+    cpl->max = size;
+    cpl->cell = (Cell **) realloc(cpl->cell, sizeof(int)*cpl->max);
+  }
+}
+
+/** reinitialize the cell structures.
+    @param new_cs gives the new topology to use afterwards. May be set to
+    \ref CELL_STRUCTURE_CURRENT for not changing it.
+*/
+void cells_re_init(int new_cs);
 
 /** Calculate and return the total number of particles on this
     node. */
 int cells_get_n_particles();
 
-/** Allocate space for a particle.
-    \param  id  the identity of the new particle
-    \param  pos its position
-    \return the new particle structure */
-Particle *cells_alloc_particle(int id, double pos[3]);
-
-/** return cell grid index for a position.
-    \param pos Position of e.g. a particle.
-    \return linear cell grid index. */
-int pos_to_cell_grid_ind(double pos[3]);
-
-/** return cell grid index for a position.
-    positions out of bounds are capped to the
-    nearest valid cell.
-    \param pos Position of e.g. a particle.
-    \return linear cell grid index. */
-int pos_to_capped_cell_grid_ind(double pos[3]);
-
-/** Callback for setmd maxnumcells (maxnumcells >= 27). 
-    see also \ref max_num_cells */
-int max_num_cells_callback(Tcl_Interp *interp, void *_data);
-
-/** returns true iff cell i is not a ghost cell.
-    @param i the cell to test
-    @param gcg always ghost_cell_grid
-*/
-int  is_inner_cell(int i, int gcg[3]);
-
-/** Convenient replace for loops over all particles. */
-#define INNER_CELLS_LOOP(m,n,o) \
-  for(o=1; o<cell_grid[2]+1; o++) \
-    for(n=1; n<cell_grid[1]+1; n++) \
-      for(m=1; m<cell_grid[0]+1; m++)
-
-/** Convenient replace for loops over all particles and ghosts. */
-#define CELLS_LOOP(m,n,o) \
-  for(o=0; o<ghost_cell_grid[2]; o++) \
-    for(n=0; n<ghost_cell_grid[1]; n++) \
-      for(m=0; m<ghost_cell_grid[0]; m++)
-
-/** Convenient replace for inner cell check. usage: if(IS_INNER_CELL(m,n,o)) {...} */
-#define IS_INNER_CELL(m,n,o) \
-  ( m > 0 && m < ghost_cell_grid[0] - 1 && \
-    n > 0 && n < ghost_cell_grid[1] - 1 && \
-    o > 0 && o < ghost_cell_grid[2] - 1 ) 
-
-/** Convenient replace for ghost cell check. usage: if(IS_GHOST_CELL(m,n,o)) {...} */
-#define IS_GHOST_CELL(m,n,o) \
-  ( m == 0 || m == ghost_cell_grid[0] - 1 || \
-    n == 0 || n == ghost_cell_grid[1] - 1 || \
-    o == 0 || o == ghost_cell_grid[2] - 1 ) 
-
-/** get the cell index associated with the cell coordinates */
-#define CELL_IND(m,n,o) (get_linear_index(m,n,o,ghost_cell_grid))
-
-/** get a pointer to the cell associated with the cell coordinates */
-#define CELL_PTR(m,n,o) (&cells[get_linear_index(m,n,o,ghost_cell_grid)])
-
 /** debug function to print particle positions: */
-void print_particle_positions();
+void print_local_particle_positions();
 
 /** debug function to print ghost positions: */
 void print_ghost_positions();
 
+/** implementation of the Tcl command \ref tcl_cellsystem */
+int cellsystem(ClientData data, Tcl_Interp *interp,
+	       int argc, char **argv);
 /*@}*/
 
 #endif
