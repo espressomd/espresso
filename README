@@ -1,0 +1,35 @@
+PROGRAMM:
+
+tcl_md is a parallel molecular dynamics program.  It uses Tcl
+(http://tcl.activestate.com) as controlling language to allow great
+flexibility.
+
+GETTING STARTED:
+
+System requierments:
+Script language: tcl 8.3 or higher
+OS: Linux or OSF1
+
+To generate the code:
+gmake
+You find the code depending on the mashine in:
+Linux/tcl_md
+OSF1/tcl_md
+
+To generate documentation:
+ssh pckr27
+gmake doc
+The documentation is in:
+HTML version:  doc/html/index.html
+LATEX version: doc/latex/refmen.tex / 
+DVI version:   doc/latex/refmen.dvi
+And for friends of WINDOWS: doc/rtf/refman.rtf
+
+For testing:
+
+For generating a new configuration type:
+setup.tcl
+The configuration is in: config.gz
+
+To integrate a created configuration (lennard-jones fluid):
+test.tcl
