@@ -45,7 +45,7 @@ proc write_data {file} {
 }
 
 if { [catch {
-    read_data "thermostat.dat"
+    read_data "thermostat.data"
     # for some reason there has to be at least one interaction
     inter 0 0 lennard-jones 0.0 1.0 1.12246 1.0 0.0 0.0
 
