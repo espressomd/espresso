@@ -78,7 +78,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /** callback for version status. */
 MDINLINE int version_callback(Tcl_Interp *interp)
 {
-  Tcl_AppendResult(interp, "ESPRESSO: v1.1.0a (Naomi), Last Change: 03.11.2003", (char *) NULL);
+  Tcl_AppendResult(interp, "ESPRESSO: v1.1.0b (Naomi), Last Change: 11.11.2003", (char *) NULL);
   return (TCL_OK);
 }
 

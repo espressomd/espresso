@@ -89,7 +89,7 @@ if { [catch {
     puts -nonewline "Reading the checkpoint... "; flush stdout
     checkpoint_read analysis_system.data; puts " Done."
 
-    analyze set chains 0 20 30
+    analyze set chains 0 20 30; set volume [expr pow([lindex [setmd box_l] 0],3)]
     set mindist1 "analyze mindist"; set mindist2 "analyze mindist 0 0"; lappend get_observables $mindist1 $mindist2
     set nbhood "lsort -integer \[analyze nbhood 13 2.5\]"; lappend get_listables $nbhood
     set distto "analyze distto 13"; lappend get_observables $distto
@@ -121,13 +121,14 @@ if { [catch {
 	}
     }
     if { [setmd n_nodes]==1 || $slow==1 } {
-	# since 'analyze p_bin' is effectively running on the master node only, it will be really slow for >1 nodes;
+	# since 'analyze p_IK1' is effectively running on the master node only, it will be really slow for >1 nodes;
 	# hence it is not really necessary to check it there - but if you like, set 'slow' to 1
 	for { set i 0 } { $i < [setmd n_part] } { incr i } { lappend plist $i }
-	set p_bin [analyze p_bin $plist 0]; set p_tot [analyze pressure total]
-	set ideal [lindex $p_bin 3]; set p_ideal [expr [lindex $ideal 1] + [lindex $ideal 5] + [lindex $ideal 9]]
-	set p_tob [expr [lindex $p_bin 0]-$p_ideal]; set rel_error [expr abs(($p_tob - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing 'analyze p_bin <ind_list> 0' to 'analyze pressure total': $rel_error  ($p_tob+$p_ideal / $obs)"
+	set p_IK1 [analyze p_IK1 $volume $plist 0]; set p_tot [analyze pressure total]
+	set ideal [lindex $p_IK1 3]; set p_ideal [expr [lindex $ideal 1] + [lindex $ideal 5] + [lindex $ideal 9]]
+	set p_tob [expr [lindex $p_IK1 0]-$p_ideal]; set rel_error [expr abs(($p_tob - $p_tot)/$p_tot)]
+	puts -nonewline "relative deviations upon comparing 'analyze p_IK1 <bin_volume> <ind_list> 0' to 'analyze pressure total': "
+	puts "$rel_error  ($p_tob+$p_ideal / $obs)"
 	if { $rel_error > $epsilon } {
 	    error "relative error $rel_error too large upon comparing the pressures  "
 	}
