@@ -583,7 +583,7 @@ void ELC_add_force()
     checkpoint("************distri q", 0, q, 2);
   }
 
-  for (p = 1; p - 1 < ux*elc_params.far_cut  && p <= n_scxcache ; p++) {
+  for (p = 1; ux*(p - 1) < elc_params.far_cut  && p <= n_scxcache ; p++) {
     for (q = 1; SQR(ux*(p - 1)) + SQR(uy*(q - 1)) < elc_params.far_cut2 && q <= n_scycache; q++) {
       omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
       setup_PQ(p, q, omega);
@@ -624,7 +624,7 @@ double ELC_energy()
     checkpoint("E************distri q", 0, q, 2);
   }
 
-  for (p = 1; p - 1 < ux*elc_params.far_cut  && p <= n_scxcache ; p++) {
+  for (p = 1; ux*(p - 1) < elc_params.far_cut  && p <= n_scxcache ; p++) {
     for (q = 1; SQR(ux*(p - 1)) + SQR(uy*(q - 1)) < elc_params.far_cut2 && q <= n_scycache; q++) {
       omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
       setup_PQ(p, q, omega);
