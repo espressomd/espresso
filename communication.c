@@ -86,14 +86,44 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
   if (pnode == this_node) {
     int index = got_particle(part);
     memcpy(pdata, &particles[index], sizeof(Particle));
+    // for now, until we have a deep copy...
+    pdata->n_pairBond   = 0;
+    pdata->n_tripleBond = 0;
   }
   else {
     int req[2] = { REQ_GET_PART, part };
     MPI_Status status;
     MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
+    pdata->identity = part;
+    MPI_Recv(&pdata->type, 1, MPI_INT, pnode,
+	     REQ_GET_PART, MPI_COMM_WORLD, &status);
     MPI_Recv(pdata->p, 3, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
+    MPI_Recv(&pdata->q, 1, MPI_DOUBLE, pnode,
+	     REQ_GET_PART, MPI_COMM_WORLD, &status);
+    MPI_Recv(pdata->v, 3, MPI_DOUBLE, pnode,
+	     REQ_GET_PART, MPI_COMM_WORLD, &status);
+    MPI_Recv(pdata->f, 3, MPI_DOUBLE, pnode,
+	     REQ_GET_PART, MPI_COMM_WORLD, &status);
+    // for now, until we have a deep copy...
+    pdata->n_pairBond   = 0;
+    pdata->n_tripleBond = 0;
   }
+}
+
+
+void mpi_send_pdata(Particle *pdata)
+{
+  MPI_Send(&pdata->type, 1, MPI_INT, 0, REQ_GET_PART,
+	   MPI_COMM_WORLD);
+  MPI_Send(pdata->p, 3, MPI_DOUBLE, 0, REQ_GET_PART,
+	   MPI_COMM_WORLD);
+  MPI_Send(&pdata->q, 1, MPI_DOUBLE, 0, REQ_GET_PART,
+	   MPI_COMM_WORLD);
+  MPI_Send(pdata->v, 3, MPI_DOUBLE, 0, REQ_GET_PART,
+	   MPI_COMM_WORLD);
+  MPI_Send(pdata->f, 3, MPI_DOUBLE, 0, REQ_GET_PART,
+	   MPI_COMM_WORLD);
 }
 
 void mpi_loop()
@@ -134,10 +164,8 @@ void mpi_loop()
       break;
     case REQ_GET_PART:
       index = got_particle(req[1]);
-      if (index != -1) {
-	MPI_Send(particles[index].p, 3, MPI_DOUBLE, 0, REQ_GET_PART,
-		 MPI_COMM_WORLD);
-      }
+      if (index != -1)
+	mpi_send_pdata(&particles[index]);
       break;
     default:
 #ifdef DEBUG

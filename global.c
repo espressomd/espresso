@@ -44,6 +44,26 @@ int add_particle(int part)
 	realloc(particles, sizeof(Particle)*max_particles);
     }
   }
+
   particles[index].identity = part;
+  particles[index].type = 0;
+
+  particles[index].p[0] =
+    particles[index].p[1] =
+    particles[index].p[2] = 0;
+  particles[index].q = 0;
+
+  particles[index].v[0] =
+    particles[index].v[1] =
+    particles[index].v[2] = 0;
+  particles[index].f[0] =
+    particles[index].f[1] =
+    particles[index].f[2] = 0;
+
+  particles[index].n_pairBond   = 0;
+  particles[index].pairBonds    = NULL;  
+  particles[index].n_tripleBond = 0;
+  particles[index].tripleBonds  = NULL;
+  
   return index;
 }

@@ -20,8 +20,9 @@ void mpi_attach_particle(int part, int node);
 /** send particle data */
 void mpi_send_pos(int node, int part, double pos[3]);
 
-/* recv particle data */
+/** recv particle data */
 void mpi_recv_part(int node, int part, Particle *part_data);
+void mpi_send_pdata(Particle *part_data);
 
 /* requests in random access mode */
 #define REQ_TERM      0

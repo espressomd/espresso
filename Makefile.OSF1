@@ -1,0 +1,11 @@
+############ compiler settings
+CC=cc
+CFLAGS=-O3 -msg_warn level6 -fp_reorder -tune host
+DEPEND=makedepend
+
+CXX=cxx
+CXXFLAGS=$(CFLAGS) -D_RWSTD_NO_NEW_HEADER -D__USE_STD_IOSTREAM
+
+############ linker settings
+LINK=$(CC)
+LDLIBS=-ltcl8.0 -lmpi -lm
