@@ -1975,6 +1975,9 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
     }
   }
 
+  coulomb.use_elc = 0;
+  coulomb.method  = COULOMB_NONE;
+
   if (coulomb_set_bjerrum(d1) == TCL_ERROR) {
     Tcl_AppendResult(interp, argv[0], "bjerrum length must be positive",
 		     (char *) NULL);
@@ -1983,9 +1986,6 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
     
   argc -= 1;
   argv += 1;
-
-  coulomb.use_elc = 0;
-  coulomb.method  = COULOMB_NONE;
 
   if (d1 == 0.0 && argc == 0) {
     mpi_bcast_coulomb_params();
