@@ -426,7 +426,7 @@
 
                      Unphysical self--energies,
 		     arised as a result of the lattice interpolation  of charges, are corrected by a subtraction scheme
-		     based on the exact lattice Green's function combination of the direct subtraction scheme plus the Yukawa subtraction scheme (second method).
+		     based either on the exact lattice Green's function or the combination of the direct subtraction scheme plus the Yukawa subtraction scheme (second method).
 
 		    For the case of Yukawa screened simulation (second method) one has  to enter screening parameter \<kappa\> and
 		    the cut-off of the Yukawa potential \<r_cut\>
