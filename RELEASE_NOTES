@@ -13,15 +13,16 @@ New Features:
 (a) working version of tabulated lookup potentials is
 now implemented.  Be sure to check documentation as file format
 requirements are likely to change with new versions.
-
+(b) comfixed interaction is implemented. This interaction fixes the center of mass of all particles of a given type. 
+(c) comforce interaction is implemented. This interaction is used to apply a force on two differenent types of particles. The force is applied either along the major axis of type_1 particles (e.g. bundle of rods), or perpendicular to the major axis of type_1 particles in the direction of the vector joining center of mass's of type_1 and type_2.  
 
 Changes:
 
 
 Bugfixes:
 (a) 'part <ind> delete' now correctly deletes all bonds involved
-(a) 'part fix' fixed
-
+(b) 'part fix' fixed
+(c) the constraint energy is printed correctly now. In the old version if the constraint particle type is smaller than any real particle type, the constraint energy was wrong, even though the total energy was correct.
 
 
 ***********
