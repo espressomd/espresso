@@ -29,7 +29,7 @@ ifeq ($(GARCHING), yes)
 endif
 
 # optimized compiler flags
-CFLAGS=-O2 -qarch=pwr4 -qcpluscmt -qmaxmem=16384 $(HOSTFLAGS)
+CFLAGS=-O2 -g -qarch=pwr4 -qcpluscmt -qmaxmem=16384 $(HOSTFLAGS)
 
 # debug compiler flags
 # CFLAGS= -g -fno-inline -Wall $(HOSTFLAGS)
