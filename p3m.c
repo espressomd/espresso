@@ -142,9 +142,20 @@ int *ca_fmp = NULL;
 /** number of permutations in k_space */
 int ks_pnum;
 
-/** \name Privat Functions */
+/** \name Private Functions */
 /************************************************************/
 /*@{*/
+
+/** Initializes the (inverse) mesh constant \ref p3m_struct::a (\ref p3m_struct::ai) 
+    and the cutoff for charge assignment \ref p3m_struct::cao_cut, which has to be
+    done by \ref P3M_init once and by \ref P3M_scaleby_box_l whenever the \ref box_l changed.
+*/
+void P3M_init_a_ai_cao_cut();
+
+/** Calculate the spacial position of the left down mesh point of the local mesh, to be
+    stored in \ref local_mesh::ld_pos; function called by \ref calc_local_ca_mesh once
+    and by \ref P3M_scaleby_box_l whenever the \ref box_l changed. */
+void calc_lm_ld_pos();
 
 /** Calculates the dipole term */
 double calc_dipole_term(int force_flag, int energy_flag);
@@ -231,7 +242,7 @@ MDINLINE double perform_aliasing_sums(int n[3], double nominator[3]);
 /*@}*/
 
 
-/** \name P3M Tuning Functions (privat)*/
+/** \name P3M Tuning Functions (private)*/
 /************************************************************/
 /*@{*/
 
@@ -286,11 +297,39 @@ void P3M_tune_aliasing_sums(int nx, int ny, int nz,
 void P3M_scaleby_box_l() {
   p3m.r_cut = p3m.r_cut_iL* box_l[0];
   p3m.alpha = p3m.alpha_L * box_l_i[0];
+  P3M_init_a_ai_cao_cut();
+  calc_lm_ld_pos();
+}
+
+void calc_lm_ld_pos() {
+  int i; 
+  /* spacial position of left down mesh point */
+  for(i=0;i<3;i++) {
+    lm.ld_pos[i] = (lm.ld_ind[i]+ p3m.mesh_off[i])*p3m.a[i];
+  }
+}
+
+void P3M_init_a_ai_cao_cut() {
+  int i;
+  for(i=0;i<3;i++) {
+    p3m.ai[i]      = (double)p3m.mesh[i]/box_l[i]; 
+    p3m.a[i]       = 1.0/p3m.ai[i];
+    p3m.cao_cut[i] = 0.5*p3m.a[i]*p3m.cao;
+    /* check k-space cutoff */
+    if(p3m.cao_cut[i] >= 0.5*box_l[i]) {
+      fprintf(stderr,"%d: P3M_init: ERROR: k-space cutoff %f is larger than half of box dimension %f\n",this_node,p3m.cao_cut[i],box_l[i]);
+      errexit();
+    }
+    if(p3m.cao_cut[i] >= local_box_l[i]) {
+      fprintf(stderr,"%d: P3M_init: ERROR: k-space cutoff %f is larger than local box dimension %f\n",this_node,p3m.cao_cut[i],local_box_l[i]);
+      errexit();
+    }
+  }
 }
 
 void   P3M_init()
 {
-  int i,n;
+  int n;
 
   if(coulomb.bjerrum == 0.0) {       
     p3m.r_cut    = 0.0;
@@ -334,20 +373,9 @@ void   P3M_init()
 
     P3M_TRACE(fprintf(stderr,"%d: mesh=%d, cao=%d, mesh_off=(%f,%f,%f)\n",this_node,p3m.mesh[0],p3m.cao,p3m.mesh_off[0],p3m.mesh_off[1],p3m.mesh_off[2]));
 
-    for(i=0;i<3;i++) {
-      p3m.ai[i]      = (double)p3m.mesh[i]/box_l[i]; 
-      p3m.a[i]       = 1.0/p3m.ai[i];
-      p3m.cao_cut[i] = p3m.a[i]*p3m.cao/2.0;
-      /* check k-space cutoff */
-      if(p3m.cao_cut[i] >= box_l[i]/2.0) {
-	fprintf(stderr,"%d: P3M_init: ERROR: k-space cutoff %f is larger than half of box dimension %f\n",this_node,p3m.cao_cut[i],box_l[i]);
-	errexit();
-      }
-      if(p3m.cao_cut[i] >= local_box_l[i]) {
-	fprintf(stderr,"%d: P3M_init: ERROR: k-space cutoff %f is larger than local box dimension %f\n",this_node,p3m.cao_cut[i],local_box_l[i]);
-	errexit();
-      }
-    }
+    /* initializes the (inverse) mesh constant p3m.a (p3m.ai) and the cutoff for charge assignment p3m.cao_cut */
+    P3M_init_a_ai_cao_cut();
+
     /* initialize ca fields to size CA_INCREMENT: ca_frac and ca_fmp */
     ca_num = 0;
     if(ca_num < CA_INCREMENT) {
@@ -563,7 +591,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 #endif
 #ifdef NPT
 		  if(integ_switch == INTEG_METHOD_NPT_ISO) {
-		    nptiso.p_vir[0] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
+		    // nptiso.p_vir[0] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
 		  }
 #endif
 		  p[i].f.f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
@@ -669,9 +697,7 @@ void calc_local_ca_mesh() {
   for(i=0;i<3;i++) 
     lm.ld_ind[i]=(int)ceil((my_left[i]-p3m.cao_cut[i]-skin)*p3m.ai[i]-p3m.mesh_off[i]);
   /* spacial position of left down mesh point */
-  for(i=0;i<3;i++) {
-    lm.ld_pos[i] = (lm.ld_ind[i]+ p3m.mesh_off[i])*p3m.a[i];
-  }
+  calc_lm_ld_pos();
   /* left down margin */
   for(i=0;i<3;i++) lm.margin[i*2] = lm.in_ld[i]-lm.ld_ind[i];
   /* up right grid point */
