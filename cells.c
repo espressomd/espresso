@@ -253,13 +253,6 @@ int pos_to_capped_cell_grid_ind(double pos[3])
   for(i=0;i<3;i++) {
     cpos[i] = (int)((pos[i]-my_left[i])*inv_cell_size[i])+1;
 
-#ifdef ADDITIONAL_CHECKS
-    if(cpos[i] < 0 || cpos[i] >  ghost_cell_grid[i]) {
-      fprintf(stderr,"%d: illegal cell position cpos[%d]=%d, ghost_grid[%d]=%d for pos[%d]=%f\n",this_node,i,cpos[i],i,ghost_cell_grid[i],i,pos[i]);
-      errexit();
-    }
-#endif
-
     if (cpos[i] < 1)
       cpos[i] = 1;
     else if (cpos[i] > cell_grid[i])
@@ -398,6 +391,7 @@ void init_cell_neighbors(int i)
 	  /* take the upper half of all neighbors 
 	     and add them to the neighbor list */
 	  if(j >= i) {
+	    CELL_TRACE(fprintf(stderr,"%d: cell %d neighbor %d\n",this_node,i,j));
 	    cells[i].nList[cnt].cell_ind = j;
 	    cells[i].nList[cnt].pList = &(cells[j].pList);
 	    init_pairList(&(cells[i].nList[cnt].vList));

@@ -20,9 +20,6 @@
 /************************************************/
 /*@{*/
 
-/**  granularity of the communication buffers. */
-#define PART_INCREMENT 20
-
 /* MPI tags for the ghost communications: */
 /** Tag for communication in send_particles(). */
 #define REQ_SEND_PART   100
@@ -155,7 +152,7 @@ int move_to_p_buf(ParticleList *pl, int ind);
            Exchange adress and sizes of send and recieve buffers.
  *  </ol>
  *
- * @param s_dir    send direction. 
+ * @param s_dir    send direction = [0,5]. 
 */
 void send_particles(int s_dir);
 
@@ -167,6 +164,7 @@ void send_particles(int s_dir);
  *  particle buffer if necessary. Copy particles and their bonds from
  *  recieve buffers to local particle buffer.
  *
+ * @param dir    direction = [0,5]. 
 */
 void append_particles(int dir);
 
@@ -256,38 +254,87 @@ void ghost_init()
   anz[2] = gcg[0]*gcg[1];
   /* 2: Allocate space */
   for(i=0;i<6;i++) {
-    realloc_intlist(&(send_cells[i])   ,anz[i/2]);
-    send_cells[i].n = anz[i/2];
-    realloc_intlist(&(recv_cells[i])   ,anz[i/2]);
-    recv_cells[i].n = anz[i/2];
-    realloc_intlist(&(n_send_ghosts[i]),anz[i/2]+1);
-    n_send_ghosts[i].n = anz[i/2]+1;
-    realloc_intlist(&(n_recv_ghosts[i]),anz[i/2]+1);
-    n_recv_ghosts[i].n = anz[i/2]+1;
+#ifdef PARTIAL_PERIODIC
+    if( (periodic[i/2] == 1) || (boundary[i] == 0) ) { 
+#endif
+      realloc_intlist(&(send_cells[i])   ,anz[i/2]);
+      send_cells[i].n = anz[i/2];
+      realloc_intlist(&(recv_cells[i])   ,anz[i/2]);
+      recv_cells[i].n = anz[i/2];
+      realloc_intlist(&(n_send_ghosts[i]),anz[i/2]+1);
+      n_send_ghosts[i].n = anz[i/2]+1;
+      realloc_intlist(&(n_recv_ghosts[i]),anz[i/2]+1);
+      n_recv_ghosts[i].n = anz[i/2]+1;
+#ifdef PARTIAL_PERIODIC
+    }
+    else {
+      send_cells[i].n    = 0;
+      recv_cells[i].n    = 0;
+      n_send_ghosts[i].n = 1;
+      n_recv_ghosts[i].n = 1;
+      realloc_intlist(&(n_send_ghosts[i]),1);
+      realloc_intlist(&(n_recv_ghosts[i]),1);
+    }
+#endif
   }
   /* 3: Get send/recv cell indices */
   for(i=0;i<3;i++) {
     lc[(i+1)%3] = 1-done[(i+1)%3]; hc[(i+1)%3] = cg[(i+1)%3]+done[(i+1)%3];
     lc[(i+2)%3] = 1-done[(i+2)%3]; hc[(i+2)%3] = cg[(i+2)%3]+done[(i+2)%3];
-    /* send to :   left, down, for */
-    lc[(i+0)%3] = 1;               hc[(i+0)%3] = 1;
-    send_cells[(2*i)].n = sub_grid_indices(send_cells[(2*i)].e, 0, 
+#ifdef PARTIAL_PERIODIC
+    if( (periodic[i] == 1) || (boundary[2*i] == 0) ) { 
+#endif
+      /* send to :   left, down, for */
+      lc[(i+0)%3] = 1;               hc[(i+0)%3] = 1;
+      send_cells[(2*i)].n = sub_grid_indices(send_cells[(2*i)].e, 0, 
 					     anz[i], lc, hc, gcg);
-     /* recv from : right, up, back */
-    lc[(i+0)%3] = 0;               hc[(i+0)%3] = 0;
-    recv_cells[(2*i)].n = sub_grid_indices(recv_cells[(2*i)].e, 0, 
+      /* recv from : right, up, back */
+      lc[(i+0)%3] = 0;               hc[(i+0)%3] = 0;
+      recv_cells[(2*i)].n = sub_grid_indices(recv_cells[(2*i)].e, 0, 
 					     anz[i], lc, hc, gcg);
-    /* send to :   right, up, back */
-    lc[(i+0)%3] = cg[(i+0)%3];     hc[(i+0)%3] = cg[(i+0)%3];
-    send_cells[(2*i)+1].n = sub_grid_indices(send_cells[(2*i)+1].e, 0, 
-					     anz[i], lc, hc, gcg);
-    /* recv from : left, down, for */
-    lc[(i+0)%3] = cg[(i+0)%3]+1;   hc[(i+0)%3] = cg[(i+0)%3]+1;
-    recv_cells[(2*i)+1].n = sub_grid_indices(recv_cells[(2*i)+1].e, 0, 
-					   anz[i], lc, hc, gcg);
+#ifdef PARTIAL_PERIODIC
+    }
+    if( (periodic[i] == 1) || (boundary[(2*i)+1] == 0) ) { 
+#endif
+      /* send to :   right, up, back */
+      lc[(i+0)%3] = cg[(i+0)%3];     hc[(i+0)%3] = cg[(i+0)%3];
+      send_cells[(2*i)+1].n = sub_grid_indices(send_cells[(2*i)+1].e, 0, 
+					       anz[i], lc, hc, gcg);
+      /* recv from : left, down, for */
+      lc[(i+0)%3] = cg[(i+0)%3]+1;   hc[(i+0)%3] = cg[(i+0)%3]+1;
+      recv_cells[(2*i)+1].n = sub_grid_indices(recv_cells[(2*i)+1].e, 0, 
+					       anz[i], lc, hc, gcg);
+#ifdef PARTIAL_PERIODIC
+    }
+#endif       
     done[i] = 1;
   }
   
+#ifdef GHOST_DEBUG
+  {
+    int n,j;
+    for(n=0;n<n_nodes;n++) {
+      if(this_node==n) {
+	fprintf(stderr,"%d: ghost_cell_grid = (%d %d %d)\n",this_node,gcg[0],gcg[1],gcg[2]);
+	for(i=0;i<6;i++) {
+	  if(send_cells[i].n>0) {
+	    fprintf(stderr,"%d: dir %d -> %d send_cells: {",this_node,i,send_cells[i].n);
+	    for(j=0;j<send_cells[i].n;j++)
+	      fprintf(stderr,"%d ",send_cells[i].e[j]);
+	    fprintf(stderr,"}\n");
+	  }
+	  if(recv_cells[i].n>0) {
+	    fprintf(stderr,"%d: dir %d -> %d recv_cells: {",this_node,i,recv_cells[i].n);
+	    for(j=0;j<recv_cells[i].n;j++)
+	      fprintf(stderr,"%d ",recv_cells[i].e[j]);
+	    fprintf(stderr,"}\n");
+	  }
+	}
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+    }
+  }
+#endif
 }
 
 void exchange_and_sort_part()
@@ -295,7 +342,7 @@ void exchange_and_sort_part()
   ParticleList *pl;
   Particle *part;
   Cell *cell;
-  int d, i, m, n, o, dir, lr, ind, c;
+  int d, i, m, n, o, s_dir, r_dir, lr, ind, c;
 
   GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part:start \n",this_node));
   GHOST_TRACE(print_particle_positions());
@@ -303,7 +350,8 @@ void exchange_and_sort_part()
   for(d=0; d<3; d++) { /* direction loop */  
     if(node_grid[d] > 1) { /* catch single node case for direction dir! */
       for(lr=0; lr<2; lr++) {
-	dir = 2*d + lr;
+	s_dir = 2*d + lr;
+	r_dir = 2*d +1 - lr;
 	p_send_buf.n = p_recv_buf.n = 0;
 	b_send_buf.n = b_recv_buf.n = 0;
 	INNER_CELLS_LOOP(m, n, o) {
@@ -314,28 +362,31 @@ void exchange_and_sort_part()
 	    part = pl->part;
 	    if((lr == 1 && part[i].r.p[d] >=  my_right[d]) ||
 	       (lr == 0 && part[i].r.p[d] <   my_left[d])) {
+
 #ifdef PARTIAL_PERIODIC 
-	      if(periodic[d]==1 || boundary[dir]==0) 
+	      if( (periodic[d]==1) || (boundary[s_dir]==0) ) {
 #endif
-		{
-		  GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part: Send Part id=%d to node %d\n",
-				      this_node,part[i].r.identity,node_neighbors[dir]));
-		  i = move_to_p_buf(pl,i);
-		}
+		GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part: s_dir=%d: Send Part id=%d to node %d\n",
+				    this_node,s_dir,part[i].r.identity,node_neighbors[s_dir]));
+		i = move_to_p_buf(pl,i);
+#ifdef PARTIAL_PERIODIC 
+	      }
+#endif
+
 	    }
-	    else if (dir == 5) {
+	    else if (s_dir == 5) {
 	      /* sort particles not moved into their real cells */
 	      ind = pos_to_cell_grid_ind(part[i].r.p);
 	      if(ind != c) {
-		GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part: move part to different cell: id=%d c%d -> c%d\n",this_node,part[i].r.identity,c,ind));
+		/* GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part: move part to different cell: id=%d c%d -> c%d\n",this_node,part[i].r.identity,c,ind)); */
 		move_unindexed_particle(&(cells[ind].pList), pl, i);
 		if(i < pl->n) i--;
 	      }
 	    }
 	  }
 	}
-	send_particles(dir);
-	append_particles(d);
+	send_particles(s_dir);
+	append_particles(r_dir);
       }
     }
     else {
@@ -349,17 +400,18 @@ void exchange_and_sort_part()
 	  part = pl->part;
 
 #ifdef PARTIAL_PERIODIC 
-	  if(periodic[d]==1) 
+	  if(periodic[d]==1) {
 #endif
-	    {
-	      fold_coordinate(part[i].r.p, part[i].i, d);
-	    }
+	    fold_coordinate(part[i].r.p, part[i].i, d);
+#ifdef PARTIAL_PERIODIC 
+	  }
+#endif
 
 	  if (d==2) {
 	    /* sort particles not moved into their real cells */
 	    ind = pos_to_cell_grid_ind(part[i].r.p);
 	    if(ind != c) {
-	      GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part: move part to different cell: id=%d c%d -> c%d\n",this_node,part[i].r.identity,c,ind));
+	      /* GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part: move part to different cell: id=%d c%d -> c%d\n",this_node,part[i].r.identity,c,ind)); */
 	      move_unindexed_particle(&(cells[ind].pList), pl, i);
 	      if(i < pl->n) i--;
 	    }
@@ -394,51 +446,40 @@ void exchange_ghost()
   for(s_dir=0; s_dir<6; s_dir++) {                     
     if(s_dir%2 == 0) r_dir = s_dir+1;
     else             r_dir = s_dir-1;
-    /* number of ghosts to send */
+    /* index where to store total number of ghosts to send in n_send_ghosts */
     c_max                         = send_cells[s_dir].n;
+    /* number of ghosts to send */
     n_send_ghosts[s_dir].e[c_max] = 0;
     cnt                           = 0;
 
-#ifdef PARTIAL_PERIODIC 
-    if(periodic[s_dir/2]==0 && boundary[s_dir]==1) 
-      {
-	for(c=0; c<c_max; c++) {
-	  n_send_ghosts[s_dir].e[c] = 0;
-	}	
-	n_send_ghosts[s_dir].e[c_max] = 0;
-      }
-    else
-#endif
-      {
-	/* send cell loop */
-	for(c=0; c<c_max; c++) {
-	  pl = &(cells[send_cells[s_dir].e[c]].pList);
-	  n_send_ghosts[s_dir].e[c]      = pl->n;
-	  n_send_ghosts[s_dir].e[c_max] += pl->n;
+    /* send cell loop */
+    for(c=0; c<c_max; c++) {
+      pl = &(cells[send_cells[s_dir].e[c]].pList);
+      n_send_ghosts[s_dir].e[c]      = pl->n;
+      n_send_ghosts[s_dir].e[c_max] += pl->n;
+    }
+    /* realloc g_send_buf */
+    if(n_send_ghosts[s_dir].e[c_max] > g_send_buf.max) 
+      realloc_redParticles(&g_send_buf, n_send_ghosts[s_dir].e[c_max]);
+    /* copy ghosts to send buffer */
+    for(c=0; c<c_max; c++) {
+      pl = &(cells[send_cells[s_dir].e[c]].pList);
+      for(n=0; n<pl->n; n++) {
+	memcpy(&(g_send_buf.part[cnt]), &(pl->part[n].r), sizeof(ReducedParticle));
+	/* fold ghost coordinates if they cross the boundary */
+	switch(boundary[s_dir]) {
+	case 0: break;
+	case 1:
+	  g_send_buf.part[cnt].p[s_dir/2] += box_l[s_dir/2];
+	  break;
+	case -1:
+	  g_send_buf.part[cnt].p[s_dir/2] -= box_l[s_dir/2];
+	  break;
 	}
-	/* realloc g_send_buf */
-	if(n_send_ghosts[s_dir].e[c_max] > g_send_buf.max) 
-	  realloc_redParticles(&g_send_buf, n_send_ghosts[s_dir].e[c_max]);
-	/* copy ghosts to send buffer */
-	for(c=0; c<c_max; c++) {
-	  pl = &(cells[send_cells[s_dir].e[c]].pList);
-	  for(n=0; n<pl->n; n++) {
-	    memcpy(&(g_send_buf.part[cnt]), &(pl->part[n].r), sizeof(ReducedParticle));
-	    /* fold ghost coordinates if they cross the boundary */
-	    switch(boundary[s_dir]) {
-	    case 0: break;
-	    case 1:
-	      g_send_buf.part[cnt].p[s_dir/2] += box_l[s_dir/2];
-	      break;
-	    case -1:
-	      g_send_buf.part[cnt].p[s_dir/2] -= box_l[s_dir/2];
-	      break;
-	    }
-	    cnt++;
-	  }
-	}
+	cnt++;
       }
-
+    }
+  
     /* send ghosts */
     send_ghosts(s_dir);
     /* copy recieved ghosts to cell structure */
@@ -480,7 +521,7 @@ void exchange_ghost()
 		      ghost_recv_size[2],ghost_recv_size[3], ghost_recv_size[4], 
 		      ghost_recv_size[5],recv_buf.max));
 
-  GHOST_TRACE(print_ghost_positions());
+  /* GHOST_TRACE(print_ghost_positions()); */
 }
 
 void invalidate_ghosts()
@@ -526,9 +567,8 @@ void update_ghost_pos()
     default: fprintf(stderr, "boundary conditions corrupt, exiting\n");
       errexit(); /* never reached */; modifier = 0;
     }
-    g=0;
-
     /* loop send cells -  copy positions to buffer*/
+    g=0;
     for(c=0; c<send_cells[s_dir].n; c++) {
       pl = &(cells[send_cells[s_dir].e[c]].pList);
       for(n=0; n < pl->n; n++) {
@@ -538,10 +578,8 @@ void update_ghost_pos()
 	g += 3;
       }
     }
-
     /* send buffer */
     send_posforce(s_dir, ghost_send_size[s_dir], ghost_recv_size[r_dir]);
-
     /* loop recv cells - copy positions from buffer */
     g=0;
     for(c=0; c<recv_cells[r_dir].n; c++) {
@@ -585,9 +623,9 @@ void collect_ghost_forces()
     for(c=0; c<recv_cells[r_dir].n; c++) {
       pl = &(cells[recv_cells[r_dir].e[c]].pList);
       for(n=0; n< pl->n; n++) {
-
+	
 	ONEPART_TRACE(if(pl->part[n].r.identity==check_id) fprintf(stderr,"%d: OPT: S_GF f = (%.3e,%.3e,%.3e)\n",this_node,pl->part[n].f[0],pl->part[n].f[1],pl->part[n].f[2]));
-
+	
 	for(i=0;i<3;i++) send_buf.e[g+i] = pl->part[n].f[i];
 	g += 3;
       }
@@ -599,7 +637,7 @@ void collect_ghost_forces()
     for(c=0; c<send_cells[s_dir].n; c++) {
       pl = &(cells[send_cells[s_dir].e[c]].pList);
       for(n=0;n< pl->n;n++) {
-
+	
 	ONEPART_TRACE(if(pl->part[n].r.identity==check_id) fprintf(stderr,"%d: OPT: R_GF f = (%.3e,%.3e,%.3e)\n",this_node,recv_buf.e[g+0],recv_buf.e[g+1],recv_buf.e[g+2]));
 	
 	for(i=0; i<3; i++) pl->part[n].f[i] += recv_buf.e[g+i];
@@ -607,7 +645,7 @@ void collect_ghost_forces()
       }
     } 
   }
-
+  
 #ifdef GHOST_FORCE_DEBUG
   {
     int m,o;
@@ -749,12 +787,20 @@ void send_particles(int s_dir)
 
 void append_particles(int dir)
 {
-  int i, c_ind, b_ind=0;
+  int i, c_ind, b_ind=0, d;
   ParticleList *pl;
   Particle *part;
-  
+
+  d = dir/2;
+
   for(i=0; i<p_recv_buf.n; i++) {
-    fold_coordinate(p_recv_buf.part[i].r.p, p_recv_buf.part[i].i, dir);
+#ifdef GHOST_DEBUG 
+    if(periodic[d]==0 && boundary[dir]!=0) {
+      fprintf(stderr,"%d: Not Allowed folding in dir %d!!!\n",this_node,dir);
+    }
+#endif    
+    if(boundary[dir] != 0)
+      fold_coordinate(p_recv_buf.part[i].r.p, p_recv_buf.part[i].i, d);
     c_ind = pos_to_capped_cell_grid_ind(p_recv_buf.part[i].r.p);
     pl = &(cells[c_ind].pList);
     GHOST_TRACE(fprintf(stderr,"%d: append part id=%d, pos=(%.3f,%.3f,%.3f) to cell %d\n",

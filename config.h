@@ -13,7 +13,7 @@
     Has effect on: \ref per_callback, \ref find_node, \ref fields, 
     \ref cells_init and \ref sort_particles_into_cells.
 */
-/* BROKEN! DO NOT USE #define PARTIAL_PERIODIC */
+#define PARTIAL_PERIODIC 
 
 /** if defined, you will get a warning when particles approach nearer than
     0.9 sigma, because then it's likely the integration will blow up.
@@ -27,8 +27,8 @@
     to a particle or fix a particle in space. */
 #define EXTERNAL_FORCES
 
-/** Compiler Flag tp enable constraints, eg walls, spheres,
-    cylinders. see \ref constraints.h and \ref interaction_data.h */
+/** Compiler Flag tp enable constraints, eg walls, spheres. 
+    See \ref constraint.h and \ref interaction_data.h */
 #define CONSTRAINTS
 
 /************************************************/
