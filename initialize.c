@@ -352,7 +352,7 @@ void on_ghost_flags_change()
   if (thermo_switch & THERMO_DPD)
     /* DPD needs also ghost velocities */
     ghosts_have_v = 1;
-#ifdef CONSTRAINT_BOND
+#ifdef BOND_CONSTRAINT
   else if (n_rigidbonds)
     ghosts_have_v = 1;
 #endif
