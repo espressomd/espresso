@@ -2,7 +2,7 @@
 The following procedures are found in scripts/statistics.tcl.
 <ul>
     <li>\anchor tcl_plotObs
-        \verbatim plotObs <file> {x:y1 ... x:yn} [titles {"title.y1" ... "title.yn"}] [labels {"xlabel" "ylabel"}] [scale <gnuplot-scale>] [out <out>]\endverbatim
+        \verbatim plotObs <file> {x:y1 ... x:yn} [titles {"title.y1" ... "title.yn"}] [labels {"xlabel" "ylabel"}] [scale <gnuplot-scale>] [cmd <gnuplot-command>] [out <out>]\endverbatim
 	creates a gnuplot of the column-wise stored data in <file> writing it to <file>.ps by default.<BR>
 	Using gnuplot syntax, the columns x:y1,... are plotted (e.g. '<tt>3:2 3:5 3:8</tt>' plots the 3rd column as x-axis, the 2nd, 5th and 8th column
 	in <file> as three independent data-series on the y-axis). The scale of the axis may be given with an optional flag using the 
@@ -11,6 +11,8 @@ The following procedures are found in scripts/statistics.tcl.
 	if only the xlabel is specified, the filename <file> is used for the y-axis.<BR>
 	If the different data series are in multiple files, <files> may be given as a tcl-list '{ <file1> <file2> ... }'; however, in this case
 	each <tt>x:yi</tt> refers to one file only, hence the length of both tcl-lists must be equal.<BR>
+	For executing any other gnuplot-commands simply pass them as one-liner using the '<tt>cmd <gnuplot-command></tt>'-option, e.g. 
+	<tt>plotObs ... cmd "set key left"</tt> to adjust the titles on the left side.<BR>
 	To specify a different output-file than the default <file>.ps, use the <tt>out <out></tt>-option; in that case <out>.ps is the result.
     <li>\anchor tcl_plotJoin
         \verbatim plotJoin <destinations> <final>\endverbatim
