@@ -203,6 +203,7 @@ void build_verlet_lists_and_calc_verlet_ia()
       neighbor = &dd.cell_inter[c].nList[n];
       p2  = neighbor->pList->part;
       np2 = neighbor->pList->n;
+      VERLET_TRACE(fprintf(stderr,"%d: neighbor %d contains %d parts\n",this_node,n,np2));
       /* init pair list */
       pl  = &neighbor->vList;
       pl->n = 0;
@@ -221,6 +222,7 @@ void build_verlet_lists_and_calc_verlet_ia()
 	/* Loop neighbor cell particles */
 	for(j = j_start; j < np2; j++) {
 	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
+	  VERLET_TRACE(fprintf(stderr,"%d: pair %d %d has distance %f\n",this_node,p1[i].p.identity,p2[j].p.identity,sqrt(dist2)));
 	  if(dist2 <= max_range2) {
 	    ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
 	    ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
@@ -232,7 +234,7 @@ void build_verlet_lists_and_calc_verlet_ia()
 	}
       }
       resize_verlet_list(pl);
-      VERLET_TRACE(fprintf(stderr,"%d: neighbor %d has %d particles\n",this_node,n,pl->n));
+      VERLET_TRACE(fprintf(stderr,"%d: neighbor %d has %d pairs\n",this_node,n,pl->n));
       VERLET_TRACE(sum += pl->n);
     }
   }

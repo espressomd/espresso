@@ -51,11 +51,11 @@
 #include <tcl.h>
 
 /* #define COMM_DEBUG */ 
-#define INTEG_DEBUG
-#define CELL_DEBUG
-/* #define GHOST_DEBUG */
+/* #define INTEG_DEBUG  */ 
+/* #define CELL_DEBUG  */  
+/* #define GHOST_DEBUG */   
 /* #define GRID_DEBUG */
-#define VERLET_DEBUG
+/* #define VERLET_DEBUG  */ 
 /* #define PARTICLE_DEBUG */
 /* #define P3M_DEBUG */
 /* #define FFT_DEBUG */
@@ -111,6 +111,12 @@ void core();
     \ref local_particles and the cell structure.
 */
 void check_particle_consistency();
+
+
+/** Print all particle positions contained in \ref cells array. */
+void print_particle_positions();
+/** Print all particle forces contained in \ref cells array. */
+void print_particle_forces();
 
 /** by setting this variable to 1, a regular exit is
     indicated. In that case, no core dump is generated.

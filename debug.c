@@ -252,3 +252,40 @@ void check_particle_consistency()
   }
 }
 
+void print_particle_positions()
+{
+  int c,np,p;
+  Cell *cell;
+  Particle *part;
+
+  for(c=0;c<n_cells;c++) {
+    cell = &cells[c];
+    part = cell->part;
+    np = cell->n;
+    if(np>0) {
+      fprintf(stderr,"%d: cell %d contains %d particles:\n",this_node,c,np);
+      for(p=0;p<np;p++) {
+	fprintf(stderr,"%d: c%d p%d (id%d) pos %f %f %f\n",this_node,c,p,part[p].p.identity,part[p].r.p[0],part[p].r.p[1],part[p].r.p[2]);
+      }
+    }
+  }    
+}
+
+void print_particle_forces()
+{
+  int c,np,p;
+  Cell *cell;
+  Particle *part;
+
+  for(c=0;c<n_cells;c++) {
+    cell = &cells[c];
+    part = cell->part;
+    np = cell->n;
+    if(np>0) {
+      fprintf(stderr,"%d: cell %d contains %d particles:\n",this_node,c,np);
+      for(p=0;p<np;p++) {
+	fprintf(stderr,"%d: c%d p%d (id%d) pos %f %f %f\n",this_node,c,p,part[p].p.identity,part[p].f.f[0],part[p].f.f[1],part[p].f.f[2]);
+      }
+    }
+  }    
+}

@@ -153,7 +153,7 @@ void cells_re_init(int new_cs);
 int cells_get_n_particles();
 
 /** debug function to print particle positions: */
-void print_particle_positions();
+void print_local_particle_positions();
 
 /** debug function to print ghost positions: */
 void print_ghost_positions();

@@ -125,6 +125,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
 	  ParticlePosition *pp = insert;
 	  int i;
 	  memcpy(pp, &pt->r, sizeof(ParticlePosition));
+	  fprintf(stderr,"%d prep_send_buf: ghost %d shift %f,%f,%f\n",this_node,pt->p.identity,gc->shift[0],gc->shift[1],gc->shift[2]);
 	  for (i = 0; i < 3; i++)
 	    pp->p[i] += gc->shift[i];
 	  insert +=  sizeof(ParticlePosition);
@@ -319,7 +320,7 @@ void ghost_communicator(GhostCommunicator *gc)
   int n, n2;
   int data_parts = gc->data_parts;
 
-  GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p\n", this_node, gc));
+  GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node, gc, data_parts));
 
   for (n = 0; n < gc->num; n++) {
     GhostCommunication *gcn = &gc->comm[n];
@@ -328,7 +329,7 @@ void ghost_communicator(GhostCommunicator *gc)
     int node      = gcn->node;
     
     GHOST_TRACE(fprintf(stderr, "%d: round %d, job %x\n", this_node, n, gc->comm[n].type));
-
+    GHOST_TRACE(fprintf(stderr, "%d: shift %f %f %f\n",this_node, gc->comm[n].shift[0], gc->comm[n].shift[1], gc->comm[n].shift[2]));
     if (comm_type == GHOST_LOCL)
       cell_cell_transfer(gcn, data_parts);
     else {

@@ -185,6 +185,8 @@ void initialize_ghosts(int global_flag)
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);
 
+  /* print_particle_positions(); */
+
   rebuild_verletlist = 1;
 }
 
@@ -208,7 +210,9 @@ void integrate_vv(int n_steps)
 #ifdef ROTATION
     convert_initial_torques();
 #endif
+    print_particle_forces();
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    print_particle_forces();
     rescale_forces();
     recalc_forces = 0;
   }

@@ -257,7 +257,7 @@ int cellsystem(ClientData data, Tcl_Interp *interp,
 }
 
 /*************************************************/
-void print_particle_positions()
+void print_local_particle_positions()
 {
   Cell *cell;
   int c,i,np,cnt=0;
