@@ -146,7 +146,7 @@ static void init_tcl(Tcl_Interp *interp)
   /* in global.c */
   Tcl_CreateCommand(interp, "setmd", (Tcl_CmdProc *)setmd, 0, NULL);
   /* in interaction_data.c */
-  Tcl_CreateCommand(interp, "info", (Tcl_CmdProc *)info, 0, NULL);
+  Tcl_CreateCommand(interp, "code_info", (Tcl_CmdProc *)code_info, 0, NULL);
   /* in interaction_data.c */
   Tcl_CreateCommand(interp, "inter", (Tcl_CmdProc *)inter, 0, NULL);
   /* in particle_data.c */
