@@ -249,13 +249,19 @@ interface between the Tcl script and the MD code:
 </ol>
         If parameters different from "read|write ..." are given, a procedure "blockfile_arg1_arg2"
 	is searched for and called with the same argument as blockfile. For example
-	\verbatim blockfile channel write particles "id pos" all \endverbatim
+	\verbatim blockfile <channel> write particles "id pos" all \endverbatim
 	results in the evaluation of
 	\verbatim blockfile_write_particles channel write particles "id pos" all \endverbatim
-        <li>\verbatim blockfile <channel> read auto \endverbatim does the same by trying to call
+	while
+        \verbatim blockfile <channel> read auto \endverbatim does the same by trying to call
 	"blockfile_read_auto_tag" for every tag it does not recognize.
 
 	The C implementation is \ref blockfile.
+
+   <li> For the time being it is NOT a wise idea to load a new configuration if there's still one within 'tcl_md': 
+        Single informations such as parameters or particle positions are simply overwritten, 
+	but complex ones such as bonds etc. are not replaced but rather attached - 
+	this is a known drawback of 'tcl_md's storage policy and will be changed sometime later on.
 </ul>
 
 At program start, tcl_md reads in a starting script
@@ -271,9 +277,11 @@ between the tcl-script and the MD-code:
     <li>\anchor tcl_convertDeserno2MD
 	\verbatim convertDeserno2MD <source_file> <destination_file>\endverbatim
 	converts the particle configuration stored in <source_file>
-	from Deserno-format into tcl_md-format, importing everything
-	to tcl_md and writing it to <destination_file>, which may be
-	used with \ref tcl_readmd later on.<BR>
+	from Deserno-format into blockfile-format, importing everything
+	to 'tcl_md' and writing it to <destination_file>. 
+	The full particle information, bonds, interactions, and parameters will be converted and saved.<BR>
+	If <destination_file> is "-1", the data is only loaded into 'tcl_md' and nothing is written to disk.<BR>
+	If <destination_file> has the suffix '.gz', the output-file will be compressed.<BR>
 	The script uses some assumptions, e.g. on the
 	<particle_type_number>s of \ref tcl_part for polymers,
 	counter-ions, or on <i>sigma, shift, offset</i> for
@@ -295,14 +303,13 @@ between the tcl-script and the MD-code:
 
     <li>\anchor tcl_convertMD2Deserno
 	\verbatim convertMD2Deserno <source_file> <destination_file>\endverbatim
-	converts the particle configuration stored in the \ref
-	tcl_writemd written checkpoint <source_file> into a
-	Deserno-compatible <destination_file> using additional
-	informations currently available from tcl_md.<BR>
-	Since Deserno stores much more than tcl_md does due to a
+	converts the particle configuration stored in the 'tcl_md'-blockfile <source_file> into a
+	Deserno-compatible <destination_file>.<BR>
+	If <source_file> is "-1", the data is entirely taken from 'tcl_md' without loading anything from disk.<BR>
+	If <source_file> has the suffix '.gz', it is assumed to be compressed; otherwise it will be treated as containing plain text.<BR>
+	Since Deserno stores much more than 'tcl_md' does due to a
 	centralized vs. a local storage policy, it depends on correct
-	values for the following properties (in addition to
-	<source_file> and the informations from tcl_md such as [inter]):
+	values for the following properties, which therefore should be contained in <source_file>:
 	<ol>
 	<li> the <particle_type_number> used for polymers,
 	counter-ions, and salt-molecules (defaults are: 
@@ -315,7 +322,8 @@ between the tcl-script and the MD-code:
 	\verbatim initConversion \endverbatim
 	(which is automatically called by <i>convertMD2Deserno</i> as well),
 	but may be overwritten the same way as explained for \ref
-	tcl_convertDeserno2MD.<BR>
+	tcl_convertDeserno2MD. However, parameters stored in <source_file> cannot (and will not) be overwritten,
+	because they were part of the system originally saved and should not be altered initially.<BR>
 	Note, that some entries in a Deserno-file cannot be determined 
 	at all, these are by default set to
 	\verbatim set prefix AA0000
@@ -328,18 +336,30 @@ between the tcl-script and the MD-code:
  set saveConfig -1
  set subbox_1D -1
  set ip -1
- set Temp -1
  set step -1 \endverbatim
 	but of course may be overwritten as well after calling
 	<i>initConversion</i> and before continuing with
 	\verbatim convertMD2DesernoMain <source_file> <destination_file>\endverbatim
 	the actual conversion process.<BR>
+	The Deserno-format assumes knowledge of the topology, hence a respective analysis is conducted 
+	to identify the type and structure of the polymer network.
 	The script allows for randomly stored polymer solutions and
 	melts, no matter how they're messed up; however, crosslinked
 	networks need to be aligned to be recognized correctly, i.e.
 	they must be set up consecutively, such that the first chain
 	with $MPC monomers corresponds to the first $MPC particles in
 	[part], the 2nd one to the $MPC following particles, etc. etc.
+
+   <li> For the time being it is NOT a wise idea to load a new configuration if there's still one within 'tcl_md': 
+        Single informations such as parameters or particle positions are simply overwritten, 
+	but complex ones such as bonds etc. are not replaced but rather attached - 
+	this is a known drawback of 'tcl_md's storage policy and will be changed sometime later on.
+   <li> It is now possible to save the <i>whole</i> state of 'tcl_md', including all parameters and interactions. 
+        These scripts make use of that advantage by storing everything they find in the Deserno-file - but vice versa they also expect 
+	you to provide a blockfile containing all possible informations.
+   <li> Earlier versions of 'convertDeserno.tcl' used the binary-format of \ref tcl_writemd and \ref tcl_readmd to save 'tcl_md'-configurations.
+        Since we switched permanently to the blockfile-format, if you urgently need the binary format, 
+	please contact me, and I will gladly provide you with the corresponding version v1.4 of 'convertDeserno.tcl'.
 </ul>
 These conversion scripts have been tested with both polymer melts and
 end-to-end-crosslinked networks in systems with or without
@@ -348,6 +368,20 @@ networks as well, although that hasn't been tested yet - if you've
 some of these systems in a Deserno-formated file, please submit them
 for extensive analysis.
 <ul>
+    <li>\anchor tcl_polyBlockWrite
+	\verbatim polyBlockWrite <path> <param_list> <part_list>\endverbatim
+	writes out the current 'tcl_md' configuration as an Axa-blockfile, including parameters, interactions, particles, and bonds.<BR>
+	<path> should contain the filename including the full path to it.<BR>
+	<param_list> gives a tcl-list of the 'tcl_md'-parameters (out of node_grid | box_l | niatypes | time_step | skin | gamma | bjerrum | p3m_alpha | p3m_r_cut | p3m_mesh | p3m_cao | p3m_epsilon | p3m_mesh_offset | max_num_cells | periodicity) to be saved; if an empty list '{}' is supplied, no parameters are written. Defaults to the full parameter set.<BR>
+	<part_list> gives a string of the particle-properties (out of pos | type | q | v | f) to be saved to disk; if an empty string ' "" 'is provided, no particles, no bonds, and no interactions are written. Defaults (if omitted) to all particle-properties.<BR>
+	Depending on the file-name's suffix, the output will be compressed (if <path> ends with '.gz'), too.<BR>
+	Note, that 'polyBlockWrite' in combination with \ref tcl_convertMD2Deserno replaces the (undocumented) function 'polywr': 
+	To save the current configuration to a Deserno-compatible file (e.g. for use with 'poly2pdb') you may now use \ref tcl_polyBlockWrite
+	to save your current configuration to a blockfile, and convert that with \ref tcl_convertMD2Deserno afterwards,
+	or you directly write a Deserno-compatible file by invoking
+	\verbatim convertMD2Deserno "-1" <output-filename>\endverbatim
+	out of 'tcl_md' to save your current active configuration.
+
     <li>\anchor tcl_countBonds
 	\verbatim countBonds <particle_list>\endverbatim
 	returns a tcl-list of the <i> complete </i> topology described by
@@ -364,6 +398,7 @@ for extensive analysis.
 	revealing the bond between particle 109 and (the preceding)
 	particle 108, while <i>countBonds</i> would return <i>all</i>
 	bonds particle 109 participates in.
+
     <li>\anchor tcl_findPropPos
 	\verbatim findPropPos <particle_property_list> <property>\endverbatim
 	returns the index of <property> within
@@ -384,9 +419,10 @@ for extensive analysis.
 	format as [part <particle_number>];<BR>
 	hence its output is the	same as [findPropPos <particle_property_list> bonds].
 	If the particle does not have any bonds, -1 is returned.
+
     <li>\anchor tcl_timeStamp
 	\verbatim timeStamp <path> <prefix> <postfix> <suffix>\endverbatim
-	modifies the filename contained within path to be preceded by
+	modifies the filename contained within <path> to be preceded by
 	a <prefix> and having a <postfix> before the <suffix>; e.g.
 	\verbatim timeStamp ./scripts/config.gz DH863 001 gz\endverbatim
 	returns './scripts/DH863_config001.gz'.<BR>
