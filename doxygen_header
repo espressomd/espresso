@@ -79,7 +79,7 @@ interface between the Tcl script and the MD code:
 	actual value of <variable> in the MD code back to the Tcl script.
 
 <li>\anchor tcl_part
-	\verbatim part <particle_number> ( pos|type|q|v|f|bond <value>+ )* \endverbatim
+	\verbatim part <particle_number> ( pos|type|q|v|f|bond [delete] <value>+ )* \endverbatim
 	modifies particle data, namely position, type (monomer, ion, ...),
 		    charge, velocity, force and bonds. 
 	Multiple properties can be changed at once. If you add a new
@@ -99,6 +99,8 @@ interface between the Tcl script and the MD code:
 	<li> \verbatim bond <bond_type_number> <partner>+ \endverbatim
 	Restrictions: <bond_type_number> >= 0; partner must be an existing particle.<BR>
 	The <bond_type_number> is used for \ref tcl_inter to define bonded interactions.
+	<li> \verbatim bond delete <bond_type_number> <partner>+ \endverbatim
+	Searches for the given bond and deletes it.
 	</ul>
 
         \anchor tcl_part_print
