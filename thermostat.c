@@ -215,7 +215,7 @@ int thermo_parse_nptiso(Tcl_Interp *interp, int argc, char **argv)
   /* check number of arguments */
   if (argc < 5) {
     Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
-		     argv[0]," ",argv[1]," <temp> <gamma0> <gammav>\"", (char *)NULL);
+		     argv[0]," set ",argv[1]," <temp> <gamma0> <gammav>\"", (char *)NULL);
     return (TCL_ERROR);
   }
   /* check argument types */
@@ -310,7 +310,15 @@ int thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return thermo_usage(interp, argc, argv);
   }
 
-  if ( ARG1_IS_S("set") )          { argc--; argv++; }
+  if ( ARG1_IS_S("set") )          {
+    argc--;
+    argv++;
+
+    if (argc == 1) {
+      Tcl_AppendResult(interp, "wrong # args: \n", (char *)NULL);
+      return thermo_usage(interp, argc, argv);
+    }
+  }
   if ( ARG1_IS_S("off") )            return thermo_parse_off(interp, argc, argv);
   if ( ARG1_IS_S("langevin"))        return thermo_parse_langevin(interp, argc, argv);
 #ifdef DPD
@@ -319,8 +327,8 @@ int thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 #ifdef NPT
   if ( ARG1_IS_S("npt_isotropic") )  return thermo_parse_nptiso(interp, argc, argv);
 #endif
-  
-  Tcl_AppendResult(interp, "Unknown thermostat:\n", (char *)NULL);
+
+  Tcl_AppendResult(interp, "Unknown thermostat ", argv[1], "\n", (char *)NULL);
   return thermo_usage(interp, argc, argv);
 }
 
