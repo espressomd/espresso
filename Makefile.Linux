@@ -2,15 +2,15 @@
 CC=hcc
 
 # optimized compiler flags
-#CFLAGS=-O3 -Wall -march=i586 -fschedule-insns -fschedule-insns2 \
-#       -frerun-cse-after-loop -ffast-math
+CFLAGS=-O3 -Wall -march=i686 -fschedule-insns -fschedule-insns2 \
+       -funroll-loops -frerun-cse-after-loop -ffast-math
 
 # debug compiler flags
-CFLAGS=-pg -g -fno-inline -Wall
+#CFLAGS= -g -fno-inline -Wall
 
 # flags needed for MPI
 CFLAGS+= -DHAS_OLD_FFTW
-CFLAGS+= -I/usr/local/include -I/usr/lib/lam/include
+CFLAGS+=
 
 # MDINLINE defines hwo to declare inline functions
 CFLAGS+= -DMDINLINE="inline static"
@@ -24,5 +24,11 @@ CXXFLAGS=$(CFLAGS) -felide-constructors -fomit-frame-pointer -fno-rtti
 
 ############ linker settings
 LINK=$(CC)
-LDFLAGS=-pg
-LDLIBS=-ltcl8.3 -L/usr/local/lib -lrfftw -lfftw -lm
+LDFLAGS=
+RELEASE=$(shell awk '{print $$3; exit}' /etc/SuSE-release)
+ifeq ($(RELEASE),8.1)
+TCLLIB=tcl8.4
+else
+TCLLIB=tcl8.3
+endif
+LDLIBS=-l$(TCLLIB) -L/usr/local/lib -lrfftw -lfftw -lm # -lefence
