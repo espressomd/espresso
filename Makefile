@@ -44,16 +44,16 @@ all: $(PLATFORM) $(PLATFORM)/Espresso $(PLATFORM)/libEspresso.a
 docu: doc/html/index.html
 
 doc/html/index.html: $(DOCFILES) $(CFILES) $(CXXFILES)
-################### RUNTIME_ERROR-CODES
-	awk -f ./scripts/runtime_errors.awk *.c *.h
-	sort ./doc/text/runtime_errors_tmp.doc -o ./doc/text/runtime_errors_tmp.doc
-	echo "/** \\page runtime_errors runtime_errors resolved" > ./doc/text/runtime_errors.doc
-	echo "<ul>" >> ./doc/text/runtime_errors.doc
-	cat ./doc/text/runtime_errors_tmp.doc >> ./doc/text/runtime_errors.doc
-	echo "</ul>" >> ./doc/text/runtime_errors.doc
-	echo "*/" >> ./doc/text/runtime_errors.doc
-	rm ./doc/text/runtime_errors_tmp.doc
-################### END OF RUNTIME_ERROR-CODES
+################### BACKGROUND_ERROR-CODES
+	awk -f ./scripts/background_errors.awk *.c *.h
+	sort ./doc/text/background_errors_tmp.doc -o ./doc/text/background_errors_tmp.doc
+	echo "/** \\page background_errors background_errors resolved" > ./doc/text/background_errors.doc
+	echo "<ul>" >> ./doc/text/background_errors.doc
+	cat ./doc/text/background_errors_tmp.doc >> ./doc/text/background_errors.doc
+	echo "</ul>" >> ./doc/text/background_errors.doc
+	echo "*/" >> ./doc/text/background_errors.doc
+	rm ./doc/text/background_errors_tmp.doc
+################### END OF BACKGROUND_ERROR-CODES
 	doxygen doxygen_config | grep -ve "^\(Generating\|Parsing\|Preprocessing\)"
 #       (cd doc/latex; make)
 
