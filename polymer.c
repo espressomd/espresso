@@ -393,7 +393,7 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try, do
 
 int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   /** Implementation of the tcl-command
-      salt \<N_pS\> \<N_nS\> [start \<part_id\>] [mode { SAW | RW } [\<shield\> [\<max_try\>]]] [charges \<val_pS\> [\<val_nS\>]] [types \<type_pS\> [\<type_nS\>]]
+      salt \<N_pS\> \<N_nS\> [start \<part_id\>] [mode { SAW | RW } [\<shield\> [\<max_try\>]]] [charges \<val_pS\> [\<val_nS\>]] [types \<type_pS\> [\<type_nS\>]] [rad \<rad>]
       Creates \<N_pS\> positively and \<N_nS\> negatively charged salt ions of charge \<val_pS\> and \<val_nS\> within the simulation box,
       and returns how often the attempt to place a particle failed in the worst case.
       Parameters:  \<N_pS\>/\<N_nS\> = number of salt ions to create
@@ -402,10 +402,12 @@ int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 		   \<shield\>      = shield around each particle another particle's position may not enter if using SAW (defaults to '0')
 		   \<max_try\>     = how often a monomer should be reset if current position collides with a previous particle (defaults to '30000')
 		   \<val_{p|n}S\>  = valencies of the salt ions (default to '1' and '-1', respectively); if \<val_nS\> is not given, \<val_nS\> = -1*\<val_pS\>
-		   \<type_{p|n}S\> = type numbers to be used with "part" (default to '3' and '4'); if \<type_nS\> is not given, \<type_nS\> = \<type_pS\> is assumed. */
+		   \<type_{p|n}S\> = type numbers to be used with "part" (default to '3' and '4'); if \<type_nS\> is not given, \<type_nS\> = \<type_pS\> is assumed. 
+       \<rad> = radius of the cell for the cell model. */
   int N_pS, N_nS; int part_id = n_total_particles; 
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_pS = 1.0, val_nS = -1.0; int type_pS = 3, type_nS = 4;
+  double rad=0.;
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
 
@@ -452,13 +454,21 @@ int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	if ((i+2 >= argc) || (Tcl_GetInt(interp, argv[i+2], &type_nS) == TCL_ERROR)) { Tcl_ResetResult(interp); type_nS = type_pS; i++; } 
 	else { i+=2; } }
     }
+    /* [rad <rad> ] */
+    else if (!strncmp(argv[i], "rad", strlen(argv[i]))) {
+      if ((Tcl_GetDouble(interp, argv[i+1], &rad) || rad < 0.) == TCL_ERROR) { 
+	Tcl_AppendResult(interp, "The radius for the cell model must be positive double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      else {
+	    i+=2;
+   }
+    }
     /* default */
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
   }
+  
+  POLY_TRACE(printf("int N_pS %d, int N_nS %d, int part_id %d, int mode %d, double shield %f, int max_try %d, double val_pS %f, double val_nS %f, int type_pS %d, int type_nS %d, double rad %f\n", N_pS, N_nS, part_id, mode, shield, max_try, val_pS, val_nS, type_pS, type_nS, rad));
 
-  POLY_TRACE(printf("int N_pS %d, int N_nS %d, int part_id %d, int mode %d, double shield %f, int max_try %d, double val_pS %f, double val_nS %f, int type_pS %d, int type_nS %d\n", N_pS, N_nS, part_id, mode, shield, max_try, val_pS, val_nS, type_pS, type_nS));
-
-  tmp_try = saltC(N_pS, N_nS, part_id, mode, shield, max_try, val_pS, val_nS, type_pS, type_nS);
+  tmp_try = saltC(N_pS, N_nS, part_id, mode, shield, max_try, val_pS, val_nS, type_pS, type_nS, rad);
   if (tmp_try == -1) {
     sprintf(buffer, "Failed to place current positive salt ion in the simulation box for %d times!\nAborting...\n",max_try); tmp_try = TCL_ERROR; }
   else if (tmp_try == -2) {
@@ -475,21 +485,32 @@ int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 
 
-int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try, double val_pS, double val_nS, int type_pS, int type_nS) {
+int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try, double val_pS, double val_nS, int type_pS, int type_nS, double rad) {
   /** C implementation of 'salt \<N_pS\> \<N_nS\> [options]',
       which returns how often the attempt to place a salt ion failed in the worst case. */
   int n, cnt1,max_cnt;
-  double pos[3];
+  double pos[3], dis2;
 
   cnt1 = max_cnt = 0;
 
   /* Place positive salt ions */
   for (n=0; n<N_pS; n++) {
     for (cnt1=0; cnt1<max_try; cnt1++) {
-      pos[0]=box_l[0]*d_random();
-      pos[1]=box_l[1]*d_random();
-      pos[2]=box_l[2]*d_random();
-      if ((mode!=0) || (collision(pos, shield)==0)) break;
+      if (rad > 0.) {
+        pos[0]=rad*(2.*d_random()-1.);
+        pos[1]=rad*(2.*d_random()-1.);
+        pos[2]=rad*(2.*d_random()-1.);
+        dis2 = pos[0]*pos[0]+pos[1]*pos[1]+pos[2]*pos[2];
+        pos[0] += box_l[0]*0.5;
+        pos[1] += box_l[1]*0.5;
+        pos[2] += box_l[2]*0.5;
+        if (((mode!=0) || (collision(pos, shield)==0)) && (dis2 < (rad * rad))) break;
+      } else {
+        pos[0]=box_l[0]*d_random();
+        pos[1]=box_l[1]*d_random();
+        pos[2]=box_l[2]*d_random();
+        if ((mode!=0) || (collision(pos, shield)==0)) break;
+      }
       POLY_TRACE(printf("p"); fflush(NULL));
     }
     if (cnt1 >= max_try) return (-1);
@@ -505,10 +526,21 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
   /* Place negative salt ions */
   for (n=0; n<N_nS; n++) {
     for (cnt1=0; cnt1<max_try; cnt1++) {
-      pos[0]=box_l[0]*d_random();
-      pos[1]=box_l[1]*d_random();
-      pos[2]=box_l[2]*d_random();
-      if ((mode!=0) || (collision(pos, shield)==0)) break;
+      if (rad > 0.) {
+        pos[0]=rad*(2.*d_random()-1.);
+        pos[1]=rad*(2.*d_random()-1.);
+        pos[2]=rad*(2.*d_random()-1.);
+        dis2 = pos[0]*pos[0]+pos[1]*pos[1]+pos[2]*pos[2];
+        pos[0] += box_l[0]*0.5;
+        pos[1] += box_l[1]*0.5;
+        pos[2] += box_l[2]*0.5;
+        if (((mode!=0) || (collision(pos, shield)==0)) && (dis2 < (rad * rad))) break;
+      } else {
+        pos[0]=box_l[0]*d_random();
+        pos[1]=box_l[1]*d_random();
+        pos[2]=box_l[2]*d_random();
+        if ((mode!=0) || (collision(pos, shield)==0)) break;
+      }
       POLY_TRACE(printf("n"); fflush(NULL));
     }
     if (cnt1 >= max_try) return (-1);

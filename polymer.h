@@ -104,9 +104,9 @@ int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv);
     @param  \<shield\>      = shield around each particle another particle's position may not enter if using SAW (defaults to '0')
     @param  \<max_try\>     = how often a monomer should be reset if current position collides with a previous particle (defaults to '30000')
     @param  \<val_{p|n}S\>  = valencies of the salt ions (default to '1' and '-1', respectively); if \<val_nS\> is not given, \<val_nS\> = -1*\<val_pS\>
-    @param  \<type_{p|n}S\> = type numbers to be used with "part" (default to '3' and '4'); if \<type_nS\> is not given, \<type_nS\> = \<type_pS\> is assumed. 
+    @param  \<type_{p|n}S\> = type numbers to be used with "part" (default to '3' and '4'); if \<type_nS\> is not given, \<type_nS\> = \<type_pS\> is assumed.     @param  \<rad\> = radius of the sphere for the cell model. If value is >0 the ions are distributed in a sphere centered in the simulation box. 
     @return Returns how often the attempt to place a particle failed in the worst case. */
-int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try, double val_pS, double val_nS, int type_pS, int type_nS);
+int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try, double val_pS, double val_nS, int type_pS, int type_nS, double rad);
 
 /** Implementation of the tcl-command
     velocities \<v_max\> [start \<part_id\>] [count \<N_T\>] <br>

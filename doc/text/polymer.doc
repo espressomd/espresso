@@ -67,6 +67,7 @@
 	<li> \verbatim <type_pS>       \endverbatim type number of the positively charged salt ions to be used with \ref tcl_part (default to '3')
 	<li> \verbatim <type_nS>       \endverbatim type number of the negatively charged salt ions to be used with \ref tcl_part (default to '4');
 	     if unset, \<type_nS\> = \<type_pS\> is assumed
+	<li> \verbatim <rad>       \endverbatim the radius of the sphere to be used in a cell model salt distribution. If a radius greater than 0 is given, the salt atoms are distributed within a sphere in the center of the simulation box.;
     </ul>
     The C implementation is \ref #salt.
 */
