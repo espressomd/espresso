@@ -292,6 +292,12 @@ void on_parameter_change(int field)
     on_coulomb_change();
 #endif
 
+  /* DPD needs ghost velocities, other thermostats not */
+  if (field == FIELD_THERMO_SWITCH) {
+    on_ghost_flags_change();
+    cells_re_init(CELL_STRUCTURE_CURRENT);
+  }
+
   if (field == FIELD_MAXRANGE)
     rebuild_verletlist = 1;
 
@@ -306,6 +312,17 @@ void on_parameter_change(int field)
       cells_re_init(CELL_STRUCTURE_DOMDEC);
     break;
   }
+}
+
+void on_ghost_flags_change()
+{
+  /* that's all we change here */
+  extern int ghosts_have_v;
+  ghosts_have_v = 0;
+  
+  if (thermo_switch & THERMO_DPD)
+    /* DPD needs also ghost velocities */
+    ghosts_have_v = 1;
 }
 
 static void init_tcl(Tcl_Interp *interp)

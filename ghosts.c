@@ -40,6 +40,12 @@ static char *r_buffer = NULL;
 
 static MPI_Op MPI_FORCES_SUM;
 
+/** wether the ghosts should also have velocity information, e. g. for DPD or RATTLE.
+    You need this whenever you need the relative velocity of two particles.
+    NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change !!!!
+*/
+int ghosts_have_v = 0;
+
 /************************************************************
  * Exported Functions
  ************************************************************/
@@ -48,6 +54,14 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
 {
   int i;
   comm->data_parts = data_parts;
+
+  /* if ghosts should have uptodate velocities, they have to be updated like positions
+     (except for shifting...) */
+  if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
+    comm->data_parts |= GHOSTTRANS_MOMENTUM;
+
+  GHOST_TRACE(fprintf(stderr, "%d: prepare_comm, data_parts = %d\n", this_node, comm->data_parts));
+
   comm->num = num;
   comm->comm = malloc(num*sizeof(GhostCommunication));
   for(i=0; i<num; i++) {

@@ -62,6 +62,12 @@ void on_NpT_boxl_change(double scal1);
 */
 void on_parameter_change(int parameter);
 
+/** call this if you want to change ghost flags, e.g. wether ghosts have velocities or not.
+    This is a opt-in process, i. e. all features are turned off and have to be reactivated
+    if necessary inside this procedure.
+*/
+void on_ghost_flags_change();
+
 /*@}*/
 
 #endif

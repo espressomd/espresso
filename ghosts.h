@@ -17,8 +17,7 @@ In this file you find everything concerning the exchange of
 particle data (particles, ghosts, positions and forces) for short
 range interactions between the spacial domains of neighbouring
 nodes.
- 
-Organization:  
+
 */
 #include <mpi.h>
 #include "particle_data.h"
