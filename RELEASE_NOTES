@@ -2,15 +2,20 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.5a *
+* v1.6.5b *
 ***********
 
 Current working revision.
 
 
-- v1.6.5a -
+- v1.6.5b -
 -----------
+(b) July 15th, 2004.
 (a) July 13th, 2004.
+
+New Features:
+(b) Introduced 'setmd npt_p_diff' to save/restore the content of nptiso.p_diff
+    which might be necessary for recovering trajectories using the NpT-integrator.
 
 Changes:
 (a) The 'blockfile <channel> write thermostat' now adds an 'off'-statement to the 
@@ -24,6 +29,8 @@ Changes:
     block in your file) will override its content nonetheless.
 
 Bugfixes:
+(b) Completed bugfix of 'integrate set npt_isotropic' by having nptiso.non_const_dim 
+    be initialized with the same value for flags '1 1 1' and for no flags at all.
 (a) Fixed a serious bug in the 'integrate set npt_isotropic' command which occured
     if that command was invoked several times (e.g. by reading in more than one 
     blockfile or checkpoint or by switching from NpT to NVT and back to NpT) while
