@@ -82,7 +82,10 @@ if { [catch {
     integrate 0
 
     # here you can create the necessary snapshot
-    # write_data "mmm1d_system.data"
+    if { 0 } {
+	inter coulomb 1.0 mmm1d tune 1e-20
+	write_data "mmm1d_system.data22"
+    }
 
     ############## end
 
