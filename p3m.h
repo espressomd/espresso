@@ -99,11 +99,7 @@ void P3M_count_charged_particles();
 
 /** Calculate the k-space contribution to the coulomb interaction
     forces. */ 
-double P3M_calc_kspace_forces(int energy_flag);
-
-/** Calculate the k-space contribution to the coulomb interaction
-    forces. */ 
-double P3M_calc_kspace_energy();
+double P3M_calc_kspace_forces(int force_flag, int energy_flag);
 
 /** Calculate real space contribution of coulomb pair forces. */
 MDINLINE void add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,

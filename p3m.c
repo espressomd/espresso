@@ -80,9 +80,9 @@ p3m_struct p3m = { 0.0, 0.0, 0.0,
 /** number of charged particles (only on master node). */
 int p3m_sum_qpart;
 /** Sum of square of charges (only on master node). */
-double p3m_sum_q2;
+double p3m_sum_q2 = 0.0;
 /** square of sum of charges (only on master node). */
-double p3m_square_sum_q;
+double p3m_square_sum_q = 0.0;
 
 
 /** local mesh. */
@@ -304,11 +304,13 @@ void   P3M_init()
     calc_differential_operator();
     calc_influence_function();
 
+
+
     P3M_TRACE(fprintf(stderr,"%d: p3m initialized\n",this_node));
   }
 }
 
-double P3M_calc_kspace_forces(int energy_flag)
+double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 {
   Particle *p;
   int i,m,n,o,np,d,d_rs,i0,i1,i2,ind,j[3];
@@ -328,7 +330,7 @@ double P3M_calc_kspace_forces(int energy_flag)
   /* Prefactor for force */
   double force_prefac;
   /* k space energy */
-  double k_space_energy=0.0;
+  double k_space_energy=0.0, node_k_space_energy=0.0;
 
   P3M_TRACE(fprintf(stderr,"%d: p3m_perform: \n",this_node));
 
@@ -406,79 +408,88 @@ double P3M_calc_kspace_forces(int energy_flag)
   /* === K Space Calculations === */
   P3M_TRACE(fprintf(stderr,"%d: p3m_perform: k-Space\n",this_node));
 
-  /* K space energy calculation */
+  /* === K Space Energy Calculation  === */
   if(energy_flag) {
     ind = 0;
     for(i=0; i<fft_plan[3].new_size; i++) {
-      k_space_energy += g[i] * ( SQR(rs_mesh[ind]) + SQR(rs_mesh[ind+1]) );
+      node_k_space_energy += g[i] * ( SQR(rs_mesh[ind]) + SQR(rs_mesh[ind+1]) );
       ind += 2;
     }
-    k_space_energy *= force_prefac * box_l[0] / (4.0*PI) ;
-    /* self energy and net charge correction: */
-    /*
+    node_k_space_energy *= force_prefac * box_l[0] / (4.0*PI) ;
+ 
+    MPI_Reduce(&node_k_space_energy, &k_space_energy, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-    k_space_energy -= prefactor * ( sum_q2 * alpha / wupi  +  
-				    sum_q_2 * PI / (2.0*L3*SQR(alpha)) );
-    */
+    if(this_node==0) {
+      /* self energy correction */
+      k_space_energy -= p3m.prefactor*(p3m_sum_q2*p3m.alpha / wupi);
+      /* net charge correction */
+      k_space_energy -= p3m.prefactor*(p3m_square_sum_q*PI / (2.0*box_l[0]*box_l[1]*box_l[2]*SQR(p3m.alpha)));
+      /* dipol correction TO BE IMPLEMENTED */
+      k_space_energy -= 0.0;
+    }
   }
-  /* Force preparation */
-  ind = 0;
-  for(i=0; i<fft_plan[3].new_size; i++) {
-    ks_mesh[ind] = g[i] * rs_mesh[ind]; ind++;
-    ks_mesh[ind] = g[i] * rs_mesh[ind]; ind++;
-  }
 
-  /* === 3 Fold backward 3D FFT (Force Component Meshs) === */
-
-  /* Force component loop */
-  for(d=0;d<3;d++) {  
-    /* direction in k space: */
-    d_rs = (d+ks_pnum)%3;
-    /* srqt(-1)*k differentiation */
-    ind=0;
-    for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {
-      for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
-	for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {
-	  /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */ 
-	  rs_mesh[ind] = -(ks_mesh[ind+1]*d_op[ j[d]+fft_plan[3].start[d] ]); ind++;
-	  rs_mesh[ind] =   ks_mesh[ind-1]*d_op[ j[d]+fft_plan[3].start[d] ];  ind++;
+  /* === K Space Force Calculation  === */
+  if(force_flag) {
+    /* Force preparation */
+    ind = 0;
+    for(i=0; i<fft_plan[3].new_size; i++) {
+      ks_mesh[ind] = g[i] * rs_mesh[ind]; ind++;
+      ks_mesh[ind] = g[i] * rs_mesh[ind]; ind++;
+    }
+    
+    /* === 3 Fold backward 3D FFT (Force Component Meshs) === */
+    
+    /* Force component loop */
+    for(d=0;d<3;d++) {  
+      /* direction in k space: */
+      d_rs = (d+ks_pnum)%3;
+      /* srqt(-1)*k differentiation */
+      ind=0;
+      for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {
+	for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
+	  for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {
+	    /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */ 
+	    rs_mesh[ind] = -(ks_mesh[ind+1]*d_op[ j[d]+fft_plan[3].start[d] ]); ind++;
+	    rs_mesh[ind] =   ks_mesh[ind-1]*d_op[ j[d]+fft_plan[3].start[d] ];  ind++;
+	  }
 	}
       }
-    }
-    /* Back FFT force componenet mesh */
-    fft_perform_back(rs_mesh);
-    /* redistribute force componenet mesh */
-    spread_force_grid();
-    /* Assign force component from mesh to particle */
-    cp_cnt=0; cf_cnt=0;
-    INNER_CELLS_LOOP(m, n, o) {
-      p  = CELL_PTR(m, n, o)->pList.part;
-      np = CELL_PTR(m, n, o)->pList.n;
-      for(i=0; i<np; i++) { 
-	if( (q=p[i].r.q) != 0.0 ) {
+      /* Back FFT force componenet mesh */
+      fft_perform_back(rs_mesh);
+      /* redistribute force componenet mesh */
+      spread_force_grid();
+      /* Assign force component from mesh to particle */
+      cp_cnt=0; cf_cnt=0;
+      INNER_CELLS_LOOP(m, n, o) {
+	p  = CELL_PTR(m, n, o)->pList.part;
+	np = CELL_PTR(m, n, o)->pList.n;
+	for(i=0; i<np; i++) { 
+	  if( (q=p[i].r.q) != 0.0 ) {
 #ifdef ADDITIONAL_CHECKS
-	  double db_fsum=0.0;
+	    double db_fsum=0.0;
 #endif
-
-	  q_ind = ca_fmp[(3*cp_cnt)+2] + lm.dim[2]*(ca_fmp[(3*cp_cnt)+1] + (lm.dim[1]*ca_fmp[(3*cp_cnt)+0]));
-	  for(i0=0; i0<p3m.cao; i0++) {
-	    for(i1=0; i1<p3m.cao; i1++) {
-	      for(i2=0; i2<p3m.cao; i2++) {
+	    
+	    q_ind = ca_fmp[(3*cp_cnt)+2] + lm.dim[2]*(ca_fmp[(3*cp_cnt)+1] + (lm.dim[1]*ca_fmp[(3*cp_cnt)+0]));
+	    for(i0=0; i0<p3m.cao; i0++) {
+	      for(i1=0; i1<p3m.cao; i1++) {
+		for(i2=0; i2<p3m.cao; i2++) {
 #ifdef ADDITIONAL_CHECKS
-		db_fsum += force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+		  db_fsum += force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
 #endif
-		p[i].f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
-		cf_cnt++;
+		  p[i].f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
+		  cf_cnt++;
+		}
+		q_ind += q_m_off;
 	      }
-	      q_ind += q_m_off;
+	      q_ind += q_s_off;
 	    }
-	    q_ind += q_s_off;
-	  }
-	  cp_cnt++;
+	    cp_cnt++;
 #ifdef ADDITIONAL_CHECKS
-	  if(fabs(db_fsum)> 1.0) fprintf(stderr,"%d: Part %d: k-space-force = %e\n",this_node,p[i].r.identity,db_fsum);
+	    if(fabs(db_fsum)> 1.0) fprintf(stderr,"%d: Part %d: k-space-force = %e\n",this_node,p[i].r.identity,db_fsum);
 #endif
-ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",this_node,p[i].f[0],p[i].f[1],p[i].f[2],d_rs,-db_fsum));
+	    ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",this_node,p[i].f[0],p[i].f[1],p[i].f[2],d_rs,-db_fsum));
+	  }
 	}
       }
     }
