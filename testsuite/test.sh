@@ -1,10 +1,11 @@
 #!/bin/sh
 
-TESTCASES="nve_pe.tcl npt.tcl madelung.tcl \
-    lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl tabulated.tcl mmm1d.tcl gb.tcl rotation.tcl constraints.tcl \
+TESTCASES="nve_pe.tcl npt.tcl \
+    madelung.tcl mmm1d.tcl p3m.tcl el2d.tcl dh.tcl \
+    lj.tcl lj-cos.tcl harm.tcl fene.tcl tabulated.tcl gb.tcl rotation.tcl constraints.tcl \
     kinetic.tcl thermostat.tcl \
     intpbc.tcl intppbc.tcl layered.tcl nsquare.tcl \
-    comforce.tcl comfixed.tcl analysis.tcl p3m.tcl"
+    comforce.tcl comfixed.tcl analysis.tcl"
 
 # List of testcases to be done (and people responsible for them):
 #################################################################
