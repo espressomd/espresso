@@ -27,7 +27,7 @@ int tcl_srand(ClientData clientData, Tcl_Interp *interp,
 int tcl_rand(ClientData clientData, Tcl_Interp *interp,
 	     Tcl_Value *args, Tcl_Value *resultPtr)
 {
-  resultPtr->type = TCL_INT;
+  resultPtr->type = TCL_DOUBLE;
   resultPtr->doubleValue = drand48();
   return TCL_OK;
 }
