@@ -1623,6 +1623,8 @@ int P3M_tune_parameters(Tcl_Interp *interp)
 	      mpi_bcast_coulomb_params();
 	      /* perform force calculation test */
 	      int_time = time_force_calc(int_num);
+	      if (int_time == -1)
+		return TCL_ERROR;
 	      try++;
 	      P3M_TRACE(fprintf(stderr,"%d ",try));
 	      /* print result */
