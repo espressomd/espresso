@@ -2,23 +2,27 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 
-* v1.1.0a *
+* v1.1.0b *
 ***********
 
 Current working revision.
+(b) November 11th, 2003.
+(a) November 3rd, 2003.
 
 
 New Features:
-- command 'analyze p_bin' to derive the pressure tensor of a given particle list
-- command 'analyze bin' to create a particle list distributed into spherical bins
+(b) command 'analyze p_IK1' replacing 'analyze p_bin'
+(a) command 'analyze p_bin' to derive the pressure tensor of a given particle list
+(a) command 'analyze bin' to create a particle list distributed into spherical bins
 
 
 Changes:
 
 
 Bugfixes:
-- fixed that 'analyze <g1>' and 'analyze <g2>' derived all of <g1>, <g2>, and <g3>
-  and always returned <g3> only
+(b) fixed implementation of 'analyze p_bin' to correspond to Kirkwood's IK1-scheme
+(a) fixed that 'analyze <g1>' and 'analyze <g2>' derived all of <g1>, <g2>, and <g3>
+    and always returned <g3> only
 
 
 
