@@ -95,7 +95,7 @@ static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
 double mindist(IntList *set1, IntList *set2)
 {
   double mindist, pt[3];
-  int i, j;
+  int i, j, in_set;
 
   mindist = SQR(box_l[0] + box_l[1] + box_l[2]);
 
@@ -104,12 +104,22 @@ double mindist(IntList *set1, IntList *set2)
     pt[0] = partCfg[j].r.p[0];
     pt[1] = partCfg[j].r.p[1];
     pt[2] = partCfg[j].r.p[2];
-    if (!set1 || intlist_contains(set1, partCfg[j].p.type)) {
-      for (i=j+1; i<n_total_particles; i++)
-	if (!set2 || intlist_contains(set2, partCfg[i].p.type)) {
-	  mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
-	}
-    }
+    /* check which sets particle j belongs to
+       bit 0: set1, bit1: set2
+    */
+    in_set = 0;
+    if (!set1 || intlist_contains(set1, partCfg[j].p.type))
+      in_set = 1;
+    if (!set2 || intlist_contains(set2, partCfg[j].p.type))
+      in_set |= 2;
+    if (in_set == 0)
+      continue;
+
+    for (i=j+1; i<n_total_particles; i++)
+      /* accept a pair if particle j is in set1 and particle i in set2 or vice versa. */
+      if (((in_set & 1) && (!set2 || intlist_contains(set2, partCfg[i].p.type))) ||
+	  ((in_set & 2) && (!set1 || intlist_contains(set1, partCfg[i].p.type))))
+	mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
   }
   mindist = sqrt(mindist);
   return mindist;
