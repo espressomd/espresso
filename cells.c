@@ -57,12 +57,15 @@ CellStructure cell_structure;
 /************************************************************/
 void cells_pre_init()
 {
+  CellPList tmp_local;
+  CELL_TRACE(fprintf(stderr, "%d: cells_pre_init\n",this_node));
   /* her local_cells has to be a NULL pointer */
   if(local_cells.cell != NULL) {
     fprintf(stderr,"Wrong usage of cells_pre_init!\n");
     errexit();
   }
-  dd_topology_init(&local_cells);
+  memcpy(&tmp_local,&local_cells,sizeof(CellPList));
+  dd_topology_init(&tmp_local);
 }
 
 void realloc_cells(int size)
@@ -126,7 +129,7 @@ void cells_re_init(int new_cs)
   Cell *tmp_cells;
   int tmp_n_cells,i;
 
-  CELL_TRACE(fprintf(stderr, "%d: cells_re_init(%d->%d)",
+  CELL_TRACE(fprintf(stderr, "%d: cells_re_init: convert type (%d->%d)\n",
 		     this_node, cell_structure.type, new_cs));
 
   topology_release(cell_structure.type);

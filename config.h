@@ -48,7 +48,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /*@{*/
 
 /** CELLS: Default value for the maximal number of cells per node. */
-#define CELLS_MAX_NUM_CELLS 512
+#define CELLS_MAX_NUM_CELLS 216
 
 /** P3M: Default for number of interpolation points of the charge
     assignment function. */

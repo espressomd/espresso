@@ -2,6 +2,19 @@
 #define DOMAIN_DECOMP_H
 #include "cells.h"
 
+/** Structure containing the information about the cell grid used for domain decomposition. */
+typedef struct {
+  /** linked cell grid in nodes spatial domain. */
+  int cell_grid[3];
+  /** linked cell grid with ghost frame. */
+  int ghost_cell_grid[3];
+  /** cell size. 
+      Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range); \endverbatim */
+  double cell_size[3];
+  /** inverse cell size = \see cell_size ^ -1. */
+  double inv_cell_size[3];
+}  DomainDecomposition;
+
 
 /** Structure containing information about non bonded interactions
     with particles in a neighbor cell. */
@@ -45,17 +58,11 @@ typedef struct {
 /************************************************************/
 /*@{*/
 
-/** linked cell grid in nodes spatial domain. */
-extern int cell_grid[3];
-/** linked cell grid with ghost frame. */
-extern int ghost_cell_grid[3];
-/** number of linked cells (inner+ghosts). */
-extern int n_cells;
-/** size of a cell. */
-extern double cell_size[3];
+/** Information about the domain decomposition. */
+extern DomainDecomposition dd;
+
 /** maximal skin size. */
 extern double max_skin;
-
 /** Maximal number of cells per node. In order to avoid memory
  *  problems due to the cell grid one has to specify the maximal
  *  number of \ref #cells . The corresponding callback function is

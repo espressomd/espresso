@@ -44,8 +44,8 @@ int ro_callback(Tcl_Interp *interp, void *data);
 /// List of all Tcl accessible global variables
 const Datafield fields[] = {
   {box_l,            TYPE_DOUBLE, 3, "box_l",         boxl_callback, 1 },            /* 0 from grid.c */
-  {cell_grid,           TYPE_INT, 3, "cell_grid",     ro_callback, 6 },              /* 1 from cells.c */
-  {cell_size,        TYPE_DOUBLE, 3, "cell_size",     ro_callback, 6 },              /* 2 from cells.c */
+  {dd.cell_grid,        TYPE_INT, 3, "cell_grid",     ro_callback, 6 },              /* 1 from cells.c */
+  {dd.cell_size,     TYPE_DOUBLE, 3, "cell_size",     ro_callback, 6 },              /* 2 from cells.c */
   {&friction_gamma,  TYPE_DOUBLE, 1, "gamma",         gamma_callback, 1 },           /* 3 from thermostat.c */
   {local_box_l,      TYPE_DOUBLE, 3, "local_box_l",   ro_callback, 2 },              /* 4 from global.c */
   {&max_cut,         TYPE_DOUBLE, 1, "max_cut",       ro_callback, 5 },              /* 5 from interaction_data.c */
