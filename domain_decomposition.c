@@ -947,8 +947,8 @@ void calculate_link_cell_energies()
 	if(n == 0) j_start = i+1;
 	/* Loop neighbor cell particles */
 	for(j = j_start; j < np2; j++) {	
-	  dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
-	  add_non_bonded_pair_energy(p1, p2, vec21, sqrt(dist2), dist2);
+	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
+	  add_non_bonded_pair_energy(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
 	}
       }
     }
