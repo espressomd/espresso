@@ -87,8 +87,7 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
     int index = got_particle(part);
     memcpy(pdata, &particles[index], sizeof(Particle));
     // for now, until we have a deep copy...
-    pdata->n_pairBond   = 0;
-    pdata->n_tripleBond = 0;
+    pdata->n_bond   = 0;
   }
   else {
     int req[2] = { REQ_GET_PART, part };
@@ -106,8 +105,7 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
     MPI_Recv(pdata->f, 3, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
     // for now, until we have a deep copy...
-    pdata->n_pairBond   = 0;
-    pdata->n_tripleBond = 0;
+    pdata->n_bond   = 0;
   }
 }
 

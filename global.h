@@ -30,13 +30,9 @@ typedef struct {
   double v[3];
   double f[3];
 
-  int n_pairBond;
-  int *pairBonds;
-  int *pairBondType;
-
-  int n_tripleBond;
-  int *tripleBonds;
-  int *tripleBondType;
+  int n_bond;
+  int *bonds;
+  int *bond_type;
 } Particle;
 
 extern int     n_particles;
