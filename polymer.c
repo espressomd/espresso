@@ -132,7 +132,7 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int N_P, MPC; double bond_length; int part_id = 0; double *posed = NULL;
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_cM = 0.0; int cM_dist = 1, type_nM = 0, type_cM = 1, type_FENE = 0;
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
 
   if (argc < 4) { Tcl_AppendResult(interp, "Wrong # of args! Usage: polymer <N_P> <MPC> <bond_length> [options]", (char *)NULL); return (TCL_ERROR); }
