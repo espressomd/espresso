@@ -1,7 +1,8 @@
 /** \page tcl_t_random The t_random command
     \verbatim t_random [{ int <n> | seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }] \endverbatim
     <ul>
-	<li> Without further arguments,\verbatim t_random\endverbatim returns a random double between 0 and 1.
+	<li> Without further arguments,\verbatim t_random\endverbatim returns a random double between 0 and 1
+	     using the 'ran1' random number generator from <i>Numerical Recipes</i>.
 	<li> \verbatim t_random int <n>\endverbatim returns a random integer between 0 and n-1.
 	<li> \verbatim t_random seed \endverbatim returns a tcl-list with the seeds of the random number generators
 	     on each of the 'n_nodes' nodes, while
