@@ -53,7 +53,9 @@ for np in 1 2 3 4 6 8; do
 	done
 	# only not blacklisted tests
 	if test $ignore -eq 0; then
-	    if ! ./$f $np $errf; then
+	    if ./$f $np $errf; then
+		echo "Test $f done"
+	    else
 		echo "execution of script failed" > $errf
 	    fi
 	    if test -f $errf; then
