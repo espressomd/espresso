@@ -44,9 +44,9 @@ proc calcObsAv { fileN ind { startJ 0 } } {
     set f [open $fileN "r"]
     gets $f tmp_line
     foreach i $ind { 
-	set tmp "[lindex $tmp_line $i]";     lappend var $tmp
-	set tmp "[lindex $tmp_line $i]_av";  lappend var_av $tmp; eval set $tmp 0
-	set tmp "[lindex $tmp_line $i]_av2"; lappend var_av2 $tmp; eval set $tmp 0
+	set tmp "[string map { - _ } [lindex $tmp_line $i]]";     lappend var $tmp
+	set tmp "[string map { - _ } [lindex $tmp_line $i]]_av";  lappend var_av $tmp; eval set $tmp 0
+	set tmp "[string map { - _ } [lindex $tmp_line $i]]_av2"; lappend var_av2 $tmp; eval set $tmp 0
 	
     }
     set N_av 0; set imax [lindex [lsort $ind] end]
