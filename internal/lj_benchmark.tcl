@@ -239,3 +239,4 @@ polyBlockWrite "$name$ident.end" {time box_l} {id pos type}
 close $obs_file
 
 puts "\n\nFinished"
+exit

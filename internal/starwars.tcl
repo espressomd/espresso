@@ -128,6 +128,7 @@ proc SetupStar  {} {
     update
 }
 
+
 proc ReadStar {} {
     global name 
     if { $name != "" } { popup_message "System exists already. Exit and start new"; return }
@@ -147,6 +148,7 @@ proc TestStar {} {
 
     CreateSystem
 }
+
 
 #############################################################
 #     Create System                                         #
@@ -681,6 +683,7 @@ proc get_ycmd {} {
     }
     if { $ycmd != "analyze" } {
 	set yres [eval $ycmd] 
+	puts $yres
 	if { [llength $yres] > 1 } { 
 	    .cobs.yres.t1 conf -text "Observable structure:\nElement   Structure"
 	    set tmp "0\t[lindex $yres 0]"
@@ -695,6 +698,7 @@ proc get_ycmd {} {
 	}
 	if { [string is double -strict [eval $ycmd]] } { 
 	    set y [eval $ycmd]
+	    puts $y
 	    if { [string is double -strict [expr $yfct]] } { 
 		.cobs.yres.t0 conf -text ""
 		.cobs.yres.t1 conf -text ""
@@ -708,6 +712,7 @@ proc get_ycmd {} {
 		.cobs.yres.t3 conf -text ""
 	    } 
 	} else {
+	    puts [eval $ycmd]
 	    .cobs.yres.t1 conf -text "Y-Command does not result a double"
 	    .cobs.yres.t2 conf -text "Change Y-Command entry!"
 	    .cobs.yres.t3 conf -text ""

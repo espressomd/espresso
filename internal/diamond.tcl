@@ -350,3 +350,4 @@ puts -nonewline "Compressing outputs to save disk-space... "; flush stdout
 eval exec gzip *.obs2 *.ps *00
 puts "Done."
 puts "\nThe Diamond Hydrogel Networks Testcase is now complete.\nThanks for watching, and Good Night!\n"
+exit

@@ -104,3 +104,5 @@ if { [expr abs($totprs - $curprs)] > $epsilon } {
 set energy $cureng
 set pressure $curprs
 write_data "$ia\_system.data"
+
+exit

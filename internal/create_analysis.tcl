@@ -296,3 +296,5 @@ puts [analyze mindist]
 # Wrapping up
 ## puts -nonewline "Closing files... "; close $KKG_file; close $VIR_file; puts "Done."
 puts "\nThe Kremer-Grest-Testcase is now complete.\nThanks for watching, and Good Night!\n"
+
+exit
