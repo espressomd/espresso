@@ -245,7 +245,7 @@ void calc_pressure() {
 
   /* Check and return */
   virials.sum.e[0] = virials.sum.e[0]/(3.0*volume) + virials.sum.e[1];
-  if( fabs(p_total - virials.sum.e[0]) > ROUND_ERROR_PREC*n_total_particles*fabs(p_total)) {
+  if( fabs(p_total - virials.sum.e[0]) > ROUND_ERROR_PREC*SQR(n_total_particles)*fabs(p_total)) {
     fprintf(stderr, "Sanity check failed: Derived pressure (%e) differs from given one (%e) by %e!\n",p_total,virials.sum.e[0],virials.sum.e[0]-p_total);
     errexit();
   }
