@@ -18,7 +18,10 @@ OSF1/tcl_md
 
 To generate documentation:
 ssh pckr27
+change into the dirctory your_home/.../tcl_md
+touch main.c
 gmake doc
+... ignore any warnings!
 The documentation is in:
 HTML version:  doc/html/index.html
 LATEX version: doc/latex/refmen.tex / 
@@ -28,6 +31,7 @@ And for friends of WINDOWS: doc/rtf/refman.rtf
 For testing:
 
 For generating a new configuration type:
+create a directory: configs
 setup.tcl
 The configuration is in: config.gz
 
