@@ -87,13 +87,28 @@ double distto(double posx, double posy, double posz, int pid);
     @return the end-to-end-distance */
 double calc_re();
 
+/** calculate the end-to-end-distance averaged over all configurations stored in 'configs'. 
+    Chain information \ref chain_start etc. must be set!
+    @return the averaged end-to-end-distance */
+double calc_re_av();
+
 /** calculate the radius of gyration. chain information \ref chain_start etc. must be set!
     @return the radius of gyration */
 double calc_rg();
 
+/** calculate the radius of gyration averaged over all configurations stored in 'configs'. 
+    Chain information \ref chain_start etc. must be set!
+    @return the averaged radius of gyration */
+double calc_rg_av();
+
 /** calculate the hydrodynamic radius. chain information \ref chain_start etc. must be set!
     @return the hydrodynamic radius */
 double calc_rh();
+
+/** calculate the hydrodynamic radius averaged over all configurations stored in 'configs'. 
+    Chain information \ref chain_start etc. must be set!
+    @return the averaged hydrodynamic radius */
+double calc_rh_av();
 
 /** calculate g123. chain information \ref chain_start etc. must be set!
     @param g1 contains g1
@@ -101,6 +116,24 @@ double calc_rh();
     @param g3 contains g3
 */
 void calc_g123(double *g1, double *g2, double *g3);
+
+/** calculate <g1> averaged over all configurations stored in 'configs'. 
+    Chain information \ref chain_start etc. must be set!
+    @param g1 contains g1[0],...,g1[n_configs-1]
+*/
+void calc_g1_av(double **g1);
+
+/** calculate <g2> averaged over all configurations stored in 'configs'. 
+    Chain information \ref chain_start etc. must be set!
+    @param g2 contains g2[0],...,g2[n_configs-1]
+*/
+void calc_g2_av(double **g2);
+
+/** calculate <g3> averaged over all configurations stored in 'configs'. 
+    Chain information \ref chain_start etc. must be set!
+    @param g3 contains g3[0],...,g3[n_configs-1]
+*/
+void calc_g3_av(double **g3);
 
 /** set the start configuration for g123.
     chain information \ref chain_start etc. must be set!
