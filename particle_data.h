@@ -61,25 +61,22 @@ typedef struct {
   int    *bonds;
 } Particle;
 
+/** List of particles. The particle array is resized using a sophisticated
+    (we hope) algorithm to avoid unnecessary resizes.
+    Access using \ref realloc_particles, \ref got_particle,...
+*/
+typedef struct {
+  /** The particles payload */
+  Particle *particles;
+  /** Number of particles contained */
+  int   n_particles;
+  /** Number of particles that fit in until a resize is needed */
+  int max_particles;
+} ParticleList;
+
 /************************************************
  * exported variables
  ************************************************/
-
-/** Size of local particle array. */
-extern int   max_particles;
-/** Number of particles belonging to that node. */
-extern int     n_particles;
-/** Number of ghost particle belonging to that node. */
-extern int     n_ghosts;
-/** Local particle array. 
- *
- *  The figure shows how local particles and ghosts are stored in the
- *  particle array \anchor particle_array_fig.  
- *
- *  \image html particles.gif  "local particle array"
- *  \image latex particles.eps "local particle array" width=8cm
-*/
-extern Particle *particles;
 
 /** Highest particle number seen so far. If you leave out some
     particle numbers, this number might be higher than the
@@ -90,17 +87,9 @@ extern Particle *particles;
 extern int max_seen_particle;
 
 /** Capacity of the particle_node array. */
-extern int  n_particle_node;
+extern int  max_particle_node;
 /** Used only on master node: particle->node mapping. */
 extern int  *particle_node;
-
-/** Mapping between particle identity and local index. 
-    You find the local index of particle i at position
-    i of this field. 
-    A particle that is not in the nodes domain 
-    (including its ghostshell) is marked with -1.
-*/
-extern int *local_index;
 
 /************************************************
  * functions
@@ -111,28 +100,35 @@ int part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
 
 /** allocate storage for local particles and ghosts.
+    \param plist the list on which to operate
     \param size the size to provide at least. It is rounded
     up to multiples of \ref PART_INCREMENT. */
-void realloc_particles(int size);
+void realloc_particles(ParticleList *plist, int size);
+
+/** search for a specific particle.
+    \param plist the list on which to operate
+    \param id the identity of the particle to search
+    \return a pointer to the particle structure or NULL if particle is
+    not in this list */
+Particle *got_particle(ParticleList *plist, int id);
+
+/** add a particle and initialize it.
+    \param plist the list on which to operate
+    \param id the identity of the particle to add
+    \return a pointer to the new particle */
+Particle *add_particle(ParticleList *plist, int id);
+
+/** allocate space for a particle.
+    \param plist the list on which to operate
+    \return the new field index */
+Particle *alloc_particle(ParticleList *plist);
+
 /** (re)allocate storage for particle bonds.
     Bonds are located in the structure \ref Particle .
     \param part     local index of particle where the bonds are located. 
     \param new_size New size of the particles[].bonds field.
- */
-void realloc_part_bonds(int part, int new_size);
-/** search for a specific particle.
-    \param part the identity of the particle to search
-    \return its field index or -1 if particle is not on this node */
-int got_particle(int part);
-
-/** add a particle and initialize it.
-    \param part the identity of the particle to add
-    \return the new field index */
-int add_particle(int part);
-
-/** allocate space for a particle.
-    \return the new field index */
-int alloc_particle();
+*/
+void realloc_part_bonds(Particle *part, int new_size);
 
 /** fold particle coordinates to primary simulation box.
     \param pos the position...
@@ -167,12 +163,8 @@ void build_particle_node();
 
 /** update \ref max_seen_particle on slave nodes and
     invalidate \ref particle_node. This has to be done
-    at the beginning of the integration */
+    at the beginning of the integration.
+*/
 void particle_finalize_data();
-
-/** append particle data in ASCII form to the Tcl result.
-    @param part_num the particle which data is appended
-    @param interp   the Tcl interpreter to which result to add to */
-int printParticleToResult(Tcl_Interp *interp, int part_num);
 
 #endif
