@@ -311,7 +311,7 @@
 	      smaller than the tabulated range it uses a linear
 	      extrapolation based on the first two tabulated force
 	      values. The C implementations are \ref
-	      add_tab_bond_force and \ref tab_bond_energy in \ref
+	      calc_tab_bond_force and \ref tab_bond_energy in \ref
 	      tab.h.
 
 	      <li> \<type\> = angle (three body interaction)	 
@@ -325,7 +325,7 @@
 	      with the invers length of the connecting vectors. It is
 	      assumed that the potential is tabulated for all angles
 	      between 0 and \f$ \pi \f$. The C implementations are \ref
-	      add_tab_angle_force and \ref tab_angle_energy in \ref
+	      calc_tab_angle_force and \ref tab_angle_energy in \ref
 	      tab.h.
 
 	      <li> \<type\> = dihedral (three body interaction)	 
@@ -335,7 +335,7 @@
 	      assumed that the potential is tabulated for all angles
 	      between 0 and \f$ 2\pi \f$. <b>This potential is not
 	      tested yet! Use on own risk</b>. The C implementations
-	      are \ref add_tab_dihedral_force and \ref
+	      are \ref calc_tab_dihedral_force and \ref
 	      tab_dihedral_energy in \ref tab.h.
 
 	      </ul>
@@ -358,7 +358,9 @@
 	     <ul>
 		<li> \verbatim p3m <r_cut> <mesh> <cao> <alpha> \endverbatim
 		     or
-		     \verbatim p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value>] \endverbatim	
+		     \verbatim p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value> n_interpol <n>] \endverbatim	
+		     or
+		     \verbatim p3m tunev2 accuracy <value> [r_cut <value> mesh <value> cao <value> n_interpol <n>] \endverbatim	
 		     This is an implemantation of the 1/r Coulomb potential
 		     \f[ U^{C-P3M} = \ell_B T \frac{q_1 q_2}{r} \f]
 		     with help of the P3M Method described elsewhere. 
@@ -373,7 +375,9 @@
 		     The dielectric constant of the surrounding medium, metallic (i.e.infinity) or some finite
 	             positive number.
 		     \verbatim n_interpol = 32768 \endverbatim 
-		     Number of interpolation points for the charge assignment function.
+		     Number of interpolation points for the charge assignment function. If this is zero, then
+		     no interpolation takes place. For modern computers, in general it is faster to not interpolate
+		     up to a cao of 4, and only for caos larger than 5 interpolation is notably faster.
 		     \verbatim mesh_off = 0.5 0.5 0.5 \endverbatim 
 		     Offset of the first mesh point from the lower left corner of the simulation box
 		     in units of the mesh constan.

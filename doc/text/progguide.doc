@@ -30,7 +30,7 @@
 	creation of interaction structures.
 
 write the procedures add_*_pair_force
-	and *_pair_energy similiar to \ref add_fene_pair_force and \ref fene_pair_energy. Note that
+	and *_pair_energy similiar to \ref calc_fene_pair_force and \ref fene_pair_energy. Note that
 	the distance vector between the particles is calculated using \ref get_mi_vector. This is necessary
 	since the particle positions may not be the closest ones, such that the minimum image convention
 	for periodic coordinates is not fulfilled. \ref get_mi_vector takes care of that.

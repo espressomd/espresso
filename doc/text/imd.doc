@@ -23,7 +23,7 @@ from time to time, which will transfer the current coordinates to VMD, if it is 
 If not, nothing happens and imd connect just consumes a small amount of CPU time. The optional 
 flag argument can take values \a -unfolded or \a -fold_chains.  By specifying \a -unfolded the unfolded 
 coordinates for each particle will be given to VMD.  Specifying \a -fold_chains causes imd to call the routine 
-\ref analyze_fold_chains which folds chains according to their centers of mass and retains bonding connectivity.  
+\ref analyze_fold_molecules which folds chains according to their centers of mass and retains bonding connectivity.  
 Note that this routine requires the chain structure to be specified first using the  analyze command.
 
 \verbatim imd listen <seconds> \endverbatim

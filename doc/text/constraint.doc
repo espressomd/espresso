@@ -11,7 +11,7 @@
 	\<n_x\> \<n_y\> \<n_z\> and the distance \<d\> from the origin.     
 	\verbatim constraint sphere center <c_x> <c_y> <c_z> radius <rad> direction <direction> type <id> \endverbatim
 	The resulting surface is a sphere with center \<c_x\> \<c_y\> \<c_z\> 
-	and radius \<rad\>. The \<direction\> determines the force direction, -1 or <i>inside<\i> for inward and +1 or <i>outside<\i> for outward
+	and radius \<rad\>. The \<direction\> determines the force direction, -1 or <i>inside</i> for inward and +1 or <i>outside</i> for outward
 	\verbatim constraint cylinder center <c_x> <c_y> <c_z> axis <n_x> <n_y> <n_z> radius <rad>
      length <length> direction <direction> type <id> \endverbatim
 	The resulting surface is a cylinder with center \<c_x\> \<c_y\> \<c_z\> 
