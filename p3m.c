@@ -218,7 +218,7 @@ void   P3M_init()
     calc_local_ca_mesh();
     P3M_TRACE(p3m_print_local_mesh(lm));
     calc_send_mesh();
-    // DEBUG
+    /* DEBUG */
     for(n=0;n<n_nodes;n++) {
       MPI_Barrier(MPI_COMM_WORLD);
       if(n==this_node) P3M_TRACE(p3m_print_send_mesh(sm));
