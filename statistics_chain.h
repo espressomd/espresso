@@ -133,7 +133,7 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff);
     @param _rdf_cm contains the distribution of centers of mass of the chains
     @param _rdf_d  contains the distribution of closest distances between the chains
     */
-void analyze_rdfchain(double r_min, double r_max, int r_bins, double **_rdf, double **_rdf_cm, double **_ff_d);
+void analyze_rdfchain(double r_min, double r_max, int r_bins, double **_rdf, double **_rdf_cm, double **_rdf_d);
 
 ///
 int print_chain_structure_info(Tcl_Interp *interp);
