@@ -200,8 +200,6 @@ topic:   Lipid-Doppelschicht, deren Koepfe zur Stabilisation an feste Waende gek
 	 angedacht ist, der eingehend untersucht wird
 
 
-
-
 name:   Giovanni Giupponi
 email:   g.giupponi@ucl.ac.uk
 sent:    15.MAR.2005
@@ -209,10 +207,35 @@ version: 20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:   n.a.
 
 
+name:      Bernd Hannebauer
+email:     bernd.hannebauer@degussa.com
+institute: Degussa
+version:   v1.7.5-Mezoti
+topic:     I\'m interested in molecular interaction energies and want to try out ESPResSo for this purpose
 
 
-name:   Thomas
-email:   tomemcd@yahoo.com
-sent:    23.MAR.2005
-version: 20040924-Espresso_v1.7.5.Mezoti.tar.gz
-topic:   Just curious at the moment. I write my own MD code in Fortran 95 but also like C.
+name:      Thomas McDermott
+email:     tomemcd@yahoo.com
+institute: UCD
+sent:      23.MAR.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     Just curious at the moment. I write my own MD code in Fortran 95 but also like C.
+topic2:  I am currently finishing a PhD on the diffusion of liquids in nanoscale pores. 
+	 These include water and salt diffusing through atomistic models of protein ion-channels. 
+	 For this I developed a suite of Fortran 95 programs including programs for 
+	 * Molecular Dynamics with Nose-Poincare Thermostat and Long range Electrostatics 
+	 (the model pore is infinite in one dimension) using the Lekner method.
+	 * Grand Canonical Ensemble Monte Carlo and Thermodynamic Integration for generating 
+	 initial conditions.
+
+	 I've also studied a hybrid hard-sphere/continuous liquid diffusing through a model 
+	 (MCM like)silica pore.
+
+	 I was interested in the Espresso source code mainly to see how a large scientific program 
+	 is organised/implemented in C. (Although I often write small 'tools' in C all my larger 
+	 program are implemented in Fortran 95 which I'm more familiar with and hence find much 
+	 simpler to use). 
+	 I don't plan to use Espresso in the short term as I'm still very busy running my own codes, 
+	 but hopefully in the future I'll get time to study the code and perhaps contribute to it.
+
+
