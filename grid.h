@@ -30,4 +30,8 @@ int pgrid_callback(Tcl_Interp *interp, void *data);
 
 /** fill neighbor lists of node. */
 void calc_neighbors(int node);
+
+/** call if topology (grid, box dim, ...) changed */
+void changed_topology();
+
 #endif

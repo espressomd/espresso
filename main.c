@@ -17,13 +17,6 @@ void exitHandler(ClientData data)
 }
 
 #ifdef DEFINE_TCL_RAND
-int tcl_srand(ClientData clientData, Tcl_Interp *interp,
-	      Tcl_Value *args, Tcl_Value *resultPtr)
-{
-  srand48(args->intValue);
-  return tcl_rand(0, interp, NULL, resultPtr);
-}
-
 int tcl_rand(ClientData clientData, Tcl_Interp *interp,
 	     Tcl_Value *args, Tcl_Value *resultPtr)
 {
@@ -31,12 +24,21 @@ int tcl_rand(ClientData clientData, Tcl_Interp *interp,
   resultPtr->doubleValue = drand48();
   return TCL_OK;
 }
+
+int tcl_srand(ClientData clientData, Tcl_Interp *interp,
+	      Tcl_Value *args, Tcl_Value *resultPtr)
+{
+  int i;
+  srand48(args[0].intValue);
+  return tcl_rand(0, interp, NULL, resultPtr);
+}
+
 #endif
 
 int appinit(Tcl_Interp *interp)
 {
 #ifdef DEFINE_TCL_RAND
-  Tcl_ValueType vt[] = { TCL_INT };
+  Tcl_ValueType vt[2] = { TCL_INT };
 #endif
 
   if (Tcl_Init(interp) == TCL_ERROR)
@@ -63,13 +65,11 @@ int main(int argc, char **argv)
 #ifdef FORCE_CORE
     atexit(core);
 #endif
-    init_data();
     Tcl_Main(argc, argv, appinit);
     return 0;
   }
 
   /* slave node */
-  init_data();
   mpi_loop();
 
   return 0;

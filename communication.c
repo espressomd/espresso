@@ -160,7 +160,7 @@ void mpi_who_has_slave(int ident)
   int npart, i;
   int *sendbuf;
   MPI_Gather(&n_particles, 1, MPI_INT, NULL, 0, MPI_INT, 0, MPI_COMM_WORLD);
-  sendbuf = malloc(sizeof(int)*npart);
+  sendbuf = malloc(sizeof(int)*n_particles);
   npart = 0;
   for (i = 0; i < n_particles; i++)
     if (particles[i].identity != -1)

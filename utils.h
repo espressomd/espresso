@@ -3,29 +3,19 @@
 
 /* just some nice utilities... */
 
-/* force gcc to inline and not warn about unused functions */
-#ifdef INLINE
-#  undef INLINE
-#endif
-#ifdef __GNUC__
-#  define INLINE inline
-#else
-#  define INLINE
-#endif
+/* Maximum von  double a und  double b berechnen, gibt double zurueck. */
+MDINLINE double dmax(double a, double b) { return (a>b) ? a : b; }
 
 /* Maximum von  double a und  double b berechnen, gibt double zurueck. */
-INLINE static double dmax(double a, double b) { return (a>b) ? a : b; }
-
-/* Maximum von  double a und  double b berechnen, gibt double zurueck. */
-INLINE static double dmin(double a, double b) { return (a<b) ? a : b; }
+MDINLINE double dmin(double a, double b) { return (a<b) ? a : b; }
 
 /* Wert von double x runden, gibt double zurueck. */
-INLINE static double dround(double x) { return floor(x+0.5); }
+MDINLINE double dround(double x) { return floor(x+0.5); }
 
 /* Berechnet das Quadrat von double x, gibt double zurueck. */
-INLINE static double SQR(double x) { return x*x; }
+MDINLINE double SQR(double x) { return x*x; }
 
-INLINE static double AS_erfc_part(double d)
+MDINLINE double AS_erfc_part(double d)
 {
   /* approximates exp(d^2)*erfc(d) by applying a formula from:
      Abramowitz/Stegun: Handbook of Mathematical Functions, 

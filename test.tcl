@@ -120,9 +120,7 @@ if {$read == 0} {
 	
 	# pump up
 	##################################################
-#	for {set i 0} { $i < 300 } { incr i} {
-#	    puts "test $i [expr srand($i,$i)]"
-#	}
+	expr srand([pid])
 	for {set i 5} { $i < $npart } { incr i} {
 	    if {[expr $i % 100 == 0]} {
 		puts "adding part $i"

@@ -16,9 +16,6 @@
 #include "ghosts.h"
 #include "forces.h"
 
-/** declare commands needed for steering the integrator. */
-void tcl_integrator_init(Tcl_Interp *interp);
-
 /** tcl procedure for integrator steering.
     USAGE: integrate <task>                       \\
            task can either be init, #steps, exit. \\

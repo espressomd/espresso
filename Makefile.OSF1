@@ -1,15 +1,29 @@
 ############ compiler settings
 CC=cc
 
+# optimized compiler flags
+#CFLAGS=-I/usr/local/include -DDEFINE_TCL_RAND -O3 $(MSG_FLAGS) -fp_reorder -tune host
+
+# debug compiler flags
+CFLAGS=-I/usr/local/include $(MSG_FLAGS) -g
+
+# flags needed for MPI
+
+# warnings
 MSG_FLAGS=-check -msg_disable ignorecallval -msg_disable noparmlist \
 	  -msg_disable uncalled -msg_disable alignment -msg_disable unknownmacro \
 	  -msg_disable strctpadding -msg_disable unusedincl
-#CFLAGS=-I/usr/local/include -DDEFINE_TCL_RAND -O3 $(MSG_FLAGS) -fp_reorder -tune host
-CFLAGS=-I/usr/local/include $(MSG_FLAGS) -g
+CFLAGS+= $(MSG_FLAGS)
 
+# MDINLINE defines hwo to declare inline functions
+CFLAGS+= -DMDINLINE="static"
+
+# name of makedepend (or gcc -ME)
 DEPEND=makedepend
 
 CXX=cxx
+
+# special flags for C++ compilation
 CXXFLAGS=$(CFLAGS) -D_RWSTD_NO_NEW_HEADER -D__USE_STD_IOSTREAM
 
 ############ linker settings

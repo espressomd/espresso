@@ -20,11 +20,6 @@ int calc_forces_first = 1;
 void propagate_velocities();
 void propagate_positions(); 
 
-void tcl_integrator_init(Tcl_Interp *interp)
-{
-  Tcl_CreateCommand(interp, "integrate", integrate, 0, NULL);
-}
-
 int integrate(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv)
 {

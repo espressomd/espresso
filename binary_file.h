@@ -1,5 +1,7 @@
 #ifndef BINARYFILE_H
 #define BINARYFILE_H
+#include <tcl.h>
+
 /**************************************************************
  * binary file format
  **************************************************************/
@@ -30,4 +32,16 @@ struct MDHeader {
  *  DATA IS WRITTEN IN MACHINE FORMAT AND MAY NOT BE PORTABLE TO DIFFERENT ARCHITECTURES */
 
 /** The end of the data is signalled by a single int -1 instead of a particle number */
+
+/**************************************************************
+ * functions
+ **************************************************************/
+
+/** tcl procedure for writing particle data */
+int writemd(ClientData data, Tcl_Interp *interp,
+	    int argc, char **argv);
+/** tcl procedure for writing particle data */
+int readmd(ClientData data, Tcl_Interp *interp,
+	   int argc, char **argv);
+
 #endif

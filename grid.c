@@ -3,6 +3,7 @@
 /************************************************/
 #include "grid.h"
 #include "debug.h"
+#include "communication.h"
 
 /**********************************************
  * local settings
@@ -101,4 +102,16 @@ void calc_neighbors(int node)
     /* right boundary ? */
     if(pe_pos[dir] == processor_grid[dir]-1) boundary[2*dir+1] = - box_l[dir];
   }
+}
+
+void changed_topology()
+{
+  int i;
+  for(i = 0; i < 3; i++) {
+    local_box_l[i] = box_l[i]/(double)processor_grid[i]; 
+  }
+
+  mpi_bcast_parameter(FIELD_LBOXL);
+
+  rebuild_verletlist = 1;
 }

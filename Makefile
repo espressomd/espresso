@@ -3,8 +3,8 @@ PLATFORM=$(shell uname -s)
 include Makefile.$(PLATFORM)
 
 ########### list of source files
-CSOURCES= main initialize global communication tcl_datafield \
-	  verlet grid integrate cells ghosts forces debug
+CSOURCES= main initialize global communication binary_file interaction_data \
+	  verlet grid integrate cells ghosts forces debug particle_data
 CXXSOURCES=
 
 ########### RULES

@@ -1,6 +1,8 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 #include <tcl.h>
+#include "interaction_data.h"
+#include "particle_data.h"
 
 /**********************************************
  * global variables
@@ -41,27 +43,6 @@ extern double my_right[3];
  * particle data from global.c
  ****************************************/
 
-/** Field to hold particle information
- *  of local particles. */
-typedef struct {
-  int    identity;
-  int    type;
-
-  /* periodically folded position */
-  double p[3];
-  double p_old[3];
-  /* index of the simulation box image where the particle really sits */
-  int    i[3];
-  double q;
-
-  double v[3];
-  double f[3];
-
-  int   n_bonds;
-  int max_bonds;
-  int    *bonds;
-} Particle;
-
 /** size of local particle array. */
 extern int   max_particles;
 /** number of particles belonging to that node. */
@@ -84,59 +65,12 @@ extern int  *particle_node;
  */
 extern int *local_index;
 
-/** allocate storage for local particles and ghosts.
-    Given size is rounded up to multiples of
-    PART_INCREMENT */
-void realloc_particles(int size);
-
-/** search for a specific particle, returns field index */
-int got_particle(int part);
-
-/** add a particle, returns field index */
-int add_particle(int part);
-
-/** allocate space for a particle, returns field index */
-int alloc_particle();
-
-/** fold particle coordinates to primary simulation box */
-void fold_particle(double pos[3],int image_box[3]);
-
-/** unfold particle coordinates to physical position */
-void unfold_particle(double pos[3],int image_box[3]);
-
-/** free a particle */
-void free_particle(int index);
-
-/** add particle to particle->node map */
-void map_particle_node(int part, int node);
-
-/** rebuild particle->node map from scratch */
-void build_particle_node();
-
-/** update n_total_particles on slave nodes
- *  and invalidate particle_node */
-void particle_finalize_data();
-
 /****************************************
- * nonbonded interactions from global.c
+ * nonbonded interactions from interaction_data.c
  ****************************************/
 
 /** number of particle types. */
 extern int n_particle_types;
-
-/** field containing the interaction parameters for
- *  nonbonded interactions. Access via
- * get_ia_param(i, j), i,j < n_particle_types */
-typedef struct {
-  double LJ_eps;
-  double LJ_sig;
-  double LJ_cut;
-  double LJ_shift;
-  double LJ_offset;
-
-  /* don't know which else, since electrostatic is different...
-     but put rest here too. */
-} IA_parameters;
 
 /* size is n_particle_types^2 */
 extern IA_parameters *ia_params;
@@ -144,24 +78,8 @@ extern IA_parameters *ia_params;
 /** number of interaction types. */
 extern int n_interaction_types;
 
-/** get interaction particles between particle sorts i and j */
-IA_parameters *get_ia_param(int i, int j);
-
-/** get interaction particles between particle sorts i and j.
-    returns NULL if i or j < 0, allocates if necessary */
-IA_parameters *safe_get_ia_param(int i, int j);
-
-/** realloc n_particle_types */
-void realloc_ia_params(int nsize);
-
-/** initialize interaction parameters */
-void initialize_ia_params(IA_parameters *params);
-
-/** copy interaction parameters */
-void copy_ia_params(IA_parameters *dst, IA_parameters *src);
-
 /****************************************
- * bonded interactions from global.c
+ * bonded interactions from particle_data.c
  ****************************************/
 
 /** possible values for bonded_ia_type */
@@ -245,14 +163,24 @@ typedef struct {
 
 extern const Datafield fields[];
 
+/* identifiers of variables in fields */
+#define FIELD_NPROCS 0
+#define FIELD_PGRID  1
+#define FIELD_LBOXL  2
+#define FIELD_BOXL   3
+#define FIELD_NTOTAL 4
+#define FIELD_NPTYPE 5
+#define FIELD_NITYPE 6
+#define FIELD_TSTEP  7
+#define FIELD_MCUT   8
+#define FIELD_SKIN   9
+#define FIELD_RANGE 10
+
 /**********************************************
  * misc procedures
  **********************************************/
 
-/** initialize data fields */
-void init_data();
-
-/** call if topology (grid, box dim, ...) changed */
-void changed_topology();
-
+/** tcl procedure for datafield access */
+int setmd(ClientData data, Tcl_Interp *interp,
+	  int argc, char **argv);
 #endif

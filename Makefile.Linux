@@ -1,12 +1,25 @@
 ############ compiler settings
 CC=/usr/lib/lam/bin/hcc
+
+# optimized compiler flags
 #CFLAGS=-O3 -Wall -march=i586 -fschedule-insns -fschedule-insns2 \
 #       -frerun-cse-after-loop -ffast-math
+
+# debug compiler flags
 CFLAGS=-g -fno-inline -Wall
+
+# flags needed for MPI
 CFLAGS+= -I/usr/lib/lam/include
+
+# MDINLINE defines hwo to declare inline functions
+CFLAGS+= -DMDINLINE="inline static"
+
+# name of makedepend (or gcc -ME)
 DEPEND=makedepend
 
 CXX=g++
+
+# special flags for C++ compilation
 CXXFLAGS=$(CFLAGS) -felide-constructors -fomit-frame-pointer -fno-rtti
 
 ############ linker settings

@@ -126,7 +126,7 @@ void sort_particles_into_cells()
       cpos[i] = (int)((particles[n].p[i]-my_left[i])*inv_cell_size[i])+1;
     ind = get_linear_index(cpos[0],cpos[1],cpos[2],gcg[0],gcg[1],gcg[2]);
     if(ind<0 || ind > n_cells)
-      fprintf(stderr,"%d: illigal cell index %d\n" ,this_node,ind);
+      fprintf(stderr,"%d: illigal cell index !(0<%d<%d)\n" ,this_node,ind, n_cells);
     /* Append particle in particle list of that cell */
     if(cells[ind].n_particles >= cells[ind].max_particles-1) 
     realloc_cell_particles(ind,cells[ind].n_particles+(2*PART_INCREMENT));
