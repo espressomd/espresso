@@ -59,11 +59,14 @@ void init_random(void)
 
   int    j;
   long   k;
+  unsigned long seed;
 
-  idum = (this_node+1)*1103515245 + 12345;
-  idum = (idum/65536) % 32768;
+  /* This random generator is bad I know, thats why its only used
+     for the seed (see Num. Rec. 7.1.) */
+  seed = (10*this_node+1)*1103515245 + 12345;
+  seed = (seed/65536) % 32768;
+  idum = (long) seed;
   printf("%d init random with seed %ld\n",this_node,idum);
-
   for (j = NTAB + 7;j >= 0; j--) {
     k = (idum) / IQ;
     idum = IA * (idum - k * IQ) - IR * k;
