@@ -76,7 +76,8 @@ interface between the Tcl script and the MD code:
  bit_random [{ seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }]\endverbatim
         different implementations of random number generators.
 	For more information, see \ref tcl_t_random or \ref tcl_bit_random.
-        
+    <li>\verbatim uwerr <data> <nrep> {<col>|<f>} [<s_tau> [<f_args>]] \endverbatim
+        get the error of errors of Monte Carlo simulations. (see \ref tcl_uwerr)
     <li>\verbatim velocities <v_max> [start <part_id>] [count <N_T>] \endverbatim
 	Sets the velocities of the particles with particle ID (see \ref tcl_part) between <part_id> and <part_id>+<N_T> 
 	(defaults to '0' & '[setmd npart]-<part_id>') 

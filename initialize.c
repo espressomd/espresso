@@ -28,6 +28,7 @@
 #include "debye_hueckel.h"
 #include "mmm1d.h"
 #include "forces.h"
+#include "uwerr.h"
 
 static void init_tcl(Tcl_Interp *interp);
 
@@ -178,6 +179,8 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "blockfile", (Tcl_CmdProc *)blockfile, 0, NULL);
   /* in interaction_data.c */
   Tcl_CreateCommand(interp, "constraint", (Tcl_CmdProc *)constraint, 0, NULL);
+  /* in uwerr.c */
+  Tcl_CreateCommand(interp, "uwerr", (Tcl_CmdProc *)uwerr, 0, NULL);
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");

@@ -3,6 +3,9 @@
 ### Tk (graphical interface)
 TK=no
 
+### GSL (GNU Scientific Library)
+GSL=no
+
 ### Enable ('yes') for the Blade-Center (see http://www.mpip-mainz.mpg.de/theory/computers/blade/index.html)
 BLADE=no
 
@@ -74,6 +77,10 @@ CXX=g++
 ############ MDINLINE defines hwo to declare inline functions
 CFLAGS+= -DMDINLINE="inline static"
 
+ifeq ($(GSL),yes)
+	CFLAGS+= -DUW_HAVE_GSL
+endif
+
 ############ linker settings
 LINK=$(CC)
 LDLIBS= -lm -lpthread
@@ -84,6 +91,9 @@ endif
 ifeq ($(BLADE),yes)
      # in Blade-Center, include optimized math-libraries (see http://dbforums.com/t564728.html)
      LDFLAGS+=-lsvml
+endif
+ifeq ($(GSL),yes)
+	LDLIBS+= -lgsl -lgslcblas
 endif
 
 ########### ElectricFence
