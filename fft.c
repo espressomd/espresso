@@ -195,6 +195,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin)
 
   FFT_TRACE(fprintf(stderr,"%d: fft_init():\n",this_node));
 
+  max_comm_size=0; max_mesh_size=0;
   for(i=0;i<4;i++) {
     n_id[i]  = malloc(1*n_nodes*sizeof(int));
     n_pos[i] = malloc(3*n_nodes*sizeof(int));
