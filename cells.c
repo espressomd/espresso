@@ -110,9 +110,7 @@ void cells_init()
     cells[i].particles = malloc(cells[i].max_particles*sizeof(int));
     init_cell_neighbours(i);
   }
-  if(this_node==0) {
-    fprintf(stderr,"0: cell_grid: (%d, %d, %d)\n",cell_grid[0],cell_grid[1],cell_grid[2]);
-  }
+  CELL_TRACE(if(this_node==0) { fprintf(stderr,"0: cell_grid: (%d, %d, %d)\n",cell_grid[0],cell_grid[1],cell_grid[2]); });
 
 }
 
