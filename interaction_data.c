@@ -1521,42 +1521,63 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
   switch (con->type) {
   case CONSTRAINT_WAL:
     Tcl_PrintDouble(interp, con->c.wal.n[0], buffer);
-    Tcl_AppendResult(interp, "wall ", buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, "wall normal ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, con->c.wal.n[1], buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, con->c.wal.n[2], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
     Tcl_PrintDouble(interp, con->c.wal.d, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, " dist ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->part_rep.r.type);
+    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_SPH:
     Tcl_PrintDouble(interp, con->c.sph.pos[0], buffer);
-    Tcl_AppendResult(interp, "sphere ", buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, "sphere center ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, con->c.sph.pos[1], buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, con->c.sph.pos[2], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
     Tcl_PrintDouble(interp, con->c.sph.rad, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->part_rep.r.type);
+    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_CYL:
     Tcl_PrintDouble(interp, con->c.cyl.pos[0], buffer);
-    Tcl_AppendResult(interp, "cylinder ", buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, "cylinder center ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, con->c.cyl.pos[1], buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, con->c.cyl.pos[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.cyl.axis[0], buffer);
+    Tcl_AppendResult(interp, " axis ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.cyl.axis[1], buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.cyl.axis[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
     Tcl_PrintDouble(interp, con->c.cyl.rad, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->part_rep.r.type);
+    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    break;
+  case CONSTRAINT_ROD:
+    Tcl_PrintDouble(interp, con->c.rod.pos[0], buffer);
+    Tcl_AppendResult(interp, "rod center ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rod.pos[1], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rod.rad, buffer);
+    Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rod.lambda, buffer);
+    Tcl_AppendResult(interp, " lambda ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->part_rep.r.type);
+    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
   default:
     sprintf(buffer, "%d", con->type);
     Tcl_AppendResult(interp, "unknown constraint type ", buffer, ".", (char *) NULL);
     return (TCL_OK);
   }
-
-  sprintf(buffer, "%d", con->part_rep.r.type);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
 
   return (TCL_OK);
 }
@@ -1899,6 +1920,10 @@ int constraint(ClientData _data, Tcl_Interp *interp,
     }
     mpi_bcast_constraint(c_num);
     return (TCL_OK);    
+  }
+  else if (argc == 2 && Tcl_GetInt(interp, argv[1], &c_num) == TCL_OK) {
+    printConstraintToResult(interp, c_num);
+    return (TCL_OK);
   }
 
   Tcl_AppendResult(interp, "possible constraints: wall sphere cylinder or constraint delete {c} to delete constraint(s)",(char *) NULL);
