@@ -52,7 +52,8 @@ LDLIBS= -lm -lpthread
 
 ########### ElectricFence
 # LDLIBS+= -lefence
-# FFTW
+
+########### FFTW
 LDLIBS+= -L/usr/local/lib -lrfftw -lfftw
 
 ########### TCL
