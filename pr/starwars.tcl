@@ -46,7 +46,11 @@ pack .star -expand 1 -fill both -in .
 frame .star.title
 label .star.title.l -text "Polyelectrolyte Star Simulation" -bg lightblue -height 2
 
-pack .star.title.l -fill both -side left -in .star.title
+canvas .star.title.logo -width 234 -height 72 -bg black
+set esp_logo [image create photo -file "logo.gif"]
+.star.title.logo create image 117 36 -image $esp_logo
+
+pack .star.title.l .star.title.logo -fill both  -in .star.title
 pack .star.title -in .star
 
 # menu
