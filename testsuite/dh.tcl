@@ -85,6 +85,7 @@ if { [catch {
 
     ############## dh-specific part, real space calculation
 
+    cellsystem nsquare
     setmd periodic 0 0 0
     setmd box_l 40 40 40
     inter coulomb 1 dh 0 20
