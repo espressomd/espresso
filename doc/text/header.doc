@@ -158,7 +158,7 @@ setenv ESPRESSO_SCRIPTS "your_directory/Espresso/scripts"
 \endverbatim
 Replace your_directory by the directory where you want to install Espresso.
 <li> Get your local copy of the latest stable release with:
-\verbatim cvs checkout -r Kim Espresso \endverbatim
+\verbatim cvs checkout -r Mezoti Espresso \endverbatim
 or with
 \verbatim cvs checkout Espresso \endverbatim
 for the latest cvs snapshot in the case you want to work on the code.
