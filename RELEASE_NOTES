@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.5.7c *
+* v1.5.7d *
 ***********
 
 Current working revision.
 
 
-- v1.5.7c -
+- v1.5.7d -
 -----------
 
+(d) April  1st, 2004.
 (c) March 29th, 2004.
 (b) March 22nd, 2004.
 (a) March 21st, 2004.
@@ -21,6 +22,7 @@ Changes:
     that (essentially) improper value for compatibility reasons.
 
 Bugfixes:
+(d) MPI_GET_PARTICLES fixed to allow empty nodes and bonds.
 (c) Fixed several compiler issues on the OSF1-architectures in
     'Makefile.OSF1' (now enforcing std.C which in turn enables
     useful warnings), 'statistics_chain.c' (pow -> SQR), 'imd.c'
@@ -136,6 +138,10 @@ New Features:
 	     IN NEW SCRIPTS! (even though they still work).
 	   - For backwards compatibility ESPResSo starts with the 
 	     Langevin thermostat turned on.
+
+Bugfixes:
+(a) Fixed unfavourable handling of round-off errors in 'fold_coordinate'
+    which on rare occasions caused a particle to end up in the wrong box.
 
 
 - v1.5.3a -
