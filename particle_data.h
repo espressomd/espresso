@@ -124,8 +124,9 @@ Particle *got_particle(ParticleList *plist, int id);
 /** append a particle at the end of a particle List.
     reallocates particles if necessary!
     \param plist List to append the particle to.
-    \param part  Particle to append. */
-void append_particle(ParticleList *plist, Particle *part);
+    \param part  Particle to append.  
+    \return Pointer to new location of the particle. */
+Particle *append_particle(ParticleList *plist, Particle *part);
 
 /** remove a particle from one particle List and append it to  another.
     Refill the destList with last particle. 
@@ -133,8 +134,9 @@ void append_particle(ParticleList *plist, Particle *part);
     \param destList   List where the particle is appended.
     \param sourceList List where the particle will be removed.
     \param ind        Index of the particle in the sourceList.
+    \return Pointer to new location of the particle.
  */
-void move_particle(ParticleList *destList, ParticleList *sourceList, int ind);
+Particle *move_particle(ParticleList *destList, ParticleList *sourceList, int ind);
 
 /** allocate space for a particle.
     \param plist the list on which to operate

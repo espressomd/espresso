@@ -172,13 +172,14 @@ Particle *alloc_particle(ParticleList *l)
   return &l->part[index];
 }
 
-void append_particle(ParticleList *l, Particle *part)
+Particle *append_particle(ParticleList *l, Particle *part)
 {
   Particle *p = alloc_particle(l);
   memcpy(p, part, sizeof(Particle));
+  return p;
 }
 
-void move_particle(ParticleList *dl, ParticleList *sl, int i)
+Particle *move_particle(ParticleList *dl, ParticleList *sl, int i)
 {
   Particle *dst = alloc_particle(dl);
   Particle *src = &sl->part[i];
@@ -187,6 +188,7 @@ void move_particle(ParticleList *dl, ParticleList *sl, int i)
   if (--sl->n > 0)
     memcpy(src, end, sizeof(Particle));
   realloc_particles(sl, sl->n);
+  return dst;
 }
 
 void fold_particle(double pos[3],int image_box[3])
