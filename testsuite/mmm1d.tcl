@@ -112,4 +112,5 @@ if { [catch {
     error_exit $res
 }
 
+exec rm -f $errf
 exit 0

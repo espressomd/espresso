@@ -20,14 +20,36 @@
 #                                                           #
 #############################################################
 
-if { [setmd n_nodes] == 3 || [setmd n_nodes] == 6 } {
-    puts "Testcase madelung.tcl does not run on 3 or 6 nodes"
-    exit 0
-}
-
 puts "----------------------------------------------"
 puts "- Testcase madelung.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------------"
+set errf [lindex $argv 1]
+
+proc error_exit {error} {
+    global errf
+    set f [open $errf "w"]
+    puts $f "Error occured: $error"
+    close $f
+    exit -666
+}
+
+proc require_feature {feature} {
+    global errf
+    if { ! [regexp $feature [code_info]]} {
+	set f [open $errf "w"]
+	puts $f "not compiled in: $feature"
+	close $f
+	exit -42
+    }
+}
+
+require_feature "ELECTROSTATICS"
+
+if { [setmd n_nodes] == 3 || [setmd n_nodes] == 6 } {
+    puts "Testcase madelung.tcl does not run on 3 or 6 nodes"
+    exec rm -f $errf
+    exit 0
+}
 
 #############################################################
 #  Parameters                                               #
@@ -160,12 +182,11 @@ for {set i 0} { $i < $n_part } {incr i} {
 puts "Maximal force component:              $max_force"
 
 if { [expr ($calc_mad_const-$madelung_nacl)/$madelung_nacl] > $accuracy } {
-    puts "Error occured: Madelung constant failed to reach accuracy goal"
-    exit -666
+    error_exit "Madelung constant failed to reach accuracy goal"
 }
 if { $max_force > $force_epsilon } {
-    puts "Error occured: Forces larger than $force_epsilon occured"
-    exit -666
+    error_exit "Forces larger than $force_epsilon occured"
 }
 
+exec rm -f $errf
 exit 0

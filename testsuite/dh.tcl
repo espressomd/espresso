@@ -44,6 +44,7 @@ setmd skin 0
 if { [setmd n_nodes] != 1 && [setmd n_nodes] != 2 &&
      [setmd n_nodes] != 4 && [setmd n_nodes] != 8 } {
     puts "Testcase dh.tcl does not run on odd numbers of nodes"
+    exec rm -f $errf
     exit 0
 }
 
@@ -192,4 +193,5 @@ if { [catch {
     error_exit $res
 }
 
+exec rm -f $errf
 exit 0

@@ -53,11 +53,9 @@ for np in 1 2 3 4 6 8; do
 	done
 	# only not blacklisted tests
 	if test $ignore -eq 0; then
-	    if ./$f $np $errf; then
-		echo "Test $f done"
-	    else
-		echo "execution of script failed" > $errf
-	    fi
+	    # this is removed if the script runs through
+	    echo "execution of script failed at unexpected point" > $errf
+	    ./$f $np $errf
 	    if test -f $errf; then
 		if grep -q -e "^not compiled in:" $errf; then
 		    missing="$missing$f: `cat $errf`\n"
