@@ -47,6 +47,10 @@ proc LinRegression {l} {
     # and the standard errors da and db
     set num [llength $l]
 
+    if { $num <= 2 } {
+	error "not enough points for regression"
+    }
+
     set sumx 0.0
     set sumy 0.0
     set sumx2 0.0
@@ -67,13 +71,18 @@ proc LinRegression {l} {
     set avgx [expr $sumx/$num]
     set avgy [expr $sumy/$num]
     set ssxx [expr $sumx2 - $num*$avgx*$avgx]
+    if { $ssxx < 1e-4 } {
+	error "data points too close together"
+    }
     set ssyy [expr $sumy2 - $num*$avgy*$avgy]
     set ssxy [expr $sumxy - $num*$avgx*$avgy]
 
     set a [expr $ssxy/$ssxx]
     set b [expr $avgy - $avgx*$a]
 
-    set s [expr sqrt(($ssyy - $b*$ssxy)/double($num-2))]
+    set tmp [expr ($ssyy - $a*$ssxy)/double($num-2)]
+    if { $tmp < 0 } {puts "LinReg warning: s^2=$tmp should be > 0, set to 0"; set tmp 0}
+    set s [expr sqrt($tmp)]
     set da [expr $s*sqrt(1.0/$num + $avgx*$avgx/$ssxx)]
     set db [expr $s/sqrt($ssxx)]
 
