@@ -1,7 +1,7 @@
 /** \file statistics.c
     This is the place for analysation (so far...).
     Implementation of \ref statistics.h "statistics.h"
- */
+*/
 #include <mpi.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +24,7 @@
 #include "harmonic.h"
 #include "angle.h"
 #include "debye_hueckel.h"
+#include "constraint.h"
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref #analyze) */
 float *partCoord_g=NULL, *partCM_g=NULL;
@@ -288,11 +289,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	if(Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) return (TCL_ERROR);
 	if(Tcl_GetInt(interp, argv[2], &j) == TCL_ERROR) return (TCL_ERROR);
 	if(i >= n_particle_types || j >= n_particle_types) return (TCL_ERROR);
-	energy.ana_num = energy.n_pre+energy.n_bonded + j -i;
-	while(i>0) {
-	  energy.ana_num += n_particle_types - (i-1);
-	  i--;
-	}
+	energy.ana_num = energy.n_pre+energy.n_bonded + ((2 * n_particle_types - 1 - i) * i) / 2  +  j;
       }
       else if(!strncmp(argv[0], "lj-cos", strlen(argv[0]))) {
 	if(argc<3) {
@@ -303,11 +300,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	if(Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) return (TCL_ERROR);
 	if(Tcl_GetInt(interp, argv[2], &j) == TCL_ERROR) return (TCL_ERROR);
 	if(i >= n_particle_types || j >= n_particle_types) return (TCL_ERROR);
-	energy.ana_num = energy.n_pre+energy.n_bonded + j -i;
-	while(i>0) {
-	  energy.ana_num += n_particle_types - (i-1);
-	  i--;
-	}
+	energy.ana_num = energy.n_pre+energy.n_bonded + ((2 * n_particle_types - 1 - i) * i) / 2  +  j;;
       }
       else if(!strncmp(argv[0], "coulomb", strlen(argv[0]))) {
 	energy.ana_num = energy.n_pre+energy.n_bonded+energy.n_non_bonded;
@@ -1376,10 +1369,10 @@ void calc_g123(double *_g1, double *_g2, double *_g3)
 	+ SQR(partCfg[p].r.p[2]-partCoord_g[3*p+2]);
       g2 += SQR( (partCfg[p].r.p[0]-partCoord_g[3*p])
 		 - (cm_tmp[0]-partCM_g[3*j]  ) ) 
-	  + SQR( (partCfg[p].r.p[1]-partCoord_g[3*p+1])
-		 - (cm_tmp[1]-partCM_g[3*j+1]) ) 
-	  + SQR( (partCfg[p].r.p[2]-partCoord_g[3*p+2])
-		 - (cm_tmp[2]-partCM_g[3*j+2]) );
+	+ SQR( (partCfg[p].r.p[1]-partCoord_g[3*p+1])
+	       - (cm_tmp[1]-partCM_g[3*j+1]) ) 
+	+ SQR( (partCfg[p].r.p[2]-partCoord_g[3*p+2])
+	       - (cm_tmp[2]-partCM_g[3*j+2]) );
     }
     g3 += SQR(cm_tmp[0]-partCM_g[3*j])
       + SQR(cm_tmp[1]-partCM_g[3*j+1])
@@ -1470,7 +1463,7 @@ void calc_energy()
   Cell *cell;
   Particle *p, **pairs;
   Particle *p1, *p2;
-  int i, j, k,  m, n, o, np, size;
+  int i, j, k,  m, n, o, np, size, q;
   double d[3], dist2, dist;
   IA_parameters *ia_params;
   /* bonded interactions */
@@ -1526,6 +1519,18 @@ void calc_energy()
 	    break;
 	  }
 	}
+	/* constaint energies */
+	for (q=0; q< n_constraints ; q++) {
+    
+	  type1 = p1->r.type;
+	  type2 = (&constraints[q].part_rep)->r.type;
+	  ia_params=get_ia_param(type1,type2);
+
+	  if(ia_params->LJ_cut > 0. ) {
+            type_num = s_non_bonded + ((2 * n_particle_types - 1 - type1) * type1) / 2  +  type2;
+            energy.node.e[type_num] += add_constraints_energy(p1,q);
+	  }
+	}
       }
     }
 
@@ -1544,11 +1549,8 @@ void calc_energy()
 	  
 	  if(p1->r.type > p2->r.type) { type1 = p2->r.type; type2 = p1->r.type; }
 	  else { type2 = p2->r.type; type1 = p1->r.type; }
-	  type_num = s_non_bonded + type2 - type1;
-	  while(type1>0) {
-	    type_num += n_particle_types - (type1-1) ;
-	    type1--;
-	  }
+	  type_num = s_non_bonded + ((2 * n_particle_types - 1 - type1) * type1) / 2  +  type2 ;
+
 	  /* distance calculation */
 	  for(j=0; j<3; j++) d[j] = p1->r.p[j] - p2->r.p[j];
 	  dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
@@ -1879,10 +1881,8 @@ void calc_virials() {
 
 	  /* derive index 'type_num' */
 	  if(p1->r.type > p2->r.type) { type1 = p2->r.type; type2 = p1->r.type; } else { type2 = p2->r.type; type1 = p1->r.type; }
-	  type_num = v_non_bonded + type2 - type1;
-	  while(type1 > 0) { 
-	    type_num += n_particle_types - (type1-1); type1--; 
-	  }
+	  type_num = v_non_bonded + ((2 * n_particle_types - 1 - type1) * type1) / 2  +  type2;
+
 	  /* distance calculation */
 	  for(j=0; j<3; j++) d[j] = p1->r.p[j] - p2->r.p[j];
 	  dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
@@ -1930,9 +1930,9 @@ void calc_virials() {
 void calc_pressure() {
   /** Remarks:
       <ul><li> The ideal gas pressure P_ig is assumed to be the pressure which the system 
-               would have if all interactions had been switched off.
-	  <li> This routine does not work for the forrest of rods.
-	  <li> Until now it only works for hydrophilic LJ.
+      would have if all interactions had been switched off.
+      <li> This routine does not work for the forrest of rods.
+      <li> Until now it only works for hydrophilic LJ.
       </ul>  */
   double p_total=0.0, volume;
   int    i,j,p;
