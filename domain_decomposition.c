@@ -1,8 +1,22 @@
-#include "integrate.h"
-#include "communication.h"
+// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
+// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
+// and by which you are legally bound while utilizing this file in any form or way.
+// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// You should have received a copy of that license along with this program;
+// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
+// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
+// Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
+
+/** \file domain_decomposition.c
+ *
+ *  This file contains everything related to the cell system: domain decomposition.
+ *  See also \ref domain_decomposition.h
+ *
+ *  <b>Responsible:</b>
+ *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
+ */
+
 #include "domain_decomposition.h"
-#include "verlet.h"
-#include "debug.h"
 
 /************************************************/
 /** \name Defines */
@@ -455,7 +469,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir)
 
 #ifdef NPT
 void dd_NpT_update_cell_grid() {
-  int i,n_local_cells;
+  int i;
   double cell_range[3], min_box_l;
 
   /* if new box length leads to too small cells, redo cell structure */
@@ -486,6 +500,7 @@ void dd_NpT_update_cell_grid() {
 void dd_topology_init(CellPList *old)
 {
   int c,p,np;
+  int exchange_data, update_data;
   Particle *part;
 
   CELL_TRACE(fprintf(stderr, "%d: dd_topology_init: Number of recieved cells=%d\n", this_node, old->n));
@@ -499,8 +514,17 @@ void dd_topology_init(CellPList *old)
   dd_mark_cells();
   /* create communicators */
   dd_prepare_comm(&cell_structure.ghost_cells_comm,         GHOSTTRANS_PARTNUM);
-  dd_prepare_comm(&cell_structure.exchange_ghosts_comm,     GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
-  dd_prepare_comm(&cell_structure.update_ghost_pos_comm,    GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
+
+  exchange_data = (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
+  update_data   = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
+  if (thermo_switch & THERMO_DPD) {
+    /* DPD needs also ghost velocities */
+    exchange_data = (exchange_data | GHOSTTRANS_MOMENTUM);
+    update_data   = (update_data   | GHOSTTRANS_MOMENTUM);
+  }
+  dd_prepare_comm(&cell_structure.exchange_ghosts_comm,  exchange_data);
+  dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data);
+
   dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
   /* collect forces has to be done in reverted order! */
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);

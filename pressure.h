@@ -16,6 +16,7 @@
 #include "thermostat.h"
 #include "communication.h"
 
+/** FOR EACH A LINE AND A COMMENT! */
 extern double piston, inv_piston, NpT_volume;
 extern double p_ext, p_inst, p_diff, p_vir, p_vel;
 

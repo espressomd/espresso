@@ -229,7 +229,7 @@ void convert_torqes_propagate_omega()
     ty = A[1][0]*p[i].f.torque[0] + A[1][1]*p[i].f.torque[1] + A[1][2]*p[i].f.torque[2];
     tz = A[2][0]*p[i].f.torque[0] + A[2][1]*p[i].f.torque[1] + A[2][2]*p[i].f.torque[2];
 
-    friction_thermo_rotation(&p[i]);
+    friction_thermo_langevin_rotation(&p[i]);
 
     p[i].f.torque[0]+= tx;
     p[i].f.torque[1]+= ty;

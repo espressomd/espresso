@@ -67,6 +67,9 @@ typedef struct {
   int min_length;
 } Datafield;
 
+/** This array contains the description of all variables that can be
+    changed/adressed via the \ref tcl_setmd command. read the
+    documentation of \ref Datafield befor you add new features. */
 extern const Datafield fields[];
 
 /** \name Field Enumeration
@@ -75,63 +78,72 @@ extern const Datafield fields[];
 */
 /*@{*/
 /** index of \ref box_l in \ref #fields */
-#define FIELD_BOXL        0  
+#define FIELD_BOXL                0  
 /** index of \ref DomainDecomposition::cell_grid in  \ref #fields */
-#define FIELD_CELLGRID    1
+#define FIELD_CELLGRID            1
 /** index of \ref DomainDecomposition::cell_size in  \ref #fields */
-#define FIELD_CELLSIZE    2
-/** index of \ref friction_gamma in \ref #fields */
-#define FIELD_GAMMA       3
+#define FIELD_CELLSIZE            2
+/** index of \ref dpd_gamma in  \ref #fields */
+#define FIELD_DPD_GAMMA           3
+/** index of \ref dpd_r_cut in  \ref #fields */
+#define FIELD_DPD_RCUT            4
+/** index of \ref langevin_gamma in  \ref #fields */
+#define FIELD_LANGEVIN_GAMMA      5
+/** index of \ref integ_switch in \ref #fields */
+#define FIELD_INTEG_SWITCH        6
 /** index of \ref local_box_l in \ref #fields */
-#define FIELD_LBOXL       4
+#define FIELD_LBOXL               7
 /** index of \ref max_cut in \ref #fields */
-#define FIELD_MCUT        5
-/** index of \ref transfer_rate  in \ref #fields */
-#define FIELD_MAXNUMCELLS 6
+#define FIELD_MCUT                8
+/** index of \ref max_num_cells  in \ref #fields */
+#define FIELD_MAXNUMCELLS         9
 /** index of \ref max_seen_particle in \ref #fields */
-#define FIELD_MAXPART     7
+#define FIELD_MAXPART             10
 /** index of \ref max_range in \ref #fields */
-#define FIELD_MAXRANGE    8
+#define FIELD_MAXRANGE            11
 /** index of \ref max_skin in  \ref #fields */
-#define FIELD_MAXSKIN     9
+#define FIELD_MAXSKIN             12
 /** index of \ref n_layers in  \ref #fields */
-#define FIELD_NLAYERS     10
+#define FIELD_NLAYERS             13
 /** index of \ref n_nodes in \ref #fields */
-#define FIELD_NNODES      11
+#define FIELD_NNODES              14
 /** index of \ref n_total_particles in  \ref #fields */
-#define FIELD_NPART       12
+#define FIELD_NPART               15
 /** index of \ref n_particle_types in \ref #fields */
-#define FIELD_NPARTTYPE   13
+#define FIELD_NPARTTYPE           16
 /** index of \ref node_grid in \ref #fields */
-#define FIELD_NODEGRID    14
-/** index of \ref #periodic in \ref #fields */
-#define FIELD_PERIODIC    15
-/** index of \ref #skin in \ref #fields */
-#define FIELD_SKIN        16
-/** index of \ref #temperature in \ref #fields */
-#define FIELD_TEMPERATURE 17
-/** index of \ref sim_time in  \ref #fields */
-#define FIELD_SIMTIME     18
-/** index of \ref time_step in \ref #fields */
-#define FIELD_TIMESTEP    19
-/** index of \ref timing_samples in  \ref #fields */
-#define FIELD_TIMINGSAMP   20
-/** index of \ref transfer_rate  in \ref #fields */
-#define FIELD_TRANSFERRATE 21
-/** index of \ref rebuild_verletlist in \ref #fields */
-#define FIELD_VERLETFLAG   22
-/** index of \ref verlet_reuse in  \ref #fields */
-#define FIELD_VERLETREUSE  23
-/** index of \ref friction_g0 in \ref #fields */
-#define FIELD_FRICTION_G0  24
-/** index of \ref friction_gv in \ref #fields */
-#define FIELD_FRICTION_GV  25
-/** index of \ref piston in \ref #fields */
-#define FIELD_PISTON       26
+#define FIELD_NODEGRID            17
+/** index of \ref nptiso_g0 in \ref #fields */
+#define FIELD_NPTISO_G0           18
+/** index of \ref nptiso__gv in \ref #fields */
+#define FIELD_NPTISO_GV           19
 /** index of \ref p_ext in \ref #fields */
-#define FIELD_PEXT         27
+#define FIELD_NPT_PEXT            20      
 /** index of \ref p_inst in \ref #fields */
-#define FIELD_PINST        28
+#define FIELD_NPT_PINST           21     
+/** index of \ref piston in \ref #fields */
+#define FIELD_NPT_PISTON          22    
+/** index of \ref #periodic in \ref #fields */
+#define FIELD_PERIODIC            23
+/** index of \ref #skin in \ref #fields */
+#define FIELD_SKIN                24
+/** index of \ref #temperature in \ref #fields */
+#define FIELD_TEMPERATURE         25
+/** index of \ref thermo_switch in \ref #fields */
+#define FIELD_THERMO_SWITCH       26
+/** index of \ref sim_time in  \ref #fields */
+#define FIELD_SIMTIME             27
+/** index of \ref time_step in \ref #fields */
+#define FIELD_TIMESTEP            28
+/** index of \ref timing_samples in  \ref #fields */
+#define FIELD_TIMINGSAMP          29
+/** index of \ref transfer_rate  in \ref #fields */
+#define FIELD_TRANSFERRATE        30
+/** index of \ref rebuild_verletlist in \ref #fields */
+#define FIELD_VERLETFLAG          31
+/** index of \ref verlet_reuse in  \ref #fields */
+#define FIELD_VERLETREUSE         32
+
 /*@}*/
 
 /**********************************************

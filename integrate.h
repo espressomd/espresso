@@ -22,6 +22,9 @@
 /************************************************************/
 /*@{*/
 
+/** Switch determining which Integrator to use. */
+extern int integ_switch;
+
 /** Time step for the integration. */
 extern double time_step;
 /** Old time step needed for rescaling of forces. */
@@ -64,6 +67,9 @@ int integrate(ClientData data, Tcl_Interp *interp,
     \ref max_range  = \ref max_cut + \ref #skin;
  */
 void integrate_vv_recalc_maxrange();
+
+/** Initialize the used thermodynamic Ensemble (NVT or NPT) */
+void integrate_ensemble_init();
 
 /** integrate with velocity verlet integrator.
     \param n_steps number of steps to integrate.

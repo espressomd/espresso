@@ -10,29 +10,135 @@
 #define THERMOSTAT_H
 /** \file thermostat.h 
 
-    Contains all thermostats. At the moment this is only a langevin
-    thermostat for translational (\ref friction_thermo) and rotational
-    (\ref friction_thermo_rotation) degrees of freedom.
+    Contains all thermostats.
+    
+    <ul>
+    <li> For NVT Simulations one can chose either a Langevin thermostat or
+    a DPD (Dissipative Particle Dynamics) thermostat.
+    \verbatim thermostat langevin <temperature> <gamma> \endverbatim
+    \verbatim thermostat dpd <temperature> <gamma> <r_cut> \endverbatim
+
+    <li> For NPT Simulations one can use a thermostat for the box (Based on
+    an Anderson thermostat) and a Langevin thermostat.
+    \verbatim thermostat langevin <temperature> <gamma> \endverbatim
+    \verbatim thermostat npt_isotropic <temperature> <gamma0> <gammaV> \endverbatim
+
+    <li> \verbatim thermostat off \endverbatim
+    Turns off all thermostats and sets all thermostat variables to zero.
+
+    <li> \verbatim thermostat \endverbatim
+    Returns the current thermostat status.
+    </ul>
+
+    Further important  remarks:
+    <ul>
+    <li> If ROTATION is compiled in, the rotational degrees of freedom
+    are coupled to a Langevin thermostat as well if you use a Langevin
+    thermostat.
+
+    <li> All thermostats use the same temperature (So far we did not
+    see any physical sense to change that!).
+    </ul>
+
+    Thermostat description:
+
+    <ul>
+
+    <li> LANGEVIN THERMOSTAT:
+
+    Consists of a friction and noise term coupled via the fluctuation
+    dissipation theorem. The Friction term is a function of the
+    particles velocity.
+
+    <li> DPD THERMOSTT (Dissipative Particle Dynamics):
+
+    Consists of a friction and noise term coupled via the fluctuation
+    dissipation theorem. The Friction term is a function of the
+    relative velocity of particle pairs. 
+
+    <li> NPT ISOTROPIC THERMOSTAT:
+    
+    INSERT COMMENT
+
+    </ul>
 
     <b>Responsible:</b>
-    <a href="mailto:muehlbac@mpip-mainz.mpg.de">Frank</a>
+    <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
 
 */
 #include <tcl.h>
+#include <math.h>
 #include "particle_data.h"
+#include "parser.h"
+#include "random.h"
+#include "global.h"
+#include "particle_data.h"
+#include "communication.h"
+#include "integrate.h"
+#include "cells.h"
+#include "debug.h"
+#include "pressure.h"
+
+/** \name Thermostat switches*/
+/************************************************************/
+/*@{*/
+
+#define THERMO_OFF      0
+#define THERMO_LANGEVIN 1
+#define THERMO_DPD      2
+#define THERMO_NPT_ISO  4
+
+/*@}*/
 
 /************************************************
  * exported variables
  ************************************************/
 
-extern double friction_gamma;
-extern double friction_g0;
-extern double friction_gv;
+/** Switch determining which thermostat to use. This is a or'd value
+    of the different possible thermostats (defines: \ref THERMO_OFF,
+    \ref THERMO_LANGEVIN, \ref THERMO_DPD \ref THERMO_NPT_ISO). If it
+    is zero all thermostats are switched off and the temperature is
+    set to zero. You may combine different thermostats at your own
+    risk by turning them on one by one. Note that there is only one
+    temperature for all thermostats so far. */
+extern int thermo_switch;
+
+/** Temperature. */
 extern double temperature;
+
+/** Langevin Friction coefficient gamma. */
+extern double langevin_gamma;
+/** langevin Friction coefficient gamma for rotation */
+extern double langevin_gamma_rotation;
+
+/** DPD Friction coefficient gamma. */
+extern double dpd_gamma;
+/** DPD thermostat cutoff */
+extern double dpd_r_cut;
+/** inverse off DPD thermostat cutoff */
+extern double dpd_r_cut_inv;
+
+
+/** INSERT COMMENT */
+extern double nptiso_gamma0;
+/** INSERT COMMENT */
+extern double nptiso_gammav;
+
+#ifdef DPD
+/** DPD thermostat: prefactor friction force. */
+extern double dpd_pref1;
+/** DPD thermostat: prefactor random force */
+extern double dpd_pref2;
+#endif
 
 /************************************************
  * functions
  ************************************************/
+
+/** Implementation of the tcl command \ref tcl_thermostat. This function
+    allows to change the used thermostat and to set its parameters.
+ */
+int thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** initialize constants of the thermostat on
     start of integration */
@@ -41,26 +147,54 @@ void thermo_init();
 /** overwrite the forces of a particle with
     the friction term, i.e. \f$ F_i= -\gamma v_i + \xi_i\f$.
 */
-void friction_thermo(Particle *p);
+void friction_thermo_langevin(Particle *p);
 
 #ifdef NPT
 /** add p_diff-dependend noise and friction for NpT-sims 
     to p_diff */
-double friction_thermo_NpT(void);
+double friction_thermo_nptiso(void);
 #endif
 
 /** set the particle torques to the friction term, i.e. \f$\tau_i=-\gamma w_i + \xi_i\f$.
 The same friction coefficient \f$\gamma\f$ is used as that for translation.
 */
-void friction_thermo_rotation(Particle *p);
+void friction_thermo_langevin_rotation(Particle *p);
 
 /** Callback for setting \ref #temperature */
 int temp_callback(Tcl_Interp *interp, void *_data);
-/** Callback for setting \ref friction_gamma */
-int gamma_callback(Tcl_Interp *interp, void *_data);
-/** Callback for setting \ref friction_g0 */
-int g0_callback(Tcl_Interp *interp, void *_data);
-/** Callback for setting \ref friction_gv */
-int gv_callback(Tcl_Interp *interp, void *_data);
+/** Callback for setting \ref langevin_gamma */
+int langevin_gamma_callback(Tcl_Interp *interp, void *_data);
+
+#ifdef DPD
+/** Calculate Random Force and Friction Force acting between particle
+    p1 and p2 and add them to their forces. */
+MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist)
+{
+  int j;
+  /* velocity difference between p1 and p2 */
+  double vel12_dot_d12=0.0;
+  /* inverse distance */
+  double dist_inv;
+  /* temporary storage variable */
+  double tmp;
+  /* weighting functions for friction and random force */
+  double omega, friction, noise;
+  if(dist < dpd_r_cut) {
+    /* random force prefactor */
+    dist_inv = 1.0/dist;
+    omega    = dist_inv - dpd_r_cut_inv;
+    /* friction force prefactor */
+    for(j=0; j<3; j++)  vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
+    friction = dpd_pref1 * SQR(omega) * vel12_dot_d12;
+    /* random force prefactor */
+    noise    = dpd_pref2 * omega      * (d_random()-0.5);
+
+    for(j=0; j<3; j++) {
+      p1->f.f[j] += ( tmp = (noise - friction)*d[j] );
+      p2->f.f[j] -= tmp;
+    }
+  }
+}
+#endif
 
 #endif

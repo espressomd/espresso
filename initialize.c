@@ -43,9 +43,7 @@
 #include "utils.h"
 #include "nsquare.h"
 #include "nemd.h"
-#ifdef NPT
 #include "domain_decomposition.h"
-#endif
 
 /** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
@@ -85,29 +83,37 @@ int on_program_start(Tcl_Interp *interp)
 
 void on_integration_start()
 {
-#ifdef NPT
-  if (piston != 0.0) {
-    /* prepare NpT-integration */
-    inv_piston = 1/(1.0*piston);
-    NpT_volume = box_l[0]*box_l[1]*box_l[2];
-    if (recalc_forces) { 
-      p_inst = 0.0;  
-      p_vir  = 0.0; 
-      p_vel  = 0.0; 
-    }
-  }
-#endif
+  INTEG_TRACE(fprintf(stderr,"%d: on_integration_start: reinit_thermo = %d, resort_particles=%d\n",
+		      this_node,reinit_thermo,resort_particles));
 
+  /* sanity checks */
+  if(time_step < 0.0 || skin < 0.0 || temperature < 0.0) {
+    fprintf(stderr,"%d: ERROR: on_integration_start: Can not initialize the integrator!:\n",this_node);
+    if( time_step < 0.0 ) fprintf(stderr,"%d: PROBLEM: You have to set the time_step!\n",this_node);
+    if( skin < 0.0 ) fprintf(stderr,"%d: PROBLEM: You have to set the skin!\n",this_node);
+    if( temperature < 0.0 ) fprintf(stderr,"%d: PROBLEM: You have to set the temperature!\n",this_node);
+    errexit();
+  }
+
+  /* Prepare the thermostat */
   if (reinit_thermo) {
     thermo_init();
     reinit_thermo = 0;
     recalc_forces = 1;
   }
 
-  invalidate_obs();
+  /* Ensemble preparation: NVT or NPT */
+  integrate_ensemble_init();
 
-  /* the particle information is no longer valid */
+  /* Update particle and observable information for routines in statistics.c */
+  invalidate_obs();
   free(partCfg); partCfg=NULL;
+
+  /* Prepare particle structure: Communication step: number of ghosts and ghost information */
+  if(resort_particles) {
+    cells_resort_particles(CELL_GLOBAL_EXCHANGE);
+    resort_particles = 0;
+  }
 }
 
 void on_particle_change()
@@ -201,8 +207,8 @@ void on_parameter_change(int field)
   if (field == FIELD_BOXL || field == FIELD_NODEGRID)
     grid_changed_box_l();
     
-  if (field == FIELD_TIMESTEP || field == FIELD_GAMMA || field == FIELD_TEMPERATURE
-      || field == FIELD_FRICTION_G0 || field == FIELD_FRICTION_GV || field == FIELD_PISTON )
+  if (field == FIELD_TIMESTEP || field == FIELD_TEMPERATURE || field == FIELD_LANGEVIN_GAMMA
+      || FIELD_DPD_GAMMA || field == FIELD_NPTISO_G0 || field == FIELD_NPTISO_GV || field == FIELD_NPT_PISTON )
     reinit_thermo = 1;
 
 #ifdef ELECTROSTATICS
@@ -232,12 +238,12 @@ void on_parameter_change(int field)
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
-    if (field == FIELD_BOXL || field == FIELD_MAXRANGE)
+    if (field == FIELD_BOXL || field == FIELD_MAXRANGE || field == FIELD_THERMO_SWITCH)
       cells_re_init(CELL_STRUCTURE_LAYERED);
     break;
   case CELL_STRUCTURE_DOMDEC:
     if (field == FIELD_BOXL || field == FIELD_NODEGRID || field == FIELD_MAXRANGE ||
-	field == FIELD_MAXNUMCELLS || field == FIELD_SKIN)
+	field == FIELD_MAXNUMCELLS || field == FIELD_SKIN || field == FIELD_THERMO_SWITCH)
       cells_re_init(CELL_STRUCTURE_DOMDEC);
     break;
   }
@@ -292,6 +298,7 @@ static void init_tcl(Tcl_Interp *interp)
   /* in uwerr.c */
   Tcl_CreateCommand(interp, "uwerr", (Tcl_CmdProc *)uwerr, 0, NULL);
   Tcl_CreateCommand(interp, "nemd", (Tcl_CmdProc *)nemd, 0, NULL);
+  Tcl_CreateCommand(interp, "thermostat", (Tcl_CmdProc *)thermostat, 0, NULL);
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");

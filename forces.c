@@ -18,9 +18,7 @@
 #include "config.h"
 #include "debug.h"
 #include "thermostat.h"
-#ifdef NPT
 #include "pressure.h"
-#endif
 #include "communication.h"
 #include "ghosts.h" 
 #include "verlet.h"
@@ -103,7 +101,7 @@ void calc_long_range_forces()
 /** initialize the forces for a real particle */
 MDINLINE void init_local_particle_force(Particle *part)
 {
-  friction_thermo(part);
+  friction_thermo_langevin(part);
 #ifdef EXTERNAL_FORCES   
   if(part->l.ext_flag & PARTICLE_EXT_FORCE) {
     part->f.f[0] += part->l.ext_force[0];
@@ -163,15 +161,37 @@ void init_forces()
   Particle *p;
   int np, c, i;
 
-  /* initialize forces with thermostat forces
-     set torque to zero for all and rescale quaternions
-  */
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++)
-      init_local_particle_force(&p[i]);
+  /* The force initialization depends on the used thermostat and the
+     thermodynamic ensemble */
+
+#ifdef NPT
+  /* reset virial part of instantaneous pressure */
+  if (piston != 0.0)
+    p_vir = 0.0;
+#endif
+
+  if ( thermo_switch & THERMO_LANGEVIN ) {
+    /* initialize forces with langevin thermostat forces
+       set torque to zero for all and rescale quaternions
+    */
+    for (c = 0; c < local_cells.n; c++) {
+      cell = local_cells.cell[c];
+      p  = cell->part;
+      np = cell->n;
+      for (i = 0; i < np; i++)
+	init_local_particle_force(&p[i]);
+    }
+  } 
+  else {
+    /* all other thermostates need forces and torques initialized with
+       zero.  rescale quaternions. */
+    for (c = 0; c < local_cells.n; c++) {
+      cell = local_cells.cell[c];
+      p  = cell->part;
+      np = cell->n;
+      for (i = 0; i < np; i++)
+	init_ghost_force(&p[i]);
+    }
   }
 
   /* initialize ghost forces with zero
@@ -184,7 +204,7 @@ void init_forces()
     for (i = 0; i < np; i++)
       init_ghost_force(&p[i]);
   }
-
+   
 #ifdef CONSTRAINTS
   init_constraint_forces();
 #endif

@@ -37,13 +37,13 @@ int piston_callback(Tcl_Interp *interp, void *_data) {
   double data = *(double *)_data;
   if (data < 0) { Tcl_AppendResult(interp, "the piston's mass must be non negativ.", (char *) NULL); return (TCL_ERROR); }
   piston = data;
-  mpi_bcast_parameter(FIELD_PISTON);
+  mpi_bcast_parameter(FIELD_NPT_PISTON);
   return (TCL_OK);
 }
 int p_ext_callback(Tcl_Interp *interp, void *_data) {
   double data = *(double *)_data;
   p_ext = data;
-  mpi_bcast_parameter(FIELD_PEXT);
+  mpi_bcast_parameter(FIELD_NPT_PEXT);
   return (TCL_OK);
 }
 

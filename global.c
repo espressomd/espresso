@@ -45,35 +45,39 @@ int ro_callback(Tcl_Interp *interp, void *data);
 
 /// List of all Tcl accessible global variables
 const Datafield fields[] = {
-  {box_l,            TYPE_DOUBLE, 3, "box_l",         boxl_callback, 1 },            /* 0 from grid.c */
-  {dd.cell_grid,        TYPE_INT, 3, "cell_grid",     ro_callback, 6 },              /* 1 from cells.c */
-  {dd.cell_size,     TYPE_DOUBLE, 3, "cell_size",     ro_callback, 6 },              /* 2 from cells.c */
-  {&friction_gamma,  TYPE_DOUBLE, 1, "gamma",         gamma_callback, 1 },           /* 3 from thermostat.c */
-  {local_box_l,      TYPE_DOUBLE, 3, "local_box_l",   ro_callback, 2 },              /* 4 from global.c */
-  {&max_cut,         TYPE_DOUBLE, 1, "max_cut",       ro_callback, 5 },              /* 5 from interaction_data.c */
-  {&max_num_cells,      TYPE_INT, 1, "max_num_cells", max_num_cells_callback, 5 },   /* 6 from cells.c */
-  {&max_seen_particle,  TYPE_INT, 1, "max_part",      ro_callback, 5 },              /* 7 from particle_data.c */
-  {&max_range,       TYPE_DOUBLE, 1, "max_range",     ro_callback, 5 },              /* 8 from integrate.c */
-  {&max_skin,        TYPE_DOUBLE, 1, "max_skin",      ro_callback, 5 },              /* 9 from integrate.c */
-  {&n_layers,           TYPE_INT, 1, "n_layers",      ro_callback, 3 },              /* 10 from layered.c */
-  {&n_nodes,            TYPE_INT, 1, "n_nodes",       ro_callback, 3 },              /* 11 from communication.c */
-  {&n_total_particles,  TYPE_INT, 1, "n_part",        ro_callback, 6 },              /* 12 from particle.c */
-  {&n_particle_types,   TYPE_INT, 1, "n_part_types",  ro_callback, 8 },              /* 13 from interaction_data.c */
-  {node_grid,           TYPE_INT, 3, "node_grid",     node_grid_callback, 2 },       /* 14 from grid.c */
-  {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback, 1 },             /* 15 from grid.c */
-  {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback, 2 },            /* 16 from integrate.c */
-  {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback, 2 },            /* 17 from thermostat.c */
-  {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback, 4 },            /* 18 from integrate.c */
-  {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },       /* 19 from integrate.c */
-  {&timing_samples,     TYPE_INT, 1, "timings",       timings_callback, 4 },         /* 20 from tuning.c */
-  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback, 2 }     ,         /* 21 from imd.c */
-  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback, 8 },              /* 22 from verlet.c */
-  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback, 8 },              /* 23 from integrate.c */
-  {&friction_g0,     TYPE_DOUBLE, 1, "g0",            g0_callback, 1 },              /* 24 from thermostat.c */
-  {&friction_gv,     TYPE_DOUBLE, 1, "gv",            gv_callback, 1 },              /* 25 from thermostat.c */
-  {&piston,          TYPE_DOUBLE, 1, "piston",        piston_callback, 1 },          /* 26 from pressure.c */
-  {&p_ext,           TYPE_DOUBLE, 1, "p_ext",         p_ext_callback, 1 },           /* 27 from pressure.c */
-  {&p_inst,          TYPE_DOUBLE, 1, "p_inst",        ro_callback, 1 },              /* 28 from pressure.c */
+  {box_l,            TYPE_DOUBLE, 3, "box_l",         boxl_callback,  1 },         /* 0  from grid.c */
+  {dd.cell_grid,        TYPE_INT, 3, "cell_grid",     ro_callback,    6 },         /* 1  from cells.c */
+  {dd.cell_size,     TYPE_DOUBLE, 3, "cell_size",     ro_callback,    6 },         /* 2  from cells.c */
+  {&dpd_gamma,       TYPE_DOUBLE, 1, "dpd_gamma",     ro_callback,    5 },         /* 3  from thermostat.c */
+  {&dpd_r_cut,       TYPE_DOUBLE, 1, "dpd_r_cut",     ro_callback,    5 },         /* 4  from thermostat.c */
+  {&langevin_gamma,  TYPE_DOUBLE, 1, "gamma",         langevin_gamma_callback, 1 },/* 5  from thermostat.c */
+  {&integ_switch,       TYPE_INT, 1, "integ_switch",  ro_callback,    1 },         /* 6  from integrate.c */
+  {local_box_l,      TYPE_DOUBLE, 3, "local_box_l",   ro_callback,    2 },         /* 7  from global.c */
+  {&max_cut,         TYPE_DOUBLE, 1, "max_cut",       ro_callback,    5 },         /* 8  from interaction_data.c */
+  {&max_num_cells,      TYPE_INT, 1, "max_num_cells", max_num_cells_callback, 5 }, /* 9  from cells.c */
+  {&max_seen_particle,  TYPE_INT, 1, "max_part",      ro_callback,    5 },         /* 10 from particle_data.c */
+  {&max_range,       TYPE_DOUBLE, 1, "max_range",     ro_callback,    5 },         /* 11 from integrate.c */
+  {&max_skin,        TYPE_DOUBLE, 1, "max_skin",      ro_callback,    5 },         /* 12 from integrate.c */
+  {&n_layers,           TYPE_INT, 1, "n_layers",      ro_callback,    3 },         /* 13 from layered.c */
+  {&n_nodes,            TYPE_INT, 1, "n_nodes",       ro_callback,    3 },         /* 14 from communication.c */
+  {&n_total_particles,  TYPE_INT, 1, "n_part",        ro_callback,    6 },         /* 15 from particle.c */
+  {&n_particle_types,   TYPE_INT, 1, "n_part_types",  ro_callback,    8 },         /* 16 from interaction_data.c */
+  {node_grid,           TYPE_INT, 3, "node_grid",     node_grid_callback, 2 },     /* 17 from grid.c */
+  {&nptiso_gamma0,   TYPE_DOUBLE, 1, "nptiso_gamma0", ro_callback,    13 },        /* 18 from thermostat.c */
+  {&nptiso_gammav,   TYPE_DOUBLE, 1, "nptiso_gammav", ro_callback,    13 },        /* 19 from thermostat.c */
+  {&p_ext,           TYPE_DOUBLE, 1, "npt_p_ext",     ro_callback,    7 },         /* 20 from pressure.c */
+  {&p_inst,          TYPE_DOUBLE, 1, "npt_p_inst",    ro_callback,    7 },         /* 21 from pressure.c */
+  {&piston,          TYPE_DOUBLE, 1, "npt_piston",    piston_callback,    6 },         /* 22 from pressure.c */
+  {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback,   1 },         /* 23 from grid.c */
+  {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback,  2 },         /* 24 from integrate.c */
+  {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback,  2 },         /* 25 from thermostat.c */
+  {&thermo_switch,      TYPE_INT, 1, "thermo_switch", ro_callback,    2 },         /* 26 from thermostat.c */
+  {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback,  4 },         /* 27 from integrate.c */
+  {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },     /* 28 from integrate.c */
+  {&timing_samples,     TYPE_INT, 1, "timings",       timings_callback, 4 },       /* 29 from tuning.c */
+  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback,    2 },         /* 30 from imd.c */
+  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback,    8 },         /* 31 from verlet.c */
+  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback,    8 },         /* 32 from integrate.c */
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 
@@ -85,20 +89,21 @@ const Datafield fields[] = {
      the documentation of the corresponding C variable.
      Variables that are marked read only can only be written by C code.
 
-	<ul>
+	<ol>
 	<li> \verbatim box_l double[3] \endverbatim
              \ref box_l - Simulation box length.
 	<li> \verbatim cell_grid int[3] (ro) \endverbatim
              \ref DomainDecomposition::cell_grid - dimension of the inner cell grid.
 	<li> \verbatim cell_size double[3] (ro) \endverbatim
 	     \ref DomainDecomposition::cell_size - box length of a cell.
+	<li> \verbatim dpd_gamma double (ro) \endverbatim
+	     \ref dpd_gamma - Friction constant for DPD thermostat.
+	<li> \verbatim dpd_r_cut double (ro) \endverbatim
+	     \ref dpd_r_cut - Cutoff for DPD thermostat.
 	<li> \verbatim gamma double \endverbatim
-	     \ref friction_gamma - Friction constant.
-	<li> \verbatim g0 double \endverbatim
-	     \ref friction_g0 - Friction constant gamma_0.
-	<li> \verbatim gv double \endverbatim
-	     \ref friction_gv - Friction constant gamma_v.
-
+	     \ref langevin_gamma - Friction constant for LANGEVIN thermostat.
+	<li> \verbatim integ_switch int (ro) \endverbatim
+	     \ref integ_switch - internal switch which integrator to use.
 	<li> \verbatim local_box_l int[3] (ro) \endverbatim
 	     \ref local_box_l - Local simulation box length of the nodes.
 	<li> \verbatim max_cut double (ro) \endverbatim
@@ -116,6 +121,8 @@ const Datafield fields[] = {
 	<li> \verbatim max_skin double (ro)\endverbatim
 	     \ref max_skin - Maximal skin to be used for the link cell/verlet algorithm.
 	     This is Min(\ref DomainDecomposition::cell_size) - \ref max_range.
+	<li> \verbatim n_layers int (ro) \endverbatim
+  	     \ref n_layers - Number of layers in cell structure LAYERED.
 	<li> \verbatim n_nodes int (ro) \endverbatim
   	     \ref n_nodes - Number of nodes.
 	<li> \verbatim n_part int (ro) \endverbatim
@@ -127,6 +134,16 @@ const Datafield fields[] = {
  	     \ref node_grid - 3D node grid for real space domain
 	     decomposition (optional,
 	     if unset an optimal set is chosen automatically).	
+	<li> \verbatim nptiso_gamma0 double (ro)\endverbatim
+	     \ref nptiso_gamma0 - INSERT COMMENT
+	<li> \verbatim nptiso_gammav double (ro)\endverbatim
+	     \ref nptiso_gammav - INSERT COMMENT
+	<li> \verbatim npt_p_ext double (ro)\endverbatim
+	     \ref p_ext - Pressure for NPT simulations.
+	<li> \verbatim npt_p_inst double \endverbatim
+	     \ref p_inst Pressure calculated during an NPT_isotropic integration.
+	<li> \verbatim piston double (ro)\endverbatim
+	     \ref piston - Mass off the box when using NPT_isotropic integrator.
 	<li> \verbatim periodicity bool[3]\endverbatim
              \ref #periodic - Specifies periodicity for the three directions.
              If the compiler flag PARTIAL_PERIODIC from \ref config.h "config.h" is set,
@@ -137,6 +154,8 @@ const Datafield fields[] = {
 	<li> \verbatim temperature double \endverbatim
 	     \ref #temperature - Temperature of the simulation.
 	     Enters the thermostat and the coulomb prefactor = bjerrum * temperature.
+	<li> \verbatim thermo_switch double (ro)\endverbatim
+	     \ref thermo_switch - internal variable which thermostat to use.
 	<li> \verbatim time double \endverbatim
 	     \ref sim_time - The simulation time.
 	<li> \verbatim time_step double \endverbatim
@@ -152,7 +171,7 @@ const Datafield fields[] = {
 	     see \ref initialize.h "initialize.h" for more information
 	<li> \verbatim verlet_reuse bool \endverbatim
 	     \ref verlet_reuse - Average number of integration steps the verlet list has been re-used.
-	</ul>    
+	</ol>    
 
  */
 
