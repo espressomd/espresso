@@ -2185,10 +2185,10 @@ void auto_exclusion(int distance)
 {
   int count, p, i, j, p1, p2, p3, dist1, dist2;
   Bonded_ia_parameters *ia_params;
-  Particle *part1, *part2;
+  Particle *part1;
   /* partners is a list containing the currently found excluded particles for each particle,
      and their distance, as a interleaved list */
-  IntList *partners, *ptns1, *ptns2;
+  IntList *partners;
 
   updatePartCfg(WITH_BONDS);
 
@@ -2201,17 +2201,15 @@ void auto_exclusion(int distance)
   /* determine initial connectivity */
   for (p = 0; p < n_total_particles; p++) {
     part1 = &partCfg[p];
-    ptns1 = &partners[part1->p.identity];
+    p1    = part1->p.identity;
     for (i = 0; i < part1->bl.n;) {
       ia_params = &bonded_ia_params[part1->bl.e[i++]];
       if (ia_params->num == 1) {
-	part2 = &partCfg[part1->bl.e[i++]];
-	ptns2 = &partners[part2->p.identity];
-
-	/* you never know whether the user does, may bond a particle to itself...? */
-	if (part2->p.identity != part1->p.identity) {
-	  add_partner(ptns1, part1->p.identity, part2->p.identity, 1);
-	  add_partner(ptns2, part2->p.identity, part1->p.identity, 1);
+	p2 = part1->bl.e[i++];
+	/* you never know what the user does, may bond a particle to itself...? */
+	if (p2 != p1) {
+	  add_partner(&partners[p1], p1, p2, 1);
+	  add_partner(&partners[p2], p2, p1, 1);
 	}
       }
       else
