@@ -58,6 +58,16 @@ scale .case1.slider2 -orient h -from 0 -to 2 \
     -resolution [expr 10/100.] -command Case1TempChange
 pack .case1.slider2 .case1.label2 -fill x -in .case1
 
+# radiobuttons
+frame .case1.butFH
+label .case1.labelF -justify left -text "FENE"
+label .case1.labelH -justify left -text "Harmonisch"
+radiobutton .case1.butF -variable butFH -value F -command Case1PotChange
+radiobutton .case1.butH -variable butFH -value H -command Case1PotChange
+pack .case1.butF .case1.labelF -fill both -side left  -in .case1.butFH
+pack .case1.labelH .case1.butH -fill both -side right -in .case1.butFH
+pack .case1.butFH  -pady {0 10} -fill x -side bottom  -in .case1
+
 set disabledfg [.case1.label cget -disabledforeground]
 set normalfg  [.case1.label cget -foreground]
 
@@ -75,17 +85,17 @@ pack .case2.title -pady {0 10} -fill x -side top -in .case2
 
 # sliders
 label .case2.label1 -justify left -text "Ladung Wand 1"
-scale .case2.slider1 -orient h -from -1 -to 1 \
+scale .case2.slider1 -orient h -from -2 -to 2 \
     -resolution [expr 2/100.] -command Case2Wall1ChargeChange
 pack .case2.slider1 .case2.label1 -fill x -in .case2
 
 label .case2.label2 -justify left -text "Ladung Wand 2"
-scale .case2.slider2 -orient h -from -1 -to 1 \
+scale .case2.slider2 -orient h -from -2 -to 2 \
     -resolution [expr 2/100.] -command Case2Wall2ChargeChange
 pack .case2.slider2 .case2.label2 -fill x -in .case2
 
 label .case2.label3 -justify left -text "Ladung Wand 3"
-scale .case2.slider3 -orient h -from -1 -to 1 \
+scale .case2.slider3 -orient h -from -2 -to 2 \
     -resolution [expr 2/100.] -command Case2Wall3ChargeChange
 pack .case2.slider3 .case2.label3 -fill x -in .case2
 
@@ -93,31 +103,46 @@ label .case2.status -justify left -text ""
 pack .case2.status -fill x -in .case2
 
 proc disableCase1 {} {
-    global disabledfg
+    global disabledfg butFH
+    .case1.slider set 8
     .case1.label configure -state disabled
     .case1.slider configure -state disabled -foreground $disabledfg 
+    .case1.slider2 set 0
     .case1.label2 configure -state disabled
     .case1.slider2 configure -state disabled -foreground $disabledfg 
+    set butFH F
+    .case1.labelF configure -state disabled
+    .case1.butF configure -state disabled -foreground $disabledfg 
+    .case1.labelH configure -state disabled
+    .case1.butH configure -state disabled -foreground $disabledfg 
 }
 
 proc enableCase1 {} {
-    global normalfg
+    global normalfg butFH
     .case1.label configure -state normal
     .case1.slider configure -state normal -foreground $normalfg 
     .case1.slider set 8
     .case1.label2 configure -state normal
     .case1.slider2 configure -state normal -foreground $normalfg 
     .case1.slider2 set 0
+    .case1.labelF configure -state normal
+    .case1.butF configure -state normal -foreground $normalfg 
+    .case1.labelH configure -state normal
+    .case1.butH configure -state normal -foreground $normalfg 
+    set butFH F
 
     .case2.status configure -text ""
 }
 
 proc disableCase2 {} {
     global disabledfg displayclock
+    .case2.slider1 set 0
     .case2.label1 configure -state disabled
     .case2.slider1 configure -state disabled -foreground $disabledfg
+    .case2.slider2 set 0
     .case2.label2 configure -state disabled
     .case2.slider2 configure -state disabled -foreground $disabledfg
+    .case2.slider3 set 0
     .case2.label3 configure -state disabled
     .case2.slider3 configure -state disabled -foreground $disabledfg
 
@@ -153,10 +178,7 @@ proc enableStarts {} {
 #############################################################
 
 proc imd_reconnect {case} {
-#    global vmd_pid
-
     imd disconnect
-
     catch {exec killall vmd_LINUX}
 
     while { [catch {imd connect 10000} res] } {
@@ -181,6 +203,7 @@ proc Case1Start {} {
     global run_sim
 
     .case2.status configure -text "Starte..."    
+    if { $run_sim == 1 } { set restart 1 } else { set restart 0 }
     set run_sim 0
     update
 
@@ -194,7 +217,7 @@ proc Case1Start {} {
     close $inp
     puts "Read [setmd n_part] particles..."
 
-    imd_reconnect case1
+    if { $restart == 0 } { imd_reconnect case1 }
 
     after 3000
 
@@ -210,6 +233,7 @@ proc Case2Start {} {
     global run_sim case2stime displayclock N0 N1 N2 N3
 
     .case2.status configure -text "Starte..."    
+    if { $run_sim == 2 } { set restart 1 } else { set restart 0 }
     set run_sim 0
     update
 
@@ -224,7 +248,12 @@ proc Case2Start {} {
     for {set i $N0} {$i < [expr $N0+$N1+$N2+$N3]} {incr i} { part $i fix }
     puts "Read & fixed [setmd n_part] particles..."
 
-    imd_reconnect case2
+    if { $restart == 0 } { imd_reconnect case2  }
+
+    set run_sim 2
+    Case2Wall1ChargeChange 0
+    Case2Wall2ChargeChange 0
+    Case2Wall3ChargeChange 0
 
     after 3000
     .case2.status configure -text "...3..."
@@ -236,7 +265,6 @@ proc Case2Start {} {
 
     enableCase2
     enableStarts
-    set run_sim 2
 
     .case2.status configure -text "Los!"
     set case2stime [clock seconds]
@@ -259,11 +287,24 @@ proc Case1TempChange {T} {
     }
 }
 
+proc Case1PotChange { } {
+    global run_sim butFH
+    if { $run_sim == 1} {
+	if { $butFH == "F" } {
+	    set tsik [setmd temp]; setmd temp 0.0
+	    inter 0 harmonic [expr 4*[lindex [inter 0] 2]] [expr 0.25*[lindex [inter 0] 3]]
+	    integrate 100; imd positions; setmd temp $tsik; integrate 100; imd positions
+	    inter 0 FENE [expr 0.125*[lindex [inter 0] 2]] [expr 8*[lindex [inter 0] 3]] 
+	}
+	if { $butFH == "H" } { inter 0 harmonic [expr 2*[lindex [inter 0] 2]] [expr 0.5*[lindex [inter 0] 3]] }
+    }
+}
+
 proc Case2Wall1ChargeChange {c} {
     global run_sim N0 N1
     if { $run_sim == 2} { 
 	for {set i [expr $N0]} {$i < [expr $N0+$N1]} {incr i} { part $i q $c }
-	puts "Charged Wall 1 with $c."
+	puts "Charged Wall 1 with $c (with Bjerrum = [lindex [lindex [inter coulomb] 0] 1])."
     }
 }
 
@@ -271,15 +312,15 @@ proc Case2Wall2ChargeChange {c} {
     global run_sim N0 N1 N2
     if { $run_sim == 2 } { 
 	for {set i [expr $N0+$N1]} {$i < [expr $N0+$N1+$N2]} {incr i} { part $i q $c } 
-	puts "Charged Wall 2 with $c."
+	puts "Charged Wall 2 with $c (with Bjerrum = [lindex [lindex [inter coulomb] 0] 1])."
     }
 }
 
 proc Case2Wall3ChargeChange {c} {
     global run_sim N0 N1 N2 N3
-    if { $run_sim } { 
+    if { $run_sim == 2} { 
 	for {set i [expr $N0+$N1+$N2]} {$i < [expr $N0+$N1+$N2+$N3]} {incr i} { part $i q $c }
-	puts "Charged Wall 3 with $c."
+	puts "Charged Wall 3 with $c (with Bjerrum = [lindex [lindex [inter coulomb] 0] 1])."
     }
 }
 
@@ -295,11 +336,6 @@ set run_sim 0
 
 while { 1 } {
     if { $run_sim != 0 } {
-#	set c1 [part 1 print pos]; set c2 [part 2 print pos]
-#	set x  [expr [lindex $c1 0]-[lindex $c2 0]]
-#	set y  [expr [lindex $c1 1]-[lindex $c2 1]]
-#	set z  [expr [lindex $c1 2]-[lindex $c2 2]]
-#	puts "bond_l between 1 and 2 = [expr sqrt($x*$x + $y*$y + $z*$z)]"
 	integrate 100
 	while { [catch {imd positions} res] } {
 	    puts "positions failed: $res, retrying."
