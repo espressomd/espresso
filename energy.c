@@ -49,10 +49,14 @@ void energy_calc(double *result)
   case CELL_STRUCTURE_LAYERED:
     layered_calculate_energies();
     break;
-  case CELL_STRUCTURE_DOMDEC:
-    if (rebuild_verletlist)
-      build_verlet_lists();
-    calculate_verlet_energies();
+  case CELL_STRUCTURE_DOMDEC: 
+    if(dd.use_vList) {
+      if (rebuild_verletlist)  
+	build_verlet_lists();
+      calculate_verlet_energies();
+    }
+    else
+      calculate_link_cell_energies();
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_calculate_energies();
@@ -78,6 +82,10 @@ void calc_long_range_energies()
     break;
   case COULOMB_MMM2D:
     *energy.coulomb += MMM2D_far_energy();
+    break;
+    /* calculate electric part of energy (only for MAGGS) */
+  case COULOMB_MAGGS:
+    *energy.coulomb += maggs_electric_energy();
     break;
   }
   if (coulomb.use_elc)
