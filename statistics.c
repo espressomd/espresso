@@ -15,6 +15,7 @@
 #include <string.h>
 #include "statistics.h"
 #include "statistics_chain.h"
+#include "statistics_cluster.h"
 #include "modes.h"
 #include "energy.h"
 #include "pressure.h"
@@ -1048,8 +1049,10 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return parse_g_av(interp, 3, argc - 2, argv + 2);
   else if (ARG1_IS_S("formfactor"))
     return parse_formfactor(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<formfactor>"))
-    return parse_formfactor(interp, 1, argc - 2, argv + 2);
+  else if (ARG1_IS_S("<formfactor>")) 
+    return parse_formfactor(interp, 1, argc - 2, argv + 2);    
+   else if (ARG1_IS_S("necklace")) 
+    return parse_necklace_analyzation(interp, argc - 2, argv + 2);   
   else if (ARG1_IS_S("distribution"))
     return parse_distribution(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("rdf"))
