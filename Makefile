@@ -36,7 +36,7 @@ $(PLATFORM):
 
 ########### final target
 $(PLATFORM)/Espresso: $(OBJECTS)
-	(cd $(PLATFORM); $(LINK) $(LDFLAGS) -o Espresso $(OBJECTS) $(LDLIBS) )
+	(cd $(PLATFORM); $(LINK) $(LDFLAGS) -o Espresso $(OBJECTS) $(LDLIBS) $(STATIC_POSTLOAD))
 
 $(PLATFORM)/libEspresso.a: $(LIBOBJECTS)
 	(cd $(PLATFORM); ar -crs libEspresso.a $(LIBOBJECTS) )

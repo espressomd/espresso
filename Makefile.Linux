@@ -3,6 +3,16 @@
 # Tk (graphical interface)
 TK=no
 
+### static compilation for certain brain damaged blade clusters
+STATIC=no
+# for the blade center
+# STATIC=yes
+
+### fixed target architecture (same reason as above)
+HOSTFLAGS=
+# for the blade center
+# HOSTFLAGS=-march=pentium4 -mfpmath=sse -msse2
+
 ############ compiler settings
 CC=mpicc
 
@@ -14,6 +24,7 @@ MODEL=$(shell awk '/\`model name/ { \
 	print "Generic"; \
 	exit }' \/proc/cpuinfo)
 
+ifeq ($(HOSTFLAGS),)
 HOSTFLAGS=-march=i386
 
 ifeq ($(MODEL),Pentium-III)
@@ -31,6 +42,9 @@ endif
 ifeq ($(MODEL),Athlon-)
 HOSTFLAGS= -march=athlon -mfpmath=sse -msse
 endif
+
+endif
+
 
 # optimized compiler flags
 CFLAGS=-g -O2 -Wall $(HOSTFLAGS) \
@@ -52,8 +66,11 @@ CFLAGS+= -DMDINLINE="inline static"
 
 ############ linker settings
 LINK=$(CC)
-#LDFLAGS=-pg
 LDLIBS= -lm -lpthread
+ifeq ($(STATIC),yes)
+	LDFLAGS+=-static
+	STATIC_POSTLOAD=-lm -ldl
+endif
 
 ########### ElectricFence
 # LDLIBS+= -lefence
