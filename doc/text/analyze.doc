@@ -5,11 +5,12 @@
     <ul>
     <li> \verbatim analyze mindist \endverbatim
          returns the minimal distance between two particles in the system.
-    <li> \verbatim analyze nbhood <part_id> <r_catch> \endverbatim
-         returns all particles within a given radius <r_catch> around the position of the particle with number <part_id>.
+    <li> \verbatim analyze nbhood { <part_id> | <posx> <posy> <posz> } <r_catch> \endverbatim
+         returns all particles within a given radius <r_catch> around the position of the particle with number <part_id>
+	 or around (<posx>, <posy>, <posz>).
     <li> \verbatim analyze distto { <part_id> | <posx> <posy> <posz> } \endverbatim
          returns the minimal distance of all particles to coordinates (<posx>, <posy>, <posz>) or to the position of particle <part_id>.
-    <li> \verbatim analyze energy [interaction] \endverbatim
+    <li> \verbatim analyze energy [{ fene <type_num> | lj <type1> <type2> | coulomb | kinetic }] \endverbatim
          returns the energies of the system. The output corresponds to the  blockfile format (\ref blockformat):
 	 { energy <value> } { kinetic <value> } { interaction <value> } ... <BR>
 	 If you specify <interaction>, e.g. <i>fene <type_num></i> or <i>lj <type1> <type2></i> or <i>coulomb</i> or <i>kinetic</i>,
@@ -41,6 +42,30 @@
                  the motion of the center of mass <i>g3(t)</i>
 	 as a tcl-list {g1(t) g2(t) g3(t)} (requires chain structure to be set or provided).<BR>
 	 If before the structure info you give '-init', the current configuration is stored as reference config.
+    </ul>
+    Some observables (i.e. non-static ones) require knowledge of the particles' positions at more than one or two times. Hence it is
+    possible to store the currently active configuration 'partCfg' to the array 'configs' for later analysis. Using these mechanisms
+    the program is also able to work quasi-offline by successively reading in previously saved checkpoints (see \ref blockformat) and
+    appending these to 'configs', performing any analysis desired afterwards.
+    <ul>
+    <li> For manipulating the particles' configurations stored in 'configs' the following commands are provided:
+    <ul> <li> \verbatim analyze append \endverbatim
+              appends the current positions of the particles in 'partCfg' to 'configs[n_configs-1]', returning an updated 'n_configs'
+	      (= number of stored configurations)
+	 <li> \verbatim analyze push [<size>] \endverbatim
+	      adds the current configuration at the end of 'configs' and removes its very first (=oldest) entry.<BR>
+	      If <size> is specified, configurations are merely appended until 'n_configs' equals <size>; from there they are pushed
+	      such that 'configs' always contains the <size> most recently stored configurations (this implies that if 'analyze push <size>'
+	      is called while <i>n_configs > size</i>, all <i>n_configs - size</i> uppermost (=oldest) configurations are removed to
+	      end up with <size> recent entries).<BR>
+	      The return value is 'n_configs'.
+	 <li> \verbatim analyze replace <index> \endverbatim
+              replaces the <index>th entry in 'configs' with the current configuration in 'partCfg' and returns an updated 'n_configs'
+         <li> \verbatim analyze remove <index> \endverbatim
+              removes the <index>th entry from 'configs' and returns an updated 'n_configs'
+         <li> \verbatim analyze stored \endverbatim
+              returns 'n_configs', the number of currently stored particles' configurations
+         </ul>
     </ul>
     The C implementation is \ref #analyze.
 */
