@@ -200,6 +200,10 @@ interface between the Tcl script and the MD code:
 	<steps> steps. 
 	The C implementation is \ref integrate.
 </ul>
+
+At program start, tcl_md reads in a starting script "init.tcl". It is assumed to be
+located in a directory "scripts", but this default value can be overridden by the
+environment variable TCLMD_SCRIPTS.
 */
 
 /** \page our_cvs How to use CVS
