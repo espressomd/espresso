@@ -6,14 +6,20 @@ What's new, what's been changed, what's been fixed
 ***********
 
 Current working revision.
+(d) November 18th, 2003
+(c) November 13th, 2003
 (b) November 11th, 2003.
 (a) November 3rd, 2003.
 
 
 New Features:
+(d) command 'imd positions' has new optional flag '-fold_chains'
+(c) command 'part fix <x> <y> <z>' replaces 'part fix'
 (b) command 'analyze p_IK1' replacing 'analyze p_bin'
 (a) command 'analyze p_bin' to derive the pressure tensor of a given particle list
 (a) command 'analyze bin' to create a particle list distributed into spherical bins
+
+
 
 
 Changes:
