@@ -8,6 +8,7 @@
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #include "statistics.h"
 #include "parser.h"
+#include "debug.h"
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref #analyze) */
 /*@{*/

@@ -16,6 +16,7 @@
 #include "global.h"
 #include "blockfile.h"
 #include "blockfile_tcl.h"
+#include "debug.h"
 
 int blockfile(ClientData data, Tcl_Interp *interp,
 	      int argc, char *argv[])

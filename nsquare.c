@@ -181,11 +181,11 @@ void nsq_balance_particles()
     if (s_node == this_node) {
       ParticleList send_buf;
       init_particleList(&send_buf);
-      realloc_particles(&send_buf, send_buf.n = transfer);
+      realloc_particlelist(&send_buf, send_buf.n = transfer);
       for (i = 0; i < transfer; i++) {
 	memcpy(&send_buf.part[i], &local->part[--local->n], sizeof(Particle));
       }
-      realloc_particles(local, local->n);
+      realloc_particlelist(local, local->n);
       send_particles(&send_buf, l_node);
     }
     else if (l_node == this_node) {

@@ -9,6 +9,7 @@
 #include <sys/resource.h>
 #include <tcl.h>
 #include "communication.h"
+#include "debug.h"
 
 int timing_samples = 0;
 

@@ -30,6 +30,36 @@ static int core_done = 0;
 int check_id =  ONEPART_DEBUG ;
 #endif
 
+#ifdef MEM_DEBUG
+
+#undef realloc
+#undef malloc
+#undef free
+
+void *__realloc(void *old, unsigned int size, char *where, int line)
+{
+  void *ret;
+  ret = realloc(old, size);
+  fprintf(stderr, "%d: realloc %p -> %p size %d at %s:%d\n", this_node, old, ret, size, where, line);
+  return ret;
+}
+
+void *__malloc(unsigned int size, char *where, int line)
+{
+  void *ret;
+  ret = malloc(size);
+  fprintf(stderr, "%d: alloc %d -> %p at %s:%d\n", this_node, size, ret, where, line);
+  return ret;
+}
+
+void __free(void *p, char *where, int line)
+{
+  fprintf(stderr, "%d: free %p at %s:%d\n", this_node, p, where, line);
+  free(p);
+}
+
+#endif
+
 int debug_callback(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, "{ Debug status { ", (char *) NULL);

@@ -20,6 +20,7 @@
 #include "communication.h"
 #include "particle_data.h"
 #include "parser.h"
+#include "debug.h"
 
 int transfer_rate = 0;
 

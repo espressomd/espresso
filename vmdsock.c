@@ -17,6 +17,7 @@
 #if ( defined(DUMMY_VMDSOCK) )
 
 #include "vmdsock.h"
+#include "debug.h"
 
 int vmdsock_init(void) { return -1; }
 void * vmdsock_create(void) { return 0; }

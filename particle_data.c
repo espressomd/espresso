@@ -65,7 +65,7 @@ int partCfgSorted = 0;
 void init_particle(Particle *part) 
 {
   /* ParticleProperties */
-  part->p.identity = 0;
+  part->p.identity = -1;
   part->p.type     = 0;
 #ifdef ELECTROSTATICS
   part->p.q        = 0.0;
@@ -216,10 +216,14 @@ void init_particleList(ParticleList *pList)
   pList->part = NULL;
 }
 
-int realloc_particles(ParticleList *l, int size)
+int realloc_particlelist(ParticleList *l, int size)
 {
-  int old_max = l->max, i;
+  int old_max = l->max;
   Particle *old_start = l->part;
+
+  PART_TRACE(fprintf(stderr, "%d: realloc_particlelist %p: %d/%d->%d\n", this_node,
+		     l, l->n, l->max, size));
+
   if (size < l->max) {
     /* shrink not as fast, just lose half, rounded up */
     l->max = PART_INCREMENT*(((l->max + size + 1)/2 +
@@ -230,8 +234,6 @@ int realloc_particles(ParticleList *l, int size)
     l->max = PART_INCREMENT*((size + PART_INCREMENT - 1)/PART_INCREMENT);
   if (l->max != old_max)
     l->part = (Particle *) realloc(l->part, sizeof(Particle)*l->max);
-  for (i = old_max; i < l->max; i++)
-    l->part[i].p.identity = -1;
   return l->part != old_start;
 }
 
@@ -290,7 +292,7 @@ Particle *append_unindexed_particle(ParticleList *l, Particle *part)
 {
   Particle *p;
 
-  realloc_particles(l, ++l->n);
+  realloc_particlelist(l, ++l->n);
   p = &l->part[l->n - 1];
 
   memcpy(p, part, sizeof(Particle));
@@ -302,7 +304,7 @@ Particle *append_indexed_particle(ParticleList *l, Particle *part)
   int re;
   Particle *p;
  
-  re = realloc_particles(l, ++l->n);
+  re = realloc_particlelist(l, ++l->n);
   p  = &l->part[l->n - 1];
 
   memcpy(p, part, sizeof(Particle));
@@ -317,7 +319,7 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i)
 {
   Particle *dst, *src, *end;
 
-  realloc_particles(dl, ++dl->n);
+  realloc_particlelist(dl, ++dl->n);
   dst = &dl->part[dl->n - 1];
   src = &sl->part[i];
   end = &sl->part[sl->n - 1];
@@ -325,13 +327,13 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i)
   if ( src != end )
     memcpy(src, end, sizeof(Particle));
   sl->n -= 1;
-  realloc_particles(sl, sl->n);
+  realloc_particlelist(sl, sl->n);
   return dst;
 }
 
 Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
 {
-  int re = realloc_particles(dl, ++dl->n);
+  int re = realloc_particlelist(dl, ++dl->n);
   Particle *dst = &dl->part[dl->n - 1];
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
@@ -345,8 +347,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
   if ( src != end )
     memcpy(src, end, sizeof(Particle));
 
-  sl->n -= 1;
-  if (realloc_particles(sl, sl->n))
+  if (realloc_particlelist(sl, --sl->n))
     update_local_particles(sl);
   else
     local_particles[src->p.identity] = src;
@@ -1521,8 +1522,7 @@ void local_place_particle(int part, double p[3])
 	      this_node, pp[0], pp[1], pp[2]);
       errexit();
     }
-    cell->n++;
-    rl = realloc_particles(cell, cell->n);
+    rl = realloc_particlelist(cell, ++cell->n);
     pt = &cell->part[cell->n - 1];
     init_particle(pt);
 
@@ -1671,11 +1671,14 @@ void send_particles(ParticleList *particles, int node)
 	   MPI_BYTE, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
 
   /* remove particles from this nodes local list */
-  for (pc = 0; pc < particles->n; pc++)
+  for (pc = 0; pc < particles->n; pc++) {
     local_particles[particles->part[pc].p.identity] = NULL;
+    free_particle(&particles->part[pc]);
+  }
 
-  realloc_particles(particles, 0);
-  
+  realloc_particlelist(particles, 0);
+  realloc_intlist(&local_bi, 0);
+
 #ifdef ADDITIONAL_CHECKS
   check_particle_consistency();
 #endif
@@ -1694,7 +1697,7 @@ void recv_particles(ParticleList *particles, int node)
 
   PART_TRACE(fprintf(stderr, "%d: recv_particles get %d\n", this_node, transfer));
 
-  realloc_particles(particles, particles->n + transfer);
+  realloc_particlelist(particles, particles->n + transfer);
   MPI_Recv(&particles->part[particles->n], transfer*sizeof(Particle), MPI_BYTE, node,
 	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
   particles->n += transfer;
@@ -1723,6 +1726,7 @@ void recv_particles(ParticleList *particles, int node)
   }
 
   realloc_intlist(&local_bi, 0);
+
 #ifdef ADDITIONAL_CHECKS
   check_particle_consistency();
 #endif

@@ -115,6 +115,7 @@ void on_integration_start()
       break;
     default: break;
     }
+    reinit_coulomb = 0;
     recalc_forces = 1;
   }
 #endif

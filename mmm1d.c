@@ -17,6 +17,7 @@
 #include "tuning.h"
 #include "utils.h"
 #include "interaction_data.h"
+#include "debug.h"
 
 #ifdef ELECTROSTATICS
 
@@ -40,6 +41,8 @@
 /** modified polygamma functions. See Arnold,Holm 2002 */
 static Polynom *modPsi = NULL;
 static int      n_modPsi = 0;
+static double modPsi_curerror = 1e100;
+
 static double L_i, L2, L2_i, prefL2_i, prefL3_i;
 
 MMM1D_struct mmm1d_params = { 0.05, 5, 1e-5 };
@@ -219,11 +222,14 @@ void MMM1D_recalcTables()
   double binom, err;
   double rho2m2max;
 
+  /* our tables are even better */
+  if (modPsi_curerror < mmm1d_params.maxPWerror)
+    return;
+
   if (modPsi != NULL) {
     for (n = 0; n < 2*n_modPsi; n++)
       realloc_doublelist(&modPsi[n], 0);
-    modPsi = NULL;
-    n_modPsi = 0;
+    modPsi = realloc(modPsi, n_modPsi = 0);
   }
 
   n = 0;
@@ -242,6 +248,8 @@ void MMM1D_recalcTables()
     n++;
   }
   while (err > 0.1*mmm1d_params.maxPWerror);
+
+  modPsi_curerror = mmm1d_params.maxPWerror;
 }
 
 void MMM1D_init()

@@ -13,6 +13,7 @@
 #include <stdio.h>
 
 #include "uwerr.h"
+#include "debug.h"
 
 
 /** This is eps from matlab */
@@ -1015,7 +1016,7 @@ int uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
   }
 
   /* check for plot as fourth argument */
-  if (argc > 4 && !error)
+  if (argc > 4 && !error) {
     if (!strcmp(argv[4], "plot"))
       plot = 1;
     else {
@@ -1027,6 +1028,7 @@ int uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
       }
 
     }
+  }
 
   if (argc > 5 && ! error)
     if (!strcmp(argv[argc-1], "plot"))

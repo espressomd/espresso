@@ -29,6 +29,7 @@
 #include "debye_hueckel.h"
 #include "forces.h"
 #include "constraint.h"
+#include "debug.h"
 
 Observable_stat energy = {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
 

@@ -120,9 +120,10 @@ void cells_pre_init()
 void realloc_cells(int size)
 {
   int i;
+  CELL_TRACE(fprintf(stderr, "%d: realloc_cells %d\n", this_node, size));
   /* free all memory associated with cells to be deleted. */
   for(i=size; i<n_cells; i++) {
-    realloc_particles(&cells[i],0);
+    realloc_particlelist(&cells[i],0);
   }
   /* resize the cell list */
   if(size != n_cells) {
@@ -196,9 +197,9 @@ void cells_re_init(int new_cs)
 
   /* finally deallocate the old cells */
   realloc_cellplist(&tmp_local,0);
-  for(i=0;i<tmp_n_cells;i++) {
-    realloc_particles(&tmp_cells[i],0);
-  }
+  for(i=0;i<tmp_n_cells;i++)
+    realloc_particlelist(&tmp_cells[i],0);
+
   free(tmp_cells);
   CELL_TRACE(fprintf(stderr, "%d: old cells deallocated\n",this_node));
 

@@ -128,7 +128,7 @@ typedef struct {
 
 /** List of particles. The particle array is resized using a sophisticated
     (we hope) algorithm to avoid unnecessary resizes.
-    Access using \ref realloc_particles, \ref got_particle,...
+    Access using \ref realloc_particlelist, \ref got_particle,...
 */
 typedef struct {
   /** The particles payload */
@@ -201,7 +201,15 @@ void free_particle(Particle *part);
     \param size the size to provide at least. It is rounded
     up to multiples of \ref PART_INCREMENT.
     \return true iff particle adresses have changed */
-int realloc_particles(ParticleList *plist, int size);
+int realloc_and_init_particlelist(ParticleList *plist, int size);
+
+/** allocate storage for local particles and ghosts. This version
+    does \em not care for the bond information to be freed if necessary.
+    \param plist the list on which to operate
+    \param size the size to provide at least. It is rounded
+    up to multiples of \ref PART_INCREMENT.
+    \return true iff particle adresses have changed */
+int realloc_particlelist(ParticleList *plist, int size);
 
 /** search for a specific particle.
     \param plist the list on which to operate 

@@ -175,7 +175,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
   for (pl = 0; pl < gc->n_part_lists; pl++) {
     if (data_parts == GHOSTTRANS_PARTNUM) {
       GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d\n", this_node, gc->part_lists[pl], *(int *)retrieve));
-      realloc_particles(gc->part_lists[pl], gc->part_lists[pl]->n = *(int *)retrieve);
+      realloc_particlelist(gc->part_lists[pl], gc->part_lists[pl]->n = *(int *)retrieve);
       retrieve += sizeof(int);
     }
     else {
@@ -255,8 +255,8 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
   for (pl = 0; pl < offset; pl++) {
     np   = gc->part_lists[pl]->n;
     if (data_parts == GHOSTTRANS_PARTNUM) {
-      realloc_particles(gc->part_lists[pl + offset],
-			gc->part_lists[pl + offset]->n = gc->part_lists[pl]->n); 
+      realloc_particlelist(gc->part_lists[pl + offset],
+			   gc->part_lists[pl + offset]->n = gc->part_lists[pl]->n); 
     }
     else {
       part1 = gc->part_lists[pl]->part;
