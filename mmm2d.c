@@ -937,7 +937,7 @@ static char *MMM2D_tune_far(double error)
   while (err > error && mmm2d_params.far_cut*box_l[2] < MAXIMAL_FAR_CUT);
   if (mmm2d_params.far_cut*box_l[2] >= MAXIMAL_FAR_CUT)
     return "Far cutoff too large, decrease n_layers or the error bound";
-  // fprintf(stderr, "far cutoff %g %g\n", mmm2d_params.far_cut, err);
+  // fprintf(stderr, "far cutoff %g %g %g\n", mmm2d_params.far_cut, err, min_far);
   mmm2d_params.far_cut -= min_inv_boxl;
   mmm2d_params.far_cut2 = SQR(mmm2d_params.far_cut);
   return NULL;
@@ -1402,6 +1402,12 @@ void MMM2D_on_resort_particles()
 int set_mmm2d_params(Tcl_Interp *interp, double maxPWerror, double far_cut)
 {
   char *err;
+
+  if (cell_structure.type != CELL_STRUCTURE_NSQUARE &&
+      cell_structure.type != CELL_STRUCTURE_LAYERED) {
+	Tcl_AppendResult(interp, "MMM2D requires layered of nsquare cell structure", (char *)NULL);
+	return TCL_ERROR;
+  }
 
   mmm2d_params.maxPWerror = maxPWerror;
 
