@@ -233,8 +233,8 @@ int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
 
   /* Sanity Checks */
 #ifdef ELECTROSTATICS      
-  if ( nptiso.dimension < 3 && !nptiso.cubic_box ){
-    fprintf(stderr,"WARNING: If electrostatics is compiled in you must use the -cubic_box option!\n");
+  if ( nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.bjerrum > 0 ){
+    fprintf(stderr,"WARNING: If electrostatics is being used you must use the -cubic_box option!\n");
     fprintf(stderr,"Automatically reverting to a cubic box for npt integration.\n");
     fprintf(stderr,"Be aware though that all of the coulombic pressure is added to the x-direction only!\n");
     nptiso.cubic_box = 1;
