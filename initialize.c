@@ -21,6 +21,7 @@
 #include "p3m.h"
 #include "fft.h"
 #include "ghosts.h"
+#include "polymer.h"
 
 static void init_tcl(Tcl_Interp *interp);
 
@@ -57,10 +58,9 @@ void on_integration_start()
   if (!node_grid_is_set())
     setup_node_grid();
 
-  /*fprintf(stderr,"%d: on_int_start: para_ch = %d inter_ch = %d top_ch %d part_ch =%d\n"
-    ,this_node,parameter_changed,interactions_changed,topology_changed,particle_changed);
-  */
-
+  INTEG_TRACE(fprintf(stderr,"%d: on_int_start: para_ch = %d inter_ch = %d top_ch %d part_ch =%d\n", 
+		      this_node,parameter_changed,interactions_changed,topology_changed,particle_changed));
+  
   particle_invalidate_part_node();
 
 
@@ -143,6 +143,8 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "tcl_rand", (Tcl_CmdProc *)tcl_rand, 0, NULL);
   /* in file blockfile_tcl.c */
   Tcl_CreateCommand(interp, "blockfile", (Tcl_CmdProc *)blockfile, 0, NULL);
+  /* in file polymer.c */
+  Tcl_CreateCommand(interp, "polymer", (Tcl_CmdProc *)polymer, 0, NULL);
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("TCLMD_SCRIPTS");
