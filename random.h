@@ -16,8 +16,6 @@ typedef struct {
   long  iv[NTAB_RANDOM];
 } RandomStatus;
 
-/*----------------------------------------------------------*/
-
 extern long   l_random(void);
 extern int    i_random(int maxint);
 extern double d_random(void);
@@ -32,6 +30,33 @@ RandomStatus  print_random_stat(void);
      parallel random number generator.
 */
 int t_random(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
+/*----------------------------------------------------------*/
+/*----------------------------------------------------------*/
+/*----------------------------------------------------------*/
+
+#define MERS_BIT_RANDOM 250
+
+typedef struct {
+  int random_pointer_1;
+  int random_pointer_2;
+  int rand_w_array[MERS_BIT_RANDOM];
+} BitRandomStatus;
+
+double bit_random_generator(void);
+void   init_bit_random(void);
+void   init_bit_random_generator(int iseed);
+void   init_bit_random_stat(BitRandomStatus my_stat);
+int    print_bit_random_seed(void);
+BitRandomStatus print_bit_random_stat(void);
+
+/**  Implementation of the tcl command \ref tcl_bit_random. 
+     Access to the parallel bit random number generator.
+*/
+int bit_random(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
+void write_random_generator(void);
+void read_random_generator(void);
 
 /*----------------------------------------------------------*/
 
