@@ -27,7 +27,7 @@ float *partCoord_g=NULL, *partCM_g=NULL;
 int n_part_g = 0, n_chains_g = 0;
 
 /** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
-double **configs = NULL; int n_configs = 0;
+double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
 
 /** data for a system consisting of chains */
 int chain_start = 0, chain_n_chains = 0, chain_length = 0;
@@ -456,7 +456,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   }
   else if ( (!strncmp(mode, "<g1>", strlen(mode))) || (!strncmp(mode, "<g2>", strlen(mode))) || (!strncmp(mode, "<g3>", strlen(mode))) ){
     /* 'analyze { <g1> | <g2> | <g3> } [<chain_start> <n_chains> <chain_length>]' */
-    /************************************************************/
+    /******************************************************************************/
     int i; double *gx; 
 
     if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR) return TCL_ERROR;
@@ -476,8 +476,13 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   else if (!strncmp(mode, "append", strlen(mode))) {
     /* 'analyze append' */
     /********************/
-    if (argc != 0) { 
-      Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze append", (char *)NULL); return TCL_ERROR; 
+    if (argc != 0) { Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze append", (char *)NULL); return TCL_ERROR; }
+    if (n_total_particles == 0) {
+      Tcl_AppendResult(interp,"No particles to append! Use 'part' to create some, or 'analyze configs' to submit a bunch!",(char *) NULL); 
+      return (TCL_ERROR); }
+    if ((n_configs > 0) && (n_part_conf != n_total_particles)) {
+      sprintf(buffer,"All configurations stored must have the same length (previously: %d, now: %d)!", n_part_conf, n_total_particles);
+      Tcl_AppendResult(interp,buffer,(char *) NULL); return (TCL_ERROR); 
     }
     if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
     analyze_append();
@@ -486,6 +491,13 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   else if (!strncmp(mode, "push", strlen(mode))) {
     /* 'analyze push [<size>]' */
     /*****************************/
+    if (n_total_particles == 0) {
+      Tcl_AppendResult(interp,"No particles to append! Use 'part' to create some, or 'analyze configs' to submit a bunch!",(char *) NULL); 
+      return (TCL_ERROR); }
+    if ((n_configs > 0) && (n_part_conf != n_total_particles)) {
+      sprintf(buffer,"All configurations stored must have the same length (previously: %d, now: %d)!", n_part_conf, n_total_particles);
+      Tcl_AppendResult(interp,buffer,(char *) NULL); return (TCL_ERROR); 
+    }
     if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
     if (argc == 1) { 
       Tcl_GetInt(interp, argv[0], &i); argc--; argv++;
@@ -500,8 +512,13 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   else if (!strncmp(mode, "replace", strlen(mode))) {
     /* 'analyze replace <index>' */
     /*****************************/
-    if (argc != 1) {
-      Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze replace <index>", (char *)NULL); return TCL_ERROR; 
+    if (argc != 1) { Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze replace <index>", (char *)NULL); return TCL_ERROR; }
+    if (n_total_particles == 0) {
+      Tcl_AppendResult(interp,"No particles to append! Use 'part' to create some, or 'analyze configs' to submit a bunch!",(char *) NULL); 
+      return (TCL_ERROR); }
+    if ((n_configs > 0) && (n_part_conf != n_total_particles)) {
+      sprintf(buffer,"All configurations stored must have the same length (previously: %d, now: %d)!", n_part_conf, n_total_particles);
+      Tcl_AppendResult(interp,buffer,(char *) NULL); return (TCL_ERROR); 
     }
     if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
     Tcl_GetInt(interp, argv[0], &i); argc--; argv++;
@@ -540,6 +557,35 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze stored", (char *)NULL); return TCL_ERROR; 
     }
     sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
+  }
+  else if (!strncmp(mode, "configs", strlen(mode))) {
+    /* 'analyze configs [<configuration>]' */
+    /***************************************/
+    if (argc == 0) {
+      for(i=0; i < n_configs; i++) {
+	Tcl_AppendResult(interp,"{ ", (char *)NULL);
+	for(j=0; j < n_part_conf; j++) {
+	  sprintf(buffer,"%f %f %f ",configs[i][3*j],configs[i][3*j+1],configs[i][3*j+2]);
+	  Tcl_AppendResult(interp, buffer,(char *)NULL);
+	}
+	Tcl_AppendResult(interp,"} ",(char *)NULL);
+      }
+      return (TCL_OK); }
+    else if ((argc == 3*n_part_conf) || (n_part_conf == 0)) {
+      if ((n_part_conf == 0) && (argc % 3 == 0)) n_part_conf = argc/3;
+      else if (argc != 3*n_part_conf) {
+	sprintf(buffer,"Wrong # of args(%d)! Usage: analyze configs [x0 y0 z0 ... x%d y%d z%d]",argc,n_part_conf,n_part_conf,n_part_conf);
+	Tcl_AppendResult(interp,buffer,(char *)NULL); return TCL_ERROR; }
+      double *tmp_config; tmp_config = malloc(3*n_part_conf*sizeof(double));
+      for(j=0; j < argc; j++) {
+	Tcl_GetDouble(interp, argv[j], &(tmp_config[j]));
+      }
+      analyze_configs(tmp_config, n_part_conf);
+      sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK; }
+    else { 
+      sprintf(buffer,"Wrong # of args(%d)! Usage: analyze configs [x0 y0 z0 ... x%d y%d z%d]",argc,n_part_conf,n_part_conf,n_part_conf);
+      Tcl_AppendResult(interp,buffer,(char *)NULL); return TCL_ERROR;
+    }
   }
   else {
     Tcl_ResetResult(interp);
@@ -1056,9 +1102,10 @@ void init_energies()
 
 void analyze_append() {
   int i;
+  n_part_conf = n_total_particles;
   configs = realloc(configs,(n_configs+1)*sizeof(double *));
-  configs[n_configs] = (double *) malloc(3*n_total_particles*sizeof(double));
-  for(i=0; i<n_total_particles; i++) {
+  configs[n_configs] = (double *) malloc(3*n_part_conf*sizeof(double));
+  for(i=0; i<n_part_conf; i++) {
     configs[n_configs][3*i]   = partCfg[i].r.p[0];
     configs[n_configs][3*i+1] = partCfg[i].r.p[1];
     configs[n_configs][3*i+2] = partCfg[i].r.p[2];
@@ -1068,12 +1115,13 @@ void analyze_append() {
 
 void analyze_push() {
   int i;
+  n_part_conf = n_total_particles;
   free(configs[0]);
   for(i=0; i<n_configs-1; i++) {
     configs[i]=configs[i+1];
   }
-  configs[n_configs-1] = (double *) malloc(3*n_total_particles*sizeof(double));
-  for(i=0; i<n_total_particles; i++) {
+  configs[n_configs-1] = (double *) malloc(3*n_part_conf*sizeof(double));
+  for(i=0; i<n_part_conf; i++) {
     configs[n_configs-1][3*i]   = partCfg[i].r.p[0];
     configs[n_configs-1][3*i+1] = partCfg[i].r.p[1];
     configs[n_configs-1][3*i+2] = partCfg[i].r.p[2];
@@ -1082,7 +1130,8 @@ void analyze_push() {
 
 void analyze_replace(int ind) {
   int i;
-  for(i=0; i<n_total_particles; i++) {
+  n_part_conf = n_total_particles;
+  for(i=0; i<n_part_conf; i++) {
     configs[ind][3*i]   = partCfg[i].r.p[0];
     configs[ind][3*i+1] = partCfg[i].r.p[1];
     configs[ind][3*i+2] = partCfg[i].r.p[2];
@@ -1098,3 +1147,17 @@ void analyze_remove(int ind) {
   n_configs--;
   configs = realloc(configs,n_configs*sizeof(double *));
 }
+
+void analyze_configs(double *tmp_config, int count) {
+  int i;
+  n_part_conf = count;
+  configs = realloc(configs,(n_configs+1)*sizeof(double *));
+  configs[n_configs] = (double *) malloc(3*n_part_conf*sizeof(double));
+  for(i=0; i<n_part_conf; i++) {
+    configs[n_configs][3*i]   = tmp_config[3*i];
+    configs[n_configs][3*i+1] = tmp_config[3*i+1];
+    configs[n_configs][3*i+2] = tmp_config[3*i+2];
+  }
+  n_configs++;
+}
+
