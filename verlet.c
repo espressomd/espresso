@@ -3,6 +3,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "config.h"
 #include "verlet.h"
 #include "debug.h"
@@ -13,15 +14,11 @@
 #include "utils.h"
 
 /** Granularity of the verlet list */
-#define LIST_INCREMENT 100
+#define LIST_INCREMENT 20
 
 /*****************************************
  * Variables 
  *****************************************/
-
-int   n_verletList;
-int max_verletList;
-int    *verletList;
 
 int rebuild_verletlist;
 
@@ -29,102 +26,108 @@ int rebuild_verletlist;
 /************************************************************/
 /*@{*/
 
-/** Reallocate the verlet list. */
-void resize_verlet_list();
-
-/** Add a particle pair to the verlet list.
- *  \param p1 Index of paricle one in \ref particles
- *  \param p2 Index of paricle one in \ref particles
+/** Add a particle pair to a verlet pair list.
+    Checks verlet pair list size and reallocates memory if necessary.
+ *  \param p1 Pointer to paricle one.
+ *  \param p2 Pointer to paricle two.
+ *  \param vl Pointer to the verlet pair list.
  */
-void add_pair(int p1, int p2);
+MDINLINE void add_pair(PairList *vl, Particle *p1, Particle *p2)
+{
+  /* check size of verlet List */
+  if( (*vl).n+1 > (*vl).max ) {
+    (*vl).max += LIST_INCREMENT;
+    (*vl).pair = (Particle **)realloc((*vl).pair, 2*sizeof(Particle *)*(*vl).max);
+  }
+  /* add pair */
+  (*vl).pair[(*vl).n * 2]       = p1;
+  (*vl).pair[((*vl).n * 2) + 1] = p2;
+  /* increase number of pairs */
+  (*vl).n++;
+}
+
+/** Resizes a verlet pair list according to the actual content (*vl).n. 
+    \param vl Pointer to the verlet pair list. */
+void resize_verlet_list(PairList *vl);
 
 /*@}*/
 
 /*******************  exported functions  *******************/
 
-void verlet_init()
-{
-  VERLET_TRACE(fprintf(stderr,"%d: verlet_init:\n",this_node));
-  /* create empty verlet list of size LIST_INCREMENT */
-  n_verletList   = 0;
-  max_verletList = LIST_INCREMENT;
-  verletList     = (int *)malloc(2*LIST_INCREMENT*sizeof(int));
-}
-
 void build_verlet_list()
 {
-  int i,j,nc;
-  /* cell position */
-  int m,n,o;
-  /* cell indizes */
-  int ci1,ci2;
-  /* particle indizes */
-  int p1,p2;
-  /* pair distance square */
+  int c, nc, p1, p2;
+  ParticleList *pl1, *pl2;
+  PairList *vl;
   double dist2;
-  
+
   VERLET_TRACE(fprintf(stderr,"%d: build_verlet_list:\n",this_node));
-  VERLET_TRACE(fprintf(stderr,"%d: Cell Grid: (%d, %d, %d)\n",
-		       this_node,cell_grid[0],cell_grid[1],cell_grid[2]));
-  VERLET_TRACE(fprintf(stderr,"%d: Max range %f:\n",this_node,sqrt(max_range2)));
- 
-  n_verletList   = 0; 
 
-  /* define 'new old' coordinates*/
-  for(i=0;i<n_particles+n_ghosts;i++)
-    for(j=0;j<3;j++)
-	particles[i].p_old[j] = particles[i].p[j];
-
-  /* loop through all inner cells. */
-  for(m=1; m<cell_grid[0]+1; m++)
-    for(n=1; n<cell_grid[1]+1; n++)
-      for(o=1; o<cell_grid[2]+1; o++) {
-	ci1 = get_linear_index(m,n,o,ghost_cell_grid);
-	/* interactions inside inner cells */
-	for(i=0; i < cells[ci1].n_particles; i++) {
-	  p1 = cells[ci1].particles[i];
-	  for(j=i+1; j < cells[ci1].n_particles; j++) {
-	    p2 = cells[ci1].particles[j];
-	    dist2 = distance2(particles[p1].p,particles[p2].p);
-	    VERLET_TRACE(fprintf(stderr,"%d: Pair (%d, %d) Dist %.2f",this_node,p1,p2,sqrt(dist2)));
-	    if(dist2 <= max_range2) {
-	      add_pair(p1,p2);
-	      VERLET_TRACE(fprintf(stderr,"; added at %d",n_verletList));
-	    }
-	    VERLET_TRACE(fprintf(stderr,"\n"));
-	  }
-	}
-	/* interactions with neighbour cells */
-	for(nc=0; nc < cells[ci1].n_neighbours; nc++) {
-	  ci2 = cells[ci1].neighbours[nc];
-	  for(i=0; i < cells[ci1].n_particles; i++) {
-	    p1 = cells[ci1].particles[i];
-	    for(j=0; j < cells[ci2].n_particles; j++) {
-	      p2 = cells[ci2].particles[j];
-	      dist2 = distance2(particles[p1].p,particles[p2].p);
-	      VERLET_TRACE(fprintf(stderr,"%d: Pair (%d, %d) Dist %.2f",this_node,p1,p2,sqrt(dist2)));
-	      if(dist2 <= max_range2) {
-		add_pair(p1,p2);
-		VERLET_TRACE(fprintf(stderr,"; added at %d",n_verletList));
-	      }
-	      VERLET_TRACE(fprintf(stderr,"\n"));
-	    }
+  /* loop cells */
+  for(c=0; c<n_cells; c++) {
+    pl1 = &(cells[c].pList);
+    /* loop neighbor cells */
+    for(nc=0; nc<cells[c].n_neighbors; nc++) {
+      pl2 = cells[c].nList[nc].pList;
+      vl  = &(cells[c].nList[nc].vList);
+      /* loop cell particles */
+      for(p1=0; p1<(*pl1).n; p1++) {
+	/* set 'new old' coordinates */
+	if(nc==0) memcpy((*pl1).part[p1].p_old, 
+			 (*pl1).part[p1].r.p, 3*sizeof(double));
+	/* loop neighbor cell particles */
+	for(p2=0; p2<(*pl2).n; p2++) {
+	  dist2 = distance2((*pl1).part[p1].r.p, (*pl2).part[p2].r.p);
+	  if(dist2 <= max_range2) {
+	    add_pair(vl, &((*pl1).part[p1]), &((*pl2).part[p2]));
 	  }
 	}
       }
-  /* make the verlet list smaller again, if possible */
-  resize_verlet_list();
-  VERLET_TRACE(fprintf(stderr,"%d: n_verletList = %d \n",this_node,n_verletList));
+      resize_verlet_list(vl);
+    }
+  }
+
+#ifdef VERLET_DEBUG 
+  {
+    int sum,tot_sum=0;
+    fprintf(stderr,"%d: Verlet list sizes: \n",this_node);
+    for(c=0; c<n_cells; c++) { 
+      sum=0;
+      for(nc=0; nc<cells[c].n_neighbors; nc++) {
+	sum += cells[c].nList[nc].vList.n;
+      }
+      fprintf(stderr,"%d: Cell %d: sum = %d \n",this_node,c,sum);
+      tot_sum += sum;
+    }
+    fprintf(stderr,"%d: total number of interaction pairs: %d\n",this_node,tot_sum)
+  }
+#endif 
+
   rebuild_verletlist = 0;
 }
 
-void verlet_exit()
+/* preliminary routine ! */
+void realloc_pairList(PairList *list, int size)
 {
-  VERLET_TRACE(fprintf(stderr,"%d: verlet_exit:\n",this_node));
-  free(verletList);
-  n_verletList   = 0;
-  max_verletList = 0; 
-    
+  int b_size;
+  b_size = (LIST_INCREMENT*((size / LIST_INCREMENT)+1));
+  if(b_size != (*list).max && b_size > (*list).n) {
+    (*list).pair = (Particle **) realloc((*list).pair, 2*sizeof(Particle *)*b_size);
+    (*list).max = b_size;
+  }
+}
+
+/************************************************************/
+
+void resize_verlet_list(PairList *vl)
+{
+  int diff;
+  diff = (*vl).max - (*vl).n;
+  if( diff > 2*LIST_INCREMENT ) {
+    diff = (diff/LIST_INCREMENT)-1;
+    (*vl).max -= diff*LIST_INCREMENT;
+    (*vl).pair = (Particle **)realloc((*vl).pair, 2*sizeof(Particle *)*(*vl).max);
+  }
 }
 
 /* Callback functions */
@@ -143,29 +146,4 @@ int rebuild_vlist_callback(Tcl_Interp *interp, void *_data)
 }
 
 
-/************************************************************/
 
-void resize_verlet_list()
-{
-  int diff;
-  diff = max_verletList - n_verletList;
-  if( diff > 2*LIST_INCREMENT ) {
-    diff = (diff/LIST_INCREMENT)-1;
-    max_verletList -= diff*LIST_INCREMENT;
-    verletList = (int *)realloc(verletList, 2*max_verletList*sizeof(int));
-  }
-}
-
-void add_pair(int p1, int p2)
-{
-  /* check size of verlet List */
-  if(n_verletList >= max_verletList) {
-    max_verletList += LIST_INCREMENT;
-    verletList = (int *)realloc(verletList, 2*max_verletList*sizeof(int));
-  }
-  /* add pair */
-  verletList[2*n_verletList]   = p1;
-  verletList[2*n_verletList+1] = p2;
-  /* increase number of pairs */
-  n_verletList++;
-}

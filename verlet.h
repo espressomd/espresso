@@ -20,7 +20,7 @@
 */
 typedef struct {
   /** The pair payload (two integers per pair) */
-  Particle *pair;
+  Particle **pair;
   /** Number of pairs contained */
   int n;
   /** Number of pairs that fit in until a resize is needed */
