@@ -217,3 +217,66 @@ proc LinRegressionWithSigma {l} {
 
     return "$a $b $da $db $covab $chi"
 }
+
+#############################################################
+#  calculate magnitude^2 of a vector                        #
+#############################################################
+proc lsqr { arg } {
+    set dim [llength $arg]
+    set sum 0.0
+    for {set i 0} {$i < $dim} {incr i} {
+        set sum [expr $sum + [lindex $arg $i] * [lindex $arg $i] ]
+    }
+    return $sum
+}
+
+#############################################################
+#  calculate dot product                                 #
+#############################################################
+proc dot_product { vec1 vec2 } {
+    set dim [llength $vec1]
+    set sum 0.0
+    for {set i 0} {$i < $dim} {incr i} {
+        set sum [expr $sum + [lindex $vec1 $i] * [lindex $vec2 $i] ]
+    }
+    return $sum
+}
+
+#############################################################
+#
+# find vector mag among two points
+#
+#############################################################
+proc find_vector_mag { vec1 vec2} {
+    set dim [llength $vec1]
+    set vec {0. 0. 0.}
+    for {set j 0} { $j < $dim } {incr j} {
+        lset vec $j [expr [lindex $vec2 $j] - [lindex $vec1 $j] ]
+    }
+    
+    set sum [expr sqrt([lsqr $vec])]
+    return $sum
+}
+
+#############################################################
+#
+# find unit vector among two points
+#
+#############################################################
+proc find_unit_vector { vec1 vec2} {
+    set dim [llength $vec1]
+    set vec {0. 0. 0.}
+    for {set j 0} { $j < $dim } {incr j} {
+        lset vec $j [expr [lindex $vec2 $j] - [lindex $vec1 $j] ]
+    }
+    
+    set sum [expr sqrt([lsqr $vec])]
+
+    set u_vec { 0. 0. 0. }
+    
+    for {set j 0} { $j < $dim } {incr j} {
+        lset u_vec $j [expr [lindex $vec $j] / ($sum)]
+    }
+    
+    return $u_vec
+}
