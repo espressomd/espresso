@@ -355,9 +355,9 @@ void thermo_init_dpd()
 void thermo_init_npt_isotropic()
 {
   if (nptiso.piston != 0.0) {
-    nptiso_pref1 = -0.5*nptiso_gamma0;
-    nptiso_pref2 = sqrt(12.0*temperature*nptiso_gamma0*time_step);
-    nptiso_pref3 = -0.5*nptiso_gammav*(1.0/nptiso.piston)*0.5*time_step;
+    nptiso_pref1 = -nptiso_gamma0*0.5 * time_step;
+    nptiso_pref2 = sqrt(12.0*temperature*nptiso_gamma0*time_step) * time_step;
+    nptiso_pref3 = -nptiso_gammav*(1.0/nptiso.piston)*0.5*time_step;
     nptiso_pref4 = sqrt(12.0*temperature*nptiso_gammav*time_step);
   }
   THERMO_TRACE(fprintf(stderr,"%d: thermo_init_npt_isotropic: nptiso_pref1=%f, nptiso_pref2=%f, nptiso_pref3=%f, nptiso_pref4=%f",nptiso_pref1,nptiso_pref2,nptiso_pref3,nptiso_pref4));
@@ -407,10 +407,5 @@ void friction_thermo_langevin_rotation(Particle *p)
 }
 #endif
 
-#ifdef NPT
-double friction_thermo_nptiso(void) {
-  return ( nptiso_pref3*nptiso.p_diff + nptiso_pref4*(d_random()-0.5) );
-}
-#endif
 
 

@@ -287,12 +287,9 @@ void integrate_vv(int n_steps)
                can not be combined for the translation. 
     */
     if(integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
-      propagate_vel();  propagate_pos();
-    }
+      propagate_vel();  propagate_pos(); }
     else
-    {
       propagate_vel_pos();
-    }
 #ifdef ROTATION
     propagate_omega_quat(); 
 #endif
@@ -455,6 +452,10 @@ void rescale_forces_propagate_vel()
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
       for(j = 0; j < 3 ; j++) {
+#ifdef NPT
+	if(integ_switch == INTEG_METHOD_NPT_ISO)
+	  nptiso.p_vel += SQR(p[i].m.v[j]);
+#endif
 #ifdef EXTERNAL_FORCES
 	if (!(p[i].l.ext_flag & COORD_FIXED(j)))
 #endif
@@ -462,7 +463,7 @@ void rescale_forces_propagate_vel()
 	  p[i].m.v[j] += p[i].f.f[j];
 #ifdef NPT
 	if(integ_switch == INTEG_METHOD_NPT_ISO)
-	  nptiso.p_vel += SQR(p[i].m.v[j]);
+	  p[i].m.v[j] += friction_therm0_nptiso(p[i].m.v[j]);
 #endif
       }
 
@@ -486,7 +487,7 @@ void finalize_p_inst_npt()
     MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     if (this_node == 0) {
       nptiso.p_inst = p_tmp/(3.0*nptiso.volume);
-      nptiso.p_diff = nptiso.p_diff  +  (nptiso.p_inst-nptiso.p_ext)*0.5*time_step + friction_thermo_nptiso();
+      nptiso.p_diff = nptiso.p_diff  +  (nptiso.p_inst-nptiso.p_ext)*0.5*time_step + friction_thermV_nptiso(nptiso.p_diff);
       // fprintf(stderr, " = %f -> %f  (volume: %f)\n",nptiso.p_inst,nptiso.p_diff,nptiso.volume/(box_l[0]*box_l[1]*box_l[2]));
     }
   }
@@ -504,6 +505,7 @@ void propagate_press_box_pos_and_rescale_npt()
     double scal[3], L_new;
 
     /* finalize derivation of p_inst */
+    // fprintf(stderr, "%d: propagate_press_box...: finalize_p_inst ",this_node);
     finalize_p_inst_npt();
 
     /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and vel-rescaling */
@@ -512,7 +514,7 @@ void propagate_press_box_pos_and_rescale_npt()
       scal[2] = SQR(box_l[0])/pow(nptiso.volume,2.0/3.0);
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       L_new = pow(nptiso.volume,1.0/3.0);
-// fprintf(stderr, "%d: %f -> %f; volume: t=%f => L=%f || ",this_node,nptiso.p_inst,nptiso.p_diff,nptiso.volume,L_new);
+      // fprintf(stderr, "%d: %f -> %f; volume: t=%f => L=%f || ",this_node,nptiso.p_inst,nptiso.p_diff,nptiso.volume,L_new);
       scal[1] = L_new/box_l[0];
       scal[0] = 1/scal[1];
       box_l[0] = box_l[1] = box_l[2] = L_new;
@@ -520,6 +522,7 @@ void propagate_press_box_pos_and_rescale_npt()
     MPI_Bcast(scal,  3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     on_NpT_boxl_change();
+    // fprintf(stderr, "box_l=%f \n ",box_l[0]);
 
     /* propagate positions while rescaling velocities */
     for (c = 0; c < local_cells.n; c++) {
@@ -570,13 +573,15 @@ void propagate_vel()
 	  {
 	    /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
 	    p[i].m.v[j] += p[i].f.f[j];
+
 	    /* SPECIAL TASKS in particle loop */
 #ifdef NEMD
 	    if(j==0) nemd_get_velocity(p[i]);
 #endif
 #ifdef NPT
-	    if(integ_switch == INTEG_METHOD_NPT_ISO) 
-	      nptiso.p_vel += SQR(p[i].m.v[j]);
+	    if(integ_switch == INTEG_METHOD_NPT_ISO) {
+	      p[i].m.v[j] += friction_therm0_nptiso(p[i].m.v[j]);
+	      nptiso.p_vel += SQR(p[i].m.v[j]); }
 #endif
 	  }
 
@@ -600,7 +605,7 @@ void propagate_vel()
 
 void propagate_pos() 
 {
-  INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
+  INTEG_TRACE(fprintf(stderr,"%d: propagate_pos:\n",this_node));
   if(integ_switch == INTEG_METHOD_NPT_ISO) 
     /* Special propagator for NPT ISOTROPIC */
     /* Propagate pressure, box_length (2 times) and positions, rescale

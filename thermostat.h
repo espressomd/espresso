@@ -119,10 +119,18 @@ extern double dpd_r_cut;
 extern double dpd_r_cut_inv;
 
 
-/** INSERT COMMENT */
+/** Friction coefficient for nptiso-thermostat's inline-functions \ref friction_therm0_nptiso */
 extern double nptiso_gamma0;
-/** INSERT COMMENT */
+/** Friction coefficient for nptiso-thermostat's inline-functions \ref friction_thermV_nptiso */
 extern double nptiso_gammav;
+#ifdef NPT
+/** Prefactors for nptiso-thermostat's inline-functions \ref friction_therm0_nptiso */
+extern double nptiso_pref1;
+extern double nptiso_pref2;
+/** Prefactors for nptiso-thermostat's inline-functions \ref friction_thermV_nptiso */
+extern double nptiso_pref3;
+extern double nptiso_pref4;
+#endif
 
 #ifdef DPD
 /** DPD thermostat: prefactor friction force. */
@@ -150,8 +158,23 @@ void thermo_init();
 void friction_thermo_langevin(Particle *p);
 
 #ifdef NPT
+/** add velocity-dependend noise and friction for NpT-sims to the particle's velocity 
+    @param dt_vj  j-component of the velocity scaled by time_step dt 
+    @return       j-component of the noise added to the velocity, also scaled by dt (contained in prefactors) */
+MDINLINE double friction_therm0_nptiso(double dt_vj) {
+  if(thermo_switch & THERMO_NPT_ISO)   
+    return ( nptiso_pref1*dt_vj + nptiso_pref2*(d_random()-0.5) );
+  else
+    return 0.0;
+}
+
 /** add p_diff-dependend noise and friction for NpT-sims to \ref nptiso_struct::p_diff */
-double friction_thermo_nptiso(void);
+MDINLINE double friction_thermV_nptiso(double p_diff) {
+  if(thermo_switch & THERMO_NPT_ISO)   
+    return ( nptiso_pref3*p_diff + nptiso_pref4*(d_random()-0.5) );
+  else
+    return 0.0;
+}
 #endif
 
 /** set the particle torques to the friction term, i.e. \f$\tau_i=-\gamma w_i + \xi_i\f$.
