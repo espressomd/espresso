@@ -17,7 +17,7 @@
 /*@{*/
 
 typedef struct {
-  /** Status flag for energy calculation. 0 re initialize energy
+  /** Status flag for energy calculation. 0 re-initialize energy
       struct, 1 every thing is fine, calculation can start. */
   int init_status;
 
@@ -28,11 +28,11 @@ typedef struct {
 
   /** number of energies. */
   int n;
-  /** number of energies befor specific interaction energies. */
+  /** number of energies before specific interaction energies. */
   int n_pre;
   /** number of energies for bonded interactions. */
   int n_bonded;
-  /** number of energies for non bonded interactions. */
+  /** number of energies for non-bonded interactions. */
   int n_non_bonded;
   /** number of energies for coulomb interaction. */
   int n_coulomb;
@@ -47,6 +47,7 @@ typedef struct {
 /************************************************************/
 /*@{*/
 extern Energy_stat energy;
+extern Energy_stat virials;
 /*@}*/
 
 /** \name Exported Functions */
@@ -160,7 +161,6 @@ void analyze_replace(int ind);
 void analyze_remove(int ind);
 
 /** Calculates the distribution of particles around others. 
-
     Calculates the distance distribution of particles with types given
     in the p1_types list around particles with types given in the
     p2_types list. The distances range from r_min to r_max, binned
@@ -200,6 +200,29 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
 */
 void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
 	      double r_min, double r_max, int r_bins, double *rdf);
+
+/** Calculates the Lennard-Jones-Virial and the real-space contribution to the electrostatic energy 
+    @param i                look at the configuration in 'configs[i][...]'
+    @param LJ_Virial        the Lennard-Jones-Virial
+    @param coulomb_r_energy the real-space contribution to the electrostatic energy
+*/
+void LJ_P3Mr(int i, double *LJ_Virial, double *coulomb_r_energy);
+
+
+/** Initializes extern Energy_stat \ref virials to be used by \ref calc_virials. */
+void init_virials();
+
+/** Calculates the virials of the system in parallel (hence it should be called by \ref mpi_gather_stats with job=2).<BR>
+    Due to the nature of a virial being Sum(i=0..n_total_particles)(Sum(j=i+1..n_total_particles)(r_ij*F_ij))
+    this function is based on a merge of \ref forces_calc into \ref calc_energy. */
+void calc_virials();
+
+/** Calculates the pressure in the system from a virial expansion using the terms from \ref calc_virials.<BR>
+    Output is stored in the \ref virials array, in which (on the first node) each component carries the corresponding pressure,
+    while virials.sum.e[0] contains the total pressure, virials.node.e[0] the sum of all squared pressure components,
+    virials.sum.e[1] the kinetic energy, and virials.node.e[1] the pressure of the ideal gas.
+*/
+void calc_pressure(void);
 
 /*@}*/
 
