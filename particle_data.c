@@ -771,6 +771,7 @@ int part(ClientData data, Tcl_Interp *interp,
       }
     else if (!strncmp(argv[0], "fix", strlen(argv[0]))) {
       double ext_f[3] = {0.0,0.0,0.0};
+      err = set_particle_v(part_num, ext_f);
       err = set_particle_ext(part_num, PARTICLE_FIXED, ext_f);
       argc -= 1;
       argv += 1;
