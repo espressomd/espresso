@@ -11,9 +11,36 @@ Current working revision.
 - v1.5.8a -
 -----------
 
+(b) April 28th, 2004
 (a) April 22nd, 2004.
 
 New Features / Changes / Bugfixes:
+(b) 1) New bonded potential: torsional dihedral angle potential.
+       Syntax is: inter i dihedral <mult> <bend> <phase>
+       This is a four body interaction. The bond has to be stored at the
+       second particle. For more information see the documentation of the
+       tcl inter command and dihedral.h
+    2) New tabulated bonded potentials:
+       Syntax is: inter i tabulated <type> <filename>
+       There are three types implemented, namely "bond" for a
+       tabulated bond length potential, "angle" for a tabulated bond
+       angle potential and "dihedral" for a tabulated dihedral
+       potential. The file format for the tabulated force and energy
+       value is the same as for the non-bonded tabulated
+       potential. For more information see the documentation of the
+       tcl inter command and tab.h. WARNING: I had no time to test the
+       tabulated dihedral angle potential yet.
+    3) New global variables: max_cut_non_bonded, max_range_non_bonded and max_range_non_bonded2
+       These variables have to do with the maximal interaction range
+       of non-bonded and short range electrostatic potentials and are
+       used by the verlet pair list algorithms. They are defined
+       similar to the variables max_cut, max_range and
+       max_range2. They keep the Verlet pair lists smaller, if the
+       maximal interaction range for non-bonded potentials is smaller
+       then the maximal interaction range of bonded interactions in
+       the system. This has no effect on the cell_structure nad the
+       communication of ghost particles.
+ 
 (a) Major NpT-Update: The NpT-Integrator does now work properly, though still not at top efficiency.
     + The code no longer crashes when updating ghost particles after enforcing a 'cells_re_init'.
     + Now the new box-length is communicated after the particles are rescaled.
@@ -245,7 +272,6 @@ New Features:
     Usage of the new tcl command nemd:
          nemd - returning nemd status
 	 nemd off - turn off nemd
-         nemd <n_slabs> <n_exchange>
 	 nemd exchange <INT n_slabs> <INT n_exchange>
               - enable method exchange momentum 
 	 nemd shearrate <INT n_slabs> <DOUBLE shearrate>
