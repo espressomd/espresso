@@ -155,18 +155,17 @@ int move_to_p_buf(ParticleList *pl, int ind);
 */
 void send_particles(int s_dir);
 
-/** appends recieved particles to local particle array.
+/** appends recieved particles of direction dir to local particle array.
  *
  *  subroutine of \ref exchange_part. 
  *
+ *  Folds the coordinate in the send/recv direction.
  *  Reallocate particle buffer (particles) if necessary. Copy
  *  particles and their bonds from recieve buffers to local particle
  *  buffer.
  *
- * \warning \b Supports only two particle bonds at the moment.
- *
 */
-void append_particles(void);
+void append_particles(int dir);
 
 /** Send ghost particles in direction s_dir.
  *
@@ -298,32 +297,6 @@ void exchange_part()
 
   GHOST_TRACE(fprintf(stderr,"%d: exchange_part:\n",this_node));
 
-  /* fold coordinates to primary simulation box */
-  INNER_CELLS_LOOP(m, n, o) {
-    part = CELL_PTR(m, n, o)->pList.part;
-    np   = CELL_PTR(m, n, o)->pList.n;
-    for(i=0 ; i<np; i++) {
-      fold_particle(part[i].r.p, part[i].i);
- 
-     /* check part array */
-#ifdef ADDITIONAL_CHECKS
-      if(part[i].r.identity <0 || part[i].r.identity > max_seen_particle) {
-	fprintf(stderr,"%d: exchange_part: ERROR: illegal id=%d of part %d in cell (%d,%d,%d)\n",
-		this_node,part[i].r.identity,i,m,n,o);
-	errexit();
-      }
-      for(dir=0;dir<3;dir++) {
-	if(periodic[dir] && (part[i].r.p[dir] < 0 || part[i].r.p[dir] > box_l[dir])) {
-	  fprintf(stderr,"%d: exchange_part: ERROR: illegal pos[%d]=%f of part %d id=%d in cell (%d,%d,%d)\n",
-		  this_node,dir,part[i].r.p[dir],i,part[i].r.identity,m,n,o);
-	  errexit();
-	}
-      }
-#endif
-
-    }
-  }
-
   for(d=0; d<3; d++) { /* direction loop */  
     if(node_grid[d] > 1) { /* catch single node case for direction dir! */
       for(lr=0; lr<2; lr++) {
@@ -359,10 +332,38 @@ void exchange_part()
 	  }
 	}
 	send_particles(dir);
-	append_particles();
+	append_particles(d);
       }
     }
   }
+
+  /* fold coordinates to primary simulation box */
+  INNER_CELLS_LOOP(m, n, o) {
+    part = CELL_PTR(m, n, o)->pList.part;
+    np   = CELL_PTR(m, n, o)->pList.n;
+    for(i=0 ; i<np; i++) {
+      fold_particle(part[i].r.p, part[i].i);
+ 
+     /* check part array */
+#ifdef ADDITIONAL_CHECKS
+      if(part[i].r.identity <0 || part[i].r.identity > max_seen_particle) {
+	fprintf(stderr,"%d: exchange_part: ERROR: illegal id=%d of part %d in cell (%d,%d,%d)\n",
+		this_node,part[i].r.identity,i,m,n,o);
+	errexit();
+      }
+      for(dir=0;dir<3;dir++) {
+	if(periodic[dir] && (part[i].r.p[dir] < 0 || part[i].r.p[dir] > box_l[dir])) {
+	  fprintf(stderr,"%d: exchange_part: ERROR: illegal pos[%d]=%f of part %d id=%d in cell (%d,%d,%d)\n",
+		  this_node,dir,part[i].r.p[dir],i,part[i].r.identity,m,n,o);
+	  errexit();
+	}
+      }
+#endif
+
+    }
+  }
+
+
 
   GHOST_TRACE(print_particle_positions());
 
@@ -479,7 +480,7 @@ void exchange_ghost()
 		      ghost_recv_size[2],ghost_recv_size[3], ghost_recv_size[4], 
 		      ghost_recv_size[5],recv_buf.max));
 
-  GHOST_TRACE(print_ghost_positions());
+  /* GHOST_TRACE(print_ghost_positions());*/
 }
 
 void update_ghost_pos()
@@ -490,7 +491,7 @@ void update_ghost_pos()
   double modifier;
   ParticleList *pl;
  
-  GHOST_TRACE(fprintf(stderr,"%d: update_ghost_pos:\n",this_node));
+  /*  GHOST_TRACE(fprintf(stderr,"%d: update_ghost_pos:\n",this_node)); */
 
   for(s_dir=0; s_dir<6; s_dir++) {          /* direction loop forward */
     if(s_dir%2 == 0) r_dir = s_dir+1;
@@ -537,7 +538,7 @@ void collect_ghost_forces()
   int c, n, g, i;
   ParticleList *pl;
 
-  GHOST_TRACE(fprintf(stderr,"%d: collect_ghost_forces:\n",this_node));
+  /* GHOST_TRACE(fprintf(stderr,"%d: collect_ghost_forces:\n",this_node)); */
 
 #ifdef GHOST_FORCE_DEBUG
   {
@@ -678,7 +679,7 @@ void send_particles(int s_dir)
   int send_sizes[2],recv_sizes[2];
   MPI_Status status;
 
-  GHOST_TRACE(fprintf(stderr,"%d: send_particles(%d)\n",this_node,s_dir));
+  /* GHOST_TRACE(fprintf(stderr,"%d: send_particles(%d)\n",this_node,s_dir)); */
 
   /* check if communication goes to the very same node */
   if(node_neighbors[s_dir] != this_node) {
@@ -690,8 +691,9 @@ void send_particles(int s_dir)
     /* two step communication: first all even positions than all odd */
     for(evenodd=0; evenodd<2;evenodd++) {
       if((node_pos[s_dir/2]+evenodd)%2==0) {
-	GHOST_TRACE(fprintf(stderr,"%d: Send %d particles to node %d\n"
-			    ,this_node,p_send_buf.n,node_neighbors[s_dir]));
+	GHOST_TRACE(if(p_send_buf.n>0) 
+		    fprintf(stderr,"%d: send_part(%d): Send %d part to node %d\n"
+			    ,this_node,s_dir,p_send_buf.n,node_neighbors[s_dir]));
 	MPI_Send(send_sizes,2,MPI_INT,node_neighbors[s_dir],
 		 REQ_SEND_PART ,MPI_COMM_WORLD);
 	if(p_send_buf.n>0)
@@ -718,6 +720,9 @@ void send_particles(int s_dir)
 	  MPI_Recv(b_recv_buf.e,b_recv_buf.n, MPI_INT, node_neighbors[r_dir],
 		   REQ_SEND_PART,MPI_COMM_WORLD,&status);
 	}
+	GHOST_TRACE(if(p_recv_buf.n>0) 
+		    fprintf(stderr,"%d: send_part(%d): Recv %d part from node %d (r_dir=%d)\n",
+			    this_node,s_dir,p_recv_buf.n,node_neighbors[r_dir],r_dir));
       }
     }
   }
@@ -727,15 +732,19 @@ void send_particles(int s_dir)
   }
 }
 
-void append_particles(void)
+void append_particles(int dir)
 {
   int i, c_ind, b_ind=0;
   ParticleList *pl;
   Particle *part;
   
   for(i=0; i<p_recv_buf.n; i++) {
+    fold_coordinate(p_recv_buf.part[i].r.p, p_recv_buf.part[i].i, dir);
     c_ind = pos_to_ghost_cell_grid_ind(p_recv_buf.part[i].r.p);
     pl = &(cells[c_ind].pList);
+    GHOST_TRACE(fprintf(stderr,"%d: append part id=%d, pos=(%.3f,%.3f,%.3f) to cell %d\n",
+			this_node, p_recv_buf.part[i].r.identity, p_recv_buf.part[i].r.p[0],
+			p_recv_buf.part[i].r.p[1], p_recv_buf.part[i].r.p[2], c_ind));
     part = append_particle(pl, &(p_recv_buf.part[i]));
     local_particles[part->r.identity] = part;
     part->bl.n = b_recv_buf.e[b_ind];
