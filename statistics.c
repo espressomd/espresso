@@ -404,6 +404,8 @@ void invalidate_obs()
   total_pressure.init_status = 0;
 }
 
+
+
 /****************************************************************************************
  *                                 basic observables parsing
  ****************************************************************************************/
@@ -415,6 +417,7 @@ static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
   IntList l_orient;
   int xd, yd, zd;
   double zref;
+  double dir[3];
 
   init_intlist(&l_orient);
 
@@ -460,7 +463,7 @@ static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
   for ( i = 0 ; i < n_molecules ; i++) {
     atom = topology[i].part.e[0];
     //    printf("atom: %d \n", atom );
-    l_orient.e[i] = lipid_orientation(atom,partCfg,zref);
+    l_orient.e[i] = lipid_orientation(atom,partCfg,zref,dir);
     //   printf("lorient: %d \n", l_orient.e[i] );
     //    Tcl_AppendResult(interp, " ", l_orient, (char *)NULL);
   }
@@ -562,6 +565,36 @@ static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 
 }
+
+static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze lipid_orient_order ' */
+  double result;
+  char buffer[TCL_DOUBLE_SPACE];
+  result = 0;
+
+  if (n_total_particles <= 1) {
+    Tcl_AppendResult(interp, "(not enough particles)",
+		     (char *)NULL);
+    return (TCL_OK);
+  }
+
+  if ( orient_order(&result) == TCL_OK ) {
+    // Put in an error message here
+
+    printf(" res %f \n", result);
+    fflush(stdout);
+
+    Tcl_PrintDouble(interp, result, buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+    return TCL_OK;
+  } else {
+    Tcl_AppendResult(interp, "Error calculating orientational order ", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+}
+
 
 static int parse_mindist(Tcl_Interp *interp, int argc, char **argv)
 {
@@ -759,25 +792,15 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
 
 static int parse_Vkappa(Tcl_Interp *interp, int argc, char **argv)
 {
-  /* 'analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }]' */
+  /* 'analyze Vkappa [reset]' */
   double result = 0.0;
-  char buffer[3*TCL_DOUBLE_SPACE];  
+  char buffer[TCL_DOUBLE_SPACE];  
 
   if (argc > 0)
     if (ARG0_IS_S("reset"))
       Vkappa.Vk1 = Vkappa.Vk2 = Vkappa.avk = 0.0;
-    else if (ARG0_IS_S("read")) {
-      sprintf(buffer,"%f %f %f ",Vkappa.Vk1,Vkappa.Vk2,Vkappa.avk);
-      Tcl_AppendResult(interp, buffer, (char *)NULL); return (TCL_OK); }
-    else if (ARG0_IS_S("set")) {
-      if (argc < 4 || !ARG_IS_D(1,Vkappa.Vk1) || !ARG_IS_D(2,Vkappa.Vk2) || !ARG_IS_D(3,Vkappa.avk)) {
-	Tcl_AppendResult(interp, "usage: analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }] ", (char *)NULL);  return TCL_ERROR;  }
-      if (Vkappa.avk <= 0.0) {
-	Tcl_AppendResult(interp, "ERROR: # of averages <avk> must be positiv! Resetting values...", (char *)NULL);  return TCL_ERROR;  
-	result = Vkappa.Vk1 = Vkappa.Vk2 = Vkappa.avk = 0.0; }
-      result = Vkappa.Vk2/Vkappa.avk - SQR(Vkappa.Vk1/Vkappa.avk); }
     else { 
-      Tcl_AppendResult(interp, "usage: analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }] ", (char *)NULL);  return TCL_ERROR;  }
+      Tcl_AppendResult(interp, "usage: analyze Vkappa [reset] ", (char *)NULL);  return TCL_ERROR;  }
   else {
     Vkappa.Vk1 += box_l[0]*box_l[1]*box_l[2];
     Vkappa.Vk2 += SQR(box_l[0]*box_l[1]*box_l[2]);
@@ -1115,6 +1138,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return parse_modes2d(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("get_lipid_orients"))
     return parse_get_lipid_orients(interp,argc-2,argv+2);
+  else if (ARG1_IS_S("lipid_orient_order"))
+    return parse_lipid_orient_order(interp,argc-2,argv+2);
   else if (ARG1_IS_S("mindist"))
     return parse_mindist(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("centermass"))

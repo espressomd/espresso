@@ -62,7 +62,13 @@ void map_to_2dgrid();
 
 
  */
-int lipid_orientation( int id, Particle* partCfg , double zref);
+int lipid_orientation( int id, Particle* partCfg , double zref, double director[3]);
+
+/**
+   This routine calculates the orientational order parameter for a
+   lipid bilayer as defined in Brannigan and Brown 2004. 
+*/
+int orient_order(double* result);
 
 #endif
 
