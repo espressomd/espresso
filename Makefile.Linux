@@ -18,6 +18,9 @@ BLADE=no
 ### static compilation for certain brain damaged blade clusters
 STATIC=no
 
+### Debug compiling
+DEBUG=no
+
 ### ElectricFence allocation debugging
 EFENCE=no
 
@@ -77,8 +80,9 @@ ifeq ($(BLADE),yes)
 endif
 
 # debug compiler flags
-CFLAGS= -g -fno-inline -Wall $(HOSTFLAGS)
-
+ifeq ($(DEBUG),yes)
+     CFLAGS= -g -fno-inline -Wall $(HOSTFLAGS)
+endif
 
 ############ name of makedepend (or gcc -ME)
 DEPEND=makedepend
