@@ -1,0 +1,71 @@
+/** \page aux Auxiliary Tcl functions
+The following procedures are found in scripts/aux.tcl and scripts/countBonds.tcl.
+<ul>
+    <li>\anchor tcl_polyBlockWrite 
+	\verbatim polyBlockWrite <path> <param_list> <part_list>\endverbatim
+	writes out the current 'tcl_md' configuration as an AxA-blockfile, including parameters, interactions, particles, and bonds.<BR>
+	<path> should contain the filename including the full path to it.<BR>
+	<param_list> gives a tcl-list of the 'tcl_md'-parameters (out of ) to be saved; if an empty list '{}' is supplied, no parameters are written. If 'all', <i>all</i> parameters available through \ref tcl_setmd are written. Defaults to the full parameter set.<BR>
+	<part_list> gives a string of the particle-properties (out of pos | type | q | v | f) to be saved to disk; if an empty string ' "" 'is provided, no particles, no bonds, and no interactions are written. Defaults (if omitted) to all particle-properties.<BR>
+	Depending on the file-name's suffix, the output will be compressed (if <path> ends with '.gz'), too.<BR>
+	Note, that 'polyBlockWrite' in combination with \ref tcl_convertMD2Deserno replaces the (undocumented) function 'polywr': 
+	To save the current configuration to a Deserno-compatible file (e.g. for use with 'poly2pdb') you may now use \ref tcl_polyBlockWrite
+	to save your current configuration to a blockfile, and convert that with \ref tcl_convertMD2Deserno afterwards,
+	or you directly write a Deserno-compatible file by invoking
+	\verbatim convertMD2Deserno "-1" <output-filename>\endverbatim
+	out of 'tcl_md' to save your current active configuration.<BR>
+	However, this last paragraph now has only historical meaning (see \ref writepdb).
+
+    <li>\anchor tcl_stopparticles
+	\verbatim stopParticles \endverbatim
+	halts all particles in the current simulation, setting their velocities and forces to zero.
+
+    <li>\anchor tcl_countBonds
+	\verbatim countBonds <particle_list>\endverbatim
+	returns a tcl-list of the <i> complete </i> topology described by
+	<particle_list>, which must have the same format as [part] (see 
+	\ref tcl_part).<BR>
+	The output list contains only particle_number and the
+	corresponding bonding informations, thus it looks like e.g.
+	\verbatim {106 {0 107}} {107 {0 106} {0 108}} {108 {0 107} {0 109}} ... {210 {0 209} {0 211}} {211 {0 210}} 212 213 ... \endverbatim
+	for a single chain of 106 monomers between particle 106 and
+	211, with additional loose particles 212, 213, ... (e.g. counter-ions). <BR>
+	Note, that \ref tcl_part stores any bonds only with the
+	particle of <i>lower</i> particle number, which is why [part 109] 
+	would only return {... bonds {{0 110}}}, therefore not
+	revealing the bond between particle 109 and (the preceding)
+	particle 108, while <i>countBonds</i> would return <i>all</i>
+	bonds particle 109 participates in.
+
+    <li>\anchor tcl_findPropPos
+	\verbatim findPropPos <particle_property_list> <property>\endverbatim
+	returns the index of <property> within
+	<particle_property_list>, which is expected to have the same
+	format as [part <particle_number>]. If <property> is not
+	found, -1 is returned.<BR>
+	This function is useful to access certain properties of
+	particles without hard-wiring their index-position, which
+	might (again) change in future releases of \ref #part.
+	\verbatim [lindex [part $i] [findPropPos [part $i] type]]\endverbatim
+	for example returns the <particle_type> of particle $i without fixing
+	where exactly that information has to be in the output of
+	[part $i].
+    <li>\anchor tcl_findBondPos
+	\verbatim findBondPos <particle_property_list>\endverbatim
+	returns the index of the bonds within
+	<particle_property_list>, which is expected to have the same
+	format as [part <particle_number>];<BR>
+	hence its output is the	same as [findPropPos <particle_property_list> bonds].
+	If the particle does not have any bonds, -1 is returned.
+
+    <li>\anchor tcl_timeStamp
+	\verbatim timeStamp <path> <prefix> <postfix> <suffix>\endverbatim
+	modifies the filename contained within <path> to be preceded by
+	a <prefix> and having a <postfix> before the <suffix>; e.g.
+	\verbatim timeStamp ./scripts/config.gz DH863 001 gz\endverbatim
+	returns './scripts/DH863_config001.gz'.<BR>
+	If <postfix> is '-1' the current date is used in the format
+	'\%y\%m\%d' thus leading to './scripts/DH863_config021022.gz' on
+	October 22nd, 2002.
+</ul>
+*/
