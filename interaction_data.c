@@ -1315,9 +1315,9 @@ int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
     return TCL_ERROR;
   }
 
-  if((! ARG_IS_D(1, switch_rad)) ||
-     (! ARG_IS_I(2, bessel_cutoff)) ||
-     (! ARG_IS_D(3, maxPWerror))) 
+  if((! ARG_IS_D(0, switch_rad)) ||
+     (! ARG_IS_I(1, bessel_cutoff)) ||
+     (! ARG_IS_D(2, maxPWerror))) 
     return TCL_ERROR;
 
   set_mmm1d_params(coulomb.bjerrum, switch_rad,
