@@ -233,25 +233,30 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 		puts "failed: Checkpoint corrupt, time_step is wrong! Expected: $tmp_start, got: [expr $tmp_step/$int_step_i])"; exit 
 	    }
 	    puts "done) at time [setmd time]: Skipping ahead to timestep [expr int($tmp_step+1)] in loop $tmp_start!"
-	    set obs_file [open "$name_i$ident.obs2" "a"]; analyze set chains 0 $n_p_i $mpc_i
+	    set obs_file [open "$name_i$ident.obs2" "a"]
+	    set tmp_dist [analyze mindist]; set tmp_re [analyze re 0 $n_p_i $mpc_i]; set tmp_rg [analyze rg]; set tmp_rh [analyze rh]
 	    set ptot [eval concat [eval concat [analyze pressure]]]; set p1 [lindex $ptot 1]
-	    puts "    Analysis at t=[setmd time]: mindist=[analyze mindist], T=[setmd temp], re^2=[lindex [analyze re] 2], rg^2=[lindex [analyze rg] 2], rh=[lindex [analyze rh] 0], p=$p1."
+	    puts -nonewline "    Analysis at t=[setmd time]: mindist=$tmp_dist, T=[setmd temp], "
+	    puts "re^2=[lindex $tmp_re 2], rg^2=[lindex $tmp_rg 2], rh=[lindex $tmp_rh 0], p=$p1."
 	} else {
 	    set tmp_start 0; set obs_file [open "$name_i$ident.obs2" "w"]
+	    set tmp_dist [analyze mindist]; set tmp_re [analyze re 0 $n_p_i $mpc_i]; set tmp_rg [analyze rg]; set tmp_rh [analyze rh]
 	    set ptot [eval concat [eval concat [analyze pressure]]]; set p1 [lindex $ptot 1]
 	    puts $obs_file "t mindist re dre re2 dre2 rg drg rg2 drg2 rh drh Temp pressure p ideal pid F# FENE pf lj# lj# lj plj "
-	    puts $obs_file "[setmd time] [analyze mindist] [analyze re 0 $n_p_i $mpc_i] [analyze rg] [analyze rh] [setmd temp] $ptot"
-	    puts "    Analysis at t=[setmd time]: mindist=[analyze mindist], T=[setmd temp], re^2=[lindex [analyze re] 2], rg^2=[lindex [analyze rg] 2], rh=[lindex [analyze rh] 0], p=$p1."
+	    puts $obs_file "[setmd time] $tmp_dist $tmp_re $tmp_rg $tmp_rh [setmd temp] $ptot"
+	    puts -nonewline "    Analysis at t=[setmd time]: mindist=$tmp_dist, T=[setmd temp], "
+	    puts "re^2=[lindex $tmp_re 2], rg^2=[lindex $tmp_rg 2], rh=[lindex $tmp_rh 0], p=$p1."
 	    analyze append; checkpoint_set "$name_i$ident.[eval format %0$sfx 0]" "all" "tmp_step"
 	}
 	for { set j $tmp_start } { $j < $int_loop } { incr j } {
-	    integrate $int_step_i; set tmp_dist [analyze mindist]
+	    integrate $int_step_i; set tmp_step [expr ($j+1)*$int_step_i]
 	    if { $vmd_output=="yes" } { imd positions }
-	    set tmp_step [expr ($j+1)*$int_step_i]
 	    puts -nonewline "    \[$i\] Step $tmp_step/[expr $int_step_i*$int_loop] (t=[setmd time]): "; flush stdout
-	    set tmp_Temp [expr [analyze energy kin]/$n_part/1.5]; puts -nonewline "mindist=[analyze mindist], T=$tmp_Temp"; flush stdout
+	    set tmp_dist [analyze mindist]; set tmp_re [analyze re]; set tmp_rg [analyze rg]; set tmp_rh [analyze rh]
 	    set ptot [eval concat [eval concat [analyze pressure]]]; set p1 [lindex $ptot 1]
-	    puts $obs_file "[setmd time] [analyze mindist] [analyze re] [analyze rg] [analyze rh] $tmp_Temp $ptot"
+	    set tmp_Temp [expr [analyze energy kin]/$n_part/1.5]
+	    puts $obs_file "[setmd time] $tmp_dist $tmp_re $tmp_rg $tmp_rh $tmp_Temp $ptot"
+	    puts -nonewline "mindist=$tmp_dist, T=$tmp_Temp"; flush stdout
 	    set tmp_conf [analyze append]; flush $obs_file
 	    # set partial checkpoint (will have previous 'configs' by [analyze append] => averages will be correct)
 	    if { [expr $tmp_step % $checkpoint]==0 } {
@@ -259,8 +264,9 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 		checkpoint_set "$name_i$ident.[eval format %0$sfx $tmp_step]" [expr int($checkpoint/$int_step_i)] "tmp_step" "-"
 		puts -nonewline "set (with <re^2>=[lindex [analyze <re>] 2], <rg^2>=[lindex [analyze <rg>] 2] averaged over $tmp_conf configurations"
 		puts ", <p>=[lindex [nameObsAv $name_i$ident.obs2 p] 1])."
-	    } else { puts -nonewline ", re^2=[lindex [analyze re] 2], rg^2=[lindex [analyze rg] 2], rh=[lindex [analyze rh] 0], p=$p1...\r"; 
-		flush stdout }
+	    } else { 
+		puts -nonewline ", re^2=[lindex $tmp_re 2], rg^2=[lindex $tmp_rg 2], rh=[lindex $tmp_rh 0], p=$p1...\r"; flush stdout 
+	    }
 	}
 	# write everything to disk (set checkpoint)
 	# (the whole configs-array is not included here for space constraints (it may exceed 1700MB),
