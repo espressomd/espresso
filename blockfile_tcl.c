@@ -13,7 +13,7 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 	      int argc, char *argv[])
 {
   char title[MAXBLOCKTITLE];
-  char buffer[1024], *name;
+  char buffer[1024], databuf[MAX_DIMENSION*(sizeof(int) + sizeof(double))], *name;
   int tcl_file_mode;
   Tcl_Channel channel;
   Tcl_CmdInfo cmdInfo;
@@ -29,14 +29,14 @@ int blockfile(ClientData data, Tcl_Interp *interp,
   if ((channel = Tcl_GetChannel(interp, argv[1], &tcl_file_mode)) == NULL)
     return (TCL_ERROR);
 
-  /* the write commands */
+  /* ------------------ the write commands ------------------------------------ */
   if (!strncmp(argv[2], "write", strlen(argv[2]))) {
     if (!(tcl_file_mode & TCL_WRITABLE)) {
       Tcl_AppendResult(interp, "\"", argv[1], "\" not writeable", (char *) NULL);
       return (TCL_ERROR);
     }
 
-    /* write start tag */
+    /* ------------------ write start tag ------------------------------------ */
     if (!strncmp(argv[3], "start", strlen(argv[3]))) {
       if (argc != 5 || strlen(argv[4]) > MAXBLOCKTITLE - 1) {
 	Tcl_AppendResult(interp, "please give a short (< 63 bytes) title for your block and nothing more",
@@ -50,7 +50,7 @@ int blockfile(ClientData data, Tcl_Interp *interp,
       }
       return (TCL_OK);
     }
-    /* write end tag */
+    /* ------------------ write end tag ------------------------------------ */
     else if (!strncmp(argv[3], "end", strlen(argv[3]))) {
       if (argc != 4) {
 	Tcl_AppendResult(interp, "\"", argv[0],
@@ -65,7 +65,7 @@ int blockfile(ClientData data, Tcl_Interp *interp,
       }
       return (TCL_OK);
     }
-    /* dump a global variable */
+    /* ------------------ write global variable ----------------------------- */
     else if (!strncmp(argv[3], "variable", strlen(argv[3]))) {
       if (argc != 5) {
 	Tcl_AppendResult(interp, "variable name missing",
@@ -106,13 +106,13 @@ int blockfile(ClientData data, Tcl_Interp *interp,
       return (TCL_ERROR);
     }
   }
-  /* the read commands */
+  /* ------------------- the read commands ------------------------------------ */
   else if (!strncmp(argv[2], "read", strlen(argv[2]))) {
     if (!(tcl_file_mode & TCL_READABLE)) {
       Tcl_AppendResult(interp, "\"", argv[1], "\" not readable", (char *) NULL);
       return (TCL_ERROR);
     }
-    /* consume start tag only */
+    /* ----------------- read start tag only ------------------------------- */
     if (!strncmp(argv[3], "start", strlen(argv[3]))) {
       if (argc != 4) {
 	Tcl_AppendResult(interp, "\"", argv[0],
@@ -130,7 +130,7 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 	return (TCL_ERROR);
       }
     }
-    /* consume next block and return data or variable contained */
+    /* -------------- read next block and return data or variable contained --*/
     else if (!strncmp(argv[3], "auto", strlen(argv[3]))) {
       if (argc != 4) {
 	Tcl_AppendResult(interp, "\"", argv[0],
@@ -153,7 +153,7 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 			 (char *) NULL);
 	return (TCL_ERROR);
       }
-      /* set global variable */
+      /* -------------------------- read global variable ------------------------ */
       if (!strcmp(title, "variable")) {
 	if ((openbrackets = block_continueread(channel, openbrackets,
 					       buffer, sizeof(buffer), ' ')) != 1) {
@@ -164,11 +164,14 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 	for (i = 0; fields[i].data != NULL; i++)
 	  if (!strcmp(fields[i].name, buffer)) {
 	    if (block_read_data(channel, fields[i].type,
-				fields[i].dimension, fields[i].data) != 0) {
+				fields[i].dimension, (void *)databuf) != 0) {
 	      Tcl_AppendResult(interp, "\"", argv[1], "\" could not read data",
 			       (char *) NULL);
 	      return (TCL_ERROR);
 	    }
+	    if (fields[i].changeproc(interp, (void *)databuf) != TCL_OK)
+	      return TCL_ERROR;
+	    
 	    Tcl_AppendResult(interp, "setvar ", buffer, (char *) NULL);
 	    if ((openbrackets = block_continueread(channel, openbrackets, buffer, sizeof(buffer), 0)) != 0) {
 	      char buffer[TCL_INTEGER_SPACE + 1];
@@ -203,7 +206,7 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, buffer, (char *) NULL);
 	return (TCL_OK);
       }
-      /* unknown field */
+      /* -------------- read unknown field ---------------------------- */
       else {
 	len = 21; /* blockfile_read_auto_ + \0 */
 	len += strlen(title);
@@ -234,7 +237,7 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 	return (TCL_OK);	
       }
     }
-    /* consume until end tag */
+    /* ------------------- read until end tag ------------------------------ */
     else if (!strncmp(argv[3], "toend", strlen(argv[3]))) {
       if (argc != 4) {
 	Tcl_AppendResult(interp, "\"", argv[0],
