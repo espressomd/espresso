@@ -15,9 +15,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#ifdef NPT
-#include "pressure.h"
-#endif
 #include "communication.h"
 #include "debug.h"
 #include "cells.h"
@@ -257,6 +254,7 @@ void check_particles()
   int n, np, dir, c, p;
   int cell_part_cnt=0, local_part_cnt=0;
   int cell_err_cnt=0;
+  double skin2 = (skin != -1) ? skin/2 : 0;
 
   CELL_TRACE(fprintf(stderr, "%d: entering check_particles\n", this_node));
 
@@ -285,7 +283,7 @@ void check_particles()
       is_here[part[n].p.identity] = 1;
 
       for(dir=0;dir<3;dir++) {
-	if(PERIODIC(dir) && (part[n].r.p[dir] < -skin/2 || part[n].r.p[dir] > box_l[dir] + skin/2)) {
+	if(PERIODIC(dir) && (part[n].r.p[dir] < -skin2 || part[n].r.p[dir] > box_l[dir] + skin2)) {
 	  fprintf(stderr,"%d: check_particles: ERROR: illegal pos[%d]=%f of part %d id=%d in cell %d\n",
 		  this_node,dir,part[n].r.p[dir],n,part[n].p.identity,c);
 	  errexit();
