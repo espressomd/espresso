@@ -185,8 +185,11 @@ Particle *move_particle(ParticleList *dl, ParticleList *sl, int i)
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
   memcpy(dst, src, sizeof(Particle));
-  if (--sl->n > 0)
+  if ( src != end ) {
     memcpy(src, end, sizeof(Particle));
+    local_particles[src->r.identity] = src;
+  }
+  sl->n -= 1;
   realloc_particles(sl, sl->n);
   return dst;
 }

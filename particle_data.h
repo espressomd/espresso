@@ -134,7 +134,7 @@ Particle *got_particle(ParticleList *plist, int id);
 Particle *append_particle(ParticleList *plist, Particle *part);
 
 /** remove a particle from one particle List and append it to  another.
-    Refill the destList with last particle. 
+    Refill the destList with last particle and update its entry in local_particles. 
     reallocates particles if necessary.
     \param destList   List where the particle is appended.
     \param sourceList List where the particle will be removed.
