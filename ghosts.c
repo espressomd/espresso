@@ -31,12 +31,12 @@
 static int n_s_buffer = 0;
 static int max_s_buffer = 0;
 /** send buffer. Just grows, which should be ok */
-static void *s_buffer = NULL;
+static char *s_buffer = NULL;
 
 static int n_r_buffer = 0;
 static int max_r_buffer = 0;
 /** recv buffer. Just grows, which should be ok */
-static void *r_buffer = NULL;
+static char *r_buffer = NULL;
 
 static MPI_Op MPI_FORCES_SUM;
 
