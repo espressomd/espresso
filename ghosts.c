@@ -304,21 +304,23 @@ void exchange_part()
     np   = CELL_PTR(m, n, o)->pList.n;
     for(i=0 ; i<np; i++) {
       fold_particle(part[i].r.p, part[i].i);
-      /* check part array */
+ 
+     /* check part array */
 #ifdef ADDITIONAL_CHECKS
       if(part[i].r.identity <0 || part[i].r.identity > max_seen_particle) {
-	fprintf(stderr,"%d: illegal identity %d of part %d in cell (%d,%d,%d)\n",
+	fprintf(stderr,"%d: exchange_part: ERROR: illegal id=%d of part %d in cell (%d,%d,%d)\n",
 		this_node,part[i].r.identity,i,m,n,o);
 	errexit();
       }
       for(dir=0;dir<3;dir++) {
 	if(periodic[dir] && (part[i].r.p[dir] < 0 || part[i].r.p[dir] > box_l[dir])) {
-	  fprintf(stderr,"%d: illegal position[%d] = %f of part %d in cell (%d,%d,%d)\n",
-		  this_node,dir,part[i].r.p[dir],i,m,n,o);
+	  fprintf(stderr,"%d: exchange_part: ERROR: illegal pos[%d]=%f of part %d id=%d in cell (%d,%d,%d)\n",
+		  this_node,dir,part[i].r.p[dir],i,part[i].r.identity,m,n,o);
 	  errexit();
 	}
       }
 #endif
+
     }
   }
 
@@ -329,24 +331,28 @@ void exchange_part()
 	p_send_buf.n = p_recv_buf.n = 0;
 	b_send_buf.n = b_recv_buf.n = 0;
 	if(lr==0) {                                /* left */
-	  INNER_CELLS_LOOP(m, n, o) {
+	  CELLS_LOOP(m, n, o) {
 	    pl   = &(CELL_PTR(m, n, o)->pList);
 	    part = CELL_PTR(m, n, o)->pList.part;
 	    np   = CELL_PTR(m, n, o)->pList.n;
 	    for(i=0 ; i<pl->n; i++) {
 	      if(part[i].r.p[d] < my_left[d] ) {
+		GHOST_TRACE(fprintf(stderr,"%d: exchange_part: Send Part id=%d to node %d\n",
+			    this_node,part[i].r.identity,node_neighbors[dir]));
 		i = move_to_p_buf(pl,i); 
 	      }
 	    }
 	  }
 	}
 	else {                            	  /* right */
-	  INNER_CELLS_LOOP(m, n, o) {
+	  CELLS_LOOP(m, n, o) {
 	    pl   = &(CELL_PTR(m, n, o)->pList);
 	    part = CELL_PTR(m, n, o)->pList.part;
 	    np   = CELL_PTR(m, n, o)->pList.n;
 	    for(i=0 ; i<pl->n; i++) {
 	      if(part[i].r.p[d] >=  my_right[d]) {
+		GHOST_TRACE(fprintf(stderr,"%d: exchange_part: Send Part id=%d to node %d\n",
+			    this_node,part[i].r.identity,node_neighbors[dir]));
 		i = move_to_p_buf(pl,i);
 	      }
 	    }
@@ -539,7 +545,7 @@ void collect_ghost_forces()
     INNER_CELLS_LOOP(m, n, o) {
       pl = &(CELL_PTR(m, n, o)->pList);
       for(i=0;i<pl->n;i++) {
-	LJ_TRACE(fprintf(stderr,"%d: Collect_forces: P %d: home_force (%.3e,%.3e,%.3e)\n",
+	GHOST_FORCE_TRACE(fprintf(stderr,"%d: Collect_forces: P %d: home_force (%.3e,%.3e,%.3e)\n",
 			 this_node,pl->part[i].r.identity,pl->part[i].f[0],pl->part[i].f[1],pl->part[i].f[2]));
       }
     }
@@ -579,7 +585,7 @@ void collect_ghost_forces()
     INNER_CELLS_LOOP(m, n, o) {
       pl = &(CELL_PTR(m, n, o)->pList);
       for(i=0;i<pl->n;i++) {
-	LJ_TRACE(fprintf(stderr,"%d: Collect_forces: P %d: tot_force (%.3e,%.3e,%.3e)\n",
+	GHOST_FORCE_TRACE(fprintf(stderr,"%d: Collect_forces: P %d: tot_force (%.3e,%.3e,%.3e)\n",
 			 this_node,pl->part[i].r.identity,pl->part[i].f[0],pl->part[i].f[1],pl->part[i].f[2]));
       }
     }
@@ -728,7 +734,7 @@ void append_particles(void)
   Particle *part;
   
   for(i=0; i<p_recv_buf.n; i++) {
-    c_ind = pos_to_cell_grid_ind(p_recv_buf.part[i].r.p);
+    c_ind = pos_to_ghost_cell_grid_ind(p_recv_buf.part[i].r.p);
     pl = &(cells[c_ind].pList);
     part = append_particle(pl, &(p_recv_buf.part[i]));
     local_particles[part->r.identity] = part;
