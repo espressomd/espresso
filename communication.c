@@ -738,6 +738,8 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
   IntList *bl = &(pdata->bl);
   MPI_Status status;
 
+  init_particle(pdata);
+
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     memcpy(pdata, p, sizeof(Particle));
