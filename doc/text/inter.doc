@@ -409,6 +409,30 @@
 
 		     <b> Make sure that you read the papers on MMM2D before using MMM1D (there are no papers on MMM1D yet,
 			 but it is pretty much the same) !!!</b>
+
+		<li> \verbatim maggs <f_mass> <mesh> <field_friction> \endverbatim
+		     or
+		     \verbatim maggs <f_mass> <mesh> <field_friction> yukawa <kappa> <r_cut> \endverbatim	
+		     This is an implementation of the instantaneous 1/r Coulomb interaction
+		     \f[ U = \ell_B T \frac{q_1 q_2}{r} \f]
+		     as the potential of mean force between charges which are dynamically coupled to a local
+		     electromagnetic field. 
+	
+	             \<f_mass\> is the mass of the field degree of freedom and equals to the square root of the inverted speed of light.
+
+                     \<mesh\> is the number of mesh points for the interpolation of the electromagnetic field
+
+	             \<field_friction\> value of the friction coefficient for the transversal field degrees of freedom (reserved for future developments)
+
+                     Unphysical self--energies,
+		     arised as a result of the lattice interpolation  of charges, are corrected by a subtraction scheme
+		     based on either the exact lattice Green's function (first method) or the Yukawa subtraction scheme.
+
+		    For the case of Yukawa subtraction scheme one has
+		    to enter screening parameter \<kappa\> and
+		    the cut-off of the Yukawa potential \<r_cut\>
+
+
 	    </ul>		
 
 	    \verbatim inter coulomb elc <maximal pairwise error> <gap size> {<far cutoff>} \endverbatim
