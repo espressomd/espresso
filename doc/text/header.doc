@@ -26,36 +26,42 @@ on <font color="#0000FF"> <b>So</b></font>ft matter
 
 \section introduction Introduction
 
-Espresso is a MPI parallel molecular dynamics program. It uses a
-<a href="http://tcl.activestate.com">Tcl</a> script for
-controlling details of the simulation to allow great flexibility.
-The standard Tcl language was extended by some commands which allow
-to perform a complete MD simulation. Details on the additional Tcl commands
-can be found \ref tcl "here".
+Espresso is an MPI parallel molecular dynamics (MD) program developed
+by members of Polyelectrolyte project
+(<a href="http://www.mpip-mainz.mpg.de/~pep/index.html">PEP</a>) of the 
+Theory group in <a href="http://www.mpip-mainz.mpg.de/">MPI-P</a>, Mainz, Germany.
+Espresso can be used as an MD integrator for a variety of systems interacting
+via soft potentials (in particular including Lennard-Jones potential and electrostatic interactions).
+The program also allows to produce scientific movies using the
+<a href="http://www.ks.uiuc.edu/Research/vmd/current/ug/ug.html">VMD</a>
+software package (the Espresso logo was produced by the program itself!).
 
-The script is interpreted on only one node,
-the master node. The other nodes wait for the master node to issue
-specific actions, i. e. we utilize a client-server model. More details
+To perform an MD simulation Espresso uses a 
+<a href="http://tcl.activestate.com">Tcl</a> script
+which gives the user control over the program.
+The standard Tcl language was extended by some \ref tcl "additional commands"
+which allow to perform a complete MD simulation. 
+
+The script is interpreted on one node,
+the master node, whereas the other nodes wait for the master node to issue
+specific actions, i. e. a client-server model is utilized. More details
 can be found in \ref communication.h "communication.h". During the
-actual integration however the communication is done synchronous.
-For details see \ref integrate.c "integrate.c".
+actual integration, however, the communication is done synchronously.
+For more details see \ref integrate.c "integrate.c".
 
 \section requirements Requirements
 
-Scriptlanguage: <a href="http://tcl.activestate.com">Tcl 8.3</a> or higher <br>
+Script language: <a href="http://tcl.activestate.com">Tcl 8.3</a> or higher <br>
 
 Supported operating systems:
 <ul>
-<li> LINUX
-     <ul>
-     <li> mpi programming enviroment: <a href="http://www.lam-mpi.org">lam</a>
-     </ul>
+<li> LINUX (mpi programming environment: <a href="http://www.lam-mpi.org">lam</a>)
 <li> OSF1
 <li> AIX
 </ul>
-You have to adept the corresponding Makefile to your system.
+You have to adopt the corresponding Makefile to your system.
 
-\section start Getting Started
+\section start Getting Started.
 
 This section is only valid inside the theory cluster at the MPI-P in Mainz.
 
@@ -84,10 +90,10 @@ or with
 for the latest cvs snapshot in the case you want to work on the code.
 <li> Compile using 
 \verbatim gmake \endverbatim
-<li> Create actual documentation with (html, latex, man and rtf). This 
-command works only on our Linux PCs (needs doxygen).
+<li> Create documentation files (html, latex, man and rtf) using
 \verbatim gmake docu\endverbatim
-(Use touch somefile.c if it does not work rightaway)
+(This command works only on our Linux PCs (needs doxygen).
+Use touch file_name.c if this does not work rightaway)
 <li> Read the documentation carefully (Come on, there had been only 213 pages when I
 was writing these lines) !!!
 <li> Try the sample script files in \ref testsuite "testsuite directory".
