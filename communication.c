@@ -121,8 +121,10 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_OMEGA 32
 /** Action number for \ref mpi_send_torque. */
 #define REQ_SET_TORQUE 33
+/** Action number for \ref mpi_send_mol_id. */
+#define REQ_SET_MOLID 34
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 34
+#define REQ_MAXIMUM 35
 
 
 /** \name Slave Callbacks
@@ -164,6 +166,7 @@ void mpi_bcast_cell_structure_slave(int node, int parm);
 void mpi_send_quat_slave(int node, int parm);
 void mpi_send_omega_slave(int node, int parm);
 void mpi_send_torque_slave(int node, int parm);
+void mpi_send_mol_id_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -188,21 +191,22 @@ SlaveCallback *callbacks[] = {
   mpi_get_particles_slave,          /* 16: REQ_GETPARTS */
   mpi_bcast_coulomb_params_slave,   /* 17: REQ_BCAST_COULOMB */
   mpi_send_ext_slave,               /* 18: REQ_SEND_EXT */
-  mpi_place_particle_slave,         /* 20: REQ_PLACE_NEW */
-  mpi_remove_particle_slave,        /* 21: REQ_REM_PART */
-  mpi_bcast_constraint_slave,       /* 22: REQ_BCAST_CONSTR */
-  mpi_random_seed_slave,            /* 23: REQ_RANDOM_SEED */
-  mpi_random_stat_slave,            /* 24: REQ_RANDOM_STAT */
-  mpi_lj_cap_forces_slave,          /* 25: REQ_BCAST_LFC */
-  mpi_tab_cap_forces_slave,         /* 26: REQ_BCAST_TFC */
-  mpi_bit_random_seed_slave,        /* 27: REQ_RANDOM_SEED */
-  mpi_bit_random_stat_slave,        /* 28: REQ_RANDOM_STAT */
-  mpi_get_constraint_force_slave,   /* 29: REQ_GET_CONSFOR */
-  mpi_rescale_particles_slave,      /* 30: REQ_RESCALE_PART */
-  mpi_bcast_cell_structure_slave,   /* 31: REQ_BCAST_CS */
-  mpi_send_quat_slave,              /* 32: REQ_SET_QUAT */
-  mpi_send_omega_slave,             /* 33: REQ_SET_OMEGA */
-  mpi_send_torque_slave,            /* 34: REQ_SET_TORQUE */
+  mpi_place_particle_slave,         /* 19: REQ_PLACE_NEW */
+  mpi_remove_particle_slave,        /* 20: REQ_REM_PART */
+  mpi_bcast_constraint_slave,       /* 21: REQ_BCAST_CONSTR */
+  mpi_random_seed_slave,            /* 22: REQ_RANDOM_SEED */
+  mpi_random_stat_slave,            /* 23: REQ_RANDOM_STAT */
+  mpi_lj_cap_forces_slave,          /* 24: REQ_BCAST_LFC */
+  mpi_tab_cap_forces_slave,         /* 25: REQ_BCAST_TFC */
+  mpi_bit_random_seed_slave,        /* 26: REQ_RANDOM_SEED */
+  mpi_bit_random_stat_slave,        /* 27: REQ_RANDOM_STAT */
+  mpi_get_constraint_force_slave,   /* 28: REQ_GET_CONSFOR */
+  mpi_rescale_particles_slave,      /* 29: REQ_RESCALE_PART */
+  mpi_bcast_cell_structure_slave,   /* 30: REQ_BCAST_CS */
+  mpi_send_quat_slave,              /* 31: REQ_SET_QUAT */
+  mpi_send_omega_slave,             /* 32: REQ_SET_OMEGA */
+  mpi_send_torque_slave,            /* 33: REQ_SET_TORQUE */
+  mpi_send_mol_id_slave,            /* 34: REQ_SET_MOLID */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -241,6 +245,7 @@ char *names[] = {
   "SET_QUAT"  ,     /* 31 */
   "SET_OMEGA",      /* 32 */
   "SET_TORQUE",     /* 33 */
+  "SET_MOLID",      /* 34 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -589,6 +594,33 @@ void mpi_send_type_slave(int pnode, int part)
     Particle *p = local_particles[part];
     MPI_Status status;
     MPI_Recv(&p->p.type, 1, MPI_INT, 0, REQ_SET_TYPE,
+	     MPI_COMM_WORLD, &status);
+  }
+
+  on_particle_change();
+}
+
+/********************* REQ_SET_MOLID ********/
+void mpi_send_mol_id(int pnode, int part, int mid)
+{
+  mpi_issue(REQ_SET_MOLID, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.mol_id = mid;
+  }
+  else
+    MPI_Send(&mid, 1, MPI_INT, pnode, REQ_SET_MOLID, MPI_COMM_WORLD);
+
+  on_particle_change();
+}
+
+void mpi_send_mol_id_slave(int pnode, int part)
+{
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.mol_id, 1, MPI_INT, 0, REQ_SET_MOLID,
 	     MPI_COMM_WORLD, &status);
   }
 
@@ -1153,6 +1185,9 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     break;
   case COULOMB_MMM1D:
     MPI_Bcast(&mmm1d_params, sizeof(MMM1D_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+    break;
+  case COULOMB_MMM2D:
+    MPI_Bcast(&mmm2d_params, sizeof(MMM2D_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
   default:
     fprintf(stderr, "cannot bcast coulomb params for unknown method %d\n", coulomb.method);

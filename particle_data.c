@@ -395,6 +395,8 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_PrintDouble(interp, part.r.p[2], buffer);
   Tcl_AppendResult(interp, buffer, " type ", (char *)NULL);
   sprintf(buffer, "%d", part.p.type);
+  Tcl_AppendResult(interp, buffer, " molecule ", (char *)NULL);
+  sprintf(buffer, "%d", part.p.mol_id);
 #ifdef ELECTROSTATICS
   Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
   Tcl_PrintDouble(interp, part.p.q, buffer);
@@ -570,6 +572,10 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     }
     else if (ARG0_IS_S("type")) {
       sprintf(buffer, "%d", part.p.type);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    else if (ARG0_IS_S("molecule_id")) {
+      sprintf(buffer, "%d", part.p.mol_id);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #ifdef ELECTROSTATICS
@@ -851,6 +857,36 @@ int part_parse_type(Tcl_Interp *interp, int argc, char **argv,
   } 
       
   if (set_particle_type(part_num, type) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    
+    return TCL_ERROR;
+  }
+  
+  return TCL_OK;
+}
+
+int part_parse_mol_id(Tcl_Interp *interp, int argc, char **argv,
+		      int part_num, int * change)
+{
+  int mid;
+  
+  *change = 1;
+
+  if (argc < 1 ) {
+    Tcl_AppendResult(interp, "molecule_id requires 1 argument", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* set mid */
+  if (! ARG0_IS_I(mid))
+    return TCL_ERROR;
+      
+  if (mid < 0) {
+    Tcl_AppendResult(interp, "invalid particle type", (char *) NULL);
+    return TCL_ERROR;	  
+  } 
+      
+  if (set_particle_mol_id(part_num, mid) == TCL_ERROR) {
     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
     
     return TCL_ERROR;
@@ -1157,6 +1193,9 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
     else if (ARG0_IS_S("type"))
       err = part_parse_type(interp, argc-1, argv+1, part_num, &change);
 
+    else if (ARG0_IS_S("molecule_id"))
+      err = part_parse_mol_id(interp, argc-1, argv+1, part_num, &change);
+
     else if (ARG0_IS_S("q"))
       err = part_parse_q(interp, argc-1, argv+1, part_num, &change);
 
@@ -1368,6 +1407,23 @@ int set_particle_type(int part, int type)
   if (pnode == -1)
     return TCL_ERROR;
   mpi_send_type(pnode, part, type);
+  return TCL_OK;
+}
+
+int set_particle_mol_id(int part, int mid)
+{
+  int pnode;
+
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_mol_id(pnode, part, mid);
   return TCL_OK;
 }
 

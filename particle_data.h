@@ -343,6 +343,13 @@ int set_particle_q(int part, double q);
 */
 int set_particle_type(int part, int type);
 
+/** Call only on the master node: set particle's molecule id.
+    @param part the particle.
+    @param mid  its new mol id.
+    @return TCL_OK if particle existed
+*/
+int set_particle_mol_id(int part, int mid);
+
 #ifdef ROTATION
 /** Call only on the master node: set particle orientation using quaternions.
     @param part the particle.

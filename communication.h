@@ -165,6 +165,14 @@ void mpi_send_torque(int node, int part, double torque[3]);
 */
 void mpi_send_type(int node, int part, int type);
 
+/** Issue REQ_SET_MOL_ID: send molecule id.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param mid its new mol_id.
+*/
+void mpi_send_mol_id(int node, int part, int mid);
+
 /** Issue REQ_SET_BOND: send bond.
     Also calls \ref on_particle_change.
     \param pnode    node it is attached to.
