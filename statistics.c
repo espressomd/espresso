@@ -589,31 +589,35 @@ static int parse_gyrationtensor(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
-static int parse_find_major_axis(Tcl_Interp *interp, int argc, char **argv)
+static int parse_find_principal_axis(Tcl_Interp *interp, int argc, char **argv)
 {
-  /* 'analyze find_major_axis [<type0>]' */
+  /* 'analyze find_principal_axis [<type0>]' */
   double gyrtensor[9],eva[3],eve[3];
   char buffer[3*TCL_DOUBLE_SPACE+3];
-  int p1,i;
+  int p1,i,j;
 
   /* parse arguments */
   if (argc != 1) {
-    Tcl_AppendResult(interp, "usage: analyze find_major_axis [<type>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze find_principal_axis [<type>]", (char *)NULL);
     return (TCL_ERROR);
   }
 
   if (!ARG0_IS_I(p1)) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze find_major_axis [<type>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze find_principal_axis [<type>]", (char *)NULL);
     return (TCL_ERROR);
   }
 
   gyrationtensor(p1, gyrtensor);
   i=calc_eigenvalues_3x3(gyrtensor, eva);
-	i=calc_eigenvector_3x3(gyrtensor,eva[0],eve);
-	
-  sprintf(buffer,"%f %f %f ",eve[0],eve[1],eve[2]);
+  
+  sprintf(buffer,"{eigenval eigenvector} ");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
+  for (j= 0; j < 3; j++) {
+  	i=calc_eigenvector_3x3(gyrtensor,eva[j],eve);
+    sprintf(buffer," { %f { %f %f %f } }",eva[j],eve[0],eve[1],eve[2]);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+  }
   return TCL_OK;
 }
 
@@ -1039,8 +1043,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return parse_centermass(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("gyrationtensor"))
     return parse_gyrationtensor(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("find_major_axis"))
-    return parse_find_major_axis(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("find_principal_axis"))
+    return parse_find_principal_axis(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("nbhood"))
     return parse_nbhood(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("distto"))
