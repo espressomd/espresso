@@ -69,10 +69,6 @@ extern int     n_ghosts;
 /** local particle array. */
 extern Particle *particles;
 
-/** first unused particle entry */
-extern int   min_free_particle;
-
-
 /* total number of particles in the system. */
 extern int n_total_particles;
 /* used only on master node: particle->node mapping */

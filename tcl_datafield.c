@@ -219,6 +219,44 @@ int part(ClientData data, Tcl_Interp *interp,
 	argc -= 2;
 	argv += 2;
       }
+      else if (!strncmp(argv[0], "v", strlen(argv[0]))) {
+	double v[3];
+	if (argc < 4) {
+	  Tcl_AppendResult(interp, "v requires 3 arguments", (char *) NULL);
+	  return (TCL_ERROR);
+	}
+	/* set v */
+	if (Tcl_GetDouble(interp, argv[1], &v[0]) == TCL_ERROR)
+	  return (TCL_ERROR);
+	if (Tcl_GetDouble(interp, argv[2], &v[1]) == TCL_ERROR)
+	  return (TCL_ERROR);
+	if (Tcl_GetDouble(interp, argv[3], &v[2]) == TCL_ERROR)
+	  return (TCL_ERROR);
+
+	mpi_send_v(node, part_num, v);
+
+	argc -= 4;
+	argv += 4;
+      }
+      else if (!strncmp(argv[0], "f", strlen(argv[0]))) {
+	double f[3];
+	if (argc < 4) {
+	  Tcl_AppendResult(interp, "f requires 3 arguments", (char *) NULL);
+	  return (TCL_ERROR);
+	}
+	/* set v */
+	if (Tcl_GetDouble(interp, argv[1], &f[0]) == TCL_ERROR)
+	  return (TCL_ERROR);
+	if (Tcl_GetDouble(interp, argv[2], &f[1]) == TCL_ERROR)
+	  return (TCL_ERROR);
+	if (Tcl_GetDouble(interp, argv[3], &f[2]) == TCL_ERROR)
+	  return (TCL_ERROR);
+
+	mpi_send_v(node, part_num, f);
+
+	argc -= 4;
+	argv += 4;
+      }
       else if (!strncmp(argv[0], "type", strlen(argv[0]))) {
 	int type;
 	if (argc < 2) {

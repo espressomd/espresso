@@ -2,13 +2,13 @@
 # tricking...\
     PLATFORM=`uname -s`;
 # OSF1 \
-    if test $PLATFORM = OSF1; then  MPIRUN=dmpirun; FLAGS="-np 8"
+    if test $PLATFORM = OSF1; then  exec dmpirun -np 8 $PLATFORM/tcl_md $0 $*
 # AIX \
-    elif test $PLATFORM = AIX; then MPIRUN=poe;     FLAGS="-procs 8"
+    elif test $PLATFORM = AIX; then exec poe $PLATFORM/tcl_md $0 $* -procs 8
 # Linux \
-    else                            MPIRUN=mpirun;  FLAGS="-np 8 -nsigs"; lamboot;
+    else exec mpirun -np 8 -nsigs $PLATFORM/tcl_md $0 $*; lamboot;
 # \
-    fi; exec $MPIRUN $PLATFORM/tcl_md $0 $* $FLAGS
+    fi;
 
 ##################################################
 # settings
@@ -36,15 +36,15 @@ inter 0 2 lennard-jones 3 1 1.2 0 0
 
 # Set up particle positions
 ##################################################
-part 0 pos 1.0 2.0 1.0 type 0 q 1
+part 0 pos 1.0 2.0 1.0 type 0 q 1 v 20 10 5 f 0 0 0
 puts "part 0 = [part 0]"
-part 1 pos 1.0 1.0 1.0 type 2 q 1
+part 1 pos 1.0 1.0 1.0 type 2 q 1 v 0 0 0 f 10 20 30
 puts "part 1 = [part 1]"
-part 2 pos 10.0 1 1 type 1 q -2
+part 2 pos 10.0 1 1 type 1 q -2   v 0 0 0 f 0 0 0
 puts "part 2 = [part 2]"
-part 3 pos 6.0 1 1 type 3 q -1
+part 3 pos 6.0 1 1 type 3 q -1    v 0 0 0 f 0 0 0
 puts "part 3 = [part 3]"
-part 4 pos 3.0 1 1 type 0 q 1
+part 4 pos 3.0 1 1 type 0 q 1     v 0 0 0 f 0 0 0
 puts "part 4 = [part 4]"
 
 

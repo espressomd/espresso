@@ -34,6 +34,14 @@ void mpi_attach_particle_slave(int parm);
 void mpi_send_pos(int node, int part, double pos[3]);
 void mpi_send_pos_slave(int parm);
 
+/** REQ_SET_V: send particle velocity */
+void mpi_send_v(int node, int part, double v[3]);
+void mpi_send_v_slave(int parm);
+
+/** REQ_SET_F: send particle force */
+void mpi_send_f(int node, int part, double F[3]);
+void mpi_send_f_slave(int parm);
+
 /** REQ_SET_Q: send particle charge */
 void mpi_send_q(int node, int part, double q);
 void mpi_send_q_slave(int parm);

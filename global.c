@@ -82,7 +82,6 @@ int     n_particles = 0;
 int   max_particles = 0;
 int        n_ghosts = 0;
 Particle *particles = NULL;
-int min_free_particle = 0;
 
 int *local_index;
 
@@ -164,27 +163,17 @@ int add_particle(int part)
 int alloc_particle()
 {
   int i,index;
-  if (min_free_particle == n_particles) {
-    /* add at end */
-    index = n_particles++;
-    min_free_particle = n_particles;
 
-    realloc_particles(n_particles);
+  /* add at end */
+  index = n_particles++;
+
+  realloc_particles(n_particles);
     
-    particles[index].n_bonds = 0;
-    particles[index].max_bonds = 0;
-    particles[index].bonds  = NULL;
-    for(i=0;i<3;i++) particles[index].i[i] = 0;
-  }
-  else {
-    /* recycling */
-    index = min_free_particle;
-    for (min_free_particle++; min_free_particle < n_particles;
-	 min_free_particle++) 
-      if (particles[min_free_particle].identity == -1)
-	break;
-  }
-
+  particles[index].n_bonds = 0;
+  particles[index].max_bonds = 0;
+  particles[index].bonds  = NULL;
+  for(i = 0; i < 3; i++)
+    particles[index].i[i] = 0;
   return index;
 }
 
@@ -204,15 +193,6 @@ void unfold_particle(double pos[3],int image_box[3])
     pos[i]       = pos[i] + image_box[i]*box_l[i];    
     image_box[i] = 0;
   }
-}
-
-void free_particle(int index)
-{
-  particles[index].identity = -1;
-
-  if ((min_free_particle == -1) ||
-      (min_free_particle > index))
-    min_free_particle = index;
 }
 
 void particle_finalize_data()
