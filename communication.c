@@ -1022,9 +1022,11 @@ void mpi_gather_stats_slave(int ana_num, int job)
     energy_calc(NULL);
     break;
   case 2:
+    /* calculate and reduce (sum up) virials for 'analyze pressure' */
     pressure_calc(NULL,0);
     break;
   case 3:
+    /* calculate and reduce (sum up) virials, revert velocities half a timestep for 'analyze p_inst' */
     pressure_calc(NULL,1);
     break;
   default:
