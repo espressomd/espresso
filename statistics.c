@@ -16,6 +16,7 @@
 #include "cells.h"
 #include "verlet.h"
 #include "p3m.h"
+#include "thermostat.h"
 /* include the force files */
 #include "lj.h"
 #include "fene.h"
@@ -34,6 +35,7 @@ double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
 int chain_start = 0, chain_n_chains = 0, chain_length = 0;
 
 Energy_stat energy = {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
+Energy_stat virials= {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
 
 static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
 			       double *posx, double *posy, double *posz, int *pid)
@@ -116,7 +118,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   char *mode;
-  int  i, j, p;
+  int  i,j,k, p;
   double *buf = NULL;
   double result, posx, posy, posz, r_catch;
 
@@ -234,7 +236,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   }
   else if (!strncmp(mode, "energy", strlen(mode))) {
     /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | lj <type1> <type2> | coulomb | kinetic }]' */
-    /***********************************************************************************/
+    /*********************************************************************************************************/
     /* checks */
     if (n_total_particles == 0) {
       Tcl_AppendResult(interp, "(no particles)",
@@ -278,7 +280,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       }
       else if(!strncmp(argv[0], "lj", strlen(argv[0]))) {
 	if(argc<3) {
-	  Tcl_AppendResult(interp, "wrong # arguments for: analyze energy fene <type_num>",
+	  Tcl_AppendResult(interp, "wrong # arguments for: analyze energy lj <type1> <type2>",
 			   (char *)NULL);
 	  return (TCL_ERROR);
 	}
@@ -302,7 +304,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     }
     else energy.ana_num=0;
 
-    mpi_gather_stats(1, buf);
+    mpi_gather_stats(1, NULL);
 
     if(energy.ana_num > 0) {
       Tcl_PrintDouble(interp, energy.sum.e[0], buffer);
@@ -437,35 +439,20 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     double g1, g2, g3;
 
     if (argc >= 1 && !strncmp(argv[0], "-init", strlen(argv[0]))) {
-      init = 1;
-      argc--;
-      argv++;
+      init = 1; argc--; argv++; 
     }
-
     if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
       return TCL_ERROR;
-    if (argc != 0) {
-      Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
-      return TCL_ERROR;
-    }
+    if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
 
-    if (init) {
-      init_g123();
-      return TCL_OK;
-    }
-
+    if (init) { init_g123(); return TCL_OK; }
     if (partCoord_g == NULL || partCM_g == NULL) {
-      Tcl_AppendResult(interp, "please call with -init first", (char *)NULL);
-      return TCL_ERROR;
-    }
-    if (chain_n_chains != n_chains_g ||
-	n_total_particles != n_part_g) {
+      Tcl_AppendResult(interp, "please call with -init first", (char *)NULL); return TCL_ERROR; }
+    if (chain_n_chains != n_chains_g || n_total_particles != n_part_g) {
       fprintf(stderr, "%d %d %d %d\n", chain_n_chains, n_chains_g, n_total_particles, n_part_g);
-      Tcl_AppendResult(interp, "initial config has different topology",
-		       (char *)NULL);
+      Tcl_AppendResult(interp, "initial config has different topology", (char *)NULL);
       return TCL_ERROR;      
     }
-
     calc_g123(&g1, &g2, &g3);
     sprintf(buffer,"{ %f %f %f }",g1, g2, g3);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -474,7 +461,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   else if ( (!strncmp(mode, "<g1>", strlen(mode))) || (!strncmp(mode, "<g2>", strlen(mode))) || (!strncmp(mode, "<g3>", strlen(mode))) ){
     /* 'analyze { <g1> | <g2> | <g3> } [<chain_start> <n_chains> <chain_length>]' */
     /******************************************************************************/
-    int i; double *gx; 
+    double *gx; 
 
     if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR) return TCL_ERROR;
     if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
@@ -488,6 +475,118 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       sprintf(buffer,"%f ",gx[i]); Tcl_AppendResult(interp, buffer, (char *)NULL); 
     }
     free(gx);
+    return (TCL_OK);
+  }
+  else if (!strncmp(mode, "pressure", strlen(mode))) {
+    /* 'analyze pressure [{ fene [<type_num>] | harmonic [<type_num>] | lj [<type1> [<type2>]] | coulomb | ideal | total[s] }]' */
+    /**************************************************************************************************************************/
+    if (n_total_particles == 0) { Tcl_AppendResult(interp, "(no particles)",(char *)NULL); return (TCL_OK); }
+    if (virials.init_status == 0 || interactions_changed) { 
+      init_virials(); virials.init_status = 0; }
+    if (parameter_changed || interactions_changed || topology_changed || particle_changed) {
+      mpi_integrate(0);
+    }
+    if(argc > 0) {
+      if(!strncmp(argv[0], "totals", strlen(argv[0]))) virials.ana_num=0;
+      else if(!strncmp(argv[0], "ideal", strlen(argv[0]))) virials.ana_num=1;
+      else if(!strncmp(argv[0], "fene", strlen(argv[0]))) {
+	if(argc<2) { virials.ana_num = 0; }
+	else {
+	  if(Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) return (TCL_ERROR);
+	  if(i >= virials.n_bonded) { 
+	    sprintf(buffer,"fene <type>=%d does not exist!",i); Tcl_AppendResult(interp,buffer,(char *)NULL); return (TCL_ERROR); }
+	  virials.ana_num = virials.n_pre+i; } }
+      else if(!strncmp(argv[0], "harmonic", strlen(argv[0]))) {
+	if(argc<2) { virials.ana_num = 0; }
+	else {
+	  if(Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) return (TCL_ERROR);
+	  if(i >= virials.n_bonded) { 
+	    sprintf(buffer,"harmonic <type>=%d does not exist!",i); Tcl_AppendResult(interp,buffer,(char *)NULL); return (TCL_ERROR); }
+	  virials.ana_num = virials.n_pre+i; } }
+      else if(!strncmp(argv[0], "lj", strlen(argv[0]))) {
+	if(argc<3) { virials.ana_num = 0; }
+	else {
+	  if(Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) return (TCL_ERROR);
+	  if(Tcl_GetInt(interp, argv[2], &j) == TCL_ERROR) return (TCL_ERROR);
+	  if(i >= n_particle_types || j >= n_particle_types) {
+	    sprintf(buffer,"lj <type>=%d or =%d does not exist!",i,j); Tcl_AppendResult(interp,buffer,(char *)NULL); return (TCL_ERROR); }
+	  virials.ana_num = virials.n_pre+virials.n_bonded + j -i;
+	  while(i>0) { virials.ana_num += n_particle_types - (i-1); i--; } } }
+      else if(!strncmp(argv[0], "coulomb", strlen(argv[0]))) {
+	virials.ana_num = virials.n_pre+virials.n_bonded+virials.n_non_bonded; }
+      else {
+	Tcl_AppendResult(interp, "unknown feature of analyze pressure",(char *)NULL); return (TCL_ERROR);
+      }
+    }
+    else virials.ana_num=0;
+
+    calc_pressure();
+
+    buf = malloc(6*sizeof(double)); buf[0]=buf[1]=buf[2]=buf[3]=buf[4]=buf[5] = 0.0;
+    if(argc > 0) {
+      if(!strncmp(argv[0], "total", strlen(argv[0]))) {
+	Tcl_PrintDouble(interp, virials.sum.e[virials.ana_num], buffer); 
+	Tcl_AppendResult(interp, buffer, (char *)NULL); }
+      else if(!strncmp(argv[0], "totals", strlen(argv[0]))) {
+	sprintf(buffer,"%f %f",virials.sum.e[virials.ana_num],virials.node.e[virials.ana_num]); 
+	Tcl_AppendResult(interp, buffer, (char *)NULL); }
+      else if(!strncmp(argv[0], "ideal", strlen(argv[0]))) {
+	Tcl_PrintDouble(interp, virials.sum.e[virials.ana_num], buffer); 
+	Tcl_AppendResult(interp, buffer, (char *)NULL); }
+      else if(virials.ana_num > 0) {
+	sprintf(buffer,"%f %f",virials.sum.e[virials.ana_num],virials.node.e[virials.ana_num]);
+	Tcl_AppendResult(interp, buffer, (char *)NULL); }
+      else if(!strncmp(argv[0], "fene", strlen(argv[0]))) {
+	for(i=0;i<n_bonded_ia;i++)
+	  if(bonded_ia_params[i].type == BONDED_IA_FENE) { buf[0] += virials.sum.e[virials.n_pre+i]; buf[1] += virials.node.e[virials.n_pre+i]; }
+	sprintf(buffer,"%f %f",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+      else if(!strncmp(argv[0], "harmonic", strlen(argv[0]))) {
+	for(i=0;i<n_bonded_ia;i++)
+	  if(bonded_ia_params[i].type == BONDED_IA_HARMONIC) { buf[4] += virials.sum.e[virials.n_pre+i]; buf[5] += virials.node.e[virials.n_pre+i]; }
+	sprintf(buffer,"%f %f",buf[4],buf[5]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+      else if(!strncmp(argv[0], "lj", strlen(argv[0]))) {
+	p = virials.n_pre+virials.n_bonded;
+	if(argc == 2) Tcl_GetInt(interp, argv[1], &k); else k=-1;
+	for (i = 0; i < n_particle_types; i++) 
+	  if((k==-1) || (k==i))
+	    for (j = i; j < n_particle_types; j++) {
+	      if(checkIfParticlesInteract(i,j)) { buf[0] += virials.sum.e[p]; buf[1] += virials.node.e[p]; }
+	      p++;
+	    }
+	sprintf(buffer,"%f %f",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+      else { Tcl_AppendResult(interp, "unknown feature of analyze pressure",(char *)NULL); return (TCL_ERROR); } }
+    else {
+      sprintf(buffer,"%f %f { ideal %f } { ",virials.sum.e[0],virials.node.e[0],virials.sum.e[1]); 
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+      for(i=0;i<n_bonded_ia;i++) {
+	switch (bonded_ia_params[i].type) {
+	case BONDED_IA_FENE:
+	  buf[0] += virials.sum.e[virials.n_pre+i]; buf[1] += virials.node.e[virials.n_pre+i]; break;
+	case BONDED_IA_ANGLE:
+	  buf[2] += virials.sum.e[virials.n_pre+i]; buf[3] += virials.node.e[virials.n_pre+i]; break;
+	case BONDED_IA_HARMONIC:
+	  buf[4] += virials.sum.e[virials.n_pre+i]; buf[5] += virials.node.e[virials.n_pre+i]; break;
+	default: break; }
+      }
+      if(buf[0] != 0.) { sprintf(buffer,"{ FENE %f %f } ",buf[0],buf[1]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+      if(buf[2] != 0.) { sprintf(buffer,"{ angle %f %f } ",buf[2],buf[3]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+      if(buf[4] != 0.) { sprintf(buffer,"{ harmonic %f %f } ",buf[4],buf[5]); Tcl_AppendResult(interp,buffer,(char *)NULL); }
+      buf[0] = buf[1] = 0.0; Tcl_AppendResult(interp, "}  { ", (char *)NULL);
+      p = virials.n_pre+virials.n_bonded;
+      for (i = 0; i < n_particle_types; i++) {
+	for (j = i; j < n_particle_types; j++) {
+	  if (checkIfParticlesInteract(i, j)) { buf[0] += virials.sum.e[p]; buf[1] += virials.node.e[p]; }
+	  p++;
+	}
+      }
+      if(buf[0] != 0.) { sprintf(buffer, "lj %f %f } ",buf[0],buf[1]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+      if(coulomb.bjerrum > 0.0) {
+	sprintf(buffer, "{ coulomb %f %f } ",virials.sum.e[p],virials.node.e[p]);
+	Tcl_AppendResult(interp, buffer,  (char *)NULL);
+      }
+    }
+    virials.init_status=1;
+    buf = realloc(buf,0);
     return (TCL_OK);
   }
   else if (!strncmp(mode, "append", strlen(mode))) {
@@ -576,8 +675,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
   }
   else if (!strncmp(mode, "configs", strlen(mode))) {
-    /* 'analyze configs [<configuration>]' */
-    /***************************************/
+    /* 'analyze configs [ { <which> | <configuration> } ]' */
+    /*******************************************************/
     if (argc == 0) {
       for(i=0; i < n_configs; i++) {
 	Tcl_AppendResult(interp,"{ ", (char *)NULL);
@@ -588,13 +687,22 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendResult(interp,"} ",(char *)NULL);
       }
       return (TCL_OK); }
+    else if (argc == 1) {
+      Tcl_GetInt(interp,argv[0],&i);
+      if ((i<0) || (i>n_configs-1)) {
+	sprintf(buffer,"The configs[%d] you requested does not exist, argument must be in [0,%d]!",i,n_configs-1);
+	Tcl_AppendResult(interp,buffer,(char *)NULL); return TCL_ERROR; }
+      for(j=0; j < n_part_conf; j++) {
+	sprintf(buffer,"%f %f %f ",configs[i][3*j],configs[i][3*j+1],configs[i][3*j+2]);
+	Tcl_AppendResult(interp, buffer,(char *)NULL);
+      }
+      return (TCL_OK); }
     else if ((argc == 3*n_part_conf) || (n_part_conf == 0)) {
-      double *tmp_config;
       if ((n_part_conf == 0) && (argc % 3 == 0)) n_part_conf = argc/3;
       else if (argc != 3*n_part_conf) {
 	sprintf(buffer,"Wrong # of args(%d)! Usage: analyze configs [x0 y0 z0 ... x%d y%d z%d]",argc,n_part_conf,n_part_conf,n_part_conf);
 	Tcl_AppendResult(interp,buffer,(char *)NULL); return TCL_ERROR; }
-      tmp_config = malloc(3*n_part_conf*sizeof(double));
+      double *tmp_config; tmp_config = malloc(3*n_part_conf*sizeof(double));
       for(j=0; j < argc; j++) {
 	Tcl_GetDouble(interp, argv[j], &(tmp_config[j]));
       }
@@ -606,8 +714,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     }
   }
   else if (!strncmp(mode, "distribution", strlen(mode))) {
-    /* 'analyze diistribution' */
-    /***************************/
+    /* 'analyze distribution { <part_type_list_a> } { <part_type_list_b> } [<r_min> [<r_max> [<r_bins> [<log_flag> [<int_flag>]]]]]' */
+    /*********************************************************************************************************************************/
     int tmp_argc;
     char **tmp_argv;
     IntList p1,p2;
@@ -658,7 +766,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     if(r_min < 0.0 || (log_flag==1 && r_min ==0.0 )) return TCL_ERROR;
     if(r_max <= r_min) return TCL_ERROR;
     if(r_bins < 1) return TCL_ERROR;
-    /* claculate distribution */
+    /* calculate distribution */
     distribution = malloc(r_bins*sizeof(double));
     updatePartCfg();
     calc_part_distribution(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, log_flag,&low,distribution);
@@ -684,10 +792,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	if(log_flag == 1) r *= log_fac; else r += bin_width;
       }
       Tcl_AppendResult(interp, "}\n", (char *)NULL);
-
-
     }
-
     free(distribution);
     return (TCL_OK);
   }
@@ -756,6 +861,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   else {
+    /* the default */
+    /***************/
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "The operation \"", mode,
 		     "\" you requested is not implemented.", (char *)NULL);
@@ -1155,7 +1262,6 @@ void calc_energy()
     p  = cell->pList.part;
     np = cell->pList.n;
     
-    
     if(energy.ana_num < s_non_bonded ) {
       /* calculate bonded interactions and kinetic energy (loop local particles) */
       for(j = 0; j < np; j++) {
@@ -1168,28 +1274,27 @@ void calc_energy()
 	  type_num = p1->bl.e[i];
 	  switch(bonded_ia_params[type_num].type) {
 	  case BONDED_IA_FENE:
-	    energy.node.e[type_num + 2] +=
+	    energy.node.e[type_num + energy.n_pre] +=
 	      fene_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
 	    i+=2; break;
 	  case BONDED_IA_HARMONIC:
-	    energy.node.e[type_num + 2] +=
+	    energy.node.e[type_num + energy.n_pre] +=
 	      harmonic_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
 	    i+=2; break;
 	  case BONDED_IA_ANGLE:
-	    energy.node.e[type_num + 2] +=
+	    energy.node.e[type_num + energy.n_pre] +=
 	      angle_energy(p1, checked_particle_ptr(p1->bl.e[i+1]),
 			   checked_particle_ptr(p1->bl.e[i+2]), type_num);
 	    i+=3; break;
 	  default :
-	    fprintf(stderr,"WARNING: Bondsie of atom %d unknown\n",p1->r.identity);
+	    fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->r.identity);
 	    i = p1->bl.n; 
 	    break;
 	  }
 	}
       }
     }
-    
-    
+
     if(energy.ana_num == 0 || 
        (energy.ana_num >= s_non_bonded && energy.ana_num < max ) ) {
       /* calculate non bonded interactions (loop verlet lists of neighbors) */
@@ -1223,10 +1328,6 @@ void calc_energy()
 	    energy.node.e[s_coulomb+1] += p3m_coulomb_pair_energy(p1,p2,d,dist2,dist);
 	  else if(coulomb.method==COULOMB_DH)
 	    energy.node.e[s_coulomb] += dh_coulomb_pair_energy(p1,p2,dist);
-
-	  /* minimal particle distance calculation */
-	  if (dist < minimum_part_dist)
-	    minimum_part_dist = dist;
 	} 
       }
     }
@@ -1257,7 +1358,6 @@ void calc_energy()
 	energy.sum.e[0] += energy.sum.e[i];
     }
   }
-
 }
 
 void init_energies()
@@ -1318,6 +1418,7 @@ void analyze_remove(int ind) {
   }
   n_configs--;
   configs = realloc(configs,n_configs*sizeof(double *));
+  if (n_configs == 0) n_part_conf = 0;
 }
 
 void analyze_configs(double *tmp_config, int count) {
@@ -1388,7 +1489,6 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
   for(i=0;i<r_bins;i++) dist[i] /= (double)cnt;
 }
 
-
 void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
 	      double r_min, double r_max, int r_bins, double *rdf)
 {
@@ -1426,7 +1526,6 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	    }
 	  }
 	}
-
       }
     }
   }
@@ -1440,3 +1539,210 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
     rdf[i] *= volume / (bin_volume * cnt);
   }
 }
+
+
+void init_virials() {
+  virials.n_pre        = 2;
+  virials.n_bonded     = n_bonded_ia;
+  virials.n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
+  if(coulomb.bjerrum > 0.0)       virials.n_coulomb =  1;
+  if(coulomb.method==COULOMB_P3M) virials.n_coulomb += 2;
+  virials.n = virials.n_pre+virials.n_bonded+virials.n_non_bonded+virials.n_coulomb;
+  realloc_doublelist(&(virials.node),virials.n);
+  realloc_doublelist(&(virials.sum),virials.n);
+}
+
+void calc_virials() {
+  Cell *cell;
+  Particle *p, **pairs, *p1,*p2,*p3;
+  IA_parameters *ia_params;
+  int i,j,k,  m,n,o, np, size;
+  double d[3], dist,dist2, f1[3],f2[3],f3[3];
+  /* bonded interactions */
+  int type_num;
+  /* non bonded */ 
+  int type1,type2;
+  /* virial classification numbers */
+  int v_bonded,v_non_bonded,v_coulomb,max;
+
+  v_bonded = virials.n_pre;
+  v_non_bonded = v_bonded + virials.n_bonded;
+  v_coulomb = v_non_bonded + virials.n_non_bonded;
+  max = v_coulomb + virials.n_coulomb;
+  for(i=0;i<max;i++) {
+    virials.node.e[i] = 0.0;
+    virials.sum.e[i]  = 0.0;
+  }
+
+  /* virials calculation loop. */
+  INNER_CELLS_LOOP(m, n, o) {
+    cell = CELL_PTR(m, n, o);
+    p  = cell->pList.part;
+    np = cell->pList.n;
+
+    if(virials.ana_num < v_non_bonded ) {
+      /* bonded interactions (loop local particles) */
+      for(j = 0; j < np; j++) {
+	p1 = &p[j]; i=0;
+	/* kinetic energy */
+	virials.node.e[1] += SQR(p1->v[0]) + SQR(p1->v[1]) + SQR(p1->v[2]);
+	/* bonded interaction virials */
+	while(i < p1->bl.n) {
+	  p2 = checked_particle_ptr(p1->bl.e[i+1]);
+	  f1[0] = p1->f[0]; f1[1] = p1->f[1]; f1[2] = p1->f[2];
+	  f2[0] = p2->f[0]; f2[1] = p2->f[1]; f2[2] = p2->f[2];
+	  for(k=0;k<3;k++) {
+	    d[k] = p1->r.p[k] - p2->r.p[k];
+	    d[k] -= dround(d[k]/box_l[k])*box_l[k];
+	  }
+	  type_num = p1->bl.e[i];
+	  switch(bonded_ia_params[type_num].type) {
+	  case BONDED_IA_FENE:
+	    add_fene_pair_force(p1,p2,type_num);
+	    for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
+	    virials.node.e[type_num + virials.n_pre] += d[0]*f1[0] + d[1]*f1[1] + d[2]*f1[2];
+	    i+=2; break;
+	  case BONDED_IA_HARMONIC:
+	    add_harmonic_pair_force(p1,p2,type_num);
+	    for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
+	    virials.node.e[type_num + virials.n_pre] += d[0]*f1[0] + d[1]*f1[1] + d[2]*f1[2];
+	    i+=2; break;
+	  case BONDED_IA_ANGLE:
+	    p3 = checked_particle_ptr(p1->bl.e[i+2]);
+	    f3[0] = p3->f[0]; f3[1] = p3->f[1]; f3[2] = p3->f[2];
+	    add_angle_force(p1,p2,p3,type_num);
+	    for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
+	    virials.node.e[type_num + virials.n_pre] += -d[0]*f2[0] - d[1]*f2[1] - d[2]*f2[2];
+	    for(k=0;k<3;k++) { 
+	      p3->f[k] -= (f3[k] = p3->f[k] - f3[k]);
+	      d[k] = p1->r.p[k] - p3->r.p[k];
+	      d[k] -= dround(d[k]/box_l[k])*box_l[k];
+	    }
+	    virials.node.e[type_num + virials.n_pre] += -d[0]*f3[0] - d[1]*f3[1] - d[2]*f3[2];
+	    i+=3; break;
+	  default :
+	    fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->r.identity);
+	    i = p1->bl.n; break;
+	  }
+	}
+      }
+    }
+
+    if(virials.ana_num == 0 || (virials.ana_num >= v_non_bonded && virials.ana_num < max ) ) {
+      /* calculate non bonded interactions (loop verlet lists of neighbors) */
+      for (k = 0; k < cell->n_neighbors; k++) {
+	pairs = cell->nList[k].vList.pair;  /* verlet list */
+	np    = cell->nList[k].vList.n;     /* length of verlet list */
+	
+	/* verlet list loop */
+	for(i=0; i<2*np; i+=2) {
+	  p1 = pairs[i];                    /* pointer to particle 1 */
+	  p2 = pairs[i+1];                  /* pointer to particle 2 */
+	  ia_params = get_ia_param(p1->r.type,p2->r.type);
+
+	  /* derive index 'type_num' */
+	  if(p1->r.type > p2->r.type) { type1 = p2->r.type; type2 = p1->r.type; } else { type2 = p2->r.type; type1 = p1->r.type; }
+	  type_num = v_non_bonded + type2 - type1;
+	  while(type1 > 0) { 
+	    type_num += n_particle_types - (type1-1); type1--; 
+	  }
+	  /* distance calculation */
+	  for(j=0; j<3; j++) d[j] = p1->r.p[j] - p2->r.p[j];
+	  dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
+	  dist  = sqrt(dist2);
+	  
+	  /* lennnard jones */
+	  for(j=0;j<3;j++) { f1[j] = p1->f[j]; f2[j] = p2->f[j]; }
+	  add_lj_pair_force(p1,p2,ia_params,d,dist);
+	  for(j=0;j<3;j++) { p1->f[j] -= (f1[j] = p1->f[j] - f1[j]); p2->f[j] -= (f2[j] = p2->f[j] - f2[j]); }
+	  virials.node.e[type_num] += d[0]*f1[0] + d[1]*f1[1] + d[2]*f1[2];
+	  
+	  /* real space coulomb */
+	  if(coulomb.method==COULOMB_P3M) 
+	    virials.node.e[v_coulomb+1] += p3m_coulomb_pair_energy(p1,p2,d,dist2,dist);
+	  else if(coulomb.method==COULOMB_DH)
+	    virials.node.e[v_coulomb] += dh_coulomb_pair_energy(p1,p2,dist);
+	} 
+      }
+    }
+  }
+  /* calculate k-space part of electrostatic interaction. */ 
+  if(coulomb.method==COULOMB_P3M && (virials.ana_num == 0 || virials.ana_num >= v_coulomb) ) {
+    virials.node.e[v_coulomb+2] = P3M_calc_kspace_forces(0,1);
+    virials.node.e[v_coulomb] = virials.node.e[v_coulomb+1]+virials.node.e[v_coulomb+2];
+  }
+  /* rescale kinetic energy  &  sum virials over nodes */
+  virials.node.e[1] /= (2.0*time_step*time_step);
+  size=virials.n;
+
+  MPI_Reduce(virials.node.e, virials.sum.e, size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  if(this_node==0) {
+    if(coulomb.method==COULOMB_P3M) {
+      for(i=virials.n_pre;i<virials.n-2;i++) 
+	virials.sum.e[0] += virials.sum.e[i];
+    } else {
+      for(i=virials.n_pre;i<virials.n;i++)   
+	virials.sum.e[0] += virials.sum.e[i];
+    }
+  }
+}
+
+
+void calc_pressure() {
+  /** Remarks:
+      <ul><li> The ideal gas pressure P_ig is assumed to be the pressure which the system 
+               would have if all interactions had been switched off.
+	  <li> This routine does not work for the forrest of rods.
+	  <li> Until now it only works for hydrophilic LJ.
+      </ul>  */
+  double p_total=0.0, volume;
+  int    i,j,p;
+
+  /* Derive Virials for all pairwise contribution + electrostatics */
+  mpi_gather_stats(2, NULL); 
+  virials.node.e[1] = virials.sum.e[1];
+
+  /* Ideal Gas */
+  volume = box_l[0]*box_l[1]*box_l[2];
+  virials.sum.e[1] = n_total_particles*temperature/volume;
+  p_total = virials.sum.e[1];
+
+  /* Contribution of bonded interactions */
+  for(i=0; i<n_bonded_ia; i++) {
+    virials.sum.e[virials.n_pre+i] /= 3.0*volume;
+    virials.node.e[virials.n_pre+i] = SQR(virials.sum.e[virials.n_pre+i]);
+    p_total += virials.sum.e[virials.n_pre+i];
+  }
+
+  /* Contribution of non-bonded interactions */
+  p = virials.n_pre+virials.n_bonded;
+  for (i = 0; i < n_particle_types; i++) {
+    for (j = i; j < n_particle_types; j++) {
+      if (checkIfParticlesInteract(i, j)) {
+	virials.sum.e[p]  /= 3.0*volume;
+	virials.node.e[p]  = SQR(virials.sum.e[p]);
+	p_total += virials.sum.e[p]; }
+      else {
+	virials.sum.e[p] = virials.node.e[p] = 0.0; 
+      }
+      p++;
+    }
+  }
+
+  /* Contribution of electrostatics (if any) */
+  if(coulomb.bjerrum > 0.0) {
+    virials.sum.e[p]  /= 3.0*volume;
+    virials.node.e[p]  = SQR(virials.sum.e[p]);
+    p_total += virials.sum.e[p]; 
+  }
+
+  /* Check and return */
+  virials.sum.e[0] = virials.sum.e[0]/(3.0*volume) + virials.sum.e[1];
+  if( fabs(p_total - virials.sum.e[0]) > ROUND_ERROR_PREC ) {
+    fprintf(stderr, "Sanity check failed: Derived pressure (%f) differs from given one (%f) by %f!\n",p_total,virials.sum.e[0],virials.sum.e[0]-p_total);
+    errexit();
+  }
+  virials.node.e[0] = SQR(p_total);
+}
+
