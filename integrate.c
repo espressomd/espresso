@@ -34,7 +34,6 @@
 /*******************  variables  *******************/
 
 double time_step = -1.0;
-double start_time = 0.0;
 double sim_time = 0.0;
 
 double skin = -1.0;
@@ -248,12 +247,11 @@ int time_step_callback(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
-int start_time_callback(Tcl_Interp *interp, void *_data)
+int time_callback(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
-  start_time = data;
-  sim_time = start_time;
-  mpi_bcast_parameter(FIELD_START_TIME);
+  sim_time = data;
+  mpi_bcast_parameter(FIELD_SIMTIME);
   return (TCL_OK);
 }
 

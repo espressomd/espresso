@@ -18,8 +18,6 @@
 extern double time_step;
 /** Old time step needed for rescaling of forces. */
 extern double old_time_step;
-/** Physical start time of the simulation. */
-extern double start_time;
 /** Actual simulation time (only on MASTER NODE). */
 extern double sim_time;
 /** Maximal interaction cutoff. */
@@ -88,7 +86,7 @@ int time_step_callback(Tcl_Interp *interp, void *_data);
     If no value is set the integration starts at start_time = 0.0.
     \return TCL status.
 */
-int start_time_callback(Tcl_Interp *interp, void *_data);
+int time_callback(Tcl_Interp *interp, void *_data);
 
 /*@}*/
 
