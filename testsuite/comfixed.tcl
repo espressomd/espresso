@@ -44,6 +44,7 @@ puts "- Testcase comfixed.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------"
 
 require_feature "COMFIXED"
+require_feature "PARTIAL_PERIODIC"
 
 set epsilon 1e-4
 setmd temp 0
