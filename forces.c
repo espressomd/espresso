@@ -120,7 +120,7 @@ void force_calc()
 	}
  	i+=3; break;
       default :
-	fprintf(stderr,"WARNING: Bonds of atom %d unkwown\n",particles[id1].identity);
+	fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",particles[id1].identity);
 	i = particles[id1].n_bonds; 
 	break;
      }
