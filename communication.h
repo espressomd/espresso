@@ -193,11 +193,16 @@ void mpi_bcast_n_particle_types(int s);
 */
 void mpi_gather_stats(int job, void *result);
 
-/** Issue REQ_GETPARTS: gather all particle informations.
-    This is slow and may use huge amounts of memory.
-    \param result where to store the gathered particles
+/** Issue REQ_GETPARTS: gather all particle informations (except bonds).
+    This is slow and may use huge amounts of memory. If il is non-NULL, also
+    the bonding information is also fetched and stored in a single intlist
+    pointed to by il. The particles bonding information references this array,
+    which is the only data you have to free later (besides the result array
+    you allocated).
+  \param result where to store the gathered particles
+  \param il if non-NULL, the integerlist where to store the bonding info
 */
-void mpi_get_particles(Particle *result);
+void mpi_get_particles(Particle *result, IntList *il);
 
 /** Issue REQ_SET_TIME_STEP: send new \ref time_step and rescale the
     velocities accordingly. 

@@ -752,15 +752,16 @@ void mpi_gather_stats_slave(int pnode, int job)
 }
 
 /*************** REQ_GETPARTS ************/
-void mpi_get_particles(Particle *result)
+void mpi_get_particles(Particle *result, IntList *bi)
 {
+  IntList local_bi;
   int n_part;
   int tot_size, i, g, pnode;
   int *sizes;
   int m,n,o;
   MPI_Status status;
 
-  mpi_issue(REQ_GETPARTS, -1, 0);
+  mpi_issue(REQ_GETPARTS, -1, bi != NULL);
 
   sizes = malloc(sizeof(int)*n_nodes);
   n_part = cells_get_n_particles();
@@ -778,15 +779,25 @@ void mpi_get_particles(Particle *result)
   }
 
   /* fetch particle informations into 'result' */
+  init_intlist(&local_bi);
   g = 0;
   for (pnode = 0; pnode < n_nodes; pnode++) {
     if (sizes[pnode] > 0) {
       if (pnode == this_node) {
 	INNER_CELLS_LOOP(m, n, o) {
-	  memcpy(&result[g],CELL_PTR(m,n,o)->pList.part,(CELL_PTR(m,n,o)->pList.n)*sizeof(Particle));
-	  COMM_TRACE(printf("%d -> %d,%d,%d: %dx (starting at %d with %d)\n", this_node, m, n, o,
-			    (CELL_PTR(m,n,o)->pList.n),g,result[g].r.identity));
-	  g += CELL_PTR(m,n,o)->pList.n;
+	  Particle *part = CELL_PTR(m,n,o)->pList.part;
+	  int npart = CELL_PTR(m,n,o)->pList.n;
+	  memcpy(&result[g], part, npart*sizeof(Particle));
+	  g += npart;
+	  if (bi) {
+	    int pc;
+	    for (pc = 0; pc < npart; pc++) {
+	      Particle *p = &part[pc];
+	      realloc_intlist(&local_bi, local_bi.n + p->bl.n);
+	      memcpy(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
+	      local_bi.n += p->bl.n;
+	    }
+	  }
 	}
       }
       else {
@@ -797,18 +808,52 @@ void mpi_get_particles(Particle *result)
     }
   }
 
-  free(sizes); 
-
   /* perhaps add some debugging output */
-  COMM_TRACE(gdata = *(Particle **)result;
-	     for(i = 0; i < tot_size; i++) {
-	       printf("%d: %d %d %f (%f, %f, %f)\n", i, gdata[i].r.identity, gdata[i].r.type,
-		      gdata[i].r.q, gdata[i].r.p[0], gdata[i].r.p[1], gdata[i].r.p[2]);
+  COMM_TRACE(for(i = 0; i < tot_size; i++) {
+	       printf("%d: %d %d %f (%f, %f, %f)\n", i, result[i].r.identity, result[i].r.type,
+		      result[i].r.q, result[i].r.p[0], result[i].r.p[1], result[i].r.p[2]);
 	     });
+
+  /* gather bonding information */
+  if (bi) {
+    int *bonds;
+
+    init_intlist(bi);
+    MPI_Gather(&local_bi.n, 1, MPI_INT, sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    for (pnode = 0; pnode < n_nodes; pnode++) {
+      if (sizes[pnode] > 0) {
+	realloc_intlist(bi, bi->n + sizes[pnode]);
+
+	if (pnode == this_node)
+	  memcpy(&bi->e[bi->n], local_bi.e, sizes[pnode]*sizeof(int));
+	else
+	  MPI_Recv(&bi->e[bi->n], sizes[pnode], MPI_INT, pnode, REQ_GETPARTS,
+		   MPI_COMM_WORLD, &status);
+
+	bi->n += sizes[pnode];  
+      }
+    }
+
+    /* setup particle bond pointers into bi */
+    bonds = bi->e;
+    for (i = 0; i < tot_size; i++) {
+      result[i].bl.e = bonds;
+      bonds += result[i].bl.n;
+      COMM_TRACE(if (result[i].bl.n > 0) {
+	printf("part %d: bonds ", i);
+	for(g = 0; g < result[i].bl.n; g++) printf("%d ", result[i].bl.e[g]);
+	printf("\n");
+      });
+    }
+    realloc_intlist(&local_bi, 0);
+  }
+
+  free(sizes); 
 }
 
-void mpi_get_particles_slave(int pnode, int job)
+void mpi_get_particles_slave(int pnode, int bi)
 {
+  IntList local_bi;
   int n_part;
   int g;
   int m,n,o;
@@ -823,17 +868,35 @@ void mpi_get_particles_slave(int pnode, int job)
     /* get (unsorted) particle informations as an array of type 'particle' */
     /* then get the particle information */
     result = malloc(n_part*sizeof(Particle));
+
+    init_intlist(&local_bi);
     
     g = 0;
     INNER_CELLS_LOOP(m, n, o) {
-      memcpy(&result[g],CELL_PTR(m,n,o)->pList.part,(CELL_PTR(m,n,o)->pList.n)*sizeof(Particle));
-      COMM_TRACE(printf("%d -> %d,%d,%d: %dx (starting at %d with %d)\n",this_node, m, n, o,
-			(CELL_PTR(m,n,o)->pList.n),g,result[g].r.identity));
+      Particle *part = CELL_PTR(m,n,o)->pList.part;
+      int npart = CELL_PTR(m,n,o)->pList.n;
+      memcpy(&result[g],part,npart*sizeof(Particle));
       g+=CELL_PTR(m,n,o)->pList.n;
+      if (bi) {
+	int pc;
+	for (pc = 0; pc < npart; pc++) {
+	  Particle *p = &part[pc];
+	  realloc_intlist(&local_bi, local_bi.n + p->bl.n);
+	  memcpy(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
+	  local_bi.n += p->bl.n;
+	}
+      }
     }
     /* and send it back to the master node */
     MPI_Send(result, n_part*sizeof(Particle), MPI_BYTE, 0, REQ_GETPARTS, MPI_COMM_WORLD);
     free(result);
+
+    if (bi) {
+      MPI_Gather(&local_bi.n, 1, MPI_INT, NULL, 1, MPI_INT, 0, MPI_COMM_WORLD);      
+      if (local_bi.n > 0)
+	MPI_Send(local_bi.e, local_bi.n, MPI_INT, 0, REQ_GETPARTS, MPI_COMM_WORLD);
+      realloc_intlist(&local_bi, 0);
+    }
   }
 }
 

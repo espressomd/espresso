@@ -52,11 +52,12 @@ int partCfgSorted = 0;
 void updatePartCfg()
 {
   int j;
+
   if(partCfg)
     return;
-
+  
   partCfg = malloc(n_total_particles*sizeof(Particle));
-  mpi_get_particles(partCfg); 
+  mpi_get_particles(partCfg, NULL); 
   for(j=0; j<n_total_particles; j++)
     unfold_particle(partCfg[j].r.p,partCfg[j].i);
 
@@ -78,10 +79,8 @@ int sortPartCfg()
     return 0;
 
   sorted = malloc(n_total_particles*sizeof(Particle));
-  for(i = 0; i < n_total_particles; i++) {
-    COMM_TRACE(printf("Sort particle %d from %d to gdata\n",partCfg[i].r.identity, i));
+  for(i = 0; i < n_total_particles; i++)
     memcpy(&sorted[partCfg[i].r.identity], &partCfg[i], sizeof(Particle));
-  }
   free(partCfg);
   partCfg = sorted;
 
