@@ -505,7 +505,8 @@ proc create_obs_window {obs xlabel ylabel xrange yrange max_points width height 
 	-height [expr \$tmarg_$obs + \$ypix_$obs + \$bmarg_$obs] -bg white
     frame .$obs.b
     button .$obs.b1 -text "PS-File" -command "obs_window_to_ps $obs"
-    button .$obs.b2 -text "Options" -command "obs_window_options $obs"
+    button .$obs.b2 -text "Options" -command "puts \"Sorry not ready yet!\""
+#    button .$obs.b2 -text "Options" -command "obs_window_options $obs"
     button .$obs.b3 -text "Close"   -command "destroy .$obs"
     pack .$obs.b1 .$obs.b2 .$obs.b3 -side left -fill both -in .$obs.b
     pack .$obs.c .$obs.b -in .$obs
