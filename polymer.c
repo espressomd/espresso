@@ -892,9 +892,9 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
 
 int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   /** Implementation of the tcl-command
-      diamond <a> <bond_length> <MPC> [counterions <N_CI>] [charges <val_nodes> <val_cM> <val_CI>] [distance <cM_dist>]
+      diamond <a> <bond_length> <MPC> [counterions <N_CI>] [charges <val_nodes> <val_cM> <val_CI>] [distance <cM_dist>] [nonet]
   */
-  double a, bond_length; int MPC, N_CI = 0; double val_nodes = 0.0, val_cM = 0.0, val_CI = 0.0; int cM_dist = 1;
+  double a, bond_length; int MPC, N_CI = 0; double val_nodes = 0.0, val_cM = 0.0, val_CI = 0.0; int cM_dist = 1; int nonet = 0;
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i, tmp_try;
 
@@ -925,13 +925,17 @@ int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	return (TCL_ERROR); }
       else { i++; }
     }
+    /* [nonet] */
+    else if (!strncmp(argv[i], "nonet", strlen(argv[i]))) {
+      nonet = 1;
+    }
     /* default */
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
   }
 
-  POLY_TRACE(printf("double a %f, bond_length %f, int MPC %d, N_CI %d, double val_nodes %f, val_cM %f, val_CI %f, int cM_dist %d\n", a, bond_length, MPC, N_CI, val_nodes, val_cM, val_CI, cM_dist));
+  POLY_TRACE(printf("double a %f, bond_length %f, int MPC %d, N_CI %d, double val_nodes %f, val_cM %f, val_CI %f, int cM_dist %d, nonet %d\n", a, bond_length, MPC, N_CI, val_nodes, val_cM, val_CI, cM_dist,nonet));
 
-  tmp_try = diamondC(a, bond_length, MPC, N_CI, val_nodes, val_cM, val_CI, cM_dist);
+  tmp_try = diamondC(a, bond_length, MPC, N_CI, val_nodes, val_cM, val_CI, cM_dist, nonet);
   if (tmp_try == -3) {
     sprintf(buffer, "Failed upon creating one of the monomers in Espresso!\nAborting...\n"); tmp_try = TCL_ERROR; }
   else if (tmp_try >= 0) {
@@ -943,7 +947,7 @@ int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 }
 
 
-int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, double val_cM, double val_CI, int cM_dist) {
+int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, double val_cM, double val_CI, int cM_dist, int nonet) {
   /** C implementation of 'diamond <a> <bond_length> <MPC> [options]' */
   int i,j,k, part_id, bond[2], type_FENE=0,type_node=0,type_cM=1,type_nM=1, type_CI=2;
   double pos[3], off = bond_length/sqrt(3);
@@ -973,13 +977,172 @@ int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, 
       if (set_particle_q(part_id, (k % cM_dist==0) ? val_cM : 0.0)==TCL_ERROR) return (-3);
       if (set_particle_type(part_id, (k % cM_dist==0) ? type_cM : type_nM)==TCL_ERROR) return (-3);
       bond[0] = type_FENE; 
-      if(k==1) bond[1] = dchain[i][0]; else bond[1] = part_id-1;
-      if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3);
-      if(k==MPC) { 
+      if(k==1) { 
+	if(nonet!=1) { bond[1] = dchain[i][0]; if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3); } }
+      else { 
+	bond[1] = part_id-1; if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3); }
+      if((k==MPC)&&(nonet!=1)) { 
 	bond[1] = dchain[i][1];
 	if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3);
       }
       part_id++;
+    }
+  }
+
+  /* place counterions (if any) */
+  if(N_CI > 0) counterionsC(N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
+  
+  return(0);
+}
+
+
+
+
+
+int icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+  /** Implementation of the tcl-command
+      icosaeder <a> <MPC> [counterions <N_CI>] [charges <val_cM> <val_CI>] [distance <cM_dist>]
+  */
+  double a; int MPC, N_CI = 0; double val_cM = 0.0, val_CI = 0.0; int cM_dist = 1; 
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  int i, tmp_try;
+
+  if (argc < 3) { Tcl_AppendResult(interp, "Wrong # of args! Usage: icosaeder <a> <MPC> [options]", (char *)NULL); return (TCL_ERROR); }
+  a = atof(argv[1]); MPC = atoi(argv[2]);
+  for (i=3; i < argc; i++) {
+    /* [counterions <N_CI>] */
+    if (!strncmp(argv[i], "counterions", strlen(argv[i]))) {
+      if (Tcl_GetInt(interp, argv[i+1], &N_CI) == TCL_ERROR) { 
+	Tcl_AppendResult(interp, "The number of counterions must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      else { i++; }
+    }
+    /* [charges <val_cM> <val_CI>] */
+    else if (!strncmp(argv[i], "charges", strlen(argv[i]))) {
+      if (i+3 >= argc) { Tcl_AppendResult(interp, "Wrong # of args! Usage: charges <val_cM> <val_CI>!", (char *)NULL); return (TCL_ERROR); }
+      if (Tcl_GetDouble(interp, argv[i+1], &val_cM) == TCL_ERROR) { 
+	Tcl_AppendResult(interp, "The charge of the monomers must be double (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
+      if (Tcl_GetDouble(interp, argv[i+2], &val_CI) == TCL_ERROR) { 
+	Tcl_AppendResult(interp, "The charge of the counterions must be double (got: ",argv[i+3],")!", (char *)NULL); return (TCL_ERROR); }
+      i+=2;
+    }
+    /* [distance <cM_dist>] */
+    else if (!strncmp(argv[i], "distance", strlen(argv[i]))) {
+      if (Tcl_GetInt(interp, argv[i+1], &cM_dist) == TCL_ERROR) { 
+	Tcl_AppendResult(interp, "The distance between two charged monomers' indices must be integer (got: ",argv[i+1],")!", (char *)NULL); 
+	return (TCL_ERROR); }
+      else { i++; }
+    }
+    /* default */
+    else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
+  }
+
+  POLY_TRACE(printf("double a %f, int MPC %d, N_CI %d, double val_cM %f, val_CI %f, int cM_dist %d\n", a, MPC, N_CI, val_cM, val_CI, cM_dist));
+
+  tmp_try = icosaederC(a, MPC, N_CI, val_cM, val_CI, cM_dist);
+  if (tmp_try == -3) {
+    sprintf(buffer, "Failed upon creating one of the monomers in Espresso!\nAborting...\n"); tmp_try = TCL_ERROR; }
+  else if (tmp_try >= 0) {
+    sprintf(buffer, "%d", tmp_try); tmp_try = TCL_OK; }
+  else {
+    sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return (tmp_try);
+}
+
+
+int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI, int cM_dist) {
+  /** C implementation of 'icosaeder <a> <bond_length> <MPC> [options]' */
+  int i,j,k,l, part_id, bond[2], type_FENE=0,type_cM=0,type_nM=1, type_CI=2;
+  double pos[3],pos_shift[3], vec[3],e_vec[3],vec_l, bond_length=(2*ico_a/3.)/(1.*MPC);
+  double ico_g=ico_a*(1+sqrt(5))/2.0, shift=0.0;
+  double ico_coord[12][3] = {{0,+ico_a,+ico_g}, {0,+ico_a,-ico_g}, {0,-ico_a,+ico_g}, {0,-ico_a,-ico_g},
+			     {+ico_a,+ico_g,0}, {+ico_a,-ico_g,0}, {-ico_a,+ico_g,0}, {-ico_a,-ico_g,0},
+			     {+ico_g,0,+ico_a}, {-ico_g,0,+ico_a}, {+ico_g,0,-ico_a}, {-ico_g,0,-ico_a}};
+  int    ico_NN[12][5]    = {{2,8,4,6, 9}, {3,10,4,6,11}, {0,8,5,7, 9}, {1,10,5,7,11}, {0,6,1,10,8}, {2,7,3,10,8},
+			     {0,4,1,11,9}, {2,5,3,11, 9}, {0,2,5,10,4}, {0,2,7,11, 6}, {1,3,5,8, 4}, {1,3,7,9, 6}};
+  int    ico_ind[12][10];
+
+  /* make sure that the edges in ico_NN are sorted such that NearestNeighbours are next to each other */
+  /* int    ico_NN[12][5]    = {{2,4,6,8, 9}, {3,4,6,10,11}, {0,5,7,8, 9}, {1,5,7,10,11}, {0,1,6,8,10}, {2,3,7,8,10}, 
+			     {0,1,4,9,11}, {2,3,5, 9,11}, {0,2,4,5,10}, {0,2,6, 7,11}, {1,3,4,5, 8}, {1,3,6,7, 9}};
+  for(i=0; i<12; i++) {
+    printf("%d: { ",i); 
+    for(j=0; j<5; j++) printf("%d ",ico_NN[i][j]);
+    printf("} -> ");
+    for(j=0; j<5; j++) 
+      for(l=0; l<5; l++) 
+	if(j!=l) 
+	  for(k=0; k<5; k++) 
+	    if(ico_NN[ico_NN[i][j]][k]==ico_NN[i][l]) printf("%d = %d (@%d)  ",ico_NN[i][j],ico_NN[i][l],k);
+    printf("\n");
+  } */
+
+  /* shift coordinates to not be centered around zero but rather be positive */
+  if(ico_a > ico_g) shift=ico_a; else shift=ico_g;
+
+  /* create fulleren & soccer-ball */
+  part_id = 0;
+  for(i=0; i<12; i++) {
+    for(j=0; j<5; j++) {
+      /* place chains along the 5 edges around each of the 12 icosaeder's vertices */
+      if(j < 4) for(l=0; l<3; l++) vec[l] = (ico_coord[ico_NN[i][j+1]][l] - ico_coord[ico_NN[i][j]][l])/3.;
+      else      for(l=0; l<3; l++) vec[l] = (ico_coord[ico_NN[i][0]][l]   - ico_coord[ico_NN[i][4]][l])/3.;
+      vec_l = sqrt(SQR(vec[0]) + SQR(vec[1]) + SQR(vec[2]));
+      for(l=0; l<3; l++) e_vec[l] = vec[l]/vec_l;
+
+      ico_ind[i][j] = part_id; bond_length = vec_l/(1.*MPC);
+      for(l=0; l<3; l++) pos[l] = ico_coord[i][l] + (ico_coord[ico_NN[i][j]][l] - ico_coord[i][l])/3.;
+      for(k=0; k<MPC; k++) {
+	for(l=0; l<3; l++) pos_shift[l] = pos[l] + shift;
+	if (place_particle(part_id, pos_shift)==TCL_ERROR) return (-3);
+	if (set_particle_q(part_id, val_cM)==TCL_ERROR) return (-3);
+	if (set_particle_type(part_id, type_cM)==TCL_ERROR) return (-3);
+	bond[0] = type_FENE;
+	if (k > 0) {
+	  bond[1] = part_id-1; if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3); 
+	}
+	part_id++;
+	for(l=0; l<3; l++) pos[l] += bond_length*e_vec[l];
+      }
+
+      /* place chains along the 5 edges on the middle third of the connection between two NN vertices */
+      if(i < ico_NN[i][j]) {
+	for(l=0; l<3; l++) vec[l] = (ico_coord[ico_NN[i][j]][l] - ico_coord[i][l])/3.;
+	vec_l = sqrt(SQR(vec[0]) + SQR(vec[1]) + SQR(vec[2]));
+	for(l=0; l<3; l++) e_vec[l] = vec[l]/vec_l;
+	
+	ico_ind[i][j+5] = part_id; bond_length = vec_l/(1.*MPC);
+	for(l=0; l<3; l++) pos[l] = ico_coord[i][l] + (ico_coord[ico_NN[i][j]][l] - ico_coord[i][l])/3. + bond_length*e_vec[l];
+	for(k=1; k<MPC; k++) {
+	  for(l=0; l<3; l++) pos_shift[l] = pos[l] + shift;
+	  if (place_particle(part_id, pos_shift)==TCL_ERROR) return (-3);
+	  if (set_particle_q(part_id, 0.0)==TCL_ERROR) return (-3);
+	  if (set_particle_type(part_id, type_nM)==TCL_ERROR) return (-3);
+	  bond[0] = type_FENE;
+	  if (k > 1) {
+	    bond[1] = part_id-1; if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3); }
+	  else {
+	    bond[1] = ico_ind[i][j]; if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3); }
+	  part_id++;
+	  for(l=0; l<3; l++) pos[l] += bond_length*e_vec[l];
+	}
+      } 
+    }
+
+    for(j=0; j<5; j++) {
+      /* add bonds between the edges around the vertices */
+      bond[0] = type_FENE;
+      if(j>0) bond[1] = ico_ind[i][j-1] + (MPC-1); else bond[1] = ico_ind[i][4] + (MPC-1);
+      if (change_particle_bond(ico_ind[i][j], bond, 0)==TCL_ERROR) return (-3);
+
+      /* connect loose edges around vertices with chains along the middle third already created earlier */
+      if(i > ico_NN[i][j]) {
+	bond[0] = type_FENE;
+	for(l=0; l<5; l++) if(ico_NN[ico_NN[i][j]][l] == i) break;
+	if(l==5) { fprintf(stderr,"WARNING: Couldn't find my neighbouring edge upon creating the icosaeder!\n"); errexit(); }
+	bond[1] = ico_ind[ico_NN[i][j]][l+5] + (MPC-2);
+	if (change_particle_bond(ico_ind[i][j], bond, 0)==TCL_ERROR) return (-3);
+      }
     }
   }
 
