@@ -331,6 +331,8 @@ void layered_topology_init(CellPList *old)
   if (PERIODIC(2))
     layered_flags |= LAYERED_PERIODIC;
 
+  CELL_TRACE(fprintf(stderr, "%d: layered_flags tn %d bn %d \n", this_node, LAYERED_TOP_NEIGHBOR, LAYERED_BTM_NEIGHBOR));
+
   /* allocate cells and mark them */
   realloc_cells(n_layers + 2);
   realloc_cellplist(&local_cells, local_cells.n = n_layers);
@@ -415,29 +417,47 @@ void layered_exchange_and_sort_particles(int global_flag)
       }
     }
 
+    CELL_TRACE(fprintf(stderr,"%d: exchange start transfer\n",this_node));
+
     /* transfer */
     if (n_nodes > 1) {
       if (this_node % 2 == 0) {
 	/* send down */
-	if (LAYERED_BTM_NEIGHBOR)
+	if (LAYERED_BTM_NEIGHBOR) {
+	  CELL_TRACE(fprintf(stderr,"%d: send dn\n",this_node));
 	  send_particles(&send_buf_dn, btm);
-	if (LAYERED_TOP_NEIGHBOR)
+	}
+	if (LAYERED_TOP_NEIGHBOR) {
+	  CELL_TRACE(fprintf(stderr,"%d: recv up\n",this_node));
 	  recv_particles(&recv_buf, top);
+	}
 	/* send up */
-	if (LAYERED_BTM_NEIGHBOR)
+	if (LAYERED_TOP_NEIGHBOR) {
+	  CELL_TRACE(fprintf(stderr,"%d: send up\n",this_node));
 	  send_particles(&send_buf_up, top);
-	if (LAYERED_TOP_NEIGHBOR)
+	}
+	if (LAYERED_BTM_NEIGHBOR) {
+	  CELL_TRACE(fprintf(stderr,"%d: recv dn\n",this_node));
 	  recv_particles(&recv_buf, btm);
+	}
       }
       else {
-	if (LAYERED_TOP_NEIGHBOR)
+	if (LAYERED_TOP_NEIGHBOR) {
+	  CELL_TRACE(fprintf(stderr,"%d: recv up\n",this_node));
 	  recv_particles(&recv_buf, top);
-	if (LAYERED_BTM_NEIGHBOR)
+	}
+	if (LAYERED_BTM_NEIGHBOR) {
+	  CELL_TRACE(fprintf(stderr,"%d: send dn\n",this_node));
 	  send_particles(&send_buf_dn, btm);
-	if (LAYERED_BTM_NEIGHBOR)
+	}
+	if (LAYERED_BTM_NEIGHBOR) {
+	  CELL_TRACE(fprintf(stderr,"%d: recv dn\n",this_node));
 	  recv_particles(&recv_buf, btm);
-	if (LAYERED_TOP_NEIGHBOR)
-	send_particles(&send_buf_up, top);
+	}
+	if (LAYERED_TOP_NEIGHBOR) {
+	  CELL_TRACE(fprintf(stderr,"%d: send up\n",this_node));
+	  send_particles(&send_buf_up, top);
+	}
       }
     }
 #ifdef ADDITIONAL_CHECKS
@@ -449,6 +469,8 @@ void layered_exchange_and_sort_particles(int global_flag)
     }
 #endif
     layered_append_particles(&recv_buf);
+
+    CELL_TRACE(fprintf(stderr,"%d: exchange redo transfer\n",this_node));
 
     /* handshake redo */
     flag = (recv_buf.n != 0);
