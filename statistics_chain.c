@@ -526,7 +526,7 @@ int analyze_fold_chains(float *coord)
 	    cm_tmp     += coord[ind];
 	  }
 	  cm_tmp /= (double)mol_size;
-	  if(cm_tmp < 0 || cm_tmp > box_l[i]) {
+	  if(cm_tmp < -ROUND_ERROR_PREC || cm_tmp > box_l[i]+ROUND_ERROR_PREC) {
 	    fprintf(stderr,"\n: analyse_fold_chains: chain center of mass is out of range (coord %d: %f not in box_l %f), exiting\n",i,cm_tmp,box_l[i]);
 	    errexit();
 	  }
@@ -536,6 +536,7 @@ int analyze_fold_chains(float *coord)
   }
   return (TCL_OK); 
 }
+
 
 void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff) {
   int i,j,k,qi, cnt,cnt_max;
