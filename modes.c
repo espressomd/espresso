@@ -348,7 +348,7 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
 
 int get_lipid_orients(IntList* l_orient) {
   int i , j,gi,gj, atom;
-  double zref, zreflocal;  
+  double shift,zref, zreflocal;  
   double dir[3];
   double grid_size[2];
 
@@ -385,14 +385,32 @@ int get_lipid_orients(IntList* l_orient) {
     }
   
 
-  /* Find the mean z position and fold x y coordinates but not z*/
+  /* Find the mean z position of unfolded coordinates */ 
+  zref = 0;
+  for (i = 0 ; i < n_total_particles ; i++) {
+    zref += partCfg[i].r.p[zdir];
+  }
+  zref = zref/(double)(n_total_particles);
+  
+  /* Calculate shift factor */
+  shift = zref - box_l[zdir]/2.0;
+
+  /* Shift bilayer to center of box */
+  for (i = 0 ; i < n_total_particles ; i++) {
+    partCfg[i].r.p[zdir] -= shift;
+  }
+
+  /* Fold particles and find the mean z position of shifted
+     coordinates */ 
   zref = 0;
   for (i = 0 ; i < n_total_particles ; i++) {
     fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,xdir);
     fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,ydir);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,zdir);
     zref += partCfg[i].r.p[zdir];
   }
   zref = zref/(double)(n_total_particles);
+
 
  /* Calculate an initial height function of all particles */
   for (i = 0 ; i < n_total_particles ; i++) {
