@@ -872,16 +872,21 @@ int max_num_cells_callback(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
-int min_num_cells_callback(Tcl_Interp *interp, void *_data)
+int calc_processor_min_num_cells()
 {
-  char buf[TCL_INTEGER_SPACE];
-  int data = *(int *)_data;
   int i, min = 1;
-  
   /* the minimal number of cells can be lower if there are at least two nodes serving a direction,
      since this also ensures that the cell size is at most half the box length. However, if there is
      only one processor for a direction, there have to be at least two cells for this direction. */
   for (i = 0; i < 3; i++) if (node_grid[i] == 1) min *= 2;
+  return min;
+}
+
+int min_num_cells_callback(Tcl_Interp *interp, void *_data)
+{
+  char buf[TCL_INTEGER_SPACE];
+  int data = *(int *)_data;
+  int min = calc_processor_min_num_cells();
 
   if (data < min) {
     sprintf(buf, "%d", min);

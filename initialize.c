@@ -67,6 +67,9 @@ int on_program_start(Tcl_Interp *interp)
   init_bit_random();
 
   setup_node_grid();
+  /* calculate initial minimimal number of cells (see min_num_cells_callback) */
+  min_num_cells = calc_processor_min_num_cells();
+
   cells_pre_init();
   ghost_init();
   /* Initialise force and energy tables */
@@ -75,7 +78,6 @@ int on_program_start(Tcl_Interp *interp)
 #ifdef ELECTROSTATICS
   fft_pre_init();
 #endif
-
 
   /*
     call all initializations to do only on the master node here.

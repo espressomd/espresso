@@ -191,6 +191,9 @@ int max_num_cells_callback(Tcl_Interp *interp, void *_data);
     see also \ref min_num_cells */
 int min_num_cells_callback(Tcl_Interp *interp, void *_data);
 
+/** calculate physical (processor) minimal number of cells */
+int calc_processor_min_num_cells();
+
 /** Calculate nonbonded and bonded forces with link-cell 
     method (without Verlet lists)
 */
