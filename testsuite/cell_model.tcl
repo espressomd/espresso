@@ -231,6 +231,8 @@ if { $vmd_output=="yes" } {
     puts $vmdout_file "mol load psf $name$ident.psf pdb $name$ident.pdb"
     puts $vmdout_file "rotate stop"
     puts $vmdout_file "imd connect $HOSTNAME $port"
+    puts $vmdout_file "mol modstyle 0 0 CPK 1.000000 0.300000 8.000000 6.000000"
+    puts $vmdout_file "mol modcolor 0 0 SegName"
     close $vmdout_file
     puts "PSF and PDB written. IMD connection on port $port"
     puts "Start VMD in the same directory on the machine you like :"
