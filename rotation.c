@@ -63,7 +63,7 @@ void define_Qdd(Particle *p);
 
 /*@}*/
 
-/** set torques to zero and add thermostat torques to non-ghost particles */
+/** set torques to zero for all particles */
 void init_torques()
 {
 #ifdef ROTATION
@@ -78,20 +78,14 @@ void init_torques()
   CELLS_LOOP(m, n, o) {
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
-    /* ghost particle selection */
-    if (IS_GHOST_CELL(m, n, o)) {
+    /* all the particles */
+    {
       for (i = 0; i < np; i++) {
 
 	p[i].torque[0] = 0;
 	p[i].torque[1] = 0;
 	p[i].torque[2] = 0;
       }
-    }
-    /* real particle selection */
-    else {
-      for (i = 0; i < np; i++) {       
-        friction_thermo_rotation(&p[i]);
-      }     
     }
   }
 #endif
