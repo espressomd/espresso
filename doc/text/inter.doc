@@ -66,6 +66,9 @@
 			FENE potential
 			\f[ U^{FENE} = -\frac{1}{2} K_{FENE} R_{FENE}^2 \ln
 			\left( 1 - \left( \frac{r}{R_{FENE}} \right)^2 \right) \f]
+		<li> \verbatim harmonic <K_harmonic> <R_harmonic> \endverbatim
+			Harmonic potential
+			\f[ U^{Harmonic} = \frac{1}{2} K_{harmonic} \left( r - R_{harmonic} \right)^2 \f]
 		<li> \verbatim angle <bend> \endverbatim
 			cosine bend potential  
 			\f[ U^{bend} = bend (1-\cos(\alpha))
