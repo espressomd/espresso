@@ -38,10 +38,20 @@
  */
 
 #include <tcl.h>
+#include "verlet.h"
 
 /************************************************
  * data types
  ************************************************/
+
+/** Structure containing information about non bonded interactions
+    with particles in a neighbor cell. */
+typedef struct {
+  /** Pointer to particle list of neighbor cell. */
+  ParticleList *pList;
+  /** Verlet list for non bonded interactions of a cell with a neighbor cell. */
+  PairList vList;
+} IA_Neighbor;
 
 /** Structure containing information of a cell. Contains: cell
     neighbor information, particles in cell.
@@ -71,15 +81,6 @@ typedef struct {
   /** particle list for particles in the cell. */
   ParticleList pList;
 } Cell;
-
-/** Structure containing information about non bonded interactions
-    with particles in a neighbor cell. */
-typedef struct {
-  /** Pointer to particle list of neighbor cell. */
-  ParticleList *pList;
-  /** Verlet list for non bonded interactions of a cell with a neighbor cell. */
-  PairList vList;
-} IA_Neighbor;
 
 /** \name Exported Variables */
 /************************************************************/
@@ -126,6 +127,12 @@ Function called in modul initialize.c initialize().  Initializes one
 cell on each node to be able to store the particle data there.
 */
 void cells_pre_init();
+
+/** Notify cell code of topology change. 
+
+Recalculates the cell sizes.
+*/
+void cells_changed_topology();
 
 /** initialize link cell structures. 
  *
