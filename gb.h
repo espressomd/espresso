@@ -51,15 +51,18 @@ MDINLINE void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
    Minus2 = (a-b)/(1-ia_params->GB_chi2*c);
     Brhi2 = (ia_params->GB_chi2/dist/dist)*(Plus2*(a+b) + Minus2*(a-b));
        E2 = 1-0.5*Brhi2;
-        E = 4*pow(E1,ia_params->GB_nu)*pow(E2,ia_params->GB_mu);
+        E = 4*ia_params->GB_eps*pow(E1,ia_params->GB_nu)*pow(E2,ia_params->GB_mu);
     Brhi1 = (ia_params->GB_chi1/dist/dist)*(Plus1*(a+b) + Minus1*(a-b));
     Sigma = 1/sqrt(1-0.5*Brhi1);
     Koef1 = ia_params->GB_mu/E2;
     Koef2 = Sigma*Sigma*Sigma*0.5;
     
-        X = 1/(dist-Sigma+1);
-     Xcut = 1/(ia_params->GB_cut-Sigma+1);
+        X = 1/(dist - Sigma + ia_params->GB_sig);
+     Xcut = 1/(ia_params->GB_cut - Sigma + ia_params->GB_sig);
      
+if (X < 1.25) { /* 1.25 corresponds to the interparticle penetration of 0.2 units of length.
+                   If they are not that close, the GB forces and torques are calculated */
+      
     Brack = X*X*X;
  BrackCut = Xcut*Xcut*Xcut;
     Brack = Brack*Brack;
@@ -72,14 +75,14 @@ MDINLINE void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
      
 /*-------- Here we calculate derivatives -----------------------------*/ 
 
-dU_dr = E*(Koef1*Brhi2*(Brack-BrackCut)-Koef2*Brhi1*(Bra12-Bra12Cut)-Bra12*dist)/dist/dist;
-Koef1 = Koef1*ia_params->GB_chi2/dist/dist; 
-Koef2 = Koef2*ia_params->GB_chi1/dist/dist;
-dU_da = E*(Koef1*(Minus2+Plus2)*(BrackCut-Brack)+Koef2*(Plus1+Minus1)*(Bra12-Bra12Cut));
-dU_db = E*(Koef1*(Minus2-Plus2)*(Brack-BrackCut)+Koef2*(Plus1-Minus1)*(Bra12-Bra12Cut));
-dU_dc = E*((Brack-BrackCut)*(ia_params->GB_nu*E1*E1*ia_params->GB_chi1*ia_params->GB_chi1*c+
-        0.5*Koef1*ia_params->GB_chi2*(Plus2*Plus2-Minus2*Minus2))-
-           (Bra12-Bra12Cut)*0.5*Koef2*ia_params->GB_chi1*(Plus1*Plus1-Minus1*Minus1));
+    dU_dr = E*(Koef1*Brhi2*(Brack-BrackCut)-Koef2*Brhi1*(Bra12-Bra12Cut)-Bra12*dist)/dist/dist;
+    Koef1 = Koef1*ia_params->GB_chi2/dist/dist; 
+    Koef2 = Koef2*ia_params->GB_chi1/dist/dist;
+    dU_da = E*(Koef1*(Minus2+Plus2)*(BrackCut-Brack)+Koef2*(Plus1+Minus1)*(Bra12-Bra12Cut));
+    dU_db = E*(Koef1*(Minus2-Plus2)*(Brack-BrackCut)+Koef2*(Plus1-Minus1)*(Bra12-Bra12Cut));
+    dU_dc = E*((Brack-BrackCut)*(ia_params->GB_nu*E1*E1*ia_params->GB_chi1*ia_params->GB_chi1*c+
+            0.5*Koef1*ia_params->GB_chi2*(Plus2*Plus2-Minus2*Minus2))-
+            (Bra12-Bra12Cut)*0.5*Koef2*ia_params->GB_chi1*(Plus1*Plus1-Minus1*Minus1));
 	   
 /*--------------------------------------------------------------------*/
  
@@ -114,7 +117,18 @@ p1->torque[2]+= u1x*Gy - u1y*Gx;
 p2->torque[0]+= u2y*Gz - u2z*Gy;
 p2->torque[1]+= u2z*Gx - u2x*Gz;
 p2->torque[2]+= u2x*Gy - u2y*Gx;
-
+        }
+else { /* the particles are too close to each other */
+       Koef1  = 100;
+       
+    p1->f[0] += Koef1 * d[0];
+    p1->f[1] += Koef1 * d[1];
+    p1->f[2] += Koef1 * d[2];
+   
+    p2->f[0] -= Koef1 * d[0];
+    p2->f[1] -= Koef1 * d[1];
+    p2->f[2] -= Koef1 * d[2];
+      }
   }
 }
 
@@ -150,10 +164,11 @@ MDINLINE double gb_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
    Minus2 = (a-b)/(1-ia_params->GB_chi2*c);
        E1 = 1/sqrt(1-ia_params->GB_chi1*ia_params->GB_chi1*c*c);
        E2 = 1-0.5*(ia_params->GB_chi2/dist/dist)*(Plus2*(a+b) + Minus2*(a-b));
-        E = 4*pow(E1,ia_params->GB_nu)*pow(E2,ia_params->GB_mu);  
-    Sigma = 1/sqrt(1-0.5*(ia_params->GB_chi1/dist/dist)*(Plus1*(a+b) + Minus1*(a-b)));    
-        X = 1/(dist-Sigma+1);
-     Xcut = 1/(ia_params->GB_cut-Sigma+1);
+        E = 4*ia_params->GB_eps*pow(E1,ia_params->GB_nu)*pow(E2,ia_params->GB_mu);  
+    Sigma = 1/sqrt(1-0.5*(ia_params->GB_chi1/dist/dist)*(Plus1*(a+b) + Minus1*(a-b)));
+        
+        X = 1/(dist - Sigma + ia_params->GB_sig);
+     Xcut = 1/(ia_params->GB_cut - Sigma + ia_params->GB_sig);
      
     Brack = X*X*X;
  BrackCut = Xcut*Xcut*Xcut;

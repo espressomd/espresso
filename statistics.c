@@ -1531,6 +1531,8 @@ void calc_energy()
 	/* kinetic energy */
 	energy.node.e[1] += SQR(p1->v[0]) + SQR(p1->v[1]) + SQR(p1->v[2]);
 #ifdef ROTATION
+        /* the rotational part is added to the total kinetic energy;
+	   at the moment, we assume unit inertia tensor I=(1,1,1)  */
         energy.node.e[1] += (SQR(p1->omega[0]) + SQR(p1->omega[1]) + SQR(p1->omega[2]))*time_step*time_step;
 #endif	
 	/* bonded interaction energies */

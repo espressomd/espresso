@@ -63,28 +63,38 @@ void define_Qdd(Particle *p);
 
 /*@}*/
 
-/** set torques to zero for all particles */
+/** set torques to zero for all particles and make sure the quaternions are of unit length */
 void init_torques()
 {
 #ifdef ROTATION
  Particle *p;
    int np, m, n, o, i;
+double scale;
 /* currently we define the inertia tensor here. If it is not spherical
  the angular velocities have to be refined several times in the
- convert_torqes_propagate_omega(). See the bottom of this file.  */
+ convert_torqes_propagate_omega(). See the bottom of this file.
+ Also the kinetic energy in file statistics.c is calculated assuming
+ that I[0] =  I[1] =  I[2] = 1  */
  
  I[0] =  I[1] =  I[2] = 1;
 
   CELLS_LOOP(m, n, o) {
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
-    /* all the particles */
+    /* for all particles */
     {
       for (i = 0; i < np; i++) {
-
+    /* set torque to zero */
 	p[i].torque[0] = 0;
 	p[i].torque[1] = 0;
 	p[i].torque[2] = 0;
+    /* and rescale quaternion, so it is exactly of unit length */	
+	scale = sqrt( p[i].r.quat[0]*p[i].r.quat[0] + p[i].r.quat[1]*p[i].r.quat[1] +
+	              p[i].r.quat[2]*p[i].r.quat[2] + p[i].r.quat[3]*p[i].r.quat[3]);
+        p[i].r.quat[0]/= scale;
+        p[i].r.quat[1]/= scale;
+        p[i].r.quat[2]/= scale;
+        p[i].r.quat[3]/= scale;
       }
     }
   }
@@ -175,9 +185,12 @@ void propagate_omega_quat()
 {
   Particle *p;
   int m,n,o,i, np;
-double lambda, dt2, S2, S3;
+double lambda, dt2, dt4, dtdt, dtdt2, S2, S3;
 
- dt2 = time_step*0.5;
+  dt2 = time_step*0.5;
+  dt4 = time_step*0.25;
+ dtdt = time_step*time_step;
+dtdt2 = dtdt*0.5;
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_omega_quat:\n",this_node));
 
@@ -194,19 +207,18 @@ double lambda, dt2, S2, S3;
 S2 = Qd[0]*Qdd[0]  + Qd[1]*Qdd[1]  + Qd[2]*Qdd[2]  + Qd[3]*Qdd[3];
 S3 = Qdd[0]*Qdd[0] + Qdd[1]*Qdd[1] + Qdd[2]*Qdd[2] + Qdd[3]*Qdd[3];
 
-lambda = ( 1 - S1*time_step*dt2 - sqrt(1 - S1*time_step*time_step - (S2 + 0.25*time_step*(S3-S1*S1))*time_step*time_step*time_step) );
+lambda = 1 - S1*dtdt2 - sqrt(1 - dtdt*(S1 + time_step*(S2 + dt4*(S3-S1*S1))));
 	  
 	p[i].omega[0]+= dt2*Wd[0];
 	p[i].omega[1]+= dt2*Wd[1];
 	p[i].omega[2]+= dt2*Wd[2];
 	
       ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].v[0],p[i].v[1],p[i].v[2]));
-	  
-	  p[i].r.quat[0]+=  time_step*(Qd[0] + dt2*Qdd[0]) - lambda*p[i].r.quat[0]; 
-	  p[i].r.quat[1]+=  time_step*(Qd[1] + dt2*Qdd[1]) - lambda*p[i].r.quat[1]; 
-	  p[i].r.quat[2]+=  time_step*(Qd[2] + dt2*Qdd[2]) - lambda*p[i].r.quat[2]; 
-	  p[i].r.quat[3]+=  time_step*(Qd[3] + dt2*Qdd[3]) - lambda*p[i].r.quat[3];  
-	  
+	
+	  p[i].r.quat[0]+= time_step*(Qd[0] + dt2*Qdd[0]) - lambda*p[i].r.quat[0]; 
+	  p[i].r.quat[1]+= time_step*(Qd[1] + dt2*Qdd[1]) - lambda*p[i].r.quat[1]; 
+	  p[i].r.quat[2]+= time_step*(Qd[2] + dt2*Qdd[2]) - lambda*p[i].r.quat[2]; 
+	  p[i].r.quat[3]+= time_step*(Qd[3] + dt2*Qdd[3]) - lambda*p[i].r.quat[3];
 	}
 	
       ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
