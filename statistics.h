@@ -120,6 +120,12 @@ void calc_internal_dist(double **idf);
     @param idf contains <tt>idf[0],...,idf[chain_length-1]</tt> */
 void calc_internal_dist_av(double **idf);
 
+/** */
+void calc_bond_l(double **_bond_l);
+
+/** */
+void calc_bond_l_av(double **_bond_l);
+
 /** calculate g123. chain information \ref chain_start etc. must be set!
     @param g1 contains g1
     @param g2 contains g2
