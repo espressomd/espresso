@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.7.4c (Mezoti)                                                                     *
+* v1.7.4d (Mezoti)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.7.4c -
+- v1.7.4d -
 -----------
 
+(d) September 21th, 2004.
 (c) September 20th, 2004.
 (b) September 16th, 2004.
 (a) September 14th, 2004.
@@ -26,6 +27,7 @@ New Features:
     with electrostatics, LJ, Fene, and Cosine angular potential.
 
 Bugfixes:
+(d) Fixed a bug in cells_update_ghosts which prevented ghost updates using the DOMDEC.
 (b) Error in cells_udate_ghosts() for the case of no_verlet_lists has been removed.
 (b) Error in the calculation of Yukawa self-forces in the Maggs algorithm has been removed.
 (a) Error for the calculation of beta[][] in the Maggs algorithm was cleaned.
