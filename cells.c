@@ -12,11 +12,8 @@
 
 /*******************  privat functions  *******************/
 
-int  get_linear_index(int a, int b, int c, int adim, int bdim, int cdim);
-void get_grid_pos(int i, int *a, int *b, int *c, int adim, int bdim, int cdim);
 void init_cell_neighbours();
 int  is_inner_cell(int i, int adim, int bdim, int cdim);
-void realloc_cell_particles(int index, int size);
 
 /*******************  exported functions  *******************/
 
@@ -26,6 +23,7 @@ void cells_init()
   int cnt=0;
   int node_pos[3];
   CELL_TRACE(fprintf(stderr,"%d: cells_init \n",this_node));
+  CELL_TRACE(fprintf(stderr,"%d: l_box0 %f \n",this_node,local_box_l[0]));
   
   map_node_array(this_node,&node_pos[0],&node_pos[1],&node_pos[2]);
   /* set up dimensions of the cell grid */

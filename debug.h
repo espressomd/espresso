@@ -1,6 +1,6 @@
 //#define COMM_DEBUG
 //#define INTEG_DEBUG
-//#define CELL_DEBUG
+#define CELL_DEBUG
 //#define GHOST_DEBUG
 //#define GRID_DEBUG
 //#define FORCE_DEBUG
@@ -25,7 +25,7 @@
 #endif
 
 #ifdef GHOST_DEBUG
-#define GHOST_TRACE(cmd) { if (this_node < 2) { cmd; } }
+#define GHOST_TRACE(cmd) { if (this_node < 1) { cmd; } }
 #else
 #define GHOST_TRACE(cmd)
 #endif

@@ -71,4 +71,15 @@ void sort_ghosts_into_cells();
 /** exit link cell structures. */
 void cells_exit();
 
+/** get the linear index from the position (a,b,c) 
+    in a 3D grid (adim,bdim,cdim). */
+int  get_linear_index(int a, int b, int c, int adim, int bdim, int cdim);
+
+/** get the position (a,b,c) from the linear index
+    in a 3D grid (adim,bdim,cdim). */
+void get_grid_pos(int i, int *a, int *b, int *c, int adim, int bdim, int cdim);
+
+/** reallocate particle array of cell[index] to size (multiples of PART_INCREMENT). */
+void realloc_cell_particles(int index, int size);
+
 #endif

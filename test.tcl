@@ -11,7 +11,7 @@
 # data initialization
 ##################################################
 puts "nproc = [setmd nproc]"
-setmd box_l 10.0 8.0 6.0
+setmd box_l 10.0 8.0 16.0
 puts "box =\{[setmd box]\}"
 setmd procgrid 2 2 2
 puts "grid = [setmd proc]"
