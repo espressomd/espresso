@@ -84,7 +84,7 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate)
   INTEG_TRACE(fprintf(stderr,"%d: nemd_init: n_slabs=%d n_exchange=%d\n",this_node, n_slabs, n_exchange));
 
   /* check node grid */
-  if( n_nodes > 0 ) {
+  if( n_nodes > 1 ) {
     char *errtxt = runtime_error(128);
     sprintf(errtxt, "{NEMD is a single node feature} ");
     return;
