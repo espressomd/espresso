@@ -61,6 +61,8 @@ void on_integration_start()
 
   if (parameter_changed || interactions_changed || topology_changed) {
     integrate_vv_recalc_maxrange();
+    invalidate_ghosts();
+    exchange_and_sort_part();
     cells_re_init();
     ghost_init();
     force_init();
