@@ -164,8 +164,14 @@ void init_particleList(ParticleList *pList);
     Do NOT use this without setting the values of the  
     \ref ReducedParticle::identity "identity" and \ref ReducedParticle::p "position" to 
     reasonable values. Also make sure that you update \ref local_particles.
- */
+
+    Add here all initializations you need to be done !!!
+    If dynamic memory allocation is involved, also look at \ref free_particle.
+*/
 void init_particle(Particle *part);
+
+/** ... and deallocate the dynamic storage of a particle. */  
+void free_particle(Particle *part);
 
 /** allocate storage for local particles and ghosts.
     \param plist the list on which to operate

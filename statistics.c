@@ -49,7 +49,7 @@ static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
     Particle ref;
     if (Tcl_GetInt(interp, (*argv)[0], pid) == TCL_ERROR)
       return TCL_ERROR;
-
+    
     if (get_particle_data(*pid, &ref) != TCL_OK) {
       Tcl_AppendResult(interp, "reference particle does not exist", (char *)NULL);
       return TCL_ERROR;
@@ -57,11 +57,11 @@ static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
     *posx = ref.r.p[0];
     *posy = ref.r.p[1];
     *posz = ref.r.p[2];
-    realloc_intlist(&ref.bl, 0);
     
     (*argc)--;
     (*argv)++;
 
+    free_particle(&ref);
     return TCL_OK;
   }
   else {

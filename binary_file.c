@@ -123,7 +123,7 @@ int writemd(ClientData data, Tcl_Interp *interp,
 	case TYPE: Tcl_Write(channel, (char *)&data.r.type, sizeof(int)); break;
 	}
       }
-      realloc_intlist(&data.bl, 0);
+      free_particle(&data);
     }
   }
   /* end marker */

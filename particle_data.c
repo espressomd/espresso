@@ -21,6 +21,7 @@
 #include "utils.h"
 #include "cells.h"
 #include "parser.h"
+#include "debug.h"
 
 /* cwz-build-command: make all
  */
@@ -183,6 +184,10 @@ void init_particle(Particle *part)
 #endif
 
   init_intlist(&(part->bl));
+}
+
+void free_particle(Particle *part) {
+  realloc_intlist(&(part->bl), 0);
 }
 
 int realloc_particles(ParticleList *l, int size)
@@ -494,8 +499,7 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
     }
     Tcl_AppendResult(interp, "} ", (char *)NULL);
   }
-  realloc_intlist(bl, 0);
-
+  free_particle(&part);
   return (TCL_OK);
 }
 
@@ -680,7 +684,7 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     else {
       Tcl_ResetResult(interp);
       Tcl_AppendResult(interp, "unknown particle data \"", argv[0], "\" requested", (char *)NULL);
-      realloc_intlist(bl, 0);
+      free_particle(&part);
       return TCL_ERROR;
     }
     if (argc > 1)
@@ -691,8 +695,7 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     
   }
   
-  realloc_intlist(bl, 0);
-  
+  free_particle(&part);
   return TCL_OK;
 }
 
@@ -1502,7 +1505,8 @@ void local_remove_particle(int part)
     errexit();
   }
 
-  realloc_intlist(&p->bl, 0);
+  free_particle(p);
+
   /* remove local_particles entry */
   local_particles[p->r.identity] = NULL;
 
@@ -1534,6 +1538,8 @@ void local_place_particle(int part, double p[3])
   if (!pt)
     pt = cells_alloc_particle(part, pp);
 
+  PART_TRACE(fprintf(stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
+		     this_node, part, p[0], p[1], p[2]));
   memcpy(pt->r.p, pp, 3*sizeof(double));
   memcpy(pt->i, i, 3*sizeof(int));
 }

@@ -742,8 +742,8 @@ int move_to_p_buf(ParticleList *pl, int ind)
   if(bonds>0) {
     memcpy(&(b_send_buf.e[b_send_buf.n]), pl->part[ind].bl.e, bonds*sizeof(int));
     b_send_buf.n += bonds;
-    realloc_intlist(&(pl->part[ind].bl), 0);
   }
+  free_particle(&(pl->part[ind]));
 
   /* delete it from local_particles list and move particle to p_send_buf */
   local_particles[pl->part[ind].r.identity] = NULL;
