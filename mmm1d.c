@@ -212,8 +212,8 @@ void MMM1D_init()
   MMM1D_recalcTables();
 }
 
-void calc_pw_force(double dx, double dy, double dz,
-		   double *Fx, double *Fy, double *Fz)
+MDINLINE void calc_pw_force(double dx, double dy, double dz,
+			    double *Fx, double *Fy, double *Fz)
 {
   double rxy2, rxy2_d, z_d;
   double r2, r, pref;
@@ -257,8 +257,7 @@ void calc_pw_force(double dx, double dy, double dz,
 
     /* real space parts */
 
-    rt = r;
-    pref = mmm1d.prefactor/(r2*rt); 
+    pref = mmm1d.prefactor/(r2*r); 
     *Fx += pref*dx;
     *Fy += pref*dy;
     *Fz += pref*dz;
@@ -380,12 +379,14 @@ void MMM1D_calc_forces()
 	  /* no self energy */
 	  if (ind1 == ind2 && part2->r.identity <= part1->r.identity)
 	    continue;
-	  dx = part1->r.p[0] - part2->r.p[0];
-	  dy = part1->r.p[1] - part2->r.p[1];
-	  dz = part1->r.p[2] - part2->r.p[2];
+
 	  chpref = part1->r.q*part2->r.q;
 
 	  if (chpref != 0.0) {
+	    dx = part1->r.p[0] - part2->r.p[0];
+	    dy = part1->r.p[1] - part2->r.p[1];
+	    dz = part1->r.p[2] - part2->r.p[2];
+
 	    calc_pw_force(dx, dy, dz, &Fx, &Fy, &Fz);
 
 	    Fx *= chpref;
@@ -508,9 +509,23 @@ void MMM1D_calc_forces()
     }
   }
 
+  /*
+  INNER_CELLS_LOOP(m1, n1, o1) {
+    ind1 = CELL_IND(m1,n1,o1);
+    n_part1 = cells[ind1].pList.n;
+    p_part1 = cells[ind1].pList.part;
+    for (p1 = 0; p1 < n_part1; p1++) {
+      part1 = &p_part1[p1];
+      printf("%d %f %f %f %d %d %d\n", part1->r.identity,
+	     part1->r.p[0], part1->r.p[1], part1->r.p[2],
+	     part1->i[0], part1->i[1], part1->i[2]
+	     );
+    }
+  }
+  */
+
   free(send_coords);
   free(send_forces);
   free(recv_coords);
   free(recv_forces);
-
 }
