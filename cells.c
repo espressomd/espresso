@@ -311,6 +311,10 @@ void calc_cell_grid()
   n_cells=1;
   for(i=0;i<3;i++) {
     ghost_cell_grid[i] = (int)(local_box_l[i]/max_range) + 2;
+    /* make sure that at least one inner cell exists in all directions.
+       Helps with highly anisotropic systems. */
+    if (ghost_cell_grid[i] <= 2)
+      ghost_cell_grid[i] = 3;
     n_cells *= ghost_cell_grid[i];
   }
 

@@ -138,6 +138,9 @@ void grid_changed_topology()
 
   GRID_TRACE(fprintf(stderr,"%d: grid_changed_topology:\n",this_node));
 
+  if (!node_grid_is_set())
+    setup_node_grid();
+
   map_node_array(this_node,node_pos);    
   for(i = 0; i < 3; i++) {
     local_box_l[i] = box_l[i]/(double)node_grid[i]; 
@@ -168,15 +171,16 @@ void calc_minimal_box_dimensions()
   min_box_l = 2*MAX_INTERACTION_RANGE;
   min_local_box_l = MAX_INTERACTION_RANGE;
   for(i=0;i<3;i++) {
-#ifdef PARTIAL_PERIODIC  
-    if(periodic[i]) { /* take only periodic directions into account */
-      min_box_l       = dmin(min_box_l, box_l[i]);
-      min_local_box_l = dmin(min_local_box_l, local_box_l[i]);
-    } 
-#else
+    /* #ifdef PARTIAL_PERIODIC  
+       if(periodic[i]) {
+       min_box_l       = dmin(min_box_l, box_l[i]);
+       min_local_box_l = dmin(min_local_box_l, local_box_l[i]);
+       }
+       #else
+    */
     min_box_l       = dmin(min_box_l, box_l[i]);
     min_local_box_l = dmin(min_local_box_l, local_box_l[i]);
-#endif
+    /* #endif */
   }
 }
 
