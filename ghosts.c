@@ -539,7 +539,7 @@ void exchange_ghost()
 		      ghost_recv_size[2],ghost_recv_size[3], ghost_recv_size[4], 
 		      ghost_recv_size[5],recv_buf.max));
 
-  /* GHOST_TRACE(print_ghost_positions());*/
+  GHOST_TRACE(print_ghost_positions());
 }
 
 void update_ghost_pos()
@@ -622,6 +622,9 @@ void collect_ghost_forces()
     for(c=0; c<recv_cells[r_dir].n; c++) {
       pl = &(cells[recv_cells[r_dir].e[c]].pList);
       for(n=0; n< pl->n; n++) {
+
+	ONEPART_TRACE(if(pl->part[n].r.identity==check_id) fprintf(stderr,"%d: OPT: S_GF f = (%.3e,%.3e,%.3e)\n",this_node,pl->part[n].f[0],pl->part[n].f[1],pl->part[n].f[2]));
+
 	for(i=0;i<3;i++) send_buf.e[g+i] = pl->part[n].f[i];
 	g += 3;
       }
@@ -633,6 +636,9 @@ void collect_ghost_forces()
     for(c=0; c<send_cells[s_dir].n; c++) {
       pl = &(cells[send_cells[s_dir].e[c]].pList);
       for(n=0;n< pl->n;n++) {
+
+	ONEPART_TRACE(if(pl->part[n].r.identity==check_id) fprintf(stderr,"%d: OPT: R_GF f = (%.3e,%.3e,%.3e)\n",this_node,recv_buf.e[g+0],recv_buf.e[g+1],recv_buf.e[g+2]));
+	
 	for(i=0; i<3; i++) pl->part[n].f[i] += recv_buf.e[g+i];
 	g += 3;
       }
@@ -802,7 +808,7 @@ void append_particles(int dir)
     part = append_unindexed_particle(pl, &(p_recv_buf.part[i]));
     part->bl.n = b_recv_buf.e[b_ind];
     b_ind++;
-    realloc_intlist(&(part->bl),part->bl.n);
+    alloc_intlist(&(part->bl),part->bl.n);
     if(part->bl.n > 0) { 
       memcpy(part->bl.e,&(b_recv_buf.e[b_ind]), part->bl.n*sizeof(int));
       b_ind += part->bl.n;
