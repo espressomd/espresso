@@ -54,7 +54,7 @@ void resize_verlet_list(PairList *pl);
 
 /*******************  exported functions  *******************/
 
-void build_verlet_list()
+void build_verlet_lists()
 {
   Cell *cell;
   PairList *pl;
