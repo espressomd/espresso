@@ -22,17 +22,61 @@ int mindist(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
   char buffer[TCL_DOUBLE_SPACE + 1];
   double *buf;
-  double mindist;
-  int i;
+  double mindist, xt,yt,zt,dx,dy,dz;
+  Particle *partCfgMD;
+  int i, j;
 
-  if (argc != 1) {
-    Tcl_AppendResult(interp, "mindist takes no arguments", (char *)NULL);
+  if (argc == 4) {
+    if (n_total_particles==0) {
+      Tcl_AppendResult(interp, "(no particles found - submit some to tcl_md first)", (char *)NULL);
+      return (TCL_OK);
+    }
+    else {
+      xt = atof(argv[1]); yt = atof(argv[2]); zt = atof(argv[3]);
+      mpi_gather_stats(2, &partCfgMD);
+      mindist=30000.0;
+      for (i=0; i<n_total_particles; i++) {
+	dx = xt - partCfgMD[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
+	dy = yt - partCfgMD[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
+	dz = zt - partCfgMD[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
+	mindist = dmin(mindist, SQR(dx)+SQR(dy)+SQR(dz));
+      }
+      Tcl_PrintDouble(interp, sqrt(mindist), buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+      return (TCL_OK);
+    }
+  }
+  else if (argc !=1) {
+    Tcl_AppendResult(interp, "Wrong # of args! Usage: mindist [<posx> <posy> <posz>]", (char *)NULL);
     return (TCL_ERROR);
   }
 
   if (minimum_part_dist == -1) {
-    Tcl_AppendResult(interp, "(not yet set)", (char *)NULL);
-    return (TCL_OK);
+    if (n_total_particles<2) {
+      Tcl_AppendResult(interp, "(need at least 2 particles)", (char *)NULL);
+      return (TCL_OK);
+    }
+    else {
+      mindist=30000.0;
+      mpi_gather_stats(2, &partCfgMD);
+      for (j=0; j<n_total_particles-1; j++) {
+	xt = partCfgMD[j].r.p[0]; yt = partCfgMD[j].r.p[1]; zt = partCfgMD[j].r.p[2];
+	for (i=j+1; i<n_total_particles; i++) {
+	  dx = xt - partCfgMD[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
+	  dy = yt - partCfgMD[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
+	  dz = zt - partCfgMD[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
+	  mindist = dmin(mindist, SQR(dx)+SQR(dy)+SQR(dz));
+	}
+      }
+      if (mindist<30000.0) {
+	Tcl_PrintDouble(interp, sqrt(mindist), buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+	return (TCL_OK); }
+      else {
+	Tcl_AppendResult(interp, "(mindist failed)", (char *)NULL);
+	return (TCL_OK);
+      }
+    }
   }
 
   buf = malloc(n_nodes*sizeof(double));
