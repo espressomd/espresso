@@ -1,0 +1,90 @@
+/** \page convertDeserno Conversion of Deserno files
+The following procedures are found in scripts/convertDeserno.tcl.
+<ul>
+    <li>\anchor tcl_convertDeserno2MD
+	\verbatim convertDeserno2MD <source_file> <destination_file>\endverbatim
+	converts the particle configuration stored in <source_file>
+	from Deserno-format into blockfile-format, importing everything
+	to 'tcl_md' and writing it to <destination_file>. 
+	The full particle information, bonds, interactions, and parameters will be converted and saved.<BR>
+	If <destination_file> is "-1", the data is only loaded into 'tcl_md' and nothing is written to disk.<BR>
+	If <destination_file> has the suffix '.gz', the output-file will be compressed.<BR>
+	The script uses some assumptions, e.g. on the
+	<particle_type_number>s of \ref tcl_part for polymers,
+	counter-ions, or on <i>sigma, shift, offset</i> for
+	Lennard-Jones-potentials (\ref tcl_inter; current defaults are 
+	2.0, 0, 0, respectively); these are all set by
+	\verbatim initConversion \endverbatim
+	(which is automatically called by <i>convertDeserno2MD</i>)
+	so have a look at the sourcecode of
+	<i>'convertDeserno.tcl'</i> in the <i>"scripts"</i>-directory for a
+	complete list of assumptions.<BR>
+	However, if for some reasons different values need to be set,
+	it is possible to bypass the initialization routine and/or
+	override the default values, e.g. by explicitly executing
+	<i>initConversion</i>, afterwards overwriting all variables
+	which need to be re-set, and manually invoking the main
+	conversion script
+	\verbatim convertDeserno2MDmain <source_file> <destination_file> \endverbatim
+	to complete the process.
+
+    <li>\anchor tcl_convertMD2Deserno
+	\verbatim convertMD2Deserno <source_file> <destination_file>\endverbatim
+	converts the particle configuration stored in the 'tcl_md'-blockfile <source_file> into a
+	Deserno-compatible <destination_file>.<BR>
+	If <source_file> is "-1", the data is entirely taken from 'tcl_md' without loading anything from disk.<BR>
+	If <source_file> has the suffix '.gz', it is assumed to be compressed; otherwise it will be treated as containing plain text.<BR>
+	Since Deserno stores much more than 'tcl_md' does due to a
+	centralized vs. a local storage policy, it depends on correct
+	values for the following properties, which therefore should be contained in <source_file>:
+	<ol>
+	<li> the <particle_type_number> used for polymers,
+	counter-ions, and salt-molecules (defaults are: 
+	<i>set type_P 0</i>, <i>set type_CI 1</i>, and <i>set type_S 2</i>
+	<li> the <bond_type_number> used for FENE-interactions
+	(default is: <i>set type_FENE 0</i>)
+	</ol>
+	As for <i>convertDeserno2MD</i>, the defaults are set upon
+	initialization by
+	\verbatim initConversion \endverbatim
+	(which is automatically called by <i>convertMD2Deserno</i> as well),
+	but may be overwritten the same way as explained for \ref
+	tcl_convertDeserno2MD. However, parameters stored in <source_file> cannot (and will not) be overwritten,
+	because they were part of the system originally saved and should not be altered initially.<BR>
+	Note, that some entries in a Deserno-file cannot be determined 
+	at all, these are by default set to
+	\verbatim set prefix AA0000
+ set postfix 0
+ set seed -1
+ set startTime -1
+ set endTime -1
+ set integrationSteps -1
+ set saveResults -1
+ set saveConfig -1
+ set subbox_1D -1
+ set ip -1
+ set step -1 \endverbatim
+	but of course may be overwritten as well after calling
+	<i>initConversion</i> and before continuing with
+	\verbatim convertMD2DesernoMain <source_file> <destination_file>\endverbatim
+	the actual conversion process.<BR>
+	The Deserno-format assumes knowledge of the topology, hence a respective analysis is conducted 
+	to identify the type and structure of the polymer network.
+	The script allows for randomly stored polymer solutions and
+	melts, no matter how they're messed up; however, crosslinked
+	networks need to be aligned to be recognized correctly, i.e.
+	they must be set up consecutively, such that the first chain
+	with $MPC monomers corresponds to the first $MPC particles in
+	[part], the 2nd one to the $MPC following particles, etc. etc.
+
+   <li> It is now possible to save the <i>whole</i> state of 'tcl_md', including all parameters and interactions. 
+        These scripts make use of that advantage by storing everything they find in the Deserno-file - but vice versa they also expect 
+	you to provide a blockfile containing all possible informations.
+</ul>
+These conversion scripts have been tested with both polymer melts and
+end-to-end-crosslinked networks in systems with or without
+counterions. It should work with additional salt-molecules or neutral
+networks as well, although that hasn't been tested yet - if you've
+some of these systems in a Deserno-formated file, please submit them
+for extensive analysis.
+*/
