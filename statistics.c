@@ -1,3 +1,7 @@
+/** \file statistics.c
+    This is the place for analysation (so far...).
+    Implementation of \ref statistics.h "statistics.h"
+ */
 #include <stdlib.h>
 #include "statistics.h"
 #include "forces.h"

@@ -1,6 +1,6 @@
-/*****************************************************/
-/*******************  INTEGRATE.C  *******************/
-/*****************************************************/
+/** \file integrate.c
+    Implementation of \ref integrate.h "integrate.h"
+*/
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,5 +1,6 @@
 #ifndef IMD_H__
 #define IMD_H__
+/** \file imd.h */
 
 #include <tcl.h>
 

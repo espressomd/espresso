@@ -2,9 +2,9 @@
 # tricking...\
     PLATFORM=`uname -s`;
 # OSF1 \
-    if test $PLATFORM = OSF1; then  exec dmpirun -np 8 $PLATFORM/tcl_md $0 $*
+    if test $PLATFORM = OSF1; then  exec dmpirun -np 1 $PLATFORM/tcl_md $0 $*
 # AIX \
-    elif test $PLATFORM = AIX; then exec poe $PLATFORM/tcl_md $0 $* -procs 8
+    elif test $PLATFORM = AIX; then exec poe $PLATFORM/tcl_md $0 $* -procs 1
 # Linux \
     else lamboot; exec /usr/lib/lam/bin/mpirun -np 8 -nsigs $PLATFORM/tcl_md $0 $*;
 
@@ -33,7 +33,9 @@ if { $write  == "yes" || $write == "finish" } {
 if {[setmd n_node] == 8} {
     setmd node_grid 2 2 2
 }
-
+if {[setmd n_node] == 1} {
+    setmd node_grid 1 1 1
+}
 # setup random particles
 puts "setting up random particles"
 expr srand([pid])

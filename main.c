@@ -1,3 +1,6 @@
+/** \file main.c
+    Main file of tcl_md. Initialization of tcl interpreter and exit handling.
+*/
 #include <tcl.h>
 #include <stdlib.h>
 #include "initialize.h"

@@ -1,3 +1,6 @@
+/** \file utils.h
+    Small functions that are useful not only for one modul.
+*/
 #ifndef UTILS_H
 #define UTILS_H
 #include <math.h>

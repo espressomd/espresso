@@ -1,3 +1,6 @@
+/** \file global.c
+    Implementation of \ref global.h "global.h".
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

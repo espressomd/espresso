@@ -1,3 +1,6 @@
+/** \file imd.c
+    Implementation of \ref imd.h "imd.h".
+ */
 #include <limits.h>
 #include <unistd.h>
 #include <stdlib.h>

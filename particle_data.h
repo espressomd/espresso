@@ -14,23 +14,23 @@
 /** Struct holding all particle information
  *  of the particles. */
 typedef struct {
-  /** unique identifier for the particle */
+  /** unique identifier for the particle. */
   int    identity;
   /** particle type, used for non bonded interactions. */
   int    type;
 
-  /** periodically folded position */
+  /** periodically folded position. */
   double p[3];
-  /** position in the last time step befor last Verlet list update */
+  /** position in the last time step befor last Verlet list update. */
   double p_old[3];
-  /** index of the simulation box image where the particle really sits */
+  /** index of the simulation box image where the particle really sits. */
   int    i[3];
-  /** charge */
+  /** charge. */
   double q;
 
-  /** velocity */
+  /** velocity. */
   double v[3];
-  /** force */
+  /** force. */
   double f[3];
 
   /** size of field \ref bonds. */

@@ -1,3 +1,6 @@
+/** \file communication.c
+    Implementation of \ref communication.h "communication.h".
+*/
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,9 +11,7 @@
 #include "forces.h"
 #include "global.h"
 #include "debug.h"
-/** \file communication.c
-    Implementation of \ref communication.h "communication.h".
-*/
+
 
 int this_node = -1;
 int n_nodes = -1;

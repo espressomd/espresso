@@ -15,7 +15,7 @@ interface between the Tcl script and the MD code:
 <ul>
 <li>\verbatim setmd <variable> <value>+ \endverbatim
 modifies variables declared in \ref fields. More information can be
-found in \ref global.c. The C implementation is \ref setmd. The
+found in  \ref global.c . The C implementation is \ref setmd. The
 following list explains the usage for the variables that are accesible 
 via setmd. Using \verbatim [setmd <variable>] \endverbatim gives the
 actual value of <variable> in the MD code back to the Tcl script.
@@ -84,7 +84,9 @@ Do not set variables which are specified as read only.
 	<li> \verbatim pos <x value> <y value> <z value> \endverbatim
 	<li> \verbatim q <charge> \endverbatim
 	<li> \verbatim type <type number> \endverbatim
+	Restrictions: type number >= 0.
 	<li> \verbatim bond <type_number> <partner>+ \endverbatim
+	Restrictions: type_number >= 0. partner must be an existing particle.
 	<li> \verbatim v <x value> <y value> <z value> \endverbatim
 	<li> \verbatim f <x value> <y value> <z value> \endverbatim
 	</ul>
@@ -119,8 +121,7 @@ Do not set variables which are specified as read only.
 	<b> <li> Bonded interactions: </b>
 
 	\verbatim inter <type_num> <interaction_type> <value>+ \endverbatim
-	Bonded interaction (Bonds are set using \ref part (!!!not
-	implemented!!!)).
+	Bonded interaction (Bonds are set using \ref part ).
 	Currently known interaction types are:
 
 	<ul>

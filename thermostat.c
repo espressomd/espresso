@@ -1,3 +1,6 @@
+/** \file thermostat.c
+    Implementation of \ref thermostat.h "thermostat.h"
+ */
 #include <math.h>
 #include "thermostat.h"
 #include "global.h"

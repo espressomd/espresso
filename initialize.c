@@ -1,3 +1,6 @@
+/** \file initialize.c
+    Implementation of \ref initialize.h "initialize.h"
+*/
 #include "initialize.h"
 #include "global.h"
 #include "particle_data.h"

@@ -1,7 +1,6 @@
-/**************************************************/
-/*******************  VERLET.C  *******************/
-/**************************************************/
-
+/** \file verlet.c
+        Implementation of \ref verlet.h "verlet.h"
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include "config.h"

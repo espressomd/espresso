@@ -1,26 +1,42 @@
 PROGRAMM:
+================================================================================
 
 tcl_md is a parallel molecular dynamics program.  It uses Tcl
 (http://tcl.activestate.com) as controlling language to allow great
 flexibility.
 
 GETTING STARTED:
+================================================================================
 
 System requierments:
-Script language: tcl 8.3 or higher
-OS: Linux or OSF1
+Script language:   tcl 8.3 or higher
+OS:                Linux ,OSF1 or AIX
+
+CODE COMPILATION
+================================================================================
 
 To generate the code:
+
 gmake
+
 You find the code depending on the mashine in:
 Linux/tcl_md
 OSF1/tcl_md
+AIX/tcl_md
+
+COMPILER FLAGS
+================================================================================
+
+DOCUMENTATION
+================================================================================
 
 To generate documentation:
+
 ssh pckr27
 change into the dirctory your_home/.../tcl_md
 touch main.c
 gmake doc
+
 ... ignore any warnings!
 The documentation is in:
 HTML version:  doc/html/index.html
@@ -28,12 +44,55 @@ LATEX version: doc/latex/refmen.tex /
 DVI version:   doc/latex/refmen.dvi
 And for friends of WINDOWS: doc/rtf/refman.rtf
 
-For testing:
+TESTING
+================================================================================
 
 For generating a new configuration type:
+
 create a directory: configs
 setup.tcl
+
 The configuration is in: config.gz
 
 To integrate a created configuration (lennard-jones fluid):
 test.tcl
+
+CVS
+================================================================================
+
+To check out a project, e. g. tcl_md, you need to
+
+setenv CVSROOT ~pep/cvsroot
+
+The best way is to add this to your .cshrc.
+
+Then you get your private copy by cvs co tcl_md. This will create a
+new directory tcl_md in the CWD, containing an up-to-date version of
+tcl_md.
+
+Before editing or if someone else has added something you want to
+have, do
+
+cvs update
+
+in your tcl_md directory. If you are completed with your editing, type
+
+cvs commit <file>
+
+to make your changes public. If <file> is omitted, all changes in all
+files are committed.
+
+To add new files to tcl_md, you do
+
+cvs add <file>
+
+and commit, or you do
+
+cvs remove -f <file>
+
+to remove a file from tcl_md. It will still be contained in the
+history files, so nothing is lost.
+
+For more help on CVS, see
+
+http://www.mpip-mainz.mpg.de/www/theory/computers/pdsoftie/doc/cvs/cvs_toc.html

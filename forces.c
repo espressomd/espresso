@@ -1,7 +1,6 @@
-/**************************************************/
-/*******************  FORCES.C  *******************/
-/**************************************************/
-
+/** \file forces.c
+    Implementation of \ref forces.h "forces.h".
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

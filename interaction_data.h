@@ -1,5 +1,9 @@
 #ifndef IA_DATA_H
 #define IA_DATA_H
+/** \file interaction_data.h
+    undocumented.
+ */
+
 #include <tcl.h>
 
 /************************************************

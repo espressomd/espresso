@@ -1,3 +1,6 @@
+/** \file interaction_data.c
+    Implementation of \ref interaction_data.h "interaction_data.h"
+ */
 #include <string.h>
 #include <stdlib.h>
 #include "interaction_data.h"
