@@ -22,6 +22,7 @@
 #include "global.h"
 #include "debug.h"
 #include "grid.h"
+#include "domain_decomposition.h"
 #include "integrate.h"
 #include "particle_data.h"
 #include "utils.h"
@@ -1877,6 +1878,7 @@ static double p3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
   double int_time;
   double r_cut_iL;
   double rs_err, ks_err, mesh_size, k_cut;
+  int i, n_cells;
   char b1[TCL_DOUBLE_SPACE + 12],b2[TCL_DOUBLE_SPACE + 12],b3[TCL_DOUBLE_SPACE + 12];
   /* initial checks. */
   mesh_size = box_l[0]/(double)mesh;
@@ -1919,6 +1921,21 @@ static double p3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
   /* final result is always the upper interval boundary, since only there
      we know that the desired minimal accuracy is obtained */
   *_r_cut_iL = r_cut_iL = r_cut_iL_max;
+
+  /* check whether this radius is too large, so that we would use less cells than allowed */
+  n_cells = 1;
+  for (i = 0; i < 3; i++)
+    n_cells *= (int)(floor(local_box_l[i]/(r_cut_iL*box_l[0] + skin)));
+  if (n_cells < min_num_cells) {
+    /* print result */
+    sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
+    Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
+    sprintf(b1,"%.5e",r_cut_iL_max); sprintf(b2,"%.5e",*_alpha_L); sprintf(b3,"%.5e",*_accuracy);
+    Tcl_AppendResult(interp, b1,"  ", b2,"  ",b3," ", (char *) NULL);
+    sprintf(b1,"%.3e",rs_err); sprintf(b2,"%.3e",ks_err);
+    Tcl_AppendResult(interp, b1,"  ", b2,"  radius dangerously high\n", (char *) NULL);
+    return -2;
+  }
 
   int_time = p3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
   if (int_time == -1) {

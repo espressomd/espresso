@@ -38,6 +38,7 @@
 DomainDecomposition dd = { 1, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, NULL };
 
 int max_num_cells = CELLS_MAX_NUM_CELLS;
+int min_num_cells = 0;
 double max_skin   = 0.0;
 
 /*@}*/
@@ -133,6 +134,11 @@ void dd_create_cell_grid()
 	  try=1;
 	}
       }
+    }
+    if (n_local_cells < min_num_cells) {
+      char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
+      sprintf(error_msg, "{number of cells %d is smaller than minimum %d (interaction range too large)} ",
+	      n_local_cells, min_num_cells);
     }
   }
 
@@ -863,9 +869,14 @@ int max_num_cells_callback(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
-/** calculate bonded and non-bonded forces 
-    using link-cell method without verlet lists 
-*/
+int min_num_cells_callback(Tcl_Interp *interp, void *_data)
+{
+  int data = *(int *)_data;
+  min_num_cells = data;
+  mpi_bcast_parameter(FIELD_MINNUMCELLS);
+  return (TCL_OK);
+}
+
 void calc_link_cell()
 {
   int c, np1, n, np2, i ,j, j_start;

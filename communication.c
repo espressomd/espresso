@@ -1708,7 +1708,7 @@ int mpi_gather_runtime_errors(Tcl_Interp *interp, int error_code)
   if (error_code != TCL_ERROR)
     Tcl_ResetResult(interp);
   else
-    Tcl_AppendResult(interp, " ");
+    Tcl_AppendResult(interp, " ", (char *) NULL);
 
   Tcl_AppendResult(interp, "background_errors ", (char *) NULL);
 

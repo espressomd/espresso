@@ -58,28 +58,29 @@ const Datafield fields[] = {
   {&max_seen_particle,  TYPE_INT, 1, "max_part",      ro_callback,    5 },         /* 10 from particle_data.c */
   {&max_range,       TYPE_DOUBLE, 1, "max_range",     ro_callback,    5 },         /* 11 from integrate.c */
   {&max_skin,        TYPE_DOUBLE, 1, "max_skin",      ro_callback,    5 },         /* 12 from integrate.c */
-  {&n_layers,           TYPE_INT, 1, "n_layers",      ro_callback,    3 },         /* 13 from layered.c */
-  {&n_nodes,            TYPE_INT, 1, "n_nodes",       ro_callback,    3 },         /* 14 from communication.c */
-  {&n_total_particles,  TYPE_INT, 1, "n_part",        ro_callback,    6 },         /* 15 from particle.c */
-  {&n_particle_types,   TYPE_INT, 1, "n_part_types",  ro_callback,    8 },         /* 16 from interaction_data.c */
-  {node_grid,           TYPE_INT, 3, "node_grid",     node_grid_callback, 2 },     /* 17 from grid.c */
-  {&nptiso_gamma0,   TYPE_DOUBLE, 1, "nptiso_gamma0", ro_callback,    13 },        /* 18 from thermostat.c */
-  {&nptiso_gammav,   TYPE_DOUBLE, 1, "nptiso_gammav", ro_callback,    13 },        /* 19 from thermostat.c */
-  {&nptiso.p_ext,    TYPE_DOUBLE, 1, "npt_p_ext",     ro_callback,     7 },        /* 20 from pressure.c */
-  {&nptiso.p_inst,   TYPE_DOUBLE, 1, "npt_p_inst",    ro_callback,    10 },        /* 21 from pressure.c */
-  {&nptiso.p_inst_av,TYPE_DOUBLE, 1, "npt_p_inst_av", ro_callback,    10 },        /* 22 from pressure.c */
-  {&nptiso.p_diff,   TYPE_DOUBLE, 1, "npt_p_diff",    p_diff_callback, 7 },        /* 23 from pressure.c */
-  {&nptiso.piston,   TYPE_DOUBLE, 1, "npt_piston",    piston_callback, 6 },        /* 24 from pressure.c */
-  {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback,    1 },        /* 25 from grid.c */
-  {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback,   2 },        /* 26 from integrate.c */
-  {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback,   2 },        /* 27 from thermostat.c */
-  {&thermo_switch,      TYPE_INT, 1, "thermo_switch", ro_callback,     2 },        /* 28 from thermostat.c */
-  {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback,   4 },        /* 29 from integrate.c */
-  {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },     /* 30 from integrate.c */
-  {&timing_samples,     TYPE_INT, 1, "timings",       timings_callback, 4 },       /* 31 from tuning.c */
-  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback,     2 },        /* 32 from imd.c */
-  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback,     8 },        /* 33 from verlet.c */
-  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback,     8 },        /* 34 from integrate.c */
+  {&min_num_cells,      TYPE_INT, 1, "min_num_cells", min_num_cells_callback, 5 }, /* 13  from cells.c */
+  {&n_layers,           TYPE_INT, 1, "n_layers",      ro_callback,    3 },         /* 14 from layered.c */
+  {&n_nodes,            TYPE_INT, 1, "n_nodes",       ro_callback,    3 },         /* 15 from communication.c */
+  {&n_total_particles,  TYPE_INT, 1, "n_part",        ro_callback,    6 },         /* 16 from particle.c */
+  {&n_particle_types,   TYPE_INT, 1, "n_part_types",  ro_callback,    8 },         /* 17 from interaction_data.c */
+  {node_grid,           TYPE_INT, 3, "node_grid",     node_grid_callback, 2 },     /* 18 from grid.c */
+  {&nptiso_gamma0,   TYPE_DOUBLE, 1, "nptiso_gamma0", ro_callback,    13 },        /* 19 from thermostat.c */
+  {&nptiso_gammav,   TYPE_DOUBLE, 1, "nptiso_gammav", ro_callback,    13 },        /* 20 from thermostat.c */
+  {&nptiso.p_ext,    TYPE_DOUBLE, 1, "npt_p_ext",     ro_callback,     7 },        /* 21 from pressure.c */
+  {&nptiso.p_inst,   TYPE_DOUBLE, 1, "npt_p_inst",    ro_callback,    10 },        /* 22 from pressure.c */
+  {&nptiso.p_inst_av,TYPE_DOUBLE, 1, "npt_p_inst_av", ro_callback,    10 },        /* 23 from pressure.c */
+  {&nptiso.p_diff,   TYPE_DOUBLE, 1, "npt_p_diff",    p_diff_callback, 7 },        /* 24 from pressure.c */
+  {&nptiso.piston,   TYPE_DOUBLE, 1, "npt_piston",    piston_callback, 6 },        /* 25 from pressure.c */
+  {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback,    1 },        /* 26 from grid.c */
+  {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback,   2 },        /* 27 from integrate.c */
+  {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback,   2 },        /* 28 from thermostat.c */
+  {&thermo_switch,      TYPE_INT, 1, "thermo_switch", ro_callback,     2 },        /* 29 from thermostat.c */
+  {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback,   4 },        /* 30 from integrate.c */
+  {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },     /* 31 from integrate.c */
+  {&timing_samples,     TYPE_INT, 1, "timings",       timings_callback, 4 },       /* 32 from tuning.c */
+  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback,     2 },        /* 33 from imd.c */
+  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback,     8 },        /* 34 from verlet.c */
+  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback,     8 },        /* 35 from integrate.c */
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 
@@ -93,8 +94,7 @@ const Datafield fields[] = {
 
 	<ol>
 	<li> \verbatim box_l double[3] \endverbatim
-             \ref box_l - Simulation box length.
-	<li> \verbatim cell_grid int[3] (ro) \endverbatim
+             \ref box_l - Simulation box length.	<li> \verbatim cell_grid int[3] (ro) \endverbatim
              \ref DomainDecomposition::cell_grid - dimension of the inner cell grid.
 	<li> \verbatim cell_size double[3] (ro) \endverbatim
 	     \ref DomainDecomposition::cell_size - box length of a cell.
@@ -123,6 +123,12 @@ const Datafield fields[] = {
 	<li> \verbatim max_skin double (ro)\endverbatim
 	     \ref max_skin - Maximal skin to be used for the link cell/verlet algorithm.
 	     This is Min(\ref DomainDecomposition::cell_size) - \ref max_range.
+	<li> \verbatim min_num_cells int> \endverbatim
+             \ref min_num_cells - Minimal number of cells for the link cell
+	     algorithm. Reasonable values range in 1e-6 N^2 to 1e-7 N^2. In general just make
+	     sure that the Verlet lists are not incredibly large. By default the minimum is 0,
+	     but for the automatic P3M tuning it may be wise to larger values for high particle
+	     numbers.
 	<li> \verbatim n_layers int (ro) \endverbatim
   	     \ref n_layers - Number of layers in cell structure LAYERED.
 	<li> \verbatim n_nodes int (ro) \endverbatim

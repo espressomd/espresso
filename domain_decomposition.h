@@ -131,6 +131,12 @@ extern double max_skin;
  */
 extern int max_num_cells;
 
+/** Minimal number of cells per node. This is mainly to avoid excessively large
+    numbers of particles per cell, which will result in really large Verlet
+    lists and eventually crash Espresso.
+*/
+extern int min_num_cells;
+
 /*@}*/
 
 /************************************************************/
@@ -177,9 +183,13 @@ void dd_exchange_and_sort_particles(int global_flag);
 /** implements \ref CellStructure::position_to_cell. */
 Cell *dd_position_to_cell(double pos[3]);
 
-/** Callback for setmd maxnumcells (maxnumcells >= 27). 
+/** Callback for setmd max_num_cells (maxnumcells >= 27). 
     see also \ref max_num_cells */
 int max_num_cells_callback(Tcl_Interp *interp, void *_data);
+
+/** Callback for setmd min_num_cells. 
+    see also \ref min_num_cells */
+int min_num_cells_callback(Tcl_Interp *interp, void *_data);
 
 /** Calculate nonbonded and bonded forces with link-cell 
     method (without Verlet lists)
