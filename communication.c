@@ -327,6 +327,9 @@ static void mpi_issue(int reqcode, int node, int param)
 
   COMM_TRACE(fprintf(stderr, "0: issuing %s(%d), assigned to node %d\n",
 		     names[reqcode], param, node));
+#ifdef ASYNC_BARRIER
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
   MPI_Bcast(request, 3, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
@@ -1770,6 +1773,9 @@ void mpi_gather_runtime_errors_slave(int node, int parm)
 void mpi_loop()
 {
   for (;;) {
+#ifdef ASYNC_BARRIER
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
     MPI_Bcast(request, 3, MPI_INT, 0, MPI_COMM_WORLD);
     COMM_TRACE(fprintf(stderr, "%d: processing %s %d...\n", this_node,
 		       names[request[0]], request[1]));

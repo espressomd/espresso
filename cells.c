@@ -350,6 +350,8 @@ void print_local_particle_positions()
 
 void cells_resort_particles(int global_flag)
 {
+  CELL_TRACE(fprintf(stderr, "%d: entering cells_resort_particles %d\n", this_node, global_flag));
+
   invalidate_ghosts();
 
   particle_invalidate_part_node();
@@ -367,6 +369,11 @@ void cells_resort_particles(int global_flag)
     break;
   }
 
+#ifdef ADDITIONAL_CHECKS
+  /* at the end of the day, everything should be consistent again */
+  check_particle_consistency();
+#endif
+
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);
 
@@ -375,6 +382,8 @@ void cells_resort_particles(int global_flag)
   rebuild_verletlist = 1;
 
   recalc_forces = 1;
+
+  CELL_TRACE(fprintf(stderr, "%d: leaving cells_resort_particles\n", this_node));
 }
 
 /*************************************************/

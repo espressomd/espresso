@@ -348,6 +348,10 @@ void integrate_vv(int n_steps)
   /* Prepare the Integrator */
   on_integration_start();
 
+  /* if any method vetoes (P3M not initialized), immediately bail out */
+  if (check_runtime_errors())
+    return;
+
   /* Verlet list criterion */
   skin2 = SQR(0.5 * skin);
 

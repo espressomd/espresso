@@ -58,7 +58,7 @@
 /* #define GRID_DEBUG */
 /* #define VERLET_DEBUG */
 /* #define PARTICLE_DEBUG */
-/* #define P3M_DEBUG*/
+/* #define P3M_DEBUG */
 /* #define FFT_DEBUG */
 /* #define RANDOM_DEBUG */
 /* #define FORCE_DEBUG */
@@ -74,7 +74,13 @@
 /* #define MEM_DEBUG */
 /* #define MAGGS_DEBUG */
 
+/** do an MPI_Barrier at the beginning of the communication slave loop.
+    Helps a lot in debugging */
+/* #define ASYNC_BARRIER */
+
+/** generate a core file on MPI errors */
 #define MPI_CORE
+/** generate a core file on errexit() */
 #define FORCE_CORE
 
 /* #define ADDITIONAL_CHECKS */
