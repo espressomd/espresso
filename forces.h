@@ -11,6 +11,8 @@
  *  For more information see \ref forces.c "forces.c".
  */
 #include <tcl.h>
+#include "config.h"
+#include "thermostat.h"
 
 /* include the force files */
 #include "p3m.h"
