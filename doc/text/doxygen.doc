@@ -20,11 +20,11 @@ structure and to make it more readable. In the following list you find
 a short description of the most common commands we need:
 
 <ul>
-<li> \anchor doc_anchor   \verbatim \anchor <name> <description>\endverbatim
-	Set an anchor to which you can refer using \ref doc_ref "\ref"
+<li> \anchor doc_anchor   \verbatim \anchor <name> <description> \endverbatim
+	Set an anchor to which you can refer using \ref doc_dref \verbatim \ref \endverbatim
 <li> \anchor doc_href     \verbatim <a href="http://www.your_url.html"> name </a>\endverbatim
 	Link to an external html source.
-<li> \anchor doc_file     \verbatim \file <name> <description>\endverbatim
+<li> \anchor doc_file     \verbatim \file <name> <description> \endverbatim
 	Special anchor for a file (see \ref doc_anchor "\anchor").
 <li> \anchor doc_image    \verbatim \image html  doc/figs/fig.gif \endverbatim
                           \verbatim \image latex doc/figs/fig.eps \endverbatim
@@ -47,12 +47,12 @@ a short description of the most common commands we need:
 /*@}*/ 
 \endverbatim
 	Introduces a group to which one can refer with 
-	\ref doc_ref "\ref". The documentation of the group members
+	\ref doc_dref \verbatim \ref \endverbatim . The documentation of the group members
 	must be inside the \@{ ... \@} comments.
 <li> \anchor doc_param    \verbatim \param <parameter> <description> \endverbatim
 	Documentation for a parameter of a function
-<li> \anchor doc_ref      \verbatim \ref <name> ["<text>"] \endverbatim
-	Inserts a link to the documentation of <name>.
+<li> \anchor doc_dref      \verbatim \ref <name> ["<text>"] \endverbatim
+	Inserts a link to the documentation of \<name\>.
 <li> \anchor doc_return   \verbatim \return <description>\endverbatim
 	Documentation for the return value of a function
 <li> \anchor doc_todo     \verbatim \todo <task to be done> \endverbatim

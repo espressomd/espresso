@@ -65,7 +65,7 @@ export ESPRESSO_SCRIPTS=/afs/ipp-garching.mpg.de/home/b/bhm/Espresso/scripts
     <li>Copy that <tt>submit_parallel.sh</tt>-script from above to wherever your tcl-script just went, and go there, too.
     <li>Edit <tt>submit_parallel.sh</tt> to have the correct tcl-script-name and the desired CPU-numbers and -time.
     <li>Use \verbatim qsub submit_parallel.sh\endverbatim to launch your simulation, and \verbatim qstat -f\endverbatim to check all nodes' status.
-    <li>The joined <tt>stdout</tt> and <tt>stderr</tt> are written to <tt><Name>.o<PID></tt> in your current directory, 
-        where <tt><Name></tt> is whatever you specified for the <tt>-N</tt>-option in the job-script and <tt><PID></tt> is your job's process number.
+    <li>The joined <tt>stdout</tt> and <tt>stderr</tt> are written to <tt>\<Name\>.o\<PID\></tt> in your current directory, 
+        where <tt>\<Name\></tt> is whatever you specified for the <tt>-N</tt>-option in the job-script and <tt>\<PID\></tt> is your job's process number.
 </ul>
 */

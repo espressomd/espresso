@@ -1,17 +1,18 @@
-/** \page tcl_invalidate_system The invalidate_system command
+/** \page tcl_invalidate_system The invalidate_system command<br>
+    DOCUMENTATION NOT UP TO DATE!!!	
     \verbatim invalidate_system \endverbatim
-    forces a system re-init by setting \ref particle_changed = \ref interactions_changed = \ref topology_changed = \ref parameter_changed = 1
+    forces a system re-init
     which, among others, causes the integrator to also update the forces at its beginning (instead of re-using the values
     from the previous integration step).<BR>
     This is particularly necessary to ensure continuity after setting a checkpoint: 
-    \ref #integrate - set_checkpoint - \ref #integrate has only one call to \ref force_init,
+    \ref #integrate - set_checkpoint - \ref #integrate has only one call to ???,
     while read_checkpoint - \ref #integrate has two at the beginning of the 2nd \ref #integrate (because
-    loading a new system from disk typically requires re-initializing the system), and since \ref force_init also
+    loading a new system from disk typically requires re-initializing the system), and since ??? also
     uses the thermostat which in turn draws random numbers, the two situations do not end up at the same segment
     of the random number sequence, all random events will therefore slightly differ.<BR>
     To prevent this, simply include a call to \ref invalidate_system upon setting the checkpoint (this is being done
     automatically if using \ref tcl_checkpoint_set and \tcl_checkpoint_read beginning with v1.1 of <tt>Espresso</tt>), 
-    because in that case both scenarios will call \ref force_init twice at the beginning of the second integration phase 
+    because in that case both scenarios will call ??? twice at the beginning of the second integration phase 
     thus having their random number sequences in total sync.
     The C implementation is \ref invalidate_system.
 */

@@ -2,16 +2,16 @@
          \verbatim inter ( <particle_type_number1> <particle_type_number2> | <bond_type_number> ) <interaction_type> <value>+ \endverbatim
 	sets the parameters for interactions.
 
-	<ol>
-	<b><li> \anchor tcl_non_bonded Non bonded interactions:</b> 
+<ol>
+	<li> \anchor tcl_non_bonded <b>Non bonded interactions:</b> 
 	\verbatim inter <particle_type_number1> <particle_type_number2> <interaction_type> <value>+ \endverbatim	
 	Non bonded interaction between particles of types
-	<particle_type_number1> and <particle_type_number2>
+	\<particle_type_number1\> and \<particle_type_number2\>
 	(the types are those set using \ref tcl_part).<BR>
-	Currently known <interaction_type>s are:
+	Currently known \<interaction_type\>s are:
 
 	<ul>
-	   	<li>\verbatim tabulated <filename> \endverbatim	
+	    <li>\verbatim tabulated <filename> \endverbatim	
 		An arbitrary tabulated non-bonded pair potential.
 		
 		To use this potential you must provide a file which contains the tabulated forces 
@@ -38,7 +38,7 @@
 
 		Where \f$ n \f$ is the number of data points in the table
 	
-		The remaining data in the file should consist of n data triples <distance> <force> <energy>.  Note that
+		The remaining data in the file should consist of n data triples \<distance\> \<force\> \<energy\>.  Note that
 		distance is only included for human readability of the file. Its
 		values do not matter but it must be present to satisfy the file read
 		format. In the future a more structured file format will be required
@@ -54,106 +54,136 @@
 
 
 
-	   	<li>\verbatim lennard-jones <epsilon> <sigma> <cutoff> <shift> <offset> \endverbatim
-			the well known Lennard-Jones potential
-			\f[4 \epsilon \left(\left(\frac{\sigma}{r-offset}\right)^{12} -
+	   <li>\verbatim lennard-jones <epsilon> <sigma> <cutoff> <shift> <offset> \endverbatim
+		the well known Lennard-Jones potential
+		\f[4 \epsilon \left(\left(\frac{\sigma}{r-offset}\right)^{12} -
 				 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
-			The order of the parameters is
-			\f$\epsilon, \sigma, cutoff, shift, offset\f$.
+		The order of the parameters is
+		\f$\epsilon, \sigma, cutoff, shift, offset\f$.
 
-			For system warmup you can cap the Lennard-Jones potential with a maximal force which can be set with:
-			\verbatim inter ljforcecap <maxforce> \endverbatim
-			For particle distances which would lead to larger forces than \f$ maxforce \f$ the Lennard-Jones potential is replaced by
-			\f[ maxforce \;\;  r \f] 
-			Particles placed exactly on top of each other will be subject to a force of magnitude \f$ maxforce \f$ applied in \f$ \pm x \f$ direction.
-			To return to the uncapped potential you have to set \f$  maxforce \f$ to zero using
-			\verbatim inter ljforcecap 0 \endverbatim
-			Note that ljforcecap applies to all given Lennard-Jones interactions regardless the particle types.
+		For system warmup you can cap the Lennard-Jones potential with a maximal force which can be set with:
+		\verbatim inter ljforcecap <maxforce> \endverbatim
+		For particle distances which would lead to larger
+		forces than \f$ maxforce \f$ the Lennard-Jones
+		potential is replaced by
+		\f[ maxforce \;\;  r \f] 
+		Particles placed exactly on top of each other will be
+		subject to a force of magnitude \f$ maxforce \f$
+		applied in \f$ \pm x \f$ direction.
+		To return to the uncapped potential you have to set \f$  maxforce \f$ to zero using
+		\verbatim inter ljforcecap 0 \endverbatim
+		Note that ljforcecap applies to all given Lennard-Jones interactions regardless the particle types.
 
-	   	<li>\verbatim lj-cos <epsilon> <sigma> <cutoff> <offset> \endverbatim
-			the Lennard-Jones+Cosine potential (Soddemann et. al. Eur. Phys. J. E. 6, 409-419 (2001))
+	   <li>\verbatim lj-cos <epsilon> <sigma> <cutoff> <offset> \endverbatim
+		the Lennard-Jones+Cosine potential (Soddemann et. al. Eur. Phys. J. E. 6, 409-419 (2001))
 
-            for \f$ r<r_{min}=offset+2^{1/6}*\sigma \f$
+		for	\f$ r<r_{min}=offset+2^{1/6}*\sigma \f$
             
 			\f[4 \epsilon \left(\left(\frac{\sigma}{r-offset}\right)^{12} -
 				 \left(\frac{\sigma}{r-offset}\right)^6 \right)\f]
 
 
-            for \f$ cutoff>r>r_{min}=offset+2^{1/6}*\sigma \f$
+		for \f$ cutoff>r>r_{min}=offset+2^{1/6}*\sigma \f$
             
-			\f[\frac{1} {2} \epsilon \left(\cos (\alpha {(r-offset)}^2 + \beta) -1 \right) \f]
+		\f[\frac{1} {2} \epsilon \left(\cos (\alpha {(r-offset)}^2 + \beta) -1 \right) \f]
             
-            where \f$ \alpha \f$ and \f$ \beta \f$ are given by,
+	        where \f$ \alpha \f$ and \f$ \beta \f$ are given by,
             
-            \f[ \alpha= \frac {\pi} { {(cutoff-offset)}^2 - {(r_{min}-offset)}^2 } \f]
+	        \f[ \alpha= \frac {\pi} { {(cutoff-offset)}^2 - {(r_{min}-offset)}^2 } \f]
             
-            \f[ \beta= \pi \left( 1 - \frac {{(r_{min}-offset)}^2} {{(cutoff-offset)}^2 - {(r_{min}-offset)}^2 } \right) \f]
+                \f[ \beta= \pi \left( 1 - \frac {{(r_{min}-offset)}^2} {{(cutoff-offset)}^2 - {(r_{min}-offset)}^2 } \right) \f]
 
-			The order of the parameters is
-			\f$\epsilon, \sigma, cutoff, offset\f$.
+		The order of the parameters is
+		\f$\epsilon, \sigma, cutoff, offset\f$.
 
-                <li>\verbatim gay-berne <epsilon> <sigma> <cutoff> <k1> <k2> <mu> <nu> \endverbatim
-		   the Gay-Berne potential for prolate and oblate particles.
-		   The Gay-Berne potential is an anisotropic version of the classic Lennard-Jones potential,
-		   with orientational dependence in the range and well-depth functions \f$\sigma\f$ and \f$\epsilon\f$:
-		   \f[ U(\mathbf{r}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j) = 
-		   4 \epsilon(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)
-\left[ \left(\frac {\sigma_0}{\mathbf{r}_{ij}-\sigma(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)+\sigma_0}\right)^{12}-
-       \left(\frac {\sigma_0}{\mathbf{r}_{ij}-\sigma(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)+\sigma_0}\right)^{6} 
-\right] \f]
+            <li>\verbatim gay-berne <epsilon> <sigma> <cutoff> <k1> <k2> <mu> <nu> \endverbatim
+		the Gay-Berne potential for prolate and oblate particles.
+		The Gay-Berne potential is an anisotropic version of the classic Lennard-Jones potential,
+		with orientational dependence in the range and well-depth functions \f$\sigma\f$ and \f$\epsilon\f$:
+		\f[ U(\mathbf{r}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j) = 
+		4 \epsilon(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)
+		\left[ \left(\frac
+		{\sigma_0}{\mathbf{r}_{ij}-\sigma(\mathbf{\hat{r}}_{ij},
+		\mathbf{\hat{u}}_i,
+		\mathbf{\hat{u}}_j)+\sigma_0}\right)^{12}-
+		\left(\frac
+		{\sigma_0}{\mathbf{r}_{ij}-\sigma(\mathbf{\hat{r}}_{ij},
+		\mathbf{\hat{u}}_i,
+		\mathbf{\hat{u}}_j)+\sigma_0}\right)^{6} \right] \f]
 
-where
+		where
 
-\f[ \sigma( \mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j) =
+		\f[ \sigma( \mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j) =
 		\sigma_{0} \left\{ 1 - \frac{1}{2} \chi \left[
-		\frac{ \left( \mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_i  +  \mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_j \right)^{2}  }
+		\frac{ \left( \mathbf{\hat{r}}_{ij} \cdot
+		\mathbf{\hat{u}}_i + \mathbf{\hat{r}}_{ij} \cdot
+		\mathbf{\hat{u}}_j \right)^{2} }
 			{1 + \chi \left(  \mathbf{\hat{u}}_i.\mathbf{\hat{u}}_j \right)  } 
-		+ \frac{ \left( \mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_i  -  \mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_j \right)^{2}  }
+		+ \frac{ \left( \mathbf{\hat{r}}_{ij} \cdot
+		\mathbf{\hat{u}}_i - \mathbf{\hat{r}}_{ij} \cdot
+		\mathbf{\hat{u}}_j \right)^{2} }
 			{1 - \chi \left(  \mathbf{\hat{u}}_i \cdot \mathbf{\hat{u}}_j \right)  } 
 		\right] \right\}^{-\frac{1}{2}} \f]
 
-and
+		and
 
-\f[ \epsilon(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j) =
-		\epsilon_0 \left( 1- \chi^{2}(\mathbf{\hat{u}}_i \cdot \mathbf{\hat{u}}_j) \right)^{-\frac {\nu}{2}}
-		\left[1-\frac {\chi'}{2} \left( \frac { (\mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_i+
-		\mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_j)^{2}} {1+\chi' \, \mathbf{\hat{u}}_i \cdot \mathbf{\hat{u}}_j }+
-		\frac {(\mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_i-\mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_j)^{2}}
-		{1-\chi' \, \mathbf{\hat{u}}_i \cdot \mathbf{\hat{u}}_j } \right) \right]^{\mu} \f]
+		\f[ \epsilon(\mathbf{\hat{r}}_{ij},
+		\mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j) =
+		\epsilon_0 \left( 1- \chi^{2}(\mathbf{\hat{u}}_i \cdot
+		\mathbf{\hat{u}}_j) \right)^{-\frac {\nu}{2}}
+		\left[1-\frac {\chi'}{2} \left( \frac {
+		(\mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_i+
+		\mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_j)^{2}}
+		{1+\chi' \, \mathbf{\hat{u}}_i \cdot
+		\mathbf{\hat{u}}_j }+
+		\frac {(\mathbf{\hat{r}}_{ij} \cdot
+		\mathbf{\hat{u}}_i-\mathbf{\hat{r}}_{ij} \cdot
+		\mathbf{\hat{u}}_j)^{2}}
+		{1-\chi' \, \mathbf{\hat{u}}_i \cdot
+		\mathbf{\hat{u}}_j } \right) \right]^{\mu} \f]
 
-Here unit vectors \f$ \mathbf{\hat{u}}_i \f$ and \f$ \mathbf{\hat{u}}_j \f$ give the orientation of the two particles and
-vector \f$ \mathbf{r}_{ij} = r_{ij} \mathbf{\hat{r}}_{ij} \f$ is the intermolecular vector.
+		Here unit vectors \f$ \mathbf{\hat{u}}_i \f$ and \f$
+		\mathbf{\hat{u}}_j \f$ give the orientation of the two
+		particles and vector \f$ \mathbf{r}_{ij} = r_{ij}
+		\mathbf{\hat{r}}_{ij} \f$ is the intermolecular
+		vector.
 
-The parameters \f$ \chi =  \frac{k_1^{2} - 1}{k_1^{2} + 1 } \f$ and \f$ \chi' =
-\frac{k_2^{1/\mu} - 1}{k_2^{1/\mu} + 1 } \f$ 	       
-are responsible for the degree of anisotropy of the molecular properties. \f$ k_1 \f$ is the
-molecular elongation, and \f$ k_2 \f$ is the ratio of the potential well depths 
-for the side-by-side and end-to-end configurations. Exponents \f$ \mu \f$ and \f$ \nu \f$
-are adjastable parameters of the potential. There are several Gay-Berne paremeterizations exist;
-the original one being \f$ k_1 = 3 \f$, \f$ k_1 = 5 \f$, \f$ \mu = 2 \f$ and \f$ \nu = 1 \f$.
+		The parameters \f$ \chi = \frac{k_1^{2} - 1}{k_1^{2} +
+		1 } \f$ and \f$ \chi' = \frac{k_2^{1/\mu} -
+		1}{k_2^{1/\mu} + 1 } \f$ are responsible for the
+		degree of anisotropy of the molecular properties. \f$
+		k_1 \f$ is the molecular elongation, and \f$ k_2 \f$
+		is the ratio of the potential well depths for the
+		side-by-side and end-to-end configurations. Exponents
+		\f$ \mu \f$ and \f$ \nu \f$ are adjastable parameters
+		of the potential. There are several Gay-Berne
+		paremeterizations exist; the original one being \f$
+		k_1 = 3 \f$, \f$ k_1 = 5 \f$, \f$ \mu = 2 \f$ and \f$
+		\nu = 1 \f$.
 
-		<li>\verbatim ramp <cutoff> <force_magnitude> \endverbatim
-			a simple step potential for initialization.<BR>
-			The parameters are the cutoff and the force
-			magnitude. If two particles are within the
-			cutoff, they feel a constant repulsion of the
-			given magnitude.
+ 	    <li>\verbatim ramp <cutoff> <force_magnitude> \endverbatim
+		a simple step potential for initialization.<BR>
+		The parameters are the cutoff and the force
+		magnitude. If two particles are within the
+		cutoff, they feel a constant repulsion of the
+		given magnitude.
 	</ul>
-	If no <interaction_type> is given,
-	\verbatim inter <particle_type_number1> <particle_type_number2> \endverbatim
-	returns the parameters of the currently active potentials for
-	non-bonded interactions in the format
-	\verbatim 0 1 lennard-jones 1.0 2.0 1.1225 0.0 0.0 \endverbatim
-	which corresponds to the input-format of \ref tcl_inter.
-	Again the first two integers are <particle_type_number1> and <particle_type_number2>.
 
-	<b> <li> \anchor tcl_bonded Bonded interactions: </b>
-	\verbatim inter <bond_type_number> ( <interaction_type>|<num> ) <value>* \endverbatim
-	Bonded interaction (bonds are set using \ref tcl_part).
-	If <num> is given, the number of interaction partners is given (e.g. 1 for FENE).
-	Currently known <interaction_type>s are:
+	     If no \<interaction_type\> is given,
+	     \verbatim inter <particle_type_number1> <particle_type_number2> \endverbatim
+	     returns the parameters of the currently active potentials for
+	     non-bonded interactions in the format
+	     \verbatim 0 1 lennard-jones 1.0 2.0 1.1225 0.0 0.0 \endverbatim
+	     which corresponds to the input-format of \ref tcl_inter.
+	     Again the first two integers are \<particle_type_number1\> and \<particle_type_number2\>.
 
-	<ul>
+	<li> \anchor tcl_bonded <b>Bonded interactions: </b>
+	     \verbatim inter <bond_type_number> ( <interaction_type>|<num> ) <value>* \endverbatim
+	     Bonded interaction (bonds are set using \ref tcl_part).
+	     If \<num\> is given, the number of interaction partners is given (e.g. 1 for FENE).
+	     Currently known \<interaction_type\>s are:
+
+	     <ul>
 		<li> \verbatim fene <K_fene> <R_fene> \endverbatim
 			FENE potential
 			\f[ U^{FENE} = -\frac{1}{2} K_{FENE} R_{FENE}^2 \ln
@@ -167,63 +197,64 @@ the original one being \f$ k_1 = 3 \f$, \f$ k_1 = 5 \f$, \f$ \mu = 2 \f$ and \f$
 			\f]
 			with \f$ \alpha \f$ being the angle between two
 			neighboring bonds.
-	</ul>
-	If no <interaction_type> is given,
-	\verbatim inter <bond_type_number> \endverbatim
-	returns the parameters of the potential responsible for the
-	bonded interactions of bonds with that <bond_type_number> in the format
-	\verbatim 0 FENE 7.0 2.0 \endverbatim	
-	which again directly corresponds to the input-format of the respective
-	interaction with the first integer being <bond_type_number>.
+	     </ul>
+	     If no \<interaction_type\> is given,
+	     \verbatim inter <bond_type_number> \endverbatim
+	     returns the parameters of the potential responsible for the
+	     bonded interactions of bonds with that \<bond_type_number\> in the format
+	     \verbatim 0 FENE 7.0 2.0 \endverbatim	
+	     which again directly corresponds to the input-format of the respective
+	     interaction with the first integer being \<bond_type_number\>.
 
-	<b> <li> \anchor tcl_coulomb Coulomb interaction: </b>
-        \verbatim inter	coulomb <bjerrum-length> <method> [parameters] \endverbatim
+	<li> \anchor tcl_coulomb <b> Coulomb interaction: </b>
+	     \verbatim inter	coulomb <bjerrum-length> <method> [parameters] \endverbatim
 
-	Implemented Methods are: 
+	     Implemented Methods are: 
 
-	<ul>
+	     <ul>
 		<li> \verbatim p3m <r_cut> <mesh> <cao> <alpha> \endverbatim
-		or
-		\verbatim p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value>] \endverbatim	
-		This is an implemantation of the 1/r Coulomb potential
-		\f[ U^{C-P3M} = \ell_B T \frac{q_1 q_2}{r} \f]
-		with help of the P3M Method described elsewhere. 
+		     or
+		     \verbatim p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value>] \endverbatim	
+		     This is an implemantation of the 1/r Coulomb potential
+		     \f[ U^{C-P3M} = \ell_B T \frac{q_1 q_2}{r} \f]
+		     with help of the P3M Method described elsewhere. 
 
-		Make sure you know how to tune p3m parameters before
-		using the automatic tuning feature. Details are
-		described in the documentation of \ref
-		P3M_tune_parameters.
+		     Make sure you know how to tune p3m parameters before
+		     using the automatic tuning feature. Details are
+		     described in the documentation of \ref
+		     P3M_tune_parameters.
 
-		Some additional p3m parameters have preset values:
-		\verbatim epsilon = 0.0 \endverbatim 
-		The dielectric constant of the surrounding medium.
-		\verbatim n_interpol = 32768 \endverbatim 
-		Number of interpolation points for the charge assignment function.
-		\verbatim mesh_off = 0.5 0.5 0.5 \endverbatim 
-		Offset of the first mesh point from the lower left corner of the simulation box
-		in units of the mesh constan.
-		As soon as p3m is turned on the additional parameters can be changed with:
-		\verbatim inter coulomb <parameter-name> <value(s)>  \endverbatim
+		     Some additional p3m parameters have preset values:
+		     \verbatim epsilon = 0.0 \endverbatim 
+		     The dielectric constant of the surrounding medium.
+		     \verbatim n_interpol = 32768 \endverbatim 
+		     Number of interpolation points for the charge assignment function.
+		     \verbatim mesh_off = 0.5 0.5 0.5 \endverbatim 
+		     Offset of the first mesh point from the lower left corner of the simulation box
+		     in units of the mesh constan.
+		     As soon as p3m is turned on the additional parameters can be changed with:
+		     \verbatim inter coulomb <parameter-name> <value(s)>  \endverbatim
 
-		<b> Make sure that you know the relevance of the P3M Parameters befor using P3M !!!</b>
+		     <b> Make sure that you know the relevance of the P3M Parameters befor using P3M !!!</b>
 
 		<li> \verbatim dh <kappa> <r_cut> \endverbatim
-		Debye-Hueckel potential: 
-		\f[ U^{C-DH} = 	\ell_B T \frac{q_1 q_2 exp(-\kappa r)}{r} \f]
-		For \f[ \kappa = 0 \f] this corresponds to the plein coulomb potential.
-	</ul>		
+		     Debye-Hueckel potential: 
+		     \f[ U^{C-DH} = 	\ell_B T \frac{q_1 q_2 exp(-\kappa r)}{r} \f]
+		     For \f[ \kappa = 0 \f] this corresponds to the plein coulomb potential.
+	    </ul>		
 
-	\verbatim inter	coulomb 0.0 \endverbatim
-	disables coulomb interactions hence deactivating the electrostatic subsystem.
-	\verbatim inter	coulomb \endverbatim
-	returns the actual parameters of the coulomb interaction as a tcl-list, e.g.
-	\verbatim {coulomb 1.0 p3m 7.75 8 5 0.1138 0.0} {coulomb epsilon 0.1 n_interpol 32768 mesh_off 0.5 0.5 0.5} \endverbatim
-	which has the correct format to be used as input to 'inter' as well. If
-	\verbatim coulomb 0.0 \endverbatim
-	is returned, no electrostatics are active at the moment.
+	    \verbatim inter	coulomb 0.0 \endverbatim
+	    disables coulomb interactions hence deactivating the electrostatic subsystem.
+	    \verbatim inter	coulomb \endverbatim
+	    returns the actual parameters of the coulomb interaction as a tcl-list, e.g.
+	    \verbatim {coulomb 1.0 p3m 7.75 8 5 0.1138 0.0} {coulomb epsilon 0.1 n_interpol 32768 mesh_off 0.5 0.5 0.5} \endverbatim
+	    which has the correct format to be used as input to 'inter' as well. If
+	    \verbatim coulomb 0.0 \endverbatim
+	    is returned, no electrostatics are active at the moment.
 
-	</ol>
-	\verbatim inter \endverbatim
+</ol>
+
+\verbatim inter \endverbatim
 	returns a list of <i>all</i> bonded and non-bonded interactions as a Tcl-list,
 	in the same formats as above, e. g.
 	\verbatim {0 0 lennard-jones 1.0 2.0 1.1225 0.0 0.0} {0 FENE 7.0 2.0} {1 angle 1.0}\endverbatim	

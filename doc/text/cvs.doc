@@ -13,20 +13,20 @@ Here a list of the most common cvs commands we need:
 
 <ul>
 <li> \anchor cvs_add \verbatim cvs add <file> \endverbatim
-	Adds <file> to the cvsroot directory. You have to use 
+	Adds \<file\> to the cvsroot directory. You have to use 
 	\ref cvs_commit "commit" to make your add complete. 
 <li> \anchor cvs_checkout \verbatim cvs checkout <project> \endverbatim
-	This will create a new directory <project> in the CWD, containing an
-	up-to-date version of <project>.
+	This will create a new directory \<project\> in the CWD, containing an
+	up-to-date version of \<project\>.
 <li> \anchor cvs_commit \verbatim cvs commit <file> \endverbatim
 	Puts your changes into the cvsroot directory and makes them
 	available for the others. 
 	<b>Use with care and write a senseful comment!!!</b>
 <li> \anchor cvs_diff \verbatim cvs diff <file> \endverbatim
-	Shows differences of your local copy of <file> with respect
+	Shows differences of your local copy of \<file\> with respect
 	to the cvs version.	
 <li> \anchor cvs_log \verbatim cvs log <file> \endverbatim
-	Shows the log file for <file>, e.g. comments on changes that
+	Shows the log file for \<file\>, e.g. comments on changes that
 	have been made in the past and who is responsible for them.
 <li> \anchor cvs_remove \verbatim cvs remove <file> \endverbatim
 	removes a file from the cvsroot directory. That means, it is
@@ -36,7 +36,7 @@ Here a list of the most common cvs commands we need:
 	time on that file, adding e.g. 'removed.' as comment. <b>Use
 	with even more care!!!</b>
 <li> \anchor cvs_status \verbatim cvs status <file> \endverbatim
-	Reports the status of your local copy of <file> with respect
+	Reports the status of your local copy of \<file\> with respect
 	to the cvs version.	
 <li> \anchor cvs_update \verbatim cvs update \endverbatim
 	Get the current version of all files from the cvsroot

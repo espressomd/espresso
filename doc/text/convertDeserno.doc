@@ -3,14 +3,14 @@ The following procedures are found in scripts/convertDeserno.tcl.
 <ul>
     <li>\anchor tcl_convertDeserno2MD
 	\verbatim convertDeserno2MD <source_file> <destination_file>\endverbatim
-	converts the particle configuration stored in <source_file>
+	converts the particle configuration stored in \<source_file\>
 	from Deserno-format into blockfile-format, importing everything
-	to 'Espresso' and writing it to <destination_file>. 
+	to 'Espresso' and writing it to \<destination_file\>. 
 	The full particle information, bonds, interactions, and parameters will be converted and saved.<BR>
-	If <destination_file> is "-1", the data is only loaded into 'Espresso' and nothing is written to disk.<BR>
-	If <destination_file> has the suffix '.gz', the output-file will be compressed.<BR>
+	If \<destination_file\> is "-1", the data is only loaded into 'Espresso' and nothing is written to disk.<BR>
+	If \<destination_file\> has the suffix '.gz', the output-file will be compressed.<BR>
 	The script uses some assumptions, e.g. on the
-	<particle_type_number>s of \ref tcl_part for polymers,
+	\<particle_type_number\>s of \ref tcl_part for polymers,
 	counter-ions, or on <i>sigma, shift, offset</i> for
 	Lennard-Jones-potentials (\ref tcl_inter; current defaults are 
 	2.0, 0, 0, respectively); these are all set by
@@ -30,18 +30,18 @@ The following procedures are found in scripts/convertDeserno.tcl.
 
     <li>\anchor tcl_convertMD2Deserno
 	\verbatim convertMD2Deserno <source_file> <destination_file>\endverbatim
-	converts the particle configuration stored in the 'Espresso'-blockfile <source_file> into a
-	Deserno-compatible <destination_file>.<BR>
-	If <source_file> is "-1", the data is entirely taken from 'Espresso' without loading anything from disk.<BR>
-	If <source_file> has the suffix '.gz', it is assumed to be compressed; otherwise it will be treated as containing plain text.<BR>
+	converts the particle configuration stored in the 'Espresso'-blockfile \<source_file\> into a
+	Deserno-compatible \<destination_file\>.<BR>
+	If \<source_file\> is "-1", the data is entirely taken from 'Espresso' without loading anything from disk.<BR>
+	If \<source_file\> has the suffix '.gz', it is assumed to be compressed; otherwise it will be treated as containing plain text.<BR>
 	Since Deserno stores much more than 'Espresso' does due to a
 	centralized vs. a local storage policy, it depends on correct
-	values for the following properties, which therefore should be contained in <source_file>:
+	values for the following properties, which therefore should be contained in \<source_file\>:
 	<ol>
-	<li> the <particle_type_number> used for polymers,
+	<li> the \<particle_type_number\> used for polymers,
 	counter-ions, and salt-molecules (defaults are: 
 	<i>set type_P 0</i>, <i>set type_CI 1</i>, and <i>set type_S 2</i>
-	<li> the <bond_type_number> used for FENE-interactions
+	<li> the \<bond_type_number\> used for FENE-interactions
 	(default is: <i>set type_FENE 0</i>)
 	</ol>
 	As for <i>convertDeserno2MD</i>, the defaults are set upon
@@ -49,7 +49,7 @@ The following procedures are found in scripts/convertDeserno.tcl.
 	\verbatim initConversion \endverbatim
 	(which is automatically called by <i>convertMD2Deserno</i> as well),
 	but may be overwritten the same way as explained for \ref
-	tcl_convertDeserno2MD. However, parameters stored in <source_file> cannot (and will not) be overwritten,
+	tcl_convertDeserno2MD. However, parameters stored in \<source_file\> cannot (and will not) be overwritten,
 	because they were part of the system originally saved and should not be altered initially.<BR>
 	Note, that some entries in a Deserno-file cannot be determined 
 	at all, these are by default set to

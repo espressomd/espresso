@@ -2,8 +2,7 @@
 
 <hr>
 <center>
-\image html  logo.gif 
-\image latex logo.eps \width=6cm
+<img src="logo.gif"> 
 \htmlonly
 <h1>
 <font color="#0000FF"> <b>E</b></font>xtensible
@@ -66,7 +65,7 @@ Supported operating systems:
 </ul>
 
 
-Only for some special purpose, e.g. you want to supplement your
+Only for some special purpose, for example you want to supplement your
 simulations with a graphical user interface like it is done in the
 sample script demo.tcl, you will also need  
 <a href="http://tcl.activestate.com">tk 8.3</a> or higher version.
@@ -76,7 +75,7 @@ sample script demo.tcl, you will also need
 \subsection start_env Environment Variables:
 
 For the work with ESPResSo you need to set the following environment variables (Please check the exact syntax for your shell/system):<br>
-The path for the mpi binary has to be included in your execution path (For Linux this would be e.g. lam).
+The path for the mpi binary has to be included in your execution path (For Linux this would be for example lam).
 \verbatim 
 setenv PATH "${PATH}:.:/opt/lam/bin"
 \endverbatim
@@ -111,7 +110,7 @@ After adjusting the makefile you can compile ESPResSo. Change into the directory
 \verbatim 
 gmake
 \endverbatim
-to compile the code. The executable is in Espresso/<your operating system>. With
+to compile the code. The executable is in Espresso/\<your operating system\>. With
 \verbatim 
 gmake docu
 \endverbatim
@@ -201,7 +200,7 @@ No bugs known at the moment.
 <li> New algorithms for treating long range interactions: A local algorithm invented by T. Maggs and a finite difference multi-grid scheme proposed by D. Tsukerman.
 </ul>
 
-And we are open for more ideas e.g. coming from you.
+And we are open for more ideas for example coming from you.
 
 
 \section help More help about ...

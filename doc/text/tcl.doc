@@ -13,18 +13,18 @@ interface between the Tcl script and the MD code:
   </ul>Pre-defined geometries:<ul>
     <li>\verbatim polymer <N_P> <MPC> <bond_length> [start <part_id>] [pos <x> <y> <z>] [mode { SAW | RW } [<shield> [<max_try>]]] 
                                    [charge <val_cM>] [distance <cM_dist>] [types <type_nM> [<type_cM>]] [FENE <type_FENE>] \endverbatim
-	creates <N_P> polymer chains with <MPC> monomers each <bond_length> apart in the simulation box.
+	creates \<N_P\> polymer chains with \<MPC\> monomers each \<bond_length\> apart in the simulation box.
 	For more information, see \ref tcl_polymer.
 
     <li>\verbatim counterions <N_CI> [start <part_id>] [mode { SAW | RW } [<shield> [<max_try>]]] [charge <val_CI>] [type <type_CI>] \endverbatim
-	creates <N_CI> counterions in the simulation box. For more informations, see \ref tcl_counterions.
+	creates \<N_CI\> counterions in the simulation box. For more informations, see \ref tcl_counterions.
 
     <li>\verbatim salt <N_pS> <N_nS> [start <part_id>] [mode { SAW | RW } [<shield> [<max_try>]]] [charges <val_pS> [<val_nS>]] [types <type_pS> [<type_nS>]] \endverbatim
-    	creates <N_pS> positively and <N_nS> negatively charged salt ions of charge <val_pS> and <val_nS> within the simulation box.
+    	creates \<N_pS\> positively and \<N_nS\> negatively charged salt ions of charge \<val_pS\> and \<val_nS\> within the simulation box.
 	For more information, see \ref tcl_salt.
 
     <li>\verbatim diamond <a> <bond_length> <MPC> [counterions <N_CI>] [charges <val_nodes> <val_cM> <val_CI>] [distance <cM_dist>] [nonet] \endverbatim
-        Creates a diamond-shaped polymer network with 8 tetra-functional nodes connected by 2*8 polymer chains of length <MPC>.
+        Creates a diamond-shaped polymer network with 8 tetra-functional nodes connected by 2*8 polymer chains of length \<MPC\>.
 	For more information, see \ref tcl_diamond.
 
     <li>\verbatim icosahedron <a> <MPC> [counterions <N_CI>] [charges <val_cM> <val_CI>] [distance <cM_dist>] \endverbatim
@@ -33,12 +33,12 @@ interface between the Tcl script and the MD code:
 
   </ul>Auxiliary functions:<ul>
     <li>\verbatim crosslink <N_P> <MPC> [start <part_id>] [catch <r_catch>] [distLink <link_dist>] [distChain <chain_dist>] [FENE <type_FENE>] [trials <max_try>] \endverbatim
-	Attempts to end-crosslink the current configuration of <N_P> equally long polymers with <MPC> monomers each, 
+	Attempts to end-crosslink the current configuration of \<N_P\> equally long polymers with \<MPC\> monomers each, 
 	returning how many ends are successfully connected. For more information, see \ref tcl_crosslink.
 
     <li>\verbatim velocities <v_max> [start <part_id>] [count <N_T>] \endverbatim
-	Sets the velocities of the particles with particle ID (see \ref tcl_part) between <part_id> and <part_id>+<N_T> 
-	(defaults to '0' & '[setmd npart]-<part_id>') 
+	Sets the velocities of the particles with particle ID (see \ref tcl_part) between \<part_id\> and \<part_id\>+\<N_T\> 
+	(defaults to '0' & '[setmd npart]-\<part_id\>') 
 	to a random vector with length in [-vmax,vmax], and returns the absolute value of the total velocity assigned.
     </ul>
 
@@ -60,12 +60,12 @@ interface between the Tcl script and the MD code:
 <br>
   <li><b>Running the simulation:</b><ul>
     <li>\anchor tcl_integrate \verbatim integrate <steps> \endverbatim
-	run <steps> integration steps. 
+	run \<steps\> integration steps. 
 	The C implementation is \ref #integrate.
 
     <li>\verbatim change_volume { <V_new> | <L_new> { x | y | z | xyz } } \endverbatim
-        changes the volume of either a cubic simulation box to the new volume <tt><V_new></tt> 
-	or its given x-/y-/z-/xyz-extension to the new box-length <tt><L_new></tt>, 
+        changes the volume of either a cubic simulation box to the new volume <tt>\<V_new\></tt> 
+	or its given x-/y-/z-/xyz-extension to the new box-length <tt>\<L_new\></tt>, 
 	and isotropically adjusts the particles coordinates as well. 
 	The function returns the new volume of the deformed simulation box.
 	The C implementation is \ref change_volume.
@@ -97,7 +97,7 @@ interface between the Tcl script and the MD code:
 <br>
   <li><b>File-I/O, checkpoints, and other auxiliary functions:</b><ul>
     <li>\verbatim blockfile <channel> ( read|write start|end|variable|auto|toend ) <param>?\endverbatim
-        blockfile allows for convenient access to a block format structured file <channel>.
+        blockfile allows for convenient access to a block format structured file \<channel\>.
 	For more information, see \ref tcl_blockfile.
 
     <li>\verbatim checkpoint_set <destination> [<# of configs> [<tclvar> [<ia_flag>]]]\endverbatim

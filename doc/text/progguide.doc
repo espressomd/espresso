@@ -34,7 +34,7 @@ write the procedures add_*_pair_force
 	the distance vector between the particles is calculated using \ref get_mi_vector. This is necessary
 	since the particle positions may not be the closest ones, such that the minimum image convention
 	for periodic coordinates is not fulfilled. \ref get_mi_vector takes care of that.
-	Then add your procedures to \ref add_bonded_pair_force rsp.  bonded_pair_energy and
+	Then add your procedures to \ref add_bonded_force rsp.  bonded_pair_energy and
 		 bonded_pair_pressure.
 	<br>
 	\section add_nonbonded Adding new nonbonded interactions
@@ -45,7 +45,10 @@ write the procedures add_*_pair_force
 	Nevertheless the next two sections contain some information you very likely will need.
 	But keep in mind that Espresso is a parallel code; therefore the organization is more
 	complicated as one thinks it has to be.
-	\section part_org Particle data organization
-	\section ia_org Interactions organization
+	\section part_org 
+	Particle data organization
+
+	\section inter_org   
+	Interactions organization
 
 */

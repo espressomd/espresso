@@ -1,5 +1,5 @@
 /** \page tcl_cellsystem
     Changing the used cell system cell structure.
-    The c implementation is \ref cellsystem.
+    The c implementation is \ref cells::cellsystem.
 
 */

@@ -4,24 +4,24 @@ The scripts are located in scripts/aux.tcl and use \ref tcl_blockfile as file fo
 <ul>
     <li>\anchor tcl_checkpoint_set
         \verbatim checkpoint_set <destination> [<# of configs> [<tclvar> [<ia_flag> [<var_flag> [<ran_flag]]]]]\endverbatim
-        creates a checkpoint with path/filename <destination> (compressed if <destination> ends with '<tt>.gz</tt>'), saving the last <# of configs> 
-	which have been appended using \ref analyze_append (defaults to 'all'), adds all tcl-embedded variables specified in the tcl-list <tclvar>
+        creates a checkpoint with path/filename \<destination\> (compressed if \<destination\> ends with '<tt>.gz</tt>'), saving the last \<# of configs\> 
+	which have been appended using \ref analyze_append (defaults to 'all'), adds all tcl-embedded variables specified in the tcl-list \<tclvar\>
 	(defaults to '-'), all interactions (\ref tcl_inter) / Espresso-variables (\ref tcl_setmd) / random-number-generator 
-	informations (\ref tcl_t_random etc.) unless their respective flags <ia_flag> / <var_flag> / <ran_flag> are set to '-'; 
+	informations (\ref tcl_t_random etc.) unless their respective flags \<ia_flag\> / \<var_flag\> / \<ran_flag\> are set to '-'; 
 	you may however choose to only include certain Espresso-variables (\ref tcl_setmd) by providing their names as a tcl-list 
-	in place of <var_flag>.<BR>
+	in place of \<var_flag\>.<BR>
 	When you're reading this, \ref tcl_checkpoint_set will be using \ref tcl_invalidate_system automatically; therefore continuing an integration
 	after setting a checkpoint or restarting it there by reading one should make absolutely no difference anymore, since the current state of
 	the random number generator(s) is/are completely (re)stored to (from) the checkpoint and the integrator is forced to re-init the forces
 	(incl. thermostat) no matter what.<BR>
 	It may be a good choice to use filenames such as '<tt>kremer_checkpoint.[eval format %05 $integration_step]</tt>' or 
-	'<tt>kremer_checkpoint.029.gz</tt>' for <destination> because the command stores all the names of checkpoints set to a file derived from 
-	<destination> by replacing the very last suffix plus maybe '.gz' with '.chk' (in the above examples: '<tt>kremer_checkpoint.chk</tt>') which
+	'<tt>kremer_checkpoint.029.gz</tt>' for \<destination\> because the command stores all the names of checkpoints set to a file derived from 
+	\<destination\> by replacing the very last suffix plus maybe '.gz' with '.chk' (in the above examples: '<tt>kremer_checkpoint.chk</tt>') which
 	is used by \ref tcl_checkpoint_read to restore all checkpoints.<BR>
-	Although '<tt>checkpoint_set <destination></tt>' without the optional parameters will store a complete checkpoint sufficient for re-starting
+	Although '<tt>checkpoint_set \<destination\></tt>' without the optional parameters will store a complete checkpoint sufficient for re-starting
 	the simulation later on, you may run out of memory while trying to save a huge number of timesteps appended (\ref analyze_append). Hence one
 	should rather only save those configurations <i>newly</i> added since the last checkpoint, i.e. if a checkpoint is created every 100,000 steps
-	while a configuration is appended every 500 steps you may want to use '<tt>checkpoint_set <destination> 200</tt>' which saves the current
+	while a configuration is appended every 500 steps you may want to use '<tt>checkpoint_set \<destination\> 200</tt>' which saves the current
 	configuration, all interactions, all bonds, the precise state of the random number generator(s), and the last 200 entries appended 
 	to <tt>configs</tt> since the last checkpoint was created.
 	Since \ref tcl_checkpoint_read reads in successively the checkpoints given in the '.chk'-file, the <tt>configs</tt>-array will nevertheless be 
@@ -29,18 +29,18 @@ The scripts are located in scripts/aux.tcl and use \ref tcl_blockfile as file fo
 
     <li>\anchor tcl_checkpoint_read
         \verbatim checkpoint_read <origin>\endverbatim
-	restores all the checkpoints whose filenames are listed in <origin> in the order given therein, consequently putting the simulation into
-	the state it was in when \ref tcl_checkpoint_set was called. If parts of the <tt>configs</tt> array are given in the files listed in <origin>,
+	restores all the checkpoints whose filenames are listed in \<origin\> in the order given therein, consequently putting the simulation into
+	the state it was in when \ref tcl_checkpoint_set was called. If parts of the <tt>configs</tt> array are given in the files listed in \<origin\>,
 	it is assumed that they represent a fraction of the whole array.
 
 
     <li>\anchor tcl_polyBlockWrite 
 	\verbatim polyBlockWrite <path> <param_list> <part_list>\endverbatim
 	writes out the current 'Espresso' configuration as an AxA-blockfile, including parameters, interactions, particles, and bonds.<BR>
-	<path> should contain the filename including the full path to it.<BR>
-	<param_list> gives a tcl-list of the 'Espresso'-parameters (out of ) to be saved; if an empty list '{}' is supplied, no parameters are written. If 'all', <i>all</i> parameters available through \ref tcl_setmd are written. Defaults to the full parameter set.<BR>
-	<part_list> gives a string of the particle-properties (out of pos | type | q | v | f) to be saved to disk; if an empty string ' "" 'is provided, no particles, no bonds, and no interactions are written. Defaults (if omitted) to all particle-properties.<BR>
-	Depending on the file-name's suffix, the output will be compressed (if <path> ends with '.gz'), too.<BR>
+	\<path\> should contain the filename including the full path to it.<BR>
+	\<param_list\> gives a tcl-list of the 'Espresso'-parameters (out of ) to be saved; if an empty list '{}' is supplied, no parameters are written. If 'all', <i>all</i> parameters available through \ref tcl_setmd are written. Defaults to the full parameter set.<BR>
+	\<part_list\> gives a string of the particle-properties (out of pos | type | q | v | f) to be saved to disk; if an empty string ' "" 'is provided, no particles, no bonds, and no interactions are written. Defaults (if omitted) to all particle-properties.<BR>
+	Depending on the file-name's suffix, the output will be compressed (if \<path\> ends with '.gz'), too.<BR>
 	Note, that 'polyBlockWrite' in combination with \ref tcl_convertMD2Deserno replaces the (undocumented) function 'polywr': 
 	To save the current configuration to a Deserno-compatible file (e.g. for use with 'poly2pdb') you may now use \ref #tcl_polyBlockWrite
 	to save your current configuration to a blockfile, and convert that with \ref tcl_convertMD2Deserno afterwards,
@@ -51,10 +51,10 @@ The scripts are located in scripts/aux.tcl and use \ref tcl_blockfile as file fo
 
     <li>\anchor tcl_polyBlockWriteAll
         \verbatim polyBlockWriteAll <destination> [<tcl-var> [<rdm> [<configs>]]] \endverbatim
-	does even more than \ref #tcl_polyBlockWrite, i.e. it saves <i>all</i> current interactions, particles, bonds, Espresso-variables to <destination>,
-	but in addition it also saves the tcl-variables specified by <tcl-var> (if 'all', then all the variables in the active script are stored),
-	it saves the state of the random number generator if <rdm> is 'random' (= complete state) or 'seed' (= only the seeds),
-	and it saves all the particle configurations used for analysis purposes if <configs> is all but '-'.<BR>
+	does even more than \ref #tcl_polyBlockWrite, i.e. it saves <i>all</i> current interactions, particles, bonds, Espresso-variables to \<destination\>,
+	but in addition it also saves the tcl-variables specified by \<tcl-var\> (if 'all', then all the variables in the active script are stored),
+	it saves the state of the random number generator if \<rdm\> is 'random' (= complete state) or 'seed' (= only the seeds),
+	and it saves all the particle configurations used for analysis purposes if \<configs\> is all but '-'.<BR>
 	Using '-' as value usually skips that entry.<BR>
 	With this one can set real checkpoints which should reproduce the script-state as precisely as possible.
 </ul>

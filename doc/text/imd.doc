@@ -13,7 +13,7 @@ In the following the setup up and using of IMD is described.
 \section imd_script IMD in the script
 In your simulation, the IMD connection is setup up using
 \verbatim imd connect <port> \endverbatim
-where <port> is an arbitrary port number (it has to be between 1024 and 65000). Normally
+where \<port\> is an arbitrary port number (it has to be between 1024 and 65000). Normally
 Espresso will try to open port 10000, but the port may be in use already by another Espresso
 simulation. In that case it is a good idea to just try another port (see lj_liquid.tcl).
 
@@ -28,7 +28,7 @@ Note that this routine requires the chain structure to be specified first using 
 
 \verbatim imd listen <seconds> \endverbatim
 can be used to let the simulation wait for
-<seconds> seconds or until IMD has connected. This is normally only useful in demo scripts,
+\<seconds\> seconds or until IMD has connected. This is normally only useful in demo scripts,
 if you want to see all frames of the simulation.
 
 If your simulations terminates,
@@ -43,12 +43,12 @@ your program has to write out psf-/pdb-files using \ref tcl_writepsf and \ref tc
 That hassle is greatly reduced by using the built-in auxiliary script
 \anchor tcl_prepare_vmd
 \verbatim prepare_vmd_connection [<filename> [<wait> [<start>]]] \endverbatim
-which writes out the necessary psf-/pdb-files to <tt><filename>.psf</tt> and <tt><filename>.pdb</tt>
+which writes out the necessary psf-/pdb-files to <tt>\<filename\>.psf</tt> and <tt>\<filename\>.pdb</tt>
 (default for <tt><filename</tt> is '<tt>vmd</tt>'), doing some nice stuff such as coloring the 
 molecules, bonds and counterions appropriately, rotating your viewpoint, and connecting your system
-to the visualization server. If <tt><start></tt> is 1 (the default), it does all that by itself; 
+to the visualization server. If <tt>\<start\></tt> is 1 (the default), it does all that by itself; 
 otherwise it writes those steps out to a script-file '<tt>vmd_start.script</tt> 
-and waits for <tt><wait></tt> seconds (default: 0) for you to connect.
+and waits for <tt>\<wait\></tt> seconds (default: 0) for you to connect.
 
 
 \section imd_vmd Using IMD in VMD
@@ -57,8 +57,8 @@ Then click on "Molecule", choose fileformat "psf and pdb", and select your psf/p
 the corresponding entries. Now click on "Load Molecule". You should see the snapshot you
 saved in the psf/pdb files.
 
-Then execute "imd connect <host> <port>", where <host> is the host running the simulation
-and <port> is the port it listens to. <em> Note that VMD crashes, if you do that without
+Then execute "imd connect \<host\> \<port\>", where \<host\> is the host running the simulation
+and \<port\> is the port it listens to. <em> Note that VMD crashes, if you do that without
 loading the molecule before </em>.
 
 For more information on how to use VMD to extract more information or hide parts of configuration,

@@ -9,22 +9,22 @@
 	<li> \verbatim <bond_length>   \endverbatim length of the bonds between two monomers
 	<li> \verbatim start <part_id> \endverbatim particle number of the start monomer to be used with \ref tcl_part (defaults to '0')
 	<li> \verbatim pos <x> <y> <z> \endverbatim 
-	     sets the position of the start monomer of the first chain to <x>,<y>,<z> (defaults to a randomly chosen value)
+	     sets the position of the start monomer of the first chain to \<x\>,\<y\>,\<z\> (defaults to a randomly chosen value)
 	<li> \verbatim mode { SAW | RW } [<shield> <max_try>] \endverbatim 
 	     selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW').<BR>
 	     If 'SAW' was selected, the position randomly chosen for the current monomer to be placed is dismissed every time 
-	     it would get closer to another particle's position than <shield> (defaults to '0.0'); the attempt to find a suitable 
-	     unobstructed random place for the current monomer is then repeated for up to <max_try> times (defaults to '30000')
+	     it would get closer to another particle's position than \<shield\> (defaults to '0.0'); the attempt to find a suitable 
+	     unobstructed random place for the current monomer is then repeated for up to \<max_try\> times (defaults to '30000')
 	<li> \verbatim <val_cM>        \endverbatim valency of charged monomers (defaults to '0.0')
 	<li> \verbatim <cM_dist>       \endverbatim distance between two charged monomers' indices (defaults to '1'); 
-	     if '1' then every monomer on the chain will have charge <val_cM>, if '2' every other monomer,...
+	     if '1' then every monomer on the chain will have charge \<val_cM\>, if '2' every other monomer,...
 	<li> \verbatim <type_nP>       \endverbatim type number of neutral monomers to be used with \ref tcl_part (default to '0')
 	<li> \verbatim <type_cP>       \endverbatim 
-             type number of charged monomers to be used with \ref tcl_part (default to '1'); if unset, <type_cM> = <type_nM> is assumed
+             type number of charged monomers to be used with \ref tcl_part (default to '1'); if unset, \<type_cM\> = \<type_nM\> is assumed
 	<li> \verbatim <type_FENE>     \endverbatim 
              type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0')
     </ul>
-    If <val_cM> is smaller than 1e-10, the charge is assumed to be zero, and the types are set to <type_cM> = <type_nM>.
+    If \<val_cM\> is smaller than 1e-10, the charge is assumed to be zero, and the types are set to \<type_cM\> = \<type_nM\>.
 
     The C implementation is \ref #polymer.
 */
@@ -32,7 +32,7 @@
 
 /** \page tcl_counterions The counterions command
     \verbatim counterions <N_CI> [start <part_id>] [mode { SAW | RW } [<shield> [<max_try>]]] [charge <val_CI>] [type <type_CI>] \endverbatim
-    Creates counterions of charge <val_CI> within the simulation box,
+    Creates counterions of charge \<val_CI\> within the simulation box,
     and returns how often the attempt to place a counterion failed in the worst case.
     <ul>
 	<li> \verbatim <N_CI>          \endverbatim number of counterions to create
@@ -40,8 +40,8 @@
 	<li> \verbatim mode { SAW | RW } [<shield> <max_try>] \endverbatim 
 	     selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW').<BR>
 	     If 'SAW' was selected, the position randomly chosen for the current counterion to be placed is dismissed every time 
-	     it would get closer to another particle's position than <shield> (defaults to '0.0'); the attempt to find a suitable 
-	     unobstructed random place for the current monomer is then repeated for up to <max_try> times (defaults to '30000')
+	     it would get closer to another particle's position than \<shield\> (defaults to '0.0'); the attempt to find a suitable 
+	     unobstructed random place for the current monomer is then repeated for up to \<max_try\> times (defaults to '30000')
 	<li> \verbatim <val_CI>        \endverbatim valency of the counterions (defaults to '-1.0')
 	<li> \verbatim <type_CI>       \endverbatim type number of the counterions to be used with \ref tcl_part (default to '2')
     </ul>
@@ -51,7 +51,7 @@
 
 /** \page tcl_salt The salt command
     \verbatim salt <N_pS> <N_nS> [start <part_id>] [mode { SAW | RW } [<shield> [<max_try>]]] [charges <val_pS> [<val_nS>]] [types <type_pS> [<type_nS>]] \endverbatim
-    Creates <N_pS> positively and <N_nS> negatively charged salt ions of charge <val_pS> and <val_nS> within the simulation box,
+    Creates \<N_pS\> positively and \<N_nS\> negatively charged salt ions of charge \<val_pS\> and \<val_nS\> within the simulation box,
     and returns how often the attempt to place a salt ion failed in the worst case.
     <ul>
 	<li> \verbatim <N_pS>          \endverbatim number of positively charged salt ions to create
@@ -60,13 +60,13 @@
 	<li> \verbatim mode { SAW | RW } [<shield> <max_try>] \endverbatim 
 	     selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW').<BR>
 	     If 'SAW' was selected, the position randomly chosen for the current counterion to be placed is dismissed every time 
-	     it would get closer to another particle's position than <shield> (defaults to '0.0'); the attempt to find a suitable 
-	     unobstructed random place for the current monomer is then repeated for up to <max_try> times (defaults to '30000')
+	     it would get closer to another particle's position than \<shield\> (defaults to '0.0'); the attempt to find a suitable 
+	     unobstructed random place for the current monomer is then repeated for up to \<max_try\> times (defaults to '30000')
 	<li> \verbatim <val_pS>        \endverbatim valency of the positively charged salt ions (defaults to '+1.0')
 	<li> \verbatim <val_nS>        \endverbatim valency of the negatively charged salt ions (defaults to '-1.0')
 	<li> \verbatim <type_pS>       \endverbatim type number of the positively charged salt ions to be used with \ref tcl_part (default to '3')
 	<li> \verbatim <type_nS>       \endverbatim type number of the negatively charged salt ions to be used with \ref tcl_part (default to '4');
-	     if unset, <type_nS> = <type_pS> is assumed
+	     if unset, \<type_nS\> = \<type_pS\> is assumed
     </ul>
     The C implementation is \ref #salt.
 */
@@ -74,9 +74,9 @@
 
 /** \page tcl_crosslink The crosslink command
     \verbatim crosslink <N_P> <MPC> [start <part_id>] [catch <r_catch>] [distLink <link_dist>] [distChain <chain_dist>] [FENE <type_FENE>] [trials <max_try>] \endverbatim
-	Evaluates the current configuration of <N_P> equally long polymers with <MPC> monomers each, for any chain's ends mapping all monomers 
-	within a radius of <r_catch> around the end-monomer, randomly choosing one of them, establishing a crosslink to it if the next crosslink 
-	from there is <link_dist> monomers away and if both prospective partners, in case they reside on the same chain, are at least <chain_dist> 
+	Evaluates the current configuration of \<N_P\> equally long polymers with \<MPC\> monomers each, for any chain's ends mapping all monomers 
+	within a radius of \<r_catch\> around the end-monomer, randomly choosing one of them, establishing a crosslink to it if the next crosslink 
+	from there is \<link_dist\> monomers away and if both prospective partners, in case they reside on the same chain, are at least \<chain_dist\> 
 	monomers apart. The function returns how many ends are successfully linked.
     <ul>
 	<li> \verbatim <N_P>           \endverbatim number of polymer chains
@@ -87,13 +87,13 @@
 	<li> \verbatim distLink <link_dist>   \endverbatim minimum difference between the indices of two crosslinked monomers with different
 	     binding partners; high values prevent stiffness, low values make crosslinking easier (defaults to '2')
 	<li> \verbatim distChain <chain_dist> \endverbatim minimum difference between the indices of the crosslink partners if the chain's end
-	     wants to connect to a monomer on the same chain (defaults to '<MPC>' hence preventing crosslinks to the same chain)
+	     wants to connect to a monomer on the same chain (defaults to '\<MPC\>' hence preventing crosslinks to the same chain)
 	<li> \verbatim FENE <type_FENE>\endverbatim 
              type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0')
 	<li> \verbatim trials <max_try>\endverbatim how often a different set of crosslinks should be searched for if the currently chosen ones
-	     do not fullfill the requirements of <link_dist> and <chain_dist> (defaults to '30000'); if <max_try> is exceeded, all irregular crosslinks
+	     do not fullfill the requirements of \<link_dist\> and \<chain_dist\> (defaults to '30000'); if \<max_try\> is exceeded, all irregular crosslinks
 	     are dismissed and the function returns successfully, allowing the user to retry crosslinking after integrating the configuration 
-	     for some time steps until <i>crosslink</i> returns '2*<N_P>' (meaning: all ends are now linked)
+	     for some time steps until <i>crosslink</i> returns '2*\<N_P\>' (meaning: all ends are now linked)
     </ul>
     The C implementation is \ref #crosslink.
 */
@@ -102,19 +102,19 @@
 /** \page tcl_diamond The diamond command
     \verbatim diamond <a> <bond_length> <MPC> [counterions <N_CI>] [charges <val_nodes> <val_cM> <val_CI>] [distance <cM_dist>] [nonet]\endverbatim
     Sets up 8 tetra-functional nodes of particle type 0 on the edges of a diamond lattice with box length <a>, squeezing 2*8 polymer chains
-    with <MPC> monomers and <bond_length> each in between the nodes, optionally adding <N_CI> counterions to the system (defaults to '0')
-    and charging monomers and counterions with <val_cM> and <val_CI>, respectively (both default to '0'); if only <val_cM> is given, then
-    <val_CI> is assumed to be -1.*<val_cM>.
+    with \<MPC\> monomers and \<bond_length\> each in between the nodes, optionally adding \<N_CI\> counterions to the system (defaults to '0')
+    and charging monomers and counterions with \<val_cM\> and \<val_CI\>, respectively (both default to '0'); if only \<val_cM\> is given, then
+    \<val_CI\> is assumed to be -1.*\<val_cM\>.
     <ul>
         <li> \verbatim <a>           \endverbatim box length of the unit cell
-	<li> \verbatim <bond_length> \endverbatim (initial) bond length between the monomers -> sqrt(3*(a/4)^2)/(<MPC>+1)
+	<li> \verbatim <bond_length> \endverbatim (initial) bond length between the monomers -\> sqrt(3*(a/4)^2)/(\<MPC\>+1)
 	<li> \verbatim <MPC>         \endverbatim monomers on each of the 2*8 polymer chains connecting the nodes
 	<li> \verbatim <N_CI>        \endverbatim number of counterions to add to the system (defaults to '0')
 	<li> \verbatim <val_nodes>   \endverbatim charge carried by the eight node monomers (defaults to '0.0')
 	<li> \verbatim <val_cM>      \endverbatim charge carried by the chain monomers (defaults to '0.0')
 	<li> \verbatim <val_CI>      \endverbatim charge carried by the counterions (defaults to '0.0')
 	<li> \verbatim <cM_dist>     \endverbatim distance between two charged monomers' indices (defaults to '1');
-	     if '1' then every monomer on the chain will have charge <val_cM>, if '2' every other monomer,...
+	     if '1' then every monomer on the chain will have charge \<val_cM\>, if '2' every other monomer,...
 	<li> \verbatim nonet         \endverbatim if given, the 16 chains on the diamond lattice won't be crosslinked to a network (default: OFF)
     </ul>
     The C implementation is \ref #diamond.
@@ -123,10 +123,10 @@
 
 /** \page tcl_ico The icosahedron command
     \verbatim icosahedron <a> <MPC> [counterions <N_CI>] [charges <val_cM> <val_CI>] [distance <cM_dist>]\endverbatim
-    Sets up an icosahedron with 12 vertices, and inserts pentagons at a third's distance of the 30 edges with length 2*<a> to achieve
-    a geometrical structure of a fulleren (or soccer ball). The edges of the resulting object are filled with chains of <MPC> monomers each,
-    where those around each vertex are charged by <val_cM>, those connecting two pentagons with each other are neutral. If <N_CI> is given,
-    counterions are added. Both charges default to '0'; if only <val_cM> is given, then <val_CI> is assumed to be -1.*<val_cM>.
+    Sets up an icosahedron with 12 vertices, and inserts pentagons at a third's distance of the 30 edges with length 2*\<a\> to achieve
+    a geometrical structure of a fulleren (or soccer ball). The edges of the resulting object are filled with chains of \<MPC\> monomers each,
+    where those around each vertex are charged by \<val_cM\>, those connecting two pentagons with each other are neutral. If \<N_CI\> is given,
+    counterions are added. Both charges default to '0'; if only \<val_cM\> is given, then \<val_CI\> is assumed to be -1.*\<val_cM\>.
     <ul>
         <li> \verbatim <a>           \endverbatim basic length scale of the icosahedron; will fullfill g = g : (a+g) (Goldener Schnitt)
 	<li> \verbatim <MPC>         \endverbatim monomers on each of the 2*8 polymer chains connecting the nodes
@@ -134,7 +134,7 @@
 	<li> \verbatim <val_cM>      \endverbatim charge carried by the charged chain monomers (defaults to '0.0')
 	<li> \verbatim <val_CI>      \endverbatim charge carried by the counterions (defaults to '0.0')
 	<li> \verbatim <cM_dist>     \endverbatim distance between two charged monomers' indices (defaults to '1');
-	     if '1' then every monomer on the chain will have charge <val_cM>, if '2' every other monomer,...
+	     if '1' then every monomer on the chain will have charge \<val_cM\>, if '2' every other monomer,...
     </ul>
     The C implementation is \ref #icosahedron.
 */

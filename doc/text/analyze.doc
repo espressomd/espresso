@@ -10,154 +10,289 @@ In <tt>statistics.c</tt>:<br>
 	 If the type-lists are given, then the minimal distance between particles of only those types is determined.
 	 The C implementation is \ref #mindist; it is parsed by \ref #parse_mindist.
     <li> \verbatim analyze nbhood { <part_id> | <posx> <posy> <posz> } <r_catch> \endverbatim
-         returns all particles within a given radius <r_catch> around the position of the particle with number <part_id>
-	 or around the spatial coordinate (<posx>, <posy>, <posz>).
+         returns all particles within a given radius \<r_catch\> around the position of the particle with number \<part_id\>
+	 or around the spatial coordinate (\<posx\>, \<posy\>, \<posz\>).
 	 The C implementation is \ref #nbhood; it is parsed by \ref #parse_nbhood.
     <li> \verbatim analyze distto { <part_id> | <posx> <posy> <posz> } \endverbatim
-         returns the minimal distance of all particles to coordinates (<posx>, <posy>, <posz>) or to the position of particle <part_id>.
+         returns the minimal distance of all particles to coordinates (\<posx\>, \<posy\>, \<posz\>) or to the position of particle \<part_id\>.
 	 The C implementation is \ref #distto; it is parsed by \ref #parse_distto.
     <li> \verbatim analyze distribution { <part_type_list_a> } { <part_type_list_b> } [<r_min> [<r_max> [<r_bins> [<log_flag> [<int_flag>]]]]] \endverbatim
          returns its parameters and the distance distribution of
-         particles with types specified in <part_type_list_a> (group a)
-         around particles with types specified in <part_type_list_b>
-         (group b) with distances between <r_min> and <r_max>, binned into
-         <r_bins> bins. The bins are either equidistant (<log_flag>=0) or
-         logarytmically equidistant (<log_flag>=1). If an integrated
-         distribution is required use <int_flag>=1. The distance is
+         particles with types specified in \<part_type_list_a\> (group a)
+         around particles with types specified in \<part_type_list_b\>
+         (group b) with distances between \<r_min\> and \<r_max\>, binned into
+         \<r_bins\> bins. The bins are either equidistant (\<log_flag\>=0) or
+         logarytmically equidistant (\<log_flag\>=1). If an integrated
+         distribution is required use \<int_flag\>=1. The distance is
          defined as the minimal distance between a particle of group a
          to any of group b. The output corresponds to the blockfile
          format (\ref blockformat): <br>
-	 { parameters } { { <r-value> <distribution-value> } ... } <br>
+	 { parameters } { { \<r-value\> \<distribution-value\> } ... } <br>
 	 The C implementation is \ref #calc_part_distribution; it is parsed by \ref #parse_distribution.
     <li> \verbatim analyze rdf { <part_type_list_a> } { <part_type_list_b> } [<r_min> <r_max> <r_bins>] \endverbatim
          returns its parameters and the radial distribution function (rdf) of
-         particles with types specified in <part_type_list_a> (group a)
-         around particles with types specified in <part_type_list_b>
-         (group b). The range is given by <r_min> and <r_max> and is
-         divided into <r_bins> equidistant bins. The output
+         particles with types specified in \<part_type_list_a\> (group a)
+         around particles with types specified in \<part_type_list_b\>
+         (group b). The range is given by \<r_min\> and \<r_max\> and is
+         divided into \<r_bins\> equidistant bins. The output
          corresponds to the blockfile format (\ref blockformat): <br>
-	 { parameters } { { <r-value> <rdf-value> } ... } <br>
+	 { parameters } { { \<r-value\> \<rdf-value\> } ... } <br>
 	 The C implementation is \ref #calc_rdf; it is parsed by \ref #parse_rdf.
 
 </ul>In <tt>energy.c</tt>:<ul>
     <li> \verbatim analyze energy [{ <interaction_type> [options] | kinetic | total }] \endverbatim
          returns the energies of the system. The output corresponds to the  blockfile format (\ref blockformat):
-	 { energy <value> } { kinetic <value> } { interaction <value> } ... <BR>
-	 If you specify <interaction_type>, e.g. 
+	 { energy \<value\> } { kinetic \<value\> } { interaction \<value\> } ... <BR>
+	 If you specify \<interaction_type\>, e.g. 
 	 \verbatim bonded     |  fene <type_num>     |  harmonic <type_num>
  nonbonded  |  lj <type1> <type2>  |  lj-cos <type1> <type2>  |  gb <type1> <type2> | tabulated <type1> <type2> 
  coulomb
  kinetic \endverbatim
          it returns just that energy; if you specify <tt>total</tt>, it only returns the total energy without giving the details on its contributors.
-	 The C implementation is \ref #calc_energies, which calls \ref #calc_energy on all nodes; it is parsed by \ref #parse_and_print_energy.
+	 The C implementation is \ref energy_calc, which calls \ref energy_calc on all nodes; it is parsed by \ref #parse_and_print_energy.
 
 </ul>In <tt>pressure.c</tt>:<ul>
     <li> \verbatim analyze pressure [{ total[s] | ideal | <interaction_type> [options] }]\endverbatim
-         derives the <i>pressure</i> and all its contributions in the system. Return value is a tcl-list looking like
+         derives the <i>pressure</i> and all its contributions in the
+         system. Return value is a tcl-list looking like
 	 \verbatim 0.002753 0.000008 { ideal 0.002000 } { { FENE -0.006172 0.000038 } }  { lj 0.005996 0.000023 } { coulomb 0.000930 0.000001 }\endverbatim
-	 specifying the pressure, its square, the ideal gas pressure, the contributions from bonded interactions, the contributions from 
-	 non-bonded interactions, the electrostatic contributions. If only certain contributions are desired, the additional options may be used
-	 to access those; in that case only a two-value tcl-list is returned (e.g. <tt>-0.006172 0.000038</tt> for <tt>analyze pressure fene</tt> 
-	 in the above example), consisting of the requested contribution and its square (except for <tt>analyze pressure total</tt> 
-	 which only returns the pressure, while <tt>analyze pressure totals</tt> returns both, e.g. <tt>0.002753 0.000008</tt> in the above example).
-	 If the <type_num> are given as well, only the contributions of interactions with that specific <type_num> are considered, returning e.g.
-	 <tt>0.006136 0.000023</tt> for <tt>analyze pressure lj 0</tt> and <tt>-0.006172 0.000038</tt> for <tt>analyze pressure fene 0</tt>.<br>
-	 The possible choices for <tt><interaction_type></tt> are the same as those for '<tt>analyze energy</tt>' given previously.<br>
-	 Note that the ideal pressure is derived using the temperature, hence for systems with <tt>temp = 0</tt> it will be zero;
-	 in those cases it is preferable to use <tt>analyze p_IK1</tt> which looks at the velocities of the particles.<BR>
+	 specifying the pressure, its square, the ideal gas pressure,
+	 the contributions from bonded interactions, the contributions
+	 from
+	 non-bonded interactions, the electrostatic contributions. If
+	 only certain contributions are desired, the additional
+	 options may be used
+	 to access those; in that case only a two-value tcl-list is
+	 returned (e.g. <tt>-0.006172 0.000038</tt> for <tt>analyze
+	 pressure fene</tt>
+	 in the above example), consisting of the requested
+	 contribution and its square (except for <tt>analyze pressure
+	 total</tt>
+	 which only returns the pressure, while <tt>analyze pressure
+	 totals</tt> returns both, e.g. <tt>0.002753 0.000008</tt> in
+	 the above example).
+	 If the \<type_num\> are given as well, only the contributions
+	 of interactions with that specific \<type_num\> are
+	 considered, returning e.g.
+	 <tt>0.006136 0.000023</tt> for <tt>analyze pressure lj 0</tt>
+	 and <tt>-0.006172 0.000038</tt> for <tt>analyze pressure fene
+	 0</tt>.<br>
+	 The possible choices for <tt>\<interaction_type\></tt> are
+	 the same as those for '<tt>analyze energy</tt>' given
+	 previously.<br>
+	 Note that the ideal pressure is derived using the
+	 temperature, hence for systems with <tt>temp = 0</tt> it will
+	 be zero;
+	 in those cases it is preferable to use <tt>analyze p_IK1</tt>
+	 which looks at the velocities of the particles.<BR>
 	 This command is implemented as a parallel algorithm:
-	 The C implementation is \ref #calc_pressure, which calls \ref #calc_virials on all nodes; it is parsed by \ref #parse_and_print_pressure.
+	 The C implementation is \ref pressure_calc, which calls \ref
+	 pressure_calc on all nodes; it is parsed by \ref
+	 #parse_and_print_pressure.
     <li> \verbatim analyze p_IK1 <bin_volume> <ind_list> <flag_all>\endverbatim
-         derives the <i>pressure-tensor</i> and all its contributions in the system. Return value is a tcl-list looking like
+         derives the <i>pressure-tensor</i> and all its contributions
+         in the system. Return value is a tcl-list looking like
 	 \verbatim 6.918227 47.861859 { total 1.487761 -0.498393 1.105992 0.141777 1.548216 -0.219248 0.202950 -1.821126 3.882250 } { ideal -0.121384 -0.497965 0.930397 0.142206 0.187245 -0.225073 0.027355 -1.826951 2.418630 } { bonded -4.531248 -0.050332 0.281053 -0.050332 -4.291891 -0.226408 0.281053 -0.226408 -4.324098 { FENE -4.531248 -0.050332 0.281053 -0.050332 -4.291891 -0.226408 0.281053 -0.226408 -4.324098 } } { nonbonded 6.140393 0.049904 -0.105458 0.049904 5.652861 0.232232 -0.105458 0.232232 5.787717 } \endverbatim
-	 specifying the pressure, its square, its tensorial form, and the tensorial form of its components ideal, bonded, nonbonded, coulombic pressure 
-	 (if applicable); the bonded component is further split up into its different contributions (FENE, ANGLE, HARMONIC) sort according to the
-	 interaction type number specified by \ref tcl_inter. Note that the tensorial entries \f$ p^{(k,l)} \f$ are directly derived from
+	 specifying the pressure, its square, its tensorial form, and
+	 the tensorial form of its components ideal, bonded,
+	 nonbonded, coulombic pressure
+	 (if applicable); the bonded component is further split up
+	 into its different contributions (FENE, ANGLE, HARMONIC) sort
+	 according to the
+	 interaction type number specified by \ref tcl_inter. Note
+	 that the tensorial entries \f$ p^{(k,l)} \f$ are directly
+	 derived from
 	 \f[ p^{(k,l)} = \sum_{j>i\in {\tt bin}} F_{ij}^{(k)} \cdot r_{ij}^{(l)} \f]
-	 where e.g. \f$ F_{ij}^{(k)} \f$ denotes the <i>k</i>th entry of the difference vector between the force vectors of particles <i>i</i> 
-	 and <i>j</i>, while the ideal pressure is determined from the particles' velocities, i.e.
+	 where e.g. \f$ F_{ij}^{(k)} \f$ denotes the <i>k</i>th entry
+	 of the difference vector between the force vectors of
+	 particles <i>i</i>
+	 and <i>j</i>, while the ideal pressure is determined from the
+	 particles' velocities, i.e.
 	 \f[ p^{(k,l)}_{\tt ideal} = \sum_{i\in {\tt bin}} v_{i}^{(k)} \cdot v_{i}^{(l)} \f]
-	 contrary to <tt>analyze pressure ideal</tt> which uses the temperature. In both cases, the sum is taken over only those particles
-	 whose identities have been provided in <tt><ind_list></tt> if <tt><flag_all>=0</tt>, otherwise <tt>i</tt> loops over <tt><ind_list</tt>
-	 while <tt>j</tt> represents <i>all</i> particles in the system. Since this command is intended to follow the Kirkwood-scheme IK1,
-	 all particles given in <tt><ind_list></tt> should represent a bin geometry with volume <tt><bin_volume></tt> for the algorithm to make
-	 sense, although this is not checked; hence it is preferable to obtain <tt><ind_list></tt> from <tt>analyze bins</tt>.<BR>
-	 This command is executed on the master node only, hence a higher number of nodes only slows it down due to the increasing amount of 
-	 communication processes required between the nodes to gather all needed particle informations. Furthermore, all interactions including
-	 electrostatic ones are treated with the virial ansatz given above, which makes <i>non-</i>periodic systems highly recommendable,
-	 and which slows electrostatic systems down due to the long-range interactions.<BR>
-	 The C implementation is \ref #calc_p_tensor; it is parsed by \ref #parse_and_print_p_IK1.
+	 contrary to <tt>analyze pressure ideal</tt> which uses the
+	 temperature. In both cases, the sum is taken over only those
+	 particles
+	 whose identities have been provided in <tt>\<ind_list\></tt>
+	 if <tt>\<flag_all\>=0</tt>, otherwise <tt>i</tt> loops over
+	 <tt>\<ind_list\></tt>
+	 while <tt>j</tt> represents <i>all</i> particles in the
+	 system. Since this command is intended to follow the
+	 Kirkwood-scheme IK1,
+	 all particles given in <tt>\<ind_list\></tt> should represent
+	 a bin geometry with volume <tt>\<bin_volume\></tt> for the
+	 algorithm to make
+	 sense, although this is not checked; hence it is preferable
+	 to obtain <tt>\<ind_list\></tt> from <tt>analyze
+	 bins</tt>.<BR>
+	 This command is executed on the master node only, hence a
+	 higher number of nodes only slows it down due to the
+	 increasing amount of
+	 communication processes required between the nodes to gather
+	 all needed particle informations. Furthermore, all
+	 interactions including
+	 electrostatic ones are treated with the virial ansatz given
+	 above, which makes <i>non-</i>periodic systems highly
+	 recommendable,
+	 and which slows electrostatic systems down due to the
+	 long-range interactions.<BR>
+	 The C implementation is \ref #calc_p_tensor; it is parsed by
+	 \ref #parse_and_print_p_IK1.
+</ul>
 
-</ul>In <tt>statistics.c</tt>:<ul>
+In <tt>statistics.c</tt>:
+<ul>
     <li> \verbatim analyze set <structure info> \endverbatim
-         defines the structure of the current system. The second argument defines the topology to set, i. e. 'chains' at the moment.
+         defines the structure of the current system. The second
+         argument defines the topology to set, i. e. 'chains' at the
+         moment.
+
+    <li> Possible values for \<structure info\> are
+
 	 <ul>
-	 Possible values for <structure info> are
 	 <li> \verbatim analyze set chains [<chain_start> <n_chains> <chain_length>] \endverbatim
-              A set of <n_chains> chains of equal length <chain_length> which start with the particle with particle number <chain_start>
-	      and are consecutively numbered (i.e. last particle in that topology has number <chain_start> + <n_chains>*<chain_length>). 
-	      If no parameters are given, the ones currently stored are returned.<br>
-	      The C implementation is \ref #parse_chain_structure_info for setting, \ref #print_chain_structure_info for returning the 
-	      current topological informations; these functions reside in <tt>statistics_chain.c</tt>.
+              A set of \<n_chains\> chains of equal length
+              \<chain_length\> which start with the particle with
+              particle number \<chain_start\>
+	      and are consecutively numbered (i.e. last particle in
+	      that topology has number \<chain_start\> +
+	      \<n_chains\>*\<chain_length\>).
+	      If no parameters are given, the ones currently stored
+	      are returned.<br>
+	      The C implementation is \ref #parse_chain_structure_info
+	      for setting, \ref #print_chain_structure_info for
+	      returning the
+	      current topological informations; these functions reside
+	      in <tt>statistics_chain.c</tt>.
 	 </ul>
-	 The C implementation is \ref #parse_set_topology.
-    </ul>
+     <li> The C implementation is \ref #parse_set_topology.
+</ul>
+
 In <tt>statistics_chain.c</tt>:<br>
-    All tasks below need <n_chains>*<chain_length> particles to be stored consecutively starting with identity <chain_start>, representing
-    <n_chains> chains of <chain_length> monomers each. This structure-info has to be set either by
-	\verbatim analyze set chains <chain_start> <n_chains> <chain_length> \endverbatim
-    or to be provided upon calling (which (re-)sets the structure info permanently, i.e. is only required once):
+    All tasks below need \<n_chains\>*\<chain_length\> particles to be
+    stored consecutively starting with identity \<chain_start\>,
+    representing
+    \<n_chains\> chains of \<chain_length\> monomers each. This
+    structure-info has to be set either by
+    \verbatim analyze set chains <chain_start> <n_chains> <chain_length> \endverbatim
+    or to be provided% upon calling (which (re-)sets the structure
+    info permanently, i.e. is only required once):
     <ul>
     <li> \verbatim analyze { re | <re> } [<chain_start> <n_chains> <chain_length>] \endverbatim
-         returns the quadratic end-to-end-distance and its root averaged over all polymers (requires chain structure to be set or provided) as
-	 a tcl-list comprising of <tt>re error_of_re re2 error_of_re2</tt>.<BR>
-	 If '<re>' is given instead of 're', the derivation uses all configurations which have been previously specified with 'analyze append',
-	 hence taking a time-average as well. Note that the stored configurations are assumed to be equidistant in time (i.e. you have to call
-	 'analyze append' in equidistant intervalls), and that no changes in the particle setup must have been made in between (i.e. no call to
+         returns the quadratic end-to-end-distance and its root
+         averaged over all polymers (requires chain structure to be
+         set or provided) as
+	 a tcl-list comprising of <tt>re error_of_re re2
+	 error_of_re2</tt>.<BR>
+	 If '\<re\>' is given instead of 're', the derivation uses all
+	 configurations which have been previously specified with
+	 'analyze append',
+	 hence taking a time-average as well. Note that the stored
+	 configurations are assumed to be equidistant in time
+	 (i.e. you have to call
+	 'analyze append' in equidistant intervalls), and that no
+	 changes in the particle setup must have been made in between
+	 (i.e. no call to
 	 \ref tcl_part).<br>
-	 The C implementation is \ref #calc_re and \ref #calc_re_av, respectively; both are parsed by \ref #parse_re.
+	 The C implementation is \ref #calc_re and \ref #calc_re_av,
+	 respectively; both are parsed by \ref #parse_re.
     <li> \verbatim analyze { rg | <rg> } [<chain_start> <n_chains> <chain_length>] \endverbatim
-         returns the radius of gyration averaged over all chains (requires chain structure to be set or provided) as
+         returns the radius of gyration averaged over all chains
+         (requires chain structure to be set or provided) as
 	 a tcl-list comprising of <tt>rg error_of_rg rg2 error_of_rg2</tt>.<BR>
-	 If '<rg>' is given instead of 'rg', the derivation uses all configurations which have been previously specified with 'analyze append',
-	 hence taking a time-average as well. Note that the stored configurations are assumed to be equidistant in time (i.e. you have to call
-	 'analyze append' in equidistant intervalls), and that no changes in the particle setup must have been made in between (i.e. no call to
+	 If '\<rg\>' is given instead of 'rg', the derivation uses all
+	 configurations which have been previously specified with
+	 'analyze append',
+	 hence taking a time-average as well. Note that the stored
+	 configurations are assumed to be equidistant in time
+	 (i.e. you have to call
+	 'analyze append' in equidistant intervalls), and that no
+	 changes in the particle setup must have been made in between
+	 (i.e. no call to
 	 \ref tcl_part).<br>
-	 The C implementation is \ref #calc_rg and \ref #calc_rg_av, respectively; both are parsed by \ref #parse_rg.
+	 The C implementation is \ref #calc_rg and \ref #calc_rg_av,
+	 respectively; both are parsed by \ref #parse_rg.
     <li> \verbatim analyze { rh | <rh> } [<chain_start> <n_chains> <chain_length>] \endverbatim
-         returns the hydrodynamic radius and its error as a tcl-list (requires chain structure to be set or provided).
-	 If '<rh>' is given instead of 'rh', the derivation uses all configurations which have been previously specified with 'analyze append',
-	 hence taking a time-average as well. Note that the stored configurations are assumed to be equidistant in time (i.e. you have to call
-	 'analyze append' in equidistant intervalls), and that changes in the particle setup must not have been made in between (i.e. no call to
+         returns the hydrodynamic radius and its error as a tcl-list
+         (requires chain structure to be set or provided).
+	 If '\<rh\>' is given instead of 'rh', the derivation uses all
+	 configurations which have been previously specified with
+	 'analyze append',
+	 hence taking a time-average as well. Note that the stored
+	 configurations are assumed to be equidistant in time
+	 (i.e. you have to call
+	 'analyze append' in equidistant intervalls), and that changes
+	 in the particle setup must not have been made in between
+	 (i.e. no call to
 	 \ref tcl_part).<br>
-	 The C implementation is \ref #calc_rh and \ref #calc_rh_av, respectively; both are parsed by \ref #parse_rh.
+	 The C implementation is \ref #calc_rh and \ref #calc_rh_av,
+	 respectively; both are parsed by \ref #parse_rh.
     <li> \verbatim analyze { internal_dist | <internal_dist> } [<chain_start> <n_chains> <chain_length>] \endverbatim
-         returns the internal distances within the <n_chains> polymer chains as a tcl-list '<tt>idf(0) idf(1) ... idf(chain_length-1)</tt>'
-	 where the index corresponds to the distance between the two monomers considered (1 = next neighbours, 2 = one monomer in between,...).
-	 The values are averaged over all chains, if '<tt><internal_dist></tt>' is used averaged over all <tt>n_config</tt> appended configurations
+         returns the internal distances within the \<n_chains\>
+         polymer chains as a tcl-list '<tt>idf(0) idf(1)
+         ... idf(chain_length-1)</tt>'
+	 where the index corresponds to the distance between the two
+	 monomers considered (1 = next neighbours, 2 = one monomer in
+	 between,...).
+	 The values are averaged over all chains, if
+	 '<tt>\<internal_dist\></tt>' is used averaged over all
+	 <tt>n_config</tt> appended configurations
 	 as well.<br>
-	 The C implementation is \ref #calc_internal_dist and \ref #calc_internal_dist_av, respectively; both are parsed by \ref #parse_intdist.
+	 The C implementation is \ref #calc_internal_dist and \ref
+	 #calc_internal_dist_av, respectively; both are parsed by \ref
+	 #parse_intdist.
     <li> \verbatim analyze { bond_dist | <bond_dist> } [index <index>] [<chain_start> <n_chains> <chain_length>] \endverbatim
-         returns the internal distances within the <n_chains> polymer chains as a tcl-list '<tt>bdf(0) bdf(1) ... bdf(chain_length-1-<index>)</tt>',
-	 but contrary to '<tt>internal_dist</tt>' it does <i>not</i> average over the whole chain, but rather takes the chain monomer at position
-	 <tt><index></tt> (default: 0, i.e. the first monomer on the chain) to be the reference point to which all internal distances are calculated.
-	 If '<tt><bond_dist></tt>' is used, the values will be averaged over all <tt>n_config</tt> appended configurations as well.<br>
-	 The C implementation is \ref #calc_bond_dist and \ref #calc_bond_dist_av, respectively; both are parsed by \ref #parse_bond_dist.
+         returns the internal distances within the \<n_chains\>
+         polymer chains as a tcl-list '<tt>bdf(0) bdf(1)
+         ... bdf(chain_length-1-\<index\>)</tt>',
+	 but contrary to '<tt>internal_dist</tt>' it does <i>not</i>
+	 average over the whole chain, but rather takes the chain
+	 monomer at position
+	 <tt>\<index\></tt> (default: 0, i.e. the first monomer on the
+	 chain) to be the reference point to which all internal
+	 distances are calculated.
+	 If '<tt>\<bond_dist\></tt>' is used, the values will be
+	 averaged over all <tt>n_config</tt> appended configurations
+	 as well.<br>
+	 The C implementation is \ref #calc_bond_dist and \ref
+	 #calc_bond_dist_av, respectively; both are parsed by \ref
+	 #parse_bond_dist.
     <li> \verbatim analyze { bond_l | <bond_l> } [<chain_start> <n_chains> <chain_length>] \endverbatim
-         returns the average bond-length within a chain, averaged over all chains in the system; hence, it gives the same result as <tt>idf(0)</tt>
-	 from the internal distances functions '<tt>internal_dist</tt>' and '<tt><internal_dist></tt>'. If you want to look at only specific chains, 
-	 use the optional arguments, i.e. <tt><chain_start> = 2*MPC</tt> and <tt><n_chains> = 1</tt> to only include the third chain's monomers.
-	 If '<tt><bond_l></tt>' is used, the value will be averaged over all <tt>n_config</tt> appended configurations as well.<br>
-	 The C implementation is \ref #calc_bond_l and \ref #calc_bond_l_av, respectively; both are parsed by \ref #parse_bond_l.
+         returns the average bond-length within a chain, averaged over
+         all chains in the system; hence, it gives the same result as
+         <tt>idf(0)</tt>
+	 from the internal distances functions
+	 '<tt>internal_dist</tt>' and '<tt>\<internal_dist\></tt>'. If
+	 you want to look at only specific chains,
+	 use the optional arguments, i.e. <tt>\<chain_start\> =
+	 2*MPC</tt> and <tt>\<n_chains\> = 1</tt> to only include the
+	 third chain's monomers.
+	 If '<tt>\<bond_l\></tt>' is used, the value will be averaged
+	 over all <tt>n_config</tt> appended configurations as
+	 well.<br>
+	 The C implementation is \ref #calc_bond_l and \ref
+	 #calc_bond_l_av, respectively; both are parsed by \ref
+	 #parse_bond_l.
     <li> \verbatim analyze { formfactor | <formfactor> } <qmin> <qmax> <qbins> [<chain_start> <n_chains> <chain_length>] \endverbatim
-         derives the spherically averaged formfactor <tt>S(q) = 1/chain_length * Sum(i,j=1..chain_length)[sin(q*r_ij)/q*r_ij]</tt> of a single chain,
-	 averaged over all \ref chain_n_chains currently allocated (-> chain information must be set!) for <qbin>+1 logarithmically spaced q-vectors
-	 <qmin>,...,<qmax> where <qmin> must be >0 and <qmax> must be greater than <qmin>. If '<tt><formfactor></tt>' is used instead of 
-	 '<tt>formfactor</tt>', the average is taken over all \ref n_configs stored configurations in \ref #configs as well. It returns a tcl-list,
-	 e.g. for '<tt>analyze <formfactor> 0.09 3 5</tt>'
+         derives the spherically averaged formfactor <tt>S(q) =
+         1/chain_length *
+         Sum(i,j=1..chain_length)[sin(q*r_ij)/q*r_ij]</tt> of a single
+         chain,
+	 averaged over all \ref chain_n_chains currently allocated
+	 (-\> chain information must be set!) for \<qbin\>+1
+	 logarithmically spaced q-vectors
+	 \<qmin\>,...,\<qmax\> where \<qmin\> must be \>0 and \<qmax\>
+	 must be greater than \<qmin\>. If '<tt>\<formfactor\></tt>'
+	 is used instead of
+	 '<tt>formfactor</tt>', the average is taken over all \ref
+	 n_configs stored configurations in \ref #configs as well. It
+	 returns a tcl-list,
+	 e.g. for '<tt>analyze \<formfactor\> 0.09 3 5</tt>'
 	 \verbatim {0.090000 92.893516} {0.181476 74.906876} {0.365927 36.951854} {0.737853 10.791177} {1.487803 2.397301} {3.000000 0.609425} \endverbatim
-	 of pairs '<tt>{q S(q)}</tt>' for <tt>q=<qmin>,...,<qmax></tt>.<br>
-	 The C implementation is \ref #analyze_formfactor and \ref #analyze_formfactor_av, respectively; both are parsed by \ref #parse_formfactor.
+	 of pairs '<tt>{q S(q)}</tt>' for
+	 <tt>q=\<qmin\>,...,\<qmax\></tt>.<br>
+	 The C implementation is \ref #analyze_formfactor and \ref
+	 #analyze_formfactor_av, respectively; both are parsed by \ref
+	 #parse_formfactor.
     <li> \verbatim analyze g123 [-init] [<chain_start> <n_chains> <chain_length>] \endverbatim
          returns the mean-square displacement <i>g1(t)</i> of a monomer,
                  the mean-square displacement <i>g2(t)</i> in the center of gravity of the chain itself, and
@@ -166,49 +301,85 @@ In <tt>statistics_chain.c</tt>:<br>
 	 If before the structure info you give '-init', the current configuration is stored as reference config.<br>
 	 The C implementation is \ref #calc_g123; it is parsed by \ref #parse_g123.
     <li> \verbatim analyze { <g1> | <g2> | <g3> } [<chain_start> <n_chains> <chain_length>] \endverbatim
-         returns, depending on which flag has been specified, the mean-square displacement <g1(t)> of a monomer, 
-	 the mean-square displacement <g2(t)> in the center of gravity of the chain itself, <b>or</b> the motion of 
-	 the center of mass <g3(t)> as a tcl-list '<tt>gi(0*dt) gi(1*dt) ... gi((\ref n_configs - 1)*dt)</tt>' where i=1,2,3 is the
-	 chosen observable, <tt>dt</tt> is the timestep (which must not have been changed), and \ref n_configs is the number of
+         returns, depending on which flag has been specified, the mean-square displacement \<g1(t)\> of a monomer, 
+	 the mean-square displacement \<g2(t)\> in the center of gravity of the chain itself, <b>or</b> the motion of 
+	 the center of mass \<g3(t)\> as a tcl-list '<tt>gi(0*dt)
+	 gi(1*dt) ... gi((\ref n_configs - 1)*dt)</tt>' where i=1,2,3
+	 is the
+	 chosen observable, <tt>dt</tt> is the timestep (which must
+	 not have been changed), and \ref n_configs is the number of
 	 configurations stored by 'analyze append' which are used to derive the observable.<BR>
-	 Again, note that the stored configurations are assumed to be equidistant in time (i.e. you have to call 'analyze append' 
-	 in equidistant intervalls), and that changes in the particle setup must not have been made in between (i.e. no call to
+	 Again, note that the stored configurations are assumed to be
+	 equidistant in time (i.e. you have to call 'analyze append'
+	 in equidistant intervalls), and that changes in the particle
+	 setup must not have been made in between (i.e. no call to
 	 \ref tcl_part).<br>
-	 The C implementations are respectively \ref #calc_g1_av, \ref #calc_g1_av, and \ref #calc_g3_av; they are all parsed by \ref #parse_g_av.
-    </ul>
+	 The C implementations are respectively \ref #calc_g1_av, \ref
+	 #calc_g1_av, and \ref #calc_g3_av; they are all parsed by
+	 \ref #parse_g_av.
+</ul>
+
 In <tt>statistics.c</tt>:<br>
-    Some observables (i.e. non-static ones) require knowledge of the particles' positions at more than one or two times. Hence it is
-    possible to store the currently active configuration \ref partCfg to the array \ref #configs for later analysis. Using these mechanisms
-    the program is also able to work quasi-offline by successively reading in previously saved checkpoints (see \ref blockformat) and
+    Some observables (i.e. non-static ones) require knowledge of the
+    particles' positions at more than one or two times. Hence it is
+    possible to store the currently active configuration \ref partCfg
+    to the array \ref #configs for later analysis. Using these
+    mechanisms
+    the program is also able to work quasi-offline by successively
+    reading in previously saved checkpoints (see \ref blockformat) and
     appending these to \ref #configs, performing any analysis desired afterwards.
-    <ul>
+
+<ul>
     <li> For manipulating the particles' configurations stored in \ref #configs the following commands are provided:
-    <ul> <li> \anchor analyze_append
+    <ul> 
+         <li> \anchor analyze_append
               \verbatim analyze append \endverbatim
-              appends the current positions of the particles in \ref partCfg to \ref #configs[\ref n_configs - 1], returning an updated \ref n_configs
+              appends the current positions of the particles in \ref
+              partCfg to \ref #configs[\ref n_configs - 1], returning
+              an updated \ref n_configs
 	      (= number of stored configurations).<br>
 	      The C implementation is \ref #analyze_append; it is parsed by \ref #parse_append.
 	 <li> \verbatim analyze push [<size>] \endverbatim
-	      adds the current configuration at the end of \ref #configs and removes its very first (=oldest) entry.<BR>
-	      If <size> is specified, configurations are merely appended until \ref n_configs equals <size>; from there they are pushed
-	      such that \ref #configs always contains the <size> most recently stored configurations (this implies that if <tt>analyze push <size></tt>'
-	      is called while \ref n_configs<tt> > <size></tt>, all \ref n_configs<tt>-<size></tt> uppermost (=oldest) configurations are removed to
-	      end up with <size> recent entries).<BR>
+	      adds the current configuration at the end of \ref
+	      #configs and removes its very first (=oldest) entry.<BR>
+	      If \<size\> is specified, configurations are merely
+	      appended until \ref n_configs equals \<size\>; from
+	      there they are pushed
+	      such that \ref #configs always contains the \<size\>
+	      most recently stored configurations (this implies that
+	      if <tt>analyze push \<size\></tt>'
+	      is called while \ref n_configs<tt> \> \<size\></tt>, all
+	      \ref n_configs<tt>-\<size\></tt> uppermost (=oldest)
+	      configurations are removed to
+	      end up with \<size\> recent entries).<BR>
 	      The return value is \ref n_configs.<br>
 	      The C implementation is \ref #analyze_push; it is parsed by \ref #parse_push.
 	 <li> \verbatim analyze replace <index> \endverbatim
-              replaces the <index>th entry in \ref #configs with the current configuration in \ref partCfg and returns an updated \ref n_configs.<br>
+              replaces the \<index\>th entry in \ref #configs with the
+              current configuration in \ref partCfg and returns an
+              updated \ref n_configs.<br>
 	      The C implementation is \ref #analyze_replace; it is parsed by \ref #parse_replace.
          <li> \verbatim analyze remove [<index>] \endverbatim
-              removes the <index>th entry from \ref #configs and returns an updated \ref n_configs. If no <index> is given, everything is removed.<br>
+              removes the \<index\>th entry from \ref #configs and
+              returns an updated \ref n_configs. If no \<index\> is
+              given, everything is removed.<br>
 	      The C implementation is \ref #analyze_remove; it is parsed by \ref #parse_remove.
          <li> \verbatim analyze configs [<config>] \endverbatim
-	      returns all configuration currently stored in \ref #configs as a tcl-list '<tt>{x1 y1 z1 ... xN yN zN} ... {...}</tt>'. 
-	      If <config> is given, it is expected to be such a configuration covering all particles, and it is appended to \ref #configs
-	      (similar to <tt>analyze append</tt> but without taking the <i>current</i> configuration but <config>).<BR>
-	      This command is mainly needed for setting/restoring checkpoints, i.e. to do some off-line analysis one can simply load the 
-	      very last checkpoint of the simulation run by using \ref tcl_blockfile (if it was written including a call to 
-	      <tt>blockfile $out write configs</tt>) - then everything is restored to \ref #configs, and all the <tt>analyze</tt> function
+	      returns all configuration currently stored in \ref
+	      #configs as a tcl-list '<tt>{x1 y1 z1 ... xN yN zN}
+	      ... {...}</tt>'.
+	      If \<config\> is given, it is expected to be such a
+	      configuration covering all particles, and it is appended
+	      to \ref #configs
+	      (similar to <tt>analyze append</tt> but without taking the <i>current</i> configuration but \<config\>).<BR>
+	      This command is mainly needed for setting/restoring
+	      checkpoints, i.e. to do some off-line analysis one can
+	      simply load the
+	      very last checkpoint of the simulation run by using \ref
+	      tcl_blockfile (if it was written including a call to
+	      <tt>blockfile $out write configs</tt>) - then everything
+	      is restored to \ref #configs, and all the
+	      <tt>analyze</tt> function
 	      are available!<br>
 	      The C implementation is \ref #analyze_configs; it is parsed by \ref #parse_configs.
          <li> \verbatim analyze stored \endverbatim

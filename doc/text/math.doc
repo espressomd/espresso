@@ -5,23 +5,23 @@ The following procedures are found in scripts/ABHmath.tcl.
     \verbatim PI \endverbatim returns \f$\pi\f$ with 16 digits precision.
 
     <li> \anchor sqr
-    \verbatim sqr <arg> \endverbatim returns the square of <tt><arg></tt>.
+    \verbatim sqr \<arg\> \endverbatim returns the square of <tt>\<arg\></tt>.
 
     <li> \anchor min
     \verbatim min <arg1> <arg2> \endverbatim 
-    returns the minimum of <tt><arg1></tt> and <tt><arg2></tt>.
+    returns the minimum of <tt>\<arg1\></tt> and <tt>\<arg2\></tt>.
 
     <li> \anchor max
     \verbatim max <arg1> <arg2> \endverbatim 
-    returns the maximum of <tt><arg1></tt> and <tt><arg2></tt>.
+    returns the maximum of <tt>\<arg1\></tt> and <tt>\<arg2\></tt>.
 
     <li> \anchor sign
     \verbatim sign <arg> \endverbatim
-    returns the signum-function of <tt><arg></tt>, namely +1 for <tt><arg></tt> >0, -1 for <0, and =0 otherwise.
+    returns the signum-function of <tt>\<arg\></tt>, namely +1 for <tt>\<arg\></tt> >0, -1 for <0, and =0 otherwise.
 
     <li> \anchor pair_dist
     \verbatim pair_dist <part_id1> <part_id2> \endverbatim
-    returns the distance of two particles with identities <tt><part_id1></tt> and <tt><part_id2></tt>.
+    returns the distance of two particles with identities <tt>\<part_id1\></tt> and <tt>\<part_id2\></tt>.
 
     <li> \anchor LinRegression
     \verbatim LinRegression <tcl-list> \endverbatim
