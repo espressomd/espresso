@@ -1,0 +1,35 @@
+What's new, what's been changed, what's been fixed
+--------------------------------------------------
+
+
+* v1.1.0a *
+***********
+
+Current working revision.
+
+
+New Features:
+- command 'analyze p_bin' to derive the pressure tensor of a given particle list
+- command 'analyze bin' to create a particle list distributed into spherical bins
+
+
+Changes:
+
+
+Bugfixes:
+- fixed that 'analyze <g1>' and 'analyze <g2>' derived all of <g1>, <g2>, and <g3>
+  and always returned <g3> only
+
+
+
+* v1.1.Gold (Naomi) *
+*********************
+
+Released on October 20th, 2003.
+
+
+
+* v1.0.Gold (Kim) *
+*******************
+
+Released on April 25th, 2003.
