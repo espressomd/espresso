@@ -48,12 +48,12 @@
 #include "global.h"
 #include "parser.h"
 
-#ifdef NEMD
 
 #define NEMD_METHOD_OFF       0
 #define NEMD_METHOD_EXCHANGE  1
 #define NEMD_METHOD_SHEARRATE 2
 
+#ifdef NEMD
 
 /************************************************/
 /** \name Data Types */
