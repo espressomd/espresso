@@ -23,6 +23,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "debug.h"
 
 /************************************************
  * defines
@@ -64,6 +65,29 @@ typedef struct {
 
 /** exit ungracefully, core dump if switched on. Defined in main.c. */
 void errexit();
+
+#ifndef MEM_DEBUG
+
+#ifdef realloc
+#undef realloc
+#endif
+
+/** used instead of realloc.
+    Makes sure that resizing to zero FREEs pointer */
+MDINLINE void *prealloc(void *old, int size)
+{
+  if (size == 0) {
+    free(old);
+    return NULL;
+  }
+  else
+    return realloc(old, size);
+}
+
+/** use our own realloc which makes sure that realloc(0) is actually a free. */
+#define realloc prealloc
+
+#endif
 
 /************************************************
  * functions: lists
