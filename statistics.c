@@ -587,6 +587,92 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       Tcl_AppendResult(interp,buffer,(char *)NULL); return TCL_ERROR;
     }
   }
+  else if (!strncmp(mode, "distribution", strlen(mode))) {
+    /* 'analyze diistribution' */
+    /***************************/
+    int tmp_argc;
+    char **tmp_argv;
+    IntList p1,p2;
+    double r_min=0, r_max=0;
+    int r_bins=0, log_flag=0, int_flag=0;
+    int i,fail=0;
+    double *distribution, low;
+
+    init_intlist(&p1); init_intlist(&p2);
+
+    /* parse arguments */
+    if( argc>0 ) {
+      Tcl_SplitList(interp,argv[0],&tmp_argc,&tmp_argv);
+      realloc_intlist(&p1,tmp_argc);
+      for(i=0;i<tmp_argc;i++) Tcl_GetInt(interp, tmp_argv[i], &(p1.e[i]));
+      argc--; argv++;
+    }
+    if( argc>0 ) {
+      Tcl_SplitList(interp,argv[0],&tmp_argc,&tmp_argv);
+      realloc_intlist(&p2,tmp_argc);
+      for(i=0;i<tmp_argc;i++) Tcl_GetInt(interp, tmp_argv[i], &(p2.e[i]));
+      argc--; argv++;
+    }
+    if(p1.max > 0 && p2.max >0) fail = 1;
+    if( argc>0 ) { Tcl_GetDouble(interp, argv[0], &r_min); argc--; argv++; }
+    if( argc>0 ) { Tcl_GetDouble(interp, argv[0], &r_max); argc--; argv++; }
+    if( argc>0 ) { Tcl_GetInt(interp, argv[0], &r_bins);   argc--; argv++; }
+    if( argc>0 ) { Tcl_GetInt(interp, argv[0], &log_flag); argc--; argv++; }
+    if( argc>0 ) { Tcl_GetInt(interp, argv[0], &int_flag); argc--; argv++; }
+    /* if not given use default */
+    if(r_min == 0.0 && r_max == 0.0 && r_bins == 0 ) {
+      r_min = 0; r_max = min_box_l/2.0; r_bins = n_total_particles / 20; log_flag = 0;
+    } 
+    /* give back what you do */
+    Tcl_AppendResult(interp, "{ analyze distribution { ", (char *)NULL);
+    for(i=0; i<p1.max; i++) { 
+      sprintf(buffer,"%d ",p1.e[i]);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    Tcl_AppendResult(interp,"} { ", (char *)NULL);
+    for(i=0; i<p2.max; i++) {
+      sprintf(buffer,"%d ",p2.e[i]);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    sprintf(buffer,"} %f %f %d %d %d",r_min,r_max,r_bins,log_flag,int_flag);
+    Tcl_AppendResult(interp, buffer," }", (char *)NULL);
+    /* some sanity checks */
+    if(r_min < 0.0 || (log_flag==1 && r_min ==0.0 )) return TCL_ERROR;
+    if(r_max <= r_min) return TCL_ERROR;
+    if(r_bins < 1) return TCL_ERROR;
+    /* claculate distribution */
+    distribution = malloc(r_bins*sizeof(double));
+    updatePartCfg();
+    calc_part_distribution(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, log_flag,&low,distribution);
+    if(int_flag==1) {
+      distribution[0] += low;
+      for(i=0; i<r_bins-1; i++) distribution[i+1] += distribution[i]; 
+    }
+    /* append result */
+    {
+      double log_fac=0.0, bin_width=0.0, r=0.0;
+      if(log_flag == 1) {
+	log_fac       = pow((r_max/r_min),(1.0/(double)r_bins));
+	r = r_min * sqrt(log_fac);
+      } 
+      else {
+	bin_width     = (r_max-r_min) / (double)r_bins;
+	r = r_min + bin_width/2.0;
+      }
+      Tcl_AppendResult(interp, " {\n", (char *)NULL);
+      for(i=0; i<r_bins; i++) {
+	sprintf(buffer,"%f %f",r,distribution[i]);
+	Tcl_AppendResult(interp, "{ ",buffer," }\n", (char *)NULL);
+	if(log_flag == 1) r *= log_fac; else r += bin_width;
+      }
+      Tcl_AppendResult(interp, "}\n", (char *)NULL);
+
+
+    }
+
+    free(distribution);
+    return (TCL_OK);
+  }
   else {
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "The operation \"", mode,
@@ -970,7 +1056,7 @@ void calc_energy()
   int type1,type2;
   /* energy classification numbers */
   int s_bonded,s_non_bonded,s_coulomb,max;
-  
+
   s_bonded = energy.n_pre;
   s_non_bonded = s_bonded + energy.n_bonded;
   s_coulomb = s_non_bonded + energy.n_non_bonded;
@@ -1160,4 +1246,58 @@ void analyze_configs(double *tmp_config, int count) {
   }
   n_configs++;
 }
+
+void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2, 
+			    double r_min, double r_max, int r_bins, int log_flag, 
+			    double *low, double *dist)
+{
+  int i,j,t1,t2,ind,cnt=0;
+  double inv_bin_width=0.0;
+  double min_dist,min_dist2=0.0,start_dist2,act_dist2;
+
+  start_dist2 = SQR(box_l[0] + box_l[1] + box_l[2]);
+  /* bin preparation */
+  *low = 0.0;
+  for(i=0;i<r_bins;i++) dist[i] = 0.0;
+  if(log_flag == 1) inv_bin_width = (double)r_bins/(log(r_max)-log(r_min));
+  else              inv_bin_width = (double)r_bins / (r_max-r_min);
+
+  /* particle loop: p1_types*/
+  for(i=0; i<n_total_particles; i++) {
+    for(t1=0; t1<n_p1; t1++) {
+      if(partCfg[i].r.type == p1_types[t1]) {
+	min_dist2 = start_dist2;
+	/* particle loop: p2_types*/
+	for(j=0; j<n_total_particles; j++) {
+	  for(t2=0; t2<n_p2; t2++) {
+	    if(partCfg[j].r.type == p2_types[t2]) {
+	      act_dist2 =  min_distance2(partCfg[i].r.p, partCfg[j].r.p, box_l);
+	      if(act_dist2 < min_dist2) { min_dist2 = act_dist2; }
+	    }
+	  }
+	}
+	min_dist = sqrt(min_dist2);
+	if(min_dist <= r_max) {
+	  if(min_dist >= r_min) {
+	    /* calculate bin index */
+	    if(log_flag == 1) ind = (int) ((log(min_dist) - log(r_min))*inv_bin_width);
+	    else              ind = (int) ((min_dist - r_min)*inv_bin_width);
+	    if(ind >= 0 && ind < r_bins) {
+	      dist[ind] += 1.0;
+	    }
+	  }
+	  else {
+	    *low += 1.0;
+	  }
+	}
+	cnt++;    
+      }
+    }
+  }
+  
+  /* normalize */
+  *low /= (double)cnt;
+  for(i=0;i<r_bins;i++) dist[i] /= (double)cnt;
+}
+
 

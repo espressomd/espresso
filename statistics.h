@@ -159,6 +159,29 @@ void analyze_replace(int ind);
     @param ind the entry in 'configs' to be removed */
 void analyze_remove(int ind);
 
+/** Calculates the distribution of particles around others. 
+
+    Calculates the distance distribution of particles with types given
+    in the p1_types list around particles with types given in the
+    p2_types list. The distances range from r_min to r_max, binned
+    into r_bins bins which are either aequidistant (log_flag==0)or
+    logarithmically aequidistant (log_flag==1). The result is stored
+    in the array dist.
+    @param p1_types list with types of particles to find the distribution for.
+    @param n_p1     length of p1_types.
+    @param p2_types list with types of particles the others are distributed around.
+    @param n_p2     length of p2_types.
+    @param r_min    Minimal distance for the distribution.
+    @param r_max    Maximal distance for the distribution.
+    @param r_bins   Number of bins.
+    @param log_flag Wether the bins are (logarithmically) aequidistant.
+    @param low      particles closer than r_min
+    @param dist     Array to store the result (size: r_bins).
+ */
+void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2, 
+			    double r_min, double r_max, int r_bins, int log_flag,
+			    double *low, double *dist);
+
 /*@}*/
 
 #endif
