@@ -85,8 +85,6 @@ if { [catch {
     set toteng [analyze energy total]
     set totprs [analyze pressure total]
 
-    puts "energy $energy toteng $toteng"
-
     if { [expr abs($toteng - $cureng)] > $epsilon } {
 	puts "system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"
     }
