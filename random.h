@@ -55,9 +55,6 @@ BitRandomStatus print_bit_random_stat(void);
 */
 int bit_random(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-void write_random_generator(void);
-void read_random_generator(void);
-
 /*----------------------------------------------------------*/
 
 #endif
