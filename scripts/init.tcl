@@ -10,9 +10,6 @@
 # here which may enhance other programs running 'tcl_md'    #
 # by providing additional tcl-commands/-functions.          #
 #                                                           #
-# Created:       20.09.2002 by AxA                          #
-# Last modified: 08.11.2002 by BAM                          #
-#                                                           #
 #############################################################
 
 # here do everything you want to do upon initialization.
@@ -25,7 +22,7 @@ puts "*                      ======                         *"
 puts "*      A MPI Parallel Molecular Dynamics Program      *"
 puts "*                                                     *"
 puts "*                                                     *"
-puts "* (c) 2002                                            *"
+puts "* (c) 2002-2003                                       *"
 puts "* Max-Planck-Institute for Polymer Research           *"
 puts "* Mainz, Germany                                      *"
 puts "*                                                     *"
@@ -50,6 +47,9 @@ source aux.tcl
 # adds 'timeStamp' which modifies a filestring to include a prefix and the current date as postfix before the suffix
 # adds 'polyBlockWrite' which writes a given 'tcl_md'-configuration to disk
 #      (this function in combination with 'convertMD2Deserno' replaces 'polywr.tcl')
+# adds 'polyConfMovWriteInit' & 'polyConfMovWrite' which are customized version of 'polyBlockWrite'
+# adds 'analysisInit' & 'analysis' which write some analysis data
+# adds 'stopParticles' which sets all particles' velocities and forces to zero
 
 source blockfile_support.tcl
 # adds 'blockfile_write_particles'
