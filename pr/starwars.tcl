@@ -23,9 +23,11 @@
 #  Initialization                                           #
 #############################################################
 
-source ../scripts/bundle.tcl
+source /usr/people/limbach/Espresso/scripts/bundle.tcl
 
+global name level
 set name ""
+set level 0
 
 #############################################################
 #  Setup GUI                                                #
@@ -37,82 +39,149 @@ wm geometry . -0+0
 
 # star
 #############################################################
-frame .star -relief raised -border 2
+frame .star -relief raised -border 2 
 pack .star -expand 1 -fill both -in .
 
 # title
 frame .star.title
-label .star.title.l -justify left -text "Polyelectrolyte Star Simulation"
+label .star.title.l -text "Polyelectrolyte Star Simulation" -bg lightblue -height 2
 
 pack .star.title.l -fill both -side left -in .star.title
-pack .star.title -pady {0 10} -fill x -side top -in .star
+pack .star.title -in .star
 
 # menu
 frame .star.menu -relief raised -border 1
-label  .star.menu.t1 -text "Main Menu"
-button .star.menu.b1 -justify left -text "Setup System"     -command SetupStar
-button .star.menu.b2 -justify left -text "Read in System"   -command ReadStar
-button .star.menu.b3 -justify left -text "Test System"   -command TestStar
-button .star.menu.b4 -justify left -text "Polyelectrolyte"   -command PolyelectrolyteTest
+label  .star.menu.t1 -text "Main Menu" -bg lightyellow
+button .star.menu.b1 -text "Setup System"     -command SetupStar
+button .star.menu.b2 -text "Read in System"   -command ReadStar
+button .star.menu.b3 -text "Test System"   -command TestStar
+button .star.menu.b4 -text "Exit"   -command exit
 
-pack .star.menu.t1 .star.menu.b1 .star.menu.b2 .star.menu.b3 .star.menu.b4 -in .star.menu
-pack .star.menu -pady {0 10} -fill x -side top -in .star
+pack .star.menu.t1 .star.menu.b1 .star.menu.b2 .star.menu.b3 .star.menu.b4 \
+    -expand 1 -fill both -in .star.menu
+pack .star.menu -expand 1 -fill both -in .star
 
 #############################################################
-#      Events                                               #
+#     Main Menu                                             #
 #############################################################
+
+proc SetupStar  {} {
+    global name level
+    if { $name != "" } { popup_message "System exists already. Exit and start new!"; return }
+    if { $level > 0 } { popup_message "Close other submenu first!"; return }
+    set level 1
+    frame .star.setup -relief raised -border 1 -width 20c
+    label .star.setup.title -text "Setup System" -bg lightyellow 
+
+    frame .star.setup.inp1
+    label .star.setup.inp1.t -anchor n -text "Name: "
+    entry .star.setup.inp1.i 
+    pack  .star.setup.inp1.t -fill both -side left  -in .star.setup.inp1
+    pack  .star.setup.inp1.i  -in .star.setup.inp1
+
+    frame .star.setup.inp2
+    label .star.setup.inp2.t -anchor n -text "Arm Number: "
+    entry .star.setup.inp2.i
+    pack  .star.setup.inp2.t -fill both -side left -in .star.setup.inp2
+    pack  .star.setup.inp2.i -expand 1 -in .star.setup.inp2
+
+    frame .star.setup.inp3
+    label .star.setup.inp3.t -anchor n  -text "Arm Length:      "
+    entry .star.setup.inp3.i
+    pack  .star.setup.inp3.t -fill both -side left -in .star.setup.inp3
+    pack  .star.setup.inp3.i -in .star.setup.inp3
+
+    frame .star.setup.inp4
+    label .star.setup.inp4.t -anchor n  -text "Charge Distance: "
+    entry .star.setup.inp4.i
+    pack  .star.setup.inp4.t -fill both -side left -in .star.setup.inp4
+    pack  .star.setup.inp4.i -in .star.setup.inp4
+
+    frame .star.setup.inp5
+    label .star.setup.inp5.t -anchor n  -text "Density:         "
+    entry .star.setup.inp5.i
+    pack  .star.setup.inp5.t -fill both -side left -in .star.setup.inp5
+    pack  .star.setup.inp5.i -in .star.setup.inp5
+
+    button .star.setup.b1 -text "OK" -command "get_Setup .star.setup"
+    button .star.setup.b2 -text "Close" -command "destroy .star.setup; set level 0"
+
+    pack  .star.setup.title .star.setup.inp1 .star.setup.inp2             \
+	.star.setup.inp3 .star.setup.inp4 .star.setup.inp5 .star.setup.b1 .star.setup.b2 \
+	-expand 1 -fill both -in .star.setup
+    pack .star.setup -expand 1 -in .star
+    tkwait window .star.setup
+    update
+}
+
+proc ReadStar {} {
+    global name 
+    if { $name != "" } { popup_message "System exists already. Exit and start new"; return }
+    puts "Not ready"
+}
 
 proc TestStar {} {
-    global name
-    global n_arms
-    global l_arms
-    global c_dist
-    global density
-    set name teststar
-    set n_arms 5
-    set l_arms 40
-    set c_dist 2
+    global name n_arms l_arms c_dist density level
+    if { $name != "" } { popup_message "System exists already. Exit and start new"; return }
+    if { $level > 0 } { popup_message "Close other submenu first!"; return }
+    set level 1
+    set name    test1
+    set n_arms  5
+    set l_arms  20
+    set c_dist  3
     set density 0.001
 
     CreateSystem
 }
 
-proc PolyelectrolyteTest {} {
-    global name
-    global n_arms
-    global l_arms
-    global c_dist
-    global density
-    set name polyelectrolyte
-    set n_arms 2
-    set l_arms 50
-    set c_dist 2
-    set density 0.001
+#############################################################
+#     Create System                                         #
+#############################################################
 
+proc get_Setup {win} {
+    global name n_arms l_arms c_dist density
+    set name [$win.inp1.i get]
+    if {$name == ""} { popup_message "System needs a name!"; return }
+    set n_arms [$win.inp2.i get]
+    if { $n_arms < 1 || $n_arms > 12} { 
+	popup_message "Number of Arms has to be between 1 and 12" 
+	return
+    }
+    set l_arms [$win.inp3.i get]
+    if {$l_arms < 1} {
+	popup_message "Arm length has to be positive"
+	return
+    }
+    set c_dist [$win.inp4.i get]
+    if {$c_dist < 1} {
+	popup_message "Charge distance has to be positive"
+	return
+    }
+    set density [$win.inp5.i get]
+    if {$density < 1e-8 || $density > 0.7} {
+	popup_message "Density is restricted between 1e-8 and 0.7"
+	return
+    }
     CreateSystem
+    destroy $win 
 }
+
+#############################################################
+#     Create System                                         #
+#############################################################
 
 proc CreateSystem {} {
     global name n_arms l_arms c_dist density rad
 
-    frame .star.create -relief raised -border 1
-    label .star.create.title -text "Create System"
-    pack .star.create.title -in .star.create
-    pack .star.create -pady {0 10} -fill x -side top -in .star
-
     # Calculate number of particles
     set n_ci   [expr $n_arms*floor($l_arms/$c_dist)]
     set n_part [expr $n_arms*$l_arms + 1 + $n_ci]
+
     # Volume
     set vol [expr $n_part/$density]
     set rad [expr pow((3.0*$vol)/(4.0*[PI]),1.0/3.0)]
     set box [expr 4.0*$rad+20.0]
     set cen [expr $box/2.0]
-
-    label .star.create.t1 -justify left -text "Star: $n_arms arms of length $l_arms
-Put $n_part Particles, $n_ci Counterions
-in Sphere with radius $rad"	
-    pack .star.create.t1 -in .star.create
 
     # Simulation Box
     setmd box_l $box $box $box
@@ -124,8 +193,6 @@ in Sphere with radius $rad"
     set_skin 0.5
     setmd gamma 1.0
     setmd temperature 1.0
-    button .star.create.int_but -text "Change Integrator settings" -command change_integrator
-    pack .star.create.int_but -in .star.create
 
     # Particle types and interactions:
     # uncharged monomer 0, charge monomer 2, counterion 1, star center 3, wall 4
@@ -140,8 +207,6 @@ in Sphere with radius $rad"
     set_lj_eps $lj_eps
     set_bjerrum 1.0
     inter 0 fene 7.0 2.0
-    button .star.create.inter_but -text "Change Interactions" -command change_inter
-    pack .star.create.inter_but -in .star.create
 
     # Create Particles
     set part_id 0
@@ -173,116 +238,53 @@ in Sphere with radius $rad"
     #      }
     polyBlockWrite "$name.start" 
 
-    # Start Integration
+    # Window appearance
+    frame .star.create -relief raised -border 1
+    label .star.create.title -text "Create System" -bg lightyellow -height 2
+    label .star.create.t1 -justify left -text "System: $name 
+Star with $n_arms arms of length $l_arms
+Put $n_part Particles, $n_ci Counterions
+in Sphere with radius $rad"	
+    button .star.create.int_but -text "Change Integrator settings" -command change_integrator
+    button .star.create.inter_but -text "Change Interactions" -command change_inter
     button .star.create.start_but -text "Start Simulation" -command simulation
-    pack .star.create.start_but -in .star.create
+
+    pack .star.create.title .star.create.t1                                   \
+	.star.create.int_but .star.create.inter_but .star.create.start_but   \
+	-expand 1 -fill both -in .star.create
+    pack .star.create  -expand 1  -in .star
+
 }
 
-proc get_Setup {win} {
-    global name
-    global n_arms
-    global l_arms
-    global c_dist
-    global density
-    set name [$win.inp1.i get]
-    if {$name == ""} { 
-	popup_message "System needs a name!"
-	return
-    }
-    set n_arms [$win.inp2.i get]
-    if { $n_arms < 1 || $n_arms > 12} { 
-	popup_message "Number of Arms has to be between 1 and 12" 
-	return
-    }
-    set l_arms [$win.inp3.i get]
-    if {$l_arms < 1} {
-	popup_message "Arm length has to be positive"
-	return
-    }
-    set c_dist [$win.inp4.i get]
-    if {$c_dist < 1} {
-	popup_message "Charge distance has to be positive"
-	return
-    }
-    set density [$win.inp5.i get]
-    if {$density < 1e-8 || $density > 0.7} {
-	popup_message "Density is restricted between 1e-8 and 0.7"
-	return
-    }
 
-    CreateSystem
-
-    destroy $win 
-}
-
-proc SetupStar  {} {
-    frame .star.setup -relief raised -border 1
-    label .star.setup.title -text "Setup System"
-
-    frame .star.setup.inp1
-    label .star.setup.inp1.t -justify left -text "Name:            "
-    entry .star.setup.inp1.i
-    pack  .star.setup.inp1.t -fill both -side left -in .star.setup.inp1
-    pack  .star.setup.inp1.i -in .star.setup.inp1
-
-    frame .star.setup.inp2
-    label .star.setup.inp2.t -justify left -text "Arm Number:      "
-    entry .star.setup.inp2.i
-    pack  .star.setup.inp2.t -fill both -side left -in .star.setup.inp2
-    pack  .star.setup.inp2.i -in .star.setup.inp2
-
-    frame .star.setup.inp3
-    label .star.setup.inp3.t -justify left -text "Arm Length:      "
-    entry .star.setup.inp3.i
-    pack  .star.setup.inp3.t -fill both -side left -in .star.setup.inp3
-    pack  .star.setup.inp3.i -in .star.setup.inp3
-
-    frame .star.setup.inp4
-    label .star.setup.inp4.t -justify left -text "Charge Distance: "
-    entry .star.setup.inp4.i
-    pack  .star.setup.inp4.t -fill both -side left -in .star.setup.inp4
-    pack  .star.setup.inp4.i -in .star.setup.inp4
-
-    frame .star.setup.inp5
-    label .star.setup.inp5.t -justify left -text "Density:         "
-    entry .star.setup.inp5.i
-    pack  .star.setup.inp5.t -fill both -side left -in .star.setup.inp5
-    pack  .star.setup.inp5.i -in .star.setup.inp5
-
-    button .star.setup.b1 -text "OK" -command "get_Setup .star.setup"
-
-    pack .star.setup.title .star.setup.inp1 .star.setup.inp2 .star.setup.inp3 .star.setup.inp4 .star.setup.inp5 .star.setup.b1 -in .star.setup
-    pack .star.setup -pady {0 10} -fill x -side top -in .star
-    tkwait window .star.setup
-    update
-}
+#############################################################
+#     Change Parameters                                     #
+#############################################################
 
 proc change_integrator {} {
     global time_step skin gamma temp
     toplevel .integrator
-    label .integrator.title -text "Change Integrator parameters"
-    pack .integrator.title -in .integrator
+    label .integrator.title -text "Change Integrator parameters" \
+	-bg lightyellow -height 2 -relief raised -border 1
 
     frame .integrator.slider1 -relief raised -border 1
     label .integrator.slider1.t -text "log(time_step)"
-    scale .integrator.slider1.s -orient h -from -3.5 -to -1.5 -resolution [expr 1/100.] -command set_time_step
+    scale .integrator.slider1.s -orient h -from -3.5 -to -0.5 -resolution [expr 1/100.] -command set_time_step
     .integrator.slider1.s set $time_step
-    pack .integrator.slider1.t .integrator.slider1.s -fill both -in .integrator.slider1
-    pack .integrator.slider1 -in .integrator
+    pack .integrator.slider1.t .integrator.slider1.s -side left  -in .integrator.slider1
 
     frame .integrator.slider2 -relief raised -border 1
     label .integrator.slider2.t -text "Skin"
     scale .integrator.slider2.s -orient h -from 0 -to 4 -resolution [expr 1/10.] -command set_skin
     .integrator.slider2.s set $skin
-    pack .integrator.slider2.t .integrator.slider2.s -fill both -in .integrator.slider2
-    pack .integrator.slider2 -in .integrator
+    pack .integrator.slider2.t .integrator.slider2.s -expand 1 -side left  -in .integrator.slider2
  
     button .integrator.but1 -text "OK" -command "destroy .integrator"
-    pack .integrator.but1 -in .integrator
+    pack .integrator.title .integrator.slider1 .integrator.slider2 .integrator.but1 \
+	-expand 1 -fill both -in .integrator
 
     tkwait window .integrator
     update
-
 }
 
 proc set_time_step {ts} {
@@ -300,32 +302,31 @@ proc set_skin {sk} {
 proc change_inter {} {
     global lj_eps bjerrum lj_cut
     toplevel .inter
-    label .inter.title -text "Change Interaction parameters"
-    pack .inter.title -in .inter
+    label .inter.title -text "Change Interaction parameters"  \
+	-bg lightyellow -height 2 -relief raised -border 1
 
     frame .inter.slider1 -relief raised -border 1
     label .inter.slider1.t -text "Solvent Quality (lj_eps)"
     scale .inter.slider1.s -orient h -from 0 -to 2 -resolution [expr 1/100.] -command set_lj_eps
     .inter.slider1.s set $lj_eps
-    pack .inter.slider1.t .inter.slider1.s -fill both -in .inter.slider1
-    pack .inter.slider1 -in .inter
+    pack .inter.slider1.t .inter.slider1.s -side left -in .inter.slider1
 
     frame .inter.slider2 -relief raised -border 1
     label .inter.slider2.t -text "Poor Solvent range (lj_cut)"
     scale .inter.slider2.s -orient h -from 1.12246 -to 3.0 -resolution [expr 1/100.] -command set_lj_cut
     .inter.slider2.s set $lj_cut
-    pack .inter.slider2.t .inter.slider2.s -fill both -in .inter.slider2
-    pack .inter.slider2 -in .inter
+    pack .inter.slider2.t .inter.slider2.s -side left -in .inter.slider2
 
     frame .inter.slider3 -relief raised -border 1
     label .inter.slider3.t -text "Electrostatics (Bjerrum length)"
     scale .inter.slider3.s -orient h -from 0 -to 10 -resolution [expr 1/10.] -command set_bjerrum
     .inter.slider3.s set $bjerrum
-    pack .inter.slider3.t .inter.slider3.s -fill both -in .inter.slider3
-    pack .inter.slider3 -in .inter
- 
+    pack .inter.slider3.t .inter.slider3.s -side left -in .inter.slider3
+
     button .inter.but1 -text "OK" -command "destroy .inter"
-    pack .inter.but1 -in .inter
+
+    pack .inter.title .inter.slider1 .inter.slider2 .inter.slider3 .inter.but1  \
+	-expand 1 -fill both -in .inter
 
     tkwait window .inter
     update
@@ -358,29 +359,51 @@ proc set_bjerrum {val} {
 
 }
 
+#############################################################
+#     Simulation                                            #
+#############################################################
+
+
 proc simulation {} {
-    global name bjerrum lj_cut lj_eps n_arms l_arms
+    global name bjerrum lj_cut lj_eps n_arms l_arms vmd_on
+    set vmd_on 0
 
     frame .star.sim -relief raised -border 1
-    label .star.sim.title -text "Simulation"
-    pack .star.sim.title -in .star.sim
-    pack .star.sim -in .star
+    label .star.sim.title -text "Simulation" -bg lightyellow -height 2 
 
-    prepare_vmd_connection "$name" 0 1
+    frame .star.sim.warmup -relief raised -border 1
+    label .star.sim.warmup.title -text ""  -height 2 
+    label .star.sim.warmup.md   -text ""
+    label .star.sim.warmup.time -text ""
+    pack .star.sim.warmup.title .star.sim.warmup.md .star.sim.warmup.time -in .star.sim.warmup
 
-    # Check if Warmup is necessary
+    frame .star.sim.integ -relief raised -border 1
+    label .star.sim.integ.title -text "Integ:" -height 2 
+    label .star.sim.integ.time -text "time = *"
+    label .star.sim.integ.re   -text "re   = *"
+    pack .star.sim.integ.title .star.sim.integ.time .star.sim.integ.re  -in .star.sim.integ
+
+    
+    frame .star.sim.graphic -relief raised -border 1
+    label .star.sim.graphic.title -text "Visualisation"  -bg lightyellow -height 2
+    button .star.sim.graphic.vmd -text "VMD" -command "start_vmd"
+    button .star.sim.graphic.re -text "RE Graph" -command "create_obs_window re t RE 0 200 400 500 300"
+    button .star.sim.graphic.et -text "Energy Graph" -command "create_obs_window totenergy t E_t 0 200 200 500 300"
+    pack .star.sim.graphic.title .star.sim.graphic.vmd .star.sim.graphic.re .star.sim.graphic.et -expand 1 -fill both -in .star.sim.graphic
+
+    pack .star.sim.title .star.sim.warmup .star.sim.integ .star.sim.graphic \
+	-expand 1 -fill both -in .star.sim
+    pack .star.sim -expand 1 -fill both -in .star
+
+
+    # Warmup
+    ########################################
     set warmup_dist 0.9
     set cap 20  
     set act_min_dist [analyze mindist]
     if { $act_min_dist < $warmup_dist } {
-	frame .star.sim.warmup 
-	label .star.sim.warmup.title -text "Warmup:"
-	label .star.sim.warmup.md   -text "mindist: *"
-	label .star.sim.warmup.time -text "time:    *"
-	pack .star.sim.warmup.title .star.sim.warmup.md .star.sim.warmup.time -in .star.sim.warmup
-	pack .star.sim.warmup -in .star.sim
-	pack .star.sim -in .star
-	
+	.star.sim.warmup.title conf -text "Warmup:" 
+    
 	set tmp_bjerrum $bjerrum
 	set tmp_lj_cut $lj_cut
 	set tmp_lj_eps $lj_eps
@@ -391,11 +414,12 @@ proc simulation {} {
     }
     while { $act_min_dist < $warmup_dist } {
 	integrate 20
-	imd positions
+	if { $vmd_on == 1 } { imd positions }
 	set act_min_dist [analyze mindist]
 	set time [setmd time]
 	.star.sim.warmup.md   conf -text "mindist: $act_min_dist"
 	.star.sim.warmup.time conf -text "time:  : $time"
+	update
 	set cap [expr $cap+5]
 	inter ljforcecap $cap  
     }
@@ -406,26 +430,298 @@ proc simulation {} {
 	inter ljforcecap 0
     }
 
-    frame .star.sim.integ
-    label .star.sim.integ.title -text "Integ:"
-    label .star.sim.integ.time -text "time = *"
-    label .star.sim.integ.re   -text "re   = *"
-    pack .star.sim.integ.title .star.sim.integ.time .star.sim.integ.re -in .star.sim.integ
-    pack .star.sim.integ -in .star.sim
-    
+ 
+    # Integration
+    ########################################
     analyze set chains 0 $n_arms $l_arms
+    set step 0
     while { 1 > 0 } {
+	.star.sim.integ.title conf -text "Integration:" 
 	integrate 20
-	imd positions
+
+	if { $vmd_on == 1 } { imd positions }
+
 	set time [setmd time]
 	set re [lindex [analyze re] 0]
 	.star.sim.integ.time   conf -text "time = $time"
 	.star.sim.integ.re     conf -text "re   = $re*"
+	if { [winfo exists .re] && [expr $step%5]==0 } {
+	    add_data_point re $time $re
+	}
+	if { [winfo exists .totenergy] && [expr $step%10]==0 } {
+	    set energy [analyze energy]
+	    set tot_e [lindex [lindex $energy 0] 1]
+	    add_data_point totenergy $time $tot_e
+	}
 	update
+	incr step
     }
 
 }
 
+#############################################################
+#      VMD Connection                                       #
+#############################################################
+
+
+proc start_vmd {} {
+    global vmd_on name
+    if { $vmd_on == 1 } { return }
+    set vmd_on 1
+    prepare_vmd_connection "$name" 0 1
+}
+
+#############################################################
+#      Observable Graphics                                  #
+#############################################################
+
+proc create_obs_window {obs xlabel ylabel xrange yrange max_points width height } {
+    if { [winfo exists .$obs] } { return }
+
+    # Global variables associated with the window:
+    # plot region
+    global xpix_$obs ypix_$obs 
+    set xpix_$obs $width
+    set ypix_$obs $height
+    # Margins
+    global lmarg_$obs rmarg_$obs tmarg_$obs bmarg_$obs
+    set lmarg_$obs 60
+    set rmarg_$obs 25
+    set tmarg_$obs 30
+    set bmarg_$obs 40
+    # data range
+    global xrng_$obs yrng_$obs pmax_$obs
+    set xrng_$obs $xrange
+    set yrng_$obs $yrange
+    set pmax_$obs $max_points
+
+    # Window elements
+    toplevel .$obs
+    canvas .$obs.c -width [expr \$lmarg_$obs + \$xpix_$obs + \$rmarg_$obs]   \
+	-height [expr \$tmarg_$obs + \$ypix_$obs + \$bmarg_$obs] -bg white
+    frame .$obs.b
+    button .$obs.b1 -text "PS-File" -command "obs_window_to_ps $obs"
+    button .$obs.b2 -text "Options" -command "obs_window_options $obs"
+    button .$obs.b3 -text "Close"   -command "destroy .$obs"
+    pack .$obs.b1 .$obs.b2 .$obs.b3 -side left -fill both -in .$obs.b
+    pack .$obs.c .$obs.b -in .$obs
+
+    # Draw axes
+    .$obs.c create line                                                          \
+	[expr \$lmarg_$obs]  [expr \$tmarg_$obs - 10]                            \
+	[expr \$lmarg_$obs]  [expr \$tmarg_$obs + \$ypix_$obs]                   \
+	[expr \$lmarg_$obs + \$xpix_$obs +10] [expr \$tmarg_$obs + \$ypix_$obs]  \
+	-arrow both -tag "axes"
+    .$obs.c create text [expr \$lmarg_$obs] [expr \$tmarg_$obs-20] \
+	-text "$ylabel" 
+    .$obs.c create text [expr \$lmarg_$obs + \$xpix_$obs +15]      \
+	[expr \$tmarg_$obs + \$ypix_$obs]                          \
+	-text "$xlabel"
+    # Esresso logo
+    set tasse [image create photo -file "cup_icon.gif"]
+    .$obs.c create image [expr 23] \
+	[expr \$tmarg_$obs + \$ypix_$obs + \$tmarg_$obs -12] -image $tasse
+}
+
+proc obs_window_to_ps {obs} {
+    if {[ winfo exists .ps_$obs]} { return }
+    toplevel .ps_$obs
+    frame .ps_$obs.f1
+    label .ps_$obs.f1.t -text "File name: "
+    entry .ps_$obs.f1.i
+    .ps_$obs.f1.i insert 0 "$obs.ps"
+    button .ps_$obs.f1.b -text "OK" -command \
+	"update; .$obs.c postscript -file [.ps_$obs.f1.i get] ; destroy .ps_$obs"
+    pack .ps_$obs.f1.t .ps_$obs.f1.i .ps_$obs.f1.b -side left -in .ps_$obs.f1
+    pack .ps_$obs.f1 -in .ps_$obs
+}
+proc obs_window_options {obs} {
+    if {[ winfo exists .opt_$obs]} { return }
+    global xrng_$obs yrng_$obs pmax_$obs xpix_$obs ypix_$obs 
+
+    toplevel .opt_$obs
+
+    frame .opt_$obs.s1
+    label .opt_$obs.s1.t -text "Width (pixel):"
+    scale .opt_$obs.s1.s -orient h                              \
+	-from [expr \$ypix_$obs/2.0] -to [expr \$ypix_$obs*2.0] \
+	-resolution 1 -command "change_var $obs xpix_$obs"
+    .opt_$obs.s1.s set [expr \$ypix_$obs]
+    pack .opt_$obs.s1.t .opt_$obs.s1.s -side left -in .opt_$obs.s1
+
+
+
+
+    button .opt_$obs.b -text "OK" -command "destroy .opt_$obs"
+    pack .opt_$obs.s1 ..opt_$obs.b  -in .opt_$obs
+}
+
+proc change_var {obs var val} {
+    set var $val
+} 
+
+proc add_data_point {obs xdat ydat} {
+    global data_$obs show_$obs
+
+    lappend data_$obs $xdat $ydat
+    lappend show_$obs $xdat $ydat
+
+    if { [llength [expr \$data_$obs]] > 2 } {
+	change_xrange $obs
+	change_yrange $obs
+        if { [llength [expr \$data_$obs]] > 4 } { .$obs.c delete "data_line" }
+	.$obs.c create line [expr \$show_$obs] -width 3 -fill red -tag "data_line"
+	update
+    }
+}
+
+# Time coordinate:
+# Sucessive coordinates are assumed to be increasing
+proc change_xrange {obs} {
+    global data_$obs show_$obs
+    global xrng_$obs pmax_$obs xpix_$obs
+    global lmarg_$obs
+
+    # case 1: xrange given
+    if { [expr \$xrng_$obs] > 0 } {
+	set xrange [expr \$xrng_$obs + 1]
+	while { $xrange > [expr \$xrng_$obs] } {
+	    set dat_len [llength [expr \$data_$obs]]
+	    set xmin [lindex [expr \$data_$obs] 0]
+	    set xmax [lindex [expr \$data_$obs] [expr $dat_len - 2]]
+	    set xrange [expr $xmax - $xmin]
+	    if { $xrange > [expr \$xrng_$obs] } {
+		set data_$obs [lrange [expr \$data_$obs] 2 end]
+		set show_$obs [lrange [expr \$show_$obs] 2 end]
+	    }
+	}
+	set xfac [expr \$xpix_$obs/(1.0*$xrange)]
+	set xoff [expr \$lmarg_$obs - ($xmin*$xfac)]
+	for { set i 0 } { $i < $dat_len } { incr i 2 } {
+	    lset show_$obs $i [expr [lindex [expr \$data_$obs] $i]*$xfac+$xoff]
+	}
+	draw_xtics $obs $xmin $xmax $xrange $xfac $xoff
+	return
+    }
+    # case 2: number of data points to shown given
+    while { [llength [expr \$data_$obs]] > [expr 2*\$pmax_$obs] } {
+		set data_$obs [lrange [expr \$data_$obs] 2 end]
+		set show_$obs [lrange [expr \$show_$obs] 2 end]
+    }
+    set dat_len [llength [expr \$data_$obs]]
+    set xmin [lindex [expr \$data_$obs] 0]
+    set xmax [lindex [expr \$data_$obs] [expr $dat_len - 2]]
+    set xrange [expr $xmax - $xmin]
+    set xfac [expr \$xpix_$obs/(1.0*$xrange)]
+    set xoff [expr \$lmarg_$obs - ($xmin*$xfac)]
+    for { set i 0 } { $i < $dat_len } { incr i 2 } {
+	lset show_$obs $i [expr [lindex [expr \$data_$obs] $i]*$xfac+$xoff]
+    }
+    draw_xtics $obs $xmin $xmax $xrange $xfac $xoff
+}
+
+# This is a scattering value
+proc change_yrange {obs} {
+    global data_$obs show_$obs
+    global yrng_$obs pmax_$obs ypix_$obs
+    global ymin_$obs ymax_$obs
+    global tmarg_$obs
+
+    set dat_len [llength [expr \$data_$obs]]
+    # init
+    if { $dat_len == 4 } {
+        set ymin_$obs [lindex [expr \$data_$obs] 1]
+	set ymax_$obs [lindex [expr \$data_$obs] 1]
+    }
+    # check yrange change
+    incr dat_len -1
+    if { [lindex [expr \$data_$obs] $dat_len] < [expr \$ymin_$obs] } {
+	set ymin_$obs [lindex [expr \$data_$obs] $dat_len]
+    }
+    if { [lindex [expr \$data_$obs] $dat_len] > [expr \$ymax_$obs] } {
+	set ymax_$obs [lindex [expr \$data_$obs] $dat_len]
+    }
+    set yrange [expr \$ymax_$obs - \$ymin_$obs]
+    if { $yrange == 0 } { set yrange 1 }
+    set yfac [expr \$ypix_$obs/(1.0*$yrange)]
+    set yoff [expr \$tmarg_$obs + (\$ymax_$obs*$yfac)]
+    for { set i 1 } { $i <= $dat_len } { incr i 2 } {
+	lset show_$obs $i [expr $yoff - [lindex [expr \$data_$obs] $i]*$yfac]
+    }
+    draw_ytics $obs [expr \$ymin_$obs] [expr \$ymax_$obs] $yrange $yfac $yoff
+
+}
+
+proc draw_xtics { obs xmin xmax xrange xfac xoff } {
+    global ypix_$obs
+    global lmarg_$obs tmarg_$obs
+    .$obs.c delete "xtics"
+    if { $xrange > 0.0 } {
+	set xexp [expr floor(log10($xrange))]
+	set xpow [expr pow(10,$xexp)]
+	set bas_range [expr $xrange/(1.0*$xpow)]
+	set dist [expr 2.0*$xpow]
+	if {  $bas_range < 6.0 } { set dist [expr 1.0*$xpow] }
+	if {  $bas_range < 3.0 } { set dist [expr 0.5*$xpow] }
+	if {  $bas_range < 1.7 } { set dist [expr 0.25*$xpow] }
+	
+	set xtics [list [expr $dist*ceil($xmin/(1.0*$dist))] ]
+	.$obs.c create text                                                             \
+	    [expr [lindex $xtics 0]*$xfac+$xoff] [expr 15 + \$tmarg_$obs + \$ypix_$obs] \
+	    -text "[lindex $xtics 0]" -tag "xtics"
+	.$obs.c create line                                                            \
+	    [expr [lindex $xtics 0]*$xfac+$xoff] [expr \$tmarg_$obs + \$ypix_$obs]     \
+	    [expr [lindex $xtics 0]*$xfac+$xoff] [expr 5 + \$tmarg_$obs + \$ypix_$obs] \
+	    -width 2 -tag "xtics"
+	set i 0
+	while { [expr [lindex $xtics $i]+$dist] <= $xmax } {
+	    lappend xtics [expr [lindex $xtics $i]+$dist]
+	    incr i
+	    .$obs.c create text                                                          \
+		[expr [lindex $xtics $i]*$xfac+$xoff] [expr 15+\$tmarg_$obs+\$ypix_$obs] \
+		-text "[lindex $xtics $i]" -tag "xtics"
+	    .$obs.c create line                                                         \
+		[expr [lindex $xtics $i]*$xfac+$xoff] [expr \$tmarg_$obs+\$ypix_$obs]   \
+		[expr [lindex $xtics $i]*$xfac+$xoff] [expr 5+\$tmarg_$obs+\$ypix_$obs] \
+		-width 2 -tag "xtics"
+	}  
+    }
+}
+
+proc draw_ytics { obs ymin ymax yrange yfac yoff } {
+    global lmarg_$obs 
+    .$obs.c delete "ytics"
+    if { $yrange > 0.0 } {
+	set yexp [expr floor(log10($yrange))]
+	set ypow [expr pow(10,$yexp)]
+	set bas_range [expr $yrange/(1.0*$ypow)]
+	set dist [expr 2.0*$ypow]
+	if {  $bas_range < 6.0 } { set dist [expr 1.0*$ypow] }
+	if {  $bas_range < 3.0 } { set dist [expr 0.5*$ypow] }
+	if {  $bas_range < 1.7 } { set dist [expr 0.25*$ypow] }
+
+	set ytics [list [expr $dist*ceil($ymin/(1.0*$dist))] ]
+	.$obs.c create text                                               \
+	    [expr \$lmarg_$obs - 20] [expr $yoff-[lindex $ytics 0]*$yfac] \
+	    -text "[lindex $ytics 0]" -tag "ytics"
+	.$obs.c create line                                               \
+	    [expr \$lmarg_$obs - 5] [expr $yoff-[lindex $ytics 0]*$yfac]  \
+	    [expr \$lmarg_$obs] [expr $yoff-[lindex $ytics 0]*$yfac]      \
+	    -width 2 -tag "ytics"
+	set i 0
+	while { [expr [lindex $ytics $i]+$dist] <= $ymax } {
+	    lappend ytics [expr [lindex $ytics $i]+$dist]
+	    incr i
+	    .$obs.c create text                                                \
+		[expr \$lmarg_$obs - 20] [expr $yoff-[lindex $ytics $i]*$yfac] \
+		-text "[lindex $ytics $i]" -tag "ytics"
+	    .$obs.c create line                                                \
+		[expr \$lmarg_$obs - 5] [expr $yoff-[lindex $ytics $i]*$yfac]  \
+		[expr \$lmarg_$obs] [expr $yoff-[lindex $ytics $i]*$yfac]      \
+		-width 2 -tag "ytics"
+	}  
+    }
+}
 
 #############################################################
 #      Helpers                                              #
@@ -443,3 +739,4 @@ proc popup_message {text} {
     tkwait window .message
     update
 }
+
