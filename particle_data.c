@@ -468,7 +468,7 @@ void part_print_folded_position(Particle *part, char *buffer, Tcl_Interp *interp
 void part_print_bonding_structure(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   int i,j,size;
-  Tcl_AppendResult(interp, " { ", (char *)NULL);
+  Tcl_AppendResult(interp, "{ ", (char *)NULL);
   i = 0;
   while(i<part->bl.n) {
     size = bonded_ia_params[part->bl.e[i]].num;
@@ -644,8 +644,10 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   part_print_position(&part, buffer, interp);
   Tcl_AppendResult(interp, " type ", (char *)NULL);
   sprintf(buffer, "%d", part.p.type);
-  Tcl_AppendResult(interp, buffer, " molecule ", (char *)NULL);
-  sprintf(buffer, "%d", part.p.mol_id);
+  if (part.p.mol_id > -1) {
+	Tcl_AppendResult(interp, buffer, " molecule ", (char *)NULL);
+  	sprintf(buffer, "%d", part.p.mol_id);
+  }
 #ifdef MASS
   Tcl_AppendResult(interp, buffer, " mass ", (char *)NULL);
   Tcl_PrintDouble(interp, part.p.mass, buffer);
@@ -673,7 +675,7 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
 
 #ifdef EXCLUSIONS
   if (part.el.n > 0) {
-    Tcl_AppendResult(interp, buffer, " exclude ", (char *)NULL);
+    Tcl_AppendResult(interp, " exclude ", (char *)NULL);
     part_print_exclusions(&part, buffer, interp);
   }
 #endif
@@ -693,8 +695,10 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
 #endif
 
   /* print bonding structure */
-  if (part.bl.n > 0)
+  if (part.bl.n > 0) {
+    Tcl_AppendResult(interp, " bond ", (char *)NULL);
     part_print_bonding_structure(&part, buffer, interp);
+  }
 
   free_particle(&part);
   return (TCL_OK);
@@ -1287,15 +1291,88 @@ int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
     *change += 1;
   }
 
-  /* check type_num */
-  if (argc <= 1 || ! ARG0_IS_I(type_num)) {
-    if (delete == 0)
-      return TCL_ERROR;
+  if (argc == 1) {
+    /* check for the new, nested Tcl-list format */
+    int param1, tmp_argc;
+    char  **tmp_argv;
     bond = NULL;
 
+    if (!particle_node)
+      build_particle_node();
+    
+    Tcl_SplitList(interp, argv[0], &tmp_argc, &tmp_argv);
+
+    for(param1 = 0 ; param1 < tmp_argc; param1++) {
+      int tmp2_argc;
+      char  **tmp2_argv;
+      Tcl_SplitList(interp, tmp_argv[param1], &tmp2_argc, &tmp2_argv);
+      if (tmp2_argc < 1) {
+	Tcl_AppendResult(interp, "usage: part <p> bond <type> <partner>+\n", (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      if (Tcl_GetInt(interp, tmp2_argv[0], &type_num) == TCL_ERROR) return TCL_ERROR;
+      if(type_num < 0 || type_num >= n_bonded_ia) {
+	Tcl_AppendResult(interp, "invalid bonded interaction type_num"
+			 " (set bonded interaction parameters first)", (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      /* check partners */
+      n_partners = bonded_ia_params[type_num].num;
+      if(tmp2_argc < 1+n_partners) {
+	char buffer[256 + 2*TCL_INTEGER_SPACE];
+	sprintf(buffer, "bond type %d requires %d arguments.",
+		type_num, n_partners+1);
+	Tcl_AppendResult(interp, buffer, (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      bond = (int *)malloc( (n_partners+1)*sizeof(int) );
+      bond[0] = type_num;
+      j=1;
+      while(j <= n_partners) {
+	if (Tcl_GetInt(interp, tmp2_argv[j], &bond[j]) == TCL_ERROR) {
+	  free(bond);
+	  return TCL_ERROR;
+	}
+	if(bond[j] > max_seen_particle || particle_node[bond[j]] == -1) {
+	  Tcl_AppendResult(interp, "partner atom %d (identity %d) not known"
+			   ,j+1,bond[j],
+			   " (set all partner atoms first)", (char *) NULL);
+	  free(bond);
+	  return TCL_ERROR;
+	}
+	j++;
+      }
+      /* set/delete bond */
+      if (change_particle_bond(part_num, bond, delete) != TCL_OK) {
+	Tcl_AppendResult(interp, "bond to delete did not exist", (char *)NULL);
+	free(bond);
+	return TCL_ERROR;
+      }
+      Tcl_Free((char *)tmp2_argv);
+    }
+    free(bond);
+    Tcl_Free((char *)tmp_argv);
+
+    *change += 1;
+    return TCL_OK;
+  }
+  /* check for the old, multiple numbers format */
+  if (argc == 0) {
+    if (delete == 0) {
+      Tcl_AppendResult(interp, "usage: part <p> bond <type> <partner>+\n", (char *) NULL);
+      return TCL_ERROR;
+    }
+    // delete all bonds
+    bond = NULL;
     // since there is not even a type...
     n_partners = -1;
-  } else {
+  }
+  else if (! ARG0_IS_I(type_num))
+    return TCL_ERROR;
+  else {
     if(type_num < 0 || type_num >= n_bonded_ia) {
       Tcl_AppendResult(interp, "invalid bonded interaction type_num"
 		       " (set bonded interaction parameters first)", (char *) NULL);
@@ -1325,7 +1402,7 @@ int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
       if(bond[j] > max_seen_particle || particle_node[bond[j]] == -1) {
 	Tcl_AppendResult(interp, "partner atom %d (identity %d) not known"
 			 ,j+1,bond[j],
-			 "(Set all partner atoms first)", (char *) NULL);
+			 " (set all partner atoms first)", (char *) NULL);
 	free(bond);
 	return TCL_ERROR;
       }

@@ -8,9 +8,10 @@ What's new, what's been changed, what's been fixed
 Current working revision.
 
 
-- v1.8.6f -
+- v1.8.6g -
 -----------
 
+(g) March    25th, 2005.
 (f) March    23rd, 2005.
 (e) March    15th, 2005.
 (d) March     8th, 2005.
@@ -36,6 +37,8 @@ New Features:
     'minimum number of contacts'-criteria
 
 Changes:
+(g) the part 0 bond output now also has a code word, "bond". And the part x bond command now also
+    accepts the "bond { { t1 p11 p12... } { t2 t21 t22... } }" format, i.e. the output format.
 (f) aux.tcl is now auxiliary.tcl for a certain brain damaged operating system which doesn't like
     the other name.
 (f) the format of config.h has changed. The documentation is separated from the flags as in debug.h
