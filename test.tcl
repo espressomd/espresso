@@ -6,7 +6,7 @@
 # AIX \
     elif test $PLATFORM = AIX; then exec poe $PLATFORM/tcl_md $0 $* -procs $NP
 # Linux \
-    else lamboot; exec /usr/lib/lam/bin/mpirun -np $NP -nsigs $PLATFORM/tcl_md $0 $*;
+    else lamboot; exec mpirun -np $NP -nsigs $PLATFORM/tcl_md $0 $*;
 
 # \
     fi;
