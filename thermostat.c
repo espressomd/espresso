@@ -378,9 +378,9 @@ void thermo_init_langevin()
 void thermo_init_dpd()
 {
   /* prefactor friction force */
-  dpd_pref1 = dpd_gamma/SQR(time_step);
+  dpd_pref1 = dpd_gamma/time_step;
   /* prefactor random force */
-  dpd_pref2 = sqrt(24.0*temperature*dpd_gamma/SQR(time_step));
+  dpd_pref2 = sqrt(24.0*temperature*dpd_gamma/time_step);
   dpd_r_cut_inv = 1.0/dpd_r_cut;
   THERMO_TRACE(fprintf(stderr,"%d: thermo_init_dpd: dpd_pref1=%f, dpd_pref2=%f, dpd_r_cut_inv=%f\n",
 		       this_node,dpd_pref1,dpd_pref2,dpd_r_cut_inv));
