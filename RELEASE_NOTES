@@ -17,12 +17,15 @@ Current working revision.
 (d) January  20th, 2005.
 (e) January  25th, 2005.
 (f) January  31st, 2005.
+(g) March     3rd, 2005.
 
 New Features:
 (a) Added new analysis routine
     'analyze cell_gpb <Manning parameter> <outer cell radius> <inner cell radius> [<accuracy> [<# of interations>]]'
     for determining the numerical solution of the Poisson-Boltzmann equation in the cell model.
 (c) added a generic P3M test case.
+(g) new option for aggregation analysis tool. <min_contact> option defines a criteria for minimum number of contacts for two molecules 
+to be considered to be in the same aggregate.
 
 Changes:
 (c) removed the buggy, non-interpolating version of the P3M charge assignment.

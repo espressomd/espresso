@@ -144,9 +144,12 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
   int p1molid, p2molid;
   int *contact_num, ind;
 
-  contact_num = (int *) malloc(n_molecules*n_molecules *sizeof(int));
-  for (i = 0; i < n_molecules *n_molecules; i++) contact_num[i]=0;
-
+  if (min_contact > 1) {
+    contact_num = (int *) malloc(n_molecules*n_molecules *sizeof(int));
+    for (i = 0; i < n_molecules *n_molecules; i++) contact_num[i]=0;
+  } else {
+    contact_num = (int *) 0; /* Just to keep the compiler happy */
+  }
 
   build_verlet_lists();
 
@@ -176,23 +179,40 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
 	    else { ind=p2molid*n_molecules +p1molid;}
 
 	    if (dist2 < dist_criteria2) {
+	      if (min_contact > 1) {
 		contact_num[ind] ++;
-	    }
-	    if (contact_num[ind] >= min_contact) {
-	      /* merge list containing p2molid into list containing p1molid*/
-	      target1=head_list[agg_id_list[p2molid]];
-	      head_list[agg_id_list[p2molid]]=-2;
-	      head_p1=head_list[agg_id_list[p1molid]];
-	      head_list[agg_id_list[p1molid]]=target1;
-	      agg_id_list[target1]=agg_id_list[p1molid];
-	      target2=link_list[target1];
-	      while(target2 != -1) {
-		target1=target2;
-		target2=link_list[target1];
+		if (contact_num[ind] >= min_contact) {
+		  /* merge list containing p2molid into list containing p1molid*/
+		  target1=head_list[agg_id_list[p2molid]];
+		  head_list[agg_id_list[p2molid]]=-2;
+		  head_p1=head_list[agg_id_list[p1molid]];
+		  head_list[agg_id_list[p1molid]]=target1;
+		  agg_id_list[target1]=agg_id_list[p1molid];
+		  target2=link_list[target1];
+		  while(target2 != -1) {
+		    target1=target2;
+		    target2=link_list[target1];
+		    agg_id_list[target1]=agg_id_list[p1molid];
+		  }
+		  agg_id_list[target1]=agg_id_list[p1molid];
+		  link_list[target1]=head_p1;
+		}
+	      } else {
+		/* merge list containing p2molid into list containing p1molid*/
+		target1=head_list[agg_id_list[p2molid]];
+		head_list[agg_id_list[p2molid]]=-2;
+		head_p1=head_list[agg_id_list[p1molid]];
+		head_list[agg_id_list[p1molid]]=target1;
 		agg_id_list[target1]=agg_id_list[p1molid];
+		target2=link_list[target1];
+		while(target2 != -1) {
+		  target1=target2;
+		  target2=link_list[target1];
+		  agg_id_list[target1]=agg_id_list[p1molid];
+		}
+		agg_id_list[target1]=agg_id_list[p1molid];
+		link_list[target1]=head_p1;
 	      }
-	      agg_id_list[target1]=agg_id_list[p1molid];
-	      link_list[target1]=head_p1;
 	    }
 	  }
 	}
