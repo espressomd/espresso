@@ -48,7 +48,41 @@ proc bundle_backbone_setup { n_poly length cyl_rad c_pat h_dist {center "0 0 0"}
 proc bundle_counterion_setup { n_ci sphere_rad valency {center "0 0 0"} {type "1"} {start "0"} } {
     set s_rad2 [expr $sphere_rad*$sphere_rad]
 
-   for {set i $start} { $i < [expr $n_ci+$start] } {incr i} {
+    for {set i $start} { $i < [expr $n_ci+$start] } {incr i} {
+	set dist [expr $s_rad2 + 10.0]
+	while { $dist > [expr $s_rad2-(2.0*$sphere_rad-1.0)] } {
+	    set posx [expr 2*$sphere_rad*[t_random]-$sphere_rad]
+	    set posy [expr 2*$sphere_rad*[t_random]-$sphere_rad]
+	    set posz [expr 2*$sphere_rad*[t_random]-$sphere_rad]
+	    set dist [expr $posx*$posx + $posy*$posy + $posz*$posz]
+	}
+	set posx [expr $posx+[lindex $center 0] ]
+	set posy [expr $posy+[lindex $center 1] ]
+	set posz [expr $posz+[lindex $center 2] ] 
+	part $i pos $posx $posy $posz type $type q $valency
+    }
+}
+
+proc bundle_counterion_two_state_setup { n_ci sphere_rad valency {center "0 0 0"} {type "1"} {start "0"} cyl_rad cyl_length frac } {
+    # Put frac*n_ci counterions inside cylinder (close to bundle)
+    set n_cyl [expr int($n_ci*$frac)]
+    set cyl_rad2 [expr $cyl_rad*$cyl_rad]
+    for {set i $start} { $i < [expr $n_cyl+$start] } {incr i} {
+	set posx [expr $cyl_length*[t_random]-($cyl_length/2.0)]
+	set dist [expr $cyl_rad2 + 10.0]
+	while { $dist > $cyl_rad2 } {
+	    set posy [expr 2*$cyl_rad*[t_random]-$cyl_rad]
+	    set posz [expr 2*$cyl_rad*[t_random]-$cyl_rad]
+	    set dist [expr $posy*$posy + $posz*$posz]
+	}
+	set posx [expr $posx+[lindex $center 0] ]
+	set posy [expr $posy+[lindex $center 1] ]
+	set posz [expr $posz+[lindex $center 2] ] 
+	part $i pos $posx $posy $posz type $type q $valency
+    }
+    # Put the rest randomly into the sphere
+    set s_rad2 [expr $sphere_rad*$sphere_rad]
+    for {set i [expr $n_cyl+$start]} { $i < [expr $n_ci+$start] } {incr i} {
 	set dist [expr $s_rad2 + 10.0]
 	while { $dist > [expr $s_rad2-(2.0*$sphere_rad-1.0)] } {
 	    set posx [expr 2*$sphere_rad*[t_random]-$sphere_rad]
