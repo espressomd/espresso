@@ -329,7 +329,7 @@ void propagate_positions()
   double skin2;
   INTEG_TRACE(fprintf(stderr,"%d: propagate_positions:\n",this_node));
   rebuild_verletlist = 0;
-  skin2 = SQR(skin);
+  skin2 = SQR(skin/2.0);
 
   INNER_CELLS_LOOP(m, n, o) {
     p  = CELL_PTR(m, n, o)->pList.part;
@@ -386,7 +386,7 @@ void propagate_vel_pos()
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
   rebuild_verletlist = 0;
-  skin2 = SQR(skin);
+  skin2 = SQR(skin/2.0);
 
   INNER_CELLS_LOOP(m, n, o) {
     p  = CELL_PTR(m, n, o)->pList.part;
@@ -421,14 +421,14 @@ void propagate_vel_pos()
 #ifdef ADDITIONAL_CHECKS
       /* force check */
       db_force = SQR(p[i].f[0])+SQR(p[i].f[1])+SQR(p[i].f[2]);
-      if(sqrt(db_force) > skin) 
+      if(db_force > skin2) 
 	fprintf(stderr,"%d: Part %d has force %f (%f,%f,%f)\n",
 		this_node,p[i].r.identity,sqrt(db_force),
 		p[i].f[0],p[i].f[1],p[i].f[2]);
       if(db_force > db_max_force) { db_max_force=db_force; db_maxf_id=p[i].r.identity; }
       /* velocity check */
       db_vel   = SQR(p[i].v[0])+SQR(p[i].v[1])+SQR(p[i].v[2]);
-      if(sqrt(db_vel) > skin) 
+      if(db_vel > skin2) 
 	fprintf(stderr,"%d: Part %d has velocity %f (%f,%f,%f)\n",
 		this_node,p[i].r.identity,sqrt(db_vel),
 		p[i].v[0],p[i].v[1],p[i].v[2]);
@@ -459,11 +459,11 @@ void propagate_vel_pos()
   else {
     MPI_Gather(&e_kin, 1, MPI_DOUBLE, NULL, 0, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
-  if(sqrt(db_max_force)>skin) 
+  if(db_max_force > skin2) 
     fprintf(stderr,"%d: max_force=%e, part=%d f=(%e,%e,%e)\n",this_node,
 	    sqrt(db_max_force),db_maxf_id,local_particles[db_maxf_id]->f[0],
 	    local_particles[db_maxf_id]->f[1],local_particles[db_maxf_id]->f[2]);
-  if(sqrt(db_max_vel)>skin)
+  if(db_max_vel > skin2)
     fprintf(stderr,"%d: max_vel=%e, part=%d v=(%e,%e,%e)\n",this_node,
 	    sqrt(db_max_vel),db_maxv_id,local_particles[db_maxv_id]->v[0],
 	    local_particles[db_maxv_id]->v[1],local_particles[db_maxv_id]->v[2]);
