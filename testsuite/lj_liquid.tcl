@@ -26,7 +26,7 @@ puts "=                lj_liquid.tcl                    ="
 puts "==================================================="
 puts " "
 
-puts "Program Information: \n[info]\n"
+puts "Program Information: \n[code_info]\n"
 
 #############################################################
 #  Parameters                                               #
@@ -93,9 +93,9 @@ set volume [expr $box_l*$box_l*$box_l]
 set n_part [expr floor($volume*$density)]
 
 for {set i 0} { $i < $n_part } {incr i} {
-    set posx [expr $box_l*[tcl_rand]]
-    set posy [expr $box_l*[tcl_rand]]
-    set posz [expr $box_l*[tcl_rand]]
+    set posx [expr $box_l*[t_random]]
+    set posy [expr $box_l*[t_random]]
+    set posz [expr $box_l*[t_random]]
  
     part $i pos $posx $posy $posz type 0
 }
@@ -137,7 +137,7 @@ puts "Stop if minimal distance is larger than $min_dist"
 
 # set LJ cap
 set cap 20
-setmd lj_force_cap $cap 
+inter ljforcecap $cap
 
 set i 0
 while { $i < $warm_n_times && $act_min_dist < $min_dist } {
@@ -150,10 +150,10 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
     puts -nonewline "minimal distance = $act_min_dist\r"
     flush stdout
 #   write observables
-puts $obs_file "{ time [setmd time] } [analyze energy]"
+    puts $obs_file "{ time [setmd time] } [analyze energy]"
 #   Increase LJ cap
     set cap [expr $cap+10]
-    setmd lj_force_cap $cap
+    inter ljforcecap $cap
     incr i
 }
 
@@ -176,13 +176,13 @@ puts "transfer_rate [setmd transfer_rate]"
 puts "verlet_reuse  [setmd verlet_reuse]" 
 
 # write parameter file
-polyBlockWrite "$name$ident.set" {box_l time_step skin temp gamma lj_force_cap} "" 
+polyBlockWrite "$name$ident.set" {box_l time_step skin temp gamma } "" 
 
 #############################################################
 #      Integration                                          #
 #############################################################
 
-setmd lj_force_cap 0
+inter ljforcecap 0
 
 puts "\nStart integration: run $int_n_times times $int_steps steps"
 
