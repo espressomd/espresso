@@ -343,6 +343,84 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
   return -1;
 }
 
+
+int get_lipid_orients(IntList* l_orient) {
+  int i , j,gi,gj, atom;
+  double zref, zreflocal;  
+  double dir[3];
+  double grid_size[2];
+
+  double* height_grid;
+  int* grid_parts;
+
+  if ( xdir + ydir + zdir == -3 || mode_grid_3d[xdir] <= 0 || mode_grid_3d[ydir] <= 0 ) {
+    fprintf(stderr,"%d,attempt to get lipid orientations with uninitialized grid \n",this_node);
+    errexit();
+  }
+
+  /* Allocate memory for height grid arrays and initialize these arrays */
+  height_grid = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
+  grid_parts = malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
+  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+      height_grid[j+i*mode_grid_3d[xdir]] = 0;
+      grid_parts[j+i*mode_grid_3d[xdir]] = 0;
+    }
+  }
+
+  /* Calculate physical size of grid mesh */
+  grid_size[xdir] = box_l[xdir]/(double)mode_grid_3d[xdir];
+  grid_size[ydir] = box_l[ydir]/(double)mode_grid_3d[ydir];
+
+
+  /* Update particles */
+  updatePartCfg(WITHOUT_BONDS);
+  //Make sure particles are sorted
+  if (!sortPartCfg()) {
+    fprintf(stderr,"%d,could not sort partCfg \n",this_node);
+    return -1;
+    }
+  
+
+  /* Find the mean z position and fold x y coordinates but not z*/
+  zref = 0;
+  for (i = 0 ; i < n_total_particles ; i++) {
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,xdir);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,ydir);
+    zref += partCfg[i].r.p[zdir];
+  }
+  zref = zref/(double)(n_total_particles);
+
+ /* Calculate an initial height function of all particles */
+  for (i = 0 ; i < n_total_particles ; i++) {
+    gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
+    gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
+    height_grid[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir];
+    grid_parts[gj + gi*mode_grid_3d[xdir]] += 1;
+  }
+
+
+  /* Normalise the initial height function */
+  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+      if ( grid_parts[j+i*mode_grid_3d[xdir]] > 0 ) {
+	height_grid[j+i*mode_grid_3d[xdir]] = height_grid[j+i*mode_grid_3d[xdir]]/(double)(grid_parts[j+i*mode_grid_3d[xdir]]);
+      } else {
+	height_grid[j+i*mode_grid_3d[xdir]] = zref;
+      }
+    }
+  }
+  for ( i = 0 ; i < n_molecules ; i++) {
+    atom = topology[i].part.e[0];
+    gi = floor( partCfg[atom].r.p[xdir]/grid_size[xdir] );
+    gj = floor( partCfg[atom].r.p[ydir]/grid_size[ydir] );
+    zreflocal = height_grid[gj+gi*mode_grid_3d[xdir]];
+    l_orient->e[i] = lipid_orientation(atom,partCfg,zreflocal,dir);
+  }
+  return 1;
+}
+
+
 /** This routine performs must of the work involved in the analyze
     modes2d command.  A breakdown of what the routine does is as
     follows
@@ -376,7 +454,7 @@ int modes2d(fftw_complex* modes) {
   int nstray;
   int nrealstray;
   int l_orient;
-  double norm;
+  double norm, shift;
   int xi, yi;
   double meanval ;
   int nonzerocnt, gapcnt;
@@ -416,102 +494,123 @@ int modes2d(fftw_complex* modes) {
     }
   
 
-  /* Find the mean z position and fold x y coordinates but not z*/
-  zref = 0;
-  for (i = 0 ; i < n_total_particles ; i++) {
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,xdir);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,ydir);
-    zref += partCfg[i].r.p[zdir];
-  }
-  zref = zref/(double)(n_total_particles);
-
-  /* Calculate an initial height function of all particles */
-  for (i = 0 ; i < n_total_particles ; i++) {
-    gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
-    gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
-    height_grid[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir];
-    grid_parts[gj + gi*mode_grid_3d[xdir]] += 1;
-  }
-
-
-  /* Normalise the initial height function */
-  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
-    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
-      if ( grid_parts[j+i*mode_grid_3d[xdir]] > 0 ) {
-	height_grid[j+i*mode_grid_3d[xdir]] = height_grid[j+i*mode_grid_3d[xdir]]/(double)(grid_parts[j+i*mode_grid_3d[xdir]]);
-      } else {
-	height_grid[j+i*mode_grid_3d[xdir]] = zref;
-      }
+    /* Find the mean z position of unfolded coordinates */ 
+    zref = 0;
+    for (i = 0 ; i < n_total_particles ; i++) {
+      zref += partCfg[i].r.p[zdir];
     }
-  }
+    zref = zref/(double)(n_total_particles);
+    
+    /* Calculate shift factor */
+    shift = zref - box_l[zdir]/2.0;
+
+    /* Shift bilayer to center of box */
+    for (i = 0 ; i < n_total_particles ; i++) {
+      partCfg[i].r.p[zdir] -= shift;
+    }
+
+    /* Fold particles and find the mean z position of shifted
+       coordinates */ 
+    zref = 0;
+    for (i = 0 ; i < n_total_particles ; i++) {
+      fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,xdir);
+      fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,ydir);
+      fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,zdir);
+      zref += partCfg[i].r.p[zdir];
+    }
+    zref = zref/(double)(n_total_particles);
 
 
-  /* Calculate the non normalized height function of tail lipids */
-  nup = ndown = nstray = nrealstray = 0;
-  for (i = 0 ; i < n_total_particles ; i++) {
-    if ( (partCfg[i].p.type == 1)) {
+
+
+
+    /* Calculate an initial height function of all particles */
+    for (i = 0 ; i < n_total_particles ; i++) {
       gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
       gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
+      height_grid[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir];
+      grid_parts[gj + gi*mode_grid_3d[xdir]] += 1;
+    }
 
-      zreflocal = height_grid[gj+gi*mode_grid_3d[xdir]];
 
-      l_orient = lipid_orientation(i,partCfg,zreflocal,direction);
-      if ( l_orient == REAL_LIPID_STRAY ) {
-	nrealstray++;
-      }
-
-      if ( l_orient != LIPID_STRAY && l_orient != REAL_LIPID_STRAY) {
-      	if ( l_orient == LIPID_UP ) {
-	  nup++;
-	  height_grid_up[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir] - zref;
-	  grid_parts_up[gj + gi*mode_grid_3d[xdir]] += 1;
-	} else if ( l_orient == LIPID_DOWN ) {
-	  ndown++;
-	  height_grid_down[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir] - zref;
-	  grid_parts_down[gj + gi*mode_grid_3d[xdir]] += 1;
+    /* Normalise the initial height function */
+    for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+      for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+	if ( grid_parts[j+i*mode_grid_3d[xdir]] > 0 ) {
+	  height_grid[j+i*mode_grid_3d[xdir]] = height_grid[j+i*mode_grid_3d[xdir]]/(double)(grid_parts[j+i*mode_grid_3d[xdir]]);
+	} else {
+	  height_grid[j+i*mode_grid_3d[xdir]] = zref;
 	}
-      } else {
-	nstray++;
       }
     }
-    fflush(stdout);
-    unfold_position(partCfg[i].r.p,partCfg[i].l.i);    
-  }
-  if ( nrealstray > 0 || nstray > 0) {
-    printf("Warning: there were %d stray lipids and %d realstray lipids in height calculation \n",nstray, nrealstray);
-  }
-  //  printf(" Lipids up = %d , Lipids down = %d \n",nup, ndown);
-
-  STAT_TRACE(fprintf(stderr,"%d, Lipids up = %d , Lipids down = %d \n",this_node, nup, ndown));
-
-  /* Reinitialise the height grid */
-  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
-    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
-     height_grid[j+i*mode_grid_3d[xdir]] = 0.0;
-      grid_parts[j+i*mode_grid_3d[xdir]] = 0;
+    
+    
+    /* Calculate the non normalized height function of tail lipids */
+    nup = ndown = nstray = nrealstray = 0;
+    for (i = 0 ; i < n_total_particles ; i++) {
+      if ( (partCfg[i].p.type == 1)) {
+	gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
+	gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
+	
+	zreflocal = height_grid[gj+gi*mode_grid_3d[xdir]];
+	
+	l_orient = lipid_orientation(i,partCfg,zreflocal,direction);
+	if ( l_orient == REAL_LIPID_STRAY ) {
+	  nrealstray++;
+	}
+	
+	if ( l_orient != LIPID_STRAY && l_orient != REAL_LIPID_STRAY) {
+	  if ( l_orient == LIPID_UP ) {
+	    nup++;
+	    height_grid_up[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir] - zref;
+	    grid_parts_up[gj + gi*mode_grid_3d[xdir]] += 1;
+	  } else if ( l_orient == LIPID_DOWN ) {
+	    ndown++;
+	    height_grid_down[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir] - zref;
+	    grid_parts_down[gj + gi*mode_grid_3d[xdir]] += 1;
+	  }
+	} else {
+	  nstray++;
+	}
+      }
+      fflush(stdout);
+      unfold_position(partCfg[i].r.p,partCfg[i].l.i);    
     }
-  }
-  /*
-  // Now for debugging purposes we impose a height function with known
-  // power spectrum
-  double qx = 0;
-  double qy = 0;
-  int qxi = 0;
-  int qyi = 0;
-  int NGrid = 8;
-  double Norm = 1/8.0;
-  //  int NGrid2 = 4;
-  double BoxLength = 28.75;
-  for ( i = 0 ; i < 8 ; i++) {
+    if ( nrealstray > 0 || nstray > 0) {
+      printf("Warning: there were %d stray lipids and %d realstray lipids in height calculation \n",nstray, nrealstray);
+    }
+    //  printf(" Lipids up = %d , Lipids down = %d \n",nup, ndown);
+
+    STAT_TRACE(fprintf(stderr,"%d, Lipids up = %d , Lipids down = %d \n",this_node, nup, ndown));
+
+    /* Reinitialise the height grid */
+    for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+      for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+	height_grid[j+i*mode_grid_3d[xdir]] = 0.0;
+	grid_parts[j+i*mode_grid_3d[xdir]] = 0;
+      }
+    }
+    /*
+    // Now for debugging purposes we impose a height function with known
+    // power spectrum
+    double qx = 0;
+    double qy = 0;
+    int qxi = 0;
+    int qyi = 0;
+    int NGrid = 8;
+    double Norm = 1/8.0;
+    //  int NGrid2 = 4;
+    double BoxLength = 28.75;
+    for ( i = 0 ; i < 8 ; i++) {
     for ( j = 0 ; j < 8 ; j++) {
-      height_grid[j+i*8] = 0.0;
-      for ( qxi = -4 ; qxi < 4 ; qxi++) {
-	for ( qyi = -4 ; qyi < 4 ; qyi++) {
-	  double dqx = qxi*2.0*3.141592/BoxLength;
-	  double dqy = qyi*2.0*3.141592/BoxLength;
-	  double dx = qxi*2.0*3.141592/(double)(NGrid);
-	  double dy = qyi*2.0*3.141592/(double)(NGrid);
-	  //	  int index = (qx+NGrid2)*NGrid + (qy+NGrid2);
+    height_grid[j+i*8] = 0.0;
+    for ( qxi = -4 ; qxi < 4 ; qxi++) {
+    for ( qyi = -4 ; qyi < 4 ; qyi++) {
+    double dqx = qxi*2.0*3.141592/BoxLength;
+    double dqy = qyi*2.0*3.141592/BoxLength;
+    double dx = qxi*2.0*3.141592/(double)(NGrid);
+    double dy = qyi*2.0*3.141592/(double)(NGrid);
+    //	  int index = (qx+NGrid2)*NGrid + (qy+NGrid2);
 	  height_grid[j+i*NGrid] += (1/(1 + dqx*dqx + dqy*dqy ))*cos((double)(dx*i + dy*j));
 	}
       }
@@ -527,69 +626,69 @@ int modes2d(fftw_complex* modes) {
   //  norm = 1.0/(double)(mode_grid_3d[xdir]);
 
   
-  norm = 1.0;
-  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
-    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
-      
-      if ( ( grid_parts_up[j + i*mode_grid_3d[xdir]] > 0 ) && ( grid_parts_down[j + i*mode_grid_3d[xdir]] > 0 ) ) {
-	height_grid[j+i*mode_grid_3d[xdir]] = 
-	  0.5*norm*((height_grid_up[j+i*mode_grid_3d[xdir]])/(double)(grid_parts_up[j + i*mode_grid_3d[xdir]]) + 
-		    (height_grid_down[j+i*mode_grid_3d[xdir]])/(double)(grid_parts_down[j + i*mode_grid_3d[xdir]]));
-	grid_parts[j+i*mode_grid_3d[xdir]] = grid_parts_up[j + i*mode_grid_3d[xdir]] + grid_parts_down[j + i*mode_grid_3d[xdir]];
-      } else {
-	// Either upper or lower layer has no lipids
-	height_grid[j+i*mode_grid_3d[xdir]] = 0.0;
-	grid_parts[j+i*mode_grid_3d[xdir]] = 0;
+    norm = 1.0;
+    for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+      for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+	
+	if ( ( grid_parts_up[j + i*mode_grid_3d[xdir]] > 0 ) && ( grid_parts_down[j + i*mode_grid_3d[xdir]] > 0 ) ) {
+	  height_grid[j+i*mode_grid_3d[xdir]] = 
+	    0.5*norm*((height_grid_up[j+i*mode_grid_3d[xdir]])/(double)(grid_parts_up[j + i*mode_grid_3d[xdir]]) + 
+		      (height_grid_down[j+i*mode_grid_3d[xdir]])/(double)(grid_parts_down[j + i*mode_grid_3d[xdir]]));
+	  grid_parts[j+i*mode_grid_3d[xdir]] = grid_parts_up[j + i*mode_grid_3d[xdir]] + grid_parts_down[j + i*mode_grid_3d[xdir]];
+	} else {
+	  // Either upper or lower layer has no lipids
+	  height_grid[j+i*mode_grid_3d[xdir]] = 0.0;
+	  grid_parts[j+i*mode_grid_3d[xdir]] = 0;
+	}
       }
     }
-  }
-  
+    
 
-  /* Check height grid for zero values and substitute mean of surrounding cells */
-  gapcnt = 0;
-  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
-    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
-      if ( grid_parts[j + i*mode_grid_3d[xdir]] ==  0) {
-	meanval = 0.0;
-	nonzerocnt = 0;
-	for ( xi = (i-1) ; xi <= (i+1) ; xi++) {
-	  for ( yi = (j-1) ; yi <= (j+1) ; yi++) {
-	    if ( height_grid[yi+xi*mode_grid_3d[xdir]] != 0 ) {
-	      meanval += height_grid[yi+xi*mode_grid_3d[xdir]];
-	      nonzerocnt++;
+    /* Check height grid for zero values and substitute mean of surrounding cells */
+    gapcnt = 0;
+    for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+      for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+	if ( grid_parts[j + i*mode_grid_3d[xdir]] ==  0) {
+	  meanval = 0.0;
+	  nonzerocnt = 0;
+	  for ( xi = (i-1) ; xi <= (i+1) ; xi++) {
+	    for ( yi = (j-1) ; yi <= (j+1) ; yi++) {
+	      if ( height_grid[yi+xi*mode_grid_3d[xdir]] != 0 ) {
+		meanval += height_grid[yi+xi*mode_grid_3d[xdir]];
+		nonzerocnt++;
+	      }
 	    }
 	  }
-	}
-	if ( nonzerocnt == 0 ) { 
-	  fprintf(stderr,"Error: hole in membrane \n ");
-	  fflush(stdout);
-	  return -1;
-	}
-	gapcnt++;
-      }      
+	  if ( nonzerocnt == 0 ) { 
+	    fprintf(stderr,"Error: hole in membrane \n ");
+	    fflush(stdout);
+	    return -1;
+	  }
+	  gapcnt++;
+	}      
+      }
     }
-  }
-  if ( gapcnt != 0 ) { 
-    fprintf(stderr,"Warning: %d, gridpoints with no particles \n",gapcnt);
-    fflush(stdout);
-  }
-
-
-
-  STAT_TRACE(fprintf(stderr,"%d,calling fftw \n",this_node));
-  rfftwnd_one_real_to_complex(mode_analysis_plan, height_grid, modes);
-  STAT_TRACE(fprintf(stderr,"%d,called fftw \n",this_node));
-
-
-  free(height_grid);
-  free(grid_parts);
-  free(height_grid_up);
-  free(height_grid_down);
-  free(grid_parts_up);
-  free(grid_parts_down);
-
-  return 1;
-
+    if ( gapcnt != 0 ) { 
+      fprintf(stderr,"Warning: %d, gridpoints with no particles \n",gapcnt);
+      fflush(stdout);
+    }
+    
+    
+    
+    STAT_TRACE(fprintf(stderr,"%d,calling fftw \n",this_node));
+    rfftwnd_one_real_to_complex(mode_analysis_plan, height_grid, modes);
+    STAT_TRACE(fprintf(stderr,"%d,called fftw \n",this_node));
+    
+    
+    free(height_grid);
+    free(grid_parts);
+    free(height_grid_up);
+    free(height_grid_down);
+    free(grid_parts_up);
+    free(grid_parts_down);
+    
+    return 1;
+    
 }
 
 #undef MODES2D_NUM_TOL

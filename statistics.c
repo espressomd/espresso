@@ -25,8 +25,6 @@
 #include "parser.h"
 #include "particle_data.h"
 #include "interaction_data.h"
-#include "domain_decomposition.h"
-#include "verlet.h"
 
 /** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
@@ -97,7 +95,7 @@ static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
 double mindist(IntList *set1, IntList *set2)
 {
   double mindist, pt[3];
-  int i, j, in_set;
+  int i, j;
 
   mindist = SQR(box_l[0] + box_l[1] + box_l[2]);
 
@@ -106,129 +104,15 @@ double mindist(IntList *set1, IntList *set2)
     pt[0] = partCfg[j].r.p[0];
     pt[1] = partCfg[j].r.p[1];
     pt[2] = partCfg[j].r.p[2];
-    /* check which sets particle j belongs to
-       bit 0: set1, bit1: set2
-    */
-    in_set = 0;
-    if (!set1 || intlist_contains(set1, partCfg[j].p.type))
-      in_set = 1;
-    if (!set2 || intlist_contains(set2, partCfg[j].p.type))
-      in_set |= 2;
-    if (in_set == 0)
-      continue;
-
-    for (i=j+1; i<n_total_particles; i++)
-      /* accept a pair if particle j is in set1 and particle i in set2 or vice versa. */
-      if (((in_set & 1) && (!set2 || intlist_contains(set2, partCfg[i].p.type))) ||
-	  ((in_set & 2) && (!set1 || intlist_contains(set1, partCfg[i].p.type))))
-	mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
+    if (!set1 || intlist_contains(set1, partCfg[j].p.type)) {
+      for (i=j+1; i<n_total_particles; i++)
+	if (!set2 || intlist_contains(set2, partCfg[i].p.type)) {
+	  mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
+	}
+    }
   }
   mindist = sqrt(mindist);
   return mindist;
-}
-
-void aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_list, int *link_list, int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std)
-{
-  /* add check for:
-     single procesor
-     verlet method not N2
-     cut-off is larger than dist criteria 
-     check if start and finish mol_id's make senses
-  */
-
-  int c, np, n, i,j, pairid;
-  Particle *p1, *p2, **pairs;
-  double dist2, vec21[3];
-  int arr_size = n_molecules * (n_molecules+1 ) / 2;
-  double minidist2[arr_size];
-  int target1, target2, head_i;
-
-  build_verlet_lists();
-
-  for (i = s_mol_id; i <= f_mol_id; i++) {
-    head_list[i]=i;
-    link_list[i]=-1;
-    agg_id_list[i]=i;
-    agg_size[i]=0;
-  }
-
-  for (i = 0; i < arr_size; i++) {
-    minidist2[i]=100. * box_l[0];
-  }
-  
-  /* Loop local cells */
-  for (c = 0; c < local_cells.n; c++) {
-    /* Loop cell neighbors */
-    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-      pairs = dd.cell_inter[c].nList[n].vList.pair;
-      np    = dd.cell_inter[c].nList[n].vList.n;
-      /* verlet list loop */
-      for(i=0; i<2*np; i+=2) {
-	p1 = pairs[i];                    /* pointer to particle 1 */
-	p2 = pairs[i+1];                  /* pointer to particle 2 */
-	if (((p1->p.mol_id <= f_mol_id) && (p1->p.mol_id >= s_mol_id)) && ((p2->p.mol_id <= f_mol_id) && (p2->p.mol_id >= s_mol_id))) {
-	  if ( p1->p.mol_id >= p2->p.mol_id ) {
-	    pairid =  p1->p.mol_id * (p1->p.mol_id + 1)/2 + p2->p.mol_id;
-	  } else {
-	    pairid =  p2->p.mol_id * (p2->p.mol_id + 1)/2 + p1->p.mol_id;
-	  }
-	  
-	  dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
-	  if (dist2 < minidist2[pairid] ) { 
-	    minidist2[pairid] = dist2;
-	  }
-	}
-      }
-    }
-  }
-  
-  for (i = f_mol_id; i >= s_mol_id; i--) {
-    for (j = s_mol_id; j <= i; j++) {
-      if( minidist2[i*(i+1)/2+j]<dist_criteria2) {
-	if (agg_id_list[i] != agg_id_list[j]) {
-	  /* merge list containing j into list containing i*/
-	  target1=head_list[agg_id_list[j]];
-	  head_list[agg_id_list[j]]=-2;
-	  head_i=head_list[agg_id_list[i]];
-	  head_list[agg_id_list[i]]=target1;
-	  agg_id_list[target1]=agg_id_list[i];
-	  target2=link_list[target1];
-	  while(target2 != -1) {
-	    target1=target2;
-	    target2=link_list[target1];
-	    agg_id_list[target1]=agg_id_list[i];
-	  }
-	  agg_id_list[target1]=agg_id_list[i];
-	  link_list[target1]=head_i;
-
-	}
-      }
-    }
-  }
-  
-  /* count number of aggregates 
-     find aggregate size
-     find max and find min size, and std */
-  for (i = s_mol_id ; i <= f_mol_id ; i++) {
-    if (head_list[i] != -2) {
-      (*agg_num)++;
-      agg_size[*agg_num -1]++;
-      target1= head_list[i];
-      while( link_list[target1] != -1) {
-	target1= link_list[target1];
-	agg_size[*agg_num -1]++;
-      }
-    }
-  }
-  
-  for (i = 0 ; i < *agg_num; i++) {
-    *agg_avg += agg_size[i];
-    *agg_std += agg_size[i] * agg_size[i];
-    if (*agg_min > agg_size[i]) { *agg_min = agg_size[i]; }
-    if (*agg_max < agg_size[i]) { *agg_max = agg_size[i]; }
-  }
-  
-  return ;
 }
 
 void centermass(int type, double *com)
@@ -262,21 +146,21 @@ void gyrationtensor(int type, double *gyrtensor)
   count=0;
   updatePartCfg(WITHOUT_BONDS);
   for(i=0;i<9;i++) gyrtensor[i]=0.;
-  centermass(type, com);
+	centermass(type, com);
   for (j=0; j<n_total_particles; j++) {
     if (type == partCfg[j].p.type) {
       count ++;
       for (i=0; i<3; i++) {
       	p1[i] = partCfg[j].r.p[i] - com[i];
       }
-      gyrtensor[0] += p1[0] * p1[0]; 
-      gyrtensor[4] += p1[1] * p1[1];
-      gyrtensor[8] += p1[2] * p1[2];
-      gyrtensor[1] += p1[0] * p1[1];
-      gyrtensor[2] += p1[0] * p1[2]; 
-      gyrtensor[5] += p1[1] * p1[2];
-    }
-  }
+    	gyrtensor[0] += p1[0] * p1[0]; 
+    	gyrtensor[4] += p1[1] * p1[1];
+    	gyrtensor[8] += p1[2] * p1[2];
+    	gyrtensor[1] += p1[0] * p1[1];
+    	gyrtensor[2] += p1[0] * p1[2]; 
+    	gyrtensor[5] += p1[1] * p1[2];
+		}
+	}
   /* use symmetry */
   gyrtensor[3] = gyrtensor[1]; 
   gyrtensor[6] = gyrtensor[2]; 
@@ -341,8 +225,7 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
     for(t1=0; t1<n_p1; t1++) {
       if(partCfg[i].p.type == p1_types[t1]) {
 	min_dist2 = start_dist2;
-	/* particle loop: p2_types*/
-	for(j=0; j<n_total_particles; j++) {
+	/* particle loop: p2_types*/for(j=0; j<n_total_particles; j++) {
 	  if(j != i) {
 	    for(t2=0; t2<n_p2; t2++) {
 	      if(partCfg[j].p.type == p2_types[t2]) {
@@ -493,22 +376,6 @@ void analyze_configs(double *tmp_config, int count) {
   n_configs++;
 }
 
-void analyze_activate(int ind) {
-  int i;
-  double pos[3];
-  n_part_conf = n_total_particles;
-
-  for(i=0; i<n_part_conf; i++) {
-    pos[0] = configs[ind][3*i];
-    pos[1] = configs[ind][3*i+1];
-    pos[2] = configs[ind][3*i+2];
-    if (place_particle(i, pos)==TCL_ERROR) {
-      fprintf(stderr, "Failed upon replacing particle in Espresso "); 
-      fprintf(stderr, "Aborting...\n"); errexit();
-    }
-  }
-}
-
 /****************************************************************************************
  *                                 Observables handling
  ****************************************************************************************/
@@ -545,63 +412,54 @@ void invalidate_obs()
 static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
 {
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-  int i , atom;
+  int i,change ;
   IntList l_orient;
-  int xd, yd, zd;
-  double zref;
-  double dir[3];
-
   init_intlist(&l_orient);
 
-  STAT_TRACE(fprintf(stderr,"%d,parsing get_lipid_orients \n",this_node);)
+  change = 0;
 
-    if ( !ARG_IS_I(0,xd) || !ARG_IS_I(1,yd) || !ARG_IS_I(2,zd) ) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp,"usage: analyze get_lipid_orients <xd> <yd> <zd> [setstray <stray_cut_off>]", (char *)NULL);
-      return (TCL_ERROR);
-    }
-  STAT_TRACE(fprintf(stderr,"%d,setaxes has args %d,%d,%d \n",this_node,mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]));
-
-  
-  if ( argc == 5 ) {
-    if ( ARG_IS_S(3,"setstray") ) { 
-      if ( !ARG_IS_D(5,stray_cut_off) ) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp,"usage: analyze get_lipid_orients <xd> <yd> <zd> [setstray <stray_cut_off>]", (char *)NULL);
-	return (TCL_ERROR);
+  STAT_TRACE(fprintf(stderr,"%d,parsing get_lipid_orients \n",this_node));
+  while (argc > 0)
+    {
+      if ( ARG0_IS_S("setgrid") ) { 
+	if ( !ARG_IS_I(1,mode_grid_3d[0]) || !ARG_IS_I(2,mode_grid_3d[1]) || !ARG_IS_I(3,mode_grid_3d[2]) ) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp,"usage: analyze get_lipid_orients [setgrid <xdim> <ydim> <zdim>] [setstray <stray_cut_off>]", (char *)NULL);
+	    return (TCL_ERROR);
+	  }
+	  STAT_TRACE(fprintf(stderr,"%d,setgrid has args %d,%d,%d \n",this_node,mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]));
+	  change = 4;
+	  /* Update global parameters */
+	  map_to_2dgrid();
+	  mode_grid_changed = 1;
+	  
+	}
+      if ( ARG0_IS_S("setstray") ) { 
+	if ( !ARG_IS_D(1,stray_cut_off) ) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp,"usage: analyze get_lipid_orients [setgrid <xdim> <ydim> <zdim>] [setstray <stray_cut_off>]", (char *)NULL);
+	  return (TCL_ERROR);
+	}
+	STAT_TRACE(fprintf(stderr,"%d,setgrid has args %d,%d,%d \n",this_node,mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]));
+	change = 2;
       }
-      STAT_TRACE(fprintf(stderr,"%d,setgrid has args %d,%d,%d \n",this_node,mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]));
+      argc -= change;
+      argv += change;
+      STAT_TRACE(fprintf(stderr,"%d,argc = %d \n",this_node, argc));
+      
+      
     }
-  }
-
-  /* Update particles */
-  updatePartCfg(WITHOUT_BONDS);
-  /* Make sure particles are sorted */
-  if (!sortPartCfg()) {
-    fprintf(stderr,"%d,could not sort partCfg \n",this_node);
-    errexit();
-  }
-
+  
   realloc_intlist(&l_orient, n_molecules);
-  /* Find the mean z position and fold x y coordinates but not z*/
-  zref = 0;
-  for (i = 0 ; i < n_total_particles ; i++) {
-    zref += partCfg[i].r.p[zd];
-  }
-  zref = zref/(double)(n_total_particles);
+  get_lipid_orients(&l_orient);
   
 
-  for ( i = 0 ; i < n_molecules ; i++) {
-    atom = topology[i].part.e[0];
-    l_orient.e[i] = lipid_orientation(atom,partCfg,zref,dir);
-  }
   Tcl_AppendResult(interp, "{ Lipid_orientations } { ", (char *)NULL);
   for ( i = 0 ; i < n_molecules ; i++) {
     sprintf(buffer, "%d ", l_orient.e[i]);
     Tcl_AppendResult(interp, buffer , (char *)NULL);
   }
   Tcl_AppendResult(interp, "} ", (char *)NULL);
-
 
   realloc_intlist(&l_orient,0);
 
@@ -612,8 +470,8 @@ static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
 static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
 {
   STAT_TRACE(fprintf(stderr,"%d,parsing modes2d \n",this_node);)
-    /* 'analyze modes2d [setgrid <xdim> <ydim> <zdim>] [setstray <stray_cut_off>]]' */
-    char buffer[TCL_DOUBLE_SPACE];
+  /* 'analyze modes2d [setgrid <xdim> <ydim> <zdim>] [setstray <stray_cut_off>]]' */
+  char buffer[TCL_DOUBLE_SPACE];
   int i,j,change ;
   fftw_complex* result;
 
@@ -655,7 +513,7 @@ static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
       STAT_TRACE(fprintf(stderr,"%d,argc = %d \n",this_node, argc);)
 
 	
-	}
+    }
 
 
   result = malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex));
@@ -678,7 +536,7 @@ static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
       Tcl_PrintDouble(interp,result[j+i*(mode_grid_3d[ydir]/2+1)].im,buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
       Tcl_AppendResult(interp, " } ", (char *)NULL);
-    }
+      }
     Tcl_AppendResult(interp, " } ", (char *)NULL);
   }
 
@@ -756,69 +614,6 @@ static int parse_mindist(Tcl_Interp *interp, int argc, char **argv)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_OK;
 }
-
-static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
-{
-  /* 'analyze centermass [<type>]' */
-  char buffer[256];
-  int i, target1;
-  int agg_id_list[n_molecules];
-  double dist_criteria, dist_criteria2;
-  int head_list[n_molecules], link_list[n_molecules];
-  int agg_num =0, agg_size[n_molecules], agg_min= n_molecules, agg_max = 0,  agg_std = 0, agg_avg = 0; 
-  float fagg_avg;
-  int s_mol_id, f_mol_id;
-
-  /* parse arguments */
-  if (argc != 3) {
-    Tcl_AppendResult(interp, "usage: analyze aggregation [<dist_criteria>] [<start mol_id>] [<finish mol_id>]", (char *)NULL);
-    return (TCL_ERROR);
-  }
-
-  if (!ARG_IS_D(0,dist_criteria)) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage:  analyze aggregation  [<dist_criteria>] [<start mol_id>] [<finish mol_id>]", (char *)NULL);
-    return (TCL_ERROR);
-  }
-  dist_criteria2 = dist_criteria * dist_criteria;
-
-  if (!ARG_IS_I(1,s_mol_id)) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage:  analyze aggregation  [<dist_criteria>] [<start mol_id>] [<finish mol_id>]", (char *)NULL);
-    return (TCL_ERROR);
-  }
-  if (!ARG_IS_I(2,f_mol_id)) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage:  analyze aggregation  [<dist_criteria>] [<start mol_id>] [<finish mol_id>]", (char *)NULL);
-    return (TCL_ERROR);
-  }
-  
-  aggregation(dist_criteria2, s_mol_id, f_mol_id, head_list, link_list, agg_id_list, 
-	      &agg_num, agg_size, &agg_max, &agg_min, &agg_avg, &agg_std);
-  
-  fagg_avg = (float) (agg_avg)/agg_num;
-  sprintf (buffer, " MAX %d MIN %d AVG %f STD %f AGG_NUM %d AGGREGATES", 
-	   agg_max, agg_min, fagg_avg, sqrt( (float) (agg_std-fagg_avg*fagg_avg)), agg_num);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-  
-  for (i = s_mol_id ; i <= f_mol_id ; i++) {
-    if (head_list[i] != -2) {
-      target1= head_list[i];
-      sprintf(buffer, " { %d ", target1); 
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-      while( link_list[target1] != -1) {
-	target1= link_list[target1];
-	sprintf(buffer, "%d ", target1); 
-	Tcl_AppendResult(interp, buffer, (char *)NULL); 
-      }
-      sprintf(buffer, "} ");
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-    }
-  }
-
-  return TCL_OK;
-}
-
 static int parse_centermass(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze centermass [<type>]' */
@@ -833,17 +628,17 @@ static int parse_centermass(Tcl_Interp *interp, int argc, char **argv)
   }
 
   if (!ARG0_IS_I(p1)) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze centermass [<type>]", (char *)NULL);
-    return (TCL_ERROR);
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "usage: analyze centermass [<type>]", (char *)NULL);
+      return (TCL_ERROR);
   }
   
-  centermass(p1, com);  
+  centermass(p1, com);
+  
   sprintf(buffer,"%f %f %f",com[0],com[1],com[2]);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_OK;
 }
-
 
 static int parse_gyrationtensor(Tcl_Interp *interp, int argc, char **argv)
 {
@@ -866,8 +661,8 @@ static int parse_gyrationtensor(Tcl_Interp *interp, int argc, char **argv)
   gyrationtensor(p1, gyrtensor);
   
   sprintf(buffer,"%f %f %f %f %f %f %f %f %f",
-	  gyrtensor[0],gyrtensor[1],gyrtensor[2],gyrtensor[3],gyrtensor[4],
-	  gyrtensor[5],gyrtensor[6],gyrtensor[7],gyrtensor[8]);
+    gyrtensor[0],gyrtensor[1],gyrtensor[2],gyrtensor[3],gyrtensor[4],
+    gyrtensor[5],gyrtensor[6],gyrtensor[7],gyrtensor[8]);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_OK;
 }
@@ -897,7 +692,7 @@ static int parse_find_principal_axis(Tcl_Interp *interp, int argc, char **argv)
   sprintf(buffer,"{eigenval eigenvector} ");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   for (j= 0; j < 3; j++) {
-    i=calc_eigenvector_3x3(gyrtensor,eva[j],eve);
+  	i=calc_eigenvector_3x3(gyrtensor,eva[j],eve);
     sprintf(buffer," { %f { %f %f %f } }",eva[j],eve[0],eve[1],eve[2]);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
@@ -1304,33 +1099,6 @@ static int parse_configs(Tcl_Interp *interp, int argc, char **argv)
   return TCL_ERROR;
 }
 
-static int parse_activate(Tcl_Interp *interp, int argc, char **argv)
-{
-  /* 'analyze replace <index>' */
-  /*****************************/
-  char buffer[2*TCL_INTEGER_SPACE+256];
-  int i;
-
-  if (argc != 1) { Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze activate <index>", (char *)NULL); return TCL_ERROR; }
-  if (n_total_particles == 0) {
-    Tcl_AppendResult(interp,"No particles to append! Use 'part' to create some, or 'analyze configs' to submit a bunch!",(char *) NULL); 
-    return (TCL_ERROR); }
-  if ((n_configs > 0) && (n_part_conf != n_total_particles)) {
-    sprintf(buffer,"All configurations stored must have the same length (previously: %d, now: %d)!", n_part_conf, n_total_particles);
-    Tcl_AppendResult(interp,buffer,(char *) NULL); return (TCL_ERROR); 
-  }
-  if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
-  if (!ARG0_IS_I(i)) return (TCL_ERROR);
-  if((n_configs == 0) && (i==0)) analyze_append();
-  else if ((n_configs == 0) && (i!=0)) {
-    Tcl_AppendResult(interp, "Nice try, but there are no stored configurations that could be replaced!", (char *)NULL); return TCL_ERROR; }
-  else if((i < 0) || (i > n_configs-1)) {
-    sprintf(buffer,"Index %d out of range (must be in [0,%d])!",i,n_configs-1);
-    Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_ERROR; }
-  else analyze_activate(i);
-  sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
-}
-
 /****************************************************************************************
  *                                 main parser for analyze
  ****************************************************************************************/
@@ -1352,8 +1120,6 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return parse_lipid_orient_order(interp,argc-2,argv+2);
   else if (ARG1_IS_S("mindist"))
     return parse_mindist(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("aggregation"))
-    return parse_aggregation(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("centermass"))
     return parse_centermass(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("gyrationtensor"))
@@ -1412,7 +1178,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return parse_formfactor(interp, 0, argc - 2, argv + 2);
   else if (ARG1_IS_S("<formfactor>")) 
     return parse_formfactor(interp, 1, argc - 2, argv + 2);    
-  else if (ARG1_IS_S("necklace")) 
+   else if (ARG1_IS_S("necklace")) 
     return parse_necklace_analyzation(interp, argc - 2, argv + 2);   
   else if (ARG1_IS_S("distribution"))
     return parse_distribution(interp, argc - 2, argv + 2);
@@ -1424,8 +1190,6 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return parse_push(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("replace"))
     return parse_replace(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("activate"))
-    return parse_activate(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("remove"))
     return parse_remove(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("stored")) {

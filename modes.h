@@ -74,6 +74,9 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
 */
 int orient_order(double* result);
 
+/* Get the list of lipid orientations */
+int get_lipid_orients(IntList* l_orient);
+
 #endif
 
 
