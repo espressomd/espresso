@@ -43,7 +43,7 @@
 # 0-1-...-(MPC-1) MPC-...-(2*MPC-1) ...                     #
 #                                                           #
 # Created:       24.08.2002 by BAM                          #
-# Last modified: 25.09.2002 by BAM                          #
+# Last modified: 26.09.2002 by BAM                          #
 #                                                           #
 #                                                           #
 # ! =============                                         ! #
@@ -710,6 +710,7 @@ proc convertMD2DesernoMain {origin destination} {
     # Now create a tcl-list with all bonds in it
     set bonds [countBonds $part_all]
 
+
     # Get an idea of the network structure
     puts "    Analyzing network structure... "
 
@@ -728,24 +729,26 @@ proc convertMD2DesernoMain {origin destination} {
 	    puts -nonewline ".,."
 	    flush stdout
 	} 
-	# Check if the current particle has any cross-links (e.g. counter-ions have not)
-	if { [string compare [lindex $bonds $i] "NA"]!=0 } {
+	# Check if the current particle has any cross-links (e.g. counter-ions have not).
+	# Note, that $bonds contains an entry for every particle (i.e. the particle_number),
+	# hence the number of bonds is -1 smaller than the length of that entry.
+	if { [llength [lindex $bonds $i]]>1 } {
 	    # Check the number of cross-links:
 	    switch [llength [lindex $bonds $i]] {
-		1  { # particle is the end of a polymer chain
-		     lappend part_end $i }
-		2  { # particle is monomer in a chain
-		     lappend part_lin $i }
-		3  { # particle also has a cross-link to another chain
-		     lappend part_crs $i }
+		2 { # 1 bond:  particle is the end of a polymer chain
+		    lappend part_end $i }
+		3 { # 2 bonds: particle is monomer in a chain
+		    lappend part_lin $i }
+		4 { # 3 bonds: particle also has a cross-link to another chain
+		    lappend part_crs $i }
 		default {
 		    # 4+ bonds??? => hmm... too much?!
 		    puts "Failed.\n"
 		    puts "----------------"
 		    puts "--> Warning! <--"
 		    puts "----------------"
-		    puts "--> Current particle $i has too many bonds!"
-		    puts "--> (Got:  [llength [lindex $bonds $i]]; expected: 1-3)"
+		    puts "--> Current particle [lindex [lindex $bonds $i] 0] (found at index $i) has too many bonds!"
+		    puts "--> (Got: [expr [llength [lindex $bonds $i]]-1]; expected: 1-3)"
 		    puts "Aborting...\n"
 		    exit
 		}
@@ -759,7 +762,8 @@ proc convertMD2DesernoMain {origin destination} {
 		puts "----------------"
 		puts "--> Warning! <--"
 		puts "----------------"
-		puts "--> Current particle $i is a loose monomer (type $type_P) without any bonds!"
+		puts -nonewline "--> Current particle [lindex [lindex $bonds $i] 0] (found at index $i) "
+		puts "is a loose monomer (type $type_P) without any bonds!"
 		puts "--> (Stats: [lindex $part_all $i])"
 		puts "Aborting...\n"
 		exit
@@ -809,13 +813,13 @@ proc convertMD2DesernoMain {origin destination} {
             if { $tmp_var==1 } continue
 
 	    # build the chain following the bond information stored with each particle
-	    set chains $i
+	    set chains [lindex [lindex $bonds $i] 0]
 	    set tmp_CPP_k 0
 	    set tmp_cD_k -1
 	    set tmp_MPC_k 0
             while { $tmp_MPC_k<$N_T } {
 		set j [lindex $chains end]
-		set j_bond [lindex $bonds $j]
+		set j_bond [lrange [lindex $bonds $j] 1 end]
 		set j_bond_nr 0
 		# is current particle charged? => keep track of the amount of charges and the distances between them
 		if { [lindex [lindex $part_all $j] [findPropPos [lindex $part_all $j] q]]!=0 } {
@@ -936,26 +940,29 @@ proc convertMD2DesernoMain {origin destination} {
 
 	    # get the bonding informations on the current particle & check if they comply with the rules
 	    set tmp_bond [lindex $bonds $i]
-	    if {[string compare $tmp_bond "NA"]==0} {
+	    set tmp_current [lindex $tmp_bond 0]
+	    if {[llength $tmp_bond]<2} {
 		puts "Failed.\n"
 		puts "----------------"
 		puts "--> Warning! <--"
 		puts "----------------"
 		puts "--> An end-to-end crosslinked network may only be reconstructed"
 		puts "--> if the chains are aligned consecutively!"
-		puts "--> (Expected $old_e particles with bonds, but found particle $i having none)"
+		puts -nonewline "--> (Expected $old_e particles with bonds, but found particle $tmp_current "
+		puts "(at index $i) having none)"
 		puts "Aborting...\n"
 		exit
 	    }
+	    set tmp_bond [lrange $tmp_bond 1 end]
 	    
 	    # build the chain following the bond information stored with each particle
 	    # and making use of the requirement that all chains have to be aligned
 	    set tmp_end -1
 	    for {set j 0} {$j<[llength $tmp_bond]} {incr j} {
 		set tmp_partner [lindex [lindex $tmp_bond $j] 1]
-		if { $tmp_partner==[expr $i-1] } {
+		if { $tmp_partner==[expr $tmp_current-1] } {
 		    # bonding partner is left neighbour => append $i to the chain
-		    lappend chains $i
+		    lappend chains $tmp_current
 		    incr tmp_MPC_k
 		    # is current particle charged? => keep track of the amount of charges and the distances between them
 		    if { [lindex [lindex $part_all $i] [findPropPos [lindex $part_all $i] q]]!=0 } {
@@ -977,15 +984,15 @@ proc convertMD2DesernoMain {origin destination} {
 			    exit
 			}
 		    } elseif { $tmp_cD_k>-1 } { incr tmp_cD_k }
-		} elseif { $tmp_partner!=[expr $i+1] } {
+		} elseif { $tmp_partner!=[expr $tmp_current+1] } {
 		    # bonding partner is not on this chain => append to crosslinks
 		    # if the current particle is at the end of a chain
 		    if { [llength $tmp_bond]==2 } {
 			set tmp_end $j
-			if {$tmp_partner < $i} {
-			    lappend cross "{$tmp_partner $i}"
+			if {$tmp_partner < $tmp_current} {
+			    lappend cross "{$tmp_partner $tmp_current}"
 			} else {
-			    lappend cross "{$i $tmp_partner}"
+			    lappend cross "{$tmp_current $tmp_partner}"
 			}
 			incr tmp_NCR
 		    }
@@ -995,9 +1002,9 @@ proc convertMD2DesernoMain {origin destination} {
 	    # check if it's the left one => in that case open a new chain
 	    if {$tmp_end > -1} {
 		set tmp_partner [lindex [lindex $tmp_bond [expr $tmp_end*(-1)+1]] 1]
-		if { $tmp_partner==[expr $i+1] } {
+		if { $tmp_partner==[expr $tmp_current+1] } {
 		    # left end => new chain
-		    set chains $i
+		    set chains $tmp_current
 		    set tmp_MPC_k 1
 		    # is current particle charged? => keep track of the amount of charges and the distances between them
 		    if { [lindex [lindex $part_all $i] [findPropPos [lindex $part_all $i] q]]!=0 } {
