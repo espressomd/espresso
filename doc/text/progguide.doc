@@ -206,13 +206,16 @@
 
     	To issue an background error, call errtxt=\ref runtime_error(length), where length should be the maximal length of the
     	error message (you can use TCL_DOUBLE_SPACE rsp. TCL_INTEGER_SPACE to obtain space for a double rsp. integer).
-    	The function returns a pointer to the current end of the string in \ref error_msg, so that you can append the new
-    	error message simply by sprintf(errtxt,"{...} ",...). Please make sure that you have the curled braces and the space
-    	at the end, otherwise the final error message will look awful. Typically, this looks like this:
+    	The function returns a pointer to the current end of the string in \ref error_msg. After doing so, you should use the 
+	"ERROR_SPRINTF" - macro, which substitutes to a simple "sprintf", so that your errormessage will automatically be added
+	to the "runtime_errors resolved"-page. Please make sure that you give each of your errors an unique 3-digit errorcode
+	(for already used errorcodes have a look at the "runtime_errors resolved"-page), have the curled braces around your
+	message and the space at the end, otherwise the final error message will look awful and will propably not automatically be
+	added to our error-page. Typically, this looks like this:
     	\verbatim
     	if (some_error_code != OK) {
       	  char *errtxt = runtime_error(TCL_INTEGER_SPACE + 128);
-      	  sprintf(errtxt, "{error occured %d} ", some_error_code);
+      	  ERROR_SPRINTF(errtxt, "{error occured %d} ", some_error_code);
       	  recovery;
     	}
     	\endverbatim
