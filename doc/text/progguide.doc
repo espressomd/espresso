@@ -1,0 +1,51 @@
+/** \page progguide Programmer's guide
+	This page contains some hints on extending Espresso. It is not exhaustive, so for major
+	changes the best documentation are still the original developers:
+	<ul>
+	<li><a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
+	<li><a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
+	<li><a href="mailto:mann@mpip-mainz.mpg.de">Bernward</a>
+	</ul>
+
+	For some simple tasks here is a small compendium of often requested things:
+
+	\section add_vars Adding global variables
+	Global variables are the simplest way to communicate values between the Tcl script and
+	the C simulation code.
+	To make a C variable available to Tcl, declare the variable extern in a header file that
+	you then include in global.c. Then add a new line to \ref #fields (for details on the
+	entries see \ref Datafield). Basically you have to declare where the variable is stored,
+	which type (INT or DOUBLE) it has and how many elements. A callback procedure can be
+	given which checks if the given value is valid and stores it. It is also responsible for	
+	dispatching the new value to the other nodes, if necessary. The easiest way to do that is by using
+	\ref mpi_bcast_parameter, which will transfer the value to the other nodes. A simple example
+	is \ref box_l with the callback procedure \ref boxl_callback. For \ref mpi_bcast_parameter
+	to work, it is necessary that they occur in the \ref FIELD_BOXL "variables enumeration".
+	So please keep this list in sync! Another list to keep up to date is the \ref desc_var.
+
+	\section add_bonded Adding new bonded interactions
+	Every interaction resides in an own header file. A simple example for a bonded interaction
+	is the FENE bond in \ref fene.h. For a new interaction, first
+
+	creation of interaction structures.
+
+write the procedures add_*_pair_force
+	and *_pair_energy similiar to \ref add_fene_pair_force and \ref fene_pair_energy. Note that
+	the distance vector between the particles is calculated using \ref get_mi_vector. This is necessary
+	since the particle positions may not be the closest ones, such that the minimum image convention
+	for periodic coordinates is not fulfilled. \ref get_mi_vector takes care of that.
+	Then add your procedures to \ref add_bonded_pair_force rsp. \ref bonded_pair_energy and
+	\ref bonded_pair_pressure.
+	<br>
+	\section add_nonbonded Adding new nonbonded interactions
+	\section add_constraints Adding constraints
+	\section parsing Tcl interaction
+	\section add_other Adding other stuff
+	Here you are mostly on your own. Contacting the original developers might \em really help.
+	Nevertheless the next two sections contain some information you very likely will need.
+	But keep in mind that Espresso is a parallel code; therefore the organization is more
+	complicated as one thinks it has to be.
+	\section part_org Particle data organization
+	\section ia_org Interactions organization
+
+*/

@@ -203,11 +203,13 @@ No bugs known at the moment.
 
 And we are open for more ideas e.g. coming from you.
 
+
 \section help More help about ...
 
 <ul>
 <li> \ref tcl
 <li> \ref variables_page
+<li> \ref progguide
 <li> \ref our_cvs
 <li> \ref our_doxygen
 <li> \ref blockformat
