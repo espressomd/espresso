@@ -108,7 +108,6 @@ proc writepdb {file {folded ""}} {
 }
 
 # This routine writes a pdb file by folding according to molecule information #
-# Note that shifting might not work yet #
 proc writepdbfoldtopo { file  {shift 0 } } {
 
     if { $shift == 0 } {

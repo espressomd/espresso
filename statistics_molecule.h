@@ -24,21 +24,19 @@
 #include "debug.h"
 #include "topology.h"
 
-/** Using the topology information stored in \ref topology::topology this routine foldes all particles belonging to a molecule 
- Using the values of \ref chain_start , \ref chain_length and \ref
-chain_n_chains this routine folds a set of chains of uniform length
-without losing bonding connectivity.  For this to work the chains must
-be of uniform length and all the bonds between two particles must be
-specified as belonging to the particle with the lower particle ID. \n
-For example a bond should be assigned in this way: \n
-<tt> part \<partnum\> bond \<bond_type\> \<partnum + 1\> </tt> \n
+/** Using the topology information stored in \ref topology::topology
+    this routine foldes all particles belonging to a molecule such
+    that the center of mass of the molecule is inside the simulation
+    box.  
 
-All bonded particles must also have sequential identities corresponding to sequence along the chain.
-
-@param coord is an array specifying the full coordinates of all particles.
+@param coord is an array specifying the full coordinates of all
+particles.  Particles must be stored in particle ID order in this
+array. @param shift is a vector specifying a shift for the entire
+system coordinates that is applied prior to folding: This is used for
+visualization purposes.
 
 */
-int analyze_fold_molecules(float *coord);
+int analyze_fold_molecules(float *coord, double shift[3]);
 
 /* calculate the center of mass of a molecule */
 void calc_mol_center_of_mass(Molecule mol, double com[3]);

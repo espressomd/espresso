@@ -813,9 +813,10 @@ static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
 {
   char buffer[10 + 3*TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i,change ;
-  double xshift,yshift,zshift;
+  double shift[3];
   float *coord;
 
+  shift[0] = shift[1] = shift[2] = 0.0;
 
   enum flag { NONE , FOLD_MOLS};
 
@@ -823,7 +824,7 @@ static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
   flag = NONE;
 
   change = 0;
-  xshift = yshift = zshift = 0.0;
+  shift[0] = shift[1] = shift[2] = 0.0;
 
   STAT_TRACE(fprintf(stderr,"%d,parsing get_folded_positions \n",this_node));
   while (argc > 0)
@@ -834,7 +835,7 @@ static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
       }
 
       if ( ARG0_IS_S("shift") ) {
-	if ( !ARG_IS_D(1,xshift) || !ARG_IS_D(2,yshift) || !ARG_IS_D(3,zshift) ) {
+	if ( !ARG_IS_D(1,shift[0]) || !ARG_IS_D(2,shift[1]) || !ARG_IS_D(3,shift[2]) ) {
 	  Tcl_ResetResult(interp);
 	  Tcl_AppendResult(interp,"usage: analyze get_folded_positions [-molecule] [shift <xshift> <yshift> <zshift>]", (char *)NULL);
 	  return (TCL_ERROR);
@@ -854,13 +855,13 @@ static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
   coord = malloc(n_total_particles*3*sizeof(float));
-  /* shift particles and construct the array coord*/
+  /* Construct the array coord*/
   for (i = 0; i < n_total_particles; i++) {
     int dummy[3] = {0,0,0};
     double tmpCoord[3];
-    tmpCoord[0] = partCfg[i].r.p[0] + xshift;
-    tmpCoord[1] = partCfg[i].r.p[1] + yshift;
-    tmpCoord[2] = partCfg[i].r.p[2] + zshift;
+    tmpCoord[0] = partCfg[i].r.p[0];
+    tmpCoord[1] = partCfg[i].r.p[1];
+    tmpCoord[2] = partCfg[i].r.p[2];
     if (flag == NONE)  {   // perform folding by particle
       fold_position(tmpCoord, dummy);
     }    
@@ -872,7 +873,7 @@ static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
 
   // Use information from the analyse set command to fold chain molecules
   if ( flag == FOLD_MOLS ) {
-    if( analyze_fold_molecules(coord) != TCL_OK ){
+    if( analyze_fold_molecules(coord, shift) != TCL_OK ){
       Tcl_AppendResult(interp, "could not fold chains: \"analyze set chains <chain_start> <n_chains> <chain_length>\" must be used first",
 		       (char *) NULL);
       return (TCL_ERROR);;   

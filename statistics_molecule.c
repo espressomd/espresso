@@ -16,7 +16,7 @@
 #include "statistics_molecule.h"
 
 /* new version for new topology structure */
-int analyze_fold_molecules(float *coord)
+int analyze_fold_molecules(float *coord, double shift[3])
 {
   int m,p,i, tmp;
   int mol_size, ind;
@@ -40,11 +40,12 @@ int analyze_fold_molecules(float *coord)
       /* fold coordinates */
       for(i=0; i<3; i++) {
 	if ( PERIODIC(i) ) { 
-	  tmp = (int)floor(com[i]*box_l_i[i]);
+	  tmp = (int)floor((com[i]+shift[i])*box_l_i[i]);
 	  cm_tmp =0.0;
 	  for(p=0; p<mol_size; p++) {
 	    ind        = 3*topology[m].part.e[p] + i;
 	    coord[ind] -= tmp*box_l[i];
+	    coord[ind] += shift[i];
 	    cm_tmp     += coord[ind];
 	  }
 	  cm_tmp /= (double)mol_size;
