@@ -2,6 +2,7 @@
 #include "global.h"
 #include "communication.h"
 #include "grid.h"
+#include "binaryfile.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +10,10 @@
 /* cwz-build-comman: ssh chakotay "builtin cd /nhomes/janeway/axel/progs/tcl_md; make" 
    cwz-build-command: make
 */
+
+/**************************************************************
+ * function prototypes
+ **************************************************************/
 
 /** tcl procedure for datafield access */
 int setmd(ClientData data, Tcl_Interp *interp,
@@ -19,12 +24,20 @@ int inter(ClientData data, Tcl_Interp *interp,
 /** tcl procedure for particle access */
 int part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
+/** tcl procedure for writing particle data */
+int writemd(ClientData data, Tcl_Interp *interp,
+	    int argc, char **argv);
+/** tcl procedure for writing particle data */
+int readmd(ClientData data, Tcl_Interp *interp,
+	   int argc, char **argv);
 
 void tcl_datafield_init(Tcl_Interp *interp)
 {
   Tcl_CreateCommand(interp, "setmd", setmd, 0, NULL);
   Tcl_CreateCommand(interp, "inter", inter, 0, NULL);
   Tcl_CreateCommand(interp, "part", part, 0, NULL);
+  Tcl_CreateCommand(interp, "writemd", writemd, 0, NULL);
+  Tcl_CreateCommand(interp, "readmd", readmd, 0, NULL);
 }
 
 int setmd(ClientData data, Tcl_Interp *interp,
@@ -32,7 +45,7 @@ int setmd(ClientData data, Tcl_Interp *interp,
 {
   double dbuffer[MAX_DIMENSION];
   int    ibuffer[MAX_DIMENSION];
-  char   buffer[256];
+  char   buffer[TCL_DOUBLE_SPACE + 5];
   int i, j;
   int status;
 
@@ -97,7 +110,7 @@ int setmd(ClientData data, Tcl_Interp *interp,
 	  sprintf(buffer, "%d", ((int *)fields[i].data)[j]);
 	  break;
 	case TYPE_DOUBLE:
-	  sprintf(buffer, "%10.6e", ((double *)fields[i].data)[j]);
+	  Tcl_PrintDouble(interp, ((double *)fields[i].data)[j], buffer);
 	  break;
 	default: ;
 	}
@@ -119,7 +132,7 @@ int part(ClientData data, Tcl_Interp *interp,
 {
   int part_num = -1;
   int node, j;
-  char buffer[256];
+  char buffer[50 + TCL_DOUBLE_SPACE];
 
   if (argc < 2) {
     Tcl_AppendResult(interp, "wrong # args:  should be \"",
@@ -145,28 +158,34 @@ int part(ClientData data, Tcl_Interp *interp,
     Particle part;
     /* retrieve particle data */
     if (node == -1) {
-      Tcl_AppendResult(interp, "particle not found", (char *) NULL);
+      sprintf(buffer, "particle %d does not exist", part_num);
+      Tcl_AppendResult(interp, buffer, (char *) NULL);
       return (TCL_ERROR);
     }
     mpi_recv_part(node, part_num, &part);
-    sprintf(buffer, "%d %d {%7.3e %7.3e %7.3e} %8.2e \n",
-	    node, part.type,
-	    part.p[0], part.p[1], part.p[2],
-	    part.q);
+    Tcl_PrintDouble(interp, part.p[0], buffer);
+    Tcl_AppendResult(interp, "p ", buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.p[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.p[2], buffer);
+    Tcl_AppendResult(interp, buffer, " type ", (char *)NULL);
+    sprintf(buffer, "%d", part.type);
+    Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.q, buffer);
+    Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.v[0], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.v[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.v[2], buffer);
+    Tcl_AppendResult(interp, buffer, " f ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.f[0], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.f[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.f[2], buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
-    sprintf(buffer, "       {%7.3e %7.3e %7.3e} {%7.3e %7.3e %7.3e}",
-	    part.v[0], part.v[1], part.v[2],
-	    part.f[0], part.f[1], part.f[2]);
-    Tcl_AppendResult(interp, buffer, " {", (char *)NULL);
-    /* FIXME: new structure
-    for (j = 0; j < part.n_bonds; j++) {
-      sprintf(buffer, "{%d %d}", part.bonds[j], part.bond_type[j]);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-      if (j < part.n_bond - 1)
-	Tcl_AppendResult(interp, " ", (char *)NULL);
-    }
-    */
-    Tcl_AppendResult(interp, "}", (char *)NULL);
+    /* FIXME: print bonding structure here */
     return (TCL_OK);
   }
   
@@ -318,11 +337,17 @@ int inter(ClientData _data, Tcl_Interp *interp,
 
   if (argc == 3) {
     /* print interaction information */
-    char buffer[256];
-    sprintf(buffer, "{lennard-jones %10.5e %10.5e %10.5e %10.5e %10.5e}",
-	    data->LJ_eps, data->LJ_sig, data->LJ_cut,
-	    data->LJ_shift, data->LJ_offset);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    char buffer[TCL_DOUBLE_SPACE];
+    Tcl_PrintDouble(interp, data->LJ_eps, buffer);
+    Tcl_AppendResult(interp, "{lennard-jones ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJ_sig, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJ_cut, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJ_shift, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJ_offset, buffer);
+    Tcl_AppendResult(interp, buffer, "}", (char *) NULL);
     return (TCL_OK);
   }
 
@@ -366,3 +391,248 @@ int inter(ClientData _data, Tcl_Interp *interp,
 
   return (TCL_OK);
 }
+
+int writemd(ClientData data, Tcl_Interp *interp,
+	    int argc, char **argv)
+{
+  static int end_num = -1;
+  char *row;
+  int p, node, i;
+  struct MDHeader header;
+  int tcl_file_mode;
+  Tcl_Channel channel;
+
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "wrong # args:  should be \"",
+		     argv[0], " <file> ?posx|posy|posz|q|vx|vy|vz|fx|fy|fz|type?* ...\"",
+		     (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  if ((channel = Tcl_GetChannel(interp, argv[1], &tcl_file_mode)) == NULL)
+    return (TCL_ERROR);
+  if (!(tcl_file_mode & TCL_WRITABLE)) {
+    Tcl_AppendResult(interp, "\"", argv[1], "\" not writeable", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  /* tune channel to binary translation, e.g. none */
+  Tcl_SetChannelOption(interp, channel, "-translation", "binary");
+
+  /* assemble rows */
+  argc -= 2;
+  argv += 2;
+  row = malloc(sizeof(char)*argc);
+  for (i = 0; i < argc; i++) {
+    if (!strncmp(*argv, "posx", strlen(*argv))) {
+      row[i] = POSX;
+    }
+    else if (!strncmp(*argv, "posy", strlen(*argv))) {
+      row[i] = POSY;
+    }
+    else if (!strncmp(*argv, "posz", strlen(*argv))) {
+      row[i] = POSZ;
+    }
+    else if (!strncmp(*argv, "q", strlen(*argv))) {
+      row[i] = Q;
+    }
+    else if (!strncmp(*argv, "vx", strlen(*argv))) {
+      row[i] = VX;
+    }
+    else if (!strncmp(*argv, "vy", strlen(*argv))) {
+      row[i] = VY;
+    }
+    else if (!strncmp(*argv, "vz", strlen(*argv))) {
+      row[i] = VZ;
+    }
+    else if (!strncmp(*argv, "fx", strlen(*argv))) {
+      row[i] = FX;
+    }
+    else if (!strncmp(*argv, "fy", strlen(*argv))) {
+      row[i] = FY;
+    }
+    else if (!strncmp(*argv, "fz", strlen(*argv))) {
+      row[i] = FZ;
+    }
+    else if (!strncmp(*argv, "type", strlen(*argv))) {
+      row[i] = TYPE;
+    }
+    else {
+      Tcl_AppendResult(interp, "no particle data field \"", *argv, "\"?",
+		       (char *) NULL);
+      return (TCL_ERROR);
+    }
+    argv++;
+  }
+
+  if (!particle_node)
+    build_particle_node();
+
+  /* write header and row data */
+  memcpy(header.magic, MDMAGIC, 4*sizeof(char));
+  header.n_rows = argc;
+  Tcl_Write(channel, (char *)&header, sizeof(header));
+  Tcl_Write(channel, row, header.n_rows*sizeof(char));
+
+  for (p = 0; p < n_total_particles; p++) {
+    node = particle_node[p];
+    if (node != -1) {
+      Particle data;
+      /* fetch particle data */
+      mpi_recv_part(node, p, &data);
+      for (i = 0; i < 3; i++)
+	data.p[i] += data.i[i]*box_l[i];
+
+      /* write particle index */
+      Tcl_Write(channel, (char *)&p, sizeof(int));
+
+      for (i = 0; i < header.n_rows; i++) {
+	switch (row[i]) {
+	case POSX: Tcl_Write(channel, (char *)&data.p[0], sizeof(double)); break;
+	case POSY: Tcl_Write(channel, (char *)&data.p[1], sizeof(double)); break;
+	case POSZ: Tcl_Write(channel, (char *)&data.p[2], sizeof(double)); break;
+	case VX:   Tcl_Write(channel, (char *)&data.v[0], sizeof(double)); break;
+	case VY:   Tcl_Write(channel, (char *)&data.v[1], sizeof(double)); break;
+	case VZ:   Tcl_Write(channel, (char *)&data.v[2], sizeof(double)); break;
+	case FX:   Tcl_Write(channel, (char *)&data.f[0], sizeof(double)); break;
+	case FY:   Tcl_Write(channel, (char *)&data.f[1], sizeof(double)); break;
+	case FZ:   Tcl_Write(channel, (char *)&data.f[2], sizeof(double)); break;
+	case Q:    Tcl_Write(channel, (char *)&data.q, sizeof(double)); break;
+	case TYPE: Tcl_Write(channel, (char *)&data.type, sizeof(int)); break;
+	}
+      }
+    }
+  }
+  /* end marker */
+  Tcl_Write(channel, (char *)&end_num, sizeof(int));
+  return TCL_OK;
+}
+
+int readmd(ClientData dummy, Tcl_Interp *interp,
+	   int argc, char **argv)
+{
+  char *row;
+  int pos_row[3] = { -1 }, v_row[3] = { -1 }, f_row[3] = { -1 };
+  int av_pos = 0, av_v = 0, av_f = 0, av_q = 0, av_type = 0;
+  int node, i;
+  struct MDHeader header;
+  Particle data;
+  int tcl_file_mode;
+  Tcl_Channel channel;
+
+  if (argc != 2) {
+    Tcl_AppendResult(interp, "wrong # args:  should be \"",
+		     argv[0], " <file>\"",
+		     (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  if ((channel = Tcl_GetChannel(interp, argv[1], &tcl_file_mode)) == NULL)
+    return (TCL_ERROR);
+
+  /* tune channel to binary translation, e.g. none */
+  Tcl_SetChannelOption(interp, channel, "-translation", "binary");
+
+  Tcl_Read(channel, (char *)&header, sizeof(header));
+  /* check token */
+  if (strncmp(header.magic, MDMAGIC, 4) || header.n_rows < 0) {
+    Tcl_AppendResult(interp, "data file \"", argv[1],
+		     "\" does not contain tcl MD data",
+		     (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  if (!particle_node)
+    build_particle_node();
+
+  if (!processor_grid_is_set())
+    setup_processor_grid();
+
+  /* parse rows */
+  row = malloc(header.n_rows*sizeof(char));
+  for (i = 0; i < header.n_rows; i++) {
+    Tcl_Read(channel, (char *)&row[i], sizeof(char));
+    switch (row[i]) {
+    case POSX: pos_row[0] = i; break;
+    case POSY: pos_row[1] = i; break;
+    case POSZ: pos_row[2] = i; break;
+    case   VX:   v_row[0] = i; break;
+    case   VY:   v_row[1] = i; break;
+    case   VZ:   v_row[2] = i; break;
+    case   FX:   f_row[0] = i; break;
+    case   FY:   f_row[1] = i; break;
+    case   FZ:   f_row[2] = i; break;
+    case    Q:   av_q = 1; break;
+    case TYPE:   av_type = 1; break;
+    }
+  }
+
+  /* *_row[0] tells if * data is completely available -
+   * otherwise we ignore it */
+  if (pos_row[0] != -1 && pos_row[1] != -1 && pos_row[2] != -1) {
+    av_pos = 1;
+  }
+  if (v_row[0] != -1 && v_row[1] != -1 && v_row[2] != -1) {
+    av_v = 1;
+  }
+  if (f_row[0] != -1 && f_row[1] != -1 && f_row[2] != -1) {
+    av_f = 1;
+  }
+
+  while (!Tcl_Eof(channel)) {
+    Tcl_Read(channel, (char *)&data.identity, sizeof(int));
+    if (data.identity == -1)
+      break;
+
+    /* printf("id=%d\n", data.identity); */
+
+    if (data.identity < 0) {
+      Tcl_AppendResult(interp, "illegal data format in data file \"", argv[1],
+		       "\", perhaps wrong file?",
+		       (char *) NULL);
+      return (TCL_ERROR);
+    }
+
+    for (i = 0; i < header.n_rows; i++) {
+      switch (row[i]) {
+      case POSX: Tcl_Read(channel, (char *)&data.p[0], sizeof(double)); break;
+      case POSY: Tcl_Read(channel, (char *)&data.p[1], sizeof(double)); break;
+      case POSZ: Tcl_Read(channel, (char *)&data.p[2], sizeof(double)); break;
+      case   VX: Tcl_Read(channel, (char *)&data.v[0], sizeof(double)); break;
+      case   VY: Tcl_Read(channel, (char *)&data.v[1], sizeof(double)); break;
+      case   VZ: Tcl_Read(channel, (char *)&data.v[2], sizeof(double)); break;
+      case   FX: Tcl_Read(channel, (char *)&data.f[0], sizeof(double)); break;
+      case   FY: Tcl_Read(channel, (char *)&data.f[1], sizeof(double)); break;
+      case   FZ: Tcl_Read(channel, (char *)&data.f[2], sizeof(double)); break;
+      case    Q: Tcl_Read(channel, (char *)&data.q, sizeof(double)); break;
+      case TYPE: Tcl_Read(channel, (char *)&data.type, sizeof(int)); break;
+      }
+    }
+
+    node = (data.identity < n_total_particles) ? particle_node[data.identity] : -1; 
+    if (node == -1) {
+      if (!av_pos) {
+	Tcl_AppendResult(interp, "new particle without position data",
+			 (char *) NULL);
+	return (TCL_ERROR);
+      }
+
+      node = find_node(data.p);
+      mpi_attach_particle(data.identity, node);
+      map_particle_node(data.identity, node);
+    }
+
+    if (av_pos)
+      mpi_send_pos(node, data.identity, data.p);
+    if (av_q)
+      mpi_send_q(node, data.identity, data.q);
+    if (av_v)
+      mpi_send_v(node, data.identity, data.v);
+    if (av_f)
+      mpi_send_f(node, data.identity, data.f);
+    if (av_type)
+      mpi_send_type(node, data.identity, data.type);
+  }
+  return TCL_OK;
+}
+

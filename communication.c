@@ -19,8 +19,8 @@ SlaveCallback *callbacks[] = {
   mpi_who_has_slave,             /*  2: REQ_WHO_HAS */
   mpi_attach_particle_slave,     /*  3: REQ_ATTACH */
   mpi_send_pos_slave,            /*  4: REQ_SET_POS */
-  NULL,                          /*  5: REQ_SET_V */
-  NULL,                          /*  6: REQ_SET_F */
+  mpi_send_v_slave,              /*  5: REQ_SET_V */
+  mpi_send_f_slave,              /*  6: REQ_SET_F */
   mpi_send_q_slave,              /*  7: REQ_SET_Q */
   mpi_send_type_slave,           /*  8: REQ_SET_TYPE */
   mpi_recv_part_slave,           /*  9: REQ_GET_PART */
@@ -81,7 +81,7 @@ void mpi_stop_slave(int param)
 
   MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
-  exit(-1);
+  exit(0);
 }
 
 /*************** REQ_BCAST_PAR ************/
@@ -249,7 +249,7 @@ void mpi_send_v_slave(int part)
 }
 
 /****************** REQ_SET_F ************/
-void mpi_send_F(int pnode, int part, double F[3])
+void mpi_send_f(int pnode, int part, double F[3])
 {
   COMM_TRACE(fprintf(stderr, "0: issuing SET_F %d %d\n", pnode, part));
   if (pnode == this_node) {
@@ -265,7 +265,7 @@ void mpi_send_F(int pnode, int part, double F[3])
   }
 }
 
-void mpi_send_F_slave(int part)
+void mpi_send_f_slave(int part)
 {
   int index = got_particle(part);
   MPI_Status status;
