@@ -369,8 +369,9 @@
 		     P3M_tune_parameters.
 
 		     Some additional p3m parameters have preset values:
-		     \verbatim epsilon = 0.0 \endverbatim 
-		     The dielectric constant of the surrounding medium.
+		     \verbatim epsilon = metallic \endverbatim 
+		     The dielectric constant of the surrounding medium, metallic (i.e.infinity) or some finite
+	             positive number.
 		     \verbatim n_interpol = 32768 \endverbatim 
 		     Number of interpolation points for the charge assignment function.
 		     \verbatim mesh_off = 0.5 0.5 0.5 \endverbatim 
@@ -379,13 +380,47 @@
 		     As soon as p3m is turned on the additional parameters can be changed with:
 		     \verbatim inter coulomb <parameter-name> <value(s)>  \endverbatim
 
-		     <b> Make sure that you know the relevance of the P3M Parameters befor using P3M !!!</b>
+		     <b> Make sure that you know the relevance of the P3M parameters before using P3M !!!</b>
 
 		<li> \verbatim dh <kappa> <r_cut> \endverbatim
 		     Debye-Hueckel potential: 
 		     \f[ U^{C-DH} = 	\ell_B T \frac{q_1 q_2 exp(-\kappa r)}{r} \f]
-		     For \f[ \kappa = 0 \f] this corresponds to the plein coulomb potential.
+		     For \f[ \kappa = 0 \f] this corresponds to the plain coulomb potential.
+
+		<li> \verbatim mmm2d <maximal pairwise error> {<fixed far cutoff>} \endverbatim
+			MMM2D coulomb method for systems with periodicity 1 1 0. Needs the layered cell system.
+			The performance of the method depends on the number of slices of the cell system, which has
+			to be tuned manually. It is automatically ensured that the maximal pairwise error is smaller
+			than the given bound. The far cutoff setting should only be used for testing reasons, otherwise
+			you are more safe with the automatical tuning. If you even don't know what it is, do not even
+			think of touching the far cutoff. 
+
+		     <b> Make sure that you read the papers on MMM2D before using it !!!</b>
+		
+		<li> \verbatim mmm1d <switch radius> {<bessel_cutoff>} <maximal pairwise error> \endverbatim or
+		     \verbatim mmm1d tune <maximal pairwise error> \endverbatim
+			MMM1D coulomb method for systems with periodicity 0 0 1. Needs the nsquared cell system.
+			The first form sets parameters manually. The switch radius determines at which xy-distance
+			the force calculation switches from the near to the far formula. If the Bessel cutoff is not
+			explicitly given, it is determined from the maximal pairwise error, otherwise this error only
+			counts for the near formula. The second, tuning form just takes the maximal pairwise error and
+			tries out a lot of switching radii to find out the fastest one. If this takes too long, you can
+			change the value of the setmd variable "timings" which controls the number of test force calculations.
+
+		     <b> Make sure that you read the papers on MMM2D before using MMM1D (there are no papers on MMM1D yet,
+			 but it is pretty much the same) !!!</b>
 	    </ul>		
+
+	    \verbatim inter coulomb elc <maximal pairwise error> <gap size> {<far cutoff>} \endverbatim
+		This is a special procedure that converts a 3d method, i. e. P3M at the moment, to a 2d method, in computational order N. This
+		is definitely faster than MMM2D for larger numbers of particles (>400 at reasonable accuracy requirements). The
+		maximal pairwise error is the LUB error of the force between any two charges without prefactors (see the papers).
+		The gap size gives the height of the empty region between the system box and the neighboring artificial images
+		(again, see the paper). The far cutoff finally is only intended for testing and allows to directly set the cutoff.
+		In this case, the maximal pairwise error is ignored. The periodicity has to be set to 1 1 1 still, and the 3d method
+		has to be set to epsilon metallic, i.e. metallic boundary conditions.
+
+		<b> Make sure that you read the papers on ELC before using it !!!</b>
 
 	    \verbatim inter	coulomb 0.0 \endverbatim
 	    disables coulomb interactions hence deactivating the electrostatic subsystem.
