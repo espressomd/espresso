@@ -833,29 +833,34 @@ void  dd_exchange_and_sort_particles(int global_flag)
 Cell *dd_position_to_cell(double pos[3])
 {
   int i,cpos[3];
-  
+  double lpos;
+
   for(i=0;i<3;i++) {
-    cpos[i] = (int)((pos[i]-my_left[i])*dd.inv_cell_size[i])+1;
+    lpos = pos[i] - my_left[i];
 
-#ifdef PARTIAL_PERIODIC
-    if( !PERIODIC(i) ) {
-      if (cpos[i] < 1)                 cpos[i] = 1;
-      else if (cpos[i] > dd.cell_grid[i]) cpos[i] = dd.cell_grid[i];
-    }
-#endif
+    cpos[i] = (int)(lpos*dd.inv_cell_size[i])+1;
 
-#ifdef ADDITIONAL_CHECKS
-    if(cpos[i] < 1 || cpos[i] >  dd.cell_grid[i]) {
-      char *errtext = runtime_error(128 + TCL_INTEGER_SPACE + 3*TCL_DOUBLE_SPACE);
-      ERROR_SPRINTF(errtext, "{005 particle @ (%f, %f, %f) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
+    if(cpos[i] < 1) {
       cpos[i] = 1;
-    }
+#ifdef ADDITIONAL_CHECKS
+      if (PERIODIC(i) && lpos < -ROUND_ERROR_PREC) {
+	char *errtext = runtime_error(128 + TCL_INTEGER_SPACE + 3*TCL_DOUBLE_SPACE);
+	ERROR_SPRINTF(errtext, "{005 particle @ (%f, %f, %f) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
+      }
 #endif
-
+    }
+    else if (cpos[i] > dd.cell_grid[i]) {
+      cpos[i] = dd.cell_grid[i];
+#ifdef ADDITIONAL_CHECKS
+      if (PERIODIC(i) && lpos > local_box_l[i] + ROUND_ERROR_PREC) {
+	char *errtext = runtime_error(128 + TCL_INTEGER_SPACE + 3*TCL_DOUBLE_SPACE);
+	ERROR_SPRINTF(errtext, "{005 particle @ (%f, %f, %f) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
+      }
+#endif
+    }
   }
   i = get_linear_index(cpos[0],cpos[1],cpos[2], dd.ghost_cell_grid);  
   return &cells[i];
-
 }
 
 /*************************************************/
