@@ -42,6 +42,7 @@
 /* #define PARTICLE_DEBUG */
 /* #define P3M_DEBUG */
 /* #define FFT_DEBUG */
+/* #define RANDOM_DEBUG */
 #define MPI_CORE
 #define FORCE_CORE
 
@@ -136,4 +137,11 @@ extern void _debug_free(void *p);
 #else
 /** Equals { cmd } iff FFT_DEBUG is set. */
 #define FFT_TRACE(cmd)
+#endif
+
+#ifdef RANDOM_DEBUG
+#define RANDOM_TRACE(cmd) { cmd; }
+#else
+/** Equals { cmd } iff FFT_DEBUG is set. */
+#define RANDOM_TRACE(cmd)
 #endif

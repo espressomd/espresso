@@ -87,7 +87,7 @@ void init_random(void)
   seed = (10*this_node+1)*1103515245 + 12345;
   seed = (seed/65536) % 32768;
   idum = (long) seed;
-  printf("%d init random with seed %ld\n",this_node,idum);
+  RANDOM_TRACE(fprintf(stderr, "%d init random with seed %ld\n",this_node,idum));
   for (j = NTAB_RANDOM + 7;j >= 0; j--) {
     k = (idum) / IQ;
     idum = IA * (idum - k * IQ) - IR * k;
