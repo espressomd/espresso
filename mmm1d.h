@@ -14,8 +14,9 @@ typedef struct {
 } MMM1D_struct;
 extern MMM1D_struct mmm1d;
 
-void set_mmm1d_params(double bjerrum, double switch_rad,
-		      int bessel_cutoff, double maxPWerror);
+int set_mmm1d_params(Tcl_Interp *interp,
+		     double bjerrum, double switch_rad,
+		     int bessel_cutoff, double maxPWerror);
 
 void MMM1D_recalcTables();
 

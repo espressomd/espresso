@@ -6,7 +6,10 @@
 #include "communication.h"
 #include "cells.h"
 #include "grid.h"
+#include "tuning.h"
+#include "utils.h"
 #include <mpi.h>
+#include <tcl.h>
 
 #ifdef ELECTROSTATICS
 
@@ -71,8 +74,18 @@ r   2 3 * 0
 #define C_GAMMA   0.57721566490153286060651209008
 #define C_2LOG4PI -5.0620484939385815859557831885
 #define C_2PISQR  C_2PI*C_2PI
-/* precision of polygamma functions */
+/* precision of polygamma functions. More is unnecessary, the Bessel
+   functions are not better anyways... */
 #define EPS 1e-10
+
+/* How many trial calculations */
+#define TEST_INTEGRATIONS 1000
+
+/* Largest reasonable cutoff for Bessel function */
+#define MAXIMAL_B_CUT 30
+
+/* Granularity of the radius scan in multiples of box_l[2] */
+#define RAD_STEPPING 0.1
 
 /** modified polygamma functions. See Arnold,Holm 2002 */
 static Polynom *modPsi = NULL;
@@ -159,15 +172,96 @@ static void preparePolygammaOdd(int n, double binom, Polynom *series)
   series->n = order;
 }
 
-void set_mmm1d_params(double bjerrum, double switch_rad,
-		      int bessel_cutoff, double maxPWerror)
+double determine_bessel_cutoff(double switch_rad, double maxPWerror, int maxP)
 {
+  /* this calculates an upper bound to all force components and the potential */
+
+  // fprintf(stderr, "determ: %f %f %d\n", switch_rad, maxPWerror, maxP);
+
+  double err;
+  double Lz = box_l[2];
+  double fac = 2*M_PI/Lz*switch_rad;
+  double pref = 4/Lz*dmax(1, 2*M_PI/Lz);
+  int P = (int)ceil(3*box_l[2]/2/M_PI/switch_rad);
+  do {
+    err = pref*exp(-fac*(P-1))*(1 + P*(exp(fac) - 1))/SQR(1 - exp(fac));
+    // fprintf(stderr, "%d %e\n", P, err); */
+    P++;
+  } while (err > maxPWerror && P <= maxP);
+  P--;
+  return P;
+}
+
+int set_mmm1d_params(Tcl_Interp *interp, double bjerrum, double switch_rad,
+		     int bessel_cutoff, double maxPWerror)
+{
+  char buffer[32 + 2*TCL_DOUBLE_SPACE];
+  double int_time, min_time=1e200, min_rad = -1;
+  double maxrad = box_l[2];
+  /* more doesn't work with the current implementation as N_psi = 2 fixed */
+
+  if (bessel_cutoff < 0 && switch_rad < 0) {
+    /* determine besselcutoff and optimal switching radius */
+    mmm1d.bjerrum = 1;
+    for (switch_rad = RAD_STEPPING*box_l[2]; switch_rad < maxrad; switch_rad += RAD_STEPPING*box_l[2]) {
+      mmm1d.bessel_cutoff = determine_bessel_cutoff(switch_rad, maxPWerror, MAXIMAL_B_CUT);
+      /* no reasonable cutoff possible */
+      if (mmm1d.bessel_cutoff == MAXIMAL_B_CUT)
+	continue;
+      mmm1d.far_switch_radius_2 = switch_rad*switch_rad;
+
+      /* initialize mmm1d temporary structures */
+      mpi_bcast_coulomb_params();
+      /* perform force calculation test */
+      int_time = time_force_calc(TEST_INTEGRATIONS);
+
+      sprintf(buffer, "r= %f c= %d t= %f ms\n", switch_rad, mmm1d.bessel_cutoff, int_time);
+      // fprintf(stderr, buffer);
+      Tcl_AppendResult(interp, buffer, (char*)NULL);
+
+      if (int_time < min_time) {
+	min_time = int_time;
+	min_rad = switch_rad;
+      }
+      /* stop if all hope is vain... */
+      else if (int_time > 2*min_time)
+	break;
+    }
+    if (min_rad < 0) {
+      fprintf(stderr, "set_mmm1d_params: internal error");
+      errexit();
+    }
+    switch_rad    = min_rad;
+    bessel_cutoff = determine_bessel_cutoff(switch_rad, maxPWerror, MAXIMAL_B_CUT);
+  }
+
+  if (bessel_cutoff < 0) {
+    /* determine besselcutoff to achieve at least the given pairwise error */
+    bessel_cutoff = determine_bessel_cutoff(switch_rad, maxPWerror, MAXIMAL_B_CUT);
+    if (bessel_cutoff == MAXIMAL_B_CUT) {
+      Tcl_AppendResult(interp, "could not find reasonable bessel cutoff", (char *)NULL);
+      return TCL_ERROR;
+    }
+  }
+
+  if (switch_rad <= 0 || switch_rad > box_l[2]) {
+    Tcl_AppendResult(interp, "switching radius is not between 0 and box_l[2]", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if (bessel_cutoff <=0) {
+    Tcl_AppendResult(interp, "bessel cutoff too small", (char *)NULL);
+    return TCL_ERROR;
+  }
+
   mmm1d.bjerrum = bjerrum;
   mmm1d.far_switch_radius_2 = switch_rad*switch_rad;
   mmm1d.bessel_cutoff = bessel_cutoff;
+
   mmm1d.maxPWerror = maxPWerror;
 
   mpi_bcast_coulomb_params();
+
+  return TCL_OK;
 }
 
 void MMM1D_recalcTables()
@@ -231,7 +325,7 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
   r2     = rxy2 + dz*dz;
   r      = sqrt(r2);
 
-  if (rxy2 < mmm1d.far_switch_radius_2) {
+  if (rxy2 <= mmm1d.far_switch_radius_2) {
     /* near range formula */
     double sr, sz, r2nm1, rt, rt2, shift_z;
     int n;

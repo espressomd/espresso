@@ -59,10 +59,6 @@ typedef struct {
   double LJ_offset;
   double LJ_capradius;
 
-  /* relaxation potential */
-  double ramp_cut;
-  double ramp_force;
-
   /** Lennard-Jones+Cos potential */
   double LJCOS_eps;
   double LJCOS_sig;

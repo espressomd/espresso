@@ -53,9 +53,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJ_offset = 
     params->LJ_capradius = 0;
   
-  params->ramp_cut =
-    params->ramp_force = 0;
-
   params->LJCOS_eps =
     params->LJCOS_sig =
     params->LJCOS_cut = 
@@ -85,9 +82,6 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJ_offset = src->LJ_offset;
   dst->LJ_capradius = src->LJ_capradius;
 
-  dst->ramp_cut = src->ramp_cut;
-  dst->ramp_force = src->ramp_force;  
-
   dst->LJCOS_eps = src->LJCOS_eps;
   dst->LJCOS_sig = src->LJCOS_sig;
   dst->LJCOS_cut = src->LJCOS_cut;
@@ -115,9 +109,6 @@ int checkIfParticlesInteract(int i, int j) {
   if (data->LJ_cut != 0)
     return 1;
   
-  if (data->ramp_cut > 0)
-    return 1;
-
   if (data->LJCOS_cut != 0)
     return 1;
 
@@ -271,12 +262,6 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
     Tcl_PrintDouble(interp, data->LJCOS_rmin, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
   }
-  if (data->ramp_cut > 0) {
-    Tcl_PrintDouble(interp, data->ramp_cut, buffer);
-    Tcl_AppendResult(interp, "ramp ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->ramp_force, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-  }
   if (data->GB_cut != 0) {
     Tcl_PrintDouble(interp, data->GB_eps, buffer);
     Tcl_AppendResult(interp, "gay-berne ", buffer, " ", (char *) NULL);
@@ -392,8 +377,6 @@ void calc_maximal_cutoff()
 	    if(max_cut < (data->GB_cut) ) 
 	      max_cut = (data->GB_cut);
 	  }	  
-	  if(max_cut < data->ramp_cut)
-	    max_cut = data->ramp_cut;
 	}
      }
 #ifdef ELECTROSTATICS
@@ -491,31 +474,6 @@ int inter_print_bonded(Tcl_Interp *interp, int i)
   Tcl_AppendResult(interp, "unknown bonded interaction number ", buffer,
 		   (char *) NULL);
   return TCL_ERROR;
-}
-
-int ramp_set_params(int part_type_a, int part_type_b,
-		    double cut, double force)
-{
-  IA_parameters *data, *data_sym;
-
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
-
-  if (!data || !data_sym)
-    return TCL_ERROR;
-
-  /* ramp should be symmetrically */
-  data_sym->ramp_cut   = data->ramp_cut   = cut;
-  data_sym->ramp_force = data->ramp_force = force;
-
-  /* broadcast interaction parameters */	
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
-   
-  return TCL_OK;
 }
 
 int lj_cos_set_params(int part_type_a, int part_type_b,
@@ -732,7 +690,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 			   int part_type_a, int part_type_b,
 			   int argc, char ** argv)
 {
-  double eps, sig, cut, shift, offset, cap_radius, force;
+  double eps, sig, cut, shift, offset, cap_radius;
   double k1, k2, mu, nu; /* parameters needed for Gay-Berne*/
 
   Tcl_ResetResult(interp);
@@ -859,33 +817,6 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 		"particle types must be nonnegative");
   }
       
-  /* parse 
-   *                        ramp
-   * interaction
-   */
-  if (ARG_IS_S(0, "ramp")) {
-    
-    /* get new ramp interaction type */
-    if (argc != 3) {
-      Tcl_AppendResult(interp, "ramp potential needs 2 parameters: "
-		       "<ramp_cut> <ramp_force>",
-		       (char *) NULL);
-      return TCL_ERROR;
-    }
-	
-    if ((! ARG_IS_D(1, cut))  ||
-	(! ARG_IS_D(2, force)   ))
-      {
-	Tcl_AppendResult(interp, "ramp potential needs 2 DOUBLE parameters: "
-			 "<ramp_cut> <ramp_force>",
-			 (char *) NULL);
-	return TCL_ERROR;
-      }
-    
-    CHECK_VALUE(ramp_set_params(part_type_a, part_type_b, cut, force),
-		"particle types must be nonnegative");
-  }
-
   Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
 		   "\"", (char *)NULL);
   return TCL_ERROR;
@@ -1446,20 +1377,37 @@ int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
 {
   double switch_rad, maxPWerror;
   int bessel_cutoff;
-  if(argc < 3) {
-    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb mmm1d <switch radius> <bessel cutoff> <maximal error for near formula>", (char *) NULL);
+
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb mmm1d <switch radius> {<bessel cutoff>} <maximal error for near formula> | tune  <maximal pairwise error>", (char *) NULL);
     return TCL_ERROR;
   }
 
-  if((! ARG_IS_D(0, switch_rad)) ||
-     (! ARG_IS_I(1, bessel_cutoff)) ||
-     (! ARG_IS_D(2, maxPWerror))) 
-    return TCL_ERROR;
+  if (ARG0_IS_S("tune")) {
+    /* autodetermine bessel cutoff AND switching radius */
+    if (! ARG_IS_D(1, maxPWerror))
+      return TCL_ERROR;
+    bessel_cutoff = -1;
+    switch_rad = -1;
+  }
+  else {
+    if (argc == 2) {
+      /* autodetermine bessel cutoff */
+      if ((! ARG_IS_D(0, switch_rad)) ||
+	  (! ARG_IS_D(1, maxPWerror))) 
+	return TCL_ERROR;
+      bessel_cutoff = -1;
+    }
+    else {
+      if((! ARG_IS_D(0, switch_rad)) ||
+	 (! ARG_IS_I(1, bessel_cutoff)) ||
+	 (! ARG_IS_D(2, maxPWerror))) 
+	return TCL_ERROR;
+    }
+  }
 
-  set_mmm1d_params(coulomb.bjerrum, switch_rad,
-		   bessel_cutoff, maxPWerror);
-
-  return TCL_OK;
+  return set_mmm1d_params(interp, coulomb.bjerrum, switch_rad,
+			  bessel_cutoff, maxPWerror);
 }
 
 int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
@@ -1531,7 +1479,7 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
       return inter_parse_dh(interp, argc-1, argv+1);    
   }
     
-  if (ARG0_IS_S("mmm1d ")) {
+  if (ARG0_IS_S("mmm1d")) {
 
     coulomb.method = COULOMB_MMM1D;
 
