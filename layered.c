@@ -377,10 +377,10 @@ void layered_exchange_and_sort_particles(int global_flag)
   ParticleList send_buf_dn, send_buf_up;
   ParticleList recv_buf;
 
-  init_particleList(&send_buf_dn);
-  init_particleList(&send_buf_up);
+  init_particlelist(&send_buf_dn);
+  init_particlelist(&send_buf_up);
 
-  init_particleList(&recv_buf);
+  init_particlelist(&recv_buf);
 
   for (;;) {
     /* sort local particles */
@@ -457,6 +457,8 @@ void layered_exchange_and_sort_particles(int global_flag)
       break;
     }
   }
+
+  realloc_particlelist(&recv_buf, 0);
 }
 
 /** nonbonded and bonded force calculation using the verlet list */

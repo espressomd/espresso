@@ -66,10 +66,17 @@ typedef struct {
 /** exit ungracefully, core dump if switched on. Defined in main.c. */
 void errexit();
 
+/* to enable us to make sure that freed pointers are invalidated, we normally try to use realloc.
+   Unfortunately allocating zero bytes (which should be avoided) actually allocates 16 bytes, and
+   reallocating to 0 also. To avoid this, we use our own malloc and realloc procedures. */
 #ifndef MEM_DEBUG
 
 #ifdef realloc
 #undef realloc
+#endif
+
+#ifdef malloc
+#undef malloc
 #endif
 
 /** used instead of realloc.
@@ -84,8 +91,22 @@ MDINLINE void *prealloc(void *old, int size)
     return realloc(old, size);
 }
 
+/** used instead of malloc.
+    Makes sure that a zero size allocation returns a NULL pointer */
+MDINLINE void *pmalloc(int size)
+{
+  if (size <= 0) {
+    return NULL;
+  }
+  else
+    return malloc(size);
+}
+
 /** use our own realloc which makes sure that realloc(0) is actually a free. */
 #define realloc prealloc
+
+/** use our own malloc which makes sure that malloc(0) returns NULL. */
+#define malloc pmalloc
 
 #endif
 
@@ -100,6 +121,7 @@ MDINLINE void init_intlist(IntList *il)
   il->max = 0;
   il->e   = NULL;
 }
+extern int this_node;
 
 MDINLINE void alloc_intlist(IntList *il, int size)
 {

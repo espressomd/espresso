@@ -39,6 +39,12 @@ int check_id =  ONEPART_DEBUG ;
 void *__realloc(void *old, unsigned int size, char *where, int line)
 {
   void *ret;
+  if (size == 0) {
+    fprintf(stderr, "%d: free %p at %s:%d\n", this_node, old, where, line);
+    free(old);
+    return NULL;
+  }
+
   ret = realloc(old, size);
   fprintf(stderr, "%d: realloc %p -> %p size %d at %s:%d\n", this_node, old, ret, size, where, line);
   return ret;
@@ -47,7 +53,10 @@ void *__realloc(void *old, unsigned int size, char *where, int line)
 void *__malloc(unsigned int size, char *where, int line)
 {
   void *ret;
-  ret = malloc(size);
+  if (size > 0)
+    ret = malloc(size);
+  else
+    ret = NULL;
   fprintf(stderr, "%d: alloc %d -> %p at %s:%d\n", this_node, size, ret, where, line);
   return ret;
 }

@@ -216,7 +216,7 @@ void build_particle_node()
   mpi_who_has();
 }
 
-void init_particleList(ParticleList *pList)
+void init_particlelist(ParticleList *pList)
 {
   pList->n    = 0;
   pList->max  = 0;
@@ -1725,9 +1725,13 @@ void send_particles(ParticleList *particles, int node)
     memcpy(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
     local_bi.n += p->bl.n;
   }
+
   PART_TRACE(fprintf(stderr, "%d: send_particles sending %d bond ints\n", this_node, local_bi.n));
-  MPI_Send(local_bi.e, local_bi.n*sizeof(int),
-	   MPI_BYTE, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
+  if (local_bi.n > 0) {
+    MPI_Send(local_bi.e, local_bi.n*sizeof(int),
+	     MPI_BYTE, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
+    realloc_intlist(&local_bi, 0);
+  }
 
   /* remove particles from this nodes local list */
   for (pc = 0; pc < particles->n; pc++) {
@@ -1736,7 +1740,6 @@ void send_particles(ParticleList *particles, int node)
   }
 
   realloc_particlelist(particles, 0);
-  realloc_intlist(&local_bi, 0);
 }
 
 void recv_particles(ParticleList *particles, int node)
@@ -1774,17 +1777,23 @@ void recv_particles(ParticleList *particles, int node)
   update_local_particles(particles);
 
   PART_TRACE(fprintf(stderr, "%d: recv_particles expecting %d bond ints\n", this_node, local_bi.n));
-  alloc_intlist(&local_bi, local_bi.n);
-  MPI_Recv(local_bi.e, local_bi.n*sizeof(int), MPI_BYTE, node,
-	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
+  if (local_bi.n > 0) {
+    alloc_intlist(&local_bi, local_bi.n);
+    MPI_Recv(local_bi.e, local_bi.n*sizeof(int), MPI_BYTE, node,
+	     REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
+  }
   read = 0;
   for (pc = particles->n - transfer; pc < particles->n; pc++) {
     Particle *p = &particles->part[pc];
-    alloc_intlist(&p->bl, p->bl.n);
-    memcpy(p->bl.e, &local_bi.e[read], p->bl.n*sizeof(int));
-    read += p->bl.n;
+    if (p->bl.n > 0) {
+      alloc_intlist(&p->bl, p->bl.n);
+      memcpy(p->bl.e, &local_bi.e[read], p->bl.n*sizeof(int));
+      read += p->bl.n;
+    }
+    else
+      p->bl.e = NULL;
   }
-
-  realloc_intlist(&local_bi, 0);
+  if (local_bi.n > 0)
+    realloc_intlist(&local_bi, 0);
 }
 

@@ -528,10 +528,10 @@ void  dd_exchange_and_sort_particles(int global_flag)
   Particle *part;
   CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles(%d):\n",this_node,global_flag));
 
-  init_particleList(&send_buf_l);
-  init_particleList(&send_buf_r);
-  init_particleList(&recv_buf_l);
-  init_particleList(&recv_buf_r);
+  init_particlelist(&send_buf_l);
+  init_particlelist(&send_buf_r);
+  init_particlelist(&recv_buf_l);
+  init_particlelist(&recv_buf_r);
   while(finished == 0 ) {
     finished=1;
     /* direction loop: x, y, z */  
@@ -667,6 +667,11 @@ void  dd_exchange_and_sort_particles(int global_flag)
     }
     CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: finished value: %d\n",this_node,finished));
   }
+
+  realloc_particlelist(&send_buf_l, 0);
+  realloc_particlelist(&send_buf_r, 0);
+  realloc_particlelist(&recv_buf_l, 0);
+  realloc_particlelist(&recv_buf_r, 0);
 
 #ifdef ADDITIONAL_CHECKS
   check_particle_consistency();

@@ -280,7 +280,7 @@ void realloc_cells(int size)
   }
   /* initialize new cells */
   for(i=n_cells; i<size; i++) {
-    init_particleList(&cells[i]);
+    init_particlelist(&cells[i]);
   }
   n_cells = size;
 }  

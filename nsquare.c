@@ -190,7 +190,7 @@ void nsq_balance_particles()
 
     if (s_node == this_node) {
       ParticleList send_buf;
-      init_particleList(&send_buf);
+      init_particlelist(&send_buf);
       realloc_particlelist(&send_buf, send_buf.n = transfer);
       for (i = 0; i < transfer; i++) {
 	memcpy(&send_buf.part[i], &local->part[--local->n], sizeof(Particle));

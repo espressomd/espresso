@@ -8,6 +8,7 @@
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #include "parser.h"
 #include "debug.h"
+#include "utils.h"
 
 int parse_int_list(Tcl_Interp *interp, char *list, IntList *il)
 {
