@@ -71,7 +71,7 @@ proc set_time_step {ts} {
     setmd time_step [expr pow(10, $ts)]
 }
 
-mdparam time_step -4 -2 -4 "log time step" set_time_step
+mdparam time_step -4 -1.7 -4 "log time step" set_time_step
 
 #############################################################
 #  Parameters                                               #
@@ -102,6 +102,7 @@ set density 0.001
 
 # counterion lj cutoff
 set fixed_lj_cut 1.12246
+set fixed_lj_eps 1.0
 
 # Interaction parameters
 #############################################################
@@ -116,7 +117,7 @@ setmd skin      0.3
 # Integration parameters
 #############################################################
 
-set intsteps 10
+set intsteps 20
 set maxtime 1000
 
 setmd gamma 1.0
@@ -153,15 +154,15 @@ inter 1 fene $fene1_k $fene1_cut
 
 # pairwise lennard_jones for all particles
 proc setup_ia {what val} {
-    global fixed_lj_cut lj1_epsilon lj1_cut
+    global fixed_lj_eps fixed_lj_cut lj1_epsilon lj1_cut
     eval "set $what $val"
     inter 0 0 lennard-jones $lj1_epsilon 1 $lj1_cut 0 0
     inter 0 1 lennard-jones $lj1_epsilon 1 $lj1_cut 0 0
     inter 1 1 lennard-jones $lj1_epsilon 1 $lj1_cut 0 0
 
-    inter 0 2 lennard-jones $lj1_epsilon 1 $fixed_lj_cut 0 0
-    inter 1 2 lennard-jones $lj1_epsilon 1 $fixed_lj_cut 0 0
-    inter 2 2 lennard-jones $lj1_epsilon 1 $fixed_lj_cut 0 0
+    inter 0 2 lennard-jones $fixed_lj_eps 1 $fixed_lj_cut 0 0
+    inter 1 2 lennard-jones $fixed_lj_eps 1 $fixed_lj_cut 0 0
+    inter 2 2 lennard-jones $fixed_lj_eps 1 $fixed_lj_cut 0 0
 }
 mdparam lj1_cut 1 2.5 1.12246 "cutoff for LJ" {setup_ia lj1_cut}
 mdparam lj1_epsilon 0.5 2 1.0 "epsilon for LJ" {setup_ia lj1_epsilon}
@@ -169,22 +170,16 @@ mdparam lj1_epsilon 0.5 2 1.0 "epsilon for LJ" {setup_ia lj1_epsilon}
 # LJ force capping
 proc setup_force_cap {lfc} {
     if {$lfc == 200} { set lfc 0 }
-    setmd lj_force_cap $lfc
+    inter ljforcecap $lfc
 }
 mdparam lj_force_cap 20 200 20 "LJ force cap" setup_force_cap
 
 # electrostatics
 proc setup_p3m {bj} {
     if { $bj == 0} {
-	setmd bjerrum 0
+	inter coulomb 0
     } {
-	setmd bjerrum $bj
-	setmd p3m_alpha 0.1138
-	setmd p3m_r_cut 15.0
-	setmd p3m_mesh 8 8 8
-	setmd p3m_cao 5 5000
-	setmd p3m_epsilon 0.1
-	setmd p3m_mesh_off 0.5 0.5 0.5
+	inter coulomb $bj p3m 15.0 8 5 0.118 
     }
 }
 mdparam bjerrum 0 4 0 "Bjerrum length" setup_p3m
@@ -214,15 +209,15 @@ if { [file exists "pe_initial.gz"]} {
     set part_id 0
     for {set i 0} { $i < $n_polymers } {incr i} {
 	# polymer start ion
-	set posz [expr $box_length*[tcl_rand]]
-	set posy [expr $box_length*[tcl_rand]]
-	set posx [expr $box_length*[tcl_rand]]
+	set posz [expr $box_length*[t_random]]
+	set posy [expr $box_length*[t_random]]
+	set posx [expr $box_length*[t_random]]
 	part $part_id pos $posx $posy $posz q $cm_valency type 1
 	incr part_id 
 	for {set n 1} { $n < $l_polymers } {incr n} {
 	    # place next ion within bond radius
-	    set phi [expr 2.0*$pi*[tcl_rand]]
-	    set theta [expr $pi*[tcl_rand]]
+	    set phi [expr 2.0*$pi*[t_random]]
+	    set theta [expr $pi*[t_random]]
 	    set vecx [expr $bond_length*sin($phi)*sin($theta)]
 	    set vecy [expr $bond_length*cos($phi)*sin($theta)]
 	    set vecz [expr $bond_length*cos($theta)]
@@ -243,9 +238,9 @@ if { [file exists "pe_initial.gz"]} {
 
     # Counterion setup
     for {set i 0} { $i < $n_counterions } {incr i} {
-	set posx [expr $box_length*[tcl_rand]]
-	set posy [expr $box_length*[tcl_rand]]
-	set posz [expr $box_length*[tcl_rand]]
+	set posx [expr $box_length*[t_random]]
+	set posy [expr $box_length*[t_random]]
+	set posz [expr $box_length*[t_random]]
 	part $part_id pos $posx $posy $posz q $ci_valency type 2
 	incr part_id 
     }
@@ -291,12 +286,13 @@ label .lab_RG -text "RG: *"
 pack .lab_md .lab_RE .lab_RG
 
 while { 1 } {
+    analyze set chains 0 $n_polymers $l_polymers
     if {$simulation_start == 1} {
 	integrate $intsteps
 	if { $vmd_output=="yes" } { puts "imd: [imd positions]" }
 	set md [analyze mindist]
-	set RE [analyze re 0 $n_polymers $l_polymers]
-	set RG [analyze rg 0 $n_polymers $l_polymers]
+	set RE [lindex [analyze re] 0]
+	set RG [lindex [analyze rg] 0]
 	.lab_md conf -text "mindist: $md"
 	.lab_RE conf -text "RE: $RE"
 	.lab_RG conf -text "RG: $RG"
