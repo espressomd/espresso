@@ -26,6 +26,9 @@
 float *partCoord_g=NULL, *partCM_g=NULL;
 int n_part_g = 0, n_chains_g = 0;
 
+/** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
+float **configs = NULL; int n_configs = 0;
+
 /** data for a system consisting of chains */
 int chain_start = 0, chain_n_chains = 0, chain_length = 0;
 
@@ -127,12 +130,14 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
   if (!strncmp(mode, "set", strlen(mode))) {
     /* 'analyze set <structure info>' */
+    /**********************************/
     if (argc == 0) {
       Tcl_AppendResult(interp, "which topology are you interested in?", (char *)NULL);
       return TCL_ERROR;
     }
     if (!strncmp(argv[0], "chains", strlen(argv[0]))) {
       /* 'analyze set chains [<chain_start> <n_chains> <chain_length>]' */
+      /******************************************************************/
       argc--;
       argv++;
       if (argc == 0) {
@@ -150,12 +155,15 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     }
     else {
       /* default */
+      /***********/
       Tcl_AppendResult(interp, "The topology \"", argv[0],
 		       "\" you requested is not implemented.", (char *)NULL);
       return (TCL_ERROR);
     }
   }
   else if (!strncmp(mode, "mindist", strlen(mode))) {
+    /* 'analyze mindist' */
+    /*********************/
     if (n_total_particles <= 1) {
       Tcl_AppendResult(interp, "(not enough particles)",
 		       (char *)NULL);
@@ -167,6 +175,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
   }
   else if (!strncmp(mode, "nbhood", strlen(mode))) {
+    /* 'analyze nbhood { <partid> | <posx> <posy> <posz> } <r_catch>' */
+    /******************************************************************/
     IntList il;
 
     if (n_total_particles == 0) {
@@ -198,6 +208,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   }
   else if (!strncmp(mode, "distto", strlen(mode))) {
     /* 'analyze distto { <part_id> | <posx> <posy> <posz> }' */
+    /*********************************************************/
 
     if (n_total_particles == 0) {
       Tcl_AppendResult(interp, "(no particles)",
@@ -221,6 +232,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   else if (!strncmp(mode, "energy", strlen(mode))) {
+    /* 'analyze energy [{ fene <type_num> | lj <type1> <type2> | coulomb | kinetic }]' */
+    /***********************************************************************************/
     /* checks */
     if (n_total_particles == 0) {
       Tcl_AppendResult(interp, "(no particles)",
@@ -342,9 +355,71 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     energy.init_status=1;
     return (TCL_OK);
   }
+  else if (!strncmp(mode, "append", strlen(mode))) {
+    /* 'analyze append' */
+    /********************/
+    if (argc != 0) {
+      Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze append", (char *)NULL); return TCL_ERROR; 
+    }
+    analyze_append();
+    sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
+  }
+  else if (!strncmp(mode, "push", strlen(mode))) {
+    /* 'analyze push [<size>]' */
+    /*****************************/
+    if (argc == 1) { 
+      Tcl_GetInt(interp, argv[0], &i); argc--; argv++;
+      if (n_configs < i) analyze_append(); else analyze_push();
+      if (n_configs > i) for(j=0; j < n_configs-i; j++) analyze_remove(0);
+    }
+    else if (argc != 0) { Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze push [<size>]", (char *)NULL); return TCL_ERROR; }
+    else if (n_configs > 0) analyze_push();
+    else analyze_append();
+    sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
+  }
+  else if (!strncmp(mode, "replace", strlen(mode))) {
+    /* 'analyze replace <index>' */
+    /*****************************/
+    if (argc != 1) {
+      Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze replace <index>", (char *)NULL); return TCL_ERROR; 
+    }
+    Tcl_GetInt(interp, argv[0], &i); argc--; argv++;
+    if((n_configs == 0) && (i==0)) analyze_append();
+    else if ((n_configs == 0) && (i!=0)) {
+      Tcl_AppendResult(interp, "Nice try, but there are no stored configurations that could be replaced!", (char *)NULL); return TCL_ERROR; }
+    else if((i < 0) || (i > n_configs-1)) {
+      sprintf(buffer,"Index %d out of range (must be in [0,%d])!",i,n_configs-1);
+      Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_ERROR; }
+    else analyze_replace(i);
+    sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
+  }
+  else if (!strncmp(mode, "remove", strlen(mode))) {
+    /* 'analyze remove <index>' */
+    /****************************/
+    if (argc != 1) {
+      Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze remove <index>", (char *)NULL); return TCL_ERROR; 
+    }
+    Tcl_GetInt(interp, argv[0], &i); argc--; argv++;
+    if(n_configs == 0) {
+      Tcl_AppendResult(interp, "Nice try, but there are no stored configurations that could be removed!", (char *)NULL); return TCL_ERROR; }
+    else if((i < 0) || (i > n_configs-1)) {
+      sprintf(buffer,"Index %d out of range (must be in [0,%d])!",i,n_configs-1);
+      Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_ERROR;
+    }
+    analyze_remove(i);
+    sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
+  }
+  else if (!strncmp(mode, "stored", strlen(mode))) {
+    /* 'analyze stored' */
+    /********************/
+    if (argc != 0) {
+      Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze stored", (char *)NULL); return TCL_ERROR; 
+    }
+    sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
+  }
   else if (!strncmp(mode, "re", strlen(mode))) {
     /* 'analyze re [<chain_start> <n_chains> <chain_length>]' */
-    /* Averaged quadratic end-to-end-distance of the polymer chains */
+    /**********************************************************/
     if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
       return TCL_ERROR;
     if (argc != 0) {
@@ -358,7 +433,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   }
   else if (!strncmp(mode, "rg", strlen(mode))) {
     /* 'analyze rg [<chain_start> <n_chains> <chain_length>]' */
-    /* Averaged radius of gyration */
+    /**********************************************************/
     if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
       return TCL_ERROR;
     if (argc != 0) {
@@ -372,7 +447,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   }
   else if (!strncmp(mode, "rh", strlen(mode))) {
     /* 'analyze rh [<chain_start> <n_chains> <chain_length>]' */
-    /* Averaged hydrodynamic radius */
+    /**********************************************************/
     if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
       return TCL_ERROR;
     if (argc != 0) {
@@ -386,9 +461,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   }
   else if (!strncmp(mode, "g123", strlen(mode))) {
     /* 'analyze g123 [-init] [<chain_start> <n_chains> <chain_length>]' */
-    /* - Mean square displacement of a monomer
-       - Mean square displacement in the center of gravity of the chain itself
-       - Motion of the center of mass */
+    /********************************************************************/
     int init = 0;
     double g1, g2, g3;
 
@@ -423,7 +496,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     }
 
     calc_g123(&g1, &g2, &g3);
-    sprintf(buffer,"{%f %f %f}",g1, g2, g3);
+    sprintf(buffer,"{ %f %f %f }",g1, g2, g3);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return (TCL_OK);
   }
@@ -616,6 +689,9 @@ void init_g123()
 
 void calc_g123(double *_g1, double *_g2, double *_g3)
 {
+  /* - Mean square displacement of a monomer
+     - Mean square displacement in the center of gravity of the chain itself
+     - Motion of the center of mass */
   int i, j, p;
   double g1=0.0, g2=0.0, g3=0.0, cm_tmp[3];
 
@@ -793,4 +869,49 @@ void init_energies()
   energy.n = energy.n_pre+energy.n_bonded+energy.n_non_bonded+energy.n_coulomb;
   realloc_doublelist(&(energy.node),energy.n);
   realloc_doublelist(&(energy.sum),energy.n);
+}
+
+void analyze_append() {
+  int i;
+  configs = realloc(configs,(n_configs+1)*sizeof(float *));
+  configs[n_configs] = (float *) malloc(3*n_total_particles*sizeof(float));
+  for(i=0; i<n_total_particles; i++) {
+    configs[n_configs][3*i]   = partCfg[i].r.p[0];
+    configs[n_configs][3*i+1] = partCfg[i].r.p[1];
+    configs[n_configs][3*i+2] = partCfg[i].r.p[2];
+  }
+  n_configs++;
+}
+
+void analyze_push() {
+  int i;
+  free(configs[0]);
+  for(i=0; i<n_configs-1; i++) {
+    configs[i]=configs[i+1];
+  }
+  configs[n_configs-1] = (float *) malloc(3*n_total_particles*sizeof(float));
+  for(i=0; i<n_total_particles; i++) {
+    configs[n_configs-1][3*i]   = partCfg[i].r.p[0];
+    configs[n_configs-1][3*i+1] = partCfg[i].r.p[1];
+    configs[n_configs-1][3*i+2] = partCfg[i].r.p[2];
+  }
+}
+
+void analyze_replace(int ind) {
+  int i;
+  for(i=0; i<n_total_particles; i++) {
+    configs[ind][3*i]   = partCfg[i].r.p[0];
+    configs[ind][3*i+1] = partCfg[i].r.p[1];
+    configs[ind][3*i+2] = partCfg[i].r.p[2];
+  }
+}
+
+void analyze_remove(int ind) {
+  int i;
+  free(configs[ind]);
+  for(i=ind; i<n_configs-1; i++) {
+    configs[i]=configs[i+1];
+  }
+  n_configs--;
+  configs = realloc(configs,n_configs*sizeof(float *));
 }

@@ -107,6 +107,20 @@ void calc_g123(double *g1, double *g2, double *g3);
 */
 void init_g123();
 
+/** appends particles' positions in 'partCfg' to 'configs' */
+void analyze_append();
+
+/** removes configs[0], pushes all entries forward, appends current 'partCfg' to last spot */
+void analyze_push();
+
+/** replaces configs[ind] with current 'partCfg'
+    @param ind the entry in 'configs' to be replaced */
+void analyze_replace(int ind);
+
+/** removes configs[ind] and shrinks the array accordingly
+    @param ind the entry in 'configs' to be removed */
+void analyze_remove(int ind);
+
 /*@}*/
 
 #endif
