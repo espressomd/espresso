@@ -119,6 +119,13 @@ void dd_create_cell_grid()
       }
     }
   }
+
+  /* sanity check */
+  for(i=0;i<3;i++) if( dd.cell_grid[i] < 1 ) {
+    fprintf(stderr, "%d: dd_create_cell_grid: interaction range larger than local box in direction %d: max_range %f local_box %f\n",this_node,i,max_range,local_box_l[i]);
+    errexit();
+  }
+
   /* quit program if unsuccesful */
   if(n_local_cells > max_num_cells) {
     fprintf(stderr, "%d: dd_create_cell_grid: grid (%d,%d,%d), n_local_cells=%d\n",
