@@ -98,15 +98,27 @@ void sync_topo_part_info() {
   }
 }
 
-
 int parse_sync_topo_part_info(Tcl_Interp *interp) {
-  
+  int i,j,ntopoparts;
   if (n_molecules <= 0) {
     Tcl_AppendResult(interp, "Can't sync molecules to particle info: No molecules defined ", (char *)NULL);
     return TCL_ERROR;
   }
   if (n_total_particles <= 0) {
     Tcl_AppendResult(interp, "Can't sync molecules to particle info: No particles defined ", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  /* Check to see that the number of particles in the topology info
+     does not exceed the total number of particles */
+  ntopoparts = 0;
+  for ( i = 0 ; i < n_molecules ; i ++ ) {
+    for ( j = 0 ; j < topology[i].part.n ; j++ ) {
+      ntopoparts += 1;
+    }
+  }
+  if ( ntopoparts > n_total_particles ) {
+    Tcl_AppendResult(interp, "Can't sync molecules to particle info: Topology contains more particles than actually exist ", (char *)NULL);
     return TCL_ERROR;
   }
 
