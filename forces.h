@@ -46,6 +46,7 @@
 #include "constraint.h"
 #include "comforce.h"
 #include "comfixed.h"
+#include "morse.h"
 
 /** \name Exported Functions */
 /************************************************************/
@@ -114,12 +115,17 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   add_lj_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
 
-/* buckingham */
+  /* morse */
+#ifdef MORSE
+  add_morse_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+
+  /* buckingham */
 #ifdef BUCKINGHAM
   add_buck_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
 
-/* soft-sphere */
+  /* soft-sphere */
 #ifdef SOFT_SPHERE
   add_soft_pair_force(p1,p2,ia_params,d,dist,force);
 #endif

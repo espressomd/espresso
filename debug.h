@@ -42,6 +42,8 @@
  <li> \verbatim #define FORCE_CORE \endverbatim generate a core dump even on regular termination.
  <li> \verbatim #define ADDITIONAL_CHECKS \endverbatim adds additional checks which indicate failure
  of the code.
+ <li> \verbatim #define MORSE_DEBUG \endverbatim activate debug output for the MORSE-potential.
+
  </ul>
 
  For every define there exists a macro that can be used to encapsulate short lines (like printf("...",...);)
@@ -64,6 +66,7 @@
 /* #define FORCE_DEBUG */
 /* #define THERMO_DEBUG */ 
 /* #define LJ_DEBUG */
+/* #define MORSE_DEBUG */
 /* #define ESR_DEBUG */
 /* #define ESK_DEBUG */
 /* #define FENE_DEBUG */
@@ -242,6 +245,12 @@ extern int check_id;
 #define LJ_TRACE(cmd) { cmd; }
 #else
 #define LJ_TRACE(cmd)
+#endif
+
+#ifdef MORSE_DEBUG
+#define MORSE_TRACE(cmd) { cmd; }
+#else
+#define MORSE_TRACE(cmd)
 #endif
 
 #ifdef BUCK_DEBUG

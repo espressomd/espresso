@@ -37,7 +37,7 @@
 #include "mmm1d.h"
 #include "mmm2d.h"
 #include "maggs.h"
-
+#include "morse.h"
 
 /** \name Exported Variables */
 /************************************************************/
@@ -69,6 +69,11 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 #ifdef LENNARD_JONES
   /* lennard jones */
   ret += lj_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+
+#ifdef MORSE
+  /* morse */
+  ret +=morse_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
 #ifdef BUCKINGHAM

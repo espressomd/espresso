@@ -61,12 +61,12 @@ This will allow to use such particle properties as quart, omega, and torque. */
 
 /** Compiler flag to enable external forces. E.g. apply a fixed external force
     to a particle or fix a particle in space. */
-#define EXTERNAL_FORCES
+/* #define EXTERNAL_FORCES */
 
 
 /** Compiler Flag to enable constraints, eg walls, spheres.
     See \ref constraint.h and \ref interaction_data.h */
-#define CONSTRAINTS
+/* #define CONSTRAINTS */
 
 /** allow particles to have different masses. */
 /* #define MASS */
@@ -96,7 +96,10 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /* #define TABULATED */
 
 /** Lennard-Jones */
-#define LENNARD_JONES
+#define LENNARD_JONES */
+
+/** Morse */
+#define MORSE
 
 /** Lennard-Jones with cosine tail */
 /* #define LJCOS */
@@ -247,6 +250,9 @@ MDINLINE int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef LENNARD_JONES
   Tcl_AppendResult(interp, "{ LENNARD_JONES } ", (char *) NULL);
+#endif
+#ifdef MORSE
+  Tcl_AppendResult(interp, "{ MORSE } ", (char *) NULL);
 #endif
 #ifdef BUCKINGHAM
   Tcl_AppendResult(interp, "{ BUCKINGHAM } ", (char *) NULL);
