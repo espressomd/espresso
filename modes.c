@@ -142,7 +142,7 @@ int orient_order(double* result)
   int bilayer_cnt;
   int i,atom,tmpzdir;
   double dp;
-
+  double len;
 
   bilayer_cnt = 0;
   *result = 0;
@@ -198,10 +198,19 @@ int orient_order(double* result)
   }
 
 
-
+  len = 0.0;
   for ( i = 0 ; i < 3 ; i++) {
     sumdir[i] = sumdir[i]/(double)(bilayer_cnt);
+    len += sumdir[i]*sumdir[i];
   }
+
+  printf("<n>: ");
+  for ( i = 0 ; i < 3 ; i++) {
+    sumdir[i] = sumdir[i]/sqrt(len);
+    printf("%f ",sumdir[i]); 
+  }
+  printf("\n");
+  fflush(stdout);
 
   for ( i = 0 ; i < n_molecules ; i++ ) {
     dir[0] = stored_dirs[i*3];
