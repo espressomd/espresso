@@ -142,6 +142,11 @@ proc polyBlockWriteTclvar { destination {tclvar "all"} } {
     flush $f; close $f
 }
 
+# reads the file named '$source' into Espresso
+proc polyBlockRead { source } {
+    set inp [open "$source" r]; while { [eof $inp] != 1 } { blockfile $inp read auto }; close $inp
+}
+
 
 proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { var "all" } { ran "all" } } {
     if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
@@ -170,7 +175,11 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
 }
 
 
-proc checkpoint_read { origin { read_all_chks 1 } } {
+# this command is intended to read all the checkpoints listed in a .chk-file
+# parameters are 'read_all_chks' == 1 (if all checkpoints should be read), != 1 (if only the last one should be read),
+# 'write_pdb' == 0 (do nothing, ignore 'pdb_sfx'), != 0 (if all [e.g. 459] checkpoints should be converted to $write_pdb0000.pdb ... $write_pdb0459.pdb),
+# and 'pdb_sfx' (giving the number of digits to be used in enumbering the .pdb-files)
+proc checkpoint_read { origin { read_all_chks 1 } { write_pdb 0 } { pdb_sfx 5 }} {
     if { [file exists "$origin.chk"] } { 
 	set chk [open "$origin.chk" "r"] 
     } elseif { 
@@ -178,6 +187,7 @@ proc checkpoint_read { origin { read_all_chks 1 } } {
     } else { 
 	puts "ERROR: Could not find checkpoint-list $origin!\nAborting..."; exit 
     }
+    if { $write_pdb !=0 } { set pdb_ind 0; set pdb_sfx [join [list "%0" $pdb_sfx "d"] ""] }
     if { $read_all_chks } {
 	while { [eof $chk]==0 } { 
 	    if { [gets $chk source] > 0 } {
@@ -190,6 +200,7 @@ proc checkpoint_read { origin { read_all_chks 1 } } {
 		while { [blockfile $f read auto] != "eof" } {}
 		puts -nonewline "."; flush stdout; # puts "read $source"
 		close $f
+		if { $write_pdb !=0 } { if {$pdb_ind==0} {writepsf "$write_pdb.psf"}; writepdb "$write_pdb[format $pdb_sfx $pdb_ind].pdb"; incr pdb_ind }
 	    }
 	}
     } else {
@@ -214,6 +225,7 @@ proc checkpoint_read { origin { read_all_chks 1 } } {
 	while { [blockfile $f read auto] != "eof" } {}
 	puts -nonewline "."; flush stdout; # puts "read $source"
 	close $f
+	if { $write_pdb !=0 } { if {$pdb_ind==0} {writepsf "$write_pdb.psf"}; writepdb "$write_pdb[format $pdb_sfx $pdb_ind].pdb"; incr pdb_ind }
     }
     close $chk
 }
