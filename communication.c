@@ -307,6 +307,10 @@ static void __place_particle(int part, double p[3])
   if (!pt)
     pt = cells_alloc_particle(part, p);
   memcpy(pt->r.p, p, 3*sizeof(double));
+  pt->i[0] = 0;
+  pt->i[1] = 0;
+  pt->i[2] = 0;
+  fold_particle(pt->r.p, pt->i);
 }
 
 void mpi_place_particle(int pnode, int part, double p[3])
