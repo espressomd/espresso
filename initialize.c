@@ -37,24 +37,24 @@ int initialize(Tcl_Interp *interp)
     */
 
     /* in integrate.c */
-    Tcl_CreateCommand(interp, "integrate", integrate, 0, NULL);
+    Tcl_CreateCommand(interp, "integrate", (Tcl_CmdProc *)integrate, 0, NULL);
     /* in global.c */
-    Tcl_CreateCommand(interp, "setmd", setmd, 0, NULL);
+    Tcl_CreateCommand(interp, "setmd", (Tcl_CmdProc *)setmd, 0, NULL);
     /* in interaction_data.c */
-    Tcl_CreateCommand(interp, "inter", inter, 0, NULL);
+    Tcl_CreateCommand(interp, "inter", (Tcl_CmdProc *)inter, 0, NULL);
     /* in particle_data.c */
-    Tcl_CreateCommand(interp, "part", part, 0, NULL);
+    Tcl_CreateCommand(interp, "part", (Tcl_CmdProc *)part, 0, NULL);
     /* in file binaryfile.c */
-    Tcl_CreateCommand(interp, "writemd", writemd, 0, NULL);
-    Tcl_CreateCommand(interp, "readmd", readmd, 0, NULL);
+    Tcl_CreateCommand(interp, "writemd", (Tcl_CmdProc *)writemd, 0, NULL);
+    Tcl_CreateCommand(interp, "readmd", (Tcl_CmdProc *)readmd, 0, NULL);
     /* in file statistics.c */
-    Tcl_CreateCommand(interp, "mindist", mindist, 0, NULL);
+    Tcl_CreateCommand(interp, "mindist", (Tcl_CmdProc *)mindist, 0, NULL);
     /* in file imd.c */
-    Tcl_CreateCommand(interp, "imd", imd, 0, NULL);
+    Tcl_CreateCommand(interp, "imd", (Tcl_CmdProc *)imd, 0, NULL);
     /* in file random.c */
-    Tcl_CreateCommand(interp, "tcl_rand", tcl_rand, 0, NULL);
+    Tcl_CreateCommand(interp, "tcl_rand", (Tcl_CmdProc *)tcl_rand, 0, NULL);
     /* in file blockfile_tcl.c */
-    Tcl_CreateCommand(interp, "blockfile", blockfile, 0, NULL);
+    Tcl_CreateCommand(interp, "blockfile", (Tcl_CmdProc *)blockfile, 0, NULL);
 
     /* evaluate the Tcl initialization script */
     scriptdir = getenv("TCLMD_SCRIPTS");
