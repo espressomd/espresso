@@ -52,7 +52,11 @@ For more details see \ref integrate.c "integrate.c".
 
 \section requirements Requirements
 
-Script language: <a href="http://tcl.activestate.com">Tcl 8.3</a> or higher <br>
+<ul>
+<li> Script language: <a href="http://tcl.activestate.com">Tcl 8.3</a> or higher version
+<li> mpi programming environment: depends on operating system (see below).
+<li> Fast Fourier Transformation: <a href="http://www.fftw.org">fftw</a> 
+</ul>
 
 Supported operating systems:
 <ul>
@@ -60,9 +64,78 @@ Supported operating systems:
 <li> OSF1
 <li> AIX
 </ul>
-You have to adopt the corresponding Makefile to your system.
 
-\section start Getting Started.
+
+Only for some special purpose, e.g. you want to supplement your
+simulations with a graphical user interface like it is done in the
+sample script demo.tcl, you will also need  
+<a href="http://tcl.activestate.com">tk 8.3</a> or higher version.
+
+\section start Getting Started
+
+\subsection start_env Environment Variables:
+
+For the work with ESPResSo you need to set the following environment variables (Please check the exact syntax for your shell/system):<br>
+The path for the mpi binary has to be included in your execution path (For Linux this would be e.g. lam).
+\verbatim 
+setenv PATH "${PATH}:.:/opt/lam/bin"
+\endverbatim
+To be able to start ESPResSo from any directory the system has to know the location of the ESPResSo sources:
+\verbatim 
+setenv ESPRESSO_SOURCE  "your_directory/Espresso"
+setenv ESPRESSO_SCRIPTS "your_directory/Espresso/scripts"
+\endverbatim
+
+\subsection start_compile Compilation:
+
+In general you have to adopt the corresponding Makefile to your
+system. Here just a short description how things should be arranged if
+you want to use the provided Makefiles directly.<br>
+
+<ol>
+<li> Linux:<br>
+<ul>
+<li> tcl8.4: The library should be installed in /usr/lib/ . The header files should reside in  /usr/include/ .
+<li> lam should be installed in /opt/lam/bin/ .
+<li> fftw: The library should be installed in /usr/local/lib/ . The header files should reside in /usr/localinclude/ .
+</ul>
+
+<li> OSF1:<br>
+Documentation not ready.
+
+<li> AIX:<br>
+Special settings for an IBM Regatta system.
+</ol>
+
+After adjusting the makefile you can compile ESPResSo. Change into the directory Espresso and type:
+\verbatim 
+gmake
+\endverbatim
+to compile the code. The executable is in Espresso/<your operating system>. With
+\verbatim 
+gmake docu
+\endverbatim
+you can create the html documentation (... including the page you are reading at the moment). The documentation is in Espresso/doc/html.
+
+If there are problems you can try to use 
+\verbatim 
+gmake clean 
+\endverbatim
+and 
+\verbatim 
+gmake dep
+\endverbatim
+befor the compilation. 
+
+\subsection start_first First Simulations
+
+In the documentation the most important page for the beginning is the
+description of the \ref tcl "Tcl Extensions". The most convenient way
+is probably to go through the examples in the 
+\ref testsuite "testsuite directory" in order to see how you can write your own
+simulation scripts. We hope you will have fun using ESPResSo.
+
+\section mpi_help Additional information for MPI-P ESPResSo users.
 
 This section is only valid inside the theory cluster at the MPI-P in Mainz.
 
@@ -94,7 +167,7 @@ for the latest cvs snapshot in the case you want to work on the code.
 <li> Create documentation files (html, latex, man and rtf) using
 \verbatim gmake docu\endverbatim
 (This command works only on our Linux PCs (needs doxygen).
-Use touch file_name.c if this does not work rightaway)
+Use touch file_name.c if this does not work right away)
 <li> Read the documentation carefully (Come on, there had been only 213 pages when I
 was writing these lines) !!!
 <li> Try the sample script files in \ref testsuite "testsuite directory".
@@ -114,6 +187,21 @@ things here.
 No bugs known at the moment.
 
 \section plans Plans for the future
+
+<ul>
+<li> Dipolar interactions
+<li> Monte Carlo Integrator with some standard moves (translational, pivot, reptation, cluster)
+<li> More general angle potential
+<li> Torsion potential
+<li> Force fields
+<li> External fields
+<li> Hydrodynamic interactions via an advanced Lattice Boltzmann method 
+<li> Dissipative particle dynamics
+<li> Non equilibrium molecular dynamics
+<li> New algorithms for treating long range interactions: A local algorithm invented by T. Maggs and a finite difference multi-grid scheme proposed by D. Tsukerman.
+</ul>
+
+And we are open for more ideas e.g. coming from you.
 
 \section help More help about ...
 
