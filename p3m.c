@@ -114,6 +114,9 @@ double *ca_frac = NULL;
 /** first mesh point for charge assignment. */
 int *ca_fmp = NULL;
 
+/** number of permutations in k_space */
+int ks_pnum;
+
 /** \name Privat Functions */
 /************************************************************/
 /*@{*/
@@ -236,6 +239,8 @@ void   P3M_init()
       return ;
     }
 
+    P3M_TRACE(fprintf(stderr,"%d: mesh=%d, cao=%d, mesh_off=(%f,%f,%f)\n",this_node,p3m.mesh[0],p3m.cao,p3m.mesh_off[0],p3m.mesh_off[1],p3m.mesh_off[2]));
+
     p3m.prefactor = p3m.bjerrum*temperature; 
     p3m.r_cut2    = p3m.r_cut*p3m.r_cut;
     for(i=0;i<3;i++) {
@@ -279,7 +284,7 @@ void   P3M_init()
  
     /* FFT */
     P3M_TRACE(fprintf(stderr,"%d: rs_mesh ADR=%p\n",this_node,rs_mesh));
-    ca_mesh_size = fft_init(&rs_mesh,lm.dim,lm.margin);
+    ca_mesh_size = fft_init(&rs_mesh,lm.dim,lm.margin,&ks_pnum);
     /* rs_mesh = (double *) realloc(rs_mesh, ca_mesh_size*sizeof(double)); */
     ks_mesh = (double *) realloc(ks_mesh, ca_mesh_size*sizeof(double));
 
@@ -296,7 +301,7 @@ void   P3M_init()
 void   P3M_calc_kspace_forces()
 {
   Particle *p;
-  int i,m,n,o,np,d,i0,i1,i2,ind,j[3];
+  int i,m,n,o,np,d,d_rs,i0,i1,i2,ind,j[3];
   double q;
   /* position of a particle in local mesh units */
   double pos[3];
@@ -361,6 +366,11 @@ void   P3M_calc_kspace_forces()
 	    tmp1 = tmp0 * int_caf[i1][arg[1]];
 	    for(i2=0; i2<p3m.cao; i2++) {
 	      ca_frac[cf_cnt] = tmp1 * int_caf[i2][arg[2]];
+	      /*
+		P3M_TRACE(fprintf(stderr,"%d Frac %d = %f add tp [%d,%d,%d] (%d)\n",
+		this_node,cf_cnt,ca_frac[cf_cnt],
+		first[0]+i0,first[1]+i1,first[2]+i2,q_ind));
+	      */
 	      rs_mesh[q_ind++] += ca_frac[cf_cnt++];
 	    }
 	    q_ind += q_m_off;
@@ -376,6 +386,8 @@ void   P3M_calc_kspace_forces()
 
   /* Gather information for FFT grid inside the nodes domain (inner local mesh) */
   gather_fft_grid();
+
+
 
   /* === Perform forward 3D FFT (Charge Assignment Mesh) === */
   fft_perform_forw(rs_mesh);
@@ -394,6 +406,8 @@ void   P3M_calc_kspace_forces()
 
   /* Force component loop */
   for(d=0;d<3;d++) {  
+    /* direction in k space: */
+    d_rs = (d+ks_pnum)%3;
     /* srqt(-1)*k differentiation */
     ind=0;
     for(j[0]=0; j[0]<fft_plan[2].new_mesh[0]; j[0]++) {
@@ -427,7 +441,7 @@ void   P3M_calc_kspace_forces()
 #ifdef ADDITIONAL_CHECKS
 		db_fsum += force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
 #endif
-		p[i].f[d] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
+		p[i].f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
 		cf_cnt++;
 	      }
 	      q_ind += q_m_off;
@@ -438,6 +452,7 @@ void   P3M_calc_kspace_forces()
 #ifdef ADDITIONAL_CHECKS
 	  if(fabs(db_fsum)> 1.0) fprintf(stderr,"%d: Part %d: k-space-force = %e\n",this_node,p[i].r.identity,db_fsum);
 #endif
+ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",this_node,p[i].f[0],p[i].f[1],p[i].f[2],d_rs,-db_fsum));
 	}
       }
     }
@@ -468,8 +483,9 @@ void calc_local_ca_mesh() {
   for(i=0;i<3;i++) lm.in_ld[i] = (int)ceil(my_left[i]*p3m.ai[i]-p3m.mesh_off[i]);
   /* inner up right grid point (global index) */
   for(i=0;i<3;i++) lm.in_ur[i] = (int)floor(my_right[i]*p3m.ai[i]-p3m.mesh_off[i]);
+  
   /* correct roundof errors at up right boundary */
-  for(i=0;i<3;i++) if((my_right[i]*p3m.ai[i]-p3m.mesh_off[i])-lm.in_ur[i]==0.0) lm.in_ur[i]--;
+  for(i=0;i<3;i++) if((my_right[i]*p3m.ai[i]-p3m.mesh_off[i])-lm.in_ur[i]<1.0e-15) lm.in_ur[i]--;
   /* inner grid dimensions */
   for(i=0;i<3;i++) lm.inner[i] = lm.in_ur[i] - lm.in_ld[i] + 1;
   /* index of left down grid point in global mesh */
@@ -508,9 +524,9 @@ void p3m_print_local_mesh(local_mesh l)
 	  l.inner[0],l.inner[1],l.inner[2],
 	  l.in_ld[0],l.in_ld[1],l.in_ld[2],
 	  l.in_ur[0],l.in_ur[1],l.in_ur[2]);
-  fprintf(stderr,"    margin = (%d,%d,%d,  %d,%d,%d)\n",
+  fprintf(stderr,"    margin = (%d,%d, %d,%d, %d,%d)\n",
 	  l.margin[0],l.margin[1],l.margin[2],l.margin[3],l.margin[4],l.margin[5]);
-  fprintf(stderr,"    r_margin=(%d,%d,%d,  %d,%d,%d)\n",
+  fprintf(stderr,"    r_margin=(%d,%d, %d,%d, %d,%d)\n",
 	  l.r_margin[0],l.r_margin[1],l.r_margin[2],l.r_margin[3],l.r_margin[4],l.r_margin[5]);
 }
 

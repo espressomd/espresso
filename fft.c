@@ -178,7 +178,7 @@ void fft_pre_init()
 
 }
 
-int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin)
+int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
 {
   int i,j;
   /* helpers */
@@ -194,6 +194,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin)
   fftw_status wisdom_status;
 
   FFT_TRACE(fprintf(stderr,"%d: fft_init():\n",this_node));
+
 
   max_comm_size=0; max_mesh_size=0;
   for(i=0;i<4;i++) {
@@ -225,6 +226,8 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin)
   }
   fft_plan[2].row_dir = (fft_plan[1].row_dir-1)%3;
   fft_plan[3].row_dir = (fft_plan[1].row_dir-2)%3;
+
+
 
   /* === communication groups === */
   /* copy local mesh off real space charge assignment grid */
@@ -294,17 +297,29 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin)
   /* Factor 2 for complex fields */
   max_comm_size *= 2;
   max_mesh_size = (ca_mesh_dim[0]*ca_mesh_dim[1]*ca_mesh_dim[2]);
-  for(i=1;i>4;i++) 
+  for(i=1;i<4;i++) 
     if(2*fft_plan[i].new_size > max_mesh_size) max_mesh_size = 2*fft_plan[i].new_size;
 
   FFT_TRACE(fprintf(stderr,"%d: max_comm_size = %d, max_mesh_size = %d\n",
 		    this_node,max_comm_size,max_mesh_size));
 
   /* === pack function === */
-  for(i=1;i<4;i++) fft_plan[i].pack_function = pack_block_permute2;
-  if(fft_plan[1].row_dir==2) fft_plan[1].pack_function = pack_block;
-  else if(fft_plan[1].row_dir==1) fft_plan[1].pack_function = pack_block_permute1;
-
+  for(i=1;i<4;i++) {
+    fft_plan[i].pack_function = pack_block_permute2; 
+    FFT_TRACE(fprintf(stderr,"%d: forw plan[%d] permute 2 \n",this_node,i));
+  }
+  (*ks_pnum)=6;
+  if(fft_plan[1].row_dir==2) {
+    fft_plan[1].pack_function = pack_block;
+    FFT_TRACE(fprintf(stderr,"%d: forw plan[%d] permute 0 \n",this_node,1));
+    (*ks_pnum)=4;
+  }
+  else if(fft_plan[1].row_dir==1) {
+    fft_plan[1].pack_function = pack_block_permute1;
+    FFT_TRACE(fprintf(stderr,"%d: forw plan[%d] permute 1 \n",this_node,1));
+    (*ks_pnum)=5;
+  }
+  
   /* Factor 2 for complex numbers */
   send_buf = (double *)realloc(send_buf, max_comm_size*sizeof(double));
   recv_buf = (double *)realloc(recv_buf, max_comm_size*sizeof(double));
@@ -313,8 +328,6 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin)
   if(!(*data) || !data_buf || !recv_buf || !send_buf) 
     fprintf(stderr,"%d: Could not allocate FFT data arays\n",this_node);
 
-
-  FFT_TRACE(fprintf(stderr,"%d: (*data) ADR=%p\n",this_node,(*data) ));
   c_data     = (fftw_complex *) (*data);
   c_data_buf = (fftw_complex *) data_buf;
 
@@ -368,10 +381,16 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin)
     }
     fft_back[i].fft_function = fftw;
     fft_back[i].pack_function = pack_block_permute1;
+    FFT_TRACE(fprintf(stderr,"%d: back plan[%d] permute 1 \n",this_node,i));
   }
-  if(fft_plan[1].row_dir==2) fft_back[1].pack_function = pack_block;
-  else if(fft_plan[1].row_dir==1) fft_back[1].pack_function = pack_block_permute2;
-
+  if(fft_plan[1].row_dir==2) {
+    fft_back[1].pack_function = pack_block;
+    FFT_TRACE(fprintf(stderr,"%d: back plan[%d] permute 0 \n",this_node,1));
+  }
+  else if(fft_plan[1].row_dir==1) {
+    fft_back[1].pack_function = pack_block_permute2;
+    FFT_TRACE(fprintf(stderr,"%d: back plan[%d] permute 2 \n",this_node,1));
+  }
   fft_init_tag=1;
   /* free(data); */
   for(i=0;i<4;i++) { free(n_id[i]); free(n_pos[i]); }
@@ -381,15 +400,30 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin)
 void fft_perform_forw(double *data)
 {
   int i;
-
+  /* int m,n,o; */
   /* ===== first direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_forw: dir 1:\n",this_node));
-
+  
   c_data     = (fftw_complex *) data;
   c_data_buf = (fftw_complex *) data_buf;
 
   /* communication to current dir row format (in is data) */
   forw_grid_comm(fft_plan[1], data, data_buf);
+
+  /*
+    fprintf(stderr,"%d: start grid \n",this_node);
+    i=0;
+    for(m=0;m<8;m++) {
+    for(n=0;n<8;n++) {
+    for(o=0;o<8;o++) {
+    fprintf(stderr,"%.3f ",data_buf[i++]);
+    }
+    fprintf(stderr,"\n");
+    }
+    fprintf(stderr,"\n");
+    }
+  */
+
   /* complexify the real data array (in is data_buf) */
   for(i=0;i<fft_plan[1].new_size;i++) {
     data[2*i]     = data_buf[i];     /* real value */
@@ -674,6 +708,8 @@ int calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3], double mesh_off[3]
   for(i=0;i<3;i++) {
     start[i] = (int)ceil( (mesh[i]/(double)n_grid[i])*n_pos[i]     - mesh_off[i] );
     last[i]  = (int)floor((mesh[i]/(double)n_grid[i])*(n_pos[i]+1) - mesh_off[i] );
+    /* correct round off errors */
+    if( (mesh[i]/(double)n_grid[i])*(n_pos[i]+1) - mesh_off[i] - last[i] < 1.0e-15 ) last[i]--;
     loc_mesh[i] = last[i]-start[i]+1;
     size *= loc_mesh[i];
   }
