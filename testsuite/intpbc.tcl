@@ -66,6 +66,7 @@ proc write_data {file} {
 
 if { [catch {
     ############## integ-specific part
+    setmd box_l     99 99 99
     inter 0 0 lennard-jones 1.0 1.0 1.12246 0.25 0.0
 
     set fene_k      30.0

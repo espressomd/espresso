@@ -62,6 +62,7 @@ if { [catch {
     ############## harm-specific part
     set harm_k      30.0
     set harm_r      1.5
+    setmd box_l     99 99 99
     inter 0 harm $harm_k $harm_r
 
     read_data "harm_system.data.gz"

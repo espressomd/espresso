@@ -62,6 +62,7 @@ if { [catch {
     ############## fene-specific part
     set fene_k      30.0
     set fene_r      1.5
+    setmd box_l     99 99 99
     inter 0 fene $fene_k $fene_r
 
     read_data "fene_system.data.gz"
