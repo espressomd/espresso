@@ -148,10 +148,12 @@ int aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_lis
   Particle *p1, *p2, **pairs;
   double dist2, vec21[3];
   int arr_size = n_molecules * (n_molecules+1 ) / 2;
-  double *minidist2;
+  float *minidist2;
   int target1, target2, head_i;
 
-  minidist2 = malloc(arr_size*sizeof(double));
+  minidist2 = malloc(arr_size*sizeof(float));
+
+  if(minidist2==NULL) return 3;
 
   if (n_nodes > 1)
     return 1;
@@ -1003,10 +1005,10 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
   float fagg_avg;
   int s_mol_id, f_mol_id;
 
-  agg_id_list = malloc(n_molecules *sizeof(double));
-  head_list =  malloc(n_molecules *sizeof(double));
-  link_list = malloc(n_molecules *sizeof(double));
-  agg_size = malloc(n_molecules *sizeof(double));
+  agg_id_list = (int *) malloc(n_molecules *sizeof(int));
+  head_list =  (int *) malloc(n_molecules *sizeof(int));
+  link_list = (int *) malloc(n_molecules *sizeof(int));
+  agg_size = (int *) malloc(n_molecules *sizeof(int));
 
   /* parse arguments */
   if (argc != 3) {
@@ -1040,6 +1042,9 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
   case 2:
     Tcl_AppendResult(interp, "aggregation can only be calculated with the domain decomposition cell system", (char *)NULL);
     return TCL_ERROR;
+  case 3:
+    Tcl_AppendResult(interp, "don't be greedy, asking for too much memory!!!", (char *)NULL);
+    return TCL_ERROR;    
   }
   
 
