@@ -9,20 +9,28 @@
  * data types
  ************************************************/
 
+
 /** Structure to hold P3M parameters and some dependend variables. */
 typedef struct {
-  double bjerrum;   /** Bjerrum-length. */
-  double alpha;     /** Ewald splitting parameter. */
-  double r_cut;     /** Cutoff radius for real space electrostatics. */
+  double bjerrum;   /** Bjerrum-length (>0). */
+  double alpha;     /** Ewald splitting parameter (0<alpha<1). */
+  double r_cut;     /** Cutoff radius for real space electrostatics (>0). */
 
-  int    mesh[3];   /** number of mesh points per coordinate direction. */
+  int    mesh[3];   /** number of mesh points per coordinate direction (>0). */
   double mesh_off[3]; /** offset of the first mesh point (lower left 
-			  corner) from the coordinate origin. */
-  int    cao;       /** charge assignment order. */
+			  corner) from the coordinate origin ([0,1[). */
+  int    cao;       /** charge assignment order ([0,7]). */
+  int    inter;     /** number of interpolation points for charge assignment function */
 
   double epsilon;   /** epsilon of the "surrounding dielectric". */
   double prefactor; /** Coulomb prefactor, e.g. Bjerrum*Temp. */
   double r_cut2;    /** Cutoff radius squared. */
+  double cao_cut[3];   /** Cutoff for charge assignment. */
+  double a[3];      /* mesh constant. */
+  double ai[3];     /** inverse mesh constant. */
+
+  int    lm[3];     /** local CA mesh (with margins =lm.dim[]). */
+  int lm_margin[3]; /** left margin of local CA mesh */
 } p3m_struct;
 
 /************************************************

@@ -12,6 +12,8 @@
  <li> \verbatim #define FORCE_DEBUG \endverbatim activate force debug output.
  <li> \verbatim #define VERLET_DEBUG \endverbatim activate verlet debug output.
  <li> \verbatim #define PARTICLE_DEBUG \endverbatim activate particle data related debug output.
+ <li> \verbatim #define P3M_DEBUG \endverbatim activate P3M related debug output.
+ <li> \verbatim #define FFT_DEBUG \endverbatim activate FFT related debug output.
  <li> \verbatim #define MPI_CORE \endverbatim generate a core dump when exiting abnormally due
  to MPI errors.
  <li> \verbatim #define FORCE_CORE \endverbatim generate a core dump even on regular termination.
@@ -34,6 +36,7 @@
 /* #define VERLET_DEBUG   */
 /* #define PARTICLE_DEBUG */
 /* #define P3M_DEBUG */
+/* #define FFT_DEBUG */
 #define MPI_CORE
 #define FORCE_CORE
 
@@ -117,8 +120,15 @@ extern void _debug_free(void *p);
 #endif
 
 #ifdef P3M_DEBUG
-#define P3M_TRACE(cmd) { if (this_node == 2) { cmd; } }
+#define P3M_TRACE(cmd) { if (this_node < 1) { cmd; } }
 #else
 /** Equals { cmd } iff P3M_DEBUG is set. */
 #define P3M_TRACE(cmd)
+#endif
+
+#ifdef FFT_DEBUG
+#define FFT_TRACE(cmd) { if (this_node < 1) { cmd; } }
+#else
+/** Equals { cmd } iff FFT_DEBUG is set. */
+#define FFT_TRACE(cmd)
 #endif

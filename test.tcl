@@ -55,17 +55,20 @@ inter 0 2 lennard-jones 3 1 2.0 0 0
 inter 1 2 lennard-jones 2 1 1.2 0 0
 puts "nptypes = [setmd nptypes]"
 
+setmd skin 0.200001
+
 setmd bjerrum 1.54
 setmd p3m_alpha 0.27
 setmd p3m_r_cut 3.0
-setmd p3m_mesh 20 20 20
-setmd p3m_cao 5
+setmd p3m_mesh 8 8 8
+setmd p3m_cao 3 5000
 setmd p3m_epsilon 0.1
-setmd p3m_mesh_off 1.0 1.0 1.0
+setmd p3m_mesh_off 0.5 0.5 0.5
 
 
 # integration
 ##################################################
+
 
 for {set port 10000} { $port < 65000 } { incr port } {
 	catch {imd connect $port} res
@@ -83,8 +86,8 @@ if { $result == "connected" } {
 
 integrate init
 
-set write_steps 10
-set configs 500
+set write_steps 2
+set configs 2
 
 for {set i 0} { $i < $configs } { incr i } {
     puts "step [expr $i*$write_steps]"
@@ -97,7 +100,7 @@ for {set i 0} { $i < $configs } { incr i } {
 
 integrate exit
 
-# puts "imd: [imd disconnect]"
+puts "imd: [imd disconnect]"
 
 # write
 set f [open "|gzip -c - >tconfig.gz" w]
@@ -105,7 +108,7 @@ writemd $f posx posy posz type q
 close $f
 
 if {"$write" == "yes" } {
-    eval exec poly2pdb -poly [glob -noc "configs/t*"] \
+    eval exec poly2pdb -poly [glob -nocomplain "configs/t*"] \
 	-per -psf "movie/t" >/dev/null 2>&1
 }
 

@@ -39,6 +39,11 @@ LDLIBS=-lm
 ############ flags needed for MPI
 LDLIBS+=-lmpi
 
+############ flags needed for FFTW
+# flags needed for FFTW. Note this is VERY specific for our cluster
+CFLAGS += -DPLAT_OSF1
+CFLAGS += -I/usr/local/include
+
 ############ flags needed for Tcl
 
 # flags needed for Tcl. Note this is VERY specific for our cluster
@@ -51,6 +56,6 @@ endif
 
 
 ############ flags needed for P3M
-LDFLAGS+=-ldxml
-LDLIBS+=-ldxml
+LDFLAGS+=-ldxml -lrfftw -lfftw -lm
+LDLIBS+=-ldxml -lrfftw -lfftw -lm
 

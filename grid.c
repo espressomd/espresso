@@ -33,6 +33,7 @@
 #include "debug.h"
 #include "communication.h"
 #include "verlet.h"
+#include "utils.h"
 
 /* Rebuild the verlet list when topology changes. */
 
@@ -106,6 +107,8 @@ int node_grid_callback(Tcl_Interp *interp, void *_data)
     return (TCL_ERROR);
   }
 
+  sort_int_array(data,3);
+
   node_grid[0] = data[0];
   node_grid[1] = data[1];
   node_grid[2] = data[2];
@@ -119,9 +122,7 @@ void setup_node_grid()
 {
   if (node_grid[0] < 0) {
     /* auto setup, grid not set */
-    fprintf(stderr, "not implemented: setup_node_grid()\n");
-    node_grid[0] = n_nodes;
-    node_grid[1] = node_grid[2] = 1;
+    calc_3d_grid(n_nodes,node_grid);
 
     changed_topology();
   }
@@ -207,7 +208,7 @@ void calc_node_neighbors(int node)
 	extended[2*dir] = 0;
     }
     /* right boundary ? */
-    if (node_pos[dir] == node_grid[dir]-1) {
+   if (node_pos[dir] == node_grid[dir]-1) {
       boundary[2*dir+1] = -1;
       extended[2*dir+1] = periodic[dir] ? 0 : 1;
     }
@@ -216,4 +217,52 @@ void calc_node_neighbors(int node)
 	extended[2*dir+1] = 0;
     }
   }
+}
+
+void calc_2d_grid(int n, int grid[3])
+{
+  int i;
+  i = (int)sqrt((double)n);
+  while(i>=1) {
+    if(n%i==0) { grid[0] = n/i; grid[1] = i; grid[2] = 1; return; }
+    i--;
+  }
+}
+
+void calc_3d_grid(int n, int grid[3])
+{
+  int i,j,k,max;
+  max = n*n;
+  for(i=1;i<=(int)sqrt((double)n);i++) 
+    for(j=1;j<=(int)sqrt((double)n);j++) 
+      for(k=1;k<=n;k++) 
+	if(i*j*k == n && ((i*i)+(j*j)+(k*k)) <= max) {
+	  grid[0] = k; grid[1] = j;grid[2] = i;
+	  max =  ((i*i)+(j*j)+(k*k));
+	}
+  if(grid[2]>grid[0]) {i=grid[0];grid[0]=grid[2];grid[2]=i;}
+}
+
+int map_3don2d_grid(int g3d[3],int g2d[3], int mult[3])
+{
+  int i,row_dir;
+  /* trivial case */
+  if(g3d[2]==1) { 
+    for(i=0;i<3;i++) mult[i]=1;
+    return 2;
+  }
+  if(g2d[0]%g3d[0] == 0) {
+    if(g2d[1]%g3d[1] == 0) {row_dir=2; }
+    else if(g2d[1]%g3d[2] == 0) {row_dir=1; g2d[2]=g2d[1]; g2d[1]=1; }
+  }
+  else if(g2d[0]%g3d[1] == 0) {
+    if(g2d[1]%g3d[0]==0) {row_dir=2; i=g2d[0]; g2d[0]=g2d[1]; g2d[1]=i; }
+    else if(g2d[1]%g3d[2]==0) {row_dir=0; g2d[2]=g2d[1]; g2d[1]=g2d[0]; g2d[0]=1; }
+  }
+  else if(g2d[0]%g3d[2] == 0) {
+    if(g2d[1]%g3d[0]==0) {row_dir=1; g2d[2]=g2d[0]; g2d[0]=g2d[1]; g2d[1]=1; }
+    else if(g2d[1]%g3d[1]==0) {row_dir=0; g2d[2]=g2d[0]; g2d[0]=1; }
+  }
+  for(i=0;i<3;i++) mult[i]=g2d[i]/g3d[i];
+  return row_dir;
 }

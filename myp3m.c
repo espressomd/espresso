@@ -83,6 +83,8 @@ void   P3M_init()
   MPI_Barrier(MPI_COMM_WORLD);   
    /* compute local mesh for fixed processor box */
   /* Direction of grid indicees in coordinate 2 is inconsistent!!!!!*/
+
+  /// FALSCH
   Hi = (double)(p3m.mesh[0]-1)/box_l[0];
 
   compute_measures(); 
@@ -137,6 +139,7 @@ void compute_measures()
   int i,j,k;
   for(i=0;i<3;i++)
     {
+      // WARUM +2.*skin ???
       local_mesh[i] = (int) ((local_box_l[i]+2.*skin)*Hi);
       inner_left_gridpoint[i]  = ceil( (my_left[i]-skin) *Hi)/Hi - (my_left[i]-skin);
       inner_right_gridpoint[i] = floor((my_right[i]+skin)*Hi)/Hi - my_right[i]+skin;
@@ -145,6 +148,7 @@ void compute_measures()
   fprintf(stderr,"%d\n",local_mesh[0]);
   for(i=0;i<6;i++)
     {
+      // WOZU WIRD j BENOETIGT ??? (taucht doch gar nicht auf...
       if(i<=1) j=0;
       else if(i<=3) j=2;
       else j=1;

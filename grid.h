@@ -88,4 +88,22 @@ void calc_node_neighbors(int node);
     will be communicated. */
 void changed_topology();
 
+/** calculate most square 2d grid. */
+void calc_2d_grid(int n, int grid[3]);
+
+/** Calculate most cubic 3d grid. */
+void calc_3d_grid(int n, int grid[3]);
+
+/** calculate 'best' mapping between a 2d and 3d grid.
+ *  This we need for the communication from 3d domain decomposition 
+ *  to 2d row decomposition. 
+ *  The dimensions of the 2d grid are resorted, if necessary, in a way
+ *  that they are multiples of the 3d grid dimensions.
+ *  @param g3d      3d grid.
+ *  @param g2d      2d grid.
+ *  @param mult     factors between 3d and 2d grid dimensions
+ *  @return         index of the row direction [0,1,2].
+*/ 
+int map_3don2d_grid(int g3d[3],int g2d[3], int mult[3]);
+
 #endif

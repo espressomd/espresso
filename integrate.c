@@ -217,3 +217,15 @@ void propagate_positions()
   free(verlet_flags);
 }
 
+
+int skin_callback(Tcl_Interp *interp, void *_data)
+{
+  double data = *(double *)_data;
+  if (data < 0) {
+    Tcl_AppendResult(interp, "skin must be positiv.", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  skin = data;
+  mpi_bcast_parameter(FIELD_SKIN);
+  return (TCL_OK);
+}

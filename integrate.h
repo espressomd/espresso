@@ -48,4 +48,7 @@ void integrate_vv(int n_steps);
 /** exit velocity verlet integrator. */
 void integrate_vv_exit();
 
+/** Callback for setmd skin*/
+int skin_callback(Tcl_Interp *interp, void *_data);
+
 #endif
