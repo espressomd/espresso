@@ -57,6 +57,8 @@ double skin             = -1.0;
 double skin2;
 double max_range        = -1.0;
 double max_range2       = -1.0;
+double max_range_non_bonded  = 0.0;
+double max_range_non_bonded2 = 0.0;
 
 int    resort_particles = 1;
 int    recalc_forces    = 1;
@@ -221,11 +223,15 @@ void integrate_vv_recalc_maxrange()
     max_range2 = -1.0;
     return;
   }
-  max_range  = max_cut;
+  max_range            = max_cut;
+  max_range_non_bonded = max_cut_non_bonded;
   /* at beginning be nice */
-  if (skin > 0.0)
-    max_range += skin;
-  max_range2 = max_range * max_range;
+  if (skin > 0.0) {
+    max_range            += skin;
+    max_range_non_bonded += skin;
+  }
+  max_range2            = SQR(max_range);
+  max_range_non_bonded2 = SQR(max_range_non_bonded);
 }
 
 /************************************************************/
