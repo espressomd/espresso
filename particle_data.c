@@ -1785,7 +1785,8 @@ void remove_all_bonds_to(int identity)
 		 bl->n - i);
 	  realloc_intlist(bl, bl->n);
 	}
-	i += 1 + partners;
+	else
+          i += 1 + partners;
       }
       if (i != bl->n) {
 	fprintf(stderr, "%d: bond information corrupt for particle %d, exiting...\n",
