@@ -280,11 +280,11 @@ static void InitCommand() {
     strcpy(compar.currentpar,defaultcurrentpar);
 
     compar.chainlen   = defaultchainlen;  
-    compar.agrid      = defaultagrid;       
     compar.boundary   = defaultboundary;
     compar.lambda     = defaultlambda;
     compar.c_sound_sq = defaultc_sound_sq; 
 
+//    compar.agrid      = defaultagrid;       
 //    compar.rho        = defaultrho;
 //    compar.gridpoints = defaultgridpoints;
 //    compar.tau        = defaulttau;  		   
@@ -624,7 +624,6 @@ void new(){
 
   double   rho_bar=compar.rho;        
   T_IVECTOR* c_g=defaultc_g;
-//  char*    bfile=compar.bfile;
   int      i,k;
 
 #ifdef DB
@@ -643,8 +642,6 @@ void new(){
   ranseed    = compar.ranseed;
   gridpa     = gridpoints*agrid;
   invgridpa  = 1.0/gridpa;
-
-//  InitTopology3D(); /* sets xsize,ysize,zsize,offset,nPesPerDir */
 
   nPesPerDir[0] = node_grid[2]; 
   nPesPerDir[1] = node_grid[1];

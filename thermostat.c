@@ -478,7 +478,7 @@ int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
 
   if(temp_callback(interp, &temp) == TCL_ERROR) return (TCL_ERROR);
   if(langevin_gamma_callback(interp, &gamma) == TCL_ERROR) return (TCL_ERROR);
-  thermo_switch = ( thermo_switch | THERMO_LB);
+  thermo_switch = ( (thermo_switch ^ THERMO_LANGEVIN) | THERMO_LB);
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
 
   return TCL_OK;

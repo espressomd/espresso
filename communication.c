@@ -1814,7 +1814,7 @@ int lb_set_params(double temp, double friction, double viscosity, double tgrid,
   compar.agrid    = agrid;
   compar.tau        = tgrid;
   compar.rho        = density;  
-  compar.gridpoints = box_l[0]/agrid;  
+  compar.gridpoints = box_l[2]/agrid;  
 
   mpi_issue(REQ_LB_BCAST, 1, 0);
   mpi_bcast_lb_params_slave(-1, 0);
