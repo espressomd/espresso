@@ -1,0 +1,51 @@
+/** \page tcl_imd IMD
+IMD (Interactive Molecular Dynamics) is the protocol VMD uses to communicate
+with a simulation. Tcl_md implements this protocol to allow online visual analysis
+of running simulations.
+
+In IMD, the simulation acts as a data server. That means that a simulation can provide
+the possibility of connecting VMD, but VMD need not be connected all the time. You can
+watch the simulation just from time to time.
+
+In the following the setup up and using of IMD is described. For an example script
+look at testsuite/lj_liquid.tcl.
+
+\section imd_script IMD in the script
+In your simulation, the IMD connection is setup up using
+\verbatim imd connect <port> \endverbatim
+where <port> is an arbitrary port number (it has to be between 1024 and 65000). Normally
+tcl_md will try to open port 10000, but the port may be in use already by another tcl_md
+simulation. In that case it is a good idea to just try another port (see lj_liquid.tcl).
+
+Now while the simulation is running, you should execute
+\verbatim imd positions \endverbatim
+from time to time, which will transfer the current coordinates to VMD, if it is connected.
+If not, nothing happens and imd connect just consumes a small amount of CPU time.
+
+\verbatim imd listen <seconds> \endverbatim
+can be used to let the simulation wait for
+<seconds> seconds or until IMD has connected. This is normally only useful in demo scripts,
+if you want to see all frames of the simulation.
+
+If your simulations terminates,
+\verbatim imd disconnect \endverbatim
+will terminate the IMD session. This is normally not only nice but also the operating system
+will not free the port for some time, so that without disconnecting for some 10 seconds you
+will not be able to reuse the port.
+
+Additionally, you have to provide VMD with the structural information for your system. Therefore
+your program has to write out psf/pdb files using \ref tcl_writepsf and \ref tcl_writepdb.
+
+\section imd_vmd Using IMD in VMD
+So after your simulation runs and has written the psf/pdb files, you start VMD.
+Then click on "Molecule", choose fileformat "psf and pdb", and select your psf/pdb files in
+the corresponding entries. Now click on "Load Molecule". You should see the snapshot you
+saved in the psf/pdb files.
+
+Then execute "imd connect <host> <port>", where <host> is the host running the simulation
+and <port> is the port it listens to. <em> Note that VMD crashes, if you do that without
+loading the molecule before </em>.
+
+For more information on how to use VMD to extract more information or hide parts of configuration,
+see the <a http://www.ks.uiuc.edu/Research/vmd/vmd_help.html>VMD Quick Help</a>.
+*/
