@@ -2,20 +2,6 @@
 #define DOMAIN_DECOMP_H
 #include "cells.h"
 
-/** Structure containing the information about the cell grid used for domain decomposition. */
-typedef struct {
-  /** linked cell grid in nodes spatial domain. */
-  int cell_grid[3];
-  /** linked cell grid with ghost frame. */
-  int ghost_cell_grid[3];
-  /** cell size. 
-      Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range); \endverbatim */
-  double cell_size[3];
-  /** inverse cell size = \see cell_size ^ -1. */
-  double inv_cell_size[3];
-}  DomainDecomposition;
-
-
 /** Structure containing information about non bonded interactions
     with particles in a neighbor cell. */
 typedef struct {
@@ -51,6 +37,23 @@ typedef struct {
   /** Interacting neighbor cell list  */
   IA_Neighbor *nList;
 } IA_Neighbor_List;
+
+/** Structure containing the information about the cell grid used for domain decomposition. */
+typedef struct {
+  /** linked cell grid in nodes spatial domain. */
+  int cell_grid[3];
+  /** linked cell grid with ghost frame. */
+  int ghost_cell_grid[3];
+  /** cell size. 
+      Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range); \endverbatim */
+  double cell_size[3];
+  /** inverse cell size = \see cell_size ^ -1. */
+  double inv_cell_size[3];
+  /** Array containing information about the interactions between the cells. */
+  IA_Neighbor_List *cell_inter;
+}  DomainDecomposition;
+
+
 
 
 /************************************************************/
@@ -97,9 +100,8 @@ void dd_topology_init(CellPList *cl);
 void dd_topology_release();
 
 /** Just resort the particles. Used during integration. The particles are stored in
-    the cell structure. Domain decomposition can assume for example that particles
-    only have to be sent to neighboring nodes. */
-void  dd_exchange_and_sort_particles();
+    the cell structure. */
+void dd_exchange_and_sort_particles();
 
 /** implements \ref cell_structure::position_to_cell. */
 Cell *dd_position_to_cell(double pos[3]);

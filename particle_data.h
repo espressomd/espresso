@@ -226,10 +226,10 @@ Particle *append_unindexed_particle(ParticleList *plist, Particle *part);
     \return Pointer to new location of the particle. */
 Particle *append_indexed_particle(ParticleList *plist, Particle *part);
 
-/** remove a particle from one particle List and append it to  another.
-    Refill the destList with last particle and update its entry in local_particles. 
-    reallocates particles if necessary.
-    This procedure does not care for \ref local_particles.
+/** remove a particle from one particle List and append it to another.
+    Refill the sourceList with last particle and update its entry in
+    local_particles. reallocates particles if necessary.  This
+    procedure does not care for \ref local_particles.
     \param destList   List where the particle is appended.
     \param sourceList List where the particle will be removed.
     \param ind        Index of the particle in the sourceList.
@@ -237,10 +237,10 @@ Particle *append_indexed_particle(ParticleList *plist, Particle *part);
  */
 Particle *move_unindexed_particle(ParticleList *destList, ParticleList *sourceList, int ind);
 
-/** remove a particle from one particle List and append it to  another.
-    Refill the destList with last particle and update its entry in local_particles. 
-    reallocates particles if necessary.
-    This procedure cares for \ref local_particles.
+/** remove a particle from one particle List and append it to another.
+    Refill the sourceList with last particle and update its entry in
+    local_particles. Reallocates particles if necessary.  This
+    procedure cares for \ref local_particles.
     \param destList   List where the particle is appended.
     \param sourceList List where the particle will be removed.
     \param ind        Index of the particle in the sourceList.

@@ -53,6 +53,9 @@ extern int rebuild_verletlist;
  *  Use with care and ONLY for initialization! */
 void init_pairList(PairList *list);
 
+/** free a Pair List . */
+void free_pairList(PairList *list);
+
 /** fill verlet tables (old version of build_verlet_lists_and_force_calc()). */
 void build_verlet_lists();
 

@@ -35,7 +35,6 @@
 int rebuild_verletlist;
 
 
-#if 0
 
 /** \name Privat Functions */
 /************************************************************/
@@ -75,6 +74,16 @@ void init_pairList(PairList *list)
   list->max     = 0;
   list->pair = NULL;
 }
+
+void free_pairList(PairList *list)
+{
+  list->n       = 0;
+  list->max     = 0;
+  list->pair = (Particle **)realloc(list->pair, 0);
+}
+
+
+#if 0
 
 void build_verlet_lists()
 {

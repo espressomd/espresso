@@ -46,9 +46,13 @@ static MPI_Op MPI_FORCES_SUM;
 
 void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
 {
+  int i;
   comm->data_parts = data_parts;
   comm->num = num;
   comm->comm = malloc(num*sizeof(GhostCommunication));
+  for(i=0; i<num; i++) {
+    comm->comm[i].shift[0]=comm->comm[i].shift[1]=comm->comm[i].shift[2]=0.0;
+  }
 }
 
 void free_comm(GhostCommunicator *comm)
@@ -293,4 +297,25 @@ void ghost_communicator(GhostCommunicator *gc)
 void ghost_init()
 {
   MPI_Op_create(reduce_forces_sum, 1, &MPI_FORCES_SUM);
+}
+
+/** Go through \ref ghost_cells and remove the ghost entries from \ref
+    local_particles. Part of \ref dd_exchange_and_sort_particles.*/
+void invalidate_ghosts()
+{
+  Particle *part;
+  int c, np, p;
+  /* remove ghosts, but keep Real Particles */
+  for(c=0; c<ghost_cells.n; c++) {
+    part = ghost_cells.cell[c]->part;
+    np   = ghost_cells.cell[c]->n;
+    for(p=0 ; p<np; p++) {
+      /* Particle is stored as ghost in the local_particles array,
+	 if the pointer stored there belongs to a ghost celll
+	 particle array. */
+      if( &(part[p]) == local_particles[part[p].p.identity] ) 
+	local_particles[part[p].p.identity] = NULL;
+    }
+    ghost_cells.cell[c]->n = 0;
+  }
 }
