@@ -134,7 +134,7 @@ int blockfile(ClientData data, Tcl_Interp *interp,
     else if (!strncmp(argv[3], "auto", strlen(argv[3]))) {
       if (argc != 4) {
 	Tcl_AppendResult(interp, "\"", argv[0],
-			 " read start\" takes no parameters",
+			 " read auto\" takes no parameters",
 			 (char *) NULL);
 	return (TCL_ERROR);
       }
@@ -142,8 +142,11 @@ int blockfile(ClientData data, Tcl_Interp *interp,
       case 0:	
       case 1:
 	break;
-      case -1:
+      case RETURN_CODE_EOF:
 	Tcl_AppendResult(interp, "eof", (char *)NULL);
+	return (TCL_OK);
+      case RETURN_CODE_FILE_FORMAT:
+	Tcl_AppendResult(interp, "illstring ", title, (char *)NULL);
 	return (TCL_OK);
       default:
 	Tcl_AppendResult(interp, "\"", argv[1], "\" could not read block start",
@@ -167,10 +170,12 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 	      return (TCL_ERROR);
 	    }
 	    Tcl_AppendResult(interp, "setvar ", buffer, (char *) NULL);
-	    if (block_continueread(channel, openbrackets, buffer, sizeof(buffer), 0) != 0) {
+	    if ((openbrackets = block_continueread(channel, openbrackets, buffer, sizeof(buffer), 0)) != 0) {
+	      char buffer[TCL_INTEGER_SPACE + 1];
+	      sprintf(buffer, "%d", openbrackets);
 	      Tcl_ResetResult(interp);
-	      Tcl_AppendResult(interp, "variable block for does not terminate correctly",
-			       (char *) NULL);
+	      Tcl_AppendResult(interp, "variable block for ", fields[i].name, " misses ", buffer,
+			       " closing braces", (char *) NULL);
 	      return (TCL_ERROR);
 	    }
 	    for (j = 0; buffer[j] != 0; j++)
@@ -207,26 +212,9 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 	strcat(name, title);
 	exists = Tcl_GetCommandInfo(interp, name, &cmdInfo);
 	free(name);
-	if (exists) {
-	  if (cmdInfo.proc(cmdInfo.clientData, interp,
-			   argc, argv) != TCL_OK)
-	    return (TCL_ERROR);
-	  if (block_continueread(channel, openbrackets, buffer, sizeof(buffer), 0) != 0) {
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, "variable block for does not terminate correctly",
-			     (char *) NULL);
-	    return (TCL_ERROR);
-	  }
-	  for (j = 0; buffer[j] != 0; j++)
-	    if (!isspace(j)) {
-	      Tcl_ResetResult(interp);
-	      Tcl_AppendResult(interp, "variable block for ", fields[i].name,
-			       " contains garbage \"", buffer, "\"",
-			       (char *) NULL);
-	      return (TCL_ERROR);
-	    }
-	  return (TCL_OK);
-	}
+	if (exists)
+	  return cmdInfo.proc(cmdInfo.clientData, interp,
+			      argc, argv);
 	
 	Tcl_AppendResult(interp, "usertag ", title, (char *) NULL);
 	if (openbrackets != 0) {

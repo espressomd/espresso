@@ -50,9 +50,8 @@
 #define RETURN_CODE_EOF   -1
 /** I/O error on the file or unexpected EOF. */
 #define RETURN_CODE_ERROR -2
-/** when reading block data the given data type does not fit the stored
-    one or the data amount does not match. */
-#define RETURN_CODE_WDATA -3
+/** file format wrong */
+#define RETURN_CODE_FILE_FORMAT -3
 /*@}*/
 
 
@@ -83,6 +82,8 @@
  @return the number of open braces on success (1 if data follows or 0
          if no data was contained in the block) or
          \ref RETURN_CODE_EOF or \ref RETURN_CODE_ERROR
+         or \ref RETURN_CODE_FILE_FORMAT if no "{" is found. In that case
+	 index contains the offending character.
 */
 int block_startread(FILETYPE f, char index[MAXBLOCKTITLE]);
 /** read a portion of the data of a block.
@@ -129,7 +130,7 @@ int block_write_data(FILETYPE f, int type, int dim, void *data);
     @param type the field type, either \ref TYPE_INT or \ref TYPE_DOUBLE
     @param dim the fields number of elements
     @param data the buffer where to store the data
-    @return 0 on success or RETURN_CODE_ERROR or RETURN_CODE_WDATA if the size of field
+    @return 0 on success or RETURN_CODE_ERROR or RETURN_CODE_FILE_FORMAT if the size of field
             or the type does not match the given parameters.
 */
 int block_read_data(FILETYPE f, int type, int dim, void *data);

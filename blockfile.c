@@ -80,12 +80,10 @@ static int readString(FILETYPE f, char *buffer, int size)
     c = (i == 0) ? findNonWs(f) : readchar(f);
 
     switch (c) {
-    case 0:
+    case RETURN_CODE_EOF:
+    case RETURN_CODE_ERROR:
       buffer[i] = 0;
-      return RETURN_CODE_EOF;
-    case -1:
-      buffer[i] = 0;
-      return RETURN_CODE_ERROR;
+      return c;
     default: ;
     }
     if (c == '}') {
@@ -113,7 +111,11 @@ int block_startread(FILETYPE f, char index[MAXBLOCKTITLE])
   case '{':
     break;
   case RETURN_CODE_EOF:  return RETURN_CODE_EOF;
-  default: return RETURN_CODE_ERROR;
+  case RETURN_CODE_ERROR:  return RETURN_CODE_ERROR;
+  default:
+    index[0] = c;
+    index[1] = 0;
+    return RETURN_CODE_FILE_FORMAT;
   }
 
   /* since a block started, we consider from now on eof an error */
@@ -246,17 +248,17 @@ int block_read_data(FILETYPE f, int type, int dim, void *data)
   else if (!strcmp(index, "_dval_"))
     readType = TYPE_DOUBLE;
   else
-    return RETURN_CODE_WDATA;
+    return RETURN_CODE_FILE_FORMAT;
 
   if (readType != type)
-    return RETURN_CODE_WDATA;
+    return RETURN_CODE_FILE_FORMAT;
 
   for (i = 0; i < dim; i++) {
     if ((err = readString(f, valbuffer, sizeof(valbuffer))) < 0)
       return RETURN_CODE_ERROR;
     /* premature end of data input */
     if (err == 1 && i != dim - 1)
-      return RETURN_CODE_WDATA;
+      return RETURN_CODE_FILE_FORMAT;
 
     switch (type) {
     case TYPE_DOUBLE:
@@ -274,5 +276,5 @@ int block_read_data(FILETYPE f, int type, int dim, void *data)
     return 0;
 
   /* consume } and detect excessive data */
-  return (findNonWs(f) == '}') ? 0 : RETURN_CODE_ERROR;
+  return (findNonWs(f) == '}') ? 0 : RETURN_CODE_FILE_FORMAT;
 }
