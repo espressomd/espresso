@@ -11,7 +11,14 @@
 
 /************************************************************/
 
-MDINLINE void add_angle_pair_force(Particle *p1, Particle *p2, Particle *p3, int type_num)
+/** Computes the three body angle interaction force and adds this
+    force to the particle forces (see \ref #inter). 
+    @param p1        Pointer to first particle.
+    @param p2        Pointer to second/middle particle.
+    @param p3        Pointer to third particle.
+    @param type_num  bond type number of the angle interaction (see \ref #inter).
+*/
+MDINLINE void add_angle_force(Particle *p1, Particle *p2, Particle *p3, int type_num)
 {
   double cosine, vec1[3], vec2[3], d1i, d2i, dist2, f1, f2;
   int j;
@@ -38,5 +45,35 @@ MDINLINE void add_angle_pair_force(Particle *p1, Particle *p2, Particle *p3, int
     p3->f[j] -= f2;
   }
 }
+
+/** Computes the three body angle interaction energy (see \ref #inter, \ref #analyze). 
+    @param p1        Pointer to first particle.
+    @param p2        Pointer to second/middle particle.
+    @param p3        Pointer to third particle.
+    @param type_num  bond type number of the angle interaction (see \ref #inter).
+    @return energy   energy.
+*/
+MDINLINE double angle_energy(Particle *p1, Particle *p2, Particle *p3, int type_num)
+{
+  double cosine, vec1[3], vec2[3], d1i, d2i, dist2;
+  int j;
+
+  cosine=0.0;
+  /* vector from p2 to p1 */
+  for(j=0;j<3;j++) vec1[j] = p2->r.p[j] - p1->r.p[j];
+  dist2 = SQR(vec1[0]) + SQR(vec1[1]) + SQR(vec1[2]);
+  d1i = 1.0 / sqrt(dist2);
+  for(j=0;j<3;j++) vec1[j] *= d1i;
+  /* vector from p3 to p1 */
+  for(j=0;j<3;j++) vec2[j] = p3->r.p[j] - p1->r.p[j];
+  dist2 = SQR(vec2[0]) + SQR(vec2[1]) + SQR(vec2[2]);
+  d2i = 1.0 / sqrt(dist2);
+  for(j=0;j<3;j++) vec2[j] *= d2i;
+  /* scalar produvt of vec1 and vec2 */
+  for(j=0;j<3;j++) cosine += vec1[j] * vec2[j];
+  /* bond bond angle energy */
+  return bonded_ia_params[type_num].p.angle.bend * ( 1 - cosine );
+}
+
 
 #endif

@@ -46,8 +46,7 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
     }
     /* this should not happen! */
     else {
-      fprintf(stderr, "%d: Lennard-Jones warning: Particles id1=%d id2=%d exactly on top of each other\n",
-	      this_node,p1->r.identity,p2->r.identity);
+      LJ_TRACE(fprintf(stderr, "%d: Lennard-Jones warning: Particles id1=%d id2=%d exactly on top of each other\n",this_node,p1->r.identity,p2->r.identity));
 
       frac2 = SQR(ia_params->LJ_sig/ia_params->LJ_capradius);
       frac6 = frac2*frac2*frac2;
@@ -63,6 +62,34 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
 
     LJ_TRACE(fprintf(stderr,"%d: LJ: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
 		     this_node,p1->r.identity,p2->r.identity,dist,fac*d[0],fac*d[1],fac*d[2]));
+  }
+}
+
+MDINLINE double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+				double d[3], double dist)
+{
+  double r_off, frac2, frac6;
+
+  if(dist < ia_params->LJ_cut+ia_params->LJ_offset) {
+    r_off = dist - ia_params->LJ_offset;
+    /* normal case: resulting force/energy smaller than capping. */
+    if(r_off > ia_params->LJ_capradius) {
+      frac2 = SQR(ia_params->LJ_sig/r_off);
+      frac6 = frac2*frac2*frac2;
+      return 4.0*ia_params->LJ_eps*(SQR(frac6)-frac6+ia_params->LJ_shift);
+    }
+    /* capped part of lj potential. */
+    else if(dist > 0.0) {
+      frac2 = SQR(ia_params->LJ_sig/ia_params->LJ_capradius);
+      frac6 = frac2*frac2*frac2;
+      return 4.0*ia_params->LJ_eps*(SQR(frac6)-frac6+ia_params->LJ_shift);
+    }
+    /* this should not happen! */
+    else {
+      frac2 = SQR(ia_params->LJ_sig/ia_params->LJ_capradius);
+      frac6 = frac2*frac2*frac2;
+      return 4.0*ia_params->LJ_eps*(SQR(frac6)-frac6+ia_params->LJ_shift);
+    }
   }
 }
 
