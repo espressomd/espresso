@@ -312,6 +312,98 @@ int part(ClientData data, Tcl_Interp *interp,
     return (TCL_OK);
   }
 
+  /* print out partial particle information */
+  if (!strncmp(argv[2], "print",  strlen(argv[2]))) {
+    char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+    Particle part;
+    if (part_num < 0 || part_num > max_seen_particle) {
+      Tcl_AppendResult(interp, "na", (char *)NULL);
+      return (TCL_OK);
+    }
+
+    if (!particle_node)
+      build_particle_node();
+
+    node = particle_node[part_num];
+    if (node == -1) {
+      Tcl_AppendResult(interp, "na", (char *)NULL);
+      return (TCL_OK);
+    }
+
+    mpi_recv_part(node, part_num, &part);
+
+    argc -= 3;
+    argv += 3;
+    while (argc > 0) {
+      if (!strncmp(argv[0], "identity", strlen(argv[0]))) {
+	sprintf(buffer, "%d", part.identity);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      else if (!strncmp(argv[0], "pos", strlen(argv[0]))) {
+	Tcl_PrintDouble(interp, part.p[0], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.p[1], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.p[2], buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      else if (!strncmp(argv[0], "type", strlen(argv[0]))) {
+	sprintf(buffer, "%d", part.type);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      else if (!strncmp(argv[0], "q", strlen(argv[0]))) {
+	Tcl_PrintDouble(interp, part.q, buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      else if (!strncmp(argv[0], "v", strlen(argv[0]))) {
+	Tcl_PrintDouble(interp, part.v[0], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.v[1], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.v[2], buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      else if (!strncmp(argv[0], "f", strlen(argv[0]))) {
+	Tcl_PrintDouble(interp, part.f[0], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.f[1], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.f[2], buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      else if (!strncmp(argv[0], "bonds", strlen(argv[0]))) {
+	int i = 0, j, size;
+	Tcl_AppendResult(interp, "{", (char *)NULL);
+	while(i < part.n_bonds) {
+	  size = bonded_ia_params[part.bonds[i]].num;
+	  sprintf(buffer, "{%d ", part.bonds[i]);
+	  i++;
+	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+	  for(j = 0; j < size - 1; j++) {
+	    sprintf(buffer, "%d ", part.bonds[i]);
+	    i++;
+	    Tcl_AppendResult(interp, buffer, (char *)NULL);
+	  }
+	  sprintf(buffer, "%d} ", part.bonds[i]);
+	  i++;
+	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+	}
+	Tcl_AppendResult(interp, "}", (char *)NULL);
+	if (part.n_bonds > 0)
+	  free(part.bonds);
+      }
+      else {
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp, "unknown particle data \"", argv[0], "\" requested", (char *)NULL);
+      }
+      if (argc > 1)
+	Tcl_AppendResult(interp, " ", (char *)NULL);
+
+      argc--;
+      argv++;
+    }
+  }
+
   /* set particle data */
   if (part_num < 0) {
     Tcl_AppendResult(interp, "particle identities must be positive", (char *)NULL);
@@ -455,8 +547,10 @@ int part(ClientData data, Tcl_Interp *interp,
 	/* check partners */ 
 	n_partners = bonded_ia_params[type_num].num;
 	if(argc < 2+n_partners) {
-	  Tcl_AppendResult(interp, "bond type %d requires %d arguments.",
-			   type_num, n_partners+1, (char *) NULL);
+	  char buffer[256 + 2*TCL_INTEGER_SPACE];
+	  sprintf(buffer, "bond type %d requires %d arguments.",
+		  type_num, n_partners+1);
+	  Tcl_AppendResult(interp, buffer, (char *) NULL);
 	  return (TCL_ERROR);
 	}
 	bond = (int *)malloc( (n_partners+1)*sizeof(int) );
