@@ -172,7 +172,7 @@ int integrate_parse_nvt(Tcl_Interp *interp, int argc, char **argv)
 int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
 {
   int xdir, ydir, zdir;
-  xdir = ydir = zdir = 0;
+  xdir = ydir = zdir = nptiso.cubic_box = 0;
 
   if (argc < 4) {
     Tcl_AppendResult(interp, "wrong # args: \n", (char *)NULL);
@@ -180,6 +180,7 @@ int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
   }  
   /* set parameters p_ext and piston */
   if ( !ARG_IS_D(3, nptiso.p_ext) )  return integrate_usage(interp);
+  p_ext_callback(interp, &nptiso.p_ext);
   if ( argc > 4 ) { 
     if(!ARG_IS_D(4, nptiso.piston) ) return integrate_usage(interp);
     piston_callback(interp, &nptiso.piston); }
@@ -193,7 +194,7 @@ int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
       return integrate_usage(interp);}
     else {
       /* set the geometry to include rescaling specified directions only*/
-      nptiso.geometry = 0;
+      nptiso.geometry = 0; nptiso.dimension = 0; nptiso.non_const_dim = -1;
       if ( xdir ) { 
 	nptiso.geometry = ( nptiso.geometry | NPTGEOM_XDIR ); 
 	nptiso.dimension += 1;
@@ -210,7 +211,7 @@ int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
 	nptiso.non_const_dim = 2;
       }
     }
-  }else {
+  } else {
     /* set the geometry to include rescaling in all directions; the default*/
     nptiso.geometry = 0;
     nptiso.geometry = ( nptiso.geometry | NPTGEOM_XDIR );
@@ -219,8 +220,9 @@ int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
     nptiso.dimension = 3;
   }
 
-
   if ( argc > 8 ) {
+    /* enable if the volume fluctuations should also apply to dimensions which are switched off by the above flags
+       and which do not contribute to the pressure (3D) / tension (2D, 1D) */
     if (!ARG_IS_S(8,"-cubic_box")) {
       return integrate_usage(interp);
     } else {
@@ -228,29 +230,29 @@ int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
     }
   }
 
+  /* Sanity Checks */
 #ifdef ELECTROSTATICS      
   if ( nptiso.dimension < 3 && !nptiso.cubic_box ){
-    fprintf(stderr,"WARNING: If electrostatics is compiled in you must use the -cubic_box option. Automatically reverting to a cubic box for npt integration. ");
+    fprintf(stderr,"WARNING: If electrostatics is compiled in you must use the -cubic_box option!\n");
+    fprintf(stderr,"Automatically reverting to a cubic box for npt integration.\n");
+    fprintf(stderr,"Be aware though that all of the coulombic pressure is added to the x-direction only!\n");
     nptiso.cubic_box = 1;
   }
 #endif
-
-
-  /* Sanity Check */
-  if( nptiso.dimension == 0) {
-    fprintf(stderr,"cannot proceed with npt_isotropic.  You must at least have one dimension for box length motion. reverting to nvt integration");
+  if( nptiso.dimension == 0 || nptiso.non_const_dim == -1) {
+    Tcl_AppendResult(interp, "You must enable at least one of the x y z components as fluctuating dimension(s) for box length motion!", (char *)NULL);
+    Tcl_AppendResult(interp, "Cannot proceed with npt_isotropic, reverting to nvt integration... \n", (char *)NULL);
     integ_switch = INTEG_METHOD_NVT;
     mpi_bcast_parameter(FIELD_INTEG_SWITCH);
     return (TCL_OK);
   }
 
-  p_ext_callback(interp, &nptiso.p_ext);
   /* set integrator switch */
   integ_switch = INTEG_METHOD_NPT_ISO;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+
   /* broadcast npt geometry information to all nodes */
   mpi_bcast_nptiso_geom();
-
   return (TCL_OK);
 }
 
@@ -325,7 +327,7 @@ void integrate_ensemble_init()
       errexit();
     }
 
-    nptiso.volume = pow(box_l[nptiso.non_const_dim],nptiso.dimension);	
+    nptiso.volume = pow(box_l[nptiso.non_const_dim],nptiso.dimension);
 
     if (recalc_forces) { 
       nptiso.p_inst = 0.0;  
