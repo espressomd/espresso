@@ -25,35 +25,33 @@ int n_rigidbonds = 0;
 
 /** Calculates the corrections required for each of the particle coordinates
     according to the RATTLE algorithm. Invoked from \ref correct_pos_shake()*/
-void compute_pos_corr_vec();
+void compute_pos_corr_vec(int *repeat_);
 
-/** Positinal Corrections are added to the current particle positions. Invoked from \ref correct_pos_shake() */
-void app_correction_check_VL_rebuild();
+/** Positional Corrections are added to the current particle positions. Invoked from \ref correct_pos_shake() */
+void app_pos_correction();
 
-/** Tolerance for positional corrections are checked, which is a criteria
-    for terminating the SHAKE/RATTLE iterations. Invoked from \ref correct_pos_shake() */
-int check_tol_pos();
+/* Checks if verlet list rebuilt is required.*/
+void check_rebuild_verletlist();
 
 /** Transfers temporarily the current forces from f.f[3] of the \ref Particle
-    structure to r.p_old[3] location and also intialize velocity correction
+    structure to r.p_old[3] location and also intializes velocity correction
     vector. Invoked from \ref correct_vel_shake()*/
 void transfer_force_init_vel();
 
-/** Calculates corrections in current particle velocities according to RATTLE
+/** Calculates corrections of the  current particle velocities according to RATTLE
     algorithm. Invoked from \ref correct_vel_shake()*/
-void compute_vel_corr_vec();
+void compute_vel_corr_vec(int *repeat_);
 
 /** Velocity corrections are added to the current particle velocities. Invoked from
     \ref correct_vel_shake()*/
 void apply_vel_corr();
 
-/** Check if tolerance in velocity is satisfied, which is a criterium for terminating
-    velocity correctional iterations. Invoked from \ref correct_vel_shake()  */
-int check_tol_vel();
 
-/*Invoked from \ref correct_vel_shake()*/
+/**Invoked from \ref correct_vel_shake(). Put back the forces from r.p_old to f.f*/
 void revert_force();
 
+/**For debugging purpose--prints the bond lengths between particles that have
+rigid_bonds*/
 void print_bond_len();
 
 /*@}*/
@@ -120,13 +118,13 @@ void init_correction_vector()
 }
 
 /**Compute positional corrections*/
-void compute_pos_corr_vec()
+void compute_pos_corr_vec(int *repeat_)
 {
   Bonded_ia_parameters *ia_params;
-  int i, j, k, c, np;
+  int i, j, k, c, np, cnt=-1;
   Cell *cell;
   Particle *p, *p1, *p2;
-  double r_ij_t[3], r_ij[3], r_ij_dot, G, pos_corr;
+  double r_ij_t[3], r_ij[3], r_ij_dot, G, pos_corr, r_ij2;
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -138,6 +136,7 @@ void compute_pos_corr_vec()
       while(k<p1->bl.n) {
 	ia_params = &bonded_ia_params[p1->bl.e[k++]];
 	if( ia_params->type == BONDED_IA_RIGID_BOND ) {
+	  cnt++;
 	  p2 = local_particles[p1->bl.e[k++]];
 	  if (!p2) {
 	    char *errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
@@ -146,19 +145,24 @@ void compute_pos_corr_vec()
 	    return;
 	  }
 
-	  get_mi_vector(r_ij_t, p1->r.p_old, p2->r.p_old);
 	  get_mi_vector(r_ij  , p1->r.p    , p2->r.p    );
-	  r_ij_dot = scalar(r_ij_t, r_ij);
-	  G = 0.50*(ia_params->p.rigid_bond.d2 - sqrlen(r_ij))/r_ij_dot;
+	  r_ij2 = sqrlen(r_ij);
+	  if(fabs(1.0 - r_ij2/ia_params->p.rigid_bond.d2) > ia_params->p.rigid_bond.p_tol) {
+            get_mi_vector(r_ij_t, p1->r.p_old, p2->r.p_old);
+	    r_ij_dot = scalar(r_ij_t, r_ij);
+	    G = 0.50*(ia_params->p.rigid_bond.d2 - r_ij2 )/r_ij_dot;
 #ifdef MASS
-	  G /= (PMASS(*p1)+PMASS(*p2));
+	    G /= (PMASS(*p1)+PMASS(*p2));
 #else
-	  G /= 2;
+	    G /= 2;
 #endif
-	  for (j=0;j<3;j++) {
-	    pos_corr = G*r_ij_t[j];
-	    p1->f.f[j] += pos_corr*PMASS(*p2);
-	    p2->f.f[j] -= pos_corr*PMASS(*p1);
+	    for (j=0;j<3;j++) {
+	      pos_corr = G*r_ij_t[j];
+	      p1->f.f[j] += pos_corr*PMASS(*p2);
+	      p2->f.f[j] -= pos_corr*PMASS(*p1);
+	    }
+	    /*Increase the 'repeat' flag by one */
+	      *repeat_ = *repeat_ + 1;
 	  }
 	}
 	else
@@ -169,15 +173,14 @@ void compute_pos_corr_vec()
   } //for c loop
 }
 
-/**Apply corrections to each particle and check if Verlet list is required to be rebuilt**/
-void app_correction_check_VL_rebuild()
+/**Apply corrections to each particle**/
+void app_pos_correction()
 {
   int c, i, j, np;
   Particle *p, *p1;
   Cell *cell;
-  double skin2 = SQR(skin/2.0);
 
-  rebuild_verletlist=0;
+
      /*Apply corrections*/
      for (c = 0; c < local_cells.n; c++)
      {
@@ -190,54 +193,31 @@ void app_correction_check_VL_rebuild()
 	   p1->r.p[j] += p1->f.f[j];
 	   p1->m.v[j] += p1->f.f[j];
 	}
-	/* Verlet criterion check */
-	if(distance2(p1->r.p, p1->l.p_old) > skin2 ) rebuild_verletlist = 1;
 
 	/**Completed for one particle*/
        } //for i loop
      } //for c loop
 }
 
-
-/**Check if further iterations are required to satisfy the specified tolerance.*/
-int check_tol_pos()
+/* Check if verlet list is required to be re-built*/
+void check_rebuild_verletlist()
 {
-  int i, k, c, np;
-  int repeat = 0;
-  Cell *cell;
-  Particle *p;
-  Bonded_ia_parameters *b_ia;
-  double r_ij[3], tol;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for(i = 0; i < np; i++) {
-      k=0;
-      while(k<p[i].bl.n)
-	{
-	  b_ia = &bonded_ia_params[p[i].bl.e[k++]];
-	  if(b_ia->type == BONDED_IA_RIGID_BOND)	
-	    {
-	      Particle *p2 = local_particles[p[i].bl.e[k++]];
-	      if (!p2) {
-		char *errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-		sprintf(errtxt,"{ rigid bond broken between particles %d and %d (particles not stored on the same node)} ",
-			p[i].p.identity, p[i].bl.e[k-1]);
-		return 0;
-	      }
-
-	      get_mi_vector(r_ij, p[i].r.p , p2->r.p);
-	      tol = fabs(0.5*(b_ia->p.rigid_bond.d2 - sqrlen(r_ij))/b_ia->p.rigid_bond.d2);
-	      repeat = repeat || (tol > b_ia->p.rigid_bond.p_tol);
-	    }
-	  else
-	    /* skip bond partners of nonrigid bond */
-	    k += b_ia->num;
-	} //while k loop
-    } //for i loop
-  }// for c loop
-  return(repeat);
+     int i, c, np;
+     Cell *cell;
+     Particle *p;
+     double skin2 = SQR(skin/2.0);
+     rebuild_verletlist=0;
+     for (c = 0; c < local_cells.n; c++)
+     {
+      cell = local_cells.cell[c];
+      p  = cell->part;
+      np = cell->n;
+      for(i = 0; i < np; i++) {
+        /* Verlet criterion check */
+	if(distance2(p[i].r.p, p[i].l.p_old) > skin2 ) rebuild_verletlist = 1;
+       } //for i loop
+     } //for c loop
+     announce_rebuild_vlist();
 }
 
 
@@ -246,30 +226,29 @@ void correct_pos_shake()
    int    repeat_,  cnt=0;
    int repeat=1;
 
-   while (repeat && cnt<SHAKE_MAX_ITERATIONS)
+   while (repeat!=0 && cnt<SHAKE_MAX_ITERATIONS)
    {
      init_correction_vector();
      repeat_ = 0;
-     compute_pos_corr_vec();
+     compute_pos_corr_vec(&repeat_);
      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-     app_correction_check_VL_rebuild();
+     app_pos_correction();
      /**Ghost Positions Update*/
      ghost_communicator(&cell_structure.update_ghost_pos_comm);
-     /**Calculate latest bond distances, determine the tolerance and check if iteration is required*/
-     repeat_ = check_tol_pos();
      if(this_node==0)
-         MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_LOR, 0, MPI_COMM_WORLD);
+         MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
      else
-         MPI_Reduce(&repeat_, NULL, 1, MPI_INT, MPI_LOR, 0, MPI_COMM_WORLD);
+         MPI_Reduce(&repeat_, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
      MPI_Bcast(&repeat, 1, MPI_INT, 0, MPI_COMM_WORLD);
-     if(!repeat)
-        announce_rebuild_vlist();
+
        cnt++;
    }// while(repeat) loop
    if (cnt >= SHAKE_MAX_ITERATIONS) {
      char *errtxt = runtime_error(100 + TCL_INTEGER_SPACE);
      sprintf(errtxt, "{RATTLE failed to converge after %d iterations} ", cnt);
    }
+
+   check_rebuild_verletlist();
 }
 
 /**The forces are transfered temporarily from f.f member of particle structure to r.p_old,
@@ -311,7 +290,8 @@ void transfer_force_init_vel()
     }
 }
 
-void compute_vel_corr_vec()
+/** Velocity correction vectors are computed*/
+void compute_vel_corr_vec(int *repeat_)
 {
   Bonded_ia_parameters *ia_params;
   int i, j, k, c, np;
@@ -340,13 +320,15 @@ void compute_vel_corr_vec()
 		  return;
 		}
 
-		vector_subt(v_ij, p1->m.v, p2->m.v);
-		get_mi_vector(r_ij, p1->r.p, p2->r.p);
-		K = scalar(v_ij, r_ij)/ia_params->p.rigid_bond.d2;
+		vecsub(p1->m.v, p2->m.v, v_ij);
+                get_mi_vector(r_ij, p1->r.p, p2->r.p);
+		if(fabs(scalar(v_ij, r_ij)) > ia_params->p.rigid_bond.v_tol)
+	        {
+		  K = scalar(v_ij, r_ij)/ia_params->p.rigid_bond.d2;
 #ifdef MASS
-		K /= (PMASS(*p1) + PMASS(*p2));
+		  K /= (PMASS(*p1) + PMASS(*p2));
 #else
-		K /= 2;
+		  K /= 2.0;
 #endif
 		for (j=0;j<3;j++)
 		  {
@@ -354,6 +336,8 @@ void compute_vel_corr_vec()
 		    p1->f.f[j] -= vel_corr*PMASS(*p2);
 		    p2->f.f[j] += vel_corr*PMASS(*p1);
 		  }
+		  *repeat_ = *repeat_ + 1 ;
+		}
 	      }
 	    else
 	      k += ia_params->num;
@@ -380,54 +364,12 @@ void apply_vel_corr()
         p1 = &p[i];
 	for (j=0;j<3;j++) {
 	   p1->m.v[j] += p1->f.f[j];
-	   //p1->r.p_old[j] += p1->f.f[j];
+
 	}
 	/**Completed for one particle*/
        } //for i loop
      } //for c loop
 
-}
-
-/**Check if tolerance for convergence of velocity corrections is fulfilled*/
-int check_tol_vel()
-{
- int i, k, c, np;
- int repeat = 0;
- Cell *cell;
- Particle *p;
- Bonded_ia_parameters *b_ia;
- double r_ij[3], v_ij[3], tol;
-
- for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for(i = 0; i < np; i++) {
-      k=0;
-      while(k<p[i].bl.n)
-	{
-	  b_ia = &bonded_ia_params[p[i].bl.e[k++]];
-	  if(b_ia->type == BONDED_IA_RIGID_BOND)
-	    {
-	      Particle *p2 = local_particles[p[i].bl.e[k++]];
-	      if (!p2) {
-		char *errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-		sprintf(errtxt,"{ rigid bond broken between particles %d and %d (particles not stored on the same node)} ",
-			p[i].p.identity, p[i].bl.e[k-1]);
-		return 0;
-	      }
-	      
-	      get_mi_vector(r_ij, p[i].r.p , p2->r.p);
-	      vector_subt(v_ij, p[i].m.v , p2->m.v);
-	      tol = fabs(scalar(r_ij, v_ij));
-	      repeat = repeat || (tol > b_ia->p.rigid_bond.v_tol);
-	    }
-	  else
-	    k += b_ia->num;
-	} //while k loop
-    } //for i loop
- }// for c loop
- return(repeat);
 }
 
 /**Put back the forces from r.p_old to f.f*/
@@ -469,18 +411,18 @@ void correct_vel_shake()
    velocity corrections can be stored temporarily at the f.f[3] of the particle
    structure  */
    transfer_force_init_vel();
-   while (repeat && cnt<SHAKE_MAX_ITERATIONS)
+   while (repeat!=0 && cnt<SHAKE_MAX_ITERATIONS)
    {
      init_correction_vector();
-     compute_vel_corr_vec();
+     repeat_ = 0;
+     compute_vel_corr_vec(&repeat_);
      ghost_communicator(&cell_structure.collect_ghost_force_comm);
      apply_vel_corr();
      ghost_communicator(&cell_structure.update_ghost_pos_comm);
-     repeat_ = check_tol_vel();
      if(this_node == 0)
-       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_LOR, 0, MPI_COMM_WORLD);
+       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
      else
-       MPI_Reduce(&repeat_, NULL, 1, MPI_INT, MPI_LOR, 0, MPI_COMM_WORLD);
+       MPI_Reduce(&repeat_, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
      MPI_Bcast(&repeat, 1, MPI_INT, 0, MPI_COMM_WORLD);
      cnt++;
@@ -544,8 +486,8 @@ int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol)
   make_bond_type_exist(bond_type);
 
   bonded_ia_params[bond_type].p.rigid_bond.d2 = d*d;
-  bonded_ia_params[bond_type].p.rigid_bond.p_tol = p_tol;
-  bonded_ia_params[bond_type].p.rigid_bond.v_tol = v_tol;
+  bonded_ia_params[bond_type].p.rigid_bond.p_tol = 2.0*p_tol;
+  bonded_ia_params[bond_type].p.rigid_bond.v_tol = v_tol*time_step;
   bonded_ia_params[bond_type].type = BONDED_IA_RIGID_BOND;
   bonded_ia_params[bond_type].num = 1;
   n_rigidbonds += 1;
