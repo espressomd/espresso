@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/resource.h>
 
 #include "global.h"
 #include "debug.h"
@@ -21,6 +20,7 @@
 #include "p3m.h"
 #include "thermostat.h"
 #include "cells.h"
+#include "tuning.h"
 
 #ifdef ELECTROSTATICS
 
@@ -128,10 +128,6 @@ int *ca_fmp = NULL;
 
 /** number of permutations in k_space */
 int ks_pnum;
-
-/* timing helper variables */
-static struct rusage time1, time2;
-
 
 /** \name Privat Functions */
 /************************************************************/
@@ -266,20 +262,6 @@ double analytic_cotangent_sum(int n, int mesh, int cao);
 void P3M_tune_aliasing_sums(int nx, int ny, int nz, 
 			    double box_size, int mesh, int cao, double alpha , 
 			    double *alias1, double *alias2);
-
-/** set a time marker. */
-void markTime()
-{
-  time2 = time1;
-  getrusage(RUSAGE_SELF, &time1);
-}
-
-/** calculate milliseconds between last two calls to markTime. */
-double diffTime()
-{
-  return 1e-3*(time1.ru_utime.tv_usec - time2.ru_utime.tv_usec) +
-    1e3*(time1.ru_utime.tv_sec - time2.ru_utime.tv_sec);
-}
 /*@}*/
 
 
@@ -1046,7 +1028,7 @@ MDINLINE double perform_aliasing_sums(int n[3], double nominator[3])
 
 int P3M_tune_parameters(Tcl_Interp *interp)
 {
-  int i,j,ind, try=0, best_try=0, n_cuts;
+  int i,ind, try=0, best_try=0, n_cuts;
   double r_cut, r_cut_min, r_cut_max, r_cut_best=0, cuts[P3M_TUNE_MAX_CUTS], cut_start;
   int    mesh , mesh_min , mesh_max,  mesh_best=0;
   int    cao  , cao_min  , cao_max,   cao_best=0;
@@ -1141,15 +1123,8 @@ int P3M_tune_parameters(Tcl_Interp *interp)
 	      p3m.alpha   = alpha;
 	      /* initialize p3m structures */
 	      mpi_bcast_coulomb_params();
-	      mpi_integrate(0);
 	      /* perform force calculation test */
-	      markTime();
-	      for(j=0;j<int_num;j++) {
-		mpi_bcast_event(PARTICLE_CHANGED);		
-		mpi_integrate(0);
-	      }
-	      markTime();
-	      int_time = diffTime()/int_num;
+	      int_time = time_force_calc(int_num);
 	      try++;
 	      P3M_TRACE(fprintf(stderr,"%d ",try));
 	      /* print result */
