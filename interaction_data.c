@@ -19,6 +19,7 @@
 #include "p3m.h"
 #include "debye_hueckel.h"
 #include "mmm1d.h"
+#include "mmm2d.h"
 #include "lj.h"
 #include "tab.h"
 #include "ljcos.h"
@@ -434,6 +435,10 @@ int printCoulombIAToResult(Tcl_Interp *interp)
     Tcl_AppendResult(interp, buffer, " ",(char *) NULL);
     Tcl_PrintDouble(interp, mmm1d_params.maxPWerror, buffer);
     Tcl_AppendResult(interp, buffer,(char *) NULL);
+  }
+  else if (coulomb.method == COULOMB_MMM2D) {
+    Tcl_PrintDouble(interp, mmm1d_params.maxPWerror, buffer);
+    Tcl_AppendResult(interp, "mmm2d ", buffer,(char *) NULL);
   }
 #else
   Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)",(char *) NULL);
@@ -914,10 +919,6 @@ int tabulated_set_params(int part_type_a, int part_type_b,
 
   return TCL_OK;
 }
-
-
-
-
 
 int dihedral_set_params(int bond_type, double bend)
 {
@@ -1989,8 +1990,6 @@ int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
     return TCL_ERROR;
   }
 
-  coulomb.method = COULOMB_MMM1D;
-
   if (ARG0_IS_S("tune")) {
     /* autodetermine bessel cutoff AND switching radius */
     if (! ARG_IS_D(1, maxPWerror))
@@ -2019,6 +2018,27 @@ int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
   }
 
   return set_mmm1d_params(interp, switch_rad, bessel_cutoff, maxPWerror);
+}
+
+int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
+{
+  int res;
+  double maxPWerror;
+
+  if (argc != 1) {
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb mmm2d <maximal pairwise error>", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if (! ARG0_IS_D(maxPWerror))
+    return TCL_ERROR;
+
+  res = TCL_ERROR; // set_mmm2d_params(interp, maxPWerror);
+  if (res != TCL_OK)
+    return res;
+
+  coulomb.method = COULOMB_MMM2D;
+  return TCL_OK;
 }
 
 int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
@@ -2071,6 +2091,9 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
     
   if (ARG0_IS_S("mmm1d"))
     return inter_parse_mmm1d(interp, argc-1, argv+1);
+
+  if (ARG0_IS_S("mmm2d"))
+    return inter_parse_mmm2d(interp, argc-1, argv+1);
 
   coulomb.bjerrum = 0.0;
   coulomb.method  = COULOMB_NONE;

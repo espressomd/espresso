@@ -17,6 +17,7 @@
 typedef struct {
   double far_switch_radius_2;
   int    bessel_cutoff;
+  int    bessel_calculated;
   double maxPWerror;
 } MMM1D_struct;
 extern MMM1D_struct mmm1d_params;

@@ -18,16 +18,9 @@
 #include "utils.h"
 #include "interaction_data.h"
 #include "debug.h"
+#include "mmm-common.h"
 
 #ifdef ELECTROSTATICS
-
-#define C_2PI     (2*M_PI)
-#define C_GAMMA   0.57721566490153286060651209008
-#define C_2LOG4PI -5.0620484939385815859557831885
-#define C_2PISQR  C_2PI*C_2PI
-/* precision of polygamma functions. More is unnecessary, the Bessel
-   functions are not better anyways... */
-#define EPS 1e-10
 
 /* How many trial calculations */
 #define TEST_INTEGRATIONS 1000
@@ -38,91 +31,17 @@
 /* Granularity of the radius scan in multiples of box_l[2] */
 #define RAD_STEPPING 0.1
 
-/** modified polygamma functions. See Arnold,Holm 2002 */
-static Polynom *modPsi = NULL;
-static int      n_modPsi = 0;
-static double modPsi_curerror = 1e100;
+static double uz, L2, uz2, prefuz2, prefL3_i;
 
-static double L_i, L2, L2_i, prefL2_i, prefL3_i;
+MMM1D_struct mmm1d_params = { 0.05, 5, 1, 1e-5 };
 
-MMM1D_struct mmm1d_params = { 0.05, 5, 1e-5 };
-
-MDINLINE double mod_psi_even(int n, double x)
-{ return evaluateAsTaylorSeriesAt(&modPsi[2*n],x*x); }
-
-MDINLINE double mod_psi_odd(int n, double x)
-{ return x*evaluateAsTaylorSeriesAt(&modPsi[2*n+1], x*x); }
-
-static void preparePolygammaEven(int n, double binom, Polynom *series)
+static void MMM1D_setup_constants()
 {
-  /* (-0.5 n) psi^2n/2n! (-0.5 n) and psi^(2n+1)/(2n)! series expansions
-     note that BOTH carry 2n! */
-  int order;
-  double deriv;
-  double maxx, x_order, coeff, pref;
-
-  deriv = 2*n;
-  if (n == 0) {
-    // psi^0 has a slightly different series expansion
-    maxx = 0.25;
-    alloc_doublelist(series, 1);
-    series->e[0] = 2*(1 - C_GAMMA);
-    for (order = 1;; order += 1) {
-      x_order = 2*order;
-      coeff = -2*hzeta(x_order + 1, 2);
-      if (fabs(maxx*coeff)*(4.0/3.0) < EPS)
-	break;
-      realloc_doublelist(series, order + 1);
-      series->e[order] = coeff;
-      maxx *= 0.25;
-    }
-    series->n = order;
-  }
-  else {
-    // even, n > 0
-    maxx = 1;
-    pref = 2;
-    init_doublelist(series);
-    for (order = 0;; order++) {
-      // only even exponents of x
-      x_order = 2*order;
-      coeff = pref*hzeta(1 + deriv + x_order, 2);
-      if ((fabs(maxx*coeff)*(4.0/3.0) < EPS) && (x_order > deriv))
-	break;
-      realloc_doublelist(series, order + 1);
-      series->e[order] = -binom*coeff;
-      maxx *= 0.25;
-      pref *= (1.0 + deriv/(x_order + 1));
-      pref *= (1.0 + deriv/(x_order + 2));
-    }
-    series->n = order;
-  }
-}
-
-static void preparePolygammaOdd(int n, double binom, Polynom *series)
-{
-  int order;
-  double deriv;
-  double maxx, x_order, coeff, pref;
-
-  deriv  = 2*n + 1;
-  maxx = 0.5;
-  // to get 1/(2n)! instead of 1/(2n+1)!
-  pref = 2*deriv*(1 + deriv);
-  init_doublelist(series);
-  for (order = 0;; order++) {
-    // only odd exponents of x
-    x_order = 2*order + 1;
-    coeff = pref*hzeta(1 + deriv + x_order, 2);
-    if ((fabs(maxx*coeff)*(4.0/3.0) < EPS) && (x_order > deriv))
-      break;
-    realloc_doublelist(series, order + 1);
-    series->e[order] = -binom*coeff;
-    maxx *= 0.25;
-    pref *= (1.0 + deriv/(x_order + 1));
-    pref *= (1.0 + deriv/(x_order + 2));
-  }
-  series->n = order;
+  uz  = 1/box_l[2];
+  L2   = box_l[2]*box_l[2];
+  uz2 = uz*uz;
+  prefuz2 = coulomb.prefactor*uz2;
+  prefL3_i = prefuz2*uz;
 }
 
 double determine_bessel_cutoff(double switch_rad, double maxPWerror, int maxP)
@@ -132,12 +51,11 @@ double determine_bessel_cutoff(double switch_rad, double maxPWerror, int maxP)
   // fprintf(stderr, "determ: %f %f %d\n", switch_rad, maxPWerror, maxP);
 
   double err;
-  double Lz = box_l[2];
-  double fac = 2*M_PI/Lz*switch_rad;
-  double pref = 4/Lz*dmax(1, 2*M_PI/Lz);
-  int P = (int)ceil(3*box_l[2]/2/M_PI/switch_rad);
+  double rhores = 2*M_PI*uz*switch_rad;
+  double pref = 4*uz*dmax(1, 2*M_PI*uz);
+  int P = 1;
   do {
-    err = pref*exp(-fac*(P-1))*(1 + P*(exp(fac) - 1))/SQR(1 - exp(fac));
+    err = pref*K1(rhores*P)*exp(rhores)/rhores*(P - 1 + 1/rhores);
     // fprintf(stderr, "%d %e\n", P, err); */
     P++;
   } while (err > maxPWerror && P <= maxP);
@@ -150,18 +68,22 @@ int set_mmm1d_params(Tcl_Interp *interp, double switch_rad,
 {
   char buffer[32 + 2*TCL_DOUBLE_SPACE];
   double int_time, min_time=1e200, min_rad = -1;
-  double maxrad = box_l[2];
-  /* more doesn't work with the current implementation as N_psi = 2 fixed */
+  double maxrad = box_l[2]; /* N_psi = 2, theta=2/3 maximum for rho */
+
+  MMM1D_setup_constants();
 
   if (bessel_cutoff < 0 && switch_rad < 0) {
     /* determine besselcutoff and optimal switching radius */
-    for (switch_rad = RAD_STEPPING*box_l[2]; switch_rad < maxrad; switch_rad += RAD_STEPPING*box_l[2]) {
+    for (switch_rad = RAD_STEPPING*maxrad; switch_rad < maxrad; switch_rad += RAD_STEPPING*maxrad) {
       mmm1d_params.bessel_cutoff = determine_bessel_cutoff(switch_rad, maxPWerror, MAXIMAL_B_CUT);
       /* no reasonable cutoff possible */
       if (mmm1d_params.bessel_cutoff == MAXIMAL_B_CUT)
 	continue;
       mmm1d_params.far_switch_radius_2 = switch_rad*switch_rad;
+      mmm1d_params.maxPWerror = maxPWerror;
 
+      coulomb.method = COULOMB_MMM1D;
+      
       /* initialize mmm1d temporary structures */
       mpi_bcast_coulomb_params();
       /* perform force calculation test */
@@ -194,7 +116,10 @@ int set_mmm1d_params(Tcl_Interp *interp, double switch_rad,
       Tcl_AppendResult(interp, "could not find reasonable bessel cutoff", (char *)NULL);
       return TCL_ERROR;
     }
+    mmm1d_params.bessel_calculated = 1;
   }
+  else 
+    mmm1d_params.bessel_calculated = 0;
 
   if (switch_rad <= 0 || switch_rad > box_l[2]) {
     Tcl_AppendResult(interp, "switching radius is not between 0 and box_l[2]", (char *)NULL);
@@ -207,8 +132,8 @@ int set_mmm1d_params(Tcl_Interp *interp, double switch_rad,
 
   mmm1d_params.far_switch_radius_2 = switch_rad*switch_rad;
   mmm1d_params.bessel_cutoff = bessel_cutoff;
-
   mmm1d_params.maxPWerror = maxPWerror;
+  coulomb.method = COULOMB_MMM1D;
 
   mpi_bcast_coulomb_params();
 
@@ -219,37 +144,20 @@ void MMM1D_recalcTables()
 {
   /* polygamma, determine order */
   int n;
-  double binom, err;
-  double rho2m2max;
-
-  /* our tables are even better */
-  if (modPsi_curerror < mmm1d_params.maxPWerror)
-    return;
-
-  if (modPsi != NULL) {
-    for (n = 0; n < 2*n_modPsi; n++)
-      realloc_doublelist(&modPsi[n], 0);
-    modPsi = realloc(modPsi, n_modPsi = 0);
-  }
+  double err;
+  double rhomax2m2, rhomax2 = uz2*mmm1d_params.far_switch_radius_2;
 
   n = 0;
-  binom = 1.0;
-  rho2m2max = 1.0;
+  rhomax2m2 = 1.0;
   do {
-    n_modPsi++;
-    modPsi = realloc(modPsi, 2*n_modPsi*sizeof(Polynom));
-    
-    preparePolygammaEven(n, binom, &modPsi[2*n_modPsi - 2]);
-    preparePolygammaOdd(n, binom, &modPsi[2*n_modPsi - 1]);
-    
-    err = fabs(2*mod_psi_even(n,rho2m2max));
-    rho2m2max *= 0.5;
-    binom *= (-0.5 - n)/(double)(n+1);
+    create_mod_psi_up_to(n+1);
+
+    err = fabs(2*mod_psi_even(n,rhomax2m2));
+    rhomax2m2 *= rhomax2;
     n++;
+    // fprintf(stderr, "%f\n", err);
   }
   while (err > 0.1*mmm1d_params.maxPWerror);
-
-  modPsi_curerror = mmm1d_params.maxPWerror;
 }
 
 void MMM1D_init()
@@ -263,14 +171,14 @@ void MMM1D_init()
     fprintf(stderr, "ERROR: MMM1D requires n-square cellsystem\n");
     errexit();
   }
+  if (mmm1d_params.far_switch_radius_2 >= SQR(box_l[2]))
+    mmm1d_params.far_switch_radius_2 = 0.8*SQR(box_l[2]);
 
-  /* precalculate some constants */
-  L_i  = 1/box_l[2];
-  L2   = box_l[2]*box_l[2];
-  L2_i = L_i*L_i;
-  prefL2_i = coulomb.prefactor*L2_i;
-  prefL3_i = prefL2_i*L_i;
+  MMM1D_setup_constants();
 
+  if (mmm1d_params.bessel_calculated)
+    mmm1d_params.bessel_cutoff = determine_bessel_cutoff(sqrt(mmm1d_params.far_switch_radius_2), mmm1d_params.maxPWerror, 1000);
+  
   MMM1D_recalcTables();
 }
 
@@ -287,8 +195,8 @@ void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], doubl
     return;
 
   rxy2   = d[0]*d[0] + d[1]*d[1];
-  rxy2_d = rxy2*L2_i;
-  z_d    = d[2]*L_i;
+  rxy2_d = rxy2*uz2;
+  z_d    = d[2]*uz;
 
   if (rxy2 <= mmm1d_params.far_switch_radius_2) {
     /* near range formula */
@@ -317,7 +225,7 @@ void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], doubl
 
     Fx = prefL3_i*sr*d[0];
     Fy = prefL3_i*sr*d[1];
-    Fz = prefL2_i*sz;
+    Fz = prefuz2*sz;
 
     /* real space parts */
 
@@ -349,7 +257,7 @@ void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], doubl
   else {
     /* far range formula */
     double rxy   = sqrt(rxy2);
-    double rxy_d = rxy*L_i;
+    double rxy_d = rxy*uz;
     double sr = 0, sz = 0;
     int bp;
 
@@ -358,10 +266,10 @@ void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], doubl
       sr += bp*K1(fq*rxy_d)*cos(fq*z_d);
       sz += bp*K0(fq*rxy_d)*sin(fq*z_d);
     }
-    sr *= L2_i*4*C_2PI;
-    sz *= L2_i*4*C_2PI;
+    sr *= uz2*4*C_2PI;
+    sz *= uz2*4*C_2PI;
     
-    pref = coulomb.prefactor*(sr/rxy + 2*L_i/rxy2);
+    pref = coulomb.prefactor*(sr/rxy + 2*uz/rxy2);
 
     F[0] = pref*d[0];
     F[1] = pref*d[1];
@@ -386,8 +294,8 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double
     return 0;
 
   rxy2   = d[0]*d[0] + d[1]*d[1];
-  rxy2_d = rxy2*L2_i;
-  z_d    = d[2]*L_i;
+  rxy2_d = rxy2*uz2;
+  z_d    = d[2]*uz;
 
   if (rxy2 <= mmm1d_params.far_switch_radius_2) {
     /* near range formula */
@@ -407,7 +315,7 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double
  
       r2n *= rxy2_d;
     }
-    E *= coulomb.prefactor*L_i;
+    E *= coulomb.prefactor*uz;
 
     /* real space parts */
 
@@ -424,18 +332,16 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double
   else {
     /* far range formula */
     double rxy   = sqrt(rxy2);
-    double rxy_d = rxy*L_i;
+    double rxy_d = rxy*uz;
     int bp;
-    E = 0;
-
+    /* The first Bessel term will compensate a little bit the
+       log term, so add them close together */
+    E = -0.25*log(rxy2_d) + 0.5*(M_LN2 - C_GAMMA);
     for (bp = 1; bp < mmm1d_params.bessel_cutoff; bp++) {
-      double fq = C_2PI*bp;    
+      double fq = C_2PI*bp;
       E += K0(fq*rxy_d)*cos(fq*z_d);
     }
-    E *= coulomb.prefactor*L_i*4;
-
-    E += -log(rxy2_d) + 2*(M_LN2 - C_GAMMA);
-    E *= coulomb.prefactor*L_i;
+    E *= 4*coulomb.prefactor*uz;
   }
 
   return chpref*E;

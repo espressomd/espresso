@@ -36,6 +36,7 @@
 #include "angle.h"
 #include "debye_hueckel.h"
 #include "mmm1d.h"
+#include "mmm2d.h"
 #include "constraint.h"
 #include "comforce.h"
 #include "comfixed.h"
@@ -112,6 +113,9 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
     break;
   case COULOMB_MMM1D:
     add_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist);
+    break;
+  case COULOMB_MMM2D:
+    //add_mmm2d_coulomb_pair_force(p1,p2,d,dist2,dist);
     break;
   }
 #endif

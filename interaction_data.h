@@ -65,6 +65,8 @@
 #define COULOMB_P3M   3
 /** Coulomb method is one-dimensional MMM */
 #define COULOMB_MMM1D 4
+/** Coulomb method is two-dimensional MMM */
+#define COULOMB_MMM2D 5
 
 /*@}*/
 
