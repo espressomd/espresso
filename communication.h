@@ -358,4 +358,8 @@ int mpi_gather_runtime_errors(Tcl_Interp *interp, int ret_state);
 #define MAGGS_COUNT_CHARGES 3
 /*@}*/
 
+/** Issue REQ_BCAST_LB: broadcast lattice-Boltzmann parameters to all nodes. */
+int lb_set_params(double temp, double friction, double viscosity, double tgrid,
+                                      double density, double agrid);
+				      
 #endif

@@ -40,6 +40,7 @@
 #include "nemd.h"
 #include "rattle.h"
 #include "errorhandling.h"
+#include  "lb.h"
 
 /************************************************
  * DEFINES
@@ -363,7 +364,7 @@ void integrate_vv(int n_steps)
      Calculate forces f(t) as function of positions p(t) ( and velocities v(t) ) */
   if (recalc_forces) {
     thermo_heat_up();
-
+    transfer_momentum = 0;
     force_calc(); 
 #ifdef ROTATION
     convert_initial_torques();
@@ -429,6 +430,7 @@ void integrate_vv(int n_steps)
 
     /* Integration Step: Step 3 of Velocity Verlet scheme:
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities v(t+0.5*dt) ) */
+    transfer_momentum = 1;
     force_calc();
 
     /* Communication step: ghost forces */
@@ -440,6 +442,10 @@ void integrate_vv(int n_steps)
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
+
+#ifdef LB
+  if(thermo_switch & THERMO_LB) LB_propagate();
+#endif
 
 #ifdef BOND_CONSTRAINT
     ghost_communicator(&cell_structure.update_ghost_pos_comm);

@@ -82,6 +82,7 @@
 #include "cells.h"
 #include "debug.h"
 #include "pressure.h"
+#include "lb.h"
 
 /** \name Thermostat switches*/
 /************************************************************/
@@ -91,6 +92,7 @@
 #define THERMO_LANGEVIN 1
 #define THERMO_DPD      2
 #define THERMO_NPT_ISO  4
+#define THERMO_LB       8
 
 /*@}*/
 
@@ -267,6 +269,10 @@ MDINLINE void add_to_part_dpd_thermo_pair_force(Particle *p1, Particle *p2, doub
     }
   }
 }
+#endif
+
+#ifdef LB
+int thermo_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
 #endif
 
 #endif

@@ -39,6 +39,7 @@
 #include "mmm2d.h"
 #include "maggs.h"
 #include "elc.h"
+#include "lb.h"
 #include "ghosts.h"
 #include "debye_hueckel.h"
 #include "forces.h"
@@ -183,6 +184,7 @@ void on_particle_change()
   resort_particles = 1;
   reinit_electrostatics = 1;
   rebuild_verletlist = 1;
+  if (thermo_switch & THERMO_LB) reinit_thermo = 1;
 
   invalidate_obs();
 
@@ -350,6 +352,12 @@ void on_parameter_change(int field)
     cells_re_init(CELL_STRUCTURE_CURRENT);
   }
 
+#ifdef LB
+  if (field == FIELD_BOXL || field == FIELD_CELLGRID || field == FIELD_NNODES || field == FIELD_NODEGRID || field == FIELD_PERIODIC ||
+  field == FIELD_NPART)
+    reinit_thermo = 1;
+#endif
+
   if (field == FIELD_MAXRANGE)
     rebuild_verletlist = 1;
 
@@ -373,7 +381,9 @@ void on_ghost_flags_change()
   ghosts_have_v = 0;
   
   if (thermo_switch & THERMO_DPD)
-    /* DPD needs also ghost velocities */
+    /* DPD and LB need also ghost velocities */
+    ghosts_have_v = 1;
+  if (thermo_switch & THERMO_LB)
     ghosts_have_v = 1;
 #ifdef BOND_CONSTRAINT
   else if (n_rigidbonds)

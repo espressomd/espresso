@@ -32,6 +32,7 @@
 #include "pressure.h"
 #include "random.h"
 #include "lj.h"
+#include "lb.h"
 #include "morse.h"
 #include "buckingham.h"
 #include "tab.h"
@@ -152,8 +153,10 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_EXCL  41
 /**Action number for \ref mpi_morse_cap_forces. */
 #define REQ_BCAST_MFC 42
+/**Action number for \ref mpi_bcast_lb_params. */
+#define REQ_LB_BCAST 43
 /** Total number of action numbers. */
-#define REQ_MAXIMUM   43
+#define REQ_MAXIMUM   44
 
 /*@}*/
 
@@ -205,6 +208,8 @@ void mpi_buck_cap_forces_slave(int node, int parm);
 void mpi_gather_runtime_errors_slave(int node, int parm);
 void mpi_send_exclusion_slave(int node, int parm);
 void mpi_morse_cap_forces_slave(int node, int parm);
+void mpi_bcast_lb_params_slave(int node, int parm);
+
 /*@}*/
 
 /** A list of which function has to be called for
@@ -253,6 +258,7 @@ SlaveCallback *callbacks[] = {
   mpi_gather_runtime_errors_slave,  /* 40: REQ_GET_ERRS */
   mpi_send_exclusion_slave,         /* 41: REQ_SET_EXCL */
   mpi_morse_cap_forces_slave,       /* 42: REQ_BCAST_MFC */
+  mpi_bcast_lb_params_slave,        /* 43: REQ_LB_BCAST */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -308,6 +314,7 @@ char *names[] = {
   "GET_ERRS",       /* 40 */
   "SET_EXCL",       /* 41 */
   "BCAST_MFC" ,     /* 42 */
+  "BCAST_LB",       /* 43 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -1796,6 +1803,31 @@ void mpi_sync_topo_part_info_slave(int node,int parm ) {
 
   sync_topo_part_info();
 
+}
+
+int lb_set_params(double temp, double friction, double viscosity, double tgrid,
+		  double density, double agrid)
+{
+  temperature     = temp;
+  compar.friction = friction;
+  compar.viscos   = viscosity;
+  compar.agrid    = agrid;
+  compar.tau        = tgrid;
+  compar.rho        = density;  
+  compar.gridpoints = box_l[0]/agrid;  
+
+  mpi_issue(REQ_LB_BCAST, 1, 0);
+  mpi_bcast_lb_params_slave(-1, 0);
+  return TCL_OK;
+}
+
+
+void mpi_bcast_lb_params_slave(int node, int parm)
+{
+  /* broadcast lb parameters */
+  
+  MPI_Bcast(&compar, sizeof(LB_structure), MPI_BYTE, 0, MPI_COMM_WORLD);
+  thermo_init_lb();
 }
 
 /******************* REQ_GET_ERRS ********************/

@@ -144,6 +144,10 @@ This will allow to use such particle properties as quart, omega, and torque. */
 */
 /* #define DPD */
 
+/** LB Thermostat (fluctuating Lattice Boltzmann fluid) 
+*/
+/* #define LB */
+
 /*@}*/
 
 /************************************************/
@@ -282,6 +286,9 @@ MDINLINE int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef DPD
   Tcl_AppendResult(interp, "{ DPD } ", (char *) NULL);
+#endif
+#ifdef LB
+  Tcl_AppendResult(interp, "{ LB } ", (char *) NULL);
 #endif
   Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);

@@ -30,6 +30,7 @@
 #include "rotation.h"
 #include "forces.h"
 #include "elc.h"
+#include "lb.h"
 #include "nsquare.h"
 #include "layered.h"
 #include "domain_decomposition.h"
@@ -69,6 +70,11 @@ void force_calc()
   }
 
   calc_long_range_forces();
+
+#ifdef LB
+  if(thermo_switch & THERMO_LB)
+    calc_lbforce(); 
+#endif
 
 #ifdef COMFORCE
   calc_comforce();
