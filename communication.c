@@ -165,7 +165,7 @@ static void mpi_issue(int reqcode, int node, int param)
 
   COMM_TRACE(fprintf(stderr, "0: issuing %s(%d), assigned to node %d\n",
 		     names[reqcode], param, node));
-  MPI_Bcast(request, 2, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(request, 3, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
 /**************** REQ_TERM ************/

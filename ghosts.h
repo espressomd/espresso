@@ -106,7 +106,7 @@ void ghost_init();
  *          if \ref node_grid[d] == 1 (single node case for that
  *          direction) nothing is done here.  
  * </ol> */
-void exchange_part();
+void exchange_and_sort_part();
 
 /** exchange ghost particles. 
  *

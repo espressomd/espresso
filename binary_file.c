@@ -19,7 +19,7 @@ int writemd(ClientData data, Tcl_Interp *interp,
 {
   static int end_num = -1;
   char *row;
-  int p, node, i;
+  int p, i;
   struct MDHeader header;
   int tcl_file_mode;
   Tcl_Channel channel;
@@ -98,11 +98,8 @@ int writemd(ClientData data, Tcl_Interp *interp,
   Tcl_Write(channel, row, header.n_rows*sizeof(char));
 
   for (p = 0; p <= max_seen_particle; p++) {
-    node = particle_node[p];
-    if (node != -1) {
-      Particle data;
-      /* fetch particle data */
-      mpi_recv_part(node, p, &data);
+    Particle data;
+    if (get_particle_data(p, &data)) {
       for (i = 0; i < 3; i++)
 	data.r.p[i] += data.i[i]*box_l[i];
 
@@ -243,23 +240,18 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
 	free(row);
 	return (TCL_ERROR);
       }
-
-      node = find_node(data.r.p);
-      map_particle_node(data.r.identity, node);
     }
 
     if (av_pos)
-      mpi_place_particle(node, data.r.identity, data.r.p);
+      place_particle(data.r.identity, data.r.p);
     if (av_q)
-      mpi_send_q(node, data.r.identity, data.r.q);
+      set_particle_q(data.r.identity, data.r.q);
     if (av_v)
-      mpi_send_v(node, data.r.identity, data.v);
+      set_particle_v(data.r.identity, data.v);
     if (av_f)
-      mpi_send_f(node, data.r.identity, data.f);
-    if (av_type) {
-      make_particle_type_exist(data.r.type);
-      mpi_send_type(node, data.r.identity, data.r.type);
-    }
+      set_particle_f(data.r.identity, data.f);
+    if (av_type)
+      set_particle_type(data.r.identity, data.r.type);
   }
 
   free(row);
