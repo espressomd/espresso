@@ -197,8 +197,6 @@ void on_constraint_change()
 void on_cell_structure_change()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_cell_structure_change\n", this_node));
-  /* to enforce initialization of the ghost cells */
-  resort_particles = 1;
   on_coulomb_change();
 }
 

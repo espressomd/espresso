@@ -14,6 +14,7 @@
 #include "config.h"
 #include "debug.h"
 #include "interaction_data.h"
+#include "errorhandling.h"
 #include "communication.h"
 #include "grid.h"
 #include "pressure.h"

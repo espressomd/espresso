@@ -620,8 +620,6 @@ void dd_topology_init(CellPList *old)
   for(c=0; c<local_cells.n; c++) {
     update_local_particles(local_cells.cell[c]);
   }
-  /* Triggers full initialization of the integrator! */
-  resort_particles = 1;
   CELL_TRACE(fprintf(stderr,"%d: dd_topology_init: done\n",this_node));
 }
 

@@ -264,6 +264,9 @@ void cells_re_init(int new_cs)
     );
   */
 
+  /* to enforce initialization of the ghost cells */
+  resort_particles = 1;
+
 #ifdef ADDITIONAL_CHECKS
   check_cells_consistency();
 #endif
