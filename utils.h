@@ -187,6 +187,21 @@ MDINLINE double sqrlen(double v[3]) {
   return d2;
 }
 
+/** calculates unit vector */
+MDINLINE void unit_vector(double v[3],double y[3]) {
+  double d = 0.0;
+  int i;
+  for(i=0;i<3;i++) 
+    d += SQR(v[i]);
+	 
+	d=sqrt(d);
+  
+  for(i=0;i<3;i++)
+    y[i] = v[i]/d;
+    
+  return;
+}
+
 /** calculates the scalar product of two vectors */
 MDINLINE double scalar(double a[3], double b[3]) {
   double d2 = 0.0;
@@ -194,6 +209,14 @@ MDINLINE double scalar(double a[3], double b[3]) {
   for(i=0;i<3;i++)
     d2 += a[i]*b[i];
   return d2;
+}
+
+/** calculates the vector product of two vectors */
+MDINLINE void vector_product(double a[3], double b[3], double c[3]) {
+  c[0]=a[1]*b[2]-a[2]*b[1];
+  c[1]=a[2]*b[0]-a[0]*b[2];
+  c[2]=a[0]*b[1]-a[1]*b[0];
+  return ;
 }
 
 /** approximates exp(d^2)*erfc(d) by applying a formula from:
@@ -269,6 +292,129 @@ MDINLINE int calc_factors(int n, int *factors, int max)
 /************************************************
  * functions: vectors and matrices
  ************************************************/
+ 
+/** Calc eigevalues of a 3x3 matrix stored in q as a 9x1 array*/
+MDINLINE int calc_eigenvalues_3x3(double *q,  double *eva) {
+  double q11,q22,q33,q12,q13,q23;
+  double a,b,c;
+  double QQ,R,R2,QQ3;
+  double theta,root1,root2,x1,x2,x3,help;
+  int anzdiff=3;
+
+  /* copy tensor to local variables (This is really a fuc off code!) */
+  q11 = *q++;    q12 = *q++;   q13 = *q;
+  q22 = *(q+=2); q23 = *(++q); q33 = *(q+=3);
+  
+  /* solve the cubic equation of the eigenvalue problem */
+  a = -(q11 + q22 + q33);
+  b = q11*q22 + q11*q33 + q22*q33 - q12*q12 - q13*q13 - q23*q23;
+  c = -(q11*q22*q33 + 2*q12*q23*q13 - q12*q12*q33 - q13*q13*q22 - q23*q23*q11);
+  QQ = (a*a-3*b)/9.0;
+  R = (2*a*a*a - 9*a*b + 27*c)/54;
+  QQ3 = QQ*QQ*QQ;
+  R2 = R*R;
+
+  if (R2 < QQ3) {
+    theta = acos(R/sqrt(QQ3));
+    root1 = sqrt(QQ)*cos(theta/3.0);
+    root2 = sqrt(QQ*3.0)*sin(theta/3.0);
+    x1 = - 2*root1 - a/3.0;
+    x2 =   root1 - root2 - a/3.0;
+    x3 =   root1 + root2 - a/3.0;
+  }
+  else {
+    double AA,BB,signum = 1.0;
+
+    if (R < 0) { signum = -1.0; R = -R; }
+    AA = - signum*exp( log(R + sqrt(R2-QQ3))/3.0);
+    if (AA==0.0) BB = 0.0;
+    else BB = QQ/AA;
+
+    /* compute the second way of the diagonalization
+     * remark : a diagonal matrix has to have real eigenvalues (=>x2=x3)
+     * but (!), the general solution of this case can have in general 
+     * imaginary solutions for x2,x3 (see numerical recipies p. 185) */
+    x1 = (AA+BB) - a/3.0;
+    x2 = 0.5*(AA+BB) - a/3.0;
+    x3 = x2;
+  }
+
+  /* order the eigenvalues in decreasing order */
+  if (x1<x2) { help = x1; x1 = x2; x2 = help; }
+  if (x1<x3) { help = x1; x1 = x3; x3 = help; }
+  if (x2<x3) { help = x2; x2 = x3; x3 = help; }
+  eva[0] = x1; eva[1] = x2; eva[2] = x3;
+
+  /* calculate number of different eigenvalues */
+  if(x1==x2) anzdiff--;
+  if(x2==x3) anzdiff--;
+  
+  return anzdiff;
+}
+
+/** Calc eigevectors of a 3x3 matrix stored in a as a 9x1 array*/
+/** Given an eigenvalue (eva) returns the corresponding eigenvector (eve)*/
+MDINLINE int calc_eigenvector_3x3(double *a,double eva,double *eve) {
+  int i,j,ind1,ind2,ind3,row1,row2;
+  double A_x1[3][3],coeff1,coeff2,norm;
+
+  /* build (matrix - eva*unity) */ 
+  for(i=0;i<3;i++) {
+    for(j=0;j<3;j++) A_x1[i][j]=a[3*i+j];
+    A_x1[i][i]-=eva;
+  }
+
+  /* solve the linear equation system */
+  for(ind1=0;ind1<3;ind1++) {
+    ind2=(ind1+1) % 3;    ind3=(ind1+2) % 3;
+    row1=0;
+    do {
+      row1++;
+    } while ((A_x1[ind3][row1]==0) && (row1<3));
+
+    /* okay, if one whole column is empty then we can take this 
+       direction as the eigenvector
+       remember : {eigenvectors} = kernel(A_x1) */
+    if (A_x1[ind3][row1]==0) {
+      eve[row1]=1.0;
+      eve[(row1+1) % 3]=0.0;
+      eve[(row1+2) % 3]=0.0;
+      return 1;
+    }
+
+    for(i=1;i<3;i++) {
+      row2=(row1+i) % 3;
+      coeff1=A_x1[ind1][row1]*A_x1[ind3][row2]-
+                    A_x1[ind1][row2]*A_x1[ind3][row1];
+      coeff2=A_x1[ind2][row1]*A_x1[ind3][row2]-
+                    A_x1[ind2][row2]*A_x1[ind3][row1];
+      if (coeff1!=0.0) {
+        eve[ind2]=1.0;
+        eve[ind1]=-coeff2/coeff1;
+        eve[ind3]=-( A_x1[ind2][row1]+eve[ind1]* A_x1[ind1][row1])
+                              /A_x1[ind3][row1];
+	norm = sqrt(eve[0]*eve[0] + eve[1]*eve[1] + eve[2]*eve[2]);
+        eve[0]/=norm; eve[1]/=norm; eve[2]/=norm;
+        return 1;
+      }
+      else {
+        if (coeff2!=0.0) {
+          eve[ind1]=1.0;
+          eve[ind2]=-coeff1/coeff2;
+          eve[ind3]=-( A_x1[ind1][row1]+eve[ind2]* A_x1[ind2][row1])
+                            /A_x1[ind3][row1];
+	  norm = sqrt(eve[0]*eve[0] + eve[1]*eve[1] + eve[2]*eve[2]);
+	  eve[0]/=norm; eve[1]/=norm; eve[2]/=norm;
+          return(1);
+        }
+      }
+    } /* loop over the different rows */
+  }   /* loop over the different columns */
+
+  /* the try failed => not a singular matrix: only solution is (0,0,0) */                    
+  return 0;
+}
+
 
 /** get the linear index from the position (a,b,c) in a 3D grid
  *  of dimensions adim[]. returns linear index.
