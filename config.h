@@ -26,6 +26,10 @@
  *  If you add a new compile flag you also have to add the
  *  corresponding lines in the function \ref compilation_callback.
  *
+ *  \warning The documentation of this file only contains the
+ *  precompiler flags that you have turned on. See the source code of
+ *  this file for more options!
+ *
  *  <b>Responsible:</b>
  *  <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 */
@@ -41,7 +45,7 @@
     \ref domain_decomposition.c, \ref grid.c, \ref interaction_data.c,
     \ref layered.c, \ref statistics_chain.c
 */
-#define PARTIAL_PERIODIC
+//#define PARTIAL_PERIODIC
 
 /** if defined, you will get a warning when particles approach nearer than
     0.9 sigma, because then it's likely the integration will blow up.
@@ -61,7 +65,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 
 /** Compiler Flag to enable constraints, eg walls, spheres. 
     See \ref constraint.h and \ref interaction_data.h */
-#define CONSTRAINTS
+//#define CONSTRAINTS
 
 /** Compiler Flag to enable COMFORCE potential */
 //#define COMFORCE
@@ -76,7 +80,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /*@{*/
 
 /** to use tabulated potential*/
-#define TABULATED
+//#define TABULATED
 
 /** Lennard-Jones */
 #define LENNARD_JONES
@@ -148,6 +152,11 @@ This will allow to use such particle properties as quart, omega, and torque. */
 
 /** Precision for capture of round off errors. */
 #define ROUND_ERROR_PREC 1.0e-14
+
+/** Tiny angle cutoff for sinus calculations */
+#define TINY_SIN_VALUE 1e-10
+/** Tiny angle cutoff for cosine calculations */
+#define TINY_COS_VALUE 0.9999999999
 
 /*@}*/
 #ifndef CONFIG_H

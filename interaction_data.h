@@ -5,7 +5,7 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #ifndef IA_DATA_H
 #define IA_DATA_H
 /** \file interaction_data.h
@@ -22,7 +22,8 @@
 */
 
 #include <tcl.h>
-#include "particle_data.h"
+#include "config.h"
+#include "utils.h"
 
 /** \name Type codes of bonded interactions
     Enumeration of implemented bonded interactions.
@@ -30,22 +31,34 @@
 /************************************************************/
 /*@{*/
 
-/** Type of bonded interaction is a FENE potential. */
-#define BONDED_IA_FENE     0
-/** Type of bonded interaction is a angle potential. */
-#define BONDED_IA_ANGLE    1
-/** Type of bonded interaction is a dihedral potential. */
-#define BONDED_IA_DIHEDRAL 2
-/** Type of bonded interaction is a HARMONIC potential. */
-#define BONDED_IA_HARMONIC 3
-/** Type of bonded interaction is a (HARMONIC-LJ) potential. */
-#define BONDED_IA_SUBT_LJ_HARM 99
-/** Type of bonded interaction is a (FENE-LJ) potential. */
-#define BONDED_IA_SUBT_LJ_FENE 98
-/** Type of bonded interaction is a (-LJ) potential. */
-#define BONDED_IA_SUBT_LJ 97
 /** This bonded interaction was not set. */
-#define BONDED_IA_NONE    -1
+#define BONDED_IA_NONE     -1
+/** Type of bonded interaction is a FENE potential 
+    (to be combined with Lennard Jones). */
+#define BONDED_IA_FENE      0
+/** Type of bonded interaction is a HARMONIC potential. */
+#define BONDED_IA_HARMONIC  1
+/** Type of bonded interaction is a bond angle potential. */
+#define BONDED_IA_ANGLE     2
+/** Type of bonded interaction is a dihedral potential. */
+#define BONDED_IA_DIHEDRAL  3
+/** Type of tabulated bonded interaction potential, 
+    may be of bond length, of bond angle or of dihedral type. */
+#define BONDED_IA_TABULATED 4
+/** Type of bonded interaction is a (-LJ) potential. */
+#define BONDED_IA_SUBT_LJ   5
+
+/* !!! DO NOT USE ANY MORE !!! */
+/** Type of bonded interaction is a (HARMONIC-LJ) potential (DO NOT USE). */
+#define BONDED_IA_SUBT_LJ_HARM 99
+/** Type of bonded interaction is a (FENE-LJ) potential (DO NOT USE). */
+#define BONDED_IA_SUBT_LJ_FENE 98
+
+/* Specify tabulated bonded interactions  */
+#define TAB_UNKNOWN          0
+#define TAB_BOND_LENGTH      1
+#define TAB_BOND_ANGLE       2
+#define TAB_BOND_DIHEDRAL    3
 
 /*@}*/
 
@@ -220,6 +233,12 @@ typedef struct {
       double r;
       double r2;
     } fene;
+    /** Parameters for harmonic bond Potential */
+    struct {
+      double k;
+      double r;
+      double r2;
+    } harmonic;
     /** Parameters for three body angular potential (bond-angle potentials). 
 	ATTENTION: Note that there are different implementations of the bond angle
 	potential which you may chose with a compiler flag in the file \ref config.h !
@@ -236,35 +255,43 @@ typedef struct {
       double cos_phi0;
 #endif
     } angle;
-    /** Parameters for four body angular potential (dihedral-angle potentials). 
-     */
+    /** Parameters for four body angular potential (dihedral-angle potentials). */
     struct {
-      int dummy;
+      int    mult;
+      double bend;
+      double phase;
     } dihedral;
-    /** Parameters for harmonic bond Potential */
+#ifdef TABULATED
+    /** Parameters for n-body tabulated potential (n=2,3,4). */
+    struct {
+      char   *filename;
+      int    type;
+      int    npoints;
+      double minval;
+      double maxval;
+      double invstepsize;
+      double *f;
+      double *e;
+    } tab;
+#endif
+    /** Dummy parameters for -LJ Potential */
     struct {
       double k;
       double r;
       double r2;
-    } harmonic;
-   /** Parameters for HARMONIC-LJ Potential */
-    struct {
-      double k;
-      double r;
-      double r2;
-    } subt_lj_harm; 
-   /** Parameters for FENE-LJ Potential */
+    } subt_lj;  
+    /** Parameters for FENE-LJ Potential */
     struct {
       double k;
       double r;
       double r2;
     } subt_lj_fene;   
-    /** Dummy parameters for -LJ Potential */
-   struct {
+    /** Parameters for HARMONIC-LJ Potential */
+    struct {
       double k;
       double r;
       double r2;
-    } subt_lj;  
+    } subt_lj_harm; 
   } p;
 } Bonded_ia_parameters;
 
@@ -383,6 +410,8 @@ extern DoubleList tabulated_energies;
 
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
+/** Maximal interaction cutoff (real space/short range non-bonded interactions). */
+extern double max_cut_non_bonded;
 
 /** For the warmup you can cap the singularity of the Lennard-Jones
     potential at r=0. look into the warmup documentation for more
@@ -456,8 +485,13 @@ void make_bond_type_exist(int type);
     the other nodes.  */
 void realloc_ia_params(int nsize);
 
-/** calculates the maximal cutoff of all real space interactions. 
-    these are: bonded, non bonded + real space electrostatics. */
+/** calculates the maximal cutoff of all real space
+    interactions. these are: bonded, non bonded + real space
+    electrostatics. The result is stored in the global variable
+    max_cut. The maximal cutoff of the non-bonded + real space
+    electrostatic interactions is stored in max_cut_non_bonded. This
+    value is used in the verlet pair list algorithm (see \ref
+    verlet.h). */
 void calc_maximal_cutoff();
 
 int checkIfParticlesInteract(int i, int j);

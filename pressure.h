@@ -54,6 +54,7 @@ extern nptiso_struct nptiso;
 #include "subt_lj_fene.h"
 #include "subt_lj.h"
 #include "angle.h"
+#include "dihedral.h"
 #include "debye_hueckel.h"
 #include "mmm1d.h"
 
@@ -216,7 +217,11 @@ MDINLINE void add_bonded_virials(Particle *p1)
 	p3->f.f[j] = F3[j];
 
       i+=3; break;
-    default :
+    case BONDED_IA_DIHEDRAL:
+      /* since it is not clear at the moment how to handle a four body interaction here, I skip it */
+      ret = 0.0;
+      i+=4; break;
+   default :
       fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d  of atom %d unknown\n",bonded_ia_params[type_num].type,p1->p.identity);
       ret = 0;
       i = p1->bl.n;

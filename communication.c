@@ -908,6 +908,14 @@ void mpi_bcast_ia_params(int i, int j)
     /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
     MPI_Bcast(&(bonded_ia_params[i]),sizeof(Bonded_ia_parameters), MPI_BYTE,
 	      0, MPI_COMM_WORLD);
+#ifdef TABULATED
+    /* For tabulated potentials we have to send the tables extra */
+    if(bonded_ia_params[i].type == BONDED_IA_TABULATED) {
+      int size = bonded_ia_params[i].p.tab.npoints;
+      MPI_Bcast(bonded_ia_params[i].p.tab.f, size, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+      MPI_Bcast(bonded_ia_params[i].p.tab.e, size, MPI_DOUBLE, 0 , MPI_COMM_WORLD);	       
+    }
+#endif
   }
 
   on_short_range_ia_change();
@@ -938,6 +946,17 @@ void mpi_bcast_ia_params_slave(int i, int j)
     make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
     MPI_Bcast(&(bonded_ia_params[i]),sizeof(Bonded_ia_parameters), MPI_BYTE,
 	      0, MPI_COMM_WORLD);
+#ifdef TABULATED
+    /* For tabulated potentials we have to send the tables extra */
+    if(bonded_ia_params[i].type == BONDED_IA_TABULATED) {
+      int size = bonded_ia_params[i].p.tab.npoints;
+      /* alloc force and energy tables on slave nodes! */
+      bonded_ia_params[i].p.tab.f = (double*)malloc(size*sizeof(double));
+      bonded_ia_params[i].p.tab.e = (double*)malloc(size*sizeof(double));
+      MPI_Bcast(bonded_ia_params[i].p.tab.f, size, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+      MPI_Bcast(bonded_ia_params[i].p.tab.e, size, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+    }
+#endif
   }
 
   on_short_range_ia_change();
@@ -1388,16 +1407,20 @@ void mpi_lj_cap_forces_slave(int node, int parm)
 /*************** REQ_BCAST_TABFORCECAP ************/
 void mpi_tab_cap_forces(double fc)
 {
+#ifdef TABULATED
   tab_force_cap = fc;
   mpi_issue(REQ_BCAST_TFC, 1, 0);
   mpi_tab_cap_forces_slave(1, 0);
+#endif
 }
 
 void mpi_tab_cap_forces_slave(int node, int parm)
 {
+#ifdef TABULATED
   MPI_Bcast(&tab_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   check_tab_forcecap(tab_force_cap);
   on_short_range_ia_change();
+#endif
 }
 
 /*************** REQ_GET_CONSFOR ************/

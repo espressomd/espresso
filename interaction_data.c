@@ -5,7 +5,7 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 /** \file interaction_data.c
     Implementation of \ref interaction_data.h "interaction_data.h"
  */
@@ -16,9 +16,7 @@
 #include "interaction_data.h"
 #include "communication.h"
 #include "grid.h"
-#ifdef NPT
 #include "pressure.h"
-#endif
 #include "p3m.h"
 #include "debye_hueckel.h"
 #include "mmm1d.h"
@@ -50,6 +48,7 @@ int n_bonded_ia = 0;
 Bonded_ia_parameters *bonded_ia_params = NULL;
 
 double max_cut;
+double max_cut_non_bonded;
 
 double lj_force_cap = 0.0;
 double tab_force_cap = 0.0;
@@ -202,7 +201,7 @@ char *get_name_of_bonded_ia(int i) {
   case BONDED_IA_FENE:
     return "FENE";
   case BONDED_IA_ANGLE:
-    return "angle ";
+    return "angle";
   case BONDED_IA_DIHEDRAL:
     return "dihedral";
   case BONDED_IA_HARMONIC:
@@ -213,6 +212,8 @@ char *get_name_of_bonded_ia(int i) {
     return "SUBT_LJ_FENE";
   case BONDED_IA_SUBT_LJ:
     return "SUBT_LJ";
+  case BONDED_IA_TABULATED:
+    return "tabulated";
   default:
     fprintf(stderr, "%d: internal error: name of unknown interaction %d requested\n",
 	    this_node, i);
@@ -222,7 +223,7 @@ char *get_name_of_bonded_ia(int i) {
   return "";
 }
 
-/** This function increases the LOCAL ia_params field
+/** This function increases the LOCAL ia_params field for non-bonded interactions
     to the given size. This function is not exported
     since it does not do this on all nodes. Use
     make_particle_type_exist for that.
@@ -274,38 +275,57 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     Tcl_PrintDouble(interp, params->p.fene.r, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
-  case BONDED_IA_ANGLE:
-    Tcl_PrintDouble(interp, params->p.angle.bend, buffer);
-    Tcl_AppendResult(interp, "angle ", buffer," ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.angle.phi0, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
-  case BONDED_IA_DIHEDRAL:
-    Tcl_AppendResult(interp, "dihedral",(char *) NULL);
-    return (TCL_OK);
   case BONDED_IA_HARMONIC:
     Tcl_PrintDouble(interp, params->p.harmonic.k, buffer);
     Tcl_AppendResult(interp, "HARMONIC ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, params->p.harmonic.r, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
- case BONDED_IA_SUBT_LJ_HARM:
+  case BONDED_IA_ANGLE:
+    Tcl_PrintDouble(interp, params->p.angle.bend, buffer);
+    Tcl_AppendResult(interp, "angle ", buffer," ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.angle.phi0, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
+  case BONDED_IA_DIHEDRAL:  
+    sprintf(buffer, "%d", params->p.dihedral.mult);
+    Tcl_AppendResult(interp, "dihedral ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.dihedral.bend, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.dihedral.phase, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
+#ifdef TABULATED
+  case BONDED_IA_TABULATED:
+    switch (params->p.tab.type) {
+    case TAB_BOND_LENGTH:
+      Tcl_AppendResult(interp, "tabulated bond \"",params->p.tab.filename,"\"",(char *) NULL);
+      return (TCL_OK);
+    case TAB_BOND_ANGLE:
+      Tcl_AppendResult(interp, "tabulated angle \"",params->p.tab.filename,"\"",(char *) NULL);
+      return (TCL_OK);
+    case TAB_BOND_DIHEDRAL:
+      Tcl_AppendResult(interp, "tabulated dihedral \"",params->p.tab.filename,"\"",(char *) NULL);
+      return (TCL_OK);
+    }
+#endif
+  case BONDED_IA_SUBT_LJ:
+    Tcl_PrintDouble(interp, params->p.subt_lj.k, buffer);
+    Tcl_AppendResult(interp, "SUBT_LJ ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.subt_lj.r, buffer);
+    Tcl_AppendResult(interp, buffer,(char *) NULL);
+    return (TCL_OK);
+  case BONDED_IA_SUBT_LJ_HARM:
     Tcl_PrintDouble(interp, params->p.subt_lj_harm.k, buffer);
     Tcl_AppendResult(interp, "SUBT_LJ_HARM ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, params->p.subt_lj_harm.r, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
- case BONDED_IA_SUBT_LJ_FENE:
+  case BONDED_IA_SUBT_LJ_FENE:
     Tcl_PrintDouble(interp, params->p.subt_lj_fene.k, buffer);
     Tcl_AppendResult(interp, "SUBT_LJ_FENE ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, params->p.subt_lj_fene.r, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
- case BONDED_IA_SUBT_LJ:
-    Tcl_PrintDouble(interp, params->p.subt_lj.k, buffer);
-    Tcl_AppendResult(interp, "SUBT_LJ ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.subt_lj.r, buffer);
-    Tcl_AppendResult(interp, buffer,(char *) NULL);
     return (TCL_OK);
  case BONDED_IA_NONE:
     Tcl_ResetResult(interp);
@@ -468,6 +488,8 @@ void calc_maximal_cutoff()
 {
   int i, j;
   max_cut = -1.0;
+  max_cut_non_bonded = -1.0;
+
   /* bonded */
   for (i = 0; i < n_bonded_ia; i++) {
     switch (bonded_ia_params[i].type) {
@@ -486,10 +508,44 @@ void calc_maximal_cutoff()
     case BONDED_IA_SUBT_LJ_FENE:
       if(max_cut < bonded_ia_params[i].p.subt_lj_fene.r)
 	max_cut = bonded_ia_params[i].p.subt_lj_fene.r;
+      break;
     case BONDED_IA_SUBT_LJ:
       if(max_cut < bonded_ia_params[i].p.subt_lj.r)
 	max_cut = bonded_ia_params[i].p.subt_lj.r;
       break;
+#ifdef TABULATED
+    case BONDED_IA_TABULATED:
+      if(bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
+	 max_cut < bonded_ia_params[i].p.tab.maxval)
+	max_cut = bonded_ia_params[i].p.tab.maxval;
+      break;
+#endif
+    default:
+      break;
+    }
+  }
+
+  /* Bond angle and dihedral potentials do not contain a cutoff
+     intrinsically. The cutoff for these potentials depends on the
+     bond length potentials. For bond angle potentials nothing has to
+     be done (it is assumed, that particles participating in a bond
+     angle or dihedral potential are bound to each other by some bond
+     length potential (FENE, Harmonic or tabulated)). For dihedral
+     potentials (both normal and tabulated ones) it follows, that the
+     cutoff is TWO TIMES the maximal cutoff! That's what the following
+     lines assure. */
+  
+  for (i = 0; i < n_bonded_ia; i++) {
+    switch (bonded_ia_params[i].type) {
+    case BONDED_IA_DIHEDRAL:
+      max_cut = 2*max_cut;
+      break; 
+#ifdef TABULATED
+    case BONDED_IA_TABULATED:
+      if(bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
+	max_cut = 2*max_cut;
+      break;
+#endif
     default:
       break;
     }
@@ -501,22 +557,22 @@ void calc_maximal_cutoff()
        if (checkIfParticlesInteract(i, j)) {
 	 IA_parameters *data = get_ia_param(i, j);
 	 if (data->LJ_cut != 0) {
-	   if(max_cut < (data->LJ_cut+data->LJ_offset) ) 
-	     max_cut = (data->LJ_cut+data->LJ_offset);
+	   if(max_cut_non_bonded < (data->LJ_cut+data->LJ_offset) ) 
+	     max_cut_non_bonded = (data->LJ_cut+data->LJ_offset);
 	 }
 #ifdef LJCOS
 	 if (data->LJCOS_cut != 0) {
-	   if(max_cut < (data->LJCOS_cut+data->LJCOS_offset) ) 
-	     max_cut = (data->LJCOS_cut+data->LJCOS_offset);
+	   if(max_cut_non_bonded < (data->LJCOS_cut+data->LJCOS_offset) ) 
+	     max_cut_non_bonded = (data->LJCOS_cut+data->LJCOS_offset);
 	 }
 #endif
 	 if (data->GB_cut != 0) {
-	   if(max_cut < (data->GB_cut) ) 
-	     max_cut = (data->GB_cut);
+	   if(max_cut_non_bonded < (data->GB_cut) ) 
+	     max_cut_non_bonded = (data->GB_cut);
 	 }
 	 if (data->TAB_maxval != 0){
-	   if(max_cut < (data->TAB_maxval ))
-	     max_cut = data->TAB_maxval;
+	   if(max_cut_non_bonded < (data->TAB_maxval ))
+	     max_cut_non_bonded = data->TAB_maxval;
 	 }
        }
      }
@@ -524,27 +580,31 @@ void calc_maximal_cutoff()
   /* real space electrostatic */
   switch (coulomb.method) {
   case COULOMB_P3M:
-    if (max_cut < p3m.r_cut) 
-      max_cut = p3m.r_cut;
+    if (max_cut_non_bonded < p3m.r_cut) 
+      max_cut_non_bonded = p3m.r_cut;
     break;
   case COULOMB_DH:
-    if (max_cut < dh_params.r_cut) 
-      max_cut = dh_params.r_cut;
+    if (max_cut_non_bonded < dh_params.r_cut) 
+      max_cut_non_bonded = dh_params.r_cut;
     break;
   case COULOMB_MMM1D:
     /* needs n-squared calculation anyways */
-    if (max_cut < 0)
-      max_cut = 0;
+    if (max_cut_non_bonded < 0)
+      max_cut_non_bonded = 0;
     break;
   case COULOMB_MMM2D:
     /* needs n-squared rsp. layered calculation, and
        it is pretty complicated to find the minimal
        required cell height. */
-    if (max_cut < 0)
-      max_cut = 0;
+    if (max_cut_non_bonded < 0)
+      max_cut_non_bonded = 0;
     break;
   }
 #endif
+
+  /* make max_cut the maximal cutoff of both bonded and non-bonded interactions */
+  if ( max_cut_non_bonded > max_cut) max_cut = max_cut_non_bonded;
+
 }
 
 int inter_print_all(Tcl_Interp *interp)
@@ -734,7 +794,8 @@ int gay_berne_set_params(int part_type_a, int part_type_b,
 
 
 #ifdef TABULATED
-/** Reads tabulated parameters and force and energy tables from a
+/** Non-Bonded tabulated potentials:
+    Reads tabulated parameters and force and energy tables from a
     file.  ia_params and force/energy tables are then communicated to each
     node \warning No checking is performed for the file read!! */
 int tabulated_set_params(int part_type_a, int part_type_b,
@@ -840,8 +901,106 @@ int tabulated_set_params(int part_type_a, int part_type_b,
 }
 #endif
 
+#ifdef TABULATED
+/** Bonded tabulated potentials: Reads tabulated parameters and force
+    and energy tables from a file.  ia_params and force/energy tables
+    are then communicated to each node \warning No checking is
+    performed for the file read!! */
+int bonded_tabulated_set_params(int bond_type, int tab_type, char * filename) 
+{
+  int i, token = 0, size;
+  double dummr;
+  FILE* fp;
 
-int dihedral_set_params(int bond_type, double bend)
+  if(bond_type < 0)
+    return TCL_ERROR;
+  
+  make_bond_type_exist(bond_type);
+
+  fp = fopen( filename , "r");
+  if ( !fp ) {
+    fprintf(stderr,"bonded_tabulated_set_params: attempt to open file %s failed \n", filename );
+    errexit();
+  }
+  
+  /*Look for a line starting with # */
+  while ( token != EOF) {
+    token = fgetc(fp);
+    if ( token == 35 ) { break; } // magic number for # symbol
+  }
+  if ( token == EOF ) { 
+    fprintf(stderr,"bonded_tabulated_set_params: attempt to read file %s failed. Could not find start the start token <#> \n", filename );
+    errexit();
+  }
+
+  /* set types */
+  bonded_ia_params[bond_type].type       = BONDED_IA_TABULATED;
+  bonded_ia_params[bond_type].p.tab.type = tab_type;
+
+  /* set number of interaction partners */
+  if(tab_type == TAB_BOND_LENGTH)   bonded_ia_params[bond_type].num = 1;
+  if(tab_type == TAB_BOND_ANGLE)    bonded_ia_params[bond_type].num = 2;
+  if(tab_type == TAB_BOND_DIHEDRAL) bonded_ia_params[bond_type].num = 3;
+
+  /* copy filename */
+  size = strlen(filename);
+  bonded_ia_params[bond_type].p.tab.filename = (char*)malloc(size*sizeof(char));
+  strcpy(bonded_ia_params[bond_type].p.tab.filename,filename);
+
+  /* read basic parameters from file */
+  fscanf( fp , "%d ", &size);
+  bonded_ia_params[bond_type].p.tab.npoints = size;
+  fscanf( fp, "%lf ", &bonded_ia_params[bond_type].p.tab.minval);
+  fscanf( fp, "%lf ", &bonded_ia_params[bond_type].p.tab.maxval);
+
+  /* Check interval for angle and dihedral potentials.  With adding
+     ROUND_ERROR_PREC to the upper boundary we make sure, that during
+     the calculation we do not leave the defined table!
+  */
+  if(tab_type == TAB_BOND_ANGLE ) {
+    if( bonded_ia_params[bond_type].p.tab.minval != 0.0 || 
+	abs(bonded_ia_params[bond_type].p.tab.maxval-PI) > 1e-5 ) {
+      fprintf(stderr,"bonded_tabulated_set_params: Tabulated bond angle potential has to be defined in the interval 0.0 to %f!\n",PI);
+      errexit();
+    }
+    bonded_ia_params[bond_type].p.tab.maxval = PI+ROUND_ERROR_PREC;
+  }
+  /* check interval for angle and dihedral potentials */
+  if(tab_type == TAB_BOND_DIHEDRAL ) {
+    if( bonded_ia_params[bond_type].p.tab.minval != 0.0 || 
+	abs(bonded_ia_params[bond_type].p.tab.maxval-(2*PI)) > 1e-5 ) {
+      fprintf(stderr,"bonded_tabulated_set_params: Tabulated bond angle potential has to be defined in the interval 0.0 to %f!\n",(2*PI));
+      errexit();
+    }
+    bonded_ia_params[bond_type].p.tab.maxval = (2*PI)+ROUND_ERROR_PREC;
+  }
+
+
+				    
+
+  /* calculate dependent parameters */
+  bonded_ia_params[bond_type].p.tab.invstepsize = (double)(size-1)/(bonded_ia_params[bond_type].p.tab.maxval-bonded_ia_params[bond_type].p.tab.minval);
+
+  /* allocate force and energy tables */
+  bonded_ia_params[bond_type].p.tab.f = (double*)malloc(size*sizeof(double));
+  bonded_ia_params[bond_type].p.tab.e = (double*)malloc(size*sizeof(double));
+
+  /* Read in the new force and energy table data */
+  for (i =0 ; i < size ; i++) {
+      fscanf(fp,"%lf", &dummr);
+      fscanf(fp,"%lf", &bonded_ia_params[bond_type].p.tab.f[i]);
+      fscanf(fp,"%lf", &bonded_ia_params[bond_type].p.tab.e[i]);
+  }
+  fclose(fp);
+
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return TCL_OK;
+}
+#endif
+
+
+int dihedral_set_params(int bond_type, int mult, double bend, double phase)
 {
   if(bond_type < 0)
     return TCL_ERROR;
@@ -849,9 +1008,10 @@ int dihedral_set_params(int bond_type, double bend)
   make_bond_type_exist(bond_type);
 
   bonded_ia_params[bond_type].type = BONDED_IA_DIHEDRAL;
-  bonded_ia_params[bond_type].num = 0;
-
-  bend = 0;
+  bonded_ia_params[bond_type].num  = 3;
+  bonded_ia_params[bond_type].p.dihedral.mult = mult;
+  bonded_ia_params[bond_type].p.dihedral.bend = bend;
+  bonded_ia_params[bond_type].p.dihedral.phase = phase;
 
   mpi_bcast_ia_params(bond_type, -1); 
 
@@ -1203,7 +1363,8 @@ int inter_parse_bonded(Tcl_Interp *interp,
 		       int bond_type,
 		       int argc, char ** argv)
 {
-  double k, r, bend, phi0;
+  int mult;
+  double k, r, bend, phi0, phase;
 
   if (ARG0_IS_S("num")) {
     if (argc == 1)
@@ -1214,7 +1375,7 @@ int inter_parse_bonded(Tcl_Interp *interp,
 	return TCL_ERROR;
     }
   }
-  
+
   if (ARG0_IS_S("fene")) {
 
       if (argc != 3) {
@@ -1329,13 +1490,43 @@ int inter_parse_bonded(Tcl_Interp *interp,
   }
     
   if (ARG0_IS_S("dihedral")) {
- 
-      /* remove this lines after the implementation of dihedral */
-      Tcl_AppendResult(interp, "Do not use interaction type \"", argv[0],
-		       "\"", (char *) NULL);
-      return TCL_ERROR;
+    if (argc < 4 ) {
+      Tcl_AppendResult(interp, "dihedral needs 3 parameters: "
+		       "<mult> <bend> <phase>", (char *) NULL);
+      return (TCL_ERROR);
+    }
+    if ( !ARG_IS_I(1, mult) || !ARG_IS_D(2, bend) || !ARG_IS_D(3, phase) ) {
+      Tcl_AppendResult(interp, "dihedral needs 3 parameters of types INT DOUBLE DOUBLE: "
+		       "<mult> <bend> <phase> ", (char *) NULL);
+     return TCL_ERROR;
+    }
+  
+   CHECK_VALUE(dihedral_set_params(bond_type, mult, bend, phase), "bond type must be nonnegative");
+  }
+  if (ARG0_IS_S("tabulated")) {
+#ifdef TABULATED
+    int tab_type = TAB_UNKNOWN;
 
-      CHECK_VALUE(dihedral_set_params(bond_type, bend), "bond type must be nonnegative");
+    if (argc < 3 ) {
+      Tcl_AppendResult(interp, "tabulated needs two string parameter: "
+		       "<type> <filename>", (char *) NULL);
+      return (TCL_ERROR);
+    }  
+
+    if (ARG_IS_S(1,"bond"))     tab_type = TAB_BOND_LENGTH;
+    if (ARG_IS_S(1,"angle"))    tab_type = TAB_BOND_ANGLE;
+    if (ARG_IS_S(1,"dihedral")) tab_type = TAB_BOND_DIHEDRAL;
+    if (tab_type == TAB_UNKNOWN) {
+       Tcl_AppendResult(interp, "Unknown type of bonded tabulated interaction. Should be: "
+		       "\"bond\" or \"angle\" or \"dihedral\"", (char *) NULL);
+      return (TCL_ERROR);
+    }
+
+    CHECK_VALUE(bonded_tabulated_set_params(bond_type, tab_type, argv[2]), "bond type must be nonnegative");
+#else
+    Tcl_AppendResult(interp, "Tabulated potentials not compiled in! see config.h\n", (char *) NULL);
+    return (TCL_ERROR);
+#endif
   }
 
   Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
@@ -2159,13 +2350,26 @@ void make_particle_type_exist(int type)
 void make_bond_type_exist(int type)
 {
   int i, ns = type + 1;
-  if(ns <= n_bonded_ia)
+
+  /* if bond type exists, free associated memory if necessary */
+  if(ns <= n_bonded_ia) {
+#ifdef TABULATED
+    if ( bonded_ia_params[type].type == BONDED_IA_TABULATED && 
+	 bonded_ia_params[type].p.tab.npoints > 0 ) {
+      free(bonded_ia_params[type].p.tab.f);
+      free(bonded_ia_params[type].p.tab.e);
+    }
+#endif
     return;
+  }
+
+  /* else allocate new memory */
   bonded_ia_params = (Bonded_ia_parameters *)realloc(bonded_ia_params,
 						     ns*sizeof(Bonded_ia_parameters));
+  /* set bond types not used as undefined */
   for (i = n_bonded_ia; i < ns; i++)
     bonded_ia_params[i].type = BONDED_IA_NONE;
-
+ 
   n_bonded_ia = ns;
 }
 

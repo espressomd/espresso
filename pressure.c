@@ -641,8 +641,9 @@ void calc_p_tensor(double volume, IntList *p_list, int flag) {
 	add_ljcos_pair_force(&p1,&p2,ia_params,d,dist);
 #endif
 	/* tabulated */
+#ifdef TABULATED
 	add_tabulated_pair_force(&p1,&p2,ia_params,d,dist);
-
+#endif
 
 #ifdef ROTATION  
 	add_gb_pair_force(&p1,&p2,ia_params,d,dist);

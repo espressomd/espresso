@@ -38,6 +38,7 @@
 #include "subt_lj_fene.h"
 #include "subt_lj.h"
 #include "angle.h"
+#include "dihedral.h"
 #include "debye_hueckel.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
@@ -166,6 +167,37 @@ MDINLINE void add_bonded_force(Particle *p1)
 		      checked_particle_ptr(p1->bl.e[i+1]),
 		      checked_particle_ptr(p1->bl.e[i+2]), type_num);
       i+=3; break;
+    case BONDED_IA_DIHEDRAL:
+      add_dihedral_force(checked_particle_ptr(p1->bl.e[i+1]),
+			 p1,
+			 checked_particle_ptr(p1->bl.e[i+2]),
+			 checked_particle_ptr(p1->bl.e[i+3]), type_num);
+      i+=4; break;
+#ifdef TABULATED
+    case BONDED_IA_TABULATED:
+      switch(bonded_ia_params[type_num].p.tab.type) {
+      case TAB_BOND_LENGTH:
+	add_tab_bond_force(p1,
+			   checked_particle_ptr(p1->bl.e[i+1]), type_num);
+	i+=2; break;
+      case TAB_BOND_ANGLE:
+	add_tab_angle_force(p1,
+			    checked_particle_ptr(p1->bl.e[i+1]),
+			    checked_particle_ptr(p1->bl.e[i+2]), type_num);
+	i+=3; break;
+      case TAB_BOND_DIHEDRAL:
+	add_tab_dihedral_force(checked_particle_ptr(p1->bl.e[i+1]),
+			       p1,
+			       checked_particle_ptr(p1->bl.e[i+2]),
+			       checked_particle_ptr(p1->bl.e[i+3]), type_num);
+	i+=4; break;
+      default :
+	fprintf(stderr,"add_bonded_force: WARNING: Tabulated Bond type  of atom %d unknown\n",p1->p.identity);
+	i = p1->bl.n; 
+	break;
+      }
+      break;
+#endif
     default :
       fprintf(stderr,"add_bonded_force: WARNING: Bonds of atom %d unknown\n",p1->p.identity);
       i = p1->bl.n; 

@@ -10,16 +10,14 @@
 #define ANGLE_H
 /** \file angle.h
  *  Routines to calculate the angle energy or/and and force 
- *  for a particle pair.
+ *  for a particle triple.
  *  \ref forces.c
  *
  *  <b>Responsible:</b>
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
 */
 
-
-#define TINY_SIN_VALUE 1e-9
-#define TINY_COS_VALUE 0.9999999999
+#include "config.h"
 
 /************************************************************/
 
