@@ -533,32 +533,12 @@ int analyze_fold_chains(float *coord)
       // Calculate and store the centers of mass for this chain
       for ( j = 0 ; j < 3 ; j++){
 	cm_pos[3*chainid + j] += coord[partCfg[i].r.identity*3 + j]/(double)(chain_length);
-	/*	
-	if (chainid == 0){
-	printf("%d : index %d : value : %f : cm_pos : %f : %d \n",j,
-	partCfg[i].r.identity*3 + j,coord[partCfg[i].r.identity*3 + j],cm_pos[3*(int)(chainid) + j],chainid);
-	}	
-	fflush(stdout);
-	*/
+
       }
     }
   }
 
-  /*
-  for ( chain = 0 ; chain < chain_n_chains ; chain++){
-  printf("chain : %d : cm_pos : %f, %f, %f \n",chain,  cm_pos[3*(int)(chain)], cm_pos[3*(int)(chain )+1],cm_pos[3*(int)(chain)+2]);
-  for ( i = 0 ; i < 3; i++)
-  {
-  for ( j = 0 ; j < chain_length ; j++){
-  index = (chain*chain_length + chain_start + j)*3 + i ;
-  printf("index : %d", index);
-  printf(" : coordb : %f \n ", coord[index]);
-  }
-  }
-  }
-  */
-  //  printf("nowfold \n" );
-  //  fflush(stdout);
+
 
   // Now fold the particles by chain
   for ( chain = 0 ; chain < chain_n_chains ; chain++){
@@ -566,14 +546,9 @@ int analyze_fold_chains(float *coord)
       if (periodic[i]) { 
 	tmp = (int)floor(cm_pos[chain*3 + i]*box_l_i[i]);
 	cm_tmp =0.0;
-	//	printf("cm_pos: %f : tmp : %d \n",cm_pos[chain*3+i],tmp);
-	//	fflush(stdout);
 	for ( j = 0 ; j < chain_length ; j++){
 	  index = (chain*chain_length + chain_start + j)*3 + i ;
-	  //	  printf("index : %d", index);
-	  //	  printf(" : coordb : %f ", coord[index]);
 	  coord[index]       = coord[index] - tmp*box_l[i];    
-	  //	  printf(" : coord : %f \n", coord[index]);
 	  cm_tmp += coord[index]/(double)(chain_length);
 	}
 	if(cm_tmp < 0 || cm_tmp > box_l[i]) {
@@ -581,7 +556,6 @@ int analyze_fold_chains(float *coord)
 	  errexit();
 	}
       }
-      //      printf("diff : %f \n",cm_pos[chain*3+i] - cm_tmp);
     }
   }
   return (TCL_OK);  

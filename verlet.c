@@ -221,6 +221,7 @@ void build_verlet_lists_and_force_calc()
 	    /* calc non bonded interactions */
 	    ia_params = get_ia_param(p1[i].r.type, p2[j].r.type);
 	    dist  = sqrt(dist2);
+
 	    add_non_bonded_pair_force(&(p1[i]), &(p2[j]), ia_params, d, dist, dist2);
 	  }
 	}

@@ -21,6 +21,7 @@
 #include "thermostat.h"
 /* include the force files */
 #include "lj.h"
+#include "tab.h"
 #include "ljcos.h"
 #include "gb.h"
 #include "fene.h"
@@ -149,9 +150,12 @@ void calc_energy()
 	  dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
 	  dist  = sqrt(dist2);
 	  
+	  /* Tabulated */
+	  energy.node.e[type_num] += tabulated_pair_energy(p1,p2,ia_params,d,dist);
+	  
 	  /* lennard jones */
 	  energy.node.e[type_num] += lj_pair_energy(p1,p2,ia_params,d,dist);
-
+	  
 	  /* lennnard jones cosine */
 	  energy.node.e[type_num] += ljcos_pair_energy(p1,p2,ia_params,d,dist);
 
@@ -167,6 +171,7 @@ void calc_energy()
 	  else if(coulomb.method==COULOMB_DH)
 	    energy.node.e[s_coulomb] += dh_coulomb_pair_energy(p1,p2,dist);
 #endif
+
 	} 
       }
     }

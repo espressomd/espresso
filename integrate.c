@@ -169,15 +169,19 @@ void integrate_vv(int n_steps)
   int i;
   int n_verlet_updates = 0;
 
-  on_integration_start();
+   on_integration_start();
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: integrating %d steps\n",this_node,
 		      n_steps));
+
+
 
   if(parameter_changed || particle_changed || topology_changed || interactions_changed) {
     invalidate_ghosts();
     exchange_and_sort_part();
     exchange_ghost();
+
     build_verlet_lists_and_force_calc();
+
 #ifdef ROTATION
     convert_initial_torques();
 #endif
@@ -185,9 +189,12 @@ void integrate_vv(int n_steps)
     rescale_forces();
   }
     
+
+
   /* integration loop */
   INTEG_TRACE(fprintf(stderr,"%d START INTEGRATION: %d steps\n",this_node,n_steps));
   for(i=0;i<n_steps;i++) {
+
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
     propagate_vel_pos();
 #ifdef ROTATION
@@ -203,8 +210,9 @@ void integrate_vv(int n_steps)
     }
     else {
       update_ghost_pos();
-      force_calc();         
+      force_calc();  
     }
+
     collect_ghost_forces();
     rescale_forces_propagate_vel();
 #ifdef ROTATION
@@ -219,6 +227,7 @@ void integrate_vv(int n_steps)
   interactions_changed = 0;
   topology_changed     = 0;
   parameter_changed    = 0;
+
 }
 
 /************************************************************/

@@ -53,14 +53,20 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
     }
     /* this should not happen! */
     else {
+
       LJ_TRACE(fprintf(stderr, "%d: Lennard-Jones warning: Particles id1=%d id2=%d exactly on top of each other\n",this_node,p1->r.identity,p2->r.identity));
 
       frac2 = SQR(ia_params->LJ_sig/ia_params->LJ_capradius);
       frac6 = frac2*frac2*frac2;
       fac   = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / ia_params->LJ_capradius;
 
+
+
       p1->f[0] += fac * ia_params->LJ_capradius;
       p2->f[0] -= fac * ia_params->LJ_capradius;
+
+
+
     }
 
     ONEPART_TRACE(if(p1->r.identity==check_id) fprintf(stderr,"%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f[0],p1->f[1],p1->f[2],p2->r.identity,dist,fac));
@@ -70,6 +76,8 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
 		     this_node,p1->r.identity,p2->r.identity,dist,fac*d[0],fac*d[1],fac*d[2]));
   }
 }
+
+
 
 MDINLINE double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
@@ -120,7 +128,7 @@ MDINLINE void calc_lj_cap_radii(double force_cap)
 	while(step != 0) {
 	  frac2 = SQR(params->LJ_sig/rad);
 	  frac6 = frac2*frac2*frac2;
-	  force = 48.0 * params->LJ_eps * frac6*(frac6 - 0.5)*frac2*rad;
+	  force = 48.0 * params->LJ_eps * frac6*(frac6 - 0.5)/rad;
 	  if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
 	    step = - (step/2.0); 
 	  }
@@ -137,5 +145,7 @@ MDINLINE void calc_lj_cap_radii(double force_cap)
     }
   }
 }
+
+
 
 #endif

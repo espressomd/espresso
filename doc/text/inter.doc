@@ -11,6 +11,46 @@
 	Currently known <interaction_type>s are:
 
 	<ul>
+	   	<li>\verbatim tabulated <filename> \endverbatim	
+		An arbitrary tabulated non-bonded pair potential.
+		
+		To use this potential you must provide a file which contains the tabulated forces 
+		and energies as a function of the separation distance.
+
+		At present the required file format is simply an ordered list separated by whitespace.  
+		The first parameter you should supply in the file is the
+		number of data points in the table.  This should be an integer.  Take
+		care when choosing an appropriate value for the number of points
+		remembering that a copy of each lookup table is kept on each node and
+		must be referenced very frequently.
+
+		The second parameter you should supply is the minimum tabulated separation distance. 
+		The third parameter should be the maximum tabulated separation distance
+		This will act as the effective
+		cutoff value for the potential.  Between minval and maxval the
+		force and energy are assumed to be tabulated at fixed intervals such
+		that the size of this interval is given by:
+
+		\f$ \frac{(maxval - minval)}{n-1} \f$
+
+		Where \f$ n \f$ is the number of data points in the table
+	
+		The remaining data in the file should consist of n data triples <distance> <force> <energy>.  Note that
+		distance is only included for human readability of the file. Its
+		values do not matter but it must be present to satisfy the file read
+		format. In the future a more structured file format will be required
+		for the tabulated input file. The values of force and energy should be
+		given as follows:
+
+		force: 	\f$ -\frac{U'(r)}{r}\f$   
+
+		energy:       \f$U(r) \f$ 
+
+
+		\warning This feature has not been fully tested. Please use with care
+
+
+
 	   	<li>\verbatim lennard-jones <epsilon> <sigma> <cutoff> <shift> <offset> \endverbatim
 			the well known Lennard-Jones potential
 			\f[4 \epsilon \left(\left(\frac{\sigma}{r-offset}\right)^{12} -

@@ -31,6 +31,7 @@
 #include "pressure.h"
 #include "random.h"
 #include "lj.h"
+#include "tab.h"
 #include "ljcos.h"
 #include "gb.h"
 #include "mmm1d.h"
@@ -103,27 +104,29 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_RANDOM_STAT 24
 /** Action number for \ref mpi_lj_cap_forces. */
 #define REQ_BCAST_LFC 25
+/** Action number for \ref mpi_tab_cap_forces. */
+#define REQ_BCAST_TFC 26
 /** Action number for \ref mpi_random_seed */
-#define REQ_BIT_RANDOM_SEED 26
+#define REQ_BIT_RANDOM_SEED 27
 /** Action number for \ref mpi_random_stat */
-#define REQ_BIT_RANDOM_STAT 27
+#define REQ_BIT_RANDOM_STAT 28
 /** Action number for \ref mpi_get_constraint_force */
-#define REQ_GET_CONSFOR 28
+#define REQ_GET_CONSFOR 29
 /** Action number for \ref mpi_rescale_particles */
-#define REQ_RESCALE_PART 29
+#define REQ_RESCALE_PART 30
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 30
+#define REQ_MAXIMUM 31
 
 #ifdef ROTATION
 /** Action number for \ref mpi_send_quat. */
-#define REQ_SET_QUAT 30
+#define REQ_SET_QUAT 31
 /** Action number for \ref mpi_send_omega. */
-#define REQ_SET_OMEGA 31
+#define REQ_SET_OMEGA 32
 /** Action number for \ref mpi_send_torque. */
-#define REQ_SET_TORQUE 32
+#define REQ_SET_TORQUE 33
 /** Total number of action numbers. */
 #undef REQ_MAXIMUM
-#define REQ_MAXIMUM 33
+#define REQ_MAXIMUM 34
 #endif
 
 /** \name Slave Callbacks
@@ -162,6 +165,7 @@ void mpi_bcast_constraint_slave(int node, int parm);
 void mpi_random_seed_slave(int node, int parm);
 void mpi_random_stat_slave(int node, int parm);
 void mpi_lj_cap_forces_slave(int node, int parm);
+void mpi_tab_cap_forces_slave(int node, int parm);
 void mpi_bit_random_seed_slave(int node, int parm);
 void mpi_bit_random_stat_slave(int node, int parm);
 void mpi_get_constraint_force_slave(int node, int parm);
@@ -197,14 +201,15 @@ SlaveCallback *callbacks[] = {
   mpi_random_seed_slave,            /* 23: REQ_RANDOM_SEED */
   mpi_random_stat_slave,            /* 24: REQ_RANDOM_STAT */
   mpi_lj_cap_forces_slave,          /* 25: REQ_BCAST_LFC */
-  mpi_bit_random_seed_slave,        /* 26: REQ_RANDOM_SEED */
-  mpi_bit_random_stat_slave,        /* 27: REQ_RANDOM_STAT */
-  mpi_get_constraint_force_slave,   /* 28: REQ_GET_CONSFOR */
-  mpi_rescale_particles_slave,      /* 29: REQ_RESCALE_PART */
+  mpi_tab_cap_forces_slave,         /* 26: REQ_BCAST_TFC */
+  mpi_bit_random_seed_slave,        /* 27: REQ_RANDOM_SEED */
+  mpi_bit_random_stat_slave,        /* 28: REQ_RANDOM_STAT */
+  mpi_get_constraint_force_slave,   /* 29: REQ_GET_CONSFOR */
+  mpi_rescale_particles_slave,      /* 30: REQ_RESCALE_PART */
 #ifdef ROTATION
-  mpi_send_quat_slave,              /* 30: REQ_SET_QUAT */
-  mpi_send_omega_slave,             /* 31: REQ_SET_OMEGA */
-  mpi_send_torque_slave,            /* 32: REQ_SET_TORQUE */
+  mpi_send_quat_slave,              /* 31: REQ_SET_QUAT */
+  mpi_send_omega_slave,             /* 32: REQ_SET_OMEGA */
+  mpi_send_torque_slave,            /* 33: REQ_SET_TORQUE */
 #endif  
 };
 
@@ -236,14 +241,15 @@ char *names[] = {
   "RAND_SEED" ,     /* 23 */
   "RAND_STAT" ,     /* 24 */
   "BCAST_LFC" ,     /* 25 */
-  "BIT_RAND_SEED",  /* 26 */
-  "BIT_RAND_STAT",  /* 27 */
-  "GET_CONSTR",     /* 28 */
-  "RESCALE_PART",   /* 29 */
+  "BCAST_TFC" ,     /* 26 */
+  "BIT_RAND_SEED",  /* 27 */
+  "BIT_RAND_STAT",  /* 28 */
+  "GET_CONSTR",     /* 29 */
+  "RESCALE_PART",   /* 30 */
 #ifdef ROTATION  
-  "SET_QUAT"  ,     /* 30 */
-  "SET_OMEGA",      /* 31 */
-  "SET_TORQUE",     /* 32 */
+  "SET_QUAT"  ,     /* 31 */
+  "SET_OMEGA",      /* 32 */
+  "SET_TORQUE",     /* 33 */
 #endif  
 };
 
@@ -919,12 +925,25 @@ void mpi_integrate_slave(int pnode, int task)
 void mpi_bcast_ia_params(int i, int j)
 {
   mpi_issue(REQ_BCAST_IA, i, j);
+  int tablesize;
+  tablesize = tabulated_forces.max;
 
   if (j>=0) {
     /* non-bonded interaction parameters */
     /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
     MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
 	      0, MPI_COMM_WORLD);
+
+    /* If there are tabulated forces broadcast those as well */
+    if ( get_ia_param(i,j)->TAB_maxval > 0) {
+      /* First let all nodes know the new size for force and energy tables */
+      MPI_Bcast(&tablesize, 1, MPI_INT, 0, MPI_COMM_WORLD);      
+      MPI_Barrier(MPI_COMM_WORLD); // Don't do anything until all nodes have this information
+
+      /* Communicate the data */
+      MPI_Bcast(tabulated_forces.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+      MPI_Bcast(tabulated_energies.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+    }    
   }
   else {
     /* bonded interaction parameters */
@@ -932,16 +951,30 @@ void mpi_bcast_ia_params(int i, int j)
     MPI_Bcast(&(bonded_ia_params[i]),sizeof(Bonded_ia_parameters), MPI_BYTE,
 	      0, MPI_COMM_WORLD);
   }
-
+  
   on_ia_change();
 }
 
 void mpi_bcast_ia_params_slave(int i, int j)
 {
+  int tablesize;
   if(j >= 0) { /* non-bonded interaction parameters */
     /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
     MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
 	      0, MPI_COMM_WORLD);
+    /* If there are tabulated forces broadcast those as well */
+    if ( get_ia_param(i,j)->TAB_maxval > 0) {
+      /* Determine the new size for force and energy tables */
+      MPI_Bcast(&tablesize,1,MPI_INT,0,MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+      /* Allocate sizes accordingly */
+      realloc_doublelist(&tabulated_forces, tablesize);
+      realloc_doublelist(&tabulated_energies, tablesize);
+      /* Now communicate the data */
+      MPI_Bcast(tabulated_forces.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+      MPI_Bcast(tabulated_energies.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+
+    }
   }
   else { /* bonded interaction parameters */
     make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
@@ -1402,6 +1435,21 @@ void mpi_lj_cap_forces_slave(int node, int parm)
 {
   MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   calc_lj_cap_radii(lj_force_cap);
+  on_ia_change();
+}
+
+/*************** REQ_BCAST_TABFORCECAP ************/
+void mpi_tab_cap_forces(double fc)
+{
+  tab_force_cap = fc;
+  mpi_issue(REQ_BCAST_TFC, 1, 0);
+  mpi_tab_cap_forces_slave(1, 0);
+}
+
+void mpi_tab_cap_forces_slave(int node, int parm)
+{
+  MPI_Bcast(&tab_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  check_tab_forcecap(tab_force_cap);
   on_ia_change();
 }
 

@@ -34,8 +34,8 @@ write the procedures add_*_pair_force
 	the distance vector between the particles is calculated using \ref get_mi_vector. This is necessary
 	since the particle positions may not be the closest ones, such that the minimum image convention
 	for periodic coordinates is not fulfilled. \ref get_mi_vector takes care of that.
-	Then add your procedures to \ref add_bonded_pair_force rsp. \ref bonded_pair_energy and
-	\ref bonded_pair_pressure.
+	Then add your procedures to \ref add_bonded_pair_force rsp.  bonded_pair_energy and
+		 bonded_pair_pressure.
 	<br>
 	\section add_nonbonded Adding new nonbonded interactions
 	\section add_constraints Adding constraints

@@ -126,6 +126,17 @@ typedef struct {
   double GB_chi1;
   double GB_chi2;
   /*@}*/  
+
+  /** \name Tabulated potential */
+  /*@{*/
+  int TAB_npoints;
+  int TAB_startindex;
+  double TAB_minval;
+  double TAB_minval2;
+  double TAB_maxval;
+  double TAB_maxval2;
+  double TAB_stepsize;
+  /*@}*/  
   
 } IA_parameters;
 
@@ -289,6 +300,11 @@ extern int n_bonded_ia;
 /** Field containing the paramters of the bonded ia types */
 extern Bonded_ia_parameters *bonded_ia_params;
 
+/** Array containing all tabulated forces*/
+extern DoubleList tabulated_forces;
+/** Array containing all tabulated energies*/
+extern DoubleList tabulated_energies;
+
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
 
@@ -296,6 +312,21 @@ extern double max_cut;
     potential at r=0. look into the warmup documentation for more
     details (who wants to wite that?).*/
 extern double lj_force_cap;
+
+/** For the warmup you can cap any tabulated potential at the value
+    tab_force_cap.  This works for most common potentials where a
+    singularity in the force occurs at small separations.  If you have
+    more specific requirements calculate a separate lookup table for
+    each stage of the warm up.  
+
+    \note If the maximum value of the tabulated force at small
+    separations is less than the force cap then a warning will be
+    issued since the user should provide tabulated values in the range
+    where particle interactions are expected.  Even so the program
+    will still run and a linear extrapolation will be used at small
+    separations until the force reaches the capped value or until zero
+    separation */
+extern double tab_force_cap;
 
 #ifdef CONSTRAINTS
 /** numnber of constraints. */
@@ -305,8 +336,10 @@ extern Constraint *constraints;
 #endif
 
 /************************************************
- * exportet functions
+ * exported functions
  ************************************************/
+/** Function for initializing force and energy tables */
+void force_and_energy_tables_init();
 
 /** Implementation of the tcl command \ref tcl_inter. This function
     allows the interaction parameters to be modified.

@@ -21,6 +21,7 @@
 #include "thermostat.h"
 /* include the force files */
 #include "lj.h"
+#include "tab.h"
 #include "ljcos.h"
 #include "gb.h"
 #include "fene.h"
@@ -300,6 +301,9 @@ void calc_virials() {
 	  
 	  /* lennnard jones */
 	  for(j=0;j<3;j++) { f1[j] = p1->f[j]; f2[j] = p2->f[j]; }
+
+	  add_tabulated_pair_force(p1,p2,ia_params,d,dist);
+
 	  add_lj_pair_force(p1,p2,ia_params,d,dist);
 	  add_ljcos_pair_force(p1,p2,ia_params,d,dist);
 #ifdef ROTATION  

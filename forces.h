@@ -25,6 +25,7 @@
 /* include the force files */
 #include "p3m.h"
 #include "lj.h"
+#include "tab.h"
 #include "ljcos.h"
 #include "gb.h"
 #include "fene.h"
@@ -90,8 +91,13 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 					IA_parameters *ia_params, 
 					double d[3], double dist, double dist2)
 {
+
+  /* tabulated */
+  add_tabulated_pair_force(p1,p2,ia_params,d,dist);
+
   /* lennard jones */
   add_lj_pair_force(p1,p2,ia_params,d,dist);
+
   /* lennard jones cosine */
   add_ljcos_pair_force(p1,p2,ia_params,d,dist);
   
@@ -107,6 +113,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   else if(coulomb.method == COULOMB_DH)
     add_dh_coulomb_pair_force(p1,p2,d,dist);
 #endif
+
 
 }
 

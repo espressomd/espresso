@@ -55,6 +55,8 @@ void calculate_verlet_ia()
     p  = cell->pList.part;
     np = cell->pList.n;
 
+
+
     /* calculate bonded interactions */
     calc_bonded_forces(p, np);
 
@@ -75,6 +77,7 @@ void calculate_verlet_ia()
 	dist  = sqrt(dist2);
 
 	add_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2);
+
       } 
     }
   }

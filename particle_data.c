@@ -1106,7 +1106,11 @@ int part_parse_fix(Tcl_Interp *interp, int argc, char **argv,
       Tcl_AppendResult(interp, "fix has either 1 or 3 arguments: { <fixed_coord> <fixed_coord> <fixed_coord> }", (char *)NULL);    
       return TCL_ERROR;
   }
-  else { // Specify all the coordinates to be fixed
+  else { // Specify all the coordinates to be fixed : This means we first UNFIX the particle ext_force flag
+    if (set_particle_ext(part_num, PARTICLE_UNFIXED, ext_force ) == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);	
+      return TCL_ERROR;
+      }
     if (! ARG_IS_I(0,fixed_coord_flag[0] ))
       return TCL_ERROR;
     if (! ARG_IS_I(1,fixed_coord_flag[1] ))

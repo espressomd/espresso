@@ -20,9 +20,11 @@
 #include "debye_hueckel.h"
 #include "mmm1d.h"
 #include "lj.h"
+#include "tab.h"
 #include "ljcos.h"
 #include "gb.h"
 #include "parser.h"
+#include "utils.h"
 
 /****************************************
  * variables
@@ -42,15 +44,29 @@ Bonded_ia_parameters *bonded_ia_params = NULL;
 double max_cut;
 
 double lj_force_cap = 0.0;
+double tab_force_cap = 0.0;
 
 #ifdef CONSTRAINTS
 int n_constraints       = 0;
 Constraint *constraints = NULL;
 #endif 
 
+/** Array containing all tabulated forces*/
+DoubleList tabulated_forces;
+/** Corresponding array containing all tabulated energies*/
+DoubleList tabulated_energies;
+
+
+
 /*****************************************
  * functions
  *****************************************/
+
+/** Initialize force and energy tables */
+void force_and_energy_tables_init() {
+  init_doublelist(&tabulated_forces);
+  init_doublelist(&tabulated_energies);
+}
 
 /** Initialize interaction parameters. */
 void initialize_ia_params(IA_parameters *params) {
@@ -78,6 +94,14 @@ void initialize_ia_params(IA_parameters *params) {
     params->GB_nu =
     params->GB_chi1 = 
     params->GB_chi2 = 0 ;
+
+  params->TAB_npoints = 0;
+  params->TAB_startindex = 0;
+  params->TAB_minval = 0.0;
+  params->TAB_minval2 = 0.0;
+  params->TAB_maxval = 0.0;
+  params->TAB_maxval2 = 0.0;
+  params->TAB_stepsize = 0.0;
 
 }
 
@@ -108,6 +132,14 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->GB_chi1 = src->GB_chi1;
   dst->GB_chi2 = src->GB_chi2; 
 
+  dst->TAB_npoints = src->TAB_npoints;
+  dst->TAB_startindex = src->TAB_startindex;
+  dst->TAB_minval = src->TAB_minval;
+  dst->TAB_minval2 = src->TAB_minval2;
+  dst->TAB_maxval = src->TAB_maxval;
+  dst->TAB_maxval2 = src->TAB_maxval2;
+  dst->TAB_stepsize = src->TAB_stepsize;
+
 }
 
 /** returns non-zero if particles of type i and j have a nonbonded interaction */
@@ -121,6 +153,9 @@ int checkIfParticlesInteract(int i, int j) {
     return 1;
 
   if (data->GB_cut != 0)
+    return 1;
+
+  if (data->TAB_maxval != 0)
     return 1;
 
   return 0;
@@ -288,6 +323,19 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
  
   }
+  if (data->TAB_maxval != 0) {
+    Tcl_PrintDouble(interp, (double)(data->TAB_npoints), buffer);
+    Tcl_AppendResult(interp, "tabulated ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, (double)(data->TAB_startindex), buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->TAB_minval, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->TAB_maxval, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->TAB_stepsize, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  }
+
   return (TCL_OK);
 }
 
@@ -366,23 +414,29 @@ void calc_maximal_cutoff()
     }
   }
   /* non bonded */
+
+
   for (i = 0; i < n_particle_types; i++)
      for (j = i; j < n_particle_types; j++) {
-       	if (checkIfParticlesInteract(i, j)) {
-	  IA_parameters *data = get_ia_param(i, j);
-    if (data->LJ_cut != 0) {
-	    if(max_cut < (data->LJ_cut+data->LJ_offset) ) 
-	      max_cut = (data->LJ_cut+data->LJ_offset);
-	  }
-	  if (data->LJCOS_cut != 0) {
-	    if(max_cut < (data->LJCOS_cut+data->LJCOS_offset) ) 
-	      max_cut = (data->LJCOS_cut+data->LJCOS_offset);
-	  }
-	  if (data->GB_cut != 0) {
-	    if(max_cut < (data->GB_cut) ) 
-	      max_cut = (data->GB_cut);
-	  }	  
-	}
+       if (checkIfParticlesInteract(i, j)) {
+	 IA_parameters *data = get_ia_param(i, j);
+	 if (data->LJ_cut != 0) {
+	   if(max_cut < (data->LJ_cut+data->LJ_offset) ) 
+	     max_cut = (data->LJ_cut+data->LJ_offset);
+	 }
+	 if (data->LJCOS_cut != 0) {
+	   if(max_cut < (data->LJCOS_cut+data->LJCOS_offset) ) 
+	     max_cut = (data->LJCOS_cut+data->LJCOS_offset);
+	 }
+	 if (data->GB_cut != 0) {
+	   if(max_cut < (data->GB_cut) ) 
+	     max_cut = (data->GB_cut);
+	 }
+	 if (data->TAB_maxval != 0){
+	   if(max_cut < (data->TAB_maxval ))
+	     max_cut = data->TAB_maxval;
+	 }
+       }
      }
 #ifdef ELECTROSTATICS
   /* real space electrostatic */
@@ -463,9 +517,25 @@ int inter_print_all(Tcl_Interp *interp)
     }
     Tcl_AppendResult(interp, "}", (char *)NULL);
   }
+  if(tab_force_cap != 0.0) {
+    char buffer[TCL_DOUBLE_SPACE];
+    if (start) {
+      Tcl_AppendResult(interp, "{", (char *)NULL);
+      start = 0;
+    }
+    else
+      Tcl_AppendResult(interp, " {", (char *)NULL);
+    if (tab_force_cap == -1.0)
+      Tcl_AppendResult(interp, "tabforcecap individual");
+    else {
+      Tcl_PrintDouble(interp, tab_force_cap, buffer);
+      Tcl_AppendResult(interp, "tabforcecap ", buffer, (char *) NULL);
+    }
+    Tcl_AppendResult(interp, "}", (char *)NULL);
+  }
+
   return (TCL_OK);
 }
-
 int inter_print_bonded(Tcl_Interp *interp, int i)
 {
   char buffer[TCL_INTEGER_SPACE];
@@ -606,6 +676,92 @@ int gay_berne_set_params(int part_type_a, int part_type_b,
   return TCL_OK;
 }
 
+
+/** Reads tabulated parameters and force and energy tables from a
+    file.  ia_params and force/energy tables are then communicated to each
+    node \warning No checking is performed for the file read!! */
+int tabulated_set_params(int part_type_a, int part_type_b,
+			     const char* filename)
+{
+  IA_parameters *data, *data_sym;
+  FILE* fp;
+  int npoints;
+  double minval,minval2, maxval, maxval2;
+  int i;
+  double dummr;
+
+  make_particle_type_exist(part_type_a);
+  make_particle_type_exist(part_type_b);
+    
+  data     = get_ia_param(part_type_a, part_type_b);
+  data_sym = get_ia_param(part_type_b, part_type_a);
+
+  if (!data || !data_sym) {
+    return TCL_ERROR;
+  }
+
+  /*Open the file containing force and energy tables */
+  fp = fopen( filename , "r");
+  /* First read two important parameters we read in the data later*/
+  fscanf( fp , "%d ", &npoints);
+  fscanf( fp, "%lf ", &minval);
+  fscanf( fp, "%lf ", &maxval);
+
+  // Set the newsize to the same as old size : only changed if a new force table is being added.
+  int newsize = tabulated_forces.max;
+
+  if ( data->TAB_npoints == 0){
+    // A new potential will be added so set the number of points, the startindex and newsize
+    data->TAB_npoints    = data_sym->TAB_npoints    = npoints;
+    data->TAB_startindex = data_sym->TAB_startindex = tabulated_forces.max;
+    newsize += npoints;
+  } else {
+    // We have existing data for this potential check array sizing
+    if ( data->TAB_npoints != npoints ){
+      fprintf(stderr,"\n%d: tabulated_set_params: Number of points for existing data %d does not match new data %d, exiting\n", this_node,data->TAB_npoints,npoints );
+      errexit();
+    }
+  }
+
+  /* Update parameters symmetrically */
+  data->TAB_maxval    = data_sym->TAB_maxval    = maxval;
+  data->TAB_minval    = data_sym->TAB_minval    = minval;
+  /* Calculate dependent parameters */
+  maxval2 = maxval*maxval;
+  minval2 = minval*minval;
+  data->TAB_maxval2 = data_sym->TAB_maxval2 = maxval2;
+  data->TAB_minval2 = data_sym->TAB_minval2 = minval2;
+  data->TAB_stepsize = data_sym->TAB_stepsize = (maxval-minval)/(double)(data->TAB_npoints - 1);
+
+
+  /* Allocate space for new data */
+  realloc_doublelist(&tabulated_forces,newsize);
+  realloc_doublelist(&tabulated_energies,newsize);
+
+  /* Read in the new force and energy table data */
+  for (i =0 ; i < npoints ; i++)
+    {
+      fscanf(fp,"%lf",&dummr);
+      fscanf(fp,"%lf", &(tabulated_forces.e[i+data->TAB_startindex]));
+      fscanf(fp,"%lf", &(tabulated_energies.e[i+data->TAB_startindex]));
+    }
+
+  fclose(fp);
+
+  if (tab_force_cap != -1.0) {
+    mpi_tab_cap_forces(tab_force_cap);}
+
+  /* broadcast interaction parameters including force and energy tables*/
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+  mpi_bcast_ia_params(part_type_b, part_type_a);
+
+  return TCL_OK;
+}
+
+
+
+
+
 int dihedral_set_params(int bond_type, double bend)
 {
   if(bond_type < 0)
@@ -709,6 +865,9 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
   double eps, sig, cut, shift, offset, cap_radius;
   double k1, k2, mu, nu; /* parameters needed for Gay-Berne*/
 
+  /* Parameters needed for tabulated force */
+  char* filename = NULL;
+  
   Tcl_ResetResult(interp);
 
   if (argc <= 0) {
@@ -832,7 +991,31 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
     CHECK_VALUE(gay_berne_set_params(part_type_a, part_type_b, eps, sig, cut, k1, k2, mu, nu),
 		"particle types must be nonnegative");
   }
-      
+   
+  /* parse 
+   *                        tabulated
+   * interaction
+   */
+  if (ARG0_IS_S("tabulated")) {
+  	
+    /* tabulated interactions should supply a file name for a file containing
+       both force and energy profiles as well as number of points, max
+       values etc.
+    */
+    if (argc != 2) {
+      Tcl_AppendResult(interp, "tabulated potentials require a filename: "
+		       "<filename>",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+    /* copy tabulated parameters */
+
+    filename = argv[1];
+
+    CHECK_VALUE(tabulated_set_params(part_type_a, part_type_b, filename),
+		"particle types must be nonnegative");
+  }
+  
   Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
 		   "\"", (char *)NULL);
   return TCL_ERROR;
@@ -954,6 +1137,14 @@ int ljforcecap_set_params(double ljforcecap)
   return TCL_OK;
 }
 
+int tabforcecap_set_params(double tabforcecap)
+{
+  if (tab_force_cap != -1.0)
+    mpi_tab_cap_forces(tab_force_cap);
+
+  return TCL_OK;
+}
+
 int inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
   char buffer[TCL_DOUBLE_SPACE];
@@ -987,6 +1178,42 @@ int inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
 	      "If you can read this, you should change it. (Use the source Luke!)");
   return TCL_ERROR;
 }
+
+int inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+
+
+  if (argc == 0) {
+    if (tab_force_cap == -1.0)
+      Tcl_AppendResult(interp, "tabforcecap individual", (char *) NULL);
+    else {
+      Tcl_PrintDouble(interp, tab_force_cap, buffer);
+      Tcl_AppendResult(interp, "tabforcecap ", buffer, (char *) NULL);
+    }
+    return TCL_OK;
+  }
+
+  if (argc > 1) {
+    Tcl_AppendResult(interp, "inter tabforcecap takes at most 1 parameter",
+		     (char *) NULL);      
+    return TCL_ERROR;
+  }
+  
+  if (ARG0_IS_S("individual"))
+      tab_force_cap = -1.0;
+  else if (! ARG0_IS_D(tab_force_cap) || tab_force_cap < 0) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  CHECK_VALUE(tabforcecap_set_params(tab_force_cap),
+	      "If you can read this, you should change it. (Use the source Luke!)");
+  return TCL_ERROR;
+}
+
 
 #ifdef ELECTROSTATICS
 void p3m_set_tune_params(double r_cut, int mesh, int cao,
@@ -1524,9 +1751,13 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 {
 
+
   if(ARG0_IS_S("ljforcecap"))
     return inter_parse_ljforcecap(interp, argc-1, argv+1);
   
+  if(ARG0_IS_S("tabforcecap"))
+    return inter_parse_tabforcecap(interp, argc-1, argv+1);
+
   if(ARG0_IS_S("coulomb")) {
 #ifdef ELECTROSTATICS
     return inter_parse_coulomb(interp, argc-1, argv+1);

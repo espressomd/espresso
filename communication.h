@@ -270,6 +270,9 @@ void mpi_random_stat(int cnt, RandomStatus *stat);
 /** Issue REQ_BCAST_LJFORCECAP: initialize LJ force capping. */
 void mpi_lj_cap_forces(double force_cap);
 
+/** Issue REQ_BCAST_TABFORCECAP: initialize tabulated force capping. */
+void mpi_tab_cap_forces(double force_cap);
+
 /** Issue REQ_GET_CONSFOR: get force acting on constraint */
 void mpi_get_constraint_force(int constraint, double force[3]);
 

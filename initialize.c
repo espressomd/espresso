@@ -39,7 +39,8 @@
 #include "mmm1d.h"
 #include "forces.h"
 #include "uwerr.h"
-
+#include "utils.h"
+#include <stdio.h>
 static void init_tcl(Tcl_Interp *interp);
 
 int on_program_start(Tcl_Interp *interp)
@@ -52,9 +53,12 @@ int on_program_start(Tcl_Interp *interp)
   init_bit_random();
   cells_pre_init();
   ghost_pre_init();
+  /* Initialise force and energy tables */
+  force_and_energy_tables_init();
 #ifdef ELECTROSTATICS
   fft_pre_init();
 #endif
+
 
   /*
     call all initializations to do only on the master node here.
