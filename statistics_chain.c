@@ -604,7 +604,7 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff) {
 
 void analyze_rdfchain(double r_min, double r_max, int r_bins, double **_f1, double **_f2, double **_f3) {
 int i, j, ind, c_i, c_j, mon;
-double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist,
+double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist, chain_mass,
        *cm=NULL, *min_d=NULL, *f1=NULL, *f2=NULL, *f3=NULL;
 
     *_f1 = f1 = realloc(f1,r_bins*sizeof(double));
@@ -626,9 +626,9 @@ double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist,
     for(c_i=0; c_i<chain_n_chains; c_i++) {
        for(i=0; i<chain_length; i++) {
           mon = chain_start + c_i*chain_length + i;
-          cm[3*c_i]+= partCfg[mon].r.p[0];
-          cm[3*c_i+1]+= partCfg[mon].r.p[1];
-          cm[3*c_i+2]+= partCfg[mon].r.p[2];	  
+          cm[3*c_i]+= partCfg[mon].r.p[0]*PMASS(partCfg[mon]);
+          cm[3*c_i+1]+= partCfg[mon].r.p[1]*PMASS(partCfg[mon]);
+          cm[3*c_i+2]+= partCfg[mon].r.p[2]*PMASS(partCfg[mon]);	  
           for(c_j=(c_i+1); c_j<chain_n_chains; c_j++) {
              for(j=0; j<chain_length; j++) {
                 dist = min_distance(partCfg[mon].r.p, partCfg[chain_start + c_j*chain_length+j].r.p);		
@@ -641,10 +641,12 @@ double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist,
 	  }
        }       
     }
+    chain_mass = 0;
+    for(i=0; i<chain_length; i++) chain_mass+= PMASS(partCfg[i]);
     for(c_i=0; c_i<chain_n_chains; c_i++) {  
-       cm[3*c_i]/= chain_length;
-       cm[3*c_i+1]/= chain_length;
-       cm[3*c_i+2]/= chain_length;
+       cm[3*c_i]/= chain_mass;
+       cm[3*c_i+1]/= chain_mass;
+       cm[3*c_i+2]/= chain_mass;
        for(c_j=(c_i+1); c_j<chain_n_chains; c_j++) {
           dist = min_d[c_i*chain_n_chains+c_j];
           if ((dist > r_min) && (dist < r_max)) {
