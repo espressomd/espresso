@@ -2,7 +2,7 @@
 # tricking...\
     PLATFORM=`uname -s`;
 # OSF1 \
-    if test $PLATFORM = OSF1; then  exec dmpirun -np 1 $PLATFORM/tcl_md $0 $*
+    if test $PLATFORM = OSF1; then  exec dmpirun -np 8 $PLATFORM/tcl_md $0 $*
 # AIX \
     elif test $PLATFORM = AIX; then exec poe $PLATFORM/tcl_md $0 $* -procs 8
 # Linux \
@@ -40,9 +40,6 @@ readmd $f
 
 puts "read [expr [setmd maxpart] + 1] particles from config.gz"
 
-for {set p 0} { $p <= [setmd maxpart]} { incr p} {
-	puts [part $p]
-}
 # setup interactions
 ##################################################
 inter 0 0 lennard-jones 1 1 1.2 0 0
@@ -56,7 +53,7 @@ puts "nptypes = [setmd nptypes]"
 # integration
 ##################################################
 integrate init
-integrate 2
+integrate 20
 integrate exit
 
 # exit

@@ -40,7 +40,7 @@ void realloc_ia_params(int nsize)
 	  copy_ia_params(&new_params[i*nsize + j],
 			 &ia_params[i*n_particle_types + j]);
 	else
-	  initialize_ia_params(&new_params[i*n_particle_types + j]);
+	  initialize_ia_params(&new_params[i*nsize + j]);
       }
     free(ia_params);
   }
@@ -48,7 +48,7 @@ void realloc_ia_params(int nsize)
     /* new field, just init */
     for (i = 0; i < nsize; i++)
       for (j = 0; j < nsize; j++)
-	initialize_ia_params(&new_params[i*n_particle_types + j]);
+	initialize_ia_params(&new_params[i*nsize + j]);
   }
 
   n_particle_types = nsize;

@@ -11,7 +11,7 @@
 # \
     fi;
 
-set npart 100
+set npart 1000
 
 setmd box_l 10.0 10.0 10.0
 
@@ -29,14 +29,14 @@ for {set i 0} { $i < $npart } { incr i} {
 }
 	
 # setup ramp ia
-puts "setting up ramp interaction"
-for {set ia1 0} { $ia1 <= 4 } { incr ia1 } {
-    for {set ia2 0} { $ia2 <= 4 } { incr ia2 } {
-	inter $ia1 $ia2 ramp 1 1
-    }
-}
+#puts "setting up ramp interaction"
+#for {set ia1 0} { $ia1 <= 4 } { incr ia1 } {
+#    for {set ia2 0} { $ia2 <= 4 } { incr ia2 } {
+#	inter $ia1 $ia2 ramp 1 1
+#    }
+#}
 
-set gamma 1
+set gamma 0
 # write
 set f [open "|gzip -c - >setup.gz" w]
 for {set i 0} { $i < $npart } { incr i} {

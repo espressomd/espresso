@@ -60,6 +60,10 @@ void force_calc()
   /* initialize forces with thermostat forces */
   friction_thermo();
 
+  for(i=n_particles;i<n_particles+n_ghosts;i++)
+    for(j=0;j<3;j++)
+      particles[i].f[j] = 0;
+
   /* loop verlet list */
   for(i=0;i<2*n_verletList;i=i+2) {
     id1 = verletList[i];
@@ -122,7 +126,6 @@ void force_calc()
       }
     }
   }
-
 }
 
 void force_exit()

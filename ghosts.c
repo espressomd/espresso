@@ -422,7 +422,9 @@ void collect_ghost_forces()
     for(c=0; c<n_send_cells[dir]; c++) {
       c_ind = send_cells[cell_start[dir]+c];
       for(n=0;n<cells[c_ind].n_particles;n++) {  
-	for(i=0; i<3; i++) particles[cells[c_ind].particles[n]].f[i] += recv_buf[g+i];
+	for(i=0; i<3; i++) {
+	  particles[cells[c_ind].particles[n]].f[i] += recv_buf[g+i];
+	}
 	g += 3;
       }
     } 

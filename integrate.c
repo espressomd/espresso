@@ -76,9 +76,9 @@ void integrate_vv_init()
 
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_init\n",this_node));
   INTEG_TRACE(fprintf(stderr,"%d: nproc =%d npart=%d\n",
-		      this_node,nprocs,n_total_particles));
-  INTEG_TRACE(fprintf(stderr,"%d: n_total_part=%d  n_particles = %d\n",
-		      this_node,n_total_particles,n_particles));
+		      this_node,nprocs,max_seen_particle));
+  INTEG_TRACE(fprintf(stderr,"%d: n_particles = %d\n",
+		      this_node, n_particles));
   max_range  = max_cut + skin;
   max_range2 = max_range* max_range;
 
@@ -126,7 +126,6 @@ void integrate_vv(int n_steps)
   /* integration loop */
   INTEG_TRACE(printf("%d START INTEGRATION\n",this_node));
   for(i=0;i<n_steps;i++) {
-    int n;
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
     propagate_velocities();
     propagate_positions();
