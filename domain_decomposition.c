@@ -38,7 +38,7 @@
 DomainDecomposition dd = { 1, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, NULL };
 
 int max_num_cells = CELLS_MAX_NUM_CELLS;
-int min_num_cells = 8;
+int min_num_cells = 1;
 double max_skin   = 0.0;
 
 /*@}*/
@@ -871,9 +871,18 @@ int max_num_cells_callback(Tcl_Interp *interp, void *_data)
 
 int min_num_cells_callback(Tcl_Interp *interp, void *_data)
 {
+  char buf[TCL_INTEGER_SPACE];
   int data = *(int *)_data;
-  if (data < 8) {
-    Tcl_AppendResult(interp, "min_num_cells must be at least 8", (char *) NULL);
+  int i, min = 1;
+  
+  /* the minimal number of cells can be lower if there are at least two nodes serving a direction,
+     since this also ensures that the cell size is at most half the box length. However, if there is
+     only one processor for a direction, there have to be at least two cells for this direction. */
+  for (i = 0; i < 3; i++) if (node_grid[i] == 1) min *= 2;
+
+  if (data < min) {
+    sprintf(buf, "%d", min);
+    Tcl_AppendResult(interp, "min_num_cells must be at least ", buf, (char *) NULL);
     return (TCL_ERROR);
   }
   if (data > max_num_cells) {
