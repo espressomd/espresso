@@ -69,8 +69,9 @@ proc pair_dist { part_id1 part_id2 } {
 
 proc LinRegression {l} {
     # l is a list {{x1 y1} {x2 y2} ...} of points.
-    # the LinRegression returns the least-square linear fit a*x+b
-    # and the standard errors da and db
+    # LinRegression returns the least-square linear fit a*x+b
+    # and the standard errors da and db.
+
     set num [llength $l]
 
     if { $num <= 2 } {
@@ -106,11 +107,66 @@ proc LinRegression {l} {
     set a [expr $ssxy/$ssxx]
     set b [expr $avgy - $avgx*$a]
 
-    set tmp [expr ($ssyy - $a*$ssxy)/double($num-2)]
-    if { $tmp < 0 } {puts "LinReg warning: s^2=$tmp should be > 0, set to 0"; set tmp 0}
-    set s [expr sqrt($tmp)]
-    set da [expr $s*sqrt(1.0/$num + $avgx*$avgx/$ssxx)]
-    set db [expr $s/sqrt($ssxx)]
+    set chi2 [expr ($ssyy - $a*$ssxy)/double($num-2)]
+    if { $chi2 < 0 } {puts "LinReg warning: s^2=$chi2 should be > 0, set to 0"; set tmp 0}
+    set chi [expr sqrt($chi2)]
+    set da [expr $chi*sqrt(1.0/$num + $avgx*$avgx/$ssxx)]
+    set db [expr $chi/sqrt($ssxx)]
 
     return "$a $b $da $db"
+}
+
+proc LinRegressionWithSigma {l} {
+    # l is a list {{x1 y1 s1} {x2 y2 s2} ...} of points with standard deviations.
+    # LinRegression returns the least-square linear fit a*x+b
+    # plus the standard errors da and db, cov(a,b) and chi.
+    set num [llength $l]
+
+    if { $num <= 2 } {
+	error "not enough points for regression"
+    }
+
+    set s 0.0
+    set sx 0.0
+    set sy 0.0
+    set sxx 0.0
+    set sxy 0.0
+
+    foreach data $l {
+	set x [lindex $data 0]
+        set y [lindex $data 1]
+        set sigma [lindex $data 2]
+
+	set wt [expr 1/($sigma*$sigma)]
+	set s   [expr $s   + $wt]
+        set sx  [expr $sx  + $wt*$x]
+        set sxx [expr $sxx + $wt*$x*$x]
+        set sy  [expr $sy  + $wt*$y]
+        set sxy [expr $sxy + $wt*$x*$y]
+    }
+    if { $s < 1e-4 } {
+	error "weights of data points too small"
+    }
+    
+    set si [expr 1/$s]
+    set stt [expr $sxx - $sx*$sx*$si]
+
+    set a [expr ($sxy - $sx*$sy*$si)/$stt]
+    set b [expr ($sy - $a*$sx)*$si]
+
+    set da [expr sqrt((1 + $sx*$sx/($s*$stt))*$si)]
+    set db [expr sqrt(1/$stt)]
+
+    set chi2 0
+    foreach data $l {
+	set x [lindex $data 0]
+        set y [lindex $data 1]
+        set sigma [lindex $data 2]
+	set diff [expr ($y - $b - $a*$x)/$sigma]
+	set chi2 [expr $chi2 + $diff*$diff]
+    }
+    set chi [expr sqrt($chi2)]
+    set covab [expr -$sx/($s*$stt)]
+
+    return "$a $b $da $db $covab $chi"
 }
