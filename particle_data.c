@@ -1796,7 +1796,7 @@ void send_particles(ParticleList *particles, int node)
     free_particle(&particles->part[pc]);
   }
 
-  realloc_particlelist(particles, 0);
+  realloc_particlelist(particles, particles->n = 0);
 }
 
 void recv_particles(ParticleList *particles, int node)
