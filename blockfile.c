@@ -105,7 +105,6 @@ static int readString(FILETYPE f, char *buffer, int size)
 int block_startread(FILETYPE f, char index[MAXBLOCKTITLE])
 {
   char c;
-  int i, open_braces;
 
   index[0] = 0;
 
@@ -119,33 +118,16 @@ int block_startread(FILETYPE f, char index[MAXBLOCKTITLE])
 
   /* since a block started, we consider from now on eof an error */
 
-  /* find start of block title */
-  if ((c = findNonWs(f)) <= 0)
+  switch (readString(f, index, MAXBLOCKTITLE)) {
+  case RETURN_CODE_EOF:
+  case RETURN_CODE_ERROR:
     return RETURN_CODE_ERROR;
-  index[0] = c;
-  /* read block title */
-  i = 1;
-  open_braces = 1;
-  for(;;) {
-    if ((c = readchar(f)) <= 0) {
-      index[i] = 0;
-      return RETURN_CODE_ERROR;
-    }
-
-    if (isspace(c) && open_braces == 1)
-      break;
-    if (c=='{')
-      open_braces++;
-    if (c=='}') {
-      if (--open_braces == 0)
-	break;
-    }
-    if (i < MAXBLOCKTITLE - 1)
-      index[i++] = c;
+  case 0:
+    return 1;
+  case 1:
+    return 0;
   }
-  index[i] = 0;
-  
-  return open_braces;
+  return RETURN_CODE_ERROR;
 }
 
 int block_continueread(FILETYPE f, int brace_count, char *data, int size,

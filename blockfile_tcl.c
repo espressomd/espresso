@@ -215,8 +215,8 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 			     (char *) NULL);
 	    return (TCL_ERROR);
 	  }
+	  Tcl_AppendResult(interp, buffer, (char *) NULL);
 	}
-	Tcl_AppendResult(interp, buffer, (char *) NULL);
 	return (TCL_OK);	
       }
     }
