@@ -479,12 +479,14 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete)
 
   mpi_issue(REQ_SET_BOND, pnode, part);
 
-  bond_size = bonded_ia_params[bond[0]].num + 1;
+  bond_size = (bond) ? bonded_ia_params[bond[0]].num + 1 : 0;
+
   if (pnode == this_node)
     return local_change_bond(part, bond, delete);
   else {
     MPI_Send(&bond_size, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
-    MPI_Send(bond, bond_size, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
+    if (bond_size)
+      MPI_Send(bond, bond_size, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
     MPI_Send(&delete, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
     MPI_Recv(&stat, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD, &status);
     return stat;
@@ -504,11 +506,16 @@ void mpi_send_bond_slave(int pnode, int part)
     return;
 
   MPI_Recv(&bond_size, 1, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
-  bond = (int *)malloc(bond_size*sizeof(int));
-  MPI_Recv(bond, bond_size, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
+  if (bond_size) {
+    bond = (int *)malloc(bond_size*sizeof(int));
+    MPI_Recv(bond, bond_size, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
+  }
+  else
+    bond = NULL;
   MPI_Recv(&delete, 1, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
   stat = local_change_bond(part, bond, delete);
-  free(bond);
+  if (bond)
+    free(bond);
   MPI_Send(&stat, 1, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD);
 }
 
