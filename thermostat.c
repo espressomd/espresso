@@ -12,9 +12,9 @@
 #include "debug.h"
 
 /** Friction coefficient gamma. */
-double friction_gamma = 0.;
+double friction_gamma = 0.0;
 /** Temperature */
-double temperature = 1.8;
+double temperature = -1.0;
 
 static double pref1;
 static double pref2;

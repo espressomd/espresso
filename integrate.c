@@ -111,12 +111,14 @@ void integrate_vv_recalc_maxrange()
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_recalc_maxrange:\n",this_node));
 
   /* sanity checks */
-  if(time_step < 0.0 || skin < 0.0 ) {
+  if(time_step < 0.0 || skin < 0.0 || temperature < 0.0) {
     fprintf(stderr,"%d: ERROR: Can not initialize the integrator!:\n",this_node);
     if( time_step < 0.0 )
       fprintf(stderr,"%d: PROBLEM: You have to set the time_step!\n",this_node);
     if( skin < 0.0 )
       fprintf(stderr,"%d: PROBLEM: You have to set the skin!\n",this_node);
+    if( temperature < 0.0 )
+      fprintf(stderr,"%d: PROBLEM: You have to set the temperature!\n",this_node);
     errexit();
   }
 
