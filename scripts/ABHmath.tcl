@@ -75,6 +75,44 @@ proc pair_dist { part_id1 part_id2 } {
     return [expr sqrt($dist2)]
 }
 
+proc veclen {v} {
+    set len [llength $v]
+    set w [lindex $v 0]
+    set res [expr $w*$w]
+    for {set i 1} {$i < $len} {incr i} {
+	set w [lindex $v $i]
+	set res [expr $res + $w*$w]
+    }
+    return [expr sqrt($res)]
+}
+
+proc vecadd {a b} {
+    set len [llength $a]
+    set res [expr [lindex $a 0] + [lindex $b 0]]
+    for {set i 1} {$i < $len} {incr i} {
+	set res "$res [expr [lindex $a $i] + [lindex $b $i]]"
+    }
+    return $res
+}
+
+proc vecsub {a b} {
+    set len [llength $a]
+    set res [expr [lindex $a 0] - [lindex $b 0]]
+    for {set i 1} {$i < $len} {incr i} {
+	set res "$res [expr [lindex $a $i] - [lindex $b $i]]"
+    }
+    return $res
+}
+
+proc vecscale {a v} {
+    set len [llength $v]
+    set res [expr $a*[lindex $v 0]]
+    for {set i 1} {$i < $len} {incr i} {
+	set res "$res [expr $a*[lindex $v $i]]"
+    }
+    return $res
+}
+
 
 proc LinRegression {l} {
     # l is a list {{x1 y1} {x2 y2} ...} of points.
