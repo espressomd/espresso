@@ -17,6 +17,10 @@ setmd box_l 10.0 8.0 6.0
 puts "box =\{[setmd box]\}"
 setmd procgrid 2 2 2
 puts "grid = [setmd proc]"
+setmd nptypes 2
+puts "nptypes = [setmd nptypes]"
+setmd niatypes 1
+puts "niatypes = [setmd niatypes]"
 
 # initialize and broadcast system parameters
 ##################################################

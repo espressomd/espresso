@@ -52,11 +52,22 @@ extern Particle *particles;
  *    (including its ghostshell) is marked with -1.
  */
 extern int *local_index;
+
+/** number of particle types. */
+extern int n_particle_types;
+/** number of interaction types. */
+extern int n_interaction_types;
+
 /* Integration */
+/** time step for integration */
 extern double time_step;
+/** maximal interaction cutoff. */
 extern double max_cut;
+/** verlet list skin. */
 extern double skin;
+/** maximal interaction range (max_cut + skin). */
 extern double max_range;
+/** maximal interaction range squared. */
 extern double max_range2;
 
 /* Verlet list */

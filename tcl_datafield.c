@@ -22,6 +22,10 @@ int set_syspar(ClientData data, Tcl_Interp *interp,
 
 /** callback for n_total_particles */
 int npart_callback(Tcl_Interp *interp, void *data);
+/* callback for n_particle_types */
+int nptypes_callback(Tcl_Interp *interp, void *data);
+/* callback for n_interaction_types */
+int niatypes_callback(Tcl_Interp *interp, void *data);
 /** callback for ro */
 int ro_callback(Tcl_Interp *interp, void *data);
 /** callback for procgrid */
@@ -39,6 +43,8 @@ Tcl_Datafield fields[] = {
   {my_left,   TYPE_DOUBLE, 3, "my_left",   ro_callback },
   {my_right,  TYPE_DOUBLE, 3, "my_right",  ro_callback },
   {&n_total_particles, TYPE_INT, 1, "nparticles", npart_callback },
+  {&n_particle_types, TYPE_INT, 1, "nptypes", nptypes_callback },
+  {&n_interaction_types, TYPE_INT, 1, "niatypes", niatypes_callback },
   { NULL, 0, 0, NULL, NULL }
 };
 
@@ -133,6 +139,20 @@ int setmd(ClientData data, Tcl_Interp *interp,
 int npart_callback(Tcl_Interp *interp, void *data)
 {
   n_total_particles = *(int *)data;
+  return (TCL_OK);
+}
+
+/* callback for nptypes */
+int nptypes_callback(Tcl_Interp *interp, void *data)
+{
+  n_particle_types = *(int *)data;
+  return (TCL_OK);
+}
+
+/* callback for niatypes */
+int niatypes_callback(Tcl_Interp *interp, void *data)
+{
+  n_interaction_types = *(int *)data;
   return (TCL_OK);
 }
 

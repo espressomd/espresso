@@ -40,6 +40,8 @@ void mpi_set_system_parameters()
   MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
   MPI_Bcast(local_box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
   MPI_Bcast(processor_grid, 3, MPI_INT, 0, MPI_COMM_WORLD); 
+  MPI_Bcast(&n_particle_types, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&n_interaction_types, 1, MPI_INT, 0, MPI_COMM_WORLD);
   return;
 }
 
@@ -145,7 +147,7 @@ void mpi_send_pdata(Particle *pdata)
 void mpi_integrate(int n_steps)
 {
   int req[2] = { REQ_INTEGRATE, n_steps };
-  int task,result;
+  int task;
   int *recvbuf = malloc(sizeof(int)*nprocs);
 
   MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
@@ -156,17 +158,13 @@ void mpi_integrate(int n_steps)
     /* send some required variables */
     MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
     MPI_Bcast(processor_grid, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
-    result = integrate_vv_init();
+    integrate_vv_init();
   }
   else if(task > 0)
     /* => task = number of steps */
-    result = integrate_vv(task);
+    integrate_vv(task);
   else if(task < 0)
-    result = integrate_vv_exit();
-
-  MPI_Gather(&result, 1, MPI_INT,
-	     recvbuf, 1, MPI_INT,
-	     0, MPI_COMM_WORLD);
+    integrate_vv_exit();
 }
 
 void mpi_loop()
@@ -174,7 +172,7 @@ void mpi_loop()
   int    req[2];
   int    sendbuf;
   int    part_num, index;
-  int    task, result;
+  int    task;
   MPI_Status status;
 
   for (;;) {
@@ -188,6 +186,8 @@ void mpi_loop()
       MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
       MPI_Bcast(local_box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
       MPI_Bcast(processor_grid, 3, MPI_INT, 0, MPI_COMM_WORLD); 
+      MPI_Bcast(&n_particle_types, 1, MPI_INT, 0, MPI_COMM_WORLD);
+      MPI_Bcast(&n_interaction_types, 1, MPI_INT, 0, MPI_COMM_WORLD);
       break;
     case REQ_WHO_HAS:
       sendbuf = got_particle(req[1]);
@@ -225,18 +225,16 @@ void mpi_loop()
 	MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
 	MPI_Bcast(processor_grid, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
 
-	result = integrate_vv_init();
+	integrate_vv_init();
       }
       else if(task > 0)
-	result = integrate_vv(task);
+	integrate_vv(task);
       else if(task < 0)
-	result = integrate_vv_exit();
-      MPI_Gather(&result, 1, MPI_INT,
-		 NULL, nprocs, MPI_INT,
-		 0, MPI_COMM_WORLD);
+	integrate_vv_exit();
+
 #ifdef DEBUG
-      fprinf(stderr, "%d: integration task %d done: %d\n",
-	     this_node, req[1], result);
+      fprinf(stderr, "%d: integration task %d done.\n",
+	     this_node, req[1]);
 #endif
       break;
     default:

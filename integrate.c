@@ -28,7 +28,6 @@ void tcl_integrator_init(Tcl_Interp *interp)
 int integrate(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv)
 {
-  int  succes;
   int  n_steps;
   char buffer[256];
   
@@ -57,7 +56,7 @@ int integrate(ClientData data, Tcl_Interp *interp,
 }
 
 
-int integrate_vv_init()
+void integrate_vv_init()
 {
   int i;
 
@@ -80,16 +79,18 @@ int integrate_vv_init()
   //  for(i=0;i<n_total_particles;i++) {
   //  if(this_node==0) fprintf(stderr,"li[%d]=%d  \n",i,local_index[i]);
   //}
+  /* initialize force structure */
+  force_init();
 }
 
-int integrate_vv(int n_steps)
+void integrate_vv(int n_steps)
 {
 #ifdef DEBUG
   if(this_node==0) fprintf(stderr,"%d: integrate_vv: %d steps\n",this_node,n_steps);
 #endif
 }
 
-int integrate_vv_exit()
+void integrate_vv_exit()
 {
 #ifdef DEBUG
   if(this_node==0) fprintf(stderr,"%d: integrate_vv_exit\n",this_node);

@@ -12,12 +12,12 @@ int integrate(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
 
 /** initialize velocity verlet integrator. */
-int integrate_vv_init();
+void integrate_vv_init();
 
 /** integrate with velocity verlet integrator. */
-int integrate_vv(int n_steps);
+void integrate_vv(int n_steps);
 
 /** exit velocity verlet integrator. */
-int integrate_vv_exit();
+void integrate_vv_exit();
 
 #endif
