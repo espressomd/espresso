@@ -1089,18 +1089,23 @@ void local_remove_particle(int part)
 
 void local_place_particle(int part, double p[3])
 {
+  double pp[3];
+
   int i[3];
   Particle *pt = (part <= max_seen_particle) ? local_particles[part] : NULL;
 
   i[0] = 0;
   i[1] = 0;
   i[2] = 0;
-  fold_particle(p, i);
+  pp[0] = p[0];
+  pp[1] = p[1];
+  pp[2] = p[2];
+  fold_particle(pp, i);
   
   if (!pt)
-    pt = cells_alloc_particle(part, p);
+    pt = cells_alloc_particle(part, pp);
 
-  memcpy(pt->r.p, p, 3*sizeof(double));
+  memcpy(pt->r.p, pp, 3*sizeof(double));
   memcpy(pt->i, i, 3*sizeof(int));
 }
 
