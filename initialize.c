@@ -125,6 +125,7 @@ void on_ia_change()
 {
   interactions_changed = 1;
   energy.init_status = 0;
+  virials.init_status= 0;
 }
 
 void on_parameter_change()
@@ -172,13 +173,13 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "constraint", (Tcl_CmdProc *)constraint, 0, NULL);
 
   /* evaluate the Tcl initialization script */
-  scriptdir = getenv("TCLMD_SCRIPTS");
+  scriptdir = getenv("ESPRESSO_SCRIPTS");
   if (!scriptdir)
     scriptdir= "scripts";
 
   if ((getcwd(cwd, 1024) == NULL) || (chdir(scriptdir) != 0)) {
     fprintf(stderr,
-	    "\n\ncould not change to script dir %s, please check TCLMD_SCRIPTS.\n\n\n",
+	    "\n\ncould not change to script dir %s, please check ESPRESSO_SCRIPTS.\n\n\n",
 	    scriptdir);
     exit(-1);
   }
