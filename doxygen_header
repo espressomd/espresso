@@ -15,7 +15,11 @@ interface between the Tcl script and the MD code:
 <ul>
 <li>\verbatim setmd <variable> <value>+ \endverbatim
 modifies variables declared in \ref fields. More information can be
+<<<<<<< doxygen_header
+found in \ref global. The C implementation is \ref setmd. The
+=======
 found in  \ref global.c . The C implementation is \ref setmd. The
+>>>>>>> 1.5
 following list explains the usage for the variables that are accesible 
 via setmd. Using \verbatim [setmd <variable>] \endverbatim gives the
 actual value of <variable> in the MD code back to the Tcl script.
@@ -49,7 +53,7 @@ Do not set variables which are specified as read only.
 	<li> \verbatim [setmd verletflag] \endverbatim
 	Flag for rebuilding the verlet list (read only).
 	<li> \verbatim setmd bjerrum <double> \endverbatim
-	Bjerrum length. If 0 electrostatic interaction is turned of.
+	Bjerrum length. If 0, electrostatic interaction is turned off.
 	<li> \verbatim setmd p3m_alpha <double> \endverbatim
 	Ewald splitting parameter.
 	<li> \verbatim setmd p3m_r_cut <double> \endverbatim
@@ -58,7 +62,7 @@ Do not set variables which are specified as read only.
 	Mesh size for P3M k space.
 	<li> \verbatim setmd p3m_cao <int>\endverbatim
 	Charge assignment order for P3M particle-mesh interaction (1 < 
-	p3m_ca0 <7).
+	p3m_cao < 7).
 	<li> \verbatim setmd p3m_epsilon <double>\endverbatim
 	Dielectric constant at infinity (boundary condition for Ewald sumation).
 	<li> \verbatim setmd p3m_mesh_offset <double> <double> <double> \endverbatim
@@ -103,14 +107,14 @@ Do not set variables which are specified as read only.
 	Currently known interaction types are:
 
 	<ul>
-	   	<li>\verbatim lennard-jones \endverbatim
+	   	<li>\verbatim lennard-jones <epsilon> <sigma> <cutoff> <shift> <offset> \endverbatim
 			the known Lennard-Jones potential
 			\f[24 \epsilon \left(2 \left(\frac{\sigma}{r-offset}\right)^{12} -
 				 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
 			The order of the paramters is
 			\f$\epsilon, \sigma, cutoff, shift, offset\f$.
 
-		<li>\verbatim ramp \endverbatim
+		<li>\verbatim ramp <cutoff> <force_magnitude> \endverbatim
 			a simple step potential for initialization.
 			The parameters are the cutoff and the force
 			magnitude. If two particles are within the
@@ -121,7 +125,11 @@ Do not set variables which are specified as read only.
 	<b> <li> Bonded interactions: </b>
 
 	\verbatim inter <type_num> <interaction_type> <value>+ \endverbatim
+<<<<<<< doxygen_header
+	Bonded interaction (Bonds are set using \ref part (!not yet documented!)).
+=======
 	Bonded interaction (Bonds are set using \ref part ).
+>>>>>>> 1.5
 	Currently known interaction types are:
 
 	<ul>
@@ -190,7 +198,7 @@ connection included (set use_imd y).
 
 <ul>
 <li> The long range part is implemented for full periodicity, cubic
-box and cubic mesh only. The program will porbably crash if you mix up 
+box and cubic mesh only. The program will probably crash if you mix up 
 things here.
 </ul>
 
