@@ -10,13 +10,8 @@
 #include <string.h> 
 #include <math.h>
 
-#ifdef HAS_OLD_FFTW
 #include <fftw.h>
 #include <rfftw.h>
-#else
-#include <dfftw.h>
-#include <drfftw.h>
-#endif
 
 #include "communication.h"
 #include "grid.h"

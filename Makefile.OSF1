@@ -1,13 +1,23 @@
 ############ compiler settings
 CC=cc
-CXX=cxx
 
 ## optimized compiler flags
 CFLAGS=-pg -O3 -fp_reorder -tune host
 ## debug compiler flags
 #CFLAGS=-g
 
-## warnings
+############ linker settings
+LINK=$(CC)
+LDFLAGS=-g
+LDLIBS=-lm
+
+############ name of makedepend (or gcc -ME)
+DEPEND=makedepend
+
+############ C++ compiler settings
+CXX=cxx
+
+############ warnings
 CFLAGS+=-check -msg_disable ignorecallval -msg_disable noparmlist \
 	-msg_disable uncalled -msg_disable alignment -msg_disable unknownmacro \
 	-msg_disable strctpadding -msg_disable unusedincl
@@ -21,32 +31,16 @@ ifneq ($(findstring V6.4,$(shell $(CC) -V)),)
 CFLAGS+= -msg_disable unusedtop -msg_disable unnecincl -msg_disable nestincl
 endif
 
-## MDINLINE defines hwo to declare inline functions
+############ MDINLINE defines how to declare inline functions
 CFLAGS+= -DMDINLINE="static"
-
-## name of makedepend (or gcc -ME)
-DEPEND=makedepend
-
-## special flags for C++ compilation
-CXXFLAGS=$(CFLAGS) -D_RWSTD_NO_NEW_HEADER -D__USE_STD_IOSTREAM
-
-############ linker settings
-
-LINK=$(CC)
-LDFLAGS=-g -ldxml
-LDLIBS=-lm
 
 ############ flags needed for MPI
 LDLIBS+=-lmpi
 
-############ flags needed for FFTW
-# flags needed for FFTW. Note this is VERY specific for our cluster
-CFLAGS += -DHAS_OLD_FFTW
+############  FFTW. Note this is VERY specific for our cluster
 CFLAGS += -I/usr/local/include
 
-############ flags needed for Tcl
-
-# flags needed for Tcl. Note this is VERY specific for our cluster
+############ flags needed for Tcl. Note this is VERY specific for our cluster
 ifeq ($(shell uname -r),V4.0)
 CFLAGS += -I/sw/axp_osf_40/tcl8.2/include
 LDFLAGS+=-pg /sw/axp_osf_40/tcl8.2/shlib/libtcl.so
@@ -56,6 +50,8 @@ endif
 
 
 ############ flags needed for P3M
-LDFLAGS+=-ldxml -lrfftw -lfftw -lm
-LDLIBS+=-ldxml -lrfftw -lfftw -lm
+LDLIBS+= -lrfftw -lfftw
+
+############ special flags for C++ compilation
+CXXFLAGS=$(CFLAGS) -D_RWSTD_NO_NEW_HEADER -D__USE_STD_IOSTREAM
 
