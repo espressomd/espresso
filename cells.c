@@ -165,8 +165,24 @@ int cellsystem(ClientData data, Tcl_Interp *interp,
     Tcl_AppendResult(interp, "usage: cellsystem <system> <params>", (char *)NULL);
     return TCL_ERROR;
   }
-  if (ARG1_IS_S("domain_decomposition"))
+
+  if (ARG1_IS_S("domain_decomposition")) {
+    if (argc > 2) {
+      if (ARG_IS_S(2,"-verlet_list"))
+	dd.use_vList = 1;
+      else if(ARG_IS_S(2,"-no_verlet_list")) 
+	dd.use_vList = 0;
+      else{
+	Tcl_AppendResult(interp, "wrong flag to",argv[0],
+			 " : should be \" -verlet_list or -no_verlet_list \"",
+			 (char *) NULL);
+	return (TCL_ERROR);
+      }
+    }
+    /** by default use verlet list */
+    else dd.use_vList = 1;
     mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC);
+  }
   else if (ARG1_IS_S("nsquare"))
     mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE);
   else if (ARG1_IS_S("layered")) {
@@ -337,7 +353,6 @@ void cells_resort_particles(int global_flag)
   invalidate_ghosts();
 
   particle_invalidate_part_node();
-
   n_verlet_updates++;
 
   switch (cell_structure.type) {
@@ -358,6 +373,7 @@ void cells_resort_particles(int global_flag)
   on_resort_particles();
 
   rebuild_verletlist = 1;
+
   recalc_forces = 1;
 }
 
