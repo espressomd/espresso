@@ -16,6 +16,11 @@
 ##################################################
 set tcl_precision 5
 
+# external tcl files 
+##################################################
+set write yes
+source polywr.tcl
+
 # data initialization
 ##################################################
 puts "n_node = [setmd n_node]"
@@ -42,19 +47,39 @@ puts "read [expr [setmd maxpart] + 1] particles from config.gz"
 
 # setup interactions
 ##################################################
-inter 0 0 lennard-jones 1 1 1.2 0 0
-inter 1 1 lennard-jones 1 1 1.2 0 0
-inter 2 2 lennard-jones 1 1 1.2 0 0
-inter 0 1 lennard-jones 1 1 1.2 0 0
-inter 0 2 lennard-jones 3 1 1.2 0 0
+inter 0 0 lennard-jones 1 1 2.0 0 0
+inter 1 1 lennard-jones 1 1 2.0 0 0
+inter 2 2 lennard-jones 1 1 2.0 0 0
+inter 0 1 lennard-jones 1 1 2.0 0 0
+inter 0 2 lennard-jones 3 1 2.0 0 0
 inter 1 2 lennard-jones 2 1 1.2 0 0
 puts "nptypes = [setmd nptypes]"
 
 # integration
 ##################################################
 integrate init
-integrate 20
+set write_steps 10
+set configs 50
+for {set i 0} { $i < $configs } { incr i } {
+    puts "step [expr $i*$write_steps]"
+    integrate $write_steps
+    if {"$write" == "yes" } {
+	polywrite [format "configs/t%04d.poly" $i]
+    }
+}
+
 integrate exit
+
+# write
+set f [open "|gzip -c - >tconfig.gz" w]
+writemd $f posx posy posz type q
+close $f
+
+if {"$write" == "yes" } {
+    eval exec poly2pdb -poly [glob "configs/t*"] \
+	-per -psf "movie/t" >/dev/null 2>&1
+}
+
 
 # exit
 ##################################################

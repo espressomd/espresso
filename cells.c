@@ -126,6 +126,12 @@ void cells_init()
     cells[i].particles = malloc(cells[i].max_particles*sizeof(int));
     init_cell_neighbours(i);
   }
+
+  CELL_TRACE(fprintf(stderr,"%d: my box: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f)\n",
+		     this_node,my_left[0],my_left[1],my_left[2],
+		     my_right[0],my_right[1],my_right[2]));
+  CELL_TRACE(fprintf(stderr,"%d: cell grid (%d+2, %d+2, %d+2) \n",this_node,
+		     cell_grid[0],cell_grid[1],cell_grid[2]));
 }
 
 
@@ -144,7 +150,7 @@ void sort_particles_into_cells()
 
   /* remove cell particles */
   for(i=0;i<n_cells;i++) cells[i].n_particles=0;
-  
+  CELL_TRACE(fprintf(stderr,"%d: sort %d paricles \n",this_node,n_particles));
   /* particle loop */
   for(n=0;n<n_particles;n++) {
     /* calculate cell index */
@@ -158,6 +164,7 @@ void sort_particles_into_cells()
       realloc_cell_particles(ind,cells[ind].n_particles + 1);
     }
     cells[ind].particles[cells[ind].n_particles] = n;
+    CELL_TRACE(fprintf(stderr,"%d: Part %d at (%.2f, %.2f, %.2f) sorted in cell %d as No. %d\n",this_node,n,particles[n].p[0],particles[n].p[1],particles[n].p[2],ind,cells[ind].n_particles));
     cells[ind].n_particles++;
   }
 }

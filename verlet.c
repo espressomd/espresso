@@ -51,8 +51,14 @@ void build_verlet_list()
   VERLET_TRACE(fprintf(stderr,"%d: build_verlet_list:\n",this_node));
   VERLET_TRACE(fprintf(stderr,"%d: Cell Grid: (%d, %d, %d)\n",
 		       this_node,cell_grid[0],cell_grid[1],cell_grid[2]));
-
+  VERLET_TRACE(fprintf(stderr,"%d: Max range %f:\n",this_node,sqrt(max_range2)));
+ 
   n_verletList   = 0; 
+
+  /* define 'new old' coordinates*/
+  for(i=0;i<n_particles+n_ghosts;i++)
+    for(j=0;j<3;j++)
+	particles[i].p_old[j] = particles[i].p[j];
 
   /* loop through all inner cells. */
   for(m=1; m<cell_grid[0]+1; m++)
@@ -65,7 +71,12 @@ void build_verlet_list()
 	  for(j=i+1; j < cells[ci1].n_particles; j++) {
 	    p2 = cells[ci1].particles[j];
 	    dist2 = distance2(p1,p2);
-	    if(dist2 <= max_range2) add_pair(p1,p2);
+	    VERLET_TRACE(fprintf(stderr,"%d: Pair (%d, %d) Dist %.2f",this_node,p1,p2,sqrt(dist2)));
+	    if(dist2 <= max_range2) {
+	      add_pair(p1,p2);
+	      VERLET_TRACE(fprintf(stderr,"; added at %d",n_verletList));
+	    }
+	    VERLET_TRACE(fprintf(stderr,"\n"));
 	  }
 	}
 	/* interactions with neighbour cells */
@@ -76,7 +87,12 @@ void build_verlet_list()
 	    for(j=0; j < cells[ci2].n_particles; j++) {
 	      p2 = cells[ci2].particles[j];
 	      dist2 = distance2(p1,p2);
-	      if(dist2 <= max_range2) add_pair(p1,p2);
+	      VERLET_TRACE(fprintf(stderr,"%d: Pair (%d, %d) Dist %.2f",this_node,p1,p2,sqrt(dist2)));
+	      if(dist2 <= max_range2) {
+		add_pair(p1,p2);
+		VERLET_TRACE(fprintf(stderr,"; added at %d",n_verletList));
+	      }
+	      VERLET_TRACE(fprintf(stderr,"\n"));
 	    }
 	  }
 	}

@@ -71,10 +71,6 @@ void force_calc()
   FORCE_TRACE(fprintf(stderr,"    ES: cut=%f,\n",coul_r_cut));
   FORCE_TRACE(fprintf(stderr,"    RAMP: cut=%f\n",ia_params->ramp_cut));
 
-  /* define 'new old' coordinates*/
-  for(i=0;i<n_particles+n_ghosts;i++)
-    for(j=0;j<3;j++)
-	particles[i].p_old[j] = particles[i].p[j];
 
   /* initialize forces with thermostat forces */
   friction_thermo();
@@ -91,8 +87,8 @@ void force_calc()
     for(j=0;j<3;j++) d[j] = particles[id1].p[j] - particles[id2].p[j];
     dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
     dist = sqrt(dist2);
-    FORCE_TRACE(if(dist<0.01) fprintf(stderr,"P%d (%d,%d): dist %f\n",
-			i,particles[id1].identity,particles[id2].identity,dist));
+    FORCE_TRACE(if(dist>0.01) fprintf(stderr,"P%d id(%d,%d) loc(%d, %d): dist %f\n",
+			i,particles[id1].identity,particles[id2].identity,id1,id2,dist));
     /* lennnard jones */
 
     if(dist < ia_params->LJ_cut+ia_params->LJ_offset) {

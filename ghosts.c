@@ -474,6 +474,7 @@ void exchange_ghost()
 	unpack_ghost(particles,m,g_recv_buf,n);
 	local_index[particles[m].identity] = m;
 	cells[c_ind].particles[i] = m;
+	GHOST_TRACE(fprintf(stderr,"%d: Ghost %d at (%.2f, %.2f, %.2f) sorted in cell %d as No. %d\n",this_node,m,particles[m].p[0],particles[m].p[1],particles[m].p[2],c_ind,i));
 	m++; n++; 
       }
       cells[c_ind].n_particles = n_recv_ghosts[c];

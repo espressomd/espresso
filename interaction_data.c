@@ -1,7 +1,7 @@
-#include "interaction_data.h"
-#include "communication.h"
 #include <string.h>
 #include <stdlib.h>
+#include "interaction_data.h"
+#include "communication.h"
 
 /****************************************
  * variables
@@ -113,22 +113,28 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	  Tcl_AppendResult(interp, "{FENE ", buffer, " ", (char *) NULL);
 	  Tcl_PrintDouble(interp, bonded_ia_params[i].p.fene.r_fene, buffer);
 	  Tcl_AppendResult(interp, buffer, "} ", (char *) NULL);
+	  return (TCL_OK);
 	}
 	else if (bonded_ia_params[i].type == 1) {
 	  Tcl_PrintDouble(interp, bonded_ia_params[i].p.angle.bend, buffer);
 	  Tcl_AppendResult(interp, "{Angle ", buffer, "} ", (char *) NULL);
+	  return (TCL_OK);
 	}
 	else if (bonded_ia_params[i].type == 2) {
 	  Tcl_AppendResult(interp, "{Dihedral} ",(char *) NULL);
+	  return (TCL_OK);
 	}
 	else {
 	  Tcl_AppendResult(interp, "{unknown bonded interaction type} ",(char *) NULL);
+	  return (TCL_ERROR);
 	}
       }
       else {
 	Tcl_PrintDouble(interp, (double)i, buffer);
-	Tcl_AppendResult(interp, "{unknown bonded interaction number  ",buffer,"}",(char *) NULL);
-      }
+	Tcl_AppendResult(interp, "{unknown bonded interaction number  ",buffer,"}",
+			 (char *) NULL);
+	return (TCL_ERROR);
+     }
       return (TCL_OK);
     }
 
@@ -143,6 +149,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	if (argc < 3) {
 	  Tcl_AppendResult(interp, "fene needs 2 parameters: "
 			   "<k_fene> <r_fene>", (char *) NULL);
+	  return (TCL_ERROR);
 	}
 	if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.fene.k_fene)) == 
 	     TCL_ERROR) ||
@@ -159,6 +166,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	if (argc < 2) {
 	  Tcl_AppendResult(interp, "angle needs 1 parameter: "
 			   "<bend> ", (char *) NULL);
+	  return (TCL_ERROR);
 	}
  	if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.angle.bend)) == 
 	     TCL_ERROR) )
@@ -177,6 +185,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	argc -= 1;
 	argv += 1;
 	mpi_bcast_ia_params(i,-1); 
+	return (TCL_OK);
       }
       else {
 	Tcl_AppendResult(interp, "unknown interaction type \"", argv[3],

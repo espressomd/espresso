@@ -178,9 +178,10 @@ void propagate_positions()
 {
   int i;
   int *verlet_flags = malloc(sizeof(int)*n_nodes);
-  double d2[3], dist2;
+  double d2[3], dist2, skin2;
   INTEG_TRACE(fprintf(stderr,"%d: propagate_positions:\n",this_node));
   rebuild_verletlist = 0;
+  skin2 = SQR(skin);
 
   for(i=0;i<n_particles;i++)
     {  
@@ -191,7 +192,8 @@ void propagate_positions()
       d2[1] = SQR(particles[i].p[1] - particles[i].p_old[1]);
       d2[2] = SQR(particles[i].p[2] - particles[i].p_old[2]);
       dist2 = d2[0] + d2[1] + d2[2];
-      if( dist2 > SQR(skin) )
+      INTEG_TRACE(fprintf(stderr,"%d: prop_pos: P[%d] moved %f\n",this_node,i,sqrt(dist2)));
+      if( dist2 > skin2 )
 	rebuild_verletlist = 1; 
     }
 
@@ -209,6 +211,7 @@ void propagate_positions()
 
   MPI_Barrier(MPI_COMM_WORLD);
   MPI_Bcast(&rebuild_verletlist, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  INTEG_TRACE(fprintf(stderr,"%d: prop_pos: rebuild_verletlist=%d\n",this_node,rebuild_verletlist));
 
   free(verlet_flags);
 }

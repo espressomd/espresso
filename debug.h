@@ -25,11 +25,11 @@
 
 /* #define COMM_DEBUG */
 /* #define INTEG_DEBUG */
-/* #define CELL_DEBUG  */
-/* #define GHOST_DEBUG  */
+/* #define CELL_DEBUG */ 
+/* #define GHOST_DEBUG   */ 
 /* #define GRID_DEBUG */
-/* #define FORCE_DEBUG  */
-/* #define VERLET_DEBUG  */
+/* #define FORCE_DEBUG */
+/* #define VERLET_DEBUG   */
 /* #define PARTICLE_DEBUG */
 #define MPI_CORE
 /* #define FORCE_CORE */
@@ -67,14 +67,14 @@ extern void _debug_free(void *p);
 #endif
 
 #ifdef CELL_DEBUG
-#define CELL_TRACE(cmd) { if (this_node < 2) { cmd; } }
+#define CELL_TRACE(cmd) { if (this_node == 2) { cmd; } }
 #else
 /** Equals { cmd } iff CELL_DEBUG is set. */
 #define CELL_TRACE(cmd)
 #endif
 
 #ifdef GHOST_DEBUG
-#define GHOST_TRACE(cmd) { if (this_node < 2) { cmd; } }
+#define GHOST_TRACE(cmd) { if (this_node == 2) { cmd; } }
 #else
 /** Equals { cmd } iff GHOST_DEBUG is set. */
 #define GHOST_TRACE(cmd)
@@ -88,14 +88,14 @@ extern void _debug_free(void *p);
 #endif
 
 #ifdef FORCE_DEBUG
-#define FORCE_TRACE(cmd) { if (this_node < 9) { cmd; } }
+#define FORCE_TRACE(cmd) { if (this_node == 2) { cmd; } }
 #else
 /** Equals { cmd } iff FORCE_DEBUG is set. */
 #define FORCE_TRACE(cmd)
 #endif
 
 #ifdef VERLET_DEBUG
-#define VERLET_TRACE(cmd) { if (this_node < 2) { cmd; } }
+#define VERLET_TRACE(cmd) { if (this_node == 2) { cmd; } }
 #else
 /** Equals { cmd } iff VERLET_DEBUG is set. */
 #define VERLET_TRACE(cmd)

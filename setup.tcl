@@ -16,7 +16,7 @@ set npart 100
 setmd box_l 10.0 10.0 10.0
 set write yes
 set write_steps 10
-set mdst 100
+set mdst 1.2
 set maxtime 200
 
 source polywr.tcl
@@ -42,7 +42,7 @@ setmd bjerrum 0
 #pairwise ramp for all particles
 for {set ia1 0} { $ia1 <= 4 } { incr ia1 } {
     for {set ia2 0} { $ia2 <= 4 } { incr ia2 } {
-	inter $ia1 $ia2 ramp 10 100
+	inter $ia1 $ia2 ramp 1.2 100
     }
 }
 
