@@ -26,7 +26,7 @@
 #     'polygelSetup.c'                                      #
 #                                                           #
 # Created:       16.08.2002 by BAM                          #
-# Last modified: 25.09.2002 by BAM                          #
+# Last modified: 15.10.2002 by BAM                          #
 #                                                           #
 #                                                           #
 # convertMD2Deserno                                         #
@@ -409,7 +409,7 @@ proc convertDeserno2MDmain {origin destination} {
 			incr k
 		    }
 		}
-		puts ".,. $j particles total, $k of which bounded (type $type_FENE)."
+		puts ".,. $j particles total, $k of which bounded (by type $type_FENE)."
 
 #  Submit remaining Particles
 #############################################################
@@ -462,7 +462,7 @@ proc convertDeserno2MDmain {origin destination} {
 #############################################################
 
 	    # Deal with crosslinks between the polymer chains
-	    } elseif {$j==[expr ($N_CI+$N_P*$MPC)+$N_S]} {
+	    } elseif {$j==[expr ($N_CI+$N_P*$MPC)+$N_S] && [string length $tmp_var]>0} {
 		# Connecting cross-linked monomers
 		puts -nonewline "        Crosslinking [expr 2*$N_CR] monomers... "
 		flush stdout
@@ -488,6 +488,8 @@ proc convertDeserno2MDmain {origin destination} {
 		    # which has '{0 a}' at particle 'b' as well!
 		}
 		puts ".,. [expr $j-($N_S+$N_CI+$N_P*$MPC)] additional bonds (of type $type_FENE) created."
+	    } elseif {[string length $N_CR]==0 } {
+		set N_CR 0
 	    }
 	}
     }
