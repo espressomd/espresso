@@ -643,7 +643,7 @@ void dd_topology_release()
 /************************************************************/
 void  dd_exchange_and_sort_particles(int global_flag)
 {
-  int dir, c, p, finished=0;
+  int dir, c, p, i, finished=0;
   ParticleList *cell,*sort_cell, send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
   Particle *part;
   CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles(%d):\n",this_node,global_flag));
@@ -786,8 +786,17 @@ void  dd_exchange_and_sort_particles(int global_flag)
       if(finished == 0) {
 	char *errtext = runtime_error(128);
 	sprintf(errtext,"{some particles moved more than min_local_box_l, reduce the time step} ");
-	/* the bad guys are all in cell 0, but probably their interactions are of no importance anyways */
+	/* the bad guys are all in cell 0, but probably their interactions are of no importance anyways.
+	   However, their positions have to be made valid again. */
 	finished = 1;
+	/* all out of range coordinates in the left overs cell are moved to (0,0,0) */
+	cell = local_cells.cell[c];
+	for (p = 0; p < cell->n; p++) {
+	  part = &cell->part[p];
+	  for (i = 0; i < 3; i++)
+	    if(part->r.p[dir] < my_left[dir] || part->r.p[dir] > my_right[dir])
+	      part->r.p[i] = 0;
+	}
       }
     }
     CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: finished value: %d\n",this_node,finished));
