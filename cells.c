@@ -186,15 +186,14 @@ void cells_changed_topology()
   int i;
   if(max_range <= 0) {
     /* not yet fully initialized */
-    for(i=0;i<3;i++) {
-      cell_size[i] =  local_box_l[i];
-      inv_cell_size[i] = 1.0 / cell_size[i];
-    }
+    max_range = min_local_box_l/2.0; }
+  
+  for(i=0;i<3;i++) {
+    cell_size[i] =  local_box_l[i];
+    inv_cell_size[i] = 1.0 / cell_size[i];
   }
-  else {
-    max_range = min_local_box_l/2.0; 
-    cells_re_init();
-  }
+
+  cells_re_init();
 }
 
 /*************************************************/
