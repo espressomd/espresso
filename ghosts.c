@@ -302,9 +302,10 @@ void exchange_and_sort_part()
   ParticleList *pl;
   Particle *part;
   Cell *cell;
-  int d, i, m, n, o, np, dir, lr, ind, c;
+  int d, i, m, n, o, dir, lr, ind, c;
 
   GHOST_TRACE(fprintf(stderr,"%d: exchange_part:start \n",this_node));
+  GHOST_TRACE(print_particle_positions());
 
   for(d=0; d<3; d++) { /* direction loop */  
     if(node_grid[d] > 1) { /* catch single node case for direction dir! */
@@ -317,8 +318,7 @@ void exchange_and_sort_part()
 	  cell = &cells[c];
 	  pl   = &(cell->pList);
 	  part = pl->part;
-	  np   = pl->n;
-	  for(i=0 ; i< np; i++) {
+	  for(i=0 ; i< pl->n; i++) {
 	    /*fprintf(stderr,"%d: exchange_part %d: Part id=%d co=%f\n",
 	      this_node,dir,part[i].r.identity,part[i].r.p[d]);*/
 	    if((lr == 1 && part[i].r.p[d] >=  my_right[d]) ||
@@ -331,10 +331,9 @@ void exchange_and_sort_part()
 	      /* sort particles not moved into their real cells */
 	      ind = pos_to_cell_grid_ind(part[i].r.p);
 	      if(ind != c) {
-		GHOST_TRACE(fprintf(stderr,"%d: exchange_part: move part to different cell, id=%d to node %d\n",
-				    this_node,part[i].r.identity,node_neighbors[dir]));
+		GHOST_TRACE(fprintf(stderr,"%d: exchange_part: move part to different cell: id=%d c%d -> c%d\n",this_node,part[i].r.identity,c,ind));
 		move_unindexed_particle(&(cells[ind].pList), pl, i);
-		i--;
+		if(i < pl->n) i--;
 	      }
 	    }
 	  }
@@ -350,16 +349,16 @@ void exchange_and_sort_part()
 	cell = &cells[c];
 	pl   = &(cell->pList);
 	part = pl->part;
-	np   = pl->n;
-	for(i=0 ; i<np; i++) {
+	for(i=0 ; i<pl->n; i++) {
 	  fold_coordinate(part[i].r.p, part[i].i, d);
 
 	  if (d==3) {
 	    /* sort particles not moved into their real cells */
 	    ind = pos_to_cell_grid_ind(part[i].r.p);
 	    if(ind != c) {
+	      GHOST_TRACE(fprintf(stderr,"%d: exchange_part: move part to different cell: id=%d c%d -> c%d\n",this_node,part[i].r.identity,c,ind));
 	      move_unindexed_particle(&(cells[ind].pList), pl, i);
-	      i--;
+	      if(i < pl->n) i--;
 	    }
 	  }
 	}
