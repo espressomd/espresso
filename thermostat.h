@@ -17,7 +17,7 @@
  ************************************************/
 
 extern double friction_gamma;
-extern double time_step;
+extern double temperature;
 
 /************************************************
  * functions
@@ -28,6 +28,8 @@ extern double time_step;
 */
 void friction_thermo();
 
+/** Callback for setting \ref tmperature */
+int temp_callback(Tcl_Interp *interp, void *_data);
 /** Callback for setting \ref friction_gamma */
 int gamma_callback(Tcl_Interp *interp, void *_data);
 

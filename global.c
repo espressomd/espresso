@@ -64,6 +64,7 @@ const Datafield fields[] = {
 #else
   {periodic, TYPE_INT,   3, "periodicity", ro_callback },
 #endif
+  {&temperature, TYPE_DOUBLE, 1, "temp", temp_callback },   
   { NULL, 0, 0, NULL, NULL }
 };
 

@@ -61,6 +61,7 @@ for {set ia1 0} { $ia1 <= $ntypes } { incr ia1 } {
 }
 # friction
 setmd gamma [expr 1e4*[setmd time_step]]
+setmd temp 1.
 
 puts "starting ramp integration"
 integrate init

@@ -103,6 +103,8 @@ extern const Datafield fields[];
 #define FIELD_MAXNUMCELLS 21
 /** index of \ref periodic in \ref fields */
 #define FIELD_PERIODIC 22
+/** index of \ref temperature in \ref fields */
+#define FIELD_TEMPERATURE 23
 /*@}*/
 
 /**********************************************

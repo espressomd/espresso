@@ -18,6 +18,7 @@
 #include "communication.h"
 #include "fft.h"
 #include "p3m.h"
+#include "thermostat.h"
 
 /************************************************
  * DEFINES
@@ -193,7 +194,6 @@ MDINLINE double perform_aliasing_sums(int n[3], double nominator[3]);
 void   P3M_init()
 {
   int i,n;
-  double temperature=1.0;
 
   if(p3m.bjerrum == 0.0) {       
     p3m.r_cut  = 0.0;
