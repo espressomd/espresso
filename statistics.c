@@ -1042,9 +1042,10 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
   
+
   fagg_avg = (float) (agg_avg)/agg_num;
   sprintf (buffer, " MAX %d MIN %d AVG %f STD %f AGG_NUM %d AGGREGATES", 
-	   agg_max, agg_min, fagg_avg, sqrt( (float) (agg_std-fagg_avg*fagg_avg)), agg_num);
+	   agg_max, agg_min, fagg_avg, sqrt( (float) (agg_std/(float)(agg_num)-fagg_avg*fagg_avg)), agg_num);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   
   for (i = s_mol_id ; i <= f_mol_id ; i++) {
