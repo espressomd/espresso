@@ -100,7 +100,6 @@ void layered_topology_release()
 
 static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
 {
-  GhostCommunication *gc;
   int even_odd;
   int c, n;
 
@@ -124,49 +123,55 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
       comm->comm[c].mpi_comm = MPI_COMM_WORLD;
     }
 
-    gc = comm->comm;
+    c = 0;
 
     CELL_TRACE(fprintf(stderr, "%d: ghostrec new comm\n", this_node));
     /* downwards */
     for (even_odd = 0; even_odd < 2; even_odd++) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
-	gc->type = GHOST_SEND;
-	gc->node = btm;
+	comm->comm[c].type = GHOST_SEND;
+	/* round 1 use prefetched data */
+	if (c == 1)
+	  comm->comm[c].type |= GHOST_PREFETCH;
+	comm->comm[c].node = btm;
 	if (data_parts == GHOSTTRANS_FORCE) {
-	  gc->part_lists[0] = &cells[0];
+	  comm->comm[c].part_lists[0] = &cells[0];
 	  CELL_TRACE(fprintf(stderr, "%d: ghostrec send force to %d btmg\n", this_node, btm));
 	}
 	else {
-	  gc->part_lists[0] = &cells[1];
+	  comm->comm[c].part_lists[0] = &cells[1];
 
 	  /* if periodic and bottom or top, send shifted */
-	  gc->shift[0] = gc->shift[1] = 0;
+	  comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
 	  if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) &&
 	      (data_parts & GHOSTTRANS_POSITION)) {
 	    comm->data_parts |= GHOSTTRANS_POSSHFTD;
-	    gc->shift[2] = box_l[2];
+	    comm->comm[c].shift[2] = box_l[2];
 	  }
 	  else
-	    gc->shift[2] = 0;
-	  CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f btml\n", this_node, btm, gc->shift[2]));
+	    comm->comm[c].shift[2] = 0;
+	  CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f btml\n", this_node, btm, comm->comm[c].shift[2]));
 	}
-	gc++;
+	c++;
       }
       /* recv. Note we test r_node as we always have to test the sender
 	 as for odd n_nodes maybe we send AND receive. */
       if (top % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
-	gc->type = GHOST_RECV;
-	gc->node = top;
+	comm->comm[c].type = GHOST_RECV;
+	/* round 0 prefetch */
+	if (c == 0)
+	  comm->comm[c].type |= GHOST_PREFETCH;
+	comm->comm[c].node = top;
 	if (data_parts == GHOSTTRANS_FORCE) {
-	  gc->part_lists[0] = &cells[n_layers];
+	  comm->comm[c].part_lists[0] = &cells[n_layers];
 	  CELL_TRACE(fprintf(stderr, "%d: ghostrec get force from %d topl\n", this_node, top));
 	}
 	else {
-	  gc->part_lists[0] = &cells[n_layers + 1];
+	  comm->comm[c].part_lists[0] = &cells[n_layers + 1];
 	  CELL_TRACE(fprintf(stderr, "%d: ghostrec recv from %d topg\n", this_node, btm));
 	}
-	gc++;
+	c++;
       }
     }
 
@@ -174,42 +179,49 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
     for (even_odd = 0; even_odd < 2; even_odd++) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
-	gc->type = GHOST_SEND;
-	gc->node = top;
+	comm->comm[c].type = GHOST_SEND;
+	/* round 1 use prefetched data from round 0.
+	   But this time there may already have been two transfers downwards */
+	if (c % 2 == 1)
+	  comm->comm[c].type |= GHOST_PREFETCH;
+	comm->comm[c].node = top;
 	if (data_parts == GHOSTTRANS_FORCE) {
-	  gc->part_lists[0] = &cells[n_layers + 1];
+	  comm->comm[c].part_lists[0] = &cells[n_layers + 1];
 	  CELL_TRACE(fprintf(stderr, "%d: ghostrec send force to %d topg\n", this_node, top));
 	}
 	else {
-	  gc->part_lists[0] = &cells[n_layers];
+	  comm->comm[c].part_lists[0] = &cells[n_layers];
 
 	  /* if periodic and bottom or top, send shifted */
-	  gc->shift[0] = gc->shift[1] = 0;
+	  comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
 	  if (((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) &&
 	      (data_parts & GHOSTTRANS_POSITION)) {
 	    comm->data_parts |= GHOSTTRANS_POSSHFTD;
-	    gc->shift[2] = -box_l[2];
+	    comm->comm[c].shift[2] = -box_l[2];
 	  }
 	  else
-	    gc->shift[2] = 0;
-	  CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f topl\n", this_node, top, gc->shift[2]));
+	    comm->comm[c].shift[2] = 0;
+	  CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f topl\n", this_node, top, comm->comm[c].shift[2]));
 	}
-	gc++;
+	c++;
       }
       /* recv. Note we test r_node as we always have to test the sender
 	 as for odd n_nodes maybe we send AND receive. */
       if (btm % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
-	gc->type = GHOST_RECV;
-	gc->node = btm;
+	comm->comm[c].type = GHOST_RECV;
+	/* round 0 prefetch. But this time there may already have been two transfers downwards */
+	if (c % 2 == 0)
+	  comm->comm[c].type |= GHOST_PREFETCH;
+	comm->comm[c].node = btm;
 	if (data_parts == GHOSTTRANS_FORCE) {
-	  gc->part_lists[0] = &cells[1];
+	  comm->comm[c].part_lists[0] = &cells[1];
 	  CELL_TRACE(fprintf(stderr, "%d: ghostrec get force from %d btml\n", this_node, btm));
 	}
 	else {
-	  gc->part_lists[0] = &cells[0];
+	  comm->comm[c].part_lists[0] = &cells[0];
 	  CELL_TRACE(fprintf(stderr, "%d: ghostrec recv from %d btmg\n", this_node, btm));
 	}
-	gc++;
+	c++;
       }
     }
   }
@@ -229,39 +241,39 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
 	comm->comm[c].node = this_node;
       }
 
-      gc = comm->comm;
+      c = 0;
 
       /* downwards */
-      gc->type = GHOST_LOCL;
+      comm->comm[c].type = GHOST_LOCL;
       if (data_parts == GHOSTTRANS_FORCE) {
-	gc->part_lists[0] = &cells[0];
-	gc->part_lists[1] = &cells[n_layers];
+	comm->comm[c].part_lists[0] = &cells[0];
+	comm->comm[c].part_lists[1] = &cells[n_layers];
       }
       else {
-	gc->part_lists[0] = &cells[1];
-	gc->part_lists[1] = &cells[n_layers + 1];
+	comm->comm[c].part_lists[0] = &cells[1];
+	comm->comm[c].part_lists[1] = &cells[n_layers + 1];
 	/* here it is periodic */
 	if (data_parts & GHOSTTRANS_POSITION)
 	  comm->data_parts |= GHOSTTRANS_POSSHFTD;
-	gc->shift[0] = gc->shift[1] = 0;
-	gc->shift[2] = box_l[2];
+	comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
+	comm->comm[c].shift[2] = box_l[2];
       }
-      gc++;
+      c++;
 
       /* upwards */
-      gc->type = GHOST_LOCL;
+      comm->comm[c].type = GHOST_LOCL;
       if (data_parts == GHOSTTRANS_FORCE) {
-	gc->part_lists[0] = &cells[n_layers + 1];
-	gc->part_lists[1] = &cells[1];
+	comm->comm[c].part_lists[0] = &cells[n_layers + 1];
+	comm->comm[c].part_lists[1] = &cells[1];
       }
       else {
-	gc->part_lists[0] = &cells[n_layers];
-	gc->part_lists[1] = &cells[0];
+	comm->comm[c].part_lists[0] = &cells[n_layers];
+	comm->comm[c].part_lists[1] = &cells[0];
 	/* here it is periodic */
 	if (data_parts & GHOSTTRANS_POSITION)
 	  comm->data_parts |= GHOSTTRANS_POSSHFTD;
-	gc->shift[0] = gc->shift[1] = 0;
-	gc->shift[2] = -box_l[2];
+	comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
+	comm->comm[c].shift[2] = -box_l[2];
       }
     }
   }
