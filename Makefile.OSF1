@@ -27,11 +27,11 @@ CXXFLAGS=$(CFLAGS) -D_RWSTD_NO_NEW_HEADER -D__USE_STD_IOSTREAM
 ############ linker settings
 
 LINK=$(CC)
-LDFLAGS=-g
+LDFLAGS=-g -ldxml
 LDLIBS=-lm
 
 ############ flags needed for MPI
-LDFLAGS+=-lmpi
+LDLIBS+=-lmpi
 
 ############ flags needed for Tcl
 
@@ -40,6 +40,11 @@ ifeq ($(shell uname -r),V4.0)
 CFLAGS += -I/sw/axp_osf_40/tcl8.2/include
 LDFLAGS+=/sw/axp_osf_40/tcl8.2/shlib/libtcl.so
 else
-LDFLAGS+=-ltcl
+LDLIBS+=-ltcl
 endif
+
+
+############ flags needed for P3M
+LDFLAGS+=-ldxml
+LDLIBS+=-ldxml
 

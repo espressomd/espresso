@@ -8,6 +8,7 @@
 #include "forces.h"
 #include "debug.h"
 #include "thermostat.h"
+#include "p3m_parallel.h"
 #include "communication.h"
 #include "cells.h"
 #include "ghosts.h" 
