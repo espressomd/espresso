@@ -47,6 +47,7 @@
 
 #include <tcl.h>
 #include "particle_data.h"
+#include "domain_decomposition.h"
 #include "ghost.h"
 
 /************************************************/
@@ -54,14 +55,34 @@
 /************************************************/
 /*@{*/
 
+#define CELL_STRUCTURE_DD 0
+#define CELL_STRUCTURE_N2 1
+
 /** Describes a cell structure */
 typedef struct {
+  /** type descriptor */
+  int type;
+
   /** transport information */
   GhostCommunicator update_pos_comm, receive_force_comm;
 
-  void  (*cell_init)();
-  void  (*cell_topology_change)();
+  /** Called when the current cell structure is invalidated because for example the
+      box length has changed. This procedure may NOT destroy the old inner cells,
+      but it should free all other related data including the ghost cells. Note
+      that parameters like the box length or the node_grid may already have changed. */
+  void  (*topology_release)();
+  /** Initialize the topology. The argument is list of cells, which particles have to be
+      sorted into their cells. The particles might not belong to this node.
+      This procedure is used when particle data or cell structure has changed and
+      the cell structure has to be reinitialized. */
+  void  (*topology_init)(CellPList *cplist);
+  /** Just resort the particles. Used during integration. The particles are stored in
+      the cell structure. Domain decomposition can assume for example that particles
+      only have to be sent to neighboring nodes. */
+  void  (*exchange_and_sort_particles)();
+  ///
   int   (*position_to_node)(double pos[3]);
+  ///
   Cell *(*position_to_cell)(double pos[3]);
 } CellStructure;
 
@@ -133,6 +154,14 @@ extern CellStructure cell_structure;
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
+
+/** initialize with a cell structure (domain decomposition) */
+void cells_init();
+
+/** initialize a cell structure.
+ *  Use with care and ONLY for initialization! 
+ *  @param cell  Pointer to cell to initialize. */
+void init_cell(Cell *cell);
 
 /** reinitialize link cell structures. 
  *
