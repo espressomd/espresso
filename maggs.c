@@ -2329,7 +2329,9 @@ int inter_parse_maggs(Tcl_Interp * interp, int argc, char ** argv)
       yukawa = 1; 
       if(! ARG_IS_D(4, kappa))
 	return TCL_ERROR;
-      if(argc > 5) ARG_IS_D(5, r_cut);
+      if(argc > 5)
+	if (! ARG_IS_D(5, r_cut))
+	  return TCL_ERROR;
     } 
   }
   return set_maggs_params(interp, coulomb.bjerrum, f_mass, mesh, gamma, yukawa, kappa, r_cut);
