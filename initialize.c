@@ -177,6 +177,7 @@ void on_cell_structure_change()
   on_coulomb_change();
 }
 
+#ifdef NPT
 void on_NpT_boxl_change() {
   grid_changed_box_l();
 
@@ -186,6 +187,7 @@ void on_NpT_boxl_change() {
   if(cell_structure.type==CELL_STRUCTURE_DOMDEC)
     dd_NpT_update_cell_grid();
 }
+#endif
 
 void on_parameter_change(int field)
 {

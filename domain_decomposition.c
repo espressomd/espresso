@@ -453,6 +453,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir)
 /* Public Functions */
 /************************************************************/
 
+#ifdef NPT
 void dd_NpT_update_cell_grid() {
   int i,n_local_cells;
   double cell_range[3], min_box_l;
@@ -479,7 +480,7 @@ void dd_NpT_update_cell_grid() {
     CELL_TRACE(fprintf(stderr, "%d: dd_NpT_update_cell_grid, n_cells=%d, local_cells.n=%d, ghost_cells.n=%d, dd.ghost_cell_grid=(%d,%d,%d)\n", this_node, n_cells,local_cells.n,ghost_cells.n,dd.ghost_cell_grid[0],dd.ghost_cell_grid[1],dd.ghost_cell_grid[2]));
   }
 }
-
+#endif
 
 /************************************************************/
 void dd_topology_init(CellPList *old)
