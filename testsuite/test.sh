@@ -1,5 +1,5 @@
 #!/bin/sh
-TESTCASES="madelung.tcl lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl mmm1d.tcl gb.tcl rotation.tcl thermostat.tcl intpbc.tcl intppbc.tcl analysis.tcl"
+TESTCASES="madelung.tcl kinetic.tcl lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl mmm1d.tcl gb.tcl rotation.tcl thermostat.tcl intpbc.tcl intppbc.tcl analysis.tcl"
 # constraints energy pressure
 # 
 # List of testcases to be done (and people responsible for them):
@@ -21,7 +21,7 @@ TESTCASES="madelung.tcl lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl mmm1d.tcl gb.
 #   Testing system with rotational degrees of freedom.
 # - const: (HL / Status: Scheduled.)
 #   Check if constraints are working.
-# - Ekin: (BAM / Status: Scheduled.)
+# - Ekin: (BAM / Status: Done.)
 #   Small check of velocities, forces and kinetic energy for a two-particle-electrostatic system
 # - thermo: (FRM / Status: Scheduled.)
 #   10000 timesteps only thermostat - does the given temperature (i.e. Ekin) remain constant?
