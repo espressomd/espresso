@@ -568,7 +568,7 @@ int part(ClientData data, Tcl_Interp *interp,
 	  Tcl_AppendResult(interp, buffer, (char *)NULL);
 	}
 	else {
-	  Tcl_AppendResult(interp, buffer, "0.0 0.0 0.0 ", (char *)NULL);
+	  Tcl_AppendResult(interp, "0.0 0.0 0.0 ", (char *)NULL);
 	}
       }
       else if (!strncmp(argv[0], "fix", strlen(argv[0]))) {
