@@ -55,9 +55,9 @@ const Datafield fields[] = {
   {p3m.mesh_off, TYPE_DOUBLE,   3, "p3m_mesh_offset", p3mmeshoff_callback },
   {&transfer_rate, TYPE_INT,   1, "transfer_rate", ro_callback },
 #ifdef PARTIAL_PERIODIC
-  {&periodic, TYPE_INT,   3, "periodicity", per_callback },
+  {periodic, TYPE_INT,   3, "periodicity", per_callback },
 #else
-  {&periodic, TYPE_INT,   3, "periodicity", ro_callback },
+  {periodic, TYPE_INT,   3, "periodicity", ro_callback },
 #endif
   { NULL, 0, 0, NULL, NULL }
 };
