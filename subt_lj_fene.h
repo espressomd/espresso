@@ -65,7 +65,7 @@ MDINLINE void add_subt_lj_fene_pair_force(Particle *p1, Particle *p2, int type_n
     	p2->f.f[i] += fac*dx[i];
 #ifdef NPT
 	if(integ_switch == INTEG_METHOD_NPT_ISO)
-	  nptiso.p_vir -= fac*dx[i] * dx[i];
+	  nptiso.p_vir[i] -= fac*dx[i] * dx[i];
 #endif
     }
   

@@ -125,8 +125,10 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_TORQUE 33
 /** Action number for \ref mpi_send_mol_id. */
 #define REQ_SET_MOLID 34
+/** Action number for \ref mpi_bcast_nptiso_geom */
+#define REQ_BCAST_NPTISO_GEOM 35
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 35
+#define REQ_MAXIMUM 36
 
 
 /** \name Slave Callbacks
@@ -169,6 +171,7 @@ void mpi_send_quat_slave(int node, int parm);
 void mpi_send_omega_slave(int node, int parm);
 void mpi_send_torque_slave(int node, int parm);
 void mpi_send_mol_id_slave(int node, int parm);
+void mpi_bcast_nptiso_geom_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -209,6 +212,7 @@ SlaveCallback *callbacks[] = {
   mpi_send_omega_slave,             /* 32: REQ_SET_OMEGA */
   mpi_send_torque_slave,            /* 33: REQ_SET_TORQUE */
   mpi_send_mol_id_slave,            /* 34: REQ_SET_MOLID */
+  mpi_bcast_nptiso_geom_slave,      /* 35: REQ_BCAST_NPTISO_GEOM */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -248,6 +252,7 @@ char *names[] = {
   "SET_OMEGA",      /* 32 */
   "SET_TORQUE",     /* 33 */
   "SET_MOLID",      /* 34 */
+  "BCAST_NPT_GEOM", /* 35 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -1533,6 +1538,25 @@ void mpi_bcast_cell_structure_slave(int pnode, int cs)
   cells_re_init(cs);
   on_cell_structure_change();
 }
+
+/*************** REQ_BCAST_NPTISO_GEOM *****************/
+
+void mpi_bcast_nptiso_geom() 
+{
+  mpi_issue(REQ_BCAST_NPTISO_GEOM, -1 , 0);
+  mpi_bcast_nptiso_geom_slave(-1,0);
+  
+}
+
+void mpi_bcast_nptiso_geom_slave(int node,int parm) 
+{
+  MPI_Bcast(&nptiso.geometry, 1,MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&nptiso.dimension, 1,MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&nptiso.cubic_box, 1,MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&nptiso.non_const_dim, 1,MPI_INT, 0, MPI_COMM_WORLD);
+
+}
+
 
 /*********************** MAIN LOOP for slaves ****************/
 

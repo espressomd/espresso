@@ -291,6 +291,9 @@ void mpi_rescale_particles(int dir, double scale);
 /** Issue REQ_BCAST_CS: change the cell structure on all nodes. */
 void mpi_bcast_cell_structure(int cs);
 
+/** Issue REQ_BCAST_NPTISO_GEOM: broadcast nptiso geometry parameter to all nodes. */
+void mpi_bcast_nptiso_geom(void);
+
 /*@}*/
 
 /** \name Event codes for \ref mpi_bcast_event

@@ -67,7 +67,7 @@ MDINLINE void add_subt_lj_pair_force(Particle *p1, Particle *p2, int type_num)
     p2->f.f[i] += fac_lj*dx[i];
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir -= fac_lj*dx[i] * dx[i];
+      nptiso.p_vir[i] -= fac_lj*dx[i] * dx[i];
 #endif
   }
 

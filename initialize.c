@@ -103,11 +103,12 @@ void on_integration_start()
     fprintf(stderr,"%d: ERROR: on_integration_start: Cannot initialize the integrator!:\n",this_node);
     if( nptiso.piston <= 0.0 ) { 
       fprintf(stderr,"%d: PROBLEM: You have to set <piston>! Please use the following: \n",this_node);
-      fprintf(stderr,"%d: 'integrate set npt_isotropic <DOUBLE p_ext> <DOUBLE piston>' for enabling isotropic NPT integration \n",this_node); 
+      fprintf(stderr,"%d: 'integrate set npt_isotropic <DOUBLE p_ext> <DOUBLE piston> [<INT, INT, INT system_geometry>]' for enabling isotropic NPT integration \n",this_node); 
     }
     errexit();
   }
 #endif
+
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
@@ -128,6 +129,7 @@ void on_integration_start()
     cells_resort_particles(CELL_GLOBAL_EXCHANGE);
     resort_particles = 0;
   }
+  
 }
 
 void on_particle_change()

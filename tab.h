@@ -69,7 +69,7 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
       p2->f.f[j] -= fac * d[j];
 #ifdef NPT
       if(integ_switch == INTEG_METHOD_NPT_ISO)
-	nptiso.p_vir += fac*d[j] * d[j];
+	nptiso.p_vir[j] += fac*d[j] * d[j];
 #endif
     }
   }
@@ -243,7 +243,7 @@ MDINLINE void add_tab_bond_force(Particle *p1, Particle *p2, int type_num)
     p2->f.f[i] += fac*dx[i];
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir -= fac*dx[i] * dx[i];
+      nptiso.p_vir[i] -= fac*dx[i] * dx[i];
 #endif
   }
 

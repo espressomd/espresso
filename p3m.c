@@ -561,6 +561,11 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 #ifdef ADDITIONAL_CHECKS
 		  db_fsum += force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
 #endif
+#ifdef NPT
+		  if(integ_switch == INTEG_METHOD_NPT_ISO) {
+		    nptiso.p_vir[0] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
+		  }
+#endif
 		  p[i].f.f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
 		  cf_cnt++;
 		}

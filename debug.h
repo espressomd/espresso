@@ -49,10 +49,11 @@
 */
 
 #include <tcl.h>
+
 /* #define COMM_DEBUG */
 /* #define EVENT_DEBUG */
-/* #define INTEG_DEBUG   */
-/* #define CELL_DEBUG */
+/*   #define INTEG_DEBUG 
+     #define CELL_DEBUG */
 /* #define GHOST_DEBUG */
 /* #define GRID_DEBUG */
 /* #define VERLET_DEBUG */
@@ -71,6 +72,7 @@
 /* #define STAT_DEBUG */ 
 /* #define POLY_DEBUG */
 /* #define MEM_DEBUG */
+
 #define MPI_CORE
 #define FORCE_CORE
 

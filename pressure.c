@@ -18,7 +18,7 @@ Observable_stat virials  = {0, {NULL,0,0}, 0,0,0,0};
 Observable_stat total_pressure = {0, {NULL,0,0}, 0,0,0,0};
 Observable_stat p_tensor = {0, {NULL,0,0},0,0,0,0};
 
-nptiso_struct   nptiso   = { 0.0,0.0,0.0, 0.0,0.0,0.0,0.0,0.0 };
+nptiso_struct   nptiso   = {0.0,0.0,0.0,0.0,0.0,0.0,{0.0,0.0,0.0},{0.0,0.0,0.0}, 0 ,{NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},0,0,0};
 
 /************************************************************/
 /* callbacks for setmd                                      */

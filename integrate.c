@@ -122,7 +122,7 @@ int integrate_usage(Tcl_Interp *interp)
   Tcl_AppendResult(interp, "'integrate set' for printing integrator status \n", (char *)NULL);
   Tcl_AppendResult(interp, "'integrate set nvt' for enabling NVT integration or \n" , (char *)NULL);
 #ifdef NPT
-  Tcl_AppendResult(interp, "'integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>]' for enabling isotropic NPT integration \n" , (char *)NULL);
+  Tcl_AppendResult(interp, "'integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>] [<INT, INT, INT system_geometry>] [-cubic_box]' for enabling isotropic NPT integration \n" , (char *)NULL);
 #endif
   return (TCL_OK);
 }
@@ -130,6 +130,7 @@ int integrate_usage(Tcl_Interp *interp)
 /** Hand over integrate status information to tcl interpreter. */
 int integrate_print_status(Tcl_Interp *interp) 
 {
+  int i;
   char buffer[TCL_INTEGER_SPACE+TCL_DOUBLE_SPACE];
   switch (integ_switch) {
   case INTEG_METHOD_NVT:
@@ -139,7 +140,21 @@ int integrate_print_status(Tcl_Interp *interp)
     Tcl_PrintDouble(interp, nptiso.p_ext, buffer);
     Tcl_AppendResult(interp, "{ set npt_isotropic ", buffer, (char *)NULL);
     Tcl_PrintDouble(interp, nptiso.piston, buffer);
-    Tcl_AppendResult(interp, " ", buffer, " } ", (char *)NULL);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+    for ( i = 0 ; i < 3 ; i++){
+      if ( nptiso.geometry & nptiso.nptgeom_dir[i] ) {
+	sprintf(buffer, " %d", 1 );
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      } else {
+	sprintf(buffer, " %d", 0 );
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+    }
+    if ( nptiso.cubic_box ) {
+      Tcl_AppendResult(interp, " -cubic_box", (char *)NULL);
+    }
+    Tcl_AppendResult(interp, " } ", (char *)NULL);
+
     return (TCL_OK);
   }
   return (TCL_ERROR);
@@ -156,6 +171,9 @@ int integrate_parse_nvt(Tcl_Interp *interp, int argc, char **argv)
 /** Parse integrate npt_isotropic command */
 int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
 {
+  int xdir, ydir, zdir;
+  xdir = ydir = zdir = 0;
+
   if (argc < 4) {
     Tcl_AppendResult(interp, "wrong # args: \n", (char *)NULL);
     return integrate_usage(interp);
@@ -169,10 +187,70 @@ int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, "You must set <piston> as well before you can use this integrator! \n", (char *)NULL);
     return integrate_usage(interp);
   }
+
+  if ( argc > 5 ) {
+    if (!ARG_IS_I(5,xdir) || !ARG_IS_I(6,ydir) || !ARG_IS_I(7,zdir) ) {
+      return integrate_usage(interp);}
+    else {
+      /* set the geometry to include rescaling specified directions only*/
+      nptiso.geometry = 0;
+      if ( xdir ) { 
+	nptiso.geometry = ( nptiso.geometry | NPTGEOM_XDIR ); 
+	nptiso.dimension += 1;
+	nptiso.non_const_dim = 0;
+      }
+      if ( ydir ) { 
+	nptiso.geometry = ( nptiso.geometry | NPTGEOM_YDIR );
+	nptiso.dimension += 1;
+	nptiso.non_const_dim = 1;
+      }
+      if ( zdir ) { 
+	nptiso.geometry = ( nptiso.geometry | NPTGEOM_ZDIR );
+	nptiso.dimension += 1;
+	nptiso.non_const_dim = 2;
+      }
+    }
+  }else {
+    /* set the geometry to include rescaling in all directions; the default*/
+    nptiso.geometry = 0;
+    nptiso.geometry = ( nptiso.geometry | NPTGEOM_XDIR );
+    nptiso.geometry = ( nptiso.geometry | NPTGEOM_YDIR );
+    nptiso.geometry = ( nptiso.geometry | NPTGEOM_ZDIR );
+    nptiso.dimension = 3;
+  }
+
+
+  if ( argc > 8 ) {
+    if (!ARG_IS_S(8,"-cubic_box")) {
+      return integrate_usage(interp);
+    } else {
+      nptiso.cubic_box = 1;
+    }
+  }
+
+#ifdef ELECTROSTATICS      
+  if ( nptiso.dimension < 3 && !nptiso.cubic_box ){
+    fprintf(stderr,"WARNING: If electrostatics is compiled in you must use the -cubic_box option. Automatically reverting to a cubic box for npt integration. ");
+    nptiso.cubic_box = 1;
+  }
+#endif
+
+
+  /* Sanity Check */
+  if( nptiso.dimension == 0) {
+    fprintf(stderr,"cannot proceed with npt_isotropic.  You must at least have one dimension for box length motion. reverting to nvt integration");
+    integ_switch = INTEG_METHOD_NVT;
+    mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+    return (TCL_OK);
+  }
+
   p_ext_callback(interp, &nptiso.p_ext);
   /* set integrator switch */
   integ_switch = INTEG_METHOD_NPT_ISO;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  /* broadcast npt geometry information to all nodes */
+  mpi_bcast_nptiso_geom();
+
   return (TCL_OK);
 }
 
@@ -241,11 +319,17 @@ void integrate_ensemble_init()
   if(integ_switch == INTEG_METHOD_NPT_ISO) {
     /* prepare NpT-integration */
     nptiso.inv_piston = 1/(1.0*nptiso.piston);
-    nptiso.volume     = box_l[0]*box_l[1]*box_l[2];
+    if ( nptiso.dimension == 0 ) {
+      fprintf(stderr,"npt integrator was called but dimension not yet set. this should not happen. ");
+      errexit();
+    }
+
+    nptiso.volume = pow(box_l[nptiso.non_const_dim],nptiso.dimension);	
+
     if (recalc_forces) { 
       nptiso.p_inst = 0.0;  
-      nptiso.p_vir  = 0.0; 
-      nptiso.p_vel  = 0.0; 
+      nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
+      nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
     }
   }
 #endif
@@ -256,7 +340,6 @@ void integrate_ensemble_init()
 void integrate_vv(int n_steps)
 {
   int i;
-
   /* Prepare the Integrator */
   on_integration_start();
   /* Verlet list criterion */
@@ -283,7 +366,6 @@ void integrate_vv(int n_steps)
 
   /* Integration loop */
   for(i=0;i<n_steps;i++) {
-
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
 
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
@@ -429,8 +511,8 @@ void rescale_forces_propagate_vel()
   double scale;
 
 #ifdef NPT
-  if(integ_switch == INTEG_METHOD_NPT_ISO)
-    nptiso.p_vel = 0.0;
+  if(integ_switch == INTEG_METHOD_NPT_ISO){
+    nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;}
 #endif
 
   scale = 0.5 * time_step * time_step;
@@ -450,16 +532,20 @@ void rescale_forces_propagate_vel()
 
       for(j = 0; j < 3 ; j++) {
 #ifdef EXTERNAL_FORCES
-	if (!(p[i].l.ext_flag & COORD_FIXED(j)))
+	if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
 #endif
 #ifdef NPT
-	  if(integ_switch == INTEG_METHOD_NPT_ISO) {
-	    nptiso.p_vel += SQR(p[i].m.v[j]);
-	    p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j]); }
+	  if(integ_switch == INTEG_METHOD_NPT_ISO && ( nptiso.geometry & nptiso.nptgeom_dir[j] )) {
+	    nptiso.p_vel[j] += SQR(p[i].m.v[j]);
+	    p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j]); 	    
+	  }
 	  else
 #endif
 	    /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-	    p[i].m.v[j] += p[i].f.f[j];
+	    { p[i].m.v[j] += p[i].f.f[j]; }
+#ifdef EXTERNAL_FORCES
+	}
+#endif
       }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
@@ -475,13 +561,21 @@ void finalize_p_inst_npt()
 #ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO) {
     double p_tmp=0.0;
+    int i;
     /* finalize derivation of p_inst */
-    nptiso.p_vel /= SQR(time_step);
-    nptiso.p_inst = nptiso.p_vir + nptiso.p_vel;
+    nptiso.p_inst = 0.0;
+    for ( i = 0 ; i < 3 ; i++ ) {
+      if( nptiso.geometry & nptiso.nptgeom_dir[i] ) {
+	nptiso.p_vel[i] /= SQR(time_step);
+	nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
+      }
+    }
+
     MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     if (this_node == 0) {
-      nptiso.p_inst = p_tmp/(3.0*nptiso.volume);
+      nptiso.p_inst = p_tmp/(nptiso.dimension*nptiso.volume);
       nptiso.p_diff = nptiso.p_diff  +  (nptiso.p_inst-nptiso.p_ext)*0.5*time_step + friction_thermV_nptiso(nptiso.p_diff);
+      
     }
   }
 
@@ -504,14 +598,18 @@ void propagate_press_box_pos_and_rescale_npt()
 
     /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and vel-rescaling */
     if (this_node == 0) {
+      
+
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
-      scal[2] = SQR(box_l[0])/pow(nptiso.volume,2.0/3.0);
+      scal[2] = SQR(box_l[nptiso.non_const_dim])/pow(nptiso.volume,2.0/nptiso.dimension);
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
-      L_new = pow(nptiso.volume,1.0/3.0);
+      L_new = pow(nptiso.volume,1.0/nptiso.dimension);
+      //      printf(stdout,"Lnew, %f: volume, %f: dim, %f: press, %f \n", L_new, nptiso.volume, nptiso.dimension,nptiso.p_inst );
+      //    fflush(stdout);
       if (nptiso.volume < 0.0) { 
 	fprintf(stderr, "%d: ERROR: Your choice of piston=%f, dt=%f, p_diff=%f just caused the volume to become negative!\nTry decreasing dt...\n",\
 		this_node,nptiso.piston,time_step,nptiso.p_diff); errexit(); }
-      scal[1] = L_new/box_l[0];
+      scal[1] = L_new/box_l[nptiso.non_const_dim];
       scal[0] = 1/scal[1];
     }
     MPI_Bcast(scal,  3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -521,27 +619,41 @@ void propagate_press_box_pos_and_rescale_npt()
       cell = local_cells.cell[c]; p  = cell->part; np = cell->n;
       for(i = 0; i < np; i++) {	for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
-	  if (!(p[i].l.ext_flag & COORD_FIXED(j)))	
-#endif
-	    {
-		p[i].r.p[j]      = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
-		p[i].l.p_old[j] *= scal[1];
-		p[i].m.v[j]     *= scal[0];
-	    }
+	if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
+#endif	    
+	  if(nptiso.geometry & nptiso.nptgeom_dir[j]) {
+	    p[i].r.p[j]      = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
+	    p[i].l.p_old[j] *= scal[1];
+	    p[i].m.v[j]     *= scal[0];
+	  } else {
+	    p[i].r.p[j] += p[i].m.v[j];
+	  }
+
+#ifdef EXTERNAL_FORCES
 	}
-	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PV_1 v_new=(%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
-	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PPOS p=(%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2])); 
-#ifdef ADDITIONAL_CHECKS
-	force_and_velocity_check(&p[i]); 
 #endif
-	/* Verlet criterion check */
-	//if(distance2(p[i].r.p,p[i].l.p_old) > skin2 )
-	  rebuild_verletlist = 1; 
+      }
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PV_1 v_new=(%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PPOS p=(%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2])); 
+#ifdef ADDITIONAL_CHECKS
+      force_and_velocity_check(&p[i]); 
+#endif
+      /* Verlet criterion check */
+      //if(distance2(p[i].r.p,p[i].l.p_old) > skin2 )
+      rebuild_verletlist = 1; 
       }
     }
 
     /* Apply new volume to the box-length, communicate it, and account for necessary adjustments to the cell geometry */
-    if (this_node == 0) box_l[0] = box_l[1] = box_l[2] = L_new;
+    if (this_node == 0) {
+      for ( i = 0 ; i < 3 ; i++ ){ 
+	if ( nptiso.geometry & nptiso.nptgeom_dir[i] ) {
+	  box_l[i] = L_new;
+	} else if ( nptiso.cubic_box ) {
+	  box_l[i] =  L_new;
+	}
+      }
+    }
     MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     on_NpT_boxl_change(scal[1]);
     //on_NpT_boxl_change(0.0);
@@ -558,7 +670,7 @@ void propagate_vel()
   Particle *p;
   int c, i, j, np;
 #ifdef NPT
-  nptiso.p_vel = 0.0;
+  nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 #endif
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel:\n",this_node));
@@ -574,20 +686,20 @@ void propagate_vel()
 #endif
 	  {
 #ifdef NPT
-	    if(integ_switch == INTEG_METHOD_NPT_ISO) {
+	    if(integ_switch == INTEG_METHOD_NPT_ISO && (nptiso.geometry & nptiso.nptgeom_dir[j] )) {
 	      p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j]);
-	      nptiso.p_vel += SQR(p[i].m.v[j]); }
+	      nptiso.p_vel[j] += SQR(p[i].m.v[j]); }
 	    else
 #endif
 	      /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
 	      p[i].m.v[j] += p[i].f.f[j];
-
+	    
 	    /* SPECIAL TASKS in particle loop */
 #ifdef NEMD
 	    if(j==0) nemd_get_velocity(p[i]);
 #endif
 	  }
-
+	
 	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
