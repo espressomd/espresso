@@ -320,6 +320,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
       poz[0]=pos[0]; poz[1]=pos[1]; poz[2]=pos[2];
 
       /* place 2nd monomer */
+      n=1;
       if (posed2!=NULL && posed!=NULL && angle2>-1.0) {
 	pos[0]=posed2[0];
 	pos[1]=posed2[1];
