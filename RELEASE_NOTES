@@ -2,18 +2,22 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.5b *
+* v1.6.5c *
 ***********
 
 Current working revision.
 
 
-- v1.6.5b -
+- v1.6.5c -
 -----------
+(c) July 22nd, 2004.
 (b) July 15th, 2004.
 (a) July 13th, 2004.
 
 New Features:
+(c) Enhanced analysis routine for estimating volume fluctuations and the systems'
+    compressibility to 'analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }]'
+    allowing the user to save/restore the measurement.
 (b) Introduced 'setmd npt_p_diff' to save/restore the content of nptiso.p_diff
     which might be necessary for recovering trajectories using the NpT-integrator.
 
