@@ -243,7 +243,10 @@ void nsq_calculate_ia()
       get_mi_vector(d, pt1->r.p, pt2->r.p);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      add_non_bonded_pair_force(pt1, pt2, d, dist, dist2);
+#ifdef EXCLUSIONS
+      if (do_nonbonded(pt1, pt2))
+#endif
+	add_non_bonded_pair_force(pt1, pt2, d, dist, dist2);
     }
 
     /* calculate with my ghosts */
@@ -256,7 +259,10 @@ void nsq_calculate_ia()
 	get_mi_vector(d, pt1->r.p, pt2->r.p);
 	dist2 = sqrlen(d);
 	dist = sqrt(dist2);
-	add_non_bonded_pair_force(pt1, pt2, d, dist, dist2);
+#ifdef EXCLUSIONS
+	if (do_nonbonded(pt1, pt2))
+#endif
+	  add_non_bonded_pair_force(pt1, pt2, d, dist, dist2);
       }
     }
   }
@@ -287,7 +293,10 @@ void nsq_calculate_energies()
       get_mi_vector(d, pt1->r.p, pt2->r.p);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      add_non_bonded_pair_energy(pt1, pt2, d, dist, dist2);
+#ifdef EXCLUSIONS
+      if (do_nonbonded(pt1, pt2))
+#endif
+	add_non_bonded_pair_energy(pt1, pt2, d, dist, dist2);
     }
 
     /* calculate with my ghosts */
@@ -300,7 +309,10 @@ void nsq_calculate_energies()
 	get_mi_vector(d, pt1->r.p, pt2->r.p);
 	dist2 = sqrlen(d);
 	dist = sqrt(dist2);
-	add_non_bonded_pair_energy(pt1, pt2, d, dist, dist2);
+#ifdef EXCLUSIONS
+	if (do_nonbonded(pt1, pt2))
+#endif
+	  add_non_bonded_pair_energy(pt1, pt2, d, dist, dist2);
       }
     }
   }
@@ -328,7 +340,10 @@ void nsq_calculate_virials()
       get_mi_vector(d, pt1->r.p, pt2->r.p);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      add_non_bonded_pair_virials(pt1, pt2, d, dist, dist2);
+#ifdef EXCLUSIONS
+      if (do_nonbonded(pt1, pt2))
+#endif
+	add_non_bonded_pair_virials(pt1, pt2, d, dist, dist2);
     }
 
     /* calculate with my ghosts */
@@ -341,7 +356,10 @@ void nsq_calculate_virials()
 	get_mi_vector(d, pt1->r.p, pt2->r.p);
 	dist2 = sqrlen(d);
 	dist = sqrt(dist2);
-	add_non_bonded_pair_virials(pt1, pt2, d, dist, dist2);
+#ifdef EXCLUSIONS
+	if (do_nonbonded(pt1, pt2))
+#endif
+	  add_non_bonded_pair_virials(pt1, pt2, d, dist, dist2);
       }
     }
   }

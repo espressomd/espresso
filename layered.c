@@ -576,14 +576,20 @@ void layered_calculate_ia()
       for(j = i+1; j < npl; j++) {
 	layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
 	dist2 = sqrlen(d);
-	add_non_bonded_pair_force(p1, &pl[j], d, sqrt(dist2), dist2);
+#ifdef EXCLUSIONS
+	if (do_nonbonded(p1, &pl[j]))
+#endif
+	  add_non_bonded_pair_force(p1, &pl[j], d, sqrt(dist2), dist2);
       }
 
       /* bottom neighbor */
       for(j = 0; j < npb; j++) {
 	layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
 	dist2 = sqrlen(d);
-	add_non_bonded_pair_force(p1, &pb[j], d, sqrt(dist2), dist2);
+#ifdef EXCLUSIONS
+	if (do_nonbonded(p1, &pb[j]))
+#endif
+	  add_non_bonded_pair_force(p1, &pb[j], d, sqrt(dist2), dist2);
       }
     }
   }
@@ -626,14 +632,20 @@ void layered_calculate_energies()
       for(j = i+1; j < npl; j++) {
 	layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
 	dist2 = sqrlen(d);
-	add_non_bonded_pair_energy(p1, &pl[j], d, sqrt(dist2), dist2);
+#ifdef EXCLUSIONS
+	if (do_nonbonded(p1, &pl[j]))
+#endif
+	  add_non_bonded_pair_energy(p1, &pl[j], d, sqrt(dist2), dist2);
       }
 
       /* bottom neighbor */
       for(j = 0; j < npb; j++) {
 	layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
 	dist2 = sqrlen(d);
-	add_non_bonded_pair_energy(p1, &pb[j], d, sqrt(dist2), dist2);
+#ifdef EXCLUSIONS
+	if (do_nonbonded(p1, &pb[j]))
+#endif
+	  add_non_bonded_pair_energy(p1, &pb[j], d, sqrt(dist2), dist2);
       }
     }
   }
@@ -671,14 +683,20 @@ void layered_calculate_virials()
       for(j = i+1; j < npl; j++) {
 	layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
 	dist2 = sqrlen(d);
-	add_non_bonded_pair_virials(p1, &pl[j], d, sqrt(dist2), dist2);
+#ifdef EXCLUSIONS
+	if (do_nonbonded(p1, &pl[j]))
+#endif
+	  add_non_bonded_pair_virials(p1, &pl[j], d, sqrt(dist2), dist2);
       }
 
       /* bottom neighbor */
       for(j = 0; j < npb; j++) {
 	layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
 	dist2 = sqrlen(d);
-	add_non_bonded_pair_virials(p1, &pb[j], d, sqrt(dist2), dist2);
+#ifdef EXCLUSIONS
+	if (do_nonbonded(p1, &pb[j]))
+#endif
+	  add_non_bonded_pair_virials(p1, &pb[j], d, sqrt(dist2), dist2);
       }
     }
   }
