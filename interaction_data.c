@@ -413,9 +413,7 @@ int printCoulombIAToResult(Tcl_Interp *interp)
 #ifdef ELECTROSTATICS
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
   if (coulomb.bjerrum == 0.0) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "coulomb 0.0",
-		     (char *) NULL);
+    Tcl_AppendResult(interp, "coulomb 0.0", (char *) NULL);
     return (TCL_OK);
   }
   Tcl_PrintDouble(interp, coulomb.bjerrum, buffer);
@@ -430,9 +428,9 @@ int printCoulombIAToResult(Tcl_Interp *interp)
     Tcl_PrintDouble(interp, p3m.alpha, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, p3m.accuracy, buffer);
-    Tcl_AppendResult(interp, buffer, "} ", (char *) NULL);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
 
-    Tcl_AppendResult(interp, "{coulomb epsilon ", (char *) NULL);
+    Tcl_AppendResult(interp, "} {coulomb epsilon ", (char *) NULL);
     if (p3m.epsilon == P3M_EPSILON_METALLIC)
       Tcl_AppendResult(interp, " metallic ", (char *) NULL);
     else {
@@ -477,6 +475,7 @@ int printCoulombIAToResult(Tcl_Interp *interp)
     Tcl_PrintDouble(interp, elc_params.far_cut, buffer);
     Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
   }
+  Tcl_AppendResult(interp, "}",(char *) NULL);
 
 #else
   Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)",(char *) NULL);
@@ -2143,9 +2142,7 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   Tcl_ResetResult(interp);
 
   if(argc == 0) {
-    Tcl_AppendResult(interp, "{", (char *)NULL);
     printCoulombIAToResult(interp);
-    Tcl_AppendResult(interp, "}", (char *)NULL);
     return TCL_OK;
   }
   
