@@ -70,7 +70,7 @@ void fft_modes_init() {
   rfftwnd_destroy_plan(mode_analysis_plan);
 
 
-  mode_analysis_plan = rfftw2d_create_plan(mode_grid_3d[xdir], mode_grid_3d[ydir], FFTW_REAL_TO_COMPLEX,FFTW_ESTIMATE);
+  mode_analysis_plan = rfftw2d_create_plan(mode_grid_3d[xdir], mode_grid_3d[ydir], FFTW_REAL_TO_COMPLEX,FFTW_MEASURE);
   STAT_TRACE(fprintf(stderr,"%d,created plan \n",this_node);)
   mode_grid_changed = 0;  
 }

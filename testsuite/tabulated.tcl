@@ -45,8 +45,8 @@ puts "----------------------------------------"
 puts "- Testcase tabulated.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------"
 
-set epsilon 1e-2
-set tab_epsilon 1000
+set epsilon 1e-6
+#set tab_epsilon 1000
 setmd temp 0
 setmd time_step 1
 setmd skin 0
@@ -69,7 +69,7 @@ proc write_data {file} {
 }
 
 if { [catch {
-    read_data "lj_system.data" 
+    read_data "tabulated_system.data" 
 
 
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
@@ -85,15 +85,19 @@ if { [catch {
 
     inter tabforcecap 1000000000
 
+# ------------------------------------------------#
+# These are the lennard jones potentials that are 
+# tabulated in the above files 
 #    inter 0 0 lennard-jones 1.0 1.0 1.12246 0.25 0.0
 #    inter 1 1 lennard-jones 1.3 0.5 2 0.0 0.0
 #    inter 0 1 lennard-jones 2.2 1.0 1.12246 0.0 0.5
+
     integrate 0
 
 
 
     # here you can create the necessary snapshot
-    # write_data "lj_system.data"
+    # write_data "tabulated_system.data"
 
     # ensures that no other forces are on
     set cureng [expr [analyze energy tabulated 0 0] + [analyze energy tabulated 0 1] + [analyze energy tabulated 1 1]]
@@ -104,10 +108,11 @@ if { [catch {
 
     ############## end
 
-    puts $cureng
+#    puts $cureng
 
     set toteng [analyze energy total]
     set totprs [analyze pressure total]
+
 
 
 
@@ -162,10 +167,10 @@ if { [catch {
 	}
     }
     puts "maximal force deviation in x $maxdx for particle $maxpx, in y $maxdy for particle $maxpy, in z $maxdz for particle $maxpz"
-    if { $maxdx > $tab_epsilon || $maxdy > $tab_epsilon || $maxdz > $tab_epsilon } {
-	if { $maxdx > $tab_epsilon} {puts "force of particle $maxpx: [part $maxpx pr f] != $F($maxpx)"}
-	if { $maxdy > $tab_epsilon} {puts "force of particle $maxpy: [part $maxpy pr f] != $F($maxpy)"}
-	if { $maxdz > $tab_epsilon} {puts "force of particle $maxpz: [part $maxpz pr f] != $F($maxpz)"}
+    if { $maxdx > $epsilon || $maxdy > $epsilon || $maxdz > $epsilon } {
+	if { $maxdx > $epsilon} {puts "force of particle $maxpx: [part $maxpx pr f] != $F($maxpx)"}
+	if { $maxdy > $epsilon} {puts "force of particle $maxpy: [part $maxpy pr f] != $F($maxpy)"}
+	if { $maxdz > $epsilon} {puts "force of particle $maxpz: [part $maxpz pr f] != $F($maxpz)"}
 	error "force error too large"
     }
 } res ] } {
