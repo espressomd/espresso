@@ -790,7 +790,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	   However, their positions have to be made valid again. */
 	finished = 1;
 	/* all out of range coordinates in the left overs cell are moved to (0,0,0) */
-	cell = local_cells.cell[c];
+	cell = local_cells.cell[0];
 	for (p = 0; p < cell->n; p++) {
 	  part = &cell->part[p];
 	  for (i = 0; i < 3; i++)
