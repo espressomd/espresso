@@ -494,76 +494,48 @@ void calc_g3_av(double **_g3) {
   }
 }
 
+/* new version for new topology structure */
 int analyze_fold_chains(float *coord)
 {
-  int i,j,chain;
-  int tmp, index;
-  int chainid = 0;
-  double cm_tmp = 0.0;
-  double *cm_pos = malloc(3*chain_n_chains*sizeof(double));
-  for ( i = 0 ; i < 3*chain_n_chains ; i++){cm_pos[i] = 0.0;}
+  int m,p,i, tmp; 
+  int mol_size, ind;
+  double cm_tmp, com[3];
 
-  // Check that chain_length, and chain_n_chains are set
-  if ( !chain_n_chains  || !chain_length ){
-    return (TCL_ERROR);
-  }
+  /* check molecule information */
+  if ( n_molecules < 0 ) return (TCL_ERROR);
 
-  // First check that the chains are linear and of a uniform size
-  for ( i = 0 ; i < n_total_particles; i++){
-    if ( partCfg[i].p.identity >= chain_start ){
-      // Check for a break in the sequence
-      if ((int)fmod(partCfg[i].p.identity + 1 - chain_start,chain_length) == 0){      
-	if (partCfg[i].bl.n != 0){
-	  return (TCL_ERROR);
-	}
-      }
-      else {
-	// If no break then must be linked to next particle 
-	if ( partCfg[i].bl.n == 0 ){
-	  return (TCL_ERROR);
-	}
-	else {
-	  if ( partCfg[i].bl.e[1] != (partCfg[i].p.identity+1) ){
-	    return (TCL_ERROR);
+  /* loop molecules */
+  for(m=0; m<n_molecules; m++) {
+    mol_size = molecules[m].part.n;
+    if(mol_size > 0) {
+      /* calc center of mass */
+      com[0] = 0.0; com[1] = 0.0; com[2] = 0.0;
+      for(p=0; p<mol_size; p++) {
+	ind = 3*molecules[m].part.e[p];
+	for(i=0;i<3;i++) com[i] += coord[ind+i];
+      }		   
+      for(i=0;i<3;i++) com[i] /= (double)mol_size;
+      /* fold coordinates */
+      for(i=0;i<3;i++) {
+	if ( PERIODIC(i) ) { 
+	  tmp = (int)floor(com[i]*box_l_i[i]);
+	  cm_tmp =0.0;
+	  for(p=0; p<mol_size; p++) {
+	    ind        = 3*molecules[m].part.e[p] + i;
+	    coord[ind] -= tmp*box_l[i];
+	    cm_tmp     += coord[ind];
+	  }
+	  cm_tmp /= (double)mol_size;
+	  if(cm_tmp < 0 || cm_tmp > box_l[i]) {
+	    fprintf(stderr,"\n: analyse_fold_chains: chain center of mass is out of range (coord %d: %f not in box_l %f), exiting\n",i,cm_tmp,box_l[i]);
+	    errexit();
 	  }
 	}
       }
-      
-      // Identify the chain corresponding to the particle
-      chainid = (int)floor((double)(partCfg[i].p.identity -chain_start)/(double)(chain_length));
-      
-      // Calculate and store the centers of mass for this chain
-      for ( j = 0 ; j < 3 ; j++){
-	cm_pos[3*chainid + j] += coord[partCfg[i].p.identity*3 + j]/(double)(chain_length);
-
-      }
     }
   }
-
-
-
-  // Now fold the particles by chain
-  for ( chain = 0 ; chain < chain_n_chains ; chain++){
-    for(i=0;i<3;i++) {
-      if ( PERIODIC(i) ) { 
-	tmp = (int)floor(cm_pos[chain*3 + i]*box_l_i[i]);
-	cm_tmp =0.0;
-	for ( j = 0 ; j < chain_length ; j++){
-	  index = (chain*chain_length + chain_start + j)*3 + i ;
-	  coord[index]       = coord[index] - tmp*box_l[i];    
-	  cm_tmp += coord[index]/(double)(chain_length);
-	}
-	if(cm_tmp < 0 || cm_tmp > box_l[i]) {
-	  fprintf(stderr,"\n: analyse_fold_chains: chain center of mass is out of range (%f not in box_l %f), exiting\n",cm_tmp,box_l[i]);
-	  errexit();
-	}
-      }
-    }
-  }
-  return (TCL_OK);  
+  return (TCL_OK); 
 }
-
-
 
 void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff) {
   int i,j,k,qi, cnt,cnt_max;
