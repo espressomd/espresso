@@ -164,11 +164,11 @@ version:
 topic:    
 
 
-name:    Sukumaran, Sathish
-email:   sathish@mpip-mainz.mpg.d
+name:    Sukumaran, Sathish Kumar
+email:   sathish@mpip-mainz.mpg.de, physks@leeds.ac.uk
 sent:    
 version:    
-topic:    
+topic:   i would like to set up espresso here in leeds and use it. would that be ok with you?
 
 
 name:    Moran Wang
@@ -189,5 +189,13 @@ version:
 topic:    
 
 
-
+name:    Olaf Lenz / Ulf Schiller / Friederike Schmid
+email:   olenz / uschille@Physik.Uni-Bielefeld.DE
+sent:    26.JAN.2005
+version: 20040924-Espresso_v1.7.5.Mezoti.tar.gz and higher
+CVS:	 remote-access (user-id: olenz / uschille)
+topic:   Lipid-Doppelschicht, deren Koepfe zur Stabilisation an feste Waende gekoppelt; 
+	 spaeter soll dann eine Lipid-Doppelschicht in einer Loesungsmittelumgebung 
+	 simuliert werden, wobei zur Simulation des Loesungsmittels ein DPD-Thermostat
+	 angedacht ist, der eingehend untersucht wird
 
