@@ -629,11 +629,11 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 #ifdef EXTERNAL_FORCES
     else if (ARG0_IS_S("ext_force")) {
       if(part.l.ext_flag & PARTICLE_EXT_FORCE) {
-	Tcl_PrintDouble(interp, part.l.ext_force[0]/(0.5*time_step*time_step), buffer);
+	Tcl_PrintDouble(interp, part.l.ext_force[0], buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.l.ext_force[1]/(0.5*time_step*time_step), buffer);
+	Tcl_PrintDouble(interp, part.l.ext_force[1], buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.l.ext_force[2]/(0.5*time_step*time_step), buffer);
+	Tcl_PrintDouble(interp, part.l.ext_force[2], buffer);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else {
@@ -1016,11 +1016,6 @@ int part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
 
   if (! ARG_IS_D(2, ext_f[2]))
     return TCL_ERROR;
-
-  /* rescale forces */
-  ext_f[0] *= (0.5*time_step*time_step);
-  ext_f[1] *= (0.5*time_step*time_step);
-  ext_f[2] *= (0.5*time_step*time_step);
 
   if (ext_f[0] == 0 && ext_f[1] == 0 && ext_f[2] == 0)
     ext_flag = 0;
