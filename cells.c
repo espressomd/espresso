@@ -134,8 +134,8 @@ void cells_re_init()
   /* 2b: there should be a reasonable number of cells only!
      But we will deal with that later... */
   if(this_node==0) {
-    if(n_inner_cells > ((max_seen_particle + 1)/n_nodes)+1) 
-      fprintf(stderr,"0: cells_init: WARNING: More cells per node %d than particles per node %d\n",n_inner_cells,((max_seen_particle + 1)/n_nodes)+1);
+    if(n_inner_cells > ((max_seen_particle + 1)/n_nodes)+1) ;
+      //fprintf(stderr,"0: cells_init: WARNING: More cells per node %d than particles per node %d\n",n_inner_cells,((max_seen_particle + 1)/n_nodes)+1);
   }
 
   /* 2c: allocate new cell structure */
@@ -148,18 +148,18 @@ void cells_re_init()
 
   /* 3: Transfer Particle data from old to new cell grid */
   for(i=0;i<old_n_cells;i++) {
+    pl = &(old_cells[i].pList);
     if(is_inner_cell(i,old_ghost_cell_grid)) {
-      pl = &(old_cells[i].pList);
       for(j=0; j<pl->n; j++) {
 	part = &(pl->part[j]);
 	ind  = pos_to_cell_grid_ind(part->r.p);
 	append_unindexed_particle(&(cells[ind].pList),part);
       }
-      if(pl->max>0) free(pl->part);
-      if(old_cells[i].n_neighbors>0) {
-	for(j=0; j<old_cells[i].n_neighbors; j++) free(old_cells[i].nList[j].vList.pair);
-	free(old_cells[i].nList);
-      }
+    }
+    if(pl->max>0) free(pl->part);
+    if(old_cells[i].n_neighbors>0) {
+      for(j=0; j<old_cells[i].n_neighbors; j++) free(old_cells[i].nList[j].vList.pair);
+      free(old_cells[i].nList);
     }
   }
 
@@ -191,8 +191,6 @@ void cells_re_init()
 #endif
 
   free(old_cells);
-
-
 
   /* cell structure initialized. */
   rebuild_verletlist = 1;
@@ -326,8 +324,8 @@ void calc_cell_grid()
     }
     /* Give information about possible larger skin. */
     cell_range = dmin(min_box_l,cell_range);
-    if( cell_range>max_range && this_node==0 ) {
-      fprintf(stderr,"Remark: Your parameters would allow a skin of %f instead of your setting %f\n",cell_range-max_cut,skin);
+    if( cell_range>max_range && this_node==0 ) { ;
+      // fprintf(stderr,"Remark: Your parameters would allow a skin of %f instead of your setting %f\n",cell_range-max_cut,skin);
     }
   }
 
