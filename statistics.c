@@ -406,7 +406,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       Tcl_AppendResult(interp, "Use 'analyze append' to save some, or 'analyze re' to only look at current state!", (char *)NULL);
       return TCL_ERROR; }
     else calc_re_av(&re);
-    sprintf(buffer,"%f %f",re[0],re[1]);
+    sprintf(buffer,"%f %f %f %f",re[0],re[1],re[2],re[3]);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     free(re); return (TCL_OK);
   }
@@ -426,7 +426,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       Tcl_AppendResult(interp, "Use 'analyze append' to save some, or 'analyze rg' to only look at current state!", (char *)NULL);
       return TCL_ERROR; }
     else calc_rg_av(&rg);
-    sprintf(buffer,"%f %f",rg[0],rg[1]);
+    sprintf(buffer,"%f %f %f %f",rg[0],rg[1],rg[2],rg[3]);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     free(rg); return (TCL_OK);
   }
@@ -1030,7 +1030,7 @@ void calc_re(double **_re)
 {
   int i;
   double dx,dy,dz,  dist=0.0,dist2=0.0, *re=NULL, tmp;
-  *_re = re = realloc(re,2*sizeof(double));
+  *_re = re = realloc(re,4*sizeof(double));
 
   for (i=0; i<chain_n_chains; i++) {
     dx = partCfg[chain_start+i*chain_length + chain_length-1].r.p[0]
@@ -1044,15 +1044,17 @@ void calc_re(double **_re)
     dist2 += tmp*tmp;
   }
   tmp = (double)chain_n_chains;
-  re[0] = dist/tmp;
-  re[1] = sqrt(fabs(dist2/tmp - re[0]*re[0]) / (tmp - 1));
+  re[2] = dist/tmp;
+  re[3] = sqrt(dist2/tmp - re[2]*re[2]);
+  re[0] = sqrt(re[2]);
+  re[1] = 1./(2.*re[0])*re[3];
 }
 
 void calc_re_av(double **_re)
 {
   int i,j;
   double dx,dy,dz,  dist=0.0,dist2=0.0, *re=NULL, tmp;
-  *_re = re = realloc(re,2*sizeof(double));
+  *_re = re = realloc(re,4*sizeof(double));
 
   for (j=0; j<n_configs; j++) {
     for (i=0; i<chain_n_chains; i++) {
@@ -1068,15 +1070,17 @@ void calc_re_av(double **_re)
     }
   }
   tmp = (double)chain_n_chains*n_configs;
-  re[0] = dist/tmp;
-  re[1] = sqrt(fabs(dist2/tmp - re[0]*re[0]) / (tmp - 1));
+  re[2] = dist/tmp;
+  re[3] = sqrt(dist2/tmp - re[2]*re[2]);
+  re[0] = sqrt(re[2]);
+  re[1] = 1./(2.*re[0])*re[3];
 }
 
 void calc_rg(double **_rg)
 {
   int i, j;
   double dx,dy,dz, r_CM_x,r_CM_y,r_CM_z, r_G=0.0,r_G2=0.0, *rg=NULL, IdoubMPC, tmp;
-  *_rg = rg = realloc(rg,2*sizeof(double));
+  *_rg = rg = realloc(rg,4*sizeof(double));
 
   IdoubMPC = 1./(double)chain_length;
   for (i=0; i<chain_n_chains; i++) {
@@ -1101,15 +1105,17 @@ void calc_rg(double **_rg)
     r_G2 += tmp*tmp;
   }
   tmp = (double)chain_n_chains;
-  rg[0] = r_G/tmp;
-  rg[1] = sqrt(fabs(r_G2/tmp - rg[0]*rg[0]) / (tmp - 1));
+  rg[2] = r_G/tmp;
+  rg[3] = sqrt(r_G2/tmp - rg[2]*rg[2]);
+  rg[0] = sqrt(rg[2]);
+  rg[1] = 1./(2.*rg[0])*rg[3];
 }
 
 void calc_rg_av(double **_rg)
 {
   int i, j, k;
   double dx,dy,dz, r_CM_x,r_CM_y,r_CM_z, r_G=0.0,r_G2=0.0, *rg=NULL, IdoubMPC, tmp;
-  *_rg = rg = realloc(rg,2*sizeof(double));
+  *_rg = rg = realloc(rg,4*sizeof(double));
 
   IdoubMPC = 1./(double)chain_length;
   for (k=0; k<n_configs; k++) {
@@ -1134,8 +1140,10 @@ void calc_rg_av(double **_rg)
     }
   }
   tmp = (double)(chain_n_chains*n_configs);
-  rg[0] = r_G/tmp;
-  rg[1] = sqrt(fabs(r_G2/tmp - rg[0]*rg[0]) / (tmp - 1));
+  rg[2] = r_G/tmp;
+  rg[3] = sqrt(r_G2/tmp - rg[2]*rg[2]);
+  rg[0] = sqrt(rg[2]);
+  rg[1] = 1./(2.*rg[0])*rg[3];
 }
 
 void calc_rh(double **_rh)
@@ -1161,7 +1169,7 @@ void calc_rh(double **_rh)
   }
   tmp = (double)chain_n_chains;
   rh[0] = r_H/tmp;
-  rh[1] = sqrt(fabs(r_H2/tmp - rh[0]*rh[0]) / (tmp - 1));
+  rh[1] = sqrt(r_H2/tmp - rh[0]*rh[0]);
 }
 
 void calc_rh_av(double **_rh)
@@ -1189,7 +1197,7 @@ void calc_rh_av(double **_rh)
   }
   tmp = (double)chain_n_chains*n_configs;
   rh[0] = r_H/tmp;
-  rh[1] = sqrt(fabs(r_H2/tmp - rh[0]*rh[0]) / (tmp - 1));
+  rh[1] = sqrt(r_H2/tmp - rh[0]*rh[0]);
 }
 
 void calc_internal_dist(double **_idf) {
