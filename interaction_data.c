@@ -11,9 +11,10 @@
 /****************************************
  * variables
  *****************************************/
-
 IA_parameters *ia_params = NULL;
 int n_particle_types = 0;
+
+Coulomb_parameters coulomb = { 0.0, "non" };
 
 int n_bonded_ia = 0;
 Bonded_ia_parameters *bonded_ia_params = NULL;
@@ -196,6 +197,47 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
   return (TCL_OK);
 }
 
+int printCoulombIAToResult(Tcl_Interp *interp) 
+{
+  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
+  if (coulomb.bjerrum == 0.0) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "coulomb interaction does not exist",
+		     (char *) NULL);
+    return (TCL_OK);
+  }
+  Tcl_PrintDouble(interp, coulomb.bjerrum, buffer);
+  Tcl_AppendResult(interp, "coulomb ", buffer, " ", (char *) NULL);
+  Tcl_AppendResult(interp, coulomb.method, " ", (char *) NULL);
+  if (!strcmp(coulomb.method,"p3m")) {
+    Tcl_PrintDouble(interp, p3m.r_cut, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    sprintf(buffer,"%d",p3m.mesh[0]);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    sprintf(buffer,"%d",p3m.cao);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, p3m.alpha, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, p3m.accuracy, buffer);
+    Tcl_AppendResult(interp, buffer, "} ", (char *) NULL);
+
+    Tcl_PrintDouble(interp, p3m.epsilon, buffer);
+    Tcl_AppendResult(interp, "{coulomb epsilon ", buffer, " ", (char *) NULL);
+    sprintf(buffer,"%d",p3m.inter);
+    Tcl_AppendResult(interp, "n_interpol ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, p3m.mesh_off[0], buffer);
+    Tcl_AppendResult(interp, "mesh_off ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, p3m.mesh_off[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, p3m.mesh_off[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+  }
+  else if  (!strcmp(coulomb.method,"dh")) {
+    Tcl_AppendResult(interp, "dh not implemented! ", (char *) NULL);
+  }
+  return (TCL_OK);
+}
+
 void calc_maximal_cutoff()
 {
   int i, j;
@@ -265,12 +307,190 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	  Tcl_AppendResult(interp, "}", (char *)NULL);
 	}
       }
+    if(coulomb.bjerrum > 0.0) {
+      if (start) {
+	Tcl_AppendResult(interp, "{", (char *)NULL);
+	start = 0;
+      }
+      else
+	Tcl_AppendResult(interp, " {", (char *)NULL);
+      printCoulombIAToResult(interp);
+      Tcl_AppendResult(interp, "}", (char *)NULL);
+    }
     return (TCL_OK);
   }
 
-  /* first argument should be an integer */
-  if (Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) 
-    return (TCL_ERROR);
+  /* if first argument is not an integer -> must be coulomb */
+  if (Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) {
+    Tcl_ResetResult(interp);
+
+    /* parse coulomb interaction parameters */
+    if(strncmp(argv[1], "coulomb", strlen(argv[1]))) {
+      Tcl_AppendResult(interp, "Do not know interaction \"",argv[1],"\"",(char *) NULL);
+      return (TCL_ERROR);
+    }
+
+    /* print coulomb interaction parameters */
+    if(argc < 3) {
+      Tcl_AppendResult(interp, "{", (char *)NULL);
+      printCoulombIAToResult(interp);
+      Tcl_AppendResult(interp, "}", (char *)NULL);
+      return (TCL_OK);
+    }
+
+    /* check number of parameters */
+    if(argc < 4) {
+      Tcl_AppendResult(interp, "wrong # args for inter coulomb.", (char *) NULL);
+      return (TCL_ERROR);
+    }
+
+    /* check bjerrum length */
+    if ((Tcl_GetDouble(interp, argv[2], &(coulomb.bjerrum)) == TCL_ERROR)) {
+      Tcl_ResetResult(interp);
+      /* if p3m is set allready you can set additional optional p3m parameters */
+      if (!strcmp(coulomb.method, "p3m")) {
+	argc -= 2;
+	argv += 2;
+	while (argc > 0) {
+	  /* p3m parameter: inter */
+	  if (!strncmp(argv[0], "n_interpol", strlen(argv[0]))) {
+	    if(argc<2) return (TCL_ERROR);
+	    if ((Tcl_GetInt(interp, argv[1], &(p3m.inter)) == TCL_ERROR)) 
+	      return (TCL_ERROR);
+	    if (p3m.inter < 0) return (TCL_ERROR);
+	    argc -= 2;
+	    argv += 2;
+	  }
+	  /* p3m parameter: mesh_off */
+	  else if (!strncmp(argv[0], "mesh_off", strlen(argv[0]))) {
+	    if(argc<4) return (TCL_ERROR);
+	    if ((Tcl_GetDouble(interp, argv[1], &(p3m.mesh_off[0])) == TCL_ERROR) ||
+		(Tcl_GetDouble(interp, argv[2], &(p3m.mesh_off[1])) == TCL_ERROR) ||
+		(Tcl_GetDouble(interp, argv[3], &(p3m.mesh_off[2])) == TCL_ERROR) ) 
+	      return (TCL_ERROR);
+	    if(p3m.mesh_off[0] < 0.0 || p3m.mesh_off[0] > 1.0 ||
+	       p3m.mesh_off[1] < 0.0 || p3m.mesh_off[1] > 1.0 ||
+	       p3m.mesh_off[2] < 0.0 || p3m.mesh_off[2] > 1.0 )
+	      return (TCL_ERROR);
+	    argc -= 4;
+	    argv += 4;
+	  }
+	  /* p3m parameter: epsilon */
+	  else if(!strncmp(argv[0], "epsilon", strlen(argv[0]))) {
+	    if(argc<2) return (TCL_ERROR);
+	    if ((Tcl_GetDouble(interp, argv[1], &(p3m.epsilon)) == TCL_ERROR))
+	      return (TCL_ERROR);
+	    argc -= 2;
+	    argv += 2;	    
+	  }
+	  else {
+	    Tcl_AppendResult(interp, "Unknown coulomb p3m parameter: \"",argv[0],"\"",(char *) NULL);
+	    return (TCL_ERROR);
+	  }
+	}
+      }
+      else {
+	Tcl_AppendResult(interp, "Expect: inter coulomb <bjerrum> || <p3m-parameter>",(char *) NULL);
+	return (TCL_ERROR);
+      }
+      mpi_bcast_coulomb_params();
+      return (TCL_OK);
+    }
+    
+    /* check bjerrum length */
+    if(coulomb.bjerrum < 0.0) {
+      Tcl_AppendResult(interp, "bjerrum length must be positiv",(char *) NULL);
+      return (TCL_ERROR);
+    }
+    argc -= 3;
+    argv += 3;
+
+    if(coulomb.bjerrum == 0.0) {
+      strcpy(coulomb.method,"non");
+      mpi_bcast_coulomb_params();
+      return (TCL_OK);
+    }
+
+    /* check number of parameters */
+    if(argc < 2) {
+      Tcl_AppendResult(interp, "wrong # args for inter coulomb.", (char *) NULL);
+      return (TCL_ERROR);
+    }
+
+    
+
+    /* check method */
+    if(!strncmp(argv[0], "p3m", strlen(argv[0])) || 
+       !strncmp(argv[0], "P3M", strlen(argv[0])) ) {
+      argc -= 1;
+      argv += 1;
+      
+      strcpy(coulomb.method,"p3m");
+      p3m.bjerrum = coulomb.bjerrum;
+
+      if(Tcl_GetDouble(interp, argv[0], &(p3m.r_cut)) == TCL_ERROR) {
+	/* must be tune, tune parameters */
+	if(strncmp(argv[0], "tune", strlen(argv[0]))) {
+	  Tcl_AppendResult(interp, "Unkwon p3m parameter \"",argv[0],"\"",(char *) NULL);
+	  return (TCL_ERROR);  
+	}
+	Tcl_AppendResult(interp, "Automatic p3m tuning not implemented.",(char *) NULL);
+	return (TCL_ERROR);  
+      }
+
+      /* parse p3m parameters */
+      if(argc<3) {
+	Tcl_AppendResult(interp, "p3m needs at least 3 parameters: <r_cut> <mesh> <cao> [alpha] [accuracy]",(char *) NULL);
+	return (TCL_ERROR);  
+      }
+      if(Tcl_GetInt(interp, argv[1], &(p3m.mesh[0])) == TCL_ERROR ||
+	 Tcl_GetInt(interp, argv[2], &(p3m.cao    )) == TCL_ERROR ) 
+	return (TCL_ERROR);
+      
+      if(p3m.mesh[0] < 0) {
+	Tcl_AppendResult(interp, "p3m mesh must be positiv.",(char *) NULL);
+	return (TCL_ERROR);
+      }
+      p3m.mesh[2] = p3m.mesh[1] = p3m.mesh[0];
+      if(p3m.cao < 0 || p3m.cao > 7) {
+	Tcl_AppendResult(interp, "p3m cao must be between 0 and 7.",(char *) NULL);
+	return (TCL_ERROR);
+      }
+      if(p3m.cao > p3m.mesh[0] )  {
+	Tcl_AppendResult(interp, "p3m cao can not be larger than p3m mesh",(char *) NULL);
+	return (TCL_ERROR);
+      }
+      if(argc>3) {
+	if(Tcl_GetDouble(interp, argv[3], &(p3m.alpha)) == TCL_ERROR )
+	  return (TCL_ERROR);
+      }
+      else {
+	Tcl_AppendResult(interp, "Automatic p3m tuning not implemented.",(char *) NULL);
+	return (TCL_ERROR);  
+      }
+      if(argc>4) {
+	if(Tcl_GetDouble(interp, argv[4], &(p3m.accuracy)) == TCL_ERROR )
+	  return (TCL_ERROR);
+      }
+    }
+    else if (!strncmp(argv[0], "dh ", strlen(argv[0])) ||
+	     !strncmp(argv[0], "DH ", strlen(argv[0])) ) {
+      argc -= 3;
+      argv += 3;
+      
+      strcpy(coulomb.method,"dh");
+      Tcl_AppendResult(interp, "Debye-Hueckel not implemented yet",(char *) NULL);
+      return (TCL_ERROR);
+    }
+    else {
+      coulomb.bjerrum = 0.0;
+      /* communicate bjerrum length */
+      Tcl_AppendResult(interp, "Do not know coulomb method \"",argv[1],"\"",(char *) NULL);
+      return (TCL_ERROR);
+    }
+    mpi_bcast_coulomb_params();
+    return (TCL_OK);
+  }
 
   /* if second argument is not an integer -> bonded interaction.  */
   if (argc==2 || Tcl_GetInt(interp, argv[2], &j) == TCL_ERROR) {

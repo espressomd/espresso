@@ -32,9 +32,9 @@
     to be in (MPI) sync with what your new mpi_*_slave does.  This
     procedure is called immediately after the broadcast with the
     arbitrary integer as parameter.  To this aim it has also to be
-    added to \ref callbacks (the array index gives your action number.
+    added to \ref #callbacks (the array index gives your action number.
     Last but not least for debugging purposes you can add a nice name
-    to \ref names in the same way.  */
+    to \ref #names in the same way.  */
 
 /* from here we borrow the enumeration of
    the global variables */
@@ -196,6 +196,9 @@ void mpi_get_particles(Particle *result);
     velocities accordingly. 
 */
 void mpi_set_time_step();
+
+/** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
+void mpi_bcast_coulomb_params();
 
 /*@}*/
 

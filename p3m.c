@@ -77,7 +77,10 @@ typedef struct {
  * variables
  ************************************************/
 
-p3m_struct p3m;
+p3m_struct p3m = { 0.0, 0.0, 0.0, 
+		   {0,0,0}, {0.5,0.5,0.5}, 
+		   0, 32768, 0.0, 0.0, 0.0, 0.0, 
+		   {0.0,0.0,0.0}, {0.0,0.0,0.0}, {0.0,0.0,0.0} };
 
 /** local mesh. */
 static local_mesh lm;
@@ -165,7 +168,7 @@ void realloc_ca_fields(int newsize);
  *  \param in          Pointer to first element of input block data.
  *  \param out         Pointer to first element of output grid.
  *  \param start[3]    Start position of block in output grid.
- *  \param int size[3] Dimensions of the block
+ *  \param size[3]     Dimensions of the block
  *  \param dim[3]      Dimensions of the output grid.
 */
 void add_block(double *in, double *out, int start[3], int size[3], int dim[3]);
@@ -203,6 +206,8 @@ void calc_influence_function();
  * \return denominator aliasing sum in the denominator
  */
 MDINLINE double perform_aliasing_sums(int n[3], double nominator[3]);
+
+void P3M_count_charged_particles(int *n_charged_part, double *sum_square_charges);
 
 /*@}*/
 
@@ -920,6 +925,7 @@ MDINLINE double perform_aliasing_sums(int n[3], double nominator[3])
   return denominator;
 }
 
+/************************************************************/
 /* Callback functions */
 /************************************************************/
 
@@ -1009,6 +1015,56 @@ int p3mmeshoff_callback(Tcl_Interp *interp, void *_data)
   mpi_bcast_parameter(FIELD_P3M_MESH_OFF);
   mpi_bcast_event(INTERACTION_CHANGED);
   return (TCL_OK);
+}
+
+/************************************************
+ * Functions for P3M Parameter tuning
+ * This tuning is based on P3M_tune by M. Deserno
+ ************************************************/
+
+int P3M_tune_parameters(void)
+{
+  int i;
+  int n_cpart;
+  double sum_q2;
+  double r_cut, r_cut_min, r_cut_max;
+  int    mesh , mesh_min , mesh_max;
+  int    cao  , cao_min  , cao_max;
+  double alpha, alpha_min, alpha_max;
+ 
+  P3M_TRACE(fprintf(stderr,"%d: P3M_tune_parameters\n",this_node)); 
+  
+  P3M_count_charged_particles(&n_cpart, &sum_q2);
+  P3M_TRACE(fprintf(stderr,"%d: ncpart=%d sum_q2=%f\n",this_node,n_cpart,sum_q2)); 
+
+  /* calculate possible parameter range */
+  if(p3m.r_cut == 0.0) { r_cut_min = 0.0; r_cut_max = min_box_l-skin; }
+  else                 { r_cut_min = r_cut_max = p3m.r_cut; }
+
+  if(p3m.mesh[0] == 0 ) {
+    double expo;
+    expo = log(pow((double)n_cpart,(1.0/3.0)))/log(2.0);
+    mesh_min = (int)(pow(2.0,(double)((int)expo))+0.1);
+    mesh_max*=2;
+    if(mesh_min < 8) { mesh_min = mesh_max = 8; }
+    P3M_TRACE(fprintf(stderr,"%d: expo=%f, mesh_min=%d, mesh_max=%d\n",this_node,expo,mesh_min,mesh_max)); 
+  }
+  else { mesh_min = mesh_max = p3m.mesh[0]; }
+
+  if(p3m.cao == 0) { cao_min = 0; cao_max = 7; }
+  else             { cao_min = cao_max = p3m.cao; }
+
+  if(p3m.alpha == 0.0) { alpha_min = 0.0; alpha_max = 1.0; }
+  else                 { alpha_min = alpha_max = p3m.alpha; } 
+
+
+  return 1;
+}
+
+void P3M_count_charged_particles(int *n_charged_part, double *sum_square_charges)
+{
+  *n_charged_part = 100;
+  *sum_square_charges  = 100.0;
 }
 
 /************************************************

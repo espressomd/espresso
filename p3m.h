@@ -58,6 +58,8 @@ typedef struct {
   int    cao;
   /** number of interpolation points for charge assignment function */
   int    inter;
+  /** Accuracy of the actual parameter set. */
+  double accuracy;
 
   /** epsilon of the "surrounding dielectric". */
   double epsilon;

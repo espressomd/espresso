@@ -32,6 +32,15 @@ typedef struct {
   double ramp_force;
 } IA_parameters;
 
+/** field containing the interaction parameters for
+ *  the coulomb  interaction.  */
+typedef struct {
+  /** Bjerrum length. */
+  double bjerrum;
+  /** Method to treat coulomb interaction. */
+  char method[8];
+} Coulomb_parameters;
+
 /** Type of bonded interaction is a FENE potential. */
 #define BONDED_IA_FENE     0
 /** Type of bonded interaction is a angle potential. */
@@ -77,6 +86,9 @@ extern int n_particle_types;
 extern IA_parameters *ia_params;
 /* Number of nonbonded (short range) interactions. Not used so far.*/
 extern int n_interaction_types;
+
+/** Structure containing the coulomb parameters. */
+extern Coulomb_parameters coulomb;
 
 /** number of bonded interactions. Not used so far. */
 extern int n_bonded_ia;

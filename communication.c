@@ -15,6 +15,7 @@
 #include "utils.h"
 #include "initialize.h"
 #include "forces.h"
+#include "p3m.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -66,8 +67,10 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_TIME_STEP  15
 /** Action number for \ref mpi_get_particles. */
 #define REQ_GETPARTS  16
+/** Action number for \ref mpi_bcast_coulomb_params. */
+#define REQ_BCAST_COULOMB 17
 /** Total number of action numbers. */
-#define REQ_MAXIMUM   17
+#define REQ_MAXIMUM   18
 
 /** \name Slave Callbacks
     These functions are the slave node counterparts for the
@@ -92,28 +95,30 @@ void mpi_bcast_n_particle_types_slave(int node, int parm);
 void mpi_gather_stats_slave(int node, int parm);
 void mpi_set_time_step_slave(int node, int parm);
 void mpi_get_particles_slave(int node, int parm);
+void mpi_bcast_coulomb_params_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
     the issued command. */
 SlaveCallback *callbacks[] = {
-  mpi_stop_slave,                /*  0: REQ_TERM */
-  mpi_bcast_parameter_slave,     /*  1: REQ_BCAST_PAR */
-  mpi_who_has_slave,             /*  2: REQ_WHO_HAS */
-  mpi_bcast_event_slave,         /*  3: REQ_EVENT */
-  mpi_place_particle_slave,      /*  4: REQ_SET_POS */
-  mpi_send_v_slave,              /*  5: REQ_SET_V */
-  mpi_send_f_slave,              /*  6: REQ_SET_F */
-  mpi_send_q_slave,              /*  7: REQ_SET_Q */
-  mpi_send_type_slave,           /*  8: REQ_SET_TYPE */
-  mpi_send_bond_slave,           /*  9: REQ_SET_BOND */
-  mpi_recv_part_slave,           /* 10: REQ_GET_PART */
-  mpi_integrate_slave,           /* 11: REQ_INTEGRATE */
-  mpi_bcast_ia_params_slave,     /* 12: REQ_BCAST_IA */ 
+  mpi_stop_slave,                   /*  0: REQ_TERM */
+  mpi_bcast_parameter_slave,        /*  1: REQ_BCAST_PAR */
+  mpi_who_has_slave,                /*  2: REQ_WHO_HAS */
+  mpi_bcast_event_slave,            /*  3: REQ_EVENT */
+  mpi_place_particle_slave,         /*  4: REQ_SET_POS */
+  mpi_send_v_slave,                 /*  5: REQ_SET_V */
+  mpi_send_f_slave,                 /*  6: REQ_SET_F */
+  mpi_send_q_slave,                 /*  7: REQ_SET_Q */
+  mpi_send_type_slave,              /*  8: REQ_SET_TYPE */
+  mpi_send_bond_slave,              /*  9: REQ_SET_BOND */
+  mpi_recv_part_slave,              /* 10: REQ_GET_PART */
+  mpi_integrate_slave,              /* 11: REQ_INTEGRATE */
+  mpi_bcast_ia_params_slave,        /* 12: REQ_BCAST_IA */ 
   mpi_bcast_n_particle_types_slave, /* 13: REQ_BCAST_IA_SIZE */ 
-  mpi_gather_stats_slave,        /* 14: REQ_GATHER */ 
-  mpi_set_time_step_slave,       /* 15: REQ_SET_TIME_STEP */
-  mpi_get_particles_slave        /* 14: REQ_GETPARTS */
+  mpi_gather_stats_slave,           /* 14: REQ_GATHER */ 
+  mpi_set_time_step_slave,          /* 15: REQ_SET_TIME_STEP */
+  mpi_get_particles_slave,          /* 16: REQ_GETPARTS */
+  mpi_bcast_coulomb_params_slave    /* 17: REQ_BCAST_COULOMB */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -135,6 +140,7 @@ char *names[] = {
   "GATHER"    , /* 14 */
   "TIME_STEP" , /* 15 */
   "GET_PARTS" , /* 16 */
+  "BCAST_CIA" , /* 17 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -795,6 +801,27 @@ void mpi_set_time_step_slave(int node, int i)
   old_time_step = time_step;
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   rescale_velocities();
+}
+
+/*************** REQ_BCAST_COULOMB ************/
+void mpi_bcast_coulomb_params()
+{
+  mpi_issue(REQ_BCAST_COULOMB, 1, 0);
+
+  MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, MPI_COMM_WORLD);
+  if(!strncmp(coulomb.method, "p3m", strlen(coulomb.method) )) {
+    MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+  }
+  on_ia_change();
+}
+
+void mpi_bcast_coulomb_params_slave(int node, int parm)
+{   
+  MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, MPI_COMM_WORLD);
+  if(!strncmp(coulomb.method, "p3m", strlen(coulomb.method) )) {
+    MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+  }
+  on_ia_change();
 }
 
 
