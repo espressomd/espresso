@@ -51,12 +51,6 @@
 /** Type of a Rigid/Constrained bond*/
 #define BONDED_IA_RIGID_BOND  6
 
-/* !!! DO NOT USE ANY MORE !!! */
-/** Type of bonded interaction is a (HARMONIC-LJ) potential (DO NOT USE). */
-#define BONDED_IA_SUBT_LJ_HARM 99
-/** Type of bonded interaction is a (FENE-LJ) potential (DO NOT USE). */
-#define BONDED_IA_SUBT_LJ_FENE 98
-
 /* Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
 #define TAB_BOND_LENGTH      1
@@ -309,18 +303,6 @@ typedef struct {
       double r;
       double r2;
     } subt_lj;  
-    /** Parameters for FENE-LJ Potential */
-    struct {
-      double k;
-      double r;
-      double r2;
-    } subt_lj_fene;   
-    /** Parameters for HARMONIC-LJ Potential */
-    struct {
-      double k;
-      double r;
-      double r2;
-    } subt_lj_harm;
     /**Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/
     struct {
       /**Length of rigid bond/Constrained Bond*/

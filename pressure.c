@@ -626,18 +626,6 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
 	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*d[l];
 	  break;
 #ifdef LENNARD_JONES
-	case BONDED_IA_SUBT_LJ_HARM:
-	  calc_subt_lj_harm_pair_force(&p1,&p2,iaparams,d,force);
-	  for(k=0;k<3;k++)
-	    for(l=0;l<3;l++)
-	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*d[l];
-	  break;
-	case BONDED_IA_SUBT_LJ_FENE:
-	  calc_subt_lj_fene_pair_force(&p1,&p2,iaparams,d,force);
-	  for(k=0;k<3;k++)
-	    for(l=0;l<3;l++)
-	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*d[l];
-	  break;
 	case BONDED_IA_SUBT_LJ:
 	  calc_subt_lj_pair_force(&p1,&p2,iaparams,d,force);
 	  for(k=0;k<3;k++)

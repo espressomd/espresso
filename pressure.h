@@ -84,8 +84,6 @@ extern nptiso_struct nptiso;
 #include "gb.h"
 #include "fene.h"
 #include "harmonic.h"
-#include "subt_lj_harm.h"
-#include "subt_lj_fene.h"
 #include "subt_lj.h"
 #include "angle.h"
 #include "dihedral.h"
@@ -228,12 +226,6 @@ MDINLINE void add_bonded_virials(Particle *p1)
       calc_harmonic_pair_force(p1,p2,iaparams,dx,force);
       break;
 #ifdef LENNARD_JONES
-    case BONDED_IA_SUBT_LJ_HARM:
-      calc_subt_lj_harm_pair_force(p1,p2,iaparams,dx,force);
-      break;
-    case BONDED_IA_SUBT_LJ_FENE:
-      calc_subt_lj_fene_pair_force(p1,p2,iaparams,dx,force);
-      break;
     case BONDED_IA_SUBT_LJ:
       calc_subt_lj_pair_force(p1,p2,iaparams,dx,force);
       break;

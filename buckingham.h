@@ -102,11 +102,10 @@ MDINLINE int buckingham_set_params(int part_type_a, int part_type_b,
   }
   /* Replace the buckingham potential for interatomic dist. less
     than or equal to discontinuity by a straight line (F1+F2*r) */
-  if (F1==0.0 && F2==0.0) {
-     F1 = buck_energy_r(A, B, C, D, shift, discont) +
-          discont*buck_force_r(A, B, C, D, discont);
-     F2 = -buck_force_r(A, B, C, D, discont);
-  }
+  F1 = buck_energy_r(A, B, C, D, shift, discont) +
+    discont*buck_force_r(A, B, C, D, discont);
+  F2 = -buck_force_r(A, B, C, D, discont);
+
   data->BUCK_F1 = data_sym->BUCK_F1=F1;
   data->BUCK_F2 = data_sym->BUCK_F2=F2;
 

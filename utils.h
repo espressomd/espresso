@@ -247,6 +247,14 @@ MDINLINE int imax(int a, int b) { return (a>b) ? a : b; }
 /** Calculates the minimum of 'int'-typed a and b, returning 'int'. */
 MDINLINE int imin(int a, int b) { return (a<b) ? a : b; }
 
+/** vector difference */
+MDINLINE void vector_subt(double res[3], double a[3], double b[3])
+{
+  int i;
+  for (i=0;i<3;i++)
+    res[i]=a[i]-b[i];
+}
+
 /** Very slow sort routine for small integer arrays. Sorts the values
     in decending order.  
     \param data   the integer array 

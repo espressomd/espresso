@@ -263,14 +263,14 @@
 		<ul>
 		        <li> Harmonic bond angle potential: (flag: <tt>BOND_ANGLE_HARMONIC</tt>)<br>
 			This potential is also used for example in YASP and good old polyMD.
-			\f[ U^{bend}_{harmonic} = bend (\phi - \phi_0)^2 \f]
+			\f[ U^{bend}_{harmonic} = \frac{bend}{2} (\phi - \phi_0)^2 \f]
 		
 			<li> Cosine bond angle potential: (flag: <tt>BOND_ANGLE_COSINE</tt>)<br>
 			The ESPResSo original!
-			\f[ U^{bend}_{cosine} = bend (1 + \cos(\phi - \phi0)) \f]
+			\f[ U^{bend}_{cosine} = \frac{bend}{2} (1 + \cos(\phi - \phi0)) \f]
 			<li> Cosine square bond angle potential: (flag: <tt>BOND_ANGLE_COSSQUARE</tt>)<br>
 			A form which is used for example in the GROMOS96 force field.
-			\f[ U^{bend}_{cossquare} = bend (\cos(\phi) - \cos(\phi_0))^2 \f]
+			\f[ U^{bend}_{cossquare} = \frac{bend}{2} (\cos(\phi) - \cos(\phi_0))^2 \f]
 
 		</ul>
 

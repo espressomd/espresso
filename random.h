@@ -19,7 +19,39 @@
 
 /*----------------------------------------------------------*/
 
+/* Stuff for Franks ran1-generator */
+/*@{*/
+#define IA 16807
+#define IM 2147483647
+#define AM (1.0/2147483647.)
+#define IQ 127773
+#define IR 2836
+#define NDIV ((double) (1+(2147483647-1)/NTAB_RANDOM))
+#define RNMX (1.0-1.2e-7)
 # define NTAB_RANDOM  32
+
+extern long  idum;
+extern long  idumInit;
+extern long  iy;
+extern long  iv[NTAB_RANDOM];
+/*@}*/
+
+/** Stuff for Burkhards r250-generator */
+/*@{*/
+#define MERS1 147
+#define MERS_BIT_RANDOM 250
+#define NBIT 32
+#define BIGINTEGER 2147483647
+#define BIGFLOAT 2147483647.
+#define FACTOR 4.6566128752457969e-10
+#define MULTIPLY 16807.
+#define NWARM 10000
+
+extern int bit_seed;
+extern int rand_w_array[MERS_BIT_RANDOM];
+extern int random_pointer_1;
+extern int random_pointer_2;
+/*@}*/
 
 typedef struct {
   long  idum;
@@ -27,15 +59,53 @@ typedef struct {
   long  iv[NTAB_RANDOM];
 } RandomStatus;
 
-extern long   l_random(void);
-extern int    i_random(int maxint);
-extern double d_random(void);
-extern void   init_random(void);
-extern void   init_random_seed(long seed);
-extern void   init_random_stat(RandomStatus my_stat);
-extern long   print_random_idum(void);
-extern long   print_random_seed(void);
+void   init_random(void);
+void   init_random_seed(long seed);
+void   init_random_stat(RandomStatus my_stat);
+long   print_random_idum(void);
+long   print_random_seed(void);
 RandomStatus  print_random_stat(void);
+
+/** classical RAN1 random number generator */
+MDINLINE long l_random(void)
+{
+  /* 
+   *    N O T E   T H A T   T H E R E   A R E   N O   S A F E T Y   C H E C K S  !!!
+   */
+  int    j;
+  long   k;
+  
+  k = (idum) / IQ;
+  idum = IA * (idum - k * IQ) - IR * k;
+  if (idum < 0) idum += IM;
+  j = iy / NDIV;
+  iy = iv[j];
+  iv[j] = idum;
+  return iy;
+}
+
+/** same as l_random, but for integer */
+MDINLINE int i_random(int maxint)
+{
+  /* delivers an integer between 0 and maxint-1 */
+  int temp;
+  temp =  (int)( ( (double) maxint * l_random() )* AM );
+  return temp;
+}
+  
+
+/*----------------------------------------------------------------------*/
+
+MDINLINE double d_random(void)
+{
+  /* delivers a uniform double between 0 and 1 */
+  double temp;
+  iy = l_random();
+  if ((temp = AM * iy) > RNMX) 
+    temp = RNMX;
+  return temp;
+}
+
 
 /**  Implementation of the tcl command \ref tcl_t_random. Access to the
      parallel random number generator.
@@ -45,8 +115,6 @@ int t_random(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 /*----------------------------------------------------------*/
 /*----------------------------------------------------------*/
 /*----------------------------------------------------------*/
-
-#define MERS_BIT_RANDOM 250
 
 typedef struct {
   int random_pointer_1;

@@ -20,81 +20,17 @@
 /** \file random.c A random generator. 
     Be sure to run init_random() before you use any of the generators. */
 
-
-/* Stuff for Franks ran1-generator from the Numerical Recipes */
-const long     IA = 16807;
-const long     IM = 2147483647;
-const double   AM = (1.0/2147483647. );
-const long     IQ = 127773;
-const long     IR = 2836;
-const double NDIV = (double) (1+(2147483647-1)/NTAB_RANDOM);
-const double RNMX = (1.0-1.2e-7);
-
-static long  idum = -1;
-static long  idumInit = -1;
-static long  iy=0;
-static long  iv[NTAB_RANDOM];
-
+/* Stuff for Franks ran1-generator */
+long  idum = -1;
+long  idumInit = -1;
+long  iy=0;
+long  iv[NTAB_RANDOM];
 
 /* Stuff for Burkhards r250-generator */
-const long        MERS1 = 147;
-const long         NBIT = 32;
-const long   BIGINTEGER = 2147483647;
-const double   BIGFLOAT = 2147483647.;
-const double     FACTOR = 4.6566128752457969e-10;
-const double   MULTIPLY = 16807.;
-const long        NWARM = 10000;
-
-static int bit_seed = -1;
-static int rand_w_array[MERS_BIT_RANDOM];
-static int random_pointer_1 = -1;
-static int random_pointer_2 = -1;
-
-
-
-/*----------------------------------------------------------------------*/
-
-long l_random(void)
-{
-  /* 
-   *    'ran1' from Numerical Recipes in C by Press et al.,
-   *    N O T E   T H A T   T H E R E   A R E   N O   S A F E T Y   C H E C K S  !!!
-   */
-  
-  int    j;
-  long   k;
-  
-  k = (idum) / IQ;
-  idum = IA * (idum - k * IQ) - IR * k;
-  if (idum < 0) idum += IM;
-  j = iy / NDIV;
-  iy = iv[j];
-  iv[j] = idum;
-  return iy;
-}
-
-/*----------------------------------------------------------------------*/
-
-int i_random(int maxint)
-{
-  /* delivers an integer between 0 and maxint-1 */
-  int temp;
-  temp =  (int)( ( (double) maxint * l_random() )* AM );
-  return temp;
-}
-  
-
-/*----------------------------------------------------------------------*/
-
-double d_random(void)
-{
-  /* delivers a uniform double between 0 and 1 */
-  double temp;
-  iy = l_random();
-  if ((temp = AM * iy) > RNMX) 
-    temp = RNMX;
-  return temp;
-}
+int bit_seed = -1;
+int rand_w_array[MERS_BIT_RANDOM];
+int random_pointer_1 = -1;
+int random_pointer_2 = -1;
 
 /*----------------------------------------------------------------------*/
 

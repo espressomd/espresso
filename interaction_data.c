@@ -279,10 +279,6 @@ char *get_name_of_bonded_ia(int i) {
     return "dihedral";
   case BONDED_IA_HARMONIC:
     return "HARMONIC";
-  case BONDED_IA_SUBT_LJ_HARM:
-    return "SUBT_LJ_HARM";
-  case BONDED_IA_SUBT_LJ_FENE:
-    return "SUBT_LJ_FENE";
   case BONDED_IA_SUBT_LJ:
     return "SUBT_LJ";
   case BONDED_IA_TABULATED:
@@ -385,14 +381,6 @@ void calc_maximal_cutoff()
     case BONDED_IA_HARMONIC:
       if(max_cut < bonded_ia_params[i].p.harmonic.r)
 	max_cut = bonded_ia_params[i].p.harmonic.r;
-      break;
-    case BONDED_IA_SUBT_LJ_HARM:
-      if(max_cut < bonded_ia_params[i].p.subt_lj_harm.r)
-	max_cut = bonded_ia_params[i].p.subt_lj_harm.r;
-      break;
-    case BONDED_IA_SUBT_LJ_FENE:
-      if(max_cut < bonded_ia_params[i].p.subt_lj_fene.r)
-	max_cut = bonded_ia_params[i].p.subt_lj_fene.r;
       break;
     case BONDED_IA_SUBT_LJ:
       if(max_cut < bonded_ia_params[i].p.subt_lj.r)
@@ -727,18 +715,6 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, "SUBT_LJ ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, params->p.subt_lj.r, buffer);
     Tcl_AppendResult(interp, buffer,(char *) NULL);
-    return (TCL_OK);
-  case BONDED_IA_SUBT_LJ_HARM:
-    Tcl_PrintDouble(interp, params->p.subt_lj_harm.k, buffer);
-    Tcl_AppendResult(interp, "SUBT_LJ_HARM ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.subt_lj_harm.r, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
-  case BONDED_IA_SUBT_LJ_FENE:
-    Tcl_PrintDouble(interp, params->p.subt_lj_fene.k, buffer);
-    Tcl_AppendResult(interp, "SUBT_LJ_FENE ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.subt_lj_fene.r, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
 #endif
  case BONDED_IA_NONE:
@@ -1126,7 +1102,6 @@ int inter_parse_bonded(Tcl_Interp *interp,
   }  
   
 #ifdef LENNARD_JONES  
-
   if (ARG0_IS_S("subt_lj")) {
 
       if (argc != 3) {
@@ -1143,41 +1118,6 @@ int inter_parse_bonded(Tcl_Interp *interp,
 
       CHECK_VALUE(subt_lj_set_params(bond_type, k, r), "bond type must be nonnegative");
   }
-
-  if (ARG0_IS_S("subt_lj_harm")) {
-
-      if (argc != 3) {
-	Tcl_AppendResult(interp, "subt_lj_harm needs 2 parameters: "
-			 "<k_subt_lj_harm> <r_subt_lj_harm>", (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) {
-	Tcl_AppendResult(interp, "subt_lj_harm needs 2 DOUBLE parameters: "
-			 "<k_subt_lj_harm> <r_subt_lj_harm>", (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      CHECK_VALUE(subt_lj_harm_set_params(bond_type, k, r), "bond type must be nonnegative");
-  }  
-  
-  if (ARG0_IS_S("subt_lj_fene")) {
-
-      if (argc != 3) {
-	Tcl_AppendResult(interp, "subt_lj_fene needs 2 parameters: "
-			 "<k_subt_lj_fene> <r_subt_lj_fene>", (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) {
-	Tcl_AppendResult(interp, "subt_lj_fene needs 2 DOUBLE parameters: "
-			 "<k_subt_lj_fene> <r_subt_lj_fene>", (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      CHECK_VALUE(subt_lj_fene_set_params(bond_type, k, r), "bond type must be nonnegative");
-  }
-
 #endif
 
   if (ARG0_IS_S("angle")) {

@@ -112,6 +112,9 @@ extern double langevin_gamma;
 /** langevin Friction coefficient gamma for rotation */
 extern double langevin_gamma_rotation;
 
+/** prefactors of the Langevin thermostats, both rotational and not */
+extern double langevin_pref1, langevin_pref2, langevin_pref2_rotation;
+
 /** DPD Friction coefficient gamma. */
 extern double dpd_gamma;
 /** DPD thermostat cutoff */
@@ -153,11 +156,6 @@ int thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv);
     start of integration */
 void thermo_init();
 
-/** overwrite the forces of a particle with
-    the friction term, i.e. \f$ F_i= -\gamma v_i + \xi_i\f$.
-*/
-void friction_thermo_langevin(Particle *p);
-
 /** very nasty: if we recalculate force when leaving/reentering the integrator,
     a(t) and a((t-dt)+dt) are NOT equal in the vv algorithm. The random
     numbers are drawn twice, resulting in a different variance of the random force.
@@ -188,15 +186,53 @@ MDINLINE double friction_thermV_nptiso(double p_diff) {
 }
 #endif
 
-/** set the particle torques to the friction term, i.e. \f$\tau_i=-\gamma w_i + \xi_i\f$.
-The same friction coefficient \f$\gamma\f$ is used as that for translation.
-*/
-void friction_thermo_langevin_rotation(Particle *p);
-
 /** Callback for setting \ref #temperature */
 int temp_callback(Tcl_Interp *interp, void *_data);
 /** Callback for setting \ref langevin_gamma */
 int langevin_gamma_callback(Tcl_Interp *interp, void *_data);
+
+/** overwrite the forces of a particle with
+    the friction term, i.e. \f$ F_i= -\gamma v_i + \xi_i\f$.
+*/
+MDINLINE void friction_thermo_langevin(Particle *p)
+{
+  int j;
+#ifdef MASS
+  double massf = sqrt(PMASS(*p));
+#else
+  double massf = 1;
+#endif
+
+  for ( j = 0 ; j < 3 ; j++) {
+#ifdef EXTERNAL_FORCES
+    if (!(p->l.ext_flag & COORD_FIXED(j)))
+#endif
+      p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
+  }
+
+  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+  THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
+}
+
+#ifdef ROTATION
+/** set the particle torques to the friction term, i.e. \f$\tau_i=-\gamma w_i + \xi_i\f$.
+    The same friction coefficient \f$\gamma\f$ is used as that for translation.
+*/
+MDINLINE void friction_thermo_langevin_rotation(Particle *p)
+{
+  int j;
+#ifdef EXTERNAL_FORCES
+  if(!(p->l.ext_flag & COORDS_FIX_MASK))
+#endif
+    {
+      for ( j = 0 ; j < 3 ; j++)
+	p->f.torque[j] = -langevin_gamma*p->m.omega[j] + langevin_pref2*(d_random()-0.5);
+
+      ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+      THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
+    }
+}
+#endif
 
 #ifdef DPD
 /** Calculate Random Force and Friction Force acting between particle

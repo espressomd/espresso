@@ -45,6 +45,7 @@ void mpifake_copy(void *from, void *to, int *count, MPI_Datatype *dtype);
 int mpifake_checked_copy(void *s, int scount, MPI_Datatype sdtype,
 			 void *r, int rcount, MPI_Datatype rdtype);
 
+#define MPI_LOR mpifake_copy
 #define MPI_SUM mpifake_copy
 #define MPI_MAX mpifake_copy
 #define MPI_COPY mpifake_copy

@@ -1931,7 +1931,7 @@ void recv_particles(ParticleList *particles, int node)
     realloc_intlist(&local_bi, 0);
 }
 
-
+#ifdef EXCLUSIONS
 /**truncates the size (=number of bond partners) for each particle's bond list to w*/
 void recreate_bond_list(int w)
 {
@@ -2073,7 +2073,6 @@ int create_bond_list(int w)
   return(w);
 }
 
-#ifdef EXCLUSIONS
 /**returns 1 if i and j are bond partners, otherwise 0*/
 int is_bond_partner(int i, int j)
 {

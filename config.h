@@ -69,7 +69,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 #define CONSTRAINTS
 
 /** allow particles to have different masses. */
-#define MASS 
+/* #define MASS */
 
 /** exclusion of nonbonded interactions for specific particle pairs
     currently works only with domain decomposition and Verlet lists */
@@ -82,7 +82,8 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /* #define COMFIXED */
 
 /** Compiler Flag to enable bond constraint.
-    See \ref rattle.h NOT YET MERGED, LEAVE OFF!!! */
+    See \ref rattle.h, merged but not tested. If you need this, I wish
+    you happy debugging. */
 /* #define BOND_CONSTRAINT */
 
 /************************************************/
@@ -179,6 +180,9 @@ This will allow to use such particle properties as quart, omega, and torque. */
 #define TINY_SIN_VALUE 1e-10
 /** Tiny angle cutoff for cosine calculations */
 #define TINY_COS_VALUE 0.9999999999
+
+/** maximal number of iterations in the RATTLE algorithm before it bails out. */
+#define SHAKE_MAX_ITERATIONS 1000
 
 /*@}*/
 

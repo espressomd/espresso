@@ -30,8 +30,6 @@
 #include "gb.h"
 #include "fene.h"
 #include "harmonic.h"
-#include "subt_lj_harm.h"
-#include "subt_lj_fene.h"
 #include "subt_lj.h"
 #include "angle.h"
 #include "dihedral.h"
@@ -184,12 +182,6 @@ MDINLINE void add_bonded_energy(Particle *p1)
       bond_broken = harmonic_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #ifdef LENNARD_JONES
-    case BONDED_IA_SUBT_LJ_HARM:
-      bond_broken = subt_lj_harm_pair_energy(p1, p2, iaparams, dx, &ret);
-      break; 
-    case BONDED_IA_SUBT_LJ_FENE:
-      bond_broken = subt_lj_fene_pair_energy(p1, p2, iaparams, dx, &ret);
-      break; 
     case BONDED_IA_SUBT_LJ:
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
       break;

@@ -37,12 +37,11 @@ double nptiso_gamma0 = 0.0;
 // INSERT COMMENT
 double nptiso_gammav = 0.0;
 
-
-/* prefactors for thermostats */
-double langevin_pref1;
-double langevin_pref2;
-double langevin_pref2_rotation;
+double langevin_pref1, langevin_pref2, langevin_pref2_rotation;
+/** buffers for the work around for the correlated random values which cool the system,
+    and require a magical heat up whenever reentering the integrator. */
 static double langevin_pref2_buffer, langevin_pref2_rotation_buffer;
+
 #ifdef DPD
 double dpd_pref1;
 double dpd_pref2;
@@ -409,37 +408,3 @@ void thermo_cool_down()
     langevin_pref2_rotation = langevin_pref2_rotation_buffer;
   }
 }
-
-void friction_thermo_langevin(Particle *p)
-{
-  int j;
-  for ( j = 0 ; j < 3 ; j++) {
-#ifdef EXTERNAL_FORCES
-    if (!(p->l.ext_flag & COORD_FIXED(j)))
-#endif
-      p->f.f[j] = langevin_pref1*p->m.v[j] + langevin_pref2*(d_random()-0.5);
-  }
-
-  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
-  THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
-}
-
-#ifdef ROTATION
-void friction_thermo_langevin_rotation(Particle *p)
-{
-  int j;
-#ifdef EXTERNAL_FORCES
-  if(!(p->l.ext_flag & COORDS_FIX_MASK))
-#endif
-    {
-      for ( j = 0 ; j < 3 ; j++)
-	p->f.torque[j] = -langevin_gamma*p->m.omega[j] + langevin_pref2*(d_random()-0.5);
-
-      ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
-      THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
-    }
-}
-#endif
-
-
-
