@@ -360,9 +360,8 @@ void fold_particle(double pos[3],int image_box[3])
       image_box[i] += (tmp = (int)floor(pos[i]/box_l[i]));
       pos[i]       = pos[i] - tmp*box_l[i];    
       if(pos[i] < 0 || pos[i] > box_l[i]) {
-	fprintf(stderr,"%d: fold_particle: Particle out of"
-		" range image_box[%d] = %d, exiting\n",
-		this_node,i,image_box[i]);
+	fprintf(stderr,"\n%d: fold_particle: Particle out of range (%f not in box_l %f) image_box[%d] = %d, exiting\n",
+		this_node,pos[i],box_l[i],i,image_box[i]);
 	errexit();
       }
     }
@@ -376,9 +375,8 @@ void fold_coordinate(double pos[3], int image_box[3], int dir)
     image_box[dir] += (tmp = (int)floor(pos[dir]/box_l[dir]));
     pos[dir]        = pos[dir] - tmp*box_l[dir];    
     if(pos[dir] < 0 || pos[dir] > box_l[dir]) {
-      fprintf(stderr,"%d: fold_particle: Particle out of"
-	      " range image_box[%d] = %d, exiting\n",
-	      this_node,dir,image_box[dir]);
+      fprintf(stderr,"\n%d: fold_coordinate: Particle out of range (%f not in box_l %f) image_box[%d] = %d, exiting\n",
+	      this_node,pos[dir],box_l[dir],dir,image_box[dir]);
       errexit();
     }
   }
