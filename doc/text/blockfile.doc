@@ -19,7 +19,7 @@ e. g. for creating and using checkpoints. Hence you can transfer all accessible 
 	use '<tt>set out [open "checkpoint.block" "w"]</tt>' instead).<BR>
 	Note that interactions must be stored before particles before bonding informations, as for the bonds to be set all particles and
 	all interactions must already be known to Espresso.
-    <li>\verbatim set in [open "|gzip -c - > checkpoint.block.gz" "r"]
+    <li>\verbatim set in [open "|gzip -cd checkpoint.block.gz" "r"]
  while { [blockfile $in read auto] != "eof" } {}
  close $in \endverbatim
         This is basically all you need to restore the informations in the blockfile (again, if you don't have a compressed file, 
