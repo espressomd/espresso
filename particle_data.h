@@ -24,6 +24,9 @@
  * defines
  ************************************************/
 
+#define DATA_DOMAIN_DECOMPOSITION 0
+#define DATA_NSQUARE              1
+
 #ifdef EXTERNAL_FORCES
 /** \ref Particle::ext_flag "ext_flag" value for unfixed particle. */
 #define PARTICLE_UNFIXED   0

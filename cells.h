@@ -63,8 +63,14 @@ typedef struct {
   /** type descriptor */
   int type;
 
-  /** transport information */
-  GhostCommunicator update_pos_comm, receive_force_comm;
+  /** Communicator to exchange ghost cell information. */
+  GhostCommunicator ghost_cells_comm;  
+  /** Communicator to exchange ghost particles. */
+  GhostCommunicator exchange_ghosts_comm;
+  /** Communicator to update ghost positions. */
+  GhostCommunicator update_ghost_pos_comm;
+  /** Communicator to collect ghost forces. */
+  GhostCommunicator collect_ghost_force_comm;
 
   /** Called when the current cell structure is invalidated because for example the
       box length has changed. This procedure may NOT destroy the old inner cells,

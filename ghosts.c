@@ -237,6 +237,15 @@ void ghost_pre_init()
   init_doublelist(&recv_buf);
 }
 
+void init_ghost_communicator(CellStructure cs, int data_structure)
+{
+  switch (data_structure) {
+  case DATA_DOMAIN_DECOMPOSITION:
+    
+  case DATA_NSQUARE: ;
+  default: ;
+  }
+}
 
 void ghost_init()
 {
@@ -438,6 +447,21 @@ void exchange_and_sort_part()
   GHOST_TRACE(print_particle_positions());
 #endif
   GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part: exit\n",this_node));
+}
+
+void ghost_comm(GhostCommunicator gc) 
+{
+  int i;
+
+  for(i=0; i<gc.num; i++) {
+    comm_ghost_data(gc.comm[i],data_parts);
+  }
+
+}
+
+void comm_ghost_data(GhostCommunication ,int data_parts)
+{
+
 }
 
 void exchange_ghost()

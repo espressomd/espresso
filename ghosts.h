@@ -121,6 +121,9 @@ typedef struct {
 /************************************************************/
 /*@{*/
 
+/** Initialize the communicator for a certain data structure. */
+
+
 /** Initialize some arrays connected to the ghosts modul. 
  */
 void ghost_pre_init();
