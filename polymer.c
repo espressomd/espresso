@@ -1018,11 +1018,11 @@ int icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     }
     /* [charges <val_cM> <val_CI>] */
     else if (!strncmp(argv[i], "charges", strlen(argv[i]))) {
-      if (i+3 >= argc) { Tcl_AppendResult(interp, "Wrong # of args! Usage: charges <val_cM> <val_CI>!", (char *)NULL); return (TCL_ERROR); }
+      if (i+2 >= argc) { Tcl_AppendResult(interp, "Wrong # of args! Usage: charges <val_cM> <val_CI>!", (char *)NULL); return (TCL_ERROR); }
       if (Tcl_GetDouble(interp, argv[i+1], &val_cM) == TCL_ERROR) { 
-	Tcl_AppendResult(interp, "The charge of the monomers must be double (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
+	Tcl_AppendResult(interp, "The charge of the monomers must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
       if (Tcl_GetDouble(interp, argv[i+2], &val_CI) == TCL_ERROR) { 
-	Tcl_AppendResult(interp, "The charge of the counterions must be double (got: ",argv[i+3],")!", (char *)NULL); return (TCL_ERROR); }
+	Tcl_AppendResult(interp, "The charge of the counterions must be double (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
       i+=2;
     }
     /* [distance <cM_dist>] */
