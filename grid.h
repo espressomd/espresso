@@ -140,11 +140,17 @@ int map_3don2d_grid(int g3d[3],int g2d[3], int mult[3]);
 /** datafield callback for \ref node_grid. */
 int node_grid_callback(Tcl_Interp *interp, void *data);
 
+/** datafield callback for \ref #periodic. Determines wether a coordinate is pbc (default). */
+int per_callback(Tcl_Interp *interp, void *_data);
+
 /** datafield callback for \ref box_l. Sets the box dimensions. */
 int boxl_callback(Tcl_Interp *interp, void *_data);
 
-/** datafield callback for \ref #periodic. Determines wether a coordinate is pbc (default). */
-int per_callback(Tcl_Interp *interp, void *_data);
+/** changes the volume by resizing the box and isotropically adjusting the particles coordinates as well */
+int change_volume(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
+/** rescales the box in dimension 'dir' to the new value 'd_new', and rescales the particles accordingly */
+void rescale_boxl(int dir, double d_new);
 
 /*@}*/
 #endif
