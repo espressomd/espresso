@@ -169,12 +169,28 @@ proc blockfile_read_auto_bonds {channel read auto} {
 
 proc blockfile_write_interactions {channel write interactions} {
     blockfile $channel write start interactions
-    puts $channel "\n\t{[join [inter] "\}\n\t\{"]}\n\}"
+    set data [join [inter] "\}\n\t\{"]
+    puts $channel "\n\t{$data}\n\}"
 }
 
 proc blockfile_read_auto_interactions {channel read auto} {
     set data [blockfile $channel read toend]
     foreach d $data { eval "inter $d" }
+}
+
+######################################
+# topology support
+######################################
+
+proc blockfile_write_topology {channel write topology} {
+    blockfile $channel write start topology
+    set data [join [analyze set] "\}\n\t\{"]
+    puts $channel "\n\t{$data}\n\}"
+}
+
+proc blockfile_read_auto_topology {channel read auto} {
+    set data [string map {"\n" " "} [blockfile $channel read toend]]
+    eval "analyze set $data"
 }
 
 ######################################
