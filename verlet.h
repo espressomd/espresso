@@ -92,11 +92,6 @@ void calculate_verlet_ia();
 */
 void build_verlet_lists_and_calc_verlet_ia();
 
-/** Calculate nonbonded and bonded forces with link-cell 
-    method
-*/
-void calc_link_cell();
-
 /** Nonbonded and bonded energy calculation using the verlet list */
 void calculate_verlet_energies();
 

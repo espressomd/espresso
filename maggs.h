@@ -1,3 +1,11 @@
+// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
+// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
+// and by which you are legally bound while utilizing this file in any form or way.
+// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// You should have received a copy of that license along with this program;
+// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
+// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
+// Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
 #ifndef MAGGS_H 
 #define MAGGS_H
 /** \file maggs.h   
@@ -12,8 +20,6 @@
 #ifdef ELECTROSTATICS
 
 #define SPACE_DIM 3
-/** Number of  additional degrees of freedom (for Yukawa) */
-#define ADD_DOF_DIM 1
 #define LINEAR_INTERPOLATION
 
 /** Not an index value for arrays. */
@@ -108,6 +114,10 @@ int maggs_count_charged_particles();
  */
 void propagate_B_field(double dt);
 
+/** \name Exported Functions */
+/************************************************************/
+/*@{*/
+
 double maggs_magnetic_energy();
 /** Calculate electric energy of the field.
  */
@@ -126,6 +136,15 @@ double calc_gauss_res();
 
 /** implementation of analyze energy */
 int parse_and_print_gauss_res(Tcl_Interp *interp, int argc, char **argv);
+
+/// print the maggs parameters to the interpreters result
+int printMaggsToResult(Tcl_Interp *interp);
+
+/// parse the basic maggs parameters
+int inter_parse_maggs(Tcl_Interp * interp, int argc, char ** argv);
+
+///
+int Maggs_sanity_checks();
 
 /** Calculate real space contribution of Yukawa pair forces. */
 MDINLINE void add_maggs_yukawa_pair_force(Particle *p1, Particle *p2,

@@ -92,6 +92,8 @@ typedef struct {
 
 /** Structure containing the information about the cell grid used for domain decomposition. */
 typedef struct {
+  /** flag for using Verlet List */
+  int use_vList;
   /** linked cell grid in nodes spatial domain. */
   int cell_grid[3];
   /** linked cell grid with ghost frame. */
@@ -104,7 +106,6 @@ typedef struct {
   /** Array containing information about the interactions between the cells. */
   IA_Neighbor_List *cell_inter;
 }  DomainDecomposition;
-
 
 /************************************************************/
 /** \name Exported Variables */
@@ -179,6 +180,14 @@ Cell *dd_position_to_cell(double pos[3]);
 /** Callback for setmd maxnumcells (maxnumcells >= 27). 
     see also \ref max_num_cells */
 int max_num_cells_callback(Tcl_Interp *interp, void *_data);
+
+/** Calculate nonbonded and bonded forces with link-cell 
+    method (without Verlet lists)
+*/
+void calc_link_cell();
+
+/** Nonbonded and bonded energy calculation using link-cell method */
+void calculate_link_cell_energies();
 
 /*@}*/
 
