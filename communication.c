@@ -234,6 +234,9 @@ void mpi_who_has()
   /* first collect number of particles on each node */
   MPI_Gather(&n_particles, 1, MPI_INT, sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
+  for (i = 0; i <= max_seen_particle; i++)
+    particle_node[i] = -1;
+
   /* then fetch particle locations */
   for (pnode = 0; pnode < n_nodes; pnode++) {
     COMM_TRACE(fprintf(stderr, "node %d reports %d particles\n",
