@@ -75,58 +75,70 @@ Do not set variables which are specified as read only.
 	together with the compiler flag PARTIAL_PERIODIC.
 	</ul>
 
-<li>\verbatim part <particle_number> ( pos|q|type|bond|v|f <value>+ )* \endverbatim
-	modifies particle data, namely
-	charge, type, position, velocity, force and bonds. 
-	Multiple properties can be changed at once. 
-	If no property is given, 
-	\verbatim part <particle_number> \endverbatim 
-	returns the properties of the particle if it exists.
-	The C implementation is \ref part. Syntax for the different
-	properties:
+<li>\verbatim part <particle_number> ( pos|type|q|v|f|bond <value>+ )* \endverbatim
+	modifies particle data, namely position, type (monomer, ion, ...), charge, velocity, force and bonds. 
+	Multiple properties can be changed at once. <BR>
+	Syntax for the different properties:
 	<ul>
 	<li> \verbatim pos <x value> <y value> <z value> \endverbatim
+	<li> \verbatim type <particle_type_number> \endverbatim
+	Restrictions: particle_type_number >= 0.<BR>
+	The particle_type_number is used for \ref inter to differentiate non bonded
+	interactions between different kind of particles.
 	<li> \verbatim q <charge> \endverbatim
-	<li> \verbatim type <type number> \endverbatim
-	Restrictions: type number >= 0.
-	<li> \verbatim bond <type_number> <partner>+ \endverbatim
-	Restrictions: type_number >= 0; partner must be an existing particle.
 	<li> \verbatim v <x value> <y value> <z value> \endverbatim
 	<li> \verbatim f <x value> <y value> <z value> \endverbatim
+	<li> \verbatim bond <bond_type_number> <partner>+ \endverbatim
+	Restrictions: bond_type_number >= 0; partner must be an	existing particle.<BR>
+	The bond_type_number is used for \ref inter to differentiate bonded interactions.
 	</ul>
+	If no property is given, 
+	\verbatim part <particle_number> \endverbatim 
+	returns the properties of the particle, if it exists, in the form of a tcl-list, e.g.
+	\verbatim {pos 2.1 6.4 3.1 type 0 q -1.0 v 0.0 0.0 0.0 f 0.0 0.0 0.0 bonds { {0 480} {0 368} ... } } \endverbatim
+	which may be used as an input to this function later on.<BR>
+	Without any parameters at all,
+	\verbatim part \endverbatim
+	returns the properties of <i> all </i> stored particles in a 
+	tcl-list with the same format as specified above. <BR>
+        The C implementation is \ref part. <BR>
 
-<li> \anchor DH_inter \verbatim inter \endverbatim
+<li> \anchor DH_inter \verbatim inter ( <particle_type_number1> <particle_type_number2> | <bond_type_number> ) <interaction_type> <value>+ \endverbatim
 	sets the parameters for interactions.
 
 	<ol>
 	<b><li> \anchor DH_non_bonded Non bonded interactions:</b> 
-
-	\verbatim inter <type1> <type2> <interaction_type> <value>+ \endverbatim	
-	Non bonded interaction between particles of
-	types type1 and type2 (the types are those set using \ref part).
-	Currently known interaction types are:
+	\verbatim inter <particle_type_number1> <particle_type_number2> <interaction_type> <value>+ \endverbatim	
+	Non bonded interaction between particles of types
+	particle_type_number1 and particle_type_number2 (the types are those set using \ref part).<BR>
+	Currently known interaction_types are:
 
 	<ul>
 	   	<li>\verbatim lennard-jones <epsilon> <sigma> <cutoff> <shift> <offset> \endverbatim
 			the known Lennard-Jones potential
 			\f[24 \epsilon \left(2 \left(\frac{\sigma}{r-offset}\right)^{12} -
 				 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
-			The order of the paramters is
+			The order of the parameters is
 			\f$\epsilon, \sigma, cutoff, shift, offset\f$.
 
 		<li>\verbatim ramp <cutoff> <force_magnitude> \endverbatim
-			a simple step potential for initialization.
+			a simple step potential for initialization.<BR>
 			The parameters are the cutoff and the force
 			magnitude. If two particles are within the
 			cutoff, they feel a constant repulsion of the
 			given magnitude.
 	</ul>
+	If no interaction_type is given,
+	\verbatim inter <particle_type_number1> <particle_type_number2> \endverbatim
+	returns the parameters of currently used potentials for
+	non-bonded interactions in a tcl-list, e.g.
+	\verbatim {lennard-jones 1.0 2.0 1.1225 0.0 0.0} {ramp 0.0 0.0} \endverbatim
+	whose format directly corresponds to the input-format of the respective interaction.
 
 	<b> <li> \anchor DH_bonded Bonded interactions: </b>
-
-	\verbatim inter <type_num> <interaction_type> <value>+ \endverbatim
-	Bonded interaction (Bonds are set using \ref part).
-	Currently known interaction types are:
+	\verbatim inter <bond_type_number> <interaction_type> <value>+ \endverbatim
+	Bonded interaction (bonds are set using \ref part).
+	Currently known interaction_types are:
 
 	<ul>
 		<li> \verbatim fene <K_fene> <R_fene> \endverbatim
@@ -140,6 +152,14 @@ Do not set variables which are specified as read only.
 			with \f$ \alpha \f$ being the angle between two
 			neighboring bonds.
 	</ul>
+	If no interaction_type is given,
+	\verbatim inter <bond_type_number> \endverbatim
+	returns the parameters of the potential responsible for the
+	bonded interactions of bonds with that bond_type_number in a
+	tcl-list, e.g.
+	\verbatim {FENE 7.0 2.0} \endverbatim	
+	whose format directly corresponds to the input-format of the respective interaction.
+
 	</ol>		
 	The C implementation is \ref inter.
 
