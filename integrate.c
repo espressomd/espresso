@@ -117,7 +117,7 @@ void integrate_vv(int n_steps)
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
     propagate_velocities();
     propagate_positions();
-    //rebuild_verletlist = 1;
+    /* rebuild_verletlist = 1; */
     if(rebuild_verletlist == 1) {
       exchange_part();
       sort_particles_into_cells();

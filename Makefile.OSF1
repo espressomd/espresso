@@ -12,7 +12,8 @@ CFLAGS=-I/usr/local/include $(MSG_FLAGS) -g
 # warnings
 MSG_FLAGS=-check -msg_disable ignorecallval -msg_disable noparmlist \
 	  -msg_disable uncalled -msg_disable alignment -msg_disable unknownmacro \
-	  -msg_disable strctpadding -msg_disable unusedincl
+	  -msg_disable strctpadding -msg_disable unusedincl -msg_disable unusedtop \
+	  -msg_disable unnecincl -msg_disable nestincl
 CFLAGS+= $(MSG_FLAGS)
 
 # MDINLINE defines hwo to declare inline functions
