@@ -192,9 +192,10 @@ void on_resort_particles()
 void on_NpT_boxl_change() {
   grid_changed_box_l();
 
-  if(coulomb.method == COULOMB_P3M)
+  if(coulomb.method == COULOMB_P3M) {
+    P3M_scaleby_box_l();
     integrate_vv_recalc_maxrange();
-
+  }
   if(cell_structure.type==CELL_STRUCTURE_DOMDEC)
     dd_NpT_update_cell_grid();
 }
@@ -216,6 +217,10 @@ void on_parameter_change(int field)
   case COULOMB_P3M:
     if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID)
       on_coulomb_change();
+    else if (field == FIELD_BOXL) {
+      P3M_scaleby_box_l();
+      integrate_vv_recalc_maxrange(); 
+    }
     break;
   case COULOMB_DH:
     if (field == FIELD_TEMPERATURE)

@@ -1369,8 +1369,10 @@ int inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv)
 void p3m_set_tune_params(double r_cut, int mesh, int cao,
 			 double alpha, double accuracy)
 {
-  if (r_cut >= 0)
-    p3m.r_cut = r_cut;
+  if (r_cut >= 0) {
+    p3m.r_cut    = r_cut;
+    p3m.r_cut_iL = r_cut*box_l_i[0];
+  }
 
   if (mesh >= 0)
     p3m.mesh[2] = p3m.mesh[1] = p3m.mesh[0] = mesh;
@@ -1378,8 +1380,10 @@ void p3m_set_tune_params(double r_cut, int mesh, int cao,
   if (cao >= 0)
     p3m.cao = cao;
 
-  if (alpha >= 0)
-    p3m.alpha = alpha;
+  if (alpha >= 0) {
+    p3m.alpha   = alpha;
+    p3m.alpha_L = alpha*box_l[0];
+  }
 
   if (accuracy >= 0)
     p3m.accuracy = accuracy;
@@ -1399,12 +1403,15 @@ int p3m_set_params(double r_cut, int mesh, int cao,
   if(cao < 1 || cao > 7 || cao > mesh)
     return -3;
 
-  p3m.r_cut = r_cut;
-  p3m.mesh[2] = p3m.mesh[1] = p3m.mesh[0] = mesh;
-  p3m.cao = cao;
+  p3m.r_cut    = r_cut;
+  p3m.r_cut_iL = r_cut*box_l_i[0];
+  p3m.mesh[2]  = p3m.mesh[1] = p3m.mesh[0] = mesh;
+  p3m.cao      = cao;
 
-  if (alpha > 0)
-    p3m.alpha = alpha;
+  if (alpha > 0) {
+    p3m.alpha   = alpha;
+    p3m.alpha_L = alpha*box_l[0];
+  }
   else
     if (alpha != -1.0)
       return -4;
@@ -1468,12 +1475,14 @@ int coulomb_set_bjerrum(double bjerrum)
 
     if (coulomb.method == COULOMB_P3M) {
 
-      p3m.alpha   = 0.0;
-      p3m.r_cut   = 0.0;
-      p3m.mesh[0] = 0;
-      p3m.mesh[1] = 0;
-      p3m.mesh[2] = 0;
-      p3m.cao     = 0;
+      p3m.alpha    = 0.0;
+      p3m.alpha_L  = 0.0;
+      p3m.r_cut    = 0.0;
+      p3m.r_cut_iL = 0.0;
+      p3m.mesh[0]  = 0;
+      p3m.mesh[1]  = 0;
+      p3m.mesh[2]  = 0;
+      p3m.cao      = 0;
 
     } else if (coulomb.method == COULOMB_DH) {
 

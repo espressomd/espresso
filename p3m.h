@@ -56,10 +56,10 @@
 
 /** Structure to hold P3M parameters and some dependend variables. */
 typedef struct {
-  /** Ewald splitting parameter (0<alpha<1). */
-  double alpha;
-  /** Cutoff radius for real space electrostatics (>0). */
-  double r_cut;
+  /** Ewald splitting parameter (0<alpha<1), rescaled to alpha_L = alpha * box_l. */
+  double alpha_L;
+  /** Cutoff radius for real space electrostatics (>0), rescaled to r_cut_iL = r_cut * box_l_i. */
+  double r_cut_iL;
   /** number of mesh points per coordinate direction (>0). */
   int    mesh[3];
   /** offset of the first mesh point (lower left 
@@ -74,14 +74,16 @@ typedef struct {
 
   /** epsilon of the "surrounding dielectric". */
   double epsilon;
-  /** Cutoff radius squared. */
-  double r_cut2;
   /** Cutoff for charge assignment. */
   double cao_cut[3];
   /** mesh constant. */
   double a[3];
   /** inverse mesh constant. */
   double ai[3];
+  /** unscaled \ref alpha_L for use with fast inline functions only */
+  double alpha;
+  /** unscaled \ref r_cut_iL for use with fast inline functions only */
+  double r_cut;
 } p3m_struct;
 
 /** \name Exported Variables */
@@ -106,6 +108,9 @@ void   P3M_init();
     charges and the squared sum of the charges. */
 void P3M_count_charged_particles();
 
+/** Updates \ref p3m_struct::alpha and \ref p3m_struct::r_cut if \ref box_l changed. */
+void P3M_scaleby_box_l();
+
 /** Tune P3M parameters to desired accuracy.
 
     Usage:
@@ -120,15 +125,15 @@ void P3M_count_charged_particles();
     distributed particles in a cubic box.
     For the real space error the estimate of Kolafa/Perram is used. 
 
-    Parameter range if not given explicit values: For \ref p3m_struct::r_cut
+    Parameter range if not given explicit values: For \ref p3m_struct::r_cut_iL
     the function uses the values (\ref min_local_box_l -\ref #skin) /
-    n, n being an integer (this implies the assumption that \ref
-    p3m_struct::r_cut is the largest cutoff in the system!). For \ref
+    (n * \ref box_l), n being an integer (this implies the assumption that \ref
+    p3m_struct::r_cut_iL is the largest cutoff in the system!). For \ref
     p3m_struct::mesh the function uses the two values which matches best the
     equation: number of mesh point = number of charged particles. For
     \ref p3m_struct::cao the function considers all possible values.
 
-    For each setting \ref p3m_struct::alpha is calculated assuming that the
+    For each setting \ref p3m_struct::alpha_L is calculated assuming that the
     error contributions of real and reciprocal space should be equal.
 
     After checking if the total error fulfils the accuracy goal the
