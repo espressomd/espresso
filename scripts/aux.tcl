@@ -165,11 +165,15 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
     if { "$var" != "-" } { blockfile $f write variable $var }
     if { "$tclvar" != "-" } { foreach j $tclvar { blockfile $f write tclvariable $j } }
     if { "$ia" != "-" } { blockfile $f write interactions; blockfile $f write integrate; blockfile $f write thermostat }
-    set part_write "id pos type q v f "; if { $COMPACT_CHK } { set part_write "id pos v f " }
-    if { [regexp "MASS" [code_info]]} { lappend part_write "mass " }
-    if { [regexp "ROTATION" [code_info]]} { lappend part_write "quat omega torque " }
-    if { [regexp "CONSTRAINTS" [code_info]]} { lappend part_write "fix " }
-    if { [regexp "EXTERNAL_FORCES" [code_info]]} { lappend part_write "ext_force " }
+    set part_write "id pos type "
+    if { $COMPACT_CHK } { set part_write "id pos " }
+    if { [regexp "ELECTROSTATICS" [code_info]] } { lappend part_write q  }
+    lappend part_write v 
+    lappend part_write f 
+    if { [regexp "MASS" [code_info]]} { lappend part_write mass  }	 	 
+    if { [regexp "ROTATION" [code_info]]} { lappend part_write quat omega torque  }
+    if { [regexp "CONSTRAINTS" [code_info]]} { lappend part_write fix  }
+    if { [regexp "EXTERNAL_FORCES" [code_info]]} { lappend part_write ext_force  }
     blockfile $f write particles "$part_write"
     if { $COMPACT_CHK != 1 } { blockfile $f write bonds }
     if { "$ran" != "-" } { blockfile $f write random }
