@@ -217,7 +217,7 @@ int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
     nptiso.geometry = ( nptiso.geometry | NPTGEOM_XDIR );
     nptiso.geometry = ( nptiso.geometry | NPTGEOM_YDIR );
     nptiso.geometry = ( nptiso.geometry | NPTGEOM_ZDIR );
-    nptiso.dimension = 3;
+    nptiso.dimension = 3; nptiso.non_const_dim = 2;
   }
 
   if ( argc > 8 ) {
