@@ -46,8 +46,9 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv);
     @param r_bins number of bins
     @param center 3 dim pointer to sphere origin 
 */
-
 void calc_bins_sphere(int *_new_bin,int *_elements,double *_volumes,double r_min,double r_max,int r_bins, double *center);
+
+/** Implementation of 'analyze bins' */
 int parse_bins(Tcl_Interp *interp, int argc, char **argv);
 
 /** Initializes extern Energy_stat \ref #p_tensor to be used by \ref calc_p_tensor. */
@@ -57,13 +58,14 @@ void init_p_tensor();
     Output is stored in the \ref #p_tensor array, in which the <tt>p_tensor.sum</tt>-components contain the sum of the component-tensors
     stored in <tt>p_tensor.node</tt>. The function is executed on the master node only and uses sort of a N^2-loop to calculate the virials,
     so it is rather slow.
+    @param volume the volume of the bin to be considered
     @param p_list contains the list of particles to look at
     @param flag   decides whether to derive the interactions of the particles in \ref p_list to <i>all</i> other particles (=1) or not (=0).
 */
-void calc_p_tensor(IntList *p_list, int flag);
+void calc_p_tensor(double volume, IntList *p_list, int flag);
 
-/** implementation of 'analyze p_bin' */
-int parse_and_print_p_bin(Tcl_Interp *interp, int argc, char **argv);
+/** implementation of 'analyze p_IK1' */
+int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
 

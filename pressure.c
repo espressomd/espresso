@@ -513,26 +513,26 @@ void calc_pressure() {
 /* Tensorial Pressure */
 /**********************/
 
-int parse_and_print_p_bin(Tcl_Interp *interp, int argc, char **argv)
+int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
 {
-  /* 'analyze p_bin { <ind_list> } <all>' */
-  /****************************************/
+  /* 'analyze p_IK1 <bin_volume> { <ind_list> } <all>' */
+  /*****************************************************/
   char buffer[9*TCL_DOUBLE_SPACE + 256];
   int i,j,p, flag=0;
+  double volume;
   IntList p1;
 
   if (n_total_particles == 0) { Tcl_AppendResult(interp, "(no particles)",(char *)NULL); return (TCL_OK); }
   init_p_tensor();
   init_intlist(&p1);
 
-  if(argc < 2) { Tcl_AppendResult(interp,"Too few arguments! Usage: 'analyze p_bin { <ind_list> } <all>'",(char *)NULL); return (TCL_ERROR); }
-  if (!ARG0_IS_INTLIST(p1)) { 
-    Tcl_ResetResult(interp); Tcl_AppendResult(interp,"usage: 'analyze p_bin { <ind_list> } <all>'",(char *)NULL); return (TCL_ERROR); 
+  if(argc < 3) { Tcl_AppendResult(interp,"Too few arguments! Usage: 'analyze p_IK1 <bin_volume> { <ind_list> } <all>'",(char *)NULL); return (TCL_ERROR); }
+  if ((!ARG0_IS_D(volume)) || (!ARG1_IS_INTLIST(p1)) || (!ARG_IS_I(2, flag))) { 
+    Tcl_ResetResult(interp); Tcl_AppendResult(interp,"usage: 'analyze p_IK1 <bin_volume> { <ind_list> } <all>'",(char *)NULL); return (TCL_ERROR); 
   }
-  if(!ARG_IS_I(1, flag)) return (TCL_ERROR);
 
   p_tensor.ana_num=0;
-  calc_p_tensor(&p1,flag);
+  calc_p_tensor(volume,&p1,flag);
 
   sprintf(buffer,"%f %f { total ",p_tensor.node.e[0],p_tensor.node.e[1]); Tcl_AppendResult(interp, buffer, (char *)NULL);
   for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.sum.e[j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
@@ -614,11 +614,11 @@ void init_p_tensor() {
 
 /* Derive the p_tensor */
 /***********************/
-void calc_p_tensor(IntList *p_list, int flag) {
+void calc_p_tensor(double volume, IntList *p_list, int flag) {
   Particle *p1, *p2, *p3;
   int *p1_list, n_p1;
   int i,j,k,l, pp, indi,indj,startj,endj, type_num, type1,type2;
-  double d[3],dist,dist2, f1[3],f2[3],f3[3], volume;
+  double d[3],dist,dist2, f1[3],f2[3],f3[3];
   
   p1=malloc(1*sizeof(Particle)); p2=malloc(1*sizeof(Particle)); p3=malloc(1*sizeof(Particle)); 
   p1_list = p_list->e; n_p1 = p_list->n;
@@ -626,7 +626,6 @@ void calc_p_tensor(IntList *p_list, int flag) {
     p_tensor.node.e[i] = 0.0;
     p_tensor.sum.e[i]  = 0.0;
   }
-  volume = box_l[0]*box_l[1]*box_l[2];
 
   if (parameter_changed || interactions_changed || topology_changed || particle_changed) {
     mpi_integrate(0);
@@ -634,6 +633,11 @@ void calc_p_tensor(IntList *p_list, int flag) {
 
   for(indi=0; indi<n_p1; indi++) {
     if (get_particle_data(p1_list[indi], p1) != TCL_OK) { fprintf(stderr,"The particle %d you requested does not exist! ",p1_list[indi]); errexit(); }
+
+    /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
+    for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
+      p_tensor.sum.e[9+ k*3 + l] += (p1->v[k])*(p1->v[l]);
+    } }
 
     /* bonded interactions */
     i=0;
@@ -685,7 +689,7 @@ void calc_p_tensor(IntList *p_list, int flag) {
       }
     }
 
-    /* non-bonded interactions, electrostatics, and ideal gas contribution */
+    /* non-bonded interactions and electrostatics */
     if(flag==1) { startj=0; endj=n_total_particles; } else { startj=indi+1; endj=n_p1; }
     for(indj=startj; indj<endj; indj++) {
       if(flag==1) {
@@ -741,11 +745,6 @@ void calc_p_tensor(IntList *p_list, int flag) {
 	} }
       }
 #endif
-
-      /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
-      for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
-	p_tensor.sum.e[9+ k*3 + l] += (p1->v[k])*(p2->v[l]);
-      } }
     } 
   }
 
