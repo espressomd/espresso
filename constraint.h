@@ -212,12 +212,10 @@ MDINLINE void add_constraints_forces(Particle *p1)
 	  errexit();
         }
 	break;
-	
-      case CONSTRAINT_ROD: 
-	add_rod_force(p1, &constraints[n].part_rep, &constraints[n].c.rod); 
-	break;
       }
     }
+    if (constraints[n].type == CONSTRAINT_ROD)
+      add_rod_force(p1, &constraints[n].part_rep, &constraints[n].c.rod);
   }
 }
 
