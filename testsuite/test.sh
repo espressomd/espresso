@@ -1,11 +1,16 @@
 #!/bin/sh
-TESTCASES="madelung.tcl kinetic.tcl lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl mmm1d.tcl gb.tcl rotation.tcl constraints.tcl thermostat.tcl intpbc.tcl intppbc.tcl analysis.tcl"
+TESTCASES="lj.tcl tabulated.tcl madelung.tcl kinetic.tcl lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl mmm1d.tcl gb.tcl rotation.tcl constraints.tcl thermostat.tcl intpbc.tcl intppbc.tcl analysis.tcl"
 # 
+
+
+
 # List of testcases to be done (and people responsible for them):
 #################################################################
 #
 # - lj: (AxA / Status: Done.)
 #   Testing forces, energies, pressures of the LJ-interaction.
+# - tabulated (Ira / Status: Done. )
+#   Testing forces, energies, pressures of the tabulated interaction.
 # - lj-cos: (AxA / Status: Done.)
 #   Testing forces, energies, pressures of the LJ-cos-interaction.
 # - fene/harm: (BAM / Status: Done.)

@@ -30,10 +30,11 @@ proc error_exit {error} {
 }
 
 puts "----------------------------------------"
-puts "- Testcase lj.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "- Testcase tabulated.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------"
 
-set epsilon 1e-4
+set epsilon 1e-2
+set tab_epsilon 1000
 setmd temp 0
 setmd time_step 1
 setmd skin 0
@@ -56,7 +57,8 @@ proc write_data {file} {
 }
 
 if { [catch {
-    read_data "lj_system.data"
+    read_data "lj_system.data" 
+
 
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set F($i) [part $i pr f]
@@ -65,31 +67,37 @@ if { [catch {
     invalidate_system
 
     ############## lj-specific part
+    inter 0 0 tabulated "lj1.tab"
+    inter 1 1 tabulated "lj2.tab"
+    inter 0 1 tabulated "lj3.tab"
 
-    inter 0 0 lennard-jones 1.0 1.0 1.12246 0.25 0.0
-    inter 1 1 lennard-jones 1.3 0.5 2 0.0 0.0
-    inter 0 1 lennard-jones 2.2 1.0 1.12246 0.0 0.5
+    inter tabforcecap 1000000000
+
+#    inter 0 0 lennard-jones 1.0 1.0 1.12246 0.25 0.0
+#    inter 1 1 lennard-jones 1.3 0.5 2 0.0 0.0
+#    inter 0 1 lennard-jones 2.2 1.0 1.12246 0.0 0.5
     integrate 0
+
+
 
     # here you can create the necessary snapshot
     # write_data "lj_system.data"
 
     # ensures that no other forces are on
-#    set cureng [expr [analyze energy lj 0 0] + [analyze energy lj 0 1] + [analyze energy lj 1 1]]
     set cureng [expr [analyze energy nonbonded 0 0] + [analyze energy nonbonded 0 1] + [analyze energy nonbonded 1 1]]
     # tbrs
-    set curprs [expr [lindex [analyze pressure lj 0 0] 0] + \
-		[lindex [analyze pressure lj 0 1] 0] + \
-		[lindex [analyze pressure lj 1 1] 0]]
+    set curprs [expr [lindex [analyze pressure nonbonded 0 0] 0] + \
+		[lindex [analyze pressure nonbonded 0 1] 0] + \
+		[lindex [analyze pressure nonbonded 1 1] 0]]
 
     ############## end
 
-
+    puts $cureng
 
     set toteng [analyze energy total]
     set totprs [analyze pressure total]
 
-    puts "energy $energy toteng $toteng"
+
 
     if { [expr abs($toteng - $cureng)] > $epsilon } {
 	error "system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"
@@ -117,8 +125,10 @@ if { [catch {
     set maxdz 0
     set maxpz 0
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-	set resF [part $i pr f]
+	set resF [part $i print force]
+
 	set tgtF $F($i)
+
 	set dx [expr abs([lindex $resF 0] - [lindex $tgtF 0])]
 	set dy [expr abs([lindex $resF 1] - [lindex $tgtF 1])]
 	set dz [expr abs([lindex $resF 2] - [lindex $tgtF 2])]
@@ -126,6 +136,9 @@ if { [catch {
 	if { $dx > $maxdx} {
 	    set maxdx $dx
 	    set maxpx $i
+#	    puts "here [part $i print force]"
+#	    puts $tgtF
+#	    flush stdout
 	}
 	if { $dy > $maxdy} {
 	    set maxdy $dy
@@ -137,10 +150,10 @@ if { [catch {
 	}
     }
     puts "maximal force deviation in x $maxdx for particle $maxpx, in y $maxdy for particle $maxpy, in z $maxdz for particle $maxpz"
-    if { $maxdx > $epsilon || $maxdy > $epsilon || $maxdz > $epsilon } {
-	if { $maxdx > $epsilon} {puts "force of particle $maxpx: [part $maxpx pr f] != $F($maxpx)"}
-	if { $maxdy > $epsilon} {puts "force of particle $maxpy: [part $maxpy pr f] != $F($maxpy)"}
-	if { $maxdz > $epsilon} {puts "force of particle $maxpz: [part $maxpz pr f] != $F($maxpz)"}
+    if { $maxdx > $tab_epsilon || $maxdy > $tab_epsilon || $maxdz > $tab_epsilon } {
+	if { $maxdx > $tab_epsilon} {puts "force of particle $maxpx: [part $maxpx pr f] != $F($maxpx)"}
+	if { $maxdy > $tab_epsilon} {puts "force of particle $maxpy: [part $maxpy pr f] != $F($maxpy)"}
+	if { $maxdz > $tab_epsilon} {puts "force of particle $maxpz: [part $maxpz pr f] != $F($maxpz)"}
 	error "force error too large"
     }
 } res ] } {
