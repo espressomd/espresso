@@ -1634,12 +1634,18 @@ int inter(ClientData _data, Tcl_Interp *interp,
    ****************************************************/
 
   // non bonded interactions
-    if (ARG_IS_I(1, i) && ARG_IS_I(2, j))
+  if (ARG_IS_I(1, i) && ARG_IS_I(2, j))
     return inter_parse_non_bonded(interp, i, j, argc-3, argv+3);
 
+  Tcl_ResetResult(interp);
+
   // bonded interactions
-  if (ARG_IS_I(1, i) && ! ARG_IS_D(2, dummy))
+  if (ARG_IS_I(1, i) && ! ARG_IS_D(2, dummy)) {
+    Tcl_ResetResult(interp);
     return inter_parse_bonded(interp, i, argc-2, argv+2);
+  }
+
+  Tcl_ResetResult(interp);
 
   if (ARG_IS_D(1, dummy)) {
       Tcl_AppendResult(interp, "integer or string expected",
