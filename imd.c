@@ -557,11 +557,7 @@ int imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
   Tcl_AppendResult(interp, "connected",
 		   (char *) NULL);
   return (TCL_OK);
-};
-
-
-
-
+}
 
 int imd(ClientData data, Tcl_Interp *interp,
 	int argc, char **argv)
