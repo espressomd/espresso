@@ -1,8 +1,8 @@
 ############ compiler settings
-CC=hcc
+CC=mpicc
 
 # optimized compiler flags
-CFLAGS=-O3 -Wall -march=i686 -fschedule-insns -fschedule-insns2 \
+CFLAGS=-g -pg -O3 -Wall -march=i586 -fschedule-insns -fschedule-insns2 \
        -funroll-loops -frerun-cse-after-loop -ffast-math
 
 # debug compiler flags
@@ -24,7 +24,7 @@ CXXFLAGS=$(CFLAGS) -felide-constructors -fomit-frame-pointer -fno-rtti
 
 ############ linker settings
 LINK=$(CC)
-LDFLAGS=
+LDFLAGS=-pg
 RELEASE=$(shell awk '{print $$3; exit}' /etc/SuSE-release)
 ifeq ($(RELEASE),8.1)
 TCLLIB=tcl8.4
@@ -32,4 +32,4 @@ CFLAGS+= -DUSE_NON_CONST
 else
 TCLLIB=tcl8.3
 endif
-LDLIBS=-l$(TCLLIB) -L/usr/local/lib -lrfftw -lfftw -lm # -lefence
+LDLIBS=-l$(TCLLIB) -L/usr/local/lib -lrfftw -lfftw -lm -L/people/thnfs/homes/arnold/progs/tcl_md/ElectricFence-2.2.2 -lefence -lpthread

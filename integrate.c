@@ -20,6 +20,7 @@
 #include "debug.h"
 #include "p3m.h"
 #include "utils.h"
+#include "thermostat.h"
 
 /************************************************
  * DEFINES
@@ -101,7 +102,6 @@ int integrate(ClientData data, Tcl_Interp *interp,
 
 void integrate_vv_init()
 {
-  int i;
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_init:\n",this_node));
 
   /* sanity checks */
@@ -137,26 +137,18 @@ void integrate_vv_init()
     }
 
     /* start initialization */
-    INTEG_TRACE(fprintf(stderr,"%d: n_nodes =%d, max_seen_particle=%d\n",
-			this_node,n_nodes,max_seen_particle));
-    INTEG_TRACE(fprintf(stderr,"%d: n_particles = %d\n",
-			this_node, n_particles));
 
     /* initialize link cell structure */
-    cells_init();  
+    cells_re_init();  
     /* allocate and initialize local indizes */
-    if (max_seen_particle >= 0)
-      local_index = (int *)malloc((max_seen_particle + 1)*sizeof(int));
-    for(i=0;i<=max_seen_particle;i++) local_index[i] = -1;
-    for(i=0;i<n_particles;i++) local_index[particles[i].identity] = i;
+    local_particles_init();
     /* initialize ghost structure */
     ghost_init(); 
-    /* initialize verlet list structure */
-    verlet_init(); 
     /* initialize force structure */
     force_init(); 
     /* initialize p3m */
-    P3M_init();   
+    P3M_init();
+    thermo_init();
     /* update integrator status */
     calc_forces_first         = 1;
     rebuild_verletlist        = 1;
@@ -184,7 +176,7 @@ void integrate_vv(int n_steps)
       exchange_part();
       sort_particles_into_cells();
       exchange_ghost();
-      build_verlet_list();
+      build_verlet_lists();
     }
     if(calc_forces_first == 1) {
       force_calc();
@@ -200,15 +192,11 @@ void integrate_vv(int n_steps)
       propagate_vel_pos();
       if(rebuild_verletlist == 1) {
 	INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
-	INTEG_TRACE(fprintf(stderr,"%d: BEFOR: n_particles=%d, n_ghosts=%d, max_particles=%d\n",
-			    this_node,n_particles,n_ghosts,max_particles));
 	invalidate_ghosts();
 	exchange_part();
 	sort_particles_into_cells(); 
 	exchange_ghost();
-	build_verlet_list();
-	INTEG_TRACE(fprintf(stderr,"%d: AFTER: n_particles=%d, n_ghosts=%d, max_particles=%d\n",
-			    this_node,n_particles,n_ghosts,max_particles));
+	build_verlet_lists();
       }
       else {
 	update_ghost_pos();
@@ -223,10 +211,9 @@ void integrate_vv(int n_steps)
 void integrate_vv_exit()
 {
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_exit\n",this_node));
+  local_particles_exit();
   cells_exit();
-  free(local_index);
   ghost_exit();
-  verlet_exit();
   force_exit();
   vv_integrator_initialized = 0;
 }
@@ -275,65 +262,86 @@ int calc_forces_first_callback(Tcl_Interp *interp, void *_data)
 
 void rescale_forces()
 {
-  int i,d;
+  Particle *p;
+  int m,n,o,i, np;
   double scale;
   scale = 0.5 * time_step * time_step;
   INTEG_TRACE(fprintf(stderr,"%d: rescale_forces:\n",this_node));
-  for(i=0;i<n_particles;i++)
-    for(d=0; d<3; d++) particles[i].f[d] *= scale;
+  INNER_CELLS_LOOP(m, n, o) {
+    p  = CELL_PTR(m, n, o)->pList.part;
+    np = CELL_PTR(m, n, o)->pList.n;
+    for(i = 0; i < np; i++) {
+      p[i].f[0] *= scale;
+      p[i].f[1] *= scale;
+      p[i].f[2] *= scale;
+    }
+  }
 }
 
 void propagate_velocities() 
 {
-  int i;
+  Particle *p;
+  int m,n,o,i, np;
   INTEG_TRACE(fprintf(stderr,"%d: propagate_velocities:\n",this_node));
-  for(i=0;i<n_particles;i++)
-    {  
-      particles[i].v[0] += particles[i].f[0];
-      particles[i].v[1] += particles[i].f[1];
-      particles[i].v[2] += particles[i].f[2];
+  INNER_CELLS_LOOP(m, n, o) {
+    p  = CELL_PTR(m, n, o)->pList.part;
+    np = CELL_PTR(m, n, o)->pList.n;
+    for(i = 0; i < np; i++) {
+      p[i].v[0] += p[i].f[0];
+      p[i].v[1] += p[i].f[1];
+      p[i].v[2] += p[i].f[2];
     }
+  }
 }
 
 void rescale_forces_propagate_vel() 
 {
-  int i;
+  Particle *p;
+  int m,n,o,i, np;
   double scale;
 
   scale = 0.5 * time_step * time_step;
   INTEG_TRACE(fprintf(stderr,"%d: rescale_forces_propagate_vel:\n",this_node));
-  for(i=0;i<n_particles;i++)
-    {  
 
-      particles[i].f[0] *= scale;
-      particles[i].f[1] *= scale;
-      particles[i].f[2] *= scale;
+  INNER_CELLS_LOOP(m, n, o) {
+    p  = CELL_PTR(m, n, o)->pList.part;
+    np = CELL_PTR(m, n, o)->pList.n;
+    for(i = 0; i < np; i++) {
+      p[i].f[0] *= scale;
+      p[i].f[1] *= scale;
+      p[i].f[2] *= scale;
 
-      particles[i].v[0] += particles[i].f[0];
-      particles[i].v[1] += particles[i].f[1];
-      particles[i].v[2] += particles[i].f[2];
+      p[i].v[0] += p[i].f[0];
+      p[i].v[1] += p[i].f[1];
+      p[i].v[2] += p[i].f[2];
     }
+  }
 }
 
 void propagate_positions() 
 {
-  int i;
+  Particle *p;
+  int m,n,o,i, np;
+
   int *verlet_flags = malloc(sizeof(int)*n_nodes);
   double skin2;
   INTEG_TRACE(fprintf(stderr,"%d: propagate_positions:\n",this_node));
   rebuild_verletlist = 0;
   skin2 = SQR(skin);
 
-  for(i=0;i<n_particles;i++)
-    {  
-      particles[i].p[0] += particles[i].v[0];
-      particles[i].p[1] += particles[i].v[1];
-      particles[i].p[2] += particles[i].v[2];
+  INNER_CELLS_LOOP(m, n, o) {
+    p  = CELL_PTR(m, n, o)->pList.part;
+    np = CELL_PTR(m, n, o)->pList.n;
+    for(i = 0; i < np; i++) {
+      p[i].r.p[0] += p[i].v[0];
+      p[i].r.p[1] += p[i].v[1];
+      p[i].r.p[2] += p[i].v[2];
 
       /* Verlet criterion check */
-      if(distance2(particles[i].p,particles[i].p_old) > skin2 )
+      if(distance2(p[i].r.p,p[i].p_old) > skin2 )
 	rebuild_verletlist = 1; 
     }
+  }
 
   /* communicate verlet criterion */
   MPI_Gather(&rebuild_verletlist, 1, MPI_INT, verlet_flags, 1, 
@@ -357,27 +365,32 @@ void propagate_positions()
 
 void propagate_vel_pos() 
 {
-  int i;
+  Particle *p;
+  int m,n,o,i, np;
+
   int *verlet_flags = malloc(sizeof(int)*n_nodes);
   double skin2;
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
   rebuild_verletlist = 0;
   skin2 = SQR(skin);
 
-  for(i=0;i<n_particles;i++)
-    {  
-      particles[i].v[0] += particles[i].f[0];
-      particles[i].v[1] += particles[i].f[1];
-      particles[i].v[2] += particles[i].f[2];
+  INNER_CELLS_LOOP(m, n, o) {
+    p  = CELL_PTR(m, n, o)->pList.part;
+    np = CELL_PTR(m, n, o)->pList.n;
+    for(i = 0; i < np; i++) {
+      p[i].v[0] += p[i].f[0];
+      p[i].v[1] += p[i].f[1];
+      p[i].v[2] += p[i].f[2];
 
-      particles[i].p[0] += particles[i].v[0];
-      particles[i].p[1] += particles[i].v[1];
-      particles[i].p[2] += particles[i].v[2];
+      p[i].r.p[0] += p[i].v[0];
+      p[i].r.p[1] += p[i].v[1];
+      p[i].r.p[2] += p[i].v[2];
 
       /* Verlet criterion check */
-      if(distance2(particles[i].p,particles[i].p_old) > skin2 )
+      if(distance2(p[i].r.p,p[i].p_old) > skin2 )
 	rebuild_verletlist = 1; 
     }
+  }
 
   /* communicate verlet criterion */
   MPI_Gather(&rebuild_verletlist, 1, MPI_INT, verlet_flags, 1, 
@@ -397,23 +410,4 @@ void propagate_vel_pos()
   INTEG_TRACE(fprintf(stderr,"%d: prop_pos: rebuild_verletlist=%d\n",this_node,rebuild_verletlist));
 
   free(verlet_flags);
-}
-
-void print_local_index() 
-{
-  int i,n,cnt,max;
-  for(i=0;i<n_nodes;i++) {
-    MPI_Barrier(MPI_COMM_WORLD); 
-    if(i==this_node) {
-      cnt=0;max=0;
-      fprintf(stderr,"%d: local_index:\n",this_node);
-      for(n=0;n<=max_seen_particle;n++) {
-	fprintf(stderr,"%d ",local_index[n]);
-	if(local_index[n]>-1) cnt++;
-	if(local_index[n]>max) max = 	local_index[n];
-      }
-      fprintf(stderr,"\n%d: %d particles in local_index (max=%d)\n",this_node,cnt,max);
-    }
-  }
-  MPI_Barrier(MPI_COMM_WORLD); 
 }

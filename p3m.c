@@ -19,6 +19,7 @@
 #include "fft.h"
 #include "p3m.h"
 #include "thermostat.h"
+#include "cells.h"
 
 /************************************************
  * DEFINES
@@ -283,7 +284,8 @@ void   P3M_init()
 
 void   P3M_calc_kspace_forces()
 {
-  int i,n,d,i0,i1,i2,ind,j[3];
+  Particle *p;
+  int i,m,n,o,np,d,i0,i1,i2,ind,j[3];
   double q;
   /* position of a particle in local mesh units */
   double pos[3];
@@ -310,41 +312,45 @@ void   P3M_calc_kspace_forces()
   /* === charge assignment === */
   force_prefac = p3m.prefactor / (double)(p3m.mesh[0]*p3m.mesh[1]*p3m.mesh[2]);
   inter2 = (p3m.inter*2)+1;
-  for(n=0; n<n_particles; n++) {
-    if( (q=particles[n].q) != 0.0 ) {
+  INNER_CELLS_LOOP(m, n, o) {
+    p  = CELL_PTR(m, n, o)->pList.part;
+    np = CELL_PTR(m, n, o)->pList.n;
+    for(i = 0; i < np; i++) {
+      if( (q=p[i].r.q) != 0.0 ) {
 
-      /* particle position in mesh coordinates */
-      for(d=0;d<3;d++) {
-	pos[d]   = (particles[n].p[d]-(lm.ld_pos[d]+pos_shift))*p3m.ai[d];
-	first[d] = (int) pos[d];
-	ca_fmp[(3*cp_cnt)+d] = first[d];
-	arg[d]   = (int) ((pos[d]-first[d])*inter2);
+	/* particle position in mesh coordinates */
+	for(d=0;d<3;d++) {
+	  pos[d]   = (p[i].r.p[d]-(lm.ld_pos[d]+pos_shift))*p3m.ai[d];
+	  first[d] = (int) pos[d];
+	  ca_fmp[(3*cp_cnt)+d] = first[d];
+	  arg[d]   = (int) ((pos[d]-first[d])*inter2);
 
-	P3M_TRACE(if( pos[d]<0.0 ) 
-		  fprintf(stderr,"%d: rs_mesh underflow! (P%d at %f)\n",
-			  this_node,particles[n].identity,particles[n].p[d]));
-	P3M_TRACE(if( (first[d]+p3m.cao-1) > lm.dim[d] )
-		  fprintf(stderr,"%d: rs_mesh overflow!  (P%d at %f)\n",
-			  this_node,particles[n].identity,particles[n].p[d]));
-      }
-
-      /* charge assignment */
-      q_ind = first[2] + lm.dim[2]*(first[1] + (lm.dim[1]*first[0]));
-      for(i0=0; i0<p3m.cao; i0++) {
-	tmp0 = q * int_caf[i0][arg[0]];
-	for(i1=0; i1<p3m.cao; i1++) {
-	  tmp1 = tmp0 * int_caf[i1][arg[1]];
-	  for(i2=0; i2<p3m.cao; i2++) {
-	    ca_frac[cf_cnt] = tmp1 * int_caf[i2][arg[2]];
-	    rs_mesh[q_ind++] += ca_frac[cf_cnt];
-	    cf_cnt++;
-	  }
-	  q_ind += q_m_off;
+	  P3M_TRACE(if( pos[d]<0.0 ) 
+		    fprintf(stderr,"%d: rs_mesh underflow! (P%d at %f)\n",
+			    this_node,p[i].r.identity,p[i].r.p[d]));
+	  P3M_TRACE(if( (first[d]+p3m.cao-1) > lm.dim[d] )
+		    fprintf(stderr,"%d: rs_mesh overflow!  (P%d at %f)\n",
+			    this_node,p[i].r.identity,p[i].r.p[d]));
 	}
-	q_ind += q_s_off;
+
+	/* charge assignment */
+	q_ind = first[2] + lm.dim[2]*(first[1] + (lm.dim[1]*first[0]));
+	for(i0=0; i0<p3m.cao; i0++) {
+	  tmp0 = q * int_caf[i0][arg[0]];
+	  for(i1=0; i1<p3m.cao; i1++) {
+	    tmp1 = tmp0 * int_caf[i1][arg[1]];
+	    for(i2=0; i2<p3m.cao; i2++) {
+	      ca_frac[cf_cnt] = tmp1 * int_caf[i2][arg[2]];
+	      rs_mesh[q_ind++] += ca_frac[cf_cnt];
+	      cf_cnt++;
+	    }
+	    q_ind += q_m_off;
+	  }
+	  q_ind += q_s_off;
+	}
+	cp_cnt++;
+	if( (cp_cnt+1)>ca_num ) realloc_ca_fields(cp_cnt+1);
       }
-      cp_cnt++;
-      if( (cp_cnt+1)>ca_num ) realloc_ca_fields(cp_cnt+1);
     }
   }
   if( (cp_cnt+CA_INCREMENT)<ca_num ) realloc_ca_fields(cp_cnt+CA_INCREMENT);
@@ -386,25 +392,27 @@ void   P3M_calc_kspace_forces()
     spread_force_grid();
     /* Assign force component from mesh to particle */
     cp_cnt=0; cf_cnt=0;
-    for(n=0; n<n_particles; n++) { 
-      if( (q=particles[n].q) != 0.0 ) {
-	q_ind = ca_fmp[(3*cp_cnt)+2] + lm.dim[2]*(ca_fmp[(3*cp_cnt)+1] + (lm.dim[1]*ca_fmp[(3*cp_cnt)+0]));
-	for(i0=0; i0<p3m.cao; i0++) {
-	  for(i1=0; i1<p3m.cao; i1++) {
-	    for(i2=0; i2<p3m.cao; i2++) {
-	      particles[n].f[d] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
-	      cf_cnt++;
+    INNER_CELLS_LOOP(m, n, o) {
+      p  = CELL_PTR(m, n, o)->pList.part;
+      np = CELL_PTR(m, n, o)->pList.n;
+      for(i=0; i<np; i++) { 
+	if( (q=p[i].r.q) != 0.0 ) {
+	  q_ind = ca_fmp[(3*cp_cnt)+2] + lm.dim[2]*(ca_fmp[(3*cp_cnt)+1] + (lm.dim[1]*ca_fmp[(3*cp_cnt)+0]));
+	  for(i0=0; i0<p3m.cao; i0++) {
+	    for(i1=0; i1<p3m.cao; i1++) {
+	      for(i2=0; i2<p3m.cao; i2++) {
+		p[i].f[d] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
+		cf_cnt++;
+	      }
+	      q_ind += q_m_off;
 	    }
-	    q_ind += q_m_off;
+	    q_ind += q_s_off;
 	  }
-	  q_ind += q_s_off;
+	  cp_cnt++;
 	}
-	cp_cnt++;
       }
     }
   }
-
-
 }
 
 void   P3M_exit()

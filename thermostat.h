@@ -11,6 +11,7 @@
     \ref friction_thermo.
 */
 #include <tcl.h>
+#include "particle_data.h"
 
 /************************************************
  * exported variables
@@ -23,10 +24,14 @@ extern double temperature;
  * functions
  ************************************************/
 
-/** overwrite the forces of the local particles with
+/** initialize constants of the thermostat on
+    start of integration */
+void thermo_init();
+
+/** overwrite the forces of a particle with
     the friction term, i. e. \f$ F_i=-\gamma v_i\f$.
 */
-void friction_thermo();
+void friction_thermo(Particle *p);
 
 /** Callback for setting \ref temperature */
 int temp_callback(Tcl_Interp *interp, void *_data);

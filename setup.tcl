@@ -1,6 +1,6 @@
 #!/bin/sh
 # tricking... the line after a these comments are interpreted as standard shell script \
-    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=8; fi
+    PLATFORM=`uname -s`; export EF_ALLOW_MALLOC_0=1; if [ "$1" != "" ]; then NP=$1; else NP=2; fi
 # OSF1 \
     if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $PLATFORM/tcl_md $0 $*
 # AIX \
@@ -13,17 +13,16 @@
 
 ########### parameters
 # number of particles to setup
-set npart 500
+set npart 1000
 # particle enumeration (1,3,5,...)
 set firstpart 1
 set partstep 2
 # box size
-setmd box_l 20.0 20.0 20.0
+setmd box_l 80.0 80.0 80.0
 # number of particle types
-set ntypes 2
+set ntypes 1
 # minimal distance of particles at finish
-#set mdst "guess"
-set mdst 1.0
+set mdst 1
 # consecutive integration steps between two tests
 set intsteps 100
 # how many tests for minimal distance
@@ -37,11 +36,6 @@ setmd time_step 0.0001
 set Lx [lindex [setmd box_l] 0]
 set Ly [lindex [setmd box_l] 1]
 set Lz [lindex [setmd box_l] 2]
-
-if {$mdst == "guess"} {
-    set mdst [expr 0.9*pow($Lx*$Ly*$Lz/$npart,0.333333333)]
-    puts "trying minimal distance of $mdst"
-}
 
 # setup random particles
 puts "setting up random particles"
@@ -58,24 +52,26 @@ setmd bjerrum 0
 #pairwise ramp for all particles
 for {set ia1 0} { $ia1 <= $ntypes } { incr ia1 } {
     for {set ia2 0} { $ia2 <= $ntypes } { incr ia2 } {
-	inter $ia1 $ia2 ramp $mdst 100
+	inter $ia1 $ia2 ramp [expr 2 * $mdst] 100
     }
 }
+
 # friction
 setmd gamma [expr 1e4*[setmd time_step]]
 setmd temp 1.
 
 puts "starting ramp integration"
+puts [part]
 integrate init
 
 set cont 1
 for {set i 0} { $i < $maxtime && $cont} { incr i} {
     set md [mindist]
     puts "step $i minimum distance = $md"
-    if {$md >= $mdst || $md == "(> ramp cutoffs)"} { set cont 0 }
+    if {$md >= $mdst} { set cont 0 }
     integrate $intsteps
 }
-
+puts [part 581]
 # write
 set f [open "|gzip -c - >config.gz" w]
 blockfile $f write variable box_l

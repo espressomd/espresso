@@ -3,9 +3,9 @@ CC=cc
 CXX=cxx
 
 ## optimized compiler flags
-#CFLAGS=-DDEFINE_TCL_RAND -O3 -fp_reorder -tune host
+CFLAGS=-pg -O3 -fp_reorder -tune host
 ## debug compiler flags
-CFLAGS=-g
+#CFLAGS=-g
 
 ## warnings
 CFLAGS+=-check -msg_disable ignorecallval -msg_disable noparmlist \
@@ -49,9 +49,9 @@ CFLAGS += -I/usr/local/include
 # flags needed for Tcl. Note this is VERY specific for our cluster
 ifeq ($(shell uname -r),V4.0)
 CFLAGS += -I/sw/axp_osf_40/tcl8.2/include
-LDFLAGS+=/sw/axp_osf_40/tcl8.2/shlib/libtcl.so
+LDFLAGS+=-pg /sw/axp_osf_40/tcl8.2/shlib/libtcl.so
 else
-LDLIBS+=-ltcl
+LDLIBS+=-pg -ltcl
 endif
 
 

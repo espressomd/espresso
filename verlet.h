@@ -8,17 +8,30 @@
  *  For more information see \ref verlet.c "verlet.c".
  */
 #include <tcl.h>
+#include "particle_data.h"
+
+/************************************************
+ * data types
+ ************************************************/
+
+/** Verlet pair list. The verlet pair list array is resized using a
+    sophisticated (we hope) algorithm to avoid unnecessary resizes.
+    Access using \ref realloc_pairList.
+*/
+typedef struct {
+  /** The pair payload (two pointers per pair) */
+  Particle **pair;
+  /** Number of pairs contained */
+  int n;
+  /** Number of pairs that fit in until a resize is needed */
+  int max;
+} PairList;
+
 
 /** \name Exported Variables */
 /************************************************************/
 /*@{*/
 
-/** Actual number of pairs in the verlet list. */
-extern int   n_verletList;
-/** Maximal number of pairs in the verlet list. */
-extern int max_verletList;
-/** Verlet list. */
-extern int    *verletList;
 /** If non-zero, the verlet list has to be rebuilt. */
 extern int rebuild_verletlist;
 
@@ -28,14 +41,12 @@ extern int rebuild_verletlist;
 /************************************************************/
 /*@{*/
 
-/** initialize verlet list structure. */
-void verlet_init();
+/** initialize a Pair List.
+ *  Use with care and ONLY for initialization! */
+void init_pairList(PairList *list);
 
-/** fill the verlet table. */
-void build_verlet_list();
-
-/** exit verlet list structure. */
-void verlet_exit();
+/** fill verlet tables. */
+void build_verlet_lists();
 
 /** Callback for integrator flag tcl:verletflag c:rebuild_verletlist (= 0 or 1).
     <ul>

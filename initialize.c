@@ -14,6 +14,7 @@
 #include "random.h"
 #include "communication.h"
 #include "blockfile_tcl.h"
+#include "cells.h"
 
 int initialize(Tcl_Interp *interp)
 {
@@ -25,6 +26,8 @@ int initialize(Tcl_Interp *interp)
   */
   init_random();
  
+  cells_pre_init();
+
   /*
     call all initializations to don only on the master node here.
   */

@@ -126,7 +126,4 @@ void realloc_ia_params(int nsize);
     these are: bonded, non bonded + real space electrostatics. */
 void calc_maximal_cutoff();
 
-/** remove bond from particle if possible */
-int try_delete_bond(Particle *part, int *bond);
-
 #endif

@@ -19,3 +19,5 @@
     0.9 sigma, because then it's likely the integration will blow up.
 */
 /* #define LJ_WARN_WHEN_CLOSE */
+
+#define ELECTROSTATICS

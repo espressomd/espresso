@@ -35,14 +35,16 @@
 /* #define COMM_DEBUG */
 /* #define INTEG_DEBUG */
 /* #define CELL_DEBUG */
-/* #define GHOST_DEBUG   */ 
+/* #define GHOST_DEBUG */
 /* #define GRID_DEBUG */
 /* #define FORCE_DEBUG */
-/* #define VERLET_DEBUG   */
+/* #define VERLET_DEBUG */
 /* #define PARTICLE_DEBUG */
 /* #define P3M_DEBUG */
 /* #define FFT_DEBUG */
 /* #define RANDOM_DEBUG */
+/* #define FENE_DEBUG */
+
 #define MPI_CORE
 #define FORCE_CORE
 
@@ -84,56 +86,56 @@ extern void _debug_free(void *p);
 #endif
 
 #ifdef INTEG_DEBUG
-#define INTEG_TRACE(cmd) { if (this_node < 2) { cmd; } }
+#define INTEG_TRACE(cmd) { cmd; }
 #else
 /** Equals { cmd } iff INTEG_DEBUG is set. */
 #define INTEG_TRACE(cmd)
 #endif
 
 #ifdef CELL_DEBUG
-#define CELL_TRACE(cmd) { if (this_node == 2) { cmd; } }
+#define CELL_TRACE(cmd) { cmd;  }
 #else
 /** Equals { cmd } iff CELL_DEBUG is set. */
 #define CELL_TRACE(cmd)
 #endif
 
 #ifdef GHOST_DEBUG
-#define GHOST_TRACE(cmd) { if (this_node == 2) { cmd; } }
+#define GHOST_TRACE(cmd) { cmd;  }
 #else
 /** Equals { cmd } iff GHOST_DEBUG is set. */
 #define GHOST_TRACE(cmd)
 #endif
 
 #ifdef GRID_DEBUG
-#define GRID_TRACE(cmd) { if (this_node < 2) { cmd; } }
+#define GRID_TRACE(cmd) { cmd;  }
 #else
 /** Equals { cmd } iff GRID_DEBUG is set. */
 #define GRID_TRACE(cmd)
 #endif
 
 #ifdef FORCE_DEBUG
-#define FORCE_TRACE(cmd) { if (this_node == 2) { cmd; } }
+#define FORCE_TRACE(cmd) { cmd;  }
 #else
 /** Equals { cmd } iff FORCE_DEBUG is set. */
 #define FORCE_TRACE(cmd)
 #endif
 
 #ifdef VERLET_DEBUG
-#define VERLET_TRACE(cmd) { if (this_node == 2) { cmd; } }
+#define VERLET_TRACE(cmd) { cmd;  }
 #else
 /** Equals { cmd } iff VERLET_DEBUG is set. */
 #define VERLET_TRACE(cmd)
 #endif
 
 #ifdef P3M_DEBUG
-#define P3M_TRACE(cmd) { if (this_node < 1) { cmd; } }
+#define P3M_TRACE(cmd) { cmd;  }
 #else
 /** Equals { cmd } iff P3M_DEBUG is set. */
 #define P3M_TRACE(cmd)
 #endif
 
 #ifdef FFT_DEBUG
-#define FFT_TRACE(cmd) { if (this_node < 1) { cmd; } }
+#define FFT_TRACE(cmd) { cmd; }
 #else
 /** Equals { cmd } iff FFT_DEBUG is set. */
 #define FFT_TRACE(cmd)
@@ -144,4 +146,10 @@ extern void _debug_free(void *p);
 #else
 /** Equals { cmd } iff FFT_DEBUG is set. */
 #define RANDOM_TRACE(cmd)
+#endif
+
+#ifdef FENE_DEBUG
+#define FENE_TRACE(cmd) { cmd; }
+#else
+#define FENE_TRACE(cmd)
 #endif

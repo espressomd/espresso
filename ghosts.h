@@ -44,20 +44,7 @@
  *  For more information on ghosts,
  *  see \ref ghosts.c "ghosts.c"
  */
-
-/************************************************
- * data types
- ************************************************/
-
-/** Structure to hold ghost particle information. 
- *  If this changes also the functions pack_gost/unpack_ghost 
- *  have to be reweritten. */
-typedef struct {
-  int identity;
-  int type;
-  double p[3];
-  double q;
-} Ghost;
+#include "particle_data.h"
 
 /** \name Exported Functions */
 /************************************************************/

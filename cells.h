@@ -24,10 +24,10 @@
  *  2D representation of a linked cell grid: n_cells = 64, cell_grid =
  *  {4,4}, ghost_cell_grid = {6,6}
  *
- * Each cell has 3^D-1 neighbour cells (For cell 14 they are
+ * Each cell has 3^D neighbor cells (For cell 14 they are
  * marked). Since we deal with pair forces, it is sufficient to
  * calculate only half of the interactions (Newtons law: actio =
- * reactio). I have chosen the upper half e.g. all neighbour cells with
+ * reactio). I have chosen the upper half e.g. all neighbor cells with
  * a higher linear index (For cell 14 they are marked in light
  * blue). Caution: This implementation needs double sided ghost
  * communication! For single sided ghost communication one would need
@@ -38,33 +38,59 @@
  */
 
 #include <tcl.h>
+#include "particle_data.h"
+#include "verlet.h"
+
+/************************************************
+ * defines
+ ************************************************/    
+
+#define CELLS_FLAG_START   -1
+#define CELLS_FLAG_PRE_INIT 0
+#define CELLS_FLAG_RE_INIT  1
 
 /************************************************
  * data types
  ************************************************/
 
-/** link cell structure. */
+/** Structure containing information about non bonded interactions
+    with particles in a neighbor cell. */
 typedef struct {
-  /** number of interacting neighbour cells . 
-      A word about the interacting neighbour cells:\\
-      In a 3D lattice each cell has 26 neighbours. Since we deal 
-      with pair forces, it is sufficient to calculate only half 
-      of the interactions (Newtons law: actio = reactio). For each 
-      cell 13 neighbours. This has only to be done for the inner 
-      cells. Caution: This implementation needs double sided ghost 
-      communication! For single sided ghost communication one 
-      would need some ghost-ghost cell interaction as well, which 
-      we do not need! */
-  int n_neighbours;
-  /** interacting neighbour cell list (linear indices) */
-  int *neighbours;
+  /** Just for transparency the index of the neighbor cell. */
+  int cell_ind;
+  /** Pointer to particle list of neighbor cell. */
+  ParticleList *pList;
+  /** Verlet list for non bonded interactions of a cell with a neighbor cell. */
+  PairList vList;
+} IA_Neighbor;
 
-  /** number of particles in the cell. */
-  int n_particles;
-  /** size of particle index array. */
-  int max_particles;
-  /** particle index array (local index!). */
-  int *particles;
+/** Structure containing information of a cell. Contains: cell
+    neighbor information, particles in cell.
+*/
+typedef struct {
+  /** number of interacting neighbor cells . 
+
+      A word about the interacting neighbor cells:
+
+      In a 3D lattice each cell has 27 neighbors (including
+      itself!). Since we deal with pair forces, it is sufficient to
+      calculate only half of the interactions (Newtons law: actio =
+      reactio). For each cell 13+1=14 neighbors. This has only to be
+      done for the inner cells. 
+
+      Caution: This implementation needs double sided ghost
+      communication! For single sided ghost communication one would
+      need some ghost-ghost cell interaction as well, which we do not
+      need! 
+
+      It follows: inner cells: n_neighbors=14
+      ghost cells: n_neighbors=0
+  */
+  int n_neighbors;
+  /** Interacting neighbor cell list  */
+  IA_Neighbor *nList;
+  /** particle list for particles in the cell. */
+  ParticleList pList;
 } Cell;
 
 /** \name Exported Variables */
@@ -91,13 +117,37 @@ extern Cell *cells;
  */
 extern int max_num_cells;
 
+/** cell initialization status. 
+    initialized:      cells_init_flag = CELLS_FLAG_START.
+    cells_pre_init(): cells_init_flag = CELLS_FLAG_PRE_INIT
+    cells_init():     cells_init_flag = CELLS_FLAG_RE_INIT
+    cells_exit():     ruft am ende cells_pre_init() auf.
+ */
+extern int cells_init_flag;
+
 /*@}*/
 
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
 
-/** initialize link cell structures. 
+
+/** Pre initialization of the link cell structure. 
+
+Function called in modul initialize.c initialize().  Initializes one
+cell on each node to be able to store the particle data there.
+*/
+void cells_pre_init();
+
+/** initialize a cell structure.
+ *  Use with care and ONLY for initialization! */
+void init_cell(Cell *cell);
+
+/** Notify cell code of topology change. 
+  * Recalculates the cell sizes. */
+void cells_changed_topology();
+
+/** re initialize link cell structures. 
  *
  *  cells_init calculates the cell grid dimension (cell_grid[3],
  *  ghost_cell_grid[3]) and allocates the space for the cell
@@ -109,9 +159,9 @@ extern int max_num_cells;
  *
  *  Then it allocates space for the particle index list of each cell
  *  (cells[i].particles) with size PART_INCREMENT and initializes the
- *  neighbour list for the cells (init_cell_neighbours()).  
+ *  neighbor list for the cells (init_cell_neighbors()).  
  */
-void cells_init();
+void cells_re_init();
 
 /** sort all particles into inner cells (no ghosts!). 
  *
@@ -134,16 +184,45 @@ void sort_particles_into_cells();
     free space for linked cell structure.  */
 void cells_exit();
 
-/** realloc cell particle array.
-    Step size for increase and decrease is PART_INCREMENT.
-    @param index    linear cell index.
-    @param size     desired size of the  particle array.
- */
-void realloc_cell_particles(int index, int size);
+/** calculate and return the total number of particles on this node. */
+int cells_get_n_particles();
+
+/** search for a specific particle in all cells.
+    \param id the identity of the particle to search
+    \return a pointer to the particle structure or NULL if particle is
+    not in this list */
+Particle *cells_got_particle(int id);
+
+/** allocate space for a particle.
+    \param id the identity of the new particle
+    \param pos its position
+    \return the new particle structure */
+Particle *cells_alloc_particle(int id, double pos[3]);
+
+/** return cell grid index for a position.
+    \param pos Position of e.g. a particle.
+    \return linear cell grid index. */
+int pos_to_cell_grid_ind(double pos[3]);
+
 
 /** Callback for setmd maxnumcells (maxnumcells >= 27). 
     see also \ref max_num_cells */
 int max_num_cells_callback(Tcl_Interp *interp, void *_data);
+
+/** Convience replace for loops over all particles. */
+#define INNER_CELLS_LOOP(m,n,o) \
+  for(m=1; m<cell_grid[0]+1; m++) \
+    for(n=1; n<cell_grid[1]+1; n++) \
+      for(o=1; o<cell_grid[2]+1; o++)
+
+/** Convience replace for loops over all particles and ghosts. */
+#define CELLS_LOOP(m,n,o) \
+  for(m=0; m<ghost_cell_grid[0]; m++) \
+    for(n=0; n<ghost_cell_grid[1]; n++) \
+      for(o=0; o<ghost_cell_grid[2]; o++)
+
+/** get a pointer to the cell associated with the cell coordinates */
+#define CELL_PTR(m,n,o) (&cells[get_linear_index(m,n,o,ghost_cell_grid)])
 
 #endif
 
