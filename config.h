@@ -57,7 +57,7 @@
 /** Compiler flag to enable describing and processing particle orientations.
 
 This will allow to use such particle properties as quart, omega, and torque. */
-#define ROTATION
+/* #define ROTATION */
 
 /** Compiler flag to enable external forces. E.g. apply a fixed external force
     to a particle or fix a particle in space. */
@@ -68,10 +68,10 @@ This will allow to use such particle properties as quart, omega, and torque. */
 #define CONSTRAINTS
 
 /** Compiler Flag to enable COMFORCE potential */
-#define COMFORCE
+/* #define COMFORCE */
 
 /** Compiler Flag to enable COMFIXED potential */
-#define COMFIXED
+/* #define COMFIXED */
 
 /************************************************/
 /** \name available short--ranged potentials
@@ -80,13 +80,13 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /*@{*/
 
 /** to use tabulated potential*/
-#define TABULATED
+/* #define TABULATED */
 
 /** Lennard-Jones */
 #define LENNARD_JONES
 
 /** Lennard-Jones with cosine tail */
-#define LJCOS
+/* #define LJCOS */
 
 /*@}*/
 
@@ -113,15 +113,15 @@ This will allow to use such particle properties as quart, omega, and torque. */
 
 /** NEMD (Non Eqilibrium Molecular Dynamics).
     This is used to perform shear simulations */
-#define NEMD
+/* #define NEMD */
 
 /** Allows to use (N,p,T)-ensembles during integration as well */
-#define NPT
+/* #define NPT */
 
 /** DPD Thermostat (Dissipative Particle Dynamics) 
     Flag needed only because DPD acts like a short range potential
 */
-#define DPD
+/* #define DPD */
 
 /*@}*/
 
@@ -166,7 +166,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /** callback for version status. */
 MDINLINE int version_callback(Tcl_Interp *interp)
 {
-  Tcl_AppendResult(interp, "ESPRESSO: v1.6.6e (Icheb), Last Change: 12.08.2004", (char *) NULL);
+  Tcl_AppendResult(interp, "ESPRESSO: v1.7.3e (Mezoti), Last Change: 13.09.2004", (char *) NULL);
   return (TCL_OK);
 }
 
