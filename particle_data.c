@@ -521,6 +521,7 @@ int part(ClientData data, Tcl_Interp *interp,
 	argv += 2;
       }
       else if (!strncmp(argv[0], "bond", strlen(argv[0]))) {
+	int delete = 0;
 	int type_num;
 	int n_partners;
 	/* Bond type number and the bond partner atoms are stored in this field. */
@@ -533,8 +534,14 @@ int part(ClientData data, Tcl_Interp *interp,
 	/* check number of arguments */
 	if (argc < 3) {
 	  Tcl_AppendResult(interp, "bond requires at least 2 arguments: "
-			   "<type_num> <partner>", (char *) NULL);
+			   "[delete] <type_num> <partner>", (char *) NULL);
 	  return (TCL_ERROR);
+	}
+	/* parse away delete eventually */
+	if (!strncmp(argv[1], "delete", strlen(argv[1]))) {
+	  delete = 1;
+	  argc--;
+	  argv++;
 	}
 	/* check type_num */
 	if (Tcl_GetInt(interp, argv[1], &type_num) == TCL_ERROR)
@@ -557,22 +564,29 @@ int part(ClientData data, Tcl_Interp *interp,
 	bond[0] = type_num;
 	j=1;
 	while(j <= n_partners) {
-	  if (Tcl_GetInt(interp, argv[j+1], &(bond[j])) == TCL_ERROR)
+	  if (Tcl_GetInt(interp, argv[j+1], &(bond[j])) == TCL_ERROR) {
+	    free(bond);
 	    return (TCL_ERROR);
+	  }
 	  if(bond[j] > max_seen_particle || particle_node[bond[j]] == -1) {
 	    Tcl_AppendResult(interp, "partner atom %d (identity %d) not known"
 			     ,j+1,bond[j],
 			     "(Set all partner atoms first)", (char *) NULL);
+	    free(bond);
 	    return (TCL_ERROR);
 	  }
 	  j++;
 	}
-	/* set and send bond */ 
-	mpi_send_bond(node, part_num, bond);
-	free(bond);  
+	/* set/delete bond */ 
+	if (!mpi_send_bond(node, part_num, bond, delete)) {
+	  Tcl_AppendResult(interp, "bond to delete did not exist", (char *)NULL);
+	  free(bond);
+	  return (TCL_ERROR);
+	}
+	free(bond);
 	argc -= (2 + n_partners);
 	argv += (2 + n_partners);
-       }
+      }
       else {
 	Tcl_AppendResult(interp, "unknown particle parameter \"", argv[0],"\"", (char *)NULL);
 	return (TCL_ERROR);

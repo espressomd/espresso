@@ -135,8 +135,10 @@ void mpi_send_type(int node, int part, int type);
     \param part     identity of principal atom of the bond.
     \param node     node it is attached to.
     \param bond     field containing the bond type number and the identity of all bond partners (secundary atoms of the bond).
+    \param delete   if true, do not add the bond, rather delete it if found
+    \return 1 on success or 0 if not (e. g. bond to delete does not exist)
 */
-void mpi_send_bond(int pnode, int part, int *bond);
+int mpi_send_bond(int pnode, int part, int *bond, int delete);
 
 
 /** Issue REQ_GET_PART: recv particle data.

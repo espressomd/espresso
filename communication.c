@@ -11,6 +11,7 @@
 #include "forces.h"
 #include "global.h"
 #include "debug.h"
+#include "utils.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -438,41 +439,69 @@ void mpi_send_type_slave(int part)
 }
 
 /********************* REQ_SET_BOND ********/
-void mpi_send_bond(int pnode, int part, int *bond)
+int mpi_send_bond(int pnode, int part, int *bond, int delete)
 {
-  int i,bond_size;
-  COMM_TRACE(fprintf(stderr, "0: issuing SET_BOND to node %d (part %d bond type_num %d)\n"
+  int i,bond_size, stat;
+  MPI_Status status;
+  COMM_TRACE(fprintf(stderr, "0: issuing SET_BOND to node %d (part %d bond type_num %d)"
 		     , pnode, part, bond[0]));
+  COMM_TRACE(if(delete) fprintf(stderr, "delete\n") else fprintf(stderr, "\n"));
+
   bond_size = bonded_ia_params[bond[0]].num + 1;
   if (pnode == this_node) {
     int ind = got_particle(part);
-    realloc_part_bonds(ind, particles[ind].n_bonds+bond_size);
-    for(i=0;i<bond_size;i++)
-      particles[ind].bonds[particles[ind].n_bonds+i] = bond[i];
-    particles[ind].n_bonds += bond_size;
+    if (delete)
+      return try_delete_bond(&particles[ind], bond);
+    else {
+      realloc_part_bonds(ind, particles[ind].n_bonds+bond_size);
+      for(i=0;i<bond_size;i++)
+	particles[ind].bonds[particles[ind].n_bonds+i] = bond[i];
+      particles[ind].n_bonds += bond_size;
+    }
+    return 1;
   }
   else {
     request[0] = REQ_SET_BOND;
     request[1] = part;
     MPI_Bcast(request, 2, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Send(&delete, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
     MPI_Send(&bond_size, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
     MPI_Send(bond, bond_size, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
+    MPI_Recv(&stat, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD, &status);
+    return stat;
   }
 }
 
 void mpi_send_bond_slave(int part)
 {
   int ind = got_particle(part);
-  int bond_size;
+  int bond_size, delete, stat, *bond;
   MPI_Status status;
-  if (ind != -1) {
-    MPI_Recv(&bond_size, 1, MPI_INT, 0, REQ_SET_BOND,
-	     MPI_COMM_WORLD, &status);
+  if (ind == -1) {
+    fprintf(stderr, "%d: communication failure, got data for particle I don't own\n", this_node);
+    errexit();
+  }
+
+  MPI_Recv(&delete, 1, MPI_INT, 0, REQ_SET_BOND,
+	   MPI_COMM_WORLD, &status);
+  MPI_Recv(&bond_size, 1, MPI_INT, 0, REQ_SET_BOND,
+	   MPI_COMM_WORLD, &status);
+  if (delete)
+    bond = (int *)malloc(bond_size*sizeof(int));
+  else {
     realloc_part_bonds(ind, particles[ind].n_bonds+bond_size);
-    MPI_Recv(&(particles[ind].bonds[particles[ind].n_bonds]), bond_size, 
-	     MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
+    bond = particles[ind].bonds + particles[ind].n_bonds;
     particles[ind].n_bonds += bond_size;
   }
+  MPI_Recv(bond, bond_size, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
+  if (delete) {
+    stat = try_delete_bond(&particles[ind], bond);
+    free(bond);
+  }
+  else {
+    stat = 1;
+  }
+  MPI_Send(&stat, 1, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD);
 }
 
 /****************** REQ_GET_PART ************/
