@@ -1,3 +1,13 @@
+/** \file particle_data.c
+    This file contains everything related to particle storage. If you want to add a new
+    property to the particles, it is probably a good idea to modify \ref part to give
+    scripts access to that property. You always have to modify two positions: first the
+    print section, where you should add your new data at the end, and second the read
+    section where you have to find a nice and short name for your property to appear in
+    the Tcl code. Then you just parse your part out of argc and argv.
+
+    The corresponding header file is \ref particle_data.h "particle_data.h".
+*/
 #include "particle_data.h"
 #include "global.h"
 #include "communication.h"
@@ -11,14 +21,8 @@
  * defines
  ************************************************/
 
-/* increment size of particle buffer */
+/** granularity of the particle buffer in particles */
 #define PART_INCREMENT 256
-
-/* decrement size of bonded ia
- * if difference between old length
- * (from recycling) and new length is
- * larger than this, reduce to new size */
-#define BONDED_REDUCE 64
 
 void map_particle_node(int part, int node)
 {
@@ -152,18 +156,6 @@ void particle_finalize_data()
     free(particle_node);
     particle_node = NULL;
   }
-}
-
-void realloc_bonds(int index, int size)
-{
-  /* reallocate if either too small or too large */
-  if ((size  > particles[index].max_bonds) ||
-      (size <= particles[index].max_bonds - BONDED_REDUCE)) {
-    particles[index].max_bonds = size;
-    particles[index].bonds = (int *)
-      realloc(particles[index].bonds, sizeof(int)*size);
-  }
-  particles[index].n_bonds = size;
 }
 
 int part(ClientData data, Tcl_Interp *interp,

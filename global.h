@@ -107,9 +107,6 @@ typedef union {
 extern int n_bonded_ia;
 extern Bonded_ia_parameters *bonded_ia_params;
 
-/** reallocate particles bonds */
-void realloc_bonds(int index, int size);
-
 /****************************************
  * integration from integrator.c
  ****************************************/
