@@ -66,7 +66,7 @@
 /** callback for version status. */
 MDINLINE int version_callback(Tcl_Interp *interp)
 {
-  Tcl_AppendResult(interp, "TCL_MD: Version: 0.99 beta, Last Change: 18.03.2003", (char *) NULL);
+  Tcl_AppendResult(interp, "ESPRESSO/tcl_md: Version: 0.99b RC01, Last Change: 16.04.2003", (char *) NULL);
   return (TCL_OK);
 }
 
