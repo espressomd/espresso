@@ -386,15 +386,19 @@ void exchange_part()
 
 }
 
+void invalidate_ghosts()
+{
+  int n;
+  /* remove ghosts */
+  for(n=n_particles; n<n_particles+n_ghosts; n++) local_index[particles[n].identity] = -1;
+}
+
 void exchange_ghost()
 {
   int i,dir,c,n,m,c_ind, d;
   int old_max_send, old_max_recv;
 
   GHOST_TRACE(fprintf(stderr,"%d: exchange_ghost:\n",this_node));
-
-  /* remove ghosts */
-  for(n=n_particles; n<n_particles+n_ghosts; n++) local_index[particles[n].identity] = -1;
 
   old_max_send = max_send_buf;
   old_max_recv = max_recv_buf;
@@ -446,7 +450,7 @@ void exchange_ghost()
     m = n_particles + n_ghosts;
     /* check particle array */
     n_ghosts += n_recv_ghosts[max_send_cells];
-    if(n_particles+n_ghosts >= max_particles) 
+    if(n_particles+n_ghosts > max_particles) 
       realloc_particles(n_particles+n_ghosts);
     /* index of actual ghost in g_recv_buf */
     n=0;
@@ -720,7 +724,7 @@ void append_particles(void)
 {
   int n,i,bonds,b_ind=0;
   /* check particle array size */
-  if(n_particles + n_p_recv_buf >= max_particles) 
+  if(n_particles + n_p_recv_buf > max_particles) 
     realloc_particles(n_particles + n_p_recv_buf);
   /* copy particle data */
   memcpy(&particles[n_particles],p_recv_buf,n_p_recv_buf*sizeof(Particle));

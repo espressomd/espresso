@@ -150,6 +150,9 @@ void exchange_part();
 */
 void exchange_ghost();
 
+/** remove the ghost entries from \ref local_index. */
+void invalidate_ghosts();
+
 /** exchange ghost particle positions. 
  *  
  *  Using the structures build up in \ref ghost_init and \ref
