@@ -18,6 +18,9 @@
 		and energies as a function of the separation distance.
 
 		At present the required file format is simply an ordered list separated by whitespace.  
+		The data reader first looks for a \p # character and begins reading from that point in the file.  
+		Anything before the \p # will be ignored.  
+
 		The first parameter you should supply in the file is the
 		number of data points in the table.  This should be an integer.  Take
 		care when choosing an appropriate value for the number of points

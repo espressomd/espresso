@@ -45,7 +45,7 @@ In <tt>statistics.c</tt>:<br>
 	 { energy <value> } { kinetic <value> } { interaction <value> } ... <BR>
 	 If you specify <interaction_type>, e.g. 
 	 \verbatim bonded     |  fene <type_num>     |  harmonic <type_num>
- nonbonded  |  lj <type1> <type2>  |  lj-cos <type1> <type2>  |  gb <type1> <type2>
+ nonbonded  |  lj <type1> <type2>  |  lj-cos <type1> <type2>  |  gb <type1> <type2> | tabulated <type1> <type2> 
  coulomb
  kinetic \endverbatim
          it returns just that energy; if you specify <tt>total</tt>, it only returns the total energy without giving the details on its contributors.
