@@ -151,9 +151,9 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_GET_ERRS  40
 /** Action number for \ref mpi_send_exclusion. */
 #define REQ_SET_EXCL  41
-/**Action number for \ref mpi_morse_cap_forces. */
+/** Action number for \ref mpi_morse_cap_forces. */
 #define REQ_BCAST_MFC 42
-/**Action number for \ref mpi_bcast_lb_params. */
+/** Action number for \ref lb_set_params. */
 #define REQ_LB_BCAST 43
 /** Total number of action numbers. */
 #define REQ_MAXIMUM   44
