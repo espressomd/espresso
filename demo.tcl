@@ -83,7 +83,7 @@ set vmd_output "yes"
 #############################################################
 
 # Number of polymers
-set n_polymers 1
+set n_polymers 2
 # length of polymers
 set l_polymers 99
 # Bond length
@@ -98,6 +98,9 @@ set ci_valency -1.0
 
 # system density
 set density 0.001
+
+# counterion lj cutoff
+set fixed_lj_cut 1.12246
 
 # Interaction parameters
 #############################################################
@@ -149,13 +152,15 @@ inter 1 fene $fene1_k $fene1_cut
 
 # pairwise lennard_jones for all particles
 proc setup_ia {what val} {
-    global lj1_epsilon lj1_cut n_part_types
+    global fixed_lj_cut lj1_epsilon lj1_cut
     eval "set $what $val"
-    for {set ia1 0} { $ia1 <= $n_part_types } { incr ia1 } {
-	for {set ia2 0} { $ia2 <= $n_part_types } { incr ia2 } {
-	    inter $ia1 $ia2 lennard-jones $lj1_epsilon 1 $lj1_cut 0 0
-	}
-    }
+    inter 0 0 lennard-jones $lj1_epsilon 1 $lj1_cut 0 0
+    inter 0 1 lennard-jones $lj1_epsilon 1 $lj1_cut 0 0
+    inter 1 1 lennard-jones $lj1_epsilon 1 $lj1_cut 0 0
+
+    inter 0 2 lennard-jones $lj1_epsilon 1 $fixed_lj_cut 0 0
+    inter 1 2 lennard-jones $lj1_epsilon 1 $fixed_lj_cut 0 0
+    inter 2 2 lennard-jones $lj1_epsilon 1 $fixed_lj_cut 0 0
 }
 mdparam lj1_cut 1 2.5 1.12246 "cutoff for LJ" {setup_ia lj1_cut}
 mdparam lj1_epsilon 0.5 2 1.0 "epsilon for LJ" {setup_ia lj1_epsilon}
@@ -208,9 +213,9 @@ if { [file exists "pe_initial.gz"]} {
     set part_id 0
     for {set i 0} { $i < $n_polymers } {incr i} {
 	# polymer start ion
-	set posx [expr $box_length*[tcl_rand]]
-	set posy [expr $box_length*[tcl_rand]]
 	set posz [expr $box_length*[tcl_rand]]
+	set posy [expr $box_length*[tcl_rand]]
+	set posx [expr $box_length*[tcl_rand]]
 	part $part_id pos $posx $posy $posz q $cm_valency type 1
 	incr part_id 
 	for {set n 1} { $n < $l_polymers } {incr n} {
@@ -288,9 +293,9 @@ while { 1 } {
     if {$simulation_start == 1} {
 	integrate $intsteps
 	if { $vmd_output=="yes" } { puts "imd: [imd positions]" }
-	set md [mindist]
-	set RE [analyze 0 $n_polymers $l_polymers $n_counterions]
-	set RG [analyze 1 $n_polymers $l_polymers $n_counterions]
+	set md [analyze mindist]
+	set RE [analyze re 0 $n_polymers $l_polymers]
+	set RG [analyze rg 0 $n_polymers $l_polymers]
 	.lab_md conf -text "mindist: $md"
 	.lab_RE conf -text "RE: $RE"
 	.lab_RG conf -text "RG: $RG"
