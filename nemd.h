@@ -29,7 +29,7 @@
     <li> The velocity profile is generated in x direction.
     <li> Do not use other special features like part fix or 
          constraints inside the top and middle slab.
-    <li> Use only with a DPD thermostat.
+    <li> Use only with a DPD thermostat or in an NVE ensemble.
     </ul>
     
     <b>Responsible:</b>

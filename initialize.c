@@ -91,7 +91,7 @@ void on_integration_start()
     fprintf(stderr,"%d: ERROR: on_integration_start: Can not initialize the integrator!:\n",this_node);
     if( time_step < 0.0 ) fprintf(stderr,"%d: PROBLEM: You have to set the time_step!\n",this_node);
     if( skin < 0.0 ) fprintf(stderr,"%d: PROBLEM: You have to set the skin!\n",this_node);
-    if( temperature < 0.0 ) fprintf(stderr,"%d: PROBLEM: You have to set the temperature!\n",this_node);
+    if( temperature < 0.0 ) fprintf(stderr,"%d: PROBLEM: You have to initialize a thermostat!\n",this_node);
     errexit();
   }
 
