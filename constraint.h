@@ -63,6 +63,73 @@ MDINLINE void calculate_sphere_dist(Particle *p1, Particle *c_p, Constraint_sphe
   }
 }
 
+
+MDINLINE void calculate_maze_dist(Particle *p1, Particle *c_p, Constraint_maze *c, double *dist, double *vec)
+{
+  int i,min_axis,cursph[3],dim;
+  float diasph,fac,c_dist,sph_dist,cyl_dist,temp_dis;
+  float sph_vec[3],cyl_vec[3];
+  IA_parameters *ia_params;
+ 
+  ia_params = get_ia_param(p1->r.type, c_p->r.type);
+  dim=(int) c->dim;
+  diasph = box_l[0]/c->nsphere;
+  
+  /* First determine the distance to the sphere */
+  c_dist=0.0;
+  for(i=0;i<3;i++) {
+    cursph[i] = (int) (p1->r.p[i]/diasph);
+    sph_vec[i] = (cursph[i]+0.5) * diasph  - (p1->r.p[i]);
+    c_dist += SQR(sph_vec[i]);
+  }
+  c_dist = sqrt(c_dist);
+  sph_dist = c->sphrad - c_dist;
+  fac = sph_dist / c_dist;
+  for(i=0;i<3;i++) cyl_vec[i] = sph_vec[i];
+  for(i=0;i<3;i++) sph_vec[i] *= fac;
+  
+  /* Now calculate the cylinder stuff */
+  /* have to check all 3 cylinders */
+  min_axis=2;
+  cyl_dist=sqrt(cyl_vec[0]*cyl_vec[0]+cyl_vec[1]*cyl_vec[1]);
+  
+  if(dim > 0 ){
+    temp_dis=sqrt(cyl_vec[0]*cyl_vec[0]+cyl_vec[2]*cyl_vec[2]);
+    if ( temp_dis < cyl_dist) {
+        min_axis=1;
+        cyl_dist=temp_dis;
+    }
+
+    if(dim > 1 ){
+        temp_dis=sqrt(cyl_vec[1]*cyl_vec[1]+cyl_vec[2]*cyl_vec[2]);
+        if ( temp_dis < cyl_dist) {
+            min_axis=0;
+            cyl_dist=temp_dis;
+        }
+    }
+  }
+  cyl_vec[min_axis]=0.;
+  
+  c_dist=cyl_dist;
+  cyl_dist = c->cylrad - c_dist;
+  fac = cyl_dist / c_dist;
+  for(i=0;i<3;i++) cyl_vec[i] *= fac;
+  
+  /* Now decide between cylinder and sphere */
+  if ( sph_dist > 0 ) {
+    if ( sph_dist>cyl_dist ) {
+        *dist = sph_dist;
+        for(i=0;i<3;i++) vec[i] = sph_vec[i];
+    } else {
+        *dist = cyl_dist;
+        for(i=0;i<3;i++) vec[i] = cyl_vec[i];  
+    }
+  } else {
+    *dist = cyl_dist;
+    for(i=0;i<3;i++) vec[i] = cyl_vec[i];  
+  }
+}
+
 MDINLINE void calculate_cylinder_dist(Particle *p1, Particle *c_p, Constraint_cylinder *c, double *dist, double *vec)
 {
   int i;
@@ -226,6 +293,18 @@ MDINLINE void add_constraints_forces(Particle *p1)
         else {
 	  fprintf(stderr,"CONSTRAINT CYLINDER: ERROR! part %d at (%.2e,%.2e,%.2e) violated the constraint! dist= %f\n",
 		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2],dist);
+	  errexit();
+        }
+	break;
+
+      case CONSTRAINT_MAZE: 
+        calculate_maze_dist(p1, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
+        if (dist > 0) {
+	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist);
+        }
+        else {
+	  fprintf(stderr,"CONSTRAINT MAZE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
 	  errexit();
         }
 	break;

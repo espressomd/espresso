@@ -1719,6 +1719,18 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     sprintf(buffer, "%d", con->part_rep.r.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
+  case CONSTRAINT_MAZE:
+    Tcl_PrintDouble(interp, con->c.maze.nsphere, buffer);
+    Tcl_AppendResult(interp, "maze nsphere ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.maze.dim, buffer);
+    Tcl_AppendResult(interp, " dim ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.maze.sphrad, buffer);
+    Tcl_AppendResult(interp, " sphrad ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.maze.cylrad, buffer);
+    Tcl_AppendResult(interp, " cylrad ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->part_rep.r.type);
+    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    break;
   default:
     sprintf(buffer, "%d", con->type);
     Tcl_AppendResult(interp, "unknown constraint type ", buffer, ".", (char *) NULL);
@@ -2066,6 +2078,80 @@ int constraint_rod(Constraint *con, Tcl_Interp *interp,
 
 #endif
 
+int constraint_maze(Constraint *con, Tcl_Interp *interp,
+		      int argc, char **argv)
+{
+  con->type = CONSTRAINT_MAZE;
+
+  /* invalid entries to start of */
+  con->c.maze.nsphere = 0.;
+  con->c.maze.dim = -1.;
+  con->c.maze.sphrad = 0.;
+  con->c.maze.cylrad = -1.;
+  con->part_rep.r.type = -1;
+
+  while (argc > 0) {
+    if(!strncmp(argv[0], "nsphere", strlen(argv[0]))) {
+      if(argc < 4) {
+	Tcl_AppendResult(interp, "constraint maze nsphere <n> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.maze.nsphere)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "dim", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint maze dim <d> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.maze.dim)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "sphrad", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint maze sphrad <r> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.maze.sphrad)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "cylrad", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint maze cylrad <r> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.maze.cylrad)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint maze type <t> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.r.type)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else
+      break;
+  }
+
+  if (con->c.maze.sphrad < 0. || con->c.maze.cylrad < 0. || con->part_rep.r.type < 0 || con->c.maze.dim < 0) {
+    Tcl_AppendResult(interp, "usage: constraint maze nsphere <n> dim <d> sphrad <r> cylrad <r> type <t>",
+		     (char *) NULL);
+    return (TCL_ERROR);    
+  }
+
+  make_particle_type_exist(con->type);
+
+  return (TCL_OK);
+}
+
+
 int constraint(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv)
 {
@@ -2091,6 +2177,11 @@ int constraint(ClientData _data, Tcl_Interp *interp,
   }
   else if(!strncmp(argv[1], "rod", strlen(argv[1]))) {
     status = constraint_rod(generate_constraint(),interp, argc - 2, argv + 2);
+    mpi_bcast_constraint(-1);
+    return status;
+  }
+  else if(!strncmp(argv[1], "maze", strlen(argv[1]))) {
+    status = constraint_maze(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
     return status;
   }
@@ -2126,7 +2217,7 @@ int constraint(ClientData _data, Tcl_Interp *interp,
     return (TCL_OK);
   }
 
-  Tcl_AppendResult(interp, "possible constraints: wall sphere cylinder or constraint delete {c} to delete constraint(s)",(char *) NULL);
+  Tcl_AppendResult(interp, "possible constraints: wall sphere cylinder maze or constraint delete {c} to delete constraint(s)",(char *) NULL);
   return (TCL_ERROR);
 #else
   Tcl_AppendResult(interp, "Constraints not compiled in!" ,(char *) NULL);

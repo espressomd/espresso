@@ -81,6 +81,8 @@
 #define CONSTRAINT_CYL 3
 /** Rod-like constraint applied. In addition to the general cylinder the rod also allows for a line charge. */
 #define CONSTRAINT_ROD 4
+/** maze-like constraint applied */
+#define CONSTRAINT_MAZE 5
 
 /*@}*/
 
@@ -231,6 +233,18 @@ typedef struct {
   double lambda;
 } Constraint_rod;
 
+/** Parameters for a MAZE constraint. */
+typedef struct {
+  /** number of spheres. */
+  double nsphere;
+  /** dimension of the maze. */
+  double dim;
+  /** sphere radius. */
+  double sphrad;  
+  /** cylinder (connecting the spheres) radius*/
+  double cylrad;
+} Constraint_maze;
+
 /** Structure to specify a constraint. */
 typedef struct {
   /** type of the constraint. */
@@ -241,6 +255,7 @@ typedef struct {
     Constraint_sphere sph;
     Constraint_cylinder cyl;
     Constraint_rod rod;
+    Constraint_maze maze;
   } c;
 
   /** particle representation of this constraint. Actually needed are only the identity,
