@@ -5,7 +5,6 @@ TESTCASES="nve_pe.tcl npt.tcl madelung.tcl \
     kinetic.tcl thermostat.tcl \
     intpbc.tcl intppbc.tcl layered.tcl nsquare.tcl \
     comforce.tcl comfixed.tcl analysis.tcl"
-TESTCASES="nve_pe.tcl lj.tcl"
 
 # List of testcases to be done (and people responsible for them):
 #################################################################
