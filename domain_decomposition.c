@@ -38,7 +38,7 @@
 DomainDecomposition dd = { 1, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, NULL };
 
 int max_num_cells = CELLS_MAX_NUM_CELLS;
-int min_num_cells = 27;
+int min_num_cells = 8;
 double max_skin   = 0.0;
 
 /*@}*/
@@ -872,8 +872,8 @@ int max_num_cells_callback(Tcl_Interp *interp, void *_data)
 int min_num_cells_callback(Tcl_Interp *interp, void *_data)
 {
   int data = *(int *)_data;
-  if (data < 27) {
-    Tcl_AppendResult(interp, "min_num_cells must be at least 27", (char *) NULL);
+  if (data < 8) {
+    Tcl_AppendResult(interp, "min_num_cells must be at least 8", (char *) NULL);
     return (TCL_ERROR);
   }
   if (data > max_num_cells) {
