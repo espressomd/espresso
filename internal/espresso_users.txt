@@ -80,17 +80,35 @@ email: prochaz@vivien.natur.cuni.cz
 send:  08.OKT.2003
 topic: 
 
-name:  Andreas Heuer
-email: andheuer@uni-muenster.de
-send:  22.OKT.2003
-topic: Polymers, e.g. PEO at Silica
+name:    Andreas Heuer
+email:   andheuer@uni-muenster.de
+send:    22.OKT.2003
+version:
+topic:   Polymers, e.g. PEO at Silica
 
-name:  Alexey Shipov
-email: ashipov@mail.ru
-send:  11.FEB.2004
-topic: domain nucleation and growth in thin granular ferromagnetic films in PMMA
+name:    Alexey Shipov
+email:   ashipov@mail.ru
+send:    11.FEB.2004
+version: 20040129-Espresso_v1.5.Beta.tar.gz
+topic:   domain nucleation and growth in thin granular ferromagnetic films 
+         in PMMA
 
-name:
-email:
-send:
-topic:
+name:    Ralph Jaquet
+email:   theo@theo.chemie.uni-siegen.de
+send:    09.MAR.2004
+version: 20040129-Espresso_v1.5.Beta.tar.gz
+topic:   Wir würden gerne auch im Rahmen von MD untersuchen, wie sich die 
+         smektische Phase ausrichtet (Direktor) und wie das 
+	 Temperaturverhalten ist.
+
+name:    Alexandre Diehl
+email:   diehl@fisica.ufc.br
+send:    10.MAR.2004
+version: 20040129-Espresso_v1.5.Beta.tar.gz
+topic:   It's my intention to work on polyelectrolyte simulation
+
+name:    Frederic Tessier
+email:	 ftessier@physics.uottawa.ca
+send:    15.MAR.2004
+version: 20040129-Espresso_v1.5.Beta.tar.gz
+topic:   simulations of EOF, Nanopore, polymer-polymer collisions
