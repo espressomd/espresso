@@ -139,8 +139,15 @@ void fft_modes_init() {
  */
 int lipid_orientation( int id, Particle* partCfg , double zref) {
   int mol_size, head_id, tail_id, mol_id, mol_type;
-  int i;
+  int i, tmpzdir;
   double distance;
+
+
+  if ( xdir + ydir + zdir == -3 ) {
+    tmpzdir = 2;
+  } else { 
+    tmpzdir = zdir;
+  };
 
 
   /* check molecule information */
@@ -148,15 +155,21 @@ int lipid_orientation( int id, Particle* partCfg , double zref) {
   mol_id = partCfg[id].p.mol_id ;
   mol_size = topology[mol_id].part.n;
   mol_type = topology[mol_id].type;
-  //  printf("mol_type %d \n", mol_type);
-  
-  //  printf("ids: %d %d %d N: %d parts: %d %d %d \n",id,partCfg[id].p.identity,mol_id,topology[mol_id].part.n,topology[mol_id].part.e[0],topology[mol_id].part.e[1],topology[mol_id].part.e[2]);
-  //  fflush(stdout);
+
+  /*
+    printf("mol_type %d \n", mol_type);  
+    printf("ids: %d %d %d N: %d parts: %d %d %d \n",id,partCfg[id].p.identity,mol_id,topology[mol_id].part.n,topology[mol_id].part.e[0],topology[mol_id].part.e[1],topology[mol_id].part.e[2]);
+  fflush(stdout);
+  */
 
   // Search the molecule for head and tail beads
-  head_id = 0 ; 
+  head_id = 0 ;
   tail_id = 0;
   for ( i = 0 ; i < mol_size ; i++ ) {
+    /*    
+	  printf("type: %d %d \n", partCfg[topology[mol_id].part.e[i]].p.type, LIPID_HEAD_TYPE);
+	  fflush(stdout);
+    */
     if ( partCfg[topology[mol_id].part.e[i]].p.type == LIPID_HEAD_TYPE ) {
       head_id = topology[mol_id].part.e[i];
       if ( i == 0 ) { 
@@ -168,8 +181,10 @@ int lipid_orientation( int id, Particle* partCfg , double zref) {
     }
   }
 
+  /*  printf("head: %d, tail %d", head_id, tail_id); */
+
   /*
-    if ( mol_type == 0 ) { 
+  if ( mol_type == 0 ) { 
     head_id = topology[mol_id].part.e[mol_size-1];
     tail_id = topology[mol_id].part.e[0];
     } else {
@@ -178,12 +193,14 @@ int lipid_orientation( int id, Particle* partCfg , double zref) {
     }
   */
 
-  distance = sqrt(pow((partCfg[tail_id].r.p[zdir] - zref),2));
+  distance = sqrt(pow((partCfg[tail_id].r.p[tmpzdir] - zref),2));
+  /*  printf("zdir: %d \n", zdir);
+      printf("head pos %f : tail pos %f \n", partCfg[head_id].r.p[tmpzdir], partCfg[tail_id].r.p[tmpzdir] );
+      printf("dist %f : vect %f \n", distance,(partCfg[head_id].r.p[tmpzdir] - partCfg[tail_id].r.p[tmpzdir]) );
+      fflush(stdout);
+  */
 
-  //  printf("dist %f : vect %f \n", distance,(partCfg[head_id].r.p[zdir] - partCfg[tail_id].r.p[zdir]) );
-
-
-  if ( (partCfg[head_id].r.p[zdir] - partCfg[tail_id].r.p[zdir]) > 0.0 ) {
+  if ( (partCfg[head_id].r.p[tmpzdir] - partCfg[tail_id].r.p[tmpzdir]) > 0.0 ) {
     /* Lipid is oriented up */
     if (  distance  > stray_cut_off ) {
       return LIPID_STRAY;
@@ -199,32 +216,6 @@ int lipid_orientation( int id, Particle* partCfg , double zref) {
   }
 
   return -1;
-  /*
-    double remainder;
-    remainder = (id+1)/3.0 - (int)((id+1)/3.0);
-    if (remainder <  MODES2D_NUM_TOL ) {
-    if ( ( partCfg[id].r.p[zdir] - partCfg[id-2].r.p[zdir] ) > 0 ) { 
-    if ( ( partCfg[id-2].r.p[zdir] - zref ) > stray_cut_off ) {
-    return LIPID_STRAY;
-    } else { 
-    return LIPID_UP; 
-    }
-    } else { 
-    if ( ( partCfg[id+2].r.p[zdir] - zref ) > stray_cut_off ) {
-    return LIPID_STRAY;
-    } else {
-    return LIPID_DOWN; 
-    }
-    }    
-    }
-    
-    if (remainder > MODES2D_NUM_TOL ) {
-    if ( ( partCfg[id].r.p[zdir] - partCfg[id+2].r.p[zdir] ) > 0 ) { 
-    return LIPID_UP;
-    } else { return LIPID_DOWN; }    
-    }
-    return -1;
-  */
 }
 
 /** This routine performs must of the work involved in the analyze
@@ -310,7 +301,7 @@ int modes2d(fftw_complex* modes) {
   /* Calculate the non normalized height function of head lipids */
   nup = ndown = nstray = 0;
   for (i = 0 ; i < n_total_particles ; i++) {
-    if ( (partCfg[i].p.type == 0)) {
+    if ( (partCfg[i].p.type == 1)) {
       gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
       gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
 
