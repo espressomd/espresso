@@ -16,11 +16,12 @@ Antypov, Dmytro
 
 Sayar, Mehmet
 
-Lobaskin, Vladimir
+Stuehn, Torsten
 
-Mühlbacher, Frank
+(X) Lobaskin, Vladimir
 
 
+(X) Andrienko, Denis
 
 Cooke, Ira
 
@@ -38,9 +39,9 @@ Nowak, Christian
 
 Pasichnyk, Igor
 
-Sukumaran, Sathish
+Praprotnik, Mateij
 
-Cooke, Ira
+Sukumaran, Sathish
 
 
 ===============================================================================
@@ -85,11 +86,13 @@ sent:    08.OKT.2003
 version:
 topic: 
 
-name:    Andreas Heuer
+
+name:    Arijit Maitra / Andreas Heuer
 email:   andheuer@uni-muenster.de
-sent:    22.OKT.2003
-version:
+sent:    22.OKT.2003 - 12.MAY.2004
+version: 20040512-Espresso_v1.6.1d.tar.gz
 topic:   Polymers, e.g. PEO at Silica
+
 
 name:    Alexey Shipov
 email:   ashipov@mail.ru
@@ -97,6 +100,14 @@ sent:    11.FEB.2004
 version: 20040129-Espresso_v1.5.Beta.tar.gz
 topic:   domain nucleation and growth in thin granular ferromagnetic films 
          in PMMA
+
+
+name:    Salvador LEON-Cabanillas 
+email:   leon@diquima.upm.es
+sent:    20.FEB.2004
+version: 
+topic:   
+
 
 name:    Ralph Jaquet
 email:   theo@theo.chemie.uni-siegen.de
@@ -106,11 +117,13 @@ topic:   Wir würden gerne auch im Rahmen von MD untersuchen, wie sich die
          smektische Phase ausrichtet (Direktor) und wie das 
 	 Temperaturverhalten ist.
 
+
 name:    Alexandre Diehl
 email:   diehl@fisica.ufc.br
 sent:    10.MAR.2004
 version: 20040129-Espresso_v1.5.Beta.tar.gz
 topic:   It's my intention to work on polyelectrolyte simulation
+
 
 name:    Frederic Tessier
 email:	 ftessier@physics.uottawa.ca
@@ -118,9 +131,19 @@ sent:    15.MAR.2004
 version: 20040129-Espresso_v1.5.Beta.tar.gz
 topic:   simulations of EOF, Nanopore, polymer-polymer collisions
 
+
 name:    Baohua Ji
 email:   ji@mf.mpg.de
 sent:    29.MAR.2004
 version: 20040329-Espresso_v1.5.7c.tar.gz
 topic:   simulate the DNA and protein mechanics and deformation
 
+
+name:    Ulf Schiller / Friederike Schmid
+email:   uschille@TechFak.Uni-Bielefeld.DE
+sent:    21.JUL.2004
+version: 20040715-Espresso_v1.6.5b.tar.gz
+topic:   Lipid-Doppelschicht, deren Koepfe zur Stabilisation an feste Waende gekoppelt; 
+	 spaeter soll dann eine Lipid-Doppelschicht in einer Loesungsmittelumgebung 
+	 simuliert werden, wobei zur Simulation des Loesungsmittels ein DPD-Thermostat
+	 angedacht ist
