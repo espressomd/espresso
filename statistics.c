@@ -307,7 +307,7 @@ double distto(double p[3], int pid)
 }
 
 void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry, double *result) {
-  double LOG,xi_min, RM, gamma,g1,g2,gmid,dg,ig, f,fmid, rtb;
+  double LOG,xi_min, RM, gamma,g1,g2,gmid=0,dg,ig, f,fmid, rtb;
   int i;
   LOG    = log(Rc/ro);
   xi_min = LOG/(1+LOG);
