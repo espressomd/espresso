@@ -744,8 +744,6 @@ void send_ghosts(int s_dir)
     }
   }
   else {                 /* communication goes to the same node! */ 
-    
-    fprintf(stderr,"%d: ghost exchange to same node: s_dir=%d r_dir=%d\n",this_node,s_dir,r_dir);
 
     ghost_send_size[s_dir] = n_send_ghosts[s_dir].e[send_cells[s_dir].n];
  

@@ -92,8 +92,8 @@ void build_verlet_lists()
 	  add_pair(pl, &p1[i], &p1[j]);
 	}
       }	
-      resize_verlet_list(pl);
     }
+    resize_verlet_list(pl);
 
     /* interactions with neighbor cells */
     for(nc=1; nc < cell->n_neighbors; nc++) {
@@ -114,17 +114,21 @@ void build_verlet_lists()
 
 #ifdef VERLET_DEBUG 
   {
-    int c, sum,tot_sum=0;
+    int sum,tot_sum=0;
+    int cind1,cind2;
     fprintf(stderr,"%d: Verlet list sizes: \n",this_node);
-    for(c=0; c<n_cells; c++) { 
+    INNER_CELLS_LOOP(m, n, o) {
+      cell = CELL_PTR(m, n, o);
+      cind1 = get_linear_index(m,n,o,ghost_cell_grid);
       sum=0;
-      for(nc=0; nc<cells[c].n_neighbors; nc++) {
-	sum += cells[c].nList[nc].vList.n;
-      }
-      fprintf(stderr,"%d: Cell %d: sum = %d \n",this_node,c,sum);
+      for(nc=0; nc<cell->n_neighbors; nc++) {
+	sum += cell->nList[nc].vList.n;
+	cind2 = cell->nList[nc].cell_ind;
+     }
+      fprintf(stderr,"%d: Cell (%d,%d,%d): sum = %d \n",this_node,m,n,o,sum);
       tot_sum += sum;
     }
-    fprintf(stderr,"%d: total number of interaction pairs: %d\n",this_node,tot_sum)
+    fprintf(stderr,"%d: total number of interaction pairs: %d\n",this_node,tot_sum);
   }
 #endif 
   rebuild_verletlist = 0;

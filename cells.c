@@ -384,13 +384,10 @@ void init_cell_neighbors(int i)
     cells[i].nList = (IA_Neighbor *) realloc(cells[i].nList,MAX_NEIGHBORS*sizeof(IA_Neighbor));    
     get_grid_pos(i,&p1[0],&p1[1],&p1[2], ghost_cell_grid);
     /* loop through all neighbors */
-    for(m = extended[0] ? 0 : -1;
-	m < (extended[1] ? 1 :  2); m++) 
-      for(n = extended[2] ? 0 : -1;
-	  n < (extended[3] ? 1 :  2); n++)
-	for(o = extended[4] ? 0 : -1;
-	    o < (extended[5] ? 1 :  2); o++) {
-	  p2[0] = p1[0]+m;   p2[1] = p1[1]+n;   p2[2] = p1[2]+o;
+    for(m=-1;m<2;m++)
+      for(n=-1;n<2;n++)
+	for(o=-1;o<2;o++) {
+	  p2[0] = p1[0]+o;   p2[1] = p1[1]+n;   p2[2] = p1[2]+m;
 	  j = get_linear_index(p2[0],p2[1],p2[2], ghost_cell_grid);
 	  /* take the upper half of all neighbors 
 	     and add them to the neighbor list */
