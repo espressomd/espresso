@@ -757,7 +757,8 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
     memcpy(pdata->omega, p->omega, 3*sizeof(double));
 #endif
 
-    bl->max = bl->n;
+    bl->max = bl->n = p->bl.n;
+
     if (bl->n > 0) {
       alloc_intlist(bl, bl->n);
       memcpy(bl->e, p->bl.e, sizeof(int)*bl->n);
