@@ -45,7 +45,7 @@ for np in 1 2 3 4 6 8; do
     for f in $TESTCASES; do
 	ignore=0
 	for ft in $blacklist; do
-	    if test "$ft" == "$f"; then
+	    if test "$ft" = "$f"; then
 		ignore=1;
 		break;
 	    fi
