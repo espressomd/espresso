@@ -2,20 +2,21 @@
     \verbatim analyze <what> [<structure info>] [...] \endverbatim
     This command provides online-calculation of local and global observables.<BR>
     Without any further information the following are accessible:
+
+In <tt>statistics.c</tt>:<br>
     <ul>
-    <li> \verbatim analyze mindist \endverbatim
-         returns the minimal distance between two particles in the system.
+    <li> \verbatim analyze mindist [<type_list_a> <type_list_b>]\endverbatim
+         returns the minimal distance between two particles in the system. 
+	 If the type-lists are given, then the minimal distance between particles of only those types is determined.
+	 The C implementation is \ref #mindist; it is parsed by \ref #parse_mindist.
     <li> \verbatim analyze nbhood { <part_id> | <posx> <posy> <posz> } <r_catch> \endverbatim
          returns all particles within a given radius <r_catch> around the position of the particle with number <part_id>
-	 or around (<posx>, <posy>, <posz>).
+	 or around the spatial coordinate (<posx>, <posy>, <posz>).
+	 The C implementation is \ref #nbhood; it is parsed by \ref #parse_nbhood.
     <li> \verbatim analyze distto { <part_id> | <posx> <posy> <posz> } \endverbatim
          returns the minimal distance of all particles to coordinates (<posx>, <posy>, <posz>) or to the position of particle <part_id>.
-    <li> \verbatim analyze energy [{ fene <type_num> | lj <type1> <type2> | coulomb | kinetic }] \endverbatim
-         returns the energies of the system. The output corresponds to the  blockfile format (\ref blockformat):
-	 { energy <value> } { kinetic <value> } { interaction <value> } ... <BR>
-	 If you specify <interaction>, e.g. <i>fene <type_num></i> or <i>lj <type1> <type2></i> or <i>coulomb</i> or <i>kinetic</i>,
-	 it returns just that energy.
-    <li> \verbatim analyze distribution { <part_type_list_a> } { <part_type_list_b> } [<r_min> <r_max> <r_bins> <log_flag> <int_flag>] \endverbatim
+	 The C implementation is \ref #distto; it is parsed by \ref #parse_distto.
+    <li> \verbatim analyze distribution { <part_type_list_a> } { <part_type_list_b> } [<r_min> [<r_max> [<r_bins> [<log_flag> [<int_flag>]]]]] \endverbatim
          returns its parameters and the distance distribution of
          particles with types specified in <part_type_list_a> (group a)
          around particles with types specified in <part_type_list_b>
@@ -26,7 +27,8 @@
          defined as the minimal distance between a particle of group a
          to any of group b. The output corresponds to the blockfile
          format (\ref blockformat): <br>
-	 { parameters } { { <r-value> <distribution-value> } ... }
+	 { parameters } { { <r-value> <distribution-value> } ... } <br>
+	 The C implementation is \ref #calc_part_distribution; it is parsed by \ref #parse_distribution.
     <li> \verbatim analyze rdf { <part_type_list_a> } { <part_type_list_b> } [<r_min> <r_max> <r_bins>] \endverbatim
          returns its parameters and the radial distribution function (rdf) of
          particles with types specified in <part_type_list_a> (group a)
@@ -34,8 +36,21 @@
          (group b). The range is given by <r_min> and <r_max> and is
          divided into <r_bins> equidistant bins. The output
          corresponds to the blockfile format (\ref blockformat): <br>
-	 { parameters } { { <r-value> <rdf-value> } ... }
-    <li> \verbatim analyze pressure [{ total[s] | ideal | fene [<type_num>] | harmonic [<type_num>] | lj [<type1> [<type2>]] | coulomb }]\endverbatim
+	 { parameters } { { <r-value> <rdf-value> } ... } <br>
+	 The C implementation is \ref #calc_rdf; it is parsed by \ref #parse_rdf.
+
+</ul>In <tt>energy.c</tt>:<ul>
+    <li> \verbatim analyze energy [{ <interaction_type> [options] | kinetic | total }] \endverbatim
+         returns the energies of the system. The output corresponds to the  blockfile format (\ref blockformat):
+	 { energy <value> } { kinetic <value> } { interaction <value> } ... <BR>
+	 If you specify <interaction_type>, e.g. <tt>bonded</tt>, <tt>fene <type_num></tt>, <tt>harmonic <type_num></tt>, or
+	 <tt>nonbonded</tt>, <tt>lj <type1> <type2></tt>, <tt>lj-cos <type1> <type2></tt>, <tt>gb <type1> <type2></tt>, 
+	 or <tt>coulomb</tt> or <tt>kinetic</tt>, it returns just that energy; 
+	 if you specify <tt>total</tt>, it only returns the total energy without giving the details on its contributors.
+	 The C implementation is \ref #calc_energies, which calls \ref #calc_energy on all nodes; it is parsed by \ref #parse_and_print_energy.
+
+</ul>In <tt>pressure.c</tt>:<ul>
+    <li> \verbatim analyze pressure [{ total[s] | ideal | <interaction_type> [options] }]\endverbatim
          derives the <i>pressure</i> and all its contributions in the system. Return value is a tcl-list looking like
 	 \verbatim 0.002753 0.000008 { ideal 0.002000 } { { FENE -0.006172 0.000038 } }  { lj 0.005996 0.000023 } { coulomb 0.000930 0.000001 }\endverbatim
 	 specifying the pressure, its square, the ideal gas pressure, the contributions from bonded interactions, the contributions from 
@@ -44,7 +59,11 @@
 	 in the above example), consisting of the requested contribution and its square (except for <tt>analyze pressure total</tt> 
 	 which only returns the pressure, while <tt>analyze pressure totals</tt> returns both, e.g. <tt>0.002753 0.000008</tt> in the above example).
 	 If the <type_num> are given as well, only the contributions of interactions with that specific <type_num> are considered, returning e.g.
-	 <tt>0.006136 0.000023</tt> for <tt>analyze pressure lj 0</tt> and <tt>-0.006172 0.000038</tt> for <tt>analyze pressure fene 0</tt>.
+	 <tt>0.006136 0.000023</tt> for <tt>analyze pressure lj 0</tt> and <tt>-0.006172 0.000038</tt> for <tt>analyze pressure fene 0</tt>.<br>
+	 The possible choices for <tt><interaction_type></tt> are the same as those for '<tt>analyze energy</tt>' given previously.<br>
+	 The C implementation is \ref #calc_pressure, which calls \ref #calc_virials on all nodes; it is parsed by \ref #parse_and_print_pressure.
+
+</ul>In <tt>statistics.c</tt>:<ul>
     <li> \verbatim analyze set <structure info> \endverbatim
          defines the structure of the current system. The second argument defines the topology to set, i. e. 'chains' at the moment.
 	 <ul>
@@ -52,13 +71,18 @@
 	 <li> \verbatim analyze set chains [<chain_start> <n_chains> <chain_length>] \endverbatim
               A set of <n_chains> chains of equal length <chain_length> which start with the particle with particle number <chain_start>
 	      and are consecutively numbered (i.e. last particle in that topology has number <chain_start> + <n_chains>*<chain_length>). 
-	      If no parameters are given, the ones currently stored are returned.
+	      If no parameters are given, the ones currently stored are returned.<br>
+	      The C implementation is \ref #parse_chain_structure_info for setting, \ref #print_chain_structure_info for returning the 
+	      current topological informations.
 	 </ul>
+	 The C implementation is \ref #parse_set_topology.
     </ul>
     All tasks below need <n_chains>*<chain_length> particles to be stored consecutively starting with identity <chain_start>, representing
     <n_chains> chains of <chain_length> monomers each. This structure-info has to be set either by
 	\verbatim analyze set chains <chain_start> <n_chains> <chain_length> \endverbatim
     or to be provided upon calling (which (re-)sets the structure info permanently, i.e. is only required once):
+
+In <tt>statistics_chain.c</tt>:<br>
     <ul>
     <li> \verbatim analyze { re | <re> } [<chain_start> <n_chains> <chain_length>] \endverbatim
          returns the quadratic end-to-end-distance and its root averaged over all polymers (requires chain structure to be set or provided) as
@@ -109,6 +133,7 @@
 	 in equidistant intervalls), and that changes in the particle setup must not have been made in between (i.e. no call to
 	 \ref tcl_part).
     </ul>
+In <tt>statistics.c</tt>:<br>
     Some observables (i.e. non-static ones) require knowledge of the particles' positions at more than one or two times. Hence it is
     possible to store the currently active configuration \ref partCfg to the array \ref #configs for later analysis. Using these mechanisms
     the program is also able to work quasi-offline by successively reading in previously saved checkpoints (see \ref blockformat) and
@@ -118,18 +143,22 @@
     <ul> <li> \anchor analyze_append
               \verbatim analyze append \endverbatim
               appends the current positions of the particles in \ref partCfg to \ref #configs[\ref n_configs - 1], returning an updated \ref n_configs
-	      (= number of stored configurations)
+	      (= number of stored configurations).<br>
+	      The C implementation is \ref #analyze_append; it is parsed by \ref #parse_append.
 	 <li> \verbatim analyze push [<size>] \endverbatim
 	      adds the current configuration at the end of \ref #configs and removes its very first (=oldest) entry.<BR>
 	      If <size> is specified, configurations are merely appended until \ref n_configs equals <size>; from there they are pushed
 	      such that \ref #configs always contains the <size> most recently stored configurations (this implies that if <tt>analyze push <size></tt>'
 	      is called while \ref n_configs<tt> > <size></tt>, all \ref n_configs<tt>-<size></tt> uppermost (=oldest) configurations are removed to
 	      end up with <size> recent entries).<BR>
-	      The return value is \ref n_configs.
+	      The return value is \ref n_configs.<br>
+	      The C implementation is \ref #analyze_push; it is parsed by \ref #parse_push.
 	 <li> \verbatim analyze replace <index> \endverbatim
-              replaces the <index>th entry in \ref #configs with the current configuration in \ref partCfg and returns an updated \ref n_configs
+              replaces the <index>th entry in \ref #configs with the current configuration in \ref partCfg and returns an updated \ref n_configs.<br>
+	      The C implementation is \ref #analyze_replace; it is parsed by \ref #parse_replace.
          <li> \verbatim analyze remove [<index>] \endverbatim
-              removes the <index>th entry from \ref #configs and returns an updated \ref n_configs. If no <index> is given, everything is removed.
+              removes the <index>th entry from \ref #configs and returns an updated \ref n_configs. If no <index> is given, everything is removed.<br>
+	      The C implementation is \ref #analyze_remove; it is parsed by \ref #parse_remove.
          <li> \verbatim analyze configs [<config>] \endverbatim
 	      returns all configuration currently stored in \ref #configs as a tcl-list '<tt>{x1 y1 z1 ... xN yN zN} ... {...}</tt>'. 
 	      If <config> is given, it is expected to be such a configuration covering all particles, and it is appended to \ref #configs
@@ -137,10 +166,12 @@
 	      This command is mainly needed for setting/restoring checkpoints, i.e. to do some off-line analysis one can simply load the 
 	      very last checkpoint of the simulation run by using \ref tcl_blockfile (if it was written including a call to 
 	      <tt>blockfile $out write configs</tt>) - then everything is restored to \ref #configs, and all the <tt>analyze</tt> function
-	      are available!
+	      are available!<br>
+	      The C implementation is \ref #analyze_configs; it is parsed by \ref #parse_configs.
          <li> \verbatim analyze stored \endverbatim
               returns \ref n_configs, the number of currently stored particles' configurations
          </ul>
     </ul>
-    The C implementation is \ref #analyze.
+ 
+ The C implementation is \ref #analyze.
 */
