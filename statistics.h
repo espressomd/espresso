@@ -9,6 +9,7 @@
 */
 
 #include <tcl.h>
+#include "particle_data.h"
 
 /** \name Exported Variables */
 /************************************************************/
@@ -16,6 +17,9 @@
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref analyze) */
 extern float *partCoord_g, *partCM_g;
+
+/** Particles' current configuration (updated if NULL, set to NULL by on_particle_change) */
+extern Particle *partCfg;
 
 /*@}*/
 
