@@ -455,13 +455,13 @@ void calc_part_self_force(double *grad, double *rho, double *force)
       temp = rho[i]*grad[i*SPACE_DIM + k];
       self += alpha[i][i] * temp;
       if(maggs.yukawa == 1)
-	self -= beta[i][i] * temp;
+	self += beta[i][i] * temp;
 
       for(j=i+1;j<8;j++) {
 	temp = rho[i]*grad[j*SPACE_DIM + k] + rho[j]*grad[i*SPACE_DIM + k];
 	self += alpha[i][j] * temp;
 	if(maggs.yukawa == 1)
-	  self -= beta[i][j] * temp;
+	  self += beta[i][j] * temp;
       }
     }
     force[k] += 2. * self; 
@@ -2046,7 +2046,6 @@ void maggs_calc_e_forces()
       }
     }
   }
-
 }
 
 void maggs_calc_psi_forces()
