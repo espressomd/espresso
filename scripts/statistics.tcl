@@ -13,14 +13,15 @@
 
 proc calcObsAv { fileN ind { startJ 0 } } {
     # derives time-averages of the observables at the columns $ind in file $fileN,
-    # returning '<amount of samples> { names (taken from header) } { averaged values }',
+    # returning '<amount of samples> { names (taken from header) } { averaged values } { errors }',
     # skip the first <startJ>-lines before starting to average
     set f [open $fileN "r"]
     gets $f tmp_line
     foreach i $ind { 
-	set tmp "[lindex $tmp_line $i]"; lappend var $tmp
-	set tmp "[lindex $tmp_line $i]_av"; lappend var_av $tmp
-	eval set $tmp 0
+	set tmp "[lindex $tmp_line $i]";     lappend var $tmp
+	set tmp "[lindex $tmp_line $i]_av";  lappend var_av $tmp; eval set $tmp 0
+	set tmp "[lindex $tmp_line $i]_av2"; lappend var_av2 $tmp; eval set $tmp 0
+	
     }
     set N_av 0; set imax [lindex [lsort $ind] end]
     # skip first $startJ-lines before starting to average
@@ -29,22 +30,23 @@ proc calcObsAv { fileN ind { startJ 0 } } {
     while { [eof $f]==0 } { if { [gets $f tmp_line] > 0 } {
 	if {[llength $tmp_line] <= $imax } { puts "File corrupted, current line too short (got: '$tmp_line', but need at least $imax+1 entries)!" 
 	} else {
-	    foreach i $ind j $var_av k $var { 
-		set tmp [lindex $tmp_line $i]; set $j [eval expr $$j + $tmp] }
+	    foreach i $ind  j $var_av  j2 $var_av2  k $var { 
+		set tmp [lindex $tmp_line $i]; set $j [eval expr $$j + $tmp]; set $j2 [eval expr $$j2 + $tmp*$tmp] }
 	    incr N_av
 	}
     } }
     close $f
-    set res1 ""; set res2 ""; foreach i $var { lappend res1 $i }
-    foreach j $var_av {	eval set $j [eval expr $$j / $N_av]; eval lappend res2 $$j }
-    set res "$N_av \{ $res1 \} \{ $res2 \}"
-    return $res
-
-    puts -nonewline "$N_av samples => "
-    foreach j $var_av {
-	eval set $j [eval expr $$j / $N_av]; eval puts -nonewline \"$j = $$j \"
+    set res1 ""; set res2 ""; set res3 ""; foreach i $var { lappend res1 $i }
+    if { $N_av == 1 } {
+	foreach j $var_av {	eval set $j [eval expr $$j / $N_av]; eval lappend res2 $$j }
+    } elseif { $N_av > 1 } {
+	foreach k $var j $var_av  j2 $var_av2 {
+	    eval set $j [eval expr $$j / $N_av]; eval lappend res2 $$j
+	    eval set $j2 [eval expr sqrt($$j2/$N_av - $$j*$$j)]; eval lappend res3 $$j2 
+	}
     }
-    puts " "
+    set res "$N_av \{ $res1 \} \{ $res2 \} \{ $res3 \}"
+    return $res
 }
 
 proc findObsAv { val what } {
@@ -61,10 +63,17 @@ proc findObsAv { val what } {
 }
 
 proc calcObAv { fileN ind { startJ 0 } } {
-    # does the same as 'calcObsAv', but for one observable only, hence returning only its value
+    # does the same as 'calcObsAv', but for one observable only, hence returning only its averaged value
     if { [llength $ind]!=1 } { puts "\nWARNING: Parameter '$ind' is too long - use 'calcObsAv' to average multiple observables!"; exit }
     set what [calcObsAv $fileN $ind $startJ]
     return [lindex $what 2]
+}
+
+proc calcObErr { fileN ind { startJ 0 } } {
+    # same as 'calcObAv', but returns the error of that value
+    if { [llength $ind]!=1 } { puts "\nWARNING: Parameter '$ind' is too long - use 'calcObsAv' to average multiple observables!"; exit }
+    set what [calcObsAv $fileN $ind $startJ]
+    return [lindex $what 3]
 }
 
 proc nameObsAv { fileN names { startJ 0 } } {
@@ -79,8 +88,8 @@ proc nameObsAv { fileN names { startJ 0 } } {
     close $f
     if { [llength $names]!=[llength $ind2] } { puts "\nWARNING: Only [llength $ind2] of [llength $names] parameters have been found in $fileN!"; exit }
     set what [calcObsAv $fileN $ind1 $startJ]
-    return [concat [lindex $what 0] [lindex $what 2]]
-}    
+    return [concat [lindex $what 0] [lindex $what 2] [lindex $what 3]]
+}
 
 
 proc replObsAv { fileN what } {
@@ -180,5 +189,5 @@ proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA}
 
 proc plotJoin { sources final } {
     eval exec  gs -dNOPAUSE -sDEVICE=pswrite -sOutputFile=$final.A.ps $sources -c quit
-    eval exec pstops "2:0L@.7(21cm,0)+1L@.7(21cm,14.85cm)" $final.A.ps $final.B.ps
+    catch { eval exec pstops "2:0L@.7(21cm,0)+1L@.7(21cm,14.85cm)" $final.A.ps $final.B.ps }
 }
