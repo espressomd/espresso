@@ -220,27 +220,26 @@ void sort_particles_into_cells()
   Particle *part;
 
 #ifdef ADDITIONAL_CHECKS
-  int cell_part_cnt=0,local_part_cnt=0;
+  int cell_part_cnt=0,local_part_cnt=0,ghost_part_cnt=0;
 #endif
 
   CELL_TRACE(fprintf(stderr,"%d: sort_particles_into_cells:\n",this_node));
 
   /* cell loop */
   for(c=0; c<n_cells; c++) {
-    if(is_inner_cell(c,ghost_cell_grid)) {
-      /* particle loop */
-      for(n=0; n<cells[c].pList.n ; n++) {
-	ind = pos_to_cell_grid_ind(cells[c].pList.part[n].r.p);
-	if(ind != c) {
-	  /* move particle from cell c to cell ind */
-	  part = move_particle(&(cells[ind].pList), &(cells[c].pList), n);
-	  /* fix address of moved particle in local_particles */
-	  local_particles[part->r.identity] = part;
-	  n--;
-	}
+    /* particle loop */
+    for(n=0; n<cells[c].pList.n ; n++) {
+      ind = pos_to_cell_grid_ind(cells[c].pList.part[n].r.p);
+      if(ind != c) {
+	/* move particle from cell c to cell ind */
+	part = move_particle(&(cells[ind].pList), &(cells[c].pList), n);
+	/* fix address of moved particle in local_particles */
+	local_particles[part->r.identity] = part;
+	n--;
       }
     }
   }
+  
 
 #ifdef ADDITIONAL_CHECKS
   for(c=0; c<n_cells; c++) {
@@ -252,6 +251,13 @@ void sort_particles_into_cells()
 		  this_node,c,n,cells[c].pList.part[n].r.identity);
 	  errexit();
 	}
+      }
+    }
+    else {
+      if(cells[c].pList.n>0) {
+	ghost_part_cnt += cells[c].pList.n;
+	fprintf(stderr,"%d: sort_part_in_cells: WARNING: ghost_cell %d contains %d particles!\n",
+		this_node,c,cells[c].pList.n);
       }
     }
   }
@@ -272,6 +278,11 @@ void sort_particles_into_cells()
   if(local_part_cnt != cell_part_cnt) {
     fprintf(stderr,"%d: sort_part_in_cells: ERROR: %d parts in cells but %d parts in local_particles\n",
 	    this_node,local_part_cnt,cell_part_cnt);
+    if(ghost_part_cnt==0) errexit();
+  }
+  if(ghost_part_cnt>0) {
+    fprintf(stderr,"%d: sort_part_in_cells: ERROR: Found %d illegal ghost particles!\n",
+	    this_node,ghost_part_cnt);
     errexit();
   }
 #endif
