@@ -262,9 +262,8 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_co
   /* if desired (v_comp==1) replace ideal component with instantaneous one */
   if (total_pressure.init_status != 1+v_comp ) {
     init_virials(&total_pressure);
-    // if(v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) && (abs(nptiso.volume - pow(box_l[nptiso.non_const_dim],nptiso.dimension)) < 1 )) {
     if(v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) && !(nptiso.invalidate_p_vel)) {
-      if (total_pressure.init_status == 0) 
+      if (total_pressure.init_status == 0)
 	master_pressure_calc(0);
       total_pressure.data.e[0] = 0.0;
       MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
