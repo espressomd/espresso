@@ -4,7 +4,7 @@
 # \
     if test $PLATFORM = OSF1; then MPIRUN=dmpirun;
 # \
-    else MPIRUN=mpirun; fi
+    else MPIRUN=mpirun; lamboot; fi
 # \
     exec $MPIRUN -nsigs -np 8 $PLATFORM/tcl_md $0 $*
 
@@ -20,9 +20,9 @@ puts "niatypes = [setmd niatypes]"
 
 # setup interactions
 ##################################################
-inter 0 1 lennard-jones 1 1.2 0 0
-inter 1 2 lennard-jones 2 1.2 0 0
-inter 0 2 lennard-jones 3 1.2 0 0
+inter 0 1 lennard-jones 1 1 1.2 0 0
+inter 1 2 lennard-jones 2 1 1.2 0 0
+inter 0 2 lennard-jones 3 1 1.2 0 0
 
 # Set up particle positions
 ##################################################

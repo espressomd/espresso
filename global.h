@@ -105,13 +105,11 @@ extern int n_particle_types;
  *  nonbonded interactions. Access via
  * get_ia_param(i, j), i,j < n_particle_types */
 typedef struct {
+  double LJ_eps;
+  double LJ_sig;
   double LJ_cut;
-  double LJ_epsilon;
-  double LJ_cutoff;
   double LJ_shift;
   double LJ_offset;
-  double LJ_sig;
-  double LJ_eps;
 
   /* don't know which else, since electrostatic is different...
      but put rest here too. */

@@ -277,8 +277,8 @@ int inter(ClientData _data, Tcl_Interp *interp,
   if (argc == 3) {
     /* print interaction information */
     char buffer[256];
-    sprintf(buffer, "{lennard-jones %10.5e %10.5e %10.5e %10.5e}",
-	    data->LJ_epsilon, data->LJ_cutoff,
+    sprintf(buffer, "{lennard-jones %10.5e %10.5e %10.5e %10.5e %10.5e}",
+	    data->LJ_eps, data->LJ_sig, data->LJ_cut,
 	    data->LJ_shift, data->LJ_offset);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
@@ -290,26 +290,28 @@ int inter(ClientData _data, Tcl_Interp *interp,
 
   while (argc > 0) {
     if (!strncmp(argv[0], "lennard-jones", strlen(argv[0]))) {
-      if (argc < 5) {
+      if (argc < 6) {
 	Tcl_AppendResult(interp, "lennard-jones needs 4 parameters: "
-			 "<lj_epsilon> <lj_cut> <lj_shift> <lj_offset>",
+			 "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
 			 (char *) NULL);
 	return (TCL_ERROR);
       }
       
-      if ((Tcl_GetDouble(interp, argv[1], &data->LJ_epsilon) == TCL_ERROR) ||
-	  (Tcl_GetDouble(interp, argv[2], &data->LJ_cutoff)  == TCL_ERROR) ||
-	  (Tcl_GetDouble(interp, argv[3], &data->LJ_shift)   == TCL_ERROR) ||
-	  (Tcl_GetDouble(interp, argv[4], &data->LJ_offset)  == TCL_ERROR))
+      if ((Tcl_GetDouble(interp, argv[1], &data->LJ_eps) == TCL_ERROR) ||
+	  (Tcl_GetDouble(interp, argv[2], &data->LJ_sig)  == TCL_ERROR) ||
+	  (Tcl_GetDouble(interp, argv[3], &data->LJ_cut)  == TCL_ERROR) ||
+	  (Tcl_GetDouble(interp, argv[4], &data->LJ_shift)   == TCL_ERROR) ||
+	  (Tcl_GetDouble(interp, argv[5], &data->LJ_offset)  == TCL_ERROR))
 	return (TCL_ERROR);
 
       /* LJ should be symmetrically */
-      data_sym->LJ_epsilon = data->LJ_epsilon;
-      data_sym->LJ_cutoff  = data->LJ_cutoff;
+      data_sym->LJ_eps = data->LJ_eps;
+      data_sym->LJ_sig = data->LJ_sig;
+      data_sym->LJ_cut = data->LJ_cut;
       data_sym->LJ_shift   = data->LJ_shift;
       data_sym->LJ_offset  = data->LJ_offset;
-      argc -= 5;
-      argv += 5;
+      argc -= 6;
+      argv += 6;
 
       mpi_bcast_ia_params(i, j);
     }
