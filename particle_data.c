@@ -255,6 +255,20 @@ void local_particles_exit()
   }
 }
 
+/** get the total number of all particles on all nodes. */
+int getParticleCount(){
+  int i = 0, c = 0;
+
+  if (!particle_node)
+    build_particle_node();
+
+  for (i = 0; i <= max_seen_particle; i++)
+    if (particle_node[i] != -1)
+      c++;
+
+  return (c);
+}
+
 /** append particle data in ASCII form to the Tcl result.
     @param part_num the particle which data is appended
     @param interp   the Tcl interpreter to which result to add to */
