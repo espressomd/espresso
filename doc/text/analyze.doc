@@ -1,0 +1,46 @@
+/** \page tcl_analyze The analyze command
+    \verbatim analyze <what> [<structure info>] [...] \endverbatim
+    This command provides online-calculation of local and global observables.<BR>
+    Without any further information the following are accessible:
+    <ul>
+    <li> \verbatim analyze mindist \endverbatim
+         returns the minimal distance between two particles in the system.
+    <li> \verbatim analyze nbhood <part_id> <r_catch> \endverbatim
+         returns all particles within a given radius <r_catch> around the position of the particle with number <part_id>.
+    <li> \verbatim analyze distto { <part_id> | <posx> <posy> <posz> } \endverbatim
+         returns the minimal distance of all particles to coordinates (<posx>, <posy>, <posz>) or to the position of particle <part_id>.
+    <li> \verbatim analyze energy [interaction] \endverbatim
+         returns the energies of the system. The output corresponds to the  blockfile format (\ref blockformat):
+	 { energy <value> } { kinetic <value> } { interaction <value> } ... <BR>
+	 If you specify <interaction>, e.g. <i>fene <type_num></i> or <i>lj <type1> <type2></i> or <i>coulomb</i> or <i>kinetic</i>,
+	 it returns just that energy.
+    <li> \verbatim analyze set <structure info> \endverbatim
+         defines the structure of the current system. The second argument defines the topology to set, i. e. 'chains' at the moment.
+	 <ul>
+	 Possible values for <structure info> are
+	 <li> \verbatim analyze set chains [<chain_start> <n_chains> <chain_length>] \endverbatim
+              A set of <n_chains> chains of equal length <chain_length> which start with the particle with particle number <chain_start>
+	      and are consecutively numbered (i.e. last particle in that topology has number <chain_start> + <n_chains>*<chain_length>). 
+	      If no parameters are given, the ones currently stored are returned.
+	 </ul>
+    </ul>
+    All tasks below need <n_chains>*<chain_length> particles to be stored consecutively starting with identity <chain_start>, representing
+    <n_chains> chains of <chain_length> monomers each. This structure-info has to be set either by
+	\verbatim analyze set chains <chain_start> <n_chains> <chain_length> \endverbatim
+    or to be provided upon calling (which (re-)sets the structure info permanently, i.e. is only required once):
+    <ul>
+    <li> \verbatim analyze re [<chain_start> <n_chains> <chain_length>] \endverbatim
+         returns the root of the quadratic end-to-end-distance averaged over all polymers (requires chain structure to be set or provided).
+    <li> \verbatim analyze rg [<chain_start> <n_chains> <chain_length>] \endverbatim
+         returns the radius of gyration averaged over all chains (requires chain structure to be set or provided).
+    <li> \verbatim analyze rh [<chain_start> <n_chains> <chain_length>] \endverbatim
+         returns the hydrodynamic radius (requires chain structure to be set or provided).
+    <li> \verbatim analyze g123 [[-init] <chain_start> <n_chains> <chain_length>] \endverbatim
+         returns the mean-square displacement <i>g1(t)</i> of a monomer,
+                 the mean-square displacement <i>g2(t)</i> in the center of gravity of the chain itself, and
+                 the motion of the center of mass <i>g3(t)</i>
+	 as a tcl-list {g1(t) g2(t) g3(t)} (requires chain structure to be set or provided).<BR>
+	 If before the structure info you give '-init', the current configuration is stored as reference config.
+    </ul>
+    The C implementation is \ref #analyze.
+*/
