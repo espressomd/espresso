@@ -59,11 +59,12 @@ set density 0.85
 set lj1_eps     1.0
 set lj1_sig     1.0
 set lj1_cut     1.12246
-set lj1_shift   $lj1_eps
+set lj1_shift   0.25
+set lj1_off     0.0
 
 # attractive FENE
-set fene_k      7.0
-set fene_r      2.0
+set fene_k      30.0
+set fene_r      1.5
 
 
 # Integration parameters
@@ -79,7 +80,7 @@ set warm_step   200
 set warm_loop   300
 set warm_cap1   10
 set warm_incr   25
-set min_dist    0.92
+set min_dist    0.90
 
 # integration (with full LJ potential) for $int_time
 set int_step  {  500  500   500  1000   500  2000  5000  10000 20000 10000 25000 }
@@ -94,6 +95,7 @@ set random_seeds  { }
 set obs           { mindist re rg rh g123 }
 set re2           { 5.2  13.1 29.7 37.8 46.7 82.7 118.3 163.8 263.8 250.7 300.3 }
 set rg2           { 0.92  2.2  5.0  6.3  7.7 13.3  20.1  27.5  42.5  46.1  53.6 }
+set pKG           { 5.55 5.20 5.04 4.97 4.99 4.93  4.90  4.90  4.87  4.88  4.84 }
 set checkpoint    100000
 
 
@@ -107,9 +109,9 @@ if { [file exists "$name$ident.KKG"] } {
     set VIR_file [open "$name$ident.VIR" "a"]
 } else {
     set KKG_file [open "$name$ident.KKG" "w"]
-    puts $KKG_file "ID N_P MPC box_l int_time re re-reKG reKG rg rg-rgKG rgKG re2/rg2 Temp mindist"; flush $KKG_file
+    puts $KKG_file "ID N_P MPC box_l int_time re re-reKG reKG rg rg-rgKG rgKG re2/rg2 Temp mindist pKG p-pKG"; flush $KKG_file
     set VIR_file [open "$name$ident.VIR" "a"]
-    puts $VIR_file "ID N_P MPC box_l int_time p_total D(p_total) p_FENE D(p_FENE) p_lj D(p_lj) p_ideal p_osmotic"; flush $VIR_file
+    puts $VIR_file "ID N_P MPC box_l int_time p_total D(p_total) p_FENE D(p_FENE) p_lj D(p_lj) p_ideal p_osmotic pKG p-pKG"; flush $VIR_file
 }
 
 # Random number generator setup
@@ -122,10 +124,10 @@ if { [llength $random_seeds] > 0 } { eval t_random seed $random_seeds }
 #############################################################
 
 set i 1
-foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2  int_step_i $int_step {
+foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2  int_step_i $int_step  pKG_i $pKG {
     setmd box_l $box_l_i $box_l_i $box_l_i
 
-    inter 0 0 lennard-jones $lj1_eps $lj1_sig $lj1_cut $lj1_shift 0
+    inter 0 0 lennard-jones $lj1_eps $lj1_sig $lj1_cut $lj1_shift $lj1_off
     inter 0   FENE          $fene_k  $fene_r
 
     puts "\n====================\n=== System [format %2d $i]/[llength $N_P] ===\n===================="
@@ -211,7 +213,7 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
     } else {
 	setmd time 0; set int_loop [expr int($int_time_i/([setmd time_step]*$int_step_i)+0.56)]; set tmp_step 0
 	puts -nonewline "\nStart integration (full interactions) with timestep [setmd time_step] until time t>=$int_time_i (-> $int_loop loops); "
-	puts "aiming for re = [expr sqrt([lindex $re2 [expr $i-1]])] and rg = [expr sqrt([lindex $rg2 [expr $i-1]])]."
+	puts "aiming for re = [expr sqrt([lindex $re2 [expr $i-1]])], rg = [expr sqrt([lindex $rg2 [expr $i-1]])], and p = $pKG_i."
 	puts -nonewline "    Remove capping of LJ-interactions... "; flush stdout; inter ljforcecap 0; puts "Done."
 	set sfx "[expr int(ceil(log10($int_loop*$int_step_i)))+1]d"
 	if { [file exists "$name_i$ident.chk" ] } {
@@ -246,7 +248,8 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 	    if { [expr $tmp_step % $checkpoint]==0 } {
 		puts -nonewline "\r    \[$i\] Step $tmp_step: Checkpoint at time [setmd time]... "; flush stdout; flush $obs_file
 		checkpoint_set "$name_i$ident.[eval format %0$sfx $tmp_step]" [expr int($checkpoint/$int_step_i)] "tmp_step" "-"
-		puts "set (with <re>=[analyze <re>], <rg>=[analyze <rg>] averaged over $tmp_conf configurations)."
+		puts -nonewline "set (with <re>=[analyze <re>], <rg>=[analyze <rg>] averaged over $tmp_conf configurations"
+		puts ", <p>=[lindex [nameObsAv $name_i$ident.obs2 p] 1])."
 	    } else { puts -nonewline ", mindist=[analyze mindist], re=[analyze re], rg=[analyze rg], rh=[analyze rh], p=$p1...\r"; 
 		flush stdout }
 	}
@@ -256,27 +259,28 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 	puts -nonewline "\n    Integration complete; saving checkpoint to '$name_i$ident.end'... ";flush stdout
 	polyBlockWriteAll "$name_i$ident.end" "-" "-"; puts "Done."; close $obs_file
 
-	puts -nonewline "\nFinished with current system; "
+	puts -nonewline "\nFinished with current system: "
 	# derive ensemble averages
-	lappend what [calcObsAv $name_i$ident.obs2 { 1 5 6 7 9 11 12 14 15 } ]
-	set avg [findObsAv { Temp mindist p p2 pid pf pf2 plj plj2 } [lindex $what end]]
+	set avg [nameObsAv $name_i$ident.obs2 { Temp mindist p p2 pid pf pf2 plj plj2 }]
 	set tmp_Temp [lindex $avg 1]; set tmp_min [lindex $avg 2]
 	set p1 [lindex $avg 3]; set p2 [lindex $avg 4]; set pid [lindex $avg 5]; set p_os [expr $p1/$pid]
 	set pf1 [lindex $avg 6]; set pf2 [lindex $avg 7]; set plj1 [lindex $avg 8]; set plj2 [lindex $avg 9]
 	set d_p12 [expr sqrt(abs($p2 - $p1*$p1)/([lindex $avg 0]-1))]
 	set d_pf12 [expr sqrt(abs($pf2 - $pf1*$pf1)/([lindex $avg 0]-1))]
 	set d_plj12 [expr sqrt(abs($plj2 - $plj1*$plj1)/([lindex $avg 0]-1))]
+	set d_pKG [expr ($p1-$pKG_i)/$pKG_i]
 	set tmp_re [analyze <re>]; set tmp_rg [analyze <rg>]
 	set tmp_reKG [expr sqrt([lindex $re2 [expr $i-1]])]; set tmp_rgKG [expr sqrt([lindex $rg2 [expr $i-1]])]
 	set tmp_divE [expr ($tmp_re-$tmp_reKG)/$tmp_reKG]; set tmp_divG [expr ($tmp_rg-$tmp_rgKG)/$tmp_rgKG]
 	set tmp_rat2 [expr $tmp_re*$tmp_re/($tmp_rg*$tmp_rg)]
 	puts -nonewline "<re> = $tmp_re ([expr 100*$tmp_divE]% -> $tmp_reKG), "
 	puts -nonewline "<rg> = $tmp_rg ([expr 100*$tmp_divG]% -> $tmp_rgKG), "
-	puts "<re2>/<rg2> = $tmp_rat2 (RW=6), <Temp> = $tmp_Temp, <p>=$p1+-$d_p12=$p_os."
+	puts "<re2>/<rg2> = $tmp_rat2 (RW=6);"
+	puts "    <Temp> = $tmp_Temp, <p> = $p_os*p_id = $p1+-$d_p12 (=[expr 100*$d_p12/$p1]% error / [expr 100*$d_pKG]% -> $pKG_i)."
 	# append ensemble averages to .KKG-file
 	puts -nonewline $KKG_file "$i $n_p_i $mpc_i $box_l_i $int_time_i "
 	puts -nonewline $KKG_file "$tmp_re $tmp_divE $tmp_reKG $tmp_rg $tmp_divG $tmp_rgKG "
-	puts $KKG_file "$tmp_rat2 $tmp_Temp $tmp_min $p1 $d_p12 $p_os"; flush $KKG_file
+	puts $KKG_file "$tmp_rat2 $tmp_Temp $tmp_min $p1 $d_p12 $p_os $pKG_i $d_pKG"; flush $KKG_file
 	# sort <g1>, <g2>, and <g3> into .g123-file
 	set outG [open "$name_i$ident.g123" "w"]
 	for {set gx 1} {$gx<=3} {incr gx} { eval set tmp_g$gx [list [analyze <g$gx>]] }
@@ -286,13 +290,13 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 	close $outG
 	# look at pressure and internal distances
 	puts -nonewline $VIR_file "$i $n_p_i $mpc_i $box_l_i $int_time_i "
-	puts $VIR_file "$p1 $d_p12 $pf1 $d_pf12 $plj1 $d_plj12 $pid $p_os"; flush $VIR_file
+	puts $VIR_file "$p1 $d_p12 $pf1 $d_pf12 $plj1 $d_plj12 $pid $p_os $pKG_i $d_pKG"; flush $VIR_file
 	set outI [open "$name_i$ident.idf" "w"]; set tmp_idf [analyze <internal_dist>]
 	for {set gt 0} {$gt<[llength $tmp_idf]} {incr gt} { puts $outI "$gt [lindex $tmp_idf $gt]" }
 	close $outI
 	# create gnuplots
 	puts -nonewline "Creating a gnuplot from current results... "; flush stdout
-	plotObs $name_i$ident.obs2 {1:6 1:3 1:4 1:5 1:2} titles {Temp re rg rh mindist} labels [concat "time (tau)" "$name_i$ident.obs2"]
+	plotObs $name_i$ident.obs2 {1:6 1:3 1:4 1:5 1:2 1:7} titles {Temp re rg rh mindist p} labels [concat "time (tau)" "$name_i$ident.obs2"]
 	plotObs $name_i$ident.g123 {1:2 1:3 1:4} titles {<g1> <g2> <g3>} labels [concat "time (tau)" "$name_i$ident.g123"] scale "logscale xy"
 	plotObs $name_i$ident.idf {1:2} titles {<internal_dist>} labels [concat "|i-j|" "$name_i$ident.idf"] scale "logscale xy"
 	lappend plotted "$name_i$ident.obs2"; lappend plotted "$name_i$ident.g123"; lappend plotted "$name_i$ident.idf"
@@ -304,7 +308,7 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 # Final gnuplots
 puts -nonewline "Creating a gnuplot of the averaged quantities... "; flush stdout
 plotObs $name$ident.KKG {3:6 3:8 3:9 3:11} titles {"<re>" "reKG" "<rg>" "rgKG"} labels { "monomers per chain" } scale "logscale xy"
-plotObs $name$ident.VIR {3:6 3:8 3:10 3:12 3:13} titles {"<p>" "<p_FENE>" "<p_lj>" "<p_ideal>" "<p_osmotic>"} labels { "monomers per chain" }
+plotObs $name$ident.VIR {3:6 3:8 3:10 3:12 3:13 3:14} titles {"<p>" "<p_FENE>" "<p_lj>" "<p_ideal>" "<p_osmotic>" "<pKG>"} labels { "monomers per chain" } scale "logscale x"
 lappend plotted "$name$ident.KKG"; lappend plotted "$name$ident.VIR"; puts "Done."
 # puts -nonewline "Combining all plots into '$name_i$ident.final.ps'... "; flush stdout
 # plotJoin $plotted "$name_i$ident.final.ps"; puts "Done."
