@@ -502,49 +502,6 @@ void calc_g3_av(double **_g3) {
   }
 }
 
-/* new version for new topology structure */
-int analyze_fold_chains(float *coord)
-{
-  int m,p,i, tmp; 
-  int mol_size, ind;
-  double cm_tmp, com[3];
-
-  /* check molecule information */
-  if ( n_molecules < 0 ) return (TCL_ERROR);
-
-  /* loop molecules */
-  for(m=0; m<n_molecules; m++) {
-    mol_size = molecules[m].part.n;
-    if(mol_size > 0) {
-      /* calc center of mass */
-      com[0] = 0.0; com[1] = 0.0; com[2] = 0.0;
-      for(p=0; p<mol_size; p++) {
-	ind = 3*molecules[m].part.e[p];
-	for(i=0;i<3;i++) com[i] += coord[ind+i];
-      }		   
-      for(i=0;i<3;i++) com[i] /= (double)mol_size;
-      /* fold coordinates */
-      for(i=0;i<3;i++) {
-	if ( PERIODIC(i) ) { 
-	  tmp = (int)floor(com[i]*box_l_i[i]);
-	  cm_tmp =0.0;
-	  for(p=0; p<mol_size; p++) {
-	    ind        = 3*molecules[m].part.e[p] + i;
-	    coord[ind] -= tmp*box_l[i];
-	    cm_tmp     += coord[ind];
-	  }
-	  cm_tmp /= (double)mol_size;
-	  if(cm_tmp < -ROUND_ERROR_PREC || cm_tmp > box_l[i]+ROUND_ERROR_PREC) {
-	    fprintf(stderr,"\n: analyse_fold_chains: chain center of mass is out of range (coord %d: %f not in box_l %f), exiting\n",i,cm_tmp,box_l[i]);
-	    errexit();
-	  }
-	}
-      }
-    }
-  }
-  return (TCL_OK); 
-}
-
 
 void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff) {
   int i,j,k,qi, cnt,cnt_max;
