@@ -667,45 +667,46 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	/* particle loop */
 	for(c=0; c<local_cells.n; c++) {
 	  cell = local_cells.cell[c];
-	  part = cell->part;
 	  for (p = 0; p < cell->n; p++) {
+	    part = &cell->part[p];
 	    /* Move particles to the left side */
-	    if(part[p].r.p[dir] <   my_left[dir]) {
+	    if(part->r.p[dir] <   my_left[dir]) {
 #ifdef PARTIAL_PERIODIC 
 	      if( PERIODIC(dir) || (boundary[2*dir]==0) ) 
 #endif
 		{
-		  CELL_TRACE(fprintf(stderr,"%d: dd_ex_and_sort_p: send part left %d\n",this_node,part[p].p.identity));
-		  local_particles[part[p].p.identity] = NULL;
+		  CELL_TRACE(fprintf(stderr,"%d: dd_ex_and_sort_p: send part left %d\n",this_node,part->p.identity));
+		  local_particles[part->p.identity] = NULL;
 		  move_indexed_particle(&send_buf_l, cell, p);
 		  if(p < cell->n) p--;
 		}
 	    }
 	    /* Move particles to the right side */
-	    else if(part[p].r.p[dir] >=  my_right[dir]) {
+	    else if(part->r.p[dir] >=  my_right[dir]) {
 #ifdef PARTIAL_PERIODIC 
 	      if( PERIODIC(dir) || (boundary[2*dir+1]==0) ) 
 #endif
 		{
-		  CELL_TRACE(fprintf(stderr,"%d: dd_ex_and_sort_p: send part right %d\n",this_node,part[p].p.identity));
-		  local_particles[part[p].p.identity] = NULL;
+		  CELL_TRACE(fprintf(stderr,"%d: dd_ex_and_sort_p: send part right %d\n",this_node,part->p.identity));
+		  local_particles[part->p.identity] = NULL;
 		  move_indexed_particle(&send_buf_r, cell, p);
 		  if(p < cell->n) p--;
 		}
 	    }
 	    /* Sort particles in cells of this node during last direction */
 	    else if(dir==2) {
-	      sort_cell = dd_save_position_to_cell(part[p].r.p);
+	      sort_cell = dd_save_position_to_cell(part->r.p);
 	      if(sort_cell != cell) {
 		if(sort_cell==NULL) {
 		  CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: Take another loop",this_node));
-		  CELL_TRACE(fprintf(stderr, "%d: dd_exchange_and_sort_particles: CP1 Particle %d (%f,%f,%f) not inside node domain.\n", this_node,part[p].p.identity,part[p].r.p[0],part[p].r.p[1],part[p].r.p[2]));		 
+		  CELL_TRACE(fprintf(stderr, "%d: dd_exchange_and_sort_particles: CP1 Particle %d (%f,%f,%f) not inside node domain.\n",
+				     this_node,part->p.identity,part->r.p[0],part->r.p[1],part->r.p[2]));		 
 		  finished=0;
 		  sort_cell = local_cells.cell[0];
 		  if(sort_cell != cell) {
 		    move_indexed_particle(sort_cell, cell, p);
 		    if(p < cell->n) p--;
-		  }      
+		  }
 		}
 		else {
 		  move_indexed_particle(sort_cell, cell, p);
@@ -713,7 +714,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 		}
 	      }
 	    }
-	  }      
+	  }
 	}
 
 	/* Exchange particles */
@@ -744,19 +745,20 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	/* particle loop */
 	for(c=0; c<local_cells.n; c++) {
 	  cell = local_cells.cell[c];
-	  part = cell->part;
 	  for (p = 0; p < cell->n; p++) {
+	    part = &cell->part[p];
 #ifdef PARTIAL_PERIODIC 
 	    if( PERIODIC(dir) ) 
 #endif
 	      {
-		fold_coordinate(part[p].r.p, part[p].l.i, dir);
+		fold_coordinate(part->r.p, part->l.i, dir);
 	      }
 	    if (dir==2) {
-	      sort_cell = dd_save_position_to_cell(part[p].r.p);
+	      sort_cell = dd_save_position_to_cell(part->r.p);
 	      if(sort_cell != cell) {
 		if(sort_cell==NULL) {
-		  CELL_TRACE(fprintf(stderr, "%d: dd_exchange_and_sort_particles: CP2 Particle %d (%f,%f,%f) not inside node domain.\n", this_node,part[p].p.identity,part[p].r.p[0],part[p].r.p[1],part[p].r.p[2]));
+		  CELL_TRACE(fprintf(stderr, "%d: dd_exchange_and_sort_particles: CP2 Particle %d (%f,%f,%f) not inside node domain.\n",
+				     this_node,part->p.identity,part->r.p[0],part->r.p[1],part->r.p[2]));
 		  finished=0;
 		  sort_cell = local_cells.cell[0];
 		  if(sort_cell != cell) {
@@ -765,7 +767,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 		  }      
 		}
 		else {
-		  CELL_TRACE(fprintf(stderr, "%d: dd_exchange_and_sort_particles: move particle id %d\n", this_node,part[p].p.identity));
+		  CELL_TRACE(fprintf(stderr, "%d: dd_exchange_and_sort_particles: move particle id %d\n", this_node,part->p.identity));
 		  move_indexed_particle(sort_cell, cell, p);
 		  if(p < cell->n) p--;
 		}
