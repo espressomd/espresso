@@ -8,6 +8,8 @@
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #ifndef CONSTRAINT_H
 #define CONSTRAINT_H
+#include "statistics.h"
+#include "energy.h"
 
 /** \file constraint.h
  *  Routines for handling of constraints. Implemented are walls, cylinders and spheres.
@@ -185,7 +187,7 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
 
 MDINLINE void add_constraints_forces(Particle *p1)
 {
-  int n=0;
+  int n;
   double dist, vec[3];
   IA_parameters *ia_params;
     
@@ -236,53 +238,59 @@ MDINLINE void add_constraints_forces(Particle *p1)
   }
 }
 
-MDINLINE double add_constraints_energy(Particle *p1, int n)
+MDINLINE double add_constraints_energy(Particle *p1)
 {
+  int n;
   double dist, vec[3];
+  double ret;
   IA_parameters *ia_params;
-  
-  ia_params=get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
-  dist=0.;
-  if(ia_params->LJ_cut > 0. ) {
-    switch(constraints[n].type) {
-    case CONSTRAINT_WAL: 
-      calculate_wall_dist(p1, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
-      if (dist > 0)
-	return lj_pair_energy(p1, &constraints[n].part_rep, ia_params, vec, dist);
-      else {
-	fprintf(stderr,"CONSTRAINT WALL : ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-	errexit();
-      }
-      break;
+
+  for(n=0;n<n_constraints;n++) { 
+    ia_params = get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
+    ret = 0;
     
-    case CONSTRAINT_SPH: 
-      calculate_sphere_dist(p1, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
-      if (dist > 0) {
-	return lj_pair_energy(p1, &constraints[n].part_rep, ia_params, vec, dist);
-      }
-      else {
-	fprintf(stderr,"CONSTRAINT SPHERE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-	errexit();
-      }
-      break;
-    
-    case CONSTRAINT_CYL: 
-      calculate_cylinder_dist(p1, &constraints[n].part_rep, &constraints[n].c.cyl, &dist , vec); 
-      if ( dist > 0 ) {
-	return lj_pair_energy(&constraints[n].part_rep, p1, ia_params, vec, dist);
-      }
-      else {
-	fprintf(stderr,"CONSTRAINT CYLINDER: ERROR! part %d at (%.2e,%.2e,%.2e) violated the constraint! dist= %f\n",
-		p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2],dist);
-	errexit();
-      }
-      break;
+    dist=0.;
+    if(ia_params->LJ_cut > 0. ) {
+      switch(constraints[n].type) {
+      case CONSTRAINT_WAL: 
+	calculate_wall_dist(p1, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
+	if (dist > 0)
+	  ret = lj_pair_energy(p1, &constraints[n].part_rep, ia_params, vec, dist);
+	else {
+	  fprintf(stderr,"CONSTRAINT WALL : ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+		  p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+	  errexit();
+	}
+	break;
 	
+      case CONSTRAINT_SPH: 
+	calculate_sphere_dist(p1, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
+	if (dist > 0) {
+	  ret += lj_pair_energy(p1, &constraints[n].part_rep, ia_params, vec, dist);
+	}
+	else {
+	  fprintf(stderr,"CONSTRAINT SPHERE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+		  p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+	  errexit();
+	}
+	break;
+	
+      case CONSTRAINT_CYL: 
+	calculate_cylinder_dist(p1, &constraints[n].part_rep, &constraints[n].c.cyl, &dist , vec); 
+	if ( dist > 0 ) {
+	  ret += lj_pair_energy(&constraints[n].part_rep, p1, ia_params, vec, dist);
+	}
+	else {
+	  fprintf(stderr,"CONSTRAINT CYLINDER: ERROR! part %d at (%.2e,%.2e,%.2e) violated the constraint! dist= %f\n",
+		  p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2],dist);
+	  errexit();
+	}
+	break;
+	
+      }
+      *obsstat_nonbonded(&energy, p1->p.type, (&constraints[n].part_rep)->p.type) += ret;
     }
   }
-
   return 0.;
 }
 

@@ -312,6 +312,30 @@ void analyze_configs(double *tmp_config, int count) {
 }
 
 /****************************************************************************************
+ *                                 Observables handling
+ ****************************************************************************************/
+
+void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded, int n_non_bonded, int n_coulomb)
+{
+  int i, total = n_pre + n_bonded_ia + n_non_bonded + n_coulomb;
+
+  realloc_doublelist(&(stat->data), stat->data.n = total);
+  stat->n_coulomb    = n_coulomb;
+  stat->n_non_bonded = n_non_bonded;
+  stat->bonded     = stat->data.e + n_pre;
+  stat->non_bonded = stat->bonded + n_bonded_ia;
+  stat->coulomb    = stat->non_bonded + n_non_bonded;
+  
+  for(i = 0; i < total; i++)
+    stat->data.e[i] = 0.0;
+}
+
+void invalidate_obs()
+{
+  energy.init_status = 0;
+}
+
+/****************************************************************************************
  *                                 basic observables parsing
  ****************************************************************************************/
 

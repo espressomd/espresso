@@ -120,6 +120,8 @@ void on_integration_start()
   }
 #endif
 
+  invalidate_obs();
+
   /* the particle information is no longer valid */
   free(partCfg); partCfg=NULL;
 }
@@ -128,22 +130,30 @@ void on_particle_change()
 {
   resort_particles = 1;
   
+  invalidate_obs();
+
   /* the particle information is no longer valid */
   free(partCfg); partCfg=NULL;
 }
 
 void on_coulomb_change()
 {
+  invalidate_obs();
+
   reinit_coulomb = 1;
 }
 
 void on_short_range_ia_change()
 {
+  invalidate_obs();
+
   recalc_maxrange = 1;  
 }
 
 void on_constraint_change()
 {
+  invalidate_obs();
+
   recalc_forces = 1;  
 }
 

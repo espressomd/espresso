@@ -214,6 +214,9 @@ void nsq_calculate_ia()
   for (p = 0; p < npl; p++) {
     pt1 = &partl[p];
     add_bonded_force(pt1);
+#ifdef CONSTRAINTS
+    add_constraints_forces(pt1);
+#endif
 
     /* other particles, same node */
     for (p2 = p + 1; p2 < npl; p2++) {
@@ -235,6 +238,50 @@ void nsq_calculate_ia()
 	dist2 = sqrlen(d);
 	dist = sqrt(dist2);
 	add_non_bonded_pair_force(pt1, pt2, d, dist, dist2);
+      }
+    }
+  }
+}
+
+void nsq_calculate_energies()
+{
+  Particle *partl, *partg;
+  Particle *pt1, *pt2;
+  int p, p2, npl, npg, c;
+  double d[3], dist2, dist;
+
+  npl   = local->n;
+  partl = local->part;
+
+  /* calculate bonded interactions and non bonded node-node */
+  for (p = 0; p < npl; p++) {
+    pt1 = &partl[p];
+    add_kinetic_energy(pt1);
+    add_bonded_energy(pt1);
+#ifdef CONSTRAINTS
+    add_constraints_energy(pt1);
+#endif
+
+    /* other particles, same node */
+    for (p2 = p + 1; p2 < npl; p2++) {
+      pt2 = &partl[p2];
+      get_mi_vector(d, pt1->r.p, pt2->r.p);
+      dist2 = sqrlen(d);
+      dist = sqrt(dist2);
+      add_non_bonded_pair_energy(pt1, pt2, d, dist, dist2);
+    }
+
+    /* calculate with my ghosts */
+    for (c = 0; c < me_do_ghosts.n; c++) {
+      npg   = me_do_ghosts.cell[c]->n;
+      partg = me_do_ghosts.cell[c]->part;
+
+      for (p2 = 0; p2 < npg; p2++) {
+	pt2 = &partg[p2];
+	get_mi_vector(d, pt1->r.p, pt2->r.p);
+	dist2 = sqrlen(d);
+	dist = sqrt(dist2);
+	add_non_bonded_pair_energy(pt1, pt2, d, dist, dist2);
       }
     }
   }

@@ -31,6 +31,8 @@ void MMM1D_init();
 ///
 void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist2, double dist);
 
-#endif
+///
+double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double r2, double r);
 
+#endif
 #endif

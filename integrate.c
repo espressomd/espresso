@@ -169,6 +169,23 @@ void integrate_vv_recalc_maxrange()
 
 /************************************************************/
 
+void initialize_ghosts()
+{
+  invalidate_ghosts();
+
+  switch (cell_structure.type) {
+  case CELL_STRUCTURE_NSQUARE:
+    nsq_balance_particles();
+    break;
+  case CELL_STRUCTURE_DOMDEC:
+    dd_exchange_and_sort_particles();
+    break;
+  }
+
+  ghost_communicator(&cell_structure.ghost_cells_comm);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm);
+}
+
 void integrate_vv(int n_steps)
 {
   int i;
@@ -179,32 +196,13 @@ void integrate_vv(int n_steps)
 		      n_steps));
 
   if(resort_particles) {
-    invalidate_ghosts();
-
-    switch (cell_structure.type) {
-    case CELL_STRUCTURE_NSQUARE:
-      nsq_balance_particles();
-      break;
-    case CELL_STRUCTURE_DOMDEC:
-      dd_exchange_and_sort_particles();
-     break;
-    }
-    ghost_communicator(&cell_structure.ghost_cells_comm);
-    ghost_communicator(&cell_structure.exchange_ghosts_comm);
+    initialize_ghosts();
 
     recalc_forces = 1;
     resort_particles = 0;
   }
   if (recalc_forces) {
-    switch (cell_structure.type) {
-    case CELL_STRUCTURE_NSQUARE:
-      force_calc();
-      break;
-    case CELL_STRUCTURE_DOMDEC:
-      build_verlet_lists_and_calc_verlet_ia();
-      break;
-    }
- 
+    force_calc(); 
 #ifdef ROTATION
     convert_initial_torques();
 #endif
@@ -212,7 +210,7 @@ void integrate_vv(int n_steps)
     rescale_forces();
     recalc_forces = 0;
   }
-    
+
   /* integration loop */
   INTEG_TRACE(fprintf(stderr,"%d START INTEGRATION: %d steps\n",this_node,n_steps));
   for(i=0;i<n_steps;i++) {
@@ -225,17 +223,14 @@ void integrate_vv(int n_steps)
        cell_structure.type == CELL_STRUCTURE_DOMDEC) {
       INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
       n_verlet_updates++;
-      invalidate_ghosts();
-      dd_exchange_and_sort_particles();
-      ghost_communicator(&cell_structure.ghost_cells_comm);
-      ghost_communicator(&cell_structure.exchange_ghosts_comm);
-      build_verlet_lists_and_calc_verlet_ia();
+      initialize_ghosts();
     }
-    else {
+    else
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
-      force_calc();
-    }
+
+    force_calc();
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
+
     rescale_forces_propagate_vel();
 #ifdef ROTATION
     convert_torqes_propagate_omega();

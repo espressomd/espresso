@@ -18,6 +18,7 @@
 
 #include <tcl.h>
 #include "particle_data.h"
+#include "interaction_data.h"
 #include "utils.h"
 
 /** \name Data Types */
@@ -30,23 +31,20 @@ typedef struct {
   int init_status;
 
   /** Array for observables on each node. */
-  DoubleList node;
-  /** Array for observables summed over all nodes. */
-  DoubleList sum;
+  DoubleList data;
 
-  /** number of observables. */
-  int n;
-  /** number of observables before specific interaction observables. */
-  int n_pre;
-  /** number of observables for bonded interactions. */
-  int n_bonded;
-  /** number of observables for non-bonded interactions. */
-  int n_non_bonded;
-  /** number of observables for coulomb interaction. */
+  /** number of coulomb interactions */
   int n_coulomb;
+  /** number of non bonded interactions */
+  int n_non_bonded;
 
-  /** analyze specified observable. */
-  int ana_num;
+  /** start of bonded interactions. Right after the special ones */
+  double *bonded;
+  /** start of observables for non-bonded interactions. */
+  double *non_bonded;
+  /** start of observables for coulomb interaction. */
+  double *coulomb;
+
 } Observable_stat;
 
 /*@}*/
@@ -89,7 +87,6 @@ void nbhood(double pos[3], double r_catch, IntList *il);
                 (this is a good idea if the posx, posy, posz is the position of a particle).
     @return the minimal distance of a particle to coordinates (<posx>, <posy>, <posz>). */
 double distto(double pos[3], int pid);
-
 
 /** appends particles' positions in 'partCfg' to \ref #configs */
 void analyze_append();
@@ -166,6 +163,26 @@ double min_distance2(double pos1[3], double pos2[3]);
 MDINLINE double min_distance(double pos1[3], double pos2[3]) {
   return sqrt(min_distance2(pos1, pos2));
 }
+
+MDINLINE double *obsstat_bonded(Observable_stat *stat, int j)
+{
+  return stat->bonded + j;
+}
+
+MDINLINE double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2)
+{
+  int tmp;
+  if (p1 > p2) {
+    tmp = p2;
+    p2 = p1;
+    p1 = tmp;
+  }
+  return stat->non_bonded + ((2 * n_particle_types - 1 - p1) * p1) / 2  +  p2;
+}
+
+void invalidate_obs();
+
+void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded, int n_non_bonded, int n_coulomb);
 
 /*@}*/
 

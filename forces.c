@@ -31,27 +31,34 @@
 #include "nsquare.h"
 
 /************************************************************/
+/* local prototypes                                         */
+/************************************************************/
+
+/** Calculate long range forces (P3M, MMM2d...). */
+void calc_long_range_forces();
+
+/** initialize real particle forces with thermostat forces and
+    ghost particle forces with zero. */
+void init_forces();
+
+/************************************************************/
 
 void force_calc()
 {
-  /* preparation */
   init_forces();
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    calculate_verlet_ia();
+    if (rebuild_verletlist)
+      build_verlet_lists_and_calc_verlet_ia();
+    else
+      calculate_verlet_ia();
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_calculate_ia();
   }
 
   calc_long_range_forces();
-}
-
-/************************************************************/
-
-void calc_bonded_forces(Particle *p, int np)
-{
 }
 
 /************************************************************/

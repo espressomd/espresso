@@ -149,7 +149,13 @@ void calculate_verlet_ia()
     p1   = cell->part;
     np  = cell->n;
     /* calculate bonded interactions (loop local particles) */
-    for(i = 0; i < np; i++)  add_bonded_force(&p1[i]);
+    for(i = 0; i < np; i++)  {
+      add_bonded_force(&p1[i]);
+#ifdef CONSTRAINTS
+      add_constraints_forces(p1);
+#endif
+    }
+
     /* Loop cell neighbors */
     for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
       pairs = dd.cell_inter[c].nList[n].vList.pair;
@@ -181,9 +187,6 @@ void build_verlet_lists_and_calc_verlet_ia()
   estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_range,3.0))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
 #endif
  
-  /* preparation forces */
-  init_forces();    
-
   /* Loop local cells */
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -203,6 +206,9 @@ void build_verlet_lists_and_calc_verlet_ia()
 	/* Tasks within cell: bonded forces, store old position, avoid double counting */
 	if(n == 0) {
 	  add_bonded_force(&p1[i]);
+#ifdef CONSTRAINTS
+	  add_constraints_forces(p1);
+#endif
 	  memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 	  j_start = i+1;
 	}
@@ -223,9 +229,6 @@ void build_verlet_lists_and_calc_verlet_ia()
       VERLET_TRACE(sum += pl->n);
     }
   }
-
-  /* calc long range forces */
-  calc_long_range_forces();
 
   VERLET_TRACE(fprintf(stderr,"%d: total number of interaction pairs: %d (should be around %d)\n",this_node,sum,estimate));
  

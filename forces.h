@@ -21,6 +21,7 @@
 #include <tcl.h>
 #include "config.h"
 #include "thermostat.h"
+#include "communication.h"
 
 /* include the force files */
 #include "p3m.h"
@@ -37,10 +38,6 @@
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-
-/** initialize real particle forces with thermostat forces and
-    ghost particle forces with zero. */
-void init_forces();
 
 /** Calculate forces.
  *
@@ -66,9 +63,6 @@ void init_forces();
  */
 void force_calc();
 
-/** Calculate long range forces (P3M, MMM1D, MMM2d...). */
-void calc_long_range_forces();
-
 /** Calculate non bonded forces between a pair of particles.
     @param p1        pointer to particle 1.
     @param p2        pointer to particle 2.
@@ -93,19 +87,21 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
 #ifdef ELECTROSTATICS
   /* real space coulomb */
-  if(coulomb.method == COULOMB_P3M) 
+  switch (coulomb.method) {
+  case COULOMB_P3M:
     add_p3m_coulomb_pair_force(p1,p2,d,dist2,dist);
-  else if(coulomb.method == COULOMB_DH)
+    break;
+  case COULOMB_DH:
     add_dh_coulomb_pair_force(p1,p2,d,dist);
-  else if(coulomb.method == COULOMB_MMM1D)
+    break;
+  case COULOMB_MMM1D:
     add_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist);
+    break;
+  }
 #endif
-
 }
 
 /** Calculate bonded forces for one particle.
-    Also contains the constraint forces, which are treated
-    as bonded interactions in Espresso.
     @param p1 particle for which to calculate forces
 */
 MDINLINE void add_bonded_force(Particle *p1)
@@ -135,11 +131,7 @@ MDINLINE void add_bonded_force(Particle *p1)
       break;
     }
   }
-  
-#ifdef CONSTRAINTS
-  add_constraints_forces(p1);
-#endif
-}
+}  
 
 /** add force to another. This is used when collecting ghost forces. */
 MDINLINE void add_force(ParticleForce *F_to, ParticleForce *F_add)

@@ -32,8 +32,9 @@
 #include "debug.h"
 
 
-Observable_stat virials= {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
+Observable_stat virials= {0, {NULL,0,0}, 0,0,0,0};
 
+#if 0
 void init_virials() {
   if (virials.init_status != 0)
     return;
@@ -267,6 +268,8 @@ void calc_pressure() {
 #endif
 }
 
+#endif
+
 int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze pressure [{ <bonded> [<type_num>] | <nonbonded> [<type1> <type2>] | coulomb | ideal | total[s] }]' */
@@ -274,19 +277,20 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
   char buffer[3*TCL_DOUBLE_SPACE + 256];
   double *buf;
   int i, j, p, k;
+  int ana_num;
 
   if (n_total_particles == 0) { Tcl_AppendResult(interp, "(no particles)",(char *)NULL); return (TCL_OK); }
 
+#if 0
   init_virials();
-
   if(argc == 0)
-    virials.ana_num=0;
+    ana_num=0;
   else {
-    if     (ARG0_IS_S("totals")) virials.ana_num=0;
-    else if(ARG0_IS_S("ideal")) virials.ana_num=1;
+    if     (ARG0_IS_S("totals")) ana_num=0;
+    else if(ARG0_IS_S("ideal")) ana_num=1;
     else if(ARG0_IS_S("bonded") || ARG0_IS_S("fene") ||
 	    ARG0_IS_S("harmonic")) {
-      if(argc<2) { virials.ana_num=0; }
+      if(argc<2) { ana_num=0; }
       else {
 	if(!ARG1_IS_I(i)) return (TCL_ERROR);
 	if(i >= virials.n_bonded) { 
@@ -294,10 +298,10 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
 	  return (TCL_ERROR);
 	}
       }
-      virials.ana_num = virials.n_pre+i;
+      ana_num = virials.n_pre+i;
     }
     else if(ARG0_IS_S("nonbonded") || ARG0_IS_S("lj") || ARG0_IS_S("lj-cos") || ARG0_IS_S("gb")) {
-      if(argc<3) { virials.ana_num=0; }
+      if(argc<3) { ana_num=0; }
       else {
 	if(!ARG_IS_I(1, i)) return (TCL_ERROR);
 	if(!ARG_IS_I(2, j)) return (TCL_ERROR);
@@ -306,15 +310,15 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
 			   (char *)NULL);
 	  return (TCL_ERROR);
 	}
-	virials.ana_num = virials.n_pre+virials.n_bonded + j -i;
+	ana_num = virials.n_pre+virials.n_bonded + j -i;
 	while(i>0) {
-	  virials.ana_num += n_particle_types - (i-1); i--;
+	  ana_num += n_particle_types - (i-1); i--;
 	}
       }
     }
     else if(ARG0_IS_S("coulomb")) {
 #ifdef ELECTROSTATICS
-      virials.ana_num = virials.n_pre+virials.n_bonded+virials.n_non_bonded; 
+      ana_num = virials.n_pre+virials.n_bonded+virials.n_non_bonded; 
 #else
       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
 #endif
@@ -329,16 +333,16 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
   buf = malloc(6*sizeof(double)); buf[0]=buf[1]=buf[2]=buf[3]=buf[4]=buf[5] = 0.0;
   if(argc > 0) {
     if(ARG0_IS_S("total")) {
-      Tcl_PrintDouble(interp, virials.sum.e[virials.ana_num], buffer); 
+      Tcl_PrintDouble(interp, virials.sum.e[ana_num], buffer); 
       Tcl_AppendResult(interp, buffer, (char *)NULL); }
     else if(ARG0_IS_S("totals")) {
-      sprintf(buffer,"%f %f",virials.sum.e[virials.ana_num],virials.node.e[virials.ana_num]); 
+      sprintf(buffer,"%f %f",virials.sum.e[ana_num],virials.node.e[ana_num]); 
       Tcl_AppendResult(interp, buffer, (char *)NULL); }
     else if(ARG0_IS_S("ideal")) {
-      Tcl_PrintDouble(interp, virials.sum.e[virials.ana_num], buffer); 
+      Tcl_PrintDouble(interp, virials.sum.e[ana_num], buffer); 
       Tcl_AppendResult(interp, buffer, (char *)NULL); }
-    else if(virials.ana_num > 0) {  /* this covers case 'coulomb' as well */
-      sprintf(buffer,"%f %f",virials.sum.e[virials.ana_num],virials.node.e[virials.ana_num]);
+    else if(ana_num > 0) {  /* this covers case 'coulomb' as well */
+      sprintf(buffer,"%f %f",virials.sum.e[ana_num],virials.node.e[ana_num]);
       Tcl_AppendResult(interp, buffer, (char *)NULL); }
     else if(ARG0_IS_S("bonded")) {
       for(i=0;i<n_bonded_ia;i++) {
@@ -402,5 +406,6 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
   }
   virials.init_status=1;
   free(buf);
+#endif
   return (TCL_OK);
 }
