@@ -70,6 +70,7 @@ MDINLINE void init_intlist(IntList *il)
 
 MDINLINE void alloc_intlist(IntList *il, int size)
 {
+  il->max = size;
   il->e = (int *) malloc(sizeof(int)*il->max);
 }
 
@@ -90,6 +91,7 @@ MDINLINE void init_doublelist(DoubleList *il)
 
 MDINLINE void alloc_doublelist(DoubleList *dl, int size)
 {
+  dl->max = size;
   dl->e = (double *) malloc(sizeof(double)*dl->max);
 }
 
