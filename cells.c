@@ -258,6 +258,7 @@ Particle *cells_alloc_particle(int id, double pos[3])
   pt->v[1]   = 0;
   pt->v[2]   = 0;
   memcpy(pt->r.p, pos, 3*sizeof(double));
+  init_intlist(&(pt->bl));
   return pt;
 }
 
