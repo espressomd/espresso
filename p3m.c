@@ -254,8 +254,8 @@ void   P3M_init()
     ca_fmp  = malloc(3*CA_INCREMENT*sizeof(int));
 
     calc_local_ca_mesh();
-    P3M_TRACE(p3m_print_local_mesh(lm));
     calc_send_mesh();
+    P3M_TRACE(p3m_print_local_mesh(lm));
     /* DEBUG */
     for(n=0;n<n_nodes;n++) {
       /* MPI_Barrier(MPI_COMM_WORLD); */
@@ -265,7 +265,7 @@ void   P3M_init()
     recv_grid = malloc(sizeof(double)*sm.max);
 
     interpolate_charge_assignment_function();
-    /* position offset for calc. of fisrt meshpoint */
+    /* position offset for calc. of first meshpoint */
     pos_shift = (double)((p3m.cao-1)/2) - (p3m.cao%2)/2.0;
     P3M_TRACE(fprintf(stderr,"%d: pos_shift = %f\n",this_node,pos_shift)); 
  
@@ -320,7 +320,7 @@ void   P3M_calc_kspace_forces()
 
 	/* particle position in mesh coordinates */
 	for(d=0;d<3;d++) {
-	  pos[d]   = (p[i].r.p[d]-(lm.ld_pos[d]+pos_shift))*p3m.ai[d];
+	  pos[d]   = ((p[i].r.p[d]-lm.ld_pos[d])*p3m.ai[d]) - pos_shift;
 	  first[d] = (int) pos[d];
 	  ca_fmp[(3*cp_cnt)+d] = first[d];
 	  arg[d]   = (int) ((pos[d]-first[d])*inter2);
@@ -333,8 +333,8 @@ void   P3M_calc_kspace_forces()
 		    this_node,my_left[d],my_right[d]);	    
 	  }
 	  if( (first[d]+p3m.cao) > lm.dim[d] ) {
-	    fprintf(stderr,"%d: rs_mesh overflow! dir=%d (P_id=%d at %f)\n",
-		    this_node,d,p[i].r.identity,p[i].r.p[d]);
+	    fprintf(stderr,"%d: rs_mesh overflow! dir=%d (P_id=%d at %f) first=%d\n",
+		    this_node,d,p[i].r.identity,p[i].r.p[d],first[d]);
 	    fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
 		    this_node,my_left[d],my_right[d]);
 	  }    
@@ -425,7 +425,7 @@ void   P3M_calc_kspace_forces()
 	  }
 	  cp_cnt++;
 #ifdef ADDITIONAL_CHECKS
-	  if(fabs(db_fsum)> 6e-1) fprintf(stderr,"%d: Part %d: k-space-force = %e\n",this_node,p[i].r.identity,db_fsum);
+	  if(fabs(db_fsum)> 1.0) fprintf(stderr,"%d: Part %d: k-space-force = %e\n",this_node,p[i].r.identity,db_fsum);
 #endif
 	}
       }
