@@ -10,7 +10,7 @@
 ############ general settings
 
 ### Tk (graphical interface)
-TK=yes
+TK=no
 
 ### Intel C compiler instead of gcc
 ICC=no
