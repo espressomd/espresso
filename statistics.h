@@ -4,7 +4,7 @@
     This file contains the code for simply statistics on the data.
 
     <b>Responsible:</b>
-    <a href="mailto:svanebor@mpip-mainz.mpg.de">Carsten</a>
+    <a href="mailto:mann@mpip-mainz.mpg.de">BAM</a>
 
 */
 
@@ -27,8 +27,11 @@ extern Particle *partCfg;
 /************************************************************/
 /*@{*/
 
-/** Implements the Tcl command mindist. It returns the minimal distance of two particles
-    (in minimum image convention). */
+/** Implements the Tcl command mindist [<posx> <posy> <posz>] or mindist [<part_id> <r_catch>]. 
+    Without any parameters it returns the minimal distance of two particles (in minimum image convention). 
+    If the coordinates mindist <posx> <posy> <posz> are given, it returns the minimum distance of all particles to that position.
+    If <part_id> <r_catch> is given, it returns the identities of all particles which are less than <r_catch> away from <part_id>.
+*/
 int mindist(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Implements the Tcl command analyze <what> <N_P> <MPC> [<N_CI> [<N_pS> <N_nS>]] [-g] for basic analysis.
