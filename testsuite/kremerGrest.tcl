@@ -110,7 +110,7 @@ if { [file exists "$name$ident.KKG"] } {
 } else {
     set KKG_file [open "$name$ident.KKG" "w"]
     puts $KKG_file "ID N_P MPC box_l int_time re re-reKG reKG rg rg-rgKG rgKG re2/rg2 Temp mindist pKG p-pKG"; flush $KKG_file
-    set VIR_file [open "$name$ident.VIR" "a"]
+    set VIR_file [open "$name$ident.VIR" "w"]
     puts $VIR_file "ID N_P MPC box_l int_time p_total D(p_total) p_FENE D(p_FENE) p_lj D(p_lj) p_ideal p_osmotic pKG p-pKG"; flush $VIR_file
 }
 
@@ -230,9 +230,9 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 	} else {
 	    set tmp_start 0; set obs_file [open "$name_i$ident.obs2" "w"]
 	    set ptot [eval concat [eval concat [analyze pressure]]]; set p1 [lindex $ptot 0]
-	    puts $obs_file "t mindist re rg rh Temp p p2 ideal pid FENE pf pf2 lj plj plj2"
+	    puts $obs_file "t mindist re dre re2 dre2 rg drg rg2 drg2 rh drh Temp p p2 ideal pid FENE pf pf2 lj plj plj2"
 	    puts $obs_file "[setmd time] [analyze mindist] [analyze re 0 $n_p_i $mpc_i] [analyze rg] [analyze rh] [setmd temp] $ptot"
-	    puts "    Analysis at t=[setmd time]: mindist=[analyze mindist], re=[analyze re], rg=[analyze rg], rh=[analyze rh], T=[setmd temp], p=$p1."
+	    puts "    Analysis at t=[setmd time]: rg^2=[lindex [analyze rg] 2], re^2=[lindex [analyze re] 2], rh=[lindex [analyze rh] 0], p=$p1, mindist=[analyze mindist], T=[setmd temp]."
 	    analyze append; checkpoint_set "$name_i$ident.[eval format %0$sfx 0]" "all" "tmp_step"
 	}
 	for { set j $tmp_start } { $j < $int_loop } { incr j } {
@@ -250,7 +250,7 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 		checkpoint_set "$name_i$ident.[eval format %0$sfx $tmp_step]" [expr int($checkpoint/$int_step_i)] "tmp_step" "-"
 		puts -nonewline "set (with <re>=[analyze <re>], <rg>=[analyze <rg>] averaged over $tmp_conf configurations"
 		puts ", <p>=[lindex [nameObsAv $name_i$ident.obs2 p] 1])."
-	    } else { puts -nonewline ", mindist=[analyze mindist], re=[analyze re], rg=[analyze rg], rh=[analyze rh], p=$p1...\r"; 
+	    } else { puts -nonewline ",  rg^2=[lindex [analyze rg] 2], re^2=[lindex [analyze re] 2], rh=[lindex [analyze rh] 0], p=$p1, mindist=[analyze mindist], T=[setmd temp]...\r"; 
 		flush stdout }
 	}
 	# write everything to disk (set checkpoint)
@@ -269,7 +269,7 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 	set d_pf12 [expr sqrt(abs($pf2 - $pf1*$pf1)/([lindex $avg 0]-1))]
 	set d_plj12 [expr sqrt(abs($plj2 - $plj1*$plj1)/([lindex $avg 0]-1))]
 	set d_pKG [expr ($p1-$pKG_i)/$pKG_i]
-	set tmp_re [analyze <re>]; set tmp_rg [analyze <rg>]
+	set tmp_re [lindex [analyze <re>] 0]; set tmp_rg [lindex [analyze <rg>] 0]
 	set tmp_reKG [expr sqrt([lindex $re2 [expr $i-1]])]; set tmp_rgKG [expr sqrt([lindex $rg2 [expr $i-1]])]
 	set tmp_divE [expr ($tmp_re-$tmp_reKG)/$tmp_reKG]; set tmp_divG [expr ($tmp_rg-$tmp_rgKG)/$tmp_rgKG]
 	set tmp_rat2 [expr $tmp_re*$tmp_re/($tmp_rg*$tmp_rg)]

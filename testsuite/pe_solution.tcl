@@ -234,28 +234,33 @@ set obs_file [open "$name$ident.obs" "w"]
 puts $obs_file "\#$name$ident: Observables"
 puts $obs_file "\#Time     R_E         R_G         R_H         E_TOT       E_KIN       E_C_k"
 analyze set chains 0 $n_polymers $l_polymers
-set re [analyze re]
+set re_full [analyze re]
+set re [lindex $re_full 0]
 set j 0
 puts "\nStart Main integration: $int_n_times times $int_steps steps"
 for {set i 0} { $i < $int_n_times } { incr i} {
     set time [setmd time]
-    puts -nonewline "run $i at time=$time, R_E = $re (soll 15.0, deviation [expr $re/15.0])\r"
+    puts -nonewline "run $i at time=$time, R_E = $re_full (soll 15.0, deviation [expr $re/15.0])\r"
     flush stdout
 
     integrate $int_steps
 
     set f [open "distribution.dat" w]
     puts -nonewline $f "\#"
-    puts $f "[analyze distribution ( 2 ) ( 0 1 ) 1.0 300.0 30 1 1]"
+    puts $f "[analyze distribution 2 {0 1} 1.0 300.0 30 1 1]"
     flush $f
     close $f
 
     set energy [analyze energy]
-    set re [analyze re]
-    puts $obs_file [format "%.3e %.5e %.5e %.5e %.5e %.5e %.5e" $time $re [analyze rg] [analyze rh] [lindex [lindex $energy 0] 1] [lindex [lindex $energy 1] 1] [lindex [lindex $energy [expr [llength $energy]-1]] 1] ]
+    set re_full [analyze re]
+    set re [lindex $re_full 0]
+    set rg [lindex [analyze rg] 0]
+    set rh [lindex [analyze rh] 0]
+
+    puts $obs_file [format "%.3e %.5e %.5e %.5e %.5e %.5e %.5e" $time $re $rg $rh [lindex [lindex $energy 0] 1] [lindex [lindex $energy 1] 1] [lindex [lindex $energy [expr [llength $energy]-1]] 1] ]
     flush $obs_file
     if { $vmd_output=="yes" } { imd positions }
-#   write intermediate configuration
+    #   write intermediate configuration
     if { $i%50==0 } {
 	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
 	incr j
