@@ -106,7 +106,7 @@ proc setup_system {file new} {
 	setmd time_step 0.0001
 	for { set i 0 } { $i < 100 } { incr i } {
 	    integrate 100
-	    puts -nonewline "warmup $i from 1000; energy [lindex [analyze energy]0 1]\r"
+	    puts -nonewline "warmup $i from 1000; energy [lindex [lindex [analyze energy] 0] 1]\r"
 	    flush stdout
 	    set cap [expr $cap+10]
 	    inter ljforcecap $cap
@@ -165,7 +165,7 @@ if { [catch {
     # check energies
     set maxde 0 
     for { set i 2 } { $i < [llength $new_energy] } { incr i } {
-	set de [expr [lindex $energy $i 3]-[lindex $new_energy $i 3] ]
+	set de [expr [lindex [lindex $energy $i] 3]-[lindex [lindex $new_energy $i] 3] ]
 	if { $de > $maxde } { set maxde $de }
 	if { $de > $epsilon } {
 	    puts "Energy Error for [lindex $new_energy $i]: deviation $maxde"
