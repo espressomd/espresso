@@ -75,6 +75,7 @@ for {set i 0} { $i < $maxtime && $cont} { incr i} {
 
 # write
 set f [open "|gzip -c - >config.gz" w]
+blockfile $f write variable box_l
 blockfile $f write particles "id pos type q" all
 close $f
 
