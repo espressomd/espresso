@@ -26,7 +26,7 @@
  * comes from.
  **********************************************/
 
-/** Read-only callback for \ref fields.
+/** Read-only callback for \ref #fields.
     If you choose this, the variable cannot be
     changed by Tcl script code. */
 int ro_callback(Tcl_Interp *interp, void *data);
@@ -106,7 +106,7 @@ const Datafield fields[] = {
 	<li> \verbatim max_cut double (ro) \endverbatim
 	\ref max_cut - Maximal cutoff of real space interactions.
 	<li> \verbatim skin double \endverbatim
-	\ref skin - Skin for the Verlet list.
+	\ref #skin - Skin for the Verlet list.
 	<li> \verbatim max_range double (ro)\endverbatim
 	\ref max_range - Maximal range of real space interactions: max_cut + skin.
 	<li> \verbatim gamma double \endverbatim
@@ -139,9 +139,9 @@ const Datafield fields[] = {
 	algorithm. Reasonable values are between 125 and 1000, or for
 	some problems (n_total_particles/n_nodes).
 	<li> \verbatim periodicity bool[3]\endverbatim
-	\ref periodic - Specifies periodicity for the three directions.
+	\ref #periodic - Specifies periodicity for the three directions.
 	This variable is read-only and returns (1,1,1) without the compiler flag
-	\ref PARTIAL_PERIODIC from \ref config.h "config.h" .
+	PARTIAL_PERIODIC from \ref config.h "config.h" (Out of order!!!).
 	</ul>    
  */
 /**********************************************

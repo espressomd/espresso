@@ -42,7 +42,7 @@ void force_init();
  *       <li> ANGLE (cos bend potential)
  *       </ul>
  *  <li> Calculate \ref tcl_non_bonded "non-bonded short range interaction" forces:<br>
- *       Loop the \ref verletList "verlet list".
+ *       Loop all \ref IA_Neighbor::vList "verlet lists" of all \ref #cells.
  *       <ul>
  *       <li> Lennard-Jones.
  *       <li> Real space part: Coulomb.

@@ -91,7 +91,7 @@ extern int max_seen_particle;
 /** total number of particles. */
 extern int  n_total_particles;
 
-/** Capacity of the \ref particle_node / \ref local_index. */
+/** Capacity of the \ref particle_node / \ref local_particles. */
 extern int  max_particle_node;
 /** Used only on master node: particle->node mapping. */
 extern int  *particle_node;

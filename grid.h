@@ -20,11 +20,11 @@
  *  \image latex directions.eps "Convention for the order of the directions" width=6cm
  *
  *  The Figure illustrates the direction convetion used for arrays
- *  with 6 (e.g. \ref node_neighbors, \ref boundary) and 3 entries
+ *  with 6 (e.g. \ref node_neighbors, \ref #boundary) and 3 entries
  *  (e.g \ref node_grid, \ref box_l , \ref my_left,...).
  *  
  *  Attention: If you change anything of the simulation box dimensions
- *  you have to call \ref changed_topology.
+ *  you have to call \ref grid_changed_topology.
  *
  *  For more information on the domain decomposition, see \ref grid.c "grid.c". 
 */
@@ -107,7 +107,7 @@ int find_node(double pos[3]);
  * \param node number of the node.  */
 void calc_node_neighbors(int node);
 
-/** called from \ref mpi_changed_topology . */
+/** called from \ref mpi_bcast_event . */
 void grid_changed_topology();
 
 /** Calculates the smallest box and local box dimensions for periodic
@@ -143,7 +143,7 @@ int node_grid_callback(Tcl_Interp *interp, void *data);
 /** datafield callback for \ref box_l. Sets the box dimensions. */
 int boxl_callback(Tcl_Interp *interp, void *_data);
 
-/** datafield callback for \ref periodic. Determines wether a coordinate is pbc (default). */
+/** datafield callback for \ref #periodic. Determines wether a coordinate is pbc (default). */
 int per_callback(Tcl_Interp *interp, void *_data);
 
 /*@}*/

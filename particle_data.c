@@ -1,6 +1,6 @@
 /** \file particle_data.c
     This file contains everything related to particle storage. If you want to add a new
-    property to the particles, it is probably a good idea to modify \ref part to give
+    property to the particles, it is probably a good idea to modify \ref Particle to give
     scripts access to that property. You always have to modify two positions: first the
     print section, where you should add your new data at the end, and second the read
     section where you have to find a nice and short name for your property to appear in

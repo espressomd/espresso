@@ -108,7 +108,7 @@ int sub_grid_indices(int* list, int start, int max,
 
 /** moves particle (ind) to the send buffers. 
  * 
- *  subroutine of \ref exchange_part .  
+ *  subroutine of \ref exchange_and_sort_part .  
  *
  *  Moves one particle (struct: Particle, local index: ind) to the
  *  send buffer (p_send_buf, b_send_buf) and removes it from the local
@@ -122,21 +122,22 @@ int sub_grid_indices(int* list, int start, int max,
  *  <ul> 
  *    <li> n_p_send_buf += 1
  *    <li> n_b_send_buf += number of bond partners
- *    <li> remove particle from local_index field (set to -1)
- *    <li> actualize local_index entry for last particle
+ *    <li> remove particle from local_particles field (set to -1)
+ *    <li> actualize local_particles entry for last particle
  *    <li> n_particles -= 1
  *  </ul>
  *  Reallocation of p_send_buf and b_send_buf if necessary.  
  *
  * \warning \b Supports only two particle bonds at the moment
  *
- * @return    local index to continue the particle loop.     
+ * @return    local index to continue the particle loop. 
+ * @param pl  particle list
  * @param ind local index of the particle. */
 int move_to_p_buf(ParticleList *pl, int ind);
 
 /** send particles in direction s_dir.
  *
- *  subroutine of \refexchange_part. 
+ *  subroutine of \ref exchange_and_sort_part. 
  *
  *  Check if communication goes to a different node.
  *  <ol>
@@ -157,7 +158,7 @@ void send_particles(int s_dir);
 
 /** appends recieved particles of direction dir to local particle array.
  *
- *  subroutine of \ref exchange_part. 
+ *  subroutine of \ref exchange_and_sort_part. 
  *
  *  Folds the coordinate in the send/recv direction.
  *  Reallocate particle buffer (particles) if necessary. Copy
@@ -175,17 +176,13 @@ void append_particles(int dir);
  *  node in direction s_dir.
  *  <ol>
  *      <li> send number of ghost in each send cell for this direction:
- *           \ref n_send_ghosts to \ref n_recv_ghosts.
- *           The total number of ghosts to send/receive is in 
- *           \ref n_send_ghosts[\ref max_send_cells].
+ *           
  *      <li> send ghost particle information:
  *           \ref g_send_buf to \ref g_recv_buf
  *  </ol>
  *
  *  If communication goes to the same node, just the pointers of the
- *  array pairs (\ref g_send_buf, \ref g_recv_buf) and the variable
- *  pairs (\ref max_g_send_buf, \ref max_g_recv_buf) and (\ref
- *  n_g_send_buf, \ref n_g_recv_buf) are exchanged.
+ *  send/recv buffers (\ref g_send_buf, \ref g_recv_buf) are exchanged.
  *
  * @param s_dir send direction.  
 */
@@ -304,7 +301,7 @@ void exchange_and_sort_part()
   Cell *cell;
   int d, i, m, n, o, dir, lr, ind, c;
 
-  GHOST_TRACE(fprintf(stderr,"%d: exchange_part:start \n",this_node));
+  GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part:start \n",this_node));
   GHOST_TRACE(print_particle_positions());
 
   for(d=0; d<3; d++) { /* direction loop */  
@@ -321,7 +318,7 @@ void exchange_and_sort_part()
 	    part = pl->part;
 	    if((lr == 1 && part[i].r.p[d] >=  my_right[d]) ||
 	       (lr == 0 && part[i].r.p[d] <  my_left[d])) {
-	      GHOST_TRACE(fprintf(stderr,"%d: exchange_part: Send Part id=%d to node %d\n",
+	      GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part: Send Part id=%d to node %d\n",
 				  this_node,part[i].r.identity,node_neighbors[dir]));
 	      i = move_to_p_buf(pl,i);
 	    }
@@ -329,7 +326,7 @@ void exchange_and_sort_part()
 	      /* sort particles not moved into their real cells */
 	      ind = pos_to_cell_grid_ind(part[i].r.p);
 	      if(ind != c) {
-		GHOST_TRACE(fprintf(stderr,"%d: exchange_part: move part to different cell: id=%d c%d -> c%d\n",this_node,part[i].r.identity,c,ind));
+		GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part: move part to different cell: id=%d c%d -> c%d\n",this_node,part[i].r.identity,c,ind));
 		move_unindexed_particle(&(cells[ind].pList), pl, i);
 		if(i < pl->n) i--;
 	      }
@@ -355,7 +352,7 @@ void exchange_and_sort_part()
 	    /* sort particles not moved into their real cells */
 	    ind = pos_to_cell_grid_ind(part[i].r.p);
 	    if(ind != c) {
-	      GHOST_TRACE(fprintf(stderr,"%d: exchange_part: move part to different cell: id=%d c%d -> c%d\n",this_node,part[i].r.identity,c,ind));
+	      GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part: move part to different cell: id=%d c%d -> c%d\n",this_node,part[i].r.identity,c,ind));
 	      move_unindexed_particle(&(cells[ind].pList), pl, i);
 	      if(i < pl->n) i--;
 	    }
@@ -368,7 +365,7 @@ void exchange_and_sort_part()
   INNER_CELLS_LOOP(m, n, o)
     update_local_particles(&(CELL_PTR(m, n, o)->pList));
 
-  GHOST_TRACE(fprintf(stderr,"%d: exchange_part: exit\n",this_node));
+  GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part: exit\n",this_node));
 #ifdef ADDITIONAL_CHECKS
   check_particle_consistency();
 #endif

@@ -36,7 +36,7 @@ void on_ia_change();
 
 /** called every time other parameters (timestep,...) are changed. Note that
     this does not happen automatically. The callback procedure of the changed
-    variable is responsible for that by calling \ref mpi_send_event (2).
+    variable is responsible for that by calling \ref mpi_bcast_event (2).
 */
 void on_parameter_change();
 

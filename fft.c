@@ -149,7 +149,7 @@ void forw_grid_comm(fft_forw_plan plan, double *in, double *out);
 void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in, double *out);
 
 /** Debug function to print fft_forw_plan structure. 
- * \param plan fft/communication plan (see \ref fft_forw_plan).
+ * \param pl fft/communication plan (see \ref fft_forw_plan).
  */
 void print_fft_plan(fft_forw_plan pl);
 

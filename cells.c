@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
 #include "cells.h"
+#include "config.h"
 #include "debug.h"
 #include "grid.h"
 #include "particle_data.h"
@@ -36,8 +36,8 @@
 int cell_grid[3];
 int ghost_cell_grid[3];
 int n_cells;
-Cell *cells;
 int max_num_cells = 512;
+Cell *cells;
 
 /** number of linked cells in nodes spatial domain. */
 int n_inner_cells;

@@ -282,10 +282,13 @@ MDINLINE void permute_ifield(int *field, int size, int permute)
  ************************************************/
 
 /** print a block of a 3D array.
- *  @param data   3D array.
- *  @param start  start coordinate for the block.
- *  @param size   size of the block.
- *  @param dim    dimension of the array.
+ *  @param data    3D array.
+ *  @param start   start coordinate for the block.
+ *  @param size    size of the block.
+ *  @param dim     dimension of the array.
+ *  @param element size of the elements in the array.
+ *  @param num     number of element to print.
+
 */
 MDINLINE void print_block(double *data, int start[3], int size[3], int dim[3], int element, int num)
 {

@@ -104,18 +104,20 @@ extern int ghost_cell_grid[3];
 
 /** number of linked cells (inner+ghosts). */
 extern int n_cells;
-/** linked cell list. */
-extern Cell *cells;
 
 /** Maximal number of cells per node. 
  *  In order to avoid memory problems due to the cell grid one has to
- *  specify the maximal number of \ref cells. The corresponding
+ *  specify the maximal number of \ref #cells . The corresponding
  *  callback function is \ref max_num_cells_callback. If the number of
  *  cells \ref n_cells, defined by \ref ghost_cell_grid is larger than
  *  max_num_cells the cell grid is reduced. max_num_cells has to be
  *  larger than 27, e.g one inner cell.
  */
 extern int max_num_cells;
+
+/** linked cell list. */
+extern Cell *cells;
+
 
 /** cell initialization status. 
     initialized:      cells_init_flag = CELLS_FLAG_START.

@@ -31,7 +31,7 @@ int rebuild_verletlist;
     Checks verlet pair list size and reallocates memory if necessary.
  *  \param p1 Pointer to paricle one.
  *  \param p2 Pointer to paricle two.
- *  \param vl Pointer to the verlet pair list.
+ *  \param pl Pointer to the verlet pair list.
  */
 MDINLINE void add_pair(PairList *pl, Particle *p1, Particle *p2)
 {
@@ -48,7 +48,7 @@ MDINLINE void add_pair(PairList *pl, Particle *p1, Particle *p2)
 }
 
 /** Resizes a verlet pair list according to the actual content (*vl).n. 
-    \param vl Pointer to the verlet pair list. */
+    \param pl Pointer to the verlet pair list. */
 void resize_verlet_list(PairList *pl);
 
 /*@}*/

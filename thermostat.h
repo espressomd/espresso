@@ -33,7 +33,7 @@ void thermo_init();
 */
 void friction_thermo(Particle *p);
 
-/** Callback for setting \ref temperature */
+/** Callback for setting \ref #temperature */
 int temp_callback(Tcl_Interp *interp, void *_data);
 /** Callback for setting \ref friction_gamma */
 int gamma_callback(Tcl_Interp *interp, void *_data);

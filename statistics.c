@@ -12,7 +12,7 @@
 #include "particle_data.h"
 #include "debug.h"
 
-/** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref analyze) */
+/** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref #analyze) */
 float *partCoord_g=NULL, *partCM_g=NULL;
 
 /** data for a system consisting of chains */

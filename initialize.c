@@ -39,7 +39,7 @@ int on_program_start(Tcl_Interp *interp)
 
 
   /*
-    call all initializations to don only on the master node here.
+    call all initializations to do only on the master node here.
   */
   if (this_node == 0) {
     /* interaction_data.c: make sure 0<->0 ia always exists */

@@ -16,7 +16,7 @@
 
 /** Verlet pair list. The verlet pair list array is resized using a
     sophisticated (we hope) algorithm to avoid unnecessary resizes.
-    Access using \ref realloc_pairList.
+    Access using \ref resize_verlet_list.
 */
 typedef struct {
   /** The pair payload (two pointers per pair) */

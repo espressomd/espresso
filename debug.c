@@ -18,7 +18,7 @@ int regular_exit = 1;
 #endif
 static int core_done = 0;
 
-int check_id = 97;
+int check_id = 3;
 
 void core()
 {
@@ -35,11 +35,8 @@ void check_particle_consistency()
   Particle *part;
   Cell *cell;
   int n, np, dir, c;
-  int cell_part_cnt, ghost_part_cnt, local_part_cnt;
+  int cell_part_cnt=0, ghost_part_cnt=0, local_part_cnt=0;
 
-  cell_part_cnt=0;
-  ghost_part_cnt=0;
-  local_part_cnt=0;
   for(c=0; c<n_cells; c++) {
     if(is_inner_cell(c,ghost_cell_grid)) {
       cell_part_cnt += cells[c].pList.n;
