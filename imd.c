@@ -539,8 +539,9 @@ int imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
 
 
   // Use information from the analyse set command to fold chain molecules
+  double shift[3] = {0.0,0.0,0.0};
   if ( flag == FOLD_CHAINS ){
-    if(analyze_fold_molecules(coord) != TCL_OK){
+    if(analyze_fold_molecules(coord, shift ) != TCL_OK){
       Tcl_AppendResult(interp, "could not fold chains: \"analyze set chains <chain_start> <n_chains> <chain_length>\" must be used first",
 		       (char *) NULL);
       return (TCL_ERROR);   
