@@ -51,6 +51,7 @@ if { [catch {
 
     set eng0    [analyze energy kin]
     set temp0   [expr $eng0/$n_part/1.5]
+    if { [regexp "ROTATION" [code_info]] } { set temp0 [expr $temp0/2.] }
     set curtemp1 0
 
     for {set i 0} { $i < $maxstep} { incr i } {
@@ -59,6 +60,7 @@ if { [catch {
 	set toteng [analyze energy total]
 	set cureng [analyze energy kin] 
 	set curtemp [expr $cureng/$n_part/1.5] 
+	if { [regexp "ROTATION" [code_info]] } { set curtemp [expr $curtemp/2.] }
 
 	if { [expr abs($toteng - $cureng)] > $epsilon } {
 	    error "system has unwanted energy contributions"
