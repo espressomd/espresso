@@ -11,6 +11,7 @@ Not yet released.
 - v1.5.Alpha -
 --------------
 
+(d) February 6th, 2004
 (c) January 30th, 2004
 (b) January 15th, 2004.
 (a) January  7th, 2004.
@@ -34,7 +35,26 @@ New Features:
     BOND_ANGLE_HARMONIC   ->  V = 1/2 k (phi - phi0)^2
     BOND_ANGLE_COSINE     ->  V = k (1+cos(phi-phi0))
     BOND_ANGLE_COSSQUARE  ->  V = 1/2 k (cos(phi)-cos(phi0))^2
-
+(d) Inplementation of NEMD (Non Equilibrium Molecular Dynamics). This method
+    introduces a shear rate corresponding to a Couette flow by artificially 
+    pumping energy into the system via a momentum exchange between two slabs 
+    of the system. For more information see for example Evans/Morriss: 
+    Statistical mechanics of Nonequilibrium Liwuids (Academic Press, London, 
+    1990) or Soddemann/Duenweg/Kremer (Phys. Rev. E; 68; 2003). 
+    All procedures reside in the fiiles nemd.c/h. There is also a new tcl
+    command:
+         nemd <n_slabs> <n_exchange>
+	 Turn NEMD on with n_slabs slabs and n_exchange momentum exchanges per
+	 integration step.
+	 nemd profile
+	 Returns the velocity profile along the slabs.
+	 nemd 0 
+	 Turns NEMD off
+    Slabs are perpendicular to the z-direction and the shear is applied in 
+    x-direction.
+    This method is only useful for either NVE ensemble or has to be used with
+    the yet to be installed DPD thermostat to run a NVT ensemble.
+    Per default NEMD is not compiled in!
 
 Changes:
 (a) completely reworked the internal particle structure, now having six substructures per particle
