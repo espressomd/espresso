@@ -20,6 +20,15 @@ setmd temp      0.0
 
 set epsilon 1e-4
 
+set errf [lindex $argv 1]
+proc error_exit {error} {
+    global errf
+    set f [open $errf "w"]
+    puts $f "Error occured: $error"
+    close $f
+    exit -666
+}
+
 proc read_data {file} {
     if { [string compare [lindex [split $file "."] end] "gz"]==0 } { set f [open "|gzip -cd $file" r]
     } else { set f [open "$file" "r"] }
@@ -120,8 +129,7 @@ if { [catch {
 	error "force error too large"
     }
 } res ] } {
-    puts "Error occured: \"$res\""
-    exit -666
+    error_exit $res
 }
 
 exit 0
