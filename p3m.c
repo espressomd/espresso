@@ -2427,7 +2427,7 @@ int P3M_adaptive_tune_parameters(Tcl_Interp *interp)
   char
     b1[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12],
     b2[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12],
-    b3[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12];
+    b3[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 17];
  
   P3M_TRACE(fprintf(stderr,"%d: P3M_adaptive_tune_parameters\n",this_node));
 
