@@ -245,7 +245,8 @@ foreach pack_i $packing {
 	    if { [expr $tmp_step % $checkpoint]==0 } {
 		puts -nonewline "\r    \[$i\] Step $tmp_step: Checkpoint at time [setmd time]... "; flush stdout; flush $obs_file
 		checkpoint_set "$name_i$ident.[eval format %0$sfx $tmp_step]" [expr int($checkpoint/$int_step_i)] "tmp_step" "-"
-		puts "set (with <re>=[analyze <re>], <rg>=[analyze <rg>] averaged over $tmp_conf configurations)."
+		puts -nonewline "set (with <re>=[analyze <re>], <rg>=[analyze <rg>] averaged over $tmp_conf configurations"
+		puts ", <p>=[lindex [nameObsAv $name_i$ident.obs2 p] 1])."
 	    } else { puts -nonewline ", mindist=[analyze mindist], re=[analyze re], rg=[analyze rg], rh=[analyze rh], p=$p1...\r"; 
 		flush stdout }
 	}
@@ -258,13 +259,11 @@ foreach pack_i $packing {
 	puts -nonewline "\nFinished with current system; "
 	# derive ensemble averages
 	if { $bjerrum > 0.0 } {
-	    lappend what [calcObsAv $name_i$ident.obs2 { 1 5 6 7 9 11 12 14 15 17 18 } ]
-	    set avg [findObsAv { Temp mindist p p2 pid pf pf2 plj plj2 pc pc2 } [lindex $what end]]
+	    set avg [nameObsAv $name_i$ident.obs2 { Temp mindist p p2 pid pf pf2 plj plj2 pc pc2 }]
 	    set pc1 [lindex $avg 10]; set pc2 [lindex $avg 11]
 	    set d_pc12 [expr sqrt(abs($pc2 - $pc1*$pc1)/([lindex $avg 0]-1))]
 	} else {
-	    lappend what [calcObsAv $name_i$ident.obs2 { 1 5 6 7 9 11 12 14 15 } ]
-	    set avg [findObsAv { Temp mindist p p2 pid pf pf2 plj plj2 } [lindex $what end]]
+	    set avg [nameObsAv $name_i$ident.obs2 { Temp mindist p p2 pid pf pf2 plj plj2 }]
 	}
 	set tmp_Temp [lindex $avg 1]; set tmp_min [lindex $avg 2]
 	set p1 [lindex $avg 3]; set p2 [lindex $avg 4]; set pid [lindex $avg 5]; set p_os [expr $p1/$pid]
@@ -276,6 +275,8 @@ foreach pack_i $packing {
 	set tmp_rat2 [expr $tmp_re*$tmp_re/($tmp_rg*$tmp_rg)]
 	puts -nonewline "<re> = $tmp_re, <rg> = $tmp_rg, <rh> = $tmp_rh, "
 	puts "<re2>/<rg2> = $tmp_rat2 (RW=6), <Temp> = $tmp_Temp, <p>=$p1+-$d_p12=$p_os."
+	puts "<re2>/<rg2> = $tmp_rat2 (RW=6);"
+	puts "    <Temp> = $tmp_Temp, <p> = $p_os*p_id = $p1+-$d_p12 (=[expr 100*$d_p12/$p1]% error)."
 	# append ensemble averages to .DHN-file
 	puts -nonewline $DHN_file "$i $int_time_i $pack_i $density $a_cube $tmp_re $tmp_rg $tmp_rh $tmp_rat2 $tmp_Temp $tmp_min "
 	puts -nonewline $DHN_file "$p1 $d_p12 $pf1 $d_pf12 $plj1 $d_plj12 "
