@@ -77,9 +77,10 @@
 
 #define GHOSTTRANS_PROPRTS  1
 #define GHOSTTRANS_POSITION 2
-#define GHOSTTRANS_MOMENTUM 4
-#define GHOSTTRANS_FORCE    8
-#define GHOSTTRANS_PARTNUM  16
+#define GHOSTTRANS_POSSHFTD 4
+#define GHOSTTRANS_MOMENTUM 8
+#define GHOSTTRANS_FORCE    16
+#define GHOSTTRANS_PARTNUM  32
 
 /*@}*/
 
@@ -101,6 +102,9 @@ typedef struct {
   /** Pointer array to particle lists to communicate. */
   ParticleList **part_lists;
 
+  /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then this is the shift vector.
+      Normally this a integer multiple of the box length. The shift is done on the sender side */
+  double shift[3];
 } GhostCommunication;
 
 /** Properties for a ghost communication. A ghost communication is defined */

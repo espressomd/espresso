@@ -60,6 +60,7 @@ int on_program_start(Tcl_Interp *interp)
 
   setup_node_grid();
   cells_pre_init();
+  ghost_init();
 
 #ifdef ELECTROSTATICS
   fft_pre_init();

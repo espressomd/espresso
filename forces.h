@@ -139,6 +139,18 @@ MDINLINE void add_bonded_pair_force(Particle *p1)
   }
 }
 
+/** add force to another. This is used when collecting ghost forces. */
+MDINLINE void add_force(ParticleForce *F_to, ParticleForce *F_add)
+{
+  int i;
+  for (i = 0; i < 3; i++)
+    F_to->f[i] += F_add->f[i];
+#ifdef ROTATION
+  for (i = 0; i < 3; i++)
+    F_to->torque[i] += F_add->torque[i];
+#endif
+}
+
 /*@}*/
 
 #endif
