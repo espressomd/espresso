@@ -34,7 +34,7 @@ MDINLINE void add_subt_lj_fene_pair_force(Particle *p1, Particle *p2, int type_n
   fac_fene = bonded_ia_params[type_num].p.subt_lj_fene.k;
   fac_fene /= (1.0 - dist2/bonded_ia_params[type_num].p.subt_lj_fene.r2);
   
-  FENE_TRACE(if(fac_fene > 50) fprintf(stderr,"WARNING: FENE force factor between Pair (%d,%d) large: %f at distance %f\n", p1->r.identity,p2->r.identity,fac_fene,dist) );
+  FENE_TRACE(if(fac_fene > 50) fprintf(stderr,"WARNING: FENE force factor between Pair (%d,%d) large: %f at distance %f\n", p1->p.identity,p2->p.identity,fac_fene,dist) );
 
   double r_off, frac2, frac6;
   if(dist < ia_params->LJ_cut+ia_params->LJ_offset) { 
@@ -62,8 +62,8 @@ MDINLINE void add_subt_lj_fene_pair_force(Particle *p1, Particle *p2, int type_n
     	p2->f.f[i] += fac*dx[i];
     }
   
-  ONEPART_TRACE(if(p1->r.identity==check_id) fprintf(stderr,"%d: OPT: SUBT_LJ_FENE f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f[0],p1->f[1],p1->f[2],p2->r.identity,sqrt(dist2),fac));
-  ONEPART_TRACE(if(p2->r.identity==check_id) fprintf(stderr,"%d: OPT: SUBT_LJ_FENE f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f[0],p2->f[1],p2->f[2],p1->r.identity,sqrt(dist2),fac));
+  ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: SUBT_LJ_FENE f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,sqrt(dist2),fac));
+  ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: SUBT_LJ_FENE f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,sqrt(dist2),fac));
 }
 
 MDINLINE double subt_lj_fene_pair_energy(Particle *p1, Particle *p2, int type_num)
