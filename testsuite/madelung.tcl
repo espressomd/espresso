@@ -200,7 +200,7 @@ if { $max_force > $force_epsilon } {
 set cur_pres [analyze pressure]
 puts "Total Pressure:           $cur_pres"
 set cur_pres [lindex [lindex $cur_pres 0] 1]
-set der_pres [expr [lindex $energy 0 1]/(3*pow([lindex [setmd box_l] 0],3))]
+set der_pres [expr [lindex [lindex $energy 0] 1]/(3*pow([lindex [setmd box_l] 0],3))]
 set err_pres [expr ($der_pres - $cur_pres)/$cur_pres]
 puts "Derived Virial Pressure U/3V:        $der_pres   ( relative error: $err_pres )"
 if { $err_pres > $accuracy } {
