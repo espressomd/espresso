@@ -20,6 +20,9 @@ The following procedures are found in scripts/ABHmath.tcl.
 
             <li> \anchor ESPSLION0
             \verbatim ESPSLION0 \endverbatim Returns dielectric constant of vaccum in Coulomb^2/(Joule meter)
+
+            <li> \anchor ATOMICMASS
+            \verbatim ATOMICMASS \endverbatim Returns the atomic mass unit u in kilogramms
         </ul>
 
     <hr>
@@ -50,11 +53,24 @@ The following procedures are found in scripts/ABHmath.tcl.
             \verbatim gauss_random \endverbatim 
 	    returns random numbers which have a Gaussian distribution
 
+	    <li> \anchor dist_random
+            \verbatim dist_random <dist> [max] \endverbatim
+	    returns random numbers in the interval \[0,1\] which have a distribution 
+  	    according to the distribution function p(x) <dist> which has to be given 
+ 	    as a tcl list containing equally spaced values of p(x). 
+	    If p(x) contains values larger than 1 (default value of max) the 
+	    maximum or any number larger 
+ 	    than that has to be given <max>. This routine basically takes the 
+	    function p(x) and places it into a rectangular area (\[0,1\],\[0,max\]). 
+	    Then it uses to random numbers to specify a point in this area and 
+	    checks wether it resides in the area under p(x). Attention: Since this 
+	    is written in tcl it is probably not the fastest way to do this!
+
             <li> \anchor vec_random
             \verbatim vec_random [len] \endverbatim
-            returns a random vector of length [len]
+            returns a random vector of length \[len\]
             (uniform distribution on a sphere)
-            This is done by chosing 3 uniformly distributed random numbers [-1,1]
+            This is done by chosing 3 uniformly distributed random numbers \[-1,1\]
             If the length of the resulting vector is <= 1.0 the vector is taken and normalized
             to the desired length, otherwise the procedure is repeated until succes.
             On average the procedure needs 5.739 random numbers per vector.
@@ -97,12 +113,18 @@ The following procedures are found in scripts/ABHmath.tcl.
 	    Calculate minimum image bond length between particles p1 and p2
 
             <li> \anchor bond_angle
-            \verbatim bond_angle <p1> <p2> <p3> \endverbatim
-            Calculate bond angle between particles p1, p2 and p3
+            \verbatim bond_angle <p1> <p2> <p3> [type]\endverbatim
+            Calculate bond angle between particles p1, p2 and p3.
+	    If \[type\] is "r" the return value is in radiant. 
+	    If it is "d" the return value is in degree
+	    The default for \[type\] is "r".
 
             <li> \anchor bond_dihedral
-            \verbatim bond_dihedral <p1> <p2> <p3> <p4> \endverbatim
+            \verbatim bond_dihedral <p1> <p2> <p3> <p4> [type]\endverbatim
             Calculate bond dihedral between particles p1, p2, p3 and p4
+	    If \[type\] is "r" the return value is in radiant. 
+	    If it is "d" the return value is in degree
+	    The default for \[type\] is "r".
 
             <li> \anchor part_at_dist
             \verbatim part_at_dist <p> <dist>\endverbatim
@@ -185,6 +207,19 @@ The following procedures are found in scripts/ABHmath.tcl.
         <ul>
             <li> \anchor average
             \verbatim average <list> \endverbatim Returns the avarage of the provided List
+            <li> \anchor list_add_value
+            \verbatim list_add_value <list> <val>\endverbatim 
+	    Add \<val\> to each element of \<list\>
+
+            <li> \anchor flatten
+            \verbatim flatten <list> \endverbatim 
+	    flattens a nested list
+
+            <li> \anchor list_contains
+            \verbatim list_contains <list> <val>\endverbatim 
+	    Checks wether list contains val. returns the number of 
+ 	    occurences of val in list.
+
         </ul>
 
     <hr>

@@ -53,6 +53,11 @@ proc ESPSLION0 { } {
     return 8.854187817e-12
 }
 
+proc ATOMICMASS { } {
+    # Returns the atomic mass unit u in kilogramms
+    return 1.66053873e-27
+}
+
 #############################################################
 # MATHEMATICAL FUNCTIONS
 #############################################################
@@ -96,6 +101,25 @@ proc gauss_random { } {
     }
     set fac [expr sqrt(-2.0*log($rsq)/$rsq)]
     return [expr $v2*$fac]
+}
+
+proc dist_random { dist { max "1.0" } } {
+    # returns random numbers in the interval [0,1] which have a distribution 
+    # according to the distribution function p(x) <dist> which has to be given 
+    # as a tcl list containing equally spaced values of p(x). 
+    # If p(x) contains values larger than 1 the maximum or any number larger 
+    # than that has to be given <max>
+
+    set bins [expr [llength $dist] -1]
+
+    while { 1 } {
+	set v1 [t_random]
+	set v2 [expr $max*[t_random]]
+	set ind [expr int($v1*$bins)]
+	set arg [expr ($v1*$bins)-$ind]
+	if { $v2 < [expr [lindex $dist $ind] + ([lindex $dist [expr $ind+1]]-[lindex $dist $ind])*$arg]} { break }
+    }
+    return $v1
 }
 
 proc vec_random { {len "1.0"} } {
@@ -183,17 +207,19 @@ proc bond_length_min { p1 p2 {box ""} } {
     return [veclen $vec]
 }
 
-proc bond_angle { p1 p2 p3 } {
+proc bond_angle { p1 p2 p3 {type "r"} } {
     # Calculate bond angle between particles p1, p2 and p3
     if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
     if { [llength $p2]==1 } { set p2 [part $p2 print pos] }
     if { [llength $p3]==1 } { set p3 [part $p3 print pos] }
     set vec1 [unitvec $p1 $p2]
     set vec2 [unitvec $p3 $p2]
-    return [expr acos([vecdot_product $vec1 $vec2])]
+    set phi  [expr acos([vecdot_product $vec1 $vec2])]
+    if { $type == "d" } { return [expr 180.0*$phi/[PI]] } 
+    return $phi 
 }
 
-proc bond_dihedral { p1 p2 p3 p4 } {
+proc bond_dihedral { p1 p2 p3 p4 {type "r"} } {
     # Calculate bond dihedral between particles p1, p2, p3 and p4
     if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
     if { [llength $p2]==1 } { set p2 [part $p2 print pos] }
@@ -204,17 +230,15 @@ proc bond_dihedral { p1 p2 p3 p4 } {
     set r_32 [unitvec $p2 $p3]
     set r_34 [unitvec $p4 $p3]
 
-    set dot1 [vecdot_product $r_12 $r_32]
-    set dot2 [vecdot_product $r_34 $r_32]
+    set aXb  [vecnorm [veccross_product3d $r_12 $r_23]]
+    set bXc  [vecnorm [veccross_product3d $r_23 $r_34]]
 
-    set r_im [vecsub $r_12 [vecscale $dot1 $r_32] ]
-    set r_ln [vecsub [vecscale $dot2 $r_32] $r_34 ]
+    set cosphi [vecdot_product $aXb $bXc]
+    set phi [expr acos($cosphi)]
 
-    set s    [vecdot_product $r_12 [veccross_product3d $r_32 $r_34] ]
-    set s    [sign $s]
-
-    set res  [vecdot_product $r_im $r_ln]
-    return   [expr $s* acos($res) ]
+    if { [vecdot_product $aXb $r_34] < 0 } { set phi [expr 2*[PI]-$phi] }
+    if { $type == "d" } { return [expr 180.0*$phi/[PI]] } 
+    return $phi
 }
 
 proc part_at_dist { p dist } {
@@ -243,7 +267,7 @@ proc part_at_dihedral { p1 p2 p3 theta {phi "rnd"} {len "1.0"} } {
     if { [llength $p3]==1 } { set p3 [part $p3 print pos] }
     set v12 [bond_vec $p2 $p1]
     set v23 [bond_vec $p3 $p2]
-    set vec [createdihedralvec $v12 $v23 $theta $phi $len]
+    set vec [create_dihedral_vec $v12 $v23 $theta $phi $len]
     return [vecadd $p3 $vec]
 }
 
@@ -341,9 +365,12 @@ proc orthovec3d { v {len "1.0"} } {
 proc create_dihedral_vec { vec1 vec2 theta {phi "rnd"} {len "1.0"} } {
     # create last vector of a dihedral (vec1, vec2, res) with dihedral angle
     # theta and bond angle (vec2, res) phi and length len.
-    # construct orthogonal basis (vec2, b, c)
+    # construct orthonormal basis (vec2, b, c)
+    set vec1 [vecnorm $vec1]
+    set vec2 [vecnorm $vec2]
     set a [vecscale [vecdot_product $vec1 $vec2] $vec2]
     set b [vecsub $a $vec1]
+    set b [vecnorm $b]
     set c [veccross_product3d $vec2 $b]
     # place dihedral angle theta in plane
     set d [vecadd [vecscale [expr cos($theta)] $b] [vecscale [expr sin($theta)] $c] ]
@@ -363,6 +390,52 @@ proc average {list_to_average} {
     set avg 0.0
     foreach avg_i $list_to_average { set avg [expr $avg + $avg_i] }
     return [expr $avg/(1.0*[llength $list_to_average])]
+}
+
+proc list_add_value { list val } {
+    # Add <val> to each element of <list>
+    for { set i 0 } { $i<[llength $list] } { incr i } {
+	lappend res [expr [lindex $list $i] + $val]
+    }
+    return $res
+}
+
+proc flatten { list } {
+    # flattens a nested list
+    set res ""
+    foreach sl $list {
+	if { [llength $sl] > 1 } { set sl [flatten $sl] } 
+	foreach e $sl { lappend res $e }
+    }
+    return $res
+}
+
+# Checks wether list contains val. returns the number of occurences of val in list.
+proc list_contains { list val } {
+    set res 0
+    foreach e $list { if { $e == $val } { incr res } }
+    return $res
+}
+
+
+# nlreplace returns a new list formed by replacing the element 
+# indicated by <ind> with the element <arguments>. <ind> is a tcl list of 
+# numbers specifying an element in a nested list which must exist
+# (similar to lindex).
+# list - tcl list (may be nested)
+# ind  - tcl list specifying an element in a nested list
+# elemnt - R 
+proc nlreplace { list ind element } {
+    if { [llength $ind] > 1 } {
+	set i   [lindex $ind 0]
+	set tmp [lindex $list $i]
+	set ind [lreplace $ind 0 0]
+	set tmp [nlreplace $tmp $ind $element]
+	set list [lreplace $list $i $i $tmp]
+    } else {
+	set list [lreplace $list $ind $ind $element]
+    }
+    return $list
 }
 
 #############################################################
