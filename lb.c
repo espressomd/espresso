@@ -214,7 +214,7 @@ void alloc_part_mem(int npart)
 }
 
 
-  /*********************************************************************/
+/*********************************************************************/
 
 void freemem(void){
 
@@ -272,7 +272,7 @@ void ibmset (int iseed) {
   ibm = iseed*3;
 }
 
-/*********  intialize inportant variables       **********************/
+/*********  intialize important variables       **********************/
 static void InitCommand() {
 
     compar.ranseed    = defaultranseed;
@@ -518,7 +518,8 @@ static double vecveccontr_trace(double *a,double *b){
 
 /*****************************************************************/
 
-//static double tensveccontr_trace_lin(double t[],T_DVECTOR v){
+#if 0
+static double tensveccontr_trace_lin(double t[],T_DVECTOR v){
 
   /***************************************************************
    calculate contraction of a symmetric tensor and the dyadic 
@@ -526,7 +527,7 @@ static double vecveccontr_trace(double *a,double *b){
 
    Author: Ahlrichs, 22/10/97
    **************************************************************/
-/*
+
   double sum2,trace;
 
   trace=(t[0]+t[2]+t[5])*SPACE_DIM_INV;
@@ -534,10 +535,10 @@ static double vecveccontr_trace(double *a,double *b){
   sum2+=2.0*(v[0]*v[1]*t[1]+v[0]*v[2]*t[3]+v[1]*v[2]*t[4]);
 
   return sum2;
-*/
-//}
 
-//static double tensveccontr_trace(T_DMATRIX t,T_DVECTOR v){
+}
+
+static double tensveccontr_trace(T_DMATRIX t,T_DVECTOR v){
 
   /***************************************************************
    calculate contraction of a symmetric tensor and the dyadic 
@@ -545,7 +546,7 @@ static double vecveccontr_trace(double *a,double *b){
 
    Author: Ahlrichs, 22/10/97
    **************************************************************/
-/*
+
 
   double sum2,trace;
 
@@ -557,7 +558,7 @@ static double vecveccontr_trace(double *a,double *b){
   return sum2;
 }
 
-*/
+#endif
 /*****************************************************************/
 
 static void calcn_eq(int* n_abs_which,int* c_abs_sq_g,double* coef_eq,
@@ -695,9 +696,11 @@ void new(){
 #endif
 
   
-} /*********************************************************
+} 
+
+/*********************************************************
    end of NEW							    
-   *********************************************************/
+*********************************************************/
 
 
 #define IM1 2147483563
@@ -1320,8 +1323,8 @@ static void calc_collis(int n_abs_veloc,
 
 			    
 /*************************************************************/
-
-//static void calc_fourier(char* rawfilename){
+#ifdef D
+static void calc_fourier(char* rawfilename){
 
   /*****************************************************
    ** calculate fourier transform of current density 
@@ -1331,7 +1334,7 @@ static void calc_collis(int n_abs_veloc,
    **
    *****************************************************/
 
-/*
+
          double  arg,sinargi,cosargi;
          int     ikx,i,ix,x,y,z;
   static double fourier_x[MAX_FOURIER][2], fourier_y[MAX_FOURIER][2], fourier_z[MAX_FOURIER][2];
@@ -1396,7 +1399,8 @@ static void calc_collis(int n_abs_veloc,
   }
 
 }
-*/
+#endif
+
 void print_status(char* fromroutine){
 
   printf("--------------------------------------------------------\n");
@@ -1580,8 +1584,8 @@ void prerun(){
     noise = sqrt(6.0*friction*temperature/time_step);
 }
 
-/************************************************************************
-end of ***********************************************************************/
+/******************************************************************************/
+/******************************************************************************/
 
 
 void thermo_init_lb () {
@@ -1593,13 +1597,9 @@ void thermo_init_lb () {
 
 } 
 
-
 /******************************************************************************/
-void LB_Run () {
+/******************************************************************************/
 
-    calcfields(n,FALSE);
-    calc_lbforce();
-} 
 
 void LB_propagate () {
 
@@ -1688,7 +1688,7 @@ void calc_lbforce()
   Cell *cell;
   Particle *p;
   int i, c, k; 
-  double  inva = 1.0/agrid,xpp;
+  double  inva = 1.0/agrid, invt=1.0/time_step, xpp;
   T_IVECTOR size;    
   if(temperature > 0.0 && !fixmom) calc_momentum();
   
@@ -1707,7 +1707,7 @@ void calc_lbforce()
       for (k= 0;k < 3;k++) {
 	int jj = 2-k;
       
-	v[i][k] = p[i].m.v[jj]/time_step;
+	v[i][k] = p[i].m.v[jj]*invt;
 	xpp = p[i].r.p[jj];
 	xint[i][k] = (int) (xpp*inva);
 	xrel[i][k] = xpp*inva - xint[i][k];
@@ -1744,7 +1744,7 @@ if(n_nodes>1){
     for (k= 0;k < 3;k++) {
       int jj = 2-k;
       
-      v[i][k] = p[i].m.v[jj]/time_step;
+      v[i][k] = p[i].m.v[jj]*invt;
       xpp = p[i].r.p[jj]-my_left[jj]+agrid;
 
       xint[i][k] = (int) (xpp*inva);
@@ -1805,9 +1805,9 @@ void calc_fluid_chain_interaction(int iamghost){
     
   for (ip=0;ip<nMono+MAX_RANREPEATE;ip++) {
     for (jp=0;jp<MAX_RANREPEATE;jp++) {
-      store_rans[ip][jp][0] = noise*mibmran();
-      store_rans[ip][jp][1] = noise*mibmran();
-      store_rans[ip][jp][2] = noise*mibmran();
+      store_rans[ip][jp][0] = noise*(2.0*d_random()-1.0);
+      store_rans[ip][jp][1] = noise*(2.0*d_random()-1.0);
+      store_rans[ip][jp][2] = noise*(2.0*d_random()-1.0);
     }
   }
   store_rans[nMono+MAX_RANREPEATE-1][MAX_RANREPEATE-1][0] = -1.0-noise; /* for checking if store of random number is used up */
