@@ -4,16 +4,24 @@
 # \
     if test $PLATFORM = OSF1; then MPIRUN=dmpirun;
 # \
-    else MPIRUN=mpirun; lamboot; fi
+    else MPIRUN=mpirun -nsigs; lamboot; fi
 # \
-    exec $MPIRUN -nsigs -np 8 $PLATFORM/tcl_md $0 $*
+    exec $MPIRUN -np 8 $PLATFORM/tcl_md $0 $*
 
+##################################################
+# settings
+##################################################
+set npart 10000
+
+puts "starting"
 # data initialization
 ##################################################
 puts "nproc = [setmd nproc]"
 setmd box_l 10.0 8.0 16.0
 puts "box =\{[setmd box]\}"
-setmd procgrid 2 2 2
+if {[setmd nproc] == 8} {
+    setmd procgrid 2 2 2
+}
 puts "grid = \{[setmd proc]\}"
 setmd niatypes 1
 puts "niatypes = [setmd niatypes]"
@@ -44,7 +52,7 @@ puts "npart = [setmd npart]"
 # pump up
 ##################################################
 
-for {set i 5} { $i < 1000 } { incr i} {
+for {set i 5} { $i < $npart } { incr i} {
     if {[expr $i % 100 == 0]} {
 	puts "adding part $i"
     }

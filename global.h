@@ -39,9 +39,6 @@ extern double my_right[3];
  * particle data from global.c
  ****************************************/
 
-/* total number of particles in the system. */
-extern int n_total_particles;
-
 /** Field to hold particle information
  *  of local particles. */
 typedef struct {
@@ -59,8 +56,8 @@ typedef struct {
   int    *bonds;
 } Particle;
 
-extern int     n_particles;
 extern int   max_particles;
+extern int     n_particles;
 extern Particle *particles;
 
 /** first unused particle entry */
@@ -71,6 +68,11 @@ extern int   max_ghosts;
 extern Particle *ghosts;
 /** first unused ghost entry */
 extern int   min_free_ghost;
+
+/* total number of particles in the system. */
+extern int n_total_particles;
+/* used only on master node: particle->node mapping */
+extern int  *particle_node;
 
 /** Mapping between particle identity and local index. 
  *    You find the local index of particle i 
@@ -88,11 +90,24 @@ void realloc_particles(int size);
 /** search for a specific particle, returns field index */
 int got_particle(int part);
 
-/** add a particle, returns new field index */
+/** add a particle, returns field index */
 int add_particle(int part);
+
+/** allocate space for a particle, returns field index */
+int alloc_particle();
 
 /** free a particle */
 void free_particle(int index);
+
+/** add particle to particle->node map */
+void map_particle_node(int part, int node);
+
+/** rebuild particle->node map from scratch */
+void build_particle_node();
+
+/** update n_total_particles on slave nodes
+ *  and invalidate particle_node */
+void particle_finalize_data();
 
 /****************************************
  * nonbonded interactions from global.c

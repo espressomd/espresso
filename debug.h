@@ -5,11 +5,20 @@
 //#define GRID_DEBUG
 //#define FORCE_DEBUG
 //#define VERLET_DEBUG
+//#define PARTICLE_DEBUG
+
+//#define FORCE_CORE
 
 #ifdef COMM_DEBUG
 #define COMM_TRACE(cmd) { cmd; }
 #else
 #define COMM_TRACE(cmd)
+#endif
+
+#ifdef PARTICLE_DEBUG
+#define PART_TRACE(cmd) { cmd; }
+#else
+#define PART_TRACE(cmd)
 #endif
 
 #ifdef INTEG_DEBUG

@@ -135,8 +135,11 @@ int part(ClientData data, Tcl_Interp *interp,
     return (TCL_ERROR);
   }
 
-  node = mpi_who_has(part_num);
+  if (!particle_node)
+    build_particle_node();
 
+  node = (part_num < n_total_particles) ? particle_node[part_num] : -1;
+ 
   /* print out particle information */
   if (argc == 2) {
     Particle part;
@@ -184,9 +187,10 @@ int part(ClientData data, Tcl_Interp *interp,
       }
     
       if (node == -1) {
-	/* spatial decomposite position */
+	/* spatial position */
 	node = find_node(pos);
 	mpi_attach_particle(part_num, node);
+	map_particle_node(part_num, node);
       }
 
       mpi_send_pos(node, part_num, pos);

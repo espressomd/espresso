@@ -24,7 +24,6 @@ void force_calc()
   int id1, id2;
   double d[3], dist2, dist;
   IA_parameters *ia_params;
-  extern int n_total_particles;
   extern Particle *particles;
   extern int *verletList;
   double frac6,r_off;
@@ -34,11 +33,11 @@ void force_calc()
   double  erfc_part_ri;
 
 
-  for(i=0;i<n_total_particles;i++)
+  for(i=0;i<n_particles;i++)
     for(j=0;j<3;j++)
       particles[i].f[j] = 0;
       
-  for(i=0;i<max_particles;i=i+2)
+  for(i=0;i<n_particles;i=i+2)
     {
       id1 = verletList[i];
       id2 = verletList[i+1];

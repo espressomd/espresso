@@ -47,7 +47,10 @@ int integrate(ClientData data, Tcl_Interp *interp,
     Tcl_AppendResult(interp, "illegal number of steps", (char *) NULL);
     return (TCL_ERROR);
   }
-  
+
+  /* flush remaining information from master node to slaves */
+  particle_finalize_data();
+
   /* assume velocity verlet integration with langevin thermostat */
   if (argc == 2) {
     mpi_integrate(n_steps);

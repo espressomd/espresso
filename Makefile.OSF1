@@ -1,6 +1,6 @@
 ############ compiler settings
 CC=cc
-CFLAGS=-O3 -msg_warn level6 -fp_reorder -tune host
+CFLAGS=-DDEFINE_TCL_RAND -O3 -msg_warn level6 -fp_reorder -tune host
 DEPEND=makedepend
 
 CXX=cxx

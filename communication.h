@@ -22,8 +22,8 @@ void mpi_stop_slave(int parm);
 void mpi_bcast_parameter(int i);
 void mpi_bcast_parameter_slave(int parm);
 
-/** REQ_WHO_HAS: ask nodes for particle */
-int mpi_who_has(int particle);
+/** REQ_WHO_HAS: ask nodes for particles */
+void mpi_who_has();
 void mpi_who_has_slave(int parm);
 
 /** REQ_ATTACH: move particle to a node */
