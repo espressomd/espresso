@@ -97,6 +97,9 @@ include $(PLATFORM)/.depend
 test: $(PLATFORM)/Espresso
 	cd testsuite; ./test.sh
 
+testfake: $(PLATFORM)/Espresso
+	cd testsuite; ./test.sh -nompi
+
 ########## implicit rules
 vpath %.o  $(PLATFORM)
 
