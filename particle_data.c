@@ -534,7 +534,7 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     
   if (get_particle_data(part_num, &part) == TCL_ERROR) {
     Tcl_AppendResult(interp, "na", (char *)NULL);
-    return TCL_ERROR;
+    return TCL_OK;
   }
     
   while (argc > 0) {
