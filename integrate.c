@@ -47,24 +47,24 @@
 
 /*******************  variables  *******************/
 
-int integ_switch;
+int    integ_switch     = INTEG_METHOD_NVT;
 
-double time_step = -1.0;
-double sim_time  = 0.0;
+double time_step        = -1.0;
+double sim_time         = 0.0;
 
-double skin       = -1.0;
+double skin             = -1.0;
 double skin2;
-double max_range  = -1.0;
-double max_range2 = -1.0;
+double max_range        = -1.0;
+double max_range2       = -1.0;
 
 int    resort_particles = 1;
-int    recalc_forces = 1;
+int    recalc_forces    = 1;
 
-double verlet_reuse=0.0;
+double verlet_reuse     = 0.0;
 
 #ifdef ADDITIONAL_CHECKS
-double db_max_force=0.0, db_max_vel=0.0;
-int    db_maxf_id=0,db_maxv_id=0;
+double db_max_force = 0.0, db_max_vel = 0.0;
+int    db_maxf_id   = 0,   db_maxv_id = 0;
 #endif
 
 /** \name Privat Functions */
@@ -73,13 +73,25 @@ int    db_maxf_id=0,db_maxv_id=0;
 
 /** Rescale all particle forces with \f[ 0.5 \Delta t^2 \f]. */
 void rescale_forces();
-/** Propagate the velocities and positions */
+/** Propagate the velocities. Integration step 1 of the Velocity Verlet integrator:<br>
+    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t) \f] */
+void propagate_vel();
+/** Propagate the positions. Integration step 2 of the Velocity Verletintegrator:<br>
+    \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
+void propagate_pos();
+/** Propagate the velocities and positions. Integration step 1 and 2
+    of the Velocity Verlet integrator: <br>
+    \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t) \f] <br>
+    \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
 void propagate_vel_pos();
-/** Rescale all particle forces with \f[ 0.5 \Delta t^2 \f] and propagate the velocities */
+/** Rescale all particle forces with \f[ 0.5 \Delta t^2 \f] and propagate the velocities.
+    Integration step 4 of the Velocity Verletintegrator:<br> 
+    \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t) \f] */
 void rescale_forces_propagate_vel();
 
+/** Integrator stability check (\ref ADDITIONAL_CHECKS). */
 void force_and_velocity_check(Particle *p); 
-
+/** Integrator stability check (\ref ADDITIONAL_CHECKS). */
 void force_and_velocity_display();
  
 void finalize_p_inst_npt();
@@ -99,6 +111,63 @@ void local_invalidate_system()
   invalidate_obs();
 }
 
+/**  Hand over integrate usage information to tcl interpreter. */
+int integrate_usage(Tcl_Interp *interp) 
+{
+  Tcl_AppendResult(interp, "Usage of tcl command integrate:\n", (char *)NULL);
+  Tcl_AppendResult(interp, "\"integrate <INT n steps>\" for integrating n steps or\n", (char *)NULL);
+  Tcl_AppendResult(interp, "\"integrate set\" for printing integrator status or\n", (char *)NULL);
+  Tcl_AppendResult(interp, "\"integrate set nvt\" for enabaling NVT integration or \n" , (char *)NULL);
+#ifdef NPT
+  Tcl_AppendResult(interp, "\"integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>]\" for enabaling isotropic NPT integration\n" , (char *)NULL);
+#endif
+  return (TCL_OK);
+}
+
+/** Hand over integrate status information to tcl interpreter. */
+int integrate_print_status(Tcl_Interp *interp) 
+{
+  char buffer[TCL_INTEGER_SPACE+TCL_DOUBLE_SPACE];
+  switch (integ_switch) {
+  case INTEG_METHOD_NVT:
+    Tcl_AppendResult(interp, "set nvt", (char *)NULL);
+    return (TCL_OK);
+  case INTEG_METHOD_NPT_ISO:
+    Tcl_PrintDouble(interp, p_ext, buffer);
+    Tcl_AppendResult(interp, "set npt_isotropic ", buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, piston, buffer);
+    Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
+    return (TCL_OK);
+  }
+  return (TCL_ERROR);
+}
+
+/** Parse integrate nvt command */
+int integrate_parse_nvt(Tcl_Interp *interp, int argc, char **argv)
+{
+  integ_switch = INTEG_METHOD_NVT;
+  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  return (TCL_OK);
+}
+
+/** Parse integrate npt_isotropic command */
+int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
+{
+  if (argc < 4) {
+    Tcl_AppendResult(interp, "wrong # args: \n", (char *)NULL);
+    return integrate_usage(interp);
+  }  
+  /* set paramters p_ext and piston */
+  if ( !ARG_IS_D(3, p_ext) )               return integrate_usage(interp);
+  if ( argc > 4 && !ARG_IS_D(4, piston) )  return integrate_usage(interp);
+  p_ext_callback(interp, &p_ext);
+  piston_callback(interp, &piston);
+  /* set integrator switch */
+  integ_switch = INTEG_METHOD_NPT_ISO;
+  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  return (TCL_OK);
+}
+
 int integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
   int  n_steps;
@@ -106,27 +175,28 @@ int integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   INTEG_TRACE(fprintf(stderr,"%d: integrate:\n",this_node));
 
   if (argc < 2) {
-    Tcl_AppendResult(interp, "wrong # args:  should be \"",
-		     argv[0], " <step num> \"", (char *) NULL);
-    return (TCL_ERROR);
+    Tcl_AppendResult(interp, "wrong # args: \n\"", (char *) NULL);
+    return integrate_usage(interp);
   }
 
-  /* translate argument */
-  if (Tcl_GetInt(interp, argv[1], &n_steps) == TCL_ERROR)
-    return (TCL_ERROR);
+  if (ARG1_IS_S("set")) {
+    if      (argc < 3)                    return integrate_print_status(interp);
+    if      (ARG_IS_S(2,"nvt"))           return integrate_parse_nvt(interp, argc, argv);
+#ifdef NPT
+    else if (ARG_IS_S(2,"npt_isotropic")) return integrate_parse_npt_isotropic(interp, argc, argv);
+#endif
+    else {
+      Tcl_AppendResult(interp, "unkown integrator method:\n", (char *)NULL);
+      return integrate_usage(interp);
+    }
+  } else if ( !ARG_IS_I(1,n_steps) ) return integrate_usage(interp);
 
+  /* go on with integrate <n_steps> */
   if(n_steps < 0) {
-    Tcl_AppendResult(interp, "illegal number of steps", (char *) NULL);
-    return (TCL_ERROR);
+    Tcl_AppendResult(interp, "illegal number of steps\n", (char *) NULL);
+    return integrate_usage(interp);;
   }
-
-  /* assume velocity verlet integration with langevin thermostat */
-  if (argc != 2) {
-    Tcl_AppendResult(interp, "too many arguments:  should be \"",
-		     argv[0], " <task> \"", (char *) NULL);
-    return (TCL_ERROR);
-  }
-
+  /* perform integration */
   mpi_integrate(n_steps);
 
   return (TCL_OK);
@@ -173,6 +243,8 @@ void integrate_vv(int n_steps)
 
   /* Prepare the Integrator */
   on_integration_start();
+  /* Verlet list criterion */
+  skin2 = SQR(skin/2.0);
 
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: integrating %d steps (recalc_forces=%d)\n",
 		      this_node, n_steps, recalc_forces));
@@ -199,9 +271,16 @@ void integrate_vv(int n_steps)
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
        v(t+0.5*dt) = v(t) + 0.5*dt * f(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)
-       NOTE: Prefactors do not occur in formulas since we use 
-       rescaled forces and velocities. */
-    propagate_vel_pos();
+       NOTE 1: Prefactors do not occur in formulas since we use 
+               rescaled forces and velocities. 
+       NOTE 2: Depending on the integration method Step 1 and Step 2 
+               can not be combined for the translation. 
+    */
+    if(integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
+      propagate_vel();  propagate_pos();
+    } else {
+      propagate_vel_pos();
+    }
 #ifdef ROTATION
     propagate_omega_quat(); 
 #endif
@@ -373,9 +452,6 @@ void rescale_forces_propagate_vel()
 	if (piston != 0.0) 
 	  p_vel += SQR(p[i].m.v[j]);
 #endif
-#ifdef NEMD
-	if(j==0) nemd_store_velocity(p[i]);
-#endif
       }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
@@ -384,12 +460,6 @@ void rescale_forces_propagate_vel()
 #ifdef NPT
   finalize_p_inst_npt();
 #endif
-
-#ifdef NEMD
-    nemd_change_momentum();
-    nemd_store_velocity_profile();
-#endif     
-
 }
 
 void finalize_p_inst_npt()
@@ -464,7 +534,7 @@ void propagate_press_box_pos_and_rescale_npt()
 #endif
 }
 
-void propagate_vel_pos() 
+void propagate_vel()
 {
   Cell *cell;
   Particle *p;
@@ -473,18 +543,13 @@ void propagate_vel_pos()
   p_vel = 0.0;
 #endif
 
-  INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
-  rebuild_verletlist = 0;
-  skin2 = SQR(skin/2.0);
+  INTEG_TRACE(fprintf(stderr,"%d: propagate_vel:\n",this_node));
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-#ifdef NEMD 
-      nemd_add_velocity(&p[i]);
-#endif
       for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
 	if (!(p[i].l.ext_flag & COORD_FIXED(j)))	
@@ -492,13 +557,99 @@ void propagate_vel_pos()
 	  {
 	    /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
 	    p[i].m.v[j] += p[i].f.f[j];
-#ifdef NPT
-	    if (piston != 0.0) 
-	      p_vel += SQR(p[i].m.v[j]);
-	    else
+	    /* SPECIAL TASKS in particle loop */
+#ifdef NEMD
+	    if(j==0) nemd_get_velocity(p[i]);
 #endif
+#ifdef NPT
+	    if (piston != 0.0) p_vel += SQR(p[i].m.v[j]);
+#endif
+	  }
+
+	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+#ifdef ADDITIONAL_CHECKS
+      force_and_velocity_check(&p[i]);
+#endif
+      }
+    }
+  }
+#ifdef ADDITIONAL_CHECKS
+  force_and_velocity_display(); 
+#endif
+
+  /* SPECIAL TASKS after velocity propagation */
+#ifdef NEMD
+  nemd_change_momentum();
+  nemd_store_velocity_profile();
+#endif
+}
+
+void propagate_pos() 
+{
+  INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
+  if(integ_switch == INTEG_METHOD_NPT_ISO) 
+    /* Special propagator for NPT ISOTROPIC */
+    /* Propagate pressure, box_length (2 times) and positions, rescale
+       positions and velocities and check verlet list criterion (only NPT) */
+    propagate_press_box_pos_and_rescale_npt();
+  else {
+    Cell *cell;
+    Particle *p;
+    int c, i, j, np;
+    
+    rebuild_verletlist = 0;
+
+    for (c = 0; c < local_cells.n; c++) {
+      cell = local_cells.cell[c];
+      p  = cell->part;
+      np = cell->n;
+      for(i = 0; i < np; i++) {
+	for(j=0; j < 3; j++){
+#ifdef EXTERNAL_FORCES
+	  if (!(p[i].l.ext_flag & COORD_FIXED(j)))	
+#endif
+	    {
+#ifdef NEMD
+	      /* change momentum of each particle in top and bottom slab */
+	      if(j==0) nemd_add_velocity(&p[i]);
+#endif	    
 	      /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
 	      p[i].r.p[j] += p[i].m.v[j];
+	    }
+	}
+	/* Verlet criterion check */
+	if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) rebuild_verletlist = 1; 
+      }
+    }
+  }
+  /* communicate verlet criterion */
+  anounce_rebuild_vlist();
+}
+
+void propagate_vel_pos() 
+{
+  Cell *cell;
+  Particle *p;
+  int c, i, j, np;
+
+  INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
+  rebuild_verletlist = 0;
+
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i = 0; i < np; i++) {
+      for(j=0; j < 3; j++){
+#ifdef EXTERNAL_FORCES
+	if (!(p[i].l.ext_flag & COORD_FIXED(j)))	
+#endif
+	  {
+	    /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
+	    p[i].m.v[j] += p[i].f.f[j];
+
+	    /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
+	    p[i].r.p[j] += p[i].m.v[j];
 	  }
       }
  
@@ -510,20 +661,9 @@ void propagate_vel_pos()
 #endif
 
       /* Verlet criterion check */
-#ifdef NPT
-      if(!(piston != 0.0))
-#endif
-	if(distance2(p[i].r.p,p[i].l.p_old) > skin2 )
-	  rebuild_verletlist = 1; 
+      if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) rebuild_verletlist = 1; 
     }
   }
-
-#ifdef NPT
-  /* Propagate pressure, box_length (2 times) and positions, rescale
-     positions and velocities and check verlet list criterion (only NPT) */
-  propagate_press_box_pos_and_rescale_npt();
-#endif
-
 
 #ifdef ADDITIONAL_CHECKS
   force_and_velocity_display(); 
@@ -531,11 +671,6 @@ void propagate_vel_pos()
 
   /* communicate verlet criterion */
   anounce_rebuild_vlist();
-
-#ifdef NEMD
-  nemd_change_momentum() ;
-#endif
-
 }
 
 void force_and_velocity_check(Particle *p) 

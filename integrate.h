@@ -17,6 +17,9 @@
 */   
 #include <tcl.h>
 
+#define INTEG_METHOD_NPT_ISO   0
+#define INTEG_METHOD_NVT       1
+
 /************************************************************/
 /** \name Exported Variables */
 /************************************************************/
@@ -56,7 +59,15 @@ extern double verlet_reuse;
 /*@{*/
 
 /** tcl procedure for integrator steering.
-    USAGE: integrate \<steps\>   
+    USAGE: 
+
+\begin{verbatim}
+integrate <INT n steps>
+integrate set
+integrate set nvt
+integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>]
+\end{verbatim}   
+
     see also \ref tcl_integrate
 */
 int integrate(ClientData data, Tcl_Interp *interp,
