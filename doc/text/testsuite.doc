@@ -11,13 +11,13 @@ In the directory Espresso/testsuite you find several scripts that can serve as s
      handle the connection to VMD.
 
 <li> <b> kremerGrest.tcl </b><br>
-     This reproduces the data of K.Kremer/G.S.Grest, J.Chem.Phys. <b>92<b>(8), 5057-5086 (1990): 
+     This reproduces the data of K.Kremer/G.S.Grest, J.Chem.Phys. <b>92</b>(8), 5057-5086 (1990): 
      Multiple systems with different number of neutral polymer chains of various lengths are simulated for very
      long times at melt density 0.85 while their static and some dynamic properties are measured.<br>
      Shows the advanced features of Espresso: How to run several simulations from a single script. How to use online-analysis
-     with comparision to expectation values. How to get averages of the observables. How to set/restore checkpoints including 
-     auto-detection of previously derived parts of the simulation(s). How to create gnuplots from within the script and
-     combine multiple plots onto duplex pages.<BR>
+     (\ref tcl_analyze) with comparision to expectation values. How to get averages of the observables. How to set/restore 
+     checkpoints (\ref io) including auto-detection of previously derived parts of the simulation(s). 
+     How to create gnuplots from within the script and combine multiple plots onto duplex pages (\ref statistics). <BR>
      In the end the script will provide plots of all important quantities as .ps- and .pdf-files while compressing the data-files.
      Note however, that the simulation uses the original time scale, hence it may take <i>quite</i> some time to finish.
 
@@ -33,8 +33,7 @@ In the directory Espresso/testsuite you find several scripts that can serve as s
           Example for an analyzation after the actual simulation run
           (offline analyzation). Calculates the integrated
           iondistribution P(r).
-     </ul><BR>
-
+     </ul> <BR>
 <li> <b> cell_model.tcl </b><br>
      This example shows the use of \ref tcl_constraint "constraints"
      and non periodic boundary conditions. It simulates a bundle of
@@ -44,8 +43,8 @@ In the directory Espresso/testsuite you find several scripts that can serve as s
 <li> <b> diamond.tcl </b><br>
      This reproduces the data of S.Schneider/P.Linse, Eur.Phys.J.E <b>8</b>, 457-460 (2002):
      A diamond-shape network of 16 polyelectrolyte chains with 20 monomers each connected at 8 nodes is simulated for varying
-     network packing fractions (densities) while the pressure is analysed. Similar to <i>kremerGrest.tcl</i> it additionally uses
-     electrostatics including the auto-tuning feature.
+     network packing fractions (densities) while the pressure is analysed (\ref tcl_analyze). 
+     Similar to <i>kremerGrest.tcl</i> it additionally uses electrostatics including the auto-tuning feature (\ref tcl_inter).
 
 <li> <b> espresso_logo.tcl </b><br>
      The Espresso Logo, the exploding espresso cup, has been created
