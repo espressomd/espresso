@@ -1,3 +1,6 @@
+/** \file blockfile_tcl.c
+    Implementation of \ref blockfile_tcl.h "blockfile_tcl.h".
+*/
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -86,27 +89,8 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 			     (char *) NULL);
 	    return (TCL_ERROR);
 	  }
-	  switch (fields[i].type) {
-	  case TYPE_INT:
-	    if (fields[i].dimension == 1)
-	      block_write_int(channel, *(int *)fields[i].data);
-	    else {
-	      int dim[3] = { 0, 1, 1 };
-	      dim[0] = fields[i].dimension;
-	      block_write_int_array(channel, dim, (int *)fields[i].data);
-	    }
-	    break;
-	  case TYPE_DOUBLE:
-	    if (fields[i].dimension == 1)
-	      block_write_double(channel, *(int *)fields[i].data);
-	    else {
-	      int dim[3] = { 0, 1, 1 };
-	      dim[0] = fields[i].dimension;
-	      block_write_double_array(channel, dim, (double *)fields[i].data);
-	    }
-	    break;
-	  default: ;
-	  }
+	  block_write_data(channel, fields[i].type, fields[i].dimension, fields[i].data);
+
 	  if (block_writeend(channel) != 0 ||
 	      (Tcl_Write(channel, "\n", 1) != 1)) {
 	    Tcl_AppendResult(interp, "\"", argv[1], "\" could not write data",
@@ -157,6 +141,7 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 	return (TCL_ERROR);
       }
       switch (openbrackets = block_startread(channel, title)) {
+      case 0:	
       case 1:
 	break;
       case -1:
@@ -169,22 +154,22 @@ int blockfile(ClientData data, Tcl_Interp *interp,
       }
       /* set global variable */
       if (!strcmp(title, "variable")) {
-	if (block_continueread(channel, 1, buffer, sizeof(buffer),' ') != 1) {
+	if ((openbrackets = block_continueread(channel, openbrackets,
+					       buffer, sizeof(buffer), ' ')) != 1) {
 	  Tcl_AppendResult(interp, "\"", argv[1], "\" could not read variable name",
 			   (char *) NULL);
 	  return (TCL_ERROR);
 	}
 	for (i = 0; fields[i].data != NULL; i++)
 	  if (!strcmp(fields[i].name, buffer)) {
-	    int dim[3] = {1, 1, 1};
-	    dim[0] =  fields[i].dimension;
-	    if (block_read_any_data(channel, fields[i].type, dim, fields[i].data) != 0) {
+	    if (block_read_data(channel, fields[i].type,
+				fields[i].dimension, fields[i].data) != 0) {
 	      Tcl_AppendResult(interp, "\"", argv[1], "\" could not read data",
 			       (char *) NULL);
 	      return (TCL_ERROR);
 	    }
 	    Tcl_AppendResult(interp, "setvar ", buffer, (char *) NULL);
-	    if (block_continueread(channel, 1, buffer, sizeof(buffer), 0) != 0) {
+	    if (block_continueread(channel, openbrackets, buffer, sizeof(buffer), 0) != 0) {
 	      Tcl_ResetResult(interp);
 	      Tcl_AppendResult(interp, "variable block for does not terminate correctly",
 			       (char *) NULL);
@@ -201,8 +186,7 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 	    return (TCL_OK);
 	  }
 	/* not a tcl_md variable, so just dump variable / value pair */
-	Tcl_AppendResult(interp, "unknownvar ", buffer, " ", (char *) NULL);
-	openbrackets = 1;
+	Tcl_AppendResult(interp, "uservar ", buffer, " ", (char *) NULL);
 	while ((openbrackets =
 		block_continueread(channel, openbrackets,
 				   buffer, sizeof(buffer), 0)) > 0) {
@@ -213,22 +197,26 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 			   (char *) NULL);
 	  return (TCL_ERROR);
 	}
+	Tcl_AppendResult(interp, buffer, (char *) NULL);
 	return (TCL_OK);
       }
       /* unknown field */
       else {
-	Tcl_AppendResult(interp, "unknowntag ", title, " ", (char *) NULL);
-	openbrackets = 1;
-	while ((openbrackets =
-		block_continueread(channel, openbrackets,
-				   buffer, sizeof(buffer), 0)) > 0) {
-	  Tcl_AppendResult(interp, buffer, (char *) NULL);
+	Tcl_AppendResult(interp, "usertag ", title, (char *) NULL);
+	if (openbrackets != 0) {
+	  Tcl_AppendResult(interp, " ", (char *) NULL);	  
+	  while ((openbrackets =
+		  block_continueread(channel, openbrackets,
+				     buffer, sizeof(buffer), 0)) > 0) {
+	    Tcl_AppendResult(interp, buffer, (char *) NULL);
+	  }
+	  if (openbrackets < 0) {
+	    Tcl_AppendResult(interp, "\"", argv[1], "\" could not read data",
+			     (char *) NULL);
+	    return (TCL_ERROR);
+	  }
 	}
-	if (openbrackets < 0) {
-	  Tcl_AppendResult(interp, "\"", argv[1], "\" could not read data",
-			   (char *) NULL);
-	  return (TCL_ERROR);
-	}
+	Tcl_AppendResult(interp, buffer, (char *) NULL);
 	return (TCL_OK);	
       }
     }

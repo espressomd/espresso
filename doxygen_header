@@ -59,6 +59,8 @@ are not known.
 <li> \ref tcl
 <li> \ref our_cvs
 <li> \ref our_doxygen
+<li> \ref blockformat
+<li> \ref libtcl_md
 </ul>
 
 */
@@ -200,6 +202,35 @@ interface between the Tcl script and the MD code:
 	init starts a new simulation, exit stops it, else the simulation will run for
 	<steps> steps. 
 	The C implementation is \ref integrate.
+
+<li>\anchor tcl_blockfile
+    \verbatim blockfile <channel> read|write start|end|variable|auto|toend <param>?\endverbatim
+        blockfile allows for convienent access to a block format structured file <channel>. The
+	possible actions are:
+<ol>
+	<li>\verbatim blockfile write start <tag> \endverbatim which writes a start "{"
+	and the title of the block given by tag.
+        <li>\verbatim blockfile write end \endverbatim just writes a "}" to <channel>.
+	<li>\verbatim blockfile write variable <variablename> \endverbatim
+            writes a variable <variablename>
+            which is known to \ref tcl_setmd to <channel>.
+	<li>\verbatim blockfile read start \endverbatim reads the start part of a block
+            and returns the block title.
+	<li>\verbatim blockfile read toend \endverbatim reads the blocks data and returns
+	    it.
+        <li>\verbatim blockfile read auto \endverbatim reads in one block and does the
+            following:
+	<ol>
+            <li> if the block is a global variable, the variable is set to the value from <channel>
+                 and "setvar <variablename>" is returned
+            <li> if the block is a variable, it returns "uservar <variablename> <data>", where data
+                 is the data block (normally _ival_ or _dval_).
+            <li> if the block has a different tag, it returns "usertag <tag> <rest of block>"
+            <li> if the file is at end, it returns "eof"
+	</ol>
+</ol>
+	The C implementation is \ref blockfile.
+
 </ul>
 
 At program start, tcl_md reads in a starting script

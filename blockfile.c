@@ -1,13 +1,14 @@
-/** \file binary_file.c
-    Implementation of \ref blockfile.h "blockfile.h". If you compile this file with the option
-    -DTCL_FILE_IO instead of the C-like FILE * operations Tcl channels are used for IO. This is
-    used in tcl_md itself, while the FILE * operations can be used in subsidiary code.
+/** \file blockfile.c
+    Implementation of \ref blockfile.h "blockfile.h". If you compile this
+    file with the option -DTCL_FILE_IO instead of the C-like FILE *
+    operations Tcl channels are used for IO. This is used in tcl_md
+    itself, while the FILE * operations can be used in subsidiary code.
+    The FILE * version is also contained in the \ref libtcl_md.
 */
 #include <stdio.h>
 #include <ctype.h>
-#include <unistd.h>
+#include <stdlib.h>
 #include <string.h>
-#include "utils.h"
 #include "blockfile.h"
 
 /** Used in the write commands as buffer size for sprintf.
@@ -71,12 +72,14 @@ static char findNonWs(FILETYPE f)
   return 0;
 }
 
-static int readToWsOrBracket(FILETYPE f, char *buffer, int size)
+static int readString(FILETYPE f, char *buffer, int size)
 {
   int i = 0;
   char c;
   while(i < size - 1) {
-    switch ((c = readchar(f))) {
+    c = (i == 0) ? findNonWs(f) : readchar(f);
+
+    switch (c) {
     case 0:
       buffer[i] = 0;
       return RETURN_CODE_EOF;
@@ -102,7 +105,7 @@ static int readToWsOrBracket(FILETYPE f, char *buffer, int size)
 int block_startread(FILETYPE f, char index[MAXBLOCKTITLE])
 {
   char c;
-  int i;
+  int i, open_braces;
 
   index[0] = 0;
 
@@ -122,21 +125,27 @@ int block_startread(FILETYPE f, char index[MAXBLOCKTITLE])
   index[0] = c;
   /* read block title */
   i = 1;
+  open_braces = 1;
   for(;;) {
     if ((c = readchar(f)) <= 0) {
       index[i] = 0;
       return RETURN_CODE_ERROR;
     }
 
-    if (isspace(c))
+    if (isspace(c) && open_braces == 1)
       break;
-
+    if (c=='{')
+      open_braces++;
+    if (c=='}') {
+      if (--open_braces == 0)
+	break;
+    }
     if (i < MAXBLOCKTITLE - 1)
       index[i++] = c;
   }
   index[i] = 0;
-
-  return 1;
+  
+  return open_braces;
 }
 
 int block_continueread(FILETYPE f, int brace_count, char *data, int size,
@@ -149,6 +158,9 @@ int block_continueread(FILETYPE f, int brace_count, char *data, int size,
     return RETURN_CODE_ERROR ;
 
   data[0] = 0;
+
+  if (brace_count == 0)
+    return 0;
 
   /* scan block data until brace_count = 0 or space eaten up */
   i = 0;
@@ -173,7 +185,7 @@ int block_continueread(FILETYPE f, int brace_count, char *data, int size,
 	return 0;
       }
     }
-    if (c == spacer) {
+    if (c == spacer && brace_count == 1) {
       data[i] = 0;
       return brace_count;
     }
@@ -186,11 +198,12 @@ int block_continueread(FILETYPE f, int brace_count, char *data, int size,
 
 int block_writestart(FILETYPE f, char index[MAXBLOCKTITLE])
 {
+  if (strlen(index) >= MAXBLOCKTITLE)
+    return RETURN_CODE_ERROR;
   if (!writestring(f, "{") ||
       !writestring(f, index) ||
       !writestring(f, " "))
     return RETURN_CODE_ERROR;
-
   return 0;
 }
 
@@ -202,149 +215,82 @@ int block_writeend(FILETYPE f)
   return 0;
 }
 
-int block_write_double(FILETYPE f, double data)
+int block_write_data(FILETYPE f, int type, int dim, void *data)
 {
-  int error;
-  char buffer[DOUBLE_SPACE];
+  int error, i;
+  char buffer[INT_SPACE + DOUBLE_SPACE];
   
-  if ((error = block_writestart(f, "_dval_")) != 0)
-    return error;
+  switch (type) {
+  case TYPE_DOUBLE:
+    if ((error = block_writestart(f, "_dval_")) != 0)
+      return error;
+    break;
+  case TYPE_INT:
+    if ((error = block_writestart(f, "_ival_")) != 0)
+      return error;
+    break;
+  default: return RETURN_CODE_ERROR;
+  }
 
-  sprintf(buffer, DOUBLE_FORMAT, data);
-  if (!writestring(f, buffer))
-    return RETURN_CODE_ERROR;
 
+  for (i = 0; i < dim; i++) {
+    switch (type) {
+    case TYPE_DOUBLE:
+      sprintf(buffer, DOUBLE_FORMAT " ", ((double *)data)[i]);
+      break;
+    case TYPE_INT:
+      sprintf(buffer, "%d ", ((int *)data)[i]);
+      break;
+    default: /* keep the compilers happy */;
+    }
+    if (!writestring(f, buffer))
+      return RETURN_CODE_ERROR;
+  }
   return block_writeend(f);
 }
 
-int block_write_int(FILETYPE f, int data)
+
+int block_read_data(FILETYPE f, int type, int dim, void *data)
 {
-  int error;
-  char buffer[INT_SPACE];
-
-  if ((error = block_writestart(f, "_ival_")) != 0)
-    return error;
-
-  sprintf(buffer, "%d", data);
-  if (!writestring(f, buffer))
-    return RETURN_CODE_ERROR;
-
-  return block_writeend(f);
-}
-
-int block_write_double_array(FILETYPE f, int dim[3], double *data)
-{
-  int error;
-  int sx, sy, sz;
-  char buffer[3 + INT_SPACE*3 + DOUBLE_SPACE];
-
-  if ((error = block_writestart(f, "_darray_")) != 0)
-    return error;
-
-  sprintf(buffer, "%d %d %d ", dim[0], dim[1], dim[2]);
-  if (!writestring(f, buffer))
-    return RETURN_CODE_ERROR;
-  for (sx = 0; sx < dim[0]; sx++)
-    for (sy = 0; sy < dim[1]; sy++)
-      for (sz = 0; sz < dim[2]; sz++) {
-	sprintf(buffer, DOUBLE_FORMAT " ",
-		data[get_linear_index(sx, sy, sz, dim)]);
-	if (!writestring(f, buffer))
-	  return RETURN_CODE_ERROR;
-      }
-  return block_writeend(f);
-}
-
-int block_write_int_array(FILETYPE f, int dim[3], int *data)
-{
-  int error;
-  int sx, sy, sz;
-  char buffer[3 + INT_SPACE*3];
-
-  if ((error = block_writestart(f, "_iarray_")) != 0)
-    return error;
-
-  sprintf(buffer, "%d %d %d ", dim[0], dim[1], dim[2]);
-  if (!writestring(f, buffer))
-    return RETURN_CODE_ERROR;
-  for (sx = 0; sx < dim[0]; sx++)
-    for (sy = 0; sy < dim[1]; sy++)
-      for (sz = 0; sz < dim[2]; sz++) {
-	sprintf(buffer, "%d ",
-		data[get_linear_index(sx, sy, sz, dim)]);
-	if (!writestring(f, buffer))
-	  return RETURN_CODE_ERROR;
-      }
-  return block_writeend(f);
-}
-
-int block_read_any_data(FILETYPE f, int type, int dim[3], void *data)
-{
-  int readType, array;
-  int err, i, sx, sy, sz;
+  int readType;
+  int err, i;
   char index[MAXBLOCKTITLE];
   char valbuffer[DOUBLE_SPACE + INT_SPACE];
 
   if ((err = block_startread(f, index)) < 0)
     return err;
-  if (!strcmp(index, "_ival_")) {
+  if (!strcmp(index, "_ival_"))
     readType = TYPE_INT;
-    array = 0;
-  }
-  else if (!strcmp(index, "_dval_")) {
+  else if (!strcmp(index, "_dval_"))
     readType = TYPE_DOUBLE;
-    array = 0;
-  }
-  else if (!strcmp(index, "_iarray_")) {
-    readType = TYPE_INT;
-    array = 1;
-  }
-  else if (!strcmp(index, "_darray_")) {
-    readType = TYPE_DOUBLE;
-    array = 1;
-  }
   else
-    readType = -1;
+    return RETURN_CODE_WDATA;
+
   if (readType != type)
     return RETURN_CODE_WDATA;
 
-  if (array) {
-    for (i = 0; i < 3; i++) {
-      if (readToWsOrBracket(f, valbuffer, sizeof(valbuffer)) != 0)
-	return RETURN_CODE_ERROR;
-      if (dim[i] != atol(valbuffer))
-	return RETURN_CODE_WDATA;
+  for (i = 0; i < dim; i++) {
+    if ((err = readString(f, valbuffer, sizeof(valbuffer))) < 0)
+      return RETURN_CODE_ERROR;
+    /* premature end of data input */
+    if (err == 1 && i != dim - 1)
+      return RETURN_CODE_WDATA;
+
+    switch (type) {
+    case TYPE_DOUBLE:
+      ((double *)data)[i] = atof(valbuffer);
+      break;
+    case TYPE_INT:
+      ((int *)data)[i] = atol(valbuffer);
+      break;
+    default: /* keep the compilers happy */;
     }
   }
-  else {
-    for (i = 0; i < 3; i++) {
-      if (dim[i] != 1)
-	return RETURN_CODE_WDATA;
-    }
-  }
-
-  for (sx = 0; sx < dim[0]; sx++)
-    for (sy = 0; sy < dim[1]; sy++)
-      for (sz = 0; sz < dim[2]; sz++) {
-	if ((err = readToWsOrBracket(f, valbuffer, sizeof(valbuffer))) < 0)
-	  return RETURN_CODE_ERROR;
-
-	switch (type) {
-	case TYPE_DOUBLE:
-	  ((double *)data)[get_linear_index(sx, sy, sz, dim)] = atof(valbuffer);
-	  break;
-	case TYPE_INT:
-	  ((int *)data)[get_linear_index(sx, sy, sz, dim)] = atol(valbuffer);
-	  break;
-	  break;
-	default: ;
-	}
-      }
 
   /* } already consumed by readToWsOrBracket */
   if (err == 1)
     return 0;
 
-  /* consume } */
+  /* consume } and detect excessive data */
   return (findNonWs(f) == '}') ? 0 : RETURN_CODE_ERROR;
 }
