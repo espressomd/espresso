@@ -1042,6 +1042,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
    *                        gay-berne
    * interaction
    */
+#ifdef ROTATION
   if (ARG0_IS_S("gay-berne")) {
   	
     /* there are 9 parameters for gay-berne, but you read in only 7 of them.
@@ -1073,11 +1074,13 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
     CHECK_VALUE(gay_berne_set_params(part_type_a, part_type_b, eps, sig, cut, k1, k2, mu, nu),
 		"particle types must be nonnegative");
   }
+#endif
 
   /* parse 
    *                        tabulated
    * interaction
    */
+#ifdef TABULATED
   if (ARG0_IS_S("tabulated")) {
   	
     /* tabulated interactions should supply a file name for a file containing
@@ -1102,6 +1105,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 		   "\"", (char *)NULL);
   return TCL_ERROR;
 }
+#endif
 
 int inter_print_partner_num(Tcl_Interp *interp, int bond_type)
 {

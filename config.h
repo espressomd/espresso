@@ -113,6 +113,9 @@ MDINLINE int compilation_callback(Tcl_Interp *interp)
 #ifdef ELECTROSTATICS
   Tcl_AppendResult(interp, "{ ELECTROSTATICS } ", (char *) NULL);
 #endif
+#ifdef LENNARD_JONES
+  Tcl_AppendResult(interp, "{ LENNARD_JONES } ", (char *) NULL);
+#endif
 #ifdef LJCOS
   Tcl_AppendResult(interp, "{ LJCOS } ", (char *) NULL);
 #endif
