@@ -122,17 +122,17 @@ pack .case2.title.b -side right -in .case2.title
 pack .case2.title -pady {0 10} -fill x -side top -in .case2
 
 # sliders
-label .case2.label1 -justify left -text "Ladung Wand 1"
+label .case2.label1 -justify left -text "Ladung Wand mitte"
 scale .case2.slider1 -orient h -from -1.5 -to 1.5 \
     -resolution [expr 3/5.] -command Case2Wall1ChargeChange
 pack .case2.slider1 .case2.label1 -fill x -in .case2
 
-label .case2.label2 -justify left -text "Ladung Wand 2"
+label .case2.label2 -justify left -text "Ladung Wand links"
 scale .case2.slider2 -orient h -from -1.5 -to 1.5 \
     -resolution [expr 3/5.] -command Case2Wall2ChargeChange
 pack .case2.slider2 .case2.label2 -fill x -in .case2
 
-label .case2.label3 -justify left -text "Ladung Wand 3"
+label .case2.label3 -justify left -text "Ladung Wand oben"
 scale .case2.slider3 -orient h -from -1.5 -to 1.5 \
     -resolution [expr 3/5.] -command Case2Wall3ChargeChange
 pack .case2.slider3 .case2.label3 -fill x -in .case2
@@ -256,7 +256,7 @@ proc imd_reconnect {case} {
 	update
 	after 500
     }
-    exec vmd -pos 100 0 -e $case.script &
+    exec ./vmd -pos 100 0 -e $case.script -startup ./vmdrc &
     while { [glob -nocomplain ".lock*" ] == "" } {
 	puts "waiting for vmd to come up"
 	after 500
