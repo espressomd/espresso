@@ -140,7 +140,7 @@ void compute_pos_corr_vec(int *repeat_)
 	  p2 = local_particles[p1->bl.e[k++]];
 	  if (!p2) {
 	    char *errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	    sprintf(errtxt,"{051 rigid bond broken between particles %d and %d (particles not stored on the same node)} ",
+	    ERROR_SPRINTF(errtxt,"{051 rigid bond broken between particles %d and %d (particles not stored on the same node)} ",
 		    p1->p.identity, p1->bl.e[k-1]);
 	    return;
 	  }
@@ -245,7 +245,7 @@ void correct_pos_shake()
    }// while(repeat) loop
    if (cnt >= SHAKE_MAX_ITERATIONS) {
      char *errtxt = runtime_error(100 + TCL_INTEGER_SPACE);
-     sprintf(errtxt, "{053 RATTLE failed to converge after %d iterations} ", cnt);
+     ERROR_SPRINTF(errtxt, "{053 RATTLE failed to converge after %d iterations} ", cnt);
    }
 
    check_rebuild_verletlist();
@@ -315,7 +315,7 @@ void compute_vel_corr_vec(int *repeat_)
 		p2 = local_particles[p1->bl.e[k++]];
 		if (!p2) {
 		  char *errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-		  sprintf(errtxt,"{054 rigid bond broken between particles %d and %d (particles not stored on the same node)} ",
+		  ERROR_SPRINTF(errtxt,"{054 rigid bond broken between particles %d and %d (particles not stored on the same node)} ",
 			  p1->p.identity, p1->bl.e[k-1]);
 		  return;
 		}
@@ -459,8 +459,7 @@ void print_bond_len()
 	       Particle *p2 = local_particles[p[i].bl.e[k++]];
 	       if (!p2) {
 		 char *errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-		 //ERROR_SPRINTF(errtxt,"{056 rigid bond broken between particles %d and %d (particles not stored on the same node)} ", p[i].p.identity, p[i].bl.e[k-1]));
-		 sprintf(errtxt,"{056 rigid bond broken between particles %d and %d (particles not stored on the same node)} ", p[i].p.identity, p[i].bl.e[k-1]);
+		 ERROR_SPRINTF(errtxt,"{056 rigid bond broken between particles %d and %d (particles not stored on the same node)} ", p[i].p.identity, p[i].bl.e[k-1]));
 		 return;
 	       }
 
