@@ -72,6 +72,7 @@
 /* #define STAT_DEBUG */ 
 /* #define POLY_DEBUG */
 /* #define MEM_DEBUG */
+/* #define MAGGS_DEBUG */
 
 #define MPI_CORE
 #define FORCE_CORE
@@ -203,6 +204,13 @@ extern int check_id;
 #else
 /** Equals { cmd } iff P3M_DEBUG is set. */
 #define P3M_TRACE(cmd)
+#endif
+
+#ifdef MAGGS_DEBUG
+#define MAGGS_TRACE(cmd) { cmd;  }
+#else
+/** Equals { cmd } iff MAGGS_DEBUG is set. */
+#define MAGGS_TRACE(cmd)
 #endif
 
 #ifdef FFT_DEBUG

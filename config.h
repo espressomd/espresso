@@ -45,7 +45,7 @@
     \ref domain_decomposition.c, \ref grid.c, \ref interaction_data.c,
     \ref layered.c, \ref statistics_chain.c
 */
-#define PARTIAL_PERIODIC
+/* #define PARTIAL_PERIODIC */
 
 /** if defined, you will get a warning when particles approach nearer than
     0.9 sigma, because then it's likely the integration will blow up.
@@ -61,11 +61,11 @@ This will allow to use such particle properties as quart, omega, and torque. */
 
 /** Compiler flag to enable external forces. E.g. apply a fixed external force
     to a particle or fix a particle in space. */
-#define EXTERNAL_FORCES
+/* #define EXTERNAL_FORCES */
 
 /** Compiler Flag to enable constraints, eg walls, spheres. 
     See \ref constraint.h and \ref interaction_data.h */
-#define CONSTRAINTS
+/* #define CONSTRAINTS */
 
 /** Compiler Flag to enable COMFORCE potential */
 /* #define COMFORCE */

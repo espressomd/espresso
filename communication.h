@@ -329,6 +329,7 @@ int mpi_gather_runtime_errors(Tcl_Interp *interp, int ret_state);
 #define P3M_COUNT_CHARGES 0
 #define INVALIDATE_SYSTEM 1
 #define CHECK_PARTICLES   2
+#define MAGGS_COUNT_CHARGES 3
 /*@}*/
 
 #endif

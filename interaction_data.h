@@ -83,6 +83,8 @@
 #define COULOMB_MMM1D 4
 /** Coulomb method is two-dimensional MMM */
 #define COULOMB_MMM2D 5
+/** Coulomb method is "Maggs" */
+#define COULOMB_MAGGS 6
 
 /*@}*/
 
