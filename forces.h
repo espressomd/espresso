@@ -110,7 +110,6 @@ MDINLINE void add_bonded_pair_force(Particle *p1)
 {
   int i, type_num;
 
-  fprintf(stderr, "%d: add bonded forces for part %d\n", this_node, p1->p.identity);
   i=0;
   while(i<p1->bl.n) {
     type_num = p1->bl.e[i];
