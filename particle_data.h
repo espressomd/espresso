@@ -104,6 +104,11 @@ extern Particle   **local_particles;
 int part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
 
+/** get the total number of all particles on all nodes.
+    \return integer N_tot containing that number */
+int getParticleCount(void);
+
+
 /** initialize a particle list.
  *  Use with care and ONLY for initialization! */
 void init_particleList(ParticleList *pList);
