@@ -15,8 +15,7 @@
 #  Demo of a buckyball                                      #
 #                                                           #
 #                                                           #
-#  Created:       23.01.2003 by HL                          #
-#  Last modified: 23.01.2003 by HL                          #
+#  Created:       26.08.2003 by AxA & BAM                   #
 #                                                           #
 #############################################################
 
@@ -48,11 +47,16 @@ pack .case1.title.l -fill both -side left -in .case1.title
 pack .case1.title.b -side right -in .case1.title
 pack .case1.title -pady {0 10} -fill x -side top -in .case1
 
-# slider 
+# sliders
 label .case1.label -justify left -text "Stärke der Elektrostatik"
-scale .case1.slider -orient h -from 0 -to 10 \
+scale .case1.slider -orient h -from 0 -to 15 \
     -resolution [expr 10/100.] -command Case1BjerrumChange
 pack .case1.slider .case1.label -fill x -in .case1
+
+label .case1.label2 -justify left -text "Temperatur"
+scale .case1.slider2 -orient h -from 0 -to 2 \
+    -resolution [expr 10/100.] -command Case1TempChange
+pack .case1.slider2 .case1.label2 -fill x -in .case1
 
 set disabledfg [.case1.label cget -disabledforeground]
 set normalfg  [.case1.label cget -foreground]
@@ -92,13 +96,18 @@ proc disableCase1 {} {
     global disabledfg
     .case1.label configure -state disabled
     .case1.slider configure -state disabled -foreground $disabledfg 
+    .case1.label2 configure -state disabled
+    .case1.slider2 configure -state disabled -foreground $disabledfg 
 }
 
 proc enableCase1 {} {
     global normalfg
     .case1.label configure -state normal
     .case1.slider configure -state normal -foreground $normalfg 
-    .case1.slider set 0
+    .case1.slider set 8
+    .case1.label2 configure -state normal
+    .case1.slider2 configure -state normal -foreground $normalfg 
+    .case1.slider2 set 0
 
     .case2.status configure -text ""
 }
@@ -144,13 +153,11 @@ proc enableStarts {} {
 #############################################################
 
 proc imd_reconnect {case} {
-    global vmd_pid
+#    global vmd_pid
 
     imd disconnect
 
     catch {exec killall vmd_LINUX}
-    writepsf "$case.psf"
-    writepdb "$case.pdb"
 
     while { [catch {imd connect 10000} res] } {
 	.case2.status configure -text "Waiting for port to unbind...\nerror: $res"
@@ -166,42 +173,65 @@ proc imd_reconnect {case} {
 #############################################################
 
 proc Case1Start {} {
+    global run_sim
+
     .case2.status configure -text "Starte..."    
+    set run_sim 0
     update
 
     disableStarts
     disableCase1
     disableCase2
 
-    # sim aufsetzen vmd restart,imd reset
+    part deleteall
+    set inp [open "case1.blk" r]
+    while { [blockfile $inp read auto] != "eof" } {}
+    close $inp
+    puts "Read [setmd n_part] particles..."
 
     imd_reconnect case1
 
+    after 3000
+
     enableCase1
     enableStarts
+    set run_sim 1
 
     .case2.status configure -text "Fertig"
 }
 
 set displayclock 0
 proc Case2Start {} {
-    global case2stime displayclock
+    global run_sim case2stime displayclock N0 N1 N2 N3
 
     .case2.status configure -text "Starte..."    
+    set run_sim 0
     update
 
     disableStarts
     disableCase1
     disableCase2
 
-    # vmd restart,imd reset
+    part deleteall
+    set inp [open "case2.blk" r]
+    while { [blockfile $inp read auto] != "eof" } {}
+    close $inp
+    for {set i $N0} {$i < [expr $N0+$N1+$N2+$N3]} {incr i} { part $i fix }
+    puts "Read & fixed [setmd n_part] particles..."
 
     imd_reconnect case2
 
-    after 1000
+    after 3000
+    .case2.status configure -text "...3..."
+    update; after 1000
+    .case2.status configure -text "...2..."
+    update; after 1000
+    .case2.status configure -text "...1..."
+    update; after 1000
 
     enableCase2
     enableStarts
+    set run_sim 2
 
     .case2.status configure -text "Los!"
     set case2stime [clock seconds]
@@ -209,16 +239,43 @@ proc Case2Start {} {
 }
 
 proc Case1BjerrumChange {l} {
-    inter coulomb $l dh 0 0
+    global run_sim
+    if { $run_sim == 1} { 
+	inter coulomb $l dh 0 [expr 2*$l]
+	puts "Changed Bjerrum length to $l."
+    }
+}
+
+proc Case1TempChange {T} {
+    global run_sim
+    if { $run_sim == 1} { 
+	setmd temp $T
+	puts "Changed temperature to $T."
+    }
 }
 
 proc Case2Wall1ChargeChange {c} {
+    global run_sim N0 N1
+    if { $run_sim == 2} { 
+	for {set i [expr $N0]} {$i < [expr $N0+$N1]} {incr i} { part $i q $c }
+	puts "Charged Wall 1 with $c."
+    }
 }
 
 proc Case2Wall2ChargeChange {c} {
+    global run_sim N0 N1 N2
+    if { $run_sim == 2 } { 
+	for {set i [expr $N0+$N1]} {$i < [expr $N0+$N1+$N2]} {incr i} { part $i q $c } 
+	puts "Charged Wall 2 with $c."
+    }
 }
 
 proc Case2Wall3ChargeChange {c} {
+    global run_sim N0 N1 N2 N3
+    if { $run_sim } { 
+	for {set i [expr $N0+$N1+$N2]} {$i < [expr $N0+$N1+$N2+$N3]} {incr i} { part $i q $c }
+	puts "Charged Wall 3 with $c."
+    }
 }
 
 #############################################################
@@ -231,14 +288,15 @@ disableCase2
 set displayclock 0
 set run_sim 0
 
-inter 1 harmonic 1 1
-part 1 pos 0 0 0
-part 0 pos .5 0 0 bond 1 1
-
 while { 1 } {
-    if { $run_sim } {
+    if { $run_sim != 0 } {
+#	set c1 [part 1 print pos]; set c2 [part 2 print pos]
+#	set x  [expr [lindex $c1 0]-[lindex $c2 0]]
+#	set y  [expr [lindex $c1 1]-[lindex $c2 1]]
+#	set z  [expr [lindex $c1 2]-[lindex $c2 2]]
+#	puts "bond_l between 1 and 2 = [expr sqrt($x*$x + $y*$y + $z*$z)]"
 	integrate 100
-	imd positions
+	catch [imd positions]
     } {
 	after 100
 	imd listen 1
