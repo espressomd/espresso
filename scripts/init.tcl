@@ -11,7 +11,7 @@
 # by providing additional tcl-commands/-functions.          #
 #                                                           #
 # Created:       20.09.2002 by AxA                          #
-# Last modified: 25.09.2002 by BAM                          #
+# Last modified: 15.10.2002 by BAM                          #
 #                                                           #
 #############################################################
 
@@ -46,4 +46,11 @@ source countBonds.tcl
 # adds 'findPropPos' to determine the index-position of a certain property in the output of 'part'
 # adds 'findBondPos' to do the same for property 'bonds'
 
+source aux.tcl
+# adds 'timeStamp' which modifies a filestring to include a prefix and the current date as postfix before the suffix
+
 source blockfile_support.tcl
+# adds 'blockfile_write_particles'
+# adds 'blockfile_read_auto_particles'
+# adds 'blockfile_read_particles'
+
