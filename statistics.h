@@ -156,6 +156,50 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
 void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
 	      double r_min, double r_max, int r_bins, double *rdf);
 
+
+/** Calculates the radial distribution function averaged over last n_conf configurations.
+
+    Calculates the radial distribution function of particles with
+    types given in the p1_types list around particles with types given
+    in the p2_types list. The range is given by r_min and r_max and
+    the distribution function is binned into r_bin bins, which are
+    equidistant. The result is stored in the array rdf.
+
+    @param p1_types list with types of particles to find the distribution for.
+    @param n_p1     length of p1_types.
+    @param p2_types list with types of particles the others are distributed around.
+    @param n_p2     length of p2_types.
+    @param r_min    Minimal distance for the distribution.
+    @param r_max    Maximal distance for the distribution.
+    @param r_bins   Number of bins.
+    @param rdf      Array to store the result (size: r_bins).
+    @param n_conf   Number of configurations from the last stored configuration.
+*/
+void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
+	      double r_min, double r_max, int r_bins, double *rdf, int n_conf);
+
+/** Calculates the intermolecular radial distribution function averaged over last n_conf configurations.
+
+    Calculates the radial distribution function of particles with
+    types given in the p1_types list around particles with types given
+    in the p2_types list. The range is given by r_min and r_max and
+    the distribution function is binned into r_bin bins, which are
+    equidistant. The result is stored in the array rdf.
+
+    @param p1_types list with types of particles to find the distribution for.
+    @param n_p1     length of p1_types.
+    @param p2_types list with types of particles the others are distributed around.
+    @param n_p2     length of p2_types.
+    @param r_min    Minimal distance for the distribution.
+    @param r_max    Maximal distance for the distribution.
+    @param r_bins   Number of bins.
+    @param rdf      Array to store the result (size: r_bins).
+    @param n_conf   Number of configurations from the last stored configuration.
+*/
+
+void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
+	      double r_min, double r_max, int r_bins, double *rdf, int n_conf);
+
 /** Calculates the spherically averaged structure factor.
 
     Calculates the spherically averaged structure factor of particles of a
@@ -167,6 +211,7 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
     @param order  the maximum wave vector length in 2PI/L
     @param sf     array to store the result (size: order^2+1).
 */
+
 void calc_structurefactor(int type, int order, double *sf);
 	      
 /** returns the minimal squared distance between two positions in the perhaps periodic

@@ -62,33 +62,7 @@ int analyze_fold_molecules(float *coord)
 }
 
 
-void calc_mol_center_of_mass(Molecule mol, double com[3])
-{
-  int i,j,id;
-  for(j=0; j<3; j++) com[j]=0.0;
 
-  for(i=0; i<mol.part.n; i++) {
-    id = mol.part.e[i];
-    for(j=0; j<3; j++) com[j]+= partCfg[id].r.p[j];
-  }
-  for(j=0; j<3; j++) com[j] /= mol.part.n;
-}
-
-double calc_mol_gyr_radius2(Molecule mol) 
-{
-  int i, id;
-  double rg=0.0, com[3], diff_vec[3];
-
-  calc_mol_center_of_mass(mol, com);
-
-  for(i=0; i<mol.part.n; i++) {
-    id = mol.part.e[i];
-    vecsub(partCfg[id].r.p, com, diff_vec);
-    rg += sqrlen(diff_vec);
-  }
-
-  return rg/(double)mol.part.n;
-} 
 
 double calc_mol_hydro_radius(Molecule mol) 
 {
@@ -107,9 +81,8 @@ double calc_mol_hydro_radius(Molecule mol)
 }
 
 
-//Added by Arijit
 /**Incorporates mass of each particle*/
-void mol_center_of_mass_(Molecule mol, double com[3])
+void calc_mol_center_of_mass(Molecule mol, double com[3])
 {
   int i,j,id;
   double M = 0.0;
@@ -124,14 +97,13 @@ void mol_center_of_mass_(Molecule mol, double com[3])
 }
 
 
-//Added by Arijit
 /**Incorporates mass of each particle*/
-double mol_gyr_radius2_(Molecule mol)
+double calc_mol_gyr_radius2(Molecule mol)
 {
   int i, id;
   double rg=0.0, M=0.0, com[3], diff_vec[3];
 
-  mol_center_of_mass_(mol, com);
+  calc_mol_center_of_mass(mol, com);
 
   for(i=0; i<mol.part.n; i++) {
     id = mol.part.e[i];

@@ -87,28 +87,34 @@ void calc_re_av(double **_re)
 
 void calc_rg(double **_rg)
 {
-  int i, j;
+  int i, j, p;
   double dx,dy,dz, r_CM_x,r_CM_y,r_CM_z;
   double r_G=0.0,r_G2=0.0,r_G4=0.0;
-  double *rg=NULL, IdoubMPC, tmp;
+  double *rg=NULL,IdoubMPC, tmp;
+  double M;
   *_rg = rg = realloc(rg,4*sizeof(double));
 
-  IdoubMPC = 1./(double)chain_length;
+
   for (i=0; i<chain_n_chains; i++) {
+    M=0.0;
     r_CM_x = r_CM_y = r_CM_z = 0.0;
+    IdoubMPC = 1./(double)chain_length;
     for (j=0; j<chain_length; j++) {
-      r_CM_x += partCfg[chain_start+i*chain_length + j].r.p[0];
-      r_CM_y += partCfg[chain_start+i*chain_length + j].r.p[1];
-      r_CM_z += partCfg[chain_start+i*chain_length + j].r.p[2];
+        p = chain_start+i*chain_length + j;
+      r_CM_x += partCfg[p].r.p[0]*PMASS(partCfg[p]);
+      r_CM_y += partCfg[p].r.p[1]*PMASS(partCfg[p]);
+      r_CM_z += partCfg[p].r.p[2]*PMASS(partCfg[p]);
+      M += PMASS(partCfg[p]);
     }
-    r_CM_x *= IdoubMPC;
-    r_CM_y *= IdoubMPC;
-    r_CM_z *= IdoubMPC;
+    r_CM_x /= M;
+    r_CM_y /= M;
+    r_CM_z /= M;
     tmp = 0.0;
     for (j=0; j<chain_length; ++j) {
-      dx = partCfg[chain_start+i*chain_length + j].r.p[0] - r_CM_x;
-      dy = partCfg[chain_start+i*chain_length + j].r.p[1] - r_CM_y;
-      dz = partCfg[chain_start+i*chain_length + j].r.p[2] - r_CM_z;
+      p = chain_start+i*chain_length + j;
+      dx = partCfg[p].r.p[0] - r_CM_x;
+      dy = partCfg[p].r.p[1] - r_CM_y;
+      dz = partCfg[p].r.p[2] - r_CM_z;
       tmp += (SQR(dx) + SQR(dy) + SQR(dz));
     }
     tmp *= IdoubMPC;
@@ -125,27 +131,32 @@ void calc_rg(double **_rg)
 
 void calc_rg_av(double **_rg)
 {
-  int i, j, k;
+  int i, j, k, p;
   double dx,dy,dz, r_CM_x,r_CM_y,r_CM_z;
   double r_G=0.0,r_G2=0.0, r_G4=0.0;
   double *rg=NULL, IdoubMPC, tmp;
+  double M;
   *_rg = rg = realloc(rg,4*sizeof(double));
 
   IdoubMPC = 1./(double)chain_length;
   for (k=0; k<n_configs; k++) {
     for (i=0; i<chain_n_chains; i++) {
+      M=0.0;
       r_CM_x = r_CM_y = r_CM_z = 0.0;
       for (j=0; j<chain_length; j++) {
-	r_CM_x += configs[k][3*(chain_start+i*chain_length + j)];
-	r_CM_y += configs[k][3*(chain_start+i*chain_length + j) + 1];
-	r_CM_z += configs[k][3*(chain_start+i*chain_length + j) + 2];
+        p = chain_start+i*chain_length + j;
+	r_CM_x += configs[k][3*p]*PMASS(partCfg[p]);
+	r_CM_y += configs[k][3*p + 1]*PMASS(partCfg[p]);
+	r_CM_z += configs[k][3*p + 2]*PMASS(partCfg[p]);
+        M += PMASS(partCfg[p]);
       }
-      r_CM_x *= IdoubMPC; r_CM_y *= IdoubMPC; r_CM_z *= IdoubMPC;
+      r_CM_x /= M; r_CM_y /= M; r_CM_z /= M;
       tmp = 0.0;
       for (j=0; j<chain_length; ++j) {
-	dx = configs[k][3*(chain_start+i*chain_length + j)]     - r_CM_x;
-	dy = configs[k][3*(chain_start+i*chain_length + j) + 1] - r_CM_y;
-	dz = configs[k][3*(chain_start+i*chain_length + j) + 2] - r_CM_z;
+        p = chain_start+i*chain_length + j;
+	dx = configs[k][3*p]     - r_CM_x;
+	dy = configs[k][3*p + 1] - r_CM_y;
+	dz = configs[k][3*p + 2] - r_CM_z;
 	tmp += (SQR(dx) + SQR(dy) + SQR(dz));
       }
       tmp *= IdoubMPC;
@@ -372,7 +383,7 @@ void calc_bond_dist_av(double **_bdf, int ind_n) {
 void init_g123()
 {
   int i, j, p;
-  double cm_tmp[3];
+  double cm_tmp[3], M;
 
   /* Save particles' current positions 
      (which'll be used as initial position later on) */
@@ -382,15 +393,17 @@ void init_g123()
   n_chains_g = chain_n_chains;
   for(j=0; j<chain_n_chains; j++) {
     cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
+    M=0.0;
     for(i=0; i<chain_length; i++) {
       p = chain_start+j*chain_length + i;
-      partCoord_g[3*p]   = partCfg[p].r.p[0]; cm_tmp[0]+=partCfg[p].r.p[0];
-      partCoord_g[3*p+1] = partCfg[p].r.p[1]; cm_tmp[1]+=partCfg[p].r.p[1];
-      partCoord_g[3*p+2] = partCfg[p].r.p[2]; cm_tmp[2]+=partCfg[p].r.p[2];
+      partCoord_g[3*p]   = partCfg[p].r.p[0]*PMASS(partCfg[p]); cm_tmp[0]+=partCfg[p].r.p[0]*PMASS(partCfg[p]);
+      partCoord_g[3*p+1] = partCfg[p].r.p[1]*PMASS(partCfg[p]); cm_tmp[1]+=partCfg[p].r.p[1]*PMASS(partCfg[p]);
+      partCoord_g[3*p+2] = partCfg[p].r.p[2]*PMASS(partCfg[p]); cm_tmp[2]+=partCfg[p].r.p[2]*PMASS(partCfg[p]);
+      M += PMASS(partCfg[p]);
     }
-    partCM_g[3*j]   = cm_tmp[0]/(1.*chain_length);
-    partCM_g[3*j+1] = cm_tmp[1]/(1.*chain_length);
-    partCM_g[3*j+2] = cm_tmp[2]/(1.*chain_length);
+    partCM_g[3*j]   = cm_tmp[0]/M;
+    partCM_g[3*j+1] = cm_tmp[1]/M;
+    partCM_g[3*j+2] = cm_tmp[2]/M;
   }
 }
 
@@ -401,18 +414,21 @@ void calc_g123(double *_g1, double *_g2, double *_g3)
      - Motion of the center of mass */
   int i, j, p;
   double g1=0.0, g2=0.0, g3=0.0, cm_tmp[3];
+  double M;
 
   for(j=0; j<chain_n_chains; j++) {
     cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
+    M=0.0;
     for(i=0; i<chain_length; i++) {
       p = chain_start+j*chain_length + i;
-      cm_tmp[0]+=partCfg[p].r.p[0];
-      cm_tmp[1]+=partCfg[p].r.p[1];
-      cm_tmp[2]+=partCfg[p].r.p[2];
+      cm_tmp[0]+=partCfg[p].r.p[0]*PMASS(partCfg[p]);
+      cm_tmp[1]+=partCfg[p].r.p[1]*PMASS(partCfg[p]);
+      cm_tmp[2]+=partCfg[p].r.p[2]*PMASS(partCfg[p]);
+      M += PMASS(partCfg[p]);
     }
-    cm_tmp[0] /= (1.*chain_length);
-    cm_tmp[1] /= (1.*chain_length);
-    cm_tmp[2] /= (1.*chain_length);
+    cm_tmp[0] /= M;
+    cm_tmp[1] /= M;
+    cm_tmp[2] /= M;
     for(i=0; i<chain_length; i++) {
       p = chain_start+j*chain_length + i;
       g1 += SQR(partCfg[p].r.p[0]-partCoord_g[3*p])
@@ -458,6 +474,7 @@ void calc_g1_av(double **_g1) {
 void calc_g2_av(double **_g2) {
   int i, j, p, t,k;
   double *g2=NULL, cm_tmp[3];
+  double M;
   *_g2 = g2 = realloc(g2,n_configs*sizeof(double));
 
   for(k=0; k < n_configs; k++) {
@@ -465,13 +482,15 @@ void calc_g2_av(double **_g2) {
     for(t=0; t < n_configs-k; t++) {
       for(j=0; j<chain_n_chains; j++) {
 	cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
+        M=0.0;
 	for(i=0; i<chain_length; i++) {
 	  p = chain_start+j*chain_length + i;
-	  cm_tmp[0] += configs[t+k][3*p]   - configs[t][3*p];
-	  cm_tmp[1] += configs[t+k][3*p+1] - configs[t][3*p+1];
-	  cm_tmp[2] += configs[t+k][3*p+2] - configs[t][3*p+2];
+	  cm_tmp[0] += (configs[t+k][3*p]   - configs[t][3*p])*PMASS(partCfg[p]);
+	  cm_tmp[1] += (configs[t+k][3*p+1] - configs[t][3*p+1])*PMASS(partCfg[p]);
+	  cm_tmp[2] += (configs[t+k][3*p+2] - configs[t][3*p+2])*PMASS(partCfg[p]);
+          M += PMASS(partCfg[p]);
 	}
-	cm_tmp[0] /= (1.*chain_length);	cm_tmp[1] /= (1.*chain_length);	cm_tmp[2] /= (1.*chain_length);
+	cm_tmp[0] /= M;	cm_tmp[1] /= M;	cm_tmp[2] /= M;
 	for(i=0; i<chain_length; i++) {
 	  p = chain_start+j*chain_length + i;
 	  g2[k] += SQR( (configs[t+k][3*p]-configs[t][3*p]) - cm_tmp[0] )
@@ -487,6 +506,7 @@ void calc_g2_av(double **_g2) {
 void calc_g3_av(double **_g3) {
   int i, j, p, t,k;
   double *g3=NULL, cm_tmp[3];
+  double M;
   *_g3 = g3 = realloc(g3,n_configs*sizeof(double));
 
   for(k=0; k < n_configs; k++) {
@@ -494,15 +514,17 @@ void calc_g3_av(double **_g3) {
     for(t=0; t < n_configs-k; t++) {
       for(j=0; j<chain_n_chains; j++) {
 	cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
+        M=0.0;
 	for(i=0; i<chain_length; i++) {
 	  p = chain_start+j*chain_length + i;
-	  cm_tmp[0] += configs[t+k][3*p]   - configs[t][3*p];
-	  cm_tmp[1] += configs[t+k][3*p+1] - configs[t][3*p+1];
-	  cm_tmp[2] += configs[t+k][3*p+2] - configs[t][3*p+2];
+	  cm_tmp[0] += (configs[t+k][3*p]   - configs[t][3*p])*PMASS(partCfg[p]);
+	  cm_tmp[1] += (configs[t+k][3*p+1] - configs[t][3*p+1])*PMASS(partCfg[p]);
+	  cm_tmp[2] += (configs[t+k][3*p+2] - configs[t][3*p+2])*PMASS(partCfg[p]);
+          M += PMASS(partCfg[p]);
 	}
-	g3[k] += SQR(cm_tmp[0] / (1.*chain_length)) 
-	  + SQR(cm_tmp[1] / (1.*chain_length)) 
-	  + SQR(cm_tmp[2] / (1.*chain_length));
+	g3[k] += (SQR(cm_tmp[0]) 
+            + SQR(cm_tmp[1]) 
+	  + SQR(cm_tmp[2]))/SQR(M);
       }
     }
     g3[k] /= ((double)chain_n_chains*chain_length*(n_configs-k));
