@@ -40,7 +40,7 @@
  ************************************************/
    
 /** increment size of charge assignment fields. */
-#define CA_INCREMENT 50       
+#define CA_INCREMENT 32       
 
 /* MPI tags for the p3m communications: */
 /** Tag for communication in P3M_init() -> send_calc_mesh(). */
@@ -139,7 +139,7 @@ double *g = NULL;
 int ca_num=0;
 /** Charge fractions for mesh assignment. */
 double *ca_frac = NULL;
-/** first mesh point for charge assignment. */
+/** index of first mesh point for charge assignment. */
 int *ca_fmp = NULL;
 
 /** number of permutations in k_space */
@@ -699,58 +699,6 @@ int inter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv)
 /************************************* method ********************************/
 /*****************************************************************************/
 
-static double caf_10(double x) { return 1.0; }
-
-static double caf_20(double x) { return 0.5-x; }
-static double caf_21(double x) { return 0.5+x; }
-
-static double caf_30(double x) { return 0.5*SQR(0.5 - x); }
-static double caf_31(double x) { return 0.75 - SQR(x); }
-static double caf_32(double x) { return 0.5*SQR(0.5 + x); }
-
-static double caf_40(double x) { return ( 1.0+x*( -6.0+x*( 12.0-x* 8.0)))/48.0; }
-static double caf_41(double x) { return (23.0+x*(-30.0+x*(-12.0+x*24.0)))/48.0; }
-static double caf_42(double x) { return (23.0+x*( 30.0+x*(-12.0-x*24.0)))/48.0; }
-static double caf_43(double x) { return ( 1.0+x*(  6.0+x*( 12.0+x* 8.0)))/48.0; }
-
-static double caf_50(double x) { return (  1.0+x*( -8.0+x*(  24.0+x*(-32.0+x*16.0))))/384.0; }
-static double caf_51(double x) { return ( 19.0+x*(-44.0+x*(  24.0+x*( 16.0-x*16.0))))/ 96.0; }
-static double caf_52(double x) { return (115.0+x*       x*(-120.0+x*       x*48.0))  /192.0; }
-static double caf_53(double x) { return ( 19.0+x*( 44.0+x*(  24.0+x*(-16.0-x*16.0))))/ 96.0; }
-static double caf_54(double x) { return (  1.0+x*(  8.0+x*(  24.0+x*( 32.0+x*16.0))))/384.0; }
-
-static double caf_60(double x) { return (  1.0+x*( -10.0+x*(  40.0+x*( -80.0+x*(  80.0-x* 32.0)))))/3840.0; }
-static double caf_61(double x) { return (237.0+x*(-750.0+x*( 840.0+x*(-240.0+x*(-240.0+x*160.0)))))/3840.0; }
-static double caf_62(double x) { return (841.0+x*(-770.0+x*(-440.0+x*( 560.0+x*(  80.0-x*160.0)))))/1920.0; }
-static double caf_63(double x) { return (841.0+x*(+770.0+x*(-440.0+x*(-560.0+x*(  80.0+x*160.0)))))/1920.0; }
-static double caf_64(double x) { return (237.0+x*( 750.0+x*( 840.0+x*( 240.0+x*(-240.0-x*160.0)))))/3840.0; }
-static double caf_65(double x) { return (  1.0+x*(  10.0+x*(  40.0+x*(  80.0+x*(  80.0+x* 32.0)))))/3840.0; }
-
-static double caf_70(double x) { return (    1.0+x*(   -12.0+x*(   60.0+x*( -160.0+x*(  240.0+x*(-192.0+x* 64.0))))))/46080.0; }
-static double caf_71(double x) { return (  361.0+x*( -1416.0+x*( 2220.0+x*(-1600.0+x*(  240.0+x*( 384.0-x*192.0))))))/23040.0; }
-static double caf_72(double x) { return (10543.0+x*(-17340.0+x*( 4740.0+x*( 6880.0+x*(-4080.0+x*(-960.0+x*960.0))))))/46080.0; }
-static double caf_73(double x) { return ( 5887.0+x*          x*(-4620.0+x*         x*( 1680.0-x*        x*320.0)))   /11520.0; }
-static double caf_74(double x) { return (10543.0+x*( 17340.0+x*( 4740.0+x*(-6880.0+x*(-4080.0+x*( 960.0+x*960.0))))))/46080.0; }
-static double caf_75(double x) { return (  361.0+x*(  1416.0+x*( 2220.0+x*( 1600.0+x*(  240.0+x*(-384.0-x*192.0))))))/23040.0; }
-static double caf_76(double x) { return (    1.0+x*(    12.0+x*(   60.0+x*(  160.0+x*(  240.0+x*( 192.0+x* 64.0))))))/46080.0; }
-
-static double caf_no(double x) {
-  fprintf(stderr,"%d: INTERNAL ERROR: Charge assignment function for order %d incorrect.\n",this_node,p3m.cao);
-  errexit(); return 0;
-}
-
-typedef double (CAOfunction)(double x);
-static CAOfunction *charge_assignment_function[8][8] = {
-  { caf_no },
-  { caf_10, caf_no },
-  { caf_20, caf_21, caf_no },
-  { caf_30, caf_31, caf_32, caf_no },
-  { caf_40, caf_41, caf_42, caf_43, caf_no },
-  { caf_50, caf_51, caf_52, caf_53, caf_54, caf_no },
-  { caf_60, caf_61, caf_62, caf_63, caf_64, caf_65, caf_no },
-  { caf_70, caf_71, caf_72, caf_73, caf_74, caf_75, caf_76, caf_no }
-};
-
 void P3M_scaleby_box_l() {
   p3m.r_cut = p3m.r_cut_iL* box_l[0];
   p3m.alpha = p3m.alpha_L * box_l_i[0];
@@ -889,8 +837,7 @@ void   P3M_init()
       recv_grid = (double *) realloc(recv_grid, sizeof(double)*sm.max);
     }
 
-    if (p3m.inter)
-      interpolate_charge_assignment_function();
+    interpolate_charge_assignment_function();
 
     /* position offset for calc. of first meshpoint */
     pos_shift = (double)((p3m.cao-1)/2) - (p3m.cao%2)/2.0;
@@ -915,31 +862,210 @@ void   P3M_init()
   }
 }
 
-double P3M_calc_kspace_forces(int force_flag, int energy_flag)
+/******************************** charge assignment *************************/
+
+void interpolate_charge_assignment_function()
+{
+  /* REMARK: This function is taken unchanged from polysim9 by M. Deserno. */
+  double dInterpol=(double)p3m.inter, x;
+  long   i;
+
+  P3M_TRACE(fprintf(stderr,"%d - interpolating (%d) the order-%d charge assignment function\n",
+		    this_node,p3m.inter,p3m.cao));
+
+  if (p3m.inter == 0) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{089 Due to bugs, the noninterpolating version has been disabled} ");
+  }
+
+  for(i=0;i<p3m.cao;i++) 
+    int_caf[i] = (double *) realloc(int_caf[i], sizeof(double)*(2*p3m.inter+1));
+
+  switch (p3m.cao) {
+  case 1 : { 
+    for (i=-p3m.inter; i<=p3m.inter; i++) {
+      x=i/(2.0*dInterpol);
+      int_caf[0][i+p3m.inter] = 1.0;
+    }
+  } break;
+  case 2 : { 
+    for (i=-p3m.inter; i<=p3m.inter; i++) {
+      x=i/(2.0*dInterpol);
+      int_caf[0][i+p3m.inter] = 0.5-x;
+      int_caf[1][i+p3m.inter] = 0.5+x;
+    }
+  } break;
+  case 3 : { 
+    for (i=-p3m.inter; i<=p3m.inter; i++) {
+      x=i/(2.0*dInterpol);
+      int_caf[0][i+p3m.inter] = 0.5*SQR(0.5 - x);
+      int_caf[1][i+p3m.inter] = 0.75 - SQR(x);
+      int_caf[2][i+p3m.inter] = 0.5*SQR(0.5 + x);
+    }
+  } break;
+  case 4 :{ 
+    for (i=-p3m.inter; i<=p3m.inter; i++) {
+      x=i/(2.0*dInterpol);
+      int_caf[0][i+p3m.inter] = ( 1.0+x*( -6.0+x*( 12.0-x* 8.0)))/48.0;
+      int_caf[1][i+p3m.inter] = (23.0+x*(-30.0+x*(-12.0+x*24.0)))/48.0;
+      int_caf[2][i+p3m.inter] = (23.0+x*( 30.0+x*(-12.0-x*24.0)))/48.0;
+      int_caf[3][i+p3m.inter] = ( 1.0+x*(  6.0+x*( 12.0+x* 8.0)))/48.0;
+    }
+  } break;
+  case 5 : {
+    for (i=-p3m.inter; i<=p3m.inter; i++) {
+      x=i/(2.0*dInterpol);
+      int_caf[0][i+p3m.inter] = (  1.0+x*( -8.0+x*(  24.0+x*(-32.0+x*16.0))))/384.0;
+      int_caf[1][i+p3m.inter] = ( 19.0+x*(-44.0+x*(  24.0+x*( 16.0-x*16.0))))/ 96.0;
+      int_caf[2][i+p3m.inter] = (115.0+x*       x*(-120.0+x*       x*48.0))  /192.0;
+      int_caf[3][i+p3m.inter] = ( 19.0+x*( 44.0+x*(  24.0+x*(-16.0-x*16.0))))/ 96.0;
+      int_caf[4][i+p3m.inter] = (  1.0+x*(  8.0+x*(  24.0+x*( 32.0+x*16.0))))/384.0;
+    }
+  } break;
+  case 6 : {
+    for (i=-p3m.inter; i<=p3m.inter; i++) {
+      x=i/(2.0*dInterpol);
+      int_caf[0][i+p3m.inter] = (  1.0+x*( -10.0+x*(  40.0+x*( -80.0+x*(  80.0-x* 32.0)))))/3840.0;
+      int_caf[1][i+p3m.inter] = (237.0+x*(-750.0+x*( 840.0+x*(-240.0+x*(-240.0+x*160.0)))))/3840.0;
+      int_caf[2][i+p3m.inter] = (841.0+x*(-770.0+x*(-440.0+x*( 560.0+x*(  80.0-x*160.0)))))/1920.0;
+      int_caf[3][i+p3m.inter] = (841.0+x*(+770.0+x*(-440.0+x*(-560.0+x*(  80.0+x*160.0)))))/1920.0;
+      int_caf[4][i+p3m.inter] = (237.0+x*( 750.0+x*( 840.0+x*( 240.0+x*(-240.0-x*160.0)))))/3840.0;
+      int_caf[5][i+p3m.inter] = (  1.0+x*(  10.0+x*(  40.0+x*(  80.0+x*(  80.0+x* 32.0)))))/3840.0;
+    }
+  } break;
+  case 7 : {
+    for (i=-p3m.inter; i<=p3m.inter; i++) {
+      x=i/(2.0*dInterpol);
+      int_caf[0][i+p3m.inter] = (    1.0+x*(   -12.0+x*(   60.0+x*( -160.0+x*(  240.0+x*(-192.0+x* 64.0))))))/46080.0;
+      int_caf[1][i+p3m.inter] = (  361.0+x*( -1416.0+x*( 2220.0+x*(-1600.0+x*(  240.0+x*( 384.0-x*192.0))))))/23040.0;
+      int_caf[2][i+p3m.inter] = (10543.0+x*(-17340.0+x*( 4740.0+x*( 6880.0+x*(-4080.0+x*(-960.0+x*960.0))))))/46080.0;
+      int_caf[3][i+p3m.inter] = ( 5887.0+x*          x*(-4620.0+x*         x*( 1680.0-x*        x*320.0)))   /11520.0;
+      int_caf[4][i+p3m.inter] = (10543.0+x*( 17340.0+x*( 4740.0+x*(-6880.0+x*(-4080.0+x*( 960.0+x*960.0))))))/46080.0;
+      int_caf[5][i+p3m.inter] = (  361.0+x*(  1416.0+x*( 2220.0+x*( 1600.0+x*(  240.0+x*(-384.0-x*192.0))))))/23040.0;
+      int_caf[6][i+p3m.inter] = (    1.0+x*(    12.0+x*(   60.0+x*(  160.0+x*(  240.0+x*( 192.0+x* 64.0))))))/46080.0;
+    }
+  } break;
+  default :{
+    fprintf(stderr,"%d: Charge assignment order %d unknown.\n",this_node,p3m.cao);
+  }
+  }
+}
+
+/* assign the charges using the tabulated charge assignment function */
+static void P3M_charge_assign()
+{
+  double tmp0,tmp1;
+  Cell *cell;
+  Particle *p;
+  int i,c,np,d,i0,i1,i2;
+  double q;
+  /* position of a particle in local mesh units */
+  double pos;
+  /* index of first assignment mesh point; argument for interpolated caf */
+  int first, arg[3];
+  /* charged particle counter, charge fraction counter */
+  int cp_cnt=0, cf_cnt=0;
+  /* index, index jumps for rs_mesh array */
+  int q_ind;
+  int q_m_off = (lm.dim[2] - p3m.cao);
+  int q_s_off = lm.dim[2] * (lm.dim[1] - p3m.cao);
+  /* 2*p3m.inter + 1, the number of table points */
+  int inter2 = 2*p3m.inter + 1;
+
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i = 0; i < np; i++) {
+      if( (q=p[i].p.q) != 0.0 ) {
+	/* particle position in mesh coordinates */
+	for(d=0;d<3;d++) {
+	  pos    = ((p[i].r.p[d]-lm.ld_pos[d])*p3m.ai[d]) - pos_shift;
+	  first  = (int) pos;
+	  arg[d] = (int) ((pos - first)*inter2);
+	  q_ind = (d == 0) ? first : first + lm.dim[d]*q_ind;
+
+#ifdef ADDITIONAL_CHECKS
+	  if( pos<0.0 ) {
+	    fprintf(stderr,"%d: rs_mesh underflow! (P%d at %f)\n",
+		    this_node,p[i].p.identity,p[i].r.p[d]);
+	    fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
+		    this_node,my_left[d],my_right[d]);	    
+	  }
+	  if( (first + p3m.cao) > lm.dim[d] ) {
+	    fprintf(stderr,"%d: rs_mesh overflow! dir=%d (P_id=%d at %f) first=%d\n",
+		    this_node,d,p[i].p.identity,p[i].r.p[d],first[d]);
+	    fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
+		    this_node,my_left[d],my_right[d]);
+	  }    
+#endif
+	}
+	ca_fmp[cp_cnt] = q_ind;
+	
+	for(i0=0; i0<p3m.cao; i0++) {
+	  tmp0 = q * int_caf[i0][arg[0]];
+	  for(i1=0; i1<p3m.cao; i1++) {
+	    tmp1 = tmp0 * int_caf[i1][arg[1]];
+	    for(i2=0; i2<p3m.cao; i2++) {
+	      rs_mesh[q_ind++] += (ca_frac[cf_cnt] = tmp1 * int_caf[i2][arg[2]]);
+	      cf_cnt++;
+	    }
+	    q_ind += q_m_off;
+	  }
+	  q_ind += q_s_off;
+	}
+	cp_cnt++;
+	if( (cp_cnt+1)>ca_num ) realloc_ca_fields(cp_cnt+1);
+      }
+    }
+  }
+  if( (cp_cnt+CA_INCREMENT)<ca_num ) realloc_ca_fields(cp_cnt+CA_INCREMENT);
+}
+
+/* assign the forces obtained from k-space */
+static void P3M_assign_forces(double force_prefac, int d_rs)
 {
   Cell *cell;
   Particle *p;
-  int i,c,n, np,d,d_rs,i0,i1,i2,ind,j[3];
+  int i,c,np,i0,i1,i2;
   double q;
-  /********** variables for the interpolating version ***********/
-  /* position of a particle in local mesh units */
-  double pos[3];
-  /* index of first assignment mesh point; argument for interpolated caf */
-  int first[3], arg[3];
   /* charged particle counter, charge fraction counter */
   int cp_cnt=0, cf_cnt=0;
-  /* (2*p3m.inter) + 1 */
-  int inter2;
-  /******* variables for the noninterpolating version ***********/
-  double n_pos;
-  /* position relative to the first point */
-  double n_arg[3];
-  int n_first;
-  /**************************************************************/
   /* index, index jumps for rs_mesh array */
-  int q_ind, q_m_off, q_s_off;
-  /* tmp variables */
-  double tmp0,tmp1;
+  int q_ind;
+  int q_m_off = (lm.dim[2] - p3m.cao);
+  int q_s_off = lm.dim[2] * (lm.dim[1] - p3m.cao);
+
+  cp_cnt=0; cf_cnt=0;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i=0; i<np; i++) { 
+      if( (q=p[i].p.q) != 0.0 ) {
+	q_ind = ca_fmp[cp_cnt];
+	for(i0=0; i0<p3m.cao; i0++) {
+	  for(i1=0; i1<p3m.cao; i1++) {
+	    for(i2=0; i2<p3m.cao; i2++) {
+	      p[i].f.f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
+	      cf_cnt++;
+	    }
+	    q_ind += q_m_off;
+	  }
+	  q_ind += q_s_off;
+	}
+	cp_cnt++;
+
+	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],d_rs,-db_fsum));
+      }
+    }
+  }
+}
+
+double P3M_calc_kspace_forces(int force_flag, int energy_flag)
+{
+  int i,n,d,d_rs,ind,j[3];
+  /**************************************************************/
   /* Prefactor for force */
   double force_prefac;
   /* k space energy */
@@ -949,92 +1075,10 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 
   /* prepare local FFT mesh */
   for(n=0; n<lm.size; n++) rs_mesh[n] = 0.0;
-  q_m_off = (lm.dim[2] - p3m.cao);
-  q_s_off = lm.dim[2] * (lm.dim[1] - p3m.cao);
-  
+
   /* === charge assignment === */
   force_prefac = coulomb.prefactor / (double)(p3m.mesh[0]*p3m.mesh[1]*p3m.mesh[2]);
-  inter2 = (p3m.inter*2)+1;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for(i = 0; i < np; i++) {
-      if( (q=p[i].p.q) != 0.0 ) {
-
-	/* charge assignment */
-	if (p3m.inter) {
-	  /* old, interpolating method */
-
-	  /* particle position in mesh coordinates */
-	  for(d=0;d<3;d++) {
-	    pos[d]   = ((p[i].r.p[d]-lm.ld_pos[d])*p3m.ai[d]) - pos_shift;
-	    first[d] = (int) pos[d];
-	    ca_fmp[(3*cp_cnt)+d] = first[d];
-	    arg[d]   = (int) ((pos[d]-first[d])*inter2);
-
-#ifdef ADDITIONAL_CHECKS
-	    if( pos[d]<0.0 ) {
-	      fprintf(stderr,"%d: rs_mesh underflow! (P%d at %f)\n",
-		      this_node,p[i].p.identity,p[i].r.p[d]);
-	      fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
-		      this_node,my_left[d],my_right[d]);	    
-	    }
-	    if( (first[d]+p3m.cao) > lm.dim[d] ) {
-	      fprintf(stderr,"%d: rs_mesh overflow! dir=%d (P_id=%d at %f) first=%d\n",
-		      this_node,d,p[i].p.identity,p[i].r.p[d],first[d]);
-	      fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
-		      this_node,my_left[d],my_right[d]);
-	    }    
-#endif
-	  }
-
-	  q_ind = first[2] + lm.dim[2]*(first[1] + (lm.dim[1]*first[0]));
-	  for(i0=0; i0<p3m.cao; i0++) {
-	    tmp0 = q * int_caf[i0][arg[0]];
-	    for(i1=0; i1<p3m.cao; i1++) {
-	      tmp1 = tmp0 * int_caf[i1][arg[1]];
-	      for(i2=0; i2<p3m.cao; i2++) {
-		ca_frac[cf_cnt] = tmp1 * int_caf[i2][arg[2]];
-		/*
-		  P3M_TRACE(fprintf(stderr,"%d Frac %d = %f add tp [%d,%d,%d] (%d)\n",
-		  this_node,cf_cnt,ca_frac[cf_cnt],
-		  first[0]+i0,first[1]+i1,first[2]+i2,q_ind));
-		*/
-		rs_mesh[q_ind++] += ca_frac[cf_cnt++];
-	      }
-	      q_ind += q_m_off;
-	    }
-	    q_ind += q_s_off;
-	  }
-	  cp_cnt++;
-	  if( (cp_cnt+1)>ca_num ) realloc_ca_fields(cp_cnt+1);
-	}
-	else {
-	  /* new, noninterpolating method */
-	  /* particle position in mesh coordinates */
-	  for(d=0;d<3;d++) {
-	    n_pos    = ((p[i].r.p[d]-lm.ld_pos[d])*p3m.ai[d]) - pos_shift;
-	    n_first  = (int) n_pos;
-	    n_arg[d] = n_pos - n_first;
-	    q_ind = (d == 0) ? n_first : n_first + lm.dim[d]*q_ind;
-	  }
-
-	  for(i0=0; i0<p3m.cao; i0++) {
-	    tmp0 = q * charge_assignment_function[p3m.cao][i0](n_arg[0]);
-	    for(i1=0; i1<p3m.cao; i1++) {
-	      tmp1 = tmp0 * charge_assignment_function[p3m.cao][i1](n_arg[1]);
-	      for(i2=0; i2<p3m.cao; i2++)
-		rs_mesh[q_ind++] += tmp1 * charge_assignment_function[p3m.cao][i2](n_arg[2]);
-	      q_ind += q_m_off;
-	    }
-	    q_ind += q_s_off;
-	  }
-	}
-      }
-    }
-  }
-  if(p3m.inter && (cp_cnt+CA_INCREMENT)<ca_num ) realloc_ca_fields(cp_cnt+CA_INCREMENT);
+  P3M_charge_assign();
 
   /* Gather information for FFT grid inside the nodes domain (inner local mesh) */
   gather_fft_grid();
@@ -1095,52 +1139,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
       /* redistribute force componenet mesh */
       spread_force_grid();
       /* Assign force component from mesh to particle */
-      cp_cnt=0; cf_cnt=0;
-      for (c = 0; c < local_cells.n; c++) {
-	cell = local_cells.cell[c];
-	p  = cell->part;
-	np = cell->n;
-	for(i=0; i<np; i++) { 
-	  if( (q=p[i].p.q) != 0.0 ) {
-	    if (p3m.inter) {
-	      /* old, interpolating method */
-	      q_ind = ca_fmp[(3*cp_cnt)+2] + lm.dim[2]*(ca_fmp[(3*cp_cnt)+1] + (lm.dim[1]*ca_fmp[(3*cp_cnt)+0]));
-	      for(i0=0; i0<p3m.cao; i0++) {
-		for(i1=0; i1<p3m.cao; i1++) {
-		  for(i2=0; i2<p3m.cao; i2++) {
-		    p[i].f.f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
-		    cf_cnt++;
-		  }
-		  q_ind += q_m_off;
-		}
-		q_ind += q_s_off;
-	      }
-	      cp_cnt++;
-	    }
-	    else {
-	      /* new, recalculating method */
-	      for(d=0;d<3;d++) {
-		n_pos    = ((p[i].r.p[d]-lm.ld_pos[d])*p3m.ai[d]) - pos_shift;
-		n_first  = (int) n_pos;
-		n_arg[d] = n_pos - n_first;
-		q_ind = (d == 0) ? n_first : n_first + lm.dim[d]*q_ind;
-	      }
-
-	      for(i0=0; i0<p3m.cao; i0++) {
-		tmp0 = q * charge_assignment_function[p3m.cao][i0](n_arg[0]);
-		for(i1=0; i1<p3m.cao; i1++) {
-		  tmp1 = tmp0 * charge_assignment_function[p3m.cao][i0](n_arg[1]);
-		  for(i2=0; i2<p3m.cao; i2++)
-		    p[i].f.f[d_rs] -= force_prefac*tmp1*charge_assignment_function[p3m.cao][i2](n_arg[2])*rs_mesh[q_ind++]; 
-		  q_ind += q_m_off;
-		}
-		q_ind += q_s_off;
-	      }
-	    }
-	    ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],d_rs,-db_fsum));
-	  }
-	}
-      }
+      P3M_assign_forces(force_prefac, d_rs);
     }
   }
 
@@ -1160,7 +1159,6 @@ void   P3M_exit()
   free(recv_grid);
   free(rs_mesh);
   free(ks_mesh); 
-  free(rs_mesh); 
   for(i=0; i<p3m.cao; i++) free(int_caf[i]);
 }
 
@@ -1442,7 +1440,7 @@ void realloc_ca_fields(int newsize)
     ca_num += incr;
     if(ca_num<CA_INCREMENT) ca_num = CA_INCREMENT;
     ca_frac = (double *)realloc(ca_frac, p3m.cao*p3m.cao*p3m.cao*ca_num*sizeof(double));
-    ca_fmp  = (int *)realloc(ca_fmp, 3*ca_num*sizeof(int));
+    ca_fmp  = (int *)realloc(ca_fmp, ca_num*sizeof(int));
   }
 }
 
@@ -1467,88 +1465,6 @@ void add_block(double *in, double *out, int start[3], int size[3], int dim[3])
       li_out += m_out_offset;
     }
     li_out += s_out_offset;
-  }
-}
-
-void interpolate_charge_assignment_function()
-{
-  /* REMARK: This function is taken unchanged from polysim9 by M. Deserno. */
-  double dInterpol=(double)p3m.inter, x;
-  long   i;
-
-  P3M_TRACE(fprintf(stderr,"%d - interpolating (%d) the order-%d charge assignment function\n",
-		    this_node,p3m.inter,p3m.cao));
-
-  for(i=0;i<p3m.cao;i++) 
-    int_caf[i] = (double *) realloc(int_caf[i], sizeof(double)*(2*p3m.inter+1));
-
-  switch (p3m.cao) {
-  case 1 : { 
-    for (i=-p3m.inter; i<=p3m.inter; i++) {
-      x=i/(2.0*dInterpol);
-      int_caf[0][i+p3m.inter] = 1.0;
-    }
-  } break;
-  case 2 : { 
-    for (i=-p3m.inter; i<=p3m.inter; i++) {
-      x=i/(2.0*dInterpol);
-      int_caf[0][i+p3m.inter] = 0.5-x;
-      int_caf[1][i+p3m.inter] = 0.5+x;
-    }
-  } break;
-  case 3 : { 
-    for (i=-p3m.inter; i<=p3m.inter; i++) {
-      x=i/(2.0*dInterpol);
-      int_caf[0][i+p3m.inter] = 0.5*SQR(0.5 - x);
-      int_caf[1][i+p3m.inter] = 0.75 - SQR(x);
-      int_caf[2][i+p3m.inter] = 0.5*SQR(0.5 + x);
-    }
-  } break;
-  case 4 :{ 
-    for (i=-p3m.inter; i<=p3m.inter; i++) {
-      x=i/(2.0*dInterpol);
-      int_caf[0][i+p3m.inter] = ( 1.0+x*( -6.0+x*( 12.0-x* 8.0)))/48.0;
-      int_caf[1][i+p3m.inter] = (23.0+x*(-30.0+x*(-12.0+x*24.0)))/48.0;
-      int_caf[2][i+p3m.inter] = (23.0+x*( 30.0+x*(-12.0-x*24.0)))/48.0;
-      int_caf[3][i+p3m.inter] = ( 1.0+x*(  6.0+x*( 12.0+x* 8.0)))/48.0;
-    }
-  } break;
-  case 5 : {
-    for (i=-p3m.inter; i<=p3m.inter; i++) {
-      x=i/(2.0*dInterpol);
-      int_caf[0][i+p3m.inter] = (  1.0+x*( -8.0+x*(  24.0+x*(-32.0+x*16.0))))/384.0;
-      int_caf[1][i+p3m.inter] = ( 19.0+x*(-44.0+x*(  24.0+x*( 16.0-x*16.0))))/ 96.0;
-      int_caf[2][i+p3m.inter] = (115.0+x*       x*(-120.0+x*       x*48.0))  /192.0;
-      int_caf[3][i+p3m.inter] = ( 19.0+x*( 44.0+x*(  24.0+x*(-16.0-x*16.0))))/ 96.0;
-      int_caf[4][i+p3m.inter] = (  1.0+x*(  8.0+x*(  24.0+x*( 32.0+x*16.0))))/384.0;
-    }
-  } break;
-  case 6 : {
-    for (i=-p3m.inter; i<=p3m.inter; i++) {
-      x=i/(2.0*dInterpol);
-      int_caf[0][i+p3m.inter] = (  1.0+x*( -10.0+x*(  40.0+x*( -80.0+x*(  80.0-x* 32.0)))))/3840.0;
-      int_caf[1][i+p3m.inter] = (237.0+x*(-750.0+x*( 840.0+x*(-240.0+x*(-240.0+x*160.0)))))/3840.0;
-      int_caf[2][i+p3m.inter] = (841.0+x*(-770.0+x*(-440.0+x*( 560.0+x*(  80.0-x*160.0)))))/1920.0;
-      int_caf[3][i+p3m.inter] = (841.0+x*(+770.0+x*(-440.0+x*(-560.0+x*(  80.0+x*160.0)))))/1920.0;
-      int_caf[4][i+p3m.inter] = (237.0+x*( 750.0+x*( 840.0+x*( 240.0+x*(-240.0-x*160.0)))))/3840.0;
-      int_caf[5][i+p3m.inter] = (  1.0+x*(  10.0+x*(  40.0+x*(  80.0+x*(  80.0+x* 32.0)))))/3840.0;
-    }
-  } break;
-  case 7 : {
-    for (i=-p3m.inter; i<=p3m.inter; i++) {
-      x=i/(2.0*dInterpol);
-      int_caf[0][i+p3m.inter] = (    1.0+x*(   -12.0+x*(   60.0+x*( -160.0+x*(  240.0+x*(-192.0+x* 64.0))))))/46080.0;
-      int_caf[1][i+p3m.inter] = (  361.0+x*( -1416.0+x*( 2220.0+x*(-1600.0+x*(  240.0+x*( 384.0-x*192.0))))))/23040.0;
-      int_caf[2][i+p3m.inter] = (10543.0+x*(-17340.0+x*( 4740.0+x*( 6880.0+x*(-4080.0+x*(-960.0+x*960.0))))))/46080.0;
-      int_caf[3][i+p3m.inter] = ( 5887.0+x*          x*(-4620.0+x*         x*( 1680.0-x*        x*320.0)))   /11520.0;
-      int_caf[4][i+p3m.inter] = (10543.0+x*( 17340.0+x*( 4740.0+x*(-6880.0+x*(-4080.0+x*( 960.0+x*960.0))))))/46080.0;
-      int_caf[5][i+p3m.inter] = (  361.0+x*(  1416.0+x*( 2220.0+x*( 1600.0+x*(  240.0+x*(-384.0-x*192.0))))))/23040.0;
-      int_caf[6][i+p3m.inter] = (    1.0+x*(    12.0+x*(   60.0+x*(  160.0+x*(  240.0+x*( 192.0+x* 64.0))))))/46080.0;
-    }
-  } break;
-  default :{
-    fprintf(stderr,"%d: Charge assignment order %d unknown.\n",this_node,p3m.cao);
-  }
   }
 }
 
@@ -1976,16 +1892,23 @@ static double p3m_m_time(Tcl_Interp *interp, int mesh,
   /* the initial step sets a timing mark. If there is no valid r_cut, we can only try
      to increase cao to increase the obtainable precision of the far formula. */
   do {
-    best_time = p3m_mc_time(interp, mesh, cao,  r_cut_iL_min, r_cut_iL_max, _r_cut_iL, _alpha_L, _accuracy);
+    tmp_time = p3m_mc_time(interp, mesh, cao,  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out if the force evaluation is not working */
-    if (best_time == -1) return -1;
+    if (tmp_time == -1) return -1;
     /* cao is too large for this grid, but still the accuracy cannot be achieved, give up */
-    if (best_time == -3) {
+    if (tmp_time == -3) {
       P3M_TRACE(fprintf(stderr, "p3m_m_time: no possible cao found\n"));
       return -2;
     }
     /* we have a valid time, start optimising from there */
-    if (best_time >= 0) break;
+    if (tmp_time >= 0) {
+      best_time  = tmp_time;
+      *_r_cut_iL = tmp_r_cut_iL;
+      *_alpha_L  = tmp_alpha_L;
+      *_accuracy = tmp_accuracy;
+      *_cao      = cao;
+      break;
+    }
     /* the required accuracy could not be obtained, try higher caos. Therefore optimisation can only be
        obtained with even higher caos, but not lower ones */
     P3M_TRACE(fprintf(stderr, "p3m_m_time: doesn't give precision, step up\n"));
@@ -1994,7 +1917,7 @@ static double p3m_m_time(Tcl_Interp *interp, int mesh,
   }
   while (cao <= cao_max);
   /* with this mesh, the required accuracy cannot be obtained. */
-  if (best_time < 0) return -2;
+  if (cao > cao_max) return -2;
 
   /* at the boundaries, only the opposite direction can be used for optimisation */
   if (cao == cao_min)      final_dir = 1;
@@ -2007,12 +1930,12 @@ static double p3m_m_time(Tcl_Interp *interp, int mesh,
     double dir_times[3];
     for (final_dir = -1; final_dir <= 1; final_dir += 2) {
       dir_times[final_dir + 1] = tmp_time =
-	p3m_mc_time(interp, mesh, cao + final_dir,  r_cut_iL_min, r_cut_iL_max,
-		    &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+	p3m_mc_time(interp, mesh, cao + final_dir,  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
       /* bail out on errors, as usual */
       if (tmp_time == -1) return -1;
       /* in this direction, we cannot optimise, since we get into precision trouble */
       if (tmp_time < 0) continue;
+
       if (tmp_time < best_time) {
 	best_time  = tmp_time;
 	*_r_cut_iL = tmp_r_cut_iL;
@@ -2070,7 +1993,7 @@ static double p3m_m_time(Tcl_Interp *interp, int mesh,
     else if (tmp_time > best_time + P3M_TIME_GRAN)
       break;
   }
-  P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=%d final cao=%d time=%f\n",mesh, *_cao, best_time));
+  P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=%d final cao=%d r_cut=%f time=%f\n",mesh, *_cao, *_r_cut_iL, best_time));
   return best_time;
 }
 
@@ -2128,14 +2051,14 @@ int P3M_adaptive_tune_parameters(Tcl_Interp *interp)
   if(p3m.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
     r_cut_iL_max = min_local_box_l/2 - skin;
+    r_cut_iL_min *= box_l_i[0];
+    r_cut_iL_max *= box_l_i[0];
   }
   else {
     sprintf(b1, "%f", p3m.r_cut_iL);
     Tcl_AppendResult(interp, "fixed r_cut_iL ", b1, "\n", (char *)NULL);
     r_cut_iL_min = r_cut_iL_max = p3m.r_cut_iL;
   }
-  r_cut_iL_min *= box_l_i[0];
-  r_cut_iL_max *= box_l_i[0];
 
   if(p3m.cao == 0) {
     cao_min = 1;
@@ -2160,7 +2083,7 @@ int P3M_adaptive_tune_parameters(Tcl_Interp *interp)
     /* some error occured during the tuning force evaluation */
     if (tmp_time == -1) return TCL_ERROR;
     /* this mesh does not work at all */
-    if (tmp_time == -2) continue;
+    if (tmp_time < 0) continue;
 
     /* the optimum r_cut for this mesh is the upper limit for higher meshes,
        everything else is slower */

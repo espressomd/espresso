@@ -396,14 +396,18 @@
 		     described in the documentation of \ref
 		     P3M_tune_parameters rsp \ref P3M_adaptive_tune_parameters.
 
+		     The two tuning methods follow different methods for determining the optimal parameter. While the tune version
+		     simply tries out different values on a grid in the parameter space, the tunev2 version uses a bisection to
+		     determine the optimal parameters. In general, for small systems the tune version is faster, while for large
+		     systems tunev2 is faster. The results of tunev2 are always at least as good as the parameters achievable from
+		     the tune version, and normally the obtained accuracy is much closer to the desired value.
+
 		     Some additional p3m parameters have preset values:
 		     \verbatim epsilon = metallic \endverbatim 
 		     The dielectric constant of the surrounding medium, metallic (i.e.infinity) or some finite
 	             positive number.
 		     \verbatim n_interpol = 32768 \endverbatim 
-		     Number of interpolation points for the charge assignment function. If this is zero, then
-		     no interpolation takes place. For modern computers, in general it is faster to not interpolate
-		     up to a cao of 4, and only for caos larger than 5 interpolation is notably faster.
+		     Number of interpolation points for the charge assignment function.
 		     \verbatim mesh_off = 0.5 0.5 0.5 \endverbatim 
 		     Offset of the first mesh point from the lower left corner of the simulation box
 		     in units of the mesh constan.
