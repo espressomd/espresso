@@ -628,6 +628,7 @@ void propagate_press_box_pos_and_rescale_npt()
         sprintf(errtxt, "{your choice of piston=%f, dt=%f, p_diff=%f just caused the volume to become negative, decrease dt} ",
                 nptiso.piston,time_step,nptiso.p_diff);
 	nptiso.volume = box_l[0]*box_l[1]*box_l[2];
+	scal[2] = 1;
       }
 
       L_new = pow(nptiso.volume,1.0/nptiso.dimension);
