@@ -57,6 +57,54 @@
  */
 #include "particle_data.h"
 
+/** \name Defines */
+/************************************************************/
+/*@{*/
+
+#define GHOST_SEND 0
+#define GHOST_RECV 1
+#define GHOST_BCST 2
+#define GHOST_GATH 3
+#define GHOST_RDCE 4
+
+/*@}*/
+
+/** \name Data Types */
+/************************************************************/
+/*@{*/
+
+typedef struct {
+
+  /* Communication type. */
+  int type;
+  /* Node to communicate with (to use with GHOST_SEND, GHOST_RECV). */
+  int node;
+  /* MPI communicator handle (to use with GHOST_BCST, GHOST_GATH, GHOST_RDCE). */
+  int mpi_comm;
+
+  /* Number of cells to communicate. */
+  int n_cells;
+  /* Pointer array to cells to communicate. */
+  Cell **cells;
+
+} GhostCommunication;
+
+/** Properties for a ghost communication. A ghost communication is defined */
+typedef struct {
+
+  /* Ghost communication routine to use. */
+  void (*comm_routine)();
+
+  /* number of communication steps. */
+  int num;
+
+  /* List of ghost communications. */
+  GhostCommunication *comm;
+
+} GhostCommunicator;
+
+/*@}*/
+
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
@@ -95,7 +143,7 @@ void ghost_init();
  *      <li> Particles which have left their cell have to be moved to their new cell.
  *      <li> Particles which have left the local box have to be send to the
  *           corresponding new node befor e.g. a new verlet list can be built.
- *      <li> Fold particle positions if the simulation box boundary has benn crossed.
+ *      <li> Fold particle positions if the simulation box boundary has been crossed.
  *  </ul>
  * 
  *  Procedur:
