@@ -758,7 +758,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
        This is a problem with the blockfile format (Mehmet) 
     */
 
-    if (argc < 5 || argc > 7) {
+    if (argc < 5 || argc > 8) {
       Tcl_AppendResult(interp, "lj-cos needs 4 parameters: "
 		       "<ljcos_eps> <ljcos_sig> <ljcos_cut> <ljcos_offset>",
 		       (char *) NULL);
