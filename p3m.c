@@ -78,7 +78,7 @@ p3m_struct p3m = { 0.0, 0.0, 0.0,
 		   {0.0,0.0,0.0}, {0.0,0.0,0.0}, {0.0,0.0,0.0} };
 
 /** number of charged particles (only on master node). */
-int p3m_sum_qpart;
+int p3m_sum_qpart=0;
 /** Sum of square of charges (only on master node). */
 double p3m_sum_q2 = 0.0;
 /** square of sum of charges (only on master node). */
@@ -251,7 +251,11 @@ void   P3M_init()
 
     P3M_TRACE(fprintf(stderr,"%d: mesh=%d, cao=%d, mesh_off=(%f,%f,%f)\n",this_node,p3m.mesh[0],p3m.cao,p3m.mesh_off[0],p3m.mesh_off[1],p3m.mesh_off[2]));
 
-    p3m.prefactor = p3m.bjerrum * temperature; 
+    if(temperature > 0.0) 
+      p3m.prefactor = p3m.bjerrum * temperature; 
+    else
+      p3m.prefactor = p3m.bjerrum;
+
     p3m.r_cut2    = p3m.r_cut*p3m.r_cut;
     for(i=0;i<3;i++) {
       p3m.ai[i]      = (double)p3m.mesh[i]/box_l[i]; 
@@ -305,6 +309,7 @@ void   P3M_init()
     calc_influence_function();
 
 
+    P3M_count_charged_particles();
 
     P3M_TRACE(fprintf(stderr,"%d: p3m initialized\n",this_node));
   }
@@ -964,8 +969,6 @@ MDINLINE double perform_aliasing_sums(int n[3], double nominator[3])
 int P3M_tune_parameters(void)
 {
   int i;
-  int n_cpart;
-  double sum_q2;
   double r_cut, r_cut_min, r_cut_max;
   int    mesh , mesh_min , mesh_max;
   int    cao  , cao_min  , cao_max;
@@ -973,8 +976,7 @@ int P3M_tune_parameters(void)
  
   P3M_TRACE(fprintf(stderr,"%d: P3M_tune_parameters\n",this_node)); 
   
-  P3M_count_charged_particles(&n_cpart, &sum_q2);
-  P3M_TRACE(fprintf(stderr,"%d: ncpart=%d sum_q2=%f\n",this_node,n_cpart,sum_q2)); 
+  P3M_count_charged_particles();
 
   /* calculate possible parameter range */
   if(p3m.r_cut == 0.0) { r_cut_min = 0.0; r_cut_max = min_box_l-skin; }
@@ -982,7 +984,7 @@ int P3M_tune_parameters(void)
 
   if(p3m.mesh[0] == 0 ) {
     double expo;
-    expo = log(pow((double)n_cpart,(1.0/3.0)))/log(2.0);
+    expo = log(pow((double)p3m_sum_qpart,(1.0/3.0)))/log(2.0);
     mesh_min = (int)(pow(2.0,(double)((int)expo))+0.1);
     mesh_max*=2;
     if(mesh_min < 8) { mesh_min = mesh_max = 8; }
