@@ -76,86 +76,37 @@ proc write_data {file} {
 
 
 if { [catch {
-    read_data "comfixed_system.data"
-
-    for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-	set F($i) [part $i pr f]
-    }
     # to ensure force recalculation
     invalidate_system
 
     ############## comfixed-specific part
 
+    setmd box_l 10. 10. 10.
+    setmd skin  0.5
+    setmd time_step 0.005
+    setmd periodic  0 0 0
+    setmd gamma     1.0
+    setmd temp      1.0
+
     inter 0 0 lennard-jones 1.0 1.0 1.12246 0.25 0.0
-    inter 1 1 lennard-jones 1.3 0.5 2 0.0 0.0
-    inter 0 1 lennard-jones 2.2 1.0 1.12246 0.0 0.5
+    constraint sphere center 5. 5. 5.  radius 4. type 5
+    inter 0 5 lennard-jones 1.0 1.0 1.12246 0.25 0 0
     inter 0 0 comfixed 1
-    integrate 0
 
-    # here you can create the necessary snapshot
-    # write_data "comfixed_system.data"
+    part 0 pos 5 5 5 type 0
+    part 1 pos 6 5 5 type 0
+    part 2 pos 6 6 4 type 0
+    part 3 pos 4 5 7 type 0
 
-    # ensures that no other forces are on
-    set cureng [expr [analyze   energy nonbonded 0 0] + [analyze   energy nonbonded 0 1] + [analyze   energy nonbonded 1 1]]
-    set curprs [expr [analyze pressure nonbonded 0 0] + [analyze pressure nonbonded 0 1] + [analyze pressure nonbonded 1 1]]
+    set com_ini [analyze centermass 0]
+    integrate 100
+    set com_fin [analyze centermass 0]
+    set com_dist [bond_length $com_ini $com_fin]
 
-    ############## end
-
-    set toteng [analyze energy total]
-    set totprs [analyze pressure total]
-
-    if { [expr abs($toteng - $cureng)] > $epsilon } {
-	error "system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"
-    }
-    if { [expr abs($totprs - $curprs)] > $epsilon } {
-	error "system has unwanted pressure contributions of [format %e [expr $totprs - $curprs]]"
+    if { $com_dist > $epsilon } {
+	error "center of mass of particles has moved $com_dist"
     }
 
-    set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
-    puts "relative energy deviations: $rel_eng_error"
-    if { $rel_eng_error > $epsilon } {
-	error "relative energy error too large"
-    }
-
-    set rel_prs_error [expr abs(($totprs - $pressure)/$pressure)]
-    puts "relative pressure deviations: $rel_prs_error"
-    if { $rel_prs_error > $epsilon } {
-	error "relative pressure error too large"
-    }
-
-    set maxdx 0
-    set maxpx 0
-    set maxdy 0
-    set maxpy 0
-    set maxdz 0
-    set maxpz 0
-    for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-	set resF [part $i pr f]
-	set tgtF $F($i)
-	set dx [expr abs([lindex $resF 0] - [lindex $tgtF 0])]
-	set dy [expr abs([lindex $resF 1] - [lindex $tgtF 1])]
-	set dz [expr abs([lindex $resF 2] - [lindex $tgtF 2])]
-
-	if { $dx > $maxdx} {
-	    set maxdx $dx
-	    set maxpx $i
-	}
-	if { $dy > $maxdy} {
-	    set maxdy $dy
-	    set maxpy $i
-	}
-	if { $dz > $maxdz} {
-	    set maxdz $dz
-	    set maxpz $i
-	}
-    }
-    puts "maximal force deviation in x $maxdx for particle $maxpx, in y $maxdy for particle $maxpy, in z $maxdz for particle $maxpz"
-    if { $maxdx > $epsilon || $maxdy > $epsilon || $maxdz > $epsilon } {
-	if { $maxdx > $epsilon} {puts "force of particle $maxpx: [part $maxpx pr f] != $F($maxpx)"}
-	if { $maxdy > $epsilon} {puts "force of particle $maxpy: [part $maxpy pr f] != $F($maxpy)"}
-	if { $maxdz > $epsilon} {puts "force of particle $maxpz: [part $maxpz pr f] != $F($maxpz)"}
-	error "force error too large"
-    }
 } res ] } {
     error_exit $res
 }

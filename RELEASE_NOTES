@@ -15,6 +15,7 @@ Current working revision.
 (b) January  11th, 2005.
 (c) January  15th, 2005.
 (d) January  20th, 2005.
+(e) January  25th, 2005.
 
 New Features:
 (a) Added new analysis routine
@@ -33,6 +34,7 @@ Bugfixes:
 (c) Fixed a rare event bug in tunev2 which could result in wrong parameter sets.
 (d) P3M now honours changes to the skin
 (d) Fixed the additional checks in P3M to contain the skin
+(e) Fixed comfixed.tcl test suite script. Now it actually integrates and checks if comfixed is really working.
 
 - v1.8.2i -
 -----------
