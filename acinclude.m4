@@ -75,9 +75,13 @@ AC_DEFUN([ES_CHECK_EFENCE],[
 
 AC_DEFUN([ES_CHECK_MPI],[
 	AC_ARG_ENABLE(mpi,AC_HELP_STRING(--enable-mpi=<type>,[compile with MPI (parallelization) support
-	if you specify <type>=lam,mpich, the corresponding MPI implementation will used,
-	otherwise the native environment of the platform is used]),,enable_mpi=yes)
-	if test $enable_mpi = no; then
+	if you specify <type>=fake,lam,mpich,poe or dmpi, the corresponding MPI implementation will used,
+	otherwise the native environment of the platform is used. If
+	none is found, the fake implementation for only one processor
+	is used]),,enable_mpi=yes)
+	if test $enable_mpi = fake; then
+		MPI_SETUP_FAKE
+	elif test $enable_mpi = no; then
 		enable_mpi=fake
 		MPI_SETUP_FAKE
 	else

@@ -829,9 +829,11 @@ Optional Features:
                           (Garching Blade Center), psi (Garching Regattas),
                           thalpha (DEC Alphas at MPIP)
   --enable-mpi=<type>     compile with MPI (parallelization) support if you
-                          specify <type>=lam,mpich, the corresponding MPI
-                          implementation will used, otherwise the native
-                          environment of the platform is used
+                          specify <type>=fake,lam,mpich,poe or dmpi, the
+                          corresponding MPI implementation will used,
+                          otherwise the native environment of the platform is
+                          used. If none is found, the fake implementation for
+                          only one processor is used
   --enable-efence         use ElectricFence memory debugging for the debug
                           binary
   --enable-xlc-qipa       enable the IPA of the xlc at linking
@@ -1273,7 +1275,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-time_stamp="March 15th, 2005"
+time_stamp="March 25th, 2005"
 
 if test .$CC != .; then	user_defined_CC=yes; fi
 if test .$CFLAGS != .; then user_defined_CFLAGS=yes; fi
@@ -2321,7 +2323,17 @@ if test "${enable_mpi+set}" = set; then
 else
   enable_mpi=yes
 fi;
-	if test $enable_mpi = no; then
+	if test $enable_mpi = fake; then
+
+	CFLAGS="$CFLAGS -I."
+	cat >>confdefs.h <<\_ACEOF
+#define MPI "fake"
+_ACEOF
+
+	ADD_SOURCES="$ADD_SOURCES mpi"
+	MPI_INVOCATION="\$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+
+	elif test $enable_mpi = no; then
 		enable_mpi=fake
 
 	CFLAGS="$CFLAGS -I."
@@ -2340,7 +2352,8 @@ _ACEOF
 		fi
 		if test $enable_mpi = yes; then
 
-	case $target_os in
+	enable_mpi=guess
+		case $target_os in
 	*aix*)
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
@@ -2455,6 +2468,7 @@ echo "${ECHO_T}no" >&6; mpicc_works=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 
+		mpicc_done=y
 
 	poe_found=yes
 	if test .$mpicc_works != .yes; then
@@ -2510,16 +2524,7 @@ _ACEOF
 		MPI_INVOCATION="$poe_bin \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@ -procs @NP@"
 	fi
 
-		if test .$poe_found = .yes; then enable_mpi=poe
-		else
-			{ { echo "$as_me:$LINENO: error: could not find the poe environment, please specify the type and
-				the compiler or includes/libraries of your MPI implementation manually,
-				or, even better, add your MPI environment to config/mpi.m4" >&5
-echo "$as_me: error: could not find the poe environment, please specify the type and
-				the compiler or includes/libraries of your MPI implementation manually,
-				or, even better, add your MPI environment to config/mpi.m4" >&2;}
-   { (exit 1); exit 1; }; }
-		fi
+		if test .$poe_found = .yes; then enable_mpi=poe; fi
 		;;
 	*osf*)
 	saved_libs=$LIBS
@@ -2642,18 +2647,12 @@ _ACEOF
 		MPI_INVOCATION="$dmpi_bin -np @NP@ \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
 	fi
 
-		if test .$dmpi_found = .yes; then enable_mpi=mpich
-		else
-			{ { echo "$as_me:$LINENO: error: could not find the Compaq MPI environment, please specify the type and
-				the compiler or includes/libraries of your MPI implementation manually,
-				or, even better, add your MPI environment to config/mpi.m4" >&5
-echo "$as_me: error: could not find the Compaq MPI environment, please specify the type and
-				the compiler or includes/libraries of your MPI implementation manually,
-				or, even better, add your MPI environment to config/mpi.m4" >&2;}
-   { (exit 1); exit 1; }; }
-		fi
+		if test .$dmpi_found = .yes; then enable_mpi=dmpi; fi
 		;;
-	*)			saved_CC=$CC
+	esac
+
+	if test .$enable_mpi = .guess; then
+				if test .$mpicc_done = .; then
 
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
@@ -2768,6 +2767,7 @@ echo "${ECHO_T}no" >&6; mpicc_works=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 
+		fi
 
 	{ echo "$as_me:$LINENO: trying to find a LAM environment" >&5
 echo "$as_me: trying to find a LAM environment" >&6;}
@@ -3013,9 +3013,10 @@ _ACEOF
 echo "$as_me: found a working LAM environment" >&6;}
 	fi
 
-		if test .$lam_found = .yes; then enable_mpi=lam
-		else
-			CC=$saved_CC
+		if test .$lam_found = .yes; then enable_mpi=lam; fi
+	fi
+
+	if test .$enable_mpi = .guess; then
 
 	{ echo "$as_me:$LINENO: trying to find a MPICH environment" >&5
 echo "$as_me: trying to find a MPICH environment" >&6;}
@@ -3275,24 +3276,37 @@ _ACEOF
 echo "$as_me: found a working MPICH environment" >&6;}
 	fi
 
-			if test .$mpich_found = .yes; then enable_mpi=mpich
-			else
-				{ { echo "$as_me:$LINENO: error: could neither detect LAM nor MPICH, please specify the type and
-					the compiler or includes/libraries of your MPI implementation manually,
-					or, even better, add your MPI environment to config/mpi.m4" >&5
-echo "$as_me: error: could neither detect LAM nor MPICH, please specify the type and
-					the compiler or includes/libraries of your MPI implementation manually,
-					or, even better, add your MPI environment to config/mpi.m4" >&2;}
-   { (exit 1); exit 1; }; }
-			fi
-		fi
-		;;
-	esac
+		if test .$mpich_found = .yes; then enable_mpi=mpich; fi
+	fi
+
+		if test .$enable_mpi = .guess; then
+		{ echo "$as_me:$LINENO: WARNING: could neither detect LAM nor MPICH nor a native MPI environment,
+			using the FAKE implementation for one processor only.
+			If you have an MPI environment, please specify its type and
+			the compiler or includes/libraries of your MPI implementation manually,
+			or, even better, add your MPI environment to config/mpi.m4" >&5
+echo "$as_me: WARNING: could neither detect LAM nor MPICH nor a native MPI environment,
+			using the FAKE implementation for one processor only.
+			If you have an MPI environment, please specify its type and
+			the compiler or includes/libraries of your MPI implementation manually,
+			or, even better, add your MPI environment to config/mpi.m4" >&2;}
+		enable_mpi=fake
+
+	CFLAGS="$CFLAGS -I."
+	cat >>confdefs.h <<\_ACEOF
+#define MPI "fake"
+_ACEOF
+
+	ADD_SOURCES="$ADD_SOURCES mpi"
+	MPI_INVOCATION="\$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+
+	fi
 
 		else
 
 	if test .$enable_mpi = .; then
-	case $target_os in
+	enable_mpi=guess
+		case $target_os in
 	*aix*)
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
@@ -3407,6 +3421,7 @@ echo "${ECHO_T}no" >&6; mpicc_works=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 
+		mpicc_done=y
 
 	poe_found=yes
 	if test .$mpicc_works != .yes; then
@@ -3462,16 +3477,7 @@ _ACEOF
 		MPI_INVOCATION="$poe_bin \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@ -procs @NP@"
 	fi
 
-		if test .$poe_found = .yes; then enable_mpi=poe
-		else
-			{ { echo "$as_me:$LINENO: error: could not find the poe environment, please specify the type and
-				the compiler or includes/libraries of your MPI implementation manually,
-				or, even better, add your MPI environment to config/mpi.m4" >&5
-echo "$as_me: error: could not find the poe environment, please specify the type and
-				the compiler or includes/libraries of your MPI implementation manually,
-				or, even better, add your MPI environment to config/mpi.m4" >&2;}
-   { (exit 1); exit 1; }; }
-		fi
+		if test .$poe_found = .yes; then enable_mpi=poe; fi
 		;;
 	*osf*)
 	saved_libs=$LIBS
@@ -3594,18 +3600,12 @@ _ACEOF
 		MPI_INVOCATION="$dmpi_bin -np @NP@ \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
 	fi
 
-		if test .$dmpi_found = .yes; then enable_mpi=mpich
-		else
-			{ { echo "$as_me:$LINENO: error: could not find the Compaq MPI environment, please specify the type and
-				the compiler or includes/libraries of your MPI implementation manually,
-				or, even better, add your MPI environment to config/mpi.m4" >&5
-echo "$as_me: error: could not find the Compaq MPI environment, please specify the type and
-				the compiler or includes/libraries of your MPI implementation manually,
-				or, even better, add your MPI environment to config/mpi.m4" >&2;}
-   { (exit 1); exit 1; }; }
-		fi
+		if test .$dmpi_found = .yes; then enable_mpi=dmpi; fi
 		;;
-	*)			saved_CC=$CC
+	esac
+
+	if test .$enable_mpi = .guess; then
+				if test .$mpicc_done = .; then
 
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
@@ -3720,6 +3720,7 @@ echo "${ECHO_T}no" >&6; mpicc_works=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 
+		fi
 
 	{ echo "$as_me:$LINENO: trying to find a LAM environment" >&5
 echo "$as_me: trying to find a LAM environment" >&6;}
@@ -3965,9 +3966,10 @@ _ACEOF
 echo "$as_me: found a working LAM environment" >&6;}
 	fi
 
-		if test .$lam_found = .yes; then enable_mpi=lam
-		else
-			CC=$saved_CC
+		if test .$lam_found = .yes; then enable_mpi=lam; fi
+	fi
+
+	if test .$enable_mpi = .guess; then
 
 	{ echo "$as_me:$LINENO: trying to find a MPICH environment" >&5
 echo "$as_me: trying to find a MPICH environment" >&6;}
@@ -4227,19 +4229,31 @@ _ACEOF
 echo "$as_me: found a working MPICH environment" >&6;}
 	fi
 
-			if test .$mpich_found = .yes; then enable_mpi=mpich
-			else
-				{ { echo "$as_me:$LINENO: error: could neither detect LAM nor MPICH, please specify the type and
-					the compiler or includes/libraries of your MPI implementation manually,
-					or, even better, add your MPI environment to config/mpi.m4" >&5
-echo "$as_me: error: could neither detect LAM nor MPICH, please specify the type and
-					the compiler or includes/libraries of your MPI implementation manually,
-					or, even better, add your MPI environment to config/mpi.m4" >&2;}
-   { (exit 1); exit 1; }; }
-			fi
-		fi
-		;;
-	esac
+		if test .$mpich_found = .yes; then enable_mpi=mpich; fi
+	fi
+
+		if test .$enable_mpi = .guess; then
+		{ echo "$as_me:$LINENO: WARNING: could neither detect LAM nor MPICH nor a native MPI environment,
+			using the FAKE implementation for one processor only.
+			If you have an MPI environment, please specify its type and
+			the compiler or includes/libraries of your MPI implementation manually,
+			or, even better, add your MPI environment to config/mpi.m4" >&5
+echo "$as_me: WARNING: could neither detect LAM nor MPICH nor a native MPI environment,
+			using the FAKE implementation for one processor only.
+			If you have an MPI environment, please specify its type and
+			the compiler or includes/libraries of your MPI implementation manually,
+			or, even better, add your MPI environment to config/mpi.m4" >&2;}
+		enable_mpi=fake
+
+	CFLAGS="$CFLAGS -I."
+	cat >>confdefs.h <<\_ACEOF
+#define MPI "fake"
+_ACEOF
+
+	ADD_SOURCES="$ADD_SOURCES mpi"
+	MPI_INVOCATION="\$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+
+	fi
 
 	else
 		case $enable_mpi in
@@ -5370,8 +5384,8 @@ echo "${ECHO_T}$compiler_type" >&6
 	Power)		type=pwr; cpu=power ;;
 	Power2)		type=pwr; cpu=power2 ;;
 	Power*)		type=pwr; cpu=powerpc ;;
-	powerpc)	case $target_os in
-			*darwin*)	type=pwr; cpu=970; altivec=yes ;;
+	ppc*)		case $target_os in
+			*darwin*)	type=pwr; cpu=$target_cpu; altivec=yes ;;
 			*)		type=pwr; cpu=powerpc;
 			esac ;;
 	EV67*)		type=alpha; cpu=ev67 ;;
@@ -6713,7 +6727,7 @@ rm -f conftest.$ac_objext conftest.$ac_ext
 	Power2)		cpu=pwr2 ;;
 	Power3)		cpu=pwr3 ;;
 	Power4)		cpu=pwr4 ;;
-	powerpc)	cpu=auto ;;
+	ppc*)		cpu=auto ;;
 	*)	{ echo "$as_me:$LINENO: WARNING: could not recognize your cpu type, relying on generic optimization" >&5
 echo "$as_me: WARNING: could not recognize your cpu type, relying on generic optimization" >&2;}
 	esac

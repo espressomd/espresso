@@ -4,7 +4,7 @@
 
 AC_PREREQ(2.50)
 AC_INIT(ESPResSo, [v1.8.6e (Rebi & Azan)], espresso@mpip-mainz.mpg.de)
-time_stamp="March 15th, 2005"
+time_stamp="March 25th, 2005"
 
 if test .$CC != .; then	user_defined_CC=yes; fi
 if test .$CFLAGS != .; then user_defined_CFLAGS=yes; fi

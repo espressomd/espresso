@@ -90,8 +90,8 @@ AC_DEFUN([CF_CHECK_GCC_FLAGS],[
 	Power)		type=pwr; cpu=power ;;
 	Power2)		type=pwr; cpu=power2 ;;
 	Power*)		type=pwr; cpu=powerpc ;;
-	powerpc)	case $target_os in
-			*darwin*)	type=pwr; cpu=970; altivec=yes ;;
+	ppc*)		case $target_os in
+			*darwin*)	type=pwr; cpu=$target_cpu; altivec=yes ;;
 			*)		type=pwr; cpu=powerpc;
 			esac ;;
 	EV67*)		type=alpha; cpu=ev67 ;;
@@ -187,7 +187,7 @@ AC_DEFUN([CF_CHECK_XLC_FLAGS],[
 	Power2)		cpu=pwr2 ;;
 	Power3)		cpu=pwr3 ;;
 	Power4)		cpu=pwr4 ;;
-	powerpc)	cpu=auto ;;
+	ppc*)		cpu=auto ;;
 	*)	AC_MSG_WARN([could not recognize your cpu type, relying on generic optimization])
 	esac
 	if test .$cpu != .; then

@@ -21,41 +21,43 @@ AC_DEFUN([MPI_SETUP],[
 ])
 
 AC_DEFUN([MPI_GUESS_ENV],[
+	enable_mpi=guess
+	dnl look for special implementations
 	case $target_os in
 	*aix*)	MPI_FIND_MPICC
+		mpicc_done=y
 		MPI_FIND_POE
-		if test .$poe_found = .yes; then enable_mpi=poe
-		else
-			AC_MSG_ERROR([could not find the poe environment, please specify the type and
-				the compiler or includes/libraries of your MPI implementation manually,
-				or, even better, add your MPI environment to config/mpi.m4])
-		fi
+		if test .$poe_found = .yes; then enable_mpi=poe; fi
 		;;
 	*osf*)	MPI_FIND_DMPI
-		if test .$dmpi_found = .yes; then enable_mpi=mpich
-		else
-			AC_MSG_ERROR([could not find the Compaq MPI environment, please specify the type and
-				the compiler or includes/libraries of your MPI implementation manually,
-				or, even better, add your MPI environment to config/mpi.m4])
-		fi
-		;;
-	*)	dnl MPICH doesn't have one, and if it doesn't work, rather skip it
-		saved_CC=$CC
-		MPI_FIND_MPICC
-		MPI_FIND_LAM
-		if test .$lam_found = .yes; then enable_mpi=lam
-		else
-			CC=$saved_CC
-			MPI_FIND_MPICH
-			if test .$mpich_found = .yes; then enable_mpi=mpich
-			else
-				AC_MSG_ERROR([could neither detect LAM nor MPICH, please specify the type and
-					the compiler or includes/libraries of your MPI implementation manually,
-					or, even better, add your MPI environment to config/mpi.m4])
-			fi
-		fi
+		if test .$dmpi_found = .yes; then enable_mpi=dmpi; fi
 		;;
 	esac
+
+	if test .$enable_mpi = .guess; then
+		dnl always check for LAM/MPI and MPICH, as they are multiplatform
+		if test .$mpicc_done = .; then
+			MPI_FIND_MPICC
+		fi
+		MPI_FIND_LAM
+		if test .$lam_found = .yes; then enable_mpi=lam; fi
+	fi
+
+	if test .$enable_mpi = .guess; then
+		MPI_FIND_MPICH
+		if test .$mpich_found = .yes; then enable_mpi=mpich; fi
+	fi
+
+	dnl out of guesses
+	if test .$enable_mpi = .guess; then
+		AC_MSG_WARN([could neither detect LAM nor MPICH nor a native MPI environment,
+			using the FAKE implementation for one processor only.
+			If you have an MPI environment, please specify its type and
+			the compiler or includes/libraries of your MPI implementation manually,
+			or, even better, add your MPI environment to config/mpi.m4])
+		enable_mpi=fake
+		MPI_SETUP_FAKE
+	fi
 ])
 
 AC_DEFUN([MPI_SETUP_FAKE],[

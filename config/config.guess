@@ -6,7 +6,7 @@ case $system in
 Linux)
     # determines the type of CPU 0
     MODEL=`awk '/\\\`model name/ { \
-	if ($4 == "Pentium") { if ($5 != "") print $4"-"$5; else print $4; } \
+	if ($4 == "Pentium") { if ($5 != "") print $4"_"$5; else print $4; } \
 	else if ($4 == "AMD" && $5 == "Opteron(tm)")   print "Opteron"; \
 	else if ($4 == "Intel(R)" && $5 == "Xeon(TM)") print "Xeon"; \
 	else { \
@@ -38,7 +38,8 @@ AIX)
     echo $MODEL-ibm-aix5.2
     ;;
 Darwin)
-    echo `uname -p | sed -e s/\ /_/ -e s/\-/_/`-apple-darwin`uname -r`
+    MODEL=`hostinfo | awk '/^Processor type/ { print $3}'`
+    echo $MODEL-apple-darwin`uname -r`
     ;;
 *)
     echo `uname -p | sed -e s/\ /_/ -e s/\-/_/`-unknown-`uname -s | sed -e s/\ /_/ -e s/\-/_/`
