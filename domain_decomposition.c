@@ -485,24 +485,77 @@ int dd_append_particles(ParticleList *pl, int fold_dir)
 
 #ifdef NPT
 void dd_NpT_update_cell_grid(double scal1) {
-  int i;
-
-  /* if new box length leads to too small cells, redo cell structure */
-  if(max_range > scal1*dmax(dmax(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2])) {
+  int i, dir,lr,cnt, lc[3],hc[3],done[3]={0,0,0};
+  
+  if(max_range > scal1*dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2])) {
+    /* if new box length leads to too small cells, redo cell structure */
     cells_re_init(CELL_STRUCTURE_DOMDEC);
     cells_resort_particles(CELL_GLOBAL_EXCHANGE); }
   else {
-    CELL_TRACE(fprintf(stderr, "%d: dd_NpT_update_cell_grid: max_range %f\n",this_node,max_range));
-    CELL_TRACE(fprintf(stderr, "%d: dd_NpT_update_cell_grid: local_box %f-%f, %f-%f, %f-%f,\n",this_node,my_left[0],my_right[0],my_left[1],my_right[1],my_left[2],my_right[2]));
-    
-    /* now set all dependent variables */
+    /* otherwise, only re-set the geometrical dimensions which have changed (in addition to those in \ref grid_changed_box_l),
+       following the lead of \ref cells_re_init */
     for(i=0;i<3;i++) {
       dd.cell_size[i]       = local_box_l[i]/(double)dd.cell_grid[i];
       dd.inv_cell_size[i]   = 1.0 / dd.cell_size[i];
     }
     max_skin = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]) - max_cut;
-    
-    CELL_TRACE(fprintf(stderr, "%d: dd_NpT_update_cell_grid, n_cells=%d, local_cells.n=%d, ghost_cells.n=%d, dd.ghost_cell_grid=(%d,%d,%d)\n", this_node, n_cells,local_cells.n,ghost_cells.n,dd.ghost_cell_grid[0],dd.ghost_cell_grid[1],dd.ghost_cell_grid[2]));
+
+    /* don't forget to update the 'shift' member of those GhostCommunicators, which use that value
+       to speed up the folding process of its ghost members (see \ref dd_prepare_comm for the original),
+       i.e. all which have GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref dd_prepare_comm. */
+    cnt=0;
+    /* direction loop: x, y, z */
+    for(dir=0; dir<3; dir++) {
+      lc[(dir+1)%3] = 1-done[(dir+1)%3]; 
+      lc[(dir+2)%3] = 1-done[(dir+2)%3];
+      hc[(dir+1)%3] = dd.cell_grid[(dir+1)%3]+done[(dir+1)%3];
+      hc[(dir+2)%3] = dd.cell_grid[(dir+2)%3]+done[(dir+2)%3];
+      /* lr loop: left right */
+      for(lr=0; lr<2; lr++) {
+	if(node_grid[dir] == 1) {
+#ifdef PARTIAL_PERIODIC
+	  if( PERIODIC(dir ) || (boundary[2*dir+lr] == 0) ) 
+#endif
+	    {
+	      /* prepare folding of ghost positions */
+	      if(boundary[2*dir+lr] != 0) {
+		// dd_prepare_comm(&cell_structure.exchange_ghosts_comm,  exchange_data);
+		// dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data);
+		// comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
+		cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
+		cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
+	      }
+	      cnt++;
+	    }
+	}
+	else {
+	  /* i: send/recv loop */
+	  for(i=0; i<2; i++) {  
+#ifdef PARTIAL_PERIODIC
+	    if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) ) 
+#endif
+	      if((node_pos[dir]+i)%2==0) {
+		/* prepare folding of ghost positions */
+		if(boundary[2*dir+lr] != 0) {
+		  cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+		  cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+		}
+		lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
+		cnt++;
+	      }
+#ifdef PARTIAL_PERIODIC
+	    if( PERIODIC(dir) || (boundary[2*dir+(1-lr)] == 0) ) 
+#endif
+	      if((node_pos[dir]+(1-i))%2==0) {
+		lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
+		cnt++;
+	      }
+	  }
+	}
+	done[dir]=1;
+      }
+    }
+
   }
 }
 #endif

@@ -467,7 +467,6 @@ void rescale_forces_propagate_vel()
   }
 #ifdef NPT
   finalize_p_inst_npt();
-  // if((integ_switch == INTEG_METHOD_NPT_ISO) && (this_node==0)) fprintf(stderr,"%d/B: p_inst=%f \n",this_node,nptiso.p_inst);
 #endif
 }
 
@@ -479,12 +478,10 @@ void finalize_p_inst_npt()
     /* finalize derivation of p_inst */
     nptiso.p_vel /= SQR(time_step);
     nptiso.p_inst = nptiso.p_vir + nptiso.p_vel;
-    // fprintf(stderr,"%d: p_inst=%f+%f=%f",this_node,nptiso.p_vir/(3.*nptiso.volume),nptiso.p_vel/(3.*nptiso.volume),nptiso.p_inst/(3.*nptiso.volume));
     MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     if (this_node == 0) {
       nptiso.p_inst = p_tmp/(3.0*nptiso.volume);
       nptiso.p_diff = nptiso.p_diff  +  (nptiso.p_inst-nptiso.p_ext)*0.5*time_step + friction_thermV_nptiso(nptiso.p_diff);
-      // fprintf(stderr, " = %f -> %f  (volume: %f)\n",nptiso.p_inst,nptiso.p_diff,nptiso.volume/(box_l[0]*box_l[1]*box_l[2]));
     }
   }
 
@@ -498,10 +495,11 @@ void propagate_press_box_pos_and_rescale_npt()
     Cell *cell;
     Particle *p;
     int i, j, np, c;
-    double scal[3], L_new;
+    double scal[3], L_new=0.0;
+
+    rebuild_verletlist = 0; 
 
     /* finalize derivation of p_inst */
-    // fprintf(stderr, "%d: propagate_press_box...: finalize_p_inst ",this_node);
     finalize_p_inst_npt();
 
     /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and vel-rescaling */
@@ -513,16 +511,10 @@ void propagate_press_box_pos_and_rescale_npt()
       if (nptiso.volume < 0.0) { 
 	fprintf(stderr, "%d: ERROR: Your choice of piston=%f, dt=%f, p_diff=%f just caused the volume to become negative!\nTry decreasing dt...\n",\
 		this_node,nptiso.piston,time_step,nptiso.p_diff); errexit(); }
-      //else fprintf(stderr, "Q=%f, dt=%f, p_diff=%f => L=%f (V=%f; p_inst=%f)\n",nptiso.piston,time_step,nptiso.p_diff,L_new,nptiso.volume,nptiso.p_inst);
       scal[1] = L_new/box_l[0];
       scal[0] = 1/scal[1];
-      //box_l[0] = box_l[1] = box_l[2] = L_new;
     }
-    //    scal[0] = scal[1] = scal[2] = 1.0;
-    //    nptiso.volume = box_l[0]*box_l[1]*box_l[2];
     MPI_Bcast(scal,  3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    //MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    //on_NpT_boxl_change(scal[1]);
 
     /* propagate positions while rescaling positions and velocities */
     for (c = 0; c < local_cells.n; c++) {
@@ -533,7 +525,7 @@ void propagate_press_box_pos_and_rescale_npt()
 #endif
 	    {
 		p[i].r.p[j]      = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
-		p[i].l.p_old[i] *= scal[1];
+		p[i].l.p_old[j] *= scal[1];
 		p[i].m.v[j]     *= scal[0];
 	    }
 	}
@@ -543,7 +535,7 @@ void propagate_press_box_pos_and_rescale_npt()
 	force_and_velocity_check(&p[i]); 
 #endif
 	/* Verlet criterion check */
-	if(distance2(p[i].r.p,p[i].l.p_old) > skin2 )
+	//if(distance2(p[i].r.p,p[i].l.p_old) > skin2 )
 	  rebuild_verletlist = 1; 
       }
     }
@@ -551,8 +543,11 @@ void propagate_press_box_pos_and_rescale_npt()
     /* Apply new volume to the box-length, communicate it, and account for necessary adjustments to the cell geometry */
     if (this_node == 0) box_l[0] = box_l[1] = box_l[2] = L_new;
     MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    //    on_NpT_boxl_change(scal[1]);
-    on_NpT_boxl_change(0.0);
+    on_NpT_boxl_change(scal[1]);
+    //on_NpT_boxl_change(0.0);
+
+    /* communicate verlet criterion */
+    //anounce_rebuild_vlist();
   }
 #endif
 }
