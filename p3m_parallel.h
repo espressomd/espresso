@@ -44,7 +44,7 @@ typedef struct {
 
 /** Initializes p3m */
 /*@{*/
-/*  Initializes the P3M package by doing the following
+/**  Initializes the P3M package by doing the following
     things: Import the quantities systemlength, particle
     number, alpha, Mesh, charge assignment order, Coulomb
     prefactor. Initializes the
@@ -69,7 +69,7 @@ extern void   P3M_exit(void);
 
 /** Computes dipole contribution */
 /*@{*/
-/*  Computes the dipole contribution to the electrostatic energy 
+/**  Computes the dipole contribution to the electrostatic energy 
     and forces in the Ewald method. This is done by using the
     UNFOLDED particle coordinates, as is suggested in:
     Jean-Michel Caillol: Comments on the numerical simulations of
@@ -80,7 +80,7 @@ extern double P3M_dipole(int force);
 
 /** Performs one particle mesh calculation*/
 /*@{*/
-/*  Performs one particle mesh calculation. As its input it
+/**  Performs one particle mesh calculation. As its input it
     needs (pointers to) the arrays of the particle
     coordinates, charges and forces. Also one can set two
     flags, which decide, whether or not the Coulomb
@@ -90,7 +90,7 @@ extern void   P3M_perform(int force, double *E_Coulomb_P3M);
 
 /** P3M_perform for only a subset */
 /*@{*/
-/* Calculates the k-space contribution to the energy coming from
+/** Calculates the k-space contribution to the energy coming from
    interactions of particles within the subset {start,...,end}.*/
 extern double P3M_perform_subset(int, int);
 /*@}*/
