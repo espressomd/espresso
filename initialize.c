@@ -31,7 +31,6 @@
 #include "mmm1d.h"
 #include "forces.h"
 #include "uwerr.h"
-#include "pairwise.h"
 
 static void init_tcl(Tcl_Interp *interp);
 

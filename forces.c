@@ -19,7 +19,6 @@
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "rotation.h"
-#include "pairwise.h"
 #include "forces.h"
 
 
