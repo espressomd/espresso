@@ -692,6 +692,10 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	data_sym->LJ_offset  = data->LJ_offset;
 	argc -= 6;
 	argv += 6;
+	if (argc >= 1 && (Tcl_GetDouble(interp, argv[1], &data->LJ_offset) == TCL_OK)) {
+	  argc--;
+	  argv++;
+	}
 	/* broadcast interaction parameters */
 	mpi_bcast_ia_params(i, j);
 	mpi_bcast_ia_params(j, i);
@@ -719,7 +723,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	mpi_bcast_ia_params(j, i);
       }
       else {
-	Tcl_AppendResult(interp, "unknown interaction type \"", argv[3],
+	Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
 			 "\"", (char *)NULL);
 	return (TCL_ERROR);
       }
