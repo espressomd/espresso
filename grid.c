@@ -159,7 +159,7 @@ void changed_topology()
   mpi_bcast_parameter(FIELD_NGRID);
   mpi_bcast_parameter(FIELD_BOXL);
   mpi_bcast_parameter(FIELD_VERLET);
-  grid_changed_topology();
+  mpi_changed_topology();
 }
 
 void calc_minimal_box_dimensions()

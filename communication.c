@@ -293,7 +293,7 @@ void mpi_changed_topology()
 
 void mpi_changed_topology_slave(int dummy)
 {
-  changed_topology();  
+  grid_changed_topology();  
 }
 
 /****************** REQ_SET_POS ************/
