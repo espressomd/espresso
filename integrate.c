@@ -216,7 +216,7 @@ void integrate_vv_recalc_maxrange()
 
   /* maximal interaction cutoff */
   calc_maximal_cutoff();
-  if (max_cut < 0.0) {
+  if (max_cut <= 0.0) {
     max_range  = -1.0;
     max_range2 = -1.0;
     return;
