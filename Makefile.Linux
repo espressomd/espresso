@@ -46,6 +46,7 @@ endif
 # architecture dependent flags for gcc 3
 MODEL=$(shell awk '/\`model name/ { \
 	if ($$4 == "Pentium") print $$4"-"$$5; else \
+	if ($$4 == "Intel(R)" && $$5 == "Pentium(R)") print "Pentium-"$$6; else \
 	if ($$4 == "AMD" && $$5 == "Athlon(TM)") print "Athlon-"$$6; else \
 	if ($$4 == "AMD" && $$5 == "Athlon(tm)") print "Athlon-"$$6; else \
 	print "Generic"; \
@@ -88,7 +89,7 @@ else
           endif
      endif
 
-     CFLAGS=-g -O3 -Wall $(HOSTFLAGS) -finline-limit=10000000 \
+     CFLAGS=-O3 -Wall $(HOSTFLAGS) -finline-limit=10000000 \
 	    -ffast-math
 endif
 
