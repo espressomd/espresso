@@ -20,6 +20,9 @@
 #include "global.h"
 #include "particle_data.h"
 
+/** number of rigid bonds */
+extern int n_rigidbonds;
+
 /** Transfers the current particle positions from r.p[3] to r.p_pold[3]
     of the \ref Particle structure. Invoked from \ref correct_pos_shake() */
 void save_old_pos();

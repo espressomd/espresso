@@ -148,8 +148,15 @@ typedef struct {
   ///
   ParticleLocal l;
 
-  /** bonded interactions list. */
+  /** bonded interactions list. The format is pretty simple:
+      Just the bond type, and then the particle ids. The number of particle ids can be determined
+      easily from the bonded_ia_params entry for the type. */
   IntList bl;
+
+#ifdef EXCLUSIONS
+  /** list of particles, with which this particle has no nonbonded interactions */
+  IntList el;
+#endif
 } Particle;
 
 /** List of particles. The particle array is resized using a sophisticated
@@ -227,9 +234,6 @@ void init_particle(Particle *part);
 
 /** Deallocate the dynamic storage of a particle. */
 void free_particle(Particle *part);
-
-/** Remove bond from particle if possible */
-int try_delete_bond(Particle *part, int *bond);
 
 /*    Functions acting on Particle Lists        */
 /************************************************/
@@ -416,12 +420,26 @@ int set_particle_fix(int part,  int flag);
 /** Call only on the master node: change particle bond.
     @param part     identity of principal atom of the bond.
     @param bond     field containing the bond type number and the
-    identity of all bond partners (secundary atoms of the bond).
+    identity of all bond partners (secundary atoms of the bond). If NULL, delete all bonds.
     @param delete   if true, do not add the bond, rather delete it if found
     @return TCL_OK on success or TCL_ERROR if no success
     (e. g. particle or bond to delete does not exist)
 */
 int change_particle_bond(int part, int *bond, int delete);
+
+#ifdef EXCLUSIONS
+/** Call only on the master node: change particle constraints.
+    @param part1    identity of particle for which the exclusion is set.
+    @param part2    identity of particle for which the exclusion is set. If -1, delete all exclusions.
+    @param delete   if true, do not add the exclusion, rather delete it if found
+    @return TCL_OK on success or TCL_ERROR if no success
+    (e. g. particles do not exist / did not have exclusion set)
+*/
+int change_exclusion(int part, int part2, int delete);
+
+/** remove all exclusions. */
+void remove_all_exclusions();
+#endif
 
 /** remove particle with a given identity. Also removes all bonds to the particle.
     @param part     identity of the particle to remove
@@ -448,6 +466,11 @@ void remove_all_bonds_to(int part);
     of  to \ref WITH_BONDS.
 */
 void updatePartCfg(int bonds_flag );
+
+/** release the partCfg array. Use this function, since it also frees the
+    bonds, if they are used.
+*/
+void freePartCfg();
 
 /** sorts the \ref partCfg array. This is indicated by setting
     \ref partCfgSorted to 1. Note that for this to work the particles
@@ -483,6 +506,14 @@ void added_particle(int part);
 */
 int local_change_bond(int part, int *bond, int delete);
 
+/** Used for example by \ref mpi_send_exclusion.
+    Locally add a exclusion to a particle.
+    @param part1 the identity of the first exclusion partner
+    @param part2 the identity of the second exclusion partner
+    @param delete if true, delete the exclusion instead of add
+*/
+void local_change_exclusion(int part1, int part2, int delete);
+
 /** Used by \ref mpi_remove_particle, should not be used elsewhere.
     Remove a particle on this node.
     @param part the identity of the particle to remove
@@ -512,25 +543,9 @@ void send_particles(ParticleList *particles, int node);
 void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS
-/** Determines if particle ids i and j are connected by bonds
-   (e.g FENE, HAMONIC, RIGID_BOND etc ) and angles (e.g BOND_ANGLE_HARMONIC).
-    Note: Can be used only if non-bonded interaction exclusions are set, and is
-    probably pretty slow
-*/
-int is_bond_partner(int i, int j);
+/** Determines if the non bonded interactions between p1 and p2 should be calculated */
+int do_nonbonded(Particle *p1, Particle *p2);
 #endif
-
-/** Invoked from \ref "create_bond_list(int w)" **/
-void recreate_bond_list(int w);
-
-/** Invoked from \ref "create_bond_list(int w)" */
-int  resort_bond_list(int w);
-
-/** Creates 1D array \ref partBondPartners of minimum size to store the bond
-    partners of each particle. For example; If particle j and k are bond partners
-    of i then partBondPartners[i]=j and partBondPartners[i+1]=k. But,
-    partBondPartners[j] and partBondPartners[k] do not contain i. */
-int  create_bond_list(int w);
 
 /** Complain about a missing bond partner. Just for convenience, replaces the old checked_particle_ptr.
     @param id particle identity.

@@ -596,7 +596,7 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
 	p_tensor.data.e[k*3 + l] += (p1.m.v[k])*(p1.m.v[l])*PMASS(p1);
 
     /* bonded interactions */
-    i=0;
+    i = 0;
     while(i < p1.bl.n) {
       if((flag==1) || intlist_contains(p_list,p1.bl.e[i+1])) {
 	type_num = p1.bl.e[i++];

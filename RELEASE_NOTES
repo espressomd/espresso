@@ -8,7 +8,7 @@ What's new, what's been changed, what's been fixed
 Current working revision.
 
 
-- v1.8.1d -
+- v1.8.1e -
 -----------
 
 (e) November 5th, 2004.
@@ -18,6 +18,9 @@ Current working revision.
 (a) October 18th, 2004.
 
 New Features:
+(e) Completely rewritten exclusions code. Ready for testing.
+    Allows for general exclusions and is stored particle bound, so it
+    should be faster.
 (e) The Morse potential for nonbonded interactions has been added.
 (d) Added the famous soft-sphere potential.
 (c) Now the P3M limit for the mesh size is configurable and defaults to 128.
@@ -25,6 +28,9 @@ New Features:
 (a) Rattle is in, but probably not yet working.
 
 Changes:
+(e) Flags for the compilers changed. gcc is more aggressive now, icc 8.1 should
+    not issue the silly warnings anymore.
+(e) Arijit's exclusion code has more or less been removed.
 (c) Switched from POLYGAMMA_EPS to the commonly used ROUND_ERROR_PREC.
 (b) By request of too many users, grid.h now explicitely includes limits.h (which
     shouldn't be necessary on modern machines, but then you never know).
@@ -32,6 +38,10 @@ Changes:
     allocation problems (a 512 grid consumes roughly 3 GB memory!).
 
 Bugfixes:
+(e) fixed a mem leak in partCfg, bonds (updatePartCfg(WITH_BONDS)) where never freed.
+(e) fixed the particle print out, not handling particles by reference.
+(e) fixed try_delete_bond, deleting bonds probably did not work for a long time.
+(e) fixed COM with masses, was off by three
 (e) Added #ifdef statements for TABULATED and BUCKINGHAM potentials in the interprintall()   
 (b) Fixed the warning with the recent icc (Blade center).
 

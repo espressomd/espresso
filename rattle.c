@@ -15,6 +15,8 @@
 #include "domain_decomposition.h"
 #include "rattle.h"
 
+int n_rigidbonds = 0;
+
 #ifdef BOND_CONSTRAINT
 
 /** \name Private functions */
@@ -401,28 +403,28 @@ int check_tol_vel()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-       k=0;
-       while(k<p[i].bl.n)
-       {
-	 b_ia = &bonded_ia_params[p[i].bl.e[k++]];
-	 if(b_ia->type == BONDED_IA_RIGID_BOND)
-	   {
-	     Particle *p2 = local_particles[p[i].bl.e[k++]];
-	     if (!p2) {
-	       char *errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	       sprintf(errtxt,"{ rigid bond broken between particles %d and %d (particles not stored on the same node)} ",
-		       p[i].p.identity, p[i].bl.e[k-1]);
-	       return 0;
-	     }
-
-	     get_mi_vector(r_ij, p[i].r.p , p2->r.p);
-	     vector_subt(v_ij, p[i].m.v , p2->m.v);
-	     tol = fabs(scalar(r_ij, v_ij));
-	     repeat = repeat || (tol > b_ia->p.rigid_bond.v_tol);
-	   }
-	 else
-	   k += b_ia->num;
-       } //while k loop
+      k=0;
+      while(k<p[i].bl.n)
+	{
+	  b_ia = &bonded_ia_params[p[i].bl.e[k++]];
+	  if(b_ia->type == BONDED_IA_RIGID_BOND)
+	    {
+	      Particle *p2 = local_particles[p[i].bl.e[k++]];
+	      if (!p2) {
+		char *errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+		sprintf(errtxt,"{ rigid bond broken between particles %d and %d (particles not stored on the same node)} ",
+			p[i].p.identity, p[i].bl.e[k-1]);
+		return 0;
+	      }
+	      
+	      get_mi_vector(r_ij, p[i].r.p , p2->r.p);
+	      vector_subt(v_ij, p[i].m.v , p2->m.v);
+	      tol = fabs(scalar(r_ij, v_ij));
+	      repeat = repeat || (tol > b_ia->p.rigid_bond.v_tol);
+	    }
+	  else
+	    k += b_ia->num;
+	} //while k loop
     } //for i loop
  }// for c loop
  return(repeat);
@@ -495,13 +497,13 @@ void correct_vel_shake()
 
 void print_bond_len()
 {
- int i, k, c, np;
- Cell *cell;
- Particle *p;
- Bonded_ia_parameters *b_ia;
- double r_ij[3];
- printf("%d: ", this_node);
- for (c = 0; c < local_cells.n; c++) {
+  int i, k, c, np;
+  Cell *cell;
+  Particle *p;
+  Bonded_ia_parameters *b_ia;
+  double r_ij[3];
+  printf("%d: ", this_node);
+  for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
     np = cell->n;
@@ -527,8 +529,8 @@ void print_bond_len()
 	       k += b_ia->num;
        } //while k loop
     } //for i loop
- }// for c loop
- printf("\n");
+  }// for c loop
+  printf("\n");
 }
 
 #endif

@@ -48,6 +48,7 @@
 #include "nemd.h"
 #include "domain_decomposition.h"
 #include "errorhandling.h"
+#include "rattle.h"
 
 /** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
@@ -144,7 +145,7 @@ void on_integration_start()
 
   /* Update particle and observable information for routines in statistics.c */
   invalidate_obs();
-  free(partCfg); partCfg=NULL;
+  freePartCfg();
 
   /* Prepare particle structure: Communication step: number of ghosts and ghost information */
   if(resort_particles) {
@@ -163,7 +164,7 @@ void on_particle_change()
   invalidate_obs();
 
   /* the particle information is no longer valid */
-  free(partCfg); partCfg=NULL;
+  freePartCfg();
 }
 
 void on_coulomb_change()
@@ -351,8 +352,10 @@ void on_ghost_flags_change()
   if (thermo_switch & THERMO_DPD)
     /* DPD needs also ghost velocities */
     ghosts_have_v = 1;
-  else if (n_rigidbonds != 0)
+#ifdef CONSTRAINT_BOND
+  else if (n_rigidbonds)
     ghosts_have_v = 1;
+#endif
 #ifdef ELECTROSTATICS
   /* Maggs electrostatics needs ghost velocities too */
   else if(coulomb.method == COULOMB_MAGGS)
@@ -413,10 +416,6 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "nemd", (Tcl_CmdProc *)nemd, 0, NULL);
   /* in thermostat.c */
   Tcl_CreateCommand(interp, "thermostat", (Tcl_CmdProc *)thermostat, 0, NULL);
-#ifdef EXCLUSIONS
-  /* in interaction_data.c */
-  Tcl_CreateCommand(interp, "exclusion", (Tcl_CmdProc *)exclusion, 0, NULL);
-#endif
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");

@@ -31,6 +31,7 @@
 #include "domain_decomposition.h"
 #include "layered.h"
 #include "pressure.h"
+#include "rattle.h"
 
 /**********************************************
  * description of variables
@@ -51,38 +52,37 @@ const Datafield fields[] = {
   {&dpd_gamma,       TYPE_DOUBLE, 1, "dpd_gamma",     ro_callback,    5 },         /* 3  from thermostat.c */
   {&dpd_r_cut,       TYPE_DOUBLE, 1, "dpd_r_cut",     ro_callback,    5 },         /* 4  from thermostat.c */
   {&langevin_gamma,  TYPE_DOUBLE, 1, "gamma",         langevin_gamma_callback, 1 },/* 5  from thermostat.c */
-  {&ia_excl,            TYPE_INT, 1, "ia_excl",       ro_callback,    5 },         /* 6  from interaction_data.c */
-  {&integ_switch,       TYPE_INT, 1, "integ_switch",  ro_callback,    1 },         /* 7  from integrate.c */
-  {local_box_l,      TYPE_DOUBLE, 3, "local_box_l",   ro_callback,    2 },         /* 8  from global.c */
-  {&max_cut,         TYPE_DOUBLE, 1, "max_cut",       ro_callback,    5 },         /* 9  from interaction_data.c */
-  {&max_num_cells,      TYPE_INT, 1, "max_num_cells", max_num_cells_callback, 5 }, /* 10 from cells.c */
-  {&max_seen_particle,  TYPE_INT, 1, "max_part",      ro_callback,    5 },         /* 11 from particle_data.c */
-  {&max_range,       TYPE_DOUBLE, 1, "max_range",     ro_callback,    5 },         /* 12 from integrate.c */
-  {&max_skin,        TYPE_DOUBLE, 1, "max_skin",      ro_callback,    5 },         /* 13 from integrate.c */
-  {&min_num_cells,      TYPE_INT, 1, "min_num_cells", min_num_cells_callback, 5 }, /* 14  from cells.c */
-  {&n_layers,           TYPE_INT, 1, "n_layers",      ro_callback,    3 },         /* 15 from layered.c */
-  {&n_nodes,            TYPE_INT, 1, "n_nodes",       ro_callback,    3 },         /* 16 from communication.c */
-  {&n_total_particles,  TYPE_INT, 1, "n_part",        ro_callback,    6 },         /* 17 from particle.c */
-  {&n_particle_types,   TYPE_INT, 1, "n_part_types",  ro_callback,    8 },         /* 18 from interaction_data.c */
-  {&n_rigidbonds,       TYPE_INT, 1, "n_rigidbonds",  ro_callback,    5 },         /* 19 from interaction_data.c */
-  {node_grid,           TYPE_INT, 3, "node_grid",     node_grid_callback, 2 },     /* 20 from grid.c */
-  {&nptiso_gamma0,   TYPE_DOUBLE, 1, "nptiso_gamma0", ro_callback,    13 },        /* 21 from thermostat.c */
-  {&nptiso_gammav,   TYPE_DOUBLE, 1, "nptiso_gammav", ro_callback,    13 },        /* 22 from thermostat.c */
-  {&nptiso.p_ext,    TYPE_DOUBLE, 1, "npt_p_ext",     ro_callback,     7 },        /* 23 from pressure.c */
-  {&nptiso.p_inst,   TYPE_DOUBLE, 1, "npt_p_inst",    ro_callback,    10 },        /* 24 from pressure.c */
-  {&nptiso.p_inst_av,TYPE_DOUBLE, 1, "npt_p_inst_av", ro_callback,    10 },        /* 25 from pressure.c */
-  {&nptiso.p_diff,   TYPE_DOUBLE, 1, "npt_p_diff",    p_diff_callback, 7 },        /* 26 from pressure.c */
-  {&nptiso.piston,   TYPE_DOUBLE, 1, "npt_piston",    piston_callback, 6 },        /* 27 from pressure.c */
-  {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback,    1 },        /* 28 from grid.c */
-  {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback,   2 },        /* 29 from integrate.c */
-  {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback,   2 },        /* 30 from thermostat.c */
-  {&thermo_switch,      TYPE_INT, 1, "thermo_switch", ro_callback,     2 },        /* 31 from thermostat.c */
-  {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback,   4 },        /* 32 from integrate.c */
-  {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },     /* 33 from integrate.c */
-  {&timing_samples,     TYPE_INT, 1, "timings",       timings_callback, 4 },       /* 34 from tuning.c */
-  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback,     2 },        /* 35 from imd.c */
-  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback,     8 },        /* 36 from verlet.c */
-  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback,     8 },        /* 37 from integrate.c */
+  {&integ_switch,       TYPE_INT, 1, "integ_switch",  ro_callback,    1 },         /* 6  from integrate.c */
+  {local_box_l,      TYPE_DOUBLE, 3, "local_box_l",   ro_callback,    2 },         /* 7  from global.c */
+  {&max_cut,         TYPE_DOUBLE, 1, "max_cut",       ro_callback,    5 },         /* 8  from interaction_data.c */
+  {&max_num_cells,      TYPE_INT, 1, "max_num_cells", max_num_cells_callback, 5 }, /* 9 from cells.c */
+  {&max_seen_particle,  TYPE_INT, 1, "max_part",      ro_callback,    5 },         /* 10 from particle_data.c */
+  {&max_range,       TYPE_DOUBLE, 1, "max_range",     ro_callback,    5 },         /* 11 from integrate.c */
+  {&max_skin,        TYPE_DOUBLE, 1, "max_skin",      ro_callback,    5 },         /* 12 from integrate.c */
+  {&min_num_cells,      TYPE_INT, 1, "min_num_cells", min_num_cells_callback, 5 }, /* 13  from cells.c */
+  {&n_layers,           TYPE_INT, 1, "n_layers",      ro_callback,    3 },         /* 14 from layered.c */
+  {&n_nodes,            TYPE_INT, 1, "n_nodes",       ro_callback,    3 },         /* 15 from communication.c */
+  {&n_total_particles,  TYPE_INT, 1, "n_part",        ro_callback,    6 },         /* 16 from particle.c */
+  {&n_particle_types,   TYPE_INT, 1, "n_part_types",  ro_callback,    8 },         /* 17 from interaction_data.c */
+  {&n_rigidbonds,       TYPE_INT, 1, "n_rigidbonds",  ro_callback,    5 },         /* 18 from rattle.c */
+  {node_grid,           TYPE_INT, 3, "node_grid",     node_grid_callback, 2 },     /* 19 from grid.c */
+  {&nptiso_gamma0,   TYPE_DOUBLE, 1, "nptiso_gamma0", ro_callback,    13 },        /* 20 from thermostat.c */
+  {&nptiso_gammav,   TYPE_DOUBLE, 1, "nptiso_gammav", ro_callback,    13 },        /* 21 from thermostat.c */
+  {&nptiso.p_ext,    TYPE_DOUBLE, 1, "npt_p_ext",     ro_callback,     7 },        /* 22 from pressure.c */
+  {&nptiso.p_inst,   TYPE_DOUBLE, 1, "npt_p_inst",    ro_callback,    10 },        /* 23 from pressure.c */
+  {&nptiso.p_inst_av,TYPE_DOUBLE, 1, "npt_p_inst_av", ro_callback,    10 },        /* 24 from pressure.c */
+  {&nptiso.p_diff,   TYPE_DOUBLE, 1, "npt_p_diff",    p_diff_callback, 7 },        /* 25 from pressure.c */
+  {&nptiso.piston,   TYPE_DOUBLE, 1, "npt_piston",    piston_callback, 6 },        /* 26 from pressure.c */
+  {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback,    1 },        /* 27 from grid.c */
+  {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback,   2 },        /* 28 from integrate.c */
+  {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback,   2 },        /* 29 from thermostat.c */
+  {&thermo_switch,      TYPE_INT, 1, "thermo_switch", ro_callback,     2 },        /* 30 from thermostat.c */
+  {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback,   4 },        /* 31 from integrate.c */
+  {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },     /* 32 from integrate.c */
+  {&timing_samples,     TYPE_INT, 1, "timings",       timings_callback, 4 },       /* 33 from tuning.c */
+  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback,     2 },        /* 34 from imd.c */
+  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback,     8 },        /* 35 from verlet.c */
+  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback,     8 },        /* 36 from integrate.c */
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 

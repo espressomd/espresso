@@ -65,9 +65,10 @@ typedef void (SlaveCallback)(int node, int param);
 /** Action number for \ref mpi_who_has. */
 #define REQ_WHO_HAS   2
 /** Action number for \ref mpi_bcast_event. */
-#define REQ_EVENT    3
+#define REQ_EVENT     3
 /** Action number for \ref mpi_place_particle. */
 #define REQ_PLACE     4
+
 /** Action number for \ref mpi_send_v. */
 #define REQ_SET_V     5
 /** Action number for \ref mpi_send_f. */
@@ -78,6 +79,7 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_TYPE  8
 /** Action number for \ref mpi_send_bond. */
 #define REQ_SET_BOND  9
+
 /** Action number for \ref mpi_recv_part. */
 #define REQ_GET_PART  10
 /** Action number for \ref mpi_integrate. */
@@ -88,6 +90,7 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_BCAST_IA_SIZE  13
 /** Action number for \ref mpi_gather_stats. */
 #define REQ_GATHER    14
+
 /** Action number for \ref mpi_set_time_step. */
 #define REQ_SET_TIME_STEP  15
 /** Action number for \ref mpi_get_particles. */
@@ -98,6 +101,7 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_EXT 18
 /** Action number for \ref mpi_place_particle. */
 #define REQ_PLACE_NEW   19
+
 /** Action number for \ref mpi_remove_particle */
 #define REQ_REM_PART   20
 /** Action number for \ref mpi_bcast_constraint */
@@ -108,6 +112,7 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_RANDOM_STAT 23
 /** Action number for \ref mpi_lj_cap_forces. */
 #define REQ_BCAST_LFC 24
+
 /** Action number for \ref mpi_tab_cap_forces. */
 #define REQ_BCAST_TFC 25
 /** Action number for \ref mpi_random_seed */
@@ -118,16 +123,18 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_GET_CONSFOR 28
 /** Action number for \ref mpi_rescale_particles */
 #define REQ_RESCALE_PART 29
+
 /** Action number for \ref mpi_bcast_cell_structure */
-#define REQ_BCAST_CS 30
+#define REQ_BCAST_CS  30
 /** Action number for \ref mpi_send_quat. */
-#define REQ_SET_QUAT 31
+#define REQ_SET_QUAT  31
 /** Action number for \ref mpi_send_omega. */
 #define REQ_SET_OMEGA 32
 /** Action number for \ref mpi_send_torque. */
 #define REQ_SET_TORQUE 33
 /** Action number for \ref mpi_send_mol_id. */
 #define REQ_SET_MOLID 34
+
 /** Action number for \ref mpi_bcast_nptiso_geom */
 #define REQ_BCAST_NPTISO_GEOM 35
 /** Action number for \ref mpi_update_mol_ids  */
@@ -135,15 +142,16 @@ typedef void (SlaveCallback)(int node, int param);
 /** Action number for \ref mpi_sync_topo_part_info  */
 #define REQ_SYNC_TOPO 37
 /** Action number for \ref mpi_send_mass. */
-#define REQ_SET_MASS     38
-/** Action number for \ref mpi_bcast_bond_partners.*/
-#define REQ_BCAST_BOND_PARTNERS  39
+#define REQ_SET_MASS  38
 /** Action number for \ref mpi_buck_cap_forces. */
-#define REQ_BCAST_BFC 40
-/**Action number for \ref mpi_morse_cap_forces. */
-#define REQ_BCAST_MFC 41
+#define REQ_BCAST_BFC 39
+
 /** Action number for \ref mpi_gather_runtime_errors  */
-#define REQ_GET_ERRS 42
+#define REQ_GET_ERRS  40
+/** Action number for \ref mpi_send_exclusion. */
+#define REQ_SET_EXCL  41
+/**Action number for \ref mpi_morse_cap_forces. */
+#define REQ_BCAST_MFC 42
 /** Total number of action numbers. */
 #define REQ_MAXIMUM   43
 
@@ -179,7 +187,6 @@ void mpi_bcast_constraint_slave(int node, int parm);
 void mpi_random_seed_slave(int node, int parm);
 void mpi_random_stat_slave(int node, int parm);
 void mpi_lj_cap_forces_slave(int node, int parm);
-void mpi_morse_cap_forces_slave(int node, int parm);
 void mpi_tab_cap_forces_slave(int node, int parm);
 void mpi_bit_random_seed_slave(int node, int parm);
 void mpi_bit_random_stat_slave(int node, int parm);
@@ -194,10 +201,10 @@ void mpi_bcast_nptiso_geom_slave(int node, int parm);
 void mpi_update_mol_ids_slave(int node, int parm);
 void mpi_sync_topo_part_info_slave(int node, int parm);
 void mpi_send_mass_slave(int node, int parm);
-void mpi_bcast_bond_partners_slave(int node, int parm);
 void mpi_buck_cap_forces_slave(int node, int parm);
 void mpi_gather_runtime_errors_slave(int node, int parm);
-
+void mpi_send_exclusion_slave(int node, int parm);
+void mpi_morse_cap_forces_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -242,10 +249,10 @@ SlaveCallback *callbacks[] = {
   mpi_update_mol_ids_slave,         /* 36: REQ_UPDATE_MOL_IDS */
   mpi_sync_topo_part_info_slave,    /* 37: REQ_SYNC_TOPO */
   mpi_send_mass_slave,              /* 38: REQ_SET_MASS */
-  mpi_bcast_bond_partners_slave,    /* 39: REQ_BCAST_BOND_PARTNERS*/
-  mpi_buck_cap_forces_slave,        /* 40: REQ_BCAST_BFC */
-  mpi_morse_cap_forces_slave,       /* 41: REQ_BCAST_MFC */
-  mpi_gather_runtime_errors_slave,  /* 42: REQ_GET_ERRS */
+  mpi_buck_cap_forces_slave,        /* 39: REQ_BCAST_LFC */
+  mpi_gather_runtime_errors_slave,  /* 40: REQ_GET_ERRS */
+  mpi_send_exclusion_slave,         /* 41: REQ_SET_EXCL */
+  mpi_morse_cap_forces_slave,       /* 42: REQ_BCAST_MFC */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -255,44 +262,52 @@ char *names[] = {
   "WHO_HAS"   ,     /*  2 */
   "EVENT"     ,     /*  3 */
   "SET_POS"   ,     /*  4 */
+
   "SET_V"     ,     /*  5 */
   "SET_F"     ,     /*  6 */
   "SET_Q"     ,     /*  7 */
   "SET_TYPE"  ,     /*  8 */
   "SET_BOND"  ,     /*  9 */
+
   "GET_PART"  ,     /* 10 */
   "INTEGRATE" ,     /* 11 */
   "BCAST_IA"  ,     /* 12 */
   "BCAST_IAS" ,     /* 13 */
   "GATHER"    ,     /* 14 */
+
   "TIME_STEP" ,     /* 15 */
   "GET_PARTS" ,     /* 16 */
   "BCAST_CIA" ,     /* 17 */
   "SEND_EXT"  ,     /* 18 */
   "PLACE_NEW" ,     /* 19 */
+
   "REM_PART"  ,     /* 20 */
   "BCAST_CON" ,     /* 21 */
   "RAND_SEED" ,     /* 22 */
   "RAND_STAT" ,     /* 23 */
   "BCAST_LFC" ,     /* 24 */
+
   "BCAST_TFC" ,     /* 25 */
   "BIT_RAND_SEED",  /* 26 */
   "BIT_RAND_STAT",  /* 27 */
   "GET_CONSTR",     /* 28 */
   "RESCALE_PART",   /* 29 */
+
   "BCAST_CS",       /* 30 */
   "SET_QUAT"  ,     /* 31 */
   "SET_OMEGA",      /* 32 */
   "SET_TORQUE",     /* 33 */
   "SET_MOLID",      /* 34 */
+
   "BCAST_NPT_GEOM", /* 35 */
   "UPDATE_MOL_IDS", /* 36 */
   "SYNC_TOPO",      /* 37 */
-  "SET_MASS"        /* 38 */
-  "BCAST_BOND_PARTNERS" /* 39*/
-  "BCAST_BFC" ,     /* 40 */
-  "BCAST_MFC" ,     /* 41 */
-  "GET_ERRS",       /* 42 */
+  "SET_MASS",       /* 38 */
+  "BCAST_BFC" ,     /* 39 */
+
+  "GET_ERRS",       /* 40 */
+  "SET_EXCL",       /* 41 */
+  "BCAST_MFC" ,     /* 42 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -306,19 +321,7 @@ static int request[3];
 void mpi_core(MPI_Comm *comm, int *errcode,...) {
   fprintf(stderr, "%d: Aborting due to MPI error %d, forcing core dump\n", this_node, *errcode);
   fflush(stderr);
-  /* no longer necessary with core.* files.
-     Actually, it is nice to have all nodes...
-     #ifdef MPI_ERR_LOCALDEAD
-     #ifdef MPI_ERR_REMOTEDEAD
-     if (*errcode != MPI_ERR_LOCALDEAD &&
-     *errcode != MPI_ERR_REMOTEDEAD)
-     core();
-     #else
-  */
   core();
-  /* #endif
-     #endif
-  */
 }
 #endif
 
@@ -887,39 +890,48 @@ void mpi_send_bond_slave(int pnode, int part)
 void mpi_recv_part(int pnode, int part, Particle *pdata)
 {
   IntList *bl = &(pdata->bl);
+#ifdef EXCLUSIONS
+  IntList *el = &(pdata->el);
+#endif
   MPI_Status status;
 
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-
-    memcpy(pdata, p, sizeof(Particle));
-
-    bl->max = bl->n = p->bl.n;
-
-    if (bl->n > 0) {
-      alloc_intlist(bl, bl->n);
-      memcpy(bl->e, p->bl.e, sizeof(int)*bl->n);
-    }
-    else
-      bl->e = NULL;
-  }
+  /* fetch fixed data */
+  if (pnode == this_node)
+    memcpy(pdata, local_particles[part], sizeof(Particle));
   else {
     mpi_issue(REQ_GET_PART, pnode, part);
-
-    /* add new properties here */
-
-    pdata->p.identity = part;
     MPI_Recv(pdata, sizeof(Particle), MPI_BYTE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-    bl->max = bl->n;
-    if (bl->n > 0) {
-      alloc_intlist(bl, bl->n);
-      MPI_Recv(bl->e, bl->n, MPI_INT, pnode,
-	       REQ_GET_PART, MPI_COMM_WORLD, &status);
-    }
-    else
-      pdata->bl.e = NULL;
   }
+
+  /* copy dynamic data */
+  /* bonds */
+  bl->max = bl->n;
+  if (bl->n > 0) {
+    alloc_intlist(bl, bl->n);
+    if (pnode == this_node)
+      memcpy(bl->e, local_particles[part]->bl.e, sizeof(int)*bl->n);
+    else
+      MPI_Recv(bl->e, bl->n, MPI_INT, pnode,
+               REQ_GET_PART, MPI_COMM_WORLD, &status);
+  }
+  else
+    bl->e = NULL;
+
+#ifdef EXCLUSIONS
+  /* exclusions */
+  el->max = el->n;
+  if (el->n > 0) {
+    alloc_intlist(el, el->n);
+    if (pnode == this_node)
+      memcpy(el->e, local_particles[part]->el.e, sizeof(int)*el->n);
+    else
+      MPI_Recv(el->e, el->n, MPI_INT, pnode,
+               REQ_GET_PART, MPI_COMM_WORLD, &status);
+  }
+  else
+    el->e = NULL;
+#endif
 }
 
 void mpi_recv_part_slave(int pnode, int part)
@@ -935,6 +947,11 @@ void mpi_recv_part_slave(int pnode, int part)
   if (p->bl.n > 0)
     MPI_Send(p->bl.e, p->bl.n, MPI_INT, 0, REQ_GET_PART,
 	     MPI_COMM_WORLD);
+#ifdef EXCLUSIONS
+  if (p->el.n > 0)
+    MPI_Send(p->el.e, p->el.n, MPI_INT, 0, REQ_GET_PART,
+	     MPI_COMM_WORLD);
+#endif
 }
 
 /****************** REQ_REM_PART ************/
@@ -1719,63 +1736,6 @@ void mpi_bcast_nptiso_geom_slave(int node,int parm)
 
 }
 
-/*************** REQ_BCAST_BOND_PARTNERS *****************/
-
-void mpi_bcast_bond_partners(int width, int parm)
-{
-  mpi_issue(REQ_BCAST_BOND_PARTNERS, width, parm);
-  mpi_bcast_bond_partners_slave(width, parm);
-
-}
-
-void mpi_bcast_bond_partners_slave(int width, int parm)
-{
-  int dim = n_total_particles*width;
-  //printf("%d: width = %d parm = %d dimensions of partBondPartners %d\n",this_node, width, parm, dim);
-  if(parm==REALLOC_BOND_PARTNERS)
-  {
-     //free(partBondPartners);
-     //int *partBondPartners;
-     partBondPartners = (int *) realloc(partBondPartners, dim*sizeof(int));
-     //if(this_node==0)
-     //   partBondPartners = (int *) realloc(partBondPartners, n_total_particles*width*sizeof(int));
-     //MPI_Bcast(&partBondPartners, n_total_particles*width, MPI_BYTE, 0, MPI_COMM_WORLD);
-     MPI_Barrier(MPI_COMM_WORLD);
-     //printf("%d: after MPI_Bcast\n",this_node);
-  }
-  else if(parm==CURR_BOND_PARTNERS)
-  {
-    //printf("%d: inside CURR_BOND_PARTNERS, dimensions: %d\n",this_node, dim);
-    //partBondPartners = (int *) realloc(partBondPartners, n_total_particles*0*sizeof(int));
-    //int i;
-    //for(i=0;i<dim;i++)
-    //  MPI_Bcast(&partBondPartners[i], 1, MPI_INT, 0, MPI_COMM_WORLD);
-    //MPI_Bcast((int *)partBondPartners, dim*sizeof(int), MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast((int *)partBondPartners, dim, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
-    //printf("%d: got partBondPartners\n",this_node);
-    //printf("%d: partBondPartners[0]=%d\n",this_node,*(partBondPartners+0));
-    /*
-    int j;
-    for(i=0;i<n_total_particles;i=i+1)
-    {
-    printf("%d:\t",i);
-    for (j=0;j<width;j++)
-     printf("%d\t",partBondPartners[i*width+j]);
-    printf("\n");
-    }
-    */
-  }
-  else
-  {
-    fprintf(stderr,"ERROR: Wrong Parameter passed to 'mpi_bcast_bond_partners'\n");
-    errexit();
-  }
-
-  //printf("Comm Node: %d\n",this_node);
-
-}
-
 /***************REQ_UPDATE_MOL_IDS *********************/
 
 void mpi_update_mol_ids()
@@ -1913,6 +1873,27 @@ void mpi_gather_runtime_errors_slave(int node, int parm)
   }
 }
 
+/********************* REQ_SET_EXCL ********/
+void mpi_send_exclusion(int part1, int part2, int delete)
+{
+#ifdef EXCLUSIONS
+  mpi_issue(REQ_SET_EXCL, part1, part2);
+
+  MPI_Bcast(&delete, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  local_change_exclusion(part1, part2, delete);
+  on_particle_change();
+#endif
+}
+
+void mpi_send_exclusion_slave(int part1, int part2)
+{
+#ifdef EXCLUSIONS
+  int delete;
+  MPI_Bcast(&delete, 1, MPI_INT, 0, MPI_COMM_WORLD);  
+  local_change_exclusion(part1, part2, delete);
+  on_particle_change();
+#endif
+}
 
 /*********************** MAIN LOOP for slaves ****************/
 

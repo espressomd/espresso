@@ -55,7 +55,29 @@ int max_local_particles = 0;
 Particle **local_particles = NULL;
 Particle *partCfg = NULL;
 int partCfgSorted = 0;
-int *partBondPartners = NULL;
+
+/** bondlist for partCfg, if bonds are needed */
+IntList partCfg_bl = { NULL, 0, 0 };
+
+/************************************************
+ * local functions
+ ************************************************/
+
+/** Remove bond from particle if possible */
+int try_delete_bond(Particle *part, int *bond);
+
+/** Remove exclusion from particle if possible */
+void try_delete_exclusion(Particle *part, int part2);
+
+/** Insert an exclusion if not already set */
+void try_add_exclusion(Particle *part, int part2);
+
+/** Automatically add the next \<distance\> neighbors in each molecule to the exclusion list.
+    This uses the bond topology obtained directly from the particles, since only this contains
+    the full topology, in contrast to \ref topology. To easily setup the bonds, all data
+    should be on a single node, therefore the \ref partCfg array is used. With large amounts
+    of particles, you should avoid this function and setup exclusions manually. */
+void auto_exclusion(int distance);
 
 /************************************************
  * particle initialization functions
@@ -130,10 +152,16 @@ void init_particle(Particle *part)
 #endif
 
   init_intlist(&(part->bl));
+#ifdef EXCLUSIONS
+  init_intlist(&(part->el));
+#endif
 }
 
 void free_particle(Particle *part) {
   realloc_intlist(&(part->bl), 0);
+#ifdef EXCLUSIONS
+  realloc_intlist(&(part->el), 0);
+#endif
 }
 
 
@@ -141,22 +169,19 @@ void free_particle(Particle *part) {
  * organizational functions
  ************************************************/
 
-void updatePartCfg(int bonds_flag )
+void updatePartCfg(int bonds_flag)
 {
   int j;
-  IntList bl;
 
   if(partCfg)
     return;
 
-
   partCfg = malloc(n_total_particles*sizeof(Particle));
-  if ( bonds_flag != WITH_BONDS ){
+  if (bonds_flag != WITH_BONDS)
     mpi_get_particles(partCfg, NULL);
-  }
-  else {
-    mpi_get_particles(partCfg,&bl);
-  }
+  else
+    mpi_get_particles(partCfg,&partCfg_bl);
+ 
   for(j=0; j<n_total_particles; j++)
     unfold_position(partCfg[j].r.p,partCfg[j].l.i);
 
@@ -186,6 +211,13 @@ int sortPartCfg()
   partCfgSorted = 1;
 
   return 1;
+}
+
+void freePartCfg()
+{
+  free(partCfg);
+  partCfg = NULL;
+  realloc_intlist(&partCfg_bl, 0);
 }
 
 /** resize \ref local_particles.
@@ -267,37 +299,6 @@ void update_local_particles(ParticleList *pl)
   int n = pl->n, i;
   for (i = 0; i < n; i++)
     local_particles[p[i].p.identity] = &p[i];
-}
-
-int try_delete_bond(Particle *part, int *bond)
-{
-  IntList *bl = &part->bl;
-  int i, j, type, partners;
-  if (!bond) {
-    realloc_intlist(bl, bl->n = 0);
-    return TCL_OK;
-  }
-
-  for (i = 0; i < bl->n;) {
-    type = bond[i];
-    partners = bonded_ia_params[type].num;
-    if (type != bond[0])
-      i += 1 + partners;
-    else {
-      for(j = 1; j <= partners; j++)
-	if (bond[j] != bl->e[i + j])
-	  break;
-      if (j > partners) {
-	bl->n -= 1 + partners;
-	memcpy(bl->e + i, bl->e + i + 1 + partners,
-	       bl->n - i);
-	realloc_intlist(bl, bl->n);
-	return TCL_OK;
-      }
-      i += 1 + partners;
-    }
-  }
-  return TCL_ERROR;
 }
 
 Particle *got_particle(ParticleList *l, int id)
@@ -386,72 +387,67 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
 }
 
 #ifdef ROTATION
-void part_print_omega(Particle part, char *buffer, Tcl_Interp *interp)
+void part_print_omega(Particle *part, char *buffer, Tcl_Interp *interp)
 {
-  Tcl_PrintDouble(interp, part.m.omega[0], buffer);
+  Tcl_PrintDouble(interp, part->m.omega[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.m.omega[1], buffer);
+  Tcl_PrintDouble(interp, part->m.omega[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.m.omega[2], buffer);
+  Tcl_PrintDouble(interp, part->m.omega[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return;
 }
 
-void part_print_torque(Particle part, char *buffer, Tcl_Interp *interp)
+void part_print_torque(Particle *part, char *buffer, Tcl_Interp *interp)
 {
-  Tcl_PrintDouble(interp, part.f.torque[0], buffer);
+  Tcl_PrintDouble(interp, part->f.torque[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f.torque[1], buffer);
+  Tcl_PrintDouble(interp, part->f.torque[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f.torque[2], buffer);
+  Tcl_PrintDouble(interp, part->f.torque[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return;
 }
 
-void part_print_quat(Particle part, char *buffer, Tcl_Interp *interp)
+void part_print_quat(Particle *part, char *buffer, Tcl_Interp *interp)
 {
-  Tcl_PrintDouble(interp, part.r.quat[0], buffer);
+  Tcl_PrintDouble(interp, part->r.quat[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.quat[1], buffer);
+  Tcl_PrintDouble(interp, part->r.quat[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.quat[2], buffer);
+  Tcl_PrintDouble(interp, part->r.quat[2], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.quat[3], buffer);
+  Tcl_PrintDouble(interp, part->r.quat[3], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return;
 }
 #endif
 
-void part_print_v(Particle part, char *buffer, Tcl_Interp *interp)
+void part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale velocities ! */
-  Tcl_PrintDouble(interp, part.m.v[0]/time_step, buffer);
+  Tcl_PrintDouble(interp, part->m.v[0]/time_step, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.m.v[1]/time_step, buffer);
+  Tcl_PrintDouble(interp, part->m.v[1]/time_step, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.m.v[2]/time_step, buffer);
+  Tcl_PrintDouble(interp, part->m.v[2]/time_step, buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return;
 }
 
-void part_print_f(Particle part, char *buffer, Tcl_Interp *interp)
+void part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale forces ! */
-  Tcl_PrintDouble(interp, part.f.f[0]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[0]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f.f[1]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[1]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f.f[2]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->f.f[2]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return;
 }
 
-void part_print_position(Particle part, char *buffer, Tcl_Interp *interp)
+void part_print_position(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   double ppos[3];
   int img[3];
-  memcpy(ppos, part.r.p, 3*sizeof(double));
-  memcpy(img, part.l.i, 3*sizeof(int));
+  memcpy(ppos, part->r.p, 3*sizeof(double));
+  memcpy(img, part->l.i, 3*sizeof(int));
   unfold_position(ppos, img);
   Tcl_PrintDouble(interp, ppos[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
@@ -459,66 +455,73 @@ void part_print_position(Particle part, char *buffer, Tcl_Interp *interp)
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, ppos[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return;
 }
 
-void part_print_folded_position(Particle part, char *buffer, Tcl_Interp *interp)
+void part_print_folded_position(Particle *part, char *buffer, Tcl_Interp *interp)
 {
-  Tcl_PrintDouble(interp, part.r.p[0], buffer);
+  Tcl_PrintDouble(interp, part->r.p[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.p[1], buffer);
+  Tcl_PrintDouble(interp, part->r.p[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.p[2], buffer);
+  Tcl_PrintDouble(interp, part->r.p[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return;
 }
 
-void part_print_bonding_structure(Particle part, char *buffer, Tcl_Interp *interp, IntList *bl)
+void part_print_bonding_structure(Particle *part, char *buffer, Tcl_Interp *interp)
 {
-  int i=0,j,size;
+  int i,j,size;
   Tcl_AppendResult(interp, " { ", (char *)NULL);
-  while(i<bl->n) {
-    size = bonded_ia_params[bl->e[i]].num;
-    sprintf(buffer, "{%d ", bl->e[i]); i++;
+  i = 0;
+  while(i<part->bl.n) {
+    size = bonded_ia_params[part->bl.e[i]].num;
+    sprintf(buffer, "{%d ", part->bl.e[i]); i++;
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     for(j=0;j<size-1;j++) {
-      sprintf(buffer, "%d ", bl->e[i]); i++;
+      sprintf(buffer, "%d ", part->bl.e[i]); i++;
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
-    sprintf(buffer, "%d} ", bl->e[i]); i++;
+    sprintf(buffer, "%d} ", part->bl.e[i]); i++;
     Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
   Tcl_AppendResult(interp, "} ", (char *)NULL);
-  return;
 }
 
+#ifdef EXCLUSIONS
+void part_print_exclusions(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  int i;
+  for (i = 0; i < part->el.n; i++) {
+    sprintf(buffer, "%d ", part->el.e[i]);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+  }
+}
+#endif
+
 #ifdef EXTERNAL_FORCES
-void part_print_fix(Particle part, char *buffer, Tcl_Interp *interp)
+void part_print_fix(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   int i;
   for (i = 0; i < 3; i++) {
-    if (part.l.ext_flag & COORD_FIXED(i))
+    if (part->l.ext_flag & COORD_FIXED(i))
       Tcl_AppendResult(interp, "1 ", (char *)NULL);
     else
 	    Tcl_AppendResult(interp, "0 ", (char *)NULL);
   }
-  return;
 }
 
-void part_print_ext_force(Particle part, char *buffer, Tcl_Interp *interp)
+void part_print_ext_force(Particle *part, char *buffer, Tcl_Interp *interp)
 {
-  if(part.l.ext_flag & PARTICLE_EXT_FORCE) {
-    Tcl_PrintDouble(interp, part.l.ext_force[0], buffer);
+  if(part->l.ext_flag & PARTICLE_EXT_FORCE) {
+    Tcl_PrintDouble(interp, part->l.ext_force[0], buffer);
 	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	  Tcl_PrintDouble(interp, part.l.ext_force[1], buffer);
+	  Tcl_PrintDouble(interp, part->l.ext_force[1], buffer);
 	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	  Tcl_PrintDouble(interp, part.l.ext_force[2], buffer);
+	  Tcl_PrintDouble(interp, part->l.ext_force[2], buffer);
 	  Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
   else {
     Tcl_AppendResult(interp, "0.0 0.0 0.0 ", (char *)NULL);
   }
-  return;
 }
 #endif
 
@@ -529,7 +532,6 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
 {
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle part;
-  IntList *bl = &(part.bl);
 
   if (get_particle_data(part_num, &part) == TCL_ERROR)
     return (TCL_ERROR);
@@ -537,7 +539,7 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   sprintf(buffer, "%d", part.p.identity);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   Tcl_AppendResult(interp, " pos ", (char *)NULL);
-  part_print_position(part, buffer, interp);
+  part_print_position(&part, buffer, interp);
   Tcl_AppendResult(interp, " type ", (char *)NULL);
   sprintf(buffer, "%d", part.p.type);
   Tcl_AppendResult(interp, buffer, " molecule ", (char *)NULL);
@@ -551,40 +553,47 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_PrintDouble(interp, part.p.q, buffer);
 #endif
   Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
-  part_print_v(part, buffer, interp);
+  part_print_v(&part, buffer, interp);
   Tcl_AppendResult(interp, " f ", (char *)NULL);
-  part_print_f(part, buffer, interp);
+  part_print_f(&part, buffer, interp);
 
 #ifdef ROTATION
   /* print information about rotation */
   Tcl_AppendResult(interp, " quat ", (char *)NULL);
-  part_print_quat(part, buffer, interp);
+  part_print_quat(&part, buffer, interp);
 
   Tcl_AppendResult(interp, " omega ", (char *)NULL);
-  part_print_omega(part, buffer, interp);
+  part_print_omega(&part, buffer, interp);
 
   Tcl_AppendResult(interp, " torque ", (char *)NULL);
-  part_print_torque(part, buffer, interp);
+  part_print_torque(&part, buffer, interp);
+#endif
+
+#ifdef EXCLUSIONS
+  if (part.el.n > 0) {
+    Tcl_AppendResult(interp, buffer, " exclude ", (char *)NULL);
+    part_print_exclusions(&part, buffer, interp);
+  }
 #endif
 
 #ifdef EXTERNAL_FORCES
   /* print external force information. */
   if (part.l.ext_flag & PARTICLE_EXT_FORCE) {
     Tcl_AppendResult(interp, " ext_force ", (char *)NULL);
-    part_print_ext_force(part, buffer, interp);
+    part_print_ext_force(&part, buffer, interp);
   }
 
   /* print fix information. */
   if (part.l.ext_flag & COORDS_FIX_MASK) {
     Tcl_AppendResult(interp, " fix ", (char *)NULL);
-    part_print_fix( part, buffer, interp);
+    part_print_fix(&part, buffer, interp);
   }
 #endif
 
   /* print bonding structure */
-  if(bl->n > 0) {
-    part_print_bonding_structure(part, buffer, interp, bl);
-  }
+  if (part.bl.n > 0)
+    part_print_bonding_structure(&part, buffer, interp);
+
   free_particle(&part);
   return (TCL_OK);
 }
@@ -624,7 +633,6 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle part;
-  IntList *bl = &(part.bl);
 
   if (part_num > max_seen_particle) {
     Tcl_AppendResult(interp, "na", (char *)NULL);
@@ -643,11 +651,11 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("position"))
-      part_print_position(part, buffer, interp);
+      part_print_position(&part, buffer, interp);
     else if (ARG0_IS_S("force"))
-      part_print_f(part, buffer, interp);
+      part_print_f(&part, buffer, interp);
     else if (ARG0_IS_S("folded_position"))
-      part_print_folded_position(part, buffer, interp);
+      part_print_folded_position(&part, buffer, interp);
     else if (ARG0_IS_S("type")) {
       sprintf(buffer, "%d", part.p.type);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -670,25 +678,31 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     }
 #endif
     else if (ARG0_IS_S("v"))
-      part_print_v(part, buffer, interp);
+      part_print_v(&part, buffer, interp);
 
 #ifdef ROTATION
     else if (ARG0_IS_S("quat"))
-      part_print_quat(part, buffer, interp);
+      part_print_quat(&part, buffer, interp);
     else if (ARG0_IS_S("omega"))
-      part_print_omega(part, buffer, interp);
+      part_print_omega(&part, buffer, interp);
     else if (ARG0_IS_S("torque"))
-      part_print_torque(part, buffer, interp);
+      part_print_torque(&part, buffer, interp);
 #endif
 
 #ifdef EXTERNAL_FORCES
     else if (ARG0_IS_S("ext_force"))
-      part_print_ext_force(part,buffer,interp);
+      part_print_ext_force(&part,buffer,interp);
     else if (ARG0_IS_S("fix"))
-      part_print_fix(part, buffer, interp);
+      part_print_fix(&part, buffer, interp);
 #endif
+
+#ifdef EXCLUSIONS
+    else if (ARG0_IS_S("exclusions"))
+      part_print_exclusions(&part, buffer, interp);
+#endif
+
     else if (ARG0_IS_S("bonds"))
-      part_print_bonding_structure(part, buffer, interp, bl);
+      part_print_bonding_structure(&part, buffer, interp);
     else {
       Tcl_ResetResult(interp);
       Tcl_AppendResult(interp, "unknown particle data \"", argv[0], "\" requested", (char *)NULL);
@@ -1171,7 +1185,7 @@ int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
   } else {
     if(type_num < 0 || type_num >= n_bonded_ia) {
       Tcl_AppendResult(interp, "invalid bonded interaction type_num"
-		       "(Set bonded interaction parameters first)", (char *) NULL);
+		       " (set bonded interaction parameters first)", (char *) NULL);
       return TCL_ERROR;
     }
     /* check partners */
@@ -1217,6 +1231,62 @@ int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 
   return TCL_OK;
 }
+
+#ifdef EXCLUSIONS
+int part_parse_exclusion(Tcl_Interp *interp, int argc, char **argv,
+			 int part_num, int * change)
+{
+  int delete = 0, partner;
+
+  *change = 0;
+
+  /* check number of arguments */
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "exclusion requires at least 1 arguments: "
+		     "[delete] { <partner 1> <partner 2> ... }", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* parse away delete eventually */
+  if (ARG0_IS_S("delete")) {
+    delete = 1;
+    argc--;
+    argv++;
+    (*change)++;
+
+    if (argc < 1) {
+      Tcl_AppendResult(interp, "exclusion requires at least 1 arguments: "
+		       "[delete] { <partner 1> <partner 2> ... }", (char *) NULL);
+      return TCL_ERROR;
+    }
+  }
+
+  /* parse partners */
+  if (!particle_node)
+    build_particle_node();
+
+  while (argc > 0) {
+    if (!ARG0_IS_I(partner)) {
+      /* seems to be the next property */
+      Tcl_ResetResult(interp);
+      break;
+    }
+
+    /* set/delete exclusion */
+    if (change_exclusion(part_num, partner, delete) != TCL_OK) {
+      if (delete)
+	Tcl_AppendResult(interp, "exclusion to delete did not exist", (char *)NULL);
+      else
+	Tcl_AppendResult(interp, "particle to exclude from interaction does not exist or is the same", (char *)NULL);	
+      return TCL_ERROR;
+    }
+
+    argc--; argv++;
+    (*change)++;
+  }
+  return TCL_OK;
+}
+#endif
 
 int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 		   int part_num)
@@ -1285,6 +1355,11 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
     else if (ARG0_IS_S("bond"))
       err = part_parse_bond(interp, argc-1, argv+1, part_num, &change);
 
+#ifdef EXCLUSIONS
+    else if (ARG0_IS_S("exclude"))
+      err = part_parse_exclusion(interp, argc-1, argv+1, part_num, &change);
+#endif
+
     else {
       Tcl_AppendResult(interp, "unknown particle parameter \"",
 		       argv[0],"\"", (char *)NULL);
@@ -1313,20 +1388,44 @@ int part(ClientData data, Tcl_Interp *interp,
   /* if no further arguments are given, print out all stored particles */
   if (argc == 1)
     return part_print_all(interp);
+  
+  /* parse away all non particle number arguments */
+  if (ARG1_IS_S("deleteall")) {
+    if (argc != 2) {
+      Tcl_AppendResult(interp, "part deleteall takes no arguments", (char *)NULL);
+      return TCL_ERROR;
+    }
+    remove_all_particles();
+    return TCL_OK;
+  }
+#ifdef EXCLUSIONS
+  else if (ARG1_IS_S("delete_exclusions")) {
+    if (argc != 2) {
+      Tcl_AppendResult(interp, "part delete_exclusions takes no arguments", (char *)NULL);
+      return TCL_ERROR;
+    }
+    remove_all_exclusions();
+    return TCL_OK;
+  }
+  else if (ARG1_IS_S("auto_exclusions")) {
+    int bond_neighbors = 2;
+    if (argc > 3) {
+      Tcl_AppendResult(interp, "usage: part auto_exclusions {distance (bond neighbors to exclude, defaults to 2)}", (char *)NULL);
+      return TCL_ERROR;
+    }
+    if (argc == 3 && !ARG_IS_I(2, bond_neighbors))
+      return TCL_ERROR;
+    auto_exclusion(bond_neighbors);
+    return TCL_OK;
+  }
+#endif
 
   /* only one argument is given */
   if (argc == 2) {
 
-    if (ARG1_IS_S("deleteall")) {
-      remove_all_particles();
-
-      return TCL_OK;
-    }
-
     if (ARG1_IS_I(part_num)) {
       if (printParticleToResult(interp, part_num) == TCL_ERROR)
 	Tcl_AppendResult(interp, "na", (char *)NULL);
-
       return TCL_OK;
     }
 
@@ -1597,16 +1696,13 @@ int change_particle_bond(int part, int *bond, int delete)
 
   if (pnode == -1)
     return TCL_ERROR;
-  if(delete != 0 || bond==NULL) {
-    delete = 1; bond=NULL; }
-  else {
-    if(bond[0] < 0 ) {
-      fprintf(stderr, "ERROR: Failed upon changing bonds of particle %d due to invalid bonded interaction type_num %d (must be >0)!\n", part,bond[0]);
-      return TCL_ERROR; }
-    if(bond[0] >= n_bonded_ia) {
-      fprintf(stderr, "ERROR: Failed upon changing bonds of particle %d due to currently unknown bonded interaction %d!\n", part,bond[0]);
-      fprintf(stderr, "       Specify its parameters first (using 'inter <bond_type_number> { FENE | Angle | ... } <parameters> ...') "
-	      "before adding bonds of that type!\n");
+  if(delete != 0 || bond == NULL)
+    delete = 1;
+
+  if (bond != NULL) {
+    if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
+      char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      sprintf(errtxt, "invalid/unknown bonded interaction type %d", bond[0]);
       return TCL_ERROR;
     }
   }
@@ -1804,6 +1900,37 @@ int local_change_bond(int part, int *bond, int delete)
   return TCL_OK;
 }
 
+int try_delete_bond(Particle *part, int *bond)
+{
+  IntList *bl = &part->bl;
+  int i, j, type, partners;
+
+  if (!bond) {
+    realloc_intlist(bl, bl->n = 0);
+    return TCL_OK;
+  }
+
+  for (i = 0; i < bl->n;) {
+    type = bl->e[i];
+    partners = bonded_ia_params[type].num;
+    if (type != bond[0])
+      i += 1 + partners;
+    else {
+      for(j = 1; j <= partners; j++)
+	if (bond[j] != bl->e[i + j])
+	  break;
+      if (j > partners) {
+	bl->n -= 1 + partners;
+	memcpy(bl->e + i, bl->e + i + 1 + partners, bl->n - i);
+	realloc_intlist(bl, bl->n);
+	return TCL_OK;
+      }
+      i += 1 + partners;
+    }
+  }
+  return TCL_ERROR;
+}
+
 void remove_all_bonds_to(int identity)
 {
   Cell *cell;
@@ -1841,10 +1968,76 @@ void remove_all_bonds_to(int identity)
   }
 }
 
+#ifdef EXCLUSIONS
+void local_change_exclusion(int part1, int part2, int delete)
+{
+  Cell *cell;
+  int p, np, c;
+  Particle *part;
+
+  if (part1 == -1 && part2 == -1) {
+    /* delete all exclusions */
+    for (c = 0; c < local_cells.n; c++) {
+      cell = local_cells.cell[c];
+      np = cell->n;
+      part = cell->part;
+      for (p = 0; p < np; p++)
+	realloc_intlist(&part[p].el, part[p].el.n = 0);
+    }
+    return;
+  }
+
+  /* part1, if here */
+  part = local_particles[part1];
+  if (part) {
+    if (delete)
+      try_delete_exclusion(part, part2);
+    else
+      try_add_exclusion(part, part2);
+  }
+
+  /* part2, if here */
+  part = local_particles[part2];
+  if (part) {
+    if (delete)
+      try_delete_exclusion(part, part1);
+    else
+      try_add_exclusion(part, part1);
+  }
+}
+
+void try_add_exclusion(Particle *part, int part2)
+{
+  int i;
+  for (i = 0; i < part->el.n; i++)
+    if (part->el.e[i] == part2)
+      return;
+  
+  realloc_intlist(&part->el, part->el.n + 1);
+  part->el.e[part->el.n++] = part2;
+}
+
+void try_delete_exclusion(Particle *part, int part2)
+{
+  IntList *el = &part->el;
+  int i;
+
+  for (i = 0; i < el->n;) {
+    if (el->e[i] == part2) {
+      el->n--;
+      memcpy(el->e + i, el->e + i + 1, el->n - i);
+      realloc_intlist(el, el->n);
+      break;
+    }
+  }
+}
+#endif
+
 void send_particles(ParticleList *particles, int node)
 {
   int pc;
-  IntList local_bi;
+  /* Dynamic data, bonds and exclusions */
+  IntList local_dyn;
 
   PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node, particles->n, node));
 
@@ -1852,22 +2045,30 @@ void send_particles(ParticleList *particles, int node)
   MPI_Send(particles->part, particles->n*sizeof(Particle),
 	   MPI_BYTE, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
 
-  init_intlist(&local_bi);
+  init_intlist(&local_dyn);
   for (pc = 0; pc < particles->n; pc++) {
     Particle *p = &particles->part[pc];
-    realloc_intlist(&local_bi, local_bi.n + p->bl.n);
-    memcpy(&local_bi.e[local_bi.n], p->bl.e, p->bl.n*sizeof(int));
-    local_bi.n += p->bl.n;
+    int size =  local_dyn.n + p->bl.n;
+#ifdef EXCLUSIONS
+    size += p->el.n;
+#endif
+    realloc_intlist(&local_dyn, size);
+    memcpy(local_dyn.e + local_dyn.n, p->bl.e, p->bl.n*sizeof(int));
+    local_dyn.n += p->bl.n;
+#ifdef EXCLUSIONS
+    memcpy(local_dyn.e + local_dyn.n, p->el.e, p->el.n*sizeof(int));
+    local_dyn.n += p->el.n;
+#endif
   }
 
-  PART_TRACE(fprintf(stderr, "%d: send_particles sending %d bond ints\n", this_node, local_bi.n));
-  if (local_bi.n > 0) {
-    MPI_Send(local_bi.e, local_bi.n*sizeof(int),
+  PART_TRACE(fprintf(stderr, "%d: send_particles sending %d bond ints\n", this_node, local_dyn.n));
+  if (local_dyn.n > 0) {
+    MPI_Send(local_dyn.e, local_dyn.n*sizeof(int),
 	     MPI_BYTE, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
-    realloc_intlist(&local_bi, 0);
+    realloc_intlist(&local_dyn, 0);
   }
 
-  /* remove particles from this nodes local list */
+  /* remove particles from this nodes local list and free data */
   for (pc = 0; pc < particles->n; pc++) {
     local_particles[particles->part[pc].p.identity] = NULL;
     free_particle(&particles->part[pc]);
@@ -1880,7 +2081,7 @@ void recv_particles(ParticleList *particles, int node)
 {
   int transfer, read, pc;
   MPI_Status status;
-  IntList local_bi;
+  IntList local_dyn;
 
   PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
 
@@ -1894,10 +2095,13 @@ void recv_particles(ParticleList *particles, int node)
 	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
   particles->n += transfer;
 
-  local_bi.n = 0;
+  local_dyn.n = 0;
   for (pc = particles->n - transfer; pc < particles->n; pc++) {
     Particle *p = &particles->part[pc];
-    local_bi.n += p->bl.n;
+    local_dyn.n += p->bl.n;
+#ifdef EXCLUSIONS
+    local_dyn.n += p->el.n;
+#endif
 
     PART_TRACE(fprintf(stderr, "%d: recv_particles got particle %d\n", this_node, p->p.identity));
 #ifdef ADDITIONAL_CHECKS
@@ -1910,10 +2114,10 @@ void recv_particles(ParticleList *particles, int node)
 
   update_local_particles(particles);
 
-  PART_TRACE(fprintf(stderr, "%d: recv_particles expecting %d bond ints\n", this_node, local_bi.n));
-  if (local_bi.n > 0) {
-    alloc_intlist(&local_bi, local_bi.n);
-    MPI_Recv(local_bi.e, local_bi.n*sizeof(int), MPI_BYTE, node,
+  PART_TRACE(fprintf(stderr, "%d: recv_particles expecting %d bond ints\n", this_node, local_dyn.n));
+  if (local_dyn.n > 0) {
+    alloc_intlist(&local_dyn, local_dyn.n);
+    MPI_Recv(local_dyn.e, local_dyn.n*sizeof(int), MPI_BYTE, node,
 	     REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
   }
   read = 0;
@@ -1921,181 +2125,143 @@ void recv_particles(ParticleList *particles, int node)
     Particle *p = &particles->part[pc];
     if (p->bl.n > 0) {
       alloc_intlist(&p->bl, p->bl.n);
-      memcpy(p->bl.e, &local_bi.e[read], p->bl.n*sizeof(int));
+      memcpy(p->bl.e, &local_dyn.e[read], p->bl.n*sizeof(int));
       read += p->bl.n;
     }
     else
       p->bl.e = NULL;
+#ifdef EXCLUSIONS
+    if (p->el.n > 0) {
+      alloc_intlist(&p->el, p->el.n);
+      memcpy(p->el.e, &local_dyn.e[read], p->el.n*sizeof(int));
+      read += p->el.n;
+    }
+    else
+      p->el.e = NULL;
+#endif
   }
-  if (local_bi.n > 0)
-    realloc_intlist(&local_bi, 0);
+  if (local_dyn.n > 0)
+    realloc_intlist(&local_dyn, 0);
 }
 
 #ifdef EXCLUSIONS
-/**truncates the size (=number of bond partners) for each particle's bond list to w*/
-void recreate_bond_list(int w)
+
+int change_exclusion(int part1, int part2, int delete)
 {
+  if (!particle_node)
+    build_particle_node();
 
-  int *tmp_partBondPartners;
-  int  i, j=0;
-  tmp_partBondPartners = (int *) malloc(n_total_particles*w*sizeof(int));
+  if (part1 < 0 || part1 > max_seen_particle ||
+      part2 < 0 || part2 > max_seen_particle ||
+      part1 == part2 ||
+      particle_node[part1] == -1 ||
+      particle_node[part2] == -1)
+    return TCL_ERROR;
 
-  for(i=0;i<n_total_particles*w;i++)
-    *(tmp_partBondPartners+j)=-1;
-
-
-  for(i=0;i<n_total_particles;i++)
-  {
-    for(j=0;j<w;j++)
-       *(tmp_partBondPartners+i*w+j)= *(partBondPartners+i*(w+1)+j);
-  }
-
-  mpi_bcast_bond_partners(w, REALLOC_BOND_PARTNERS);
-
-  for(i=0;i<n_total_particles*w;i++)
-    *(partBondPartners+i) = *(tmp_partBondPartners+i);
-
-  free(tmp_partBondPartners);
-  tmp_partBondPartners=NULL;
+  mpi_send_exclusion(part1, part2, delete);
+  return TCL_OK;
 }
 
-/**Resorts the *partBondPartners array to minimise memory usage. Input parameter: current size of bondlist for each particle
-returns 0 if resort is not possible and 1 if possible. */
-int resort_bond_list(int w)
+void remove_all_exclusions()
 {
-  int i, j, check=0;
-  if(w!=1)
-  {
-    for(i=0;i<n_total_particles;i++)
-    {
-      if (*(partBondPartners+i*w+w-1) != -1)
-      {
-        int flag=0;
-	for(j=0;j<w;j++)
-        {
-	   if(*(partBondPartners + *(partBondPartners+i*w+w-1)*w + j) == i)
-	   {
-	     *(partBondPartners + i*w + w - 1) = -1;
-	     check = 1;
-	     flag=1;
-	     break;
-	   }
-        }
-	if(!flag)
-	{
-	  for(j=0;j<w-1;j++)
-	  {
-	    if(*(partBondPartners + *(partBondPartners+i*w+w-1)*w + j) == -1)
-	    {
-	       *(partBondPartners + *(partBondPartners + i*w + w - 1)*w + j) = i;
-	       *(partBondPartners + i*w + w - 1) = -1;
-	       check = 1;
-	       break;
+  mpi_send_exclusion(-1, -1, 1);
+}
 
-	    }
+/* keep a unique list for particle i. Particle j is only added if it is not i
+   and not already in the list. */
+MDINLINE void add_partner(IntList *il, int i, int j, int distance)
+{
+  int k;
+  if (j == i) return;
+  for (k = 0; k < il->n; k += 2)
+    if (il->e[k] == j)
+      return;
+  realloc_intlist(il, il->n + 2);
+  il->e[il->n++] = j;
+  il->e[il->n++] = distance;
+}
 
-	  }
+void auto_exclusion(int distance)
+{
+  int count, p, i, j, p1, p2, p3, dist1, dist2;
+  Bonded_ia_parameters *ia_params;
+  Particle *part1, *part2;
+  /* partners is a list containing the currently found excluded particles for each particle,
+     and their distance, as a interleaved list */
+  IntList *partners, *ptns1, *ptns2;
+
+  updatePartCfg(WITH_BONDS);
+
+  /* setup bond partners and distance list. Since we need to identify particles via their identity,
+     we use a full sized array */
+  partners    = malloc((max_seen_particle + 1)*sizeof(IntList));
+  for (p = 0; p <= max_seen_particle; p++)
+    init_intlist(&partners[p]);
+
+  /* determine initial connectivity */
+  for (p = 0; p < n_total_particles; p++) {
+    part1 = &partCfg[p];
+    ptns1 = &partners[part1->p.identity];
+    for (i = 0; i < part1->bl.n;) {
+      ia_params = &bonded_ia_params[part1->bl.e[i++]];
+      if (ia_params->num == 1) {
+	part2 = &partCfg[part1->bl.e[i++]];
+	ptns2 = &partners[part2->p.identity];
+
+	/* you never know whether the user does, may bond a particle to itself...? */
+	if (part2->p.identity != part1->p.identity) {
+	  add_partner(ptns1, part1->p.identity, part2->p.identity, 1);
+	  add_partner(ptns2, part2->p.identity, part1->p.identity, 1);
 	}
+      }
+      else
+	i += ia_params->num;
+    }
+  }
 
+  /* calculate transient connectivity. For each of the current neighbors,
+     also exclude their close enough neighbors.
+  */
+  for (count = 1; count < distance; count++) {
+    for (p1 = 0; p1 <= max_seen_particle; p1++) {
+      for (i = 0; i < partners[p1].n; i += 2) {
+	p2 = partners[p1].e[i];
+	dist1 = partners[p1].e[i + 1];
+	if (dist1 > distance) continue;
+	/* loop over all partners of the partner */
+	for (j = 0; j < partners[p2].n; j += 2) {
+	  p3 = partners[p2].e[j];
+	  dist2 = dist1 + partners[p2].e[j + 1];
+	  if (dist2 > distance) continue;
+	  add_partner(&partners[p1], p1, p3, dist2);
+	  add_partner(&partners[p3], p3, p1, dist2);
+	}
       }
     }
   }
-  return(check);
+
+  /* setup the exclusions and clear the arrays. We do not setup the exclusions up there,
+     since on_part_change clears the partCfg, so that we would have to restore it
+     continously. Of course this could be optimized by bundling the exclusions, but this
+     is only done once and the overhead is as much as for setting the bonds, which
+     the user apparently accepted.
+  */
+  for (p = 0; p <= max_seen_particle; p++) {
+    for (j = 0; j < partners[p].n; j++)
+      if (p < partners[p].e[j]) change_exclusion(p, partners[p].e[j], 0);
+    realloc_intlist(&partners[p], 0);
+  }
+  free(partners);
 }
 
-/**returns the number of integers(or size) allocated for each particle*/
-int create_bond_list(int w)
+int do_nonbonded(Particle *p1, Particle *p2)
 {
-  Particle *p;
-  int i=0, j, k, l, itr, loc;
-  IntList bl_tmp;
-  Particle *pcfg;
-  pcfg = (Particle *) malloc(n_total_particles*sizeof(Particle));
-
-  mpi_get_particles(pcfg, &bl_tmp);
-
-  if (n_total_particles != max_seen_particle + 1)
-    return 0;
-
-  mpi_bcast_bond_partners(w, REALLOC_BOND_PARTNERS);
-  for(i=0;i<w*n_total_particles;i++)
-    *(partBondPartners+i)=-1;
-
-  for (i=n_total_particles-1;i>=0;i--)
-  {
-    p = &pcfg[i];
-    loc = w*p->p.identity;
-    k=0;
-    j=0;
-      while (k<p->bl.n)
-      {
-        l=0;
-	while(l<bonded_ia_params[p->bl.e[k]].num && bonded_ia_params[p->bl.e[k]].num!=3)
-        {
-	   int condition = 0,jj ;
-	   for(jj=0;jj<j;jj++)
-	   {
-	      condition = condition || (*(partBondPartners + loc+jj) == p->bl.e[k+l+1]);
-	      if(condition) break;
-	   }
-	   if(!condition)
-	   {
-	     *(partBondPartners+loc+j) = p->bl.e[k+l+1];
-	     j++;
-	   }
-
-	   l++;
-        }
-        k+=(bonded_ia_params[p->bl.e[k]].num+1);
-
-      }
-  }
-  free(pcfg);
-  pcfg=NULL;
-  itr=1;
-  while(itr)
-  {
-    int check = 1;
-    for(i=w-1;i<n_total_particles;i=i+w)
-    {
-      check = check && (*(partBondPartners+i)==-1);
-      if(!check) break;
-    }
-    if(check)
-    {
-     recreate_bond_list(--w);
-     itr=1;
-    }
-    else
-     itr=resort_bond_list(w);
-
-  }
-  return(w);
-}
-
-/**returns 1 if i and j are bond partners, otherwise 0*/
-int is_bond_partner(int i, int j)
-{
-  int check=0, k;
-  if(ia_excl!=-1)
-  {
-    //checking if j is a bond partner of i
-    for(k=0;k<ia_excl;k++)
-    {
-      check = check || (*(partBondPartners + (i*ia_excl) +k) == j);
-      if(check) break;
-    }
-    //if j is not a bond partner of i then check if i is a bond partner of j
-    if(!check)
-    {
-      for(k=0;k<ia_excl;k++)
-      {
-        check = check || (*(partBondPartners + (j*ia_excl) +k) == i);
-        if(check) break;
-      }
-    }
-  }
-  VERLET_TRACE(if(check) fprintf(stderr,"%d: %d-%d pair excluded from verlet list \n", this_node, i, j));
-  return(check);
+  int i, i2;
+  /* check for particle 2 in particle 1's exclusion list. The exclusion list is
+     symmetric, so this is sufficient. */
+  i2  = p2->p.identity;
+  for (i = 0; i < p1->el.n; i++)
+    if (i2 == p1->el.e[i]) return 0;
+  return 1;
 }
 #endif

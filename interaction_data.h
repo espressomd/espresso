@@ -59,7 +59,6 @@
 
 /*@}*/
 
-
 /** \name Type codes for the type of Coulomb interaction
     Enumeration of implemented methods for the electrostatic
     interaction.
@@ -107,9 +106,6 @@
 #define CONSTRAINT_MAZE 6
 
 /*@}*/
-
-#define REALLOC_BOND_PARTNERS 0
-#define CURR_BOND_PARTNERS    1
 
 /* Data Types */
 /************************************************************/
@@ -426,9 +422,6 @@ extern int n_particle_types;
 /* Number of nonbonded (short range) interactions. Not used so far.*/
 extern int n_interaction_types;
 
-/**Contains the number of rigid bonds set so far*/
-extern int n_rigidbonds;
-
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;
 
@@ -503,12 +496,6 @@ int inter(ClientData data, Tcl_Interp *interp,
  */
 int constraint(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv);
-
-/** Implementation of the Tcl function exclusion. This function
-    allows to set and delete exclusions of non bonded interactions between bonded particles
-    (currently supported exclusions are for only 1-2 and 1-3 interactions).
- */
-int exclusion(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Callback for setmd niatypes. */
 int niatypes_callback(Tcl_Interp *interp, void *data);

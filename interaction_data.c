@@ -42,8 +42,6 @@
  *****************************************/
 int n_particle_types = 0;
 int n_interaction_types = 0;
-int n_rigidbonds = 0;
-int ia_excl = -1;
 IA_parameters *ia_params = NULL;
 
 #ifdef ELECTROSTATICS
@@ -1386,86 +1384,4 @@ int inter(ClientData _data, Tcl_Interp *interp,
   }
   /* check for background errors which have not been handled so far */
   return mpi_gather_runtime_errors(interp, err_code);
-}
-
-#ifdef EXCLUSIONS
-int exclusion_parse(Tcl_Interp * interp, int argc, char ** argv)
-{
-  int i;
-  if(n_total_particles==0)
-  {
-    Tcl_AppendResult(interp, "ERROR!! Non bonded Interaction Exclusions could not be set as there are no particles in the system.\n", (char *) NULL);
-    Tcl_AppendResult(interp, "USAGE: inter exclusion {set|delete}", (char *) NULL);
-    return TCL_ERROR;
-  }
-  if(argc==0)
-  {
-    Tcl_AppendResult(interp, "ERROR!! Non bonded Interaction Exclusions could not be set.", (char *) NULL);
-    Tcl_AppendResult(interp, "USAGE: inter exclusion {set|delete}", (char *) NULL);
-    return TCL_ERROR;
-  }
-  else
-  {
-    for (i=0;i<argc;i++)
-    {
-      if      (ARG0_IS_S("set"))
-      {
-         /**Excludes non bonded interactions 1-2 and 1-3 only*/
-         /**parameter 4 in the function assumes that each particle can have a maximum of 4 distinguishable bond partners if only 1-2 and 1-3 interaction exclusions are considered.*/
-	 ia_excl = create_bond_list(4);
-	 mpi_bcast_parameter(FIELD_IA_EXCL);
-	 mpi_bcast_bond_partners(ia_excl, CURR_BOND_PARTNERS);
-	 i++;argc--;argv++;break;
-      }
-      else if (ARG0_IS_S("delete"))
-      {
-	 ia_excl = -1;
-	 mpi_bcast_parameter(FIELD_IA_EXCL);
-	 mpi_bcast_bond_partners(0, REALLOC_BOND_PARTNERS);
-	 i++;argc--;argv++;break;
-      }
-      else
-      {
-  	 Tcl_AppendResult(interp, "ERROR: Unknown 'interaction exclusion' argument \"", argv[i], "\"", (char *) NULL);
-	 return TCL_ERROR;
-      }
-    }
-
-  }
-
-  return TCL_OK;
-}
-
-int exclusion_print(Tcl_Interp *interp)
-{
-  int start=1;
-  if(ia_excl != -1) {
-      if (start) {
-        Tcl_AppendResult(interp, "{", (char *)NULL);
-        start = 0;
-      }
-      else
-        Tcl_AppendResult(interp, " {", (char *)NULL);
-      Tcl_AppendResult(interp, "exclusion set");
-      Tcl_AppendResult(interp, "}", (char *)NULL);
-  }
-  return (TCL_OK);
-}
-#endif
-
-int exclusion(ClientData _data, Tcl_Interp *interp, int argc, char **argv)
-{
-#ifdef EXCLUSIONS
-  if(n_total_particles==0)
-  {
-    Tcl_AppendResult(interp, "ERROR!! Non bonded Interaction Exclusions could be set only after all particles are set.\n", (char *) NULL);
-    Tcl_AppendResult(interp, "USAGE: exclude_nonbonded_ia {set|delete}", (char *) NULL);
-    return TCL_ERROR;
-  }
-  if(argc==1) return exclusion_print(interp);
-  else        return exclusion_parse(interp, argc-1, argv+1);
-#else
-  Tcl_AppendResult(interp, "EXCLUSIONS not compiled in", (char *) NULL);
-  return TCL_ERROR;
-#endif
 }

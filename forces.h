@@ -214,7 +214,7 @@ MDINLINE void add_bonded_force(Particle *p1)
   Bonded_ia_parameters *iaparams;
   int i, j, type_num, type, n_partners, bond_broken;
 
-  i=0;
+  i = 0;
   while(i<p1->bl.n) {
     type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];

@@ -126,7 +126,7 @@ void build_verlet_lists()
 	/* Loop neighbor cell particles */
 	for(j = j_start; j < np2; j++) {
 #ifdef EXCLUSIONS
-          if(!is_bond_partner(p1[i].p.identity, p2[j].p.identity))
+          if(do_nonbonded(&p1[i], &p2[j]))
 #endif
 	  {
 	    dist2 = distance2(p1[i].r.p, p2[j].r.p);
@@ -227,7 +227,7 @@ void build_verlet_lists_and_calc_verlet_ia()
 	/* Loop neighbor cell particles */
 	for(j = j_start; j < np2; j++) {
 #ifdef EXCLUSIONS
-          if(!is_bond_partner(p1[i].p.identity, p2[j].p.identity))
+          if(do_nonbonded(&p1[i], &p2[j]))
 #endif
 	  {
 	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);

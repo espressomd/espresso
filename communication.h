@@ -194,6 +194,14 @@ void mpi_send_mol_id(int node, int part, int mid);
 */
 int mpi_send_bond(int pnode, int part, int *bond, int delete);
 
+/** Issue REQ_SET_EXCLUSION: send exclusions.
+    Also calls \ref on_particle_change.
+    \param part     identity of first particle of the exclusion.
+    \param part2    identity of secnd particle of the exclusion.
+    \param delete   if true, do not add the exclusion, rather delete it if found
+*/
+void mpi_send_exclusion(int part, int part2, int delete);
+
 /** Issue REQ_REM_PART: remove a particle.
     Also calls \ref on_particle_change.
     \param id   the particle to remove.
@@ -201,7 +209,9 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete);
 */
 void mpi_remove_particle(int node, int id);
 
-/** Issue REQ_GET_PART: recv particle data.
+/** Issue REQ_GET_PART: recv particle data. The data has to be freed later
+    using \ref free_particle, otherwise the dynamically allocated parts, bonds
+    and exclusions are left over.
     \param part the particle.
     \param node the node it is attached to.
     \param part_data where to store the received data.
@@ -258,6 +268,7 @@ void mpi_gather_stats(int job, void *result);
     pointed to by il. The particles bonding information references this array,
     which is the only data you have to free later (besides the result array
     you allocated). YOU MUST NOT CALL \ref free_particle on any of these particles!
+    
   \param result where to store the gathered particles
   \param il if non-NULL, the integerlist where to store the bonding info
 */
@@ -322,10 +333,6 @@ void mpi_update_mol_ids(void);
 
 /** Issue REQ_SYNC_TOPO: Update the molecules ids to that they correspond to the topology */
 int mpi_sync_topo_part_info(void);
-
-/** Issue REQ_BCAST_BOND_PARTNERS: Broadcast the sorted array containing the mapping of
-    particle and its bond partners */
-void mpi_bcast_bond_partners(int width, int parm);
 
 /** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result
     to these error messages. This called only on the master node.

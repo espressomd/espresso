@@ -137,7 +137,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
   int i, type_num, type, n_partners, bond_broken;
   double ret, dx[3] = {0, 0, 0};
 
-  i=0;
+  i = 0;
   while(i<p1->bl.n) {
     type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
