@@ -33,6 +33,21 @@ typedef struct {
   double p[3];
 } ReducedParticle;
 
+/** Struct holding bond information for a particle. */
+typedef struct {
+  /** field containing the bond information for the particle.
+   * 
+   * For each bond, where the particle is the main particle, bonds
+   * contains the type of the bonded interaction and the identity of
+   * the other participating particles.  
+   */
+  int *bonds;
+  /** size of field \ref bonds. */
+  int n;
+  /** allocated size of field \ref bonds. */
+  int max;
+} BondList;
+
 /** Struct holding all particle information
  *  of the particles. */
 typedef struct {
@@ -48,17 +63,8 @@ typedef struct {
   /** velocity. */
   double v[3];
 
-  /** size of field \ref bonds. */
-  int   n_bonds;
-  /** allocated size of field \ref bonds. */
-  int max_bonds;
-  /** field containing the bond information for the particle.
-   * 
-   * For each bond, where the particle is the main particle, bonds
-   * contains the type of the bonded interaction and the identity of
-   * the other participating particles.  
-   */
-  int    *bonds;
+  /** bonded interactions list. */
+  BondList bl;
 } Particle;
 
 /** List of particles. The particle array is resized using a sophisticated
@@ -73,6 +79,17 @@ typedef struct {
   /** Number of particles that fit in until a resize is needed */
   int max;
 } ParticleList;
+
+/** List of reduced particles (e.g. ghost particles). */
+typedef struct {
+  /** The reduced particles payload */
+  ReducedParticle *part;
+  /** Number of reduced particles contained */
+  int n;
+  /** Number of reduced particles that fit in until a resize is needed */
+  int max;
+} RedParticleList;
+
 
 /************************************************
  * exported variables

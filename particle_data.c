@@ -244,11 +244,11 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, part.v[2], buffer);
   Tcl_AppendResult(interp, buffer, " f ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.f[0], buffer);
+  Tcl_PrintDouble(interp, part.f[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.f[1], buffer);
+  Tcl_PrintDouble(interp, part.f[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.f[2], buffer);
+  Tcl_PrintDouble(interp, part.f[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 
   /* print bonding structure */
@@ -374,11 +374,11 @@ int part(ClientData data, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (!strncmp(argv[0], "f", strlen(argv[0]))) {
-	Tcl_PrintDouble(interp, part.r.f[0], buffer);
+	Tcl_PrintDouble(interp, part.f[0], buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.r.f[1], buffer);
+	Tcl_PrintDouble(interp, part.f[1], buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.r.f[2], buffer);
+	Tcl_PrintDouble(interp, part.f[2], buffer);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (!strncmp(argv[0], "bonds", strlen(argv[0]))) {
