@@ -104,7 +104,7 @@ proc calcObErr { fileN ind { startJ 0 } } {
 
 proc nameObsAv { fileN names { startJ 0 } } {
     # does the same as 'calcObsAv', but expects the observables' column-names rather than their column-positions
-    set f [open $fileN "r"]
+    set f [open $fileN "r"]; set ind1 ""; set ind2 ""
     gets $f tmp_line
     for { set j 0 } { $j<[llength $names] } { incr j } {
 	for { set i 0 } { $i<[llength $tmp_line] } { incr i } {
@@ -112,6 +112,7 @@ proc nameObsAv { fileN names { startJ 0 } } {
 	}
     }
     close $f
+    if { $ind2=="" || $ind1=="" } { puts "\nERROR: None of the observables were found (you were looking for '$names')!"; exit }
     if { [llength $names]!=[llength $ind2] } { puts "\nWARNING: Only [llength $ind2] of [llength $names] parameters have been found in $fileN!"; exit }
     set what [calcObsAv $fileN $ind1 $startJ]
     return [concat [lindex $what 0] [lindex $what 2] [lindex $what 3]]
