@@ -1,24 +1,24 @@
 #############################################################
-#                                                           #
-# init.tcl                                                  #
-# ========                                                  #
-#                                                           #
+#                                                             #
+# init.tcl                                                    #
+# ========                                                    #
+#                                                             #
 # Used for initializing tcl-scripts powered by the 'Espresso' #
-# MPI parallel molecular dynamics program package.          #
-#                                                           #
-# It is a very good idea to include all custom tcl-scripts  #
+# MPI parallel molecular dynamics program package.            #
+#                                                             #
+# It is a very good idea to include all custom tcl-scripts    #
 # here which may enhance other programs running 'Espresso'    #
-# by providing additional tcl-commands/-functions.          #
-#                                                           #
-#############################################################
+# by providing additional tcl-commands/-functions.            #
+#                                                             #
+###############################################################
 
 # here do everything you want to do upon initialization.
 # e. g.
 puts ""
 puts "*******************************************************"
 puts "*                                                     *"
-puts "*                    - Espresso -                       *"
-puts "*                      ======                         *"
+puts "*                    - Espresso -                     *"
+puts "*                    ============                     *"
 puts "*      A MPI Parallel Molecular Dynamics Program      *"
 puts "*                                                     *"
 puts "*                                                     *"
@@ -44,9 +44,11 @@ source countBonds.tcl
 # adds 'findBondPos' to do the same for property 'bonds'
 
 source aux.tcl
+# adds 'checkpoint_set' and 'checkpoint_read'
 # adds 'timeStamp' which modifies a filestring to include a prefix and the current date as postfix before the suffix
 # adds 'polyBlockWrite' which writes a given 'Espresso'-configuration to disk
 #      (this function in combination with 'convertMD2Deserno' replaces 'polywr.tcl')
+# adds 'polyBlockWriteAll'
 # adds 'polyConfMovWriteInit' & 'polyConfMovWrite' which are customized version of 'polyBlockWrite'
 # adds 'analysisInit' & 'analysis' which write some analysis data
 # adds 'stopParticles' which sets all particles' velocities and forces to zero
