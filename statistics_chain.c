@@ -498,7 +498,7 @@ int analyze_fold_chains(float *coord)
   int tmp, index;
   int chainid = 0;
   double cm_tmp = 0.0;
-  double cm_pos[chain_n_chains*3];
+  double *cm_pos = malloc(3*chain_n_chains*sizeof(double));
   for ( i = 0 ; i < 3*chain_n_chains ; i++){cm_pos[i] = 0.0;}
 
   // Check that chain_length, and chain_n_chains are set
