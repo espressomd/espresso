@@ -1,7 +1,7 @@
 #ifndef ROTATION_H
 #define ROTATION_H
 /** \file rotation.h
-    This file ontains all subroutines required to process rotational motion. 
+    This file contains all subroutines required to process rotational motion. 
 
     <b>Responsible:</b>
     <a href="mailto:antypov@mpip-mainz.mpg.de">Dmytro</a>
@@ -23,7 +23,7 @@
 void propagate_omega_quat(); 
 
 /** Convert torques to the body-fixed frame and propogate
-    angular velocity */
+    angular velocities */
 void convert_torqes_propagate_omega();
 
 /** Convert torques to the body-fixed frame to start

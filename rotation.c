@@ -1,7 +1,10 @@
 /** \file rotation.c  Molecular dynamics integrator for rotational motion.
  *
- *  For more information about the integrator 
- *  see \ref rotation.h "rotation.h".
+ *  A velocity Verlet <a HREF="http://ciks.cbt.nist.gov/~garbocz/dpd1/dpd.html">algorithm</a>
+ *  using quaternions is implemented to tackle rotational motion. A random torque and a friction
+ *  term are added to provide the constant NVT conditions. Due to this feature all particles are
+ *  treated as 3D objects with 3 translational and 3 rotational degrees of freedom if ROTATION
+ *  flag is set in \ref config.h "config.h".
 */
 
 #include <mpi.h>
@@ -40,8 +43,11 @@ static double A[3][3];
     \ref statistics.c is calculated assuming that I[0] =  I[1] =  I[2] = 1  */
 static double I[3] = { 1, 1, 1};
 
-/** first and second time derivative of a quaternion */
-static double Qd[4], Qdd[4];
+/** first time derivative of a quaternion */
+static double Qd[4];
+
+/** second time derivative of a quaternion */
+static double Qdd[4];
 
 /** Qd squared */
 static double S1;
