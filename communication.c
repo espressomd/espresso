@@ -19,6 +19,8 @@
 #include "rotation.h"
 #include "p3m.h"
 #include "statistics.h"
+#include "energy.h"
+#include "pressure.h"
 #include "random.h"
 #include "lj.h"
 #include "ljcos.h"
@@ -939,11 +941,6 @@ void mpi_gather_stats(int job, void *result)
   mpi_issue(REQ_GATHER, -1, job);
 
   switch (job) {
-  case 0:
-    /* gather minimum distance */
-    MPI_Gather(&minimum_part_dist, 1, MPI_DOUBLE, (double *)result,
-	       1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    break;
   case 1:
     /* calculate and reduce (sum up) energies */
     task[0] = energy.init_status;
@@ -969,10 +966,6 @@ void mpi_gather_stats_slave(int pnode, int job)
   int task[2];
 
   switch (job) {
-  case 0:
-    MPI_Gather(&minimum_part_dist, 1, MPI_DOUBLE, NULL,
-               1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    break;
   case 1:
     /* calculate and reduce (sum up) energies */
     MPI_Bcast(task, 2, MPI_INT, 0, MPI_COMM_WORLD);

@@ -21,11 +21,6 @@
 #include "forces.h"
 
 
-/************************************************/
-/* Variables */
-/************************************************/
-double minimum_part_dist = -1;
-
 /************************************************************/
 
 void force_init()
@@ -45,7 +40,6 @@ void force_calc()
   double d[3], dist2, dist;
   IA_parameters *ia_params;
   /* preparation */
-  minimum_part_dist = box_l[0] + box_l[1] + box_l[2];
   init_forces();
 #ifdef ROTATION
   init_torques();
@@ -78,11 +72,6 @@ void force_calc()
 	dist  = sqrt(dist2);
 
 	add_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2);
-
-	/* minimal particle distance calculation */
-	if (dist < minimum_part_dist)
-	  minimum_part_dist = dist;
-
       } 
     }
   }

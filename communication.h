@@ -208,7 +208,7 @@ void mpi_bcast_n_particle_types(int s);
 
 /** Issue REQ_GATHER: gather data for analysis in \ref #analyze.
     \param job what to do:
-    <ul><li> 0 gather \ref minimum_part_dist
+    <ul>
 	<li> 1 calculate and reduce (sum up) energies, using \ref calc_energy.
 	<li> 2 calculate and reduce (sum up) virials, using \ref calc_virials.
     </ul>

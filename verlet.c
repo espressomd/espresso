@@ -162,10 +162,9 @@ void build_verlet_lists_and_force_calc()
   VERLET_TRACE(fprintf(stderr,"%d: build_verlet_list_and_force_calc:\n",this_node));
 
   /* preparation forces */
-  minimum_part_dist = box_l[0] + box_l[1] + box_l[2];
   init_forces();    
 #ifdef ROTATION
-    init_torques();
+  init_torques();
 #endif
 
   INNER_CELLS_LOOP(m, n, o) {
@@ -218,7 +217,6 @@ void build_verlet_lists_and_force_calc()
 	    ia_params = get_ia_param(p1[i].r.type, p2[j].r.type);
 	    dist  = sqrt(dist2);
 	    add_non_bonded_pair_force(&(p1[i]), &(p2[j]), ia_params, d, dist, dist2);
-	    if (dist < minimum_part_dist) minimum_part_dist = dist;
 	  }
 	}
       }

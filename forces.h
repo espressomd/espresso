@@ -26,15 +26,6 @@
 #include "mmm1d.h"
 #include "constraint.h"
 
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-
-/** The minimum particle distance seen by the ramp potential. */
-extern double minimum_part_dist;
-
-/*@}*/
-
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/

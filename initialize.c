@@ -13,6 +13,8 @@
 #include "binary_file.h"
 #include "integrate.h"
 #include "statistics.h"
+#include "energy.h"
+#include "pressure.h"
 #include "polymer.h"
 #include "imd.h"
 #include "random.h"
@@ -126,8 +128,6 @@ void on_topology_change()
 void on_ia_change()
 {
   interactions_changed = 1;
-  energy.init_status = 0;
-  virials.init_status= 0;
 }
 
 void on_parameter_change()

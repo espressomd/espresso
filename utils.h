@@ -101,6 +101,14 @@ MDINLINE void realloc_grained_intlist(IntList *il, int size, int grain)
   il->e = (int *) realloc(il->e, sizeof(int)*il->max);
 }
 
+MDINLINE int intlist_contains(IntList *il, int c)
+{
+  int i;
+  for (i = 0; i < il->n; i++)
+    if (c == il->e[i]) return 1;
+  return 0;
+}
+
 MDINLINE void init_doublelist(DoubleList *il)
 {
   il->n   = 0;
