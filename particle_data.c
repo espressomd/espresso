@@ -159,6 +159,17 @@ void init_particle(Particle *part)
   part->v[1]       = 0.0;
   part->v[2]       = 0.0;
 
+#ifdef DIPOLAR_INTERACTION
+  part->quat[0]   = 0.0;
+  part->quat[1]   = 0.0;
+  part->quat[2]   = 0.0;
+  part->quat[3]   = 0.0;
+  part->lambda     = 0.0;
+  part->torque[0]  = 0.0;
+  part->torque[1]  = 0.0;
+  part->torque[2]  = 0.0;
+#endif
+
 #ifdef EXTERNAL_FORCES
   part->ext_flag   = 0;
   part->ext_force[0] = 0.0;
@@ -414,6 +425,31 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_PrintDouble(interp, part.f[2]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 
+#ifdef DIPOLAR_INTERACTION
+  /* print information about dipolar interactions */
+      Tcl_AppendResult(interp, " quat ", (char *)NULL);
+       Tcl_PrintDouble(interp, part.quat[0], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+       Tcl_PrintDouble(interp, part.quat[1], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+       Tcl_PrintDouble(interp, part.quat[2], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+       Tcl_PrintDouble(interp, part.quat[3], buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+             
+      Tcl_AppendResult(interp, " lambda ", (char *)NULL);
+       Tcl_PrintDouble(interp, part.lambda, buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+              
+      Tcl_AppendResult(interp, " torque ", (char *)NULL);
+       Tcl_PrintDouble(interp, part.torque[0], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+       Tcl_PrintDouble(interp, part.torque[1], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+       Tcl_PrintDouble(interp, part.torque[2], buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);       
+#endif
+
 #ifdef EXTERNAL_FORCES
   /* print external force information. */
   if(part.ext_flag == PARTICLE_EXT_FORCE) {
@@ -557,6 +593,32 @@ int part(ClientData data, Tcl_Interp *interp,
 	Tcl_PrintDouble(interp, part.f[2]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
+#ifdef DIPOLAR_INTERACTION
+      else if (!strncmp(argv[0], "quat", strlen(argv[0]))) {
+	 Tcl_PrintDouble(interp, part.quat[0], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	 Tcl_PrintDouble(interp, part.quat[1], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	 Tcl_PrintDouble(interp, part.quat[2], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	 Tcl_PrintDouble(interp, part.quat[3], buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      
+      else if (!strncmp(argv[0], "lambda", strlen(argv[0]))) {
+         Tcl_PrintDouble(interp, part.lambda, buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      
+      else if (!strncmp(argv[0], "torque", strlen(argv[0]))) {
+	Tcl_PrintDouble(interp, part.torque[0], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.torque[1], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.torque[2], buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+#endif         
 #ifdef EXTERNAL_FORCES
       else if (!strncmp(argv[0], "ext_force", strlen(argv[0]))) {
 	if(part.ext_flag == PARTICLE_EXT_FORCE) {
@@ -984,6 +1046,57 @@ int set_particle_type(int part, int type)
   mpi_send_type(pnode, part, type);
   return TCL_OK;
 }
+
+#ifdef DIPOLAR_INTERACTION
+int set_particle_quat(int part, double quat[4])
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_quat(pnode, part, quat);
+  return TCL_OK;
+}
+
+int set_particle_lambda(int part, double lambda)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_lambda(pnode, part, lambda);
+  return TCL_OK;
+}
+
+int set_particle_torque(int part, double torque[3])
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_torque(pnode, part, torque);
+  return TCL_OK;
+}
+
+#endif
 
 #ifdef EXTERNAL_FORCES
 int set_particle_ext(int part, int flag, double force[3])

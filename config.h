@@ -21,6 +21,9 @@
 
 #define ELECTROSTATICS
 
+/** Compiler flag to enable describing and processing particle orientations.
+This will allow to use such particle properties as quart, lambda, and torque. */
+/** #define DIPOLAR_INTERACTION */
 
 /** Compiler flag to enable external forces. E.g. apply a fixed external force
     to a particle or fix a particle in space. */
@@ -88,6 +91,9 @@ MDINLINE int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef CONSTRAINTS
   Tcl_AppendResult(interp, "{ CONSTRAINTS } ", (char *) NULL);
+#endif
+#ifdef DIPOLAR_INTERACTION
+  Tcl_AppendResult(interp, "{ DIPOLAR_INTERACTION} ", (char *) NULL);
 #endif
   Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);

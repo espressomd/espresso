@@ -60,8 +60,20 @@ typedef struct {
 
   /** force. */
   double f[3];
+  
   /** velocity. */
   double v[3];
+  
+#ifdef DIPOLAR_INTERACTION
+/** quaternions */
+  double quat[4];
+
+/** lambda =  mu^2 / sigma^3 / Temperature */
+  double lambda;
+  
+/** torque */
+  double torque[3];
+#endif
 
 #ifdef EXTERNAL_FORCES
   /** flag wether to fix a particle in space. Values: 
@@ -309,6 +321,30 @@ int set_particle_q(int part, double q);
     @return TCL_OK if particle existed
 */
 int set_particle_type(int part, int type);
+
+#ifdef DIPOLAR_INTERACTION
+/** Call only on the master node: set particle orientation using quaternions.
+    @param part the particle.
+    @param quat its new value for quaternions.
+    @return TCL_OK if particle existed
+*/
+int set_particle_quat(int part, double quat[4]);
+
+/** Call only on the master node: set particle lambda parameter which is
+    rwlated to the dipole moment.
+    @param part the particle.
+    @param lambda its lambda = mu^2 / sigma^3 / Temperature.
+    @return TCL_OK if particle existed
+*/
+int set_particle_lambda(int part, double lambda);
+
+/** Call only on the master node: set particle orientation using quaternions.
+    @param part the particle.
+    @param torque its new torque.
+    @return TCL_OK if particle existed
+*/
+int set_particle_torque(int part, double torque[3]);
+#endif
 
 #ifdef EXTERNAL_FORCES
 /** Call only on the master node: set particle external forced.
