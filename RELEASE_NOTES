@@ -2,14 +2,15 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.3e *
+* v1.6.3f *
 ***********
 
 Current working revision.
 
 
-- v1.6.3e -
+- v1.6.3f -
 -----------
+(f) July  1st, 2004.
 (e) June 26th, 2004.
 (d) June 23rd, 2004.
 (c) June 21st, 2004.
@@ -28,6 +29,9 @@ Changes:
     force recalculations due to missing correlations while drawing random numbers.
 
 Bugfixes:
+(f) Rewrote output of 'inter coulomb' to also fix a bug which caused an incomplete
+    list to be returned if the command was used without electrostatics turned on.
+(f) Fixed blockfile storage of nested lists to prevent increase of outermost bounds.
 (d) Fixed bug in the rounding error handling code of fold_coordinate, which caused
     a particle in the unlikely event of rounding error mismatches to not be folded
     by box_l but by the inverse of it (box_l_i).
