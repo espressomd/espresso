@@ -20,6 +20,6 @@ print "<li> " enum " \\ref " FILENAME "::" FNR " \"{" out > "./doc/text/backgrou
 out = ""
 }
 
-function para_match(s){
+function para_match(s) {
 	 return (split(s,a,"(") - split(s,b,")"))
 }
