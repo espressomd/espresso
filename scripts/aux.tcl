@@ -69,16 +69,18 @@ proc timeStamp { destination prefix postfix suffix } {
 #   if the filename ends with '.gz', the file will be compressed
 # - a list of 'tcl_md' parameters to be saved (out of node_grid|box_l|niatypes|time_step|skin|gamma|bjerrum|...
 #   ...p3m_alpha|p3m_r_cut|p3m_mesh|p3m_cao|p3m_epsilon|p3m_mesh_offset|max_num_cells|periodicity);
-#   if an empty list '{}' is supplied, no parameters are written
+#   if an empty list '{}' is supplied, no parameters and no interactions are written
+#   Default value: All the above mentioned parameters.
 # - a string containing which informations (out of pos|type|q|v|f) on the particles should be saved to disk;
-#   if an empty string ' "" 'is provided, no particles, no bonds, and no interactions are written
+#   if an empty string ' "" 'is provided, no particles, and no bonds are written
+#   Default vaule: All the above mentioned informations.
 # 
 # Created:       08.11.2002 by BAM
 # Last modified: 08.11.2002 by BAM
 # 
 #############################################################
 
-proc polyBlockWrite { destination write_param write_part } {
+proc polyBlockWrite { destination {write_param {node_grid box_l niatypes time_step skin gamma bjerrum p3m_alpha p3m_r_cut p3m_mesh p3m_cao p3m_epsilon p3m_mesh_offset max_num_cells periodicity}} {write_part "id pos type q v f"} } {
     
     # Open output-file - compressed, if desired
     if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
@@ -87,18 +89,18 @@ proc polyBlockWrite { destination write_param write_part } {
 	set f [open "$destination" "w"]
     }
     
-    # Write parameters, if desired
+    # Write parameters and interactions, if desired
     if { "$write_param" != "{}" } {
 	foreach j $write_param {
 	    blockfile $f write variable $j
 	}
+	blockfile $f write interactions
     }
     
-    # Write particles, bonds, and interactions, if desired
+    # Write particles and bonds, if desired
     if { "$write_part" != "" } {
 	blockfile $f write particles $write_part all
 	blockfile $f write bonds all
-	blockfile $f write interactions
     }
     
     # Close file
