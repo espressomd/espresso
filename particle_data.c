@@ -1,11 +1,11 @@
 #include "particle_data.h"
 #include "global.h"
 #include "communication.h"
-#include "debug.h"
 #include "grid.h"
 #include <stdlib.h>
 #include <string.h>
 #include <tcl.h>
+#include "debug.h"
 
 /************************************************
  * defines
