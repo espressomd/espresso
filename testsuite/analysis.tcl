@@ -70,7 +70,17 @@ proc rewrite {in out} {
 	set bondl [analyze bond_l]; set bondl_av [analyze <bond_l>]; lappend listables $bondl $bondl_av
 	set gff [analyze formfactor 1 10 10]; set gff_av [analyze <formfactor> 1 10 10]; lappend listables $gff $gff_av
 	set g1v [analyze <g1>]; set g2v [analyze <g2>]; set g3v [analyze <g3>]; lappend listables $g1v $g2v $g3v
-	checkpoint_set "$out.[eval format %02d $i].gz" 1 "observables listables" "all" "$sys_obs" "-"
+	set f [open "|gzip - > $out.[eval format %02d $i].gz" w]
+	blockfile $f write variable all
+	blockfile $f write tclvariable observables
+	blockfile $f write tclvariable listables
+	blockfile $f write interactions
+	blockfile $f write integrate
+	blockfile $f write thermostat
+	blockfile $f write particles "id pos type v f"
+	blockfile $f write bonds
+	blockfile $f write configs 1
+	close $f
 	incr i
     } }
     close $chk; puts " Done."
@@ -82,7 +92,7 @@ setmd gamma  0.0
 #set tcl_precision  6
 set slow     0
 
-# rewrite analysis_system.data2 analysis_system.data; exit 0
+# rewrite analysis_system.data analysis_system.data2; exit 0
 
 if { [catch {
     puts -nonewline "Reading the checkpoint... "; flush stdout
