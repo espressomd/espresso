@@ -270,9 +270,12 @@ void MMM1D_init()
 
   MMM1D_setup_constants();
 
-  if (mmm1d_params.bessel_calculated)
-    mmm1d_params.bessel_cutoff = determine_bessel_cutoff(sqrt(mmm1d_params.far_switch_radius_2), mmm1d_params.maxPWerror, 1000);
-  
+  if (mmm1d_params.bessel_calculated) {
+    // if the radius has not been calculated previously, we are
+    // in the tuning process, and do not need to determine the cutoff here
+    if (mmm1d_params.far_switch_radius_2 > 0)
+      mmm1d_params.bessel_cutoff = determine_bessel_cutoff(sqrt(mmm1d_params.far_switch_radius_2), mmm1d_params.maxPWerror, 1000);
+  }
   MMM1D_recalcTables();
 }
 
