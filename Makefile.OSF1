@@ -11,7 +11,7 @@
 CC=cc
 
 ## optimized compiler flags
-CFLAGS= -O3 -fp_reorder -tune host
+CFLAGS= -O3 -fp_reorder -tune host -std
 ## debug compiler flags
 #CFLAGS=-g
 
@@ -27,7 +27,7 @@ DEPEND=makedepend
 CXX=cxx
 
 ############ warnings
-CFLAGS+=-check -msg_disable ignorecallval -msg_disable noparmlist \
+CFLAGS+=-w0 -warnproto -check -msg_disable ignorecallval -msg_disable noparmlist \
 	-msg_disable uncalled -msg_disable alignment -msg_disable unknownmacro \
 	-msg_disable strctpadding -msg_disable unusedincl \
         -msg_disable needconstext -msg_disable newlocale 
