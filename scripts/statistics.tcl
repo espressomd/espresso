@@ -42,7 +42,7 @@ proc calcObsAv { fileN ind { startJ 0 } } {
     } elseif { $N_av > 1 } {
 	foreach k $var j $var_av  j2 $var_av2 {
 	    eval set $j [eval expr $$j / $N_av]; eval lappend res2 $$j
-	    eval set $j2 [eval expr sqrt($$j2/$N_av - $$j*$$j)]; eval lappend res3 $$j2 
+	    eval set $j2 [eval expr sqrt(abs($$j2/$N_av - $$j*$$j))]; eval lappend res3 $$j2 
 	}
     }
     set res "$N_av \{ $res1 \} \{ $res2 \} \{ $res3 \}"
