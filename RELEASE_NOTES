@@ -28,6 +28,8 @@ Bugfixes:
 (a) November 3rd, 2003.
 
 New Features:
+(e) command 'constraint maze' to create a constraint with a maze-like structure,
+    i.e. spheres connected by cylinders 
 (d) command 'imd positions' has new optional flag '-fold_chains'
 (c) command 'part fix' has new optional parameters, i.e. 'part fix [<x> <y> <z>]'
 (b) command 'analyze p_IK1' replacing 'analyze p_bin'
