@@ -81,8 +81,12 @@ void pressure_calc(double *result)
   case CELL_STRUCTURE_NSQUARE:
     nsq_calculate_virials();
   }
-  /* rescale kinetic energy */
-  virials.data.e[0] /= (2.0*time_step*time_step*volume);
+  /* rescale kinetic energy (=ideal contribution) */
+#ifdef ROTATION
+  virials.data.e[0] /= (6.0*volume*time_step*time_step);
+#else
+  virials.data.e[0] /= (3.0*volume*time_step*time_step);
+#endif
 
   calc_long_range_virials();
 
@@ -426,10 +430,10 @@ int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
 
   for(i=0;i<n_bonded_ia;i++) {
     sprintf(buffer, "%d ", i);
-    Tcl_AppendResult(interp, "{ ", buffer, get_name_of_bonded_ia(bonded_ia_params[i].type), (char *)NULL);
+    Tcl_AppendResult(interp, "{ ", buffer, get_name_of_bonded_ia(bonded_ia_params[i].type)," ", (char *)NULL);
     for(j=0; j<9; j++) {
       Tcl_PrintDouble(interp, obsstat_bonded(&p_tensor, i)[j], buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
     }
     Tcl_AppendResult(interp, "} ", (char *)NULL);
   } 
@@ -630,9 +634,14 @@ void calc_p_tensor(double volume, IntList *p_list, int flag) {
     free_particle(&p1);
   }
 
-  /* Rescale entries */
-  for(i=0; i<9; i++)
-    p_tensor.data.e[i] /= 2.0*volume*SQR(time_step);
+  /* Rescale entries, kinetic (ideal) contribution first */
+  for(i=0; i<9; i++) {
+#ifdef ROTATION
+    p_tensor.data.e[i] /= (6.0*volume*time_step*time_step);
+#else
+    p_tensor.data.e[i] /= (3.0*volume*time_step*time_step);
+#endif
+  }
 
   for(i=9; i<p_tensor.data.n; i++)
     p_tensor.data.e[i]  /= 3.0*volume;
