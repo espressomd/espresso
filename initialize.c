@@ -310,7 +310,7 @@ void on_parameter_change(int field)
   cc = 0;
   switch (coulomb.method) {
   case COULOMB_P3M:
-    if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID)
+    if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID || field == FIELD_SKIN)
       cc = 1;
     else if (field == FIELD_BOXL) {
       P3M_scaleby_box_l();

@@ -8,12 +8,13 @@ What's new, what's been changed, what's been fixed
 Current working revision.
 
 
-- v1.8.3c -
+- v1.8.3d -
 -----------
 
 (a) December 27th, 2004.
 (b) January  11th, 2005.
 (c) January  15th, 2005.
+(d) January  20th, 2005.
 
 New Features:
 (a) Added new analysis routine
@@ -30,6 +31,8 @@ Bugfixes:
 (b) exclusions now also work without Verlet lists.
 (c) Fixed the square bug in P3M, which occurs for non-neutral systems.
 (c) Fixed a rare event bug in tunev2 which could result in wrong parameter sets.
+(d) P3M now honours changes to the skin
+(d) Fixed the additional checks in P3M to contain the skin
 
 - v1.8.2i -
 -----------

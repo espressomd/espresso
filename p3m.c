@@ -1015,17 +1015,17 @@ static void P3M_charge_assign()
 	  q_ind = (d == 0) ? first : first + lm.dim[d]*q_ind;
 
 #ifdef ADDITIONAL_CHECKS
-	  if( pos<0.0 ) {
+	  if( pos < -skin*p3m.ai[d] ) {
 	    fprintf(stderr,"%d: rs_mesh underflow! (P%d at %f)\n",
 		    this_node,p[i].p.identity,p[i].r.p[d]);
 	    fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
-		    this_node,my_left[d],my_right[d]);	    
+		    this_node,my_left[d] - skin, my_right[d] + skin);	    
 	  }
 	  if( (first + p3m.cao) > lm.dim[d] ) {
 	    fprintf(stderr,"%d: rs_mesh overflow! dir=%d (P_id=%d at %f) first=%d\n",
-		    this_node,d,p[i].p.identity,p[i].r.p[d],first[d]);
+		    this_node,d,p[i].p.identity,p[i].r.p[d],first);
 	    fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
-		    this_node,my_left[d],my_right[d]);
+		    this_node, my_left[d] - skin, my_right[d] + skin);
 	  }    
 #endif
 	}
