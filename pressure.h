@@ -200,6 +200,9 @@ MDINLINE void add_kinetic_virials(Particle *p1)
 {
   /* kinetic energy */
   virials.data.e[0] += SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]);
+#ifdef ROTATION
+  virials.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*SQR(time_step);
+#endif
 }
 
 /** implementation of 'analyze pressure' */
