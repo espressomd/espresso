@@ -9,11 +9,5 @@ int initialize(Tcl_Interp *interp)
     i. e. adding the commands etc.
   */
 
-  /* field.c */
-  field_init(interp);
-
-  /* chain.c */
-  chain_init(interp);
-
   return TCL_OK;
 }

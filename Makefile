@@ -3,7 +3,7 @@ PLATFORM=$(shell uname -s)
 include Makefile.$(PLATFORM)
 
 ########### list of source files
-CSOURCES= main initialize global field chain
+CSOURCES= main initialize global slave
 CXXSOURCES=
 
 ########### RULES

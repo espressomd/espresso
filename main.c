@@ -1,8 +1,16 @@
 #include <tcl.h>
-#ifdef USE_TK
-#include <tk.h>
-#endif
 #include "initialize.h"
+#include <mpi.h>
+#include "global.h"
+#include "slave.h"
+
+/* initialize MPI and determine nprocs/node */
+void init_mpi(int *argc, char ***argv)
+{
+  MPI_Init(argc, argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &node);
+  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+}
 
 int appinit(Tcl_Interp *interp)
 {
@@ -19,10 +27,16 @@ int appinit(Tcl_Interp *interp)
 
 int main(int argc, char **argv)
 {
-#ifdef USE_TK
-  Tk_Main(argc, argv, appinit);
-#else
-  Tcl_Main(argc, argv, appinit);
-#endif
+  init_mpi(&argc, &argv);
+
+  if (node == 0) {
+    /* master node */
+    Tcl_Main(argc, argv, appinit);
+    return 0;
+  }
+
+  /* slave node */
+  process_loop();
+
   return 0;
 }
