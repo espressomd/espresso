@@ -10,7 +10,7 @@
 #include "blockfile_tcl.h"
 
 int blockfile(ClientData data, Tcl_Interp *interp,
-	      int argc, char **argv)
+	      int argc, char *argv[])
 {
   char title[MAXBLOCKTITLE];
   char buffer[1024], *name;

@@ -12,7 +12,6 @@
 #include "global.h"
 #include "debug.h"
 
-
 int this_node = -1;
 int n_nodes = -1;
 

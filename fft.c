@@ -604,7 +604,7 @@ int find_comm_groups(int grid1[3], int grid2[3], int *node_list1, int *node_list
   /* node identity */
   int n;
   /* this_node position in the communication group. */
-  int c_pos;
+  int c_pos=-1;
   /* flag for group identification */
   int my_group=0;
 
@@ -802,9 +802,9 @@ void print_fft_plan(fft_forw_plan pl)
 void print_global_fft_mesh(fft_forw_plan plan, double *data, int element, int num)
 {
   int i0,i1,i2,b=1;
-  int mesh,divide=0,block1,start1;
+  int mesh,divide=0,block1=-1,start1;
   int st[3],en[3],si[3];
-  int my;
+  int my=-1;
   double tmp;
 
   for(i1=0;i1<3;i1++) {

@@ -10,7 +10,7 @@ CFLAGS=-O3 -Wall -march=i686 -fschedule-insns -fschedule-insns2 \
 
 # flags needed for MPI
 CFLAGS+= -DHAS_OLD_FFTW
-CFLAGS+=
+CFLAGS+= 
 
 # MDINLINE defines hwo to declare inline functions
 CFLAGS+= -DMDINLINE="inline static"
@@ -28,6 +28,7 @@ LDFLAGS=
 RELEASE=$(shell awk '{print $$3; exit}' /etc/SuSE-release)
 ifeq ($(RELEASE),8.1)
 TCLLIB=tcl8.4
+CFLAGS+= -DUSE_NON_CONST
 else
 TCLLIB=tcl8.3
 endif

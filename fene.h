@@ -33,8 +33,8 @@ MDINLINE void add_fene_pair_force(int p1_ind, int p2_ind, int type_num)
   int i;
   double dx[3], dist2=0.0, fac;
   if(p2_ind == -1) {
-    fprintf(stderr,"%d: ERROR: Bonded atoms %d and %d not on the same node\n"
-	    ,this_node, particles[p1_ind].identity,particles[p1_ind].bonds[i+1]); 
+    fprintf(stderr,"%d: ERROR: Atom %d has bond to unknown particle (probably on different node)\n"
+	    ,this_node, particles[p1_ind].identity); 
     errexit();
   }
   for(i=0;i<3;i++) {

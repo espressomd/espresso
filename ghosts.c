@@ -497,28 +497,31 @@ void exchange_ghost()
 void update_ghost_pos()
 {
   int dir,c,c_ind,n,g,i;
+  int mod_ind;
+  double modifier;
   GHOST_TRACE(fprintf(stderr,"%d: update_ghost_pos:\n",this_node));
 
   for(dir=0; dir<6; dir++) {          /* direction loop forward */
     /* loop send cells -  copy positions to buffer*/
+    mod_ind = dir/2;
+    switch(boundary[dir]) {
+    case 0:  modifier =  0;          break;
+    case 1:  modifier =  box_l[dir]; break;
+    case -1: modifier = -box_l[dir]; break;
+    default: fprintf(stderr, "boundary conditions corrupt, exiting\n");
+      errexit(); /* never reached */; modifier = 0;
+    }
     g=0;
     for(c=0; c<n_send_cells[dir]; c++) {
       c_ind = send_cells[cell_start[dir]+c];
       for(n=0; n<cells[c_ind].n_particles; n++) {
 	for(i=0;i<3;i++) send_buf[g+i] = particles[cells[c_ind].particles[n]].p[i];
+	/* fold positions if they cross the boundary */
+	send_buf[g+mod_ind] += modifier;
 	g += 3;
       }
     }
-    /* fold positions if they cross the boundary */
-    switch(boundary[dir]) {
-    case 0: break;
-    case 1:
-      for(n=dir/2; n<g; n+=3) send_buf[n] += box_l[dir];
-      break;
-    case -1:
-      for(n=dir/2; n<g; n+=3) send_buf[n] -= box_l[dir];
-      break;
-    }
+
     /* send buffer */
     send_posforce(dir,3*ghost_send_size[dir],3*ghost_recv_size[dir]);
 

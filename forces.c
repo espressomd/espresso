@@ -125,6 +125,7 @@ void force_calc()
     /* lennnard jones */
 
     if(dist < ia_params->LJ_cut+ia_params->LJ_offset) {
+      r_off = dist - ia_params->LJ_offset;
       if(r_off>0.0) {
 #ifdef LJ_WARN_WHEN_CLOSE
 	if (r_off < 0.9*ia_params->LJ_sig) {
