@@ -162,7 +162,7 @@ void set_mmm1d_params(double bjerrum, double switch_rad,
   mmm1d.bessel_cutoff = bessel_cutoff;
   mmm1d.maxPWerror = maxPWerror;
 
-  MMM1D_recalcTables(); 
+  mpi_bcast_coulomb_params();
 }
 
 void MMM1D_recalcTables()
@@ -208,6 +208,8 @@ void MMM1D_init()
   L2_i = L_i*L_i;
   prefL2_i = mmm1d.prefactor*L2_i;
   prefL3_i = prefL2_i*L_i;
+
+  MMM1D_recalcTables();
 }
 
 void calc_pw_force(double dx, double dy, double dz,

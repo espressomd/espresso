@@ -51,7 +51,6 @@ void force_init()
   FORCE_TRACE(fprintf(stderr,"%d: force_init:\n",this_node));
   FORCE_TRACE(fprintf(stderr,"%d: found %d particles types\n",
 		      this_node,n_particle_types));
-  MMM1D_init();
 }
 
 
