@@ -21,6 +21,8 @@
 #define BONDED_IA_ANGLE    1
 /** Type of bonded interaction is a dihedral potential. */
 #define BONDED_IA_DIHEDRAL 2
+/** Type of bonded interaction is a HARMONIC potential. */
+#define BONDED_IA_HARMONIC 3
 /** This bonded interaction was not set. */
 #define BONDED_IA_NONE    -1
 
@@ -86,7 +88,7 @@ typedef struct {
 
 /** Defines parameters for a bonded interaction. */
 typedef struct {
-  /** bonded interaction type:  0 = FENE, 1 = ANGLE, 2 = DIHEDRAL */
+  /** bonded interaction type:  0 = FENE, 1 = ANGLE, 2 = DIHEDRAL, 3 = HARMONIC */
   int type;
   /** (Number of particles - 1) interacting for that type */ 
   int num;
@@ -106,6 +108,13 @@ typedef struct {
     struct {
       int dummy;
     } dihedral;
+    /* Parameters for HARMONIC Potential */
+    struct {
+      double k;
+      double r;
+      double r2;
+    } harmonic;
+	 
 
   } p;
 } Bonded_ia_parameters;

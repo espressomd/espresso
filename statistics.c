@@ -19,6 +19,7 @@
 /* include the force files */
 #include "lj.h"
 #include "fene.h"
+#include "harmonic.h"
 #include "angle.h"
 #include "debye_hueckel.h"
 
@@ -232,7 +233,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   else if (!strncmp(mode, "energy", strlen(mode))) {
-    /* 'analyze energy [{ fene <type_num> | lj <type1> <type2> | coulomb | kinetic }]' */
+    /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | lj <type1> <type2> | coulomb | kinetic }]' */
     /***********************************************************************************/
     /* checks */
     if (n_total_particles == 0) {
@@ -258,6 +259,16 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       else if(!strncmp(argv[0], "fene", strlen(argv[0]))) {
 	if(argc<2) {
 	  Tcl_AppendResult(interp, "wrong # arguments for: analyze energy fene <type_num>",
+			   (char *)NULL);
+	  return (TCL_ERROR);
+	}
+	if(Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) return (TCL_ERROR);
+	if(i >= energy.n_bonded) return (TCL_ERROR);
+	energy.ana_num = energy.n_pre+i;
+      }
+      else if(!strncmp(argv[0], "harmonic", strlen(argv[0]))) {
+	if(argc<2) {
+	  Tcl_AppendResult(interp, "wrong # arguments for: analyze energy harmonic <type_num>",
 			   (char *)NULL);
 	  return (TCL_ERROR);
 	}
@@ -321,6 +332,12 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	  Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
 	  Tcl_PrintDouble(interp, energy.sum.e[energy.n_pre+i], buffer);
 	  Tcl_AppendResult(interp, "dihedral", buffer, " } ", (char *) NULL);
+	  break;
+	case BONDED_IA_HARMONIC:
+	  sprintf(buffer, "%d ", i);
+	  Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
+	  Tcl_PrintDouble(interp, energy.sum.e[energy.n_pre+i], buffer);
+	  Tcl_AppendResult(interp, "HARMONIC ", buffer, " } ", (char *) NULL);
 	  break;
 	default:
 	  ;
@@ -1153,13 +1170,17 @@ void calc_energy()
 	    energy.node.e[type_num + 2] +=
 	      fene_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
 	    i+=2; break;
+	  case BONDED_IA_HARMONIC:
+	    energy.node.e[type_num + 2] +=
+	      harmonic_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
+	    i+=2; break;
 	  case BONDED_IA_ANGLE:
 	    energy.node.e[type_num + 2] +=
 	      angle_energy(p1, checked_particle_ptr(p1->bl.e[i+1]),
 			   checked_particle_ptr(p1->bl.e[i+2]), type_num);
 	    i+=3; break;
 	  default :
-	    fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->r.identity);
+	    fprintf(stderr,"WARNING: Bondsie of atom %d unknown\n",p1->r.identity);
 	    i = p1->bl.n; 
 	    break;
 	  }

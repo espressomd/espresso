@@ -21,6 +21,7 @@
 /* include the force files */
 #include "lj.h"
 #include "fene.h"
+#include "harmonic.h"
 #include "angle.h"
 #include "debye_hueckel.h"
 #include "constraint.h"
@@ -61,7 +62,6 @@ void force_calc()
   IA_parameters *ia_params;
   /* bonded interactions */
   int type_num;
-
   /* preparation */
   minimum_part_dist = box_l[0] + box_l[1] + box_l[2];
   init_forces();
@@ -81,6 +81,10 @@ void force_calc()
 	switch(bonded_ia_params[type_num].type) {
 	case BONDED_IA_FENE:
 	  add_fene_pair_force(p1,
+			      checked_particle_ptr(p1->bl.e[i+1]), type_num);
+	  i+=2; break;
+	case BONDED_IA_HARMONIC:
+	  add_harmonic_pair_force(p1,
 			      checked_particle_ptr(p1->bl.e[i+1]), type_num);
 	  i+=2; break;
 	case BONDED_IA_ANGLE:

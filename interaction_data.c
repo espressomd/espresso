@@ -159,6 +159,12 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
   case BONDED_IA_DIHEDRAL:
     Tcl_AppendResult(interp, "dihedral",(char *) NULL);
     return (TCL_OK);
+  case BONDED_IA_HARMONIC:
+    Tcl_PrintDouble(interp, params->p.harmonic.k, buffer);
+    Tcl_AppendResult(interp, "HARMONIC ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.harmonic.r, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
   case BONDED_IA_NONE:
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
@@ -262,6 +268,10 @@ void calc_maximal_cutoff()
     case BONDED_IA_FENE:
       if(max_cut < bonded_ia_params[i].p.fene.r)
 	max_cut = bonded_ia_params[i].p.fene.r;
+      break;
+    case BONDED_IA_HARMONIC:
+      if(max_cut < bonded_ia_params[i].p.harmonic.r)
+	max_cut = bonded_ia_params[i].p.harmonic.r;
       break;
     default:
       break;
@@ -696,6 +706,26 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	return (TCL_ERROR);
       bonded_ia_params[i].type = BONDED_IA_FENE;
       bonded_ia_params[i].p.fene.r2 = SQR(bonded_ia_params[i].p.fene.r);
+      bonded_ia_params[i].num  = 1;
+      /* broadcast interaction parameters */
+      mpi_bcast_ia_params(i,-1); 
+    }
+    else if (!strncmp(argv[0], "HARMONIC", strlen(argv[0])) || 
+	!strncmp(argv[0], "harmonic", strlen(argv[0]))) {
+      /* set new HARMONIC interaction type */
+      if (argc != 3) {
+	Tcl_AppendResult(interp, "harmonic needs 2 parameters: "
+			 "<k_harmonic> <r_harmonic>", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      /* copy HARMONIC parameters */
+      if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.harmonic.k)) == 
+	   TCL_ERROR) ||
+	  (Tcl_GetDouble(interp, argv[2], &(bonded_ia_params[i].p.harmonic.r))  == 
+	   TCL_ERROR) ) 
+	return (TCL_ERROR);
+      bonded_ia_params[i].type = BONDED_IA_HARMONIC;
+      bonded_ia_params[i].p.harmonic.r2 = SQR(bonded_ia_params[i].p.harmonic.r);
       bonded_ia_params[i].num  = 1;
       /* broadcast interaction parameters */
       mpi_bcast_ia_params(i,-1); 
