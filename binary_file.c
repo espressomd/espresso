@@ -257,9 +257,6 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
       mpi_send_type(node, data.identity, data.type);
   }
 
-  if (!processor_grid_is_set())
-    setup_processor_grid();
-
   free(row);
   return TCL_OK;
 }

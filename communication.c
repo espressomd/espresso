@@ -1,6 +1,7 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "communication.h"
 #include "interaction_data.h"
 #include "integrate.h"
