@@ -428,9 +428,11 @@ void mpi_bcast_event_slave(int node, int event)
   case TOPOLOGY_CHANGED:
     on_topology_change();  
     break;
+#ifdef ELECTROSTATICS
   case P3M_COUNT_CHARGES:
     P3M_count_charged_particles();
     break;
+#endif
   default:;
   }
 }
@@ -527,6 +529,7 @@ void mpi_send_f_slave(int pnode, int part)
 /********************* REQ_SET_Q ********/
 void mpi_send_q(int pnode, int part, double q)
 {
+#ifdef ELECTROSTATICS
   mpi_issue(REQ_SET_Q, pnode, part);
 
   if (pnode == this_node) {
@@ -538,10 +541,12 @@ void mpi_send_q(int pnode, int part, double q)
   }
 
   on_particle_change();
+#endif
 }
 
 void mpi_send_q_slave(int pnode, int part)
 {
+#ifdef ELECTROSTATICS
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
@@ -550,6 +555,7 @@ void mpi_send_q_slave(int pnode, int part)
   }
 
   on_particle_change();
+#endif
 }
 
 /********************* REQ_SET_TYPE ********/
@@ -745,8 +751,10 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
     MPI_Recv(pdata->r.p, 3, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
+#ifdef ELECTROSTATICS
     MPI_Recv(&pdata->r.q, 1, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
+#endif   
     MPI_Recv(pdata->f, 3, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
 #ifdef DIPOLAR_INTERACTION	      
@@ -786,8 +794,10 @@ void mpi_recv_part_slave(int pnode, int part)
 	   MPI_COMM_WORLD);
   MPI_Send(p->r.p, 3, MPI_DOUBLE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
+#ifdef ELECTROSTATICS
   MPI_Send(&p->r.q, 1, MPI_DOUBLE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
+#endif
   MPI_Send(p->f, 3, MPI_DOUBLE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
 #ifdef DIPOLAR_INTERACTION
@@ -1128,12 +1138,15 @@ void mpi_set_time_step_slave(int node, int i)
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_coulomb_params()
 {
+#ifdef ELECTROSTATICS
   mpi_issue(REQ_BCAST_COULOMB, 1, 0);
   mpi_bcast_coulomb_params_slave(-1, 0);
+#endif
 }
 
 void mpi_bcast_coulomb_params_slave(int node, int parm)
 {   
+#ifdef ELECTROSTATICS
   MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, MPI_COMM_WORLD);
   if(coulomb.method == COULOMB_P3M) {
     MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
@@ -1145,6 +1158,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     MPI_Bcast(&mmm1d, sizeof(MMM1D_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
   }
   on_ia_change();
+#endif
 }
 
 /****************** REQ_SET_EXT ************/
@@ -1305,13 +1319,17 @@ void mpi_lj_cap_forces_slave(int node, int parm)
 /*************** REQ_GET_CONSFOR ************/
 void mpi_get_constraint_force(int cons, double force[3])
 {
+#ifdef CONSTRAINTS
   mpi_issue(REQ_GET_CONSFOR, -1, cons);
   MPI_Reduce(constraints[cons].part_rep.f, force, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+#endif
 }
 
 void mpi_get_constraint_force_slave(int node, int parm)
 {
+#ifdef CONSTRAINTS
   MPI_Reduce(constraints[parm].part_rep.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+#endif
 }
 
 /*************** REQ_BIT_RANDOM_SEED ************/
