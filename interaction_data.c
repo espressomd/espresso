@@ -37,17 +37,25 @@ void realloc_ia_params(int nsize)
   if (nsize <= n_particle_types)
     return;
 
-  if (ia_params)
-    free(ia_params);
   new_params = (IA_parameters *) malloc(nsize*nsize*sizeof(IA_parameters));
-  for (i = 0; i < nsize; i++)
-    for (j = 0; j < nsize; j++) {
-      if ((i < n_particle_types) && (i < n_particle_types))
-	copy_ia_params(&new_params[i*n_particle_types + j],
-			   &ia_params[i*n_particle_types + j]);
-      else
+  if (ia_params) {
+    /* if there is an old field, copy entries and delete */
+    for (i = 0; i < nsize; i++)
+      for (j = 0; j < nsize; j++) {
+	if ((i < n_particle_types) && (j < n_particle_types))
+	  copy_ia_params(&new_params[i*nsize + j],
+			 &ia_params[i*n_particle_types + j]);
+	else
+	  initialize_ia_params(&new_params[i*n_particle_types + j]);
+      }
+    free(ia_params);
+  }
+  else {
+    /* new field, just init */
+    for (i = 0; i < nsize; i++)
+      for (j = 0; j < nsize; j++)
 	initialize_ia_params(&new_params[i*n_particle_types + j]);
-    }
+  }
 
   n_particle_types = nsize;
   ia_params = new_params;
