@@ -487,15 +487,9 @@ void layered_calculate_ia()
     pl    = celll->part;
     npl   = celll->n;
 
-    if (LAYERED_BTM_NEIGHBOR) {
-      cellb = &cells[c-1];
-      pb    = cellb->part;
-      npb   = cellb->n;
-    }
-    else {
-      npb   = 0;
-      pb    = NULL;
-    }
+    cellb = &cells[c-1];
+    pb    = cellb->part;
+    npb   = cellb->n;
 
     for(i = 0; i < npl; i++) {
       p1 = &pl[i];
@@ -537,15 +531,9 @@ void layered_calculate_energies()
     pl    = celll->part;
     npl   = celll->n;
 
-    if (LAYERED_BTM_NEIGHBOR) {
-      cellb = &cells[c-1];
-      pb    = cellb->part;
-      npb   = cellb->n;
-    }
-    else {
-      npb   = 0;
-      pb    = NULL;
-    }
+    cellb = &cells[c-1];
+    pb    = cellb->part;
+    npb   = cellb->n;
 
     for(i = 0; i < npl; i++) {
       p1 = &pl[i];
@@ -587,15 +575,9 @@ void layered_calculate_virials()
     pl    = celll->part;
     npl   = celll->n;
 
-    if (LAYERED_BTM_NEIGHBOR) {
-      cellb = &cells[c-1];
-      pb    = cellb->part;
-      npb   = cellb->n;
-    }
-    else {
-      npb   = 0;
-      pb    = NULL;
-    }
+    cellb = &cells[c-1];
+    pb    = cellb->part;
+    npb   = cellb->n;
 
     for(i = 0; i < npl; i++) {
       p1 = &pl[i];
