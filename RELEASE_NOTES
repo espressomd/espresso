@@ -2,10 +2,39 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.4c *
+* v1.6.5a *
 ***********
 
 Current working revision.
+
+
+- v1.6.5a -
+-----------
+(a) July 13th, 2004.
+
+Changes:
+(a) The 'blockfile <channel> write thermostat' now adds an 'off'-statement to the 
+    beginning of the thermostat block; this results in all other thermostats being
+    deactivated before the stored ones are read in. Contrary to earlier versions,
+    any 'temperature' or 'gamma' field before this block will therefore no longer 
+    activate the langevin thermostat (a feature present for backwards compatibility
+    only; it should no longer be used anyway) unless there's a corresponding entry
+    within the thermostat block; however, 'temperature' or 'gamma' fields _after_
+    the thermostat block (a big DON'T - always have the setmd-variables as first
+    block in your file) will override its content nonetheless.
+
+Bugfixes:
+(a) Fixed a serious bug in the 'integrate set npt_isotropic' command which occured
+    if that command was invoked several times (e.g. by reading in more than one 
+    blockfile or checkpoint or by switching from NpT to NVT and back to NpT) while
+    supplying the <x> <y> <z> flags each time, causing the internal 'nptiso.volume'
+    to be too large because of a too large internal 'nptiso.dimension', resulting
+    in too small instantaneous pressures 'npt_p_inst' and consequently to small
+    volume adjustments, which consequently resulted in the wrong averaged volumes.
+(a) The aforementioned change to the 'blockfile' command also fixes a bug that when
+    a full blockfile (containing both 'temperature' and 'thermostat' fields in the
+    standard successive order) is read in, the langevin thermostat will be active
+    afterwards no matter if it was or was not contained in the 'thermostat' block.
 
 
 - v1.6.4c -
@@ -15,8 +44,8 @@ Current working revision.
 (a) July  5th, 2004.
 
 Changes:
-(c) Now BOND_ANGLE_COSINE is the default three-body bonded potential (if you don't like
-    this, change it in 'config.h' and recompile).
+(c) Now BOND_ANGLE_COSINE is the default three-body bonded potential 
+    (if you don't like this, change it in 'config.h' and recompile).
 
 Bugfixes:
 (c) Fixed unintialized image box in 'map_position_node_array' before calling 'fold_position'.
