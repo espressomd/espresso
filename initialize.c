@@ -1,5 +1,6 @@
 #include "initialize.h"
 #include "tcl_datafield.h"
+#include "integrate.h"
 
 int initialize(Tcl_Interp *interp)
 {
@@ -9,6 +10,8 @@ int initialize(Tcl_Interp *interp)
   */
 
   tcl_datafield_init(interp);
+
+  tcl_integrator_init(interp);
 
   return TCL_OK;
 }

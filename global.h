@@ -12,12 +12,15 @@ extern int nprocs;
 extern int processor_grid[3];
 extern int neighbors[6];
 
-/* box dimensions */
+/** box dimensions. */
 extern double box_l[3];
+/** left corner of local box. */
 extern double my_left[3];
+/** right corner of local box. */
 extern double my_right[3];
 
 /* particle data */
+/** total number of particles in the system. */
 extern int n_total_particles;
 
 typedef struct {
@@ -38,6 +41,14 @@ typedef struct {
 extern int     n_particles;
 extern int   max_particles;
 extern Particle *particles;
+
+
+/* Integration */
+extern double time_step;
+extern double max_cut;
+extern double skin;
+extern double max_range;
+extern double max_range2;
 
 /* Verlet list */
 extern int   n_verletList;

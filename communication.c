@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "communication.h"
+#include "integrate.h"
 #include "global.h"
 
 //#define DEBUG
@@ -124,11 +125,34 @@ void mpi_send_pdata(Particle *pdata)
 	   MPI_COMM_WORLD);
 }
 
+void mpi_integrate(int n_steps)
+{
+  int req[2] = { REQ_INTEGRATE, n_steps };
+  int task,result;
+  int *recvbuf = malloc(sizeof(int)*nprocs);
+
+  MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
+
+  task = req[1];
+  if(task==0) 
+    result = integrate_vv_init();
+  else if(task > 0)
+    /* => task = number of steps */
+    result = integrate_vv(task);
+  else if(task < 0)
+    result = integrate_vv_exit();
+
+  MPI_Gather(&result, 1, MPI_INT,
+	     recvbuf, 1, MPI_INT,
+	     0, MPI_COMM_WORLD);
+}
+
 void mpi_loop()
 {
   int    req[2];
   int    sendbuf;
   int    part_num, index;
+  int    task, result;
   MPI_Status status;
 
   for (;;) {
@@ -164,6 +188,22 @@ void mpi_loop()
       index = got_particle(req[1]);
       if (index != -1)
 	mpi_send_pdata(&particles[index]);
+      break;
+    case REQ_INTEGRATE:
+      task = req[1];
+      if(task==0) 
+	result = integrate_vv_init();
+      else if(task > 0)
+	result = integrate_vv(task);
+      else if(task < 0)
+	result = integrate_vv_exit();
+      MPI_Gather(&result, 1, MPI_INT,
+		 NULL, nprocs, MPI_INT,
+		 0, MPI_COMM_WORLD);
+#ifdef DEBUG
+      fprinf(stderr, "%d: integration task %d done: %d\n",
+	     this_node, req[1], result);
+#endif
       break;
     default:
 #ifdef DEBUG

@@ -24,6 +24,9 @@ void mpi_send_pos(int node, int part, double pos[3]);
 void mpi_recv_part(int node, int part, Particle *part_data);
 void mpi_send_pdata(Particle *part_data);
 
+/** start integrator */
+void mpi_integrate(int n_steps);
+
 /* requests in random access mode */
 #define REQ_TERM      0
 #define REQ_WHO_HAS   1
@@ -34,5 +37,6 @@ void mpi_send_pdata(Particle *part_data);
 #define REQ_ADD_B2    6
 #define REQ_ADD_B3    7
 #define REQ_GET_PART  8
+#define REQ_INTEGRATE 9
 
 #endif

@@ -216,18 +216,10 @@ int part(ClientData data, Tcl_Interp *interp,
 	    part.v[0], part.v[1], part.v[2],
 	    part.f[0], part.f[1], part.f[2]);
     Tcl_AppendResult(interp, buffer, " {", (char *)NULL);
-    for (j = 0; j < part.n_pairBond; j++) {
-      sprintf(buffer, "{%d %d}", part.pairBonds[j], part.pairBondType[j]);
+    for (j = 0; j < part.n_bond; j++) {
+      sprintf(buffer, "{%d %d}", part.bonds[j], part.bond_type[j]);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
-      if (j < part.n_pairBond - 1)
-	Tcl_AppendResult(interp, " ", (char *)NULL);
-    }
-    Tcl_AppendResult(interp, "} {", (char *)NULL);
-    for (j = 0; j < part.n_tripleBond; j++) {
-      sprintf(buffer, "{%d %d %d}", part.tripleBonds[2*j],
-	      part.tripleBonds[2*j + 1], part.tripleBondType[j]);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-      if (j < part.n_tripleBond - 1)
+      if (j < part.n_bond - 1)
 	Tcl_AppendResult(interp, " ", (char *)NULL);
     }
     Tcl_AppendResult(interp, "}", (char *)NULL);
