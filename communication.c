@@ -16,11 +16,13 @@
 #include "utils.h"
 #include "initialize.h"
 #include "forces.h"
+#include "rotation.h"
 #include "p3m.h"
 #include "statistics.h"
 #include "random.h"
 #include "lj.h"
 #include "ljcos.h"
+#include "gb.h"
 #include "mmm1d.h"
 
 int this_node = -1;

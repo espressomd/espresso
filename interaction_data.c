@@ -13,6 +13,7 @@
 #include "mmm1d.h"
 #include "lj.h"
 #include "ljcos.h"
+#include "gb.h"
 #include "parser.h"
 
 /****************************************
@@ -62,6 +63,16 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJCOS_alfa = 
     params->LJCOS_beta = 
     params->LJCOS_rmin = 0 ;
+    
+  params->GB_eps =
+    params->GB_sig =
+    params->GB_cut =
+    params->GB_k1 =
+    params->GB_k2 =   
+    params->GB_mu = 
+    params->GB_nu =
+    params->GB_chi1 = 
+    params->GB_chi2 = 0 ;
 
 }
 
@@ -84,6 +95,17 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJCOS_alfa = src->LJCOS_alfa;
   dst->LJCOS_beta = src->LJCOS_beta;
   dst->LJCOS_rmin = src->LJCOS_rmin;
+  
+  dst->GB_eps = src->GB_eps;
+  dst->GB_sig = src->GB_sig;
+  dst->GB_cut = src->GB_cut;
+  dst->GB_k1 = src->GB_k1;
+  dst->GB_k2 = src->GB_k2; 
+  dst->GB_mu = src->GB_mu;
+  dst->GB_nu = src->GB_nu;
+  dst->GB_chi1 = src->GB_chi1;
+  dst->GB_chi2 = src->GB_chi2; 
+
 }
 
 /** returns non-zero if particles of type i and j have a nonbonded interaction */
@@ -97,6 +119,9 @@ int checkIfParticlesInteract(int i, int j) {
     return 1;
 
   if (data->LJCOS_cut != 0)
+    return 1;
+
+  if (data->GB_cut != 0)
     return 1;
 
   return 0;
@@ -252,6 +277,27 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
     Tcl_PrintDouble(interp, data->ramp_force, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
   }
+  if (data->GB_cut != 0) {
+    Tcl_PrintDouble(interp, data->GB_eps, buffer);
+    Tcl_AppendResult(interp, "gay-berne ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->GB_sig, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->GB_cut, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->GB_k1, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->GB_k2, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->GB_mu, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->GB_nu, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->GB_chi1, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->GB_chi2, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+ 
+  }
   return (TCL_OK);
 }
 
@@ -342,6 +388,10 @@ void calc_maximal_cutoff()
 	    if(max_cut < (data->LJCOS_cut+data->LJCOS_offset) ) 
 	      max_cut = (data->LJCOS_cut+data->LJCOS_offset);
 	  }
+	  if (data->GB_cut != 0) {
+	    if(max_cut < (data->GB_cut) ) 
+	      max_cut = (data->GB_cut);
+	  }	  
 	  if(max_cut < data->ramp_cut)
 	    max_cut = data->ramp_cut;
 	}
@@ -544,6 +594,44 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
   return TCL_OK;
 }
 
+int gay_berne_set_params(int part_type_a, int part_type_b,
+			     double eps, double sig, double cut,
+			     double k1, double k2,
+			     double mu, double nu)
+{
+  IA_parameters *data, *data_sym;
+
+  make_particle_type_exist(part_type_a);
+  make_particle_type_exist(part_type_b);
+    
+  data     = get_ia_param(part_type_a, part_type_b);
+  data_sym = get_ia_param(part_type_b, part_type_a);
+
+  if (!data || !data_sym) {
+    return TCL_ERROR;
+  }
+
+  /* GB should be symmetrically */
+  data->GB_eps    = data_sym->GB_eps    = eps;
+  data->GB_sig    = data_sym->GB_sig    = sig;
+  data->GB_cut    = data_sym->GB_cut    = cut;
+  data->GB_k1     = data_sym->GB_k1     = k1;
+  data->GB_k2     = data_sym->GB_k2     = k2;
+  data->GB_mu     = data_sym->GB_mu     = mu;
+  data->GB_nu     = data_sym->GB_nu     = nu;
+ 
+   /* Calculate dependent parameters */
+
+  data->GB_chi1 = data_sym->GB_chi1 = ((data->GB_k1*data->GB_k1) - 1) / ((data->GB_k1*data->GB_k1) + 1);
+  data->GB_chi2 = data_sym->GB_chi2 = (pow(data->GB_k2,(1/data->GB_mu))-1)/(pow(data->GB_k2,(1/data->GB_mu))+1);
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+  mpi_bcast_ia_params(part_type_b, part_type_a);
+
+  return TCL_OK;
+}
+
 int dihedral_set_params(int bond_type, double bend)
 {
   if(bond_type < 0)
@@ -645,6 +733,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 			   int argc, char ** argv)
 {
   double eps, sig, cut, shift, offset, cap_radius, force;
+  double k1, k2, mu, nu; /* parameters needed for Gay-Berne*/
 
   Tcl_ResetResult(interp);
 
@@ -731,6 +820,42 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
       }
 
     CHECK_VALUE(lj_cos_set_params(part_type_a, part_type_b, eps, sig, cut, offset),
+		"particle types must be nonnegative");
+  }
+
+  /* parse 
+   *                        gay-berne
+   * interaction
+   */
+  if (ARG0_IS_S("gay-berne")) {
+  	
+    /* there are 9 parameters for gay-berne, but you read in only 7 of them.
+       The rest is calculated in gay_berne_set_params.
+    */
+
+    if (argc < 8 || argc > 9) {
+      Tcl_AppendResult(interp, "gay-berne needs 7 parameters: "
+		       "<gb_eps> <gb_sig> <gb_cut> <gb_k1> <gb_k2> <gb_mu> <gb_nu>",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    /* copy gay-berne parameters */
+    if ((! ARG_IS_D(1, eps))   ||
+	(! ARG_IS_D(2, sig))   ||
+	(! ARG_IS_D(3, cut))   ||
+	(! ARG_IS_D(4, k1 ))   ||
+	(! ARG_IS_D(5, k2 ))   ||
+	(! ARG_IS_D(6, mu ))   ||	
+	(! ARG_IS_D(7, nu )    ))
+      {
+	Tcl_AppendResult(interp, "gay-berne needs 7 DOUBLE parameters: "
+			 "<gb_eps> <gb_sig> <gb_cut> <gb_k1> <gb_k2> <gb_mu> <gb_nu>",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+
+    CHECK_VALUE(gay_berne_set_params(part_type_a, part_type_b, eps, sig, cut, k1, k2, mu, nu),
 		"particle types must be nonnegative");
   }
       

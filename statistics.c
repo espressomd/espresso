@@ -19,6 +19,7 @@
 /* include the force files */
 #include "lj.h"
 #include "ljcos.h"
+#include "gb.h"
 #include "fene.h"
 #include "harmonic.h"
 #include "angle.h"
@@ -239,9 +240,11 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   else if (!strncmp(mode, "energy", strlen(mode))) {
-    /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | coulomb | kinetic }]' */
+    /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | gb <type1> <type2> | coulomb | kinetic /total }]' */
     /*********************************************************************************************************/
     /* checks */
+    int out_mode=0;
+    
     if (n_total_particles == 0) {
       Tcl_AppendResult(interp, "(no particles)",
 		       (char *)NULL);
@@ -271,6 +274,10 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	if(Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) return (TCL_ERROR);
 	if(i >= energy.n_bonded) return (TCL_ERROR);
 	energy.ana_num = energy.n_pre+i;
+      }
+      else if(!strncmp(argv[0], "total", strlen(argv[0]))) {
+	energy.ana_num = 0; 
+	out_mode = 1;
       }
       else if(!strncmp(argv[0], "harmonic", strlen(argv[0]))) {
 	if(argc<2) {
@@ -304,6 +311,17 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	if(i >= n_particle_types || j >= n_particle_types) return (TCL_ERROR);
 	energy.ana_num = energy.n_pre+energy.n_bonded + ((2 * n_particle_types - 1 - i) * i) / 2  +  j;;
       }
+      else if(!strncmp(argv[0], "gb", strlen(argv[0]))) {
+	if(argc<3) {
+	  Tcl_AppendResult(interp, "wrong # arguments for: analyze energy gb <type1> <type2>",
+			   (char *)NULL);
+	  return (TCL_ERROR);
+	}
+	if(Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) return (TCL_ERROR);
+	if(Tcl_GetInt(interp, argv[2], &j) == TCL_ERROR) return (TCL_ERROR);
+	if(i >= n_particle_types || j >= n_particle_types) return (TCL_ERROR);
+	energy.ana_num = energy.n_pre+energy.n_bonded + ((2 * n_particle_types - 1 - i) * i) / 2  +  j;;
+      }
       else if(!strncmp(argv[0], "coulomb", strlen(argv[0]))) {
 #ifdef ELECTROSTATICS
 	energy.ana_num = energy.n_pre+energy.n_bonded+energy.n_non_bonded;
@@ -328,6 +346,11 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else {
+      if(out_mode == 1) {
+        Tcl_PrintDouble(interp, energy.sum.e[0], buffer);
+      	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      else {
       Tcl_PrintDouble(interp, energy.sum.e[0], buffer);
       Tcl_AppendResult(interp, "{ energy ", buffer, " } ", (char *)NULL);
       Tcl_PrintDouble(interp, energy.sum.e[1], buffer);
@@ -374,11 +397,13 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	    Tcl_PrintDouble(interp, energy.sum.e[p], buffer);
 	    /* distinguish lj and lj-cos */
 	    data = get_ia_param(i,j);
-	    if(data->LJ_cut > 0.0 && data->LJCOS_cut > 0.0) 
+	    if(data->GB_cut > 0.0) 
+	      Tcl_AppendResult(interp, "gb ", buffer, " } ", (char *)NULL);
+	    if(data->LJ_cut > 0.0 && data->LJCOS_cut > 0.0)
 	      Tcl_AppendResult(interp, "lj+lj-cos ", buffer, " } ", (char *)NULL);	    
 	    else if(data->LJ_cut > 0.0) 
 	      Tcl_AppendResult(interp, "lj ", buffer, " } ", (char *)NULL);	    
-	    else 
+	    else if(data->LJCOS_cut > 0.0)
 	      Tcl_AppendResult(interp, "lj-cos ", buffer, " } ", (char *)NULL);	    
 	  }
 	  p++;
@@ -397,7 +422,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       }
 #endif
     }
-
+    }
+	
     energy.init_status=1;
     return (TCL_OK);
   }
@@ -1504,6 +1530,9 @@ void calc_energy()
 	p1 = &p[j];
 	/* kinetic energy */
 	energy.node.e[1] += SQR(p1->v[0]) + SQR(p1->v[1]) + SQR(p1->v[2]);
+#ifdef ROTATION
+        energy.node.e[1] += (SQR(p1->omega[0]) + SQR(p1->omega[1]) + SQR(p1->omega[2]))*time_step*time_step;
+#endif	
 	/* bonded interaction energies */
 	i=0;
 	while(i<p1->bl.n) {
@@ -1572,7 +1601,12 @@ void calc_energy()
 
 	  /* lennnard jones cosine */
 	  energy.node.e[type_num] += ljcos_pair_energy(p1,p2,ia_params,d,dist);
-	  
+
+#ifdef ROTATION	  
+	  /* gay-berne */
+	  energy.node.e[type_num] += gb_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+ 
 #ifdef ELECTROSTATICS
 	  /* real space coulomb */
 	  if(coulomb.method==COULOMB_P3M) 
@@ -1912,6 +1946,9 @@ void calc_virials() {
 	  for(j=0;j<3;j++) { f1[j] = p1->f[j]; f2[j] = p2->f[j]; }
 	  add_lj_pair_force(p1,p2,ia_params,d,dist);
 	  add_ljcos_pair_force(p1,p2,ia_params,d,dist);
+#ifdef ROTATION  
+	  add_gb_pair_force(p1,p2,ia_params,d,dist);
+#endif
 	  for(j=0;j<3;j++) { p1->f[j] -= (f1[j] = p1->f[j] - f1[j]); p2->f[j] -= (f2[j] = p2->f[j] - f2[j]); }
 	  virials.node.e[type_num] += d[0]*f1[0] + d[1]*f1[1] + d[2]*f1[2];
 	  

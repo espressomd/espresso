@@ -15,6 +15,7 @@
 #include "utils.h"
 #include "grid.h"
 #include "forces.h"
+#include "rotation.h"
 
 /** Granularity of the verlet list */
 #define LIST_INCREMENT 20
@@ -162,7 +163,10 @@ void build_verlet_lists_and_force_calc()
 
   /* preparation forces */
   minimum_part_dist = box_l[0] + box_l[1] + box_l[2];
-  init_forces();
+  init_forces();    
+#ifdef ROTATION
+    init_torques();
+#endif
 
   INNER_CELLS_LOOP(m, n, o) {
     cell = CELL_PTR(m, n, o);
@@ -224,7 +228,7 @@ void build_verlet_lists_and_force_calc()
 
   /* calc long range forces */
   calc_long_range_forces();
-
+  
 #ifdef VERLET_DEBUG 
   {
     int sum,tot_sum=0;

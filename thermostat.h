@@ -29,9 +29,15 @@ extern double temperature;
 void thermo_init();
 
 /** overwrite the forces of a particle with
-    the friction term, i. e. \f$ F_i=-\gamma v_i\f$.
+    the friction term, i.e. \f$ F_i= -\gamma v_i + \xi_i\f$.
 */
 void friction_thermo(Particle *p);
+
+/** set the particle torques to the friction term, i.e. \f$\tau_i=-\gamma w_i + \xi_i\f$.
+
+The same friction coefficient \f$\gamma\f$ is used as that for translation.
+*/
+void friction_thermo_rotation(Particle *p);
 
 /** Callback for setting \ref #temperature */
 int temp_callback(Tcl_Interp *interp, void *_data);

@@ -71,6 +71,19 @@ typedef struct {
   double LJCOS_alfa;
   double LJCOS_beta;
   double LJCOS_rmin;
+  
+  /** Gay-Berne potential */
+  double GB_eps;
+  double GB_sig;
+  double GB_cut;
+  double GB_k1;
+  double GB_k2;
+  double GB_mu;
+  double GB_nu;
+  double GB_chi1;
+  double GB_chi2;
+  
+  
 } IA_parameters;
 
 /** field containing the interaction parameters for

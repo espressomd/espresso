@@ -201,8 +201,9 @@ void send_ghosts(int s_dir);
  * @param s_dir       direction to send to/recv from.
  * @param send_size   number of positions/forces to send. 
  * @param recv_size   number of positions/forces to receive.
+ * @param element_size number of doubles to send/recv per particle.
  */
-void send_posforce(int s_dir,int send_size, int recv_size);
+void send_posforce(int s_dir,int send_size, int recv_size, int element_size);
 
 /*@}*/
 
@@ -434,7 +435,7 @@ void exchange_and_sort_part()
 void exchange_ghost()
 {
   int s_dir=0, r_dir=0;
-  int c, c_max, n, cnt;
+  int c, c_max, n, cnt, element_size;
   ParticleList *pl;
 
   GHOST_TRACE(fprintf(stderr,"%d: exchange_ghost:\n",this_node));
@@ -504,10 +505,14 @@ void exchange_ghost()
   }
 
   /* realloc pos/force buffers */
+  element_size = 3;
+#ifdef ROTATION
+  element_size += 4;
+#endif
   if(g_send_buf.max > g_recv_buf.max) 
-    send_buf.n = recv_buf.n = 3*g_send_buf.max;
+    send_buf.n = recv_buf.n = element_size*g_send_buf.max;
   else 
-    send_buf.n = recv_buf.n = 3*g_recv_buf.max;
+    send_buf.n = recv_buf.n = element_size*g_recv_buf.max;
   
   realloc_doublelist(&send_buf, send_buf.n);
   realloc_doublelist(&recv_buf, recv_buf.n);
@@ -550,16 +555,21 @@ void update_ghost_pos()
 {
   int s_dir, r_dir;
   int c, n, g, i;
-  int mod_ind;
+  int mod_ind, element_size;
   double modifier;
   ParticleList *pl;
  
   /*  GHOST_TRACE(fprintf(stderr,"%d: update_ghost_pos:\n",this_node)); */
 
+  element_size = 3;
+#ifdef ROTATION
+  element_size += 4;
+#endif     
+	
   for(s_dir=0; s_dir<6; s_dir++) {          /* direction loop forward */
     if(s_dir%2 == 0) r_dir = s_dir+1;
     else             r_dir = s_dir-1;
-    mod_ind = s_dir/2;
+    mod_ind = s_dir/2; 
     switch(boundary[s_dir]) {
     case 0:  modifier =  0;            break;
     case 1:  modifier =  box_l[s_dir/2]; break;
@@ -575,11 +585,15 @@ void update_ghost_pos()
 	for(i=0;i<3;i++) send_buf.e[g+i] = pl->part[n].r.p[i];
 	/* fold positions if they cross the boundary */
 	send_buf.e[g+mod_ind] += modifier;
-	g += 3;
-      }
-    }
+	g += 3;			
+#ifdef ROTATION
+	/* if ROTATION is defined, copy orientations to buffer */
+	for(i=0;i<4;i++) send_buf.e[g+i] = pl->part[n].r.quat[i];
+	g += 4;	
+#endif     
+      }}
     /* send buffer */
-    send_posforce(s_dir, ghost_send_size[s_dir], ghost_recv_size[r_dir]);
+    send_posforce(s_dir, ghost_send_size[s_dir], ghost_recv_size[r_dir], element_size);
     /* loop recv cells - copy positions from buffer */
     g=0;
     for(c=0; c<recv_cells[r_dir].n; c++) {
@@ -587,8 +601,12 @@ void update_ghost_pos()
       for(n=0; n< pl->n; n++) {
 	for(i=0;i<3;i++) pl->part[n].r.p[i] = recv_buf.e[g+i];
 	g += 3;
+#ifdef ROTATION    
+	for(i=0;i<4;i++) pl->part[n].r.quat[i] = recv_buf.e[g+i];
+	g += 4;
+#endif    
       }
-    }
+    }  
   }
 }
 
@@ -596,9 +614,15 @@ void collect_ghost_forces()
 {
   int s_dir, r_dir;
   int c, n, g, i;
+  int element_size;
   ParticleList *pl;
 
   /* GHOST_TRACE(fprintf(stderr,"%d: collect_ghost_forces:\n",this_node)); */
+
+  element_size = 3;
+#ifdef ROTATION    
+  element_size += 3;
+#endif    
 
 #ifdef GHOST_FORCE_DEBUG
   {
@@ -628,10 +652,14 @@ void collect_ghost_forces()
 	
 	for(i=0;i<3;i++) send_buf.e[g+i] = pl->part[n].f[i];
 	g += 3;
+#ifdef ROTATION 
+	for(i=0;i<3;i++) send_buf.e[g+i] = pl->part[n].torque[i];
+	g += 3;
+#endif    
       }
     }
     /* send forces */
-    send_posforce(r_dir, ghost_recv_size[r_dir], ghost_send_size[s_dir]);
+    send_posforce(r_dir, ghost_recv_size[r_dir], ghost_send_size[s_dir],element_size);
     /* loop send cells - add buffer forces to local forces */
     g=0;
     for(c=0; c<send_cells[s_dir].n; c++) {
@@ -642,8 +670,12 @@ void collect_ghost_forces()
 	
 	for(i=0; i<3; i++) pl->part[n].f[i] += recv_buf.e[g+i];
 	g += 3;
+#ifdef ROTATION     
+	for(i=0; i<3; i++) pl->part[n].torque[i] += recv_buf.e[g+i];
+	g += 3;
+#endif     
       }
-    } 
+    }
   }
   
 #ifdef GHOST_FORCE_DEBUG
@@ -886,7 +918,7 @@ void send_ghosts(int s_dir)
   }
 }
 
-void send_posforce(int s_dir, int send_size, int recv_size)
+void send_posforce(int s_dir, int send_size, int recv_size, int element_size)
 {
   int evenodd;
   int r_dir;
@@ -901,12 +933,12 @@ void send_posforce(int s_dir, int send_size, int recv_size)
     for(evenodd=0; evenodd<2;evenodd++) {
       if((node_pos[s_dir/2]+evenodd)%2==0) { 
 	if(send_size>0) 
-	  MPI_Send(send_buf.e, 3*send_size, MPI_DOUBLE, 
+	  MPI_Send(send_buf.e, element_size*send_size, MPI_DOUBLE, 
 		   node_neighbors[s_dir],REQ_SEND_POS,MPI_COMM_WORLD);
       }
       else { 
 	if(recv_size>0) 
-	  MPI_Recv(recv_buf.e, 3*recv_size, MPI_DOUBLE,
+	  MPI_Recv(recv_buf.e, element_size*recv_size, MPI_DOUBLE,
 		   node_neighbors[r_dir],REQ_SEND_POS,MPI_COMM_WORLD,&status);    
       }
     }

@@ -16,6 +16,7 @@
 #include "grid.h"
 #include "cells.h"
 #include "verlet.h"
+#include "rotation.h"
 #include "ghosts.h"
 #include "debug.h"
 #include "p3m.h"
@@ -167,7 +168,9 @@ void integrate_vv(int n_steps)
   if(parameter_changed || particle_changed || topology_changed || interactions_changed) {
     exchange_ghost();
     build_verlet_lists_and_force_calc();
-
+#ifdef ROTATION
+  convert_initial_torques();
+#endif
     collect_ghost_forces();
     rescale_forces();
   }
@@ -177,6 +180,9 @@ void integrate_vv(int n_steps)
   for(i=0;i<n_steps;i++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
     propagate_vel_pos();
+#ifdef ROTATION
+    propagate_omega_quat(); 
+#endif    
     if(rebuild_verletlist == 1) {
       INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
       n_verlet_updates++;
@@ -187,10 +193,13 @@ void integrate_vv(int n_steps)
     }
     else {
       update_ghost_pos();
-      force_calc();
+      force_calc();         
     }
     collect_ghost_forces();
     rescale_forces_propagate_vel();
+#ifdef ROTATION
+    convert_torqes_propagate_omega();
+#endif             
     if(this_node==0) sim_time += time_step;
   }
 

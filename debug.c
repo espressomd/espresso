@@ -18,7 +18,7 @@ int regular_exit = 1;
 #endif
 static int core_done = 0;
 
-int check_id = 91;
+int check_id = 1;
 
 int debug_callback(Tcl_Interp *interp)
 {

@@ -16,6 +16,7 @@
 #include "cells.h"
 #include "particle_data.h"
 #include "interaction_data.h"
+#include "rotation.h"
 
 #include "forces.h"
 
@@ -46,6 +47,10 @@ void force_calc()
   /* preparation */
   minimum_part_dist = box_l[0] + box_l[1] + box_l[2];
   init_forces();
+#ifdef ROTATION
+  init_torques();
+#endif
+
 
   /* force calculation loop. */
   INNER_CELLS_LOOP(m, n, o) {

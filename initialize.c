@@ -21,6 +21,7 @@
 #include "cells.h"
 #include "grid.h"
 #include "thermostat.h"
+#include "rotation.h"
 #include "p3m.h"
 #include "fft.h"
 #include "ghosts.h"
