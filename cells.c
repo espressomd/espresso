@@ -207,21 +207,10 @@ Particle *cells_alloc_particle(int id, double pos[3])
   pl->n++;
   rl = realloc_particles(pl, pl->n);
   pt = &pl->part[pl->n - 1];
-  pt->r.identity = id;
-  pt->r.type = 0;
-  pt->r.q    = 0;
-  pt->f[0] = 0;
-  pt->f[1] = 0;
-  pt->f[2] = 0;
-  pt->i[0]   = 0;
-  pt->i[1]   = 0;
-  pt->i[2]   = 0;
-  pt->v[0]   = 0;
-  pt->v[1]   = 0;
-  pt->v[2]   = 0;
-  memcpy(pt->r.p, pos, 3*sizeof(double));
-  init_intlist(&(pt->bl));
+  init_particle(pt);
 
+  pt->r.identity = id;
+  memcpy(pt->r.p, pos, 3*sizeof(double));
   if (rl)
     update_local_particles(&cells[ind].pList);
   else

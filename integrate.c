@@ -11,6 +11,7 @@
 #include <math.h>
 #include "integrate.h"
 #include "interaction_data.h"
+#include "particle_data.h"
 #include "communication.h"
 #include "grid.h"
 #include "cells.h"
@@ -335,10 +336,14 @@ void propagate_positions()
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
-      p[i].r.p[0] += p[i].v[0];
-      p[i].r.p[1] += p[i].v[1];
-      p[i].r.p[2] += p[i].v[2];
-
+#ifdef EXTERNAL_FORCES
+      if(p[i].ext_flag != PARTICLE_FIXED) 
+#endif
+	{
+	  p[i].r.p[0] += p[i].v[0];
+	  p[i].r.p[1] += p[i].v[1];
+	  p[i].r.p[2] += p[i].v[2];
+	}
       /* Verlet criterion check */
       if(distance2(p[i].r.p,p[i].p_old) > skin2 )
 	rebuild_verletlist = 1; 
@@ -402,9 +407,14 @@ void propagate_vel_pos()
 	 p[i].r.p[0]+p[i].v[0], p[i].r.p[1]+p[i].v[1], p[i].r.p[2]+p[i].v[2]); */
 #endif
 
-      p[i].r.p[0] += p[i].v[0];
-      p[i].r.p[1] += p[i].v[1];
-      p[i].r.p[2] += p[i].v[2];
+#ifdef EXTERNAL_FORCES
+      if(p[i].ext_flag != PARTICLE_FIXED) 
+#endif
+	{
+	  p[i].r.p[0] += p[i].v[0];
+	  p[i].r.p[1] += p[i].v[1];
+	  p[i].r.p[2] += p[i].v[2];
+	}
 
       ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
 

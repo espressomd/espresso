@@ -16,6 +16,20 @@
 #include "utils.h"
 
 /************************************************
+ * defines
+ ************************************************/
+
+#ifdef EXTERNAL_FORCES
+/** \ref ext_flag value for unfixed particle. */
+#define PARTICLE_UNFIXED   0
+/** \ref ext_flag value for particle subject to an external force. */
+#define PARTICLE_EXT_FORCE 1
+/** \ref ext_flag value for fixed particle. */
+#define PARTICLE_FIXED     2
+#endif
+
+
+/************************************************
  * data types
  ************************************************/
 
@@ -48,6 +62,16 @@ typedef struct {
   double f[3];
   /** velocity. */
   double v[3];
+
+#ifdef EXTERNAL_FORCES
+  /** flag wether to fix a particle in space. Values: 
+      <ul> <li> 0 no external influence
+           <li> 1 apply external force \ref Particle::ext_force
+           <li> 2 fix particle in space </ul> */
+  int ext_flag;
+  /** External force, apply if \ref Particle::ext_flag == 1. */
+  double ext_force[3];
+#endif
 
   /** bonded interactions list. */
   IntList bl;
@@ -118,6 +142,14 @@ int part(ClientData data, Tcl_Interp *interp,
 /** initialize a particle list.
  *  Use with care and ONLY for initialization! */
 void init_particleList(ParticleList *pList);
+
+/** initialize a particle.
+    This function just sets all values to zero!
+    Do NOT use this without setting the values of the identity 
+    \ref Particle::r::identity and position \ref Particle::r::p to 
+    reasonable values. Also make sure that you update \ref local_particles.
+ */
+void init_particle(Particle *part);
 
 /** allocate storage for local particles and ghosts.
     \param plist the list on which to operate
@@ -276,6 +308,16 @@ int set_particle_q(int part, double q);
     @return TCL_OK if particle existed
 */
 int set_particle_type(int part, int type);
+
+#ifdef EXTERNAL_FORCES
+/** Call only on the master node: set particle external forced.
+    @param part  the particle.
+    @param flag  new value for ext_flag.
+    @param force new value for ext_force.
+    @return TCL_OK if particle existed
+*/
+int set_particle_ext(int part, int flag, double force[3]);
+#endif
 
 /** Call only on the master node: change particle bond.
     @param part     identity of principal atom of the bond.

@@ -144,6 +144,38 @@ void init_particleList(ParticleList *pList)
   pList->part = NULL;
 }
 
+void init_particle(Particle *part) 
+{
+  part->r.identity = 0;
+  part->r.type     = 0;
+  part->r.q        = 0.0;
+  part->r.p[0]     = 0.0;
+  part->r.p[1]     = 0.0;
+  part->r.p[2]     = 0.0;
+
+  part->p_old[0]   = 0.0;
+  part->p_old[1]   = 0.0;
+  part->p_old[2]   = 0.0;
+  part->i[0]       = 0;
+  part->i[1]       = 0;
+  part->i[2]       = 0;
+  part->f[0]       = 0.0;
+  part->f[1]       = 0.0;
+  part->f[2]       = 0.0;
+  part->v[0]       = 0.0;
+  part->v[1]       = 0.0;
+  part->v[2]       = 0.0;
+
+#ifdef EXTERNAL_FORCES
+  part->ext_flag   = 0;
+  part->ext_force[0] = 0.0;
+  part->ext_force[1] = 0.0;
+  part->ext_force[2] = 0.0;
+#endif
+
+  init_intlist(&(part->bl));
+}
+
 int realloc_particles(ParticleList *l, int size)
 {
   int old_max = l->max, i;
@@ -389,6 +421,22 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_PrintDouble(interp, part.f[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 
+#ifdef EXTERNAL_FORCES
+  /* print external force information. */
+  if(part.ext_flag == PARTICLE_EXT_FORCE) {
+      Tcl_AppendResult(interp, " ext_force ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.ext_force[0], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.ext_force[1], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.ext_force[2], buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+  }
+  else if (part.ext_flag == PARTICLE_FIXED) {
+    Tcl_AppendResult(interp, " fix ", (char *)NULL);
+  }
+#endif
+
   /* print bonding structure */
   if(bl->n > 0) {
     int i=0,j,size;
@@ -407,6 +455,7 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
     Tcl_AppendResult(interp, "} ", (char *)NULL);
   }
   realloc_intlist(bl, 0);
+
   return (TCL_OK);
 }
 
@@ -510,6 +559,35 @@ int part(ClientData data, Tcl_Interp *interp,
 	Tcl_PrintDouble(interp, part.f[2], buffer);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
+#ifdef EXTERNAL_FORCES
+      else if (!strncmp(argv[0], "ext_force", strlen(argv[0]))) {
+	if(part.ext_flag == PARTICLE_EXT_FORCE) {
+	  Tcl_PrintDouble(interp, part.ext_force[0], buffer);
+	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	  Tcl_PrintDouble(interp, part.ext_force[1], buffer);
+	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	  Tcl_PrintDouble(interp, part.ext_force[2], buffer);
+	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+	}
+	else {
+	  Tcl_AppendResult(interp, buffer, "0.0 0.0 0.0 ", (char *)NULL);
+	}
+      }
+      else if (!strncmp(argv[0], "fix", strlen(argv[0]))) {
+	if(part.ext_flag == PARTICLE_FIXED) 
+	  Tcl_AppendResult(interp, "fix", (char *)NULL);
+	else if(part.ext_flag == PARTICLE_UNFIXED)
+	  Tcl_AppendResult(interp, "unfix", (char *)NULL);
+	else if(part.ext_flag == PARTICLE_EXT_FORCE) {
+	  Tcl_PrintDouble(interp, part.ext_force[0], buffer);
+	  Tcl_AppendResult(interp, "ext_force ", buffer, " ", (char *)NULL);
+	  Tcl_PrintDouble(interp, part.ext_force[1], buffer);
+	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	  Tcl_PrintDouble(interp, part.ext_force[2], buffer);
+	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+	}
+      }
+#endif
       else if (!strncmp(argv[0], "bonds", strlen(argv[0]))) {
 	int i = 0, j, size;
 	Tcl_AppendResult(interp, "{", (char *)NULL);
@@ -648,6 +726,39 @@ int part(ClientData data, Tcl_Interp *interp,
 	argc -= 2;
 	argv += 2;
       }
+#ifdef EXTERNAL_FORCES
+      else if (!strncmp(argv[0], "ext_force", strlen(argv[0]))) {
+	double ext_f[3];
+	if (argc < 4) {
+	  Tcl_AppendResult(interp, "ext_force requires 3 arguments", (char *) NULL);
+	  return (TCL_ERROR);
+	}
+	/* set external force */
+	if (Tcl_GetDouble(interp, argv[1], &ext_f[0]) == TCL_ERROR)
+	  return (TCL_ERROR);
+	if (Tcl_GetDouble(interp, argv[2], &ext_f[1]) == TCL_ERROR)
+	  return (TCL_ERROR);
+	if (Tcl_GetDouble(interp, argv[3], &ext_f[2]) == TCL_ERROR)
+	  return (TCL_ERROR);
+
+	err = set_particle_ext(part_num, PARTICLE_EXT_FORCE, ext_f);
+
+	argc -= 4;
+	argv += 4;
+      }
+      else if (!strncmp(argv[0], "fix", strlen(argv[0]))) {
+	double ext_f[3] = {0.0,0.0,0.0};
+	err = set_particle_ext(part_num, PARTICLE_FIXED, ext_f);
+	argc -= 1;
+	argv += 1;
+      }
+      else if (!strncmp(argv[0], "unfix", strlen(argv[0]))) {
+	double ext_f[3] = {0.0,0.0,0.0};
+	err = set_particle_ext(part_num, PARTICLE_UNFIXED, ext_f);
+	argc -= 1;
+	argv += 1;
+      }
+#endif
       else if (!strncmp(argv[0], "bond", strlen(argv[0]))) {
 	int delete = 0;
 	int type_num;
@@ -848,6 +959,24 @@ int set_particle_type(int part, int type)
   mpi_send_type(pnode, part, type);
   return TCL_OK;
 }
+
+#ifdef EXTERNAL_FORCES
+int set_particle_ext(int part, int flag, double force[3])
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_ext(pnode, part, flag, force);
+  return TCL_OK;
+}
+#endif
 
 int change_particle_bond(int part, int *bond, int delete)
 {

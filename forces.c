@@ -14,6 +14,7 @@
 #include "verlet.h"
 #include "utils.h"
 #include "interaction_data.h"
+#include "particle_data.h"
 #include "grid.h"
 #include "p3m.h"
 #include "cells.h"
@@ -132,7 +133,7 @@ void force_calc()
   }
 
   /* calculate k-space part of electrostatic interaction. */
-  if(p3m.bjerrum != 0.0) P3M_calc_kspace_forces(0);
+  if(p3m.bjerrum != 0.0) P3M_calc_kspace_forces(1,0);
 }
 
 /************************************************************/
@@ -156,8 +157,16 @@ void init_forces()
     }
     /* real particle selection */
     else {
-      for (i = 0; i < np; i++)
+      for (i = 0; i < np; i++) {
 	friction_thermo(&p[i]);
+#ifdef EXTERNAL_FORCES   
+	if(p[i].ext_flag == PARTICLE_EXT_FORCE) {
+	  p[i].f[0] += p[i].ext_force[0];
+	  p[i].f[1] += p[i].ext_force[1];
+	  p[i].f[2] += p[i].ext_force[2];
+	}
+#endif
+      }
     }
   }
 }

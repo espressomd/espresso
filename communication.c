@@ -69,8 +69,10 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_GETPARTS  16
 /** Action number for \ref mpi_bcast_coulomb_params. */
 #define REQ_BCAST_COULOMB 17
+/** Action number for \ref mpi_send_ext. */
+#define REQ_SET_EXT 18
 /** Total number of action numbers. */
-#define REQ_MAXIMUM   18
+#define REQ_MAXIMUM 19
 
 /** \name Slave Callbacks
     These functions are the slave node counterparts for the
@@ -96,6 +98,7 @@ void mpi_gather_stats_slave(int node, int parm);
 void mpi_set_time_step_slave(int node, int parm);
 void mpi_get_particles_slave(int node, int parm);
 void mpi_bcast_coulomb_params_slave(int node, int parm);
+void mpi_send_ext_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -118,7 +121,8 @@ SlaveCallback *callbacks[] = {
   mpi_gather_stats_slave,           /* 14: REQ_GATHER */ 
   mpi_set_time_step_slave,          /* 15: REQ_SET_TIME_STEP */
   mpi_get_particles_slave,          /* 16: REQ_GETPARTS */
-  mpi_bcast_coulomb_params_slave    /* 17: REQ_BCAST_COULOMB */
+  mpi_bcast_coulomb_params_slave,   /* 17: REQ_BCAST_COULOMB */
+  mpi_send_ext_slave                /* 18: REQ_SEND_EXT */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -141,6 +145,7 @@ char *names[] = {
   "TIME_STEP" , /* 15 */
   "GET_PARTS" , /* 16 */
   "BCAST_CIA" , /* 17 */
+  "SEND_EXT"    /* 18 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -824,6 +829,39 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   on_ia_change();
 }
 
+/****************** REQ_SET_EXT ************/
+void mpi_send_ext(int pnode, int part, int flag, double force[3])
+{
+#ifdef EXTERNAL_FORCES
+  mpi_issue(REQ_SET_EXT, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->ext_flag = flag;
+    memcpy(p->ext_force, force, 3*sizeof(double));
+  }
+  else {
+    MPI_Send(&flag, 1, MPI_INT, pnode, REQ_SET_EXT, MPI_COMM_WORLD);
+    MPI_Send(force, 3, MPI_DOUBLE, pnode, REQ_SET_EXT, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_ext_slave(int pnode, int part)
+{
+#ifdef EXTERNAL_FORCES
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&(p->ext_flag), 1, MPI_INT, 0, REQ_SET_EXT, MPI_COMM_WORLD, &status);
+    MPI_Recv(p->ext_force, 3, MPI_DOUBLE, 0, REQ_SET_EXT, MPI_COMM_WORLD, &status);
+  }
+
+  on_particle_change();
+#endif
+}
 
 /*********************** MAIN LOOP for slaves ****************/
 
