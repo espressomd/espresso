@@ -142,6 +142,11 @@ proc polyBlockWriteTclvar { destination {tclvar "all"} } {
     flush $f; close $f
 }
 
+# reads the file named '$source' into Espresso
+proc polyBlockRead { source } {
+    set inp [open "$source" r]; while { [eof $inp] != 1 } { blockfile $inp read auto }; close $inp
+}
+
 
 proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { var "all" } { ran "all" } } {
     if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
