@@ -10,6 +10,9 @@
 ############ compiler settings
 CC=cc
 
+### which version of fftw to use, default is use fftw2
+USEFFTW3=no
+
 ## optimized compiler flags
 CFLAGS= -O3 -fp_reorder -tune host -std
 ## debug compiler flags
@@ -58,10 +61,14 @@ else
 LDLIBS+=-pg -ltcl
 endif
 
-
-############ flags needed for P3M
-LDLIBS+= -lrfftw -lfftw
-
 ############ special flags for C++ compilation
 CXXFLAGS=$(CFLAGS) -D_RWSTD_NO_NEW_HEADER -D__USE_STD_IOSTREAM
+
+############ use of fftw2 or fftw3
+ifeq ($(USEFFTW3),yes)
+     LDLIBS+= -lfftw3
+     CFLAGS+= -DUSEFFTW3
+else
+     LDLIBS+= -lrfftw -lfftw
+endif
 

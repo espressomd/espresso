@@ -12,6 +12,9 @@
 ### Tk (graphical interface)
 TK=no
 
+### which version of fftw to use, default is use fftw2
+USEFFTW3=no
+
 ############ compiler settings
 
 # for MPI
@@ -32,7 +35,7 @@ CFLAGS+= -I/Library/Frameworks/Tcl.framework/Headers
 ############ linker settings
 export DARWINLINK=$(CC)
 LINK=../darwinlink.sh
-LDLIBS=-O3 -L/usr/local/lib -lrfftw -lfftw -lmpi -lm -ltcl -llam
+LDLIBS=-O3 -L/usr/local/lib -lmpi -lm -ltcl -llam
 
 # FFTW. Note this is VERY specific for our cluster
 CFLAGS += -I/usr/local/include
@@ -48,5 +51,13 @@ ifeq ($(TK),yes)
      CFLAGS+= -I/Library/Frameworks/Tk.framework/Headers
      CFLAGS+= -DTK
      LDLIBS+= -ltk
+endif
+
+############ use of fftw2 or fftw3
+ifeq ($(USEFFTW3),yes)
+     LDLIBS+= -lfftw3
+     CFLAGS+= -DUSEFFTW3
+else
+     LDLIBS+= -lrfftw -lfftw
 endif
 
