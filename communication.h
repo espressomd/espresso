@@ -154,6 +154,14 @@ void mpi_bcast_ia_params(int i, int j);
     \param s the new size for \ref ia_params.
 */
 void mpi_bcast_n_particle_types(int s);
+
+/** Issue REQ_GATHER: gather statistics. Currently only used for \ref mindist,
+    but should be extended later.
+    \param job what to do; currently only gathering \ref minimum_part_distance
+               is possible.
+    \param result where to store the gathered value(s), currently a double *.
+*/
+void mpi_gather_stats(int job, void *result);
 /*@}*/
 
 #endif

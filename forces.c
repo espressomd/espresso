@@ -14,12 +14,13 @@
 #include "verlet.h"
 #include "utils.h"
 #include "interaction_data.h"
+#include "grid.h"
 
 double Bjerrum    = 1.68;
 double coul_r_cut = 20;
 double alpha      = 0;
 
-double minimum_part_dist = 0;
+double minimum_part_dist = -1;
 
 void force_init()
 {
@@ -68,7 +69,7 @@ void force_calc()
 
   ia_params = get_ia_param(0,0);
 
-  minimum_part_dist = ia_params->ramp_cut;
+  minimum_part_dist = box_l[0] + box_l[1] + box_l[2];
 
   FORCE_TRACE(fprintf(stderr,"%d: interactions type:(0,0):\n",this_node));
   FORCE_TRACE(fprintf(stderr,"    LJ: cut=%f, eps=%f, off=%f\n",
@@ -152,7 +153,8 @@ void force_calc()
     id1 = verletList[i];
     id2 = verletList[i+1];
     ia_params = get_ia_param(particles[id1].type,particles[id2].type);
-    for(j=0;j<3;j++) d[j] = particles[id1].p[j] - particles[id2].p[j];
+    for(j=0;j<3;j++)
+      d[j] = particles[id1].p[j] - particles[id2].p[j];
     dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
     dist = sqrt(dist2);
     FORCE_TRACE(if(dist>0.01) fprintf(stderr,"P%d id(%d,%d) loc(%d, %d): dist %f\n",
@@ -160,6 +162,11 @@ void force_calc()
     /* lennnard jones */
 
     if(dist < ia_params->LJ_cut+ia_params->LJ_offset) {
+      fprintf(stderr, "%d: LJ %d(%d) %d(%d) %f @ %f %f %f - %f %f %f\n", this_node,
+	      id1, particles[id1].identity, id2, particles[id2].identity, dist,
+	      particles[id1].p[0], particles[id1].p[1], particles[id1].p[2],
+	      particles[id2].p[0], particles[id2].p[1], particles[id2].p[2]);
+      
       r_off = dist - ia_params->LJ_offset;
       if(r_off>0.0) {
 	frac2 = SQR(ia_params->LJ_sig/r_off);

@@ -50,7 +50,6 @@ const Datafield fields[] = {
   {&friction_gamma, TYPE_DOUBLE,   1, "gamma", gamma_callback },
   {&rebuild_verletlist, TYPE_INT,   1, "verletflag", ro_callback },
   {&Bjerrum, TYPE_DOUBLE,   1, "bjerrum", bjerrum_callback },
-  {&minimum_part_dist, TYPE_DOUBLE,   1, "mindist", ro_callback },
   { NULL, 0, 0, NULL, NULL }
 };
 

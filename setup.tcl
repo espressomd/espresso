@@ -63,15 +63,15 @@ if {"$write" == "yes" } {
 puts "starting ramp integration"
 integrate init
 
-for {set i 0} { $i < 100 && [setmd mindist] < $mdst } { incr i} {
-    puts "step ${i}00: minimum distance=[setmd mindist]"
+for {set i 0} { $i < 100 && [mindist] < $mdst } { incr i} {
+    puts "step ${i}00: minimum distance=[mindist]"
     integrate $write_steps
     if {"$write" == "yes" } {
 	polywrite [format "configs/c%04d.poly" $i]
     }
 }
 
-puts "final: minimum distance=[setmd mindist]"
+puts "final: minimum distance=[mindist]"
 
 # write
 set f [open "|gzip -c - >config.gz" w]

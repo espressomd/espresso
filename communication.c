@@ -5,6 +5,7 @@
 #include "communication.h"
 #include "interaction_data.h"
 #include "integrate.h"
+#include "forces.h"
 #include "global.h"
 #include "debug.h"
 /** \file communication.c
@@ -55,8 +56,10 @@ typedef void (SlaveCallback)(int param);
 #define REQ_BCAST_IA  12
 /** Action number for \ref mpi_bcast_n_particle_types. */
 #define REQ_BCAST_IA_SIZE  13
+/** Action number for \ref mpi_gather_stats. */
+#define REQ_GATHER  14
 /** Total number of action numbers. */
-#define REQ_MAXIMUM   14
+#define REQ_MAXIMUM   15
 
 /** \name Slave Callbacks
     These functions are the slave node counterparts for the
@@ -78,6 +81,7 @@ void mpi_recv_part_slave(int parm);
 void mpi_integrate_slave(int parm);
 void mpi_bcast_ia_params_slave(int parm);
 void mpi_bcast_n_particle_types_slave(int parm);
+void mpi_gather_stats_slave(int parm);
 /*@}*/
 
 /** A list of wich function has to be called for
@@ -96,7 +100,8 @@ SlaveCallback *callbacks[] = {
   mpi_recv_part_slave,           /* 10: REQ_GET_PART */
   mpi_integrate_slave,           /* 11: REQ_INTEGRATE */
   mpi_bcast_ia_params_slave,     /* 12: REQ_BCAST_IA */ 
-  mpi_bcast_n_particle_types_slave /* 13: REQ_BCAST_IA_SIZE */ 
+  mpi_bcast_n_particle_types_slave, /* 13: REQ_BCAST_IA_SIZE */ 
+  mpi_gather_stats_slave         /* 14: REQ_GATHER */ 
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -499,6 +504,8 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
     MPI_Recv(pdata->p, 3, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
+    MPI_Recv(pdata->i, 3, MPI_INT, pnode,
+	     REQ_GET_PART, MPI_COMM_WORLD, &status);
     MPI_Recv(&pdata->q, 1, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
     MPI_Recv(pdata->v, 3, MPI_DOUBLE, pnode,
@@ -530,6 +537,8 @@ void mpi_recv_part_slave(int part)
   MPI_Send(&pdata->type, 1, MPI_INT, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
   MPI_Send(pdata->p, 3, MPI_DOUBLE, 0, REQ_GET_PART,
+	   MPI_COMM_WORLD);
+  MPI_Send(pdata->i, 3, MPI_INT, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
   MPI_Send(&pdata->q, 1, MPI_DOUBLE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
@@ -635,6 +644,27 @@ void mpi_bcast_n_particle_types(int ns)
 void mpi_bcast_n_particle_types_slave(int ns)
 {
   realloc_ia_params(ns);
+}
+
+/*************** REQ_GATHER ************/
+void mpi_gather_stats(int job, void *result)
+{
+  int req[2];
+  req[0] = REQ_GATHER;
+  req[1] = job;
+
+  COMM_TRACE(fprintf(stderr, "0: issuing GATHER %d\n", job));
+  MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
+  if (job == 0)
+    MPI_Gather(&minimum_part_dist, 1, MPI_DOUBLE, result,
+	       1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+}
+
+void mpi_gather_stats_slave(int job)
+{
+  if (job == 0)
+    MPI_Gather(&minimum_part_dist, 1, MPI_DOUBLE, NULL,
+	       1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
 /*********************** MAIN LOOP for slaves ****************/
