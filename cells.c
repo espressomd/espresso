@@ -395,8 +395,11 @@ void cells_update_ghosts()
   case CELL_STRUCTURE_DOMDEC:
     if(dd.use_vList) {
       if (rebuild_verletlist == 1)
-      /* Communication step:  number of ghosts and ghost information */
+	/* Communication step:  number of ghosts and ghost information */
 	cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
+      else
+	/* Communication step: ghost information */
+	ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
     else 
       cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
