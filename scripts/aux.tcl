@@ -118,7 +118,6 @@ proc polyBlockWriteAll { destination {tclvar "all"} {cfg "1"} {rdm "random"} } {
     polyBlockWrite $destination
     if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
 	set f [open "|gzip -c - >$destination" a] } else { set f [open "$destination" "a"] }
-    
     # Write tcl-variables, if desired
     if { "$tclvar" != "-" } { foreach j $tclvar { blockfile $f write tclvariable $j } }
     
@@ -126,8 +125,17 @@ proc polyBlockWriteAll { destination {tclvar "all"} {cfg "1"} {rdm "random"} } {
     if { "$rdm" != "-" } { foreach j $rdm { blockfile $f write $j } }
     flush $f
     # Write stored analysis-configurations, if desired
-    if { "$cfg" != "-" } { blockfile $f write configs }
+    if { "$cfg" != "-" }  { blockfile $f write configs }
 
+    # Close file
+    flush $f; close $f
+}
+
+proc polyBlockWriteTclvar { destination {tclvar "all"} } {
+    if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
+	set f [open "|gzip -c - >$destination" a] } else { set f [open "$destination" "a"] }
+    # Write tcl-variables, if desired
+    if { "$tclvar" != "-" } { foreach j $tclvar { blockfile $f write tclvariable $j } }
     # Close file
     flush $f; close $f
 }
