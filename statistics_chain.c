@@ -522,12 +522,10 @@ void calc_g3_av(double **_g3) {
 	  cm_tmp[2] += (configs[t+k][3*p+2] - configs[t][3*p+2])*PMASS(partCfg[p]);
           M += PMASS(partCfg[p]);
 	}
-	g3[k] += (SQR(cm_tmp[0]) 
-            + SQR(cm_tmp[1]) 
-	  + SQR(cm_tmp[2]))/SQR(M);
+	g3[k] += (SQR(cm_tmp[0]) + SQR(cm_tmp[1]) + SQR(cm_tmp[2]))/SQR(M);
       }
     }
-    g3[k] /= ((double)chain_n_chains*chain_length*(n_configs-k));
+    g3[k] /= ((double)chain_n_chains*SQR(chain_length)*(n_configs-k));
   }
 }
 
