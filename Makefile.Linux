@@ -49,6 +49,7 @@ MODEL=$(shell awk '/\`model name/ { \
 	if ($$4 == "Intel(R)" && $$5 == "Pentium(R)") print "Pentium-"$$6; else \
 	if ($$4 == "AMD" && $$5 == "Athlon(TM)") print "Athlon-"$$6; else \
 	if ($$4 == "AMD" && $$5 == "Athlon(tm)") print "Athlon-"$$6; else \
+	if ($$4 == "AMD" && $$5 == "Opteron(tm)") print "Opteron"; else \
 	print "Generic"; \
 	exit }' \/proc/cpuinfo)
 
@@ -94,6 +95,10 @@ else
           endif
 
           ifeq ($(MODEL),Athlon-64)
+               HOSTFLAGS= -m64 -mfpmath=sse -msse2
+          endif
+
+          ifeq ($(MODEL),Opteron)
                HOSTFLAGS= -m64 -mfpmath=sse -msse2
           endif
 
