@@ -234,6 +234,7 @@ int aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_lis
     if (*agg_max < agg_size[i]) { *agg_max = agg_size[i]; }
   }
   
+  free (minidist2);
   return 0;
 }
 
@@ -785,6 +786,11 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
   }
+
+  free(agg_id_list);
+  free(head_list);
+  free(link_list);
+  free(agg_size);
 
   return TCL_OK;
 }
