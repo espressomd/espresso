@@ -125,7 +125,8 @@ proc blockfile_read_auto_bonds {channel read auto} {
 	}
 	set pid [lindex $line 1] 
 	set bl [lindex $line 2]
-	foreach inter $bl { part $pid bond delete; eval [concat {part $pid bond} $inter] }
+	part $pid bond delete
+	foreach inter $bl { eval [concat {part $pid bond} $inter] }
     }
 }
 
