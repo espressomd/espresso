@@ -1,6 +1,7 @@
 /** \page tcl_polymer The polymer command
     \verbatim polymer <N_P> <MPC> <bond_length> [start <part_id>] [pos <x> <y> <z>] [mode { SAW | RW } [<shield> [<max_try>]]] 
-                                   [charge <val_cM>] [distance <cM_dist>] [types <type_nM> [<type_cM>]] [FENE <type_FENE>] \endverbatim
+                                   [charge <val_cM>] [distance <cM_dist>] [types <type_nM> [<type_cM>]] [FENE <type_FENE>] 
+				   [angle <angle> [<angle2> [<x2> <y2> <z2>]]] \endverbatim
     Creates some polymer chains within the simulation box, 
     and returns how often the attempt to place a monomer failed in the worst case.
     <ul>
@@ -24,9 +25,11 @@
 	<li> \verbatim <type_FENE>     \endverbatim 
              type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0')
 	<li> \verbatim <angle>	       \endverbatim
-	     desired bond-angle to be fixed
+	     freely rotating bond-angle to be fixed
 	<li> \verbatim <angle2>        \endverbatim
-	     second spherical bond-angle
+	     second spherical bond-angle (for setting up helixes or planar polymers)
+	<li> \verbatim <x2> <y2> <z2>    \endverbatim
+	     sets the position of the 2nd monomer of the first chain
     </ul>
     If \<val_cM\> is smaller than 1e-10, the charge is assumed to be zero, and the types are set to \<type_cM\> = \<type_nM\>.
 
