@@ -1,19 +1,19 @@
 PROGRAMM:
-================================================================================
+===============================================================================
 
 tcl_md is a parallel molecular dynamics program.  It uses Tcl
 (http://tcl.activestate.com) as controlling language to allow great
 flexibility.
 
 GETTING STARTED:
-================================================================================
+===============================================================================
 
 System requierments:
 Script language:   tcl 8.3 or higher
 OS:                Linux ,OSF1 or AIX
 
 CODE COMPILATION
-================================================================================
+===============================================================================
 
 To generate the code:
 
@@ -24,15 +24,18 @@ Linux/tcl_md
 OSF1/tcl_md
 AIX/tcl_md
 
+To clean junk from old compilation trials:
+gmake clean         /* removes all object files */
+gmake clean dep     /* removes dependency files */
+
 COMPILER FLAGS
-================================================================================
+===============================================================================
 
 DOCUMENTATION
-================================================================================
+===============================================================================
 
-To generate documentation:
+To generate documentation (only on pckr17, pckr27):
 
-ssh pckr27
 change into the dirctory your_home/.../tcl_md
 touch main.c
 gmake doc
@@ -44,8 +47,17 @@ LATEX version: doc/latex/refmen.tex /
 DVI version:   doc/latex/refmen.dvi
 And for friends of WINDOWS: doc/rtf/refman.rtf
 
+THEORY CLUSTER INFORMATION
+===============================================================================
+
+LINUX:  pckr17, pckr27
+OSF1:   all workstations (except th42)
+	use also thas2!
+AIX:    hal
+
+
 TESTING
-================================================================================
+===============================================================================
 
 For generating a new configuration type:
 
@@ -58,7 +70,7 @@ To integrate a created configuration (lennard-jones fluid):
 test.tcl
 
 CVS
-================================================================================
+===============================================================================
 
 To check out a project, e. g. tcl_md, you need to
 
@@ -66,9 +78,12 @@ setenv CVSROOT ~pep/cvsroot
 
 The best way is to add this to your .cshrc.
 
-Then you get your private copy by cvs co tcl_md. This will create a
-new directory tcl_md in the CWD, containing an up-to-date version of
-tcl_md.
+Then you get your private copy by 
+
+cvs checkout tcl_md 
+
+This will create a new directory tcl_md in the CWD, containing an
+up-to-date version of tcl_md.
 
 Before editing or if someone else has added something you want to
 have, do
