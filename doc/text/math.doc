@@ -27,7 +27,7 @@ The following procedures are found in scripts/ABHmath.tcl.
     <li> MATHEMATICAL FUNCTIONS
         <ul>   
             <li> \anchor sqr
-            \verbatim sqr \<arg\> \endverbatim returns the square of <tt>\<arg\></tt>.
+            \verbatim sqr <arg> \endverbatim returns the square of <tt>\<arg\></tt>.
 
             <li> \anchor min
             \verbatim min <arg1> <arg2> \endverbatim 
