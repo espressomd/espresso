@@ -198,6 +198,8 @@ This will allow to use such particle properties as quart, omega, and torque. */
 #define CONFIG_H
 
 #ifdef MASS
+/** macro for easy use of mass. If masses are not switched on, the particle mass is defined to 1,
+    so it should be compiled out in most cases. */
 #define PMASS(pt) (pt).p.mass
 #else
 #define PMASS(pt) 1
