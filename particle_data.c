@@ -20,6 +20,7 @@
 #include "debug.h"
 #include "utils.h"
 #include "cells.h"
+#include "parser.h"
 
 /* cwz-build-command: make all
  */
@@ -488,10 +489,581 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   return (TCL_OK);
 }
 
+int part_print_all(Tcl_Interp *interp)
+{
+  int i = 0, start = 1;
+
+  PART_TRACE(fprintf(stderr, "max_seen %d\n", max_seen_particle));
+
+  for (i = 0; i <= max_seen_particle ; i++) {
+
+    PART_TRACE(fprintf(stderr, "particle %d\n", i));
+
+    if (particle_node[i] != -1) {
+      if (start) {
+	Tcl_AppendResult(interp, "{", (char *)NULL);
+	start = 0;
+      }
+      else
+	Tcl_AppendResult(interp, " {", (char *)NULL);
+
+      printParticleToResult(interp, i);
+      Tcl_AppendResult(interp, "}", (char *)NULL);
+    }
+  }
+
+  return TCL_OK;
+}
+
+int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
+		     int part_num)
+{
+  
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  Particle part;
+  IntList *bl = &(part.bl);
+    
+  if (part_num > max_seen_particle) {
+    Tcl_AppendResult(interp, "na", (char *)NULL);
+  
+    return TCL_OK;
+  }
+
+  if (!particle_node)
+    build_particle_node();
+    
+  if (get_particle_data(part_num, &part) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "na", (char *)NULL);
+    return TCL_ERROR;
+  }
+    
+  while (argc > 0) {
+    if (ARG0_IS_S("identity")) {
+      sprintf(buffer, "%d", part.r.identity);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    else if (ARG0_IS_S("pos")) {
+      unfold_particle(part.r.p, part.i);
+      Tcl_PrintDouble(interp, part.r.p[0], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.r.p[1], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.r.p[2], buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    else if (ARG0_IS_S("type")) {
+      sprintf(buffer, "%d", part.r.type);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    else if (ARG0_IS_S("q")) {
+      Tcl_PrintDouble(interp, part.r.q, buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    else if (ARG0_IS_S("v")) {
+      /* unscale velocities ! */
+      Tcl_PrintDouble(interp, part.v[0]/time_step, buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.v[1]/time_step, buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.v[2]/time_step, buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    else if (ARG0_IS_S("f")) {
+      Tcl_PrintDouble(interp, part.f[0]/(0.5*time_step*time_step), buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.f[1]/(0.5*time_step*time_step), buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.f[2]/(0.5*time_step*time_step), buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+
+#ifdef DIPOLAR_INTERACTION
+    else if (ARG0_IS_S("quat")) {
+      Tcl_PrintDouble(interp, part.quat[0], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.quat[1], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.quat[2], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.quat[3], buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    
+    else if (ARG0_IS_S("lambda")) {
+      Tcl_PrintDouble(interp, part.lambda, buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    
+    else if (ARG0_IS_S("torque")) {
+      Tcl_PrintDouble(interp, part.torque[0], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.torque[1], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, part.torque[2], buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+#endif         
+
+#ifdef EXTERNAL_FORCES
+    else if (ARG0_IS_S("ext_force")) {
+      if(part.ext_flag == PARTICLE_EXT_FORCE) {
+	Tcl_PrintDouble(interp, part.ext_force[0], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.ext_force[1], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.ext_force[2], buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      else {
+	Tcl_AppendResult(interp, "0.0 0.0 0.0 ", (char *)NULL);
+      }
+    }
+    else if (ARG0_IS_S("fix")) {
+      if(part.ext_flag == PARTICLE_FIXED) 
+	Tcl_AppendResult(interp, "fix", (char *)NULL);
+      else if(part.ext_flag == PARTICLE_UNFIXED)
+	Tcl_AppendResult(interp, "unfix", (char *)NULL);
+      else if(part.ext_flag == PARTICLE_EXT_FORCE) {
+	Tcl_PrintDouble(interp, part.ext_force[0], buffer);
+	Tcl_AppendResult(interp, "ext_force ", buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.ext_force[1], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	Tcl_PrintDouble(interp, part.ext_force[2], buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+    }
+#endif
+
+    else if (ARG0_IS_S("bonds")) {
+      int i = 0, j, size;
+      Tcl_AppendResult(interp, "{", (char *)NULL);
+      while(i < bl->n) {
+	size = bonded_ia_params[bl->e[i]].num;
+	sprintf(buffer, "{%d ", bl->e[i]);
+	i++;
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+	for(j = 0; j < size - 1; j++) {
+	  sprintf(buffer, "%d ", bl->e[i]);
+	  i++;
+	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+	}
+	sprintf(buffer, "%d} ", bl->e[i]);
+	i++;
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      Tcl_AppendResult(interp, "}", (char *)NULL);
+    }
+    else {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "unknown particle data \"", argv[0], "\" requested", (char *)NULL);
+      realloc_intlist(bl, 0);
+      return TCL_ERROR;
+    }
+    if (argc > 1)
+      Tcl_AppendResult(interp, " ", (char *)NULL);
+    
+    argc--;
+    argv++;
+    
+  }
+  
+  realloc_intlist(bl, 0);
+  
+  return TCL_OK;
+}
+
+int part_cmd_delete(Tcl_Interp *interp, int argc, char **argv,
+		   int part_num, int * change)
+{
+  *change = 0;
+
+  if (remove_particle(part_num) == TCL_ERROR) {
+    char buffer[32 + TCL_INTEGER_SPACE];
+    sprintf(buffer, "particle %d", part_num);
+    Tcl_AppendResult(interp, buffer, " does not exist and cannot be removed",
+		     (char *)NULL);
+    
+    return TCL_ERROR;
+  }
+  if (argc > 0) {
+    Tcl_AppendResult(interp, "part <id> delete does not expect parameters",
+		     (char *)NULL);
+    
+    return TCL_ERROR;
+  }
+  
+  return TCL_OK;
+}
+
+int part_parse_pos(Tcl_Interp *interp, int argc, char **argv,
+		   int part_num, int * change)
+{
+  double pos[3];
+  int j;
+  
+  *change = 3;
+
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "pos requires 3 arguments", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* set position */
+  for (j = 0; j < 3; j++)
+    if (! ARG_IS_D(j, pos[j]))
+      return TCL_ERROR;
+
+  if (place_particle(part_num, pos) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "particle could not be set", (char *) NULL);
+
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
+int part_parse_q(Tcl_Interp *interp, int argc, char **argv,
+		 int part_num, int * change)
+{
+    double q;
+
+    *change = 1;
+
+    if (argc < 1) {
+      Tcl_AppendResult(interp, "q requires 1 argument", (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    /* set charge */
+    if (! ARG0_IS_D(q))
+      return TCL_ERROR;
+    
+    if (set_particle_q(part_num, q) == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+      
+      return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+
+int part_parse_v(Tcl_Interp *interp, int argc, char **argv,
+		 int part_num, int * change)
+{
+  double v[3];
+
+  *change = 3;
+
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "v requires 3 arguments", (char *) NULL);
+   
+    return TCL_ERROR;
+  }
+
+  /* set v */
+  if (! ARG_IS_D(0, v[0]))
+    return TCL_ERROR;
+
+  if (! ARG_IS_D(1, v[1]))
+    return TCL_ERROR;
+
+  if (! ARG_IS_D(2, v[2]))
+    return TCL_ERROR;
+      
+  /* scale velocity with time step */
+  v[0] *= time_step; 
+  v[1] *= time_step; 
+  v[2] *= time_step; 
+  
+  if (set_particle_v(part_num, v) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
+int part_parse_f(Tcl_Interp *interp, int argc, char **argv,
+		 int part_num, int * change)
+{
+  double f[3];
+  
+  *change = 3;
+
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "f requires 3 arguments", (char *) NULL);
+   
+    return TCL_ERROR;
+  }
+  
+  /* set f */
+  if (! ARG_IS_D(0, f[0]))
+    return TCL_ERROR;
+
+  if (! ARG_IS_D(1, f[1]))
+    return TCL_ERROR;
+
+  if (! ARG_IS_D(2, f[2]))
+    return TCL_ERROR;
+      
+  if (set_particle_f(part_num, f) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
+int part_parse_type(Tcl_Interp *interp, int argc, char **argv,
+		    int part_num, int * change)
+{
+  int type;
+  
+  *change = 1;
+
+  if (argc < 1 ) {
+    Tcl_AppendResult(interp, "type requires 1 argument", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* set type */
+  if (! ARG0_IS_I(type))
+    return TCL_ERROR;
+      
+  if (type < 0) {
+    Tcl_AppendResult(interp, "invalid particle type", (char *) NULL);
+    return TCL_ERROR;	  
+  } 
+      
+  if (set_particle_type(part_num, type) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    
+    return TCL_ERROR;
+  }
+  
+  return TCL_OK;
+}
+
+#ifdef EXTERNAL_FORCES
+
+int part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
+			 int part_num, int * change)
+{
+  double ext_f[3];
+  
+  *change = 3;
+
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "ext_force requires 3 arguments", (char *) NULL);
+    return TCL_ERROR;
+  }
+  /* set external force */
+  if (! ARG_IS_D(0, ext_f[0]))
+    return TCL_ERROR;
+
+  if (! ARG_IS_D(1, ext_f[1]))
+    return TCL_ERROR;
+
+  if (! ARG_IS_D(2, ext_f[2]))
+    return TCL_ERROR;
+
+  if (set_particle_ext(part_num, PARTICLE_EXT_FORCE, ext_f) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    
+    return TCL_ERROR;
+  }
+      
+  return TCL_OK;
+}
+
+int part_parse_fix(Tcl_Interp *interp, int argc, char **argv,
+		   int part_num, int * change)
+{
+  double ext_f[3] = {0.0, 0.0, 0.0};
+
+  *change = 0;
+
+  if (set_particle_v(part_num, ext_f) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    
+    return TCL_ERROR;
+  }
+
+  if (set_particle_ext(part_num, PARTICLE_FIXED, ext_f) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
+int part_parse_unfix(Tcl_Interp *interp, int argc, char **argv,
+		     int part_num, int * change)
+{
+  double ext_f[3] = {0.0, 0.0, 0.0};
+
+  *change = 0;
+
+  if (set_particle_ext(part_num, PARTICLE_UNFIXED, ext_f) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
+#endif
+
+int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
+		    int part_num, int * change)
+{
+  int delete = 0;
+  int type_num;
+  int n_partners;
+  /* Bond type number and the bond partner atoms are stored in this field. */
+  int *bond;
+  int j;
+
+  *change = 0;
+
+  /* check number of arguments */
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "bond requires at least 1 arguments: "
+		     "[delete] { <type_num> <partner> }", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* parse away delete eventually */
+  if (ARG0_IS_S("delete")) {
+    delete = 1;
+    argc--;
+    argv++;
+    *change += 1;
+  }
+  
+  /* check type_num */
+  if (argc <= 1 || ! ARG0_IS_I(type_num)) {
+    if (delete == 0)
+      return TCL_ERROR;
+    bond = NULL;
+   
+    // since there is not even a type...
+    n_partners = -1;
+  } else {
+    if(type_num < 0 || type_num >= n_bonded_ia) {
+      Tcl_AppendResult(interp, "invalid bonded interaction type_num"
+		       "(Set bonded interaction parameters first)", (char *) NULL);
+      return TCL_ERROR;
+    }
+    /* check partners */ 
+    n_partners = bonded_ia_params[type_num].num;
+    if(argc < 1+n_partners) {
+      char buffer[256 + 2*TCL_INTEGER_SPACE];
+      sprintf(buffer, "bond type %d requires %d arguments.",
+	      type_num, n_partners+1);
+      Tcl_AppendResult(interp, buffer, (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    bond = (int *)malloc( (n_partners+1)*sizeof(int) );
+    bond[0] = type_num;
+    j=1;
+    while(j <= n_partners) {
+      if (! ARG_IS_I(j, bond[j])) {
+	free(bond);
+	return TCL_ERROR;
+      }
+      if(bond[j] > max_seen_particle || particle_node[bond[j]] == -1) {
+	Tcl_AppendResult(interp, "partner atom %d (identity %d) not known"
+			 ,j+1,bond[j],
+			 "(Set all partner atoms first)", (char *) NULL);
+	free(bond);
+	return TCL_ERROR;
+      }
+      j++;
+    }
+  }
+  /* set/delete bond */ 
+  if (change_particle_bond(part_num, bond, delete) != TCL_OK) {
+    Tcl_AppendResult(interp, "bond to delete did not exist", (char *)NULL);
+    free(bond);
+    return TCL_ERROR;
+  }
+  free(bond);
+
+  *change += (1 + n_partners);
+
+  return TCL_OK;
+}
+
+int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
+		   int part_num)
+{
+  int change = 0, err = TCL_OK;
+
+  while (argc > 0) {
+    if (ARG0_IS_S("print"))
+      return part_parse_print(interp, argc-1, argv+1, part_num);
+
+    else if (ARG0_IS_S("delete"))
+      err = part_cmd_delete(interp, argc-1, argv+1, part_num, &change);
+
+    else if (ARG0_IS_S("pos"))
+      err = part_parse_pos(interp, argc-1, argv+1, part_num, &change);
+
+    else if (ARG0_IS_S("type"))
+      err = part_parse_type(interp, argc-1, argv+1, part_num, &change);
+
+    else if (ARG0_IS_S("q"))
+      err = part_parse_q(interp, argc-1, argv+1, part_num, &change);
+
+    else if (ARG0_IS_S("v"))
+      err = part_parse_v(interp, argc-1, argv+1, part_num, &change);
+
+    else if (ARG0_IS_S("f"))
+      err = part_parse_f(interp, argc-1, argv+1, part_num, &change);
+    
+#ifdef EXTERNAL_FORCES
+
+    else if (ARG0_IS_S("unfix"))
+      err = part_parse_unfix(interp, argc-1, argv+1, part_num, &change);
+
+    else if (ARG0_IS_S("fix"))
+      err = part_parse_fix(interp, argc-1, argv+1, part_num, &change);
+
+    else if (ARG0_IS_S("ext_force"))
+      err = part_parse_ext_force(interp, argc-1, argv+1, part_num, &change);
+
+#endif
+   
+    else if (ARG0_IS_S("bond"))
+      err = part_parse_bond(interp, argc-1, argv+1, part_num, &change);
+
+    else {
+      Tcl_AppendResult(interp, "unknown particle parameter \"",
+		       argv[0],"\"", (char *)NULL);
+
+      return TCL_ERROR;
+    }
+  
+    argc -= (change + 1);
+    argv += (change + 1);
+
+    if (err == TCL_ERROR)
+      return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
 int part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv)
 {
-  int part_num = -1, j;
+  int part_num = -1;
 
   if (!node_grid_is_set())
     setup_node_grid();
@@ -500,432 +1072,41 @@ int part(ClientData data, Tcl_Interp *interp,
     build_particle_node();
 
   /* if no further arguments are given, print out all stored particles */
-  if (argc == 1) {
-    int i = 0, start = 1;
-    PART_TRACE(fprintf(stderr, "max_seen %d\n", max_seen_particle));
-    for (i = 0; i <= max_seen_particle ; i++) {
-      PART_TRACE(fprintf(stderr, "particle %d\n", i));
-      if (particle_node[i] != -1) {
-	if (start) {
-	  Tcl_AppendResult(interp, "{", (char *)NULL);
-	  start = 0;
-	}
-	else
-	  Tcl_AppendResult(interp, " {", (char *)NULL);
-	printParticleToResult(interp, i);
-	Tcl_AppendResult(interp, "}", (char *)NULL);
-      }
-    }
-    return (TCL_OK);
-  }
+  if (argc == 1)
+    return part_print_all(interp);
 
-  if (!strncmp(argv[1], "deleteall", strlen(argv[1]))) {
-    remove_all_particles();
-    return TCL_OK;
-  }
-
-  part_num = atol(argv[1]);
-
-  /* print out particle information */
+  /* only one argument is given */
   if (argc == 2) {
-    if (printParticleToResult(interp, part_num) == TCL_ERROR)
-      Tcl_AppendResult(interp, "na", (char *)NULL);
-    return (TCL_OK);
+
+    if (ARG1_IS_S("deleteall")) {
+      remove_all_particles();
+
+      return TCL_OK;
+    }
+    
+    if (ARG1_IS_I(part_num)) {
+      if (printParticleToResult(interp, part_num) == TCL_ERROR)
+	Tcl_AppendResult(interp, "na", (char *)NULL);
+
+      return TCL_OK;
+    }
+
+    return TCL_ERROR;
   }
 
-  /* print out partial particle information */
-  if (!strncmp(argv[2], "print",  strlen(argv[2]))) {
-    char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-    Particle part;
-    IntList *bl = &(part.bl);
-    
-    if (part_num < 0 || part_num > max_seen_particle) {
-      Tcl_AppendResult(interp, "na", (char *)NULL);
-      return (TCL_OK);
-    }
-    
-    if (!particle_node)
-      build_particle_node();
-    
-    if (get_particle_data(part_num, &part) == TCL_ERROR) {
-      Tcl_AppendResult(interp, "na", (char *)NULL);
-      return (TCL_OK);
-    }
-    
-    argc -= 3;
-    argv += 3;
-    while (argc > 0) {
-      if (!strncmp(argv[0], "identity", strlen(argv[0]))) {
-	sprintf(buffer, "%d", part.r.identity);
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-      else if (!strncmp(argv[0], "pos", strlen(argv[0]))) {
-	unfold_particle(part.r.p, part.i);
-	Tcl_PrintDouble(interp, part.r.p[0], buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.r.p[1], buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.r.p[2], buffer);
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-      else if (!strncmp(argv[0], "type", strlen(argv[0]))) {
-	sprintf(buffer, "%d", part.r.type);
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-      else if (!strncmp(argv[0], "q", strlen(argv[0]))) {
-	Tcl_PrintDouble(interp, part.r.q, buffer);
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-      else if (!strncmp(argv[0], "v", strlen(argv[0]))) {
-	/* unscale velocities ! */
-	Tcl_PrintDouble(interp, part.v[0]/time_step, buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.v[1]/time_step, buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.v[2]/time_step, buffer);
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-      else if (!strncmp(argv[0], "f", strlen(argv[0]))) {
-	Tcl_PrintDouble(interp, part.f[0]/(0.5*time_step*time_step), buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.f[1]/(0.5*time_step*time_step), buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.f[2]/(0.5*time_step*time_step), buffer);
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-#ifdef DIPOLAR_INTERACTION
-      else if (!strncmp(argv[0], "quat", strlen(argv[0]))) {
-	 Tcl_PrintDouble(interp, part.quat[0], buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	 Tcl_PrintDouble(interp, part.quat[1], buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	 Tcl_PrintDouble(interp, part.quat[2], buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	 Tcl_PrintDouble(interp, part.quat[3], buffer);
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-      
-      else if (!strncmp(argv[0], "lambda", strlen(argv[0]))) {
-         Tcl_PrintDouble(interp, part.lambda, buffer);
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-      
-      else if (!strncmp(argv[0], "torque", strlen(argv[0]))) {
-	Tcl_PrintDouble(interp, part.torque[0], buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.torque[1], buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.torque[2], buffer);
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-#endif         
-#ifdef EXTERNAL_FORCES
-      else if (!strncmp(argv[0], "ext_force", strlen(argv[0]))) {
-	if(part.ext_flag == PARTICLE_EXT_FORCE) {
-	  Tcl_PrintDouble(interp, part.ext_force[0], buffer);
-	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	  Tcl_PrintDouble(interp, part.ext_force[1], buffer);
-	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	  Tcl_PrintDouble(interp, part.ext_force[2], buffer);
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
-	}
-	else {
-	  Tcl_AppendResult(interp, "0.0 0.0 0.0 ", (char *)NULL);
-	}
-      }
-      else if (!strncmp(argv[0], "fix", strlen(argv[0]))) {
-	if(part.ext_flag == PARTICLE_FIXED) 
-	  Tcl_AppendResult(interp, "fix", (char *)NULL);
-	else if(part.ext_flag == PARTICLE_UNFIXED)
-	  Tcl_AppendResult(interp, "unfix", (char *)NULL);
-	else if(part.ext_flag == PARTICLE_EXT_FORCE) {
-	  Tcl_PrintDouble(interp, part.ext_force[0], buffer);
-	  Tcl_AppendResult(interp, "ext_force ", buffer, " ", (char *)NULL);
-	  Tcl_PrintDouble(interp, part.ext_force[1], buffer);
-	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	  Tcl_PrintDouble(interp, part.ext_force[2], buffer);
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
-	}
-      }
-#endif
-      else if (!strncmp(argv[0], "bonds", strlen(argv[0]))) {
-	int i = 0, j, size;
-	Tcl_AppendResult(interp, "{", (char *)NULL);
-	while(i < bl->n) {
-	  size = bonded_ia_params[bl->e[i]].num;
-	  sprintf(buffer, "{%d ", bl->e[i]);
-	  i++;
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
-	  for(j = 0; j < size - 1; j++) {
-	    sprintf(buffer, "%d ", bl->e[i]);
-	    i++;
-	    Tcl_AppendResult(interp, buffer, (char *)NULL);
-	  }
-	  sprintf(buffer, "%d} ", bl->e[i]);
-	  i++;
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
-	}
-	Tcl_AppendResult(interp, "}", (char *)NULL);
-      }
-      else {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "unknown particle data \"", argv[0], "\" requested", (char *)NULL);
-	realloc_intlist(bl, 0);
-	return (TCL_ERROR);
-      }
-      if (argc > 1)
-	Tcl_AppendResult(interp, " ", (char *)NULL);
-
-      argc--;
-      argv++;
-
-    }
-
-    realloc_intlist(bl, 0);
-
-    return TCL_OK;
-  }
+  /* from here we have at least two arguments */
+  /* The first one has to be an integer */
+  if (! ARG1_IS_I(part_num))
+    return TCL_ERROR;
 
   if (part_num < 0) {
-    Tcl_AppendResult(interp, "particle identities must be positive", (char *)NULL);
-    return (TCL_ERROR);
+    Tcl_AppendResult(interp, "particle identities must be positive",
+		     (char *)NULL);
+
+    return TCL_ERROR;
   }
 
-  /* delete a particle */
-
-  if (!strncmp(argv[2], "delete", strlen(argv[2]))) {
-    if (remove_particle(part_num) == TCL_ERROR) {
-      char buffer[32 + TCL_INTEGER_SPACE];
-      sprintf(buffer, "particle %d", part_num);
-      Tcl_AppendResult(interp, buffer, " does not exist and cannot be removed", (char *)NULL);      
-      return TCL_ERROR;
-    }
-    if (argc != 3) {
-      Tcl_AppendResult(interp, "part <id> delete does not expect parameters", (char *)NULL);      
-      return TCL_ERROR;
-    }
-    return TCL_OK;
-  }
-
-  /* set particle data */
-
-  argc -= 2;
-  argv += 2;
-  while (argc > 0) {
-    int err = TCL_OK;
-    if (!strncmp(argv[0], "pos", strlen(argv[0]))) {
-      double pos[3];
-      if (argc < 4) {
-	Tcl_AppendResult(interp, "pos requires 3 arguments", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      /* set position */
-      for (j = 0; j < 3; j++) {
-	if (Tcl_GetDouble(interp, argv[1 + j], &pos[j]) == TCL_ERROR)
-	  return (TCL_ERROR);
-      }
-
-      if (place_particle(part_num, pos) == TCL_ERROR) {
-	Tcl_AppendResult(interp, "particle could not be set", (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      argc -= 4;
-      argv += 4;
-    }
-    else if (!strncmp(argv[0], "q", strlen(argv[0]))) {
-      double q;
-      if (argc < 2) {
-	Tcl_AppendResult(interp, "q requires 1 argument", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      /* set charge */
-      if (Tcl_GetDouble(interp, argv[1], &q) == TCL_ERROR)
-	return (TCL_ERROR);
-      
-      err = set_particle_q(part_num, q);
-      
-      argc -= 2;
-      argv += 2;
-    }
-    else if (!strncmp(argv[0], "v", strlen(argv[0]))) {
-      double v[3];
-      if (argc < 4) {
-	Tcl_AppendResult(interp, "v requires 3 arguments", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      /* set v */
-      if (Tcl_GetDouble(interp, argv[1], &v[0]) == TCL_ERROR)
-	return (TCL_ERROR);
-      if (Tcl_GetDouble(interp, argv[2], &v[1]) == TCL_ERROR)
-	return (TCL_ERROR);
-      if (Tcl_GetDouble(interp, argv[3], &v[2]) == TCL_ERROR)
-	return (TCL_ERROR);
-      
-      /* scale velocity with time step */
-      v[0] *= time_step; 
-      v[1] *= time_step; 
-      v[2] *= time_step; 
-
-      err = set_particle_v(part_num, v);
-
-      argc -= 4;
-      argv += 4;
-    }
-    else if (!strncmp(argv[0], "f", strlen(argv[0]))) {
-      double f[3];
-      if (argc < 4) {
-	Tcl_AppendResult(interp, "f requires 3 arguments", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      /* set v */
-      if (Tcl_GetDouble(interp, argv[1], &f[0]) == TCL_ERROR)
-	return (TCL_ERROR);
-      if (Tcl_GetDouble(interp, argv[2], &f[1]) == TCL_ERROR)
-	return (TCL_ERROR);
-      if (Tcl_GetDouble(interp, argv[3], &f[2]) == TCL_ERROR)
-	return (TCL_ERROR);
-      
-      err = set_particle_f(part_num, f);
-      
-      argc -= 4;
-      argv += 4;
-    }
-    else if (!strncmp(argv[0], "type", strlen(argv[0]))) {
-      int type;
-      if (argc < 2) {
-	Tcl_AppendResult(interp, "type requires 1 argument", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      /* set type */
-      if (Tcl_GetInt(interp, argv[1], &type) == TCL_ERROR)
-	return (TCL_ERROR);
-      
-      if (type < 0) {
-	Tcl_AppendResult(interp, "invalid particle type", (char *) NULL);
-	return (TCL_ERROR);	  
-      } 
-      
-      err = set_particle_type(part_num, type);
-      
-      argc -= 2;
-      argv += 2;
-    }
-#ifdef EXTERNAL_FORCES
-    else if (!strncmp(argv[0], "ext_force", strlen(argv[0]))) {
-      double ext_f[3];
-      if (argc < 4) {
-	Tcl_AppendResult(interp, "ext_force requires 3 arguments", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      /* set external force */
-      if (Tcl_GetDouble(interp, argv[1], &ext_f[0]) == TCL_ERROR)
-	return (TCL_ERROR);
-      if (Tcl_GetDouble(interp, argv[2], &ext_f[1]) == TCL_ERROR)
-	return (TCL_ERROR);
-      if (Tcl_GetDouble(interp, argv[3], &ext_f[2]) == TCL_ERROR)
-	return (TCL_ERROR);
-
-      err = set_particle_ext(part_num, PARTICLE_EXT_FORCE, ext_f);
-      
-      argc -= 4;
-      argv += 4;
-      }
-    else if (!strncmp(argv[0], "fix", strlen(argv[0]))) {
-      double ext_f[3] = {0.0,0.0,0.0};
-      err = set_particle_v(part_num, ext_f);
-      err = set_particle_ext(part_num, PARTICLE_FIXED, ext_f);
-      argc -= 1;
-      argv += 1;
-    }
-    else if (!strncmp(argv[0], "unfix", strlen(argv[0]))) {
-      double ext_f[3] = {0.0,0.0,0.0};
-      err = set_particle_ext(part_num, PARTICLE_UNFIXED, ext_f);
-      argc -= 1;
-      argv += 1;
-    }
-#endif
-    else if (!strncmp(argv[0], "bond", strlen(argv[0]))) {
-      int delete = 0;
-      int type_num;
-      int n_partners;
-      /* Bond type number and the bond partner atoms are stored in this field. */
-      int *bond;
-      /* check number of arguments */
-      if (argc < 2) {
-	Tcl_AppendResult(interp, "bond requires at least 1 arguments: "
-			 "[delete] { <type_num> <partner> }", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      /* parse away delete eventually */
-      if (!strncmp(argv[1], "delete", strlen(argv[1]))) {
-	delete = 1;
-	argc--;
-	argv++;
-      }
-      /* check type_num */
-      if (argc <= 1 || Tcl_GetInt(interp, argv[1], &type_num) == TCL_ERROR) {
-	if (delete == 0)
-	  return (TCL_ERROR);
-	bond = NULL;
-	// since there is not even a type...
-	n_partners = -1;
-      }
-      else {
-	if(type_num < 0 || type_num >= n_bonded_ia) {
-	  Tcl_AppendResult(interp, "invalid bonded interaction type_num"
-			   "(Set bonded interaction parameters first)", (char *) NULL);
-	  return (TCL_ERROR);
-	}
-	/* check partners */ 
-	n_partners = bonded_ia_params[type_num].num;
-	if(argc < 2+n_partners) {
-	  char buffer[256 + 2*TCL_INTEGER_SPACE];
-	  sprintf(buffer, "bond type %d requires %d arguments.",
-		  type_num, n_partners+1);
-	  Tcl_AppendResult(interp, buffer, (char *) NULL);
-	  return (TCL_ERROR);
-	}
-	bond = (int *)malloc( (n_partners+1)*sizeof(int) );
-	bond[0] = type_num;
-	j=1;
-	while(j <= n_partners) {
-	  if (Tcl_GetInt(interp, argv[j+1], &(bond[j])) == TCL_ERROR) {
-	    free(bond);
-	    return (TCL_ERROR);
-	  }
-	  if(bond[j] > max_seen_particle || particle_node[bond[j]] == -1) {
-	    Tcl_AppendResult(interp, "partner atom %d (identity %d) not known"
-			     ,j+1,bond[j],
-			     "(Set all partner atoms first)", (char *) NULL);
-	    free(bond);
-	    return (TCL_ERROR);
-	  }
-	  j++;
-	}
-      }
-      /* set/delete bond */ 
-      if (change_particle_bond(part_num, bond, delete) != TCL_OK) {
-	Tcl_AppendResult(interp, "bond to delete did not exist", (char *)NULL);
-	free(bond);
-	return (TCL_ERROR);
-      }
-      free(bond);
-      argc -= (2 + n_partners);
-      argv += (2 + n_partners);
-    }
-    else {
-      Tcl_AppendResult(interp, "unknown particle parameter \"", argv[0],"\"", (char *)NULL);
-      return (TCL_ERROR);
-    }
-
-    if (err == TCL_ERROR) {
-      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-      return (TCL_ERROR);
-    }
-  }
-
-  return (TCL_OK);
+  return part_parse_cmd(interp, argc-2, argv+2, part_num);
 }
 
 int get_particle_data(int part, Particle *data)

@@ -190,7 +190,7 @@ bundle_hair_setup       $n_poly $l_back $cyl_rad $h_dist $h_length $center 3 $ha
 
 # Control Loop
 for {set i 0} { $i < $n_part } {incr i} {
-#    puts "[part $i]"
+    puts "[part $i]"
 }
 
 # Checks
