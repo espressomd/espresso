@@ -1,13 +1,12 @@
 #!/bin/sh
 # tricking... the line after a these comments are interpreted as standard shell script \
-    PLATFORM=`uname -s`; export EF_ALLOW_MALLOC_0=1; if [ "$1" != "" ]; then NP=$1; else NP=8; fi
+    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=8; fi
 # OSF1 \
     if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $PLATFORM/tcl_md $0 $*
 # AIX \
     elif test $PLATFORM = AIX; then exec poe $PLATFORM/tcl_md $0 $* -procs $NP
 # Linux \
-    else lamboot -v hostfile; exec mpirun -c2c -toff -O -np $NP -nsigs $PLATFORM/tcl_md $0 $*;
-
+    else export EF_ALLOW_MALLOC_0=1; lamboot -v hostfile; exec mpirun -c2c -toff -O -np $NP -nsigs $PLATFORM/tcl_md $0 $*;
 # \
     fi;
 
@@ -17,7 +16,7 @@
 set tcl_precision 5
 
 set intsteps 100
-set maxtime  50
+set maxtime  200
 
 setmd periodic 1 1 1
 setmd bjerrum 1.0
