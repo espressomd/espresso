@@ -1515,7 +1515,6 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
 {
   Constraint *con = &constraints[i];
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-
   sprintf(buffer, "%d ", i);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   
@@ -1556,10 +1555,10 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     return (TCL_OK);
   }
 
-  Tcl_PrintDouble(interp, con->part_rep.r.type, buffer);
+  sprintf(buffer, "%d", con->part_rep.r.type);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+
   return (TCL_OK);
- 
 }
 
 int constraint_print_all(Tcl_Interp *interp)
