@@ -8,16 +8,20 @@ What's new, what's been changed, what's been fixed
 Current working revision.
 
 
-- v1.8.3a -
+- v1.8.3b -
 -----------
 
 (a) December 27th, 2004.
+(b) January  11th, 2005.
 
 New Features:
 (a) Added new analysis routine
     'analyze cell_gpb <Manning parameter> <outer cell radius> <inner cell radius> [<accuracy> [<# of interations>]]'
     for determining the numerical solution of the Poisson-Boltzmann equation in the cell model.
 
+Bugfixes:
+(b) Fixed a bug which crashed analyze energy and pressure if the bonded interactions had noncontigous numbers.
+(b) exclusions now also work without Verlet lists.
 
 - v1.8.2i -
 -----------

@@ -215,12 +215,14 @@ static void print_detailed_pressure(Tcl_Interp *interp)
   Tcl_AppendResult(interp, "{ ideal ", buffer, " } ", (char *)NULL);
 
   for(i=0;i<n_bonded_ia;i++) {
-    sprintf(buffer, "%d ", i);
-    Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, *obsstat_bonded(&total_pressure, i), buffer);
-    Tcl_AppendResult(interp,
-		     get_name_of_bonded_ia(bonded_ia_params[i].type),
-		     " ", buffer, " } ", (char *) NULL);
+    if (bonded_ia_params[i].type != BONDED_IA_NONE) {
+      sprintf(buffer, "%d ", i);
+      Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
+      Tcl_PrintDouble(interp, *obsstat_bonded(&total_pressure, i), buffer);
+      Tcl_AppendResult(interp,
+		       get_name_of_bonded_ia(bonded_ia_params[i].type),
+		       " ", buffer, " } ", (char *) NULL);
+    }
   }
 
   for (i = 0; i < n_particle_types; i++)
@@ -506,13 +508,15 @@ int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
   Tcl_AppendResult(interp, "} ", (char *)NULL);
 
   for(i=0;i<n_bonded_ia;i++) {
-    sprintf(buffer, "%d ", i);
-    Tcl_AppendResult(interp, "{ ", buffer, get_name_of_bonded_ia(bonded_ia_params[i].type)," ", (char *)NULL);
-    for(j=0; j<9; j++) {
-      Tcl_PrintDouble(interp, obsstat_bonded(&p_tensor, i)[j], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    if (bonded_ia_params[i].type != BONDED_IA_NONE) {
+      sprintf(buffer, "%d ", i);
+      Tcl_AppendResult(interp, "{ ", buffer, get_name_of_bonded_ia(bonded_ia_params[i].type)," ", (char *)NULL);
+      for(j=0; j<9; j++) {
+	Tcl_PrintDouble(interp, obsstat_bonded(&p_tensor, i)[j], buffer);
+	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      }
+      Tcl_AppendResult(interp, "} ", (char *)NULL);
     }
-    Tcl_AppendResult(interp, "} ", (char *)NULL);
   }
 
   for (i = 0; i < n_particle_types; i++)
