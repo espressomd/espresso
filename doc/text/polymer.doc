@@ -26,7 +26,7 @@
     </ul>
     If \<val_cM\> is smaller than 1e-10, the charge is assumed to be zero, and the types are set to \<type_cM\> = \<type_nM\>.
 
-    The C implementation is \ref #polymer.
+    The C implementation is \ref polymer.
 */
 
 
@@ -136,5 +136,5 @@
 	<li> \verbatim <cM_dist>     \endverbatim distance between two charged monomers' indices (defaults to '1');
 	     if '1' then every monomer on the chain will have charge \<val_cM\>, if '2' every other monomer,...
     </ul>
-    The C implementation is \ref #icosahedron.
+    The C implementation is \ref icosaeder.
 */

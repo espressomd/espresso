@@ -21,15 +21,19 @@ a short description of the most common commands we need:
 
 <ul>
 <li> \anchor doc_anchor   \verbatim \anchor <name> <description> \endverbatim
-	Set an anchor to which you can refer using \ref doc_dref \verbatim \ref \endverbatim
-<li> \anchor doc_href     \verbatim <a href="http://www.your_url.html"> name </a>\endverbatim
+	Set an anchor to which you can refer using \ref doc_dref "\\ref"
+
+<li> \anchor doc_href     \verbatim <a href="http://www.your_url.html"> name </a> \endverbatim
 	Link to an external html source.
+
 <li> \anchor doc_file     \verbatim \file <name> <description> \endverbatim
-	Special anchor for a file (see \ref doc_anchor "\anchor").
-<li> \anchor doc_image    \verbatim \image html  doc/figs/fig.gif \endverbatim
-                          \verbatim \image latex doc/figs/fig.eps \endverbatim
-	Include a picture. You have to put both lines in the
-	documentation since HTML and LaTex need different file formats.
+	Special anchor for a file (see \ref doc_anchor "\\anchor").
+
+<li> \anchor doc_image    \verbatim <img src="doc/figs/your_fig.gif"> \endverbatim
+	Include a picture. There are more optional parameters like
+	width. All pictures we usse reside in the directory
+	Espresso/doc/figs/.
+
 <li> \anchor doc_list     \verbatim 
 <ul>
 <li> List entry
@@ -37,6 +41,7 @@ a short description of the most common commands we need:
 \endverbatim
 	Creates a list in the documentation (For example the list you
 	are reading at the moment).
+
 <li> \anchor doc_name     \verbatim 
 /** \name <group_name> <short description>.
     <long_description>
@@ -47,7 +52,7 @@ a short description of the most common commands we need:
 /*@}*/ 
 \endverbatim
 	Introduces a group to which one can refer with 
-	\ref doc_dref \verbatim \ref \endverbatim . The documentation of the group members
+	\ref doc_dref "\\ref". The documentation of the group members
 	must be inside the \@{ ... \@} comments.
 <li> \anchor doc_param    \verbatim \param <parameter> <description> \endverbatim
 	Documentation for a parameter of a function

@@ -27,7 +27,7 @@ The scripts are located in scripts/aux.tcl and use \ref tcl_blockfile as file fo
 	Since \ref tcl_checkpoint_read reads in successively the checkpoints given in the '.chk'-file, the <tt>configs</tt>-array will nevertheless be 
 	completely restored to its original state although each checkpoint-file contains only a fraction of the whole array.
 
-    <li>\anchor tcl_checkpoint_read
+    <li> \anchor tcl_checkpoint_read
         \verbatim checkpoint_read <origin>\endverbatim
 	restores all the checkpoints whose filenames are listed in \<origin\> in the order given therein, consequently putting the simulation into
 	the state it was in when \ref tcl_checkpoint_set was called. If parts of the <tt>configs</tt> array are given in the files listed in \<origin\>,
@@ -42,7 +42,7 @@ The scripts are located in scripts/aux.tcl and use \ref tcl_blockfile as file fo
 	\<part_list\> gives a string of the particle-properties (out of pos | type | q | v | f) to be saved to disk; if an empty string ' "" 'is provided, no particles, no bonds, and no interactions are written. Defaults (if omitted) to all particle-properties.<BR>
 	Depending on the file-name's suffix, the output will be compressed (if \<path\> ends with '.gz'), too.<BR>
 	Note, that 'polyBlockWrite' in combination with \ref tcl_convertMD2Deserno replaces the (undocumented) function 'polywr': 
-	To save the current configuration to a Deserno-compatible file (e.g. for use with 'poly2pdb') you may now use \ref #tcl_polyBlockWrite
+	To save the current configuration to a Deserno-compatible file (e.g. for use with 'poly2pdb') you may now use \ref tcl_polyBlockWrite
 	to save your current configuration to a blockfile, and convert that with \ref tcl_convertMD2Deserno afterwards,
 	or you directly write a Deserno-compatible file by invoking
 	\verbatim convertMD2Deserno "-1" <output-filename>\endverbatim
@@ -51,7 +51,7 @@ The scripts are located in scripts/aux.tcl and use \ref tcl_blockfile as file fo
 
     <li>\anchor tcl_polyBlockWriteAll
         \verbatim polyBlockWriteAll <destination> [<tcl-var> [<rdm> [<configs>]]] \endverbatim
-	does even more than \ref #tcl_polyBlockWrite, i.e. it saves <i>all</i> current interactions, particles, bonds, Espresso-variables to \<destination\>,
+	does even more than \ref tcl_polyBlockWrite, i.e. it saves <i>all</i> current interactions, particles, bonds, Espresso-variables to \<destination\>,
 	but in addition it also saves the tcl-variables specified by \<tcl-var\> (if 'all', then all the variables in the active script are stored),
 	it saves the state of the random number generator if \<rdm\> is 'random' (= complete state) or 'seed' (= only the seeds),
 	and it saves all the particle configurations used for analysis purposes if \<configs\> is all but '-'.<BR>
