@@ -21,6 +21,7 @@
 #include "debug.h"
 #include "p3m.h"
 #include "utils.h"
+#include "thermostat.h"
 
 /************************************************
  * DEFINES
@@ -147,7 +148,8 @@ void integrate_vv_init()
     /* initialize force structure */
     force_init(); 
     /* initialize p3m */
-    P3M_init();   
+    P3M_init();
+    thermo_init();
     /* update integrator status */
     calc_forces_first         = 1;
     rebuild_verletlist        = 1;

@@ -8,11 +8,15 @@
 #include "communication.h"
 #include "random.h"
 #include "integrate.h"
+#include "cells.h"
 
 /** Friction coefficient gamma. */
 double friction_gamma = 0.;
 /** Temperature */
 double temperature = 1.8;
+
+static double pref1;
+static double pref2;
 
 int gamma_callback(Tcl_Interp *interp, void *_data)
 {
@@ -44,11 +48,15 @@ int temp_callback(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
-void friction_thermo()
+void thermo_init()
 {
-  int i, j; 
-  for(i=0;i<n_particles;i++)
-    for(j=0;j<3;j++)
-            particles[i].f[j] = - friction_gamma/time_step*particles[i].v[j] 
-                        + sqrt(12.0 * 2.0*temperature*friction_gamma/time_step)*(d_random()-0.5);
+  pref1 = -friction_gamma/time_step;
+  pref2 = sqrt(12.0 * 2.0*temperature*friction_gamma/time_step);
+}
+
+void friction_thermo(Particle *p)
+{
+  p->f[0] = pref1*p->v[0] + pref2*(d_random()-0.5);
+  p->f[1] = pref1*p->v[1] + pref2*(d_random()-0.5);
+  p->f[2] = pref1*p->v[2] + pref2*(d_random()-0.5);
 }

@@ -61,36 +61,6 @@ int checkIfParticlesInteract(int i, int j) {
   return 0;
 }
 
-int try_delete_bond(Particle *part, int *bond)
-{
-  int i, j, type, partners;
-  for (i = 0; i < part->n_bonds;) {
-    type = bond[i];
-    partners = bonded_ia_params[type].num;
-    if (type != bond[0])
-      i += 1 + partners;
-    else {
-      for(j = 1; j <= partners; j++)
-	if (bond[j] != part->bonds[i + j])
-	  break;
-      if (j > partners) {
-	part->n_bonds -= 1 + partners;
-	memcpy(part->bonds + i, part->bonds + i + 1 + partners,
-	       part->n_bonds - i);
-	if (part->n_bonds > 0)
-	  realloc(part->bonds, part->n_bonds);
-	else {
-	  free(part->bonds);
-	  part->bonds = 0;
-	}
-	return 1;
-      }
-      i += 1 + partners;
-    }
-  }
-  return 0;
-}
-
 /** This function increases the LOCAL ia_params field
     to the given size. This function is not exported
     since it does not do this on all nodes. Use

@@ -117,14 +117,14 @@ int writemd(ClientData data, Tcl_Interp *interp,
 	case VX:   Tcl_Write(channel, (char *)&data.v[0], sizeof(double)); break;
 	case VY:   Tcl_Write(channel, (char *)&data.v[1], sizeof(double)); break;
 	case VZ:   Tcl_Write(channel, (char *)&data.v[2], sizeof(double)); break;
-	case FX:   Tcl_Write(channel, (char *)&data.r.f[0], sizeof(double)); break;
-	case FY:   Tcl_Write(channel, (char *)&data.r.f[1], sizeof(double)); break;
-	case FZ:   Tcl_Write(channel, (char *)&data.r.f[2], sizeof(double)); break;
+	case FX:   Tcl_Write(channel, (char *)&data.f[0], sizeof(double)); break;
+	case FY:   Tcl_Write(channel, (char *)&data.f[1], sizeof(double)); break;
+	case FZ:   Tcl_Write(channel, (char *)&data.f[2], sizeof(double)); break;
 	case Q:    Tcl_Write(channel, (char *)&data.r.q, sizeof(double)); break;
 	case TYPE: Tcl_Write(channel, (char *)&data.r.type, sizeof(int)); break;
 	}
       }
-      free(data.bonds);
+      realloc(&data.bl, 0);
     }
   }
   /* end marker */
@@ -227,9 +227,9 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
       case   VX: Tcl_Read(channel, (char *)&data.v[0], sizeof(double)); break;
       case   VY: Tcl_Read(channel, (char *)&data.v[1], sizeof(double)); break;
       case   VZ: Tcl_Read(channel, (char *)&data.v[2], sizeof(double)); break;
-      case   FX: Tcl_Read(channel, (char *)&data.r.f[0], sizeof(double)); break;
-      case   FY: Tcl_Read(channel, (char *)&data.r.f[1], sizeof(double)); break;
-      case   FZ: Tcl_Read(channel, (char *)&data.r.f[2], sizeof(double)); break;
+      case   FX: Tcl_Read(channel, (char *)&data.f[0], sizeof(double)); break;
+      case   FY: Tcl_Read(channel, (char *)&data.f[1], sizeof(double)); break;
+      case   FZ: Tcl_Read(channel, (char *)&data.f[2], sizeof(double)); break;
       case    Q: Tcl_Read(channel, (char *)&data.r.q, sizeof(double)); break;
       case TYPE: Tcl_Read(channel, (char *)&data.r.type, sizeof(int)); break;
       }
@@ -255,7 +255,7 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
     if (av_v)
       mpi_send_v(node, data.r.identity, data.v);
     if (av_f)
-      mpi_send_f(node, data.r.identity, data.r.f);
+      mpi_send_f(node, data.r.identity, data.f);
     if (av_type) {
       make_particle_type_exist(data.r.type);
       mpi_send_type(node, data.r.identity, data.r.type);

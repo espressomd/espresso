@@ -240,9 +240,9 @@ Particle *cells_alloc_particle(int id, double pos[3])
   pt->r.identity = id;
   pt->r.type = 0;
   pt->r.q    = 0;
-  pt->r.f[0] = 0;
-  pt->r.f[1] = 0;
-  pt->r.f[2] = 0;
+  pt->f[0] = 0;
+  pt->f[1] = 0;
+  pt->f[2] = 0;
   pt->i[0]   = 0;
   pt->i[1]   = 0;
   pt->i[2]   = 0;

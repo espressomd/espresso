@@ -60,19 +60,43 @@ void errexit();
  * functions: lists
  ************************************************/
 
-void realloc_intlist(IntList *il, int size)
+MDINLINE void alloc_intlist(IntList *il, int size)
+{
+  il->e = (int *) malloc(sizeof(int)*il->max);
+}
+
+MDINLINE void realloc_intlist(IntList *il, int size)
 {
   if(size != il->max) {
-    il->max = size;
-    il->e = (int *) realloc(il->e, sizeof(int)*il->max);
+    if (size == 0) {
+      il->max = 0;
+      free(il->e);
+      il->e = NULL;
+    }
+    else {
+      il->max = size;
+      il->e = (int *) realloc(il->e, sizeof(int)*il->max);
+    }
   }
 }
 
-void realloc_doublelist(DoubleList *dl, int size)
+MDINLINE void alloc_doublelist(DoubleList *dl, int size)
+{
+  dl->e = (double *) malloc(sizeof(double)*dl->max);
+}
+
+MDINLINE void realloc_doublelist(DoubleList *dl, int size)
 {
   if(size != dl->max) {
-    dl->max = size;
-    dl->e = (double *) realloc(dl->e, sizeof(double)*dl->max);
+    if (size == 0) {
+      dl->max = 0;
+      free(dl->e);
+      dl->e = NULL;
+    }
+    else {
+      dl->max = size;
+      dl->e = (double *) realloc(dl->e, sizeof(double)*dl->max);
+    }
   }
 }
 

@@ -93,14 +93,30 @@ void realloc_particles(ParticleList *l, int size)
     l->part[i].r.identity = -1;
 }
 
-void realloc_part_bonds(Particle *p, int new_size)
+int try_delete_bond(Particle *part, int *bond)
 {
-  /* make sure, that n_bonds is not larger than new_size */
-  if(p->n_bonds > new_size) p->n_bonds = new_size;
-  if (new_size != p->max_bonds) {
-    p->bonds = (int *) realloc(p->bonds,new_size*sizeof(int));
-    p->max_bonds = new_size;
+  IntList *bl = &part->bl;
+  int i, j, type, partners;
+  for (i = 0; i < bl->n;) {
+    type = bond[i];
+    partners = bonded_ia_params[type].num;
+    if (type != bond[0])
+      i += 1 + partners;
+    else {
+      for(j = 1; j <= partners; j++)
+	if (bond[j] != bl->e[i + j])
+	  break;
+      if (j > partners) {
+	bl->n -= 1 + partners;
+	memcpy(bl->e + i, bl->e + i + 1 + partners,
+	       bl->n - i);
+	realloc_intlist(bl, bl->n);
+	return 1;
+      }
+      i += 1 + partners;
+    }
   }
+  return 0;
 }
 
 Particle *got_particle(ParticleList *l, int id)
@@ -213,6 +229,7 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
 {
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle part;
+  IntList *bl = &(part.bl);
   int node;
 
   if (part_num < 0 || part_num > max_seen_particle)
@@ -252,23 +269,23 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 
   /* print bonding structure */
-  if(part.n_bonds > 0) {
+  if(bl->n > 0) {
     int i=0,j,size;
     Tcl_AppendResult(interp, " bonds { ", (char *)NULL);
-    while(i<part.n_bonds) {
-      size = bonded_ia_params[part.bonds[i]].num;
-      sprintf(buffer, "{%d ", part.bonds[i]); i++;
+    while(i<bl->n) {
+      size = bonded_ia_params[bl->e[i]].num;
+      sprintf(buffer, "{%d ", bl->e[i]); i++;
       Tcl_AppendResult(interp, buffer, (char *)NULL);
       for(j=0;j<size-1;j++) {
-	sprintf(buffer, "%d ", part.bonds[i]); i++;
+	sprintf(buffer, "%d ", bl->e[i]); i++;
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
-      sprintf(buffer, "%d} ", part.bonds[i]); i++;
+      sprintf(buffer, "%d} ", bl->e[i]); i++;
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     Tcl_AppendResult(interp, "} ", (char *)NULL);
-    free(part.bonds);
   }
+  realloc_intlist(bl, 0);
   return (TCL_OK);
 }
 
@@ -326,6 +343,8 @@ int part(ClientData data, Tcl_Interp *interp,
   if (!strncmp(argv[2], "print",  strlen(argv[2]))) {
     char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
     Particle part;
+    IntList *bl = &(part.bl);
+
     if (part_num < 0 || part_num > max_seen_particle) {
       Tcl_AppendResult(interp, "na", (char *)NULL);
       return (TCL_OK);
@@ -384,23 +403,22 @@ int part(ClientData data, Tcl_Interp *interp,
       else if (!strncmp(argv[0], "bonds", strlen(argv[0]))) {
 	int i = 0, j, size;
 	Tcl_AppendResult(interp, "{", (char *)NULL);
-	while(i < part.n_bonds) {
-	  size = bonded_ia_params[part.bonds[i]].num;
-	  sprintf(buffer, "{%d ", part.bonds[i]);
+	while(i < bl->n) {
+	  size = bonded_ia_params[bl->e[i]].num;
+	  sprintf(buffer, "{%d ", bl->e[i]);
 	  i++;
 	  Tcl_AppendResult(interp, buffer, (char *)NULL);
 	  for(j = 0; j < size - 1; j++) {
-	    sprintf(buffer, "%d ", part.bonds[i]);
+	    sprintf(buffer, "%d ", bl->e[i]);
 	    i++;
 	    Tcl_AppendResult(interp, buffer, (char *)NULL);
 	  }
-	  sprintf(buffer, "%d} ", part.bonds[i]);
+	  sprintf(buffer, "%d} ", bl->e[i]);
 	  i++;
 	  Tcl_AppendResult(interp, buffer, (char *)NULL);
 	}
 	Tcl_AppendResult(interp, "}", (char *)NULL);
-	if (part.n_bonds > 0)
-	  free(part.bonds);
+	realloc_intlist(bl, 0);
       }
       else {
 	Tcl_ResetResult(interp);

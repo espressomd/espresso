@@ -360,7 +360,7 @@ void mpi_send_f(int pnode, int part, double F[3])
   COMM_TRACE(fprintf(stderr, "0: issuing SET_F %d %d\n", pnode, part));
   if (pnode == this_node) {
     Particle *p = cells_got_particle(part);
-    memcpy(p->r.f, F, 3*sizeof(double));
+    memcpy(p->f, F, 3*sizeof(double));
   }
   else {
     mpi_issue(REQ_SET_F, part);
@@ -373,7 +373,7 @@ void mpi_send_f_slave(int part)
   Particle *p = cells_got_particle(part);
   MPI_Status status;
   if (p)
-    MPI_Recv(p->r.f, 3, MPI_DOUBLE, 0, REQ_SET_F,
+    MPI_Recv(p->f, 3, MPI_DOUBLE, 0, REQ_SET_F,
 	     MPI_COMM_WORLD, &status);
 }
 
@@ -426,6 +426,7 @@ void mpi_send_type_slave(int part)
 /********************* REQ_SET_BOND ********/
 int mpi_send_bond(int pnode, int part, int *bond, int delete)
 {
+  IntList *bl;
   int i,bond_size, stat;
   MPI_Status status;
 
@@ -434,10 +435,10 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete)
     Particle *p = cells_got_particle(part);
     if (delete)
       return try_delete_bond(p, bond);
-
-    realloc_part_bonds(p, p->n_bonds+bond_size);
+    bl = &(p->bl);
+    realloc_intlist(bl, bl->n + bond_size);
     for(i = 0; i < bond_size; i++)
-      p->bonds[p->n_bonds++] = bond[i];
+      bl->e[bl->n++] = bond[i];
     return 1;
   }
   else {
@@ -452,8 +453,9 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete)
 
 void mpi_send_bond_slave(int part)
 {
+  IntList *bl = NULL;
   Particle *p = cells_got_particle(part);
-  int bond_size, delete, stat, *bond;
+  int bond_size, delete, stat, *insert;
   MPI_Status status;
 
   if (!p)
@@ -464,16 +466,17 @@ void mpi_send_bond_slave(int part)
   MPI_Recv(&bond_size, 1, MPI_INT, 0, REQ_SET_BOND,
 	   MPI_COMM_WORLD, &status);
   if (delete)
-    bond = (int *)malloc(bond_size*sizeof(int));
+    insert = (int *)malloc(bond_size*sizeof(int));
   else {
-    realloc_part_bonds(p, p->n_bonds+bond_size);
-    bond = p->bonds + p->n_bonds;
-    p->n_bonds += bond_size;
+    bl = &(p->bl);
+    insert = bl->e + bl->n;
+    bl->n += bond_size;
+    realloc_intlist(bl, bl->n);
   }
-  MPI_Recv(bond, bond_size, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
+  MPI_Recv(insert, bond_size, MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
   if (delete) {
-    stat = try_delete_bond(p, bond);
-    free(bond);
+    stat = try_delete_bond(p, insert);
+    free(insert);
   }
   else
     stat = 1;
@@ -483,20 +486,20 @@ void mpi_send_bond_slave(int part)
 /****************** REQ_GET_PART ************/
 void mpi_recv_part(int pnode, int part, Particle *pdata)
 {
+  IntList *bl = &(pdata->bl);
   MPI_Status status;
 
   if (pnode == this_node) {
     Particle *p = cells_got_particle(part);
     
     memcpy(pdata, p, sizeof(Particle));
-    pdata->max_bonds = pdata->n_bonds;
-    if (pdata->n_bonds > 0) {
-      pdata->bonds = malloc(sizeof(int)*pdata->n_bonds);
-      memcpy(pdata->bonds, p->bonds,
-	     sizeof(int)*p->n_bonds);
+    bl->max = bl->n;
+    if (bl->n > 0) {
+      alloc_intlist(bl, bl->n);
+      memcpy(bl->e, p->bl.e, sizeof(int)*bl->n);
     }
     else
-      pdata->bonds = NULL;
+      bl->e = NULL;
   }
   else {
     mpi_issue(REQ_GET_PART, part);
@@ -508,22 +511,22 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
     MPI_Recv(&pdata->r.q, 1, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-    MPI_Recv(pdata->r.f, 3, MPI_DOUBLE, pnode,
+    MPI_Recv(pdata->f, 3, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
     MPI_Recv(pdata->i, 3, MPI_INT, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
     MPI_Recv(pdata->v, 3, MPI_DOUBLE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-    MPI_Recv(&pdata->n_bonds, 1, MPI_INT, pnode,
+    MPI_Recv(&(bl->n), 1, MPI_INT, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-    pdata->max_bonds = pdata->n_bonds;
-    if (pdata->n_bonds > 0) {
-      pdata->bonds = malloc(sizeof(int)*pdata->n_bonds);
-      MPI_Recv(pdata->bonds, pdata->n_bonds, MPI_INT, pnode,
+    bl->max = bl->n;
+    if (bl->n > 0) {
+      alloc_intlist(bl, bl->n);
+      MPI_Recv(bl->e, bl->n, MPI_INT, pnode,
 	       REQ_GET_PART, MPI_COMM_WORLD, &status);
     }
     else
-      pdata->bonds = NULL;
+      pdata->bl.e = NULL;
   }
 }
 
@@ -539,16 +542,16 @@ void mpi_recv_part_slave(int part)
 	   MPI_COMM_WORLD);
   MPI_Send(&p->r.q, 1, MPI_DOUBLE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
-  MPI_Send(p->r.f, 3, MPI_DOUBLE, 0, REQ_GET_PART,
+  MPI_Send(p->f, 3, MPI_DOUBLE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
   MPI_Send(p->i, 3, MPI_INT, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
   MPI_Send(p->v, 3, MPI_DOUBLE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
-  MPI_Send(&p->n_bonds, 1, MPI_INT, 0, REQ_GET_PART,
+  MPI_Send(&p->bl.n, 1, MPI_INT, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
-  if (p->n_bonds > 0)
-    MPI_Send(p->bonds, p->n_bonds, MPI_INT, 0, REQ_GET_PART,
+  if (p->bl.n > 0)
+    MPI_Send(p->bl.e, p->bl.n, MPI_INT, 0, REQ_GET_PART,
 	     MPI_COMM_WORLD);
 }
 

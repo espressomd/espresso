@@ -13,6 +13,7 @@
 
 #include <tcl.h>
 #include "config.h"
+#include "utils.h"
 
 /************************************************
  * data types
@@ -136,12 +137,8 @@ void move_particle(ParticleList *destList, ParticleList *sourceList, int ind);
     \return the new field index */
 Particle *alloc_particle(ParticleList *plist);
 
-/** (re)allocate storage for particle bonds.
-    Bonds are located in the structure \ref Particle .
-    \param part     local index of particle where the bonds are located. 
-    \param new_size New size of the particles[].bonds field.
-*/
-void realloc_part_bonds(Particle *part, int new_size);
+/** remove bond from particle if possible */
+int try_delete_bond(Particle *part, int *bond);
 
 /** fold particle coordinates to primary simulation box.
     \param pos the position...
