@@ -130,6 +130,18 @@ typedef struct {
   /*@}*/
 #endif
 
+#ifdef MORSE 
+  /** \name Morse potential */
+  /*@{*/
+  double MORSE_eps;
+  double MORSE_alpha;
+  double MORSE_rmin;
+  double MORSE_cut;
+  double MORSE_rest;
+  double MORSE_capradius;
+  /*@}*/
+#endif
+
 #ifdef BUCKINGHAM
   /** \name Buckingham potential */
   /*@{*/
@@ -440,9 +452,14 @@ extern double max_cut_non_bonded;
     details (who wants to wite that?).*/
 extern double lj_force_cap;
 
+/** For the warmup you can cap the singularity of the Morse
+    potential at r=0. look into the warmup documentation for more
+    details (who wants to wite that?).*/
+extern double morse_force_cap;
+
 /** For warm up integration, the maximum force between any two particles
-interacting via Buckingham potential can be set and this magnitude of max
-force is stored in buck_force_cap*/
+    interacting via Buckingham potential can be set and this magnitude of max
+    force is stored in buck_force_cap*/
 extern double buck_force_cap;
 
 /** For the warmup you can cap any tabulated potential at the value
