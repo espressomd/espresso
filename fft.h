@@ -106,6 +106,9 @@ extern fft_forw_plan fft_plan[4];
 /************************************************************/
 /*@{*/
 
+/** Initialize some arrays connected to the 3D-FFT. */
+void  fft_pre_init();
+
 /** Initialize everything connected to the 3D-FFT.
 
  * \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
@@ -127,10 +130,6 @@ void fft_perform_forw(double *data);
     \param data Mesh.
 */
 void fft_perform_back(double *data);
-
-/** Clears all memory allocated by \ref fft_init.
- */
-void fft_exit();
 
 /** pack a block (size[3] starting at start[3]) of an input 3d-grid
  *  with dimension dim[3] into an output 3d-block with dimension size[3].

@@ -209,6 +209,28 @@ void send_posforce(int s_dir,int send_size, int recv_size);
 
 /*@}*/
 /************************************************************/
+void ghost_pre_init()
+{
+  int i;
+
+  for(i=0;i<6;i++) {
+    init_intlist(&(send_cells[i]));
+    init_intlist(&(recv_cells[i]));
+    init_intlist(&(n_send_ghosts[i]));
+    init_intlist(&(n_recv_ghosts[i]));
+  }
+
+  /* init some more lists */
+  init_particleList(&p_send_buf);
+  init_particleList(&p_recv_buf);
+  init_intlist(&b_send_buf);
+  init_intlist(&b_recv_buf);  
+  init_redParticleList(&g_send_buf);
+  init_redParticleList(&g_recv_buf);
+  init_doublelist(&send_buf);
+  init_doublelist(&recv_buf);
+}
+
 
 void ghost_init()
 {
@@ -237,19 +259,15 @@ void ghost_init()
 
   /* create send/recv cell index lists for ghost exchange*/
   for(i=0;i<6;i++) {
-    init_intlist(&(send_cells[i]));
     realloc_intlist(&(send_cells[i])   ,anz[i/2]);
     send_cells[i].n = anz[i/2];
 
-    init_intlist(&(recv_cells[i]));
     realloc_intlist(&(recv_cells[i])   ,anz[i/2]);
     recv_cells[i].n = anz[i/2];
 
-    init_intlist(&(n_send_ghosts[i]));
     realloc_intlist(&(n_send_ghosts[i]),anz[i/2]+1);
     n_send_ghosts[i].n = anz[i/2]+1;
   
-    init_intlist(&(n_recv_ghosts[i]));
     realloc_intlist(&(n_recv_ghosts[i]),anz[i/2]+1);
     n_recv_ghosts[i].n = anz[i/2]+1;
   }
@@ -277,15 +295,6 @@ void ghost_init()
     done[i] = 1;
   }
   
-  /* init some more lists */
-  init_particleList(&p_send_buf);
-  init_particleList(&p_recv_buf);
-  init_intlist(&b_send_buf);
-  init_intlist(&b_recv_buf);  
-  init_redParticleList(&g_send_buf);
-  init_redParticleList(&g_recv_buf);
-  init_doublelist(&send_buf);
-  init_doublelist(&recv_buf);
 }
 
 void exchange_and_sort_part()

@@ -145,7 +145,7 @@ void integrate_vv(int n_steps)
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: integrating %d steps\n",this_node,
 		      n_steps));
 
-  if(particle_changed || topology_changed || interactions_changed) {
+  if(parameter_changed || particle_changed || topology_changed || interactions_changed) {
     /* already here since exchange_part may destroy the ghost particles */
     invalidate_ghosts();
     exchange_and_sort_part();
@@ -178,9 +178,7 @@ void integrate_vv(int n_steps)
     if(this_node==0) sim_time += time_step;
   }
 
-  invalidate_ghosts();
-
-  particle_changed     = 0;
+  particle_changed     = 0; 
   interactions_changed = 0;
   topology_changed     = 0;
 }

@@ -55,7 +55,7 @@ void thermo_init()
 {
   pref1 = -friction_gamma/time_step;
   pref2 = sqrt(12.0 * 2.0*temperature*friction_gamma/time_step);
-  fprintf(stderr,"%d: pref1=%f, pref2=%f\n",this_node,pref1,pref2);
+  /* fprintf(stderr,"%d: pref1=%f, pref2=%f\n",this_node,pref1,pref2); */
 }
 
 void friction_thermo(Particle *p)

@@ -50,6 +50,9 @@
 /************************************************************/
 /*@{*/
 
+/** Initialize some arrays connected to the ghosts modul. */
+void ghost_pre_init();
+
 /** initialize ghost particle structures. 
  *  
  *  <ul>

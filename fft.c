@@ -52,11 +52,11 @@ static int max_comm_size=0;
 /** Maximal local mesh size. */
 static int max_mesh_size=0;
 /** send buffer. */
-static double *send_buf;
+static double *send_buf = NULL;
 /** receive buffer. */
-static double *recv_buf;
+static double *recv_buf = NULL;
 /** Buffer for receive data. */
-static double *data_buf;
+static double *data_buf = NULL;
 /** Complex data pointers. */
 static fftw_complex *c_data;
 static fftw_complex *c_data_buf;
@@ -167,6 +167,20 @@ void print_global_fft_mesh(fft_forw_plan plan, double *data, int element, int nu
 /*@}*/
 /************************************************************/
 
+void fft_pre_init()
+{
+  int i;
+
+  for(i=0;i<4;i++) {
+    fft_plan[i].group = malloc(1*n_nodes*sizeof(int));
+    fft_plan[i].send_block = NULL;
+    fft_plan[i].send_size  = NULL;
+    fft_plan[i].recv_block = NULL;
+    fft_plan[i].recv_size  = NULL;
+  }
+
+}
+
 int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
 {
   int i,j;
@@ -183,12 +197,10 @@ int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
   fftw_status wisdom_status;
 
   FFT_TRACE(fprintf(stderr,"%d: fft_init():\n",this_node));
- 
-  /* === allocation === */
+
   for(i=0;i<4;i++) {
     n_id[i]  = malloc(1*n_nodes*sizeof(int));
     n_pos[i] = malloc(3*n_nodes*sizeof(int));
-    fft_plan[i].group = malloc(1*n_nodes*sizeof(int));
   }
 
   /* === node grids === */
@@ -223,10 +235,10 @@ int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
     fft_plan[i].g_size=find_comm_groups(n_grid[i-1], n_grid[i], n_id[i-1], n_id[i], 
 					fft_plan[i].group, n_pos[i], my_pos[i]);
 
-    fft_plan[i].send_block = malloc(6*fft_plan[i].g_size*sizeof(int));
-    fft_plan[i].send_size  = malloc(1*fft_plan[i].g_size*sizeof(int));
-    fft_plan[i].recv_block = malloc(6*fft_plan[i].g_size*sizeof(int));
-    fft_plan[i].recv_size  = malloc(1*fft_plan[i].g_size*sizeof(int));
+    fft_plan[i].send_block = (int *)realloc(fft_plan[i].send_block, 6*fft_plan[i].g_size*sizeof(int));
+    fft_plan[i].send_size  = (int *)realloc(fft_plan[i].send_size, 1*fft_plan[i].g_size*sizeof(int));
+    fft_plan[i].recv_block = (int *)realloc(fft_plan[i].recv_block, 6*fft_plan[i].g_size*sizeof(int));
+    fft_plan[i].recv_size  = (int *)realloc(fft_plan[i].recv_size, 1*fft_plan[i].g_size*sizeof(int));
 
     fft_plan[i].new_size = calc_local_mesh(my_pos[i], n_grid[i], p3m.mesh,
 					   p3m.mesh_off, fft_plan[i].new_mesh, 
@@ -296,10 +308,10 @@ int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
   else if(fft_plan[1].row_dir==1) fft_plan[1].pack_function = pack_block_permute1;
 
   /* Factor 2 for complex numbers */
-  send_buf = malloc(max_comm_size*sizeof(double));
-  recv_buf = malloc(max_comm_size*sizeof(double));
-  data     = malloc(max_mesh_size*sizeof(double));
-  data_buf = malloc(max_mesh_size*sizeof(double));
+  send_buf = (double *)realloc(send_buf, max_comm_size*sizeof(double));
+  recv_buf = (double *)realloc(recv_buf, max_comm_size*sizeof(double));
+  data     = (double *)realloc(data, max_mesh_size*sizeof(double));
+  data_buf = (double *)realloc(data_buf, max_mesh_size*sizeof(double));
   if(!data || !data_buf || !recv_buf || !send_buf) 
     fprintf(stderr,"%d: Could not allocate FFT data arays\n",this_node);
 
@@ -441,21 +453,6 @@ void fft_perform_back(double *data)
   back_grid_comm(fft_plan[1],fft_back[1],data_buf,data);
 
   /* REMARK: Result has to be in data. */
-}
-
-void fft_exit()
-{
-  int i;
-  for(i=0;i<4;i++) free(fft_plan[i].group);
-  for(i=1;i<4;i++) {
-    free(fft_plan[i].send_block);
-    free(fft_plan[i].send_size);
-    free(fft_plan[i].recv_block);
-    free(fft_plan[i].recv_size);
-  } 
-  free(send_buf);
-  free(recv_buf);
-  free(data_buf);
 }
 
 void pack_block(double *in, double *out, int start[3], int size[3], int dim[3], int element)

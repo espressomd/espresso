@@ -32,7 +32,7 @@
 
 /* #define COMM_DEBUG */
 /* #define INTEG_DEBUG */
-/* #define CELL_DEBUG */
+/* #define CELL_DEBUG  */
 /* #define GHOST_DEBUG */
 /* #define GRID_DEBUG  */
 /* #define VERLET_DEBUG */
@@ -48,7 +48,7 @@
 /* #define ESK_DEBUG */
 /* #define FENE_DEBUG */
 /* #define GHOST_FORCE_DEBUG */
-#define ONEPART_DEBUG 
+/* #define ONEPART_DEBUG */
 
 #define MPI_CORE
 #define FORCE_CORE

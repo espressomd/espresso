@@ -172,8 +172,15 @@ void cells_re_init()
   CELL_TRACE(fprintf(stderr,"%d: old_cell_grid: (%d, %d, %d)\n"
 		     ,this_node,old_ghost_cell_grid[0]-2
 		     ,old_ghost_cell_grid[1]-2,old_ghost_cell_grid[2]-2));
+  part_cnt=0;
+  for(i=0;i<old_n_cells;i++) {
+    if(is_inner_cell(i,old_ghost_cell_grid)) {
+      part_cnt += old_cells[i].pList.n;
+    }
+  }
   CELL_TRACE(fprintf(stderr,"%d: had %d particles in old grid.\n"
 		     ,this_node,part_cnt));
+  part_cnt=0;
   for(i=0;i<n_cells;i++) {
     if(is_inner_cell(i,ghost_cell_grid)) {
       part_cnt += cells[i].pList.n;

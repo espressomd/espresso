@@ -290,7 +290,7 @@ void mpi_who_has_slave(int node, int param)
 }
 
 /**************** REQ_CHTOPL ***********/
-void mpi_bcast_event(event)
+void mpi_bcast_event(int event)
 {
   mpi_issue(REQ_EVENT, -1, event);
   mpi_bcast_event_slave(-1, event);

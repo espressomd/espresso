@@ -84,33 +84,33 @@ static send_mesh  sm;
 /** size of linear array for local CA/FFT mesh . */
 int    ca_mesh_size;
 /** real space mesh (local) for CA/FFT.*/
-double *rs_mesh;
+double *rs_mesh = NULL;
 /** k space mesh (local) for k space calculation and FFT.*/
-double *ks_mesh;
+double *ks_mesh = NULL;
 
 /** Field to store grid points to send */
-double *send_grid; 
+double *send_grid = NULL; 
 /** Field to store grid points to recv */
-double *recv_grid;
+double *recv_grid = NULL;
 
 /** interpolation of the charge assignment function. */
-double *int_caf[7];
+double *int_caf[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 /** position shift for calc. of first assignment mesh point. */
 double pos_shift;
 
 /** help variable for calculation of aliasing sums */
-double *meshift;
+double *meshift = NULL;
 /** Spatial differential operator in k-space. We use an i*k differentiation. */
-double *d_op;
+double *d_op = NULL;
 /** Optimal influence function (k-space) */
-double *g;
+double *g = NULL;
 
 /** number of charged particles on the node. */
 int ca_num;
 /** Charge fractions for mesh assignment. */
-double *ca_frac;
+double *ca_frac = NULL;
 /** first mesh point for charge assignment. */
-int *ca_fmp;
+int *ca_fmp = NULL;
 
 /** \name Privat Functions */
 /************************************************************/
@@ -250,8 +250,8 @@ void   P3M_init()
 	errexit();
       }
     }
-    ca_frac = malloc(p3m.cao*p3m.cao*p3m.cao*CA_INCREMENT*sizeof(double));
-    ca_fmp  = malloc(3*CA_INCREMENT*sizeof(int));
+    ca_frac = (double *) realloc(ca_frac, p3m.cao*p3m.cao*p3m.cao*CA_INCREMENT*sizeof(double));
+    ca_fmp  = (int *) realloc(ca_fmp, 3*CA_INCREMENT*sizeof(int));
 
     calc_local_ca_mesh();
     calc_send_mesh();
@@ -261,8 +261,8 @@ void   P3M_init()
       /* MPI_Barrier(MPI_COMM_WORLD); */
       if(n==this_node) P3M_TRACE(p3m_print_send_mesh(sm));
     }
-    send_grid = malloc(sizeof(double)*sm.max);
-    recv_grid = malloc(sizeof(double)*sm.max);
+    send_grid = (double *) realloc(send_grid, sizeof(double)*sm.max);
+    recv_grid = (double *) realloc(recv_grid, sizeof(double)*sm.max);
 
     interpolate_charge_assignment_function();
     /* position offset for calc. of first meshpoint */
@@ -271,8 +271,8 @@ void   P3M_init()
  
     /* FFT */
     ca_mesh_size = fft_init(rs_mesh,lm.dim,lm.margin);
-    rs_mesh = malloc(ca_mesh_size*sizeof(double));
-    ks_mesh = malloc(ca_mesh_size*sizeof(double));
+    rs_mesh = (double *) realloc(rs_mesh, ca_mesh_size*sizeof(double));
+    ks_mesh = (double *) realloc(ks_mesh, ca_mesh_size*sizeof(double));
  
     /* k-space part: */
     calc_differential_operator();
@@ -717,7 +717,7 @@ void interpolate_charge_assignment_function()
 		    this_node,p3m.inter,p3m.cao));
 
   for(i=0;i<p3m.cao;i++) 
-    int_caf[i] = malloc(sizeof(double)*(2*p3m.inter+1));
+    int_caf[i] = (double *) realloc(int_caf[i], sizeof(double)*(2*p3m.inter+1));
 
   switch (p3m.cao) {
   case 1 : { 
@@ -795,7 +795,7 @@ void calc_meshift(void)
   double dmesh;
 
   dmesh = (double)p3m.mesh[0];
-  meshift = malloc(p3m.mesh[0]*sizeof(double));
+  meshift = (double *) realloc(meshift, p3m.mesh[0]*sizeof(double));
 
   for (i=0; i<p3m.mesh[0]; i++) meshift[i] = i - dround(i/dmesh)*dmesh; 
 }
@@ -806,7 +806,7 @@ void calc_differential_operator()
   double dmesh;
 
   dmesh = (double)p3m.mesh[0];
-  d_op = malloc(p3m.mesh[0]*sizeof(double));
+  d_op = (double *) realloc(d_op, p3m.mesh[0]*sizeof(double));
 
   for (i=0; i<p3m.mesh[0]; i++) 
     d_op[i] = (double)i - dround((double)i/dmesh)*dmesh;
@@ -828,7 +828,7 @@ void calc_influence_function()
     size *= fft_plan[2].new_mesh[i];
     end[i] = fft_plan[2].start[i] + fft_plan[2].new_mesh[i];
   }
-  g = malloc(size*sizeof(double));
+  g = (double *) realloc(g, size*sizeof(double));
 
   fak1  = p3m.mesh[0]*p3m.mesh[0]*p3m.mesh[0]*2.0/(box_l[0]*box_l[0]);
 

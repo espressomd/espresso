@@ -12,6 +12,7 @@
 #include "particle_data.h"
 #include "communication.h"
 #include "utils.h"
+#include "grid.h"
 
 /** Granularity of the verlet list */
 #define LIST_INCREMENT 20
@@ -122,7 +123,10 @@ void build_verlet_lists()
   {
     int sum,tot_sum=0;
     int cind1,cind2;
-   
+    double estimate;
+
+    estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_range,3.0))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
+
     INNER_CELLS_LOOP(m, n, o) {
       cell = CELL_PTR(m, n, o);
       cind1 = get_linear_index(m,n,o,ghost_cell_grid);
@@ -133,7 +137,7 @@ void build_verlet_lists()
       }
       tot_sum += sum;
     }
-    fprintf(stderr,"%d: total number of interaction pairs: %d\n",this_node,tot_sum);
+    fprintf(stderr,"%d: total number of interaction pairs: %d (should be around %.1f)\n",this_node,tot_sum,estimate);
   }
 #endif 
   rebuild_verletlist = 0;

@@ -19,6 +19,7 @@
 #include "forces.h"
 #include "thermostat.h"
 #include "p3m.h"
+#include "fft.h"
 #include "ghosts.h"
 
 static void init_tcl(Tcl_Interp *interp);
@@ -31,6 +32,9 @@ int on_program_start(Tcl_Interp *interp)
 
   init_random();
   cells_pre_init();
+  ghost_pre_init();
+  fft_pre_init();
+
 
   /*
     call all initializations to don only on the master node here.
@@ -50,6 +54,9 @@ void on_integration_start()
   if (!node_grid_is_set())
     setup_node_grid();
 
+  fprintf(stderr,"%d: on_int_start: para_ch = %d inter_ch = %d top_ch %d part_ch =%d\n",this_node,
+	  parameter_changed,interactions_changed,topology_changed,particle_changed);
+
   particle_invalidate_part_node();
 
   if (parameter_changed || interactions_changed || topology_changed) {
@@ -67,7 +74,7 @@ void on_integration_start()
     P3M_init();
   }
 
-  if (particle_changed || interactions_changed || topology_changed) {
+  if (parameter_changed || particle_changed || interactions_changed || topology_changed) {
     rebuild_verletlist = 1;
   }
 }
