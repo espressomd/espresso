@@ -103,6 +103,9 @@ void map_node_array(int node, int pos[3]);
 */
 int map_array_node(int pos[3]);
 
+/** map a spatial position to the node grid */
+int map_position_node_array(double pos[3]);
+
 /** fill neighbor lists of node. 
  *
  * Calculates the numbers of the 6 nearest neighbors for a node and

@@ -1388,7 +1388,7 @@ void mpi_rescale_particles_slave(int pnode, int dir) {
 void mpi_bcast_cell_structure(int cs)
 {
   mpi_issue(REQ_BCAST_IA_SIZE, -1, cs);
-  mpi_bcast_n_particle_types_slave(-1, cs);
+  mpi_bcast_cell_structure_slave(-1, cs);
 }
 
 void mpi_bcast_cell_structure_slave(int pnode, int cs)
