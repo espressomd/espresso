@@ -36,6 +36,8 @@
 #include "ljcos.h"
 #include "gb.h"
 #include "mmm1d.h"
+#include "mmm2d.h"
+#include "elc.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -1192,6 +1194,9 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   default:
     fprintf(stderr, "cannot bcast coulomb params for unknown method %d\n", coulomb.method);
     errexit();
+  }
+  if (coulomb.use_elc) {
+    MPI_Bcast(&elc_params, sizeof(ELC_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
   }
   on_coulomb_change();
   on_short_range_ia_change();

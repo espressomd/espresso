@@ -146,6 +146,9 @@ int ks_pnum;
 /************************************************************/
 /*@{*/
 
+/** Calculates the dipole term */
+double calc_dipole_term(int force_flag, int energy_flag);
+
 /** Calculates properties of the local FFT mesh for the 
     charge assignment process. */
 void calc_local_ca_mesh();
@@ -506,8 +509,6 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
       k_space_energy -= coulomb.prefactor*(p3m_sum_q2*p3m.alpha_L*box_l_i[0] * wupii);
       /* net charge correction */
       k_space_energy -= coulomb.prefactor*(p3m_square_sum_q*PI / (2.0*box_l[0]*SQR(p3m.alpha_L)));
-      /* dipol correction TO BE IMPLEMENTED */
-      k_space_energy -= 0.0;
     }
   }
 
@@ -577,6 +578,10 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
       }
     }
   }
+
+  if (p3m.epsilon != P3M_EPSILON_METALLIC)
+    k_space_energy -= calc_dipole_term(force_flag, energy_flag);
+
   return k_space_energy;
 }
 
@@ -592,6 +597,49 @@ void   P3M_exit()
   free(ks_mesh); 
   free(rs_mesh); 
   for(i=0; i<p3m.cao; i++) free(int_caf[i]);
+}
+
+/************************************************************/
+
+double calc_dipole_term(int force_flag, int energy_flag)
+{
+  int np, c, i, j;
+  Particle *part;
+  double pref = coulomb.prefactor*4*M_PI*box_l_i[0]*box_l_i[1]*box_l_i[2]/(2*p3m.epsilon + 1);
+  double lcl_dm[3], gbl_dm[3];
+  double en;
+
+  for (j = 0; j < 3; j++)
+    lcl_dm[j] = 0;
+
+  for (c = 0; c < local_cells.n; c++) {
+    np   = local_cells.cell[c]->n;
+    part = local_cells.cell[c]->part;
+    for (i = 0; i < np; i++) {
+      for (j = 0; j < 3; j++)
+	/* dipole moment with unfolded coordinates */
+	lcl_dm[j] += part[i].p.q*(part[i].r.p[j] + part[i].l.i[j]*box_l[j]);
+    }
+  }
+  
+  MPI_Allreduce(lcl_dm, gbl_dm, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+  if (energy_flag)
+    en = 0.5*pref*(SQR(gbl_dm[0]) + SQR(gbl_dm[1]) + SQR(gbl_dm[2]));
+  else
+    en = 0;
+  if (force_flag) {
+    for (j = 0; j < 3; j++)
+      gbl_dm[j] *= pref;
+    for (c = 0; c < local_cells.n; c++) {
+      np   = local_cells.cell[c]->n;
+      part = local_cells.cell[c]->part;
+      for (i = 0; i < np; i++)
+	for (j = 0; j < 3; j++)
+	  part[i].f.f[j] -= gbl_dm[j]*part[i].p.q;
+    }
+  }
+  return en;
 }
 
 /************************************************************/

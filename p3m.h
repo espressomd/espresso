@@ -49,6 +49,8 @@
 
 #ifdef ELECTROSTATICS
 
+/** This value for p3m.epsilon indicates metallic boundary conditions. */
+#define P3M_EPSILON_METALLIC 0.0
 
 /************************************************
  * data types

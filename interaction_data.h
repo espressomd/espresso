@@ -184,6 +184,9 @@ typedef struct {
   
   /** Method to treat coulomb interaction. See \ref COULOMB_NONE "Type codes for Coulomb" */
   int method;
+
+  /** wether to use ELC */
+  int use_elc;
 } Coulomb_parameters;
 
 /** Structure to hold Debye-Hueckel Parameters. */

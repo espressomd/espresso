@@ -13,6 +13,7 @@
 #include "domain_decomposition.h"
 #include "nsquare.h"
 #include "layered.h"
+#include "elc.h"
 
 Observable_stat energy = {0, {NULL,0,0}, 0,0,0};
 Observable_stat total_energy = {0, {NULL,0,0}, 0,0,0};
@@ -76,6 +77,8 @@ void calc_long_range_energies()
     *energy.coulomb += MMM2D_far_energy();
     break;
   }
+  if (coulomb.use_elc)
+    *energy.coulomb += ELC_energy();
 #endif
 }
 

@@ -35,9 +35,11 @@
 #include "rotation.h"
 #include "p3m.h"
 #include "fft.h"
+#include "mmm1d.h"
+#include "mmm2d.h"
+#include "elc.h"
 #include "ghosts.h"
 #include "debye_hueckel.h"
-#include "mmm1d.h"
 #include "forces.h"
 #include "uwerr.h"
 #include "utils.h"
@@ -158,6 +160,9 @@ void on_coulomb_change()
     break;
   default: break;
   }
+  if (coulomb.use_elc)
+    ELC_init();
+
   recalc_forces = 1;
 #endif
 }
@@ -195,6 +200,8 @@ void on_resort_particles()
     break;
   default: break;
   }
+  if (coulomb.use_elc)
+    ELC_on_resort_particles();
 #endif
 }
 
@@ -213,6 +220,9 @@ void on_NpT_boxl_change() {
 
 void on_parameter_change(int field)
 {
+  /* to prevent two on_coulomb_change */
+  int cc;
+
   if (field == FIELD_NODEGRID)
     grid_changed_n_nodes();
   if (field == FIELD_BOXL || field == FIELD_NODEGRID)
@@ -223,29 +233,40 @@ void on_parameter_change(int field)
     reinit_thermo = 1;
 
 #ifdef ELECTROSTATICS
+  cc = 0;
   switch (coulomb.method) {
   case COULOMB_P3M:
-    if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID)
+    if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID) {
       on_coulomb_change();
+      cc = 1;
+    }
     else if (field == FIELD_BOXL) {
       P3M_scaleby_box_l();
       integrate_vv_recalc_maxrange(); 
     }
     break;
   case COULOMB_DH:
-    if (field == FIELD_TEMPERATURE)
+    if (field == FIELD_TEMPERATURE) {
       on_coulomb_change();
+      cc = 1;
+    }
     break;
   case COULOMB_MMM1D:
-    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
+    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL) {
       on_coulomb_change();
+      cc = 1;
+    }
     break;
   case COULOMB_MMM2D:
-    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL || field == FIELD_NLAYERS)
+    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL || field == FIELD_NLAYERS) {
       on_coulomb_change();
+      cc = 1;
+    }
     break;
   default: break;
   }
+  if (!cc && coulomb.use_elc && (field == FIELD_TEMPERATURE || field == FIELD_BOXL))
+    on_coulomb_change();
 #endif
 
   if (field == FIELD_MAXRANGE)

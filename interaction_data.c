@@ -23,6 +23,7 @@
 #include "debye_hueckel.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
+#include "elc.h"
 #include "lj.h"
 #include "tab.h"
 #include "ljcos.h"
@@ -41,7 +42,7 @@ int n_interaction_types = 0;
 IA_parameters *ia_params = NULL;
 
 #ifdef ELECTROSTATICS
-Coulomb_parameters coulomb = { 0.0, 0.0, COULOMB_NONE };
+Coulomb_parameters coulomb = { 0.0, 0.0, COULOMB_NONE, 0 };
 Debye_hueckel_params dh_params = { 0.0, 0.0 };
 #endif
 
@@ -403,8 +404,13 @@ int printCoulombIAToResult(Tcl_Interp *interp)
     Tcl_PrintDouble(interp, p3m.accuracy, buffer);
     Tcl_AppendResult(interp, buffer, "} ", (char *) NULL);
 
-    Tcl_PrintDouble(interp, p3m.epsilon, buffer);
-    Tcl_AppendResult(interp, "{coulomb epsilon ", buffer, " ", (char *) NULL);
+    Tcl_AppendResult(interp, "{coulomb epsilon ", (char *) NULL);
+    if (p3m.epsilon == P3M_EPSILON_METALLIC)
+      Tcl_AppendResult(interp, " metallic ", (char *) NULL);
+    else {
+      Tcl_PrintDouble(interp, p3m.epsilon, buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    }
     sprintf(buffer,"%d",p3m.inter);
     Tcl_AppendResult(interp, "n_interpol ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, p3m.mesh_off[0], buffer);
@@ -436,6 +442,18 @@ int printCoulombIAToResult(Tcl_Interp *interp)
       Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
     }
   }
+
+  if (coulomb.use_elc) {
+    Tcl_PrintDouble(interp, elc_params.maxPWerror, buffer);
+    Tcl_AppendResult(interp, "} {coulomb elc ", buffer,(char *) NULL);
+    Tcl_PrintDouble(interp, elc_params.minimal_dist, buffer);
+    Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
+    if (!elc_params.far_calculated) {
+      Tcl_PrintDouble(interp, elc_params.far_cut, buffer);
+      Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
+    }
+  }
+
 #else
   Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)",(char *) NULL);
 #endif
@@ -511,11 +529,15 @@ void calc_maximal_cutoff()
     if (max_cut < 0)
       max_cut = 0;
     break;
+  case COULOMB_MMM2D:
+    /* needs n-squared rsp. layered calculation, and
+       it is pretty complicated to find the minimal
+       required cell height. */
+    if (max_cut < 0)
+      max_cut = 0;
+    break;
   }
 #endif
-
-
-
 }
 
 int inter_print_all(Tcl_Interp *interp)
@@ -1366,6 +1388,28 @@ int inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv)
 
 
 #ifdef ELECTROSTATICS
+
+int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double pwerror;
+  double minimal_distance;
+  double far_cut = -1;
+
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>} expected, not \"",
+		     argv[0], "\"", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if (!ARG0_IS_D(pwerror))
+    return TCL_ERROR;
+  if (!ARG1_IS_D(minimal_distance))
+    return TCL_ERROR;
+  if (argc > 2 && !ARG_IS_D(2, far_cut))
+    return TCL_ERROR;
+
+  return set_elc_params(interp, pwerror, minimal_distance, far_cut);
+}
+
 void p3m_set_tune_params(double r_cut, int mesh, int cao,
 			 double alpha, double accuracy)
 {
@@ -1544,9 +1588,9 @@ int inter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv)
       }
 
     } else {
-      Tcl_AppendResult(interp, "Unkwon p3m tune parameter \"",argv[0],"\"",
-		       (char *) NULL);
-      return TCL_ERROR;  
+      Tcl_AppendResult(interp, "Unknown p3m tune parameter \"",argv[0],"\"",
+                       (char *) NULL);
+      return TCL_ERROR;
     }
     
     argc -= 2;
@@ -1557,7 +1601,7 @@ int inter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv)
 
   if(P3M_tune_parameters(interp) == TCL_ERROR) 
     return TCL_ERROR;
-
+  
   return TCL_OK;
 }
 
@@ -1645,10 +1689,9 @@ int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
 
     return TCL_ERROR;
 
-  } else {
-    return TCL_OK;
   }
-  return TCL_ERROR;
+
+  return TCL_OK;
 }
 
 int inter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv)
@@ -1721,16 +1764,21 @@ int inter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv)
 	return TCL_ERROR;
       }
 
-      if (! ARG1_IS_D(d1)) {
-	Tcl_AppendResult(interp, argv[0], " needs 1 DOUBLE parameter",
-			 (char *) NULL);
-	return TCL_ERROR;
+      if (ARG1_IS_S("metallic")) {
+	d1 = P3M_EPSILON_METALLIC;
       }
+      else {
+	if (! ARG1_IS_D(d1)) {
+	  Tcl_AppendResult(interp, argv[0], " needs 1 DOUBLE parameter or \"metallic\"",
+			   (char *) NULL);
+	  return TCL_ERROR;
+	}
 	
-      if (p3m_set_eps(d1) == TCL_ERROR) {
-	Tcl_AppendResult(interp, argv[0], " There is no error msg yet!",
-			 (char *) NULL);
-	return TCL_ERROR;
+	if (p3m_set_eps(d1) == TCL_ERROR) {
+	  Tcl_AppendResult(interp, argv[0], " There is no error msg yet!",
+			   (char *) NULL);
+	  return TCL_ERROR;
+	}
       }
 
       argc -= 2;
@@ -1873,6 +1921,9 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   }
   
   if (! ARG0_IS_D(d1)) {
+    Tcl_ResetResult(interp);
+    if (ARG0_IS_S("elc") && (coulomb.method == COULOMB_P3M))
+      return inter_parse_elc_params(interp, argc - 1, argv + 1);
     if (coulomb.method == COULOMB_P3M)
       return inter_parse_p3m_opt_params(interp, argc, argv);
     else {
@@ -1891,12 +1942,18 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   argc -= 1;
   argv += 1;
 
-  if (d1 == 0.0 && argc == 0)
+  coulomb.use_elc = 0;
+  coulomb.method  = COULOMB_NONE;
+
+  if (d1 == 0.0 && argc == 0) {
+    mpi_bcast_coulomb_params();
     return TCL_OK;
+  }
 
   if(argc < 1) {
     Tcl_AppendResult(interp, "wrong # args for inter coulomb.",
 		     (char *) NULL);
+    mpi_bcast_coulomb_params();
     return TCL_ERROR;
   }
 
@@ -1913,8 +1970,8 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   if (ARG0_IS_S("mmm2d"))
     return inter_parse_mmm2d(interp, argc-1, argv+1);
 
+  /* fallback */
   coulomb.bjerrum = 0.0;
-  coulomb.method  = COULOMB_NONE;
 
   mpi_bcast_coulomb_params();
 

@@ -29,6 +29,7 @@
 #include "interaction_data.h"
 #include "rotation.h"
 #include "forces.h"
+#include "elc.h"
 #include "nsquare.h"
 #include "layered.h"
 
@@ -93,6 +94,9 @@ void calc_long_range_forces()
   case COULOMB_MMM2D:
     MMM2D_add_far_force();
   }
+
+  if (coulomb.use_elc)
+    ELC_add_force();
 #endif
 }
 
