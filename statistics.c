@@ -718,6 +718,8 @@ static int parse_configs(Tcl_Interp *interp, int argc, char **argv)
     sprintf(buffer,"Wrong # of args(%d)! Usage: analyze configs [x0 y0 z0 ... x%d y%d z%d]",argc,n_part_conf,n_part_conf,n_part_conf);
     Tcl_AppendResult(interp,buffer,(char *)NULL); return TCL_ERROR;
   }
+  /* keep the compiler happy */
+  return TCL_ERROR;
 }
 
 /****************************************************************************************
@@ -745,6 +747,8 @@ static int parse_set_topology(Tcl_Interp *interp, int argc, char **argv)
 		     "\" you requested is not implemented.", (char *)NULL);
     return (TCL_ERROR);
   }
+  /* keep the compiler happy */
+  return TCL_ERROR;
 }
 
 int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)

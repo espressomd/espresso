@@ -162,6 +162,8 @@ double gammaq(double a, double x)
 	gammacf(&retval, a, x);
 	return retval;
     }
+    /* keep the compiler happy */
+    return 0.0;
 }
 
 /** Sum up a vector.
