@@ -510,7 +510,7 @@ double distto(double xt, double yt, double zt, int pid)
   /* larger than possible */
   mindist=box_l[0] + box_l[1] + box_l[2];
   for (i=0; i<n_total_particles; i++) {
-    if (pid != i) {
+    if (pid != partCfg[i].r.identity) {
       dx = xt - partCfg[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
       dy = yt - partCfg[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
       dz = zt - partCfg[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
