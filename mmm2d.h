@@ -9,6 +9,8 @@
 #ifndef MMM2D_H
 #define MMM2D_H
 
+#ifdef ELECTROSTATICS
+
 typedef struct {
   double maxPWerror;
   double far_cut, far_cut2;
@@ -52,5 +54,7 @@ double mmm2d_coulomb_pair_energy(Particle *p1, Particle *p2,
 void MMM2D_init();
 
 void MMM2D_on_resort_particles();
+
+#endif
 
 #endif
