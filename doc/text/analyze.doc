@@ -61,19 +61,21 @@
     or to be provided upon calling (which (re-)sets the structure info permanently, i.e. is only required once):
     <ul>
     <li> \verbatim analyze { re | <re> } [<chain_start> <n_chains> <chain_length>] \endverbatim
-         returns the root of the quadratic end-to-end-distance averaged over all polymers (requires chain structure to be set or provided).<BR>
+         returns the quadratic end-to-end-distance and its root averaged over all polymers (requires chain structure to be set or provided) as
+	 a tcl-list comprising of <tt>re error_of_re re2 error_of_re2</tt>.<BR>
 	 If '<re>' is given instead of 're', the derivation uses all configurations which have been previously specified with 'analyze append',
 	 hence taking a time-average as well. Note that the stored configurations are assumed to be equidistant in time (i.e. you have to call
 	 'analyze append' in equidistant intervalls), and that no changes in the particle setup must have been made in between (i.e. no call to
 	 \ref tcl_part).
     <li> \verbatim analyze { rg | <rg> } [<chain_start> <n_chains> <chain_length>] \endverbatim
-         returns the radius of gyration averaged over all chains (requires chain structure to be set or provided).
+         returns the radius of gyration averaged over all chains (requires chain structure to be set or provided) as
+	 a tcl-list comprising of <tt>rg error_of_rg rg2 error_of_rg2</tt>.<BR>
 	 If '<rg>' is given instead of 'rg', the derivation uses all configurations which have been previously specified with 'analyze append',
 	 hence taking a time-average as well. Note that the stored configurations are assumed to be equidistant in time (i.e. you have to call
 	 'analyze append' in equidistant intervalls), and that no changes in the particle setup must have been made in between (i.e. no call to
 	 \ref tcl_part).
     <li> \verbatim analyze { rh | <rh> } [<chain_start> <n_chains> <chain_length>] \endverbatim
-         returns the hydrodynamic radius (requires chain structure to be set or provided).
+         returns the hydrodynamic radius and its error as a tcl-list (requires chain structure to be set or provided).
 	 If '<rh>' is given instead of 'rh', the derivation uses all configurations which have been previously specified with 'analyze append',
 	 hence taking a time-average as well. Note that the stored configurations are assumed to be equidistant in time (i.e. you have to call
 	 'analyze append' in equidistant intervalls), and that changes in the particle setup must not have been made in between (i.e. no call to
