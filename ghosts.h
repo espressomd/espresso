@@ -45,6 +45,14 @@ extern Particle *p_send_buf;
 extern int       n_p_recv_buf;
 extern int       max_p_recv_buf;
 extern Particle *p_recv_buf;
+/** Buffer for particles bonds to send. */
+extern int       n_b_send_buf;
+extern int       max_b_send_buf;
+extern int      *b_send_buf;
+/** Buffer for particles bonds recieve. */
+extern int       n_b_recv_buf;
+extern int       max_b_recv_buf;
+extern int      *b_recv_buf;
 
 /* exchange Ghosts */
 

@@ -34,12 +34,12 @@ void force_calc()
   double Bjerrum = 1.68, alpha = 1.;
   double  erfc_part_ri;
 
-  FORCE_TRACE(fprintf(stderr,"%d: force_calc:\n",this_node));
+  FORCE_TRACE(fprintf(stderr,"%d: force_calc: for %d (P %d,G %d)\n",this_node,n_particles+n_ghosts,n_particles,n_ghosts));
  
-  for(i=0;i<n_particles;i++)
+  for(i=0;i<n_particles+n_ghosts;i++)
     for(j=0;j<3;j++)
-      particles[i].f[j] = 0;
-      
+      particles[i].f[j] = 0.0;
+ 
   for(i=0;i<2*n_verletList;i=i+2)
     {
       id1 = verletList[i];
@@ -74,10 +74,6 @@ void force_calc()
 	}
     }
    
-
-      
-      
-  FORCE_TRACE(fprintf(stderr,"%d: force_calc:\n",this_node));
 }
 
 void force_exit()

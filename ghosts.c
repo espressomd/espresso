@@ -15,7 +15,7 @@
  */  
 int sub_grid_indices(int* list, int start, int max,
 		     int lc[3], int hc[3], int gs[3]);
-/** moves particle (ind) to the send buffer.
+/** moves particle (ind) to the send buffers.
     subroutine of exchange_part(). */
 void move_to_p_buf(int ind);
 /** send particles in direction s_dir.
@@ -29,7 +29,7 @@ void send_ghosts(int s_dir);
 void pack_ghost(Ghost *g_array, int g_ind, Particle *p_array, int p_ind);
 void unpack_ghost(Particle *p_array, int p_ind, Ghost *g_array, int g_ind);
 
-void send_posforce(int s_dir);
+void send_posforce(int s_dir,int send_size, int recv_size);
 
 /******************************** variables for  exchange Particles */
 
@@ -41,6 +41,14 @@ Particle *p_send_buf;
 int       n_p_recv_buf;
 int       max_p_recv_buf;
 Particle *p_recv_buf;
+/** Buffer for particles bonds to send. */
+int       n_b_send_buf;
+int       max_b_send_buf;
+int      *b_send_buf;
+/** Buffer for particles bonds recieve. */
+int       n_b_recv_buf;
+int       max_b_recv_buf;
+int      *b_recv_buf;
 
 /******************************** variables for  exchange Ghosts */
 
@@ -104,6 +112,10 @@ void ghost_init()
   max_p_send_buf = max_p_recv_buf = PART_INCREMENT;
   p_send_buf = (Particle *)malloc(max_p_send_buf*sizeof(Particle));
   p_recv_buf = (Particle *)malloc(max_p_recv_buf*sizeof(Particle));
+  max_b_send_buf = max_b_recv_buf = PART_INCREMENT;
+  b_send_buf = (int *)malloc(max_b_send_buf*sizeof(int));
+  b_recv_buf = (int *)malloc(max_b_recv_buf*sizeof(int));
+
 
   /* preparation of help variables */
   for(i=0;i<3;i++) {
@@ -118,8 +130,8 @@ void ghost_init()
   for(i=1;i<6;i++) cell_start[i] = cell_start[i-1] + anz[(i-1)/2];
 
   /* create send/recv cell index lists */
-  send_cells = (int *)malloc(n_total_cells*sizeof(int));
   recv_cells = (int *)malloc(n_total_cells*sizeof(int));
+  send_cells = (int *)malloc(n_total_cells*sizeof(int));
   /* direction loop (sorry, it looks nasty, and it is!!!). */
   for(i=0;i<3;i++) {
     lc[(i+1)%3] = 1-done[(i+1)%3]; hc[(i+1)%3] = cg[(i+1)%3]+done[(i+1)%3];
@@ -184,7 +196,7 @@ void exchange_part()
     particles[0].p[0] -= 5.0;
     fprintf(stderr,"0: new particles[0].p[0] = %f (myleft %f)\n",particles[0].p[0], my_left[0]);
   }
-  end test */
+   end test */
 
   /* fold coordinates to primary simulation box */
   for(n=0;n<n_particles;n++) fold_particle(particles[n].p,particles[n].i);
@@ -193,6 +205,7 @@ void exchange_part()
     for(lr=0; lr<2; lr++) {
       dir = 2*d + lr;
       n_p_send_buf = n_p_recv_buf = 0;
+      n_b_send_buf = n_b_recv_buf = 0;
       if(lr==0) {                                /* left */
 	for(n=0;n<n_particles;n++)
 	  if(particles[n].p[d] <   my_left[d] )  move_to_p_buf(n);
@@ -214,7 +227,9 @@ void exchange_ghost()
   int old_max_send, old_max_recv;
 
   GHOST_TRACE(fprintf(stderr,"%d: exchange_ghost:\n",this_node));
-  GHOST_TRACE(fprintf(stderr,"%d: start with n_p %d and n_g %d\n",this_node,n_particles,n_ghosts));
+
+  /* remove ghosts */
+  for(n=n_particles; n<n_particles+n_ghosts; n++) local_index[particles[n].identity] = -1;
 
   old_max_send = max_send_buf;
   old_max_recv = max_recv_buf;
@@ -268,51 +283,72 @@ void exchange_ghost()
       }
       cells[c_ind].n_particles = n_recv_ghosts[c];
     }
-    if(dir%2==1) MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
   }                                               /* END direction loop */
 
-  /* debug output */
-  fprintf(stderr,"%d: max_send %d, max_recv %d (n_s,n_r) {",this_node,max_send_buf,max_recv_buf);
-  for(i=0;i<6;i++) 
-    fprintf(stderr,"(%d, %d),",ghost_send_size[i],ghost_recv_size[i]);
-  fprintf(stderr,"}\n");
-  GHOST_TRACE(fprintf(stderr,"%d: end with n_p %d and n_g %d\n",this_node,n_particles,n_ghosts));
-  
 
   /* resize pos/force buffer if necessary */
+  if(max_send_buf > max_recv_buf) max_recv_buf = max_send_buf;
+  else                            max_send_buf = max_recv_buf;
   if(max_send_buf > old_max_send)
     send_buf = (double *)realloc(send_buf,3*max_send_buf*sizeof(double));
   if(max_recv_buf > old_max_recv)    
     recv_buf = (double *)realloc(recv_buf,3*max_recv_buf*sizeof(double));
+
+  /* verbose debug output about send/recv cells !!!
+  for(n=0;n<nprocs;n++) {
+    if(n==this_node) {
+      int sum=0;
+      for(i=0;i<n_cells;i++) sum += cells[i].n_particles;
+      fprintf(stderr,"%d: ghost exchange done: %d Particles in cells:\n",this_node,sum);
+      for(i=0;i<n_cells;i++) fprintf(stderr,"%d ",cells[i].n_particles);
+      fprintf(stderr,"\n");
+      for(dir=0;dir<6;dir++) {
+	fprintf(stderr,"Ghosts in dir %d: S:",dir); sum=0;
+	for(i=0;i<n_send_cells[dir];i++) { 
+	  sum+=cells[(send_cells[(cell_start[dir]+i)])].n_particles;
+	  fprintf(stderr,"%d ",cells[(send_cells[(cell_start[dir]+i)])].n_particles); }
+	fprintf(stderr,"(%d) R:",sum); sum=0;
+	for(i=0;i<n_recv_cells[dir];i++) {
+	  sum+=cells[(recv_cells[(cell_start[dir]+i)])].n_particles;
+	  fprintf(stderr,"%d ",cells[(recv_cells[(cell_start[dir]+i)])].n_particles); }
+	fprintf(stderr,"(%d)\n",sum);
+      }
+    }
+    fflush(stderr); MPI_Barrier(MPI_COMM_WORLD);
+  }
+  */
 }
 
 void update_ghost_pos()
 {
-  int dir,c,c_ind,n,g;
+  int dir,c,c_ind,n,g,i;
   GHOST_TRACE(fprintf(stderr,"%d: update_ghost_pos:\n",this_node));
+  MPI_Barrier(MPI_COMM_WORLD);
+
   for(dir=0; dir<6; dir++) {          /* direction loop forward */
     /* loop send cells -  copy positions to buffer*/
     g=0;
     for(c=0; c<n_send_cells[dir]; c++) {
       c_ind = send_cells[cell_start[dir]+c];
-      for(n=0;n<cells[c_ind].n_particles;n++) {
-	memcpy(&(send_buf[g]), particles[cells[c_ind].particles[n]].p, 3*sizeof(double));
+      for(n=0; n<cells[c_ind].n_particles; n++) {
+	for(i=0;i<3;i++) send_buf[g+i] = particles[cells[c_ind].particles[n]].p[i];
 	g += 3;
       }
     }
-    GHOST_TRACE(fprintf(stderr,"%d: Dir %d send %d positions\n",this_node,g/3));
     /* send buffer */
-    send_posforce(dir);
+    send_posforce(dir,3*ghost_send_size[dir],3*ghost_recv_size[dir]);
+
     /* loop recv cells - copy positions from buffer */
     g=0;
     for(c=0; c<n_recv_cells[dir]; c++) {
       c_ind = recv_cells[cell_start[dir]+c];
-      for(n=0;n<cells[c_ind].n_particles;n++) {
-	memcpy(particles[cells[c_ind].particles[n]].p, &(send_buf[g]), 3*sizeof(double));
+      for(n=0; n<cells[c_ind].n_particles; n++) {
+	for(i=0;i<3;i++) particles[cells[c_ind].particles[n]].p[i] = recv_buf[g+i];
 	g += 3;
       }
     }
-    if(dir%2==1) MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD); 
   }
 }
 
@@ -320,29 +356,32 @@ void collect_ghost_forces()
 {
   int dir,c,c_ind,n,g,i;
   GHOST_TRACE(fprintf(stderr,"%d: collect_ghost_forces:\n",this_node));
+  MPI_Barrier(MPI_COMM_WORLD);
+
   for(dir=5; dir>=0; dir--) {         /* direction loop backward */
     /* loop recv cells - copy forces to buffer*/
     g=0;
     for(c=0; c<n_recv_cells[dir]; c++) {
       c_ind = recv_cells[cell_start[dir]+c];
-      for(n=0;n<cells[c_ind].n_particles;n++) {
-	memcpy(&(send_buf[g]), particles[cells[c_ind].particles[n]].f, 3*sizeof(double));
+      for(n=0; n<cells[c_ind].n_particles; n++) {
+	for(i=0;i<3;i++) {
+	  send_buf[g+i] = particles[cells[c_ind].particles[n]].f[i];
+	}
 	g += 3;
       }
     }
-    GHOST_TRACE(fprintf(stderr,"%d: Dir %d send %d forces\n",this_node,g/3));
     /* send forces */
-    send_posforce(dir);
+    send_posforce(dir,3*ghost_recv_size[dir],3*ghost_send_size[dir]);
     /* loop send cells - add buffer forces to local forces */
     g=0;
     for(c=0; c<n_send_cells[dir]; c++) {
       c_ind = send_cells[cell_start[dir]+c];
       for(n=0;n<cells[c_ind].n_particles;n++) {  
-	for(i=0; i<3; i++) particles[cells[c_ind].particles[n]].f[i] += send_buf[g+i];
+	for(i=0; i<3; i++) particles[cells[c_ind].particles[n]].f[i] += recv_buf[g+i];
 	g += 3;
       }
-    }
-    if(dir%2==1) MPI_Barrier(MPI_COMM_WORLD);
+    } 
+    MPI_Barrier(MPI_COMM_WORLD); 
   }
 }
 
@@ -398,13 +437,30 @@ int sub_grid_indices(int* list, int start, int max,
 
 void move_to_p_buf(int ind)
 {
-  /* check buffer size */
+  int bonds=0,i;
+  /* count bond partners */
+  for(i=0;i<particles[ind].n_bonds;i++) {
+    /* ATTENTION: HERE YOU HAVE TO CHECK THE NUMBER OF BOND PARTNERS FOR EACH BOND ! */
+    bonds++;
+  }
+    
+  /* check buffer sizes */
   if(n_p_send_buf >= max_p_send_buf) {
     max_p_send_buf += PART_INCREMENT;
-    p_send_buf = (Particle *)realloc(p_send_buf,max_p_send_buf*sizeof(Particle));
+    p_send_buf = (Particle *)realloc(p_send_buf, max_p_send_buf*sizeof(Particle));
   }
+  if(bonds>0 && n_b_send_buf+bonds >= max_b_send_buf) {
+    max_b_send_buf = n_b_send_buf + bonds +  PART_INCREMENT;
+    b_send_buf = (int *)realloc(b_send_buf, max_b_send_buf*sizeof(int));
+  }
+
   /* copy particle from local array to send buffer */
-  memcpy(&p_send_buf[n_p_send_buf],&particles[ind],sizeof(Particle));
+  if(bonds>0) {
+    memcpy(&b_send_buf[n_b_send_buf], particles[ind].bonds, bonds*sizeof(int));
+    n_b_send_buf += bonds;
+    free(particles[ind].bonds);
+  }
+  memcpy(&p_send_buf[n_p_send_buf], &particles[ind], sizeof(Particle));
   n_p_send_buf++;
   /* delete particle = 
      1: update the local_index list 
@@ -419,41 +475,63 @@ void send_particles(int s_dir)
 {
   int evenodd;
   int r_dir;
+  int send_sizes[2],recv_sizes[2];
   MPI_Status status;
 
+  send_sizes[0]=n_p_send_buf;
+  send_sizes[1]=n_b_send_buf;
   /* calc recv direction (r_dir) from send direction (s_dir) */
   if(s_dir%2 == 0) r_dir = s_dir+1;
   else             r_dir = s_dir-1;
   /* two step communication: first all even positions than all odd */
   for(evenodd=0; evenodd<2;evenodd++) {
     if((pe_pos[s_dir/2]+evenodd)%2==0) {
-      MPI_Send(&n_p_send_buf,1,MPI_INT,neighbors[s_dir],0,MPI_COMM_WORLD);
+      MPI_Send(send_sizes,2,MPI_INT,neighbors[s_dir],0,MPI_COMM_WORLD);
       MPI_Send(p_send_buf,n_p_send_buf*sizeof(Particle), MPI_BYTE, 
 	       neighbors[s_dir],0,MPI_COMM_WORLD);
+      if(n_b_send_buf>0)
+	MPI_Send(b_send_buf, n_b_send_buf, MPI_INT, neighbors[s_dir], 0, MPI_COMM_WORLD);
     }
     else {
-      MPI_Recv(&n_p_recv_buf,1,MPI_INT,neighbors[r_dir],0,MPI_COMM_WORLD,&status);
+      MPI_Recv(recv_sizes,2,MPI_INT,neighbors[r_dir],0,MPI_COMM_WORLD,&status);
+      n_p_recv_buf = recv_sizes[0];
+      n_b_recv_buf = recv_sizes[1];
       if(n_p_recv_buf >= max_p_recv_buf) {
 	max_p_recv_buf = n_p_recv_buf;
 	p_recv_buf = (Particle *)realloc(p_recv_buf,max_p_recv_buf*sizeof(Particle));
       }
+      if(n_b_recv_buf >= max_b_recv_buf) {
+	max_b_recv_buf = n_b_recv_buf;
+	b_recv_buf = (int *)realloc(b_recv_buf,max_b_recv_buf*sizeof(int));
+      }
       MPI_Recv(p_recv_buf,n_p_recv_buf*sizeof(Particle), MPI_BYTE,
 	       neighbors[r_dir],0,MPI_COMM_WORLD,&status);
+      if(n_b_recv_buf>0) 
+	MPI_Recv(b_recv_buf,n_b_recv_buf, MPI_INT, neighbors[r_dir],0,MPI_COMM_WORLD,&status);
     }
   }
 }
 
 void append_particles(void)
 {
-  int n;
+  int n,i,bonds,b_ind=0;
   /* check particle array size */
   if(n_particles + n_p_recv_buf >= max_particles) 
     realloc_particles(n_particles + n_p_recv_buf);
   /* copy particle data */
-  memcpy(&particles[n_particles],p_send_buf,n_p_recv_buf*sizeof(Particle));
-  /* update local_indes list */
-  for(n=n_particles; n < n_particles+n_p_recv_buf; n++)
+  memcpy(&particles[n_particles],p_recv_buf,n_p_recv_buf*sizeof(Particle));
+  /* update local_index list */
+  for(n=n_particles; n < n_particles+n_p_recv_buf; n++) {
     local_index[particles[n].identity] = n;
+    bonds=0;
+    /* ATTENTION: HERE YOU HAVE TO CHECK THE NUMBER OF BOND PARTNERS FOR EACH BOND ! */
+    for(i=0; i<particles[n].n_bonds; i++) { bonds++; }
+    if(bonds>0) {
+      particles[n].bonds = (int *)malloc(bonds*sizeof(int));
+      memcpy(particles[n].bonds, &(b_recv_buf[b_ind]), bonds*sizeof(int));
+      b_ind += bonds;
+    }
+  }
   /* update particle number */
   n_particles += n_p_recv_buf;
 }
@@ -489,9 +567,9 @@ void send_ghosts(int s_dir)
   /* store number of ghosts to send in direction s_dir */
   ghost_send_size[s_dir] = n_send_ghosts[max_send_cells];
   if(ghost_send_size[s_dir]>max_send_buf) max_send_buf = ghost_send_size[s_dir];
-  /* store number of ghosts to recieve from direction r_dir */
-  ghost_recv_size[r_dir] = n_recv_ghosts[max_send_cells];
-  if(ghost_recv_size[r_dir]>max_recv_buf) max_recv_buf = ghost_recv_size[r_dir];
+  /* store number of ghosts to recieve from direction s_dir */
+  ghost_recv_size[s_dir] = n_recv_ghosts[max_send_cells];
+  if(ghost_recv_size[s_dir]>max_recv_buf) max_recv_buf = ghost_recv_size[s_dir];
 }
 
 void pack_ghost(Ghost *g_array, int g_ind, Particle *p_array, int p_ind)
@@ -510,7 +588,7 @@ void unpack_ghost(Particle *p_array, int p_ind, Ghost *g_array, int g_ind)
   p_array[p_ind].q        = g_array[g_ind].q ;
 }
 
-void send_posforce(int s_dir)
+void send_posforce(int s_dir,int send_size, int recv_size)
 {
   int evenodd;
   int r_dir;
@@ -521,13 +599,11 @@ void send_posforce(int s_dir)
   else             r_dir = s_dir-1;
   /* two step communication: first all even positions than all odd */
   for(evenodd=0; evenodd<2;evenodd++) {
-    if((pe_pos[s_dir/2]+evenodd)%2==0) {
-      MPI_Send(send_buf,3*ghost_send_size[s_dir], MPI_DOUBLE, 
+    if((pe_pos[s_dir/2]+evenodd)%2==0) 
+      MPI_Send(send_buf, send_size, MPI_DOUBLE, 
 	       neighbors[s_dir],0,MPI_COMM_WORLD);
-    }
-    else {
-      MPI_Recv(recv_buf,3*ghost_recv_size[r_dir], MPI_DOUBLE,
-	       neighbors[r_dir],0,MPI_COMM_WORLD,&status);
-    }
+    else 
+      MPI_Recv(recv_buf, recv_size, MPI_DOUBLE,
+	       neighbors[r_dir],0,MPI_COMM_WORLD,&status);    
   }
 }
