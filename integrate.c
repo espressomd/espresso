@@ -17,12 +17,12 @@
 #include "cells.h"
 #include "verlet.h"
 #include "ghosts.h"
-#include "forces.h"
 #include "debug.h"
 #include "p3m.h"
 #include "utils.h"
 #include "thermostat.h"
 #include "initialize.h"
+#include "forces.h"
 
 /************************************************
  * DEFINES
@@ -166,9 +166,8 @@ void integrate_vv(int n_steps)
 
   if(parameter_changed || particle_changed || topology_changed || interactions_changed) {
     exchange_ghost();
-    build_verlet_lists();
+    build_verlet_lists_and_force_calc();
 
-    force_calc();
     collect_ghost_forces();
     rescale_forces();
   }
@@ -184,12 +183,12 @@ void integrate_vv(int n_steps)
       invalidate_ghosts();
       exchange_and_sort_part();
       exchange_ghost();
-      build_verlet_lists();
+      build_verlet_lists_and_force_calc();
     }
     else {
       update_ghost_pos();
+      force_calc();
     }
-    force_calc();
     collect_ghost_forces();
     rescale_forces_propagate_vel();
     if(this_node==0) sim_time += time_step;
@@ -448,9 +447,6 @@ void propagate_vel_pos()
 		p[i].v[0],p[i].v[1],p[i].v[2]);
       if(db_vel > db_max_vel) { db_max_vel=db_vel; db_maxv_id=p[i].r.identity; }
 #endif
-
-
-
 
       /* Verlet criterion check */
       if(distance2(p[i].r.p,p[i].p_old) > skin2 )

@@ -45,8 +45,11 @@ extern int rebuild_verletlist;
  *  Use with care and ONLY for initialization! */
 void init_pairList(PairList *list);
 
-/** fill verlet tables. */
+/** fill verlet tables (old version of build_verlet_lists_and_force_calc()). */
 void build_verlet_lists();
+
+/** fill verlet tables and calculate forces. */
+void build_verlet_lists_and_force_calc();
 
 /** Callback for integrator flag tcl:verletflag c:rebuild_verletlist (= 0 or 1).
     <ul>
