@@ -212,7 +212,8 @@ proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA}
     puts $f "\# !lpr -Pthps18 \"$out.ps\""
     puts $f "set terminal x11"
     close $f
-    eval exec gnuplot plotObsTmp.p
+    catch { eval exec gnuplot plotObsTmp.p }
+    # eval exec gnuplot plotObsTmp.p
     eval exec rm -f plotObsTmp.p
 }
 
