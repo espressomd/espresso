@@ -48,7 +48,7 @@ TESTCASES="nve_pe.tcl npt.tcl madelung.tcl \
 
 errf=_test.sh_error.$$
 
-if [ "$1" == "-nompi" ]; then
+if [ "$1" = "-nompi" ]; then
     mpifake=1
     nplist=1
 else
