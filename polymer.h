@@ -93,8 +93,7 @@ int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** C implementation of 'salt <N_pS> <N_nS> [options]',
     @param  <N_pS>/<N_nS> = number of salt ions to create
-    @param  <box_length>  = length of the simulation box
-    @param  <part_id>     = particle number of the first salt ion (defaults to '[setmd npart]')
+    @param  <part_id>     = particle number of the first salt ion (defaults to 'n_total_particles')
     @param  <mode>        = selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW')
     @param  <shield>      = shield around each particle another particle's position may not enter if using SAW (defaults to '0')
     @param  <max_try>     = how often a monomer should be reset if current position collides with a previous particle (defaults to '30000')
