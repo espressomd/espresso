@@ -54,9 +54,9 @@ static int writestring(FILE *f, char *s)
 }
 #endif
 
-static char findNonWs(FILETYPE f)
+static int findNonWs(FILETYPE f)
 {
-  char c;
+  int c;
   for(;;) {
     switch ((c = readchar(f))) {
     case 0:
@@ -102,7 +102,7 @@ static int readString(FILETYPE f, char *buffer, int size)
 
 int block_startread(FILETYPE f, char index[MAXBLOCKTITLE])
 {
-  char c;
+  int c;
 
   index[0] = 0;
 

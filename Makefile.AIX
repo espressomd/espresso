@@ -4,7 +4,7 @@
 CC=mpcc
 
 # optimized compiler flags
-CFLAGS=-O2
+CFLAGS=-g -O2 -qmaxmem=8192
 
 # debug compiler flags
 
