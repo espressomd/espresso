@@ -157,7 +157,7 @@ int MMM1D_set_params(double switch_rad, int bessel_cutoff, double maxPWerror)
 
 int MMM1D_tune(Tcl_Interp *interp)
 {
-  char buffer[32 + 2*TCL_DOUBLE_SPACE];
+  char buffer[32 + 2*TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   double int_time, min_time=1e200, min_rad = -1;
   double maxrad = box_l[2]; /* N_psi = 2, theta=2/3 maximum for rho */
   double switch_radius;
