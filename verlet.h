@@ -8,6 +8,7 @@
  *  For more information see \ref verlet.c "verlet.c".
  */
 #include <tcl.h>
+#include "particle_data.h"
 
 /************************************************
  * data types
@@ -15,15 +16,15 @@
 
 /** Verlet pair list. The verlet pair list array is resized using a
     sophisticated (we hope) algorithm to avoid unnecessary resizes.
-    Access using \ref realloc_verletList.
+    Access using \ref realloc_pairList.
 */
 typedef struct {
   /** The pair payload (two integers per pair) */
-  int *pair;
+  Particle *pair;
   /** Number of pairs contained */
-  int n_pairs;
+  int n;
   /** Number of pairs that fit in until a resize is needed */
-  int max_pairs;
+  int max;
 } PairList;
 
 
@@ -40,14 +41,11 @@ extern int rebuild_verletlist;
 /************************************************************/
 /*@{*/
 
-/** initialize verlet list structure. */
-void verlet_init();
+/** fill verlet tables. */
+void build_verlet_lists();
 
-/** fill the verlet table. */
-void build_verlet_list();
-
-/** exit verlet list structure. */
-void verlet_exit();
+/** reallocate a verlet pair list to a new size. */
+void realloc_pairList(PairList *list, int size);
 
 /** Callback for integrator flag tcl:verletflag c:rebuild_verletlist (= 0 or 1).
     <ul>
