@@ -225,6 +225,22 @@ void calc_virials();
 */
 void calc_pressure(void);
 
+/** Derives the spherically averaged formfactor S(q) = 1/chain_length * Sum(i,j=1..chain_length)[sin(q*r_ij)/q*r_ij] of a single chain,
+    averaged over all \ref chain_n_chains currently allocated (-> chain information must be set!).
+    @param qmin  smallest q-vector to look at (qmin > 0)
+    @param qmax  biggest q-vector to look at (qmax > qmin)
+    @param qbins decides how many S(q) are derived (note that the qbins+1 values will be logarithmically spaced)
+    @param _ff   contains S(q) as an array of size qbins */
+void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff);
+
+/** Derives the spherically averaged formfactor S(q) = 1/chain_length * Sum(i,j=1..chain_length)[sin(q*r_ij)/q*r_ij] of a single chain,
+    averaged over all \ref chain_n_chains of all \ref n_configs stored configurations in \ref #configs.
+    @param qmin  smallest q-vector to look at (qmin > 0)
+    @param qmax  biggest q-vector to look at (qmax > qmin)
+    @param qbins decides how many S(q) are derived (note that the qbins+1 values will be logarithmically spaced)
+    @param _ff   contains S(q) as an array of size qbins */
+void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff);
+
 /*@}*/
 
 #endif
