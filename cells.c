@@ -133,7 +133,7 @@ void sort_particles_into_cells()
     cells[ind].n_particles++;
   }
  
-  /* debuging */
+  /* debuging 
   fflush(stderr);
   MPI_Barrier(MPI_COMM_WORLD) ; 
   for(i=0;i<nprocs;i++) {
@@ -147,7 +147,8 @@ void sort_particles_into_cells()
       fflush(stderr);
     }
     MPI_Barrier(MPI_COMM_WORLD) ;
-  }  
+  }
+  */  
 }
 
 
@@ -247,7 +248,7 @@ void realloc_cell_particles(int index, int size)
 void cell_memory_info(int verb)
 {
   int i;
-
+  
   fprintf(stderr,"%d: Cell Memory Information:\n",this_node);
   fprintf(stderr,"    Inner Cell Grid: "); print_ifield(cell_grid,3);
   fprintf(stderr,"    Ghost Cell Grid: "); print_ifield(ghost_cell_grid,3);
