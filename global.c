@@ -34,7 +34,7 @@ int ro_callback(Tcl_Interp *interp, void *data);
 /** List of all Tcl accessible global variables. If you
     want to add a new variable, ADD IT ALWAYS AT THE END.
     You should also add an \verbatim #define FIELD_*\endverbatim
-    in \ref global.h.
+    in \ref global.h and a descriptive text in \ref variables_page.
 */
 const Datafield fields[] = {
   {&n_nodes,    TYPE_INT,    1, "n_nodes",    ro_callback },  /* communication.c */
@@ -67,6 +67,79 @@ const Datafield fields[] = {
   { NULL, 0, 0, NULL, NULL }
 };
 
+/** \page variables_page Global variables
+
+     The following list explains the usage of the variables that are
+     accessible via \ref tcl_setmd.  The list gives the setmd name of
+     (hopefully) all available variables, the data type and a link to
+     the documentation of the corresponding C variable.
+     Variables that are marked read only can only be written by C code.
+
+	<ul>
+	<li> \verbatim n_nodes int (ro) \endverbatim
+	\ref n_nodes - Number of nodes.
+	<li> \verbatim node_grid int[3] \endverbatim
+	\ref node_grid - 3D node grid for real space domain
+	decomposition (optional,
+	if unset an optimal set is chosen automatically).	
+	<li> \verbatim local_box_l int[3] (ro) \endverbatim
+	\ref local_box_l - Local simulation box length of the nodes.
+	<li> \verbatim box_l double[3] \endverbatim
+	\ref box_l - Simulation box length.
+	<li> \verbatim maxpart int (ro) \endverbatim
+	\ref max_seen_particle - Maximal identity of a particle.
+	THIS IS IN GENERAL _NOT_ RELATED
+	TO THE NUMBER OF PARTICLES.
+	<li> \verbatim nptypes int (ro) \endverbatim
+	\ref n_particle_types - Number of particle
+	types that were used so far in \ref tcl_inter.
+	<li> \verbatim niatypes int \endverbatim
+	\ref n_interaction_types - Number of interaction types
+	(not fully implemented. DO NOT USE).
+	<li> \verbatim time_step double (_currently_ ro)\endverbatim
+	\ref time_step - Time step for MD integration
+	(_currently_ read only, set to 0.001).
+	<li> \verbatim max_cut double (ro) \endverbatim
+	\ref max_cut - Maximal cutoff of real space interactions.
+	<li> \verbatim skin double \endverbatim
+	\ref skin - Skin for the Verlet list.
+	<li> \verbatim max_range double (ro)\endverbatim
+	\ref max_range - Maximal range of real space interactions: max_cut + skin.
+	<li> \verbatim gamma double \endverbatim
+	\ref friction_gamma - Friction constant.
+	<li> \verbatim verletflag bool (ro)\endverbatim
+	\ref rebuild_verletlist - Indicates wether the Verlet list will be rebuild.
+	The program decides this automatically based on your actions on the data.
+	<li> \verbatim bjerrum double \endverbatim
+	\ref p3m_struct::bjerrum - Bjerrum length. If 0, electrostatic interaction is turned off.
+	<li> \verbatim p3m_alpha double \endverbatim
+	\ref p3m_struct::alpha - Ewald splitting parameter.
+	<li> \verbatim p3m_r_cut double \endverbatim
+	\ref p3m_struct::r_cut - Real space cutoff for P3M.
+	<li> \verbatim p3m_mesh int[3]\endverbatim
+	\ref p3m_struct::mesh - Mesh size for P3M k space.
+	<li> \verbatim p3m_cao int \endverbatim
+	\ref p3m_struct::cao - Charge assignment order for P3M particle-mesh interaction (1 < 
+	p3m_cao < 7).
+	<li> \verbatim p3m_epsilon double\endverbatim
+	\ref p3m_struct::epsilon - Dielectric constant at infinity
+	(boundary condition for Ewald sumation).
+	<li> \verbatim p3m_mesh_offset double[3] \endverbatim
+	\ref p3m_struct::mesh_off - Offset of the first mesh point from the origin in mesh
+	coordinates (all values between 0.0 and 1.0).
+	<li> \verbatim transfer_rate int (ro)\endverbatim
+	\ref transfer_rate - Tranfer rate for VMD connection. You can use this
+	to transfer any integer value to the simulation from VMD.
+	<li> \verbatim max_num_cells int> \endverbatim
+	\ref max_num_cells - Maximal number of cells for the link cell
+	algorithm. Reasonable values are between 125 and 1000, or for
+	some problems (n_total_particles/n_nodes).
+	<li> \verbatim periodicity bool[3]\endverbatim
+	\ref periodic - Specifies periodicity for the three directions.
+	This variable is read-only and returns (1,1,1) without the compiler flag
+	\ref PARTIAL_PERIODIC from \ref config.h "config.h" .
+	</ul>    
+ */
 /**********************************************
  * functions
  **********************************************/

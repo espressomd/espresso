@@ -40,22 +40,34 @@
 
 /** Structure to hold P3M parameters and some dependend variables. */
 typedef struct {
-  double bjerrum;    /** Bjerrum-length (>0). */
-  double alpha;      /** Ewald splitting parameter (0<alpha<1). */
-  double r_cut;      /** Cutoff radius for real space electrostatics (>0). */
+  /** Bjerrum-length (>0). */
+  double bjerrum;
+  /** Ewald splitting parameter (0<alpha<1). */
+  double alpha;
+  /** Cutoff radius for real space electrostatics (>0). */
+  double r_cut;
+  /** number of mesh points per coordinate direction (>0). */
+  int    mesh[3];
+  /** offset of the first mesh point (lower left 
+      corner) from the coordinate origin ([0,1[). */
+  double mesh_off[3];
+  /** charge assignment order ([0,7]). */
+  int    cao;
+  /** number of interpolation points for charge assignment function */
+  int    inter;
 
-  int    mesh[3];    /** number of mesh points per coordinate direction (>0). */
-  double mesh_off[3];/** offset of the first mesh point (lower left 
-			 corner) from the coordinate origin ([0,1[). */
-  int    cao;        /** charge assignment order ([0,7]). */
-  int    inter;      /** number of interpolation points for charge assignment function */
-
-  double epsilon;    /** epsilon of the "surrounding dielectric". */
-  double prefactor;  /** Coulomb prefactor, e.g. Bjerrum*Temp. */
-  double r_cut2;     /** Cutoff radius squared. */
-  double cao_cut[3]; /** Cutoff for charge assignment. */
-  double a[3];       /** mesh constant. */
-  double ai[3];      /** inverse mesh constant. */
+  /** epsilon of the "surrounding dielectric". */
+  double epsilon;
+  /** Coulomb prefactor, e.g. Bjerrum*Temp. */
+  double prefactor;
+  /** Cutoff radius squared. */
+  double r_cut2;
+  /** Cutoff for charge assignment. */
+  double cao_cut[3];
+  /** mesh constant. */
+  double a[3];
+  /** inverse mesh constant. */
+  double ai[3];
 } p3m_struct;
 
 /** \name Exported Variables */

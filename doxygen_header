@@ -2,190 +2,19 @@
 
 \section introduction Introduction
 
-tcl_md is a parallel molecular dynamics program. It uses
-<a href="http://tcl.activestate.com">Tcl</a> as controlling language
-to allow great flexibility. bla bla bla
+tcl_md is a MPI parallel molecular dynamics program. It uses a
+<a href="http://tcl.activestate.com">Tcl</a> script for
+controlling details of the simulation to allow great flexibility.
+The standard Tcl language was extended by some commands which allow
+to perform a complete MD simulation. Details on the additional Tcl commands
+can be found \ref tcl "here".
 
-\section tcl Using Tcl
-
-The program tcl_md is an enhanced Tcl interpreter. Additionally to the standard commands
-of Tcl it offers the following commands, which are implemented in C and provide the
-interface between the Tcl script and the MD code:
-
-<ul>
-<li>\verbatim setmd <variable> <value>+ \endverbatim
-modifies variables declared in \ref fields. More information can be
-found in \ref global.h. The C implementation is \ref setmd. The
-following list explains the usage for the variables that are accesible 
-via setmd. Using \verbatim [setmd <variable>] \endverbatim gives the
-actual value of <variable> in the MD code back to the Tcl script.
-Do not set variables which are specified as read only.
-	<ul>
-	<li> \verbatim [setmd n_nodes] \endverbatim 
-	Number of nodes (read only).
-	<li> \verbatim setmd node_grid <int> <int> <int> \endverbatim
-	3D node grid for real space domain decomposition (optional,
-	default is set automatically).	
-	<li> \verbatim [lindex [setmd local_box_l] i] \endverbatim
-	Local simulation box length on each node (i=0,1,2) (read only).
-	<li> \verbatim setmd box_l <double> <double> <double> \endverbatim
-	Simulation box length (optional, default is (1,1,1)).
-	<li> \verbatim [setmd maxpart] \endverbatim
-	Number of particles (read only).
-	<li> \verbatim [setmd nptypes] \endverbatim
-	Number of particle types (read only).
-	<li> \verbatim setmd niatypes \endverbatim
-	Number of interaction types (not fully implemented. DO NOT USE).
-	<li> \verbatim [setmd time_step] \endverbatim
-	Time step for MD integration (read only, set to 0.001).
-	<li> \verbatim [setmd max_cut] \endverbatim
-	Maximal cutoff of real space interactions (read only).
-	<li> \verbatim setmd skin <double> \endverbatim
-	Skin for the Verlet list.
-	<li> \verbatim [setmd max_range] \endverbatim
-	Maximal range of real space interactions: max_cut+skin (read only).
-	<li> \verbatim setmd gamma <double>\endverbatim
-	Friction constant.
-	<li> \verbatim [setmd verletflag] \endverbatim
-	Flag for rebuilding the verlet list (read only).
-	<li> \verbatim setmd bjerrum <double> \endverbatim
-	Bjerrum length. If 0, electrostatic interaction is turned off.
-	<li> \verbatim setmd p3m_alpha <double> \endverbatim
-	Ewald splitting parameter.
-	<li> \verbatim setmd p3m_r_cut <double> \endverbatim
-	Real space cutoff for P3M.
-	<li> \verbatim setmd p3m_mesh <int> <int> <int>\endverbatim
-	Mesh size for P3M k space.
-	<li> \verbatim setmd p3m_cao <int>\endverbatim
-	Charge assignment order for P3M particle-mesh interaction (1 < 
-	p3m_cao < 7).
-	<li> \verbatim setmd p3m_epsilon <double>\endverbatim
-	Dielectric constant at infinity (boundary condition for Ewald sumation).
-	<li> \verbatim setmd p3m_mesh_offset <double> <double> <double> \endverbatim
-	Offset of the first mesh point from the origin in mesh
-	coordinates (all values between 0.0 and 1.0).
-	<li> \verbatim [setmd transfer_rate] \endverbatim
-	Tranfer rate for VMD connection (read onle).
-	<li> \verbatim setmd max_num_cells <value >= 27> \endverbatim
-	Maximal number of cells for the link cell
-	algorithm. Reasonable values are between 125 and 1000, or for
-	some problems (n_total_particles/n_nodes).
-	<li> \verbatim setmd periodicity <flag> <flag> <flag>\endverbatim
-	Specifies periodicity for the three diractions. Only useable
-	together with the compiler flag PARTIAL_PERIODIC.
-	</ul>
-
-<li>\verbatim part <particle_number> ( pos|type|q|v|f|bond <value>+ )* \endverbatim
-	modifies particle data, namely position, type (monomer, ion, ...), charge, velocity, force and bonds. 
-	Multiple properties can be changed at once. <BR>
-	Syntax for the different properties:
-	<ul>
-	<li> \verbatim pos <x value> <y value> <z value> \endverbatim
-	<li> \verbatim type <particle_type_number> \endverbatim
-	Restrictions: particle_type_number >= 0.<BR>
-	The particle_type_number is used for \ref inter to differentiate non bonded
-	interactions between different kind of particles.
-	<li> \verbatim q <charge> \endverbatim
-	<li> \verbatim v <x value> <y value> <z value> \endverbatim
-	<li> \verbatim f <x value> <y value> <z value> \endverbatim
-	<li> \verbatim bond <bond_type_number> <partner>+ \endverbatim
-	Restrictions: bond_type_number >= 0; partner must be an	existing particle.<BR>
-	The bond_type_number is used for \ref inter to differentiate bonded interactions.
-	</ul>
-	If no property is given, 
-	\verbatim part <particle_number> \endverbatim 
-	returns the properties of the particle, if it exists, in the form of a tcl-list, e.g.
-	\verbatim {pos 2.1 6.4 3.1 type 0 q -1.0 v 0.0 0.0 0.0 f 0.0 0.0 0.0 bonds { {0 480} {0 368} ... } } \endverbatim
-	which may be used as an input to this function later on.<BR>
-	Without any parameters at all,
-	\verbatim part \endverbatim
-	returns the properties of <i> all </i> stored particles in a 
-	tcl-list with the same format as specified above. <BR>
-        The C implementation is \ref part. <BR>
-
-<li> \anchor DH_inter \verbatim inter ( <particle_type_number1> <particle_type_number2> | <bond_type_number> ) <interaction_type> <value>+ \endverbatim
-	sets the parameters for interactions.
-
-	<ol>
-	<b><li> \anchor DH_non_bonded Non bonded interactions:</b> 
-	\verbatim inter <particle_type_number1> <particle_type_number2> <interaction_type> <value>+ \endverbatim	
-	Non bonded interaction between particles of types
-	particle_type_number1 and particle_type_number2 (the types are those set using \ref part).<BR>
-	Currently known interaction_types are:
-
-	<ul>
-	   	<li>\verbatim lennard-jones <epsilon> <sigma> <cutoff> <shift> <offset> \endverbatim
-			the known Lennard-Jones potential
-			\f[24 \epsilon \left(2 \left(\frac{\sigma}{r-offset}\right)^{12} -
-				 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
-			The order of the parameters is
-			\f$\epsilon, \sigma, cutoff, shift, offset\f$.
-
-		<li>\verbatim ramp <cutoff> <force_magnitude> \endverbatim
-			a simple step potential for initialization.<BR>
-			The parameters are the cutoff and the force
-			magnitude. If two particles are within the
-			cutoff, they feel a constant repulsion of the
-			given magnitude.
-	</ul>
-	If no interaction_type is given,
-	\verbatim inter <particle_type_number1> <particle_type_number2> \endverbatim
-	returns the parameters of currently used potentials for
-	non-bonded interactions in a tcl-list, e.g.
-	\verbatim {lennard-jones 1.0 2.0 1.1225 0.0 0.0} {ramp 0.0 0.0} \endverbatim
-	whose format directly corresponds to the input-format of the respective interaction.
-
-	<b> <li> \anchor DH_bonded Bonded interactions: </b>
-	\verbatim inter <bond_type_number> <interaction_type> <value>+ \endverbatim
-	Bonded interaction (bonds are set using \ref part).
-	Currently known interaction_types are:
-
-	<ul>
-		<li> \verbatim fene <K_fene> <R_fene> \endverbatim
-			FENE potential
-			\f[ U^{FENE} = -\frac{1}{2} K_{FENE} R_{FENE}^2 \ln
-			\left( 1 - \left( \frac{r}{R_{FENE}} \right)^2 \right) \f]
-		<li> \verbatim angle <bend> \endverbatim
-			cosine bend potential  
-			\f[ U^{bend} = bend (1-\cos(\alpha))
-			\f]
-			with \f$ \alpha \f$ being the angle between two
-			neighboring bonds.
-	</ul>
-	If no interaction_type is given,
-	\verbatim inter <bond_type_number> \endverbatim
-	returns the parameters of the potential responsible for the
-	bonded interactions of bonds with that bond_type_number in a
-	tcl-list, e.g.
-	\verbatim {FENE 7.0 2.0} \endverbatim	
-	whose format directly corresponds to the input-format of the respective interaction.
-
-	</ol>		
-	The C implementation is \ref inter.
-
-<li>\verbatim writemd <channel> ( posx|posy|posz|q|type|vx|vy|vz|fx|fy|z )+\endverbatim
-	writes to the channel <channel> (previously opened using the Tcl commands open or
-	socket) the given properties for all particles.
-	The C implementation is \ref writemd.
-
-<li>\verbatim readmd <channel>\endverbatim reads back that data. All components
-	posx, posy and posz should be included since otherwise domain decomposition is
-	impossible.
-	The C implementation is \ref readmd.
-
-<li>\verbatim integrate init|<steps>|exit \endverbatim
-	init starts a new simulation, exit stops it, else the simulation will run for
-	<steps> steps. 
-	The C implementation is \ref integrate.
-</ul>
-
-\section comm Communication
-
-This program uses MPI for parallelization. The script is interpreted on only one node,
-the master node. The other nodes wait for the master node to issue specific actions,
-i. e. we utilize a client-server model. More details can be found in
-\ref communication.h "communication.h". During the actual integration however the
-communication is done synchronous.
+The script is interpreted on only one node,
+the master node. The other nodes wait for the master node to issue
+specific actions, i. e. we utilize a client-server model. More details
+can be found in \ref communication.h "communication.h". During the
+actual integration however the communication is done synchronous.
+For details see \ref integrate.c "integrate.c".
 
 \section start Getting Started
 
@@ -227,10 +56,150 @@ are not known.
 \section help More help about ...
 
 <ul>
+<li> \ref tcl
 <li> \ref our_cvs
 <li> \ref our_doxygen
 </ul>
 
+*/
+
+/** \page tcl Using the Tcl Extension
+
+The program tcl_md is an enhanced Tcl interpreter. Additionally to the standard commands
+of Tcl it offers the following commands, which are implemented in C and provide the
+interface between the Tcl script and the MD code:
+
+<ul>
+    <li>\anchor tcl_setmd \verbatim setmd <variable> <value>+ \endverbatim
+	modifies variables declared in \ref fields. More information can be
+	found in \ref variables_page. The C implementation is \ref setmd.
+	Using \verbatim [setmd <variable>] \endverbatim gives the
+	actual value of <variable> in the MD code back to the Tcl script.
+
+<li>\anchor tcl_part
+	\verbatim part <particle_number> ( pos|type|q|v|f|bond <value>+ )* \endverbatim
+	modifies particle data, namely position, type (monomer, ion, ...),
+		    charge, velocity, force and bonds. 
+	Multiple properties can be changed at once. If you add a new
+        particle the position has to be set first because of the spatial
+        decomposition. <BR>
+	Syntax for the different properties:
+	<ul>
+	<li> \verbatim pos <x value> <y value> <z value> \endverbatim
+	<li> \verbatim type <particle_type_number> \endverbatim
+	Restrictions: particle_type_number >= 0.<BR>
+	The particle_type_number is used in \ref tcl_inter to define the
+        parameters of the non bonded interactions between different kinds
+        of particles.
+	<li> \verbatim q <charge> \endverbatim
+	<li> \verbatim v <x value> <y value> <z value> \endverbatim
+	<li> \verbatim f <x value> <y value> <z value> \endverbatim
+	<li> \verbatim bond <bond_type_number> <partner>+ \endverbatim
+	Restrictions: bond_type_number >= 0; partner must be an	existing particle.<BR>
+	The bond_type_number is used for \ref tcl_inter to define bonded interactions.
+	</ul>
+	If no property is given, 
+	\verbatim part <particle_number> \endverbatim 
+	returns the properties of the particle, if it exists, in the form
+	\verbatim 0 pos 2.1 6.4 3.1 type 0 q -1.0 v 0.0 0.0 0.0 f 0.0 0.0 0.0 bonds { {0 480} {0 368} ... } \endverbatim
+	which may be used as an input to this function later on. The first integer is the
+	particle number. <BR>
+	\verbatim part number \endverbatim
+	returns the real number of particles added so far.
+	Without any parameters at all,
+	\verbatim part \endverbatim
+	returns the properties of <i> all </i> stored particles in a 
+	tcl-list with the same format as specified above:
+	\verbatim {0 pos 2.1 6.4 3.1 type 0 q -1.0 v 0.0 0.0 0.0 f 0.0 0.0 0.0 bonds { {0 480} {0 368} ... }} {1 pos 1.0 2.0 3.0 type 0 q 1.0 v 0.0 0.0 0.0 f 0.0 0.0 0.0 bonds { {0 480} {0 368} ... }}
+	\endverbatim
+        The C implementation is \ref part. <BR>
+
+<li> \anchor tcl_inter \verbatim inter ( <particle_type_number1> <particle_type_number2> | <bond_type_number> ) <interaction_type> <value>+ \endverbatim
+	sets the parameters for interactions.
+
+	<ol>
+	<b><li> \anchor tcl_non_bonded Non bonded interactions:</b> 
+	\verbatim inter <particle_type_number1> <particle_type_number2> <interaction_type> <value>+ \endverbatim	
+	Non bonded interaction between particles of types
+	particle_type_number1 and particle_type_number2
+	(the types are those set using \ref tcl_part).<BR>
+	Currently known interaction_types are:
+
+	<ul>
+	   	<li>\verbatim lennard-jones <epsilon> <sigma> <cutoff> <shift> <offset> \endverbatim
+			the known Lennard-Jones potential
+			\f[24 \epsilon \left(2 \left(\frac{\sigma}{r-offset}\right)^{12} -
+				 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
+			The order of the parameters is
+			\f$\epsilon, \sigma, cutoff, shift, offset\f$.
+
+		<li>\verbatim ramp <cutoff> <force_magnitude> \endverbatim
+			a simple step potential for initialization.<BR>
+			The parameters are the cutoff and the force
+			magnitude. If two particles are within the
+			cutoff, they feel a constant repulsion of the
+			given magnitude.
+	</ul>
+	If no interaction_type is given,
+	\verbatim inter <particle_type_number1> <particle_type_number2> \endverbatim
+	returns the parameters of the currently active potentials for
+	non-bonded interactions in the format
+	\verbatim 0 1 lennard-jones 1.0 2.0 1.1225 0.0 0.0 \endverbatim
+	which corresponds to the input-format of \ref tcl_inter.
+	Again the first two integers are particle_type_number1 and particle_type_number2.
+
+	<b> <li> \anchor tcl_bonded Bonded interactions: </b>
+	\verbatim inter <bond_type_number> <interaction_type> <value>+ \endverbatim
+	Bonded interaction (bonds are set using \ref tcl_part).
+	Currently known interaction_types are:
+
+	<ul>
+		<li> \verbatim fene <K_fene> <R_fene> \endverbatim
+			FENE potential
+			\f[ U^{FENE} = -\frac{1}{2} K_{FENE} R_{FENE}^2 \ln
+			\left( 1 - \left( \frac{r}{R_{FENE}} \right)^2 \right) \f]
+		<li> \verbatim angle <bend> \endverbatim
+			cosine bend potential  
+			\f[ U^{bend} = bend (1-\cos(\alpha))
+			\f]
+			with \f$ \alpha \f$ being the angle between two
+			neighboring bonds.
+	</ul>
+	If no interaction_type is given,
+	\verbatim inter <bond_type_number> \endverbatim
+	returns the parameters of the potential responsible for the
+	bonded interactions of bonds with that bond_type_number in the format
+	\verbatim 0 FENE 7.0 2.0 \endverbatim	
+	which again directly corresponds to the input-format of the respective
+	interaction with the first integer being bond_type_number.
+	</ol>
+	\verbatim inter \endverbatim
+	returns a list of \emph{all} bonded and non-bonded interactions as a Tcl-list,
+	in the same formats as above, e. g.
+	\verbatim {0 0 lennard-jones 1.0 2.0 1.1225 0.0 0.0} {0 FENE 7.0 2.0} {1 angle 1.0}\endverbatim	
+	The C implementation is \ref inter.
+
+<li>\anchor tcl_writemd
+	\verbatim writemd <channel> ( posx|posy|posz|q|type|vx|vy|vz|fx|fy|z )+\endverbatim
+
+	writes to the channel <channel> (previously opened using the Tcl commands open or
+	socket) the given properties for all particles in a binary format decribed by
+	\ref binary_file.h "binary_file.h". Note that the data format is written in hardware
+	dependend format. Especially files written on AIX cannot be read by Linux or Tru64
+	computers. This command is only meant to be used for restart checkpoints, NOT for
+	permanent data storage. The C implementation is \ref writemd.
+
+<li>\verbatim readmd <channel>\endverbatim
+	reads back data written by \ref tcl_writemd.
+	The components posx, posy and posz must be included since otherwise
+	domain decomposition is impossible.
+	The C implementation is \ref readmd.
+
+<li>\verbatim integrate init|<steps>|exit \endverbatim
+	init starts a new simulation, exit stops it, else the simulation will run for
+	<steps> steps. 
+	The C implementation is \ref integrate.
+</ul>
 */
 
 /** \page our_cvs How to use CVS

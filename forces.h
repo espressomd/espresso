@@ -35,13 +35,13 @@ void force_init();
  *  A short list, what the function is doing:
  *  <ol>
  *  <li> Initialize forces with: \ref friction_thermo.
- *  <li> Calculate \ref DH_bonded "bonded interaction" forces:<br>
+ *  <li> Calculate \ref tcl_bonded "bonded interaction" forces:<br>
  *       Loop all local particles (not the ghosts). 
  *       <ul>
  *       <li> FENE
  *       <li> ANGLE (cos bend potential)
  *       </ul>
- *  <li> Calculate \ref DH_non_bonded "non-bonded short range interaction" forces:<br>
+ *  <li> Calculate \ref tcl_non_bonded "non-bonded short range interaction" forces:<br>
  *       Loop the \ref verletList "verlet list".
  *       <ul>
  *       <li> Lennard-Jones.
