@@ -17,6 +17,7 @@ double my_right[3]    = {1, 1, 1};
 int n_total_particles = 0;
 
 int     n_particles = 0;
+int     n_ghosts = 0;
 int   max_particles;
 Particle *particles;
 

@@ -41,6 +41,7 @@ typedef struct {
 } Particle;
 
 extern int     n_particles;
+extern int     n_ghosts;
 extern int   max_particles;
 /** Field to hold particle information of local particles. */
 extern Particle *particles;
@@ -75,7 +76,11 @@ extern int   n_verletList;
 extern int max_verletList;
 extern int    *verletList;
 
+/** Flag for rebuilding the verlet list. */
 extern int rebuild_verletlist;
+/** Flag for integrator. 
+    Wether to calculate the forces befor the first step. */
+extern int calc_forces_first;
 
 /** initialize data fields */
 void init_data();

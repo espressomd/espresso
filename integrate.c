@@ -1,16 +1,12 @@
+/*****************************************************/
 /*******************  INTEGRATE.C  *******************/
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include "communication.h"
-#include "global.h"
+/*****************************************************/
 
 #include "integrate.h"
-#include "cells.h"
-#include "verlet.h"
-#include "forces.h"
 
 //#define DEBUG
+
+/*******************  variables  *******************/
 
 double time_step = 0.001;
 double max_cut = 2.0;
@@ -18,7 +14,12 @@ double skin = 0.4;
 double max_range;
 double max_range2;
 
+int calc_forces_first = 1;
 
+/*******************  functions  *******************/
+
+void propagate_velocities();
+void propagate_positions(); 
 
 void tcl_integrator_init(Tcl_Interp *interp)
 {
@@ -31,6 +32,10 @@ int integrate(ClientData data, Tcl_Interp *interp,
   int  n_steps;
   char buffer[256];
   
+#ifdef DEBUG
+  if(this_node<2) fprintf(stderr,"%d: integrate:\n",this_node); 
+#endif
+
   if (argc < 2) {
     Tcl_AppendResult(interp, "wrong # args:  should be \"",
 		     argv[0], " <step num> \"", (char *) NULL);
@@ -76,18 +81,41 @@ void integrate_vv_init()
   local_index = (int *)malloc(n_total_particles*sizeof(int));
   for(i=0;i<n_total_particles;i++) local_index[i] = -1;
   for(i=0;i<n_particles;i++) local_index[particles[i].identity] = i;
-  //  for(i=0;i<n_total_particles;i++) {
-  //  if(this_node==0) fprintf(stderr,"li[%d]=%d  \n",i,local_index[i]);
-  //}
+
+  /* initialize ghost structure */
+  ghost_init();
+
+  /* initialize verlet list structure */
+  verlet_init();
+
   /* initialize force structure */
   force_init();
 }
 
 void integrate_vv(int n_steps)
 {
+  int i,j;
 #ifdef DEBUG
-  if(this_node==0) fprintf(stderr,"%d: integrate_vv: %d steps\n",this_node,n_steps);
+  if(this_node<2) fprintf(stderr,"%d: integrate_vv: %d steps\n",this_node,n_steps);
 #endif
+
+  /* check init */
+  if(rebuild_verletlist == 1) {
+    build_verlet_list();
+  }
+  if(calc_forces_first == 1) {
+    force_calc();
+  }
+
+  /* integration loop */
+  for(i=0;i<n_steps;i++) {
+    propagate_velocities();
+    propagate_positions();
+    if(rebuild_verletlist == 1) build_verlet_list();
+    force_calc();
+    propagate_velocities();
+  }
+
 }
 
 void integrate_vv_exit()
@@ -96,3 +124,14 @@ void integrate_vv_exit()
   if(this_node==0) fprintf(stderr,"%d: integrate_vv_exit\n",this_node);
 #endif
 }
+
+void propagate_velocities() 
+{
+
+}
+
+void propagate_positions() 
+{
+
+}
+

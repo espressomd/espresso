@@ -1,8 +1,19 @@
-/*******************  INTEGRATE.H *******************/
+/*****************************************************/
+/*******************  INTEGRATE.H  *******************/
+/*****************************************************/
 #ifndef INTEGRATE_H
 #define INTEGRATE_H
-#include "global.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 #include <tcl.h>
+#include <math.h>
+#include "communication.h"
+#include "global.h"
+#include "cells.h"
+#include "verlet.h"
+#include "forces.h"
+#include "ghosts.h"
 
 /** declare commands needed for steering the integrator. */
 void tcl_integrator_init(Tcl_Interp *interp);

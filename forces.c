@@ -1,12 +1,9 @@
 /**************************************************/
 /*******************  FORCES.C  *******************/
 /**************************************************/
-#ifndef FORCES_H
-#define FORCES_H
-
 #include "forces.h"
 
-#define DEBUG
+//#define DEBUG
 
 void force_init()
 {
@@ -18,9 +15,18 @@ void force_init()
   if(this_node<2) fprintf(stderr,"%d: found %d particles types\n",
 			  this_node,n_interaction_types);
 #endif
-
-  
-
 }
 
+void force_calc()
+{
+#ifdef DEBUG
+  if(this_node<2) fprintf(stderr,"%d: force_calc:\n",this_node); 
 #endif
+}
+
+void force_exit()
+{
+#ifdef DEBUG
+  if(this_node<2) fprintf(stderr,"%d: force_exit:\n",this_node); 
+#endif
+}

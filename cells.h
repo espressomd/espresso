@@ -14,9 +14,9 @@ typedef struct {
   double pos[3];
   
   /** number of interacting neighbour cells . */
-  int n_neighbours;
+  int n_cell_neighbours;
   /** interacting neighbour cell list (linear indices) */
-  int *neighbours;
+  int *cell_neighbours;
 
   /** number of particles in the cell. */
   int n_particles;

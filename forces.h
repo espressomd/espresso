@@ -1,6 +1,8 @@
 /**************************************************/
 /*******************  FORCES.H  *******************/
 /**************************************************/
+#ifdef FORCES_H
+#define FORCES_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,3 +25,4 @@ void force_calc();
 /** clean up the force part.*/
 void force_exit(); 
 
+#endif
