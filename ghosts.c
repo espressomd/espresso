@@ -297,7 +297,7 @@ void reduce_forces_sum(void *add, void *to, int *len, MPI_Datatype *type)
 #endif
 
   for (i = 0; i < clen; i++)
-    add_force(&cadd[i], &cto[i]);
+    add_force(&cto[i], &cadd[i]);
 }
 
 static int is_send_op(int comm_type, int node)
