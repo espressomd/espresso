@@ -142,7 +142,7 @@ void sort_particles_into_cells()
     ind = get_linear_index(cpos[0],cpos[1],cpos[2], ghost_cell_grid);
 #ifdef ADDITIONAL_CHECKS
     if(ind<0 || ind > n_cells) {
-      fprintf(stderr,"%d: illigal cell index %d %d %d, ghost_grid %d %d %d\n", this_node,
+      fprintf(stderr,"%d: illegal cell index %d %d %d, ghost_grid %d %d %d\n", this_node,
 	      cpos[0], cpos[1], cpos[2],
 	      ghost_cell_grid[0], ghost_cell_grid[1], ghost_cell_grid[2]);
       errexit();
@@ -232,7 +232,7 @@ void calc_cell_grid()
     max_box_l = dmax(dmax(local_box_l[0],local_box_l[1]),local_box_l[2]);
     step = ((max_box_l/2.0)-max_range)/100; /* Maximal 100 trials! */
     if(step<0.0) {
-      fprintf(stderr,"Error: negative step! Something went wrong in calc_cell_grid(). Ask your local Guru\n");
+      fprintf(stderr,"%d: Error: negative step! Something went wrong in calc_cell_grid(). Ask your local Guru\n",this_node);
       errexit();
     }
     cell_range = max_range;
@@ -247,14 +247,14 @@ void calc_cell_grid()
       }
     }
     if (count == 0) {
-      fprintf(stderr, "Error: no suitable cell grid found (max_num_cells was %d)\n",
-	      max_num_cells);
+      fprintf(stderr, "%d: Error: no suitable cell grid found (max_num_cells was %d)\n",
+	      this_node,max_num_cells);
       errexit();
     }
     /* Give information about possible larger skin. */
     cell_range = dmin(min_box_l,cell_range);
     if( cell_range>max_range && this_node==0 ) {
-      fprintf(stderr,"Attention: Your parameters would allow a skin of %f instead of your setting %f\n",cell_range-max_cut,skin);
+      fprintf(stderr,"Remark: Your parameters would allow a skin of %f instead of your setting %f\n",cell_range-max_cut,skin);
     }
   }
 
@@ -263,7 +263,7 @@ void calc_cell_grid()
   for(i=0;i<3;i++) {
     cell_grid[i] = ghost_cell_grid[i]-2;
 
-    /* catch no inner cells case */
+    /* catch no inner cells case (even though this should never happen!!!) */
     if(cell_grid[i] < 1) {
 #ifdef PARTIAL_PERIODIC
       if (!periodic[i])
