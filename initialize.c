@@ -105,7 +105,7 @@ void on_integration_start()
     if(temperature > 0.0)
       coulomb.prefactor = coulomb.bjerrum * temperature; 
     else
-      coulomb.prefactor    = coulomb.bjerrum;
+      coulomb.prefactor = coulomb.bjerrum;
     switch (coulomb.method) {
     case COULOMB_P3M:
       P3M_init();

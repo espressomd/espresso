@@ -816,6 +816,8 @@ void mpi_remove_particle_slave(int pnode, int part)
   }
   else
     local_remove_all_particles();
+
+  on_particle_change();
 }
 
 /********************* REQ_INTEGRATE ********/

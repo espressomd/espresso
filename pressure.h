@@ -91,6 +91,8 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
     case COULOMB_MMM1D:
       ret = mmm1d_coulomb_pair_energy(p1,p2,d, dist2,dist);
       break;
+    default:
+      ret = 0;
     }
     virials.coulomb[0] += ret;
   }
@@ -157,7 +159,8 @@ MDINLINE void add_bonded_virials(Particle *p1)
       i+=3; break;
     default :
       fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->p.identity);
-      i = p1->bl.n; 
+      ret = 0;
+      i = p1->bl.n;
       break;
     }
     *obsstat_bonded(&virials, type_num) += ret;
