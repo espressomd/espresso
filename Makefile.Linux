@@ -1,0 +1,23 @@
+############ set if you want to use tk
+#TK=1
+
+############ compiler settings
+CC=gcc
+CFLAGS=-g -O3 -Wall -march=i586 -fschedule-insns -fschedule-insns2 \
+         -frerun-cse-after-loop -ffast-math
+
+DEPEND=makedepend
+
+CXX=g++
+CXXFLAGS=$(CFLAGS) -felide-constructors -fomit-frame-pointer -fno-rtti
+
+############ linker settings
+LINK=gcc
+LDLIBS=-ltcl8.3
+
+############ Tk if wanted
+ifdef TK
+LDLIBS+=-ltk8.3
+CFLAGS+=-DUSE_TK
+CXXFLAGS+=-DUSE_TK
+endif
