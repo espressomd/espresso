@@ -3,13 +3,13 @@
 
 typedef struct {
   double maxPWerror;
-  int far_cut;
+  double far_cut, far_cut2;
   int far_calculated;
 } MMM2D_struct;
 extern MMM2D_struct mmm2d_params;
 
 /** set parameters for MMM2D */
-int set_mmm2d_params(Tcl_Interp *interp, double maxPWerror);
+int set_mmm2d_params(Tcl_Interp *interp, double maxPWerror, double far_cut);
 
 /** the actual calculation */
 void MMM2D_add_far();

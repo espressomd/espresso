@@ -429,8 +429,12 @@ int printCoulombIAToResult(Tcl_Interp *interp)
     Tcl_AppendResult(interp, buffer,(char *) NULL);
   }
   else if (coulomb.method == COULOMB_MMM2D) {
-    Tcl_PrintDouble(interp, mmm1d_params.maxPWerror, buffer);
+    Tcl_PrintDouble(interp, mmm2d_params.maxPWerror, buffer);
     Tcl_AppendResult(interp, "mmm2d ", buffer,(char *) NULL);
+    if (!mmm2d_params.far_calculated) {
+      Tcl_PrintDouble(interp, mmm2d_params.far_cut, buffer);
+      Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
+    }
   }
 #else
   Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)",(char *) NULL);
@@ -1826,16 +1830,24 @@ int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
 int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
 {
   double maxPWerror;
+  double far_cut;
 
-  if (argc != 1) {
-    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb mmm2d <maximal pairwise error>", (char *) NULL);
+  if (argc > 2) {
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb mmm2d <maximal pairwise error> {<fixed far cutoff>}", (char *) NULL);
     return TCL_ERROR;
   }
 
   if (! ARG0_IS_D(maxPWerror))
     return TCL_ERROR;
 
-  return set_mmm2d_params(interp, maxPWerror);
+  if (argc == 2) {
+    if (! ARG1_IS_D(far_cut))
+      return TCL_ERROR;
+  }
+  else
+    far_cut = -1;
+
+  return set_mmm2d_params(interp, maxPWerror, far_cut);
 }
 
 int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)

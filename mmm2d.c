@@ -24,8 +24,11 @@
  * LOCAL DEFINES
  ****************************************/
 
+/* Largest reasonable cutoff for far formula */
+#define MAXIMAL_FAR_CUT 50
+
 /* Largest reasonable cutoff for Bessel function */
-#define MAXIMAL_B_CUT 30
+#define MAXIMAL_B_CUT 20
 
 /* Largest reasonable order of polygamma series */
 #define MAXIMAL_POLYGAMMA 50
@@ -51,7 +54,7 @@ static int  complexCutoff[COMPLEX_STEP];
 static DoubleList  bon = {NULL, 0, 0};
 
 static double ux, ux2, uy, uy2, uz;
-static double cell_h, cell_h_i;
+static double cell_h;
 
 MMM2D_struct mmm2d_params = { 1e100, 10, 1 };
 
@@ -113,14 +116,12 @@ static int    n_scycache;
 
 /* NEAR FORMULA */
 /****************/
-/* Bessel evaluation */
-static void prepareBesselCutoffs(int P);
 
 /* complex evaluation */
 static void prepareBernoulliNumbers(int nmax);
 
-/* cutoff error setup */
-static void MMM2D_tune_near(double error);
+/* cutoff error setup. Returns error message or NULL */
+static char *MMM2D_tune_near(double error);
 
 /* FAR FORMULA */
 /***************/
@@ -141,8 +142,8 @@ static void add_Q_force();
 static void setup_PQ(int p, int q, double omega);
 static void add_PQ_force(int p, int q, double omega);
 
-/* cutoff error setup */
-static void MMM2D_tune_far(double error);
+/* cutoff error setup. Returns error message or NULL */
+static char *MMM2D_tune_far(double error);
 
 /* COMMON */
 /**********/
@@ -165,7 +166,6 @@ void MMM2D_setup_constants()
   default:
     cell_h = 0;
   }
-  cell_h_i = 1/cell_h;
 }
 
 /****************************************
@@ -660,7 +660,7 @@ void MMM2D_add_far()
   }
 
   for (p = 1; p - 1 < ux*mmm2d_params.far_cut  && p <= n_scxcache ; p++) {
-    for (q = 1; SQR(ux*(p - 1)) + SQR(uy*(q - 1)) < SQR(mmm2d_params.far_cut) && q <= n_scycache; q++) {
+    for (q = 1; SQR(ux*(p - 1)) + SQR(uy*(q - 1)) < mmm2d_params.far_cut2 && q <= n_scycache; q++) {
       omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
       setup_PQ(p, q, omega);
       distribute(4);
@@ -670,36 +670,43 @@ void MMM2D_add_far()
   }
 }
 
-static void MMM2D_tune_far(double error)
+static char *MMM2D_tune_far(double error)
 {
-  //  fprintf(stderr, "!!!!!!!!!!!!!!!!!!!!!!!!!!! fixed far cutoff\n");
-  mmm2d_params.far_cut = 20;
-  mmm2d_params.far_calculated = 1;
+  double err, step;
+  mmm2d_params.far_cut = 2;
+  /* so it is at least at one border optimal */
+  step = dmin(ux, uy);
+  do {
+    err = exp(-2*M_PI*mmm2d_params.far_cut*cell_h)/cell_h*
+      (C_2PI*mmm2d_params.far_cut + 2*(ux + uy) + 1/cell_h);
+    mmm2d_params.far_cut += step;
+  }
+  while (err > error && mmm2d_params.far_cut < MAXIMAL_FAR_CUT);
+  if (mmm2d_params.far_cut >= MAXIMAL_FAR_CUT)
+    return "Far cutoff too large, decrease n_layers or the error bound";
+  // fprintf(stderr, "far cutoff %g %g\n", mmm2d_params.far_cut, err);
+  mmm2d_params.far_cut -= step;
+  mmm2d_params.far_cut2 = SQR(mmm2d_params.far_cut);
+  return NULL;
 }
 
 /****************************************
  * NEAR FORMULA
  ****************************************/
 
-static void MMM2D_tune_near(double error)
+static char *MMM2D_tune_near(double error)
 {
   int P, n, i;
-  double T, err;
   double uxrho2m2max, uxrhomax2;
-
-  // fprintf(stderr, "%d: tune near\n", this_node);
-
-  mmm2d_params.maxPWerror = error;
+  int p;
+  double T, pref, err, exponent;
+  double L, sum;
 
   /* yes, it's y only... */
-  if (cell_h > box_l[1]/2) {
-    fprintf(stderr, "layer height too large for MMM2D near formula, increase n_layers\n");
-    errexit();
-  }
-  if (ux*box_l[1] >= 3/M_SQRT2 ) {
-    fprintf(stderr, "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and y\n");
-    errexit();
-  }
+  if (cell_h > box_l[1]/2)
+    return "Layer height too large for MMM2D near formula, increase n_layers";
+  if (ux*box_l[1] >= 3/M_SQRT2 )
+    return "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and y";
 
   /* error is split into three parts:
      one part for bessel, one for complex
@@ -707,28 +714,30 @@ static void MMM2D_tune_near(double error)
   part_error = error/3;
 
   /* Bessel sum, determine cutoff */
-  P = 1;
-  T  = exp(M_PI)/M_PI;
+  P = 2;
+  exponent = M_PI*ux*box_l[1];
+  T  = exp(exponent)/exponent;
+  pref = 8*ux*dmax(C_2PI*ux, 1);
   do {
-    int p;
-    double L, sum;
-    L = P*M_PI;
+    L = M_PI*ux*(P - 1);
     sum = 0;
-    for (p = 1; p < P; p++)
-      sum += p*exp(-M_PI*p);
-    err = 16*M_PI*exp(-L)*(T*((L + 1)/M_PI - 1) + sum);
+    for (p = 1; p <= P; p++)
+      sum += p*exp(-exponent*p);
+    err = pref*K1(box_l[1]*L)*(T*((L + uy)/M_PI*box_l[0] - 1) + sum);
     P++;
   }
-  while (err > part_error && (P + 1) < MAXIMAL_B_CUT);
+  while (err > part_error && (P - 1) < MAXIMAL_B_CUT);
   P--;
-  prepareBesselCutoffs(P);
-  if (P == MAXIMAL_B_CUT) {
-    fprintf(stderr, "ERROR: MMM2D could find not reasonable Bessel cutoff. Error bound at highest order: %e. Please decrease the error bound\n", err);
-    errexit();
-  }
+  if (P == MAXIMAL_B_CUT)
+    return "Could find not reasonable Bessel cutoff. Please decrease n_layers or the error bound";
+  // fprintf(stderr, "bessel cutoff %d %g\n", P, err);
+
+  realloc_intlist(&besselCutoff, besselCutoff.n = P);
+  for (p = 1; p < P; p++)
+    besselCutoff.e[p-1] = (int)floor(P/(2*p)) + 1;
 
   /* complex sum, determine cutoffs (dist dependent) */
-  T = log(part_error/16/M_SQRT2*box_l[1]*box_l[2]);
+  T = log(part_error/(16*M_SQRT2)*box_l[1]*box_l[2]);
   for (i = 0; i < COMPLEX_STEP; i++)
     complexCutoff[i] = (int)ceil(T/log((i+1)/COMPLEX_FAC));
   prepareBernoulliNumbers(complexCutoff[COMPLEX_STEP-1]);
@@ -745,23 +754,11 @@ static void MMM2D_tune_near(double error)
     n++;
   }
   while (err > 0.1*part_error && n < MAXIMAL_POLYGAMMA);
-  if (n == MAXIMAL_POLYGAMMA) {
-    fprintf(stderr, "ERROR: MMM2D could find not reasonable Polygamma cutoff. Error bound at highest order: %e. Consider exchanging x and y\n", err);
-    errexit();
-  }
+  if (n == MAXIMAL_POLYGAMMA)
+    return "Could find not reasonable Polygamma cutoff. Consider exchanging x and y";
+  // fprintf(stderr, "polygamma cutoff %d %g\n", n, err);
 
-  // fprintf(stderr, "%d: tune near finished\n", this_node);
-}
-
-static void prepareBesselCutoffs(int P)
-{
-  int p;
-  double L2MPI;
-
-  realloc_intlist(&besselCutoff, besselCutoff.n = P);
-  L2MPI = 0.5*P;
-  for (p = 1; p < P; p++)
-    besselCutoff.e[p-1] = (int)ceil(L2MPI/p) + 1;
+  return NULL;
 }
 
 static void prepareBernoulliNumbers(int bon_order)
@@ -960,6 +957,8 @@ void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
 
 void MMM2D_init()
 {
+  char *err;
+
   if (!PERIODIC(0) || !PERIODIC(1) || PERIODIC(2)) {
     fprintf(stderr, "ERROR: MMM2D requires periodicity 1 1 0\n");
     errexit();
@@ -972,9 +971,16 @@ void MMM2D_init()
   }
 
   MMM2D_setup_constants();
-  MMM2D_tune_near(mmm2d_params.maxPWerror);
-  if (mmm2d_params.far_calculated)
-    MMM2D_tune_far(mmm2d_params.maxPWerror);
+  if ((err = MMM2D_tune_near(mmm2d_params.maxPWerror))) {
+    fprintf(stderr, "ERROR: MMM2D auto-retuning: %s\n", err);
+    errexit();
+  }
+  if (mmm2d_params.far_calculated) {
+    if ((err = MMM2D_tune_far(mmm2d_params.maxPWerror))) {
+      fprintf(stderr, "ERROR: MMM2D auto-retuning: %s\n", err);
+      errexit();
+    }
+  }
 }
 
 void MMM2D_allocate_particle_buffers()
@@ -993,11 +999,34 @@ void MMM2D_allocate_particle_buffers()
   }
 }
 
-int set_mmm2d_params(Tcl_Interp *interp, double maxPWerror)
+int set_mmm2d_params(Tcl_Interp *interp, double maxPWerror, double far_cut)
 {
+  char *err;
+
+  mmm2d_params.maxPWerror = maxPWerror;
+
   MMM2D_setup_constants();
-  MMM2D_tune_near(maxPWerror);
-  MMM2D_tune_far(maxPWerror);
+
+  if ((err = MMM2D_tune_near(maxPWerror))) {
+    coulomb.method = COULOMB_NONE;
+    Tcl_AppendResult(interp, err, NULL);
+    return TCL_ERROR;
+  }
+
+  if (far_cut >= 0) {
+    mmm2d_params.far_cut = far_cut;
+    mmm2d_params.far_cut2 = SQR(far_cut);
+    mmm2d_params.far_calculated = 0;
+  }
+  else {
+    if ((err = MMM2D_tune_far(maxPWerror))) {
+      coulomb.method = COULOMB_NONE;
+      Tcl_AppendResult(interp, err, NULL);
+      return TCL_ERROR;
+    }
+    mmm2d_params.far_calculated = 1;    
+  }
+
   coulomb.method = COULOMB_MMM2D;
 
   mpi_bcast_coulomb_params();
