@@ -5,45 +5,53 @@
 #                                                           #
 # convertDeserno2MD                                         #
 # -----------------                                         #
-# Reads in an (initial) configuration created by            #
-# 'polygelSetup', sets up global variables corresponding to #
-# the parameters, broadcasts the appropriate values to the  #
-# 'tcl_md' program adding the particle configuration, too.  #
+# Reads in an (initial) particle configuration given in     #
+# Deserno-format (e.g. created by 'polygelSetup') and       #
+# converts it for 'tcl_md', setting up global variables     #
+# corresponding to the parameters and broadcasting the      #
+# appropriate values to the 'tcl_md' program, including     #
+# particle configuration and interactions.                  #
 #                                                           #
 # Input:                                                    #
-# - A file $origin containing the configuration created by  #
-#   'polygelSetup' (e.g. 'DH0001_config.START', where       #
-#   'DH0001' is the prefix of the wishlist);                #
+# - A file $origin containing the configuration             #
+#   in Deserno-format (e.g. as created by 'polygelSetup')   #
 #   supplied as parameter containing the full path.         #
 #                                                           #
 # Output:                                                   #
 # - A gzipped file $destination ready for use with 'tcl_md' #
-# - Global variables for use with the main part of the      #
-#   script, i.e.:                                           #
+#   supplied in AxA's-blockfile-format;                     #
+#   the output file is suppressed if{$destination=="-1"}.   #
+# - Global variables for use with any tcl_md-script, i.e.:  #
 #   + lists 'conf' & 'corr', which contain the parameter's  #
 #     names in Deserno's and A&L's world, respectively      #
 #   + bunch of parameters having the same names as in       #
 #     'polygelSetup.c'                                      #
 #                                                           #
 # Created:       16.08.2002 by BAM                          #
-# Last modified: 15.10.2002 by BAM                          #
+# Last modified: 08.11.2002 by BAM                          #
 #                                                           #
 #                                                           #
 # convertMD2Deserno                                         #
 # -----------------                                         #
 # The same as 'convertDeserno2MD', just vice versa,         #
-# i.e. it reads in a configuration file in 'tcl_md'-format  #
-# and creates a Deserno-compatible style-file.              #
-# However, this only works if additional informations such  #
-# as particle interactions etc are available from 'tcl_md', #
-# i.e. providing only 'config.gz' is _NOT_ sufficient.      #
+# i.e. it reads in a configuration file in AxA's new        #
+# 'tcl_md'-blockfileformat and creates a Deserno-compatible # 
+# style-file $destination ( if{$origin=="-1"} no input-file #
+# is used, informations are taken from 'tcl_md' instead).   #
+# Meanwhile, the blockfile-format does also provide info's  #
+# about interactions etc., therefore if $origin is provided #
+# as an input file, additional informations may not be      #
+# required to be taken from 'tcl_md'.                       #
+# Since Deserno needs to know the chain-structure of the    #
+# (sometimes crosslinked) polymers, this script does also   #
+# have to analyze the topology of the given network/melt.   #
 # Note that a polymer solution is always identified,        #
 # whereas a cross-linked network can only be reconstructed  #
 # if the chains are aligned consecutively such as           #
 # 0-1-...-(MPC-1) MPC-...-(2*MPC-1) ...                     #
 #                                                           #
 # Created:       24.08.2002 by BAM                          #
-# Last modified: 26.09.2002 by BAM                          #
+# Last modified: 06.11.2002 by BAM                          #
 #                                                           #
 #                                                           #
 # ! =============                                         ! #
@@ -53,14 +61,14 @@
 # ! - All additional parameters are defined in            ! #
 # !   'initConversion', so check that procedure regularly!! #
 # ! - Make sure all 'global'ly defined variables are      ! #
-# !   repeated in every other procedure as well!          ! #
+# !   loaded into every other procedure as well!          ! #
 # ! - It is possible to bypass initialization by directly ! #
 # !   accessing the 'XXXmain'-scripts, which comes handy  ! #
 # !   in particular when using 'MD2Deserno' on course of  ! #
 # !   a simulation run with 'tcl_md', because everything  ! #
 # !   needed for a Deserno-compatible output is available ! #
 # !   in some program's variable by then - all missing    ! #
-# !   informations not extractable from '$source' or      ! #
+# !   informations not extractable from $origin or        ! #
 # !   'tcl_md' itself (such as 'saveConfig' etc.) may be  ! #
 # !   manually added (e.g. by setting 'saveConfig' in the ! #
 # !   main script before calling the conversion-script)   ! #
@@ -87,27 +95,48 @@ proc initConversion {} {
     puts "    Initializing conversion script..."
 
     # Include needed functions
-    puts -nonewline "        Loading auxiliary functions... "
+    puts -nonewline "        Checking if all auxiliary functions have been loaded... "
     flush stdout
-    if { [catch [source countBonds.tcl]]!=0 } {
-	if { [catch [source ./scripts/countBonds.tcl]]!=0 && [catch [source $TCLMD_SCRIPTS/countBonds.tcl]]!=0 } {
-	    puts "Failed.\n"
-	    puts "----------------"
-	    puts "--> Warning! <--"
-	    puts "----------------"
-	    puts "--> Could not find 'countBonds.tcl' which is required for execution!"
-	    puts "Aborting..."
-	    exit
-	} 
+    if { [lsearch [info procs] "countBonds"] == -1 } {
+	puts -nonewline "\n            Function 'countBonds' is missing - trying to reload... "
+	flush stdout
+	if { [catch [source countBonds.tcl]]!=0 } {
+	    if { [catch [source ./scripts/countBonds.tcl]]!=0 && [catch [source $TCLMD_SCRIPTS/countBonds.tcl]]!=0 } {
+		puts "Failed.\n"
+		puts "----------------"
+		puts "--> Warning! <--"
+		puts "----------------"
+		puts "--> Could not find 'countBonds.tcl' which is required for execution!"
+		puts "Aborting..."
+		exit
+	    }
+	}
+	puts "Done."
+    } elseif { [lsearch [info procs] "polyBlockWrite"] == -1 } {
+	puts -nonewline "\n            Function 'polyBlockWrite' is missing - trying to reload... "
+	flush stdout
+	if { [catch [source aux.tcl]]!=0 } {
+	    if { [catch [source ./scripts/aux.tcl]]!=0 && [catch [source $TCLMD_SCRIPTS/aux.tcl]]!=0 } {
+		puts "Failed.\n"
+		puts "----------------"
+		puts "--> Warning! <--"
+		puts "----------------"
+		puts "--> Could not find 'aux.tcl' which is required for execution!"
+		puts "Aborting..."
+		exit
+	    }
+	}
+	puts "Done."
+    } else {
+	puts "Done (all required functions accounted for)."
     }
-    puts "Done."
 
     # The internal names of the Deserno-variables from 'polygelSetup' will be stored in 'conf',
     # the corresponding counterparts for 'tcl_md' in 'corr' at the same relative position within the lists;
     # 'spec' specifies any special properties one has to take into account when using the parameters
     puts -nonewline "        Correlate parameter names... "
     flush stdout
-    global conf corr spec
+    global conf corr spec iptq
     set conf [concat { prefix postfix seed startTime endTime deltaT 
 	integrationSteps saveResults saveConfig N_P N_CPP chargeDist 
 	val_CI N_Salt val_pS val_nS N_T boxLen subbox_1D 
@@ -119,14 +148,16 @@ proc initConversion {} {
         NA NA NA NA NA NA 
         NA NA NA NA maxpart box_l NA
         skin p3m_r_cut NA NA NA NA p3m_alpha p3m_mesh NA
-        bjerrum NA gamma NA } ]
+        bjerrum temp gamma NA } ]
     # Note the special properties some 'tcl_md' variables have:
     # 'ro' = read only; '3d' = 3D input required; 'OK' = nothing special
-    set spec [concat { OK OK OK OK OK ro
+    set spec [concat { OK OK OK OK OK OK
 	OK OK OK OK OK OK
 	OK OK OK OK ro 3d OK
 	OK OK OK OK OK OK OK 3d OK
 	OK OK OK OK } ]
+    set iptq "id pos type q"
+    # sets which informations (out of pos|type|q|v|f) on the particles should be saved to disk ('Deserno2MD' only)
     puts "Done."
     
     puts -nonewline "        Preparing global variables... "
@@ -195,7 +226,7 @@ proc convertDeserno2MDmain {origin destination} {
 
     # Note that tcl requires to have the name of used global variables repeated here
     # => cross-check with 'initConversion' to make sure everything there matches an entry here
-    global conf corr spec
+    global conf corr spec iptq
     global type_P type_CI type_S
     global type_FENE type_bend
     global pot_bend pot_LJ_sigma pot_LJ_shift pot_LJ_offset pot_ramp_cut pot_ramp_fmax
@@ -213,16 +244,8 @@ proc convertDeserno2MDmain {origin destination} {
 	puts "Aborting...\n"
 	exit
     }
-    if { [string compare [lindex [split $destination "."] end] "gz"]!=0 } {
-	puts "Failed.\n"
-	puts "----------------"
-	puts "--> Warning! <--"
-	puts "----------------"
-	puts "--> The 'tcl_md'-configuration file should be compressed!"
-	puts "--> Hence, a filename ending in '.gz' is desired!"
-	puts "--> (You supplied: $destination)"
-	puts "Aborting...\n"
-	exit
+    if { $destination == "-1" } {
+	puts "    No output-file was given, everything will be submitted without saving to 'tcl_md' only..."
     }
 
 
@@ -501,23 +524,27 @@ proc convertDeserno2MDmain {origin destination} {
 #  Write output file
 #############################################################
 
-    # The converted configurations will be compressed on-the-fly using 
-    # 'set f [open "|gzip -c - >$destination" w]' for output, allowing later usage with
-    # 'set f [open "|gzip -cd $destination" r]' to read it in
-    puts -nonewline "    Preparing converted configurations to be written to '[lindex [split $destination \"/\"] end]'... "
-    flush stdout
-    set out [open "|gzip -c - >$destination" w]
-    puts "Done."
+    # Save all converted configurations, parameters, and interactions to $destination
+    # using AxA's blockfile-format for 'tcl_md'; skip if user specified "-1" as file-name
+    if { $destination != "-1" } {
+	# The converted configurations should be compressed on-the-fly using 
+	# 'set f [open "|gzip -c - >$destination" w]' for output, allowing later usage with
+	# 'set f [open "|gzip -cd $destination" r]' to read it in
+	# This is done in 'polyBlockWrite' which writes all we've done so far to a 'tcl_md'-compatible file
+	puts -nonewline "    Saving all configurations in 'tcl_md'-format to '[lindex [split $destination \"/\"] end]'... "
+	flush stdout
+	foreach j $corr {
+	    if { $j != "NA" } { lappend tmp_corr $j }
+	}
+	polyBlockWrite $destination $tmp_corr $iptq
+	puts "Done "
+
+    } else {
+	puts "    Skipping to save converted configurations: Nothing will be written to disk, only 'tcl_md' will have them!"
+    }
 
 
-    # Now write all we've done so far to a 'tcl_md'-compatible file
-    puts -nonewline "    Saving all configurations in 'tcl_md'-format to disk... "
-    flush stdout
-    writemd $out posx posy posz vx vy vz q type fx fy fz
-    puts "Done."
-    
-    # End this script closing the output-file
-    close $out
+    # End this script
     puts "    Function successfully completed. Returning control to calling script..."
 }
 
@@ -546,7 +573,6 @@ proc convertMD2Deserno {origin destination} {
     set saveConfig -1
     set subbox_1D -1
     set ip -1
-    set Temp -1
     set step -1
 
     # Continue
@@ -567,7 +593,7 @@ proc convertMD2DesernoMain {origin destination} {
 
     # Note that tcl requires to have the name of used global variables repeated here
     # => cross-check with 'initConversion' to make sure everything there matches an entry here
-    global conf corr spec
+    global conf corr spec iptq
     foreach i $conf { global $i }
     global type_P type_CI type_S
     global type_FENE type_bend
@@ -576,58 +602,39 @@ proc convertMD2DesernoMain {origin destination} {
     global step
 
 
-    # Check the supplied file-names for existence and correctness
-    if { [string compare [lindex [split $origin "."] end] "gz"]!=0 } {
-	puts "Failed.\n"
-	puts "----------------"
-	puts "--> Warning! <--"
-	puts "----------------"
-	puts "--> The 'tcl_md'-configuration file is expected to be compressed!"
-	puts "--> Hence, a filename ending in '.gz' is desired!"
-	puts "--> (You supplied: $origin)"
-	puts "Aborting...\n"
-	exit
-    }
-    if {[expr { [string last \_config $destination ]<1 || \
-		    [expr [string compare [lindex [split $destination \".\"] end] START]!=0 && \
-			 [string compare [lindex [split $destination \".\"] end] $postfix]!=0 ] } ]} {
-	puts "Failed.\n"
-	puts "----------------"
-	puts "--> Warning! <--"
-	puts "----------------"
-	puts "--> The name of the output-file should comply to Deserno's criteria!"
-	puts "--> Hence, a filename formated as '$prefix\_config.START' or '$prefix\_config.$postfix' is expected!"
-	puts "--> (You supplied: $destination)"
-	puts "Aborting...\n"
-	exit
-    }
-
-
 #  Import entries from file
 #############################################################
 
-    # Open the input-file which is expected to contain a compressed configuration in 'tcl_md'-format
-    puts -nonewline "    Preparing 'tcl_md'-configuration to be read from '[lindex [split $origin \"/\"] end]'... "
-    flush stdout
-    set in [open "|gzip -cd $origin" "r"]
-    puts "Done."
+    # If the user specified '-1' for $origin, then there is no input-file and everything is directly taken from tcl_md
+    if { [string compare "$origin" "-1"]==0 } {
+	puts "    No input-file was specified, let's hope that all required informations are accessible from 'tcl_md'!"
+    } else {
+	# Open the (compressed) input-file which is expected to contain a configuration in 'tcl_md'-blockfile-format
+	puts -nonewline "    Preparing 'tcl_md'-configuration to be read from '[lindex [split $origin \"/\"] end]'... "
+	flush stdout
+	if { [string compare [lindex [split $origin "."] end] "gz"]==0 } {
+	    set in [open "|gzip -cd $origin" "r"]
+	} else {
+	    set in [open "$origin" "r"]
+	}
+	puts "Done."
 
-    # Now get the file's entries
-    puts -nonewline "    Reading content of '[lindex [split $origin \"/\"] end]' (this may take a while)... "
-    flush stdout
-    readmd $in
-    puts "Done." 
-    puts -nonewline "    Got coordinates for [expr [setmd maxpart] + 1] particles total "
-    flush stdout
-    close $in
-    puts "and closed the file."
+	# Now get the file's entries
+	puts "    Reading content of '[lindex [split $origin \"/\"] end]' (this may take a while)... "
+	while {[blockfile $in read auto] != "eof" } {}
+	puts "        Got coordinates for [expr [setmd maxpart] + 1] particles total..."
+	puts "        Got all the bonds between particles..."
+	puts "        Got all the interactions..."	
+	close $in
+	puts "    ... and closed the file."
+    }
 
 
 #  Get the rest from 'tcl-md'
 #############################################################
 
-    # Since the file only contained informations about pox, veloc, forces, charge, type,
-    # further informations are required which need to be accessible from 'tcl_md'
+    # Now everything should either have been loaded from the blockfile $origin into 'tcl_md'
+    # or (in case $origin==-1) it was already there
     puts "    Gathering informations from 'tcl_md'... "
     flush stdout
 
