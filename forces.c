@@ -32,36 +32,30 @@ void force_calc()
   double Bjerrum = 1.68, alpha = 1.;
   double  erfc_part_ri;
 
-
+  FORCE_TRACE(fprintf(stderr,"%d: force_calc:\n",this_node));
+ 
   for(i=0;i<n_particles;i++)
     for(j=0;j<3;j++)
       particles[i].f[j] = 0;
       
-  for(i=0;i<n_particles;i=i+2)
+  for(i=0;i<n_verletList;i=i+2)
     {
       id1 = verletList[i];
       id2 = verletList[i+1];
       ia_params = get_ia_param(id1,id2);
-      
-      d[0] = particles[id1].p[0] - particles[id2].p[0]; //d[0] -= dround(d[0]/box_l[0]) * box_l[0];
-      d[1] = particles[id1].p[1] - particles[id2].p[1]; //d[1] -= dround(d[1]/box_l[1]) * box_l[1];
-      d[2] = particles[id1].p[2] - particles[id2].p[2]; //d[2] -= dround(d[2]/box_l[2]) * box_l[2];
+      for(j=0;j<3;j++) d[j] = particles[id1].p[j] - particles[id2].p[j];
       dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
       dist = sqrt(dist2);
-
       if(dist < ia_params->LJ_cut + ia_params->LJ_offset)
 	{
 	  r_off = dist - ia_params->LJ_offset;
 	  frac6 = SQR(ia_params->LJ_sig/r_off);
 	  frac6 *= SQR(frac6);
 	  fac = 24.* ia_params->LJ_eps * (2.*SQR(frac6) - frac6 + ia_params->LJ_shift)/r_off;
-	  particles[id1].f[0] += fac * d[0]/dist;
-	  particles[id1].f[1] += fac * d[1]/dist;
-	  particles[id1].f[2] += fac * d[2]/dist;
-	  particles[id2].f[0] -= fac * d[0]/dist;
-	  particles[id2].f[1] -= fac * d[1]/dist;
-	  particles[id2].f[2] -= fac * d[2]/dist;
-	  
+	  for(j=0;j<3;j++) {
+	    particles[id1].f[j] += fac * d[j]/dist;
+	    particles[id2].f[j] -= fac * d[j]/dist;
+	  }	  
 	}
       if(dist < coul_r_cut)
 	{

@@ -45,7 +45,10 @@ typedef struct {
   int    identity;
   int    type;
 
+  /* periodically folded position */
   double p[3];
+  /* index of the simulation box image where the particle really sits */
+  int    i[3];
   double q;
 
   double v[3];
@@ -95,6 +98,12 @@ int add_particle(int part);
 
 /** allocate space for a particle, returns field index */
 int alloc_particle();
+
+/** fold particle coordinates to primary simulation box */
+void fold_particle(double pos[3],int image_box[3]);
+
+/** unfold particle coordinates to physical position */
+void unfold_particle(double pos[3],int image_box[3]);
 
 /** free a particle */
 void free_particle(int index);

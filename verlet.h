@@ -9,6 +9,7 @@
 #include "global.h"
 
 
+
 /** initialize verlet list structure. */
 void verlet_init();
 

@@ -163,7 +163,7 @@ int add_particle(int part)
 
 int alloc_particle()
 {
-  int index;
+  int i,index;
   if (min_free_particle == n_particles) {
     /* add at end */
     index = n_particles++;
@@ -174,6 +174,7 @@ int alloc_particle()
     particles[index].n_bonds = 0;
     particles[index].max_bonds = 0;
     particles[index].bonds  = NULL;
+    for(i=0;i<3;i++) particles[index].i[i] = 0;
   }
   else {
     /* recycling */
@@ -185,6 +186,24 @@ int alloc_particle()
   }
 
   return index;
+}
+
+void fold_particle(double pos[3],int image_box[3])
+{
+  int i;
+  for(i=0;i<3;i++) {
+    image_box[i] = floor(pos[i]/box_l[i]);
+    pos[i]       = pos[i] - image_box[i]*box_l[i];    
+  }
+}
+
+void unfold_particle(double pos[3],int image_box[3])
+{
+  int i;
+  for(i=0;i<3;i++) {
+    pos[i]       = pos[i] + image_box[i]*box_l[i];    
+    image_box[i] = 0;
+  }
 }
 
 void free_particle(int index)

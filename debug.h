@@ -1,9 +1,9 @@
 //#define COMM_DEBUG
-//#define INTEG_DEBUG
+#define INTEG_DEBUG
 //#define CELL_DEBUG
 //#define GHOST_DEBUG
 //#define GRID_DEBUG
-//#define FORCE_DEBUG
+#define FORCE_DEBUG
 //#define VERLET_DEBUG
 //#define PARTICLE_DEBUG
 
