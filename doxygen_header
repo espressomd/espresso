@@ -221,9 +221,17 @@ interface between the Tcl script and the MD code:
 
 	<ul>
 		<li> \verbatim p3m <r_cut> <mesh> <cao> <alpha> \endverbatim
+		or
+		\verbatim p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value>] \endverbatim	
 		This is an implemantation of the 1/r Coulomb potential
 		\f[ U^{C-P3M} = \ell_B T \frac{q_1 q_2}{r} \f]
 		with help of the P3M Method described elsewhere. 
+
+		Make sure you know how to tune p3m parameters befor
+		using the automatic tuning feature. Details are
+		described in the documentation of \ref
+		P3M_tune_parameters.
+
 		Some additional p3m parameters have preset values:
 		\verbatim epsilon = 0.0 \endverbatim 
 		The dielectric constant of the surrounding medium.
