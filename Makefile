@@ -50,10 +50,10 @@ install: all
 	config/install-sh -m 755 __common_Espresso $(bindir)/Espresso
 	config/install-sh -c $(OUTDIR)/Espresso $(pkglibdir)/$(OUTDIR)/Espresso
 	config/install-sh -c $(OUTDIR)/Espresso_bin$(EXEEXT) $(pkglibdir)/$(OUTDIR)/Espresso_bin
-	config/install-sh -d $(OUTDIR)/scripts $(pkglibdir)/scripts
+	for f in scripts/*.tcl; do config/install-sh -c "$$f" "$(pkglibdir)/$$f"; done
 
 install-doc:
-	config/install-sh -d doc/html $(pkglibdir)/html
+	(cd doc/html; for f in *; do ../../config/install-sh -c "$$f" "$(pkglibdir)/html_doc/$$f"; done)
 
 ########### dependencies
 ifeq ($(DEPEND),makedepend)
