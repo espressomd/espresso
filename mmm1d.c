@@ -254,7 +254,7 @@ void MMM1D_recalcTables()
 
 void MMM1D_init()
 {
-  if (PERIODIC(0) != 0 || PERIODIC(1) != 0 || PERIODIC(2) != 1) {
+  if (PERIODIC(0) || PERIODIC(1) || !PERIODIC(2)) {
     fprintf(stderr, "ERROR: MMM1D requires periodicity 0 0 1\n");
     errexit();
   }

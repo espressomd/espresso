@@ -29,7 +29,7 @@
 /************************************************************/
 /*@{*/
 ///
-extern Observable_stat energy;
+extern Observable_stat energy, total_energy;
 /*@}*/
 
 /** \name Exported Functions */
@@ -62,23 +62,25 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
   /* Gay-Berne */
   ret += gb_pair_energy(p1,p2,ia_params,d,dist);
 #endif
+  *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) += ret;
 
 #ifdef ELECTROSTATICS
-  /* real space coulomb */
-  switch (coulomb.method) {
-  case COULOMB_P3M:
-    ret += p3m_coulomb_pair_energy(p1,p2,d,dist2,dist);
-    break;
-  case COULOMB_DH:
-    ret += dh_coulomb_pair_energy(p1,p2,dist);
-    break;
-  case COULOMB_MMM1D:
-    ret += mmm1d_coulomb_pair_energy(p1,p2,d, dist2,dist);
-    break;
+  if (coulomb.bjerrum != 0.0) {
+    /* real space coulomb */
+    switch (coulomb.method) {
+    case COULOMB_P3M:
+      ret = p3m_coulomb_pair_energy(p1,p2,d,dist2,dist);
+      break;
+    case COULOMB_DH:
+      ret = dh_coulomb_pair_energy(p1,p2,dist);
+      break;
+    case COULOMB_MMM1D:
+      ret = mmm1d_coulomb_pair_energy(p1,p2,d, dist2,dist);
+      break;
+    }
+    energy.coulomb[0] += ret;
   }
 #endif
-
-  *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) += ret;
 }
 
 /** Calculate bonded energies for one particle.
@@ -87,7 +89,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 MDINLINE void add_bonded_energy(Particle *p1)
 {
   int i, type_num;
-  double ret = 0;
+  double ret;
   i=0;
   while(i<p1->bl.n) {
     type_num = p1->bl.e[i];
@@ -99,9 +101,9 @@ MDINLINE void add_bonded_energy(Particle *p1)
       ret = harmonic_pair_energy(p1, checked_particle_ptr(p1->bl.e[i+1]), type_num);
       i+=2; break;
     case BONDED_IA_ANGLE:
-      ret += angle_energy(p1,
-			  checked_particle_ptr(p1->bl.e[i+1]),
-			  checked_particle_ptr(p1->bl.e[i+2]), type_num);
+      ret = angle_energy(p1,
+			 checked_particle_ptr(p1->bl.e[i+1]),
+			 checked_particle_ptr(p1->bl.e[i+2]), type_num);
       i+=3; break;
     default :
       fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->p.identity);

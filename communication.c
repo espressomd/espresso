@@ -894,7 +894,7 @@ void mpi_gather_stats(int job, void *result)
     break;
   case 2:
     mpi_issue(REQ_GATHER, -1, 2);
-    //virials_calc(result);
+    pressure_calc(result);
     break;
   default:
     fprintf(stderr, "%d: illegal request %d for REQ_GATHER\n", this_node, job);
@@ -910,7 +910,7 @@ void mpi_gather_stats_slave(int ana_num, int job)
     energy_calc(NULL);
     break;
   case 2:
-    //virials_calc(NULL);
+    pressure_calc(NULL);
     break;
   default:
     fprintf(stderr, "%d: illegal request %d for REQ_GATHER\n", this_node, job);

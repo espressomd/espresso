@@ -435,7 +435,7 @@ int inter_print_all(Tcl_Interp *interp)
       }
     }
 #ifdef ELECTROSTATICS
-  if(coulomb.bjerrum > 0.0) {
+  if(coulomb.bjerrum != 0.0) {
     if (start) {
       Tcl_AppendResult(interp, "{", (char *)NULL);
       start = 0;

@@ -14,4 +14,6 @@ void nsq_calculate_ia();
 
 void nsq_calculate_energies();
 
+void nsq_calculate_virials();
+
 #endif

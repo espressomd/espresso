@@ -184,6 +184,8 @@ void initialize_ghosts(int global_flag)
 
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);
+
+  rebuild_verletlist = 1;
 }
 
 void integrate_vv(int n_steps)
@@ -197,7 +199,7 @@ void integrate_vv(int n_steps)
 
   if(resort_particles) {
     initialize_ghosts(DD_GLOBAL_EXCHANGE);
-
+    
     recalc_forces = 1;
     resort_particles = 0;
   }

@@ -155,7 +155,7 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
   */
   /*  fprintf(stderr, "%d: bj %f q %f l %f\n", this_node, coulomb.bjerrum, p1->r.q, c->lambda);*/
 #ifdef ELECTROSTATICS
-  if (coulomb.bjerrum > 0.0 && p1->p.q != 0.0 && c->lambda != 0.0) {
+  if (coulomb.bjerrum != 0.0 && p1->p.q != 0.0 && c->lambda != 0.0) {
     fac = 2*coulomb.bjerrum*c->lambda*p1->p.q/c_dist_2;
     if (temperature > 0)
       fac *= temperature;

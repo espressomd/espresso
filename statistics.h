@@ -45,6 +45,8 @@ typedef struct {
   /** start of observables for coulomb interaction. */
   double *coulomb;
 
+  /** number of doubles per data item */
+  int chunk_size;
 } Observable_stat;
 
 /*@}*/
@@ -166,7 +168,7 @@ MDINLINE double min_distance(double pos1[3], double pos2[3]) {
 
 MDINLINE double *obsstat_bonded(Observable_stat *stat, int j)
 {
-  return stat->bonded + j;
+  return stat->bonded + stat->chunk_size*j;
 }
 
 MDINLINE double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2)
@@ -177,12 +179,13 @@ MDINLINE double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2)
     p2 = p1;
     p1 = tmp;
   }
-  return stat->non_bonded + ((2 * n_particle_types - 1 - p1) * p1) / 2  +  p2;
+  return stat->non_bonded + stat->chunk_size*(((2 * n_particle_types - 1 - p1) * p1) / 2  +  p2);
 }
 
 void invalidate_obs();
 
-void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded, int n_non_bonded, int n_coulomb);
+void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded, int n_non_bonded,
+			       int n_coulomb, int chunk_size);
 
 /*@}*/
 

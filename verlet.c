@@ -23,7 +23,8 @@
 #include "utils.h"
 #include "grid.h"
 #include "forces.h"
-#include "rotation.h"
+#include "energy.h"
+#include "pressure.h"
 #include "domain_decomposition.h"
 
 /** Granularity of the verlet list */
@@ -33,7 +34,7 @@
  * Variables 
  *****************************************/
 
-int rebuild_verletlist;
+int rebuild_verletlist = 1;
 
 
 
@@ -87,7 +88,7 @@ void build_verlet_lists()
 {
   int c, np1, n, np2, i ,j, j_start;
   Cell *cell;
-  IA_Neighbor neighbor;
+  IA_Neighbor *neighbor;
   Particle *p1, *p2;
   PairList *pl;
   double dist2;
@@ -101,16 +102,18 @@ void build_verlet_lists()
    
   /* Loop local cells */
   for (c = 0; c < local_cells.n; c++) {
+    VERLET_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
+
     cell = local_cells.cell[c];
     p1   = cell->part;
     np1  = cell->n;
     /* Loop cell neighbors */
     for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-      neighbor = dd.cell_inter[c].nList[n];
-      p2  = neighbor.pList->part;
-      np2 = neighbor.pList->n;
+      neighbor = &dd.cell_inter[c].nList[n];
+      p2  = neighbor->pList->part;
+      np2 = neighbor->pList->n;
       /* init pair list */
-      pl  = &neighbor.vList;
+      pl  = &neighbor->vList;
       pl->n = 0;
       /* Loop cell particles */
       for(i=0; i < np1; i++) {
@@ -127,18 +130,19 @@ void build_verlet_lists()
 	}
       }
       resize_verlet_list(pl);
+      VERLET_TRACE(fprintf(stderr,"%d: neighbor %d has %d particles\n",this_node,n,pl->n));
       VERLET_TRACE(sum += pl->n);
     }
   }
 
-    VERLET_TRACE(fprintf(stderr,"%d: total number of interaction pairs: %d (should be around %d)\n",this_node,sum,estimate));
+  VERLET_TRACE(fprintf(stderr,"%d: total number of interaction pairs: %d (should be around %d)\n",this_node,sum,estimate));
 
   rebuild_verletlist = 0;
 }
 
 void calculate_verlet_ia()
 {
-  int c, np, n, i ,j;
+  int c, np, n, i;
   Cell *cell;
   Particle *p1, *p2, **pairs;
   double dist2, vec21[3];
@@ -164,7 +168,7 @@ void calculate_verlet_ia()
       for(i=0; i<2*np; i+=2) {
 	p1 = pairs[i];                    /* pointer to particle 1 */
 	p2 = pairs[i+1];                  /* pointer to particle 2 */
-	dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
+	dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
 	add_non_bonded_pair_force(p1, p2, vec21, sqrt(dist2), dist2);
       }
     }
@@ -175,7 +179,7 @@ void build_verlet_lists_and_calc_verlet_ia()
 {
   int c, np1, n, np2, i ,j, j_start;
   Cell *cell;
-  IA_Neighbor neighbor;
+  IA_Neighbor *neighbor;
   Particle *p1, *p2;
   PairList *pl;
   double dist2, vec21[3];
@@ -189,16 +193,18 @@ void build_verlet_lists_and_calc_verlet_ia()
  
   /* Loop local cells */
   for (c = 0; c < local_cells.n; c++) {
+    VERLET_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
+
     cell = local_cells.cell[c];
     p1   = cell->part;
     np1  = cell->n;
     /* Loop cell neighbors */
     for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-      neighbor = dd.cell_inter[c].nList[n];
-      p2  = neighbor.pList->part;
-      np2 = neighbor.pList->n;
+      neighbor = &dd.cell_inter[c].nList[n];
+      p2  = neighbor->pList->part;
+      np2 = neighbor->pList->n;
       /* init pair list */
-      pl  = &neighbor.vList;
+      pl  = &neighbor->vList;
       pl->n = 0;
       /* Loop cell particles */
       for(i=0; i < np1; i++) {
@@ -226,6 +232,7 @@ void build_verlet_lists_and_calc_verlet_ia()
 	}
       }
       resize_verlet_list(pl);
+      VERLET_TRACE(fprintf(stderr,"%d: neighbor %d has %d particles\n",this_node,n,pl->n));
       VERLET_TRACE(sum += pl->n);
     }
   }
@@ -233,6 +240,90 @@ void build_verlet_lists_and_calc_verlet_ia()
   VERLET_TRACE(fprintf(stderr,"%d: total number of interaction pairs: %d (should be around %d)\n",this_node,sum,estimate));
  
   rebuild_verletlist = 0;
+}
+
+/************************************************************/
+
+void calculate_verlet_energies()
+{
+  int c, np, n, i;
+  Cell *cell;
+  Particle *p1, *p2, **pairs;
+  double dist2, vec21[3];
+
+  VERLET_TRACE(fprintf(stderr,"%d: calculate verlet energies\n",this_node));
+
+  /* Loop local cells */
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p1   = cell->part;
+    np  = cell->n;
+    /* calculate bonded interactions (loop local particles) */
+    for(i = 0; i < np; i++)  {
+      add_kinetic_energy(&p1[i]);
+      add_bonded_energy(&p1[i]);
+#ifdef CONSTRAINTS
+      add_constraints_energy(p1);
+#endif
+    }
+
+    VERLET_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
+    /* Loop cell neighbors */
+    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
+      pairs = dd.cell_inter[c].nList[n].vList.pair;
+      np    = dd.cell_inter[c].nList[n].vList.n;
+      VERLET_TRACE(fprintf(stderr,"%d: neighbor %d has %d particles\n",this_node,n,np));
+
+      /* verlet list loop */
+      for(i=0; i<2*np; i+=2) {
+	p1 = pairs[i];                    /* pointer to particle 1 */
+	p2 = pairs[i+1];                  /* pointer to particle 2 */
+	dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
+	VERLET_TRACE(fprintf(stderr, "%d: %d <-> %d: dist2 dist2\n",this_node,p1->p.identity,p2->p.identity));
+	add_non_bonded_pair_energy(p1, p2, vec21, sqrt(dist2), dist2);
+      }
+    }
+  }
+}
+
+/************************************************************/
+
+void calculate_verlet_pressure()
+{
+  int c, np, n, i;
+  Cell *cell;
+  Particle *p1, *p2, **pairs;
+  double dist2, vec21[3];
+
+  VERLET_TRACE(fprintf(stderr,"%d: calculate verlet pressure\n",this_node));
+
+  /* Loop local cells */
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p1   = cell->part;
+    np  = cell->n;
+    /* calculate bonded interactions (loop local particles) */
+    for(i = 0; i < np; i++)  {
+      add_kinetic_virials(&p1[i]);
+      add_bonded_virials(&p1[i]);
+    }
+
+    VERLET_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
+    /* Loop cell neighbors */
+    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
+      pairs = dd.cell_inter[c].nList[n].vList.pair;
+      np    = dd.cell_inter[c].nList[n].vList.n;
+      VERLET_TRACE(fprintf(stderr,"%d: neighbor %d has %d particles\n",this_node,n,np));
+
+      /* verlet list loop */
+      for(i=0; i<2*np; i+=2) {
+	p1 = pairs[i];                    /* pointer to particle 1 */
+	p2 = pairs[i+1];                  /* pointer to particle 2 */
+	dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
+	add_non_bonded_pair_virials(p1, p2, vec21, sqrt(dist2), dist2);
+      }
+    }
+  }
 }
 
 /************************************************************/
@@ -254,10 +345,7 @@ void resize_verlet_list(PairList *pl)
 int rebuild_vlist_callback(Tcl_Interp *interp, void *_data)
 {
   int data = *(int *)_data;
-  if (data != 0 && data != 1) {
-    Tcl_AppendResult(interp, "verletflag is an integrator flag and must be 0 or 1.", (char *) NULL);
-    return (TCL_ERROR);
-  }
+  /* declared as bool, no check necessary (and possible) */
   rebuild_verletlist = data;
   mpi_bcast_parameter(FIELD_VERLETFLAG);
   return (TCL_OK);

@@ -68,6 +68,12 @@ void calculate_verlet_ia();
 */
 void build_verlet_lists_and_calc_verlet_ia();
 
+/** Nonbonded and bonded energy calculation using the verlet list */
+void calculate_verlet_energies();
+
+/** Nonbonded and bonded pressure calculation using the verlet list */
+void calculate_verlet_virials();
+
 /** Callback for integrator flag tcl:verletflag c:rebuild_verletlist (= 0 or 1).
     <ul>
     <li> 1 means the integrator rebuilds the verlet list befor the

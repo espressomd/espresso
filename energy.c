@@ -25,8 +25,9 @@ void calc_long_range_energies();
 void init_energies(Observable_stat *stat);
 
 /** on the master node: calc energies only if necessary */
-void master_energy_calc(double *result);
+void master_energy_calc();
 
+/************************************************************/
 
 void energy_calc(double *result)
 {
@@ -36,7 +37,7 @@ void energy_calc(double *result)
   case CELL_STRUCTURE_DOMDEC:
     if (rebuild_verletlist)
       build_verlet_lists();
-    // calculate_verlet_energies();
+    calculate_verlet_energies();
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_calculate_energies();
@@ -75,18 +76,21 @@ void init_energies(Observable_stat *stat)
 
   n_coulomb    = 0;
 #ifdef ELECTROSTATICS
-  if(coulomb.bjerrum > 0.0)
+  if(coulomb.bjerrum != 0.0) {
     n_coulomb  = 1;
-  if(coulomb.method==COULOMB_P3M)
-    n_coulomb += 1;
+    if(coulomb.method==COULOMB_P3M)
+      n_coulomb += 1;
+  }
 #endif
   
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb);
+  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, 1);
   stat->init_status = 0;
 }
 
-void master_energy_calc(double *data) {
-  mpi_gather_stats(1, data);
+/************************************************************/
+
+void master_energy_calc() {
+  mpi_gather_stats(1, total_energy.data.e);
 
   total_energy.init_status=1;
 }
@@ -133,7 +137,7 @@ static void print_detailed_energies(Tcl_Interp *interp)
     }
 
 #ifdef ELECTROSTATICS
-  if(coulomb.bjerrum > 0.0) {
+  if(coulomb.bjerrum != 0.0) {
     /* total Coulomb energy */
     value = total_energy.coulomb[0];
     for (i = 1; i < total_energy.n_coulomb; i++)
@@ -153,6 +157,8 @@ static void print_detailed_energies(Tcl_Interp *interp)
 #endif
 }
 
+/************************************************************/
+
 int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | gb <type1> <type2> | coulomb | kinetic | total }]' */
@@ -167,7 +173,7 @@ int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
 
   if (total_energy.init_status == 0) {
     init_energies(&total_energy);
-    master_energy_calc(total_energy.data.e);
+    master_energy_calc();
   }
 
   if (argc == 0)
