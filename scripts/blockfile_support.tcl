@@ -58,26 +58,26 @@ proc blockfile_read_auto_particles {channel read auto} {
 	    "^i"      { if {![regexp "^$i" "identity"]} { error " $i is not a particle property" }
 		set id $idx; incr idx }
 	    "^p"      { if {![regexp "^$i" "position"]} { error " $i is not a particle property" }
-		 set pos $idx; incr idx 3 }
+		set pos $idx; incr idx 3 }
 	    "^ty"     { if {![regexp "^$i" "type"]} { error " $i is not a particle property" }
-		 set type $idx; incr idx }
+		set type $idx; incr idx }
 	    "^m"      { if {![regexp "^$i" "molecule_id"]} { error " $i is not a particle property" }
-		 set mol $idx; incr idx }
+		set mol $idx; incr idx }
 	    "^q$"     { set q $idx; incr idx }
-	    "^fo"     { if {![regexp "^$i" "force"]} { error " $i is not a particle property" }
-		 set f $idx; incr idx 3 }
 	    "^v"      { if {![regexp "^$i" "v"]} { error " $i is not a particle property" }
-		 set v $idx; incr idx 3 }
+		set v $idx; incr idx 3 }
 	    "^qu"     { if {![regexp "^$i" "quat"]} { error " $i is not a particle property" }
-		 set quat $idx; incr idx 4 }
+		set quat $idx; incr idx 4 }
 	    "^o"      { if {![regexp "^$i" "omega"]} { error " $i is not a particle property" }
-		 set omega $idx; incr idx 3 }
+		set omega $idx; incr idx 3 }
 	    "^to"     { if {![regexp "^$i" "torque"]} { error " $i is not a particle property" }
-		 set torque $idx; incr idx 3 }
+		set torque $idx; incr idx 3 }
 	    "^fix"    { if {![regexp "^$i" "fix"]} { error " $i is not a particle property" }
-		 set fix $idx; incr idx 3 }
+		set fix $idx; incr idx 3 }
+	    "^f"      { if {![regexp "^$i" "force"]} { error " $i is not a particle property" }
+		set f $idx; incr idx 3 }
 	    "^e"      { if {![regexp "^$i" "ext_force"]} { error " $i is not a particle property" }
-		 set ext_force $idx; incr idx 3 }
+		set ext_force $idx; incr idx 3 }
 	    default { error " $i is not a particle property" }
 	}
     }
