@@ -51,6 +51,9 @@ proc blockfile_read_auto_particles {channel read auto} {
 	    "q"     { set q $idx; incr idx }
 	    "f"     { set f $idx; incr idx 3 }
 	    "v"     { set v $idx; incr idx 3 }
+	    "quat"  { set quat $idx; incr idx 4 }
+	    "omega" { set omega $idx; incr idx 3 }
+	    "torque" { set torque $idx; incr idx 3 }
 	    default { error " $i is not a particle property" }
 	}
     }
@@ -67,6 +70,15 @@ proc blockfile_read_auto_particles {channel read auto} {
     if {[info exists f]} { set cmd "$cmd \
              f  \[lindex \$line $f\] \[lindex \$line [expr $f + 1]\] \[lindex \$line [expr $f + 2]\]"
     }
+    if {[info exists quat]} { set cmd "$cmd \
+             quat \[lindex \$line $quat\] \[lindex \$line [expr $quat + 1]\] \[lindex \$line [expr $quat + 2]\] \[lindex \$line [expr $quat + 3]\]"
+    }
+    if {[info exists omega]} { set cmd "$cmd \
+             omega \[lindex \$line $omega\] \[lindex \$line [expr $omega + 1]\] \[lindex \$line [expr $omega + 2]\]"
+    }
+    if {[info exists torque]} { set cmd "$cmd \
+             torque \[lindex \$line $torque\] \[lindex \$line [expr $torque + 1]\] \[lindex \$line [expr $torque + 2]\]"
+    }    
     while {1} {
 	set line [blockfile $channel read auto]
 	if {[lindex $line 0] != "usertag"} {
