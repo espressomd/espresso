@@ -251,7 +251,8 @@ int node_grid_callback(Tcl_Interp *interp, void *_data)
     return (TCL_ERROR);
   }
 
-  sort_int_array(data,3);
+  /* outsourced to 
+     sort_int_array(data,3); */
 
   node_grid[0] = data[0];
   node_grid[1] = data[1];

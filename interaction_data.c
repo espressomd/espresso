@@ -1189,6 +1189,11 @@ int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
     }
 #endif
 
+  if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+    Tcl_AppendResult(interp, "Node grid not suited for Coulomb P3M. Node grid must be sorted, largest first.", (char *) NULL);
+    return TCL_ERROR;  
+  }
+
   if (ARG0_IS_S("tune"))
     return inter_parse_p3m_tune_params(interp, argc-1, argv+1);
       
