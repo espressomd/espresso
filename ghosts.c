@@ -22,6 +22,14 @@
 /**  granularity of the communication buffers. */
 #define PART_INCREMENT 20
 
+/* MPI tags for the ghost communications: */
+/** Tag for communication in send_particles(). */
+#define REQ_SEND_PART   100
+/** Tag for communication in send_ghosts(). */
+#define REQ_SEND_GHOSTS 101
+/** Tag for communication in send_posforce(). */
+#define REQ_SEND_POS    102
+
 /** \name Variables for particle exchange */
 /************************************************************/
 /*@{*/
@@ -345,13 +353,13 @@ void exchange_part()
 #ifdef ADDITIONAL_CHECKS
   for(n=0;n<n_particles;n++) {
     if(particles[n].identity <0 || particles[n].identity > max_seen_particle) {
-      fprintf(stderr,"%d: illigal identity %d of part %d\n",
+      fprintf(stderr,"%d: illegal identity %d of part %d\n",
 	      this_node,particles[n].identity,n);
       errexit();
     }
     for(dir=0;dir<3;dir++) {
       if(periodic[dir] && (particles[n].p[dir] < 0 || particles[n].p[dir] > box_l[dir])) {
-	fprintf(stderr,"%d: illigal position[%d] = %f of part %d\n",
+	fprintf(stderr,"%d: illegal position[%d] = %f of part %d\n",
 		this_node,dir,particles[n].p[dir],n);
 	errexit();
       }
@@ -380,7 +388,6 @@ void exchange_part()
 	send_particles(dir);
 	append_particles();
       }
-      MPI_Barrier(MPI_COMM_WORLD);
     }
   }
 
@@ -389,8 +396,11 @@ void exchange_part()
 void invalidate_ghosts()
 {
   int n;
-  /* remove ghosts */
-  for(n=n_particles; n<n_particles+n_ghosts; n++) local_index[particles[n].identity] = -1;
+  /* remove ghosts, but keep Real Particles */
+  for(n=n_particles; n<n_particles+n_ghosts; n++) {
+    if(local_index[particles[n].identity] >= n_particles)
+      local_index[particles[n].identity] = -1;
+  }
 }
 
 void exchange_ghost()
@@ -461,14 +471,17 @@ void exchange_ghost()
       }
       for(i=0; i<n_recv_ghosts[c];i++) {
 	unpack_ghost(particles,m,g_recv_buf,n);
-	local_index[particles[m].identity] = m;
+	/* Real Paricle Priority! 
+	   If Ghost Particle is already present on that node, 
+	   than leave local index unchanged! */
+	if(local_index[particles[m].identity] == -1) 
+	  local_index[particles[m].identity] = m;
 	cells[c_ind].particles[i] = m;
-	GHOST_TRACE(fprintf(stderr,"%d: Ghost %d at (%.2f, %.2f, %.2f) sorted in cell %d as No. %d\n",this_node,m,particles[m].p[0],particles[m].p[1],particles[m].p[2],c_ind,i));
+	/*	GHOST_TRACE(fprintf(stderr,"%d: Ghost %d at (%.2f, %.2f, %.2f) sorted in cell %d as No. %d\n",this_node,m,particles[m].p[0],particles[m].p[1],particles[m].p[2],c_ind,i)); */
 	m++; n++; 
       }
       cells[c_ind].n_particles = n_recv_ghosts[c];
     }
-    MPI_Barrier(MPI_COMM_WORLD);
   }                                               /* END direction loop */
 
 
@@ -485,7 +498,6 @@ void update_ghost_pos()
 {
   int dir,c,c_ind,n,g,i;
   GHOST_TRACE(fprintf(stderr,"%d: update_ghost_pos:\n",this_node));
-  MPI_Barrier(MPI_COMM_WORLD);
 
   for(dir=0; dir<6; dir++) {          /* direction loop forward */
     /* loop send cells -  copy positions to buffer*/
@@ -519,7 +531,6 @@ void update_ghost_pos()
 	g += 3;
       }
     }
-    MPI_Barrier(MPI_COMM_WORLD); 
   }
 }
 
@@ -527,7 +538,6 @@ void collect_ghost_forces()
 {
   int dir,c,c_ind,n,g,i;
   GHOST_TRACE(fprintf(stderr,"%d: collect_ghost_forces:\n",this_node));
-  MPI_Barrier(MPI_COMM_WORLD);
 
   for(dir=5; dir>=0; dir--) {         /* direction loop backward */
     /* loop recv cells - copy forces to buffer*/
@@ -554,9 +564,7 @@ void collect_ghost_forces()
 	g += 3;
       }
     } 
-    MPI_Barrier(MPI_COMM_WORLD); 
   }
-  MPI_Barrier(MPI_COMM_WORLD); 
 }
 
 void ghost_exit()
@@ -664,6 +672,8 @@ void send_particles(int s_dir)
   int send_sizes[2],recv_sizes[2];
   MPI_Status status;
 
+  GHOST_TRACE(fprintf(stderr,"%d: send_particles(%d)\n",this_node,s_dir));
+
   /* check if communication goes to the very same node */
   if(node_neighbors[s_dir] != this_node) {
     send_sizes[0]=n_p_send_buf;
@@ -674,28 +684,38 @@ void send_particles(int s_dir)
     /* two step communication: first all even positions than all odd */
     for(evenodd=0; evenodd<2;evenodd++) {
       if((node_pos[s_dir/2]+evenodd)%2==0) {
-	MPI_Send(send_sizes,2,MPI_INT,node_neighbors[s_dir],0,MPI_COMM_WORLD);
-	MPI_Send(p_send_buf,n_p_send_buf*sizeof(Particle), MPI_BYTE, 
-		 node_neighbors[s_dir],0,MPI_COMM_WORLD);
+	GHOST_TRACE(fprintf(stderr,"%d: Send %d particles to node %d\n"
+			    ,this_node,n_p_send_buf,node_neighbors[s_dir]));
+	MPI_Send(send_sizes,2,MPI_INT,node_neighbors[s_dir],
+		 REQ_SEND_PART ,MPI_COMM_WORLD);
+	if(n_p_send_buf>0)
+	  MPI_Send(p_send_buf,n_p_send_buf*sizeof(Particle), MPI_BYTE, 
+		   node_neighbors[s_dir], REQ_SEND_PART, MPI_COMM_WORLD);
 	if(n_b_send_buf>0)
-	  MPI_Send(b_send_buf, n_b_send_buf, MPI_INT, node_neighbors[s_dir], 0, MPI_COMM_WORLD);
+	  MPI_Send(b_send_buf, n_b_send_buf, MPI_INT, node_neighbors[s_dir], 
+		   REQ_SEND_PART, MPI_COMM_WORLD);
       }
       else {
-	MPI_Recv(recv_sizes,2,MPI_INT,node_neighbors[r_dir],0,MPI_COMM_WORLD,&status);
+	MPI_Recv(recv_sizes, 2, MPI_INT, node_neighbors[r_dir], 
+		 REQ_SEND_PART, MPI_COMM_WORLD, &status);
 	n_p_recv_buf = recv_sizes[0];
 	n_b_recv_buf = recv_sizes[1];
-	if(n_p_recv_buf >= max_p_recv_buf) {
-	  max_p_recv_buf = n_p_recv_buf;
-	  p_recv_buf = (Particle *)realloc(p_recv_buf,max_p_recv_buf*sizeof(Particle));
+	if(n_p_recv_buf>0) {
+	  if(n_p_recv_buf >= max_p_recv_buf) {
+	    max_p_recv_buf = n_p_recv_buf;
+	    p_recv_buf = (Particle *)realloc(p_recv_buf,max_p_recv_buf*sizeof(Particle));
+	  }
+	  MPI_Recv(p_recv_buf,n_p_recv_buf*sizeof(Particle), MPI_BYTE,
+		   node_neighbors[r_dir],REQ_SEND_PART,MPI_COMM_WORLD,&status);
 	}
-	if(n_b_recv_buf >= max_b_recv_buf) {
-	  max_b_recv_buf = n_b_recv_buf;
-	  b_recv_buf = (int *)realloc(b_recv_buf,max_b_recv_buf*sizeof(int));
+	if(n_b_recv_buf>0) { 
+	  if(n_b_recv_buf >= max_b_recv_buf) {
+	    max_b_recv_buf = n_b_recv_buf;
+	    b_recv_buf = (int *)realloc(b_recv_buf,max_b_recv_buf*sizeof(int));
+	  }
+	  MPI_Recv(b_recv_buf,n_b_recv_buf, MPI_INT, node_neighbors[r_dir],
+		   REQ_SEND_PART,MPI_COMM_WORLD,&status);
 	}
-	MPI_Recv(p_recv_buf,n_p_recv_buf*sizeof(Particle), MPI_BYTE,
-		 node_neighbors[r_dir],0,MPI_COMM_WORLD,&status);
-	if(n_b_recv_buf>0) 
-	  MPI_Recv(b_recv_buf,n_b_recv_buf, MPI_INT, node_neighbors[r_dir],0,MPI_COMM_WORLD,&status);
       }
     }
   }
@@ -760,19 +780,19 @@ void send_ghosts(int s_dir)
     for(evenodd=0; evenodd<2;evenodd++) {
       if((node_pos[s_dir/2]+evenodd)%2==0) {
 	MPI_Send(n_send_ghosts, max_send_cells+1, MPI_INT,
-		 node_neighbors[s_dir], 0, MPI_COMM_WORLD);
+		 node_neighbors[s_dir], REQ_SEND_GHOSTS, MPI_COMM_WORLD);
 	MPI_Send(g_send_buf,n_send_ghosts[max_send_cells]*sizeof(Ghost), MPI_BYTE, 
-		 node_neighbors[s_dir],0,MPI_COMM_WORLD);
+		 node_neighbors[s_dir], REQ_SEND_GHOSTS, MPI_COMM_WORLD);
       }
       else {
 	MPI_Recv(n_recv_ghosts, max_send_cells+1, MPI_INT,
-		 node_neighbors[r_dir],0,MPI_COMM_WORLD,&status);
+		 node_neighbors[r_dir],REQ_SEND_GHOSTS,MPI_COMM_WORLD,&status);
 	if(n_recv_ghosts[max_send_cells] >= max_g_recv_buf) {
 	  max_g_recv_buf = n_recv_ghosts[max_send_cells];
 	  g_recv_buf = (Ghost *)realloc(g_recv_buf,max_g_recv_buf*sizeof(Ghost));
 	}
 	MPI_Recv(g_recv_buf,n_recv_ghosts[max_send_cells]*sizeof(Ghost), MPI_BYTE,
-		 node_neighbors[r_dir],0,MPI_COMM_WORLD,&status);
+		 node_neighbors[r_dir],REQ_SEND_GHOSTS,MPI_COMM_WORLD,&status);
       }
     }
   }
@@ -832,10 +852,10 @@ void send_posforce(int s_dir,int send_size, int recv_size)
     for(evenodd=0; evenodd<2;evenodd++) {
       if((node_pos[s_dir/2]+evenodd)%2==0) 
 	MPI_Send(send_buf, send_size, MPI_DOUBLE, 
-		 node_neighbors[s_dir],0,MPI_COMM_WORLD);
+		 node_neighbors[s_dir],REQ_SEND_POS,MPI_COMM_WORLD);
       else 
 	MPI_Recv(recv_buf, recv_size, MPI_DOUBLE,
-		 node_neighbors[r_dir],0,MPI_COMM_WORLD,&status);    
+		 node_neighbors[r_dir],REQ_SEND_POS,MPI_COMM_WORLD,&status);    
     }
   }
   else {                  /* communication goes to the same node! */ 

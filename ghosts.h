@@ -30,9 +30,9 @@
  *  neighbor nodes in 3 dimensions) to 6 the order of the
  *  communication is important:
  *  <ol> 
- *      <li> x-direction: left and right - MPI_Barrier
- *      <li> y-direction: forth and back - MPI_Barrier
- *      <li> z-direction: down and up - MPI_Barrier
+ *      <li> x-direction: left and right
+ *      <li> y-direction: forth and back 
+ *      <li> z-direction: down and up 
  *  </ol>
  *  In this way also edges and corners are communicated
  *  (See also \ref directions for our conventions).
