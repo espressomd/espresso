@@ -21,8 +21,8 @@ const double NDIV = (double) (1+(2147483647-1)/NTAB_RANDOM);
 const double RNMX = (1.0-1.2e-7);
 
 
-static long  idum = 1;
-static long  idumInit = 1;
+static long  idum = -1;
+static long  idumInit = -1;
 static long  iy=0;
 static long  iv[NTAB_RANDOM];
 
@@ -31,7 +31,7 @@ static long  iv[NTAB_RANDOM];
 long l_random(void)
 {
   /* 
-   *    from Numerical Recipes in C by Press et al.,
+   *    'ran1' from Numerical Recipes in C by Press et al.,
    *    N O T E   T H A T   T H E R E   A R E   N O   S A F E T Y   C H E C K S  !!!
    */
   
@@ -91,8 +91,14 @@ void init_random_seed(long seed)
   int    j;
   long   k;
 
-  /* This random generator is bad I know, thats why its only used
+  /* This random generator is bad I know {why, Frank? It's the same as the
+     one in l_random!}, thats why its only {no, in l_random as well!} used
      for the seed (see Num. Rec. 7.1.) */
+  if(seed < 1) {
+    fprintf(stderr,"The initial seed of the random number generator must be a positive integer!\n");
+    fprintf(stderr,"Using 0 will result in a plain 0-sequence, hence it's forbidden (you used: %ld)!\n",seed);
+    fflush(NULL); errexit();
+  }
   idumInit = idum = seed;
   RANDOM_TRACE(fprintf(stderr, "%d: Init random with seed %ld in 'random.c'\n",this_node,idum));
   for (j = NTAB_RANDOM + 7;j >= 0; j--) {
