@@ -140,7 +140,7 @@ int integrate_print_status(Tcl_Interp *interp)
     Tcl_PrintDouble(interp, nptiso.p_ext, buffer);
     Tcl_AppendResult(interp, "{ set npt_isotropic ", buffer, (char *)NULL);
     Tcl_PrintDouble(interp, nptiso.piston, buffer);
-    Tcl_AppendResult(interp, buffer, (char *)NULL);
+    Tcl_AppendResult(interp, " ",buffer, (char *)NULL);
     for ( i = 0 ; i < 3 ; i++){
       if ( nptiso.geometry & nptiso.nptgeom_dir[i] ) {
 	sprintf(buffer, " %d", 1 );
@@ -279,7 +279,7 @@ int integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
   /* go on with integrate <n_steps> */
   if(n_steps < 0) {
-    Tcl_AppendResult(interp, "illegal number of steps\n", (char *) NULL);
+    Tcl_AppendResult(interp, "illegal number of steps (must be >0) \n", (char *) NULL);
     return integrate_usage(interp);;
   }
   /* perform integration */
@@ -319,6 +319,7 @@ void integrate_ensemble_init()
   if(integ_switch == INTEG_METHOD_NPT_ISO) {
     /* prepare NpT-integration */
     nptiso.inv_piston = 1/(1.0*nptiso.piston);
+    nptiso.p_inst_av = 0.0;
     if ( nptiso.dimension == 0 ) {
       fprintf(stderr,"npt integrator was called but dimension not yet set. this should not happen. ");
       errexit();
@@ -374,7 +375,7 @@ void integrate_vv(int n_steps)
        NOTE 1: Prefactors do not occur in formulas since we use 
                rescaled forces and velocities. 
        NOTE 2: Depending on the integration method Step 1 and Step 2 
-               can not be combined for the translation. 
+               cannot be combined for the translation. 
     */
     if(integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
       propagate_vel();  propagate_pos(); }
@@ -398,7 +399,11 @@ void integrate_vv(int n_steps)
     rescale_forces_propagate_vel();
 #ifdef ROTATION
     convert_torqes_propagate_omega();
-#endif        
+#endif
+#ifdef NPT
+    if((this_node==0) && (integ_switch == INTEG_METHOD_NPT_ISO))
+      nptiso.p_inst_av += nptiso.p_inst;
+#endif
 
     /* Propagate time: t = t+dt */
     if(this_node==0) sim_time += time_step;
@@ -414,9 +419,12 @@ void integrate_vv(int n_steps)
 
 #ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO) {
+    nptiso.invalidate_p_vel = 0;
     MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    if(this_node==0) nptiso.p_inst_av /= 1.0*n_steps;
+    MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
 #endif
 }
@@ -578,10 +586,8 @@ void finalize_p_inst_npt()
     if (this_node == 0) {
       nptiso.p_inst = p_tmp/(nptiso.dimension*nptiso.volume);
       nptiso.p_diff = nptiso.p_diff  +  (nptiso.p_inst-nptiso.p_ext)*0.5*time_step + friction_thermV_nptiso(nptiso.p_diff);
-      
     }
   }
-
 #endif
 }
 
