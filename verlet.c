@@ -365,3 +365,47 @@ int rebuild_vlist_callback(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
+/* only link-cell method without verlet lists
+   (for Maggs electrostatics) */
+void calc_link_cell()
+{
+  int c, np1, n, np2, i ,j, j_start;
+  Cell *cell;
+  IA_Neighbor *neighbor;
+  Particle *p1, *p2;
+  double dist2, vec21[3];
+ 
+  /* Loop local cells */
+  for (c = 0; c < local_cells.n; c++) {
+
+    cell = local_cells.cell[c];
+    p1   = cell->part;
+    np1  = cell->n;
+    /* Loop cell neighbors */
+    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
+      neighbor = &dd.cell_inter[c].nList[n];
+      p2  = neighbor->pList->part;
+      np2 = neighbor->pList->n;
+      /* Loop cell particles */
+      for(i=0; i < np1; i++) {
+	j_start = 0;
+	/* Tasks within cell: bonded forces, store old position, avoid double counting */
+	if(n == 0) {
+	  add_bonded_force(&p1[i]);
+#ifdef CONSTRAINTS
+	  add_constraints_forces(&p1[i]);
+#endif
+	  j_start = i+1;
+	}
+	/* Loop neighbor cell particles */
+	for(j = j_start; j < np2; j++) {
+	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
+	  if(dist2 <= max_range_non_bonded2) {
+	    /* calc non bonded interactions */
+	    add_non_bonded_pair_force(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
+	  }
+	}
+      }
+    }
+  }
+}

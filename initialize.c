@@ -37,6 +37,7 @@
 #include "fft.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
+#include "maggs.h"
 #include "elc.h"
 #include "ghosts.h"
 #include "debye_hueckel.h"
@@ -187,6 +188,9 @@ void on_coulomb_change()
   case COULOMB_MMM2D:
     MMM2D_init();
     break;
+  case COULOMB_MAGGS: 
+    Maggs_init(); 
+    break;
   default: break;
   }
   if (coulomb.use_elc)
@@ -303,6 +307,11 @@ void on_parameter_change(int field)
     if (field == FIELD_TEMPERATURE || field == FIELD_BOXL || field == FIELD_NLAYERS)
       cc = 1;
     break;
+  case COULOMB_MAGGS:
+    /* Maggs needs ghost velocities */
+    on_ghost_flags_change();
+    cells_re_init(CELL_STRUCTURE_CURRENT);    
+    break;
   default: break;
   }
   if (coulomb.use_elc && (field == FIELD_TEMPERATURE || field == FIELD_BOXL))
@@ -317,6 +326,9 @@ void on_parameter_change(int field)
     cells_re_init(CELL_STRUCTURE_CURRENT);
   }
 
+#ifdef ELECTROSTATICS
+  if(coulomb.method != COULOMB_MAGGS)
+#endif
   if (field == FIELD_MAXRANGE)
     rebuild_verletlist = 1;
 
@@ -342,6 +354,11 @@ void on_ghost_flags_change()
   if (thermo_switch & THERMO_DPD)
     /* DPD needs also ghost velocities */
     ghosts_have_v = 1;
+#ifdef ELECTROSTATICS
+  /* Maggs electrostatics needs ghost velocities */
+  else if(coulomb.method == COULOMB_MAGGS)
+    ghosts_have_v = 1;
+#endif
 }
 
 static void init_tcl(Tcl_Interp *interp)
@@ -397,7 +414,6 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "nemd", (Tcl_CmdProc *)nemd, 0, NULL);
   /* in thermostat.c */
   Tcl_CreateCommand(interp, "thermostat", (Tcl_CmdProc *)thermostat, 0, NULL);
-
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");
   fprintf(stderr,"%d: Script directory: %s\n",this_node,scriptdir);

@@ -335,9 +335,11 @@ void print_local_particle_positions()
 void cells_resort_particles(int global_flag)
 {
   invalidate_ghosts();
-
   particle_invalidate_part_node();
-
+#ifdef ELECTROSTATICS
+  /* for Maggs electrostatics no verlet lists! */
+  if(coulomb.method != COULOMB_MAGGS)
+#endif
   n_verlet_updates++;
 
   switch (cell_structure.type) {
@@ -357,7 +359,12 @@ void cells_resort_particles(int global_flag)
 
   on_resort_particles();
 
+#ifdef ELECTROSTATICS
+  /* for Maggs electrostatics no verlet lists! */
+  if(coulomb.method != COULOMB_MAGGS)
+#endif
   rebuild_verletlist = 1;
+
   recalc_forces = 1;
 }
 
@@ -371,12 +378,22 @@ void cells_update_ghosts()
     /* layered has a skin only in z in principle, but
        probably we can live very well with the standard skin */
   case CELL_STRUCTURE_LAYERED:
+#ifdef ELECTROSTATICS
+    /* for Maggs electrostatics no verlet lists! */
+    if(coulomb.method != COULOMB_MAGGS) {
+#endif
     if (rebuild_verletlist == 1)
       /* Communication step:  number of ghosts and ghost information */
       cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
     else
       /* Communication step: ghost information */
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
+#ifdef ELECTROSTATICS
+    }
+    else
+      /* Communication step:  number of ghosts and ghost information */
+      cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
+#endif
     break;
   case CELL_STRUCTURE_NSQUARE:
     /* the particles probably are still balanced... */

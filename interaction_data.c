@@ -22,6 +22,7 @@
 #include "debye_hueckel.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
+#include "maggs.h"
 #include "elc.h"
 #include "lj.h"
 #include "tab.h"
@@ -434,6 +435,12 @@ void calc_maximal_cutoff()
     if (max_cut_non_bonded < 0)
       max_cut_non_bonded = 0;
     break;
+  case COULOMB_MAGGS:
+    if((maggs.yukawa == 1) && (max_cut_non_bonded < maggs.r_cut))
+      max_cut_non_bonded = maggs.r_cut;
+    if((maggs.yukawa == 0) && (max_cut < maggs.a))
+      max_cut = maggs.a;  
+    break;
   }
 #endif
 
@@ -455,10 +462,8 @@ int check_obs_calc_initialized()
   }
   if (coulomb.use_elc && ELC_sanity_checks()) state = 0;
 #endif
-
   return state;
 }
-
 
 #ifdef ELECTROSTATICS
 
@@ -472,9 +477,7 @@ int coulomb_set_bjerrum(double bjerrum)
     return TCL_ERROR;
   
   coulomb.bjerrum = bjerrum;
-
   if (coulomb.bjerrum == 0.0) {
-
     if (coulomb.method == COULOMB_P3M) {
 
       p3m.alpha    = 0.0;
@@ -568,6 +571,11 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   if (ARG0_IS_S("mmm2d"))
     return inter_parse_mmm2d(interp, argc-1, argv+1);
 
+  if (ARG0_IS_S("maggs")) {
+
+    coulomb.method = COULOMB_MAGGS;
+    return inter_parse_maggs(interp, argc-1, argv+1);
+  }
   /* fallback */
   coulomb.bjerrum = 0.0;
 
@@ -718,7 +726,7 @@ int printCoulombIAToResult(Tcl_Interp *interp)
   else if (coulomb.method == COULOMB_DH) printdhToResult(interp);
   else if (coulomb.method == COULOMB_MMM1D) printMMM1DToResult(interp);
   else if (coulomb.method == COULOMB_MMM2D) printMMM2DToResult(interp);
-
+  else if (coulomb.method == COULOMB_MAGGS) printMaggsToResult(interp);
   if (coulomb.use_elc) printELCToResult(interp);
 
   Tcl_AppendResult(interp, "}",(char *) NULL);
@@ -848,9 +856,9 @@ int inter_print_non_bonded(Tcl_Interp * interp,
 		     (char *) NULL);
     return TCL_ERROR;
   }
-
   return printNonbondedIAToResult(interp, part_type_a, part_type_b);
 }
+#endif
 
 int inter_parse_non_bonded(Tcl_Interp * interp,
 			   int part_type_a, int part_type_b,
@@ -859,7 +867,6 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
   int change;
   
   Tcl_ResetResult(interp);
-
   if (argc <= 0) {
     Tcl_AppendResult(interp, "wrong # args:  should be \"",
 		     "inter <type 1> <type 2> ?interaction? ?values?\"",
@@ -880,27 +887,22 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
     /* that's just for the else below... */
     if (0);
 #endif
-
 #ifdef LJCOS
     else if (ARG0_IS_S("lj-cos"))
       change = ljcos_parser(interp, part_type_a, part_type_b, argc, argv);
 #endif
-
 #ifdef COMFORCE
     else if (ARG0_IS_S("comforce"))
       change = comforce_parser(interp, part_type_a, part_type_b, argc, argv);
 #endif
-
 #ifdef COMFIXED
     else if (ARG0_IS_S("comfixed"))
       change = comfixed_parser(interp, part_type_a, part_type_b, argc, argv);
 #endif
-
 #ifdef ROTATION
     else if (ARG0_IS_S("gay-berne"))
       change = gb_parser(interp, part_type_a, part_type_b, argc, argv);
 #endif
-
 #ifdef TABULATED
     else if (ARG0_IS_S("tabulated"))
       change = tab_parser(interp, part_type_a, part_type_b, argc, argv);
@@ -1053,7 +1055,6 @@ int inter_parse_bonded(Tcl_Interp *interp,
 
       CHECK_VALUE(subt_lj_fene_set_params(bond_type, k, r), "bond type must be nonnegative");
   }
-
 #endif
 
   if (ARG0_IS_S("angle")) {
@@ -1063,7 +1064,6 @@ int inter_parse_bonded(Tcl_Interp *interp,
 		       "<bend> [<phi0>]", (char *) NULL);
       return (TCL_ERROR);
     }
-
     if (! ARG_IS_D(1, bend)) {
       Tcl_AppendResult(interp, "angle needs a DOUBLE parameter: "
 		       "<bend> ", (char *) NULL);
@@ -1082,7 +1082,6 @@ int inter_parse_bonded(Tcl_Interp *interp,
     }
     CHECK_VALUE(angle_set_params(bond_type, bend, phi0), "bond type must be nonnegative");
   }
-    
   if (ARG0_IS_S("dihedral")) {
     if (argc < 4 ) {
       Tcl_AppendResult(interp, "dihedral needs 3 parameters: "
@@ -1142,13 +1141,12 @@ int inter_parse_bonded(Tcl_Interp *interp,
     return (TCL_ERROR);
 #endif
   }
-
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);
   return TCL_ERROR;
 }
 
-int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
+int ljforcecap_set_params(double ljforcecap)
 {
 #ifdef LENNARD_JONES
   if(ARG0_IS_S("ljforcecap"))
@@ -1159,6 +1157,729 @@ int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
   if(ARG0_IS_S("tabforcecap"))
     return inter_parse_tabforcecap(interp, argc-1, argv+1);
 #endif
+
+int tabforcecap_set_params(double tabforcecap)
+{
+  if (tab_force_cap != -1.0)
+    mpi_tab_cap_forces(tab_force_cap);
+
+  return TCL_OK;
+}
+
+int inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
+{
+  int i, j, err_code = TCL_OK, is_i1, is_i2;
+
+  if (argc == 0) {
+    if (lj_force_cap == -1.0)
+      Tcl_AppendResult(interp, "ljforcecap individual", (char *) NULL);
+    else {
+      Tcl_PrintDouble(interp, lj_force_cap, buffer);
+      Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
+    }
+    return TCL_OK;
+  }
+
+  if (argc > 1) {
+    Tcl_AppendResult(interp, "inter ljforcecap takes at most 1 parameter",
+		     (char *) NULL);      
+    return TCL_ERROR;
+  }
+  
+  if (ARG0_IS_S("individual"))
+      lj_force_cap = -1.0;
+  else if (! ARG0_IS_D(lj_force_cap) || lj_force_cap < 0) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  CHECK_VALUE(ljforcecap_set_params(lj_force_cap),
+	      "If you can read this, you should change it. (Use the source Luke!)");
+  return TCL_ERROR;
+}
+
+int inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+
+
+  if (argc == 0) {
+    if (tab_force_cap == -1.0)
+      Tcl_AppendResult(interp, "tabforcecap individual", (char *) NULL);
+    else {
+      Tcl_PrintDouble(interp, tab_force_cap, buffer);
+      Tcl_AppendResult(interp, "tabforcecap ", buffer, (char *) NULL);
+    }
+    return TCL_OK;
+  }
+
+  if (argc > 1) {
+    Tcl_AppendResult(interp, "inter tabforcecap takes at most 1 parameter",
+		     (char *) NULL);      
+    return TCL_ERROR;
+  }
+  
+  if (ARG0_IS_S("individual"))
+      tab_force_cap = -1.0;
+  else if (! ARG0_IS_D(tab_force_cap) || tab_force_cap < 0) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  CHECK_VALUE(tabforcecap_set_params(tab_force_cap),
+	      "If you can read this, you should change it. (Use the source Luke!)");
+  return TCL_ERROR;
+}
+
+
+#ifdef ELECTROSTATICS
+
+int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double pwerror;
+  double minimal_distance;
+  double far_cut = -1;
+
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>} expected, not \"",
+		     argv[0], "\"", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if (!ARG0_IS_D(pwerror))
+    return TCL_ERROR;
+  if (!ARG1_IS_D(minimal_distance))
+    return TCL_ERROR;
+  if (argc > 2 && !ARG_IS_D(2, far_cut))
+    return TCL_ERROR;
+
+  return set_elc_params(interp, pwerror, minimal_distance, far_cut);
+}
+
+void p3m_set_tune_params(double r_cut, int mesh, int cao,
+			 double alpha, double accuracy)
+{
+  if (r_cut >= 0) {
+    p3m.r_cut    = r_cut;
+    p3m.r_cut_iL = r_cut*box_l_i[0];
+  }
+
+  if (mesh >= 0)
+    p3m.mesh[2] = p3m.mesh[1] = p3m.mesh[0] = mesh;
+
+  if (cao >= 0)
+    p3m.cao = cao;
+
+  if (alpha >= 0) {
+    p3m.alpha   = alpha;
+    p3m.alpha_L = alpha*box_l[0];
+  }
+
+  if (accuracy >= 0)
+    p3m.accuracy = accuracy;
+
+  mpi_bcast_coulomb_params();
+}
+
+int p3m_set_params(double r_cut, int mesh, int cao,
+		   double alpha, double accuracy)
+{
+  if(r_cut < 0)
+    return -1;
+
+  if(mesh < 0)
+    return -2;
+
+  if(cao < 1 || cao > 7 || cao > mesh)
+    return -3;
+
+  p3m.r_cut    = r_cut;
+  p3m.r_cut_iL = r_cut*box_l_i[0];
+  p3m.mesh[2]  = p3m.mesh[1] = p3m.mesh[0] = mesh;
+  p3m.cao      = cao;
+
+  if (alpha > 0) {
+    p3m.alpha   = alpha;
+    p3m.alpha_L = alpha*box_l[0];
+  }
+  else
+    if (alpha != -1.0)
+      return -4;
+
+  if (accuracy >= 0)
+    p3m.accuracy = accuracy;
+  else
+    if (accuracy != -1.0)
+      return -5;
+
+  mpi_bcast_coulomb_params();
+
+  return 0;
+}
+
+int p3m_set_mesh_offset(double x, double y, double z)
+{
+  if(x < 0.0 || x > 1.0 ||
+     y < 0.0 || y > 1.0 ||
+     z < 0.0 || z > 1.0 )
+    return TCL_ERROR;
+
+  p3m.mesh_off[0] = x;
+  p3m.mesh_off[1] = y;
+  p3m.mesh_off[2] = z;
+
+  mpi_bcast_coulomb_params();
+
+  return TCL_OK;
+}
+
+int p3m_set_eps(double eps)
+{
+  p3m.epsilon = eps;
+
+  mpi_bcast_coulomb_params();
+
+  return TCL_OK;
+}
+
+int p3m_set_ninterpol(int n)
+{
+  if (n < 0)
+    return TCL_ERROR;
+
+  p3m.inter = n;
+
+  mpi_bcast_coulomb_params();
+
+  return TCL_OK;
+}
+
+int coulomb_set_bjerrum(double bjerrum)
+{
+  if (bjerrum < 0.0)
+    return TCL_ERROR;
+  
+  coulomb.bjerrum = bjerrum;
+
+  if (coulomb.bjerrum == 0.0) {
+
+    if (coulomb.method == COULOMB_P3M) {
+
+      p3m.alpha    = 0.0;
+      p3m.alpha_L  = 0.0;
+      p3m.r_cut    = 0.0;
+      p3m.r_cut_iL = 0.0;
+      p3m.mesh[0]  = 0;
+      p3m.mesh[1]  = 0;
+      p3m.mesh[2]  = 0;
+      p3m.cao      = 0;
+
+    } else if (coulomb.method == COULOMB_DH) {
+
+      dh_params.r_cut   = 0.0;
+      dh_params.kappa   = 0.0;
+
+    } else if (coulomb.method == COULOMB_MMM1D) {
+
+      mmm1d_params.maxPWerror = 1e40;
+      mmm1d_params.bessel_cutoff = 0;
+
+    }
+ 
+    mpi_bcast_coulomb_params();
+    coulomb.method = COULOMB_NONE;
+    mpi_bcast_coulomb_params();
+
+  }
+
+  return TCL_OK;
+}
+
+int inter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv)
+{
+  int mesh, cao;
+  double r_cut, accuracy;
+
+  mesh = cao = -1;
+  r_cut = accuracy = -1.0;
+
+  while(argc > 0) {
+
+    if(ARG0_IS_S("r_cut")) {
+      if (! (argc > 1 && ARG1_IS_D(r_cut))) {
+	  Tcl_AppendResult(interp, "r_cut expects double",
+			   (char *) NULL);
+	  return TCL_ERROR;
+      }
+ 
+    } else if(ARG0_IS_S("mesh")) {
+      if(! (argc > 1 && ARG1_IS_I(mesh))) {
+	Tcl_AppendResult(interp, "mesh expects integer",
+			   (char *) NULL);
+	return TCL_ERROR;
+      }
+      
+    } else if(ARG0_IS_S("cao")) {
+      if(! (argc > 1 && ARG1_IS_I(cao))) {
+	Tcl_AppendResult(interp, "cao expects integer",
+			   (char *) NULL);
+	return TCL_ERROR;
+      } 
+
+    } else if(ARG0_IS_S("accuracy")) {
+      if(! (argc > 1 && ARG1_IS_D(accuracy))) {
+	Tcl_AppendResult(interp, "accuracy expects double",
+			 (char *) NULL);
+	  return TCL_ERROR;
+      }
+
+    } else {
+      Tcl_AppendResult(interp, "Unknown p3m tune parameter \"",argv[0],"\"",
+                       (char *) NULL);
+      return TCL_ERROR;
+    }
+    
+    argc -= 2;
+    argv += 2;
+  }
+
+  p3m_set_tune_params(r_cut, mesh, cao, -1.0, accuracy);
+
+  if(P3M_tune_parameters(interp) == TCL_ERROR) 
+    return TCL_ERROR;
+  
+  return TCL_OK;
+}
+
+int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double r_cut, alpha, accuracy = -1.0;
+  int mesh, cao, i;
+
+  coulomb.method = COULOMB_P3M;
+    
+#ifdef PARTIAL_PERIODIC
+  if(PERIODIC(0) == 0 ||
+     PERIODIC(1) == 0 ||
+     PERIODIC(2) == 0)
+    {
+      Tcl_AppendResult(interp, "Need periodicity (1,1,1) with Coulomb P3M",
+		       (char *) NULL);
+      return TCL_ERROR;  
+    }
+#endif
+
+  if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+    Tcl_AppendResult(interp, "Node grid not suited for Coulomb P3M. Node grid must be sorted, largest first.", (char *) NULL);
+    return TCL_ERROR;  
+  }
+
+  if (ARG0_IS_S("tune"))
+    return inter_parse_p3m_tune_params(interp, argc-1, argv+1);
+      
+  if(! ARG0_IS_D(r_cut)) {
+    Tcl_AppendResult(interp, "Unknown p3m parameter \"", argv[0],"\"",
+		     (char *) NULL);
+    return TCL_ERROR;  
+  }
+
+  if(argc < 3) {
+    Tcl_AppendResult(interp, "p3m needs at least 3 parameters: <r_cut> <mesh> <cao> [<alpha> [accuracy]]",
+		     (char *) NULL);
+    return TCL_ERROR;  
+  }
+
+  if((! ARG_IS_I(1, mesh)) || (! ARG_IS_I(2, cao))) {
+    Tcl_AppendResult(interp, "integer expected", (char *) NULL);
+    return TCL_ERROR;
+  }
+	
+  if(argc > 3) {
+    if(! ARG_IS_D(3, alpha))
+      return TCL_ERROR;
+  }
+  else {
+    Tcl_AppendResult(interp, "Automatic p3m tuning not implemented.",
+		     (char *) NULL);
+    return TCL_ERROR;  
+  }
+
+  if(argc > 4) {
+    if(! ARG_IS_D(4, accuracy)) {
+      Tcl_AppendResult(interp, "double expected", (char *) NULL);
+      return TCL_ERROR;
+    }
+  }
+
+  if ((i = p3m_set_params(r_cut, mesh, cao, alpha, accuracy)) < 0) {
+    switch (i) {
+    case -1:
+      Tcl_AppendResult(interp, "r_cut must be positive", (char *) NULL);
+      break;
+    case -2:
+      Tcl_AppendResult(interp, "mesh must be positive", (char *) NULL);
+      break;
+    case -3:
+      Tcl_AppendResult(interp, "cao must be between 1 and 7 and less than mesh",
+		       (char *) NULL);
+      break;
+    case -4:
+      Tcl_AppendResult(interp, "alpha must be positive", (char *) NULL);
+      break;
+    case -5:
+      Tcl_AppendResult(interp, "accuracy must be positive", (char *) NULL);
+      break;
+    default:;
+      Tcl_AppendResult(interp, "unspecified error", (char *) NULL);
+    }
+
+    return TCL_ERROR;
+
+  }
+
+  return TCL_OK;
+}
+
+int inter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv)
+{
+  int i; double d1, d2, d3;
+
+  Tcl_ResetResult(interp);
+
+  while (argc > 0) {
+    /* p3m parameter: inter */
+    if (ARG0_IS_S("n_interpol")) {
+      
+      if(argc < 2) {
+	Tcl_AppendResult(interp, argv[0], " needs 1 parameter",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+      
+      if (! ARG1_IS_I(i)) {
+	Tcl_AppendResult(interp, argv[0], " needs 1 INTEGER parameter",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+      
+      if (p3m_set_ninterpol(i) == TCL_ERROR) {
+	Tcl_AppendResult(interp, argv[0], " argument must be positive",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      argc -= 2;
+      argv += 2;
+    }
+    
+    /* p3m parameter: mesh_off */
+    else if (ARG0_IS_S("mesh_off")) {
+      
+      if(argc < 4) {
+	Tcl_AppendResult(interp, argv[0], " needs 3 parameters",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+	
+      if ((! ARG_IS_D(1, d1)) ||
+	  (! ARG_IS_D(2, d2)) ||
+	  (! ARG_IS_D(3, d3)))
+	{
+	  Tcl_AppendResult(interp, argv[0], " needs 3 DOUBLE parameters",
+			   (char *) NULL);
+	  return TCL_ERROR;
+	}
+
+      if (p3m_set_mesh_offset(d1, d2 ,d3) == TCL_ERROR)
+	{
+	  Tcl_AppendResult(interp, argv[0], " parameters have to be between 0.0 an 1.0",
+			   (char *) NULL);
+	  return TCL_ERROR;
+	}
+
+      argc -= 4;
+      argv += 4;
+    }
+    
+    /* p3m parameter: epsilon */
+    else if(ARG0_IS_S( "epsilon")) {
+
+      if(argc < 2) {
+	Tcl_AppendResult(interp, argv[0], " needs 1 parameter",
+			 (char *) NULL);
+	return TCL_ERROR;
+      }
+
+      if (ARG1_IS_S("metallic")) {
+	d1 = P3M_EPSILON_METALLIC;
+      }
+      else {
+	if (! ARG1_IS_D(d1)) {
+	  Tcl_AppendResult(interp, argv[0], " needs 1 DOUBLE parameter or \"metallic\"",
+			   (char *) NULL);
+	  return TCL_ERROR;
+	}
+	
+	if (p3m_set_eps(d1) == TCL_ERROR) {
+	  Tcl_AppendResult(interp, argv[0], " There is no error msg yet!",
+			   (char *) NULL);
+	  return TCL_ERROR;
+	}
+      }
+
+      argc -= 2;
+      argv += 2;	    
+    }
+    else {
+      Tcl_AppendResult(interp, "Unknown coulomb p3m parameter: \"",argv[0],"\"",(char *) NULL);
+      return TCL_ERROR;
+    }
+  }
+
+  return TCL_OK;
+}
+int inter_parse_maggs(Tcl_Interp * interp, int argc, char ** argv)
+{
+  int mesh;
+  int yukawa = 0;
+  double f_mass;
+  double gamma;
+  double kappa = 0.;
+  double r_cut = -1.;
+
+  if(argc < 3) {
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb maggs <f_mass> <mesh> <gamma>", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if(! ARG_IS_D(0, f_mass))
+    return TCL_ERROR;
+
+  if(! ARG_IS_I(1, mesh)) {
+    Tcl_AppendResult(interp, "integer expected", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if(! ARG_IS_D(2, gamma)) {
+    Tcl_AppendResult(interp, "double expected", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if(argc > 3) {
+    if (ARG_IS_S(3,"yukawa")) {
+      yukawa = 1; 
+      if(! ARG_IS_D(4, kappa))
+	return TCL_ERROR;
+      if(argc > 5) ARG_IS_D(5, r_cut);
+    } 
+  }
+  return set_maggs_params(interp, coulomb.bjerrum, f_mass, mesh, gamma, yukawa, kappa, r_cut);
+}
+
+int dh_set_params(double kappa, double r_cut)
+{
+  if(dh_params.kappa < 0.0)
+    return -1;
+
+  if(dh_params.r_cut < 0.0)
+    return -2;
+
+  dh_params.kappa = kappa;
+  dh_params.r_cut = r_cut;
+
+  mpi_bcast_coulomb_params();
+
+  return 1;
+}
+
+int inter_parse_dh(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double kappa, r_cut;
+  int i;
+
+  if(argc < 2) {
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb dh <kappa> <r_cut>", (char *) NULL);
+    return TCL_ERROR;
+  }
+  
+  coulomb.method = COULOMB_DH;
+
+  if(! ARG0_IS_D(kappa))
+    return TCL_ERROR;
+  if(! ARG1_IS_D(r_cut))
+    return TCL_ERROR;
+
+  if ( (i = dh_set_params(kappa, r_cut)) < 0) {
+    switch (i) {
+    case -1:
+      Tcl_AppendResult(interp, "dh kappa must be positiv.",(char *) NULL);
+      break;
+    case -2:
+      Tcl_AppendResult(interp, "dh r_cut must be positiv.",(char *) NULL);
+      break;
+    default:
+      Tcl_AppendResult(interp, "unspecified error",(char *) NULL);
+    }
+    
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
+int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double switch_rad, maxPWerror;
+  int bessel_cutoff;
+
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb mmm1d <switch radius> {<bessel cutoff>} <maximal error for near formula> | tune  <maximal pairwise error>", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if (ARG0_IS_S("tune")) {
+    /* autodetermine bessel cutoff AND switching radius */
+    if (! ARG_IS_D(1, maxPWerror))
+      return TCL_ERROR;
+    bessel_cutoff = -1;
+    switch_rad = -1;
+  }
+  else {
+    if (argc == 2) {
+      /* autodetermine bessel cutoff */
+      if ((! ARG_IS_D(0, switch_rad)) ||
+	  (! ARG_IS_D(1, maxPWerror))) 
+	return TCL_ERROR;
+      bessel_cutoff = -1;
+    }
+    else if (argc == 3) {
+      if((! ARG_IS_D(0, switch_rad)) ||
+	 (! ARG_IS_I(1, bessel_cutoff)) ||
+	 (! ARG_IS_D(2, maxPWerror))) 
+	return TCL_ERROR;
+    }
+    else {
+      Tcl_AppendResult(interp, "Too many parameters: inter coulomb mmm1d <switch radius> {<bessel cutoff>} <maximal error for near formula> | tune  <maximal pairwise error>", (char *) NULL);
+      return TCL_ERROR;
+    }
+  }
+
+  return set_mmm1d_params(interp, switch_rad, bessel_cutoff, maxPWerror);
+}
+
+int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double maxPWerror;
+  double far_cut;
+
+  if (argc > 2) {
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb mmm2d <maximal pairwise error> {<fixed far cutoff>}", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if (! ARG0_IS_D(maxPWerror))
+    return TCL_ERROR;
+
+  if (argc == 2) {
+    if (! ARG1_IS_D(far_cut))
+      return TCL_ERROR;
+  }
+  else
+    far_cut = -1;
+
+  return set_mmm2d_params(interp, maxPWerror, far_cut);
+}
+
+int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double d1;
+
+  Tcl_ResetResult(interp);
+
+  if(argc == 0) {
+    printCoulombIAToResult(interp);
+    return TCL_OK;
+  }
+  
+  if (! ARG0_IS_D(d1)) {
+    Tcl_ResetResult(interp);
+    if (ARG0_IS_S("elc") && (coulomb.method == COULOMB_P3M))
+      return inter_parse_elc_params(interp, argc - 1, argv + 1);
+    if (coulomb.method == COULOMB_P3M)
+      return inter_parse_p3m_opt_params(interp, argc, argv);
+    else {
+      Tcl_AppendResult(interp, "(P3M not enabled) Expect: inter coulomb <bjerrum>",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+  }
+
+  coulomb.use_elc = 0;
+  coulomb.method  = COULOMB_NONE;
+
+  if (coulomb_set_bjerrum(d1) == TCL_ERROR) {
+    Tcl_AppendResult(interp, argv[0], "bjerrum length must be positive",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+    
+  argc -= 1;
+  argv += 1;
+
+  if (d1 == 0.0 && argc == 0) {
+    mpi_bcast_coulomb_params();
+    return TCL_OK;
+  }
+
+  if(argc < 1) {
+    Tcl_AppendResult(interp, "wrong # args for inter coulomb.",
+		     (char *) NULL);
+    mpi_bcast_coulomb_params();
+    return TCL_ERROR;
+  }
+
+  /* check method */
+  if(ARG0_IS_S("p3m"))    
+    return inter_parse_p3m(interp, argc-1, argv+1);
+
+  if (ARG0_IS_S("dh"))
+    return inter_parse_dh(interp, argc-1, argv+1);    
+    
+  if (ARG0_IS_S("mmm1d"))
+    return inter_parse_mmm1d(interp, argc-1, argv+1);
+
+  if (ARG0_IS_S("mmm2d"))
+    return inter_parse_mmm2d(interp, argc-1, argv+1);
+
+  if (ARG0_IS_S("maggs")) {
+
+    coulomb.method = COULOMB_MAGGS;
+    return inter_parse_maggs(interp, argc-1, argv+1);
+  }
+  /* fallback */
+  coulomb.bjerrum = 0.0;
+
+  mpi_bcast_coulomb_params();
+
+  Tcl_AppendResult(interp, "Do not know coulomb method \"",argv[1],
+		   "\": coulomb switched off", (char *) NULL);
+
+  return TCL_ERROR;
+}
+#endif
+
+int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
+{
+
+
+  if(ARG0_IS_S("ljforcecap"))
+    return inter_parse_ljforcecap(interp, argc-1, argv+1);
+  
+  if(ARG0_IS_S("tabforcecap"))
+    return inter_parse_tabforcecap(interp, argc-1, argv+1);
 
   if(ARG0_IS_S("coulomb")) {
 #ifdef ELECTROSTATICS
@@ -1177,7 +1898,8 @@ int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 int inter(ClientData _data, Tcl_Interp *interp,
 	  int argc, char **argv)
 {
-  int i, j, err_code = TCL_OK, is_i1, is_i2;
+  int i, j;
+  double dummy;
 
   Tcl_ResetResult(interp);
   
