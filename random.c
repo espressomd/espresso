@@ -2,6 +2,8 @@
 #include "tcl.h"
 #include "communication.h"
 
+/** \file random.c A random generator. Be sure to run init_random() before
+    you use any of the generators. */
 
 #define IA 16807
 #define IM 2147483647
@@ -41,12 +43,25 @@ long l_random(void)
 
 /*----------------------------------------------------------------------*/
 
+int i_random(int maxint)
+{
+  /* delivers an integer between 0 and maxint-1 */
+  int temp;
+  temp =  (int)( ( maxint * l_random() )* AM );
+  return temp;
+}
+  
+
+/*----------------------------------------------------------------------*/
+
 double random(void)
 {
+  /* delivers a uniform double between 0 and 1 */
   double temp;
   iy = l_random();
-  if ((temp = AM * iy) > RNMX) return RNMX; 
-  else return temp;
+  if ((temp = AM * iy) > RNMX) 
+    temp = RNMX;
+  return temp;
 }
 
 /*----------------------------------------------------------------------*/
