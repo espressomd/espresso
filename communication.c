@@ -565,25 +565,25 @@ void mpi_integrate(int n_steps)
   MPI_Bcast(request, 2, MPI_INT, this_node, MPI_COMM_WORLD);
 
   task = request[1];
-  if(task==0) {
+  if(task==-1) {
     /* initialize integrator */
     integrate_vv_init();
   }
   else if(task > 0)
     /* => task = number of steps */
     integrate_vv(task);
-  else if(task < 0)
+  else if(task < -1)
     integrate_vv_exit();
 }
 
 void mpi_integrate_slave(int task)
 {
-  if(task==0) {
+  if(task==-1) {
     integrate_vv_init();
   }
   else if(task > 0)
     integrate_vv(task);
-  else if(task < 0)
+  else if(task < -1)
     integrate_vv_exit();
   
   COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n",
