@@ -317,8 +317,8 @@ void exchange_and_sort_part()
 	  c    = CELL_IND(m, n, o);
 	  cell = &cells[c];
 	  pl   = &(cell->pList);
-	  part = pl->part;
 	  for(i=0 ; i< pl->n; i++) {
+	    part = pl->part;
 	    if((lr == 1 && part[i].r.p[d] >=  my_right[d]) ||
 	       (lr == 0 && part[i].r.p[d] <  my_left[d])) {
 	      GHOST_TRACE(fprintf(stderr,"%d: exchange_part: Send Part id=%d to node %d\n",
@@ -348,6 +348,7 @@ void exchange_and_sort_part()
 	pl   = &(cell->pList);
 	part = pl->part;
 	for(i=0 ; i<pl->n; i++) {
+	  part = pl->part;
 	  fold_coordinate(part[i].r.p, part[i].i, d);
 
 	  if (d==2) {
