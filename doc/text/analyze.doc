@@ -78,11 +78,16 @@
 	 hence taking a time-average as well. Note that the stored configurations are assumed to be equidistant in time (i.e. you have to call
 	 'analyze append' in equidistant intervalls), and that changes in the particle setup must not have been made in between (i.e. no call to
 	 \ref tcl_part).
+    <li> \verbatim analyze { internal_dist | <internal_dist> } [<chain_start> <n_chains> <chain_length>] \endverbatim
+         returns the internal distances within the <n_chains> polymer chains as a tcl-list '<tt>idf(0) idf(1) ... idf(chain_length-1)</tt>'
+	 where the index corresponds to the distance between the two monomers considered (1 = next neighbours, 2 = one monomer in between,...).
+	 The values are averaged over all chains, if '<tt><internal_dist></tt>' is used averaged over all <tt>n_config</tt> appended configurations
+	 as well.
     <li> \verbatim analyze g123 [-init] [<chain_start> <n_chains> <chain_length>] \endverbatim
          returns the mean-square displacement <i>g1(t)</i> of a monomer,
                  the mean-square displacement <i>g2(t)</i> in the center of gravity of the chain itself, and
                  the motion of the center of mass <i>g3(t)</i>
-	 as a tcl-list {g1(t) g2(t) g3(t)} (requires chain structure to be set or provided).<BR>
+	 as a tcl-list <tt>{g1(t) g2(t) g3(t)}</tt> (requires chain structure to be set or provided).<BR>
 	 If before the structure info you give '-init', the current configuration is stored as reference config.
     <li> \verbatim analyze { <g1> | <g2> | <g3> } [<chain_start> <n_chains> <chain_length>] \endverbatim
          returns, depending on which flag has been specified, the mean-square displacement <g1(t)> of a monomer, 
