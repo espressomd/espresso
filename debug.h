@@ -22,8 +22,6 @@
  <li> \verbatim #define MPI_CORE \endverbatim generate a core dump when exiting abnormally due
  to MPI errors.
  <li> \verbatim #define FORCE_CORE \endverbatim generate a core dump even on regular termination.
- <li> \verbatim #define MALLOC_DEBUG \endverbatim replaces malloc, realloc and free by version that
- log their actions. May help debugging issues and shows memory leaks. BUT YOU GET A LOT OF OUTPUT!!
  <li> \verbatim #define ADDITIONAL_CHECKS \endverbatim adds additional checks which indicate failure
  of the code.
  </ul>
@@ -36,7 +34,7 @@
 /* #define INTEG_DEBUG */
 /* #define CELL_DEBUG */
 /* #define GHOST_DEBUG */
-/* #define GRID_DEBUG */
+/* #define GRID_DEBUG  */
 /* #define VERLET_DEBUG */
 /* #define PARTICLE_DEBUG */
 /* #define P3M_DEBUG */
@@ -50,6 +48,7 @@
 /* #define ESK_DEBUG */
 /* #define FENE_DEBUG */
 /* #define GHOST_FORCE_DEBUG */
+#define ONEPART_DEBUG 
 
 #define MPI_CORE
 #define FORCE_CORE
@@ -65,6 +64,9 @@ extern void core();
     indicated. In that case, no core dump is generated.
 */
 extern int regular_exit;
+
+/** Identity of the particle to chekc extenively if ONEPART_DEBUG is defined. */
+extern int check_id;
 
 #ifdef COMM_DEBUG
 #define COMM_TRACE(cmd) { cmd; }
@@ -177,3 +179,10 @@ extern int regular_exit;
 #else
 #define GHOST_FORCE_TRACE(cmd)
 #endif
+
+#ifdef ONEPART_DEBUG
+#define ONEPART_TRACE(cmd) { cmd; }
+#else
+#define ONEPART_TRACE(cmd)
+#endif
+
