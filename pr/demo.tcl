@@ -22,8 +22,16 @@
 set case2timeout 120
 
 #############################################################
+#  Initialization                                           #
+#############################################################
+
+set run_sim 0
+
+#############################################################
 #  Setup GUI                                                #
 #############################################################
+
+bind . <Destroy> onExitHandler
 
 # popup window if desired
 proc popup {text} {
@@ -58,6 +66,11 @@ Bitte geben Sie nun Ihren Namen ein, so, wie er dort erscheinen soll:
     update
 }
 
+proc set_status {stat} {
+    .case2.status configure -text $stat
+    update
+}
+
 wm geometry . -0+0
 
 ##### case 1
@@ -74,13 +87,13 @@ pack .case1.title -pady {0 10} -fill x -side top -in .case1
 
 # sliders
 label .case1.label -justify left -text "Stärke der Elektrostatik"
-scale .case1.slider -orient h -from 0 -to 15 \
+scale .case1.slider -orient h -from 0 -to 10 \
     -resolution [expr 10/100.] -command Case1BjerrumChange
 pack .case1.slider .case1.label -fill x -in .case1
 
 label .case1.label2 -justify left -text "Temperatur"
-scale .case1.slider2 -orient h -from 0 -to 2 \
-    -resolution [expr 10/100.] -command Case1TempChange
+scale .case1.slider2 -orient h -from 0 -to 1.5 \
+    -resolution [expr 2/100.] -command Case1TempChange
 pack .case1.slider2 .case1.label2 -fill x -in .case1
 
 # radiobuttons
@@ -110,18 +123,18 @@ pack .case2.title -pady {0 10} -fill x -side top -in .case2
 
 # sliders
 label .case2.label1 -justify left -text "Ladung Wand 1"
-scale .case2.slider1 -orient h -from -1 -to 1 \
-    -resolution [expr 2/100.] -command Case2Wall1ChargeChange
+scale .case2.slider1 -orient h -from -1.5 -to 1.5 \
+    -resolution [expr 3/5.] -command Case2Wall1ChargeChange
 pack .case2.slider1 .case2.label1 -fill x -in .case2
 
 label .case2.label2 -justify left -text "Ladung Wand 2"
-scale .case2.slider2 -orient h -from -1 -to 1 \
-    -resolution [expr 2/100.] -command Case2Wall2ChargeChange
+scale .case2.slider2 -orient h -from -1.5 -to 1.5 \
+    -resolution [expr 3/5.] -command Case2Wall2ChargeChange
 pack .case2.slider2 .case2.label2 -fill x -in .case2
 
 label .case2.label3 -justify left -text "Ladung Wand 3"
-scale .case2.slider3 -orient h -from -1 -to 1 \
-    -resolution [expr 2/100.] -command Case2Wall3ChargeChange
+scale .case2.slider3 -orient h -from -1.5 -to 1.5 \
+    -resolution [expr 3/5.] -command Case2Wall3ChargeChange
 pack .case2.slider3 .case2.label3 -fill x -in .case2
 
 label .case2.status -justify left -text ""
@@ -129,7 +142,7 @@ pack .case2.status -fill x -in .case2
 
 proc disableCase1 {} {
     global disabledfg butFH
-    .case1.slider set 8
+    .case1.slider set 5
     .case1.label configure -state disabled
     .case1.slider configure -state disabled -foreground $disabledfg 
     .case1.slider2 set 0
@@ -156,7 +169,7 @@ proc enableCase1 {} {
     .case1.butH configure -state normal -foreground $normalfg 
     set butFH F
 
-    .case2.status configure -text ""
+    set_status ""
 }
 
 proc disableCase2 {} {
@@ -171,7 +184,7 @@ proc disableCase2 {} {
     .case2.label3 configure -state disabled
     .case2.slider3 configure -state disabled -foreground $disabledfg
 
-    .case2.status configure -text ""
+    set_status ""
     set displayclock 0
 }
 
@@ -228,15 +241,18 @@ proc disp_highscore { highscore } {
     return $ret
 }
 
+proc onExitHandler {} {
+    # terminate vmd
+    eval "exec rm -f [glob -nocomplain .lock*]"    
+}
+
 proc imd_reconnect {case} {
     imd disconnect
 
-    puts "before [glob -nocomplain .lock*]"
     eval "exec rm -f [glob -nocomplain .lock*]"
-    puts "after [glob -nocomplain .lock*]"
 
     while { [catch {imd connect 10000} res] } {
-	.case2.status configure -text "Waiting for port to unbind...\nerror: $res"
+	set_status  "Waiting for port to unbind...\nerror: $res"
 	update
 	after 500
     }
@@ -258,7 +274,7 @@ proc imd_reconnect {case} {
 proc Case1Start {} {
     global run_sim
 
-    .case2.status configure -text "Starte..."    
+    set_status "Starte..."    
     if { $run_sim == 1 } { set restart 1 } else { set restart 0 }
     set run_sim 0
     update
@@ -279,14 +295,14 @@ proc Case1Start {} {
     enableStarts
     set run_sim 1
 
-    .case2.status configure -text "Fertig"; update
+    set_status "Fertig"
 }
 
 set displayclock 0
 proc Case2Start {} {
     global run_sim case2stime displayclock N0 N1 N2 N3 N4 Rx Ry Rz Rt
 
-    .case2.status configure -text "Starte..."    
+    set_status "Starte..."    
     if { [expr abs($run_sim)] == 2 } { set restart 1 } else { set restart 0 }
     set run_sim 0
     update
@@ -309,48 +325,104 @@ proc Case2Start {} {
     Case2Wall2ChargeChange 0
     Case2Wall3ChargeChange 0
 
-    .case2.status configure -text "...3..."
+    set_status "...3..."
     update; after 1000
-    .case2.status configure -text "...2..."
+    set_status "...2..."
     update; after 1000
-    .case2.status configure -text "...1..."
+    set_status "...1..."
     update; after 1000
 
     enableCase2
     enableStarts
 
-    .case2.status configure -text "Los!"
+    set_status "Los!"
     set case2stime [clock seconds]
     set displayclock 1
 }
 
+proc checkLambda {} {
+    global Bjerrum temp
+    if { $Bjerrum > 10 || $temp > 1 } {
+	puts "Increasing friction and slowing down"
+	setmd gamma 5
+	integrate 50
+    }
+}
+
 proc Case1BjerrumChange {l} {
-    global run_sim
+    global run_sim Bjerrum
+    set Bjerrum $l
     if { $run_sim == 1} { 
 	inter coulomb $l dh 0 [expr 2*$l]
 	puts "Changed Bjerrum length to $l."
+	checkLambda
     }
 }
 
 proc Case1TempChange {T} {
-    global run_sim
+    global run_sim temp
+    set temp $T
     if { $run_sim == 1} { 
 	setmd temp $T
 	puts "Changed temperature to $T."
+	checkLambda
     }
 }
 
 proc Case1PotChange { } {
     global run_sim butFH
+    .case1.butH configure -state disabled
+    .case1.butF configure -state disabled
+
     if { $run_sim == 1} {
 	if { $butFH == "F" } {
-	    set tsik [setmd temp]; setmd temp 0.0
-	    inter 0 harmonic [expr 4*[lindex [inter 0] 2]] [expr 0.25*[lindex [inter 0] 3]]
-	    integrate 100; imd positions; setmd temp $tsik; integrate 100; imd positions
-	    inter 0 FENE [expr 0.125*[lindex [inter 0] 2]] [expr 8*[lindex [inter 0] 3]] 
+	    set_status "Bindungen straffen"
+
+	    set param1 [lindex [inter 0] 2]
+	    set param2 [lindex [inter 0] 3]
+	    set tg [setmd gamma]
+	    foreach factor "2 4 6" {
+		puts "fac $factor"
+		inter 0 harmonic [expr $factor*$param1] [expr 1./$factor*$param2]
+		integrate 50; imd positions
+		integrate 50; imd positions
+		integrate 50; imd positions
+		integrate 50; imd positions
+		# by this
+		setmd gamma [expr 1./$factor]
+	    }
+
+	    set_status "Viskositaet erhöhen..."
+
+	    foreach gamma "10 20 30 50" {
+		puts "gamma $gamma"
+		setmd gamma $gamma
+		integrate 50; imd positions
+		integrate 50; imd positions
+		integrate 50; imd positions
+		integrate 50; imd positions
+	    }
+
+	    set_status "Bindungstyp umschalten..."
+
+	    inter 0 FENE [expr 0.5*$param1] [expr 2*$param2]
+
+	    set_status "Viskositaet senken"
+
+	    foreach gamma "40 35 30 20 10 $tg" {
+		puts "gamma $gamma"
+		setmd gamma $gamma
+		integrate 50; imd positions
+		integrate 50; imd positions
+		integrate 50; imd positions
+		integrate 50; imd positions
+	    }
 	}
 	if { $butFH == "H" } { inter 0 harmonic [expr 2*[lindex [inter 0] 2]] [expr 0.5*[lindex [inter 0] 3]] }
     }
+
+    .case1.butH configure -state active
+    .case1.butF configure -state active
 }
 
 proc Case2Wall1ChargeChange {c} {
@@ -372,9 +444,9 @@ proc Case2Wall2ChargeChange {c} {
 proc Case2Wall3ChargeChange {c} {
     global run_sim N0 N1 N2 N3
     if { $run_sim == 2} {
-	set ind [expr $N0+$N1+$N2]; set le [expr round(sqrt($N3))]; set maxdist [expr $le/sqrt(2)]
+	set ind [expr $N0+$N1+$N2]; set le [expr round(sqrt($N3))]; set maxdist [expr $le/sqrt(2.)]
 	for {set i 0} {$i < $N3} {incr i} { 
-	    set x [expr $i % $le]; set y [expr $i / $le]; set dist [expr sqrt(pow(0.5*$N3-$x,2)+pow(0.5*$N3-$y,2))]
+	    set x [expr $i % $le]; set y [expr $i / $le]; set dist [expr sqrt(pow(0.5*$le-$x,2)+pow(0.5*$le-$y,2))]
 	    part $ind q [expr $c*sqrt($dist/$maxdist)]; incr ind
 	}
 	puts "Charged Wall 3 with 0...$c (with Bjerrum = [lindex [lindex [inter coulomb] 0] 1])."
@@ -389,7 +461,6 @@ disableCase1
 disableCase2
 
 set displayclock 0
-set run_sim 0
 set firework 250
 
 set etime 91; set i 4
@@ -408,7 +479,7 @@ while { 1 } {
 	if { [llength $nbh] > $N4 } {
 	    set etime [expr [clock seconds] - $case2stime]
 	    disableCase2; set run_sim -2
-	    .case2.status configure -text "Gewonnen nach [clock format $etime -format "%M:%S"]!"; update
+	    set_status "Gewonnen nach [clock format $etime -format "%M:%S"]!"
 	    for {set i [expr $N0]} {$i < [expr $N0+$N1+$N2+$N3 +$N4]} {incr i} { part $i unfix }
 	    setmd temp 1.0
 	    for {set i 0} {$i < $firework} {incr i} {
@@ -459,9 +530,9 @@ Sie es daher gleich noch einmal?!                      \
 	    }
 	} else {
 	    set etime [expr [clock seconds] - $case2stime]
-	    .case2.status configure -text [clock format $etime -format "%M:%S"]
+	    set_status [clock format $etime -format "%M:%S"]
 	    if { $etime > $case2timeout } {
-		.case2.status configure -text "Die Zeit ist um!"
+		set_status "Die Zeit ist um!"
 		set displayclock 0
 		set run_sim -2
 popup "                     *************                     \ 

@@ -1,7 +1,6 @@
-60 Kurt BigBoss Kremer
-70 Chris Boss Holm
-80 Hanjo Informatical Limbach
-90 Axel No Comment Arnold
-100 Bw EggLayingCottonMilkPig Mann
-110 Frank Later Muehlbac
-
+8  Mon Sep 01 17:27:16 CEST 2003
+60  Kurt BigBoss Kremer
+70  Chris Boss Holm
+80  Hanjo Informatical Limbach
+90  Axel No Comment Arnold
+100  Bw EggLayingCottonMilkPig Mann
