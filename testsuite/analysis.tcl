@@ -113,6 +113,10 @@ if { [catch {
     integrate 0
 
     foreach obs $observables get_obs $get_observables {
+	if { [string first "analyze pressure" $get_obs]==0 } { if { [regexp "ROTATION" [code_info]]} { 
+	    puts -nonewline "ROTATION compiled in => adjusting stored pressure $obs (f=3) by current ideal one ([analyze pressure ideal]) "
+	    set obs [expr $obs - [analyze pressure ideal]]; puts "to $obs (f=6)"
+	} }
 	set rel_error [expr abs(([eval $get_obs] - $obs)/$obs)]
 	puts "relative deviations upon evaluating '$get_obs': $rel_error  ([eval $get_obs] / $obs)"
 	if { $rel_error > $epsilon } {
@@ -125,16 +129,28 @@ if { [catch {
 	for { set i 0 } { $i < [setmd n_part] } { incr i } { lappend plist $i }
 	set p_IK1_full [analyze p_IK1 $volume $plist 0];
 	set total [lindex $p_IK1_full 0]
-	set p_IK1 0
+	set ideal [lindex $p_IK1_full 1]
+	set fene  [lindex $p_IK1_full 2]
+	set lj    [lindex $p_IK1_full 3]
+        set p_IKT 0; set p_IKI 0; set p_IKF 0; set p_IKJ 0
 	for {set i 0} {$i < 3} {incr i} {
-	    set p_IK1 [expr $p_IK1 + [lindex $total [expr 1 + 4*$i]]]
+	    set p_IKT [expr $p_IKT + [lindex $total [expr 1 + 4*$i]]]
+	    set p_IKI [expr $p_IKI + [lindex $ideal [expr 1 + 4*$i]]]
+	    set p_IKF [expr $p_IKF + [lindex $fene  [expr 2 + 4*$i]]]
+	    set p_IKJ [expr $p_IKJ + [lindex $lj    [expr 3 + 4*$i]]]
 	}
-	set p_tot [analyze pressure total]
-	set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure total': $rel_error"
-	if { $rel_error > $epsilon } {
-	    error "relative error $rel_error too large upon comparing the pressures"
-	}
+        set p_tot [analyze pressure total]; set p_IK1 $p_IKT; set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure total': $rel_error  ($p_tot / $p_IK1)"
+	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+        set p_tot [analyze pressure ideal]; set p_IK1 $p_IKI; set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure ideal': $rel_error  ($p_tot / $p_IK1)"
+	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+        set p_tot [analyze pressure fene 0]; set p_IK1 $p_IKF; set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure fene 0': $rel_error  ($p_tot / $p_IK1)"
+	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+        set p_tot [analyze pressure lj 0 0]; set p_IK1 $p_IKJ; set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure lj 0 0': $rel_error  ($p_tot / $p_IK1)"
+	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
     }
 
     foreach lst $listables get_lst $get_listables {

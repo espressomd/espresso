@@ -97,13 +97,13 @@ if { [catch {
     set totprs [analyze pressure total]
 
     set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
-    puts "relative energy deviations: $rel_eng_error"
+    puts "relative energy deviations: $rel_eng_error  ($toteng / $energy)"
     if { $rel_eng_error > $epsilon } {
 	error "relative energy error too large"
     }
 
     set rel_prs_error [expr abs(($totprs - $pressure)/$pressure)]
-    puts "relative pressure deviations: $rel_prs_error"
+    puts "relative pressure deviations: $rel_prs_error  ($totprs / $pressure)"
     if { $rel_prs_error > $epsilon } {
 	error "relative pressure error too large"
     }
