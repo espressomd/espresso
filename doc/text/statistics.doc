@@ -16,14 +16,38 @@ The following procedures are found in scripts/statistics.tcl.
         \verbatim plotJoin <destinations> <final>\endverbatim
 	joins the .ps-files given by the tcl-list <destinations> into one single .ps-file '<final>.ps' while placing any two files on one page.<BR>
 	Note that the resulting files may be huge and therefore hard to print!
+
+    <li>\verbatim calcObAv <file> <index>\endverbatim
+        returns the average of the column with index <index> in <file>.
     <li>\anchor tcl_calcObsAv
 	\verbatim calcObsAv <file> { <i1> <i2> ... } \endverbatim
-	derives column-averages of the observables stored at columns <i1>, <i2>,... in <file>,
-	returning a tcl-list '<tt><amount of samples> { names (taken from the first line) } { averaged values }</tt>'.<BR>
-	This is most effective if you are using '<tt>puts $dataFile "[setmd time] $observable1 $observable 2 ..."</tt>' in
-	your tcl-script, and you need the averages of the observables afterwards.
-    <li>\verbatim findObsAv <val> <what>\endverbatim
+	derives column-averages of the observables stored at columns with index <i1>, <i2>,... in <file>,
+	returning a tcl-list 
+	\verbatim<amount of samples> { names (taken from the first line) } { averaged values }\endverbatim
+	This is most effective if you are using '<tt>puts $file-handle "[setmd time] $observable1 $observable 2 ..."</tt>' in
+	your tcl-script to create the data file <file>, and you need the averages of the observables afterwards.
+    <li>\anchor tcl_findObsAv
+        \verbatim findObsAv <val> <what>\endverbatim
         extracts the values whose names are given in the tcl-list <val> at their respective positions in <what>, where
 	<what> has the list-format as returned by \ref tcl_calcObsAv, returning just these values as tiny tcl-list.
+    <li>\verbatim nameObsAv <file> { <name1> <name2> ... } \endverbatim
+        combines \ref tcl_calcObsAv and \ref tcl_findObsAv by accepting the header-names '<tt><name1>...</tt>' as input argument, returning
+	the averages as a tiny tcl-list 
+	\endverbatim<# of samples> <average of name1> <average of name2> ...\endverbatim
+    <li><i>Example:</i><BR>
+        If the data-file '<tt>data.obs2<tt>' looks like
+	\verbatim t mindist re rg rh Temp p p2 ideal pid 
+ 0.0 0.926135 6.39158 2.66884 2.53191 1.0 5.954496 35.456017 ideal 0.851101 
+ 3.0 0.898834 6.21145 2.67247 2.54319 0.974109 6.003794 36.045547 ideal 0.851101
+ 6.0 0.907179 6.27208 2.66989 2.52997 0.97327 6.200693 38.448588 ideal 0.851101
+ 9.0 0.902748 6.83424 2.69967 2.53421 0.988377 6.366481 40.532074 ideal 0.851101 
+ ... \endverbatim
+	the following will create a tcl-list '<tt>$avg</tt>' containing the averages of some of the observables:
+	\verbatim lappend what [calcObsAv data.obs2 { 1 5 6 7 9 } ]
+ set avg [findObsAv { Temp mindist p p2 pid } [lindex $what end]] \endverbatim
+        The same is achievable with just one line using:
+	\verbatim set avg [nameObsAv data.obs2 { Temp mindist p p2 pid }] \endverbatim
+	In both cases, the resulting tcl-list will have the form:
+	\verbatim 4801 0.909671168923 1.0011450302 6.27845111352 39.4770145345 0.851101 \endverbatim
 </ul>
 */
