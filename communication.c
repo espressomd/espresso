@@ -74,8 +74,10 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_EXT 18
 /** Action number for \ref mpi_place_particle. */
 #define REQ_PLACE_NEW   19
+/** Action number for \ref mpi_remove_particle */
+#define REQ_REM_PART   20
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 20
+#define REQ_MAXIMUM 21
 
 /** \name Slave Callbacks
     These functions are the slave node counterparts for the
@@ -102,6 +104,7 @@ void mpi_set_time_step_slave(int node, int parm);
 void mpi_get_particles_slave(int node, int parm);
 void mpi_bcast_coulomb_params_slave(int node, int parm);
 void mpi_send_ext_slave(int node, int parm);
+void mpi_remove_particle_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -126,7 +129,8 @@ SlaveCallback *callbacks[] = {
   mpi_get_particles_slave,          /* 16: REQ_GETPARTS */
   mpi_bcast_coulomb_params_slave,   /* 17: REQ_BCAST_COULOMB */
   mpi_send_ext_slave,               /* 18: REQ_SEND_EXT */
-  mpi_place_particle_slave          /* 19: REQ_PLACE_NEW */
+  mpi_place_particle_slave,         /* 19: REQ_PLACE_NEW */
+  mpi_remove_particle_slave         /* 20: REQ_REM_PART */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -150,7 +154,8 @@ char *names[] = {
   "GET_PARTS" , /* 16 */
   "BCAST_CIA" , /* 17 */
   "SEND_EXT"  , /* 18 */
-  "PLACE_NEW"   /* 19 */
+  "PLACE_NEW" , /* 19 */
+  "REM_PART"    /* 20 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -607,6 +612,27 @@ void mpi_recv_part_slave(int pnode, int part)
 	     MPI_COMM_WORLD);
 }
 
+/****************** REQ_REM_PART ************/
+void mpi_remove_particle(int pnode, int part)
+{
+  mpi_issue(REQ_REM_PART, pnode, part);
+  mpi_remove_particle_slave(pnode, part);
+}
+
+void mpi_remove_particle_slave(int pnode, int part)
+{
+  if (part != -1) {
+    n_total_particles--;
+
+    if (pnode == this_node)
+      local_remove_particle(part);
+    
+    remove_all_bonds_to(part);
+  }
+  else
+    local_remove_all_particles();
+}
+
 /********************* REQ_INTEGRATE ********/
 void mpi_integrate(int n_steps)
 {
@@ -746,7 +772,7 @@ void mpi_get_particles(Particle *result)
     tot_size += sizes[i];
 
   if (tot_size!=n_total_particles) {
-    fprintf(stderr,"%d: mpi_gather_stats: n_total_particles %d, but I counted %d. Exiting...\n",
+    fprintf(stderr,"%d: mpi_get_particles: n_total_particles %d, but I counted %d. Exiting...\n",
 	    this_node, n_total_particles, tot_size);
     errexit();
   }

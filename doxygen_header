@@ -109,8 +109,13 @@ interface between the Tcl script and the MD code:
 	The <bond_type_number> is used for \ref tcl_inter to define bonded interactions.
 	<li> \verbatim bond delete <bond_type_number> <partner>+ \endverbatim
 	Searches for the given bond and deletes it.
+	<li> \verbatim bond delete\endverbatim
+	will delete all bonds attached to this particle.
 	</ul>
 
+	\anchor tcl_part_delete
+	If instead of a property "delete" is given, the particle is deleted and all
+	bonds referencing it.
         \anchor tcl_part_print
         If instead of a property "print" is given,
 	\verbatim part <particle_number> print (id|pos|type|q|v|f|fix|ext_force|bond)* \endverbatim
@@ -126,8 +131,8 @@ interface between the Tcl script and the MD code:
 	\verbatim 0 pos 2.1 6.4 3.1 type 0 q -1.0 v 0.0 0.0 0.0 f 0.0 0.0 0.0 bonds { {0 480} {0 368} ... } \endverbatim
 	which may be used as an input to this function later on. The first integer is the
 	particle number. <BR>
-	\verbatim part number \endverbatim
-	returns the real number of particles added so far.
+	\verbatim part deleteall \endverbatim
+	deletes <i>all<i> particles in the simulation.
 	Without any parameters at all,
 	\verbatim part \endverbatim
 	returns the properties of <i>all</i> stored particles in a 

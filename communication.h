@@ -90,6 +90,7 @@ void mpi_who_has();
     particle) include communication anyways, this is handled by the way.
 */
 void mpi_bcast_event(int event);
+
 /** Issue REQ_PLACE: move particle to a position on a node.
     Also calls \ref on_particle_change.
     \param id   the particle to move.
@@ -141,6 +142,12 @@ void mpi_send_type(int node, int part, int type);
 */
 int mpi_send_bond(int pnode, int part, int *bond, int delete);
 
+/** Issue REQ_REM_PART: remove a particle.
+    Also calls \ref on_particle_change.
+    \param id   the particle to remove.
+    \param node the node it is attached to.
+*/
+void mpi_remove_particle(int node, int id);
 
 /** Issue REQ_GET_PART: recv particle data.
     \param part the particle.

@@ -329,6 +329,22 @@ int set_particle_ext(int part, int flag, double force[3]);
 */
 int change_particle_bond(int part, int *bond, int delete);
 
+/** remove particle with a given identity. Also removes all bonds to the particle.
+    @param part     identity of the particle to remove
+    @return TCL_OK on success or TCL_ERROR if particle does not exist
+*/
+int remove_particle(int part);
+
+/** remove all particles.
+ */
+void remove_all_particles();
+
+/** for all local particles, remove bonds incorporating the specified
+    particle.
+    @param part     identity of the particle to free from bonds
+*/
+void remove_all_bonds_to(int part);
+
 /** Get the complete unsorted informations on all particles into
     \ref partCfg if something's changed. This is a severe performance
     drawback and might even fail for lack of memory for large systems.
@@ -346,7 +362,7 @@ void updatePartCfg();
 */
 int sortPartCfg();
 
-/** Used by mpi_place_particle, should not be used elsewhere.
+/** Used by \ref mpi_place_particle, should not be used elsewhere.
     Move a particle to a new position.
     If it does not exist, it is created. the position must
     be on the local node!
@@ -355,13 +371,13 @@ int sortPartCfg();
 */
 void local_place_particle(int part, double p[3]);
 
-/** Used by mpi_place_particle, should not be used elsewhere.
+/** Used by \ref mpi_place_particle, should not be used elsewhere.
     Called if on a different node a new particle was added.
     @param part the identity of the particle added
 */
 void added_particle(int part);
 
-/** Used by mpi_send_bond, should not be used elsewhere.
+/** Used by \ref mpi_send_bond, should not be used elsewhere.
     Modify a bond.
     @param part the identity of the particle to change
     @param bond the bond to do
@@ -370,6 +386,16 @@ void added_particle(int part);
 */
 int local_change_bond(int part, int *bond, int delete);
 
+/** Used by \ref mpi_remove_particle, should not be used elsewhere.
+    Remove a particle on this node.
+    @param part the identity of the particle to remove
+*/
+void local_remove_particle(int part);
+
+/** Used by \ref mpi_remove_particle, should not be used elsewhere.
+    Locally remove all particles.
+ */
+void local_remove_all_particles();
 
 /** Check the existence of a bond partner on that node and return the
     corresponding particle pointer or force exit.
