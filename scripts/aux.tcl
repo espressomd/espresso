@@ -170,18 +170,51 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
 }
 
 
-proc checkpoint_read { origin } {
-    if { [file exists "$origin.chk"] } { set chk [open "$origin.chk" "r"] 
-    } elseif { [file exists "$origin"] } { set chk [open "$origin" "r"] 
-    } else { puts "ERROR: Could not find checkpoint-list $origin!\nAborting..."; exit }
-    while { [eof $chk]==0 } { if { [gets $chk source] > 0 } {
-	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -cd $source" r]
-	} else { set f [open "$source" "r"] }
+proc checkpoint_read { origin { read_all_chks 1 } } {
+    if { [file exists "$origin.chk"] } { 
+	set chk [open "$origin.chk" "r"] 
+    } elseif { 
+	[file exists "$origin"] } { set chk [open "$origin" "r"] 
+    } else { 
+	puts "ERROR: Could not find checkpoint-list $origin!\nAborting..."; exit 
+    }
+    if { $read_all_chks } {
+	while { [eof $chk]==0 } { 
+	    if { [gets $chk source] > 0 } {
+		if { [string compare [lindex [split $source "."] end] "gz"]==0 } { 
+		    set f [open "|gzip -cd $source" r] 
+		} else { 
+		    set f [open "$source" "r"] 
+		}
+		part deleteall
+		while { [blockfile $f read auto] != "eof" } {}
+		puts -nonewline "."; flush stdout; # puts "read $source"
+		close $f
+	    }
+	}
+    } else {
+	puts " Reading just one chkpnt " 
+	set tmp_chk "NA"
+	while { [eof $chk]==0 } { 
+	    if { [gets $chk source] > 0 } { 
+		set tmp_chk $source 
+	    }   
+	}
+	if { $tmp_chk == "NA" } { 
+	    puts "ERROR: Didn't find any checkpoints! Aborting..."; exit 
+	} else { 
+	    set source $tmp_chk 
+	}
+	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { 
+	    set f [open "|gzip -cd $source" r]
+	} else { 
+	    set f [open "$source" "r"] 
+	}
 	part deleteall
 	while { [blockfile $f read auto] != "eof" } {}
 	puts -nonewline "."; flush stdout; # puts "read $source"
 	close $f
-    } }
+    }
     close $chk
 }
 
