@@ -146,8 +146,8 @@ const Datafield fields[] = {
 
 int ro_callback(Tcl_Interp *interp, void *data)
 {
-  Tcl_AppendResult(interp, "variable is readonly", (char *)NULL);
-  return (TCL_ERROR);
+  Tcl_AppendResult(interp, "Warning: variable is readonly", (char *)NULL);
+  return (TCL_OK);
 }
 
 int setmd(ClientData data, Tcl_Interp *interp,
