@@ -130,7 +130,7 @@ void setup_node_grid()
 
 int node_grid_is_set()
 {
-  return (node_grid[1] > 0);
+  return (node_grid[0] > 0);
 }
 
 void changed_topology()
@@ -232,14 +232,17 @@ void calc_2d_grid(int n, int grid[3])
 void calc_3d_grid(int n, int grid[3])
 {
   int i,j,k,max;
-  max = n*n;
-  for(i=1;i<=(int)sqrt((double)n);i++) 
-    for(j=1;j<=(int)sqrt((double)n);j++) 
-      for(k=1;k<=n;k++) 
+  max = 3*n*n;
+  for(i=1;i<=(int)sqrt((double)n);i++) {
+    for(j=1;j<=(int)sqrt((double)n);j++) { 
+      for(k=1;k<=n;k++) {
 	if(i*j*k == n && ((i*i)+(j*j)+(k*k)) <= max) {
 	  grid[0] = k; grid[1] = j;grid[2] = i;
 	  max =  ((i*i)+(j*j)+(k*k));
 	}
+      }
+    }
+  }
   if(grid[2]>grid[0]) {i=grid[0];grid[0]=grid[2];grid[2]=i;}
 }
 
