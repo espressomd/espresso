@@ -212,7 +212,7 @@ int orient_order(double* result)
 
     if ( l_orient.e[i] != LIPID_STRAY ) {
       dp = scalar(dir,sumdir);
-      *result += dp*dp*3-1;      
+      *result += dp*dp*1.5-0.5;      
       //     printf( "dp: %f, %f \n", dp, result );
     }
 
