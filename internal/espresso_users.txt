@@ -80,7 +80,17 @@ email: prochaz@vivien.natur.cuni.cz
 send:  08.OKT.2003
 topic: 
 
-name:  Andreas Heure
+name:  Andreas Heuer
 email: andheuer@uni-muenster.de
 send:  22.OKT.2003
 topic: Polymers, e.g. PEO at Silica
+
+name:  Alexey Shipov
+email: ashipov@mail.ru
+send:  11.FEB.2004
+topic: domain nucleation and growth in thin granular ferromagnetic films in PMMA
+
+name:
+email:
+send:
+topic:
