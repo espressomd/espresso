@@ -137,10 +137,6 @@ void integrate_vv_init()
     }
 
     /* start initialization */
-    INTEG_TRACE(fprintf(stderr,"%d: n_nodes =%d, max_seen_particle=%d\n",
-			this_node,n_nodes,max_seen_particle));
-    INTEG_TRACE(fprintf(stderr,"%d: n_particles = %d\n",
-			this_node, n_particles));
 
     /* initialize link cell structure */
     cells_re_init();  
@@ -278,9 +274,9 @@ void rescale_forces()
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
-      p[i].r.f[0] *= scale;
-      p[i].r.f[1] *= scale;
-      p[i].r.f[2] *= scale;
+      p[i].f[0] *= scale;
+      p[i].f[1] *= scale;
+      p[i].f[2] *= scale;
     }
   }
 }
@@ -294,9 +290,9 @@ void propagate_velocities()
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
-      p[i].v[0] += p[i].r.f[0];
-      p[i].v[1] += p[i].r.f[1];
-      p[i].v[2] += p[i].r.f[2];
+      p[i].v[0] += p[i].f[0];
+      p[i].v[1] += p[i].f[1];
+      p[i].v[2] += p[i].f[2];
     }
   }
 }
@@ -314,13 +310,13 @@ void rescale_forces_propagate_vel()
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
-      p[i].r.f[0] *= scale;
-      p[i].r.f[1] *= scale;
-      p[i].r.f[2] *= scale;
+      p[i].f[0] *= scale;
+      p[i].f[1] *= scale;
+      p[i].f[2] *= scale;
 
-      p[i].v[0] += p[i].r.f[0];
-      p[i].v[1] += p[i].r.f[1];
-      p[i].v[2] += p[i].r.f[2];
+      p[i].v[0] += p[i].f[0];
+      p[i].v[1] += p[i].f[1];
+      p[i].v[2] += p[i].f[2];
     }
   }
 }
@@ -385,9 +381,9 @@ void propagate_vel_pos()
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
-      p[i].v[0] += p[i].r.f[0];
-      p[i].v[1] += p[i].r.f[1];
-      p[i].v[2] += p[i].r.f[2];
+      p[i].v[0] += p[i].f[0];
+      p[i].v[1] += p[i].f[1];
+      p[i].v[2] += p[i].f[2];
 
       p[i].r.p[0] += p[i].v[0];
       p[i].r.p[1] += p[i].v[1];
