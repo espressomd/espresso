@@ -18,13 +18,17 @@ OBJECTS=$(CSOURCES:%=%.o) $(CXXSOURCES:%=%.o)
 CFILES=$(CSOURCES:=.c)
 CXXFILES=$(CXXSOURCES:=.cc)
 
+DOCFILES=$(shell ls doc/text/*.doc)
+
 default: $(PLATFORM) $(PLATFORM)/tcl_md $(PLATFORM)/libtcl_md.a
 all: $(PLATFORM) $(PLATFORM)/tcl_md $(PLATFORM)/libtcl_md.a
 
 ########### documentation
-doc: doxygen_header $(CFILES) $(CXXFILES)
+docu: doc/html/index.html
+
+doc/html/index.html: $(DOCFILES) $(CFILES) $(CXXFILES)
 	doxygen doxygen_config
-	# (cd doc/latex; make)
+#       (cd doc/latex; make)
 
 ########### output directory
 $(PLATFORM):
@@ -41,8 +45,10 @@ $(PLATFORM)/libtcl_md.a: $(LIBOBJECTS)
 clean:
 	rm -f *~
 	(cd $(PLATFORM); rm -f $(OBJECTS) )
-mostclean: clean
-	rm -rf $(PLATFORM) doc/html/* doc/rtf/*
+docclean:
+	rm -rf doc/html/* doc/rtf/* doc/latex/* doc/man/*
+mostclean: clean docclean
+	rm -rf $(PLATFORM)
 
 ########### dependencies
 dep: 
