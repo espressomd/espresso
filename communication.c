@@ -228,7 +228,7 @@ void mpi_who_has()
       MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, REQ_WHO_HAS,
 	       MPI_COMM_WORLD, &status);
       for (i = 0; i < sizes[pnode]; i++)
-	particle_node[particles[i].identity] = pnode;
+	particle_node[pdata[i]] = pnode;
     }
   }
 
