@@ -28,8 +28,9 @@ extern double my_right[3];
  * functions
  **************************************************/
 
-/** try to determine the processor grid and communicate it */
-int setup_processor_grid();
+/** Make sure that the processor grid is set, eventually
+    determine one automatically. */
+void setup_processor_grid();
 
 /** return wether grid was set */
 int processor_grid_is_set();
@@ -49,7 +50,8 @@ int pgrid_callback(Tcl_Interp *interp, void *data);
 /** fill neighbor lists of node. */
 void calc_neighbors(int node);
 
-/** call if topology (grid, box dim, ...) changed */
+/** Call this if the topology (grid, box dim, ...) has changed. Only for master node,
+    will be communicated. */
 void changed_topology();
 
 #endif

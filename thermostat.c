@@ -1,10 +1,26 @@
+#include <math.h>
 #include "thermostat.h"
 #include "global.h"
 #include "particle_data.h"
-#include <math.h>
+#include "communication.h"
 
 /** Friction coefficient gamma. */
 double friction_gamma = 0;
+
+int gamma_callback(Tcl_Interp *interp, void *_data)
+{
+  double data = *(double *)_data;
+
+  if (data < 0) {
+    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  friction_gamma = data;
+
+  mpi_bcast_parameter(FIELD_GAMMA);
+
+  return (TCL_OK);
+}
 
 void friction_thermo()
 {

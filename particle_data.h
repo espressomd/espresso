@@ -41,26 +41,34 @@ typedef struct {
  * exported variables
  ************************************************/
 
-/** size of local particle array. */
+/** Size of local particle array. */
 extern int   max_particles;
-/** number of particles belonging to that node. */
+/** Number of particles belonging to that node. */
 extern int     n_particles;
-/** number of ghost particle belonging to that node. */
+/** Number of ghost particle belonging to that node. */
 extern int     n_ghosts;
-/** local particle array. */
+/** Local particle array. */
 extern Particle *particles;
 
-/* total number of particles in the system. */
-extern int n_total_particles;
-/* used only on master node: particle->node mapping */
+/** Highest particle number seen so far. If you leave out some
+    particle numbers, this number might be higher than the
+    true number of particles. On the other hand, if you start
+    your particle numbers at 0, the total number of particles
+    is larger by 1.
+*/
+extern int max_seen_particle;
+
+/** Capacity of the particle_node array. */
+extern int  n_particle_node;
+/** Used only on master node: particle->node mapping. */
 extern int  *particle_node;
 
 /** Mapping between particle identity and local index. 
- *    You find the local index of particle i 
- *    at position i of this field. 
- *    A particle that is not in the processors domain 
- *    (including its ghostshell) is marked with -1.
- */
+    You find the local index of particle i at position
+    i of this field. 
+    A particle that is not in the processors domain 
+    (including its ghostshell) is marked with -1.
+*/
 extern int *local_index;
 
 /************************************************

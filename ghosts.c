@@ -188,7 +188,7 @@ void ghost_init()
 
 void exchange_part()
 {
-  int i,d, lr, dir, n;
+  int d, lr, dir, n;
   GHOST_TRACE(fprintf(stderr,"%d: exchange_part:\n",this_node));
 
   /*
@@ -216,7 +216,7 @@ void exchange_part()
 
   /* check part array */
   for(n=0;n<n_particles;n++) {
-    if(particles[n].identity <0 || particles[n].identity > n_total_particles)
+    if(particles[n].identity <0 || particles[n].identity > max_seen_particle)
       fprintf(stderr,"%d: illigal identity %d of part %d\n",
 	      this_node,particles[n].identity,n);
     for(dir=0;dir<3;dir++) {

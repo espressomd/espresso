@@ -85,8 +85,8 @@ void integrate_vv_init()
   /* initialize link cell structure */
   cells_init();  fflush(stderr); MPI_Barrier(MPI_COMM_WORLD);
   /* allocate and initialize local indizes */
-  local_index = (int *)malloc(n_total_particles*sizeof(int));
-  for(i=0;i<n_total_particles;i++) local_index[i] = -1;
+  local_index = (int *)malloc((max_seen_particle + 1)*sizeof(int));
+  for(i=0;i<=max_seen_particle;i++) local_index[i] = -1;
   for(i=0;i<n_particles;i++) local_index[particles[i].identity] = i;
   /* initialize ghost structure */
   ghost_init(); fflush(stderr);  MPI_Barrier(MPI_COMM_WORLD);

@@ -1,10 +1,12 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "binary_file.h"
 #include "global.h"
 #include "communication.h"
 #include "grid.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "interaction_data.h"
+
 /** \file binary_file.c
     Implementation of \ref binary_file.h "binary_file.h".
 */
@@ -96,7 +98,7 @@ int writemd(ClientData data, Tcl_Interp *interp,
   Tcl_Write(channel, (char *)&header, sizeof(header));
   Tcl_Write(channel, row, header.n_rows*sizeof(char));
 
-  for (p = 0; p < n_total_particles; p++) {
+  for (p = 0; p <= max_seen_particle; p++) {
     node = particle_node[p];
     if (node != -1) {
       Particle data;
@@ -234,7 +236,7 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
       }
     }
 
-    node = (data.identity < n_total_particles) ? particle_node[data.identity] : -1; 
+    node = (data.identity <= max_seen_particle) ? particle_node[data.identity] : -1; 
     if (node == -1) {
       if (!av_pos) {
 	Tcl_AppendResult(interp, "new particle without position data",
@@ -256,8 +258,10 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
       mpi_send_v(node, data.identity, data.v);
     if (av_f)
       mpi_send_f(node, data.identity, data.f);
-    if (av_type)
+    if (av_type) {
+      make_particle_type_exist(data.type);
       mpi_send_type(node, data.identity, data.type);
+    }
   }
 
   free(row);

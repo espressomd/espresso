@@ -74,8 +74,8 @@ void cells_init()
   /* there should be a reasonable number of cells only!
      But we will deal with that later... */
   if(this_node==0) {
-    if(n_inner_cells > (n_total_particles/nprocs)+1) 
-      fprintf(stderr,"0: cells_init: WARNING: More cells per node %d than particles per node %d\n",n_inner_cells,(n_total_particles/nprocs)+1);
+    if(n_inner_cells > ((max_seen_particle + 1)/nprocs)+1) 
+      fprintf(stderr,"0: cells_init: WARNING: More cells per node %d than particles per node %d\n",n_inner_cells,((max_seen_particle + 1)/nprocs)+1);
   }
 
   /* allocate space for cell structure */

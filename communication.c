@@ -51,8 +51,10 @@ typedef void (SlaveCallback)(int param);
 #define REQ_INTEGRATE 10
 /** Action number for \ref mpi_bcast_ia_params. */
 #define REQ_BCAST_IA  11
+/** Action number for \ref mpi_bcast_n_particle_types. */
+#define REQ_BCAST_IA_SIZE  12
 /** Total number of action numbers. */
-#define REQ_MAXIMUM   12
+#define REQ_MAXIMUM   13
 
 /** \name Slave Callbacks
     These functions are the slave node counterparts for the
@@ -72,6 +74,7 @@ void mpi_send_type_slave(int parm);
 void mpi_recv_part_slave(int parm);
 void mpi_integrate_slave(int parm);
 void mpi_bcast_ia_params_slave(int parm);
+void mpi_bcast_n_particle_types_slave(int parm);
 /*@}*/
 
 /** A list of wich function has to be called for
@@ -88,7 +91,8 @@ SlaveCallback *callbacks[] = {
   mpi_send_type_slave,           /*  8: REQ_SET_TYPE */
   mpi_recv_part_slave,           /*  9: REQ_GET_PART */
   mpi_integrate_slave,           /* 10: REQ_INTEGRATE */
-  mpi_bcast_ia_params_slave      /* 11: REQ_BCAST_IA */ 
+  mpi_bcast_ia_params_slave,     /* 11: REQ_BCAST_IA */ 
+  mpi_bcast_n_particle_types_slave /* 12: REQ_BCAST_IA_SIZE */ 
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -105,6 +109,7 @@ char *names[] = {
   "GET_PART",  /*  9 */
   "INTEGRATE", /* 10 */
   "BCAST_IA"   /* 11 */
+  "BCAST_IAS"  /* 12 */
 };
 
 /**********************************************
@@ -220,7 +225,7 @@ void mpi_who_has()
 	  particle_node[particles[i].identity] = pnode;
       }
     }
-    else {
+    else if (sizes[pnode] > 0) {
       if (pdata_s < sizes[pnode]) {
 	pdata_s = sizes[pnode];
 	pdata = realloc(pdata, sizeof(int)*pdata_s);
@@ -241,6 +246,9 @@ void mpi_who_has_slave(int ident)
   int npart, i;
   int *sendbuf;
   MPI_Gather(&n_particles, 1, MPI_INT, NULL, 0, MPI_INT, 0, MPI_COMM_WORLD);
+  if (n_particles == 0)
+    return;
+
   sendbuf = malloc(sizeof(int)*n_particles);
   npart = 0;
   for (i = 0; i < n_particles; i++)
@@ -550,8 +558,24 @@ void mpi_bcast_ia_params_slave(int i)
   MPI_Bcast(&j,  1, MPI_INT, 0, MPI_COMM_WORLD);
 
   /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
-  MPI_Bcast(safe_get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
+  MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
 	    0, MPI_COMM_WORLD);
+}
+
+/*************** REQ_BCAST_IA_SIZE ************/
+void mpi_bcast_n_particle_types(int ns)
+{
+  int req[2];
+  req[0] = REQ_BCAST_IA_SIZE;
+  req[1] = ns;
+
+  COMM_TRACE(fprintf(stderr, "0: issuing BCAST_IA_SIZE %d\n", ns));
+  MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
+}
+
+void mpi_bcast_n_particle_types_slave(int ns)
+{
+  realloc_ia_params(ns);
 }
 
 /*********************** MAIN LOOP for slaves ****************/

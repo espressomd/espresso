@@ -4,9 +4,9 @@
 /* just some nice utilities... */
 /* and some constants...*/
 
-static double PI     = 3.14159265358979323846264338328;  /* Pi */
-static double wupi   = 1.77245385090551602729816748334;  /* root of PI */
-static double driwu2 = 1.25992104989487316476721060728;  /* third root of 2 */
+#define PI     3.14159265358979323846264338328 /* Pi */
+#define wupi   1.77245385090551602729816748334 /* root of PI */
+#define driwu2 1.25992104989487316476721060728 /* third root of 2 */
 
 
 /* Maximum von  double a und  double b berechnen, gibt double zurueck. */

@@ -18,17 +18,11 @@ Bonded_ia_parameters *bonded_ia_params;
  * functions
  *****************************************/
 
-IA_parameters *safe_get_ia_param(int i, int j)
-{
-  if ((i < 0) || (j < 0))
-    return NULL;
-
-  /* expand array if necessary */
-  realloc_ia_params(((i > j) ? i : j) + 1);
-
-  return &ia_params[i*n_particle_types + j];
-}
-
+/** This function increases the LOCAL ia_params field
+    to the given size. This function is not exported
+    since it does not do this on all nodes. Use
+    make_particle_type_exist for that.
+*/
 void realloc_ia_params(int nsize)
 {
   int i, j;
@@ -61,6 +55,17 @@ void realloc_ia_params(int nsize)
   ia_params = new_params;
 }
 
+void make_particle_type_exist(int type)
+{
+  int ns = type + 1;
+  if (ns <= n_particle_types)
+    return;
+
+  realloc_ia_params(ns);
+
+  mpi_bcast_n_particle_types(ns);
+}
+
 int inter(ClientData _data, Tcl_Interp *interp,
 	  int argc, char **argv)
 {
@@ -78,8 +83,11 @@ int inter(ClientData _data, Tcl_Interp *interp,
       (Tcl_GetInt(interp, argv[2], &j) == TCL_ERROR))
     return (TCL_ERROR);
 
-  data     = safe_get_ia_param(i, j);
-  data_sym = safe_get_ia_param(j, i);
+  make_particle_type_exist(i);
+  make_particle_type_exist(j);
+
+  data     = get_ia_param(i, j);
+  data_sym = get_ia_param(j, i);
 
   if (!data || !data_sym) {
     Tcl_AppendResult(interp, "particle types must be nonnegative",
@@ -174,5 +182,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
 int niatypes_callback(Tcl_Interp *interp, void *data)
 {
   n_interaction_types = *(int *)data;
+
+  mpi_bcast_parameter(FIELD_NITYPE);
   return (TCL_OK);
 }

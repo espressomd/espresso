@@ -27,7 +27,7 @@ if {[setmd nproc] == 8} {
 }
 puts "grid = \{[setmd proc]\}"
 
-if { ![file exists "config"]} {
+if { ![file exists "config.gz"]} {
     error "please generate a configuration file with setup.tcl"
     exit
 }
@@ -38,6 +38,11 @@ if { ![file exists "config"]} {
 set f [open "|gzip -cd config.gz" r]
 readmd $f
 
+puts "read [expr [setmd maxpart] + 1] particles from config.gz"
+
+for {set p 0} { $p <= [setmd maxpart]} { incr p} {
+	puts [part $p]
+}
 # setup interactions
 ##################################################
 inter 0 0 lennard-jones 1 1 1.2 0 0

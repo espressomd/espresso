@@ -49,6 +49,11 @@ typedef struct {
 
 extern const Datafield fields[];
 
+/** \name Field Enumeration
+    These numbers identify the variables given in
+    \ref fields for use with e. g. \ref mpi_bcast_parameter.
+*/
+/*@{*/
 /** index of \ref nprocs in \ref fields */
 #define FIELD_NPROCS 0
 /** index of \ref processor_grid in \ref fields */
@@ -73,12 +78,18 @@ extern const Datafield fields[];
 #define FIELD_RANGE 10
 /** index of \ref friction_gamma in \ref fields */
 #define FIELD_GAMMA 11
+/** index of \ref rebuild_verletlist \ref fields */
+#define FIELD_VERLET 12
+/*@}*/
 
 /**********************************************
  * misc procedures
  **********************************************/
 
-/** tcl procedure for datafield access */
+/** Implements the Tcl command setmd. It allows to modify simulation parameters.
+    These parameters must be declared in \ref fields. If you write your own
+    callback, REMEMBER THE OTHER NODES!!! The value will only be set by you
+    and only on the master node. Using \ref mpi_bcast_parameter may be useful. */
 int setmd(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
 #endif

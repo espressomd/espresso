@@ -47,7 +47,7 @@ close $f
 # relax
 puts "starting ramp integration"
 integrate init
-for {set i 0} { $i < 10} { incr i} {
+for {set i 0} { $i < 100} { incr i} {
     puts "$i% done"
     integrate 1
 }

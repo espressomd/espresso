@@ -61,10 +61,14 @@ extern Bonded_ia_parameters *bonded_ia_params;
  * functions
  ************************************************/
 
-/** tcl procedure for interaction access */
+/** Implementation of the Tcl function inter. This function
+    allows to modify the interaction parameters for nonbonded
+    interactions like Lennard-Jones.
+ */
 int inter(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
-/* callback for setmd niatypes */
+
+/** Callback for setmd niatypes. */
 int niatypes_callback(Tcl_Interp *interp, void *data);
 
 /** get interaction particles between particle sorts i and j */
@@ -74,14 +78,19 @@ MDINLINE IA_parameters *get_ia_param(int i, int j) {
   return &ia_params[i*n_particle_types + j];
 }
 
-/** get interaction particles between particle sorts i and j.
-    returns NULL if i or j < 0, allocates if necessary */
-IA_parameters *safe_get_ia_param(int i, int j);
+/** Makes sure that ia_params is large enough to cover interactions
+    for this particle type. The interactions are initialized with values
+    such that no physical interaction occurs. */
+void make_particle_type_exist(int type);
 
-/** realloc n_particle_types */
+/** This function increases the LOCAL ia_params field
+    to the given size. Better use
+    \ref make_particle_type_exist since it takes care of
+    the other nodes.
+*/
 void realloc_ia_params(int nsize);
 
-/** initialize interaction parameters */
+/** Initialize interaction parameters. */
 MDINLINE void initialize_ia_params(IA_parameters *params) {
   params->LJ_eps =
     params->LJ_sig =
@@ -93,7 +102,7 @@ MDINLINE void initialize_ia_params(IA_parameters *params) {
     params->ramp_force = 0;
 }
 
-/** copy interaction parameters */
+/** Copy interaction parameters. */
 MDINLINE void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJ_eps = src->LJ_eps;
   dst->LJ_sig = src->LJ_sig;

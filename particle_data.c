@@ -30,26 +30,15 @@
  * variables
  ************************************************/
 
-/** Maximal identity of particles on all nodes. */
-int n_total_particles = 0;
-/** For every particle (identity) the node where it is stored.
-    Only available when executing scripts, during the integration
-    this pointer is NULL. */
+int max_seen_particle = -1;
+int n_particle_node = 0;
 int *particle_node = NULL;
 
-/** Number of particles on this node. */
 int     n_particles = 0;
-/** Physical size of \ref particles. */
 int   max_particles = 0;
-/** Number of ghosts additionally in \ref particles. */
 int        n_ghosts = 0;
-/** Data of local particles. */
 Particle *particles = NULL;
 
-/** For every particle (identity) the index on this node. If the particle is not
-    stored on this node, neither physical nor as ghost, the index is -1. Only
-    valid during the simulation.
-*/
 int *local_index;
 
 /************************************************
@@ -58,12 +47,18 @@ int *local_index;
 
 void map_particle_node(int part, int node)
 {
-  int old_max = n_total_particles, i;
-  if (part >= n_total_particles) {
-    n_total_particles = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
-    particle_node = realloc(particle_node, sizeof(int)*n_total_particles);
-    for (i = old_max; i < n_total_particles; i++)
-      particle_node[i] = -1;
+  int old_max = n_particle_node, i;
+  if (part > max_seen_particle) {
+    max_seen_particle = part;
+    mpi_bcast_parameter(FIELD_NTOTAL);
+
+    if (part >= n_particle_node) {
+      /* round up part + 1 in granularity PART_INCREMENT */
+      n_particle_node = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
+      particle_node = realloc(particle_node, sizeof(int)*n_particle_node);
+      for (i = old_max; i <= max_seen_particle; i++)
+	particle_node[i] = -1;
+    }
   }
   PART_TRACE(fprintf(stderr, "mapping %d -> %d (%d)\n", part, node, n_total_particles));
   particle_node[part] = node;
@@ -71,11 +66,14 @@ void map_particle_node(int part, int node)
 
 void build_particle_node()
 {
-  if (n_total_particles == 0)
+  if (max_seen_particle == -1)
     return;
   if (particle_node)
     free(particle_node);
-  particle_node = malloc(n_total_particles*sizeof(int));
+
+  /* round up max_seen_particle + 1 in granularity PART_INCREMENT */
+  n_particle_node = PART_INCREMENT*((max_seen_particle + PART_INCREMENT)/PART_INCREMENT);
+  particle_node = malloc(n_particle_node*sizeof(int));
   mpi_who_has();
 }
 
@@ -176,10 +174,6 @@ void particle_finalize_data()
   if (!particle_node)
     return;
 
-  /* calculate n_total_particles */
-  while (particle_node[n_total_particles - 1] == -1)
-    n_total_particles--;
-
   mpi_bcast_parameter(FIELD_NTOTAL);
 
   /* invalidate particle->node data */
@@ -213,7 +207,7 @@ int part(ClientData data, Tcl_Interp *interp,
   if (!particle_node)
     build_particle_node();
 
-  node = (part_num < n_total_particles) ? particle_node[part_num] : -1;
+  node = (part_num <= max_seen_particle) ? particle_node[part_num] : -1;
  
   /* print out particle information */
   if (argc == 2) {
@@ -355,7 +349,7 @@ int part(ClientData data, Tcl_Interp *interp,
 	} 
 
 	/* make sure type exists */
-	realloc_ia_params(type + 1);
+	make_particle_type_exist(type);
 
 	mpi_send_type(node, part_num, type);
 

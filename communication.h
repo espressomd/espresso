@@ -122,6 +122,11 @@ void mpi_integrate(int n_steps);
     \param i,j the particle types whose parameters are to be sent.
 */
 void mpi_bcast_ia_params(int i, int j);
+
+/** Issue REQ_BCAST_IA_SIZE: send new size of \ref ia_params.
+    \param s the new size for \ref ia_params.
+*/
+void mpi_bcast_n_particle_types(int s);
 /*@}*/
 
 #endif

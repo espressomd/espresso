@@ -28,5 +28,8 @@ int initialize(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "writemd", writemd, 0, NULL);
   Tcl_CreateCommand(interp, "readmd", readmd, 0, NULL);
 
+  /* in interaction_data.c: make sure 0<->0 ia always exists */
+  make_particle_type_exist(0);
+
   return TCL_OK;
 }

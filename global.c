@@ -10,6 +10,7 @@
 #include "interaction_data.h"
 #include "integrate.h"
 #include "thermostat.h"
+#include "verlet.h"
 
 /**********************************************
  * description of variables
@@ -38,7 +39,7 @@ const Datafield fields[] = {
   {processor_grid, TYPE_INT, 3, "procgrid", pgrid_callback }, /* grid.c */
   {local_box_l, TYPE_DOUBLE, 3, "local_box_l", ro_callback }, /* global.c */
   {box_l, TYPE_DOUBLE, 3, "box_l", boxl_callback },
-  {&n_total_particles, TYPE_INT, 1, "nparticles", ro_callback },
+  {&max_seen_particle, TYPE_INT, 1, "maxpart", ro_callback },
   {&n_particle_types, TYPE_INT, 1, "nptypes", ro_callback },
   {&n_interaction_types, TYPE_INT, 1, "niatypes", niatypes_callback },
   {&time_step, TYPE_DOUBLE, 1, "time_step", ro_callback }, /* integrator.c */
@@ -46,6 +47,7 @@ const Datafield fields[] = {
   {&skin, TYPE_DOUBLE,   1, "skin", ro_callback },
   {&max_range, TYPE_DOUBLE,   1, "max_range", ro_callback },
   {&friction_gamma, TYPE_DOUBLE,   1, "gamma", gamma_callback },
+  {&rebuild_verletlist, TYPE_INT,   1, "verletflag", ro_callback },
   { NULL, 0, 0, NULL, NULL }
 };
 
@@ -75,18 +77,6 @@ int boxl_callback(Tcl_Interp *interp, void *_data)
 
   changed_topology();
 
-  return (TCL_OK);
-}
-
-int gamma_callback(Tcl_Interp *interp, void *_data)
-{
-  double data = *(double *)_data;
-
-  if (data < 0) {
-    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  friction_gamma = data;
   return (TCL_OK);
 }
 
@@ -149,8 +139,6 @@ int setmd(ClientData data, Tcl_Interp *interp,
 	}
 	if (status != TCL_OK)
 	  return TCL_ERROR;
-
-	mpi_bcast_parameter(i);
       }
 
       /* get */

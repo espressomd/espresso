@@ -37,28 +37,32 @@ int pgrid_callback(Tcl_Interp *interp, void *_data)
     Tcl_AppendResult(interp, "illegal value", (char *) NULL);
     return (TCL_ERROR);
   }
-  processor_grid[0] = data[0];
-  processor_grid[1] = data[1];
-  processor_grid[2] = data[2];
-  if (!setup_processor_grid()) {
+
+  if (data[0]*data[1]*data[2] != nprocs) {
     Tcl_AppendResult(interp, "processor grid does not fit nprocs",
 		     (char *) NULL);
     return (TCL_ERROR);
   }
 
+  processor_grid[0] = data[0];
+  processor_grid[1] = data[1];
+  processor_grid[2] = data[2];
+
+  changed_topology();
+
   return (TCL_OK);
 }
 
-int setup_processor_grid()
+void setup_processor_grid()
 {
   if (processor_grid[0] < 0) {
+    /* auto setup, grid not set */
     fprintf(stderr, "not implemented: setup_processor_grid()\n");
     processor_grid[0] = nprocs;
     processor_grid[1] = processor_grid[2] = 1;
+
+    changed_topology();
   }
-  changed_topology();
-  
-  return (processor_grid[0]*processor_grid[1]*processor_grid[2] == nprocs);
 }
 
 int processor_grid_is_set()
@@ -122,7 +126,11 @@ void changed_topology()
     local_box_l[i] = box_l[i]/(double)processor_grid[i]; 
   }
 
-  mpi_bcast_parameter(FIELD_LBOXL);
-
   rebuild_verletlist = 1;
+
+  /* a little bit of overkill, but safe */
+  mpi_bcast_parameter(FIELD_PGRID);
+  mpi_bcast_parameter(FIELD_BOXL);
+  mpi_bcast_parameter(FIELD_LBOXL);
+  mpi_bcast_parameter(FIELD_VERLET);
 }
