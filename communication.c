@@ -743,10 +743,14 @@ void mpi_gather_stats(int job, void *result)
     task[0] = energy.init_status;
     task[1] = energy.ana_num;
     MPI_Bcast(task, 2, MPI_INT, 0, MPI_COMM_WORLD);
-
     calc_energy();
-    
-
+    break;
+  case 2:
+    /* calculate and reduce (sum up) virials */
+    task[0] = virials.init_status;
+    task[1] = virials.ana_num;
+    MPI_Bcast(task, 2, MPI_INT, 0, MPI_COMM_WORLD);
+    calc_virials();
     break;
   default:
     fprintf(stderr, "%d: illegal request %d for REQ_GATHER\n", this_node, job);
@@ -769,7 +773,13 @@ void mpi_gather_stats_slave(int pnode, int job)
     if( task[0]==0 ) init_energies();
     energy.ana_num = task[1];
     calc_energy();
-
+    break;
+  case 2:
+    /* calculate and reduce (sum up) virials */
+    MPI_Bcast(task, 2, MPI_INT, 0, MPI_COMM_WORLD);
+    if( task[0]==0 ) init_virials();
+    virials.ana_num = task[1];
+    calc_virials();
     break;
   default:
     fprintf(stderr, "%d: illegal request %d for REQ_GATHER\n", this_node, job);
