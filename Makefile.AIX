@@ -53,7 +53,7 @@ ifeq ($(GARCHING),yes)
      # LDLIBS+= -L/afs/ipp/@sys/soft/gnu/lib -ltcl8.4
      LDLIBS+= /afs/ipp/@sys/soft/gnu/lib/libtcl8.4.so
 else
-     LDLIBS+= /usr/lib/libtcl8.3.so
+     LDLIBS+= /usr/local/lib/libtcl8.4.so
 endif
 
 
