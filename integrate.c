@@ -73,8 +73,12 @@ void rescale_forces_propagate_vel();
 
 /************************************************************/
 
-int integrate(ClientData data, Tcl_Interp *interp,
-	      int argc, char **argv)
+int invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+  particle_changed = interactions_changed = topology_changed = parameter_changed = 1;
+  return TCL_OK;
+}
+
+int integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
   int  n_steps;
   
