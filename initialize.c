@@ -21,7 +21,6 @@
 #include "p3m.h"
 #include "fft.h"
 #include "ghosts.h"
-#include "polymer.h"
 
 static void init_tcl(Tcl_Interp *interp);
 
@@ -143,8 +142,6 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "tcl_rand", (Tcl_CmdProc *)tcl_rand, 0, NULL);
   /* in file blockfile_tcl.c */
   Tcl_CreateCommand(interp, "blockfile", (Tcl_CmdProc *)blockfile, 0, NULL);
-  /* in file polymer.c */
-  Tcl_CreateCommand(interp, "polymer", (Tcl_CmdProc *)polymer, 0, NULL);
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("TCLMD_SCRIPTS");
