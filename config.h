@@ -69,7 +69,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 #define CONSTRAINTS
 
 /** allow particles to have different masses. */
-#define MASS
+/* #define MASS */
 
 /** exclusion of nonbonded interactions for specific particle pairs
     currently works only with domain decomposition and Verlet lists */
@@ -99,16 +99,16 @@ This will allow to use such particle properties as quart, omega, and torque. */
 #define LENNARD_JONES
 
 /** Morse */
-#define MORSE
+/* #define MORSE */
 
 /** Lennard-Jones with cosine tail */
 /* #define LJCOS */
 
 /** BUCKINGHAM potential */
-#define BUCKINGHAM
+/* #define BUCKINGHAM */
 
 /** SOFT-SPHERE potential */
-#define SOFT_SPHERE
+/* #define SOFT_SPHERE */
 /*@}*/
 
 /************************************************/
