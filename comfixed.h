@@ -36,6 +36,10 @@ MDINLINE int comfixed_set_params(int part_type_a, int part_type_b, int flag)
   if (n_nodes > 1)
     return 2;
 
+  if (PERIODIC(0) || PERIODIC(1) || PERIODIC(2)) {
+    return 3;
+  }
+
   /* COMFIXED should be symmetrically */
   data_sym->COMFIXED_flag    = data->COMFIXED_flag    = flag;
 
@@ -102,8 +106,13 @@ MDINLINE int comfixed_parser(Tcl_Interp * interp,
   case 2:
     Tcl_AppendResult(interp, "works only with a single CPU", (char *) NULL);
     return 0;
+  case 3:
+    Tcl_AppendResult(interp, "works only with non periodic BC", (char *) NULL);
+    return 0;
   }
-  return 2;
+
+   
+   return 2;
 }
 
 MDINLINE void calc_comfixed()
