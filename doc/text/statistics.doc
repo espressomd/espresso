@@ -1,0 +1,29 @@
+/** \page statistics Statistical Analysis and Creating Gnuplots
+The following procedures are found in scripts/statistics.tcl.
+<ul>
+    <li>\anchor tcl_plotObs
+        \verbatim plotObs <file> {x:y1 ... x:yn} [titles {"title.y1" ... "title.yn"}] [labels {"xlabel" "ylabel"}] [scale <gnuplot-scale>] [out <out>]\endverbatim
+	creates a gnuplot of the column-wise stored data in <file> writing it to <file>.ps by default.<BR>
+	Using gnuplot syntax, the columns x:y1,... are plotted (e.g. '<tt>3:2 3:5 3:8</tt>' plots the 3rd column as x-axis, the 2nd, 5th and 8th column
+	in <file> as three independent data-series on the y-axis). The scale of the axis may be given with an optional flag using the 
+	gnuplot keywords, e.g. '<tt>scale logscale xy</tt>' to enable log-log-plotting; by default, <tt>nologscale xy</tt> is assumed.<BR>
+	With <tt>titles</tt> each of the data-series can be given an individual description. <tt>labels</tt> allow to set the annotation of the axis;
+	if only the xlabel is specified, the filename <file> is used for the y-axis.<BR>
+	If the different data series are in multiple files, <files> may be given as a tcl-list '{ <file1> <file2> ... }'; however, in this case
+	each <tt>x:yi</tt> refers to one file only, hence the length of both tcl-lists must be equal.<BR>
+	To specify a different output-file than the default <file>.ps, use the <tt>out <out></tt>-option; in that case <out>.ps is the result.
+    <li>\anchor tcl_plotJoin
+        \verbatim plotJoin <destinations> <final>\endverbatim
+	joins the .ps-files given by the tcl-list <destinations> into one single .ps-file '<final>.ps' while placing any two files on one page.<BR>
+	Note that the resulting files may be huge and therefore hard to print!
+    <li>\anchor tcl_calcObsAv
+	\verbatim calcObsAv <file> { <i1> <i2> ... } \endverbatim
+	derives column-averages of the observables stored at columns <i1>, <i2>,... in <file>,
+	returning a tcl-list '<tt><amount of samples> { names (taken from the first line) } { averaged values }</tt>'.<BR>
+	This is most effective if you are using '<tt>puts $dataFile "[setmd time] $observable1 $observable 2 ..."</tt>' in
+	your tcl-script, and you need the averages of the observables afterwards.
+    <li>\verbatim findObsAv <val> <what>\endverbatim
+        extracts the values whose names are given in the tcl-list <val> at their respective positions in <what>, where
+	<what> has the list-format as returned by \ref tcl_calcObsAv, returning just these values as tiny tcl-list.
+</ul>
+*/
