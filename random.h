@@ -25,6 +25,7 @@ extern double d_random(void);
 extern void   init_random(void);
 extern void   init_random_seed(long seed);
 extern void   init_random_stat(RandomStatus my_stat);
+extern long   print_random_idum(void);
 extern long   print_random_seed(void);
 RandomStatus  print_random_stat(void);
 
