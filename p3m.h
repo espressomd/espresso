@@ -43,8 +43,8 @@
  */
 
 #include "config.h"
-#include "integrate.h"
 #include "debug.h"
+
 #include "interaction_data.h"
 
 #ifdef ELECTROSTATICS

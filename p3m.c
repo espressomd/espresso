@@ -17,6 +17,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "integrate.h"
+
 #include "global.h"
 #include "debug.h"
 #include "grid.h"
