@@ -15,7 +15,7 @@
 # settings
 ##################################################
 set tcl_precision 5
-set use_imd y
+set use_imd n
 
 set write_steps 10
 set configs 5000
@@ -68,7 +68,7 @@ puts "nptypes = [setmd nptypes]"
 
 setmd skin 0.200001
 
-setmd bjerrum 1.54
+setmd bjerrum 0.0
 setmd p3m_alpha 0.27
 setmd p3m_r_cut 3.0
 setmd p3m_mesh 8 8 8

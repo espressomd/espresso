@@ -199,7 +199,7 @@ void force_calc()
   }
 
   /* calculate long range interactions */
-  P3M_perform();
+  if(p3m.bjerrum != 0.0) P3M_perform();
 
 }
 

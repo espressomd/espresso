@@ -167,7 +167,7 @@ void   P3M_init()
   if(p3m.bjerrum == 0.0) {       // no electrostatics !
     p3m.r_cut  = 0.0;
     p3m.r_cut2 = 0.0;
-    P3M_TRACE(fprintf(stderr,"%d: P3M_init: Bjerrum length is zero. Electrostatics switched off!\n"));
+    P3M_TRACE(fprintf(stderr,"%d: P3M_init: Bjerrum length is zero. Electrostatics switched off!\n",this_node));
   }
   else {                         // prepare long range electrostatics
     /* DEBUG */
