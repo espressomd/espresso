@@ -4,7 +4,7 @@
 
 #define LAYERED_FULL_EXCHANGE 0
 #define LAYERED_NBOR_EXCHANGE 1
-extern int n_layers;
+extern int n_layers, determine_n_layers;
 
 Cell *layered_position_to_cell(double pos[3]);
 

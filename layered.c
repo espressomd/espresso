@@ -1,12 +1,15 @@
 #include <mpi.h>
 #include <string.h>
 #include "layered.h"
+#include "global.h"
 #include "communication.h"
 #include "debug.h"
 #include "ghosts.h"
 #include "forces.h"
 #include "pressure.h"
 #include "energy.h"
+#include "constraint.h"
+#include "domain_decomposition.h"
 
 /* Organization: Layers only in one direction.
    ghost_bottom
@@ -50,8 +53,22 @@
 #define LAYERED_BTM_NEIGHBOR ((layered_flags & LAYERED_BTM_MASK) != LAYERED_BOTTOM)
 
 int layered_flags = 0;
-int n_layers = 0, btm, top;
+int n_layers = -1, determine_n_layers = 1, btm, top;
 double layer_h = 0, layer_h_i = 0;
+
+static void layered_get_mi_vector(double res[3], double a[3], double b[3])
+{
+  int i;
+
+  for(i=0;i<2;i++) {
+    res[i] = a[i] - b[i];
+#ifdef PARTIAL_PERIODIC
+    if (PERIODIC(i))
+#endif
+      res[i] -= dround(res[i]*box_l_i[i])*box_l[i];
+  }
+  res[2] = a[2] - b[2];
+}
 
 Cell *layered_position_to_cell(double pos[3])
 {
@@ -69,7 +86,7 @@ Cell *layered_position_to_cell(double pos[3])
     else
       return NULL;
   }
-  return &(cells[cpos]);  
+  return &(cells[cpos]);
 }
 
 void layered_topology_release()
@@ -85,86 +102,167 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
 {
   GhostCommunication *gc;
   int even_odd;
-  int c, n = 4; /* how many communications to do by default: up even/odd, down even/odd */
-  
-  /* if periodic and bottom or top, send shifted */
-  if (((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) ||
-      ((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK))
-    data_parts |= GHOSTTRANS_POSSHFTD;
+  int c, n;
 
-  /* one communication missing if not periodic but on border */
-  if (!LAYERED_TOP_NEIGHBOR)
-    n -= 2;
-  if (!LAYERED_BTM_NEIGHBOR)
-    n -= 2;
+  if (n_nodes > 1) {
+    /* more than one node => no local transfers */
 
-  prepare_comm(comm, data_parts, n);
-  /* always sending/receiving 1 cell per time step */
-  for(c = 0; c < n; c++) {
-    comm->comm[c].part_lists = malloc(sizeof(ParticleList *));
-    comm->comm[c].n_part_lists = 1;
-    comm->comm[c].mpi_comm = MPI_COMM_WORLD;
+    /* how many communications to do: up even/odd, down even/odd */
+    n = 4;
+    /* one communication missing if not periodic but on border */
+    if (!LAYERED_TOP_NEIGHBOR)
+      n -= 2;
+    if (!LAYERED_BTM_NEIGHBOR)
+      n -= 2;
+
+    prepare_comm(comm, data_parts, n);
+
+    /* always sending/receiving 1 cell per time step */
+    for(c = 0; c < n; c++) {
+      comm->comm[c].part_lists = malloc(sizeof(ParticleList *));
+      comm->comm[c].n_part_lists = 1;
+      comm->comm[c].mpi_comm = MPI_COMM_WORLD;
+    }
+
+    gc = comm->comm;
+
+    CELL_TRACE(fprintf(stderr, "%d: ghostrec new comm\n", this_node));
+    /* downwards */
+    for (even_odd = 0; even_odd < 2; even_odd++) {
+      /* send */
+      if (this_node % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
+	gc->type = GHOST_SEND;
+	gc->node = btm;
+	if (data_parts == GHOSTTRANS_FORCE) {
+	  gc->part_lists[0] = &cells[0];
+	  CELL_TRACE(fprintf(stderr, "%d: ghostrec send force to %d btmg\n", this_node, btm));
+	}
+	else {
+	  gc->part_lists[0] = &cells[1];
+
+	  /* if periodic and bottom or top, send shifted */
+	  gc->shift[0] = gc->shift[1] = 0;
+	  if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) &&
+	      (data_parts & GHOSTTRANS_POSITION)) {
+	    comm->data_parts |= GHOSTTRANS_POSSHFTD;
+	    gc->shift[2] = box_l[2];
+	  }
+	  else
+	    gc->shift[2] = 0;
+	  CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f btml\n", this_node, btm, gc->shift[2]));
+	}
+	gc++;
+      }
+      /* recv. Note we test r_node as we always have to test the sender
+	 as for odd n_nodes maybe we send AND receive. */
+      if (top % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
+	gc->type = GHOST_RECV;
+	gc->node = top;
+	if (data_parts == GHOSTTRANS_FORCE) {
+	  gc->part_lists[0] = &cells[n_layers];
+	  CELL_TRACE(fprintf(stderr, "%d: ghostrec get force from %d topl\n", this_node, top));
+	}
+	else {
+	  gc->part_lists[0] = &cells[n_layers + 1];
+	  CELL_TRACE(fprintf(stderr, "%d: ghostrec recv from %d topg\n", this_node, btm));
+	}
+	gc++;
+      }
+    }
+
+    /* upwards */
+    for (even_odd = 0; even_odd < 2; even_odd++) {
+      /* send */
+      if (this_node % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
+	gc->type = GHOST_SEND;
+	gc->node = top;
+	if (data_parts == GHOSTTRANS_FORCE) {
+	  gc->part_lists[0] = &cells[n_layers + 1];
+	  CELL_TRACE(fprintf(stderr, "%d: ghostrec send force to %d topg\n", this_node, top));
+	}
+	else {
+	  gc->part_lists[0] = &cells[n_layers];
+
+	  /* if periodic and bottom or top, send shifted */
+	  gc->shift[0] = gc->shift[1] = 0;
+	  if (((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) &&
+	      (data_parts & GHOSTTRANS_POSITION)) {
+	    comm->data_parts |= GHOSTTRANS_POSSHFTD;
+	    gc->shift[2] = -box_l[2];
+	  }
+	  else
+	    gc->shift[2] = 0;
+	  CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f topl\n", this_node, top, gc->shift[2]));
+	}
+	gc++;
+      }
+      /* recv. Note we test r_node as we always have to test the sender
+	 as for odd n_nodes maybe we send AND receive. */
+      if (btm % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
+	gc->type = GHOST_RECV;
+	gc->node = btm;
+	if (data_parts == GHOSTTRANS_FORCE) {
+	  gc->part_lists[0] = &cells[1];
+	  CELL_TRACE(fprintf(stderr, "%d: ghostrec get force from %d btml\n", this_node, btm));
+	}
+	else {
+	  gc->part_lists[0] = &cells[0];
+	  CELL_TRACE(fprintf(stderr, "%d: ghostrec recv from %d btmg\n", this_node, btm));
+	}
+	gc++;
+      }
+    }
   }
+  else {
+    /* one node => local transfers, either 2 (up and down, periodic) or zero*/
 
-  gc = comm->comm;
+    n = (layered_flags & LAYERED_PERIODIC) ? 2 : 0;
 
-  /* downwards */
-  for (even_odd = 0; even_odd < 2; even_odd++) {
-    /* send */
-    if (this_node % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
-      gc->type = GHOST_SEND;
-      gc->node = btm;
-      if (data_parts == GHOSTTRANS_FORCE)
+    prepare_comm(comm, data_parts, n);
+
+    if (n != 0) {
+      /* two cells: from and to */
+      for(c = 0; c < n; c++) {
+	comm->comm[c].part_lists = malloc(2*sizeof(ParticleList *));
+	comm->comm[c].n_part_lists = 2;
+	comm->comm[c].mpi_comm = MPI_COMM_WORLD;
+	comm->comm[c].node = this_node;
+      }
+
+      gc = comm->comm;
+
+      /* downwards */
+      gc->type = GHOST_LOCL;
+      if (data_parts == GHOSTTRANS_FORCE) {
 	gc->part_lists[0] = &cells[0];
+	gc->part_lists[1] = &cells[n_layers];
+      }
       else {
 	gc->part_lists[0] = &cells[1];
-	if (data_parts & GHOSTTRANS_POSSHFTD) {
-	  gc->shift[0] = gc->shift[1] = 0;
-	  gc->shift[2] = box_l[2];
-	}
+	gc->part_lists[1] = &cells[n_layers + 1];
+	/* here it is periodic */
+	if (data_parts & GHOSTTRANS_POSITION)
+	  comm->data_parts |= GHOSTTRANS_POSSHFTD;
+	gc->shift[0] = gc->shift[1] = 0;
+	gc->shift[2] = box_l[2];
       }
       gc++;
-    }
-    /* recv. Note we test r_node as we always have to test the sender
-       as for odd n_nodes maybe we send AND receive. */
-    if (top % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
-      gc->type = GHOST_RECV;
-      gc->node = top;
-      if (data_parts == GHOSTTRANS_FORCE)
-	gc->part_lists[0] = &cells[n_layers];
-      else
-	gc->part_lists[0] = &cells[n_layers + 1];
-      gc++;
-    }
-  }
 
-  /* upwards */
-  for (even_odd = 0; even_odd < 2; even_odd++) {
-    /* send */
-    if (this_node % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
-      gc->type = GHOST_SEND;
-      gc->node = top;
-      if (data_parts == GHOSTTRANS_FORCE)
+      /* upwards */
+      gc->type = GHOST_LOCL;
+      if (data_parts == GHOSTTRANS_FORCE) {
 	gc->part_lists[0] = &cells[n_layers + 1];
+	gc->part_lists[1] = &cells[1];
+      }
       else {
 	gc->part_lists[0] = &cells[n_layers];
-	if (data_parts & GHOSTTRANS_POSSHFTD) {
-	  gc->shift[0] = gc->shift[1] = 0;
-	  gc->shift[2] = -box_l[2];
-	}
+	gc->part_lists[1] = &cells[0];
+	/* here it is periodic */
+	if (data_parts & GHOSTTRANS_POSITION)
+	  comm->data_parts |= GHOSTTRANS_POSSHFTD;
+	gc->shift[0] = gc->shift[1] = 0;
+	gc->shift[2] = -box_l[2];
       }
-      gc++;
-    }
-    /* recv. Note we test r_node as we always have to test the sender
-       as for odd n_nodes maybe we send AND receive. */
-    if (btm % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
-      gc->type = GHOST_RECV;
-      gc->node = btm;
-      if (data_parts == GHOSTTRANS_FORCE)
-	gc->part_lists[0] = &cells[1];
-      else
-	gc->part_lists[0] = &cells[0];
-      gc++;
     }
   }
 }
@@ -174,7 +272,7 @@ void layered_topology_init(CellPList *old)
   Particle *part;
   int c, p, np;
 
-  CELL_TRACE(fprintf(stderr, "%d: layered_topology_init, %d old particles\n", this_node, old->n));
+  CELL_TRACE(fprintf(stderr, "%d: layered_topology_init, %d old particle lists\n", this_node, old->n));
 
   if (cell_structure.type != CELL_STRUCTURE_LAYERED) {
     cell_structure.type = CELL_STRUCTURE_LAYERED;
@@ -182,16 +280,43 @@ void layered_topology_init(CellPList *old)
     cell_structure.position_to_cell = layered_position_to_cell;
   }
 
-  top = (this_node + 1) % n_nodes;
-  btm = (this_node - 1) % n_nodes;
+  /* check node grid. All we can do is 1x1xn. */
+  if (node_grid[0] != 1 || node_grid[1] != 1) {
+    fprintf(stderr, "ERROR: selected node grid is not suitable for layered cell structure (needs 1x1xn grid)\n");
+    errexit();
+  }
 
-  layer_h = box_l[2]/(double)(n_layers);
+  if (determine_n_layers) {
+    if (max_range > 0) {
+      n_layers = (int)floor(local_box_l[2]/max_range);
+      if (n_layers < 1) {
+	fprintf(stderr, "ERROR: layered: maximal interaction range %f larger than local box length %f\n", max_range, local_box_l[2]);
+	errexit();
+      }
+      if (n_layers > max_num_cells - 2)
+	n_layers = max_num_cells - 2;
+    }
+    else
+      n_layers = 1;
+  }
+
+  top = (this_node == n_nodes - 1) ? 0 : this_node + 1;
+  btm = (this_node == 0) ? n_nodes - 1 : this_node - 1;
+
+  layer_h = local_box_l[2]/(double)(n_layers);
   layer_h_i = 1/layer_h;
 
+  if (layer_h < max_range) {
+    fprintf(stderr, "ERROR: layered: maximal interaction range %f larger than layer height %f\n", max_range, layer_h);
+    errexit();
+  }
+
+  /* check wether node is top and/or bottom */
+  layered_flags = 0;
   if (this_node == 0)
-    layered_flags = LAYERED_BOTTOM;
-  else if (this_node == n_nodes - 1)
-    layered_flags = LAYERED_TOP;
+    layered_flags |= LAYERED_BOTTOM;
+  if (this_node == n_nodes - 1)
+    layered_flags |= LAYERED_TOP;
 
   if (PERIODIC(2))
     layered_flags |= LAYERED_PERIODIC;
@@ -226,6 +351,7 @@ void layered_topology_init(CellPList *old)
   }
   for (c = 1; c <= n_layers; c++)
     update_local_particles(&cells[c]);
+
   CELL_TRACE(fprintf(stderr, "%d: layered_topology_init done\n", this_node));
 }
  
@@ -316,12 +442,12 @@ void layered_exchange_and_sort_particles(int global_flag)
 
     /* handshake redo */
     flag = (recv_buf.n != 0);
-    CELL_TRACE(fprintf(stderr, "%d: flag: %d\n", this_node, flag));
 
     if (global_flag == LAYERED_FULL_EXCHANGE) {
       MPI_Allreduce(&flag, &redo, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
       if (!redo)
 	break;
+      CELL_TRACE(fprintf(stderr, "%d: another exchange round\n", this_node));
     }
     else {
       if (flag) {
@@ -337,9 +463,9 @@ void layered_exchange_and_sort_particles(int global_flag)
 void layered_calculate_ia()
 {
   int c, i, j;
-  Cell *celll, *cellt, *cellb;
-  int      npl, npt, npb;
-  Particle *pl, *pt, *pb, *p1;
+  Cell  *celll, *cellb;
+  int      npl,    npb;
+  Particle *pl,    *pb, *p1;
   double dist2, d[3];
  
   for (c = 1; c <= n_layers; c++) {
@@ -357,16 +483,6 @@ void layered_calculate_ia()
       pb    = NULL;
     }
 
-    if (LAYERED_TOP_NEIGHBOR) {
-      cellt = &cells[c+1];
-      pt    = cellt->part;
-      npt   = cellt->n;
-    }
-    else {
-      npt   = 0;
-      pt    = NULL;
-    }
-
     for(i = 0; i < npl; i++) {
       p1 = &pl[i];
 
@@ -376,20 +492,18 @@ void layered_calculate_ia()
 #endif
 
       /* cell itself and bonded / constraints */
+      CELL_TRACE(fprintf(stderr, "%d: inter local\n", this_node));
       for(j = i+1; j < npl; j++) {
-	dist2 = distance2vec(p1->r.p, pl[j].r.p, d);
+	layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
+	dist2 = sqrlen(d);
 	add_non_bonded_pair_force(p1, &pl[j], d, sqrt(dist2), dist2);
       }
 
-      /* top neighbor */
-      for(j = 0; j < npt; j++) {
-	dist2 = distance2vec(p1->r.p, pt[j].r.p, d);
-	add_non_bonded_pair_force(p1, &pt[j], d, sqrt(dist2), dist2);
-      }
-
       /* bottom neighbor */
+      CELL_TRACE(fprintf(stderr, "%d: inter bottom\n", this_node));
       for(j = 0; j < npb; j++) {
-	dist2 = distance2vec(p1->r.p, pb[j].r.p, d);
+	layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
+	dist2 = sqrlen(d);
 	add_non_bonded_pair_force(p1, &pb[j], d, sqrt(dist2), dist2);
       }
     }
@@ -398,8 +512,97 @@ void layered_calculate_ia()
 
 void layered_calculate_energies()
 {
+  int c, i, j;
+  Cell  *celll, *cellb;
+  int      npl,    npb;
+  Particle *pl,    *pb, *p1;
+  double dist2, d[3];
+ 
+  for (c = 1; c <= n_layers; c++) {
+    celll = &cells[c];
+    pl    = celll->part;
+    npl   = celll->n;
+
+    if (LAYERED_BTM_NEIGHBOR) {
+      cellb = &cells[c-1];
+      pb    = cellb->part;
+      npb   = cellb->n;
+    }
+    else {
+      npb   = 0;
+      pb    = NULL;
+    }
+
+    for(i = 0; i < npl; i++) {
+      p1 = &pl[i];
+
+      add_kinetic_energy(p1);
+
+      add_bonded_energy(p1);
+#ifdef CONSTRAINTS
+      add_constraints_energy(p1);
+#endif
+
+      /* cell itself and bonded / constraints */
+      for(j = i+1; j < npl; j++) {
+	layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
+	dist2 = sqrlen(d);
+	add_non_bonded_pair_energy(p1, &pl[j], d, sqrt(dist2), dist2);
+      }
+
+      /* bottom neighbor */
+      for(j = 0; j < npb; j++) {
+	layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
+	dist2 = sqrlen(d);
+	add_non_bonded_pair_energy(p1, &pb[j], d, sqrt(dist2), dist2);
+      }
+    }
+  }
 }
 
 void layered_calculate_virials()
 {
+  int c, i, j;
+  Cell  *celll, *cellb;
+  int      npl,    npb;
+  Particle *pl,    *pb, *p1;
+  double dist2, d[3];
+ 
+  for (c = 1; c <= n_layers; c++) {
+    celll = &cells[c];
+    pl    = celll->part;
+    npl   = celll->n;
+
+    if (LAYERED_BTM_NEIGHBOR) {
+      cellb = &cells[c-1];
+      pb    = cellb->part;
+      npb   = cellb->n;
+    }
+    else {
+      npb   = 0;
+      pb    = NULL;
+    }
+
+    for(i = 0; i < npl; i++) {
+      p1 = &pl[i];
+
+      add_kinetic_virials(p1);
+
+      add_bonded_virials(p1);
+
+      /* cell itself and bonded / constraints */
+      for(j = i+1; j < npl; j++) {
+	layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
+	dist2 = sqrlen(d);
+	add_non_bonded_pair_virials(p1, &pl[j], d, sqrt(dist2), dist2);
+      }
+
+      /* bottom neighbor */
+      for(j = 0; j < npb; j++) {
+	layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
+	dist2 = sqrlen(d);
+	add_non_bonded_pair_virials(p1, &pb[j], d, sqrt(dist2), dist2);
+      }
+    }
+  }
 }
