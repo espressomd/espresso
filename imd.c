@@ -304,7 +304,7 @@ int imd_recv_fcoords(void *s, int32 n, float *coords) {
   return (imd_readn(s, (char *)coords, 12*n) != 12*n);
 }
 
-/***************************** tcl_md stuff ************************/
+/***************************** Espresso stuff ************************/
 
 int imd_drain_socket(Tcl_Interp *interp)
 {

@@ -14,7 +14,7 @@ look at testsuite/lj_liquid.tcl.
 In your simulation, the IMD connection is setup up using
 \verbatim imd connect <port> \endverbatim
 where <port> is an arbitrary port number (it has to be between 1024 and 65000). Normally
-tcl_md will try to open port 10000, but the port may be in use already by another tcl_md
+Espresso will try to open port 10000, but the port may be in use already by another Espresso
 simulation. In that case it is a good idea to just try another port (see lj_liquid.tcl).
 
 Now while the simulation is running, you should execute

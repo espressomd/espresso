@@ -1,11 +1,11 @@
 /** \page testsuite The Testsuite Directory
 
-In the directory tcl_md/testsuite you find several scripts that can serve as samples and tests for tcl_md.
+In the directory Espresso/testsuite you find several scripts that can serve as samples and tests for Espresso.
 
 <ol>
 <li> <b> lj_liquid.tcl </b><br>
      Simple Lennard-Jones particle liquid. Shows the basic features of
-     tcl_md: How to set up system parameters, particles and
+     Espresso: How to set up system parameters, particles and
      interactions. How to warm up and integrate. How to write
      parameters, configurations and observables to files. How to
      handle the connection to VMD.

@@ -560,7 +560,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 	    }
 	    cp_cnt++;
 #ifdef ADDITIONAL_CHECKS
-	    if(fabs(db_fsum)> 1.0) fprintf(stderr,"%d: Part %d: k-space-force = %e\n",this_node,p[i].r.identity,db_fsum);
+	    /*	    if(fabs(db_fsum)> 1.0) fprintf(stderr,"%d: Part %d: k-space-force = %e\n",this_node,p[i].r.identity,db_fsum); */
 #endif
 	    ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",this_node,p[i].f[0],p[i].f[1],p[i].f[2],d_rs,-db_fsum));
 	  }

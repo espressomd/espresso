@@ -7,14 +7,14 @@
 	     on each of the 'n_nodes' nodes, while
 	     \verbatim t_random seed <seed(0)> ... <seed(n_nodes-1)> \endverbatim
 	     sets those seeds to the new values respectively, re-initialising the random number generators on each node.<BR>
-	     Note that this is automatically done on invoking <i>tcl_md</i>, however due to that  your simulation will always start
+	     Note that this is automatically done on invoking <i>Espresso</i>, however due to that  your simulation will always start
 	     with the same random sequence on any node unless you use this tcl-command to reset the sequences' seeds.
 	<li> Since internally the random number generators' random sequences are not based on mere seeds but rather on whole random
 	     number tables, to recover the exact state of the random number generators at a given time during the simulation run (e.g.
 	     for saving a checkpoint) requires knowledge of all these values. They can be accessed by
 	     \verbatim t_random stat \endverbatim
 	     which returns a tcl-list with all status informations for any node (e.g. 8 nodes => approx. 350 parameters). To overwrite 
-	     those internally in <i>tcl_md</i> (e.g. upon restoring a checkpoint) submit the whole list back using
+	     those internally in <i>Espresso</i> (e.g. upon restoring a checkpoint) submit the whole list back using
 	     \verbatim t_random stat <status-list> \endverbatim
 	     with <status-list> being the tcl-list mentioned above without any braces.<BR>
 	     <b>Be careful!</b> A <i>complete</i> recovery of the current state of the simulation is only possible if you are saving/restoring 

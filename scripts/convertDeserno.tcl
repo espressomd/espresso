@@ -7,9 +7,9 @@
 # -----------------                                         #
 # Reads in an (initial) particle configuration given in     #
 # Deserno-format (e.g. created by 'polygelSetup') and       #
-# converts it for 'tcl_md', setting up global variables     #
+# converts it for 'Espresso', setting up global variables     #
 # corresponding to the parameters and broadcasting the      #
-# appropriate values to the 'tcl_md' program, including     #
+# appropriate values to the 'Espresso' program, including     #
 # particle configuration and interactions.                  #
 #                                                           #
 # Input:                                                    #
@@ -18,10 +18,10 @@
 #   supplied as parameter containing the full path.         #
 #                                                           #
 # Output:                                                   #
-# - A gzipped file $destination ready for use with 'tcl_md' #
+# - A gzipped file $destination ready for use with 'Espresso' #
 #   supplied in AxA's-blockfile-format;                     #
 #   the output file is suppressed if{$destination=="-1"}.   #
-# - Global variables for use with any tcl_md-script, i.e.:  #
+# - Global variables for use with any Espresso-script, i.e.:  #
 #   + lists 'conf' & 'corr', which contain the parameter's  #
 #     names in Deserno's and A&L's world, respectively      #
 #   + bunch of parameters having the same names as in       #
@@ -35,13 +35,13 @@
 # -----------------                                         #
 # The same as 'convertDeserno2MD', just vice versa,         #
 # i.e. it reads in a configuration file in AxA's new        #
-# 'tcl_md'-blockfileformat and creates a Deserno-compatible # 
+# 'Espresso'-blockfileformat and creates a Deserno-compatible # 
 # style-file $destination ( if{$origin=="-1"} no input-file #
-# is used, informations are taken from 'tcl_md' instead).   #
+# is used, informations are taken from 'Espresso' instead).   #
 # Meanwhile, the blockfile-format does also provide info's  #
 # about interactions etc., therefore if $origin is provided #
 # as an input file, additional informations may not be      #
-# required to be taken from 'tcl_md'.                       #
+# required to be taken from 'Espresso'.                       #
 # Since Deserno needs to know the chain-structure of the    #
 # (sometimes crosslinked) polymers, this script does also   #
 # have to analyze the topology of the given network/melt.   #
@@ -65,11 +65,11 @@
 # ! - It is possible to bypass initialization by directly ! #
 # !   accessing the 'XXXmain'-scripts, which comes handy  ! #
 # !   in particular when using 'MD2Deserno' on course of  ! #
-# !   a simulation run with 'tcl_md', because everything  ! #
+# !   a simulation run with 'Espresso', because everything  ! #
 # !   needed for a Deserno-compatible output is available ! #
 # !   in some program's variable by then - all missing    ! #
 # !   informations not extractable from $origin or        ! #
-# !   'tcl_md' itself (such as 'saveConfig' etc.) may be  ! #
+# !   'Espresso' itself (such as 'saveConfig' etc.) may be  ! #
 # !   manually added (e.g. by setting 'saveConfig' in the ! #
 # !   main script before calling the conversion-script)   ! #
 # !   and will be included in the Deserno-file.           ! #
@@ -78,7 +78,7 @@
 # !   unexpected behaviour may occur!                     ! #
 # !   A recommendable good compromise would be:           ! #
 # !   + manually invoke 'initConversion'                  ! #
-# !   + change all the parameters you know but 'tcl_md'   ! #
+# !   + change all the parameters you know but 'Espresso'   ! #
 # !     doesn't (such as 'saveConfig', 'seed', etc.)      ! #
 # !   + continue with 'conversionMD2DesernoMain'          ! #
 #                                                           #
@@ -132,7 +132,7 @@ proc initConversion {} {
     }
 
     # The internal names of the Deserno-variables from 'polygelSetup' will be stored in 'conf',
-    # the corresponding counterparts for 'tcl_md' in 'corr' at the same relative position within the lists;
+    # the corresponding counterparts for 'Espresso' in 'corr' at the same relative position within the lists;
     # 'spec' specifies any special properties one has to take into account when using the parameters
     puts -nonewline "        Correlate parameter names... "
     flush stdout
@@ -142,14 +142,14 @@ proc initConversion {} {
 	val_CI N_Salt val_pS val_nS N_T boxLen subbox_1D 
 	skin rcut_P3M k_FENE r_FENE eps_LJ rcut_LJ alpha mesh ip 
 	Bjerrum Temp Gamma N_CR } ]
-    # ...and correlate it with the ones from 'tcl_md'
-    # ('NA' = there's no implementation in 'tcl_md')
+    # ...and correlate it with the ones from 'Espresso'
+    # ('NA' = there's no implementation in 'Espresso')
     set corr [concat { NA NA NA NA NA time_step 
         NA NA NA NA NA NA 
         NA NA NA NA max_part box_l NA
         skin p3m_r_cut NA NA NA NA p3m_alpha p3m_mesh NA
         bjerrum temp gamma NA } ]
-    # Note the special properties some 'tcl_md' variables have:
+    # Note the special properties some 'Espresso' variables have:
     # 'ro' = read only; '3d' = 3D input required; 'OK' = nothing special
     set spec [concat { OK OK OK OK OK OK
 	OK OK OK OK OK OK
@@ -251,7 +251,7 @@ proc convertDeserno2MDmain {origin destination} {
 	exit
     }
     if { $destination == "-1" } {
-	puts "    No output-file was given, everything will be submitted without saving to 'tcl_md' only..."
+	puts "    No output-file was given, everything will be submitted without saving to 'Espresso' only..."
     }
 
 
@@ -314,11 +314,11 @@ proc convertDeserno2MDmain {origin destination} {
 	    # Right part is the value of the parameter -> e.g. 'prefix' (as stored in 'conf')
 	    eval set $tmp_var \"[string trim [lindex [eval split \"$$tmp_var\" $sep] 1] ]\"
 	    
-	    # If possible, sent the value to 'tcl_md':
+	    # If possible, sent the value to 'Espresso':
 	    if { [string compare "[lindex $corr $i]" "NA"]!=0 } {
-		# Intercept 'read-only' parameters until they are available in 'tcl_md'
+		# Intercept 'read-only' parameters until they are available in 'Espresso'
 		if { [string compare "[lindex $spec $i]" "ro"]!=0 } {
-		    puts -nonewline "        ---> tcl_md <--- Submitting "
+		    puts -nonewline "        ---> Espresso <--- Submitting "
 		    eval puts -nonewline \"'$[concat "T$tmp_var"] [lindex $conf $i]' \"
 		    puts -nonewline "\t to   "
                     eval puts \"'[lindex $corr $i]' (= $$tmp_var).\"
@@ -338,7 +338,7 @@ proc convertDeserno2MDmain {origin destination} {
 		    eval puts \"'$[concat "T$tmp_var"] [lindex $conf $i]' (= $$tmp_var).\"
 		}
 	    } else {
-		# Even if they're not sent to 'tcl_md' the parameters are set up globally
+		# Even if they're not sent to 'Espresso' the parameters are set up globally
 		# for further use in this or any other script
 		puts -nonewline "        Assigning global variable   "
 		eval puts \"'$[concat "T$tmp_var"] [lindex $conf $i]' (= $$tmp_var).\"
@@ -420,7 +420,7 @@ proc convertDeserno2MDmain {origin destination} {
 		    # lines once we've processed this one, i.e. for $j>0
 		    if { $j>0 } { gets $in tmp_var }
 
-		    # Submit the data to 'tcl_md'
+		    # Submit the data to 'Espresso'
 		    if { $foldCoord == 1 } {
 			part $j pos [expr [lindex $tmp_var 0] - floor([lindex $tmp_var 0] / $boxLen)*$boxLen] \
 			    [expr [lindex $tmp_var 1] - floor([lindex $tmp_var 1] / $boxLen)*$boxLen] \
@@ -436,7 +436,7 @@ proc convertDeserno2MDmain {origin destination} {
 		    # => omit monomer 0, 1*$MPC, 2*$MPC,..., ($N_P-1)*$MPC
 		    if { [expr $j%$MPC]!=0 } {
 			part $j bond $type_FENE [expr $j-1]
-			# Note that tcl_md stores bonds only with the particle of lower particle-number;
+			# Note that Espresso stores bonds only with the particle of lower particle-number;
 			# hence, a bond between 'a' and 'b' for 'a<b' is stored as '{0 b}' with particle 'a',
 			# whereas particle 'b' doesn't seem to have any bond...
 			# => use the function 'countBonds' to get a tcl-list 'bonds' 
@@ -461,7 +461,7 @@ proc convertDeserno2MDmain {origin destination} {
 			flush stdout
 		    } 
 		    gets $in tmp_var
-		    # Submit the data to 'tcl_md'
+		    # Submit the data to 'Espresso'
 		    if { $foldCoord == 1 } {
 			part $j pos [expr [lindex $tmp_var 0] - floor([lindex $tmp_var 0] / $boxLen)*$boxLen] \
 			    [expr [lindex $tmp_var 1] - floor([lindex $tmp_var 1] / $boxLen)*$boxLen] \
@@ -491,7 +491,7 @@ proc convertDeserno2MDmain {origin destination} {
 			flush stdout
 		    } 
 		    gets $in tmp_var
-		    # Submit the data to 'tcl_md'
+		    # Submit the data to 'Espresso'
 		    if { $foldCoord == 1 } {
 			part $j pos [expr [lindex $tmp_var 0] - floor([lindex $tmp_var 0] / $boxLen)*$boxLen] \
 			    [expr [lindex $tmp_var 1] - floor([lindex $tmp_var 1] / $boxLen)*$boxLen] \
@@ -528,7 +528,7 @@ proc convertDeserno2MDmain {origin destination} {
 
 		    # Crosslink particles
 		    part [lindex $tmp_var 0] bond $type_FENE [lindex $tmp_var 1]
-		    # Note that tcl_md stores bonds only with the particle of lower particle-number;
+		    # Note that Espresso stores bonds only with the particle of lower particle-number;
 		    # hence, a bond between 'a' and 'b' for 'a<b' is stored as '{0 b}' with particle 'a',
 		    # whereas particle 'b' doesn't seem to have any bond...
 		    # => use the function 'countBonds' to get a tcl-list 'bonds' 
@@ -549,13 +549,13 @@ proc convertDeserno2MDmain {origin destination} {
 #############################################################
 
     # Save all converted configurations, parameters, and interactions to $destination
-    # using AxA's blockfile-format for 'tcl_md'; skip if user specified "-1" as file-name
+    # using AxA's blockfile-format for 'Espresso'; skip if user specified "-1" as file-name
     if { $destination != "-1" } {
 	# The converted configurations should be compressed on-the-fly using 
 	# 'set f [open "|gzip -c - >$destination" w]' for output, allowing later usage with
 	# 'set f [open "|gzip -cd $destination" r]' to read it in
-	# This is done in 'polyBlockWrite' which writes all we've done so far to a 'tcl_md'-compatible file
-	puts -nonewline "    Saving all configurations in 'tcl_md'-format to '[lindex [split $destination \"/\"] end]'... "
+	# This is done in 'polyBlockWrite' which writes all we've done so far to a 'Espresso'-compatible file
+	puts -nonewline "    Saving all configurations in 'Espresso'-format to '[lindex [split $destination \"/\"] end]'... "
 	flush stdout
 	foreach j $corr {
 	    if { $j != "NA" } { lappend tmp_corr $j }
@@ -564,7 +564,7 @@ proc convertDeserno2MDmain {origin destination} {
 	puts "Done "
 
     } else {
-	puts "    Skipping to save converted configurations: Nothing will be written to disk, only 'tcl_md' will have them!"
+	puts "    Skipping to save converted configurations: Nothing will be written to disk, only 'Espresso' will have them!"
     }
 
 
@@ -583,7 +583,7 @@ proc convertMD2Deserno {origin destination} {
     # Initialize necessary parameters
     initConversion
 
-    # Set parameters which cannot be determined from 'tcl_md' or from $origin
+    # Set parameters which cannot be determined from 'Espresso' or from $origin
     global conf
     foreach i $conf { global $i }
     global step
@@ -629,12 +629,12 @@ proc convertMD2DesernoMain {origin destination} {
 #  Import entries from file
 #############################################################
 
-    # If the user specified '-1' for $origin, then there is no input-file and everything is directly taken from tcl_md
+    # If the user specified '-1' for $origin, then there is no input-file and everything is directly taken from Espresso
     if { [string compare "$origin" "-1"]==0 } {
-	puts "    No input-file was specified, let's hope that all required informations are accessible from 'tcl_md'!"
+	puts "    No input-file was specified, let's hope that all required informations are accessible from 'Espresso'!"
     } else {
-	# Open the (compressed) input-file which is expected to contain a configuration in 'tcl_md'-blockfile-format
-	puts -nonewline "    Preparing 'tcl_md'-configuration to be read from '[lindex [split $origin \"/\"] end]'... "
+	# Open the (compressed) input-file which is expected to contain a configuration in 'Espresso'-blockfile-format
+	puts -nonewline "    Preparing 'Espresso'-configuration to be read from '[lindex [split $origin \"/\"] end]'... "
 	flush stdout
 	if { [string compare [lindex [split $origin "."] end] "gz"]==0 } {
 	    set in [open "|gzip -cd $origin" "r"]
@@ -657,12 +657,12 @@ proc convertMD2DesernoMain {origin destination} {
 #  Get the rest from 'tcl-md'
 #############################################################
 
-    # Now everything should either have been loaded from the blockfile $origin into 'tcl_md'
+    # Now everything should either have been loaded from the blockfile $origin into 'Espresso'
     # or (in case $origin==-1) it was already there
-    puts "    Gathering informations from 'tcl_md'... "
+    puts "    Gathering informations from 'Espresso'... "
     flush stdout
 
-    # Load everything useful out of 'tcl_md'
+    # Load everything useful out of 'Espresso'
     puts -nonewline "        Getting"
     foreach i $corr j $conf {
 	if { [string compare "$i" "NA"]!=0 } {

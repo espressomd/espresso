@@ -1,7 +1,7 @@
 PROGRAMM:
 ===============================================================================
 
-tcl_md is a parallel molecular dynamics program.  It uses Tcl
+Espresso is a parallel molecular dynamics program.  It uses Tcl
 (http://tcl.activestate.com) as controlling language to allow great
 flexibility.
 
@@ -20,9 +20,9 @@ To generate the code:
 gmake
 
 You find the code depending on the mashine in:
-Linux/tcl_md
-OSF1/tcl_md
-AIX/tcl_md
+Linux/Espresso
+OSF1/Espresso
+AIX/Espresso
 
 To clean junk from old compilation trials:
 gmake clean         /* removes all object files */
@@ -36,7 +36,7 @@ DOCUMENTATION
 
 To generate documentation (only on pckr17, pckr27):
 
-change into the dirctory your_home/.../tcl_md
+change into the dirctory your_home/.../Espresso
 touch main.c
 gmake doc
 
@@ -72,7 +72,7 @@ test.tcl
 CVS
 ===============================================================================
 
-To check out a project, e. g. tcl_md, you need to
+To check out a project, e. g. Espresso, you need to
 
 setenv CVSROOT ~pep/cvsroot
 
@@ -80,24 +80,24 @@ The best way is to add this to your .cshrc.
 
 Then you get your private copy by 
 
-cvs checkout tcl_md 
+cvs checkout Espresso 
 
-This will create a new directory tcl_md in the CWD, containing an
-up-to-date version of tcl_md.
+This will create a new directory Espresso in the CWD, containing an
+up-to-date version of Espresso.
 
 Before editing or if someone else has added something you want to
 have, do
 
 cvs update
 
-in your tcl_md directory. If you are completed with your editing, type
+in your Espresso directory. If you are completed with your editing, type
 
 cvs commit <file>
 
 to make your changes public. If <file> is omitted, all changes in all
 files are committed.
 
-To add new files to tcl_md, you do
+To add new files to Espresso, you do
 
 cvs add <file>
 
@@ -105,7 +105,7 @@ and commit, or you do
 
 cvs remove -f <file>
 
-to remove a file from tcl_md. It will still be contained in the
+to remove a file from Espresso. It will still be contained in the
 history files, so nothing is lost.
 
 For more help on CVS, see

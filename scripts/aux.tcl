@@ -3,7 +3,7 @@
 # aux.tcl                                                   #
 # =======                                                   #
 #                                                           #
-# Several additional auxiliary functions for tcl_md.        #
+# Several additional auxiliary functions for Espresso.        #
 #                                                           #
 # Created:       01.10.2002 by BAM                          #
 #                                                           #
@@ -65,7 +65,7 @@ proc timeStamp { destination prefix postfix suffix } {
 # Input:
 # - complete path 'destination';
 #   if the filename ends with '.gz', the file will be compressed
-# - a list of 'tcl_md' parameters to be saved (out of node_grid|box_l|niatypes|time_step|skin|gamma|bjerrum|...
+# - a list of 'Espresso' parameters to be saved (out of node_grid|box_l|niatypes|time_step|skin|gamma|bjerrum|...
 #   ...p3m_alpha|p3m_r_cut|p3m_mesh|p3m_cao|p3m_epsilon|p3m_mesh_offset|max_num_cells|periodicity);
 #   if an empty list '{}' is supplied, no parameters and no interactions are written
 #   Default value: All the above mentioned parameters.
@@ -199,7 +199,7 @@ proc analysis { stat stat_out N_P MPC simtime { noted "na" } } {
 # -------------
 # 
 # Sets the velocities and forces of all particles currently
-# stored in tcl_md to zero.
+# stored in Espresso to zero.
 #
 #############################################################
 

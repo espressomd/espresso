@@ -20,8 +20,8 @@ CXXFILES=$(CXXSOURCES:=.cc)
 
 DOCFILES=$(shell ls doc/text/*.doc)
 
-default: $(PLATFORM) $(PLATFORM)/tcl_md $(PLATFORM)/libtcl_md.a
-all: $(PLATFORM) $(PLATFORM)/tcl_md $(PLATFORM)/libtcl_md.a
+default: $(PLATFORM) $(PLATFORM)/Espresso $(PLATFORM)/libEspresso.a
+all: $(PLATFORM) $(PLATFORM)/Espresso $(PLATFORM)/libEspresso.a
 
 ########### documentation
 docu: doc/html/index.html
@@ -35,11 +35,11 @@ $(PLATFORM):
 	mkdir -p $(PLATFORM)
 
 ########### final target
-$(PLATFORM)/tcl_md: $(OBJECTS)
-	(cd $(PLATFORM); $(LINK) $(LDFLAGS) -o tcl_md $(OBJECTS) $(LDLIBS) )
+$(PLATFORM)/Espresso: $(OBJECTS)
+	(cd $(PLATFORM); $(LINK) $(LDFLAGS) -o Espresso $(OBJECTS) $(LDLIBS) )
 
-$(PLATFORM)/libtcl_md.a: $(LIBOBJECTS)
-	(cd $(PLATFORM); ar -crs libtcl_md.a $(LIBOBJECTS) )
+$(PLATFORM)/libEspresso.a: $(LIBOBJECTS)
+	(cd $(PLATFORM); ar -crs libEspresso.a $(LIBOBJECTS) )
 
 ########### clean
 clean:

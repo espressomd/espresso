@@ -3,11 +3,11 @@
 # init.tcl                                                  #
 # ========                                                  #
 #                                                           #
-# Used for initializing tcl-scripts powered by the 'tcl_md' #
+# Used for initializing tcl-scripts powered by the 'Espresso' #
 # MPI parallel molecular dynamics program package.          #
 #                                                           #
 # It is a very good idea to include all custom tcl-scripts  #
-# here which may enhance other programs running 'tcl_md'    #
+# here which may enhance other programs running 'Espresso'    #
 # by providing additional tcl-commands/-functions.          #
 #                                                           #
 #############################################################
@@ -17,7 +17,7 @@
 puts ""
 puts "*******************************************************"
 puts "*                                                     *"
-puts "*                    - tcl_md -                       *"
+puts "*                    - Espresso -                       *"
 puts "*                      ======                         *"
 puts "*      A MPI Parallel Molecular Dynamics Program      *"
 puts "*                                                     *"
@@ -34,7 +34,7 @@ puts ""
 
 source convertDeserno.tcl
 # adds 'convertDeserno2MD' & 'convertMD2Deserno' for converting particle configurations
-#       stored in Deserno-file-format into tcl_md format and vice versa
+#       stored in Deserno-file-format into Espresso format and vice versa
 # adds 'convertDeserno2MDmain' & 'convertMD2DesernoMain' for directly accessing the conversion scripts
 #       therefore bypassing and/or overriding the initialization procedure
 
@@ -45,7 +45,7 @@ source countBonds.tcl
 
 source aux.tcl
 # adds 'timeStamp' which modifies a filestring to include a prefix and the current date as postfix before the suffix
-# adds 'polyBlockWrite' which writes a given 'tcl_md'-configuration to disk
+# adds 'polyBlockWrite' which writes a given 'Espresso'-configuration to disk
 #      (this function in combination with 'convertMD2Deserno' replaces 'polywr.tcl')
 # adds 'polyConfMovWriteInit' & 'polyConfMovWrite' which are customized version of 'polyBlockWrite'
 # adds 'analysisInit' & 'analysis' which write some analysis data

@@ -3,11 +3,11 @@
     The file can be either a Tcl channel or a FILE *, which is called FILETYPE here.
     See \ref blockfile.c "blockfile.c" for more information.
 */
-/** \page libtcl_md The tcl_md library
+/** \page libEspresso The Espresso library
     All functions described here are also contained in a library
-    called libtcl_md.a which can be used with any C-program. The file type is FILE *.
-    To compile using the tcl_md library, simply add the switches
-    \verbatim -L<tcl_md dir>/<PLATFORM> -ltcl_md \endverbatim to your compiler switches.
+    called libEspresso.a which can be used with any C-program. The file type is FILE *.
+    To compile using the Espresso library, simply add the switches
+    \verbatim -L<Espresso dir>/<PLATFORM> -lEspresso \endverbatim to your compiler switches.
 */
 #ifndef BLOCKFILE_H
 #define BLOCKFILE_H

@@ -68,7 +68,7 @@ void mpi_init(int *argc, char ***argv);
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
-/** Issue REQ_TERM: stop tcl_md, all slave nodes exit. */
+/** Issue REQ_TERM: stop Espresso, all slave nodes exit. */
 void mpi_stop();
 
 /** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.

@@ -1,9 +1,9 @@
 /** \file blockfile.c
     Implementation of \ref blockfile.h "blockfile.h". If you compile this
     file with the option -DTCL_FILE_IO instead of the C-like FILE *
-    operations Tcl channels are used for IO. This is used in tcl_md
+    operations Tcl channels are used for IO. This is used in Espresso
     itself, while the FILE * operations can be used in subsidiary code.
-    The FILE * version is also contained in the \ref libtcl_md.
+    The FILE * version is also contained in the \ref libEspresso.
 */
 #include <stdio.h>
 #include <ctype.h>

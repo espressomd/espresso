@@ -1,6 +1,6 @@
 /** \page our_doxygen How to do the documentation (Doxygen)
 
-The documentation for tcl_md is mainly contained in the source code
+The documentation for Espresso is mainly contained in the source code
 and is automatically generated using doxygen.
 <p>
 For each modul the documentation of the user interface, this are

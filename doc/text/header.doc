@@ -2,7 +2,7 @@
 
 \section introduction Introduction
 
-tcl_md is a MPI parallel molecular dynamics program. It uses a
+Espresso is a MPI parallel molecular dynamics program. It uses a
 <a href="http://tcl.activestate.com">Tcl</a> script for
 controlling details of the simulation to allow great flexibility.
 The standard Tcl language was extended by some commands which allow
@@ -31,13 +31,13 @@ endif
 # cvs root directory 
 setenv CVSROOT ~pep/cvsroot
 # TCL_MD source directory
-setenv TCLMD_SOURCE  "your_directory/tcl_md"
+setenv TCLMD_SOURCE  "your_directory/Espresso"
 # TCL_MD script directory
-setenv TCLMD_SCRIPTS "your_directory/tcl_md/scripts"
+setenv TCLMD_SCRIPTS "your_directory/Espresso/scripts"
 \endverbatim
-Replace your_directory by the directory where you want to install tcl_md.
+Replace your_directory by the directory where you want to install Espresso.
 <li> Get your local copy with:
-\verbatim cvs checkout tcl_md \endverbatim
+\verbatim cvs checkout Espresso \endverbatim
 <li> Compile using 
 \verbatim gmake \endverbatim
 <li> Create actual documentation with (html, latex, man and rtf). This 
@@ -73,7 +73,7 @@ No bugs known at the moment.
 <li> \ref our_cvs
 <li> \ref our_doxygen
 <li> \ref blockformat
-<li> \ref libtcl_md
+<li> \ref libEspresso
 </ul>
 
 */

@@ -195,9 +195,9 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   else if (tmp_try == -2) {
     sprintf(buffer, "Failed to place current polymer chain in the simulation box for %d times!\nAborting...\n",max_try); tmp_try = TCL_ERROR; }
   else if (tmp_try == -3) {
-    sprintf(buffer, "Failed upon creating one of the monomers in tcl_md!\nAborting...\n"); tmp_try = TCL_ERROR; }
+    sprintf(buffer, "Failed upon creating one of the monomers in Espresso!\nAborting...\n"); tmp_try = TCL_ERROR; }
   else if (tmp_try == -4) {
-    sprintf(buffer, "Failed upon removing one of the monomers in tcl_md while trying to reset current chain!\nAborting...\n"); tmp_try = TCL_ERROR; }
+    sprintf(buffer, "Failed upon removing one of the monomers in Espresso while trying to reset current chain!\nAborting...\n"); tmp_try = TCL_ERROR; }
   else if (tmp_try >= 0) {
     sprintf(buffer, "%d", tmp_try); tmp_try = TCL_OK; }
   else {
@@ -340,7 +340,7 @@ int counterions (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   if (tmp_try == -1) {
     sprintf(buffer, "Failed to place current counterion in the simulation box for %d times!\nAborting...\n",max_try); tmp_try = TCL_ERROR; }
   else if (tmp_try == -3) {
-    sprintf(buffer, "Failed upon creating one of the monomers in tcl_md!\nAborting...\n"); tmp_try = TCL_ERROR; }
+    sprintf(buffer, "Failed upon creating one of the monomers in Espresso!\nAborting...\n"); tmp_try = TCL_ERROR; }
   else if (tmp_try >= 0) {
     sprintf(buffer, "%d", tmp_try); tmp_try = TCL_OK; }
   else {
@@ -452,7 +452,7 @@ int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   else if (tmp_try == -2) {
     sprintf(buffer, "Failed to place current negative salt ion in the simulation box for %d times!\nAborting...\n",max_try); tmp_try = TCL_ERROR; }
   else if (tmp_try == -3) {
-    sprintf(buffer, "Failed upon creating one of the monomers in tcl_md!\nAborting...\n"); tmp_try = TCL_ERROR; }
+    sprintf(buffer, "Failed upon creating one of the monomers in Espresso!\nAborting...\n"); tmp_try = TCL_ERROR; }
   else if (tmp_try >= 0) {
     sprintf(buffer, "%d", tmp_try); tmp_try = TCL_OK; }
   else {
@@ -577,7 +577,7 @@ double velocitiesC(double v_max, int part_id, int N_T) {
     } while ( sqrt(SQR(v[0])+SQR(v[1])+SQR(v[2])) > v_max);
     v_av[0]+=v[0]; v_av[1]+=v[1]; v_av[2]+=v[2];
     if (set_particle_v(i, v)==TCL_ERROR) {
-      fprintf(stderr, "Failed upon setting one of the velocities in tcl_md (current average: %f)!\n",sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2]))); 
+      fprintf(stderr, "Failed upon setting one of the velocities in Espresso (current average: %f)!\n",sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2]))); 
       fprintf(stderr, "Aborting...\n"); errexit();
     }
   }
@@ -676,7 +676,7 @@ int crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   else if (tmp_try == -2) {
     sprintf(buffer, "An error occured while crosslinking the system!\nAborting...\n"); tmp_try = TCL_ERROR; }
   else if (tmp_try == -3) {
-    sprintf(buffer, "Failed upon submitting a bond to tcl_md!\nAborting...\n"); tmp_try = TCL_ERROR; }
+    sprintf(buffer, "Failed upon submitting a bond to Espresso!\nAborting...\n"); tmp_try = TCL_ERROR; }
   else if (tmp_try >= 0) {
     sprintf(buffer, "%d", tmp_try); tmp_try = TCL_OK; }
   else {
@@ -860,7 +860,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
   }
   POLY_TRACE(for (i=0; i < 2*N_P; i++) printf("%d -> %d \t", i%2 ? (i+1)*MPC/2-1 : i*MPC/2, cross[i]); printf("=> %d\n",crossL); fflush(NULL) );
 
-  /* Submit all lawful partners as new bonds to tcl_md (observing that bonds are stored with the higher-ID particle only). */
+  /* Submit all lawful partners as new bonds to Espresso (observing that bonds are stored with the higher-ID particle only). */
   if (k >= max_try) return(-1); else {
     size = 0;
     for (i=0; i < N_P; i++) {

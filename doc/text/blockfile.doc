@@ -1,7 +1,7 @@
 /** \page tcl_blockfile The blockfile command
 <i>In a nutshell:</i><BR>
-\ref tcl_blockfile is provided for saving and restoring the current state of tcl_md,
-e.g. for creating and using checkpoints. Hence you can transfer all accessible informations to and from disk from and to tcl_md.
+\ref tcl_blockfile is provided for saving and restoring the current state of Espresso,
+e.g. for creating and using checkpoints. Hence you can transfer all accessible informations to and from disk from and to Espresso.
 <ul>
     <li>\verbatim set out [open "|gzip -c - > checkpoint.block.gz" "w"]
  blockfile $out write variable all
@@ -17,12 +17,12 @@ e.g. for creating and using checkpoints. Hence you can transfer all accessible i
 	to the file 'checkpoint.block.gz' which is even being compressed on-the-fly (if you don't want that, 
 	use '<tt>set out [open "checkpoint.block" "w"]</tt>' instead).<BR>
 	Note that interactions must be stored before particles before bonding informations, as for the bonds to be set all particles and
-	all interactions must already be known to tcl_md.
+	all interactions must already be known to Espresso.
     <li>\verbatim set in [open "|gzip -c - > checkpoint.block.gz" "r"]
  while { [blockfile $in read auto] != "eof" } {}
  close $in \endverbatim
         This is basically all you need to restore the informations in the blockfile (again, if you don't have a compressed file, 
-	use '<tt>set out [open "checkpoint.block" "r"]</tt>' instead) overwriting the current settings in tcl_md.
+	use '<tt>set out [open "checkpoint.block" "r"]</tt>' instead) overwriting the current settings in Espresso.
 </li></ul>
 And now the full documentation on how \ref tcl_blockfile actually works:<BR>
     \verbatim blockfile <channel> read|write start|end|variable|auto|toend <param>?\endverbatim

@@ -2,7 +2,7 @@
 
 /*
   Demonstration of the use of the blockfile interface.
-  Build using gcc -Wall -o test test.c -LLinux -ltcl_md.
+  Build using gcc -Wall -o test test.c -LLinux -lEspresso.
 */
 int main()
 {

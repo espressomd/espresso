@@ -2,11 +2,11 @@
 # tricking... the line after a these comments are interpreted as standard shell script \
     PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=2; fi
 # OSF1 \
-    if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $TCLMD_SOURCE/$PLATFORM/tcl_md $0 $*
+    if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $TCLMD_SOURCE/$PLATFORM/Espresso $0 $*
 # AIX \
-    elif test $PLATFORM = AIX; then exec poe $TCLMD_SOURCE/$PLATFORM/tcl_md $0 $* -procs $NP
+    elif test $PLATFORM = AIX; then exec poe $TCLMD_SOURCE/$PLATFORM/Espresso $0 $* -procs $NP
 # Linux \
-    else export EF_ALLOW_MALLOC_0=1; lamboot; exec mpirun -np $NP -nsigs $TCLMD_SOURCE/$PLATFORM/tcl_md $0 $*;
+    else export EF_ALLOW_MALLOC_0=1; lamboot; exec mpirun -np $NP -nsigs $TCLMD_SOURCE/$PLATFORM/Espresso $0 $*;
 # \
     fi;
 
@@ -122,7 +122,7 @@ set p3m_alpha    0.1138
 set p3m_epsilon  0.1
    # parameters for 'inter coulomb $bjerrum p3m <r_cut> <mesh> <cao> [alpha] [accuracy]'
    # p3m_r_cut 15.0              --> r-space cutoff for electrostatics; r_cut+skin = max. real-space interaction must be < 0.5*min(box_l[0,1,2])
-   # p3m_mesh 8                  --> was 3D, now will be automatically expanded to x=y=z by tcl_md; must be positive (>0)
+   # p3m_mesh 8                  --> was 3D, now will be automatically expanded to x=y=z by Espresso; must be positive (>0)
    # p3m_cao 5 (was: 3 5000)     --> charge assigment order for p3m-particle mesh interaction (p3m_cao in [0,7] and < p3m_mesh)   [EXPERIMENTAL]
    # p3m_mesh_offset 0.5 0.5 0.5 --> offset of the first mesh point from the origin in mesh coordinates (all values between 0.0 and 1.0)
    # p3m_epsilon 0.1             --> dielectric constant at infinity (boundary condition for Ewald sumation)
@@ -223,7 +223,7 @@ set stat_path   ./configs/
 set stat_prfx     simulation_stats
 
 
-# tcl_md parameters
+# Espresso parameters
 #############################################################
 
 setmd skin 1.333333
@@ -418,7 +418,7 @@ if { $warmup != 1 } {
     puts -nonewline "done) with [setmd n_part] particles; "; flush stdout
     if { $N_T != [setmd n_part] } {
 	puts "however, configuration differs from this setup (expected $N_T particles).\n    Creating new start configuration now..."
-	puts -nonewline "        First, erasing all previously stored particles (i.e. those just read) from tcl_md... "; flush stdout
+	puts -nonewline "        First, erasing all previously stored particles (i.e. those just read) from Espresso... "; flush stdout
 	puts "Done ([part deleteall])."
 	set warmup 1
     } else {
@@ -485,8 +485,8 @@ puts "($section) Warm-up integration:"
 
 if {$max_type!=[setmd n_part_types]} {
     puts "Failed.\n\n----------------\n--> Warning! <--\n----------------"
-    puts "--> The number of particle types you specified differs from the one known to tcl_md!"
-    puts "--> (You said: $max_type, but tcl_md has [setmd n_part_types])\nAborting..."; exit
+    puts "--> The number of particle types you specified differs from the one known to Espresso!"
+    puts "--> (You said: $max_type, but Espresso has [setmd n_part_types])\nAborting..."; exit
 }
 if { $warmup == 1 } {
     puts -nonewline "    Prepare environement for the warm-up process ("; flush stdout
@@ -654,7 +654,7 @@ if { $vmd_output=="yes" } {
     } else { puts "Done (successfully disconnected 'imd')." }
 }
 puts "    Wrapped."
-puts "\nThis simulation run is now complete. Thank you for using 'tcl_md'!"
+puts "\nThis simulation run is now complete. Thank you for using 'Espresso'!"
 puts " "
 puts "============================================================="
 puts "=                         Finished.                         ="

@@ -10,7 +10,7 @@
 #include "grid.h"
 #include "interaction_data.h"
 
-/* cwz-build-comman: ssh chakotay "builtin cd /nhomes/janeway/axel/progs/tcl_md; make" 
+/* cwz-build-comman: ssh chakotay "builtin cd /nhomes/janeway/axel/progs/Espresso; make" 
    cwz-build-command: make
 */
 

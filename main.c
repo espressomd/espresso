@@ -1,5 +1,5 @@
 /** \file main.c
-    Main file of tcl_md. Initialization of tcl interpreter and exit handling.
+    Main file of Espresso. Initialization of tcl interpreter and exit handling.
 
     DO NOT CHANGE!!!
 

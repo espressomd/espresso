@@ -1,6 +1,6 @@
 /** \page tcl Using the Tcl Extension
 
-The program tcl_md is an enhanced Tcl interpreter. Additionally to the standard commands
+The program Espresso is an enhanced Tcl interpreter. Additionally to the standard commands
 of Tcl it offers the following commands, which are implemented in C and provide the
 interface between the Tcl script and the MD code:
 
@@ -19,7 +19,7 @@ interface between the Tcl script and the MD code:
 
     <li>\verbatim code_info \endverbatim
         returns information on the version and compilation status of
-        the used tcl_md programm.
+        the used Espresso programm.
     <li>\verbatim counterions <N_CI> [start <part_id>] [mode { SAW | RW } [<shield> [<max_try>]]] [charge <val_CI>] [type <type_CI>] \endverbatim
 	creates <N_CI> counterions in the simulation box. For more informations, see \ref tcl_counterions.
 
@@ -66,7 +66,7 @@ interface between the Tcl script and the MD code:
 	to a random vector with length in [-vmax,vmax], and returns the absolute value of the total velocity assigned.
 </ul>
 
-At program start, tcl_md reads in a starting script
+At program start, Espresso reads in a starting script
 <i>'init.tcl'</i>. It is assumed to be located in a directory
 <i>"scripts"</i>, but this default value can be overridden by the
 environment variable TCLMD_SCRIPTS.<BR>

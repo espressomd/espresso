@@ -5,9 +5,9 @@ The following procedures are found in scripts/convertDeserno.tcl.
 	\verbatim convertDeserno2MD <source_file> <destination_file>\endverbatim
 	converts the particle configuration stored in <source_file>
 	from Deserno-format into blockfile-format, importing everything
-	to 'tcl_md' and writing it to <destination_file>. 
+	to 'Espresso' and writing it to <destination_file>. 
 	The full particle information, bonds, interactions, and parameters will be converted and saved.<BR>
-	If <destination_file> is "-1", the data is only loaded into 'tcl_md' and nothing is written to disk.<BR>
+	If <destination_file> is "-1", the data is only loaded into 'Espresso' and nothing is written to disk.<BR>
 	If <destination_file> has the suffix '.gz', the output-file will be compressed.<BR>
 	The script uses some assumptions, e.g. on the
 	<particle_type_number>s of \ref tcl_part for polymers,
@@ -30,11 +30,11 @@ The following procedures are found in scripts/convertDeserno.tcl.
 
     <li>\anchor tcl_convertMD2Deserno
 	\verbatim convertMD2Deserno <source_file> <destination_file>\endverbatim
-	converts the particle configuration stored in the 'tcl_md'-blockfile <source_file> into a
+	converts the particle configuration stored in the 'Espresso'-blockfile <source_file> into a
 	Deserno-compatible <destination_file>.<BR>
-	If <source_file> is "-1", the data is entirely taken from 'tcl_md' without loading anything from disk.<BR>
+	If <source_file> is "-1", the data is entirely taken from 'Espresso' without loading anything from disk.<BR>
 	If <source_file> has the suffix '.gz', it is assumed to be compressed; otherwise it will be treated as containing plain text.<BR>
-	Since Deserno stores much more than 'tcl_md' does due to a
+	Since Deserno stores much more than 'Espresso' does due to a
 	centralized vs. a local storage policy, it depends on correct
 	values for the following properties, which therefore should be contained in <source_file>:
 	<ol>
@@ -77,7 +77,7 @@ The following procedures are found in scripts/convertDeserno.tcl.
 	with $MPC monomers corresponds to the first $MPC particles in
 	[part], the 2nd one to the $MPC following particles, etc. etc.
 
-   <li> It is now possible to save the <i>whole</i> state of 'tcl_md', including all parameters and interactions. 
+   <li> It is now possible to save the <i>whole</i> state of 'Espresso', including all parameters and interactions. 
         These scripts make use of that advantage by storing everything they find in the Deserno-file - but vice versa they also expect 
 	you to provide a blockfile containing all possible informations.
 </ul>
