@@ -562,7 +562,7 @@ static int parse_centermass(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
-static int parse_gyrationcenter(Tcl_Interp *interp, int argc, char **argv)
+static int parse_gyrationtensor(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze gyrationtensor [<type>]' */
   double gyrtensor[9];
@@ -1038,7 +1038,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   else if (ARG1_IS_S("centermass"))
     return parse_centermass(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("gyrationtensor"))
-    return parse_gyrationcenter(interp, argc - 2, argv + 2);
+    return parse_gyrationtensor(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("find_major_axis"))
     return parse_find_major_axis(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("nbhood"))
