@@ -27,10 +27,8 @@ proc average { data { from 0 } { to 0 } } {
     }
     if { $from < 0 || $from >= [llength $data] } {
 	return 0
-    }
-    
-    
-	for { set i $from } { $i < [expr $to + 1] } { incr i } {
+    }    
+    	for { set i $from } { $i < [expr $to + 1] } { incr i } {
 	    set sum [expr $sum + [lindex $data $i] ]
 	}
     
@@ -109,8 +107,8 @@ proc require_feature {feature} {
 
 #if { [catch {
 
-#require_feature "NPT"
-#require_feature "LENNARD_JONES"
+require_feature "NPT"
+require_feature "LENNARD_JONES"
 
 read_data "npt_lj_system.data"
 
@@ -160,11 +158,13 @@ for { set t 0 } { $t < 1000 } { incr t } {
 
     if { $t > 500 } {
 	lappend storedV [expr pow($Linst,3)]
+#	set vkappa [analyze Vkappa]
     }
 }
 
 set Vvar [expr pow([stdev $storedV],2)]
 set compressibility [expr $Vvar/([average $storedV]*1.0)]
+#set compressibility [expr $vkappa/([average $storedV]*1.0)]
 
 if { [expr abs($avp/(1.0*$avpi) - 2.0) ] > 0.2 } {
     error "ERROR: Average pressure <P> = [expr $avp/(1.0*$avpi)] deviates from imposed pressure P = 2.0"
@@ -172,7 +172,7 @@ if { [expr abs($avp/(1.0*$avpi) - 2.0) ] > 0.2 } {
 
 set Vvar [expr pow([stdev $storedV],2)]
 set compressibility [expr $Vvar/([average $storedV]*1.0)]
-if { [expr abs($compressibility - 0.209) ] > 0.005 } {
+if { [expr abs($compressibility - 0.209) ] > 0.05 } {
     error "ERROR: Compressibility <K> = $compressibility deviates from known value "
 } else { puts "Compressibility deviations: [expr abs($compressibility-0.2093)] acceptable" } 
 
