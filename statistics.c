@@ -52,7 +52,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle *gdata;
-  int N_P, MPC, N_CI, N_pS, N_nS, N_tot;
+  int N_P, MPC, N_CI, N_pS, N_nS;
   int mode, i, j, p;
   double dx, dy, dz, dist = 0.0;
   double r_CM_x=0.0, r_CM_y=0.0, r_CM_z=0.0, r_G=0.0, doubMPC;
@@ -60,7 +60,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
   /* If no further arguments are given, perform a self-consistency-test */
   if (argc == 1) {
-    sprintf(buffer,"%d",N_tot);
+    sprintf(buffer,"%d",n_total_particles);
     Tcl_AppendResult(interp, "Hello World! You have ", buffer, " particles!", (char *)NULL);
     mpi_gather_stats(2, &gdata);
     for(i=0; i<n_total_particles; i++) {
@@ -89,9 +89,9 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     N_pS = atol(argv[5]); N_nS = atol(argv[6]); }
   else {
     N_pS = 0; N_nS = 0; }
-  if (N_P*MPC + N_CI + N_pS + N_nS != N_tot) {
+  if (N_P*MPC + N_CI + N_pS + N_nS != n_total_particles) {
     Tcl_ResetResult(interp);
-    sprintf(buffer,"The topology you specified does not match the current configuration (expected: %d particles, got: %d)!",N_tot,N_P*MPC+N_CI+N_pS+N_nS);
+    sprintf(buffer,"The topology you specified does not match the current configuration (expected: %d particles, got: %d)!",n_total_particles,N_P*MPC+N_CI+N_pS+N_nS);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return (TCL_ERROR);
   }
