@@ -10,6 +10,7 @@
 #include "vmdsock.h"
 #include "imd.h"
 #include "communication.h"
+#include "particle_data.h"
 
 int transfer_rate = 0;
 
@@ -536,8 +537,9 @@ int imd(ClientData data, Tcl_Interp *interp,
   }
 
   if (!strncmp(argv[1], "positions", strlen(argv[1]))) {
-    float_packed_particle_data coord;
-    
+    float *coord;
+    int i, j;
+
     if (!initsock) {
       Tcl_AppendResult(interp, "no connection",
 		       (char *) NULL);
@@ -573,19 +575,35 @@ int imd(ClientData data, Tcl_Interp *interp,
       return (TCL_OK);
     }
 
-    if (!vmdsock_selwrite(sock, 0) > 0) {
+    if (!(vmdsock_selwrite(sock, 60) > 0)) {
       Tcl_AppendResult(interp, "could not write to IMD socket.",
 		       (char *) NULL);
       return (TCL_ERROR);
     }
 
-    mpi_gather_stats(1, &coord);
-    if (imd_send_fcoords(sock, coord.n_particles, coord.coords)) {
+    if (n_total_particles != max_seen_particle + 1) {
+      Tcl_AppendResult(interp, "for IMD, store particles consecutively starting with 0.",
+		       (char *) NULL);
+      return (TCL_ERROR);      
+    }
+    
+    updatePartCfg();
+
+    /* sort partcles according to identities */
+    coord = malloc(n_total_particles*3*sizeof(float));
+    for (i = 0; i < n_total_particles; i++) {
+      j = 3*partCfg[i].r.identity;
+      coord[j    ] = partCfg[i].r.p[0];
+      coord[j + 1] = partCfg[i].r.p[1];
+      coord[j + 2] = partCfg[i].r.p[2];
+    }
+
+    if (imd_send_fcoords(sock, n_total_particles, coord)) {
       Tcl_AppendResult(interp, "could not write to IMD socket.",
 		       (char *) NULL);
       return (TCL_ERROR);      
     }
-    free(coord.coords);
+    free(coord);
 
     Tcl_AppendResult(interp, "connected",
 		     (char *) NULL);

@@ -98,6 +98,15 @@ extern int  *particle_node;
 /** id->particle mapping on all nodes. */
 extern Particle   **local_particles;
 
+/** Particles' current configuration. Before using that
+    call \ref updatePartCfg or \ref sortPartCfg to allocate
+    the data if necessary (which is decided by \ref updatePartCfg). */
+extern Particle *partCfg;
+/** if non zero, \ref partCfg is sorted by particle order, and
+    the particles are stored consecutively starting with 0. */
+extern int partCfgSorted;
+
+
 /************************************************
  * functions
  ************************************************/
@@ -277,6 +286,23 @@ int set_particle_type(int part, int type);
     (e. g. particle or bond to delete does not exist)
 */
 int change_particle_bond(int part, int *bond, int delete);
+
+/** Get the complete unsorted informations on all particles into
+    \ref partCfg if something's changed. This is a severe performance
+    drawback and might even fail for lack of memory for large systems.
+    If you need the particle info sorted, call \ref sortPartCfg instead.
+    This function is lazy.
+*/
+void updatePartCfg();
+
+/** sorts the \ref partCfg array. This is indicated by setting
+    \ref partCfgSorted to 1. Note that for this to work the particles
+    have to be stored consecutively starting with 0.
+    This function is lazy.
+    @return 1 iff sorting was possible, i. e. the particles were stored
+    consecutively.
+*/
+int sortPartCfg();
 
 /** Used by mpi_place_particle, should not be used elsewhere.
     Move a particle to a new position.

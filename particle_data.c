@@ -41,10 +41,54 @@ int max_particle_node = 0;
 int *particle_node = NULL;
 int max_local_particles = 0;
 Particle **local_particles = NULL;
+Particle *partCfg = NULL;
+int partCfgSorted = 0;
 
 /************************************************
  * functions
  ************************************************/
+
+
+void updatePartCfg()
+{
+  int j;
+  if(partCfg)
+    return;
+
+  partCfg = malloc(n_total_particles*sizeof(Particle));
+  mpi_get_particles(partCfg); 
+  for(j=0; j<n_total_particles; j++)
+    unfold_particle(partCfg[j].r.p,partCfg[j].i);
+
+  partCfgSorted = 0;
+}
+
+int sortPartCfg()
+{
+  int i;
+  Particle *sorted;
+
+  if (!partCfg)
+    updatePartCfg();
+
+  if (partCfgSorted)
+    return 1;
+
+  if (n_total_particles != max_seen_particle + 1)
+    return 0;
+
+  sorted = malloc(n_total_particles*sizeof(Particle));
+  for(i = 0; i < n_total_particles; i++) {
+    COMM_TRACE(printf("Sort particle %d from %d to gdata\n",partCfg[i].r.identity, i));
+    memcpy(&sorted[partCfg[i].r.identity], &partCfg[i], sizeof(Particle));
+  }
+  free(partCfg);
+  partCfg = sorted;
+
+  partCfgSorted = 1;
+
+  return 1;
+}
 
 /** resize \ref local_particles.
     \param part the highest existing particle

@@ -411,7 +411,7 @@ void propagate_vel_pos()
     }
   }
 
-#ifdef ADDITIONAL_CHECKS
+#ifdef ADITIONAL_CHECKS
   if(this_node==0) {
     stat=fopen("e_kin.dat","a");
     kin_energies = malloc(sizeof(double)*n_nodes);
