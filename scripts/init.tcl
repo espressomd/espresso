@@ -15,7 +15,6 @@
 #                                                           #
 #############################################################
 
-
 # here do everything you want to do upon initialization.
 # e. g.
 puts ""

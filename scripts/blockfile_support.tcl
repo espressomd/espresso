@@ -28,12 +28,52 @@ proc blockfile_write_particles {channel write particles {info "id pos v q"} {ran
 	if {![string is integer $start] || ![string is integer $end]} {error "list boundaries must be integers"}
 	for {set p $start} {$p <= $end} {incr p} {
 	    set d [eval "part $p pr $info"]
-	    if {$d != "na"} {puts $channel "{$d}"}
+	    if {$d != "na"} {puts $channel "\t{$d}"}
 	}
     }
-    blockfile $channel write end
+    puts $channel "\}"
 }
 
-proc blockfile_read_auto_particles {channel read particles} {
-    error "sorry, blockfile_read_particles not implemented yet"
+proc blockfile_read_auto_particles {channel read auto} {
+    set info "[blockfile $channel read start] [blockfile $channel read toend]"
+    set idx 1
+    foreach i $info {
+	case $i {
+	    "id"    { set id $idx; incr idx }
+	    "pos"   { set pos $idx; incr idx 3 }
+	    "type"  { set type $idx; incr idx }
+	    "q"     { set q $idx; incr idx }
+	    "f"     { set f $idx; incr idx 3 }
+	    "v"     { set v $idx; incr idx 3 }
+	    default { error " $i is not a particle property" }
+	}
+    }
+    if {![info exists id] || ![info exists pos]} { error "the fields id and pos are mandatory" }
+    set cmd "part \[lindex \$line $id\] \
+             pos \[lindex \$line $pos \] \[lindex \$line [expr $pos + 1]\] \[lindex \$line [expr $pos + 2]\]"
+    if {[info exists q]} { set cmd "$cmd \
+             q \[lindex \$line $q\]" }
+    if {[info exists type]} { set cmd "$cmd \
+             type \[lindex \$line $type\]" }
+    if {[info exists v]} { set cmd "$cmd \
+             v  \[lindex \$line $v\] \[lindex \$line [expr $v + 1]\] \[lindex \$line [expr $v + 2]\]"
+    }
+    if {[info exists f]} { set cmd "$cmd \
+             f  \[lindex \$line $f\] \[lindex \$line [expr $f + 1]\] \[lindex \$line [expr $f + 2]\]"
+    }
+    while { 1 } {
+	set line [blockfile $channel read auto]
+	if {[lindex $line 0] != "usertag"} {
+	    if {$line != "illstring \}"} { error "particle block ill formed (\"[lindex $line 1]\" unexpected)" }
+	    break
+	}
+	eval $cmd
+    }
 }
+
+proc blockfile_read_particles {channel read particles} {
+    set tag [blockfile $channel read start]
+    if {$tag != "particles"} { error "blockfile read particles did not find particle block in file $channel" }
+    blockfile_read_auto_particles $channel read particles
+}
+ 
