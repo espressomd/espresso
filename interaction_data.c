@@ -491,6 +491,9 @@ void calc_maximal_cutoff()
     break;
   }
 #endif
+
+
+
 }
 
 int inter_print_all(Tcl_Interp *interp)
@@ -794,12 +797,12 @@ int tabulated_set_params(int part_type_a, int part_type_b,
 
   fclose(fp);
 
-  if (tab_force_cap != -1.0) {
-    mpi_tab_cap_forces(tab_force_cap);}
-
   /* broadcast interaction parameters including force and energy tables*/
   mpi_bcast_ia_params(part_type_a, part_type_b);
   mpi_bcast_ia_params(part_type_b, part_type_a);
+
+  if (tab_force_cap != -1.0) {
+    mpi_tab_cap_forces(tab_force_cap);}
 
   return TCL_OK;
 }
