@@ -172,6 +172,17 @@ int try_delete_bond(Particle *part, int *bond);
 */
 void fold_particle(double pos[3],int image_box[3]);
 
+/** fold a particle coordinate to primary simulation box.
+    \param pos         the position...
+    \param image_box   and the box
+    \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z coordinate.
+
+    Both pos and image_box are I/O,
+    i. e. a previously folded position will be folded correctly.
+*/
+void fold_coordinate(double pos[3], int image_box[3], int dir);
+
+
 /** unfold particle coordinates to physical position.
     \param pos the position...
     \param image_box and the box

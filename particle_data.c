@@ -212,6 +212,21 @@ void fold_particle(double pos[3],int image_box[3])
   }
 }
 
+void fold_coordinate(double pos[3], int image_box[3], int dir)
+{
+  int tmp;
+  if (periodic[dir]) {
+    image_box[dir] += (tmp = (int)floor(pos[dir]/box_l[dir]));
+    pos[dir]        = pos[dir] - tmp*box_l[dir];    
+    if(pos[dir] < 0 || pos[dir] > box_l[dir]) {
+      fprintf(stderr,"%d: fold_particle: Particle out of"
+	      " range image_box[%d] = %d, exiting\n",
+	      this_node,dir,image_box[dir]);
+      errexit();
+    }
+  }
+}
+
 void unfold_particle(double pos[3],int image_box[3])
 {
   int i;
