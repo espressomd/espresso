@@ -1,4 +1,4 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
+nb// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 // It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
 // and by which you are legally bound while utilizing this file in any form or way.
 // There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -787,6 +787,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	char *errtext = runtime_error(128);
 	sprintf(errtext,"{some particles moved more than min_local_box_l, reduce the time step} ");
 	/* the bad guys are all in cell 0, but probably their interactions are of no importance anyways */
+	finished = 1;
       }
     }
     CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: finished value: %d\n",this_node,finished));
