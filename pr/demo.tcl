@@ -35,6 +35,8 @@ proc popup {text} {
     update
 }
 
+wm geometry . -0+0
+
 ##### case 1
 frame .case1 -relief raised -border 2
 pack .case1 -expand 1 -fill both -in .
@@ -179,16 +181,21 @@ proc enableStarts {} {
 
 proc imd_reconnect {case} {
     imd disconnect
-    catch {exec killall vmd_LINUX}
+
+    puts "before [glob -nocomplain .lock*]"
+    eval "exec rm -f [glob -nocomplain .lock*]"
+    puts "after [glob -nocomplain .lock*]"
 
     while { [catch {imd connect 10000} res] } {
 	.case2.status configure -text "Waiting for port to unbind...\nerror: $res"
 	update
 	after 500
     }
-    after 1000
-    exec vmd -e $case.script &
-    after 500
+    exec vmd -pos 100 0 -e $case.script &
+    while { [glob -nocomplain ".lock*" ] == "" } {
+	puts "waiting for vmd to come up"
+	after 500
+    }
     while { [catch {imd positions} res] } {
 	puts "connect failed: $res, retrying."
 	after 500
