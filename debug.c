@@ -1,8 +1,9 @@
 /* do NOT include debug.h !!!!!!! */
 #include "stdio.h"
 #include "stdlib.h"
+#include "string.h"
 
-static char fill_code = 0xaa;
+static unsigned char fill_code = 0xaa;
 
 extern void *_debug_malloc(int size);
 extern void *_debug_realloc(void *p, int size);

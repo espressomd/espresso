@@ -87,7 +87,9 @@ void mpi_stop_slave(int param)
 /*************** REQ_BCAST_PAR ************/
 void mpi_bcast_parameter(int i)
 {
-  int req[2] = { REQ_BCAST_PAR, i };
+  int req[2];
+  req[0] = REQ_BCAST_PAR;
+  req[1] = i;
 
   COMM_TRACE(fprintf(stderr, "0: issuing BCAST_PAR %d\n", i));
   MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
@@ -113,7 +115,7 @@ void mpi_bcast_parameter_slave(int i)
 /*************** REQ_WHO_HAS ****************/
 void mpi_who_has()
 {
-  int req[2]   = { REQ_WHO_HAS, 0 };
+  int req[2] = { REQ_WHO_HAS, 0};
   int *sizes = malloc(sizeof(int)*nprocs);
   int *pdata = NULL;
   int pdata_s = 0, i;
@@ -173,7 +175,9 @@ void mpi_who_has_slave(int ident)
 /**************** REQ_ATTACH ***********/
 void mpi_attach_particle(int part, int pnode)
 {
-  int req[2] = { REQ_ATTACH, pnode };
+  int req[2];
+  req[0] = REQ_ATTACH;
+  req[1] = pnode;
 
   COMM_TRACE(fprintf(stderr, "0: issuing ATTACH %d %d\n", pnode, part));
 
@@ -205,7 +209,9 @@ void mpi_send_pos(int pnode, int part, double p[3])
     particles[index].p[2] = p[2];
   }
   else {
-    int req[2] = { REQ_SET_POS, part };
+    int req[2];
+    req[0] = REQ_SET_POS;
+    req[1] = part;
     MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Send(p, 3, MPI_DOUBLE, pnode, REQ_SET_POS, MPI_COMM_WORLD);
   }
@@ -232,9 +238,11 @@ void mpi_send_v(int pnode, int part, double v[3])
     particles[index].v[2] = v[2];
   }
   else {
-    int req[2] = { REQ_SET_POS, part };
+    int req[2];
+    req[0] = REQ_SET_V;
+    req[1] = part;
     MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Send(v, 3, MPI_DOUBLE, pnode, REQ_SET_POS, MPI_COMM_WORLD);
+    MPI_Send(v, 3, MPI_DOUBLE, pnode, REQ_SET_V, MPI_COMM_WORLD);
   }
 }
 
@@ -243,7 +251,7 @@ void mpi_send_v_slave(int part)
   int index = got_particle(part);
   MPI_Status status;
   if (index != -1) {
-    MPI_Recv(particles[index].v, 3, MPI_DOUBLE, 0, REQ_SET_POS,
+    MPI_Recv(particles[index].v, 3, MPI_DOUBLE, 0, REQ_SET_V,
 	     MPI_COMM_WORLD, &status);
   }
 }
@@ -259,9 +267,11 @@ void mpi_send_f(int pnode, int part, double F[3])
     particles[index].f[2] = F[2];
   }
   else {
-    int req[2] = { REQ_SET_POS, part };
+    int req[2];
+    req[0] = REQ_SET_F;
+    req[1] = part;
     MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Send(F, 3, MPI_DOUBLE, pnode, REQ_SET_POS, MPI_COMM_WORLD);
+    MPI_Send(F, 3, MPI_DOUBLE, pnode, REQ_SET_F, MPI_COMM_WORLD);
   }
 }
 
@@ -270,7 +280,7 @@ void mpi_send_f_slave(int part)
   int index = got_particle(part);
   MPI_Status status;
   if (index != -1) {
-    MPI_Recv(particles[index].f, 3, MPI_DOUBLE, 0, REQ_SET_POS,
+    MPI_Recv(particles[index].f, 3, MPI_DOUBLE, 0, REQ_SET_F,
 	     MPI_COMM_WORLD, &status);
   }
 }
@@ -284,9 +294,11 @@ void mpi_send_q(int pnode, int part, double q)
     particles[index].q = q;
   }
   else {
-    int req[2] = { REQ_SET_Q, part };
+    int req[2];
+    req[0] = REQ_SET_Q;
+    req[1] = part;
     MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Send(&q, 1, MPI_DOUBLE, pnode, REQ_SET_POS, MPI_COMM_WORLD);
+    MPI_Send(&q, 1, MPI_DOUBLE, pnode, REQ_SET_Q, MPI_COMM_WORLD);
   }
 }
 
@@ -295,7 +307,34 @@ void mpi_send_q_slave(int part)
   int index = got_particle(part);
   MPI_Status status;
   if (index != -1) {
-    MPI_Recv(&particles[index].q, 1, MPI_DOUBLE, 0, REQ_SET_POS,
+    MPI_Recv(&particles[index].q, 1, MPI_DOUBLE, 0, REQ_SET_Q,
+	     MPI_COMM_WORLD, &status);
+  }
+}
+
+/********************* REQ_SET_TYPE ********/
+void mpi_send_type(int pnode, int part, int type)
+{
+  COMM_TRACE(fprintf(stderr, "0: issuing SET_TYPE %d %d\n", pnode, part));
+  if (pnode == this_node) {
+    int index = got_particle(part);
+    particles[index].type = type;
+  }
+  else {
+    int req[2];
+    req[0] = REQ_SET_TYPE;
+    req[1] = part;
+    MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Send(&type, 1, MPI_INT, pnode, REQ_SET_TYPE, MPI_COMM_WORLD);
+  }
+}
+
+void mpi_send_type_slave(int part)
+{
+  int index = got_particle(part);
+  MPI_Status status;
+  if (index != -1) {
+    MPI_Recv(&particles[index].type, 1, MPI_INT, 0, REQ_SET_TYPE,
 	     MPI_COMM_WORLD, &status);
   }
 }
@@ -315,8 +354,10 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
 	   sizeof(int)*particles[index].n_bonds);
   }
   else {
-    int req[2] = { REQ_GET_PART, part };
+    int req[2];
     MPI_Status status;
+    req[0] = REQ_GET_PART;
+    req[1] = part;
 
     MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
     pdata->identity = part;
@@ -367,8 +408,10 @@ void mpi_recv_part_slave(int part)
 /*********************+ REQ_INTEGRATE ********/
 void mpi_integrate(int n_steps)
 {
-  int req[2] = { REQ_INTEGRATE, n_steps };
+  int req[2];
   int task;
+  req[0] = REQ_INTEGRATE;
+  req[1] = n_steps;
 
   COMM_TRACE(fprintf(stderr, "0: issuing INTEGRATE %d\n", n_steps));
   MPI_Bcast(req, 2, MPI_INT, this_node, MPI_COMM_WORLD);
@@ -399,35 +442,12 @@ void mpi_integrate_slave(int task)
 		     this_node, task));
 }
 
-/********************* REQ_SET_TYPE ********/
-void mpi_send_type(int pnode, int part, int type)
-{
-  COMM_TRACE(fprintf(stderr, "0: issuing SET_TYPE %d %d\n", pnode, part));
-  if (pnode == this_node) {
-    int index = got_particle(part);
-    particles[index].type = type;
-  }
-  else {
-    int req[2] = { REQ_SET_TYPE, part };
-    MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Send(&type, 1, MPI_INT, pnode, REQ_SET_POS, MPI_COMM_WORLD);
-  }
-}
-
-void mpi_send_type_slave(int part)
-{
-  int index = got_particle(part);
-  MPI_Status status;
-  if (index != -1) {
-    MPI_Recv(&particles[index].type, 1, MPI_INT, 0, REQ_SET_POS,
-	     MPI_COMM_WORLD, &status);
-  }
-}
-
 /*************** REQ_BCAST_IA ************/
 void mpi_bcast_ia_params(int i, int j)
 {
-  int req[2] = { REQ_BCAST_IA, i };
+  int req[2];
+  req[0] = REQ_BCAST_IA;
+  req[1] = i;
 
   COMM_TRACE(fprintf(stderr, "0: issuing BCAST_IA %d %d\n", i, j));
   MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);

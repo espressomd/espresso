@@ -5,10 +5,10 @@
 
 
 /* Maximum von  double a und  double b berechnen, gibt double zurueck. */
-static double dmax(double a, double b) { if (a>b) return a; else return b; }
+static double dmax(double a, double b) { return (a>b) ? a : b; }
 
 /* Maximum von  double a und  double b berechnen, gibt double zurueck. */
-static double dmin(double a, double b) { if (a<b) return a; else return b; }
+static double dmin(double a, double b) { return (a<b) ? a : b; }
 
 /* Wert von double x runden, gibt double zurueck. */
 static double dround(double x) { return floor(x+0.5); }

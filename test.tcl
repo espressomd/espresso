@@ -2,7 +2,7 @@
 # tricking...\
     PLATFORM=`uname -s`;
 # OSF1 \
-    if test $PLATFORM = OSF1; then  exec dmpirun -np 8 $PLATFORM/tcl_md $0 $*
+    if test $PLATFORM = OSF1; then  exec dmpirun -np 1 $PLATFORM/tcl_md $0 $*
 # AIX \
     elif test $PLATFORM = AIX; then exec poe $PLATFORM/tcl_md $0 $* -procs 8
 # Linux \
@@ -14,7 +14,7 @@
 ##################################################
 # settings
 ##################################################
-set npart 10000
+set npart 100
 set tcl_precision 5
 set writemethod ascii
 
@@ -74,7 +74,7 @@ puts "nptypes = [setmd nptypes]"
 # Set up particle positions
 ##################################################
 set read 0
-if {[file exists "config"]} {
+if {0 && [file exists "config"]} {
     set compressed ""
     set f [open "|gzip -cd config" r]
     if {[gets $f] != ""} { set compressed .gz } { set f [open "config" r] }
@@ -120,7 +120,9 @@ if {$read == 0} {
 	
 	# pump up
 	##################################################
-	
+	for {set i 0} { $i < 300 } { incr i} {
+	    puts "test $i [expr srand($i,$i)]"
+	}
 	for {set i 5} { $i < $npart } { incr i} {
 	    if {[expr $i % 100 == 0]} {
 		puts "adding part $i"

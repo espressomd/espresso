@@ -52,15 +52,15 @@ int integrate(ClientData data, Tcl_Interp *interp,
   particle_finalize_data();
 
   /* assume velocity verlet integration with langevin thermostat */
-  if (argc == 2) {
-    mpi_integrate(n_steps);
-    return (TCL_OK);
-  }
-  else {
+  if (argc != 2) {
     Tcl_AppendResult(interp, "too many arguments:  should be \"",
 		     argv[0], " <task> \"", (char *) NULL);
     return (TCL_ERROR);
   }
+
+  mpi_integrate(n_steps);
+
+  return (TCL_OK);
 }
 
 

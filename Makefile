@@ -22,7 +22,7 @@ $(PLATFORM):
 
 ########### final target
 $(PLATFORM)/tcl_md: $(OBJECTS)
-	(cd $(PLATFORM); $(LINK) -o tcl_md $(OBJECTS) $(LDLIBS) )
+	(cd $(PLATFORM); $(LINK) $(LDFLAGS) -o tcl_md $(OBJECTS) $(LDLIBS) )
 
 ########### clean
 clean:

@@ -4,6 +4,7 @@
 
 #include "cells.h"
 #include "debug.h"
+#include <string.h>
 
 /** increment size of particle buffer */
 #define PART_INCREMENT 5
@@ -210,12 +211,9 @@ int  is_inner_cell(int i, int adim, int bdim, int cdim)
 {
   int pos[3];
   get_grid_pos(i,&pos[0],&pos[1],&pos[2],adim,bdim,cdim);
-  if(pos[0]>0 && pos[0] < adim-1 &&
-     pos[1]>0 && pos[1] < bdim-1 &&
-     pos[2]>0 && pos[2] < cdim-1) 
-    return 1;
-  else
-    return 0;
+  return (pos[0]>0 && pos[0] < adim-1 &&
+	  pos[1]>0 && pos[1] < bdim-1 &&
+	  pos[2]>0 && pos[2] < cdim-1);
 }
 
 /*************************************************/

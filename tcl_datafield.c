@@ -272,7 +272,7 @@ int part(ClientData data, Tcl_Interp *interp,
 	if (Tcl_GetDouble(interp, argv[3], &f[2]) == TCL_ERROR)
 	  return (TCL_ERROR);
 
-	mpi_send_v(node, part_num, f);
+	mpi_send_f(node, part_num, f);
 
 	argc -= 4;
 	argv += 4;
