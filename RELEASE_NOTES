@@ -11,6 +11,7 @@ Not yet released.
 - v1.5.Alpha -
 --------------
 
+(c) January 30th, 2004
 (b) January 15th, 2004.
 (a) January  7th, 2004.
 
@@ -23,6 +24,17 @@ New Features:
     major axis of type_1 particles (e.g. bundle of rods), or perpendicular to the 
     major axis of type_1 particles in the direction of the vector joining center
     of mass's of type_1 and type_2.
+(c) The bond angle potential can now be used also for equilibrium angles different 
+    from 180 degree (stretched configuration). This should not affect any previous 
+    simulations (except numerical errors). The default potential form is now:
+    V = k (1+cos(phi+phi0)).
+(c) With help of compiler flags used as switch you can now choose between three 
+    different potential forms (the corresponding #define statements are as usual 
+    in config.h):
+    BOND_ANGLE_HARMONIC   ->  V = 1/2 k (phi - phi0)^2
+    BOND_ANGLE_COSINE     ->  V = k (1+cos(phi-phi0))
+    BOND_ANGLE_COSSQUARE  ->  V = 1/2 k (cos(phi)-cos(phi0))^2
+
 
 Changes:
 (a) completely reworked the internal particle structure, now having six substructures per particle
