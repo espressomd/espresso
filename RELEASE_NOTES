@@ -2,10 +2,35 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.5.5b *
+* v1.5.6c *
 ***********
 
 Current working revision.
+
+
+- v1.5.6c -
+-----------
+
+(c) March 18th, 2004.
+(b) March 17th, 2004.
+(a) March  5th, 2004.
+
+Changes:
+(b) [analyze bond_l] now returns a four member list with the average, standard deviation, 
+    maximum value and minumum value of the sample; the same holds true for 
+    [analyze <bond_l>], however, note that now it returns the maximum/minimum 
+    in all the configurations and the values don't have to belong to same chain. 
+    It was done this way to ensure uniformity. The testsuite has been adapted to this.
+(b) In statistics_chain.c, the bond length calculations have been modified. It 
+    actually calculates the average now (not the root mean square avg as was done 
+    before); the error is taken as one standard deviation.
+
+Bugfixes:
+(c) Falsely calling 'analyze nbhood' without any arguments no longer unintentionally
+    crashes the program but returns an appropriate error message instead.
+(a) Added nptiso-thermostat random noise to 2nd propagation of the velocities as well.
+(a) Fixed wrongly scaled prefactors of the nptiso-thermostat which do now remember
+    to include an additional 'time_step' for the propagated velocities.
 
 
 - v1.5.5b -
@@ -15,26 +40,26 @@ Current working revision.
 (a) March 1st, 2004.
 
 New Features:
-(d) Introduced new structure 'nptiso' in which all global variables
+(b) Introduced new structure 'nptiso' in which all global variables
     related to the NpT-integration-scheme are contained.
-(d) Now 'integrate' returns integrator informations, too, as well as
+(b) Now 'integrate' returns integrator informations, too, as well as
     'thermostat set <what>' may be used instead of 'thermostat <what>.
 
 Changes:
-(d) P3M is now entirely scaling invariant, replacing 'alpha' and 'r_cut'
+(b) P3M is now entirely scaling invariant, replacing 'alpha' and 'r_cut'
     by rescaled 'alpha_L' and 'r_cut_iL'; for performance reasons the
     forces- and energy-derivation is still using the unscaled versions,
     so are the I/O-routines.
-(d) Exchanged virial criterion 'if(piston!=0.0)' by test for 'integ_switch'
+(b) Exchanged virial criterion 'if(piston!=0.0)' by test for 'integ_switch'
     in all functions deriving forces; should result in a speed-up if compiled in.
-(c) Replaced p3m.alpha and p3m.r_cut with rescaled versions p3m.alpha_L and p3m.r_cut_iL
+(a) Replaced p3m.alpha and p3m.r_cut with rescaled versions p3m.alpha_L and p3m.r_cut_iL
     which renders the p3m-algorithm to be independent of box_l.
     The old alpha and r_cut do still exist, mainly for I/O- and speed-purposes
     (since the forces- and energy-routine in p3m.h use both).
 
 Bugfixes:
-(d) Fixed wrong and/or missing safety checks for nptiso-integrator.
-(d) Fixed handling of missing exceptions in 'thermostat set'.
+(b) Fixed wrong and/or missing safety checks for nptiso-integrator.
+(b) Fixed handling of missing exceptions in 'thermostat set'.
 
 
 - v1.5.4b -

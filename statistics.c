@@ -44,7 +44,11 @@ static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
 {
   *pid = -1;
 
-  if (*argc < 3) {
+  if (*argc == 0) {
+    Tcl_AppendResult(interp, "usage: nbhood { <partid> | <posx> <posy> <posz> } <r_catch>\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+  else if (*argc < 3) {
     Particle ref;
     if (Tcl_GetInt(interp, (*argv)[0], pid) == TCL_ERROR)
       return TCL_ERROR;
