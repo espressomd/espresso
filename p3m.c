@@ -74,6 +74,9 @@ typedef struct {
  * variables
  ************************************************/
 
+int fft_init_flag=0;
+int p3m_init_flag=0;
+
 p3m_struct p3m;
 
 /** local mesh. */
@@ -270,9 +273,15 @@ void   P3M_init()
     P3M_TRACE(fprintf(stderr,"%d: pos_shift = %f\n",this_node,pos_shift)); 
  
     /* FFT */
-    ca_mesh_size = fft_init(rs_mesh,lm.dim,lm.margin);
-    rs_mesh = (double *) realloc(rs_mesh, ca_mesh_size*sizeof(double));
-    ks_mesh = (double *) realloc(ks_mesh, ca_mesh_size*sizeof(double));
+     P3M_TRACE(fprintf(stderr,"%d: rs_mesh ADR=%p\n",this_node,rs_mesh));
+    if(fft_init_flag==0) {
+      ca_mesh_size = fft_init(&rs_mesh,lm.dim,lm.margin);
+      /* rs_mesh = (double *) realloc(rs_mesh, ca_mesh_size*sizeof(double)); */
+      ks_mesh = (double *) realloc(ks_mesh, ca_mesh_size*sizeof(double));
+
+      fft_init_flag=1;
+    }
+    P3M_TRACE(fprintf(stderr,"%d: rs_mesh ADR=%p\n",this_node,rs_mesh));
  
     /* k-space part: */
     calc_differential_operator();

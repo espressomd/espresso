@@ -37,6 +37,8 @@
  * variables
  ************************************************/
 
+int fft_init_tag=0;
+
 fft_forw_plan fft_plan[4];
 
 /** Information for Back FFTs (see fft_plan). */
@@ -176,7 +178,7 @@ void fft_pre_init()
 
 }
 
-int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
+int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin)
 {
   int i,j;
   /* helpers */
@@ -305,12 +307,14 @@ int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
   /* Factor 2 for complex numbers */
   send_buf = (double *)realloc(send_buf, max_comm_size*sizeof(double));
   recv_buf = (double *)realloc(recv_buf, max_comm_size*sizeof(double));
-  data     = (double *)realloc(data, max_mesh_size*sizeof(double));
+  (*data)  = (double *)realloc((*data), max_mesh_size*sizeof(double));
   data_buf = (double *)realloc(data_buf, max_mesh_size*sizeof(double));
-  if(!data || !data_buf || !recv_buf || !send_buf) 
+  if(!(*data) || !data_buf || !recv_buf || !send_buf) 
     fprintf(stderr,"%d: Could not allocate FFT data arays\n",this_node);
 
-  c_data     = (fftw_complex *) data;
+
+  FFT_TRACE(fprintf(stderr,"%d: (*data) ADR=%p\n",this_node,(*data) ));
+  c_data     = (fftw_complex *) (*data);
   c_data_buf = (fftw_complex *) data_buf;
 
   /* === FFT Routines (Using FFTW / RFFTW package)=== */
@@ -325,10 +329,11 @@ int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
       wisdom_status = fftw_import_wisdom_from_file(wisdom_file);
       fclose(wisdom_file);
     }
-      fft_plan[i].fft_plan = 
-	fftw_create_plan_specific(fft_plan[i].new_mesh[2], fft_plan[i].dir,
-				  FFTW_MEASURE | FFTW_IN_PLACE | FFTW_USE_WISDOM,
-				  c_data, 1,c_data_buf, 1);
+    if(fft_init_tag==1) fftw_destroy_plan(fft_plan[i].fft_plan);
+    fft_plan[i].fft_plan = 
+      fftw_create_plan_specific(fft_plan[i].new_mesh[2], fft_plan[i].dir,
+				FFTW_MEASURE | FFTW_IN_PLACE | FFTW_USE_WISDOM,
+				c_data, 1,c_data_buf, 1);
 
     if( wisdom_status == FFTW_FAILURE && 
 	(wisdom_file=fopen(wisdom_file_name,"w"))!=NULL ) {
@@ -350,6 +355,7 @@ int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
       wisdom_status = fftw_import_wisdom_from_file(wisdom_file);
       fclose(wisdom_file);
     }    
+    if(fft_init_tag==1) fftw_destroy_plan(fft_back[i].fft_plan);
     fft_back[i].fft_plan = 
       fftw_create_plan_specific(fft_plan[i].new_mesh[2], fft_back[i].dir,
 				FFTW_MEASURE | FFTW_IN_PLACE | FFTW_USE_WISDOM,
@@ -365,7 +371,8 @@ int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
   if(fft_plan[1].row_dir==2) fft_back[1].pack_function = pack_block;
   else if(fft_plan[1].row_dir==1) fft_back[1].pack_function = pack_block_permute2;
 
-  free(data);
+  fft_init_tag=1;
+  /* free(data); */
   for(i=0;i<4;i++) { free(n_id[i]); free(n_pos[i]); }
   return max_mesh_size; 
 }

@@ -112,11 +112,11 @@ void  fft_pre_init();
 /** Initialize everything connected to the 3D-FFT.
 
  * \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
- * \param data           Pointer to temporary data array.
+ * \param data           Pointer Pounter to data array.
  * \param ca_mesh_dim    Pointer to CA mesh dimensions.
  * \param ca_mesh_margin Pointer to CA mesh margins.
  */
-int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin);
+int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin);
 
 /** perform the forward 3D FFT.
     The assigned charges are in data. The result is also stored in data.
