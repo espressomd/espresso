@@ -74,6 +74,10 @@ interface between the Tcl script and the MD code:
         forces a system re-init which, among others, helps to ensure continuity upon working with checkpoints.
 	For more information, see \ref tcl_invalidate_system.
 
+    <li>\verbatim cellsystem \endverbatim
+        Changes the data structure to the desired cell system.
+	For more information, see \ref tcl_cellsystem.
+
     <li>\verbatim imd ( connect|disconnect|listen|positions ) <param>\endverbatim
     <li>\verbatim prepare_vmd_connection [<filename> [<wait> [<start>]]] \endverbatim
         network connection handling to the visual interface program VMD.
