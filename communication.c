@@ -762,7 +762,9 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
     pdata->r.identity = p->r.identity;
     pdata->r.type = p->r.type;
     memcpy(pdata->r.p, p->r.p, 3*sizeof(double));
+#ifdef ELECTROSTATICS
     pdata->r.q = p->r.q;
+#endif
     memcpy(pdata->f, p->f, 3*sizeof(double));
     memcpy(pdata->i, p->i, 3*sizeof(double));
     memcpy(pdata->v, p->v, 3*sizeof(double));
