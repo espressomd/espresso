@@ -191,8 +191,10 @@ Particle *got_particle(ParticleList *l, int id)
 Particle *append_unindexed_particle(ParticleList *l, Particle *part)
 {
   Particle *p;
-  p = &l->part[l->n - 1];
+
   realloc_particles(l, ++l->n);
+  p = &l->part[l->n - 1];
+
   memcpy(p, part, sizeof(Particle));
   return p;
 }
@@ -204,6 +206,7 @@ Particle *append_indexed_particle(ParticleList *l, Particle *part)
  
   re = realloc_particles(l, ++l->n);
   p  = &l->part[l->n - 1];
+
   memcpy(p, part, sizeof(Particle));
   if (re)
     update_local_particles(l);
