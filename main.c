@@ -3,11 +3,18 @@
 #include "initialize.h"
 #include "global.h"
 #include "communication.h"
+#include "debug.h"
 
 #ifdef FORCE_CORE
+static int core_done = 0;
+
 void core()
 {
-  *(int *)0 = 0;
+  if (!core_done) {
+    core_done = 1;
+    fprintf(stderr, "forcing core dump on exit\n");
+    *(int *)0 = 0;
+  }
 }
 #endif
 
@@ -16,39 +23,11 @@ void exitHandler(ClientData data)
   mpi_stop();
 }
 
-#ifdef DEFINE_TCL_RAND
-int tcl_rand(ClientData clientData, Tcl_Interp *interp,
-	     Tcl_Value *args, Tcl_Value *resultPtr)
-{
-  resultPtr->type = TCL_DOUBLE;
-  resultPtr->doubleValue = drand48();
-  return TCL_OK;
-}
-
-int tcl_srand(ClientData clientData, Tcl_Interp *interp,
-	      Tcl_Value *args, Tcl_Value *resultPtr)
-{
-  int i;
-  srand48(args[0].intValue);
-  return tcl_rand(0, interp, NULL, resultPtr);
-}
-
-#endif
-
 int appinit(Tcl_Interp *interp)
 {
-#ifdef DEFINE_TCL_RAND
-  Tcl_ValueType vt[2] = { TCL_INT };
-#endif
-
   if (Tcl_Init(interp) == TCL_ERROR)
     return (TCL_ERROR);
   Tcl_CreateExitHandler(exitHandler, 0);
-
-#ifdef DEFINE_TCL_RAND
-  Tcl_CreateMathFunc(interp, "rand", 0, NULL, tcl_rand, 0);
-  Tcl_CreateMathFunc(interp, "srand", 1, vt, tcl_srand, 0);
-#endif
 
   if (initialize(interp) == TCL_ERROR)
     return (TCL_ERROR);

@@ -47,11 +47,28 @@ char *names[] = {
  * procedures
  **********************************************/
 
+#ifdef MPI_CORE
+void mpi_core(MPI_Comm *comm, int *errcode,...) {
+  fprintf(stderr, "Aborting due to MPI error %d, forcing core dump\n", *errcode);
+  *(int *)0 = 0;  
+}
+#endif
+
 void mpi_init(int *argc, char ***argv)
 {
+#ifdef MPI_CORE
+  MPI_Errhandler mpi_errh;
+#endif
+
   MPI_Init(argc, argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &this_node);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+
+#ifdef MPI_CORE
+  MPI_Errhandler_create(mpi_core, &mpi_errh);
+  MPI_Errhandler_set(MPI_COMM_WORLD, mpi_errh);
+#endif
+
 }
 
 /**************** REQ_TERM ************/

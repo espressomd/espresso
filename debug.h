@@ -7,9 +7,10 @@
 /* #define VERLET_DEBUG */
 /* #define PARTICLE_DEBUG */
 
+#define MPI_CORE
 /* #define FORCE_CORE */
 
-/* #define MALLOC_DEBUG */
+#define MALLOC_DEBUG
 
 #ifdef MALLOC_DEBUG
 extern void *_debug_malloc(int size);
