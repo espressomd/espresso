@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.5.7b *
+* v1.5.7c *
 ***********
 
 Current working revision.
 
 
-- v1.5.7b -
+- v1.5.7c -
 -----------
 
+(c) March 29th, 2004.
 (b) March 22nd, 2004.
 (a) March 21st, 2004.
 
@@ -20,6 +21,10 @@ Changes:
     that (essentially) improper value for compatibility reasons.
 
 Bugfixes:
+(c) Fixed several compiler issues on the OSF1-architectures in
+    'Makefile.OSF1' (now enforcing std.C which in turn enables
+    useful warnings), 'statistics_chain.c' (pow -> SQR), 'imd.c'
+    and 'mmm2d.c'.
 (b) Fixed wrong parsing of chain structure info if given in addition
     to one of the analyze-commands in 'statistics_chain.c', e.g.
     'analyze re [<chain_start> <n_chains> <chain_length>]'; now,
