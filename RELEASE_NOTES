@@ -2,24 +2,49 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.5.1d *
+* v1.5.5b *
 ***********
 
 Current working revision.
 
 
-- v1.5.1d -
+- v1.5.5b -
 -----------
 
-(f) February 25th, 2004.
-(e) February 20th, 2004.
-(d) February 14th, 2004.
-(c) February  9th, 2004.
-(b) February  6th, 2004.
-(a) January  30th, 2004.
+(b) March 2nd, 2004.
+(a) March 1st, 2004.
 
 New Features:
-(f) Extension of the tcl command integrate. "integrate" is now 
+(d) Introduced new structure 'nptiso' in which all global variables
+    related to the NpT-integration-scheme are contained.
+(d) Now 'integrate' returns integrator informations, too, as well as
+    'thermostat set <what>' may be used instead of 'thermostat <what>.
+
+Changes:
+(d) P3M is now entirely scaling invariant, replacing 'alpha' and 'r_cut'
+    by rescaled 'alpha_L' and 'r_cut_iL'; for performance reasons the
+    forces- and energy-derivation is still using the unscaled versions,
+    so are the I/O-routines.
+(d) Exchanged virial criterion 'if(piston!=0.0)' by test for 'integ_switch'
+    in all functions deriving forces; should result in a speed-up if compiled in.
+(c) Replaced p3m.alpha and p3m.r_cut with rescaled versions p3m.alpha_L and p3m.r_cut_iL
+    which renders the p3m-algorithm to be independent of box_l.
+    The old alpha and r_cut do still exist, mainly for I/O- and speed-purposes
+    (since the forces- and energy-routine in p3m.h use both).
+
+Bugfixes:
+(d) Fixed wrong and/or missing safety checks for nptiso-integrator.
+(d) Fixed handling of missing exceptions in 'thermostat set'.
+
+
+- v1.5.4b -
+-----------
+
+(b) February 25th, 2004.
+(a) February 20th, 2004.
+
+New Features:
+(b) Extension of the tcl command integrate. "integrate" is now 
     also used to set the integration method and parameters of 
     this methods. The general parameters <time_step> and <skin> 
     remained at the 'setmd' command. The usage of integrate is now:
@@ -27,7 +52,7 @@ New Features:
 	integrate set
 	integrate set nvt
 	integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>]
-(e) New tcl command: thermostat to control the new thermostats:
+(a) New tcl command: thermostat to control the new thermostats:
     Usage: thermostat langevin <temperature> <langevin_gamma>
            thermostat dpd <temperature> <dpd_gamma> <dpd_r_cut> 
            thermostat npt_isotropic <temperature> <nptiso_gamma0> <nptiso_gammav>
@@ -44,13 +69,47 @@ New Features:
 	     IN NEW SCRIPTS! (even though they still work).
 	   - For backwards compatibility ESPResSo starts with the 
 	     Langevin thermostat turned on.
-(d) Implemented an (N,p,T)-ensemble integrator, as published by
+
+
+- v1.5.3a -
+-----------
+
+(a) February 14th, 2004.
+
+New Features:
+(a) Implemented an (N,p,T)-ensemble integrator, as published by
     Kolb, Duenweg, J.Chem.Phys. 111(8) 4453 (1999).
     To activate it, use the corresponding compiler-flag in 'config.h'
     and set the new parameters 'piston', 'g0', 'gv', and 'p_ext'.
-(d) New global variable 'p_inst' returns the measure instantaneous pressure
+(a) New global variable 'p_inst' returns the measure instantaneous pressure
     if (N,p,T)-integration is used.
-(c) introducing topoplogy concept.
+
+
+- v1.5.2a -
+-----------
+
+(a) February  9th, 2004.
+
+New Features:
+(a) introducing topoplogy concept.
+
+Changes:
+(a) 'analyze set chains <start> <N_P> <MPC>' does now set the topology,
+    hence 'analyze set chains' has been discontinued.
+
+Bugfixes:
+(a) fixed severe bug that had the p3m tuning routine to not allocate
+    the appropriate amount of memory for the final parameter set, but
+    used the last trial's settings instead.
+
+
+- v1.5.1b -
+-----------
+
+(b) February  6th, 2004.
+(a) January  30th, 2004.
+
+New Features:
 (b) Inplementation of NEMD (Non Equilibrium Molecular Dynamics). This method
     introduces a shear rate corresponding to a Couette flow by artificially
     pumping energy into the system via a momentum exchange between two slabs
@@ -84,16 +143,6 @@ New Features:
     BOND_ANGLE_HARMONIC   ->  V = 1/2 k (phi - phi0)^2
     BOND_ANGLE_COSINE     ->  V = k (1+cos(phi-phi0))
     BOND_ANGLE_COSSQUARE  ->  V = 1/2 k (cos(phi)-cos(phi0))^2
-(c) introducing topoplogy concept.
-
-Changes:
-(c) 'analyze set chains <start> <N_P> <MPC>' does now set the topology,
-    hence 'analyze set chains' has been discontinued.
-
-Bugfixes:
-(c) fixed severe bug that had the p3m tuning routine to not allocate
-    the appropriate amount of memory for the final parameter set, but
-    used the last trial's settings instead.
 
 
 
