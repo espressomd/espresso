@@ -37,6 +37,10 @@ puts "* Mainz, Germany                                      *"
 puts "*                                                     *"
 puts "*******************************************************"
 puts ""
+# Read user defined settings
+if { [file exists "~/.espressorc" ] } {
+    source ~/.espressorc
+}
 
 
 # Include useful tcl-scripts providing new functions etc.
