@@ -677,7 +677,7 @@ int parse_re(Tcl_Interp *interp, int average, int argc, char **argv)
 
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
-  if (argc != 0) {
+  if ((argc != 0) && (argc != 3)) {
     Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
     return TCL_ERROR;
   }
@@ -708,7 +708,7 @@ int parse_rg(Tcl_Interp *interp, int average, int argc, char **argv)
   double *rg;
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
-  if (argc != 0) {
+  if ((argc != 0) && (argc != 3)) {
     Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
     return TCL_ERROR;
   }
@@ -737,7 +737,7 @@ int parse_rh(Tcl_Interp *interp, int average, int argc, char **argv)
   double *rh;
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
-  if (argc != 0) {
+  if ((argc != 0) && (argc != 3)) {
     Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
     return TCL_ERROR;
   }
@@ -768,7 +768,7 @@ int parse_intdist(Tcl_Interp *interp, int average, int argc, char **argv)
   double *idf;
 
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
-  if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
+  if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   if (!average)
     calc_internal_dist(&idf); 
   else {
@@ -797,7 +797,7 @@ int parse_bond_l(Tcl_Interp *interp, int average, int argc, char **argv)
   double *bond_l;
 
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
-  if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
+  if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   if (!average) calc_bond_l(&bond_l); 
   else if (n_configs == 0) {
     Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
@@ -818,7 +818,7 @@ int parse_bond_dist(Tcl_Interp *interp, int average, int argc, char **argv)
 
   if (argc >= 1 && !strncmp(argv[0], "index", strlen(argv[0]))) { ind_n = atoi(argv[1]); argc-=2; argv+=2; }
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
-  if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
+  if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   if (ind_n < 0 || ind_n > chain_length-1) { 
     sprintf(buffer,"%d!",chain_length-1);
     Tcl_AppendResult(interp, "ERROR: <index> must be between 0 and ", buffer, (char *)NULL);  return TCL_ERROR; }
@@ -850,7 +850,7 @@ int parse_g123(Tcl_Interp *interp, int average, int argc, char **argv)
   }
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
-  if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
+  if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   
   if (init) { init_g123(); return TCL_OK; }
   if (partCoord_g == NULL || partCM_g == NULL) {
@@ -875,7 +875,7 @@ int parse_g_av(Tcl_Interp *interp, int what, int argc, char **argv)
   double *gx;
 
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
-  if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
+  if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   if (n_configs == 0) { Tcl_AppendResult(interp, "no configurations found! Use 'analyze append' to save some!", (char *)NULL); return TCL_ERROR; }
   switch (what) {
   case 1:
