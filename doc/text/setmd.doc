@@ -1,0 +1,7 @@
+/** \page tcl_setmd The setmd command
+    \verbatim setmd <variable> <value>+ \endverbatim
+	modifies variables declared in \ref #fields. More information can be
+	found in \ref variables_page. The C implementation is \ref #setmd.
+	Using \verbatim [setmd <variable>] \endverbatim gives the
+	actual value of <variable> in the MD code back to the Tcl script.
+*/
