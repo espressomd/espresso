@@ -33,7 +33,7 @@
  *  For more information about the p3m algorithm,
  *  see \ref p3m.c "p3m.c"
  */
-
+#include "integrate.h"
 /************************************************
  * data types
  ************************************************/
@@ -106,6 +106,8 @@ MDINLINE void add_coulomb_pair_force(Particle *p1, Particle *p2,
       p1->f[j] += fac * d[j];
       p2->f[j] -= fac * d[j];
     }
+    ESR_TRACE(fprintf(stderr,"%d: RSE: Pair (%d-%d) dist=%.3f: force (%.3e,%.3e,%.3e)\n",this_node,
+		      p1->r.identity,p2->r.identity,dist,fac*d[0],fac*d[1],fac*d[2]));
   }
 }
 

@@ -9,6 +9,7 @@
 #include "random.h"
 #include "integrate.h"
 #include "cells.h"
+#include "debug.h"
 
 /** Friction coefficient gamma. */
 double friction_gamma = 0.;
@@ -52,6 +53,7 @@ void thermo_init()
 {
   pref1 = -friction_gamma/time_step;
   pref2 = sqrt(12.0 * 2.0*temperature*friction_gamma/time_step);
+  fprintf(stderr,"%d: pref1=%f, pref2=%f\n",this_node,pref1,pref2);
 }
 
 void friction_thermo(Particle *p)
@@ -59,4 +61,5 @@ void friction_thermo(Particle *p)
   p->f[0] = pref1*p->v[0] + pref2*(d_random()-0.5);
   p->f[1] = pref1*p->v[1] + pref2*(d_random()-0.5);
   p->f[2] = pref1*p->v[2] + pref2*(d_random()-0.5);
+  THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->r.identity,p->f[0],p->f[1],p->f[2]));
 }

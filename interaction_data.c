@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "interaction_data.h"
+#include "debug.h"
 #include "communication.h"
 #include "p3m.h"
 
@@ -229,6 +230,7 @@ void calc_maximal_cutoff()
     if(max_cut < p3m.r_cut)
       max_cut = p3m.r_cut;
   }
+
 }
 
 int inter(ClientData _data, Tcl_Interp *interp,

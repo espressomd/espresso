@@ -14,7 +14,7 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
 				double d[3], double dist)
 {
   int j;
-  double r_off, frac2, frac6, fac;
+  double r_off, frac2, frac6, fac=0.0;
 
   if(dist < ia_params->LJ_cut+ia_params->LJ_offset) {
     r_off = dist - ia_params->LJ_offset;
@@ -27,6 +27,8 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
 	p1->f[j] += fac * d[j];
 	p2->f[j] -= fac * d[j];
       }
+      if(fac*dist*0.5*time_step*time_step > 3e-6) fprintf(stderr,"%d: LJ-Warning: Pair (%d-%d) force=%f dist=%f\n",
+				  this_node,p1->r.identity,p2->r.identity,fac*dist,dist);
     }
     /* capped part of lj potential. */
     else if(dist > 0.0) {
@@ -52,6 +54,8 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
       p2->f[0] -= fac * ia_params->LJ_capradius;
 
     }
+    LJ_TRACE(fprintf(stderr,"%d: LJ: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
+		     this_node,p1->r.identity,p2->r.identity,dist,fac*d[0],fac*d[1],fac*d[2]));
   }
 }
 

@@ -91,6 +91,8 @@ void build_verlet_lists()
 	dist2 = distance2(p1[i].r.p,p1[j].r.p);
 	if(dist2 <= max_range2) {
 	  add_pair(pl, &p1[i], &p1[j]);
+	  /* VERLET_TRACE(fprintf(stderr,"%d: cell(%d,%d,%d), nc=0, pair (%d-%d), dist=%f\n",
+	     this_node,m,n,o,p1[i].r.identity, p1[j].r.identity,sqrt(dist2)));*/
 	}
       }	
     }
@@ -107,6 +109,8 @@ void build_verlet_lists()
 	  dist2 = distance2(p1[i].r.p,p2[j].r.p);
 	  if(dist2 <= max_range2) {
 	    add_pair(pl, &p1[i], &p2[j]);
+	    /* VERLET_TRACE(fprintf(stderr,"%d: cell(%d,%d,%d), nc=%d, pair (%d-%d), dist=%f\n",
+	       this_node,m,n,o,nc,p1[i].r.identity, p2[j].r.identity,sqrt(dist2)));*/
 	  }
 	}	
       }
@@ -118,6 +122,7 @@ void build_verlet_lists()
   {
     int sum,tot_sum=0;
     int cind1,cind2;
+   
     INNER_CELLS_LOOP(m, n, o) {
       cell = CELL_PTR(m, n, o);
       cind1 = get_linear_index(m,n,o,ghost_cell_grid);

@@ -325,12 +325,21 @@ void   P3M_calc_kspace_forces()
 	  ca_fmp[(3*cp_cnt)+d] = first[d];
 	  arg[d]   = (int) ((pos[d]-first[d])*inter2);
 
-	  P3M_TRACE(if( pos[d]<0.0 ) 
-		    fprintf(stderr,"%d: rs_mesh underflow! (P%d at %f)\n",
-			    this_node,p[i].r.identity,p[i].r.p[d]));
-	  P3M_TRACE(if( (first[d]+p3m.cao-1) > lm.dim[d] )
-		    fprintf(stderr,"%d: rs_mesh overflow!  (P%d at %f)\n",
-			    this_node,p[i].r.identity,p[i].r.p[d]));
+#ifdef ADDITIONAL_CHECKS
+	  if( pos[d]<0.0 ) {
+	    fprintf(stderr,"%d: rs_mesh underflow! (P%d at %f)\n",
+		    this_node,p[i].r.identity,p[i].r.p[d]);
+	    fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
+		    this_node,my_left[d],my_right[d]);	    
+	  }
+	  if( (first[d]+p3m.cao) > lm.dim[d] ) {
+	    fprintf(stderr,"%d: rs_mesh overflow! dir=%d (P_id=%d at %f)\n",
+		    this_node,d,p[i].r.identity,p[i].r.p[d]);
+	    fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
+		    this_node,my_left[d],my_right[d]);
+	  }    
+#endif
+
 	}
 
 	/* charge assignment */
@@ -341,8 +350,7 @@ void   P3M_calc_kspace_forces()
 	    tmp1 = tmp0 * int_caf[i1][arg[1]];
 	    for(i2=0; i2<p3m.cao; i2++) {
 	      ca_frac[cf_cnt] = tmp1 * int_caf[i2][arg[2]];
-	      rs_mesh[q_ind++] += ca_frac[cf_cnt];
-	      cf_cnt++;
+	      rs_mesh[q_ind++] += ca_frac[cf_cnt++];
 	    }
 	    q_ind += q_m_off;
 	  }
@@ -397,10 +405,17 @@ void   P3M_calc_kspace_forces()
       np = CELL_PTR(m, n, o)->pList.n;
       for(i=0; i<np; i++) { 
 	if( (q=p[i].r.q) != 0.0 ) {
+#ifdef ADDITIONAL_CHECKS
+	  double db_fsum=0.0;
+#endif
+
 	  q_ind = ca_fmp[(3*cp_cnt)+2] + lm.dim[2]*(ca_fmp[(3*cp_cnt)+1] + (lm.dim[1]*ca_fmp[(3*cp_cnt)+0]));
 	  for(i0=0; i0<p3m.cao; i0++) {
 	    for(i1=0; i1<p3m.cao; i1++) {
 	      for(i2=0; i2<p3m.cao; i2++) {
+#ifdef ADDITIONAL_CHECKS
+		db_fsum += force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+#endif
 		p[i].f[d] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
 		cf_cnt++;
 	      }
@@ -409,6 +424,9 @@ void   P3M_calc_kspace_forces()
 	    q_ind += q_s_off;
 	  }
 	  cp_cnt++;
+#ifdef ADDITIONAL_CHECKS
+	  if(fabs(db_fsum)> 6e-1) fprintf(stderr,"%d: Part %d: k-space-force = %e\n",this_node,p[i].r.identity,db_fsum);
+#endif
 	}
       }
     }
@@ -447,7 +465,10 @@ void calc_local_ca_mesh() {
   for(i=0;i<3;i++) 
     lm.ld_ind[i]=(int)ceil((my_left[i]-p3m.cao_cut[i]-skin)*p3m.ai[i]-p3m.mesh_off[i]);
   /* spacial position of left down mesh point */
-  for(i=0;i<3;i++) lm.ld_pos[i] = lm.ld_ind[i]*p3m.a[i] + p3m.mesh_off[i];
+  for(i=0;i<3;i++) {
+    lm.ld_pos[i] = (lm.ld_ind[i]+ p3m.mesh_off[i])*p3m.a[i];
+    fprintf(stderr,"%d: lm.ld_ind[%d]=%f\n",this_node,i,lm.ld_pos[i]);
+  }
   /* left down margin */
   for(i=0;i<3;i++) lm.margin[i*2] = lm.in_ld[i]-lm.ld_ind[i];
   /* up right grid point */

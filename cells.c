@@ -511,7 +511,7 @@ int pos_to_cell_grid_ind(double pos[3])
 
 void print_particle_positions()
 {
-  int i,m,n,o,np;
+  int i,m,n,o,np,cnt=0;
   ParticleList *pl;
   Particle *part;
 
@@ -523,13 +523,15 @@ void print_particle_positions()
       fprintf(stderr,"%d: cell(%d,%d,%d) Part id=%d pos=(%f,%f,%f)\n",
 	      this_node, m, n, o, part[i].r.identity,
 	      part[i].r.p[0], part[i].r.p[1], part[i].r.p[2]);
+      cnt++;
     }
   }
+  fprintf(stderr,"%d: Found %d Particles\n",this_node,cnt);
 }
 
 void print_ghost_positions()
 {
-  int i,m,n,o,np;
+  int i,m,n,o,np,cnt=0;
   ParticleList *pl;
   Particle *part;
 
@@ -544,7 +546,9 @@ void print_ghost_positions()
 	fprintf(stderr,"%d: cell(%d,%d,%d) ghost id=%d pos=(%f,%f,%f)\n",
 		this_node, m, n, o, part[i].r.identity,
 		part[i].r.p[0], part[i].r.p[1], part[i].r.p[2]);
+	cnt++;
       }
     }
   }
+  fprintf(stderr,"%d: Found %d Ghosts\n",this_node,cnt);
 }

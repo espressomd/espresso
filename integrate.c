@@ -450,11 +450,11 @@ void propagate_vel_pos()
   else {
     MPI_Gather(&e_kin, 1, MPI_DOUBLE, NULL, 0, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
-  if(sqrt(db_max_force)>1e-5) 
+  if(sqrt(db_max_force)>1e-4) 
     fprintf(stderr,"%d: max_force=%e, part=%d f=(%e,%e,%e)\n",this_node,
 	    sqrt(db_max_force),db_maxf_id,local_particles[db_maxf_id]->f[0],
 	    local_particles[db_maxf_id]->f[1],local_particles[db_maxf_id]->f[2]);
-  if(sqrt(db_max_vel)>1e-3)
+  if(sqrt(db_max_vel)>1e-2)
     fprintf(stderr,"%d: max_vel=%e, part=%d v=(%e,%e,%e)\n",this_node,
 	    sqrt(db_max_vel),db_maxv_id,local_particles[db_maxv_id]->v[0],
 	    local_particles[db_maxv_id]->v[1],local_particles[db_maxv_id]->v[2]);
