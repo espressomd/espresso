@@ -11,6 +11,7 @@ Current working revision.
 - v1.7.3e -
 -----------
 
+(f) September 14th, 2004
 (e) September 13th, 2004.
 (d) September 10th, 2004.
 (c) September  6th, 2004.
@@ -18,6 +19,7 @@ Current working revision.
 (a) September  2nd, 2004.
 
 New Features:
+(f) New test case nve_pe.tcl added. This does an integration for NVE ensemble with electrostatics, LJ, Fene, and Cosine angular potential.
 (e) New function 'average <tcl-list>' averages the contents of a tcl-list of values.
 (e) Re-entered new function 'polyBlockRead <source>' to read in blockfile 'source'
     which was first added for v1.6.6e but removed in v1.7.3c accidentally.
