@@ -45,7 +45,7 @@ This will allow to use such particle properties as quart, lambda, and torque. */
     assignment function. */
 #define P3M_N_INTERPOL 32768
 
-/** P3M: Default for baundary condition: Epsilon of the surrounding
+/** P3M: Default for boundary condition: Epsilon of the surrounding
     medium. */
 #define P3M_EPSILON 0.0
 
@@ -69,7 +69,7 @@ This will allow to use such particle properties as quart, lambda, and torque. */
 /** callback for version status. */
 MDINLINE int version_callback(Tcl_Interp *interp)
 {
-  Tcl_AppendResult(interp, "ESPRESSO/tcl_md: Version: 0.99b RC01, Last Change: 16.04.2003", (char *) NULL);
+  Tcl_AppendResult(interp, "ESPRESSO: v1.0.0 (Kim), Last Change: 25.04.2003", (char *) NULL);
   return (TCL_OK);
 }
 
