@@ -232,9 +232,13 @@ int realloc_particlelist(ParticleList *l, int size)
 		     l, l->n, l->max, size));
 
   if (size < l->max) {
-    /* shrink not as fast, just lose half, rounded up */
-    l->max = PART_INCREMENT*(((l->max + size + 1)/2 +
-			      PART_INCREMENT - 1)/PART_INCREMENT);
+    if (size == 0)
+      /* to be able to free an array again */
+      l->max = 0;
+    else
+      /* shrink not as fast, just lose half, rounded up */
+      l->max = PART_INCREMENT*(((l->max + size + 1)/2 +
+				PART_INCREMENT - 1)/PART_INCREMENT);
   }
   else
     /* round up */
@@ -1570,8 +1574,8 @@ void local_place_particle(int part, double p[3])
     /* allocate particle anew */
     cell = cell_structure.position_to_cell(pp);
     if (!cell) {
-      fprintf(stderr, "%d: INTERNAL ERROR: particle at %f %f %f does not belong on this node\n",
-	      this_node, pp[0], pp[1], pp[2]);
+      fprintf(stderr, "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) does not belong on this node\n",
+	      this_node, part, p[0], pp[0], p[1], pp[1], p[2], pp[2]);
       errexit();
     }
     rl = realloc_particlelist(cell, ++cell->n);
