@@ -12,9 +12,6 @@
 
     <b>Responsible:</b>
     <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
- *
- *  \todo Put ghost structure as a sub structure into the particle structure, so everybody knows whats going into the ghost communication.
- *
     For more information on particle_data,
     see \ref particle_data.c "particle_data.c"
  */
@@ -41,6 +38,12 @@
  * data types
  ************************************************/
 
+/** Properties of a particle which are not supposed to
+    change during the integration, but have to be known
+    for all ghosts. Ghosts are particles which are
+    needed in the interaction calculation, but are just copies of
+    particles stored on different nodes.
+*/
 typedef struct {
   /** unique identifier for the particle. */
   int    identity;
@@ -51,50 +54,73 @@ typedef struct {
   /** charge. */
   double q;
 #endif
+} ParticleProperties;
 
+/// Positional information on a particle
+typedef struct {
   /** periodically folded position. */
   double p[3];
   
 #ifdef ROTATION
-/** quaternions to define particle orientation */
+  /** quaternions to define particle orientation */
   double quat[4]; 
 #endif
-  
-} ReducedParticle;
+} ParticlePosition;
 
-/** Struct holding all particle information
- *  of the particles. */
+/// Force information on a particle
 typedef struct {
-  ReducedParticle r;
+  /** force. */
+  double f[3];
 
+#ifdef ROTATION
+  /** torque */
+  double torque[3];
+#endif
+} ParticleForce;
+
+/// Momentum information on a particle
+typedef struct {
+  /** velocity. */
+  double v[3];
+  
+#ifdef ROTATION
+  /** angular velocity */
+  double omega[3];
+#endif
+} ParticleMomentum;
+
+/** Information on a particle that is needed only on the
+    node the particle belongs to */
+typedef struct {
   /** position in the last time step befor last Verlet list update. */
   double p_old[3];
   /** index of the simulation box image where the particle really sits. */
   int    i[3];
 
-  /** force. */
-  double f[3];
-  
-  /** velocity. */
-  double v[3];
-  
-#ifdef ROTATION
-/** angular velocity */
-  double omega[3];
-  
-/** torque */
-  double torque[3];
-#endif
-
 #ifdef EXTERNAL_FORCES
   /** flag wether to fix a particle in space. Values: 
       <ul> <li> 0 no external influence
-           <li> 1 apply external force \ref Particle::ext_force
-           <li> 2 fix particle in space </ul> */
+      <li> 1 apply external force \ref Particle::ext_force
+      <li> 2 fix particle in space </ul> */
   int ext_flag;
   /** External force, apply if \ref Particle::ext_flag == 1. */
   double ext_force[3];
 #endif
+
+} ParticleLocal;
+
+/// Struct holding all information for one particle.
+typedef struct {
+  ///
+  ParticleProperties p;
+  ///
+  ParticlePosition r;
+  ///
+  ParticleMomentum m;
+  ///
+  ParticleForce f;
+  ///
+  ParticleLocal l;
 
   /** bonded interactions list. */
   IntList bl;
@@ -112,17 +138,6 @@ typedef struct {
   /** Number of particles that fit in until a resize is needed */
   int max;
 } ParticleList;
-
-/** List of reduced particles (e.g. ghost particles). */
-typedef struct {
-  /** The reduced particles payload */
-  ReducedParticle *part;
-  /** Number of reduced particles contained */
-  int n;
-  /** Number of reduced particles that fit in until a resize is needed */
-  int max;
-} RedParticleList;
-
 
 /************************************************
  * exported variables
@@ -170,7 +185,7 @@ void init_particleList(ParticleList *pList);
 /** initialize a particle.
     This function just sets all values to zero!
     Do NOT use this without setting the values of the  
-    \ref ReducedParticle::identity "identity" and \ref ReducedParticle::p "position" to 
+    \ref ParticleProperties::identity "identity" and \ref ParticlePosition::p "position" to 
     reasonable values. Also make sure that you update \ref local_particles.
 
     Add here all initializations you need to be done !!!
@@ -238,46 +253,8 @@ Particle *move_indexed_particle(ParticleList *destList, ParticleList *sourceList
 */
 void update_local_particles(ParticleList *pl);
 
-/** initialize a reduced particle list (ghosts).
- *  Use with care and ONLY for initialization! */
-void init_redParticleList(RedParticleList *pList);
-
-/** allocate storage for reduced particles (ghosts).
-    \param plist the list on which to operate
-    \param size the size to provide at least. It is rounded
-    up to multiples of \ref PART_INCREMENT. */
-void realloc_redParticles(RedParticleList *plist, int size);
-
 /** remove bond from particle if possible */
 int try_delete_bond(Particle *part, int *bond);
-
-/** fold particle coordinates to primary simulation box.
-    \param pos the position...
-    \param image_box and the box
-
-    Both pos and image_box are I/O,
-    i. e. a previously folded position will be folded correctly.
-*/
-void fold_particle(double pos[3],int image_box[3]);
-
-/** fold a particle coordinate to primary simulation box.
-    \param pos         the position...
-    \param image_box   and the box
-    \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z coordinate.
-
-    Both pos and image_box are I/O,
-    i. e. a previously folded position will be folded correctly.
-*/
-void fold_coordinate(double pos[3], int image_box[3], int dir);
-
-/** unfold particle coordinates to physical position.
-    \param pos the position...
-    \param image_box and the box
-
-    Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
-    afterwards.
-*/
-void unfold_particle(double pos[3],int image_box[3]);
 
 /** rebuild \ref particle_node from scratch.
     After a simulation step \ref particle_node has to be rebuild
