@@ -10,7 +10,7 @@
 */
 #include <math.h>
 #include <stdlib.h>
-#include <utils.h>
+#include "utils.h"
 #include "communication.h"
 #include "interaction_data.h"
 #include "grid.h"
