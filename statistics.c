@@ -229,7 +229,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 	g3 += SQR(cm_tmp[0]-partCM_g[3*j]) + SQR(cm_tmp[1]-partCM_g[3*j+1]) + SQR(cm_tmp[2]-partCM_g[3*j+2]);
       }
     }
-    g1 /= (1.*N_P*MPC); g2 /= (1.*N_P*MPC); g3 /= (1.*N_P*MPC);
+    g1 /= (1.*N_P*MPC); g2 /= (1.*N_P*MPC); g3 /= (1.*N_P);
     sprintf(buffer,"{%f %f %f}",g1, g2, g3);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return (TCL_OK);
