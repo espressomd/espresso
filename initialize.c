@@ -171,6 +171,7 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "velocities", (Tcl_CmdProc *)velocities, 0, NULL);
   Tcl_CreateCommand(interp, "crosslink", (Tcl_CmdProc *)crosslink, 0, NULL);
   Tcl_CreateCommand(interp, "diamond", (Tcl_CmdProc *)diamond, 0, NULL);
+  Tcl_CreateCommand(interp, "icosaeder", (Tcl_CmdProc *)icosaeder, 0, NULL);
    /* in file imd.c */
   Tcl_CreateCommand(interp, "imd", (Tcl_CmdProc *)imd, 0, NULL);
   /* in file random.c */
