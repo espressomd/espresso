@@ -525,7 +525,7 @@ void calc_g3_av(double **_g3) {
 	g3[k] += (SQR(cm_tmp[0]) + SQR(cm_tmp[1]) + SQR(cm_tmp[2]))/SQR(M);
       }
     }
-    g3[k] /= ((double)chain_n_chains*SQR(chain_length)*(n_configs-k));
+    g3[k] /= ((double)chain_n_chains*(n_configs-k));
   }
 }
 
