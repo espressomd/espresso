@@ -271,6 +271,8 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
   case BONDED_IA_ANGLE:
     Tcl_PrintDouble(interp, params->p.angle.bend, buffer);
     Tcl_AppendResult(interp, "angle ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.angle.phi0, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
   case BONDED_IA_DIHEDRAL:
     Tcl_AppendResult(interp, "dihedral",(char *) NULL);
@@ -819,7 +821,7 @@ int dihedral_set_params(int bond_type, double bend)
   return TCL_OK;
 }
 
-int angle_set_params(int bond_type, double bend)
+int angle_set_params(int bond_type, double bend, double phi0)
 {
   if(bond_type < 0)
     return TCL_ERROR;
@@ -827,6 +829,14 @@ int angle_set_params(int bond_type, double bend)
   make_bond_type_exist(bond_type);
 
   bonded_ia_params[bond_type].p.angle.bend = bend;
+  bonded_ia_params[bond_type].p.angle.phi0 = phi0;
+#ifdef BOND_ANGLE_COSINE
+  bonded_ia_params[bond_type].p.angle.cos_phi0 = cos(phi0);
+  bonded_ia_params[bond_type].p.angle.sin_phi0 = sin(phi0);
+#endif
+#ifdef BOND_ANGLE_COSSQUARE
+  bonded_ia_params[bond_type].p.angle.cos_phi0 = cos(phi0);
+#endif
   bonded_ia_params[bond_type].type = BONDED_IA_ANGLE;
   bonded_ia_params[bond_type].num = 2;
  
@@ -1139,7 +1149,7 @@ int inter_parse_bonded(Tcl_Interp *interp,
 		       int bond_type,
 		       int argc, char ** argv)
 {
-  double k, r, bend;
+  double k, r, bend, phi0;
 
   if (ARG0_IS_S("num")) {
     if (argc == 1)
@@ -1221,20 +1231,29 @@ int inter_parse_bonded(Tcl_Interp *interp,
   }
 
   if (ARG0_IS_S("angle")) {
-
-    if (argc != 2) {
-      Tcl_AppendResult(interp, "angle needs 1 parameter: "
-		       "<bend> ", (char *) NULL);
+    /* the optional parameter phi0 is due to backwards compatibility and is set to PI if not given */
+    if (argc != 2 && argc != 3) {
+      Tcl_AppendResult(interp, "angle needs 1 or 2 parameters: "
+		       "<bend> [<phi0>]", (char *) NULL);
       return (TCL_ERROR);
     }
 
     if (! ARG_IS_D(1, bend)) {
-      Tcl_AppendResult(interp, "angle needs 1 DOUBLE parameter: "
+      Tcl_AppendResult(interp, "angle needs a DOUBLE parameter: "
 		       "<bend> ", (char *) NULL);
       return TCL_ERROR;
     }
-    
-    CHECK_VALUE(angle_set_params(bond_type, bend), "bond type must be nonnegative");
+    /* special treatment of the optional parameter phi0 */
+    if (argc == 3) {
+      if (! ARG_IS_D(2, phi0)) {
+	Tcl_AppendResult(interp, "angle needs a DOUBLE parameter: "
+			 "<phi0> ", (char *) NULL);
+	return TCL_ERROR;
+      }
+    } else {
+      phi0 = PI;
+    }
+    CHECK_VALUE(angle_set_params(bond_type, bend, phi0), "bond type must be nonnegative");
   }
     
   if (ARG0_IS_S("dihedral")) {

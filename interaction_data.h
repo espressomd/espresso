@@ -204,21 +204,37 @@ typedef struct {
   int num;
   /** union to store the different bonded interaction parameters. */
   union {
-    /** Parameters for FENE Potential */
+    /** Parameters for FENE bond Potential.
+	k - spring constant.
+	r - cutoff radius (maximal bond length).
+	r2 - suare of r (internal parameter). */
     struct {
       double k;
       double r;
       double r2;
     } fene;
-    /** Parameters for Cosine bend potential */
+    /** Parameters for three body angular potential (bond-angle potentials). 
+	ATTENTION: Note that there are different implementations of the bond angle
+	potential which you may chose with a compiler flag in the file \ref config.h !
+	bend - bending constant.
+	phi0 - equilibrium angle (default is 180 degrees / Pi) */
     struct {
       double bend;
+      double phi0;
+#ifdef BOND_ANGLE_COSINE
+      double cos_phi0;
+      double sin_phi0;
+#endif
+#ifdef BOND_ANGLE_COSSQUARE 
+      double cos_phi0;
+#endif
     } angle;
-    /** Parameters for dihedral potential */
+    /** Parameters for four body angular potential (dihedral-angle potentials). 
+     */
     struct {
       int dummy;
     } dihedral;
-    /** Parameters for HARMONIC Potential */
+    /** Parameters for harmonic bond Potential */
     struct {
       double k;
       double r;

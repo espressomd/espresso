@@ -21,66 +21,98 @@
 
 /** Computes the three body angle interaction force and adds this
     force to the particle forces (see \ref #inter). 
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
-    @param p3        Pointer to third particle.
+    @param p_mid     Pointer to second/middle particle.
+    @param p_left    Pointer to first/left particle.
+    @param p_right   Pointer to third/right particle.
     @param type_num  bond type number of the angle interaction (see \ref #inter).
 */
-MDINLINE void add_angle_force(Particle *p1, Particle *p2, Particle *p3, int type_num)
+MDINLINE void add_angle_force(Particle *p_mid, Particle *p_left, Particle *p_right, int type_num)
 {
-  double cosine, vec1[3], vec2[3], d1i, d2i, dist2, f1, f2;
+  double cosine, vec1[3], vec2[3], d1i, d2i, dist2,  fac, f1=0.0, f2=0.0;
   int j;
 
   cosine=0.0;
-  /* vector from p1 to p2 */
-  get_mi_vector(vec1, p2->r.p, p1->r.p);
+  /* vector from p_left to p_mid */
+  get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
   dist2 = sqrlen(vec1);
   d1i = 1.0 / sqrt(dist2);
   for(j=0;j<3;j++) vec1[j] *= d1i;
-  /* vector from p1 to p3 */
-  get_mi_vector(vec2, p3->r.p, p1->r.p);
+  /* vector from p_mid to p_right */
+  get_mi_vector(vec2, p_right->r.p, p_mid->r.p);
   dist2 = sqrlen(vec2);
   d2i = 1.0 / sqrt(dist2);
   for(j=0;j<3;j++) vec2[j] *= d2i;
   /* scalar produvt of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
+  fac    = bonded_ia_params[type_num].p.angle.bend;
+#ifdef BOND_ANGLE_HARMONIC
+  {
+    double phi,sinphi;
+    phi =  acos(-cosine);
+    sinphi = sin(phi);
+    if ( sinphi < 0.00000001 ) sinphi = 0.00000001;
+    fac *= (bonded_ia_params[type_num].p.angle.phi0-phi)/sinphi;
+  }
+#endif
+#ifdef BOND_ANGLE_COSINE
+  if ( cosine >  0.999999999 ) cosine =  0.999999999;
+  if ( cosine < -0.999999999 ) cosine = -0.999999999;
+  fac *= bonded_ia_params[type_num].p.angle.cos_phi0 - bonded_ia_params[type_num].p.angle.sin_phi0 * (cosine/sqrt(1-SQR(cosine)));
+#endif
+#ifdef BOND_ANGLE_COSSQUARE
+  fac *= bonded_ia_params[type_num].p.angle.cos_phi0 - cosine;
+#endif
   /* apply bend forces */
   for(j=0;j<3;j++) {
-    f1 = bonded_ia_params[type_num].p.angle.bend * (vec2[j] - cosine * vec1[j]) * d1i;
-    f2 = bonded_ia_params[type_num].p.angle.bend * (vec1[j] - cosine * vec2[j]) * d2i;
-    p2->f.f[j] -= f1;
-    p1->f.f[j] += (f1+f2);
-    p3->f.f[j] -= f2;
+    f1               = fac * (vec2[j] - cosine * vec1[j]) * d1i;
+    f2               = fac * (vec1[j] - cosine * vec2[j]) * d2i;
+    p_left->f.f[j]  -= f1;
+    p_mid->f.f[j]   += (f1-f2);
+    p_right->f.f[j] += f2;
   }
 }
 
 /** Computes the three body angle interaction energy (see \ref #inter, \ref #analyze). 
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
-    @param p3        Pointer to third particle.
+    @param p_mid        Pointer to first particle.
+    @param p_left        Pointer to second/middle particle.
+    @param p_right        Pointer to third particle.
     @param type_num  bond type number of the angle interaction (see \ref #inter).
     @return energy   energy.
 */
-MDINLINE double angle_energy(Particle *p1, Particle *p2, Particle *p3, int type_num)
+MDINLINE double angle_energy(Particle *p_mid, Particle *p_left, Particle *p_right, int type_num)
 {
-  double cosine, vec1[3], vec2[3], d1i, d2i, dist2;
+  double cosine, vec1[3], vec2[3],  d1i, d2i, dist2;
   int j;
 
   cosine=0.0;
-  /* vector from p1 to p2 */
-  get_mi_vector(vec1, p2->r.p, p1->r.p);
+  /* vector from p_mid to p_left */
+  get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
   dist2 = sqrlen(vec1);
   d1i = 1.0 / sqrt(dist2);
   for(j=0;j<3;j++) vec1[j] *= d1i;
-  /* vector from p3 to p1 */
-  get_mi_vector(vec2, p1->r.p, p3->r.p);
+  /* vector from p_right to p_mid */
+  get_mi_vector(vec2, p_mid->r.p, p_right->r.p);
   dist2 = sqrlen(vec2);
   d2i = 1.0 / sqrt(dist2);
   for(j=0;j<3;j++) vec2[j] *= d2i;
   /* scalar produvt of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
-  /* bond bond angle energy */
-  return bonded_ia_params[type_num].p.angle.bend * ( 1 - cosine );
+  /* bond angle energy */
+#ifdef BOND_ANGLE_HARMONIC
+  {
+    double phi;
+    phi =  acos(-cosine);
+    return 0.5*bonded_ia_params[type_num].p.angle.bend*SQR(phi-bonded_ia_params[type_num].p.angle.phi0);
+  }
+#endif
+#ifdef BOND_ANGLE_COSINE
+  {
+    return bonded_ia_params[type_num].p.angle.bend*(cosine*bonded_ia_params[type_num].p.angle.cos_phi0 - sqrt(1-SQR(cosine))*bonded_ia_params[type_num].p.angle.sin_phi0+1);
+  }
+#endif
+#ifdef BOND_ANGLE_COSSQUARE
+  return 0.5*bonded_ia_params[type_num].p.angle.bend*SQR(cosine-bonded_ia_params[type_num].p.angle.cos_phi0);
+#endif
 }
 
 
