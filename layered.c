@@ -381,14 +381,22 @@ static void layered_append_particles(ParticleList *pl)
 {
   int p;
 
+  CELL_TRACE(fprintf(stderr, "%d: sorting in %d\n", this_node, pl->n));
   for(p = 0; p < pl->n; p++) {
-    if (LAYERED_BTM_NEIGHBOR && pl->part[p].r.p[2] < my_left[2])
+    fold_position(pl->part[p].r.p, pl->part[p].l.i);
+    if (LAYERED_BTM_NEIGHBOR && pl->part[p].r.p[2] < my_left[2]) {
+      CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node below\n", this_node, pl->part[p].p.identity));
       continue;
-    if (LAYERED_TOP_NEIGHBOR && pl->part[p].r.p[2] >= my_right[2])
+    }
+    if (LAYERED_TOP_NEIGHBOR && pl->part[p].r.p[2] >= my_right[2]) {
+      CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node above\n", this_node, pl->part[p].p.identity));
       continue;
-
+    }
     move_indexed_particle(layered_position_to_cell(pl->part[p].r.p), pl, p);
+    /* same particle again, as this is now a new one */
+    if (p < pl->n) p--;
   }
+  CELL_TRACE(fprintf(stderr, "%d: left over %d\n", this_node, pl->n));
 }
 
 void layered_exchange_and_sort_particles(int global_flag)
@@ -398,6 +406,8 @@ void layered_exchange_and_sort_particles(int global_flag)
   int c, p, flag, redo;
   ParticleList send_buf_dn, send_buf_up;
   ParticleList recv_buf;
+
+  CELL_TRACE(fprintf(stderr, "%d:layered exchange and sort %d\n", this_node, global_flag));
 
   init_particlelist(&send_buf_dn);
   init_particlelist(&send_buf_up);
@@ -410,14 +420,19 @@ void layered_exchange_and_sort_particles(int global_flag)
 
     for (p = 0; p < oc->n; p++) {
       part = &oc->part[p];
-      fold_position(part->r.p, part->l.i);
-      nc = layered_position_to_cell(part->r.p);
 
-      if (LAYERED_BTM_NEIGHBOR && part->r.p[2] < my_left[2])
+      if (n_nodes != 1 && LAYERED_BTM_NEIGHBOR && part->r.p[2] < my_left[2]) {
+	CELL_TRACE(fprintf(stderr, "%d: send part %d down\n", this_node, part->p.identity));
 	move_indexed_particle(&send_buf_dn, oc, p);
-      else if (LAYERED_TOP_NEIGHBOR && part->r.p[2] >= my_right[2])
+      }
+      else if (n_nodes != 1 && LAYERED_TOP_NEIGHBOR && part->r.p[2] >= my_right[2]) {
+	CELL_TRACE(fprintf(stderr, "%d: send part %d up\n", this_node, part->p.identity));
 	move_indexed_particle(&send_buf_up, oc, p);
+      }
       else {
+	/* particle stays here. Fold anyways to get x,y correct */
+	fold_position(part->r.p, part->l.i);
+	nc = layered_position_to_cell(part->r.p);
 	if (nc != oc) {
 	  move_indexed_particle(nc, oc, p);
 	  if (p < oc->n) p--;
@@ -471,7 +486,8 @@ void layered_exchange_and_sort_particles(int global_flag)
 #ifdef ADDITIONAL_CHECKS
     else {
       if (recv_buf.n != 0 || send_buf_dn.n != 0 || send_buf_up.n != 0) {
-	fprintf(stderr, "1 node but transfer buffers not empty\n");
+	fprintf(stderr, "1 node but transfer buffers are not empty. send up %d, down %d, recv %d\n",
+		send_buf_up.n, send_buf_dn.n, recv_buf.n);
 	errexit();
       }
     }
@@ -480,7 +496,7 @@ void layered_exchange_and_sort_particles(int global_flag)
 
     /* handshake redo */
     flag = (recv_buf.n != 0);
-
+    
     CELL_TRACE(if (flag) fprintf(stderr, "%d: requesting another exchange round\n", this_node));
 
     if (global_flag == CELL_GLOBAL_EXCHANGE) {
@@ -503,7 +519,7 @@ void layered_exchange_and_sort_particles(int global_flag)
     }
     else {
       if (flag) {
-	fprintf(stderr,"%d: layered_exchange_and_sort_particles: particle moved to far\n", this_node);
+	fprintf(stderr,"%d: layered_exchange_and_sort_particles: particle moved more than one cell\n", this_node);
 	errexit();
       }
       break;
@@ -522,6 +538,8 @@ void layered_calculate_ia()
   Particle *pl,    *pb, *p1;
   double dist2, d[3];
  
+  CELL_TRACE(fprintf(stderr, "%d: rebuild_v=%d\n", this_node, rebuild_verletlist));
+
   for (c = 1; c <= n_layers; c++) {
     celll = &cells[c];
     pl    = celll->part;
@@ -533,6 +551,9 @@ void layered_calculate_ia()
 
     for(i = 0; i < npl; i++) {
       p1 = &pl[i];
+
+      if (rebuild_verletlist)
+	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
       add_bonded_force(p1);
 #ifdef CONSTRAINTS
@@ -554,6 +575,7 @@ void layered_calculate_ia()
       }
     }
   }
+  rebuild_verletlist = 0;
 }
 
 void layered_calculate_energies()
@@ -564,6 +586,8 @@ void layered_calculate_energies()
   Particle *pl,    *pb, *p1;
   double dist2, d[3];
  
+  CELL_TRACE(fprintf(stderr, "%d: rebuild_v=%d\n", this_node, rebuild_verletlist));
+
   for (c = 1; c <= n_layers; c++) {
     celll = &cells[c];
     pl    = celll->part;
@@ -575,6 +599,9 @@ void layered_calculate_energies()
 
     for(i = 0; i < npl; i++) {
       p1 = &pl[i];
+
+      if (rebuild_verletlist)
+	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
       add_kinetic_energy(p1);
 
@@ -598,6 +625,7 @@ void layered_calculate_energies()
       }
     }
   }
+  rebuild_verletlist = 0;
 }
 
 void layered_calculate_virials()
@@ -620,6 +648,9 @@ void layered_calculate_virials()
     for(i = 0; i < npl; i++) {
       p1 = &pl[i];
 
+      if (rebuild_verletlist)
+	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
+
       add_kinetic_virials(p1);
 
       add_bonded_virials(p1);
@@ -639,4 +670,5 @@ void layered_calculate_virials()
       }
     }
   }
+  rebuild_verletlist = 0;
 }

@@ -33,8 +33,8 @@ puts "----------------------------------------"
 puts "- Testcase layered.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------"
 
-if { [setmd n_nodes] >= 6 } {
-    puts "Testcase layered.tcl does not run on more than 6 nodes -- too many cells"
+if { [setmd n_nodes] >= 5 } {
+    puts "Testcase layered.tcl does not run on more than 5 nodes -- too many cells"
     exec rm -f $errf
     exit 0
 }
@@ -79,6 +79,7 @@ proc write_data {file} {
 }
 
 if { [catch {
+
     ############## integ-specific part
     setmd box_l     99 99 99
     inter 0 0 lennard-jones 1.0 1.0 1.12246 0.25 0.0
@@ -157,6 +158,10 @@ if { [catch {
 	error "force error too large"
     }
 
+    puts "verlet reuse is [setmd verlet_reuse], should be $verlet_reuse"
+    if { [expr abs([setmd verlet_reuse] - $verlet_reuse)] > $epsilon } {
+	error "verlet reuse frequency differs."
+    }
 } res ] } {
     error_exit $res
 }
