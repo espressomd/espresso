@@ -261,7 +261,7 @@ int cluster_join_to_substructures()
 */
 int analyze_necklace(Particle *part, int np) {
   int n_pearls;
-
+  fprintf(stderr," analyze_necklace:\n");
   /* initialize: step 1 in necklace cluster analyzation.*/
   cluster_init(part,np);
   /* perform step 2-4 in necklace cluster analyzation.*/
@@ -336,6 +336,9 @@ int parse_necklace_analyzation(Tcl_Interp *interp, int argc, char **argv)
   sprintf(buffer,"%d",n_pearls);
   Tcl_AppendResult(interp, buffer, " pearls { ", (char *)NULL);
   cluster = first_cluster;
+  sprintf(buffer,"%d",cluster->size);
+  Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
+  cluster = cluster->next;
   while(cluster->prev != last_cluster) { 
     sprintf(buffer,"%d",cluster->size);
     Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
