@@ -108,7 +108,8 @@ ifeq ($(ICC),yes)
           endif
      endif
 
-     CFLAGS=-O3 -ip -w1 -wd 1572,1173 $(HOSTFLAGS)
+     CFLAGS=-O3 -ip -w1 $(HOSTFLAGS)
+     # if you get excessive warnings, try -wd 1572,1173
 
      # debug compiler flags
      ifeq ($(DEBUG),yes)
@@ -153,7 +154,11 @@ else
      endif
 
      CFLAGS=-O3 -Wall $(HOSTFLAGS) -finline-limit=10000000 \
-	    -ffast-math -floop-optimize -funroll-loops
+	-ffast-math -floop-optimize -funroll-loops -fomit-frame-pointer \
+	--param max-crossjump-edges=300 \
+ 	--param max-gcse-memory=100000 \
+	--param max-gcse-passes=300 \
+	--param max-pending-list-length=200
 
      # debug compiler flags
      ifeq ($(DEBUG),yes)
