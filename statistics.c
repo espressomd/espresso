@@ -539,6 +539,29 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     free(bond_l);
     return (TCL_OK);
   }
+  else if ( (!strncmp(mode, "bond_dist", strlen(mode))) || (!strncmp(mode, "<bond_dist>", strlen(mode))) ) {
+    /* 'analyze { bond_dist | <bond_dist> } [index <index>] [<chain_start> <n_chains> <chain_length>]' */
+    /***************************************************************************************************/
+    double *bdf; int ind_n=0;
+
+    if (argc >= 1 && !strncmp(argv[0], "index", strlen(argv[0]))) { ind_n = atoi(argv[1]); argc-=2; argv+=2; }
+    if (prepare_chain_structure_info(interp, &argc, &argv) == TCL_ERROR) return TCL_ERROR;
+    if (argc != 0) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
+    if (ind_n < 0 || ind_n > chain_length-1) { 
+      sprintf(buffer,"ERROR: <index> must be between 0 and %d!",chain_length-1); Tcl_AppendResult(interp, buffer, (char *)NULL);  return TCL_ERROR; }
+    if (ind_n >= chain_length/2) ind_n = (chain_length-1) - ind_n;
+    if (!strncmp(mode, "bond_dist", strlen(mode))) calc_bond_dist(&bdf,ind_n); 
+    else if (n_configs == 0) {
+      Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
+      Tcl_AppendResult(interp, "Use 'analyze append' to save some, or 'analyze internal_dist' to only look at current state!", (char *)NULL);
+      return TCL_ERROR; }
+    else calc_bond_dist_av(&bdf,ind_n);
+    for (i=0; i<chain_length-ind_n; i++) { 
+      sprintf(buffer,"%f ",bdf[i]); Tcl_AppendResult(interp, buffer, (char *)NULL); 
+    }
+    free(bdf);
+    return (TCL_OK);
+  }
   else if (!strncmp(mode, "g123", strlen(mode))) {
     /* 'analyze g123 [-init] [<chain_start> <n_chains> <chain_length>]' */
     /********************************************************************/
@@ -1365,6 +1388,54 @@ void calc_bond_l_av(double **_bond_l) {
   tmp = (double)(chain_length-1)*chain_n_chains*n_configs;
   bond_l[0] = sqrt(bond_l[0] / tmp);
   bond_l[1] = 1./(2.*bond_l[0])*sqrt(bond_l[1]/tmp - pow(bond_l[0],4));
+}
+
+void calc_bond_dist(double **_bdf, int ind_n) {
+  int i,j=ind_n,k;
+  double dx,dy,dz;
+  double *bdf=NULL;
+  *_bdf = bdf = realloc(bdf,chain_length*sizeof(double));
+
+  bdf[0] = 0.0;
+  for (k=1; k < chain_length; k++) {
+    bdf[k] = 0.0;
+    for (i=0; i<chain_n_chains; i++) {
+      if (j < chain_length-k) {
+	dx = partCfg[chain_start+i*chain_length + j+k].r.p[0]
+	  - partCfg[chain_start+i*chain_length + j].r.p[0];
+	dy = partCfg[chain_start+i*chain_length + j+k].r.p[1]
+	  - partCfg[chain_start+i*chain_length + j].r.p[1];
+	dz = partCfg[chain_start+i*chain_length + j+k].r.p[2]
+	  - partCfg[chain_start+i*chain_length +j].r.p[2];
+	bdf[k] += (SQR(dx) + SQR(dy) + SQR(dz));
+      }
+    }
+    bdf[k] = sqrt(bdf[k] / (1.0*chain_n_chains));
+  }
+}
+
+void calc_bond_dist_av(double **_bdf, int ind_n) {
+  int i,j=ind_n,k,n, i1,i2;
+  double dx,dy,dz;
+  double *bdf=NULL;
+  *_bdf = bdf = realloc(bdf,chain_length*sizeof(double));
+
+  bdf[0] = 0.0;
+  for (k=1; k < chain_length; k++) {
+    bdf[k] = 0.0;
+    for (n=0; n<n_configs; n++) {
+      for (i=0; i<chain_n_chains; i++) {
+	if (j < chain_length-k) {
+	  i2 = chain_start+i*chain_length + j; i1 = i2 + k;
+	  dx = configs[n][3*i1]   - configs[n][3*i2];
+	  dy = configs[n][3*i1+1] - configs[n][3*i2+1];
+	  dz = configs[n][3*i1+2] - configs[n][3*i2+2];
+	  bdf[k] += (SQR(dx) + SQR(dy) + SQR(dz));
+	}
+      }
+    }
+    bdf[k] = sqrt(bdf[k] / (1.0*chain_n_chains*n_configs));
+  }
 }
 
 void init_g123()
