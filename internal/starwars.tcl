@@ -1,6 +1,6 @@
 #!/bin/sh
 # tricking... the line after a these comments are interpreted as standard shell script \
-    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=2; fi
+    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=1; fi
 # OSF1 \
     if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $*
 # AIX \
@@ -57,8 +57,8 @@ frame .star.title
 label .star.title.l -text "Polyelectrolyte Star Simulation" -bg lightblue -height 2
 
 canvas .star.title.logo -width 234 -height 72 -bg black
-#set esp_logo [image create photo -file "logo.gif"]
-#.star.title.logo create image 117 36 -image $esp_logo
+set esp_logo [image create photo -file "logo.gif"]
+.star.title.logo create image 117 36 -image $esp_logo
 
 pack .star.title.l .star.title.logo -fill both  -in .star.title
 pack .star.title -in .star
