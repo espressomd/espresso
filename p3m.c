@@ -1079,7 +1079,7 @@ int P3M_tune_parameters(Tcl_Interp *interp)
     expo = log(pow((double)p3m_sum_qpart,(1.0/3.0)))/log(2.0);
     mesh_min = (int)(pow(2.0,(double)((int)expo))+0.1);
     mesh_max = mesh_min*2;
-    if(mesh_min < 8) { mesh_min = mesh_max = 8; }
+    if(mesh_min < 8) { mesh_min = 8; mesh_max = 16; }
   }
   else { mesh_min = mesh_max = p3m.mesh[0]; }
   /* calculate cao tune range */
