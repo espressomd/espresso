@@ -939,6 +939,7 @@ static double sinc(double d)
     PId2 = SQR(PId);
     return 1.0 + PId2 * ( c2 + PId2 * ( c4 + PId2 * ( c6 + PId2 * c8 ) ) );
   }
+  return 1.0;
 }
 
 /*----------------------------------------------------------------------*/

@@ -188,9 +188,27 @@ void ghost_init()
 
 void exchange_part()
 {
-  int d, lr, dir, n;
+  int i,d, lr, dir, n;
   GHOST_TRACE(fprintf(stderr,"%d: exchange_part:\n",this_node));
 
+  /*
+  for(i=0;i<nprocs;i++) {
+    if(this_node==i) {
+      fprintf(stderr,"EP1 %d: Have %d particles\n",this_node,n_particles);
+      fprintf(stderr,"EP1    My Box (%f, %f, %f) -  (%f, %f, %f)\n",
+	      my_left[0],my_left[1],my_left[2],
+	      my_right[0],my_right[1],my_right[2]);
+      for(n=0;n<n_particles;n++) 
+	fprintf(stderr,"EP1    P %d: p(%.2f, %.2f, %.2f) i(%d, %d, %d) v(%.2f, %.2f, %.2f)\n",
+		particles[n].identity,
+		particles[n].p[0],particles[n].p[1],particles[n].p[2],
+		particles[n].i[0],particles[n].i[1],particles[n].i[2],
+		particles[n].v[0],particles[n].v[1],particles[n].v[2]);
+      fflush(stderr);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+  }
+  */
 
   /* fold coordinates to primary simulation box */
   for(n=0;n<n_particles;n++) fold_particle(particles[n].p,particles[n].i);

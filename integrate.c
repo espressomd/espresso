@@ -24,7 +24,7 @@ double skin = 0.4;
 double max_range;
 double max_range2;
 int calc_forces_first = 1;
-extern p3m_struct p3m;
+/* extern p3m_struct p3m; */
 
 /*******************  functions  *******************/
 
@@ -94,7 +94,7 @@ void integrate_vv_init()
   verlet_init(); fflush(stderr);  MPI_Barrier(MPI_COMM_WORLD);
   /* initialize force structure */
   force_init(); fflush(stderr);  MPI_Barrier(MPI_COMM_WORLD);
-  P3M_init(box_l,n_total_particles,&p3m);
+  /* P3M_init(box_l,n_total_particles,&p3m); */
 }
 
 void integrate_vv(int n_steps)

@@ -8,13 +8,15 @@
 
     The corresponding header file is \ref particle_data.h "particle_data.h".
 */
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <tcl.h>
 #include "particle_data.h"
 #include "global.h"
 #include "communication.h"
 #include "grid.h"
-#include <stdlib.h>
-#include <string.h>
-#include <tcl.h>
+#include "interaction_data.h" 
 #include "debug.h"
 
 /************************************************
@@ -149,7 +151,6 @@ void fold_particle(double pos[3],int image_box[3])
   int tmp;
   for(i=0;i<3;i++) {
     image_box[i] += (tmp = (int)floor(pos[i]/box_l[i]));
-    /*pos[i]       = pos[i] - image_box[i]*box_l[i];    */
     pos[i]       = pos[i] - tmp*box_l[i];    
     if(pos[i] < 0. || pos[i] > box_l[i])
       {

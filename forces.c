@@ -8,7 +8,7 @@
 #include "forces.h"
 #include "debug.h"
 #include "thermostat.h"
-#include "p3m_parallel.h"
+/* #include "p3m_parallel.h" */
 #include "communication.h"
 #include "cells.h"
 #include "ghosts.h" 
@@ -46,6 +46,12 @@ void force_calc()
 
   FORCE_TRACE(fprintf(stderr,"%d: force_calc: for %d (P %d,G %d)\n",this_node,n_particles+n_ghosts,n_particles,n_ghosts));
 
+  ia_params = get_ia_param(0,0);
+  FORCE_TRACE(fprintf(stderr,"%d: interactions type:(0,0):\n",this_node));
+  FORCE_TRACE(fprintf(stderr,"    LJ: cut=%f, eps=%f\n",
+		      ia_params->LJ_cut,ia_params->LJ_eps));
+  FORCE_TRACE(fprintf(stderr,"    ES: cut=%f,\n",coul_r_cut));
+  FORCE_TRACE(fprintf(stderr,"    RAMP: cut=%f\n",ia_params->ramp_cut));
   /* define 'new old' coordinates*/
   for(i=0;i<n_particles+n_ghosts;i++)
     for(j=0;j<3;j++)
@@ -76,18 +82,11 @@ void force_calc()
 	  particles[id1].f[j] += fac * d[j]/dist;
 	  particles[id2].f[j] -= fac * d[j]/dist;
 	}
-	/*debug*/
-	/*if(fac>100){
-	  printf("%d lj crash %f \n",this_node, dist);
-	  printf("%f %f %f\n",particles[id1].p[0],particles[id1].p[1],particles[id1].p[2]);
-	  printf("%f %f %f\n",particles[id2].p[0],particles[id2].p[1],particles[id2].p[2]);
-	  printf("%f %f %f\n",particles[id1].p_old[0],particles[id1].p_old[1],particles[id1].p_old[2]);
-	  printf("%f %f %f\n",particles[id2].p_old[0],particles[id2].p_old[1],particles[id2].p_old[2]);
-	  }*/
       }
     }
     
     /* real space coulomb */
+    /*
     if(dist < coul_r_cut) {
       adist = alpha * dist;
       erfc_part_ri = AS_erfc_part(adist) / dist;
@@ -100,7 +99,8 @@ void force_calc()
       particles[id2].f[1] -= fac * d[1];
       particles[id2].f[2] -= fac * d[2];
     }
-    
+    */
+
     /* ramp */
     if(dist < ia_params->ramp_cut) {
       if (dist < 1e-4) {
