@@ -2,10 +2,20 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.3f *
+* v1.6.4a *
 ***********
 
 Current working revision.
+
+
+- v1.6.4a -
+-----------
+(a) July  5th, 2004.
+
+Bugfixes:
+(a) Fixed pointer mismatch in 'dd_exchange_and_sort_particles' which in the rare event
+    that more than half of the particles left the current cell had that cell resized,
+    rendering the 'part = cell->part' pointer used invalid.
 
 
 - v1.6.3f -
