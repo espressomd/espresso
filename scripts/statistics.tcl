@@ -11,6 +11,23 @@
 
 
 
+proc average { origin what } {
+    # reads in a checkpoint, executing analysis-command 'what' after each file, averaging it in the end
+    if { [file exists "$origin.chk"] } { set chk [open "$origin.chk" "r"] 
+    } elseif { [file exists "$origin"] } { set chk [open "$origin" "r"] 
+    } else { puts "ERROR: Could not find checkpoint-list $origin!\nAborting..."; exit }
+    while { [eof $chk]==0 } { if { [gets $chk source] > 0 } {
+	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -cd $source" r]
+	} else { set f [open "$source" "r"] }
+	while { [blockfile $f read auto] != "eof" } {}
+	puts -nonewline "."; flush stdout; # puts "read $source"
+	close $f
+    } }
+    close $chk
+}
+
+
+
 proc calcObsAv { fileN ind { startJ 0 } } {
     # derives time-averages of the observables at the columns $ind in file $fileN,
     # returning '<amount of samples> { names (taken from header) } { averaged values } { errors }',
@@ -172,6 +189,8 @@ proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA}
 	for {set i [llength $destinations]} {$i < [llength $what]} {incr i} { lappend destinations [lindex $destinations end] }
     }
     set f [open "plotObsTmp.p" "w"]
+    puts $f "set out \"$out.ps\""
+    puts $f "set terminal postscript color"
     puts $f "set xlabel \"[lindex $labels 0]\"; set ylabel \"[lindex $labels 1]\""
     puts $f "set $scale"
     puts -nonewline $f "plot "
@@ -180,8 +199,7 @@ proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA}
     }
     puts -nonewline $f "\"[lindex $destinations end]\" using [lindex $what $i] title \"[lindex $titles $i]\"  \n"
     if { $cmd != "" } { puts $f $cmd }
-    puts $f "set out \"$out.ps\""
-    puts $f "set terminal postscript color; replot"
+    puts $f "replot"
     puts $f "\# !lpr -Pthps18 \"$out.ps\""
     puts $f "set terminal x11"
     close $f
