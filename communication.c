@@ -245,17 +245,13 @@ void mpi_core(MPI_Comm *comm, int *errcode,...) {
   fflush(stderr);
 #ifdef MPI_ERR_LOCALDEAD
 #ifdef MPI_ERR_REMOTEDEAD
-#define HAS_DEAD_ERR
-#endif
-#endif
-#ifdef HAS_DEAD_ERR
   if (*errcode != MPI_ERR_LOCALDEAD &&
       *errcode != MPI_ERR_REMOTEDEAD)
   	core();
 #else
   core();
 #endif
-#undef HAS_DEAD_ERR
+#endif
 }
 #endif
 
