@@ -303,14 +303,18 @@ void mpi_changed_topology_slave(int dummy)
 
 static void __place_particle(int part, double p[3])
 {
+  int i[3];
   Particle *pt = cells_got_particle(part);
+
+  i[0] = 0;
+  i[1] = 0;
+  i[2] = 0;
+  fold_particle(p, i);
+
   if (!pt)
     pt = cells_alloc_particle(part, p);
   memcpy(pt->r.p, p, 3*sizeof(double));
-  pt->i[0] = 0;
-  pt->i[1] = 0;
-  pt->i[2] = 0;
-  fold_particle(pt->r.p, pt->i);
+  memcpy(pt->i, i, 3*sizeof(int));
 }
 
 void mpi_place_particle(int pnode, int part, double p[3])
