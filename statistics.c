@@ -15,6 +15,7 @@
 #include <string.h>
 #include "statistics.h"
 #include "statistics_chain.h"
+#include "statistics_molecule.h"
 #include "statistics_cluster.h"
 #include "energy.h"
 #include "modes.h"
@@ -742,6 +743,88 @@ void invalidate_obs()
 /****************************************************************************************
  *                                 basic observables parsing
  ****************************************************************************************/
+
+static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
+{
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  int i,change ;
+  double xshift,yshift,zshift;
+  float *coord;
+
+
+  enum flag { NONE , FOLD_MOLS};
+
+  int flag;
+  flag = NONE;
+
+  change = 0;
+  xshift = yshift = zshift = 0.0;
+
+  STAT_TRACE(fprintf(stderr,"%d,parsing get_folded_positions \n",this_node));
+  while (argc > 0)
+    {
+      if ( ARG0_IS_S("-molecule") ) {
+	flag = FOLD_MOLS;
+	change = 1;
+      }
+
+      if ( ARG0_IS_S("shift") ) {
+	if ( !ARG_IS_D(1,xshift) || !ARG_IS_D(2,yshift) || !ARG_IS_D(3,zshift) ) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp,"usage: analyze get_folded_positions [-molecule] [shift <xshift> <yshift> <zshift>]", (char *)NULL);
+	  return (TCL_ERROR);
+	}
+	change = 4;
+      }
+      argc -= change;
+      argv += change;
+      STAT_TRACE(fprintf(stderr,"%d,argc = %d \n",this_node, argc));
+    }
+
+
+  updatePartCfg(WITH_BONDS);
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    sprintf(errtxt, "{could not sort partCfg, particles have to start at 0 and have consecutive identities} ");
+    return TCL_ERROR;
+  }
+  coord = malloc(n_total_particles*3*sizeof(float));
+  /* shift particles and construct the array coord*/
+  for (i = 0; i < n_total_particles; i++) {
+    int dummy[3] = {0,0,0};
+    double tmpCoord[3];
+    tmpCoord[0] = partCfg[i].r.p[0] + xshift;
+    tmpCoord[1] = partCfg[i].r.p[1] + yshift;
+    tmpCoord[2] = partCfg[i].r.p[2] + zshift;
+    if (flag == NONE)  {   // perform folding by particle
+      fold_position(tmpCoord, dummy);
+    }    
+    coord[i*3    ] = (float)(tmpCoord[0]);
+    coord[i*3 + 1] = (float)(tmpCoord[1]);
+    coord[i*3 + 2] = (float)(tmpCoord[2]);
+  }
+
+
+  // Use information from the analyse set command to fold chain molecules
+  if ( flag == FOLD_MOLS ) {
+    if( analyze_fold_molecules(coord) != TCL_OK ){
+      Tcl_AppendResult(interp, "could not fold chains: \"analyze set chains <chain_start> <n_chains> <chain_length>\" must be used first",
+		       (char *) NULL);
+      return (TCL_ERROR);;   
+    }
+  }
+
+  //  Tcl_AppendResult(interp, "{ ", (char *)NULL);
+  for ( i = 0 ; i < n_total_particles ; i++) {
+    sprintf(buffer, " { %d %f %f %f } ", partCfg[i].p.identity , coord[i*3] , coord[i*3+1] , coord[i*3+2] );
+    Tcl_AppendResult(interp, buffer , (char *)NULL);
+  }
+  //  Tcl_AppendResult(interp, "} ", (char *)NULL);
+
+  return TCL_OK;
+
+}
+
 
 static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
 {
@@ -1633,6 +1716,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
   if (ARG1_IS_S("set"))
     err = parse_analyze_set_topology(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("get_folded_positions"))
+    err = parse_get_folded_positions(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("modes2d"))
     err = parse_modes2d(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("get_lipid_orients"))
