@@ -2076,7 +2076,6 @@ int constraint_rod(Constraint *con, Tcl_Interp *interp,
   return (TCL_OK);
 }
 
-#endif
 
 int constraint_maze(Constraint *con, Tcl_Interp *interp,
 		      int argc, char **argv)
@@ -2150,6 +2149,8 @@ int constraint_maze(Constraint *con, Tcl_Interp *interp,
 
   return (TCL_OK);
 }
+
+#endif
 
 
 int constraint(ClientData _data, Tcl_Interp *interp,
