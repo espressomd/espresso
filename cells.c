@@ -1,30 +1,10 @@
 /** \file cells.c
  *
  *  This file contains everything related to the link cell
- *  algorithm. This modul strongly interacts with the ghost particle
- *  structure (ghosts.c) and the verlet list algorithm (verlet.c). The
- *  initialization (cells_init()) and cleaning up (cells_exit()) is
- *  done from the integrator (integrate.c).
+ *  algorithm. 
  *
- *  The domain of a node is split into a 3D cell grid with dimension
- *  cell_grid. Together with one ghost cell layer on each side the
- *  overall dimension of the ghost cell grid is ghost_cell_grid.
- *  You can see a 2D graphical representation of the linked cell grid below. 
- *
- *  \image html linked_cells.gif "Linked cells structure"
- *  \image latex linked_cells.eps "Linked cells structure" \width=6cm
- *
- *  2D representation of a linked cell grid: n_cells = 64, cell_grid =
- *  {4,4}, ghost_cell_grid = {6,6}
- *
- * Each cell has 3^D-1 neighbour cells (For cell 14 they are
- * marked). Since we deal with pair forces, it is sufficient to
- * calculate only half of the interactions (Newtons law: actio =
- * reactio). I have chosen the upper half e.g. all neighbour cells with
- * a higher linear index (For cell 14 they are marked in light
- * blue). Caution: This implementation needs double sided ghost
- * communication! For single sided ghost communication one would need
- * some ghost-ghost cell interaction as well, which we do not need!
+ *  For more information on cells,
+ *  see \ref cells.h "cells.h"
  *   */
 #include <stdio.h>
 #include <stdlib.h>
