@@ -1,0 +1,108 @@
+/** \page tcl_inter The inter command
+         \verbatim inter ( <particle_type_number1> <particle_type_number2> | <bond_type_number> ) <interaction_type> <value>+ \endverbatim
+	sets the parameters for interactions.
+
+	<ol>
+	<b><li> \anchor tcl_non_bonded Non bonded interactions:</b> 
+	\verbatim inter <particle_type_number1> <particle_type_number2> <interaction_type> <value>+ \endverbatim	
+	Non bonded interaction between particles of types
+	<particle_type_number1> and <particle_type_number2>
+	(the types are those set using \ref tcl_part).<BR>
+	Currently known <interaction_type>s are:
+
+	<ul>
+	   	<li>\verbatim lennard-jones <epsilon> <sigma> <cutoff> <shift> <offset> \endverbatim
+			the known Lennard-Jones potential
+			\f[4 \epsilon \left(\left(\frac{\sigma}{r-offset}\right)^{12} -
+				 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
+			The order of the parameters is
+			\f$\epsilon, \sigma, cutoff, shift, offset\f$.
+
+		<li>\verbatim ramp <cutoff> <force_magnitude> \endverbatim
+			a simple step potential for initialization.<BR>
+			The parameters are the cutoff and the force
+			magnitude. If two particles are within the
+			cutoff, they feel a constant repulsion of the
+			given magnitude.
+	</ul>
+	If no <interaction_type> is given,
+	\verbatim inter <particle_type_number1> <particle_type_number2> \endverbatim
+	returns the parameters of the currently active potentials for
+	non-bonded interactions in the format
+	\verbatim 0 1 lennard-jones 1.0 2.0 1.1225 0.0 0.0 \endverbatim
+	which corresponds to the input-format of \ref tcl_inter.
+	Again the first two integers are <particle_type_number1> and <particle_type_number2>.
+
+	<b> <li> \anchor tcl_bonded Bonded interactions: </b>
+	\verbatim inter <bond_type_number> <interaction_type>|num <value>* \endverbatim
+	Bonded interaction (bonds are set using \ref tcl_part).
+	If "num" is given, the number of interaction partners is given (e.g. 1 for FENE).
+	Currently known <interaction_type>s are:
+
+	<ul>
+		<li> \verbatim fene <K_fene> <R_fene> \endverbatim
+			FENE potential
+			\f[ U^{FENE} = -\frac{1}{2} K_{FENE} R_{FENE}^2 \ln
+			\left( 1 - \left( \frac{r}{R_{FENE}} \right)^2 \right) \f]
+		<li> \verbatim angle <bend> \endverbatim
+			cosine bend potential  
+			\f[ U^{bend} = bend (1-\cos(\alpha))
+			\f]
+			with \f$ \alpha \f$ being the angle between two
+			neighboring bonds.
+	</ul>
+	If no <interaction_type> is given,
+	\verbatim inter <bond_type_number> \endverbatim
+	returns the parameters of the potential responsible for the
+	bonded interactions of bonds with that <bond_type_number> in the format
+	\verbatim 0 FENE 7.0 2.0 \endverbatim	
+	which again directly corresponds to the input-format of the respective
+	interaction with the first integer being <bond_type_number>.
+
+	<b> <li> \anchor tcl_coulomb Coulomb interaction: </b>
+        \verbatim inter	coulomb <bjerrum-length> <method> [parameters] \endverbatim
+
+	Implemented Methods are: 
+
+	<ul>
+		<li> \verbatim p3m <r_cut> <mesh> <cao> <alpha> \endverbatim
+		or
+		\verbatim p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value>] \endverbatim	
+		This is an implemantation of the 1/r Coulomb potential
+		\f[ U^{C-P3M} = \ell_B T \frac{q_1 q_2}{r} \f]
+		with help of the P3M Method described elsewhere. 
+
+		Make sure you know how to tune p3m parameters befor
+		using the automatic tuning feature. Details are
+		described in the documentation of \ref
+		P3M_tune_parameters.
+
+		Some additional p3m parameters have preset values:
+		\verbatim epsilon = 0.0 \endverbatim 
+		The dielectric constant of the surrounding medium.
+		\verbatim n_interpol = 32768 \endverbatim 
+		Number of interpolation points for the charge assignment function.
+		\verbatim mesh_off = 0.5 0.5 0.5 \endverbatim 
+		Offset of the first mesh point from the lower left corner of the simulation box
+		in units of the mesh constan.
+		As soon as p3m is turned on the additional parameters can be changed with:
+		\verbatim inter coulomb <parameter-name> <value(s)>  \endverbatim
+
+		<b> Make sure that you know the relevance of the P3M Parameters befor using P3M !!!</b>
+
+		<li> \verbatim dh <kappa> <r_cut> \endverbatim
+		Debye-H{\"u}ckel potential: 
+		\f[ U^{C-DH} = 	\ell_B T \frac{q_1 q_2 exp(-\kappa r)}{r} \f]
+		For \f[ \kappa = 0 \f] this corresponds to the plein coulomb potential.
+	</ul>		
+
+	\verbatim inter	coulomb \endverbatim
+	returns the actual parameters of the coulomb interaction.
+
+	</ol>
+	\verbatim inter \endverbatim
+	returns a list of \emph{all} bonded and non-bonded interactions as a Tcl-list,
+	in the same formats as above, e. g.
+	\verbatim {0 0 lennard-jones 1.0 2.0 1.1225 0.0 0.0} {0 FENE 7.0 2.0} {1 angle 1.0}\endverbatim	
+	The C implementation is \ref #inter.
+*/
