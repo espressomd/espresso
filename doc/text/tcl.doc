@@ -31,7 +31,7 @@ interface between the Tcl script and the MD code:
 	Attempts to end-crosslink the current configuration of <N_P> equally long polymers with <MPC> monomers each, 
 	returning how many ends are successfully connected. For more information, see \ref tcl_crosslink.
 
-    <li>\verbatim diamond <a> <bond_length> <MPC> [counterions <N_CI>] [charges <val_cM> [<val_CI>]] \endverbatim
+    <li>\verbatim diamond <a> <bond_length> <MPC> [counterions <N_CI>] [charges <val_nodes> <val_cM> <val_CI>] [distance <cM_dist>] \endverbatim
         Creates a diamond-shaped polymer network with 8 tetra-functional nodes connected by 2*8 polymer chains of length <MPC>.
 	For more information, see \ref tcl_diamond.
 
@@ -94,5 +94,6 @@ between the tcl-script and the MD-code. For details on these procedures see
 <li> \ref writepdb
 <li> \ref math
 <li> \ref aux
+<li> \ref blade
 </ul>
 */
