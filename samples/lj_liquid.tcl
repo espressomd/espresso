@@ -53,8 +53,6 @@ set vmd_output "no"
 
 # 10 000  Particles
 set box_l   10.7437
-# 100 000 Particles
-# set box_l   48.9998
 set density 0.7
 
 # Interaction parameters (repulsive Lennard Jones)
@@ -80,7 +78,7 @@ set warm_n_times 30
 set min_dist     0.9
 
 # integration
-set int_steps    100
+set int_steps    1000
 set int_n_times  100
 
 # Other parameters
