@@ -125,11 +125,14 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 					  double dist, double dist2)
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+  double F1[3], F2[3];
+  int i;
 #ifdef ELECTROSTATICS
   double ret; 
 #endif
-  double F1[3], F2[3], p_vir[3];
-  int i;
+#ifdef NPT
+  double p_vir[3];
+#endif
 
   for (i = 0; i < 3; i++) {
     F1[i] = p1->f.f[i];
@@ -202,8 +205,11 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 MDINLINE void add_bonded_virials(Particle *p1)
 {
   int i,j, type_num;
-  double ret, F1[3], F2[3], F3[3], p_vir[3], d[3];
+  double ret, F1[3], F2[3], F3[3], d[3];
   Particle *p2, *p3;
+#ifdef NPT
+  double p_vir[3];
+#endif
 
   for (j = 0; j < 3; j++) {
     F1[j] = p1->f.f[j];
