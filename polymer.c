@@ -777,7 +777,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
 	link[2*i+k] = mindist3(i*MPC+k*(MPC-1)+part_id, r_catch, links[2*i+k]);
 	links[2*i+k] = realloc(links[2*i+k],link[2*i+k]*sizeof(int));
       }
-      else if (bond[i*MPC+k*(MPC-1)] == 2) { link[2*i+k] = -1; links[2*i+k] = realloc(links[2*i+k],0); }
+      else if (bond[i*MPC+k*(MPC-1)] == 2) link[2*i+k] = -1;  /* Note that links[2*i+k] will not be malloc()ed now (taken care of at end)!!! */
       else { fprintf(stderr,"Runaway end-monomer %d detected (has %d bonds)!\nAborting...\n", i*N_P+k*(MPC-1)+part_id, bond[i*MPC+k*(MPC-1)]); 
              fflush(NULL); return(-2); }
       POLY_TRACE(printf("%d: ",i*MPC+k*(MPC-1)+part_id); 
@@ -848,7 +848,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
   if (k >= max_try) return(-1); else {
     size = 0;
     for (i=0; i < N_P; i++) {
-      if (cross[2*i] >=0 ) {
+      if (cross[2*i] >= 0 ) {
 	bondN[0] = type_FENE; bondN[1] = i*MPC + part_id; size++;
 	if (change_particle_bond(cross[2*i], bondN, 0)==TCL_ERROR) return (-3);
       }
@@ -856,7 +856,10 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
 	bondN[0] = type_FENE; bondN[1] = cross[2*i+1]; size++;
 	if (change_particle_bond(i*MPC+(MPC-1) + part_id, bondN, 0)==TCL_ERROR) return (-3);
       }
+      free(bonds[2*i]);    if (link[2*i]   >= 0) free(links[2*i]);    /* else crash(); because links[2*i]   has never been malloc()ed then */
+      free(bonds[2*i+1]);  if (link[2*i+1] >= 0) free(links[2*i+1]);  /* else crash(); because links[2*i+1] has never been malloc()ed then */
     }
+    free(bond); free(bonds); free(link); free(links); free(cross);
     POLY_TRACE(printf("Created %d new bonds; now %d ends are crosslinked!\n", size, crossL));
     return(crossL); 
   }
