@@ -44,12 +44,12 @@ void calc_internal_dist_av(double **idf);
 /** calculates the bond length between two neighbouring monomers (i.e. idf[1] in \ref calc_internal_dist).
     Chain information \ref chain_start etc. must be set!
     @param bond_l returns the bond length */
-void calc_bond_l(double **_bond_l);
+void calc_bond_l(double **bond_l);
 
 /** calculates the averaged bond length between two neighbouring monomers (i.e. idf[1] in \ref calc_internal_dist_av).
     Chain information \ref chain_start etc. must be set!
     @param bond_l returns the bond length */
-void calc_bond_l_av(double **_bond_l);
+void calc_bond_l_av(double **bond_l);
 
 /** calculates the internal distances within a chain measured from monomer <ind_n>.
     Chain information \ref chain_start etc. must be set!
