@@ -65,8 +65,8 @@ int collision(double pos[3], double shield);
 	         \<cM_dist\>     = distance between two charged monomers' indices (defaults to '1') <br>
 	         \<type_{n|c}P\> = type number of {neutral|charged} monomers to be used with "part" (default to '0' and '1') <br>
 	         \<type_FENE\>   = type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0') <br>
-		 \<angle\>       = desired bond-angle to be fixed <br>
-	         \<angle2\>      = second spherical bond-angle <br>
+		 \<angle\>       = freely rotating bond-angle to be fixed <br>
+	         \<angle2\>      = second spherical bond-angle (for setting up helixes or planar polymers)<br>
 		 \<x2,y2,z2\>    = sets the position of the 2nd monomer of the first chain
     <br>For more informations on the parameters see \ref polymerC. */
 int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv);
