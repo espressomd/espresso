@@ -12,7 +12,7 @@
     Has effect on: \ref per_callback, \ref find_node, \ref #fields, 
     \ref #cells_init and \ref #sort_particles_into_cells.
 */
-#define PARTIAL_PERIODIC 
+/* #define PARTIAL_PERIODIC */
 
 /** if defined, you will get a warning when particles approach nearer than
     0.9 sigma, because then it's likely the integration will blow up.
@@ -28,11 +28,11 @@ This will allow to use such particle properties as quart, omega, and torque. */
 
 /** Compiler flag to enable external forces. E.g. apply a fixed external force
     to a particle or fix a particle in space. */
-#define EXTERNAL_FORCES
+/* #define EXTERNAL_FORCES */
 
-/** Compiler Flag tp enable constraints, eg walls, spheres. 
+/** Compiler Flag to enable constraints, eg walls, spheres. 
     See \ref constraint.h and \ref interaction_data.h */
-#define CONSTRAINTS
+/* #define CONSTRAINTS */
 
 /************************************************/
 /** \name Default Parameter Settings            */
@@ -70,7 +70,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /** callback for version status. */
 MDINLINE int version_callback(Tcl_Interp *interp)
 {
-  Tcl_AppendResult(interp, "ESPRESSO: v1.0.0 (Kim), Last Change: 25.04.2003", (char *) NULL);
+  Tcl_AppendResult(interp, "ESPRESSO: v1.1.RC1 (Naomi), Last Change: 16.10.2003", (char *) NULL);
   return (TCL_OK);
 }
 
