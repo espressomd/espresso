@@ -12,6 +12,9 @@
 ### Tk (graphical interface)
 TK=yes
 
+### Intel C compiler instead of gcc
+ICC=yes
+
 ### Enable ('yes') for the Blade-Center (see http://www.mpip-mainz.mpg.de/theory/computers/blade/index.html)
 BLADE=no
 
@@ -24,19 +27,21 @@ DEBUG=no
 ### ElectricFence allocation debugging
 EFENCE=no
 
-### fixed target architecture (same reason as above)
+### host optimization. Leave blank for automatic setting
 HOSTFLAGS=
-ifeq ($(BLADE),yes)
-     # activate optimization for Blade-Xeon-Procs (see http://www.rzg.mpg.de/docs/languages/Intel_cc.html)
-     HOSTFLAGS=-tpp7 -axW -xW -march=pentium4 -I. -I/afs/ipp/@sys/soft/fftw/f95i/include
-endif
+
+
 
 ############ compiler settings
 CC=mpicc
 ifeq ($(BLADE),yes)
-     # CC=/afs/ipp/@sys/soft/mpich-1.2.4/gnu/bin/mpicc
      CC=mpicci
-endif 
+     ICC=yes
+else
+     ifeq ($(ICC),yes)
+          CC=icc
+     endif
+endif
 
 # architecture dependent flags for gcc 3
 MODEL=$(shell awk '/\`model name/ { \
@@ -46,40 +51,47 @@ MODEL=$(shell awk '/\`model name/ { \
 	print "Generic"; \
 	exit }' \/proc/cpuinfo)
 
-ifeq ($(HOSTFLAGS),)
-HOSTFLAGS=-march=i386
+ifeq ($(ICC),yes)
+     ifeq ($(BLADE),yes)
+# activate optimization for Blade-Xeon-Procs (see http://www.rzg.mpg.de/docs/languages/Intel_cc.html)
+          HOSTFLAGS=-tpp7 -axW -xW -march=pentium4 -I. -I/afs/ipp/@sys/soft/fftw/f95i/include
+     else
+          ifeq ($(MODEL),Athlon-MP)
+               HOSTFLAGS= -tpp6 -xK -march=pentiumiii
+          endif
+     endif
 
-ifeq ($(MODEL),Pentium-III)
-HOSTFLAGS= -march=pentium3 -mfpmath=sse -msse
+     CFLAGS=-g -O3 -ip -w1 $(HOSTFLAGS)
+else
+# gcc optimization
+     ifeq ($(HOSTFLAGS),)
+          HOSTFLAGS=-march=i386
+
+          ifeq ($(MODEL),Pentium-III)
+               HOSTFLAGS= -march=pentium3 -mfpmath=sse -msse
+          endif
+
+          ifeq ($(MODEL),Athlon-MP)
+               HOSTFLAGS= -march=athlon-mp -mfpmath=sse -msse
+          endif
+
+          ifeq ($(MODEL),Athlon-XP)
+               HOSTFLAGS= -march=athlon-xp -mfpmath=sse -msse
+          endif
+
+          ifeq ($(MODEL),Athlon-64)
+               HOSTFLAGS= -m64 -mfpmath=sse -msse2
+          endif
+
+          ifeq ($(MODEL),Athlon-Processor)
+               HOSTFLAGS= -march=athlon -mfpmath=sse -msse
+          endif
+     endif
+
+     CFLAGS=-g -O3 -Wall $(HOSTFLAGS) -finline-limit=10000000 \
+	    -ffast-math
 endif
 
-ifeq ($(MODEL),Athlon-MP)
-HOSTFLAGS= -march=athlon-mp -mfpmath=sse -msse
-endif
-
-ifeq ($(MODEL),Athlon-XP)
-HOSTFLAGS= -march=athlon-xp -mfpmath=sse -msse
-endif
-
-ifeq ($(MODEL),Athlon-64)
-HOSTFLAGS= -m64 -mfpmath=sse -msse2
-endif
-
-ifeq ($(MODEL),Athlon-Processor)
-HOSTFLAGS= -march=athlon -mfpmath=sse -msse
-endif
-
-endif
-
-
-# optimized compiler flags
-
-CFLAGS=-g -O3 -Wall $(HOSTFLAGS) -finline-limit=10000000 \
-	-ffast-math
-
-ifeq ($(BLADE),yes)
-     CFLAGS=-g -O2 -Wall $(HOSTFLAGS)
-endif
 
 # debug compiler flags
 ifeq ($(DEBUG),yes)
@@ -98,6 +110,7 @@ CFLAGS+= -DMDINLINE="inline static"
 ############ linker settings
 LINK=$(CC)
 LDLIBS= -lm -lpthread
+
 ifeq ($(STATIC),yes)
 	LDFLAGS+=-static
 	STATIC_POSTLOAD=-lm -ldl
@@ -109,8 +122,8 @@ endif
 
 ########### ElectricFence
 ifeq ($(EFENCE),yes)
-	LDLIBS+= -lefence
-	CFLAGS+= -DEFENCE
+     LDLIBS+= -lefence
+     CFLAGS+= -DEFENCE
 endif
 
 ########### FFTW
@@ -131,8 +144,17 @@ endif
 
 ########### TK
 ifeq ($(TK),yes)
-CFLAGS+= -DTK
-LDLIBS+= -ltk8.4
+     CFLAGS+= -DTK
+     LDLIBS+= -ltk8.4
+endif
+
+########### LAM/MPI
+ifeq ($(ICC),yes)
+     ifeq ($(BLADE),yes)
+     else
+          CFLAGS+= -I/opt/lam/include
+          LDLIBS+= -L/opt/lam/lib -lmpi -llam
+     endif
 endif
 
 ############# special flags for C++ compilation
