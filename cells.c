@@ -114,7 +114,9 @@ void cells_re_init()
 #endif
 
   /* first move particles to their nodes. Necessary if
-     box length has changed. */
+     box length has changed. May also be called in script mode,
+     so better also invalidate the node pointers. */
+  particle_invalidate_part_node();
   invalidate_ghosts();
   exchange_and_sort_part();
 
@@ -431,8 +433,8 @@ void print_particle_positions()
     part = CELL_PTR(m, n, o)->pList.part;
     np   = CELL_PTR(m, n, o)->pList.n;
     for(i=0 ; i<pl->n; i++) {
-      fprintf(stderr,"%d: cell(%d,%d,%d) Part id=%d pos=(%f,%f,%f)\n",
-	      this_node, m, n, o, part[i].r.identity,
+      fprintf(stderr,"%d: cell(%d,%d,%d) linear %d Part id=%d pos=(%f,%f,%f)\n",
+	      this_node, m, n, o, CELL_IND(m,n,o),part[i].r.identity,
 	      part[i].r.p[0], part[i].r.p[1], part[i].r.p[2]);
       cnt++;
     }
