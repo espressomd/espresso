@@ -9,16 +9,28 @@
  */
 #include <tcl.h>
 
+/************************************************
+ * data types
+ ************************************************/
+
+/** Verlet pair list. The verlet pair list array is resized using a
+    sophisticated (we hope) algorithm to avoid unnecessary resizes.
+    Access using \ref realloc_verletList.
+*/
+typedef struct {
+  /** The pair payload (two integers per pair) */
+  int *pair;
+  /** Number of pairs contained */
+  int n_pairs;
+  /** Number of pairs that fit in until a resize is needed */
+  int max_pairs;
+} PairList;
+
+
 /** \name Exported Variables */
 /************************************************************/
 /*@{*/
 
-/** Actual number of pairs in the verlet list. */
-extern int   n_verletList;
-/** Maximal number of pairs in the verlet list. */
-extern int max_verletList;
-/** Verlet list. */
-extern int    *verletList;
 /** If non-zero, the verlet list has to be rebuilt. */
 extern int rebuild_verletlist;
 
