@@ -28,7 +28,7 @@
 /** number of Brillouin zones in the aliasing sums. */
 #define BRILLOUIN 1       
 /** increment size of charge assignment fields. */
-#define CA_INCREMENT 10       
+#define CA_INCREMENT 50       
 
 /* MPI tags for the p3m communications: */
 /** Tag for communication in P3M_init() -> send_calc_mesh(). */
@@ -74,9 +74,6 @@ typedef struct {
  * variables
  ************************************************/
 
-int fft_init_flag=0;
-int p3m_init_flag=0;
-
 p3m_struct p3m;
 
 /** local mesh. */
@@ -91,10 +88,12 @@ double *rs_mesh = NULL;
 /** k space mesh (local) for k space calculation and FFT.*/
 double *ks_mesh = NULL;
 
-/** Field to store grid points to send */
+/** Field to store grid points to send. */
 double *send_grid = NULL; 
 /** Field to store grid points to recv */
 double *recv_grid = NULL;
+/** Allocation size of send_grid and recv_grid. */
+int send_recv_grid_size=0;
 
 /** interpolation of the charge assignment function. */
 double *int_caf[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
@@ -109,7 +108,7 @@ double *d_op = NULL;
 double *g = NULL;
 
 /** number of charged particles on the node. */
-int ca_num;
+int ca_num=0;
 /** Charge fractions for mesh assignment. */
 double *ca_frac = NULL;
 /** first mesh point for charge assignment. */
@@ -253,9 +252,12 @@ void   P3M_init()
 	errexit();
       }
     }
-    ca_frac = (double *) realloc(ca_frac, p3m.cao*p3m.cao*p3m.cao*CA_INCREMENT*sizeof(double));
-    ca_fmp  = (int *) realloc(ca_fmp, 3*CA_INCREMENT*sizeof(int));
-
+    /* initialize ca fields to size CA_INCREMENT: ca_frac and ca_fmp */
+    if(ca_num < CA_INCREMENT) {
+      ca_num = 0;
+      realloc_ca_fields(CA_INCREMENT);
+    }
+ 
     calc_local_ca_mesh();
     calc_send_mesh();
     P3M_TRACE(p3m_print_local_mesh(lm));
@@ -264,8 +266,11 @@ void   P3M_init()
       /* MPI_Barrier(MPI_COMM_WORLD); */
       if(n==this_node) P3M_TRACE(p3m_print_send_mesh(sm));
     }
-    send_grid = (double *) realloc(send_grid, sizeof(double)*sm.max);
-    recv_grid = (double *) realloc(recv_grid, sizeof(double)*sm.max);
+    if(sm.max != send_recv_grid_size) {
+      send_recv_grid_size=sm.max;
+      send_grid = (double *) realloc(send_grid, sizeof(double)*sm.max);
+      recv_grid = (double *) realloc(recv_grid, sizeof(double)*sm.max);
+    }
 
     interpolate_charge_assignment_function();
     /* position offset for calc. of first meshpoint */
@@ -273,14 +278,11 @@ void   P3M_init()
     P3M_TRACE(fprintf(stderr,"%d: pos_shift = %f\n",this_node,pos_shift)); 
  
     /* FFT */
-     P3M_TRACE(fprintf(stderr,"%d: rs_mesh ADR=%p\n",this_node,rs_mesh));
-    if(fft_init_flag==0) {
-      ca_mesh_size = fft_init(&rs_mesh,lm.dim,lm.margin);
-      /* rs_mesh = (double *) realloc(rs_mesh, ca_mesh_size*sizeof(double)); */
-      ks_mesh = (double *) realloc(ks_mesh, ca_mesh_size*sizeof(double));
+    P3M_TRACE(fprintf(stderr,"%d: rs_mesh ADR=%p\n",this_node,rs_mesh));
+    ca_mesh_size = fft_init(&rs_mesh,lm.dim,lm.margin);
+    /* rs_mesh = (double *) realloc(rs_mesh, ca_mesh_size*sizeof(double)); */
+    ks_mesh = (double *) realloc(ks_mesh, ca_mesh_size*sizeof(double));
 
-      fft_init_flag=1;
-    }
     P3M_TRACE(fprintf(stderr,"%d: rs_mesh ADR=%p\n",this_node,rs_mesh));
  
     /* k-space part: */
@@ -476,7 +478,6 @@ void calc_local_ca_mesh() {
   /* spacial position of left down mesh point */
   for(i=0;i<3;i++) {
     lm.ld_pos[i] = (lm.ld_ind[i]+ p3m.mesh_off[i])*p3m.a[i];
-    fprintf(stderr,"%d: lm.ld_ind[%d]=%f\n",this_node,i,lm.ld_pos[i]);
   }
   /* left down margin */
   for(i=0;i<3;i++) lm.margin[i*2] = lm.in_ld[i]-lm.ld_ind[i];
@@ -683,8 +684,10 @@ void realloc_ca_fields(int newsize)
 {
   int incr = 0;
   if( newsize > ca_num ) incr = (newsize - ca_num)/CA_INCREMENT +1;
-  else if( newsize < ca_num ) incr = (newsize - ca_num)/CA_INCREMENT;
+  else if( newsize < ca_num ) incr = (newsize - ca_num)/CA_INCREMENT +1;
+  incr *= CA_INCREMENT;
   if(incr != 0) {
+    P3M_TRACE(fprintf(stderr,"%d: realloc_ca_fields: old_size=%d -> new_size=%d\n",this_node,ca_num,ca_num+incr));
     ca_num += incr;
     if(ca_num<CA_INCREMENT) ca_num = CA_INCREMENT;
     ca_frac = (double *)realloc(ca_frac, p3m.cao*p3m.cao*p3m.cao*ca_num*sizeof(double));
