@@ -55,18 +55,19 @@ const Datafield fields[] = {
   {&(p3m.r_cut), TYPE_DOUBLE,   1, "p3m_r_cut", p3mrcut_callback },    /* p3m.c */
   {p3m.mesh, TYPE_INT,   3, "p3m_mesh", p3mmesh_callback },            /* p3m.c */
   {&(p3m.cao), TYPE_INT,   2, "p3m_cao", p3mcao_callback },            /* p3m.c */
-  {&(p3m.epsilon), TYPE_DOUBLE,   1, "p3m_epsilon", p3mepsilon_callback },    /* p3m.c */
-  {p3m.mesh_off, TYPE_DOUBLE,   3, "p3m_mesh_offset", p3mmeshoff_callback },  /* p3m.c */
-  {&transfer_rate, TYPE_INT,   1, "transfer_rate", ro_callback },             /* imd.c */
-  {&max_num_cells, TYPE_INT,   1, "max_num_cells", max_num_cells_callback },  /* cells.c */
+  {&(p3m.epsilon), TYPE_DOUBLE,   1, "p3m_epsilon", p3mepsilon_callback }, /* p3m.c */
+  {p3m.mesh_off, TYPE_DOUBLE,   3, "p3m_mesh_offset", p3mmeshoff_callback }, /* p3m.c */
+  {&transfer_rate, TYPE_INT,   1, "transfer_rate", ro_callback },      /* imd.c */
+  {&max_num_cells, TYPE_INT,   1, "max_num_cells", max_num_cells_callback }, /* cells.c */
 #ifdef PARTIAL_PERIODIC
   {periodic, TYPE_INT,   3, "periodicity", per_callback },             /* grid,c */
 #else
   {periodic, TYPE_INT,   3, "periodicity", ro_callback },              /* grid,c */
 #endif
   {&temperature, TYPE_DOUBLE, 1, "temp", temp_callback },              /* thermostat.c */
-  {&lj_force_cap, TYPE_DOUBLE, 1, "lj_force_cap", lj_force_cap_callback },  /* interaction.c */
+  {&lj_force_cap, TYPE_DOUBLE, 1, "lj_force_cap", lj_force_cap_callback }, /* interaction.c */
   {&start_time, TYPE_DOUBLE, 1, "start_time", start_time_callback }, /* integrate.c */
+  {&n_total_particles, TYPE_INT, 1, "npart", ro_callback },            /* particle.c */
   { NULL, 0, 0, NULL, NULL }
 };
 

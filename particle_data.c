@@ -318,6 +318,8 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   if (get_particle_data(part_num, &part) == TCL_ERROR)
     return (TCL_ERROR);
 
+  unfold_particle(part.r.p, part.i);
+
   sprintf(buffer, "%d", part.r.identity);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   Tcl_PrintDouble(interp, part.r.p[0], buffer);
@@ -395,17 +397,6 @@ int part(ClientData data, Tcl_Interp *interp,
     return (TCL_OK);
   }
 
-  if (argc == 2 && !strncmp(argv[1], "number", strlen(argv[1]))) {
-    char buffer[TCL_INTEGER_SPACE];
-    int i = 0, c = 0;
-    for (i = 0; i <= max_seen_particle; i++)
-      if (particle_node[i] != -1)
-	c++;
-    sprintf(buffer, "%d", c);
-    Tcl_AppendResult(interp, buffer, (char *)NULL);
-    return (TCL_OK);
-  }
-
   part_num = atol(argv[1]);
 
   /* print out particle information */
@@ -442,6 +433,7 @@ int part(ClientData data, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else if (!strncmp(argv[0], "pos", strlen(argv[0]))) {
+	unfold_particle(part.r.p, part.i);
 	Tcl_PrintDouble(interp, part.r.p[0], buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
 	Tcl_PrintDouble(interp, part.r.p[1], buffer);

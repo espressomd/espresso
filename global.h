@@ -109,6 +109,8 @@ extern const Datafield fields[];
 #define FIELD_LJFORCECAP 24
 /** index of \ref start_time in  \ref fields */
 #define FIELD_START_TIME 25
+/** index of \ref n_total_particles in  \ref fields */
+#define FIELD_N_PART 26
 /*@}*/
 
 /**********************************************

@@ -1,7 +1,7 @@
 proc writepsf {file} {
     set f [open $file "w"]
     puts $f "PSF"
-    puts $f [format "%8d !NATOM" [part number]]
+    puts $f [format "%8d !NATOM" [setmd npart]]
     # write atoms and create bondlist
     set cnt 1
     set mp [setmd maxpart]
