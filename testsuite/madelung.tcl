@@ -197,5 +197,15 @@ if { $max_force > $force_epsilon } {
     error_exit "Forces larger than $force_epsilon occured"
 }
 
+set cur_pres [analyze pressure]
+puts "Total Pressure:           $cur_pres"
+set cur_pres [lindex [lindex $cur_pres 0] 1]
+set der_pres [expr [lindex $energy 0 1]/(3*pow([lindex [setmd box_l] 0],3))]
+set err_pres [expr ($der_pres - $cur_pres)/$cur_pres]
+puts "Derived Virial Pressure U/3V:        $der_pres   ( relative error: $err_pres )"
+if { $err_pres > $accuracy } {
+    error_exit "pressure derivation failed to reach accuracy goal"
+}
+
 exec rm -f $errf
 exit 0
