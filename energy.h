@@ -33,6 +33,7 @@
 #include "debye_hueckel.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
+#include "maggs.h"
 
 
 /** \name Exported Variables */
@@ -99,6 +100,8 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
     case COULOMB_MMM2D:
       ret = mmm2d_coulomb_pair_energy(p1,p2,d,dist2,dist);
       break;
+    default :
+      ret = 0.;
     }
     energy.coulomb[0] += ret;
   }
