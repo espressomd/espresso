@@ -10,6 +10,7 @@
  *  \todo General Send/Recv routine for two-step communications.
 */
 #include <math.h>
+#include <stdlib.h>
 
 /* just some nice utilities... */
 /* and some constants...*/
