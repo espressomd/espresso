@@ -172,7 +172,7 @@ proc analysis { stat stat_out N_P MPC simtime } {
 
 proc stopParticles { } {
     puts -nonewline "        Setting all particles' velocities and forces to zero... "; flush stdout
-    set old_i 0; set old_e [setmd npart]; set old [expr 10*$old_e]
+    set old_i 0; set old_e [setmd n_part]; set old [expr 10*$old_e]
     for { set i 0} { $i < $old_e } {incr i} {
 	if { [expr $old_i*100]>=$old } { set old [expr $old + 10*$old_e]; puts -nonewline ".,."; flush stdout }; incr old_i
 	part $i v 0 0 0
