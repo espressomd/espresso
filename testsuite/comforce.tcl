@@ -29,10 +29,21 @@ proc error_exit {error} {
     exit -666
 }
 
+proc require_feature {feature} {
+    global errf
+    if { ! [regexp $feature [code_info]]} {
+	set f [open $errf "w"]
+	puts $f "not compiled in: $feature"
+	close $f
+	exit -42
+    }
+}
+
 puts "----------------------------------------"
 puts "- Testcase comforce.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------"
 
+require_feature "COMFORCE"
 
 set epsilon 1e-4
 setmd temp 0
