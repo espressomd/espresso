@@ -6,7 +6,7 @@
     <dl>
     <dt>data</dt><dd>is a matrix filled with the primary estimates \f$a_\alpha^{i,r}\f$ from \f$R\/\f$
                 replica with \f$N_1,N_2,\ldots,N_R\f$ measurements each.<br>
-                <center>\f$$data=\left(\begin{array}{*{4}{c}}
+                <center>\f[data=\left(\begin{array}{*{4}{c}}
 		             a_1^{1,1}&a_2^{1,1}&a_3^{1,1}&\cdots\\
 		             a_1^{2,1}&a_2^{2,1}&a_3^{2,1}&\cdots\\
 			     \vdots&\vdots&\vdots&\vdots\\
@@ -14,7 +14,7 @@
 		             a_1^{1,2}&a_2^{1,2}&a_3^{1,2}&\cdots\\
 			     \vdots&\vdots&\vdots&\vdots\\
 		             a_1^{{N_R},R}&a_2^{{N_R},R}&a_3^{{N_R},R}&\cdots\\
-		             \end{array}\right)$\f$</center></dd>
+		             \end{array}\right)\f]</center></dd>
     <dt>nrep</dt><dd>is a vector whose elements specify the length of the individual replica.<br>
                 <center>\f$$nrep=\left(N_1,N_2,\ldots,N_R\right)$\f$</center></dd>
     <dt>col</dt><dd>is the column of the data which is to be analyzed. I.e. \f$1\le\textrm{col}\le\textrm{number of columns}\f$.</dd>
@@ -33,10 +33,10 @@
                 <li>The error of the error
                 <li>The integrated autocorrelation time
                 <li>The error of that
+		<li>if length(nrep) > 1 The Q-value, i.e. the probability to find a $\Chi^2$ fit of the replica estimates
             </ol>
 
-	    If UW_HAVE_GSL is defined at compile time and the GSL is available the Q value is returned too.
-
+    The users is warned with a string if the windowing failed or if the error in one of the replica is to large.
 
     This function is based on the matlab function presented in<br>
     [1] arXiv:hep-lat/0306017 v1 13. Jun 2003, Wolff, U., <a href="http://arxiv.org/pdf/hep-lat/0306017">Monte Carlo errors with less errors.</a>
