@@ -280,7 +280,7 @@ void calc_maximal_cutoff()
 	    max_cut = data->ramp_cut;
 	}
      }
-  /* real cpace electrostatic */
+  /* real space electrostatic */
   if(coulomb.method == COULOMB_P3M     && max_cut < p3m.r_cut) 
     max_cut = p3m.r_cut;
   else if(coulomb.method == COULOMB_DH && max_cut < dh_params.r_cut) 
@@ -351,16 +351,10 @@ int inter(ClientData _data, Tcl_Interp *interp,
       return (TCL_OK);
     }
 
-    /* check number of parameters */
-    if(argc < 4) {
-      Tcl_AppendResult(interp, "wrong # args for inter coulomb.", (char *) NULL);
-      return (TCL_ERROR);
-    }
-
     /* check bjerrum length */
     if ((Tcl_GetDouble(interp, argv[2], &(coulomb.bjerrum)) == TCL_ERROR)) {
       Tcl_ResetResult(interp);
-      /* if p3m is set allready you can set additional optional p3m parameters */
+      /* if p3m is set already you can set additional optional p3m parameters */
       if (coulomb.method == COULOMB_P3M) {
 	argc -= 2;
 	argv += 2;
@@ -451,7 +445,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
       if(Tcl_GetDouble(interp, argv[0], &(p3m.r_cut)) == TCL_ERROR) {
 	/* must be tune, tune parameters */
 	if(strncmp(argv[0], "tune", strlen(argv[0]))) {
-	  Tcl_AppendResult(interp, "Unkwon p3m parameter \"",argv[0],"\"",(char *) NULL);
+	  Tcl_AppendResult(interp, "Unknown p3m parameter \"",argv[0],"\"",(char *) NULL);
 	  return (TCL_ERROR);  
 	}
 	Tcl_AppendResult(interp, "Automatic p3m tuning not implemented.",(char *) NULL);
