@@ -204,7 +204,6 @@ proc checkpoint_read { origin { read_all_chks 1 } { write_pdb 0 } { pdb_sfx 5 }}
 	    }
 	}
     } else {
-	puts " Reading just one chkpnt " 
 	set tmp_chk "NA"
 	while { [eof $chk]==0 } { 
 	    if { [gets $chk source] > 0 } { 
@@ -223,7 +222,7 @@ proc checkpoint_read { origin { read_all_chks 1 } { write_pdb 0 } { pdb_sfx 5 }}
 	}
 	part deleteall
 	while { [blockfile $f read auto] != "eof" } {}
-	puts -nonewline "."; flush stdout; # puts "read $source"
+	puts -nonewline "L"; flush stdout; # puts "read $source"
 	close $f
 	if { $write_pdb !=0 } { if {$pdb_ind==0} {writepsf "$write_pdb.psf"}; writepdb "$write_pdb[format $pdb_sfx $pdb_ind].pdb"; incr pdb_ind }
     }
