@@ -44,6 +44,16 @@ all: $(PLATFORM) $(PLATFORM)/Espresso $(PLATFORM)/libEspresso.a
 docu: doc/html/index.html
 
 doc/html/index.html: $(DOCFILES) $(CFILES) $(CXXFILES)
+################### RUNTIME_ERROR-CODES
+	awk -f ./scripts/runtime_errors.awk *.c *.h
+	sort ./doc/text/runtime_errors.doc -o ./doc/text/runtime_errors.doc
+	echo "/** \\page runtime_errorcodes runtime_errorcodes resolved" > ./doc/text/runtime_errorcodes.doc
+	echo "<ul>" >> ./doc/text/runtime_errorcodes.doc
+	cat ./doc/text/runtime_errors.doc >> ./doc/text/runtime_errorcodes.doc
+	echo "</ul>" >> ./doc/text/runtime_errorcodes.doc
+	echo "*/" >> ./doc/text/runtime_errorcodes.doc
+	rm ./doc/text/runtime_errors.doc
+################### END OF RUNTIME_ERROR-CODES
 	doxygen doxygen_config | grep -ve "^\(Generating\|Parsing\|Preprocessing\)"
 #       (cd doc/latex; make)
 
