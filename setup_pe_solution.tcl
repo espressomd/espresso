@@ -30,19 +30,19 @@ puts " "
 #  Parameters                                               #
 #############################################################
 
-set vmd_output "yes"
+set vmd_output "no"
 
 # System parameters
 #############################################################
 
 # Number of polymers
-set n_polymers 4
+set n_polymers 5
 # length of polymers
-set l_polymers 49
+set l_polymers 238
 # Bond length
 set bond_length 1.0
 # distance between charged monomers
-set cm_distance 2
+set cm_distance 3
 # valency of charged monomers
 set cm_valency 1.0
 
@@ -50,30 +50,36 @@ set cm_valency 1.0
 set ci_valency -1.0
 
 # system density
-set density 0.001
+set density 0.00002
 
 # Interaction parameters
 #############################################################
 
 set n_part_types 3
 
-set lj1_cut     1.12246
-set lj1_epsilon 1.0
-set lj1_cap_start  10.0
-set lj1_cap_incr   2.0
+set lj1_cut       1.12246
+set lj1_epsilon   1.0
+set lj1_shift     1.0
+set lj1_cap_start 10.0
+set lj1_cap_incr  5.0
+
+set lj2_cut       2.5
+set lj2_epsilon   1.75
 
 set fene1_cut   2.0
 set fene1_k     7.0
 
-setmd skin      0.3
+setmd skin      0.8
 
 # Integration parameters
 #############################################################
 
-set mdst 0.92
+set mdst 0.90
 setmd time_step 0.01
 set intsteps 100
-set maxtime 1000
+set maxtime_w  100
+set maxtime_i1 100
+set maxtime_i2 100000
 
 setmd gamma 1.0
 setmd temp 1.0
@@ -107,9 +113,9 @@ setmd box_l $box_length $box_length $box_length
 inter 1 fene $fene1_k $fene1_cut
 
 # pairwise lennard_jones for all particles
-for {set ia1 0} { $ia1 <= $n_part_types } { incr ia1 } {
-    for {set ia2 0} { $ia2 <= $n_part_types } { incr ia2 } {
-	inter $ia1 $ia2 lennard-jones $lj1_epsilon 1 $lj1_cut 0 0
+for {set ia1 0} { $ia1 < $n_part_types } { incr ia1 } {
+    for {set ia2 0} { $ia2 < $n_part_types } { incr ia2 } {
+	inter $ia1 $ia2 lennard-jones $lj1_epsilon 1 $lj1_cut $lj1_shift 0
     }
 }
 set lj1_cap $lj1_cap_start
@@ -203,12 +209,14 @@ if { $vmd_output=="yes" } {
 if { $warmup == 0 } {
     puts "start warmup integration"
     set cont 1
-    for {set i 0} { $i < $maxtime && $cont} { incr i} {
+    for {set i 0} { $i < $maxtime_w && $cont} { incr i} {
 	set md [analyze mindist]
 	puts "step $i minimum distance = $md, force cap = $lj1_cap"
 	if {$md >= $mdst} { set cont 0 }
 	setmd lj_force_cap $lj1_cap
 	integrate $intsteps
+	puts "[analyze energy lj 1 1]"
+	puts "[analyze energy]"
 	set lj1_cap [expr $lj1_cap + $lj1_cap_incr]
     }
     # write
@@ -226,13 +234,9 @@ if { $warmup == 0 } {
 # turn off potentil caps
 setmd lj_force_cap 0
 # electrostatics
-setmd bjerrum 1.0
-setmd p3m_alpha 0.1138
-setmd p3m_r_cut 15.0
-setmd p3m_mesh 8 8 8
-setmd p3m_cao 5 5000
-setmd p3m_epsilon 0.1
-setmd p3m_mesh_off 0.5 0.5 0.5
+inter coulomb 1.5 p3m 70.0 16 3 0.026609
+
+puts "[inter]"
 
 if { $vmd_output=="yes" } {
     for {set port 10000} { $port < 65000 } { incr port } {
@@ -244,20 +248,37 @@ if { $vmd_output=="yes" } {
 
 #puts "[analyze]"
 
-puts [part 1 print bonds]
+#puts [part 1 print bonds]
+
 
 #analyze
 set f [open "pe_obs.dat" w]
 puts $f "\#    RE            RG"
 
-puts "start integration"
-for {set i 0} { $i < $maxtime } { incr i} {
-    puts "step $i"
+
+puts "start integration 1 (good solvent)"
+for {set i 0} { $i < $maxtime_i1 } { incr i} {
+    puts "step $i at time=[setmd time]"
     integrate $intsteps
-    if { $vmd_output=="yes" } { puts "[imd positions]" }
-    puts $f "$i [analyze 0 $n_polymers $l_polymers $n_counterions] [analyze 1 $n_polymers $l_polymers $n_counterions]"
-    flush $f
+    puts "[analyze energy]"
+    if { $vmd_output=="yes" } { imd positions }
+
 }
+
+puts "Set attractive LJ between monomers"
+inter 0 0 lennard-jones $lj2_epsilon 1 $lj2_cut 0 0
+inter 0 1 lennard-jones $lj2_epsilon 1 $lj2_cut 0 0
+#inter 1 0 lennard-jones $lj2_epsilon 1 $lj2_cut 0 0
+inter 1 1 lennard-jones $lj2_epsilon 1 $lj2_cut 0 0
+
+puts "[inter]"
+
+puts "start integration 2 (poor solvent)"
+for {set i 0} { $i < $maxtime_i2 } { incr i} {
+    puts "step $i at time=[setmd time]"
+    integrate $intsteps
+}
+
 close $f
 
 if { $vmd_output=="yes" } { puts "imd: [imd disconnect]" }

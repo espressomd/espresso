@@ -141,23 +141,6 @@ MDINLINE double p3m_coulomb_pair_energy(Particle *p1, Particle *p2,
 /** Clean up P3M memory allocations. */
 void   P3M_exit();
 
-/** Callback for setmd bjerrum (bjerrum >= 0). 
-    Bjerrum acts as switch to turn off all long range computations for bjerrum=0. */
-int bjerrum_callback(Tcl_Interp *interp, void *_data);
-/** Callback for setmd p3m_alpha (0.0 <= alpha <=1.0). */
-int p3malpha_callback(Tcl_Interp *interp, void *_data);
-/** Callback for setmd p3m_r_cut (r_cut >=0). */
-int p3mrcut_callback(Tcl_Interp *interp, void *_data);
-/** Callback for setmd p3m_mesh (all components > 0).
-    So far only cubic meshs are supported. */
-int p3mmesh_callback(Tcl_Interp *interp, void *_data);
-/** Callback for setmd p3m_cao (1 <= cao <= 7, inter > 0). */
-int p3mcao_callback(Tcl_Interp *interp, void *_data);
-/** Callback for setmd p3m_epsilon. */
-int p3mepsilon_callback(Tcl_Interp *interp, void *_data);
-/** Callback for setmd p3m_mesh_offset (all components between 0.0 and 1.0). */
-int p3mmeshoff_callback(Tcl_Interp *interp, void *_data);
-
 /*@}*/
 
 #endif

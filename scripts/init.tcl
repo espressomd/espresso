@@ -64,7 +64,7 @@ source blockfile_support.tcl
 
 source pdb.tcl
 # adds 'writepsf'
-# adds 'writepdf'
+# adds 'writepdb'
 
 source polymer.tcl
 # adds 'collision_tcl'

@@ -45,11 +45,11 @@ typedef struct {
       done in Tcl script code.  The procedure is assumed to actually
       set the value and return TCL_OK or not change the value and
       return TCL_ERROR and an appropriate error message in the
-      interpreters result stack. If you use the \ref ro_callback,
-      every time an error will be issued, i. e. the value cannot be
-      changed from Tcl.
+      interpreters result stack. 
   */
   SetCallback *changeproc;
+  /** Minimal number of characters needed for identification. */
+  int min_length;
 } Datafield;
 
 extern const Datafield fields[];
@@ -59,60 +59,54 @@ extern const Datafield fields[];
     \ref #fields for use with e. g. \ref mpi_bcast_parameter.
 */
 /*@{*/
-/** index of \ref n_nodes in \ref #fields */
-#define FIELD_NNODES 0
-/** index of \ref node_grid in \ref #fields */
-#define FIELD_NGRID  1
-/** index of \ref local_box_l in \ref #fields */
-#define FIELD_LBOXL  2
 /** index of \ref box_l in \ref #fields */
-#define FIELD_BOXL   3
-/** index of \ref max_seen_particle in \ref #fields */
-#define FIELD_MAXPART 4
-/** index of \ref n_particle_types in \ref #fields */
-#define FIELD_NITYPE 5
-/** index of \ref sim_time in  \ref #fields */
-#define FIELD_SIM_TIME 6
-/** index of \ref time_step in \ref #fields */
-#define FIELD_TIME_STEP  7
-/** index of \ref max_cut in \ref #fields */
-#define FIELD_MCUT   8
-/** index of \ref #skin in \ref #fields */
-#define FIELD_SKIN   9
-/** index of \ref max_range in \ref #fields */
-#define FIELD_RANGE  10
+#define FIELD_BOXL        0  
+/** index of \ref #cell_grid in  \ref #fields */
+#define FIELD_CELLGRID    1
+/** index of \ref #cell_size in  \ref #fields */
+#define FIELD_CELLSIZE    2
 /** index of \ref friction_gamma in \ref #fields */
-#define FIELD_GAMMA 11
-/** index of \ref rebuild_verletlist in \ref #fields */
-#define FIELD_VERLET 12
-/** index of \ref p3m_struct::bjerrum in \ref #fields */
-#define FIELD_BJERRUM 13
-/** index of \ref p3m_struct::alpha  in \ref #fields */
-#define FIELD_P3M_ALPHA 14
-/** index of \ref p3m_struct::r_cut in \ref #fields */
-#define FIELD_P3M_RCUT 15
-/** index of \ref p3m_struct::mesh in \ref #fields */
-#define FIELD_P3M_MESH 16
-/** index of \ref p3m_struct::cao  in \ref #fields */
-#define FIELD_P3M_CAO 17
-/** index of \ref p3m_struct::epsilon  in \ref #fields */
-#define FIELD_P3M_EPSILON 18
-/** index of \ref p3m_struct::mesh_off  in \ref #fields */
-#define FIELD_P3M_MESH_OFF 19
-/** index of \ref transfer_rate  in \ref #fields */
-#define FIELD_TRANSFER_RATE 20
-/** index of \ref transfer_rate  in \ref #fields */
-#define FIELD_MAXNUMCELLS 21
-/** index of \ref #periodic in \ref #fields */
-#define FIELD_PERIODIC 22
-/** index of \ref #temperature in \ref #fields */
-#define FIELD_TEMPERATURE 23
+#define FIELD_GAMMA       3
 /** index of \ref lj_force_cap in \ref #fields */
-#define FIELD_LJFORCECAP 24
-/** index of \ref start_time in  \ref #fields */
-#define FIELD_START_TIME 25
+#define FIELD_LJFORCECAP  4
+/** index of \ref local_box_l in \ref #fields */
+#define FIELD_LBOXL       5
+/** index of \ref max_cut in \ref #fields */
+#define FIELD_MCUT        6
+/** index of \ref transfer_rate  in \ref #fields */
+#define FIELD_MAXNUMCELLS 7
+/** index of \ref max_seen_particle in \ref #fields */
+#define FIELD_MAXPART     8
+/** index of \ref max_range in \ref #fields */
+#define FIELD_MAXRANGE    9
+/** index of \ref max_skin in  \ref #fields */
+#define FIELD_MAXSKIN     10
+/** index of \ref n_nodes in \ref #fields */
+#define FIELD_NNODES      11
 /** index of \ref n_total_particles in  \ref #fields */
-#define FIELD_N_PART 26
+#define FIELD_NPART       12
+/** index of \ref n_particle_types in \ref #fields */
+#define FIELD_NPARTTYPE   13
+/** index of \ref node_grid in \ref #fields */
+#define FIELD_NODEGRID    14
+/** index of \ref #periodic in \ref #fields */
+#define FIELD_PERIODIC    15
+/** index of \ref #skin in \ref #fields */
+#define FIELD_SKIN        16
+/** index of \ref #temperature in \ref #fields */
+#define FIELD_TEMPERATURE 17
+/** index of \ref sim_time in  \ref #fields */
+#define FIELD_SIMTIME     18
+/** index of \ref start_time in  \ref #fields */
+#define FIELD_START_TIME  19
+/** index of \ref time_step in \ref #fields */
+#define FIELD_TIMESTEP    20
+/** index of \ref transfer_rate  in \ref #fields */
+#define FIELD_TRANSFERRATE 21
+/** index of \ref rebuild_verletlist in \ref #fields */
+#define FIELD_VERLETFLAG   22
+/** index of \ref verlet_reuse in  \ref #fields */
+#define FIELD_VERLETREUSE  23
 /*@}*/
 
 /**********************************************
@@ -125,4 +119,10 @@ extern const Datafield fields[];
     and only on the master node. Using \ref mpi_bcast_parameter may be useful. */
 int setmd(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
+/** Implements the Tcl command info.  It provides information on the
+    Version, Compilation status and the debug status of the used
+    code. */
+int info(ClientData data, Tcl_Interp *interp,
+	 int argc, char **argv);
+
 #endif

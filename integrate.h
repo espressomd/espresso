@@ -42,6 +42,9 @@ extern int    topology_changed;
 /** If non-zero, some other parameter (e.g. time_step, skin) has changed
     since last integration. */
 extern int    parameter_changed;
+/** Average number of integration steps the verlet list has been re
+    used. */
+extern double verlet_reuse;
 
 /*@}*/
 

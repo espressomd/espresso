@@ -146,7 +146,7 @@ proc initConversion {} {
     # ('NA' = there's no implementation in 'tcl_md')
     set corr [concat { NA NA NA NA NA time_step 
         NA NA NA NA NA NA 
-        NA NA NA NA maxpart box_l NA
+        NA NA NA NA max_part box_l NA
         skin p3m_r_cut NA NA NA NA p3m_alpha p3m_mesh NA
         bjerrum temp gamma NA } ]
     # Note the special properties some 'tcl_md' variables have:
@@ -646,7 +646,7 @@ proc convertMD2DesernoMain {origin destination} {
 	# Now get the file's entries
 	puts "    Reading content of '[lindex [split $origin \"/\"] end]' (this may take a while)... "
 	while {[blockfile $in read auto] != "eof" } {}
-	puts "        Got coordinates for [expr [setmd maxpart] + 1] particles total..."
+	puts "        Got coordinates for [expr [setmd max_part] + 1] particles total..."
 	puts "        Got all the bonds between particles..."
 	puts "        Got all the interactions..."	
 	close $in

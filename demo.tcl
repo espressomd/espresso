@@ -85,11 +85,12 @@ set vmd_output "yes"
 # Number of polymers
 set n_polymers 2
 # length of polymers
-set l_polymers 99
+set l_polymers 100
+
 # Bond length
 set bond_length 1.0
 # distance between charged monomers
-set cm_distance 2
+set cm_distance 3
 # valency of charged monomers
 set cm_valency 1.0
 
@@ -186,7 +187,7 @@ proc setup_p3m {bj} {
 	setmd p3m_mesh_off 0.5 0.5 0.5
     }
 }
-mdparam bjerrum 0 1 0 "Bjerrum length" setup_p3m
+mdparam bjerrum 0 4 0 "Bjerrum length" setup_p3m
 
 # Particle setup
 #############################################################

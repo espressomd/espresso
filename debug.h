@@ -66,6 +66,9 @@
 
 #define ADDITIONAL_CHECKS
 
+/** callback for debug status. */
+int debug_callback(Tcl_Interp *interp);
+
 #if defined FORCE_CORE || defined MPI_CORE
 /** this functions kills the task with SIGSEGV */
 void core();

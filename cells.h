@@ -97,9 +97,12 @@ typedef struct {
 extern int cell_grid[3];
 /** linked cell grid with ghost frame. */
 extern int ghost_cell_grid[3];
-
 /** number of linked cells (inner+ghosts). */
 extern int n_cells;
+/** size of a cell. */
+extern double cell_size[3];
+/** maximal skin size. */
+extern double max_skin;
 
 /** Maximal number of cells per node. In order to avoid memory
  *  problems due to the cell grid one has to specify the maximal

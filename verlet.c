@@ -167,6 +167,6 @@ int rebuild_vlist_callback(Tcl_Interp *interp, void *_data)
     return (TCL_ERROR);
   }
   rebuild_verletlist = data;
-  mpi_bcast_parameter(FIELD_VERLET);
+  mpi_bcast_parameter(FIELD_VERLETFLAG);
   return (TCL_OK);
 }

@@ -4,7 +4,6 @@
  *  <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 */
 
-
 /** if defined, the code will be slower, but with the \ref periodic
     array you can choose which coordinates are bound to p.b.c and
     which are not. If not defined, all coordinates are bound to
@@ -32,7 +31,7 @@
 #define CONSTRAINTS
 
 /************************************************/
-/** \name Default Parameter Settings */
+/** \name Default Parameter Settings            */
 /************************************************/
 /*@{*/
 
@@ -60,3 +59,38 @@
 #define ROUND_ERROR_PREC 1.0e-14
 
 /*@}*/
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#include <tcl.h>
+/** callback for version status. */
+MDINLINE int version_callback(Tcl_Interp *interp)
+{
+  Tcl_AppendResult(interp, "TCL_MD: Version: 0.99 beta, Last Change: 18.03.2003", (char *) NULL);
+  return (TCL_OK);
+}
+
+/** callback for compilation status. */
+MDINLINE int compilation_callback(Tcl_Interp *interp)
+{
+  Tcl_AppendResult(interp, "{ Compilation status ", (char *) NULL);
+#ifdef PARTIAL_PERIODIC
+  Tcl_AppendResult(interp, "{ PARTIAL_PERIODIC } ", (char *) NULL);
+#endif
+#ifdef LJ_WARN_WHEN_CLOSE
+  Tcl_AppendResult(interp, "{ LJ_WARN_WHEN_CLOSE } ", (char *) NULL);
+#endif
+#ifdef ELECTROSTATICS
+  Tcl_AppendResult(interp, "{ ELECTROSTATICS } ", (char *) NULL);
+#endif
+#ifdef EXTERNAL_FORCES
+  Tcl_AppendResult(interp, "{ EXTERNAL_FORCES } ", (char *) NULL);
+#endif
+#ifdef CONSTRAINTS
+  Tcl_AppendResult(interp, "{ CONSTRAINTS } ", (char *) NULL);
+#endif
+  Tcl_AppendResult(interp, "}", (char *) NULL);
+  return (TCL_OK);
+}
+
+#endif

@@ -47,6 +47,8 @@ double cell_size[3];
 /** inverse cell size = \see cell_size ^ -1. */
 double inv_cell_size[3];
 
+double max_skin=0.0;
+
 /*@}*/
 
 /************************************************************/
@@ -296,6 +298,7 @@ int  is_inner_cell(int i, int gcg[3])
 void calc_cell_grid()
 {
   int i;
+  double cell_range;
 
   /* normal case */
   n_cells=1;
@@ -307,7 +310,6 @@ void calc_cell_grid()
   /* catch case, n_cells > max_num_cells */
   if(n_cells > max_num_cells) {
     int count;
-    double cell_range;
     double step;
     double min_box_l;
     double max_box_l;
@@ -335,12 +337,10 @@ void calc_cell_grid()
 	      this_node,max_num_cells);
       errexit();
     }
-    /* Give information about possible larger skin. */
-    cell_range = dmin(min_box_l,cell_range);
-    if( cell_range>max_range && this_node==0 ) { ;
-    /* fprintf(stderr,"Remark: Your parameters would allow a skin of %f instead of your setting %f\n",cell_range-max_cut,skin); */
-    }
+    /* Store information about possible larger skin. */
   }
+  cell_range = dmin(dmin(cell_size[0],cell_size[1]),cell_size[2]);
+  max_skin = cell_range - max_cut;
 
   /* now set all dependent variables */
   for(i=0;i<3;i++) {

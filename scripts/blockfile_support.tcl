@@ -11,9 +11,9 @@ proc blockfile_write_particles {channel write particles {info "id pos v q"} {ran
 	if {$len == 1} {
 	    if {$list == "all"} {
 		set start 0
-		set end [setmd maxpart]
+		set end [setmd max_part]
 	    } {
-		if {$list == "end"} {set list [setmd maxpart]}
+		if {$list == "end"} {set list [setmd max_part]}
 		set start $list
 		set end   $list
 	    }
@@ -23,9 +23,9 @@ proc blockfile_write_particles {channel write particles {info "id pos v q"} {ran
 		exit
 	    }
 	    set start [lindex $list 0]
-	    if {$start == "end"} {set start [setmd maxpart]}
+	    if {$start == "end"} {set start [setmd max_part]}
 	    set end [lindex $list 1]
-	    if {$end == "end"} {set end [setmd maxpart]}
+	    if {$end == "end"} {set end [setmd max_part]}
 	}
 	if {![string is integer $start] || ![string is integer $end]} {error "list boundaries must be integers"}
 	for {set p $start} {$p <= $end} {incr p} {
@@ -89,9 +89,9 @@ proc blockfile_write_bonds {channel write bonds {range "0-end"}} {
 	if {$len == 1} {
 	    if {$list == "all"} {
 		set start 0
-		set end [setmd maxpart]
+		set end [setmd max_part]
 	    } {
-		if {$list == "end"} {set list [setmd maxpart]}
+		if {$list == "end"} {set list [setmd max_part]}
 		set start $list
 		set end   $list
 	    }
@@ -101,9 +101,9 @@ proc blockfile_write_bonds {channel write bonds {range "0-end"}} {
 		exit
 	    }
 	    set start [lindex $list 0]
-	    if {$start == "end"} {set start [setmd maxpart]}
+	    if {$start == "end"} {set start [setmd max_part]}
 	    set end [lindex $list 1]
-	    if {$end == "end"} {set end [setmd maxpart]}
+	    if {$end == "end"} {set end [setmd max_part]}
 	}
 	if {![string is integer $start] || ![string is integer $end]} {error "list boundaries must be integers"}
 	for {set p $start} {$p <= $end} {incr p} {

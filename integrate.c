@@ -36,15 +36,19 @@
 double time_step = -1.0;
 double start_time = 0.0;
 double sim_time = 0.0;
+
 double skin = -1.0;
 double max_range;
 double max_range2;
+
 int    particle_changed = 1;
 int    interactions_changed = 1;
 int    topology_changed = 1;
 int    parameter_changed = 1;
 
 double old_time_step;
+
+double verlet_reuse=0.0;
 
 /** \name Privat Functions */
 /************************************************************/
@@ -148,6 +152,7 @@ void integrate_vv_recalc_maxrange()
 void integrate_vv(int n_steps)
 {
   int i;
+  int n_verlet_updates = 0;
 
   on_integration_start();
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: integrating %d steps\n",this_node,
@@ -169,6 +174,7 @@ void integrate_vv(int n_steps)
     propagate_vel_pos();
     if(rebuild_verletlist == 1) {
       INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
+      n_verlet_updates++;
       invalidate_ghosts();
       exchange_and_sort_part();
       exchange_ghost();
@@ -183,6 +189,7 @@ void integrate_vv(int n_steps)
     if(this_node==0) sim_time += time_step;
   }
 
+  verlet_reuse = n_steps/(double) n_verlet_updates;
   particle_changed     = 0; 
   interactions_changed = 0;
   topology_changed     = 0;
@@ -377,11 +384,9 @@ void propagate_vel_pos()
   double skin2;
 
 #ifdef ADDITIONAL_CHECKS
-  double db_force,db_vel,e_kin=0.0,tot_kin_energy=0.0;
+  double db_force,db_vel;
   double db_max_force=0.0, db_max_vel=0.0;
   int db_maxf_id=0,db_maxv_id=0;
-  double *kin_energies=NULL;
-  FILE *stat;
 #endif
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
@@ -398,13 +403,6 @@ void propagate_vel_pos()
       p[i].v[2] += p[i].f[2];
 
       ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].v[0],p[i].v[1],p[i].v[2]));
-
-
-#ifdef ADDITIONAL_CHECKS
-      /* fprintf(stderr,"%d: Propagate P %d from (%.4f,%.4f,%.4f) to (%.4f,%.4f,%.4f)\n",this_node,
-	 p[i].r.identity, p[i].r.p[0], p[i].r.p[1], p[i].r.p[2],
-	 p[i].r.p[0]+p[i].v[0], p[i].r.p[1]+p[i].v[1], p[i].r.p[2]+p[i].v[2]); */
-#endif
 
 #ifdef EXTERNAL_FORCES
       if(p[i].ext_flag != PARTICLE_FIXED) 
@@ -433,8 +431,6 @@ void propagate_vel_pos()
 		this_node,p[i].r.identity,sqrt(db_vel),
 		p[i].v[0],p[i].v[1],p[i].v[2]);
       if(db_vel > db_max_vel) { db_max_vel=db_vel; db_maxv_id=p[i].r.identity; }
-      /* kinetic energy */
-      e_kin += db_vel;
 #endif
 
 
@@ -447,18 +443,6 @@ void propagate_vel_pos()
   }
 
 #ifdef ADDITIONAL_CHECKS
-  if(this_node==0) {
-    stat=fopen("e_kin.dat","a");
-    kin_energies = malloc(sizeof(double)*n_nodes);
-    MPI_Gather(&e_kin, 1, MPI_DOUBLE, kin_energies, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    for(i=0;i<n_nodes;i++) tot_kin_energy += kin_energies[i];
-    fprintf(stat,"%e\t%e\n",sim_time,tot_kin_energy/(2.0*time_step*time_step));
-    free(kin_energies);
-    fclose(stat); 
-  }
-  else {
-    MPI_Gather(&e_kin, 1, MPI_DOUBLE, NULL, 0, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  }
   if(db_max_force > skin2) 
     fprintf(stderr,"%d: max_force=%e, part=%d f=(%e,%e,%e)\n",this_node,
 	    sqrt(db_max_force),db_maxf_id,local_particles[db_maxf_id]->f[0],

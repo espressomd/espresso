@@ -167,14 +167,14 @@ proc counterions_tcl { N_CI box_length {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {
 # and returns how often the attempt to place a particle failed in the worst case.
 # Parameters:  <N_CI>        = number of counterions to create
 #              <box_length>  = length of the simulation box
-#              <part_id>     = particle number of the first counterion (defaults to '[setmd npart]')
+#              <part_id>     = particle number of the first counterion (defaults to '[setmd n_part]')
 #              <mode>        = selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW')
 #              <shield>      = shield around each particle another particle's position may not enter if using SAW (defaults to '0')
 #              <max_try>     = how often a monomer should be reset if current position collides with a previous particle (defaults to '30000')
 #              <val_CI>      = valency of the counterions (defaults to '-1')
 #              <type_CI>     = type number of the counterions to be used with "part" (default to '2')
     set param [list $p1 $p2 $p3 $p4 $p5 $p6 $p7 $p8 $p9 $p10]
-    set part_id [setmd npart]; set mode "SAW"; set shield 0; set max_try 30000; set val_CI -1; set type_CI 2
+    set part_id [setmd n_part]; set mode "SAW"; set shield 0; set max_try 30000; set val_CI -1; set type_CI 2
     for {set i 0} {$i < 10} {incr i} {
 	switch [lindex $param $i] {
 	    "start" { incr i; set part_id [lindex $param $i] 
@@ -223,14 +223,14 @@ proc salt_tcl { N_pS N_nS box_length {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6
 # and returns how often the attempt to place a particle failed in the worst case.
 # Parameters:  <N_pS>/<N_nS> = number of salt ions to create
 #              <box_length>  = length of the simulation box
-#              <part_id>     = particle number of the first salt ion (defaults to '[setmd npart]')
+#              <part_id>     = particle number of the first salt ion (defaults to '[setmd n_part]')
 #              <mode>        = selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW')
 #              <shield>      = shield around each particle another particle's position may not enter if using SAW (defaults to '0')
 #              <max_try>     = how often a monomer should be reset if current position collides with a previous particle (defaults to '30000')
 #              <val_{p|n}S>  = valencies of the salt ions (default to '1' and '-1', respectively); if <val_nS> is not given, <val_nS> = -1*<val_pS>
 #              <type_{p|n}S> = type numbers to be used with "part" (default to '3' and '4'); if <type_nS> is not given, <type_nS> = <type_pS> is assumed
     set param [list $p1 $p2 $p3 $p4 $p5 $p6 $p7 $p8 $p9 $p10 $p11 $p12]
-    set part_id [setmd npart]; set mode "SAW"; set shield 0; set max_try 30000; set val_pS 1; set val_nS -1; set type_pS 3; set type_nS 4
+    set part_id [setmd n_part]; set mode "SAW"; set shield 0; set max_try 30000; set val_pS 1; set val_nS -1; set type_pS 3; set type_nS 4
     for {set i 0} {$i < 12} {incr i} {
 	switch [lindex $param $i] {
 	    "start" { incr i; set part_id [lindex $param $i] 

@@ -49,7 +49,7 @@ void setup_node_grid()
     /* auto setup, grid not set */
     calc_3d_grid(n_nodes,node_grid);
 
-    mpi_bcast_parameter(FIELD_NGRID);
+    mpi_bcast_parameter(FIELD_NODEGRID);
     mpi_bcast_event(TOPOLOGY_CHANGED);
   }
 }
@@ -250,7 +250,7 @@ int node_grid_callback(Tcl_Interp *interp, void *_data)
   node_grid[1] = data[1];
   node_grid[2] = data[2];
 
-  mpi_bcast_parameter(FIELD_NGRID);
+  mpi_bcast_parameter(FIELD_NODEGRID);
   mpi_bcast_event(TOPOLOGY_CHANGED);
 
   return (TCL_OK);

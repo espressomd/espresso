@@ -20,6 +20,82 @@ static int core_done = 0;
 
 int check_id = 91;
 
+int debug_callback(Tcl_Interp *interp)
+{
+  Tcl_AppendResult(interp, "{ Debug status { ", (char *) NULL);
+#ifdef COMM_DEBUG
+  Tcl_AppendResult(interp, "COMM_DEBUG ", (char *) NULL);
+#endif
+#ifdef INTEG_DEBUG
+  Tcl_AppendResult(interp, "INTEG_DEBUG ", (char *) NULL);
+#endif
+#ifdef CELL_DEBUG
+  Tcl_AppendResult(interp, "CELL_DEBUG ", (char *) NULL);
+#endif
+#ifdef GHOST_DEBUG
+  Tcl_AppendResult(interp, "GHOST_DEBUG ", (char *) NULL);
+#endif
+#ifdef GRID_DEBUG 
+  Tcl_AppendResult(interp, "GRID_DEBUG ", (char *) NULL);
+#endif
+#ifdef VERLET_DEBUG
+  Tcl_AppendResult(interp, "VERLET_DEBUG ", (char *) NULL);
+#endif
+#ifdef PARTICLE_DEBUG
+  Tcl_AppendResult(interp, "PARTICLE_DEBUG ", (char *) NULL);
+#endif
+#ifdef P3M_DEBUG
+  Tcl_AppendResult(interp, "P3M_DEBUG ", (char *) NULL);
+#endif
+#ifdef FFT_DEBUG
+  Tcl_AppendResult(interp, "FFT_DEBUG ", (char *) NULL);
+#endif
+#ifdef RANDOM_DEBUG
+  Tcl_AppendResult(interp, "RANDOM_DEBUG ", (char *) NULL);
+#endif
+#ifdef FORCE_DEBUG
+  Tcl_AppendResult(interp, "FORCE_DEBUG ", (char *) NULL);
+#endif
+#ifdef THERMO_DEBUG
+  Tcl_AppendResult(interp, "THERMO_DEBUG ", (char *) NULL);
+#endif
+#ifdef LJ_DEBUG
+  Tcl_AppendResult(interp, "LJ_DEBUG ", (char *) NULL);
+#endif
+#ifdef ESR_DEBUG
+  Tcl_AppendResult(interp, "ESR_DEBUG ", (char *) NULL);
+#endif
+#ifdef ESK_DEBUG
+  Tcl_AppendResult(interp, "ESK_DEBUG ", (char *) NULL);
+#endif
+#ifdef FENE_DEBUG
+  Tcl_AppendResult(interp, "FENE_DEBUG ", (char *) NULL);
+#endif
+#ifdef GHOST_FORCE_DEBUG
+  Tcl_AppendResult(interp, "GHOST_FORCE_DEBUG ", (char *) NULL);
+#endif
+#ifdef ONEPART_DEBUG
+  Tcl_AppendResult(interp, "ONEPART_DEBUG ", (char *) NULL);
+#endif
+#ifdef STAT_DEBUG
+  Tcl_AppendResult(interp, "STAT_DEBUG ", (char *) NULL);
+#endif
+#ifdef POLY_DEBUG
+  Tcl_AppendResult(interp, "POLY_DEBUG ", (char *) NULL);
+#endif
+#ifdef MPI_CORE
+  Tcl_AppendResult(interp, "MPI_CORE ", (char *) NULL);
+#endif
+#ifdef FORCE_CORE
+  Tcl_AppendResult(interp, "FORCE_CORE ", (char *) NULL);
+#endif
+#ifdef ADDITIONAL_CHECKS
+  Tcl_AppendResult(interp, "ADDITIONAL_CHECKS ", (char *) NULL);
+#endif
+  Tcl_AppendResult(interp, "} }", (char *) NULL);
+  return (TCL_OK);
+}
+
 void core()
 {
   if (!core_done && !regular_exit) {

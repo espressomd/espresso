@@ -77,7 +77,7 @@ proc timeStamp { destination prefix postfix suffix } {
 # 
 #############################################################
 
-proc polyBlockWrite { destination {write_param {node_grid box_l niatypes time_step skin gamma bjerrum p3m_alpha p3m_r_cut p3m_mesh p3m_cao p3m_epsilon p3m_mesh_offset max_num_cells periodicity}} {write_part "id pos type q v f"} } {
+proc polyBlockWrite { destination {write_param {box_l time_step skin temp gamma lj_force_cap max_num_cells node_grid periodicity}} {write_part "id pos type q v f"} } {
     
     # Open output-file - compressed, if desired
     if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
@@ -103,7 +103,6 @@ proc polyBlockWrite { destination {write_param {node_grid box_l niatypes time_st
     # Close file
     close $f
 }
-
 
 proc polyConfMovWriteInit { write prfx polyConfAux } {
     if { $write=="yes" || $write=="movie" } {

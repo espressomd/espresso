@@ -15,13 +15,13 @@
 ##################################################
 set tcl_precision 5
 
-set intsteps 100
-set maxtime  1000
+set intsteps 1000
+set maxtime  100
 
 
 setmd bjerrum 1.0
 setmd p3m_alpha 0.48
-setmd p3m_r_cut 4.5
+setmd p3m_r_cut 2.5
 setmd p3m_mesh 8 8 8
 setmd p3m_cao 4 5000
 setmd p3m_epsilon 0.1
@@ -31,7 +31,7 @@ setmd box_l 10.0 10.0 10.0
 setmd max_num_cells 512
 # integrator
 setmd skin 0.4
-setmd time_step 0.0001
+setmd time_step 0.001
 # friction
 setmd gamma 1.0
 setmd temp  1.0
@@ -68,18 +68,14 @@ inter 1 2 lennard-jones 1 1 1.12246 0 0
 #}
 #puts "opened port $port"
 
-integrate init
-
 puts [time {
   for {set i 0} { $i < $maxtime } { incr i } {
       puts "step $i"
       integrate $intsteps
-  #   imd pos
-  puts "mindist=[mindist]"
+      puts "mindist=[mindist]"
   }
 }]
 
-integrate exit
 
 #puts "imd: [imd disconnect]"
 

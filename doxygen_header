@@ -20,19 +20,33 @@ For details see \ref integrate.c "integrate.c".
 
 <ol>
 <li> Get your PEP membership.
-<li> Add the following line to your .cshrc file.
-\verbatim setenv CVSROOT ~pep/cvsroot  \endverbatim
+<li> Add the following lines to your .cshrc file.
+\verbatim 
+##################################################################
+# Settings for TCL_MD
+##################################################################
+if ( (`uname` == "Linux") ) then
+    setenv PATH "${PATH}:.:/opt/lam/bin"
+endif
+# cvs root directory 
+setenv CVSROOT ~pep/cvsroot
+# TCL_MD source directory
+setenv TCLMD_SOURCE  "your_directory/tcl_md"
+# TCL_MD script directory
+setenv TCLMD_SCRIPTS "your_directory/tcl_md/scripts"
+\endverbatim
+Replace your_directory by the directory where you want to install tcl_md.
 <li> Get your local copy with:
 \verbatim cvs checkout tcl_md \endverbatim
 <li> Compile using 
 \verbatim gmake \endverbatim
 <li> Create actual documentation with (html, latex, man and rtf). This 
-command works probably only on pckr27 (needs doxygen).
+command works only on our Linux PCs (needs doxygen).
 \verbatim gmake doc\endverbatim
 (Use touch somefile.c if it does not work rightaway)
 <li> Read the documentation carefully (Come on, there had been only 213 pages when I
 was writing these lines) !!!
-<li> Try the example script files: 
+<li> Try the sample script files in testsuite directory: 
 setup.tcl which sets up a new configuration using the ramp potential.
 test.tcl Doing some MD on the new configuration. Try also the VMD
 connection included (set use_imd y).
@@ -49,9 +63,7 @@ things here.
 
 \section bugs Bugs
 
-!!! Don't use this code for sientific productions !!!\\
-Their are probably plenty of bugs in the code at the moment, but they
-are not known.
+No bugs known at the moment.
 
 \section help More help about ...
 
@@ -97,13 +109,13 @@ interface between the Tcl script and the MD code:
 	<li> \verbatim v <x value> <y value> <z value> \endverbatim
 	<li> \verbatim f <x value> <y value> <z value> \endverbatim
 	<li> \verbatim fix \endverbatim
-	Fixes the particle in space (Needs $\ref EXTERNAL_FORCES in \ref config.h).
+	Fixes the particle in space (Needs \ref EXTERNAL_FORCES in \ref config.h).
         <li> \verbatim ext_force <x value> <y value> <z value> \endverbatim
 	An additional exxternal force is applied to the particle
-	(Needs $\ref EXTERNAL_FORCES in \ref config.h).
+	(Needs \ref EXTERNAL_FORCES in \ref config.h).
         <li> \verbatim unfix \endverbatim
 	Release any external influence from the particle 
-	(Needs $\ref EXTERNAL_FORCES in \ref config.h).
+	(Needs \ref EXTERNAL_FORCES in \ref config.h).
 	<li> \verbatim bond <bond_type_number> <partner>+ \endverbatim
 	Restrictions: <bond_type_number> >= 0; partner must be an existing particle.<BR>
 	The <bond_type_number> is used for \ref tcl_inter to define bonded interactions.
@@ -209,8 +221,8 @@ interface between the Tcl script and the MD code:
 
 	<ul>
 		<li> \verbatim p3m <r_cut> <mesh> <cao> <alpha> \endverbatim
-		This is an implemantation of the 1/r potential
-		\f[ U^{COULOMB} = \ell_B T \frac{q_1 q_2}{r} \f]
+		This is an implemantation of the 1/r Coulomb potential
+		\f[ U^{C-P3M} = \ell_B T \frac{q_1 q_2}{r} \f]
 		with help of the P3M Method described elsewhere. 
 		Some additional p3m parameters have preset values:
 		\verbatim epsilon = 0.0 \endverbatim 
@@ -224,6 +236,11 @@ interface between the Tcl script and the MD code:
 		\verbatim inter coulomb <parameter-name> <value(s)>  \endverbatim
 
 		<b> Make sure that you know the relevance of the P3M Parameters befor using P3M !!!</b>
+
+		<li> \verbatim dh <kappa> <r_cut> \endverbatim
+		Debye-H{\"u}ckel potential: 
+		\f[ U^{C-DH} = 	\ell_B T \frac{q_1 q_2 exp(-\kappa r)}{r} \f]
+		For \f[ \kappa = 0 \f] this corresponds to the plein coulomb potential.
 	</ul>		
 
 	\verbatim inter	coulomb \endverbatim
@@ -235,6 +252,27 @@ interface between the Tcl script and the MD code:
 	in the same formats as above, e. g.
 	\verbatim {0 0 lennard-jones 1.0 2.0 1.1225 0.0 0.0} {0 FENE 7.0 2.0} {1 angle 1.0}\endverbatim	
 	The C implementation is \ref #inter.
+
+<li>\anchor tcl_constraint
+        \verbatim constraint <type_name | delete> [parameters] \endverbatim
+	A constraint is a surface which interacts with all particles via a Lennard-Jones potential.
+	\f[4 \epsilon \left(\left(\frac{\sigma}{r}\right)^{12} -
+	\left(\frac{\sigma}{r}\right)^6 + shift\right)\f]
+	with r being the distance of the center of the particle to the surface. 
+	The corresponding force acts in direction of the normal vector of the surcafe.
+	Possible usages are:
+	\verbatim constraint wall <n_x> <n_y> <n_z> <d> <lj_eps> <lj_sig> <lj_cut> <lj_shift> \endverbatim
+	The resulting surface is a plane defined by the normal vector 
+	<n_x> <n_y> <n_z> and the distnace <d> from the origin
+	\verbatim constraint sphere <c_x> <c_y> <c_z> <rad> <lj_eps> <lj_sig> <lj_cut> <lj_shift> \endverbatim
+	The resulting surface is a sphere with center <c_x> <c_y> <c_z> 
+	and radius <rad>. The force is pointing inwards.
+	\verbatim constraint delete <num> \endverbatim
+	Delete constraint with number <num>. 
+	This may change the numbers of the other constraints. 
+	The contraint numbers can be obtained with:
+	\verbatim constraint \endverbatim
+	Print out all constraint information.
 
 <li>\anchor tcl_writemd
 	\verbatim writemd <channel> ( posx|posy|posz|q|type|vx|vy|vz|fx|fy|fz )+\endverbatim
@@ -251,7 +289,7 @@ interface between the Tcl script and the MD code:
 	domain decomposition is impossible.
 	The C implementation is \ref #readmd.
 
-<li>\verbatim integrate <steps> \endverbatim
+<li>\anchor tcl_integrate \verbatim integrate <steps> \endverbatim
 	run <steps> integration steps. 
 	The C implementation is \ref #integrate.
 

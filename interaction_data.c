@@ -523,6 +523,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
       coulomb.method  = COULOMB_NONE;
       /* communicate bjerrum length */
       Tcl_AppendResult(interp, "Do not know coulomb method \"",argv[1],"\": coulomb switched off",(char *) NULL);
+      return (TCL_ERROR);
     }
     mpi_bcast_coulomb_params();
     return (TCL_OK);

@@ -47,7 +47,7 @@ CFLAGS+= -DMDINLINE="inline static"
 
 ############ linker settings
 LINK=$(CC)
-LDFLAGS=-pg
+#LDFLAGS=-pg
 LDLIBS= -lm -lpthread
 
 ########### ElectricFence
