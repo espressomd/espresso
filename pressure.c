@@ -270,25 +270,29 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)
     else if(ARG0_IS_S("bonded") || ARG0_IS_S("fene") ||
 	    ARG0_IS_S("harmonic")) {
       if(argc<2) { virials.ana_num=0; }
-      if(!ARG1_IS_I(i)) return (TCL_ERROR);
-      if(i >= virials.n_bonded) { 
-	Tcl_AppendResult(interp,"bond type does not exist!",(char *)NULL);
-	return (TCL_ERROR);
+      else {
+	if(!ARG1_IS_I(i)) return (TCL_ERROR);
+	if(i >= virials.n_bonded) { 
+	  Tcl_AppendResult(interp,"bond type does not exist!",(char *)NULL);
+	  return (TCL_ERROR);
+	}
       }
       virials.ana_num = virials.n_pre+i;
     }
     else if(ARG0_IS_S("nonbonded") || ARG0_IS_S("lj")) {
       if(argc<3) { virials.ana_num=0; }
-      if(!ARG_IS_I(1, i)) return (TCL_ERROR);
-      if(!ARG_IS_I(2, j)) return (TCL_ERROR);
-      if(i >= n_particle_types || j >= n_particle_types) {
-	Tcl_AppendResult(interp, "particle type does not exist",
-			 (char *)NULL);
-	return (TCL_ERROR);
-      }
-      virials.ana_num = virials.n_pre+virials.n_bonded + j -i;
-      while(i>0) {
-	virials.ana_num += n_particle_types - (i-1); i--;
+      else {
+	if(!ARG_IS_I(1, i)) return (TCL_ERROR);
+	if(!ARG_IS_I(2, j)) return (TCL_ERROR);
+	if(i >= n_particle_types || j >= n_particle_types) {
+	  Tcl_AppendResult(interp, "particle type does not exist",
+			   (char *)NULL);
+	  return (TCL_ERROR);
+	}
+	virials.ana_num = virials.n_pre+virials.n_bonded + j -i;
+	while(i>0) {
+	  virials.ana_num += n_particle_types - (i-1); i--;
+	}
       }
     }
     else if(ARG0_IS_S("coulomb")) {
