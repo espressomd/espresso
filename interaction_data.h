@@ -24,6 +24,7 @@
 #include <tcl.h>
 #include "config.h"
 #include "utils.h"
+#include "particle_data.h" /* needed for constraints */
 
 /** \name Type codes of bonded interactions
     Enumeration of implemented bonded interactions.
