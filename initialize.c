@@ -82,7 +82,9 @@ void on_integration_start()
 
   if (interactions_changed || topology_changed) {
     P3M_init();
-  }
+    p3m.prefactor    = p3m.bjerrum * temperature; 
+    dh_params.prefac = dh_params.bjerrum * temperature; 
+ }
 
   if (parameter_changed || particle_changed || interactions_changed || topology_changed) {
     rebuild_verletlist = 1;
