@@ -280,7 +280,7 @@ void calc_bond_l(double **_bond_l) {
   }
   tmp = (double)(chain_length-1)*chain_n_chains;
   bond_l[0] = bond_l[0] / tmp;
-  bond_l[1] = sqrt(bond_l[1]/tmp - pow(bond_l[0],2));
+  bond_l[1] = sqrt(bond_l[1]/tmp - SQR(bond_l[0]));
   bond_l[2] = sqrt(bond_l[2]);
   bond_l[3] = sqrt(bond_l[3]);
 }
@@ -309,7 +309,7 @@ void calc_bond_l_av(double **_bond_l) {
   }
   tmp = (double)(chain_length-1)*chain_n_chains*n_configs;
   bond_l[0] = bond_l[0] / tmp;
-  bond_l[1] = sqrt(bond_l[1]/tmp - pow(bond_l[0],2));
+  bond_l[1] = sqrt(bond_l[1]/tmp - SQR(bond_l[0]));
   bond_l[2] = sqrt(bond_l[2]);
   bond_l[3] = sqrt(bond_l[3]);
 }
