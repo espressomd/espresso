@@ -204,6 +204,11 @@ Particle *cells_alloc_particle(int id, double pos[3]);
     \return linear cell grid index. */
 int pos_to_cell_grid_ind(double pos[3]);
 
+/** debug function to print particle positions: */
+void print_particle_positions();
+
+/** debug function to print ghost positions: */
+void print_ghost_positions();
 
 /** Callback for setmd maxnumcells (maxnumcells >= 27). 
     see also \ref max_num_cells */

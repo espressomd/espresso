@@ -237,6 +237,7 @@ void sort_particles_into_cells()
       }
     }
   }
+
 #ifdef ADDITIONAL_CHECKS
   for(c=0; c<n_cells; c++) {
     if(is_inner_cell(c,ghost_cell_grid)) {
@@ -252,8 +253,11 @@ void sort_particles_into_cells()
   for(n=0; n< max_seen_particle; n++) {
     if(local_particles[n] != NULL) {
       part_cnt ++;
-      if(local_particles[n]->r.identity < 0 || local_particles[n]->r.identity > max_seen_particle)
-      CELL_TRACE(fprintf(stderr,"%d: Particle %d has corrupted identity!\n",this_node,n));
+      if(local_particles[n]->r.identity != n) {
+	CELL_TRACE(fprintf(stderr,"%d: Particle %d has corrupted identity!\n",this_node,n));
+	CELL_TRACE(fprintf(stderr,"%d: local_part check: part %d identity %d at adress %p\n",
+			   this_node,n,local_particles[n]->r.identity,local_particles[n]));
+      }
     }
   }
 #endif
@@ -503,4 +507,44 @@ int pos_to_cell_grid_ind(double pos[3])
 
   }
   return get_linear_index(cpos[0],cpos[1],cpos[2], ghost_cell_grid);  
+}
+
+void print_particle_positions()
+{
+  int i,m,n,o,np;
+  ParticleList *pl;
+  Particle *part;
+
+  INNER_CELLS_LOOP(m, n, o) {
+    pl   = &(CELL_PTR(m, n, o)->pList);
+    part = CELL_PTR(m, n, o)->pList.part;
+    np   = CELL_PTR(m, n, o)->pList.n;
+    for(i=0 ; i<pl->n; i++) {
+      fprintf(stderr,"%d: cell(%d,%d,%d) Part id=%d pos=(%f,%f,%f)\n",
+	      this_node, m, n, o, part[i].r.identity,
+	      part[i].r.p[0], part[i].r.p[1], part[i].r.p[2]);
+    }
+  }
+}
+
+void print_ghost_positions()
+{
+  int i,m,n,o,np;
+  ParticleList *pl;
+  Particle *part;
+
+  CELLS_LOOP(m, n, o) {
+    if (m == 0 || m == ghost_cell_grid[0] - 1 ||
+	n == 0 || n == ghost_cell_grid[1] - 1 ||
+	o == 0 || o == ghost_cell_grid[2] - 1) {
+      pl   = &(CELL_PTR(m, n, o)->pList);
+      part = CELL_PTR(m, n, o)->pList.part;
+      np   = CELL_PTR(m, n, o)->pList.n;
+      for(i=0 ; i<pl->n; i++) {
+	fprintf(stderr,"%d: cell(%d,%d,%d) ghost id=%d pos=(%f,%f,%f)\n",
+		this_node, m, n, o, part[i].r.identity,
+		part[i].r.p[0], part[i].r.p[1], part[i].r.p[2]);
+      }
+    }
+  }
 }
