@@ -13,6 +13,10 @@ interface between the Tcl script and the MD code:
         blockfile allows for convenient access to a block format structured file <channel>.
 	For more information, see \ref tcl_blockfile.
 
+    <li>\verbatim change_volume { <V_new> | <L_new> { x | y | z | xyz } } \endverbatim
+        changes the volume by resizing the box and isotropically adjusting the particles coordinates as well.
+	The C implementation is \ref change_volume.
+
     <li> \verbatim constraint <type_name | delete> [parameters] \endverbatim
         sets the parameters for constraints. 
 	For more information, see \ref tcl_constraint.
