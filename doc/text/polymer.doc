@@ -1,0 +1,99 @@
+/** \page tcl_polymer The polymer command
+    \verbatim polymer <N_P> <MPC> <bond_length> [start <part_id>] [pos <x> <y> <z>] [mode { SAW | RW } [<shield> [<max_try>]]] 
+                                   [charge <val_cM>] [distance <cM_dist>] [types <type_nM> [<type_cM>]] [FENE <type_FENE>] \endverbatim
+    Creates some polymer chains within the simulation box, 
+    and returns how often the attempt to place a monomer failed in the worst case.
+    <ul>
+	<li> \verbatim <N_P>           \endverbatim how many polymer chains to create
+	<li> \verbatim <MPC>           \endverbatim monomers per chain
+	<li> \verbatim <bond_length>   \endverbatim length of the bonds between two monomers
+	<li> \verbatim start <part_id> \endverbatim particle number of the start monomer to be used with \ref tcl_part (defaults to '0')
+	<li> \verbatim pos <x> <y> <z> \endverbatim 
+	     sets the position of the start monomer of the first chain to <x>,<y>,<z> (defaults to a randomly chosen value)
+	<li> \verbatim mode { SAW | RW } [<shield> <max_try>] \endverbatim 
+	     selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW').<BR>
+	     If 'SAW' was selected, the position randomly chosen for the current monomer to be placed is dismissed every time 
+	     it would get closer to another particle's position than <shield> (defaults to '0.0'); the attempt to find a suitable 
+	     unobstructed random place for the current monomer is then repeated for up to <max_try> times (defaults to '30000')
+	<li> \verbatim <val_cM>        \endverbatim valency of charged monomers (defaults to '0.0')
+	<li> \verbatim <cM_dist>       \endverbatim distance between two charged monomers' indices (defaults to '1'); 
+	     if '1' then every monomer on the chain will have charge <val_cM>, if '2' every other monomer,...
+	<li> \verbatim <type_nP>       \endverbatim type number of neutral monomers to be used with \ref tcl_part (default to '0')
+	<li> \verbatim <type_cP>       \endverbatim 
+             type number of charged monomers to be used with \ref tcl_part (default to '1'); if unset, <type_cM> = <type_nM> is assumed
+	<li> \verbatim <type_FENE>     \endverbatim 
+             type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0')
+    </ul>
+    If <val_cM> is smaller than 1e-10, the charge is assumed to be zero, and the types are set to <type_cM> = <type_nM>.
+
+    The C implementation is \ref #polymer.
+*/
+
+
+/** \page tcl_counterions The counterions command
+    \verbatim counterions <N_CI> [start <part_id>] [mode { SAW | RW } [<shield> [<max_try>]]] [charge <val_CI>] [type <type_CI>] \endverbatim
+    Creates counterions of charge <val_CI> within the simulation box,
+    and returns how often the attempt to place a counterion failed in the worst case.
+    <ul>
+	<li> \verbatim <N_CI>          \endverbatim number of counterions to create
+	<li> \verbatim start <part_id> \endverbatim particle number of the first counterion (defaults to '[setmd npart]')
+	<li> \verbatim mode { SAW | RW } [<shield> <max_try>] \endverbatim 
+	     selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW').<BR>
+	     If 'SAW' was selected, the position randomly chosen for the current counterion to be placed is dismissed every time 
+	     it would get closer to another particle's position than <shield> (defaults to '0.0'); the attempt to find a suitable 
+	     unobstructed random place for the current monomer is then repeated for up to <max_try> times (defaults to '30000')
+	<li> \verbatim <val_CI>        \endverbatim valency of the counterions (defaults to '-1.0')
+	<li> \verbatim <type_CI>       \endverbatim type number of the counterions to be used with \ref tcl_part (default to '2')
+    </ul>
+    The C implementation is \ref #counterions.
+*/
+
+
+/** \page tcl_salt The salt command
+    \verbatim salt <N_pS> <N_nS> [start <part_id>] [mode { SAW | RW } [<shield> [<max_try>]]] [charges <val_pS> [<val_nS>]] [types <type_pS> [<type_nS>]] \endverbatim
+    Creates <N_pS> positively and <N_nS> negatively charged salt ions of charge <val_pS> and <val_nS> within the simulation box,
+    and returns how often the attempt to place a salt ion failed in the worst case.
+    <ul>
+	<li> \verbatim <N_pS>          \endverbatim number of positively charged salt ions to create
+	<li> \verbatim <N_nS>          \endverbatim number of negatively charged salt ions to create
+	<li> \verbatim start <part_id> \endverbatim particle number of the first salt ion (defaults to '[setmd npart]')
+	<li> \verbatim mode { SAW | RW } [<shield> <max_try>] \endverbatim 
+	     selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW').<BR>
+	     If 'SAW' was selected, the position randomly chosen for the current counterion to be placed is dismissed every time 
+	     it would get closer to another particle's position than <shield> (defaults to '0.0'); the attempt to find a suitable 
+	     unobstructed random place for the current monomer is then repeated for up to <max_try> times (defaults to '30000')
+	<li> \verbatim <val_pS>        \endverbatim valency of the positively charged salt ions (defaults to '+1.0')
+	<li> \verbatim <val_nS>        \endverbatim valency of the negatively charged salt ions (defaults to '-1.0')
+	<li> \verbatim <type_pS>       \endverbatim type number of the positively charged salt ions to be used with \ref tcl_part (default to '3')
+	<li> \verbatim <type_nS>       \endverbatim type number of the negatively charged salt ions to be used with \ref tcl_part (default to '4');
+	     if unset, <type_nS> = <type_pS> is assumed
+    </ul>
+    The C implementation is \ref #salt.
+*/
+
+
+/** \page tcl_crosslink The crosslink command
+    \verbatim crosslink <N_P> <MPC> [start <part_id>] [catch <r_catch>] [distLink <link_dist>] [distChain <chain_dist>] [FENE <type_FENE>] [trials <max_try>] \endverbatim
+	Evaluates the current configuration of <N_P> equally long polymers with <MPC> monomers each, for any chain's ends mapping all monomers 
+	within a radius of <r_catch> around the end-monomer, randomly choosing one of them, establishing a crosslink to it if the next crosslink 
+	from there is <link_dist> monomers away and if both prospective partners, in case they reside on the same chain, are at least <chain_dist> 
+	monomers apart. The function returns how many ends are successfully linked.
+    <ul>
+	<li> \verbatim <N_P>           \endverbatim number of polymer chains
+	<li> \verbatim <MPC>           \endverbatim monomers per chain
+	<li> \verbatim start <part_id> \endverbatim particle number of the first chain's first monomer (defaults to '0')
+	<li> \verbatim catch <r_catch> \endverbatim maximum distance from the end-monomer in which to look for possible binding partners / 
+	     maximum length of a potential crosslink (defaults to '1.9')
+	<li> \verbatim distLink <link_dist>   \endverbatim minimum difference between the indices of two crosslinked monomers with different
+	     binding partners; high values prevent stiffness, low values make crosslinking easier (defaults to '2')
+	<li> \verbatim distChain <chain_dist> \endverbatim minimum difference between the indices of the crosslink partners if the chain's end
+	     wants to connect to a monomer on the same chain (defaults to '<MPC>' hence preventing crosslinks to the same chain)
+	<li> \verbatim FENE <type_FENE>\endverbatim 
+             type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0')
+	<li> \verbatim trials <max_try>\endverbatim how often a different set of crosslinks should be searched for if the currently chosen ones
+	     do not fullfill the requirements of <link_dist> and <chain_dist> (defaults to '30000'); if <max_try> is exceeded, all irregular crosslinks
+	     are dismissed and the function returns successfully, allowing the user to retry crosslinking after integrating the configuration 
+	     for some time steps until <i>crosslink</i> returns '2*<N_P>' (meaning: all ends are now linked)
+    </ul>
+    The C implementation is \ref #crosslink.
+*/
