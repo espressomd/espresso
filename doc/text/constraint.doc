@@ -16,7 +16,8 @@
      length <length> direction <direction> type <id> \endverbatim
 	The resulting surface is a cylinder with center <c_x> <c_y> <c_z> 
 	and radius <rad>. The <axis> is a vector along the cylinder axis, which is normalized in the program. The <direction> determines the force direction, -1 for inward and +1 for outward.
-    
+	\verbatim constraint maze nsphere <n> dim <d> sphrad <r_s> cylrad <r_c> type 10 <id> \endverbatim
+    The resulting surface is <n> spheres of radius <r_s> along each dimension, connected by cylinders of radius <r_c>. The spheres have simple cubic symmetry. The spheres are distributed evenly by dividing the <box_l> by <n>. Dimension of the maze can be controlled by <d>: 0 for one dimensional, 1 for two dimensional and 2 for three dimensional maze.
     
 	\verbatim constraint delete <num> \endverbatim
 	Delete constraint with number <num>. 
