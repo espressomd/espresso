@@ -69,22 +69,34 @@
 
 /*@}*/
 
+/** \name Transfer data classes */
+/************************************************************/
+/*@{*/
+
+#define GHOSTTRANS_PROPRTS  1
+#define GHOSTTRANS_POSITION 2
+#define GHOSTTRANS_MOMENTUM 4
+#define GHOSTTRANS_FORCE    8
+#define GHOSTTRANS_PARTNUM  16
+
+/*@}*/
+
 /** \name Data Types */
 /************************************************************/
 /*@{*/
 
 typedef struct {
 
-  /* Communication type. */
+  /** Communication type. */
   int type;
-  /* Node to communicate with (to use with GHOST_SEND, GHOST_RECV). */
+  /** Node to communicate with (to use with GHOST_SEND, GHOST_RECV). */
   int node;
-  /* MPI communicator handle (to use with GHOST_BCST, GHOST_GATH, GHOST_RDCE). */
+  /** MPI communicator handle (to use with GHOST_BCST, GHOST_GATH, GHOST_RDCE). */
   int mpi_comm;
 
-  /* Number of cells to communicate. */
+  /** Number of cells to communicate. */
   int n_cells;
-  /* Pointer array to cells to communicate. */
+  /** Pointer array to cells to communicate. */
   Cell **cells;
 
 } GhostCommunication;
@@ -92,13 +104,13 @@ typedef struct {
 /** Properties for a ghost communication. A ghost communication is defined */
 typedef struct {
 
-  /* Ghost communication routine to use. */
-  void (*comm_routine)();
+  /** Particle data parts to transfer */
+  int data_parts;
 
-  /* number of communication steps. */
+  /** number of communication steps. */
   int num;
 
-  /* List of ghost communications. */
+  /** List of ghost communications. */
   GhostCommunication *comm;
 
 } GhostCommunicator;
