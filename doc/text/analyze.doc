@@ -84,6 +84,14 @@
               replaces the <index>th entry in 'configs' with the current configuration in 'partCfg' and returns an updated 'n_configs'
          <li> \verbatim analyze remove [<index>] \endverbatim
               removes the <index>th entry from 'configs' and returns an updated 'n_configs'. If no <index> is given, everything is removed.
+         <li> \verbatim analyze configs [<config>] \endverbatim
+	      returns all configuration currently stored in 'configs' as a tcl-list '{x1 y1 z1 ... xN yN zN} ... {...}'. 
+	      If <config> is given, it is expected to be such a configuration covering all particles, and it is appended to 'configs'
+	      (similar to <tt>analyze append</tt> but without taking the <i>current</i> configuration but <config>).<BR>
+	      This command is mainly needed for setting/restoring checkpoints, i.e. to do some off-line analysis one can simply load the 
+	      very last checkpoint of the simulation run by using \ref tcl_blockfile (if it was written including a call to 
+	      <tt>blockfile $out write configs</tt>) - then everything is restored to 'configs', and all the <tt>analyze</tt> function
+	      are available!
          <li> \verbatim analyze stored \endverbatim
               returns 'n_configs', the number of currently stored particles' configurations
          </ul>
