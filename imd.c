@@ -11,6 +11,7 @@
 #include "imd.h"
 #include "communication.h"
 #include "particle_data.h"
+#include "parser.h"
 
 int transfer_rate = 0;
 
@@ -443,7 +444,7 @@ int imd(ClientData data, Tcl_Interp *interp,
     return (TCL_ERROR);
   }
 
-  if (!strncmp(argv[1], "connect", strlen(argv[1]))) {
+  if (ARG1_IS_S("connect")) {
     /* connect to vmd */
     int port = 12346;
 
@@ -454,7 +455,7 @@ int imd(ClientData data, Tcl_Interp *interp,
       return (TCL_ERROR);
     }
     if (argc == 3)
-      if (Tcl_GetInt(interp, argv[2], &port) == TCL_ERROR)
+      if (!ARG_IS_I(2, port))
 	return (TCL_ERROR);
 
     if (sock)
@@ -484,7 +485,7 @@ int imd(ClientData data, Tcl_Interp *interp,
 
     return (TCL_OK);
   }
-  if (!strncmp(argv[1], "disconnect", strlen(argv[1]))) {
+  if (ARG1_IS_S("disconnect")) {
     if (argc > 2) {
       Tcl_AppendResult(interp, "wrong # args:  should be \"",
 		       argv[0], " disconnect\"",
@@ -504,7 +505,7 @@ int imd(ClientData data, Tcl_Interp *interp,
     return (TCL_OK);
   }
 
-  if (!strncmp(argv[1], "listen", strlen(argv[1]))) {
+  if (ARG1_IS_S("listen")) {
     /* wait until vmd connects */
     int cnt = 3600;
     
@@ -515,7 +516,7 @@ int imd(ClientData data, Tcl_Interp *interp,
       return (TCL_ERROR);
     } 
    
-    if (Tcl_GetInt(interp, argv[2], &cnt) == TCL_ERROR)
+    if (!ARG_IS_I(2, cnt))
       return (TCL_ERROR);
 
     while (initsock && !sock && cnt--) {
@@ -536,19 +537,29 @@ int imd(ClientData data, Tcl_Interp *interp,
     return (TCL_OK);
   }
 
-  if (!strncmp(argv[1], "positions", strlen(argv[1]))) {
+  if (ARG1_IS_S("positions")) {
     float *coord;
+    int unfolded = 0;
     int i, j;
 
+    if (argc == 3) {
+      if (!ARG1_IS_S("-unfolded")) {
+	Tcl_AppendResult(interp, "wrong # args:  should be \"",
+			 argv[0], " positions [-unfolded]\"",
+			 (char *) NULL);
+	return (TCL_ERROR);
+      }
+      unfolded = 1;
+    }
     if (!initsock) {
       Tcl_AppendResult(interp, "no connection",
 		       (char *) NULL);
       return (TCL_OK);
     }
 
-    if (argc > 2) {
+    if (argc > 3) {
       Tcl_AppendResult(interp, "wrong # args:  should be \"",
-		       argv[0], " positions\"",
+		       argv[0], " positions [-unfolded]\"",
 		       (char *) NULL);
       return (TCL_ERROR);
     }
@@ -597,7 +608,8 @@ int imd(ClientData data, Tcl_Interp *interp,
       tmpCoord[0] = partCfg[i].r.p[0];
       tmpCoord[1] = partCfg[i].r.p[1];
       tmpCoord[2] = partCfg[i].r.p[2];
-      fold_particle(tmpCoord, dummy);
+      if (!unfolded)
+	fold_particle(tmpCoord, dummy);
       
       j = 3*partCfg[i].r.identity;
       coord[j    ] = tmpCoord[0];
@@ -616,7 +628,7 @@ int imd(ClientData data, Tcl_Interp *interp,
 		     (char *) NULL);
     return (TCL_OK);
   }
-  if (!strncmp(argv[1], "energies", strlen(argv[1]))) {
+  if (ARG1_IS_S("energies")) {
     Tcl_AppendResult(interp, "Sorry. imd energies not yet implemented",
 		     (char *) NULL);
     return (TCL_ERROR);      
