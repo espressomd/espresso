@@ -5,7 +5,7 @@
 #  You should have received a copy of that license along with this program;
 #  if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-#  Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+#  Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 # 
 ############ general settings
 
@@ -15,10 +15,12 @@ TK=no
 ############ compiler settings
 
 # for MPI
-CC=cc
+CC=mpicc
 
 # optimized compiler flags
-CFLAGS=-g -O3 -qcpluscmt -qarch=g5
+CFLAGS=-O3 -mtune=G5 -mcpu=G5 -faltivec -finline-limit=10000000 \
+        -fschedule-insns -fschedule-insns2 \
+        -funroll-loops -frerun-cse-after-loop -ffast-math
 
 ############ name of makedepend (or gcc -ME)
 DEPEND=makedepend
@@ -26,13 +28,9 @@ DEPEND=makedepend
 ############ C++ compiler settings
 CXX=mpiCC
 
-############ Include-file PATH for tcl on Mac
-CFLAGS+= -I/Library/Frameworks/Tcl.framework/Headers
-
 ############ linker settings
-export DARWINLINK=$(CC)
-LINK=../darwinlink.sh
-LDLIBS=-O3 -L/usr/local/lib -lrfftw -lfftw -lmpi -lm -ltcl -llam
+LINK=$(CC)
+LDLIBS=-O3 -L/usr/local/lib -lfftw -lrfftw -lmpi -lm -ltcl
 
 # FFTW. Note this is VERY specific for our cluster
 CFLAGS += -I/usr/local/include
@@ -42,11 +40,3 @@ CFLAGS+= -DMDINLINE="static"
 
 ############ special flags for C++ compilation
 CXXFLAGS=$(CFLAGS)
-
-########### TK
-ifeq ($(TK),yes)
-     CFLAGS+= -I/Library/Frameworks/Tk.framework/Headers
-     CFLAGS+= -DTK
-     LDLIBS+= -ltk
-endif
-
