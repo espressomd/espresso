@@ -38,6 +38,8 @@
 #include "mmm1d.h"
 #include "mmm2d.h"
 #include "elc.h"
+#include "statistics_chain.h"
+#include "topology.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -127,8 +129,12 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_MOLID 34
 /** Action number for \ref mpi_bcast_nptiso_geom */
 #define REQ_BCAST_NPTISO_GEOM 35
+/**Action number for \ref mpi_update_mol_ids  */
+#define REQ_UPDATE_MOL_IDS 36
+/**Action number for \ref mpi_sync_topo_part_info  */
+#define REQ_SYNC_TOPO 37
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 36
+#define REQ_MAXIMUM 38
 
 
 /** \name Slave Callbacks
@@ -172,6 +178,8 @@ void mpi_send_omega_slave(int node, int parm);
 void mpi_send_torque_slave(int node, int parm);
 void mpi_send_mol_id_slave(int node, int parm);
 void mpi_bcast_nptiso_geom_slave(int node, int parm);
+void mpi_update_mol_ids_slave(int node, int parm);
+void mpi_sync_topo_part_info_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -213,6 +221,8 @@ SlaveCallback *callbacks[] = {
   mpi_send_torque_slave,            /* 33: REQ_SET_TORQUE */
   mpi_send_mol_id_slave,            /* 34: REQ_SET_MOLID */
   mpi_bcast_nptiso_geom_slave,      /* 35: REQ_BCAST_NPTISO_GEOM */
+  mpi_update_mol_ids_slave,         /* 36: REQ_UPDATE_MOL_IDS */
+  mpi_sync_topo_part_info_slave     /* 37: REQ_UPDATE_MOL_IDS */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -253,6 +263,8 @@ char *names[] = {
   "SET_TORQUE",     /* 33 */
   "SET_MOLID",      /* 34 */
   "BCAST_NPT_GEOM", /* 35 */
+  "UPDATE_MOL_IDS", /* 36 */
+  "SYNC_TOPO",      /* 37 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -1564,6 +1576,46 @@ void mpi_bcast_nptiso_geom_slave(int node,int parm)
 
 }
 
+/***************REQ_UPDATE_MOL_IDS *********************/
+
+void mpi_update_mol_ids()
+{
+  mpi_issue(REQ_UPDATE_MOL_IDS, -1, 0);
+  mpi_update_mol_ids_slave(-1, 0);
+}
+
+void mpi_update_mol_ids_slave(int node,int parm)
+{
+  update_mol_ids_setchains();
+}
+
+/******************* REQ_SYNC_TOPO ********************/
+int mpi_sync_topo_part_info( Molecule *topology ) {
+  int i;
+  MPI_Bcast(&n_molecules,1,MPI_INT,0,MPI_COMM_WORLD);
+  for ( i = 0 ; i < n_molecules ; i++){
+    MPI_Bcast(topology[i].part.e,topology[i].part.n,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&topology[i].type,1,MPI_INT,0,MPI_COMM_WORLD);
+  }
+
+  mpi_issue(REQ_SYNC_TOPO,-1,0);
+  
+  sync_topo_part_info();
+  return 1;
+}
+
+void mpi_sync_topo_part_info_slave(int node,int parm ) {
+  int i;
+  MPI_Bcast(&n_molecules,1,MPI_INT,0,MPI_COMM_WORLD);
+  realloc_topology(n_molecules);
+  for ( i = 0 ; i < n_molecules ; i++){
+    MPI_Bcast(topology[i].part.e,topology[i].part.n,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&topology[i].type,1,MPI_INT,0,MPI_COMM_WORLD);
+  }
+
+  sync_topo_part_info();
+
+}
 
 /*********************** MAIN LOOP for slaves ****************/
 

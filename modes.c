@@ -33,6 +33,9 @@ int zdir = -1;
 #define LIPID_DOWN 1
 /** Enumerated constant indicating a Lipid that has left the bilayer*/
 #define LIPID_STRAY 2
+/** The atom type corresponding to a lipid head group */
+#define LIPID_HEAD_TYPE 0
+
 
 /** Numerical tolerance to be used only in modes2d*/
 #define MODES2D_NUM_TOL 0.00001
@@ -135,39 +138,100 @@ void fft_modes_init() {
 
 /** 
     This routine performs a simple check to see whether a lipid is
-    oriented up or down or if it has escaped the bilayer.  At present
-    this routine is completely specific to bilayers which have been
-    created in a special way.  See documentation for \ref modes2d for more details.
+    oriented up or down or if it has escaped the bilayer. 
 
     \param id The particle identifier
-    \param partCfg A sorted array of particles as generated using the sortPartCfg command
+    \param partCfg An array of sorted particles
     \param zref The average z position of all particles
  */
 int lipid_orientation( int id, Particle* partCfg , double zref) {
-  double remainder;
-  remainder = (id+1)/3.0 - (int)((id+1)/3.0);
-  if (remainder <  MODES2D_NUM_TOL ) {
-    if ( ( partCfg[id].r.p[zdir] - partCfg[id-2].r.p[zdir] ) > 0 ) { 
-      if ( ( partCfg[id-2].r.p[zdir] - zref ) > stray_cut_off ) {
-	return LIPID_STRAY;
-      } else { 
-	return LIPID_UP; 
-      }
-    } else { 
-      if ( ( partCfg[id+2].r.p[zdir] - zref ) > stray_cut_off ) {
-	return LIPID_STRAY;
+  int mol_size, head_id, tail_id, mol_id, mol_type;
+  int i;
+  double distance;
+
+
+  /* check molecule information */
+  if ( n_molecules < 0 ) return (TCL_ERROR);
+  mol_id = partCfg[id].p.mol_id ;
+  mol_size = topology[mol_id].part.n;
+  mol_type = topology[mol_id].type;
+  //  printf("mol_type %d \n", mol_type);
+  
+  //  printf("ids: %d %d %d N: %d parts: %d %d %d \n",id,partCfg[id].p.identity,mol_id,topology[mol_id].part.n,topology[mol_id].part.e[0],topology[mol_id].part.e[1],topology[mol_id].part.e[2]);
+  //  fflush(stdout);
+
+  // Search the molecule for head and tail beads
+  head_id = 0 ; 
+  tail_id = 0;
+  for ( i = 0 ; i < mol_size ; i++ ) {
+    if ( partCfg[topology[mol_id].part.e[i]].p.type == LIPID_HEAD_TYPE ) {
+      head_id = topology[mol_id].part.e[i];
+      if ( i == 0 ) { 
+	tail_id = topology[mol_id].part.e[mol_size-1]; 
       } else {
-	return LIPID_DOWN; 
+	tail_id = topology[mol_id].part.e[0];
       }
-    }    
+      break;
+    }
   }
 
-  if (remainder > MODES2D_NUM_TOL ) {
-    if ( ( partCfg[id].r.p[zdir] - partCfg[id+2].r.p[zdir] ) > 0 ) { 
+  /*
+    if ( mol_type == 0 ) { 
+    head_id = topology[mol_id].part.e[mol_size-1];
+    tail_id = topology[mol_id].part.e[0];
+    } else {
+    tail_id = topology[mol_id].part.e[mol_size-1];
+    head_id = topology[mol_id].part.e[0];
+    }
+  */
+
+  distance = sqrt(pow((partCfg[tail_id].r.p[zdir] - zref),2));
+
+  //  printf("dist %f : vect %f \n", distance,(partCfg[head_id].r.p[zdir] - partCfg[tail_id].r.p[zdir]) );
+
+
+  if ( (partCfg[head_id].r.p[zdir] - partCfg[tail_id].r.p[zdir]) > 0.0 ) {
+    /* Lipid is oriented up */
+    if (  distance  > stray_cut_off ) {
+      return LIPID_STRAY;
+    } else {
       return LIPID_UP;
-    } else { return LIPID_DOWN; }    
+    }
+  } else {
+    if (  distance  > stray_cut_off ) {
+      return LIPID_STRAY;
+    } else {
+      return LIPID_DOWN;
+    }
   }
+
   return -1;
+  /*
+    double remainder;
+    remainder = (id+1)/3.0 - (int)((id+1)/3.0);
+    if (remainder <  MODES2D_NUM_TOL ) {
+    if ( ( partCfg[id].r.p[zdir] - partCfg[id-2].r.p[zdir] ) > 0 ) { 
+    if ( ( partCfg[id-2].r.p[zdir] - zref ) > stray_cut_off ) {
+    return LIPID_STRAY;
+    } else { 
+    return LIPID_UP; 
+    }
+    } else { 
+    if ( ( partCfg[id+2].r.p[zdir] - zref ) > stray_cut_off ) {
+    return LIPID_STRAY;
+    } else {
+    return LIPID_DOWN; 
+    }
+    }    
+    }
+    
+    if (remainder > MODES2D_NUM_TOL ) {
+    if ( ( partCfg[id].r.p[zdir] - partCfg[id+2].r.p[zdir] ) > 0 ) { 
+    return LIPID_UP;
+    } else { return LIPID_DOWN; }    
+    }
+    return -1;
+  */
 }
 
 /** This routine performs must of the work involved in the analyze
@@ -200,6 +264,7 @@ int modes2d(fftw_complex* modes) {
   int nup;
   int ndown;
   int nstray;
+  int l_orient;
   double norm;
   int xi, yi;
   double meanval ;
@@ -233,11 +298,13 @@ int modes2d(fftw_complex* modes) {
 
   /* Update particles */
   updatePartCfg(WITHOUT_BONDS);
-  if (!sortPartCfg()) {
-    fprintf(stderr,"%d,could not sort partCfg \n",this_node);
-    errexit();
-  }
+  //Sorting no longer necessary since we now have the molecule information
+    if (!sortPartCfg()) {
+      fprintf(stderr,"%d,could not sort partCfg \n",this_node);
+      errexit();
+    }
   
+
   /* Find the mean z position and fold x y coordinates but not z*/
   zref = 0;
   for (i = 0 ; i < n_total_particles ; i++) {
@@ -247,33 +314,40 @@ int modes2d(fftw_complex* modes) {
   }
   zref = zref/(double)(n_total_particles);
 
-  /* Calculate the unnormalized height function */
+  /* Calculate the non normalized height function of head lipids */
   nup = ndown = nstray = 0;
   for (i = 0 ; i < n_total_particles ; i++) {
     if ( (partCfg[i].p.type == 0)) {
-
       gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
-      gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );   
+      gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
 
-      if ( lipid_orientation(i,partCfg,zref) != LIPID_STRAY ) {
-	if ( lipid_orientation(i,partCfg,zref) == LIPID_UP ) {
+      l_orient = lipid_orientation(i,partCfg,zref);
+
+      if ( l_orient != LIPID_STRAY ) {
+	if ( l_orient == LIPID_UP ) {
 	  nup++;
 	  height_grid_up[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir] - zref;
 	  grid_parts_up[gj + gi*mode_grid_3d[xdir]] += 1;
-	} else if ( lipid_orientation(i,partCfg,zref) == LIPID_DOWN ) {
+	  //	  printf("up lipid \n");
+	} else if ( l_orient == LIPID_DOWN ) {
 	  ndown++;
 	  height_grid_down[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir] - zref;
 	  grid_parts_down[gj + gi*mode_grid_3d[xdir]] += 1;
+	  //  printf("down lipid \n");
 	}
       } else {
 	nstray++;
+	//	printf("stray lipid \n");
       }
     }
+    fflush(stdout);
     unfold_position(partCfg[i].r.p,partCfg[i].l.i);    
   }
   if ( nstray > 0 ) {
     printf("Warning: there were %d stray lipids in height calculation \n",nstray);
   }
+  printf(" Lipids up = %d , Lipids down = %d \n",nup, ndown);
+
   STAT_TRACE(fprintf(stderr,"%d, Lipids up = %d , Lipids down = %d \n",this_node, nup, ndown));
 
 
@@ -380,3 +454,4 @@ int modes2d(fftw_complex* modes) {
 #undef LIPID_DOWN 
 #undef LIPID_STRAY 
 #undef MODES2D_NUM_TOL
+

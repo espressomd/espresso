@@ -134,6 +134,9 @@ int print_chain_structure_info(Tcl_Interp *interp);
     requires the particles to be sorted, this is performed, too. */
 int parse_chain_structure_info(Tcl_Interp *interp, int argc, char **argv);
 
+/** sets the particle mol_id according to the chain_structure info*/
+void update_mol_ids_setchains();
+
 /** same as \ref parse_chain_structure_info, but also allows for chain_structure info
     not to be given. You either get an error or chain topology is safe to be used. */
 int check_and_parse_chain_structure_info(Tcl_Interp *interp, int argc, char **argv);

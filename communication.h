@@ -49,6 +49,7 @@
 #include "global.h"
 #include "particle_data.h"
 #include "random.h"
+#include "topology.h"
 
 /**************************************************
  * exported variables
@@ -293,6 +294,13 @@ void mpi_bcast_cell_structure(int cs);
 
 /** Issue REQ_BCAST_NPTISO_GEOM: broadcast nptiso geometry parameter to all nodes. */
 void mpi_bcast_nptiso_geom(void);
+
+/** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are
+    in sync with the topology from analyze set chains */
+void mpi_update_mol_ids(void); 
+
+/** Issue REQ_SYNC_TOPO: Update the molecules ids to that they correspond to the topology */
+int mpi_sync_topo_part_info(Molecule* topology);
 
 /*@}*/
 

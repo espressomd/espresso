@@ -10,6 +10,8 @@
 #include "parser.h"
 #include "debug.h"
 #include "topology.h"
+#include "communication.h"
+#include "cells.h"
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref #analyze) */
 /*@{*/
@@ -599,17 +601,36 @@ int parse_chain_structure_info(Tcl_Interp *interp, int argc, char **argv)
   if (! (ARG0_IS_I(chain_start) && ARG1_IS_I(chain_n_chains) && ARG_IS_I(2, chain_length)))
     return TCL_ERROR;
 
-  realloc_molecules(chain_n_chains);
+  realloc_topology(chain_n_chains);
   pc = 0;
   for (m = 0; m < n_molecules; m++) {
-    molecules[m].type = 0;
-    realloc_intlist(&molecules[m].part, molecules[m].part.n = chain_length);
+    topology[m].type = 0;
+    realloc_intlist(&topology[m].part, topology[m].part.n = chain_length);
     for (i = 0; i < chain_length; i++)
-      molecules[m].part.e[i] = pc++;
+      topology[m].part.e[i] = pc++;
   }
-  
+ 
+  mpi_update_mol_ids();
+ 
   return TCL_OK;
 }
+
+
+void update_mol_ids_setchains() {
+  Particle *p;
+  int i, np, c;
+  Cell *cell;
+  
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i = 0; i < np; i++) {
+      p[i].p.mol_id = floor((p[i].p.identity - chain_start)/(double)chain_length);
+    }
+  }
+}
+
 
 int check_and_parse_chain_structure_info(Tcl_Interp *interp, int argc, char **argv)
 {
