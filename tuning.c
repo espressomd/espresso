@@ -44,8 +44,7 @@ double time_force_calc(int default_samples)
   int rds = timing_samples > 0 ? timing_samples : default_samples;
   int i;
 
-  mpi_integrate(0);
-  if (check_runtime_errors())
+  if (mpi_integrate(0))
     return -1;
 
   /* perform force calculation test */
