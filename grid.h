@@ -28,4 +28,6 @@ int find_node(double pos[3]);
 /** datafield callback for procgrid */
 int pgrid_callback(Tcl_Interp *interp, void *data);
 
+/** fill neighbor lists of node. */
+void calc_neighbors(int node);
 #endif

@@ -22,8 +22,8 @@ extern int nprocs;
  * topology from grid.c
  ****************************************/
 extern int processor_grid[3];
-extern int le_neighbors[3];
-extern int ri_neighbors[3];
+extern int pe_pos[3];
+extern int neighbors[6];
 
 /****************************************
  * box dimensions from global.c
@@ -60,18 +60,18 @@ typedef struct {
   int    *bonds;
 } Particle;
 
+/** size of local particle array. */
 extern int   max_particles;
+/** number of particles belonging to that node. */
 extern int     n_particles;
+/** number of ghost particle belonging to that node. */
+extern int     n_ghosts;
+/** local particle array. */
 extern Particle *particles;
 
 /** first unused particle entry */
 extern int   min_free_particle;
 
-extern int     n_ghosts;
-extern int   max_ghosts;
-extern Particle *ghosts;
-/** first unused ghost entry */
-extern int   min_free_ghost;
 
 /* total number of particles in the system. */
 extern int n_total_particles;

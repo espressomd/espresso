@@ -9,8 +9,8 @@
  **********************************************/
 
 int processor_grid[3] = { -1, -1, -1};
-int le_neighbors[3] = {0, 0, 0};
-int ri_neighbors[3] = {0, 0, 0};
+int pe_pos[3] = {-1,-1,-1};
+int neighbors[6] = {0, 0, 0, 0, 0, 0};
 
 /**********************************************
  * procedures
@@ -80,4 +80,24 @@ void map_node_array(int node, int *a, int *b, int *c)
 
 int map_array_node(int a, int b, int c) {
   return (a + processor_grid[0]*(b + processor_grid[1]*c));
+}
+
+void calc_neighbors(int node)
+{
+  int dir,j;
+  int n_pos[3];
+  
+  map_node_array(node,&pe_pos[0],&pe_pos[1],&pe_pos[2]);
+
+  for(dir=0;dir<3;dir++) {
+    for(j=0;j<3;j++) n_pos[j]=pe_pos[j];
+    /* left neighbor in direction dir */
+    n_pos[dir] -= 1;
+    if(n_pos[dir]<0) n_pos[dir] += processor_grid[dir];
+    neighbors[2*dir]     = map_array_node(n_pos[0],n_pos[1],n_pos[2]);
+    /* right neighbor in direction dir */
+    n_pos[dir] += 2;
+    if(n_pos[dir]>=processor_grid[dir]) n_pos[dir] -= processor_grid[dir];
+    neighbors[(2*dir)+1] = map_array_node(n_pos[0],n_pos[1],n_pos[2]);
+  }
 }

@@ -96,15 +96,21 @@ void integrate_vv(int n_steps)
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: %d steps\n",this_node,
 		      n_steps));
 
+  MPI_Barrier(MPI_COMM_WORLD);
+
   /* check init */
   if(rebuild_verletlist == 1) {
     exchange_part();
+    MPI_Barrier(MPI_COMM_WORLD);
     sort_particles_into_cells();
+    MPI_Barrier(MPI_COMM_WORLD);
     exchange_ghost();
+    MPI_Barrier(MPI_COMM_WORLD);
     build_verlet_list();
   }
   if(calc_forces_first == 1) {
     force_calc();
+    collect_ghost_forces();
     calc_forces_first = 0;
   }
 
@@ -119,10 +125,10 @@ void integrate_vv(int n_steps)
       build_verlet_list();
     }
     else {
-      exchange_ghost_pos();
+      update_ghost_pos();
     }
     force_calc();
-    exchange_ghost_forces();
+    collect_ghost_forces();
     propagate_velocities();
   }
 

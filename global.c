@@ -192,7 +192,7 @@ void fold_particle(double pos[3],int image_box[3])
 {
   int i;
   for(i=0;i<3;i++) {
-    image_box[i] = floor(pos[i]/box_l[i]);
+    image_box[i] += floor(pos[i]/box_l[i]);
     pos[i]       = pos[i] - image_box[i]*box_l[i];    
   }
 }
