@@ -10,6 +10,7 @@
 #define MMM1D_H
 
 #include "config.h"
+#include "particle_data.h"
 
 #ifdef ELECTROSTATICS
 
@@ -25,9 +26,10 @@ int set_mmm1d_params(Tcl_Interp *interp, double switch_rad,
 
 void MMM1D_recalcTables();
 
-void MMM1D_calc_forces();
-
 void MMM1D_init();
+
+///
+void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist2, double dist);
 
 #endif
 

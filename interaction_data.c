@@ -396,7 +396,7 @@ void calc_maximal_cutoff()
       max_cut = dh_params.r_cut;
     break;
   case COULOMB_MMM1D:
-    /* uses mi interactions anyways */
+    /* needs n-squared calculation anyways */
     if (max_cut < 0)
       max_cut = 0;
     break;

@@ -20,63 +20,6 @@
 
 #ifdef ELECTROSTATICS
 
-
-/*
-  cwz-build-command: gmake
-odd strategy:
-
-    0 1 2 3 4
-  0 0 1 0 3 0
-  1 1 1 2 1 4
-  2 0 2 2 3 2
-  3 3 1 3 3 4
-  4 0 4 2 4 4
-
-    0 1 2 3 4
-0.
-s   0 1 2 3 4
-r   0 1 2 3 4
-1. offset=1
-s   1 2 3 4 0
-r   4 0 1 2 3
-2. offset=3
-s   3 4 0 1 2
-r   2 3 4 0 1
-
-  0 1 2 3 4
-0 0 1 2 2 1
-1   0 1 2 2
-2     0 1 2
-3       0 1
-4         0
-
-even strategy:
-
-    0 1 2 3
-  0 0 1 0 3
-  1 1 1 2 1
-  2 0 2 2 3
-  3 3 1 3 3
-
-    0 1 2 3
-0.
-s   0 1 2 3
-r   0 1 2 3
-1. offset = 1
-s   1 2 3 *
-r   * 0 1 2
-2. offset = 3
-s   3 * 0 1
-r   2 3 * 0
-
-  0 1 2 3
-0 0 1 2 2
-1   0 1 2
-2     0 1
-3       0
-
-*/
-
 #define C_2PI     (2*M_PI)
 #define C_GAMMA   0.57721566490153286060651209008
 #define C_2LOG4PI -5.0620484939385815859557831885
@@ -96,7 +39,7 @@ r   2 3 * 0
 
 /** modified polygamma functions. See Arnold,Holm 2002 */
 static Polynom *modPsi = NULL;
-static int      n_modPsi = 0, eo_n_nodes = 0;
+static int      n_modPsi = 0;
 static double L_i, L2, L2_i, prefL2_i, prefL3_i;
 
 MMM1D_struct mmm1d_params = { 0.05, 5, 1e-5 };
@@ -303,8 +246,15 @@ void MMM1D_recalcTables()
 
 void MMM1D_init()
 {
-  /* round up n_nodes to next odd number */
-  eo_n_nodes = (n_nodes/2)*2 + 1;
+  if (periodic[0] != 0 || periodic[1] != 0 || periodic[2] != 1) {
+    fprintf(stderr, "ERROR: MMM1D requires periodicity 0 0 1\n");
+    errexit();
+  }
+
+  if (cell_structure.type != CELL_STRUCTURE_NSQUARE) {
+    fprintf(stderr, "ERROR: MMM1D requires n-square cellsystem\n");
+    errexit();
+  }
 
   /* precalculate some constants */
   L_i  = 1/box_l[2];
@@ -316,19 +266,21 @@ void MMM1D_init()
   MMM1D_recalcTables();
 }
 
-MDINLINE void calc_pw_force(double dx, double dy, double dz,
-			    double *Fx, double *Fy, double *Fz)
+void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double r2, double r)
 {
+  int dim;
+  double F[3];
+  double chpref = p1->p.q*p2->p.q;
   double rxy2, rxy2_d, z_d;
-  double r2, r, pref;
-
-  dz -= rint(dz/box_l[2])*box_l[2];
+  double pref;
+  double Fx, Fy, Fz;
   
-  rxy2   = dx*dx + dy*dy;
+  if (chpref == 0)
+    return;
+
+  rxy2   = d[0]*d[0] + d[1]*d[1];
   rxy2_d = rxy2*L2_i;
-  z_d    = dz*L_i;
-  r2     = rxy2 + dz*dz;
-  r      = sqrt(r2);
+  z_d    = d[2]*L_i;
 
   if (rxy2 <= mmm1d_params.far_switch_radius_2) {
     /* near range formula */
@@ -355,32 +307,36 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
       r2nm1 = r2n;
     }
 
-    *Fx = prefL3_i*sr*dx;
-    *Fy = prefL3_i*sr*dy;
-    *Fz = prefL2_i*sz;
+    Fx = prefL3_i*sr*d[0];
+    Fy = prefL3_i*sr*d[1];
+    Fz = prefL2_i*sz;
 
     /* real space parts */
 
     pref = coulomb.prefactor/(r2*r); 
-    *Fx += pref*dx;
-    *Fy += pref*dy;
-    *Fz += pref*dz;
+    Fx += pref*d[0];
+    Fy += pref*d[1];
+    Fz += pref*d[2];
 
-    shift_z = dz + box_l[2];
+    shift_z = d[2] + box_l[2];
     rt2 = rxy2 + shift_z*shift_z;
     rt  = sqrt(rt2);
     pref = coulomb.prefactor/(rt2*rt); 
-    *Fx += pref*dx;
-    *Fy += pref*dy;
-    *Fz += pref*shift_z;
+    Fx += pref*d[0];
+    Fy += pref*d[1];
+    Fz += pref*shift_z;
 
-    shift_z = dz - box_l[2];
+    shift_z = d[2] - box_l[2];
     rt2 = rxy2 + shift_z*shift_z;
     rt  = sqrt(rt2);
     pref = coulomb.prefactor/(rt2*rt); 
-    *Fx += pref*dx;
-    *Fy += pref*dy;
-    *Fz += pref*shift_z;
+    Fx += pref*d[0];
+    Fy += pref*d[1];
+    Fz += pref*shift_z;
+
+    F[0] = Fx;
+    F[1] = Fy;
+    F[2] = Fz;
   }
   else {
     /* far range formula */
@@ -399,243 +355,80 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
     
     pref = coulomb.prefactor*(sr/rxy + 2*L_i/rxy2);
 
-    *Fx = pref*dx;
-    *Fy = pref*dy;
-    *Fz = coulomb.prefactor*sz;
+    F[0] = pref*d[0];
+    F[1] = pref*d[1];
+    F[2] = coulomb.prefactor*sz;
+  }
+
+  for (dim = 0; dim < 3; dim++)
+    F[dim] *= chpref;
+  for (dim = 0; dim < 3; dim++) {
+    p1->f.f[dim] += F[dim];
+    p2->f.f[dim] -= F[dim];
   }
 }
 
-void MMM1D_calc_forces()
+double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double r2, double r)
 {
-  fprintf(stderr, "MMM1D_calc_forces has to be rewritten\n");
-#if 0
-  MPI_Status status;
+  double chpref = p1->p.q*p2->p.q;
+  double rxy2, rxy2_d, z_d;
+  double E;
 
-  double *send_coords;
-  double *send_forces;
-  int n_send_coords;
-  int send_node;
+  if (chpref == 0)
+    return 0;
 
-  double *recv_coords = NULL;
-  double *recv_forces = NULL;
-  int n_recv_coords = 0, max_recv_coords = 0;
-  int recv_node;
+  rxy2   = d[0]*d[0] + d[1]*d[1];
+  rxy2_d = rxy2*L2_i;
+  z_d    = d[2]*L_i;
 
-  int m1, n1, o1, p1;
-  int m2, n2, o2, p2;
-  Particle *part1, *part2, *p_part1, *p_part2;
-  int n_part1, n_part2;
-  int ind1, ind2;
+  if (rxy2 <= mmm1d_params.far_switch_radius_2) {
+    /* near range formula */
+    double r2n, rt, shift_z;
+    int n;
 
-  int *sizes;
-  int buffer_part;
-  int offset;
-  double chpref;
-  double dx, dy, dz;
-  double Fx, Fy, Fz;
+    E = -C_GAMMA*L_i;
 
-  if (mmm1d_params.maxPWerror <= 0)
-    return;
+    /* polygamma summation */
+    r2n = 1.0;
+    for (n = 0; n < n_modPsi; n++) {
+      double add = mod_psi_even(n, z_d)*r2n;
+      E -= add;
+      
+      if (fabs(add) < mmm1d_params.maxPWerror)
+	break;
+ 
+      r2n *= rxy2_d;
+    }
 
-  if (periodic[0] != 0 || periodic[1] != 0 || periodic[2] != 1) {
-    fprintf(stderr, "MMM1D must have periodicity 0,0,1 !\n");
-    errexit();
+    /* real space parts */
+
+    E += coulomb.prefactor/r; 
+
+    shift_z = d[2] + box_l[2];
+    rt = sqrt(rxy2 + shift_z*shift_z);
+    E += coulomb.prefactor/rt; 
+
+    shift_z = d[2] - box_l[2];
+    rt = sqrt(rxy2 + shift_z*shift_z);
+    E += coulomb.prefactor/rt; 
+  }
+  else {
+    /* far range formula */
+    double rxy   = sqrt(rxy2);
+    double rxy_d = rxy*L_i;
+    E = 0;
+    int bp;
+
+    for (bp = 1; bp < mmm1d_params.bessel_cutoff; bp++) {
+      double fq = C_2PI*bp;    
+      E += K0(fq*rxy_d)*cos(fq*z_d);
+    }
+    E *= coulomb.prefactor*L_i*4;
+
+    E += -L_i*log(0.25*rxy2_d) - C_GAMMA*L_i;
   }
 
-  /* prepare send and fetch buffers */
-  n_send_coords = cells_get_n_particles();
-  send_coords = malloc(n_send_coords*sizeof(double)*4);
-  send_forces = malloc(n_send_coords*sizeof(double)*3);
-  sizes = malloc(sizeof(int)*n_nodes);
-  MPI_Allgather(&n_send_coords, 1, MPI_INT, sizes, 1, MPI_INT, MPI_COMM_WORLD);
-
-  /* interaction on node itself and setup of send buffer */
-  buffer_part = 0;
-  INNER_CELLS_LOOP(m1, n1, o1) {
-    ind1 = CELL_IND(m1,n1,o1);
-    n_part1 = cells[ind1].pList.n;
-    p_part1 = cells[ind1].pList.part;
-    for (p1 = 0; p1 < n_part1; p1++) {
-      part1 = &p_part1[p1];
-
-      /* append particle to send buffer */
-      send_coords[4*buffer_part    ] = part1->r.p[0];
-      send_coords[4*buffer_part + 1] = part1->r.p[1];
-      send_coords[4*buffer_part + 2] = part1->r.p[2];
-      send_coords[4*buffer_part + 3] = part1->p.q;
-      /*
-	fprintf(stderr, "%d: send %f %f %f %f\n", this_node,
-	send_coords[4*buffer_part    ],
-	send_coords[4*buffer_part + 1],
-	send_coords[4*buffer_part + 2],
-	send_coords[4*buffer_part + 3]);
-      */
-      buffer_part++;
-
-      /* interactions with all the other particles on this node */
-      INNER_CELLS_LOOP(m2, n2, o2) {
-	ind2 = CELL_IND(m2,n2,o2);
-	if (ind2 < ind1)
-	  continue;
-	n_part2 = cells[ind2].pList.n;
-	p_part2 = cells[ind2].pList.part;
-	for (p2 = 0; p2 < n_part2; p2++) {
-	  part2 = &p_part2[p2];
-
-	  /* no self energy */
-	  if (ind1 == ind2 && part2->p.identity <= part1->p.identity)
-	    continue;
-
-	  chpref = part1->p.q*part2->p.q;
-
-	  if (chpref != 0.0) {
-	    dx = part1->r.p[0] - part2->r.p[0];
-	    dy = part1->r.p[1] - part2->r.p[1];
-	    dz = part1->r.p[2] - part2->r.p[2];
-
-	    calc_pw_force(dx, dy, dz, &Fx, &Fy, &Fz);
-
-	    Fx *= chpref;
-	    Fy *= chpref;
-	    Fz *= chpref;
-
-	    part1->f.f[0] += Fx;
-	    part1->f.f[1] += Fy;
-	    part1->f.f[2] += Fz;
-	    part2->f.f[0] -= Fx;
-	    part2->f.f[1] -= Fy;
-	    part2->f.f[2] -= Fz;
-	  }
-	}
-      }
-    }
-  }
-
-  for (offset = 1; offset < eo_n_nodes; offset += 2) {
-    send_node = (this_node + offset) % eo_n_nodes;
-    recv_node = (this_node - offset + eo_n_nodes) % eo_n_nodes;
-    if (recv_node < n_nodes)
-      n_recv_coords = sizes[recv_node];
-    else
-      n_recv_coords = 0;
-    /*
-      fprintf(stderr, "round %2d: %2d(%2d) sn %2d rn %2d(%2d)\n",
-      offset, this_node,
-      n_send_coords, send_node,
-      recv_node, n_recv_coords);
-    */
-
-    if (n_recv_coords > max_recv_coords) {
-      max_recv_coords = n_recv_coords;
-      recv_coords = realloc(recv_coords, max_recv_coords*sizeof(double)*4);
-      recv_forces = realloc(recv_forces, max_recv_coords*sizeof(double)*3);
-    }
-    /* send away my particles coordinates and charge */
-    if (send_node < n_nodes)
-      MPI_Send(send_coords, 4*n_send_coords, MPI_DOUBLE, send_node,
-	       1, MPI_COMM_WORLD);
-    /* and get the particles which are my duty now, and calculate */
-    if (recv_node < n_nodes) {
-      MPI_Recv(recv_coords, 4*n_recv_coords, MPI_DOUBLE, recv_node,
-	       1, MPI_COMM_WORLD, &status);
-      for (p2 = 0; p2 < 3*n_recv_coords; p2++)
-	recv_forces[p2] = 0;
-
-      INNER_CELLS_LOOP(m1, n1, o1) {
-	ind1 = CELL_IND(m1,n1,o1);
-	n_part1 = cells[ind1].pList.n;
-	p_part1 = cells[ind1].pList.part;
-	for (p1 = 0; p1 < n_part1; p1++) {
-	  part1 = &p_part1[p1];
-	  for (p2 = 0; p2 < n_recv_coords; p2++) {
-	    /*
-	      fprintf(stderr, "%d: got %f %f %f %f\n", this_node,
-	      recv_coords[4*p2    ],
-	      recv_coords[4*p2 + 1],
-	      recv_coords[4*p2 + 2],
-	      recv_coords[4*p2 + 3]);
-	    */
-	    dx = part1->r.p[0] - recv_coords[4*p2    ];
-	    dy = part1->r.p[1] - recv_coords[4*p2 + 1];
-	    dz = part1->r.p[2] - recv_coords[4*p2 + 2];
-	    chpref = part1->p.q*recv_coords[4*p2 + 3];
-
-	    if (chpref != 0.0) {
-	      calc_pw_force(dx, dy, dz, &Fx, &Fy, &Fz);
-
-	      Fx *= chpref;
-	      Fy *= chpref;
-	      Fz *= chpref;
-	      part1->f.f[0] += Fx;
-	      part1->f.f[1] += Fy;
-	      part1->f.f[2] += Fz;
-	      recv_forces[3*p2    ] -= Fx;
-	      recv_forces[3*p2 + 1] -= Fy;
-	      recv_forces[3*p2 + 2] -= Fz;
-	    }
-	    /*
-	      fprintf(stderr, "%d: sendf %f %f %f\n", this_node,
-	      recv_forces[3*p2    ],
-	      recv_forces[3*p2 + 1],
-	      recv_forces[3*p2 + 2]);
-	    */
-	  }
-	}
-      }
-
-      /* send away other nodes forces */
-      if (recv_node < n_nodes)
-	MPI_Send(recv_forces, 3*n_recv_coords, MPI_DOUBLE, recv_node,
-		 1, MPI_COMM_WORLD);
-    }
-
-    /* and collect my ones */
-    if (send_node < n_nodes) {
-      MPI_Recv(send_forces, 3*n_send_coords, MPI_DOUBLE, send_node,
-	       1, MPI_COMM_WORLD, &status);    
-      buffer_part = 0;
-      INNER_CELLS_LOOP(m1, n1, o1) {
-	ind1 = CELL_IND(m1,n1,o1);
-	n_part1 = cells[ind1].pList.n;
-	p_part1 = cells[ind1].pList.part;
-	for (p1 = 0; p1 < n_part1; p1++) {
-	  part1 = &p_part1[p1];
-	  part1->f.f[0] += send_forces[3*buffer_part    ];
-	  part1->f.f[1] += send_forces[3*buffer_part + 1];
-	  part1->f.f[2] += send_forces[3*buffer_part + 2];
-	  /*
-	    fprintf(stderr, "%d: gotf %f %f %f\n", this_node,
-	    send_forces[3*buffer_part    ],
-	    send_forces[3*buffer_part + 1],
-	    send_forces[3*buffer_part + 2]);
-	  */
-	  buffer_part++;
-	}
-      }
-    }
-  }
-
-  /*
-  INNER_CELLS_LOOP(m1, n1, o1) {
-    ind1 = CELL_IND(m1,n1,o1);
-    n_part1 = cells[ind1].pList.n;
-    p_part1 = cells[ind1].pList.part;
-    for (p1 = 0; p1 < n_part1; p1++) {
-      part1 = &p_part1[p1];
-      printf("%d %f %f %f %d %d %d\n", part1->r.identity,
-	     part1->r.p[0], part1->r.p[1], part1->r.p[2],
-	     part1->i[0], part1->i[1], part1->i[2]
-	     );
-    }
-  }
-  */
-
-  free(send_coords);
-  free(send_forces);
-  free(recv_coords);
-  free(recv_forces);
-  free(sizes);
-#endif
+  return chpref*E;
 }
 
 #endif

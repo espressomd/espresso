@@ -97,6 +97,8 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
     add_p3m_coulomb_pair_force(p1,p2,d,dist2,dist);
   else if(coulomb.method == COULOMB_DH)
     add_dh_coulomb_pair_force(p1,p2,d,dist);
+  else if(coulomb.method == COULOMB_MMM1D)
+    add_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist);
 #endif
 
 }
