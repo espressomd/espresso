@@ -35,12 +35,17 @@ typedef struct {
   double p_ext;
   /** instantaneous pressure the system currently has */
   double p_inst;
+  /** instantaneous pressure averaged over current integration cycle */
+  double p_inst_av;
   /** difference between \ref p_ext and \ref p_inst */
   double p_diff;
   /** virial (short-range) components of \ref p_inst */
   double p_vir[3];
   /** ideal gas components of \ref p_inst, derived from the velocities */
   double p_vel[3];
+  /** flag which indicates if \ref p_vel may (0) or may not (1) be used
+      in offline pressure calculations such as 'analyze p_inst' */ 
+  int invalidate_p_vel;
   /** geometry information for the npt integrator.  Holds the vector
       <dir, dir ,dir> where a positive value for dir indicates that
       box movement is allowed in that direction. To check whether a
@@ -51,12 +56,11 @@ typedef struct {
   int nptgeom_dir[3];
   /** The number of dimensions in which npt boxlength motion is coupled to particles */
   int dimension;
-  /** Set this flag if you want all box dimensions to be
-      identical. Needed for electrostatics.  If the value of \ref
-      dimension is less than 3 then box length motion in one or more
+  /** Set this flag if you want all box dimensions to be identical. Needed for electrostatics.  
+      If the value of \ref dimension is less than 3 then box length motion in one or more
       directions will be decoupled from the particle motion */
   int cubic_box;
-  /** An index to one of the non_constant dimensions. handy if you just want the variable box_l*/
+  /** An index to one of the non_constant dimensions. handy if you just want the variable box_l */
   int non_const_dim;
 } nptiso_struct;
 extern nptiso_struct nptiso;
@@ -104,8 +108,12 @@ int p_ext_callback(Tcl_Interp *interp, void *_data);
 
 /** Calculates the pressure in the system from a virial expansion using the terms from \ref calculate_verlet_virials or \ref nsq_calculate_virials dependeing on the used cell system.<BR>
     @param result here all the data is stored
+    @param v_comp flag which enables (1) compensation of the velocities required 
+		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
+		  (hence it only works with domain decomposition); naturally it
+		  therefore doesn't make sense to use it without NpT.
 */
-void pressure_calc(double *result);
+void pressure_calc(double *result, int v_comp);
 
 /** Calculate non bonded energies between a pair of particles.
     @param p1        pointer to particle 1.
@@ -120,7 +128,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 #ifdef ELECTROSTATICS
   double ret; 
 #endif
-  double F1[3], F2[3];
+  double F1[3], F2[3], p_vir[3];
   int i;
 
   for (i = 0; i < 3; i++) {
@@ -128,6 +136,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
     p1->f.f[i] = 0;
     F2[i] = p2->f.f[i];
     p2->f.f[i] = 0;
+    p_vir[i] = nptiso.p_vir[i];
   }
 
   /* lennard jones */
@@ -177,6 +186,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   for (i = 0; i < 3; i++) {
     p1->f.f[i] = F1[i];
     p2->f.f[i] = F2[i];
+    nptiso.p_vir[i] = p_vir[i];
   }
 }
 
@@ -188,11 +198,13 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 MDINLINE void add_bonded_virials(Particle *p1)
 {
   int i,j, type_num;
-  double ret, F1[3], F2[3], F3[3], d[3];
+  double ret, F1[3], F2[3], F3[3], p_vir[3], d[3];
   Particle *p2, *p3;
 
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     F1[i] = p1->f.f[i];
+    p_vir[i] = nptiso.p_vir[i];
+  }
   
   i=0;
   while(i<p1->bl.n) {
@@ -260,24 +272,37 @@ MDINLINE void add_bonded_virials(Particle *p1)
       p2->f.f[j] = F2[j];
   }
   
-  for (j = 0; j < 3; j++)
+  for (j = 0; j < 3; j++) {
     p1->f.f[j] = F1[j];
+    nptiso.p_vir[i] = p_vir[i];
+  }
 }
 
 /** Calculate kinetic pressure (aka energy) for one particle.
     @param p1 particle for which to calculate pressure
+    @param v_comp flag which enables (1) compensation of the velocities required 
+		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
+		  (hence it only works with domain decomposition); naturally it
+		  therefore doesn't make sense to use it without NpT.
 */
-MDINLINE void add_kinetic_virials(Particle *p1)
+MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
 {
   /* kinetic energy */
-  virials.data.e[0] += SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]);
+  if(v_comp)
+    virials.data.e[0] += SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]);
+  else
+    virials.data.e[0] += SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]);
 #ifdef ROTATION
   virials.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*SQR(time_step);
 #endif
 }
 
-/** implementation of 'analyze pressure' */
-int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv);
+/** implementation of 'analyze pressure'
+    @param v_comp flag which enables (1) compensation of the velocities required 
+		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
+		  (hence it only works with domain decomposition); naturally it
+		  therefore doesn't make sense to use it without NpT. */
+int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_comp);
 
 /** Implementation of 'analyze bins' */
 int parse_bins(Tcl_Interp *interp, int argc, char **argv);
