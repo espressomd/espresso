@@ -23,6 +23,7 @@ on <font color="#0000FF"> <b>So</b></font>ft matter
 \endlatexonly
 </center>
 <hr>
+
 \section introduction Introduction
 
 Espresso is a MPI parallel molecular dynamics program. It uses a
@@ -39,7 +40,24 @@ can be found in \ref communication.h "communication.h". During the
 actual integration however the communication is done synchronous.
 For details see \ref integrate.c "integrate.c".
 
+\section requirements Requirements
+
+Scriptlanguage: <a href="http://tcl.activestate.com">Tcl 8.3</a> or higher <br>
+
+Supported operating systems:
+<ul>
+<li> LINUX
+     <ul>
+     <li> mpi programming enviroment: <a href="http://www.lam-mpi.org">lam</a>
+     </ul>
+<li> OSF1
+<li> AIX
+</ul>
+You have to adept the corresponding Makefile to your system.
+
 \section start Getting Started
+
+This section is only valid inside the theory cluster at the MPI-P in Mainz.
 
 <ol>
 <li> Get your PEP membership.
@@ -69,10 +87,7 @@ command works only on our Linux PCs (needs doxygen).
 (Use touch somefile.c if it does not work rightaway)
 <li> Read the documentation carefully (Come on, there had been only 213 pages when I
 was writing these lines) !!!
-<li> Try the sample script files in testsuite directory: 
-setup.tcl which sets up a new configuration using the ramp potential.
-test.tcl Doing some MD on the new configuration. Try also the VMD
-connection included (set use_imd y).
+<li> Try the sample script files in \ref testsuite "testsuite directory".
 <li> Complain if you experience problems.
 </ol>
 
@@ -87,6 +102,8 @@ things here.
 \section bugs Bugs
 
 No bugs known at the moment.
+
+\section plans Plans for the future
 
 \section help More help about ...
 

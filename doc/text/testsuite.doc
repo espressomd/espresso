@@ -25,6 +25,23 @@ In the directory Espresso/testsuite you find several scripts that can serve as s
           (offline analyzation). Calculates the integrated
           iondistribution P(r).
      </ul>
+
+<li> <b> cell_model.tcl </b><br>
+     This example shows the use of \ref tcl_constraint "constraints"
+     and non periodic boundary conditions. It simulates a bundle of
+     semiflexible polyelectrolyes with hydrophobic side chains
+     neutralized by counterions in a spherical simulation cell.
+
+<li> <b> espresso_logo.tcl </b><br>
+     The Espresso Logo, the exploding espresso cup, has been created
+     with this script. It is a regular simulation of a polyelectrolyte
+     solution. It makes use of some nice features of the \ref tcl_part
+     command, namely the capability to fix a particle in space and to
+     apply an external force.
+
+<li> <b> harmonic_oscillator.tcl </b><br>
+     A chain of harmonic oscillators. This is a T=0 simulation to test
+     the energy conservation.
 </ol>
 
 */
