@@ -27,11 +27,18 @@ extern MMM2D_struct mmm2d_params;
 */
 int set_mmm2d_params(Tcl_Interp *interp, double maxPWerror, double far_cut);
 
+/** the general long range force/energy calculation */
+double MMM2D_add_far(int f, int e);
+
 /** the actual long range force calculation */
-void MMM2D_add_far_force();
+MDINLINE void MMM2D_add_far_force() {
+  MMM2D_add_far(1,0);
+}
 
 /** the actual long range energy calculation */
-double MMM2D_far_energy();
+MDINLINE double MMM2D_far_energy() {
+  return MMM2D_add_far(0,1);
+}
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
 void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,

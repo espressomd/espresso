@@ -47,6 +47,14 @@
    so normally we are faster */
 #define MAXIMAL_POLYGAMMA 100
 
+
+/* internal relative precision of far formula. This controls how many
+   p,q vectors are done at once. This has nothing to do with the effective
+   precision, but rather controls how different values can be we add up without
+   loosing the smallest values. In principle one could choose smaller values, but
+   that would not make things faster */
+#define FARRELPREC 1e-6
+
 /* number of steps in the complex cutoff table */
 #define COMPLEX_STEP 16
 /* map numbers from 0 to 1/sqrt(2) onto the complex cutoff table
@@ -189,8 +197,8 @@ void MMM2D_setup_constants()
     min_far = 0.0;
     break;
   case CELL_STRUCTURE_LAYERED:
-    max_near = layer_h + skin;
-    min_far  = layer_h - skin;
+    max_near = 2*layer_h + skin;
+    min_far  =   layer_h - skin;
     break;
   default:
     fprintf(stderr, "%d: INTERNAL MMM2D ERROR: setup for cell structure it should reject\n", this_node);
@@ -776,94 +784,143 @@ static double PQ_energy(double omega)
 /* main loops */
 /*****************************************************************/
 
-void MMM2D_add_far_force()
+static void add_force_contribution(int p, int q)
 {
-  int p, q;
   double omega;
-
-  if (mmm2d_params.far_cut == 0.0)
-    return;
-
-  add_2pi_signz();
-  checkpoint("************2piz", 0, 0, 1);
-
-  prepare_scx_cache();
-  prepare_scy_cache();
-
-  /* the second condition is just for the case of numerical accident */
-  for (p = 1; ux*(p - 1) < mmm2d_params.far_cut && p <= n_scxcache; p++) {
-    omega = C_2PI*ux*p;
-    setup_P(p, omega);
-    distribute(2);
-    add_P_force();
-    checkpoint("************distri p", p, 0, 2);
+  
+  if (q == 0) {
+    if (p == 0) {
+      add_2pi_signz();
+      checkpoint("************2piz", 0, 0, 1);
+    }
+    else {
+      omega = C_2PI*ux*p;
+      setup_P(p, omega);
+      distribute(2);
+      add_P_force();
+      checkpoint("************distri p", p, 0, 2);
+    }
   }
-
-  for (q = 1; uy*(q - 1) < mmm2d_params.far_cut && q <= n_scycache; q++) {
+  else if (p == 0) {
     omega = C_2PI*uy*q;
     setup_Q(q, omega);
     distribute(2);
     add_Q_force();
     checkpoint("************distri q", 0, q, 2);
   }
-
-  for (p = 1; ux*(p - 1) < mmm2d_params.far_cut  && p <= n_scxcache ; p++) {
-    for (q = 1; SQR(ux*(p - 1)) + SQR(uy*(q - 1)) < mmm2d_params.far_cut2 && q <= n_scycache; q++) {
-      omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
-      setup_PQ(p, q, omega);
-      distribute(4);
-      add_PQ_force(p, q, omega);
-      checkpoint("************distri pq", p, q, 4);
-    }
+  else {
+    omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
+    setup_PQ(p, q, omega);
+    distribute(4);
+    add_PQ_force(p, q, omega);
+    checkpoint("************distri pq", p, q, 4);
   }
 }
 
-double MMM2D_far_energy()
+static double energy_contribution(int p, int q)
+{
+  double eng;
+  double omega;
+  
+  if (q == 0) {
+    if (p == 0) {
+      eng = twopi_z_energy();
+      checkpoint("E************2piz", 0, 0, 2);
+    }
+    else {
+      omega = C_2PI*ux*p;
+      setup_P(p, omega);
+      distribute(2);
+      eng = P_energy(omega);
+      checkpoint("************distri p", p, 0, 2);
+    }
+  }
+  else if (p == 0) {
+    omega = C_2PI*uy*q;
+    setup_Q(q, omega);
+    distribute(2);
+    eng = Q_energy(omega);
+    checkpoint("************distri q", 0, q, 2);
+  }
+  else {
+    omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
+    setup_PQ(p, q, omega);
+    distribute(4);
+    eng = PQ_energy(omega);
+    checkpoint("************distri pq", p, q, 4);
+  }
+  return eng;
+}
+
+double MMM2D_add_far(int f, int e)
 {
   double eng;
   int p, q;
-  double omega;
+  double R, dR, q2;
+  int *undone;
 
   // It's not really far...
-  eng = self_energy;
+  eng = e ? self_energy : 0;
 
   if (mmm2d_params.far_cut == 0.0)
     return 0.5*eng;
 
-  eng += twopi_z_energy();
-  checkpoint("E************2piz", 0, 0, 2);
+  undone = malloc((n_scxcache + 1)*sizeof(int));
 
   prepare_scx_cache();
   prepare_scy_cache();
 
-  /* the second condition is just for the case of numerical accident */
-  for (p = 1; ux*(p - 1) < mmm2d_params.far_cut && p <= n_scxcache; p++) {
-    omega = C_2PI*ux*p;
-    setup_P(p, omega);
-    distribute(2);
-    eng += P_energy(omega);
-    checkpoint("E************distri p", p, 0, 2);
+  /* complicated loop. We work through the p,q vectors in rings
+     from outside to inside to avoid problems with cancellation */
+
+  /* up to which q vector we have to work */
+  for (p = 0; p <= n_scxcache; p++) {
+    if (p == 0)
+      q =  n_scycache;
+    else {
+      q2 = mmm2d_params.far_cut2 - SQR(ux*(p - 1));
+      if (q2 > 0)
+	q = 1 + box_l[1]*(int)ceil(sqrt(q2));
+      else
+	q = 1;
+      /* just to be on the safe side... */
+      if (q > n_scycache) q = n_scycache;
+    }
+    undone[p] = q;
   }
 
-  for (q = 1; uy*(q - 1) < mmm2d_params.far_cut && q <= n_scycache; q++) {
-    omega = C_2PI*uy*q;
-    setup_Q(q, omega);
-    distribute(2);
-    eng += Q_energy(omega);
-    checkpoint("E************distri q", 0, q, 2);
-  }
+  dR = -log(FARRELPREC)/C_2PI*uz;
 
-  for (p = 1; ux*(p - 1) < mmm2d_params.far_cut  && p <= n_scxcache ; p++) {
-    for (q = 1; SQR(ux*(p - 1)) + SQR(uy*(q - 1)) < mmm2d_params.far_cut2 && q <= n_scycache; q++) {
-      omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
-      setup_PQ(p, q, omega);
-      distribute(4);
-      eng += PQ_energy(omega);
-      checkpoint("E************distri pq", p, q, 4);
+  for(R = mmm2d_params.far_cut; R > 0; R -= dR) {
+    for (p = n_scxcache; p >= 0; p--) {
+      for (q = undone[p]; q >= 0; q--) {
+	if (ux2*SQR(p)  + uy2*SQR(q) < SQR(R))
+	  break;
+	// printf("xxxxx %d %d\n", p, q);
+	if (f)
+	  add_force_contribution(p, q);
+	if (e)
+	  eng += energy_contribution(p, q);
+      }
+      undone[p] = q;
+    }
+  }
+  // printf("yyyy\n");
+  /* clean up left overs */
+  for (p = n_scxcache; p >= 0; p--) {
+    q = undone[p];
+    // fprintf(stderr, "left over %d\n", q);
+    for (; q >= 0; q--) {
+      // printf("xxxxx %d %d\n", p, q);
+      if (f)
+	add_force_contribution(p, q);
+      if (e)
+	eng += energy_contribution(p, q);
     }
   }
 
-  /* we count both i<->j and j<->i, so return just half of it */
+  free(undone);
+
   return 0.5*eng;
 }
 
@@ -878,7 +935,7 @@ static char *MMM2D_tune_far(double error)
     mmm2d_params.far_cut += min_inv_boxl;
   }
   while (err > error && mmm2d_params.far_cut*box_l[2] < MAXIMAL_FAR_CUT);
-  if (mmm2d_params.far_cut*box_l[2] >= MAXIMAL_FAR_CUT*uz)
+  if (mmm2d_params.far_cut*box_l[2] >= MAXIMAL_FAR_CUT)
     return "Far cutoff too large, decrease n_layers or the error bound";
   // fprintf(stderr, "far cutoff %g %g\n", mmm2d_params.far_cut, err);
   mmm2d_params.far_cut -= min_inv_boxl;
@@ -993,9 +1050,9 @@ static void prepareBernoulliNumbers(int bon_order)
 
   for (; l <= bon_order; l++) {
     if (l & 1)
-      bon.e[l-1] =  2.0/l;
+      bon.e[l-1] =  4.0*uy;
     else
-      bon.e[l-1] = -2.0/l;      
+      bon.e[l-1] = -4.0*uy;      
   }
 }
 
