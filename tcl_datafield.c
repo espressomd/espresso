@@ -131,7 +131,7 @@ int part(ClientData data, Tcl_Interp *interp,
     setup_processor_grid();
 
   part_num = atol(argv[1]);
-  if ((part_num < 0) || (part_num >= n_total_particles)) {
+  if (part_num < 0) {
     Tcl_AppendResult(interp, "illegal particle", (char *) NULL);
     return (TCL_ERROR);
   }

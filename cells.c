@@ -3,8 +3,7 @@
 /*************************************************/
 
 #include "cells.h"
-
-#define DEBUG
+#include "debug.h"
 
 /** increment size of particle buffer */
 #define PART_INCREMENT 5
@@ -26,9 +25,7 @@ void cells_init()
   int i;
   int cnt=0;
   int node_pos[3];
-#ifdef DEBUG
-  if(this_node < 2) fprintf(stderr,"%d: cells_init \n",this_node);
-#endif
+  CELL_TRACE(fprintf(stderr,"%d: cells_init \n",this_node));
   
   map_node_array(this_node,&node_pos[0],&node_pos[1],&node_pos[2]);
   /* set up dimensions of the cell grid */
@@ -74,7 +71,7 @@ void cells_init()
 
   init_cell_neighbours();
 
-#ifdef DEBUG
+#ifdef CELL_DEBUG
   if(this_node < 2) {
     fprintf(stderr,"cell_grid = (%d, %d, %d)\n",
 	    cell_grid[0],cell_grid[1],cell_grid[2]);
@@ -95,9 +92,7 @@ void cells_init()
 void cells_exit() 
 {
   int i;
-#ifdef DEBUG
-  if(this_node<2) fprintf(stderr,"%d: cells_exit:\n",this_node); 
-#endif
+  CELL_TRACE(if(this_node<2) fprintf(stderr,"%d: cells_exit:\n",this_node));
   for(i=0;i<n_cells;i++) {
     if(cells[i].n_neighbours>0) free(cells[i].neighbours);
     if(cells[i].max_particles>0)free(cells[i].particles);
@@ -114,9 +109,7 @@ void sort_particles_into_cells()
   int cpos[3], gcg[3];
   int ind;
 
-#ifdef DEBUG
-  if(this_node<2) fprintf(stderr,"%d: sort_particles_into_cells:\n",this_node); 
-#endif  
+  CELL_TRACE(fprintf(stderr,"%d: sort_particles_into_cells:\n",this_node));
  
   for(i=0;i<3;i++) gcg[i] = ghost_cell_grid[i];
 
@@ -132,8 +125,8 @@ void sort_particles_into_cells()
     for(i=0;i<3;i++) 
       cpos[i] = (int)((particles[n].p[i]-my_left[i])*inv_cell_size[i])+1;
     ind = get_linear_index(cpos[0],cpos[1],cpos[2],gcg[0],gcg[1],gcg[2]);
-#ifdef DEBUG
-   fprintf(stderr,"%d: Sort Part (GI=%d LI=%d) (%.2e, %.2e, %.2e) in cell %d\n",
+#ifdef CELL_DEBUG
+    fprintf(stderr,"%d: Sort Part (GI=%d LI=%d) (%.2e, %.2e, %.2e) in cell %d\n",
 	    this_node,particles[n].identity,n,particles[n].p[0],
 	    particles[n].p[1],particles[n].p[2],ind);
 #endif  
@@ -149,7 +142,7 @@ void sort_particles_into_cells()
   for(i=0;i<n_inner_cells;i++) { 
     ind = inner_cells[i];
     //realloc_cell_particles(ind,cells[ind].n_particles);
-#ifdef DEBUG
+#ifdef CELL_DEBUG
    if(this_node==0) fprintf(stderr,"0: Cell[%d] n_part = %d max_part = %d\n",
 			    ind,cells[ind].n_particles,cells[ind].max_particles);
 #endif      
@@ -158,9 +151,7 @@ void sort_particles_into_cells()
 
 void sort_ghosts_into_cells()
 {
-#ifdef DEBUG
-  if(this_node<2) fprintf(stderr,"%d: sort_ghosts_into_cells:\n",this_node);
-#endif      
+  CELL_TRACE(fprintf(stderr,"%d: sort_ghosts_into_cells:\n",this_node));
 }
 
 
@@ -198,7 +189,7 @@ void init_cell_neighbours()
 	      cnt++;
 	    }
 	  }
-#ifdef DEBUG
+#ifdef CELL_DEBUG
       if(this_node==0) {
 	fprintf(stderr,"Cell %d pos(%d,%d,%d) with %d neighbours: {",
 		i,p1[0],p1[1],p1[2],cnt);

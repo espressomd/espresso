@@ -196,8 +196,13 @@ void init_data();
 void changed_topology();
 
 /*******************************
- * particle data access
+ * particle storage
  *******************************/
+
+/** allocate storage for local particles and ghosts.
+    Given size is rounded up to multiples of
+    PART_INCREMENT */
+void reallocate_particles(int size);
 
 /** search for a specific particle, returns field index */
 int got_particle(int part);
@@ -205,11 +210,15 @@ int got_particle(int part);
 /** add a particle, returns new field index */
 int add_particle(int part);
 
-/** reallocate particles bonds */
-void realloc_bonds(int index, int size);
-
 /** free a particle */
 void free_particle(int index);
+
+/*******************************
+ * bonded ia information
+ *******************************/
+
+/** reallocate particles bonds */
+void realloc_bonds(int index, int size);
 
 /*******************************
  * nonbonded ia access

@@ -3,8 +3,7 @@
 /*****************************************************/
 
 #include "integrate.h"
-
-#define DEBUG
+#include "debug.h"
 
 /*******************  variables  *******************/
 
@@ -31,9 +30,7 @@ int integrate(ClientData data, Tcl_Interp *interp,
 {
   int  n_steps;
   
-#ifdef DEBUG
-  if(this_node<2) fprintf(stderr,"%d: integrate:\n",this_node); 
-#endif
+  INTEG_TRACE(fprintf(stderr,"%d: integrate:\n",this_node));
 
   if (argc < 2) {
     Tcl_AppendResult(interp, "wrong # args:  should be \"",
@@ -68,13 +65,11 @@ void integrate_vv_init()
 {
   int i;
 
-#ifdef DEBUG
-  if(this_node < 2) fprintf(stderr,"%d: integrate_vv_init\n",this_node);
-  if(this_node < 2) fprintf(stderr,"%d: nproc =%d npart=%d\n",
-			   this_node,nprocs,n_total_particles);
-  fprintf(stderr,"%d: n_total_part=%d  n_particles = %d\n",
-			   this_node,n_total_particles,n_particles);
-#endif
+  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_init\n",this_node));
+  INTEG_TRACE(fprintf(stderr,"%d: nproc =%d npart=%d\n",
+		      this_node,nprocs,n_total_particles));
+  INTEG_TRACE(fprintf(stderr,"%d: n_total_part=%d  n_particles = %d\n",
+		      this_node,n_total_particles,n_particles));
   max_range  = max_cut + skin;
   max_range2 = max_range* max_range;
 
@@ -95,9 +90,8 @@ void integrate_vv_init()
 void integrate_vv(int n_steps)
 {
   int i;
-#ifdef DEBUG
-  if(this_node<2) fprintf(stderr,"%d: integrate_vv: %d steps\n",this_node,n_steps);
-#endif
+  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: %d steps\n",this_node,
+		      n_steps));
 
   /* check init */
   if(rebuild_verletlist == 1) {
@@ -133,9 +127,7 @@ void integrate_vv(int n_steps)
 
 void integrate_vv_exit()
 {
-#ifdef DEBUG
-  if(this_node==0) fprintf(stderr,"%d: integrate_vv_exit\n",this_node);
-#endif
+  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_exit\n",this_node));
   cells_exit();
   free(local_index);
   ghost_exit();
@@ -145,15 +137,11 @@ void integrate_vv_exit()
 
 void propagate_velocities() 
 {
-#ifdef DEBUG
-  if(this_node==0) fprintf(stderr,"%d: propagate_velocities:\n",this_node);
-#endif
+  INTEG_TRACE(fprintf(stderr,"%d: propagate_velocities:\n",this_node));
 }
 
 void propagate_positions() 
 {
-#ifdef DEBUG
-  if(this_node==0) fprintf(stderr,"%d: propagate_positions:\n",this_node);
-#endif
+  INTEG_TRACE(fprintf(stderr,"%d: propagate_positions:\n",this_node));
 }
 

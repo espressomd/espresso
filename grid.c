@@ -2,12 +2,11 @@
 /*******************  GRID.C  *******************/
 /************************************************/
 #include "grid.h"
+#include "debug.h"
 
 /**********************************************
  * local settings
  **********************************************/
-
-//#define DEBUG
 
 int processor_grid[3] = { -1, -1, -1};
 int neighbors[6] = {0, 0, 0, 0, 0, 0};
@@ -62,10 +61,8 @@ int find_node(double pos[3])
   double f_pos[3];
   
   for(i=0;i<3;i++) f_pos[i] = pos[i] - floor(pos[i]/box_l[i])*box_l[i];
-#ifdef DEBUG
-  fprintf(stderr,"(%e, %e, %e) folded to (%e,%e, %e)\n",
-	  pos[0],pos[1],pos[2],f_pos[0],f_pos[1],f_pos[2]);
-#endif
+  GRID_TRACE(fprintf(stderr,"(%e, %e, %e) folded to (%e,%e, %e)\n",
+		     pos[0],pos[1],pos[2],f_pos[0],f_pos[1],f_pos[2]));
   return map_array_node((int)floor(processor_grid[0]*f_pos[0]/box_l[0]),
 			(int)floor(processor_grid[1]*f_pos[1]/box_l[1]),
 			(int)floor(processor_grid[2]*f_pos[2]/box_l[2]));

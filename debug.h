@@ -1,0 +1,49 @@
+//#define COMM_DEBUG
+//#define INTEG_DEBUG
+//#define CELL_DEBUG
+//#define GHOST_DEBUG
+//#define GRID_DEBUG
+//#define FORCE_DEBUG
+//#define VERLET_DEBUG
+
+#ifdef COMM_DEBUG
+#define COMM_TRACE(cmd) { cmd; }
+#else
+#define COMM_TRACE(cmd)
+#endif
+
+#ifdef INTEG_DEBUG
+#define INTEG_TRACE(cmd) { if (this_node < 2) { cmd; } }
+#else
+#define INTEG_TRACE(cmd)
+#endif
+
+#ifdef CELL_DEBUG
+#define CELL_TRACE(cmd) { if (this_node < 2) { cmd; } }
+#else
+#define CELL_TRACE(cmd)
+#endif
+
+#ifdef GHOST_DEBUG
+#define GHOST_TRACE(cmd) { if (this_node < 2) { cmd; } }
+#else
+#define GHOST_TRACE(cmd)
+#endif
+
+#ifdef GRID_DEBUG
+#define GRID_TRACE(cmd) { if (this_node < 2) { cmd; } }
+#else
+#define GRID_TRACE(cmd)
+#endif
+
+#ifdef FORCE_DEBUG
+#define FORCE_TRACE(cmd) { if (this_node < 2) { cmd; } }
+#else
+#define FORCE_TRACE(cmd)
+#endif
+
+#ifdef VERLET_DEBUG
+#define VERLET_TRACE(cmd) { if (this_node < 2) { cmd; } }
+#else
+#define VERLET_TRACE(cmd)
+#endif

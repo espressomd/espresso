@@ -11,8 +11,6 @@
 # data initialization
 ##################################################
 puts "nproc = [setmd nproc]"
-setmd npart 5
-puts "npart = [setmd npart]"
 setmd box_l 10.0 8.0 6.0
 puts "box =\{[setmd box]\}"
 setmd procgrid 2 2 2
@@ -38,6 +36,7 @@ part 3 pos 6.0 1 1
 puts "part 3 = [part 3]"
 part 4 pos 3.0 1 1
 puts "part 4 = [part 4]"
+puts "npart = [setmd npart]"
 
 
 # integration
