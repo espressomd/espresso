@@ -86,22 +86,22 @@ if { [catch {
     set totprs [analyze pressure total]
 
     if { [expr abs($toteng - $cureng)] > $epsilon } {
-	puts "system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"
+	error "system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"
     }
     if { [expr abs($totprs - $curprs)] > $epsilon } {
-	puts "system has unwanted pressure contributions of [format %e [expr $totprs - $curprs]]"
+	error "system has unwanted pressure contributions of [format %e [expr $totprs - $curprs]]"
     }
 
     set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
     puts "relative energy deviations: $rel_eng_error"
     if { $rel_eng_error > $epsilon } {
-	puts "relative energy error too large"
+	error "relative energy error too large"
     }
 
     set rel_prs_error [expr abs(($totprs - $pressure)/$pressure)]
     puts "relative pressure deviations: $rel_prs_error"
     if { $rel_prs_error > $epsilon } {
-	puts "relative pressure error too large"
+	error "relative pressure error too large"
     }
 
     set maxdx 0
