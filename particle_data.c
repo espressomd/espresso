@@ -421,7 +421,7 @@ int part(ClientData data, Tcl_Interp *interp,
 	while(j <= n_partners) {
 	  if (Tcl_GetInt(interp, argv[j+1], &(bond[j])) == TCL_ERROR)
 	    return (TCL_ERROR);
-	  if(bond[j] >= max_seen_particle || particle_node[bond[j]] == -1) {
+	  if(bond[j] > max_seen_particle || particle_node[bond[j]] == -1) {
 	    Tcl_AppendResult(interp, "partner atom %d (identity %d) not known"
 			     ,j+1,bond[j],
 			     "(Set all partner atoms first)", (char *) NULL);
