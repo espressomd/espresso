@@ -111,9 +111,6 @@ void init_particle(Particle *part)
   part->l.i[2]       = 0;
 #ifdef EXTERNAL_FORCES
   part->l.ext_flag   = 0;
-  part->l.fixed_coord_flag[0] = COORDINATE_UNFIXED;
-  part->l.fixed_coord_flag[1] = COORDINATE_UNFIXED;
-  part->l.fixed_coord_flag[2] = COORDINATE_UNFIXED;
   part->l.ext_force[0] = 0.0;
   part->l.ext_force[1] = 0.0;
   part->l.ext_force[2] = 0.0;
@@ -378,6 +375,7 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
 {
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle part;
+  int i;
   IntList *bl = &(part.bl);
 
   if (get_particle_data(part_num, &part) == TCL_ERROR)
@@ -443,45 +441,24 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
 
 #ifdef EXTERNAL_FORCES
   /* print external force information. */
-  switch (part.l.ext_flag)
-    {
-    case PARTICLE_UNFIXED:
-      {
-	// First check if particle is partially fixed
-	if(part.l.fixed_coord_flag[0] == COORDINATE_FIXED || 
-	   part.l.fixed_coord_flag[1] == COORDINATE_FIXED ||
-	   part.l.fixed_coord_flag[2] == COORDINATE_FIXED){
-	  Tcl_AppendResult(interp, " fix ", (char *)NULL);
-	  sprintf(buffer, "%d", part.l.fixed_coord_flag[0]);
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
-	  Tcl_AppendResult(interp, " ", (char *)NULL);
-	  sprintf(buffer, "%d", part.l.fixed_coord_flag[1]);
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
-	  Tcl_AppendResult(interp, " ", (char *)NULL);
-	  sprintf(buffer, "%d", part.l.fixed_coord_flag[2]);
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
-	}
-	else{
-	  Tcl_AppendResult(interp, " unfix", (char *)NULL); 	    
-	}
-	break;
-      }
-    case PARTICLE_FIXED:
-      {
-	Tcl_AppendResult(interp, " fix ", (char *)NULL);
-	break;
-      }
-    case PARTICLE_EXT_FORCE:
-      {
-	Tcl_PrintDouble(interp, part.l.ext_force[0], buffer);
-	Tcl_AppendResult(interp, " ext_force ", buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.l.ext_force[1], buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.l.ext_force[2], buffer);
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-	break;
-      }
-    }
+  if (part.l.ext_flag & PARTICLE_EXT_FORCE) {
+    Tcl_PrintDouble(interp, part.l.ext_force[0], buffer);
+    Tcl_AppendResult(interp, " ext_force ", buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.l.ext_force[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.l.ext_force[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+  }
+
+  /* print fix information. */
+  if (part.l.ext_flag & COORDS_FIX_MASK) {
+    Tcl_AppendResult(interp, " fix ", (char *)NULL);
+    for (i = 0; i < 3; i++)
+      if (COORD_FIXED(i))
+	Tcl_AppendResult(interp, "1 ", (char *)NULL);
+      else
+	Tcl_AppendResult(interp, "0 ", (char *)NULL);
+  }
 #endif
 
   /* print bonding structure */
@@ -540,6 +517,7 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
   
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle part;
+  int i;
   IntList *bl = &(part.bl);
     
   if (part_num > max_seen_particle) {
@@ -640,7 +618,7 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 
 #ifdef EXTERNAL_FORCES
     else if (ARG0_IS_S("ext_force")) {
-      if(part.l.ext_flag == PARTICLE_EXT_FORCE) {
+      if(part.l.ext_flag & PARTICLE_EXT_FORCE) {
 	Tcl_PrintDouble(interp, part.l.ext_force[0]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
 	Tcl_PrintDouble(interp, part.l.ext_force[1]/(0.5*time_step*time_step), buffer);
@@ -653,45 +631,11 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       }
     }
     else if (ARG0_IS_S("fix")) {
-      switch (part.l.ext_flag)
-	{
-	case PARTICLE_UNFIXED:
-	  {
-	    // First check if particle is partially fixed
-	    if(part.l.fixed_coord_flag[0] == COORDINATE_FIXED || 
-	       part.l.fixed_coord_flag[1] == COORDINATE_FIXED ||
-	       part.l.fixed_coord_flag[2] == COORDINATE_FIXED){
-	      Tcl_AppendResult(interp, " fix ", (char *)NULL);
-	      sprintf(buffer, "%d", part.l.fixed_coord_flag[0]);
-	      Tcl_AppendResult(interp, buffer, (char *)NULL);
-	      Tcl_AppendResult(interp, " ", (char *)NULL);
-	      sprintf(buffer, "%d", part.l.fixed_coord_flag[1]);
-	      Tcl_AppendResult(interp, buffer, (char *)NULL);
-	      Tcl_AppendResult(interp, " ", (char *)NULL);
-	      sprintf(buffer, "%d", part.l.fixed_coord_flag[2]);
-	      Tcl_AppendResult(interp, buffer, (char *)NULL);
-	    }
-	    else{
-	      Tcl_AppendResult(interp, " unfix ", (char *)NULL); 	    
-	    }
-	    break;
-	  }
-	case PARTICLE_FIXED:
-	  {
-	    Tcl_AppendResult(interp, " fix ", (char *)NULL);
-	    break;
-	  }
-	case PARTICLE_EXT_FORCE:
-	  {
-	    Tcl_PrintDouble(interp, part.l.ext_force[0], buffer);
-	    Tcl_AppendResult(interp, " ext_force ", buffer, " ", (char *)NULL);
-	    Tcl_PrintDouble(interp, part.l.ext_force[1], buffer);
-	    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	    Tcl_PrintDouble(interp, part.l.ext_force[2], buffer);
-	    Tcl_AppendResult(interp, buffer, (char *)NULL);
-	    break;
-	  }
-	}
+      for (i = 0; i < 3; i++)
+	if (COORD_FIXED(i))
+	  Tcl_AppendResult(interp, "1 ", (char *)NULL);
+	else
+	  Tcl_AppendResult(interp, "0 ", (char *)NULL);
     }
 #endif
     else if (ARG0_IS_S("bonds")) {
@@ -1013,7 +957,8 @@ int part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   double ext_f[3];
-  
+  int ext_flag;
+
   *change = 3;
 
   if (argc < 3) {
@@ -1035,9 +980,13 @@ int part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
   ext_f[1] *= (0.5*time_step*time_step);
   ext_f[2] *= (0.5*time_step*time_step);
 
-  if (set_particle_ext(part_num, PARTICLE_EXT_FORCE, ext_f) == TCL_ERROR) {
+  if (ext_f[0] == 0 && ext_f[1] == 0 && ext_f[2] == 0)
+    ext_flag = 0;
+  else
+    ext_flag = PARTICLE_EXT_FORCE;
+
+  if (set_particle_ext(part_num, ext_flag, ext_f) == TCL_ERROR) {
     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-    
     return TCL_ERROR;
   }
       
@@ -1047,58 +996,37 @@ int part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
 int part_parse_fix(Tcl_Interp *interp, int argc, char **argv,
 		   int part_num, int * change)
 {
-  int fixed_coord_flag[3] = {COORDINATE_UNFIXED,COORDINATE_UNFIXED,COORDINATE_UNFIXED};
+  int fixed_coord_flag[3] = {0, 0, 0};
+  int ext_flag = 0;
   double ext_force[3] = {0.0, 0.0, 0.0};
+  int i;
 
-  if (argc == 0) {    
-    fixed_coord_flag[0] = COORDINATE_FIXED;
-    fixed_coord_flag[1] = COORDINATE_FIXED;
-    fixed_coord_flag[2] = COORDINATE_FIXED;
+  if (argc == 0) {
+    fixed_coord_flag[0] = 0;
+    fixed_coord_flag[1] = 0;
+    fixed_coord_flag[2] = 0;
     *change = 0;
-    if (set_particle_ext(part_num, PARTICLE_FIXED, ext_force ) == TCL_ERROR) {
-      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);	
-      return TCL_ERROR;
-      }
   }
-  else if (argc != 3){
-      Tcl_AppendResult(interp, "fix has either 1 or 3 arguments: { <fixed_coord> <fixed_coord> <fixed_coord> }", (char *)NULL);    
+  else {
+    if (argc != 3){
+      Tcl_AppendResult(interp, "fix has either 0 or 3 arguments: { <fixed_coord> <fixed_coord> <fixed_coord> }", (char *)NULL);    
       return TCL_ERROR;
-  }
-  else { // Specify all the coordinates to be fixed : This means we first UNFIX the particle ext_force flag
-    if (set_particle_ext(part_num, PARTICLE_UNFIXED, ext_force ) == TCL_ERROR) {
-      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);	
-      return TCL_ERROR;
-      }
+    }
     if (! ARG_IS_I(0,fixed_coord_flag[0] ))
       return TCL_ERROR;
     if (! ARG_IS_I(1,fixed_coord_flag[1] ))
       return TCL_ERROR;
     if (! ARG_IS_I(2,fixed_coord_flag[2] ))
       return TCL_ERROR;
-    // Check for <1 1 1> case
-    if ( fixed_coord_flag[0] == COORDINATE_FIXED && fixed_coord_flag[1] == 
-	 COORDINATE_FIXED && fixed_coord_flag[2] == COORDINATE_FIXED ) { 
-      if (set_particle_ext(part_num, PARTICLE_FIXED, ext_force ) == TCL_ERROR) {
-	Tcl_AppendResult(interp, "set particle position first", (char *)NULL);	
-	return TCL_ERROR;
-      }
-    }
-    // Check for <0 0 0> case
-    else if( fixed_coord_flag[0] == COORDINATE_UNFIXED && fixed_coord_flag[1] == 
-	     COORDINATE_UNFIXED && fixed_coord_flag[2] == COORDINATE_UNFIXED ) { 
-      if (set_particle_ext(part_num, PARTICLE_UNFIXED, ext_force ) == TCL_ERROR) {
-	Tcl_AppendResult(interp, "set particle position first", (char *)NULL);	
-	return TCL_ERROR;
-      }
-    }
     *change = 3;
   }
 
+  for (i = 0; i < 3l; i++)
+    if (fixed_coord_flag[i])
+      ext_flag |= COORD_FIXED(i);
 
-
-  if (set_particle_fix(part_num, fixed_coord_flag ) == TCL_ERROR) {
-    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-    
+  if (set_particle_ext(part_num, ext_flag, ext_force ) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);	
     return TCL_ERROR;
   }
 
@@ -1108,11 +1036,9 @@ int part_parse_fix(Tcl_Interp *interp, int argc, char **argv,
 int part_parse_unfix(Tcl_Interp *interp, int argc, char **argv,
 		     int part_num, int * change)
 {
-  double ext_f[3] = {0.0, 0.0, 0.0};
-
   *change = 0;
 
-  if (set_particle_ext(part_num, PARTICLE_UNFIXED, ext_f) == TCL_ERROR) {
+  if (set_particle_fix(part_num, 0) == TCL_ERROR) {
     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
     
     return TCL_ERROR;
@@ -1504,11 +1430,11 @@ int set_particle_ext(int part, int flag, double force[3])
 
   if (pnode == -1)
     return TCL_ERROR;
-  mpi_send_ext(pnode, part, flag, force);
+  mpi_send_ext(pnode, part, flag, PARTICLE_EXT_FORCE, force);
   return TCL_OK;
 }
 
-int set_particle_fix(int part,  int fixed_coord_flags[3])
+int set_particle_fix(int part,  int flag)
 {
   int pnode;
   if (!particle_node)
@@ -1520,7 +1446,7 @@ int set_particle_fix(int part,  int fixed_coord_flags[3])
 
   if (pnode == -1)
     return TCL_ERROR;
-  mpi_send_fix(pnode, part,  fixed_coord_flags);
+  mpi_send_ext(pnode, part, flag, COORDS_FIX_MASK, NULL);
   return TCL_OK;
 }
 

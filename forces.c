@@ -86,7 +86,7 @@ MDINLINE void init_local_particle_force(Particle *part)
 {
   friction_thermo(part);
 #ifdef EXTERNAL_FORCES   
-  if(part->l.ext_flag == PARTICLE_EXT_FORCE) {
+  if(part->l.ext_flag & PARTICLE_EXT_FORCE) {
     part->f.f[0] += part->l.ext_force[0];
     part->f.f[1] += part->l.ext_force[1];
     part->f.f[2] += part->l.ext_force[2];

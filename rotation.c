@@ -182,7 +182,7 @@ void propagate_omega_quat()
     np = cell->n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
-      if(p[i].l.ext_flag != PARTICLE_FIXED) 
+      if(!(p[i].l.ext_flag & COORDS_FIX_MASK))
 #endif
 	{ 
 	  define_Qd(&p[i]); 
@@ -194,12 +194,7 @@ void propagate_omega_quat()
 	  lambda = 1 - S1*dtdt2 - sqrt(1 - dtdt*(S1 + time_step*(S2 + dt4*(S3-S1*S1))));
 	  
 	  for(j=0; j < 3; j++){
-#ifdef EXTERNAL_FORCES
-	    if (p[i].l.fixed_coord_flag[j] != COORDINATE_FIXED)	
-#endif
-	      { 
-		p[i].m.omega[j]+= dt2*Wd[j];
-	      }
+	    p[i].m.omega[j]+= dt2*Wd[j];
 	  }
 	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 	  
@@ -222,48 +217,49 @@ void convert_torqes_propagate_omega()
   int c,i, np, times;
   double dt2, tx, ty, tz;
   
-   dt2 = time_step*0.5;
-   INTEG_TRACE(fprintf(stderr,"%d: convert_torqes_propagate_omega:\n",this_node));
-   for (c = 0; c < local_cells.n; c++) {
-     cell = local_cells.cell[c];
-     p  = cell->part;
-     np = cell->n;
-     for(i = 0; i < np; i++) {define_rotation_matrix(&p[i]);
+  dt2 = time_step*0.5;
+  INTEG_TRACE(fprintf(stderr,"%d: convert_torqes_propagate_omega:\n",this_node));
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i = 0; i < np; i++) {define_rotation_matrix(&p[i]);
            
-tx = A[0][0]*p[i].f.torque[0] + A[0][1]*p[i].f.torque[1] + A[0][2]*p[i].f.torque[2]; 
-ty = A[1][0]*p[i].f.torque[0] + A[1][1]*p[i].f.torque[1] + A[1][2]*p[i].f.torque[2];
-tz = A[2][0]*p[i].f.torque[0] + A[2][1]*p[i].f.torque[1] + A[2][2]*p[i].f.torque[2];
+    tx = A[0][0]*p[i].f.torque[0] + A[0][1]*p[i].f.torque[1] + A[0][2]*p[i].f.torque[2]; 
+    ty = A[1][0]*p[i].f.torque[0] + A[1][1]*p[i].f.torque[1] + A[1][2]*p[i].f.torque[2];
+    tz = A[2][0]*p[i].f.torque[0] + A[2][1]*p[i].f.torque[1] + A[2][2]*p[i].f.torque[2];
 
-        friction_thermo_rotation(&p[i]);
+    friction_thermo_rotation(&p[i]);
 
-	p[i].f.torque[0]+= tx;
-	p[i].f.torque[1]+= ty;
-	p[i].f.torque[2]+= tz;
+    p[i].f.torque[0]+= tx;
+    p[i].f.torque[1]+= ty;
+    p[i].f.torque[2]+= tz;
 
-      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+    ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
 #ifdef EXTERNAL_FORCES
-      if(p[i].l.ext_flag != PARTICLE_FIXED) 
+    if(!(p[i].l.ext_flag & COORDS_FIX_MASK))
 #endif
-	{ p[i].m.omega[0]+= dt2*p[i].f.torque[0]/I[0];
-	  p[i].m.omega[1]+= dt2*p[i].f.torque[1]/I[1];
-	  p[i].m.omega[2]+= dt2*p[i].f.torque[2]/I[2];
+      {
+	p[i].m.omega[0]+= dt2*p[i].f.torque[0]/I[0];
+	p[i].m.omega[1]+= dt2*p[i].f.torque[1]/I[1];
+	p[i].m.omega[2]+= dt2*p[i].f.torque[2]/I[2];
 	  
-/* if the tensor of inertia is isotrpic, the following refinement is not needed.
-   Otherwise repeat this loop 2-3 times depending on the required accuracy */
-for(times=0;times<=0;times++) { 
+	/* if the tensor of inertia is isotrpic, the following refinement is not needed.
+	   Otherwise repeat this loop 2-3 times depending on the required accuracy */
+	for(times=0;times<=0;times++) { 
 		   		 
-  Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]))/I[0];  
-  Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]))/I[1]; 
-  Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]))/I[2];
+	  Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]))/I[0];  
+	  Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]))/I[1]; 
+	  Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]))/I[2];
  
-  p[i].m.omega[0]+= dt2*Wd[0];
-  p[i].m.omega[1]+= dt2*Wd[1];
-  p[i].m.omega[2]+= dt2*Wd[2];
-		 }
+	  p[i].m.omega[0]+= dt2*Wd[0];
+	  p[i].m.omega[1]+= dt2*Wd[1];
+	  p[i].m.omega[2]+= dt2*Wd[2];
 	}
+      }
 
-      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+    ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
       
     }
   }

@@ -329,18 +329,12 @@ void propagate_velocities()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+      for(j = 0; j < 3 ; j++){
 #ifdef EXTERNAL_FORCES
-      if(p[i].l.ext_flag != PARTICLE_FIXED) 
+	if (!(p[i].l.ext_flag & COORD_FIXED(j)))
 #endif
-	{
-	  for(j = 0; j < 3 ; j++){
-#ifdef EXTERNAL_FORCES
-	    if (p[i].l.fixed_coord_flag[j] != COORDINATE_FIXED)
-#endif
-	      {p[i].m.v[j] += p[i].f.f[j];}
-	  }
-
-	}
+	  p[i].m.v[j] += p[i].f.f[j];
+      }
     }
   }
 }
@@ -366,21 +360,14 @@ void rescale_forces_propagate_vel()
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
+      for(j = 0; j < 3 ; j++) {
 #ifdef EXTERNAL_FORCES
-      if(p[i].l.ext_flag != PARTICLE_FIXED) 
+	if (!(p[i].l.ext_flag & COORD_FIXED(j)))
 #endif
-	{
-	  for(j = 0; j < 3 ; j++) {
-#ifdef EXTERNAL_FORCES
-	    if (p[i].l.fixed_coord_flag[j] != COORDINATE_FIXED)
-#endif
-	      {  p[i].m.v[j] += p[i].f.f[j];}
-	    
-	  }
-	}
+	  p[i].m.v[j] += p[i].f.f[j];
+      }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
-
     }
   }
 }
@@ -403,17 +390,12 @@ void propagate_positions()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+      for (j=0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-      if(p[i].l.ext_flag != PARTICLE_FIXED) 
+	if (!(p[i].l.ext_flag & COORD_FIXED(j)))
 #endif
-	{
-	  for (j=0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-	    if (p[i].l.fixed_coord_flag[j] != COORDINATE_FIXED)
-#endif
-	      {p[i].r.p[j] += p[i].m.v[j];}
-	  }
-	}
+	  p[i].r.p[j] += p[i].m.v[j];
+      }
       /* Verlet criterion check */
       if(distance2(p[i].r.p,p[i].l.p_old) > skin2 )
 	rebuild_verletlist = 1; 
@@ -463,25 +445,17 @@ void propagate_vel_pos()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+      for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
-      if(p[i].l.ext_flag != PARTICLE_FIXED) 
+	if (!(p[i].l.ext_flag & COORD_FIXED(j)))	
 #endif
-	{
-	  for(j=0; j < 3; j++){
-#ifdef EXTERNAL_FORCES
-	    if (p[i].l.fixed_coord_flag[j] != COORDINATE_FIXED)	
-#endif
-	      { 
-		p[i].m.v[j] += p[i].f.f[j];
-		p[i].r.p[j] += p[i].m.v[j];
-	      }
-	    
+	  {
+	    p[i].m.v[j] += p[i].f.f[j];
+	    p[i].r.p[j] += p[i].m.v[j];
 	  }
-
-	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
-	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
-	  
-	}
+      }
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2])); 
 
 #ifdef ADDITIONAL_CHECKS
       /* force check */

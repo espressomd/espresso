@@ -251,10 +251,7 @@ void mpi_set_time_step();
 void mpi_bcast_coulomb_params();
 
 /** Issue REQ_SEND_EXT: send nex external flag and external force. */
-void mpi_send_ext(int pnode, int part, int flag, double force[3]);
-
-/** Issue REQ_SEND_FIX: send new coordinate axes to be fixed. */
-void mpi_send_fix(int pnode, int part, int coord_flag[3]);
+void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3]);
 
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_constraint(int del_num);

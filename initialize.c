@@ -186,11 +186,13 @@ void on_parameter_change(int field)
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
     if (field == FIELD_BOXL)
-      cells_re_init(CELL_STRUCTURE_DOMDEC);
+      cells_re_init(CELL_STRUCTURE_LAYERED);
+    break;
   case CELL_STRUCTURE_DOMDEC:
     if (field == FIELD_BOXL || field == FIELD_NODEGRID || field == FIELD_MAXRANGE ||
 	field == FIELD_MAXNUMCELLS || field == FIELD_SKIN)
       cells_re_init(CELL_STRUCTURE_DOMDEC);
+    break;
   }
 }
 

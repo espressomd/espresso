@@ -76,22 +76,15 @@ void thermo_init()
 void friction_thermo(Particle *p)
 {
   int j;
+  for ( j = 0 ; j < 3 ; j++) {
 #ifdef EXTERNAL_FORCES
-  if(p->l.ext_flag != PARTICLE_FIXED) 
+    if (!(p->l.ext_flag & COORD_FIXED(j)))
 #endif
-    {
-      for ( j = 0 ; j < 3 ; j++)
-	{
-#ifdef EXTERNAL_FORCES
-	  if (p->l.fixed_coord_flag[j] != COORDINATE_FIXED )
-#endif
-	    p->f.f[j] = pref1*p->m.v[j] + pref2*(d_random()-0.5);
-	}
+      p->f.f[j] = pref1*p->m.v[j] + pref2*(d_random()-0.5);
+  }
 
-      ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
-
-      THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
-    }
+  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+  THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
 }
 
 #ifdef ROTATION
@@ -99,19 +92,13 @@ void friction_thermo_rotation(Particle *p)
 {
   int j;
 #ifdef EXTERNAL_FORCES
-  if(p->l.ext_flag != PARTICLE_FIXED) 
+  if(!(p->l.ext_flag & COORDS_FIX_MASK))
 #endif
     {
       for ( j = 0 ; j < 3 ; j++)
-	{
-#ifdef EXTERNAL_FORCES
-	  if (p->l.fixed_coord_flag[j] != COORDINATE_FIXED )
-#endif
-	    p->f.torque[j] = -friction_gamma*p->m.omega[j] + pref2*(d_random()-0.5);
-	}
+	p->f.torque[j] = -friction_gamma*p->m.omega[j] + pref2*(d_random()-0.5);
 
       ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
-
       THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
     }
 }

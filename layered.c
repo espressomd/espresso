@@ -215,8 +215,14 @@ void layered_topology_init(CellPList *old)
   for (c = 0; c < old->n; c++) {
     part = old->cell[c]->part;
     np   = old->cell[c]->n;
-    for (p = 0; p < np; p++)
-      append_unindexed_particle(layered_position_to_cell(part[p].r.p), &part[p]);
+    for (p = 0; p < np; p++) {
+      Cell *nc = layered_position_to_cell(part[p].r.p);
+      /* particle does not belong to this node. Just stow away
+	 somewhere for the moment */
+      if (nc == NULL)
+	nc = local_cells.cell[0];
+      append_unindexed_particle(nc, &part[p]);
+    }
   }
   for (c = 1; c <= n_layers; c++)
     update_local_particles(&cells[c]);
@@ -257,6 +263,7 @@ void layered_exchange_and_sort_particles(int global_flag)
 
       for (p = 0; p < oc->n; p++) {
 	part = &oc->part[p];
+	fold_position(part->r.p, part->l.i);
 	nc = layered_position_to_cell(part->r.p);
 
 	if (LAYERED_BTM_NEIGHBOR && part->r.p[2] < my_left[2])
@@ -273,33 +280,43 @@ void layered_exchange_and_sort_particles(int global_flag)
     }
 
     /* transfer */
-    if (this_node % 2 == 0) {
-      /* send down */
-      if (LAYERED_BTM_NEIGHBOR)
-	send_particles(&send_buf_dn, btm);
-      if (LAYERED_TOP_NEIGHBOR)
-	recv_particles(&recv_buf, top);
-      /* send up */
-      if (LAYERED_BTM_NEIGHBOR)
+    if (n_nodes > 1) {
+      if (this_node % 2 == 0) {
+	/* send down */
+	if (LAYERED_BTM_NEIGHBOR)
+	  send_particles(&send_buf_dn, btm);
+	if (LAYERED_TOP_NEIGHBOR)
+	  recv_particles(&recv_buf, top);
+	/* send up */
+	if (LAYERED_BTM_NEIGHBOR)
+	  send_particles(&send_buf_up, top);
+	if (LAYERED_TOP_NEIGHBOR)
+	  recv_particles(&recv_buf, btm);
+      }
+      else {
+	if (LAYERED_TOP_NEIGHBOR)
+	  recv_particles(&recv_buf, top);
+	if (LAYERED_BTM_NEIGHBOR)
+	  send_particles(&send_buf_dn, btm);
+	if (LAYERED_BTM_NEIGHBOR)
+	  recv_particles(&recv_buf, btm);
+	if (LAYERED_TOP_NEIGHBOR)
 	send_particles(&send_buf_up, top);
-      if (LAYERED_TOP_NEIGHBOR)
-	recv_particles(&recv_buf, btm);
+      }
     }
+#ifdef ADDITIONAL_CHECKS
     else {
-      if (LAYERED_TOP_NEIGHBOR)
-	recv_particles(&recv_buf, top);
-      if (LAYERED_BTM_NEIGHBOR)
-	send_particles(&send_buf_dn, btm);
-      if (LAYERED_BTM_NEIGHBOR)
-	recv_particles(&recv_buf, btm);
-      if (LAYERED_TOP_NEIGHBOR)
-	send_particles(&send_buf_up, top);
+      if (recv_buf.n != 0 || send_buf_dn.n != 0 || send_buf_up.n != 0) {
+	fprintf(stderr, "1 node but transfer buffers not empty\n");
+	errexit();
+      }
     }
-    
+#endif
     layered_append_particles(&recv_buf);
 
     /* handshake redo */
     flag = (recv_buf.n != 0);
+    CELL_TRACE(fprintf(stderr, "%d: flag: %d\n", this_node, flag));
 
     if (global_flag == LAYERED_FULL_EXCHANGE) {
       MPI_Allreduce(&flag, &redo, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
@@ -311,6 +328,7 @@ void layered_exchange_and_sort_particles(int global_flag)
 	fprintf(stderr,"%d: layered_exchange_and_sort_particles: particle moved to far\n", this_node);
 	errexit();
       }
+      break;
     }
   }
 }

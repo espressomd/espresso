@@ -31,17 +31,12 @@
 
 
 #ifdef EXTERNAL_FORCES
-/** \ref ParticleLocal::ext_flag "ext_flag" value for unfixed particle.  */
-#define PARTICLE_UNFIXED   0
 /** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an external force. */
 #define PARTICLE_EXT_FORCE 1
-/** \ref ParticleLocal::ext_flag "ext_flag" value for fixed particle. */
-#define PARTICLE_FIXED     2
-/** \ref ParticleLocal::fixed_coord_flag "fixed_coord_flag" value for fixed coordinate. */
-#define COORDINATE_FIXED  1
-/** \ref ParticleLocal::fixed_coord_flag "fixed_coord_flag" value for unfixed coordinate. */
-#define COORDINATE_UNFIXED  0
-
+/** \ref ParticleLocal::ext_flag "ext_flag" value for fixed coordinate coord. */
+#define COORD_FIXED(coord) (2L << coord)
+/** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether any of the coordinates is fixed. */
+#define COORDS_FIX_MASK     (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
 #endif
 
 
@@ -114,17 +109,13 @@ typedef struct {
 
 #ifdef EXTERNAL_FORCES
   /** flag whether to fix a particle in space. 
-Values: 
+      Values: 
       <ul> <li> 0 no external influence
            <li> 1 apply external force \ref ParticleLocal::ext_force
-           <li> 2 fix particle in space (equivalent to setting all coordinate axes as fixed </ul> */
-  int ext_flag;
-  /** flag whether to fix the motion of the particle in one or more coordinate axes. 
-      Values: 
-      <ul> <li> <tt> 0 <\tt>integration for this coordinate as normal 
-      <li> <tt> 1 <\tt> no integration for this coordinate </ul> 
+           <li> 2,3,4 fix particle coordinate 0,1,2
+      </ul>
   */
-  int fixed_coord_flag[3];
+  int ext_flag;
   /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
   double ext_force[3];
 #endif
@@ -383,10 +374,10 @@ int set_particle_torque(int part, double torque[3]);
 int set_particle_ext(int part, int flag, double force[3]);
 /** Call only on the master node: set coordinate axes for which the particles motion is fixed.
     @param part  the particle.
-    @param fixed_coord_flag new value for flagged coordinate axes to be fixed
+    @param flag new value for flagged coordinate axes to be fixed
     @return TCL_OK if particle existed
 */
-int set_particle_fix(int part,  int fixed_coord_flag[3]);
+int set_particle_fix(int part,  int flag);
 #endif
 
 /** Call only on the master node: change particle bond.

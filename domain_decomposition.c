@@ -483,7 +483,12 @@ void dd_topology_init(CellPList *old)
     part = old->cell[c]->part;
     np   = old->cell[c]->n;
     for (p = 0; p < np; p++) {
-      append_unindexed_particle(cell_structure.position_to_cell(part[p].r.p), &part[p]);
+      Cell *nc = dd_save_position_to_cell(part[p].r.p);
+      /* particle does not belong to this node. Just stow away
+	 somewhere for the moment */
+      if (nc == NULL)
+	nc = local_cells.cell[0];
+      append_unindexed_particle(nc, &part[p]);
     }
   }
   for(c=0; c<local_cells.n; c++) {
