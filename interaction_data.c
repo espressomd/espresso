@@ -292,7 +292,25 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	return (TCL_OK);
       }
       else {
-	Tcl_PrintDouble(interp, (double)i, buffer);
+	sprintf(buffer, "%d", i);
+	Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
+			 (char *) NULL);
+	return (TCL_ERROR);
+      }
+    }
+
+    if (argc == 3 && !strncmp(argv[2], "num", strlen(argv[2]))) {
+      char buffer[TCL_INTEGER_SPACE];
+      /* print interaction partner number */
+      if(i<n_bonded_ia) {
+	Bonded_ia_parameters *params = &bonded_ia_params[i];
+	sprintf(buffer, "%d", params->num);
+	Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
+			 (char *) NULL);
+	return (TCL_OK);
+      }
+      else {
+	sprintf(buffer, "%d", i);
 	Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
 			 (char *) NULL);
 	return (TCL_ERROR);

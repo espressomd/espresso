@@ -2,6 +2,8 @@ proc blockfile_write_particles {channel write particles {info "id pos v q"} {ran
     blockfile $channel write start "particles"
     if {![regexp "pos" $info]} {set info "pos $info"}
     if {![regexp "id" $info]} {set info "id $info"}
+    if {[regexp "bonds" $info]} { error "bonding information cannot be written" }
+
     puts $channel "{$info} "
     foreach list $range {
 	set list [split $list "-"]
@@ -61,7 +63,7 @@ proc blockfile_read_auto_particles {channel read auto} {
     if {[info exists f]} { set cmd "$cmd \
              f  \[lindex \$line $f\] \[lindex \$line [expr $f + 1]\] \[lindex \$line [expr $f + 2]\]"
     }
-    while { 1 } {
+    while {1} {
 	set line [blockfile $channel read auto]
 	if {[lindex $line 0] != "usertag"} {
 	    if {$line != "illstring \}"} { error "particle block ill formed (\"[lindex $line 1]\" unexpected)" }
@@ -77,3 +79,73 @@ proc blockfile_read_particles {channel read particles} {
     blockfile_read_auto_particles $channel read particles
 }
  
+proc blockfile_write_bonds {channel write bonds {range "0-end"}} {
+    blockfile $channel write start "bonds"
+
+    puts $channel " "
+    foreach list $range {
+	set list [split $list "-"]
+	set len [llength $list]
+	if {$len == 1} {
+	    if {$list == "all"} {
+		set start 0
+		set end [setmd maxpart]
+	    } {
+		if {$list == "end"} {set list [setmd maxpart]}
+		set start $list
+		set end   $list
+	    }
+	} {
+	    if {$len != 2} {
+		error "list must have form \"<a>-<b> <c>-end...\""
+		exit
+	    }
+	    set start [lindex $list 0]
+	    if {$start == "end"} {set start [setmd maxpart]}
+	    set end [lindex $list 1]
+	    if {$end == "end"} {set end [setmd maxpart]}
+	}
+	if {![string is integer $start] || ![string is integer $end]} {error "list boundaries must be integers"}
+	for {set p $start} {$p <= $end} {incr p} {
+	    set d [eval "part $p pr bonds"]
+	    if {$d != "na" && $d != "{}"} {puts $channel "\t{$p $d}"}
+	}
+    }
+    puts $channel "\}"
+}
+
+
+proc blockfile_read_auto_bonds {channel read auto} {
+    while {1} {
+	set line [blockfile $channel read auto]
+	if {[lindex $line 0] != "usertag"} {
+	    if {$line != "illstring \}"} { error "particle block ill formed (\"[lindex $line 1]\" unexpected)" }
+	    break
+	}
+	set pid [lindex $line 1] 
+	set bl [lindex $line 2]
+	foreach inter $bl { eval [concat {part $pid bond} $inter] }
+    }
+}
+
+proc blockfile_read_bonds {channel read bonds} {
+    set tag [blockfile $channel read start]
+    if {$tag != "particles"} { error "blockfile read bonds did not find particle block in file $channel" }
+    blockfile_read_auto_interactions $channel read bonds
+}
+ 
+proc blockfile_write_interactions {channel write interactions} {
+    blockfile $channel write start interactions
+    puts $channel "\n\t{[join [inter] "\}\n\t\{"]}\n\}"
+}
+
+proc blockfile_read_auto_interactions {channel read auto} {
+    set data [blockfile $channel read toend]
+    foreach d $data { eval "inter $d" }
+}
+
+proc blockfile_read_interactions {channel read interactions} {
+    set tag [blockfile $channel read start]
+    if {$tag != "particles"} { error "blockfile read interactions did not find interactions block in file $channel" }
+    blockfile_read_auto_particles $channel read interactions
+}
