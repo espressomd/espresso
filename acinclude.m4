@@ -120,21 +120,22 @@ AC_DEFUN([ES_CHECK_TCL],[
 
 	AC_ARG_ENABLE(tcl,AC_HELP_STRING([--enable-tcl],[specify the tcl library to use (e.g. tcl8.4)]),
 		[tclversion=$enable_tcl], [tclversion=yes])
-	case $target_os in
-	*darwin*) extrapaths=/Library/Frameworks/Tcl.framework/Tcl ;;
-	*) ;;
-	esac
 	if test .$tclversion = .yes; then
 		tclversion=""
-		for version in $TCL_VERSION tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl8.1 tcl8.0; do
-			ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [tclversion=$version], [],$extrapaths)
+		for version in $TCL_VERSION tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
+			ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [tclversion=$version], [])
 			if test .$tclversion != .; then break; fi
 		done
-		if test .$tclversion = .; then
-			AC_MSG_ERROR(Tcl library not found)
-		fi
 	else
-		ES_ADDPATH_CHECK_LIB($tclversion, Tcl_Init, [], [AC_MSG_ERROR(TCL library $tclversion not found)],$extrapaths)
+		ES_ADDPATH_CHECK_LIB($tclversion, Tcl_Init, [], [tclversion=""])
+	fi
+	if test .$tclversion = .; then
+		case $target_os in
+		*darwin*) AC_MSG_NOTICE([If you have Tcl installed, make sure that in one of the library paths, e.g. /usr/local/lib,
+	there is a link from lib<tclversion>.dylib to the Tcl library, which usually is
+	/Library/Frameworks/Tcl.framework/Tcl.]) ;;
+		*)	AC_MSG_ERROR([Tcl library $tclversion not found]) ;;
+		esac
 	fi
 	case $target_os in
 	*darwin*) extrapaths=/Library/Frameworks/Tcl.framework/Headers ;;
@@ -146,27 +147,46 @@ AC_DEFUN([ES_CHECK_TCL],[
 AC_DEFUN([ES_CHECK_TK],[
 	AC_ARG_ENABLE(tk,AC_HELP_STRING([--enable-tk],[tk version for the GUI to use, yes for auto check, no to disable]),
 		[tkversion=$enable_tk], [tkversion=no])
-	case $target_os in
-	*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Tk ;;
-	*) ;;
-	esac
 	if test .$tkversion != .no; then
+		dnl test for X11
 		AC_PATH_XTRA
+		saved_CFLAGS=$CFLAGS
+		saved_LDFLAGS=$LDFLAGS
+		saved_LIBS=$LIBS
 		CFLAGS="$CFLAGS $X_CFLAGS"
 		LDFLAGS="$LDFLAGS $X_LIBS"
 		LIBS="$LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
+		AC_LINK_IFELSE([AC_LANG_CALL([],[XOpenDisplay])],[x11_works=yes],[x11_works=no])
+		if test $x11_works = no ;then
+			AC_MSG_WARN([could not link against X11, hoping Tk works without])
+			CFLAGS=$saved_CFLAGS
+			LDFLAGS=$saved_LDFLAGS
+			LIBS=$saved_LIBS
+		fi
 		if test .$tkversion = .yes; then
-			for version in $TK_VERSION tk8.5 tk8.4 tk8.3 tk8.2 tk8.1 tk8.0; do
-				ES_ADDPATH_CHECK_LIB($version, Tk_Init, [tkversion=$version], [],$extrapaths)
-				if test .$tkversion != .yes; then
+			tkversion=""
+			for version in $TK_VERSION tk8.5 tk8.4 tk8.3 tk8.2 tk; do
+				ES_ADDPATH_CHECK_LIB($version, Tk_Init, [tkversion=$version], [])
+				if test .$tkversion != .; then
 					break;
 				fi
 			done
-			if test .$tkversion = .yes; then
-				AC_MSG_ERROR(Tk library not found)
-			fi
 		else
-			ES_ADDPATH_CHECK_LIB($tkversion, Tk_Init, [], [AC_MSG_ERROR(Tk library $tkversion not found)],$extrapaths)
+			ES_ADDPATH_CHECK_LIB($tkversion, Tk_Init, [], [tkversion=""])
+		fi
+		if test .$tkversion = .; then
+			case $target_os in
+			*darwin*) AC_MSG_ERROR([If you have Tk installed, make sure that in one of the library paths, e.g. /usr/local/lib,
+	there is a link from lib<tkversion>.dylib to the Tk library, which usually is
+	/Library/Frameworks/Tk.framework/Tk.]) ;;
+			*)	AC_MSG_ERROR([Tk library $tkversion not found]) ;;
+			esac
+		fi
+		if test $tkversion = tk; then
+			if test .$tclversion != .tcl; then
+				AC_MSG_WARN([You are using a generic Tk version, but a defined Tcl version. This may cause problems.
+	Try --tcl-version=tcl to also use a generic Tcl version, which may fit better.])
+			fi
 		fi
 		case $target_os in
 		*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Headers ;;

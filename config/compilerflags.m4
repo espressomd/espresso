@@ -91,7 +91,13 @@ AC_DEFUN([CF_CHECK_GCC_FLAGS],[
 	Power2)		type=pwr; cpu=power2 ;;
 	Power*)		type=pwr; cpu=powerpc ;;
 	ppc*)		case $target_os in
-			*darwin*)	type=pwr; cpu=$target_cpu; altivec=yes ;;
+			*darwin*)	type=pwr
+					case $target_cpu in
+					ppc970)	 cpu=G5 ;;
+					ppc7450) cpu=7450 ;;
+					ppc*)    cpu=powerpc ;;
+					esac
+					altivec=yes ;;
 			*)		type=pwr; cpu=powerpc;
 			esac ;;
 	EV67*)		type=alpha; cpu=ev67 ;;
