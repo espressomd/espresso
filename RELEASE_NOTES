@@ -2,15 +2,92 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.6e *
+* v1.7.1c *
 ***********
 
 Current working revision.
 
 
-- v1.6.6e -
+- v1.7.1c -
 -----------
-(g) August 19th, 2004.
+
+(c) August 26th, 2004.
+(b) August 23rd, 2004.
+(a) August 20th, 2004.
+
+New Features:
+(c) Now the 'mpich'-implementation on Linux64 is available
+    in addition to the known 'lam' one via flag in 'Makefile.Linux'.
+    Note that you'll need a link to the 'mpich'-implemented 'mpirun' 
+    to execute the resulting binary (the default is 'lam's 'mpirun').
+(c) New architecture AMD64/Opteron is now supported as well,
+    hence we have modified Makefiles with optimized settings.
+(b) A new check_particles ADDITIONAL_CHECKS has been added 
+    to test the 'part'-command.
+(b) Improved method for calculating midpoint of bilayer.
+
+Changes:
+(a) Changed the core to procedure something working on SuSE 9.1/AMD64.
+(a) Replaced the flag 'COM_on' by some reasonable checks.
+
+Bugfixes:
+(b) Fixed a bug in the 'part' command that relied on 'local_particles' 
+    to contain physical particles only, although ghosts may be in there, too.
+(a) Various fixes in the error handling occuring when switching off parts of the code.
+
+
+- v1.7.0  -
+-----------
+
+(a) August 19th, 2004.
+
+New Features:
+(a) A new error handling code has been put into Espresso:
+    Instead of the old 'fprintf(stderr, "..."); errexit()' scheme, 
+    you have to include "errorhandling.h" and call
+	char *errtxt = runtime_error(string_length);
+	sprintf(errtxt, "...");
+    The string_length just has to be larger than the actual error 
+    message, so typically '128+n_i*TCL_INTEGER_SPACE+n_d*TCL_DOUBLE_SPACE' 
+    will do.
+    Afterwards the program will go on until the runtime errors are collected.
+    If you write a new Tcl command, make sure that at the end you call 
+    'mpi_gather_runtime_errors(interp, error_code)'. If the error_code is TCL_OK 
+    and no runtime errors occured, it will simply return TCL_OK, but if an 
+    runtime error occurs, it will be set as the interpreters result. If the state 
+    was already TCL_ERROR, the background errors are appended, so the original 
+    error message is not lost. In case of errors, the routine returns TCL_ERROR, 
+    so in most cases you are done with
+        return mpi_gather_runtime_errors(interp, error_code);
+    Again, see the code.
+
+Changes:
+(a) Changed a lot of 'errexit()'s to using the new 'runtime_error' facility.
+(a) The parsers for the tabulated potentials now generate Tcl errors instead of
+    'errexit()'s.
+(a) All parsers for interactions have been moved to the corresponding force files.
+
+Bugfixes:
+(a) A lot of bugfixes all over the place, mostly in the parsers.
+(a) The layered cell system is now able to deal with moving particles.
+(a) Setting bonds now generates an 'on_particle_change' on ALL nodes.
+(a) Fixes for the Tru64 compiler.
+
+
+
+**********************
+* v1.7.Gold (Mezoti) *
+**********************
+
+Released on August 19th, 2004.
+
+
+
+- v1.6.6h -
+-----------
+
+(h) August 18th, 2004.
+(g) August 16th, 2004.
 (f) August 13th, 2004.
 (e) August 12th, 2004.
 (d) August 10th, 2004.
@@ -19,7 +96,6 @@ Current working revision.
 (a) July   27th, 2004.
 
 New Features:
-(g) Added error handling code.
 (f) Added new analysis command "analyze aggregation" to analyze the aggregation 
     state of molecules in the system.
 (e) Added 'polyBlockRead <source>' to read in blockfile 'source'.
@@ -40,10 +116,9 @@ New Features:
 (a) Added documentation for MMM2D, MMM1D and ELC, and the ghost communication stuff.
 
 Changes:
-(g) Changed a lot of errexit()s to using the new runtime_error facility.
-(g) The parsers for the tabulated potentials now generate Tcl errors instead of
-    errexit()s.
-(g) All parsers for interactions have been moved to the corresponding force files.
+(h) Improved the algorithm for the calculation of height function in modes analysis.
+(h) Improved the parser for get_lipid_orients.  
+(h) Merged 'analyze aggregation' with changes to modes analysis.
 (d) Changed classification of stray lipids to account for the fact that some lipids 
     will become incorporated into periodic image bilayers. These lipids are still
     discarded in modes analysis but are classified as "STRAY".  
@@ -53,9 +128,8 @@ Changes:
 (a) Now errors in the 'integrate set' command are actually reported as errors.
 
 Bugfixes:
-(g) A lot all over, mostly in the parsers.
-(g) The layered cell system now is able to deal with moving particles.
-(g) Setting bonds now generates an on_particle_change on ALL nodes.
+(g) Fixed bug that after a cells_re_init the ghost cells were resized only
+    for domain decomposition. Now this is handled by the cell structure code.
 (d) Fixed bug in the mindist which only worked for symmetric sets.
 (d) Fixed some bugs in the topology-mol_id sync command so that this now works 
     properly on multiple nodes.
@@ -64,6 +138,7 @@ Bugfixes:
 
 - v1.6.5d -
 -----------
+
 (d) July 26th, 2004.
 (c) July 22nd, 2004.
 (b) July 15th, 2004.
@@ -110,6 +185,7 @@ Bugfixes:
 
 - v1.6.4c -
 -----------
+
 (c) July  9th, 2004.
 (b) July  5th, 2004.
 (a) July  5th, 2004.
@@ -128,6 +204,7 @@ Bugfixes:
 
 - v1.6.3f -
 -----------
+
 (f) July  1st, 2004.
 (e) June 26th, 2004.
 (d) June 23rd, 2004.
