@@ -54,13 +54,13 @@ extern Energy_stat energy;
 
 /** Implements the Tcl command 'analyze <what> [<structure info>] [...]' for basic analysis.
     Possible arguments for <what> are:
-    <li> 'analyze mindist'
+    <li> 'analyze mindist' \\
          returns the minimal distance of two particles (needs no structure info).
-    <li> 'analyze nbhood <part_id> <r_catch>'
+    <li> 'analyze nbhood <part_id> <r_catch>' \\
          returns all particles within a given radius <r_catch> around the position of particle <part_id>.
-    <li> 'analyze distto <posx> <posy> <posz>' 
+    <li> 'analyze distto <posx> <posy> <posz>' \\
          returns the minimal distance of a particle to coordinates (<posx>, <posy>, <posz>).
-    <li> 'analyze set <structure info>'
+    <li> 'analyze set <structure info>' \\
          defines the structure. The second argument defines the topology to set, i. e. chain at the moment.
 	 <ul>
 	 Possible values for <structure info> are
@@ -73,17 +73,17 @@ extern Energy_stat energy;
 	 if you specify an interaction, e.g. fene <type_num> or lj <type1> <type2> or coulomb or kinetic
 	 it returns just that energy.
     All tasks below need the particles to be stored consecutively starting with identity 0.
-    <li> 'analyze re [<chain_start> <n_chains> <chain_length>]'
+    <li> 'analyze re [<chain_start> <n_chains> <chain_length>]' \\
          returns the quadratic end-to-end-distance averaged over all polymers (requires chain structure to be set).
-    <li> 'analyze rg [<chain_start> <n_chains> <chain_length>]'
+    <li> 'analyze rg [<chain_start> <n_chains> <chain_length>]' \
          returns the radius of gyration averaged over all chains (requires chain structure to be set).
-    <li> 'analyze rh [<chain_start> <n_chains> <chain_length>]'
+    <li> 'analyze rh [<chain_start> <n_chains> <chain_length>]' \\
          returns the hydrodynamic radius (requires chain structure to be set).
-    <li> 'analyze g123 [-init [<chain_start> <n_chains> <chain_length>]]'
+    <li> 'analyze g123 [[-init] <chain_start> <n_chains> <chain_length>]' \\
          returns the mean-square displacement g1(t) of a monomer,
                  the mean-square displacement g2(t) in the center of gravity of the chain itself, and
                  the motion of the center of mass g3(t)
-	 as a tcl-list {g1(t) g2(t) g3(t)} (requires chain structure to be set).
+	 as a tcl-list {g1(t) g2(t) g3(t)} (requires chain structure to be set). \\
 	 If before the structure info you give '-init', the current configuration is stored as reference config.
 */
 int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
