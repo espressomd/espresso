@@ -33,8 +33,12 @@ extern int zdir;
 /** Flag to indicate when the mode_grid is changed */
 extern int mode_grid_changed;
 
+/** Parameter indicating distance beyond which a lipid is said to have
+    left the membrane the default value is set in \ref modes.c */
+extern double stray_cut_off;
+
 /* Exported Functions */
-int modes2d(IntList *ptype, fftw_complex* result);
+int modes2d(fftw_complex* result);
 void map_to_2dgrid();
 
 #endif

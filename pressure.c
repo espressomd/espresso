@@ -637,6 +637,7 @@ void calc_p_tensor(double volume, IntList *p_list, int flag) {
 	/* tabulated */
 	add_tabulated_pair_force(&p1,&p2,ia_params,d,dist);
 
+
 #ifdef ROTATION  
 	add_gb_pair_force(&p1,&p2,ia_params,d,dist);
 #endif

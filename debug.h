@@ -67,7 +67,7 @@
 /* #define FENE_DEBUG */
 /* #define GHOST_FORCE_DEBUG */
 /* #define ONEPART_DEBUG 7  */
-/* #define STAT_DEBUG */
+/* #define STAT_DEBUG */ 
 /* #define POLY_DEBUG */
 /* #define MEM_DEBUG */
 #define MPI_CORE

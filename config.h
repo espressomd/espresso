@@ -57,7 +57,7 @@ This will allow to use such particle properties as quart, omega, and torque. */
 
 /** Compiler flag to enable external forces. E.g. apply a fixed external force
     to a particle or fix a particle in space. */
-//#define EXTERNAL_FORCES
+#define EXTERNAL_FORCES
 
 /** Compiler Flag to enable constraints, eg walls, spheres. 
     See \ref constraint.h and \ref interaction_data.h */
