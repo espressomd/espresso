@@ -1,0 +1,82 @@
+/** \page tcl_blockfile The blockfile command
+    \verbatim blockfile <channel> read|write start|end|variable|auto|toend <param>?\endverbatim
+        blockfile allows for convienent access to a block format structured file <channel>. The
+	possible actions are:
+<ol>
+	<li>\verbatim blockfile <channel>  write start <tag> \endverbatim which writes a start "{"
+	and the title of the block given by tag.
+        <li>\verbatim blockfile <channel>  write end \endverbatim just writes a "}" to <channel>.
+	<li>\verbatim blockfile <channel>  write variable {<varname1> <varname2> ...} \endverbatim
+            writes the variables <varname1>, <varname2>,..., which are known to \ref tcl_setmd (a list
+	    can be found in \ref variables_page), to <channel>.
+	<li>\verbatim blockfile <channel>  write variable all\endverbatim
+            will write all variables known to \ref tcl_setmd to <channel>.
+	<li>\anchor tcl_blockfile_write_particles
+            \verbatim blockfile <channel> write particles <what> <range>\endverbatim
+    	    writes particle information in a standardized format to the file <channel>.
+	    <what> can be any list of parameters that \ref tcl_part_print "part <x> print"
+	    takes except for "bonds". Notice that if "id" or "pos" is missing, this is added
+	    in the front to the list automatically. <range> is a Tcl list of ranges which particles
+	    to write. The range "all" is valid as well as a boundary of "end". For example
+	    \verbatim blockfile file10 write particles "id pos q" "all 0-end 0" \endverbatim
+	    will write all particles two times to file10 and then particle 0 alone.
+	<li>\anchor tcl_blockfile_write_interactions
+            \verbatim blockfile <channel> write interactions\endverbatim
+    	    writes interactions information in a standardized format to the file <channel>.
+	<li>\anchor tcl_blockfile_write_bonds
+            \verbatim blockfile <channel> write bonds <range>\endverbatim
+    	    writes bonds information in a standardized format to the file <channel>. The involved
+	    particles and bond types must exist and be valid.
+	<li>\verbatim blockfile <channel> read start \endverbatim reads the start part of a block
+            and returns the block title.
+	<li>\verbatim blockfile <channel> read toend \endverbatim reads the blocks data and returns
+	    it.
+	<li>\verbatim blockfile <channel> read particles|interactions|bonds|variable\endverbatim
+	    reads one block, checks wether it contains data of the given type and reads it.
+        <li>\verbatim blockfile <channel> read auto \endverbatim reads in one block and does the
+            following:
+	<ol>
+            <li> if a procedure blockfile_read_auto_<tag> exists, this procedure takes over
+	         (<tag> is the first expression in the block). For most block types, at least
+		 all mentioned above, i. e. particles, interactions, bonds and
+		 variable, the corresponding procedure will overwrite the current information with
+		 the information from the block.
+            <li> if the procedure does not exist, it returns "usertag <tag> <rest of block>"
+            <li> if the file is at end, it returns "eof"
+	</ol>
+</ol>
+        If "blockfile <channel> read auto" finds a block, it tries to load the corresponding procedure
+	as described above. "blockfile <channel> read <block>" checks for a block with tag <block>
+	and then again executes the corresponding blockfile_read_auto_<tag>, if it exists.
+
+	If that fails, blockfile executes "blockfile_arg1_arg2", if it exists, with the all arguments
+	given to blockfile. For example
+	\verbatim blockfile channel write particles "id pos" all \endverbatim
+	results in the evaluation of
+	\verbatim blockfile_write_particles channel write particles "id pos" all \endverbatim
+	If the next block in a blockfile is a particle block, e. g.
+	\verbatim
+	{particles {id pos type q}
+		   {0 27.251 62.31 58.707 1 1.0}
+		   {1 27.226 61.483 58.146 0 0.0}
+	}	
+	\endverbatim
+        \verbatim blockfile <channel> read auto \endverbatim will call
+	\verbatim blockfile_read_auto_particles <channel> read auto\endverbatim, which then
+	will delete all particles and insert the two particles above.
+
+	In the contrary that means that for a new blocktype you will normally implement two
+	procedures:
+	\verbatim
+	blockfile_write_<tag> {channel "write" "<tag>" param...}
+	\endverbatim
+	which writes the block including the header and enclosing braces and
+	\verbatim
+	blockfile_read_auto_<tag> {channel "read" "auto"}
+	\endverbatim
+	which reads the block data and the closing brace.
+	The parameters "write", "read", "<tag>" and "auto" are regular parameters which will
+	always have the specified value. They occur just for technical reasons.
+
+	The C implementation is \ref #blockfile.
+*/
