@@ -611,7 +611,7 @@ int imd(ClientData data, Tcl_Interp *interp,
     /* sort partcles according to identities */
     coord = malloc(n_total_particles*3*sizeof(float));
     for (i = 0; i < n_total_particles; i++) {
-      int dummy[3];
+      int dummy[3] = {0,0,0};
       double tmpCoord[3];
       tmpCoord[0] = partCfg[i].r.p[0];
       tmpCoord[1] = partCfg[i].r.p[1];
