@@ -9,6 +9,7 @@
 */   
 #include <tcl.h>
 
+/************************************************************/
 /** \name Exported Variables */
 /************************************************************/
 /*@{*/
@@ -49,24 +50,26 @@ extern int    parameter_changed;
 /*@{*/
 
 /** tcl procedure for integrator steering.
-    USAGE: integrate <task>                       \\
-           task can either be init, #steps, exit. \\
-    EXAMPLE for an integration:                   \\
-           integrate init                         \\
-           integrate 100                          \\
-           integrate exit      
-    \return TCL status.
+    USAGE: integrate <steps> \\   
+    see also \ref tcl_integrate
 */
 int integrate(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
 
-/** update maxrange etc. */
+/** Calculate maximal interaction range. 
+    Uses \ref calc_maximal_cutoff.
+    \ref max_range  = \ref max_cut + \ref skin;
+ */
 void integrate_vv_recalc_maxrange();
 
 /** integrate with velocity verlet integrator.
     \param n_steps number of steps to integrate.
  */
 void integrate_vv(int n_steps);
+
+/** function that rescales all velocities on one node according to a
+    new time step. */
+void rescale_velocities(); 
 
 /** Callback for setmd skin.
     \return TCL status.
@@ -83,20 +86,6 @@ int time_step_callback(Tcl_Interp *interp, void *_data);
     \return TCL status.
 */
 int start_time_callback(Tcl_Interp *interp, void *_data);
-
-/** Callback for integrator flag calc_forces_first (= 0 or 1).
-    <ul>
-    <li> 1 means the integrator calculates the forces befor the
-    first integration step.
-    <li> 0 means the integrator reuses the forces that it remembers 
-    from the last integration step.
-    </ul>
-    \return TCL status.
-*/
-int calc_forces_first_callback(Tcl_Interp *interp, void *_data);
-
-/** function that rescales all velocities on one node according to a new time step. */
-void rescale_velocities(); 
 
 /*@}*/
 

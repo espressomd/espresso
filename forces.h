@@ -25,16 +25,14 @@ extern double minimum_part_dist;
 /************************************************************/
 /*@{*/
 
-/** Initialization of force calculation. 
-    This routine is empty at the moment.
-*/
+/** Calculates lj cap radii */
 void force_init();
- 
+
 /** Calculate forces.
  *
  *  A short list, what the function is doing:
  *  <ol>
- *  <li> Initialize forces with: \ref friction_thermo.
+ *  <li> Initialize forces with: \ref friction_thermo (ghost forces with zero).
  *  <li> Calculate \ref tcl_bonded "bonded interaction" forces:<br>
  *       Loop all local particles (not the ghosts). 
  *       <ul>
@@ -53,11 +51,6 @@ void force_init();
  *  </ol>
  */
 void force_calc();
-
-/** Clean up the force part. 
-    This routine is empty at the moment.
- */
-void force_exit(); 
 
 /*@}*/
 

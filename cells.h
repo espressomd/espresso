@@ -41,17 +41,10 @@
 #include "particle_data.h"
 #include "verlet.h"
 
-/************************************************
- * defines
- ************************************************/    
-
-#define CELLS_FLAG_START   -1
-#define CELLS_FLAG_PRE_INIT 0
-#define CELLS_FLAG_RE_INIT  1
-
-/************************************************
- * data types
- ************************************************/
+/************************************************/
+/** \name Data Types */
+/************************************************/
+/*@{*/
 
 /** Structure containing information about non bonded interactions
     with particles in a neighbor cell. */
@@ -83,8 +76,8 @@ typedef struct {
       need some ghost-ghost cell interaction as well, which we do not
       need! 
 
-      It follows: inner cells: n_neighbors=14
-      ghost cells: n_neighbors=0
+      It follows: inner cells: n_neighbors = 14
+      ghost cells:             n_neighbors = 0
   */
   int n_neighbors;
   /** Interacting neighbor cell list  */
@@ -93,6 +86,9 @@ typedef struct {
   ParticleList pList;
 } Cell;
 
+/*@}*/
+
+/************************************************************/
 /** \name Exported Variables */
 /************************************************************/
 /*@{*/
@@ -105,72 +101,58 @@ extern int ghost_cell_grid[3];
 /** number of linked cells (inner+ghosts). */
 extern int n_cells;
 
-/** Maximal number of cells per node. 
- *  In order to avoid memory problems due to the cell grid one has to
- *  specify the maximal number of \ref #cells . The corresponding
- *  callback function is \ref max_num_cells_callback. If the number of
- *  cells \ref n_cells, defined by \ref ghost_cell_grid is larger than
- *  max_num_cells the cell grid is reduced. max_num_cells has to be
- *  larger than 27, e.g one inner cell.
+/** Maximal number of cells per node. In order to avoid memory
+ *  problems due to the cell grid one has to specify the maximal
+ *  number of \ref #cells . The corresponding callback function is
+ *  \ref max_num_cells_callback. If the number of cells \ref n_cells,
+ *  defined by \ref ghost_cell_grid is larger than max_num_cells the
+ *  cell grid is reduced. max_num_cells has to be larger than 27, e.g
+ *  one inner cell.  max_num_cells is initialized with the default
+ *  value specified in \ref config.h: \ref CELLS_MAX_NUM_CELLS.
  */
 extern int max_num_cells;
 
 /** linked cell list. */
 extern Cell *cells;
 
-
-/** cell initialization status. 
-    initialized:      cells_init_flag = CELLS_FLAG_START.
-    cells_pre_init(): cells_init_flag = CELLS_FLAG_PRE_INIT
-    cells_init():     cells_init_flag = CELLS_FLAG_RE_INIT
-    cells_exit():     ruft am ende cells_pre_init() auf.
- */
-extern int cells_init_flag;
-
 /*@}*/
 
+/************************************************************/
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
 
-
-/** Pre initialization of the link cell structure. 
-
-Function called in modul initialize.c initialize().  Initializes one
-cell on each node to be able to store the particle data there.
-*/
+/** Pre initialization of the link cell structure. Function called in
+    modul initialize.c initialize().  Initializes one cell on each
+    node to be able to store the particle data there. */
 void cells_pre_init();
-
-/** initialize a cell structure.
- *  Use with care and ONLY for initialization! */
-void init_cell(Cell *cell);
-
-/** Notify cell code of topology change. 
-  * Recalculates the cell sizes. */
-void cells_changed_topology();
 
 /** re initialize link cell structures. 
  *
- *  cells_init calculates the cell grid dimension (cell_grid[3],
- *  ghost_cell_grid[3]) and allocates the space for the cell
- *  structure: cells.  Further it calculates the values for:
- *  cell_size[3], inv_cell_size[3], n_cells, n_inner_cells.
+ *  cells_re_init calculates cell grid parameters: \ref cell_grid,
+ *  \ref ghost_cell_grid \ref cell_size, \ref inv_cell_size, \ref
+ *  n_cells (via calling \ref calc_cell_grid).
  *
- *  At the moment it also calculates the edges of the nodes
- *  spatial domain: my_left[3] and my_right[3].
+ *  It reallocates the cell structure (\ref #cells) and initializes
+ *  the contained cell neighbor structure, verlet lists and particle
+ *  lists (see \ref init_cell and \ref init_cell_neighbors).
  *
- *  Then it allocates space for the particle index list of each cell
- *  (cells[i].particles) with size PART_INCREMENT and initializes the
- *  neighbor list for the cells (init_cell_neighbors()).  
+ *  Then it transfers the particles from the old cell structure to the
+ *  new one. 
  */
 void cells_re_init();
 
-/** calculate and return the total number of particles on this node. */
+/** Notify cell code of topology change. Reinits cell cstructure if
+  * necesarry (\ref cells_re_init). */
+void cells_changed_topology();
+
+/** Calculate and return the total number of particles on this
+    node. */
 int cells_get_n_particles();
 
-/** allocate space for a particle.
-    \param id the identity of the new particle
-    \param pos its position
+/** Allocate space for a particle.
+    \param  id  the identity of the new particle
+    \param  pos its position
     \return the new particle structure */
 Particle *cells_alloc_particle(int id, double pos[3]);
 
@@ -186,12 +168,6 @@ int pos_to_cell_grid_ind(double pos[3]);
     \return linear cell grid index. */
 int pos_to_capped_cell_grid_ind(double pos[3]);
 
-/** debug function to print particle positions: */
-void print_particle_positions();
-
-/** debug function to print ghost positions: */
-void print_ghost_positions();
-
 /** Callback for setmd maxnumcells (maxnumcells >= 27). 
     see also \ref max_num_cells */
 int max_num_cells_callback(Tcl_Interp *interp, void *_data);
@@ -202,17 +178,29 @@ int max_num_cells_callback(Tcl_Interp *interp, void *_data);
 */
 int  is_inner_cell(int i, int gcg[3]);
 
-/** Convience replace for loops over all particles. */
+/** Convenient replace for loops over all particles. */
 #define INNER_CELLS_LOOP(m,n,o) \
   for(m=1; m<cell_grid[0]+1; m++) \
     for(n=1; n<cell_grid[1]+1; n++) \
       for(o=1; o<cell_grid[2]+1; o++)
 
-/** Convience replace for loops over all particles and ghosts. */
+/** Convenient replace for loops over all particles and ghosts. */
 #define CELLS_LOOP(m,n,o) \
   for(m=0; m<ghost_cell_grid[0]; m++) \
     for(n=0; n<ghost_cell_grid[1]; n++) \
       for(o=0; o<ghost_cell_grid[2]; o++)
+
+/** Convenient replace for inner cell check. usage: if(IS_INNER_CELL(m,n,o)) {...} */
+#define IS_INNER_CELL(m,n,o) \
+  ( m > 0 && m < ghost_cell_grid[0] - 1 && \
+    n > 0 && n < ghost_cell_grid[1] - 1 && \
+    o > 0 && o < ghost_cell_grid[2] - 1 ) 
+
+/** Convenient replace for ghost cell check. usage: if(IS_GHOST_CELL(m,n,o)) {...} */
+#define IS_GHOST_CELL(m,n,o) \
+  ( m == 0 || m == ghost_cell_grid[0] - 1 || \
+    n == 0 || n == ghost_cell_grid[1] - 1 || \
+    o == 0 || o == ghost_cell_grid[2] - 1 ) 
 
 /** get the cell index associated with the cell coordinates */
 #define CELL_IND(m,n,o) (get_linear_index(m,n,o,ghost_cell_grid))
@@ -220,6 +208,14 @@ int  is_inner_cell(int i, int gcg[3]);
 /** get a pointer to the cell associated with the cell coordinates */
 #define CELL_PTR(m,n,o) (&cells[get_linear_index(m,n,o,ghost_cell_grid)])
 
-#endif
+/** debug function to print particle positions: */
+void print_particle_positions();
+
+/** debug function to print ghost positions: */
+void print_ghost_positions();
 
 /*@}*/
+
+#endif
+
+

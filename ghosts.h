@@ -10,16 +10,20 @@
  *  range interactions between the spacial domains of neighbouring
  *  nodes.
  *
- *  All structures are initialized by \ref ghost_init.  Exchanging
- *  particles that move from one to another node domain is done by
- *  \ref exchange_and_sort_part. Setup of the ghost particle frame is done by
- *  \ref exchange_ghost.  During integration using a verlet
- *  list ghost positions and forces are exchanged by \ref
- *  update_ghost_pos and \ref collect_ghost_forces. Before calling
- *  \ref ghost_init again tou should clean up with \ref ghost_exit.
+ *  All structures are initialized by \ref ghost_pre_init and \ref
+ *  ghost_init.
+ *
+ *  Exchanging particles that move from one cell to another including
+ *  crossing of node domain boundaries is done by \ref
+ *  exchange_and_sort_part. 
+ *
+ *  Setup of the ghost particle frame is done by \ref exchange_ghost.
+ *
+ *  During integration the ghost positions and forces are exchanged by
+ *  \ref update_ghost_pos and \ref collect_ghost_forces.
  *
  *  Communication \anchor communication is done only between
- *  neighboring nodes. The communication scheme can be senn in the
+ *  neighboring nodes. The communication scheme can be seen in the
  *  figure below.
  *
  *  \image html ghost_communication.gif "Scheme of ghost/particle communication"
@@ -49,62 +53,60 @@
 /************************************************************/
 /*@{*/
 
-/** Initialize some arrays connected to the ghosts modul. */
+/** Initialize some arrays connected to the ghosts modul. 
+ */
 void ghost_pre_init();
 
-/** initialize ghost particle structures. 
+/** Initialize ghost particle structures. 
  *  
+ *  <ol>
+ *      <li> Calculate number of cells to send/recv for each direction.
+ *      <li> Allocate \ref #send_cells, \ref #recv_cells, 
+ *           \ref #n_send_ghosts, \ref #n_recv_ghosts.
+ *      <li> Fill \ref #send_cells and \ref #recv_cells with cell indices.
+ *  </ol>
+ *
+ *   
  *  <ul>
- *      <li> Init node neighbours ( \ref calc_node_neighbors ).
- *      <li> Init particle exchange buffers.
-
- *      <li> Init ghost exchange cell structures: The \ref exchange_ghost
- *           makes use of the linked cell structure (\ref #cells) and hence
- *           needs more complicated structures for bookkeeping:
- *           <ul>
- *               <li> \ref send_cells is a list of all cells to send. 
- *               <li> \ref recv_cells is a list of all cells to receive. 
- *               <li> \ref n_send_ghosts contains the number of particles 
- *                    in each send cell. 
- *               <li> \ref n_recv_ghosts contains the number of particles 
- *                    in each recv cell. 
- *           </ul>
- *           All lists have the length \ref #send_cells::n and are
- *           divided into blocks of cells send to/received from
- *           different directions.  This is
- *           exemplary shown in the figure \anchor ghost_cells_fig below.
+ *      <li> \ref send_cells contains a list of tcells to send. 
+ *      <li> \ref recv_cells contains a list of cells to receive. 
+ *      <li> \ref n_send_ghosts contains the number of particles 
+ *           in each send cell. 
+ *      <li> \ref n_recv_ghosts contains the number of particles 
+ *           in each recv cell. 
+ *  </ul>
  *
- * \image html ghost_cells.gif "ghost exchange: cell structures"
- * \image latex ghost_cells.eps "ghost exchange: cell structures" \width=15cm
- *
- *           In the example it is shown which cells Node 2 receives
- *           from Node 1 from direction 0 (left) and which cells Node
- *           2 sends to Node 3 in direction 2 (down).
- *           
- *           (see \ref exchange_ghost for more details).
- * </ul> 
+ * (see \ref exchange_ghost for more details). 
 */
 void ghost_init();
 
-/** exchange particles between neighbouring nodes. 
+/** exchange particles between neighbouring nodes and sort particles in \ref #cells. 
  *
- *  Particles which have left the local box have to be send to the
- *  right node befor e.g. a new verlet list can be built.
+ *  Tasks:
+ *  <ul> 
+ *      <li> Particles which have left their cell have to be moved to their new cell.
+ *      <li> Particles which have left the local box have to be send to the
+ *           corresponding new node befor e.g. a new verlet list can be built.
+ *      <li> Fold particle positions if the simulation box boundary has benn crossed.
+ *  </ul>
  * 
  *  Procedur:
  *  <ol>
- *      <li> \ref fold_particle
- *      <li> direction loop d = 0,1,2 (see \ref communication for details):
- *          <ul>
- *              <li> Move particles to send buffers;
- *                   via \ref move_to_p_buf to \ref p_send_buf and \ref b_send_buf.
- *              <li> Send/Receive Particles: \ref send_particles.
- *              <li> Move reveived particles to local particle field:
- *                   \ref p_recv_buf and b_recv_buf via \ref append_particles to 
- *                   \ref Cell::pList .
- *          </ul>
- *          if \ref node_grid[d] == 1 (single node case for that
- *          direction) nothing is done here.  
+ *      <li> direction loop d = 0,1,2 (x, y, z), lr = 0,1 (left, right) 
+ *           (see \ref communication for details):
+ *           <ul>
+ *               <li> Move particles to send buffers;
+ *                    via \ref move_to_p_buf to \ref p_send_buf and \ref b_send_buf.
+ *               <li> Send/Receive Particles: \ref send_particles.
+ *               <li> Append reveived particles to particle array of the corresponding cell:
+ *                    \ref p_recv_buf and b_recv_buf via \ref append_particles to 
+ *                    \ref Cell::pList .
+ *           </ul>
+ *           if \ref node_grid[d] == 1 (single node case for that
+ *           direction) nothing is done here. \\
+ *           if d=2 and lr=1 (last direction) then move particles to new cell 
+ *           if necessary via \ref move_unindexed_particle.
+ *      <li> Update local particle array via \ref update_local_particles.  
  * </ol> */
 void exchange_and_sort_part();
 
@@ -112,26 +114,33 @@ void exchange_and_sort_part();
  *
  *  Procedure:
  *  <ul>
-
- *      <li> Remove all ghosts from local particle arrays \ref Cell::pList.
-
  *      <li> direction loop d = 0,1,2,3,4,5 (see \ref communication for details):
  *           <ul> 
  *               <li> Loop through \ref send_cells for this direction. 
- *               <li> Store number of particles in that cell: 
- *                    \ref n_send_ghosts[ind] = 
- *                    \ref #cells[\ref send_cells[ind]].n_particles .
- *               <li> Pack particles of that cells into \ref g_send_buf.
- *               <li> Store number of ghosts to send in that direction in 
- *                    \ref ghost_send_size[d].
+ *               <li> Store number of particles in cells in \ref n_send_ghosts.
+ *               <li> Realloc \ref g_send_buf.
+ *               <li> Pack particles of that cells into \ref g_send_buf 
+ *                    and fold ghost coordinates.
  *               <li> Fold ghost coordinates if necessary (\ref #boundary).
  *               <li> send/receive ghost particles (\ref send_ghosts)
  *               <li> Loop through \ref recv_cells for this direction. 
  *               <li> Store received ghosts: \ref g_recv_buf 
  *                    to \ref Cell::pList.
+ *               <li> update \ref local_particles if necesarry (real particle priority!).
  *           </ul>
+ *      <li> realloc buffers \ref send_buf and \ref recv_buf for 
+ *           \ref update_ghost_pos and \ref collect_ghost_forces
  *  </ul>
- *  All buffers are resized dynamically.
+ *
+ * All buffers are resized dynamically.
+ *
+ * In the example (picture below) it is shown which cells Node 2
+ * receives from Node 1 from direction 0 (left) and which cells Node 2
+ * sends to Node 3 in direction 2 (down).
+ *
+ * \image html ghost_cells.gif "ghost exchange: cell structures"
+ * \image latex ghost_cells.eps "ghost exchange: cell structures" \width=14cm
+ *
 */
 void exchange_ghost();
 
@@ -141,27 +150,26 @@ void invalidate_ghosts();
 /** exchange ghost particle positions. 
  *  
  *  Using the structures build up in \ref ghost_init and \ref
- *  exchange_ghost thsi routine updates the positions of the ghost
+ *  exchange_ghost this routine updates the positions of the ghost
  *  particles.
  *
  *  It loops through the \ref directions, \ref send_cells and the
- *  particles therein and communicates them between neighbouring
- *  processors. Cells to send and receive (\ref send_cells, \ref
- *  recv_cells), as well as the number of particles in each cell to
- *  send/receive (\ref n_send_ghosts, \ref n_recv_ghosts) are allready
- *  known from \ref exchange_ghost.
+ *  particles therein and communicates their positions between
+ *  neighbouring processors. Cells to send and receive (\ref
+ *  send_cells, \ref recv_cells), as well as the number of particles
+ *  in each cell to send/receive (\ref n_send_ghosts, \ref
+ *  n_recv_ghosts) are allready known from \ref exchange_ghost.
  *
 */
 void update_ghost_pos();
-/** exchange ghost particle forces. 
+
+/** Collect ghost particle forces. 
  *
  *  Same procedure as in \ref update_ghost_pos except that the order
  *  of the directions is reversed and that forces are communicated and
  *  added up.  
 */
 void collect_ghost_forces();
-/** exit ghost structures. */
-void ghost_exit();
 
 /*@}*/
 

@@ -39,8 +39,7 @@ double min_local_box_l;
 double my_left[3]     = {0, 0, 0};
 double my_right[3]    = {1, 1, 1};
 
-
-
+/************************************************************/
 /** \name Privat Functions */
 /************************************************************/
 /*@{*/
@@ -142,7 +141,6 @@ void grid_changed_topology()
 
   GRID_TRACE(fprintf(stderr,"%d: grid_changed_topology:\n",this_node));
 
-  /* this could also go to grid.c ! */
   map_node_array(this_node,node_pos);    
   for(i = 0; i < 3; i++) {
     local_box_l[i] = box_l[i]/(double)node_grid[i]; 

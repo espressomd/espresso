@@ -7,12 +7,12 @@
  *
  *  The primary simulation box is divided into orthogonal rectangular
  *  subboxes which are assigned to the different nodes (or processes
- *  or processors or threads if you want). This grid is described in
- *  \ref node_grid. Each node has a number \ref this_node and a
- *  position \ref node_pos in that grid. Each node has also 6 nearest
- *  neighbors \ref node_neighbors which are necessary for the
- *  communication between the nodes (see also \ref ghosts.c and \ref
- *  p3m.c for more details about the communication.
+ *  or threads if you want). This grid is described in \ref
+ *  node_grid. Each node has a number \ref this_node and a position
+ *  \ref node_pos in that grid. Each node has also 6 nearest neighbors
+ *  \ref node_neighbors which are necessary for the communication
+ *  between the nodes (see also \ref ghosts.c and \ref p3m.c for more
+ *  details about the communication.
  *
  *  For the 6 directions \anchor directions we have the following convention:
  *

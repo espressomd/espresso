@@ -27,7 +27,6 @@
  * DEFINES
  ************************************************/
 
-/* MPI tags for the fft communications: */
 /** Tag for communication in verlet fix: propagate_positions()  */
 #define REQ_INT_VERLET   400
 
@@ -59,14 +58,15 @@ void propagate_velocities();
     \todo Put verlet criterion as inline function to verlet.h if possible.
 */
 void propagate_positions(); 
-
+/** combination of \ref propagate_velocities and \ref
+    propagate_positions. */
 void propagate_vel_pos();
+/** combination of \ref rescale_forces and \ref
+    propagate_velocities. */
 void rescale_forces_propagate_vel(); 
 
-
-void print_local_index();
-
 /*@}*/
+
 /************************************************************/
 
 int integrate(ClientData data, Tcl_Interp *interp,
@@ -103,6 +103,8 @@ int integrate(ClientData data, Tcl_Interp *interp,
   return (TCL_OK);
 }
 
+/************************************************************/
+
 void integrate_vv_recalc_maxrange()
 {
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_recalc_maxrange:\n",this_node));
@@ -120,7 +122,7 @@ void integrate_vv_recalc_maxrange()
   /* maximal interaction cutoff */
   calc_maximal_cutoff();
   max_range  = max_cut + skin;
-  max_range2 = max_range* max_range;
+  max_range2 = max_range * max_range;
 
   /* check real space interaction cutoff/range*/
   if(max_cut < 0.0) {
@@ -137,6 +139,8 @@ void integrate_vv_recalc_maxrange()
     errexit();
   }
 }
+
+/************************************************************/
 
 void integrate_vv(int n_steps)
 {
@@ -185,6 +189,26 @@ void integrate_vv(int n_steps)
   parameter_changed    = 0;
 }
 
+/************************************************************/
+
+void rescale_velocities() 
+{
+  Particle *p;
+  int m,n,o,i, np;
+  double scale;
+
+  scale = time_step / old_time_step;
+  INNER_CELLS_LOOP(m, n, o) {
+    p  = CELL_PTR(m, n, o)->pList.part;
+    np = CELL_PTR(m, n, o)->pList.n;
+    for(i = 0; i < np; i++) {
+      p[i].v[0] *= scale;
+      p[i].v[1] *= scale;
+      p[i].v[2] *= scale;
+    }
+  }
+}
+
 /* Callback functions */
 /************************************************************/
 
@@ -226,6 +250,8 @@ int start_time_callback(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
+
+/* Privat functions */
 /************************************************************/
 
 void rescale_forces()
@@ -454,20 +480,3 @@ void propagate_vel_pos()
   free(verlet_flags);
 }
 
-void rescale_velocities() 
-{
-  Particle *p;
-  int m,n,o,i, np;
-  double scale;
-
-  scale = time_step / old_time_step;
-  INNER_CELLS_LOOP(m, n, o) {
-    p  = CELL_PTR(m, n, o)->pList.part;
-    np = CELL_PTR(m, n, o)->pList.n;
-    for(i = 0; i < np; i++) {
-      p[i].v[0] *= scale;
-      p[i].v[1] *= scale;
-      p[i].v[2] *= scale;
-    }
-  }
-}

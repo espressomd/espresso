@@ -135,9 +135,9 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
   
   switch (params->type) {
   case BONDED_IA_FENE:
-    Tcl_PrintDouble(interp, params->p.fene.k_fene, buffer);
+    Tcl_PrintDouble(interp, params->p.fene.k, buffer);
     Tcl_AppendResult(interp, "FENE ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.fene.r_fene, buffer);
+    Tcl_PrintDouble(interp, params->p.fene.r, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
   case BONDED_IA_ANGLE:
@@ -246,8 +246,8 @@ void calc_maximal_cutoff()
   for (i = 0; i < n_bonded_ia; i++) {
     switch (bonded_ia_params[i].type) {
     case BONDED_IA_FENE:
-      if(max_cut < bonded_ia_params[i].p.fene.r_fene)
-	max_cut = bonded_ia_params[i].p.fene.r_fene;
+      if(max_cut < bonded_ia_params[i].p.fene.r)
+	max_cut = bonded_ia_params[i].p.fene.r;
       break;
     default:
       break;
@@ -556,12 +556,13 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	return (TCL_ERROR);
       }
       /* copy FENE parameters */
-      if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.fene.k_fene)) == 
+      if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.fene.k)) == 
 	   TCL_ERROR) ||
-	  (Tcl_GetDouble(interp, argv[2], &(bonded_ia_params[i].p.fene.r_fene))  == 
+	  (Tcl_GetDouble(interp, argv[2], &(bonded_ia_params[i].p.fene.r))  == 
 	   TCL_ERROR) ) 
 	return (TCL_ERROR);
       bonded_ia_params[i].type = BONDED_IA_FENE;
+      bonded_ia_params[i].p.fene.r2 = SQR(bonded_ia_params[i].p.fene.r);
       bonded_ia_params[i].num  = 1;
       /* broadcast interaction parameters */
       mpi_bcast_ia_params(i,-1); 

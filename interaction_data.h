@@ -60,8 +60,9 @@ typedef struct {
   union {
     /* Parameters for FENE Potential */
     struct {
-      double k_fene;
-      double r_fene;
+      double k;
+      double r;
+      double r2;
     } fene;
     /* Parameters for Cosine bend potential */
     struct {

@@ -15,9 +15,10 @@
 #include "grid.h"
 #include "utils.h"
 
-/************************************************
- * defines
- ************************************************/
+/************************************************/
+/** \name Defines */
+/************************************************/
+/*@{*/
 
 /**  granularity of the communication buffers. */
 #define PART_INCREMENT 20
@@ -30,8 +31,11 @@
 /** Tag for communication in send_posforce(). */
 #define REQ_SEND_POS    102
 
+/*@}*/
+
+/************************************************/
 /** \name Variables for particle exchange */
-/************************************************************/
+/************************************************/
 /*@{*/
 
 /** Particle send buffer. */
@@ -45,8 +49,9 @@ IntList b_send_buf;
 IntList b_recv_buf;
 /*@}*/
 
+/************************************************/
 /** \name Variables for ghost particle exchange */
-/************************************************************/
+/************************************************/
 /*@{*/
 
 /** Ghost send buffer. */
@@ -73,6 +78,7 @@ int ghost_recv_size[6];
 
 /*@}*/
 
+/************************************************************/
 /** \name Variables for ghost force/position exchange */
 /************************************************************/
 /*@{*/
@@ -82,6 +88,7 @@ DoubleList send_buf;
 DoubleList recv_buf;
 /*@}*/
 
+/************************************************************/
 /** \name Privat Functions */
 /************************************************************/
 /*@{*/
@@ -110,29 +117,27 @@ int sub_grid_indices(int* list, int start, int max,
  * 
  *  subroutine of \ref exchange_and_sort_part .  
  *
- *  Moves one particle (struct: Particle, local index: ind) to the
- *  send buffer (p_send_buf, b_send_buf) and removes it from the local
- *  particle field. The empty space in the local particle field is
- *  then filled with the last particle (See illustration).
+ *  Moves one particle to the send buffer (p_send_buf, b_send_buf) and
+ *  removes it from the field \ref local_particles. The empty space in the
+ *  local particle field is then filled with the last particle (See
+ *  illustration).
  *
  *  \image html move_to_p_buf.gif "Move particle to send buffer" 
  *  \image latex move_to_p_buf.eps "Move particle to send buffer" \width=10cm
  *  
  *  Variable changes:
  *  <ul> 
- *    <li> n_p_send_buf += 1
- *    <li> n_b_send_buf += number of bond partners
- *    <li> remove particle from local_particles field (set to -1)
- *    <li> actualize local_particles entry for last particle
- *    <li> n_particles -= 1
+ *    <li> \ref p_send_buf::n += 1
+ *    <li> \ref b_send_buf::n += number of bond partners + 1
+ *    <li> remove particle from \ref local_particles field (set to -1)
+ *    <li> move last particle and actualize \ref local_particles.
+ *    <li> pl->n  -= 1
  *  </ul>
- *  Reallocation of p_send_buf and b_send_buf if necessary.  
+ *  Reallocation of \ref p_send_buf and \ref b_send_buf if necessary.  
  *
- * \warning \b Supports only two particle bonds at the moment
- *
- * @return    local index to continue the particle loop. 
- * @param pl  particle list
- * @param ind local index of the particle. */
+ * @return     local index to continue the particle loop. 
+ * @param  pl  particle list
+ * @param  ind local index of the particle. */
 int move_to_p_buf(ParticleList *pl, int ind);
 
 /** send particles in direction s_dir.
@@ -150,8 +155,6 @@ int move_to_p_buf(ParticleList *pl, int ind);
            Exchange adress and sizes of send and recieve buffers.
  *  </ol>
  *
- * \warning \b Supports only two particle bonds at the moment
- *
  * @param s_dir    send direction. 
 */
 void send_particles(int s_dir);
@@ -160,10 +163,9 @@ void send_particles(int s_dir);
  *
  *  subroutine of \ref exchange_and_sort_part. 
  *
- *  Folds the coordinate in the send/recv direction.
- *  Reallocate particle buffer (particles) if necessary. Copy
- *  particles and their bonds from recieve buffers to local particle
- *  buffer.
+ *  Folds the coordinate in the send/recv direction.  Reallocate
+ *  particle buffer if necessary. Copy particles and their bonds from
+ *  recieve buffers to local particle buffer.
  *
 */
 void append_particles(int dir);
@@ -205,6 +207,7 @@ void send_ghosts(int s_dir);
 void send_posforce(int s_dir,int send_size, int recv_size);
 
 /*@}*/
+
 /************************************************************/
 void ghost_pre_init()
 {
@@ -217,7 +220,6 @@ void ghost_pre_init()
     init_intlist(&(n_recv_ghosts[i]));
   }
 
-  /* init some more lists */
   init_particleList(&p_send_buf);
   init_particleList(&p_recv_buf);
   init_intlist(&b_send_buf);
@@ -240,9 +242,6 @@ void ghost_init()
   int lc[3],hc[3],done[3]={0,0,0};
 
   GHOST_TRACE(fprintf(stderr,"%d: ghost_init:\n",this_node));
-  GHOST_TRACE(fprintf(stderr,"%d: box_l=(%f,%f,%f):\n",this_node,box_l[0],box_l[1],box_l[2]));
-  GHOST_TRACE(fprintf(stderr,"%d: boundary=(%d,%d,%d,%d,%d,%d):\n",this_node,
-		      boundary[0],boundary[1],boundary[2],boundary[3],boundary[4],boundary[5]));
 
   /* Init ghost exchange */
   /* preparation of help variables */
@@ -250,26 +249,23 @@ void ghost_init()
     gcg[i] = ghost_cell_grid[i];
     cg[i]  = cell_grid[i];
   }
+
+  /* 1: Calculate number of cells to send/recv for each direction. */
   anz[0] = cg[1] *cg[2];
   anz[1] = cg[2] *gcg[0];
   anz[2] = gcg[0]*gcg[1];
-
-  /* create send/recv cell index lists for ghost exchange*/
+  /* 2: Allocate space */
   for(i=0;i<6;i++) {
     realloc_intlist(&(send_cells[i])   ,anz[i/2]);
     send_cells[i].n = anz[i/2];
-
     realloc_intlist(&(recv_cells[i])   ,anz[i/2]);
     recv_cells[i].n = anz[i/2];
-
     realloc_intlist(&(n_send_ghosts[i]),anz[i/2]+1);
     n_send_ghosts[i].n = anz[i/2]+1;
-  
     realloc_intlist(&(n_recv_ghosts[i]),anz[i/2]+1);
     n_recv_ghosts[i].n = anz[i/2]+1;
   }
-
-  /* direction loop (sorry, it looks nasty, and it is!!!). */
+  /* 3: Get send/recv cell indices */
   for(i=0;i<3;i++) {
     lc[(i+1)%3] = 1-done[(i+1)%3]; hc[(i+1)%3] = cg[(i+1)%3]+done[(i+1)%3];
     lc[(i+2)%3] = 1-done[(i+2)%3]; hc[(i+2)%3] = cg[(i+2)%3]+done[(i+2)%3];
@@ -365,35 +361,11 @@ void exchange_and_sort_part()
   INNER_CELLS_LOOP(m, n, o)
     update_local_particles(&(CELL_PTR(m, n, o)->pList));
 
-  GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part: exit\n",this_node));
 #ifdef ADDITIONAL_CHECKS
   check_particle_consistency();
-#endif
   GHOST_TRACE(print_particle_positions());
-}
-
-void invalidate_ghosts()
-{
-  Particle *part;
-  int m, n, o, i, np;
-  /* remove ghosts, but keep Real Particles */
-  CELLS_LOOP(m, n, o) {
-    /* ghost cell selection */
-    if (m == 0 || m == ghost_cell_grid[0] - 1 ||
-	n == 0 || n == ghost_cell_grid[1] - 1 ||
-	o == 0 || o == ghost_cell_grid[2] - 1) {
-       part = CELL_PTR(m, n, o)->pList.part;
-       np   = CELL_PTR(m, n, o)->pList.n;
-       for(i=0 ; i<np; i++) {
-	 /* Particle is stored as ghost in the local_particles array,
-	    if the pointer stored there belongs to a ghost celll
-	    particle array. */
-	 if( &(part[i]) == local_particles[part[i].r.identity] ) 
-	   local_particles[part[i].r.identity] = NULL;
-       }
-       np   = CELL_PTR(m, n, o)->pList.n = 0;
-    }
-  }
+#endif
+  GHOST_TRACE(fprintf(stderr,"%d: exchange_and_sort_part: exit\n",this_node));
 }
 
 void exchange_ghost()
@@ -407,7 +379,8 @@ void exchange_ghost()
   g_send_buf.max = 0;
   g_recv_buf.max = 0;
 
-  for(s_dir=0; s_dir<6; s_dir++) {                      /* direction loop */
+  /* direction loop */
+  for(s_dir=0; s_dir<6; s_dir++) {                     
     if(s_dir%2 == 0) r_dir = s_dir+1;
     else             r_dir = s_dir-1;
 
@@ -415,14 +388,15 @@ void exchange_ghost()
     c_max                         = send_cells[s_dir].n;
     n_send_ghosts[s_dir].e[c_max] = 0;
     cnt                           = 0;
+    /* send cell loop */
     for(c=0; c<c_max; c++) {
       pl = &(cells[send_cells[s_dir].e[c]].pList);
       n_send_ghosts[s_dir].e[c]      = pl->n;
       n_send_ghosts[s_dir].e[c_max] += pl->n;
     }
+    /* realloc g_send_buf */
     if(n_send_ghosts[s_dir].e[c_max] > g_send_buf.max) 
       realloc_redParticles(&g_send_buf, n_send_ghosts[s_dir].e[c_max]);
-
     /* copy ghosts to send buffer */
     for(c=0; c<c_max; c++) {
       pl = &(cells[send_cells[s_dir].e[c]].pList);
@@ -441,18 +415,17 @@ void exchange_ghost()
 	cnt++;
       }
     }
-
     /* send ghosts */
     send_ghosts(s_dir);
-
     /* copy recieved ghosts to cell structure */
-
     c_max = recv_cells[r_dir].n;
     cnt=0;
+    /* loop recv cells */
     for(c=0; c<c_max; c++) {
       pl    = &(cells[recv_cells[r_dir].e[c]].pList);
       realloc_particles(pl, n_recv_ghosts[r_dir].e[c]);
       pl->n = n_recv_ghosts[r_dir].e[c];
+      /* copy ghosts from recv buffer to ghost cells. */
       for(n=0; n < pl->n; n++) {
 	memcpy(&(pl->part[n].r), &(g_recv_buf.part[cnt]), sizeof(ReducedParticle));
 	/* Real Paricle Priority! 
@@ -484,6 +457,28 @@ void exchange_ghost()
 		      ghost_recv_size[5],recv_buf.max));
 
   GHOST_TRACE(print_ghost_positions());
+}
+
+void invalidate_ghosts()
+{
+  Particle *part;
+  int m, n, o, i, np;
+  /* remove ghosts, but keep Real Particles */
+  CELLS_LOOP(m, n, o) {
+    /* ghost cell selection */
+    if (IS_GHOST_CELL(m, n, o)) {
+       part = CELL_PTR(m, n, o)->pList.part;
+       np   = CELL_PTR(m, n, o)->pList.n;
+       for(i=0 ; i<np; i++) {
+	 /* Particle is stored as ghost in the local_particles array,
+	    if the pointer stored there belongs to a ghost celll
+	    particle array. */
+	 if( &(part[i]) == local_particles[part[i].r.identity] ) 
+	   local_particles[part[i].r.identity] = NULL;
+       }
+       np   = CELL_PTR(m, n, o)->pList.n = 0;
+    }
+  }
 }
 
 void update_ghost_pos()
@@ -606,14 +601,6 @@ void collect_ghost_forces()
 
 /*******************  privat functions  *******************/
 
-/** Creates an linear index list of a sub grid.
-    The sub grid is defined by its lower and upper corner:\\
-    from (lc[0],lc[1],lc[2]) to (hc[0],hc[1],hc[2])\\
-    The grid dimension is given with (gs[0],gs[1],gs[2])\\
-    The linear index list of length <returnvalue> is stored 
-    in list starting from position start. max should be the 
-    total length of list to ensure that the indices fit into list.
- */  
 int sub_grid_indices(int* list, int start, int max,
 		     int lc[3], int hc[3], int gs[3])
 {

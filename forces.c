@@ -22,11 +22,28 @@
 #include "fene.h"
 #include "angle.h"
 
+/************************************************/
+/* Variables */
+/************************************************/
 double minimum_part_dist = -1;
+
+/************************************************************/
+/** \name Privat Functions */
+/************************************************************/
+/*@{*/
 
 /** initialize real particle forces with thermostat forces and
     ghost particle forces with zero. */
 void init_forces();
+
+/** Check the existence of a bond partner on that node and return the
+    corresponding particle pointer or force exit.
+    @param id particle identity.
+    @return Particle pointer.
+ */
+static Particle *checked_particle_ptr(int id);
+
+/*@}*/
 
 /************************************************************/
 
@@ -36,26 +53,10 @@ void force_init()
   FORCE_TRACE(fprintf(stderr,"%d: found %d particles types\n",
 		      this_node,n_particle_types));
   FORCE_TRACE(fprintf(stderr,"%d: lj_force_cap = %f\n",this_node,lj_force_cap));
-
-  calc_lj_cap_radii(lj_force_cap);
-
+  
+  calc_lj_cap_radii(lj_force_cap); 
 }
 
-
-/************************************************************/
-
-static Particle *checked_particle_ptr(int id)
-{
-  Particle *p = local_particles[id];
-  if(!p) {
-    fprintf(stderr,"%d: ERROR: Atom %d has bond to unknown particle "
-	    "(probably on different node)\n",this_node, id); 
-    errexit();
-  }
-  return p;
-}
-
-/************************************************************/
 
 void force_calc()
 {
@@ -90,9 +91,9 @@ void force_calc()
 			      checked_particle_ptr(p1->bl.e[i+1]), type_num);
 	  i+=2; break;
 	case BONDED_IA_ANGLE:
-	  add_angle_pair_force(p1,
-			       checked_particle_ptr(p1->bl.e[i+1]),
-			       checked_particle_ptr(p1->bl.e[i+2]), type_num);
+	  add_angle_force(p1,
+			  checked_particle_ptr(p1->bl.e[i+1]),
+			  checked_particle_ptr(p1->bl.e[i+2]), type_num);
 	  i+=3; break;
 	default :
 	  fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->r.identity);
@@ -121,7 +122,7 @@ void force_calc()
 	add_lj_pair_force(p1,p2,ia_params,d,dist);
 
 	/* real space coulomb */
-	add_coulomb_pair_force(p1,p2,d,dist2,dist);
+	add_p3m_coulomb_pair_force(p1,p2,d,dist2,dist);
 
 	/* minimal particle distance calculation */
 	if (dist < minimum_part_dist)
@@ -131,7 +132,7 @@ void force_calc()
   }
 
   /* calculate k-space part of electrostatic interaction. */
-  if(p3m.bjerrum != 0.0) P3M_calc_kspace_forces();
+  if(p3m.bjerrum != 0.0) P3M_calc_kspace_forces(0);
 }
 
 /************************************************************/
@@ -146,9 +147,7 @@ void init_forces()
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
     /* ghost particle selection */
-    if (m == 0 || m == ghost_cell_grid[0] - 1 ||
-	n == 0 || n == ghost_cell_grid[1] - 1 ||
-	o == 0 || o == ghost_cell_grid[2] - 1) {
+    if (IS_GHOST_CELL(m, n, o)) {
       for (i = 0; i < np; i++) {
 	p[i].f[0] = 0;
 	p[i].f[1] = 0;
@@ -163,9 +162,15 @@ void init_forces()
   }
 }
 
-void force_exit()
+/************************************************************/
+static Particle *checked_particle_ptr(int id)
 {
-  FORCE_TRACE(fprintf(stderr,"%d: force_exit:\n",this_node));
+  Particle *p = local_particles[id];
+  if(!p) {
+    fprintf(stderr,"%d: ERROR: Atom %d has bond to unknown particle "
+	    "(probably on different node)\n",this_node, id); 
+    errexit();
+  }
+  return p;
 }
-
 
