@@ -1,5 +1,6 @@
 #!/bin/sh
-TESTCASES="lj.tcl lj-cos.tcl harm.tcl fene.tcl mmm1d.tcl dh.tcl madelung.tcl intpbc.tcl intppbc.tcl"
+TESTCASES="lj.tcl lj-cos.tcl harm.tcl gb.tcl fene.tcl mmm1d.tcl dh.tcl madelung.tcl intpbc.tcl
+intppbc.tcl rotation.tcl"
 # lj-cos.tcl FENE.tcl harmonic.tcl... constraints thermosim energy pressure rotation gay-berne
 # 
 # List of testcases to be done (and people responsible for them):
@@ -15,9 +16,9 @@ TESTCASES="lj.tcl lj-cos.tcl harm.tcl fene.tcl mmm1d.tcl dh.tcl madelung.tcl int
 #   Testing electrostatic interactions.
 # - mmm1d: (AxA / Status: Done.)
 #   Testing forces of the mmm1D-interaction.
-# - GB: (DmA / Status: Scheduled.)
+# - gb: (DmA / Status: Done.)
 #   Testing forces, energies, pressures of the Gay-Berne-Potential.
-# - Rot: (DmA / Status: Scheduled.)
+# - rotation: (DmA / Status: Done.)
 #   Testing system with rotational degrees of freedom.
 # - const: (HL / Status: Scheduled.)
 #   Check if constraints are working.
