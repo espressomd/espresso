@@ -917,11 +917,16 @@ void calc_link_cell()
 	}
 	/* Loop neighbor cell particles */
 	for(j = j_start; j < np2; j++) {
-	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
-	  if(dist2 <= max_range_non_bonded2) {
-	    /* calc non bonded interactions */
-	    add_non_bonded_pair_force(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-	  }
+#ifdef EXCLUSIONS
+          if(do_nonbonded(&p1[i], &p2[j]))
+#endif
+	    {
+	      dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
+	      if(dist2 <= max_range_non_bonded2) {
+		/* calc non bonded interactions */
+		add_non_bonded_pair_force(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
+	      }
+	    }
 	}
       }
     }
@@ -966,8 +971,13 @@ void calculate_link_cell_energies()
 	if(n == 0) j_start = i+1;
 	/* Loop neighbor cell particles */
 	for(j = j_start; j < np2; j++) {	
-	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
-	  add_non_bonded_pair_energy(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
+#ifdef EXCLUSIONS
+          if(do_nonbonded(&p1[i], &p2[j]))
+#endif
+	    {
+	      dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
+	      add_non_bonded_pair_energy(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
+	    }
 	}
       }
     }
