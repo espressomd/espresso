@@ -184,12 +184,8 @@ set n_part [expr $n_mono ]
 #flush stdout
 #puts "[inter coulomb $bjerrum p3m tune accuracy $accuracy]"
 
-puts "Particles:\n[part]\n[setmd cell_grid]"
-
 #Use pretuned p3m parameters:
 inter coulomb 2 p3m 125.07 8 6 0.0195788 9.47835e-07
-
-puts "Particles:\n[part]\n[setmd cell_grid]"
 
 # Status report
 puts "$n_poly PE chain of length $p_length and charge distance $b_length"
