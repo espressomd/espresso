@@ -232,7 +232,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
   }
 
   /* prepare communicator */
-  CELL_TRACE(fprintf(stderr,"%d Create Communicator: data_parts %d num %d\n",this_node,data_parts,num));
+  CELL_TRACE(fprintf(stderr,"%d Create Communicator: prep_comm data_parts %d num %d\n",this_node,data_parts,num));
   prepare_comm(comm, data_parts, num);
 
   /* number of cells to communicate in a direction */
@@ -269,12 +269,13 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	    /* fill send comm cells */
 	    lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
 	    dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
-	    CELL_TRACE(fprintf(stderr,"%d: comm %d copy to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
+	    CELL_TRACE(fprintf(stderr,"%d: prep_comm %d copy to          grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,
+			       lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
 	    /* fill recv comm cells */
 	    lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
 	    /* place recieve cells after send cells */
 	    dd_fill_comm_cell_lists(&comm->comm[cnt].part_lists[n_comm_cells[dir]],lc,hc);
-	    CELL_TRACE(fprintf(stderr,"%d:        recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
+	    CELL_TRACE(fprintf(stderr,"%d: prep_comm %d copy from        grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
 	    cnt++;
 	  }
       }
@@ -296,7 +297,8 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	      lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
 	      dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
 	      
-	       CELL_TRACE(fprintf(stderr,"%d: comm %d send to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
+	      CELL_TRACE(fprintf(stderr,"%d: prep_comm %d send to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,
+				 comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
 	      cnt++;
 	    }
 #ifdef PARTIAL_PERIODIC
@@ -311,7 +313,8 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	      lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
 	      dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
 	      
-	      CELL_TRACE(fprintf(stderr,"%d: comm %d recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
+	      CELL_TRACE(fprintf(stderr,"%d: prep_comm %d recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,
+				 comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
 	      cnt++;
 	    }
 	}
@@ -349,6 +352,19 @@ void dd_revert_comm_order(GhostCommunicator *comm)
 	comm->comm[i].part_lists[j] = comm->comm[i].part_lists[j+nlist2];
 	comm->comm[i].part_lists[j+nlist2] = tmplist;
       }
+    }
+  }
+}
+
+/** Of every two communication rounds, set the first receivers to prefetch and poststore */
+void dd_assign_prefetches(GhostCommunicator *comm)
+{
+  int cnt;
+
+  for(cnt=0; cnt<comm->num; cnt += 2) {
+    if (comm->comm[cnt].type == GHOST_RECV && comm->comm[cnt + 1].type == GHOST_SEND) {
+      comm->comm[cnt].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+      comm->comm[cnt + 1].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
     }
   }
 }
@@ -523,6 +539,11 @@ void dd_topology_init(CellPList *old)
   dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
   /* collect forces has to be done in reverted order! */
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
+
+  dd_assign_prefetches(&cell_structure.ghost_cells_comm);
+  dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
+  dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
+  dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
   /* initialize cell neighbor structures */
   dd_init_cell_interactions();

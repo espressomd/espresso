@@ -111,6 +111,8 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
     if (data_parts == GHOSTTRANS_PARTNUM) {
       *(int *)insert = np;
       insert += sizeof(int);
+      GHOST_TRACE(fprintf(stderr, "%d: %d particles assigned\n",
+			  this_node, np));
     }
     else {
       part = gc->part_lists[pl]->part;
@@ -175,7 +177,8 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
   retrieve = r_buffer;
   for (pl = 0; pl < gc->n_part_lists; pl++) {
     if (data_parts == GHOSTTRANS_PARTNUM) {
-      GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d\n", this_node, gc->part_lists[pl], *(int *)retrieve));
+      GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d, assigned to node %d\n",
+			  this_node, gc->part_lists[pl], *(int *)retrieve, gc->node));
       realloc_particlelist(gc->part_lists[pl], gc->part_lists[pl]->n = *(int *)retrieve);
       retrieve += sizeof(int);
     }
@@ -328,10 +331,11 @@ void ghost_communicator(GhostCommunicator *gc)
     GhostCommunication *gcn = &gc->comm[n];
     int comm_type = gcn->type & GHOST_JOBMASK;
     int prefetch  = gcn->type & GHOST_PREFETCH;
+    int poststore = gcn->type & GHOST_PSTSTORE;
     int node      = gcn->node;
     
-    GHOST_TRACE(fprintf(stderr, "%d: round %d, job %x\n", this_node, n, gc->comm[n].type));
-    GHOST_TRACE(fprintf(stderr, "%d: shift %f %f %f\n",this_node, gc->comm[n].shift[0], gc->comm[n].shift[1], gc->comm[n].shift[2]));
+    GHOST_TRACE(fprintf(stderr, "%d: ghost_comm round %d, job %x\n", this_node, n, gc->comm[n].type));
+    GHOST_TRACE(fprintf(stderr, "%d: ghost_comm shift %f %f %f\n",this_node, gc->comm[n].shift[0], gc->comm[n].shift[1], gc->comm[n].shift[2]));
     if (comm_type == GHOST_LOCL)
       cell_cell_transfer(gcn, data_parts);
     else {
@@ -340,18 +344,27 @@ void ghost_communicator(GhostCommunicator *gc)
 	/* ok, we send this step, prepare send buffer if not yet done */
 	if (!prefetch)
 	  prepare_send_buffer(gcn, data_parts);
+	else {
+	  GHOST_TRACE(fprintf(stderr, "%d: ghost_comm using prefetched data for operation %d, sending to %d\n", this_node, n, node));
+#ifdef ADDITIONAL_CHECKS
+	  if (n_s_buffer != calc_transmit_size(gcn, data_parts)) {
+	    fprintf(stderr, "%d: ghost_comm transmission size and current size of cells to transmit do not match\n", this_node);
+	    errexit();
+	  }
+#endif
+	}
       }
       else {
 	/* we do not send this time, let's look for a prefetch */
 	if (prefetch) {
+	  /* find next action where we send and which has PREFETCH set */
 	  for (n2 = n+1; n2 < gc->num; n2++) {
 	    GhostCommunication *gcn2 = &gc->comm[n2];
 	    int comm_type2 = gcn2->type & GHOST_JOBMASK;
 	    int prefetch2  = gcn2->type & GHOST_PREFETCH;
 	    int node2      = gcn2->node;
-	    /* find next action where we send and which has PREFETCH set */
 	    if (is_send_op(comm_type2, node2) && prefetch2) {
-	      GHOST_TRACE(fprintf(stderr, "%d: prefetch comm with/from %d\n", this_node, node2));
+	      GHOST_TRACE(fprintf(stderr, "%d: ghost_comm prefetch operation %d, is send/bcast to/from %d\n", this_node, n2, node2));
 	      prepare_send_buffer(gcn2, data_parts);
 	      break;
 	    }
@@ -366,42 +379,71 @@ void ghost_communicator(GhostCommunicator *gc)
       /* transfer data */
       switch (comm_type) {
       case GHOST_RECV:
-	GHOST_TRACE(fprintf(stderr, "%d: receive from %d\n", this_node, node));
+	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm receive from %d\n", this_node, node));
 	MPI_Recv(r_buffer, n_r_buffer, MPI_BYTE, node, REQ_GHOST_SEND, MPI_COMM_WORLD, &status);
 	break;
       case GHOST_SEND:
-	GHOST_TRACE(fprintf(stderr, "%d: send to %d\n", this_node, node));
+	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm send to %d\n", this_node, node));
 	MPI_Send(s_buffer, n_s_buffer, MPI_BYTE, node, REQ_GHOST_SEND, MPI_COMM_WORLD);
 	break;
       case GHOST_BCST:
-	GHOST_TRACE(fprintf(stderr, "%d: bcast from %d\n", this_node, node));
+	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm bcast from %d\n", this_node, node));
 	if (node == this_node)
 	  MPI_Bcast(s_buffer, n_s_buffer, MPI_BYTE, node, MPI_COMM_WORLD);
 	else
 	  MPI_Bcast(r_buffer, n_r_buffer, MPI_BYTE, node, MPI_COMM_WORLD);
 	break;
       case GHOST_RDCE:
-	GHOST_TRACE(fprintf(stderr, "%d: reduce to %d\n", this_node, node));
+	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm reduce to %d\n", this_node, node));
 	if (node == this_node)
 	  MPI_Reduce(s_buffer, r_buffer, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, MPI_COMM_WORLD);
 	else
 	  MPI_Reduce(s_buffer, NULL, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, MPI_COMM_WORLD);
 	break;
       }
-      GHOST_TRACE(fprintf(stderr, "%d: done\n", this_node));
-
-      /* write back data */
-      if (comm_type == GHOST_RECV ||
-	  (comm_type == GHOST_BCST && node != this_node)) {
-	/* forces have to be added, the rest overwritten */
-	if (data_parts == GHOSTTRANS_FORCE)
-	  add_forces_from_recv_buffer(gcn);
-	else
-	  put_recv_buffer(gcn, data_parts);
+      GHOST_TRACE(fprintf(stderr, "%d: ghost_comm done\n", this_node));
+      
+      /* recv op; write back data directly, if no PSTSTORE delay is requested. */
+      if (is_recv_op(comm_type, node)) {
+	if (!poststore) {
+	  /* forces have to be added, the rest overwritten. Exception is RDCE, where the addition
+	     is integrated into the communication. */
+	  if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
+	    add_forces_from_recv_buffer(gcn);
+	  else
+	    put_recv_buffer(gcn, data_parts);
+	}
+	else {
+	  GHOST_TRACE(fprintf(stderr, "%d: ghost_comm delaying operation %d, recv from %d\n", this_node, n, node));
+	}
       }
-      else if (comm_type == GHOST_RDCE && node == this_node)
-	/* exception: for reduce, the addition is integral part of the reduce operation */
-	put_recv_buffer(gcn, data_parts);
+      else {
+	/* send op; write back delayed data from last recv, when this was a prefetch send. */
+	if (poststore) {
+	  /* find previous action where we recv and which has PSTSTORE set */
+	  for (n2 = n-1; n2 >= 0; n2--) {
+	    GhostCommunication *gcn2 = &gc->comm[n2];
+	    int comm_type2 = gcn2->type & GHOST_JOBMASK;
+	    int poststore2 = gcn2->type & GHOST_PSTSTORE;
+	    int node2      = gcn2->node;
+	    if (is_recv_op(comm_type2, node2) && poststore2) {
+	      GHOST_TRACE(fprintf(stderr, "%d: ghost_comm storing delayed recv, operation %d, from %d\n", this_node, n2, node2));
+#ifdef ADDITIONAL_CHECKS
+	      if (n_r_buffer != calc_transmit_size(gcn2, data_parts)) {
+		fprintf(stderr, "%d: ghost_comm transmission size and current size of cells to transmit do not match\n", this_node);
+		errexit();
+	      }
+#endif
+	      /* as above */
+	      if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
+		add_forces_from_recv_buffer(gcn2);
+	      else
+		put_recv_buffer(gcn2, data_parts);
+	      break;
+	    }
+	  }
+	}
+      }
     }
   }
 }

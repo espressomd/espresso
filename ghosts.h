@@ -9,19 +9,17 @@
 #ifndef GHOSTS_H 
 #define GHOSTS_H 
 /** \file ghosts.h    Ghost particles and particle exchange.
- *
- *  <b>Responsible:</b>
- *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
- *
- *  In this file you find everything concerning the exchange of
- *  particle data (particles, ghosts, positions and forces) for short
- *  range interactions between the spacial domains of neighbouring
- *  nodes.
- *
- *  All structures are initialized by \ref ghost_init.
- *
- *
- */
+ 
+<b>Responsible:</b>
+<a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
+ 
+In this file you find everything concerning the exchange of
+particle data (particles, ghosts, positions and forces) for short
+range interactions between the spacial domains of neighbouring
+nodes.
+ 
+Organization:  
+*/
 #include <mpi.h>
 #include "particle_data.h"
 
@@ -36,6 +34,7 @@
 #define GHOST_LOCL 4
 #define GHOST_JOBMASK  15
 #define GHOST_PREFETCH 16
+#define GHOST_PSTSTORE 32
 
 /*@}*/
 
