@@ -74,7 +74,10 @@ void rescale_forces_propagate_vel();
 /************************************************************/
 
 int invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  particle_changed = interactions_changed = topology_changed = parameter_changed = 1;
+  mpi_bcast_event(PARTICLE_CHANGED);
+  mpi_bcast_event(INTERACTION_CHANGED);
+  mpi_bcast_event(PARAMETER_CHANGED);
+  mpi_bcast_event(TOPOLOGY_CHANGED);
   return TCL_OK;
 }
 
