@@ -113,6 +113,29 @@ int velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv);
     which returns the averaged velocity assigned. */
 double velocitiesC(double v_max, int part_id, int N_T);
 
+/** Implementation of the tcl-command
+    crosslink <N_P> <MPC> [start <part_id>] [catch <r_catch>] [distLink <link_dist>] [distChain <chain_dist>] [FENE <type_FENE>] [trials <max_try>]
+    Evaluates the current configuration and connects each chain's end to a random monomer of another chain at most <r_catch> away,
+    if the next crosslink from there is at least <link_dist> monomers away.
+    @param  <N_P>         = number of polymer chains
+    @param  <MPC>         = monomers per chain
+    @param  <part_id>     = particle number of the start monomer (defaults to '0')
+    @param  <r_catch>     = maximum length of a crosslink (defaults to '1.9')
+    @param  <link_dist>   = minimum distance between the indices of two crosslinked monomers with different binding partners (defaults to '2')
+    @param  <chain_dist>  = same as <link_dist>, but for monomers of the same bond (defaults to <MPC> => no bonds to the same chain allowed)
+    @param  <max_try>     = how often crosslinks should be removed if they are too close to other links (defaults to '30000')
+    @return Returns how many ends are now successfully linked. */
+int crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
+/** Collects the bonds leading to and from the ending monomers of the chains (mode == 1) or
+    all the bonds leading to and from each monomer (mode == 2). 
+    @return  Returns '0' upon success, '-2' otherwise. */
+int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond, int **bond_out, int ***bonds_out);
+
+/** C implementation of 'crosslink <N_P> <MPC> [options]',
+    which returns how many ends are now successfully linked.   */
+int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int chain_dist, int type_FENE, int max_try);
+
 
 #endif
 

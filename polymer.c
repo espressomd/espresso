@@ -18,6 +18,7 @@
 #include "polymer.h"
 #include "grid.h"
 #include "communication.h"
+#include "interaction_data.h"
 #include "random.h"
 #include "debug.h"
 #include "utils.h"
@@ -38,20 +39,22 @@ int mindist3(int part_id, double r_catch, int *ids) {
       less than <r_catch> away from the position of the particle <part_id>. */
   Particle *partCfgMD;
   double dx,dy,dz;
-  int i, caught=0;
-  ids = (int *)malloc(n_total_particles*sizeof(int));
+  int i, me, caught=0;
 
   partCfgMD = malloc(n_total_particles*sizeof(Particle));
-  mpi_get_particles(partCfgMD); 
+  mpi_get_particles(partCfgMD, NULL);
+  me = -1;        /* Since 'mpi_get_particles' returns the particles unsorted, it's most likely that 'partCfgMD[i].r.identity != i' --> prevent that! */
+  for(i=0; i<n_total_particles; i++) if (partCfgMD[i].r.identity == part_id) me = i; 
+  if (me == -1) { 
+    fprintf(stderr, "Failed to find desired particle %d within the %d known particles!\nAborting...\n",part_id,n_total_particles); errexit(); }
   for (i=0; i<n_total_particles; i++) {
-    if (i != part_id) {
-      dx = partCfgMD[part_id].r.p[0] - partCfgMD[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
-      dy = partCfgMD[part_id].r.p[1] - partCfgMD[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
-      dz = partCfgMD[part_id].r.p[2] - partCfgMD[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
-      if (sqrt(SQR(dx)+SQR(dy)+SQR(dz)) < r_catch) ids[++caught]=partCfgMD[i].r.identity;
+    if (i != me) {
+      dx = partCfgMD[me].r.p[0] - partCfgMD[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
+      dy = partCfgMD[me].r.p[1] - partCfgMD[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
+      dz = partCfgMD[me].r.p[2] - partCfgMD[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
+      if (sqrt(SQR(dx)+SQR(dy)+SQR(dz)) < r_catch) ids[caught++]=partCfgMD[i].r.identity;
     }
   }
-  ids = (int *)realloc(ids,caught*sizeof(int));
   free(partCfgMD); 
   return (caught);
 }
@@ -69,7 +72,7 @@ double mindist4(double pos[3]) {
 
   if (n_total_particles ==0) return (dmin(dmin(box_l[0],box_l[1]),box_l[2]));
   partCfgMD = malloc(n_total_particles*sizeof(Particle));
-  mpi_get_particles(partCfgMD); 
+  mpi_get_particles(partCfgMD, NULL); 
   for (i=0; i<n_total_particles; i++) {
     dx = pos[0] - partCfgMD[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
     dy = pos[1] - partCfgMD[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
@@ -137,7 +140,9 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	  if (shield < 0) { Tcl_AppendResult(interp, "The SAW-shield must be positive (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
 	  if ((i+3 >= argc) || (Tcl_GetInt(interp, argv[i+3], &max_try) == TCL_ERROR)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } } }
       else if (!strncmp(argv[i+1], "RW", strlen(argv[i+1]))) {
-	mode = 1; i++; }
+	mode = 1;
+	if ((i+2 >= argc) || (Tcl_GetDouble(interp, argv[i+2], &shield) == TCL_ERROR)) { Tcl_ResetResult(interp); i++; }
+	else if ((i+3 >= argc) || (Tcl_GetInt(interp, argv[i+3], &max_try) == TCL_ERROR)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } }
       else {
 	Tcl_AppendResult(interp, "The mode you specified does not exist (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
     }
@@ -233,7 +238,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, int mode, double
 	  fprintf(stderr,"         Retrying by re-setting the start-monomer of current chain...\n");
 	  part_id = part_id - n; n=0; break;
 	}
-	bond[0] = type_FENE; bond[1] = n-1;
+	bond[0] = type_FENE; bond[1] = part_id - 1;
 	if (place_particle(part_id, pos)==TCL_ERROR) return (-3);
 	if (set_particle_q(part_id, ((n % cM_dist==0) ? val_cM : 0.0) )==TCL_ERROR) return (-3);
 	if (set_particle_type(part_id, ((n % cM_dist==0) ? type_cM : type_nM) )==TCL_ERROR) return (-3);
@@ -290,7 +295,9 @@ int counterions (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	  if (shield < 0) { Tcl_AppendResult(interp, "The SAW-shield must be positive (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
 	  if ((i+3 >= argc) || (Tcl_GetInt(interp, argv[i+3], &max_try) == TCL_ERROR)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } } }
       else if (!strncmp(argv[i+1], "RW", strlen(argv[i+1]))) {
-	mode = 1; i++; }
+	mode = 1;
+	if ((i+2 >= argc) || (Tcl_GetDouble(interp, argv[i+2], &shield) == TCL_ERROR)) { Tcl_ResetResult(interp); i++; }
+	else if ((i+3 >= argc) || (Tcl_GetInt(interp, argv[i+3], &max_try) == TCL_ERROR)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } }
       else {
 	Tcl_AppendResult(interp, "The mode you specified does not exist (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
     }
@@ -395,7 +402,9 @@ int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	  if (shield < 0) { Tcl_AppendResult(interp, "The SAW-shield must be positive (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
 	  if ((i+3 >= argc) || (Tcl_GetInt(interp, argv[i+3], &max_try) == TCL_ERROR)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } } }
       else if (!strncmp(argv[i+1], "RW", strlen(argv[i+1]))) {
-	mode = 1; i++; }
+	mode = 1;
+	if ((i+2 >= argc) || (Tcl_GetDouble(interp, argv[i+2], &shield) == TCL_ERROR)) { Tcl_ResetResult(interp); i++; }
+	else if ((i+3 >= argc) || (Tcl_GetInt(interp, argv[i+3], &max_try) == TCL_ERROR)) { Tcl_ResetResult(interp); i+=2; } else { i+=3; } }
       else {
 	Tcl_AppendResult(interp, "The mode you specified does not exist (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
     }
@@ -510,7 +519,7 @@ int velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
       else {
 	if ((part_id < 0) || (part_id>=n_total_particles)) {
 	  sprintf(buffer,"Index of first particle must be in [0,%d[ (got: ", n_total_particles);
-	  Tcl_AppendResult(interp, buffer ,argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+	  Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
       i++;
     }
     /* [count <N_T>] */
@@ -520,7 +529,7 @@ int velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
       else {
 	if ((N_T < 0) || (part_id+N_T > n_total_particles)) {
 	  sprintf(buffer,"The amount of particles to be set must be in [0,%d] (got: ",n_total_particles-part_id);
-	  Tcl_AppendResult(interp, buffer,argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+	  Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
       i++;
     }
     /* default */
@@ -540,78 +549,315 @@ int velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 double velocitiesC(double v_max, int part_id, int N_T) {
   /** C implementation of 'velocities <v_max> [options]',
       which returns the averaged velocity assigned. */
-  double r,theta,phi, v[3], v_av[3];
+  double v[3], v_av[3];
   int i;
 
   v_av[0] = v_av[1] = v_av[2] = 0.0;
   for (i=part_id; i < part_id+N_T; i++) {
-    r     = v_max*d_random();
-    theta =    PI*d_random();
-    phi   = 2.*PI*d_random();
-    v[0] = r*sin(theta)*cos(phi);  v_av[0]+=v[0];
-    v[1] = r*sin(theta)*sin(phi);  v_av[1]+=v[1];
-    v[2] = r*cos(theta);           v_av[2]+=v[2];
+    do {
+      v[0] = v_max * 2.*(d_random()-.5);
+      v[1] = v_max * 2.*(d_random()-.5);
+      v[2] = v_max * 2.*(d_random()-.5);
+    } while ( sqrt(SQR(v[0])+SQR(v[1])+SQR(v[2])) > v_max);
+    v_av[0]+=v[0]; v_av[1]+=v[1]; v_av[2]+=v[2];
     if (set_particle_v(i, v)==TCL_ERROR) {
       fprintf(stderr, "Failed upon setting one of the velocities in tcl_md (current average: %f)!\n",sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2]))); 
       fprintf(stderr, "Aborting...\n"); errexit();
     }
   }
-  return (sqrt(SQR(v_av[0]) + SQR(v_av[1]) + SQR(v_av[2])));
+  return ( sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2])) );
 }
 
 
 
-/*
-proc crosslink { N_P MPC  {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA} } {
-# crosslink <N_P> <MPC> [catch <r_catch>] [distance <link_dist>] [trials <max_try>]
-# Evaluates the current configuration and connects each chain's end to a random monomer of another chain at most <r_catch> away,
-# if the next crosslink from there is at least <link_dist> monomers away;
-# returns how many ends have been successfully linked.
-# Parameters:  <N_P>         = number of polymer chains
-#              <MPC>         = monomers per chain
-#              <r_catch>     = maximum length of a crosslink (defaults to '1.9')
-#              <link_dist>   = minimum distance between the indices of two crosslinked monomers (defaults to '2')
-#              <max_try>     = how often crosslinks should be removed if they are too close to other links (defaults to '30000')
-    set param [list $p1 $p2 $p3 $p4 $p5 $p6]
-    set r_catch 1.9; set link_dist 2; set max_try 30000
-    for {set i 0} {$i < 6} {incr i} {
-	switch [lindex $param $i] {
-	    "catch" { incr i; set r_catch [lindex $param $i] 
-		      if { ![string is double $r_catch] } { puts "Maximum length of a crosslink must be double (got: $r_catch)!\nAborting...\n"; exit } }
-	    "distance" { incr i; set link_dist [lindex $param $i]
-		      if { ![string is integer $link_dist] } { 
-			  puts "The distance between two crosslinked monomers' indices must be integer (got: $link_dist)!\nAborting...\n"; exit } }
-	    "trials" { incr i; set max_try [lindex $param $i]
-		      if { ![string is integer $max_try] } { puts "The maximum \# of trials must be integer (got: $max_try)!\nAborting...\n"; exit } }
-	    default { if { [lindex $param $i]!="NA" } {
-		          puts "The parameter set you supplied ($param) does not seem to be valid (stuck at: [lindex $param $i])!\nAborting...\n"; exit }
-	            }
-	}
+int crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+  /** Implementation of the tcl-command
+      crosslink <N_P> <MPC> [start <part_id>] [catch <r_catch>] [distLink <link_dist>] [distChain <chain_dist>] [FENE <type_FENE>] [trials <max_try>]
+      Evaluates the current configuration and connects each chain's end to a random monomer of another chain at most <r_catch> away,
+      if the next crosslink from there is at least <link_dist> monomers away;
+      returns how many ends are now successfully linked.
+      Parameters:  <N_P>         = number of polymer chains
+                   <MPC>         = monomers per chain
+                   <part_id>     = particle number of the start monomer (defaults to '0')
+		   <r_catch>     = maximum length of a crosslink (defaults to '1.9')
+		   <link_dist>   = minimum distance between the indices of two crosslinked monomers with different binding partners (defaults to '2')
+		   <chain_dist>  = same as <link_dist>, but for monomers of the same bond (defaults to <MPC> => no bonds to the same chain allowed)
+		   <type_FENE>   = type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0') 
+		   <max_try>     = how often crosslinks should be removed if they are too close to other links (defaults to '30000') */
+  int N_P, MPC; int part_id=0;
+  double r_catch=1.9; int link_dist=2, chain_dist, type_FENE=0, tmp_try,max_try=30000; 
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  int i;
+
+  if (argc < 3) { Tcl_AppendResult(interp, "Wrong # of args! Usage: crosslink <N_P> <MPC> [options]", (char *)NULL); return (TCL_ERROR); }
+  N_P = atoi(argv[1]); MPC = atoi(argv[2]); chain_dist = MPC;
+  for (i=3; i < argc; i++) {
+    /* [start <part_id>] */
+    if (!strncmp(argv[i], "start", strlen(argv[i]))) {
+      if (Tcl_GetInt(interp, argv[i+1], &part_id) == TCL_ERROR) {	
+	Tcl_AppendResult(interp, "Index of first particle must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      else {
+	if ((part_id < 0) || (part_id > n_total_particles - N_P*MPC)) {
+	  sprintf(buffer,"Index of first particle must be in [0,%d] (got: ", n_total_particles - N_P*MPC);
+	  Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+      i++;
     }
-    set bonds [countBonds [part]]
-    for { set i 0 } { $i<$N_P } { incr i } {
-	lappend ends [lrange [lindex $bonds [expr $i*$MPC]] 1 end]
-	lappend link [mindist [expr $i*$MPC] $r_catch]
-	lappend ends [lrange [lindex $bonds [expr ($i+1)*$MPC-1]] 1 end]
-	lappend link [mindist [expr ($i+1)*$MPC-1] $r_catch]
+    /* [catch <r_catch>] */
+    else if (!strncmp(argv[i], "catch", strlen(argv[i]))) {
+      if (Tcl_GetDouble(interp, argv[i+1], &r_catch) == TCL_ERROR) {	
+	Tcl_AppendResult(interp, "Catching radius must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      else {
+	if ((r_catch < 0.) || (r_catch > dmax(dmax(box_l[0],box_l[1]),box_l[2]) )) {
+	  sprintf(buffer,"Catching radius must be in [0,%f] (got: ", dmax(dmax(box_l[0],box_l[1]),box_l[2]) );
+	  Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+      i++;
     }
-puts "$ends"
-puts "$link"
-    for { set i 0 } { $i<$N_P } { incr i } {
-	for { set k 0 } { $k<2 } { incr k } {
-	    set tmp_link1 [lindex $link [expr 2*$i+$k]]
-	    set tmp_link2 ""
-puts -nonewline "$i,$k: $tmp_link1 & $tmp_link2 => "; flush stdout
-	    for { set j 0 } { $j<[llength $tmp_link1] } { incr j } {
-		set tmp_link [lindex $tmp_link1 $j]
-puts -nonewline "$tmp_link "
-		if { ($tmp_link<[expr $i*$MPC] || $tmp_link>[expr ($i+1)*$MPC]) && $tmp_link<[expr $N_P*$MPC] } { lappend $tmp_link2 $tmp_link }
+    /* [distLink <link_dist>] */
+    else if (!strncmp(argv[i], "distLink", strlen(argv[i]))) {
+      if (Tcl_GetInt(interp, argv[i+1], &link_dist) == TCL_ERROR) {	
+	Tcl_AppendResult(interp, "Minimum distance between bonds must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      else {
+	if ((link_dist < 0) || (link_dist > MPC-1)) {
+	  sprintf(buffer,"Minimum distance between bonds must be in [0,%d] (got: ",MPC-1);
+	  Tcl_AppendResult(interp, buffer,argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+      i++;
+    }
+    /* [distChain <chain_dist>] */
+    else if (!strncmp(argv[i], "distChain", strlen(argv[i]))) {
+      if (Tcl_GetInt(interp, argv[i+1], &chain_dist) == TCL_ERROR) {	
+	Tcl_AppendResult(interp, "Minimum distance between partners must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      else {
+	if ((chain_dist < 0) || (chain_dist > MPC)) {
+	  sprintf(buffer,"Minimum distance between partners must be in [0,%d] (got: ",MPC);
+	  Tcl_AppendResult(interp, buffer,argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+      i++;
+    }
+    /* [FENE <type_FENE>] */
+    else if (!strncmp(argv[i], "FENE", strlen(argv[i]))) {
+      if (Tcl_GetInt(interp, argv[i+1], &type_FENE) == TCL_ERROR) { 
+	Tcl_AppendResult(interp, "The type-# of the FENE-interaction must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      else { i++; }
+    }
+    /* [trials <max_try>] */
+    else if (!strncmp(argv[i], "trials", strlen(argv[i]))) {
+      if (Tcl_GetInt(interp, argv[i+1], &max_try) == TCL_ERROR) {	
+	Tcl_AppendResult(interp, "Amount of retries must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      else {
+	if (max_try < 0) {
+	  sprintf(buffer,"Amount of retries must be positive (got: ");
+	  Tcl_AppendResult(interp, buffer,argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+      i++;
+    }
+    /* default */
+    else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
+  }
+
+  POLY_TRACE(printf("int N_P %d, int MPC %d, int part_id %d, double r_catch %f, int link_dist %d, int chain_dist %d, int type_FENE %d, int max_try %d\n", N_P, MPC, part_id, r_catch, link_dist, chain_dist, type_FENE, max_try));
+
+  tmp_try = crosslinkC(N_P, MPC, part_id, r_catch, link_dist, chain_dist, type_FENE, max_try);
+  if (tmp_try == -1) {
+    sprintf(buffer, "Failed to crosslink current system for %d times!\nAborting...\n",max_try); tmp_try = TCL_ERROR; }
+  else if (tmp_try == -2) {
+    sprintf(buffer, "An error occured while crosslinking the system!\nAborting...\n"); tmp_try = TCL_ERROR; }
+  else if (tmp_try == -3) {
+    sprintf(buffer, "Failed upon submitting a bond to tcl_md!\nAborting...\n"); tmp_try = TCL_ERROR; }
+  else if (tmp_try >= 0) {
+    sprintf(buffer, "%d", tmp_try); tmp_try = TCL_OK; }
+  else {
+    sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return (tmp_try);
+}
+
+
+
+int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond, int **bond_out, int ***bonds_out) {
+  /** Collects the bonds leading to and from the ending monomers of the chains (mode == 1) or
+      all the bonds leading to and from each monomer (mode == 2). */
+  int i,j,k,ii,size, *bond=NULL, **bonds=NULL;
+
+  /* Get particle and bonding informations. */
+  IntList *bl;
+  Particle *prt, *sorted;
+  bl  = malloc(1*sizeof(IntList));
+  prt = malloc(n_total_particles*sizeof(Particle));
+  mpi_get_particles(prt, bl); 
+
+  /* Sort the received informations. */
+  sorted = malloc(n_total_particles*sizeof(Particle));
+  for(i = 0; i < n_total_particles; i++)
+    memcpy(&sorted[prt[i].r.identity], &prt[i], sizeof(Particle));
+  free(prt);
+  prt = sorted;
+  
+  if (mode == 1) {
+    /* Find all the bonds leading to and from the ending monomers of the chains. */
+    bond  = malloc(2*N_P*sizeof(int));      bonds   = malloc(2*N_P*sizeof(int *));
+    for (i=0; i < 2*N_P; i++) { bond[i]=0;  bonds[i]= malloc(1*sizeof(int)); }
+    for (k=part_id; k < N_P*MPC + part_id; k++) {
+      i=0;
+      while(i < prt[k].bl.n) {
+	size = bonded_ia_params[prt[k].bl.e[i]].num;
+	if (prt[k].bl.e[i++] == type_bond) {
+	  for(j=0; j<size; j++) {
+	    if ((prt[k].r.identity % MPC == 0) || ( (prt[k].r.identity+1) % MPC == 0)) {
+	      ii = prt[k].r.identity%MPC ? 2*(prt[k].r.identity+1)/MPC-1 : 2*prt[k].r.identity/MPC;
+	      bonds[i] = realloc(bonds[i], (bond[i]+1)*sizeof(int));
+	      bonds[ii][bond[ii]++] = prt[k].bl.e[i];
 	    }
-puts "$tmp_link2"
-	    set link [lreplace $link [expr 2*$i+$k] [expr 2*$i+$k] $tmp_link2]
+	    else if ((prt[k].bl.e[i] % MPC == 0) || ( (prt[k].bl.e[i]+1) % MPC == 0)) {
+	      ii = prt[k].bl.e[i]%MPC ? 2*(prt[k].bl.e[i]+1)/MPC-1 : 2*prt[k].bl.e[i]/MPC;
+	      bonds[i] = realloc(bonds[i], (bond[i]+1)*sizeof(int));
+	      bonds[ii][bond[ii]++] = prt[k].r.identity;
+	    }
+	    i++;
+	  }
 	}
+	else i += size;
+      }
     }
-puts "$link"
-    
+    POLY_TRACE(for (i=0; i < 2*N_P; i++) {
+      printf("(%d) %d:\t",i,i%2 ? (i+1)*MPC/2-1 : i*MPC/2); if(bond[i]>0) for(j=0;j<bond[i];j++) printf("%d ",bonds[i][j]); printf("\t=%d\n",bond[i]);
+    });
+  }
+  else if (mode == 2) {
+    /* Find all the bonds leading to and from each monomer. */
+    bond  = malloc(N_P*MPC*sizeof(int));                bonds   = malloc(N_P*MPC*sizeof(int *));
+    for (i=0; i < N_P*MPC + part_id; i++) { bond[i]=0;  bonds[i]= malloc(1*sizeof(int)); }
+    for (k=part_id; k < N_P*MPC + part_id; k++) {
+      i=0;
+      while(i < prt[k].bl.n) {
+	size = bonded_ia_params[prt[k].bl.e[i]].num;
+	if (prt[k].bl.e[i++] == type_bond) {
+	  for(j=0; j<size; j++) {
+	    ii = prt[k].bl.e[i];
+	    bonds[k] = (int *) realloc(bonds[k], (bond[k]+1)*sizeof(int));
+	    bonds[k][bond[k]++] = ii;
+	    bonds[ii] = (int *) realloc(bonds[ii], (bond[ii]+1)*sizeof(int));
+	    bonds[ii][bond[ii]++] = k;
+	    i++;
+	  }
+	}
+	else i += size;
+      }
+    }
+    POLY_TRACE(for (i=0; i < N_P*MPC + part_id; i++) { 
+      printf("%d:\t",i); if(bond[i]>0) for(j=0;j<bond[i];j++) printf("%d ",bonds[i][j]); printf("\t=%d\n",bond[i]); 
+    });
+  }
+  else {
+    fprintf(stderr, "Unknown mode %d requested!\nAborting...\n",mode); fflush(NULL); return(-2);
+  }
+  free(prt); realloc_intlist(bl, 0);
+  *bond_out  = bond;
+  *bonds_out = bonds;
+  return(0);
 }
-*/
+
+
+
+int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int chain_dist, int type_FENE, int max_try) {
+  /** C implementation of 'crosslink <N_P> <MPC> [options]',
+      which returns how many ends are now successfully linked.   */
+  int i,j,k,ii,size, bondN[2], *bond, **bonds, *link, **links, *cross, crossL;
+
+  /* Find all the bonds leading to and from each monomer. */
+  if (collectBonds(2, part_id, N_P, MPC, type_FENE, &bond, &bonds)) return(-2);
+  POLY_TRACE(for (i=0; i < N_P*MPC + part_id; i++) { 
+    printf("%d:\t",i); if(bond[i]>0) for(j=0;j<bond[i];j++) printf("%d ",bonds[i][j]); printf("\t=%d\n",bond[i]); 
+  });
+  
+  /* Find all possible binding partners in the neighbourhood of the unconnected ending monomers. */
+  link  = malloc(2*N_P*sizeof(int));       
+  links = malloc(2*N_P*sizeof(int *));
+  for (i=0; i < N_P; i++) {
+    for (k=0; k<2; k++) {
+      if (bond[i*MPC+k*(MPC-1)] == 1) {
+	links[2*i+k] = malloc(n_total_particles*sizeof(int));
+	link[2*i+k] = mindist3(i*MPC+k*(MPC-1)+part_id, r_catch, links[2*i+k]);
+	links[2*i+k] = realloc(links[2*i+k],link[2*i+k]*sizeof(int));
+      }
+      else if (bond[i*MPC+k*(MPC-1)] == 2) { link[2*i+k] = -1; links[2*i+k] = realloc(links[2*i+k],0); }
+      else { fprintf(stderr,"Runaway end-monomer %d detected (has %d bonds)!\nAborting...\n", i*N_P+k*(MPC-1)+part_id, bond[i*MPC+k*(MPC-1)]); 
+             fflush(NULL); return(-2); }
+      POLY_TRACE(printf("%d: ",i*MPC+k*(MPC-1)+part_id); 
+		 for (j=0; j<link[2*i+k]; j++) printf("%d ",links[2*i+k][j]); printf("\t=%d\n",link[2*i+k]); fflush(NULL) );
+    }
+  }
+
+  /* Throw out all the monomers which are ends, which are too close to the ending monomers on the same chain, or which are no monomers at all. */
+  for (i=0; i < N_P; i++) {
+    for (k=0; k<2; k++) {
+      size = 0;  ii = i*MPC + k*(MPC-1) + part_id;
+      if (link[2*i+k] >= 0) {
+	for (j=0; j < link[2*i+k]; j++) {                     /* only monomers && ((same chain, but sufficiently far away) || (different chain)) */
+	  if ( (links[2*i+k][j] < N_P*MPC+part_id) && ( ((fabs(links[2*i+k][j] - ii) > chain_dist) || (fabs(links[2*i+k][j]-i*MPC) > (1.*MPC))) ) )
+	    if ((links[2*i+k][j] % MPC != 0) && ((links[2*i+k][j]+1) % MPC != 0)) links[2*i+k][size++] = links[2*i+k][j];    /* no ends accepted */
+	}
+	link[2*i+k]  = size; 
+	links[2*i+k] = realloc(links[2*i+k],link[2*i+k]*sizeof(int));
+      }
+      POLY_TRACE(printf("%d: ",ii); for (j=0; j<link[2*i+k]; j++) printf("%d ",links[2*i+k][j]); printf("\t=%d\n",link[2*i+k]); fflush(NULL) );
+    }
+  }
+
+  /* Randomly choose a partner (if not available -> '-1') for each polymer chain's end if it's not already been crosslinked (-> '-2'). */
+  cross = malloc(2*N_P*sizeof(int)); crossL = 0;
+  for (i=0; i < 2*N_P; i++) 
+    if (link[i] > 0) { cross[i] = links[i][(int)dround(d_random()*(link[i]-1))]; crossL++; }  else { cross[i] = -1+link[i]; crossL -= link[i]; }
+  POLY_TRACE(for (i=0; i < 2*N_P; i++) printf("%d -> %d \t", i%2 ? (i+1)*MPC/2-1 : i*MPC/2, cross[i]); printf("=> %d\n",crossL); fflush(NULL) );
+
+  /* Remove partners (-> '-3') if they are less than link_dist apart and retry. */
+  k = 0; ii = 1;
+  while ((k < max_try) && (ii > 0)) {
+    POLY_TRACE(printf("Check #%d: ",k));
+    for (i=0; i < 2*N_P; i++) {
+      if (cross[i] >= 0) {
+	for (j=0; j < 2*N_P; j++) {       /* In the neighbourhood of each partner shall be no future crosslinks (preventing stiffness). */
+	  if ((j != i) && (cross[j] >=0) && (fabs(cross[j]-cross[i]) < link_dist)) {
+	    cross[i] = -3; cross[j] = -3; crossL -= 2; POLY_TRACE(printf("%d->%d! ",i,j)); break;
+	  }
+	}
+	if (cross[i] == -3) continue;     /* Partners shall not be too close to the chain's ends (because these will be crosslinked at some point). */
+	if ((cross[i] % MPC < link_dist) || (cross[i] % MPC >= MPC-link_dist)) {
+	  cross[i] = -3; crossL--; POLY_TRACE(printf("%d->end! ",i)); }      
+	else {                            /* In the neighbourhood of each partner there shall be no other crosslinks (preventing stiffness). */
+	  for (j = cross[i]-link_dist+1; j < cross[i]+link_dist-1; j++) {
+	    if ((j % MPC == 0) || ((j+1) % MPC == 0)) size = 1; else size = 2;
+	    if ((bond[j] > size) && (j - floor(i/2)*MPC < MPC)) {
+	      cross[i] = -3; crossL--; POLY_TRACE(printf("%d->link! ",i)); break; 
+	    }
+	  }
+	}
+      }
+    }   POLY_TRACE(printf("complete => %d CL left; ",crossL));
+    ii = 0;
+    if (crossL < 2*N_P) {
+      for (i=0; i < 2*N_P; i++) {         /* If crosslinks violated the rules & had to be removed, create new ones now. */
+	if (cross[i] == -3) {
+	  ii++;
+	  if (link[i] > 0) { cross[i] = links[i][(int)dround(d_random()*(link[i]-1))]; crossL++; } else { return(-2); }
+	}
+      }
+    }   POLY_TRACE(printf("+ %d new = %d CL.\n",ii,crossL));
+    if (ii > 0) k++;
+  }
+  POLY_TRACE(for (i=0; i < 2*N_P; i++) printf("%d -> %d \t", i%2 ? (i+1)*MPC/2-1 : i*MPC/2, cross[i]); printf("=> %d\n",crossL); fflush(NULL) );
+
+  /* Submit all lawful partners as new bonds to tcl_md (observing that bonds are stored with the higher-ID particle only). */
+  if (k >= max_try) return(-1); else {
+    size = 0;
+    for (i=0; i < N_P; i++) {
+      if (cross[2*i] >=0 ) {
+	bondN[0] = type_FENE; bondN[1] = i*MPC + part_id; size++;
+	if (change_particle_bond(cross[2*i], bondN, 0)==TCL_ERROR) return (-3);
+      }
+      if (cross[2*i+1] >= 0) {
+	bondN[0] = type_FENE; bondN[1] = cross[2*i+1]; size++;
+	if (change_particle_bond(i*MPC+(MPC-1) + part_id, bondN, 0)==TCL_ERROR) return (-3);
+      }
+    }
+    POLY_TRACE(printf("Created %d new bonds; now %d ends are crosslinked!\n", size, crossL));
+    return(crossL); 
+  }
+}
