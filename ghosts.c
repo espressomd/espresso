@@ -66,6 +66,11 @@ IntList n_send_ghosts[6];
     + one (last) entry for total number. */
 IntList n_recv_ghosts[6];
 
+/** Total number of ghosts to send in one direction . */
+int ghost_send_size[6];
+/** Total number of ghosts to recv from one direction. */
+int ghost_recv_size[6];
+
 /*@}*/
 
 /** \name Variables for ghost force/position exchange */
@@ -229,7 +234,7 @@ void ghost_init()
   anz[1] = cg[2] *gcg[0];
   anz[2] = gcg[0]*gcg[1];
 
-  /* create send/recv cell index lists */
+  /* create send/recv cell index lists for ghost exchange*/
   for(i=0;i<6;i++) {
     init_intList(&(send_cells[i]));
     realloc_intlist(&(send_cells[i])   ,anz[i/2]);
@@ -377,7 +382,8 @@ void invalidate_ghosts()
 
 void exchange_ghost()
 {
-  int dir, c, c_max, n, cnt, r_dir;
+  int s_dir=0, r_dir=0;
+  int c, c_max, n, cnt;
   ParticleList *pl;
 
   GHOST_TRACE(fprintf(stderr,"%d: exchange_ghost:\n",this_node));
@@ -385,35 +391,35 @@ void exchange_ghost()
   g_send_buf.max = 0;
   g_recv_buf.max = 0;
 
-  for(dir=0; dir<6; dir++) {                      /* direction loop */
+  for(s_dir=0; s_dir<6; s_dir++) {                      /* direction loop */
+    if(s_dir%2 == 0) r_dir = s_dir+1;
+    else             r_dir = s_dir-1;
 
     /* number of ghosts to send */
-    c_max                       = send_cells[dir].n;
-    n_send_ghosts[dir].e[c_max] = 0;
-    cnt                         = 0;
+    c_max                         = send_cells[s_dir].n;
+    n_send_ghosts[s_dir].e[c_max] = 0;
+    cnt                           = 0;
     for(c=0; c<c_max; c++) {
-      pl = &(cells[send_cells[dir].e[c]].pList);
-      n_send_ghosts[dir].e[c]      = pl->n;
-      n_send_ghosts[dir].e[c_max] += pl->n;
+      pl = &(cells[send_cells[s_dir].e[c]].pList);
+      n_send_ghosts[s_dir].e[c]      = pl->n;
+      n_send_ghosts[s_dir].e[c_max] += pl->n;
     }
-    if(n_send_ghosts[dir].e[c_max] > g_send_buf.max) {
-      g_send_buf.max = n_send_ghosts[dir].e[c_max];	
-      g_send_buf.part = (ReducedParticle *)realloc(g_send_buf.part, n_send_ghosts[dir].e[c_max]*sizeof(ReducedParticle));
-    }
-
+    if(n_send_ghosts[s_dir].e[c_max] > g_send_buf.max) 
+      realloc_redParticles(&g_send_buf, n_send_ghosts[s_dir].e[c_max]);
+    
     /* copy ghosts to send buffer */
     for(c=0; c<c_max; c++) {
-      pl = &(cells[send_cells[dir].e[c]].pList);
+      pl = &(cells[send_cells[s_dir].e[c]].pList);
       for(n=0; n<pl->n; n++) {
 	memcpy(&(g_send_buf.part[cnt]), &(pl->part[n].r), sizeof(ReducedParticle));
 	/* fold ghost coordinates if they cross the boundary */
-	switch(boundary[dir]) {
+	switch(boundary[s_dir]) {
 	case 0: break;
 	case 1:
-	  g_send_buf.part[cnt].p[dir/2] += box_l[dir];
+	  g_send_buf.part[cnt].p[s_dir/2] += box_l[s_dir];
 	  break;
 	case -1:
-	  g_send_buf.part[cnt].p[dir/2] -= box_l[dir];
+	  g_send_buf.part[cnt].p[s_dir/2] -= box_l[s_dir];
 	  break;
 	}
 	cnt++;
@@ -421,11 +427,9 @@ void exchange_ghost()
     }
 
     /* send ghosts */
-    send_ghosts(dir);
+    send_ghosts(s_dir);
 
     /* copy recieved ghosts to cell structure */
-    if(dir%2 == 0) r_dir = dir+1;
-    else           r_dir = dir-1;
 
     c_max = recv_cells[r_dir].n;
     cnt=0;
@@ -446,33 +450,45 @@ void exchange_ghost()
   }
 
   /* realloc pos/force buffers */
-  /* CHECK: IF Tthey really have to be the same size (max of both buf.max) */
-  realloc_doublelist(&send_buf, 3*g_send_buf.max);
-  realloc_doublelist(&recv_buf, 3*g_recv_buf.max);
+  if(g_send_buf.max > g_recv_buf.max) g_recv_buf.max = 3*g_send_buf.max;
+  else                                g_send_buf.max = 3*g_recv_buf.max;
+  realloc_doublelist(&send_buf, g_send_buf.max);
+  realloc_doublelist(&recv_buf, g_recv_buf.max);
+
+  GHOST_TRACE(fprintf(stderr,"%d: ghost_send_size=(%d, %d, %d, %d, %d, %d), max=%d\n",this_node,
+		      ghost_send_size[0], ghost_send_size[1], ghost_send_size[2],
+		      ghost_send_size[3], ghost_send_size[4], ghost_send_size[5],g_send_buf.max));
+  GHOST_TRACE(fprintf(stderr,"%d: ghost_recv_size=(%d, %d, %d, %d, %d, %d), max=%d\n",this_node,
+		      ghost_recv_size[0], ghost_recv_size[1], ghost_recv_size[2],
+		      ghost_recv_size[3], ghost_recv_size[4], ghost_recv_size[5],g_recv_buf.max));
 }
 
 void update_ghost_pos()
 {
-  int dir, c, n, g, i, r_dir;
-  int mod_ind, send_size, recv_size;
+  int s_dir, r_dir;
+  int c, n, g, i;
+  int mod_ind;
   double modifier;
   ParticleList *pl;
  
   GHOST_TRACE(fprintf(stderr,"%d: update_ghost_pos:\n",this_node));
 
-  for(dir=0; dir<6; dir++) {          /* direction loop forward */
-    /* loop send cells -  copy positions to buffer*/
-    mod_ind = dir/2;
-    switch(boundary[dir]) {
-    case 0:  modifier =  0;          break;
-    case 1:  modifier =  box_l[dir]; break;
-    case -1: modifier = -box_l[dir]; break;
+  for(s_dir=0; s_dir<6; s_dir++) {          /* direction loop forward */
+    if(s_dir%2 == 0) r_dir = s_dir+1;
+    else             r_dir = s_dir-1;
+    mod_ind = s_dir/2;
+    switch(boundary[s_dir]) {
+    case 0:  modifier =  0;            break;
+    case 1:  modifier =  box_l[s_dir]; break;
+    case -1: modifier = -box_l[s_dir]; break;
     default: fprintf(stderr, "boundary conditions corrupt, exiting\n");
       errexit(); /* never reached */; modifier = 0;
     }
     g=0;
-    for(c=0; c<send_cells[dir].n; c++) {
-      pl = &(cells[send_cells[dir].e[c]].pList);
+
+    /* loop send cells -  copy positions to buffer*/
+    for(c=0; c<send_cells[s_dir].n; c++) {
+      pl = &(cells[send_cells[s_dir].e[c]].pList);
       for(n=0; n < pl->n; n++) {
 	for(i=0;i<3;i++) send_buf.e[g+i] = pl->part[n].r.p[i];
 	/* fold positions if they cross the boundary */
@@ -482,11 +498,7 @@ void update_ghost_pos()
     }
 
     /* send buffer */
-    if(dir%2 == 0) r_dir = dir+1;
-    else           r_dir = dir-1;
-    send_size = n_send_ghosts[dir].e[send_cells[dir].n];
-    recv_size = n_recv_ghosts[r_dir].e[recv_cells[r_dir].n];
-    send_posforce(dir, 3*send_size, 3*recv_size);
+    send_posforce(s_dir, ghost_send_size[s_dir], ghost_recv_size[r_dir]);
 
     /* loop recv cells - copy positions from buffer */
     g=0;
@@ -685,9 +697,12 @@ void append_particles(void)
 
 void send_ghosts(int s_dir)
 {
-  int evenodd, send_size, recv_size;
+  int evenodd;
   int r_dir=0;
   MPI_Status status;
+  int tmp;
+  ReducedParticle *tmp_gp;
+  int *tmp_ip;
 
   /* calc recv direction (r_dir) from send direction (s_dir) */
   if(s_dir%2 == 0) r_dir = s_dir+1;
@@ -696,31 +711,32 @@ void send_ghosts(int s_dir)
   /* check if communication goes to the very same node */
   if(node_neighbors[s_dir] != this_node) {
     /* two step communication: first all even positions than all odd */
-    for(evenodd=0; evenodd<2;evenodd++) {
+    for(evenodd=0; evenodd<2; evenodd++) {
       if((node_pos[s_dir/2]+evenodd)%2==0) {
 	MPI_Send(n_send_ghosts[s_dir].e, n_send_ghosts[s_dir].n, MPI_INT,
 		 node_neighbors[s_dir], REQ_SEND_GHOSTS, MPI_COMM_WORLD);
-	send_size = n_send_ghosts[s_dir].e[n_send_ghosts[s_dir].n];
-	MPI_Send(g_send_buf.part, send_size*sizeof(ReducedParticle), MPI_BYTE, 
+
+	ghost_send_size[s_dir] = n_send_ghosts[s_dir].e[n_send_ghosts[s_dir].n];
+  
+	MPI_Send(g_send_buf.part, ghost_send_size[s_dir]*sizeof(ReducedParticle), MPI_BYTE, 
 		 node_neighbors[s_dir], REQ_SEND_GHOSTS, MPI_COMM_WORLD);
       }
       else {
 	MPI_Recv(n_recv_ghosts[r_dir].e, n_recv_ghosts[r_dir].n, MPI_INT,
 		 node_neighbors[r_dir],REQ_SEND_GHOSTS,MPI_COMM_WORLD,&status);
-	recv_size = n_recv_ghosts[r_dir].e[n_recv_ghosts[r_dir].n];
-	if(recv_size > g_recv_buf.max) {
-	  g_recv_buf.max = recv_size;
-	  g_recv_buf.part = (ReducedParticle *)realloc(g_recv_buf.part,recv_size*sizeof(ReducedParticle));
-	}
-	MPI_Recv(g_recv_buf.part,recv_size*sizeof(ReducedParticle), MPI_BYTE,
+
+	ghost_recv_size[r_dir] = n_recv_ghosts[r_dir].e[n_recv_ghosts[r_dir].n];
+	if(ghost_recv_size[r_dir] > g_recv_buf.max) 
+	  realloc_redParticles(&g_recv_buf, ghost_recv_size[r_dir]);
+
+	MPI_Recv(g_recv_buf.part, ghost_recv_size[r_dir]*sizeof(ReducedParticle), MPI_BYTE,
 		 node_neighbors[r_dir],REQ_SEND_GHOSTS,MPI_COMM_WORLD,&status);
       }
     }
   }
   else {                 /* communication goes to the same node! */ 
-    int tmp;
-    ReducedParticle *tmp_gp;
-    int *tmp_ip;
+    
+    fprintf(stderr,"%d: ghost exchange to same node: s_dir=%d r_dir=%d\n",this_node,s_dir,r_dir);
 
     tmp_ip                    = n_send_ghosts[s_dir].e;
     n_send_ghosts[s_dir].e    = n_recv_ghosts[r_dir].e;
@@ -728,6 +744,13 @@ void send_ghosts(int s_dir)
     tmp                       = n_send_ghosts[s_dir].max;
     n_send_ghosts[s_dir].max  = n_recv_ghosts[r_dir].max;
     n_recv_ghosts[r_dir].max  = tmp ;
+    tmp                       = n_send_ghosts[s_dir].n;
+    n_send_ghosts[s_dir].n    = n_recv_ghosts[r_dir].n;
+    n_recv_ghosts[r_dir].n    = tmp ;
+
+    ghost_recv_size[r_dir] = n_recv_ghosts[r_dir].e[n_recv_ghosts[r_dir].n];
+    if(ghost_recv_size[r_dir] > g_recv_buf.max) 
+      realloc_redParticles(&g_recv_buf, ghost_recv_size[r_dir]);
 
     tmp_gp          = g_send_buf.part;
     g_send_buf.part = g_recv_buf.part; 
@@ -738,7 +761,7 @@ void send_ghosts(int s_dir)
   }
 }
 
-void send_posforce(int s_dir,int send_size, int recv_size)
+void send_posforce(int s_dir, int send_size, int recv_size)
 {
   int evenodd;
   int r_dir;
@@ -752,16 +775,23 @@ void send_posforce(int s_dir,int send_size, int recv_size)
     /* two step communication: first all even positions than all odd */
     for(evenodd=0; evenodd<2;evenodd++) {
       if((node_pos[s_dir/2]+evenodd)%2==0) 
-	MPI_Send(send_buf.e, send_size, MPI_DOUBLE, 
+	MPI_Send(send_buf.e, 3*send_size, MPI_DOUBLE, 
 		 node_neighbors[s_dir],REQ_SEND_POS,MPI_COMM_WORLD);
       else 
-	MPI_Recv(recv_buf.e, recv_size, MPI_DOUBLE,
+	MPI_Recv(recv_buf.e, 3*recv_size, MPI_DOUBLE,
 		 node_neighbors[r_dir],REQ_SEND_POS,MPI_COMM_WORLD,&status);    
     }
   }
   else {                  /* communication goes to the same node! */ 
     double *tmp_dp;
-    tmp_dp = send_buf.e;
-    send_buf.e = recv_buf.e; recv_buf.e = tmp_dp;        
+    int tmp;
+
+    tmp_dp     = send_buf.e;
+    send_buf.e = recv_buf.e;
+    recv_buf.e = tmp_dp;  
+
+    tmp          = send_buf.max;
+    send_buf.max = recv_buf.max;
+    recv_buf.max = tmp;
   }
 }
