@@ -24,12 +24,12 @@ MDINLINE void add_angle_force(Particle *p1, Particle *p2, Particle *p3, int type
   int j;
 
   cosine=0.0;
-  /* vector from p2 to p1 */
+  /* vector from p1 to p2 */
   for(j=0;j<3;j++) vec1[j] = p2->r.p[j] - p1->r.p[j];
   dist2 = SQR(vec1[0]) + SQR(vec1[1]) + SQR(vec1[2]);
   d1i = 1.0 / sqrt(dist2);
   for(j=0;j<3;j++) vec1[j] *= d1i;
-  /* vector from p3 to p1 */
+  /* vector from p1 to p3 */
   for(j=0;j<3;j++) vec2[j] = p3->r.p[j] - p1->r.p[j];
   dist2 = SQR(vec2[0]) + SQR(vec2[1]) + SQR(vec2[2]);
   d2i = 1.0 / sqrt(dist2);
