@@ -16,8 +16,8 @@
 #include "statistics.h"
 #include "statistics_chain.h"
 #include "statistics_cluster.h"
-#include "modes.h"
 #include "energy.h"
+#include "modes.h"
 #include "pressure.h"
 #include "communication.h"
 #include "debug.h"
@@ -27,6 +27,15 @@
 #include "interaction_data.h"
 #include "domain_decomposition.h"
 #include "verlet.h"
+
+/** Makro definition to handle the different complex types of FFTW2 and FFTW3 */
+#ifdef USEFFTW3
+#  define FFTW_REAL [0]
+#  define FFTW_IMAG [1]
+#else
+#  define FFTW_REAL .re
+#  define FFTW_IMAG .im
+#endif
 
 /** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
@@ -672,10 +681,10 @@ static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, " { ", (char *)NULL);
     for ( j = 0 ; j < mode_grid_3d[ydir]/2 + 1 ; j++) {
       Tcl_AppendResult(interp, " { ", (char *)NULL);
-      Tcl_PrintDouble(interp,result[j+i*(mode_grid_3d[ydir]/2+1)].re,buffer);
+      Tcl_PrintDouble(interp,result[j+i*(mode_grid_3d[ydir]/2+1)]FFTW_REAL,buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
       Tcl_AppendResult(interp, " ", (char *)NULL);
-      Tcl_PrintDouble(interp,result[j+i*(mode_grid_3d[ydir]/2+1)].im,buffer);
+      Tcl_PrintDouble(interp,result[j+i*(mode_grid_3d[ydir]/2+1)]FFTW_IMAG,buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
       Tcl_AppendResult(interp, " } ", (char *)NULL);
       }
