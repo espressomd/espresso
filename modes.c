@@ -16,7 +16,24 @@
 #include "errorhandling.h"
 
 /** fftw plan for calculating the 2d mode analysis */
+
+#ifdef USEFFTW3
+
+#  ifdef FFTW_ENABLE_FLOAT
+typedef float fftw_real;
+#  else
+typedef double fftw_real;
+#  endif
+
+fftw_plan mode_analysis_plan;
+/** Input values for the fft */
+double* height_grid;
+/** Output values for the fft */
+fftw_complex* result;
+#else
 rfftwnd_plan mode_analysis_plan;
+#endif
+
 /** Flag to indicate when the grid size has changed*/
 int mode_grid_changed = 1;
 
@@ -28,9 +45,6 @@ int mode_grid_3d[3] = {0,0,0};
 int xdir = -1;
 int ydir = -1;
 int zdir = -1;
-
-
-
 
 /** Numerical tolerance to be used only in modes2d*/
 #define MODES2D_NUM_TOL 0.00001
@@ -122,10 +136,22 @@ void fft_modes_init() {
     }
 
   STAT_TRACE(fprintf(stderr,"%d,destroying old fftw plan \n",this_node));
+
+#ifdef USEFFTW3
+  /* Make sure all memory is free and old plan is destroyed */
+  fftw_free(result);
+  fftw_free(height_grid);
+  fftw_destroy_plan(mode_analysis_plan);
+  fftw_cleanup(); 
+  /* Allocate memory for input and output arrays */
+  height_grid = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
+  result = malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex)); 
+  mode_analysis_plan = fftw_plan_dft_r2c_2d(mode_grid_3d[xdir],mode_grid_3d[ydir],height_grid, result,FFTW_ESTIMATE);
+#else
   rfftwnd_destroy_plan(mode_analysis_plan);
-
-
   mode_analysis_plan = rfftw2d_create_plan(mode_grid_3d[xdir], mode_grid_3d[ydir], FFTW_REAL_TO_COMPLEX,FFTW_MEASURE);
+#endif
+
   STAT_TRACE(fprintf(stderr,"%d,created new fftw plan \n",this_node));
   mode_grid_changed = 0;  
 }
@@ -695,7 +721,12 @@ int modes2d(fftw_complex* modes) {
     
     
     STAT_TRACE(fprintf(stderr,"%d,calling fftw \n",this_node));
+
+#ifdef USEFFTW3
+    fftw_execute(mode_analysis_plan);
+#else
     rfftwnd_one_real_to_complex(mode_analysis_plan, height_grid, modes);
+#endif
     STAT_TRACE(fprintf(stderr,"%d,called fftw \n",this_node));
     
     

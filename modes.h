@@ -21,8 +21,12 @@
 #include "parser.h"
 #include "debug.h"
 #include "utils.h"
-//#include <fftw.h>
-#include <rfftw.h>
+
+#ifdef USEFFTW3
+#  include <fftw3.h>
+#else
+#  include <rfftw.h>
+#endif
 
 /** The full 3d grid for mode analysis */
 extern int mode_grid_3d[3];
@@ -50,6 +54,13 @@ extern int mode_grid_changed;
 /** Parameter indicating distance beyond which a lipid is said to have
     left the membrane the default value is set in \ref modes.c */
 extern double stray_cut_off;
+
+#ifdef USEFFTW3
+/** Input values for the fft */
+extern double* height_grid;
+/** Output values for the fft */
+extern fftw_complex* result;
+#endif
 
 /* Exported Functions */
 int modes2d(fftw_complex* result);
