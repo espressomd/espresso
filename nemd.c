@@ -18,10 +18,12 @@
 
 /************************************************************/
 
+#ifdef NEMD
+
 int nemd_method = NEMD_METHOD_OFF;
 
-#ifdef NEMD
 Nemd nemddata = { -1, 0, 0, 0.0, 1.0, NULL, 0, 0, NULL, 0.0, 0.0};
+
 #endif
 
 /************************************************************/
@@ -43,9 +45,10 @@ int nemd_usage(Tcl_Interp *interp)
   Tcl_AppendResult(interp, "\"nemd profile\" for returning the velocity profile \n", (char *)NULL);
   Tcl_AppendResult(interp, "\"nemd viscosity\" for returning the viscosity \n", (char *)NULL);
   return (TCL_ERROR);
-#endif
+#else
   Tcl_AppendResult(interp, "nemd not compiled in!", (char *)NULL);
   return (TCL_ERROR);
+#endif
 }
 
 #ifdef NEMD

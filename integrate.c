@@ -276,9 +276,13 @@ void integrate_vv(int n_steps)
        NOTE 2: Depending on the integration method Step 1 and Step 2 
                can not be combined for the translation. 
     */
+#ifdef NEMD
     if(integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
       propagate_vel();  propagate_pos();
-    } else {
+    }
+    else
+#endif
+    {
       propagate_vel_pos();
     }
 #ifdef ROTATION
