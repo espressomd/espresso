@@ -1,0 +1,2 @@
+#!/bin/sh
+$ESPRESSO_SOURCE/obj-`$ESPRESSO_SOURCE/config/config.guess`/Espresso $*
