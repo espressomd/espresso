@@ -49,7 +49,7 @@ int collision(double pos[3], double shield);
 /** Implementation of the tcl-command <br>
     polymer \<N_P\> \<MPC\> \<bond_length\> [start \<part_id\>] [pos \<x\> \<y\> \<z\>] [mode { SAW | RW } [\<shield\> [\<max_try\>]]] 
             [charge \<val_cM\>] [distance \<cM_dist\>] [types \<type_nM\> [\<type_cM\>]] [FENE \<type_FENE\>] [angle \<angle\>
-	    [\<angle2\>]] <br>
+	    [\<angle2\> [\<x2\> \<y2\> \<z2\>]]] <br>
     Creates some polymer chains within the simulation box,
     and returns how often the attempt to place a monomer failed in the worst case.
     Parameters: <br>
@@ -67,6 +67,7 @@ int collision(double pos[3], double shield);
 	         \<type_FENE\>   = type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0') <br>
 		 \<angle\>       = desired bond-angle to be fixed <br>
 	         \<angle2\>      = second spherical bond-angle <br>
+		 \<x2,y2,z2\>    = sets the position of the 2nd monomer of the first chain
     <br>For more informations on the parameters see \ref polymerC. */
 int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
@@ -85,11 +86,12 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv);
     @param  type_cM     = type number of charged monomers (default to '1') <br>
     @param  type_FENE   = type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0') <br>
     @param  angle       = desired bond-angle to be fixed <br>
-    @param  angle2      = secon spherical bond-angle (relative to the plane s*(preceding bondvectore)+t*[0,0,1])<br>
+    @param  angle2      = secon spherical bond-angle<br>
+    @param  posed2      = sets the position of the 2nd monomer of the first chain
     @return Returns how often the attempt to place a monomer failed in the worst case. <br>
     If val_cM \< 1e-10, the charge is assumed to be zero, and type_cM = type_nM.  */
 int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, int mode, double shield, int max_try, 
-	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle, double angle2);
+	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle, double angle2, double* posed2);
 
 /** Implementation of the tcl-command <br>
     counterions \<N_CI\> [start \<part_id\>] [mode { SAW | RW } [\<shield\> [\<max_try\>]]] [charge \<val_CI\>] [type \<type_CI\>] <br>
