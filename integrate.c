@@ -27,7 +27,7 @@ int calc_forces_first = 1;
 /* extern p3m_struct p3m; */
 
 /*******************  functions  *******************/
-
+void rescale_forces();
 void propagate_velocities();
 void propagate_positions(); 
 
@@ -119,16 +119,18 @@ void integrate_vv(int n_steps)
     force_calc();
     MPI_Barrier(MPI_COMM_WORLD);
     collect_ghost_forces();
+    rescale_forces();
     calc_forces_first = 0;
   }
 
   /* integration loop */
   INTEG_TRACE(printf("%d START INTEGRATION\n",this_node));
   for(i=0;i<n_steps;i++) {
+    int n;
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
     propagate_velocities();
     propagate_positions();
-    /* rebuild_verletlist = 1; */
+   /* rebuild_verletlist = 1; */
     if(rebuild_verletlist == 1) {
       exchange_part();
       sort_particles_into_cells();
@@ -140,6 +142,7 @@ void integrate_vv(int n_steps)
     }
     force_calc();
     collect_ghost_forces();
+    rescale_forces();
     propagate_velocities();
   }
 
@@ -153,6 +156,16 @@ void integrate_vv_exit()
   ghost_exit();
   verlet_exit();
   force_exit();
+}
+
+void rescale_forces()
+{
+  int i,d;
+  double scale;
+  scale = 0.5 * time_step * time_step;
+  INTEG_TRACE(fprintf(stderr,"%d: rescale_forces:\n",this_node));
+  for(i=0;i<n_particles;i++)
+    for(d=0; d<3; d++) particles[i].f[d] *= scale;
 }
 
 void propagate_velocities() 
@@ -174,6 +187,7 @@ void propagate_positions()
   double d2[3], dist2;
   INTEG_TRACE(fprintf(stderr,"%d: propagate_positions:\n",this_node));
   rebuild_verletlist = 0;
+
   for(i=0;i<n_particles;i++)
     {  
       particles[i].p[0] += particles[i].v[0];
@@ -186,6 +200,7 @@ void propagate_positions()
       if( dist2 > SQR(skin) )
 	rebuild_verletlist = 1; 
     }
+
   MPI_Gather(&rebuild_verletlist, 1, MPI_INT, verlet_flags, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if(this_node == 0)
     {
@@ -197,7 +212,10 @@ void propagate_positions()
 	    break;
 	  }
     }
+
+  MPI_Barrier(MPI_COMM_WORLD);
   MPI_Bcast(&rebuild_verletlist, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
   free(verlet_flags);
 }
 
