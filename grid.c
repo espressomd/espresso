@@ -297,6 +297,11 @@ int per_callback(Tcl_Interp *interp, void *_data)
 
 int per_callback(Tcl_Interp *interp, void *_data)
 {
+  int tmp_periodic;
+  tmp_periodic = *(int *)_data;
+  if (tmp_periodic==7)
+    return (TCL_OK);
+
   Tcl_AppendResult(interp, "periodic cannot be set since PARTIAL_PERIODIC not configured.", (char *)NULL);  
   return (TCL_ERROR);
 }
