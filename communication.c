@@ -148,7 +148,6 @@ void mpi_integrate(int n_steps)
 {
   int req[2] = { REQ_INTEGRATE, n_steps };
   int task;
-  int *recvbuf = malloc(sizeof(int)*nprocs);
 
   MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
 

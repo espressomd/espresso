@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <tcl.h>
 #include <math.h>
 #include "communication.h"
@@ -18,7 +19,14 @@
 /** declare commands needed for steering the integrator. */
 void tcl_integrator_init(Tcl_Interp *interp);
 
-/** tcl procedure for integrator steering */
+/** tcl procedure for integrator steering.
+    USAGE: integrate <task>                       \\
+           task can either be init, #steps, exit. \\
+    EXAMPLE for an integration:                   \\
+           integrate init                         \\
+           integrate 100                          \\
+           integrate exit                         
+*/
 int integrate(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
 

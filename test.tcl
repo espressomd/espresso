@@ -42,9 +42,9 @@ puts "part 4 = [part 4]"
 
 # integration
 ##################################################
-integrate 0
-integrate 10
-integrate -1
+integrate init
+integrate 2
+integrate exit
 
 # exit
 ##################################################

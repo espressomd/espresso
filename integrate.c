@@ -4,7 +4,7 @@
 
 #include "integrate.h"
 
-//#define DEBUG
+#define DEBUG
 
 /*******************  variables  *******************/
 
@@ -30,7 +30,6 @@ int integrate(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv)
 {
   int  n_steps;
-  char buffer[256];
   
 #ifdef DEBUG
   if(this_node<2) fprintf(stderr,"%d: integrate:\n",this_node); 
@@ -42,12 +41,16 @@ int integrate(ClientData data, Tcl_Interp *interp,
     return (TCL_ERROR);
   }
 
-  n_steps = atol(argv[1]);
+  /* translate argument */
+  if (!strncmp(argv[1], "init", strlen(argv[1]))) n_steps=0;
+  else if (!strncmp(argv[1], "exit", strlen(argv[1]))) n_steps=-1;
+  else n_steps = atol(argv[1]);
+
   if(n_steps < -1) {
     Tcl_AppendResult(interp, "illegal number of steps", (char *) NULL);
     return (TCL_ERROR);
   }
-
+  
   /* assume velocity verlet integration with langevin thermostat */
   if (argc == 2) {
     mpi_integrate(n_steps);
@@ -55,7 +58,7 @@ int integrate(ClientData data, Tcl_Interp *interp,
   }
   else {
     Tcl_AppendResult(interp, "too many arguments:  should be \"",
-		     argv[0], " <step num> \"", (char *) NULL);
+		     argv[0], " <task> \"", (char *) NULL);
     return (TCL_ERROR);
   }
 }
@@ -91,13 +94,14 @@ void integrate_vv_init()
 
 void integrate_vv(int n_steps)
 {
-  int i,j;
+  int i;
 #ifdef DEBUG
   if(this_node<2) fprintf(stderr,"%d: integrate_vv: %d steps\n",this_node,n_steps);
 #endif
 
   /* check init */
   if(rebuild_verletlist == 1) {
+    exchange_part();
     sort_particles_into_cells();
     exchange_ghost();
     build_verlet_list();
@@ -112,6 +116,7 @@ void integrate_vv(int n_steps)
     propagate_velocities();
     propagate_positions();
     if(rebuild_verletlist == 1) {
+      exchange_part();
       sort_particles_into_cells();
       exchange_ghost();
       build_verlet_list();

@@ -8,18 +8,16 @@
 #include <stdlib.h>
 
 #include "global.h"
+#include "grid.h"
 
 /*******************  Structures  *******************/
 
 /** link cell structure. */
 typedef struct {
-  /** Position inside the cell grid. */
-  double pos[3];
-  
   /** number of interacting neighbour cells . */
-  int n_cell_neighbours;
+  int n_neighbours;
   /** interacting neighbour cell list (linear indices) */
-  int *cell_neighbours;
+  int *neighbours;
 
   /** number of particles in the cell. */
   int n_particles;
@@ -31,12 +29,14 @@ typedef struct {
 
 /*******************  Variables  *******************/
 
+/** number of linked cells inside the domain of one node (inner cells). */
+int n_inner_cells;
 /** inner linked cell grid. */
 int cell_grid[3];
+/** number of linked cells (inner+ghosts). */
+int n_cells;
 /** linked cell grid with ghost frame. */
 int ghost_cell_grid[3];
-/** number of linked cells. */
-int n_cells;
 /** linked cell list. */
 Cell *cells;
 

@@ -4,11 +4,11 @@
 
 #include "forces.h"
 
-//#define DEBUG
+#define DEBUG
 
 void force_init()
 {
-  int i;
+
 #ifdef DEBUG
   if(this_node<2) fprintf(stderr,"%d: force_init:\n",this_node);
   if(this_node<2) fprintf(stderr,"%d: found %d interaction types\n",
@@ -16,8 +16,6 @@ void force_init()
   if(this_node<2) fprintf(stderr,"%d: found %d particles types\n",
 			  this_node,n_interaction_types);
 #endif
-
-  
 
 }
 

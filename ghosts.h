@@ -44,6 +44,8 @@ double *recv_buf;
 
 /** initialize ghost particle structures. */
 void ghost_init();
+/** exchange particles. */
+void exchange_part();
 /** exchange ghost particles. */
 void exchange_ghost();
 /** exchange ghost particle positions. */

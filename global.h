@@ -71,6 +71,9 @@ extern double max_range;
 /** maximal interaction range squared. */
 extern double max_range2;
 
+/* ghost communication */
+extern int double_sided;
+
 /* Verlet list */
 extern int   n_verletList;
 extern int max_verletList;
