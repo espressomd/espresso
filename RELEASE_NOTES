@@ -1,28 +1,72 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-***********
-* v1.1.2a *
-***********
+**********************
+* v1.5.Gold (Neelix) *
+**********************
 
-Current working revision.
-(a) December 19th, 2003.
+Not yet released.
+
+
+- v1.5.Alpha -
+--------------
+
+(b) January 15th, 2004.
+(a) January  7th, 2004.
 
 New Features: 
-
-(a) working version of tabulated lookup potentials is
-now implemented.  Be sure to check documentation as file format
-requirements are likely to change with new versions.
-(b) comfixed interaction is implemented. This interaction fixes the center of mass of all particles of a given type. 
-(c) comforce interaction is implemented. This interaction is used to apply a force on two differenent types of particles. The force is applied either along the major axis of type_1 particles (e.g. bundle of rods), or perpendicular to the major axis of type_1 particles in the direction of the vector joining center of mass's of type_1 and type_2.  
+(a) new command 'cellsystem { domain | nsquare }' to choose the internal particle structure.
+(a) comfixed interaction is implemented. This interaction fixes the center of mass 
+    of all particles of a given type.
+(a) comforce interaction is implemented. This interaction is used to apply a force 
+    on two differenent types of particles. The force is applied either along the
+    major axis of type_1 particles (e.g. bundle of rods), or perpendicular to the 
+    major axis of type_1 particles in the direction of the vector joining center
+    of mass's of type_1 and type_2.
 
 Changes:
+(a) completely reworked the internal particle structure, now having six substructures per particle
+    and a choice of two entirely different particle administration systems (domain decomposition
+    or homogeneous N^2-mode)
+(b) 'analyze pressure ideal' does no longer use n_total_particles*temperature/volume but rather 
+    measures the particles' velocities to deduct the ideal gas contribution to the pressure 
+    from there; consequently, its value is at last the very same as the trace of p_IK1;
+    note however, that the ideal gas now depends on whether or not ROTATION is compiled in
+    (changing the degrees of freedom from 3 to 6), even if the particles don't use that property
+(b) 'checkpoint_set' now also saves informations on external forces, fixed particles, and
+    rotational properties if the corresponding flags are compiled in
 
+Bugfixes:
+(a) 'part fix' fixed
+(a) the constraint energy is printed correctly now. In the old version, if 
+    the constraint particle type is smaller than any real particle type, 
+    the constraint energy was wrong, even though the total energy was correct
+(b) fixed several memory leaks occuring when using newer version of the gcc-compiler
+(b) fixed wrong prefactor of 'analyze pressure ideal' contained in early versions of v1.5.Alpha
+ 
+
+
+***********
+* v1.1.2  *
+***********
+
+Released on December 19th, 2003.
+
+
+- v1.1.2a -
+-----------
+
+New Features: 
+(a) working version of tabulated lookup potentials is
+    now implemented.  Be sure to check documentation as file format
+    requirements are likely to change with new versions.
+
+Changes:
+(-) none
 
 Bugfixes:
 (a) 'part <ind> delete' now correctly deletes all bonds involved
-(b) 'part fix' fixed
-(c) the constraint energy is printed correctly now. In the old version if the constraint particle type is smaller than any real particle type, the constraint energy was wrong, even though the total energy was correct.
+
 
 
 ***********
