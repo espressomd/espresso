@@ -34,7 +34,7 @@
  <li> \verbatim #define ESK_DEBUG \endverbatim activate ??? debug output.
  <li> \verbatim #define FENE_DEBUG \endverbatim activate debug output for the FENE-potential.
  <li> \verbatim #define GHOST_FORCE_DEBUG \endverbatim activate debug output for ghost forces.
- <li> \verbatim #define ONE_PART_DEBUG <part_id> \endverbatim activate debug output, tracing everything done with particle <part_id>.
+ <li> \verbatim #define ONE_PART_DEBUG <part_id> \endverbatim activate debug output, tracing everything done with particle "<part_id>".
  <li> \verbatim #define STAT_DEBUG \endverbatim activate statistics related debug output.
  <li> \verbatim #define POLY_DEBUG \endverbatim activate polymer setup debug output.
  <li> \verbatim #define MPI_CORE \endverbatim generate a core dump when exiting abnormally due
