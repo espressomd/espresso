@@ -585,20 +585,6 @@ void dd_topology_init(CellPList *old)
 
   exchange_data = (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
   update_data   = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
-  if (thermo_switch & THERMO_DPD) {
-    /* DPD needs also ghost velocities */
-    exchange_data = (exchange_data | GHOSTTRANS_MOMENTUM);
-    update_data   = (update_data   | GHOSTTRANS_MOMENTUM);
-  }
-#ifdef ELECTROSTATICS
-  /* Maggs electrostatics needs velocities */
-  else {
-    if(coulomb.method == COULOMB_MAGGS) {
-      exchange_data = (exchange_data | GHOSTTRANS_MOMENTUM);
-      update_data   = (update_data   | GHOSTTRANS_MOMENTUM);
-    }
-  }
-#endif
   dd_prepare_comm(&cell_structure.exchange_ghosts_comm,  exchange_data);
   dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data);
 
