@@ -34,11 +34,13 @@ set run_sim 0
 bind . <Destroy> onExitHandler
 
 # popup window if desired
-proc popup {text} {
+proc popup {title text} {
     toplevel .tag
-    button .tag.btn -text "$text" -justify left -font -jis-fixed-medium-r-normal--24-* -command "destroy .tag"
-    pack .tag.btn
+    button .tag.title -text "$title" -justify center -font -*-helvetica-bold-r-*-*-24-*-*-*-*-*-*-* -command "destroy .tag"
+    button .tag.btn -text "$text" -justify left -font -*-helvetica-bold-r-*-*-24-*-*-*-*-*-*-* -command "destroy .tag"
+    pack .tag.title .tag.btn
     wm geometry .tag +60+0
+    wm title .tag $title
     tkwait window .tag
     update
 }
@@ -468,19 +470,27 @@ set highscore [read_highscore]
 
 while { 1 } {
     if { $run_sim > 0 } {
-	integrate 10
+ 	integrate 10
 	while { [catch {imd positions} res] } { puts "positions failed: $res, retrying."; after 500 }
     } {
 	after 100
 	while { [catch {imd listen 1} res] } { puts "listen failed: $res, retrying."; after 500 }
     }
     if { $displayclock } {
-	set nbh [analyze nbhood $Rx $Ry $Rz [expr 1.25*$Rt]]
-	if { [llength $nbh] > $N4 } {
+	set hit 0
+	for {set part 0} { $part < $N0 } { incr part } {
+	    set pos [part $part pr pos]
+	    set dy [expr [lindex $pos 1] - $Ry]
+	    set dz [expr [lindex $pos 2] - $Rz]
+	    if {[expr sqrt($dy*$dy + $dz*$dz)*0.9] < $Rt } {
+		set hit 1
+	    }
+	}
+	if { $hit } {
 	    set etime [expr [clock seconds] - $case2stime]
 	    disableCase2; set run_sim -2
 	    set_status "Gewonnen nach [clock format $etime -format "%M:%S"]!"
-	    for {set i [expr $N0]} {$i < [expr $N0+$N1+$N2+$N3 +$N4]} {incr i} { part $i unfix }
+	    for {set i [expr $N0]} {$i < [expr $N0+$N1+$N2+$N3+$N4]} {incr i} { part $i unfix }
 	    setmd temp 1.0
 	    for {set i 0} {$i < $firework} {incr i} {
 		integrate 10; while { [catch {imd positions} res] } { puts "positions failed: $res, retrying."; after 500 }
@@ -498,27 +508,26 @@ while { 1 } {
 		    if { [expr $j+1] < [llength $highscore] } { set victory $old }
 		}
 		incr i
-popup "                    ***************                     \ 
-                    *  HIGHSCORE  *                     \ 
-                    ***************                     \ 
-                                                       \ 
+
+		popup "HIGHSCORE" "\
 Sie haben es tatsächlich geschafft, das geladene Objekt\ 
 in einer Rekordzeit ins Ziel zu steuern - phantastisch!\ 
                                                        \ 
 Mit Ihrem beachtlichen Wert von [format %3d $etime]s haben Sie sich den\ 
-   ----->  [format %2d $i]. Platz in der Highscore-Liste   <-----   \ 
+----->  [format %2d $i]. Platz in der Highscore-Liste   <-----   \ 
 erobert und Ihren Eintrag redlich verdient!\ 
                                                        \ 
 Herzlichen Glückwunsch!!!                              \ 
                                                        \ 
-[disp_highscore $highscore]"
-		puts "New Highscore (Rank \#$i)!!!"
-		write_highscore $highscore
+[disp_highscore $highscore]\
+"
+
+	       puts "New Highscore (Rank \#$i)!!!"
+               write_highscore $highscore
+
+               catch {exec /usr/local/bin/mplayer Logo-Espresso-Bat-HQ.avi >& /dev/null}
 	    } else {
-popup "                     *************                     \ 
-                     * Gewonnen! *                     \ 
-                     *************                     \ 
-                                                       \ 
+               popup "Gewonnen!" "\ 
 Sie haben es tatsächlich geschafft, das geladene Objekt\ 
 in der gegebenen Zeit ins Ziel zu steuern - super!     \ 
                                                        \ 
@@ -526,7 +535,10 @@ Beinahe hätte Ihre Zeit von [format %3d $etime]s auch für einen Eintrag\
 in die Highscore-Liste gereicht -- vielleicht probieren\ 
 Sie es daher gleich noch einmal?!                      \ 
                                                        \ 
-[disp_highscore $highscore]"
+[disp_highscore $highscore]\
+"
+
+               catch {exec /usr/local/bin/mplayer Logo-Espresso-Bat-HQ.avi >& /dev/null}
 	    }
 	} else {
 	    set etime [expr [clock seconds] - $case2stime]
@@ -535,10 +547,7 @@ Sie es daher gleich noch einmal?!                      \
 		set_status "Die Zeit ist um!"
 		set displayclock 0
 		set run_sim -2
-popup "                     *************                     \ 
-                     *  Schade!  *                     \ 
-                     *************                     \ 
-                                                       \ 
+                popup "Schade!" "\ 
 Leider hat es diesmal nicht geklappt, das Ladungsobjekt\ 
 in der gegebenen Zeit ins Ziel zu steuern - schade! :-(\ 
                                                        \ 
@@ -547,7 +556,8 @@ sich mit einem Eintrag in die Highscore-Liste verewigen\
 zu können -- vielleicht probieren Sie es daher sogleich\ 
 noch einmal?!                                          \ 
                                                        \ 
-[disp_highscore $highscore]"
+[disp_highscore $highscore]\
+"
 	    }
 	}
     }
