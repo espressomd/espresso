@@ -76,7 +76,7 @@ extern fft_forw_plan fft_plan[4];
  ************************************************/
 
 
-int fft_init(double *data);
+int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin);
 
 void fft_perform_forw(double *data);
 

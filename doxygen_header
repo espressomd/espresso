@@ -14,15 +14,80 @@ interface between the Tcl script and the MD code:
 
 <ul>
 <li>\verbatim setmd <variable> <value>+ \endverbatim
-modifies variables declared in \ref fields.
-The C implementation is \ref setmd.
+modifies variables declared in \ref fields. More information can be
+found in \ref global.c. The C implementation is \ref setmd. The
+following list explains the usage for the variables that are accesible 
+via setmd. Using \verbatim [setmd <variable>] \endverbatim gives the
+actual value of <variable> in the MD code back to the Tcl script.
+Do not set variables which are specified as read only.
+	<ul>
+	<li> \verbatim [setmd n_nodes] \endverbatim 
+	Number of nodes (read only).
+	<li> \verbatim setmd node_grid <int> <int> <int> \endverbatim
+	3D node grid for real space domain decomposition (optional,
+	default is set automatically).	
+	<li> \verbatim [lindex [setmd local_box_l] i] \endverbatim
+	Local simulation box length on each node (i=0,1,2) (read only).
+	<li> \verbatim setmd box_l <double> <double> <double> \endverbatim
+	Simulation box length (optional, default is (1,1,1)).
+	<li> \verbatim [setmd maxpart] \endverbatim
+	Number of particles (read only).
+	<li> \verbatim [setmd nptypes] \endverbatim
+	Number of particle types (read only).
+	<li> \verbatim setmd niatypes \endverbatim
+	Number of interaction types (not fully implemented. DO NOT USE).
+	<li> \verbatim [setmd time_step] \endverbatim
+	Time step for MD integration (read only, set to 0.001).
+	<li> \verbatim [setmd max_cut] \endverbatim
+	Maximal cutoff of real space interactions (read only).
+	<li> \verbatim setmd skin <double> \endverbatim
+	Skin for the Verlet list.
+	<li> \verbatim [setmd max_range] \endverbatim
+	Maximal range of real space interactions: max_cut+skin (read only).
+	<li> \verbatim setmd gamma <double>\endverbatim
+	Friction constant.
+	<li> \verbatim [setmd verletflag] \endverbatim
+	Flag for rebuilding the verlet list (read only).
+	<li> \verbatim setmd bjerrum <double> \endverbatim
+	Bjerrum length. If 0 electrostatic interaction is turned of.
+	<li> \verbatim setmd p3m_alpha <double> \endverbatim
+	Ewald splitting parameter.
+	<li> \verbatim setmd p3m_r_cut <double> \endverbatim
+	Real space cutoff for P3M.
+	<li> \verbatim setmd p3m_mesh <int> <int> <int>\endverbatim
+	Mesh size for P3M k space.
+	<li> \verbatim setmd p3m_cao <int>\endverbatim
+	Charge assignment order for P3M particle-mesh interaction (1 < 
+	p3m_ca0 <7).
+	<li> \verbatim setmd p3m_epsilon <double>\endverbatim
+	Dielectric constant at infinity (boundary condition for Ewald sumation).
+	<li> \verbatim setmd p3m_mesh_offset <double> <double> <double> \endverbatim
+	Offset of the first mesh point from the origin in mesh
+	coordinates (all values between 0.0 and 1.0).
+	<li> \verbatim [setmd transfer_rate] \endverbatim
+	Tranfer rate for VMD connection (read onle).
+	<li> \verbatim setmd periodicity <flag> <flag> <flag>\endverbatim
+	Specifies periodicity for the three diractions. Only useable
+	together with the compiler flag PARTIAL_PERIODIC.
+	</ul>
 
-<li>\verbatim part <particle_number> ( q|type|pos|v|f <value>+ )* \endverbatim
+<li>\verbatim part <particle_number> ( pos|q|type|bond|v|f <value>+ )* \endverbatim
 	modifies particle data, namely
-	charge, type, position, velocity and force. Multiple properties can be changed
-	at once. If no property is given, \verbatim part <particle_number> \endverbatim 
+	charge, type, position, velocity, force and bonds. 
+	Multiple properties can be changed at once. 
+	If no property is given, 
+	\verbatim part <particle_number> \endverbatim 
 	returns the properties of the particle if it exists.
-	The C implementation is \ref part.
+	The C implementation is \ref part. Syntax for the different
+	properties:
+	<ul>
+	<li> \verbatim pos <x value> <y value> <z value> \endverbatim
+	<li> \verbatim q <charge> \endverbatim
+	<li> \verbatim type <type number> \endverbatim
+	<li> \verbatim bond <type_number> <partner>+ \endverbatim
+	<li> \verbatim v <x value> <y value> <z value> \endverbatim
+	<li> \verbatim f <x value> <y value> <z value> \endverbatim
+	</ul>
 
 <li>\verbatim inter \endverbatim
 	sets the parameters for interactions.
@@ -96,5 +161,42 @@ the master node. The other nodes wait for the master node to issue specific acti
 i. e. we utilize a client-server model. More details can be found in
 \ref communication.h "communication.h". During the actual integration however the
 communication is done synchronous.
+
+\section start Getting Started
+
+<ol>
+<li> Get your PEP membership.
+<li> Add the following line to your .cshrc file.
+\verbatim setenv CVSROOT ~pep/cvsroot  \endverbatim
+<li> Get your local copy with:
+\verbatim cvs checkout tcl_md \endverbatim
+<li> Compile using 
+\verbatim gmake \endverbatim
+<li> Create actual documentation with (html, latex, man and rtf). This 
+command works probably only on pckr27 (needs doxygen).
+\verbatim gmake doc\endverbatim
+(Use touch somefile.c if it does not work rightaway)
+<li> Read the documentation carefully (Come on, there had been only 213 pages when I
+was writing these lines) !!!
+<li> Try the example script files: 
+setup.tcl which sets up a new configuration using the ramp potential.
+test.tcl Doing some MD on the new configuration. Try also the VMD
+connection included (set use_imd y).
+<li> Complain if you experience problems.
+</ol>
+
+\section restrictions Restrictions
+
+<ul>
+<li> The long range part is implemented for full periodicity, cubic
+box and cubic mesh only. The program will porbably crash if you mix up 
+things here.
+</ul>
+
+\section bugs Bugs
+
+!!! Don't use this code for sientific productions !!!\\
+Their are probably plenty of bugs in the code at the moment, but they
+are not known.
 
 */

@@ -71,35 +71,33 @@ typedef struct {
 /** p3m parameters. */
 p3m_struct p3m;
 /** local mesh. */
-local_mesh lm;
+static local_mesh lm;
 /** send/recv mesh sizes */
-send_mesh  sm;
+static send_mesh  sm;
 
 /** size of linear array for local CA/FFT mesh . */
-int    ca_mesh_size;
+static int    ca_mesh_size;
 /** real space mesh (local) for CA/FFT.*/
-double *rs_mesh;
+static double *rs_mesh;
 /** k space mesh (local) for k space calculation and FFT.*/
-double *ks_mesh;
+static double *ks_mesh;
 
 /** Field to store grid points to send */
-double *send_grid; 
+static double *send_grid; 
 /** Field to store grid points to recv */
-double *recv_grid;
+static double *recv_grid;
 
 /** interpolation of the charge assignment function. */
-double *int_caf[7];
+static double *int_caf[7];
 /** position shift for calc. of first assignment mesh point. */
-double pos_shift;
+static double pos_shift;
 
 /** help variable for calculation of aliasing sums */
-double *meshift;
+static double *meshift;
 /** Spatial differential operator in k-space. We use an i*k differentiation. */
-double *d_op;
+static double *d_op;
 /** Optimal influence function (k-space) */
-double *g;
-/** number of charged particles on that node. */
-int q_number;
+static double *g;
 
 /************************************************
  * privat functions
@@ -108,13 +106,13 @@ int q_number;
 /** Calculates properties of the local FFT mesh for the charge assignment process. */
 void calc_local_ca_mesh();
 /** print local mesh content. */
-void print_local_mesh(local_mesh l);
+void p3m_print_local_mesh(local_mesh l);
 /** Calculates the properties of the send/recv sub-meshes of the local FFT mesh. 
  *  In order to calculate the recv sub-meshes there is a communication of 
  *  the margins between neighbouring nodes. */ 
 void calc_send_mesh();
 /** print send mesh content. */
-void print_send_mesh(send_mesh sm);
+void p3m_print_send_mesh(send_mesh sm);
 
 void gather_fft_grid();
 /** Add values of a 3d-grid input block (size[3]) to values of 3d-grid
@@ -163,87 +161,68 @@ MDINLINE double perform_aliasing_sums(int n[3], double nominator[3]);
 void   P3M_init()
 {
   int i,n;
+  double temperature=1.0;
 
-  if(p3m.bjerrum == 0.0) {       /* no electrostatics ! */
+  if(p3m.bjerrum == 0.0) {       
     p3m.r_cut  = 0.0;
     p3m.r_cut2 = 0.0;
-    P3M_TRACE(fprintf(stderr,"%d: P3M_init: Bjerrum length is zero. Electrostatics switched off!\n",this_node));
+    if(this_node==0) 
+      P3M_TRACE(fprintf(stderr,"0: P3M_init: Bjerrum length is zero.\n");
+		fprintf(stderr,"   Electrostatics switched off!\n"));
   }
-  else {                         /* prepare long range electrostatics */
-    /* DEBUG */
-    MPI_Barrier(MPI_COMM_WORLD);   
-    P3M_TRACE(fprintf(stderr,"%d: P3M Parameters: Bjerrum = %f, alpha = %f, r_cut = %f\n"
-		      ,this_node,p3m.bjerrum,p3m.alpha,p3m.r_cut));
-    P3M_TRACE(fprintf(stderr,"        mesh (%d, %d, %d) CAO = %d\n"
-		      ,p3m.mesh[0],p3m.mesh[1],p3m.mesh[2],p3m.cao));
-    P3M_TRACE(fprintf(stderr,"        meshoff (%f, %f, %f) epsiolon = %f\n"
-		      ,p3m.mesh_off[0],p3m.mesh_off[1],p3m.mesh_off[2],p3m.epsilon));
-    MPI_Barrier(MPI_COMM_WORLD);   
-    /* some checks */
+  else {  
+    P3M_TRACE(fprintf(stderr,"%d: P3M_init: \n",this_node));
+    /* parameter checks */
     if( (p3m.mesh[0] != p3m.mesh[1]) || (p3m.mesh[1] != p3m.mesh[2]) ) {
-      if(this_node==0) fprintf(stderr,"P3M_init: WARNING: Can't handle non cubic mesh, use p3m.mesh[0]=%d as cubic mesh size!\n)",p3m.mesh[0]);
+      if(this_node==0) {
+	fprintf(stderr,"0: P3M_init: WARNING: Non cubic mesh found!\n");
+	fprintf(stderr,"   use p3m.mesh[0]=%d as cubic mesh size!\n)",p3m.mesh[0]);
+      }
       p3m.mesh[1] = p3m.mesh[0];
       p3m.mesh[2] = p3m.mesh[0];
     }
     if( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
-      if(this_node==0) fprintf(stderr,"P3M_init: SERIOUS WARNING: Can't handle long range interactions for non cubic box. Switch off long range interactions! \n");
+      if(this_node==0) {
+	fprintf(stderr,"0: P3M_init: SERIOUS WARNING:\n"); 
+	fprintf(stderr,"   No long range interactions for non cubic box.\n"); 
+	fprintf(stderr,"   Switch off long range interactions! \n");
+      }
       p3m.bjerrum =  0.0;
       p3m.r_cut  = 0.0;
       p3m.r_cut2 = 0.0;
       return ;
     }
 
-    p3m.prefactor = p3m.bjerrum * 1.0;
-    p3m.r_cut2 = p3m.r_cut*p3m.r_cut;
-    for(i=0;i<3;i++) p3m.ai[i] = (double)p3m.mesh[i]/box_l[i]; 
-    for(i=0;i<3;i++) p3m.a[i] = 1.0/p3m.ai[i];
-    for(i=0;i<3;i++) p3m.cao_cut[i] = p3m.a[i]*p3m.cao/2.0;
-    /* DEBUG */
-    P3M_TRACE(fprintf(stderr,"%d Mesh (%d,%d,%d) a=(%1.2e,%1.2e,%1.2e) ai=(%1.2e,%1.2e,%1.2e)\n",
-		      this_node,p3m.mesh[0],p3m.mesh[1],p3m.mesh[2],
-		      p3m.a[0],p3m.a[1],p3m.a[2],p3m.ai[0],p3m.ai[1],p3m.ai[2]));
-    P3M_TRACE(fprintf(stderr,"%d cao_cut = %f, skin=%f\n",this_node,p3m.cao_cut[0],skin));
- 
-   /* local mesh */
+    p3m.prefactor = p3m.bjerrum*temperature; 
+    p3m.r_cut2    = p3m.r_cut*p3m.r_cut;
+    for(i=0;i<3;i++) {
+      p3m.ai[i]      = (double)p3m.mesh[i]/box_l[i]; 
+      p3m.a[i]       = 1.0/p3m.ai[i];
+      p3m.cao_cut[i] = p3m.a[i]*p3m.cao/2.0;
+    }
+    
     calc_local_ca_mesh();
-    P3M_TRACE(print_local_mesh(lm));
+    P3M_TRACE(p3m_print_local_mesh(lm));
     calc_send_mesh();
-
+    // DEBUG
     for(n=0;n<n_nodes;n++) {
       MPI_Barrier(MPI_COMM_WORLD);
-      if(n==this_node) P3M_TRACE(print_send_mesh(sm));
+      if(n==this_node) P3M_TRACE(p3m_print_send_mesh(sm));
     }
-
-    /* allocate arrays */
     send_grid = malloc(sizeof(double)*sm.max);
     recv_grid = malloc(sizeof(double)*sm.max);
 
     interpolate_charge_assignment_function();
     /* position offset for calc. of fisrt meshpoint */
-    switch (p3m.cao) {
-    case 2 : case 4 : case 6 : 
-      {pos_shift = (double)((p3m.cao-1)/2);     } break;
-    case 1 :case 3 : case 5 : case 7 : 
-      {pos_shift = (double)((p3m.cao-1)/2) - 0.5;} break;
-    default : {
-      fprintf(stderr,"Uncatched Error in function 'P3M_init':\n");
-    } break;
-    }
+    pos_shift = (double)((p3m.cao-1)/2) - (p3m.cao%2)/2.0;
     P3M_TRACE(fprintf(stderr,"%d: pos_shift = %f\n",this_node,pos_shift)); 
+ 
     /* FFT */
-    /* export some local mesh parameters */
-    for(i=0;i<3;i++) {
-      p3m.lm[i]        = lm.dim[i];
-      p3m.lm_margin[i] = lm.margin[i];
-    }
-    /* FFT */
-    ca_mesh_size = fft_init(rs_mesh);
-    /* allocate  meshs (local)*/
+    ca_mesh_size = fft_init(rs_mesh,lm.dim,lm.margin);
     rs_mesh = malloc(ca_mesh_size*sizeof(double));
     ks_mesh = malloc(ca_mesh_size*sizeof(double));
  
-   /* k-space part: */
-
+    /* k-space part: */
     calc_differential_operator();
     calc_influence_function();
 
@@ -254,7 +233,7 @@ void   P3M_init()
 
 void   P3M_perform()
 {
-  int n,d,i0,i1,i2,cnt;
+  int i,n,d,i0,i1,i2,ind;
   double q;
   /* position of a particle in local mesh units */
   double pos[3];
@@ -262,55 +241,58 @@ void   P3M_perform()
   int first[3],arg[3];
   /* index, index jumps for rs_mesh array */
   int q_ind, q_m_off, q_s_off;
-  /* some local copies */
-  double ld_pos[3],ai[3];
   /* (2*p3m.inter) + 1 */
   int inter2;
   /* tmp variables */
   double tmp0,tmp1;
+  /* Energy */
+  double energy=0.0;
 
   MPI_Barrier(MPI_COMM_WORLD);   
   P3M_TRACE(fprintf(stderr,"%d: p3m_perform: \n",this_node));
   MPI_Barrier(MPI_COMM_WORLD);   
 
-  /* copy some stuff from structures in local variables */
-  for(d=0;d<3;d++) {
-    ld_pos[d] = lm.ld_pos[d] + pos_shift;
-    ai[d]     = p3m.ai[d];
-  }
-  inter2 = (p3m.inter*2)+1;
   /* prepare local FFT mesh */
   for(n=0; n<lm.size; n++) rs_mesh[n] = 0.0;
   q_m_off = (lm.dim[2] - p3m.cao);
   q_s_off = lm.dim[2] * (lm.dim[1] - p3m.cao);
   
-  /* perform charge assignment */
-  cnt=0;
-  for(n=0;n<n_particles;n++)  
-    if((q=particles[n].q) != 0.0) {
+  /* === charge assignment === */
+  inter2 = (p3m.inter*2)+1;
+  for(n=0; n<n_particles; n++)  
+    if( (q=particles[n].q) != 0.0 ) {
+
+      /* particle position in mesh coordinates */
       for(d=0;d<3;d++) {
-	pos[d] = (particles[n].p[d]-ld_pos[d])*ai[d];
-	P3M_TRACE(if(pos[d]<0.0) fprintf(stderr,"%d P%d %f -> %f <0.0 error\n",this_node,particles[n].identity,particles[n].p[d],pos[d]));
+	pos[d]   = (particles[n].p[d]-(lm.ld_pos[d]+pos_shift))*p3m.ai[d];
 	first[d] = (int) pos[d];
 	arg[d]   = (int) ((pos[d]-first[d])*inter2);
+
+	P3M_TRACE(if( pos[d]<0.0 ) 
+		  fprintf(stderr,"%d: rs_mesh underflow! (P%d at %f)\n",
+			  this_node,particles[n].identity,particles[n].p[d]));
+	P3M_TRACE(if( (first[d]+p3m.cao-1) > lm.dim[d] )
+		  fprintf(stderr,"%d: rs_mesh overflow!  (P%d at %f)\n",
+			  this_node,particles[n].identity,particles[n].p[d]));
       }
-      q_ind = first[2] + lm.dim[2] * (first[1] + (lm.dim[1] * first[0]));
+
+      /* charge assignment */
+      q_ind = first[2] + lm.dim[2]*(first[1] + (lm.dim[1]*first[0]));
       for(i0=0; i0<p3m.cao; i0++) {
 	tmp0 = q * int_caf[i0][arg[0]];
 	for(i1=0; i1<p3m.cao; i1++) {
 	  tmp1 = tmp0 * int_caf[i1][arg[1]];
 	  for(i2=0; i2<p3m.cao; i2++) {
-	    P3M_TRACE(if(i0+first[0]>lm.dim[0] || i1+first[1]>lm.dim[1] || i2+first[2]>lm.dim[2]) fprintf(stderr,"%d rs_mesh array overflow!\n",this_node));
 	    rs_mesh[q_ind++] += tmp1 * int_caf[i2][arg[2]];
 	  }
 	  q_ind += q_m_off;
 	}
 	q_ind += q_s_off;
       }
-      cnt++;
+
     }
   
- /* Gather information for FFT grid inside the nodes domain (inner local mesh) */
+  /* Gather information for FFT grid inside the nodes domain (inner local mesh) */
   gather_fft_grid();
 
   /* === Perform forward 3D FFT (Charge Assignment Mesh) === */
@@ -321,18 +303,26 @@ void   P3M_perform()
   P3M_TRACE(fprintf(stderr,"%d: p3m_perform: k-Space\n",this_node));
   MPI_Barrier(MPI_COMM_WORLD);   
 
+  /* Energy */
+  ind=0;
+  for(i=0; i<fft_plan[2].new_size; i++) 
+    energy += g[i] * (SQR(rs_mesh[ind++])+SQR(rs_mesh[ind++]));
+  /* Force preparation */
+  ind = 0;
+  for(i=0; i<fft_plan[2].new_size; i++) {
+    ks_mesh[ind] = g[i] * rs_mesh[ind]; ind++;
+    ks_mesh[ind] = g[i] * rs_mesh[ind]; ind++;
+  }
 
   /* === 3 Fold backward 3D FFT (Force Component Meshs) === */
   /* reuse rs_mesh as force componenet array */
 
   for(d=0;d<3;d++) {     /* Force component loop */
-
+    
   }
 
   /* For debug we just perform one backward FFT */
   fft_perform_back(rs_mesh);
-
-
 }
 
 void   P3M_exit()
@@ -341,8 +331,10 @@ void   P3M_exit()
   /* free memory */
   free(send_grid);
   free(recv_grid);
+  free(rs_mesh);
+  free(ks_mesh); 
   free(rs_mesh); 
-  for(i=0;i<p3m.cao;i++) free(int_caf[i]);
+  for(i=0; i<p3m.cao; i++) free(int_caf[i]);
 }
 
 void calc_local_ca_mesh() {
@@ -626,12 +618,12 @@ void calc_influence_function()
   for(n[0]=fft_plan[2].start[0]; n[0]<end[0]; n[0]++) 
     for(n[1]=fft_plan[2].start[1]; n[1]<end[1]; n[1]++) 
       for(n[2]=fft_plan[2].start[2]; n[2]<end[2]; n[2]++) {
-	ind = (n[2]-fft_plan[2].start[2]) 
-	  + fft_plan[2].new_mesh[2]*((n[1]-fft_plan[2].start[1]) 
-				 + (fft_plan[2].new_mesh[1]*(n[0]-fft_plan[2].start[0])));
+	ind = (n[2]-fft_plan[2].start[2]) + fft_plan[2].new_mesh[2] * ((n[1]-fft_plan[2].start[1]) + (fft_plan[2].new_mesh[1]*(n[0]-fft_plan[2].start[0])));
 	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
 	  g[ind] = 0.0;
-	else if( (n[0]%(p3m.mesh[0]/2)==0) && (n[1]%(p3m.mesh[0]/2)==0) && (n[2]%(p3m.mesh[0]/2)==0))
+	else if( (n[0]%(p3m.mesh[0]/2)==0) && 
+		 (n[1]%(p3m.mesh[0]/2)==0) && 
+		 (n[2]%(p3m.mesh[0]/2)==0) )
 	  g[ind] = 0.0;
 	else {
 	  denominator = perform_aliasing_sums(n,nominator);
@@ -640,7 +632,6 @@ void calc_influence_function()
 	  g[ind] = fak1*fak2;
 	}
       }
-  
 }
 
 MDINLINE double perform_aliasing_sums(int n[3], double nominator[3])
@@ -697,7 +688,6 @@ void add_block(double *in, double *out, int start[3], int size[3], int dim[3])
 
   for(s=0 ;s<size[0]; s++) {
     for(m=0; m<size[1]; m++) {
-      /*  P3M_TRACE(fprintf(stderr,"s=%d m=%d: li_out=%d li_in=%d\n",s,m,li_out,li_in)); */
       for(f=0; f<size[2]; f++) {
 	out[li_out++] += in[li_in++];
       }
@@ -707,23 +697,9 @@ void add_block(double *in, double *out, int start[3], int size[3], int dim[3])
   }
 }
 
-
-void print_local_mesh(local_mesh l) 
-{
-  fprintf(stderr,"%d: local_mesh: dim=(%d,%d,%d), size=%d\n",this_node,
-	  l.dim[0],l.dim[1],l.dim[2],l.size);
-  fprintf(stderr,"    ld_ind=(%d,%d,%d), ld_pos=(%f,%f,%f)\n",
-	  l.ld_ind[0],l.ld_ind[1],l.ld_ind[2],
-	  l.ld_pos[0],l.ld_pos[1],l.ld_pos[2]);
-  fprintf(stderr,"    inner=(%d,%d,%d) [(%d,%d,%d)-(%d,%d,%d)]\n",
-	  l.inner[0],l.inner[1],l.inner[2],
-	  l.in_ld[0],l.in_ld[1],l.in_ld[2],
-	  l.in_ur[0],l.in_ur[1],l.in_ur[2]);
-  fprintf(stderr,"    margin = (%d,%d,%d,  %d,%d,%d)\n",
-	  l.margin[0],l.margin[1],l.margin[2],l.margin[3],l.margin[4],l.margin[5]);
-  fprintf(stderr,"    r_margin=(%d,%d,%d,  %d,%d,%d)\n",
-	  l.r_margin[0],l.r_margin[1],l.r_margin[2],l.r_margin[3],l.r_margin[4],l.r_margin[5]);
-}
+/************************************************
+ * Callback functions 
+ ************************************************/
 
 int bjerrum_callback(Tcl_Interp *interp, void *_data)
 {
@@ -776,8 +752,8 @@ int p3mmesh_callback(Tcl_Interp *interp, void *_data)
 int p3mcao_callback(Tcl_Interp *interp, void *_data)
 {
   int *data = (int *)_data;
-  if (data[0] < 0 || data[0] > 7 || data[1] < 0) {
-    Tcl_AppendResult(interp, "P3M CAO must be in interval [0,7] and inter >0.", (char *) NULL);
+  if (data[0] < 1 || data[0] > 7 || data[1] < 0) {
+    Tcl_AppendResult(interp, "P3M CAO must be in interval [1,7] and inter > 0.", (char *) NULL);
     return (TCL_ERROR);
   }
   p3m.cao = data[0];
@@ -806,7 +782,28 @@ int p3mmeshoff_callback(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
-void print_send_mesh(send_mesh sm) 
+/************************************************
+ * Debug functions printing p3m structures 
+ ************************************************/
+
+void p3m_print_local_mesh(local_mesh l) 
+{
+  fprintf(stderr,"%d: local_mesh: dim=(%d,%d,%d), size=%d\n",this_node,
+	  l.dim[0],l.dim[1],l.dim[2],l.size);
+  fprintf(stderr,"    ld_ind=(%d,%d,%d), ld_pos=(%f,%f,%f)\n",
+	  l.ld_ind[0],l.ld_ind[1],l.ld_ind[2],
+	  l.ld_pos[0],l.ld_pos[1],l.ld_pos[2]);
+  fprintf(stderr,"    inner=(%d,%d,%d) [(%d,%d,%d)-(%d,%d,%d)]\n",
+	  l.inner[0],l.inner[1],l.inner[2],
+	  l.in_ld[0],l.in_ld[1],l.in_ld[2],
+	  l.in_ur[0],l.in_ur[1],l.in_ur[2]);
+  fprintf(stderr,"    margin = (%d,%d,%d,  %d,%d,%d)\n",
+	  l.margin[0],l.margin[1],l.margin[2],l.margin[3],l.margin[4],l.margin[5]);
+  fprintf(stderr,"    r_margin=(%d,%d,%d,  %d,%d,%d)\n",
+	  l.r_margin[0],l.r_margin[1],l.r_margin[2],l.r_margin[3],l.r_margin[4],l.r_margin[5]);
+}
+
+void p3m_print_send_mesh(send_mesh sm) 
 {
   int i;
   fprintf(stderr,"%d: send_mesh: max=%d\n",this_node,sm.max);
@@ -814,4 +811,19 @@ void print_send_mesh(send_mesh sm)
     fprintf(stderr,"  dir=%d: s_dim (%d,%d,%d)  s_ld (%d,%d,%d) s_ur (%d,%d,%d) s_size=%d\n",i,sm.s_dim[i][0],sm.s_dim[i][1],sm.s_dim[i][2],sm.s_ld[i][0],sm.s_ld[i][1],sm.s_ld[i][2],sm.s_ur[i][0],sm.s_ur[i][1],sm.s_ur[i][2],sm.s_size[i]);
     fprintf(stderr,"         r_dim (%d,%d,%d)  r_ld (%d,%d,%d) r_ur (%d,%d,%d) r_size=%d\n",sm.r_dim[i][0],sm.r_dim[i][1],sm.r_dim[i][2],sm.r_ld[i][0],sm.r_ld[i][1],sm.r_ld[i][2],sm.r_ur[i][0],sm.r_ur[i][1],sm.r_ur[i][2],sm.r_size[i]);
   }
+}
+
+void p3m_print_p3m_struct(p3m_struct ps) {
+  fprintf(stderr,"%d: p3m_struct: \n",this_node);
+  fprintf(stderr,"   bjerrum=%f, alpha=%f, r_cut=%f, r_cut2=%f\n",
+	  ps.bjerrum,ps.alpha,ps.r_cut,ps.r_cut2);
+  fprintf(stderr,"   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n",
+	  ps.mesh[0],ps.mesh[1],ps.mesh[2],
+	  ps.mesh_off[0],ps.mesh_off[1],ps.mesh_off[2]);
+  fprintf(stderr,"   cao=%d, inter=%d, epsilon=%f, prefactor=%f\n",
+	  ps.cao,ps.inter,ps.epsilon,ps.prefactor);
+  fprintf(stderr,"   cao_cut=(%f,%f,%f)\n",
+	  ps.cao_cut[0],ps.cao_cut[1],ps.cao_cut[2]);
+  fprintf(stderr,"   a=(%f,%f,%f), ai=(%f,%f,%f)\n",
+	  ps.a[0],ps.a[1],ps.a[2],ps.ai[0],ps.ai[1],ps.ai[2]);
 }

@@ -12,8 +12,10 @@
     fi;
 
 ########### parameters
-set npart 300
+
+set npart 100
 setmd box_l 10.0 10.0 10.0
+
 set write finish
 set write_steps 10
 set mdst 1.2

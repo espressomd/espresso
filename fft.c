@@ -135,7 +135,7 @@ void print_global_fft_mesh(fft_forw_plan plan, double *data, int element, int nu
 /** Initialize everything connected to the 3D-FFT.
 
  */
-int fft_init(double *data)
+int fft_init(double *data, int *ca_mesh_dim, int *ca_mesh_margin)
 {
   int i,j;
   /* helpers */
@@ -188,7 +188,7 @@ int fft_init(double *data)
 
   /* === communication groups === */
   /* copy local mesh off real space charge assignment grid */
-  for(i=0;i<3;i++) fft_plan[0].new_mesh[i] = p3m.lm[i];
+  for(i=0;i<3;i++) fft_plan[0].new_mesh[i] = ca_mesh_dim[i];
   for(i=1; i<4;i++) {
     fft_plan[i].g_size=find_comm_groups(n_grid[i-1], n_grid[i], n_id[i-1], n_id[i], 
 					fft_plan[i].group, n_pos[i], my_pos[i]);
@@ -222,7 +222,7 @@ int fft_init(double *data)
 	 node */
       if(i==1) {
 	for(k=0;k<3;k++) 
-	  fft_plan[1].send_block[6*j+k  ] += p3m.lm_margin[k];
+	  fft_plan[1].send_block[6*j+k  ] += ca_mesh_margin[2*k];
       }
       /* recv block: this_node from comm-group-node i (identity: node) */
       fft_plan[i].recv_size[j] 
@@ -253,9 +253,9 @@ int fft_init(double *data)
 
   /* Factor 2 for complex fields */
   max_comm_size *= 2;
-  max_mesh_size = (p3m.lm[0]*p3m.lm[1]*p3m.lm[2]);
+  max_mesh_size = (ca_mesh_dim[0]*ca_mesh_dim[1]*ca_mesh_dim[2]);
   for(i=1;i>4;i++) 
-    if(fft_plan[i].new_size > max_mesh_size) max_mesh_size = 2*fft_plan[i].new_size;
+    if(2*fft_plan[i].new_size > max_mesh_size) max_mesh_size = 2*fft_plan[i].new_size;
 
   FFT_TRACE(fprintf(stderr,"%d: max_comm_size = %d, max_mesh_size = %d\n",
 		    this_node,max_comm_size,max_mesh_size));

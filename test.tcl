@@ -18,11 +18,12 @@ set tcl_precision 5
 set use_imd n
 
 set write_steps 10
-set configs 5000
+set configs 1
 
 setmd periodic 1 1 1
-setmd bjerrum 1
+setmd bjerrum 1.0
 setmd box_l 10.0 10.0 10.0
+
 
 # external tcl files 
 ##################################################
