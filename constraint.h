@@ -8,142 +8,109 @@
  *
  *  <b>Responsible:</b>
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
-*/
+ */
 
 
 #ifdef CONSTRAINTS
-MDINLINE void add_wall_force(Particle *p1, Particle *c_p, Constraint_wall *c)
+MDINLINE void calculate_wall_dist(Particle *p1, Particle *c_p, Constraint_wall *c, double *dist, double *vec)
 {
   int i;
-  double dist, vec[3];
   IA_parameters *ia_params;
 
   ia_params=get_ia_param(p1->r.type, c_p->r.type);
 
-  if (ia_params->LJ_cut > 0. ) {
-    dist = -c->d;
-    for(i=0;i<3;i++) dist += p1->r.p[i]*c->n[i];
+  *dist = -c->d;
+  for(i=0;i<3;i++) *dist += p1->r.p[i]*c->n[i];
   
-    for(i=0;i<3;i++) vec[i] = c->n[i]*dist;
+  for(i=0;i<3;i++) vec[i] = c->n[i] * *dist;
   
-    if (dist > 0)
-      add_lj_pair_force(p1, c_p, ia_params, vec, dist);
-    else {
-      fprintf(stderr,"CONSTRAINT WALL : ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-	      p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-      errexit();
-    }
-  }
 }
 
 
-MDINLINE void add_sphere_force(Particle *p1, Particle *c_p, Constraint_sphere *c)
+MDINLINE void calculate_sphere_dist(Particle *p1, Particle *c_p, Constraint_sphere *c, double *dist, double *vec)
 {
   int i;
-  double fac, dist, vec[3], c_dist;
-
+  double fac,  c_dist;
   IA_parameters *ia_params;
  
   ia_params=get_ia_param(p1->r.type, c_p->r.type);
  
-  if (ia_params->LJ_cut > 0. ) {
-    c_dist=0.0;
-    for(i=0;i<3;i++) {
-      vec[i] = c->pos[i] - p1->r.p[i];
-      c_dist += SQR(vec[i]);
-    }
-
-    c_dist = sqrt(c_dist);
-    dist = c->rad - c_dist;
-
-    if (dist > 0) {
-      fac = dist / c_dist;
-      for(i=0;i<3;i++) vec[i] *= fac;  
-      add_lj_pair_force(p1, c_p, ia_params, vec, dist);
-    }
-    else {
-      fprintf(stderr,"CONSTRAINT SPHERE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-	      p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-      errexit();
-    }
+  c_dist=0.0;
+  for(i=0;i<3;i++) {
+    vec[i] = c->pos[i] - p1->r.p[i];
+    c_dist += SQR(vec[i]);
   }
+
+  c_dist = sqrt(c_dist);
+  *dist = c->rad - c_dist;
+  fac = *dist / c_dist;
+  for(i=0;i<3;i++) vec[i] *= fac;  
 }
 
-MDINLINE void add_cylinder_force(Particle *p1, Particle *c_p, Constraint_cylinder *c)
+MDINLINE void calculate_cylinder_dist(Particle *p1, Particle *c_p, Constraint_cylinder *c, double *dist, double *vec)
 {
   int i;
-  double dist, vec[3];
   double d_per,d_par,d_real,d_per_vec[3],d_par_vec[3],d_real_vec[3];
   IA_parameters *ia_params;
   
   ia_params=get_ia_param(p1->r.type, c_p->r.type);
 
-  if (ia_params->LJ_cut > 0. ) {
 
-    d_real = 0.0;
-    for(i=0;i<3;i++) {
-        d_real_vec[i] = p1->r.p[i] - c->pos[i];
-        d_real += SQR(d_real_vec[i]);
-    }
-    d_real = sqrt(d_real);
+  d_real = 0.0;
+  for(i=0;i<3;i++) {
+    d_real_vec[i] = p1->r.p[i] - c->pos[i];
+    d_real += SQR(d_real_vec[i]);
+  }
+  d_real = sqrt(d_real);
     
-    d_par=0.;
-    for(i=0;i<3;i++) {
-        d_par += (d_real_vec[i] * c->axis[i]);
-    }
+  d_par=0.;
+  for(i=0;i<3;i++) {
+    d_par += (d_real_vec[i] * c->axis[i]);
+  }
     
-    for(i=0;i<3;i++) {
-		d_par_vec[i] = d_par * c->axis[i] ;
-		d_per_vec[i] = p1->r.p[i] - (c->pos[i] + d_par_vec[i]) ;
-	}
+  for(i=0;i<3;i++) {
+    d_par_vec[i] = d_par * c->axis[i] ;
+    d_per_vec[i] = p1->r.p[i] - (c->pos[i] + d_par_vec[i]) ;
+  }
 		
-    d_per=sqrt(SQR(d_real)-SQR(d_par));
-	d_par = fabs(d_par) ;
+  d_per=sqrt(SQR(d_real)-SQR(d_par));
+  d_par = fabs(d_par) ;
     
-    if ( c->direction == -1 ) {
+  if ( c->direction == -1 ) {
     /*apply force towards inside cylinder */
-        d_per = c->rad - d_per ;
-        d_par = c->length - d_par;
-		if (d_per < d_par )  {
-			dist = d_per ;   
-			for (i=0; i<3;i++) {
-				vec[i]= d_per_vec[i] * d_per /  (c->rad - d_per) ;
-			}
-		} else {
-			dist = d_par ;
-			for (i=0; i<3;i++) {
-				vec[i]= d_par_vec[i] * d_par /  (c->length - d_par) ;
-			}
-		}
+    d_per = c->rad - d_per ;
+    d_par = c->length - d_par;
+    if (d_per < d_par )  {
+      *dist = d_per ;   
+      for (i=0; i<3;i++) {
+	vec[i]= d_per_vec[i] * d_per /  (c->rad - d_per) ;
+      }
     } else {
+      *dist = d_par ;
+      for (i=0; i<3;i++) {
+	vec[i]= d_par_vec[i] * d_par /  (c->length - d_par) ;
+      }
+    }
+  } else {
     /*apply force towards outside cylinder */
-        d_per = d_per - c->rad ;
-        d_par = d_par - c->length ;
-		if (d_par < 0 )  {
-			dist = d_per ;   
-			for (i=0; i<3;i++) {
-				vec[i]= - d_per_vec[i] * d_per /  (d_per + c->rad) ;
-			}
-		} else if ( d_per < 0) {
-			dist = d_par ;
-			for (i=0; i<3;i++) {
-				vec[i]= - d_par_vec[i] * d_par /  (d_par + c->length) ;
-			}
-		} else {
-			dist = sqrt( SQR(d_par) + SQR(d_per)) ;
-			for (i=0; i<3;i++) {
-				vec[i]= - d_per_vec[i] * d_per /  (d_per + c->rad) ;
-				vec[i]+= - d_par_vec[i] * d_par /  (d_par + c->length) ;
-			}			
-		}
-    }
-    if ( dist > 0 ) {
-        add_lj_pair_force(c_p, p1, ia_params, vec, dist);
-    }
-    else {
-      fprintf(stderr,"CONSTRAINT CYLINDER: ERROR! part %d at (%.2e,%.2e,%.2e) violated the constraint!\n",
-	      p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-      errexit();
+    d_per = d_per - c->rad ;
+    d_par = d_par - c->length ;
+    if (d_par < 0 )  {
+      *dist = d_per ;   
+      for (i=0; i<3;i++) {
+	vec[i]= - d_per_vec[i] * d_per /  (d_per + c->rad) ;
+      }
+    } else if ( d_per < 0) {
+      *dist = d_par ;
+      for (i=0; i<3;i++) {
+	vec[i]= - d_par_vec[i] * d_par /  (d_par + c->length) ;
+      }
+    } else {
+      *dist = sqrt( SQR(d_par) + SQR(d_per)) ;
+      for (i=0; i<3;i++) {
+	vec[i]= - d_per_vec[i] * d_per /  (d_per + c->rad) ;
+	vec[i]+= - d_par_vec[i] * d_par /  (d_par + c->length) ;
+      }			
     }
   }
 }
@@ -201,16 +168,107 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
 
 MDINLINE void add_constraints_forces(Particle *p1)
 {
-  int n;
-
+  int n=0;
+  double dist, vec[3];
+  IA_parameters *ia_params;
+    
   for(n=0;n<n_constraints;n++) {
-    switch(constraints[n].type) {
-    case CONSTRAINT_WAL: add_wall_force(p1, &constraints[n].part_rep, &constraints[n].c.wal); break;
-    case CONSTRAINT_SPH: add_sphere_force(p1, &constraints[n].part_rep, &constraints[n].c.sph); break;
-    case CONSTRAINT_CYL: add_cylinder_force(p1, &constraints[n].part_rep, &constraints[n].c.cyl); break;
-    case CONSTRAINT_ROD: add_rod_force(p1, &constraints[n].part_rep, &constraints[n].c.rod); break;
+    ia_params=get_ia_param(p1->r.type, (&constraints[n].part_rep)->r.type);
+    dist=0.;
+	
+    if(ia_params->LJ_cut > 0. ) {
+      switch(constraints[n].type) {
+      case CONSTRAINT_WAL: 
+        calculate_wall_dist(p1, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
+        if (dist > 0)
+	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist);
+        else {
+	  fprintf(stderr,"CONSTRAINT WALL : ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+	  errexit();
+        }
+	break;
+    
+      case CONSTRAINT_SPH: 
+        calculate_sphere_dist(p1, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
+        if (dist > 0) {
+	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist);
+        }
+        else {
+	  fprintf(stderr,"CONSTRAINT SPHERE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+	  errexit();
+        }
+	break;
+    
+      case CONSTRAINT_CYL: 
+        calculate_cylinder_dist(p1, &constraints[n].part_rep, &constraints[n].c.cyl, &dist , vec); 
+        if ( dist > 0 ) {
+	  add_lj_pair_force(&constraints[n].part_rep, p1, ia_params, vec, dist);
+        }
+        else {
+	  fprintf(stderr,"CONSTRAINT CYLINDER: ERROR! part %d at (%.2e,%.2e,%.2e) violated the constraint! dist= %f\n",
+		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2],dist);
+	  errexit();
+        }
+	break;
+	
+      case CONSTRAINT_ROD: 
+	add_rod_force(p1, &constraints[n].part_rep, &constraints[n].c.rod); 
+	break;
+      }
     }
   }
+}
+
+MDINLINE double add_constraints_energy(Particle *p1, int n)
+{
+  double dist, vec[3];
+  IA_parameters *ia_params;
+  
+  ia_params=get_ia_param(p1->r.type, (&constraints[n].part_rep)->r.type);
+  dist=0.;
+  if(ia_params->LJ_cut > 0. ) {
+    switch(constraints[n].type) {
+    case CONSTRAINT_WAL: 
+      calculate_wall_dist(p1, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
+      if (dist > 0)
+	return lj_pair_energy(p1, &constraints[n].part_rep, ia_params, vec, dist);
+      else {
+	fprintf(stderr,"CONSTRAINT WALL : ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+		p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+	errexit();
+      }
+      break;
+    
+    case CONSTRAINT_SPH: 
+      calculate_sphere_dist(p1, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
+      if (dist > 0) {
+	return lj_pair_energy(p1, &constraints[n].part_rep, ia_params, vec, dist);
+      }
+      else {
+	fprintf(stderr,"CONSTRAINT SPHERE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
+		p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+	errexit();
+      }
+      break;
+    
+    case CONSTRAINT_CYL: 
+      calculate_cylinder_dist(p1, &constraints[n].part_rep, &constraints[n].c.cyl, &dist , vec); 
+      if ( dist > 0 ) {
+	return lj_pair_energy(&constraints[n].part_rep, p1, ia_params, vec, dist);
+      }
+      else {
+	fprintf(stderr,"CONSTRAINT CYLINDER: ERROR! part %d at (%.2e,%.2e,%.2e) violated the constraint! dist= %f\n",
+		p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2],dist);
+	errexit();
+      }
+      break;
+	
+    }
+  }
+
+  return 0.;
 }
 #endif
 
