@@ -92,7 +92,7 @@ void friction_thermo(Particle *p)
 
       ONEPART_TRACE(if(p->r.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f[0],p->f[1],p->f[2]));
 
-      THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->r.identity,p->f[0],p->f[1],p->f[2]));
+      THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=( %.3e, %.3e, %.3e )\n",this_node,p->r.identity,p->f[0],p->f[1],p->f[2]));
     }
 }
 
