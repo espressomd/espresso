@@ -19,7 +19,8 @@ CSOURCES= main initialize global communication binary_file interaction_data \
 	  verlet grid integrate cells ghosts forces rotation debug particle_data \
 	  thermostat statistics statistics_chain energy pressure vmdsock imd \
 	  p3m fft random blockfile blockfile_tcl polymer specfunc mmm1d tuning \
-	  uwerr parser domain_decomposition nsquare layered mmm-common modes
+	  uwerr parser domain_decomposition nsquare layered mmm-common modes \
+	  topology
 CXXSOURCES=
 
 LIBOBJECTS= c_blockfile.o
