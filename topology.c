@@ -46,7 +46,7 @@ void realloc_topology(int size)
 
 int print_structure_info(Tcl_Interp *interp)
 {
-  char buffer[TCL_INTEGER_SPACE + 1];
+  char buffer[TCL_INTEGER_SPACE + 2];
   int m, i;
   for (m = 0; m < n_molecules; m++) {
     sprintf(buffer, "%d ", topology[m].type);

@@ -398,7 +398,7 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv)
   /******************************************/
   /** Computes bins for pressure calculations, gives back lists
       with particles and bin volumes for each bin in spherical geometry**/
-  char buffer[1000*TCL_INTEGER_SPACE];
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   double r_min=0, r_max=-1.0, center[3];
   int r_bins=-1, i,j,k;
   int *new_bin;
@@ -454,8 +454,7 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   /* else */
-  sprintf(buffer, "The feature 'analyze bins %s' you requested is not yet implemented.",argv[0]);
-  Tcl_AppendResult(interp,buffer,(char *)NULL);
+  Tcl_AppendResult(interp,"The feature 'analyze bins ", argv[0], "' you requested is not yet implemented.",(char *)NULL);
   return (TCL_ERROR);
 }
 

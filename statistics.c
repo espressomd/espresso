@@ -811,7 +811,7 @@ void invalidate_obs()
 
 static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
 {
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[10 + 3*TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i,change ;
   double xshift,yshift,zshift;
   float *coord;
@@ -1059,7 +1059,7 @@ static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
 static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze centermass [<type>]' */
-  char buffer[256];
+  char buffer[256 + 3*TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE];
   int i, target1;
   int *agg_id_list;
   double dist_criteria, dist_criteria2;
@@ -1248,7 +1248,7 @@ static int parse_find_principal_axis(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze find_principal_axis [<type0>]' */
   double gyrtensor[9],eva[3],eve[3];
-  char buffer[3*TCL_DOUBLE_SPACE+3];
+  char buffer[4*TCL_DOUBLE_SPACE+20];
   int p1,i,j;
 
   /* parse arguments */
@@ -1351,7 +1351,7 @@ static int parse_cell_gpb(Tcl_Interp *interp, int argc, char **argv)
   double result[3], xi_m, Rc, ro;
   double gacc = 1e-6;
   int maxtry  = 30000;
-  char buffer[3*TCL_DOUBLE_SPACE+3], usage[150];
+  char buffer[3*TCL_DOUBLE_SPACE+20], usage[150];
   sprintf(usage,"analyze cell_gpb <Manning parameter> <outer cell radius> <inner cell radius> [<accuracy> [<# of interations>]]");
 
   if ((argc < 3) || (argc > 5)) { 
@@ -1397,7 +1397,7 @@ static int parse_Vkappa(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }]' */
   double result = 0.0;
-  char buffer[3*TCL_DOUBLE_SPACE];
+  char buffer[3*TCL_DOUBLE_SPACE+3];
 
   if (argc > 0)
     if (ARG0_IS_S("reset"))

@@ -861,7 +861,7 @@ int parse_bond_l(Tcl_Interp *interp, int average, int argc, char **argv)
 {
   /* 'analyze { bond_l | <bond_l> } [<chain_start> <n_chains> <chain_length>]' */
   /*****************************************************************************/
-  char buffer[4*TCL_DOUBLE_SPACE+2];
+  char buffer[4*TCL_DOUBLE_SPACE+4];
   double *bond_l;
 
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
@@ -909,7 +909,7 @@ int parse_g123(Tcl_Interp *interp, int average, int argc, char **argv)
 {
   /* 'analyze g123 [-init] [<chain_start> <n_chains> <chain_length>]' */
   /********************************************************************/
-  char buffer[3*TCL_DOUBLE_SPACE+6];
+  char buffer[3*TCL_DOUBLE_SPACE+7];
   int init = 0;
   double g1, g2, g3;
 
@@ -966,7 +966,7 @@ int parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv)
 {
   /* 'analyze { formfactor | <formfactor> } <qmin> <qmax> <qbins> [<chain_start> <n_chains> <chain_length>]' */
   /***********************************************************************************************************/
-  char buffer[2*TCL_DOUBLE_SPACE+4];
+  char buffer[2*TCL_DOUBLE_SPACE+5];
   int i;
   double qmin,qmax, q,qfak, *ff; int qbins;
   if (argc < 3) {
@@ -1019,7 +1019,7 @@ int parse_rdfchain(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze { rdfchain } <r_min> <r_max> <r_bins> [<chain_start> <n_chains> <chain_length>]' */
   /***********************************************************************************************************/
-  char buffer[4*TCL_DOUBLE_SPACE+6];
+  char buffer[4*TCL_DOUBLE_SPACE+7];
   int i, r_bins;
   double r_min, r_max, *f1, *f2, *f3;
   double bin_width, r;
