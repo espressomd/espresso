@@ -335,7 +335,6 @@ int change_volume(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 void rescale_boxl(int dir, double d_new) {
   double scale = (dir-3) ? d_new/box_l[dir] : d_new/box_l[0];
-  printf("%d %f\n",dir,scale);
   if (scale < 1.) {
     mpi_rescale_particles(dir,scale);
     if (dir < 3) 
@@ -350,8 +349,8 @@ void rescale_boxl(int dir, double d_new) {
       box_l[dir] = d_new;
     else
       box_l[0] = box_l[1] = box_l[2] = d_new;
+    mpi_rescale_particles(dir,scale);
     mpi_bcast_parameter(FIELD_BOXL);
     mpi_bcast_event(TOPOLOGY_CHANGED);
-    mpi_rescale_particles(dir,scale);
   }
 }
