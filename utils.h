@@ -229,7 +229,6 @@ MDINLINE void permute_ifield(int *field, int size, int permute)
 /** returns the minimum distance between two particles */
 MDINLINE double distance(double pos1[3], double pos2[3])
 {
-  int i;
   double dist = 0;
   dist += SQR(pos1[0]-pos2[0]) + SQR(pos1[1]-pos2[1]) + SQR(pos1[2]-pos2[2]);
   return sqrt(dist);
