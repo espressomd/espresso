@@ -9,8 +9,7 @@
 #include "utils.h"
 #include "parser.h"
 
-#ifndef LJCOS_H
-#define LJCOS_H
+#ifdef LJCOS_H
 
 /** \file ljcos.h
  *  Routines to calculate the lennard jones+cosine energy and/or force 
