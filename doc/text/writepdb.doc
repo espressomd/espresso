@@ -20,4 +20,15 @@ topologies can also be handled by modified versions of writepsf.
 writepdb <file>
 \endverbatim
 writes the corresponding particle data.
+
+\anchor tcl_writepdbfoldchains
+\verbatim
+writepdbfoldchains <file> { < chain_start> <n_chains> <chain_length> <box_l> }
+\endverbatim
+Writes folded particle data where the folding is 
+performed on chain centers of mass rather than single particles.
+In order to fold in this way the chain topology and box length 
+must be specified. 
+
+
 */
