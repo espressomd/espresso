@@ -2,13 +2,42 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.5.6c *
+* v1.5.7b *
 ***********
 
 Current working revision.
 
 
-- v1.5.6c -
+- v1.5.7b -
+-----------
+
+(b) March 22nd, 2004.
+(a) March 21st, 2004.
+
+Changes:
+(b) Setting 'setmd piston 0.0' now disables the nptiso-thermostat
+    (if compiled in), otherwise it does no longer complain about
+    that (essentially) improper value for compatibility reasons.
+
+Bugfixes:
+(b) Fixed wrong parsing of chain structure info if given in addition
+    to one of the analyze-commands in 'statistics_chain.c', e.g.
+    'analyze re [<chain_start> <n_chains> <chain_length>]'; now,
+    supplying the optional parameters will no longer result in the
+    (unfounded) error message 'only chain structure info required'.
+(a) Fixed severe bug in 'add_bonded_virials' which caused the bonded
+    component of the pressure to be derived falsely. This error was
+    introduced with the new system structure in v1.5.Alpha, so all
+    pressure results produced with that or later versions should be
+    re-derived; however, the actual simulation -as long as it's script
+    did not depend on the pressure results- was not affected by this.
+    Due to the internal storage policy of ESPResSo (forces are rescaled
+    by 0.5*timestep^2) the deviation to the true bonded pressure scales
+    with the timestep: As smaller it was as less noticable this error
+    should have been in your simulations.
+
+
+- v1.5.6d -
 -----------
 
 (d) March 19th, 2004.
