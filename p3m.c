@@ -24,14 +24,9 @@
 /************************************************
  * DEFINES
  ************************************************/
-
-/** number of Brillouin zones in the aliasing sums. */
-#define BRILLOUIN 1       
+   
 /** increment size of charge assignment fields. */
 #define CA_INCREMENT 50       
-
-/** Precision of mesh setup calculations. */
-#define SETUP_PREC 1.0e-14
 
 /* MPI tags for the p3m communications: */
 /** Tag for communication in P3M_init() -> send_calc_mesh(). */
@@ -78,9 +73,17 @@ typedef struct {
  ************************************************/
 
 p3m_struct p3m = { 0.0, 0.0, 0.0, 
-		   {0,0,0}, {0.5,0.5,0.5}, 
-		   0, 32768, 0.0, 0.0, 0.0, 0.0, 
+		   {0,0,0}, {P3M_MESHOFF, P3M_MESHOFF, P3M_MESHOFF}, 
+		   0, P3M_N_INTERPOL, 0.0, P3M_EPSILON, 0.0, 0.0, 
 		   {0.0,0.0,0.0}, {0.0,0.0,0.0}, {0.0,0.0,0.0} };
+
+/** number of charged particles (only on master node). */
+int p3m_sum_qpart;
+/** Sum of square of charges (only on master node). */
+double p3m_sum_q2;
+/** square of sum of charges (only on master node). */
+double p3m_square_sum_q;
+
 
 /** local mesh. */
 static local_mesh lm;
@@ -207,7 +210,6 @@ void calc_influence_function();
  */
 MDINLINE double perform_aliasing_sums(int n[3], double nominator[3]);
 
-void P3M_count_charged_particles(int *n_charged_part, double *sum_square_charges);
 
 /*@}*/
 
@@ -306,7 +308,7 @@ void   P3M_init()
   }
 }
 
-void   P3M_calc_kspace_forces()
+double P3M_calc_kspace_forces(int energy_flag)
 {
   Particle *p;
   int i,m,n,o,np,d,d_rs,i0,i1,i2,ind,j[3];
@@ -325,6 +327,8 @@ void   P3M_calc_kspace_forces()
   int cp_cnt=0, cf_cnt=0;
   /* Prefactor for force */
   double force_prefac;
+  /* k space energy */
+  double k_space_energy=0.0;
 
   P3M_TRACE(fprintf(stderr,"%d: p3m_perform: \n",this_node));
 
@@ -402,6 +406,21 @@ void   P3M_calc_kspace_forces()
   /* === K Space Calculations === */
   P3M_TRACE(fprintf(stderr,"%d: p3m_perform: k-Space\n",this_node));
 
+  /* K space energy calculation */
+  if(energy_flag) {
+    ind = 0;
+    for(i=0; i<fft_plan[3].new_size; i++) {
+      k_space_energy += g[i] * ( SQR(rs_mesh[ind]) + SQR(rs_mesh[ind+1]) );
+      ind += 2;
+    }
+    k_space_energy *= force_prefac * box_l[0] / (4.0*PI) ;
+    /* self energy and net charge correction: */
+    /*
+
+    k_space_energy -= prefactor * ( sum_q2 * alpha / wupi  +  
+				    sum_q_2 * PI / (2.0*L3*SQR(alpha)) );
+    */
+  }
   /* Force preparation */
   ind = 0;
   for(i=0; i<fft_plan[3].new_size; i++) {
@@ -464,6 +483,7 @@ ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%
       }
     }
   }
+  return k_space_energy;
 }
 
 void   P3M_exit()
@@ -493,8 +513,8 @@ void calc_local_ca_mesh() {
   
   /* correct roundof errors at boundary */
   for(i=0;i<3;i++) {
-    if((my_right[i]*p3m.ai[i]-p3m.mesh_off[i])-lm.in_ur[i]<SETUP_PREC) lm.in_ur[i]--;
-    if(1.0+(my_left[i]*p3m.ai[i]-p3m.mesh_off[i])-lm.in_ld[i]<SETUP_PREC) lm.in_ld[i]--;
+    if((my_right[i]*p3m.ai[i]-p3m.mesh_off[i])-lm.in_ur[i]<ROUND_ERROR_PREC) lm.in_ur[i]--;
+    if(1.0+(my_left[i]*p3m.ai[i]-p3m.mesh_off[i])-lm.in_ld[i]<ROUND_ERROR_PREC) lm.in_ld[i]--;
   }
   /* inner grid dimensions */
   for(i=0;i<3;i++) lm.inner[i] = lm.in_ur[i] - lm.in_ld[i] + 1;
@@ -901,13 +921,13 @@ MDINLINE double perform_aliasing_sums(int n[3], double nominator[3])
   f1 = 1.0/(double)p3m.mesh[0];
   f2 = SQR(PI/(p3m.alpha*box_l[0]));
 
-  for(mx = -BRILLOUIN; mx <= BRILLOUIN; mx++) {
+  for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
     nmx = meshift[n[0]] + p3m.mesh[0]*mx;
     sx  = pow(sinc(f1*nmx),2.0*p3m.cao);
-    for(my = -BRILLOUIN; my <= BRILLOUIN; my++) {
+    for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
       nmy = meshift[n[1]] + p3m.mesh[0]*my;
       sy  = sx*pow(sinc(f1*nmy),2.0*p3m.cao);
-      for(mz = -BRILLOUIN; mz <= BRILLOUIN; mz++) {
+      for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
 	nmz = meshift[n[2]] + p3m.mesh[0]*mz;
 	sz  = sy*pow(sinc(f1*nmz),2.0*p3m.cao);
 	
@@ -1057,14 +1077,38 @@ int P3M_tune_parameters(void)
   if(p3m.alpha == 0.0) { alpha_min = 0.0; alpha_max = 1.0; }
   else                 { alpha_min = alpha_max = p3m.alpha; } 
 
-
+  i=1; r_cut=0.0; mesh=0;cao=0;alpha=0.0;
   return 1;
 }
 
-void P3M_count_charged_particles(int *n_charged_part, double *sum_square_charges)
-{
-  *n_charged_part = 100;
-  *sum_square_charges  = 100.0;
+void P3M_count_charged_particles()
+{  
+  Particle *part;
+  int i,m,n,o,np;
+  double node_sums[3], tot_sums[3];
+
+  for(i=0;i<3;i++) { node_sums[i]=0.0; tot_sums[i]=0.0;}
+
+  INNER_CELLS_LOOP(m, n, o) {
+    part = CELL_PTR(m,n,o)->pList.part;
+    np   = CELL_PTR(m,n,o)->pList.n;
+    for(i=0;i<np;i++) {
+      if( part[i].r.q != 0.0 ) {
+	node_sums[0] += 1.0;
+	node_sums[1] += SQR(part[i].r.q);
+	node_sums[2] += part[i].r.q;
+      }
+    }
+  }
+  
+  MPI_Reduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  if(this_node==0) {
+    p3m_sum_qpart    = (int)(tot_sums[0]+0.1);
+    p3m_sum_q2       = tot_sums[1];
+    p3m_square_sum_q = tot_sums[2];
+  }
+
 }
 
 /************************************************

@@ -92,11 +92,21 @@ extern p3m_struct p3m;
  *  P3M algorithm.
  */
 void   P3M_init();
-/** Calculate the k-space contribution to the coulomb interaction forces. */ 
-void   P3M_calc_kspace_forces();
+
+/** Calculate number of charged particles, the sum of the squared
+    charges and the squared sum of the charges. */
+void P3M_count_charged_particles();
+
+/** Calculate the k-space contribution to the coulomb interaction
+    forces. */ 
+double P3M_calc_kspace_forces(int energy_flag);
+
+/** Calculate the k-space contribution to the coulomb interaction
+    forces. */ 
+double P3M_calc_kspace_energy();
 
 /** Calculate real space contribution of coulomb pair forces. */
-MDINLINE void add_coulomb_pair_force(Particle *p1, Particle *p2,
+MDINLINE void add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
 				     double *d,double dist2,double dist)
 {
   int j;
@@ -105,8 +115,8 @@ MDINLINE void add_coulomb_pair_force(Particle *p1, Particle *p2,
   if(dist < p3m.r_cut) {
     adist = p3m.alpha * dist;
     erfc_part_ri = AS_erfc_part(adist) / dist;
-    fac = p3m.bjerrum * p1->r.q * p2->r.q  * 
-      exp(-adist*adist) * (erfc_part_ri + 2.0*p3m.alpha/1.772453851) / dist2;
+    fac = p3m.prefactor * p1->r.q * p2->r.q  * 
+      exp(-adist*adist) * (erfc_part_ri + 2.0*p3m.alpha/wupi) / dist2;
     for(j=0;j<3;j++) {
       p1->f[j] += fac * d[j];
       p2->f[j] -= fac * d[j];
@@ -116,6 +126,19 @@ MDINLINE void add_coulomb_pair_force(Particle *p1, Particle *p2,
     ONEPART_TRACE(if(p1->r.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f[0],p1->f[1],p1->f[2],p2->r.identity,dist,fac));
     ONEPART_TRACE(if(p2->r.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f[0],p2->f[1],p2->f[2],p1->r.identity,dist,fac));
 
+  }
+}
+
+/** Calculate real space contribution of coulomb pair energy. */
+MDINLINE double p3m_coulomb_pair_energy(Particle *p1, Particle *p2,
+				     double *d,double dist2,double dist)
+{
+  double adist, erfc_part_ri;
+
+  if(dist < p3m.r_cut) {
+    adist = p3m.alpha * dist;
+    erfc_part_ri = AS_erfc_part(adist) / dist;
+    return p3m.prefactor*p1->r.q*p2->r.q *erfc_part_ri*exp(-adist*adist);
   }
 }
 
