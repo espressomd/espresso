@@ -35,8 +35,12 @@ extern int zdir;
 #define LIPID_UP 0
 /** Enumerated constant indicating a Lipid in the bottom leaflet*/
 #define LIPID_DOWN 1
-/** Enumerated constant indicating a Lipid that has left the bilayer*/
+/** Enumerated constant indicating a Lipid that has left the bilayer
+    but may have become incorporated into a periodic image bilayer */
 #define LIPID_STRAY 2
+/** Enumerated constant indicating a Lipid that has left the bilayer
+    and truly floating in space */
+#define REAL_LIPID_STRAY 3
 /** The atom type corresponding to a lipid head group */
 #define LIPID_HEAD_TYPE 0
 

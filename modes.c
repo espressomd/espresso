@@ -217,7 +217,7 @@ int orient_order(double* result)
     dir[1] = stored_dirs[i*3+1];
     dir[2] = stored_dirs[i*3+2];
 
-    if ( l_orient.e[i] != LIPID_STRAY ) {
+    if ( l_orient.e[i] != LIPID_STRAY && l_orient.e[i] != REAL_LIPID_STRAY ) {
       dp = scalar(dir,sumdir);
       *result += dp*dp*1.5-0.5;      
     }
@@ -248,7 +248,8 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
   int mol_size, head_id, tail_id, mol_id, mol_type;
   int i, tmpzdir;
   double distance;
-
+  double fdistance;
+  double tailz;
 
   if ( xdir + ydir + zdir == -3 ) {
     tmpzdir = 2;
@@ -300,7 +301,8 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
     }
   */
 
-  distance = sqrt(pow((partCfg[tail_id].r.p[tmpzdir] - zref),2));
+  tailz = partCfg[tail_id].r.p[tmpzdir];
+  distance = sqrt(pow((tailz - zref),2));
   /*  printf("zdir: %d \n", zdir);
       printf("head pos %f : tail pos %f \n", partCfg[head_id].r.p[tmpzdir], partCfg[tail_id].r.p[tmpzdir] );
       printf("dist %f : vect %f \n", distance,(partCfg[head_id].r.p[tmpzdir] - partCfg[tail_id].r.p[tmpzdir]) );
@@ -318,6 +320,10 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
   }
   
 
+  fdistance = distance - sqrt(pow(floor(tailz/box_l[2])*box_l[2],2));
+  if ( fdistance > stray_cut_off ) {
+    return REAL_LIPID_STRAY;
+  }
 
   if ( (partCfg[head_id].r.p[tmpzdir] - partCfg[tail_id].r.p[tmpzdir]) > 0.0 ) {
     /* Lipid is oriented up */
@@ -364,10 +370,11 @@ int modes2d(fftw_complex* modes) {
   int* grid_parts;
   int* grid_parts_up;
   int* grid_parts_down;
-  double zref;
+  double zreflocal, zref;
   int nup;
   int ndown;
   int nstray;
+  int nrealstray;
   int l_orient;
   double norm;
   int xi, yi;
@@ -418,44 +425,72 @@ int modes2d(fftw_complex* modes) {
   }
   zref = zref/(double)(n_total_particles);
 
-  /* Calculate the non normalized height function of head lipids */
-  nup = ndown = nstray = 0;
+  /* Calculate an initial height function of all particles */
+  for (i = 0 ; i < n_total_particles ; i++) {
+    gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
+    gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
+    height_grid[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir];
+    grid_parts[gj + gi*mode_grid_3d[xdir]] += 1;
+  }
+
+
+  /* Normalise the initial height function */
+  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+      if ( grid_parts[j+i*mode_grid_3d[xdir]] > 0 ) {
+	height_grid[j+i*mode_grid_3d[xdir]] = height_grid[j+i*mode_grid_3d[xdir]]/(double)(grid_parts[j+i*mode_grid_3d[xdir]]);
+      } else {
+	height_grid[j+i*mode_grid_3d[xdir]] = zref;
+      }
+    }
+  }
+
+
+  /* Calculate the non normalized height function of tail lipids */
+  nup = ndown = nstray = nrealstray = 0;
   for (i = 0 ; i < n_total_particles ; i++) {
     if ( (partCfg[i].p.type == 1)) {
       gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
       gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
 
-      l_orient = lipid_orientation(i,partCfg,zref,direction);
+      zreflocal = height_grid[gj+gi*mode_grid_3d[xdir]];
 
-      if ( l_orient != LIPID_STRAY ) {
-	if ( l_orient == LIPID_UP ) {
+      l_orient = lipid_orientation(i,partCfg,zreflocal,direction);
+      if ( l_orient == REAL_LIPID_STRAY ) {
+	nrealstray++;
+      }
+
+      if ( l_orient != LIPID_STRAY && l_orient != REAL_LIPID_STRAY) {
+      	if ( l_orient == LIPID_UP ) {
 	  nup++;
 	  height_grid_up[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir] - zref;
 	  grid_parts_up[gj + gi*mode_grid_3d[xdir]] += 1;
-	  //	  printf("up lipid \n");
 	} else if ( l_orient == LIPID_DOWN ) {
 	  ndown++;
 	  height_grid_down[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir] - zref;
 	  grid_parts_down[gj + gi*mode_grid_3d[xdir]] += 1;
-	  //  printf("down lipid \n");
 	}
       } else {
 	nstray++;
-	//	printf("stray lipid \n");
       }
     }
     fflush(stdout);
     unfold_position(partCfg[i].r.p,partCfg[i].l.i);    
   }
-  if ( nstray > 0 ) {
-    printf("Warning: there were %d stray lipids in height calculation \n",nstray);
+  if ( nrealstray > 0 || nstray > 0) {
+    printf("Warning: there were %d stray lipids and %d realstray lipids in height calculation \n",nstray, nrealstray);
   }
   //  printf(" Lipids up = %d , Lipids down = %d \n",nup, ndown);
 
   STAT_TRACE(fprintf(stderr,"%d, Lipids up = %d , Lipids down = %d \n",this_node, nup, ndown));
 
-
-
+  /* Reinitialise the height grid */
+  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+     height_grid[j+i*mode_grid_3d[xdir]] = 0.0;
+      grid_parts[j+i*mode_grid_3d[xdir]] = 0;
+    }
+  }
   /*
   // Now for debugging purposes we impose a height function with known
   // power spectrum
@@ -557,8 +592,5 @@ int modes2d(fftw_complex* modes) {
 
 }
 
-#undef LIPID_UP 
-#undef LIPID_DOWN 
-#undef LIPID_STRAY 
 #undef MODES2D_NUM_TOL
 
