@@ -9,7 +9,9 @@
 #include <string.h>
 #include <math.h>
 #include "integrate.h"
+#include "interaction_data.h"
 #include "communication.h"
+#include "grid.h"
 #include "cells.h"
 #include "verlet.h"
 #include "ghosts.h"
@@ -18,15 +20,22 @@
 #include "p3m.h"
 #include "utils.h"
 
+/************************************************
+ * DEFINES
+ ************************************************/
+
+/* MPI tags for the fft communications: */
+/** Tag for communication in verlet fix: propagate_positions()  */
+#define REQ_INT_VERLET   400
 
 /*******************  variables  *******************/
 
-double time_step = 0.001;
-double max_cut = 2.0;
-double skin = 0.4;
+double time_step = -1.0;
+double skin = -1.0;
 double max_range;
 double max_range2;
-int    calc_forces_first = 1;
+int    calc_forces_first;
+int    vv_integrator_initialized = 0;
 
 /** \name Privat Functions */
 /************************************************************/
@@ -41,6 +50,8 @@ void propagate_velocities();
     \todo Put verlet criterion as inline function to verlet.h if possible.
 */
 void propagate_positions(); 
+
+void print_local_index();
 
 /*@}*/
 /************************************************************/
@@ -59,11 +70,11 @@ int integrate(ClientData data, Tcl_Interp *interp,
   }
 
   /* translate argument */
-  if (!strncmp(argv[1], "init", strlen(argv[1]))) n_steps=0;
-  else if (!strncmp(argv[1], "exit", strlen(argv[1]))) n_steps=-1;
+  if (!strncmp(argv[1], "init", strlen(argv[1]))) n_steps=-1;
+  else if (!strncmp(argv[1], "exit", strlen(argv[1]))) n_steps=-2;
   else n_steps = atol(argv[1]);
 
-  if(n_steps < -1) {
+  if(n_steps < -2) {
     Tcl_AppendResult(interp, "illegal number of steps", (char *) NULL);
     return (TCL_ERROR);
   }
@@ -86,78 +97,124 @@ int integrate(ClientData data, Tcl_Interp *interp,
 void integrate_vv_init()
 {
   int i;
+  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_init:\n",this_node));
 
-  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_init\n",this_node));
-  INTEG_TRACE(fprintf(stderr,"%d: n_node =%d npart=%d\n",
-		      this_node,n_nodes,max_seen_particle));
-  INTEG_TRACE(fprintf(stderr,"%d: n_particles = %d\n",
-		      this_node, n_particles));
-  max_range  = max_cut + skin;
-  max_range2 = max_range* max_range;
+  /* sanity checks */
+  if(time_step < 0.0 || skin < 0.0 ) {
+    fprintf(stderr,"%d: ERROR: Can not initialize the integrator!:\n",this_node);
+    if( time_step < 0.0 )
+      fprintf(stderr,"%d: PROBLEM: You have to set the time_step!\n",this_node);
+    if( skin < 0.0 )
+      fprintf(stderr,"%d: PROBLEM: You have to set the skin!\n",this_node);
+    errexit();
+  }
+  else {
 
-  /* initialize link cell structure */
-  cells_init();  fflush(stderr); MPI_Barrier(MPI_COMM_WORLD);
-  /* allocate and initialize local indizes */
-  if (max_seen_particle >= 0)
-    local_index = (int *)malloc((max_seen_particle + 1)*sizeof(int));
-  for(i=0;i<=max_seen_particle;i++) local_index[i] = -1;
-  for(i=0;i<n_particles;i++) local_index[particles[i].identity] = i;
-  /* initialize ghost structure */
-  ghost_init(); fflush(stderr);  MPI_Barrier(MPI_COMM_WORLD);
-  /* initialize verlet list structure */
-  verlet_init(); fflush(stderr);  MPI_Barrier(MPI_COMM_WORLD);
-  /* initialize force structure */
-  force_init(); fflush(stderr);  MPI_Barrier(MPI_COMM_WORLD);
-  /* initialize p3m */
-  P3M_init();
+    /* maximal interaction cutoff */
+    calc_maximal_cutoff();
+    calc_minimal_box_dimensions();
+    max_range  = max_cut + skin;
+    max_range2 = max_range* max_range;
+
+   /* check real space interaction cutoff/range*/
+    if(max_cut < 0.0) {
+      fprintf(stderr,"%d: ERROR: You have to specify at least one interaction\n",this_node);
+      errexit();
+    }
+    if((min_box_l/2.0) < max_range) {
+      fprintf(stderr,"%d: ERROR: Maximal real space interaction %f is larger than half of the minimal box dimension %f\n",this_node,max_range,min_box_l);
+      errexit();
+    }
+
+    if(min_local_box_l < max_range) {
+      fprintf(stderr,"%d: ERROR: Maximal real space interaction %f is larger than minimal local box length %f\n",this_node,max_range,min_local_box_l);
+      errexit();
+    }
+
+    /* start initialization */
+    INTEG_TRACE(fprintf(stderr,"%d: n_nodes =%d, max_seen_particle=%d\n",
+			this_node,n_nodes,max_seen_particle));
+    INTEG_TRACE(fprintf(stderr,"%d: n_particles = %d\n",
+			this_node, n_particles));
+
+    /* initialize link cell structure */
+    cells_init();  
+    /* allocate and initialize local indizes */
+    if (max_seen_particle >= 0)
+      local_index = (int *)malloc((max_seen_particle + 1)*sizeof(int));
+    for(i=0;i<=max_seen_particle;i++) local_index[i] = -1;
+    for(i=0;i<n_particles;i++) local_index[particles[i].identity] = i;
+    /* initialize ghost structure */
+    ghost_init(); 
+    /* initialize verlet list structure */
+    verlet_init(); 
+    /* initialize force structure */
+    force_init(); 
+    /* initialize p3m */
+    P3M_init();   
+    /* update integrator status */
+    calc_forces_first         = 1;
+    rebuild_verletlist        = 1;
+    vv_integrator_initialized = 1;
+  }
 }
 
 void integrate_vv(int n_steps)
 {
   int i;
-  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: %d steps\n",this_node,
-		      n_steps));
-  /* this is just for security reasons */
-  MPI_Barrier(MPI_COMM_WORLD);
-  /* check init */
-  if(rebuild_verletlist == 1) {
-    /* already here since exchange_part may destroy the ghost particles */
-    invalidate_ghosts();
-    exchange_part();
-    sort_particles_into_cells();
-    exchange_ghost();
-    build_verlet_list();
-  }
-  if(calc_forces_first == 1) {
-    force_calc();
-    collect_ghost_forces();
-    rescale_forces();
-    calc_forces_first = 0;
-  }
 
-  /* integration loop */
-  INTEG_TRACE(printf("%d START INTEGRATION\n",this_node));
-  for(i=0;i<n_steps;i++) {
-    INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
-    propagate_velocities();
-    propagate_positions();
-   /* rebuild_verletlist = 1; */
+  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv:\n",this_node));
+  if(vv_integrator_initialized == 0) {
+    fprintf(stderr,"%d: ERROR: Velocity verlet Integrator not initialized\n",
+	    this_node);
+    errexit();
+  }
+  else {
+    INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: integrating %d steps\n",this_node,
+			n_steps));
+    /* check init */
     if(rebuild_verletlist == 1) {
+      /* already here since exchange_part may destroy the ghost particles */
       invalidate_ghosts();
       exchange_part();
       sort_particles_into_cells();
       exchange_ghost();
       build_verlet_list();
     }
-    else {
-      update_ghost_pos();
+    if(calc_forces_first == 1) {
+      force_calc();
+      collect_ghost_forces();
+      rescale_forces();
+      calc_forces_first = 0;
     }
-    force_calc();
-    collect_ghost_forces();
-    rescale_forces();
-    propagate_velocities();
+    
+    /* integration loop */
+    INTEG_TRACE(fprintf(stderr,"%d START INTEGRATION\n",this_node));
+    for(i=0;i<n_steps;i++) {
+      INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
+      propagate_velocities();
+      propagate_positions();
+      if(rebuild_verletlist == 1) {
+	INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
+	INTEG_TRACE(fprintf(stderr,"%d: BEFOR: n_particles=%d, n_ghosts=%d, max_particles=%d\n",
+			    this_node,n_particles,n_ghosts,max_particles));
+	invalidate_ghosts();
+	exchange_part();
+	sort_particles_into_cells(); 
+	exchange_ghost();
+	build_verlet_list();
+	INTEG_TRACE(fprintf(stderr,"%d: AFTER: n_particles=%d, n_ghosts=%d, max_particles=%d\n",
+			    this_node,n_particles,n_ghosts,max_particles));
+      }
+      else {
+	update_ghost_pos();
+      }
+      force_calc();
+      collect_ghost_forces();
+      rescale_forces();
+      propagate_velocities();
+    }
   }
-
 }
 
 void integrate_vv_exit()
@@ -168,7 +225,13 @@ void integrate_vv_exit()
   ghost_exit();
   verlet_exit();
   force_exit();
+  vv_integrator_initialized = 0;
 }
+
+/* Callback functions */
+/************************************************************/
+
+
 int skin_callback(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
@@ -178,6 +241,30 @@ int skin_callback(Tcl_Interp *interp, void *_data)
   }
   skin = data;
   mpi_bcast_parameter(FIELD_SKIN);
+  return (TCL_OK);
+}
+
+int time_step_callback(Tcl_Interp *interp, void *_data)
+{
+  double data = *(double *)_data;
+  if (data < 0.0) {
+    Tcl_AppendResult(interp, "time step must be positiv.", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  time_step = data;
+  mpi_bcast_parameter(FIELD_TIME_STEP);
+  return (TCL_OK);
+}
+
+int calc_forces_first_callback(Tcl_Interp *interp, void *_data)
+{
+  int data = *(int *)_data;
+  if (data != 0 && data != 1) {
+    Tcl_AppendResult(interp, "calc_forces_first is an integrator flag and must be 0 or 1.", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  calc_forces_first = data;
+  mpi_bcast_parameter(FIELD_CALC_FORCES_FIRST);
   return (TCL_OK);
 }
 
@@ -209,7 +296,7 @@ void propagate_positions()
 {
   int i;
   int *verlet_flags = malloc(sizeof(int)*n_nodes);
-  double d2[3], dist2, skin2;
+  double skin2;
   INTEG_TRACE(fprintf(stderr,"%d: propagate_positions:\n",this_node));
   rebuild_verletlist = 0;
   skin2 = SQR(skin);
@@ -221,17 +308,13 @@ void propagate_positions()
       particles[i].p[2] += particles[i].v[2];
 
       /* Verlet criterion check */
-      d2[0] = SQR(particles[i].p[0] - particles[i].p_old[0]);
-      d2[1] = SQR(particles[i].p[1] - particles[i].p_old[1]);
-      d2[2] = SQR(particles[i].p[2] - particles[i].p_old[2]);
-      dist2 = d2[0] + d2[1] + d2[2];
-      INTEG_TRACE(fprintf(stderr,"%d: prop_pos: P[%d] moved %f\n",this_node,i,sqrt(dist2)));
-      if( dist2 > skin2 )
+      if(distance2(particles[i].p,particles[i].p_old) > skin2 )
 	rebuild_verletlist = 1; 
     }
 
   /* communicate verlet criterion */
-  MPI_Gather(&rebuild_verletlist, 1, MPI_INT, verlet_flags, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gather(&rebuild_verletlist, 1, MPI_INT, verlet_flags, 1, 
+	     MPI_INT, 0, MPI_COMM_WORLD);
   if(this_node == 0)
     {
       rebuild_verletlist = 0;
@@ -242,10 +325,28 @@ void propagate_positions()
 	    break;
 	  }
     }
-
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(MPI_COMM_WORLD); 
   MPI_Bcast(&rebuild_verletlist, 1, MPI_INT, 0, MPI_COMM_WORLD);
   INTEG_TRACE(fprintf(stderr,"%d: prop_pos: rebuild_verletlist=%d\n",this_node,rebuild_verletlist));
 
   free(verlet_flags);
+}
+
+void print_local_index() 
+{
+  int i,n,cnt,max;
+  for(i=0;i<n_nodes;i++) {
+    MPI_Barrier(MPI_COMM_WORLD); 
+    if(i==this_node) {
+      cnt=0;max=0;
+      fprintf(stderr,"%d: local_index:\n",this_node);
+      for(n=0;n<=max_seen_particle;n++) {
+	fprintf(stderr,"%d ",local_index[n]);
+	if(local_index[n]>-1) cnt++;
+	if(local_index[n]>max) max = 	local_index[n];
+      }
+      fprintf(stderr,"\n%d: %d particles in local_index (max=%d)\n",this_node,cnt,max);
+    }
+  }
+  MPI_Barrier(MPI_COMM_WORLD); 
 }

@@ -61,6 +61,21 @@ void integrate_vv_exit();
 */
 int skin_callback(Tcl_Interp *interp, void *_data);
 
+/** Callback for integration time_step (0.0 <= time_step).
+    \return TCL status.
+*/
+int time_step_callback(Tcl_Interp *interp, void *_data);
+
+/** Callback for integrator flag calc_forces_first (= 0 or 1).
+    <ul>
+    <li> 1 means the integrator calculates the forces befor the
+    first integration step.
+    <li> 0 means the integrator reuses the forces that it remembers 
+    from the last integration step.
+    </ul>
+    \return TCL status.
+*/
+int calc_forces_first_callback(Tcl_Interp *interp, void *_data);
 /*@}*/
 
 #endif
