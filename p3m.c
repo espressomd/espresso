@@ -2156,7 +2156,7 @@ void P3M_count_charged_particles()
   if(this_node==0) {
     p3m_sum_qpart    = (int)(tot_sums[0]+0.1);
     p3m_sum_q2       = tot_sums[1];
-    p3m_square_sum_q = tot_sums[2];
+    p3m_square_sum_q = SQR(tot_sums[2]);
   }
 }
 
