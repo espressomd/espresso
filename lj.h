@@ -102,7 +102,7 @@ MDINLINE void calc_lj_cap_radii(double force_cap)
   for(i=0; i<n_particle_types; i++) {
     for(j=0; j<n_particle_types; j++) {
       params = get_ia_param(i,j);
-      if(force_cap > 0.0) {
+      if(force_cap > 0.0 && params->LJ_eps > 0.0) {
 	/* I think we have to solve this numerically... and very crude as well */
 	cnt=0;
 	rad = params->LJ_sig;
