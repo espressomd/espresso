@@ -1177,6 +1177,9 @@ int P3M_tune_parameters(Tcl_Interp *interp)
   p3m.cao      = cao_best;
   p3m.alpha    = alpha_best;
   p3m.accuracy = accuracy_best;
+  /* broadcast tuned p3m parameters */
+  mpi_bcast_coulomb_params();
+  /* Tell the user about the outcome */
   sprintf(b1,"%d",try);
   Tcl_AppendResult(interp, "\nTune results of ",b1," trials:\n", (char *) NULL);
   sprintf(b1,"%-3d",best_try); sprintf(b2,"%-4d",mesh_best); sprintf(b3,"%-3d",cao_best);
