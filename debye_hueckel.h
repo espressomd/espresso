@@ -92,7 +92,7 @@ MDINLINE int inter_parse_dh(Tcl_Interp * interp, int argc, char ** argv)
     @param d         Vector pointing from p1 to p2.
     @param dist      Distance between p1 and p2.
 */
-MDINLINE void calc_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
+MDINLINE void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
 {
   int j;
   double kappa_dist, fac;
