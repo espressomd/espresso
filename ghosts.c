@@ -223,6 +223,9 @@ void ghost_init()
   int lc[3],hc[3],done[3]={0,0,0};
 
   GHOST_TRACE(fprintf(stderr,"%d: ghost_init:\n",this_node));
+  GHOST_TRACE(fprintf(stderr,"%d: box_l=(%f,%f,%f):\n",this_node,box_l[0],box_l[1],box_l[2]));
+  GHOST_TRACE(fprintf(stderr,"%d: boundary=(%d,%d,%d,%d,%d,%d):\n",this_node,
+		      boundary[0],boundary[1],boundary[2],boundary[3],boundary[4],boundary[5]));
 
   /* Init ghost exchange */
   /* preparation of help variables */
@@ -419,10 +422,12 @@ void exchange_ghost()
 	switch(boundary[s_dir]) {
 	case 0: break;
 	case 1:
-	  g_send_buf.part[cnt].p[s_dir/2] += box_l[s_dir];
+	  g_send_buf.part[cnt].p[s_dir/2] += box_l[s_dir/2];
+	  GHOST_TRACE(fprintf(stderr,"%d: ghost shift %f\n",this_node,box_l[s_dir/2]));
 	  break;
 	case -1:
-	  g_send_buf.part[cnt].p[s_dir/2] -= box_l[s_dir];
+	  g_send_buf.part[cnt].p[s_dir/2] -= box_l[s_dir/2];
+	  GHOST_TRACE(fprintf(stderr,"%d: ghost shift %f\n",this_node,-box_l[s_dir/2]));
 	  break;
 	}
 	cnt++;
