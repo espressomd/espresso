@@ -20,13 +20,12 @@
 #                                                           #
 #############################################################
 
-puts " "
-puts "==================================================="
-puts "=                 madelung.tcl                    ="
-puts "==================================================="
-puts " "
+if { [setmd n_nodes] == 3 || [setmd n_nodes] == 6 } {
+    puts "Testcase madelung.tcl does not run on 3 or 6 nodes"
+    exit 0
+}
 
-puts "Program Information: \n[code_info]\n"
+puts "Testcase madelung.tcl running on [setmd n_nodes] nodes:"
 
 #############################################################
 #  Parameters                                               #
@@ -34,6 +33,7 @@ puts "Program Information: \n[code_info]\n"
 
 # The Madelung constant
 set madelung_nacl 1.747564594633182190636212035544397403481
+set force_epsilon 1e-14
 
 # System identification: 
 set name  "madelung"
@@ -119,25 +119,26 @@ for {set i 0} { $i < $nacl_repl } {incr i} {
     }
 }
 
-puts -nonewline "P3M Parameter Tuning ... please wait\r"
-flush stdout
-puts "[inter coulomb $bjerrum p3m tune accuracy $accuracy mesh 32]"
-
+#puts -nonewline "P3M Parameter Tuning ... please wait\r"
+#flush stdout
+#puts "[inter coulomb $bjerrum p3m tune accuracy $accuracy mesh 32]"
+# Use pretuned p3m parameters:
+inter coulomb $bjerrum p3m 7.97000e+00 32 6 4.48505e-01
 
 # print system specification
 set n_part [setmd n_part]
 puts "NaCl crystal with $n_part particle (grid $nc, replic $nacl_repl)"
-puts "in cubic box of size $box_l. Crystal offset: $x0 $y0 $z0"
-puts "Interactions: \n{ [inter] }"
+#puts "in cubic box of size $box_l. Crystal offset: $x0 $y0 $z0"
+#puts "Interactions: \n{ [inter] }"
 
-writepdb "$name$ident.pdb"
+#writepdb "$name$ident.pdb"
 
-puts "\nIntegrate $int_steps step(s)"
+#puts "\nIntegrate $int_steps step(s)"
 integrate $int_steps
 
 # calculate Madelung constant
 set energy "[analyze energy]"
-puts "\nEnergy: $energy"
+#puts "\nEnergy: $energy"
 set calc_mad_const [expr -2.0*$nacl_const*[lindex [lindex $energy 0] 1] / $n_part]
 puts "\nExact value of the Madelung constant: $madelung_nacl"
 puts "Madelung constant:                    $calc_mad_const"
@@ -156,6 +157,13 @@ for {set i 0} { $i < $n_part } {incr i} {
 }
 puts "Maximal force component:              $max_force"
 
-set out [open "mad_variables.txt" "w"]
-blockfile $out write tclvariable all
-close $out
+if { [expr ($calc_mad_const-$madelung_nacl)/$madelung_nacl] > $accuracy } {
+    puts "Error occured: Madelung constant failed to reach accuracy goal"
+    exit -666
+}
+if { $max_force > $force_epsilon } {
+    puts "Error occured: Forces larger than $force_epsilon occured"
+    exit -666
+}
+
+exit 0
