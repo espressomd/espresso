@@ -142,11 +142,11 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond, int **b
 int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int chain_dist, int type_FENE, int max_try);
 
 /** Implementation of the tcl-command
-    diamond <a> <bond_length> <MPC> [counterions <N_CI>] [charges <val_cM> [<val_CI>]] */
+    diamond <a> <bond_length> <MPC> [counterions <N_CI>] [charges <val_nodes> <val_cM> <val_CI>] [distance <cM_dist>] */
 int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** C implementation of 'diamond <a> <bond_length> <MPC> [options]' */
-int diamondC(double a, double bond_length, int MPC, int N_CI, double val_cM, double val_CI);
+int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, double val_cM, double val_CI, int cM_dist);
 
 
 #endif
