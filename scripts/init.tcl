@@ -45,6 +45,7 @@ source countBonds.tcl
 
 source aux.tcl
 # adds 'checkpoint_set' and 'checkpoint_read'
+# adds 'prepare_vmd_connection' which aids in setting up a vmd-connection
 # adds 'timeStamp' which modifies a filestring to include a prefix and the current date as postfix before the suffix
 # adds 'polyBlockWrite' which writes a given 'Espresso'-configuration to disk
 #      (this function in combination with 'convertMD2Deserno' replaces 'polywr.tcl')
@@ -88,3 +89,7 @@ source ABHmath.tcl
 # adds 'sqr <arg>' which returns the square of <arg>
 # adds 'min <arg1> <arg2>' which returns the minimum of <arg1> and <arg2>
 # adds 'max <arg1> <arg2>' which returns the maximum of <arg1> and <arg2>
+# adds 'sign <arg>' which returns the signum-function of <arg>
+# adds 'g_random' which returns random numbers which have a Gaussian distribution
+# adds 'pair_dist <part_id1> <part_id2>' which returns the distance of two particles with identities <part_id1> and <part_id2>
+# adds 'LinRegression <tcl-list of points {{x1 y1} {x2 y2} ...}>' which returns the least-square linear fit a*x+b and the standard errors da and db
