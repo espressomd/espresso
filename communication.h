@@ -170,16 +170,23 @@ void mpi_bcast_n_particle_types(int s);
 
 /** Issue REQ_GATHER: gather statistics. job determines the job to
     do, at the moment either gather \ref minimum_part_dist or
-    the coordinates.
+    the coordinates or all particle informations.
     \param job what to do:
     <ul>
     <li> 0 gather \ref minimum_part_dist
     <li> 1 gather coordinates in packed float format (imd)
+    <li> 2 gather all particle informations
+          (assuming that they are stored consecutively,
+           i.e. tot_size == getParticleCount() == max_seen_particle+1 )
     </ul>
     \param result where to store the gathered value(s):
     <ul>
     <li> for job 0 a double *
+         usage: double *buf; mpi_gather_stats(0, buf);
     <li> for job 1 a float_packed_particle_data *
+         usage: float_packed_particle_data fdata; mpi_gather_stats(1, &fdata);
+    <li> for job 2 a Particle *
+         usage: Particle *gdata; mpi_gather_stats(2, &gdata);
     </ul>
 */
 void mpi_gather_stats(int job, void *result);
