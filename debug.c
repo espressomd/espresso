@@ -8,6 +8,8 @@
 #include <string.h>
 #include "communication.h"
 #include "debug.h"
+#include "cells.h"
+#include "grid.h"
 
 #if defined FORCE_CORE || defined MPI_CORE
 int regular_exit = 0;
@@ -26,3 +28,78 @@ void core()
     kill(getpid(), SIGSEGV);
   }
 }
+
+void check_particle_consistency()
+{
+  ParticleList *pl;
+  Particle *part;
+  Cell *cell;
+  int n, np, dir, c;
+  int cell_part_cnt, ghost_part_cnt, local_part_cnt;
+
+  cell_part_cnt=0;
+  ghost_part_cnt=0;
+  local_part_cnt=0;
+  for(c=0; c<n_cells; c++) {
+    if(is_inner_cell(c,ghost_cell_grid)) {
+      cell_part_cnt += cells[c].pList.n;
+      cell = &cells[c];
+      pl   = &(cell->pList);
+      part = pl->part;
+      np   = pl->n;
+      for(n=0; n<cells[c].pList.n ; n++) {
+	if(part[n].r.identity < 0 || part[n].r.identity > max_seen_particle) {
+	  fprintf(stderr,"%d: sort_part_in_cells: ERROR: Cell %d Part %d has corrupted id=%d\n",
+		  this_node,c,n,cells[c].pList.part[n].r.identity);
+	  errexit();
+	}
+	for(dir=0;dir<3;dir++) {
+	  if(periodic[dir] && (part[n].r.p[dir] < 0 || part[n].r.p[dir] > box_l[dir])) {
+	    fprintf(stderr,"%d: exchange_part: ERROR: illegal pos[%d]=%f of part %d id=%d in cell %d\n",
+		    this_node,dir,part[n].r.p[dir],n,part[n].r.identity,c);
+	    errexit();
+	  }
+	}
+	if(local_particles[part[n].r.identity] != &part[n]) {
+	    fprintf(stderr,"%d: exchange_part: ERROR: address mismatch for part id %d: %p %p in cell %d\n",
+		    this_node,part[n].r.identity,local_particles[part[n].r.identity],
+		    &part[n],c);
+	    errexit();
+
+	}
+      }
+    }
+    else {
+      if(cells[c].pList.n>0) {
+	ghost_part_cnt += cells[c].pList.n;
+	fprintf(stderr,"%d: sort_part_in_cells: WARNING: ghost_cell %d contains %d particles!\n",
+		this_node,c,cells[c].pList.n);
+      }
+    }
+  }
+  CELL_TRACE(fprintf(stderr,"%d: sort_part_in_cells: %d particles in cells.\n",
+		     this_node,cell_part_cnt));
+  for(n=0; n< max_seen_particle+1; n++) {
+    if(local_particles[n] != NULL) {
+      local_part_cnt ++;
+      if(local_particles[n]->r.identity != n) {
+	fprintf(stderr,"%d: sort_part_in_cells: ERROR: local_particles part %d has corrupted id %d\n",
+		this_node,n,local_particles[n]->r.identity);
+	errexit();
+      }
+    }
+  }
+  CELL_TRACE(fprintf(stderr,"%d: sort_part_in_cells: %d particles in local_particles.\n",
+		     this_node,local_part_cnt));
+  if(local_part_cnt != cell_part_cnt) {
+    fprintf(stderr,"%d: sort_part_in_cells: ERROR: %d parts in cells but %d parts in local_particles\n",
+	    this_node,local_part_cnt,cell_part_cnt);
+    if(ghost_part_cnt==0) errexit();
+  }
+  if(ghost_part_cnt>0) {
+    fprintf(stderr,"%d: sort_part_in_cells: ERROR: Found %d illegal ghost particles!\n",
+	    this_node,ghost_part_cnt);
+    errexit();
+  }
+}
+

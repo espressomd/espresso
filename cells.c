@@ -236,6 +236,7 @@ Particle *cells_alloc_particle(int id, double pos[3])
     update_local_particles(&cells[ind].pList);
   else
     local_particles[pt->r.identity] = pt;
+
   return pt;
 }
 

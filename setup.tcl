@@ -63,8 +63,7 @@ setmd gamma [expr 1e4*[setmd time_step]]
 setmd temp 1.
 
 puts "starting ramp integration"
-#puts [part]
-integrate init
+puts [part]
 
 set cont 1
 for {set i 0} { $i < $maxtime && $cont} { incr i} {

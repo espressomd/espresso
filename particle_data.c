@@ -55,7 +55,7 @@ void realloc_local_particles(int part)
     /* round up part + 1 in granularity PART_INCREMENT */
     max_local_particles = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
     local_particles = (Particle **)realloc(local_particles, sizeof(Particle *)*max_local_particles);
-    for (i = part + 1; i < max_local_particles; i++)
+    for (i =  max_seen_particle + 1; i < max_local_particles; i++)
       local_particles[i] = NULL;
   }
 }
@@ -105,7 +105,7 @@ int realloc_particles(ParticleList *l, int size)
   Particle *old_start = l->part;
   if (size < l->max) {
     /* shrink not as fast, just lose half, rounded up */
-    l->max = PART_INCREMENT*(((l->n + size)/2 +
+    l->max = PART_INCREMENT*(((l->max + size + 1)/2 +
 			      PART_INCREMENT - 1)/PART_INCREMENT);
   }
   else
@@ -138,8 +138,8 @@ void realloc_redParticles(RedParticleList *pList, int size)
   int old_max = pList->max, i;
   if (size < pList->max) {
     /* shrink not as fast, just lose half, rounded up */
-    pList->max = PART_INCREMENT*(((pList->n + size)/2 +
-			      PART_INCREMENT - 1)/PART_INCREMENT);
+    pList->max = PART_INCREMENT*(((pList->max + size + 1)/2 +
+				  PART_INCREMENT - 1)/PART_INCREMENT);
   }
   else
     /* round up */
@@ -701,6 +701,7 @@ int place_particle(int part, double p[3])
 
   if (!particle_node)
     build_particle_node();
+
   pnode = (part <= max_seen_particle) ? particle_node[part] : -1;
   if (pnode == -1) {
     /* new particle, node by spatial position */
@@ -719,6 +720,7 @@ int place_particle(int part, double p[3])
   }
 
   mpi_place_particle(pnode, part, p);
+
   return retcode;
 }
 
@@ -814,9 +816,9 @@ void local_place_particle(int part, double p[3])
   i[2] = 0;
   fold_particle(p, i);
   
-  if (!pt) {
+  if (!pt)
     pt = cells_alloc_particle(part, p);
-  }
+
   memcpy(pt->r.p, p, 3*sizeof(double));
   memcpy(pt->i, i, 3*sizeof(int));
 }

@@ -181,6 +181,7 @@ void integrate_vv(int n_steps)
   particle_changed     = 0; 
   interactions_changed = 0;
   topology_changed     = 0;
+  parameter_changed    = 0;
 }
 
 /* Callback functions */

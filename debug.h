@@ -30,25 +30,25 @@
  of code that should be executed iff the respective *_DEBUG macro is defined.
 */
 
-/* #define COMM_DEBUG */
-/* #define INTEG_DEBUG */
-/* #define CELL_DEBUG  */
-/* #define GHOST_DEBUG */
-/* #define GRID_DEBUG  */
-/* #define VERLET_DEBUG */
-/* #define PARTICLE_DEBUG */
-/* #define P3M_DEBUG */
-/* #define FFT_DEBUG */
-/* #define RANDOM_DEBUG */
-/* #define FORCE_DEBUG */
+// #define COMM_DEBUG
+// #define INTEG_DEBUG
+// #define CELL_DEBUG
+// #define GHOST_DEBUG
+// #define GRID_DEBUG
+// #define VERLET_DEBUG
+// #define PARTICLE_DEBUG
+// #define P3M_DEBUG
+// #define FFT_DEBUG
+// #define RANDOM_DEBUG
+// #define FORCE_DEBUG
 /* Detailed Force debugging -> Gives expilitely all forces! */
-/* #define THERMO_DEBUG */
-/* #define LJ_DEBUG */
-/* #define ESR_DEBUG */
-/* #define ESK_DEBUG */
-/* #define FENE_DEBUG */
-/* #define GHOST_FORCE_DEBUG */
-/* #define ONEPART_DEBUG */
+// #define THERMO_DEBUG
+// #define LJ_DEBUG
+// #define ESR_DEBUG
+// #define ESK_DEBUG
+// #define FENE_DEBUG
+// #define GHOST_FORCE_DEBUG
+// #define ONEPART_DEBUG
 
 #define MPI_CORE
 #define FORCE_CORE
@@ -57,8 +57,13 @@
 
 #if defined FORCE_CORE || defined MPI_CORE
 /** this functions kills the task with SIGSEGV */
-extern void core();
+void core();
 #endif
+
+/** this performs a lot of tests which will very likely detect corruptions of
+    \ref local_particles and the cell structure.
+*/
+void check_particle_consistency();
 
 /** by setting this variable to 1, a regular exit is
     indicated. In that case, no core dump is generated.
