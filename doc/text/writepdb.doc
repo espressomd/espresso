@@ -1,0 +1,23 @@
+/** \page writepdb Writing pdb/psf files
+    The PDB (Brookhaven Protein DataBase) format is a widely used
+    format for describing atomic configurations. PSF is a format
+    that is used by VMD to describe the topology of a PDB file.
+    You need the PDB and PSF files for example for \ref tcl_imd.
+
+\anchor tcl_writepsf
+\verbatim
+writepsf <file> { <N_P> <MPC> <N_CI> <N_pS> <N_nS> }
+\endverbatim
+writes the current topology to the file <file> (here <file> is not
+a channel since additional information cannot be written anyways).
+<N_P>, <MPC> and so on are parameters describing a system consisting
+of equally long charged polymers, counterions and salt. This information
+can be used to color the atoms in VMD. Of course different kinds of
+topologies can also be handled by modified versions of writepsf.
+
+\anchor tcl_writepdb
+\verbatim
+writepdb <file>
+\endverbatim
+writes the corresponding particle data.
+*/
