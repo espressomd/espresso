@@ -22,9 +22,11 @@ proc read_data {file} {
 }
 
 proc write_data {file} {
+    global energy pressure
     set f [open $file "w"]
     set energy [analyze energy total]
-    blockfile $f write tclvariable energy
+    set pressure [analyze pressure total]
+    blockfile $f write tclvariable {energy pressure}
     blockfile $f write variable box_l
     blockfile $f write particles {id pos f}
     close $f
@@ -39,7 +41,7 @@ if { [catch {
     # to ensure force recalculation
     invalidate_system
 
-    # lj-specific part
+    ############## lj-specific part
 
     inter 0 0 lennard-jones 1.0 1.0 1.12246 1.0 0.0 0.0
     integrate 0
@@ -47,20 +49,33 @@ if { [catch {
     # here you can create the necessary snapshot
     # write_data "lj_system.data2"
 
+    # ensures that no other forces are on
     set cureng [analyze energy lj 0 0]
+    # tbrs
+    set curprs [lindex [analyze pressure lj 0 0] 0]
 
-    # end
+    ############## end
 
     set toteng [analyze energy total]
+    set totprs [analyze pressure total]
 
-    if { $toteng != $cureng } {
+    if { [expr abs($toteng - $cureng)] > $epsilon } {
 	error "system has unwanted energy contributions"
+    }
+    if { [expr abs($totprs - $curprs)] > $epsilon } {
+	error "system has unwanted pressure contributions"
     }
 
     set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
     puts "relative energy deviations: $rel_eng_error"
     if { $rel_eng_error > $epsilon } {
 	error "relative energy error too large"
+    }
+
+    set rel_prs_error [expr abs(($totprs - $pressure)/$pressure)]
+    puts "relative pressure deviations: $rel_prs_error"
+    if { $rel_prs_error > $epsilon } {
+	error "relative pressure error too large"
     }
 
     set maxdx 0
