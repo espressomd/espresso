@@ -90,15 +90,15 @@ if { [catch {
 	if { [expr abs($curfy)] > $epsilon || [expr abs($curfz)] > $epsilon } {
 	    error "unexpected shear forces occured ($curfy / $curfz)"
 	}
-	set curedh [analyze energy coulom]; set curekin [analyze energy kinetic]; set curet [analyze energy total]
+	set curedh [analyze energy coulomb]; set curekin [analyze energy kinetic]; set curet [analyze energy total]
 	if { [expr abs($curet - $curedh - $curekin)] > $epsilon } {
 	    error "system has unwanted energy contributions of [format %e [expr $curet - $curedh - $curekin]]"
 	}
 
-	set thx [analyze mindist]; set rel_error [expr abs(($x - $thx)/$thx)]
-	if { $rel_error > $epsilon } {
-	    error "relative error $rel_error in the minimal distance too large ($thx / $x)"
-	} elseif { $rel_error > $maxx } { set maxx $rel_error }
+ 	set thx [analyze mindist]; set rel_error [expr abs(($x - $thx)/$thx)]
+ 	if { $rel_error > $epsilon } {
+ 	    error "relative error $rel_error in the minimal distance too large ($thx / $x)"
+ 	} elseif { $rel_error > $maxx } { set maxx $rel_error }
 	set thfx [expr $bjerrum*$q1*$q2/($x*$x)]; set rel_error [expr abs(($curfx - $thfx)/$thfx)]
 	if { $x > $maxr } { set thfx 0.0; set rel_error [expr abs($curfx - $thfx)] }
 	if { $rel_error > $epsilon } {
