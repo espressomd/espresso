@@ -20,6 +20,7 @@
 #include "cells.h"
 /* include the force files */
 #include "lj.h"
+#include "ljcos.h"
 #include "fene.h"
 #include "harmonic.h"
 #include "angle.h"
@@ -120,8 +121,11 @@ void force_calc()
 	dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
 	dist  = sqrt(dist2);
 
-	/* lennnard jones */
+	/* lennard jones */
 	add_lj_pair_force(p1,p2,ia_params,d,dist);
+
+	/* lennard jones cosine */
+	add_ljcos_pair_force(p1,p2,ia_params,d,dist);
 
 	/* real space coulomb */
 	if(coulomb.method == COULOMB_P3M) 

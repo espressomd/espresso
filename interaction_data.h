@@ -58,6 +58,15 @@ typedef struct {
   /* relaxation potential */
   double ramp_cut;
   double ramp_force;
+
+  /** Lennard-Jones+Cos potential */
+  double LJCOS_eps;
+  double LJCOS_sig;
+  double LJCOS_cut;
+  double LJCOS_offset;
+  double LJCOS_alfa;
+  double LJCOS_beta;
+  double LJCOS_rmin;
 } IA_parameters;
 
 /** field containing the interaction parameters for

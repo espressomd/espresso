@@ -19,6 +19,7 @@
 #include "thermostat.h"
 /* include the force files */
 #include "lj.h"
+#include "ljcos.h"
 #include "fene.h"
 #include "harmonic.h"
 #include "angle.h"
@@ -235,7 +236,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   else if (!strncmp(mode, "energy", strlen(mode))) {
-    /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | lj <type1> <type2> | coulomb | kinetic }]' */
+    /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | coulomb | kinetic }]' */
     /*********************************************************************************************************/
     /* checks */
     if (n_total_particles == 0) {
@@ -281,6 +282,21 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       else if(!strncmp(argv[0], "lj", strlen(argv[0]))) {
 	if(argc<3) {
 	  Tcl_AppendResult(interp, "wrong # arguments for: analyze energy lj <type1> <type2>",
+			   (char *)NULL);
+	  return (TCL_ERROR);
+	}
+	if(Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) return (TCL_ERROR);
+	if(Tcl_GetInt(interp, argv[2], &j) == TCL_ERROR) return (TCL_ERROR);
+	if(i >= n_particle_types || j >= n_particle_types) return (TCL_ERROR);
+	energy.ana_num = energy.n_pre+energy.n_bonded + j -i;
+	while(i>0) {
+	  energy.ana_num += n_particle_types - (i-1);
+	  i--;
+	}
+      }
+      else if(!strncmp(argv[0], "lj-cos", strlen(argv[0]))) {
+	if(argc<3) {
+	  Tcl_AppendResult(interp, "wrong # arguments for: analyze energy lj-cos <type1> <type2>",
 			   (char *)NULL);
 	  return (TCL_ERROR);
 	}
@@ -1390,8 +1406,11 @@ void calc_energy()
 	  dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
 	  dist  = sqrt(dist2);
 	  
-	  /* lennnard jones */
+	  /* lennard jones */
 	  energy.node.e[type_num] += lj_pair_energy(p1,p2,ia_params,d,dist);
+
+	  /* lennnard jones cosine */
+	  energy.node.e[type_num] += ljcos_pair_energy(p1,p2,ia_params,d,dist);
 	  
 	  /* real space coulomb */
 	  if(coulomb.method==COULOMB_P3M) 
@@ -1724,6 +1743,7 @@ void calc_virials() {
 	  /* lennnard jones */
 	  for(j=0;j<3;j++) { f1[j] = p1->f[j]; f2[j] = p2->f[j]; }
 	  add_lj_pair_force(p1,p2,ia_params,d,dist);
+	  add_ljcos_pair_force(p1,p2,ia_params,d,dist);
 	  for(j=0;j<3;j++) { p1->f[j] -= (f1[j] = p1->f[j] - f1[j]); p2->f[j] -= (f2[j] = p2->f[j] - f2[j]); }
 	  virials.node.e[type_num] += d[0]*f1[0] + d[1]*f1[1] + d[2]*f1[2];
 	  

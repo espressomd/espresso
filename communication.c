@@ -20,6 +20,7 @@
 #include "statistics.h"
 #include "random.h"
 #include "lj.h"
+#include "ljcos.h"
 
 int this_node = -1;
 int n_nodes = -1;

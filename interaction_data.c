@@ -11,6 +11,7 @@
 #include "p3m.h"
 #include "debye_hueckel.h"
 #include "lj.h"
+#include "ljcos.h"
 
 /****************************************
  * variables
@@ -50,6 +51,15 @@ void initialize_ia_params(IA_parameters *params) {
   
   params->ramp_cut =
     params->ramp_force = 0;
+
+  params->LJCOS_eps =
+    params->LJCOS_sig =
+    params->LJCOS_cut = 
+    params->LJCOS_offset = 
+    params->LJCOS_alfa = 
+    params->LJCOS_beta = 
+    params->LJCOS_rmin = 0 ;
+
 }
 
 /** Copy interaction parameters. */
@@ -63,6 +73,14 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 
   dst->ramp_cut = src->ramp_cut;
   dst->ramp_force = src->ramp_force;  
+
+  dst->LJCOS_eps = src->LJCOS_eps;
+  dst->LJCOS_sig = src->LJCOS_sig;
+  dst->LJCOS_cut = src->LJCOS_cut;
+  dst->LJCOS_offset = src->LJCOS_offset;
+  dst->LJCOS_alfa = src->LJCOS_alfa;
+  dst->LJCOS_beta = src->LJCOS_beta;
+  dst->LJCOS_rmin = src->LJCOS_rmin;
 }
 
 /** returns non-zero if particles of type i and j have a nonbonded interaction */
@@ -73,6 +91,9 @@ int checkIfParticlesInteract(int i, int j) {
     return 1;
   
   if (data->ramp_cut > 0)
+    return 1;
+
+  if (data->LJCOS_eps != 0)
     return 1;
 
   return 0;
@@ -206,6 +227,22 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
     Tcl_PrintDouble(interp, data->LJ_capradius, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
   }
+  if (data->LJCOS_eps != 0) {
+    Tcl_PrintDouble(interp, data->LJCOS_eps, buffer);
+    Tcl_AppendResult(interp, "lj-cos ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJCOS_sig, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJCOS_cut, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJCOS_offset, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJCOS_alfa, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJCOS_beta, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJCOS_rmin, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
+  }
   if (data->ramp_cut > 0) {
     Tcl_PrintDouble(interp, data->ramp_cut, buffer);
     Tcl_AppendResult(interp, "ramp ", buffer, " ", (char *) NULL);
@@ -282,9 +319,13 @@ void calc_maximal_cutoff()
      for (j = i; j < n_particle_types; j++) {
        	if (checkIfParticlesInteract(i, j)) {
 	  IA_parameters *data = get_ia_param(i, j);
-	  if (data->LJ_eps != 0) {
+    if (data->LJ_eps != 0) {
 	    if(max_cut < (data->LJ_cut+data->LJ_offset) ) 
 	      max_cut = (data->LJ_cut+data->LJ_offset);
+	  }
+	  if (data->LJCOS_eps != 0) {
+	    if(max_cut < (data->LJCOS_cut+data->LJCOS_offset) ) 
+	      max_cut = (data->LJCOS_cut+data->LJCOS_offset);
 	  }
 	  if(max_cut < data->ramp_cut)
 	    max_cut = data->ramp_cut;
@@ -797,7 +838,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
    
     while (argc > 0) {
       if (!strncmp(argv[0], "lennard-jones", strlen(argv[0]))) {
-	/* set new lennard-jones interaction type */
+ 	/* set new lennard-jones interaction type */
 	if (argc < 6) {
 	  Tcl_AppendResult(interp, "lennard-jones needs 5 parameters: "
 			   "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
@@ -830,6 +871,37 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	mpi_bcast_ia_params(j, i);
 	if (lj_force_cap != -1.0)
 	  mpi_lj_cap_forces(lj_force_cap);
+      }
+      else if (!strncmp(argv[0], "lj-cos", strlen(argv[0]))) {
+  	    if (argc < 5) {
+	        Tcl_AppendResult(interp, "lj-cos needs 4 parameters: "
+			   "<ljcos_eps> <ljcos_sig> <ljcos_cut> <ljcos_offset>",
+		    (char *) NULL);
+	        return (TCL_ERROR);
+	    }
+ 	    /* copy lj-cos parameters */
+	    if ((Tcl_GetDouble(interp, argv[1], &data->LJCOS_eps) == TCL_ERROR) ||
+	        (Tcl_GetDouble(interp, argv[2], &data->LJCOS_sig)  == TCL_ERROR) ||
+	        (Tcl_GetDouble(interp, argv[3], &data->LJCOS_cut)  == TCL_ERROR) ||
+            (Tcl_GetDouble(interp, argv[4], &data->LJCOS_offset)  == TCL_ERROR)) {
+	    return (TCL_ERROR);}
+        double fac1=1.122462*(data->LJCOS_sig);
+        double facsq=fac1*fac1;
+        data->LJCOS_rmin= fac1 ;
+        data->LJCOS_alfa=3.1415927/(SQR(data->LJCOS_cut)-facsq);
+        data->LJCOS_beta=3.1415927*(1.-(1./(SQR(data->LJCOS_cut)/facsq-1.)));
+	
+	/* LJCOS should be symmetrically */
+	data_sym->LJCOS_eps = data->LJCOS_eps;
+	data_sym->LJCOS_sig = data->LJCOS_sig;
+	data_sym->LJCOS_cut = data->LJCOS_cut;
+	data_sym->LJCOS_offset = data->LJCOS_offset;
+ 	argc -= 5;
+	argv += 5;
+
+	/* broadcast interaction parameters */
+	mpi_bcast_ia_params(i, j);
+	mpi_bcast_ia_params(j, i);
       }
       else if (!strncmp(argv[0], "ramp", strlen(argv[0]))) {
 	/* set new ramp interaction type */
