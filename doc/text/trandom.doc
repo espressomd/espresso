@@ -18,11 +18,12 @@
 	     those internally in <i>Espresso</i> (e.g. upon restoring a checkpoint) submit the whole list back using
 	     \verbatim t_random stat <status-list> \endverbatim
 	     with <status-list> being the tcl-list mentioned above without any braces.<BR>
-	     <b>Be careful!</b> A <i>complete</i> recovery of the current state of the simulation is only possible if you are saving/restoring 
-	     the checkpoint while all particles' forces are set to zero or on/after a change in the particles' configuration!
-	     This is because the integration algorithm re-uses the old forces calculated in the previous time-step; if something has changed 
-	     in the system (or if it has just been read from a file) the forces are re-derived (including application of the thermostat and
-	     its random numbers) leading to slightly different results compared to the uninterrupted run!
+	     <b>Be careful!</b> A <i>complete</i> recovery of the current state of the simulation is only possible if you make sure to
+	     include a call to \ref tcl_invalidate_system <i>after</i> you saved the checkpoint (\ref tcl_checkpoint_set will do this
+	     automatically for you), because the integration algorithm re-uses the old forces calculated in the previous time-step; 
+	     if something has changed in the system (or if it has just been read from a file) the forces are re-derived (including application 
+	     of the thermostat and its random numbers) leading to slightly different results compared to the uninterrupted run (see
+	     \ref tcl_invalidate_system for details)!
     </ul>
     The C implementation is \ref #t_random.
 */
