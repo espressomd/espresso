@@ -116,7 +116,7 @@ extern const Datafield fields[];
 int setmd(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
 
-/** Implements the Tcl command \ref tcl_code_info.  It provides information on the
+/** Implements the Tcl command \ref #tcl_code_info.  It provides information on the
     Version, Compilation status and the debug status of the used
     code. */
 int code_info(ClientData data, Tcl_Interp *interp,
