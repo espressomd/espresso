@@ -38,7 +38,7 @@
  ************************************************/
 
 /** granularity of the particle buffers in particles */
-#define PART_INCREMENT 32
+#define PART_INCREMENT 8
 
 /** my magic MPI code for send/recv_particles */
 #define REQ_SNDRCV_PART 0xaa
