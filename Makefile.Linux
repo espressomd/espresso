@@ -13,7 +13,7 @@
 TK=yes
 
 ### Intel C compiler instead of gcc
-ICC=yes
+ICC=no
 
 ### Enable ('yes') for the Blade-Center (see http://www.mpip-mainz.mpg.de/theory/computers/blade/index.html)
 BLADE=no
