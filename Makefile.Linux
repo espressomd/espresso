@@ -13,7 +13,7 @@
 TK=no
 
 ### Intel C compiler instead of gcc
-ICC=no
+ICC=yes
 
 ### Enable ('yes') for the Blade-Center (see http://www.mpip-mainz.mpg.de/theory/computers/blade/index.html)
 ### This also enables the ICC-flag by default (since there is no 'gcc' on the Blade-Center).
@@ -25,6 +25,9 @@ BLADE=no
 ### Note that you'll need a link to the 'mpich'-implemented 'mpirun' in /opt/mpich/ch-p4/bin/mpirun
 ###      to execute the resulting binary (the default 'mpirun' is currently /opt/lam/bin/mpirun).
 MPICH=no
+
+### use a simple fake MPI implementation for single node use only
+MPIFAKE=yes
 
 ### static compilation for certain brain damaged blade clusters
 STATIC=no
@@ -56,6 +59,12 @@ else
           CC=/opt/mpich/ch-p4/bin/mpicc
 	  CC=$$ESPRESSO_SOURCE/internal/mpicc.modf
 	  ICC=no
+     else
+	  ifeq ($(MPIFAKE),yes)
+                ifeq ($(CC),mpicc)
+			CC=gcc
+		endif
+          endif
      endif
 endif
 
@@ -146,6 +155,12 @@ else
      CFLAGS+= -DMDINLINE="inline static"
 endif
 
+############ fake mpi
+ifeq ($(MPIFAKE),yes)
+	CSOURCES += mpi
+	CFLAGS += -I.
+endif
+
 ############ linker settings
 LINK=$(CC)
 LDLIBS= -lm -lpthread
@@ -194,8 +209,12 @@ ifeq ($(ICC),yes)
 	       CFLAGS+= -I/opt/mpich/ch-p4/include
 	       LDLIBS+= -L/opt/mpich/ch-p4/lib64 -lmpich
 	  else
-	       CFLAGS+= -I/opt/lam/include
-	       LDLIBS+= -L/opt/lam/lib -lmpi -llam
+	       ifeq ($(MPIFAKE),yes)
+                     # no mpi flags at all
+	       else
+	             CFLAGS+= -I/opt/lam/include
+	             LDLIBS+= -L/opt/lam/lib -lmpi -llam
+               endif
 	  endif
      endif
 endif

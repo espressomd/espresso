@@ -10,10 +10,6 @@
 
 PLATFORMS=AIX Darwin Linux OSF1
 
-########### load platform dependent part
-PLATFORM=$(shell uname -s)
-include Makefile.$(PLATFORM)
-
 ########### list of source files
 CSOURCES= main initialize global communication binary_file interaction_data \
 	  verlet grid integrate cells ghosts forces rotation debug particle_data \
@@ -27,6 +23,10 @@ CXXSOURCES=
 LIBOBJECTS= c_blockfile.o
 
 DOC_RES= doc/html doc/rtf doc/latex doc/man
+
+########### load platform dependent part
+PLATFORM=$(shell uname -s)
+include Makefile.$(PLATFORM)
 
 ########### RULES
 #################

@@ -48,11 +48,19 @@ TESTCASES="nve_pe.tcl npt.tcl madelung.tcl \
 
 errf=_test.sh_error.$$
 
+if [ "$1" == "-nompi" ]; then
+    mpifake=1
+    nplist=1
+else
+    nplist="1 2 3 4 6 8"
+fi
+
+PLATFORM=`uname -s`
 # list of tests that are not supported by this version
 blacklist=
 # and what is missing for what test
 missing=
-for np in 1 2 3 4 6 8; do
+for np in $nplist; do
     for f in $TESTCASES; do
 	ignore=0
 	for ft in $blacklist; do
@@ -65,7 +73,11 @@ for np in 1 2 3 4 6 8; do
 	if test $ignore -eq 0; then
 	    # this is removed if the script runs through
 	    echo "execution of script failed at unexpected point" > $errf
-	    ./$f $np $errf
+	    if [ "$mpifake" ]; then
+		../$PLATFORM/Espresso $f 1 $errf
+	    else
+		./$f $np $errf
+	    fi
 	    if test -f $errf; then
 		if grep -q -e "^not compiled in:" $errf; then
 		    missing="$missing$f: `cat $errf`\n"
