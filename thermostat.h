@@ -17,6 +17,7 @@
  ************************************************/
 
 extern double friction_gamma;
+extern double time_step;
 
 /************************************************
  * functions
