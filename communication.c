@@ -89,19 +89,23 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_RANDOM_STAT 23
 /** Action number for \ref mpi_lj_cap_forces. */
 #define REQ_BCAST_LFC 24
+/** Action number for \ref mpi_random_seed */
+#define REQ_BIT_RANDOM_SEED 25
+/** Action number for \ref mpi_random_stat */
+#define REQ_BIT_RANDOM_STAT 26
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 25
+#define REQ_MAXIMUM 27
 
 #ifdef DIPOLAR_INTERACTION
 /** Action number for \ref mpi_send_quat. */
-#define REQ_SET_QUAT 25
+#define REQ_SET_QUAT 27
 /** Action number for \ref mpi_send_lambda. */
-#define REQ_SET_LAMBDA 26
+#define REQ_SET_LAMBDA 28
 /** Action number for \ref mpi_send_torque. */
-#define REQ_SET_TORQUE 27
+#define REQ_SET_TORQUE 29
 /** Total number of action numbers. */
 #undef REQ_MAXIMUM
-#define REQ_MAXIMUM 28
+#define REQ_MAXIMUM 30
 #endif
 
 /** \name Slave Callbacks
@@ -139,6 +143,8 @@ void mpi_bcast_constraint_slave(int node, int parm);
 void mpi_random_seed_slave(int node, int parm);
 void mpi_random_stat_slave(int node, int parm);
 void mpi_lj_cap_forces_slave(int node, int parm);
+void mpi_bit_random_seed_slave(int node, int parm);
+void mpi_bit_random_stat_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -169,44 +175,48 @@ SlaveCallback *callbacks[] = {
   mpi_random_seed_slave,            /* 22: REQ_RANDOM_SEED */
   mpi_random_stat_slave,            /* 23: REQ_RANDOM_STAT */
   mpi_lj_cap_forces_slave,          /* 24: REQ_BCAST_LFC */
+  mpi_bit_random_seed_slave,        /* 25: REQ_RANDOM_SEED */
+  mpi_bit_random_stat_slave,        /* 26: REQ_RANDOM_STAT */
 #ifdef DIPOLAR_INTERACTION
-  mpi_send_quat_slave,              /* 25: REQ_SET_QUAT */
-  mpi_send_lambda_slave,            /* 26: REQ_SET_LAMBDA */
-  mpi_send_torque_slave,            /* 27: REQ_SET_TORQUE */
+  mpi_send_quat_slave,              /* 27: REQ_SET_QUAT */
+  mpi_send_lambda_slave,            /* 28: REQ_SET_LAMBDA */
+  mpi_send_torque_slave,            /* 29: REQ_SET_TORQUE */
 #endif  
 };
 
 /** Names to be printed when communication debugging is on. */
 char *names[] = {
-  "TERM"      , /*  0 */
-  "BCAST_PAR" , /*  1 */
-  "WHO_HAS"   , /*  2 */
-  "EVENT"     , /*  3 */
-  "SET_POS"   , /*  4 */
-  "SET_V"     , /*  5 */
-  "SET_F"     , /*  6 */
-  "SET_Q"     , /*  7 */
-  "SET_TYPE"  , /*  8 */
-  "SET_BOND"  , /*  9 */
-  "GET_PART"  , /* 10 */
-  "INTEGRATE" , /* 11 */
-  "BCAST_IA"  , /* 12 */
-  "BCAST_IAS" , /* 13 */
-  "GATHER"    , /* 14 */
-  "TIME_STEP" , /* 15 */
-  "GET_PARTS" , /* 16 */
-  "BCAST_CIA" , /* 17 */
-  "SEND_EXT"  , /* 18 */
-  "PLACE_NEW" , /* 19 */
-  "REM_PART"  , /* 20 */
-  "BCAST_CON" , /* 21 */
-  "RAND_SEED" , /* 22 */
-  "RAND_STAT" , /* 23 */
-  "BCAST_LFC" , /* 24 */
+  "TERM"      ,     /*  0 */
+  "BCAST_PAR" ,     /*  1 */
+  "WHO_HAS"   ,     /*  2 */
+  "EVENT"     ,     /*  3 */
+  "SET_POS"   ,     /*  4 */
+  "SET_V"     ,     /*  5 */
+  "SET_F"     ,     /*  6 */
+  "SET_Q"     ,     /*  7 */
+  "SET_TYPE"  ,     /*  8 */
+  "SET_BOND"  ,     /*  9 */
+  "GET_PART"  ,     /* 10 */
+  "INTEGRATE" ,     /* 11 */
+  "BCAST_IA"  ,     /* 12 */
+  "BCAST_IAS" ,     /* 13 */
+  "GATHER"    ,     /* 14 */
+  "TIME_STEP" ,     /* 15 */
+  "GET_PARTS" ,     /* 16 */
+  "BCAST_CIA" ,     /* 17 */
+  "SEND_EXT"  ,     /* 18 */
+  "PLACE_NEW" ,     /* 19 */
+  "REM_PART"  ,     /* 20 */
+  "BCAST_CON" ,     /* 21 */
+  "RAND_SEED" ,     /* 22 */
+  "RAND_STAT" ,     /* 23 */
+  "BCAST_LFC" ,     /* 24 */
+  "BIT_RAND_SEED" , /* 25 */
+  "BIT_RAND_STAT" , /* 26 */
 #ifdef DIPOLAR_INTERACTION  
-  "SET_QUAT"  , /* 25 */
-  "SET_LAMBDA", /* 26 */
-  "SET_TORQUE", /* 27 */
+  "SET_QUAT"  ,     /* 27 */
+  "SET_LAMBDA",     /* 28 */
+  "SET_TORQUE",     /* 29 */
 #endif  
 };
 
@@ -1280,6 +1290,64 @@ void mpi_lj_cap_forces_slave(int node, int parm)
   MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   calc_lj_cap_radii(lj_force_cap);
   on_ia_change();
+}
+
+/*************** REQ_BIT_RANDOM_SEED ************/
+void mpi_bit_random_seed(int cnt, int *seed) {
+  int this_idum = print_bit_random_seed();
+
+  mpi_issue(REQ_BIT_RANDOM_SEED, -1, cnt);
+
+  if (cnt==0) {
+    RANDOM_TRACE(printf("%d: Have seed %d\n",this_node,this_idum));
+    MPI_Gather(&this_idum,1,MPI_INT,seed,1,MPI_INT,0,MPI_COMM_WORLD); }
+  else {
+    MPI_Scatter(seed,1,MPI_INT,&this_idum,1,MPI_INT,0,MPI_COMM_WORLD);
+    RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
+    init_bit_random_generator(this_idum);
+  }
+}
+
+void mpi_bit_random_seed_slave(int pnode, int cnt) {
+  int this_idum = print_bit_random_seed();
+
+  if (cnt==0) {
+    RANDOM_TRACE(printf("%d: Have seed %d\n",this_node,this_idum));
+    MPI_Gather(&this_idum,1,MPI_INT,NULL,0,MPI_INT,0,MPI_COMM_WORLD); }
+  else {
+    MPI_Scatter(NULL,1,MPI_INT,&this_idum,1,MPI_INT,0,MPI_COMM_WORLD);
+    RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
+    init_bit_random_generator(this_idum);
+  }
+}
+
+/*************** REQ_BIT_RANDOM_STAT ************/
+void mpi_bit_random_stat(int cnt, BitRandomStatus *stat) {
+  BitRandomStatus this_stat = print_bit_random_stat();
+
+  mpi_issue(REQ_BIT_RANDOM_STAT, -1, cnt);
+
+  if (cnt==0) {
+    RANDOM_TRACE(printf("%d: Have status %d/%d/...\n",this_node,this_stat.random_pointer_1,this_stat.random_pointer_2));
+    MPI_Gather(&this_stat,1*sizeof(BitRandomStatus),MPI_BYTE,stat,1*sizeof(BitRandomStatus),MPI_BYTE,0,MPI_COMM_WORLD); }
+  else {
+    MPI_Scatter(stat,1*sizeof(BitRandomStatus),MPI_BYTE,&this_stat,1*sizeof(BitRandomStatus),MPI_BYTE,0,MPI_COMM_WORLD);
+    RANDOM_TRACE(printf("%d: Received status %d/%d/...\n",this_node,this_stat.random_pointer_1,this_stat.random_pointer_2));
+    init_bit_random_stat(this_stat);
+  }
+}
+
+void mpi_bit_random_stat_slave(int pnode, int cnt) {
+  BitRandomStatus this_stat = print_bit_random_stat();
+
+  if (cnt==0) {
+    RANDOM_TRACE(printf("%d: Have status %d/%d/...\n",this_node,this_stat.random_pointer_1,this_stat.random_pointer_2));
+    MPI_Gather(&this_stat,1*sizeof(BitRandomStatus),MPI_BYTE,NULL,0,MPI_BYTE,0,MPI_COMM_WORLD); }
+  else {
+    MPI_Scatter(NULL,0,MPI_BYTE,&this_stat,1*sizeof(BitRandomStatus),MPI_BYTE,0,MPI_COMM_WORLD);
+    RANDOM_TRACE(printf("%d: Received status %d/%d/...\n",this_node,this_stat.random_pointer_1,this_stat.random_pointer_2));
+    init_bit_random_stat(this_stat);
+  }
 }
 
 /*********************** MAIN LOOP for slaves ****************/
