@@ -107,6 +107,8 @@ extern const Datafield fields[];
 #define FIELD_TEMPERATURE 23
 /** index of \ref calc_forces_first in \ref fields */
 #define FIELD_CALC_FORCES_FIRST 24
+/** index of \ref lj_force_cap in \ref fields */
+#define FIELD_LJFORCECAP 25
 /*@}*/
 
 /**********************************************

@@ -20,6 +20,8 @@ Bonded_ia_parameters *bonded_ia_params = NULL;
 
 double max_cut;
 
+double lj_force_cap = 0.0;
+
 /*****************************************
  * functions
  *****************************************/
@@ -30,7 +32,8 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJ_sig =
     params->LJ_cut =
     params->LJ_shift =
-    params->LJ_offset = 0;
+    params->LJ_offset = 
+    params->LJ_capradius = 0;
   
   params->ramp_cut =
     params->ramp_force = 0;
@@ -43,6 +46,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJ_cut = src->LJ_cut;
   dst->LJ_shift = src->LJ_shift;
   dst->LJ_offset = src->LJ_offset;
+  dst->LJ_capradius = src->LJ_capradius;
 
   dst->ramp_cut = src->ramp_cut;
   dst->ramp_force = src->ramp_force;  
@@ -180,6 +184,8 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, data->LJ_offset, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJ_capradius, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
   }
   if (data->ramp_cut > 0) {
     Tcl_PrintDouble(interp, data->ramp_cut, buffer);
@@ -469,5 +475,13 @@ int niatypes_callback(Tcl_Interp *interp, void *data)
   n_interaction_types = *(int *)data;
 
   mpi_bcast_parameter(FIELD_NITYPE);
+  return (TCL_OK);
+}
+
+int lj_force_cap_callback(Tcl_Interp *interp, void *data)
+{
+  lj_force_cap = *(double *)data;
+
+  mpi_bcast_parameter(FIELD_LJFORCECAP);
   return (TCL_OK);
 }

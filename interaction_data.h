@@ -25,6 +25,7 @@ typedef struct {
   double LJ_cut;
   double LJ_shift;
   double LJ_offset;
+  double LJ_capradius;
 
   /* relaxation potential */
   double ramp_cut;
@@ -85,6 +86,11 @@ extern Bonded_ia_parameters *bonded_ia_params;
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
 
+/** For the warmup you can cap the singularity of the Lennard-Jones
+    potential at r=0. look into the warmup documentation for more
+    details (who wants to wite that?).*/
+extern double lj_force_cap;
+
 /************************************************
  * exportet functions
  ************************************************/
@@ -98,6 +104,9 @@ int inter(ClientData data, Tcl_Interp *interp,
 
 /** Callback for setmd niatypes. */
 int niatypes_callback(Tcl_Interp *interp, void *data);
+
+/** Callback for setmd lj_force_cap. */
+int lj_force_cap_callback(Tcl_Interp *interp, void *data);
 
 /** get interaction particles between particle sorts i and j */
 MDINLINE IA_parameters *get_ia_param(int i, int j) {
