@@ -129,6 +129,112 @@ void fft_modes_init() {
   mode_grid_changed = 0;  
 }
 
+/**
+   This routine calculates the orientational order parameter for a
+   lipid bilayer as defined in Brannigan and Brown 2004
+*/
+int orient_order(double* result)
+{
+  double dir[3];
+  double sumdir[3] = {0,0,0};
+  double* stored_dirs;
+  double zref;
+  int bilayer_cnt;
+  int i,atom,tmpzdir;
+  double dp;
+
+
+  bilayer_cnt = 0;
+  *result = 0;
+
+  IntList l_orient;
+  init_intlist(&l_orient);
+  realloc_intlist(&l_orient, n_molecules);
+
+  stored_dirs = malloc(sizeof(double)*n_molecules*3);
+
+  if ( xdir + ydir + zdir == -3 ) {
+    tmpzdir = 2;
+  } else { 
+    tmpzdir = zdir;
+  };
+
+  /* Update particles */
+  updatePartCfg(WITHOUT_BONDS);
+  //Make sure particles are sorted 
+  if (!sortPartCfg()) {
+    fprintf(stderr,"%d,could not sort partCfg \n",this_node);
+    errexit();
+  }
+
+
+  /* Find the mean z position and fold x y coordinates but not z*/
+  zref = 0;
+  for (i = 0 ; i < n_total_particles ; i++) {
+    zref += partCfg[i].r.p[tmpzdir];
+  }
+  zref = zref/(double)(n_total_particles);
+  
+
+  //  Tcl_AppendResult(interp, "{ Lipid_orientations } { ", (char *)NULL);
+
+  for ( i = 0 ; i < n_molecules ; i++) {
+    atom = topology[i].part.e[0];
+    l_orient.e[i] = lipid_orientation(atom,partCfg,zref,dir);
+    stored_dirs[i*3] = dir[0];
+    stored_dirs[i*3+1] = dir[1];
+    stored_dirs[i*3+2] = dir[2];
+
+    if ( l_orient.e[i] == LIPID_UP ) {
+      sumdir[0] += dir[0];
+      sumdir[1] += dir[1];
+      sumdir[2] += dir[2];
+      bilayer_cnt++;
+    }
+    if ( l_orient.e[i] == LIPID_DOWN ) {
+      sumdir[0] -= dir[0];
+      sumdir[1] -= dir[1];
+      sumdir[2] -= dir[2];
+      bilayer_cnt++;
+    }
+  }
+
+
+
+  for ( i = 0 ; i < 3 ; i++) {
+    sumdir[i] = sumdir[i]/(double)(bilayer_cnt++);
+  }
+
+  for ( i = 0 ; i < n_molecules ; i++ ) {
+    dir[0] = stored_dirs[i*3];
+    dir[1] = stored_dirs[i*3+1];
+    dir[2] = stored_dirs[i*3+2];
+
+    if ( l_orient.e[i] != LIPID_STRAY ) {
+      dp = scalar(dir,sumdir);
+      *result += dp*dp*3-1;      
+      //     printf( "dp: %f, %f \n", dp, result );
+    }
+
+  }
+
+  printf("cnt %d sumdir %f \n ", bilayer_cnt, *result);
+  fflush(stdout);
+
+  free(stored_dirs);
+  realloc_intlist(&l_orient, 0);
+
+  *result = *result/(double)(bilayer_cnt);
+  printf("cnt %d result %f \n ", bilayer_cnt, *result);
+  fflush(stdout);
+  return TCL_OK;
+
+}
+
+
+
+
+
 /** 
     This routine performs a simple check to see whether a lipid is
     oriented up or down or if it has escaped the bilayer. 
@@ -137,7 +243,7 @@ void fft_modes_init() {
     \param partCfg An array of sorted particles
     \param zref The average z position of all particles
  */
-int lipid_orientation( int id, Particle* partCfg , double zref) {
+int lipid_orientation( int id, Particle* partCfg , double zref, double director[3]) {
   int mol_size, head_id, tail_id, mol_id, mol_type;
   int i, tmpzdir;
   double distance;
@@ -200,6 +306,18 @@ int lipid_orientation( int id, Particle* partCfg , double zref) {
       fflush(stdout);
   */
 
+  double len = 0;
+  for ( i = 0 ; i < 3 ; i++ ) {
+    director[i] = (partCfg[head_id].r.p[i] - 
+		   partCfg[tail_id].r.p[i]);
+    len += director[i]*director[i];
+  }
+  for ( i = 0 ; i < 3 ; i++ ) {
+    director[i] = director[i]/sqrt(len);
+  }
+  
+
+
   if ( (partCfg[head_id].r.p[tmpzdir] - partCfg[tail_id].r.p[tmpzdir]) > 0.0 ) {
     /* Lipid is oriented up */
     if (  distance  > stray_cut_off ) {
@@ -238,6 +356,7 @@ int modes2d(fftw_complex* modes) {
   STAT_TRACE(fprintf(stderr,"%d,executing modes2d \n",this_node);)
   int i,j, gi, gj;
   double grid_size[2];
+  double direction[3];
   fftw_real* height_grid;
   double* height_grid_up;
   double* height_grid_down;
@@ -305,7 +424,7 @@ int modes2d(fftw_complex* modes) {
       gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
       gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
 
-      l_orient = lipid_orientation(i,partCfg,zref);
+      l_orient = lipid_orientation(i,partCfg,zref,direction);
 
       if ( l_orient != LIPID_STRAY ) {
 	if ( l_orient == LIPID_UP ) {
