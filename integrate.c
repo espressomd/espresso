@@ -611,8 +611,6 @@ void propagate_press_box_pos_and_rescale_npt()
 
     /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and vel-rescaling */
     if (this_node == 0) {
-      
-
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       scal[2] = SQR(box_l[nptiso.non_const_dim])/pow(nptiso.volume,2.0/nptiso.dimension);
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
@@ -663,7 +661,7 @@ void propagate_press_box_pos_and_rescale_npt()
 	if ( nptiso.geometry & nptiso.nptgeom_dir[i] ) {
 	  box_l[i] = L_new;
 	} else if ( nptiso.cubic_box ) {
-	  box_l[i] =  L_new;
+	  box_l[i] = L_new;
 	}
       }
     }
