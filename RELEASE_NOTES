@@ -10,7 +10,7 @@ Current working revision.
 
 - v1.8.2d -
 -----------
-
+(f) December 14th, 2004.
 (d) December  6th, 2004.
 (c) December  2nd, 2004.
 (b) December  1st, 2004.
@@ -23,6 +23,7 @@ New Features:
     Added new options 'COMPACT_CHK' to 'checkpoint_set', which'll take care of this, if enabled.
 
 Bugfixes:
+(f) Fixed a memory allocation bug in aggregation analysis tool
 (d) Re-fixed wrong renormalization in 'analyze g3'.
 (b) Fixed yet another bug in 'pair_dist' which used to not use the 2nd particle's z-component,
     while now (after HL's rewrite) taking the wrong particle identities to derive the distance.
