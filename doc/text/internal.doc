@@ -1,22 +1,6 @@
-/** \page testsuite The Testsuite Directory
-
-The scripts in the directory your_directory/Espresso/testsuite are
-used to check wether changes in the program code affect basic
-properties of ESPResSo. Befor checking in any changes please make sure
-that this test is succesfull. To run the test type <tt>gmake test</tt>
-in the directory your_directory/Espresso. If you write any new
-features for Espresso please provide new tests for them. 
-
-This is a list of the tests that will be performed and a short
-description what they test.
+/** \page internal The internal Directory
 
 <ol>
-<li> <b> lj.tcl </b><br>
-     Tests Lennard-Jones potential: Energy, Pressure and Forces
-<li> <b> madelung.tcl </b><br>
-     Calculates the energy of a NaCl crystal. Test case for the
-     electrostatic energy / force.
-</ol>
 <li> <b> cell_model.tcl </b><br>
      This example shows the use of \ref tcl_constraint "constraints"
      and non periodic boundary conditions. It simulates a bundle of
