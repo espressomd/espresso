@@ -94,14 +94,14 @@ void ghost_init()
 
   /* particle, force/pos buffers */
   buf_size = PART_INCREMENT;
-  /*
+  
   part_send_buf  = (Particle *)malloc(buf_size*sizeof(Particle));
   part_recv_buf  = (Particle *)malloc(buf_size*sizeof(Particle));
   part_send_buf2 = (Particle *)malloc(buf_size*sizeof(Particle));
   part_recv_buf2 = (Particle *)malloc(buf_size*sizeof(Particle));
   send_buf       = (double *)malloc(3*buf_size*sizeof(double));
   recv_buf       = (double *)malloc(3*buf_size*sizeof(double));
-  */
+  
   GHOST_TRACE(fprintf(stderr,"allocation done (exit ghost_init)\n"));
 }
 
@@ -128,7 +128,7 @@ void exchange_ghost_forces()
 void ghost_exit()
 {
   GHOST_TRACE(fprintf(stderr,"%d: ghost_exit:\n",this_node));
-  /*
+  
   free(send_cells);
   free(recv_cells);
   free(n_send_ghosts);
@@ -138,8 +138,8 @@ void ghost_exit()
     free(part_recv_buf);
     free(send_buf);
     free(recv_buf);
-  }
-  */
+  } 
+  
 }
 
 /*******************  privat functions  *******************/

@@ -5,6 +5,10 @@
 #include "verlet.h"
 #include "debug.h"
 
+int   n_verletList;
+int max_verletList;
+int    *verletList;
+
 int rebuild_verletlist = 1;
 
 void verlet_init()
