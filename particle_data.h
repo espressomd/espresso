@@ -135,7 +135,8 @@ extern int partCfgSorted;
  * functions
  ************************************************/
 
-/** implementation of the tcl command part */
+/** implementation of the tcl command \ref tcl_part. This command allows to
+    modify particle data. */
 int part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
 

@@ -53,45 +53,8 @@ extern Energy_stat energy;
 /************************************************************/
 /*@{*/
 
-/** Implements the Tcl command 'analyze <what> [<structure info>] [...]' for basic analysis.
-    Possible arguments for <what> are:
-    <ul>
-    <li> 'analyze mindist' <BR>
-         returns the minimal distance of two particles (needs no structure info).
-    <li> 'analyze nbhood <part_id> <r_catch>' <BR>
-         returns all particles within a given radius <r_catch> around the position of particle <part_id>.
-    <li> 'analyze distto { <part_id> | <posx> <posy> <posz> }' <BR>
-         returns the minimal distance of all particles to coordinates (<posx>, <posy>, <posz>) or to the position of particle <part_id>.
-    <li> 'analyze energy [interaction]' <BR>
-         returns the energies of the system. output is blockfile format: <BR>
-	 { energy <value> } { kinetic <value> } { interaction <value> } ... <BR>
-	 if you specify an interaction, e.g. fene <type_num> or lj <type1> <type2> or coulomb or kinetic
-	 it returns just that energy.
-    <li> 'analyze set <structure info>' <BR>
-         defines the structure. The second argument defines the topology to set, i. e. chain at the moment.<BR>
-	 Possible values for <structure info> are
-	 <ul>
-	 <li> 'analyze set chains [<chain_start> <n_chains> <chain_length>]'
-              A set of equal-length chains. If no parameters are given, the ones currently stored are returned.
-	 </ul>
-    </ul>
-    All tasks below need the particles to be stored consecutively starting with identity 0, and the structure info to be either set by
-    'analyze set chains <chain_start> <n_chains> <chain_length>' above or to be provided upon calling (which (re-)sets 
-    the structure info permanently, i.e. is only required once):
-    <ul>
-    <li> 'analyze re [<chain_start> <n_chains> <chain_length>]' <BR>
-         returns the root of the quadratic end-to-end-distance averaged over all polymers (requires chain structure to be set or provided).
-    <li> 'analyze rg [<chain_start> <n_chains> <chain_length>]' <BR>
-         returns the radius of gyration averaged over all chains (requires chain structure to be set or provided).
-    <li> 'analyze rh [<chain_start> <n_chains> <chain_length>]' <BR>
-         returns the hydrodynamic radius (requires chain structure to be set or provided).
-    <li> 'analyze g123 [[-init] <chain_start> <n_chains> <chain_length>]' <BR>
-         returns the mean-square displacement g1(t) of a monomer,
-                 the mean-square displacement g2(t) in the center of gravity of the chain itself, and
-                 the motion of the center of mass g3(t)
-	 as a tcl-list {g1(t) g2(t) g3(t)} (requires chain structure to be set or provided). <BR>
-	 If before the structure info you give '-init', the current configuration is stored as reference config.
-    </ul>
+/** Implements the Tcl command \ref tcl_analyze. This allows for basic system analysis,
+    both online and offline.
 */
 int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 

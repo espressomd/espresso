@@ -28,13 +28,9 @@ extern long   print_random_idum(void);
 extern long   print_random_seed(void);
 RandomStatus  print_random_stat(void);
 
-/**  Implementation of the tcl-command
-     t_random [{ int <n> | seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }]
-     <li> Without further arguments, it returns a random double between 0 and 1.
-     <li> If 'int <n>' is given, it returns a random integer between 0 and n-1.
-     <li> If 'seed'/'stat' is given without further arguments, it returns a tcl-list with
-          the current seeds/status of the n_nodes active nodes; otherwise it issues the 
-	  given parameters as the new seeds/status to the respective nodes. */
+/**  Implementation of the tcl command \ref tcl_t_random. Access to the
+     parallel random number generator.
+*/
 int t_random(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /*----------------------------------------------------------*/

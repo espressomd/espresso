@@ -204,7 +204,7 @@ extern Constraint *constraints;
  * exportet functions
  ************************************************/
 
-/** Implementation of the Tcl function inter. This function
+/** Implementation of the tcl command \ref tcl_inter. This function
     allows to modify the interaction parameters.
  */
 int inter(ClientData data, Tcl_Interp *interp,

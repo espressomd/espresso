@@ -109,14 +109,14 @@ extern const Datafield fields[];
  * misc procedures
  **********************************************/
 
-/** Implements the Tcl command setmd. It allows to modify simulation parameters.
+/** Implements the Tcl command \ref tcl_setmd. It allows to modify simulation parameters.
     These parameters must be declared in \ref #fields. If you write your own
     callback, REMEMBER THE OTHER NODES!!! The value will only be set by you
     and only on the master node. Using \ref mpi_bcast_parameter may be useful. */
 int setmd(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
 
-/** Implements the Tcl command code_info.  It provides information on the
+/** Implements the Tcl command \ref tcl_code_info.  It provides information on the
     Version, Compilation status and the debug status of the used
     code. */
 int code_info(ClientData data, Tcl_Interp *interp,
