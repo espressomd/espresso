@@ -136,14 +136,8 @@ MDINLINE int compilation_callback(Tcl_Interp *interp)
 #ifdef ELECTROSTATICS
   Tcl_AppendResult(interp, "{ ELECTROSTATICS } ", (char *) NULL);
 #endif
-#ifdef LENNARD_JONES
-  Tcl_AppendResult(interp, "{ LENNARD_JONES } ", (char *) NULL);
-#endif
-#ifdef LJCOS
-  Tcl_AppendResult(interp, "{ LJCOS } ", (char *) NULL);
-#endif
-#ifdef TABULATED
-  Tcl_AppendResult(interp, "{ TABULATED } ", (char *) NULL);
+#ifdef ROTATION
+  Tcl_AppendResult(interp, "{ ROTATION } ", (char *) NULL);
 #endif
 #ifdef EXTERNAL_FORCES
   Tcl_AppendResult(interp, "{ EXTERNAL_FORCES } ", (char *) NULL);
@@ -151,8 +145,29 @@ MDINLINE int compilation_callback(Tcl_Interp *interp)
 #ifdef CONSTRAINTS
   Tcl_AppendResult(interp, "{ CONSTRAINTS } ", (char *) NULL);
 #endif
-#ifdef ROTATION
-  Tcl_AppendResult(interp, "{ ROTATION } ", (char *) NULL);
+#ifdef COMFORCE
+  Tcl_AppendResult(interp, "{ COMFORCE } ", (char *) NULL);
+#endif
+#ifdef COMFIXED
+  Tcl_AppendResult(interp, "{ COMFIXED } ", (char *) NULL);
+#endif
+#ifdef TABULATED
+  Tcl_AppendResult(interp, "{ TABULATED } ", (char *) NULL);
+#endif
+#ifdef LENNARD_JONES
+  Tcl_AppendResult(interp, "{ LENNARD_JONES } ", (char *) NULL);
+#endif
+#ifdef LJCOS
+  Tcl_AppendResult(interp, "{ LJCOS } ", (char *) NULL);
+#endif
+#ifdef BOND_ANGLE_HARMONIC
+  Tcl_AppendResult(interp, "{ BOND_ANGLE_HARMONIC } ", (char *) NULL);
+#endif
+#ifdef BOND_ANGLE_COSINE
+  Tcl_AppendResult(interp, "{ BOND_ANGLE_COSINE } ", (char *) NULL);
+#endif
+#ifdef BOND_ANGLE_COSSQUARE
+  Tcl_AppendResult(interp, "{ BOND_ANGLE_COSSQUARE } ", (char *) NULL);
 #endif
   Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);
