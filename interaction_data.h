@@ -157,6 +157,10 @@ typedef struct {
   double axis[3];
   /** cylinder radius. */
   double rad;
+  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
+  double length;
+  /** cylinder direction. (+1 outside -1 inside interaction direction)*/
+  double direction;
 } Constraint_cylinder;
 
 /** Parameters for a ROD constraint. */

@@ -1558,6 +1558,10 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     Tcl_PrintDouble(interp, con->c.cyl.rad, buffer);
     Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.cyl.length, buffer);
+    Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.cyl.direction, buffer);
+    Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
     sprintf(buffer, "%d", con->part_rep.r.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
@@ -1746,6 +1750,8 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
     con->c.cyl.axis[1] = 
     con->c.cyl.axis[2] = 0;
   con->c.cyl.rad = 0;
+  con->c.cyl.length = 0;
+  con->c.cyl.direction = 0;
   con->part_rep.r.type = -1;
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
@@ -1768,6 +1774,19 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
 	  Tcl_GetDouble(interp, argv[2], &(con->c.cyl.axis[1])) == TCL_ERROR ||
 	  Tcl_GetDouble(interp, argv[3], &(con->c.cyl.axis[2])) == TCL_ERROR)
 	return (TCL_ERROR);
+
+		/*normalize the axis vector */
+		double temp;
+		int i;
+		temp=0.;
+		for (i=0;i<3;i++) {
+			temp += SQR(con->c.cyl.axis[i]);
+		}
+		temp = sqrt (temp);
+		for (i=0;i<3;i++) {
+			con->c.cyl.axis[i] /= temp;
+		}
+        		
       argc -= 4; argv += 4;    
     }
     else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
@@ -1776,6 +1795,24 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
 	return (TCL_ERROR);
       }
       if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.rad)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "length", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint cylinder length <rad> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.length)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "direction", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint cylinder direction <rad> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.direction)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
@@ -1793,7 +1830,7 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
   }
 
   if (con->c.cyl.rad < 0. || con->part_rep.r.type < 0) {
-    Tcl_AppendResult(interp, "usage: constraint cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> type <t>",
+    Tcl_AppendResult(interp, "usage: constraint cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
