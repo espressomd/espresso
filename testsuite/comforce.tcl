@@ -39,6 +39,12 @@ setmd temp 0
 setmd time_step 1
 setmd skin 0
 
+if { [setmd n_nodes] != 1 } {
+    puts "Testcase comforce.tcl does not run on more than one node"
+    exec rm -f $errf
+    exit 0
+}
+
 proc read_data {file} {
     set f [open $file "r"]
     while {![eof $f]} { blockfile $f read auto}
