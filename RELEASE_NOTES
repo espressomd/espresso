@@ -2,18 +2,23 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.3d *
+* v1.6.3e *
 ***********
 
 Current working revision.
 
 
-- v1.6.3d -
+- v1.6.3e -
 -----------
+(e) June 26th, 2004.
 (d) June 23rd, 2004.
 (c) June 21st, 2004.
 (b) June 12th, 2004.
 (a) June 11th, 2004.
+
+New Features:
+(e) Added new analysis routine 'analyze Vkappa' which measures the compressibility
+    of the system by looking at the volume fluctuations.
 
 Changes:
 (a) Added sqrt(3) factor to the Langevin thermostat for re-entering the integrator

@@ -29,6 +29,16 @@
 /** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
 
+/** Variables for measuring the compressibility from volume fluctuations.
+    Will be used by \ref parse_Vkappa exclusively. */
+typedef struct {
+  /** sum of all the considered volumes resp. volumes squared so far */
+  double Vk1; double Vk2; 
+  /** amount of considered volumes so far */
+  double avk;
+} Vkappa_struct;
+Vkappa_struct Vkappa = { 0.0, 0.0, 0.0 };
+
 /****************************************************************************************
  *                                 helper functions
  ****************************************************************************************/
@@ -747,6 +757,30 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
+static int parse_Vkappa(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze Vkappa [reset]' */
+  double result = 0.0;
+  char buffer[TCL_DOUBLE_SPACE];  
+
+  if (argc > 0)
+    if (ARG0_IS_S("reset"))
+      Vkappa.Vk1 = Vkappa.Vk2 = Vkappa.avk = 0.0;
+    else { 
+      Tcl_AppendResult(interp, "usage: analyze Vkappa [reset] ", (char *)NULL);  return TCL_ERROR;  }
+  else {
+    Vkappa.Vk1 += box_l[0]*box_l[1]*box_l[2];
+    Vkappa.Vk2 += SQR(box_l[0]*box_l[1]*box_l[2]);
+    Vkappa.avk += 1.0;
+    result = Vkappa.Vk2/Vkappa.avk - SQR(Vkappa.Vk1/Vkappa.avk);
+  }
+
+  Tcl_PrintDouble(interp, result, buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return (TCL_OK);
+}
+
+
 static int parse_distribution(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze distribution { <part_type_list_a> } { <part_type_list_b> } [<r_min> [<r_max> [<r_bins> [<log_flag> [<int_flag>]]]]]' */
@@ -1083,6 +1117,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return parse_nbhood(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("distto"))
     return parse_distto(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("Vkappa"))
+    return parse_Vkappa(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("energy"))
     return parse_and_print_energy(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("pressure"))
