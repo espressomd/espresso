@@ -186,6 +186,7 @@ int part(ClientData data, Tcl_Interp *interp,
     Tcl_PrintDouble(interp, part.f[2], buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     /* FIXME: print bonding structure here */
+    free(part.bonds);
     return (TCL_OK);
   }
   
@@ -460,6 +461,7 @@ int writemd(ClientData data, Tcl_Interp *interp,
     else {
       Tcl_AppendResult(interp, "no particle data field \"", *argv, "\"?",
 		       (char *) NULL);
+      free(row);
       return (TCL_ERROR);
     }
     argv++;
@@ -501,10 +503,12 @@ int writemd(ClientData data, Tcl_Interp *interp,
 	case TYPE: Tcl_Write(channel, (char *)&data.type, sizeof(int)); break;
 	}
       }
+      free(data.bonds);
     }
   }
   /* end marker */
   Tcl_Write(channel, (char *)&end_num, sizeof(int));
+  free(row);
   return TCL_OK;
 }
 
@@ -590,6 +594,7 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
       Tcl_AppendResult(interp, "illegal data format in data file \"", argv[1],
 		       "\", perhaps wrong file?",
 		       (char *) NULL);
+      free(row);
       return (TCL_ERROR);
     }
 
@@ -614,6 +619,7 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
       if (!av_pos) {
 	Tcl_AppendResult(interp, "new particle without position data",
 			 (char *) NULL);
+	free(row);
 	return (TCL_ERROR);
       }
 
@@ -633,6 +639,11 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
     if (av_type)
       mpi_send_type(node, data.identity, data.type);
   }
+
+  if (!processor_grid_is_set())
+    setup_processor_grid();
+
+  free(row);
   return TCL_OK;
 }
 
