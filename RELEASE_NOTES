@@ -1,41 +1,32 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-**********************
-* v1.5.Gold (Neelix) *
-**********************
+***********
+* v1.5.1  *
+***********
 
-Not yet released.
+Current working revision.
 
 
-- v1.5.Alpha -
---------------
+- v1.5.1a -
+-----------
 
-(d) February 6th, 2004
-(c) January 30th, 2004
-(b) January 15th, 2004.
-(a) January  7th, 2004.
+(c) February  9th, 2004.
+(b) February  6th, 2004.
+(a) January  30th, 2004.
 
-New Features: 
-(a) new command 'cellsystem { domain | nsquare }' to choose the internal particle structure.
-(a) comfixed interaction is implemented. This interaction fixes the center of mass 
-    of all particles of a given type.
-(a) comforce interaction is implemented. This interaction is used to apply a force 
-    on two differenent types of particles. The force is applied either along the
-    major axis of type_1 particles (e.g. bundle of rods), or perpendicular to the 
-    major axis of type_1 particles in the direction of the vector joining center
-    of mass's of type_1 and type_2.
-(c) The bond angle potential can now be used also for equilibrium angles different 
-    from 180 degree (stretched configuration). This should not affect any previous 
+New Features:
+(a) The bond angle potential can now be used also for equilibrium angles different
+    from 180 degree (stretched configuration). This should not affect any previous
     simulations (except numerical errors). The default potential form is now:
     V = k (1+cos(phi+phi0)).
-(c) With help of compiler flags used as switch you can now choose between three 
-    different potential forms (the corresponding #define statements are as usual 
+(a) With help of compiler flags used as switch you can now choose between three
+    different potential forms (the corresponding #define statements are as usual
     in config.h):
     BOND_ANGLE_HARMONIC   ->  V = 1/2 k (phi - phi0)^2
     BOND_ANGLE_COSINE     ->  V = k (1+cos(phi-phi0))
     BOND_ANGLE_COSSQUARE  ->  V = 1/2 k (cos(phi)-cos(phi0))^2
-(d) Inplementation of NEMD (Non Equilibrium Molecular Dynamics). This method
+(b) Inplementation of NEMD (Non Equilibrium Molecular Dynamics). This method
     introduces a shear rate corresponding to a Couette flow by artificially 
     pumping energy into the system via a momentum exchange between two slabs 
     of the system. For more information see for example Evans/Morriss: 
@@ -55,6 +46,42 @@ New Features:
     This method is only useful for either NVE ensemble or has to be used with
     the yet to be installed DPD thermostat to run a NVT ensemble.
     Per default NEMD is not compiled in!
+(c) introducing new particle property 'molecule ID'.
+(c) introducing topoplogy concept.
+
+Changes:
+(c) 'analyze set chains <start> <N_P> <MPC>' does now set the topology,
+    hence 'analyze set chains' has been discontinued.
+
+Bugfixes:
+(c) fixed severe bug that had the p3m tuning routine to not allocate
+    the appropriate amount of memory for the final parameter set, but
+    used the last trial's settings instead.
+
+
+
+**********************
+* v1.5.Beta (Neelix) *
+**********************
+
+Released on January 29th, 2004.
+
+
+- v1.5.Alpha -
+--------------
+
+(b) January 15th, 2004.
+(a) January  7th, 2004.
+
+New Features: 
+(a) new command 'cellsystem { domain | nsquare }' to choose the internal particle structure.
+(a) comfixed interaction is implemented. This interaction fixes the center of mass 
+    of all particles of a given type.
+(a) comforce interaction is implemented. This interaction is used to apply a force 
+    on two differenent types of particles. The force is applied either along the
+    major axis of type_1 particles (e.g. bundle of rods), or perpendicular to the 
+    major axis of type_1 particles in the direction of the vector joining center
+    of mass's of type_1 and type_2.
 
 Changes:
 (a) completely reworked the internal particle structure, now having six substructures per particle
@@ -66,7 +93,7 @@ Changes:
     note however, that the ideal gas now depends on whether or not ROTATION is compiled in
     (changing the degrees of freedom from 3 to 6), even if the particles don't use that property
 (b) 'checkpoint_set' now also saves informations on external forces, fixed particles, and
-    rotational properties if the corresponding flags are compiled in
+    rotational properties if the corresponding flags are compiled in.
 
 Bugfixes:
 (a) 'part fix' fixed
