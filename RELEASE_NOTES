@@ -11,12 +11,14 @@ Current working revision.
 - v1.8.1d -
 -----------
 
+(e) November 5th, 2004.
 (d) October 22nd, 2004.
 (c) October 20th, 2004.
 (b) October 19th, 2004.
 (a) October 18th, 2004.
 
 New Features:
+(e) The Morse potential for nonbonded interactions has been added.
 (d) Added the famous soft-sphere potential.
 (c) Now the P3M limit for the mesh size is configurable and defaults to 128.
 (a) The Buckingham potential has been added.
@@ -30,6 +32,7 @@ Changes:
     allocation problems (a 512 grid consumes roughly 3 GB memory!).
 
 Bugfixes:
+(e) Added #ifdef statements for TABULATED and BUCKINGHAM potentials in the interprintall()   
 (b) Fixed the warning with the recent icc (Blade center).
 
 
