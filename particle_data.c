@@ -186,9 +186,9 @@ void unfold_particle(double pos[3],int image_box[3])
 
 void particle_finalize_data()
 {
-  /* if this is zero, \ref max_seen_particle didn't change */
-  if (!particle_node)
-    return;
+  /* happens if 0 particles... */
+  if (!node_grid_is_set())
+    setup_node_grid();
 
   mpi_bcast_parameter(FIELD_MAXPART);
 
