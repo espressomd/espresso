@@ -134,7 +134,8 @@ void realloc_particles(int size)
   else
     /* round up */
     max_particles = PART_INCREMENT*((size + PART_INCREMENT - 1)/PART_INCREMENT);
-  particles = (Particle *) realloc(particles, sizeof(Particle)*max_particles);
+  if (max_particles != old_max)
+    particles = (Particle *) realloc(particles, sizeof(Particle)*max_particles);
   for (i = old_max; i < max_particles; i++)
     particles[i].identity = -1;
 }
