@@ -1,37 +1,23 @@
 /* #define COMM_DEBUG */
-#define INTEG_DEBUG
-#define CELL_DEBUG
-#define GHOST_DEBUG
-#define GRID_DEBUG
-#define FORCE_DEBUG
-#define VERLET_DEBUG
-#define PARTICLE_DEBUG
+/* #define INTEG_DEBUG */
+/* #define CELL_DEBUG */
+/* #define GHOST_DEBUG */
+/* #define GRID_DEBUG */
+/* #define FORCE_DEBUG */
+/* #define VERLET_DEBUG */
+/* #define PARTICLE_DEBUG */
 
 /* #define FORCE_CORE */
 
 /* #define MALLOC_DEBUG */
 
 #ifdef MALLOC_DEBUG
-extern inline void *___malloc(int size) {
-  void *res = malloc(size);
-  fprintf(stderr, "allocated %p+%d\n", res, size);
-  return res;
-}
-
-extern inline void *___realloc(void *p, int size) {
-  void *res = realloc(p, size);
-  fprintf(stderr, "reallocated %p -> %p+%d\n", p, res, size);
-  return res;
-}
-
-extern inline void ___free(void *p) {
-  free(p);
-  fprintf(stderr, "freed %p\n", p);
-}
-
-#define malloc(x) ___malloc(x)
-#define realloc(x,y) ___realloc(x,y)
-#define free(x) ___free(x)
+extern void *_debug_malloc(int size);
+#define malloc(x) _debug_malloc(x)
+extern void *_debug_realloc(void *p, int size);
+#define realloc(x,y) _debug_realloc(x,y)
+extern void _debug_free(void *p);
+#define free(x) _debug_free(x)
 #endif
 
 #ifdef COMM_DEBUG

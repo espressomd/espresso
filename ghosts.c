@@ -231,7 +231,7 @@ void exchange_part()
 
 void exchange_ghost()
 {
-  int i,dir,c,n,m,c_ind;
+  int i,dir,c,n,m,c_ind, d;
   int old_max_send, old_max_recv;
 
   GHOST_TRACE(fprintf(stderr,"%d: exchange_ghost:\n",this_node));
@@ -253,16 +253,41 @@ void exchange_ghost()
     }
     /* check buffer size */
     if(n_send_ghosts[max_send_cells] > max_g_send_buf) {
+      int old_g = max_g_send_buf;
       max_g_send_buf = n_send_ghosts[max_send_cells];
       g_send_buf = (Ghost *)realloc(g_send_buf,max_g_send_buf*sizeof(Ghost));
+      memset(g_send_buf + old_g, 0xaa, (max_g_send_buf - old_g)*sizeof(Ghost));
     }
     /* send cell loop - pack ghosts */
     for(c=0; c<n_send_cells[dir]; c++) {
       c_ind = send_cells[cell_start[dir]+c];
+      for (d = 0; d < ntot_send_cells; d++) {
+	int j;
+	for (j = 0; j < cells[send_cells[d]].n_particles; j++)
+	  if (cells[send_cells[d]].particles[j] < 0 ||
+	      cells[send_cells[d]].particles[j] >= n_particles + n_ghosts)
+	    *(int *)0 = 0;
+      }
+
       for(n=0;n<cells[c_ind].n_particles;n++) {
 	pack_ghost(g_send_buf,n_g_send_buf,particles,cells[c_ind].particles[n]);
 	n_g_send_buf++;
+	for (d = 0; d < ntot_send_cells; d++) {
+	  int j;
+	  for (j = 0; j < cells[send_cells[d]].n_particles; j++)
+	    if (cells[send_cells[d]].particles[j] < 0 ||
+		cells[send_cells[d]].particles[j] >= n_particles + n_ghosts)
+	      *(int *)0 = 0;
+	}
       }
+      for (d = 0; d < ntot_send_cells; d++) {
+	int j;
+	for (j = 0; j < cells[send_cells[d]].n_particles; j++)
+	  if (cells[send_cells[d]].particles[j] < 0 ||
+	      cells[send_cells[d]].particles[j] >= n_particles + n_ghosts)
+	    *(int *)0 = 0;
+      }
+
     }
     /* send ghosts */
     send_ghosts(dir);
@@ -598,11 +623,18 @@ void send_ghosts(int s_dir)
     }
   }
   else {                 /* communication goes to the same node! */ 
+    int tmp;
     Ghost *tmp_gp;
 
     memcpy(n_recv_ghosts,n_send_ghosts,(max_send_cells+1)*sizeof(int));
     tmp_gp = g_send_buf;
-    g_send_buf = g_recv_buf; g_recv_buf = tmp_gp;    
+    g_send_buf = g_recv_buf; g_recv_buf = tmp_gp;
+    tmp = max_g_send_buf;
+    max_g_send_buf = max_g_recv_buf;
+    max_g_recv_buf = tmp;
+    tmp = n_g_send_buf;
+    n_g_send_buf = n_g_recv_buf;
+    n_g_recv_buf = tmp;
   }
 
   /* store number of ghosts to send in direction s_dir */

@@ -14,9 +14,9 @@
 ##################################################
 # settings
 ##################################################
-set npart 1000
+set npart 10000
 set tcl_precision 5
-set writemethod binary
+set writemethod ascii
 
 ##################################################
 # subroutines

@@ -1,7 +1,8 @@
 ############ compiler settings
 CC=/usr/lib/lam/bin/hcc
-CFLAGS=-g -O3 -Wall -march=i586 -fschedule-insns -fschedule-insns2 \
-         -frerun-cse-after-loop -ffast-math
+#CFLAGS=-O3 -Wall -march=i586 -fschedule-insns -fschedule-insns2 \
+#       -frerun-cse-after-loop -ffast-math
+CFLAGS=-g -fno-inline -Wall
 CFLAGS+= -I/usr/lib/lam/include
 DEPEND=makedepend
 

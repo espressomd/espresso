@@ -29,18 +29,18 @@ SlaveCallback *callbacks[] = {
 };
 
 char *names[] = {
-  "TERM",
-  "BCAST_PAR",
-  "WHO_HAS",
-  "ATTACH",
-  "SET_POS",
-  "SET_V",
-  "SET_F",
-  "SET_Q",
-  "SET_TYPE",
-  "GET_PART",
-  "INTEGRATE",
-  "BCAST_IA"
+  "TERM",      /*  0 */
+  "BCAST_PAR", /*  1 */
+  "WHO_HAS",   /*  2 */
+  "ATTACH",    /*  3 */
+  "SET_POS",   /*  4 */
+  "SET_V",     /*  5 */
+  "SET_F",     /*  6 */
+  "SET_Q",     /*  7 */
+  "SET_TYPE",  /*  8 */
+  "GET_PART",  /*  9 */
+  "INTEGRATE", /* 10 */
+  "BCAST_IA"   /* 11 */
 };
 
 /**********************************************
@@ -408,7 +408,7 @@ void mpi_send_type(int pnode, int part, int type)
     particles[index].type = type;
   }
   else {
-    int req[2] = { REQ_SET_Q, part };
+    int req[2] = { REQ_SET_TYPE, part };
     MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Send(&type, 1, MPI_INT, pnode, REQ_SET_POS, MPI_COMM_WORLD);
   }
