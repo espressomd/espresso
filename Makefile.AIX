@@ -4,7 +4,7 @@
 CC=mpcc
 
 # optimized compiler flags
-CFLAGS=-g -O2 -qmaxmem=8192
+CFLAGS=-g -O2 -qcpluscmt -qmaxmem=16384
 
 ############ name of makedepend (or gcc -ME)
 DEPEND=makedepend
@@ -14,7 +14,7 @@ CXX=mpCC
 
 ############ linker settings
 LINK=$(CC)
-LDLIBS=-O5 /usr/lib/libtcl8.3.so -L/usr/local/lib -lrfftw -lfftw -lmpi -lm
+LDLIBS=-O3 /usr/lib/libtcl8.3.so -L/usr/local/lib -lrfftw -lfftw -lmpi -lm
 
 # FFTW. Note this is VERY specific for our cluster
 CFLAGS += -I/usr/local/include
