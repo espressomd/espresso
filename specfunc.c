@@ -39,6 +39,7 @@
 /************************************************
  * chebychev expansions
  ************************************************/
+/* Note that the first coefficient already includes the constant offsets */
 
 /* based on SLATEC bk0(), bk0e() */
 
@@ -64,7 +65,7 @@
 */
 
 static double bk0_data[11] = {
-  -0.03532739323390276872,
+  -.5 -0.03532739323390276872,
    0.3442898999246284869, 
    0.03597993651536150163,
    0.00126461541144692592,
@@ -79,7 +80,7 @@ static double bk0_data[11] = {
 static Polynom bk0_cs = { bk0_data, 11, 11 };
 
 static double ak0_data[17] = {
-  -0.07643947903327941,
+  2.5 -0.07643947903327941,
   -0.02235652605699819,
    0.00077341811546938,
   -0.00004281006688886,
@@ -100,7 +101,7 @@ static double ak0_data[17] = {
 static Polynom ak0_cs = { ak0_data, 16, 16 };
 
 static double ak02_data[14] = {
-  -0.01201869826307592,
+  2.5 -0.01201869826307592,
   -0.00917485269102569,
    0.00014445509317750,
   -0.00000401361417543,
@@ -142,7 +143,7 @@ static Polynom ak02_cs = { ak02_data, 13, 13 };
 */
 
 static double bi0_data[12] = {
-  -.07660547252839144951,
+  5.5 -.07660547252839144951,
   1.92733795399380827000,
    .22826445869203013390, 
    .01304891466707290428,
@@ -158,7 +159,7 @@ static double bi0_data[12] = {
 static Polynom bi0_cs = { bi0_data, 12, 12 };
 
 static double ai0_data[21] = {
-   .07575994494023796, 
+  .75 +.07575994494023796, 
    .00759138081082334,
    .00041531313389237,
    .00001070076463439,
@@ -183,7 +184,7 @@ static double ai0_data[21] = {
 static Polynom ai0_cs = { ai0_data, 21, 21 };
 
 static double ai02_data[22] = {
-   .05449041101410882,
+  .75 +.05449041101410882,
    .00336911647825569,
    .00006889758346918,
    .00000289137052082,
@@ -232,7 +233,7 @@ static Polynom ai02_cs = { ai02_data, 22, 22 };
 */
 
 static double bk1_data[11] = {
-   0.0253002273389477705,
+  1.5 +0.0253002273389477705,
   -0.3531559607765448760, 
   -0.1226111808226571480, 
   -0.0069757238596398643,
@@ -248,7 +249,7 @@ static double bk1_data[11] = {
 static Polynom bk1_cs = { bk1_data, 11, 11 };
 
 static double ak1_data[17] = {
-   0.27443134069738830, 
+  2.5 +0.27443134069738830, 
    0.07571989953199368,
   -0.00144105155647540,
    0.00006650116955125,
@@ -269,7 +270,7 @@ static double ak1_data[17] = {
 static Polynom ak1_cs = { ak1_data, 17, 17 };
 
 static double ak12_data[14] = {
-   0.06379308343739001,
+  2.5 +0.06379308343739001,
    0.02832887813049721,
   -0.00024753706739052,
    0.00000577197245160,
@@ -310,7 +311,7 @@ static Polynom ak12_cs = { ak12_data, 14, 14 };
 */
 
 static double bi1_data[11] = {
-  -0.001971713261099859,
+  1.75 -0.001971713261099859,
    0.407348876675464810,
    0.034838994299959456,
    0.001545394556300123,
@@ -325,7 +326,7 @@ static double bi1_data[11] = {
 static Polynom bi1_cs = { bi1_data, 11, 11 };
 
 static double ai1_data[21] = {
-  -0.02846744181881479,
+  .75 -0.02846744181881479,
   -0.01922953231443221,
   -0.00061151858579437,
   -0.00002069971253350,
@@ -350,7 +351,7 @@ static double ai1_data[21] = {
 static Polynom ai1_cs = { ai1_data, 21, 21 };
 
 static double ai12_data[22] = {
-   0.02857623501828014,
+  .75 +0.02857623501828014,
   -0.00976109749136147,
   -0.00011058893876263,
   -0.00000388256480887,
@@ -404,64 +405,6 @@ static double hzeta_c[15] = {
  * functions
  ************************************************/
 
-double I0(double x)
-{
-  double c, y = fabs(x);
-  if(y <= 3.0) {
-    c = evaluateAsChebychevSeriesAt(&bi0_cs, y*y/4.5-1.0);
-    return 2.75 + c;
-  }
-
-  c = (y <= 8.0) ?
-    evaluateAsChebychevSeriesAt(&ai0_cs, (48.0/y-11.0)/5.0) :
-    evaluateAsChebychevSeriesAt(&ai02_cs, 16.0/y-1.0);
-  return exp(y) * (0.375 + c) / sqrt(y);
-}
-
-double K0(double x)
-{
-  double c, I0;
-  if(x <= 2.0) {
-    c  = evaluateAsChebychevSeriesAt(&bk0_cs, 0.5*x*x-1.0);
-    I0 = 2.75 + evaluateAsChebychevSeriesAt(&bi0_cs, x*x/4.5-1.0);
-    return (-log(x) + M_LN2)*I0 - 0.25 + c;
-  }
-  c = (x <= 8.0) ?
-    evaluateAsChebychevSeriesAt(&ak0_cs, (16.0/x-5.0)/3.0) :
-    evaluateAsChebychevSeriesAt(&ak02_cs, 16.0/x-1.0);
-  return exp(-x) * (1.25 + c) / sqrt(x); 
-}
-
-double I1(double x)
-{
-  double c, y = fabs(x);
-  if(y <= 3.0) {
-    c = evaluateAsChebychevSeriesAt(&bi1_cs, y*y/4.5-1.0);
-    return x * (0.875 + c);
-  }
-  c = (y <= 8.0) ?
-    evaluateAsChebychevSeriesAt(&ai1_cs, (48.0/y-11.0)/5.0) :
-    evaluateAsChebychevSeriesAt(&ai12_cs, 16.0/y-1.0);
-  c = (0.375 + c) / sqrt(y);
-  if (x < 0)
-    c = -c;
-  return exp(y)*c;
-}
-
-double K1(double x)
-{
-  double c, I1;
-  if(x <= 2.0) {
-    c = evaluateAsChebychevSeriesAt(&bk1_cs, 0.5*x*x-1.0);
-    I1 = x * (0.875 + evaluateAsChebychevSeriesAt(&bi1_cs, x*x/4.5-1.0));
-    return (log(x) - M_LN2) * I1 + (0.75 + c)/x;
-  }
-  c = (x <= 8.0) ?
-    evaluateAsChebychevSeriesAt(&ak1_cs, (16.0/x-5.0)/3.0) :
-    evaluateAsChebychevSeriesAt(&ak12_cs, 16.0/x-1.0);
-  return exp(-x) * (1.25 + c) / sqrt(x);
-}
-
 double hzeta(double s, double q)
 {
   double max_bits = 54.0;
@@ -499,4 +442,283 @@ double hzeta(double s, double q)
   return ans;
 }
 
+double I0(double x)
+{
+  double c, y = fabs(x);
+  if(y <= 3.0)
+    return evaluateAsChebychevSeriesAt(&bi0_cs, y*y/4.5-1.0);
 
+  c = (y <= 8.0) ?
+    evaluateAsChebychevSeriesAt(&ai0_cs, (48.0/y-11.0)/5.0) :
+    evaluateAsChebychevSeriesAt(&ai02_cs, 16.0/y-1.0);
+  return exp(y) * c / sqrt(y);
+}
+
+double K0(double x)
+{
+  double c, I0;
+  if(x <= 2.0) {
+    c  = evaluateAsChebychevSeriesAt(&bk0_cs, 0.5*x*x-1.0);
+    I0 = evaluateAsChebychevSeriesAt(&bi0_cs, x*x/4.5-1.0);
+    return (-log(x) + M_LN2)*I0 + c;
+  }
+  c = (x <= 8.0) ?
+    evaluateAsChebychevSeriesAt(&ak0_cs, (16.0/x-5.0)/3.0) :
+    evaluateAsChebychevSeriesAt(&ak02_cs, 16.0/x-1.0);
+  return exp(-x)*c/sqrt(x); 
+}
+
+double I1(double x)
+{
+  double c, y = fabs(x);
+  if(y <= 3.0) {
+    c = evaluateAsChebychevSeriesAt(&bi1_cs, y*y/4.5-1.0);
+    return x*c;
+  }
+  c = (y <= 8.0) ?
+    evaluateAsChebychevSeriesAt(&ai1_cs, (48.0/y-11.0)/5.0) :
+    evaluateAsChebychevSeriesAt(&ai12_cs, 16.0/y-1.0);
+  c = c / sqrt(y);
+  if (x < 0)
+    c = -c;
+  return exp(y)*c;
+}
+
+double K1(double x)
+{
+  double c, I1;
+  if(x <= 2.0) {
+    c = evaluateAsChebychevSeriesAt(&bk1_cs, 0.5*x*x-1.0);
+    I1 = x * evaluateAsChebychevSeriesAt(&bi1_cs, x*x/4.5-1.0);
+    return (log(x) - M_LN2)*I1 + c/x;
+  }
+  c = (x <= 8.0) ?
+    evaluateAsChebychevSeriesAt(&ak1_cs, (16.0/x-5.0)/3.0) :
+    evaluateAsChebychevSeriesAt(&ak12_cs, 16.0/x-1.0);
+  return exp(-x)*c/sqrt(x);
+}
+
+/***********************************************************
+ * optimized K0/1 implementations for 10^(-14) precision
+ ***********************************************************/
+
+/** necessary orders for K0/1 from 2 up to 22 for 10^-14 precision. Note that at 8
+    the expansion changes. From 23 to 26 order 2 is used, above order 1. For the
+    latter cases separate implementations are necessary. */
+static int ak01_orders[] = {
+  /* 2 - 8 */
+     11, 11, 10,
+  10, 9, 9,
+  /* 8 - 26 */
+           6, 6,
+  5, 5, 5, 4, 4,
+  4, 3, 3, 2, 2,
+  2, 2, 2
+};
+
+double LPK0(double x)
+{
+  if (x >= 27.) {
+    double tmp = .5*exp(-x)/sqrt(x);
+    return tmp*ak0_data[0];
+  }
+  if (x >= 23.) {
+    double tmp = exp(-x)/sqrt(x), xx = (16./3.)/x - 5./3.;
+    return tmp*(xx*ak0_data[1] + 0.5*ak0_data[0]);
+  }
+  if (x > 2) {
+    int j = ak01_orders[((int)x) - 2];
+    double tmp, x2;
+    double dd0, d0;
+    double *s0;
+    if (x <= 8) {
+      s0 = ak0_data;
+      x2 = (2.*16./3.)/x - 2.*5./3.;
+    } else {
+      s0 = ak02_data;
+      x2 = (2.*16.)/x - 2.;
+    }
+    dd0 = s0[j];
+    d0  = x2*dd0 + s0[j - 1];
+    for(j -= 2; j >= 1; j--) {
+      double tmp0 = d0;
+      d0 = x2*d0 - dd0 + s0[j];
+      dd0 = tmp0;
+    }
+    tmp = exp(-x)/sqrt(x);
+    return tmp*(0.5*(s0[0] + x2*d0) - dd0);
+  }
+  /* x <= 2 */
+  {
+    /* I0/1 series */
+    int j = 10;
+    double ret, tmp, x2 = (2./4.5)*x*x - 2.;
+    double dd0, d0;
+    dd0 = bi0_data[j];
+    d0  = x2*dd0 + bi0_data[j - 1];
+    for(j -= 2; j >= 1; j--) {
+      double tmp0 = d0;
+      d0 = x2*d0 - dd0 + bi0_data[j];
+      dd0 = tmp0;
+    }
+    tmp = log(x) - M_LN2;
+    ret =  -tmp*(0.5*(bi0_data[0] + x2*d0)- dd0);
+
+    /* K0/K1 correction */
+    j = 9;
+    x2 = x*x - 2.;
+    dd0 = bk0_data[j];
+    d0  = x2*dd0 + bk0_data[j - 1];
+    for(j -= 2; j >= 1; j--) {
+      double tmp0 = d0;
+      d0 = x2*d0 - dd0 + bk0_data[j];
+      dd0 = tmp0;
+    }
+    return ret + (0.5*(x2*d0 + bk0_data[0]) - dd0);
+  }
+}
+
+double LPK1(double x)
+{
+  if (x >= 27.) {
+    double tmp = .5*exp(-x)/sqrt(x);
+    return tmp*ak1_data[0];
+  }
+  if (x >= 23.) {
+    double tmp = exp(-x)/sqrt(x), xx = (16./3.)/x - 5./3.;
+    return tmp*(xx*ak1_data[1] + 0.5*ak1_data[0]);
+  }
+  if (x > 2) {
+    int j = ak01_orders[((int)x) - 2];
+    double tmp, x2;
+    double dd1, d1;
+    double *s1;
+    if (x <= 8) {
+      s1 = ak1_data;
+      x2 = (2.*16./3.)/x - 2.*5./3.;
+    } else {
+      s1 = ak12_data;
+      x2 = (2.*16.)/x - 2.;
+    }
+    dd1 = s1[j];
+    d1  = x2*dd1 + s1[j - 1];
+    for(j -= 2; j >= 1; j--) {
+      double tmp1 = d1;
+      d1 = x2*d1 - dd1 + s1[j];
+      dd1 = tmp1;      
+    }
+    tmp = exp(-x)/sqrt(x);
+    return tmp*(0.5*(s1[0] + x2*d1) - dd1);
+  }
+  /* x <= 2 */
+  {
+    /* I0/1 series */
+    int j = 10;
+    double ret, tmp, x2 = (2./4.5)*x*x - 2.;
+    double dd1, d1;
+    dd1 = bi1_data[j];
+    d1  = x2*dd1 + bi1_data[j - 1];
+    for(j -= 2; j >= 1; j--) {
+      double tmp1 = d1;
+      d1 = x2*d1 - dd1 + bi1_data[j];
+      dd1 = tmp1;      
+    }
+    tmp = log(x) - M_LN2;
+    ret = x*tmp*(0.5*(bi1_data[0] + x2*d1) - dd1);
+
+    /* K0/K1 correction */
+    j = 9;
+    x2 = x*x - 2.;
+    dd1 = bk1_data[j];
+    d1  = x2*dd1 + bk1_data[j - 1];
+    for(j -= 2; j >= 1; j--) {
+      double tmp1 = d1;
+      d1 = x2*d1 - dd1 + bk1_data[j];
+      dd1 = tmp1;      
+    }
+    return ret + (0.5*(x2*d1 + bk1_data[0]) - dd1)/x;
+  }
+}
+
+void LPK01(double x, double *K0, double *K1)
+{
+  if (x >= 27.) {
+    double tmp = .5*exp(-x)/sqrt(x);
+    *K0 = tmp*ak0_data[0];
+    *K1 = tmp*ak1_data[0];
+    return;
+  }
+  if (x >= 23.) {
+    double tmp = exp(-x)/sqrt(x), xx = (16./3.)/x - 5./3.;
+    *K0 = tmp*(xx*ak0_data[1] + 0.5*ak0_data[0]);
+    *K1 = tmp*(xx*ak1_data[1] + 0.5*ak1_data[0]);
+    return;    
+  }
+  if (x > 2) {
+    int j = ak01_orders[((int)x) - 2];
+    double tmp, x2;
+    double dd0, dd1, d0, d1;
+    double *s0, *s1;
+    if (x <= 8) {
+      s0 = ak0_data; s1 = ak1_data;
+      x2 = (2.*16./3.)/x - 2.*5./3.;
+    } else {
+      s0 = ak02_data; s1 = ak12_data;
+      x2 = (2.*16.)/x - 2.;
+    }
+    dd0 = s0[j];
+    dd1 = s1[j];
+    d0  = x2*dd0 + s0[j - 1];
+    d1  = x2*dd1 + s1[j - 1];
+    for(j -= 2; j >= 1; j--) {
+      double tmp0 = d0, tmp1 = d1;
+      d0 = x2*d0 - dd0 + s0[j];
+      d1 = x2*d1 - dd1 + s1[j];
+      dd0 = tmp0;
+      dd1 = tmp1;      
+    }
+    tmp = exp(-x)/sqrt(x);
+    *K0 = tmp*(0.5*(s0[0] + x2*d0) - dd0);
+    *K1 = tmp*(0.5*(s1[0] + x2*d1) - dd1);
+    return;
+  }
+  /* x <= 2 */
+  {
+    /* I0/1 series */
+    int j = 10;
+    double tmp, x2 = (2./4.5)*x*x - 2.;
+    double dd0, dd1, d0, d1;
+    dd0 = bi0_data[j];
+    dd1 = bi1_data[j];
+    d0  = x2*dd0 + bi0_data[j - 1];
+    d1  = x2*dd1 + bi1_data[j - 1];
+    for(j -= 2; j >= 1; j--) {
+      double tmp0 = d0, tmp1 = d1;
+      d0 = x2*d0 - dd0 + bi0_data[j];
+      d1 = x2*d1 - dd1 + bi1_data[j];
+      dd0 = tmp0;
+      dd1 = tmp1;      
+    }
+    tmp = log(x) - M_LN2;
+    *K0 =  -tmp*(0.5*(bi0_data[0] + x2*d0)- dd0);
+    *K1 = x*tmp*(0.5*(bi1_data[0] + x2*d1) - dd1);
+
+    /* K0/K1 correction */
+    j = 9;
+    x2 = x*x - 2.;
+    dd0 = bk0_data[j];
+    dd1 = bk1_data[j];
+    d0  = x2*dd0 + bk0_data[j - 1];
+    d1  = x2*dd1 + bk1_data[j - 1];
+    for(j -= 2; j >= 1; j--) {
+      double tmp0 = d0, tmp1 = d1;
+      d0 = x2*d0 - dd0 + bk0_data[j];
+      d1 = x2*d1 - dd1 + bk1_data[j];
+      dd0 = tmp0;
+      dd1 = tmp1;      
+    }
+    *K0 += (0.5*(x2*d0 + bk0_data[0]) - dd0);
+    *K1 += (0.5*(x2*d1 + bk1_data[0]) - dd1)/x;
+    return;
+  }
+}

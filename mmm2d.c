@@ -29,11 +29,21 @@
 
 #ifdef ELECTROSTATICS
 
+/** if you define this, the Besselfunctions are calculated up
+    to machine precision, otherwise 10^-14, which should be
+    definitely enough for daily life. */
+#undef BESSEL_MACHINE_PREC
+
 // #define CHECKPOINTS
 #if 0
 #define LOG_FORCES(x) x
 #else
 #define LOG_FORCES(x)
+#endif
+
+#ifndef BESSEL_MACHINE_PREC
+#define K0 LPK0
+#define K1 LPK1
 #endif
 
 /****************************************
@@ -1123,7 +1133,7 @@ void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
     /* Bessel sum */
     {
       int p, l;
-      double k1;
+      double k0, k1;
       double k0Sum, k1ySum, k1Sum;
       double freq;
       double rho_l, ypl;
@@ -1139,15 +1149,27 @@ void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
 	for (l = 1; l < besselCutoff.e[p-1]; l++) {
 	  ypl   = d[1] + l*box_l[1];
 	  rho_l = sqrt(ypl*ypl + z2);
-	  k0Sum  += K0(freq*rho_l);
-	  k1 = K1(freq*rho_l)/rho_l;
+#ifdef BESSEL_MACHINE_PREC
+	  k0 = K0(freq*rho_l);
+	  k1 = K1(freq*rho_l);
+#else
+	  LPK01(freq*rho_l, &k0, &k1);
+#endif
+	  k1 /= rho_l;
+	  k0Sum  += k0;
 	  k1Sum  += k1;
 	  k1ySum += k1*ypl;
 
 	  ypl   = d[1] - l*box_l[1];
 	  rho_l = sqrt(ypl*ypl + z2);
-	  k0Sum  += K0(freq*rho_l);
-	  k1 = K1(freq*rho_l)/rho_l;
+#ifdef BESSEL_MACHINE_PREC
+	  k0 = K0(freq*rho_l);
+	  k1 = K1(freq*rho_l);
+#else
+	  LPK01(freq*rho_l, &k0, &k1);
+#endif
+	  k1 /= rho_l;
+	  k0Sum  += k0;
 	  k1Sum  += k1;
 	  k1ySum += k1*ypl;
 	}

@@ -38,6 +38,16 @@
 /** Granularity of the radius scan in multiples of box_l[2] */
 #define RAD_STEPPING 0.1
 
+/** if you define this, the Besselfunctions are calculated up
+    to machine precision, otherwise 10^-14, which should be
+    definitely enough for daily life. */
+#undef BESSEL_MACHINE_PREC
+
+#ifndef BESSEL_MACHINE_PREC
+#define K0 LPK0
+#define K1 LPK1
+#endif
+
 /** inverse box dimensions and other constants */
 /*@{*/
 static double uz, L2, uz2, prefuz2, prefL3_i;
@@ -360,9 +370,15 @@ void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], doubl
     int bp;
 
     for (bp = 1; bp < mmm1d_params.bessel_cutoff; bp++) {
-      double fq = C_2PI*bp;    
-      sr += bp*K1(fq*rxy_d)*cos(fq*z_d);
-      sz += bp*K0(fq*rxy_d)*sin(fq*z_d);
+      double fq = C_2PI*bp, k0, k1;
+#ifdef BESSEL_MACHINE_PREC
+      k0 = K0(fq*rxy_d);
+      k1 = K1(fq*rxy_d);
+#else
+      LPK01(fq*rxy_d, &k0, &k1);
+#endif
+      sr += bp*k1*cos(fq*z_d);
+      sz += bp*k0*sin(fq*z_d);
     }
     sr *= uz2*4*C_2PI;
     sz *= uz2*4*C_2PI;

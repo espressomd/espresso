@@ -27,16 +27,33 @@
 double hzeta(double order, double x);
 
 /** Modified Bessel function of first kind, order 0. This function was taken from
-    the GSL code. */
+    the GSL code. Precise roughly up to machine precision. */
 double I0(double x);
 /** Modified Bessel function of first kind, order 1. This function was taken from
-    the GSL code. */
+    the GSL code. Precise roughly up to machine precision. */
 double I1(double x);
 /** Modified Bessel function of second kind, order 0. This function was taken from
-    the GSL code. */
+    the GSL code. Precise roughly up to machine precision. */
 double K0(double x);
 /** Modified Bessel function of second kind, order 1. This function was taken from
-    the GSL code. */
+    the GSL code. Precise roughly up to machine precision. */
 double K1(double x);
 
+/** Besselfunctions K0 at x.
+    The implementation has an absolute precision of around 10^(-14), which is
+    comparable to the relative precision sqrt implementation of current hardware.
+*/
+double LPK0(double x);
+
+/** Besselfunctions K1 at x.
+    The implementation has an absolute precision of around 10^(-14), which is
+    comparable to the relative precision sqrt implementation of current hardware.
+*/
+double LPK1(double x);
+
+/** Besselfunctions K0 and K1 at x.
+    The implementation has an absolute precision of around 10^(-14), which is
+    comparable to the relative precision sqrt implementation of current hardware.
+*/
+void LPK01(double x, double *K0, double *K1);
 #endif

@@ -30,15 +30,16 @@ MDINLINE double evaluateAsTaylorSeriesAt(Polynom *series, double x)
   return r;
 }
 
-/** evaluate the polynomial interpreted as a Chebychev series */
+/** evaluate the polynomial interpreted as a Chebychev series. Requires a series with at least
+    three coefficients, i.e. no linear approximations! */
 MDINLINE double evaluateAsChebychevSeriesAt(Polynom *series, double x)
 {
   int j;
   double *c = series->e;
   double x2 = 2.0 * x;
-  double d  = 0.0;
-  double dd = 0.0;
-  for(j = series->n - 1; j >= 1; j--) {
+  double dd = c[series->n - 1];
+  double d  = x2*dd + c[series->n - 2];
+  for(j = series->n - 3; j >= 1; j--) {
     double tmp = d;
     d = x2*d - dd + c[j];
     dd = tmp;
