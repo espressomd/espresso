@@ -2,10 +2,28 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.6.2d *
+* v1.6.3b *
 ***********
 
 Current working revision.
+
+
+- v1.6.3b -
+-----------
+
+(b) June 12th, 2004.
+(a) June 11th, 2004.
+
+Changes:
+(a) Added sqrt(3) factor to the Langevin thermostat for re-entering the integrator
+    (only if 'recalc_forces' is set as well, e.g. because a bond was removed, 
+    the box rescaled or just the forcecap changed). 
+    This is necessary since otherwise the temperature drops with the rate of 
+    force recalculations due to missing correlations while drawing random numbers.
+
+Bugfixes:
+(b) Fixed typo in array index causing nptiso.p_vel to be accidentially overwritten
+    while deriving virials in 'add_bonded_virials'.
 
 
 - v1.6.2d -
