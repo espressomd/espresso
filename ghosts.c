@@ -423,11 +423,9 @@ void exchange_ghost()
 	case 0: break;
 	case 1:
 	  g_send_buf.part[cnt].p[s_dir/2] += box_l[s_dir/2];
-	  GHOST_TRACE(fprintf(stderr,"%d: ghost shift %f\n",this_node,box_l[s_dir/2]));
 	  break;
 	case -1:
 	  g_send_buf.part[cnt].p[s_dir/2] -= box_l[s_dir/2];
-	  GHOST_TRACE(fprintf(stderr,"%d: ghost shift %f\n",this_node,-box_l[s_dir/2]));
 	  break;
 	}
 	cnt++;
@@ -494,8 +492,8 @@ void update_ghost_pos()
     mod_ind = s_dir/2;
     switch(boundary[s_dir]) {
     case 0:  modifier =  0;            break;
-    case 1:  modifier =  box_l[s_dir]; break;
-    case -1: modifier = -box_l[s_dir]; break;
+    case 1:  modifier =  box_l[s_dir/2]; break;
+    case -1: modifier = -box_l[s_dir/2]; break;
     default: fprintf(stderr, "boundary conditions corrupt, exiting\n");
       errexit(); /* never reached */; modifier = 0;
     }
@@ -535,6 +533,20 @@ void collect_ghost_forces()
 
   GHOST_TRACE(fprintf(stderr,"%d: collect_ghost_forces:\n",this_node));
 
+#ifdef GHOST_FORCE_DEBUG
+  {
+    int m,o;
+    INNER_CELLS_LOOP(m, n, o) {
+      pl = &(CELL_PTR(m, n, o)->pList);
+      for(i=0;i<pl->n;i++) {
+	LJ_TRACE(fprintf(stderr,"%d: Collect_forces: P %d: home_force (%.3e,%.3e,%.3e)\n",
+			 this_node,pl->part[i].r.identity,pl->part[i].f[0],pl->part[i].f[1],pl->part[i].f[2]));
+      }
+    }
+  }
+#endif
+
+
   for(s_dir=5; s_dir>=0; s_dir--) {         /* direction loop backward */
     if(s_dir%2 == 0) r_dir = s_dir+1;
     else             r_dir = s_dir-1;
@@ -560,6 +572,20 @@ void collect_ghost_forces()
       }
     } 
   }
+
+#ifdef GHOST_FORCE_DEBUG
+  {
+    int m,o;
+    INNER_CELLS_LOOP(m, n, o) {
+      pl = &(CELL_PTR(m, n, o)->pList);
+      for(i=0;i<pl->n;i++) {
+	LJ_TRACE(fprintf(stderr,"%d: Collect_forces: P %d: tot_force (%.3e,%.3e,%.3e)\n",
+			 this_node,pl->part[i].r.identity,pl->part[i].f[0],pl->part[i].f[1],pl->part[i].f[2]));
+      }
+    }
+  }
+#endif
+
 }
 
 void ghost_exit()
