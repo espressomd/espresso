@@ -6,7 +6,7 @@
 \image latex logo.eps \width=6cm
 \htmlonly
 <h1>
-<font color="#0000FF"> <b>E</b></font>xpandable
+<font color="#0000FF"> <b>E</b></font>xtensible
 <font color="#0000FF"> <b>S</b></font>imulation
 <font color="#0000FF"> <b>P</b></font>ackage <br>
 for <font color="#0000FF"> <b>Res</b></font>earch
@@ -26,21 +26,22 @@ on <font color="#0000FF"> <b>So</b></font>ft matter
 
 \section introduction Introduction
 
-Espresso is an MPI parallel molecular dynamics (MD) program developed
-by members of Polyelectrolyte project
-(<a href="http://www.mpip-mainz.mpg.de/~pep/index.html">PEP</a>) of the 
-Theory group in <a href="http://www.mpip-mainz.mpg.de/">MPI-P</a>, Mainz, Germany.
-Espresso can be used as an MD integrator for a variety of systems interacting
-via soft potentials (in particular including Lennard-Jones potential and electrostatic interactions).
+Espresso is a MPI based parallel molecular dynamics (MD) program developed
+by members of the group of C. Holm
+(<a href="http://www.mpip-mainz.mpg.de/~pep/index.html">PEP</a>) at the 
+Theory Department of the MPI for Polymer Research, <a
+href="http://www.mpip-mainz.mpg.de/">MPI-P</a>, in Mainz, Germany.
+Espresso can be used as an MD/MC integrator for a variety of systems interacting
+via a variety of potentials (in particular including Lennard-Jones potential and electrostatic interactions).
 The program also allows to produce scientific movies using the
 <a href="http://www.ks.uiuc.edu/Research/vmd/current/ug/ug.html">VMD</a>
 software package (the Espresso logo was produced by the program itself!).
 
-To perform an MD simulation Espresso uses a 
+To perform a simulation Espresso uses a 
 <a href="http://tcl.activestate.com">Tcl</a> script
 which gives the user control over the program.
 The standard Tcl language was extended by some \ref tcl "additional commands"
-which allow to perform a complete MD simulation. 
+which allow to perform a complete MD/MC simulation. 
 
 The script is interpreted on one node,
 the master node, whereas the other nodes wait for the master node to issue
