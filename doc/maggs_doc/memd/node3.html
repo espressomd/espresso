@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.70)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Discretization</TITLE>
+<META NAME="description" CONTENT="Discretization">
+<META NAME="keywords" CONTENT="memd">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="memd.css">
+
+<LINK REL="next" HREF="node4.html">
+<LINK REL="previous" HREF="node2.html">
+<LINK REL="up" HREF="memd.html">
+<LINK REL="next" HREF="node4.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html44"
+  HREF="node4.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html42"
+  HREF="memd.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html36"
+  HREF="node2.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A>   
+<BR>
+<B> Next:</B> <A NAME="tex2html45"
+  HREF="node4.html">Initialization of the algorithm</A>
+<B> Up:</B> <A NAME="tex2html43"
+  HREF="memd.html">memd</A>
+<B> Previous:</B> <A NAME="tex2html37"
+  HREF="node2.html">Equations of motion</A>
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00030000000000000000">
+Discretization</A>
+</H1>
+For implementation on the computer, the equations need to be
+discretized with respect to both space and time.We consider a domain of physical space as being an
+affine space and divide it into subdomains of contiguous cells of
+cubic shape. The charges live on the vertices of our lattice which has
+the spacing <IMG
+ WIDTH="14" HEIGHT="16" ALIGN="BOTTOM" BORDER="0"
+ SRC="img27.png"
+ ALT="$a$">. The electric fields <IMG
+ WIDTH="40" HEIGHT="37" ALIGN="MIDDLE" BORDER="0"
+ SRC="img28.png"
+ ALT="$E(l)$"> and vector potentials
+<IMG
+ WIDTH="39" HEIGHT="37" ALIGN="MIDDLE" BORDER="0"
+ SRC="img29.png"
+ ALT="$A(l)$"> live on the edges or links and are aligned with them. We need
+also the operator <!-- MATH
+ $\mathbf{\nabla}\times\mathbf{}$
+ -->
+<IMG
+ WIDTH="44" HEIGHT="35" ALIGN="MIDDLE" BORDER="0"
+ SRC="img30.png"
+ ALT="$\mathbf{\nabla}\times\mathbf{}$">. It gives the vector <IMG
+ WIDTH="20" HEIGHT="16" ALIGN="BOTTOM" BORDER="0"
+ SRC="img26.png"
+ ALT="$\mathbf{B}$">, which lives on the
+faces of the cube or on the plaquettes, Fig.&nbsp;<A HREF="#fig:cell_structure"><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="file:/usr/share/latex2html/icons/crossref.png"></A>.
+
+<DIV ALIGN="CENTER"><A NAME="fig:cell_structure"></A><A NAME="48"></A>
+<TABLE>
+<CAPTION ALIGN="BOTTOM"><STRONG>Figure:</STRONG>
+Spatial elements of a cell complex</CAPTION>
+<TR><TD><IMG
+ WIDTH="211" HEIGHT="233" ALIGN="BOTTOM" BORDER="0"
+ SRC="img31.png"
+ ALT="\includegraphics[scale=0.55]{figs/cell.eps}"></TD></TR>
+</TABLE>
+</DIV>
+In the implementation of the algorithm we assume that particles with
+masses <IMG
+ WIDTH="26" HEIGHT="33" ALIGN="MIDDLE" BORDER="0"
+ SRC="img1.png"
+ ALT="$m_i$"> live in the continuum (off-lattice approach). Particles
+have charges <IMG
+ WIDTH="18" HEIGHT="33" ALIGN="MIDDLE" BORDER="0"
+ SRC="img2.png"
+ ALT="$q_i$"> and interact between themselves also by a
+Lennard-Jones potential. The Lennard-Jones potential of scale <IMG
+ WIDTH="16" HEIGHT="16" ALIGN="BOTTOM" BORDER="0"
+ SRC="img32.png"
+ ALT="$\sigma$"> is 
+truncated at its minimum, <!-- MATH
+ $r_c=2^{1/6}\sigma$
+ -->
+<IMG
+ WIDTH="87" HEIGHT="42" ALIGN="MIDDLE" BORDER="0"
+ SRC="img33.png"
+ ALT="$r_c=2^{1/6}\sigma$">. 
+
+<P>
+The charges are interpolated on the lattice
+with grid spacing <IMG
+ WIDTH="14" HEIGHT="16" ALIGN="BOTTOM" BORDER="0"
+ SRC="img27.png"
+ ALT="$a$"> using the linear interpolation scheme.
+<BR><HR>
+<ADDRESS>
+Igor Pasichnyk
+2004-09-07
+</ADDRESS>
+</BODY>
+</HTML>
