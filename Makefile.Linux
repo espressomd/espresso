@@ -29,6 +29,9 @@ MPICH=no
 ### use a simple fake MPI implementation for single node use only
 MPIFAKE=no
 
+### which version of fftw to use, default is use fftw2
+USEFFTW3=no
+
 ### static compilation for certain brain damaged blade clusters
 STATIC=no
 
@@ -189,10 +192,19 @@ ifeq ($(EFENCE),yes)
 endif
 
 ########### FFTW
-ifeq ($(BLADE),yes)
-     LDLIBS+= -L/afs/ipp/@sys/soft/fftw/f95i/lib -lrfftw -lfftw
+ifeq ($(USEFFTW3),yes)
+     CFLAGS+= -DUSEFFTW3
+     ifeq ($(BLADE),yes)
+          LDLIBS+= -L/afs/ipp/@sys/soft/fftw/f95i/lib -lfftw3
+     else
+          LDLIBS+= -L/usr/local/lib -lfftw3
+     endif
 else
-     LDLIBS+= -L/usr/local/lib -ldrfftw -ldfftw
+     ifeq ($(BLADE),yes)
+           LDLIBS+= -L/afs/ipp/@sys/soft/fftw/f95i/lib -lrfftw -lfftw
+     else
+           LDLIBS+= -L/usr/local/lib -ldrfftw -ldfftw
+     endif
 endif
 
 ########### TCL
