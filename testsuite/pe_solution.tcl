@@ -91,7 +91,7 @@ set int_n_times  1000
 #############################################################
 
 set tcl_precision 6
-set vmd_output    "no"
+set vmd_output    "yes"
 
 # Initial Bond length
 set bond_length   1.0
@@ -146,6 +146,34 @@ counterions $n_counterions charge $ci_valency type 2
 
 set act_min_dist [analyze mindist]
 puts "Placed [setmd n_part] particles with minimal distance: $act_min_dist"
+
+#############################################################
+#  prepare vmd connection                                       #
+#############################################################
+    if { $vmd_output=="yes" } {
+	puts -nonewline "\nWrite psf and pdb for VMD connection... "; flush stdout
+	writepsf "$name$ident.psf" ; writepdb "$name$ident.pdb"
+	puts -nonewline "Output created, establishing link... "; flush stdout
+	for {set port 10000} { $port < 65000 } { incr port } {
+	    catch {imd connect $port} res
+	    if {$res == ""} break
+	}
+	if { $port==65000 } { puts "Failed." } else { puts "Done (now listening at port $port)." 
+	   # puts "    What you have to do now for a VMD connection:"
+	   # puts "    (1) Start vmd in current directory (best before running the script)."
+	   # puts "    (2) Enter on vmd command line: 'mol load psf $name$ident.psf pdb $name$ident.pdb'"
+	    set HOSTNAME [exec hostname]
+	   # puts "    (3) Enter on vmd command line: 'imd connect $HOSTNAME $port'"
+	   # puts "    (4) To have the chains coloured individually, set 'Coloring-Method' to 'ResName' in the 'Graphics'-menu"
+	    imd listen 0
+	    set vmdout_file [open "vmdoutput.script" "w"]
+	    puts $vmdout_file "mol load psf $name$ident.psf pdb $name$ident.pdb"
+	    puts $vmdout_file "rotate stop"
+	    puts $vmdout_file "imd connect $HOSTNAME $port"
+	    close $vmdout_file
+	    exec vmd -e vmdoutput.script &
+	}
+    }
 
 #############################################################
 #  Warmup Integration                                       #
