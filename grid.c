@@ -307,7 +307,7 @@ int boxl_callback(Tcl_Interp *interp, void *_data)
 int change_volume(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   char *mode;
-  double d_new; 
+  double d_new = box_l[0]; 
   int dir = -1;
 
   if (argc < 2) {
@@ -353,8 +353,8 @@ void rescale_boxl(int dir, double d_new) {
       box_l[dir] = d_new;
     else
       box_l[0] = box_l[1] = box_l[2] = d_new;
-    mpi_rescale_particles(dir,scale);
     mpi_bcast_parameter(FIELD_BOXL);
+    mpi_rescale_particles(dir,scale);
     mpi_bcast_event(TOPOLOGY_CHANGED);
   }
 }
