@@ -76,10 +76,14 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
 
   /* lennard jones */
+#ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist);
+#endif
   /* lennard jones cosine */
+#ifdef LJ_COS
   add_ljcos_pair_force(p1,p2,ia_params,d,dist);
-  
+#endif
+
 #ifdef ROTATION
   /* Gay-Berne */
   add_gb_pair_force(p1,p2,ia_params,d,dist);

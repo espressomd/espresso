@@ -724,6 +724,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
    *                        lennard-jones
    * interaction
    */
+#ifdef LENNARD_JONES
   if (ARG0_IS_S("lennard-jones")) {
 
     /* get lennard-jones interaction type */
@@ -760,12 +761,13 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 					 cap_radius),
 		"particle types must be nonnegative");
   }
-
+#endif
 
   /* parse 
    *                        lj-cos
    * interaction
    */
+#ifdef LJ_COS
   if (ARG0_IS_S("lj-cos")) {
   	
     /* this is a quick fix for the inconsistency in the ljcos parameters 
@@ -796,6 +798,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
     CHECK_VALUE(lj_cos_set_params(part_type_a, part_type_b, eps, sig, cut, offset),
 		"particle types must be nonnegative");
   }
+#endif
 
   /* parse 
    *                        gay-berne

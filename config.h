@@ -32,7 +32,7 @@
 /** Compiler flag to enable describing and processing particle orientations.
 
 This will allow to use such particle properties as quart, omega, and torque. */
-/* #define ROTATION */
+#define ROTATION
 
 /** Compiler flag to enable external forces. E.g. apply a fixed external force
     to a particle or fix a particle in space. */
@@ -41,6 +41,20 @@ This will allow to use such particle properties as quart, omega, and torque. */
 /** Compiler Flag to enable constraints, eg walls, spheres. 
     See \ref constraint.h and \ref interaction_data.h */
 #define CONSTRAINTS
+
+/************************************************/
+/** \name available short--ranged potentials
+    For optimization it might be useful to switch
+    off the ones you don't need */
+/*@{*/
+
+/** Lennard-Jones */
+#define LENNARD_JONES
+
+/** Lennard-Jones with cosine tail */
+#define LJ_COS
+
+/*@}*/
 
 /************************************************/
 /** \name Default Parameter Settings            */
