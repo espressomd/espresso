@@ -122,8 +122,14 @@ void init_cell(Cell *cell)
 void cells_re_init() 
 {
   int i,j,ind;
-  Cell *old_cells;
   int old_n_cells, old_ghost_cell_grid[3];
+  Cell         *old_cells;
+  ParticleList *pl;
+  Particle     *part;
+
+#ifdef ADDITIONAL_CHECKS
+  int part_cnt=0;
+#endif
 
   CELL_TRACE(fprintf(stderr,"%d: cells_re_init \n",this_node));
   if(cells_init_flag != CELLS_FLAG_PRE_INIT) {
@@ -153,27 +159,55 @@ void cells_re_init()
   /* 2e: init cell neighbors */
   for(i=0; i<n_cells; i++) init_cell_neighbors(i);
  
-  CELL_TRACE(if(this_node==0) { fprintf(stderr,"0: cell_grid: (%d, %d, %d)\n",cell_grid[0],cell_grid[1],cell_grid[2]); });
 
   /* 3: Transfer Particle data from old to new cell grid */
   for(i=0;i<old_n_cells;i++) {
-    if(old_n_cells == 1 || is_inner_cell(i,old_ghost_cell_grid)) {
-      for(j=0; j<old_cells[i].pList.n; j++) {
-	ind = pos_to_cell_grid_ind(old_cells[i].pList.part[j].r.p);
-	append_particle(&(cells[ind].pList),&(old_cells[i].pList.part[j]));
+    if(is_inner_cell(i,old_ghost_cell_grid)) {
+      pl = &(old_cells[i].pList);
+#ifdef ADDITIONAL_CHECKS
+      part_cnt += pl->n;
+#endif
+      for(j=0; j<pl->n; j++) {
+	part = &(pl->part[j]);
+	ind  = pos_to_cell_grid_ind(part->r.p);
+	append_particle(&(cells[ind].pList),part);
       }
-      if(old_cells[i].pList.max>0) free(old_cells[i].pList.part);
+      if(pl->max>0) free(pl->part);
       if(old_cells[i].n_neighbors>0) {
 	for(j=0; j<old_cells[i].n_neighbors; j++) free(old_cells[i].nList[j].vList.pair);
 	free(old_cells[i].nList);
       }
     }
   }
+#ifdef ADDITIONAL_CHECKS
+  CELL_TRACE(fprintf(stderr,"%d: old_cell_grid: (%d, %d, %d)\n"
+		     ,this_node,old_ghost_cell_grid[0]-2
+		     ,old_ghost_cell_grid[1]-2,old_ghost_cell_grid[2]-2));
+  CELL_TRACE(fprintf(stderr,"%d: had %d particles in old grid.\n"
+		     ,this_node,part_cnt));
+  part_cnt=0;
+  for(i=0;i<n_cells;i++) {
+    if(is_inner_cell(i,ghost_cell_grid)) {
+      part_cnt += cells[i].pList.n;
+    }
+  }
+  CELL_TRACE(fprintf(stderr,"%d: new grid has %d particles.\n"
+		     ,this_node,part_cnt));
+#endif
+
   free(old_cells);
-  rebuild_verletlist = 1;
+
+
 
   /* cell structure initialized. */
+  rebuild_verletlist = 1;
   cells_init_flag = CELLS_FLAG_RE_INIT;
+
+  CELL_TRACE(fprintf(stderr,"%d: cell_grid: (%d, %d, %d)\n"
+		     ,this_node,cell_grid[0],cell_grid[1],cell_grid[2]));
+  CELL_TRACE(fprintf(stderr,"%d: cell_size: (%f, %f, %f)\n"
+		     ,this_node,cell_size[0],cell_size[1],cell_size[2]));
+
 
 }
 
@@ -183,19 +217,47 @@ void sort_particles_into_cells()
 {
   
   int c, n, ind;
+  Particle *part;
+#ifdef ADDITIONAL_CHECKS
+  int part_cnt=0;
+#endif
 
   CELL_TRACE(fprintf(stderr,"%d: sort_particles_into_cells:\n",this_node));
- 
+
   /* cell loop */
   for(c=0; c<n_cells; c++) {
     if(is_inner_cell(c,ghost_cell_grid)) {
       /* particle loop */
       for(n=0; n<cells[c].pList.n ; n++) {
 	ind = pos_to_cell_grid_ind(cells[c].pList.part[n].r.p);
-	if(ind != c) move_particle(&(cells[ind].pList), &(cells[c].pList), n);
+	if(ind != c) {
+	  part = move_particle(&(cells[ind].pList), &(cells[c].pList), n);
+	  local_particles[part->r.identity] = part;
+	}
       }
     }
   }
+#ifdef ADDITIONAL_CHECKS
+  for(c=0; c<n_cells; c++) {
+    if(is_inner_cell(c,ghost_cell_grid)) {
+      part_cnt += cells[c].pList.n;
+      for(n=0; n<cells[c].pList.n ; n++) {
+	if(cells[c].pList.part[n].r.identity < 0 || cells[c].pList.part[n].r.identity > max_seen_particle)
+	  CELL_TRACE(fprintf(stderr,"%d: Particle %d in cell %d has corrupted identity!\n",this_node,n,c));
+      }
+    }
+  }
+  CELL_TRACE(fprintf(stderr,"%d: %d particles in cells.\n",this_node,part_cnt));
+  part_cnt=0;
+  for(n=0; n< max_seen_particle; n++) {
+    if(local_particles[n] != NULL) {
+      part_cnt ++;
+      if(local_particles[n]->r.identity < 0 || local_particles[n]->r.identity > max_seen_particle)
+      CELL_TRACE(fprintf(stderr,"%d: Particle %d has corrupted identity!\n",this_node,n));
+    }
+  }
+#endif
+
 }
 
 /*************************************************/
