@@ -25,7 +25,7 @@ set mdst 2
 # consecutive integration steps between two tests
 set intsteps 100
 # how many tests for minimal distance
-set maxtime 100
+set maxtime 10
 # integrator
 setmd skin 0.3
 setmd time_step 0.0001
@@ -40,23 +40,24 @@ set Lz [lindex [setmd box_l] 2]
 puts "setting up random particles"
 
 for {set i $firstpart; set np 0} { $np < $npart } { incr np; incr i $partstep} {
-    part $i pos [expr $Lx*[tcl_rand]] [expr $Ly*[tcl_rand]] [expr $Ly*[tcl_rand]] \
+    part $i pos [expr $Lx*[t_random]] [expr $Ly*[t_random]] [expr $Ly*[t_random]] \
 	q [ expr ($i % 2 == 1) ? -1 : 1 ] \
-	type [ expr round([tcl_rand]*$ntypes) ]
+	type [ expr round([t_random]*$ntypes) ]
 }
 
 # no electrostatics
-setmd bjerrum 0
+inter coulomb 0
 
 #pairwise lennard_jones for all particles
 for {set ia1 0} { $ia1 <= $ntypes } { incr ia1 } {
     for {set ia2 0} { $ia2 <= $ntypes } { incr ia2 } {
 	inter $ia1 $ia2 lennard-jones 3 1 1.12246 0 0
+	puts [inter $ia1 $ia2]
     }
 }
 
 # cap lennard_jones
-setmd lj_force_cap 500
+inter ljforcecap 500
 
 # friction
 setmd gamma [expr 1e4*[setmd time_step]]
@@ -73,11 +74,18 @@ for {set i 0} { $i < $maxtime && $cont} { incr i} {
 
     integrate $intsteps
 }
-puts [part 581]
+
 # write
 set f [open "|gzip -c - >config.gz" w]
-blockfile $f write variable box_l
+blockfile $f write variable all
 blockfile $f write particles "id pos type q" all
+blockfile $f write interactions
+blockfile $f write bonds all
 close $f
+puts "wrote [setmd n_part] particles to config.gz with minimal distance [analyze mindist]"
 
-puts "wrote [part number] particles to config.gz with minimal distance [analyze mindist]"
+part delete
+set f [open "|gzip -cd config.gz" r]
+while {[blockfile $f read auto] != "eof"} {}
+close $f
+puts "[setmd box_l] read [setmd n_part] particles from config.gz with minimal distance [analyze mindist]"

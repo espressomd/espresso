@@ -155,54 +155,58 @@ int setmd(ClientData data, Tcl_Interp *interp,
   char databuf[MAX_DIMENSION*(sizeof(int) + sizeof(double))];
   char buffer[TCL_DOUBLE_SPACE + 5];
   int i, j;
+  int all = (argc == 1);
 
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "wrong # args:  should be \"",
-		     argv[0], " <variable> ?value? ?value? ...\"",
-		     (char *) NULL);
-    return (TCL_ERROR);
-  }
-
+  /* loop over all global variables. Has two purposes:
+     either we write al variables or search for the one
+     to write */
   for (i = 0; fields[i].data != NULL; i++) {
-    if (!strncmp(argv[1], fields[i].name, strlen(argv[1]))) {
-      if(strlen(argv[1]) < fields[i].min_length) {
-	Tcl_AppendResult(interp, "Argument \"",argv[1],"\" not long ", (char *) NULL);
-	Tcl_AppendResult(interp, "enough to identify a setmd variable!", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (argc >= 3) {
-	/* set */
-	/* parse in data */
-	if (argc != 2 + fields[i].dimension) {
-	  sprintf(buffer, "%d", fields[i].dimension);	  
-	  Tcl_AppendResult(interp, "\"", argv[1],
-			   "\" has dimension ",
-			   buffer, (char *) NULL);
-	  sprintf(buffer, " not %d", argc - 2);	  
-	  Tcl_AppendResult(interp, buffer, (char *) NULL);
+    if (all || !strncmp(argv[1], fields[i].name, strlen(argv[1]))) {
+      if (!all) {
+	if (strlen(argv[1]) < fields[i].min_length) {
+	  Tcl_AppendResult(interp, "Argument \"",argv[1],"\" not long ", (char *) NULL);
+	  Tcl_AppendResult(interp, "enough to identify a setmd variable!", (char *) NULL);
 	  return (TCL_ERROR);
 	}
-
-	/* get new value */
-	for (j = 0; j < fields[i].dimension; j++) {
-	  switch (fields[i].type) {
-	  case TYPE_INT:
-	    if (Tcl_GetInt(interp, argv[2 + j], (int *)databuf + j) == TCL_ERROR)
-	      return (TCL_ERROR);
-	    break;
-	  case TYPE_DOUBLE:
-	    if (Tcl_GetDouble(interp, argv[2 + j], (double *)databuf + j))
-	      return (TCL_ERROR);
-	    break;
-	  default: ;
+	if (argc >= 3) {
+	  /* set */
+	  /* parse in data */
+	  if (argc != 2 + fields[i].dimension) {
+	    sprintf(buffer, "%d", fields[i].dimension);	  
+	    Tcl_AppendResult(interp, "\"", argv[1],
+			     "\" has dimension ",
+			     buffer, (char *) NULL);
+	    sprintf(buffer, " not %d", argc - 2);	  
+	    Tcl_AppendResult(interp, buffer, (char *) NULL);
+	    return (TCL_ERROR);
 	  }
-	}
 
-	if (fields[i].changeproc(interp, databuf) != TCL_OK)
-	  return TCL_ERROR;
+	  /* get new value */
+	  for (j = 0; j < fields[i].dimension; j++) {
+	    switch (fields[i].type) {
+	    case TYPE_INT:
+	      if (Tcl_GetInt(interp, argv[2 + j], (int *)databuf + j) == TCL_ERROR)
+		return (TCL_ERROR);
+	      break;
+	    case TYPE_DOUBLE:
+	      if (Tcl_GetDouble(interp, argv[2 + j], (double *)databuf + j))
+		return (TCL_ERROR);
+	      break;
+	    default: ;
+	    }
+	  }
+
+	  if (fields[i].changeproc(interp, databuf) != TCL_OK)
+	    return TCL_ERROR;
+	}
       }
 
       /* get */
+      if (all) {
+	if (i != 0)
+	  Tcl_AppendResult(interp, " ", (char *)NULL);
+	Tcl_AppendResult(interp, "{", fields[i].name, " ", (char *)NULL);
+      }
       for (j = 0; j < fields[i].dimension; j++) {
 	switch (fields[i].type) {
 	case TYPE_INT:
@@ -217,11 +221,19 @@ int setmd(ClientData data, Tcl_Interp *interp,
 	if (j < fields[i].dimension - 1)
 	  Tcl_AppendResult(interp, " ", (char *) NULL);
       }
-
-      return (TCL_OK);
+      
+      if (all)
+	Tcl_AppendResult(interp, "}", (char *)NULL);
+      /* wrote out one value, so skip rest */
+      if (!all)
+	return (TCL_OK);
     }
   }
-  Tcl_AppendResult(interp, "unknown variable \"",
+
+  if (all)
+    return TCL_OK;
+
+  Tcl_AppendResult(interp, "unknown md variable \"",
 		   argv[1], "\"", (char *) NULL);
   return (TCL_ERROR);
 }

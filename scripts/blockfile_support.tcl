@@ -1,3 +1,7 @@
+######################################
+# particle support
+######################################
+
 proc blockfile_write_particles {channel write particles {info "id pos v q"} {range "0-end"}} {
     blockfile $channel write start "particles"
     if {![regexp "pos" $info]} {set info "pos $info"}
@@ -73,12 +77,10 @@ proc blockfile_read_auto_particles {channel read auto} {
     }
 }
 
-proc blockfile_read_particles {channel read particles} {
-    set tag [blockfile $channel read start]
-    if {$tag != "particles"} { error "blockfile read particles did not find particle block in file $channel" }
-    blockfile_read_auto_particles $channel read particles
-}
- 
+######################################
+# bonds support
+######################################
+
 proc blockfile_write_bonds {channel write bonds {range "0-end"}} {
     blockfile $channel write start "bonds"
 
@@ -114,7 +116,6 @@ proc blockfile_write_bonds {channel write bonds {range "0-end"}} {
     puts $channel "\}"
 }
 
-
 proc blockfile_read_auto_bonds {channel read auto} {
     while {1} {
 	set line [blockfile $channel read auto]
@@ -128,12 +129,10 @@ proc blockfile_read_auto_bonds {channel read auto} {
     }
 }
 
-proc blockfile_read_bonds {channel read bonds} {
-    set tag [blockfile $channel read start]
-    if {$tag != "particles"} { error "blockfile read bonds did not find particle block in file $channel" }
-    blockfile_read_auto_bonds $channel read bonds
-}
- 
+######################################
+# interactions support
+######################################
+
 proc blockfile_write_interactions {channel write interactions} {
     blockfile $channel write start interactions
     puts $channel "\n\t{[join [inter] "\}\n\t\{"]}\n\}"
@@ -144,8 +143,40 @@ proc blockfile_read_auto_interactions {channel read auto} {
     foreach d $data { eval "inter $d" }
 }
 
-proc blockfile_read_interactions {channel read interactions} {
-    set tag [blockfile $channel read start]
-    if {$tag != "particles"} { error "blockfile read interactions did not find interactions block in file $channel" }
-    blockfile_read_auto_particles $channel read interactions
+######################################
+# variables support
+######################################
+
+proc blockfile_write_variable {channel write variable {which "all"}} {
+    blockfile $channel write start variable
+    if { $which == "all" } {
+	puts $channel "\n\t{[join [setmd] "\}\n\t\{"]}"
+    } {
+	foreach wh $which { puts $channel "{$wh [setmd $wh]}" }
+    }
+    puts $channel "\n\}"
+}
+
+# this is more tricky since we want to read old files
+proc blockfile_read_auto_variable {channel read auto} {
+    set vars [blockfile $channel read toend]
+    set vname [lindex $vars 0]
+    if {[llength $vname] == 1} {
+	# old format
+	set data [lindex $vars 1]
+	set type [lindex $data 0]
+	if { $type != "_ival_" && $type != "_dval_"} { error "old style variable block corrupt"}
+	eval "setmd $vname [lrange $data 1 end]"
+    } {
+	# new format
+	foreach vblock $vars {
+	    set vname [lindex $vblock 0]
+	    set data [lrange $vblock 1 end]
+	    if {[catch {eval "setmd $vname $data"} error]} {
+		if { $error != "variable is readonly" } {
+		    error "setmd $vname $data reported: $error"
+		}
+	    }   
+	}
+    }
 }
