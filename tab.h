@@ -622,27 +622,35 @@ MDINLINE int calc_tab_dihedral_force(Particle *p2, Particle *p1,
 				     double force2[3], double force1[3], double force3[3])
 {
   int i;
-  /* vectors in plane of particle triples (p1,p2,p3) and (p2,p3,p4) and thier length. */
-  double vec1[3], vecl1, vec2[3], vecl2;
+  /* vectors for dihedral angle calculation */
+  double v12[3], v23[3], v34[3], v12Xv23[3], v23Xv34[3], l_v12Xv23, l_v23Xv34;
+  double v23Xf1[3], v23Xf4[3], v34Xf4[3], v12Xf1[3];
   /* dihedral angle, cosine of the dihedral angle, cosine of the bond angles */
-  double phi, cosphi, cos1223, cos2334;
+  double phi, cosphi;
   /* force factors */
-  double fac, f1, f2, f4;
+  double fac, f1[3], f4[3];
 
-  phi = calc_dihedral_angle(p1, p2, p3, p4, vec1, &vecl1, vec2, &vecl2, 
-			    &cos1223, &cos2334, &cosphi);
+  /* dihedral angle */
+  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23, v23Xv34, &l_v23Xv34, &cosphi, &phi);
 
+  /* calculate force components (directions) */
+  for(i=0;i<3;i++)  {
+    f1[i] = (v23Xv34[i] - cosphi*v12Xv23[i])/l_v12Xv23;;
+    f4[i] = (v12Xv23[i] - cosphi*v23Xv34[i])/l_v23Xv34;
+  }
+  vector_product(v23, f1, v23Xf1);
+  vector_product(v23, f4, v23Xf4);
+  vector_product(v34, f4, v34Xf4);
+  vector_product(v12, f1, v12Xf1);
+
+  /* table lookup */
   fac = bonded_tab_force_lookup(phi, iaparams);
-  /* apply dihedral forces */
-  vecl1 = 1.0/vecl1; vecl2 = 1.0/vecl2;
-  for(i=0;i<3;i++) {
-    f1 = fac * (vec2[i] - vec1[i]*cosphi) * vecl1;
-    f4 = fac * (vec1[i] - vec2[i]*cosphi) * vecl2;
-    f2 = (cos1223 - 1.0)*f1 - cos2334*f4;
 
-    force1[i] = f1;
-    force2[i] = f2;
-    force3[i] = -(f1 + f2 + f4);
+  /* store dihedral forces */
+  for(i=0;i<3;i++) {
+      force1[i] = fac*v23Xf1[i];
+      force2[i] = fac*(v34Xf4[i] - v12Xf1[i] - v23Xf1[i]);
+      force3[i] = fac*(v12Xf1[i] - v23Xf4[i] - v34Xf4[i]);
   }
 
   return 0;
@@ -656,13 +664,12 @@ MDINLINE int tab_dihedral_energy(Particle *p2, Particle *p1,
 				 Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams,
 				 double *_energy)
 {
-  /* vectors in plane of particle triples (p1,p2,p3) and (p2,p3,p4) and thier length. */
-  double vec1[3], vecl1, vec2[3], vecl2;
-  /* dihedral angle, cosine of the dihedral angle, cosine of the bond angles */
-  double phi, cosphi, cos1223, cos2334;
+  /* vectors for dihedral calculations. */
+  double v12[3], v23[3], v34[3], v12Xv23[3], v23Xv34[3], l_v12Xv23, l_v23Xv34;
+  /* dihedral angle, cosine of the dihedral angle */
+  double phi, cosphi;
 
-  phi = calc_dihedral_angle(p1, p2, p3, p4, vec1, &vecl1, vec2, &vecl2, 
-			    &cos1223, &cos2334, &cosphi);
+  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23, v23Xv34, &l_v23Xv34, &cosphi, &phi);
 
   *_energy = bonded_tab_energy_lookup(phi, iaparams);
 

@@ -41,147 +41,113 @@ MDINLINE int dihedral_set_params(int bond_type, int mult, double bend, double ph
   return TCL_OK;
 }
 
-
-/** Calculates the dihedral angle between particel quadriple p1, p2,
-p3 and p4. The dihedral angle is the angel between the planes
-specified by the particle triples (p1,p2,p3) and (p2,p3,p4). Additional information is stored in:
- plane_vec1, plane_vec2, cos_v12_v23, cos_v23_v34*/
-MDINLINE double calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Particle *p4, 
-				    double plane_vec1[3], double *length_plane_vec1,
-				    double plane_vec2[3], double *length_plane_vec2,
-				    double *cos_v12_v23, double *cos_v23_v34, double *cosphi)
+/** Calculates the dihedral angle between particle quadruple p1, p2,
+p3 and p4. The dihedral angle is the angle between the planes
+specified by the particle triples (p1,p2,p3) and (p2,p3,p4). 
+Vectors a, b and c are the bond vectors between consequtive particles.
+(Written by: Arijit Maitra) */
+MDINLINE void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Particle *p4, 
+				  double a[3], double b[3], double c[3], 
+				  double aXb[3], double *l_aXb, double bXc[3], double *l_bXc, 
+				  double *cosphi, double *phi)
 {
   int i;
-  double tmp, tmpvec[3];
-  /* vectors between particles */
-  double v12[3], v23[3], v34[3];
-  /* dihedral angle */
-  double phi;
 
-  get_mi_vector(v12, p2->r.p, p1->r.p);
-  get_mi_vector(v23, p3->r.p, p2->r.p);
-  get_mi_vector(v34, p4->r.p, p3->r.p);
-  //  fprintf(stderr,"calc_dihedral_cos: v23=(%f,%f,%f)\n",v23[0],v23[1],v23[2]);
-  //  fprintf(stderr,"calc_dihedral_cos: v34=(%f,%f,%f)\n",v34[0],v34[1],v34[2]);
+  get_mi_vector(a, p2->r.p, p1->r.p);
+  get_mi_vector(b, p3->r.p, p2->r.p);
+  get_mi_vector(c, p4->r.p, p3->r.p);
 
-  /* calculate plane_vec1 and plane_vec2 */
-  tmp = 1.0/sqrlen(v23);
-  *cos_v12_v23 = scalar(v12,v23)*tmp;
-  *cos_v23_v34 = scalar(v23,v34)*tmp;
-  //  fprintf(stderr,"calc_dihedral_cos: Angels (v12,v23)=%f, (v23,v34)=%f\n",
-  //  acos(*cos_v12_v23),acos(*cos_v23_v34)); 
-  for(i=0;i<3;i++) {
-    plane_vec1[i] =  v12[i] - (*cos_v12_v23) * v23[i];
-    plane_vec2[i] = -v34[i] + (*cos_v23_v34) * v23[i];
+  /* calculate vector product a X b and b X c */
+  vector_product(a, b, aXb);
+  vector_product(b, c, bXc);
+
+  /* calculate the unit vectors */
+  *l_aXb = sqrt(sqrlen(aXb));
+  *l_bXc = sqrt(sqrlen(bXc));
+  for (i=0;i<3;i++) {
+    aXb[i] /= *l_aXb;
+    bXc[i] /= *l_bXc;
   }
-  //fprintf(stderr,"plane_vec1=(%f,%f,%f)\n",plane_vec1[0],plane_vec1[1],plane_vec1[2]);
-  //fprintf(stderr,"plane_vec2=(%f,%f,%f)\n",plane_vec2[0],plane_vec2[1],plane_vec2[2]);
+
+  *cosphi = scalar(aXb, bXc);
+
+  if ( fabs(fabs(*cosphi)-1)  < TINY_SIN_VALUE  ) *cosphi = dround(*cosphi);
 
   /* Calculate dihedral angle */
-  *length_plane_vec1 = sqrt(sqrlen(plane_vec1));
-  *length_plane_vec2 = sqrt(sqrlen(plane_vec2));
-  if( *length_plane_vec1 == 0.0 && *length_plane_vec2 == 0.0 ) { return ANGLE_NOT_DEFINED; }
-  /* return cosine of the dihedral angle */
-  *cosphi = scalar(plane_vec1,plane_vec2)/((*length_plane_vec1)*(*length_plane_vec2));
-  phi     = acos(*cosphi);
+  *phi = acos(*cosphi);
+  if( scalar(aXb, c) < 0.0 ) *phi = (2.0*PI) - *phi;
 
-  /* take care of the degeneracy of the acos operation */
-  vector_product(v12,v23,tmpvec);  
-  if( scalar(tmpvec,v34) < 0.0 ) phi = (2.0*PI) - phi;
-
-  return phi;
 }
 
-
+/** calculate dihedral force between particles p1, p2 p3 and p4 
+    Written by Arijit Maitra, adapted to new force interface by Hanjo */
 MDINLINE int calc_dihedral_force(Particle *p2, Particle *p1, Particle *p3, Particle *p4,
 				 Bonded_ia_parameters *iaparams, double force2[3],
 				 double force1[2], double force3[2])
 {
   int i;
-  /* vectors in plane of particle triples (p1,p2,p3) and (p2,p3,p4) and thier length. */
-  double vec1[3], vecl1, vec2[3], vecl2;
-  /* dihedral angle, cosine of the dihedral angle, cosine of the bond angles */
-  double phi, cosphi, cos1223, cos2334;
+  /* vectors for dihedral angle calculation */
+  double v12[3], v23[3], v34[3], v12Xv23[3], v23Xv34[3], l_v12Xv23, l_v23Xv34;
+  double v23Xf1[3], v23Xf4[3], v34Xf4[3], v12Xf1[3];
+  /* dihedral angle, cosine of the dihedral angle */
+  double phi, cosphi, sinmphi_sinphi;
   /* force factors */
-  double fac, f1, f2, f4;
+  double fac, f1[3], f4[3];
 
-  phi = calc_dihedral_angle(p1, p2, p3, p4, vec1, &vecl1, vec2, &vecl2, 
-			    &cos1223, &cos2334, &cosphi);
-  /* fprintf(stderr,"add_dihedral_force: phi = %f, cosphi =%f\n",phi,cosphi); */
+  /* dihedral angle */
+  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23, v23Xv34, &l_v23Xv34, &cosphi, &phi);
+
+  /* calculate force components (directions) */
+  for(i=0;i<3;i++)  {
+    f1[i] = (v23Xv34[i] - cosphi*v12Xv23[i])/l_v12Xv23;;
+    f4[i] = (v12Xv23[i] - cosphi*v23Xv34[i])/l_v23Xv34;
+  }
+  vector_product(v23, f1, v23Xf1);
+  vector_product(v23, f4, v23Xf4);
+  vector_product(v34, f4, v34Xf4);
+  vector_product(v12, f1, v12Xf1);
+
+  /* calculate force magnitude */
+  fac =   iaparams->p.dihedral.bend * iaparams->p.dihedral.phase * iaparams->p.dihedral.mult;
   
-  if( phi == ANGLE_NOT_DEFINED ) {
-    fprintf(stderr,"%d: calc_dihedral_force: undefined angle\n", this_node);
-    return 1;
+  if(fabs(sin(phi)) < TINY_SIN_VALUE) {
+    sinmphi_sinphi =  iaparams->p.dihedral.mult * cos(2.0*PI -  iaparams->p.dihedral.mult*phi)/cos(phi); 
   }
   else {
-    fac = - iaparams->p.dihedral.bend*iaparams->p.dihedral.phase;
-    /* treat the different multiplicities */
-    switch (iaparams->p.dihedral.mult) {
-    case 1:
-      break;
-    case 2:
-      fac *= 4.0*cosphi; break;
-    case 3:
-      fac *= 12.0*SQR(cosphi) - 3.0;  break;
-    case 4:
-      fac *= 16.0*cosphi * (2.0*SQR(cosphi) - 1.0 );  break;
-    case 5:
-      fac *= SQR(cosphi) * (80.0*SQR(cosphi) - 60.0) + 5.0;  break;
-    case 6:
-      fac *= ((SQR(cosphi) - 1.0) * 192.0*SQR(cosphi) + 36.0) * cosphi;  break; 
-    }
-    /* apply dihedral forces */
-    vecl1 = 1.0/vecl1; vecl2 = 1.0/vecl2;
-    for(i=0;i<3;i++) {
-      f1 = fac * (vec2[i] - vec1[i]*cosphi) * vecl1;
-      f4 = fac * (vec1[i] - vec2[i]*cosphi) * vecl2;
-      f2 = (cos1223 - 1.0)*f1 - cos2334*f4;
+    sinmphi_sinphi = sin( iaparams->p.dihedral.mult*phi)/sin(phi);
+  }
 
-      force1[i] = f1;
-      force2[i] = f2;
-      force3[i] = -(f1 + f2 + f4);
-    }
+  fac *= sinmphi_sinphi;
+
+
+  /* store dihedral forces */
+  for(i=0;i<3;i++) {
+      force1[i] = fac*v23Xf1[i];
+      force2[i] = fac*(v34Xf4[i] - v12Xf1[i] - v23Xf1[i]);
+      force3[i] = fac*(v12Xf1[i] - v23Xf4[i] - v34Xf4[i]);
   }
   return 0;
 }
 
+/** calculate dihedral energy between particles p1, p2 p3 and p4 
+    Written by Arijit Maitra, adapted to new force interface by Hanjo */
 MDINLINE int dihedral_energy(Particle *p1, Particle *p2, Particle *p3, Particle *p4,
 			     Bonded_ia_parameters *iaparams, double *_energy) 
 {
-  /* vectors in plane of particle triples (p1,p2,p3) and (p2,p3,p4) and thier length. */
-  double vec1[3], vecl1, vec2[3], vecl2;
-  /* dihedral angle, cosine of the dihedral angle, cosine of the bond angles */
-  double phi, cosphi, cos1223, cos2334;
-  /* force factors */
+  /* vectors for dihedral calculations. */
+  double v12[3], v23[3], v34[3], v12Xv23[3], v23Xv34[3], l_v12Xv23, l_v23Xv34;
+  /* dihedral angle, cosine of the dihedral angle */
+  double phi, cosphi;
+  /* energy factors */
   double fac;
 
-  phi = calc_dihedral_angle(p1, p2, p3, p4, vec1, &vecl1, vec2, &vecl2, 
-			    &cos1223, &cos2334, &cosphi);
+  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23, v23Xv34, &l_v23Xv34, &cosphi, &phi);
+  
+  fac =  iaparams->p.dihedral.phase * cos( iaparams->p.dihedral.mult*phi);
+  fac += 1.0;
+  fac *=  iaparams->p.dihedral.bend;
 
-  if( phi != ANGLE_NOT_DEFINED ) {
-    fac = iaparams->p.dihedral.phase;
-    /* treat the different multiplicities */
-    switch (iaparams->p.dihedral.mult) {
-    case 1:
-      fac *= cosphi; break;
-    case 2:
-      fac *= 2.0*SQR(cosphi) - 1.0; break;
-    case 3:
-      fac *= (4.0*SQR(cosphi) - 3.0) * cosphi;  break;
-    case 4:
-      fac *= (8.0*SQR(cosphi) - 8.0 ) * SQR(cosphi) + 1;  break;
-    case 5:
-      fac *= ((16.0*SQR(cosphi) - 20.0) * SQR(cosphi) + 5.0) * cosphi;  break;
-    case 6:
-      fac *= ((32.0*SQR(cosphi) - 48.0) * SQR(cosphi) + 18.0) * SQR(cosphi) - 1;  break; 
-    }
-    fac += 1.0;
-    *_energy = fac * iaparams->p.dihedral.bend;
-    return 0;
-  }
-  /* angle undefined */
-  fprintf(stderr,"%d: calc_dihedral_force: undefined angle\n", this_node);
-  return 1;
+  return fac;
 }
 
 #endif
