@@ -21,7 +21,7 @@ setmd box_l 10.0 10.0 10.0
 # number of particle types
 set ntypes 1
 # minimal distance of particles at finish
-set mdst 1
+set mdst 2
 # consecutive integration steps between two tests
 set intsteps 100
 # how many tests for minimal distance
@@ -62,12 +62,12 @@ setmd lj_force_cap 500
 setmd gamma [expr 1e4*[setmd time_step]]
 setmd temp 1.
 
-puts "starting ramp integration"
-puts [part]
+puts "starting warmup integration"
+
 
 set cont 1
 for {set i 0} { $i < $maxtime && $cont} { incr i} {
-    set md [mindist]
+    set md [analyze mindist]
     puts "step $i minimum distance = $md"
     if {$md >= $mdst} { set cont 0 }
 
@@ -80,4 +80,4 @@ blockfile $f write variable box_l
 blockfile $f write particles "id pos type q" all
 close $f
 
-puts "wrote [part number] particles to config.gz with minimal distance [mindist]"
+puts "wrote [part number] particles to config.gz with minimal distance [analyze mindist]"
