@@ -241,6 +241,12 @@ proc analysis { stat stat_out N_P MPC simtime { noted "na" } } {
 #
 #############################################################
 
+proc stop_particles { } { 
+    for { set i 0} { $i < [setmd n_part] } {incr i} {
+	part $i v 0 0 0
+	part $i f 0 0 0
+    }
+}
 proc stopParticles { } {
     puts -nonewline "        Setting all particles' velocities and forces to zero... "; flush stdout
     set old_i 0; set old_e [setmd n_part]; set old [expr 10*$old_e]
