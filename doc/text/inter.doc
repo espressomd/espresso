@@ -180,9 +180,10 @@
 	<li> \anchor tcl_bonded <b>Bonded interactions: </b>
 	     \verbatim inter <bond_type_number> ( <interaction_type>|<num> ) <value>* \endverbatim
 	     Bonded interaction (bonds are set using \ref tcl_part).
-	     If \<num\> is given, the number of interaction partners is given (e.g. 1 for FENE).
+	     If \<num\> is given, the number of interaction partners is given (for example 1 for FENE).
 	     Currently known \<interaction_type\>s are:
 
+	     <b>Bond length potentials:</b> (two body interactions)
 	     <ul>
 		<li> \verbatim fene <K_fene> <R_fene> \endverbatim
 			FENE potential
@@ -191,12 +192,55 @@
 		<li> \verbatim harmonic <K_harmonic> <R_harmonic> \endverbatim
 			Harmonic potential
 			\f[ U^{Harmonic} = \frac{1}{2} K_{harmonic} \left( r - R_{harmonic} \right)^2 \f]
-		<li> \verbatim angle <bend> \endverbatim
-			cosine bend potential  
-			\f[ U^{bend} = bend (1-\cos(\alpha))
-			\f]
-			with \f$ \alpha \f$ being the angle between two
-			neighboring bonds.
+	     </ul>
+
+	     <b>Bond angle potentials:</b> (three body interactions)<br>
+
+	     <table border="no"><tr>
+	     <td>	     
+	     There are three different implementations for the bond angle
+	     potential. Use the compile flags/switches in \ref config.h to choose
+	     one of them. Default is the cosine bend potential (flag:
+	     <tt>BOND_ANGLE_COSINE</tt>)<br>
+
+	     The used definitions are illustrated in the picture on
+	     the right side showing three particles i,j and k at
+	     position \f$ \vec{r}_i \f$, \f$ \vec{r}_j \f$ and
+	     \f$ \vec{r}_k \f$ with bond vectors \f$ \vec{b}_{ij} \f$ and
+	     \f$ \vec{b}_{jk} \f$. For all potentials we use the
+	     definition 
+	     \f$ \phi := \arccos(\frac{\vec{b}_{ij}.\vec{b}_{jk}}{b_{ij} b_{jk}}) \f$. 
+	     This also explains the use of potentials which contain
+	     \f$ \cos(\phi) \f$ since this saves computational
+	     costly \f$ \arccos \f$ and \f$ \sin \f$ operations.
+	     </td>	     
+	     <td>
+	     <img src="../figs/bond_angle.gif" width=50>
+	     </td>
+	     </tr></table>
+	     <ul>			
+		<li> \verbatim angle <bend> [<phi0>]\endverbatim
+		
+		\<bend\> is the bending constant in units of KT. The
+		optional parameter \<phi0\> = \f$ \phi_o \f$ is the
+		equilibirum bond angle in rad ranging from 0 to \f$
+		\pi \f$. If this paramter is not given the default
+		value is \f$ \phi_o = \pi \f$ which corresponds to a
+		stretched configuration.
+
+		<ul>
+		        <li> Harmonic bond angle potential: (flag: <tt>BOND_ANGLE_HARMONIC</tt>)<br>
+			This potential is also used for example in YASP and good old polyMD.
+			\f[ U^{bend}_{harmonic} = bend (\phi - \phi_0)^2 \f]
+		
+			<li> Cosine bond angle potential: (flag: <tt>BOND_ANGLE_COSINE</tt>)<br>
+			The ESPResSo original!
+			\f[ U^{bend}_{cosine} = bend (1 + \cos(\phi - \phi0)) \f]
+			<li> Cosine square bond angle potential: (flag: <tt>BOND_ANGLE_COSSQUARE</tt>)<br>
+			A form which is used for example in the GROMOS96 force field.
+			\f[ U^{bend}_{cossquare} = bend (\cos(\phi) - \cos(\phi_0))^2 \f]
+
+		</ul>
 	     </ul>
 	     If no \<interaction_type\> is given,
 	     \verbatim inter <bond_type_number> \endverbatim
