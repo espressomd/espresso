@@ -113,7 +113,7 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 		   <type_{n|c}P> = type number of {neutral|charged} monomers to be used with "part" (default to '0' and '1')
 		   <type_FENE>   = type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0') 
       If <val_cM> < 1e-10, the charge is assumed to be zero, and <type_cM> = <type_nM>.                                                    */
-  int N_P, MPC; double bond_length; int part_id = 0; double posx,posy,posz,*posed; posx=posy=posz=-1.; posed=NULL;
+  int N_P, MPC; double bond_length; int part_id = 0; double *posed = NULL;
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_cM = 0.0; int cM_dist = 1, type_nM = 0, type_cM = 1, type_FENE = 0;
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -134,9 +134,9 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     /* [pos <x> <y> <z>] */
     else if (!strncmp(argv[i], "pos", strlen(argv[i]))) {
       if (i+3 < argc) { 
-	posed = malloc(3*sizeof(int));
-	if ((Tcl_GetDouble(interp, argv[i+1], &posx) == TCL_ERROR) || (Tcl_GetDouble(interp, argv[i+2], &posy) == TCL_ERROR) 
-	    || (Tcl_GetDouble(interp, argv[i+3], &posz) == TCL_ERROR)) { 
+	posed = malloc(3*sizeof(double));
+	if ((Tcl_GetDouble(interp, argv[i+1], &posed[0]) == TCL_ERROR) || (Tcl_GetDouble(interp, argv[i+2], &posed[1]) == TCL_ERROR) 
+	    || (Tcl_GetDouble(interp, argv[i+3], &posed[2]) == TCL_ERROR)) { 
 	  Tcl_AppendResult(interp, "The first start monomers position must be double (got: ",argv[i+1],",",argv[i+2],",",argv[i+3],")!", (char *)NULL); 
 	  return (TCL_ERROR); } else { i+=3; } }
       else { Tcl_AppendResult(interp, "The first start monomers position must be 3D!", (char *)NULL); return (TCL_ERROR); }
@@ -186,9 +186,8 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
   }
   if (val_cM < 1e-10) { val_cM = 0.0; type_cM = type_nM; }
-  if (posed!=NULL) { posed[0] = posx; posed[1] = posy; posed[2] = posz; }
 
-  POLY_TRACE(printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed %f/%f/%f, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE));
+  POLY_TRACE(if (posed!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed %f/%f/%f, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE);  else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE));
 
   tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE);
   if (tmp_try == -1) {
@@ -197,6 +196,8 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     sprintf(buffer, "Failed to place current polymer chain in the simulation box for %d times!\nAborting...\n",max_try); tmp_try = TCL_ERROR; }
   else if (tmp_try == -3) {
     sprintf(buffer, "Failed upon creating one of the monomers in tcl_md!\nAborting...\n"); tmp_try = TCL_ERROR; }
+  else if (tmp_try == -4) {
+    sprintf(buffer, "Failed upon removing one of the monomers in tcl_md while trying to reset current chain!\nAborting...\n"); tmp_try = TCL_ERROR; }
   else if (tmp_try >= 0) {
     sprintf(buffer, "%d", tmp_try); tmp_try = TCL_OK; }
   else {
@@ -218,7 +219,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
   for (p=0; p<N_P; p++) {
     for (cnt2=0; cnt2<max_try; cnt2++) {
       /* place start monomer */
-      if ((p==0) && (posed!=NULL)) { pos[0]=posed[0]; pos[1]=posed[1]; pos[2]=posed[2]; }
+      if (posed!=NULL) { if (p > 0) { free(posed); posed=NULL; } else { pos[0]=posed[0]; pos[1]=posed[1]; pos[2]=posed[2]; } }
       else {
 	for (cnt1=0; cnt1<max_try; cnt1++) {
 	  pos[0]=box_l[0]*d_random();
@@ -250,7 +251,9 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	if (cnt1 >= max_try) {
 	  fprintf(stderr,"Warning! Attempt #%d to build polymer %d failed after %d unsuccessful trials to place monomer %d!\n",cnt2+1,p,cnt1,n);
 	  fprintf(stderr,"         Retrying by re-setting the start-monomer of current chain...\n");
-	  part_id = part_id - n; n=0; break;
+	  cnt1 = part_id - n;
+	  for (part_id=part_id-1; part_id >= cnt1; part_id--) if (remove_particle(part_id)==TCL_ERROR) return (-4);
+	  part_id = cnt1; n=0; break;
 	}
 	bond[0] = type_FENE; bond[1] = part_id - 1;
 	if (place_particle(part_id, pos)==TCL_ERROR) return (-3);
