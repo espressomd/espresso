@@ -234,9 +234,9 @@ void rescale_velocities()
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
-      p[i].v[0] *= scale;
-      p[i].v[1] *= scale;
-      p[i].v[2] *= scale;
+      p[i].m.v[0] *= scale;
+      p[i].m.v[1] *= scale;
+      p[i].m.v[2] *= scale;
     }
   }
 }
@@ -296,11 +296,11 @@ void rescale_forces()
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
-      p[i].f[0] *= scale;
-      p[i].f[1] *= scale;
-      p[i].f[2] *= scale;
+      p[i].f.f[0] *= scale;
+      p[i].f.f[1] *= scale;
+      p[i].f.f[2] *= scale;
 
-      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f[0],p[i].f[1],p[i].f[2],p[i].v[0],p[i].v[1],p[i].v[2]));
+      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
     }
   }
@@ -316,12 +316,12 @@ void propagate_velocities()
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
-      if(p[i].ext_flag != PARTICLE_FIXED) 
+      if(p[i].l.ext_flag != PARTICLE_FIXED) 
 #endif
 	{
-	  p[i].v[0] += p[i].f[0];
-	  p[i].v[1] += p[i].f[1];
-	  p[i].v[2] += p[i].f[2];
+	  p[i].m.v[0] += p[i].f.f[0];
+	  p[i].m.v[1] += p[i].f.f[1];
+	  p[i].m.v[2] += p[i].f.f[2];
 	}
     }
   }
@@ -340,22 +340,22 @@ void rescale_forces_propagate_vel()
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
-      p[i].f[0] *= scale;
-      p[i].f[1] *= scale;
-      p[i].f[2] *= scale;
+      p[i].f.f[0] *= scale;
+      p[i].f.f[1] *= scale;
+      p[i].f.f[2] *= scale;
 
-      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f[0],p[i].f[1],p[i].f[2],p[i].v[0],p[i].v[1],p[i].v[2]));
+      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
 #ifdef EXTERNAL_FORCES
-      if(p[i].ext_flag != PARTICLE_FIXED) 
+      if(p[i].l.ext_flag != PARTICLE_FIXED) 
 #endif
 	{
-	  p[i].v[0] += p[i].f[0];
-	  p[i].v[1] += p[i].f[1];
-	  p[i].v[2] += p[i].f[2];
+	  p[i].m.v[0] += p[i].f.f[0];
+	  p[i].m.v[1] += p[i].f.f[1];
+	  p[i].m.v[2] += p[i].f.f[2];
 	}
 
-      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].v[0],p[i].v[1],p[i].v[2]));
+      ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
       
     }
   }
@@ -377,15 +377,15 @@ void propagate_positions()
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
-      if(p[i].ext_flag != PARTICLE_FIXED) 
+      if(p[i].l.ext_flag != PARTICLE_FIXED) 
 #endif
 	{
-	  p[i].r.p[0] += p[i].v[0];
-	  p[i].r.p[1] += p[i].v[1];
-	  p[i].r.p[2] += p[i].v[2];
+	  p[i].r.p[0] += p[i].m.v[0];
+	  p[i].r.p[1] += p[i].m.v[1];
+	  p[i].r.p[2] += p[i].m.v[2];
 	}
       /* Verlet criterion check */
-      if(distance2(p[i].r.p,p[i].p_old) > skin2 )
+      if(distance2(p[i].r.p,p[i].l.p_old) > skin2 )
 	rebuild_verletlist = 1; 
     }
   }
@@ -432,19 +432,19 @@ void propagate_vel_pos()
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
-      if(p[i].ext_flag != PARTICLE_FIXED) 
+      if(p[i].l.ext_flag != PARTICLE_FIXED) 
 #endif
 	{
-	  p[i].v[0] += p[i].f[0];
-	  p[i].v[1] += p[i].f[1];
-	  p[i].v[2] += p[i].f[2];
+	  p[i].m.v[0] += p[i].f.f[0];
+	  p[i].m.v[1] += p[i].f.f[1];
+	  p[i].m.v[2] += p[i].f.f[2];
 	
 
-	  ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].v[0],p[i].v[1],p[i].v[2]));
+	  ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 	  
-	  p[i].r.p[0] += p[i].v[0];
-	  p[i].r.p[1] += p[i].v[1];
-	  p[i].r.p[2] += p[i].v[2];
+	  p[i].r.p[0] += p[i].m.v[0];
+	  p[i].r.p[1] += p[i].m.v[1];
+	  p[i].r.p[2] += p[i].m.v[2];
 	}
 
       ONEPART_TRACE(if(p[i].r.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
@@ -452,23 +452,23 @@ void propagate_vel_pos()
 
 #ifdef ADDITIONAL_CHECKS
       /* force check */
-      db_force = SQR(p[i].f[0])+SQR(p[i].f[1])+SQR(p[i].f[2]);
+      db_force = SQR(p[i].f.f[0])+SQR(p[i].f.f[1])+SQR(p[i].f.f[2]);
       if(db_force > skin2) 
 	fprintf(stderr,"%d: Part %d has force %f (%f,%f,%f)\n",
 		this_node,p[i].r.identity,sqrt(db_force),
-		p[i].f[0],p[i].f[1],p[i].f[2]);
+		p[i].f.f[0],p[i].f.f[1],p[i].f.f[2]);
       if(db_force > db_max_force) { db_max_force=db_force; db_maxf_id=p[i].r.identity; }
       /* velocity check */
-      db_vel   = SQR(p[i].v[0])+SQR(p[i].v[1])+SQR(p[i].v[2]);
+      db_vel   = SQR(p[i].m.v[0])+SQR(p[i].m.v[1])+SQR(p[i].m.v[2]);
       if(db_vel > skin2) 
 	fprintf(stderr,"%d: Part %d has velocity %f (%f,%f,%f)\n",
 		this_node,p[i].r.identity,sqrt(db_vel),
-		p[i].v[0],p[i].v[1],p[i].v[2]);
+		p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]);
       if(db_vel > db_max_vel) { db_max_vel=db_vel; db_maxv_id=p[i].r.identity; }
 #endif
 
       /* Verlet criterion check */
-      if(distance2(p[i].r.p,p[i].p_old) > skin2 )
+      if(distance2(p[i].r.p,p[i].l.p_old) > skin2 )
 	rebuild_verletlist = 1; 
     }
   }

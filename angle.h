@@ -48,9 +48,9 @@ MDINLINE void add_angle_force(Particle *p1, Particle *p2, Particle *p3, int type
   for(j=0;j<3;j++) {
     f1 = bonded_ia_params[type_num].p.angle.bend * (vec2[j] - cosine * vec1[j]) * d1i;
     f2 = bonded_ia_params[type_num].p.angle.bend * (vec1[j] - cosine * vec2[j]) * d2i;
-    p2->f[j] -= f1;
-    p1->f[j] += (f1+f2);
-    p3->f[j] -= f2;
+    p2->f.f[j] -= f1;
+    p1->f.f[j] += (f1+f2);
+    p3->f.f[j] -= f2;
   }
 }
 

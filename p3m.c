@@ -417,7 +417,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
     p  = CELL_PTR(m, n, o)->pList.part;
     np = CELL_PTR(m, n, o)->pList.n;
     for(i = 0; i < np; i++) {
-      if( (q=p[i].r.q) != 0.0 ) {
+      if( (q=p[i].p.q) != 0.0 ) {
 
 	/* particle position in mesh coordinates */
 	for(d=0;d<3;d++) {
@@ -536,7 +536,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 	p  = CELL_PTR(m, n, o)->pList.part;
 	np = CELL_PTR(m, n, o)->pList.n;
 	for(i=0; i<np; i++) { 
-	  if( (q=p[i].r.q) != 0.0 ) {
+	  if( (q=p[i].p.q) != 0.0 ) {
 #ifdef ADDITIONAL_CHECKS
 	    double db_fsum=0.0;
 #endif
@@ -548,7 +548,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 #ifdef ADDITIONAL_CHECKS
 		  db_fsum += force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
 #endif
-		  p[i].f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
+		  p[i].f.f[d_rs] -= force_prefac*ca_frac[cf_cnt]*rs_mesh[q_ind++]; 
 		  cf_cnt++;
 		}
 		q_ind += q_m_off;
@@ -1196,10 +1196,10 @@ void P3M_count_charged_particles()
     part = CELL_PTR(m,n,o)->pList.part;
     np   = CELL_PTR(m,n,o)->pList.n;
     for(i=0;i<np;i++) {
-      if( part[i].r.q != 0.0 ) {
+      if( part[i].p.q != 0.0 ) {
 	node_sums[0] += 1.0;
-	node_sums[1] += SQR(part[i].r.q);
-	node_sums[2] += part[i].r.q;
+	node_sums[1] += SQR(part[i].p.q);
+	node_sums[2] += part[i].p.q;
       }
     }
   }

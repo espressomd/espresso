@@ -25,7 +25,7 @@ MDINLINE void calculate_wall_dist(Particle *p1, Particle *c_p, Constraint_wall *
   int i;
   IA_parameters *ia_params;
 
-  ia_params=get_ia_param(p1->r.type, c_p->r.type);
+  ia_params=get_ia_param(p1->p.type, c_p->p.type);
 
   *dist = -c->d;
   for(i=0;i<3;i++) *dist += p1->r.p[i]*c->n[i];
@@ -41,7 +41,7 @@ MDINLINE void calculate_sphere_dist(Particle *p1, Particle *c_p, Constraint_sphe
   double fac,  c_dist;
   IA_parameters *ia_params;
  
-  ia_params=get_ia_param(p1->r.type, c_p->r.type);
+  ia_params=get_ia_param(p1->p.type, c_p->p.type);
  
   c_dist=0.0;
   for(i=0;i<3;i++) {
@@ -69,7 +69,7 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, Particle *c_p, Constraint_cy
   double d_per,d_par,d_real,d_per_vec[3],d_par_vec[3],d_real_vec[3];
   IA_parameters *ia_params;
   
-  ia_params=get_ia_param(p1->r.type, c_p->r.type);
+  ia_params=get_ia_param(p1->p.type, c_p->p.type);
 
 
   d_real = 0.0;
@@ -137,7 +137,7 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
   double fac, dist, vec[3], c_dist_2, c_dist;
   IA_parameters *ia_params;
   
-  ia_params=get_ia_param(p1->r.type, c_p->r.type);
+  ia_params=get_ia_param(p1->p.type, c_p->p.type);
 
   /* also needed for coulomb */
   c_dist_2 = 0.0;
@@ -153,14 +153,14 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
   */
   /*  fprintf(stderr, "%d: bj %f q %f l %f\n", this_node, coulomb.bjerrum, p1->r.q, c->lambda);*/
 #ifdef ELECTROSTATICS
-  if (coulomb.bjerrum > 0.0 && p1->r.q != 0.0 && c->lambda != 0.0) {
-    fac = 2*coulomb.bjerrum*c->lambda*p1->r.q/c_dist_2;
+  if (coulomb.bjerrum > 0.0 && p1->p.q != 0.0 && c->lambda != 0.0) {
+    fac = 2*coulomb.bjerrum*c->lambda*p1->p.q/c_dist_2;
     if (temperature > 0)
       fac *= temperature;
-    p1->f[0]  += fac*vec[0];
-    p1->f[1]  += fac*vec[1];
-    c_p->f[0] -= fac*vec[0];
-    c_p->f[1] -= fac*vec[1];
+    p1->f.f[0]  += fac*vec[0];
+    p1->f.f[1]  += fac*vec[1];
+    c_p->f.f[0] -= fac*vec[0];
+    c_p->f.f[1] -= fac*vec[1];
     /* fprintf(stderr, "%d: vec %f %f -> f %f %f\n", this_node, vec[0], vec[1],
        fac*vec[0], fac*vec[1]); */
   }
@@ -177,7 +177,7 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
     }
     else {
       fprintf(stderr,"CONSTRAINT ROD: ERROR! part %d at (%.2e,%.2e,%.2e) within rod!\n",
-	      p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+	      p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
       errexit();
     }
   }
@@ -190,7 +190,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
   IA_parameters *ia_params;
     
   for(n=0;n<n_constraints;n++) {
-    ia_params=get_ia_param(p1->r.type, (&constraints[n].part_rep)->r.type);
+    ia_params=get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
     dist=0.;
 	
     if(ia_params->LJ_cut > 0. ) {
@@ -201,7 +201,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
 	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist);
         else {
 	  fprintf(stderr,"CONSTRAINT WALL : ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+		  p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
 	  errexit();
         }
 	break;
@@ -213,7 +213,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
         }
         else {
 	  fprintf(stderr,"CONSTRAINT SPHERE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+		  p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
 	  errexit();
         }
 	break;
@@ -225,7 +225,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
         }
         else {
 	  fprintf(stderr,"CONSTRAINT CYLINDER: ERROR! part %d at (%.2e,%.2e,%.2e) violated the constraint! dist= %f\n",
-		  p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2],dist);
+		  p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2],dist);
 	  errexit();
         }
 	break;
@@ -241,7 +241,7 @@ MDINLINE double add_constraints_energy(Particle *p1, int n)
   double dist, vec[3];
   IA_parameters *ia_params;
   
-  ia_params=get_ia_param(p1->r.type, (&constraints[n].part_rep)->r.type);
+  ia_params=get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
   dist=0.;
   if(ia_params->LJ_cut > 0. ) {
     switch(constraints[n].type) {
@@ -251,7 +251,7 @@ MDINLINE double add_constraints_energy(Particle *p1, int n)
 	return lj_pair_energy(p1, &constraints[n].part_rep, ia_params, vec, dist);
       else {
 	fprintf(stderr,"CONSTRAINT WALL : ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+		p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
 	errexit();
       }
       break;
@@ -263,7 +263,7 @@ MDINLINE double add_constraints_energy(Particle *p1, int n)
       }
       else {
 	fprintf(stderr,"CONSTRAINT SPHERE: ERROR! part %d at (%.2e,%.2e,%.2e) out of constraint!\n",
-		p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
+		p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
 	errexit();
       }
       break;
@@ -275,7 +275,7 @@ MDINLINE double add_constraints_energy(Particle *p1, int n)
       }
       else {
 	fprintf(stderr,"CONSTRAINT CYLINDER: ERROR! part %d at (%.2e,%.2e,%.2e) violated the constraint! dist= %f\n",
-		p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2],dist);
+		p1->p.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2],dist);
 	errexit();
       }
       break;
@@ -292,7 +292,7 @@ MDINLINE void init_constraint_forces()
   
   for (n = 0; n < n_constraints; n++)
     for (i = 0; i < 3; i++)
-      constraints[n].part_rep.f[i] = 0;
+      constraints[n].part_rep.f.f[i] = 0;
 }
 #endif
 

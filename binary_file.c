@@ -108,8 +108,7 @@ int writemd(ClientData data, Tcl_Interp *interp,
   for (p = 0; p <= max_seen_particle; p++) {
     Particle data;
     if (get_particle_data(p, &data)) {
-      for (i = 0; i < 3; i++)
-	data.r.p[i] += data.i[i]*box_l[i];
+      unfold_position(data.r.p, data.l.i);
 
       /* write particle index */
       Tcl_Write(channel, (char *)&p, sizeof(int));
@@ -119,16 +118,16 @@ int writemd(ClientData data, Tcl_Interp *interp,
 	case POSX: Tcl_Write(channel, (char *)&data.r.p[0], sizeof(double)); break;
 	case POSY: Tcl_Write(channel, (char *)&data.r.p[1], sizeof(double)); break;
 	case POSZ: Tcl_Write(channel, (char *)&data.r.p[2], sizeof(double)); break;
-	case VX:   Tcl_Write(channel, (char *)&data.v[0], sizeof(double)); break;
-	case VY:   Tcl_Write(channel, (char *)&data.v[1], sizeof(double)); break;
-	case VZ:   Tcl_Write(channel, (char *)&data.v[2], sizeof(double)); break;
-	case FX:   Tcl_Write(channel, (char *)&data.f[0], sizeof(double)); break;
-	case FY:   Tcl_Write(channel, (char *)&data.f[1], sizeof(double)); break;
-	case FZ:   Tcl_Write(channel, (char *)&data.f[2], sizeof(double)); break;
+	case VX:   Tcl_Write(channel, (char *)&data.m.v[0], sizeof(double)); break;
+	case VY:   Tcl_Write(channel, (char *)&data.m.v[1], sizeof(double)); break;
+	case VZ:   Tcl_Write(channel, (char *)&data.m.v[2], sizeof(double)); break;
+	case FX:   Tcl_Write(channel, (char *)&data.f.f[0], sizeof(double)); break;
+	case FY:   Tcl_Write(channel, (char *)&data.f.f[1], sizeof(double)); break;
+	case FZ:   Tcl_Write(channel, (char *)&data.f.f[2], sizeof(double)); break;
 #ifdef ELECTROSTATICS
-	case Q:    Tcl_Write(channel, (char *)&data.r.q, sizeof(double)); break;
+	case Q:    Tcl_Write(channel, (char *)&data.p.q, sizeof(double)); break;
 #endif
-	case TYPE: Tcl_Write(channel, (char *)&data.r.type, sizeof(int)); break;
+	case TYPE: Tcl_Write(channel, (char *)&data.p.type, sizeof(int)); break;
 	}
       }
       free_particle(&data);
@@ -212,13 +211,13 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
   }
 
   while (!Tcl_Eof(channel)) {
-    Tcl_Read(channel, (char *)&data.r.identity, sizeof(int));
-    if (data.r.identity == -1)
+    Tcl_Read(channel, (char *)&data.p.identity, sizeof(int));
+    if (data.p.identity == -1)
       break;
 
     /* printf("id=%d\n", data.identity); */
 
-    if (data.r.identity < 0) {
+    if (data.p.identity < 0) {
       Tcl_AppendResult(interp, "illegal data format in data file \"", argv[1],
 		       "\", perhaps wrong file?",
 		       (char *) NULL);
@@ -231,20 +230,20 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
       case POSX: Tcl_Read(channel, (char *)&data.r.p[0], sizeof(double)); break;
       case POSY: Tcl_Read(channel, (char *)&data.r.p[1], sizeof(double)); break;
       case POSZ: Tcl_Read(channel, (char *)&data.r.p[2], sizeof(double)); break;
-      case   VX: Tcl_Read(channel, (char *)&data.v[0], sizeof(double)); break;
-      case   VY: Tcl_Read(channel, (char *)&data.v[1], sizeof(double)); break;
-      case   VZ: Tcl_Read(channel, (char *)&data.v[2], sizeof(double)); break;
-      case   FX: Tcl_Read(channel, (char *)&data.f[0], sizeof(double)); break;
-      case   FY: Tcl_Read(channel, (char *)&data.f[1], sizeof(double)); break;
-      case   FZ: Tcl_Read(channel, (char *)&data.f[2], sizeof(double)); break;
+      case   VX: Tcl_Read(channel, (char *)&data.m.v[0], sizeof(double)); break;
+      case   VY: Tcl_Read(channel, (char *)&data.m.v[1], sizeof(double)); break;
+      case   VZ: Tcl_Read(channel, (char *)&data.m.v[2], sizeof(double)); break;
+      case   FX: Tcl_Read(channel, (char *)&data.f.f[0], sizeof(double)); break;
+      case   FY: Tcl_Read(channel, (char *)&data.f.f[1], sizeof(double)); break;
+      case   FZ: Tcl_Read(channel, (char *)&data.f.f[2], sizeof(double)); break;
 #ifdef ELECTROSTATICS
-      case    Q: Tcl_Read(channel, (char *)&data.r.q, sizeof(double)); break;
+      case    Q: Tcl_Read(channel, (char *)&data.p.q, sizeof(double)); break;
 #endif
-      case TYPE: Tcl_Read(channel, (char *)&data.r.type, sizeof(int)); break;
+      case TYPE: Tcl_Read(channel, (char *)&data.p.type, sizeof(int)); break;
       }
     }
 
-    node = (data.r.identity <= max_seen_particle) ? particle_node[data.r.identity] : -1; 
+    node = (data.p.identity <= max_seen_particle) ? particle_node[data.p.identity] : -1; 
     if (node == -1) {
       if (!av_pos) {
 	Tcl_AppendResult(interp, "new particle without position data",
@@ -255,17 +254,17 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
     }
 
     if (av_pos)
-      place_particle(data.r.identity, data.r.p);
+      place_particle(data.p.identity, data.r.p);
 #ifdef ELECTROSTATICS
     if (av_q)
-      set_particle_q(data.r.identity, data.r.q);
+      set_particle_q(data.p.identity, data.p.q);
 #endif
     if (av_v)
-      set_particle_v(data.r.identity, data.v);
+      set_particle_v(data.p.identity, data.m.v);
     if (av_f)
-      set_particle_f(data.r.identity, data.f);
+      set_particle_f(data.p.identity, data.f.f);
     if (av_type)
-      set_particle_type(data.r.identity, data.r.type);
+      set_particle_type(data.p.identity, data.p.type);
   }
 
   free(row);

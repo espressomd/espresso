@@ -55,9 +55,74 @@ Particle *partCfg = NULL;
 int partCfgSorted = 0;
 
 /************************************************
- * functions
+ * particle initialization functions
  ************************************************/
 
+void init_particle(Particle *part) 
+{
+  /* ParticleProperties */
+  part->p.identity = 0;
+  part->p.type     = 0;
+#ifdef ELECTROSTATICS
+  part->p.q        = 0.0;
+#endif
+
+  /* ParticlePosition */
+  part->r.p[0]     = 0.0;
+  part->r.p[1]     = 0.0;
+  part->r.p[2]     = 0.0;
+#ifdef ROTATION
+  part->r.quat[0]  = 1.0;
+  part->r.quat[1]  = 0.0;
+  part->r.quat[2]  = 0.0;
+  part->r.quat[3]  = 0.0;
+#endif
+
+  /* ParticleMomentum */
+  part->m.v[0]     = 0.0;
+  part->m.v[1]     = 0.0;
+  part->m.v[2]     = 0.0;
+#ifdef ROTATION
+  part->m.omega[0] = 0.0;
+  part->m.omega[1] = 0.0;
+  part->m.omega[2] = 0.0;
+#endif
+
+  /* ParticleForce */
+  part->f.f[0]     = 0.0;
+  part->f.f[1]     = 0.0;
+  part->f.f[2]     = 0.0;
+#ifdef ROTATION
+  part->f.torque[0] = 0.0;
+  part->f.torque[1] = 0.0;
+  part->f.torque[2] = 0.0;
+#endif
+
+  /* ParticleLocal */
+  part->l.p_old[0]   = 0.0;
+  part->l.p_old[1]   = 0.0;
+  part->l.p_old[2]   = 0.0;
+  part->l.i[0]       = 0;
+  part->l.i[1]       = 0;
+  part->l.i[2]       = 0;
+#ifdef EXTERNAL_FORCES
+  part->l.ext_flag   = 0;
+  part->l.ext_force[0] = 0.0;
+  part->l.ext_force[1] = 0.0;
+  part->l.ext_force[2] = 0.0;
+#endif
+
+  init_intlist(&(part->bl));
+}
+
+void free_particle(Particle *part) {
+  realloc_intlist(&(part->bl), 0);
+}
+
+
+/************************************************
+ * organizational functions
+ ************************************************/
 
 void updatePartCfg()
 {
@@ -69,7 +134,7 @@ void updatePartCfg()
   partCfg = malloc(n_total_particles*sizeof(Particle));
   mpi_get_particles(partCfg, NULL); 
   for(j=0; j<n_total_particles; j++)
-    unfold_particle(partCfg[j].r.p,partCfg[j].i);
+    unfold_position(partCfg[j].r.p,partCfg[j].l.i);
 
   partCfgSorted = 0;
 }
@@ -90,7 +155,7 @@ int sortPartCfg()
 
   sorted = malloc(n_total_particles*sizeof(Particle));
   for(i = 0; i < n_total_particles; i++)
-    memcpy(&sorted[partCfg[i].r.identity], &partCfg[i], sizeof(Particle));
+    memcpy(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
   free(partCfg);
   partCfg = sorted;
 
@@ -147,57 +212,6 @@ void init_particleList(ParticleList *pList)
   pList->part = NULL;
 }
 
-void init_particle(Particle *part) 
-{
-  part->r.identity = 0;
-  part->r.type     = 0;
-#ifdef ELECTROSTATICS
-  part->r.q        = 0.0;
-#endif
-  part->r.p[0]     = 0.0;
-  part->r.p[1]     = 0.0;
-  part->r.p[2]     = 0.0;
-
-  part->p_old[0]   = 0.0;
-  part->p_old[1]   = 0.0;
-  part->p_old[2]   = 0.0;
-  part->i[0]       = 0;
-  part->i[1]       = 0;
-  part->i[2]       = 0;
-  part->f[0]       = 0.0;
-  part->f[1]       = 0.0;
-  part->f[2]       = 0.0;
-  part->v[0]       = 0.0;
-  part->v[1]       = 0.0;
-  part->v[2]       = 0.0;
-
-#ifdef ROTATION
-  part->r.quat[0]   = 1.0;
-  part->r.quat[1]   = 0.0;
-  part->r.quat[2]   = 0.0;
-  part->r.quat[3]   = 0.0;
-  part->omega[0]  = 0.0;
-  part->omega[1]  = 0.0;
-  part->omega[2]  = 0.0;
-  part->torque[0]  = 0.0;
-  part->torque[1]  = 0.0;
-  part->torque[2]  = 0.0;
-#endif
-
-#ifdef EXTERNAL_FORCES
-  part->ext_flag   = 0;
-  part->ext_force[0] = 0.0;
-  part->ext_force[1] = 0.0;
-  part->ext_force[2] = 0.0;
-#endif
-
-  init_intlist(&(part->bl));
-}
-
-void free_particle(Particle *part) {
-  realloc_intlist(&(part->bl), 0);
-}
-
 int realloc_particles(ParticleList *l, int size)
 {
   int old_max = l->max, i;
@@ -213,7 +227,7 @@ int realloc_particles(ParticleList *l, int size)
   if (l->max != old_max)
     l->part = (Particle *) realloc(l->part, sizeof(Particle)*l->max);
   for (i = old_max; i < l->max; i++)
-    l->part[i].r.identity = -1;
+    l->part[i].p.identity = -1;
   return l->part != old_start;
 }
 
@@ -222,31 +236,7 @@ void update_local_particles(ParticleList *pl)
   Particle *p = pl->part;
   int n = pl->n, i;
   for (i = 0; i < n; i++)
-    local_particles[p[i].r.identity] = &p[i];
-}
-
-void init_redParticleList(RedParticleList *pList)
-{
-  pList->n    = 0;
-  pList->max  = 0;
-  pList->part = NULL;
-}
-
-void realloc_redParticles(RedParticleList *pList, int size)
-{
-  int old_max = pList->max, i;
-  if (size < pList->max) {
-    /* shrink not as fast, just lose half, rounded up */
-    pList->max = PART_INCREMENT*(((pList->max + size + 1)/2 +
-				  PART_INCREMENT - 1)/PART_INCREMENT);
-  }
-  else
-    /* round up */
-    pList->max = PART_INCREMENT*((size + PART_INCREMENT - 1)/PART_INCREMENT);
-  if (pList->max != old_max)
-    pList->part = (ReducedParticle *) realloc(pList->part, sizeof(ReducedParticle)*pList->max);
-  for (i = old_max; i < pList->max; i++)
-    pList->part[i].identity = -1;
+    local_particles[p[i].p.identity] = &p[i];
 }
 
 int try_delete_bond(Particle *part, int *bond)
@@ -285,7 +275,7 @@ Particle *got_particle(ParticleList *l, int id)
   int i;
 
   for (i = 0; i < l->n; i++)
-    if (l->part[i].r.identity == id)
+    if (l->part[i].p.identity == id)
       break;
   if (i == l->n)
     return NULL;
@@ -315,7 +305,7 @@ Particle *append_indexed_particle(ParticleList *l, Particle *part)
   if (re)
     update_local_particles(l);
   else
-    local_particles[p->r.identity] = p;
+    local_particles[p->p.identity] = p;
   return p;
 }
 
@@ -346,7 +336,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
   if (re)
     update_local_particles(dl);
   else
-    local_particles[dst->r.identity] = dst;
+    local_particles[dst->p.identity] = dst;
     
   if ( src != end )
     memcpy(src, end, sizeof(Particle));
@@ -355,12 +345,8 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
   if (realloc_particles(sl, sl->n))
     update_local_particles(sl);
   else
-    local_particles[src->r.identity] = src;
+    local_particles[src->p.identity] = src;
   return dst;
-}
-
-void unfold_particle(double pos[3],int image_box[3])
-{
 }
 
 /** append particle data in ASCII form to the Tcl result.
@@ -378,9 +364,9 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   if (get_particle_data(part_num, &part) == TCL_ERROR)
     return (TCL_ERROR);
 
-  unfold_particle(part.r.p, part.i);
+  unfold_position(part.r.p, part.l.i);
 
-  sprintf(buffer, "%d", part.r.identity);
+  sprintf(buffer, "%d", part.p.identity);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   Tcl_PrintDouble(interp, part.r.p[0], buffer);
   Tcl_AppendResult(interp, " pos ", buffer, " ", (char *)NULL);
@@ -388,66 +374,66 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, part.r.p[2], buffer);
   Tcl_AppendResult(interp, buffer, " type ", (char *)NULL);
-  sprintf(buffer, "%d", part.r.type);
+  sprintf(buffer, "%d", part.p.type);
 #ifdef ELECTROSTATICS
   Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.r.q, buffer);
+  Tcl_PrintDouble(interp, part.p.q, buffer);
 #endif
   Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.v[0]/time_step, buffer);
+  Tcl_PrintDouble(interp, part.m.v[0]/time_step, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.v[1]/time_step, buffer);
+  Tcl_PrintDouble(interp, part.m.v[1]/time_step, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.v[2]/time_step, buffer);
+  Tcl_PrintDouble(interp, part.m.v[2]/time_step, buffer);
   Tcl_AppendResult(interp, buffer, " f ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f[0]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part.f.f[0]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f[1]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part.f.f[1]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.f[2]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part.f.f[2]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 
 #ifdef ROTATION
   /* print information about rotation */
-      Tcl_AppendResult(interp, " quat ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.r.quat[0], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.r.quat[1], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.r.quat[2], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.r.quat[3], buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
+  Tcl_AppendResult(interp, " quat ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.r.quat[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.r.quat[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.r.quat[2], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.r.quat[3], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
              
-      Tcl_AppendResult(interp, " omega ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.omega[0], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.omega[1], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.omega[2], buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
+  Tcl_AppendResult(interp, " omega ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.m.omega[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.m.omega[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.m.omega[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
               
-      Tcl_AppendResult(interp, " torque ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.torque[0], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.torque[1], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-       Tcl_PrintDouble(interp, part.torque[2], buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);       
+  Tcl_AppendResult(interp, " torque ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.f.torque[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.f.torque[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.f.torque[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);       
 #endif      
 
 #ifdef EXTERNAL_FORCES
   /* print external force information. */
-  if(part.ext_flag == PARTICLE_EXT_FORCE) {
-      Tcl_AppendResult(interp, " ext_force ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.ext_force[0], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.ext_force[1], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.ext_force[2], buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
+  if(part.l.ext_flag == PARTICLE_EXT_FORCE) {
+    Tcl_AppendResult(interp, " ext_force ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.l.ext_force[0], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.l.ext_force[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part.l.ext_force[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
-  else if (part.ext_flag == PARTICLE_FIXED) {
+  else if (part.l.ext_flag == PARTICLE_FIXED) {
     Tcl_AppendResult(interp, " fix ", (char *)NULL);
   }
 #endif
@@ -523,15 +509,15 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     
   while (argc > 0) {
     if (ARG0_IS_S("identity")) {
-      sprintf(buffer, "%d", part.r.identity);
+      sprintf(buffer, "%d", part.p.identity);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("position")) {
       double ppos[3];
       int img[3];
       memcpy(ppos, part.r.p, 3*sizeof(double));
-      memcpy(img, part.i, 3*sizeof(int));
-      unfold_particle(ppos, img);
+      memcpy(img, part.l.i, 3*sizeof(int));
+      unfold_position(ppos, img);
       Tcl_PrintDouble(interp, ppos[0], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
       Tcl_PrintDouble(interp, ppos[1], buffer);
@@ -540,11 +526,11 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("force")) {
-      Tcl_PrintDouble(interp, part.f[0]/(0.5*time_step*time_step), buffer);
+      Tcl_PrintDouble(interp, part.f.f[0]/(0.5*time_step*time_step), buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.f[1]/(0.5*time_step*time_step), buffer);
+      Tcl_PrintDouble(interp, part.f.f[1]/(0.5*time_step*time_step), buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.f[2]/(0.5*time_step*time_step), buffer);
+      Tcl_PrintDouble(interp, part.f.f[2]/(0.5*time_step*time_step), buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("folded_position")) {
@@ -556,22 +542,22 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("type")) {
-      sprintf(buffer, "%d", part.r.type);
+      sprintf(buffer, "%d", part.p.type);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #ifdef ELECTROSTATICS
     else if (ARG0_IS_S("q")) {
-      Tcl_PrintDouble(interp, part.r.q, buffer);
+      Tcl_PrintDouble(interp, part.p.q, buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #endif
     else if (ARG0_IS_S("v")) {
       /* unscale velocities ! */
-      Tcl_PrintDouble(interp, part.v[0]/time_step, buffer);
+      Tcl_PrintDouble(interp, part.m.v[0]/time_step, buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.v[1]/time_step, buffer);
+      Tcl_PrintDouble(interp, part.m.v[1]/time_step, buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part.v[2]/time_step, buffer);
+      Tcl_PrintDouble(interp, part.m.v[2]/time_step, buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 
@@ -608,12 +594,12 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 
 #ifdef EXTERNAL_FORCES
     else if (ARG0_IS_S("ext_force")) {
-      if(part.ext_flag == PARTICLE_EXT_FORCE) {
-	Tcl_PrintDouble(interp, part.ext_force[0]/(0.5*time_step*time_step), buffer);
+      if(part.l.ext_flag == PARTICLE_EXT_FORCE) {
+	Tcl_PrintDouble(interp, part.l.ext_force[0]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.ext_force[1]/(0.5*time_step*time_step), buffer);
+	Tcl_PrintDouble(interp, part.l.ext_force[1]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.ext_force[2]/(0.5*time_step*time_step), buffer);
+	Tcl_PrintDouble(interp, part.l.ext_force[2]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else {
@@ -621,16 +607,16 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       }
     }
     else if (ARG0_IS_S("fix")) {
-      if(part.ext_flag == PARTICLE_FIXED) 
+      if(part.l.ext_flag == PARTICLE_FIXED) 
 	Tcl_AppendResult(interp, "fix", (char *)NULL);
-      else if(part.ext_flag == PARTICLE_UNFIXED)
+      else if(part.l.ext_flag == PARTICLE_UNFIXED)
 	Tcl_AppendResult(interp, "unfix", (char *)NULL);
-      else if(part.ext_flag == PARTICLE_EXT_FORCE) {
-	Tcl_PrintDouble(interp, part.ext_force[0], buffer);
+      else if(part.l.ext_flag == PARTICLE_EXT_FORCE) {
+	Tcl_PrintDouble(interp, part.l.ext_force[0], buffer);
 	Tcl_AppendResult(interp, "ext_force ", buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.ext_force[1], buffer);
+	Tcl_PrintDouble(interp, part.l.ext_force[1], buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.ext_force[2], buffer);
+	Tcl_PrintDouble(interp, part.l.ext_force[2], buffer);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
     }
@@ -1505,13 +1491,13 @@ void local_remove_particle(int part)
   free_particle(p);
 
   /* remove local_particles entry */
-  local_particles[p->r.identity] = NULL;
+  local_particles[p->p.identity] = NULL;
 
   if (&pl->part[pl->n - 1] != p) {
     /* move last particle to free position */
     memcpy(p, &pl->part[pl->n - 1], sizeof(Particle));
     /* update the local_particles array for the moved particle */
-    local_particles[p->r.identity] = p;
+    local_particles[p->p.identity] = p;
   }
 
   pl->n--;
@@ -1530,7 +1516,7 @@ void local_place_particle(int part, double p[3])
   pp[0] = p[0];
   pp[1] = p[1];
   pp[2] = p[2];
-  fold_particle(pp, i);
+  fold_position(pp, i);
   
   if (!pt)
     pt = cells_alloc_particle(part, pp);
@@ -1538,7 +1524,7 @@ void local_place_particle(int part, double p[3])
   PART_TRACE(fprintf(stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
 		     this_node, part, p[0], p[1], p[2]));
   memcpy(pt->r.p, pp, 3*sizeof(double));
-  memcpy(pt->i, i, 3*sizeof(int));
+  memcpy(pt->l.i, i, 3*sizeof(int));
 }
 
 void local_remove_all_particles()
@@ -1633,7 +1619,7 @@ void remove_all_bonds_to(int identity)
       }
       if (i != bl->n) {
 	fprintf(stderr, "%d: bond information corrupt for particle %d, exiting...\n",
-		this_node, part[p].r.identity);
+		this_node, part[p].p.identity);
 	errexit();
       }
     }

@@ -372,7 +372,7 @@ void mpi_who_has()
       INNER_CELLS_LOOP(m,n,o) {
 	c = CELL_PTR(m,n,o);
 	for (i = 0; i < c->pList.n; i++)
-	  particle_node[c->pList.part[i].r.identity] = this_node;
+	  particle_node[c->pList.part[i].p.identity] = this_node;
       }
     }
     else if (sizes[pnode] > 0) {
@@ -408,7 +408,7 @@ void mpi_who_has_slave(int node, int param)
   INNER_CELLS_LOOP(m,n,o) {
     c = CELL_PTR(m,n,o);
     for (i = 0; i < c->pList.n; i++)
-      sendbuf[npart++] = c->pList.part[i].r.identity;
+      sendbuf[npart++] = c->pList.part[i].p.identity;
   }
   MPI_Send(sendbuf, npart, MPI_INT, 0, REQ_WHO_HAS, MPI_COMM_WORLD);
   free(sendbuf);
@@ -487,7 +487,7 @@ void mpi_send_v(int pnode, int part, double v[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    memcpy(p->v, v, 3*sizeof(double));
+    memcpy(p->m.v, v, 3*sizeof(double));
   }
   else
     MPI_Send(v, 3, MPI_DOUBLE, pnode, REQ_SET_V, MPI_COMM_WORLD);
@@ -500,7 +500,7 @@ void mpi_send_v_slave(int pnode, int part)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(p->v, 3, MPI_DOUBLE, 0, REQ_SET_V,
+    MPI_Recv(p->m.v, 3, MPI_DOUBLE, 0, REQ_SET_V,
 	     MPI_COMM_WORLD, &status);
   }
 
@@ -514,7 +514,7 @@ void mpi_send_f(int pnode, int part, double F[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    memcpy(p->f, F, 3*sizeof(double));
+    memcpy(p->f.f, F, 3*sizeof(double));
   }
   else
     MPI_Send(F, 3, MPI_DOUBLE, pnode, REQ_SET_F, MPI_COMM_WORLD);
@@ -527,7 +527,7 @@ void mpi_send_f_slave(int pnode, int part)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(p->f, 3, MPI_DOUBLE, 0, REQ_SET_F,
+    MPI_Recv(p->f.f, 3, MPI_DOUBLE, 0, REQ_SET_F,
 	     MPI_COMM_WORLD, &status);
   }
 
@@ -542,7 +542,7 @@ void mpi_send_q(int pnode, int part, double q)
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->r.q = q;
+    p->p.q = q;
   }
   else {
     MPI_Send(&q, 1, MPI_DOUBLE, pnode, REQ_SET_Q, MPI_COMM_WORLD);
@@ -558,7 +558,7 @@ void mpi_send_q_slave(int pnode, int part)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(&p->r.q, 1, MPI_DOUBLE, 0, REQ_SET_Q,
+    MPI_Recv(&p->p.q, 1, MPI_DOUBLE, 0, REQ_SET_Q,
 	     MPI_COMM_WORLD, &status);
   }
 
@@ -573,7 +573,7 @@ void mpi_send_type(int pnode, int part, int type)
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->r.type = type;
+    p->p.type = type;
   }
   else
     MPI_Send(&type, 1, MPI_INT, pnode, REQ_SET_TYPE, MPI_COMM_WORLD);
@@ -586,7 +586,7 @@ void mpi_send_type_slave(int pnode, int part)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(&p->r.type, 1, MPI_INT, 0, REQ_SET_TYPE,
+    MPI_Recv(&p->p.type, 1, MPI_INT, 0, REQ_SET_TYPE,
 	     MPI_COMM_WORLD, &status);
   }
 
@@ -636,9 +636,9 @@ void mpi_send_omega(int pnode, int part, double omega[3])
   if (pnode == this_node) {
    Particle *p = local_particles[part];
 /*  memcpy(p->omega, omega, 3*sizeof(double));*/
-    p->omega[0] = omega[0];
-    p->omega[1] = omega[1];
-    p->omega[2] = omega[2];
+    p->m.omega[0] = m.omega[0];
+    p->m.omega[1] = m.omega[1];
+    p->m.omega[2] = m.omega[2];
   }
   else {
     MPI_Send(omega, 3, MPI_DOUBLE, pnode, REQ_SET_OMEGA, MPI_COMM_WORLD);
@@ -652,7 +652,7 @@ void mpi_send_omega_slave(int pnode, int part)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(p->omega, 3, MPI_DOUBLE, 0, REQ_SET_OMEGA,
+    MPI_Recv(p->m.omega, 3, MPI_DOUBLE, 0, REQ_SET_OMEGA,
 	     MPI_COMM_WORLD, &status);
   }
 
@@ -748,24 +748,10 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
   IntList *bl = &(pdata->bl);
   MPI_Status status;
 
-  init_particle(pdata);
-
   if (pnode == this_node) {
     Particle *p = local_particles[part];
 
-    /* add new properties here */
-    pdata->r.identity = p->r.identity;
-    pdata->r.type = p->r.type;
-    memcpy(pdata->r.p, p->r.p, 3*sizeof(double));
-    pdata->r.q = p->r.q;
-    memcpy(pdata->f, p->f, 3*sizeof(double));
-    memcpy(pdata->i, p->i, 3*sizeof(double));
-    memcpy(pdata->v, p->v, 3*sizeof(double));
-#ifdef ROTATION
-    memcpy(pdata->r.quat, p->r.quat, 4*sizeof(double));
-    memcpy(pdata->torque, p->torque, 3*sizeof(double));
-    memcpy(pdata->omega, p->omega, 3*sizeof(double));
-#endif
+    memcpy(pdata, p, sizeof(Particle));
 
     bl->max = bl->n = p->bl.n;
 
@@ -781,30 +767,8 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
 
     /* add new properties here */
 
-    pdata->r.identity = part;
-    MPI_Recv(&pdata->r.type, 1, MPI_INT, pnode,
-	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-    MPI_Recv(pdata->r.p, 3, MPI_DOUBLE, pnode,
-	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-#ifdef ELECTROSTATICS
-    MPI_Recv(&pdata->r.q, 1, MPI_DOUBLE, pnode,
-	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-#endif   
-    MPI_Recv(pdata->f, 3, MPI_DOUBLE, pnode,
-	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-#ifdef ROTATION	      
-    MPI_Recv(pdata->r.quat, 4, MPI_DOUBLE, pnode,
-	     REQ_GET_PART, MPI_COMM_WORLD, &status);     
-    MPI_Recv(pdata->omega, 3, MPI_DOUBLE, pnode,
-	     REQ_GET_PART, MPI_COMM_WORLD, &status);     
-    MPI_Recv(pdata->torque, 3, MPI_DOUBLE, pnode,
-	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-#endif   
-    MPI_Recv(pdata->i, 3, MPI_INT, pnode,
-	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-    MPI_Recv(pdata->v, 3, MPI_DOUBLE, pnode,
-	     REQ_GET_PART, MPI_COMM_WORLD, &status);
-    MPI_Recv(&(bl->n), 1, MPI_INT, pnode,
+    pdata->p.identity = part;
+    MPI_Recv(pdata, sizeof(Particle), MPI_BYTE, pnode,
 	     REQ_GET_PART, MPI_COMM_WORLD, &status);
     bl->max = bl->n;
     if (bl->n > 0) {
@@ -825,29 +789,7 @@ void mpi_recv_part_slave(int pnode, int part)
 
   p = local_particles[part];
 
-  MPI_Send(&p->r.type, 1, MPI_INT, 0, REQ_GET_PART,
-	   MPI_COMM_WORLD);
-  MPI_Send(p->r.p, 3, MPI_DOUBLE, 0, REQ_GET_PART,
-	   MPI_COMM_WORLD);
-#ifdef ELECTROSTATICS
-  MPI_Send(&p->r.q, 1, MPI_DOUBLE, 0, REQ_GET_PART,
-	   MPI_COMM_WORLD);
-#endif
-  MPI_Send(p->f, 3, MPI_DOUBLE, 0, REQ_GET_PART,
-	   MPI_COMM_WORLD);
-#ifdef ROTATION
-  MPI_Send(p->r.quat, 4, MPI_DOUBLE, 0, REQ_GET_PART,
-	   MPI_COMM_WORLD);
-  MPI_Send(p->omega, 3, MPI_DOUBLE, 0, REQ_GET_PART,
-	   MPI_COMM_WORLD);	   
-  MPI_Send(p->torque, 3, MPI_DOUBLE, 0, REQ_GET_PART,
-	   MPI_COMM_WORLD);
-#endif	 
-  MPI_Send(p->i, 3, MPI_INT, 0, REQ_GET_PART,
-	   MPI_COMM_WORLD);
-  MPI_Send(p->v, 3, MPI_DOUBLE, 0, REQ_GET_PART,
-	   MPI_COMM_WORLD);
-  MPI_Send(&p->bl.n, 1, MPI_INT, 0, REQ_GET_PART,
+  MPI_Send(p, sizeof(Particle), MPI_BYTE, 0, REQ_GET_PART,
 	   MPI_COMM_WORLD);
   if (p->bl.n > 0)
     MPI_Send(p->bl.e, p->bl.n, MPI_INT, 0, REQ_GET_PART,
@@ -1053,8 +995,8 @@ void mpi_get_particles(Particle *result, IntList *bi)
 
   /* perhaps add some debugging output */
   COMM_TRACE(for(i = 0; i < tot_size; i++) {
-	       printf("%d: %d %d %f (%f, %f, %f)\n", i, result[i].r.identity, result[i].r.type,
-		      result[i].r.q, result[i].r.p[0], result[i].r.p[1], result[i].r.p[2]);
+	       printf("%d: %d %d %f (%f, %f, %f)\n", i, result[i].p.identity, result[i].p.type,
+		      result[i].p.q, result[i].r.p[0], result[i].r.p[1], result[i].r.p[2]);
 	     });
 
   /* gather bonding information */
@@ -1083,7 +1025,7 @@ void mpi_get_particles(Particle *result, IntList *bi)
       result[i].bl.e = bonds;
       bonds += result[i].bl.n;
       COMM_TRACE(if (result[i].bl.n > 0) {
-	printf("(%d) part %d: bonds ", i, result[i].r.identity);
+	printf("(%d) part %d: bonds ", i, result[i].p.identity);
 	for(g = 0; g < result[i].bl.n; g++) printf("%d ", result[i].bl.e[g]);
 	printf("\n");
       });
@@ -1203,8 +1145,8 @@ void mpi_send_ext(int pnode, int part, int flag, double force[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    p->ext_flag = flag;
-    memcpy(p->ext_force, force, 3*sizeof(double));
+    p->l.ext_flag = flag;
+    memcpy(p->l.ext_force, force, 3*sizeof(double));
   }
   else {
     MPI_Send(&flag, 1, MPI_INT, pnode, REQ_SET_EXT, MPI_COMM_WORLD);
@@ -1221,8 +1163,8 @@ void mpi_send_ext_slave(int pnode, int part)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(&(p->ext_flag), 1, MPI_INT, 0, REQ_SET_EXT, MPI_COMM_WORLD, &status);
-    MPI_Recv(p->ext_force, 3, MPI_DOUBLE, 0, REQ_SET_EXT, MPI_COMM_WORLD, &status);
+    MPI_Recv(&(p->l.ext_flag), 1, MPI_INT, 0, REQ_SET_EXT, MPI_COMM_WORLD, &status);
+    MPI_Recv(p->l.ext_force, 3, MPI_DOUBLE, 0, REQ_SET_EXT, MPI_COMM_WORLD, &status);
   }
 
   on_particle_change();
@@ -1355,14 +1297,14 @@ void mpi_get_constraint_force(int cons, double force[3])
 {
 #ifdef CONSTRAINTS
   mpi_issue(REQ_GET_CONSFOR, -1, cons);
-  MPI_Reduce(constraints[cons].part_rep.f, force, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(constraints[cons].part_rep.f.f, force, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #endif
 }
 
 void mpi_get_constraint_force_slave(int node, int parm)
 {
 #ifdef CONSTRAINTS
-  MPI_Reduce(constraints[parm].part_rep.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(constraints[parm].part_rep.f.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #endif
 }
 

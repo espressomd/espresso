@@ -52,7 +52,7 @@ int mindist3(int part_id, double r_catch, int *ids) {
   partCfgMD = malloc(n_total_particles*sizeof(Particle));
   mpi_get_particles(partCfgMD, NULL);
   me = -1;        /* Since 'mpi_get_particles' returns the particles unsorted, it's most likely that 'partCfgMD[i].r.identity != i' --> prevent that! */
-  for(i=0; i<n_total_particles; i++) if (partCfgMD[i].r.identity == part_id) me = i; 
+  for(i=0; i<n_total_particles; i++) if (partCfgMD[i].p.identity == part_id) me = i; 
   if (me == -1) { 
     fprintf(stderr, "Failed to find desired particle %d within the %d known particles!\nAborting...\n",part_id,n_total_particles); errexit(); }
   for (i=0; i<n_total_particles; i++) {
@@ -60,7 +60,7 @@ int mindist3(int part_id, double r_catch, int *ids) {
       dx = partCfgMD[me].r.p[0] - partCfgMD[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
       dy = partCfgMD[me].r.p[1] - partCfgMD[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
       dz = partCfgMD[me].r.p[2] - partCfgMD[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
-      if (sqrt(SQR(dx)+SQR(dy)+SQR(dz)) < r_catch) ids[caught++]=partCfgMD[i].r.identity;
+      if (sqrt(SQR(dx)+SQR(dy)+SQR(dz)) < r_catch) ids[caught++]=partCfgMD[i].p.identity;
     }
   }
   free(partCfgMD); 
@@ -715,7 +715,7 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond, int **b
   /* Sort the received informations. */
   sorted = malloc(n_total_particles*sizeof(Particle));
   for(i = 0; i < n_total_particles; i++)
-    memcpy(&sorted[prt[i].r.identity], &prt[i], sizeof(Particle));
+    memcpy(&sorted[prt[i].p.identity], &prt[i], sizeof(Particle));
   free(prt);
   prt = sorted;
   
@@ -729,15 +729,15 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond, int **b
 	size = bonded_ia_params[prt[k].bl.e[i]].num;
 	if (prt[k].bl.e[i++] == type_bond) {
 	  for(j=0; j<size; j++) {
-	    if ((prt[k].r.identity % MPC == 0) || ( (prt[k].r.identity+1) % MPC == 0)) {
-	      ii = prt[k].r.identity%MPC ? 2*(prt[k].r.identity+1)/MPC-1 : 2*prt[k].r.identity/MPC;
+	    if ((prt[k].p.identity % MPC == 0) || ( (prt[k].p.identity+1) % MPC == 0)) {
+	      ii = prt[k].p.identity%MPC ? 2*(prt[k].p.identity+1)/MPC-1 : 2*prt[k].p.identity/MPC;
 	      bonds[i] = realloc(bonds[i], (bond[i]+1)*sizeof(int));
 	      bonds[ii][bond[ii]++] = prt[k].bl.e[i];
 	    }
 	    else if ((prt[k].bl.e[i] % MPC == 0) || ( (prt[k].bl.e[i]+1) % MPC == 0)) {
 	      ii = prt[k].bl.e[i]%MPC ? 2*(prt[k].bl.e[i]+1)/MPC-1 : 2*prt[k].bl.e[i]/MPC;
 	      bonds[i] = realloc(bonds[i], (bond[i]+1)*sizeof(int));
-	      bonds[ii][bond[ii]++] = prt[k].r.identity;
+	      bonds[ii][bond[ii]++] = prt[k].p.identity;
 	    }
 	    i++;
 	  }

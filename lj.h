@@ -32,8 +32,8 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
       fac   = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / (r_off * dist);
 
       for(j=0;j<3;j++) {
-	p1->f[j] += fac * d[j];
-	p2->f[j] -= fac * d[j];
+	p1->f.f[j] += fac * d[j];
+	p2->f.f[j] -= fac * d[j];
       }
 #ifdef LJ_WARN_WHEN_CLOSE
       if(fac*dist > 1000) fprintf(stderr,"%d: LJ-Warning: Pair (%d-%d) force=%f dist=%f\n",
@@ -47,8 +47,8 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
       fac   = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / (ia_params->LJ_capradius * dist);
       for(j=0;j<3;j++) {
 	/* vector d is rescaled to length LJ_capradius */
-	p1->f[j] += fac * d[j];
-	p2->f[j] -= fac * d[j];
+	p1->f.f[j] += fac * d[j];
+	p2->f.f[j] -= fac * d[j];
       }
     }
     /* this should not happen! */
@@ -59,8 +59,8 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
       frac6 = frac2*frac2*frac2;
       fac   = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / ia_params->LJ_capradius;
 
-      p1->f[0] += fac * ia_params->LJ_capradius;
-      p2->f[0] -= fac * ia_params->LJ_capradius;
+      p1->f.f[0] += fac * ia_params->LJ_capradius;
+      p2->f.f[0] -= fac * ia_params->LJ_capradius;
     }
 
     ONEPART_TRACE(if(p1->r.identity==check_id) fprintf(stderr,"%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f[0],p1->f[1],p1->f[2],p2->r.identity,dist,fac));

@@ -39,8 +39,8 @@ MDINLINE void add_harmonic_pair_force(Particle *p1, Particle *p2, int type_num)
 
 
   for(i=0;i<3;i++) {
-    p1->f[i] -= fac*dx[i];
-    p2->f[i] += fac*dx[i];
+    p1->f.f[i] -= fac*dx[i];
+    p2->f.f[i] += fac*dx[i];
   }
 
   ONEPART_TRACE(if(p1->r.identity==check_id) fprintf(stderr,"%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f[0],p1->f[1],p1->f[2],p2->r.identity,sqrt(dist2),fac));

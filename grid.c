@@ -86,7 +86,7 @@ int find_node(double pos[3])
   for (i = 0; i < 3; i++)
     f_pos[i] = pos[i];
   
-  fold_particle(f_pos, im);
+  fold_position(f_pos, im);
 
   for (i = 0; i < 3; i++) {
     im[i] = (int)floor(node_grid[i]*f_pos[i]*box_l_i[i]);
@@ -100,6 +100,23 @@ int find_node(double pos[3])
 #endif
   }
   return map_array_node(im);
+}
+
+void fold_coordinate(double pos[3], int image_box[3], int dir)
+{
+  int tmp;
+#ifdef PARTIAL_PERIODIC
+  if (periodic[dir])
+#endif
+    {
+      image_box[dir] += (tmp = (int)floor(pos[dir]*box_l_i[dir]));
+      pos[dir]        = pos[dir] - tmp*box_l[dir];    
+      if(pos[dir] < 0 || pos[dir] > box_l[dir]) {
+	fprintf(stderr,"\n%d: fold_coordinate: Particle out of range (%f not in box_l %f) image_box[%d] = %d, exiting\n",
+		this_node,pos[dir],box_l[dir],dir,image_box[dir]);
+	errexit();
+      }
+    }
 }
 
 void calc_node_neighbors(int node)

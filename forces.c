@@ -68,7 +68,7 @@ void calculate_verlet_ia()
 	p1 = pairs[i];                    /* pointer to particle 1 */
 	p2 = pairs[i+1];                  /* pointer to particle 2 */
 
-	ia_params = get_ia_param(p1->r.type,p2->r.type);
+	ia_params = get_ia_param(p1->p.type,p2->p.type);
 	/* distance calculation */
 	for(j=0; j<3; j++) d[j] = p1->r.p[j] - p2->r.p[j];
 	dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
@@ -143,18 +143,18 @@ void init_forces()
       part = &p[i];
       if (is_ghost) {
 	/* ghost particle selection */
-	part->f[0] = 0;
-	part->f[1] = 0;
-	part->f[2] = 0;
+	part->f.f[0] = 0;
+	part->f.f[1] = 0;
+	part->f.f[2] = 0;
       }
       else {
 	/* real particle selection */
 	friction_thermo(part);
 #ifdef EXTERNAL_FORCES   
-	if(part->ext_flag == PARTICLE_EXT_FORCE) {
-	  part->f[0] += part->ext_force[0];
-	  part->f[1] += part->ext_force[1];
-	  part->f[2] += part->ext_force[2];
+	if(part->l.ext_flag == PARTICLE_EXT_FORCE) {
+	  part->f.f[0] += part->l.ext_force[0];
+	  part->f.f[1] += part->l.ext_force[1];
+	  part->f.f[2] += part->l.ext_force[2];
 	}
 #endif
       }
@@ -164,9 +164,9 @@ void init_forces()
       {
 	double scale;
 	/* set torque to zero */
-	part->torque[0] = 0;
-	part->torque[1] = 0;
-	part->torque[2] = 0;
+	part->f.torque[0] = 0;
+	part->f.torque[1] = 0;
+	part->f.torque[2] = 0;
 
 	/* and rescale quaternion, so it is exactly of unit length */	
 	scale = sqrt( SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +

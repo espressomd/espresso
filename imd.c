@@ -617,9 +617,9 @@ int imd(ClientData data, Tcl_Interp *interp,
       tmpCoord[1] = partCfg[i].r.p[1];
       tmpCoord[2] = partCfg[i].r.p[2];
       if (!unfolded)
-	fold_particle(tmpCoord, dummy);
+	fold_position(tmpCoord, dummy);
       
-      j = 3*partCfg[i].r.identity;
+      j = 3*partCfg[i].p.identity;
       coord[j    ] = tmpCoord[0];
       coord[j + 1] = tmpCoord[1];
       coord[j + 2] = tmpCoord[2];

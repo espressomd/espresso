@@ -131,21 +131,21 @@ void check_particle_consistency()
       part = pl->part;
       np   = pl->n;
       for(n=0; n<cells[c].pList.n ; n++) {
-	if(part[n].r.identity < 0 || part[n].r.identity > max_seen_particle) {
+	if(part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
 	  fprintf(stderr,"%d: sort_part_in_cells: ERROR: Cell %d Part %d has corrupted id=%d\n",
-		  this_node,c,n,cells[c].pList.part[n].r.identity);
+		  this_node,c,n,cells[c].pList.part[n].p.identity);
 	  errexit();
 	}
 	for(dir=0;dir<3;dir++) {
 	  if(periodic[dir] && (part[n].r.p[dir] < 0 || part[n].r.p[dir] > box_l[dir])) {
 	    fprintf(stderr,"%d: exchange_part: ERROR: illegal pos[%d]=%f of part %d id=%d in cell %d\n",
-		    this_node,dir,part[n].r.p[dir],n,part[n].r.identity,c);
+		    this_node,dir,part[n].r.p[dir],n,part[n].p.identity,c);
 	    errexit();
 	  }
 	}
-	if(local_particles[part[n].r.identity] != &part[n]) {
+	if(local_particles[part[n].p.identity] != &part[n]) {
 	    fprintf(stderr,"%d: exchange_part: ERROR: address mismatch for part id %d: %p %p in cell %d\n",
-		    this_node,part[n].r.identity,local_particles[part[n].r.identity],
+		    this_node,part[n].p.identity,local_particles[part[n].p.identity],
 		    &part[n],c);
 	    errexit();
 
@@ -166,9 +166,9 @@ void check_particle_consistency()
   for(n=0; n< max_seen_particle+1; n++) {
     if(local_particles[n] != NULL) {
       local_part_cnt ++;
-      if(local_particles[n]->r.identity != n) {
+      if(local_particles[n]->p.identity != n) {
 	fprintf(stderr,"%d: sort_part_in_cells: ERROR: local_particles part %d has corrupted id %d\n",
-		this_node,n,local_particles[n]->r.identity);
+		this_node,n,local_particles[n]->p.identity);
 	errexit();
       }
     }

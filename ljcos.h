@@ -31,8 +31,8 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
       fac   = (r_off/dist) * ia_params->LJCOS_alfa * ia_params->LJCOS_eps * (sin(ia_params->LJCOS_alfa * SQR(r_off) + ia_params->LJCOS_beta));
       for(j=0;j<3;j++) {
 	    /* vector d is rescaled to length LJ_capradius */
-	    p1->f[j] += fac * d[j];
-	    p2->f[j] -= fac * d[j];
+	    p1->f.f[j] += fac * d[j];
+	    p2->f.f[j] -= fac * d[j];
       }
     }
     /* lennard-jones part of the potential. */
@@ -42,8 +42,8 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
       fac   = 48.0 * ia_params->LJCOS_eps * frac6*(frac6 - 0.5) / (r_off * dist);
 
       for(j=0;j<3;j++) {
-	    p1->f[j] += fac * d[j];
-	    p2->f[j] -= fac * d[j];
+	    p1->f.f[j] += fac * d[j];
+	    p2->f.f[j] -= fac * d[j];
       }
 #ifdef LJ_WARN_WHEN_CLOSE
       if(fac*dist > 1000) fprintf(stderr,"%d: LJCOS-Warning: Pair (%d-%d) force=%f dist=%f\n",
@@ -58,8 +58,8 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
       frac6 = frac2*frac2*frac2;
       fac   = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / ia_params->LJ_capradius;
 
-      p1->f[0] += fac * ia_params->LJ_capradius;
-      p2->f[0] -= fac * ia_params->LJ_capradius;
+      p1->f.f[0] += fac * ia_params->LJ_capradius;
+      p2->f.f[0] -= fac * ia_params->LJ_capradius;
     }
 
     ONEPART_TRACE(if(p1->r.identity==check_id) fprintf(stderr,"%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f[0],p1->f[1],p1->f[2],p2->r.identity,dist,fac));

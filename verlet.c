@@ -97,7 +97,7 @@ void build_verlet_lists()
     pl  = &cell->nList[0].vList;
     pl->n = 0;
     for(i=0; i < np1; i++) {
-      memcpy(p1[i].p_old, p1[i].r.p, 3*sizeof(double));
+      memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
       for(j = (i+1); j < np1; j++) {
 	dist2 = distance2(p1[i].r.p,p1[j].r.p);
 	if(dist2 <= max_range2) {
@@ -200,7 +200,7 @@ void build_verlet_lists_and_force_calc()
 	   we have to avoid double counting */
 	if(nc == 0) {
 	  /* store actual position of the particle */
-	  memcpy(p1[i].p_old, p1[i].r.p, 3*sizeof(double));
+	  memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 	  j_start = i+1;
 	} 
 	else j_start = 0;
@@ -219,7 +219,7 @@ void build_verlet_lists_and_force_calc()
 	       this_node,m,n,o,nc,p1[i].r.identity, p2[j].r.identity,sqrt(dist2)));*/
 	    
 	    /* calc non bonded interactions */
-	    ia_params = get_ia_param(p1[i].r.type, p2[j].r.type);
+	    ia_params = get_ia_param(p1[i].p.type, p2[j].p.type);
 	    dist  = sqrt(dist2);
 	    add_non_bonded_pair_force(&(p1[i]), &(p2[j]), ia_params, d, dist, dist2);
 	  }

@@ -411,7 +411,7 @@ void exchange_and_sort_part()
 #ifdef PARTIAL_PERIODIC 
 	  if(periodic[d]==1) {
 #endif
-	    fold_coordinate(part[i].r.p, part[i].i, d);
+	    fold_coordinate(part[i].r.p, part[i].l.i, d);
 #ifdef PARTIAL_PERIODIC 
 	  }
 #endif
@@ -551,8 +551,8 @@ void invalidate_ghosts()
 	 /* Particle is stored as ghost in the local_particles array,
 	    if the pointer stored there belongs to a ghost celll
 	    particle array. */
-	 if( &(part[i]) == local_particles[part[i].r.identity] ) 
-	   local_particles[part[i].r.identity] = NULL;
+	 if( &(part[i]) == local_particles[part[i].p.identity] ) 
+	   local_particles[part[i].p.identity] = NULL;
        }
        np   = CELL_PTR(m, n, o)->pList.n = 0;
     }

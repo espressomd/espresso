@@ -80,11 +80,11 @@ void calc_energy()
       for(j = 0; j < np; j++) {
 	p1 = &p[j];
 	/* kinetic energy */
-	energy.node.e[1] += SQR(p1->v[0]) + SQR(p1->v[1]) + SQR(p1->v[2]);
+	energy.node.e[1] += SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]);
 #ifdef ROTATION
         /* the rotational part is added to the total kinetic energy;
 	   at the moment, we assume unit inertia tensor I=(1,1,1)  */
-        energy.node.e[1] += (SQR(p1->omega[0]) + SQR(p1->omega[1]) + SQR(p1->omega[2]))*time_step*time_step;
+        energy.node.e[1] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*time_step*time_step;
 #endif	
 	/* bonded interaction energies */
 	i=0;
@@ -105,7 +105,7 @@ void calc_energy()
 			   checked_particle_ptr(p1->bl.e[i+2]), type_num);
 	    i+=3; break;
 	  default :
-	    fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->r.identity);
+	    fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->p.identity);
 	    i = p1->bl.n; 
 	    break;
 	  }
@@ -114,8 +114,8 @@ void calc_energy()
 	/* constaint energies */
 	for (i=0; i< n_constraints ; i++) {
     
-	  type1 = p1->r.type;
-	  type2 = (&constraints[i].part_rep)->r.type;
+	  type1 = p1->p.type;
+	  type2 = (&constraints[i].part_rep)->p.type;
 	  ia_params=get_ia_param(type1,type2);
 
 	  if(ia_params->LJ_cut > 0. ) {
@@ -138,10 +138,10 @@ void calc_energy()
 	for(i=0; i<2*np; i+=2) {
 	  p1 = pairs[i];                    /* pointer to particle 1 */
 	  p2 = pairs[i+1];                  /* pointer to particle 2 */
-	  ia_params = get_ia_param(p1->r.type,p2->r.type);
+	  ia_params = get_ia_param(p1->p.type,p2->p.type);
 	  
-	  if(p1->r.type > p2->r.type) { type1 = p2->r.type; type2 = p1->r.type; }
-	  else { type2 = p2->r.type; type1 = p1->r.type; }
+	  if(p1->p.type > p2->p.type) { type1 = p2->p.type; type2 = p1->p.type; }
+	  else { type2 = p2->p.type; type1 = p1->p.type; }
 	  type_num = s_non_bonded + ((2 * n_particle_types - 1 - type1) * type1) / 2  +  type2 ;
 
 	  /* distance calculation */

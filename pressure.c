@@ -90,37 +90,37 @@ void calc_virials() {
       for(j = 0; j < np; j++) {
 	p1 = &p[j]; i=0;
 	/* kinetic energy */
-	virials.node.e[1] += SQR(p1->v[0]) + SQR(p1->v[1]) + SQR(p1->v[2]);
+	virials.node.e[1] += SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]);
 	/* bonded interaction virials */
 	while(i < p1->bl.n) {
 	  p2 = checked_particle_ptr(p1->bl.e[i+1]);
-	  f1[0] = p1->f[0]; f1[1] = p1->f[1]; f1[2] = p1->f[2];
-	  f2[0] = p2->f[0]; f2[1] = p2->f[1]; f2[2] = p2->f[2];
+	  f1[0] = p1->f.f[0]; f1[1] = p1->f.f[1]; f1[2] = p1->f.f[2];
+	  f2[0] = p2->f.f[0]; f2[1] = p2->f.f[1]; f2[2] = p2->f.f[2];
 	  get_mi_vector(d, p1->r.p, p2->r.p);
 	  type_num = p1->bl.e[i];
 	  switch(bonded_ia_params[type_num].type) {
 	  case BONDED_IA_FENE:
 	    add_fene_pair_force(p1,p2,type_num);
-	    for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
+	    for(k=0;k<3;k++) { p1->f.f[k] -= (f1[k] = p1->f.f[k] - f1[k]); p2->f.f[k] -= (f2[k] = p2->f.f[k] - f2[k]); }
 	    virials.node.e[type_num + virials.n_pre] += d[0]*f1[0] + d[1]*f1[1] + d[2]*f1[2];
 	    i+=2; break;
 	  case BONDED_IA_HARMONIC:
 	    add_harmonic_pair_force(p1,p2,type_num);
-	    for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
+	    for(k=0;k<3;k++) { p1->f.f[k] -= (f1[k] = p1->f.f[k] - f1[k]); p2->f.f[k] -= (f2[k] = p2->f.f[k] - f2[k]); }
 	    virials.node.e[type_num + virials.n_pre] += d[0]*f1[0] + d[1]*f1[1] + d[2]*f1[2];
 	    i+=2; break;
 	  case BONDED_IA_ANGLE:
 	    p3 = checked_particle_ptr(p1->bl.e[i+2]);
-	    f3[0] = p3->f[0]; f3[1] = p3->f[1]; f3[2] = p3->f[2];
+	    f3[0] = p3->f.f[0]; f3[1] = p3->f.f[1]; f3[2] = p3->f.f[2];
 	    add_angle_force(p1,p2,p3,type_num);
-	    for(k=0;k<3;k++) { p1->f[k] -= (f1[k] = p1->f[k] - f1[k]); p2->f[k] -= (f2[k] = p2->f[k] - f2[k]); }
+	    for(k=0;k<3;k++) { p1->f.f[k] -= (f1[k] = p1->f.f[k] - f1[k]); p2->f.f[k] -= (f2[k] = p2->f.f[k] - f2[k]); }
 	    virials.node.e[type_num + virials.n_pre] += -d[0]*f2[0] - d[1]*f2[1] - d[2]*f2[2];
-	    for(k=0;k<3;k++) { p3->f[k] -= (f3[k] = p3->f[k] - f3[k]); }
+	    for(k=0;k<3;k++) { p3->f.f[k] -= (f3[k] = p3->f.f[k] - f3[k]); }
 	    get_mi_vector(d, p1->r.p, p3->r.p);
 	    virials.node.e[type_num + virials.n_pre] += -d[0]*f3[0] - d[1]*f3[1] - d[2]*f3[2];
 	    i+=3; break;
 	  default :
-	    fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->r.identity);
+	    fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->p.identity);
 	    i = p1->bl.n; break;
 	  }
 	}
@@ -137,10 +137,10 @@ void calc_virials() {
 	for(i=0; i<2*np; i+=2) {
 	  p1 = pairs[i];                    /* pointer to particle 1 */
 	  p2 = pairs[i+1];                  /* pointer to particle 2 */
-	  ia_params = get_ia_param(p1->r.type,p2->r.type);
+	  ia_params = get_ia_param(p1->p.type,p2->p.type);
 
 	  /* derive index 'type_num' */
-	  if(p1->r.type > p2->r.type) { type1 = p2->r.type; type2 = p1->r.type; } else { type2 = p2->r.type; type1 = p1->r.type; }
+	  if(p1->p.type > p2->p.type) { type1 = p2->p.type; type2 = p1->p.type; } else { type2 = p2->p.type; type1 = p1->p.type; }
 	  type_num = v_non_bonded + ((2 * n_particle_types - 1 - type1) * type1) / 2  +  type2;
 
 	  /* distance calculation */
@@ -149,13 +149,13 @@ void calc_virials() {
 	  dist  = sqrt(dist2);
 	  
 	  /* lennnard jones */
-	  for(j=0;j<3;j++) { f1[j] = p1->f[j]; f2[j] = p2->f[j]; }
+	  for(j=0;j<3;j++) { f1[j] = p1->f.f[j]; f2[j] = p2->f.f[j]; }
 	  add_lj_pair_force(p1,p2,ia_params,d,dist);
 	  add_ljcos_pair_force(p1,p2,ia_params,d,dist);
 #ifdef ROTATION  
 	  add_gb_pair_force(p1,p2,ia_params,d,dist);
 #endif
-	  for(j=0;j<3;j++) { p1->f[j] -= (f1[j] = p1->f[j] - f1[j]); p2->f[j] -= (f2[j] = p2->f[j] - f2[j]); }
+	  for(j=0;j<3;j++) { p1->f.f[j] -= (f1[j] = p1->f.f[j] - f1[j]); p2->f.f[j] -= (f2[j] = p2->f.f[j] - f2[j]); }
 	  virials.node.e[type_num] += d[0]*f1[0] + d[1]*f1[1] + d[2]*f1[2];
 	  
 #ifdef ELECTROSTATICS

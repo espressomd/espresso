@@ -230,12 +230,12 @@ Particle *cells_alloc_particle(int id, double pos[3])
   pt = &pl->part[pl->n - 1];
   init_particle(pt);
 
-  pt->r.identity = id;
+  pt->p.identity = id;
   memcpy(pt->r.p, pos, 3*sizeof(double));
   if (rl)
     update_local_particles(&cells[ind].pList);
   else
-    local_particles[pt->r.identity] = pt;
+    local_particles[pt->p.identity] = pt;
 
   return pt;
 }
@@ -442,7 +442,7 @@ void print_particle_positions()
     np   = CELL_PTR(m, n, o)->pList.n;
     for(i=0 ; i<pl->n; i++) {
       fprintf(stderr,"%d: cell(%d,%d,%d) linear %d Part id=%d pos=(%f,%f,%f)\n",
-	      this_node, m, n, o, CELL_IND(m,n,o),part[i].r.identity,
+	      this_node, m, n, o, CELL_IND(m,n,o),part[i].p.identity,
 	      part[i].r.p[0], part[i].r.p[1], part[i].r.p[2]);
       cnt++;
     }
@@ -464,7 +464,7 @@ void print_ghost_positions()
       np   = CELL_PTR(m, n, o)->pList.n;
       for(i=0 ; i<pl->n; i++) {
 	fprintf(stderr,"%d: cell(%d,%d,%d) ghost id=%d pos=(%f,%f,%f)\n",
-		this_node, m, n, o, part[i].r.identity,
+		this_node, m, n, o, part[i].p.identity,
 		part[i].r.p[0], part[i].r.p[1], part[i].r.p[2]);
 	cnt++;
       }

@@ -158,11 +158,11 @@ MDINLINE void add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
   if(dist < p3m.r_cut) {
     adist = p3m.alpha * dist;
     erfc_part_ri = AS_erfc_part(adist) / dist;
-    fac = p3m.prefactor * p1->r.q * p2->r.q  * 
+    fac = p3m.prefactor * p1->p.q * p2->p.q  * 
       exp(-adist*adist) * (erfc_part_ri + 2.0*p3m.alpha*wupii) / dist2;
     for(j=0;j<3;j++) {
-      p1->f[j] += fac * d[j];
-      p2->f[j] -= fac * d[j];
+      p1->f.f[j] += fac * d[j];
+      p2->f.f[j] -= fac * d[j];
     }
     ESR_TRACE(fprintf(stderr,"%d: RSE: Pair (%d-%d) dist=%.3f: force (%.3e,%.3e,%.3e)\n",this_node,
 		      p1->r.identity,p2->r.identity,dist,fac*d[0],fac*d[1],fac*d[2]));
@@ -181,7 +181,7 @@ MDINLINE double p3m_coulomb_pair_energy(Particle *p1, Particle *p2,
   if(dist < p3m.r_cut) {
     adist = p3m.alpha * dist;
     erfc_part_ri = AS_erfc_part(adist) / dist;
-    return p3m.prefactor*p1->r.q*p2->r.q *erfc_part_ri*exp(-adist*adist);
+    return p3m.prefactor*p1->p.q*p2->p.q *erfc_part_ri*exp(-adist*adist);
   }
   else
     return 0;

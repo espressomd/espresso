@@ -461,7 +461,7 @@ void MMM1D_calc_forces()
       send_coords[4*buffer_part    ] = part1->r.p[0];
       send_coords[4*buffer_part + 1] = part1->r.p[1];
       send_coords[4*buffer_part + 2] = part1->r.p[2];
-      send_coords[4*buffer_part + 3] = part1->r.q;
+      send_coords[4*buffer_part + 3] = part1->p.q;
       /*
 	fprintf(stderr, "%d: send %f %f %f %f\n", this_node,
 	send_coords[4*buffer_part    ],
@@ -482,10 +482,10 @@ void MMM1D_calc_forces()
 	  part2 = &p_part2[p2];
 
 	  /* no self energy */
-	  if (ind1 == ind2 && part2->r.identity <= part1->r.identity)
+	  if (ind1 == ind2 && part2->p.identity <= part1->p.identity)
 	    continue;
 
-	  chpref = part1->r.q*part2->r.q;
+	  chpref = part1->p.q*part2->p.q;
 
 	  if (chpref != 0.0) {
 	    dx = part1->r.p[0] - part2->r.p[0];
@@ -498,12 +498,12 @@ void MMM1D_calc_forces()
 	    Fy *= chpref;
 	    Fz *= chpref;
 
-	    part1->f[0] += Fx;
-	    part1->f[1] += Fy;
-	    part1->f[2] += Fz;
-	    part2->f[0] -= Fx;
-	    part2->f[1] -= Fy;
-	    part2->f[2] -= Fz;
+	    part1->f.f[0] += Fx;
+	    part1->f.f[1] += Fy;
+	    part1->f.f[2] += Fz;
+	    part2->f.f[0] -= Fx;
+	    part2->f.f[1] -= Fy;
+	    part2->f.f[2] -= Fz;
 	  }
 	}
       }
@@ -557,7 +557,7 @@ void MMM1D_calc_forces()
 	    dx = part1->r.p[0] - recv_coords[4*p2    ];
 	    dy = part1->r.p[1] - recv_coords[4*p2 + 1];
 	    dz = part1->r.p[2] - recv_coords[4*p2 + 2];
-	    chpref = part1->r.q*recv_coords[4*p2 + 3];
+	    chpref = part1->p.q*recv_coords[4*p2 + 3];
 
 	    if (chpref != 0.0) {
 	      calc_pw_force(dx, dy, dz, &Fx, &Fy, &Fz);
@@ -565,9 +565,9 @@ void MMM1D_calc_forces()
 	      Fx *= chpref;
 	      Fy *= chpref;
 	      Fz *= chpref;
-	      part1->f[0] += Fx;
-	      part1->f[1] += Fy;
-	      part1->f[2] += Fz;
+	      part1->f.f[0] += Fx;
+	      part1->f.f[1] += Fy;
+	      part1->f.f[2] += Fz;
 	      recv_forces[3*p2    ] -= Fx;
 	      recv_forces[3*p2 + 1] -= Fy;
 	      recv_forces[3*p2 + 2] -= Fz;
@@ -599,9 +599,9 @@ void MMM1D_calc_forces()
 	p_part1 = cells[ind1].pList.part;
 	for (p1 = 0; p1 < n_part1; p1++) {
 	  part1 = &p_part1[p1];
-	  part1->f[0] += send_forces[3*buffer_part    ];
-	  part1->f[1] += send_forces[3*buffer_part + 1];
-	  part1->f[2] += send_forces[3*buffer_part + 2];
+	  part1->f.f[0] += send_forces[3*buffer_part    ];
+	  part1->f.f[1] += send_forces[3*buffer_part + 1];
+	  part1->f.f[2] += send_forces[3*buffer_part + 2];
 	  /*
 	    fprintf(stderr, "%d: gotf %f %f %f\n", this_node,
 	    send_forces[3*buffer_part    ],
