@@ -31,9 +31,6 @@ typedef struct {
 
   /** periodically folded position. */
   double p[3];
-
-  /** force. */
-  double f[3];
 } ReducedParticle;
 
 /** Struct holding all particle information
@@ -46,6 +43,8 @@ typedef struct {
   /** index of the simulation box image where the particle really sits. */
   int    i[3];
 
+  /** force. */
+  double f[3];
   /** velocity. */
   double v[3];
 
@@ -111,7 +110,7 @@ int part(ClientData data, Tcl_Interp *interp,
 void realloc_particles(ParticleList *plist, int size);
 
 /** search for a specific particle.
-    \param plist the list on which to operate
+    \param plist the list on which to operate 
     \param id the identity of the particle to search
     \return a pointer to the particle structure or NULL if particle is
     not in this list */
