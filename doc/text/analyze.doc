@@ -63,7 +63,28 @@ In <tt>statistics.c</tt>:<br>
 	 If the <type_num> are given as well, only the contributions of interactions with that specific <type_num> are considered, returning e.g.
 	 <tt>0.006136 0.000023</tt> for <tt>analyze pressure lj 0</tt> and <tt>-0.006172 0.000038</tt> for <tt>analyze pressure fene 0</tt>.<br>
 	 The possible choices for <tt><interaction_type></tt> are the same as those for '<tt>analyze energy</tt>' given previously.<br>
+	 Note that the ideal pressure is derived using the temperature, hence for systems with <tt>temp = 0</tt> it will be zero;
+	 in those cases it is preferable to use <tt>analyze p_bin</tt> which looks at the velocities of the particles.<BR>
+	 This command is implemented as a parallel algorithm:
 	 The C implementation is \ref #calc_pressure, which calls \ref #calc_virials on all nodes; it is parsed by \ref #parse_and_print_pressure.
+    <li> \verbatim analyze p_bin <ind_list> <flag_all>\endverbatim
+         derives the <i>pressure-tensor</i> and all its contributions in the system. Return value is a tcl-list looking like
+	 \verbatim 6.918227 47.861859 { total 1.487761 -0.498393 1.105992 0.141777 1.548216 -0.219248 0.202950 -1.821126 3.882250 } { ideal -0.121384 -0.497965 0.930397 0.142206 0.187245 -0.225073 0.027355 -1.826951 2.418630 } { bonded -4.531248 -0.050332 0.281053 -0.050332 -4.291891 -0.226408 0.281053 -0.226408 -4.324098 { FENE -4.531248 -0.050332 0.281053 -0.050332 -4.291891 -0.226408 0.281053 -0.226408 -4.324098 } } { nonbonded 6.140393 0.049904 -0.105458 0.049904 5.652861 0.232232 -0.105458 0.232232 5.787717 } \endverbatim
+	 specifying the pressure, its square, its tensorial form, and the tensorial form of its components ideal, bonded, nonbonded, coulombic pressure 
+	 (if applicable); the bonded component is further split up into its different contributions (FENE, ANGLE, HARMONIC) sort according to the
+	 interaction type number specified by \ref tcl_inter. Note that the tensorial entries \f$ p^{(k,l)} \f$ are directly derived from
+	 \f[ p^{(k,l)} = \sum_{i<j} F_{ij}^{(k)} \cdot r_{ij}^{(l)} \f]
+	 where e.g. \f$ F_{ij}^{(k)} \f$ denotes the <i>k</i>th entry of the difference vector between the force vectors of particles <i>i</i> 
+	 and <i>j</i>, while the ideal pressure is determined from the particles' velocities, i.e.
+	 \f[ p^{(k,l)}_\text{ideal} = \sum_{i<j} v_{i}^{(k)} \cdot v_{j}^{(l)} \f]
+	 contrary to <tt>analyze pressure ideal</tt> which uses the temperature. In both cases, the sum is taken over only those particles
+	 whose identities have been provided in <tt><ind_list></tt> if <tt><flag_all>=0</tt>, otherwise <tt>i</tt> loops over <tt><ind_list</tt>
+	 while <tt>j</tt> represents <i>all</i> particles in the system.<BR>
+	 This command is executed on the master node only, hence a higher number of nodes only slows it down due to the increasing amount of 
+	 communication processes required between the nodes to gather all needed particle informations. Furthermore, all interactions including
+	 electrostatic ones are treated with the virial ansatz given above, which makes <i>non-</i>periodic systems highly recommendable,
+	 and which slows electrostatic systems down due to the long-range interactions.<BR>
+	 The C implementation is \ref #calc_p_tensor; it is parsed by \ref #parse_and_print_p_bin.
 
 </ul>In <tt>statistics.c</tt>:<ul>
     <li> \verbatim analyze set <structure info> \endverbatim
