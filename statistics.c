@@ -443,7 +443,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   else if (!strncmp(mode, "g123", strlen(mode))) {
-    /* 'analyze g123 [-init [<chain_start> <n_chains> <chain_length>]]' */
+    /* 'analyze g123 [[-init] <chain_start> <n_chains> <chain_length>]' */
     double g1=0.0, g2=0.0, g3=0.0, cm_tmp[3];
     int init = 0;
     /* - Mean square displacement of a monomer
@@ -456,9 +456,18 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       return (TCL_ERROR);      
     }
 
-    if (argc == 1 && !strncmp(argv[0], "-init", strlen(argv[0]))) {
+    if (argc == 0) {
+      Tcl_AppendResult(interp, "too few arguments (usage: analyze g123 [[-init] <chain_start> <n_chains> <chain_length>])", (char *)NULL);
+      return TCL_ERROR;
+    }
+      
+    if (argc == 4 && !strncmp(argv[0], "-init", strlen(argv[0]))) {
       init = 1;
       argc--; argv++;
+    }
+    else if (!strncmp(argv[0], "-init", strlen(argv[0]))) {
+      Tcl_AppendResult(interp, "too few arguments (if using '-init', chain structure '<chain_start> <n_chains> <chain_length>' required)", (char *)NULL);
+      return TCL_ERROR;
     }
 
     if (get_chain_structure_info(interp, &argc, &argv) == TCL_ERROR)
