@@ -109,6 +109,10 @@ extern const Datafield fields[];
 #define FIELD_CALC_FORCES_FIRST 24
 /** index of \ref lj_force_cap in \ref fields */
 #define FIELD_LJFORCECAP 25
+/** index of \ref start_time in  \ref fields */
+#define FIELD_START_TIME 26
+/** index of \ref sim_time in  \ref fields */
+#define FIELD_SIM_TIME 26
 /*@}*/
 
 /**********************************************

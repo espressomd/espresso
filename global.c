@@ -67,6 +67,8 @@ const Datafield fields[] = {
   {&temperature, TYPE_DOUBLE, 1, "temp", temp_callback },              /* thermostat.c */
   {&calc_forces_first, TYPE_INT, 1, "calc_forces_first", calc_forces_first_callback }, /* integrate.c */
   {&lj_force_cap, TYPE_DOUBLE, 1, "lj_force_cap", lj_force_cap_callback },  /* interaction.c */
+  {&start_time, TYPE_DOUBLE, 1, "start_time", start_time_callback }, /* integrate.c */
+  {&sim_time, TYPE_DOUBLE, 1, "time", ro_callback },                 /* integrate.c */
   { NULL, 0, 0, NULL, NULL }
 };
 
