@@ -45,6 +45,7 @@
 #include "config.h"
 #include "integrate.h"
 #include "debug.h"
+#include "interaction_data.h"
 
 #ifdef ELECTROSTATICS
 
@@ -55,8 +56,6 @@
 
 /** Structure to hold P3M parameters and some dependend variables. */
 typedef struct {
-  /** Bjerrum-length (>0). */
-  double bjerrum;
   /** Ewald splitting parameter (0<alpha<1). */
   double alpha;
   /** Cutoff radius for real space electrostatics (>0). */
@@ -75,8 +74,6 @@ typedef struct {
 
   /** epsilon of the "surrounding dielectric". */
   double epsilon;
-  /** Coulomb prefactor, e.g. Bjerrum*Temp. */
-  double prefactor;
   /** Cutoff radius squared. */
   double r_cut2;
   /** Cutoff for charge assignment. */
@@ -158,7 +155,7 @@ MDINLINE void add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
   if(dist < p3m.r_cut) {
     adist = p3m.alpha * dist;
     erfc_part_ri = AS_erfc_part(adist) / dist;
-    fac = p3m.prefactor * p1->p.q * p2->p.q  * 
+    fac = coulomb.prefactor * p1->p.q * p2->p.q  * 
       exp(-adist*adist) * (erfc_part_ri + 2.0*p3m.alpha*wupii) / dist2;
     for(j=0;j<3;j++) {
       p1->f.f[j] += fac * d[j];
@@ -181,7 +178,7 @@ MDINLINE double p3m_coulomb_pair_energy(Particle *p1, Particle *p2,
   if(dist < p3m.r_cut) {
     adist = p3m.alpha * dist;
     erfc_part_ri = AS_erfc_part(adist) / dist;
-    return p3m.prefactor*p1->p.q*p2->p.q *erfc_part_ri*exp(-adist*adist);
+    return coulomb.prefactor*p1->p.q*p2->p.q *erfc_part_ri*exp(-adist*adist);
   }
   else
     return 0;

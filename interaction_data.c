@@ -32,8 +32,8 @@ int n_interaction_types = 0;
 IA_parameters *ia_params = NULL;
 
 #ifdef ELECTROSTATICS
-Coulomb_parameters coulomb = { 0.0, COULOMB_NONE };
-Debye_hueckel_params dh_params = { 0.0, 0.0, 0.0, 0.0 };
+Coulomb_parameters coulomb = { 0.0, 0.0, COULOMB_NONE };
+Debye_hueckel_params dh_params = { 0.0, 0.0 };
 #endif
 
 int n_bonded_ia = 0;
@@ -1091,7 +1091,6 @@ int coulomb_set_bjerrum(double bjerrum)
 
     if (coulomb.method == COULOMB_P3M) {
 
-      p3m.bjerrum = 0.0;
       p3m.alpha   = 0.0;
       p3m.r_cut   = 0.0;
       p3m.mesh[0] = 0;
@@ -1101,14 +1100,12 @@ int coulomb_set_bjerrum(double bjerrum)
 
     } else if (coulomb.method == COULOMB_DH) {
 
-      dh_params.bjerrum = 0.0;
       dh_params.r_cut   = 0.0;
       dh_params.kappa   = 0.0;
 
     } else if (coulomb.method == COULOMB_MMM1D) {
 
       mmm1d_params.maxPWerror = 1e40;
-      mmm1d_params.bjerrum = 0.0;
       mmm1d_params.bessel_cutoff = 0;
 
     }
@@ -1184,7 +1181,6 @@ int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
   int mesh, cao, i;
 
   coulomb.method = COULOMB_P3M;
-  p3m.bjerrum    = coulomb.bjerrum;
     
 #ifdef PARTIAL_PERIODIC
   if(periodic[0] == 0 ||
@@ -1390,7 +1386,6 @@ int inter_parse_dh(Tcl_Interp * interp, int argc, char ** argv)
   }
   
   coulomb.method = COULOMB_DH;
-  dh_params.bjerrum = coulomb.bjerrum;
 
   if(! ARG0_IS_D(kappa))
     return TCL_ERROR;
@@ -1454,8 +1449,7 @@ int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
     }
   }
 
-  return set_mmm1d_params(interp, coulomb.bjerrum, switch_rad,
-			  bessel_cutoff, maxPWerror);
+  return set_mmm1d_params(interp, switch_rad, bessel_cutoff, maxPWerror);
 }
 
 int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)

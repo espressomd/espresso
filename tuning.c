@@ -46,7 +46,7 @@ double time_force_calc(int default_samples)
   /* perform force calculation test */
   markTime();
   for (i = 0; i < rds; i++) {
-    mpi_bcast_event(PARTICLE_CHANGED);		
+    mpi_bcast_event(INVALIDATE_SYSTEM);
     mpi_integrate(0);
   }
   markTime();

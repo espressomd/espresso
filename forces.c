@@ -32,26 +32,19 @@
 
 /************************************************************/
 
-void force_init()
-{
-  FORCE_TRACE(fprintf(stderr,"%d: force_init:\n",this_node));
-  FORCE_TRACE(fprintf(stderr,"%d: found %d particles types\n",
-		      this_node,n_particle_types));
-}
-
 /** nonbonded and bonded force calculation using the verlet list */
 void calculate_verlet_ia()
 {
   Cell *cell;
   Particle *p, **pairs;
   Particle *p1, *p2;
-  int k, i,j, m, n, o, np;
+  int k, i,j, c, np;
   double d[3], dist2, dist;
   IA_parameters *ia_params;
 
   /* force calculation loop. */
-  INNER_CELLS_LOOP(m, n, o) {
-    cell = CELL_PTR(m, n, o);
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
     p  = cell->pList.part;
     np = cell->pList.n;
 
@@ -124,60 +117,89 @@ void calc_long_range_forces()
 
 /************************************************************/
 
-void init_forces()
+/** initialize the forces for a real particle */
+MDINLINE void init_local_particle_force(Particle *part)
 {
-  Particle *p, *part;
-  int np, m, n, o, i;
-  int is_ghost;
-
-  /* initialize forces with thermostat forces and
-     ghost forces with zero
-     set torque to zero for all and rescale quaternions
-  */
-  CELLS_LOOP(m, n, o) {
-    p  = CELL_PTR(m, n, o)->pList.part;
-    np = CELL_PTR(m, n, o)->pList.n;
-    is_ghost = IS_GHOST_CELL(m, n, o);
-
-    for (i = 0; i < np; i++) {
-      part = &p[i];
-      if (is_ghost) {
-	/* ghost particle selection */
-	part->f.f[0] = 0;
-	part->f.f[1] = 0;
-	part->f.f[2] = 0;
-      }
-      else {
-	/* real particle selection */
-	friction_thermo(part);
+  friction_thermo(part);
 #ifdef EXTERNAL_FORCES   
-	if(part->l.ext_flag == PARTICLE_EXT_FORCE) {
-	  part->f.f[0] += part->l.ext_force[0];
-	  part->f.f[1] += part->l.ext_force[1];
-	  part->f.f[2] += part->l.ext_force[2];
-	}
+  if(part->l.ext_flag == PARTICLE_EXT_FORCE) {
+    part->f.f[0] += part->l.ext_force[0];
+    part->f.f[1] += part->l.ext_force[1];
+    part->f.f[2] += part->l.ext_force[2];
+  }
 #endif
-      }
 
 #ifdef ROTATION
-      /* rotation for both ghost and real */
-      {
-	double scale;
-	/* set torque to zero */
-	part->f.torque[0] = 0;
-	part->f.torque[1] = 0;
-	part->f.torque[2] = 0;
-
-	/* and rescale quaternion, so it is exactly of unit length */	
-	scale = sqrt( SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
-		      SQR(part->r.quat[2]) + SQR(part->r.quat[3]));
-	part->r.quat[0]/= scale;
-	part->r.quat[1]/= scale;
-	part->r.quat[2]/= scale;
-	part->r.quat[3]/= scale;
-      }
+  {
+    double scale;
+    /* set torque to zero */
+    part->f.torque[0] = 0;
+    part->f.torque[1] = 0;
+    part->f.torque[2] = 0;
+    
+    /* and rescale quaternion, so it is exactly of unit length */	
+    scale = sqrt( SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
+		  SQR(part->r.quat[2]) + SQR(part->r.quat[3]));
+    part->r.quat[0]/= scale;
+    part->r.quat[1]/= scale;
+    part->r.quat[2]/= scale;
+    part->r.quat[3]/= scale;
+  }
 #endif
-    }
+}
+
+/** initialize the forces for a ghost particle */
+MDINLINE void init_ghost_force(Particle *part)
+{
+  part->f.f[0] = 0;
+  part->f.f[1] = 0;
+  part->f.f[2] = 0;
+
+#ifdef ROTATION
+  {
+    double scale;
+    /* set torque to zero */
+    part->f.torque[0] = 0;
+    part->f.torque[1] = 0;
+    part->f.torque[2] = 0;
+
+    /* and rescale quaternion, so it is exactly of unit length */	
+    scale = sqrt( SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
+		  SQR(part->r.quat[2]) + SQR(part->r.quat[3]));
+    part->r.quat[0]/= scale;
+    part->r.quat[1]/= scale;
+    part->r.quat[2]/= scale;
+    part->r.quat[3]/= scale;
+  }
+#endif
+}
+
+void init_forces()
+{
+  Cell *cell;
+  Particle *p;
+  int np, c, i;
+
+  /* initialize forces with thermostat forces
+     set torque to zero for all and rescale quaternions
+  */
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->pList.part;
+    np = cell->pList.n;
+    for (i = 0; i < np; i++)
+      init_local_particle_force(&p[i]);
+  }
+
+  /* initialize ghost forces with zero
+     set torque to zero for all and rescale quaternions
+  */
+  for (c = 0; c < ghost_cells.n; c++) {
+    cell = ghost_cells.cell[c];
+    p  = cell->pList.part;
+    np = cell->pList.n;
+    for (i = 0; i < np; i++)
+      init_ghost_force(&p[i]);
   }
 
 #ifdef CONSTRAINTS

@@ -38,9 +38,6 @@
 /************************************************************/
 /*@{*/
 
-/** Calculates lj cap radii */
-void force_init();
-
 /** initialize real particle forces with thermostat forces and
     ghost particle forces with zero. */
 void init_forces();

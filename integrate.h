@@ -36,18 +36,10 @@ extern double skin;
 extern double max_range;
 /** square of \ref max_range. */
 extern double max_range2;
-/** If non-zero, some particles have moved since last
-    integration. */
-extern int    particle_changed;
-/** If non-zero, some non-bonded interactions have changed since last
-    integration. */
-extern int    interactions_changed;
-/** If non-zero, the system topology has changed since last
-    integration. */
-extern int    topology_changed;
-/** If non-zero, some other parameter (e.g. time_step, skin) has changed
-    since last integration. */
-extern int    parameter_changed;
+/** If non-zero, the particle data will be resorted before the next integration. */
+extern int    resort_particles;
+/** If non-zero, the forces will be recalculated before the next integration. */
+extern int    recalc_forces;
 /** Average number of integration steps the verlet list has been re
     used. */
 extern double verlet_reuse;
@@ -101,6 +93,8 @@ int time_callback(Tcl_Interp *interp, void *_data);
     For more information, see \ref tcl_invalidate_system. */
 int invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
+/** local routine of \ref invalidate system */
+void local_invalidate_system();
 
 /*@}*/
 

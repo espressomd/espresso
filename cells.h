@@ -52,8 +52,9 @@
 
 /** which cell structure is used */
 /*@{*/
-#define CELL_STRUCTURE_DD 0
-#define CELL_STRUCTURE_N2 1
+#define CELL_STRUCTURE_CURRENT 0
+#define CELL_STRUCTURE_DOMDEC  1
+#define CELL_STRUCTURE_NSQUARE 2
 /*@}*/
 
 /************************************************/
@@ -122,23 +123,8 @@ typedef struct {
   /** Communicator to collect ghost forces. */
   GhostCommunicator collect_ghost_force_comm;
 
-  /** Called when the current cell structure is invalidated because for example the
-      box length has changed. This procedure may NOT destroy the old inner and ghost
-      cells, but it should free all other organizational data. Note that parameters
-      like the box length or the node_grid may already have changed. Therefore
-      organizational data has to be stored independently from variables
-      that may be changed from outside. */
   void  (*topology_release)();
-  /** Initialize the topology. The argument is list of cells, which particles have to be
-      sorted into their cells. The particles might not belong to this node.
-      This procedure is used when particle data or cell structure has changed and
-      the cell structure has to be reinitialized. This also includes setting up the
-      cell_structure array. */
   void  (*topology_init)(CellPList *cplist);
-  /** Just resort the particles. Used during integration. The particles are stored in
-      the cell structure. Domain decomposition can assume for example that particles
-      only have to be sent to neighboring nodes. */
-  void  (*exchange_and_sort_particles)();
   ///
   int   (*position_to_node)(double pos[3]);
   ///
@@ -189,16 +175,11 @@ MDINLINE void realloc_cellplist(CellPList *cl, int size)
   }
 }
 
-/** reinitialize link cell structures. 
- *
- *  It reallocates the cell structure (\ref #cells) and initializes
- *  the contained cell neighbor structure, verlet lists and particle
- *  lists (see \ref init_cell and \ref init_cell_neighbors).
- *
- *  Then it transfers the particles from the old cell structure to the
- *  new one. 
- */
-void cells_re_init();
+/** reinitialize the cell structures.
+    @param new_cs gives the new topology to use afterwards. May be set to
+    \ref CELL_STRUCTURE_CURRENT for not changing it.
+*/
+void cells_re_init(int new_cs);
 
 /** called when the topology has changed, so that the cell system can be reinitialized. */
 void cells_changed_topology();
@@ -213,6 +194,9 @@ void print_particle_positions();
 /** debug function to print ghost positions: */
 void print_ghost_positions();
 
+/** implementation of the Tcl command \ref tcl_cellsystem */
+int cellsystem(ClientData data, Tcl_Interp *interp,
+	       int argc, char **argv);
 /*@}*/
 
 #endif

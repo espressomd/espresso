@@ -60,7 +60,6 @@ void setup_node_grid()
     calc_3d_grid(n_nodes,node_grid);
 
     mpi_bcast_parameter(FIELD_NODEGRID);
-    mpi_bcast_event(TOPOLOGY_CHANGED);
   }
 }
 
@@ -76,30 +75,6 @@ void map_node_array(int node, int pos[3])
 
 int map_array_node(int pos[3]) {
   return get_linear_index(pos[0], pos[1], pos[2], node_grid);
-}
-
-int find_node(double pos[3])
-{
-  int i, im[3];
-  double f_pos[3];
-
-  for (i = 0; i < 3; i++)
-    f_pos[i] = pos[i];
-  
-  fold_position(f_pos, im);
-
-  for (i = 0; i < 3; i++) {
-    im[i] = (int)floor(node_grid[i]*f_pos[i]*box_l_i[i]);
-#ifdef PARTIAL_PERIODIC
-    if (!periodic[i]) {
-      if (im[i] < 0)
-	im[i] = 0;
-      else if (im[i] >= node_grid[i])
-	im[i] = node_grid[i] - 1;
-    }
-#endif
-  }
-  return map_array_node(im);
 }
 
 void fold_coordinate(double pos[3], int image_box[3], int dir)
@@ -164,10 +139,7 @@ void grid_changed_topology()
 
   GRID_TRACE(fprintf(stderr,"%d: grid_changed_topology:\n",this_node));
 
-  if (!node_grid_is_set())
-    setup_node_grid();
-
-  map_node_array(this_node,node_pos);    
+  map_node_array(this_node,node_pos);
   for(i = 0; i < 3; i++) {
     local_box_l[i] = box_l[i]/(double)node_grid[i]; 
     my_left[i]   = node_pos[i]    *local_box_l[i];
@@ -284,7 +256,6 @@ int node_grid_callback(Tcl_Interp *interp, void *_data)
   node_grid[2] = data[2];
 
   mpi_bcast_parameter(FIELD_NODEGRID);
-  mpi_bcast_event(TOPOLOGY_CHANGED);
 
   return (TCL_OK);
 }
@@ -307,7 +278,6 @@ int per_callback(Tcl_Interp *interp, void *_data)
   */
 
   mpi_bcast_parameter(FIELD_PERIODIC);
-  mpi_bcast_event(TOPOLOGY_CHANGED);
 
   return (TCL_OK);
 }
@@ -327,7 +297,6 @@ int boxl_callback(Tcl_Interp *interp, void *_data)
   box_l[2] = data[2];
 
   mpi_bcast_parameter(FIELD_BOXL);
-  mpi_bcast_event(TOPOLOGY_CHANGED);
 
   return (TCL_OK);
 }
@@ -374,7 +343,6 @@ void rescale_boxl(int dir, double d_new) {
     else
       box_l[0] = box_l[1] = box_l[2] = d_new;
     mpi_bcast_parameter(FIELD_BOXL);
-    mpi_bcast_event(TOPOLOGY_CHANGED);
   }
   else if (scale > 1.) {
     if (dir < 3) 
@@ -383,6 +351,5 @@ void rescale_boxl(int dir, double d_new) {
       box_l[0] = box_l[1] = box_l[2] = d_new;
     mpi_bcast_parameter(FIELD_BOXL);
     mpi_rescale_particles(dir,scale);
-    mpi_bcast_event(TOPOLOGY_CHANGED);
   }
 }

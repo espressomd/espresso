@@ -118,46 +118,46 @@ void check_particle_consistency()
   ParticleList *pl;
   Particle *part;
   Cell *cell;
-  int n, np, dir, c, nc;
+  int n, np, dir, c;
   int cell_part_cnt=0, ghost_part_cnt=0, local_part_cnt=0;
   int cell_err_cnt=0;
 
   /* checks: part_id, part_pos, local_particles id */
-  for(c=0; c<n_cells; c++) {
-    if(is_inner_cell(c,ghost_cell_grid)) {
-      cell_part_cnt += cells[c].pList.n;
-      cell = &cells[c];
-      pl   = &(cell->pList);
-      part = pl->part;
-      np   = pl->n;
-      for(n=0; n<cells[c].pList.n ; n++) {
-	if(part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
-	  fprintf(stderr,"%d: sort_part_in_cells: ERROR: Cell %d Part %d has corrupted id=%d\n",
-		  this_node,c,n,cells[c].pList.part[n].p.identity);
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    cell_part_cnt += cell->pList.n;
+    pl   = &(cell->pList);
+    part = pl->part;
+    np   = pl->n;
+    for(n=0; n<cell->pList.n ; n++) {
+      if(part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
+	fprintf(stderr,"%d: sort_part_in_cells: ERROR: Cell %d Part %d has corrupted id=%d\n",
+		this_node,c,n,cell->pList.part[n].p.identity);
+	errexit();
+      }
+      for(dir=0;dir<3;dir++) {
+	if(periodic[dir] && (part[n].r.p[dir] < 0 || part[n].r.p[dir] > box_l[dir])) {
+	  fprintf(stderr,"%d: exchange_part: ERROR: illegal pos[%d]=%f of part %d id=%d in cell %d\n",
+		  this_node,dir,part[n].r.p[dir],n,part[n].p.identity,c);
 	  errexit();
 	}
-	for(dir=0;dir<3;dir++) {
-	  if(periodic[dir] && (part[n].r.p[dir] < 0 || part[n].r.p[dir] > box_l[dir])) {
-	    fprintf(stderr,"%d: exchange_part: ERROR: illegal pos[%d]=%f of part %d id=%d in cell %d\n",
-		    this_node,dir,part[n].r.p[dir],n,part[n].p.identity,c);
-	    errexit();
-	  }
-	}
-	if(local_particles[part[n].p.identity] != &part[n]) {
-	    fprintf(stderr,"%d: exchange_part: ERROR: address mismatch for part id %d: %p %p in cell %d\n",
-		    this_node,part[n].p.identity,local_particles[part[n].p.identity],
-		    &part[n],c);
-	    errexit();
-
-	}
+      }
+      if(local_particles[part[n].p.identity] != &part[n]) {
+	fprintf(stderr,"%d: exchange_part: ERROR: address mismatch for part id %d: %p %p in cell %d\n",
+		this_node,part[n].p.identity,local_particles[part[n].p.identity],
+		&part[n],c);
+	errexit();
+	
       }
     }
-    else {
-      if(cells[c].pList.n>0) {
-	ghost_part_cnt += cells[c].pList.n;
-	fprintf(stderr,"%d: sort_part_in_cells: WARNING: ghost_cell %d contains %d particles!\n",
-		this_node,c,cells[c].pList.n);
-      }
+  }
+
+  for (c = 0; c < ghost_cells.n; c++) {
+    cell = ghost_cells.cell[c];
+    if(cell->pList.n>0) {
+      ghost_part_cnt += cell->pList.n;
+      fprintf(stderr,"%d: sort_part_in_cells: WARNING: ghost_cell %d contains %d particles!\n",
+	      this_node,c,cell->pList.n);
     }
   }
   CELL_TRACE(fprintf(stderr,"%d: sort_part_in_cells: %d particles in cells.\n",
@@ -176,7 +176,7 @@ void check_particle_consistency()
   CELL_TRACE(fprintf(stderr,"%d: sort_part_in_cells: %d particles in local_particles.\n",
 		     this_node,local_part_cnt));
 
-  /* check cell neighbor consistency */
+  /* check cell neighbor consistency
   for(c=0; c<n_cells; c++) {
     for(n=0; n< cells[c].n_neighbors; n++) {
       if(is_inner_cell(c,ghost_cell_grid)) {
@@ -193,6 +193,7 @@ void check_particle_consistency()
       }
     }
   }
+  */
 
   /* EXIT on severe errors */
   if(cell_err_cnt>0) {

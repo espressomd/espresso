@@ -49,12 +49,8 @@ double skin = -1.0;
 double max_range;
 double max_range2;
 
-int    particle_changed = 1;
-int    interactions_changed = 1;
-int    topology_changed = 1;
-int    parameter_changed = 1;
-
-double old_time_step;
+int    resort_particles = 1;
+int    recalc_forces = 1;
 
 double verlet_reuse=0.0;
 
@@ -83,11 +79,13 @@ void rescale_forces_propagate_vel();
 /************************************************************/
 
 int invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  mpi_bcast_event(PARTICLE_CHANGED);
-  mpi_bcast_event(INTERACTION_CHANGED);
-  mpi_bcast_event(PARAMETER_CHANGED);
-  mpi_bcast_event(TOPOLOGY_CHANGED);
+  mpi_bcast_event(INVALIDATE_SYSTEM);
   return TCL_OK;
+}
+
+void local_invalidate_system()
+{
+  resort_particles = 1;
 }
 
 int integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
@@ -173,16 +171,21 @@ void integrate_vv(int n_steps)
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: integrating %d steps\n",this_node,
 		      n_steps));
 
-  if(parameter_changed || particle_changed || topology_changed || interactions_changed) {
+  if(resort_particles) {
     invalidate_ghosts();
     exchange_and_sort_part();
     exchange_ghost();
+    recalc_forces = 1;
+    resort_particles = 0;
+  }
+  if (recalc_forces) {
     build_verlet_lists_and_force_calc();
 #ifdef ROTATION
     convert_initial_torques();
 #endif
     collect_ghost_forces();
     rescale_forces();
+    recalc_forces = 0;
   }
     
   /* integration loop */
@@ -215,24 +218,20 @@ void integrate_vv(int n_steps)
 
   if(n_verlet_updates>0) verlet_reuse = n_steps/(double) n_verlet_updates;
   else verlet_reuse = 0;
-  particle_changed     = 0; 
-  interactions_changed = 0;
-  topology_changed     = 0;
-  parameter_changed    = 0;
 }
 
 /************************************************************/
 
-void rescale_velocities() 
+void rescale_velocities(double scale) 
 {
   Particle *p;
-  int m,n,o,i, np;
-  double scale;
+  int i, np, c;
+  Cell *cell;
 
-  scale = time_step / old_time_step;
-  INNER_CELLS_LOOP(m, n, o) {
-    p  = CELL_PTR(m, n, o)->pList.part;
-    np = CELL_PTR(m, n, o)->pList.n;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->pList.part;
+    np = cell->pList.n;
     for(i = 0; i < np; i++) {
       p[i].m.v[0] *= scale;
       p[i].m.v[1] *= scale;
@@ -254,7 +253,6 @@ int skin_callback(Tcl_Interp *interp, void *_data)
   }
   skin = data;
   mpi_bcast_parameter(FIELD_SKIN);
-  mpi_bcast_event(PARAMETER_CHANGED);
   return (TCL_OK);
 }
 
@@ -265,11 +263,9 @@ int time_step_callback(Tcl_Interp *interp, void *_data)
     Tcl_AppendResult(interp, "time step must be positive.", (char *) NULL);
     return (TCL_ERROR);
   }
-  old_time_step = time_step;
   time_step = data;
   mpi_set_time_step();
 
-  mpi_bcast_event(PARAMETER_CHANGED);
   return (TCL_OK);
 }
 
@@ -288,13 +284,15 @@ int time_callback(Tcl_Interp *interp, void *_data)
 void rescale_forces()
 {
   Particle *p;
-  int m,n,o,i, np;
+  int i, np, c;
+  Cell *cell;
   double scale;
   scale = 0.5 * time_step * time_step;
   INTEG_TRACE(fprintf(stderr,"%d: rescale_forces:\n",this_node));
-  INNER_CELLS_LOOP(m, n, o) {
-    p  = CELL_PTR(m, n, o)->pList.part;
-    np = CELL_PTR(m, n, o)->pList.n;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->pList.part;
+    np = cell->pList.n;
     for(i = 0; i < np; i++) {
       p[i].f.f[0] *= scale;
       p[i].f.f[1] *= scale;
@@ -308,12 +306,14 @@ void rescale_forces()
 
 void propagate_velocities() 
 {
+  Cell *cell;
   Particle *p;
-  int m,n,o,i, np;
+  int i, np, c;
   INTEG_TRACE(fprintf(stderr,"%d: propagate_velocities:\n",this_node));
-  INNER_CELLS_LOOP(m, n, o) {
-    p  = CELL_PTR(m, n, o)->pList.part;
-    np = CELL_PTR(m, n, o)->pList.n;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->pList.part;
+    np = cell->pList.n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
       if(p[i].l.ext_flag != PARTICLE_FIXED) 
@@ -329,16 +329,18 @@ void propagate_velocities()
 
 void rescale_forces_propagate_vel() 
 {
+  Cell *cell;
   Particle *p;
-  int m,n,o,i, np;
+  int i, np, c;
   double scale;
 
   scale = 0.5 * time_step * time_step;
   INTEG_TRACE(fprintf(stderr,"%d: rescale_forces_propagate_vel:\n",this_node));
 
-  INNER_CELLS_LOOP(m, n, o) {
-    p  = CELL_PTR(m, n, o)->pList.part;
-    np = CELL_PTR(m, n, o)->pList.n;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->pList.part;
+    np = cell->pList.n;
     for(i = 0; i < np; i++) {
       p[i].f.f[0] *= scale;
       p[i].f.f[1] *= scale;
@@ -363,8 +365,9 @@ void rescale_forces_propagate_vel()
 
 void propagate_positions() 
 {
+  Cell *cell;
   Particle *p;
-  int m,n,o,i, np;
+  int c,i, np;
 
   int *verlet_flags = malloc(sizeof(int)*n_nodes);
   double skin2;
@@ -372,9 +375,10 @@ void propagate_positions()
   rebuild_verletlist = 0;
   skin2 = SQR(skin/2.0);
 
-  INNER_CELLS_LOOP(m, n, o) {
-    p  = CELL_PTR(m, n, o)->pList.part;
-    np = CELL_PTR(m, n, o)->pList.n;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->pList.part;
+    np = cell->pList.n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
       if(p[i].l.ext_flag != PARTICLE_FIXED) 
@@ -412,8 +416,9 @@ void propagate_positions()
 
 void propagate_vel_pos() 
 {
+  Cell *cell;
   Particle *p;
-  int m,n,o,i, np;
+  int c, i, np;
   int *verlet_flags = malloc(sizeof(int)*n_nodes);
   double skin2;
 
@@ -427,9 +432,10 @@ void propagate_vel_pos()
   rebuild_verletlist = 0;
   skin2 = SQR(skin/2.0);
 
-  INNER_CELLS_LOOP(m, n, o) {
-    p  = CELL_PTR(m, n, o)->pList.part;
-    np = CELL_PTR(m, n, o)->pList.n;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->pList.part;
+    np = cell->pList.n;
     for(i = 0; i < np; i++) {
 #ifdef EXTERNAL_FORCES
       if(p[i].l.ext_flag != PARTICLE_FIXED) 

@@ -1250,7 +1250,7 @@ int place_particle(int part, double p[3])
   new = (pnode == -1);
   if (new) {
     /* new particle, node by spatial position */
-    pnode = find_node(p);
+    pnode = cell_structure.position_to_node(p);
 
     /* master node specific stuff */
     realloc_particle_node(part);
@@ -1467,15 +1467,15 @@ int remove_particle(int part)
 
 void local_remove_particle(int part)
 {
-  int ind, m, n, o;
+  int ind, c;
   Particle *p = local_particles[part];
   ParticleList *pl = NULL, *tmp;
   
   /* the tricky - say ugly - part: determine
      the cell the particle is located in by checking
      wether the particle address is inside the array */
-  INNER_CELLS_LOOP(m, n, o) {
-    tmp = &CELL_PTR(m,n,o)->pList;
+  for (c = 0; c < local_cells.n; c++) {
+    tmp = &local_cells.cell[c]->pList;
     ind = p - tmp->part;
     if (ind >= 0 && ind < tmp->n) {
       pl = tmp;
@@ -1505,10 +1505,11 @@ void local_remove_particle(int part)
 
 void local_place_particle(int part, double p[3])
 {
+  Cell *cell;
   double pp[3];
-
-  int i[3];
+  int i[3], rl;
   Particle *pt = (part <= max_seen_particle) ? local_particles[part] : NULL;
+  ParticleList *pl;
 
   i[0] = 0;
   i[1] = 0;
@@ -1518,34 +1519,59 @@ void local_place_particle(int part, double p[3])
   pp[2] = p[2];
   fold_position(pp, i);
   
-  if (!pt)
-    pt = cells_alloc_particle(part, pp);
+  if (!pt) {
+    /* allocate particle anew */
+    cell = cell_structure.position_to_cell(pp);
+    if (!cell) {
+      fprintf(stderr, "%d: INTERNAL ERROR: particle at %f %f %f does not belong on this node\n",
+	      this_node, pp[0], pp[1], pp[2]);
+      errexit();
+    }
+    pl = &cell->pList;
+    pl->n++;
+    rl = realloc_particles(pl, pl->n);
+    pt = &pl->part[pl->n - 1];
+    init_particle(pt);
+
+    pt->p.identity = part;
+    if (rl)
+      update_local_particles(pl);
+    else
+      local_particles[pt->p.identity] = pt;
+  }
 
   PART_TRACE(fprintf(stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
 		     this_node, part, p[0], p[1], p[2]));
+
   memcpy(pt->r.p, pp, 3*sizeof(double));
   memcpy(pt->l.i, i, 3*sizeof(int));
 }
 
 void local_remove_all_particles()
 {
-  int m, n, o;
+  Cell *cell;
+  int c;
   n_total_particles = 0;
   max_seen_particle = -1;
-  INNER_CELLS_LOOP(m, n, o) {
-    Particle *p = CELL_PTR(m, n, o)->pList.part;
-    int i,   np = CELL_PTR(m, n, o)->pList.n;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    Particle *p = cell->pList.part;
+    int i,   np = cell->pList.n;
     for (i = 0; i < np; i++)
       realloc_intlist(&p[i].bl, 0);
-    CELL_PTR(m, n, o)->pList.n = 0;
+    cell->pList.n = 0;
   }
 }
 
 void local_rescale_particles(int dir, double scale) {
-  Particle *p,*p1; int j, m,n,o; 
-  INNER_CELLS_LOOP(m, n, o) {
-    p  = CELL_PTR(m, n, o)->pList.part;
-    for(j = 0; j < CELL_PTR(m, n, o)->pList.n; j++) {
+  Particle *p,*p1;
+  int j, c; 
+  Cell *cell;
+
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->pList.part;
+    for(j = 0; j < cell->pList.n; j++) {
       p1 = &p[j];
       if(dir < 3) 
 	p1->r.p[dir] *= scale;
@@ -1595,12 +1621,15 @@ int local_change_bond(int part, int *bond, int delete)
 
 void remove_all_bonds_to(int identity)
 {
-  int m, n, o, p;
-  INNER_CELLS_LOOP(m, n, o) {
-    Cell *cell = CELL_PTR(m, n, o);
-    int n = cell->pList.n;
-    Particle *part = cell->pList.part;
-    for (p = 0; p < n; p++) {
+  Cell *cell;
+  int p, np, c;
+  Particle *part;
+
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    np = cell->pList.n;
+    part = cell->pList.part;
+    for (p = 0; p < np; p++) {
       IntList *bl = &part[p].bl;
       int i, j, partners;
       

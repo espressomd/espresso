@@ -40,6 +40,13 @@
 #include "forces.h"
 #include "uwerr.h"
 
+/** wether before integration the thermostat has to be reinitialized */
+static int reinit_thermo = 1;
+/** wether to recalculate the maximal interaction range before integration */
+static int recalc_maxrange = 1;
+/** wether the coulomb method needs to be reset before integration */
+static int reinit_coulomb = 1;
+
 static void init_tcl(Tcl_Interp *interp);
 
 int on_program_start(Tcl_Interp *interp)
@@ -51,7 +58,6 @@ int on_program_start(Tcl_Interp *interp)
   init_random();
   init_bit_random();
   cells_init();
-  ghost_pre_init();
 #ifdef ELECTROSTATICS
   fft_pre_init();
 #endif
@@ -75,42 +81,37 @@ void on_integration_start()
   if (!node_grid_is_set())
     setup_node_grid();
 
-  INTEG_TRACE(fprintf(stderr,"%d: on_int_start: para_ch = %d inter_ch = %d top_ch %d part_ch =%d\n", 
-		      this_node,parameter_changed,interactions_changed,topology_changed,particle_changed));
-  
   particle_invalidate_part_node();
-
-
-  if (parameter_changed || interactions_changed || topology_changed) {
+  
+  if (recalc_maxrange) {
     integrate_vv_recalc_maxrange();
-    cells_re_init();
-    ghost_init();
-    force_init();
+    on_parameter_change(FIELD_MAXRANGE);
+    recalc_maxrange = 0;
+    recalc_forces = 1;
   }
 
-  if (parameter_changed || topology_changed) {
+  if (reinit_thermo) {
     thermo_init();
+    reinit_thermo = 0;
+    recalc_forces = 1;
   }
 
 #ifdef ELECTROSTATICS
-  if (interactions_changed || topology_changed) {
-    if (coulomb.method == COULOMB_P3M)
+  if (reinit_coulomb) {
+    if(temperature > 0.0)
+      coulomb.prefactor = coulomb.bjerrum * temperature; 
+    else
+      coulomb.prefactor    = coulomb.bjerrum;
+    switch (coulomb.method) {
+    case COULOMB_P3M:
       P3M_init();
-  }
-
-  if (interactions_changed || parameter_changed || topology_changed) {
-    if(temperature > 0.0) {
-      p3m.prefactor    = p3m.bjerrum * temperature; 
-      dh_params.prefac = dh_params.bjerrum * temperature;
-      mmm1d_params.prefactor = mmm1d_params.bjerrum * temperature;
-    }
-    else {
-      p3m.prefactor    = p3m.bjerrum;
-      dh_params.prefac = dh_params.bjerrum;
-      mmm1d_params.prefactor = mmm1d_params.bjerrum;
-    }
-    if (coulomb.method == COULOMB_MMM1D)
+      break;
+    case COULOMB_MMM1D:
       MMM1D_init();
+      break;
+    default: break;
+    }
+    recalc_forces = 1;
   }
 #endif
 
@@ -120,27 +121,58 @@ void on_integration_start()
 
 void on_particle_change()
 {
-  particle_changed = 1;
-
+  resort_particles = 1;
+  
   /* the particle information is no longer valid */
   free(partCfg); partCfg=NULL;
 }
 
-void on_topology_change()
+void on_coulomb_change()
 {
-  grid_changed_topology();
-  cells_changed_topology();
-  topology_changed = 1;
+  reinit_coulomb = 1;
 }
 
-void on_ia_change()
+void on_short_range_ia_change()
 {
-  interactions_changed = 1;
+  recalc_maxrange = 1;  
 }
 
-void on_parameter_change()
+void on_constraint_change()
 {
-  parameter_changed = 1;
+  recalc_forces = 1;  
+}
+
+void on_parameter_change(int field)
+{
+  if (field == FIELD_BOXL || field == FIELD_NODEGRID)
+    grid_changed_topology();
+
+  if (field == FIELD_TIMESTEP || field == FIELD_GAMMA || field == FIELD_TEMPERATURE)
+    reinit_thermo = 1;
+
+  if (field == FIELD_TEMPERATURE)
+    reinit_coulomb = 1;
+
+#ifdef ELECTROSTATICS
+  switch (coulomb.method) {
+  case COULOMB_P3M:
+    if (field == FIELD_BOXL || field == FIELD_NODEGRID)
+      reinit_coulomb = 1;
+    break;
+  case COULOMB_MMM1D:
+    if (field == FIELD_BOXL)
+      reinit_coulomb = 1;
+    break;
+  default: break;
+  }
+#endif
+
+  switch (cell_structure.type) {
+  case CELL_STRUCTURE_DOMDEC:
+    if (field == FIELD_BOXL || field == FIELD_NODEGRID || field == FIELD_MAXRANGE ||
+	field == FIELD_MAXNUMCELLS || field == FIELD_SKIN)
+      cells_re_init(CELL_STRUCTURE_DOMDEC);
+  }
 }
 
 static void init_tcl(Tcl_Interp *interp)
@@ -152,6 +184,8 @@ static void init_tcl(Tcl_Interp *interp)
     installation of tcl commands
   */
 
+  /* in cells.c */
+  Tcl_CreateCommand(interp, "cellsystem", (Tcl_CmdProc *)cellsystem, 0, NULL);
   /* in integrate.c */
   Tcl_CreateCommand(interp, "invalidate_system", (Tcl_CmdProc *)invalidate_system, 0, NULL);
   Tcl_CreateCommand(interp, "integrate", (Tcl_CmdProc *)integrate, 0, NULL);

@@ -43,7 +43,6 @@ int gamma_callback(Tcl_Interp *interp, void *_data)
   friction_gamma = data;
 
   mpi_bcast_parameter(FIELD_GAMMA);
-  mpi_bcast_event(PARAMETER_CHANGED);
 
   return (TCL_OK);
 }
@@ -59,7 +58,6 @@ int temp_callback(Tcl_Interp *interp, void *_data)
   temperature = data;
 
   mpi_bcast_parameter(FIELD_TEMPERATURE);
-  mpi_bcast_event(PARAMETER_CHANGED);
 
   return (TCL_OK);
 }

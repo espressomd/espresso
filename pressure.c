@@ -34,7 +34,7 @@
 Observable_stat virials= {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
 
 void init_virials() {
-  if (virials.init_status != 0 && ! interactions_changed)
+  if (virials.init_status != 0)
     return;
   virials.n_pre        = 2;
   virials.n_bonded     = n_bonded_ia;
@@ -58,6 +58,9 @@ void init_virials() {
 }
 
 void calc_virials() {
+  fprintf(stderr, "pressure calculate not updated yet\n");
+  errexit();
+#if 0
   Cell *cell;
   Particle *p, **pairs, *p1,*p2,*p3;
   IA_parameters *ia_params;
@@ -193,10 +196,12 @@ void calc_virials() {
 	virials.sum.e[0] += virials.sum.e[i];
     
   }
+#endif
 }
 
 
 void calc_pressure() {
+#if 0
   /** Remarks:
       <ul><li> The ideal gas pressure P_ig is assumed to be the pressure which the system 
       would have if all interactions had been switched off.
@@ -258,6 +263,7 @@ void calc_pressure() {
     errexit();
   }
   virials.node.e[0] = SQR(p_total);
+#endif
 }
 
 int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv)

@@ -103,13 +103,6 @@ void map_node_array(int node, int pos[3]);
 */
 int map_array_node(int pos[3]);
 
-/** map particle position to node. 
- *
- * \return       number of the node where the particle is (should be) located.
- * \param pos[3] particle position
-*/
-int find_node(double pos[3]);
-
 /** fill neighbor lists of node. 
  *
  * Calculates the numbers of the 6 nearest neighbors for a node and

@@ -6,6 +6,8 @@
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
+#include <mpi.h>
+#include <tcl.h>
 #include "mmm1d.h"
 #include "polynom.h"
 #include "specfunc.h"
@@ -14,8 +16,7 @@
 #include "grid.h"
 #include "tuning.h"
 #include "utils.h"
-#include <mpi.h>
-#include <tcl.h>
+#include "interaction_data.h"
 
 #ifdef ELECTROSTATICS
 
@@ -98,7 +99,7 @@ static Polynom *modPsi = NULL;
 static int      n_modPsi = 0, eo_n_nodes = 0;
 static double L_i, L2, L2_i, prefL2_i, prefL3_i;
 
-MMM1D_struct mmm1d_params = { 0.05, 5, 1e-5, 1, 1};
+MMM1D_struct mmm1d_params = { 0.05, 5, 1e-5 };
 
 MDINLINE double mod_psi_even(int n, double x)
 { return evaluateAsTaylorSeriesAt(&modPsi[2*n],x*x); }
@@ -198,7 +199,7 @@ double determine_bessel_cutoff(double switch_rad, double maxPWerror, int maxP)
   return P;
 }
 
-int set_mmm1d_params(Tcl_Interp *interp, double bjerrum, double switch_rad,
+int set_mmm1d_params(Tcl_Interp *interp, double switch_rad,
 		     int bessel_cutoff, double maxPWerror)
 {
   char buffer[32 + 2*TCL_DOUBLE_SPACE];
@@ -208,7 +209,6 @@ int set_mmm1d_params(Tcl_Interp *interp, double bjerrum, double switch_rad,
 
   if (bessel_cutoff < 0 && switch_rad < 0) {
     /* determine besselcutoff and optimal switching radius */
-    mmm1d_params.bjerrum = 1;
     for (switch_rad = RAD_STEPPING*box_l[2]; switch_rad < maxrad; switch_rad += RAD_STEPPING*box_l[2]) {
       mmm1d_params.bessel_cutoff = determine_bessel_cutoff(switch_rad, maxPWerror, MAXIMAL_B_CUT);
       /* no reasonable cutoff possible */
@@ -259,7 +259,6 @@ int set_mmm1d_params(Tcl_Interp *interp, double bjerrum, double switch_rad,
     return TCL_ERROR;
   }
 
-  mmm1d_params.bjerrum = bjerrum;
   mmm1d_params.far_switch_radius_2 = switch_rad*switch_rad;
   mmm1d_params.bessel_cutoff = bessel_cutoff;
 
@@ -311,7 +310,7 @@ void MMM1D_init()
   L_i  = 1/box_l[2];
   L2   = box_l[2]*box_l[2];
   L2_i = L_i*L_i;
-  prefL2_i = mmm1d_params.prefactor*L2_i;
+  prefL2_i = coulomb.prefactor*L2_i;
   prefL3_i = prefL2_i*L_i;
 
   MMM1D_recalcTables();
@@ -362,7 +361,7 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
 
     /* real space parts */
 
-    pref = mmm1d_params.prefactor/(r2*r); 
+    pref = coulomb.prefactor/(r2*r); 
     *Fx += pref*dx;
     *Fy += pref*dy;
     *Fz += pref*dz;
@@ -370,7 +369,7 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
     shift_z = dz + box_l[2];
     rt2 = rxy2 + shift_z*shift_z;
     rt  = sqrt(rt2);
-    pref = mmm1d_params.prefactor/(rt2*rt); 
+    pref = coulomb.prefactor/(rt2*rt); 
     *Fx += pref*dx;
     *Fy += pref*dy;
     *Fz += pref*shift_z;
@@ -378,7 +377,7 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
     shift_z = dz - box_l[2];
     rt2 = rxy2 + shift_z*shift_z;
     rt  = sqrt(rt2);
-    pref = mmm1d_params.prefactor/(rt2*rt); 
+    pref = coulomb.prefactor/(rt2*rt); 
     *Fx += pref*dx;
     *Fy += pref*dy;
     *Fz += pref*shift_z;
@@ -398,16 +397,18 @@ MDINLINE void calc_pw_force(double dx, double dy, double dz,
     sr *= L2_i*4*C_2PI;
     sz *= L2_i*4*C_2PI;
     
-    pref = mmm1d_params.prefactor*(sr/rxy + 2*L_i/rxy2);
+    pref = coulomb.prefactor*(sr/rxy + 2*L_i/rxy2);
 
     *Fx = pref*dx;
     *Fy = pref*dy;
-    *Fz = mmm1d_params.prefactor*sz;
+    *Fz = coulomb.prefactor*sz;
   }
 }
 
 void MMM1D_calc_forces()
 {
+  fprintf(stderr, "MMM1D_calc_forces has to be rewritten\n");
+#if 0
   MPI_Status status;
 
   double *send_coords;
@@ -634,6 +635,7 @@ void MMM1D_calc_forces()
   free(recv_coords);
   free(recv_forces);
   free(sizes);
+#endif
 }
 
 #endif

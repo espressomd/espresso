@@ -29,6 +29,7 @@
 #include "verlet.h"
 #include "ghosts.h"
 #include "domain_decomposition.h"
+#include "parser.h"
 
 /* Variables */
 
@@ -41,9 +42,25 @@ CellPList ghost_cells = { NULL, 0, 0 };
 CellStructure cell_structure;
 
 /************************************************************/
+static void topology_init(int cs, CellPList *local) {
+  switch (cs) {
+  case CELL_STRUCTURE_CURRENT:
+    cell_structure.topology_init(local);
+    break;
+  case CELL_STRUCTURE_DOMDEC:
+    dd_topology_init(local);
+    break;
+  default:
+    fprintf(stderr, "ERROR: attempting to sort the particles in an unknown way\n");
+    errexit();
+  }
+}
+
+/************************************************************/
 void cells_init()
 {
-  dd_cells_init(&local_cells);
+  /* here local_cells should be empty still */
+  dd_topology_init(&local_cells);
 }
 
 /************************************************************/
@@ -59,7 +76,7 @@ static void free_cellplist(CellPList *cl)
 }
 
 /************************************************************/
-void cells_re_init() 
+void cells_re_init(int new_cs)
 {
   CellPList tmp_local;
   cell_structure.topology_release();
@@ -69,97 +86,9 @@ void cells_re_init()
   init_cellplist(&local_cells);
   /* deallocate the ghosts */
   free_cellplist(&ghost_cells);
-  cell_structure.topology_init(&tmp_local);
+  topology_init(new_cs, &tmp_local);
   /* finally deallocate the old cells */
   free_cellplist(&tmp_local);
-}
-
-#if 0
-  int i,j,ind;
-  int old_n_cells, old_ghost_cell_grid[3];
-  Cell         *old_cells;
-  ParticleList *pl;
-  Particle     *part;
-
-#ifdef ADDITIONAL_CHECKS
-  int part_cnt_old, part_cnt_new;
-#endif
-
-  /* first move particles to their nodes. Necessary if
-     box length has changed. May also be called in script mode,
-     so better also invalidate the node pointers. */
-  particle_invalidate_part_node();
-  invalidate_ghosts();
-  exchange_and_sort_part();
-
-  CELL_TRACE(fprintf(stderr,"%d: cells_re_init \n",this_node));
-
-  /* 1: store old cell grid */
-  old_cells = cells;
-  old_n_cells = n_cells;
-  for(i=0;i<3;i++) old_ghost_cell_grid[i] = ghost_cell_grid[i];
- 
-  /* 2: setup new cell grid */
-  /* 2a: set up dimensions of the cell grid */
-  calc_cell_grid();  
-  /* 2b: there should be a reasonable number of cells only!
-     But we will deal with that later... */
-  /* 2c: allocate new cell structure */
-  cells  = (Cell *)malloc(n_cells*sizeof(Cell));
-  /* 2d: allocate particle arrays */
-  for(i=0; i<n_cells; i++) init_cell(&cells[i]);
-  /* 2e: init cell neighbors */
-  for(i=0; i<n_cells; i++) init_cell_neighbors(i);
- 
-  /* 3: Transfer Particle data from old to new cell grid */
-  for(i=0;i<old_n_cells;i++) {
-    pl = &(old_cells[i].pList);
-    if(is_inner_cell(i,old_ghost_cell_grid)) {
-      for(j=0; j<pl->n; j++) {
-	part = &(pl->part[j]);
-	ind  = pos_to_cell_grid_ind(part->r.p);
-	append_unindexed_particle(&(cells[ind].pList),part);
-      }
-    }
-    if(pl->max>0) free(pl->part);
-    if(old_cells[i].n_neighbors>0) {
-      for(j=0; j<old_cells[i].n_neighbors; j++) free(old_cells[i].nList[j].vList.pair);
-      free(old_cells[i].nList);
-    }
-  }
-
-  for(i=0;i<n_cells;i++) {
-    if(is_inner_cell(i,ghost_cell_grid))
-      update_local_particles(&(cells[i].pList));
-  }
-
-#ifdef ADDITIONAL_CHECKS
-  /* check particle transfer */
-  part_cnt_old=0;
-  for(i=0;i<old_n_cells;i++) 
-    if(is_inner_cell(i,old_ghost_cell_grid)) 
-      part_cnt_old += old_cells[i].pList.n;
-  part_cnt_new=0;
-  for(i=0;i<n_cells;i++) 
-    if(is_inner_cell(i,ghost_cell_grid)) 
-      part_cnt_new += cells[i].pList.n;
-  if(part_cnt_old != part_cnt_new) 
-    CELL_TRACE(fprintf(stderr,"%d: cells_re_init: lost particles: old grid had %d new grid has %d particles.\n",this_node,part_cnt_old, part_cnt_new));
-#endif
-
-  CELL_TRACE(fprintf(stderr,"%d: cell_grid (%d %d %d) \n",this_node,cell_grid[0],cell_grid[1],cell_grid[2]));
-
-  free(old_cells);
-  /* cell structure initialized. */
-  rebuild_verletlist = 1;
-}
-
-#endif
-
-/*************************************************/
-void cells_changed_topology()
-{
-  cells_re_init();
 }
 
 /*************************************************/
@@ -171,34 +100,22 @@ int cells_get_n_particles()
   return cnt;
 }
 
-#if 0
 /*************************************************/
-Particle *cells_alloc_particle(int id, double pos[3])
+int cellsystem(ClientData data, Tcl_Interp *interp,
+	       int argc, char **argv)
 {
-  int rl;
-  int ind = pos_to_cell_grid_ind(pos);
-  ParticleList *pl = &cells[ind].pList;
-  Particle *pt;
-
-  pl->n++;
-  rl = realloc_particles(pl, pl->n);
-  pt = &pl->part[pl->n - 1];
-  init_particle(pt);
-
-  pt->p.identity = id;
-  memcpy(pt->r.p, pos, 3*sizeof(double));
-  if (rl)
-    update_local_particles(&cells[ind].pList);
-  else
-    local_particles[pt->p.identity] = pt;
-
-  return pt;
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "usage: cellsystem <system> <params>", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if (ARG0_IS_S("domain_decomposition"))
+    mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC);
+  else {
+    Tcl_AppendResult(interp, "unkown cell structure type \"", argv[0],"\"", (char *)NULL);
+    return TCL_ERROR;
+  }
+  return TCL_OK;
 }
-#endif
-
-/************************************************************/
-/*******************  privat functions  *********************/
-/************************************************************/
 
 /*************************************************/
 void print_particle_positions()

@@ -34,6 +34,9 @@ Observable_stat energy = {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
 
 void calc_energy()
 {
+  fprintf(stderr, "Energy calculate not updated yet\n");
+  errexit();
+#if 0
   Cell *cell;
   Particle *p, **pairs;
   Particle *p1, *p2;
@@ -200,11 +203,12 @@ void calc_energy()
       for(i=1;i<energy.n;i++)
 	energy.sum.e[0] += energy.sum.e[i];
   }
+#endif
 }
 
 void init_energies()
 {
-  if (energy.init_status != 0 && ! interactions_changed)
+  if (energy.init_status != 0)
     return;
 
   energy.n_pre        = 2;
@@ -223,12 +227,14 @@ void init_energies()
 
 void calc_energies()
 {
+#if 0
   /* check integrator status */
   if (parameter_changed || interactions_changed || topology_changed || particle_changed) {
     mpi_integrate(0);
   }
   /* calculate energies (in parallel) */
   mpi_gather_stats(1, NULL);
+#endif
 }
 
 /****************************************************************************************

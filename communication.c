@@ -109,20 +109,16 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_GET_CONSFOR 27
 /** Action number for \ref mpi_rescale_particles */
 #define REQ_RESCALE_PART 28
-/** Total number of action numbers. */
-#define REQ_MAXIMUM 29
-
-#ifdef ROTATION
+/** Action number for \ref mpi_bcast_cell_structure */
+#define REQ_BCAST_CS 29
 /** Action number for \ref mpi_send_quat. */
-#define REQ_SET_QUAT 29
+#define REQ_SET_QUAT 30
 /** Action number for \ref mpi_send_omega. */
-#define REQ_SET_OMEGA 30
+#define REQ_SET_OMEGA 31
 /** Action number for \ref mpi_send_torque. */
-#define REQ_SET_TORQUE 31
+#define REQ_SET_TORQUE 32
 /** Total number of action numbers. */
-#undef REQ_MAXIMUM
-#define REQ_MAXIMUM 32
-#endif
+#define REQ_MAXIMUM 33
 
 /** \name Slave Callbacks
     These functions are the slave node counterparts for the
@@ -138,11 +134,6 @@ void mpi_place_particle_slave(int node, int parm);
 void mpi_send_v_slave(int node, int parm);
 void mpi_send_f_slave(int node, int parm);
 void mpi_send_q_slave(int node, int parm);
-#ifdef ROTATION
-void mpi_send_quat_slave(int node, int parm);
-void mpi_send_omega_slave(int node, int parm);
-void mpi_send_torque_slave(int node, int parm);
-#endif
 void mpi_send_type_slave(int node, int parm);
 void mpi_send_bond_slave(int node, int parm);
 void mpi_recv_part_slave(int node, int parm);
@@ -163,6 +154,10 @@ void mpi_bit_random_seed_slave(int node, int parm);
 void mpi_bit_random_stat_slave(int node, int parm);
 void mpi_get_constraint_force_slave(int node, int parm);
 void mpi_rescale_particles_slave(int node, int parm);
+void mpi_bcast_cell_structure_slave(int node, int parm);
+void mpi_send_quat_slave(int node, int parm);
+void mpi_send_omega_slave(int node, int parm);
+void mpi_send_torque_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -197,11 +192,10 @@ SlaveCallback *callbacks[] = {
   mpi_bit_random_stat_slave,        /* 26: REQ_RANDOM_STAT */
   mpi_get_constraint_force_slave,   /* 27: REQ_GET_CONSFOR */
   mpi_rescale_particles_slave,      /* 28: REQ_RESCALE_PART */
-#ifdef ROTATION
-  mpi_send_quat_slave,              /* 29: REQ_SET_QUAT */
-  mpi_send_omega_slave,             /* 30: REQ_SET_OMEGA */
-  mpi_send_torque_slave,            /* 31: REQ_SET_TORQUE */
-#endif  
+  mpi_bcast_cell_structure_slave,   /* 29: REQ_RESCALE_PART */
+  mpi_send_quat_slave,              /* 30: REQ_SET_QUAT */
+  mpi_send_omega_slave,             /* 31: REQ_SET_OMEGA */
+  mpi_send_torque_slave,            /* 32: REQ_SET_TORQUE */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -235,11 +229,10 @@ char *names[] = {
   "BIT_RAND_STAT",  /* 26 */
   "GET_CONSTR",     /* 27 */
   "RESCALE_PART",   /* 28 */
-#ifdef ROTATION  
-  "SET_QUAT"  ,     /* 29 */
-  "SET_OMEGA",      /* 30 */
-  "SET_TORQUE",     /* 31 */
-#endif  
+  "BCAST_CS",       /* 29 */
+  "SET_QUAT"  ,     /* 30 */
+  "SET_OMEGA",      /* 31 */
+  "SET_TORQUE",     /* 32 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -341,16 +334,18 @@ void mpi_bcast_parameter_slave(int node, int i)
     break;
   default: break;
   }
+
+  on_parameter_change(i);
 }
 
 /*************** REQ_WHO_HAS ****************/
 
 void mpi_who_has()
 {
-  Cell *c;
+  Cell *cell;
   int *sizes = malloc(sizeof(int)*n_nodes);
   int *pdata = NULL;
-  int pdata_s = 0, i, m, n, o;
+  int pdata_s = 0, i, c;
   int pnode;
   int n_part;
   MPI_Status status;
@@ -369,10 +364,10 @@ void mpi_who_has()
     COMM_TRACE(fprintf(stderr, "node %d reports %d particles\n",
 		       pnode, sizes[pnode]));
     if (pnode == this_node) {
-      INNER_CELLS_LOOP(m,n,o) {
-	c = CELL_PTR(m,n,o);
-	for (i = 0; i < c->pList.n; i++)
-	  particle_node[c->pList.part[i].p.identity] = this_node;
+      for (c = 0; c < local_cells.n; c++) {
+	cell = local_cells.cell[c];
+	for (i = 0; i < cell->pList.n; i++)
+	  particle_node[cell->pList.part[i].p.identity] = this_node;
       }
     }
     else if (sizes[pnode] > 0) {
@@ -393,8 +388,8 @@ void mpi_who_has()
 
 void mpi_who_has_slave(int node, int param)
 {
-  Cell *c;
-  int npart, i, m, n, o;
+  Cell *cell;
+  int npart, i, c;
   int *sendbuf;
   int n_part;
 
@@ -405,10 +400,10 @@ void mpi_who_has_slave(int node, int param)
 
   sendbuf = malloc(sizeof(int)*n_part);
   npart = 0;
-  INNER_CELLS_LOOP(m,n,o) {
-    c = CELL_PTR(m,n,o);
-    for (i = 0; i < c->pList.n; i++)
-      sendbuf[npart++] = c->pList.part[i].p.identity;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    for (i = 0; i < cell->pList.n; i++)
+      sendbuf[npart++] = cell->pList.part[i].p.identity;
   }
   MPI_Send(sendbuf, npart, MPI_INT, 0, REQ_WHO_HAS, MPI_COMM_WORLD);
   free(sendbuf);
@@ -424,23 +419,14 @@ void mpi_bcast_event(int event)
 void mpi_bcast_event_slave(int node, int event)
 {
   switch (event) {
-  case PARTICLE_CHANGED:
-    on_particle_change();
-    break;
-  case INTERACTION_CHANGED:
-    on_ia_change();
-    break;
-  case PARAMETER_CHANGED:
-    on_parameter_change();  
-    break;
-  case TOPOLOGY_CHANGED:
-    on_topology_change();  
-    break;
 #ifdef ELECTROSTATICS
   case P3M_COUNT_CHARGES:
     P3M_count_charged_particles();
     break;
 #endif
+  case INVALIDATE_SYSTEM:
+    local_invalidate_system();
+    break;
   default:;
   }
 }
@@ -593,12 +579,11 @@ void mpi_send_type_slave(int pnode, int part)
   on_particle_change();
 }
 
-#ifdef ROTATION
-
 /********************* REQ_SET_QUAT ********/
 
 void mpi_send_quat(int pnode, int part, double quat[4])
 {
+#ifdef ROTATION
   mpi_issue(REQ_SET_QUAT, pnode, part);
 
   if (pnode == this_node) {
@@ -613,10 +598,12 @@ void mpi_send_quat(int pnode, int part, double quat[4])
   }
 
   on_particle_change();
+#endif
 }
 
 void mpi_send_quat_slave(int pnode, int part)
 {
+#ifdef ROTATION
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
@@ -625,12 +612,14 @@ void mpi_send_quat_slave(int pnode, int part)
   }
 
   on_particle_change();
+#endif
 }
 
 /********************* REQ_SET_OMEGA ********/
 
 void mpi_send_omega(int pnode, int part, double omega[3])
 {
+#ifdef ROTATION
   mpi_issue(REQ_SET_OMEGA, pnode, part);
 
   if (pnode == this_node) {
@@ -645,10 +634,12 @@ void mpi_send_omega(int pnode, int part, double omega[3])
   }
 
   on_particle_change();
+#endif
 }
 
 void mpi_send_omega_slave(int pnode, int part)
 {
+#ifdef ROTATION
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
@@ -657,17 +648,18 @@ void mpi_send_omega_slave(int pnode, int part)
   }
 
   on_particle_change();
+#endif
 }
 
 /********************* REQ_SET_TORQUE ********/
 
 void mpi_send_torque(int pnode, int part, double torque[3])
 {
+#ifdef ROTATION
   mpi_issue(REQ_SET_TORQUE, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-/*  memcpy(p->torque, torque, 3*sizeof(double)); */
     p->torque[0] = torque[0];
     p->torque[1] = torque[1];
     p->torque[2] = torque[2];
@@ -677,10 +669,12 @@ void mpi_send_torque(int pnode, int part, double torque[3])
   }
 
   on_particle_change();
+#endif
 }
 
 void mpi_send_torque_slave(int pnode, int part)
 {
+#ifdef ROTATION
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
@@ -689,9 +683,8 @@ void mpi_send_torque_slave(int pnode, int part)
   }
 
   on_particle_change();
-}
-
 #endif
+}
 
 
 /********************* REQ_SET_BOND ********/
@@ -851,7 +844,7 @@ void mpi_bcast_ia_params(int i, int j)
 	      0, MPI_COMM_WORLD);
   }
 
-  on_ia_change();
+  on_short_range_ia_change();
 }
 
 void mpi_bcast_ia_params_slave(int i, int j)
@@ -867,7 +860,7 @@ void mpi_bcast_ia_params_slave(int i, int j)
 	      0, MPI_COMM_WORLD);
   }
 
-  on_ia_change();
+  on_short_range_ia_change();
 }
 
 /*************** REQ_BCAST_IA_SIZE ************/
@@ -943,7 +936,8 @@ void mpi_get_particles(Particle *result, IntList *bi)
   int n_part;
   int tot_size, i, g, pnode;
   int *sizes;
-  int m,n,o;
+  Cell *cell;
+  int c;
   MPI_Status status;
 
   mpi_issue(REQ_GETPARTS, -1, bi != NULL);
@@ -969,9 +963,10 @@ void mpi_get_particles(Particle *result, IntList *bi)
   for (pnode = 0; pnode < n_nodes; pnode++) {
     if (sizes[pnode] > 0) {
       if (pnode == this_node) {
-	INNER_CELLS_LOOP(m, n, o) {
-	  Particle *part = CELL_PTR(m,n,o)->pList.part;
-	  int npart = CELL_PTR(m,n,o)->pList.n;
+	for (c = 0; c < local_cells.n; c++) {
+	  cell = local_cells.cell[c];
+	  Particle *part = cell->pList.part;
+	  int npart = cell->pList.n;
 	  memcpy(&result[g], part, npart*sizeof(Particle));
 	  g += npart;
 	  if (bi) {
@@ -1041,8 +1036,9 @@ void mpi_get_particles_slave(int pnode, int bi)
   IntList local_bi;
   int n_part;
   int g;
-  int m,n,o;
   Particle *result;
+  Cell *cell;
+  int c;
 
   n_part = cells_get_n_particles();
   /* first collect number of particles on each node */
@@ -1057,11 +1053,12 @@ void mpi_get_particles_slave(int pnode, int bi)
     init_intlist(&local_bi);
     
     g = 0;
-    INNER_CELLS_LOOP(m, n, o) {
-      Particle *part = CELL_PTR(m,n,o)->pList.part;
-      int npart = CELL_PTR(m,n,o)->pList.n;
+    for (c = 0; c < local_cells.n; c++) {
+      cell = local_cells.cell[c];
+      Particle *part = cell->pList.part;
+      int npart = cell->pList.n;
       memcpy(&result[g],part,npart*sizeof(Particle));
-      g+=CELL_PTR(m,n,o)->pList.n;
+      g+=cell->pList.n;
       if (bi) {
 	int pc;
 	for (pc = 0; pc < npart; pc++) {
@@ -1088,19 +1085,16 @@ void mpi_get_particles_slave(int pnode, int bi)
 /*************** REQ_SET_TIME_STEP ************/
 void mpi_set_time_step()
 {
-
   mpi_issue(REQ_SET_TIME_STEP, -1, 0);
-  MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-  rescale_velocities();
+  mpi_set_time_step_slave(-1, 0);
 }
 
 void mpi_set_time_step_slave(int node, int i)
 {
-
-  old_time_step = time_step;
+  double old_ts = time_step;
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  rescale_velocities();
+  rescale_velocities(time_step / old_ts);
+  on_parameter_change(FIELD_TIMESTEP);
 }
 
 /*************** REQ_BCAST_COULOMB ************/
@@ -1133,7 +1127,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     fprintf(stderr, "cannot bcast coulomb params for unknown method %d\n", coulomb.method);
     errexit();
   }
-  on_ia_change();
+  on_coulomb_change();
 #endif
 }
 
@@ -1192,7 +1186,7 @@ void mpi_bcast_constraint(int del_num)
     constraints = realloc(constraints,n_constraints*sizeof(Constraint));
   }
 
-  on_ia_change();
+  on_constraint_change();
 #endif
 }
 
@@ -1215,7 +1209,7 @@ void mpi_bcast_constraint_slave(int node, int parm)
     constraints = realloc(constraints,n_constraints*sizeof(Constraint));    
   }
 
-  on_ia_change();
+  on_constraint_change();
 #endif
 }
 
@@ -1289,7 +1283,7 @@ void mpi_lj_cap_forces_slave(int node, int parm)
 {
   MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   calc_lj_cap_radii(lj_force_cap);
-  on_ia_change();
+  on_short_range_ia_change();
 }
 
 /*************** REQ_GET_CONSFOR ************/
@@ -1387,6 +1381,19 @@ void mpi_rescale_particles_slave(int pnode, int dir) {
   MPI_Recv(&scale, 1, MPI_DOUBLE, 0, REQ_PLACE, MPI_COMM_WORLD, &status);
   local_rescale_particles(dir, scale);
   on_particle_change();
+}
+
+/*************** REQ_BCAST_CS *****************/
+
+void mpi_bcast_cell_structure(int cs)
+{
+  mpi_issue(REQ_BCAST_IA_SIZE, -1, cs);
+  mpi_bcast_n_particle_types_slave(-1, cs);
+}
+
+void mpi_bcast_cell_structure_slave(int pnode, int cs)
+{
+  cells_re_init(cs);
 }
 
 /*********************** MAIN LOOP for slaves ****************/

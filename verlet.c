@@ -77,9 +77,7 @@ void build_verlet_lists()
 {
   Cell *cell;
   PairList *pl;
-  int i,j,nc;
-  /* cell position */
-  int m,n,o;
+  int i,j,nc, c;
   /* particle lists */
   Particle *p1, *p2;
   int np1, np2;
@@ -88,8 +86,8 @@ void build_verlet_lists()
  
   VERLET_TRACE(fprintf(stderr,"%d: build_verlet_list_and_force_calc:\n",this_node));
 
-  INNER_CELLS_LOOP(m, n, o) {
-    cell = CELL_PTR(m, n, o);
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
     p1   = cell->pList.part;
     np1  = cell->pList.n;
     
@@ -157,9 +155,7 @@ void build_verlet_lists_and_force_calc()
 {
   Cell *cell;
   PairList *pl;
-  int i,j,j_start,k,nc;
-  /* cell position */
-  int m,n,o;
+  int i,j,j_start,k,nc,c;
   /* particle lists */
   Particle *p1, *p2;
   int np1, np2;
@@ -172,8 +168,8 @@ void build_verlet_lists_and_force_calc()
   /* preparation forces */
   init_forces();    
 
-  INNER_CELLS_LOOP(m, n, o) {
-    cell = CELL_PTR(m, n, o);
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
 
     /* particle list of that cell */
     p1   = cell->pList.part;

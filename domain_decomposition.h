@@ -36,18 +36,31 @@ extern int max_num_cells;
 /************************************************************/
 /*@{*/
 
+/** Initialize the topology. The argument is list of cells, which particles have to be
+    sorted into their cells. The particles might not belong to this node.
+    This procedure is used when particle data or cell structure has changed and
+    the cell structure has to be reinitialized. This also includes setting up the
+    cell_structure array. */
+void dd_topology_init(CellPList *cl);
 
-/** implements \ref cell_structure::topology_init. */
-void dd_cells_init(CellPList *cl);
+/** Called when the current cell structure is invalidated because for example the
+    box length has changed. This procedure may NOT destroy the old inner and ghost
+    cells, but it should free all other organizational data. Note that parameters
+    like the box length or the node_grid may already have changed. Therefore
+    organizational data has to be stored independently from variables
+    that may be changed from outside. */
+void dd_topology_release();
 
-/** implements \ref cell_structure::topology_release. */
-void dd_cells_release();
+/** Just resort the particles. Used during integration. The particles are stored in
+    the cell structure. Domain decomposition can assume for example that particles
+    only have to be sent to neighboring nodes. */
+void  dd_exchange_and_sort_particles();
 
 /** implements \ref cell_structure::position_to_cell. */
-Cell *dd_cells_position_to_cell(double pos[3]);
+Cell *dd_position_to_cell(double pos[3]);
 
 /** implements \ref cell_structure::position_to_cell. */
-Cell *dd_cells_position_to_node(double pos[3]);
+Cell *dd_position_to_node(double pos[3]);
 
 /** Callback for setmd maxnumcells (maxnumcells >= 27). 
     see also \ref max_num_cells */

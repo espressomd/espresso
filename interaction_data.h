@@ -135,20 +135,19 @@ typedef struct {
 typedef struct {
   /** Bjerrum length. */
   double bjerrum;
+  /** bjerrum length times temperature. */
+  double prefactor;
+  
   /** Method to treat coulomb interaction. See \ref COULOMB_NONE "Type codes for Coulomb" */
   int method;
 } Coulomb_parameters;
 
 /** Structure to hold Debye-Hueckel Parameters. */
 typedef struct {
-  /** bjerrum length. */
-  double bjerrum;
   /** Cutoff for Debey-Hueckel interaction. */
   double r_cut;
   /** Debye kappa (inverse Debye length) . */
   double kappa;
-  /** bjerrum length times temperature. */
-  double prefac;
 } Debye_hueckel_params;
 
 /*@}*/
