@@ -1,10 +1,9 @@
 proc blockfile_write_particles {channel {info "id pos v q"} {range "0-end"}} {
     blockfile $channel write start "particles"
+    if {![regexp "pos" $info]} {set info "pos $info"}
+    if {![regexp "id" $info]} {set info "id $info"}
     puts $channel "{$info} "
     foreach list $range {
-	if {![regexp "id" $info]} {
-	    set info "id $info"
-	}
 	set list [split $list "-"]
 	set len [llength $list]
 	if {$len == 1} {
