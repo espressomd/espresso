@@ -20,6 +20,7 @@ int chain_start = 0, chain_n_chains = 0, chain_length = 0;
 
 static int get_chain_structure_info(Tcl_Interp *interp, int *argc, char ***argv)
 {
+  /* 'analyze set chains [<chain_start> <n_chains> <chain_length>]' */
   if (*argc == 0)
     return TCL_OK;
   if (*argc < 3) {
@@ -57,11 +58,13 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   argv += 2;
 
   if (!strncmp(mode, "set", strlen(mode))) {
+    /* 'analyze set <structure info>' */
     if (argc == 0) {
       Tcl_AppendResult(interp, "which topology are you interested in?", (char *)NULL);
       return TCL_ERROR;
     }
     if (!strncmp(argv[0], "chains", strlen(argv[0]))) {
+      /* 'analyze set chains [<chain_start> <n_chains> <chain_length>]' */
       argc--;
       argv++;
       if (argc == 0) {
@@ -78,12 +81,14 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       return TCL_OK;
     }
     else {
+      /* default */
       Tcl_AppendResult(interp, "The topology \"", argv[0],
 		       "\" you requested is not implemented.", (char *)NULL);
       return (TCL_ERROR);
     }
   }
   else if (!strncmp(mode, "mindist", strlen(mode))) {
+    /* 'analyze mindist' */
     if (n_total_particles <= 1) {
       Tcl_AppendResult(interp, "(not enough particles)",
 		       (char *)NULL);
@@ -129,6 +134,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
   }
   else if (!strncmp(mode, "nbhood", strlen(mode))) {
+    /* 'analyze nbhood <part_id> <r_catch>' */
     Particle ref;
 
     if (n_total_particles == 0) {
@@ -163,6 +169,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   else if (!strncmp(mode, "distto", strlen(mode))) {
+    /* 'analyze distto <posx> <posy> <posz>' */
     xt = atof(argv[0]); yt = atof(argv[1]); zt = atof(argv[2]);
 
     if (n_total_particles == 0) {
@@ -186,6 +193,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   else if (!strncmp(mode, "re", strlen(mode))) {
+    /* 'analyze re [<chain_start> <n_chains> <chain_length>]' */
     double dist = 0;
 
     /* Averaged quadratic end-to-end-distance of the polymer chains */
@@ -217,6 +225,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   else if (!strncmp(mode, "rg", strlen(mode))) {
+    /* 'analyze rg [<chain_start> <n_chains> <chain_length>]' */
     double r_CM_x=0.0, r_CM_y=0.0, r_CM_z=0.0, r_G=0.0, doubMPC;
 
     /* Averaged radius of gyration */
@@ -260,6 +269,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   else if (!strncmp(mode, "rh", strlen(mode))) {
+    /* 'analyze rh [<chain_start> <n_chains> <chain_length>]' */
     double rh=0.0, ri=0.0;
 
     /* Averaged hydrodynamic radius */
@@ -299,6 +309,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   else if (!strncmp(mode, "g123", strlen(mode))) {
+    /* 'analyze g123 [-init [<chain_start> <n_chains> <chain_length>]]' */
     double g1=0.0, g2=0.0, g3=0.0, cm_tmp[3];
     int init = 0;
     /* - Mean square displacement of a monomer
