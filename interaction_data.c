@@ -27,6 +27,8 @@
 #include "parser.h"
 #include "utils.h"
 #include "cells.h"
+#include "comforce.h"
+#include "comfixed.h"
 
 /****************************************
  * variables
@@ -79,6 +81,7 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJ_offset = 
     params->LJ_capradius = 0;
   
+#ifdef LJCOS
   params->LJCOS_eps =
     params->LJCOS_sig =
     params->LJCOS_cut = 
@@ -86,6 +89,7 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJCOS_alfa = 
     params->LJCOS_beta = 
     params->LJCOS_rmin = 0 ;
+#endif
 
   params->GB_eps =
     params->GB_sig =
@@ -106,12 +110,16 @@ void initialize_ia_params(IA_parameters *params) {
   params->TAB_stepsize = 0.0;
   strcpy(params->TAB_filename,"");
 
+#ifdef COMFORCE
   params->COMFORCE_flag = 0;
   params->COMFORCE_dir = 0;
   params->COMFORCE_force = 0.;
 	params->COMFORCE_fratio = 0.;
+#endif
 
+#ifdef COMFIXED
   params->COMFIXED_flag = 0;
+#endif
 }
 
 /** Copy interaction parameters. */
@@ -123,6 +131,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJ_offset = src->LJ_offset;
   dst->LJ_capradius = src->LJ_capradius;
 
+#ifdef LJCOS
   dst->LJCOS_eps = src->LJCOS_eps;
   dst->LJCOS_sig = src->LJCOS_sig;
   dst->LJCOS_cut = src->LJCOS_cut;
@@ -130,6 +139,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJCOS_alfa = src->LJCOS_alfa;
   dst->LJCOS_beta = src->LJCOS_beta;
   dst->LJCOS_rmin = src->LJCOS_rmin;
+#endif
   
   dst->GB_eps = src->GB_eps;
   dst->GB_sig = src->GB_sig;
@@ -150,13 +160,16 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->TAB_stepsize = src->TAB_stepsize;
   strcpy(dst->TAB_filename,src->TAB_filename);
 
+#ifdef COMFORCE
   dst->COMFORCE_flag = src->COMFORCE_flag;
   dst->COMFORCE_dir = src->COMFORCE_dir;
   dst->COMFORCE_force = src->COMFORCE_force;
   dst->COMFORCE_fratio = src->COMFORCE_fratio;
+#endif
 
+#ifdef COMFIXED
   dst->COMFIXED_flag = src->COMFIXED_flag;
-
+#endif
 }
 
 /** returns non-zero if particles of type i and j have a nonbonded interaction */
@@ -322,22 +335,7 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
   }
 #ifdef LJCOS
-  if (data->LJCOS_cut != 0) {
-    Tcl_PrintDouble(interp, data->LJCOS_eps, buffer);
-    Tcl_AppendResult(interp, "lj-cos ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJCOS_sig, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJCOS_cut, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJCOS_offset, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJCOS_alfa, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJCOS_beta, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->LJCOS_rmin, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
-  }
+  if (data->LJCOS_cut != 0) printljcosIAToResult(interp,i,j);
 #endif
   if (data->GB_cut != 0) {
     Tcl_PrintDouble(interp, data->GB_eps, buffer);
@@ -366,22 +364,11 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 
   }
 #ifdef COMFORCE
-  if (data->COMFORCE_flag != 0) {
-    sprintf(buffer,"%d",data->COMFORCE_flag);
-    Tcl_AppendResult(interp, "comforce ", buffer, " ", (char *) NULL);
-    sprintf(buffer,"%d",data->COMFORCE_dir);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->COMFORCE_force / (0.5*time_step*time_step), buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, data->COMFORCE_fratio, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  }
+  if (data->COMFORCE_flag != 0) printcomforceIAToResult(interp,i,j);
 #endif
+
 #ifdef COMFIXED
-  if (data->COMFIXED_flag != 0) {
-    sprintf(buffer,"%d",data->COMFIXED_flag);
-    Tcl_AppendResult(interp, "comfixed ", buffer, " ", (char *) NULL);
-  }
+  if (data->COMFIXED_flag != 0) printcomfixedIAToResult(interp,i,j);
 #endif
 
   return (TCL_OK);
@@ -625,118 +612,6 @@ int inter_print_bonded(Tcl_Interp *interp, int i)
 		   (char *) NULL);
   return TCL_ERROR;
 }
-
-#ifdef LJCOS
-int lj_cos_set_params(int part_type_a, int part_type_b,
-		      double eps, double sig, double cut,
-		      double offset)
-{
-  IA_parameters *data, *data_sym;
-
-  double facsq;
-
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
-  
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* LJCOS should be symmetrically */
-  data_sym->LJCOS_eps    = data->LJCOS_eps    = eps;
-  data_sym->LJCOS_sig    = data->LJCOS_sig    = sig;
-  data_sym->LJCOS_cut    = data->LJCOS_cut    = cut;
-  data_sym->LJCOS_offset = data->LJCOS_offset = offset;
-
-  /* Calculate dependent parameters */
-  facsq = driwu2*SQR(sig);
-  data_sym->LJCOS_rmin = data->LJCOS_rmin = sqrt(driwu2)*sig;
-  data_sym->LJCOS_alfa = data->LJCOS_alfa = PI/(SQR(data->LJCOS_cut)-facsq);
-  data_sym->LJCOS_beta = data->LJCOS_beta = PI*(1.-(1./(SQR(data->LJCOS_cut)/facsq-1.)));
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
-  
-  return TCL_OK;
-}
-#endif
-
-#ifdef COMFORCE
-int comforce_set_params(int part_type_a, int part_type_b,
-		      int flag, int dir, double force, double fratio)
-{
-  IA_parameters *data, *data_sym;
-
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
-  
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* COMFORCE should be symmetrically */
-  data_sym->COMFORCE_flag    = data->COMFORCE_flag    = flag;
-  data_sym->COMFORCE_dir    = data->COMFORCE_dir    = dir;
-  data_sym->COMFORCE_force    = data->COMFORCE_force    = force;
-  data_sym->COMFORCE_fratio    = data->COMFORCE_fratio    = fratio;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
-  
-  return TCL_OK;
-}
-#endif
-
-#ifdef COMFIXED
-int comfixed_set_params(int part_type_a, int part_type_b, int flag)
-{
-  Particle *p;
-  int i, j, np, c;
-  Cell *cell;
-  IA_parameters *data, *data_sym;
-
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
-  
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* COMFIXED should be symmetrically */
-  data_sym->COMFIXED_flag    = data->COMFIXED_flag    = flag;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for(i = 0; i < np; i++) {
-      if(p[i].p.type==part_type_a) {
-	for(j = 0; j < 3; j++) {
-	  p[i].m.v[j] = 0.;
-	  p[i].f.f[j] = 0.;
-	}
-      }
-    }
-  }
-  
-  return TCL_OK;
-}
-#endif
 
 #ifdef LENNARD_JONES
 int lennard_jones_set_params(int part_type_a, int part_type_b,
@@ -1064,9 +939,6 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 			   int argc, char ** argv)
 {
   int change;
-#ifdef LJCOS
-  double tmp;
-#endif
 #ifdef LENNARD_JONES
   /* parameters needed for LJ */
   double eps, sig, cut, shift, offset, cap_radius;
@@ -1079,14 +951,6 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
   /* Parameters needed for tabulated force */
   char* filename = NULL;
 #endif
-#ifdef COMFORCE
-  /* parameters needed for comforce and comfixed */
-  int flag, dir; 
-  double force, fratio;
-#endif
-#ifdef COMFIXED
-  int flagc;
-#endif 
   
   Tcl_ResetResult(interp);
 
@@ -1151,113 +1015,18 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
      * interaction
      */
 #ifdef LJCOS
-    else if (ARG0_IS_S("lj-cos")) {
-      if (argc < 5) {
-	Tcl_AppendResult(interp, "lj-cos needs 4 parameters: "
-			 "<ljcos_eps> <ljcos_sig> <ljcos_cut> <ljcos_offset>",
-			 (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      /* copy lj-cos parameters */
-      if ((! ARG_IS_D(1, eps))   ||
-	  (! ARG_IS_D(2, sig))   ||
-	  (! ARG_IS_D(3, cut))   ||
-	  (! ARG_IS_D(4, offset)    )) {
-	Tcl_AppendResult(interp, "lj-cos needs 4 DOUBLE parameters: "
-			 "<ljcos_eps> <ljcos_sig> <ljcos_cut> <ljcos_offset>",
-			 (char *) NULL);
-	return TCL_ERROR;
-      }
-      change = 5;
-
-      /* fix for the inconsistency in the ljcos parameters.
-	 There are 7 parameters for ljcos, but you read in only four of them.
-	 The rest is calculated in lj_cos_set_params.
-	 This is a problem with the blockfile format (Mehmet) 
-      */
-
-      if (argc >= 8 && ARG_IS_D(5, tmp) && ARG_IS_D(6, tmp) && ARG_IS_D(7, tmp))
-	change += 3;
-      else
-	Tcl_ResetResult(interp);
-
-      if (lj_cos_set_params(part_type_a, part_type_b, eps, sig, cut, offset) == TCL_ERROR) {
-	Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-	return TCL_ERROR;
-      }
-    }
+    else if (ARG0_IS_S("lj-cos")) ljcos_parser(interp,
+			   part_type_a, part_type_b, argc, argv, &change);
 #endif
 
-  /* parse 
-   *                        comforce
-   * interaction
-   */
 #ifdef COMFORCE
-  else if (ARG0_IS_S("comforce")) {
-  	
-    if (argc != 5) {
-      Tcl_AppendResult(interp, "comforce needs 4 parameters: "
-		       "<comforce_flag> <comforce_dir> <comforce_force> <comforce_fratio>",
-		       (char *) NULL);
-      return TCL_ERROR;
-    }
-	 
-	  if (part_type_a == part_type_b) {
-	    Tcl_AppendResult(interp, "comforce needs 2 different types ", (char *) NULL);
-	    return TCL_ERROR;
-	  }
-
-    /* copy comforce parameters */
-    if ((! ARG_IS_I(1, flag)) || (! ARG_IS_I(2, dir)) || (! ARG_IS_D(3, force)) || (! ARG_IS_D(4, fratio)) ) {
-	    Tcl_AppendResult(interp, "comforce needs 2 INTEGER 1 DOUBLE parameter: "
-			  "<comforce_flag> <comforce_dir> <comforce_force> <comforce_fratio>", (char *) NULL);
-	    return TCL_ERROR;
-    }
-    
-    force *= (0.5*time_step*time_step);
-    change = 5;
-    
-    if (comforce_set_params(part_type_a, part_type_b, flag, dir, force, fratio) == TCL_ERROR) {
-	Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-	return TCL_ERROR;
-    }
-  }
+  else if (ARG0_IS_S("comforce")) comforce_parser(interp,
+			   part_type_a, part_type_b, argc, argv, &change);
 #endif
 
 #ifdef COMFIXED
-  /* parse 
-   *                        comfixed
-   * interaction
-   */
-  else if (ARG0_IS_S("comfixed")) {
-  	
-    if (argc != 2) {
-      Tcl_AppendResult(interp, "comfixed needs 1 parameters: "
-		       "<comfixed_flag> ", (char *) NULL);
-      return TCL_ERROR;
-    }
-	 
-	  if (part_type_a != part_type_b) {
-	    Tcl_AppendResult(interp, "comfixed must be among same type interactions", (char *) NULL);
-	    return TCL_ERROR;
-	  }
-
-    /* copy comfixed parameters */
-    if ((! ARG_IS_I(1, flagc)) )
-    {
-	    Tcl_AppendResult(interp, "comfixed needs 1 INTEGER parameter: "
-			  "<comfixed_flag>", (char *) NULL);
-	    return TCL_ERROR;
-    }
-
-    change = 2;
-
-    if (comfixed_set_params(part_type_a, part_type_b, flagc) == TCL_ERROR) {
-	Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-	return TCL_ERROR;
-    }
-  }
+  else if (ARG0_IS_S("comfixed")) comfixed_parser(interp,
+			   part_type_a, part_type_b, argc, argv, &change);
 #endif
 
     /* parse 

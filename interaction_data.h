@@ -111,6 +111,7 @@ typedef struct {
   double LJ_capradius;
   /*@}*/
 
+#ifdef LJCOS
   /** \name Lennard-Jones+Cos potential */
   /*@{*/
   double LJCOS_eps;
@@ -121,6 +122,7 @@ typedef struct {
   double LJCOS_beta;
   double LJCOS_rmin;
   /*@}*/
+#endif
   
   /** \name Gay-Berne potential */
   /*@{*/
@@ -150,6 +152,7 @@ typedef struct {
 
   /*@}*/  
   
+#ifdef COMFORCE
   /** \name center of mass directed force */
   /*@{*/
   int COMFORCE_flag;
@@ -157,11 +160,14 @@ typedef struct {
   double COMFORCE_force;
   double COMFORCE_fratio;
   /*@}*/
+#endif
   
+#ifdef COMFIXED
   /** \name center of mass directed force */
   /*@{*/
   int COMFIXED_flag;
   /*@}*/
+#endif
 
 } IA_parameters;
 
