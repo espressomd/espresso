@@ -25,6 +25,7 @@
 #include "gb.h"
 #include "parser.h"
 #include "utils.h"
+#include "cells.h"
 
 /****************************************
  * variables
@@ -102,6 +103,13 @@ void initialize_ia_params(IA_parameters *params) {
   params->TAB_maxval = 0.0;
   params->TAB_maxval2 = 0.0;
   params->TAB_stepsize = 0.0;
+
+  params->COMFORCE_flag = 0;
+  params->COMFORCE_dir = 0;
+  params->COMFORCE_force = 0.;
+	params->COMFORCE_fratio = 0.;
+
+  params->COMFIXED_flag = 0;
 }
 
 /** Copy interaction parameters. */
@@ -138,6 +146,13 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->TAB_maxval = src->TAB_maxval;
   dst->TAB_maxval2 = src->TAB_maxval2;
   dst->TAB_stepsize = src->TAB_stepsize;
+
+  dst->COMFORCE_flag = src->COMFORCE_flag;
+  dst->COMFORCE_dir = src->COMFORCE_dir;
+  dst->COMFORCE_force = src->COMFORCE_force;
+  dst->COMFORCE_fratio = src->COMFORCE_fratio;
+
+  dst->COMFIXED_flag = src->COMFIXED_flag;
 
 }
 
@@ -354,6 +369,24 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
     Tcl_PrintDouble(interp, data->TAB_stepsize, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   }
+#ifdef COMFORCE
+  if (data->COMFORCE_flag != 0) {
+    sprintf(buffer,"%d",data->COMFORCE_flag);
+    Tcl_AppendResult(interp, "comforce ", buffer, " ", (char *) NULL);
+    sprintf(buffer,"%d",data->COMFORCE_dir);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->COMFORCE_force / (0.5*time_step*time_step), buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->COMFORCE_fratio, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  }
+#endif
+#ifdef COMFIXED
+  if (data->COMFIXED_flag != 0) {
+    sprintf(buffer,"%d",data->COMFIXED_flag);
+    Tcl_AppendResult(interp, "comfixed ", buffer, " ", (char *) NULL);
+  }
+#endif
 
   return (TCL_OK);
 }
@@ -627,6 +660,80 @@ int lj_cos_set_params(int part_type_a, int part_type_b,
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
   mpi_bcast_ia_params(part_type_b, part_type_a);
+  
+  return TCL_OK;
+}
+#endif
+
+#ifdef COMFORCE
+int comforce_set_params(int part_type_a, int part_type_b,
+		      int flag, int dir, double force, double fratio)
+{
+  IA_parameters *data, *data_sym;
+
+  make_particle_type_exist(part_type_a);
+  make_particle_type_exist(part_type_b);
+    
+  data     = get_ia_param(part_type_a, part_type_b);
+  data_sym = get_ia_param(part_type_b, part_type_a);
+  
+  if (!data || !data_sym) {
+    return TCL_ERROR;
+  }
+
+  /* COMFORCE should be symmetrically */
+  data_sym->COMFORCE_flag    = data->COMFORCE_flag    = flag;
+  data_sym->COMFORCE_dir    = data->COMFORCE_dir    = dir;
+  data_sym->COMFORCE_force    = data->COMFORCE_force    = force;
+  data_sym->COMFORCE_fratio    = data->COMFORCE_fratio    = fratio;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+  mpi_bcast_ia_params(part_type_b, part_type_a);
+  
+  return TCL_OK;
+}
+#endif
+
+#ifdef COMFIXED
+int comfixed_set_params(int part_type_a, int part_type_b, int flag)
+{
+  IA_parameters *data, *data_sym;
+
+  make_particle_type_exist(part_type_a);
+  make_particle_type_exist(part_type_b);
+    
+  data     = get_ia_param(part_type_a, part_type_b);
+  data_sym = get_ia_param(part_type_b, part_type_a);
+  
+  if (!data || !data_sym) {
+    return TCL_ERROR;
+  }
+
+  /* COMFIXED should be symmetrically */
+  data_sym->COMFIXED_flag    = data->COMFIXED_flag    = flag;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+  mpi_bcast_ia_params(part_type_b, part_type_a);
+
+  Particle *p;
+  int i, j, np, c;
+  Cell *cell;
+
+      for (c = 0; c < local_cells.n; c++) {
+        cell = local_cells.cell[c];
+        p  = cell->part;
+        np = cell->n;
+        for(i = 0; i < np; i++) {
+	 	      if(p[i].p.type==part_type_a) {
+      	    for(j = 0; j < 3; j++) {
+				      p[i].m.v[j] = 0.;
+				      p[i].f.f[j] = 0.;
+			      }
+		      }
+        }
+      }
   
   return TCL_OK;
 }
@@ -950,6 +1057,11 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
   double k1, k2, mu, nu;
   /* Parameters needed for tabulated force */
   char* filename = NULL;
+  /* parameters needed for comforce and comfixed */
+  int flag;
+  int dir; 
+  double force, fratio;
+
   
   Tcl_ResetResult(interp);
 
@@ -1050,6 +1162,77 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 	return TCL_ERROR;
       }
     }
+#endif
+
+  /* parse 
+   *                        comforce
+   * interaction
+   */
+#ifdef COMFORCE
+  else if (ARG0_IS_S("comforce")) {
+  	
+    if (argc != 5) {
+      Tcl_AppendResult(interp, "comforce needs 4 parameters: "
+		       "<comforce_flag> <comforce_dir> <comforce_force> <comforce_fratio>",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+	 
+	  if (part_type_a == part_type_b) {
+	    Tcl_AppendResult(interp, "comforce needs 2 different types ", (char *) NULL);
+	    return TCL_ERROR;
+	  }
+
+    /* copy comforce parameters */
+    if ((! ARG_IS_I(1, flag)) || (! ARG_IS_I(2, dir)) || (! ARG_IS_D(3, force)) || (! ARG_IS_D(4, fratio)) ) {
+	    Tcl_AppendResult(interp, "comforce needs 2 INTEGER 1 DOUBLE parameter: "
+			  "<comforce_flag> <comforce_dir> <comforce_force> <comforce_fratio>", (char *) NULL);
+	    return TCL_ERROR;
+    }
+    
+    force *= (0.5*time_step*time_step);
+    change = 5;
+    
+    if (comforce_set_params(part_type_a, part_type_b, flag, dir, force, fratio) == TCL_ERROR) {
+	Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+	return TCL_ERROR;
+    }
+  }
+#endif
+
+#ifdef COMFIXED
+  /* parse 
+   *                        comfixed
+   * interaction
+   */
+  else if (ARG0_IS_S("comfixed")) {
+  	
+    if (argc != 2) {
+      Tcl_AppendResult(interp, "comfixed needs 1 parameters: "
+		       "<comfixed_flag> ", (char *) NULL);
+      return TCL_ERROR;
+    }
+	 
+	  if (part_type_a != part_type_b) {
+	    Tcl_AppendResult(interp, "comfixed must be among same type interactions", (char *) NULL);
+	    return TCL_ERROR;
+	  }
+
+    /* copy comfixed parameters */
+    if ((! ARG_IS_I(1, flag)) )
+    {
+	    Tcl_AppendResult(interp, "comfixed needs 1 INTEGER parameter: "
+			  "<comfixed_flag>", (char *) NULL);
+	    return TCL_ERROR;
+    }
+
+    change = 2;
+
+    if (comfixed_set_params(part_type_a, part_type_b, flag) == TCL_ERROR) {
+	Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+	return TCL_ERROR;
+    }
+  }
 #endif
 
     /* parse 

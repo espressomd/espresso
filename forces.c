@@ -63,6 +63,15 @@ void force_calc()
   }
 
   calc_long_range_forces();
+
+#ifdef COMFORCE
+  calc_comforce();
+#endif
+
+/* this must be the last force to be calculated (Mehmet)*/
+#ifdef COMFIXED
+  calc_comfixed();
+#endif
 }
 
 /************************************************************/

@@ -42,6 +42,11 @@ This will allow to use such particle properties as quart, omega, and torque. */
     See \ref constraint.h and \ref interaction_data.h */
 #define CONSTRAINTS
 
+/** Compiler Flag to enable COMFORCE potential */
+/* #define COMFORCE */
+
+/** Compiler Flag to enable COMFIXED potential */
+/* #define COMFIXED */
 
 /************************************************/
 /** \name available short--ranged potentials

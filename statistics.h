@@ -166,6 +166,9 @@ MDINLINE double min_distance(double pos1[3], double pos2[3]) {
   return sqrt(min_distance2(pos1, pos2));
 }
 
+void centermass(int type, double *com);
+void gyrationtensor(int type, double *gyrtensor);
+
 MDINLINE double *obsstat_bonded(Observable_stat *stat, int j)
 {
   return stat->bonded + stat->chunk_size*j;

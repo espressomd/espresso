@@ -142,6 +142,19 @@ typedef struct {
   double TAB_stepsize;
   /*@}*/  
   
+  /** \name center of mass directed force */
+  /*@{*/
+  int COMFORCE_flag;
+  int COMFORCE_dir;
+  double COMFORCE_force;
+  double COMFORCE_fratio;
+  /*@}*/
+  
+  /** \name center of mass directed force */
+  /*@{*/
+  int COMFIXED_flag;
+  /*@}*/
+
 } IA_parameters;
 
 /** \name Compounds for Coulomb interactions */

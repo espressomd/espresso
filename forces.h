@@ -37,6 +37,8 @@
 #include "debye_hueckel.h"
 #include "mmm1d.h"
 #include "constraint.h"
+#include "comforce.h"
+#include "comfixed.h"
 
 /** \name Exported Functions */
 /************************************************************/

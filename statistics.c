@@ -103,6 +103,60 @@ double mindist(IntList *set1, IntList *set2)
   return mindist;
 }
 
+void centermass(int type, double *com)
+{
+  int i, j,count;
+
+  com[0]=com[1]=com[2]=0.;
+  count=0;
+   	
+  updatePartCfg(WITHOUT_BONDS);
+  for (j=0; j<n_total_particles; j++) {
+    if (type == partCfg[j].p.type) {
+      count ++;
+      for (i=0; i<3; i++) {
+      	com[i] += partCfg[j].r.p[i];
+      }
+    }
+  }
+  
+  for (i=0; i<3; i++) {
+    com[i] /= count;
+  }
+  return;
+}
+
+void gyrationtensor(int type, double *gyrtensor)
+{
+  int i,j,count;
+  double p1[3],com[3];
+
+  count=0;
+  updatePartCfg(WITHOUT_BONDS);
+  for(i=0;i<9;i++) gyrtensor[i]=0.;
+	centermass(type, com);
+  for (j=0; j<n_total_particles; j++) {
+    if (type == partCfg[j].p.type) {
+      count ++;
+      for (i=0; i<3; i++) {
+      	p1[i] = partCfg[j].r.p[i] - com[i];
+      }
+    	gyrtensor[0] += p1[0] * p1[0]; 
+    	gyrtensor[4] += p1[1] * p1[1];
+    	gyrtensor[8] += p1[2] * p1[2];
+    	gyrtensor[1] += p1[0] * p1[1];
+    	gyrtensor[2] += p1[0] * p1[2]; 
+    	gyrtensor[5] += p1[1] * p1[2];
+		}
+	}
+  /* use symmetry */
+  gyrtensor[3] = gyrtensor[1]; 
+  gyrtensor[6] = gyrtensor[2]; 
+  gyrtensor[7] = gyrtensor[5];
+
+  return;
+}
+
 void nbhood(double pt[3], double r, IntList *il)
 {
   double d[3];
@@ -379,6 +433,86 @@ static int parse_mindist(Tcl_Interp *interp, int argc, char **argv)
   }
 
   Tcl_PrintDouble(interp, result, buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return TCL_OK;
+}
+static int parse_centermass(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze centermass [<type>]' */
+  double com[3];
+  char buffer[3*TCL_DOUBLE_SPACE+3];
+  int p1;
+  
+  /* parse arguments */
+  if (argc != 1) {
+    Tcl_AppendResult(interp, "usage: analyze centermass [<type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  if (!ARG0_IS_I(p1)) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "usage: analyze centermass [<type>]", (char *)NULL);
+      return (TCL_ERROR);
+  }
+  
+  centermass(p1, com);
+  
+  sprintf(buffer,"%f %f %f",com[0],com[1],com[2]);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return TCL_OK;
+}
+
+static int parse_gyrationcenter(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze gyrationtensor [<type>]' */
+  double gyrtensor[9];
+  char buffer[9*TCL_DOUBLE_SPACE+9];
+  int p1;
+
+  /* parse arguments */
+  if (argc != 1) {
+    Tcl_AppendResult(interp, "usage: analyze gyrationtensor [<type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  if (!ARG0_IS_I(p1)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze gyrationtensor [<type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  gyrationtensor(p1, gyrtensor);
+  
+  sprintf(buffer,"%f %f %f %f %f %f %f %f %f",
+    gyrtensor[0],gyrtensor[1],gyrtensor[2],gyrtensor[3],gyrtensor[4],
+    gyrtensor[5],gyrtensor[6],gyrtensor[7],gyrtensor[8]);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return TCL_OK;
+}
+
+static int parse_find_major_axis(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze find_major_axis [<type0>]' */
+  double gyrtensor[9],eva[3],eve[3];
+  char buffer[3*TCL_DOUBLE_SPACE+3];
+  int p1,i;
+
+  /* parse arguments */
+  if (argc != 1) {
+    Tcl_AppendResult(interp, "usage: analyze find_major_axis [<type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  if (!ARG0_IS_I(p1)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze find_major_axis [<type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  gyrationtensor(p1, gyrtensor);
+  i=calc_eigenvalues_3x3(gyrtensor, eva);
+	i=calc_eigenvector_3x3(gyrtensor,eva[0],eve);
+	
+  sprintf(buffer,"%f %f %f ",eve[0],eve[1],eve[2]);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_OK;
 }
@@ -799,6 +933,12 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return parse_set_topology(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("mindist"))
     return parse_mindist(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("centermass"))
+    return parse_centermass(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("gyrationtensor"))
+    return parse_gyrationcenter(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("find_major_axis"))
+    return parse_find_major_axis(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("nbhood"))
     return parse_nbhood(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("distto"))
