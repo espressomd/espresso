@@ -145,15 +145,17 @@ void MMM1D_recalcTables()
   /* polygamma, determine order */
   int n;
   double err;
-  double rhomax2m2, rhomax2 = uz2*mmm1d_params.far_switch_radius_2;
+  double rhomax2nm2, rhomax2 = uz2*mmm1d_params.far_switch_radius_2;
+  /* rhomax2 < 1, so rhomax2m2 falls monotonously */
 
-  n = 0;
-  rhomax2m2 = 1.0;
+  n = 1;
+  rhomax2nm2 = 1.0;
   do {
     create_mod_psi_up_to(n+1);
 
-    err = fabs(2*mod_psi_even(n,rhomax2m2));
-    rhomax2m2 *= rhomax2;
+    /* |uz*z| <= 0.5 */
+    err = 2*n*fabs(mod_psi_even(n, 0.5))*rhomax2nm2;
+    rhomax2nm2 *= rhomax2;
     n++;
     // fprintf(stderr, "%f\n", err);
   }
@@ -222,6 +224,7 @@ void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], doubl
 
       r2nm1 = r2n;
     }
+    // fprintf(stderr, "max_n %d\n", n);
 
     Fx = prefL3_i*sr*d[0];
     Fy = prefL3_i*sr*d[1];
