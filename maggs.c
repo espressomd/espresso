@@ -474,6 +474,7 @@ void calc_part_point_forces(Particle *p, double *grad, double *rho, int lat_inde
   double grad2[24];
  
 
+  fprintf(stderr, "we are in point forces\n");
   if(init) {
     //    calc_self_energy_coeffs(alpha); 
     calc_self_energy_coeffs(); 
@@ -776,15 +777,15 @@ void exchange_surface_patch(double *field, int dim, int e_equil)
 {
   static int init = 1;
   static int init_yuk = 1;
-  static int flag_free = 1;
+  //  static int flag_free = 1;
   static MPI_Datatype xyPlane,xzPlane,yzPlane; 
   static MPI_Datatype xzPlane2D, xyPlane2D, yzPlane2D;
-  int coord[2];
+  //  int coord[2];
   int l, s_dir, r_dir;
   //  int pos=0;
   MPI_Status status[2];
   MPI_Request request[]={MPI_REQUEST_NULL, MPI_REQUEST_NULL};
-  int offset, doffset, skip, stride, bufsize, nblocks;
+  int offset, doffset, skip, stride, nblocks;
   /** surface_patch */
   static t_surf_patch  surface_patch[6];
 
@@ -2002,7 +2003,7 @@ void maggs_calc_e_forces()
   /* charge gradient (number of neighbor sites X number of dimensions) */
   static  double *grad;
 
-  
+  fprintf(stderr,"begin calc forces\n");
   if(init) Npart_old = 0;
 
   Npart = cells_get_n_particles();
@@ -2011,6 +2012,7 @@ void maggs_calc_e_forces()
     Npart_old = Npart;
   }
 
+  fprintf(stderr,"before grad and point forces\n");
   calc_grad_and_point_forces(grad);
 
   if(maggs.yukawa)
@@ -2269,6 +2271,68 @@ void check_gauss_law()
   }  
   //  fprintf(stderr, "%d: Gauss law total residual=%10.4e, time %f\n", this_node,  SQR(tot_res), sim_time);
   //  fprintf(stderr, "%d: Gauss law at time=%f, res=%11.4e\n", this_node, sim_time, maxresidual);  
+}
+
+/************************************************************/
+int printMaggsToResult(Tcl_Interp *interp)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+
+  Tcl_PrintDouble(interp, maggs.f_mass, buffer);
+  Tcl_AppendResult(interp, "maggs ", buffer, " ", (char *) NULL);
+  sprintf(buffer,"%d",maggs.mesh);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL); 
+  Tcl_PrintDouble(interp, maggs.fric_gamma, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL); 
+  if(maggs.yukawa==1) {
+    Tcl_PrintDouble(interp, maggs.kappa, buffer);
+    Tcl_AppendResult(interp, "yukawa ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, maggs.r_cut, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+  } 
+  else {
+    Tcl_AppendResult(interp, "self-energy ", (char *) NULL);
+  } 
+
+  return TCL_OK;
+}
+
+int inter_parse_maggs(Tcl_Interp * interp, int argc, char ** argv)
+{
+  int mesh;
+  int yukawa = 0;
+  double f_mass;
+  double gamma;
+  double kappa = 0.;
+  double r_cut = -1.;
+
+  if(argc < 3) {
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb maggs <f_mass> <mesh> <gamma>", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if(! ARG_IS_D(0, f_mass))
+    return TCL_ERROR;
+
+  if(! ARG_IS_I(1, mesh)) {
+    Tcl_AppendResult(interp, "integer expected", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if(! ARG_IS_D(2, gamma)) {
+    Tcl_AppendResult(interp, "double expected", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if(argc > 3) {
+    if (ARG_IS_S(3,"yukawa")) {
+      yukawa = 1; 
+      if(! ARG_IS_D(4, kappa))
+	return TCL_ERROR;
+      if(argc > 5) ARG_IS_D(5, r_cut);
+    } 
+  }
+  return set_maggs_params(interp, coulomb.bjerrum, f_mass, mesh, gamma, yukawa, kappa, r_cut);
 }
 
 double calc_gauss_res()
