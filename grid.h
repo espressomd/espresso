@@ -38,6 +38,7 @@
 */
 #include <tcl.h>
 #include "utils.h"
+#include "limits.h"
 
 /** Macro that tests for a coordinate being periodic or not. */
 #ifdef PARTIAL_PERIODIC
@@ -205,10 +206,21 @@ MDINLINE void fold_coordinate(double pos[3], int image_box[3], int dir)
     {
       image_box[dir] += (tmp = (int)floor(pos[dir]*box_l_i[dir]));
       pos[dir]        = pos[dir] - tmp*box_l[dir];    
-      if(pos[dir] < 0 || pos[dir] > box_l[dir]) {
-	fprintf(stderr,"\n%d: fold_coordinate: Particle out of range (%f not in box_l %f) image_box[%d] = %d, exiting\n",
-		this_node,pos[dir],box_l[dir],dir,image_box[dir]);
-	errexit();
+      if(pos[dir] < 0 || pos[dir] >= box_l[dir]) {
+	/* slow but safe */
+	if (fabs(pos[dir]*box_l_i[dir]) >= INT_MAX/2) {
+	  fprintf(stderr,"\n%d: fold_coordinate: Particle out of range image_box[%d] = %d, exiting\n",
+		  this_node,dir,image_box[dir]);
+	  errexit();
+	}
+	while (pos[dir] < 0) {
+	  pos[dir] += box_l_i[dir];
+	  image_box[dir]--;
+	}
+	while (pos[dir] >= box_l[dir]) {
+	  pos[dir] -= box_l_i[dir];
+	  image_box[dir]++;
+	}
       }
     }
 }
