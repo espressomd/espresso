@@ -143,7 +143,7 @@ interface between the Tcl script and the MD code:
 	<ul>
 	   	<li>\verbatim lennard-jones <epsilon> <sigma> <cutoff> <shift> <offset> \endverbatim
 			the known Lennard-Jones potential
-			\f[24 \epsilon \left(2 \left(\frac{\sigma}{r-offset}\right)^{12} -
+			\f[4 \epsilon \left(\left(\frac{\sigma}{r-offset}\right)^{12} -
 				 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
 			The order of the parameters is
 			\f$\epsilon, \sigma, cutoff, shift, offset\f$.
