@@ -35,13 +35,13 @@ int rebuild_verletlist;
 MDINLINE void add_pair(PairList *pl, Particle *p1, Particle *p2)
 {
   /* check size of verlet List */
-  if(pl->n >= pl->max) {
+  if(pl->n+1 >= pl->max) {
     pl->max += LIST_INCREMENT;
     pl->pair = (Particle **)realloc(pl->pair, 2*pl->max*sizeof(Particle *));
   }
   /* add pair */
-  pl->pair[2*pl->n  ] = p1;
-  pl->pair[2*pl->n+1] = p2;
+  pl->pair[(2*pl->n)  ] = p1;
+  pl->pair[(2*pl->n)+1] = p2;
   /* increase number of pairs */
   pl->n++;
 }
@@ -84,6 +84,7 @@ void build_verlet_lists()
     
     /* interactions within the cell (neighbor cell 0)*/
     pl  = &cell->nList[0].vList;
+    pl->n = 0;
     for(i=0; i < np1; i++) {
       memcpy(p1[i].p_old, p1[i].r.p, 3*sizeof(double));
       for(j = (i+1); j < np1; j++) {
@@ -98,6 +99,7 @@ void build_verlet_lists()
     /* interactions with neighbor cells */
     for(nc=1; nc < cell->n_neighbors; nc++) {
       pl  = &cell->nList[nc].vList;
+      pl->n = 0;
       p2  = cell->nList[nc].pList->part;
       np2 = cell->nList[nc].pList->n;
       for(i=0; i < np1; i++) {
