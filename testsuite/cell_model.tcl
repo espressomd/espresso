@@ -42,10 +42,10 @@ set ident "_test"
 #############################################################
 
 # number of Polyelectrolytes
-set n_poly        4
+set n_poly        3
 
 # Polyelectrolyte backbone
-set l_back        40
+set l_back        20
 set c_pat         {0 1 1}
 
 # Hairs
@@ -134,7 +134,7 @@ set volume [expr $n_part/$density]
 set sphere_rad [expr pow((3.0*$volume)/(4.0*$mypi),1.0/3.0)]
 set  box_l       [expr 4.0*$sphere_rad + 6.0*$skin]
 set center [list [expr $box_l/2.0] [expr $box_l/2.0] [expr $box_l/2.0]]
-constraint sphere [expr $box_l/2.0] [expr $box_l/2.0] [expr $box_l/2.0] $sphere_rad 1.0 1.0 1.12246 1.0
+constraint sphere center [expr $box_l/2.0] [expr $box_l/2.0] [expr $box_l/2.0] radius $sphere_rad type 4 
 
 setmd box_l     $box_l $box_l $box_l
 setmd periodic  0 0 0
@@ -163,6 +163,11 @@ inter 3 3 lennard-jones $lja_eps 1.0 $lja_cut $lja_shift 0
 inter 0 fene $fene_k $fene_r
 # Stiffness
 inter 1 angle $bend_k
+
+#sphere constraint interactions
+for {set i 0} { $i <= $max_part_type } {incr i} {
+    inter $i 4 lennard-jones 1.0 1.0 1.12246 1.0 0.
+}
 
 # Particle setup
 #############################################################
