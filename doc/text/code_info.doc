@@ -1,0 +1,11 @@
+/** \page tcl_code_info The code_info command
+    \verbatim code_info \endverbatim
+
+    It provides information on the version, compilation status and the debug status of the used code. 
+    Exemplaric output: 
+\verbatim
+ESPRESSO: v1.5.Beta (Neelix), Last Change: 23.01.2004
+{ Compilation status { PARTIAL_PERIODIC } { ELECTROSTATICS } { EXTERNAL_FORCES } { CONSTRAINTS } { TABULATED } { LENNARD_JONES } { BOND_ANGLE_COSINE } }
+{ Debug status { MPI_CORE FORCE_CORE } }
+\endverbatim
+*/
