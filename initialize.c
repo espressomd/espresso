@@ -11,7 +11,6 @@
 #include "imd.h"
 #include "random.h"
 #include "communication.h"
-#include "tcl_rand.h"
 
 int initialize(Tcl_Interp *interp)
 {
