@@ -82,6 +82,8 @@ proc create_chain { part_id rvec p_length b_length} {
 
 require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
+require_feature "BOND_ANGLE_COSINE"
+require_feature "EXTERNAL_FORCES"
 
 if { [setmd n_nodes] == 3 || [setmd n_nodes] == 6 } {
     puts "Testcase nve_pe.tcl does not run on 3 or 6 nodes"
