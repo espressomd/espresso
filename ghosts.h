@@ -44,6 +44,7 @@
  *  For more information on ghosts,
  *  see \ref ghosts.c "ghosts.c"
  */
+#include "particle_data.h"
 
 /************************************************
  * data types
@@ -58,6 +59,14 @@ typedef struct {
   double p[3];
   double q;
 } Ghost;
+
+/** Mapping between particle identity and local index. 
+    You find the local index of particle i at position
+    i of this field. 
+    A particle that is not in the nodes domain 
+    (including its ghostshell) has a NULL pointer.
+*/
+extern Particle *local_index;
 
 /** \name Exported Functions */
 /************************************************************/
