@@ -15,6 +15,10 @@
 
 /** Time step for the integration. */
 extern double time_step;
+/** Physical start time of the simulation. */
+extern double start_time;
+/** Actual simulation time (only on MASTER NODE). */
+extern double sim_time;
 /** Maximal interaction cutoff. */
 extern double max_cut;
 /** Verlet list skin. */
@@ -65,6 +69,12 @@ int skin_callback(Tcl_Interp *interp, void *_data);
     \return TCL status.
 */
 int time_step_callback(Tcl_Interp *interp, void *_data);
+
+/** Callback for start_time of the integration.
+    If no value is set the integration starts at start_time = 0.0.
+    \return TCL status.
+*/
+int start_time_callback(Tcl_Interp *interp, void *_data);
 
 /** Callback for integrator flag calc_forces_first (= 0 or 1).
     <ul>

@@ -33,6 +33,8 @@
 /*******************  variables  *******************/
 
 double time_step = -1.0;
+double start_time = 0.0;
+double sim_time = 0.0;
 double skin = -1.0;
 double max_range;
 double max_range2;
@@ -215,6 +217,7 @@ void integrate_vv(int n_steps)
       force_calc();
       collect_ghost_forces();
       rescale_forces_propagate_vel();
+      if(this_node==0) sim_time += time_step;
     }
   }
 }
@@ -254,6 +257,15 @@ int time_step_callback(Tcl_Interp *interp, void *_data)
   }
   time_step = data;
   mpi_bcast_parameter(FIELD_TIME_STEP);
+  return (TCL_OK);
+}
+
+int start_time_callback(Tcl_Interp *interp, void *_data)
+{
+  double data = *(double *)_data;
+  start_time = data;
+  sim_time = start_time;
+  mpi_bcast_parameter(FIELD_START_TIME);
   return (TCL_OK);
 }
 
@@ -443,18 +455,18 @@ void propagate_vel_pos()
     kin_energies = malloc(sizeof(double)*n_nodes);
     MPI_Gather(&e_kin, 1, MPI_DOUBLE, kin_energies, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     for(i=0;i<n_nodes;i++) tot_kin_energy += kin_energies[i];
-    fprintf(stat,"%e\n",tot_kin_energy/(2.0*time_step*time_step));
+    fprintf(stat,"%e\t%e\n",sim_time,tot_kin_energy/(2.0*time_step*time_step));
     free(kin_energies);
     fclose(stat); 
   }
   else {
     MPI_Gather(&e_kin, 1, MPI_DOUBLE, NULL, 0, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
-  if(sqrt(db_max_force)>1e-4) 
+  if(sqrt(db_max_force)>1e-2) 
     fprintf(stderr,"%d: max_force=%e, part=%d f=(%e,%e,%e)\n",this_node,
 	    sqrt(db_max_force),db_maxf_id,local_particles[db_maxf_id]->f[0],
 	    local_particles[db_maxf_id]->f[1],local_particles[db_maxf_id]->f[2]);
-  if(sqrt(db_max_vel)>1e-2)
+  if(sqrt(db_max_vel)>1e-1)
     fprintf(stderr,"%d: max_vel=%e, part=%d v=(%e,%e,%e)\n",this_node,
 	    sqrt(db_max_vel),db_maxv_id,local_particles[db_maxv_id]->v[0],
 	    local_particles[db_maxv_id]->v[1],local_particles[db_maxv_id]->v[2]);
