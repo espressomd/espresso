@@ -128,14 +128,14 @@ const Datafield fields[] = {
 	<li> \verbatim time_step double \endverbatim
 	     \ref time_step - Time step for MD integration
 	<li> \verbatim transfer_rate int (ro)\endverbatim
- 	     \ref transfer_rate - Tranfer rate for VMD connection. You can use this
+ 	     \ref transfer_rate - Transfer rate for VMD connection. You can use this
 	     to transfer any integer value to the simulation from VMD.
 	<li> \verbatim verlet_flag bool \endverbatim
-	     \ref rebuild_verletlist - Indicates wether the Verlet list will be rebuild.
+	     \ref rebuild_verletlist - Indicates whether the Verlet list will be rebuild.
 	     The program decides this normally automatically based on your actions on the data.
 	     see \ref initialize.h "initialize.h" for more information
 	<li> \verbatim verlet_reuse bool \endverbatim
-	     \ref verlet_reuse - Average number of integration steps the verlet list has been re used.
+	     \ref verlet_reuse - Average number of integration steps the verlet list has been re-used.
 	</ul>    
  */
 
@@ -222,12 +222,12 @@ int setmd(ClientData data, Tcl_Interp *interp,
       return (TCL_OK);
     }
   }
-  Tcl_AppendResult(interp, "unkown variable \"",
+  Tcl_AppendResult(interp, "unknown variable \"",
 		   argv[1], "\"", (char *) NULL);
   return (TCL_ERROR);
 }
 
-int info(ClientData data, Tcl_Interp *interp,
+int code_info(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv)
 {
   if (argc < 2) {
