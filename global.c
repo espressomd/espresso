@@ -42,7 +42,7 @@ const Datafield fields[] = {
   {local_box_l, TYPE_DOUBLE, 3, "local_box_l", ro_callback }, /* global.c */
   {box_l, TYPE_DOUBLE, 3, "box_l", boxl_callback },
   {&n_total_particles, TYPE_INT, 1, "nparticles", ro_callback },
-  {&n_particle_types, TYPE_INT, 1, "nptypes", nptypes_callback },
+  {&n_particle_types, TYPE_INT, 1, "nptypes", ro_callback },
   {&n_interaction_types, TYPE_INT, 1, "niatypes", niatypes_callback },
   {&time_step, TYPE_DOUBLE, 1, "time_step", ro_callback }, /* integrator.c */
   {&max_cut, TYPE_DOUBLE,   1, "max_cut", ro_callback },
@@ -87,16 +87,16 @@ void init_data()
   particles = (Particle *)malloc(sizeof(Particle)*PART_INCREMENT);
 }
 
-void reallocate_particles(int size)
+void realloc_particles(int size)
 {
   if (size < max_particles) {
     // shrink not as fast, just lose half, rounded up
-    max_particles = ((max_particles + size)/2 +
-		     PART_INCREMENT - 1)/PART_INCREMENT;
+    max_particles = PART_INCREMENT*(((max_particles + size)/2 +
+		     PART_INCREMENT - 1)/PART_INCREMENT);
   }
   else
     // round up
-    max_particles = (size + PART_INCREMENT - 1)/PART_INCREMENT;
+    max_particles = PART_INCREMENT*((size + PART_INCREMENT - 1)/PART_INCREMENT);
   particles = (Particle *)
     realloc(particles, sizeof(Particle)*max_particles);
 }
@@ -123,7 +123,7 @@ int add_particle(int part)
   if (min_free_particle == -1) {
     /* add at end */
     index = n_particles++;
-    reallocate_particles(n_particles);
+    realloc_particles(n_particles);
     
     particles[index].n_bonds = 0;
     particles[index].max_bonds = 0;
@@ -172,27 +172,6 @@ int ro_callback(Tcl_Interp *interp, void *data)
   return (TCL_ERROR);
 }
 
-int nptypes_callback(Tcl_Interp *interp, void *data)
-{
-  int i, j;
-  int nsize = *(int *)data;
-  IA_parameters *new_params;
-
-  if (ia_params)
-    free(ia_params);
-  new_params = (IA_parameters *) malloc(nsize*nsize*sizeof(IA_parameters));
-  for (i = 0; i < nsize; i++)
-    for (j = 0; j < nsize; j++) {
-      if ((i < n_particle_types) && (i < n_particle_types))
-	memcpy(&new_params[i*n_particle_types + j],
-	       &ia_params[i*n_particle_types + j], sizeof(IA_parameters));
-      else
-	memset(&new_params[i*n_particle_types + j],
-	       sizeof(IA_parameters), 0);
-    }
-  return (TCL_OK);
-}
-
 int niatypes_callback(Tcl_Interp *interp, void *data)
 {
   n_interaction_types = *(int *)data;
@@ -229,4 +208,51 @@ void changed_topology()
 IA_parameters *get_ia_param(int i, int j)
 {
   return &ia_params[i*n_particle_types + j];
+}
+
+IA_parameters *safe_get_ia_param(int i, int j)
+{
+  if ((i < 0) || (j < 0))
+    return NULL;
+
+  // expand array if necessary
+  realloc_ia_params(((i > j) ? i : j) + 1);
+
+  return &ia_params[i*n_particle_types + j];
+}
+
+void realloc_ia_params(int nsize)
+{
+  int i, j;
+  IA_parameters *new_params;
+
+  if (nsize <= n_particle_types)
+    return;
+
+  if (ia_params)
+    free(ia_params);
+  new_params = (IA_parameters *) malloc(nsize*nsize*sizeof(IA_parameters));
+  for (i = 0; i < nsize; i++)
+    for (j = 0; j < nsize; j++) {
+      if ((i < n_particle_types) && (i < n_particle_types))
+	copy_ia_params(&new_params[i*n_particle_types + j],
+			   &ia_params[i*n_particle_types + j]);
+      else
+	initialize_ia_params(&new_params[i*n_particle_types + j]);
+    }
+
+  n_particle_types = nsize;
+  ia_params = new_params;
+}
+
+void copy_ia_params(IA_parameters *dst, IA_parameters *src)
+{
+  /* change if any allocating ia types enter !!!! */
+  memcpy(dst, src, sizeof(IA_parameters));
+}
+
+void initialize_ia_params(IA_parameters *params)
+{
+  /* change if an interaction needs non-0 param to do nothing !!!!! */
+  memset(params, sizeof(IA_parameters), 0);
 }

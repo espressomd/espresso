@@ -4,6 +4,11 @@
 #include "global.h"
 #include "communication.h"
 
+void core()
+{
+  *(int *)0 = 0;
+}
+
 void exitHandler(ClientData data)
 {
   mpi_stop();
@@ -27,7 +32,7 @@ int main(int argc, char **argv)
   if (this_node == 0) {
     /* master node */
     atexit(mpi_stop);
-
+    atexit(core);
     init_data();
     Tcl_Main(argc, argv, appinit);
     return 0;

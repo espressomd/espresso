@@ -80,6 +80,20 @@ extern int   min_free_ghost;
  */
 extern int *local_index;
 
+/** allocate storage for local particles and ghosts.
+    Given size is rounded up to multiples of
+    PART_INCREMENT */
+void realloc_particles(int size);
+
+/** search for a specific particle, returns field index */
+int got_particle(int part);
+
+/** add a particle, returns new field index */
+int add_particle(int part);
+
+/** free a particle */
+void free_particle(int index);
+
 /****************************************
  * nonbonded interactions from global.c
  ****************************************/
@@ -91,11 +105,12 @@ extern int n_particle_types;
  *  nonbonded interactions. Access via
  * get_ia_param(i, j), i,j < n_particle_types */
 typedef struct {
+  double LJ_epsilon;
   double LJ_cutoff;
   double LJ_shift;
   double LJ_offset;
 
-  /* don't which else, since electrostatic is different...
+  /* don't know which else, since electrostatic is different...
      but put rest here too. */
 } IA_parameters;
 
@@ -104,6 +119,22 @@ extern IA_parameters *ia_params;
 
 /** number of interaction types. */
 extern int n_interaction_types;
+
+/** get interaction particles between particle sorts i and j */
+IA_parameters *get_ia_param(int i, int j);
+
+/** get interaction particles between particle sorts i and j.
+    returns NULL if i or j < 0, allocates if necessary */
+IA_parameters *safe_get_ia_param(int i, int j);
+
+/** realloc n_particle_types */
+void realloc_ia_params(int nsize);
+
+/** initialize interaction parameters */
+void initialize_ia_params(IA_parameters *params);
+
+/** copy interaction parameters */
+void copy_ia_params(IA_parameters *dst, IA_parameters *src);
 
 /****************************************
  * bonded interactions from global.c
@@ -126,6 +157,9 @@ typedef union {
 /** field defining the bonded ia types */
 extern int n_bonded_ia;
 extern Bonded_ia_parameters *bonded_ia_params;
+
+/** reallocate particles bonds */
+void realloc_bonds(int index, int size);
 
 /****************************************
  * integration from integrator.c
@@ -157,7 +191,7 @@ extern int    *verletList;
 extern int rebuild_verletlist;
 
 /**********************************************
- * description of variables from global.c
+ * description of global variables
  * add any variable that should be handled
  * automatically in global.c. This includes
  * distribution to other nodes and
@@ -176,17 +210,19 @@ typedef int (SetCallback)(Tcl_Interp *interp, void *data);
 
 /* variable descriptor */
 typedef struct {
-  void        *data;
-  int          type;
-  int          dimension;
-  const char  *name;
-  SetCallback *changeproc;
+  void        *data;      /* physical address */
+  int          type;      /* int or double */
+  int          dimension; /* field dimension */
+  const char  *name;      /* name assigned in Tcl */
+  SetCallback *changeproc;/* procedure called if value should be
+			     changed. Maybe ro_callback for
+			     non-writeable variables */
 } Datafield;
 
 extern const Datafield fields[];
 
 /**********************************************
- * procedures for access to global variables
+ * misc procedures
  **********************************************/
 
 /** initialize data fields */
@@ -194,36 +230,5 @@ void init_data();
 
 /** call if topology (grid, box dim, ...) changed */
 void changed_topology();
-
-/*******************************
- * particle storage
- *******************************/
-
-/** allocate storage for local particles and ghosts.
-    Given size is rounded up to multiples of
-    PART_INCREMENT */
-void reallocate_particles(int size);
-
-/** search for a specific particle, returns field index */
-int got_particle(int part);
-
-/** add a particle, returns new field index */
-int add_particle(int part);
-
-/** free a particle */
-void free_particle(int index);
-
-/*******************************
- * bonded ia information
- *******************************/
-
-/** reallocate particles bonds */
-void realloc_bonds(int index, int size);
-
-/*******************************
- * nonbonded ia access
- *******************************/
-
-IA_parameters *get_ia_param(int i, int j);
 
 #endif

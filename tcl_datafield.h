@@ -7,7 +7,9 @@
  * field access from tcl *
  *************************/ 
 
-/* declare the commands needed to modify particle data */
+/* declare the commands needed to modify particle data, set
+   interaction parameters and global parameters, i. e.
+   part, inter and setmd */
 void tcl_datafield_init(Tcl_Interp *interp);
 
 #endif

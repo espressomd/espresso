@@ -15,17 +15,18 @@ int nprocs = -1;
 
 SlaveCallback *callbacks[] = 
 {
-  mpi_stop_slave,
-  mpi_bcast_parameter_slave, 
-  mpi_who_has_slave,
-  mpi_attach_particle_slave,
-  mpi_send_pos_slave,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  mpi_recv_part_slave,
-  mpi_integrate_slave
+  mpi_stop_slave,                /*  0: REQ_TERM */
+  mpi_bcast_parameter_slave,     /*  1: REQ_BCAST_PAR */
+  mpi_who_has_slave,             /*  2: REQ_WHO_HAS */
+  mpi_attach_particle_slave,     /*  3: REQ_ATTACH */
+  mpi_send_pos_slave,            /*  4: REQ_SET_POS */
+  NULL,                          /*  5: REQ_SET_V */
+  NULL,                          /*  6: REQ_SET_F */
+  mpi_send_q_slave,              /*  7: REQ_SET_Q */
+  mpi_send_type_slave,           /*  8: REQ_SET_TYPE */
+  mpi_recv_part_slave,           /*  9: REQ_GET_PART */
+  mpi_integrate_slave,           /* 10: REQ_INTEGRATE */
+  mpi_bcast_ia_params_slave      /* 11: REQ_BCAST_IA */ 
 };
 
 
@@ -284,17 +285,91 @@ void mpi_integrate_slave(int task)
 		     this_node, task));
 }
 
+/********************* REQ_SET_Q ********/
+void mpi_send_q(int pnode, int part, double q)
+{
+  if (pnode == this_node) {
+    int index = got_particle(part);
+    particles[index].q = q;
+  }
+  else {
+    int req[2] = { REQ_SET_Q, part };
+    MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Send(&q, 1, MPI_DOUBLE, pnode, REQ_SET_POS, MPI_COMM_WORLD);
+  }
+}
+
+void mpi_send_q_slave(int part)
+{
+  int index = got_particle(part);
+  MPI_Status status;
+  if (index != -1) {
+    MPI_Recv(&particles[index].q, 1, MPI_DOUBLE, 0, REQ_SET_POS,
+	     MPI_COMM_WORLD, &status);
+  }
+}
+
+/********************* REQ_SET_TYPE ********/
+void mpi_send_type(int pnode, int part, int type)
+{
+  if (pnode == this_node) {
+    int index = got_particle(part);
+    particles[index].type = type;
+  }
+  else {
+    int req[2] = { REQ_SET_Q, part };
+    MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Send(&type, 1, MPI_INT, pnode, REQ_SET_POS, MPI_COMM_WORLD);
+  }
+}
+
+void mpi_send_type_slave(int part)
+{
+  int index = got_particle(part);
+  MPI_Status status;
+  if (index != -1) {
+    MPI_Recv(&particles[index].type, 1, MPI_INT, 0, REQ_SET_POS,
+	     MPI_COMM_WORLD, &status);
+  }
+}
+
+/*************** REQ_BCAST_IA ************/
+void mpi_bcast_ia_params(int i, int j)
+{
+  int req[2] = { REQ_BCAST_IA, i };
+
+  /* start broadcasting. */
+  MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&j,  1, MPI_INT, 0, MPI_COMM_WORLD);
+  /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
+  MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
+	    0, MPI_COMM_WORLD);
+}
+
+void mpi_bcast_ia_params_slave(int i)
+{
+  int j;
+  MPI_Bcast(&j,  1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
+  MPI_Bcast(safe_get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
+	    0, MPI_COMM_WORLD);
+}
+
+/*********************** MAIN LOOP for slaves ****************/
+
 void mpi_loop()
 {
   int req[2];
 
   for (;;) {
     MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
-    COMM_TRACE(fprintf(stderr, "%d: processing request %d %d\n", this_node,
+    COMM_TRACE(fprintf(stderr, "%d: processing request %d %d...", this_node,
 		       req[0], req[1]));
 
     if ((req[0] < 0) || (req[0] >= REQ_MAXIMUM))
       continue;
     callbacks[req[0]](req[1]);
+    COMM_TRACE(fprintf(stderr, "%d: finished\n", this_node));
   }
 }
