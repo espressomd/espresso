@@ -16,7 +16,7 @@ if(para_match($0)!=0){
 }
 else
 	out = substr(out,1,length(out)-2)
-print "<li> " enum " \\ref " FILENAME "::" FNR " \"{" out > "./doc/text/runtime_errors.doc"
+print "<li> " enum " \\ref " FILENAME "::" FNR " \"{" out > "./doc/text/runtime_errors_tmp.doc"
 out = ""
 }
 
