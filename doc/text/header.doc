@@ -46,7 +46,7 @@ For details see \ref integrate.c "integrate.c".
 <li> Add the following lines to your .cshrc file.
 \verbatim 
 ##################################################################
-# Settings for TCL_MD
+# Settings for ESPRESSO
 ##################################################################
 if ( (`uname` == "Linux") ) then
     setenv PATH "${PATH}:.:/opt/lam/bin"
@@ -65,7 +65,7 @@ Replace your_directory by the directory where you want to install Espresso.
 \verbatim gmake \endverbatim
 <li> Create actual documentation with (html, latex, man and rtf). This 
 command works only on our Linux PCs (needs doxygen).
-\verbatim gmake doc\endverbatim
+\verbatim gmake docu\endverbatim
 (Use touch somefile.c if it does not work rightaway)
 <li> Read the documentation carefully (Come on, there had been only 213 pages when I
 was writing these lines) !!!
