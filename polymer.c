@@ -1041,6 +1041,10 @@ int icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   tmp_try = icosaederC(a, MPC, N_CI, val_cM, val_CI, cM_dist);
   if (tmp_try == -3) {
     sprintf(buffer, "Failed upon creating one of the monomers in Espresso!\nAborting...\n"); tmp_try = TCL_ERROR; }
+  else if (tmp_try == -2) {
+    sprintf(buffer, "Failed upon creating a bond between edges around the vertices!\nAborting...\n"); tmp_try = TCL_ERROR; }
+  else if (tmp_try == -1) {
+    sprintf(buffer, "Failed upon connecting loose edges around vertices with chains along the middle third!\nAborting...\n"); tmp_try = TCL_ERROR; }
   else if (tmp_try >= 0) {
     sprintf(buffer, "%d", tmp_try); tmp_try = TCL_OK; }
   else {
@@ -1132,8 +1136,9 @@ int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI, in
     for(j=0; j<5; j++) {
       /* add bonds between the edges around the vertices */
       bond[0] = type_FENE;
-      if(j>0) bond[1] = ico_ind[i][j-1] + (MPC-1); else bond[1] = ico_ind[i][4] + (MPC-1);
-      if (change_particle_bond(ico_ind[i][j], bond, 0)==TCL_ERROR) return (-3);
+      //      if(j>0) bond[1] = ico_ind[i][j-1] + (MPC-1); else bond[1] = ico_ind[i][4] + (MPC-1);
+      if(j>0) bond[1] = ico_ind[i][j-1] + (MPC-1); else if(MPC>0) bond[1] = ico_ind[i][4] + (MPC-1); else bond[1] = ico_ind[i][4];
+      if (change_particle_bond(ico_ind[i][j], bond, 0)==TCL_ERROR) return (-2);
 
       /* connect loose edges around vertices with chains along the middle third already created earlier */
       if(i > ico_NN[i][j]) {
@@ -1141,7 +1146,7 @@ int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI, in
 	for(l=0; l<5; l++) if(ico_NN[ico_NN[i][j]][l] == i) break;
 	if(l==5) { fprintf(stderr,"WARNING: Couldn't find my neighbouring edge upon creating the icosaeder!\n"); errexit(); }
 	bond[1] = ico_ind[ico_NN[i][j]][l+5] + (MPC-2);
-	if (change_particle_bond(ico_ind[i][j], bond, 0)==TCL_ERROR) return (-3);
+	if (change_particle_bond(ico_ind[i][j], bond, 0)==TCL_ERROR) return (-1);
       }
     }
   }
