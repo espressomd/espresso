@@ -14,11 +14,20 @@
  <li> \verbatim #define CELL_DEBUG \endverbatim activate cell code debug output.
  <li> \verbatim #define GHOST_DEBUG \endverbatim activate ghost code debug output.
  <li> \verbatim #define GRID_DEBUG \endverbatim activate grid debug output.
- <li> \verbatim #define FORCE_DEBUG \endverbatim activate force debug output.
  <li> \verbatim #define VERLET_DEBUG \endverbatim activate verlet debug output.
  <li> \verbatim #define PARTICLE_DEBUG \endverbatim activate particle data related debug output.
  <li> \verbatim #define P3M_DEBUG \endverbatim activate P3M related debug output.
  <li> \verbatim #define FFT_DEBUG \endverbatim activate FFT related debug output.
+ <li> \verbatim #define RANDOM_DEBUG \endverbatim activate ??? debug output.
+ <li> \verbatim #define FORCE_DEBUG \endverbatim activate detailed Force debugging -> gives explicitely all forces.
+ <li> \verbatim #define THERMO_DEBUG \endverbatim activate ??? debug output.
+ <li> \verbatim #define LJ_DEBUG \endverbatim activate ??? debug output.
+ <li> \verbatim #define ESR_DEBUG \endverbatim activate ??? debug output.
+ <li> \verbatim #define ESK_DEBUG \endverbatim activate ??? debug output.
+ <li> \verbatim #define FENE_DEBUG \endverbatim activate ??? debug output.
+ <li> \verbatim #define GHOST_FORCE_DEBUG \endverbatim activate ??? debug output.
+ <li> \verbatim #define ONE_PART_DEBUG \endverbatim activate ??? debug output.
+ <li> \verbatim #define STAT_DEBUG \endverbatim activate statistics related debug output.
  <li> \verbatim #define MPI_CORE \endverbatim generate a core dump when exiting abnormally due
  to MPI errors.
  <li> \verbatim #define FORCE_CORE \endverbatim generate a core dump even on regular termination.
@@ -41,7 +50,6 @@
 // #define FFT_DEBUG
 // #define RANDOM_DEBUG
 // #define FORCE_DEBUG
-/* Detailed Force debugging -> Gives expilitely all forces! */
 // #define THERMO_DEBUG
 // #define LJ_DEBUG
 // #define ESR_DEBUG
@@ -49,6 +57,7 @@
 // #define FENE_DEBUG
 // #define GHOST_FORCE_DEBUG
 // #define ONEPART_DEBUG
+// #define STAT_DEBUG
 
 #define MPI_CORE
 #define FORCE_CORE
@@ -190,4 +199,11 @@ extern int check_id;
 #else
 #define ONEPART_TRACE(cmd)
 #endif
+
+#ifdef STAT_DEBUG
+#define STAT_TRACE(cmd) { cmd; }
+#else
+#define STAT_TRACE(cmd)
+#endif
+
 
