@@ -10,8 +10,7 @@ Copyright (C) 2003, Max-Planck-Institute for Polymer Research,
 The name ESPResSo stands for Extensible Simulation Package for Research in 
 Soft Matter and collectively refers to programs in source code, scripts, 
 documentation and test data. 
-The name ESPResSo is a registered trade mark of the Max-Planck-Institute 
-for Polymer Research.
+The name ESPResSo is a registered trade mark. 
 
 		         ESPResSo License
 TERMS AND CONDITIONS FOR USAGE, COPYING, DISTRIBUTION AND MODIFICATION
@@ -34,5 +33,16 @@ TERMS AND CONDITIONS FOR USAGE, COPYING, DISTRIBUTION AND MODIFICATION
    authors are not liable for any loss or damage arising from the use of 
    ESPResSo.
 
-A copy of the GPL can be found in the file GPL.TXT which is part of ESPResSo.
+6. Severability Clause: The provisions, sections, subdivisions and articles 
+   of this license shall be considered to be severable, so that 
+   if any section, paragraph, sentence, clause, phrase 
+   or any part of this license is declared to be unconstitutional or void, 
+   or if for any reason is declared to be invalid or of no effect, 
+   or its application to any person or circumstance is altered 
+   amended, abrogated, repealed, superseded by state law or held invalid,
+   the remaining sections, paragraphs, sentences, clauses, phrases or parts thereof 
+   shall be in no manner affected thereby but shall remain in full force and effect.
 
+A copy of the GPL can be found in the file GPL.TXT which is part of ESPResSo.
+If for some reasons that file is missing, it may be obtained online 
+at http://www.gnu.org/copyleft/gpl.html or by writing to the adress given above.
