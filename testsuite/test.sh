@@ -9,7 +9,7 @@ TESTCASES="lj.tcl lj-cos.tcl harm.tcl fene.tcl mmm1d.tcl dh.tcl madelung.tcl"
 #   Testing forces, energies, pressures of the LJ-interaction.
 # - lj-cos: (AxA / Status: Done.)
 #   Testing forces, energies, pressures of the LJ-cos-interaction.
-# - fene/harm: (BAM / Status: Finishing.)
+# - fene/harm: (BAM / Status: Completed.)
 #   Testing forces, energies, pressures of the FENE-/harmonic-interaction.
 # - p3m/dh: (HL)
 #   Testing electrostatic interactions.
@@ -76,10 +76,11 @@ for np in 1 2 3 4 6 8; do
 done
 
 if test "$missing" != ""; then
-    echo -e "\n\n*******************************************\n\n"
-    echo -e "           Tests not done:\n"
+    echo -e "\n\n===============================================\n\n"
+    echo -e "                Tests not done:\n                "
     echo -e $missing
 fi
 
-echo -e "\n\n********************************************\n\n"
-echo -e "   Gratulations! Espresso seems to be ok."
+echo -e "\n\n===============================================\n\n"
+echo -e "   Congratulations! ESPResSo seems to be ok."
+echo -e "\n\n===============================================\n\n"
