@@ -33,21 +33,6 @@ typedef struct {
   double p[3];
 } ReducedParticle;
 
-/** Struct holding bond information for a particle. */
-typedef struct {
-  /** field containing the bond information for the particle.
-   * 
-   * For each bond, where the particle is the main particle, bonds
-   * contains the type of the bonded interaction and the identity of
-   * the other participating particles.  
-   */
-  int *bonds;
-  /** size of field \ref bonds. */
-  int n;
-  /** allocated size of field \ref bonds. */
-  int max;
-} BondList;
-
 /** Struct holding all particle information
  *  of the particles. */
 typedef struct {
@@ -64,7 +49,7 @@ typedef struct {
   double v[3];
 
   /** bonded interactions list. */
-  BondList bl;
+  IntList bl;
 } Particle;
 
 /** List of particles. The particle array is resized using a sophisticated
