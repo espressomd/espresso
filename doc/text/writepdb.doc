@@ -28,7 +28,18 @@ writepdbfoldchains <file> { < chain_start> <n_chains> <chain_length> <box_l> }
 Writes folded particle data where the folding is 
 performed on chain centers of mass rather than single particles.
 In order to fold in this way the chain topology and box length 
-must be specified. 
+must be specified.  Note that this method is outdated. Use writepdbfoldtopo instead.
+
+\anchor tcl_writepdbfoldtopo
+\verbatim
+writepdbfoldtopo <file> { <shift> } 
+\endverbatim
+Writes folded particle data where the folding is 
+performed on chain centers of mass rather than single particles.
+This method uses the internal box length and topology information from espresso.  If you wish to shift
+particles prior to folding then supply the optional shift information.  Shift should be a three member tcl list consisting of x, y, and z shifts respectively and each number should be a floating point (ie with decimal point). 
+
+
 
 
 */
