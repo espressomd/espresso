@@ -33,40 +33,40 @@
 */
 
 /* #define COMM_DEBUG */
-/* #define INTEG_DEBUG  */
-/* #define CELL_DEBUG  */
-/* #define GHOST_DEBUG  */
-/* #define GRID_DEBUG  */
-/* #define VERLET_DEBUG  */
+/* #define INTEG_DEBUG */
+/* #define CELL_DEBUG */
+/* #define GHOST_DEBUG */
+/* #define GRID_DEBUG */
+/* #define VERLET_DEBUG */
 /* #define PARTICLE_DEBUG */
-/*#define P3M_DEBUG  */
-/* #define FFT_DEBUG  */
+/* #define P3M_DEBUG */
+/* #define FFT_DEBUG */
 /* #define RANDOM_DEBUG */
-#define FORCE_DEBUG  
+/* #define FORCE_DEBUG */
 /* Detailed Force debugging -> Gives expilitely all forces! */
-/* #define THERMO_DEBUG   */
-/* #define LJ_DEBUG  */
-/* #define ESR_DEBUG   */
-/* #define ESK_DEBUG  */
-/* #define FENE_DEBUG  */
+/* #define THERMO_DEBUG */
+/* #define LJ_DEBUG */
+/* #define ESR_DEBUG */
+/* #define ESK_DEBUG */
+/* #define FENE_DEBUG */
 /* #define GHOST_FORCE_DEBUG */
 
-#define MPI_CORE
-#define FORCE_CORE
+/* #define MPI_CORE */
+/* #define FORCE_CORE */
 
-#define ADDITIONAL_CHECKS
+/* #define ADDITIONAL_CHECKS */
 
 /* #define MALLOC_DEBUG */
 
 #if defined FORCE_CORE || defined MPI_CORE
 /** this functions kills the task with SIGSEGV */
 extern void core();
+#endif
 
 /** by setting this variable to 1, a regular exit is
     indicated. In that case, no core dump is generated.
 */
 extern int regular_exit;
-#endif
 
 #ifdef MALLOC_DEBUG
 extern void *_debug_malloc(int size);

@@ -19,7 +19,11 @@ extern void *_debug_realloc(void *p, int size);
 /** Replacement for free that logs the freed address. */
 extern void _debug_free(void *p);
 
+#if defined FORCE_CORE || defined MPI_CORE
 int regular_exit = 0;
+#else
+int regular_exit = 1;
+#endif
 static int core_done = 0;
 
 void core()
