@@ -13,10 +13,11 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv)
 {
   char title[MAXBLOCKTITLE];
-  char buffer[1024];
+  char buffer[1024], *name;
   int tcl_file_mode;
   Tcl_Channel channel;
-  int i, j, openbrackets;
+  Tcl_CmdInfo cmdInfo;
+  int i, j, openbrackets, len, exists;
 
   if (argc < 4) {
     Tcl_AppendResult(interp, "wrong # args:  should be \"",
@@ -104,9 +105,6 @@ int blockfile(ClientData data, Tcl_Interp *interp,
 		       argv[4], "\"", (char *) NULL);
       return (TCL_ERROR);
     }
-    Tcl_AppendResult(interp, "unknown write action \"", argv[3],
-		     "\"", (char *)NULL);
-    return (TCL_ERROR);
   }
   /* the read commands */
   else if (!strncmp(argv[2], "read", strlen(argv[2]))) {
@@ -202,6 +200,34 @@ int blockfile(ClientData data, Tcl_Interp *interp,
       }
       /* unknown field */
       else {
+	len = 21; /* blockfile_read_auto_ + \0 */
+	len += strlen(title);
+	name = malloc(len);
+	strcpy(name, "blockfile_read_auto_");
+	strcat(name, title);
+	exists = Tcl_GetCommandInfo(interp, name, &cmdInfo);
+	free(name);
+	if (exists) {
+	  if (cmdInfo.proc(cmdInfo.clientData, interp,
+			   argc, argv) != TCL_OK)
+	    return (TCL_ERROR);
+	  if (block_continueread(channel, openbrackets, buffer, sizeof(buffer), 0) != 0) {
+	    Tcl_ResetResult(interp);
+	    Tcl_AppendResult(interp, "variable block for does not terminate correctly",
+			     (char *) NULL);
+	    return (TCL_ERROR);
+	  }
+	  for (j = 0; buffer[j] != 0; j++)
+	    if (!isspace(j)) {
+	      Tcl_ResetResult(interp);
+	      Tcl_AppendResult(interp, "variable block for ", fields[i].name,
+			       " contains garbage \"", buffer, "\"",
+			       (char *) NULL);
+	      return (TCL_ERROR);
+	    }
+	  return (TCL_OK);
+	}
+	
 	Tcl_AppendResult(interp, "usertag ", title, (char *) NULL);
 	if (openbrackets != 0) {
 	  Tcl_AppendResult(interp, " ", (char *) NULL);	  
@@ -244,6 +270,20 @@ int blockfile(ClientData data, Tcl_Interp *interp,
     }
   }
 
+  /* not a native action, try script support */
+  len = 12; /* blockfile_ + _ + \0 */
+  len += strlen(argv[2]) + strlen(argv[3]);
+  name = malloc(len);
+  strcpy(name, "blockfile_");
+  strcat(name, argv[2]);
+  strcat(name, "_");
+  strcat(name, argv[3]);
+  exists = Tcl_GetCommandInfo(interp, name, &cmdInfo);
+  free(name);
+  if (exists) {
+    return cmdInfo.proc(cmdInfo.clientData, interp,
+			argc, argv);
+  }
   Tcl_AppendResult(interp, "unknown action \"", argv[2],
 		   "\"", (char *)NULL);  
   return (TCL_ERROR);

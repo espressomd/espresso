@@ -218,17 +218,25 @@ interface between the Tcl script and the MD code:
         blockfile allows for convienent access to a block format structured file <channel>. The
 	possible actions are:
 <ol>
-	<li>\verbatim blockfile write start <tag> \endverbatim which writes a start "{"
+	<li>\verbatim blockfile <channel>  write start <tag> \endverbatim which writes a start "{"
 	and the title of the block given by tag.
-        <li>\verbatim blockfile write end \endverbatim just writes a "}" to <channel>.
-	<li>\verbatim blockfile write variable <variablename> \endverbatim
+        <li>\verbatim blockfile <channel>  write end \endverbatim just writes a "}" to <channel>.
+	<li>\verbatim blockfile <channel>  write variable <variablename> \endverbatim
             writes a variable <variablename>
             which is known to \ref tcl_setmd to <channel>.
-	<li>\verbatim blockfile read start \endverbatim reads the start part of a block
+	<li>\verbatim blockfile_write_particles <channel> <what> <range>\endverbatim
+    	    writes particle information in a standardized format to the file <channel>.
+	    <what> can be any list of parameters that \anchor tcl_part_print "part <x> print"
+	    takes. Notice that if "id" or "pos" is missing, this is added in the front to the
+	    list automatically. <range> is a Tcl list of ranges which particles to write. The
+	    range "all" is valid as well as a boundary of "end". For example
+	    \verbatim blockfile file10 write particles "id pos q" "all 0-end 0" \endverbatim
+	    will write all particles two times to file10 and then particle 0 alone.
+	<li>\verbatim blockfile <channel> read start \endverbatim reads the start part of a block
             and returns the block title.
-	<li>\verbatim blockfile read toend \endverbatim reads the blocks data and returns
+	<li>\verbatim blockfile <channel> read toend \endverbatim reads the blocks data and returns
 	    it.
-        <li>\verbatim blockfile read auto \endverbatim reads in one block and does the
+        <li>\verbatim blockfile <channel> read auto \endverbatim reads in one block and does the
             following:
 	<ol>
             <li> if the block is a global variable, the variable is set to the value from <channel>
@@ -239,12 +247,15 @@ interface between the Tcl script and the MD code:
             <li> if the file is at end, it returns "eof"
 	</ol>
 </ol>
+        If parameters different from "read|write ..." are given, a procedure "blockfile_arg1_arg2"
+	is searched for and called with the same argument as blockfile. For example
+	\verbatim blockfile channel write particles "id pos" all \endverbatim
+	results in the evaluation of
+	\verbatim blockfile_write_particles channel write particles "id pos" all \endverbatim
+        <li>\verbatim blockfile <channel> read auto \endverbatim does the same by trying to call
+	"blockfile_read_auto_tag" for every tag it does not recognize.
+
 	The C implementation is \ref blockfile.
-<li>\anchor tcl_blockfile_write_particles
-    \verbatimblockfile_write_particles <channel> <what> <range>\endverbatim
-    writes particle information in a standardized format to the file <channel>. <what> can be
-    any list of parameters that \anchor tcl_part_print "part <x> print" takes. Notice that if
-    "id" or "pos" is missing, this is added in the front to the list automatically. 
 </ul>
 
 At program start, tcl_md reads in a starting script
