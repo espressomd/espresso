@@ -306,6 +306,105 @@ double distto(double p[3], int pid)
   return sqrt(mindist);
 }
 
+void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry, double *result) {
+  double LOG,xi_min, RM, gamma,g1,g2,gmid,dg,ig, f,fmid, rtb;
+  int i;
+  LOG    = log(Rc/ro);
+  xi_min = LOG/(1+LOG);
+  if(maxtry < 1) maxtry = 1;
+
+  /* determine which of the regimes we are in: */
+  if(xi_m > 1) {
+    ig = 1.0;
+    g1 = PI / LOG;
+    g2 = PI / (LOG + xi_m/(xi_m-1.0)); }
+  else if(xi_m == 1) {
+    ig = 1.0;
+    g1 = (PI/2.0) / LOG;
+    g2 = (PI/2.0) / (LOG + 1.0); }
+  else if(xi_m == xi_min) {
+    ig = 1.0;
+    g1 = g2 = 0.0; }
+  else if(xi_m > xi_min) {
+    ig = 1.0;
+    g1 = (PI/2.0) / LOG;
+    g2 = sqrt(3.0*(LOG-xi_m/(1.0-xi_m))/(1-pow((1.0-xi_m),-3.0))); }
+  else if(xi_m > 0.0) {
+    ig = -1.0;
+    g1 = 1-xi_m;
+    g2 = xi_m*(6.0-(3.0-xi_m)*xi_m)/(3.0*LOG); }
+  else if(xi_m == 0.0) {
+    ig = -1.0;
+    g1 = g2 = 1-xi_m; }
+  else {
+    result[2]=-5.0; return;
+  }
+
+  /* decide which method to use (if any): */
+  if(xi_m == xi_min) {
+    gamma = 0.0;
+    RM    = 0.0; }
+  else if(xi_m == 0.0) {
+    gamma = 1-xi_m;
+    RM    = -1.0; }
+  else if(ig == 1.0) {
+    /* determine gamma via a bisection-search: */
+    f    = atan(1.0/g1) + atan( (xi_m-1.0) / g1 ) - g1 * LOG;
+    fmid = atan(1.0/g2) + atan( (xi_m-1.0) / g2 ) - g2 * LOG;
+    if (f*fmid >= 0.0) {
+      /* failed to bracket function value with intial guess - abort: */
+      result[0]=f; result[1]=fmid; result[2]=-3.0; return;  }
+
+    /* orient search such that the positive part of the function lies to the right of the zero */
+    rtb = f < 0.0 ? (dg=g2-g1,g1) : (dg=g1-g2,g2);
+    for (i = 1; i <= maxtry; i++) {
+      gmid = rtb + (dg *= 0.5);
+      fmid = atan(1.0/gmid) + atan((xi_m-1.0)/gmid) - gmid*LOG;
+      if (fmid <= 0.0) rtb = gmid;
+      if (fabs(dg) < gacc || fmid == 0.0) break;
+    }
+
+    if (fabs(dg) > gacc) {
+      /* too many iterations without success - abort: */
+      result[0]=gmid; result[1]=dg; result[2]=-2.0; return;  }
+
+    /* So, these are the values for gamma and Manning-radius: */
+    gamma = gmid;
+    RM    = Rc * exp( -(1.0/gamma) * atan(1.0/gamma) ); }
+  else if(ig == -1.0) {
+    /* determine -i*gamma: */
+    f = -1.0*(atanh(g2) + atanh(g2/(xi_m-1))) - g2*LOG;
+
+    /* modified orient search, this time starting from the upper bound backwards: */
+    if (f < 0.0) {
+      rtb = g1;  dg = g1-g2; }
+    else {
+      fprintf(stderr,"WARNING: Lower boundary is actually larger than l.h.s, flipping!\n");
+      rtb = g1;  dg = g1;    }
+    for (i = 1; i <= maxtry; i++) {
+      gmid = rtb - (dg *= 0.5);
+      fmid = -1.0*(atanh(gmid) + atanh(gmid/(xi_m-1))) - gmid*LOG;
+      if (fmid >= 0.0) rtb = gmid;
+      if (fabs(dg) < gacc || fmid == 0.0) break;
+    }
+    
+    if (fabs(dg) > gacc) {
+      /* too many iterations without success - abort: */
+      result[0]=gmid; result[1]=dg; result[2]=-2.0; return;  }
+
+    /* So, these are the values for -i*gamma and Manning-radius: */
+    gamma = gmid;
+    RM    = Rc * exp( atan(1.0/gamma)/gamma ); }
+  else {
+    result[2]=-5.0; return;
+  }
+
+  result[0]=gamma;
+  result[1]=RM;
+  result[2]=ig;
+  return;
+}
+
 void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2, 
 			    double r_min, double r_max, int r_bins, int log_flag, 
 			    double *low, double *dist)
@@ -1246,6 +1345,54 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
+static int parse_cell_gpb(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze cell_gpb <Manning parameter> <outer cell radius> <inner cell radius> [<accuracy> [<# of interations>]]' */
+  double result[3], xi_m, Rc, ro;
+  double gacc = 1e-6;
+  int maxtry  = 30000;
+  char buffer[3*TCL_DOUBLE_SPACE+3], usage[150];
+  sprintf(usage,"analyze cell_gpb <Manning parameter> <outer cell radius> <inner cell radius> [<accuracy> [<# of interations>]]");
+
+  if ((argc < 3) || (argc > 5)) { 
+    Tcl_AppendResult(interp, "usage: ",usage,(char *)NULL); return TCL_ERROR; }
+  else if (!ARG_IS_D(0,xi_m) || !ARG_IS_D(1,Rc) || !ARG_IS_D(2,ro))
+    return TCL_ERROR;
+  if (argc == 4) if (!ARG_IS_D(3,gacc))
+    return TCL_ERROR;
+  if (argc == 5) if (!ARG_IS_I(4,maxtry))
+    return TCL_ERROR;
+  if ((xi_m < 0) || !((Rc > 0) && (ro > 0))) {
+    Tcl_ResetResult(interp); sprintf(buffer,"%f %f %f",xi_m,Rc,ro);
+    Tcl_AppendResult(interp, "usage: ",usage,"\n",(char *)NULL);
+    Tcl_AppendResult(interp, "ERROR: All three arguments must be positive, the latter two even non-zero (got: ",buffer,")! Aborting...", (char*)NULL);
+    return(TCL_ERROR);
+  }
+
+  calc_cell_gpb(xi_m,Rc,ro,gacc,maxtry,result);
+
+  if (result[2] == -2.0) {
+    Tcl_ResetResult(interp); sprintf(buffer,"%d",maxtry); Tcl_AppendResult(interp, "ERROR: Maximum number of iterations exceeded (",buffer,")! ");
+    sprintf(buffer,"%f and %f",result[0],result[1]);      Tcl_AppendResult(interp, "Got ",buffer," so far, aborting now...", (char*)NULL);
+    return(TCL_ERROR); 
+  } else if (result[2] == -3.0) {
+    Tcl_ResetResult(interp); sprintf(buffer,"%f and %f",result[0],result[1]);
+    Tcl_AppendResult(interp, "ERROR: gamma is not bracketed by the programs initial guess (",buffer,")! Aborting...", (char*)NULL);
+    return(TCL_ERROR); 
+  } else if (result[2] == -4.0) {
+    Tcl_ResetResult(interp); sprintf(buffer,"%f and %f",result[0],result[1]);
+    Tcl_AppendResult(interp, "ERROR: lower boundary on wrong side of the function (",buffer,")! Aborting...", (char*)NULL);
+    return(TCL_ERROR); 
+  } else if (result[2] == -5.0) {
+    Tcl_ResetResult(interp); Tcl_AppendResult(interp, "ERROR: Something went wrong! Aborting...", (char*)NULL);
+    return(TCL_ERROR); 
+  }
+  sprintf(buffer,"%f %f %f",result[0],result[1],result[2]);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return (TCL_OK);
+}
+
+
 static int parse_Vkappa(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }]' */
@@ -1719,6 +1866,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     err = parse_nbhood(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("distto"))
     err = parse_distto(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("cell_gpb"))
+    err = parse_cell_gpb(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("Vkappa"))
     err = parse_Vkappa(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("energy"))

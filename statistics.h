@@ -96,6 +96,22 @@ void nbhood(double pos[3], double r_catch, IntList *il);
     @return the minimal distance of a particle to coordinates (\<posx\>, \<posy\>, \<posz\>). */
 double distto(double pos[3], int pid);
 
+/** numerical solution for the integration constant \f$\gamma\f$ in the cell model, determined by 
+    \f[\gamma\,\ln\frac{R}{r_0}=\arctan\frac{1}{\gamma}+\arctan\frac{\xi_M-1}{\gamma}\f]
+    from which the second integration constant, the Manning radius \f$R_M\f$, follows to
+    \f[R_M = R\cdot\exp\left(-\frac{1}{\gamma}\cdot\arctan\frac{1}{\gamma}\right)\f]
+    Any value \f$\xi_M>0\f$ is allowed, the function will automatically ensure the 
+    analytical continuation required for \f$\xi_M<\ln(R/r_0)/(1+\ln(R/r_0))\f$, in which case 
+    \f$\gamma\f$ becomes imaginary.
+    @param xi_m   Manning parameter \f$\xi_M=\ell_B/a\f$ (with Bjerrum-length \f$\ell_B\f$ and charge distance \f$a\f$)
+    @param Rc     outer radius \f$R_C\f$ of the cylindrical cell around each polyelectrolyte
+    @param ro     inner radius \f$r_0\f$ of the cylindrical cell around each polyelectrolyte
+    @param gacc   the accuracy up to which \f$\gamma\f$ should be determined
+    @param maxtry maximum number of interations to find a solution 
+    @param result pointer to double array containing \f$\gamma\f$ and \f$R_M\f$, 
+                  and a third entry which is -1.0 if \f$\gamma\f$ is imaginary, +1.0 else. */
+void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry, double *result);
+
 /** appends particles' positions in 'partCfg' to \ref #configs */
 void analyze_append();
 
