@@ -120,17 +120,21 @@ AC_DEFUN([ES_CHECK_TCL],[
 
 	AC_ARG_ENABLE(tcl,AC_HELP_STRING([--enable-tcl],[specify the tcl library to use (e.g. tcl8.4)]),
 		[tclversion=$enable_tcl], [tclversion=yes])
+	case $target_os in
+	*darwin*) extrapaths=/Library/Frameworks/Tcl.framework/Tcl ;;
+	*) ;;
+	esac
 	if test .$tclversion = .yes; then
 		tclversion=""
 		for version in $TCL_VERSION tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl8.1 tcl8.0; do
-			ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [tclversion=$version], [])
+			ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [tclversion=$version], [],$extrapaths)
 			if test .$tclversion != .; then break; fi
 		done
 		if test .$tclversion = .; then
 			AC_MSG_ERROR(Tcl library not found)
 		fi
 	else
-		ES_ADDPATH_CHECK_LIB($tclversion, Tcl_Init, [], [AC_MSG_ERROR(TCL library $tclversion not found)])
+		ES_ADDPATH_CHECK_LIB($tclversion, Tcl_Init, [], [AC_MSG_ERROR(TCL library $tclversion not found)],$extrapaths)
 	fi
 	case $target_os in
 	*darwin*) extrapaths=/Library/Frameworks/Tcl.framework/Headers ;;
@@ -142,6 +146,10 @@ AC_DEFUN([ES_CHECK_TCL],[
 AC_DEFUN([ES_CHECK_TK],[
 	AC_ARG_ENABLE(tk,AC_HELP_STRING([--enable-tk],[tk version for the GUI to use, yes for auto check, no to disable]),
 		[tkversion=$enable_tk], [tkversion=no])
+	case $target_os in
+	*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Tk ;;
+	*) ;;
+	esac
 	if test .$tkversion != .no; then
 		AC_PATH_XTRA
 		CFLAGS="$CFLAGS $X_CFLAGS"
@@ -149,7 +157,7 @@ AC_DEFUN([ES_CHECK_TK],[
 		LIBS="$LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
 		if test .$tkversion = .yes; then
 			for version in $TK_VERSION tk8.5 tk8.4 tk8.3 tk8.2 tk8.1 tk8.0; do
-				ES_ADDPATH_CHECK_LIB($version, Tk_Init, [tkversion=$version], [])
+				ES_ADDPATH_CHECK_LIB($version, Tk_Init, [tkversion=$version], [],$extrapaths)
 				if test .$tkversion != .yes; then
 					break;
 				fi
@@ -158,7 +166,7 @@ AC_DEFUN([ES_CHECK_TK],[
 				AC_MSG_ERROR(Tk library not found)
 			fi
 		else
-			ES_ADDPATH_CHECK_LIB($tkversion, Tk_Init, [], [AC_MSG_ERROR(Tk library $tkversion not found)])
+			ES_ADDPATH_CHECK_LIB($tkversion, Tk_Init, [], [AC_MSG_ERROR(Tk library $tkversion not found)],$extrapaths)
 		fi
 		case $target_os in
 		*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Headers ;;
