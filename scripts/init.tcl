@@ -74,6 +74,13 @@ source polymer.tcl
 # adds 'salt_tcl <N_pS> <N_nS> <box_length> [options]'
 # adds 'velocities_tcl <N_T> <v_max> [options]'
 
+source statistics.tcl
+# adds 'calcObsAv <fileN> <ind>'
+# adds 'findObsAv <val> <what>'
+# adds 'replObsAv <fileN> <what>'
+# adds 'plotObs' <destinations>'
+# adds 'plotJoin <destinations> <final>'
+
 source ABHmath.tcl
 # adds 'PI' which returns an approximate value of the mathematical constant pi
 # adds 'sqr <arg>' which returns the square of <arg>
