@@ -106,22 +106,39 @@ MDINLINE void add_cylinder_force(Particle *p1, Particle *c_p, Constraint_cylinde
 MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
 {
   int i;
-  double fac, dist, vec[3], c_dist;
+  double fac, dist, vec[3], c_dist_2, c_dist;
   IA_parameters *ia_params;
   
   ia_params=get_ia_param(p1->r.type, c_p->r.type);
 
   /* also needed for coulomb */
-  c_dist = 0.0;
+  c_dist_2 = 0.0;
   for(i=0;i<2;i++) {
     vec[i] = p1->r.p[i] - c->pos[i];
-    c_dist += SQR(vec[i]);
+    c_dist_2 += SQR(vec[i]);
   }
   vec[2] = 0.;
-  c_dist = sqrt(c_dist);
+
+  /* charge stuff. This happens even if the particle does not feel the constraint. The electrostatic
+     formulas for pbc highly dislike partial interactions anyways.
+     THIS HAS TO BE DONE FIRST SINCE LJ CHANGES vec!!!
+  */
+  /*  fprintf(stderr, "%d: bj %f q %f l %f\n", this_node, coulomb.bjerrum, p1->r.q, c->lambda);*/
+  if (coulomb.bjerrum > 0.0 && p1->r.q != 0.0 && c->lambda != 0.0) {
+    fac = 2*coulomb.bjerrum*c->lambda*p1->r.q/c_dist_2;
+    if (temperature > 0)
+      fac *= temperature;
+    p1->f[0]  += fac*vec[0];
+    p1->f[1]  += fac*vec[1];
+    c_p->f[0] -= fac*vec[0];
+    c_p->f[1] -= fac*vec[1];
+    /* fprintf(stderr, "%d: vec %f %f -> f %f %f\n", this_node, vec[0], vec[1],
+       fac*vec[0], fac*vec[1]); */
+  }
 
   if (ia_params->LJ_eps > 0. ) {
     /* put an infinite cylinder along z axis */
+    c_dist = sqrt(c_dist_2);
     dist = c_dist - c->rad;
 
     if (dist > 0) {
@@ -134,16 +151,6 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
 	      p1->r.identity,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
       errexit();
     }
-  }
-
-  /* charge stuff. This happens even if the particle does not feel the constraint. The electrostatic
-     formulas for pbc highly dislike partial interactions anyways */
-  if (coulomb.bjerrum > 0.0 && p1->r.q != 0.0) {
-    fac = -2*coulomb.bjerrum*c->lambda*p1->r.q/c_dist;
-    p1->f[0]  += fac*vec[0];
-    p1->f[1]  += fac*vec[1];
-    c_p->f[0] -= fac*vec[0];
-    c_p->f[1] -= fac*vec[1];
   }
 }
 
