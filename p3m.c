@@ -2115,9 +2115,9 @@ int P3M_adaptive_tune_parameters(Tcl_Interp *interp)
        be obtained with smaller meshes, but normally not all these
        meshes have to be tested */
     mesh_max = tmp_mesh * 256;
-    /* avoid using more than 1 GB of FFT arrays*/
-    if (mesh_max > 256)
-      mesh_max = 256;
+    /* avoid using more than 1 GB of FFT arrays (per default, see config.h) */
+    if (mesh_max > P3M_MAX_MESH)
+      mesh_max = P3M_MAX_MESH;
   }
   else {
     sprintf(b1, "%d", p3m.mesh[0]);

@@ -164,6 +164,11 @@ This will allow to use such particle properties as quart, omega, and torque. */
     sums). */
 #define P3M_BRILLOUIN 1
 
+/** P3M: Maximal mesh size that will be checked. The current setting
+         limits the memory consumption to below 1GB, which is probably
+	 reasonable for a while. */
+#define P3M_MAX_MESH 128
+
 /** Precision for capture of round off errors. */
 #define ROUND_ERROR_PREC 1.0e-14
 
