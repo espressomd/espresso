@@ -23,6 +23,10 @@
 #define ELECTROSTATICS
 
 
+/** Flag to enable external forces. E.g. apply a fixed external force
+    to a particle or fix a particle in space. */
+#define EXTERNAL_FORCES
+
 /************************************************/
 /** \name Default Parameter Settings */
 /************************************************/
