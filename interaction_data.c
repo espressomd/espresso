@@ -919,7 +919,7 @@ int constraint(ClientData _data, Tcl_Interp *interp,
        Tcl_GetDouble(interp, argv[5], &(con->c.wal.d)) == TCL_ERROR)
       return (TCL_ERROR);
     norm = SQR(con->c.wal.n[0])+SQR(con->c.wal.n[1])+SQR(con->c.wal.n[2]);
-    for(i=0;i<3;i++) con->c.wal.n[i]/sqrt(norm);
+    for(i=0;i<3;i++) con->c.wal.n[i] /= sqrt(norm);
   }
   else if(!strncmp(argv[1], "sphere", strlen(argv[1]))) {
     if(argc < 10) {

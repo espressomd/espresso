@@ -66,6 +66,7 @@ static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
 
     return TCL_OK;
   }
+  return TCL_ERROR;
 }
 
 /** this function scans the arguments for a description of the chain structure,
@@ -104,6 +105,7 @@ static int check_chain_structure_info(Tcl_Interp *interp)
     Tcl_AppendResult(interp, "not enough particles for chain structure", (char *)NULL);
     return TCL_ERROR;
   }
+  return TCL_OK;
 }
 
 int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
@@ -431,6 +433,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 		     "\" you requested is not implemented.", (char *)NULL);
     return (TCL_ERROR);
   }
+  return (TCL_ERROR);
 }
 
 double mindist()
@@ -767,8 +770,13 @@ void calc_energy()
   MPI_Reduce(energy.node.e, energy.sum.e, size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if(energy.ana_num==0 && this_node==0) {
-    for(i=1;i<energy.n;i++)
-      energy.sum.e[0] += energy.sum.e[i];
+    if(coulomb.method==COULOMB_P3M) {
+      for(i=1;i<energy.n-2;i++)
+	energy.sum.e[0] += energy.sum.e[i];
+    } else {
+      for(i=1;i<energy.n;i++)
+	energy.sum.e[0] += energy.sum.e[i];
+    }
   }
 
 }
