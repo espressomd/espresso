@@ -122,8 +122,11 @@ int map_position_node_array(double pos[3]);
  * \param node number of the node.  */
 void calc_node_neighbors(int node);
 
-/** called from \ref mpi_bcast_event . */
-void grid_changed_topology();
+/** called from \ref mpi_bcast_parameter . */
+void grid_changed_n_nodes();
+
+/** called from \ref mpi_bcast_parameter . */
+void grid_changed_box_l();
 
 /** Calculates the smallest box and local box dimensions for periodic
  * directions.  This is needed to check if the interaction ranges are

@@ -138,15 +138,12 @@ void calc_node_neighbors(int node)
   }
 }
 
-/* executed on every node */
-void grid_changed_topology()
+void grid_changed_box_l()
 {
   int i;
-  int node_pos[3];
 
-  GRID_TRACE(fprintf(stderr,"%d: grid_changed_topology:\n",this_node));
+  GRID_TRACE(fprintf(stderr,"%d: grid_changed_box_l:\n",this_node));
 
-  map_node_array(this_node,node_pos);
   for(i = 0; i < 3; i++) {
     local_box_l[i] = box_l[i]/(double)node_grid[i]; 
     my_left[i]   = node_pos[i]    *local_box_l[i];
@@ -154,8 +151,21 @@ void grid_changed_topology()
     box_l_i[i] = 1/box_l[i];
   }
 
-  calc_node_neighbors(this_node);
   calc_minimal_box_dimensions();
+
+#ifdef GRID_DEBUG
+  fprintf(stderr,"%d: local_box_l = (%.3f, %.3f, %.3f)\n",this_node,
+	  local_box_l[0],local_box_l[1],local_box_l[2]);
+  fprintf(stderr,"%d: coordinates: x in [%.3f, %.3f], y in [%.3f, %.3f], z in [%.3f, %.3f]\n",this_node,
+	  my_left[0],my_right[0],my_left[1],my_right[1],my_left[2],my_right[2]);
+#endif
+}
+
+void grid_changed_n_nodes()
+{
+  GRID_TRACE(fprintf(stderr,"%d: grid_changed_n_nodes:\n",this_node));
+
+  calc_node_neighbors(this_node);
 
 #ifdef GRID_DEBUG
   fprintf(stderr,"%d: node_pos=(%d,%d,%d)\n",this_node,node_pos[0],node_pos[1],node_pos[2]);
@@ -164,10 +174,6 @@ void grid_changed_topology()
 	  node_neighbors[3],node_neighbors[4],node_neighbors[5]);
   fprintf(stderr,"%d: boundary=(%d,%d,%d,%d,%d,%d)\n",this_node,
 	  boundary[0],boundary[1],boundary[2],boundary[3],boundary[4],boundary[5]);
-  fprintf(stderr,"%d: local_box_l = (%.3f, %.3f, %.3f)\n",this_node,
-	  local_box_l[0],local_box_l[1],local_box_l[2]);
-  fprintf(stderr,"%d: coordinates: x in [%.3f, %.3f], y in [%.3f, %.3f], z in [%.3f, %.3f]\n",this_node,
-	  my_left[0],my_right[0],my_left[1],my_right[1],my_left[2],my_right[2]);
 #endif
 }
 

@@ -111,6 +111,13 @@ void on_particle_change()
 
   invalidate_obs();
 
+  switch (coulomb.method) {
+  case COULOMB_MMM2D:
+    on_coulomb_change();
+    break;
+  default: break;
+  }
+
   /* the particle information is no longer valid */
   free(partCfg); partCfg=NULL;
 }
@@ -166,28 +173,31 @@ void on_cell_structure_change()
 
 void on_parameter_change(int field)
 {
-  if (field == FIELD_BOXL || field == FIELD_NODEGRID)
-    grid_changed_topology();
-
+  if (field == FIELD_NODEGRID)
+    grid_changed_n_nodes();
+  if (field == FIELD_BOXL)
+    grid_changed_box_l();
+    
   if (field == FIELD_TIMESTEP || field == FIELD_GAMMA || field == FIELD_TEMPERATURE
       || field == FIELD_FRICTION_G0 || field == FIELD_FRICTION_GV || field == FIELD_PISTON )
     reinit_thermo = 1;
 
-  if (field == FIELD_TEMPERATURE)
-    on_coulomb_change();
-
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_P3M:
-    if (field == FIELD_BOXL || field == FIELD_NODEGRID)
+    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL || field == FIELD_NODEGRID)
+      on_coulomb_change();
+    break;
+  case COULOMB_DH:
+    if (field == FIELD_TEMPERATURE)
       on_coulomb_change();
     break;
   case COULOMB_MMM1D:
-    if (field == FIELD_BOXL)
+    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
       on_coulomb_change();
     break;
   case COULOMB_MMM2D:
-    if (field == FIELD_BOXL || field == FIELD_NLAYERS)
+    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL || field == FIELD_NLAYERS)
       on_coulomb_change();
     break;
   default: break;
