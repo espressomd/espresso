@@ -23,6 +23,24 @@
 #include "grid.h"
 #include "utils.h"
 
+void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
+{
+  comm->data_parts = data_parts;
+  comm->num = num;
+  comm->comm = malloc(num*sizeof(GhostCommunication));
+}
+
+void free_comm(GhostCommunicator *comm)
+{
+  int n, p;
+  for (n = 0; n < comm->num; n++){
+    for (p = 0; p < comm->comm[n].n_part_lists; p++)
+      free(comm->comm[n].part_lists[p]);
+  }
+  free(comm->comm);
+  free(comm);
+}
+
 /************************************************/
 /** \name Defines */
 /************************************************/

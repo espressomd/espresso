@@ -55,6 +55,7 @@
  *  For more information on ghosts,
  *  see \ref ghosts.c "ghosts.c"
  */
+#include <mpi.h>
 #include "particle_data.h"
 
 /** \name Defines */
@@ -92,7 +93,7 @@ typedef struct {
   /** Node to communicate with (to use with GHOST_SEND, GHOST_RECV). */
   int node;
   /** MPI communicator handle (to use with GHOST_BCST, GHOST_GATH, GHOST_RDCE). */
-  int mpi_comm;
+  MPI_Comm mpi_comm;
 
   /** Number of particle lists to communicate. */
   int n_part_lists;
@@ -121,8 +122,11 @@ typedef struct {
 /************************************************************/
 /*@{*/
 
-/** Initialize the communicator for a certain data structure. */
+/** Initialize a communicator. */
+void prepare_comm(GhostCommunicator *comm, int data_parts, int num);
 
+/** Free a communicator. */
+void free_comm(GhostCommunicator *comm);
 
 /** Initialize some arrays connected to the ghosts modul. 
  */
