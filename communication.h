@@ -180,17 +180,20 @@ void mpi_bcast_ia_params(int i, int j);
 */
 void mpi_bcast_n_particle_types(int s);
 
-/** Issue REQ_GATHER: gather statistics. job determines the job to
-    do, at the moment only gather \ref minimum_part_dist.
+/** Issue REQ_GATHER: gather data for analysis in \ref analyze.
     \param job what to do:
-        <ul>
-        <li> 0 gather \ref minimum_part_dist
-        </ul>
+    <ul><li> 0 gather \ref minimum_part_dist
+	<li> 1 calculate and reduce (sum up) energies, using \ref calc_energy.
+	<li> 2 calculate and reduce (sum up) virials, using \ref calc_virials.
+    </ul>
     \param result where to store the gathered value(s):
-        <ul>
-        <li> job=0 a double *
+    <ul><li> job=0 a double *
              usage: double *buf; mpi_gather_stats(0, buf);
-        </ul>
+	<li> job=1 unused (the results are stored in a global 
+	     energy array of type \ref Energy_stat)
+	<li> job=2 unused (the results are stored in a global 
+	     virials array of type \ref Energy_stat)
+    </ul>
 */
 void mpi_gather_stats(int job, void *result);
 
