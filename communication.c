@@ -649,6 +649,7 @@ void mpi_gather_stats(int job, void *result)
   int *sizes;
   float *cdata;
   float_packed_particle_data *fdata;
+  Particle *gdata, **pgdata, *tdata, *tdat2;
   MPI_Status status;
 
   mpi_issue(REQ_GATHER, job);
@@ -660,7 +661,8 @@ void mpi_gather_stats(int job, void *result)
 	       1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     break;
   case 1:
-    /* get packed particle coords - similar to REQ_WHO_HAS */
+    /* get packed particle coords - similar to REQ_WHO_HAS
+       Usage:     float_packed_particle_data fdata; mpi_gather_stats(1, &fdata);   */
     sizes = malloc(sizeof(int)*n_nodes);
     fdata = (float_packed_particle_data *)result;
     n_part = cells_get_n_particles();
@@ -705,6 +707,66 @@ void mpi_gather_stats(int job, void *result)
 			cdata[3*i+1], cdata[3*i+2]);
 	       });
     break;
+  case 2:
+    /* get (unsorted) particle informations as an array of type 'particle'
+       and sort it afterwards according to each particle's number 
+       Usage:     Particle *gdata; mpi_gather_stats(2, &gdata);   */
+    sizes = malloc(sizeof(int)*n_nodes);
+    pgdata = (Particle **)result;
+    n_part = cells_get_n_particles();
+
+    /* first collect number of particles on each node */
+    MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT,
+	       0, MPI_COMM_WORLD);
+    tot_size = 0;
+    for (i = 0; i < n_nodes; i++)
+      tot_size += sizes[i];
+    if((tot_size!=getParticleCount())||(tot_size!=max_seen_particle+1)) {
+      fprintf(stderr,"%d: mpi_gather_stats: The particles must be stored "
+        "consecutively (found %d, counted %d, and saw %d particles), exiting...\n",
+	this_node,tot_size,getParticleCount(),max_seen_particle+1);
+      errexit();
+    }
+
+    /* prepare an array where the particles will be collected in temporarily */
+    tdat2 = tdata = malloc(tot_size*sizeof(Particle));
+    /* and another one, where they'll be sorted into afterwards */
+    gdata = *pgdata = malloc(tot_size*sizeof(Particle));
+
+    /* then fetch particle informations into 'tdata' */
+    for (pnode = 0; pnode < n_nodes; pnode++) {
+      COMM_TRACE(fprintf(stderr, "node %d reports %d particles\n",
+			 pnode, sizes[pnode]));
+      if (sizes[pnode] > 0) {
+	if (pnode == this_node) {
+	  g = 0;
+	  for (c = 0; c < n_cells; c++)
+	    for (i = 0; i < cells[c].pList.n; i++) {
+	      memcpy(&tdata[g],&cells[c].pList.part[i],sizeof(Particle));
+	      g++;
+	    }
+	}
+	else {
+	  MPI_Recv(tdata, sizes[pnode]*sizeof(Particle), MPI_BYTE, pnode, REQ_GATHER,
+		   MPI_COMM_WORLD, &status);
+	}
+	tdata += 1*sizes[pnode];
+      }
+    }
+
+    /* now sort the particle data according to the identity-numbers */
+    tdata = tdat2;
+    for(i=0; i<tot_size; i++)
+	memcpy(&gdata[tdata[i].r.identity],&tdata[i],sizeof(Particle));
+    free(tdata);
+
+    /* perhaps add some debuggin output */
+    COMM_TRACE(gdata = *pgdata;
+	       for(i=0; i<N_tot; i++) {
+		 printf("%d: %d %d %f (%f, %f, %f)\n",i,gdata[i].r.identity,gdata[i].r.type,gdata[i].r.q,gdata[i].r.p[0],gdata[i].r.p[1],gdata[i].r.p[2]);
+	       });
+    free(sizes); 
+    break;
   default: ;
   }
 }
@@ -714,6 +776,7 @@ void mpi_gather_stats_slave(int job)
   int n_part;
   int i, c, g;
   float *cdata;
+  Particle *gdata;
 
   switch (job) {
   case 0:
@@ -722,6 +785,7 @@ void mpi_gather_stats_slave(int job)
     break;
   case 1:
     /* get packed particle coords - similar to REQ_WHO_HAS */
+    n_part = cells_get_n_particles();
     /* first collect number of particles on each node */
     MPI_Gather(&n_part, 1, MPI_INT, NULL, 1, MPI_INT,
 	       0, MPI_COMM_WORLD);
@@ -737,6 +801,26 @@ void mpi_gather_stats_slave(int job)
 	     MPI_COMM_WORLD);
 
     free(cdata);
+    break;
+  case 2:
+    /* get (unsorted) particle informations as an array of type 'particle' */
+    n_part = cells_get_n_particles();
+    /* first collect number of particles on each node */
+    MPI_Gather(&n_part, 1, MPI_INT, NULL, 1, MPI_INT,
+	       0, MPI_COMM_WORLD);
+    /* then get the particle information */
+    gdata = malloc(n_part*sizeof(Particle));
+    g = 0;
+    for (c = 0; c < n_cells; c++)
+      for (i = 0; i < cells[c].pList.n; i++) {
+        memcpy(&gdata[g],&cells[c].pList.part[i],sizeof(Particle));
+        g++;
+      }
+    /* and send it back to the master node */
+    MPI_Send(gdata, n_part*sizeof(Particle), MPI_BYTE, 0, REQ_GATHER,
+	     MPI_COMM_WORLD);
+
+    free(gdata);
     break;
   default:;
   }
