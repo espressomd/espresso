@@ -369,16 +369,22 @@ void exchange_part()
 
 
   /* check part array */
+#ifdef ADDITIONAL_CHECKS
   for(n=0;n<n_particles;n++) {
-    if(particles[n].identity <0 || particles[n].identity > max_seen_particle)
+    if(particles[n].identity <0 || particles[n].identity > max_seen_particle) {
       fprintf(stderr,"%d: illigal identity %d of part %d\n",
 	      this_node,particles[n].identity,n);
+      errexit();
+    }
     for(dir=0;dir<3;dir++) {
-      if(particles[n].p[dir] < 0 ||  particles[n].p[dir] > box_l[dir])
+      if(periodic[dir] && (particles[n].p[dir] < 0 || particles[n].p[dir] > box_l[dir])) {
 	fprintf(stderr,"%d: illigal position[%d] = %f of part %d\n",
 		this_node,dir,particles[n].p[dir],n);
+	errexit();
+      }
     }
   }
+#endif
 
   for(d=0; d<3; d++) {                           /* direction loop */  
     if(node_grid[d] > 1) { /* catch single node case for direction d! */
@@ -431,10 +437,8 @@ void exchange_ghost()
     }
     /* check buffer size */
     if(n_send_ghosts[max_send_cells] > max_g_send_buf) {
-      int old_g = max_g_send_buf;
       max_g_send_buf = n_send_ghosts[max_send_cells];
       g_send_buf = (Ghost *)realloc(g_send_buf,max_g_send_buf*sizeof(Ghost));
-      memset(g_send_buf + old_g, 0xaa, (max_g_send_buf - old_g)*sizeof(Ghost));
     }
     /* send cell loop - pack ghosts */
     for(c=0; c<n_send_cells[dir]; c++) {
@@ -449,10 +453,18 @@ void exchange_ghost()
       }
     }
     /* fold ghost coordinates if they cross the boundary */
-    if(boundary[dir] != 0.0) {
+    switch(boundary[dir]) {
+    case 0: break;
+    case 1:
       d=dir/2;
-      for(n=0;n<n_g_send_buf;n++) g_send_buf[n].p[d] += boundary[dir];
+      for(n=0;n<n_g_send_buf;n++) g_send_buf[n].p[d] += box_l[dir];
+      break;
+    case -1:
+      d=dir/2;
+      for(n=0;n<n_g_send_buf;n++) g_send_buf[n].p[d] -= box_l[dir];
+      break;
     }
+
     /* send ghosts */
     send_ghosts(dir);
     /* sort recieved ghosts into cells */
@@ -509,8 +521,14 @@ void update_ghost_pos()
       }
     }
     /* fold positions if they cross the boundary */
-    if(boundary[dir] != 0.0) {
-      for(n=dir/2; n<g; n+=3) send_buf[n] += boundary[dir];
+    switch(boundary[dir]) {
+    case 0: break;
+    case 1:
+      for(n=dir/2; n<g; n+=3) send_buf[n] += box_l[dir];
+      break;
+    case -1:
+      for(n=dir/2; n<g; n+=3) send_buf[n] -= box_l[dir];
+      break;
     }
     /* send buffer */
     send_posforce(dir,3*ghost_send_size[dir],3*ghost_recv_size[dir]);
@@ -612,7 +630,7 @@ int sub_grid_indices(int* list, int start, int max,
     for(p1=lc[1];p1<=hc[1];p1++)
       for(p2=lc[2];p2<=hc[2];p2++) {
 	if(i>max) fprintf(stderr,"%d: sub_grid_indices: Array overflow: %d>%d\n",this_node,i,max); 
-	list[i] = get_linear_index(p0,p1,p2,gs[0],gs[1],gs[2]);
+	list[i] = get_linear_index(p0,p1,p2,gs);
 	i++;
       }
 
