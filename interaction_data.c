@@ -1310,7 +1310,7 @@ int inter_parse_mmm1d(Tcl_Interp * interp, int argc, char ** argv)
 {
   double switch_rad, maxPWerror;
   int bessel_cutoff;
-  if(argc < 4) {
+  if(argc < 3) {
     Tcl_AppendResult(interp, "Not enough parameters: inter coulomb mmm1d <switch radius> <bessel cutoff> <maximal error for near formula>", (char *) NULL);
     return TCL_ERROR;
   }
