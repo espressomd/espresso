@@ -11,6 +11,9 @@
 /** \file binary_file.h
     This file defines a binary file format for the particle data.
 
+The functions in this file are no longer supported by the Espresso
+team. Use them at your own risk!
+
     <b>Responsible:</b>
     <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 

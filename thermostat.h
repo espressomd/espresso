@@ -8,15 +8,15 @@
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #ifndef THERMOSTAT_H
 #define THERMOSTAT_H
-/** \file thermostat.h
-    Contains all thermostats. 
+/** \file thermostat.h 
+
+    Contains all thermostats. At the moment this is only a langevin
+    thermostat for translational (\ref friction_thermo) and rotational
+    (\ref friction_thermo_rotation) degrees of freedom.
 
     <b>Responsible:</b>
     <a href="mailto:muehlbac@mpip-mainz.mpg.de">Frank</a>
 
-
-    Currently there is only the
-    \ref friction_thermo.
 */
 #include <tcl.h>
 #include "particle_data.h"

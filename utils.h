@@ -17,54 +17,67 @@
  *  <b>Responsible:</b>
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
  *
- *  \todo General realloc function for dynamic arrays. So far these functions are spread all over the place and redone in nearly every modul.
- *  \todo General Send/Recv routine for two-step communications.
 */
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "debug.h"
 
-/************************************************
- * defines
- ************************************************/
-
-#define PI     3.14159265358979323846264338328 /* Pi */
-#define wupi   1.77245385090551602729816748334 /* root of PI */
-#define wupii  0.56418958354775627928034964498 /* 1 over root of PI */
-#define driwu2 1.25992104989487316476721060728 /* third root of 2 */
+/*************************************************************/
+/** \name Mathematical, physical and chemical constants.     */
+/*************************************************************/
+/*@{*/
+/** Pi. */
+#define PI     3.14159265358979323846264338328 
+/** Square root of Pi */
+#define wupi   1.77245385090551602729816748334 
+/** One over square root of Pi. */
+#define wupii  0.56418958354775627928034964498 
+/** Pi to the power 1/3. */
+#define driwu2 1.25992104989487316476721060728 
+/*@}*/
 
 /************************************************
  * data types
  ************************************************/
 
-/** Integer list. */
+/** Integer list. 
+    Use the functions specified in list operations. */
 typedef struct {
-  /* Dynamically allocated integer field. */
+  /** Dynamically allocated integer field. */
   int *e;
   /** number of used elements in the integer field. */
   int n;
-  /** allocated size of the integer field. */
+  /** allocated size of the integer field. This value is ONLY changed
+      in the routines specified in list operations ! */
   int max;
 } IntList;
 
-/** Double list. */
+/** Double list.
+    Use the functions specified in list operations. */
 typedef struct {
-  /* Dynamically allocated double field. */
+  /** Dynamically allocated double field. */
   double *e;
   /** number of used elements in the double field. */
   int n;
-  /** allocated size of the double field. */
+  /** allocated size of the double field. This value is ONLY changed
+      in the routines specified in list operations ! */
   int max;
 } DoubleList;
 
 
-/************************************************
- * functions: misc
- ************************************************/
-
+/*************************************************************/
+/** \name Error catching.                                    */
+/*************************************************************/
+/*@{*/
 /** exit ungracefully, core dump if switched on. Defined in main.c. */
 void errexit();
+/*@}*/
+
+/*************************************************************/
+/** \name Dynamic memory allocation.                         */
+/*************************************************************/
+/*@{*/
 
 /* to enable us to make sure that freed pointers are invalidated, we normally try to use realloc.
    Unfortunately allocating zero bytes (which should be avoided) actually allocates 16 bytes, and
@@ -107,12 +120,14 @@ MDINLINE void *pmalloc(int size)
 #define malloc pmalloc
 
 #endif
+/*@}*/
 
-/************************************************
- * functions: lists
- ************************************************/
+/*************************************************************/
+/** \name List operations .                                  */
+/*************************************************************/
+/*@{*/
 
-
+/** Initialize an \ref IntList.  */
 MDINLINE void init_intlist(IntList *il)
 {
   il->n   = 0;
@@ -121,12 +136,15 @@ MDINLINE void init_intlist(IntList *il)
 }
 extern int this_node;
 
+/** Allocate an \ref IntList of size size. If you need an \ref IntList
+    with variable size better use \ref realloc_intlist */
 MDINLINE void alloc_intlist(IntList *il, int size)
 {
   il->max = size;
   il->e = (int *) malloc(sizeof(int)*il->max);
 }
 
+/** Reallocate an \ref IntList */
 MDINLINE void realloc_intlist(IntList *il, int size)
 {
   if(size != il->max) {
@@ -135,12 +153,14 @@ MDINLINE void realloc_intlist(IntList *il, int size)
   }
 }
 
+/** Allocate an \ref IntList, but only to multiples of grain. */
 MDINLINE void alloc_grained_intlist(IntList *il, int size, int grain)
 {
   il->max = grain*((size + grain - 1)/grain);
   il->e = (int *) malloc(sizeof(int)*il->max);
 }
 
+/** Reallocate an \ref IntList, but only to multiples of grain. */
 MDINLINE void realloc_grained_intlist(IntList *il, int size, int grain)
 {
   if(size >= il->max)
@@ -153,6 +173,7 @@ MDINLINE void realloc_grained_intlist(IntList *il, int size, int grain)
   il->e = (int *) realloc(il->e, sizeof(int)*il->max);
 }
 
+/** Check wether an \ref IntList contains the value c */
 MDINLINE int intlist_contains(IntList *il, int c)
 {
   int i;
@@ -161,6 +182,7 @@ MDINLINE int intlist_contains(IntList *il, int c)
   return 0;
 }
 
+/** Initialize an \ref DoubleList.  */
 MDINLINE void init_doublelist(DoubleList *il)
 {
   il->n   = 0;
@@ -168,12 +190,15 @@ MDINLINE void init_doublelist(DoubleList *il)
   il->e   = NULL;
 }
 
+/** Allocate an \ref DoubleList of size size. If you need an \ref DoubleList
+    with variable size better use \ref realloc_doublelist */
 MDINLINE void alloc_doublelist(DoubleList *dl, int size)
 {
   dl->max = size;
   dl->e = (double *) malloc(sizeof(double)*dl->max);
 }
 
+/** Reallocate an \ref DoubleList */
 MDINLINE void realloc_doublelist(DoubleList *dl, int size)
 {
   if(size != dl->max) {
@@ -182,12 +207,14 @@ MDINLINE void realloc_doublelist(DoubleList *dl, int size)
   }
 }
 
+/** Allocate an \ref DoubleList, but only to multiples of grain. */
 MDINLINE void alloc_grained_doublelist(DoubleList *dl, int size, int grain)
 {
   dl->max = grain*((size + grain - 1)/grain);
   dl->e = (double *) malloc(sizeof(double)*dl->max);
 }
 
+/** Reallocate an \ref DoubleList, but only to multiples of grain. */
 MDINLINE void realloc_grained_doublelist(DoubleList *dl, int size, int grain)
 {
   if(size >= dl->max)
@@ -199,10 +226,13 @@ MDINLINE void realloc_grained_doublelist(DoubleList *dl, int size, int grain)
 
   dl->e = (double *) realloc(dl->e, sizeof(double)*dl->max);
 }
+/*@}*/
 
-/************************************************
- * functions: math
- ************************************************/
+
+/*************************************************************/
+/** \name Mathematical functions.                            */
+/*************************************************************/
+/*@{*/
 
 /** Calculates the maximum of 'double'-typed a and b, returning 'double'. */
 MDINLINE double dmax(double a, double b) { return (a>b) ? a : b; }
@@ -216,52 +246,42 @@ MDINLINE int imax(int a, int b) { return (a>b) ? a : b; }
 /** Calculates the minimum of 'int'-typed a and b, returning 'int'. */
 MDINLINE int imin(int a, int b) { return (a<b) ? a : b; }
 
+/** Very slow sort routine for small integer arrays. Sorts the values
+    in decending order.  
+    \param data   the integer array 
+    \param size   size of the array
+ */
+MDINLINE void sort_int_array(int *data, int size)
+{
+  int i,j,tmp;
+  for(i=0;i<size-1;i++)
+    for(j=i+1;j<size;j++) {
+      if(data[i]<data[j]) {
+	tmp=data[i]; data[i]=data[j]; data[j]=tmp;
+      }
+    }
+}
+
+/** permute an interger array field of size size about permute positions. */
+MDINLINE void permute_ifield(int *field, int size, int permute)
+{
+  int i,tmp;
+
+  if(permute==0) return;
+  if(permute<0) permute = (size + permute);
+  while(permute>0) {
+    tmp=field[0];
+    for(i=1;i<size;i++) field[i-1] = field[i];
+    field[size-1]=tmp;
+    permute--;
+  }
+}
+
 /** Mathematically rounds 'double'-typed x, returning 'double'. */
 MDINLINE double dround(double x) { return floor(x+0.5); }
 
 /** Calculates the SQuaRe of 'double' x, returning 'double'. */
 MDINLINE double SQR(double x) { return x*x; }
-
-/** calculates the squared length of a vector */
-MDINLINE double sqrlen(double v[3]) {
-  double d2 = 0.0;
-  int i;
-  for(i=0;i<3;i++)
-    d2 += SQR(v[i]);
-  return d2;
-}
-
-/** calculates unit vector */
-MDINLINE void unit_vector(double v[3],double y[3]) {
-  double d = 0.0;
-  int i;
-  for(i=0;i<3;i++) 
-    d += SQR(v[i]);
-	 
-	d=sqrt(d);
-  
-  for(i=0;i<3;i++)
-    y[i] = v[i]/d;
-    
-  return;
-}
-
-/** calculates the scalar product of two vectors */
-MDINLINE double scalar(double a[3], double b[3]) {
-  double d2 = 0.0;
-  int i;
-  for(i=0;i<3;i++)
-    d2 += a[i]*b[i];
-  return d2;
-}
-
-/** calculates the vector product of two vectors */
-MDINLINE void vector_product(double a[3], double b[3], double c[3]) {
-  c[0]=a[1]*b[2]-a[2]*b[1];
-  c[1]=a[2]*b[0]-a[0]*b[2];
-  c[2]=a[0]*b[1]-a[1]*b[0];
-  return ;
-}
 
 /** approximates exp(d^2)*erfc(d) by applying a formula from:
     Abramowitz/Stegun: Handbook of Mathematical Functions, 
@@ -332,10 +352,51 @@ MDINLINE int calc_factors(int n, int *factors, int max)
   }
   return i;
 }
+/*@}*/
 
-/************************************************
- * functions: vectors and matrices
- ************************************************/
+
+/*************************************************************/
+/** \name Vector and matrix operations for three dimensons.  */
+/*************************************************************/
+/*@{*/
+
+/** calculates the squared length of a vector */
+MDINLINE double sqrlen(double v[3]) {
+  double d2 = 0.0;
+  int i;
+  for(i=0;i<3;i++)
+    d2 += SQR(v[i]);
+  return d2;
+}
+
+/** calculates unit vector */
+MDINLINE void unit_vector(double v[3],double y[3]) {
+  double d = 0.0;
+  int i;
+  d=sqrt( sqrlen(v) );
+  
+  for(i=0;i<3;i++)
+    y[i] = v[i]/d;
+    
+  return;
+}
+
+/** calculates the scalar product of two vectors a nd b */
+MDINLINE double scalar(double a[3], double b[3]) {
+  double d2 = 0.0;
+  int i;
+  for(i=0;i<3;i++)
+    d2 += a[i]*b[i];
+  return d2;
+}
+
+/** calculates the vector product c of two vectors a and b */
+MDINLINE void vector_product(double a[3], double b[3], double c[3]) {
+  c[0]=a[1]*b[2]-a[2]*b[1];
+  c[1]=a[2]*b[0]-a[0]*b[2];
+  c[2]=a[0]*b[1]-a[1]*b[0];
+  return ;
+}
  
 /** Calc eigevalues of a 3x3 matrix stored in q as a 9x1 array*/
 MDINLINE int calc_eigenvalues_3x3(double *q,  double *eva) {
@@ -458,7 +519,12 @@ MDINLINE int calc_eigenvector_3x3(double *a,double eva,double *eve) {
   /* the try failed => not a singular matrix: only solution is (0,0,0) */                    
   return 0;
 }
+/*@}*/
 
+/*************************************************************/
+/** \name Three dimensional grid operations                  */
+/*************************************************************/
+/*@{*/
 
 /** get the linear index from the position (a,b,c) in a 3D grid
  *  of dimensions adim[]. returns linear index.
@@ -512,36 +578,6 @@ MDINLINE int malloc_3d_grid(double ****grid, int dim[3])
   return 1;
 }
 
-/* very slow sort routine for small integer arrays. */
-MDINLINE void sort_int_array(int *data,int size)
-{
-  int i,j,tmp;
-  for(i=0;i<size-1;i++)
-    for(j=i+1;j<size;j++) {
-      if(data[i]<data[j]) {
-	tmp=data[i]; data[i]=data[j]; data[j]=tmp;
-      }
-    }
-}
-
-MDINLINE void permute_ifield(int *field, int size, int permute)
-{
-  int i,tmp;
-
-  if(permute==0) return;
-  if(permute<0) permute = (size + permute);
-  while(permute>0) {
-    tmp=field[0];
-    for(i=1;i<size;i++) field[i-1] = field[i];
-    field[size-1]=tmp;
-    permute--;
-  }
-}
-
-/************************************************
- * functions: Debugging
- ************************************************/
-
 /** print a block of a 3D array.
  *  @param data    3D array.
  *  @param start   start coordinate for the block.
@@ -583,12 +619,13 @@ MDINLINE void print_block(double *data, int start[3], int size[3], int dim[3], i
     fprintf(stderr,"\n");
   }
 }
+/*@}*/
 
 
-
-/************************************************
- * functions: Distance calculation
- ************************************************/
+/*************************************************************/
+/** \name Distance calculations.  */
+/*************************************************************/
+/*@{*/
 
 /** returns the distance between two position. 
  *  \param pos1 Position one.
@@ -645,4 +682,6 @@ MDINLINE double unfolded_distance(double pos1[3], int image_box1[3],
   }
   return sqrt(dist);
 }
+/*@}*/
+
 #endif

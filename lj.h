@@ -18,6 +18,8 @@
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
 */
 
+/** Calculate lennard Jones force between particle p1 and p2 and add
+    it to their force. */
 MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
 {
@@ -71,6 +73,7 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
   }
 }
 
+/** calculate Lennard jones energy between particle p1 and p2. */
 MDINLINE double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
 {

@@ -8,6 +8,14 @@
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #ifndef STATISTICS_CHAIN_H
 #define STATISTICS_CHAIN_H
+/** \file statistics_chain.h 
+
+    This file contains the code for statistics on the data using the
+    molecule information set with analyse set chains.
+
+    <b>Responsible:</b>
+    <a href="mailto:mann@mpip-mainz.mpg.de">BAM</a>
+*/
 
 /** \name Exported Functions */
 /************************************************************/

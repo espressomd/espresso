@@ -6,11 +6,31 @@
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
+
 /** \file config.h 
+ *
+ *  This file contains all Precompiler Flags deciding which features
+ *  of Espresso to turn on/off. It is recommended to turn everything
+ *  off which you do not need in order to optimize the performance of
+ *  Espresso for your problem. 
+ *
+ *  There are also quite a number of features which are turned off by
+ *  default since they are used only rarely.
+ *
+ *  You can get information on the compilation status of the code you
+ *  are working with by using the tcl command \ref tcl_code_info
+ *  "code_info" within your tcl_script. It is highly recommended to
+ *  store this information with your simulation data in order to
+ *  maintain the reproducibility of your results.
+ *
+ *  If you add a new compile flag you also have to add the
+ *  corresponding lines in the function \ref compilation_callback.
  *
  *  <b>Responsible:</b>
  *  <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 */
+
+
 
 /** if defined, the code will be slower, but with the \ref #periodic
     array you can choose which coordinates are bound to p.b.c and

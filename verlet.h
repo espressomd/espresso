@@ -8,7 +8,30 @@
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #ifndef VERLET_H
 #define VERLET_H
-/** \file verlet.h   Verlet list.
+/** \file verlet.h   
+ *
+ *  This file contains routines to setup and handle interaction pair
+ *  lists (verlet pair lists) for the non bonded interactions. 
+ *
+ *  The integrator uses verlet pair lists which contain all particle
+ *  pairs with a distance smaller than \ref max_cut + \ref skin. This
+ *  allows one to use these verlet pair lists for several time steps,
+ *  as long no particle has moved further than \ref skin / 2.0. You
+ *  can tune the verlet pair algorithm with the variable \ref skin
+ *  which you can set via the \ref setmd command. You can also acces
+ *  the average number of integration steps the verlet lists have been
+ *  reused with \ref setmd \ref verlet_reuse.
+ *
+ *  It contains the data type \ref PairList to store interacting
+ *  particle pairs.
+ *
+ *  To use verlet pair lists for the force calculation you can either
+ *  use the functions \ref build_verlet_lists and \ref
+ *  calculate_verlet_ia or a combination of those two \ref
+ *  build_verlet_lists_and_calc_verlet_ia.
+ *
+ *  For energy and pressure calculations using verlet pair lists use
+ *  \ref calculate_verlet_energies and \ref calculate_verlet_virials.
  *
  *  <b>Responsible:</b>
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>

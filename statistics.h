@@ -9,7 +9,7 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 /** \file statistics.h
-    This file contains the code for simply statistics on the data.
+    This file contains the code for statistics on the data.
 
     <b>Responsible:</b>
     <a href="mailto:mann@mpip-mainz.mpg.de">BAM</a>

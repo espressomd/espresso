@@ -9,7 +9,10 @@
 #ifndef RANDOM_H
 #define RANDOM_H
 
-/** \file random.h a random generator
+/** \file random.h 
+
+    A random generator
+
     <b>Responsible:</b>
     <a href="mailto:muehlbac@mpip-mainz.mpg.de">Frank</a>
 */

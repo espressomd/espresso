@@ -9,9 +9,11 @@
 #ifndef POLYMER_H
 #define POLYMER_H
 /** \file polymer.h
-    This file contains everything needed to create a start-up configuration
-    of (partially charged) polymer chains with counterions and salt molecules,
-    assigning velocities to the particles and crosslinking the polymers if necessary.
+
+    This file contains everything needed to create a start-up
+    configuration of (partially charged) polymer chains with
+    counterions and salt molecules, assigning velocities to the
+    particles and crosslinking the polymers if necessary.
  
     For more information on polymer, see \ref polymer.c "polymer.c"
   
@@ -20,11 +22,7 @@
 */
 
 #include <tcl.h>
-
 #include "particle_data.h"
-
-
-
 
 /************************************************************* 
  * Functions                                                 *

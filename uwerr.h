@@ -8,6 +8,14 @@
 // Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 #ifndef UWERR_H
 #define UWERR_H
+/** \file uwerr.h
+ *
+ *  PLEASE INSERT DOCUMENTATION
+ *
+ *  <b>Responsible:</b>
+ *  <a href="mailto:holm@mpip-mainz.mpg.de">Christian</a>
+*/
+
 
 #include <tcl.h>
 
