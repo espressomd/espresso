@@ -1,16 +1,16 @@
 		         ESPResSo License
 		      Version 1, October 2003
 
-Copyright (C) 2003, Max-Planck-Institute for Polymer Research, 
-                    Theory Group, 
-		    PO Box 3148, 55021 Mainz, Germany.
+Copyright (C) 2003-2004, Max-Planck-Institute for Polymer Research, 
+                         Theory Group, 
+		         PO Box 3148, 55021 Mainz, Germany.
 
                              Preamble
 
 The name ESPResSo stands for Extensible Simulation Package for Research in 
 Soft Matter and collectively refers to programs in source code, scripts, 
 documentation and test data. 
-The name ESPResSo is a registered trade mark. 
+The name ESPResSo is a registered trademark. 
 
 		         ESPResSo License
 TERMS AND CONDITIONS FOR USAGE, COPYING, DISTRIBUTION AND MODIFICATION

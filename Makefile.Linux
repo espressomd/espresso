@@ -5,7 +5,7 @@
 #  You should have received a copy of that license along with this program;
 #  if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-#  Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
+#  Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
 # 
 ############ general settings
 
@@ -128,7 +128,6 @@ endif
 
 ########### FFTW
 ifeq ($(BLADE),yes)
-     # LDLIBS+= -L/afs/ipp-garching.mpg.de/home/b/bhm/Espresso -lrfftw -lfftw
      LDLIBS+= -L/afs/ipp/@sys/soft/fftw/f95i/lib -lrfftw -lfftw
 else
      LDLIBS+= -L/usr/local/lib -ldrfftw -ldfftw
@@ -139,7 +138,7 @@ CFLAGS+= -DUSE_NON_CONST
 ifeq ($(BLADE),yes)
      LDLIBS+= -L/afs/ipp/@sys/soft/gnu/lib -ltcl8.4
 else
-     LDLIBS+= -ltcl8.4
+     LDLIBS+= -L/usr/lib -ltcl8.4
 endif
 
 ########### TK
