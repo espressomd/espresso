@@ -2,16 +2,38 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.7.3e (Mezoti)                                                                     *
+* v1.7.4c (Mezoti)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
+- v1.7.4c -
+-----------
+
+(c) September 20th, 2004.
+(b) September 16th, 2004.
+(a) September 14th, 2004.
+
+New Features:
+(c) Added ASYNC_BARRIER for easier debugging of the async comm mode. At the beginning 
+    of each comm step, there is an MPI_Barrier, which ensure that all nodes have finished 
+    the previous command, so that synchronization errors are detected earlier.
+(b) There is an additional check for errors right after the integrator's initialization 
+    to catch really fundamental problems, which do not allow the force calculation at all.
+(a) Added 'add_maggs_yukawa_forces' which was previously ommited.
+(a) New test case nve_pe.tcl added. This does an integration in the NVE ensemble 
+    with electrostatics, LJ, Fene, and Cosine angular potential.
+
+Bugfixes:
+(b) Error in cells_udate_ghosts() for the case of no_verlet_lists has been removed.
+(b) Error in the calculation of Yukawa self-forces in the Maggs algorithm has been removed.
+(a) Error for the calculation of beta[][] in the Maggs algorithm was cleaned.
+
+
 - v1.7.3e -
 -----------
 
-(f) September 14th, 2004
 (e) September 13th, 2004.
 (d) September 10th, 2004.
 (c) September  6th, 2004.
@@ -19,7 +41,6 @@ Current working revision.
 (a) September  2nd, 2004.
 
 New Features:
-(f) New test case nve_pe.tcl added. This does an integration for NVE ensemble with electrostatics, LJ, Fene, and Cosine angular potential.
 (e) New function 'average <tcl-list>' averages the contents of a tcl-list of values.
 (e) Re-entered new function 'polyBlockRead <source>' to read in blockfile 'source'
     which was first added for v1.6.6e but removed in v1.7.3c accidentally.
