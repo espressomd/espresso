@@ -118,6 +118,14 @@ void mpi_send_q(int node, int part, double q);
 */
 void mpi_send_type(int node, int part, int type);
 
+/** Issue REQ_SET_BOND: send bond.
+    \param part     identity of principal atom of the bond.
+    \param node     node it is attached to.
+    \param bond     field containing the bond type number and the identity of all bond partners (secundary atoms of the bond).
+*/
+void mpi_send_bond(int pnode, int part, int *bond);
+
+
 /** Issue REQ_GET_PART: recv particle data.
     \param part the particle.
     \param node the node it is attached to.

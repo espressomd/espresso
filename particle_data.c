@@ -93,6 +93,16 @@ void realloc_particles(int size)
     particles[i].identity = -1;
 }
 
+void realloc_part_bonds(int part, int new_size)
+{
+  /* make sure, that n_bonds is not larger than new_size */
+  if(particles[part].n_bonds > new_size) particles[part].n_bonds = new_size;
+  if (new_size != particles[part].max_bonds) {
+    particles[part].bonds = (int *) realloc(particles[part].bonds,new_size*sizeof(int));
+    particles[part].max_bonds = new_size;
+  }
+}
+
 int got_particle(int part)
 {
   int i;
@@ -240,8 +250,24 @@ int part(ClientData data, Tcl_Interp *interp,
     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
     Tcl_PrintDouble(interp, part.f[2], buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
-    /* FIXME: print bonding structure here */
-    free(part.bonds);
+
+    /* print bonding structure */
+    if(part.n_bonds > 0) {
+      int i=0,j,size;
+      Tcl_AppendResult(interp, buffer, " bonds ", (char *)NULL);
+      while(i<part.n_bonds) {
+	size = bonded_ia_params[part.bonds[i]].num;
+	sprintf(buffer, "%d(", part.bonds[i]); i++;
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+	for(j=0;j<size-1;j++) {
+	  sprintf(buffer, "%d, ", part.bonds[i]); i++;
+	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+	}
+	sprintf(buffer, "%d)", part.bonds[i]); i++;
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      free(part.bonds);
+     }
     return (TCL_OK);
   }
   
@@ -357,19 +383,55 @@ int part(ClientData data, Tcl_Interp *interp,
       }
       else if (!strncmp(argv[0], "bond", strlen(argv[0]))) {
 	int type_num;
+	int n_partners;
+	/* Bond type number and the bond partner atoms are stored in this field. */
+	int *bond;
+	/* check particle position */
+	if (node == -1) {
+	  Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+	  return (TCL_ERROR);
+	}
+	/* check number of arguments */
 	if (argc < 3) {
 	  Tcl_AppendResult(interp, "bond requires at least 2 arguments: "
 			   "<type_num> <partner>", (char *) NULL);
 	  return (TCL_ERROR);
 	}
-	/* set type_num */
+	/* check type_num */
 	if (Tcl_GetInt(interp, argv[1], &type_num) == TCL_ERROR)
 	  return (TCL_ERROR);
 	if(type_num < 0 || type_num >= n_bonded_ia) {
 	  Tcl_AppendResult(interp, "invalid bonded interaction type_num"
 			   "(Set bonded interaction parameters first)", (char *) NULL);
+	  return (TCL_ERROR);
 	}
-      }
+	/* check partners */ 
+	n_partners = bonded_ia_params[type_num].num;
+	if(argc < 2+n_partners) {
+	  Tcl_AppendResult(interp, "bond type %d requires %d arguments.",
+			   type_num, n_partners+1, (char *) NULL);
+	  return (TCL_ERROR);
+	}
+	bond = (int *)malloc( (n_partners+1)*sizeof(int) );
+	bond[0] = type_num;
+	j=1;
+	while(j <= n_partners) {
+	  if (Tcl_GetInt(interp, argv[j+1], &(bond[j])) == TCL_ERROR)
+	    return (TCL_ERROR);
+	  if(bond[j] >= max_seen_particle || particle_node[bond[j]] == -1) {
+	    Tcl_AppendResult(interp, "partner atom %d (identity %d) not known"
+			     ,j+1,bond[j],
+			     "(Set all partner atoms first)", (char *) NULL);
+	    return (TCL_ERROR);
+	  }
+	  j++;
+	}
+	/* set and send bond */ 
+	mpi_send_bond(node, part_num, bond);
+	free(bond);  
+	argc -= (2 + n_partners);
+	argv += (2 + n_partners);
+       }
       else {
 	Tcl_AppendResult(interp, "unknown particle parameter \"", argv[0],"\"", (char *)NULL);
 	return (TCL_ERROR);

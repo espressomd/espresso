@@ -45,16 +45,18 @@ typedef void (SlaveCallback)(int param);
 #define REQ_SET_Q     7
 /** Action number for \ref mpi_send_type. */
 #define REQ_SET_TYPE  8
+/** Action number for \ref mpi_send_bond. */
+#define REQ_SET_BOND  9
 /** Action number for \ref mpi_recv_part. */
-#define REQ_GET_PART  9
+#define REQ_GET_PART  10
 /** Action number for \ref mpi_integrate. */
-#define REQ_INTEGRATE 10
+#define REQ_INTEGRATE 11
 /** Action number for \ref mpi_bcast_ia_params. */
-#define REQ_BCAST_IA  11
+#define REQ_BCAST_IA  12
 /** Action number for \ref mpi_bcast_n_particle_types. */
-#define REQ_BCAST_IA_SIZE  12
+#define REQ_BCAST_IA_SIZE  13
 /** Total number of action numbers. */
-#define REQ_MAXIMUM   13
+#define REQ_MAXIMUM   14
 
 /** \name Slave Callbacks
     These functions are the slave node counterparts for the
@@ -71,6 +73,7 @@ void mpi_send_v_slave(int parm);
 void mpi_send_f_slave(int parm);
 void mpi_send_q_slave(int parm);
 void mpi_send_type_slave(int parm);
+void mpi_send_bond_slave(int parm);
 void mpi_recv_part_slave(int parm);
 void mpi_integrate_slave(int parm);
 void mpi_bcast_ia_params_slave(int parm);
@@ -89,10 +92,11 @@ SlaveCallback *callbacks[] = {
   mpi_send_f_slave,              /*  6: REQ_SET_F */
   mpi_send_q_slave,              /*  7: REQ_SET_Q */
   mpi_send_type_slave,           /*  8: REQ_SET_TYPE */
-  mpi_recv_part_slave,           /*  9: REQ_GET_PART */
-  mpi_integrate_slave,           /* 10: REQ_INTEGRATE */
-  mpi_bcast_ia_params_slave,     /* 11: REQ_BCAST_IA */ 
-  mpi_bcast_n_particle_types_slave /* 12: REQ_BCAST_IA_SIZE */ 
+  mpi_send_bond_slave,           /*  9: REQ_SET_BOND */
+  mpi_recv_part_slave,           /* 10: REQ_GET_PART */
+  mpi_integrate_slave,           /* 11: REQ_INTEGRATE */
+  mpi_bcast_ia_params_slave,     /* 12: REQ_BCAST_IA */ 
+  mpi_bcast_n_particle_types_slave /* 13: REQ_BCAST_IA_SIZE */ 
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -106,10 +110,11 @@ char *names[] = {
   "SET_F",     /*  6 */
   "SET_Q",     /*  7 */
   "SET_TYPE",  /*  8 */
-  "GET_PART",  /*  9 */
-  "INTEGRATE", /* 10 */
-  "BCAST_IA"   /* 11 */
-  "BCAST_IAS"  /* 12 */
+  "SET_BOND",  /*  9 */
+  "GET_PART",  /* 10 */
+  "INTEGRATE", /* 11 */
+  "BCAST_IA"   /* 12 */
+  "BCAST_IAS"  /* 13 */
 };
 
 /**********************************************
@@ -425,6 +430,45 @@ void mpi_send_type_slave(int part)
   }
 }
 
+/********************* REQ_SET_BOND ********/
+void mpi_send_bond(int pnode, int part, int *bond)
+{
+  int i,bond_size;
+  COMM_TRACE(fprintf(stderr, "0: issuing SET_BOND to node %d (part %d bond type_num %d)\n"
+		     , pnode, part, bond[0]));
+  bond_size = bonded_ia_params[bond[0]].num + 1;
+  if (pnode == this_node) {
+    int ind = got_particle(part);
+    realloc_part_bonds(ind, particles[ind].n_bonds+bond_size);
+    for(i=0;i<bond_size;i++)
+      particles[ind].bonds[particles[ind].n_bonds+i] = bond[i];
+    particles[ind].n_bonds += bond_size;
+  }
+  else {
+    int req[2];
+    req[0] = REQ_SET_BOND;
+    req[1] = part;
+    MPI_Bcast(req, 2, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Send(&bond_size, 1, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
+    MPI_Send(bond, bond_size, MPI_INT, pnode, REQ_SET_BOND, MPI_COMM_WORLD);
+  }
+}
+
+void mpi_send_bond_slave(int part)
+{
+  int ind = got_particle(part);
+  int bond_size;
+  MPI_Status status;
+  if (ind != -1) {
+    MPI_Recv(&bond_size, 1, MPI_INT, 0, REQ_SET_BOND,
+	     MPI_COMM_WORLD, &status);
+    realloc_part_bonds(ind, particles[ind].n_bonds+bond_size);
+    MPI_Recv(&(particles[ind].bonds[particles[ind].n_bonds]), bond_size, 
+	     MPI_INT, 0, REQ_SET_BOND, MPI_COMM_WORLD, &status);
+    particles[ind].n_bonds += bond_size;
+  }
+}
+
 /****************** REQ_GET_PART ************/
 void mpi_recv_part(int pnode, int part, Particle *pdata)
 {
@@ -470,7 +514,7 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
 	       REQ_GET_PART, MPI_COMM_WORLD, &status);
     }
     else
-      pdata->bonds = 0;
+      pdata->bonds = NULL;
   }
 }
 

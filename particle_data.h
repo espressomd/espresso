@@ -99,7 +99,12 @@ int part(ClientData data, Tcl_Interp *interp,
     \param size the size to provide at least. It is rounded
     up to multiples of \ref PART_INCREMENT. */
 void realloc_particles(int size);
-
+/** (re)allocate storage for particle bonds.
+    Bonds are located in the structure \ref Particle .
+    \param part     local index of particle where the bonds are located. 
+    \param new_size New size of the particles[].bonds field.
+ */
+void realloc_part_bonds(int part, int new_size);
 /** search for a specific particle.
     \param part the identity of the particle to search
     \return its field index or -1 if particle is not on this node */

@@ -50,13 +50,18 @@ int bjerrum_callback(Tcl_Interp *interp, void *_data)
 void force_calc()
 {
   int i,j;
-  int id1, id2;
+  int id1, id2, id3;
   double d[3], dist2, dist;
   IA_parameters *ia_params;
   extern Particle *particles;
   extern int *verletList;
   double frac2,frac6,r_off;
   double fac, adist;
+  /* bonded interactions */
+  int type_num;
+  /* angle bend interaction */
+  double vec1[3],vec2[3],d1i,d2i,cosine,f1,f2;
+  /* electrostatic */
   double  erfc_part_ri;
 
   FORCE_TRACE(fprintf(stderr,"%d: force_calc: for %d (P %d,G %d)\n",this_node,n_particles+n_ghosts,n_particles,n_ghosts));
@@ -74,12 +79,75 @@ void force_calc()
 
   /* initialize forces with thermostat forces */
   friction_thermo();
-
+  /* initialize ghost forces with zero */
   for(i=n_particles;i<n_particles+n_ghosts;i++)
     for(j=0;j<3;j++)
-      particles[i].f[j] = 0;
+      particles[i].f[j] = 0.0;
 
-  /* loop verlet list */
+  /* calculate bonded interactions (loop local particles) */
+  for(id1=0; id1<n_particles; id1++) {
+    i=0;
+    while(i<particles[id1].n_bonds) {
+      type_num = particles[id1].bonds[i];
+      switch(bonded_ia_params[type_num].type) {
+      case BONDED_IA_FENE:
+	id2 = local_index[particles[id1].bonds[i+1]];
+	/* check particle existence */
+	if(id2 == -1) {
+	  fprintf(stderr,"WARNING: Bonded atoms %d and %d not on the same node\n",
+		  particles[id1].identity,particles[id1].bonds[i+1] ); 
+	  i+=2; break;
+	}
+	/* fene force */
+	for(j=0;j<3;j++) d[j] = particles[id1].p[j] - particles[id2].p[j];
+	dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
+	fac = bonded_ia_params[type_num].p.fene.k_fene;
+	fac /= (1.0 - dist2/SQR(bonded_ia_params[type_num].p.fene.r_fene));
+	for(j=0;j<3;j++) {
+	  particles[id1].f[j] -= fac*d[j];
+	  particles[id2].f[j] += fac*d[j];
+	}
+	i+=2; break;
+      case BONDED_IA_ANGLE:
+	id2 = local_index[particles[id1].bonds[i+1]];
+	id3 = local_index[particles[id1].bonds[i+2]];
+	if(id2 == -1 || id3 == -1) {
+	  fprintf(stderr,"WARNING: Bonded atoms %d, %d and %d not on the same node\n",
+		  particles[id1].identity,particles[id1].bonds[i+1],particles[id1].bonds[i+2]); 
+	  i+=3; break;
+	}
+	/* angle bend force */
+	cosine=0.0;
+	/* vector from particles[id2] to particles[id1] */
+	for(j=0;j<3;j++) vec1[j] = particles[id2].p[j] - particles[id1].p[j];
+	dist2 = SQR(vec1[0]) + SQR(vec1[1]) + SQR(vec1[2]);
+	d1i = 1.0 / sqrt(dist2);
+	for(j=0;j<3;j++) vec1[j] *= d1i;
+	/* vector from particles[id3] to particles[id1] */
+ 	for(j=0;j<3;j++) vec2[j] = particles[id3].p[j] - particles[id1].p[j];
+	dist2 = SQR(vec2[0]) + SQR(vec2[1]) + SQR(vec2[2]);
+	d2i = 1.0 / sqrt(dist2);
+	for(j=0;j<3;j++) vec2[j] *= d2i;
+	/* scalar produvt of vec1 and vec2 */
+	for(j=0;j<3;j++) cosine += vec1[j] * vec2[j];
+	/* apply bend forces */
+	for(j=0;j<3;j++) {
+	  f1 = bonded_ia_params[type_num].p.angle.bend * (vec2[j] - cosine * vec1[j]) * d1i;
+	  f2 = bonded_ia_params[type_num].p.angle.bend * (vec1[j] - cosine * vec2[j]) * d2i;
+	  particles[id2].f[j] -= f1;
+	  particles[id1].f[j] += (f1+f2);
+	  particles[id3].f[j] -= f2;
+	}
+ 	i+=3; break;
+      default :
+	fprintf(stderr,"WARNING: Bonds of atom %d unkwown\n",particles[id1].identity);
+	i = particles[id1].n_bonds; 
+	break;
+     }
+    }
+  }
+
+  /* calculate non bonded interactions (loop verlet list) */
   for(i=0;i<2*n_verletList;i=i+2) {
     id1 = verletList[i];
     id2 = verletList[i+1];
