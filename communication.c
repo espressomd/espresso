@@ -752,9 +752,9 @@ void mpi_recv_part(int pnode, int part, Particle *pdata)
     memcpy(pdata->i, p->i, 3*sizeof(double));
     memcpy(pdata->v, p->v, 3*sizeof(double));
 #ifdef ROTATION
-    memcpy(pdata->r.quat = p->r.quat, 4*sizeof(double));
-    memcpy(pdata->torque = p->torque, 3*sizeof(double));
-    memcpy(pdata->omega = p->omega, 3*sizeof(double));
+    memcpy(pdata->r.quat, p->r.quat, 4*sizeof(double));
+    memcpy(pdata->torque, p->torque, 3*sizeof(double));
+    memcpy(pdata->omega, p->omega, 3*sizeof(double));
 #endif
 
     bl->max = bl->n;
