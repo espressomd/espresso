@@ -174,7 +174,6 @@ void nbhood(double pt[3], double r, IntList *il)
       il->e[il->n] = partCfg[i].p.identity;
       il->n++;
     }
-    printf("particle number %d, id %d, type %d \n",i,partCfg[i].p.identity,partCfg[i].p.type);
   }
 }
 

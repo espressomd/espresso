@@ -22,7 +22,7 @@ BLADE=no
 STATIC=no
 
 ### Debug compiling
-DEBUG=yes
+DEBUG=no
 
 ### ElectricFence allocation debugging
 EFENCE=no
