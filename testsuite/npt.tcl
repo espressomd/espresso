@@ -19,6 +19,47 @@
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 #  Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
 # 
+
+proc average { data { from 0 } { to 0 } } {
+    set sum 0
+    if { $to == 0 || $to >= [llength $data] } { 
+	set to [expr [llength $data] - 1 ] 
+    }
+    if { $from < 0 || $from >= [llength $data] } {
+	return 0
+    }
+    
+    
+	for { set i $from } { $i < [expr $to + 1] } { incr i } {
+	    set sum [expr $sum + [lindex $data $i] ]
+	}
+    
+    
+    return [expr $sum/(1.0*[expr $to - $from + 1 ])]
+}
+
+proc stdev { data { from 0 } { to 0 } } {
+    set sum 0
+    if { $to == 0 || $to >= [llength $data] } { 
+	set to [expr [llength $data] - 1 ] 
+    }
+    if { $from < 0 || $from >= [llength $data] } {
+	return 0
+    }
+    
+    set av [average $data $from $to]
+    
+    for { set i $from } { $i < [expr $to + 1] } { incr i } {
+	set sum [expr $sum + ([lindex $data $i] - $av)* ([lindex $data $i] - $av)]
+    }
+    
+    set var [expr $sum/(1.0*[expr $to - $from  ])]
+    return [expr sqrt($var)]
+}
+
+
+
+
 set errf [lindex $argv 1]
 
 proc error_exit {error} {
@@ -66,10 +107,10 @@ proc require_feature {feature} {
     }
 }
 
-if { [catch {
+#if { [catch {
 
-require_feature "NPT"
-require_feature "LENNARD_JONES"
+#require_feature "NPT"
+#require_feature "LENNARD_JONES"
 
 read_data "npt_lj_system.data"
 
@@ -107,7 +148,9 @@ for { set t 0 } { $t < 1000 } { incr t } {
     set avp [expr $avp + $totprs]
     incr avpi
 
-    set avbl [expr $avbl + [lindex [setmd box_l] 0] ]
+    set Linst [lindex [setmd box_l] 0]
+
+    set avbl [expr $avbl + $Linst ]
     incr avbli
 
     if { $t%100==0 } {
@@ -115,10 +158,60 @@ for { set t 0 } { $t < 1000 } { incr t } {
 	flush stdout
     }
 
+    if { $t > 500 } {
+	lappend storedV [expr pow($Linst,3)]
+    }
 }
+
+set Vvar [expr pow([stdev $storedV],2)]
+set compressibility [expr $Vvar/([average $storedV]*1.0)]
+
 if { [expr abs($avp/(1.0*$avpi) - 2.0) ] > 0.2 } {
     error "ERROR: Average pressure <P> = [expr $avp/(1.0*$avpi)] deviates from imposed pressure P = 2.0"
-} else { puts "done" }  
+} else { puts "Pressure deviations: [expr abs($avp/(1.0*$avpi) - 2.0) ] acceptable" }  
+
+set Vvar [expr pow([stdev $storedV],2)]
+set compressibility [expr $Vvar/([average $storedV]*1.0)]
+if { [expr abs($compressibility - 0.209) ] > 0.005 } {
+    error "ERROR: Compressibility <K> = $compressibility deviates from known value "
+} else { puts "Compressibility deviations: [expr abs($compressibility-0.2093)] acceptable" } 
+
+# --------------------------------------------------------- #
+# -- Code to calculate theoretical value of Compressibility #
+# --------------------------------------------------------- #
+
+# First set the system back to nvt with a slightly smaller box length
+
+#setmd box_l 5.65 5.65 5.65 
+#integrate set nvt
+#thermostat set langevin 1.0 0.5
+#set f_p [open "TvsP_low" w] 
+#for { set t 0 } { $t < 1000 } { incr t } {
+#    integrate 10
+#    set totprs [analyze pressure total]
+#    if { $t > 500 } {
+#	lappend storedPlow $totprs
+#    }
+#}
+
+# Then set the system back to  a slightly larger box length
+
+#setmd box_l 5.8 5.8 5.8 
+#for { set t 0 } { $t < 1000 } { incr t } {
+#    integrate 10
+#    set totprs [analyze pressure total]
+#    if { $t > 500 } {
+#	lappend storedPhigh $totprs
+#    }
+#}
+
+#set Pdiff [expr [average $storedPhigh] - [average $storedPlow]]
+#puts $Pdiff
+#puts [average $storedV]
+#set Tcompressibility [expr -(pow(5.8,3)-pow(5.65,3))/($Pdiff*[average $storedV])]
+#set Tcompressibility [expr -(pow(5.8,3)-pow(5.65,3))/($Pdiff*187.6405)]
+#puts $Tcompressibility
+
 
 # here you can create the necessary snapshot
 #    write_data "npt_lj_system.data"
@@ -129,9 +222,9 @@ if { [expr abs($avp/(1.0*$avpi) - 2.0) ] > 0.2 } {
 
 # Somebody who understands this please feel free to write it #
 
-} res ] } {
-    error_exit $res
-}
+#} res ] } {
+#    error_exit $res
+#}
 
 exec rm -f $errf
 exit 0
