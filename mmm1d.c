@@ -1,5 +1,3 @@
-
-
 #include "mmm1d.h"
 #include "polynom.h"
 #include "specfunc.h"
@@ -272,7 +270,7 @@ void MMM1D_recalcTables()
   double rho2m2max;
 
   if (modPsi != NULL) {
-    for (n = 0; n < n_modPsi; n++)
+    for (n = 0; n < 2*n_modPsi; n++)
       realloc_doublelist(&modPsi[n], 0);
     modPsi = NULL;
     n_modPsi = 0;
