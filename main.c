@@ -8,6 +8,9 @@
 
 */
 #include <tcl.h>
+#ifdef TK
+#include <tk.h>
+#endif
 #include <stdlib.h>
 #include "initialize.h"
 #include "global.h"
@@ -33,6 +36,11 @@ int appinit(Tcl_Interp *interp)
     return (TCL_ERROR);
   Tcl_CreateExitHandler(exitHandler, 0);
 
+#ifdef TK
+  if (Tk_Init(interp) == TCL_ERROR)
+    return (TCL_ERROR);
+#endif
+
   if (on_program_start(interp) == TCL_ERROR)
     return (TCL_ERROR);
   return (TCL_OK);
@@ -48,7 +56,11 @@ int main(int argc, char **argv)
 #ifdef FORCE_CORE
     atexit(core);
 #endif
+#ifdef TK
+    Tk_Main(argc, argv, appinit);
+#else
     Tcl_Main(argc, argv, appinit);
+#endif
     return 0;
   }
   else

@@ -1,35 +1,47 @@
+############ general settings
+
+# Tk (graphical interface)
+TK=no
+
 ############ compiler settings
 CC=mpicc
 
 # optimized compiler flags
-CFLAGS=-g -pg -O3 -Wall -march=i586 -fschedule-insns -fschedule-insns2 \
+CFLAGS=-g -pg -O3 -Wall -march=athlon -fschedule-insns -fschedule-insns2 \
        -funroll-loops -frerun-cse-after-loop -ffast-math
 
 # debug compiler flags
-#CFLAGS= -g -fno-inline -Wall
+# CFLAGS= -g -fno-inline -Wall
 
-# flags needed for MPI
-CFLAGS+= -DHAS_OLD_FFTW
-CFLAGS+= 
 
-# MDINLINE defines hwo to declare inline functions
-CFLAGS+= -DMDINLINE="inline static"
-# name of makedepend (or gcc -ME)
+############ name of makedepend (or gcc -ME)
 DEPEND=makedepend
 
+############ C++ compiler settings
 CXX=g++
 
-# special flags for C++ compilation
-CXXFLAGS=$(CFLAGS) -felide-constructors -fomit-frame-pointer -fno-rtti
+############ MDINLINE defines hwo to declare inline functions
+CFLAGS+= -DMDINLINE="inline static"
 
 ############ linker settings
 LINK=$(CC)
 LDFLAGS=-pg
-RELEASE=$(shell awk '{print $$3; exit}' /etc/SuSE-release)
-ifeq ($(RELEASE),8.1)
-TCLLIB=tcl8.4
+LDLIBS= -lm -lpthread
+
+########### ElectricFence
+LDLIBS+= -lefence
+# FFTW
+LDLIBS+= -L/usr/local/lib -lrfftw -lfftw
+
+########### TCL
 CFLAGS+= -DUSE_NON_CONST
-else
-TCLLIB=tcl8.3
+LDLIBS+= -ltcl8.4
+
+########### TK
+ifeq ($(TK),yes)
+CFLAGS+= -DTK
+LDLIBS+= -ltk8.4
 endif
-LDLIBS=-l$(TCLLIB) -L/usr/local/lib -lrfftw -lfftw -lm -L/people/thnfs/homes/arnold/progs/tcl_md/ElectricFence-2.2.2 -lefence -lpthread
+
+############# special flags for C++ compilation
+CXXFLAGS=$(CFLAGS) -felide-constructors -fomit-frame-pointer -fno-rtti
