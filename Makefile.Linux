@@ -18,6 +18,9 @@ BLADE=no
 ### static compilation for certain brain damaged blade clusters
 STATIC=no
 
+### ElectricFence allocation debugging
+EFENCE=no
+
 ### fixed target architecture (same reason as above)
 HOSTFLAGS=
 ifeq ($(BLADE),yes)
@@ -99,7 +102,10 @@ ifeq ($(BLADE),yes)
 endif
 
 ########### ElectricFence
-# LDLIBS+= -lefence
+ifeq ($(EFENCE),yes)
+	LDLIBS+= -lefence
+	CFLAGS+= -DEFENCE
+endif
 
 ########### FFTW
 ifeq ($(BLADE),yes)
