@@ -81,8 +81,11 @@ extern int n_bonded_ia;
 /** Field containing the paramters of the bonded ia types */
 extern Bonded_ia_parameters *bonded_ia_params;
 
+/** Maximal interaction cutoff (real space/short range interactions). */
+extern double max_cut;
+
 /************************************************
- * functions
+ * exportet functions
  ************************************************/
 
 /** Implementation of the Tcl function inter. This function
@@ -117,5 +120,9 @@ void make_bond_type_exist(int type);
     \ref make_particle_type_exist since it takes care of
     the other nodes.  */
 void realloc_ia_params(int nsize);
+
+/** calculates the maximal cutoff of all real space interactions. 
+    these are: bonded, non bonded + real space electrostatics. */
+void calc_maximal_cutoff();
 
 #endif

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "interaction_data.h"
 #include "communication.h"
+#include "p3m.h"
 
 /****************************************
  * variables
@@ -16,6 +17,8 @@ int n_interaction_types = 0;
 
 int n_bonded_ia = 0;
 Bonded_ia_parameters *bonded_ia_params = NULL;
+
+double max_cut;
 
 /*****************************************
  * functions
@@ -189,11 +192,47 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
   return (TCL_OK);
 }
 
+void calc_maximal_cutoff()
+{
+  int i, j;
+  max_cut = -1.0;
+  /* bonded */
+  for (i = 0; i < n_bonded_ia; i++) {
+    switch (bonded_ia_params[i].type) {
+    case BONDED_IA_FENE:
+      if(max_cut < bonded_ia_params[i].p.fene.r_fene)
+	max_cut = bonded_ia_params[i].p.fene.r_fene;
+      break;
+    default:
+      break;
+    }
+  }
+  /* non bonded */
+  for (i = 0; i < n_particle_types; i++)
+     for (j = i; j < n_particle_types; j++) {
+       	if (checkIfParticlesInteract(i, j)) {
+	  IA_parameters *data = get_ia_param(i, j);
+	  if (data->LJ_eps != 0) {
+	    if(max_cut < (data->LJ_cut+data->LJ_offset) ) 
+	      max_cut = (data->LJ_cut+data->LJ_offset);
+	  }
+	  if(max_cut < data->ramp_cut)
+	    max_cut = data->ramp_cut;
+	}
+     }
+  /* real cpace electrostatic */
+  if(p3m.bjerrum > 0.0) {
+    if(max_cut < p3m.r_cut)
+      max_cut = p3m.r_cut;
+  }
+}
+
 int inter(ClientData _data, Tcl_Interp *interp,
 	  int argc, char **argv)
 {
   int i, j;
 
+  /* no argument -> print all interaction informations. */
   if (argc == 1) {
     int start = 1;
     for (i = 0; i < n_bonded_ia; i++) {
@@ -247,7 +286,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
 
     if (argc == 2) {
       char buffer[TCL_INTEGER_SPACE];
-      /* print interaction information */
+      /* print specific interaction information */
       if(i<n_bonded_ia) {
 	printBondedIAToResult(interp, i);
 	return (TCL_OK);
@@ -266,11 +305,13 @@ int inter(ClientData _data, Tcl_Interp *interp,
 
     if (!strncmp(argv[0], "FENE", strlen(argv[0])) || 
 	!strncmp(argv[0], "fene", strlen(argv[0]))) {
+      /* set new FENE interaction type */
       if (argc != 3) {
 	Tcl_AppendResult(interp, "fene needs 2 parameters: "
 			 "<k_fene> <r_fene>", (char *) NULL);
 	return (TCL_ERROR);
       }
+      /* copy FENE parameters */
       if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.fene.k_fene)) == 
 	   TCL_ERROR) ||
 	  (Tcl_GetDouble(interp, argv[2], &(bonded_ia_params[i].p.fene.r_fene))  == 
@@ -278,23 +319,32 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	return (TCL_ERROR);
       bonded_ia_params[i].type = BONDED_IA_FENE;
       bonded_ia_params[i].num  = 1;
+      /* broadcast interaction parameters */
       mpi_bcast_ia_params(i,-1); 
     }
     else if (!strncmp(argv[0], "angle", strlen(argv[0]))) {
+      /* set new ANGLE interaction type */
       if (argc != 2) {
 	Tcl_AppendResult(interp, "angle needs 1 parameter: "
 			 "<bend> ", (char *) NULL);
 	return (TCL_ERROR);
       }
+      /* copy ANGLE parameters */
       if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.angle.bend)) == 
 	   TCL_ERROR) )
 	return (TCL_ERROR);
       bonded_ia_params[i].type = BONDED_IA_ANGLE;
       bonded_ia_params[i].num = 2;
+      /* broadcast interaction parameters */
       mpi_bcast_ia_params(i,-1); 
     }
     else if (!strncmp(argv[0], "dihedral", strlen(argv[0]))) {
-      fprintf(stderr, "WARNING: dihedral not implemented yet.");
+ 
+      /* remove this lines after the implementation of dihedral */
+      Tcl_AppendResult(interp, "Do not use interaction type \"", argv[0],
+		       "\"", (char *) NULL);
+      return (TCL_ERROR);
+
       bonded_ia_params[i].type = BONDED_IA_DIHEDRAL;
       bonded_ia_params[i].num = 0;
       mpi_bcast_ia_params(i,-1); 
@@ -329,24 +379,24 @@ int inter(ClientData _data, Tcl_Interp *interp,
 		       (char *) NULL);
       return (TCL_ERROR);
     }
-    
+    /* print specific interaction information */
     if (argc == 3) {
       return printNonbondedIAToResult(interp, i, j);
-    }
-    
+    }    
     /* set interaction parameters */
     argc -= 3;
     argv += 3;
     
     while (argc > 0) {
       if (!strncmp(argv[0], "lennard-jones", strlen(argv[0]))) {
+	/* set new lennard-jones interaction type */
 	if (argc < 6) {
 	  Tcl_AppendResult(interp, "lennard-jones needs 5 parameters: "
 			   "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
 			   (char *) NULL);
 	return (TCL_ERROR);
 	}
-	
+	/* copy lennard-jones parameters */
 	if ((Tcl_GetDouble(interp, argv[1], &data->LJ_eps) == TCL_ERROR) ||
 	    (Tcl_GetDouble(interp, argv[2], &data->LJ_sig)  == TCL_ERROR) ||
 	    (Tcl_GetDouble(interp, argv[3], &data->LJ_cut)  == TCL_ERROR) ||
@@ -362,13 +412,14 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	data_sym->LJ_offset  = data->LJ_offset;
 	argc -= 6;
 	argv += 6;
-	
+	/* broadcast interaction parameters */
 	mpi_bcast_ia_params(i, j);
 	mpi_bcast_ia_params(j, i);
       }
       else if (!strncmp(argv[0], "ramp", strlen(argv[0]))) {
+	/* set new ramp interaction type */
 	if (argc < 3) {
-	  Tcl_AppendResult(interp, "lennard-jones needs 2 parameters: "
+	  Tcl_AppendResult(interp, "ramp potential needs 2 parameters: "
 			   "<ramp_cut> <ramp_force>",
 			   (char *) NULL);
 	  return (TCL_ERROR);
@@ -383,7 +434,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	data_sym->ramp_force = data->ramp_force;
 	argc -= 3;
 	argv += 3;
-	
+	/* broadcast interaction parameters */	
 	mpi_bcast_ia_params(i, j);
 	mpi_bcast_ia_params(j, i);
       }
