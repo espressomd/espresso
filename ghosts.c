@@ -309,6 +309,8 @@ void exchange_part()
 	    part = CELL_PTR(m, n, o)->pList.part;
 	    np   = CELL_PTR(m, n, o)->pList.n;
 	    for(i=0 ; i<pl->n; i++) {
+	      /*	      fprintf(stderr,"%d: exchange_part %d: Part id=%d co=%f\n",
+			      this_node,dir,part[i].r.identity,part[i].r.p[d]);*/
 	      if(part[i].r.p[d] < my_left[d] ) {
 		GHOST_TRACE(fprintf(stderr,"%d: exchange_part: Send Part id=%d to node %d\n",
 			    this_node,part[i].r.identity,node_neighbors[dir]));
@@ -323,6 +325,8 @@ void exchange_part()
 	    part = CELL_PTR(m, n, o)->pList.part;
 	    np   = CELL_PTR(m, n, o)->pList.n;
 	    for(i=0 ; i<pl->n; i++) {
+	      /*fprintf(stderr,"%d: exchange_part %d: Part id=%d co=%f\n",
+		this_node,dir,part[i].r.identity,part[i].r.p[d]);*/
 	      if(part[i].r.p[d] >=  my_right[d]) {
 		GHOST_TRACE(fprintf(stderr,"%d: exchange_part: Send Part id=%d to node %d\n",
 			    this_node,part[i].r.identity,node_neighbors[dir]));
@@ -338,7 +342,7 @@ void exchange_part()
   }
 
   /* fold coordinates to primary simulation box */
-  INNER_CELLS_LOOP(m, n, o) {
+  CELLS_LOOP(m, n, o) {
     part = CELL_PTR(m, n, o)->pList.part;
     np   = CELL_PTR(m, n, o)->pList.n;
     for(i=0 ; i<np; i++) {
@@ -365,7 +369,7 @@ void exchange_part()
 
 
 
-  GHOST_TRACE(print_particle_positions());
+   GHOST_TRACE(print_particle_positions()); 
 
 }
 
@@ -668,7 +672,7 @@ int move_to_p_buf(ParticleList *pl, int ind)
 		      this_node,p_send_buf.n,b_send_buf.n));
 
 
-  if(ind < (pl->n)-1) ind--;
+  if(ind < (pl->n)) ind--;
   return ind;
 }
 
