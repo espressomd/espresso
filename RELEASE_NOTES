@@ -8,20 +8,28 @@ What's new, what's been changed, what's been fixed
 Current working revision.
 
 
-- v1.8.3b -
+- v1.8.3c -
 -----------
 
 (a) December 27th, 2004.
 (b) January  11th, 2005.
+(c) January  15th, 2005.
 
 New Features:
 (a) Added new analysis routine
     'analyze cell_gpb <Manning parameter> <outer cell radius> <inner cell radius> [<accuracy> [<# of interations>]]'
     for determining the numerical solution of the Poisson-Boltzmann equation in the cell model.
+(c) added a generic P3M test case.
+
+Changes:
+(c) removed the buggy, non-interpolating version of the P3M charge assignment.
+(c) some improvements in the P3M charge assignment.
 
 Bugfixes:
 (b) Fixed a bug which crashed analyze energy and pressure if the bonded interactions had noncontigous numbers.
 (b) exclusions now also work without Verlet lists.
+(c) Fixed the square bug in P3M, which occurs for non-neutral systems.
+(c) Fixed a rare event bug in tunev2 which could result in wrong parameter sets.
 
 - v1.8.2i -
 -----------
