@@ -29,46 +29,12 @@ double cell_size[3];
 /** inverse cell size = \see cell_size ^ -1. */
 double inv_cell_size[3];
 
-
 /*@}*/
-
 
 /************************************************************/
 /** \name Privat Functions */
 /************************************************************/
 /*@{*/
-
-/** Calculate cell grid dimensions, cell sizes and number of cells.
- *  Calculates the cell grid, based on \ref local_box_l and \ref
- *  max_range. If the number of cells is larger than \ref
- *  max_num_cells, it increases max_range until the number of cells is
- *  smaller or equal \ref max_num_cells. It sets: \ref cell_grid, \ref
- *  ghost_cell_grid, \ref cell_size, \ref inv_cell_size, and \ref
- *  n_cells.
- */
-void dd_create_cell_grid();
-
-/** create communicators */
-void  dd_prepare_comm(GhostCommunicator *comm, int data_parts);
-
-/** initializes the interacting neighbor cell list of a cell
- *  (\ref #cells::neighbors).  the created list of interacting neighbor
- *  cells is used by the verlet algorithm (see verlet.c) to build the
- *  verlet lists.
- *
- *  @param i linear index of the cell.  */
-void init_cell_neighbors(int i);
- 
-/** Calculate grid dimensions for the largest 3d grid in box where the
-    cell size is given by size. 
-    Help routine for \ref dd_ccreate_cell_grid.
-    @param grid  resulting 3d grid.
-    @param box   box where the cell grid should fit in.
-    @param size  desired cell size.
-    @param max   maximal number of cells.
-*/
-int calc_3d_cell_grid(int grid[3], double box[3], double size, int max);
-/*@}*/
 
 /** Convenient replace for loops over all cells. */
 #define DD_CELLS_LOOP(m,n,o) \
@@ -94,87 +60,94 @@ int calc_3d_cell_grid(int grid[3], double box[3], double size, int max);
     n == 0 || n == dd.ghost_cell_grid[1] - 1 || \
     o == 0 || o == dd.ghost_cell_grid[2] - 1 ) 
 
-/************************************************************/
+/** Calculate grid dimensions for the largest 3d grid in box where the
+    cell size is given by size. 
+    Help routine for \ref dd_ccreate_cell_grid.
+    @param grid  resulting 3d grid.
+    @param box   box where the cell grid should fit in.
+    @param size  desired cell size.
+    @param max   maximal number of cells.
+*/
+int calc_3d_cell_grid(int grid[3], double box[3], double size, int max)
+{
+  int i,n_cells=1;
+  for(i=0;i<3;i++) {
+    grid[i] = (int)(box[i]/size);
+    /* catch large integer case */
+    if( grid[i] > max) {
+      grid[0] = grid[1] = grid[2] = -1;
+      return (max+1);
+    }
+    n_cells *= grid[i];
+  }
+  return n_cells;
+}
+
+/** Calculate cell grid dimensions, cell sizes and number of cells.
+ *  Calculates the cell grid, based on \ref local_box_l and \ref
+ *  max_range. If the number of cells is larger than \ref
+ *  max_num_cells, it increases max_range until the number of cells is
+ *  smaller or equal \ref max_num_cells. It sets: \ref cell_grid, \ref
+ *  ghost_cell_grid, \ref cell_size, \ref inv_cell_size, and \ref
+ *  n_cells.
+ */
+void dd_create_cell_grid()
+{
+  int i,n_local_cells,new_cells;
+  double cell_range, min_box_l;
+  CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid:\n",this_node));
+  
+  /* initialize */
+  min_box_l = dmin(dmin(local_box_l[0],local_box_l[1]),local_box_l[2]);
+  cell_range = max_range;
+  n_local_cells = max_num_cells+1;
+  /* try finding a suitable cell grid. */
+  while(n_local_cells > max_num_cells && 2.0*cell_range <= min_box_l) {
+    n_local_cells = calc_3d_cell_grid(dd.cell_grid, local_box_l, cell_range, max_num_cells);
+    cell_range *= 1.05;
+  }
+  /* quit program if unsuccesful */
+  if(n_local_cells > max_num_cells) {
+      fprintf(stderr, "%d: dd_create_cell_grid: grid (%d,%d,%d), n_local_cells=%d\n",
+	      this_node,dd.cell_grid[0],dd.cell_grid[1],dd.cell_grid[2],n_local_cells);
+      fprintf(stderr, "    Error: no suitable cell grid found (max_num_cells = %d)\n",
+	      max_num_cells);
+      fflush(stderr);
+      errexit();
+  } 
+  /* now set all dependent variables */
+  new_cells=1;
+  for(i=0;i<3;i++) {
+    dd.ghost_cell_grid[i] = dd.cell_grid[i]+2;	
+    new_cells              *= dd.ghost_cell_grid[i];
+    dd.cell_size[i]       = local_box_l[i]/(double)dd.cell_grid[i];
+    dd.inv_cell_size[i]   = 1.0 / dd.cell_size[i];
+  }
+  cell_range = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]);
+  max_skin = cell_range - max_cut;
+
+  /* allocate cell array and cell pointer arrays */
+  realloc_cells(new_cells);
+  realloc_cellplist(&local_cells, local_cells.n = n_local_cells);
+  realloc_cellplist(&ghost_cells, ghost_cells.n = new_cells-n_local_cells);
+
+  CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid, n_cells=%d, local_cells.n=%d, ghost_cells.n=%d, dd.ghost_cell_grid=(%d,%d,%d)\n", this_node, n_cells,local_cells.n,ghost_cells.n,dd.ghost_cell_grid[0],dd.ghost_cell_grid[1],dd.ghost_cell_grid[2]));
+}
+
+/** Fill local_cells list and ghost_cells list for use with domain
+    decomposition.  \ref cells is assumed to be a 3d grid with size
+    \ref dd.ghos_cell_grid. */
 void dd_mark_cells()
 {
   int m,n,o,cnt_c=0,cnt_l=0,cnt_g=0;
-  DD_CELLS_LOOP(m,n,o)
+  DD_CELLS_LOOP(m,n,o) {
     if(DD_IS_LOCAL_CELL(m,n,o)) local_cells.cell[cnt_l++] = &cells[cnt_c++]; 
-    else                        ghost_cells.cell[cnt_g++] = &cells[cnt_c++];   
+    else                        ghost_cells.cell[cnt_g++] = &cells[cnt_c++];
+  } 
 }
 
-/************************************************************/
-void dd_revert_comm_order(GhostCommunicator *comm)
-{
-  int i;
-  GhostCommunication tmp;
-  /* revret order */
-  for(i=0; i<(comm->num/2); i++) {
-    tmp = comm->comm[i];
-    comm->comm[i] = comm->comm[comm->num-i-1];
-    comm->comm[comm->num-i-1] = tmp;
-  }
-  /* exchange SEND/RECV */
-  for(i=0; i<comm->num; i++) {
-    if(comm->comm[i].type == GHOST_SEND) comm->comm[i].type = GHOST_RECV;
-    else comm->comm[i].type = GHOST_SEND;
-  }
-}
-
-/************************************************************/
-void dd_topology_init(CellPList *cl)
-{
-  int c,p,np;
-  Particle *part;
-
-  CELL_TRACE(fprintf(stderr, "%d: dd_topology_init, Number of recieved cells=%d\n", this_node, cl->n));
-  cell_structure.type             = CELL_STRUCTURE_DOMDEC;
-  cell_structure.position_to_node = map_position_node_array;
-  cell_structure.position_to_cell = dd_position_to_cell;
-
-  /* not yet fully initialized */
-  if(max_range <= 0) {
-    max_range  = min_local_box_l/2.0; 
-    max_range2 = SQR(max_range); 
-  }
-
-  /* set up new domain decomposition cell structure */
-  dd_create_cell_grid();
-  /* mark cells */
-  dd_mark_cells();
-  /* create communicators */
-  dd_prepare_comm(&cell_structure.ghost_cells_comm,         GHOSTTRANS_PARTNUM);
-  dd_prepare_comm(&cell_structure.exchange_ghosts_comm,     GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
-  dd_prepare_comm(&cell_structure.update_ghost_pos_comm,    GHOSTTRANS_POSITION);
-  dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
-  /* collect forces has to be done in reverted order! */
-  dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
-
-  /* copy particles */
-  fprintf(stderr,"%d: copy particles from %d cells!\n",this_node,cl->n);
-  for (c = 0; c < cl->n; c++) {
-    part = cl->cell[c]->part;
-    np   = cl->cell[c]->n;
-    for (p = 0; p < np; p++) {
-      fprintf(stderr,"%d: copy part %d of old cell %d to new cs\n",this_node,p,c);
-      // fprintf(stderr,"%d: copy part %d  to new cs\n",this_node,part[p].p.identity);
-      append_unindexed_particle(cell_structure.position_to_cell(part[p].r.p), &part[p]);
-    }
-  }
-  fprintf(stderr,"%d: update_local_particles for %d local cells\n",this_node,local_cells.n);
-  for(c=0; c<n_cells; c++) fprintf(stderr,"%p ",&cells[c]);
-  for(c=0; c<local_cells.n; c++) {
-    fprintf(stderr,"%d: update_local_particles: cell %d with %p particles\n",this_node,c,local_cells.cell[c]);
-    update_local_particles(local_cells.cell[c]);
-  }
-}
-
-/************************************************************/
-void dd_topology_release()
-{
-}
-
-int dd_fill_pl_pointers(ParticleList **part_lists, int lc[3], int hc[3])
+/** Fill cell list */
+int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3])
 {
   int i,m,n,o,c=0;
   /* sanity check */
@@ -194,7 +167,7 @@ int dd_fill_pl_pointers(ParticleList **part_lists, int lc[3], int hc[3])
   return c;
 }
 
-/************************************************************/
+/** Create communicators for cell structure domain decomposition. */
 void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 {
   int dir,lr,i,cnt, num=12, n_comm_cells[3];
@@ -240,7 +213,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	    comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
 
 	    lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
-	    dd_fill_pl_pointers(comm->comm[cnt].part_lists,lc,hc);
+	    dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
 
 	    //fprintf(stderr,"%d: comm %d send to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
 	    cnt++;
@@ -255,7 +228,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	    comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
 
 	    lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
-	    dd_fill_pl_pointers(comm->comm[cnt].part_lists,lc,hc);
+	    dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
 
 	    //fprintf(stderr,"%d: comm %d recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]);
 	    cnt++;
@@ -266,6 +239,105 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
   }
 
 }
+
+/** Revert the order of a communicator: After calling this the
+    communicator is working in reverted order with exchanged
+    communication types GHOST_SEND <-> GHOST_RECV. */
+void dd_revert_comm_order(GhostCommunicator *comm)
+{
+  int i;
+  GhostCommunication tmp;
+  /* revert order */
+  for(i=0; i<(comm->num/2); i++) {
+    tmp = comm->comm[i];
+    comm->comm[i] = comm->comm[comm->num-i-1];
+    comm->comm[comm->num-i-1] = tmp;
+  }
+  /* exchange SEND/RECV */
+  for(i=0; i<comm->num; i++) {
+    if(comm->comm[i].type == GHOST_SEND) comm->comm[i].type = GHOST_RECV;
+    else comm->comm[i].type = GHOST_SEND;
+  }
+}
+
+/** initializes the interacting neighbor cell list of a cell
+ *  The created list of interacting neighbor
+ *  cells is used by the verlet algorithm (see verlet.c) to build the
+ *  verlet lists.
+ *
+ *  @param i linear index of the cell.  */
+void dd_init_cell_interactions()
+{
+
+}
+ 
+/*@}*/
+
+/************************************************************/
+/* Public Functions */
+/************************************************************/
+
+/************************************************************/
+void dd_topology_init(CellPList *old)
+{
+  int c,p,np;
+  Particle *part;
+
+  CELL_TRACE(fprintf(stderr, "%d: dd_topology_init, Number of recieved cells=%d\n", this_node, old->n));
+  cell_structure.type             = CELL_STRUCTURE_DOMDEC;
+  cell_structure.position_to_node = map_position_node_array;
+  cell_structure.position_to_cell = dd_position_to_cell;
+
+  /* not yet fully initialized */
+  if(max_range <= 0) {
+    max_range  = min_local_box_l/2.0; 
+    max_range2 = SQR(max_range); 
+  }
+
+  /* set up new domain decomposition cell structure */
+  dd_create_cell_grid();
+  /* mark cells */
+  dd_mark_cells();
+  /* create communicators */
+  dd_prepare_comm(&cell_structure.ghost_cells_comm,         GHOSTTRANS_PARTNUM);
+  dd_prepare_comm(&cell_structure.exchange_ghosts_comm,     GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
+  dd_prepare_comm(&cell_structure.update_ghost_pos_comm,    GHOSTTRANS_POSITION);
+  dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
+  /* collect forces has to be done in reverted order! */
+  dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
+
+  /* initialize cell neighbor structures */
+  dd_init_cell_interactions();
+
+  /* copy particles */
+  fprintf(stderr,"%d: copy particles from %d cells!\n",this_node,old->n);
+  for (c = 0; c < old->n; c++) {
+    part = old->cell[c]->part;
+    np   = old->cell[c]->n;
+    for (p = 0; p < np; p++) {
+      append_unindexed_particle(cell_structure.position_to_cell(part[p].r.p), &part[p]);
+    }
+  }
+  for(c=0; c<local_cells.n; c++) {
+    update_local_particles(local_cells.cell[c]);
+  }
+}
+
+/************************************************************/
+void dd_topology_release()
+{
+  CELL_TRACE(fprintf(stderr,"%d: dd_topology_release:\n",this_node));
+  /* free ghost cell pointer list */
+  realloc_cellplist(&ghost_cells, ghost_cells.n = 0);
+  /* free ghost communicators */
+  free_comm(&cell_structure.ghost_cells_comm);
+  free_comm(&cell_structure.exchange_ghosts_comm);
+  free_comm(&cell_structure.update_ghost_pos_comm);
+  free_comm(&cell_structure.collect_ghost_force_comm);
+}
+
+
+
 
 
 /************************************************************/
@@ -292,66 +364,6 @@ Cell *dd_position_to_cell(double pos[3])
   }
   i = get_linear_index(cpos[0],cpos[1],cpos[2], dd.ghost_cell_grid); 
   return &(cells[i]);  
-}
-
-/************************************************************/
-void dd_create_cell_grid()
-{
-  int i,n_local_cells,new_cells;
-  double cell_range, min_box_l;
-  CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid, max_range=%f local_box_l=(%f,%f,%f)\n", this_node,max_range,local_box_l[0],local_box_l[1],local_box_l[2]));
-  
-  /* initialize */
-  min_box_l = dmin(dmin(local_box_l[0],local_box_l[1]),local_box_l[2]);
-  cell_range = max_range;
-  n_local_cells = max_num_cells+1;
-  /* try finding a suitable cell grid. */
-  while(n_local_cells > max_num_cells && 2.0*cell_range <= min_box_l) {
-    n_local_cells = calc_3d_cell_grid(dd.cell_grid, local_box_l, cell_range, max_num_cells);
-    cell_range *= 1.05;
-  }
-  /* quit program if unsuccesful */
-  if(n_local_cells > max_num_cells) {
-      fprintf(stderr, "%d: dd_create_cell_grid: grid (%d,%d,%d), n_local_cells=%d\n",
-	      this_node,dd.cell_grid[0],dd.cell_grid[1],dd.cell_grid[2],n_local_cells);
-      fprintf(stderr, "    Error: no suitable cell grid found (max_num_cells = %d)\n",
-	      max_num_cells);
-      fflush(stderr);
-      errexit();
-  } 
-  /* now set all dependent variables */
-  new_cells=1;
-  for(i=0;i<3;i++) {
-    dd.ghost_cell_grid[i] = dd.cell_grid[i]+2;	
-    new_cells              *= dd.ghost_cell_grid[i];
-    dd.cell_size[i]       = local_box_l[i]/(double)dd.cell_grid[i];
-    dd.inv_cell_size[i]   = 1.0 / dd.cell_size[i];
-  }
-  cell_range = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]);
-  max_skin = cell_range - max_cut;
-
-  /* allocate cell array and cell pointer arrays */
-  realloc_cells(new_cells);
-  realloc_cellplist(&local_cells, local_cells.n = n_local_cells);
-  realloc_cellplist(&ghost_cells, ghost_cells.n = new_cells-n_local_cells);
-
-  CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid, n_cells=%d, local_cells.n=%d, ghost_cells.n=%d, dd.ghost_cell_grid=(%d,%d,%d)\n", this_node, n_cells,local_cells.n,ghost_cells.n,dd.ghost_cell_grid[0],dd.ghost_cell_grid[1],dd.ghost_cell_grid[2]));
-}
-
-/************************************************************/
-int calc_3d_cell_grid(int grid[3], double box[3], double size, int max)
-{
-  int i,n_cells=1;
-  for(i=0;i<3;i++) {
-    grid[i] = (int)(box[i]/size);
-    /* catch large integer case */
-    if( grid[i] > max) {
-      grid[0] = grid[1] = grid[2] = -1;
-      return (max+1);
-    }
-    n_cells *= grid[i];
-  }
-  return n_cells;
 }
 
 #if 0

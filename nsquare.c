@@ -13,14 +13,13 @@ Cell *nsq_position_to_cell(double pos[3])
 
 void nsq_topology_release()
 {
-  int n;
+  CELL_TRACE(fprintf(stderr,"%d: nsq_topology_release:\n",this_node));
+  /* free ghost cell pointer list */
   realloc_cellplist(&me_do_ghosts, 0);
-  for (n = 0; n < n_nodes; n++) {
-    free_comm(&cell_structure.ghost_cells_comm);
-    free_comm(&cell_structure.exchange_ghosts_comm);
-    free_comm(&cell_structure.update_ghost_pos_comm);
-    free_comm(&cell_structure.collect_ghost_force_comm);
-  }
+  free_comm(&cell_structure.ghost_cells_comm);
+  free_comm(&cell_structure.exchange_ghosts_comm);
+  free_comm(&cell_structure.update_ghost_pos_comm);
+  free_comm(&cell_structure.collect_ghost_force_comm);
 }
 
 static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts)

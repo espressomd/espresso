@@ -172,7 +172,7 @@ int cellsystem(ClientData data, Tcl_Interp *interp,
   }
   if (ARG1_IS_S("domain_decomposition"))
     mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC);
-  if (ARG1_IS_S("nsquare"))
+  else if (ARG1_IS_S("nsquare"))
     mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE);
   else {
     Tcl_AppendResult(interp, "unkown cell structure type \"", argv[0],"\"", (char *)NULL);

@@ -32,13 +32,10 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
 
 void free_comm(GhostCommunicator *comm)
 {
-  int n, p;
-  for (n = 0; n < comm->num; n++){
-    for (p = 0; p < comm->comm[n].n_part_lists; p++)
-      free(comm->comm[n].part_lists[p]);
-  }
+  int n;
+  GHOST_TRACE(fprintf(stderr,"%d: free_comm: %p has %d ghost communications\n",this_node,comm,comm->num));
+  for (n = 0; n < comm->num; n++) free(comm->comm[n].part_lists);
   free(comm->comm);
-  free(comm);
 }
 
 /************************************************/
