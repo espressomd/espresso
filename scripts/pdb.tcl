@@ -113,7 +113,7 @@ proc writepdbfoldchains { file  { chain_start } { n_chains } { chain_length } { 
 	}
 	# Calculate and store the centers of mass for this chain
 	for {set j 0} { $j < 3 } { incr j } {
-	    lset cm_pos $chainid $j [expr [ lindex $cm_pos $chainid $j ] + double([lindex $coord $p $j])/double(3)]
+	    lset cm_pos $chainid $j [expr [ lindex $cm_pos $chainid $j ] + double([lindex $coord $p $j])/double($chain_length)]
 	}
     }
 
