@@ -47,6 +47,11 @@ HOSTFLAGS=
 
 
 ############ compiler settings
+# you only have to define this if the automagic below
+# does not work for you
+CC=
+
+ifeq ($(CC),)
 CC=mpicc
 ifeq ($(BLADE),yes)
      CC=mpicci
@@ -61,11 +66,14 @@ else
 	  ICC=no
      else
 	  ifeq ($(MPIFAKE),yes)
-                ifeq ($(CC),mpicc)
+                ifeq ($(ICC),yes)
+			CC=icc
+		else
 			CC=gcc
 		endif
           endif
      endif
+endif
 endif
 
 # architecture dependent flags for gcc 3
