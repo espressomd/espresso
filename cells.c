@@ -37,7 +37,7 @@ int cell_grid[3];
 int ghost_cell_grid[3];
 int n_cells;
 Cell *cells;
-int max_num_cells;
+int max_num_cells = 512;
 
 /** number of linked cells in nodes spatial domain. */
 int n_inner_cells;
@@ -222,6 +222,7 @@ void calc_cell_grid()
 
   /* catch case, n_cells > max_num_cells */
   if(n_cells > max_num_cells) {
+    int count;
     double cell_range;
     double step;
     double min_box_l;
@@ -230,16 +231,25 @@ void calc_cell_grid()
     min_box_l = dmin(dmin(local_box_l[0],local_box_l[1]),local_box_l[2]);
     max_box_l = dmax(dmax(local_box_l[0],local_box_l[1]),local_box_l[2]);
     step = ((max_box_l/2.0)-max_range)/100; /* Maximal 100 trials! */
-    if(step<0.0) fprintf(stderr,"Error: negative step! Something went wrong in calc_cell_grid(). Ask your local Guru\n");
+    if(step<0.0) {
+      fprintf(stderr,"Error: negative step! Something went wrong in calc_cell_grid(). Ask your local Guru\n");
+      errexit();
+    }
     cell_range = max_range;
 
-    while(n_cells > max_num_cells) {
+    count = 100;
+    while(n_cells > max_num_cells && --count > 0) {
       cell_range += step;
       n_cells=1;
       for(i=0;i<3;i++) {
 	ghost_cell_grid[i] = (int)(local_box_l[i]/cell_range) + 2;
 	n_cells *= ghost_cell_grid[i];
       }
+    }
+    if (count == 0) {
+      fprintf(stderr, "Error: no suitable cell grid found (max_num_cells was %d)\n",
+	      max_num_cells);
+      errexit();
     }
     /* Give information about possible larger skin. */
     cell_range = dmin(min_box_l,cell_range);
