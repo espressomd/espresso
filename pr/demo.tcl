@@ -87,17 +87,17 @@ pack .case2.title -pady {0 10} -fill x -side top -in .case2
 
 # sliders
 label .case2.label1 -justify left -text "Ladung Wand 1"
-scale .case2.slider1 -orient h -from -2 -to 2 \
+scale .case2.slider1 -orient h -from -1 -to 1 \
     -resolution [expr 2/100.] -command Case2Wall1ChargeChange
 pack .case2.slider1 .case2.label1 -fill x -in .case2
 
 label .case2.label2 -justify left -text "Ladung Wand 2"
-scale .case2.slider2 -orient h -from -2 -to 2 \
+scale .case2.slider2 -orient h -from -1 -to 1 \
     -resolution [expr 2/100.] -command Case2Wall2ChargeChange
 pack .case2.slider2 .case2.label2 -fill x -in .case2
 
 label .case2.label3 -justify left -text "Ladung Wand 3"
-scale .case2.slider3 -orient h -from -2 -to 2 \
+scale .case2.slider3 -orient h -from -1 -to 1 \
     -resolution [expr 2/100.] -command Case2Wall3ChargeChange
 pack .case2.slider3 .case2.label3 -fill x -in .case2
 
@@ -232,15 +232,15 @@ proc Case1Start {} {
     enableStarts
     set run_sim 1
 
-    .case2.status configure -text "Fertig"
+    .case2.status configure -text "Fertig"; update
 }
 
 set displayclock 0
 proc Case2Start {} {
-    global run_sim case2stime displayclock N0 N1 N2 N3
+    global run_sim case2stime displayclock N0 N1 N2 N3 N4 Rx Ry Rz Rt
 
     .case2.status configure -text "Starte..."    
-    if { $run_sim == 2 } { set restart 1 } else { set restart 0 }
+    if { [expr abs($run_sim)] == 2 } { set restart 1 } else { set restart 0 }
     set run_sim 0
     update
 
@@ -252,7 +252,7 @@ proc Case2Start {} {
     set inp [open "case2.blk" r]
     while { [blockfile $inp read auto] != "eof" } {}
     close $inp
-    for {set i $N0} {$i < [expr $N0+$N1+$N2+$N3]} {incr i} { part $i fix }
+    for {set i $N0} {$i < [expr $N0+$N1+$N2+$N3+$N4]} {incr i} { part $i fix }
     puts "Read & fixed [setmd n_part] particles..."
 
     if { $restart == 0 } { imd_reconnect case2  }
@@ -325,9 +325,13 @@ proc Case2Wall2ChargeChange {c} {
 
 proc Case2Wall3ChargeChange {c} {
     global run_sim N0 N1 N2 N3
-    if { $run_sim == 2} { 
-	for {set i [expr $N0+$N1+$N2]} {$i < [expr $N0+$N1+$N2+$N3]} {incr i} { part $i q $c }
-	puts "Charged Wall 3 with $c (with Bjerrum = [lindex [lindex [inter coulomb] 0] 1])."
+    if { $run_sim == 2} {
+	set ind [expr $N0+$N1+$N2]; set le [expr round(sqrt($N3))]; set maxdist [expr $le/sqrt(2)]
+	for {set i 0} {$i < $N3} {incr i} { 
+	    set x [expr $i % $le]; set y [expr $i / $le]; set dist [expr sqrt(pow(0.5*$N3-$x,2)+pow(0.5*$N3-$y,2))]
+	    part $ind q [expr $c*sqrt($dist/$maxdist)]; incr ind
+	}
+	puts "Charged Wall 3 with 0...$c (with Bjerrum = [lindex [lindex [inter coulomb] 0] 1])."
     }
 }
 
@@ -342,26 +346,31 @@ set displayclock 0
 set run_sim 0
 
 while { 1 } {
-    if { $run_sim != 0 } {
-	integrate 100
-	while { [catch {imd positions} res] } {
-	    puts "positions failed: $res, retrying."
-	    after 500
-	}
+    if { $run_sim > 0 } {
+	integrate 10
+	while { [catch {imd positions} res] } { puts "positions failed: $res, retrying."; after 500 }
     } {
 	after 100
-	while { [catch {imd listen 1} res] } {
-	    puts "listen failed: $res, retrying."
-	    after 500
-	}
+	while { [catch {imd listen 1} res] } { puts "listen failed: $res, retrying."; after 500 }
     }
     if { $displayclock } {
-	set etime [expr [clock seconds] - $case2stime]
-	.case2.status configure -text [clock format $etime -format "%M:%S"]
-	if { $etime > $case2timeout } {
-	    .case2.status configure -text "Verloren!"
-	    set displayclock 0
-	    set run_sim 0
+	set nbh [analyze nbhood $Rx $Ry $Rz [expr 1.25*$Rt]]
+	if { [llength $nbh] > $N4 } {
+	    disableCase2; set run_sim -2
+	    .case2.status configure -text "Gewonnen!"; update
+	    for {set i [expr $N0]} {$i < [expr $N0+$N1+$N2+$N3 +$N4]} {incr i} { part $i unfix }
+	    setmd temp 1.0
+	    for {set i 0} {$i < 500} {incr i} {
+		integrate 10; while { [catch {imd positions} res] } { puts "positions failed: $res, retrying."; after 500 }
+	    }
+	} else {
+	    set etime [expr [clock seconds] - $case2stime]
+	    .case2.status configure -text [clock format $etime -format "%M:%S"]
+	    if { $etime > $case2timeout } {
+		.case2.status configure -text "Die Zeit ist um!"
+		set displayclock 0
+		set run_sim -2
+	    }
 	}
     }
     update
