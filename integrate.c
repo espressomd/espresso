@@ -98,7 +98,8 @@ void integrate_vv_init()
   /* initialize link cell structure */
   cells_init();  fflush(stderr); MPI_Barrier(MPI_COMM_WORLD);
   /* allocate and initialize local indizes */
-  local_index = (int *)malloc((max_seen_particle + 1)*sizeof(int));
+  if (max_seen_particle >= 0)
+    local_index = (int *)malloc((max_seen_particle + 1)*sizeof(int));
   for(i=0;i<=max_seen_particle;i++) local_index[i] = -1;
   for(i=0;i<n_particles;i++) local_index[particles[i].identity] = i;
   /* initialize ghost structure */
@@ -120,6 +121,8 @@ void integrate_vv(int n_steps)
   MPI_Barrier(MPI_COMM_WORLD);
   /* check init */
   if(rebuild_verletlist == 1) {
+    /* already here since exchange_part may destroy the ghost particles */
+    invalidate_ghosts();
     exchange_part();
     sort_particles_into_cells();
     exchange_ghost();
@@ -140,6 +143,7 @@ void integrate_vv(int n_steps)
     propagate_positions();
    /* rebuild_verletlist = 1; */
     if(rebuild_verletlist == 1) {
+      invalidate_ghosts();
       exchange_part();
       sort_particles_into_cells();
       exchange_ghost();
