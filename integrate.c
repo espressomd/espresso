@@ -460,8 +460,7 @@ int time_step_callback(Tcl_Interp *interp, void *_data)
     Tcl_AppendResult(interp, "time step must be positive.", (char *) NULL);
     return (TCL_ERROR);
   }
-  time_step = data;
-  mpi_set_time_step();
+  mpi_set_time_step(data);
 
   return (TCL_OK);
 }

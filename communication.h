@@ -253,7 +253,7 @@ void mpi_get_particles(Particle *result, IntList *il);
 /** Issue REQ_SET_TIME_STEP: send new \ref time_step and rescale the
     velocities accordingly. 
 */
-void mpi_set_time_step();
+void mpi_set_time_step(double time_step);
 
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_coulomb_params();

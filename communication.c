@@ -1185,15 +1185,22 @@ void mpi_get_particles_slave(int pnode, int bi)
 }
 
 /*************** REQ_SET_TIME_STEP ************/
-void mpi_set_time_step()
+void mpi_set_time_step(double time_s)
 {
+  double old_ts = time_step;
+
   mpi_issue(REQ_SET_TIME_STEP, -1, 0);
-  mpi_set_time_step_slave(-1, 0);
+
+  time_step = time_s;
+  MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  rescale_velocities(time_step / old_ts);
+  on_parameter_change(FIELD_TIMESTEP);
 }
 
 void mpi_set_time_step_slave(int node, int i)
 {
   double old_ts = time_step;
+
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   rescale_velocities(time_step / old_ts);
   on_parameter_change(FIELD_TIMESTEP);
