@@ -29,6 +29,14 @@
 /** increment size of charge assignment fields. */
 #define CA_INCREMENT 10       
 
+/* MPI tags for the p3m communications: */
+/** Tag for communication in P3M_init() -> send_calc_mesh(). */
+#define REQ_P3M_INIT   200
+/** Tag for communication in gather_fft_grid(). */
+#define REQ_P3M_GATHER 201
+/** Tag for communication in spread_force_grid(). */
+#define REQ_P3M_SPREAD 202
+
 /************************************************
  * data types
  ************************************************/
@@ -231,6 +239,15 @@ void   P3M_init()
       p3m.ai[i]      = (double)p3m.mesh[i]/box_l[i]; 
       p3m.a[i]       = 1.0/p3m.ai[i];
       p3m.cao_cut[i] = p3m.a[i]*p3m.cao/2.0;
+      /* check k-space cutoff */
+      if(p3m.cao_cut[i] >= box_l[i]/2.0) {
+	fprintf(stderr,"%d: P3M_init: ERROR: k-space cutoff %f is larger than half of box dimension %f\n",this_node,p3m.cao_cut[i],box_l[i]);
+	errexit();
+      }
+      if(p3m.cao_cut[i] >= local_box_l[i]) {
+	fprintf(stderr,"%d: P3M_init: ERROR: k-space cutoff %f is larger than local box dimension %f\n",this_node,p3m.cao_cut[i],local_box_l[i]);
+	errexit();
+      }
     }
     ca_frac = malloc(p3m.cao*p3m.cao*p3m.cao*CA_INCREMENT*sizeof(double));
     ca_fmp  = malloc(3*CA_INCREMENT*sizeof(int));
@@ -240,7 +257,7 @@ void   P3M_init()
     calc_send_mesh();
     /* DEBUG */
     for(n=0;n<n_nodes;n++) {
-      MPI_Barrier(MPI_COMM_WORLD);
+      /* MPI_Barrier(MPI_COMM_WORLD); */
       if(n==this_node) P3M_TRACE(p3m_print_send_mesh(sm));
     }
     send_grid = malloc(sizeof(double)*sm.max);
@@ -260,7 +277,6 @@ void   P3M_init()
     calc_differential_operator();
     calc_influence_function();
 
-    MPI_Barrier(MPI_COMM_WORLD);   
     P3M_TRACE(fprintf(stderr,"%d: p3m initialized\n",this_node));
   }
 }
@@ -284,9 +300,7 @@ void   P3M_calc_kspace_forces()
   /* Prefactor for force */
   double force_prefac;
 
-  MPI_Barrier(MPI_COMM_WORLD);   
   P3M_TRACE(fprintf(stderr,"%d: p3m_perform: \n",this_node));
-  MPI_Barrier(MPI_COMM_WORLD);   
 
   /* prepare local FFT mesh */
   for(n=0; n<lm.size; n++) rs_mesh[n] = 0.0;
@@ -342,9 +356,7 @@ void   P3M_calc_kspace_forces()
   fft_perform_forw(rs_mesh);
 
   /* === K Space Calculations === */
-  MPI_Barrier(MPI_COMM_WORLD);   
   P3M_TRACE(fprintf(stderr,"%d: p3m_perform: k-Space\n",this_node));
-  MPI_Barrier(MPI_COMM_WORLD);   
 
   /* Force preparation */
   ind = 0;
@@ -500,10 +512,10 @@ void calc_send_mesh()
       for(evenodd=0; evenodd<2;evenodd++) {
 	if((node_pos[i/2]+evenodd)%2==0)
 	  MPI_Send(&(lm.margin[i]), 1, MPI_INT, 
-		   node_neighbors[i],0,MPI_COMM_WORLD);
+		   node_neighbors[i],REQ_P3M_INIT,MPI_COMM_WORLD);
 	else
 	  MPI_Recv(&(lm.r_margin[j]), 1, MPI_INT,
-		   node_neighbors[j],0,MPI_COMM_WORLD,&status);    
+		   node_neighbors[j],REQ_P3M_INIT,MPI_COMM_WORLD,&status);    
       }
     }
     else {
@@ -552,9 +564,7 @@ void gather_fft_grid()
   MPI_Status status;
   double *tmp_ptr;
 
-  MPI_Barrier(MPI_COMM_WORLD);   
   P3M_TRACE(fprintf(stderr,"%d: gather_fft_grid:\n",this_node));
-  MPI_Barrier(MPI_COMM_WORLD);   
 
   /* direction loop */
   for(s_dir=0; s_dir<6; s_dir++) {
@@ -569,12 +579,12 @@ void gather_fft_grid()
 	if((node_pos[s_dir/2]+evenodd)%2==0) {
 	  if(sm.s_size[s_dir]>0) 
 	    MPI_Send(send_grid, sm.s_size[s_dir], MPI_DOUBLE, 
-		     node_neighbors[s_dir], 0, MPI_COMM_WORLD);
+		     node_neighbors[s_dir], REQ_P3M_GATHER, MPI_COMM_WORLD);
 	}
 	else {
 	  if(sm.r_size[r_dir]>0) 
 	    MPI_Recv(recv_grid, sm.r_size[r_dir], MPI_DOUBLE, 
-		     node_neighbors[r_dir], 0, MPI_COMM_WORLD, &status); 	    
+		     node_neighbors[r_dir], REQ_P3M_GATHER, MPI_COMM_WORLD, &status); 	    
 	}
       }
     }
@@ -595,9 +605,7 @@ void spread_force_grid()
   int s_dir,r_dir,evenodd;
   MPI_Status status;
   double *tmp_ptr;
-  MPI_Barrier(MPI_COMM_WORLD);   
   P3M_TRACE(fprintf(stderr,"%d: spread_force_grid:\n",this_node));
-  MPI_Barrier(MPI_COMM_WORLD);   
 
   /* direction loop */
   for(s_dir=5; s_dir>=0; s_dir--) {
@@ -612,12 +620,12 @@ void spread_force_grid()
 	if((node_pos[r_dir/2]+evenodd)%2==0) {
 	  if(sm.r_size[r_dir]>0) 
 	    MPI_Send(send_grid, sm.r_size[r_dir], MPI_DOUBLE, 
-		     node_neighbors[r_dir], 0, MPI_COMM_WORLD);
+		     node_neighbors[r_dir], REQ_P3M_SPREAD, MPI_COMM_WORLD);
    	}
 	else {
 	  if(sm.s_size[s_dir]>0) 
 	    MPI_Recv(recv_grid, sm.s_size[s_dir], MPI_DOUBLE, 
-		     node_neighbors[s_dir], 0, MPI_COMM_WORLD, &status); 	    
+		     node_neighbors[s_dir], REQ_P3M_SPREAD, MPI_COMM_WORLD, &status); 	    
 	}
       }
     }
