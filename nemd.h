@@ -36,6 +36,34 @@
     <li> Use only with a DPD thermostat or in an NVE ensemble.
     </ul>
     
+    Methods:
+
+    Both methods devide the simulation box into n_slab slabs (x-y
+    planes) in z direction and apply a shear in x direction. The shear
+    is aplied on the top and the middle layer.
+    
+    <ul>
+    <li> <b>Exchange</b>: At each step find the n_exchange particles
+    with the largest velocity x-component (top slab negative velocity
+    component, middle slab positiv velocity component) in the top and
+    middle slab. Exchange the x component of their velocities.
+    <li> <b>Shearrate</b>: Calculate the mean velocity of the top and
+    middle slab that produces the desired shear rate: mean_velocity =
+    (+/-) shear rate*box_l[2]/4.0. During integration calculate the
+    actual mean velocities of these slabs and add the difference
+    between the actual mean velocity and the desired mean velocity to
+    the velocity of the particles in the slab.
+    </ul>
+
+    Results:
+
+    During the simulation the velocity profile along the slabs as well
+    as the viscosity is calculated.
+    The viscosity is calculated via:
+    \f[ \eta = \frac{F}{\dot{\gamma} L_x L_y} \f]
+    F is the mean force (momentum transfer per unit time) acting on
+    the slab and \f[ L_x L_y \f] is the area of the slab.
+
     <b>Responsible:</b>
     <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
  */
@@ -113,7 +141,11 @@ typedef struct {
   /** Corresponding velocity of top and mid slab */
   double slab_vel;
 
- } Nemd;
+  /* momentum added/exchanged */
+  double momentum;
+  /* numbe of momentum exchanges */
+  int momentum_norm;
+} Nemd;
 /*@}*/
 
 /************************************************************/

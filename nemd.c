@@ -22,7 +22,7 @@
 int nemd_method = NEMD_METHOD_OFF;
 
 #ifdef NEMD
-Nemd nemddata = { -1, 0, 0, 0.0, 1.0, NULL, 0, 0, NULL, 0.0, 0.0};
+Nemd nemddata = { -1, 0, 0, 0.0, 1.0, NULL, 0, 0, NULL, 0.0, 0.0, 0.0, 0};
 #endif
 
 /************************************************************/
@@ -108,6 +108,9 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate)
   nemddata.slab             = (Slab *)malloc(nemddata.n_slabs*sizeof(Slab));
   nemddata.velocity_profile = (double *)malloc(nemddata.n_slabs*sizeof(double));
 
+  nemddata.momentum = 0.0;
+  nemddata.momentum_norm = 0;
+
   /* initialize slabs and velocity profile */
   for(i=0;i<nemddata.n_slabs;i++) {
     nemddata.velocity_profile[i]     = 0.0;
@@ -152,7 +155,7 @@ int nemd_print_status(Tcl_Interp *interp)
   case NEMD_METHOD_SHEARRATE:
     sprintf(buffer, "%d", nemddata.n_slabs);
     Tcl_AppendResult(interp, "shearrate ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, nemddata.n_exchange, buffer);
+    Tcl_PrintDouble(interp, nemddata.shear_rate, buffer);
     Tcl_AppendResult(interp, " ",buffer, (char *)NULL);
     return (TCL_OK);
     break;
@@ -207,7 +210,7 @@ int nemd_set_shearrate(Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, "nemd <n_slabs> must be non negative and even!",(char *)NULL);
     return (TCL_ERROR);
   }  
-   nemd_method = NEMD_METHOD_SHEARRATE;
+  nemd_method = NEMD_METHOD_SHEARRATE;
   nemd_init(n_slabs, 0, shearrate);
   return (TCL_OK);
 }
@@ -217,7 +220,7 @@ int nemd_print_profile(Tcl_Interp *interp)
 {
   int i;
   double val;
-  char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[TCL_DOUBLE_SPACE];
   
   INTEG_TRACE(fprintf(stderr,"%d: nemd_print_profile:\n",this_node));
   if(nemd_method == NEMD_METHOD_OFF) {
@@ -238,9 +241,33 @@ int nemd_print_profile(Tcl_Interp *interp)
   return (TCL_OK);
 }
 
-int nemd_print_viscosity(Tcl_Interp *viscosity)
+int nemd_print_viscosity(Tcl_Interp *interp)
 {
+  double shear_rate=0.0, mean_force, viscosity;
+  char buffer[TCL_DOUBLE_SPACE];
   INTEG_TRACE(fprintf(stderr,"%d: nemd_print_viscosity:\n",this_node));
+
+  /* calculate shear_rate */
+  switch (nemd_method) {
+  case NEMD_METHOD_OFF:
+    Tcl_AppendResult(interp, "nemd is off", (char *)NULL);
+    return (TCL_OK);
+  case NEMD_METHOD_EXCHANGE:
+    shear_rate = 1.0;
+  case NEMD_METHOD_SHEARRATE:
+    shear_rate = nemddata.shear_rate;
+  }
+  /* rescale momentum exchange (vel_internal = time_step * vel) */
+  nemddata.momentum /= time_step;
+  /* Calculate average Force := Momentum transfer per time unit */
+  mean_force = nemddata.momentum / (nemddata.momentum_norm*time_step);
+  /* Calculate viscosity := mean_force / (shearrate * area) */
+  viscosity = mean_force / (shear_rate*4.0*box_l[0]*box_l[1]);
+  Tcl_PrintDouble(interp, viscosity, buffer);
+  Tcl_AppendResult(interp,buffer, (char *)NULL);
+
+  nemddata.momentum = 0.0;
+  nemddata.momentum_norm = 0;
   return (TCL_OK);
 }
 #endif
@@ -318,6 +345,9 @@ void nemd_change_momentum()
 
     /* perform momentum exchange */
     for(i=0;i<nemddata.n_exchange;i++) {
+      /* store momentum change */
+      nemddata.momentum += local_particles[top_slab->fastest[i]]->m.v[0]; 
+      nemddata.momentum -= local_particles[mid_slab->fastest[i]]->m.v[0]; 
       tmp_v0 = local_particles[mid_slab->fastest[i]]->m.v[0];
       local_particles[mid_slab->fastest[i]]->m.v[0] = local_particles[top_slab->fastest[i]]->m.v[0];
       local_particles[top_slab->fastest[i]]->m.v[0] = tmp_v0;
@@ -335,8 +365,12 @@ void nemd_change_momentum()
     vel_mean = top_slab->v_mean/(double)top_slab->n_parts_in_slab;
     top_slab->vel_diff = nemddata.slab_vel - vel_mean;
     vel_mean = mid_slab->v_mean/(double)mid_slab->n_parts_in_slab;
-    mid_slab->vel_diff = - nemddata.slab_vel - vel_mean;
+    mid_slab->vel_diff = - (nemddata.slab_vel + vel_mean);
+    /* store momentum change */
+    nemddata.momentum += top_slab->n_parts_in_slab*top_slab->vel_diff;
+    nemddata.momentum -= mid_slab->n_parts_in_slab*mid_slab->vel_diff;
   }
+  nemddata.momentum_norm ++;
 }
 
 /************************************************************/
