@@ -86,7 +86,7 @@ Do not set variables which are specified as read only.
 	<li> \verbatim type <type number> \endverbatim
 	Restrictions: type number >= 0.
 	<li> \verbatim bond <type_number> <partner>+ \endverbatim
-	Restrictions: type_number >= 0. partner must be an existing particle.
+	Restrictions: type_number >= 0; partner must be an existing particle.
 	<li> \verbatim v <x value> <y value> <z value> \endverbatim
 	<li> \verbatim f <x value> <y value> <z value> \endverbatim
 	</ul>
