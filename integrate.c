@@ -676,7 +676,7 @@ void propagate_vel_pos()
   }
 
 #ifdef ADDITIONAL_CHECKS
-  force_and_velocity_display(); 
+  force_and_velocity_display();
 #endif
 
   /* communicate verlet criterion */
@@ -686,7 +686,19 @@ void propagate_vel_pos()
 void force_and_velocity_check(Particle *p) 
 {
 #ifdef ADDITIONAL_CHECKS
+  int i;
   double db_force,db_vel;
+  /* distance_check */
+  for (i = 0; i < 3; i++)
+    if(fabs(p->r.p[i] - p->l.p_old[i]) > local_box_l[i]) {
+      /* put any cellsystems here which do not rely on rebuild_verletlist */
+      if (cell_structure.type != CELL_STRUCTURE_NSQUARE) {
+	fprintf(stderr, "%d: particle %d moved further than local box length by %lf %lf %lf\n",
+		this_node, p->p.identity, p->r.p[0] - p->l.p_old[0], p->r.p[1] - p->l.p_old[1],
+		p->r.p[2] - p->l.p_old[2]);
+      }
+    }
+
   /* force check */
   db_force = SQR(p->f.f[0])+SQR(p->f.f[1])+SQR(p->f.f[2]);
   if(db_force > skin2) 
