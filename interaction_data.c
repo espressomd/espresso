@@ -1613,7 +1613,7 @@ int p3m_set_params(double r_cut, int mesh, int cao,
     if (alpha != -1.0)
       return -4;
 
-  if (accuracy > 0)
+  if (accuracy >= 0)
     p3m.accuracy = accuracy;
   else
     if (accuracy != -1.0)
