@@ -1,5 +1,6 @@
 #include <mpi.h>
 #include <string.h>
+#include "integrate.h"
 #include "layered.h"
 #include "global.h"
 #include "communication.h"
