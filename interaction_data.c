@@ -1137,11 +1137,15 @@ int inter_parse_bonded(Tcl_Interp *interp,
 
 int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 {
+#ifdef LENNARD_JONES
   if(ARG0_IS_S("ljforcecap"))
     return inter_parse_ljforcecap(interp, argc-1, argv+1);
-  
+#endif
+
+#ifdef TABULATED
   if(ARG0_IS_S("tabforcecap"))
     return inter_parse_tabforcecap(interp, argc-1, argv+1);
+#endif
 
   if(ARG0_IS_S("coulomb")) {
 #ifdef ELECTROSTATICS
