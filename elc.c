@@ -669,6 +669,9 @@ int ELC_tune(double error)
     dst2 = 2*box_l[2] - elc_params.minimal_dist;
   double min_inv_boxl = dmin(ux, uy);
 
+  if (h < 0)
+    return TCL_ERROR;
+
   if (elc_params.far_cut < 0) {
     elc_params.far_calculated = 1;    
 
@@ -787,9 +790,17 @@ int ELC_set_params(double maxPWerror, double minimal_dist, double far_cut)
   }
 
   elc_params.far_cut = far_cut;
-  elc_params.far_cut2 = SQR(far_cut);
-  elc_params.far_calculated = 0;
-
+  if (far_cut != -1) {
+    elc_params.far_cut2 = SQR(far_cut);
+    elc_params.far_calculated = 0;
+  }
+  else {
+    elc_params.far_calculated = 1;
+    if (ELC_tune(elc_params.maxPWerror) == TCL_ERROR) {
+      char *errtxt = runtime_error(128);
+      sprintf(errtxt, "{ELC tuning failed, gap size too small} ");
+    }
+  }
   coulomb.use_elc = 1;
 
   mpi_bcast_coulomb_params();
