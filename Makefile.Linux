@@ -10,7 +10,7 @@
 ############ general settings
 
 ### Tk (graphical interface)
-TK=no
+TK=yes
 
 ### Enable ('yes') for the Blade-Center (see http://www.mpip-mainz.mpg.de/theory/computers/blade/index.html)
 BLADE=no

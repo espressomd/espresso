@@ -286,3 +286,4 @@ puts "\nIntegration done."
 #############################################################
 
 puts "\nFinished"
+exit

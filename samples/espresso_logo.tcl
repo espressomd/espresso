@@ -285,3 +285,4 @@ for {set i 0} { $i < $int_n_times } { incr i} {
 
 exec rm vmd_start.script
 puts "\n\nFinished"
+exit

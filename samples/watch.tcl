@@ -145,3 +145,4 @@ exec rm vmd.log
 exec rm vmd_movie.script
 
 puts "\nFinished\n"
+exit
