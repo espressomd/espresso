@@ -8,16 +8,16 @@
 
 /** link cell structure. */
 typedef struct {
-  /* A word about the interacting neighbour cells:\\
-     In a 3D lattice each cell has 26 neighbours. Since we deal 
-     with pair forces, it is sufficient to calculate only half 
-     of the interactions (Newtons law: actio = reactio). For each 
-     cell 13 neighbours. This has only to be done for the inner 
-     cells. Caution: This implementation needs double sided ghost 
-     communication! For single sided ghost communication one 
-     would need some ghost-ghost cell interaction as well, which 
-     we do not need!   */
-  /** number of interacting neighbour cells . */
+  /** number of interacting neighbour cells . 
+      A word about the interacting neighbour cells:\\
+      In a 3D lattice each cell has 26 neighbours. Since we deal 
+      with pair forces, it is sufficient to calculate only half 
+      of the interactions (Newtons law: actio = reactio). For each 
+      cell 13 neighbours. This has only to be done for the inner 
+      cells. Caution: This implementation needs double sided ghost 
+      communication! For single sided ghost communication one 
+      would need some ghost-ghost cell interaction as well, which 
+      we do not need! */
   int n_neighbours;
   /** interacting neighbour cell list (linear indices) */
   int *neighbours;
@@ -51,13 +51,29 @@ extern double inv_cell_size[3];
 
 /*******************  Functions  *******************/
 
-/** initialize link cell structures. */
+/** initialize link cell structures. 
+
+    cells_init calculates the cell grid dimension and allocates the
+    space for the cell structure: cells. 
+
+    Then it allocates space for the particle index list of each cell
+    (cells[i].particles) and initializes the neighbour list for the
+    cells (init_cell_neighbours()).  */
 void cells_init();
 
-/** sort all particles into inner cells (no ghosts!). */
+/** sort all particles into inner cells (no ghosts!). 
+
+    In order to build the verlet list (verlet.c) from the link cell
+    structure one has to sort the particles into the cells. This is
+    done after the particle exchange (exchange_part()).  
+
+    Sorting: Go through local particle list (0...n_particles) and
+    store the local index into the particle list of the corresponding
+    cell. */
 void sort_particles_into_cells();
 
-/** exit link cell structures. */
+/** exit link cell structures.  
+    free space for linked cell structure.  */
 void cells_exit();
 
 /** get the linear index from the position (a,b,c) 

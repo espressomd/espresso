@@ -28,11 +28,12 @@
 /* #define CELL_DEBUG  */
 /* #define GHOST_DEBUG  */
 /* #define GRID_DEBUG */
-/* #define FORCE_DEBUG */
-/* #define VERLET_DEBUG */
+/* #define FORCE_DEBUG  */
+/* #define VERLET_DEBUG  */
 /* #define PARTICLE_DEBUG */
 #define MPI_CORE
 /* #define FORCE_CORE */
+
 /* #define MALLOC_DEBUG */
 
 #ifdef MALLOC_DEBUG

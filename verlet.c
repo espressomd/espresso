@@ -9,6 +9,7 @@
 #include "cells.h"
 #include "integrate.h"
 #include "particle_data.h"
+#include "communication.h"
 
 int   n_verletList;
 int max_verletList;

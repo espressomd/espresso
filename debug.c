@@ -5,6 +5,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include "communication.h"
 
 /** memory from malloc will initially be filled with this value. */
 static unsigned char fill_code = 0xaa;
@@ -20,20 +21,20 @@ void *_debug_malloc(int size)
 {
   void *res = malloc(size);
   memset(res, fill_code, size);
-  fprintf(stderr, "allocated %p+%d\n", res, size);
+  fprintf(stderr, "%d: allocated %p+%d\n", this_node, res, size);
   return res;
 }
 
 void *_debug_realloc(void *p, int size)
 {
   void *res = realloc(p, size);
-  fprintf(stderr, "reallocated %p -> %p+%d\n", p, res, size);
+  fprintf(stderr, "%d: reallocated %p -> %p+%d\n", this_node, p, res, size);
   return res;
 }
 
 void _debug_free(void *p)
 {
   free(p);
-  fprintf(stderr, "freed %p\n", p);
+  fprintf(stderr, "%d: freed %p\n", this_node, p);
 }
 

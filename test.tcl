@@ -20,7 +20,7 @@ set tcl_precision 5
 ##################################################
 puts "nproc = [setmd nproc]"
 
-setmd box_l 10.0 8.0 16.0
+setmd box_l 10.0 10.0 10.0
 puts "box =\{[setmd box]\}"
 if {[setmd nproc] == 8} {
     setmd procgrid 2 2 2

@@ -174,41 +174,12 @@ void ghost_init()
   max_send_buf = max_recv_buf = PART_INCREMENT;
   send_buf       = (double *)malloc(3*max_send_buf*sizeof(double));
   recv_buf       = (double *)malloc(3*max_recv_buf*sizeof(double));
-
-  /* debuging 
-  fflush(stderr);
-  MPI_Barrier(MPI_COMM_WORLD) ; 
-  for(i=0;i<nprocs;i++) {
-    if(i==this_node) { ghost_memory_info(0); }
-    MPI_Barrier(MPI_COMM_WORLD) ;
-  }   
-  */
-  
 }
 
 void exchange_part()
 {
   int d, lr, dir, n;
   GHOST_TRACE(fprintf(stderr,"%d: exchange_part:\n",this_node));
-
-  /*
-  for(i=0;i<nprocs;i++) {
-    if(this_node==i) {
-      fprintf(stderr,"EP1 %d: Have %d particles\n",this_node,n_particles);
-      fprintf(stderr,"EP1    My Box (%f, %f, %f) -  (%f, %f, %f)\n",
-	      my_left[0],my_left[1],my_left[2],
-	      my_right[0],my_right[1],my_right[2]);
-      for(n=0;n<n_particles;n++) 
-	fprintf(stderr,"EP1    P %d: p(%.2f, %.2f, %.2f) i(%d, %d, %d) v(%.2f, %.2f, %.2f)\n",
-		particles[n].identity,
-		particles[n].p[0],particles[n].p[1],particles[n].p[2],
-		particles[n].i[0],particles[n].i[1],particles[n].i[2],
-		particles[n].v[0],particles[n].v[1],particles[n].v[2]);
-      fflush(stderr);
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-  }
-  */
 
   /* fold coordinates to primary simulation box */
   for(n=0;n<n_particles;n++) fold_particle(particles[n].p,particles[n].i);
@@ -243,11 +214,7 @@ void exchange_part()
 	    n = move_to_p_buf(n);
 	  }
       }
-      /* GHOST_TRACE(fprintf(stderr,"%d: send %d part with %d bond partners to dir %d\n",
-	 this_node,n_p_send_buf,n_b_send_buf,dir)); */
       send_particles(dir);
-      /* GHOST_TRACE(fprintf(stderr,"%d: recv %d part with %d bond partners fr dir %d\n",
-	 this_node,n_p_recv_buf,n_b_recv_buf,dir)); */
       append_particles();
     }
     MPI_Barrier(MPI_COMM_WORLD);
@@ -288,6 +255,10 @@ void exchange_ghost()
     for(c=0; c<n_send_cells[dir]; c++) {
       c_ind = send_cells[cell_start[dir]+c];
       for(n=0;n<cells[c_ind].n_particles;n++) {
+	if(n_g_send_buf > max_g_send_buf) {
+	  fprintf(stderr,"%d: g_send_buf overflow (%d > %d)\n",
+		  this_node,max_g_send_buf,n_g_send_buf);
+	}
 	pack_ghost(g_send_buf,n_g_send_buf,particles,cells[c_ind].particles[n]);
 	n_g_send_buf++;
       }
@@ -312,9 +283,7 @@ void exchange_ghost()
     for(c=0; c<n_recv_cells[dir]; c++) {   /* cell loop - unpack ghosts */
       c_ind = recv_cells[cell_start[dir] + c];
       if(n_recv_ghosts[c] >= cells[c_ind].max_particles) {
-	cells[c_ind].max_particles = n_recv_ghosts[c];
-	cells[c_ind].particles = (int *)realloc(cells[c_ind].particles,
-				 cells[c_ind].max_particles*sizeof(int));
+	realloc_cell_particles(c_ind, n_recv_ghosts[c]+1);
       }
       for(i=0; i<n_recv_ghosts[c];i++) {
 	unpack_ghost(particles,m,g_recv_buf,n);
@@ -335,30 +304,6 @@ void exchange_ghost()
     send_buf = (double *)realloc(send_buf,3*max_send_buf*sizeof(double));
   if(max_recv_buf > old_max_recv)    
     recv_buf = (double *)realloc(recv_buf,3*max_recv_buf*sizeof(double));
-
-  /* verbose debug output about send/recv cells !!!
-  for(n=0;n<nprocs;n++) {
-    if(n==this_node) {
-      int sum=0;
-      for(i=0;i<n_cells;i++) sum += cells[i].n_particles;
-      fprintf(stderr,"%d: ghost exchange done: %d Particles in cells:\n",this_node,sum);
-      for(i=0;i<n_cells;i++) fprintf(stderr,"%d ",cells[i].n_particles);
-      fprintf(stderr,"\n");
-      for(dir=0;dir<6;dir++) {
-	fprintf(stderr,"Ghosts in dir %d: S:",dir); sum=0;
-	for(i=0;i<n_send_cells[dir];i++) { 
-	  sum+=cells[(send_cells[(cell_start[dir]+i)])].n_particles;
-	  fprintf(stderr,"%d ",cells[(send_cells[(cell_start[dir]+i)])].n_particles); }
-	fprintf(stderr,"(%d) R:",sum); sum=0;
-	for(i=0;i<n_recv_cells[dir];i++) {
-	  sum+=cells[(recv_cells[(cell_start[dir]+i)])].n_particles;
-	  fprintf(stderr,"%d ",cells[(recv_cells[(cell_start[dir]+i)])].n_particles); }
-	fprintf(stderr,"(%d)\n",sum);
-      }
-    }
-    fflush(stderr); MPI_Barrier(MPI_COMM_WORLD);
-  }
-  */
 }
 
 void update_ghost_pos()
@@ -430,6 +375,7 @@ void collect_ghost_forces()
     } 
     MPI_Barrier(MPI_COMM_WORLD); 
   }
+  MPI_Barrier(MPI_COMM_WORLD); 
 }
 
 void ghost_exit()

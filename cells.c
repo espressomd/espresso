@@ -1,6 +1,17 @@
-/*************************************************/
-/*******************  CELLS.C  *******************/
-/*************************************************/
+/** \file cells.c
+
+    This file contains everything related to the link cell
+    algorithm. This modul strongly interacts with with the ghost
+    particle structure (ghosts.c) and the verlet list algorithm
+    (verlet.c). The initialization (cells_init()) and cleaning up
+    (cells_exit()) is done from the integrator (integrate.c).  
+
+    The domain of a node is split into a 3D cell grid with dimension
+    cell_grid. Together with one ghost cell layer on each side the
+    overall dimension of the ghost cell grid is ghos_cell_grid.
+    
+*/
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,7 +77,7 @@ void cells_init()
     
     ghost_cell_grid[i] = cell_grid[i] + 2;
     cell_size[i]       = local_box_l[i]/(double)cell_grid[i];
-    inv_cell_size[i]   = (double)cell_grid[i]/local_box_l[i];
+    inv_cell_size[i]   = 1.0 / cell_size[i];
   }
   n_inner_cells = cell_grid[0]*cell_grid[1]*cell_grid[2];
   n_cells = ghost_cell_grid[0]*ghost_cell_grid[1]*ghost_cell_grid[2];
@@ -86,15 +97,6 @@ void cells_init()
     cells[i].particles = malloc(cells[i].max_particles*sizeof(int));
     init_cell_neighbours(i);
   }
-
-  /* debuging 
-  fflush(stderr);
-  MPI_Barrier(MPI_COMM_WORLD) ; 
-  for(i=0;i<nprocs;i++) {
-    if(i==this_node) { cell_memory_info(0); }
-    MPI_Barrier(MPI_COMM_WORLD) ;
-  }
-  */
 }
 
 /*************************************************/
@@ -131,32 +133,16 @@ void sort_particles_into_cells()
     /* calculate cell index */
     for(i=0;i<3;i++) 
       cpos[i] = (int)((particles[n].p[i]-my_left[i])*inv_cell_size[i])+1;
-    ind = get_linear_index(cpos[0],cpos[1],cpos[2],gcg[0],gcg[1],gcg[2]);
+    ind = get_linear_index(cpos[0],cpos[1],cpos[2], gcg[0],gcg[1],gcg[2]);
     if(ind<0 || ind > n_cells)
       fprintf(stderr,"%d: illigal cell index !(0<%d<%d)\n" ,this_node,ind, n_cells);
     /* Append particle in particle list of that cell */
-    if(cells[ind].n_particles >= cells[ind].max_particles-1) 
-    realloc_cell_particles(ind,cells[ind].n_particles+(2*PART_INCREMENT));
+    if(cells[ind].n_particles >= cells[ind].max_particles-1) {
+      realloc_cell_particles(ind,cells[ind].n_particles + 1);
+    }
     cells[ind].particles[cells[ind].n_particles] = n;
     cells[ind].n_particles++;
   }
- 
-  /* debuging 
-  fflush(stderr);
-  MPI_Barrier(MPI_COMM_WORLD) ; 
-  for(i=0;i<nprocs;i++) {
-    if(i==this_node) { 
-      fprintf(stderr,"%d: Cell Memory Information:\n",this_node);
-      for(i=0;i<n_cells;i++) { 
-	if(cells[i].n_particles > 0) 
-	  fprintf(stderr,"C%d(np=%d - %d) ",i,cells[i].n_particles,cells[i].max_particles);
-      }
-      fprintf(stderr,"\n");
-      fflush(stderr);
-    }
-    MPI_Barrier(MPI_COMM_WORLD) ;
-  }
-  */
 }
 
 
@@ -235,7 +221,7 @@ void realloc_cell_particles(int index, int size)
   int incr;
 
   if( size > cells[index].max_particles) {
-    incr = (size-cells[index].max_particles)/PART_INCREMENT;
+    incr = (size-cells[index].max_particles)/PART_INCREMENT + 1;
     cells[index].max_particles += incr*PART_INCREMENT;
   }
   else if( size < (cells[index].max_particles-PART_INCREMENT) ) {
@@ -246,7 +232,7 @@ void realloc_cell_particles(int index, int size)
 
   if(incr != 0) {
     cells[index].particles = (int *)
-      realloc(cells[index].particles,sizeof(int)*cells[index].max_particles);
+      realloc(cells[index].particles, sizeof(int)*cells[index].max_particles);
   }
 }
 

@@ -10,7 +10,6 @@
 #include "thermostat.h"
 /* #include "p3m_parallel.h" */
 #include "communication.h"
-#include "cells.h"
 #include "ghosts.h" 
 #include "verlet.h"
 #include "utils.h"
@@ -38,7 +37,7 @@ void force_calc()
   IA_parameters *ia_params;
   extern Particle *particles;
   extern int *verletList;
-  double frac6,r_off;
+  double frac2,frac6,r_off;
   double fac, adist;
   double coul_r_cut = 20.;
   double Bjerrum = 1.68, alpha = 1.;
@@ -48,8 +47,8 @@ void force_calc()
 
   ia_params = get_ia_param(0,0);
   FORCE_TRACE(fprintf(stderr,"%d: interactions type:(0,0):\n",this_node));
-  FORCE_TRACE(fprintf(stderr,"    LJ: cut=%f, eps=%f\n",
-		      ia_params->LJ_cut,ia_params->LJ_eps));
+  FORCE_TRACE(fprintf(stderr,"    LJ: cut=%f, eps=%f, off=%f\n",
+		      ia_params->LJ_cut,ia_params->LJ_eps,ia_params->LJ_offset));
   FORCE_TRACE(fprintf(stderr,"    ES: cut=%f,\n",coul_r_cut));
   FORCE_TRACE(fprintf(stderr,"    RAMP: cut=%f\n",ia_params->ramp_cut));
   /* define 'new old' coordinates*/
@@ -79,12 +78,12 @@ void force_calc()
     if(dist < ia_params->LJ_cut+ia_params->LJ_offset) {
       r_off = dist - ia_params->LJ_offset;
       if(r_off>0.0) {
-	frac6 = SQR(ia_params->LJ_sig/r_off);
-	frac6 *= SQR(frac6);
-	fac = 24.* ia_params->LJ_eps * (2.*SQR(frac6) - frac6 + ia_params->LJ_shift)/r_off;
+	frac2 = SQR(ia_params->LJ_sig/r_off);
+	frac6 = frac2*frac2*frac2;
+	fac = 48.* ia_params->LJ_eps * frac6*(frac6 - 0.5)*frac2;
 	for(j=0;j<3;j++) {
-	  particles[id1].f[j] += fac * d[j]/dist;
-	  particles[id2].f[j] -= fac * d[j]/dist;
+	  particles[id1].f[j] += fac * d[j];
+	  particles[id2].f[j] -= fac * d[j];
 	}
       }
     }
