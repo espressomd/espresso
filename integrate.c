@@ -124,7 +124,7 @@ int integrate_usage(Tcl_Interp *interp)
 #ifdef NPT
   Tcl_AppendResult(interp, "'integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>] [<INT, INT, INT system_geometry>] [-cubic_box]' for enabling isotropic NPT integration \n" , (char *)NULL);
 #endif
-  return (TCL_OK);
+  return (TCL_ERROR);
 }
 
 /** Hand over integrate status information to tcl interpreter. */
@@ -244,7 +244,7 @@ int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, "Cannot proceed with npt_isotropic, reverting to nvt integration... \n", (char *)NULL);
     integ_switch = INTEG_METHOD_NVT;
     mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-    return (TCL_OK);
+    return (TCL_ERROR);
   }
 
   /* set integrator switch */
@@ -616,12 +616,16 @@ void propagate_press_box_pos_and_rescale_npt()
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       scal[2] = SQR(box_l[nptiso.non_const_dim])/pow(nptiso.volume,2.0/nptiso.dimension);
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
+      if (nptiso.volume < 0.0) {
+        fprintf(stderr,
+		"%d: ERROR: Your choice of piston=%f, dt=%f, p_diff=%f just caused the volume to become negative!\nTry decreasing dt...\n",
+                this_node,nptiso.piston,time_step,nptiso.p_diff); errexit();
+      }
+
       L_new = pow(nptiso.volume,1.0/nptiso.dimension);
       //      printf(stdout,"Lnew, %f: volume, %f: dim, %f: press, %f \n", L_new, nptiso.volume, nptiso.dimension,nptiso.p_inst );
       //    fflush(stdout);
-      if (nptiso.volume < 0.0) { 
-	fprintf(stderr, "%d: ERROR: Your choice of piston=%f, dt=%f, p_diff=%f just caused the volume to become negative!\nTry decreasing dt...\n",\
-		this_node,nptiso.piston,time_step,nptiso.p_diff); errexit(); }
+
       scal[1] = L_new/box_l[nptiso.non_const_dim];
       scal[0] = 1/scal[1];
     }
@@ -672,7 +676,7 @@ void propagate_press_box_pos_and_rescale_npt()
     //on_NpT_boxl_change(0.0);
 
     /* communicate verlet criterion */
-    //anounce_rebuild_vlist();
+    //announce_rebuild_vlist();
   }
 #endif
 }
@@ -769,8 +773,7 @@ void propagate_pos()
       }
     }
   }
-  /* communicate verlet criterion */
-  anounce_rebuild_vlist();
+  announce_rebuild_vlist();
 }
 
 void propagate_vel_pos() 
@@ -811,13 +814,11 @@ void propagate_vel_pos()
       if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) rebuild_verletlist = 1; 
     }
   }
+  announce_rebuild_vlist();
 
 #ifdef ADDITIONAL_CHECKS
   force_and_velocity_display();
 #endif
-
-  /* communicate verlet criterion */
-  anounce_rebuild_vlist();
 }
 
 void force_and_velocity_check(Particle *p) 

@@ -342,15 +342,16 @@ void resize_verlet_list(PairList *pl)
   }
 }
 
-void anounce_rebuild_vlist()
+void announce_rebuild_vlist()
 {
   int sum;
-  MPI_Reduce(&rebuild_verletlist, &sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  if(this_node == 0 && sum > 0) rebuild_verletlist = 1;
 
-  MPI_Bcast(&rebuild_verletlist, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  INTEG_TRACE(fprintf(stderr,"%d: prop_pos: rebuild_verletlist=%d\n",this_node,rebuild_verletlist));
+  MPI_Allreduce(&rebuild_verletlist, &sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  rebuild_verletlist = (sum > 0) ? 1 : 0;
+  
+  INTEG_TRACE(fprintf(stderr,"%d: announce_rebuild_vlist: rebuild_verletlist=%d\n",this_node,rebuild_verletlist));
 }
+
 
 /* Callback functions */
 /************************************************************/

@@ -101,8 +101,8 @@ void calculate_verlet_energies();
 		  naturally it doesn't make sense to use it without NpT. */
 void calculate_verlet_virials(int v_comp);
 
-/** INSERT COMMENT */
-void anounce_rebuild_vlist();
+/** spread the verlet criterion across the nodes. */
+void announce_rebuild_vlist();
 
 /** Callback for integrator flag tcl:verletflag c:rebuild_verletlist (= 0 or 1).
     <ul>
