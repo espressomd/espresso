@@ -18,7 +18,7 @@ set tcl_precision 5
 set intsteps 100
 set maxtime  1000
 
-setmd periodic 1 1 1
+
 setmd bjerrum 1.0
 setmd p3m_alpha 0.48
 setmd p3m_r_cut 4.5
