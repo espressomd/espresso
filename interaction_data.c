@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "interaction_data.h"
 #include "communication.h"
+#include "grid.h"
 #include "p3m.h"
 #include "debye_hueckel.h"
 
@@ -432,6 +433,13 @@ int inter(ClientData _data, Tcl_Interp *interp,
       
       coulomb.method = COULOMB_P3M;
       p3m.bjerrum    = coulomb.bjerrum;
+
+#ifdef PARTIAL_PERIODIC
+      if(periodic[0]==0 || periodic[1]==0 || periodic[2]==0) {
+	Tcl_AppendResult(interp, "Need periodicity (1,1,1) with Coulomb P3M", (char *) NULL);
+	return (TCL_ERROR);  
+      }
+#endif
 
       if(Tcl_GetDouble(interp, argv[0], &(p3m.r_cut)) == TCL_ERROR) {
 	/* must be tune, tune parameters */

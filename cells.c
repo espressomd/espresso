@@ -228,10 +228,10 @@ int pos_to_cell_grid_ind(double pos[3])
     cpos[i] = (int)((pos[i]-my_left[i])*inv_cell_size[i])+1;
 
 #ifdef PARTIAL_PERIODIC
-    if (cpos[i] < 1)
-      cpos[i] = 1;
-    else if (cpos[i] > cell_grid[i])
-      cpos[i] = cell_grid[i];
+    if(periodic[i] == 0) {
+      if (cpos[i] < 1)                 cpos[i] = 1;
+      else if (cpos[i] > cell_grid[i]) cpos[i] = cell_grid[i];
+    }
 #endif
 
 #ifdef ADDITIONAL_CHECKS
