@@ -28,8 +28,31 @@ set case2timeout 120
 # popup window if desired
 proc popup {text} {
     toplevel .tag
-    button .tag.btn -text "text" -command "destroy .tag"
+    button .tag.btn -text "$text" -justify left -font -jis-fixed-medium-r-normal--24-* -command "destroy .tag"
     pack .tag.btn
+    wm geometry .tag +60+0
+    tkwait window .tag
+    update
+}
+
+# popup-input-window
+proc ret_input {win} {
+    global input
+    set input [.tag.inp get]
+    destroy $win
+}
+proc get_input { } {
+    toplevel .tag
+    label .tag.title -justify center -text "Herzlichen Glückwunsch!!!
+
+Sie haben sich für einen Eintrag in der Highscore-Tabelle qualifiziert!
+Bitte geben Sie nun Ihren Namen ein, so, wie er dort erscheinen soll:
+"
+    entry .tag.inp
+    button .tag.btn -text "OK" -justify left -command "ret_input .tag"
+    pack .tag.title -fill both -side top -in .tag
+    pack .tag.inp -fill both -side top  -in .tag
+    pack .tag.btn -side top
     wm geometry .tag +60+0
     tkwait window .tag
     update
@@ -196,6 +219,15 @@ proc write_highscore { highscore } {
     close $f
 }
 
+proc disp_highscore { highscore } {
+    set ret " \# | Zeit | Name \n=======================================================\n\n"
+    for {set i 0} {$i < [llength $highscore]} {incr i} {
+	set tmp [lindex $highscore $i]
+	set ret "$ret[format %2d [expr $i+1]] | [format %3d [lindex $tmp 0]]s | [lindex $tmp 1]\n"
+    }
+    return $ret
+}
+
 proc imd_reconnect {case} {
     imd disconnect
 
@@ -243,8 +275,6 @@ proc Case1Start {} {
 
     if { $restart == 0 } { imd_reconnect case1 }
 
-    after 3000
-
     enableCase1
     enableStarts
     set run_sim 1
@@ -279,7 +309,6 @@ proc Case2Start {} {
     Case2Wall2ChargeChange 0
     Case2Wall3ChargeChange 0
 
-    after 3000
     .case2.status configure -text "...3..."
     update; after 1000
     .case2.status configure -text "...2..."
@@ -363,6 +392,9 @@ set displayclock 0
 set run_sim 0
 set firework 250
 
+set etime 91; set i 4
+set highscore [read_highscore]
+
 while { 1 } {
     if { $run_sim > 0 } {
 	integrate 10
@@ -385,20 +417,46 @@ while { 1 } {
 	    set highscore [read_highscore]
 	    if { $etime < [lindex [lindex $highscore end] 0] } {
 		for {set i 0} {$i < [llength $highscore]} {incr i} {
-		    if { $etime < [lindex [lindex $highscore $i] 0] } {
-			set victor [clock format [clock seconds]]
-			set victory [list $etime $victor]
-			break
-		    }
+		    if { $etime < [lindex [lindex $highscore $i] 0] } { break }
 		}
+		get_input; set victor "$input ([clock format [clock seconds] -format "%d.%m.%y @ %Rh"])"; # "%a, %d.%m.%Y @ %T"
+		set victory [list $etime $victor]
 		for {set j $i} {$j < [llength $highscore]} {incr j} {
 		    if { [expr $j+1] < [llength $highscore] } { set old [lindex $highscore $j] }
 		    set highscore [lreplace $highscore $j $j $victory]
 		    if { [expr $j+1] < [llength $highscore] } { set victory $old }
 		}
+		incr i
+popup "                    ***************                     \ 
+                    *  HIGHSCORE  *                     \ 
+                    ***************                     \ 
+                                                       \ 
+Sie haben es tatsächlich geschafft, das geladene Objekt\ 
+in einer Rekordzeit ins Ziel zu steuern - phantastisch!\ 
+                                                       \ 
+Mit Ihrem beachtlichen Wert von [format %3d $etime]s haben Sie sich den\ 
+   ----->  [format %2d $i]. Platz in der Highscore-Liste   <-----   \ 
+erobert und Ihren Eintrag redlich verdient!\ 
+                                                       \ 
+Herzlichen Glückwunsch!!!                              \ 
+                                                       \ 
+[disp_highscore $highscore]"
 		puts "New Highscore (Rank \#$i)!!!"
 		write_highscore $highscore
-	    } 
+	    } else {
+popup "                     *************                     \ 
+                     * Gewonnen! *                     \ 
+                     *************                     \ 
+                                                       \ 
+Sie haben es tatsächlich geschafft, das geladene Objekt\ 
+in der gegebenen Zeit ins Ziel zu steuern - super!     \ 
+                                                       \ 
+Beinahe hätte Ihre Zeit von [format %3d $etime]s auch für einen Eintrag\ 
+in die Highscore-Liste gereicht -- vielleicht probieren\ 
+Sie es daher gleich noch einmal?!                      \ 
+                                                       \ 
+[disp_highscore $highscore]"
+	    }
 	} else {
 	    set etime [expr [clock seconds] - $case2stime]
 	    .case2.status configure -text [clock format $etime -format "%M:%S"]
@@ -406,6 +464,19 @@ while { 1 } {
 		.case2.status configure -text "Die Zeit ist um!"
 		set displayclock 0
 		set run_sim -2
+popup "                     *************                     \ 
+                     *  Schade!  *                     \ 
+                     *************                     \ 
+                                                       \ 
+Leider hat es diesmal nicht geklappt, das Ladungsobjekt\ 
+in der gegebenen Zeit ins Ziel zu steuern - schade! :-(\ 
+                                                       \ 
+Aber mit ein wenig Übung schaffen Sie  es bestimmt auch\ 
+sich mit einem Eintrag in die Highscore-Liste verewigen\ 
+zu können -- vielleicht probieren Sie es daher sogleich\ 
+noch einmal?!                                          \ 
+                                                       \ 
+[disp_highscore $highscore]"
 	    }
 	}
     }
