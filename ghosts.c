@@ -175,14 +175,14 @@ void ghost_init()
   send_buf       = (double *)malloc(3*max_send_buf*sizeof(double));
   recv_buf       = (double *)malloc(3*max_recv_buf*sizeof(double));
 
-  /* debuging 
+  /* debuging */
   fflush(stderr);
   MPI_Barrier(MPI_COMM_WORLD) ; 
   for(i=0;i<nprocs;i++) {
     if(i==this_node) { ghost_memory_info(0); }
     MPI_Barrier(MPI_COMM_WORLD) ;
   }   
-  */
+  
 }
 
 void exchange_part()
@@ -270,6 +270,7 @@ void exchange_ghost()
       }
 
       for(n=0;n<cells[c_ind].n_particles;n++) {
+	if(n_g_send_buf > max_g_send_buf) fprintf(stderr,"n_g_send_buf = %d!!!\n",n_g_send_buf);
 	pack_ghost(g_send_buf,n_g_send_buf,particles,cells[c_ind].particles[n]);
 	n_g_send_buf++;
 	for (d = 0; d < ntot_send_cells; d++) {
@@ -711,9 +712,9 @@ void ghost_memory_info(int verb)
       gprint_ifield(recv_cells,cell_start[i],n_recv_cells[i]);
     }
   }
-  fprintf(stderr,"      n_send/recv_ghosts: size %d",max_send_cells+1);
+  fprintf(stderr,"      n_send/recv_ghosts: size %d\n",max_send_cells+1);
   fprintf(stderr,"    POS/FORCE:\n");
-  fprintf(stderr,"      send/recv_buf: size %d",max_send_buf);
+  fprintf(stderr,"      send/recv_buf: size %d\n",max_send_buf);
 }
 
 void gprint_ifield(int *field, int start, int size)

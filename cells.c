@@ -79,14 +79,14 @@ void cells_init()
     init_cell_neighbours(i);
   }
 
-  /* debuging 
+  /* debuging */
   fflush(stderr);
   MPI_Barrier(MPI_COMM_WORLD) ; 
   for(i=0;i<nprocs;i++) {
     if(i==this_node) { cell_memory_info(0); }
     MPI_Barrier(MPI_COMM_WORLD) ;
   }
-  */
+  
 }
 
 /*************************************************/
@@ -133,7 +133,7 @@ void sort_particles_into_cells()
     cells[ind].n_particles++;
   }
  
-  /* debuging 
+  /* debuging */
   fflush(stderr);
   MPI_Barrier(MPI_COMM_WORLD) ; 
   for(i=0;i<nprocs;i++) {
@@ -148,7 +148,6 @@ void sort_particles_into_cells()
     }
     MPI_Barrier(MPI_COMM_WORLD) ;
   }
-  */  
 }
 
 
