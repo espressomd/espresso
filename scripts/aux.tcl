@@ -101,6 +101,8 @@ proc polyBlockWrite { destination {write_param "all"} {write_part "id pos type q
 	    blockfile $f write variable $j
 	}
 	blockfile $f write interactions
+	blockfile $f write integrate
+	blockfile $f write thermostat
     }
     
     # Write particles and bonds, if desired
@@ -151,7 +153,7 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
     }
     if { "$var" != "-" } { blockfile $f write variable $var }
     if { "$tclvar" != "-" } { foreach j $tclvar { blockfile $f write tclvariable $j } }
-    if { "$ia" != "-" } { blockfile $f write interactions }
+    if { "$ia" != "-" } { blockfile $f write interactions; blockfile $f write integrate; blockfile $f write thermostat }
     set part_write "id pos type q v f "
     if { [regexp "ROTATION" [code_info]]} { lappend part_write "quat omega torque " }
     if { [regexp "CONSTRAINTS" [code_info]]} { lappend part_write "fix" }
@@ -251,6 +253,58 @@ proc analysis { stat stat_out N_P MPC simtime { noted "na" } } {
     puts $stat_out " "; flush $stat_out
 }
 
+
+
+#
+# tune_cells
+# ----------
+# 
+# Tunes the skin and cell-grid to balance verlet_reuse vs. 
+# organisational overhead.
+#
+#############################################################
+
+proc tune_cells { { int_steps 1000 } { min_cells 1 } { max_cells 30 } { tol_cells 0.099 } } {
+    set msg_string "Tuning current system with [setmd n_part] particles and initial skin=[setmd skin] and cell_grid=[setmd cell_grid] to:"
+    array set int_times [list "0 0 0" 0.0]
+    proc eval_cells { i num_cells } {
+	upvar int_steps int_steps  int_times int_times  msg_string msg_string
+	setmd max_num_cells [expr int(pow($num_cells,3))]
+	setmd skin 0.0
+	set msg_string "$msg_string\n    run [expr $i+1] (t=[setmd time]; max_cells=[format %.3f $num_cells],"
+	set msg_string "$msg_string skin=[format %.3g [setmd skin [expr 0.999*[setmd max_skin]]]],"
+	set msg_string "$msg_string grid=[setmd cell_grid], cell_size=[format %.3f [lindex [set tmp_cell [setmd cell_size]] 0]]"
+	set msg_string "$msg_string [format %.3f [lindex $tmp_cell 1]] [format %.3f [lindex $tmp_cell 2]], max_cut=[format %.3f [setmd max_cut]],"
+	set msg_string "$msg_string max_range=[format %.3f [setmd max_range]])"
+	if { [llength [set int_time [array get int_times "[setmd cell_grid]"]]]==2 } {
+	    set integ_time [lindex $int_time 1]
+	} else {
+	    set integ_time [lindex [time {
+		integrate $int_steps
+	    } ] 0]
+	    array set int_times [list "[setmd cell_grid]" $integ_time]
+	}
+	set msg_string "$msg_string => [expr $integ_time/1.0e6]s (vr=[format %.3f [setmd verlet_reuse]])"
+	return $integ_time
+    }
+    set i 0; set ax $min_cells; set bx [expr 0.5*($min_cells+$max_cells)]; set cx $max_cells
+    set GR 0.61803399; set GC [expr 1.0-$GR]; set x0 $ax; set x3 $cx
+    if { abs($cx-$bx) > abs($bx-$ax) } { set x1 $bx; set x2 [expr $bx + $GC*($cx-$bx)] } else { set x2 $bx; set x1 [expr $bx - $GC*($bx-$ax)] }
+    set f1 [eval_cells $i $x1]; incr i 
+    set f2 [eval_cells $i $x2]; incr i
+    while { abs($x3-$x0) > $tol_cells*(abs($x1) + abs($x2))} {
+	if { $f2 < $f1 } {
+	    set x0 $x1; set x1 $x2; set x2 [expr $GR*$x1 + $GC*$x3]
+	    set f1 $f2; set f2 [eval_cells $i $x2]; incr i
+	} else {
+	    set x3 $x2; set x2 $x1; set x1 [expr $GR*$x2 + $GC*$x0]
+	    set f2 $f1; set f1 [eval_cells $i $x1]; incr i
+	}
+    }
+    set msg_string "$msg_string\nFinal set: "
+    if { $f1 < $f2 } { set fs [eval_cells $i $x1] } else { set fs [eval_cells $i $x2] }
+    return $msg_string
+}
 
 
 
