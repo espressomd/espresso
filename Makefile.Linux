@@ -24,4 +24,4 @@ CXXFLAGS=$(CFLAGS) -felide-constructors -fomit-frame-pointer -fno-rtti
 
 ############ linker settings
 LINK=$(CC)
-LDLIBS=-ltcl8.3
+LDLIBS=-ltcl8.3 -lefence
