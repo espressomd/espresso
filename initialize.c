@@ -159,7 +159,8 @@ void on_observable_calc()
     cells_resort_particles(CELL_GLOBAL_EXCHANGE);
     resort_particles = 0;
   }
-  
+
+#ifdef ELECTROSTATICS  
   if(reinit_electrostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
     switch (coulomb.method) {
@@ -173,6 +174,7 @@ void on_observable_calc()
     }
     reinit_electrostatics = 0;
   }
+#endif
 }
 
 void on_particle_change()
