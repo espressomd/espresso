@@ -444,6 +444,51 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
   }
 }
 
+void analyze_structurefactor(int type, int order, double **_ff) {
+     int i, j, k, n, qi, p, order2, *fn=NULL;
+  double qr, twoPI_L, C_sum, S_sum, *ff=NULL;
+  
+  order2 = order*order;
+  *_ff = ff = realloc(ff,(order2+1)*sizeof(double));
+  fn = realloc(fn,(order2+1)*sizeof(int));
+  twoPI_L = 2*PI/box_l[0];
+  
+  if ((type < 0) || (type > n_particle_types)) { fprintf(stderr,"WARNING: Type %i does not exist!",type); fflush(NULL); errexit(); }
+  else if (order < 1) { fprintf(stderr,"WARNING: parameter \"order\" has to be a whole positive number"); fflush(NULL); errexit(); }
+  else {
+  for(qi=1; qi<=order2; qi++) {
+     ff[qi] = 0.0;
+     fn[qi] = 0;
+  }
+  for(i=0; i<=order; i++) {
+     for(j=-order; j<=order; j++) {
+        for(k=-order; k<=order; k++) {
+	   n = i*i + j*j + k*k;
+	   if ((n<=order2) && (n>0)) {
+	      C_sum = S_sum = 0.0;
+	      for(p=0; p<n_total_particles; p++) {
+                 if (partCfg[p].p.type == type) {
+		    qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
+		    C_sum+= cos(qr);
+		    S_sum+= sin(qr);
+		 }
+	      }
+              ff[n]+= C_sum*C_sum + S_sum*S_sum;
+	      fn[n]++;
+	   }
+	}
+     }
+  }
+  n = 0;
+  for(p=0; p<n_total_particles; p++) {
+     if (partCfg[p].p.type == type) n++;
+  }
+  for(qi=0; qi<=order2; qi++) 
+     if (fn[qi]!=0) ff[qi]/= n*fn[qi];
+  free(fn);
+  }
+}
+
 /****************************************************************************************
  *                                 config storage functions
  ****************************************************************************************/
@@ -1194,6 +1239,34 @@ static int parse_rdf(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
+int parse_structurefactor(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze { stucturefactor } <type> <order>' */
+  /***********************************************************************************************************/
+  char buffer[2*TCL_DOUBLE_SPACE+4];
+  int i, type, order;
+  double qfak, *sf;
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze structurefactor <type> <order> [<chain_start> <n_chains> <chain_length>]",
+		     (char *)NULL);
+    return (TCL_ERROR);
+  } else {
+    if (!ARG0_IS_I(type))
+      return (TCL_ERROR);
+    if (!ARG1_IS_I(order))
+      return (TCL_ERROR);
+    argc-=2; argv+=2;
+  }
+  updatePartCfg(WITHOUT_BONDS);
+  analyze_structurefactor(type, order, &sf); 
+  
+  qfak = 2.0*PI/box_l[0];
+  for(i=1; i<=order*order+1; i++) { 
+     if (sf[i]>1e-6) sprintf(buffer,"{%f %f} ",qfak*sqrt(i),sf[i]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+  free(sf);
+  return (TCL_OK);
+}
+
 /****************************************************************************************
  *                                 parser for config storage stuff
  ****************************************************************************************/
@@ -1455,6 +1528,10 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     err = parse_distribution(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("rdf"))
     err = parse_rdf(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("rdfchain"))
+    err = parse_rdfchain(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("structurefactor"))
+    err = parse_structurefactor(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("append"))
     err = parse_append(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("push"))

@@ -581,6 +581,79 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff) {
   free(r_ij);
 }
 
+
+void analyze_rdfchain(double r_min, double r_max, int r_bins, double **_f1, double **_f2, double **_f3) {
+int i, j, ind, c_i, c_j, mon;
+double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist,
+       *cm=NULL, *min_d=NULL, *f1=NULL, *f2=NULL, *f3=NULL;
+
+    *_f1 = f1 = realloc(f1,r_bins*sizeof(double));
+    *_f2 = f2 = realloc(f2,r_bins*sizeof(double));
+    *_f3 = f3 = realloc(f3,r_bins*sizeof(double));
+    cm = realloc(cm,(chain_n_chains*3)*sizeof(double));
+    min_d = realloc(min_d,(chain_n_chains*chain_n_chains)*sizeof(double));
+    for(i=0; i<r_bins; i++) {
+       f1[i] = f2[i] = f3[i] = 0.0;
+    }
+    bin_width     = (r_max-r_min) / (double)r_bins;
+    inv_bin_width = 1.0 / bin_width;
+    for(c_i=0; c_i<chain_n_chains; c_i++) {
+       cm[3*c_i] = cm[3*c_i+1] = cm[3*c_i+2] = 0.0;
+          for(c_j=(c_i+1); c_j<chain_n_chains; c_j++) {
+             min_d[c_i*chain_n_chains+c_j] = box_l[0] + box_l[1] + box_l[2];
+	  }
+    }    
+    for(c_i=0; c_i<chain_n_chains; c_i++) {
+       for(i=0; i<chain_length; i++) {
+          mon = chain_start + c_i*chain_length + i;
+          cm[3*c_i]+= partCfg[mon].r.p[0];
+          cm[3*c_i+1]+= partCfg[mon].r.p[1];
+          cm[3*c_i+2]+= partCfg[mon].r.p[2];	  
+          for(c_j=(c_i+1); c_j<chain_n_chains; c_j++) {
+             for(j=0; j<chain_length; j++) {
+                dist = min_distance(partCfg[mon].r.p, partCfg[chain_start + c_j*chain_length+j].r.p);		
+	        if ((dist > r_min) && (dist < r_max)) {
+		   ind = (int) ( (dist - r_min)*inv_bin_width ); 
+		   f1[ind]+= 1.0; 
+		}        
+	        if (dist<min_d[c_i*chain_n_chains+c_j]) min_d[c_i*chain_n_chains+c_j] = dist;
+	     }
+	  }
+       }       
+    }
+    for(c_i=0; c_i<chain_n_chains; c_i++) {  
+       cm[3*c_i]/= chain_length;
+       cm[3*c_i+1]/= chain_length;
+       cm[3*c_i+2]/= chain_length;
+       for(c_j=(c_i+1); c_j<chain_n_chains; c_j++) {
+          dist = min_d[c_i*chain_n_chains+c_j];
+          if ((dist > r_min) && (dist < r_max)) {
+	     ind = (int) ( (dist - r_min)*inv_bin_width );
+	     f3[ind]+= 1.0; 
+	  }  
+       }
+    }    
+    for(c_i=0; c_i<chain_n_chains; c_i++) {  
+       for(c_j=(c_i+1); c_j<chain_n_chains; c_j++) {
+          dist = min_distance(&cm[3*c_i],&cm[3*c_j]);
+	  if ((dist > r_min) && (dist < r_max)) {
+	     ind = (int) ( (dist - r_min)*inv_bin_width );
+	     f2[ind]+= 1.0; 
+	  }  
+       }
+    }
+  /* normalization */
+  factor = box_l[0]*box_l[1]*box_l[2] *1.5/PI/(chain_n_chains*(chain_n_chains-1));
+  for(i=0; i<r_bins; i++) {
+     r_in       = i*bin_width + r_min; 
+     r_out      = r_in + bin_width;
+     bin_volume = r_out*r_out*r_out - r_in*r_in*r_in;
+     f1[i] *= factor / (bin_volume * chain_length*chain_length);
+     f2[i] *= factor / bin_volume;
+     f3[i] *= factor / bin_volume;
+  }  
+}
+
 /****************************************************************************************
  *                                 chain structure commands parsing
  ****************************************************************************************/
@@ -888,6 +961,11 @@ int parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv)
     argc-=3; argv+=3;
   }
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
+
+  if ((chain_n_chains == 0) || (chain_length == 0)) {
+    Tcl_AppendResult(interp, "The chain topology has not been set",(char *)NULL); return TCL_ERROR;
+  }
+  
   if (qbins <=0) {
     Tcl_AppendResult(interp, "Nothing to be done - choose <qbins> greater zero to get S(q)!",(char *)NULL); return TCL_ERROR;
   }
@@ -915,3 +993,55 @@ int parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv)
   return (TCL_OK);
 }
 
+int parse_rdfchain(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze { rdfchain } <r_min> <r_max> <r_bins> [<chain_start> <n_chains> <chain_length>]' */
+  /***********************************************************************************************************/
+  char buffer[4*TCL_DOUBLE_SPACE+6];
+  int i, r_bins;
+  double r_min, r_max, *f1, *f2, *f3;
+  double bin_width, r;
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze rdfchain <r_min> <r_max> <r_bins> [<chain_start> <n_chains> <chain_length>]",
+		     (char *)NULL);
+    return (TCL_ERROR);
+  } else {
+    if (!ARG0_IS_D(r_min))
+      return (TCL_ERROR);
+    if (!ARG1_IS_D(r_max))
+      return (TCL_ERROR);
+    if (!ARG_IS_I(2, r_bins))
+      return (TCL_ERROR);
+    argc-=3; argv+=3;
+  }
+  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
+  
+  if ((chain_n_chains == 0) || (chain_length == 0)) {
+    Tcl_AppendResult(interp, "The chain topology has not been set",(char *)NULL); return TCL_ERROR;
+  }
+  
+  if (r_bins <=0) {
+    Tcl_AppendResult(interp, "Nothing to be done - choose <r_bins> greater zero!",(char *)NULL); return TCL_ERROR;
+  }
+
+  if (r_min <= 0.) {
+    Tcl_AppendResult(interp, "<r_min> has to be positive", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if (r_max <= r_min) {
+    Tcl_AppendResult(interp, "<r_max> has to be larger than <r_min>", (char *)NULL);
+    return TCL_ERROR;
+  }
+  updatePartCfg(WITHOUT_BONDS);
+  analyze_rdfchain(r_min, r_max, r_bins, &f1, &f2, &f3);
+
+  bin_width = (r_max - r_min) / (double)r_bins;
+  r = r_min + bin_width/2.0;
+  for(i=0; i<r_bins; i++) {
+    sprintf(buffer,"{%f %f %f %f} ",r,f1[i],f2[i],f3[i]);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+     r+= bin_width;
+  }  
+  free(f1); free(f2); free(f3);
+  return (TCL_OK);
+}

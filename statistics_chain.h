@@ -125,6 +125,15 @@ void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff);
     @param _ff   contains S(q) as an array of size qbins */
 void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff);
 
+/** Calculates monomer-monomer distribution between monomers of different chains. 
+    @param r_min   minimal distance for the distribution.
+    @param r_max   maximal distance for the distribution.
+    @param r_bins  the number of bins
+    @param _rdf    contains the monomer-monomer distribution 
+    @param _rdf_cm contains the distribution of centers of mass of the chains
+    @param _rdf_d  contains the distribution of closest distances between the chains
+    */
+void analyze_rdfchain(double r_min, double r_max, int r_bins, double **_rdf, double **_rdf_cm, double **_ff_d);
 
 ///
 int print_chain_structure_info(Tcl_Interp *interp);
@@ -159,6 +168,8 @@ int parse_g123(Tcl_Interp *interp, int average, int argc, char **argv);
 int parse_g_av(Tcl_Interp *interp, int average, int argc, char **argv);
 ///
 int parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv);
+///
+int parse_rdfchain(Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
 

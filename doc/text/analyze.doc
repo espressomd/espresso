@@ -38,6 +38,13 @@ In <tt>statistics.c</tt>:<br>
          corresponds to the blockfile format (\ref blockformat): <br>
 	 { parameters } { { \<r-value\> \<rdf-value\> } ... } <br>
 	 The C implementation is \ref #calc_rdf; it is parsed by \ref #parse_rdf.
+    <li> \verbatim analyze structurefactor { <type> <order> } \endverbatim
+         returns the spherically averaged structure factor for particles of a given type \<type\>.
+	 The S(q) is calculated for all possible wave vectors, 2PI/L <= q <= 2PI/L*\<order\>.
+	 Do not chose parameter \<order\> too large, becase the number of calculations grows as
+	 \<order\>^3. The output corresponds to the blockfile format (\ref blockformat): <br>
+	 { \<q-value\> \<S(q)-value\> } ...  <br>
+	 The C implementation is \ref #calc_structurefactor; it is parsed by \ref #parse_structurefactor.	 
     <li> \verbatim analyze centermass { <part_type> } \endverbatim
          returns the center of mass of particles of given type.
 	 The C implementation is \ref #centermass; it is parsed by \ref #parse_centermass.
@@ -301,6 +308,16 @@ In <tt>statistics_chain.c</tt>:<br>
 	 The C implementation is \ref #analyze_formfactor and \ref
 	 #analyze_formfactor_av, respectively; both are parsed by \ref
 	 #parse_formfactor.
+    <li> \verbatim analyze rdfchain { <r_min> <r_max> <r_bins> } [<chain_start> <n_chains> <chain_length>] \endverbatim
+         returns three radial distribution functions (rdf) for the set chain structure.
+	 The first rdf is calculated for monomers belonging to different chains, the second
+	 rdf is for the centers of mass of the chains and the third one is the distribution of
+	 the closest distances between the chains (i.e. the shortest monomer-monomer distances). 
+	 The output is given in the blockfile format (\ref blockformat): <br>
+	 { \<r-value\> \<rdf_1-value\> \<rdf_2-value\> \<rdf_3-value\>} ...  <br>
+         The distance range is given by \<r_min\> and \<r_max\> and it is
+         divided into \<r_bins\> equidistant bins. 
+	 The C implementation is \ref #calc_rdfchain; it is parsed by \ref #parse_rdfchain.	 
     <li> \verbatim analyze g123 [-init] [<chain_start> <n_chains> <chain_length>] \endverbatim
          returns the mean-square displacement <i>g1(t)</i> of a monomer,
                  the mean-square displacement <i>g2(t)</i> in the center of gravity of the chain itself, and

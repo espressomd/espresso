@@ -156,6 +156,19 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
 void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
 	      double r_min, double r_max, int r_bins, double *rdf);
 
+/** Calculates the spherically averaged structure factor.
+
+    Calculates the spherically averaged structure factor of particles of a
+    given type. The possible wave vectors are given by q = 2PI/L sqrt(nx^2 + ny^2 + nz^2).
+    The S(q) is calculated up to a given length measured in 2PI/L (the recommended order of
+    the wave vector is less than 20)
+    
+    @param type   the type of the particles to be analyzed
+    @param order  the maximum wave vector length in 2PI/L
+    @param sf     array to store the result (size: order^2+1).
+*/
+void calc_structurefactor(int type, int order, double *sf);
+	      
 /** returns the minimal squared distance between two positions in the perhaps periodic
     simulation box.
  *  \param pos1  Position one.
