@@ -639,11 +639,11 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 #ifdef EXTERNAL_FORCES
     else if (ARG0_IS_S("ext_force")) {
       if(part.ext_flag == PARTICLE_EXT_FORCE) {
-	Tcl_PrintDouble(interp, part.ext_force[0], buffer);
+	Tcl_PrintDouble(interp, part.ext_force[0]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.ext_force[1], buffer);
+	Tcl_PrintDouble(interp, part.ext_force[1]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, part.ext_force[2], buffer);
+	Tcl_PrintDouble(interp, part.ext_force[2]/(0.5*time_step*time_step), buffer);
 	Tcl_AppendResult(interp, buffer, (char *)NULL);
       }
       else {
@@ -837,7 +837,12 @@ int part_parse_f(Tcl_Interp *interp, int argc, char **argv,
 
   if (! ARG_IS_D(2, f[2]))
     return TCL_ERROR;
-      
+
+  /* rescale forces */
+  f[0] *= (0.5*time_step*time_step);
+  f[1] *= (0.5*time_step*time_step);
+  f[2] *= (0.5*time_step*time_step);
+  
   if (set_particle_f(part_num, f) == TCL_ERROR) {
     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
     
@@ -996,6 +1001,11 @@ int part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
 
   if (! ARG_IS_D(2, ext_f[2]))
     return TCL_ERROR;
+
+  /* rescale forces */
+  ext_f[0] *= (0.5*time_step*time_step);
+  ext_f[1] *= (0.5*time_step*time_step);
+  ext_f[2] *= (0.5*time_step*time_step);
 
   if (set_particle_ext(part_num, PARTICLE_EXT_FORCE, ext_f) == TCL_ERROR) {
     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
