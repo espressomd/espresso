@@ -143,6 +143,7 @@ static void init_tcl(Tcl_Interp *interp)
   */
 
   /* in integrate.c */
+  Tcl_CreateCommand(interp, "invalidate_system", (Tcl_CmdProc *)invalidate_system, 0, NULL);
   Tcl_CreateCommand(interp, "integrate", (Tcl_CmdProc *)integrate, 0, NULL);
   /* in global.c */
   Tcl_CreateCommand(interp, "setmd", (Tcl_CmdProc *)setmd, 0, NULL);
