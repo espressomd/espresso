@@ -1006,9 +1006,9 @@ int part_parse_fix(Tcl_Interp *interp, int argc, char **argv,
   int i;
 
   if (argc == 0) {
-    fixed_coord_flag[0] = 0;
-    fixed_coord_flag[1] = 0;
-    fixed_coord_flag[2] = 0;
+    fixed_coord_flag[0] = 1;
+    fixed_coord_flag[1] = 1;
+    fixed_coord_flag[2] = 1;
     *change = 0;
   }
   else {
