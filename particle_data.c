@@ -308,8 +308,9 @@ Particle *append_indexed_particle(ParticleList *l, Particle *part)
   p  = &l->part[l->n - 1];
 
   memcpy(p, part, sizeof(Particle));
-  if (re)
-    update_local_particles(l);
+
+  if (re) 
+    update_local_particles(l); 
   else
     local_particles[p->p.identity] = p;
   return p;

@@ -2,6 +2,20 @@
 #define DOMAIN_DECOMP_H
 #include "cells.h"
 
+
+/************************************************/
+/** \name Defines */
+/************************************************/
+/*@{*/
+
+/** Flag for dd_exchange_and_sort_particles : Do global exchange. */
+#define DD_GLOBAL_EXCHANGE 1
+/** Flag for dd_exchange_and_sort_particles : Do neighbor exchange. */
+#define DD_NEIGHBOR_EXCHANGE 0
+
+/*@}*/
+
+
 /** Structure containing information about non bonded interactions
     with particles in a neighbor cell. */
 typedef struct {
@@ -91,17 +105,24 @@ extern int max_num_cells;
     cell_structure array. */
 void dd_topology_init(CellPList *cl);
 
-/** Called when the current cell structure is invalidated because for example the
-    box length has changed. This procedure may NOT destroy the old inner and ghost
-    cells, but it should free all other organizational data. Note that parameters
-    like the box length or the node_grid may already have changed. Therefore
-    organizational data has to be stored independently from variables
-    that may be changed from outside. */
+/** Called when the current cell structure is invalidated because for
+    example the box length has changed. This procedure may NOT destroy
+    the old inner and ghost cells, but it should free all other
+    organizational data. Note that parameters like the box length or
+    the node_grid may already have changed. Therefore organizational
+    data has to be stored independently from variables that may be
+    changed from outside. */
 void dd_topology_release();
 
-/** Just resort the particles. Used during integration. The particles are stored in
-    the cell structure. */
-void dd_exchange_and_sort_particles();
+/** Just resort the particles. Used during integration. The particles
+    are stored in the cell structure.
+
+    @param global_flag Use DD_GLOBAL_EXCHANGE for global exchange and
+    DD_NEIGHBOR_EXCHANGE for neighbor exchange (recommended for use within
+    Molecular dynamics, or any other integration scheme using only local
+    particle moves) 
+*/
+void dd_exchange_and_sort_particles(int global_flag);
 
 /** implements \ref cell_structure::position_to_cell. */
 Cell *dd_position_to_cell(double pos[3]);
