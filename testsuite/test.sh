@@ -1,5 +1,5 @@
 #!/bin/sh
-TESTCASES="madelung.tcl lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl mmm1d.tcl gb.tcl rotation.tcl thermostat.tcl intpbc.tcl intppbc.tcl"
+TESTCASES="madelung.tcl lj.tcl lj-cos.tcl harm.tcl fene.tcl dh.tcl mmm1d.tcl gb.tcl rotation.tcl thermostat.tcl intpbc.tcl intppbc.tcl analysis.tcl"
 # constraints energy pressure
 # 
 # List of testcases to be done (and people responsible for them):
