@@ -63,3 +63,19 @@ source blockfile_support.tcl
 # adds 'blockfile_read_interactions'
 
 source pdb.tcl
+# adds 'writepsf'
+# adds 'writepdf'
+
+source polymer.tcl
+# adds 'collision_tcl'
+# adds 'polymer_tcl <MPC> <bond_length> <box_length> [options]'
+# adds 'polymers_tcl <N_P> <MPC> <bond_length> <box_length> [options]'
+# adds 'counterions_tcl <N_CI> <box_length> [options]'
+# adds 'salt_tcl <N_pS> <N_nS> <box_length> [options]'
+# adds 'velocities_tcl <N_T> <v_max> [options]'
+
+source ABHmath.tcl
+# adds 'PI' which returns an approximate value of the mathematical constant pi
+# adds 'sqr <arg>' which returns the square of <arg>
+# adds 'min <arg1> <arg2>' which returns the minimum of <arg1> and <arg2>
+# adds 'max <arg1> <arg2>' which returns the maximum of <arg1> and <arg2>
