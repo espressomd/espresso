@@ -30,6 +30,7 @@
 #include "random.h"
 #include "debug.h"
 #include "utils.h"
+#include "integrate.h"
 
 
 
@@ -629,7 +630,86 @@ double velocitiesC(double v_max, int part_id, int N_T) {
   return ( sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2])) );
 }
 
+int maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+  /** Implementation of the tcl-command
+      maxwell_velocities [start <part_id>] [count <N_T>]
+      Sets the velocities of <N_T> particles to a random value with maxwell distribution,
+      and returns the averaged velocity when done.
+		   <part_id>     = particle number of the first of the <N_T> particles (defaults to '0') 
+		   <N_T>         = number of particles of which the velocities should be set (defaults to 'n_total_particles - part_id') */
+  int part_id = 0, N_T = n_total_particles;
+  double tmp_try;
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  int i;
 
+  if (argc < 1) { Tcl_AppendResult(interp, "Wrong # of args! Usage: maxwell_velocities [options]", (char *)NULL); return (TCL_ERROR); }
+  for (i=1; i < argc; i++) {
+    /* [start <part_id>] */
+    if (!strncmp(argv[i], "start", strlen(argv[i]))) {
+      if (Tcl_GetInt(interp, argv[i+1], &part_id) == TCL_ERROR) {	
+	Tcl_AppendResult(interp, "Index of first particle must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      else {
+	if ((part_id < 0) || (part_id>=n_total_particles)) {
+	  sprintf(buffer,"Index of first particle must be in [0,%d[ (got: ", n_total_particles);
+	  Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+      i++;
+    }
+    /* [count <N_T>] */
+    else if (!strncmp(argv[i], "count", strlen(argv[i]))) {
+      if (Tcl_GetInt(interp, argv[i+1], &N_T) == TCL_ERROR) {	
+	Tcl_AppendResult(interp, "The amount of particles to be set must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
+      else {
+	if ((N_T < 0) || (part_id+N_T > n_total_particles)) {
+	  sprintf(buffer,"The amount of particles to be set must be in [0,%d] (got: ",n_total_particles-part_id);
+	  Tcl_AppendResult(interp, buffer, argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
+      i++;
+    }
+    /* default */
+    else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
+  }
+  if (part_id+N_T > n_total_particles) N_T = n_total_particles - part_id;
+
+  POLY_TRACE(printf("double v_max %f, int part_id %d, int N_T %d\n", v_max, part_id, N_T));
+
+  tmp_try = maxwell_velocitiesC(part_id, N_T);
+  sprintf(buffer, "%f", tmp_try); Tcl_AppendResult(interp, buffer, (char *)NULL); 
+  return (TCL_OK);
+}
+
+double maxwell_velocitiesC(int part_id, int N_T) {
+  /** C implementation of 'maxwell_velocities [options]',
+      which returns the averaged velocity assigned. */
+  double v[3], v_av[3],uniran[2];
+  int i;
+  int flag=1;
+  uniran[0]=d_random();
+  uniran[1]=d_random();
+  v_av[0] = v_av[1] = v_av[2] = 0.0;
+  for (i=part_id; i < part_id+N_T; i++) {
+    if(flag == 1 ) {
+      v[0] = pow((-2. * log(uniran[0])),0.5) * cos (2. * PI * uniran[1]) * time_step;
+      v[1] = pow((-2. * log(uniran[1])),0.5) * sin (2. * PI * uniran[0]) * time_step;
+      uniran[0]=d_random();
+      uniran[1]=d_random();
+      v[2] = pow((-2. * log(uniran[0])),0.5) * cos (2. * PI * uniran[1]) * time_step;
+      flag = 0;
+    } else {
+      v[0] = pow((-2. * log(uniran[1])),0.5) * sin (2. * PI * uniran[0]) * time_step;
+      uniran[0]=d_random();
+      uniran[1]=d_random();
+      v[1] = pow((-2. * log(uniran[0])),0.5) * cos (2. * PI * uniran[1]) * time_step;
+      v[2] = pow((-2. * log(uniran[1])),0.5) * sin (2. * PI * uniran[0]) * time_step;
+      flag = 1;      
+    }
+    //printf("%f \n %f \n %f \n",v[0],v[1],v[2]);
+    v_av[0]+=v[0]; v_av[1]+=v[1]; v_av[2]+=v[2];
+    if (set_particle_v(i, v)==TCL_ERROR) {
+      fprintf(stderr, "Failed upon setting one of the velocities in Espresso (current average: %f)!\n",sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2]))); 
+      fprintf(stderr, "Aborting...\n"); errexit();
+    }
+  }
+  return ( sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2])) );
+}
 
 int crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   /** Implementation of the tcl-command

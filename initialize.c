@@ -359,6 +359,7 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "counterions", (Tcl_CmdProc *)counterions, 0, NULL);
   Tcl_CreateCommand(interp, "salt", (Tcl_CmdProc *)salt, 0, NULL);
   Tcl_CreateCommand(interp, "velocities", (Tcl_CmdProc *)velocities, 0, NULL);
+  Tcl_CreateCommand(interp, "maxwell_velocities", (Tcl_CmdProc *)maxwell_velocities, 0, NULL);
   Tcl_CreateCommand(interp, "crosslink", (Tcl_CmdProc *)crosslink, 0, NULL);
   Tcl_CreateCommand(interp, "diamond", (Tcl_CmdProc *)diamond, 0, NULL);
   Tcl_CreateCommand(interp, "icosaeder", (Tcl_CmdProc *)icosaeder, 0, NULL);

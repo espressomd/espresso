@@ -387,6 +387,22 @@ void analyze_configs(double *tmp_config, int count) {
   n_configs++;
 }
 
+void analyze_activate(int ind) {
+  int i;
+  double pos[3];
+  n_part_conf = n_total_particles;
+
+  for(i=0; i<n_part_conf; i++) {
+    pos[0] = configs[ind][3*i];
+    pos[1] = configs[ind][3*i+1];
+    pos[2] = configs[ind][3*i+2];
+    if (place_particle(i, pos)==TCL_ERROR) {
+      fprintf(stderr, "Failed upon replacing particle in Espresso "); 
+      fprintf(stderr, "Aborting...\n"); errexit();
+    }
+  }
+}
+
 /****************************************************************************************
  *                                 Observables handling
  ****************************************************************************************/
@@ -1119,6 +1135,33 @@ static int parse_configs(Tcl_Interp *interp, int argc, char **argv)
   return TCL_ERROR;
 }
 
+static int parse_activate(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze replace <index>' */
+  /*****************************/
+  char buffer[2*TCL_INTEGER_SPACE+256];
+  int i;
+
+  if (argc != 1) { Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze activate <index>", (char *)NULL); return TCL_ERROR; }
+  if (n_total_particles == 0) {
+    Tcl_AppendResult(interp,"No particles to append! Use 'part' to create some, or 'analyze configs' to submit a bunch!",(char *) NULL); 
+    return (TCL_ERROR); }
+  if ((n_configs > 0) && (n_part_conf != n_total_particles)) {
+    sprintf(buffer,"All configurations stored must have the same length (previously: %d, now: %d)!", n_part_conf, n_total_particles);
+    Tcl_AppendResult(interp,buffer,(char *) NULL); return (TCL_ERROR); 
+  }
+  if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
+  if (!ARG0_IS_I(i)) return (TCL_ERROR);
+  if((n_configs == 0) && (i==0)) analyze_append();
+  else if ((n_configs == 0) && (i!=0)) {
+    Tcl_AppendResult(interp, "Nice try, but there are no stored configurations that could be replaced!", (char *)NULL); return TCL_ERROR; }
+  else if((i < 0) || (i > n_configs-1)) {
+    sprintf(buffer,"Index %d out of range (must be in [0,%d])!",i,n_configs-1);
+    Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_ERROR; }
+  else analyze_activate(i);
+  sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
+}
+
 /****************************************************************************************
  *                                 main parser for analyze
  ****************************************************************************************/
@@ -1210,6 +1253,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return parse_push(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("replace"))
     return parse_replace(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("activate"))
+    return parse_activate(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("remove"))
     return parse_remove(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("stored")) {
