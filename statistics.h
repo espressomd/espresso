@@ -115,8 +115,10 @@ void nbhood(double posx, double posy, double posz, double r_catch, IntList *il);
     @param posx x-coordinate of point
     @param posy y-coordinate of point
     @param posz z-coordinate of point
+    @param pid  if a valid particle id, this particle is omitted from minimazation
+                (this is a good idea if the posx, posy, posz is the position of a particle).
     @return the minimal distance of a particle to coordinates (<posx>, <posy>, <posz>). */
-double distto(double posx, double posy, double posz);
+double distto(double posx, double posy, double posz, int pid);
 
 /** calculate the end-to-end-distance. chain information \ref chain_start etc. must be set!
     @return the end-to-end-distance */

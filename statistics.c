@@ -32,16 +32,16 @@ int chain_start = 0, chain_n_chains = 0, chain_length = 0;
 Energy_stat energy = {0, {NULL,0,0}, {NULL,0,0}, 0,0,0,0,0,0};
 
 static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
-			       double *posx, double *posy, double *posz)
+			       double *posx, double *posy, double *posz, int *pid)
 {
-  int pid;
+  *pid = -1;
 
   if (*argc < 3) {
     Particle ref;
-    if (Tcl_GetInt(interp, (*argv)[0], &pid) == TCL_ERROR)
+    if (Tcl_GetInt(interp, (*argv)[0], pid) == TCL_ERROR)
       return TCL_ERROR;
 
-    if (get_particle_data(pid, &ref) != TCL_OK) {
+    if (get_particle_data(*pid, &ref) != TCL_OK) {
       Tcl_AppendResult(interp, "reference particle does not exist", (char *)NULL);
       return TCL_ERROR;
     }
@@ -175,7 +175,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       return (TCL_OK);
     }
 
-    get_reference_point(interp, &argc, &argv, &posx, &posy, &posz);
+    get_reference_point(interp, &argc, &argv, &posx, &posy, &posz, &p);
 
     if (argc != 1) {
       Tcl_AppendResult(interp, "usage: nbhood { <partid> | <posx> <posy> <posz> } <r_catch>",
@@ -205,7 +205,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
       return (TCL_OK);
     }
 
-    get_reference_point(interp, &argc, &argv, &posx, &posy, &posz);
+    get_reference_point(interp, &argc, &argv, &posx, &posy, &posz, &p);
     if (argc != 0) {
       Tcl_AppendResult(interp, "usage: distto { <partid> | <posx> <posy> <posz> }",
 		       (char *)NULL);
@@ -214,7 +214,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
     updatePartCfg();
 
-    result = distto(posx, posy, posz);
+    result = distto(posx, posy, posz, p);
 
     Tcl_PrintDouble(interp, result, buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -501,7 +501,7 @@ void nbhood(double xt, double yt, double zt, double r, IntList *il)
   }
 }
 
-double distto(double xt, double yt, double zt)
+double distto(double xt, double yt, double zt, int pid)
 {
   int i;
   double dx, dy, dz;
@@ -510,10 +510,12 @@ double distto(double xt, double yt, double zt)
   /* larger than possible */
   mindist=box_l[0] + box_l[1] + box_l[2];
   for (i=0; i<n_total_particles; i++) {
-    dx = xt - partCfg[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
-    dy = yt - partCfg[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
-    dz = zt - partCfg[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
-    mindist = dmin(mindist, SQR(dx)+SQR(dy)+SQR(dz));
+    if (pid != i) {
+      dx = xt - partCfg[i].r.p[0];   dx -= dround(dx/box_l[0])*box_l[0];
+      dy = yt - partCfg[i].r.p[1];   dy -= dround(dy/box_l[1])*box_l[1];
+      dz = zt - partCfg[i].r.p[2];   dz -= dround(dz/box_l[2])*box_l[2];
+      mindist = dmin(mindist, SQR(dx)+SQR(dy)+SQR(dz));
+    }
   }
   return sqrt(mindist);
 }
