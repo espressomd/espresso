@@ -14,6 +14,10 @@ void ghost_init()
 #ifdef DEBUG_GHOSTS
   if(this_node<2) fprintf(stderr,"%d: ghost_init:\n",this_node); 
 #endif
+  // if(n_cells==0) {
+  //  fprintf(stderr,"%d Cell structure not initialized! STOP!",this_node);
+  //  exit(1);
+  // }
 }
 
 void exchange_part()

@@ -4,7 +4,7 @@
 
 #include "integrate.h"
 
-//#define DEBUG
+#define DEBUG
 
 /*******************  variables  *******************/
 

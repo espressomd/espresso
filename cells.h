@@ -40,15 +40,18 @@ typedef struct {
 
 /** number of linked cells inside the domain of one node (inner cells). */
 int n_inner_cells;
+/** index list of the inner cells. */
+int  *inner_cells;
 /** inner linked cell grid. */
 int cell_grid[3];
+
 /** number of linked cells (inner+ghosts). */
 int n_cells;
 /** linked cell grid with ghost frame. */
 int ghost_cell_grid[3];
+
 /** linked cell list. */
 Cell *cells;
-
 /** cell size. */
 double cell_size[3];
 /** inverse cell size. */
@@ -59,8 +62,11 @@ double inv_cell_size[3];
 /** initialize link cell structures. */
 void cells_init();
 
-/** sort all particles into cells. */
+/** sort all particles into inner cells (no ghosts!). */
 void sort_particles_into_cells();
+
+/** sort all ghost particles into cells. */
+void sort_ghosts_into_cells();
 
 /** exit link cell structures. */
 void cells_exit();

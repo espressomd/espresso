@@ -4,12 +4,14 @@
 
 #include "cells.h"
 
-//#define DEBUG
+#define DEBUG
 
 /** increment size of particle buffer */
-#define PART_INCREMENT 2
+#define PART_INCREMENT 5
 /** half the number of cell neighbours in 3 Dimensions*/
 #define MAX_NEIGHBOURS 13
+
+/*******************  privat functions  *******************/
 
 int  get_linear_index(int a, int b, int c, int adim, int bdim, int cdim);
 void get_grid_pos(int i, int *a, int *b, int *c, int adim, int bdim, int cdim);
@@ -17,9 +19,12 @@ void init_cell_neighbours();
 int  is_inner_cell(int i, int adim, int bdim, int cdim);
 void realloc_cell_particles(int index, int size);
 
+/*******************  exported functions  *******************/
+
 void cells_init() 
 {
   int i;
+  int cnt=0;
   int node_pos[3];
 #ifdef DEBUG
   if(this_node < 2) fprintf(stderr,"%d: cells_init \n",this_node);
@@ -53,14 +58,20 @@ void cells_init()
 
   /* allocate space for cell structure */
   cells = (Cell *)malloc(n_cells*sizeof(Cell));
+  inner_cells = (int *)malloc(n_inner_cells*sizeof(int));
   for(i=0;i<n_cells;i++) {
     cells[i].n_particles=0;
     cells[i].max_particles = PART_INCREMENT;
     cells[i].particles = malloc(cells[i].max_particles*sizeof(int));
-    if(is_inner_cell(i,ghost_cell_grid[0],ghost_cell_grid[1],ghost_cell_grid[2])) 
+    if(is_inner_cell(i,ghost_cell_grid[0],ghost_cell_grid[1],ghost_cell_grid[2])) {
       cells[i].neighbours = malloc(MAX_NEIGHBOURS*sizeof(int));
+      inner_cells[cnt]=i;
+      cnt++;
+    }
   }
-  
+  if(cnt != n_inner_cells) 
+  fprintf(stderr,"Found %d inner cells instead of %d",cnt,n_inner_cells);
+
   init_cell_neighbours();
 
 #ifdef DEBUG
@@ -79,6 +90,8 @@ void cells_init()
 #endif
 }
 
+/*************************************************/
+
 void cells_exit() 
 {
   int i;
@@ -86,15 +99,17 @@ void cells_exit()
   if(this_node<2) fprintf(stderr,"%d: cells_exit:\n",this_node); 
 #endif
   for(i=0;i<n_cells;i++) {
-    free(cells[i].neighbours);
-    free(cells[i].particles);
+    if(cells[i].n_neighbours>0) free(cells[i].neighbours);
+    if(cells[i].max_particles>0)free(cells[i].particles);
   }
   free(cells);
 }
 
+/*************************************************/
 
 void sort_particles_into_cells()
 {
+  
   int i,n;
   int cpos[3], gcg[3];
   int ind;
@@ -105,8 +120,11 @@ void sort_particles_into_cells()
  
   for(i=0;i<3;i++) gcg[i] = ghost_cell_grid[i];
 
-  /* initialize cells */
-  for(i=0;i<n_cells;i++) cells[i].n_particles=0;
+  /* initialize inner cells */
+  for(i=0;i<n_inner_cells;i++) { 
+    ind = inner_cells[i];
+    cells[ind].n_particles=0;
+  }
 
   /* particle loop */
   for(n=0;n<n_particles;n++) {
@@ -121,22 +139,29 @@ void sort_particles_into_cells()
 #endif  
 
     /* Append particle in particle list of that cell */
-    if(cells[ind].n_particles >= cells[ind].max_particles) 
-      realloc_cell_particles(ind,cells[ind].n_particles+PART_INCREMENT);
+   //   if(cells[ind].n_particles >= cells[ind].max_particles) 
+   // realloc_cell_particles(ind,cells[ind].n_particles+PART_INCREMENT);
     cells[ind].particles[cells[ind].n_particles] = n;
     cells[ind].n_particles++;
   }
 
-  /* resize particle arrays */
-  for(i=0;i<n_cells;i++) {
-    realloc_cell_particles(i,cells[i].n_particles);
+  /* resize particle arrays for inner cells */
+  for(i=0;i<n_inner_cells;i++) { 
+    ind = inner_cells[i];
+    //realloc_cell_particles(ind,cells[ind].n_particles);
 #ifdef DEBUG
    if(this_node==0) fprintf(stderr,"0: Cell[%d] n_part = %d max_part = %d\n",
-			    i,cells[i].n_particles,cells[i].max_particles);
+			    ind,cells[ind].n_particles,cells[ind].max_particles);
 #endif      
   }
 }
 
+void sort_ghosts_into_cells()
+{
+#ifdef DEBUG
+  if(this_node<2) fprintf(stderr,"%d: sort_ghosts_into_cells:\n",this_node);
+#endif      
+}
 
 
 /*******************  privat functions  *******************/
@@ -186,11 +211,14 @@ void init_cell_neighbours()
   }
 }
 
+/*************************************************/
 
 int get_linear_index(int a, int b, int c, int adim, int bdim, int cdim)
 {
   return (a + adim*(b + bdim*c));
 }
+
+/*************************************************/
 
 void get_grid_pos(int i, int *a, int *b, int *c, int adim, int bdim, int cdim)
 {
@@ -200,6 +228,8 @@ void get_grid_pos(int i, int *a, int *b, int *c, int adim, int bdim, int cdim)
   i /= bdim;
   *c = i;
 }
+
+/*************************************************/
 
 /** check wether the cell with linear index i is an inner cell or not. */
 int  is_inner_cell(int i, int adim, int bdim, int cdim)
@@ -213,6 +243,8 @@ int  is_inner_cell(int i, int adim, int bdim, int cdim)
   else
     return 0;
 }
+
+/*************************************************/
 
 /** realloc cell particle array.
     Step size for increase and decrease is PART_INCREMENT.
