@@ -28,6 +28,12 @@ void nsq_topology_release()
 static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts)
 {
   int n;
+  /* no need for comm for only 1 node */
+  if (n_nodes == 1) {
+    prepare_comm(comm, data_parts, 0);
+    return;
+  }
+
   prepare_comm(comm, data_parts, n_nodes);
   /* every node has its dedicated comm step */
   for(n = 0; n < n_nodes; n++) {
@@ -86,25 +92,27 @@ void nsq_topology_init(CellPList *old)
     nsq_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
 
     /* here we just decide what to transfer where */
-    for (n = 0; n < n_nodes; n++) {
-      /* use the prefetched send buffers */
-      if (this_node != n) {
-	cell_structure.ghost_cells_comm.comm[n].type         = GHOST_BCST;
-	cell_structure.exchange_ghosts_comm.comm[n].type     = GHOST_BCST;
-	cell_structure.update_ghost_pos_comm.comm[n].type    = GHOST_BCST;
+    if (n_nodes > 1) {
+      for (n = 0; n < n_nodes; n++) {
+	/* use the prefetched send buffers. Node 0 transmits first and never prefetches. */
+	if (this_node == 0 || this_node != n) {
+	  cell_structure.ghost_cells_comm.comm[n].type         = GHOST_BCST;
+	  cell_structure.exchange_ghosts_comm.comm[n].type     = GHOST_BCST;
+	  cell_structure.update_ghost_pos_comm.comm[n].type    = GHOST_BCST;
+	}
+	else {
+	  cell_structure.ghost_cells_comm.comm[n].type         = GHOST_BCST | GHOST_PREFETCH;
+	  cell_structure.exchange_ghosts_comm.comm[n].type     = GHOST_BCST | GHOST_PREFETCH;
+	  cell_structure.update_ghost_pos_comm.comm[n].type    = GHOST_BCST | GHOST_PREFETCH;
+	}
+	cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
       }
-      else {
-	cell_structure.ghost_cells_comm.comm[n].type         = GHOST_BCST | GHOST_PREFETCH;
-	cell_structure.exchange_ghosts_comm.comm[n].type     = GHOST_BCST | GHOST_PREFETCH;
-	cell_structure.update_ghost_pos_comm.comm[n].type    = GHOST_BCST | GHOST_PREFETCH;
+      /* first round: all nodes except the first one prefetch their send data */
+      if (this_node != 0) {
+	cell_structure.ghost_cells_comm.comm[0].type         |= GHOST_PREFETCH;
+	cell_structure.exchange_ghosts_comm.comm[0].type     |= GHOST_PREFETCH;
+	cell_structure.update_ghost_pos_comm.comm[0].type    |= GHOST_PREFETCH;
       }
-      cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
-    }
-    /* first round: all nodes except the first one prefetch their send data */
-    if (this_node != 0) {
-      cell_structure.ghost_cells_comm.comm[0].type         |= GHOST_PREFETCH;
-      cell_structure.exchange_ghosts_comm.comm[0].type     |= GHOST_PREFETCH;
-      cell_structure.update_ghost_pos_comm.comm[0].type    |= GHOST_PREFETCH;
     }
   }
 
@@ -183,7 +191,6 @@ void nsq_balance_particles()
     else if (l_node == this_node) {
       recv_particles(local, s_node);
     }
-
     ppnode[s_node] -= transfer;
     ppnode[l_node] += transfer;
   }

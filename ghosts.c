@@ -94,7 +94,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
   int pl, p, np;
   Particle *part, *pt;
 
-  GHOST_TRACE(fprintf(stderr, "%d: prepare sending to %d\n", this_node, gc->node));
+  GHOST_TRACE(fprintf(stderr, "%d: prepare sending to/bcast from %d\n", this_node, gc->node));
 
   /* reallocate send buffer */
   n_s_buffer = calc_transmit_size(gc, data_parts);
@@ -174,7 +174,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
   retrieve = r_buffer;
   for (pl = 0; pl < gc->n_part_lists; pl++) {
     if (data_parts == GHOSTTRANS_PARTNUM) {
-      GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d", this_node, gc->part_lists[pl], *(int *)retrieve));
+      GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d\n", this_node, gc->part_lists[pl], *(int *)retrieve));
       realloc_particles(gc->part_lists[pl], gc->part_lists[pl]->n = *(int *)retrieve);
       retrieve += sizeof(int);
     }
@@ -184,7 +184,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
       for (p = 0; p < np; p++) {
 	pt = &part[p];
 	if (data_parts & GHOSTTRANS_PROPRTS) {
-	  memcpy(retrieve, &pt->p, sizeof(ParticleProperties));
+	  memcpy(&pt->p, retrieve, sizeof(ParticleProperties));
 	  retrieve +=  sizeof(ParticleProperties);
 	  GHOST_TRACE(fprintf(stderr, "%d: received ghost %d", this_node, pt->p.identity));
 	  if (local_particles[pt->p.identity] == NULL) {
@@ -196,15 +196,15 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 	  }
 	}
 	if (data_parts & GHOSTTRANS_POSITION) {
-	  memcpy(retrieve, &pt->r, sizeof(ParticlePosition));
+	  memcpy(&pt->r, retrieve, sizeof(ParticlePosition));
 	  retrieve +=  sizeof(ParticlePosition);
 	}
 	if (data_parts & GHOSTTRANS_MOMENTUM) {
-	  memcpy(retrieve, &pt->m, sizeof(ParticleMomentum));
+	  memcpy(&pt->m, retrieve, sizeof(ParticleMomentum));
 	  retrieve +=  sizeof(ParticleMomentum);
 	}
 	if (data_parts & GHOSTTRANS_FORCE) {
-	  memcpy(retrieve, &pt->f, sizeof(ParticleForce));
+	  memcpy(&pt->f, retrieve, sizeof(ParticleForce));
 	  retrieve +=  sizeof(ParticleForce);
 	}
       }
@@ -286,17 +286,18 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
 
 void reduce_forces_sum(void *add, void *to, int *len, MPI_Datatype *type)
 {
-  void *cur = add;
-
+  ParticleForce *cadd = add, *cto = to;
+  int i, clen = *len/sizeof(ParticleForce);
+ 
 #ifdef ADDITIONAL_CHECKS
-  if (*type != MPI_BYTE) {
+  if (*type != MPI_BYTE || (*len % sizeof(ParticleForce)) != 0) {
     fprintf(stderr, "%d: transfer data type wrong\n", this_node);
     errexit();
   }
 #endif
 
-  for (; cur - add < *len; to++, add++)
-    add_force((ParticleForce *)to, (ParticleForce *)add);
+  for (i = 0; i < clen; i++)
+    add_force(&cadd[i], &cto[i]);
 }
 
 static int is_send_op(int comm_type, int node)
@@ -347,7 +348,7 @@ void ghost_communicator(GhostCommunicator *gc)
 	    int node2      = gcn2->node;
 	    /* find next action where we send and which has PREFETCH set */
 	    if (is_send_op(comm_type2, node2) && prefetch2) {
-	      GHOST_TRACE(fprintf(stderr, "%d: prefetch comm with %d\n", this_node, node2));
+	      GHOST_TRACE(fprintf(stderr, "%d: prefetch comm with/from %d\n", this_node, node2));
 	      prepare_send_buffer(gcn2, data_parts);
 	    }
 	  }
@@ -386,7 +387,8 @@ void ghost_communicator(GhostCommunicator *gc)
       GHOST_TRACE(fprintf(stderr, "%d: done\n", this_node));
 
       /* write back data */
-      if (comm_type == GHOST_RECV || comm_type == GHOST_BCST) {
+      if (comm_type == GHOST_RECV ||
+	  (comm_type == GHOST_BCST && node != this_node)) {
 	/* forces have to be added, the rest overwritten */
 	if (data_parts == GHOSTTRANS_FORCE)
 	  add_forces_from_recv_buffer(gcn);

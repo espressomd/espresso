@@ -87,9 +87,6 @@ void on_integration_start()
 
   particle_invalidate_part_node();
 
-  if (cell_structure.type == CELL_STRUCTURE_NSQUARE)
-    nsq_balance_particles();
-
   if (recalc_maxrange) {
     integrate_vv_recalc_maxrange();
     on_parameter_change(FIELD_MAXRANGE);

@@ -244,17 +244,21 @@ static int request[3];
 
 #ifdef MPI_CORE
 void mpi_core(MPI_Comm *comm, int *errcode,...) {
-  fprintf(stderr, "Aborting due to MPI error %d, forcing core dump\n", *errcode);
+  fprintf(stderr, "%d: Aborting due to MPI error %d, forcing core dump\n", this_node, *errcode);
   fflush(stderr);
-#ifdef MPI_ERR_LOCALDEAD
-#ifdef MPI_ERR_REMOTEDEAD
-  if (*errcode != MPI_ERR_LOCALDEAD &&
-      *errcode != MPI_ERR_REMOTEDEAD)
-  	core();
-#else
+  /* no longer necessary with core.* files.
+     Actually, it is nice to have all nodes...
+     #ifdef MPI_ERR_LOCALDEAD
+     #ifdef MPI_ERR_REMOTEDEAD
+     if (*errcode != MPI_ERR_LOCALDEAD &&
+     *errcode != MPI_ERR_REMOTEDEAD)
+     core();
+     #else
+  */
   core();
-#endif
-#endif
+  /* #endif
+     #endif
+  */
 }
 #endif
 
