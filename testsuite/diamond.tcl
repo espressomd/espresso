@@ -49,7 +49,6 @@ set N_P     16
 set MPC     20
 set N_CI    328
 set N_T     [expr $N_node + $N_P*$MPC + $N_CI]
-# set packing { 0.0005 0.00075 0.001 0.0025 0.005 0.0075 0.01 0.025 0.05 0.1 0.4 0.443 }
 set packing { 0.45 0.4 0.1 0.05 0.025 0.01 0.0075 0.005 0.0025 0.001 0.00075  }
 
 
@@ -61,7 +60,6 @@ set lj1_eps     1.0
 set lj1_sig     1.0
 set lj1_cut     1.122462048309373
 set lj1_shift   [expr -4.0*$lj1_eps*(pow($lj1_cut,-12)-pow($lj1_cut,-6))]
-# set lj1_cforce  [expr 48*$lj1_epsilon*(0.5*pow($lj1_cut,-7)-pow($lj1_cut,-13))]
 
 # attractive FENE
 set fene_k      15.551
@@ -210,7 +208,7 @@ foreach pack_i $packing {
 	setmd time 0; set int_loop [expr int($int_time_i/([setmd time_step]*$int_step_i)+0.56)]; set tmp_step 0
 	puts "\nStart integration (full interactions) with timestep [setmd time_step] until time t>=$int_time_i (-> $int_loop loops). "
 	puts -nonewline "    Activating electrostatics... "; flush stdout
-	inter coulomb $bjerrum p3m tune accuracy $accuracy mesh 16
+	puts "Done.\n[inter coulomb $bjerrum p3m tune accuracy $accuracy mesh 16]"
 	puts -nonewline "Remove capping of LJ-interactions... "; flush stdout; inter ljforcecap 0; puts "Done."
 	set sfx "[expr int(ceil(log10($int_loop*$int_step_i)))+1]d"
 	if { [file exists "$name_i$ident.chk" ] } {
@@ -298,23 +296,40 @@ foreach pack_i $packing {
 	plotObs $name_i$ident.obs2 {1:6 1:3 1:4 1:5 1:2} titles {Temp re rg rh mindist} labels [concat "time (tau)" "$name_i$ident.obs2"]
 	plotObs $name_i$ident.g123 {1:2 1:3 1:4} titles {<g1> <g2> <g3>} labels [concat "time (tau)" "$name_i$ident.g123"] scale "logscale xy"
 	plotObs $name_i$ident.idf {1:2} titles {<internal_dist>} labels [concat "|i-j|" "$name_i$ident.idf"] scale "logscale xy"
-	lappend plotted "$name_i$ident.obs2"; lappend plotted "$name_i$ident.g123"; lappend plotted "$name_i$ident.idf"
 	puts "Done."
     }
     puts -nonewline "Cleaning up for next system... "; flush stdout; 
     part deleteall; analyze remove; setmd time 0; inter coulomb 0.0; incr i; puts "Done.\n"
 }
+
 # Final gnuplots
 puts -nonewline "Creating a gnuplot of the averaged quantities... "; flush stdout
 if {$bjerrum > 0.0} {
-    plotObs $name$ident.DHN2 {3:12 3:14 3:16 3:18 3:21 3:20} titles {"<p>" "<p_FENE>" "<p_lj>" "<p_c>" "<p_osmotic>" "<p_ideal>"} labels {"packing fraction"} scale "logscale x"
+    plotObs $name$ident.DHN {3:12 3:14 3:16 3:18 3:21 3:20} titles {"<p>" "<p_FENE>" "<p_lj>" "<p_c>" "<p_osmotic>" "<p_ideal>"} labels {"packing fraction"} scale "logscale x"
 } else {
-    plotObs $name$ident.DHN2 {3:12 3:14 3:16 3:18 3:19} titles {"<p>" "<p_FENE>" "<p_lj>" "<p_ideal>" "<p_osmotic>"} labels {"packing fraction"} scale "logscale x" }
-eval exec mv $name$ident.DHN2.ps $name$ident.DHN2.pres.ps
-plotObs $name$ident.DHN2 {3:6 3:7 3:8 3:9 3:4 3:10 3:11} titles {"<re>" "<rg>" "<rh>" "<re2>/<rg2>" "density" "Temp" "mindist"} labels { "packing fraction" } scale "logscale x"; eval exec mv $name$ident.DHN2.ps $name$ident.DHN2.obs2.ps
-lappend plotted "$name$ident.DHN2.pres"; lappend plotted "$name$ident.DHN2.obs2"; puts "Done."
-# puts -nonewline "Combining all plots into '$name_i$ident.final.ps'... "; flush stdout
-# plotJoin $plotted "$name_i$ident.final.ps"; puts "Done."
+    plotObs $name$ident.DHN {3:12 3:14 3:16 3:18 3:19} titles {"<p>" "<p_FENE>" "<p_lj>" "<p_ideal>" "<p_osmotic>"} labels {"packing fraction"} scale "logscale x" }
+eval exec mv $name$ident.DHN.ps $name$ident.DHN.pres.ps
+plotObs $name$ident.DHN {3:6 3:7 3:8 3:9 3:4 3:10 3:11} titles {"<re>" "<rg>" "<rh>" "<re2>/<rg2>" "density" "Temp" "mindist"} labels { "packing fraction" } scale "logscale x"; eval exec mv $name$ident.DHN.ps $name$ident.DHN.obs2.ps
+puts "Done."
+
+# Combine multiple plots
+puts -nonewline "Combining all .obs2- and .g123-plots into '$name$ident.gobs.B.ps'... "; flush stdout; set sources ""
+for {set j 1} {$j<$i} {incr j} { 
+    set name_i "$name[format %02d $j]"; lappend sources "$name_i$ident.obs2.ps"; lappend sources "$name_i$ident.g123.ps" }
+plotJoin $sources $name$ident.gobs; eval exec ps2pdf $name$ident.gobs.B.ps
+puts -nonewline "Done.\nCombining all .idf-plots into '$name$ident.idf.B.ps'... "; flush stdout; set sources ""
+for {set j 1} {$j<$i} {incr j} { 
+    set name_i "$name[format %02d $j]"; lappend sources "$name_i$ident.idf.ps" }
+plotJoin $sources $name$ident.idf; eval exec ps2pdf $name$ident.idf.B.ps
+puts -nonewline "Done.\nCombining DHN-plots into '$name$ident.DHN.B.ps'... "; flush stdout; 
+set sources ""; lappend sources "$name$ident.DHN.obs2.ps"; lappend sources "$name$ident.DHN.pres.ps"
+plotJoin $sources $name$ident.DHN; eval exec ps2pdf $name$ident.DHN.B.ps
+puts "Done."
+
 # Wrapping up
-puts -nonewline "Closing files... "; close $DHN_file; puts "Done."
+puts -nonewline "Closing files... "; flush stdout
+close $DHN_file
+puts -nonewline "Compressing outputs to save disk-space... "; flush stdout
+eval exec gzip *.obs2 *.ps *00
+puts "Done."
 puts "\nThe Diamond Hydrogel Networks Testcase is now complete.\nThanks for watching, and Good Night!\n"
