@@ -49,7 +49,7 @@ MDINLINE int printcomforceIAToResult(Tcl_Interp *interp, int i, int j)
   Tcl_AppendResult(interp, "comforce ", buffer, " ", (char *) NULL);
   sprintf(buffer,"%d",data->COMFORCE_dir);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->COMFORCE_force / (0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, data->COMFORCE_force, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, data->COMFORCE_fratio, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
@@ -83,7 +83,6 @@ MDINLINE int comforce_parser(Tcl_Interp * interp,
 	  return TCL_ERROR;
   }
     
-  force *= (0.5*time_step*time_step);
   *change = 5;
     
   if (comforce_set_params(part_type_a, part_type_b, flag, dir, force, fratio) == TCL_ERROR) {
