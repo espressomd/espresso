@@ -286,11 +286,9 @@ void layered_topology_init(CellPList *old)
 
   CELL_TRACE(fprintf(stderr, "%d: layered_topology_init, %d old particle lists\n", this_node, old->n));
 
-  if (cell_structure.type != CELL_STRUCTURE_LAYERED) {
-    cell_structure.type = CELL_STRUCTURE_LAYERED;
-    cell_structure.position_to_node = map_position_node_array;
-    cell_structure.position_to_cell = layered_position_to_cell;
-  }
+  cell_structure.type = CELL_STRUCTURE_LAYERED;
+  cell_structure.position_to_node = map_position_node_array;
+  cell_structure.position_to_cell = layered_position_to_cell;
 
   /* check node grid. All we can do is 1x1xn. */
   if (node_grid[0] != 1 || node_grid[1] != 1) {

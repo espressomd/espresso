@@ -62,67 +62,65 @@ void nsq_topology_init(CellPList *old)
 
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_init, %d\n", this_node, old->n));
 
-  if (cell_structure.type != CELL_STRUCTURE_NSQUARE) {
-    cell_structure.type = CELL_STRUCTURE_NSQUARE;
-    cell_structure.position_to_node = map_position_node_array;
-    cell_structure.position_to_cell = nsq_position_to_cell;
+  cell_structure.type = CELL_STRUCTURE_NSQUARE;
+  cell_structure.position_to_node = map_position_node_array;
+  cell_structure.position_to_cell = nsq_position_to_cell;
 
-    realloc_cells(n_nodes);
+  realloc_cells(n_nodes);
 
-    /* mark cells */
-    local = &cells[this_node];
-    realloc_cellplist(&local_cells, local_cells.n = 1);
-    local_cells.cell[0] = local;
+  /* mark cells */
+  local = &cells[this_node];
+  realloc_cellplist(&local_cells, local_cells.n = 1);
+  local_cells.cell[0] = local;
 
-    realloc_cellplist(&ghost_cells, ghost_cells.n = n_nodes - 1);
-    c = 0;
-    for (n = 0; n < n_nodes; n++)
-      if (n != this_node)
-	ghost_cells.cell[c++] = &cells[n];
+  realloc_cellplist(&ghost_cells, ghost_cells.n = n_nodes - 1);
+  c = 0;
+  for (n = 0; n < n_nodes; n++)
+    if (n != this_node)
+      ghost_cells.cell[c++] = &cells[n];
 
-    /* distribute force calculation work  */
-    ntodo = (n_nodes + 3)/2;
-    init_cellplist(&me_do_ghosts);
-    realloc_cellplist(&me_do_ghosts, ntodo);
-    for (n = 0; n < n_nodes; n++) {
-      diff = n - this_node;
-      /* simple load balancing formula. Basically diff % n, where n >= n_nodes, n odd.
-	 The node itself is also left out, as it is treated differently */
-      if (((diff > 0 && (diff % 2) == 0) ||
-	   (diff < 0 && ((-diff) % 2) == 1))) {
-	CELL_TRACE(fprintf(stderr, "%d: doing interactions with %d\n", this_node, n));
-	me_do_ghosts.cell[me_do_ghosts.n++] = &cells[n];
-      }
+  /* distribute force calculation work  */
+  ntodo = (n_nodes + 3)/2;
+  init_cellplist(&me_do_ghosts);
+  realloc_cellplist(&me_do_ghosts, ntodo);
+  for (n = 0; n < n_nodes; n++) {
+    diff = n - this_node;
+    /* simple load balancing formula. Basically diff % n, where n >= n_nodes, n odd.
+       The node itself is also left out, as it is treated differently */
+    if (((diff > 0 && (diff % 2) == 0) ||
+	 (diff < 0 && ((-diff) % 2) == 1))) {
+      CELL_TRACE(fprintf(stderr, "%d: doing interactions with %d\n", this_node, n));
+      me_do_ghosts.cell[me_do_ghosts.n++] = &cells[n];
     }
+  }
 
-    /* create communicators */
-    nsq_prepare_comm(&cell_structure.ghost_cells_comm,         GHOSTTRANS_PARTNUM);
-    nsq_prepare_comm(&cell_structure.exchange_ghosts_comm,     GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
-    nsq_prepare_comm(&cell_structure.update_ghost_pos_comm,    GHOSTTRANS_POSITION);
-    nsq_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
+  /* create communicators */
+  nsq_prepare_comm(&cell_structure.ghost_cells_comm,         GHOSTTRANS_PARTNUM);
+  nsq_prepare_comm(&cell_structure.exchange_ghosts_comm,     GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
+  nsq_prepare_comm(&cell_structure.update_ghost_pos_comm,    GHOSTTRANS_POSITION);
+  nsq_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
 
-    /* here we just decide what to transfer where */
-    if (n_nodes > 1) {
-      for (n = 0; n < n_nodes; n++) {
-	/* use the prefetched send buffers. Node 0 transmits first and never prefetches. */
-	if (this_node == 0 || this_node != n) {
-	  cell_structure.ghost_cells_comm.comm[n].type         = GHOST_BCST;
-	  cell_structure.exchange_ghosts_comm.comm[n].type     = GHOST_BCST;
-	  cell_structure.update_ghost_pos_comm.comm[n].type    = GHOST_BCST;
-	}
-	else {
-	  cell_structure.ghost_cells_comm.comm[n].type         = GHOST_BCST | GHOST_PREFETCH;
-	  cell_structure.exchange_ghosts_comm.comm[n].type     = GHOST_BCST | GHOST_PREFETCH;
-	  cell_structure.update_ghost_pos_comm.comm[n].type    = GHOST_BCST | GHOST_PREFETCH;
-	}
-	cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
+  /* here we just decide what to transfer where */
+  if (n_nodes > 1) {
+    for (n = 0; n < n_nodes; n++) {
+      /* use the prefetched send buffers. Node 0 transmits first and never prefetches. */
+      if (this_node == 0 || this_node != n) {
+	cell_structure.ghost_cells_comm.comm[n].type         = GHOST_BCST;
+	cell_structure.exchange_ghosts_comm.comm[n].type     = GHOST_BCST;
+	cell_structure.update_ghost_pos_comm.comm[n].type    = GHOST_BCST;
       }
-      /* first round: all nodes except the first one prefetch their send data */
-      if (this_node != 0) {
-	cell_structure.ghost_cells_comm.comm[0].type         |= GHOST_PREFETCH;
-	cell_structure.exchange_ghosts_comm.comm[0].type     |= GHOST_PREFETCH;
-	cell_structure.update_ghost_pos_comm.comm[0].type    |= GHOST_PREFETCH;
+      else {
+	cell_structure.ghost_cells_comm.comm[n].type         = GHOST_BCST | GHOST_PREFETCH;
+	cell_structure.exchange_ghosts_comm.comm[n].type     = GHOST_BCST | GHOST_PREFETCH;
+	cell_structure.update_ghost_pos_comm.comm[n].type    = GHOST_BCST | GHOST_PREFETCH;
       }
+      cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
+    }
+    /* first round: all nodes except the first one prefetch their send data */
+    if (this_node != 0) {
+      cell_structure.ghost_cells_comm.comm[0].type         |= GHOST_PREFETCH;
+      cell_structure.exchange_ghosts_comm.comm[0].type     |= GHOST_PREFETCH;
+      cell_structure.update_ghost_pos_comm.comm[0].type    |= GHOST_PREFETCH;
     }
   }
 
