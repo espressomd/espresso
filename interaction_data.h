@@ -36,6 +36,8 @@ typedef struct {
 #define BONDED_IA_ANGLE    1
 /** Type of bonded interaction is a dihedral potential. */
 #define BONDED_IA_DIHEDRAL 2
+/** This bonded interaction was not set. */
+#define BONDED_IA_NONE    -1
 
 /** Defines parameters for a bonded interaction. */
 typedef struct {
@@ -116,27 +118,4 @@ void make_bond_type_exist(int type);
     the other nodes.  */
 void realloc_ia_params(int nsize);
 
-/** Initialize interaction parameters. */
-MDINLINE void initialize_ia_params(IA_parameters *params) {
-  params->LJ_eps =
-    params->LJ_sig =
-    params->LJ_cut =
-    params->LJ_shift =
-    params->LJ_offset = 0;
-  
-  params->ramp_cut =
-    params->ramp_force = 0;
-}
-
-/** Copy interaction parameters. */
-MDINLINE void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
-  dst->LJ_eps = src->LJ_eps;
-  dst->LJ_sig = src->LJ_sig;
-  dst->LJ_cut = src->LJ_cut;
-  dst->LJ_shift = src->LJ_shift;
-  dst->LJ_offset = src->LJ_offset;
-
-  dst->ramp_cut = src->ramp_cut;
-  dst->ramp_force = src->ramp_force;  
-}
 #endif

@@ -21,6 +21,44 @@ Bonded_ia_parameters *bonded_ia_params = NULL;
  * functions
  *****************************************/
 
+/** Initialize interaction parameters. */
+void initialize_ia_params(IA_parameters *params) {
+  params->LJ_eps =
+    params->LJ_sig =
+    params->LJ_cut =
+    params->LJ_shift =
+    params->LJ_offset = 0;
+  
+  params->ramp_cut =
+    params->ramp_force = 0;
+}
+
+/** Copy interaction parameters. */
+void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
+  dst->LJ_eps = src->LJ_eps;
+  dst->LJ_sig = src->LJ_sig;
+  dst->LJ_cut = src->LJ_cut;
+  dst->LJ_shift = src->LJ_shift;
+  dst->LJ_offset = src->LJ_offset;
+
+  dst->ramp_cut = src->ramp_cut;
+  dst->ramp_force = src->ramp_force;  
+}
+
+/** returns non-zero if particles of type i and j have a nonbonded interaction */
+int checkIfParticlesInteract(int i, int j) {
+  IA_parameters *data = get_ia_param(i, j);
+
+  if (data->LJ_eps != 0)
+    return 1;
+  
+  if (data->ramp_cut > 0)
+    return 1;
+
+  return 0;
+}
+
+
 /** This function increases the LOCAL ia_params field
     to the given size. This function is not exported
     since it does not do this on all nodes. Use
@@ -71,14 +109,84 @@ void make_particle_type_exist(int type)
 
 void make_bond_type_exist(int type)
 {
-  int ns = type + 1;
+  int i, ns = type + 1;
   if(ns <= n_bonded_ia)
     return;
-  if(n_bonded_ia==0) 
-    bonded_ia_params = (Bonded_ia_parameters *)malloc(ns*sizeof(Bonded_ia_parameters));  
-  else 
-    bonded_ia_params = (Bonded_ia_parameters *)realloc(bonded_ia_params, ns*sizeof(Bonded_ia_parameters));
+  bonded_ia_params = (Bonded_ia_parameters *)realloc(bonded_ia_params,
+						     ns*sizeof(Bonded_ia_parameters));
+  for (i = n_bonded_ia; i < ns; i++)
+    bonded_ia_params[i].type = BONDED_IA_NONE;
+
   n_bonded_ia = ns;
+}
+
+int printBondedIAToResult(Tcl_Interp *interp, int i)
+{
+  Bonded_ia_parameters *params = &bonded_ia_params[i];
+  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+
+  sprintf(buffer, "%d ", i);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  
+  switch (params->type) {
+  case BONDED_IA_FENE:
+    Tcl_PrintDouble(interp, params->p.fene.k_fene, buffer);
+    Tcl_AppendResult(interp, "FENE ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.fene.r_fene, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
+  case BONDED_IA_ANGLE:
+    Tcl_PrintDouble(interp, params->p.angle.bend, buffer);
+    Tcl_AppendResult(interp, "angle ", buffer, (char *) NULL);
+    return (TCL_OK);
+  case BONDED_IA_DIHEDRAL:
+    Tcl_AppendResult(interp, "dihedral",(char *) NULL);
+    return (TCL_OK);
+  case BONDED_IA_NONE:
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
+		     (char *) NULL);
+    return (TCL_ERROR);
+  default:
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "unknown bonded interaction type",(char *) NULL);
+    return (TCL_ERROR);
+  }
+}
+
+int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
+{
+  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
+  IA_parameters *data = get_ia_param(i, j);
+
+  if (!data) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "interaction does not exist",
+		     (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  sprintf(buffer, "%d %d ", i, j);
+  Tcl_AppendResult(interp, buffer, (char *) NULL);
+  if (data->LJ_eps != 0) {
+    Tcl_PrintDouble(interp, data->LJ_eps, buffer);
+    Tcl_AppendResult(interp, "lennard-jones ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJ_sig, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJ_cut, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJ_shift, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->LJ_offset, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  }
+  if (data->ramp_cut > 0) {
+    Tcl_PrintDouble(interp, data->ramp_cut, buffer);
+    Tcl_AppendResult(interp, "ramp ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, data->ramp_force, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+  }
+  return (TCL_OK);
 }
 
 int inter(ClientData _data, Tcl_Interp *interp,
@@ -86,6 +194,35 @@ int inter(ClientData _data, Tcl_Interp *interp,
 {
   int i, j;
 
+  if (argc == 1) {
+    int start = 1;
+    for (i = 0; i < n_bonded_ia; i++) {
+      if (bonded_ia_params[i].type != BONDED_IA_NONE) {
+	if (start) {
+	  Tcl_AppendResult(interp, "{", (char *)NULL);
+	  start = 0;
+	}
+	else
+	  Tcl_AppendResult(interp, " {", (char *)NULL);
+	printBondedIAToResult(interp, i);
+	Tcl_AppendResult(interp, "}", (char *)NULL);
+      }
+    }
+    for (i = 0; i < n_particle_types; i++)
+      for (j = i; j < n_particle_types; j++) {
+	if (checkIfParticlesInteract(i, j)) {
+	  if (start) {
+	    Tcl_AppendResult(interp, "{", (char *)NULL);
+	    start = 0;
+	  }
+	  else
+	    Tcl_AppendResult(interp, " {", (char *)NULL);
+	  printNonbondedIAToResult(interp, i, j);
+	  Tcl_AppendResult(interp, "}", (char *)NULL);
+	}
+      }
+    return (TCL_OK);
+  }
 
   /* first argument should be an integer */
   if (Tcl_GetInt(interp, argv[1], &i) == TCL_ERROR) 
@@ -93,6 +230,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
 
   /* if second argument is not an integer -> bonded interaction.  */
   if (argc==2 || Tcl_GetInt(interp, argv[2], &j) == TCL_ERROR) {
+    Tcl_ResetResult(interp);
 
     if (argc < 2) {
       Tcl_AppendResult(interp, "wrong # args:  should be \"",
@@ -108,33 +246,13 @@ int inter(ClientData _data, Tcl_Interp *interp,
     make_bond_type_exist(i);
 
     if (argc == 2) {
+      char buffer[TCL_INTEGER_SPACE];
       /* print interaction information */
-      char buffer[TCL_DOUBLE_SPACE];
-      if(i<n_bonded_ia) {
-	if(bonded_ia_params[i].type == 0) {
-	  Tcl_PrintDouble(interp, bonded_ia_params[i].p.fene.k_fene, buffer);
-	  Tcl_AppendResult(interp, "{FENE ", buffer, " ", (char *) NULL);
-	  Tcl_PrintDouble(interp, bonded_ia_params[i].p.fene.r_fene, buffer);
-	  Tcl_AppendResult(interp, buffer, "} ", (char *) NULL);
-	  return (TCL_OK);
-	}
-	else if (bonded_ia_params[i].type == 1) {
-	  Tcl_PrintDouble(interp, bonded_ia_params[i].p.angle.bend, buffer);
-	  Tcl_AppendResult(interp, "{Angle ", buffer, "} ", (char *) NULL);
-	  return (TCL_OK);
-	}
-	else if (bonded_ia_params[i].type == 2) {
-	  Tcl_AppendResult(interp, "{Dihedral} ",(char *) NULL);
-	  return (TCL_OK);
-	}
-	else {
-	  Tcl_AppendResult(interp, "{unknown bonded interaction type} ",(char *) NULL);
-	  return (TCL_ERROR);
-	}
-      }
+      if(i<n_bonded_ia)
+	printBondedIAToResult(interp, i);
       else {
 	Tcl_PrintDouble(interp, (double)i, buffer);
-	Tcl_AppendResult(interp, "{unknown bonded interaction number  ",buffer,"}",
+	Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
 			 (char *) NULL);
 	return (TCL_ERROR);
       }
@@ -144,58 +262,49 @@ int inter(ClientData _data, Tcl_Interp *interp,
     argc -= 2;
     argv += 2;
 
-    while (argc > 0) {
-      if (!strncmp(argv[0], "FENE", strlen(argv[0])) || 
-	  !strncmp(argv[0], "fene", strlen(argv[0])) ||
-	  !strncmp(argv[0], "Fene", strlen(argv[0])) ) {
-	if (argc < 3) {
-	  Tcl_AppendResult(interp, "fene needs 2 parameters: "
-			   "<k_fene> <r_fene>", (char *) NULL);
-	  return (TCL_ERROR);
-	}
-	if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.fene.k_fene)) == 
-	     TCL_ERROR) ||
-	    (Tcl_GetDouble(interp, argv[2], &(bonded_ia_params[i].p.fene.r_fene))  == 
-	     TCL_ERROR) ) 
-	  return (TCL_ERROR);
-	bonded_ia_params[i].type = 0;
-	bonded_ia_params[i].num  = 1;
-	argc -= 3;
-	argv += 3;
-	mpi_bcast_ia_params(i,-1); 
-      }
-      else if (!strncmp(argv[0], "angle", strlen(argv[0]))) {
-	if (argc < 2) {
-	  Tcl_AppendResult(interp, "angle needs 1 parameter: "
-			   "<bend> ", (char *) NULL);
-	  return (TCL_ERROR);
-	}
- 	if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.angle.bend)) == 
-	     TCL_ERROR) )
-	  return (TCL_ERROR);
-	bonded_ia_params[i].type = 1;
-	bonded_ia_params[i].num = 2;
-	argc -= 2;
-	argv += 2;
-	mpi_bcast_ia_params(i,-1); 
-     }
-      else if (!strncmp(argv[0], "dihedral", strlen(argv[0]))) {
-	Tcl_AppendResult(interp, "dihedral not implemented yet!! \"", argv[3],
-			 "\"", (char *) NULL);
-	bonded_ia_params[i].type = 2;
-	bonded_ia_params[i].num = 0;
-	argc -= 1;
-	argv += 1;
-	mpi_bcast_ia_params(i,-1); 
-	return (TCL_OK);
-      }
-      else {
-	Tcl_AppendResult(interp, "unknown interaction type \"", argv[3],
-			 "\"", (char *) NULL);
+    if (!strncmp(argv[0], "FENE", strlen(argv[0])) || 
+	!strncmp(argv[0], "fene", strlen(argv[0]))) {
+      if (argc != 3) {
+	Tcl_AppendResult(interp, "fene needs 2 parameters: "
+			 "<k_fene> <r_fene>", (char *) NULL);
 	return (TCL_ERROR);
       }
+      if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.fene.k_fene)) == 
+	   TCL_ERROR) ||
+	  (Tcl_GetDouble(interp, argv[2], &(bonded_ia_params[i].p.fene.r_fene))  == 
+	   TCL_ERROR) ) 
+	return (TCL_ERROR);
+      bonded_ia_params[i].type = BONDED_IA_FENE;
+      bonded_ia_params[i].num  = 1;
+      mpi_bcast_ia_params(i,-1); 
+    }
+    else if (!strncmp(argv[0], "angle", strlen(argv[0]))) {
+      if (argc != 2) {
+	Tcl_AppendResult(interp, "angle needs 1 parameter: "
+			 "<bend> ", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if ((Tcl_GetDouble(interp, argv[1], &(bonded_ia_params[i].p.angle.bend)) == 
+	   TCL_ERROR) )
+	return (TCL_ERROR);
+      bonded_ia_params[i].type = BONDED_IA_ANGLE;
+      bonded_ia_params[i].num = 2;
+      mpi_bcast_ia_params(i,-1); 
+    }
+    else if (!strncmp(argv[0], "dihedral", strlen(argv[0]))) {
+      fprintf(stderr, "WARNING: dihedral not implemented yet.");
+      bonded_ia_params[i].type = BONDED_IA_DIHEDRAL;
+      bonded_ia_params[i].num = 0;
+      mpi_bcast_ia_params(i,-1); 
+      return (TCL_OK);
+    }
+    else {
+      Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
+		       "\"", (char *) NULL);
+      return (TCL_ERROR);
     }
   }
+
   /* second argument is an integer -> non bonded interaction. */
   else {
     IA_parameters *data, *data_sym;
@@ -220,24 +329,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
     }
     
     if (argc == 3) {
-      /* print interaction information */
-      char buffer[TCL_DOUBLE_SPACE];
-      Tcl_PrintDouble(interp, data->LJ_eps, buffer);
-      Tcl_AppendResult(interp, "{lennard-jones ", buffer, " ", (char *) NULL);
-      Tcl_PrintDouble(interp, data->LJ_sig, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-      Tcl_PrintDouble(interp, data->LJ_cut, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-      Tcl_PrintDouble(interp, data->LJ_shift, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-      Tcl_PrintDouble(interp, data->LJ_offset, buffer);
-      Tcl_AppendResult(interp, buffer, "} ", (char *) NULL);
-
-      Tcl_PrintDouble(interp, data->ramp_cut, buffer);
-      Tcl_AppendResult(interp, "{ramp ", buffer, " ", (char *) NULL);
-      Tcl_PrintDouble(interp, data->ramp_force, buffer);
-      Tcl_AppendResult(interp, buffer, "}", (char *) NULL);
-      return (TCL_OK);
+      return printNonbondedIAToResult(interp, i, j);
     }
     
     /* set interaction parameters */
