@@ -16,14 +16,14 @@
 set tcl_precision 5
 
 set intsteps 100
-set maxtime  200
+set maxtime  1000
 
 setmd periodic 1 1 1
 setmd bjerrum 1.0
-setmd p3m_alpha 0.27
-setmd p3m_r_cut 3.0
+setmd p3m_alpha 0.48
+setmd p3m_r_cut 4.5
 setmd p3m_mesh 8 8 8
-setmd p3m_cao 3 5000
+setmd p3m_cao 4 5000
 setmd p3m_epsilon 0.1
 setmd p3m_mesh_off 0.5 0.5 0.5
 
@@ -32,7 +32,9 @@ setmd max_num_cells 512
 # integrator
 setmd skin 0.4
 setmd time_step 0.0001
-
+# friction
+setmd gamma 1.0
+setmd temp  1.0
 # read particles
 ##################################################
 
@@ -56,13 +58,6 @@ inter 0 1 lennard-jones 1 1 1.12246 0 0
 inter 0 2 lennard-jones 1 1 1.12246 0 0
 inter 1 2 lennard-jones 1 1 1.12246 0 0
 
-inter 1 fene 1 2
-
-puts "add first bond"
-part 1 bond 1 3
-puts [part 1]
-part 1 bond delete 1 3
-puts [part 1]
 
 # integration
 ##################################################
