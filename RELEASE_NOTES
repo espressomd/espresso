@@ -10,7 +10,7 @@ Current working revision.
 
 - v1.8.1e -
 -----------
-
+(f) December 1st, 2004.
 (e) November 5th, 2004.
 (d) October 22nd, 2004.
 (c) October 20th, 2004.
@@ -38,6 +38,7 @@ Changes:
     allocation problems (a 512 grid consumes roughly 3 GB memory!).
 
 Bugfixes:
+(f) Comfixed potential no works with different mass particles.
 (e) fixed a mem leak in partCfg, bonds (updatePartCfg(WITH_BONDS)) where never freed.
 (e) fixed the particle print out, not handling particles by reference.
 (e) fixed try_delete_bond, deleting bonds probably did not work for a long time.

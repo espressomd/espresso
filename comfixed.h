@@ -14,7 +14,7 @@
  *
  *  <b>Responsible:</b>
  *  <a href="mailto:sayar@mpip-mainz.mpg.de">Mehmet</a>
-*/
+ */
 #ifdef COMFIXED
 
 MDINLINE int comfixed_set_params(int part_type_a, int part_type_b, int flag)
@@ -112,41 +112,41 @@ MDINLINE void calc_comfixed()
   int i, np, c;
   Cell *cell;
   IA_parameters *ia_params;
-  int t0,type_count0;
+  int t0;
   int j;
-	double fsum0[3];
+  double fsum0[3], type_mass;
 
   for (t0=0; t0<n_particle_types; t0++) {
     ia_params = get_ia_param(t0,t0);
     if(ia_params->COMFIXED_flag == 1) {
-  	  type_count0=0;
+      type_mass=0.0;
       for(j = 0; j < 3; j++) {
-			  fsum0[j]= 0.;
-			}
+	fsum0[j]= 0.;
+      }
       for (c = 0; c < local_cells.n; c++) {
         cell = local_cells.cell[c];
         p  = cell->part;
         np = cell->n;
         for(i = 0; i < np; i++) {
-	 	      if(p[i].p.type==t0) {
-			      type_count0 ++;
+	  if(p[i].p.type==t0) {
+	    type_mass += PMASS(p[i]);
       	    for(j = 0; j < 3; j++) {
-				      fsum0[j] += p[i].f.f[j];
-			      }
-		      }
+	      fsum0[j] += p[i].f.f[j];
+	    }
+	  }
         }
       }
-
+      
       for (c = 0; c < local_cells.n; c++) {
         cell = local_cells.cell[c];
         p  = cell->part;
         np = cell->n;
         for(i = 0; i < np; i++) {
-	 	      if(p[i].p.type==t0) {
+	  if(p[i].p.type==t0) {
       	    for(j = 0; j < 3; j++) {
-				      p[i].f.f[j] -= fsum0[j]/type_count0;
-			      }
-		      }
+	      p[i].f.f[j] -= fsum0[j]/type_mass*PMASS(p[i]);
+	    }
+	  }
         }
       }
     }
