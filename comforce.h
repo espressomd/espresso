@@ -110,7 +110,7 @@ MDINLINE void calc_comforce()
 {
   int t0,t1,k, j;
   IA_parameters *ia_params;
-  double com0[3], com1[3], gyrtensor[9], diff[3];
+  double com0[3], com1[3], MofImatrix[9], diff[3];
   double vect0[3], vect1[3], eva[3], eve[3], fvect[3];
   Particle *p;
   int i, np, c;
@@ -125,11 +125,11 @@ MDINLINE void calc_comforce()
 	      for (i = 0; i < 3; i++) {
 		      diff[i]=com1[i]-com0[i];
 	      }
-        gyrationtensor(t0, gyrtensor);
-        k=calc_eigenvalues_3x3(gyrtensor, eva);
+        momentofinertiamatrix(t0, MofImatrix);
+        k=calc_eigenvalues_3x3(MofImatrix, eva);
         /* perpendicular force */
         if(ia_params->COMFORCE_dir == 1) {
-	        k=calc_eigenvector_3x3(gyrtensor,eva[0],eve);
+	        k=calc_eigenvector_3x3(MofImatrix,eva[0],eve);
           /*By doing two vector products find radial axis along the target system */
 	        vector_product(eve,diff,vect0);
 	        vector_product(vect0,eve,vect1);
@@ -138,7 +138,7 @@ MDINLINE void calc_comforce()
 	        unit_vector(vect1,fvect);
         } else {
         /* parallel force */
-	        k=calc_eigenvector_3x3(gyrtensor,eva[0],fvect);
+	        k=calc_eigenvector_3x3(MofImatrix,eva[0],fvect);
         }
         
         /* orient it along the com vector */
