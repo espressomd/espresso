@@ -112,17 +112,17 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
 	  memcpy(insert, &pt->p, sizeof(ParticleProperties));
 	  insert +=  sizeof(ParticleProperties);
 	}
-	if (data_parts & GHOSTTRANS_POSITION) {
-	  memcpy(insert, &pt->r, sizeof(ParticlePosition));
-	  insert +=  sizeof(ParticlePosition);
-	}
-	/* ok, this is not nice, but perhaps fast */
-	else if (data_parts & GHOSTTRANS_POSSHFTD) {
+	if (data_parts & GHOSTTRANS_POSSHFTD) {
+	  /* ok, this is not nice, but perhaps fast */
 	  ParticlePosition *pp = insert;
 	  int i;
 	  memcpy(pp, &pt->r, sizeof(ParticlePosition));
 	  for (i = 0; i < 3; i++)
 	    pp->p[i] += gc->shift[i];
+	  insert +=  sizeof(ParticlePosition);
+	}
+	else if (data_parts & GHOSTTRANS_POSITION) {
+	  memcpy(insert, &pt->r, sizeof(ParticlePosition));
 	  insert +=  sizeof(ParticlePosition);
 	}
 	if (data_parts & GHOSTTRANS_MOMENTUM) {
@@ -175,6 +175,8 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 	if (data_parts & GHOSTTRANS_PROPRTS) {
 	  memcpy(retrieve, &pt->p, sizeof(ParticleProperties));
 	  retrieve +=  sizeof(ParticleProperties);
+	  if (local_particles[pt->p.identity] == NULL)
+	    local_particles[pt->p.identity] = pt;
 	}
 	if (data_parts & GHOSTTRANS_POSITION) {
 	  memcpy(retrieve, &pt->r, sizeof(ParticlePosition));

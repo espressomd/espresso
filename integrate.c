@@ -178,12 +178,13 @@ void integrate_vv(int n_steps)
 		      n_steps));
 
   if(resort_particles) {
+    invalidate_ghosts();
+
     switch (cell_structure.type) {
     case CELL_STRUCTURE_NSQUARE:
       nsq_balance_particles();
       break;
     case CELL_STRUCTURE_DOMDEC:
-      //invalidate_ghosts();
       //exchange_and_sort_part();
       //exchange_ghost();
       break;
