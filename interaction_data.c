@@ -914,7 +914,10 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	data_sym->LJCOS_sig = data->LJCOS_sig;
 	data_sym->LJCOS_cut = data->LJCOS_cut;
 	data_sym->LJCOS_offset = data->LJCOS_offset;
- 	argc -= 5;
+/* this is a quick fix for the inconsistency in the ljcos parameters 
+there are 7 parameters for ljcos, but you read in only four of them. The rest is calculated above. This is a problem with the blockfile format (Mehmet)*/
+/* 	argc -= 5; */
+ 	argc = 0;
 	argv += 5;
 
 	/* broadcast interaction parameters */
