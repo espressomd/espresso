@@ -1172,7 +1172,7 @@ int inter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv)
 
 int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
 {
-  double r_cut, alpha, accuracy;
+  double r_cut, alpha, accuracy = -1.0;
   int mesh, cao, i;
 
   coulomb.method = COULOMB_P3M;
