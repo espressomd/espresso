@@ -140,6 +140,8 @@ void grid_changed_topology()
   int i;
   int node_pos[3];
 
+  GRID_TRACE(fprintf(stderr,"%d: grid_changed_topology:\n",this_node));
+
   /* this could also go to grid.c ! */
   map_node_array(this_node,node_pos);    
   for(i = 0; i < 3; i++) {
@@ -150,6 +152,19 @@ void grid_changed_topology()
 
   calc_node_neighbors(this_node);
   calc_minimal_box_dimensions();
+
+#ifdef GRID_DEBUG
+  fprintf(stderr,"%d: node_pos=(%d,%d,%d)\n",this_node,node_pos[0],node_pos[1],node_pos[2]);
+  fprintf(stderr,"%d: node_neighbors=(%d,%d,%d,%d,%d,%d)\n",this_node,
+	  node_neighbors[0],node_neighbors[1],node_neighbors[2],
+	  node_neighbors[3],node_neighbors[4],node_neighbors[5]);
+  fprintf(stderr,"%d: boundary=(%d,%d,%d,%d,%d,%d)\n",this_node,
+	  boundary[0],boundary[1],boundary[2],boundary[3],boundary[4],boundary[5]);
+  fprintf(stderr,"%d: local_box_l = (%.3f, %.3f, %.3f)\n",this_node,
+	  local_box_l[0],local_box_l[1],local_box_l[2]);
+  fprintf(stderr,"%d: coordinates: x in [%.3f, %.3f], y in [%.3f, %.3f], z in [%.3f, %.3f]\n",this_node,
+	  my_left[0],my_right[0],my_left[1],my_right[1],my_left[2],my_right[2]);
+#endif
 }
 
 void calc_minimal_box_dimensions()
