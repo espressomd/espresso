@@ -405,7 +405,7 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv)
     elements = malloc(n_total_particles*sizeof(int));
     new_bin = malloc(r_bins*sizeof(int));
     volumes = malloc(r_bins*sizeof(double));
-    updatePartCfg();
+    updatePartCfg(WITHOUT_BONDS);
     calc_bins_sphere(new_bin,elements,volumes, r_min, r_max, r_bins, center);
     /* append result */
     {

@@ -60,7 +60,7 @@ void init_p_tensor();
     so it is rather slow.
     @param volume the volume of the bin to be considered
     @param p_list contains the list of particles to look at
-    @param flag   decides whether to derive the interactions of the particles in \ref p_list to <i>all</i> other particles (=1) or not (=0).
+    @param flag   decides whether to derive the interactions of the particles in p_list to <i>all</i> other particles (=1) or not (=0).
 */
 void calc_p_tensor(double volume, IntList *p_list, int flag);
 

@@ -87,7 +87,7 @@ double mindist(IntList *set1, IntList *set2)
 
   mindist = SQR(box_l[0] + box_l[1] + box_l[2]);
 
-  updatePartCfg();
+  updatePartCfg(WITHOUT_BONDS);
   for (j=0; j<n_total_particles-1; j++) {
     pt[0] = partCfg[j].r.p[0];
     pt[1] = partCfg[j].r.p[1];
@@ -110,7 +110,7 @@ void nbhood(double pt[3], double r, IntList *il)
 
   init_intlist(il);
 
-  updatePartCfg();
+  updatePartCfg(WITHOUT_BONDS);
 
   for (i = 0; i<n_total_particles; i++) {
     get_mi_vector(d, pt, partCfg[i].r.p);
@@ -382,7 +382,7 @@ static int parse_nbhood(Tcl_Interp *interp, int argc, char **argv)
   if (!ARG0_IS_D(r_catch))
     return (TCL_ERROR);
 
-  updatePartCfg();
+  updatePartCfg(WITHOUT_BONDS);
 
   nbhood(pos, r_catch, &il);
   
@@ -415,7 +415,7 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  updatePartCfg();
+  updatePartCfg(WITHOUT_BONDS);
 
   result = distto(pos, p);
 
@@ -486,7 +486,7 @@ static int parse_distribution(Tcl_Interp *interp, int argc, char **argv)
   if(r_bins < 1) return TCL_ERROR;
   /* calculate distribution */
   distribution = malloc(r_bins*sizeof(double));
-  updatePartCfg();
+  updatePartCfg(WITHOUT_BONDS);
   calc_part_distribution(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, log_flag,&low,distribution);
   if(int_flag==1) {
     distribution[0] += low;
@@ -567,7 +567,7 @@ static int parse_rdf(Tcl_Interp *interp, int argc, char **argv)
   sprintf(buffer,"} %f %f %d",r_min,r_max,r_bins);
   Tcl_AppendResult(interp, buffer," }", (char *)NULL);
   rdf = malloc(r_bins*sizeof(double));
-  updatePartCfg();
+  updatePartCfg(WITHOUT_BONDS);
   calc_rdf(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf);
   /* append result */
   {

@@ -59,15 +59,22 @@ int partCfgSorted = 0;
  ************************************************/
 
 
-void updatePartCfg()
+void updatePartCfg(int bonds_flag )
 {
   int j;
+  IntList bl;
 
   if(partCfg)
     return;
-  
+
+
   partCfg = malloc(n_total_particles*sizeof(Particle));
-  mpi_get_particles(partCfg, NULL); 
+  if ( bonds_flag != WITH_BONDS ){
+    mpi_get_particles(partCfg, NULL);
+  }
+  else {
+    mpi_get_particles(partCfg,&bl);
+  }
   for(j=0; j<n_total_particles; j++)
     unfold_particle(partCfg[j].r.p,partCfg[j].i);
 
@@ -80,7 +87,7 @@ int sortPartCfg()
   Particle *sorted;
 
   if (!partCfg)
-    updatePartCfg();
+    updatePartCfg(WITHOUT_BONDS);
 
   if (partCfgSorted)
     return 1;

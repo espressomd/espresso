@@ -492,6 +492,103 @@ void calc_g3_av(double **_g3) {
   }
 }
 
+int analyze_fold_chains(float *coord)
+{
+  int i,j,chain;
+  int tmp, index;
+  int chainid = 0;
+  double cm_tmp = 0.0;
+  double cm_pos[chain_n_chains*3];
+  for ( i = 0 ; i < 3*chain_n_chains ; i++){cm_pos[i] = 0.0;}
+
+  // Check that chain_length, and chain_n_chains are set
+  if ( !chain_n_chains  || !chain_length ){
+    return (TCL_ERROR);
+  }
+
+  // First check that the chains are linear and of a uniform size
+  for ( i = 0 ; i < n_total_particles; i++){
+    if ( partCfg[i].r.identity >= chain_start ){
+      // Check for a break in the sequence
+      if ((int)fmod(partCfg[i].r.identity + 1 - chain_start,chain_length) == 0){      
+	if (partCfg[i].bl.n != 0){
+	  return (TCL_ERROR);
+	}
+      }
+      else {
+	// If no break then must be linked to next particle 
+	if ( partCfg[i].bl.n == 0 ){
+	  return (TCL_ERROR);
+	}
+	else {
+	  if ( partCfg[i].bl.e[1] != (partCfg[i].r.identity+1) ){
+	    return (TCL_ERROR);
+	  }
+	}
+      }
+      
+      // Identify the chain corresponding to the particle
+      chainid = (int)floor((double)(partCfg[i].r.identity -chain_start)/(double)(chain_length));
+      
+      // Calculate and store the centers of mass for this chain
+      for ( j = 0 ; j < 3 ; j++){
+	cm_pos[3*chainid + j] += coord[partCfg[i].r.identity*3 + j]/(double)(chain_length);
+	/*	
+	if (chainid == 0){
+	printf("%d : index %d : value : %f : cm_pos : %f : %d \n",j,
+	partCfg[i].r.identity*3 + j,coord[partCfg[i].r.identity*3 + j],cm_pos[3*(int)(chainid) + j],chainid);
+	}	
+	fflush(stdout);
+	*/
+      }
+    }
+  }
+
+  /*
+  for ( chain = 0 ; chain < chain_n_chains ; chain++){
+  printf("chain : %d : cm_pos : %f, %f, %f \n",chain,  cm_pos[3*(int)(chain)], cm_pos[3*(int)(chain )+1],cm_pos[3*(int)(chain)+2]);
+  for ( i = 0 ; i < 3; i++)
+  {
+  for ( j = 0 ; j < chain_length ; j++){
+  index = (chain*chain_length + chain_start + j)*3 + i ;
+  printf("index : %d", index);
+  printf(" : coordb : %f \n ", coord[index]);
+  }
+  }
+  }
+  */
+  //  printf("nowfold \n" );
+  //  fflush(stdout);
+
+  // Now fold the particles by chain
+  for ( chain = 0 ; chain < chain_n_chains ; chain++){
+    for(i=0;i<3;i++) {
+      if (periodic[i]) { 
+	tmp = (int)floor(cm_pos[chain*3 + i]*box_l_i[i]);
+	cm_tmp =0.0;
+	//	printf("cm_pos: %f : tmp : %d \n",cm_pos[chain*3+i],tmp);
+	//	fflush(stdout);
+	for ( j = 0 ; j < chain_length ; j++){
+	  index = (chain*chain_length + chain_start + j)*3 + i ;
+	  //	  printf("index : %d", index);
+	  //	  printf(" : coordb : %f ", coord[index]);
+	  coord[index]       = coord[index] - tmp*box_l[i];    
+	  //	  printf(" : coord : %f \n", coord[index]);
+	  cm_tmp += coord[index]/(double)(chain_length);
+	}
+	if(cm_tmp < 0 || cm_tmp > box_l[i]) {
+	  fprintf(stderr,"\n: analyse_fold_chains: chain center of mass is out of range (%f not in box_l %f), exiting\n",cm_tmp,box_l[i]);
+	  errexit();
+	}
+      }
+      //      printf("diff : %f \n",cm_pos[chain*3+i] - cm_tmp);
+    }
+  }
+  return (TCL_OK);  
+}
+
+
+
 void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff) {
   int i,j,k,qi, cnt,cnt_max;
   double q,qfak, qr, dx,dy,dz, *r_ij=NULL, *ff=NULL;

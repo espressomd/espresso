@@ -20,6 +20,7 @@
 #include "communication.h"
 #include "particle_data.h"
 #include "parser.h"
+#include "statistics_chain.h"
 
 int transfer_rate = 0;
 
@@ -442,6 +443,125 @@ int imd_check_connect(Tcl_Interp *interp)
   return (TCL_OK);
 }
 
+int imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
+{
+  enum flag { NONE , UNFOLDED, FOLD_CHAINS};
+
+  float *coord;
+  int flag = NONE;
+  int i, j;
+
+  // Determine how many arguments we have and set the value of flag
+  switch (argc)
+    {
+    case 2:
+      flag = NONE; 
+      break;
+    case 3:
+      {
+	if (ARG_IS_S(2,"-unfolded"))
+	  {flag = UNFOLDED;}
+	else if (ARG_IS_S(2,"-fold_chains"))
+	  {flag = FOLD_CHAINS;}
+	else{
+	  Tcl_AppendResult(interp, "wrong flag to",argv[0],
+			   " positions: should be \" -fold_chains or -unfolded \"",
+			   (char *) NULL);
+	  return (TCL_ERROR);
+	}
+      }
+      break;
+    default:
+      Tcl_AppendResult(interp, "wrong # args:  should be \"",
+		       argv[0], " positions [-flag]\"",
+		       (char *) NULL);
+      return (TCL_ERROR);
+    }
+
+  if (!initsock) {
+    Tcl_AppendResult(interp, "no connection",
+		     (char *) NULL);
+    return (TCL_OK);
+  }
+  if (!sock) {
+    if (imd_check_connect(interp) == TCL_ERROR)
+      return (TCL_ERROR);
+    
+    /* no VMD is ok, but tell the user */
+    if (!sock) {
+      Tcl_AppendResult(interp, "no connection",
+		       (char *) NULL);
+      return (TCL_OK);
+    }
+  }
+
+  if (imd_drain_socket(interp) == TCL_ERROR)
+    return (TCL_ERROR);
+  
+  /* we do not consider a non connected VMD as error, but tell the user */
+  if (!sock) {
+    Tcl_AppendResult(interp, "no connection",
+		     (char *) NULL);
+    return (TCL_OK);
+  }
+
+  if (!(vmdsock_selwrite(sock, 60) > 0)) {
+    Tcl_AppendResult(interp, "could not write to IMD socket.",
+		     (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  if (n_total_particles != max_seen_particle + 1) {
+    Tcl_AppendResult(interp, "for IMD, store particles consecutively starting with 0.",
+		     (char *) NULL);
+    return (TCL_ERROR);      
+  }
+
+  updatePartCfg(WITH_BONDS);
+  coord = malloc(n_total_particles*3*sizeof(float));
+  /* sort partcles according to identities */
+  for (i = 0; i < n_total_particles; i++) {
+    int dummy[3] = {0,0,0};
+    double tmpCoord[3];
+    tmpCoord[0] = partCfg[i].r.p[0];
+    tmpCoord[1] = partCfg[i].r.p[1];
+    tmpCoord[2] = partCfg[i].r.p[2];
+    if (flag == NONE)     // perform folding by particle
+      fold_particle(tmpCoord, dummy);
+    
+    j = 3*partCfg[i].r.identity;
+    coord[j    ] = tmpCoord[0];
+    coord[j + 1] = tmpCoord[1];
+    coord[j + 2] = tmpCoord[2];
+  }
+
+
+  // Use information from the analyse set command to fold chain molecules
+  if ( flag == FOLD_CHAINS ){
+    if(analyze_fold_chains(coord) != TCL_OK){
+      Tcl_AppendResult(interp, "could not fold chains: \"analyze set chains <chain_start> <n_chains> <chain_length>\" must be used first",
+		       (char *) NULL);
+      return (TCL_ERROR);   
+    }
+  }
+
+ 
+  if (imd_send_fcoords(sock, n_total_particles, coord)) {
+    Tcl_AppendResult(interp, "could not write to IMD socket.",
+		     (char *) NULL);
+    return (TCL_ERROR);      
+  }
+  free(coord);
+  
+  Tcl_AppendResult(interp, "connected",
+		   (char *) NULL);
+  return (TCL_OK);
+};
+
+
+
+
+
 int imd(ClientData data, Tcl_Interp *interp,
 	int argc, char **argv)
 {
@@ -545,97 +665,9 @@ int imd(ClientData data, Tcl_Interp *interp,
     return (TCL_OK);
   }
 
-  if (ARG1_IS_S("positions")) {
-    float *coord;
-    int unfolded = 0;
-    int i, j;
-
-    if (argc == 3) {
-      if (!ARG_IS_S(2,"-unfolded")) {
-	Tcl_AppendResult(interp, "wrong # args:  should be \"",
-			 argv[0], " positions [-unfolded]\"",
-			 (char *) NULL);
-	return (TCL_ERROR);
-      } 
-      unfolded = 1;
-    }
-    if (!initsock) {
-      Tcl_AppendResult(interp, "no connection",
-		       (char *) NULL);
-      return (TCL_OK);
-    }
-
-    if (argc > 3) {
-      Tcl_AppendResult(interp, "wrong # args:  should be \"",
-		       argv[0], " positions [-unfolded]\"",
-		       (char *) NULL);
-      return (TCL_ERROR);
-    }
-
-    if (!sock) {
-      if (imd_check_connect(interp) == TCL_ERROR)
-	return (TCL_ERROR);
-
-      /* no VMD is ok, but tell the user */
-      if (!sock) {
-	Tcl_AppendResult(interp, "no connection",
-			 (char *) NULL);
-	return (TCL_OK);
-      }
-    }
-
-    if (imd_drain_socket(interp) == TCL_ERROR)
-      return (TCL_ERROR);
-
-    /* we do not consider a non connected VMD as error, but tell the user */
-    if (!sock) {
-      Tcl_AppendResult(interp, "no connection",
-		       (char *) NULL);
-      return (TCL_OK);
-    }
-
-    if (!(vmdsock_selwrite(sock, 60) > 0)) {
-      Tcl_AppendResult(interp, "could not write to IMD socket.",
-		       (char *) NULL);
-      return (TCL_ERROR);
-    }
-
-    if (n_total_particles != max_seen_particle + 1) {
-      Tcl_AppendResult(interp, "for IMD, store particles consecutively starting with 0.",
-		       (char *) NULL);
-      return (TCL_ERROR);      
-    }
-    
-    updatePartCfg();
-
-    /* sort partcles according to identities */
-    coord = malloc(n_total_particles*3*sizeof(float));
-    for (i = 0; i < n_total_particles; i++) {
-      int dummy[3] = {0,0,0};
-      double tmpCoord[3];
-      tmpCoord[0] = partCfg[i].r.p[0];
-      tmpCoord[1] = partCfg[i].r.p[1];
-      tmpCoord[2] = partCfg[i].r.p[2];
-      if (!unfolded)
-	fold_particle(tmpCoord, dummy);
-      
-      j = 3*partCfg[i].r.identity;
-      coord[j    ] = tmpCoord[0];
-      coord[j + 1] = tmpCoord[1];
-      coord[j + 2] = tmpCoord[2];
-    }
-
-    if (imd_send_fcoords(sock, n_total_particles, coord)) {
-      Tcl_AppendResult(interp, "could not write to IMD socket.",
-		       (char *) NULL);
-      return (TCL_ERROR);      
-    }
-    free(coord);
-
-    Tcl_AppendResult(interp, "connected",
-		     (char *) NULL);
-    return (TCL_OK);
-  }
+  if (ARG1_IS_S("positions")) 
+    return imd_parse_pos(interp, argc, argv);
+  
   if (ARG1_IS_S("energies")) {
     Tcl_AppendResult(interp, "Sorry. imd energies not yet implemented",
 		     (char *) NULL);

@@ -117,6 +117,21 @@ void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff);
     @param _ff   contains S(q) as an array of size qbins */
 void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff);
 
+/** Using the values of \ref chain_start , \ref chain_length and \ref
+chain_n_chains this routine folds a set of chains of uniform length
+without losing bonding connectivity.  For this to work the chains must
+be of uniform length and all the bonds between two particles must be
+specified as belonging to the particle with the lower particle ID. \n
+For example a bond should be assigned in this way: \n
+<tt> part <partnum> bond <bond_type> <partnum + 1> </tt> \n
+
+All bonded particles must also have sequential identities corresponding to sequence along the chain.
+
+@param coord is an array specifying the full coordinates of all particles.
+
+*/
+int analyze_fold_chains(float *coord);
+
 ///
 int print_chain_structure_info(Tcl_Interp *interp);
 

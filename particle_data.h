@@ -26,6 +26,11 @@
 /************************************************
  * defines
  ************************************************/
+/**  bonds_flag "bonds_flag" value for updating particle config without bonding information */
+#define WITHOUT_BONDS 0
+/**  bonds_flag "bonds_flag" value for updating particle config with bonding information */
+#define WITH_BONDS 1
+
 
 #ifdef EXTERNAL_FORCES
 /** \ref Particle::ext_flag "ext_flag" value for unfixed particle.  */
@@ -99,9 +104,10 @@ Values:
            <li> 2 fix particle in space (equivalent to setting all coordinate axes as fixed </ul> */
   int ext_flag;
   /** flag whether to fix the motion of the particle in one or more coordinate axes. 
-Values: 
-<ul> <li> 0 integration for this coordinate as normal 
-<li> \ref 1 no integration for this coordinate */
+      Values: 
+      <ul> <li> <tt> 0 <\tt>integration for this coordinate as normal 
+      <li> <tt> 1 <\tt> no integration for this coordinate </ul> 
+  */
   int fixed_coord_flag[3];
   /** External force, apply if \ref Particle::ext_flag == 1. */
   double ext_force[3];
@@ -415,13 +421,15 @@ void remove_all_particles();
 */
 void remove_all_bonds_to(int part);
 
-/** Get the complete unsorted informations on all particles into
-    \ref partCfg if something's changed. This is a severe performance
+/** Get the complete unsorted informations on all particles into \ref
+    partCfg if something's changed. This is a severe performance
     drawback and might even fail for lack of memory for large systems.
-    If you need the particle info sorted, call \ref sortPartCfg instead.
-    This function is lazy.
+    If you need the particle info sorted, call \ref sortPartCfg
+    instead.  This function is lazy. If you would like the bonding
+    information in \ref partCfg to be valid you should set the value
+    of  to \ref WITH_BONDS.
 */
-void updatePartCfg();
+void updatePartCfg(int bonds_flag );
 
 /** sorts the \ref partCfg array. This is indicated by setting
     \ref partCfgSorted to 1. Note that for this to work the particles
