@@ -1,5 +1,5 @@
 /** \page tcl_part The part command
-    	\verbatim part <particle_number> ( pos|type|q|v|f|quat|omega|torque|[un]fix <x> <y> <z> |ext_force|bond| [delete] <value>+ )* \endverbatim
+    	\verbatim part <particle_number> ( pos|type|q|v|f|quat|omega|torque|[un]fix <x> <y> <z> |ext_force|bond|exclude [delete] <value>+ )* \endverbatim
 	modifies particle data, namely position, type (monomer, ion, ...),
 		    charge, velocity, force and bonds. 
 	Multiple properties can be changed at once. If you add a new
@@ -30,7 +30,7 @@
 	arguments is equivalent to <tt> fix 1 1 1 </tt> (Needs
 	compile flag EXTERNAL_FORCES in \ref config.h config.h).
         <li> \verbatim ext_force <x value> <y value> <z value> \endverbatim
-	An additional exxternal force is applied to the particle
+	An additional external force is applied to the particle
 	(Needs compile flag EXTERNAL_FORCES in \ref config.h config.h).
         <li> \verbatim unfix \endverbatim
 	Release any external influence from the particle 
@@ -40,6 +40,14 @@
 	The \<bond_type_number\> is used for \ref tcl_inter to define bonded interactions.
 	<li> \verbatim bond delete <bond_type_number> <partner>+ \endverbatim
 	Searches for the given bond and deletes it.
+	<li> \verbatim exclude <exclusion partner>+ \endverbatim
+	Restrictions: partner must be an existing particle.<BR>
+	Between the current particle and the exclusion partner(s), no nonbonded interactions are
+	calculated (Needs compile flag EXCLUSIONS in config.h \ref config.h). Note that unlike bonds,
+	exclusions are stored with both partners. Therefore this command adds the defined exclusions
+	to both partners.
+	<li> \verbatim exclude delete <exclusion partner>+ \endverbatim
+	Searches for the given exclusion and deletes it. Again deletes the exclusion with both partners.
 	<li> \verbatim bond delete\endverbatim
 	will delete all bonds attached to this particle.
 	</ul>
@@ -76,7 +84,7 @@
 	result up to range = 3 would look like:
 	\verbatim { { 4 } { 6 } } { { 4 3 } { 6 7 } } { {4 3 2 } { 6 7 8 } } \endverbatim
 	The function is useful when you want to create bonded interactions to all other 
-	particles a certain particl is connected to. Note that this output can not be used as 
+	particles a certain particle is connected to. Note that this output can not be used as 
 	input to the part command. Check results if you use them in ring structures.
 	
  	<hr>
@@ -84,6 +92,24 @@
 	\verbatim part deleteall \endverbatim
 	deletes <i>all</i> particles currently present in the simulation.<BR>
 	Without any parameters at all,
+
+ 	<hr>
+
+	\verbatim part auto_exclusions [<range>]\endverbatim
+	creates exclusions for <i>all</i> particles pairs connected by not more than \<range\> bonds (range defaults to 2).  This
+	is typically used in atomistic simulations, where nearest and next nearest neigbor interactions along the chain have to be
+	omitted since they are included in the bonding potentials. For example, if the system contains particles 0...100, where
+	particle n is bonded to particle n-1 for 1<=n<=100, then part auto_exclusions will result in the exclusions:
+	<ul>
+        <li> particle 1 does not interact with particles 2 and 3
+        <li> particle 2 does not interact with particles 1, 3 and 4
+        <li> particle 3 does not interact with particles 1, 2, 4 and 5
+	<li> ...
+        </ul>
+ 	<hr>
+
+	\verbatim part delete_exclusions \endverbatim
+        deletes <i>all</i> exclusions currently present in the system.
 
 	<hr>
 
