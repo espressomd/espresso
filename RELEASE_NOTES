@@ -38,6 +38,7 @@ Changes:
 (-) none
 
 Bugfixes:
+(e) fixed 'tuning.c' on Darwin-systems (e.g. MacOS)
 (e) fixed that 'communication.c' would not compile without electrostatics-flag on
 (b) fixed implementation of 'analyze p_bin' to correspond to Kirkwood's IK1-scheme
 (a) fixed that 'analyze <g1>' and 'analyze <g2>' derived all of <g1>, <g2>, and <g3>
