@@ -161,4 +161,9 @@ void build_particle_node();
     at the beginning of the integration */
 void particle_finalize_data();
 
+/** append particle data in ASCII form to the Tcl result.
+    @param part_num the particle which data is appended
+    @param interp   the Tcl interpreter to which result to add to */
+int printParticleToResult(Tcl_Interp *interp, int part_num);
+
 #endif

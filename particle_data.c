@@ -19,6 +19,9 @@
 #include "debug.h"
 #include "utils.h"
 
+/* cwz-build-command: gmake all
+ */
+
 /************************************************
  * defines
  ************************************************/
@@ -47,8 +50,9 @@ int *local_index;
 
 void map_particle_node(int part, int node)
 {
-  int old_max = n_particle_node, i;
   if (part > max_seen_particle) {
+    int old_max = max_seen_particle, i;
+
     max_seen_particle = part;
     mpi_bcast_parameter(FIELD_MAXPART);
 
@@ -56,9 +60,9 @@ void map_particle_node(int part, int node)
       /* round up part + 1 in granularity PART_INCREMENT */
       n_particle_node = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
       particle_node = realloc(particle_node, sizeof(int)*n_particle_node);
-      for (i = old_max; i <= max_seen_particle; i++)
-	particle_node[i] = -1;
     }
+    for (i = old_max + 1; i < max_seen_particle; i++)
+      particle_node[i] = -1;
   }
   PART_TRACE(fprintf(stderr, "mapping %d -> %d (%d)\n", part, node, max_seen_particle));
   particle_node[part] = node;
@@ -195,102 +199,126 @@ void particle_finalize_data()
   }
 }
 
+int printParticleToResult(Tcl_Interp *interp, int part_num)
+{
+  char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  Particle part;
+  int node;
+
+  if (part_num < 0 || part_num > max_seen_particle)
+    return (TCL_ERROR);
+
+  if (!particle_node)
+    build_particle_node();
+
+  node = particle_node[part_num];
+  if (node == -1)
+    return (TCL_ERROR);
+
+  mpi_recv_part(node, part_num, &part);
+  sprintf(buffer, "%d", part.identity);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  Tcl_PrintDouble(interp, part.p[0], buffer);
+  Tcl_AppendResult(interp, " pos ", buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.p[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.p[2], buffer);
+  Tcl_AppendResult(interp, buffer, " type ", (char *)NULL);
+  sprintf(buffer, "%d", part.type);
+  Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.q, buffer);
+  Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.v[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.v[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.v[2], buffer);
+  Tcl_AppendResult(interp, buffer, " f ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.f[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.f[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.f[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+
+  /* print bonding structure */
+  if(part.n_bonds > 0) {
+    int i=0,j,size;
+    Tcl_AppendResult(interp, " bonds { ", (char *)NULL);
+    while(i<part.n_bonds) {
+      size = bonded_ia_params[part.bonds[i]].num;
+      sprintf(buffer, "{%d ", part.bonds[i]); i++;
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+      for(j=0;j<size-1;j++) {
+	sprintf(buffer, "%d ", part.bonds[i]); i++;
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      sprintf(buffer, "%d} ", part.bonds[i]); i++;
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    Tcl_AppendResult(interp, "} ", (char *)NULL);
+    free(part.bonds);
+  }
+  return (TCL_OK);
+}
+
 int part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv)
 {
   int part_num = -1;
   int node, j;
-  char buffer[50 + TCL_DOUBLE_SPACE];
 
-  if (argc < 1) {
-    Tcl_AppendResult(interp, "wrong # args:  should be \"",
-		     argv[0], " <part num> ?what? ?value?\"", (char *) NULL);
-    return (TCL_ERROR);
-  }
+  if (!particle_node)
+    build_particle_node();
 
   /* if no further arguments are given, print out all stored particles */
   if (argc == 1) {
-    int i=0,j=0;
-    char *tmp_buffer[2];
-    tmp_buffer[0]=argv[0];
-    for(i=0;i<max_seen_particle;i++) {
-      sprintf(buffer,"%d",i);
-      tmp_buffer[1]=buffer;
-      j=part(data,interp,argc+1,tmp_buffer);
+    int i = 0, start = 1;
+    for (i = 0; i <= max_seen_particle ; i++) {
+      if (particle_node[i] != -1) {
+	if (start) {
+	  Tcl_AppendResult(interp, "{", (char *)NULL);
+	  start = 0;
+	}
+	else
+	  Tcl_AppendResult(interp, " {", (char *)NULL);
+	printParticleToResult(interp, i);
+	Tcl_AppendResult(interp, "}", (char *)NULL);
+      }
     }
     return (TCL_OK);
   }
 
-  /* if there's at least one argument, evaluate it */
+  if (argc == 2 && !strncmp(argv[1], "number", strlen(argv[1]))) {
+    char buffer[TCL_INTEGER_SPACE];
+    int i = 0, c = 0;
+    for (i = 0; i <= max_seen_particle; i++)
+      if (particle_node[i] != -1)
+	c++;
+    sprintf(buffer, "%d", c);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+    return (TCL_OK);
+  }
+
   if (!node_grid_is_set())
     setup_node_grid();
 
   part_num = atol(argv[1]);
-  if (part_num < 0) {
-    Tcl_AppendResult(interp, "illegal particle", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  if (!particle_node)
-    build_particle_node();
 
-  node = (part_num <= max_seen_particle) ? particle_node[part_num] : -1;
- 
   /* print out particle information */
   if (argc == 2) {
-    Particle part;
-    /* retrieve particle data */
-    if (node == -1) {
-      sprintf(buffer, "particle %d does not exist", part_num);
-      Tcl_AppendResult(interp, buffer, (char *) NULL);
-      return (TCL_ERROR);
-    }
-    mpi_recv_part(node, part_num, &part);
-    Tcl_PrintDouble(interp, part.p[0], buffer);
-    Tcl_AppendResult(interp, "{pos ", buffer, " ", (char *)NULL);
-    Tcl_PrintDouble(interp, part.p[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-    Tcl_PrintDouble(interp, part.p[2], buffer);
-    Tcl_AppendResult(interp, buffer, " type ", (char *)NULL);
-    sprintf(buffer, "%d", part.type);
-    Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
-    Tcl_PrintDouble(interp, part.q, buffer);
-    Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
-    Tcl_PrintDouble(interp, part.v[0], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-    Tcl_PrintDouble(interp, part.v[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-    Tcl_PrintDouble(interp, part.v[2], buffer);
-    Tcl_AppendResult(interp, buffer, " f ", (char *)NULL);
-    Tcl_PrintDouble(interp, part.f[0], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-    Tcl_PrintDouble(interp, part.f[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-    Tcl_PrintDouble(interp, part.f[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *)NULL);
-
-    /* print bonding structure */
-    if(part.n_bonds > 0) {
-      int i=0,j,size;
-      Tcl_AppendResult(interp, " bonds { ", (char *)NULL);
-      while(i<part.n_bonds) {
-	size = bonded_ia_params[part.bonds[i]].num;
-	sprintf(buffer, "{%d ", part.bonds[i]); i++;
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-	for(j=0;j<size-1;j++) {
-	  sprintf(buffer, "%d ", part.bonds[i]); i++;
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
-	}
-	sprintf(buffer, "%d} ", part.bonds[i]); i++;
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-      Tcl_AppendResult(interp, "} ", (char *)NULL);
-      free(part.bonds);
-     }
-    Tcl_AppendResult(interp, "} ", (char *)NULL);
+    if (printParticleToResult(interp, part_num) == TCL_ERROR)
+      Tcl_AppendResult(interp, "na", (char *)NULL);
     return (TCL_OK);
   }
-  
+
   /* set particle data */
+  if (part_num < 0) {
+    Tcl_AppendResult(interp, "particle identities must be positive", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  node = (part_num <= max_seen_particle) ? particle_node[part_num] : -1;
+
   argc -= 2;
   argv += 2;
   while (argc > 0) {
