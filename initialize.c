@@ -256,6 +256,11 @@ void on_parameter_change(int field)
       || FIELD_DPD_GAMMA || field == FIELD_NPTISO_G0 || field == FIELD_NPTISO_GV || field == FIELD_NPTISO_PISTON )
     reinit_thermo = 1;
 
+#ifdef NPT
+  if ((field == FIELD_INTEG_SWITCH) && (integ_switch != INTEG_METHOD_NPT_ISO))
+    nptiso.invalidate_p_vel = 1;  
+#endif
+
 #ifdef ELECTROSTATICS
   cc = 0;
   switch (coulomb.method) {
