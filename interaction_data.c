@@ -21,9 +21,7 @@
 #include "mmm1d.h"
 #include "lj.h"
 #include "tab.h"
-#ifdef LJCOS
-  #include "ljcos.h"
-#endif
+#include "ljcos.h"
 #include "gb.h"
 #include "parser.h"
 #include "utils.h"
@@ -79,7 +77,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJ_offset = 
     params->LJ_capradius = 0;
   
-#ifdef LJCOS
   params->LJCOS_eps =
     params->LJCOS_sig =
     params->LJCOS_cut = 
@@ -87,7 +84,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJCOS_alfa = 
     params->LJCOS_beta = 
     params->LJCOS_rmin = 0 ;
-#endif
 
   params->GB_eps =
     params->GB_sig =
@@ -117,7 +113,6 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJ_offset = src->LJ_offset;
   dst->LJ_capradius = src->LJ_capradius;
 
-#ifdef LJCOS
   dst->LJCOS_eps = src->LJCOS_eps;
   dst->LJCOS_sig = src->LJCOS_sig;
   dst->LJCOS_cut = src->LJCOS_cut;
@@ -125,7 +120,6 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJCOS_alfa = src->LJCOS_alfa;
   dst->LJCOS_beta = src->LJCOS_beta;
   dst->LJCOS_rmin = src->LJCOS_rmin;
-#endif
   
   dst->GB_eps = src->GB_eps;
   dst->GB_sig = src->GB_sig;

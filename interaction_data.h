@@ -107,7 +107,6 @@ typedef struct {
   double LJ_capradius;
   /*@}*/
 
-#ifdef LJCOS
   /** \name Lennard-Jones+Cos potential */
   /*@{*/
   double LJCOS_eps;
@@ -118,8 +117,7 @@ typedef struct {
   double LJCOS_beta;
   double LJCOS_rmin;
   /*@}*/
-#endif
-
+  
   /** \name Gay-Berne potential */
   /*@{*/
   double GB_eps;
@@ -302,9 +300,6 @@ typedef struct {
 extern int n_particle_types;
 /* Number of nonbonded (short range) interactions. Not used so far.*/
 extern int n_interaction_types;
-/** Array of the interaction parameters. Should be accessed only via
-    \ref get_ia_param  */
-extern IA_parameters *ia_params;
 
 /** Structure containing the coulomb parameters. */
 extern Coulomb_parameters coulomb;

@@ -78,6 +78,7 @@
 
 #define GHOSTTRANS_PROPRTS  1
 #define GHOSTTRANS_POSITION 2
+/** must be or'd together with \ref GHOSTTRANS_POSITION */
 #define GHOSTTRANS_POSSHFTD 4
 #define GHOSTTRANS_MOMENTUM 8
 #define GHOSTTRANS_FORCE    16

@@ -53,7 +53,6 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
     }
     /* this should not happen! */
     else {
-
       LJ_TRACE(fprintf(stderr, "%d: Lennard-Jones warning: Particles id1=%d id2=%d exactly on top of each other\n",this_node,p1->p.identity,p2->p.identity));
 
       frac2 = SQR(ia_params->LJ_sig/ia_params->LJ_capradius);
@@ -71,8 +70,6 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
 		     this_node,p1->p.identity,p2->p.identity,dist,fac*d[0],fac*d[1],fac*d[2]));
   }
 }
-
-
 
 MDINLINE double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
@@ -140,7 +137,5 @@ MDINLINE void calc_lj_cap_radii(double force_cap)
     }
   }
 }
-
-
 
 #endif

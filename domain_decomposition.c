@@ -638,7 +638,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
       }
     }
     /* Communicate wether particle exchange is finished */
-    if(global_flag == DD_GLOBAL_EXCHANGE) {
+    if(global_flag == CELL_GLOBAL_EXCHANGE) {
       if(this_node==0) {
 	int sum;
 	MPI_Reduce(&finished, &sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);

@@ -69,11 +69,17 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   }
 
   /* lennard jones */
+#ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist);
+#endif
   /* lennard jones cosine */
+#ifdef LJCOS
   add_ljcos_pair_force(p1,p2,ia_params,d,dist);
+#endif
   /* tabulated */
+#ifdef TABULATED
   add_tabulated_pair_force(p1,p2,ia_params,d,dist);
+#endif
  
 #ifdef ROTATION  
   /* Gay-Berne */
@@ -112,11 +118,10 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   }
 }
 
-
-/** Calculate bonded energies for one particle.
+/** Calculate bonded virials for one particle.
     For performance reasons the force routines add their values directly to the particles.
     So here we do some tricks to get the value out without changing the forces.
-    @param p1 particle for which to calculate energies
+    @param p1 particle for which to calculate virials
 */
 MDINLINE void add_bonded_virials(Particle *p1)
 {
@@ -124,17 +129,17 @@ MDINLINE void add_bonded_virials(Particle *p1)
   double ret, F1[3], F2[3], F3[3], d[3];
   Particle *p2, *p3;
 
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
     F1[i] = p1->f.f[i];
-    p1->f.f[i] = 0;
-  }
   
   i=0;
   while(i<p1->bl.n) {
     p2 = checked_particle_ptr(p1->bl.e[i+1]);
-
+    
     for (j = 0; j < 3; j++) {
-      F2[j] = p2->f.f[j];
+      p1->f.f[i] = 0;
+
+      F2[j] = p2->f.f[j];      
       p2->f.f[j] = 0;
     }
 
@@ -201,29 +206,8 @@ MDINLINE void add_kinetic_virials(Particle *p1)
 /** implementation of 'analyze pressure' */
 int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv);
 
-/** Does the binning for calc_p_tensor
-    @param r_min minimum distance for binning
-    @param r_max maximum distance for binning
-    @param r_bins number of bins
-    @param center 3 dim pointer to sphere origin 
-*/
-void calc_bins_sphere(int *_new_bin,int *_elements,double *_volumes,double r_min,double r_max,int r_bins, double *center);
-
 /** Implementation of 'analyze bins' */
 int parse_bins(Tcl_Interp *interp, int argc, char **argv);
-
-/** Initializes extern Energy_stat \ref #p_tensor to be used by \ref calc_p_tensor. */
-void init_p_tensor();
-
-/** Calculates the pressure in the system from a virial expansion as a tensor.<BR>
-    Output is stored in the \ref #p_tensor array, in which the <tt>p_tensor.sum</tt>-components contain the sum of the component-tensors
-    stored in <tt>p_tensor.node</tt>. The function is executed on the master node only and uses sort of a N^2-loop to calculate the virials,
-    so it is rather slow.
-    @param volume the volume of the bin to be considered
-    @param p_list contains the list of particles to look at
-    @param flag   decides whether to derive the interactions of the particles in p_list to <i>all</i> other particles (=1) or not (=0).
-*/
-void calc_p_tensor(double volume, IntList *p_list, int flag);
 
 /** implementation of 'analyze p_IK1' */
 int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv);

@@ -53,14 +53,22 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 					 double dist, double dist2)
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-  double ret;
+  double ret = 0;
 
+#ifdef LENNARD_JONES
   /* lennard jones */
-  ret  = lj_pair_energy(p1,p2,ia_params,d,dist);
+  ret  += lj_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+
+#ifdef TABULATED
   /* tabulated */
   ret += tabulated_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+
+#ifdef LJCOS
   /* lennard jones cosine */
   ret += ljcos_pair_energy(p1,p2,ia_params,d,dist);
+#endif
   
 #ifdef ROTATION
   /* Gay-Berne */

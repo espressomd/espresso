@@ -75,7 +75,7 @@
 #define MPI_CORE
 #define FORCE_CORE
 
-//#define ADDITIONAL_CHECKS
+/* #define ADDITIONAL_CHECKS */
 
 #ifdef MEM_DEBUG
 #ifdef __GNUC__

@@ -18,6 +18,12 @@ BLADE=no
 ### static compilation for certain brain damaged blade clusters
 STATIC=no
 
+### Debug compiling
+DEBUG=no
+
+### ElectricFence allocation debugging
+EFENCE=no
+
 ### fixed target architecture (same reason as above)
 HOSTFLAGS=
 ifeq ($(BLADE),yes)
@@ -73,8 +79,9 @@ ifeq ($(BLADE),yes)
 endif
 
 # debug compiler flags
-#CFLAGS= -g -fno-inline -Wall $(HOSTFLAGS)
-
+ifeq ($(DEBUG),yes)
+     CFLAGS= -g -fno-inline -Wall $(HOSTFLAGS)
+endif
 
 ############ name of makedepend (or gcc -ME)
 DEPEND=makedepend
@@ -98,7 +105,10 @@ ifeq ($(BLADE),yes)
 endif
 
 ########### ElectricFence
-# LDLIBS+= -lefence
+ifeq ($(EFENCE),yes)
+	LDLIBS+= -lefence
+	CFLAGS+= -DEFENCE
+endif
 
 ########### FFTW
 ifeq ($(BLADE),yes)

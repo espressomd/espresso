@@ -8,7 +8,7 @@
 #  Copyright (c) 2002-2003; all rights reserved unless otherwise stated.
 # 
 
-PLATFORMS=AIX Linux OSF1
+PLATFORMS=AIX Darwin Linux OSF1
 
 ########### load platform dependent part
 PLATFORM=$(shell uname -s)
@@ -19,7 +19,7 @@ CSOURCES= main initialize global communication binary_file interaction_data \
 	  verlet grid integrate cells ghosts forces rotation debug particle_data \
 	  thermostat statistics statistics_chain energy pressure vmdsock imd \
 	  p3m fft random blockfile blockfile_tcl polymer specfunc mmm1d tuning \
-	  uwerr parser domain_decomposition nsquare
+	  uwerr parser domain_decomposition nsquare layered
 CXXSOURCES=
 
 LIBOBJECTS= c_blockfile.o
@@ -71,7 +71,7 @@ mostclean: clean docclean
 TARFILE=Espresso-$(shell date -I).tgz
 EXCLUDES=$(PLATFORMS:%=--exclude=%) $(DOC_RES:%=--exclude=%) \
 	--exclude=*.avi --exclude=Espresso-*.tgz --exclude=*~ \
-	--exclude=.\#* --exclude=CVS --exclude=TclTutor
+	--exclude=core --exclude=core.* --exclude=.\#* --exclude=CVS --exclude=TclTutor
 
 transport:
 	(cd ..; tar -vchzf Espresso/$(TARFILE) Espresso $(EXCLUDES))

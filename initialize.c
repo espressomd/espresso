@@ -41,6 +41,7 @@
 #include "forces.h"
 #include "uwerr.h"
 #include "utils.h"
+#include "nsquare.h"
 
 /** wether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
@@ -183,6 +184,9 @@ void on_parameter_change(int field)
     rebuild_verletlist = 1;
 
   switch (cell_structure.type) {
+  case CELL_STRUCTURE_LAYERED:
+    if (field == FIELD_BOXL)
+      cells_re_init(CELL_STRUCTURE_DOMDEC);
   case CELL_STRUCTURE_DOMDEC:
     if (field == FIELD_BOXL || field == FIELD_NODEGRID || field == FIELD_MAXRANGE ||
 	field == FIELD_MAXNUMCELLS || field == FIELD_SKIN)

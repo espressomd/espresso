@@ -21,22 +21,25 @@ MDINLINE void add_subt_lj_fene_pair_force(Particle *p1, Particle *p2, int type_n
 {
   int i;
   double dx[3], dist = 0.0, dist2 = 0.0, fac_fene=0.0, fac_lj=0.0, fac;
-    get_mi_vector(dx, p1->r.p, p2->r.p);
-    dist2=sqrlen(dx);
-    dist=sqrt(dist2);
+  IA_parameters *ia_params;
+  double r_off, frac2, frac6;
 
-    if(dist >= bonded_ia_params[type_num].p.subt_lj_fene.r) {
+  get_mi_vector(dx, p1->r.p, p2->r.p);
+  dist2=sqrlen(dx);
+  dist=sqrt(dist2);
+
+  if(dist >= bonded_ia_params[type_num].p.subt_lj_fene.r) {
     fprintf(stderr,"%d: add_subt_lj_fene_pair_force: ERROR: FENE Bond between Pair (%d,%d) broken: dist=%f\n",this_node,
 	    p1->p.identity,p2->p.identity,dist); 
     errexit();
-        }
+  }
 
   fac_fene = bonded_ia_params[type_num].p.subt_lj_fene.k;
   fac_fene /= (1.0 - dist2/bonded_ia_params[type_num].p.subt_lj_fene.r2);
   
   FENE_TRACE(if(fac_fene > 50) fprintf(stderr,"WARNING: FENE force factor between Pair (%d,%d) large: %f at distance %f\n", p1->p.identity,p2->p.identity,fac_fene,dist) );
 
-  double r_off, frac2, frac6;
+  ia_params = get_ia_param(p1->p.type,p2->p.type);
   if(dist < ia_params->LJ_cut+ia_params->LJ_offset) { 
     r_off = dist - ia_params->LJ_offset;
 
@@ -69,6 +72,9 @@ MDINLINE void add_subt_lj_fene_pair_force(Particle *p1, Particle *p2, int type_n
 MDINLINE double subt_lj_fene_pair_energy(Particle *p1, Particle *p2, int type_num)
 {
   double dx[3], dist = 0.0, dist2 = 0.0, energy_fene = 0.0, energy_lj = 0.0;
+  IA_parameters *ia_params;
+  double r_off, frac2, frac6;
+
   get_mi_vector(dx, p1->r.p, p2->r.p);
   dist2=sqrlen(dx);
   dist=sqrt(dist2);
@@ -82,8 +88,7 @@ MDINLINE double subt_lj_fene_pair_energy(Particle *p1, Particle *p2, int type_nu
   energy_fene = -0.5*bonded_ia_params[type_num].p.subt_lj_fene.k*bonded_ia_params[type_num].p.subt_lj_fene.r2;
   energy_fene *= log((1.0 - dist2/bonded_ia_params[type_num].p.subt_lj_fene.r2));
   
-  double r_off, frac2, frac6;
-
+  ia_params = get_ia_param(p1->p.type,p2->p.type);
   if(dist < ia_params->LJ_cut+ia_params->LJ_offset) {
     r_off = dist - ia_params->LJ_offset;
     /* normal case: resulting force/energy smaller than capping. */

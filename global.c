@@ -29,6 +29,7 @@
 #include "imd.h"
 #include "tuning.h"
 #include "domain_decomposition.h"
+#include "layered.h"
 
 /**********************************************
  * description of variables
@@ -53,23 +54,20 @@ const Datafield fields[] = {
   {&max_seen_particle,  TYPE_INT, 1, "max_part",      ro_callback, 5 },              /* 7 from particle_data.c */
   {&max_range,       TYPE_DOUBLE, 1, "max_range",     ro_callback, 5 },              /* 8 from integrate.c */
   {&max_skin,        TYPE_DOUBLE, 1, "max_skin",      ro_callback, 5 },              /* 9 from integrate.c */
-  {&n_nodes,            TYPE_INT, 1, "n_nodes",       ro_callback, 3 },              /* 10 from communication.c */
-  {&n_total_particles,  TYPE_INT, 1, "n_part",        ro_callback, 6 },              /* 11 from particle.c */
-  {&n_particle_types,   TYPE_INT, 1, "n_part_types",  ro_callback, 8 },              /* 12 from interaction_data.c */
-  {node_grid,           TYPE_INT, 3, "node_grid",     node_grid_callback, 2 },       /* 13 from grid.c */
-#ifdef PARTIAL_PERIODIC
-  {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback, 1 },             /* 14 from grid.c */
-#else
-  {&periodic,          TYPE_BOOL, 3, "periodicity",   ro_callback, 1 },              /* 14 from grid,c */
-#endif
-  {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback, 2 },            /* 15 from integrate.c */
-  {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback, 2 },            /* 16 from thermostat.c */
-  {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback, 4 },            /* 17 from integrate.c */
-  {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },       /* 18 from integrate.c */
-  {&timing_samples,     TYPE_INT, 1, "timings",       timings_callback, 4 },         /* 19 from tuning.c */
-  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback, 2 }     ,         /* 20 from imd.c */
-  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback, 8 },              /* 21 from verlet.c */
-  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback, 8 },              /* 22 from integrate.c */
+  {&n_layers,           TYPE_INT, 1, "n_layers",      ro_callback, 3 },              /* 10 from layered.c */
+  {&n_nodes,            TYPE_INT, 1, "n_nodes",       ro_callback, 3 },              /* 11 from communication.c */
+  {&n_total_particles,  TYPE_INT, 1, "n_part",        ro_callback, 6 },              /* 12 from particle.c */
+  {&n_particle_types,   TYPE_INT, 1, "n_part_types",  ro_callback, 8 },              /* 13 from interaction_data.c */
+  {node_grid,           TYPE_INT, 3, "node_grid",     node_grid_callback, 2 },       /* 14 from grid.c */
+  {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback, 1 },             /* 15 from grid.c */
+  {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback, 2 },            /* 16 from integrate.c */
+  {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback, 2 },            /* 17 from thermostat.c */
+  {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback, 4 },            /* 18 from integrate.c */
+  {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },       /* 19 from integrate.c */
+  {&timing_samples,     TYPE_INT, 1, "timings",       timings_callback, 4 },         /* 20 from tuning.c */
+  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback, 2 }     ,         /* 21 from imd.c */
+  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback, 8 },              /* 22 from verlet.c */
+  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback, 8 },              /* 23 from integrate.c */
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 

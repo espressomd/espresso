@@ -50,18 +50,6 @@
 #include "cells.h"
 
 
-/************************************************/
-/** \name Defines */
-/************************************************/
-/*@{*/
-
-/** Flag for dd_exchange_and_sort_particles : Do global exchange. */
-#define DD_GLOBAL_EXCHANGE 1
-/** Flag for dd_exchange_and_sort_particles : Do neighbor exchange. */
-#define DD_NEIGHBOR_EXCHANGE 0
-
-/*@}*/
-
 
 /** Structure containing information about non bonded interactions
     with particles in a neighbor cell. */

@@ -30,6 +30,28 @@ void init_virials(Observable_stat *stat);
 /** on the master node: calc energies only if necessary */
 void master_pressure_calc();
 
+/** Does the binning for calc_p_tensor
+    @param r_min minimum distance for binning
+    @param r_max maximum distance for binning
+    @param r_bins number of bins
+    @param center 3 dim pointer to sphere origin 
+*/
+void calc_bins_sphere(int *_new_bin,int *_elements,double *_volumes,double r_min,double r_max,int r_bins, double *center);
+
+/** Initializes extern Energy_stat \ref #p_tensor to be used by \ref calc_p_tensor. */
+void init_p_tensor();
+
+/** Calculates the pressure in the system from a virial expansion as a tensor.<BR>
+    Output is stored in the \ref #p_tensor array, in which the <tt>p_tensor.sum</tt>-components contain the sum of the component-tensors
+    stored in <tt>p_tensor.node</tt>. The function is executed on the master node only and uses sort of a N^2-loop to calculate the virials,
+    so it is rather slow.
+    @param volume the volume of the bin to be considered
+    @param p_list contains the list of particles to look at
+    @param flag   decides whether to derive the interactions of the particles in p_list to <i>all</i> other particles (=1) or not (=0).
+*/
+void calc_p_tensor(double volume, IntList *p_list, int flag);
+
+
 /*******************/
 /* Scalar Pressure */
 /*******************/
@@ -43,7 +65,7 @@ void pressure_calc(double *result)
   init_virials(&virials);
 
   if(resort_particles) {
-    initialize_ghosts(DD_GLOBAL_EXCHANGE);
+    initialize_ghosts(CELL_GLOBAL_EXCHANGE);
     resort_particles = 0;
   }
 
@@ -363,18 +385,15 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv)
 
 int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
 {
-
-#if 0
-
   /* 'analyze p_IK1 <bin_volume> { <ind_list> } <all>' */
   /*****************************************************/
   char buffer[9*TCL_DOUBLE_SPACE + 256];
-  int i,j,p, flag=0;
-  double volume;
+  int i,j,k, flag=0;
+  double volume, value;
   IntList p1;
 
   if (n_total_particles == 0) { Tcl_AppendResult(interp, "(no particles)",(char *)NULL); return (TCL_OK); }
-  init_p_tensor();
+
   init_intlist(&p1);
 
   if(argc < 3) { Tcl_AppendResult(interp,"Too few arguments! Usage: 'analyze p_IK1 <bin_volume> { <ind_list> } <all>'",(char *)NULL); return (TCL_ERROR); }
@@ -382,194 +401,166 @@ int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
     Tcl_ResetResult(interp); Tcl_AppendResult(interp,"usage: 'analyze p_IK1 <bin_volume> { <ind_list> } <all>'",(char *)NULL); return (TCL_ERROR); 
   }
 
-  p_tensor.ana_num=0;
+  init_p_tensor();
   calc_p_tensor(volume,&p1,flag);
 
-  sprintf(buffer,"%f %f { total ",p_tensor.node.e[0],p_tensor.node.e[1]); Tcl_AppendResult(interp, buffer, (char *)NULL);
-  for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.sum.e[j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
-  Tcl_AppendResult(interp, "} ", (char *)NULL); 
-
-  Tcl_AppendResult(interp, "{ ideal ", (char *)NULL);
-  for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.sum.e[9+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
-  Tcl_AppendResult(interp, "} ", (char *)NULL); 
-
-  p = p_tensor.n_pre;
-  Tcl_AppendResult(interp, "{ bonded ", (char *)NULL); 
-  for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.sum.e[p+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
-  for(i=0;i<n_bonded_ia;i++) {
-    switch (bonded_ia_params[i].type) {
-    case BONDED_IA_FENE:
-      Tcl_AppendResult(interp, "{ FENE ", (char *)NULL);
-      for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.node.e[p+i*9+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
-      Tcl_AppendResult(interp, "} ", (char *)NULL);
-      break;
-    case BONDED_IA_ANGLE:
-      Tcl_AppendResult(interp, "{ ANGLE ", (char *)NULL);
-      for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.node.e[p+i*9+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
-      Tcl_AppendResult(interp, "} ", (char *)NULL);
-      break;
-    case BONDED_IA_HARMONIC:
-      Tcl_AppendResult(interp, "{ HARMONIC ", (char *)NULL);
-      for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.node.e[p+i*9+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
-      Tcl_AppendResult(interp, "} ", (char *)NULL);
-      break;
-    case BONDED_IA_SUBT_LJ_HARM:
-      Tcl_AppendResult(interp, "{ SUBT_LJ_HARM ", (char *)NULL);
-      for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.node.e[p+i*9+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
-      Tcl_AppendResult(interp, "} ", (char *)NULL);
-      break;
-    case BONDED_IA_SUBT_LJ_FENE:
-      Tcl_AppendResult(interp, "{ SUBT_LJ_FENE ", (char *)NULL);
-      for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.node.e[p+i*9+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
-      Tcl_AppendResult(interp, "} ", (char *)NULL);
-      break;
-    default: break; }
+  Tcl_AppendResult(interp, "{ pressure ", (char *)NULL);
+  for(j=0; j<9; j++) {
+    value = p_tensor.data.e[j];
+    for (i = 1; i < p_tensor.data.n/9; i++) value += p_tensor.data.e[9*i + j];
+    Tcl_PrintDouble(interp, value, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   }
   Tcl_AppendResult(interp, "} ", (char *)NULL); 
 
-  p = p_tensor.n_pre+p_tensor.n_bonded;
-  Tcl_AppendResult(interp, "{ nonbonded ", (char *)NULL); 
-  for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.sum.e[p+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+  Tcl_AppendResult(interp, "{ ideal ", (char *)NULL);
+  for(j=0; j<9; j++) {
+    Tcl_PrintDouble(interp, p_tensor.data.e[j], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  }
   Tcl_AppendResult(interp, "} ", (char *)NULL); 
 
+  for(i=0;i<n_bonded_ia;i++) {
+    sprintf(buffer, "%d ", i);
+    Tcl_AppendResult(interp, "{ ", buffer, get_name_of_bonded_ia(bonded_ia_params[i].type), (char *)NULL);
+    for(j=0; j<9; j++) {
+      Tcl_PrintDouble(interp, obsstat_bonded(&p_tensor, i)[j], buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    Tcl_AppendResult(interp, "} ", (char *)NULL);
+  } 
+
+  for (i = 0; i < n_particle_types; i++)
+    for (j = i; j < n_particle_types; j++) {
+      if (checkIfParticlesInteract(i, j)) {
+	sprintf(buffer, "%d ", i);
+	Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
+	sprintf(buffer, "%d ", j);
+	Tcl_AppendResult(interp, " ", buffer, "nonbonded ", (char *)NULL);
+	for(k=0; k<9; k++) {
+	  Tcl_PrintDouble(interp, obsstat_nonbonded(&p_tensor, i, j)[k], buffer);
+	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+	}
+	Tcl_AppendResult(interp, "} ", (char *)NULL);
+      }
+    }
+
 #ifdef ELECTROSTATICS
-  p = p_tensor.n_pre+p_tensor.n_bonded+p_tensor.n_non_bonded;
   if(coulomb.bjerrum > 0.0) {
     Tcl_AppendResult(interp, "{ coulomb ", (char *)NULL); 
-    for(j=0; j<9; j++) { sprintf(buffer,"%f ",p_tensor.sum.e[p+j]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+    for(j=0; j<9; j++) {
+      Tcl_PrintDouble(interp, p_tensor.coulomb[j], buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
     Tcl_AppendResult(interp, "} ", (char *)NULL); 
   }
 #endif
 
-  p_tensor.init_status=1;
   return (TCL_OK);
-
-#endif
-
-  return (TCL_OK);
-
 }
 
 
 /* Initialize the p_tensor */
 /***************************/
 void init_p_tensor() {
+  int n_pre, n_non_bonded, n_coulomb;
 
-#if 0
+  n_pre        = 1;
+  n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
 
-  if (p_tensor.init_status != 0 && ! interactions_changed)
-    return;
-  p_tensor.n_pre        = 9+9;
-  p_tensor.n_bonded     = 9*n_bonded_ia;
-  p_tensor.n_non_bonded = 9*(n_particle_types*(n_particle_types+1))/2;
-
+  n_coulomb    = 0;
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-  case COULOMB_NONE: p_tensor.n_coulomb = 0; break;
-  case COULOMB_P3M: p_tensor.n_coulomb = 9; break;
-  case COULOMB_DH:  p_tensor.n_coulomb = 9; break;
-  default:
-    fprintf(stderr, "%d: init_p_tensor: cannot calculate p_tensor for coulomb method %d\n",
-	    this_node, coulomb.method);
-    errexit();
+  if(coulomb.bjerrum != 0.0) {
+    switch (coulomb.method) {
+    case COULOMB_DH:   n_coulomb = 1; break;
+    default:
+      fprintf(stderr, "%d: init_p_tensor: cannot calculate p_tensor for coulomb method %d\n",
+	      this_node, coulomb.method);
+      errexit();
+    }
   }
 #endif
-  p_tensor.n = p_tensor.n_pre+p_tensor.n_bonded+p_tensor.n_non_bonded+p_tensor.n_coulomb;
-  realloc_doublelist(&(p_tensor.node),p_tensor.n);
-  realloc_doublelist(&(p_tensor.sum),p_tensor.n);
+
+  obsstat_realloc_and_clear(&p_tensor, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, 9);
   p_tensor.init_status = 0;
 }
 
 /* Derive the p_tensor */
 /***********************/
 void calc_p_tensor(double volume, IntList *p_list, int flag) {
-  Particle *p1, *p2, *p3;
+  Particle p1, p2, p3;
   int *p1_list, n_p1;
-  int i,j,k,l, pp, indi,indj,startj,endj, type_num, type1,type2;
-  double d[3],dist,dist2, f1[3],f2[3],f3[3];
-  
-  p1=malloc(1*sizeof(Particle)); p2=malloc(1*sizeof(Particle)); p3=malloc(1*sizeof(Particle)); 
-  p1_list = p_list->e; n_p1 = p_list->n;
-  for(i=0;i<p_tensor.n;i++) {
-    p_tensor.node.e[i] = 0.0;
-    p_tensor.sum.e[i]  = 0.0;
-  }
+  int i,j, k,l, indi,indj,startj,endj, type_num;
+  double d[3],dist,dist2;
+  IA_parameters *ia_params;
 
-  if (parameter_changed || interactions_changed || topology_changed || particle_changed) {
-    mpi_integrate(0);
-  }
+  p1_list = p_list->e; n_p1 = p_list->n;
 
   for(indi=0; indi<n_p1; indi++) {
-    if (get_particle_data(p1_list[indi], p1) != TCL_OK) { fprintf(stderr,"The particle %d you requested does not exist! ",p1_list[indi]); errexit(); }
+    if (get_particle_data(p1_list[indi], &p1) != TCL_OK) { fprintf(stderr,"The particle %d you requested does not exist! ",p1_list[indi]); errexit(); }
 
     /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
-    for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
-      p_tensor.sum.e[9+ k*3 + l] += (p1->m.v[k])*(p1->m.v[l]);
-    } }
+    for(k=0;k<3;k++)
+      for(l=0;l<3;l++)
+	p_tensor.data.e[k*3 + l] += (p1.m.v[k])*(p1.m.v[l]);
 
     /* bonded interactions */
     i=0;
-    while(i < p1->bl.n) {
-      if((flag==1) || (intlist_contains(p_list,p1->bl.e[i+1])==1)) {
-	get_particle_data(p1->bl.e[i+1], p2);
-	f1[0] = p1->f.f[0]; f1[1] = p1->f.f[1]; f1[2] = p1->f.f[2];
-	f2[0] = p2->f.f[0]; f2[1] = p2->f.f[1]; f2[2] = p2->f.f[2];
-	get_mi_vector(d, p1->r.p, p2->r.p);
-	type_num = p1->bl.e[i];
+    while(i < p1.bl.n) {
+      if((flag==1) || intlist_contains(p_list,p1.bl.e[i+1])) {
+	get_particle_data(p1.bl.e[i+1], &p2);
+	for (j = 0; j < 3; j++) {
+	  p1.f.f[j] = 0;
+	  p2.f.f[j] = 0;
+	}
+
+	get_mi_vector(d, p1.r.p, p2.r.p);
+
+	type_num = p1.bl.e[i];
 	switch(bonded_ia_params[type_num].type) {
 	case BONDED_IA_FENE:
-	  add_fene_pair_force(p1,p2,type_num);
-	  for(k=0;k<3;k++) { p1->f.f[k] -= (f1[k] = p1->f.f[k] - f1[k]); p2->f.f[k] -= (f2[k] = p2->f.f[k] - f2[k]); }
-	  for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
-	    p_tensor.node.e[p_tensor.n_pre+9*type_num + k*3 + l] += f1[k]*d[l];
-	    p_tensor.sum.e[p_tensor.n_pre+ k*3 + l] += f1[k]*d[l];
-	  } }
+	  add_fene_pair_force(&p1,&p2,type_num);
+	  for(k=0;k<3;k++)
+	    for(l=0;l<3;l++)
+	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += p1.f.f[k]*d[l];
 	  i+=2; break;
 	case BONDED_IA_HARMONIC:
-	  add_harmonic_pair_force(p1,p2,type_num);
-	  for(k=0;k<3;k++) { p1->f.f[k] -= (f1[k] = p1->f.f[k] - f1[k]); p2->f.f[k] -= (f2[k] = p2->f.f[k] - f2[k]); }
-	  for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
-	    p_tensor.node.e[p_tensor.n_pre+9*type_num + k*3 + l] += f1[k]*d[l];
-	    p_tensor.sum.e[p_tensor.n_pre+ k*3 + l] += f1[k]*d[l];
-	  } }
+	  add_harmonic_pair_force(&p1,&p2,type_num);
+	  for(k=0;k<3;k++)
+	    for(l=0;l<3;l++)
+	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += p1.f.f[k]*d[l];
 	  i+=2; break;
 	case BONDED_IA_SUBT_LJ_HARM:
-	  add_subt_lj_harm_pair_force(p1,p2,type_num);
-	  for(k=0;k<3;k++) { p1->f.f[k] -= (f1[k] = p1->f.f[k] - f1[k]); p2->f.f[k] -= (f2[k] = p2->f.f[k] - f2[k]); }
-	  for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
-	    p_tensor.node.e[p_tensor.n_pre+9*type_num + k*3 + l] += f1[k]*d[l];
-	    p_tensor.sum.e[p_tensor.n_pre+ k*3 + l] += f1[k]*d[l];
-	  } }
+	  add_subt_lj_harm_pair_force(&p1,&p2,type_num);
+	  for(k=0;k<3;k++)
+	    for(l=0;l<3;l++)
+	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += p1.f.f[k]*d[l];
 	  i+=2; break;
 	case BONDED_IA_SUBT_LJ_FENE:
-	  add_subt_lj_fene_pair_force(p1,p2,type_num);
-	  for(k=0;k<3;k++) { p1->f.f[k] -= (f1[k] = p1->f.f[k] - f1[k]); p2->f.f[k] -= (f2[k] = p2->f.f[k] - f2[k]); }
-	  for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
-	    p_tensor.node.e[p_tensor.n_pre+9*type_num + k*3 + l] += f1[k]*d[l];
-	    p_tensor.sum.e[p_tensor.n_pre+ k*3 + l] += f1[k]*d[l];
-	  } }
+	  add_subt_lj_fene_pair_force(&p1,&p2,type_num);
+	  for(k=0;k<3;k++)
+	    for(l=0;l<3;l++)
+	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += p1.f.f[k]*d[l];
 	  i+=2; break;
 	case BONDED_IA_ANGLE:
-	  get_particle_data(p1->bl.e[i+2], p3);
-	  f3[0] = p3->f.f[0]; f3[1] = p3->f.f[1]; f3[2] = p3->f.f[2];
-	  add_angle_force(p1,p2,p3,type_num);
-	  for(k=0;k<3;k++) { p1->f.f[k] -= (f1[k] = p1->f.f[k] - f1[k]); p2->f.f[k] -= (f2[k] = p2->f.f[k] - f2[k]); }
-	  for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
-	    p_tensor.node.e[p_tensor.n_pre+9*type_num + k*3 + l] += -f2[k]*d[l];
-	    p_tensor.sum.e[p_tensor.n_pre+ k*3 + l] += -f2[k]*d[l];
-	  } }
-	  for(k=0;k<3;k++) { p3->f.f[k] -= (f3[k] = p3->f.f[k] - f3[k]); }
-	  get_mi_vector(d, p1->r.p, p3->r.p);
-	  for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
-	    p_tensor.node.e[p_tensor.n_pre+9*type_num + k*3 + l] += -f3[k]*d[l];
-	    p_tensor.sum.e[p_tensor.n_pre+ k*3 + l] += -f3[k]*d[l];
-	  } }
-	  if (p3->bl.n > 0) { realloc_intlist(&(p3->bl),0); }
+	  get_particle_data(p1.bl.e[i+2], &p3);
+	  for (j = 0; j < 3; j++)
+	    p3.f.f[j] = 0;
+	  add_angle_force(&p1,&p2,&p3,type_num);
+	  for(k=0;k<3;k++)
+	    for(l=0;l<3;l++)
+	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += -p2.f.f[k]*d[l];
+	  get_mi_vector(d, p1.r.p, p3.r.p);
+	  for(k=0;k<3;k++)
+	    for(l=0;l<3;l++)
+	      obsstat_bonded(&p_tensor, type_num)[k*3 + l] += -p3.f.f[k]*d[l];
+	  free_particle(&p3);
 	  i+=3; break;
 	default :
-	  fprintf(stderr,"WARNING: Bonds of atom %d unknown\n",p1->p.identity);
-	  i = p1->bl.n; break;
+	  fprintf(stderr,"WARNING: Bond type %d of atom %d unknown\n",type_num, p1.p.identity);
+	  i = p1.bl.n; break;
 	}
+	free_particle(&p2);
       }
     }
 
@@ -577,100 +568,71 @@ void calc_p_tensor(double volume, IntList *p_list, int flag) {
     if(flag==1) { startj=0; endj=n_total_particles; } else { startj=indi+1; endj=n_p1; }
     for(indj=startj; indj<endj; indj++) {
       if(flag==1) {
-	if((indj == p1->p.identity) || (intlist_contains(p_list,indj)==1)) continue;
-	get_particle_data(indj, p2); }
-      else get_particle_data(p1_list[indj], p2);
+	if((indj == p1.p.identity) || intlist_contains(p_list,indj)) continue;
+	get_particle_data(indj, &p2);
+      }
+      else
+	get_particle_data(p1_list[indj], &p2);
 
-      /* save current force information */
-      for(j=0;j<3;j++) { f1[j] = p1->f.f[j]; f2[j] = p2->f.f[j]; }
+      for (j = 0; j < 3; j++) {
+	p1.f.f[j] = 0;
+	p2.f.f[j] = 0;
+      }
 
       /* distance calculation */
-      get_mi_vector(d, p1->r.p, p2->r.p);                 // for(j=0; j<3; j++) d[j] = p1->r.p[j] - p2->r.p[j];
+      get_mi_vector(d, p1.r.p, p2.r.p);
       dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
       dist  = sqrt(dist2);
 
       /* non-bonded interactions */
-      pp = p_tensor.n_pre+p_tensor.n_bonded;
-      if (checkIfParticlesInteract(p1->p.type, p2->p.type)) { 
-	ia_params = get_ia_param(p1->p.type,p2->p.type);
+      if (checkIfParticlesInteract(p1.p.type, p2.p.type)) { 
+	ia_params = get_ia_param(p1.p.type,p2.p.type);
 
-	/* derive index 'type_num' */
-	if(p1->p.type > p2->p.type) { type1 = p2->p.type; type2 = p1->p.type; } else { type2 = p2->p.type; type1 = p1->p.type; }
-	type_num = pp + 9*( ((2 * n_particle_types - 1 - type1) * type1) / 2  +  type2);
-	
 	/* lennnard jones */
-	add_lj_pair_force(p1,p2,ia_params,d,dist);
+	add_lj_pair_force(&p1,&p2,ia_params,d,dist);
+	/* lennard jones cosine */
 #ifdef LJCOS
-	add_ljcos_pair_force(p1,p2,ia_params,d,dist);
+	add_ljcos_pair_force(&p1,&p2,ia_params,d,dist);
 #endif
+	/* tabulated */
+	add_tabulated_pair_force(&p1,&p2,ia_params,d,dist);
+
 #ifdef ROTATION  
-	add_gb_pair_force(p1,p2,ia_params,d,dist);
+	add_gb_pair_force(&p1,&p2,ia_params,d,dist);
 #endif
-	for(j=0;j<3;j++) { p1->f.f[j] -= (f1[j] = p1->f.f[j] - f1[j]); p2->f.f[j] -= (f2[j] = p2->f.f[j] - f2[j]); }
-	for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
-	  p_tensor.node.e[type_num + k*3 + l] += f1[k]*d[l];
-	  p_tensor.sum.e[pp+ k*3 + l] += f1[k]*d[l];
-	} }
+
+	for(k=0;k<3;k++)
+	  for(l=0;l<3;l++)
+	    obsstat_nonbonded(&p_tensor, p1.p.type, p2.p.type)[k*3 + l] += p1.f.f[k]*d[l];
       }
-	
+
 #ifdef ELECTROSTATICS
-      /* real space coulomb */
-      pp = p_tensor.n_pre+p_tensor.n_bonded+p_tensor.n_non_bonded;
-      if(coulomb.method==COULOMB_P3M) {
-	add_p3m_coulomb_pair_force(p1,p2,d,dist2,dist);
-	for(j=0;j<3;j++) { p1->f.f[j] -= (f1[j] = p1->f.f[j] - f1[j]); p2->f.f[j] -= (f2[j] = p2->f.f[j] - f2[j]); }
-	for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
-	  p_tensor.sum.e[pp+ k*3 + l] += f1[k]*d[l];
-	} }
-      }
-      else if(coulomb.method==COULOMB_DH) {
-	add_dh_coulomb_pair_force(p1,p2,d,dist);
-	for(j=0;j<3;j++) { p1->f.f[j] -= (f1[j] = p1->f.f[j] - f1[j]); p2->f.f[j] -= (f2[j] = p2->f.f[j] - f2[j]); }
-	for(k=0;k<3;k++) { for(l=0;l<3;l++) { 
-	  p_tensor.sum.e[pp+ k*3 + l] += f1[k]*d[l];
-	} }
+      if (coulomb.bjerrum != 0.0 && coulomb.method == COULOMB_DH) {
+	for (j = 0; j < 3; j++) {
+	  p1.f.f[j] = 0;
+	  p2.f.f[j] = 0;
+	}
+
+	add_dh_coulomb_pair_force(&p1,&p2,d,dist);
+	for(k=0;k<3;k++)
+	  for(l=0;l<3;l++)
+	    p_tensor.coulomb[k*3 + l] += p1.f.f[k]*d[l];
       }
 #endif
-    } 
+
+      free_particle(&p2);
+    }
+
+    free_particle(&p1);
   }
 
-  /* Rescale entries and sum all contributions */
-  for(i=9; i<2*9; i++) { 
-    p_tensor.sum.e[i] /= 2.0*volume*SQR(time_step); 
-    p_tensor.sum.e[i%9] += p_tensor.sum.e[i];
-  }
-  for(i=p_tensor.n_pre;i<p_tensor.n;i++) {
-    p_tensor.node.e[i]  /= 3.0*volume;
-  }
-  pp=p_tensor.n_pre+p_tensor.n_bonded;
-  for(i=p_tensor.n_pre; i<pp; i++) {
-    p_tensor.sum.e[i]   /= 3.0*volume;
-    p_tensor.sum.e[i%9] += p_tensor.sum.e[i];
-  }
-  pp+=p_tensor.n_non_bonded;
-  for(i=pp-p_tensor.n_non_bonded; i<pp; i++) {
-    p_tensor.sum.e[i]   /= 3.0*volume;
-    p_tensor.sum.e[i%9] += p_tensor.sum.e[i];
-  }
-#ifdef ELECTROSTATICS
-  pp+=p_tensor.n_coulomb;
-  for(i=pp-p_tensor.n_coulomb; i<pp; i++) {
-    p_tensor.sum.e[i]   /= 3.0*volume;
-    p_tensor.sum.e[i%9] += p_tensor.sum.e[i];
-  }
-#endif
+  /* Rescale entries */
+  for(i=0; i<9; i++)
+    p_tensor.data.e[i] /= 2.0*volume*SQR(time_step);
 
-  /* Total Sum = Trace of 1st tensor */
-  p_tensor.node.e[0] = p_tensor.sum.e[0] + p_tensor.sum.e[4] + p_tensor.sum.e[8];
-  p_tensor.node.e[1] = SQR(p_tensor.node.e[0]);
+  for(i=9; i<p_tensor.data.n; i++)
+    p_tensor.data.e[i]  /= 3.0*volume;
 
-  /* Clean up particles */
-  if (p1->bl.n > 0) { realloc_intlist(&(p1->bl),0); }
-  //  if (p2->bl.n > 0) { realloc_intlist(&(p2->bl),0); }
-  //  free_particle(p1); free_particle(p2); free_particle(p3); 
-  free(p1); free(p2); free(p3); 
-
-#endif
-
+  p_tensor.init_status=1;
 }
 

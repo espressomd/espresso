@@ -376,7 +376,6 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
     @param interp   the Tcl interpreter to which result to add to */
 int printParticleToResult(Tcl_Interp *interp, int part_num)
 {
-
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle part;
   IntList *bl = &(part.bl);

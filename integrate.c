@@ -34,6 +34,7 @@
 #include "forces.h"
 #include "nsquare.h"
 #include "domain_decomposition.h"
+#include "layered.h"
 
 /************************************************
  * DEFINES
@@ -130,42 +131,14 @@ void integrate_vv_recalc_maxrange()
 {
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_recalc_maxrange:\n",this_node));
 
-  /* sanity checks */
-  if(time_step < 0.0 || skin < 0.0 || temperature < 0.0) {
-    fprintf(stderr,"%d: ERROR: Can not initialize the integrator!:\n",this_node);
-    if( time_step < 0.0 )
-      fprintf(stderr,"%d: PROBLEM: You have to set the time_step!\n",this_node);
-    if( skin < 0.0 )
-      fprintf(stderr,"%d: PROBLEM: You have to set the skin!\n",this_node);
-    if( temperature < 0.0 )
-      fprintf(stderr,"%d: PROBLEM: You have to set the temperature!\n",this_node);
-    errexit();
-  }
 
   /* maximal interaction cutoff */
   calc_maximal_cutoff();
-  max_range  = max_cut + skin;
+  max_range  = max_cut;
+  /* at beginning be nice */
+  if (skin > 0.0)
+    max_range += skin;
   max_range2 = max_range * max_range;
-
-  /* To domain_decomposition.
-
-
-     check real space interaction cutoff/range
-
-     if(max_cut < 0.0) {
-     fprintf(stderr,"%d: ERROR: You have to specify at least one interaction\n",this_node);
-     errexit();
-     }
-     if((min_box_l/2.0) < max_range) {
-     fprintf(stderr,"%d: ERROR: Maximal real space interaction %f is larger than half of the minimal box dimension %f\n",this_node,max_range,min_box_l);
-     errexit();
-     }
-     
-     if(min_local_box_l < max_range) {
-     fprintf(stderr,"%d: ERROR: Maximal real space interaction %f is larger than minimal local box length %f\n",this_node,max_range,min_local_box_l);
-     errexit();
-     }
-  */
 }
 
 /************************************************************/
@@ -175,6 +148,9 @@ void initialize_ghosts(int global_flag)
   invalidate_ghosts();
 
   switch (cell_structure.type) {
+  case CELL_STRUCTURE_LAYERED:
+    layered_exchange_and_sort_particles(global_flag);
+    break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_balance_particles();
     break;
@@ -198,10 +174,23 @@ void integrate_vv(int n_steps)
   INTEG_TRACE(fprintf(stderr,"%d: integrate_vv: integrating %d steps\n",this_node,
 		      n_steps));
 
-  /* prepare integrator */
+  /* sanity checks */
+  if(time_step < 0.0 || skin < 0.0 || temperature < 0.0) {
+    fprintf(stderr,"%d: ERROR: Can not initialize the integrator!:\n",this_node);
+    if( time_step < 0.0 )
+      fprintf(stderr,"%d: PROBLEM: You have to set the time_step!\n",this_node);
+    if( skin < 0.0 )
+      fprintf(stderr,"%d: PROBLEM: You have to set the skin!\n",this_node);
+    if( temperature < 0.0 )
+      fprintf(stderr,"%d: PROBLEM: You have to set the temperature!\n",this_node);
+    errexit();
+  }
+
+
   on_integration_start();
+
   if(resort_particles) {
-    initialize_ghosts(DD_GLOBAL_EXCHANGE);
+    initialize_ghosts(CELL_GLOBAL_EXCHANGE);
     resort_particles = 0;
   }
   if (recalc_forces) {
@@ -217,7 +206,6 @@ void integrate_vv(int n_steps)
   /* integration loop */
   INTEG_TRACE(fprintf(stderr,"%d START INTEGRATION: %d steps\n",this_node,n_steps));
   for(i=0;i<n_steps;i++) {
-
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
     propagate_vel_pos();
 #ifdef ROTATION
@@ -227,11 +215,10 @@ void integrate_vv(int n_steps)
        cell_structure.type == CELL_STRUCTURE_DOMDEC) {
       INTEG_TRACE(fprintf(stderr,"%d: Rebuild Verlet List\n",this_node));
       n_verlet_updates++;
-      initialize_ghosts(DD_NEIGHBOR_EXCHANGE);
+      initialize_ghosts(CELL_NEIGHBOR_EXCHANGE);
     }
-    else {
+    else
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    }
 
     force_calc();
     ghost_communicator(&cell_structure.collect_ghost_force_comm);

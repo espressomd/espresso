@@ -30,6 +30,7 @@
 #include "parser.h"
 #include "domain_decomposition.h"
 #include "nsquare.h"
+#include "layered.h"
 
 /* Variables */
 
@@ -117,6 +118,9 @@ static void topology_release(int cs) {
   case CELL_STRUCTURE_NSQUARE:
     nsq_topology_release();
     break;
+  case CELL_STRUCTURE_LAYERED:
+    layered_topology_release();
+    break;
   default:
     fprintf(stderr, "ERROR: attempting to sort the particles in an unknown way\n");
     errexit();
@@ -135,6 +139,9 @@ static void topology_init(int cs, CellPList *local) {
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_topology_init(local);
+    break;
+  case CELL_STRUCTURE_LAYERED:
+    layered_topology_init(local);
     break;
   default:
     fprintf(stderr, "ERROR: attempting to sort the particles in an unknown way\n");
@@ -159,6 +166,13 @@ int cellsystem(ClientData data, Tcl_Interp *interp,
     mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC);
   else if (ARG1_IS_S("nsquare"))
     mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE);
+  else if (ARG1_IS_S("layered")) {
+    if (argc > 1) {
+      if (!ARG_IS_I(2, n_layers))
+	return TCL_ERROR;
+    }
+    mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED);
+  }
   else {
     Tcl_AppendResult(interp, "unkown cell structure type \"", argv[0],"\"", (char *)NULL);
     return TCL_ERROR;

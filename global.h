@@ -94,32 +94,34 @@ extern const Datafield fields[];
 #define FIELD_MAXRANGE    8
 /** index of \ref max_skin in  \ref #fields */
 #define FIELD_MAXSKIN     9
+/** index of \ref n_layers in  \ref #fields */
+#define FIELD_NLAYERS     10
 /** index of \ref n_nodes in \ref #fields */
-#define FIELD_NNODES      10
+#define FIELD_NNODES      11
 /** index of \ref n_total_particles in  \ref #fields */
-#define FIELD_NPART       11
+#define FIELD_NPART       12
 /** index of \ref n_particle_types in \ref #fields */
-#define FIELD_NPARTTYPE   12
+#define FIELD_NPARTTYPE   13
 /** index of \ref node_grid in \ref #fields */
-#define FIELD_NODEGRID    13
+#define FIELD_NODEGRID    14
 /** index of \ref #periodic in \ref #fields */
-#define FIELD_PERIODIC    14
+#define FIELD_PERIODIC    15
 /** index of \ref #skin in \ref #fields */
-#define FIELD_SKIN        15
+#define FIELD_SKIN        16
 /** index of \ref #temperature in \ref #fields */
-#define FIELD_TEMPERATURE 16
+#define FIELD_TEMPERATURE 17
 /** index of \ref sim_time in  \ref #fields */
-#define FIELD_SIMTIME     17
+#define FIELD_SIMTIME     18
 /** index of \ref time_step in \ref #fields */
-#define FIELD_TIMESTEP    18
+#define FIELD_TIMESTEP    19
 /** index of \ref timing_samples in  \ref #fields */
-#define FIELD_TIMINGSAMP   19
+#define FIELD_TIMINGSAMP   20
 /** index of \ref transfer_rate  in \ref #fields */
-#define FIELD_TRANSFERRATE 20
+#define FIELD_TRANSFERRATE 21
 /** index of \ref rebuild_verletlist in \ref #fields */
-#define FIELD_VERLETFLAG   21
+#define FIELD_VERLETFLAG   22
 /** index of \ref verlet_reuse in  \ref #fields */
-#define FIELD_VERLETREUSE  22
+#define FIELD_VERLETREUSE  23
 /*@}*/
 
 /**********************************************

@@ -27,9 +27,7 @@
 #include "p3m.h"
 #include "lj.h"
 #include "tab.h"
-#ifdef LJCOS
-    #include "ljcos.h"
-#endif
+#include "ljcos.h"
 #include "gb.h"
 #include "fene.h"
 #include "harmonic.h"
@@ -93,7 +91,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #ifdef LJ_COS
   add_ljcos_pair_force(p1,p2,ia_params,d,dist);
 #endif
-  
+
 #ifdef ROTATION
   /* Gay-Berne */
   add_gb_pair_force(p1,p2,ia_params,d,dist);

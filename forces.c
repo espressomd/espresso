@@ -29,6 +29,7 @@
 #include "rotation.h"
 #include "forces.h"
 #include "nsquare.h"
+#include "layered.h"
 
 /************************************************************/
 /* local prototypes                                         */
@@ -41,7 +42,6 @@ void calc_long_range_forces();
     ghost particle forces with zero. */
 void init_forces();
 
-
 /************************************************************/
 
 void force_calc()
@@ -49,6 +49,9 @@ void force_calc()
   init_forces();
 
   switch (cell_structure.type) {
+  case CELL_STRUCTURE_LAYERED:
+    layered_calculate_ia();
+    break;
   case CELL_STRUCTURE_DOMDEC:
     if (rebuild_verletlist)
       build_verlet_lists_and_calc_verlet_ia();

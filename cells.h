@@ -64,9 +64,24 @@
 #define CELL_STRUCTURE_CURRENT 0
 /** cell structure domain decomposition */
 #define CELL_STRUCTURE_DOMDEC  1
-/** Cell structure n square */
+/** cell structure n square */
 #define CELL_STRUCTURE_NSQUARE 2
+/** cell structure layered */
+#define CELL_STRUCTURE_LAYERED 3
 /*@}*/
+
+/** \name Flags for exchange_and_sort_particles: wether to do a global exchange
+    or assume that particles did not move much (faster, used during integration,
+    where moving far is a catastrophe anyways). */
+/*@{*/
+
+/** Flag for exchange_and_sort_particles : Do global exchange. */
+#define CELL_GLOBAL_EXCHANGE 1
+/** Flag for exchange_and_sort_particles : Do neighbor exchange. */
+#define CELL_NEIGHBOR_EXCHANGE 0
+
+/*@}*/
+
 
 /************************************************/
 /** \name Data Types */

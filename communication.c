@@ -33,9 +33,7 @@
 #include "random.h"
 #include "lj.h"
 #include "tab.h"
-#ifdef LJCOS
-  #include "ljcos.h"
-#endif
+#include "ljcos.h"
 #include "gb.h"
 #include "mmm1d.h"
 
@@ -1094,7 +1092,7 @@ void mpi_get_particles_slave(int pnode, int bi)
       cell = local_cells.cell[c];
       part = cell->part;
       npart = cell->n;
-     memcpy(&result[g],part,npart*sizeof(Particle));
+      memcpy(&result[g],part,npart*sizeof(Particle));
       g+=cell->n;
       if (bi) {
 	int pc;

@@ -407,7 +407,7 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double
  
       r2n *= rxy2_d;
     }
-    E *= L_i;
+    E *= coulomb.prefactor*L_i;
 
     /* real space parts */
 
@@ -434,7 +434,8 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double
     }
     E *= coulomb.prefactor*L_i*4;
 
-    E += L_i*(-log(rxy2_d) + 2*(M_LN2 - C_GAMMA));
+    E += -log(rxy2_d) + 2*(M_LN2 - C_GAMMA);
+    E *= coulomb.prefactor*L_i;
   }
 
   return chpref*E;
