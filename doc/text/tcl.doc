@@ -1,0 +1,82 @@
+/** \page tcl Using the Tcl Extension
+
+The program tcl_md is an enhanced Tcl interpreter. Additionally to the standard commands
+of Tcl it offers the following commands, which are implemented in C and provide the
+interface between the Tcl script and the MD code:
+
+<ul>
+    <li> \verbatim setmd <variable> <value>+ \endverbatim
+	modifies variables declared in \ref #fields.
+	For more information, see \ref tcl_setmd.
+
+    <li> \verbatim part <particle_number> ( pos|type|q|v|f|[un]fix|ext_force|bond| [delete] <value>+ )* \endverbatim
+	modifies particle data.
+	For more information, see \ref tcl_part.
+ 
+    <li>\verbatim polymer <N_P> <MPC> <bond_length> [start <part_id>] [pos <x> <y> <z>] [mode { SAW | RW } [<shield> [<max_try>]]] 
+                                   [charge <val_cM>] [distance <cM_dist>] [types <type_nM> [<type_cM>]] [FENE <type_FENE>] \endverbatim
+	creates <N_P> polymer chains with <MPC> monomers each <bond_length> apart in the simulation box.
+	For more information, see \ref tcl_polymer.
+
+    <li>\verbatim counterions <N_CI> [start <part_id>] [mode { SAW | RW } [<shield> [<max_try>]]] [charge <val_CI>] [type <type_CI>] \endverbatim
+	creates <N_CI> counterions in the simulation box. For more informations, see \ref tcl_counterions.
+
+    <li>\verbatim salt <N_pS> <N_nS> [start <part_id>] [mode { SAW | RW } [<shield> [<max_try>]]] [charges <val_pS> [<val_nS>]] [types <type_pS> [<type_nS>]] \endverbatim
+    	creates <N_pS> positively and <N_nS> negatively charged salt ions of charge <val_pS> and <val_nS> within the simulation box.
+	For more information, see \ref tcl_salt.
+
+    <li>\verbatim velocities <v_max> [start <part_id>] [count <N_T>] \endverbatim
+	Sets the velocities of the particles with particle ID (see \ref tcl_part) between <part_id> and <part_id>+<N_T> 
+	(defaults to '0' & '[setmd npart]-<part_id>') 
+	to a random vector with length in [-vmax,vmax], and returns the absolute value of the total velocity assigned.
+
+    <li>\verbatim crosslink <N_P> <MPC> [start <part_id>] [catch <r_catch>] [distLink <link_dist>] [distChain <chain_dist>] [FENE <type_FENE>] [trials <max_try>] \endverbatim
+	Attempts to end-crosslink the current configuration of <N_P> equally long polymers with <MPC> monomers each, 
+	returning how many ends are successfully connected. For more information, see \ref tcl_crosslink.
+
+    <li> \verbatim constraint <type_name | delete> [parameters] \endverbatim
+        sets the parameters for constraints. 
+	For more information, see \ref tcl_constraint.
+
+    <li> \verbatim inter ( <particle_type_number1> <particle_type_number2> | <bond_type_number> ) <interaction_type> <value>+ \endverbatim
+	sets the parameters for interactions.
+	For more information, see \ref tcl_inter.
+
+    <li>\anchor tcl_integrate \verbatim integrate <steps> \endverbatim
+	run <steps> integration steps. 
+	The C implementation is \ref #integrate.
+
+    <li>\verbatim imd ( connect|disconnect|listen|positions ) <param>\endverbatim
+        network connection handling to the visual interface program VMD.
+	For more information, see \ref tcl_imd.
+
+    <li>\verbatim blockfile <channel> ( read|write start|end|variable|auto|toend ) <param>?\endverbatim
+        blockfile allows for convenient access to a block format structured file <channel>.
+	For more information, see \ref tcl_blockfile.
+
+    <li>\verbatim analyze ( mindist|nbhood|distto| energy | set|re|rg|rh|g123... )\endverbatim
+        calculates different observables.
+	For more information, see \ref tcl_analyze.
+
+    <li>\verbatim t_random [{ int <n> | seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }] \endverbatim
+        random number generator.
+	For more information, see \ref tcl_t_random.
+        
+    <li>\verbatim code_info \endverbatim
+</ul>
+
+At program start, tcl_md reads in a starting script
+<i>'init.tcl'</i>. It is assumed to be located in a directory
+<i>"scripts"</i>, but this default value can be overridden by the
+environment variable TCLMD_SCRIPTS.<BR>
+It also includes some useful tcl-scripts (which should always be
+located in the same directory <i>"scripts"</i>) providing additional
+commands which are implemented in tcl and enhance the interface
+between the tcl-script and the MD-code. For details on these procedures see
+<ul>
+<li> \ref convertDeserno
+<li> \ref writepdb
+<li> \ref math
+<li> \ref aux
+</ul>
+*/
