@@ -2,7 +2,7 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ***********
-* v1.5.1  *
+* v1.5.1d *
 ***********
 
 Current working revision.
@@ -17,6 +17,33 @@ Current working revision.
 (a) January  30th, 2004.
 
 New Features:
+(d) Implemented an (N,p,T)-ensemble integrator, as published by
+    Kolb, Duenweg, J.Chem.Phys. 111(8) 4453 (1999).
+    To activate it, use the corresponding compiler-flag in 'config.h'
+    and set the new parameters 'piston', 'g0', 'gv', and 'p_ext'.
+(d) New global variable 'p_inst' returns the measure instantaneous pressure
+    if (N,p,T)-integration is used.
+(c) introducing topoplogy concept.
+(b) Inplementation of NEMD (Non Equilibrium Molecular Dynamics). This method
+    introduces a shear rate corresponding to a Couette flow by artificially
+    pumping energy into the system via a momentum exchange between two slabs
+    of the system. For more information see for example Evans/Morriss:
+    Statistical mechanics of Nonequilibrium Liwuids (Academic Press, London,
+    1990) or Soddemann/Duenweg/Kremer (Phys. Rev. E; 68; 2003).
+    All procedures reside in the fiiles nemd.c/h. There is also a new tcl
+    command:
+         nemd <n_slabs> <n_exchange>
+         Turn NEMD on with n_slabs slabs and n_exchange momentum exchanges per
+         integration step.
+         nemd profile
+         Returns the velocity profile along the slabs.
+         nemd 0
+         Turns NEMD off
+    Slabs are perpendicular to the z-direction and the shear is applied in
+    x-direction.
+    This method is only useful for either NVE ensemble or has to be used with
+    the yet to be installed DPD thermostat to run a NVT ensemble.
+    Per default NEMD is not compiled in!
 (a) The bond angle potential can now be used also for equilibrium angles different
     from 180 degree (stretched configuration). This should not affect any previous
     simulations (except numerical errors). The default potential form is now:
@@ -27,34 +54,7 @@ New Features:
     BOND_ANGLE_HARMONIC   ->  V = 1/2 k (phi - phi0)^2
     BOND_ANGLE_COSINE     ->  V = k (1+cos(phi-phi0))
     BOND_ANGLE_COSSQUARE  ->  V = 1/2 k (cos(phi)-cos(phi0))^2
-(b) Inplementation of NEMD (Non Equilibrium Molecular Dynamics). This method
-    introduces a shear rate corresponding to a Couette flow by artificially 
-    pumping energy into the system via a momentum exchange between two slabs 
-    of the system. For more information see for example Evans/Morriss: 
-    Statistical mechanics of Nonequilibrium Liwuids (Academic Press, London, 
-    1990) or Soddemann/Duenweg/Kremer (Phys. Rev. E; 68; 2003). 
-    All procedures reside in the fiiles nemd.c/h. There is also a new tcl
-    command:
-         nemd <n_slabs> <n_exchange>
-	 Turn NEMD on with n_slabs slabs and n_exchange momentum exchanges per
-	 integration step.
-	 nemd profile
-	 Returns the velocity profile along the slabs.
-	 nemd 0 
-	 Turns NEMD off
-    Slabs are perpendicular to the z-direction and the shear is applied in 
-    x-direction.
-    This method is only useful for either NVE ensemble or has to be used with
-    the yet to be installed DPD thermostat to run a NVT ensemble.
-    Per default NEMD is not compiled in!
-(c) introducing new particle property 'molecule ID'.
 (c) introducing topoplogy concept.
-(d) Implemented an (N,p,T)-ensemble integrator, as published by
-    Kolb, Duenweg, J.Chem.Phys. 111(8) 4453 (1999).
-    To activate it, use the corresponding compiler-flag in 'config.h'
-    and set the new parameters 'piston', 'g0', 'gv', and 'p_ext'.
-(d) New global variable 'p_inst' returns the measure instantaneous pressure
-    if (N,p,T)-integration is used.
 
 Changes:
 (c) 'analyze set chains <start> <N_P> <MPC>' does now set the topology,
@@ -91,24 +91,24 @@ New Features:
     of mass's of type_1 and type_2.
 
 Changes:
-(a) completely reworked the internal particle structure, now having six substructures per particle
-    and a choice of two entirely different particle administration systems (domain decomposition
-    or homogeneous N^2-mode)
-(b) 'analyze pressure ideal' does no longer use n_total_particles*temperature/volume but rather 
-    measures the particles' velocities to deduct the ideal gas contribution to the pressure 
+(b) 'analyze pressure ideal' does no longer use n_total_particles*temperature/volume but rather
+    measures the particles' velocities to deduct the ideal gas contribution to the pressure
     from there; consequently, its value is at last the very same as the trace of p_IK1;
     note however, that the ideal gas now depends on whether or not ROTATION is compiled in
     (changing the degrees of freedom from 3 to 6), even if the particles don't use that property
 (b) 'checkpoint_set' now also saves informations on external forces, fixed particles, and
     rotational properties if the corresponding flags are compiled in.
+(a) completely reworked the internal particle structure, now having six substructures per particle
+    and a choice of two entirely different particle administration systems (domain decomposition
+    or homogeneous N^2-mode)
 
 Bugfixes:
+(b) fixed several memory leaks occuring when using newer version of the gcc-compiler
+(b) fixed wrong prefactor of 'analyze pressure ideal' contained in early versions of v1.5.Alpha
 (a) 'part fix' fixed
 (a) the constraint energy is printed correctly now. In the old version, if 
     the constraint particle type is smaller than any real particle type, 
     the constraint energy was wrong, even though the total energy was correct
-(b) fixed several memory leaks occuring when using newer version of the gcc-compiler
-(b) fixed wrong prefactor of 'analyze pressure ideal' contained in early versions of v1.5.Alpha
  
 
 

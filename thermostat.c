@@ -93,7 +93,7 @@ void thermo_init()
   pref1 = -friction_gamma/time_step;
   pref2 = sqrt(24.0*temperature*friction_gamma/time_step);
 #ifdef NPT
-  if (piston > 0.0) {
+  if (piston != 0.0) {
     pref1 = -0.5*friction_g0;
     pref2 = sqrt(12.0*temperature*friction_g0*time_step);
     pref3 = -0.5*friction_gv*inv_piston*0.5*time_step;
@@ -123,7 +123,7 @@ void friction_thermo(Particle *p)
 
 #ifdef NPT
 double friction_thermo_NpT(void) {
-  return (p_diff  +  (p_inst-p_ext)*0.5*time_step + pref3*p_diff + pref4*(d_random()-0.5) );
+  return (pref3*p_diff + pref4*(d_random()-0.5) );
 }
 #endif
 

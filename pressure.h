@@ -16,7 +16,7 @@
 #include "communication.h"
 
 extern double piston, inv_piston, NpT_volume;
-extern double p_ext, p_inst, p_diff;
+extern double p_ext, p_inst, p_diff, p_vir, p_vel;
 
 /* include the potential files */
 #include "p3m.h"
@@ -41,9 +41,6 @@ extern Observable_stat virials, total_pressure;
 ///
 extern Observable_stat p_tensor;
 ///
-//  extern double piston, inv_piston, volume;
-//  extern double p_ext, p_inst, p_diff;
-
 /*@}*/
 
 /** \name Exported Functions */

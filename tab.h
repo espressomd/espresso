@@ -64,8 +64,8 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
       p1->f.f[j] += fac * d[j];
       p2->f.f[j] -= fac * d[j];
 #ifdef NPT
-      if (piston > 0.0) 
-	p_inst += fac*d[j] * d[j];
+      if (piston != 0.0) 
+	p_vir += fac*d[j] * d[j];
 #endif
     }
   }

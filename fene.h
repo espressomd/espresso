@@ -46,8 +46,8 @@ MDINLINE void add_fene_pair_force(Particle *p1, Particle *p2, int type_num)
     p1->f.f[i] -= fac*dx[i];
     p2->f.f[i] += fac*dx[i];
 #ifdef NPT
-    if (piston > 0.0) 
-      p_inst -= fac*dx[i] * dx[i];
+    if (piston != 0.0) 
+      p_vir -= fac*dx[i] * dx[i];
 #endif
   }
 

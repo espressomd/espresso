@@ -25,6 +25,8 @@ double NpT_volume  = 0.0;
 double p_ext       = 0.0;
 double p_inst      = 0.0;
 double p_diff      = 0.0;
+double p_vir       = 0.0;
+double p_vel       = 0.0;
 
 
 /************************************************************/

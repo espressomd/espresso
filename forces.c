@@ -85,11 +85,12 @@ void calc_long_range_forces()
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
   case COULOMB_P3M:
-    P3M_calc_kspace_forces(1,0);
 #ifdef NPT
-    if ((piston > 0.0) && (this_node==0))
-      p_inst += P3M_calc_kspace_forces(0,1);
+    if (piston != 0.0)
+      p_vir += P3M_calc_kspace_forces(1,1);
+    else
 #endif
+      P3M_calc_kspace_forces(1,0);
     break;
   case COULOMB_MMM2D:
     MMM2D_add_far();

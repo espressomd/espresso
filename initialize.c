@@ -43,6 +43,9 @@
 #include "utils.h"
 #include "nsquare.h"
 #include "nemd.h"
+#ifdef NPT
+#include "domain_decomposition.h"
+#endif
 
 /** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
@@ -83,12 +86,15 @@ int on_program_start(Tcl_Interp *interp)
 void on_integration_start()
 {
 #ifdef NPT
-  if (piston > 0.0) {
+  if (piston != 0.0) {
     /* prepare NpT-integration */
     inv_piston = 1/(1.0*piston);
     NpT_volume = box_l[0]*box_l[1]*box_l[2];
-    if (recalc_forces) 
-      p_inst = 0.0;
+    if (recalc_forces) { 
+      p_inst = 0.0;  
+      p_vir  = 0.0; 
+      p_vel  = 0.0; 
+    }
   }
 #endif
 
@@ -171,6 +177,16 @@ void on_cell_structure_change()
   on_coulomb_change();
 }
 
+void on_NpT_boxl_change() {
+  grid_changed_box_l();
+
+  if(coulomb.method == COULOMB_P3M)
+    integrate_vv_recalc_maxrange();
+
+  if(cell_structure.type==CELL_STRUCTURE_DOMDEC)
+    dd_NpT_update_cell_grid();
+}
+
 void on_parameter_change(int field)
 {
   if (field == FIELD_NODEGRID)
@@ -185,7 +201,7 @@ void on_parameter_change(int field)
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_P3M:
-    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL || field == FIELD_NODEGRID)
+    if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID)
       on_coulomb_change();
     break;
   case COULOMB_DH:

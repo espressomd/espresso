@@ -213,8 +213,7 @@ void cells_re_init(int new_cs)
   Cell *tmp_cells;
   int tmp_n_cells,i;
 
-  CELL_TRACE(fprintf(stderr, "%d: cells_re_init: convert type (%d->%d)\n",
-		     this_node, cell_structure.type, new_cs));
+  CELL_TRACE(fprintf(stderr, "%d: cells_re_init: convert type (%d->%d)\n", this_node, cell_structure.type, new_cs));
 
   invalidate_ghosts();
 
