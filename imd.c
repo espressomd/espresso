@@ -370,7 +370,7 @@ int imd_drain_socket(Tcl_Interp *interp)
 	 << forces[3*i + 2] << endl;
 	 
 	 }
-	 //cout << "end" << endl;
+	 cout << "end" << endl;
 	 */
       break;
     case IMD_TRATE:

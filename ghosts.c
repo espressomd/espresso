@@ -34,6 +34,8 @@
  *  In this way also edges and corners are communicated
  *  (See also \ref directions for our conventions).
  *
+ *  Source code: \include ghosts.c
+ *
  *  \warning \b Since the ghost particle structures make use of the
  *  linked cell structure, \ref ghost_init has to be called after \ref
  *  cells_init */
