@@ -3,6 +3,7 @@
 */
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include "initialize.h"
 #include "global.h"
 #include "particle_data.h"
@@ -23,8 +24,6 @@
 #include "ghosts.h"
 
 static void init_tcl(Tcl_Interp *interp);
-
-int db_start=1;
 
 int on_program_start(Tcl_Interp *interp)
 {
