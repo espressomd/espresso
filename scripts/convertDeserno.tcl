@@ -26,7 +26,7 @@
 #     'polygelSetup.c'                                      #
 #                                                           #
 # Created:       16.08.2002 by BAM                          #
-# Last modified: 20.09.2002 by BAM                          #
+# Last modified: 25.09.2002 by BAM                          #
 #                                                           #
 #                                                           #
 # convertMD2Deserno                                         #
@@ -43,7 +43,7 @@
 # 0-1-...-(MPC-1) MPC-...-(2*MPC-1) ...                     #
 #                                                           #
 # Created:       24.08.2002 by BAM                          #
-# Last modified: 23.09.2002 by BAM                          #
+# Last modified: 25.09.2002 by BAM                          #
 #                                                           #
 #                                                           #
 # ! =============                                         ! #
@@ -89,7 +89,17 @@ proc initConversion {} {
     # Include needed functions
     puts -nonewline "        Loading auxiliary functions... "
     flush stdout
-    source countBonds.tcl
+    if { [catch [source countBonds.tcl]]!=0 } {
+	if { [catch [source ./scripts/countBonds.tcl]]!=0 && [catch [source $TCLMD_SCRIPTS/countBonds.tcl]]!=0 } {
+	    puts "Failed.\n"
+	    puts "----------------"
+	    puts "--> Warning! <--"
+	    puts "----------------"
+	    puts "--> Could not find 'countBonds.tcl' which is required for execution!"
+	    puts "Aborting..."
+	    exit
+	} 
+    }
     puts "Done."
 
     # The internal names of the Deserno-variables from 'polygelSetup' will be stored in 'conf',
@@ -194,7 +204,7 @@ proc convertDeserno2MDmain {origin destination} {
 
     # Check the supplied file-names for existence and correctness
     if { ![ file exists $origin ] } {
-	puts " "
+	puts "Failed.\n "
 	puts "----------------"
 	puts "--> Warning! <--"
 	puts "----------------"
@@ -204,7 +214,7 @@ proc convertDeserno2MDmain {origin destination} {
 	exit
     }
     if { [string compare [lindex [split $destination "."] end] "gz"]!=0 } {
-	puts " "
+	puts "Failed.\n"
 	puts "----------------"
 	puts "--> Warning! <--"
 	puts "----------------"
@@ -259,7 +269,7 @@ proc convertDeserno2MDmain {origin destination} {
 
 	    # Check for consistency
 	    if { ![expr $i<[llength $conf]] } {
-		puts " "
+		puts "Failed.\n"
 		puts "----------------"
 		puts "--> Warning! <--"
 		puts "----------------"
@@ -566,7 +576,7 @@ proc convertMD2DesernoMain {origin destination} {
 
     # Check the supplied file-names for existence and correctness
     if { [string compare [lindex [split $origin "."] end] "gz"]!=0 } {
-	puts " "
+	puts "Failed.\n"
 	puts "----------------"
 	puts "--> Warning! <--"
 	puts "----------------"
@@ -579,7 +589,7 @@ proc convertMD2DesernoMain {origin destination} {
     if {[expr { [string last \_config $destination ]<1 || \
 		    [expr [string compare [lindex [split $destination \".\"] end] START]!=0 && \
 			 [string compare [lindex [split $destination \".\"] end] $postfix]!=0 ] } ]} {
-	puts " "
+	puts "Failed.\n"
 	puts "----------------"
 	puts "--> Warning! <--"
 	puts "----------------"
@@ -650,7 +660,7 @@ proc convertMD2DesernoMain {origin destination} {
 		set tmp_FENE 1
 		puts "Done."
 	    } elseif { $k_FENE!=[lindex $tmp_var 2] || $r_FENE!=[lindex $tmp_var 3] } {
-		puts " "
+		puts "Failed.\n"
 		puts "----------------"
 		puts "--> Warning! <--"
 		puts "----------------"
@@ -670,7 +680,7 @@ proc convertMD2DesernoMain {origin destination} {
 		set tmp_LJ 1
 		puts "Done."
 	    } elseif { $eps_LJ!=[lindex $tmp_var 3] || $rcut_LJ!=[lindex $tmp_var 5] } {
-		puts " "
+		puts "Failed.\n"
 		puts "----------------"
 		puts "--> Warning! <--"
 		puts "----------------"
@@ -730,7 +740,7 @@ proc convertMD2DesernoMain {origin destination} {
 		     lappend part_crs $i }
 		default {
 		    # 4+ bonds??? => hmm... too much?!
-		    puts " "
+		    puts "Failed.\n"
 		    puts "----------------"
 		    puts "--> Warning! <--"
 		    puts "----------------"
@@ -745,7 +755,7 @@ proc convertMD2DesernoMain {origin destination} {
 	    if { [lindex [lindex $part_all $i] [findPropPos [lindex $part_all $i] type]]!=$type_P } {
 		lappend part_else $i
 	    } else {
-		puts " "
+		puts "Failed.\n"
 		puts "----------------"
 		puts "--> Warning! <--"
 		puts "----------------"
@@ -817,7 +827,7 @@ proc convertMD2DesernoMain {origin destination} {
 			set tmp_cD [expr $tmp_cD_k+1]
 			set tmp_cD_k 0
 		    } else {
-			puts " "
+			puts "Failed.\n"
 			puts "----------------"
 			puts "--> Warning! <--"
 			puts "----------------"
@@ -849,7 +859,7 @@ proc convertMD2DesernoMain {origin destination} {
 		if { $tmp_CPP==0 } {
 		    set tmp_CPP $tmp_CPP_k
 		} else {
-		    puts " "
+		    puts "Failed.\n"
 		    puts "----------------"
 		    puts "--> Warning! <--"
 		    puts "----------------"
@@ -867,7 +877,7 @@ proc convertMD2DesernoMain {origin destination} {
 		lappend polymer_chains $chains
 		incr tmp_NP
 	    } else {
-		puts " "
+		puts "Failed.\n"
 		puts "----------------"
 		puts "--> Warning! <--"
 		puts "----------------"
@@ -927,7 +937,7 @@ proc convertMD2DesernoMain {origin destination} {
 	    # get the bonding informations on the current particle & check if they comply with the rules
 	    set tmp_bond [lindex $bonds $i]
 	    if {[string compare $tmp_bond "NA"]==0} {
-		puts " "
+		puts "Failed.\n"
 		puts "----------------"
 		puts "--> Warning! <--"
 		puts "----------------"
@@ -957,7 +967,7 @@ proc convertMD2DesernoMain {origin destination} {
 			    set tmp_cD [expr $tmp_cD_k+1]
 			    set tmp_cD_k 0
 			} else {
-			    puts " "
+			    puts "Failed.\n"
 			    puts "----------------"
 			    puts "--> Warning! <--"
 			    puts "----------------"
@@ -1003,7 +1013,7 @@ proc convertMD2DesernoMain {origin destination} {
 			if { $tmp_CPP==0 } {
 			    set tmp_CPP $tmp_CPP_k
 			} else {
-			    puts " "
+			    puts "Failed.\n"
 			    puts "----------------"
 			    puts "--> Warning! <--"
 			    puts "----------------"
@@ -1021,7 +1031,7 @@ proc convertMD2DesernoMain {origin destination} {
 			lappend polymer_chains $chains
 			incr tmp_NP
 		    } else {
-			puts " "
+			puts "Failed.\n"
 			puts "----------------"
 			puts "--> Warning! <--"
 			puts "----------------"
@@ -1087,7 +1097,7 @@ proc convertMD2DesernoMain {origin destination} {
 	    if { $tmp_CI==0} {
 		set tmp_valCI $tmp_var
 	    } elseif { $tmp_valCI!=$tmp_var } {
-		puts " "
+		puts "Failed.\n"
 		puts "----------------"
 		puts "--> Warning! <--"
 		puts "----------------"
@@ -1104,7 +1114,7 @@ proc convertMD2DesernoMain {origin destination} {
 	    if { [eval expr $$tmp_S==0] } {
 		eval set $tmp_S $tmp_var
 	    } elseif { [eval expr $$tmp_S!=$tmp_var] } {
-		puts " "
+		puts "Failed.\n"
 		puts "----------------"
 		puts "--> Warning! <--"
 		puts "----------------"
@@ -1116,7 +1126,7 @@ proc convertMD2DesernoMain {origin destination} {
 	    incr tmp_Salt 
 	} else {
 	    # neither salt nor counter-ion but having no bonds at all??? => hmm... something's wrong?!
-	    puts " "
+	    puts "Failed.\n"
 	    puts "----------------"
 	    puts "--> Warning! <--"
 	    puts "----------------"
