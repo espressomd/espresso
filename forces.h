@@ -77,6 +77,8 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
 
+  FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node, p1->p.identity, p2->p.identity, dist));
+
 #ifdef TABULATED
   /* tabulated */
   add_tabulated_pair_force(p1,p2,ia_params,d,dist);
