@@ -7,6 +7,11 @@
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 #  Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
 # 
+############ general settings
+
+### Tk (graphical interface)
+TK=yes
+
 ############ compiler settings
 
 # for MPI
@@ -21,8 +26,12 @@ DEPEND=makedepend
 ############ C++ compiler settings
 CXX=mpiCC
 
+############ Include-file PATH for tcl on Mac
+CFLAGS+= -I/Library/Frameworks/Tcl.framework/Headers
+
 ############ linker settings
-LINK=$(CC)
+export DARWINLINK=$(CC)
+LINK=../darwinlink.sh
 LDLIBS=-O3 -L/usr/local/lib -lrfftw -lfftw -lmpi -lm -ltcl -llam
 
 # FFTW. Note this is VERY specific for our cluster
@@ -33,3 +42,11 @@ CFLAGS+= -DMDINLINE="static"
 
 ############ special flags for C++ compilation
 CXXFLAGS=$(CFLAGS)
+
+########### TK
+ifeq ($(TK),yes)
+     CFLAGS+= -I/Library/Frameworks/Tk.framework/Headers
+     CFLAGS+= -DTK
+     LDLIBS+= -ltk
+endif
+
