@@ -166,10 +166,12 @@ void integrate_vv(int n_steps)
 		      n_steps));
 
   if(parameter_changed || particle_changed || topology_changed || interactions_changed) {
+    invalidate_ghosts();
+    exchange_and_sort_part();
     exchange_ghost();
     build_verlet_lists_and_force_calc();
 #ifdef ROTATION
-  convert_initial_torques();
+    convert_initial_torques();
 #endif
     collect_ghost_forces();
     rescale_forces();
