@@ -8,8 +8,11 @@ What's new, what's been changed, what's been fixed
 Current working revision.
 (a) December 19th, 2003.
 
-New Features:
-(a) tabulated lookup potentials
+New Features: 
+
+(a) working version of tabulated lookup potentials is
+now implemented.  Be sure to check documentation as file format
+requirements are likely to change with new versions.
 
 
 Changes:

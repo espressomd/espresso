@@ -726,6 +726,15 @@ int tabulated_set_params(int part_type_a, int part_type_b,
 
   /*Open the file containing force and energy tables */
   fp = fopen( filename , "r");
+
+  int token = 0;
+  /*Look for a line starting with # */
+  while ( token != EOF) {
+    token = fgetc(fp);
+    if ( token == 35 ) { break; } // magic number for # symbol
+  }
+
+
   /* First read two important parameters we read in the data later*/
   fscanf( fp , "%d ", &npoints);
   fscanf( fp, "%lf ", &minval);
