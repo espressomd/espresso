@@ -51,51 +51,56 @@ Users in MPI-P:
 External users:
 ===============================================================================
 
-name:  Cameron Abrams
-email: cfa22@drexel.edu
-send:  JUL 2003
+name:    Cameron Abrams
+email:   cfa22@drexel.edu
+sent:    JUL 2003
+version:
 topic: 
 
 
-name:  Hendrik Meyer
-email: hmeyer@ics.u-strasbg.fr
-send:  2003
+name:    Hendrik Meyer
+email:   hmeyer@ics.u-strasbg.fr
+sent:    2003
+version:
 topic: 
 
 
-name:  Zuowei Wang 
-email: wangzw@email.unc.com
-send:  2003
+name:    Zuowei Wang 
+email:   wangzw@email.unc.com
+sent:    2003
+version:
 topic: 
 
 
-name:  Elena Jarkova
-email: jarkova@mpip-mainz.mpg.de
-send:  OKT 2003
+name:    Elena Jarkova
+email:   jarkova@mpip-mainz.mpg.de
+sent:    OKT 2003
+version:
 topic: 
 
 
-name:  Karel Prochazka
-email: prochaz@vivien.natur.cuni.cz
-send:  08.OKT.2003
+name:    Karel Prochazka
+email:   prochaz@vivien.natur.cuni.cz
+sent:    08.OKT.2003
+version:
 topic: 
 
 name:    Andreas Heuer
 email:   andheuer@uni-muenster.de
-send:    22.OKT.2003
+sent:    22.OKT.2003
 version:
 topic:   Polymers, e.g. PEO at Silica
 
 name:    Alexey Shipov
 email:   ashipov@mail.ru
-send:    11.FEB.2004
+sent:    11.FEB.2004
 version: 20040129-Espresso_v1.5.Beta.tar.gz
 topic:   domain nucleation and growth in thin granular ferromagnetic films 
          in PMMA
 
 name:    Ralph Jaquet
 email:   theo@theo.chemie.uni-siegen.de
-send:    09.MAR.2004
+sent:    09.MAR.2004
 version: 20040129-Espresso_v1.5.Beta.tar.gz
 topic:   Wir würden gerne auch im Rahmen von MD untersuchen, wie sich die 
          smektische Phase ausrichtet (Direktor) und wie das 
@@ -103,12 +108,19 @@ topic:   Wir würden gerne auch im Rahmen von MD untersuchen, wie sich die
 
 name:    Alexandre Diehl
 email:   diehl@fisica.ufc.br
-send:    10.MAR.2004
+sent:    10.MAR.2004
 version: 20040129-Espresso_v1.5.Beta.tar.gz
 topic:   It's my intention to work on polyelectrolyte simulation
 
 name:    Frederic Tessier
 email:	 ftessier@physics.uottawa.ca
-send:    15.MAR.2004
+sent:    15.MAR.2004
 version: 20040129-Espresso_v1.5.Beta.tar.gz
 topic:   simulations of EOF, Nanopore, polymer-polymer collisions
+
+name:    Baohua Ji
+email:   ji@mf.mpg.de
+sent:    29.MAR.2004
+version: 20040329-Espresso_v1.5.7c.tar.gz
+topic:   simulate the DNA and protein mechanics and deformation
+
