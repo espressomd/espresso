@@ -167,6 +167,8 @@ MDINLINE void add_maggs_yukawa_pair_force(Particle *p1, Particle *p2,
       );
   }
 }
+
+/*@}*/
 #endif
 
 #endif

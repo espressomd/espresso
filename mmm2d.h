@@ -27,7 +27,6 @@ int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv);
 /** set parameters for MMM2D. This assumes that the particles do NOT leave the box.
     For the near formula (nsquared cell structure), precision might be lost, while
     the far formula might have problems with overflows. 
-    @param interp       Tcl interpreter where errors are returned
     @param maxPWerror   the maximal error for the pairwise interactions. Both for
     potential and force components. The potential is therefore always slightly
     more precise

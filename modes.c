@@ -244,6 +244,7 @@ int orient_order(double* result)
     \param id The particle identifier
     \param partCfg An array of sorted particles
     \param zref The average z position of all particles
+    \param director director
  */
 int lipid_orientation( int id, Particle* partCfg , double zref, double director[3]) {
   int mol_size, head_id, tail_id, mol_id, mol_type;

@@ -160,7 +160,24 @@ void P3M_scaleby_box_l();
  */
 int P3M_tune_parameters(Tcl_Interp *interp);
 
-/** a probably faster adaptive tuning method */
+/** a probably faster adaptive tuning method. Uses the same error estimates and parameters as
+    \ref P3M_adaptive_tune_parameters, but a different strategy for finding the optimum. The algorithm
+    basically determines the mesh, cao and then the real space cutoff, in this nested order.
+
+    For each mesh, the cao optimal for the mesh tested previously is used as an initial guess,
+    and the algorithm tries whether increasing or decreasing it leads to a better solution. This
+    is efficient, since the optimal cao only changes little with the meshes in general.
+
+    The real space cutoff for a given mesh and cao is determined via a bisection on the error estimate,
+    which determines where the error estimate equals the required accuracy. Therefore the smallest 
+    possible, i.e. fastest real space cutoff is determined.
+
+    Both the search over mesh and cao stop to search in a specific direction once the computation time is
+    significantly higher than the currently known optimum.
+
+    Compared to \ref P3M_tune_parameters, this function will test more parameters sets for efficiency, but
+    the error estimate is calculated less often. In general this should be faster and give better results.
+ */
 int P3M_adaptive_tune_parameters(Tcl_Interp *interp);
 
 /** Calculate the k-space contribution to the coulomb interaction

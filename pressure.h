@@ -258,6 +258,9 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
 }
 
 /** implementation of 'analyze pressure'
+    @param interp Tcl interpreter
+    @param argc   arguments
+    @param argv   arguments
     @param v_comp flag which enables (1) compensation of the velocities required 
 		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
 		  (hence it only works with domain decomposition); naturally it

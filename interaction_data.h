@@ -174,10 +174,9 @@ typedef struct {
   /** The maximum allowable filename length for a tabulated potential file*/
 #define MAXLENGTH_TABFILE_NAME 256
   char TAB_filename[MAXLENGTH_TABFILE_NAME];
+  /*@}*/  
 #endif
 
-  /*@}*/  
-  
 #ifdef COMFORCE
   /** \name center of mass directed force */
   /*@{*/

@@ -24,7 +24,7 @@
 #include "debug.h"
 #include "topology.h"
 
-/** Using the topology information stored in \ref molecules this routine foldes all particles belonging to a molecule 
+/** Using the topology information stored in \ref topology this routine foldes all particles belonging to a molecule 
  Using the values of \ref chain_start , \ref chain_length and \ref
 chain_n_chains this routine folds a set of chains of uniform length
 without losing bonding connectivity.  For this to work the chains must

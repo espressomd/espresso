@@ -637,11 +637,11 @@ double velocitiesC(double v_max, int part_id, int N_T) {
 
 int maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   /** Implementation of the tcl-command
-      maxwell_velocities [start <part_id>] [count <N_T>]
-      Sets the velocities of <N_T> particles to a random value with maxwell distribution,
+      maxwell_velocities [start \<part_id\>] [count \<N_T\>]
+      Sets the velocities of \<N_T\> particles to a random value with maxwell distribution,
       and returns the averaged velocity when done.
-		   <part_id>     = particle number of the first of the <N_T> particles (defaults to '0') 
-		   <N_T>         = number of particles of which the velocities should be set (defaults to 'n_total_particles - part_id') */
+		   \<part_id\>     = particle number of the first of the \<N_T\> particles (defaults to '0') 
+		   \<N_T\>         = number of particles of which the velocities should be set (defaults to 'n_total_particles - part_id') */
   int part_id = 0, N_T = n_total_particles;
   double tmp_try;
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];

@@ -91,6 +91,7 @@ MDINLINE int inter_parse_dh(Tcl_Interp * interp, int argc, char ** argv)
     @param p2        Pointer to second/middle particle.
     @param d         Vector pointing from p1 to p2.
     @param dist      Distance between p1 and p2.
+    @param force     returns the force on particle 1.
 */
 MDINLINE void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
 {

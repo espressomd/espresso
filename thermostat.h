@@ -119,9 +119,9 @@ extern double dpd_r_cut;
 extern double dpd_r_cut_inv;
 
 
-/** Friction coefficient for nptiso-thermostat's inline-functions \ref friction_therm0_nptiso */
+/** Friction coefficient for nptiso-thermostat's inline-function friction_therm0_nptiso */
 extern double nptiso_gamma0;
-/** Friction coefficient for nptiso-thermostat's inline-functions \ref friction_thermV_nptiso */
+/** Friction coefficient for nptiso-thermostat's inline-function friction_thermV_nptiso */
 extern double nptiso_gammav;
 #ifdef NPT
 /** Prefactors for nptiso-thermostat's inline-functions \ref friction_therm0_nptiso */
