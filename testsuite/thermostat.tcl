@@ -1,6 +1,6 @@
 #!/bin/sh
 # tricking... the line after a these comments are interpreted as standard shell script \
-    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=2; fi
+    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=3; fi
 # OSF1 \
     if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $*
 # AIX \
@@ -49,18 +49,25 @@ proc read_data {file} {
 proc write_data {file} {
     set f [open $file "w"]
     blockfile $f write variable box_l
-    blockfile $f write particles {id pos v f}
+    blockfile $f write particles {id pos v omega} 
     close $f
 }
-
 if { [catch {
-    read_data "thermostat.data"
+    if { [regexp "ROTATION" [code_info]] } {
+	puts "rotation found, 6 degrees of freedom"
+	set deg_free 6
+	set filename "thermostat_rot.data"
+    } else {
+	puts "no rotation found, 3 degrees of freedom"
+	set deg_free 3
+	set filename "thermostat.data"
+    }
+    read_data $filename
     # for some reason there has to be at least one interaction
     inter 0 0 lennard-jones 0.0 1.0 1.12246 1.0 0.0 0.0
 
     set eng0    [analyze energy kin]
-    set temp0   [expr $eng0/$n_part/1.5]
-    if { [regexp "ROTATION" [code_info]] } { set temp0 [expr $temp0/2.] }
+    set temp0   [expr $eng0/$n_part/($deg_free/2.)]
     set curtemp1 0
 
     for {set i 0} { $i < $maxstep} { incr i } {
@@ -68,8 +75,7 @@ if { [catch {
 
 	set toteng [analyze energy total]
 	set cureng [analyze energy kin] 
-	set curtemp [expr $cureng/$n_part/1.5] 
-	if { [regexp "ROTATION" [code_info]] } { set curtemp [expr $curtemp/2.] }
+	set curtemp [expr $cureng/$n_part/($deg_free/2.)] 
 
 	if { [expr abs($toteng - $cureng)] > $epsilon } {
 	    error "system has unwanted energy contributions"
@@ -78,7 +84,7 @@ if { [catch {
     }
     set curtemp1 [expr $curtemp1/$maxstep]
     # here you can create a new snapshot
-    #  write_data "thermostat.dat"
+    # write_data $filename
 
 
     set rel_temp_error [expr abs(( [setmd temp] - $curtemp1)/$curtemp1)]
