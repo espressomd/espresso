@@ -40,6 +40,7 @@ Pasichnyk, Igor
 
 Sukumaran, Sathish
 
+Cooke, Ira
 
 
 ===============================================================================
@@ -79,10 +80,7 @@ email: prochaz@vivien.natur.cuni.cz
 send:  08.OKT.2003
 topic: 
 
-name:    Ira Cooke
-email:   Ira Cooke <ira.cooke@anu.edu.au>
-send:    2003-10-09  (v?? dated 2003-10-08 17:17h)
-remarks: will join Markus Deserno as a postdoc later in Oct/03,
-         therefore wants to familiarize himself with ESPResSo.
-update:  2003-10-20  (v1.1.RC2; Ira is now an internal user)
-
+name:  Andreas Heure
+email: andheuer@uni-muenster.de
+send:  22.OKT.2003
+topic: Polymers, e.g. PEO at Silica
