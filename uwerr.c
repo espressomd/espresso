@@ -324,7 +324,7 @@ int UWerr_proj(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
 */
 int UWerr_f(Tcl_Interp *interp, Tcl_CmdInfo * cmdInfo, int argc, char ** argv,
 	    double ** data, int rows, int cols,
-	    int * n_rep, int len, double s_tau)
+	    int * n_rep, int len, double s_tau, int plot)
 {
   struct UWerr_t ret;
   int a, k, i, sum = 0, W_opt = 0, W_max = 0;
@@ -335,6 +335,8 @@ int UWerr_f(Tcl_Interp *interp, Tcl_CmdInfo * cmdInfo, int argc, char ** argv,
   char * str = 0L;
   char * tcl_vector = 0L;
   char ** my_argv;
+
+  FILE * plotDataf, * plotScriptf;
 
   if (!data) {
     Tcl_AppendElement(interp, "No data matrix given.");
@@ -674,13 +676,28 @@ int UWerr_f(Tcl_Interp *interp, Tcl_CmdInfo * cmdInfo, int argc, char ** argv,
     ret.Q_val = gammaq((len-1)/2., ret.Q_val/2.);
   }
 
-#ifdef UW_PLOT
-  tmp = 0;
-  for (i = 0; i < W_max; ++i) {
-    tmp += gFbb[i];
-    printf("%d %.3f %.3f\n", i, gFbb[i]/gFbb[0], tmp/gFbb[0]-.5);
+  if (plot) {
+    plotScriptf = fopen("uwerr_plot_script", "w");
+
+    fprintf(plotScriptf, "set ylabel \"Gamma\"; set xlabel \"W\"; set label \"W_opt=%d\" at %d,0 center; plot f(x) = 0, f(x) notitle, 'uwerr_plot_data' using 1:2 title \"normalized autocorrelation\" with lines; show label; pause -1\n", W_opt, W_opt);
+    fprintf(plotScriptf, "set ylabel \"tau_int\"; plot f(x) = %.3f, 'uwerr_plot_data' using 1:3 title \"tau_int with statistical errors\" with lines,", ret.tau_int);
+    fprintf(plotScriptf, " 'uwerr_plot_data' using 1:3:4 notitle with errorbars, f(x) title \"estimate\"; pause -1\n");
+
+    fclose(plotScriptf);
+
+    plotDataf = fopen("uwerr_plot_data", "w");
+    tmp = 0;
+    for (i = 0; i < W_max; ++i) {
+      tmp += gFbb[i];
+      /* print values for x-Axis, Gamma/Gamma[0], tau_int, and its errors */
+      fprintf(plotDataf, "%d %.3f %.3f %.3f\n", i, gFbb[i]/gFbb[0],
+	      tmp/gFbb[0]-.5, 2*sqrt((i+tmp/gFbb[0])/rows));
+    }
+    fclose(plotDataf);
+
+    puts("Press Return to continue ...");
+    Tcl_Eval(interp, "[exec gnuplot uwerr_plot_script]");
   }
-#endif
 
   Tcl_ResetResult(interp);
   Tcl_PrintDouble(interp, ret.value, str);
@@ -721,7 +738,7 @@ int UWerr(Tcl_Interp * interp,
 	  double ** data, int rows, int cols,
 	  int col_to_analyze,
 	  int * n_rep, int len,
-	  double s_tau)
+	  double s_tau, int plot)
 {
   Tcl_CmdInfo cmdInfo;
   char * argv[2];
@@ -736,7 +753,7 @@ int UWerr(Tcl_Interp * interp,
   Tcl_GetCommandInfo(interp, name, &cmdInfo);
   
   res = UWerr_f(interp, &cmdInfo, 2, argv,
-		data, rows, cols, n_rep, len, s_tau);
+		data, rows, cols, n_rep, len, s_tau, plot);
 
   Tcl_DeleteCommand(interp, name);
   
@@ -939,7 +956,7 @@ int uwerr_read_double_vector(Tcl_Interp *interp, char * data_in ,
 
 int uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
 {
-  int i, nrows, ncols, len,
+  int i, nrows, ncols, len, plot = 0,
     col_to_analyze = -1, analyze_col = 0, error = 0,
     result = TCL_OK;
   double s_tau = 1.5;
@@ -951,7 +968,7 @@ int uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
 
   if (argc < 4) {
     Tcl_AppendResult(interp, argv[0], " needs at least 3 arguments.\n",
-		     "usage: ", argv[0], " <data> <nrep> {<col>|<f>} [<s_tau> [<f_args>]]\n",
+		     "usage: ", argv[0], " <data> <nrep> {<col>|<f>} [<s_tau> [<f_args>]] [plot]\n",
 		     (char *)NULL);
     return TCL_ERROR;
   }
@@ -987,27 +1004,39 @@ int uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
     free(str);
   }
 
-  /* read s_tau if there is a fourth arg */
-  if (argc > 4 && !error && Tcl_GetDouble(interp, argv[4], &s_tau) == TCL_ERROR) {
-    error = 1;
-    Tcl_AppendResult(interp, "fourth argument has to be a double.", (char *)NULL);
-  }
+  /* check for plot as fourth argument */
+  if (argc > 4 && !error)
+    if (!strcmp(argv[4], "plot"))
+      plot = 1;
+    else {
+
+      /* read s_tau if there is a fourth arg */
+      if (Tcl_GetDouble(interp, argv[4], &s_tau) == TCL_ERROR) {
+	error = 1;
+	Tcl_AppendResult(interp, "fourth argument has to be a double or 'plot'.", (char *)NULL);
+      }
+
+    }
+
+  if (argc > 5 && ! error)
+    if (!strcmp(argv[argc-1], "plot"))
+      plot = 1;
 
   if (!error && analyze_col) {
     result = UWerr(interp, data, nrows, ncols,
-		   col_to_analyze-1, nrep, len, s_tau);
+		   col_to_analyze-1, nrep, len, s_tau, plot);
   }
 
   if (!error && !analyze_col) {
     my_argv = (char**)malloc((argc-3)*sizeof(char*));
     my_argv[0] = argv[3];
-    for (i = 0; i < argc-5; ++i)
+    for (i = 0; i < argc-5-plot; ++i)
       my_argv[i+1] = argv[5+i];
-    result = UWerr_f(interp, &cmdInfo, argc>4?argc-4:1, my_argv,
-		     data, nrows, ncols, nrep, len, s_tau);
+    result = UWerr_f(interp, &cmdInfo, argc-plot>4?argc-plot-4:1, my_argv,
+		     data, nrows, ncols, nrep, len, s_tau, plot);
     free(my_argv);
   }
-
+  
   for (i = 0; i < nrows; ++i)
     free(data[i]);
   free(data);

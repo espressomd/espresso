@@ -1,5 +1,5 @@
 /** \page tcl_uwerr The uwerr comand
-    \verbatim uwerr <data> <nrep> {<col>|<f>} [<s_tau> [<f_args>]] \endverbatim
+    \verbatim uwerr <data> <nrep> {<col>|<f>} [<s_tau> [<f_args>]] [plot]\endverbatim
     calculates the value, the error and the error of the error for arbitrary functions of
     elementary observables in Monte Carlo simulations.
 
@@ -24,6 +24,7 @@
     <dt>f_args</dt><dd>further arguments to \em f.</dd>
     <dt>s_tau</dt><dd>is the estimate \f$S=\tau/tau_{\textrm{int}}\f$ as explained in section (3.3) of
                  [1]. The default is 1.5 and it is never taken larger than \f$\min_{r=1}^R{N_r}/2\f$.</dd>
+    <dt>'plot'</dt><dd>If plot is given you will get the plots of \f$\Gamma/\Gamma(0)\f$ and \f$\tau_{int}\f$ vs. \f$W\f$.<br>The data and gnuplot script is written to the current directory.</dd>
     </dl>
     <br>
     It returns a string containing the following values in the given order.
@@ -33,7 +34,7 @@
                 <li>The error of the error
                 <li>The integrated autocorrelation time
                 <li>The error of that
-		<li>if length(nrep) > 1 The Q-value, i.e. the probability to find a $\Chi^2$ fit of the replica estimates
+		<li>if length(nrep) > 1 The Q-value, i.e. the probability to find a \f$\chi^2\f$ fit of the replica estimates
             </ol>
 
     The users is warned with a string if the windowing failed or if the error in one of the replica is to large.
