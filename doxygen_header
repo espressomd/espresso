@@ -15,7 +15,7 @@ interface between the Tcl script and the MD code:
 <ul>
 <li>\verbatim setmd <variable> <value>+ \endverbatim
 modifies variables declared in \ref fields. More information can be
-found in \ref global. The C implementation is \ref setmd. The
+found in \ref global.h. The C implementation is \ref setmd. The
 following list explains the usage for the variables that are accesible 
 via setmd. Using \verbatim [setmd <variable>] \endverbatim gives the
 actual value of <variable> in the MD code back to the Tcl script.
@@ -199,5 +199,143 @@ things here.
 !!! Don't use this code for sientific productions !!!\\
 Their are probably plenty of bugs in the code at the moment, but they
 are not known.
+
+\section help More help about ...
+
+<ul>
+<li> \ref our_cvs
+<li> \ref our_doxygen
+</ul>
+
+*/
+
+/** \page our_cvs How to use CVS
+
+<b>Befor checking in any changes you should make sure that</b>
+<ol>
+<li> your file contains no conflicts with the cvs version.
+<li> the code compiles without warning on Linux and OSF1.
+<li> the \ref maketest "test procedure" runs. 
+<li> you have informed the responsible person of that file about major
+changes.
+</ol>
+
+Here a list of the most commen cvs commands we need:
+
+<ul>
+<li> \anchor cvs_add \verbatim cvs add <file> \endverbatim
+	Adds <file> to the cvsroot directory. You have to use 
+	\ref cvs_commit "commit" to make your add complete. 
+<li> \anchor cvs_checkout \verbatim cvs checkout <project> \endverbatim
+	This will create a new directory <project> in the CWD, containing an
+	up-to-date version of <project>.
+<li> \anchor cvs_commit \verbatim cvs commit <file> \endverbatim
+	Puts your changes into the cvsroot directory and makes them
+	available for the others. 
+	<b> Use with care and write a senseful comment !!!</b>
+<li> \anchor cvs_diff \verbatim cvs diff <file> \endverbatim
+	Shows differences of your local copy of <file> with respect
+	to the cvs version.	
+<li> \anchor cvs_log \verbatim cvs log <file> \endverbatim
+	Shows the log file for <file>, e.g. comments on changes that
+	have been made in the past and who is responsible for them.
+<li> \anchor cvs_remove \verbatim cvs remove <file> \endverbatim
+	removes a file from the cvsroot directory. That means, it is
+	still there and can be restored, but will not be contained in
+	futere checkouts and updates. <b>Use with care !!! </b>
+<li> \anchor cvs_status \verbatim cvs status <file> \endverbatim
+	Reports the status of your local copy of <file> with respect
+	to the cvs version.	
+<li> \anchor cvs_update \verbatim cvs update \endverbatim
+	Get the current version of all files from the cvsroot
+	directory. There will be a U in front of files that are
+	updated, a M before files where cvs merges your local copy
+	with the cvs version and a ? if there are files in your local
+	directory which are not known to cvs. You will get a warning 
+	\verbatim conflicts during merge \endverbatim for files where
+	cvs is not able to merge. <b>You have to look at these files
+	by hand!</b> They contain sections
+	\verbatim 
+>>>>>>>>
+Version of this section from 
+the cvsroot directory
+========
+Version of this section from
+your local copy
+<<<<<<<<
+	\endverbatim
+	You have to <b>think first</b> and then decide how to combine
+	the two versions.
+</ul>
+
+For more help on CVS, see 
+<a href="http://www.mpip-mainz.mpg.de/www/theory/computers/pdsoftie/doc/cvs/cvs_toc.html">CVS Manual</a>
+*/
+
+/** \page our_doxygen How to do the documentation (Doxygen)
+
+The documentation for tcl_md is mainly contained in the source code
+and is automatically generated using doxygen.
+<p>
+For each modul the documentation of the user interface, this are
+public funtions and external variable, should be in the header
+file. All other documentation should be in the c-file.
+<p>
+The documentation for each function should contain a short
+description, if necessary a more detailed description and a
+description for the return value and parameters.
+<p>
+Look at the documentation of existing files and functions to get a
+feeling how it should be!
+<p>
+Doxygen is able to understand simple LaTex and HTML commands as well
+as some special command in order to give the documentation a nice
+structure and to make it more readable. In the following list you find 
+a short description of the most common commands we need:
+
+<ul>
+<li> \anchor doc_anchor   \verbatim \anchor <name> <description>\endverbatim
+	Set an anchor to which you can refer using \ref doc_ref "\ref"
+<li> \anchor doc_href     \verbatim <a href="http://www.your_url.html"> name </a>\endverbatim
+	Link to an external html source.
+<li> \anchor doc_file     \verbatim \file <name> <description>\endverbatim
+	Special anchor for a file (see \ref doc_anchor "\anchor").
+<li> \anchor doc_image    \verbatim \image html  doc/figs/fig.gif \endverbatim
+                          \verbatim \image latex doc/figs/fig.eps \endverbatim
+	Include a picture. You have to put both lines in the
+	documentation since HTML and LaTex need different file formats.
+<li> \anchor doc_list     \verbatim 
+<ul>
+<li> List entry
+</ul>
+\endverbatim
+	Creates a list in the documentation (For example the list you
+	are reading at the moment).
+<li> \anchor doc_name     \verbatim 
+/** \name <group_name> <short description>.
+    <long_description>
+*/
+/*@{*/ 
+<group members>
+...
+/*@}*/ 
+\endverbatim
+	Introduces a group to which one can refer with 
+	\ref doc_ref "\ref". The documentation of the group members
+	must be inside the \@{ ... \@} comments.
+<li> \anchor doc_param    \verbatim \param <parameter> <description> \endverbatim
+	Documentation for a parameter of a function
+<li> \anchor doc_ref      \verbatim \ref <name> ["<text>"] \endverbatim
+	Inserts a link to the documentation of <name>.
+<li> \anchor doc_return   \verbatim \return <description>\endverbatim
+	Documentation for the return value of a function
+<li> \anchor doc_todo     \verbatim \todo <task to be done> \endverbatim
+	Starts a paragraph where a TODO item is described. The
+	description will also add an item to a separate TODO list. The
+	two instances of the description will be
+	cross-referenced. Each item in the TODO list will be preceded
+	by a header that indicates the origin of the item. The TODO
+	list can be found under [Related Pages] 
+</ul>
 
 */
