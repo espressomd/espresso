@@ -157,6 +157,18 @@ void thermo_init();
 */
 void friction_thermo_langevin(Particle *p);
 
+/** very nasty: if we recalculate force when leaving/reentering the integrator,
+    a(t) and a((t-dt)+dt) are NOT equal in the vv algorithm. The random
+    numbers are drawn twice, resulting in a different variance of the random force.
+    This is corrected by additional heat when restarting the integrator here.
+    Currently only works for the Langevin thermostat, although probably also others
+    are affected.
+*/
+void thermo_heat_up();
+
+/** pendant to \ref thermo_heat_up */
+void thermo_cool_down();
+
 #ifdef NPT
 /** add velocity-dependend noise and friction for NpT-sims to the particle's velocity 
     @param dt_vj  j-component of the velocity scaled by time_step dt 

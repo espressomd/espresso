@@ -41,6 +41,7 @@ double nptiso_gammav = 0.0;
 double langevin_pref1;
 double langevin_pref2;
 double langevin_pref2_rotation;
+static double langevin_pref2_buffer, langevin_pref2_rotation_buffer;
 #ifdef DPD
 double dpd_pref1;
 double dpd_pref2;
@@ -378,6 +379,24 @@ void thermo_init()
 #ifdef NPT
   if(thermo_switch & THERMO_NPT_ISO)   thermo_init_npt_isotropic();
 #endif
+}
+
+void thermo_heat_up()
+{
+  if(thermo_switch & THERMO_LANGEVIN) {
+    langevin_pref2_buffer          = langevin_pref2;
+    langevin_pref2_rotation_buffer = langevin_pref2_rotation;
+    langevin_pref2 *= sqrt(3);
+    langevin_pref2_rotation *= sqrt(3);
+  }
+}
+
+void thermo_cool_down()
+{
+  if(thermo_switch & THERMO_LANGEVIN) {
+    langevin_pref2          = langevin_pref2_buffer;
+    langevin_pref2_rotation = langevin_pref2_rotation_buffer;
+  }
 }
 
 void friction_thermo_langevin(Particle *p)

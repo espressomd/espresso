@@ -352,10 +352,14 @@ void integrate_vv(int n_steps)
   /* Integration Step: Preparation for first integration step:
      Calculate forces f(t) as function of positions p(t) ( and velocities v(t) ) */
   if (recalc_forces) {
+    thermo_heat_up();
+
     force_calc(); 
 #ifdef ROTATION
     convert_initial_torques();
 #endif
+
+    thermo_cool_down();
 
     /* Communication Step: ghost forces */
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
