@@ -79,8 +79,22 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
     @return the minimal distance of two particles */
 double mindist(IntList *set1, IntList *set2);
 
-/** */
-int aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_list, int *link_list,
+/** calculate the aggregate distribution for molecules.
+    @param dist_criteria2 distance criteria squared
+    @param min_contact minimum number of contacts 
+    @param s_mol_id start molecule id
+    @param f_mol_id finish molecule id
+    @param head_list 
+    @param link_list
+    @param agg_id_list
+    @param agg_num
+    @param agg_size
+    @param agg_max
+    @param agg_min
+    @param agg_avg
+    @param agg_std
+*/
+int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_id, int *head_list, int *link_list,
 		int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std);
 
 /** returns all particles within a given radius r_catch around a position.

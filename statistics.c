@@ -135,13 +135,18 @@ double mindist(IntList *set1, IntList *set2)
   return mindist;
 }
 
-int aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_list, int *link_list, int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std)
+int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_id, int *head_list, int *link_list, int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std)
 {
   int c, np, n, i;
   Particle *p1, *p2, **pairs;
   double dist2, vec21[3];
   int target1, target2, head_p1;
   int p1molid, p2molid;
+  int *contact_num, ind;
+
+  contact_num = (int *) malloc(n_molecules*n_molecules *sizeof(int));
+  for (i = 0; i < n_molecules *n_molecules; i++) contact_num[i]=0;
+
 
   build_verlet_lists();
 
@@ -167,7 +172,13 @@ int aggregation(double dist_criteria2, int s_mol_id, int f_mol_id, int *head_lis
 	if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) && ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
 	  if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
 	    dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
+	    if ( p1molid > p2molid ) { ind=p1molid*n_molecules + p2molid;} 
+	    else { ind=p2molid*n_molecules +p1molid;}
+
 	    if (dist2 < dist_criteria2) {
+		contact_num[ind] ++;
+	    }
+	    if (contact_num[ind] >= min_contact) {
 	      /* merge list containing p2molid into list containing p1molid*/
 	      target1=head_list[agg_id_list[p2molid]];
 	      head_list[agg_id_list[p2molid]]=-2;
@@ -1064,7 +1075,7 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
   int i, target1;
   int *agg_id_list;
   double dist_criteria, dist_criteria2;
-  int *head_list, *link_list;
+  int min_contact, *head_list, *link_list;
   int agg_num =0, *agg_size, agg_min= n_molecules, agg_max = 0,  agg_std = 0, agg_avg = 0; 
   float fagg_avg;
   int s_mol_id, f_mol_id;
@@ -1075,26 +1086,26 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
   agg_size = (int *) malloc(n_molecules *sizeof(int));
 
   /* parse arguments */
-  if (argc != 3) {
-    Tcl_AppendResult(interp, "usage: analyze aggregation [<dist_criteria>] [<start mol_id>] [<finish mol_id>]", (char *)NULL);
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "usage: analyze aggregation <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
     return (TCL_ERROR);
   }
 
   if (!ARG_IS_D(0,dist_criteria)) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage:  analyze aggregation  [<dist_criteria>] [<start mol_id>] [<finish mol_id>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage:  analyze aggregation  <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
     return (TCL_ERROR);
   }
   dist_criteria2 = dist_criteria * dist_criteria;
 
   if (!ARG_IS_I(1,s_mol_id)) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage:  analyze aggregation  [<dist_criteria>] [<start mol_id>] [<finish mol_id>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage:  analyze aggregation  <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
     return (TCL_ERROR);
   }
   if (!ARG_IS_I(2,f_mol_id)) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage:  analyze aggregation  [<dist_criteria>] [<start mol_id>] [<finish mol_id>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage:  analyze aggregation  <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
     return (TCL_ERROR);
   }
   
@@ -1119,8 +1130,18 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
     
   }
 
+  if (argc == 4) {
+      if (!ARG_IS_I(3,min_contact)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "usage: analyze aggregation <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
+	  return (TCL_ERROR);
+      }
+  } else {
+      min_contact = 1;
+  }
 
-  aggregation(dist_criteria2, s_mol_id, f_mol_id, head_list, link_list, agg_id_list, 
+
+  aggregation(dist_criteria2, min_contact, s_mol_id, f_mol_id, head_list, link_list, agg_id_list, 
 	      &agg_num, agg_size, &agg_max, &agg_min, &agg_avg, &agg_std);
 
   fagg_avg = (float) (agg_avg)/agg_num;
