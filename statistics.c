@@ -139,7 +139,7 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
 {
   int c, np, n, i;
   Particle *p1, *p2, **pairs;
-  double dist2, vec21[3];
+  double dist2;
   int target1, target2, head_p1;
   int p1molid, p2molid;
   int *contact_num, ind;
@@ -174,11 +174,11 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
 	p2molid = p2->p.mol_id;
 	if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) && ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
 	  if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
-	    dist2 = distance2vec(p1->r.p, p2->r.p, vec21);
-	    if ( p1molid > p2molid ) { ind=p1molid*n_molecules + p2molid;} 
-	    else { ind=p2molid*n_molecules +p1molid;}
+	    dist2 = min_distance2(p1->r.p, p2->r.p);
 
 	    if (dist2 < dist_criteria2) {
+	      if ( p1molid > p2molid ) { ind=p1molid*n_molecules + p2molid;} 
+	      else { ind=p2molid*n_molecules +p1molid;}
 	      if (min_contact > 1) {
 		contact_num[ind] ++;
 		if (contact_num[ind] >= min_contact) {
