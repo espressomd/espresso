@@ -10,6 +10,9 @@
 # \
     fi;
 
+puts "--------------------------------------------"
+puts "- Testcase lj-cos.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "--------------------------------------------"
 set errf [lindex $argv 1]
 
 proc error_exit {error} {
@@ -19,8 +22,6 @@ proc error_exit {error} {
     close $f
     exit -666
 }
-
-puts "Testcase lj-cos.tcl running on [setmd n_nodes] nodes:"
 
 
 set epsilon 1e-4
