@@ -284,7 +284,7 @@ int blockfile(ClientData data, Tcl_Interp *interp,
     return cmdInfo.proc(cmdInfo.clientData, interp,
 			argc, argv);
   }
-  Tcl_AppendResult(interp, "unknown action \"", argv[2],
+  Tcl_AppendResult(interp, "unknown action \"", argv[2], " ", argv[3],
 		   "\"", (char *)NULL);  
   return (TCL_ERROR);
 }
