@@ -904,6 +904,7 @@ int inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
 
   CHECK_VALUE(ljforcecap_set_params(lj_force_cap),
 	      "If you can read this, you should change it. (Use the source Luke!)");
+  return TCL_ERROR;
 }
 
 void p3m_set_tune_params(double r_cut, int mesh, int cao,
@@ -1159,9 +1160,10 @@ int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
 
     return TCL_ERROR;
 
-  } else
-
+  } else {
     return TCL_OK;
+  }
+  return TCL_ERROR;
 }
 
 int inter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv)
@@ -1765,6 +1767,8 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
       argc -= 4; argv += 4;
     }
     else if(!strncmp(argv[0], "axis", strlen(argv[0]))) {
+      double temp;
+      int i;
       if(argc < 4) {
 	Tcl_AppendResult(interp, "constraint cylinder axis <rx> <ry> <rz> expected", (char *) NULL);
 	return (TCL_ERROR);
@@ -1774,18 +1778,16 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
 	  Tcl_GetDouble(interp, argv[3], &(con->c.cyl.axis[2])) == TCL_ERROR)
 	return (TCL_ERROR);
 
-		/*normalize the axis vector */
-		double temp;
-		int i;
-		temp=0.;
-		for (i=0;i<3;i++) {
-			temp += SQR(con->c.cyl.axis[i]);
-		}
-		temp = sqrt (temp);
-		for (i=0;i<3;i++) {
-			con->c.cyl.axis[i] /= temp;
-		}
-        		
+      /*normalize the axis vector */
+      temp=0.;
+      for (i=0;i<3;i++) {
+	temp += SQR(con->c.cyl.axis[i]);
+      }
+      temp = sqrt (temp);
+      for (i=0;i<3;i++) {
+	con->c.cyl.axis[i] /= temp;
+      }
+      
       argc -= 4; argv += 4;    
     }
     else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
