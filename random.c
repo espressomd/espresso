@@ -22,6 +22,7 @@ const double RNMX = (1.0-1.2e-7);
 
 
 static long  idum = 1;
+static long  idumInit = 1;
 static long  iy=0;
 static long  iv[NTAB_RANDOM];
 
@@ -92,7 +93,7 @@ void init_random_seed(long seed)
 
   /* This random generator is bad I know, thats why its only used
      for the seed (see Num. Rec. 7.1.) */
-  idum = seed;
+  idumInit = idum = seed;
   RANDOM_TRACE(fprintf(stderr, "%d: Init random with seed %ld in 'random.c'\n",this_node,idum));
   for (j = NTAB_RANDOM + 7;j >= 0; j--) {
     k = (idum) / IQ;
@@ -115,9 +116,16 @@ void init_random_stat(RandomStatus my_stat) {
 
 /*----------------------------------------------------------------------*/
 
-long print_random_seed(void) {
+long print_random_idum(void) {
   /* returns current 'idum' */
   return(idum);
+}
+
+/*----------------------------------------------------------------------*/
+
+long print_random_seed(void) {
+  /* returns the seed originally used upon last initialize of the generator */
+  return(idumInit);
 }
 
 /*----------------------------------------------------------------------*/
