@@ -1379,10 +1379,10 @@ void mpi_rescale_particles(int dir, double scale) {
 
   mpi_issue(REQ_RESCALE_PART, -1, dir);
   for (pnode = 0; pnode < n_nodes; pnode++) {
-    if (pnode == this_node)
-      local_rescale_particles(dir, scale);
-    else
-      MPI_Send(&scale, 1, MPI_DOUBLE, pnode, REQ_PLACE, MPI_COMM_WORLD);
+    if (pnode == this_node) {
+      local_rescale_particles(dir, scale); }
+    else {
+      MPI_Send(&scale, 1, MPI_DOUBLE, pnode, REQ_PLACE, MPI_COMM_WORLD); }
   }
   on_particle_change();
 }
