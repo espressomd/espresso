@@ -42,12 +42,13 @@ setmd temp 0
 setmd gamma 0
 setmd time_step 1
 setmd skin 0
-set   box_l 200
+
+set   bjerrum  10.0
+set   maxr  100
+set   box_l [expr 2*[setmd n_nodes]*($maxr+1)]
 setmd box_l $box_l $box_l $box_l
 setmd periodic 0 0 0
 
-set bjerrum 10.0
-set maxr [expr floor(0.5*$box_l)-1]
 set q1 +1.0
 set q2 +1.0
 set x2 +5.0
@@ -101,7 +102,7 @@ if { [catch {
 	} elseif { $rel_error > $maxe } { set maxe $rel_error }
 	set thekin [expr 0.5*$vx*$vx]; set rel_error [expr abs(($curekin - $thekin)/$thekin)]
 	if { $rel_error > $epsilon } {
-	    error "relative error $rel_error in the kinetic energy too large ($thek / $curekin)"
+	    error "relative error $rel_error in the kinetic energy too large ($thekin / $curekin)"
 	} elseif { $rel_error > $maxk } { set maxk $rel_error }
     }
     puts "maximal deviation in the minimal distance = $maxx, in the force = $maxf, in the coulomb energy = $maxe, in the kinetic energy = $maxk"
