@@ -604,18 +604,22 @@ int part(ClientData data, Tcl_Interp *interp,
 	  Tcl_AppendResult(interp, buffer, (char *)NULL);
 	}
 	Tcl_AppendResult(interp, "}", (char *)NULL);
-	realloc_intlist(bl, 0);
       }
       else {
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "unknown particle data \"", argv[0], "\" requested", (char *)NULL);
+	realloc_intlist(bl, 0);
+	return (TCL_ERROR);
       }
       if (argc > 1)
 	Tcl_AppendResult(interp, " ", (char *)NULL);
 
       argc--;
       argv++;
+
     }
+
+    realloc_intlist(bl, 0);
 
     return TCL_OK;
   }
