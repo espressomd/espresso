@@ -100,7 +100,7 @@
 
 
 /** \page tcl_diamond The diamond command
-    \verbatim diamond <a> <bond_length> <MPC> [counterions <N_CI>] [charges <val_nodes> <val_cM> <val_CI>] [distance <cM_dist>] \endverbatim
+    \verbatim diamond <a> <bond_length> <MPC> [counterions <N_CI>] [charges <val_nodes> <val_cM> <val_CI>] [distance <cM_dist>] [nonet]\endverbatim
     Sets up 8 tetra-functional nodes of particle type 0 on the edges of a diamond lattice with box length <a>, squeezing 2*8 polymer chains
     with <MPC> monomers and <bond_length> each in between the nodes, optionally adding <N_CI> counterions to the system (defaults to '0')
     and charging monomers and counterions with <val_cM> and <val_CI>, respectively (both default to '0'); if only <val_cM> is given, then
@@ -115,6 +115,26 @@
 	<li> \verbatim <val_CI>      \endverbatim charge carried by the counterions (defaults to '0.0')
 	<li> \verbatim <cM_dist>     \endverbatim distance between two charged monomers' indices (defaults to '1');
 	     if '1' then every monomer on the chain will have charge <val_cM>, if '2' every other monomer,...
+	<li> \verbatim nonet         \endverbatim if given, the 16 chains on the diamond lattice won't be crosslinked to a network (default: OFF)
     </ul>
     The C implementation is \ref #diamond.
+*/
+
+
+/** \page tcl_ico The icosahedron command
+    \verbatim icosahedron <a> <MPC> [counterions <N_CI>] [charges <val_cM> <val_CI>] [distance <cM_dist>]\endverbatim
+    Sets up an icosahedron with 12 vertices, and inserts pentagons at a third's distance of the 30 edges with length 2*<a> to achieve
+    a geometrical structure of a fulleren (or soccer ball). The edges of the resulting object are filled with chains of <MPC> monomers each,
+    where those around each vertex are charged by <val_cM>, those connecting two pentagons with each other are neutral. If <N_CI> is given,
+    counterions are added. Both charges default to '0'; if only <val_cM> is given, then <val_CI> is assumed to be -1.*<val_cM>.
+    <ul>
+        <li> \verbatim <a>           \endverbatim basic length scale of the icosahedron; will fullfill g = g : (a+g) (Goldener Schnitt)
+	<li> \verbatim <MPC>         \endverbatim monomers on each of the 2*8 polymer chains connecting the nodes
+	<li> \verbatim <N_CI>        \endverbatim number of counterions to add to the system (defaults to '0')
+	<li> \verbatim <val_cM>      \endverbatim charge carried by the charged chain monomers (defaults to '0.0')
+	<li> \verbatim <val_CI>      \endverbatim charge carried by the counterions (defaults to '0.0')
+	<li> \verbatim <cM_dist>     \endverbatim distance between two charged monomers' indices (defaults to '1');
+	     if '1' then every monomer on the chain will have charge <val_cM>, if '2' every other monomer,...
+    </ul>
+    The C implementation is \ref #icosahedron.
 */
