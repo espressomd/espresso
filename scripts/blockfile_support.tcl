@@ -215,7 +215,7 @@ proc blockfile_read_auto_integrate {channel read auto} {
 proc blockfile_write_thermostat {channel write thermostat} {
     blockfile $channel write start thermostat
     set data [join [thermostat] "\}\n\t\{"]
-    puts $channel "\n\t{$data}\n\}"
+    puts $channel "\n\t\{ off \}\n\t{$data}\n\}"
 }
 
 proc blockfile_read_auto_thermostat {channel read auto} {
