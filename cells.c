@@ -167,10 +167,20 @@ int cellsystem(ClientData data, Tcl_Interp *interp,
   else if (ARG1_IS_S("nsquare"))
     mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE);
   else if (ARG1_IS_S("layered")) {
-    if (argc > 1) {
+    if (argc > 2) {
       if (!ARG_IS_I(2, n_layers))
 	return TCL_ERROR;
+      determine_n_layers = 0;
+      mpi_bcast_parameter(FIELD_NLAYERS);
     }
+
+    /* check node grid. All we can do is 1x1xn. */
+    if (node_grid[0] != 1 || node_grid[1] != 1) {
+      node_grid[0] = node_grid[1] = 1;
+      node_grid[2] = n_nodes;
+      mpi_bcast_parameter(FIELD_NODEGRID);
+    }
+
     mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED);
   }
   else {
@@ -208,14 +218,16 @@ void cells_re_init(int new_cs)
 
   invalidate_ghosts();
 
-  CELL_TRACE({
-    int p;
-    for (p = 0; p < n_total_particles; p++)
-      if (local_particles[p])
-	fprintf(stderr, "%d: cells_re_init: got particle %d\n", this_node, p);
-  }
-	     );
-    
+  /* 
+     CELL_TRACE({
+     int p;
+     for (p = 0; p < n_total_particles; p++)
+     if (local_particles[p])
+     fprintf(stderr, "%d: cells_re_init: got particle %d\n", this_node, p);
+     }
+     );
+  */
+
   topology_release(cell_structure.type);
   /* MOVE old local_cell list to temporary buffer */
   memcpy(&tmp_local,&local_cells,sizeof(CellPList));
@@ -237,13 +249,15 @@ void cells_re_init(int new_cs)
   free(tmp_cells);
   CELL_TRACE(fprintf(stderr, "%d: old cells deallocated\n",this_node));
 
-  CELL_TRACE({
+  /*
+    CELL_TRACE({
     int p;
     for (p = 0; p < n_total_particles; p++)
-      if (local_particles[p])
-	fprintf(stderr, "%d: cells_re_init: now got particle %d\n", this_node, p);
-  }
-	     );
+    if (local_particles[p])
+    fprintf(stderr, "%d: cells_re_init: now got particle %d\n", this_node, p);
+    }
+    );
+  */
 
 #ifdef ADDITIONAL_CHECKS
   check_cells_consistency();
