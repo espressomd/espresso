@@ -212,11 +212,11 @@ MDINLINE void fold_coordinate(double pos[3], int image_box[3], int dir)
 	  errexit();
 	}
 	while (pos[dir] < 0) {
-	  pos[dir] += box_l_i[dir];
+	  pos[dir] += box_l[dir];
 	  image_box[dir]--;
 	}
 	while (pos[dir] >= box_l[dir]) {
-	  pos[dir] -= box_l_i[dir];
+	  pos[dir] -= box_l[dir];
 	  image_box[dir]++;
 	}
       }
