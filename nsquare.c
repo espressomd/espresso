@@ -34,6 +34,7 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts)
     comm->comm[n].part_lists = malloc(sizeof(ParticleList *));
     comm->comm[n].part_lists[0] = &cells[n];
     comm->comm[n].n_part_lists = 1;
+    comm->comm[n].node = n;
     comm->comm[n].mpi_comm = MPI_COMM_WORLD;
   }
 }
@@ -85,14 +86,7 @@ void nsq_topology_init(CellPList *old)
     nsq_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
 
     /* here we just decide what to transfer where */
-    /* first round: all nodes prefetch their send data */
-    cell_structure.ghost_cells_comm.comm[n].type         = GHOST_BCST | GHOST_PREFETCH;
-    cell_structure.exchange_ghosts_comm.comm[n].type     = GHOST_BCST | GHOST_PREFETCH;
-    cell_structure.update_ghost_pos_comm.comm[n].type    = GHOST_BCST | GHOST_PREFETCH;
-    /* here all nodes send every comm step, no prefetch */
-    cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
-
-    for (n = 1; n < n_nodes; n++) {
+    for (n = 0; n < n_nodes; n++) {
       /* use the prefetched send buffers */
       if (this_node != n) {
 	cell_structure.ghost_cells_comm.comm[n].type         = GHOST_BCST;
@@ -105,6 +99,12 @@ void nsq_topology_init(CellPList *old)
 	cell_structure.update_ghost_pos_comm.comm[n].type    = GHOST_BCST | GHOST_PREFETCH;
       }
       cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
+    }
+    /* first round: all nodes except the first one prefetch their send data */
+    if (this_node != 0) {
+      cell_structure.ghost_cells_comm.comm[0].type         |= GHOST_PREFETCH;
+      cell_structure.exchange_ghosts_comm.comm[0].type     |= GHOST_PREFETCH;
+      cell_structure.update_ghost_pos_comm.comm[0].type    |= GHOST_PREFETCH;
     }
   }
 
