@@ -43,7 +43,7 @@ CellStructure cell_structure;
 /************************************************************/
 void cells_init()
 {
-  dd_cells_init(local_cells);
+  dd_cells_init(&local_cells);
 }
 
 /************************************************************/

@@ -1,5 +1,6 @@
 #ifndef DOMAIN_DECOMP_H
 #define DOMAIN_DECOMP_H
+#include "cells.h"
 
 /************************************************************/
 /** \name Exported Variables */
@@ -36,30 +37,21 @@ extern int max_num_cells;
 /*@{*/
 
 
-/** Pre initialization of the link cell structure. Function called in
-    modul initialize.c initialize().  Initializes one cell on each
-    node to be able to store the particle data there. */
-void dd_cells_init();
+/** implements \ref cell_structure::topology_init. */
+void dd_cells_init(CellPList *cl);
 
-/** Notify cell code of topology change. Reinits cell cstructure if
-    necesarry (\ref cells_re_init). */
-void dd_cells_changed_topology();
+/** implements \ref cell_structure::topology_release. */
+void dd_cells_release();
 
-/** return cell grid index for a position.
-    \param pos Position of e.g. a particle.
-    \return linear cell grid index. */
-int dd_pos_to_cell_grid_ind(double pos[3]);
+/** implements \ref cell_structure::position_to_cell. */
+Cell *dd_cells_position_to_cell(double pos[3]);
 
-/** return cell grid index for a position.
-    positions out of bounds are capped to the
-    nearest valid cell.
-    \param pos Position of e.g. a particle.
-    \return linear cell grid index. */
-int dd_pos_to_capped_cell_grid_ind(double pos[3]);
+/** implements \ref cell_structure::position_to_cell. */
+Cell *dd_cells_position_to_node(double pos[3]);
 
 /** Callback for setmd maxnumcells (maxnumcells >= 27). 
     see also \ref max_num_cells */
-int dd_max_num_cells_callback(Tcl_Interp *interp, void *_data);
+int max_num_cells_callback(Tcl_Interp *interp, void *_data);
 
 
 /*@}*/

@@ -47,7 +47,6 @@
 
 #include <tcl.h>
 #include "particle_data.h"
-#include "domain_decomposition.h"
 #include "ghosts.h"
 #include "verlet.h"
 
