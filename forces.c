@@ -86,7 +86,7 @@ void calc_long_range_forces()
   case COULOMB_P3M:
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO)
-      P3M_calc_kspace_forces(1,1);
+      nptiso.p_vir[0] += P3M_calc_kspace_forces(1,1);
     else
 #endif
       P3M_calc_kspace_forces(1,0);
