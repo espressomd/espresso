@@ -61,14 +61,16 @@ void force_calc()
 
   FORCE_TRACE(fprintf(stderr,"%d: force_calc: for %d (P %d,G %d)\n",this_node,n_particles+n_ghosts,n_particles,n_ghosts));
 
-  minimum_part_dist = 1e300;
-
   ia_params = get_ia_param(0,0);
+
+  minimum_part_dist = ia_params->ramp_cut;
+
   FORCE_TRACE(fprintf(stderr,"%d: interactions type:(0,0):\n",this_node));
   FORCE_TRACE(fprintf(stderr,"    LJ: cut=%f, eps=%f, off=%f\n",
 		      ia_params->LJ_cut,ia_params->LJ_eps,ia_params->LJ_offset));
   FORCE_TRACE(fprintf(stderr,"    ES: cut=%f,\n",coul_r_cut));
   FORCE_TRACE(fprintf(stderr,"    RAMP: cut=%f\n",ia_params->ramp_cut));
+
   /* define 'new old' coordinates*/
   for(i=0;i<n_particles+n_ghosts;i++)
     for(j=0;j<3;j++)

@@ -11,9 +11,14 @@
 # \
     fi;
 
-set npart 1000
-
+########### parameters
+set npart 100
 setmd box_l 10.0 10.0 10.0
+set write yes
+set write_steps 10
+set mdst 10
+
+source polywr.tcl
 
 if {[setmd nproc] == 8} {
     setmd procgrid 2 2 2
@@ -36,7 +41,7 @@ setmd bjerrum 0
 #pairwise ramp for all particles
 for {set ia1 0} { $ia1 <= 4 } { incr ia1 } {
     for {set ia2 0} { $ia2 <= 4 } { incr ia2 } {
-	inter $ia1 $ia2 ramp 1 1
+	inter $ia1 $ia2 ramp 10 100
     }
 }
 
@@ -47,9 +52,12 @@ set gamma 1
 puts "starting ramp integration"
 integrate init
 
-for {set i 0} { [setmd mindist] < 0.5 } { incr i} {
+for {set i 0} { [setmd mindist] < $mdst } { incr i} {
     puts "step ${i}00: minimum distance=[setmd mindist]"
-    integrate 100
+    integrate $write_steps
+    if {"$write" == "yes" } {
+	polywrite [format "config%04d.poly" $i]
+    }
 }
 
 puts "final: minimum distance=[setmd mindist]"
