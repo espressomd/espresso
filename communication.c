@@ -1233,9 +1233,11 @@ void mpi_get_particles_slave(int pnode, int bi)
     }
   }
   else {
-    /* inform master node that we do not have bonds (as we don't have particles) */
-    g = 0;
-    MPI_Gather(&g, 1, MPI_INT, NULL, 1, MPI_INT, 0, MPI_COMM_WORLD);      
+    if (bi) {
+      /* inform master node that we do not have bonds (as we don't have particles) */
+      g = 0;
+      MPI_Gather(&g, 1, MPI_INT, NULL, 1, MPI_INT, 0, MPI_COMM_WORLD);      
+    }
   }
 }
 
@@ -1748,7 +1750,7 @@ void mpi_gather_runtime_errors_slave(int node, int parm)
 {
   if (!check_runtime_errors())
     return;
-  
+
   MPI_Gather(&n_error_msg, 1, MPI_INT, NULL, 0, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (n_error_msg > 0) {
