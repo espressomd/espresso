@@ -268,7 +268,7 @@ inter 2 3 lennard-jones 1.0 1.0 1.12246 0.25 0 0
 #############################################################
 
 set part_id 0
-set input_file [open "PE_MICELLE_input.txt" "r"]
+set input_file [open "pe_micelle_input.txt" "r"]
 for {set xi 0} { $xi < [expr $n_poly] } {incr xi} {
     gets $input_file vec
     set rvec [hexconvert $vec $shift_vec $d_space]
@@ -496,7 +496,7 @@ for {set xi 0} { $xi < $int_n_times } { incr xi} {
 
 puts  "Energy = [analyze energy]"
 
-puts "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\nCOMPARE ENERGY VALUES ABOVE WITH THE ONES BELOW\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n Energy = { energy -190.501 } { kinetic 100.37 } { 0 FENE 151.982 } { 1 angle 6.19231 } { 0  0 lj-cos -254.083 } { 0  1 lj-cos -116.934 } { 0  2 lj 0.0 } { 0  3 lj 0.0 } { 1  1 lj-cos -78.0284 } { 1  2 lj 0.0 } { 1  3 lj 0.0 } { 2  2 lj 0.0 } { 2  3 lj 0.0 } { 2  6 lj 0.0 } { 2  8 lj 0.0 } { 2  9 lj 0.0 }\n"
+puts "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\nCOMPARE ENERGY VALUES ABOVE WITH THE ONES BELOW\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n Energy = { energy -216.909 } { kinetic 92.9468 } { 0 FENE 141.601 } { 1 angle 6.56779 } { 0  0 nonbonded -248.561 } { 0  1 nonbonded -139.074 } { 0  2 nonbonded 0.0 } { 0  3 nonbonded 0.0 } { 1  1 nonbonded -70.3895 } { 1  2 nonbonded 0.0 } { 1  3 nonbonded 0.0 } { 2  2 nonbonded 0.0 } { 2  3 nonbonded 0.0 } { 2  6 nonbonded 0.0 } { 2  8 nonbonded 0.0 } { 2  9 nonbonded 0.0 }\n"
 
 puts "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\nIF THE VALUES ARE CORRECT, IT IS YOUR LUCKY DAY !!!\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
 
@@ -509,3 +509,4 @@ puts "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\nIF THE VALUES ARE CORRECT, IT IS YOU
 #############################################################
 
 puts "\nFinished"
+exit 0
