@@ -64,7 +64,7 @@ set p3m_cao   7
 # Integration parameters
 #############################################################
 setmd time_step 0.01
-setmd skin      0.0
+setmd skin      0.03
 setmd gamma     1.0
 setmd temp      0.0
 
@@ -85,9 +85,8 @@ setmd box_l $box_l $box_l $box_l
 # Interaction setup
 #############################################################
 inter coulomb $bjerrum p3m $p3m_rcut $p3m_mesh $p3m_cao $p3m_alpha 0.0
+#inter coulomb mesh_off 0.0 0.0 0.0
 
-
-puts "[inter]"
 # Particle setup
 #############################################################
 
@@ -121,17 +120,33 @@ for {set i 0} { $i < $nacl_repl } {incr i} {
     }
 }
 
+# print system specification
 set n_part [setmd n_part]
 puts "NaCl crystal with $n_part particle (grid $nc, replic $nacl_repl)"
-puts "in cubic box of size $box_l"
-#puts "[part]"
-
+puts "in cubic box of size $box_l. Crystal offset: $x0 $y0 $z0"
+puts "Interactions: \n{ [inter] }"
 
 writepdb "$name$ident.pdb"
 
-integrate 0
+puts "\nIntegrate $int_steps step(s)"
+integrate $int_steps
+
+# calculate Madelung constant
 set energy "[analyze energy]"
-puts "Energy: $energy"
+puts "\nEnergy: $energy"
 set calc_mad_const [expr -2.0*$nacl_const*[lindex [lindex $energy 0] 1] / $n_part]
-puts "Madelung constant: $calc_mad_const"
-puts "relative error:    [expr ($calc_mad_const-$madelung_nacl)/$madelung_nacl]"
+puts "\nMadelung constant:      $calc_mad_const"
+puts "relative error:         [expr ($calc_mad_const-$madelung_nacl)/$madelung_nacl]"
+
+# check forces
+set max_force 0.0
+for {set i 0} { $i < $n_part } {incr i} {
+    set force [part $i print f]
+    set fx [lindex $force 0]
+    if { $fx > $max_force } { set max_force $fx }
+    set fy [lindex $force 1]
+    if { $fy > $max_force } { set max_force $fy }
+    set fz [lindex $force 2]
+    if { $fz > $max_force } { set max_force $fz }
+}
+puts "Maximal force component: $max_force"
