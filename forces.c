@@ -25,6 +25,7 @@
 #include "harmonic.h"
 #include "angle.h"
 #include "debye_hueckel.h"
+#include "mmm1d.h"
 #include "constraint.h"
 
 /************************************************/
@@ -50,6 +51,7 @@ void force_init()
   FORCE_TRACE(fprintf(stderr,"%d: force_init:\n",this_node));
   FORCE_TRACE(fprintf(stderr,"%d: found %d particles types\n",
 		      this_node,n_particle_types));
+  MMM1D_init();
 }
 
 
@@ -142,6 +144,8 @@ void force_calc()
   /* calculate k-space part of electrostatic interaction. */
   if(coulomb.method == COULOMB_P3M) 
     P3M_calc_kspace_forces(1,0);
+  else if (coulomb.method == COULOMB_MMM1D)
+    MMM1D_calc_forces();
 }
 
 /************************************************************/

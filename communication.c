@@ -21,6 +21,7 @@
 #include "random.h"
 #include "lj.h"
 #include "ljcos.h"
+#include "mmm1d.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -220,7 +221,9 @@ static int request[3];
 void mpi_core(MPI_Comm *comm, int *errcode,...) {
   fprintf(stderr, "Aborting due to MPI error %d, forcing core dump\n", *errcode);
   fflush(stderr);
-  core();
+  if (*errcode != MPI_ERR_LOCALDEAD &&
+      *errcode != MPI_ERR_REMOTEDEAD)
+  	core();
 }
 #endif
 
@@ -1096,15 +1099,7 @@ void mpi_set_time_step_slave(int node, int i)
 void mpi_bcast_coulomb_params()
 {
   mpi_issue(REQ_BCAST_COULOMB, 1, 0);
-
-  MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, MPI_COMM_WORLD);
-  if(coulomb.method == COULOMB_P3M) {
-    MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
-  }
-  else if(coulomb.method == COULOMB_DH) {
-    MPI_Bcast(&dh_params, sizeof(Debye_hueckel_params), MPI_BYTE, 0, MPI_COMM_WORLD);
-  }
-  on_ia_change();
+  mpi_bcast_coulomb_params_slave(-1, 0);
 }
 
 void mpi_bcast_coulomb_params_slave(int node, int parm)
@@ -1115,6 +1110,9 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   }
   else if(coulomb.method == COULOMB_DH) {
     MPI_Bcast(&dh_params, sizeof(Debye_hueckel_params), MPI_BYTE, 0, MPI_COMM_WORLD);
+  }
+  else if (coulomb.method == COULOMB_MMM1D) {
+    MPI_Bcast(&mmm1d, sizeof(MMM1D_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
   }
   on_ia_change();
 }

@@ -10,6 +10,7 @@
 #include "grid.h"
 #include "p3m.h"
 #include "debye_hueckel.h"
+#include "mmm1d.h"
 #include "lj.h"
 #include "ljcos.h"
 
@@ -292,6 +293,14 @@ int printCoulombIAToResult(Tcl_Interp *interp)
     Tcl_PrintDouble(interp, dh_params.r_cut, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
   }
+  else if (coulomb.method == COULOMB_MMM1D) {
+    Tcl_PrintDouble(interp, sqrt(mmm1d.far_switch_radius_2), buffer);
+    Tcl_AppendResult(interp, "mmm1d ", buffer, " ",(char *) NULL);
+    sprintf(buffer, "%d", mmm1d.bessel_cutoff);
+    Tcl_AppendResult(interp, buffer, " ",(char *) NULL);
+    Tcl_PrintDouble(interp, mmm1d.maxPWerror, buffer);
+    Tcl_AppendResult(interp, buffer,(char *) NULL);
+  }
   return (TCL_OK);
 }
 
@@ -525,7 +534,7 @@ int inter(ClientData _data, Tcl_Interp *interp,
     }
 
     /* check number of parameters */
-    if(argc < 2) {
+    if(argc < 1) {
       Tcl_AppendResult(interp, "wrong # args for inter coulomb.", (char *) NULL);
       return (TCL_ERROR);
     }
@@ -674,6 +683,26 @@ int inter(ClientData _data, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "dh r_cut must be positiv.",(char *) NULL);
 	return (TCL_ERROR);
       }
+    }
+    else if (!strncmp(argv[0], "mmm1d ", strlen(argv[0])) ||
+	     !strncmp(argv[0], "MMM1D ", strlen(argv[0])) ) {
+      double switch_rad, maxPWerror;
+      int bessel_cutoff;
+
+      coulomb.method = COULOMB_MMM1D;
+
+      if(argc < 4) {
+	Tcl_AppendResult(interp, "Not enough parameters: inter coulomb mmm1d <switch radius> <bessel cutoff> <maximal error for near formula>", (char *) NULL);
+	return (TCL_ERROR);
+      }
+
+      if(Tcl_GetDouble(interp, argv[1], &(switch_rad)) == TCL_ERROR ||
+	 Tcl_GetInt(interp, argv[2], &(bessel_cutoff)) == TCL_ERROR ||
+	 Tcl_GetDouble(interp, argv[3], &(maxPWerror)) == TCL_ERROR) 
+	return (TCL_ERROR);
+
+      set_mmm1d_params(coulomb.bjerrum, switch_rad,
+		       bessel_cutoff, maxPWerror);
     }
     else {
       coulomb.bjerrum = 0.0;

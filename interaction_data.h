@@ -32,6 +32,8 @@
 #define COULOMB_DH    1
 /** Coulomb method is P3M. */
 #define COULOMB_P3M   2
+/** Coulomb method is one-dimensional MMM */
+#define COULOMB_MMM1D 3
 
 #define CONSTRAINT_WAL 1
 #define CONSTRAINT_SPH 2
