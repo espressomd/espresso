@@ -848,7 +848,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
 	}
       }
     }   POLY_TRACE(printf("complete => %d CL left; ",crossL));
-    ii = 0;
+    if (k == max_try-1) break; else ii = 0;  /* Get out if max_try is about to be reached, preventing dangling unchecked bond suggestions. */
     if (crossL < 2*N_P) {
       for (i=0; i < 2*N_P; i++) {         /* If crosslinks violated the rules & had to be removed, create new ones now. */
 	if (cross[i] == -3) {
