@@ -3,7 +3,7 @@ CC=cc
 
 MSG_FLAGS=-check -msg_disable ignorecallval -msg_disable noparmlist \
 	  -msg_disable uncalled -msg_disable alignment -msg_disable unknownmacro \
-	  -msg_disable strctpadding -msg_disable unusedtop
+	  -msg_disable strctpadding -msg_disable unusedincl
 #CFLAGS=-I/usr/local/include -DDEFINE_TCL_RAND -O3 $(MSG_FLAGS) -fp_reorder -tune host
 CFLAGS=-I/usr/local/include $(MSG_FLAGS) -g
 
