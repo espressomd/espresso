@@ -1,11 +1,42 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-***********
-* v1.7.1c *
-***********
+****************************************************************************************
+* v1.7.2b (Mezoti)                                                                     *
+****************************************************************************************
 
 Current working revision.
+
+
+- v1.7.2b -
+-----------
+
+(b) August 27th, 2004.
+(a) August 26th, 2004.
+
+New Features / Changes:
+(a) New force evaluation structure, unified force and energy interfaces 
+    for the potentials, and simpler force/pressure/energy evaluation loops.
+(a) The derivation of 'p_vir' has been moved out of each potential's header
+    file back to the force calculation's main loop; hence from now on it is
+    no longer necessary to include it into newly added potentials as long as
+    they follow the forces interface introduced thereby.
+(a) The derivation of 'analyze pressure', 'analyze p_inst', 'analyze p_IK1',
+    'analyze energy' has been adapted to the new force/energy interface.
+
+Changes:
+(b) Reduced screen output for 'checkpoint_read' with 'only_last' option enabled.
+
+Bugfixes:
+(b) Fixed an endless loop in the error handling if particles moved too far.
+(b) Fixed format errors in part of the error handling output.
+(b) The tuning of p3m now checks for errors correctly and bails out accordingly.
+(b) Re-enabled possibility to re-tune p3m by allowing to disable r_cut again.
+(b) Re-entered the enhancement of the analysis routine for estimating volume 
+    fluctuations to 'analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }]'
+    allowing the user to save/restore the measurement, which was first added
+    for v1.6.5c but removed in v1.6.5d accidentally.
+(a) Fixed bug in 'check_particles' when the skin is not yet set.
 
 
 - v1.7.1c -
@@ -75,9 +106,9 @@ Bugfixes:
 
 
 
-**********************
-* v1.7.Gold (Mezoti) *
-**********************
+****************************************************************************************
+* v1.7.Gold (Mezoti)                                                                   *
+****************************************************************************************
 
 Released on August 19th, 2004.
 
@@ -332,9 +363,9 @@ Bugfixes:
 
 
 
-*********************
-* v1.6.Gold (Icheb) *
-*********************
+****************************************************************************************
+* v1.6.Gold (Icheb)                                                                    *
+****************************************************************************************
 
 Released on April 29th, 2004.
 
@@ -655,9 +686,9 @@ New Features:
 
 
 
-**********************
-* v1.5.Beta (Neelix) *
-**********************
+****************************************************************************************
+* v1.5.Beta (Neelix)                                                                   *
+****************************************************************************************
 
 Released on January 29th, 2004.
 
@@ -760,17 +791,17 @@ Bugfixes:
 
 
 
-*********************
-* v1.1.Gold (Naomi) *
-*********************
+****************************************************************************************
+* v1.1.Gold (Naomi)                                                                    *
+****************************************************************************************
 
 Released on October 20th, 2003.
 
 
 
-*******************
-* v1.0.Gold (Kim) *
-*******************
+****************************************************************************************
+* v1.0.Gold (Kim)                                                                      *
+****************************************************************************************
 
 Released on April 25th, 2003.
 
