@@ -24,13 +24,16 @@ BLADE=no
 ### This is overridden by the BLADE-flag (since there is no 'lam' on the Blade-Center).
 ### Note that you'll need a link to the 'mpich'-implemented 'mpirun' in /opt/mpich/ch-p4/bin/mpirun
 ###      to execute the resulting binary (the default 'mpirun' is currently /opt/lam/bin/mpirun).
-MPICH=yes
+MPICH=no
 
 ### static compilation for certain brain damaged blade clusters
 STATIC=no
 
 ### Debug compiling
 DEBUG=no
+
+### Profiling compiling
+PROFIL=no
 
 ### ElectricFence allocation debugging
 EFENCE=no
@@ -188,14 +191,21 @@ ifeq ($(ICC),yes)
      ifeq ($(BLADE),yes)
      else
           ifeq ($(MPICH),yes)
-	       CFLAGS+= -I/opt/mpich/chp4/include
-	       LDLIBS+= -L/opt/mpich/chp4/lib64 -lmpich
+	       CFLAGS+= -I/opt/mpich/ch-p4/include
+	       LDLIBS+= -L/opt/mpich/ch-p4/lib64 -lmpich
 	  else
 	       CFLAGS+= -I/opt/lam/include
 	       LDLIBS+= -L/opt/lam/lib -lmpi -llam
 	  endif
      endif
 endif
+
+############ add profiling flags
+ifeq ($(PROFIL),yes)
+     CFLAGS+= -pg
+     LDFLAGS+= -pg
+endif
+
 
 ############# special flags for C++ compilation
 CXXFLAGS=$(CFLAGS) -felide-constructors -fomit-frame-pointer -fno-rtti
