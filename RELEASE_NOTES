@@ -2,17 +2,21 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.7.2b (Mezoti)                                                                     *
+* v1.7.2e (Mezoti)                                                                     *
 ****************************************************************************************
 
 Current working revision.
+Released on September 2nd, 2004.
 
 
-- v1.7.2b -
+- v1.7.2e -
 -----------
 
-(b) August 27th, 2004.
-(a) August 26th, 2004.
+(e) September 1st, 2004.
+(d) August   31th, 2004.
+(c) August   30th, 2004.
+(b) August   27th, 2004.
+(a) August   26th, 2004.
 
 New Features / Changes:
 (a) New force evaluation structure, unified force and energy interfaces 
@@ -24,10 +28,22 @@ New Features / Changes:
 (a) The derivation of 'analyze pressure', 'analyze p_inst', 'analyze p_IK1',
     'analyze energy' has been adapted to the new force/energy interface.
 
+New Features:
+(c) Added error recovery in the case of out of bounds particles.
+
 Changes:
+(d) Now you can still run NpT-simulations in 2D or 1D without the -cubic_box option 
+    enabled even if electrostatics is compiled in but not used (i.e. bjerrum == 0.0);
+    otherwise -cubic_box will automatically be invoked and a warning issued.
 (b) Reduced screen output for 'checkpoint_read' with 'only_last' option enabled.
 
 Bugfixes:
+(e) Fixed bug in 'mpi_get_particles' when no bond information was requested, 
+    the slave still sends some if there are no particles on the slave.
+(e) Various fixes to prevent some warnings on Tru64 and Alpha.
+(e) Fixed premature 'return'-statement in resurrection of 'analyze Vkappa' (see v1.7.2b).
+(d) Fixed some bugs in statistics aggregate function so that it compiles on DEC machines.
+(c) Fixed recovery of error handling of negative 'nptiso_volume' in the integrator.
 (b) Fixed an endless loop in the error handling if particles moved too far.
 (b) Fixed format errors in part of the error handling output.
 (b) The tuning of p3m now checks for errors correctly and bails out accordingly.
