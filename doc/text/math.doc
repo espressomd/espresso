@@ -1,0 +1,14 @@
+/** \page math Additional Tcl math-functions
+The following procedures are found in scripts/ABHmath.tcl.
+<ul>
+    <li> \anchor PI
+    \verbatim PI \endverbatim returns pi with 16 digits precision.
+    <li> \anchor sqr
+    \verbatim sqr <arg> \endverbatim returns the square of <arg>.
+    <li> \anchor min
+    \verbatim min <arg1> <arg2> \endverbatim returns the minimum of
+    <arg1> and <arg2>.
+    \verbatim max <arg1> <arg2> \endverbatim returns the maximum of
+    <arg1> and <arg2>.
+</ul>
+*/
