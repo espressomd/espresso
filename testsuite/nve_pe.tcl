@@ -58,7 +58,7 @@ proc hexconvert { vec shift_vec d_space} {
     set dim 3
     for {set j 0} { $j < $dim } {incr j} {
         for {set i 0} { $i < $dim } {incr i} {
-             lset rvec $j [expr [lindex $rvec $j] + [lindex $vec $i] * [lindex $hvec $j $i]]
+	    lset rvec $j [expr [lindex $rvec $j] + [lindex $vec $i] * [lindex [lindex $hvec $j] $i]]
         }
     }
     lsqr $rvec
