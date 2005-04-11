@@ -4,7 +4,7 @@
 
 AC_PREREQ(2.50)
 AC_INIT(ESPResSo, [v1.8.6e (Rebi & Azan)], espresso@mpip-mainz.mpg.de)
-time_stamp="March 25th, 2005"
+time_stamp="April 11th, 2005"
 
 if test .$CC != .; then	user_defined_CC=yes; fi
 if test .$CFLAGS != .; then user_defined_CFLAGS=yes; fi
@@ -77,6 +77,9 @@ echo "linker flags     = $LDFLAGS"
 echo "libraries        = $LIBS"
 echo "compilation mode = $enable_mode"
 echo "MPI library      = $enable_mpi"
+if test .$enable_mpi = .generic; then
+echo "    WARNING: a generic MPI version may or may not work, look at the Espresso script in obj-$target"
+fi
 echo "Tcl library      = $tclversion"
 if test $tclversion != tcl8.5 && test $tclversion != tcl8.4; then
 echo "       WARNING: Not all supplied scripts work properly with Tcl version before 8.4, consider upgrading"

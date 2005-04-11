@@ -77,6 +77,9 @@ echo "linker flags     = $LDFLAGS"
 echo "libraries        = $LIBS"
 echo "compilation mode = $enable_mode"
 echo "MPI library      = $enable_mpi"
+if test .$enable_mpi = .generic; then
+echo "    WARNING: a generic MPI version may or may not work, look at the Espresso script in obj-$target"
+fi
 echo "Tcl library      = $tclversion"
 if test $tclversion != tcl8.5 && test $tclversion != tcl8.4; then
 echo "       WARNING: Not all supplied scripts work properly with Tcl version before 8.4, consider upgrading"

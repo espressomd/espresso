@@ -75,7 +75,8 @@ AC_DEFUN([ES_CHECK_EFENCE],[
 
 AC_DEFUN([ES_CHECK_MPI],[
 	AC_ARG_ENABLE(mpi,AC_HELP_STRING(--enable-mpi=<type>,[compile with MPI (parallelization) support
-	if you specify <type>=fake,lam,mpich,poe or dmpi, the corresponding MPI implementation will used,
+	if you specify <type>=fake,generic,lam,mpich,poe or dmpi,
+	the corresponding MPI implementation will used,
 	otherwise the native environment of the platform is used. If
 	none is found, the fake implementation for only one processor
 	is used]),,enable_mpi=yes)

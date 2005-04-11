@@ -9,6 +9,10 @@ AC_DEFUN([MPI_SETUP],[
 		dmpi)	MPI_FIND_DMPI
 			if test $dmpi_found != yes; then AC_MSG_ERROR([Tru64/OSF MPI not working]); fi
 			;;
+		generic) MPI_FIND_MPICC
+			MPI_FIND_GENERIC
+			if test $generic_found != yes; then AC_MSG_ERROR([generic MPI not working]); fi
+			;;
 		lam)	MPI_FIND_MPICC
 			MPI_FIND_LAM
 			if test $lam_found != yes; then	AC_MSG_ERROR([LAM/MPI not working]); fi
@@ -34,8 +38,9 @@ AC_DEFUN([MPI_GUESS_ENV],[
 		;;
 	esac
 
+	dnl always check for generic, LAM/MPI and MPICH, as they are multiplatform
+
 	if test .$enable_mpi = .guess; then
-		dnl always check for LAM/MPI and MPICH, as they are multiplatform
 		if test .$mpicc_done = .; then
 			MPI_FIND_MPICC
 		fi
@@ -46,6 +51,16 @@ AC_DEFUN([MPI_GUESS_ENV],[
 	if test .$enable_mpi = .guess; then
 		MPI_FIND_MPICH
 		if test .$mpich_found = .yes; then enable_mpi=mpich; fi
+	fi
+
+	dnl generic last, since here we just assume how to run mpirun
+
+	if test .$enable_mpi = .guess; then
+		if test .$mpicc_done = .; then
+			MPI_FIND_MPICC
+		fi
+		MPI_FIND_GENERIC
+		if test .$generic_found = .yes; then enable_mpi=generic; fi
 	fi
 
 	dnl out of guesses
@@ -76,6 +91,24 @@ AC_DEFUN([MPI_FIND_MPICC],[
 	AC_MSG_CHECKING([whether the $CC command works out of the box for MPI])
 	AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY(MPI_Init)],
     		[AC_MSG_RESULT(yes); mpicc_works=yes],[AC_MSG_RESULT(no); mpicc_works=no])
+])
+
+AC_DEFUN([MPI_FIND_GENERIC],[
+	AC_MSG_NOTICE([trying to find a generic MPI])
+	generic_found=yes
+	if test .$mpicc_works != .yes; then
+		generic_found=no
+	else
+		AC_PATH_PROG(generic_bin, mpirun, mpirun, [])
+		if test .$generic_bin = .; then
+			generic_found=no
+		fi
+	fi
+	if test $generic_found = yes; then
+		AC_DEFINE(MPI,"generic")
+		MPI_INVOCATION="$generic_bin -np @NP@ \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+		AC_MSG_NOTICE([found a generic MPI environment])
+	fi
 ])
 
 AC_DEFUN([MPI_FIND_LAM],[
