@@ -422,31 +422,82 @@ void dd_init_cell_interactions()
   }
 }
 
+/*************************************************/
+
 /** Returns pointer to the cell which corresponds to the position if
     the position is in the nodes spatial domain otherwise a NULL
     pointer. */
 Cell *dd_save_position_to_cell(double pos[3]) 
 {
-  int dir,cpos[3];
-  for(dir=0;dir<3;dir++) {
-    cpos[dir] = (int)((pos[dir]-my_left[dir])*dd.inv_cell_size[dir])+1;
+  int i,cpos[3];
+  double lpos;
+
+  for(i=0;i<3;i++) {
+    lpos = pos[i] - my_left[i];
+
+    cpos[i] = (int)(lpos*dd.inv_cell_size[i])+1;
+    
+    /* particles outside our box. Still take them if
+       VERY close or nonperiodic boundary */
+    if (cpos[i] < 1) {
+      if (lpos > -ROUND_ERROR_PREC
 #ifdef PARTIAL_PERIODIC
-    if( !PERIODIC(dir) ) {
-      if (cpos[dir] < 1 && boundary[2*dir]!=0) {   
-	cpos[dir] = 1;
-      }
-      else if (cpos[dir] > dd.cell_grid[dir] && boundary[2*dir+1]!=0) {
-	cpos[dir] = dd.cell_grid[dir];
-      }
-    }
+	  || (!PERIODIC(i) && boundary[2*i])
 #endif
-    if(cpos[dir] < 1 || cpos[dir] >  dd.cell_grid[dir]) {
-      return NULL;
+	  )
+	cpos[i] = 1;
+      else
+	return NULL;
+    }
+    else if (cpos[i] > dd.cell_grid[i]) {
+      if (lpos < local_box_l[i] + ROUND_ERROR_PREC
+#ifdef PARTIAL_PERIODIC
+	  || (!PERIODIC(i) && boundary[2*i+1])
+#endif
+	  )
+	cpos[i] = dd.cell_grid[i];
+      else
+	return NULL;
     }
   }
-  dir = get_linear_index(cpos[0],cpos[1],cpos[2], dd.ghost_cell_grid); 
-  return &(cells[dir]);  
+  i = get_linear_index(cpos[0],cpos[1],cpos[2], dd.ghost_cell_grid); 
+  return &(cells[i]);  
 }
+
+Cell *dd_position_to_cell(double pos[3])
+{
+  int i,cpos[3];
+  double lpos;
+
+  for(i=0;i<3;i++) {
+    lpos = pos[i] - my_left[i];
+
+    cpos[i] = (int)(lpos*dd.inv_cell_size[i])+1;
+
+    if (cpos[i] < 1) {
+      cpos[i] = 1;
+#ifdef ADDITIONAL_CHECKS
+      if (PERIODIC(i) && lpos < -ROUND_ERROR_PREC) {
+	char *errtext = runtime_error(128 + TCL_INTEGER_SPACE + 3*TCL_DOUBLE_SPACE);
+	ERROR_SPRINTF(errtext, "{005 particle @ (%f, %f, %f) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
+      }
+#endif
+    }
+    else if (cpos[i] > dd.cell_grid[i]) {
+      cpos[i] = dd.cell_grid[i];
+#ifdef ADDITIONAL_CHECKS
+      if (PERIODIC(i) && lpos > local_box_l[i] + ROUND_ERROR_PREC) {
+	char *errtext = runtime_error(128 + TCL_INTEGER_SPACE + 3*TCL_DOUBLE_SPACE);
+	ERROR_SPRINTF(errtext, "{005 particle @ (%f, %f, %f) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
+      }
+#endif
+    }
+  }
+  i = get_linear_index(cpos[0],cpos[1],cpos[2], dd.ghost_cell_grid);  
+  return &cells[i];
+}
+
+/*************************************************/
 
 /** Append the particles in pl to \ref local_cells and update \ref local_particles.  
     @return 0 if all particles in pl reside in the nodes domain otherwise 1.*/
@@ -826,41 +877,6 @@ void  dd_exchange_and_sort_particles(int global_flag)
 #endif
 
   CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles finished\n",this_node));
-}
-
-/*************************************************/
-
-Cell *dd_position_to_cell(double pos[3])
-{
-  int i,cpos[3];
-  double lpos;
-
-  for(i=0;i<3;i++) {
-    lpos = pos[i] - my_left[i];
-
-    cpos[i] = (int)(lpos*dd.inv_cell_size[i])+1;
-
-    if(cpos[i] < 1) {
-      cpos[i] = 1;
-#ifdef ADDITIONAL_CHECKS
-      if (PERIODIC(i) && lpos < -ROUND_ERROR_PREC) {
-	char *errtext = runtime_error(128 + TCL_INTEGER_SPACE + 3*TCL_DOUBLE_SPACE);
-	ERROR_SPRINTF(errtext, "{005 particle @ (%f, %f, %f) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
-      }
-#endif
-    }
-    else if (cpos[i] > dd.cell_grid[i]) {
-      cpos[i] = dd.cell_grid[i];
-#ifdef ADDITIONAL_CHECKS
-      if (PERIODIC(i) && lpos > local_box_l[i] + ROUND_ERROR_PREC) {
-	char *errtext = runtime_error(128 + TCL_INTEGER_SPACE + 3*TCL_DOUBLE_SPACE);
-	ERROR_SPRINTF(errtext, "{005 particle @ (%f, %f, %f) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
-      }
-#endif
-    }
-  }
-  i = get_linear_index(cpos[0],cpos[1],cpos[2], dd.ghost_cell_grid);  
-  return &cells[i];
 }
 
 /*************************************************/

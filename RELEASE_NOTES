@@ -8,9 +8,10 @@ What's new, what's been changed, what's been fixed
 Current working revision.
 
 
-- v1.8.6g -
+- v1.8.6h -
 -----------
 
+(h) April    11th, 2005.
 (g) March    25th, 2005.
 (f) March    23rd, 2005.
 (e) March    15th, 2005.
@@ -55,6 +56,8 @@ Changes:
 (a) Updated the MMM1D testcase to contain maximal precision reference data.
 
 Bugfixes:
+(h) Fixed a very rare case bug where Espresso would either bail out with error 004 or loop
+    endlessly for particles at processor boundaries due to rounding errors.
 (f) Fixed some inportabilities such as spaces before #
 (d) Fixed bug in aggregation analysis tool: 
     For calculating distances 'distance2vec' was used (which ignores periodicity), 
