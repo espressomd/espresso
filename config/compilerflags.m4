@@ -129,6 +129,7 @@ AC_DEFUN([CF_CHECK_GCC_FLAGS],[
 		CF_TRY_ADD_CFLAG(-malign-double)
 	fi
 	CF_TRY_ADD_CFLAG(-O3)
+	CF_TRY_ADD_CFLAG(-Wno-unused-function)
 	CF_TRY_ADD_CFLAG(-Wall)
 	CF_TRY_ADD_CFLAG(-ffast-math)
 	CF_TRY_ADD_CFLAG(-floop-optimize)
