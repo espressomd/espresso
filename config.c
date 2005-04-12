@@ -18,6 +18,12 @@
 #include <tcl.h>
 #include "utils.h"
 
+#ifdef BOND_CONSTRAINT
+#ifdef ROTATION
+#error BOND_CONSTRAINT and ROTATION currently do not work together
+#endif
+#endif
+
 int version_callback(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, PACKAGE_NAME ": " PACKAGE_VERSION ", Last Change: " LAST_CHANGE, (char *) NULL);
