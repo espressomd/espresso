@@ -50,6 +50,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef ROTATION
   Tcl_AppendResult(interp, "{ ROTATION } ", (char *) NULL);
 #endif
+#ifdef MASS
+  Tcl_AppendResult(interp, "{ MASS } ", (char *) NULL);
+#endif
 #ifdef EXTERNAL_FORCES
   Tcl_AppendResult(interp, "{ EXTERNAL_FORCES } ", (char *) NULL);
 #endif
