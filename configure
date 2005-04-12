@@ -1436,9 +1436,6 @@ echo "$as_me: using preconfigured settings for the Blade Center Garching" >&6;}
 echo "$as_me: using preconfigured settings for the Alphas at MPIP" >&6;}
         use_mpi=dmpi
 	CC=cc
-        CFLAGS="-I/usr/local/include -I/sw/axp_osf_40/tcl8.2/include"
-        LDFLAGS="-L/sw/axp_osf_40/tcl8.2/shlib"
-	TCL_VERSION=tcl
 	use_fftw=2
 
 	fi
@@ -2357,7 +2354,7 @@ _ACEOF
 	*aix*)
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
-		for ac_prog in mpcc mpxlc mpicc mpicci hcc cc icc gcc
+		for ac_prog in mpcc mpxlc mpicc mpicci mpiccg hcc cc icc gcc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -2657,7 +2654,7 @@ _ACEOF
 
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
-		for ac_prog in mpcc mpxlc mpicc mpicci hcc cc icc gcc
+		for ac_prog in mpcc mpxlc mpicc mpicci mpiccg hcc cc icc gcc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -3286,7 +3283,7 @@ echo "$as_me: found a working MPICH environment" >&6;}
 
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
-		for ac_prog in mpcc mpxlc mpicc mpicci hcc cc icc gcc
+		for ac_prog in mpcc mpxlc mpicc mpicci mpiccg hcc cc icc gcc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -3493,7 +3490,7 @@ _ACEOF
 	*aix*)
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
-		for ac_prog in mpcc mpxlc mpicc mpicci hcc cc icc gcc
+		for ac_prog in mpcc mpxlc mpicc mpicci mpiccg hcc cc icc gcc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -3793,7 +3790,7 @@ _ACEOF
 
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
-		for ac_prog in mpcc mpxlc mpicc mpicci hcc cc icc gcc
+		for ac_prog in mpcc mpxlc mpicc mpicci mpiccg hcc cc icc gcc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -4422,7 +4419,7 @@ echo "$as_me: found a working MPICH environment" >&6;}
 
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
-		for ac_prog in mpcc mpxlc mpicc mpicci hcc cc icc gcc
+		for ac_prog in mpcc mpxlc mpicc mpicci mpiccg hcc cc icc gcc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -4626,7 +4623,7 @@ _ACEOF
 		poe)
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
-		for ac_prog in mpcc mpxlc mpicc mpicci hcc cc icc gcc
+		for ac_prog in mpcc mpxlc mpicc mpicci mpiccg hcc cc icc gcc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -4924,7 +4921,7 @@ echo "$as_me: error: Tru64/OSF MPI not working" >&2;}
 		generic)
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
-		for ac_prog in mpcc mpxlc mpicc mpicci hcc cc icc gcc
+		for ac_prog in mpcc mpxlc mpicc mpicci mpiccg hcc cc icc gcc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -5103,7 +5100,7 @@ echo "$as_me: error: generic MPI not working" >&2;}
 		lam)
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
-		for ac_prog in mpcc mpxlc mpicc mpicci hcc cc icc gcc
+		for ac_prog in mpcc mpxlc mpicc mpicci mpiccg hcc cc icc gcc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2

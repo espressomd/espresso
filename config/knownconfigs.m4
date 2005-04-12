@@ -11,9 +11,6 @@ AC_DEFUN([KC_DINO],[
 	AC_MSG_NOTICE([using preconfigured settings for the Alphas at MPIP])
         use_mpi=dmpi
 	CC=cc
-        CFLAGS="-I/usr/local/include -I/sw/axp_osf_40/tcl8.2/include"
-        LDFLAGS="-L/sw/axp_osf_40/tcl8.2/shlib"
-	TCL_VERSION=tcl
 	use_fftw=2
 ])
 

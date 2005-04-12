@@ -85,7 +85,7 @@ AC_DEFUN([MPI_SETUP_FAKE],[
 AC_DEFUN([MPI_FIND_MPICC],[
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
-		AC_CHECK_PROGS(MPICC,[mpcc mpxlc mpicc mpicci hcc cc icc gcc])
+		AC_CHECK_PROGS(MPICC,[mpcc mpxlc mpicc mpicci mpiccg hcc cc icc gcc])
 		CC=$MPICC
 	fi
 	AC_MSG_CHECKING([whether the $CC command works out of the box for MPI])
