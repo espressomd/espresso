@@ -396,7 +396,7 @@ int UWerr_f(Tcl_Interp *interp, Tcl_CmdInfo * cmdInfo, int argc, char ** argv,
   }
 
   /* string for output of numbers */
-  str = (char *)malloc(((log10(rows)>TCL_DOUBLE_SPACE?(int)log10(rows):TCL_DOUBLE_SPACE)+1)*sizeof(char));
+  str = (char *)malloc((TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE)*sizeof(char));
 
   if (!(delpro = (double*)malloc(rows*sizeof(double)))) {
     Tcl_AppendResult(interp, "Out of Memory.", __LINE__, (char *) NULL);
@@ -758,7 +758,7 @@ int UWerr(Tcl_Interp * interp,
   int res;
   
   argv[0] = name;
-  argv[1] = (char*)malloc((log10(col_to_analyze)+1)*sizeof(char));
+  argv[1] = (char*)malloc(TCL_INTEGER_SPACE*sizeof(char));
   sprintf(argv[1], "%d", col_to_analyze);
 
   Tcl_CreateCommand(interp, name, UWerr_proj, 0, NULL);
@@ -998,7 +998,7 @@ int uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
     analyze_col = 1;
     if (Tcl_GetInt(interp, argv[3], &col_to_analyze) == TCL_ERROR) {
       error = 1;
-      str = (char *)malloc((int)(log10(ncols)+1)*sizeof(char));
+      str = (char *)malloc(TCL_INTEGER_SPACE*sizeof(char));
       sprintf(str, "%d", ncols);
       Tcl_AppendResult(interp, "third argument has to be a function or a ",
 		       "number between 1 and ", str, "!", (char *)NULL);
@@ -1009,7 +1009,7 @@ int uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
   if (!error && analyze_col &&
       (col_to_analyze < 1 || col_to_analyze > ncols)) {
     error = 1;
-    str = (char *)malloc((int)(log10(ncols)+1)*sizeof(char));
+    str = (char *)malloc(TCL_INTEGER_SPACE*sizeof(char));
     sprintf(str, "%d", ncols);
     Tcl_AppendResult(interp, "third argument has to be a function or a ",
 		     "number between 1 and ", str, ".", (char *)NULL);
