@@ -6,10 +6,10 @@ AC_PREREQ(2.50)
 AC_INIT(ESPResSo, [v1.8.6e (Rebi & Azan)], espresso@mpip-mainz.mpg.de)
 time_stamp="April 11th, 2005"
 
-if test .$CC != .; then	user_defined_CC=yes; fi
-if test .$CFLAGS != .; then user_defined_CFLAGS=yes; fi
-if test .$LDFLAGS != .; then user_defined_LDFLAGS=yes; fi
-if test .$LIBS != .; then user_defined_LIBS=yes; fi
+if test "$CC" != ""; then	user_defined_CC=yes; fi
+if test "$CFLAGS" != ""; then	user_defined_CFLAGS=yes; fi
+if test "$LDFLAGS" != ""; then	user_defined_LDFLAGS=yes; fi
+if test "$LIBS" != ""; then	user_defined_LIBS=yes; fi
 
 AC_CONFIG_AUX_DIR(config)
 AC_CANONICAL_HOST
