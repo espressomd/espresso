@@ -243,3 +243,12 @@ sent:      26.MAR.2005
 version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:     MC/MD simulations
 
+
+
+name:      Giovanni Giupponi
+email:     g.giupponi@ucl.ac.uk
+institute: ucl.ak.uk
+sent:      19.APR.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     no idea
+
