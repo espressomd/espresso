@@ -8,9 +8,10 @@ What's new, what's been changed, what's been fixed
 Current working revision.
 
 
-- v1.8.6h -
+- v1.8.6i -
 -----------
 
+(i) April    21th, 2005.
 (h) April    11th, 2005.
 (g) March    25th, 2005.
 (f) March    23rd, 2005.
@@ -38,6 +39,8 @@ New Features:
     'minimum number of contacts'-criteria
 
 Changes:
+(i) mmm2d now uses a numerically stabilized treatment of the exponentials, which should allow
+    for highly asymmetric simulation boxes such as 10x10x10000.
 (g) the part 0 bond output now also has a code word, "bond". And the part x bond command now also
     accepts the "bond { { t1 p11 p12... } { t2 t21 t22... } }" format, i.e. the output format.
 (f) aux.tcl is now auxiliary.tcl for a certain brain damaged operating system which doesn't like

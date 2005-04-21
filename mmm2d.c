@@ -127,7 +127,7 @@ static char *mmm2d_errors[] = {
   "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and y",
   "Could find not reasonable Bessel cutoff. Please decrease n_layers or the error bound",
   "Could find not reasonable Polygamma cutoff. Consider exchanging x and y",
-  "Far cutoff too large, decrease n_layers or the error bound"
+  "Far cutoff too large, decrease the error bound"
 };
 
 /****************************************
@@ -210,23 +210,25 @@ void MMM2D_self_energy();
 /** sin/cos storage */
 static void prepare_scx_cache();
 static void prepare_scy_cache();
-/** common code */
-static void distribute(int size);
-/** 2 pi sign(z) code */
-static void add_2pi_signz();
-static double twopi_z_energy();
+/** spread the top/bottom sums */
+static void distribute(int size, double fac);
+/** 2 pi |z| code */
+static void setup_z_force();
+static void setup_z_energy();
+static void   add_z_force();
+static double     z_energy();
 /** p=0 per frequency code */
-static void setup_P(int p, double omega);
-static void add_P_force();
-static double   P_energy(double omega);
+static void setup_P(int p, double omega, double fac);
+static void   add_P_force();
+static double     P_energy(double omega);
 /** q=0 per frequency code */
-static void setup_Q(int q, double omega);
-static void add_Q_force();
-static double   Q_energy(double omega);
+static void setup_Q(int q, double omega, double fac);
+static void   add_Q_force();
+static double     Q_energy(double omega);
 /** p,q <> 0 per frequency code */
-static void setup_PQ(int p, int q, double omega);
-static void add_PQ_force(int p, int q, double omega);
-static double   PQ_energy(double omega);
+static void setup_PQ(int p, int q, double omega, double fac);
+static void   add_PQ_force(int p, int q, double omega);
+static double     PQ_energy(double omega);
 
 /** cutoff error setup. Returns error code */
 static int MMM2D_tune_far(double error);
@@ -312,6 +314,9 @@ static void prepare_scy_cache()
 /* data distribution */
 /*****************************************************************/
 
+/* vector operations */
+
+/** pdc = 0 */
 MDINLINE void clear_vec(double *pdc, int size)
 {
   int i;
@@ -319,6 +324,7 @@ MDINLINE void clear_vec(double *pdc, int size)
     pdc[i] = 0;
 }
 
+/** pdc_d = pdc_s */
 MDINLINE void copy_vec(double *pdc_d, double *pdc_s, int size)
 {
   int i;
@@ -326,6 +332,7 @@ MDINLINE void copy_vec(double *pdc_d, double *pdc_s, int size)
     pdc_d[i] = pdc_s[i];
 }
 
+/** pdc_d = pdc_s1 + pdc_s2 */
 MDINLINE void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size)
 {
   int i;
@@ -333,12 +340,26 @@ MDINLINE void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size)
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
 }
 
+/** pdc_d = scale*pdc_s1 + pdc_s2 */
+MDINLINE void addscale_vec(double *pdc_d, double scale, double *pdc_s1, double *pdc_s2, int size)
+{
+  int i;
+  for (i = 0; i < size; i++)
+    pdc_d[i] = scale*pdc_s1[i] + pdc_s2[i];
+}
+
+/** pdc_d = scale*pdc */
 MDINLINE void scale_vec(double scale, double *pdc, int size)
 {
   int i;
   for (i = 0; i < size; i++)
     pdc[i] *= scale;
 }
+
+/* block indexing - has to fit to the PQ block definitions above.
+   size gives the full size of the data block,
+   e_size is the size of only the top or bottom half, i.e. half of size.
+*/
 
 MDINLINE double *block(double *p, int index, int size)
 {
@@ -355,7 +376,7 @@ MDINLINE double *abventry(double *p, int index, int e_size)
   return &p[(2*index + 1)*e_size];
 }
 
-void distribute(int e_size)
+void distribute(int e_size, double fac)
 {
   int c, node, inv_node;
   double sendbuf[8];
@@ -380,11 +401,11 @@ void distribute(int e_size)
     if (node == this_node) {
       /* calculate sums of cells below */
       for (c = 1; c < n_layers; c++)
-	add_vec(blwentry(gblcblk, c, e_size), blwentry(gblcblk, c - 1, e_size), blwentry(lclcblk, c - 1, e_size), e_size);
- 
+	addscale_vec(blwentry(gblcblk, c, e_size), fac, blwentry(gblcblk, c - 1, e_size), blwentry(lclcblk, c - 1, e_size), e_size);
+
       /* calculate my ghost contribution only if a node below exists */
       if (node + 1 < n_nodes) {
-	add_vec(sendbuf, blwentry(gblcblk, n_layers - 1, e_size), blwentry(lclcblk, n_layers - 1, e_size), e_size);
+	addscale_vec(sendbuf, fac, blwentry(gblcblk, n_layers - 1, e_size), blwentry(lclcblk, n_layers - 1, e_size), e_size);
 	copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size), e_size);
 	MPI_Send(sendbuf, 2*e_size, MPI_DOUBLE, node + 1, 0, MPI_COMM_WORLD);
       }
@@ -395,15 +416,15 @@ void distribute(int e_size)
       copy_vec(blwentry(lclcblk, 0, e_size), recvbuf + e_size, e_size);
     }
 
-    /* up */
+    /* down */
     if (inv_node == this_node) {
       /* calculate sums of all cells above */
       for (c = n_layers + 1; c > 2; c--)
-	add_vec(abventry(gblcblk, c - 3, e_size), abventry(gblcblk, c - 2, e_size), abventry(lclcblk, c, e_size), e_size);
-
+	addscale_vec(abventry(gblcblk, c - 3, e_size), fac, abventry(gblcblk, c - 2, e_size), abventry(lclcblk, c, e_size), e_size);
+      
       /* calculate my ghost contribution only if a node above exists */
       if (inv_node -  1 >= 0) {
-	add_vec(sendbuf, abventry(gblcblk, 0, e_size), abventry(lclcblk, 2, e_size), e_size);
+	addscale_vec(sendbuf, fac, abventry(gblcblk, 0, e_size), abventry(lclcblk, 2, e_size), e_size);
 	copy_vec(sendbuf + e_size, abventry(lclcblk, 1, e_size), e_size);
 	MPI_Send(sendbuf, 2*e_size, MPI_DOUBLE, inv_node - 1, 0, MPI_COMM_WORLD);
       }
@@ -477,13 +498,12 @@ static void checkpoint(char *text, int p, int q, int e_size)
 /* 2 pi (sign)(z) */
 /*****************************************************************/
 
-static void add_2pi_signz()
+static void setup_z_force()
 {
   int np, c, i;
-  double pref = coulomb.prefactor*C_2PI*ux*uy, add;
+  double pref = coulomb.prefactor*C_2PI*ux*uy;
   Particle *part;
-  int e_size = 1, size = 2;
-  double *othcblk;
+  int size = 2;
 
   /* calculate local cellblks. partblks don't make sense */
   for (c = 1; c <= n_layers; c++) {
@@ -497,8 +517,15 @@ static void add_2pi_signz()
        and above terms are the same */
     lclcblk[size*c + 1] = lclcblk[size*c];
   }
+}
 
-  distribute(e_size);
+static void add_z_force()
+{
+  int np, c, i;
+  double add;
+  Particle *part;
+  double *othcblk;
+  int size = 2;
 
   for (c = 1; c <= n_layers; c++) {
     othcblk = block(gblcblk, c - 1, size);
@@ -514,14 +541,12 @@ static void add_2pi_signz()
   }
 }
 
-static double twopi_z_energy()
+static void setup_z_energy()
 {
   int np, c, i;
   double pref = -coulomb.prefactor*C_2PI*ux*uy;
   Particle *part;
   int e_size = 2, size = 4;
-  double *othcblk;
-  double eng = 0;
 
   /* calculate local cellblks. partblks don't make sense */
   for (c = 1; c <= n_layers; c++) {
@@ -537,8 +562,15 @@ static double twopi_z_energy()
        and above terms are the same */
     copy_vec(abventry(lclcblk, c, e_size), blwentry(lclcblk, c, e_size), e_size);
   }
+}
 
-  distribute(e_size);
+static double z_energy()
+{
+  int np, c, i;
+  Particle *part;
+  double *othcblk;
+  int size = 4;
+  double eng = 0;
 
   for (c = 1; c <= n_layers; c++) {
     othcblk = block(gblcblk, c - 1, size);
@@ -555,15 +587,21 @@ static double twopi_z_energy()
 /* PoQ exp sum */
 /*****************************************************************/
 
-static void setup_P(int p, double omega)
+static void setup_P(int p, double omega, double fac)
 {
   int np, c, i, ic, o = (p-1)*n_localpart;
   Particle *part;
-  double pref = coulomb.prefactor*4*M_PI*ux*uy;
+  /* the prefactors also include the shifts for the lower and upper layers:
+     up by two for the lower layer, down by one for the upper ones. This then
+     matches the layer they will be applied to. */
+  double pref = coulomb.prefactor*4*M_PI*ux*uy,
+    pref_blw = pref*fac*fac, pref_abv = pref*fac*fac;
+  double layer_top;
   double e;
   double *llclcblk;
-  int size = 4;
+  int e_size = 2, size = 4;
 
+  layer_top = my_left[2] + layer_h;
   ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np   = cells[c].n;
@@ -571,9 +609,14 @@ static void setup_P(int p, double omega)
     llclcblk = block(lclcblk, c, size);
 
     clear_vec(llclcblk, size);
-
+    
     for (i = 0; i < np; i++) {
-      e = exp(omega*part[i].r.p[2]);
+      /* instead of the full exponents, we only save the exponents within
+	 a layer. This removes problems with very large simulation boxes,
+	 where the partblock entry were HUGE exponentials. With this approach,
+	 only the layers should not get too large, which as good idea anyways
+	 for the near formula */
+      e = exp(omega*(part[i].r.p[2] - layer_top));
 
       partblk[size*ic + POQESM] = part[i].p.q*scxcache[o + ic].s/e;
       partblk[size*ic + POQESP] = part[i].p.q*scxcache[o + ic].s*e;
@@ -583,19 +626,25 @@ static void setup_P(int p, double omega)
       add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
       ic++;
     }
-    scale_vec(pref, llclcblk, size);
+    scale_vec(pref_blw, blwentry(lclcblk, c, e_size), e_size);
+    scale_vec(pref_abv, abventry(lclcblk, c, e_size), e_size);
+
+    layer_top += layer_h;
   }
 }
 
-static void setup_Q(int q, double omega)
+static void setup_Q(int q, double omega, double fac)
 {
   int np, c, i, ic, o = (q-1)*n_localpart;
   Particle *part;
-  double pref = coulomb.prefactor*4*M_PI*ux*uy;
+  double pref = coulomb.prefactor*4*M_PI*ux*uy,
+    pref_blw = pref*fac*fac, pref_abv = pref*fac*fac;
+  double layer_top;
   double e;
   double *llclcblk;
-  int size = 4;
+  int e_size = 2, size = 4;
 
+  layer_top = my_left[2] + layer_h;
   ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np   = cells[c].n;
@@ -605,7 +654,7 @@ static void setup_Q(int q, double omega)
     clear_vec(llclcblk, size);
 
     for (i = 0; i < np; i++) {
-      e = exp(omega*part[i].r.p[2]);
+      e = exp(omega*(part[i].r.p[2] - layer_top));
 
       partblk[size*ic + POQESM] = part[i].p.q*scycache[o + ic].s/e;
       partblk[size*ic + POQESP] = part[i].p.q*scycache[o + ic].s*e;
@@ -615,7 +664,10 @@ static void setup_Q(int q, double omega)
       add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
       ic++;
     }
-    scale_vec(pref, llclcblk, size);
+    scale_vec(pref_blw, blwentry(lclcblk, c, e_size), e_size);
+    scale_vec(pref_abv, abventry(lclcblk, c, e_size), e_size);
+
+    layer_top += layer_h;
   }
 }
 
@@ -729,15 +781,18 @@ static double Q_energy(double omega)
 /* PQ particle blocks */
 /*****************************************************************/
 
-static void setup_PQ(int p, int q, double omega)
+static void setup_PQ(int p, int q, double omega, double fac)
 {
   int np, c, i, ic, ox = (p - 1)*n_localpart, oy = (q - 1)*n_localpart;
   Particle *part;
-  double pref = coulomb.prefactor*8*M_PI*ux*uy;
+  double pref = coulomb.prefactor*8*M_PI*ux*uy,
+    pref_blw = pref*fac*fac, pref_abv = pref*fac*fac;
+  double layer_top;
   double e;
   double *llclcblk;
-  int size = 8;
+  int e_size = 4, size = 8;
 
+  layer_top = my_left[2] + layer_h;
   ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np   = cells[c].n;
@@ -747,7 +802,7 @@ static void setup_PQ(int p, int q, double omega)
     clear_vec(llclcblk, size);
 
     for (i = 0; i < np; i++) {
-      e = exp(omega*part[i].r.p[2]);
+      e = exp(omega*(part[i].r.p[2] - layer_top));
       
       partblk[size*ic + PQESSM] = scxcache[ox + ic].s*scycache[oy + ic].s*part[i].p.q/e;
       partblk[size*ic + PQESCM] = scxcache[ox + ic].s*scycache[oy + ic].c*part[i].p.q/e;
@@ -762,7 +817,10 @@ static void setup_PQ(int p, int q, double omega)
       add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
       ic++;
     }
-    scale_vec(pref, llclcblk, size);
+    scale_vec(pref_blw, blwentry(lclcblk, c, e_size), e_size);
+    scale_vec(pref_abv, abventry(lclcblk, c, e_size), e_size);
+
+    layer_top += layer_h;
   }
 }
 
@@ -838,32 +896,37 @@ static double PQ_energy(double omega)
 
 static void add_force_contribution(int p, int q)
 {
-  double omega;
+  double omega, fac;
   
   if (q == 0) {
     if (p == 0) {
-      add_2pi_signz();
+      setup_z_force();
+      distribute(1, 1.);
+      add_z_force();
       checkpoint("************2piz", 0, 0, 1);
     }
     else {
       omega = C_2PI*ux*p;
-      setup_P(p, omega);
-      distribute(2);
+      fac = exp(-omega*layer_h);
+      setup_P(p, omega, fac);
+      distribute(2, fac);
       add_P_force();
       checkpoint("************distri p", p, 0, 2);
     }
   }
   else if (p == 0) {
     omega = C_2PI*uy*q;
-    setup_Q(q, omega);
-    distribute(2);
+    fac = exp(-omega*layer_h);
+    setup_Q(q, omega, fac);
+    distribute(2, fac);
     add_Q_force();
     checkpoint("************distri q", 0, q, 2);
   }
   else {
     omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
-    setup_PQ(p, q, omega);
-    distribute(4);
+    fac = exp(-omega*layer_h);
+    setup_PQ(p, q, omega, fac);
+    distribute(4, fac);
     add_PQ_force(p, q, omega);
     checkpoint("************distri pq", p, q, 4);
   }
@@ -872,32 +935,37 @@ static void add_force_contribution(int p, int q)
 static double energy_contribution(int p, int q)
 {
   double eng;
-  double omega;
+  double omega, fac;
   
   if (q == 0) {
     if (p == 0) {
-      eng = twopi_z_energy();
+      setup_z_energy();
+      distribute(2, 1.);
+      eng = z_energy();
       checkpoint("E************2piz", 0, 0, 2);
     }
     else {
       omega = C_2PI*ux*p;
-      setup_P(p, omega);
-      distribute(2);
+      fac = exp(-omega*layer_h);
+      setup_P(p, omega, fac);
+      distribute(2, fac);
       eng = P_energy(omega);
       checkpoint("************distri p", p, 0, 2);
     }
   }
   else if (p == 0) {
     omega = C_2PI*uy*q;
-    setup_Q(q, omega);
-    distribute(2);
+    fac = exp(-omega*layer_h);
+    setup_Q(q, omega, fac);
+    distribute(2, fac);
     eng = Q_energy(omega);
     checkpoint("************distri q", 0, q, 2);
   }
   else {
     omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
-    setup_PQ(p, q, omega);
-    distribute(4);
+    fac = exp(-omega*layer_h);
+    setup_PQ(p, q, omega, fac);
+    distribute(4, fac);
     eng = PQ_energy(omega);
     checkpoint("************distri pq", p, q, 4);
   }
@@ -942,7 +1010,7 @@ double MMM2D_add_far(int f, int e)
   }
 
   dR = -log(FARRELPREC)/C_2PI*uz;
-
+  
   for(R = mmm2d_params.far_cut; R > 0; R -= dR) {
     for (p = n_scxcache; p >= 0; p--) {
       for (q = undone[p]; q >= 0; q--) {
@@ -987,7 +1055,7 @@ static int MMM2D_tune_far(double error)
     mmm2d_params.far_cut += min_inv_boxl;
   }
   while (err > error && mmm2d_params.far_cut*box_l[2] < MAXIMAL_FAR_CUT);
-  if (mmm2d_params.far_cut*box_l[2] >= MAXIMAL_FAR_CUT)
+  if (mmm2d_params.far_cut*layer_h >= MAXIMAL_FAR_CUT)
     return ERROR_FARC;
   // fprintf(stderr, "far cutoff %g %g %g\n", mmm2d_params.far_cut, err, min_far);
   mmm2d_params.far_cut -= min_inv_boxl;
