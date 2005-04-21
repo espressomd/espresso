@@ -52,6 +52,7 @@ proc read_data {file} {
 proc write_data {file} {
     set f [open $file "w"]
     blockfile $f write variable box_l
+    blockfile $f write tclvariable energy
     blockfile $f write interactions
     blockfile $f write particles {id pos q f}
     close $f
@@ -130,6 +131,19 @@ if { [catch {
 	error "MMM2D force error too large"
     }
 
+    set cureng [lindex [analyze energy coulomb] 0]
+    set toteng [analyze energy total]
+
+    if { [expr abs($toteng - $cureng)] > $epsilon } {
+	error "system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"
+    }
+
+    set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
+    puts "relative energy deviations: $rel_eng_error"
+    if { $rel_eng_error > $epsilon } {
+	error "relative energy error too large"
+    }
+
     inter coulomb 0.0
 
     #########################################
@@ -167,6 +181,21 @@ if { [catch {
     puts "rms force deviation $rmsf"
     if { $rmsf > $epsilon } {
 	error "P3M+ELC force error too large"
+    }
+
+    set cureng [lindex [analyze energy coulomb] 0]
+    set toteng [analyze energy total]
+
+    puts [analyze energy]
+
+    if { [expr abs($toteng - $cureng)] > $epsilon } {
+	error "system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"
+    }
+
+    set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
+    puts "relative energy deviations: $rel_eng_error"
+    if { $rel_eng_error > $epsilon } {
+	error "relative energy error too large"
     }
 } res ] } {
     error_exit $res

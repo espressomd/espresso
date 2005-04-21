@@ -326,8 +326,11 @@ static double dipole_energy()
   }
 
   distribute(1);
-  
-  return pref*SQR(gblcblk[0]);
+
+  if (this_node == 0)
+    return pref*SQR(gblcblk[0]);
+  else 
+    return 0;
 }
 
 /*****************************************************************/
@@ -623,7 +626,7 @@ double ELC_energy()
   int p, q;
   double omega;
 
-  eng = dipole_energy();
+  eng = 2*dipole_energy();
 
   prepare_scx_cache();
   prepare_scy_cache();

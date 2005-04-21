@@ -39,6 +39,7 @@ New Features:
     'minimum number of contacts'-criteria
 
 Changes:
+(i) The el2d and p3m testcases now also take care of the energy.
 (i) mmm2d now uses a numerically stabilized treatment of the exponentials, which should allow
     for highly asymmetric simulation boxes such as 10x10x10000.
 (g) the part 0 bond output now also has a code word, "bond". And the part x bond command now also
@@ -59,6 +60,7 @@ Changes:
 (a) Updated the MMM1D testcase to contain maximal precision reference data.
 
 Bugfixes:
+(i) Fixed the energy calculation of ELC.
 (h) Fixed a very rare case bug where Espresso would either bail out with error 004 or loop
     endlessly for particles at processor boundaries due to rounding errors.
 (f) Fixed some inportabilities such as spaces before #

@@ -1,4 +1,6 @@
 {variable  {box_l 125.992104989 125.992104989 125.992104989} }
+{tclvariable
+	{energy -1.96274594106} }
 {interactions 
 	{0 0 lennard-jones 1.0 1.0 1.12246 0.0 0.0 0.0 }
 }

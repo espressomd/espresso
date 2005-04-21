@@ -90,7 +90,7 @@ void calc_long_range_energies()
     break;
   }
   if (coulomb.use_elc)
-    *energy.coulomb += ELC_energy();
+    energy.coulomb[energy.n_coulomb - 1] = ELC_energy();
 #endif
 }
 
@@ -110,6 +110,8 @@ void init_energies(Observable_stat *stat)
   case COULOMB_P3M:  n_coulomb = 2; break;
   default: n_coulomb  = 1;
   }
+  if (coulomb.use_elc)
+    n_coulomb++;
 #endif
   
   obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, 1);

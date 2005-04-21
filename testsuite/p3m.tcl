@@ -51,6 +51,7 @@ proc read_data {file} {
 proc write_data {file} {
     set f [open $file "w"]
     blockfile $f write variable box_l
+    blockfile $f write tclvariable {energy pressure}
     blockfile $f write interactions
     blockfile $f write particles {id pos q f}
     close $f
@@ -62,7 +63,7 @@ if { [catch {
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set F($i) [part $i pr f]
     }
-    ############## mmm1d-specific part
+    ############## P3M-specific part
     # the P3M parameters are stored in p3m_system.data
 
     # to ensure force recalculation
@@ -75,6 +76,26 @@ if { [catch {
 	integrate 0
 
 	write_data "p3m_system.data"
+    }
+
+    ############## end
+
+    puts [analyze energy]
+    puts [analyze pressure]
+
+    set cureng [lindex [analyze   energy coulomb] 0]
+    set curprs [lindex [analyze pressure coulomb] 0]
+
+    set rel_eng_error [expr abs(($cureng - $energy)/$energy)]
+    puts "relative energy deviations: $rel_eng_error"
+    if { $rel_eng_error > $epsilon } {
+	error "relative energy error too large"
+    }
+
+    set rel_prs_error [expr abs(($curprs - $pressure)/$pressure)]
+    puts "relative pressure deviations: $rel_prs_error"
+    if { $rel_prs_error > $epsilon } {
+	error "relative pressure error too large"
     }
 
     ############## end, here RMS force error for P3M

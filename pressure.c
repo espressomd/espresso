@@ -154,6 +154,8 @@ void calc_long_range_virials()
     fprintf(stderr, "WARNING: pressure calculated, but MMM1D pressure not implemented\n");
     break;
   }
+  if (coulomb.use_elc)
+    fprintf(stderr, "WARNING: pressure calculated, but ELC pressure not implemented\n");
 #endif
 }
 
