@@ -61,8 +61,10 @@ proc blockfile_read_auto_particles {channel read auto} {
 		set pos $idx; incr idx 3 }
 	    "^ty"     { if {![regexp "^$i" "type"]} { error " $i is not a particle property" }
 		set type $idx; incr idx }
-	    "^m"      { if {![regexp "^$i" "molecule_id"]} { error " $i is not a particle property" }
+	    "^mo"     { if {![regexp "^$i" "molecule_id"]} { error " $i is not a particle property" }
 		set mol $idx; incr idx }
+            "^ma"     { if {![regexp "^$i" "mass"]} { error " $i is not a particle property" }
+                set mass $idx; incr idx }
 	    "^q$"     { set q $idx; incr idx }
 	    "^v"      { if {![regexp "^$i" "v"]} { error " $i is not a particle property" }
 		set v $idx; incr idx 3 }
@@ -90,6 +92,8 @@ proc blockfile_read_auto_particles {channel read auto} {
              type \[lindex \$line $type\]" }
     if {[info exists mol]} { set cmd "$cmd \
              molecule \[lindex \$line $mol\]" }
+    if {[info exists mass]} { set cmd "$cmd \
+             mass \[lindex \$line $mass\]" }
     if {[info exists v]} { set cmd "$cmd \
              v  \[lindex \$line $v\] \[lindex \$line [expr $v + 1]\] \[lindex \$line [expr $v + 2]\]"
     }
