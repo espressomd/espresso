@@ -252,3 +252,12 @@ sent:      19.APR.2005
 version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:     no idea
 
+
+
+name:      Kristopher Wise
+email:     k.e.wise@larc.nasa.gov
+institute: National Institute of Aerospace
+sent:      26.APR.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     polymer simulations for materials development
+
