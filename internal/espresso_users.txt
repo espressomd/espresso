@@ -261,3 +261,20 @@ sent:      26.APR.2005
 version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:     polymer simulations for materials development
 
+
+
+name:      Adama Tandia
+email:     adamatandia@gmail.com
+institute: Corning INC, Modeling & Simulation, Corning, NY 14831 USA
+sent:      28.APR.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     Silica glass transition
+
+
+name:      Christian Hinderling
+email:     christian.hinderling@csem.ch
+institute: Centre Suisse d\'Electronique et de Microtechnique (CSEM),J. Droz 1,2007 Neuchatel,Schweiz
+sent:      28.APR.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     simulation of self assembly of block-copolymers into nanostructures by DPD
+
