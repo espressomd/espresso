@@ -198,9 +198,13 @@ topic:     I am a postdoc researcher at the Johns Hopkins University. My current
 name:      Giovanni Giupponi
 email:     g.giupponi@ucl.ac.uk
 institute: University College London
-sent:      15.MAR.2005
+sent:      15.MAR.2005 / topic added: 19.APR.2005
 version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:     n.a.
+topic:     I am interested in Espresso as me and colleagues at the IRC in Leeds are trying
+           to investigate the conformational properties and beyond of charged dendrimers.
+           Any suggestions from you and your group (including past work on coarse grained
+           simulation of charged system with espresso) are more than welcome
 
 
 name:      Bernd Hannebauer
@@ -208,6 +212,13 @@ email:     bernd.hannebauer@degussa.com
 institute: Degussa
 version:   v1.7.5-Mezoti
 topic:     I\'m interested in molecular interaction energies and want to try out ESPResSo for this purpose
+topic:     We are doing quantum and force field calculations here and
+           we are always interested in new simulation approaches including coarse
+           grained systems. I will definitely try to find out what kind of potential
+           applications related to our research are suitable for ESPResSo and I am
+           also interested in looking at the new features of the latest ESPResSo
+           versions. However, since I'm quite busy at the moment, it may take some
+           time until I will be able spend a bit more time on this matter.
 
 
 name:      Thomas McDermott
@@ -235,7 +246,6 @@ topic2:    I am currently finishing a PhD on the diffusion of liquids in nanosca
 	   but hopefully in the future I'll get time to study the code and perhaps contribute to it.
 
 
-
 name:      Neeraj Rai
 email:     rai@chem.umn.edu
 institute: University of Minnesota
@@ -244,23 +254,12 @@ version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:     MC/MD simulations
 
 
-
-name:      Giovanni Giupponi
-email:     g.giupponi@ucl.ac.uk
-institute: ucl.ak.uk
-sent:      19.APR.2005
-version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
-topic:     no idea
-
-
-
 name:      Kristopher Wise
 email:     k.e.wise@larc.nasa.gov
 institute: National Institute of Aerospace
 sent:      26.APR.2005
 version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:     polymer simulations for materials development
-
 
 
 name:      Adama Tandia
