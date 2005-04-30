@@ -2,19 +2,151 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.8.6e (Rebi & Azan)                                                                *
+* v1.9.3f (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.8.6i -
+- v1.9.3f -
 -----------
 
-(i) April    21th, 2005.
-(h) April    11th, 2005.
-(g) March    25th, 2005.
-(f) March    23rd, 2005.
+(f) April 27th, 2005.
+(e) April 21st, 2005.
+(d) April 18th, 2005.
+(c) April 15th, 2005.
+(b) April 12th, 2005.
+(a) April 11th, 2005.
+
+New Features:
+(d) Up-to-date informations on the installation procedure are now available in the
+    newly added 'INSTALL'-file.
+(a) Added a generic MPI-environment for implementations which work simply 
+    via 'mpicc' and 'mpirun' out of the box.
+
+Changes:
+(f) Added masses to 'blockfile read particles'.
+(e) The 'el2d'- and 'P3M'-testcases now also check consistency of the energy calculation.
+(e) MMM2D now uses a numerically stabilized treatment of the exponentials, 
+    which should allow for highly asymmetric simulation boxes such as 10x10x10000.
+(b) Testcase 'rotation.tcl' did not produce eventual errors correctly.
+    Added an error if BOND_CONSTRAINT and ROTATION are used simultanously.
+(b) The output of 'code_info' now also lists masses if available.
+(b) 'thalpha' now uses tcl8.4. Basically just disables gcc, which does not work.
+    'mpiccg' is now also recognized as mpi compiler (rio cluster Garching).
+
+Bugfixes:
+(e) Fixed the energy calculation of ELC.
+(c) Fixed a bug which prevented multiple Options to CFLAGS and LDFLAGS.
+(c) Fixed a bug where the 'uwerr'-error analysis crashes for single row data.
+(a) Fixed a very rare case where Espresso would either bail out with 'error 004' or 
+    loop endlessly for particles at processor boundaries due to rounding ambiguities.
+
+
+- v1.9.2f -
+-----------
+
+(f) April  4th, 2005.
+(e) April  1st, 2005.
+(d) March 31st, 2005.
+(c) March 29th, 2005.
+(b) March 25th, 2005.
+(a) March 24th, 2005.
+
+New Features:
+(f) Added functions to '$ESPRESSO_SCRIPTS/ABHmath.tcl':
+    'dist_random'    (returns random numbers in the interval [0,1] which have a 
+        distribution according to a given distribution function p(x) <dist>
+        containing equally spaced values of p(x). If p(x) contains values larger 
+        than 1 the maximum <max> or any number larger than that has to be given)
+    'list_add_value' (add numerical value <val> to each element of <list>)
+    'flatten'        (flattens a nested list)
+    'list_contains'  (checks wether list contains <val> and returns its
+        number of occurences)
+(d) Added code to read a '.espressorc'-file with user defined settings
+    for allowing customized tcl-wrapper packages, parameters, plus more.
+(c) Automatic processor detection added for automized addition of optimization options.
+(c) The tk-libraries on Mac OS-X platforms are now also found automatically.
+
+Changes:
+(f) Added functions to '$ESPRESSO_SCRIPTS/ABHmath.tcl':
+    'bond_angle'          (calculates bond angle between particles p1, p2 and p3)
+    'bond_dihedral'       (calculates bond dihedral between particles p1, p2, p3 and p4)
+    'create_dihedral_vec' (creates last vector of a dihedral (vec1, vec2, res))
+(f) Changed assumptions in the lipid orientation calculation such that now the head bead 
+    can have any type but is assumed to be either type 0 or the first bead in the molecule 
+    where a type 0 bead takes preference.
+(b) The output of 'part <part_id> bond' now also has its own code word, "bond". 
+    Conversely, 'part <part_id> bond' now also accepts the output format as parameters, 
+    e.g. "bond { { t1 p11 p12... } { t2 t21 t22... } }" is now a valid input.
+
+Bugfixes:
+(f) Finally fixed the DPD initialization bug: SQR(time_step) -> time_step.
+    See also the mails from Ulf Schiller to the 'despresso'-mailing list.
+(f) Fixed a problem with the lipid orientation calculation where the head bead 
+    was assumed to always have type 0. Now the head bead can have any type but is assumed 
+    to be either type 0 or the first bead in the molecule where a type 0 bead takes preference.
+(f) Fixed a bug in 'try_delete_exclusion'.
+(e) Fixed a bug in the dihedral forces. The new version is based on Arijits routines,
+    although it is not yet certain if the energies are correct.
+(b) Fixed the installation of directories ('scripts' and 'html_doc').
+(b) Fixed the additional sources handling, i.e. MPI fake.
+(a) Fixed a rare particle loss event.
+(a) Fixed that 'make install' was missing a '\$'.
+
+
+- v1.9.1b -
+-----------
+
+(b) March 23rd, 2005.
+(a) March 21st, 2005.
+
+New Features:
+(b) Introduced an automatic configuration ability to ESPResSo.
+    Now, executing './configure' in the root-directory will (attempt to) customize
+    the program to the current working environment, identifying most of the commonly
+    used compilers, parallel communicators, tcl-versions, etc.pp. required by itself.
+    For details, see './configure --help'. 
+    Note that in course of this, also the object file directory names have changed
+    from the old '$ESPRESSO_SOURCE/Linux', '$ESPRESSO_SOURCE/Darwin', and so on,
+    to 'obj-<cpu>-<vendor>-<os>'. There is, however, now a script in the source directory
+    which will automatically start the correct binary and MPI-implementation for the 
+    current architecture, provided it has been configured and compiled successfully.
+(b) Introduced new option 'make install' which will install ESPResSo in the directories 
+    specified using the new './configure'-ability. 
+    The installed script contains the correct settings for $ESPRESSO_SOURCE and -SCRIPTS. 
+(b) Informations on the production- and debug-status, the employed MPI-environment and
+    FFTW-version are now also included in the output of the 'code_info'-command.
+
+Changes:
+(b) File '$ESPRESSO_SCRIPTS/scripts/aux.tcl' has been renamed to 'auxiliary.tcl' 
+    for better compatibility with a certain brain damaged operating system 
+    which doesn't like the other name 'cause it confuses it with the serial port of the PC.
+(b) The internal structure of 'config.h' has been changed to allow better overview
+    on the compilation status by separating documentation and flags (as done in 'debug.h').
+(b) Changed makros FFTW_REAL and -IMAG for fftw3 to also work with systems/platforms
+    where the complex data type is used. 
+(b) Changed inclusion policy of header files: All files in ESPResSo are now required to
+    include 'utils.h' which in turn will be the only one to include 'debug.h' and 'config.h'.
+
+Bugfixes:
+(b) Fixed some inportabilities such as spaces before #
+(a) Small fixes in Lattice-Boltzmann part of the communication related to problems 
+    with running on ALPHA-machines.
+
+
+
+****************************************************************************************
+* v1.8.6e (Rebi & Azan)                                                                *
+****************************************************************************************
+
+Released & tagged on March 15th, 2005.
+
+
+
+- v1.8.6e -
+-----------
+
 (e) March    15th, 2005.
 (d) March     8th, 2005.
 (c) March     3rd, 2005.
@@ -22,36 +154,12 @@ Current working revision.
 (a) February 28th, 2005.
 
 New Features:
-(f) configure. For details see ./configure --help. Note that in course of this, also
-    the object file directory names have changed to obj-<cpu>-<vendor>-<os>. However
-    there is now an Espresso script in the source directory which will automatically
-    start the correct binary and mpi for the current architecture, provided it has been
-    configured and compiled successfully.
-(f) there is now a make install, which will install Espresso in the directories specified 
-    via configure. The installed script contains the correct settings for ESPRESSO_SOURCE
-    and -SCRIPTS. 
-(f) production/debug, MPI and FFTW status are now also included in code_info
-(d) there is now a make dist, which builds espresso-<date>.tgz and should contain everything
-    important to just take Espresso with you and compile it somewhere else.
 (c) Added a new option for aggregation analysis tool: <min_contact> option defines a criteria 
     for minimum number of contacts for two molecules to be considered being in the same aggregate.
 (c) Added new feature to aggregation analysis routine so that there is a 
     'minimum number of contacts'-criteria
 
 Changes:
-(i) The el2d and p3m testcases now also take care of the energy.
-(i) mmm2d now uses a numerically stabilized treatment of the exponentials, which should allow
-    for highly asymmetric simulation boxes such as 10x10x10000.
-(g) the part 0 bond output now also has a code word, "bond". And the part x bond command now also
-    accepts the "bond { { t1 p11 p12... } { t2 t21 t22... } }" format, i.e. the output format.
-(f) aux.tcl is now auxiliary.tcl for a certain brain damaged operating system which doesn't like
-    the other name.
-(f) the format of config.h has changed. The documentation is separated from the flags as in debug.h
-    to allow a better overview on the compilation status.
-(f) changed FFTW_REAL and -IMAG for fftw3 to also work with systems where the complex data type
-    is used. 
-(f) utils.h alone includes debug.h and config.h and should be the one and only one of the three
-    to be included in ALL files.
 (e) Deactivating superfluous output of 'analyze necklace'-command.
 (b) Speedup of the Bessel functions used for 'MMM1D'-calculations:
     - improved Chebychev series evaluation
@@ -60,10 +168,6 @@ Changes:
 (a) Updated the MMM1D testcase to contain maximal precision reference data.
 
 Bugfixes:
-(i) Fixed the energy calculation of ELC.
-(h) Fixed a very rare case bug where Espresso would either bail out with error 004 or loop
-    endlessly for particles at processor boundaries due to rounding errors.
-(f) Fixed some inportabilities such as spaces before #
 (d) Fixed bug in aggregation analysis tool: 
     For calculating distances 'distance2vec' was used (which ignores periodicity), 
     but 'min_distance2' should have been used instead.
