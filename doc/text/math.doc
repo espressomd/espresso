@@ -56,11 +56,11 @@ The following procedures are found in scripts/ABHmath.tcl.
 	    <li> \anchor dist_random
             \verbatim dist_random <dist> [max] \endverbatim
 	    returns random numbers in the interval \[0,1\] which have a distribution 
-  	    according to the distribution function p(x) <dist> which has to be given 
+  	    according to the distribution function p(x) \<dist\> which has to be given 
  	    as a tcl list containing equally spaced values of p(x). 
 	    If p(x) contains values larger than 1 (default value of max) the 
 	    maximum or any number larger 
- 	    than that has to be given <max>. This routine basically takes the 
+ 	    than that has to be given \<max\>. This routine basically takes the 
 	    function p(x) and places it into a rectangular area (\[0,1\],\[0,max\]). 
 	    Then it uses to random numbers to specify a point in this area and 
 	    checks wether it resides in the area under p(x). Attention: Since this 
