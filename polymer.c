@@ -1299,20 +1299,20 @@ int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     /* [charges <val_nodes> <val_cM> <val_CI>] */
     else if (ARG_IS_S(i, "charges")) {
       if (i+3 >= argc) { Tcl_AppendResult(interp, "Wrong # of args! Usage: charges <val_nodes> <val_cM> <val_CI>!", (char *)NULL); return (TCL_ERROR); }
-      if (ARG_IS_D(i+1, val_nodes)) {
+      if (!ARG_IS_D(i+1, val_nodes)) {
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The charge of the nodes must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-      if (ARG_IS_D(i+2, val_cM)) { 
+      if (!ARG_IS_D(i+2, val_cM)) { 
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The charge of the monomers must be double (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
-      if (ARG_IS_D(i+3, val_CI)) { 
+      if (!ARG_IS_D(i+3, val_CI)) { 
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The charge of the counterions must be double (got: ",argv[i+3],")!", (char *)NULL); return (TCL_ERROR); }
       i+=3;
     }
     /* [distance <cM_dist>] */
     else if (ARG_IS_S(i, "distance")) {
-      if (ARG_IS_I(i+1, cM_dist)) { 
+      if (!ARG_IS_I(i+1, cM_dist)) { 
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "The distance between two charged monomers' indices must be integer (got: ",argv[i+1],")!", (char *)NULL); 
 	return (TCL_ERROR); }
