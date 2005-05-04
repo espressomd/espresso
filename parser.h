@@ -26,6 +26,13 @@
 */
 int parse_int_list(Tcl_Interp *interp, char *list, IntList *il);
 
+/** parse an double list
+    @param interp for conversion of backslash stuff
+    @param list the string containing the list
+    @param dl where to store the results
+*/
+int parse_double_list(Tcl_Interp *interp, char *list, DoubleList *dl);
+
 
 #define ARG_IS_S(no, str) !strncasecmp(argv[(no)], (str), strlen(argv[(no)]))
 #define ARG0_IS_S(str) ARG_IS_S(0, (str))
@@ -42,6 +49,10 @@ int parse_int_list(Tcl_Interp *interp, char *list, IntList *il);
 #define ARG_IS_INTLIST(no, il) (parse_int_list(interp, argv[(no)], &(il)))
 #define ARG0_IS_INTLIST(il) ARG_IS_INTLIST(0, (il))
 #define ARG1_IS_INTLIST(il) ARG_IS_INTLIST(1, (il))
+
+#define ARG_IS_DOUBLELIST(no, il) (parse_double_list(interp, argv[(no)], &(il)))
+#define ARG0_IS_DOUBLELIST(il) ARG_IS_DOUBLELIST(0, (il))
+#define ARG1_IS_DOUBLELIST(il) ARG_IS_DOUBLELIST(1, (il))
 
 #define CHECK_VALUE(func, errmsg) \
         if (func == TCL_ERROR) { \
