@@ -48,6 +48,7 @@
 #include "domain_decomposition.h"
 #include "errorhandling.h"
 #include "rattle.h"
+#include "bin.h"
 
 /** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
@@ -455,6 +456,8 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "nemd", (Tcl_CmdProc *)nemd, 0, NULL);
   /* in thermostat.c */
   Tcl_CreateCommand(interp, "thermostat", (Tcl_CmdProc *)thermostat, 0, NULL);
+  /* in bin.c */
+  Tcl_CreateCommand(interp, "bin", (Tcl_CmdProc *)bin, 0, NULL);
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");
