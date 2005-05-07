@@ -277,3 +277,21 @@ sent:      28.APR.2005
 version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:     simulation of self assembly of block-copolymers into nanostructures by DPD
 
+
+
+name:      Adolf Hille
+email:     a_hill07@uni-muenster.de
+institute: Uni Münster
+sent:      06.MAY.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     Verständnis für programmierte Lösung von P3M-Methode im Rahmen eines Seminars, das sich mit Bilderkennung durch Pratikel-Simulationsmethoden beschäftigt
+
+
+name:      J. Ramos
+email:     j.ramos@iem.cfmac.csic.es
+institute: Department of Macromolecular Physics IEM-CSIC; 
+           Serrano 113bis, 28003 Madrid (Spain) 
+sent:      06.MAY.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     physical properties of polyolefins
+
