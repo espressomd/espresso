@@ -121,24 +121,26 @@ int bin(ClientData cdata, Tcl_Interp *interp,
 	sum.e[s] += data.e[i];
     }
     
-    if (data.n) {
-      /* shift the final result into the count and normalize */
-      for (i = 0; i < sum.n; i++)
-	if (count.e[i])
-	  count.e[i] = sum.e[i]/count.e[i];
-    }
-    else {
-      /* just normalize */
-      contr = 1./coords.n;
-      for (i = 0; i < count.n; i++)
-	count.e[i] *= contr;
-    }
+    /* normalization */
+    contr = 1./coords.n;
 
-    Tcl_PrintDouble(interp, count.e[0], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    for (i = 1; i < count.n; i++) {
-      Tcl_PrintDouble(interp, count.e[i], buffer);
-      Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
+    for (i = 0; i < count.n; i++) {
+      if (data.n) {
+	if (count.e[i]) {
+	  count.e[i] = sum.e[i]/count.e[i];
+	  Tcl_PrintDouble(interp, count.e[i], buffer);
+	}
+	else
+	  strcpy(buffer, "n/a");
+      }
+      else {
+	Tcl_PrintDouble(interp, count.e[i] *= contr, buffer);
+      }
+ 
+      if (i == 0)
+	Tcl_AppendResult(interp, buffer, (char *) NULL);
+      else
+	Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
     }
     return TCL_OK;
   }
