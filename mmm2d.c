@@ -1103,6 +1103,7 @@ static int MMM2D_tune_near(double error)
   P--;
   if (P == MAXIMAL_B_CUT)
     return ERROR_BESSEL;
+
   // fprintf(stderr, "bessel cutoff %d %g\n", P, err);
 
   realloc_intlist(&besselCutoff, besselCutoff.n = P);
@@ -1110,7 +1111,7 @@ static int MMM2D_tune_near(double error)
     besselCutoff.e[p-1] = (int)floor(((double)P)/(2*p)) + 1;
 
   /* complex sum, determine cutoffs (dist dependent) */
-  T = log(part_error/(16*M_SQRT2)*box_l[1]*box_l[2]);
+  T = log(part_error/(16*M_SQRT2)*box_l[0]*box_l[1]);
   for (i = 0; i < COMPLEX_STEP; i++)
     complexCutoff[i] = (int)ceil(T/log((i+1)/COMPLEX_FAC));
   prepareBernoulliNumbers(complexCutoff[COMPLEX_STEP-1]);
