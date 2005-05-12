@@ -1054,7 +1054,7 @@ static int MMM2D_tune_far(double error)
       (C_2PI*mmm2d_params.far_cut + 2*(ux + uy) + 1/min_far);
     mmm2d_params.far_cut += min_inv_boxl;
   }
-  while (err > error && mmm2d_params.far_cut*box_l[2] < MAXIMAL_FAR_CUT);
+  while (err > error && mmm2d_params.far_cut*layer_h < MAXIMAL_FAR_CUT);
   if (mmm2d_params.far_cut*layer_h >= MAXIMAL_FAR_CUT)
     return ERROR_FARC;
   // fprintf(stderr, "far cutoff %g %g %g\n", mmm2d_params.far_cut, err, min_far);
