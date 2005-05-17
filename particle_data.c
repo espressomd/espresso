@@ -1336,10 +1336,11 @@ int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 	  free(bond);
 	  return TCL_ERROR;
 	}
-	if(bond[j] > max_seen_particle || particle_node[bond[j]] == -1) {
-	  Tcl_AppendResult(interp, "partner atom %d (identity %d) not known"
-			   ,j+1,bond[j],
-			   " (set all partner atoms first)", (char *) NULL);
+	if(bond[j] < 0 || bond[j] > max_seen_particle || particle_node[bond[j]] == -1) {
+	  char buffer[256 + 2*TCL_INTEGER_SPACE];
+	  sprintf(buffer, "partner atom %d (identity %d) not known, set all partner atoms first",
+		  j+1,bond[j]);
+	  Tcl_AppendResult(interp, buffer , (char *) NULL);
 	  free(bond);
 	  return TCL_ERROR;
 	}
@@ -1399,10 +1400,11 @@ int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 	free(bond);
 	return TCL_ERROR;
       }
-      if(bond[j] > max_seen_particle || particle_node[bond[j]] == -1) {
-	Tcl_AppendResult(interp, "partner atom %d (identity %d) not known"
-			 ,j+1,bond[j],
-			 " (set all partner atoms first)", (char *) NULL);
+      if(bond[j] < 0 || bond[j] > max_seen_particle || particle_node[bond[j]] == -1) {
+	char buffer[256 + 2*TCL_INTEGER_SPACE];
+	sprintf(buffer, "partner atom %d (identity %d) not known, set all partner atoms first",
+		j+1,bond[j]);
+	Tcl_AppendResult(interp, buffer , (char *) NULL);
 	free(bond);
 	return TCL_ERROR;
       }
