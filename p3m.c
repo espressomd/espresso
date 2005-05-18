@@ -679,18 +679,16 @@ int inter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv)
       if (ARG1_IS_S("metallic")) {
 	d1 = P3M_EPSILON_METALLIC;
       }
-      else {
-	if (! ARG1_IS_D(d1)) {
-	  Tcl_AppendResult(interp, argv[0], " needs 1 DOUBLE parameter or \"metallic\"",
-			   (char *) NULL);
-	  return TCL_ERROR;
-	}
+      else if (! ARG1_IS_D(d1)) {
+	Tcl_AppendResult(interp, argv[0], " needs 1 DOUBLE parameter or \"metallic\"",
+	                 (char *) NULL);
+	return TCL_ERROR;
+      }
 	
-	if (p3m_set_eps(d1) == TCL_ERROR) {
-	  Tcl_AppendResult(interp, argv[0], " There is no error msg yet!",
-			   (char *) NULL);
-	  return TCL_ERROR;
-	}
+      if (p3m_set_eps(d1) == TCL_ERROR) {
+        Tcl_AppendResult(interp, argv[0], " There is no error msg yet!",
+                         (char *) NULL);
+        return TCL_ERROR;
       }
 
       argc -= 2;
