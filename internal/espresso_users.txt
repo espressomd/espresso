@@ -295,3 +295,18 @@ sent:      06.MAY.2005
 version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:     physical properties of polyolefins
 
+
+
+name:      David Morse
+email:     morse@cems.umn.edu
+institute: Dept. of Chemical Engineering & Material Science
+University of Minnesota
+sent:      17.MAY.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     MD and Brownian dynamics simulations of semiflexible
+           polymers in solutions and non-equilibrium MD of dense
+           neutral (i.e., LJ-ium) polymers. I received an email 
+           from Christian Holm about another matter, which brought
+           my attention to the package, and explained some of the 
+           reasons for my interest in greater detail in the reply.
+
