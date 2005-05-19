@@ -5,7 +5,7 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2005; all rights reserved unless otherwise stated.
 #ifndef CONFIG_H
 #define CONFIG_H
 
@@ -89,6 +89,11 @@
     <li> \verbatim #define  LJ_WARN_WHEN_CLOSE \endverbatim
     if defined, you will get a warning when particles approach nearer than
     0.9 sigma, because then it's likely the integration will blow up.
+<<<<<<< config.h
+*/
+#define LJ_WARN_WHEN_CLOSE
+=======
+>>>>>>> 2.88
 
     <li> \verbatim #define MORSE \endverbatim
     Morse potential
@@ -130,8 +135,13 @@
     DPD Thermostat (Dissipative Particle Dynamics) 
     Flag needed only because DPD acts like a short range potential
 
+<<<<<<< config.h
+This will allow to use such particle properties as quart, omega, and torque. */
+#define ROTATION
+=======
     <li> \verbatim #define LB \endverbatim
     LB Thermostat (fluctuating Lattice Boltzmann fluid)
+>>>>>>> 2.88
 
     </ul>
 */
@@ -143,28 +153,110 @@
 /* #define ROTATION */
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
+<<<<<<< config.h
+
+/** allow particles to have different masses. */
+#define MASS
+
+/** exclusion of nonbonded interactions for specific particle pairs
+    currently works only with domain decomposition and Verlet lists */
+#define EXCLUSIONS
+
+/** Compiler Flag to enable COMFORCE potential */
+#define COMFORCE
+
+/** Compiler Flag to enable COMFIXED potential */
+#define COMFIXED
+
+/** Compiler Flag to enable bond constraint.
+    See \ref rattle.h, merged but not tested. 
+    If you need this, I wish you happy debugging. */
+#define BOND_CONSTRAINT
+=======
 /* #define MASS */
 /* #define EXCLUSIONS */
 /* #define COMFORCE */
 /* #define COMFIXED */
 /* #define BOND_CONSTRAINT */
+>>>>>>> 2.88
 
+<<<<<<< config.h
+/************************************************/
+/** \name available short--ranged potentials
+    For optimization it might be useful to switch
+    off the ones you don't need */
+/*@{*/
+
+/** to use tabulated potential*/
+#define TABULATED
+
+/** Lennard-Jones */
+=======
 /* #define TABULATED */
+>>>>>>> 2.88
 #define LENNARD_JONES
+<<<<<<< config.h
+
+/** Morse */
+#define MORSE
+
+/** Lennard-Jones with cosine tail */
+#define LJCOS
+
+/** BUCKINGHAM potential */
+#define BUCKINGHAM
+
+/** SOFT-SPHERE potential */
+#define SOFT_SPHERE
+/*@}*/
+=======
 /* #define LJ_WARN_WHEN_CLOSE */
 /* #define MORSE */
 /* #define LJCOS */
 /* #define BUCKINGHAM */
 /* #define SOFT_SPHERE */
+>>>>>>> 2.88
 
 /* #define BOND_ANGLE_HARMONIC */
+<<<<<<< config.h
+/** Cosine bond angle potential:        V = k (1+cos(phi-phi0)) */
+/* #define BOND_ANGLE_COSINE */
+/** Cosine square bond angle potential: V = 1/2 k (cos(phi)-cos(phi0))^2 */
+#define BOND_ANGLE_COSSQUARE
+=======
 #define BOND_ANGLE_COSINE
 /* #define BOND_ANGLE_COSSQUARE */
+>>>>>>> 2.88
 
+<<<<<<< config.h
+/*@}*/
+
+/***********************************************************/
+/** \name Simulation methods, Integrators and Thermostats  */
+/***********************************************************/
+/*@{*/
+
+/** NEMD (Non Eqilibrium Molecular Dynamics).
+    This is used to perform shear simulations */
+#define NEMD
+
+/** Allows to use (N,p,T)-ensembles during integration as well */
+#define NPT
+
+/** DPD Thermostat (Dissipative Particle Dynamics) 
+    Flag needed only because DPD acts like a short range potential
+*/
+#define DPD
+
+/** LB Thermostat (fluctuating Lattice Boltzmann fluid) 
+*/
+#define LB
+=======
 /* #define NEMD */
 /* #define NPT */
 /* #define DPD */
 /* #define LB */
+>>>>>>> 2.88
 
 /************************************************/
 /** \name Default Parameter Settings            */
