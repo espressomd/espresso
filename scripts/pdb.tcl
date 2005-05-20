@@ -5,7 +5,7 @@
 #  You should have received a copy of that license along with this program;
 #  if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-#  Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+#  Copyright (c) 2002-2005; all rights reserved unless otherwise stated.
 #  
 proc writepsf { file {N_P -1} {MPC -1} {N_CI -1} {N_pS -1} {N_nS -1} } {
     set f [open $file "w"]

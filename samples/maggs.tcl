@@ -1,14 +1,6 @@
 #!/bin/sh
 # tricking... the line after a these comments are interpreted as standard shell script \
-    PLATFORM=`uname -s`; if [ "$1" != "" ]; then NP=$1; else NP=1; fi
-# OSF1 \
-    if test $PLATFORM = OSF1; then  exec dmpirun -np $NP $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $*
-# AIX \
-    elif test $PLATFORM = AIX; then exec poe $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $* -procs $NP
-# Linux \
-    else export EF_ALLOW_MALLOC_0=1; exec mpirun -np $NP -nsigs $ESPRESSO_SOURCE/$PLATFORM/Espresso $0 $*;
-# \
-    fi;
+    exec $ESPRESSO_SOURCE/Espresso $0 $*
 # 
 #  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 #  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
@@ -17,7 +9,7 @@
 #  You should have received a copy of that license along with this program;
 #  if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-#  Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+#  Copyright (c) 2002-2005; all rights reserved unless otherwise stated.
 # 
 
 proc require_feature {feature} {
