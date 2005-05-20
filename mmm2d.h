@@ -5,7 +5,7 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2005; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
 /** \file mmm2d.h  MMM2D algorithm for long range coulomb interaction in 2d+h geometries.
     Implementation of the MMM2D method for the calculation of the electrostatic interaction for two dimensionally
     periodic systems. For details on the method see \ref MMM_general. The MMM2D method works only with the layered
