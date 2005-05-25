@@ -388,7 +388,9 @@ proc blockfile_write_tclvariable {channel write tclvariable {which "all"}} {
     }
     if {[llength $which] == 1} {
 	global $which
-	puts -nonewline $channel " {$which [set $which]} "
+	if { ![array exists $which] } {
+	    puts -nonewline $channel " {$which [set $which]} "
+	} { puts -nonewline $channel " {array $which [array get $which]} " }
     } {
 	puts $channel ""
 	foreach wh $which { global $wh; if { ! [array exists $wh] } { puts $channel "\t{$wh [set $wh]}" } }
@@ -404,12 +406,23 @@ proc blockfile_read_auto_tclvariable {channel read auto} {
 	set vname [lindex $vblock 0]
 	set data [lrange $vblock 1 end]
 #	puts "----$vname-$data-"
-	global $vname
-	if {[catch {eval "set $vname \"$data\""} error]} {
-	    if { $error != "" } {
-		error "blockfile_read_auto_tclvariable: set $vname $data reported: $error"
-	    }
-	}   
+	if { "$vname" != "array" } {
+	    global $vname
+	    if {[catch {eval "set $vname \"$data\""} error]} {
+		if { $error != "" } {
+		    error "blockfile_read_auto_tclvariable: set $vname $data reported: $error"
+		}
+	    }   
+	} else { 
+	    set vname [lindex $vblock 1]
+	    set data [lrange $vblock 2 end]
+	    global $vname
+	    if {[catch {eval "array set $vname \"$data\""} error]} {
+		if { $error != "" } {
+		    error "blockfile_read_auto_tclvariable: set $vname $data reported: $error"
+		}
+	    }   
+	}
     }
 
     return "tclvariable"
