@@ -310,3 +310,12 @@ topic:     MD and Brownian dynamics simulations of semiflexible
            my attention to the package, and explained some of the 
            reasons for my interest in greater detail in the reply.
 
+
+
+name:      Peter Virnau
+email:     virnau@mit.edu
+institute: MIT
+sent:      24.MAY.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     Coarse-grained MD simulation, Translocation, Globule collapse
+
