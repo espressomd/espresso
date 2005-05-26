@@ -212,7 +212,7 @@ void mpi_bcast_lb_params_slave(int node, int parm);
 
 /** A list of which function has to be called for
     the issued command. */
-SlaveCallback *callbacks[] = {
+static SlaveCallback *slave_callbacks[] = {
   mpi_stop_slave,                   /*  0: REQ_TERM */
   mpi_bcast_parameter_slave,        /*  1: REQ_BCAST_PAR */
   mpi_who_has_slave,                /*  2: REQ_WHO_HAS */
@@ -1944,7 +1944,7 @@ void mpi_loop()
       fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
       errexit();
     }
-    callbacks[request[0]](request[1], request[2]);
+    slave_callbacks[request[0]](request[1], request[2]);
     COMM_TRACE(fprintf(stderr, "%d: finished %s %d %d\n", this_node,
 		       names[request[0]], request[1], request[2]));
   }
