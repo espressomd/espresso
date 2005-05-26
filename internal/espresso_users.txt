@@ -319,3 +319,16 @@ sent:      24.MAY.2005
 version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:     Coarse-grained MD simulation, Translocation, Globule collapse
 
+
+
+name:      Miguel Angelo Granato
+email:     mgranato@fe.up.pt
+institute: LSRE - Laboratory of Separation and Reaction Engineering
+           Universidade do Porto
+           Rua Dr. Roberto Frias
+           4200-465 - Porto
+           Portugal
+version:   1.9.4g CVS
+topic:     Research on molecular simulations for alkane adsorption on zeolites. The models assume to be rigid, but the code will be suitabel to study ion interactions that are currently not found in literature. My system runs under Debian, so a Debian package would be greatly appreciated ifi possible. Otherwise, I shall be able to convert it.
+Setting the sorbate coordinates are under investigation and any help on this issue will also be acknowledged.
+
