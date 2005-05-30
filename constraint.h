@@ -270,7 +270,7 @@ MDINLINE double plate_energy(Particle *p1, Particle *c_p, Constraint_plate *c)
 {
 #ifdef ELECTROSTATICS
   if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->sigma != 0.0)
-    return 2*M_PI*coulomb.prefactor*c->sigma*p1->p.q*fabs(p1->r.p[2] < c->pos);
+    return 2*M_PI*coulomb.prefactor*c->sigma*p1->p.q*fabs(p1->r.p[2] - c->pos);
 #endif
   return 0;
 }
