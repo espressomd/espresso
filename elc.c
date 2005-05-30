@@ -5,7 +5,7 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2005; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
 /** \file elc.c
  *
  *  For more information about ELC, see \ref elc.h "elc.h".
@@ -69,6 +69,11 @@ ELC_struct elc_params = { 1e100, 10, 1 };
 #define PQECSM 6
 #define PQECCM 7
 /*@}*/
+
+/** if true, use a homogenous neutralizing background for nonneutral systems. Unlike
+    the 3d case, this background adds an additional force pointing towards the system
+    center, so be careful with this. */
+static int neutralize = 0;
 
 /** number of local particles, equals the size of \ref elc::partblk. */
 static int n_localpart = 0;
@@ -291,13 +296,16 @@ static void add_dipole_force()
   int np, c, i;
   Particle *part;
   double pref = coulomb.prefactor*4*M_PI*ux*uy*uz;
+  /* for nonneutral systems, this shift gives the background contribution
+     (rsp. for this shift, the DM of the background is zero) */
+  double shift = 0.5*box_l[2];
 
   gblcblk[0] = 0;
   for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
     part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++)
-      gblcblk[0] += part[i].p.q*part[i].r.p[2];
+      gblcblk[0] += part[i].p.q*(part[i].r.p[2] - shift);
   }
   gblcblk[0] *= pref;
 
@@ -309,6 +317,29 @@ static void add_dipole_force()
     for (i = 0; i < np; i++)
       part[i].f.f[2] -= gblcblk[0]*part[i].p.q;
   }
+
+  if (!neutralize) {
+    /* SUBTRACT the forces of the neutralizing background
+       looks very close to the code above, but is still different.
+    */
+    gblcblk[0] = 0;
+    for (c = 0; c < local_cells.n; c++) {
+      np   = local_cells.cell[c]->n;
+      part = local_cells.cell[c]->part;
+      for (i = 0; i < np; i++)
+	gblcblk[0] += part[i].p.q;
+    }
+    gblcblk[0] *= pref;
+
+    distribute(1);
+
+    for (c = 0; c < local_cells.n; c++) {
+      np   = local_cells.cell[c]->n;
+      part = local_cells.cell[c]->part;
+      for (i = 0; i < np; i++)
+	part[i].f.f[2] += gblcblk[0]*part[i].p.q*(part[i].r.p[2] - shift);
+    }
+  }
 }
 
 static double dipole_energy()
@@ -316,21 +347,46 @@ static double dipole_energy()
   int np, c, i;
   Particle *part;
   double pref = coulomb.prefactor*2*M_PI*ux*uy*uz;
+  double eng;
+  /* for nonneutral systems, this shift gives the background contribution
+     (rsp. for this shift, the DM of the background is zero) */
+  double shift = 0.5*box_l[2];
 
   gblcblk[0] = 0;
   for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
     part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++)
-      gblcblk[0] += part[i].p.q*part[i].r.p[2];
+      gblcblk[0] += part[i].p.q*(part[i].r.p[2] - shift);
   }
 
   distribute(1);
 
   if (this_node == 0)
-    return pref*SQR(gblcblk[0]);
+    eng = pref*SQR(gblcblk[0]);
   else 
-    return 0;
+    eng = 0;
+
+  if (!neutralize) {
+    /* SUBTRACT the energy of the neutralizing background */
+
+    gblcblk[0] = 0;
+    gblcblk[1] = 0;
+    for (c = 0; c < local_cells.n; c++) {
+      np   = local_cells.cell[c]->n;
+      part = local_cells.cell[c]->part;
+      for (i = 0; i < np; i++) {
+	gblcblk[0] += part[i].p.q;
+	gblcblk[1] += part[i].p.q*(SQR(part[i].r.p[2])- box_l[2]*part[i].r.p[2]);
+      }
+    }
+
+    distribute(2);
+    
+    if (this_node == 0)
+      eng += pref*(-gblcblk[1]*gblcblk[0] + (-0.5 + (0.5/3.))*SQR(gblcblk[0]*box_l[2]));
+  }
+  return eng;
 }
 
 /*****************************************************************/
@@ -720,8 +776,10 @@ int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
   double minimal_distance;
   double far_cut = -1;
 
+  neutralize = 1;
+
   if (argc < 2) {
-    Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>} expected, not \"",
+    Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>} {-noneutralization} expected, not \"",
 		     argv[0], "\"", (char *)NULL);
     return TCL_ERROR;
   }
@@ -729,9 +787,19 @@ int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
     return TCL_ERROR;
   if (!ARG1_IS_D(minimal_distance))
     return TCL_ERROR;
-  if (argc > 2 && !ARG_IS_D(2, far_cut))
-    return TCL_ERROR;
-
+  if (argc == 3) {
+    if (ARG_IS_S(2, "-noneutralization"))
+      neutralize = 0;
+    else if (!ARG_IS_D(2, far_cut))
+      return TCL_ERROR;
+  }
+  else if (argc == 4) {
+    if (!ARG_IS_D(2, far_cut))
+      return TCL_ERROR;
+    if (!ARG_IS_S(3, "-noneutralization"))
+      return TCL_ERROR;
+    neutralize = 0;
+  }
   CHECK_VALUE(ELC_set_params(pwerror, minimal_distance, far_cut), "choose a 3d electrostatics method prior to ELC");
 }
 
