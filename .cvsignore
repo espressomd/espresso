@@ -1,4 +1,7 @@
-Linux
-OSF1
-AIX
-Darwin
+obj-*
+fftw*wisdom*.file
+autom4te.cache
+aclocal.m4
+config.status
+config.log
+Makefile.*-*-*
