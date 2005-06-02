@@ -332,3 +332,19 @@ version:   1.9.4g CVS
 topic:     Research on molecular simulations for alkane adsorption on zeolites. The models assume to be rigid, but the code will be suitabel to study ion interactions that are currently not found in literature. My system runs under Debian, so a Debian package would be greatly appreciated ifi possible. Otherwise, I shall be able to convert it.
 Setting the sorbate coordinates are under investigation and any help on this issue will also be acknowledged.
 
+
+
+name:      Shiping Huang
+email:     huangsp@mail.buct.edu.cn
+           huangsp12345@163.com
+institute: Dept. of Chemical engineering
+           Beijing University of Chemical Technology
+           Beijing, 100029
+sent:      31.MAY.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     - simulation of complex materials
+           - I am going to use ESPReSo package to study the 
+             clay/polymer system at atomistic simulation, 
+             such as intercalation of polymer in layer silicate 
+             and orginic in the space between two clay sheets.
+
