@@ -348,3 +348,18 @@ topic:     - simulation of complex materials
              such as intercalation of polymer in layer silicate 
              and orginic in the space between two clay sheets.
 
+
+
+name:      Shiping Huang
+email:     huangsp12345@163.com
+institute: Dept. of Chemical engineering
+           Beijing University of Chemical Technology
+           Beijing, 100029
+sent:      02.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:   - simulation of complex materials
+         - I am going to use ESPReSo package to study the clay/polymer
+           system at atomistic simulation, such as intercalation of
+           polymer in layer silicate and orginic in the space between two
+           clay sheets.
+
