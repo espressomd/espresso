@@ -363,3 +363,22 @@ topic:   - simulation of complex materials
            polymer in layer silicate and orginic in the space between two
            clay sheets.
 
+
+
+name:      Anguang Hu
+email:     ag.ahu3@gmail.com
+institute: department of chemistry,
+           the university of western ontario
+           London, Ontario, N6A 5B7,
+           Canada
+sent:      03.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:   - density functional theory
+         - My research interests are mainly in first-principle modeling on
+           energetic materials, such as polymeric nitrogen, molecular
+           electronic devices and organic light-emitting diodes. So, I
+           want to use Espresso to obtain some structures of polymeric 
+           nitrogen and poly-phenylene polymers. 
+           I am also interested in MD/MC calculations in terms of 
+           thermodynamic properties of polymers.
+
