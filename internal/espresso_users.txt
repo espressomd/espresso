@@ -382,3 +382,39 @@ topic:   - density functional theory
            I am also interested in MD/MC calculations in terms of 
            thermodynamic properties of polymers.
 
+
+
+name:      Davide Ceresoli
+email:     ceresoli@sissa.it
+institute: International School for Advanced Studies (SISSA)
+           via Beirut 2-4
+           I-34014 Trieste, Italy
+           Phone: +39-040-3787-448  Fax: +39-040-3787-528
+sent:      16.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     alkali halide nanoclusters and surfaces
+
+
+name:      Cordula Rauwolf
+email:     rauwolf@ipfdd.de
+institute: Leibniz Institute of Polymer Research Dresden          
+         & Max Bergmann Center of Biomaterials Dresden 
+           Hohe Straﬂe 6, 01069 Dresden, Germany
+sent:      16.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     simulations of amphiphilic systems and polymers in biomaterial
+           science
+
+
+name:      Gianluca Lattanzi
+email:     Gianluca.Lattanzi@ba.infn.it
+institute: Department of Medical Biochemistry, Biology and Physics
+           University of Bari, Italy
+           Piazza Giulio Cesare, 11 - Policlinico
+           70124 Bari (Italy)
+sent:      16.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     We would like to study the entaglement properties of oligomers
+           with different functionalization geometries for the development
+           of organic thin films.
+
