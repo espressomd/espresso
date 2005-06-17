@@ -47,7 +47,7 @@ int mindist3(int part_id, double r_catch, int *ids);
 int collision(double pos[3], double shield);
 
 /** Implementation of the tcl-command <br>
-    polymer \<N_P\> \<MPC\> \<bond_length\> [start \<part_id\>] [pos \<x\> \<y\> \<z\>] [mode { SAW | RW } [\<shield\> [\<max_try\>]]] 
+    polymer \<N_P\> \<MPC\> \<bond_length\> [start \<part_id\>] [pos \<x\> \<y\> \<z\>] [mode { SAW | RW | PSAW } [\<shield\> [\<max_try\>]]] 
             [charge \<val_cM\>] [distance \<cM_dist\>] [types \<type_nM\> [\<type_cM\>]] [FENE \<type_FENE\>] [angle \<angle\>
 	    [\<angle2\> [\<x2\> \<y2\> \<z2\>]]] <br>
     Creates some polymer chains within the simulation box,
@@ -58,7 +58,7 @@ int collision(double pos[3], double shield);
                  \<bond_length\> = length of the bonds between two monomers <br>
                  \<part_id\>     = particle number of the start monomer (defaults to '0') <br>
 	         \<pos\>         = sets the position of the start monomer of the first chain (defaults to a randomly chosen value) <br>
-	         \<mode\>        = selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW') <br>
+	         \<mode\>        = selects setup mode: (Pseudo) self avoiding walk ([P]SAW) or plain random walk (RW) (defaults to 'SAW') <br>
 	         \<shield\>      = shield around each particle another particle's position may not enter if using SAW (defaults to '0.0') <br>
 	         \<max_try\>     = how often a monomer should be reset if current position collides with a previous particle (defaults to '30000') <br>
 	         \<val_cM\>      = valency of charged monomers (defaults to '0.0') <br>
@@ -77,7 +77,7 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv);
     @param  bond_length = length of the bonds between two monomers <br>
     @param  part_id     = particle number of the start monomer (defaults to '0') <br>
     @param  posed       = sets the position of the start monomer of the first chain (defaults to a randomly chosen value) <br>
-    @param  mode        = selects setup mode: Self avoiding walk (SAW) or plain random walk (RW) (defaults to 'SAW') <br>
+    @param  mode        = selects setup mode: (Pseudo) self avoiding walk ([P]SAW) or plain random walk (RW) (defaults to 'SAW') <br>
     @param  shield      = shield around each particle another particle's position may not enter if using SAW (defaults to '0.0') <br>
     @param  max_try     = how often a monomer should be reset if current position collides with a previous particle (defaults to '30000') <br>
     @param  val_cM      = valency of charged monomers (defaults to '0.0') <br>

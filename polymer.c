@@ -101,7 +101,7 @@ int collision(double pos[3], double shield) {
 
 int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int N_P, MPC; double bond_length; int part_id = 0; double *posed = NULL; double *posed2 = NULL;
-  int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
+  int mode = 0; double shield = 1.0; int tmp_try,max_try = 30000;       /* mode==0 equals "SAW", mode==1 equals "RW", mode==2 equals "PSAW" */
   double val_cM = 0.0; int cM_dist = 1, type_nM = 0, type_cM = 1, type_FENE = 0;
   double angle = -1.0, angle2 = -1.0;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -154,11 +154,11 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	  return (TCL_ERROR); } else { i+=3; } }
       else { Tcl_AppendResult(interp, "The first start monomers position must be 3D!", (char *)NULL); return (TCL_ERROR); }
     }
-    /* [mode { SAW | RW } [<shield> [max_try]]] */
+    /* [mode { SAW | RW | PSAW } [<shield> [max_try]]] */
     else if (ARG_IS_S(i, "mode")) {
       if (i+1 < argc) {
-	if (ARG_IS_S(i+1, "SAW")) {
-	  mode = 0;
+	if (ARG_IS_S(i+1, "SAW") || ARG_IS_S(i+1, "PSAW")) {
+	  if (ARG_IS_S(i+1, "SAW")) mode = 0; else mode = 2;
 	  if ((i+2 >= argc) || !ARG_IS_D(i+2, shield)) { Tcl_ResetResult(interp); i++; }
 	  else {
 	    if (shield < 0) { Tcl_AppendResult(interp, "The SAW-shield must be positive (got: ",argv[i+2],")!", (char *)NULL); return (TCL_ERROR); }
@@ -257,13 +257,13 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   }
   if (val_cM < 1e-10) { val_cM = 0.0; type_cM = type_nM; }
 
-  POLY_TRACE(if (posed!=NULL) {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed %f/%f/%f, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f, double posed %f/%f/%f\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle,angle2, posed2[0], posed2[1], posed2[2]); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed %f/%f/%f, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f, double posed2 NULL\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle,angle2);} else {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2, double posed2 %f/%f/%f\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle, angle2,posed2[0],posed2[1],posed2[2]); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f, double posed2 NULL\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle, angle2);});
+  POLY_TRACE(if (posed!=NULL) {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed (%f,%f,%f), int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f, double posed (%f,%f,%f)\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle,angle2, posed2[0], posed2[1], posed2[2]); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed (%f,%f,%f), int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f, double posed2 NULL\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle,angle2);} else {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f, double posed2 (%f,%f,%f)\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle, angle2,posed2[0],posed2[1],posed2[2]); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f, double posed2 NULL\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle, angle2);});
 
 tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle, angle2, posed2);
   if (tmp_try == -1) {
-    sprintf(buffer, "Failed to find a suitable place for the start-monomer for %d times!\nAborting...\n",max_try); tmp_try = TCL_ERROR; }
+    sprintf(buffer, "Failed to find a suitable place for the start-monomer for %d times!\nUse option 'mode { SAW | RW | PSAW } <shield> <max_try>' to increase this limit...\n",max_try); tmp_try = TCL_ERROR; }
   else if (tmp_try == -2) {
-    sprintf(buffer, "Failed to place current polymer chain in the simulation box for %d times!\nAborting...\n",max_try); tmp_try = TCL_ERROR; }
+    sprintf(buffer, "Failed to place current polymer chain in the simulation box for %d times!\nUse option 'mode { SAW | RW | PSAW } <shield> <max_try>' to increase this limit...\n",max_try); tmp_try = TCL_ERROR; }
   else if (tmp_try == -3) {
     sprintf(buffer, "Failed upon creating one of the monomers in Espresso!\nAborting...\n"); tmp_try = TCL_ERROR; }
   else if (tmp_try == -4) {
@@ -281,7 +281,7 @@ tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try,
 int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, int mode, double shield, int max_try, 
 	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle, double angle2, double *posed2) {
   int p,n, cnt1,cnt2,max_cnt, bond[2];
-  double theta,phi,pos[3],poz[3],poy[3],pox[3],M[3],a[3],b[3],c[3],d[3],absc,absd,v1,v2,alpha;
+  double theta,phi,poly[3*MPC],pos[3],poz[3],poy[3],pox[3],M[3],a[3],b[3],c[3],d[3],absc,absd,v1,v2,alpha;
 
   cnt1 = cnt2 = max_cnt = 0;
   for (p=0; p<N_P; p++) {
@@ -303,17 +303,15 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	  pos[0]=box_l[0]*d_random();
 	  pos[1]=box_l[1]*d_random();
 	  pos[2]=box_l[2]*d_random();
-	  if ((mode!=0) || (collision(pos, shield)==0)) break;
+	  if ((mode==1) || (collision(pos, shield)==0)) break;
 	  POLY_TRACE(printf("s"); fflush(NULL));
 	}
 	if (cnt1 >= max_try) return (-1);
       }
-      if (place_particle(part_id, pos)==TCL_ERROR) return (-3);
-      if (set_particle_q(part_id, val_cM)==TCL_ERROR) return (-3);
-      if (set_particle_type(part_id, type_cM)==TCL_ERROR) return (-3);
-      part_id++; max_cnt=imax(cnt1, max_cnt);
+      poly[0] = pos[0]; poly[1] = pos[1]; poly[2] = pos[2];
+      max_cnt=imax(cnt1, max_cnt);
       POLY_TRACE(printf("S"); fflush(NULL));
-      POLY_TRACE(printf("placed Monomer 0 at (%f,%f,%f)\n",pos[0],pos[1],pos[2]));
+      POLY_TRACE(/* printf("placed Monomer 0 at (%f,%f,%f)\n",pos[0],pos[1],pos[2]) */);
 
       poz[0]=pos[0]; poz[1]=pos[1]; poz[2]=pos[2];
 
@@ -328,7 +326,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	poz[0]=pos[0]+(poz[0]-pos[0])*bond_length/absc;
 	poz[1]=pos[1]+(poz[1]-pos[1])*bond_length/absc;
 	poz[2]=pos[2]+(poz[2]-pos[2])*bond_length/absc;
-	POLY_TRACE(printf("changed preceding monomer-position to (%f,%f,%f)\n",poz[0],poz[1],poz[2]));
+	POLY_TRACE(/* printf("virtually shifted position of first monomer to (%f,%f,%f)\n",poz[0],poz[1],poz[2]) */);
       }
       else {
 	for (cnt1=0; cnt1<max_try; cnt1++) {
@@ -337,23 +335,26 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	  pos[0] = poz[0]+bond_length*sin(theta)*cos(phi);
 	  pos[1] = poz[1]+bond_length*sin(theta)*sin(phi);
 	  pos[2] = poz[2]+bond_length*cos(theta);
-	  if ((mode!=0) || (collision(pos, shield)==0)) break;
+	  if (mode==1 || collision(pos, shield)==0) break;
+	  if (mode==0) { cnt1 = -1; break; }
 	  POLY_TRACE(printf("m"); fflush(NULL));
 	}
-	if (cnt1 >= max_try) return (-1);
+	if (cnt1 >= max_try) {
+	  fprintf(stderr,"\nWarning! Attempt #%d to build polymer %d failed while placing monomer 2!\n",cnt2+1,p);
+	  fprintf(stderr,"         Retrying by re-setting the start-monomer of current chain...\n");
+	}
+	if (cnt1 == -1 || cnt1 >= max_try) {
+	  continue;
+	}
       }
       if(posed2!=NULL && p>0) {
 	free(posed2);
 	posed2=NULL;
       }
-      bond[0] = type_FENE; bond[1] = part_id - 1;
-      if (place_particle(part_id, pos)==TCL_ERROR) return (-3);
-      if (set_particle_q(part_id, ((n % cM_dist==0) ? val_cM : 0.0) )==TCL_ERROR) return (-3);
-      if (set_particle_type(part_id, ((n % cM_dist==0) ? type_cM : type_nM) )==TCL_ERROR) return (-3);
-      if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3);
-      part_id++; max_cnt=imax(cnt1, max_cnt);
+      poly[3*n] = pos[0]; poly[3*n+1] = pos[1]; poly[3*n+2] = pos[2];
+      max_cnt=imax(cnt1, max_cnt);
       POLY_TRACE(printf("M"); fflush(NULL));
-      POLY_TRACE(printf("placed Monomer 1 at (%f,%f,%f)\n",pos[0],pos[1],pos[2]));
+      POLY_TRACE(/* printf("placed Monomer 1 at (%f,%f,%f)\n",pos[0],pos[1],pos[2]) */);
       
       /* place remaining monomers */
       for (n=2; n<MPC; n++) { 
@@ -377,32 +378,32 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	    a[0]=poz[0]-poy[0];
 	    a[1]=poz[1]-poy[1];
 	    a[2]=poz[2]-poy[2];
-
+	    
 	    if(angle2 > -1.0 && n>2) {
 	      b[0]=poy[0]-pox[0];
 	      b[1]=poy[1]-pox[1];
 	      b[2]=poy[2]-pox[2];
-
+	      
 	      alpha=acos((a[0]*b[0]+a[1]*b[1]+a[2]*b[2])/SQR(bond_length));
-
+	      
 	      d[0]=b[0]/cos(alpha);
 	      d[1]=b[1]/cos(alpha);
 	      d[2]=b[2]/cos(alpha);
-
+	      
 	      c[0]=a[1]*b[2]-a[2]*b[1];
 	      c[1]=a[2]*b[0]-a[0]*b[2];
 	      c[2]=a[0]*b[1]-a[1]*b[0];
-
+	      
 	      absd=sqrt(SQR(d[0])+SQR(d[1])+SQR(d[2]));
 	      absc=sqrt(SQR(c[0])+SQR(c[1])+SQR(c[2]));
 	      c[0]=c[0]*absd*tan(angle2)/absc;
 	      c[1]=c[1]*absd*tan(angle2)/absc;
 	      c[2]=c[2]*absd*tan(angle2)/absc;
-
+	      
 	      b[0]=a[0]+c[0]+d[0];
 	      b[1]=a[1]+c[1]+d[1];
 	      b[2]=a[2]+c[2]+d[2];
-
+	      
 	      c[0]=a[0]-((SQR(a[0])+SQR(a[1])+SQR(a[2]))/(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))*b[0];
 	      c[1]=a[1]-((SQR(a[0])+SQR(a[1])+SQR(a[2]))/(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))*b[1];
 	      c[2]=a[2]-((SQR(a[0])+SQR(a[1])+SQR(a[2]))/(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))*b[2];
@@ -410,7 +411,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	    else {
 	      v1 = 1-2*d_random();
 	      v2 = 1-2*d_random();
-
+	      
 	      if(a[0] != 0) {
 		c[1] = v1;
 		c[2] = v2;
@@ -431,11 +432,11 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	    c[0] = (sin(angle)*bond_length/absc)*c[0];
 	    c[1] = (sin(angle)*bond_length/absc)*c[1];
 	    c[2] = (sin(angle)*bond_length/absc)*c[2];
-
+	    
 	    M[0] = cos(angle)*(a[0]);
 	    M[1] = cos(angle)*(a[1]);
 	    M[2] = cos(angle)*(a[2]);
-
+	    
 	    pos[0] += M[0]+c[0];
 	    pos[1] += M[1]+c[1];
 	    pos[2] += M[2]+c[2];
@@ -447,32 +448,41 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	    pos[1] = poz[1]+bond_length*sin(theta)*sin(phi);
 	    pos[2] = poz[2]+bond_length*cos(theta);
 	  }
-
-	  POLY_TRACE(printf("a=(%f,%f,%f) absa=%f M=(%f,%f,%f) c=(%f,%f,%f) absMc=%f a*c=%f)\n",a[0],a[1],a[2],sqrt(SQR(a[0])+SQR(a[1])+SQR(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(SQR(M[0]+c[0])+SQR(M[1]+c[1])+SQR(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2]));
-	  POLY_TRACE(printf("placed Monomer %d at (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]));
-
-	  if ((mode!=0) || (collision(pos, shield)==0)) break;
+	  
+	  POLY_TRACE(/* printf("a=(%f,%f,%f) absa=%f M=(%f,%f,%f) c=(%f,%f,%f) absMc=%f a*c=%f)\n",a[0],a[1],a[2],sqrt(SQR(a[0])+SQR(a[1])+SQR(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(SQR(M[0]+c[0])+SQR(M[1]+c[1])+SQR(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2]) */);
+	  POLY_TRACE(/* printf("placed Monomer %d at (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
+	  
+	  if (mode==1 || collision(pos, shield)==0) break;
+	  if (mode==0) { cnt1 = -2; break; }
 	  POLY_TRACE(printf("m"); fflush(NULL));
 	}
 	if (cnt1 >= max_try) {
-	  fprintf(stderr,"Warning! Attempt #%d to build polymer %d failed after %d unsuccessful trials to place monomer %d!\n",cnt2+1,p,cnt1,n);
+	  fprintf(stderr,"\nWarning! Attempt #%d to build polymer %d failed after %d unsuccessful trials to place monomer %d!\n",cnt2+1,p,cnt1,n);
 	  fprintf(stderr,"         Retrying by re-setting the start-monomer of current chain...\n");
-	  cnt1 = part_id - n;
-	  for (part_id=part_id-1; part_id >= cnt1; part_id--) if (remove_particle(part_id)==TCL_ERROR) return (-4);
-	  part_id = cnt1; n=0; break;
 	}
-	bond[0] = type_FENE; bond[1] = part_id - 1;
-	if (place_particle(part_id, pos)==TCL_ERROR) return (-3);
-	if (set_particle_q(part_id, ((n % cM_dist==0) ? val_cM : 0.0) )==TCL_ERROR) return (-3);
-	if (set_particle_type(part_id, ((n % cM_dist==0) ? type_cM : type_nM) )==TCL_ERROR) return (-3);
-	if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3);
-	part_id++; max_cnt=imax(cnt1, max_cnt);
+	if (cnt1 == -2 || cnt1 >= max_try) {
+	  n=0; break;
+	}
+	poly[3*n] = pos[0]; poly[3*n+1] = pos[1]; poly[3*n+2] = pos[2];
+	max_cnt=imax(cnt1, max_cnt);
 	POLY_TRACE(printf("M"); fflush(NULL));
       }
-      if ((mode!=0) || (n>0)) break;
+      if ((mode==1) || (n>0)) break;
     }
     POLY_TRACE(printf(" %d/%d->%d \n",cnt1,cnt2,max_cnt));
     if (cnt2 >= max_try) return(-2); else max_cnt = imax(max_cnt,imax(cnt1,cnt2));
+
+    /* actually creating current polymer in ESPResSo */
+    for (n=0; n<MPC; n++) {
+      pos[0] = poly[3*n]; pos[1] = poly[3*n+1]; pos[2] = poly[3*n+2];
+      bond[0] = type_FENE; bond[1] = part_id - 1;
+      if (place_particle(part_id, pos)==TCL_ERROR) return (-3);
+      if (set_particle_q(part_id, ((n % cM_dist==0) ? val_cM : 0.0) )==TCL_ERROR) return (-3);
+      if (set_particle_type(part_id, ((n % cM_dist==0) ? type_cM : type_nM) )==TCL_ERROR) return (-3);
+      if(n>0) if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3);
+      part_id++;
+      POLY_TRACE(/* printf("placed Monomer %d at (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
+    }
   }
   return(imax(max_cnt,cnt2));
 }
