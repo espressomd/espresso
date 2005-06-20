@@ -1,0 +1,90 @@
+####################################
+# About                           ##
+####################################
+
+mbtools is a collection of tcl packages designed to perform certain
+common tasks in the simulation of bilayer membranes such as
+preconstructing vesicles with certain geometries or calculating common
+observables.  
+
+In the examples directory you will find a set of simulations ranging
+from basic to more complicated systems.  In all examples the membrane
+model that is used is the solvent free model of "Cooke, Kremer and
+Deserno" which makes use of broad attractive tail potentials. (see the
+paper Cooke, I. R., Kremer, K. and Deserno, M. Efficient tunable
+generic model for fluid bilayer membranes, (cond-mat/0502418)
+Phys. Rev. E. to appear ). 
+
+
+
+###################################
+######## Versions #################
+###################################
+
+19-4-05: system_generation changed to version 1.0.0 and is
+         incompatible with previous versions
+
+####################################
+# Installation and configuration ###
+####################################
+
+If all goes well Espresso should know where this package is.  If not
+then you can set the environment variable ESPRESSO_PACKAGES to the
+full path of the packages directory within mbtools
+
+To test that everything works try running a script in the examples directory eg.
+
+cd examples
+
+$ESPRESSO_SOURCE/$PLATFORM/Espresso ./scripts/main.tcl simplebilayer.tcl
+
+####################################
+# Messages interface             ###
+####################################
+
+All of the packages in mbtools print messages through the package
+mmsg.  The idea of this is to try and obtain some consistency in the
+style and format of messages and some control over what is printed.
+There are four types of messages (send, warn, err , debug).  To write
+a standard message for instance just use ::mmsg::send [namespace
+current] "text string".  The [namespace current] gives the current
+namespace to mmsg where it is checked to see that messages from that
+namespace are allowed.  By setting which namespaces are allowed you
+can have some broad control over messages.  
+
+In order to configure the allowed namespaces for messaging you should
+add a line to your .espressorc file such as
+
+set message_allowlist { :: ::system_generation ::setup_utilities ::std_analysis }
+ which in this case will allow messaging from all packages.  To turn messaging off simply make an empty list like 
+set message_allowlist { }
+
+
+####################################
+# Using and modifying the package ##
+####################################
+
+The way I run all of my membrane simulations is as follows.  I have a
+single script called main.tcl which contains calls to package commands
+and expresso commands such as integrate etc.  This script takes the
+name of a parameter file as its argument (eg as in the examples
+directory).  With this system it is only necessary to maintain a
+single main.tcl file that services many different parameter.tcl files
+specifying your various individual systems.
+
+Note that the main.tcl file provided in examples/scripts/ directory is
+designed to be a relatively simple example.  It will run all of the
+scripts in examples/ but will probably require modification to do more
+fancy stuff.  
+
+The main.tcl file provided makes use of several packages contained
+within the packages directory.  These are designed to take care of
+common tasks like setting up systems with different geometries or
+topologies, printing and analyzing data.  If you create new additions
+to these scripts to suit your needs then (provided it's not too much
+hassle) please make the changes to fit within the existing framework
+and commit the new feature.
+
+
+
+
