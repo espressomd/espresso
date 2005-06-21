@@ -418,3 +418,22 @@ topic:     We would like to study the entaglement properties of oligomers
            with different functionalization geometries for the development
            of organic thin films.
 
+
+
+name:      Demetrius
+email:     dcomes@wolfshade.com
+institute: None
+sent:      20.JUN.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+topic:     More interested in see the implementation of the verlet
+           integration.  I\\\\\\\'m interested in writing a cloth simulator
+           for my own edification.
+
+
+name:      Olaf Evers
+email:     mathtcl@yahoo.de
+institute: BASF AG
+sent:      20.JUN.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+topic:     Collaboration with MPI
+
