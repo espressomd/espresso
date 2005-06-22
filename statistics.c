@@ -1054,6 +1054,115 @@ static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
 
 }
 
+static int parse_bilayer_density_profile(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze bilayer density profile ' */
+  char buffer[TCL_DOUBLE_SPACE];
+  int change,nbins,i,j;
+  IntList beadtypes;
+  init_intlist(&beadtypes);
+  double hrange;
+  int usegrid;
+  usegrid = 1;
+
+  if ( !ARG0_IS_D(hrange) ) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp,"usage: analyze bilayer_density_profile <hrange> <nbins> <beadtype1> .. <beadtypeN> [setgrid <xdim> <ydim> <zdim>] [setstray <stray_cut_off>] [nogrid]", (char *)NULL);
+    return (TCL_ERROR);
+  } else {
+    argc -= 1;
+    argv += 1;
+  }
+
+  if ( !ARG0_IS_I(nbins) ) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp,"usage: analyze bilayer_density_profile <hrange> <nbins> <beadtype1> .. <beadtypeN> [setgrid <xdim> <ydim> <zdim>] [setstray <stray_cut_off>] [nogrid]", (char *)NULL);
+    return (TCL_ERROR);
+  } else {
+    argc -= 1;
+    argv += 1;
+  }
+    
+  if ( !ARG0_IS_INTLIST(beadtypes) ) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp,"usage: analyze bilayer_density_profile <hrange> <nbins> <beadtype1> .. <beadtypeN> [setgrid <xdim> <ydim> <zdim>] [setstray <stray_cut_off>] [nogrid]", (char *)NULL);
+    return (TCL_ERROR);
+  } else {
+    change = 1;
+    argc -= change;
+    argv += change;
+  }
+
+  while ( argc > 0 ) {
+    if ( ARG0_IS_S("setgrid") ) { 
+      if ( !ARG_IS_I(1,mode_grid_3d[0]) || !ARG_IS_I(2,mode_grid_3d[1]) || !ARG_IS_I(3,mode_grid_3d[2]) ) {
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp,"usage: analyze bilayer_density_profile <hrange> <nbins> <beadtype1> .. <beadtypeN> [setgrid <xdim> <ydim> <zdim>] [setstray <stray_cut_off>] [nogrid]", (char *)NULL);
+	return (TCL_ERROR);
+      }
+      STAT_TRACE(fprintf(stderr,"%d,setgrid has args %d,%d,%d \n",this_node,mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]));
+      printf("setgrid args %d %d %d \n", mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);
+      change = 4;
+      /* Update global parameters */
+      map_to_2dgrid();
+      mode_grid_changed = 1;
+	
+    }
+    if ( ARG0_IS_S("setstray") ) { 
+      if ( !ARG_IS_D(1,stray_cut_off) ) {
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp,"usage: analyze bilayer_density_profile <hrange> <nbins> <beadtype1> .. <beadtypeN> [setgrid <xdim> <ydim> <zdim>] [setstray <stray_cut_off>] [nogrid]", (char *)NULL);
+	return (TCL_ERROR);
+      }
+      STAT_TRACE(fprintf(stderr,"%d,setgrid has args %d,%d,%d \n",this_node,mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]));
+      change = 2;
+    }
+    if ( ARG0_IS_S("nogrid") ) { 
+      usegrid = 0;
+      change = 1;
+    }
+
+    argc -= change;
+    argv += change;
+
+  }
+
+  
+
+  DoubleList* density_profile;
+
+  /* Allocate a two doublelists of bins for each beadtype so that we
+     can keep track of beads in upper or lower lipids */
+  density_profile = (DoubleList *)malloc(beadtypes.n*2*sizeof(DoubleList));
+  init_doublelist(&density_profile[0]);
+  /* Initialize all the subprofiles in density profile */
+  for ( i = 0 ; i < beadtypes.n*2 ; i++ ) {
+    init_doublelist(&density_profile[i]);
+    alloc_doublelist(&density_profile[i],nbins);
+    for ( j = 0 ; j < nbins ; j++ ) {
+      density_profile[i].e[j] = 0.0;
+    }
+  }
+
+  if ( !bilayer_density_profile(&beadtypes, hrange, density_profile, usegrid ) ) {
+    Tcl_AppendResult(interp, "Error calculating bilayer density profile ", (char *)NULL);
+    return TCL_ERROR;
+  } else {
+    Tcl_AppendResult(interp, "{ DensityProfile } { ", (char *)NULL);
+    for ( i = 0 ; i < beadtypes.n*2 ; i++) {
+      Tcl_AppendResult(interp, " { ", (char *)NULL);
+      for ( j = 0 ; j < nbins ; j++) {
+	Tcl_PrintDouble(interp,density_profile[i].e[j],buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+	Tcl_AppendResult(interp, " ", (char *)NULL);
+      }
+      Tcl_AppendResult(interp, " } ", (char *)NULL);
+    }
+    Tcl_AppendResult(interp, " } ", (char *)NULL);    
+  }
+  return TCL_OK;
+}
+
 static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze lipid_orient_order ' */
@@ -1881,6 +1990,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     err = parse_get_folded_positions(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("modes2d"))
     err = parse_modes2d(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("bilayer_density_profile"))
+    err = parse_bilayer_density_profile(interp,argc -2, argv +2);
   else if (ARG1_IS_S("get_lipid_orients"))
     err = parse_get_lipid_orients(interp,argc-2,argv+2);
   else if (ARG1_IS_S("lipid_orient_order"))

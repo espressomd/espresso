@@ -144,7 +144,15 @@ if { !$checkpointexists } {
     setmd temp     [lindex $systemtemp 0]
  
     # Since we have a very simple system we can say
-    ::std_analysis::setup_analysis $analysis_flags $topology -mgrid $mgrid -outputdir  $outputdir 
+    if { [catch { set dumm $profile_beadtypes } ] } {
+	set profile_beadtypes 0
+    }
+    if { [catch { set dumm $profilenogrid } ] } {
+	set profilenogrid 0
+    }
+
+
+    ::std_analysis::setup_analysis $analysis_flags $topology -mgrid $mgrid -outputdir  $outputdir -beadtypes $profile_beadtypes -profilenogrid $profilenogrid
     
     mmsg::send $this "starting integration: run $int_n_times times $int_steps steps"
 
@@ -155,7 +163,7 @@ if { !$checkpointexists } {
 
     # A checkpoint exists so all we need to do is reset the topology and setup analysis again
     ::setup_utilities::read_topology "$outputdir/$topofile"
-    ::std_analysis::setup_analysis $analysis_flags $topology -mgrid $mgrid -outputdir  $outputdir 
+    ::std_analysis::setup_analysis $analysis_flags $topology -mgrid $mgrid -outputdir  $outputdir -beadtypes $profile_beadtypes -profilenogrid $profilenogrid
     ::setup_utilities::initialize_vmd $use_vmd $outputdir $ident
 
     # Yikes I hope this is right.  We want to make sure that we start

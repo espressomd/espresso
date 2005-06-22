@@ -3,15 +3,23 @@ package require mmsg 0.1.0
 package provide std_analysis 0.1.0
 
 namespace eval ::std_analysis {
+
+    # Global arguments
     variable area_lipid
     variable iotype 
     variable all_particles
     variable rawmodes
- 
+    variable hrange
+    variable beadtypes
+    variable nbins
+    variable profilenogrid
     variable l_orients_start
     variable suffix
+    variable topology
 
-    variable known_flags " possible flags are: \n cluster_calc \n pik1_calc \n pressure_calc \n box_len_calc \n fluctuation_calc \n energy_calc \n stray_lipids_calc \n orient_order_calc \n flipflop_calc"
+    variable switches
+    variable this [namespace current]
+    variable known_flags " possible flags are: \n cluster_calc \n pik1_calc \n pressure_calc \n box_len_calc \n fluctuation_calc \n energy_calc \n stray_lipids_calc \n orient_order_calc \n flipflop_calc \n density_profile_calc "
 
     #File Streams
     variable f_tvspik1
@@ -22,8 +30,13 @@ namespace eval ::std_analysis {
     variable f_tvsstray
     variable f_tvsen
     variable f_tvsclust
+    variable f_densityprof
 
-    # Averaging
+    # Variables to be used for averaging
+    variable av_densities
+    variable av_densities_i 0
+
+
     variable av_pow
     variable av_pow_i 0
 
@@ -59,11 +72,6 @@ namespace eval ::std_analysis {
     variable av_nb_en 0
     variable av_en_i 0
 
-    variable topology
-
-    variable switches
-
-    variable this [namespace current]
 
     namespace export do_analysis
     namespace export setup_analysis
@@ -81,6 +89,7 @@ source [file join [file dirname [info script]] pik1.tcl]
 source [file join [file dirname [info script]] oop.tcl]
 source [file join [file dirname [info script]] fluctuations.tcl]
 source [file join [file dirname [info script]] stray.tcl]
+source [file join [file dirname [info script]] density_profile.tcl]
 
 # ::std_analysis::flush_streams --
 #
@@ -98,8 +107,16 @@ proc ::std_analysis::flush_streams { } {
     variable f_tvsen
     variable f_tvsclust
     variable f_tvsstray
+    variable f_densityprof
+
     for { set i 0 } { $i < [llength $switches ] } { incr i } {
 	switch [lindex $switches $i 0] {
+	    "fluctuation_calc" {
+		# This doesn't get flushed because we overwrite each time
+	    }
+	    "density_profile_calc" {
+		# This doesn't get flushed because we overwrite each time
+	    }
 	    "cluster_calc" {
 		flush $f_tvsclust
 	    }
@@ -111,8 +128,6 @@ proc ::std_analysis::flush_streams { } {
 	    }
 	    "box_len_calc" {
 		flush $f_tvsbl
-	    }
-	    "fluctuation_calc" {
 	    }
 	    "flipflop_calc" {
 		flush $f_tvsflip
@@ -143,6 +158,11 @@ proc ::std_analysis::print_averages { } {
     mmsg::debug $this "printing averages"
     variable switches
     variable known_flags
+
+    variable av_densities
+    variable av_densities_i 
+    variable f_densityprof
+
     variable av_pik1_i
     variable av_pik1
     variable f_tvspik1
@@ -188,6 +208,14 @@ proc ::std_analysis::print_averages { } {
     variable av_sizehisto
     variable av_sizehisto_i
     variable outputdir
+    variable iotype
+    variable suffix
+    variable beadtypes
+
+    variable hrange
+    variable nbins
+    
+    set binwidth [expr $hrange*2.0/(1.0*$nbins)]
     
     set time [setmd time]
     
@@ -196,6 +224,38 @@ proc ::std_analysis::print_averages { } {
 	#	    puts [lindex $switches $i 0]
 	#	    flush stdout
 	switch [lindex $switches $i 0] {
+	    "fluctuation_calc" {
+		if { [lindex $switches $i 2] && $av_pow_i > 0 } {
+		    # Do a power analysis on the intermediate results
+		    power_analysis
+		}
+	    }
+	    "density_profile_calc" {
+		if { [lindex $switches $i 2] && $av_densities_i > 0 } {
+		    
+		    set f_densityprof [open "$outputdir/av_zprof$suffix" "w" ]
+		    # Write a header to the file
+		    puts -nonewline $f_densityprof "\# zheight "
+		    foreach bt $beadtypes {
+			puts -nonewline $f_densityprof "|| $bt up "
+		    }
+		    foreach bt $beadtypes {
+			puts -nonewline $f_densityprof "|| $bt down "
+		    }
+		    puts $f_densityprof ""
+
+		    # Write out the density profiles to a file
+		    for { set bin 0 } { $bin < [llength $av_densities] } { incr bin } {
+			set currbin [lindex $av_densities $bin]
+			puts -nonewline $f_densityprof "[expr $bin*$binwidth-($binwidth/2.0)] "
+			for { set bt 0 } { $bt < [llength $currbin] } { incr bt } {
+			    puts -nonewline $f_densityprof "[expr [lindex $currbin $bt]/(1.0*$av_densities_i)] "
+			}
+			puts $f_densityprof ""
+		    }		    
+		    close $f_densityprof
+		}
+	    }
 	    "cluster_calc" {
 		if { [lindex $switches $i 2] && $av_clust_i > 0 } {
 		    puts -nonewline $f_tvsclust "$time "
@@ -255,12 +315,7 @@ proc ::std_analysis::print_averages { } {
 		}
 		
 	    }
-	    "fluctuation_calc" {
-		if { [lindex $switches $i 2] && $av_pow_i > 0 } {
-		    # Do a power analysis on the intermediate results
-		    power_analysis
-		}
-	    }
+
 	    "flipflop_calc" {
 		puts $f_tvsflip "$time [expr $av_flip/(1.0*$av_flip_i)]"
 	    }
@@ -291,11 +346,12 @@ proc ::std_analysis::print_averages { } {
 # ::std_analysis::reset_averages --
 #
 # Reset all of the average storage variables and counters to zero
-#  
-#  Note: Power analysis is not reset since it generally requires
-#  averages over the entire simulation. Flip-flop is also not reset
-#  since it should exponentially decay with time and is calculated
-#  from the entire simulation run.
+#   
+#
+# Note: Power analysis and densityprofiles are not reset since they
+# generally require averages over the entire simulation. Flip-flop is
+# also not reset since it should exponentially decay with time and is
+# calculated from the entire simulation run.
 #
 proc ::std_analysis::reset_averages { } {
     variable av_sizehisto
@@ -384,6 +440,9 @@ proc ::std_analysis::do_analysis { } {
 
     for { set i 0 } { $i < [llength $switches ] } { incr i } {
 	switch [lindex $switches $i 0] {
+	    "density_profile_calc" {
+		analyze_density_profile [lindex $switches $i 1]
+	    }
 	    "cluster_calc" {
 		analyze_clusters [lindex $switches $i 1]
 	    }
@@ -423,7 +482,7 @@ proc ::std_analysis::do_analysis { } {
     flush stdout
 }
 
-# ::std_analysis::do_analysis --
+# ::std_analysis::setup_analysis --
 #
 # This routine should be called once and only once at the beginning of
 # the simulation in order to setup all the appropriate variables that
@@ -447,9 +506,17 @@ proc ::std_analysis::do_analysis { } {
 #
 #       straycutoff: The Cutoff distance beyond which a lipid is
 #                    considered to be a stray
+#  
 #
 #
-#       a_lipid:     The area per lipid
+#        hrange:    The range relative to bilayer midplane over which to
+#                   calculate the density profiles
+#
+#        nbins:     The number of bins used for density profile analysis
+#
+#       beadtypes:  A list of bead types to be used for density profile analysis
+#
+#       a_lipid:    The area per lipid
 #
 #       suffix: The suffix to use for output files.  
 #
@@ -478,10 +545,16 @@ proc ::std_analysis::setup_analysis { switchesin topo args } {
     variable f_tvsen
     variable f_tvsclust
     variable av_pow
+    variable av_densities
+    variable av_densities_i
     variable l_orients_start
     variable topology
     variable area_lipid
+    variable hrange
+    variable nbins
+    variable beadtypes
     variable this
+    variable profilenogrid
 
     variable av_components_en
 
@@ -489,13 +562,17 @@ proc ::std_analysis::setup_analysis { switchesin topo args } {
 
     set options {
 	{mgrid.arg      8    "set the size of the grid for heightfunction calculations" }
-	{straycutoff.arg      3    "stray distance from bilayer " }
+	{straycutoff.arg      4    "stray distance from bilayer " }
 	{outputdir.arg      "./"    "name of output directory " }
 	{alipid.arg  1.29 "area per lipid" }
 	{suffix.arg "tmp" "suffix to be used for outputfiles" }
 	{iotype.arg "a" "the method with which to open existing analysis files"}
+	{nbins.arg "50" "Number of bins used for density profile analysis" }
+	{hrange.arg "5" "Range over which to calculate density profile"}
+	{beadtypes.arg "0" "Identity of beads to use for density profile analysis" }
+	{profilenogrid.arg "0" "Whether to not use the height grid for density profile analysis" }
     }
-    set usage "Usage: setup_analysis gridm:straycutoff:outputdir:alipid:suffix:iotype: "
+    set usage "Usage: setup_analysis gridm:straycutoff:outputdir:alipid:suffix:iotype:nbins:hrange:beadtypes:profilenogrid "
     array set params [::cmdline::getoptions args $options $usage]
 
 
@@ -525,6 +602,10 @@ proc ::std_analysis::setup_analysis { switchesin topo args } {
     set iotype $params(iotype)
     set suffix "_$params(suffix)"
     set area_lipid $params(alipid)
+    set hrange $params(hrange)
+    set nbins $params(nbins)
+    set beadtypes $params(beadtypes)
+    set profilenogrid $params(profilenogrid)
 
     for { set i 0 } { $i < [llength $switches ] } { incr i } {
 	mmsg::debug $this "switch = [lindex $switches $i 0]"
@@ -543,6 +624,31 @@ proc ::std_analysis::setup_analysis { switchesin topo args } {
 		    puts $f_tvsclust "\# cmax cmin c2sizeav c2sizestd nc2 csizeav csizestd nc clenav clenstd nc"
 		}
 
+	    }
+	    "density_profile_calc" {
+
+		# Initialize modes2d
+		if { $profilenogrid } {
+		    if { [catch { analyze bilayer_density_profile $hrange $nbins $beadtypes setgrid $mgrid $mgrid 0 setstray $stray_cut_off nogrid } ] } {
+			mmsg::err $this "could not initialize density_profile_calc"
+		    }
+		} else {
+		    if { [catch { analyze bilayer_density_profile $hrange $nbins $beadtypes setgrid $mgrid $mgrid 0 setstray $stray_cut_off } ] } {
+			mmsg::err $this "could not initialize density_profile_calc"
+		    }
+		}
+
+		#Initialize av_densities
+		set thisbinlist 0.0
+		unset thisbinlist
+		for { set bn 0 } { $bn < $nbins } { incr bn } {
+		    for { set bt 0 } { $bt < [expr 2*[llength $beadtypes]] } { incr bt } {
+			lappend thisbinlist 0.0
+		    }
+		    lappend av_densities $thisbinlist
+		    unset thisbinlist
+
+		}
 	    }
 	    "pik1_calc" {
 		for { set j 0 } { $j < $n_particles } { incr j } {
@@ -708,6 +814,9 @@ proc ::std_analysis::finish_analysis {  } {
     variable f_tvsclust
     
     # Averaging
+    variable av_densities
+    variable av_densities_i
+
     variable av_clust
     variable av_clust_i
     
@@ -739,66 +848,59 @@ proc ::std_analysis::finish_analysis {  } {
     
     variable switches
     
-    set av_sizehisto 0
-    set av_sizehisto_i 0
-    
-    set av_clust 0
-    set av_clust_i 0
-    
-    set av_pow 0
-    set av_pow_i 0
-    set av_pik1 0
-    set av_pik1_i 0
-    set av_pressure 0
-    set av_pressure_i 0
-    set av_boxl 0
-    set av_boxl_i 0
-    set av_flip 0
-    set av_flip_i 0
-    set av_oop 0
-    set av_oop_i 0
-    
-    set av_components_en 0
-    set av_total_en 0
-    set av_kin_en 0
-    set av_fene_en 0
-    set av_harm_en 0
-    set av_nb_en 0
-    set av_en_i 0
     
     puts $switches	
     for { set i 0 } { $i < [llength $switches ] } { incr i } {
 	puts [lindex $switches $i 0]
 	puts -nonewline "Closing down: "
 	switch [lindex $switches $i 0] {
+	    "density_profile_calc" {
+		puts "density_profile_calc"
+		unset av_densities
+	    }
 	    "cluster_calc" {
 		puts "cluster_calc"
 		close $f_tvsclust
+		set av_sizehisto 0
+		set av_sizehisto_i 0
+		set av_clust 0
+		set av_clust_i 0
 	    }
 	    "pik1_calc" {
 		puts "pik1_calc"
-		unset all_particles
+		catch { unset all_particles }
 		close $f_tvspik1
+		set av_pik1 0
+		set av_pik1_i 0
 	    }
 	    "pressure_calc" {
 		puts "pressure_calc"
-		unset all_particles
+		set av_pressure 0
+		set av_pressure_i 0
+		catch { unset all_particles }
 		close $f_tvsp
 	    }
 	    "box_len_calc" {
 		puts "box_len_calc"
+		set av_boxl 0
+		set av_boxl_i 0
 		close $f_tvsbl 
 	    }
 	    "fluctuation_calc" {
 		puts "fluctuation_calc"
 		unset av_pow
+		set av_pow_i 0
 	    }
 	    "flipflop_calc" {
 		puts "flipflop_calc"
+		set av_flip 0
+		set av_flip_i 0
 		close $f_tvsflip
 	    }
 	    "orient_order_calc" {
 		puts "orient_order_calc"
+		set av_oop 0
+		set av_oop_i 0
 		close $f_tvsoop
 	    }
 	    "stray_lipids_calc" {
@@ -807,6 +909,13 @@ proc ::std_analysis::finish_analysis {  } {
 	    }
 	    "energy_calc" {
 		puts "energy_calc"
+		set av_components_en 0
+		set av_total_en 0
+		set av_kin_en 0
+		set av_fene_en 0
+		set av_harm_en 0
+		set av_nb_en 0
+		set av_en_i 0
 		close $f_tvsen 		    
 	    }
 	    "default" {

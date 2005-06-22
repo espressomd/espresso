@@ -92,6 +92,16 @@ int get_lipid_orients(IntList* l_orient);
 */
 int calc_height_grid ( double* height_grid );
 
+/** 
+    Calculate a  vertical density profile for each of the specified beadtypes
+
+    \param beadids The list of bead types for which profiles will be generated
+    \param hrange The vertical range from the bilayer midplane over which the profiles are calculated
+    \param density_profile The pre-allocated density profile into which data is written
+ */
+int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *density_profile, int usegrid );
+
 #endif
+
 
 

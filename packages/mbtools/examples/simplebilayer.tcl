@@ -49,7 +49,7 @@ set use_vmd "offline"
 # The atom types in this lipid are 0 1 and 2 respectively and the
 # bonding interactions are type 0 for short bonds and type 1 for long
 # bonds.
-set moltypes [list { 0 lipid { 0 1 1 } { 0 1 } } ]
+set moltypes [list { 0 lipid { 0 1 2 } { 0 1 } } ]
 
 # --- Specify the system geometry and composition ----#
 # Set the geometry to flat
@@ -111,7 +111,10 @@ lappend bonded_parms $hb_parms
 
 lappend nb_interactions [list 0 0 tabulated 9_095_11.tab ]
 lappend nb_interactions [list 0 1 tabulated 9_095_11.tab ]
+lappend nb_interactions [list 0 2 tabulated 9_095_11.tab ]
 lappend nb_interactions [list 1 1 tabulated n9_c160_22.tab ]
+lappend nb_interactions [list 1 2 tabulated n9_c160_22.tab ]
+lappend nb_interactions [list 2 2 tabulated n9_c160_22.tab ]
 
 # We also need to make a list of all the forcetable filenames so that
 # the forcetables can be copied to the working directory.
@@ -132,7 +135,12 @@ set mgrid 8
 
 # Distance from the bilayer beyond which a lipid is considered to be
 # stray
-set stray_cut_off 3
+set stray_cut_off 10000
+
+
+set profile_beadtypes [list  0 1 2 ]
+
+set profilenogrid 1
 
 # Use these flags to specify which observables to calculate during the
 # simulation.  Values are calculated after every call to the espresso
@@ -145,6 +153,7 @@ lappend analysis_flags { box_len_calc  0 1}
 lappend analysis_flags { flipflop_calc  0 1}
 lappend analysis_flags { energy_calc  0 1}
 lappend analysis_flags { orient_order_calc  0 1}
+lappend analysis_flags { density_profile_calc  0 1}
 
 # It is not recommended to include fluctuation calculations during the
 # simulation since they will crash if a hole appears in the membrane

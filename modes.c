@@ -48,7 +48,7 @@ int zdir = -1;
     all lipids are counted*/
 double stray_cut_off = 10000000.0;
 
-/** This function takes a given grid a supplied by the user and
+/** This function takes a given grid supplied by the user and
     determines the correct orientation in which to do the fourier
     transform.  In this regard one of the grid dimensions must be 0
     and the other two must be integer multiples of two and equal to
@@ -534,10 +534,130 @@ int modes2d(fftw_complex* modes) {
 }
 
 
-/**
-   This routine calculates an average height for the bilayer in each grid square as follows;
+/** This routine calculates density profiles for given bead types as a
+    function of height relative to the bilayer midplane.
 
-    \li Calculates the average bead position in the height dimension \ref modes::zdir
+    \li First the height function is calculated
+
+    \li The height value of each bead is then calculated relative to
+    the overall height function and the population of the relevant bin
+    is increased.
+
+**/
+int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *density_profile, int usegrid ) {
+  int i,j, gi,gj;
+  double* tmp_height_grid, zref,zreflocal;
+  int thisbin,nbins;
+  double grid_size[2];
+  double binwidth;
+  int nbeadtypes,l_orient;
+  double relativeheight;
+  double direction[3];  
+
+  nbins = density_profile[0].max;
+  nbeadtypes=beadids->max;
+
+  /* 
+     Check to see that there is a mode grid to work with
+  */
+  if ( xdir + ydir + zdir == -3 ) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{092 attempt to perform mode analysis with uninitialized grid} ");
+    return -1;
+  }
+
+  tmp_height_grid = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
+  binwidth = hrange*2.0/(double)(nbins);
+
+  /* Calculate physical size of grid mesh */
+  grid_size[xdir] = box_l[xdir]/(double)mode_grid_3d[xdir];
+  grid_size[ydir] = box_l[ydir]/(double)mode_grid_3d[ydir];
+
+
+  if ( density_profile == NULL ) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{095 density_profile not initialized in calc_bilayer_density_profile } ");
+    return -1;
+  }
+
+  /* Initialize the height grid */
+  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+      tmp_height_grid[j+i*mode_grid_3d[xdir]] = 0;
+    }
+  }
+
+  /* Calculate the height grid which also ensures that particle config is updated */
+  if ( !calc_height_grid(tmp_height_grid) ) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
+    return -1;
+  }
+
+  /* Since height grid unfolds the particles we have to refold
+     them. We also need to add the average height of the entire
+     bilayer because the height function is calculated relative to
+     this */
+  zref = 0;
+  for (i = 0 ; i < n_total_particles ; i++) {
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,xdir);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,ydir);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,zdir);
+    zref += partCfg[i].r.p[zdir];
+  }
+  zref = zref/(double)(n_total_particles);
+
+  for (i = 0 ; i < n_total_particles ; i++) {
+    for ( j = 0 ; j < nbeadtypes ; j++ ) {
+      if ( beadids->e[j] == partCfg[i].p.type ) {
+	/* Where are we on the height grid */
+	gi = (int)(floor( partCfg[i].r.p[xdir]/grid_size[xdir] ));
+	gj = (int)(floor( partCfg[i].r.p[ydir]/grid_size[ydir] ));
+	if ( usegrid ) {
+	  zreflocal = tmp_height_grid[gj + gi*mode_grid_3d[xdir]] + zref;
+	} else {
+	  zreflocal = zref;
+	}
+
+	/* What is the relative height to the grid */
+	relativeheight = partCfg[i].r.p[zdir] - zreflocal;								
+	/* If the particle is within our zrange then add it to the profile */
+	if ( (relativeheight*relativeheight - hrange*hrange) <= 0 ) {
+	  thisbin = (int)(floor((relativeheight + hrange)/binwidth));
+	  l_orient = lipid_orientation(i,partCfg,zreflocal,direction);
+	  /* Distinguish between lipids that are in the top and bottom layers */
+	  if ( l_orient == LIPID_UP ) {
+	    density_profile[j].e[thisbin] += 1.0;
+	  }
+	  if ( l_orient == LIPID_DOWN ) {
+	    density_profile[2*nbeadtypes-j-1].e[thisbin] += 1.0;	    
+	  }
+	}
+	    
+      }
+    }
+  }
+
+  /* Normalize the density profile */
+  double binvolume = binwidth*box_l[xdir]*box_l[ydir];
+  for ( i = 0 ; i < 2*nbeadtypes ; i++ ) {
+    for ( j = 0 ; j < nbins ; j++ ) {
+      density_profile[i].e[j] = density_profile[i].e[j]/binvolume;
+    }
+  }
+
+
+
+  free(tmp_height_grid);
+  return 1;
+}
+
+/**
+   This routine calculates an average height for the bilayer in each
+   grid square as follows;
+
+    \li Calculates the average bead position in the height dimension
+    \ref modes::zdir
 
     \li Calculates the average height of each bilayer leaflet above or
     below \ref modes::zdir separately.  These averages are then averaged
