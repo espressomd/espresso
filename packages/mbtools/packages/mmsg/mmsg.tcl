@@ -20,7 +20,7 @@ namespace eval mmsg {
     variable enablesend 1
     variable enableerr 1
     variable enablewarn 1
-    variable enabledebug 1
+    variable enabledebug 0
 
     # For keeping track of whether we are printing again on the
     # sameline or not.
