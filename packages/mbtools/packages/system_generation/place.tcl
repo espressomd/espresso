@@ -200,6 +200,7 @@ proc ::system_generation::place_sphericalconstraint { mol pos args } {
 }
 
 
+
 #
 # Arguments:
 #
@@ -231,7 +232,7 @@ proc ::system_generation::place_protein { mol pos orient args } {
     set ny [lindex $orient 1]
     set nz [lindex $orient 2]
    
-
+    # Create a protein with 2 hexagonal layers and has 12 layer from bottom to up#
     # Placing the beads # # $a is the height of the protein #
 
     for {set a 0 } { $a < 12 } {incr a} {
@@ -319,10 +320,38 @@ proc ::system_generation::place_protein { mol pos orient args } {
 	}
     }
 }
+
+
+#an extra bead is placed in the middle of the protein and connected with a spring to the protein to measure the force#
  
+    for { set b $d } { $b < [expr $d+1] } {incr b} {
+
+
+	#puts "d=$d"	
+
+	set phantom [lindex $mol [expr $b + 1]]
+	set ptype [lindex $typeinfo 2 $b] 
+	
+	set bb [lindex $bonds $a]
+   
+	set middle [lindex $mol [expr $b - 133]]
+
+	set posx [expr $rx + 10 + ($a*1.0)*$nx]
+	set posy [expr $ry + ($a*1.0)*$ny]  
+	
+	set posz [expr $rz + (6.0)*$nz]
+		  
+	
+	part $phantom pos $posx $posy $posz type $ptype fix 1 1 0
+
+	part $phantom bond $bb $middle
+
+#	exit
+    } 
   
 return
 }
+
 
 
 

@@ -16,6 +16,7 @@ namespace eval ::system_generation {
 
     # Global variables for setup routines
     variable moltypeskey  
+    variable userfixedparts
 
     variable icovermagicnums { 72 92 122 132 162 192 212 252 272 282 312 362 372 392 432 482 492 492 522 572 612 632 642 672 732 752 762 792 812 842 912 912 932 972 1002 1032 1082 1092 1112 1122 1172 1212 1242 1272 1292 1332 1332 1392 1442 1472 1472 1482 1512 1562 1572 1632 1692 1692 1712 1722 1752 1812 1832 1892 1922 1932 1962 1962 1992 2012 2082 2112 2172 2172 2192 2232 2252 2282 2292 2372 2412 2432 2442 2472 2472 2522 2562 2592 2592 2682 2712 2732 2732 2772 2792 2832 2892 2912 2922 3002 3012 3012 3042 3072 3092 3132 3162 3242 3252 3272 3312 3332 3362 3372 3432 3432 3492 3512 3612 3612 3632 3642 3642 3672 3722 3732 3792 3812 3872 3882 3972 3992 3992 4002 4032 4032 4092 4122 4172 4212 4272 4272 4322 4332 4362 4392 4412 4412 4442 4482 4532 4572 4632 4682 4692 4692 4712 4752 4812 4812 4842 4872 4892 4962 4992 5072 5072 5082 5112 5112 5132 5162 5232 5252 5292 5322 5322 5412 5432 5472 5492 5532 5532 5562 5592 5592 5672 5712 5762 5772 5792 5882 5882 5892 5892 5922 5972 6012 6032 6042 6072 6132 6192 6242 6252 6282 6312 6332 6372 6372 6372 6432 6512 6512 6522 6572 6612 6692 6732 6752 6762 6762 6792 6792 6842 6872 6882 6912 7002 7682 8192 8192 8672 9722 10832 12002 13232 14522 15872 17282 18752 20282 21872 23522 25232 27002 28832 30722 32672 34682 36752 38882 41072 43322 45632 48002 50432 52922 55472 58082 60752 63482 66272 69122 72032 75002 78032 }
 
@@ -68,6 +69,7 @@ proc ::system_generation::setup_system { system_specs setbox_l moltypes } {
 
     # The molecule types spec should be globally accessible
     variable moltypeskey
+    variable userfixedparts
     set moltypeskey $moltypes
 
     # Starting value for particle ids
@@ -151,8 +153,14 @@ proc ::system_generation::setup_system { system_specs setbox_l moltypes } {
 		::system_generation::create_bilayer $topology $setbox_l 
 
 		# Fix the z positions for warmup
+		::mmsg::send [namespace current] "fixing z positions of bilayer for warmup" 
 		for {set i [minpartid $topology] } { $i <  [setmd n_part] } {incr i} {
-		    part [expr $i] fix 0 0 1
+		    set fixvalue [part $i print fix]
+		    if { [lindex $fixvalue 0] == 0 && [lindex $fixvalue 1] == 0 && [lindex $fixvalue 2] == 0 }  {
+			part [expr $i] fix 0 0 1
+		    } else {
+			lappend userfixedparts $i
+		    }
 		}  
 
 		# Check particle consistency
@@ -265,4 +273,14 @@ proc ::system_generation::setup_system { system_specs setbox_l moltypes } {
 
 }
 
+
+
+proc ::system_generation::get_userfixedparts {  } {
+    variable userfixedparts
+
+    if { [catch { set dum $userfixedparts } ] } {
+	::mmsg::warn [namespace current] "no user fixed particles defined"
+    }
+    return $userfixedparts
+}
 

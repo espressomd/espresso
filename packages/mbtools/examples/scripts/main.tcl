@@ -129,9 +129,12 @@ if { !$checkpointexists } {
     # Bilayer systems may have been setup with fixed z positions for
     # particles.  Here we make sure that all particles are unfixed
     # after warmup
+    set userfixedparts [::system_generation::get_userfixedparts ]
     for {set i 0} { $i <  [setmd n_part] } {incr i} {
-	part [expr $i] fix 0 0 0 
-    }    
+	if { [lsearch $userfixedparts $i ] == -1 } {
+	    part [expr $i] fix 0 0 0
+	}
+    }
 
     setmd time_step $main_time_step
     setmd temp     [lindex $systemtemp 0]
