@@ -437,3 +437,24 @@ sent:      20.JUN.2005
 version:   20050525-Espresso_v1.9.4g.tar.gz
 topic:     Collaboration with MPI
 
+
+
+name:      Huiqun Zhou
+email:     hqzhou@nju.edu.cn
+institute: Nanjing University/Earth Sciences
+           22 Hankou Road, Gulou
+           Nanjing, 210093
+           China
+sent:      22.JUN.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+topic:   - Atomistic simulation of minerals and in high PT condition and
+           various geo-fluids.
+         - quantum and atomistic simulation of minerals is just one
+           of our research interests, research of mesoscopic phenomena,
+           such as how rocks will be fractured, cracked under pressure,
+           are more focused in physics of solid earth. We are currently
+           using LAMMPS to do this kind of simulation. It will be greatly
+           appreciated if you could give us a chance to try ESPResSO.
+         - A user of Quantum-Espresso, CPMD, LAMMPS
+           and a bunch of self-made programs
+
