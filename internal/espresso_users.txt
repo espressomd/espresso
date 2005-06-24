@@ -458,3 +458,13 @@ topic:   - Atomistic simulation of minerals and in high PT condition and
          - A user of Quantum-Espresso, CPMD, LAMMPS
            and a bunch of self-made programs
 
+
+
+name:      Javier Ramos
+email:     Barny_Beer@hotmail.com
+institute: Macromolecular Physics Departement, IEM-CSIC. Serrano 113bis,
+           28003 Madrid (Spain)
+sent:      23.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     Dynamics of branched polymer chains
+
