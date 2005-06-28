@@ -468,3 +468,13 @@ sent:      23.JUN.2005
 version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:     Dynamics of branched polymer chains
 
+
+
+name:      Luigi Sanguigno
+email:     lusangui@unina.it
+institute: Department of Material and Production, University Federico II,
+           Naples. Piazzale Tecchio, 80 (Italy)
+sent:      27.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     Polymer simulation
+
