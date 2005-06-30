@@ -2,9 +2,7 @@
 #
 # Routines for placing molecules
 #
-######################################
-#Protein: 2 hex.layers 
-#######################################################
+
 
 
 namespace eval system_generation {
@@ -209,6 +207,8 @@ proc ::system_generation::place_sphericalconstraint { mol pos args } {
 #
 proc ::system_generation::place_protein { mol pos orient args } {
 
+    variable middlebead
+
     set moltype [lindex $mol 0]
     set typeinfo [matchtype $moltype]
 
@@ -245,7 +245,8 @@ proc ::system_generation::place_protein { mol pos orient args } {
 	 for { set b $c } { $b < $d } {incr b} {
 
 	     if { $b == $c } {
-		     
+
+				     
 		    set partnum [lindex $mol [expr $b +1]] 
 		    set ptype [lindex $typeinfo 2 $b]
 
@@ -262,8 +263,8 @@ proc ::system_generation::place_protein { mol pos orient args } {
 		    set ptype [lindex $typeinfo 2 $b] 
 	   
 		  
-	  	    set posx [expr $rx+(0.9+0.1*$a)*cos($b*(2*3.14)/(6))] 
-		    set posy [expr $ry+(0.9+0.1*$a)*sin($b*(2*3.14)/(6))]
+	  	    set posx [expr $rx+ (0.9+0.1*$a)*cos($b*(2*3.14)/(6))] 
+		    set posy [expr $ry+ (0.9+0.1*$a)*sin($b*(2*3.14)/(6))]
 
 		    set posz [expr $rz + ($a*1.0)*$nz]
 		  
@@ -276,8 +277,8 @@ proc ::system_generation::place_protein { mol pos orient args } {
 		    set ptype [lindex $typeinfo 2 $b] 
 	   
 		  
-	  	    set posx [expr $rx+2*(0.9+(0.1*$a))*cos($b*(2*3.14)/(12))] 
-		    set posy [expr $ry+2*(0.9+(0.1*$a))*sin($b*(2*3.14)/(12))]
+	  	    set posx [expr $rx+ 2*(0.9+(0.1*$a))*cos($b*(2*3.14)/(12))] 
+		    set posy [expr $ry+ 2*(0.9+(0.1*$a))*sin($b*(2*3.14)/(12))]
 
 		    set posz [expr $rz + ($a*1.0)*$nz]
 		  
@@ -322,33 +323,19 @@ proc ::system_generation::place_protein { mol pos orient args } {
 }
 
 
-#an extra bead is placed in the middle of the protein and connected with a spring to the protein to measure the force#
+#Get the midlle bead id#
+
  
-    for { set b $d } { $b < [expr $d+1] } {incr b} {
+    for { set b 95 } { $b < 96 } {incr b} {
 
-
-	#puts "d=$d"	
-
-	set phantom [lindex $mol [expr $b + 1]]
-	set ptype [lindex $typeinfo 2 $b] 
-	
-	set bb [lindex $bonds $a]
    
-	set middle [lindex $mol [expr $b - 133]]
+	lappend middlebead [lindex $mol [expr $b+1]]
 
-	set posx [expr $rx + 10 + ($a*1.0)*$nx]
-	set posy [expr $ry + ($a*1.0)*$ny]  
-	
-	set posz [expr $rz + (6.0)*$nz]
-		  
-	
-	part $phantom pos $posx $posy $posz type $ptype fix 1 1 0
 
-	part $phantom bond $bb $middle
-
-#	exit
     } 
   
+  
+
 return
 }
 
