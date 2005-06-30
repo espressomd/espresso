@@ -292,17 +292,27 @@ void  momentofinertiamatrix(int type, double *MofImatrix)
   return;
 }
 
-void nbhood(double pt[3], double r, IntList *il)
+
+void nbhood(double pt[3], double r, IntList *il, int planedims[3] )
 {
-  double d[3];
-  int i;
+  double d[3],dsize;
+  int i,j;
 
   init_intlist(il);
  
   updatePartCfg(WITHOUT_BONDS);
 
   for (i = 0; i<n_total_particles; i++) {
-    get_mi_vector(d, pt, partCfg[i].r.p);
+    if ( (planedims[0] + planedims[1] + planedims[2]) == 3 ) {
+      get_mi_vector(d, pt, partCfg[i].r.p);
+    } else {
+      /* Calculate the in plane distance */
+      dsize = 0.0;
+      for ( j= 0 ; j < 3 ; j++ ) {
+	d[j] = planedims[j]*(partCfg[i].r.p[j]-pt[j]);
+      }
+    }
+
     if (sqrt(sqrlen(d)) < r) {
       realloc_intlist(il, il->n + 1);
       il->e[il->n] = partCfg[i].p.identity;
@@ -1420,33 +1430,62 @@ static int parse_find_principal_axis(Tcl_Interp *interp, int argc, char **argv)
 
 static int parse_nbhood(Tcl_Interp *interp, int argc, char **argv)
 {
-  /* 'analyze nbhood { <partid> | <posx> <posy> <posz> } <r_catch>' */
+  /* 'analyze nbhood [-planar <x> <y> <z>] { <partid> | <posx> <posy> <posz> } <r_catch> ' */
   int p, i;
   double pos[3];
   double r_catch;
   char buffer[TCL_INTEGER_SPACE + 2];  
   IntList il;
+  int planedims[3], change;
 
   if (n_total_particles == 0) {
     Tcl_AppendResult(interp, "(no particles)",
 		     (char *)NULL);
     return (TCL_OK);
   }
+  planedims[0] = planedims[1] = planedims[2] = 1;
 
-  get_reference_point(interp, &argc, &argv, pos, &p);
-
-  if (argc != 1) {
-    Tcl_AppendResult(interp, "usage: nbhood { <partid> | <posx> <posy> <posz> } <r_catch>",
-		     (char *)NULL);
-    return TCL_ERROR;
+  /* Optional planar argument */
+  if ( ARG0_IS_S("planar")) {      
+    if ( argc < 6 ) {
+      Tcl_AppendResult(interp, "planar option requires exactly 3 integer arguments",
+		       (char *)NULL); 
+      return TCL_ERROR;
+    }
+      
+    /* Now read in the dimensions to be used */
+    if (! ARG_IS_I(1,planedims[0] ))
+      return TCL_ERROR;
+    if (! ARG_IS_I(2,planedims[1] ))
+      return TCL_ERROR;
+    if (! ARG_IS_I(3,planedims[2] ))
+      return TCL_ERROR;
+      
+    /* Check to make sure that we actually specified a plane */
+    if ( (planedims[0] + planedims[1] + planedims[2] ) != 2 ) {
+      Tcl_AppendResult(interp, "you specified the planar option. Please specify exactly 2 dimensions eg 1 1 0 for xy plane",
+		       (char *)NULL); 
+      return TCL_ERROR;
+    }
+    change = 4;
+    argc -= change;
+    argv += change;
+    
   }
 
-  if (!ARG0_IS_D(r_catch))
+  /* Process obligatory arguments */
+  get_reference_point(interp, &argc, &argv, pos, &p);
+  if (!ARG0_IS_D(r_catch)) {
+    Tcl_AppendResult(interp, "usage: nbhood [planar <x> <y> <z>] { <partid> | <posx> <posy> <posz> } <r_catch> ",
+		     (char *)NULL);    
     return (TCL_ERROR);
+  }
+  argc--;
+  argv++;
 
   updatePartCfg(WITHOUT_BONDS);
+  nbhood(pos, r_catch, &il, planedims );
 
-  nbhood(pos, r_catch, &il);
   
   for (i = 0; i < il.n; i++) {
     sprintf(buffer, "%d ", il.e[i]);

@@ -101,7 +101,7 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
     @param pos position of sphere of point
     @param r_catch the radius around the position
     @param il the list where to store the particles indices */
-void nbhood(double pos[3], double r_catch, IntList *il);
+void nbhood(double pos[3], double r_catch, IntList *il, int planedims[3]);
 
 /** minimal distance to point.
     @param pos point
