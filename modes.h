@@ -80,9 +80,10 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
 
 /**
    This routine calculates the orientational order parameter for a
-   lipid bilayer as defined in Brannigan and Brown 2004. 
+   lipid bilayer.  It also calculates the direction of orientation for
+   all lipids and places them in stored_dirs.
 */
-int orient_order(double* result);
+int orient_order(double* result, double* stored_dirs);
 
 /* Get the list of lipid orientations */
 int get_lipid_orients(IntList* l_orient);

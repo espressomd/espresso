@@ -1177,6 +1177,7 @@ static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze lipid_orient_order ' */
   double result;
+  double* stored_dirs;
   char buffer[TCL_DOUBLE_SPACE];
   result = 0;
 
@@ -1186,13 +1187,17 @@ static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
 
-  if ( orient_order(&result) == TCL_OK ) {
+  stored_dirs = malloc(sizeof(double)*n_molecules*3);
+
+  if ( orient_order(&result,stored_dirs) == TCL_OK ) {
     Tcl_PrintDouble(interp, result, buffer);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return TCL_OK;
   }
 
   Tcl_AppendResult(interp, "Error calculating orientational order ", (char *)NULL);
+
+  free(stored_dirs);
   return TCL_ERROR;
 }
 

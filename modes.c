@@ -122,11 +122,10 @@ void map_to_2dgrid() {
    This routine calculates the orientational order parameter for a
    lipid bilayer 
 */
-int orient_order(double* result)
+int orient_order(double* result, double* stored_dirs)
 {
   double dir[3];
   double sumdir[3] = {0,0,0};
-  double* stored_dirs;
   double zref;
   int bilayer_cnt;
   int i,atom,tmpzdir;
@@ -140,7 +139,7 @@ int orient_order(double* result)
   bilayer_cnt = 0;
   *result = 0;
 
-  stored_dirs = malloc(sizeof(double)*n_molecules*3);
+
 
   if ( xdir + ydir + zdir == -3 ) {
     tmpzdir = 2;
@@ -214,7 +213,7 @@ int orient_order(double* result)
 
   }
 
-  free(stored_dirs);
+
   realloc_intlist(&l_orient, 0);
 
   *result = *result/(double)(bilayer_cnt);
