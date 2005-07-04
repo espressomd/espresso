@@ -11,6 +11,7 @@ namespace eval ::std_analysis {
     variable rawmodes
     variable hrange
     variable lhrange
+    variable lorange 
     variable beadtypes
     variable nbins
     variable profilenogrid
@@ -20,12 +21,16 @@ namespace eval ::std_analysis {
 
     # Special or hardwired variables
     variable rcatch 1.9
+
     variable localheightsnbins 100
+    variable localorientsnbins 100
+
+
 
 
     variable switches
     variable this [namespace current]
-    variable known_flags " possible flags are: \n cluster_calc \n pik1_calc \n pressure_calc \n box_len_calc \n fluctuation_calc \n energy_calc \n stray_lipids_calc \n orient_order_calc \n flipflop_calc \n density_profile_calc \n localheights_calc \n distance_calc \n "
+    variable known_flags " possible flags are: \n cluster_calc \n pik1_calc \n pressure_calc \n box_len_calc \n fluctuation_calc \n energy_calc \n stray_lipids_calc \n orient_order_calc \n flipflop_calc \n density_profile_calc \n localheights_calc \n localorients \n distance_calc \n "
 
     #File Streams
     variable f_tvspik1
@@ -38,8 +43,12 @@ namespace eval ::std_analysis {
     variable f_tvsclust
     variable f_densityprof
     variable f_localheights
+    variable f_localorients
     variable f_tvsdist
     # Variables to be used for averaging
+    variable av_localorients 0
+    variable av_localorients_i 0
+
     variable av_dist  0
     variable av_dist_i 0
 
@@ -104,6 +113,7 @@ source [file join [file dirname [info script]] fluctuations.tcl]
 source [file join [file dirname [info script]] stray.tcl]
 source [file join [file dirname [info script]] density_profile.tcl]
 source [file join [file dirname [info script]] localheights.tcl]
+source [file join [file dirname [info script]] localorients.tcl]
 source [file join [file dirname [info script]] distance.tcl]
 
 # ::std_analysis::flush_streams --
@@ -124,6 +134,7 @@ proc ::std_analysis::flush_streams { } {
     variable f_tvsstray
     variable f_densityprof
     variable f_localheights
+    variable f_localorients
     variable f_tvsdist
 
     for { set i 0 } { $i < [llength $switches ] } { incr i } {
@@ -135,6 +146,9 @@ proc ::std_analysis::flush_streams { } {
 		# This doesn't get flushed because we overwrite each time
 	    }
 	    "localheights_calc" {
+		# This doesn't get flushed because we overwrite each time
+	    }
+	    "localorients_calc" {
 		# This doesn't get flushed because we overwrite each time
 	    }
 	    "cluster_calc" {
@@ -184,7 +198,8 @@ proc ::std_analysis::print_averages { } {
     variable topology
     variable localheightsnbins
     variable lhrange
-
+    variable localorientsnbins
+    variable lorange
 
     variable av_densities
     variable av_densities_i 
@@ -194,6 +209,11 @@ proc ::std_analysis::print_averages { } {
     variable av_localheights
     variable av_localheights_i
     variable f_localheights
+
+    variable av_localorients
+    variable av_localorients_i
+    variable f_localorients
+
 
     variable av_pik1_i
     variable av_pik1
@@ -309,6 +329,25 @@ proc ::std_analysis::print_averages { } {
 			puts $f_localheights "[expr $bin*$lhbinwidth - $lhrange/2.0] [expr $currbin/(1.0*[llength $topology])]"
 		    }		    
 		    close $f_localheights
+		}
+	    }
+	    "localorients_calc" {
+		if { [lindex $switches $i 2] && $av_localorients_i > 0 } {
+		    
+		    set f_localorients [open "$outputdir/av_localo$suffix" "w" ]
+		    # Write a header to the file
+		    puts $f_localorients "\# local orientation distribution of lipids "
+		    puts $f_localorients ""
+
+		   
+		    set lobinwidth [expr $lorange/($localorientsnbins*1.0)]
+
+		    # Write out the local orientation distribution to a file
+		    for { set bin 0 } { $bin < [llength $av_localorients] } { incr bin } {
+			set currbin [lindex $av_localorients $bin]
+			puts $f_localorients "[expr $bin*$lobinwidth] [expr $currbin/(1.0*[llength $topology])]"
+		    }		    
+		    close $f_localorients
 		}
 	    }
 	    "cluster_calc" {
@@ -518,6 +557,9 @@ proc ::std_analysis::do_analysis { } {
 	    "localheights_calc" {
 		analyze_localheights [lindex $switches $i 1]
 	    }
+	    "localorients_calc" {
+		analyze_localorients  [lindex $switches $i 1]
+	    }
 	    "cluster_calc" {
 		analyze_clusters [lindex $switches $i 1]
 	    }
@@ -615,6 +657,7 @@ proc ::std_analysis::setup_analysis { switchesin topo args } {
     variable stray_cut_off
     variable all_particles
     variable lhrange
+    variable lorange
     variable f_tvspik1
     variable f_tvsp
     variable f_tvsbl
@@ -623,10 +666,10 @@ proc ::std_analysis::setup_analysis { switchesin topo args } {
     variable f_tvsstray
     variable f_tvsen
     variable f_tvsclust
-    variable f_localheights
     variable f_tvsdist
     variable av_pow
     variable av_localheights
+    variable av_localorients
     variable av_densities
     variable av_densities_i
     variable l_orients_start
@@ -638,6 +681,7 @@ proc ::std_analysis::setup_analysis { switchesin topo args } {
     variable this
     variable profilenogrid
     variable localheightsnbins
+    variable localorientsnbins
     variable av_components_en
 
     mmsg::send $this "setting up analysis"
@@ -654,6 +698,7 @@ proc ::std_analysis::setup_analysis { switchesin topo args } {
 	{beadtypes.arg "0" "Identity of beads to use for density profile analysis" }
 	{profilenogrid.arg "0" "Whether to not use the height grid for density profile analysis" }
 	{lhrange.arg "4" "Range for localheights calculation" }
+	{lorange.arg "1.0" "Range for localorients calculation" }
     }
     set usage "Usage: setup_analysis gridm:straycutoff:outputdir:alipid:suffix:iotype:nbins:hrange:beadtypes:profilenogrid "
     array set params [::cmdline::getoptions args $options $usage]
@@ -690,6 +735,7 @@ proc ::std_analysis::setup_analysis { switchesin topo args } {
     set beadtypes $params(beadtypes)
     set profilenogrid $params(profilenogrid)
     set lhrange $params(lhrange)
+    set lorange $params(lorange)
 
     for { set i 0 } { $i < [llength $switches ] } { incr i } {
 	mmsg::debug $this "switch = [lindex $switches $i 0]"
@@ -740,6 +786,14 @@ proc ::std_analysis::setup_analysis { switchesin topo args } {
 		#Initialize av_localheights
 		for { set bn 0 } { $bn < $localheightsnbins } { incr bn } {
 		    lappend av_localheights 0
+		}
+	    }
+	    "localorients_calc" {
+		set av_localorients 0
+		unset av_localorients
+		#Initialize av_localorients
+		for { set bn 0 } { $bn < $localorientsnbins } { incr bn } {
+		    lappend av_localorients 0
 		}
 	    }
 	    "pik1_calc" {
@@ -925,6 +979,7 @@ proc ::std_analysis::finish_analysis {  } {
     variable av_dist_i
 
     variable av_localheights
+    variable av_localorients
 
     variable av_densities
     variable av_densities_i
@@ -973,6 +1028,10 @@ proc ::std_analysis::finish_analysis {  } {
 	    "localheights_calc" {
 		puts "localheights_calc"
 		unset av_localheights
+	    }
+	    "localorients_calc" {
+		puts "localorients_calc"
+		unset av_localorients
 	    }
 	    "cluster_calc" {
 		puts "cluster_calc"
