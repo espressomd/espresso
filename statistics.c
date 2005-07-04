@@ -1179,6 +1179,7 @@ static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
   double result;
   double* stored_dirs;
   char buffer[TCL_DOUBLE_SPACE];
+  int i , j ;
   result = 0;
 
   if (n_total_particles <= 1) {
@@ -1188,15 +1189,39 @@ static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
   }
 
   stored_dirs = malloc(sizeof(double)*n_molecules*3);
-
-  if ( orient_order(&result,stored_dirs) == TCL_OK ) {
-    Tcl_PrintDouble(interp, result, buffer);
-    Tcl_AppendResult(interp, buffer, (char *)NULL);
-    return TCL_OK;
+  /* Do the calculation */
+  if ( orient_order(&result,stored_dirs) != TCL_OK ) {
+    Tcl_AppendResult(interp, "Error calculating orientational order ", (char *)NULL);
+    return TCL_ERROR;
   }
 
+  if ( argc == 0 ) {
+    /* If no options are specified then only give the average
+       orientational order */
+      Tcl_PrintDouble(interp, result, buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+      return TCL_OK;
+  } else {
+    /* If the -all option is specified then print everything */
+    if ( ARG0_IS_S("all") ) {
+      Tcl_PrintDouble(interp, result, buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+      Tcl_AppendResult(interp, " { ", (char *)NULL);
+      for ( i = 0 ; i < n_molecules ; i++ ) {
+	Tcl_AppendResult(interp, " { ", (char *)NULL);
+	for ( j = 0 ; j < 3 ; j++ ) {
+	  Tcl_PrintDouble(interp,stored_dirs[i*3+j],buffer);
+	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+	  Tcl_AppendResult(interp, " ", (char *)NULL);
+	}
+	Tcl_AppendResult(interp, "} ", (char *)NULL);
+      } 
+      Tcl_AppendResult(interp, "} ", (char *)NULL);
+    }
+    return TCL_OK;
+  }
+  
   Tcl_AppendResult(interp, "Error calculating orientational order ", (char *)NULL);
-
   free(stored_dirs);
   return TCL_ERROR;
 }
