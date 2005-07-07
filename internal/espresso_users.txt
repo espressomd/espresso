@@ -478,3 +478,19 @@ sent:      27.JUN.2005
 version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
 topic:     Polymer simulation
 
+
+
+name:      Arturo Ortiz
+email:     nitesurfer79@hotmail.com
+institute: Universidad Autonoma de Tlaxcala
+           Departamento de Ingenieria y Tecnologia
+           Av. Apizaquito S/N
+           Apizaco, Tlax
+           Mexico
+sent:      06.JUL.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     We are interested mainly in NEMD of confined polymers to obtain
+           transport properties such as viscosity, difusivities. We are
+           also interested in the flow of gases and liquids in porous
+           media.
+
