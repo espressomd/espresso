@@ -44,7 +44,7 @@
 static double ux, ux2, uy, uy2, uz;
 /*@}*/
 
-ELC_struct elc_params = { 1e100, 10, 1 };
+ELC_struct elc_params = { 1e100, 10, 1, 0 };
 
 /****************************************
  * LOCAL ARRAYS
@@ -69,11 +69,6 @@ ELC_struct elc_params = { 1e100, 10, 1 };
 #define PQECSM 6
 #define PQECCM 7
 /*@}*/
-
-/** if true, use a homogenous neutralizing background for nonneutral systems. Unlike
-    the 3d case, this background adds an additional force pointing towards the system
-    center, so be careful with this. */
-static int neutralize = 0;
 
 /** number of local particles, equals the size of \ref elc::partblk. */
 static int n_localpart = 0;
@@ -318,7 +313,7 @@ static void add_dipole_force()
       part[i].f.f[2] -= gblcblk[0]*part[i].p.q;
   }
 
-  if (!neutralize) {
+  if (!elc_params.neutralize) {
     /* SUBTRACT the forces of the neutralizing background
        looks very close to the code above, but is still different.
     */
@@ -367,7 +362,7 @@ static double dipole_energy()
   else 
     eng = 0;
 
-  if (!neutralize) {
+  if (!elc_params.neutralize) {
     /* SUBTRACT the energy of the neutralizing background */
 
     gblcblk[0] = 0;
@@ -761,12 +756,14 @@ int printELCToResult(Tcl_Interp *interp)
   char buffer[TCL_DOUBLE_SPACE];
 
   Tcl_PrintDouble(interp, elc_params.maxPWerror, buffer);
-  Tcl_AppendResult(interp, "} {coulomb elc ", buffer,(char *) NULL);
+  Tcl_AppendResult(interp, "} {coulomb elc ", buffer, (char *) NULL);
   Tcl_PrintDouble(interp, elc_params.minimal_dist, buffer);
-  Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
+  Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
   Tcl_PrintDouble(interp, elc_params.far_cut, buffer);
-  Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
-
+  Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
+  fprintf(stderr, "here:%d", elc_params.neutralize);
+  if (!elc_params.neutralize)
+    Tcl_AppendResult(interp, " -noneutralization", (char *) NULL);
   return TCL_OK;
 }
 
@@ -775,8 +772,7 @@ int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
   double pwerror;
   double minimal_distance;
   double far_cut = -1;
-
-  neutralize = 1;
+  int neutralize = 1;
 
   if (argc < 2) {
     Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>} {-noneutralization} expected, not \"",
@@ -800,7 +796,7 @@ int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
       return TCL_ERROR;
     neutralize = 0;
   }
-  CHECK_VALUE(ELC_set_params(pwerror, minimal_distance, far_cut), "choose a 3d electrostatics method prior to ELC");
+  CHECK_VALUE(ELC_set_params(pwerror, minimal_distance, far_cut, neutralize), "choose a 3d electrostatics method prior to ELC");
 }
 
 int ELC_sanity_checks()
@@ -843,10 +839,11 @@ void ELC_on_resort_particles()
   partblk   = realloc(partblk,  n_localpart*8*sizeof(double));
 }
 
-int ELC_set_params(double maxPWerror, double minimal_dist, double far_cut)
+int ELC_set_params(double maxPWerror, double minimal_dist, double far_cut, int neutralize)
 {
   elc_params.maxPWerror = maxPWerror;
   elc_params.minimal_dist = minimal_dist;
+  elc_params.neutralize = neutralize;
 
   ELC_setup_constants();
 

@@ -29,6 +29,10 @@ typedef struct {
   /** whether the cutoff was set by the user, or calculated by Espresso. In the latter case, the
       cutoff will be adapted if important parameters, such as the box dimensions, change. */
   int far_calculated;
+  /** if true, use a homogenous neutralizing background for nonneutral systems. Unlike
+      the 3d case, this background adds an additional force pointing towards the system
+      center, so be careful with this. */
+  int neutralize;
 } ELC_struct;
 extern ELC_struct elc_params;
 
@@ -44,8 +48,10 @@ int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv);
     @param min_dist   the gap size.
     @param far_cut    the cutoff of the exponential sum. If -1, the cutoff is automatically calculated using
     the error formulas.
+    @param neutralize whether to add a neutralizing background. WARNING: This background exerts forces, which
+    are dependent on the simulation box; especially the gap size enters into the value of the forces.
 */
-int ELC_set_params(double maxPWerror, double min_dist, double far_cut);
+int ELC_set_params(double maxPWerror, double min_dist, double far_cut, int neutralize);
 
 /// the force calculation 
 void ELC_add_force();
