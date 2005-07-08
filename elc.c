@@ -761,7 +761,6 @@ int printELCToResult(Tcl_Interp *interp)
   Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
   Tcl_PrintDouble(interp, elc_params.far_cut, buffer);
   Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-  fprintf(stderr, "here:%d", elc_params.neutralize);
   if (!elc_params.neutralize)
     Tcl_AppendResult(interp, " -noneutralization", (char *) NULL);
   return TCL_OK;
