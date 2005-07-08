@@ -494,3 +494,19 @@ topic:     We are interested mainly in NEMD of confined polymers to obtain
            also interested in the flow of gases and liquids in porous
            media.
 
+
+
+name:      Arturo Ortiz
+email:     arturo.ortiz-arroyo.1@ulaval.ca
+institute: Universidad Autonoma de Tlaxcala
+           Departamento de Ingenieria y Tecnologia
+           Av. Apizaquito S/N
+           Apizaco, Tlax
+           Mexico
+sent:      07.JUL.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     We are interested mainly in NEMD of confined polymers to obtain
+           transport properties such as viscosity, difusivities. We are
+           also interested in the flow of gases and liquids in porous
+           media.
+
