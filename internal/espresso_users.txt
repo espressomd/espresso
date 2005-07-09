@@ -510,3 +510,65 @@ topic:     We are interested mainly in NEMD of confined polymers to obtain
            also interested in the flow of gases and liquids in porous
            media.
 
+
+
+name:      Arturo Ortiz
+email:     nitesurfer79@hotmail.com
+institute: Universidad Autonoma de Tlaxcala
+           Departamento de Ingenieria y Tecnologia
+           Av. Apizaquito S/N
+           Apizaco, Tlax
+           Mexico
+sent:      08.JUL.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     We are interested mainly in NEMD of confined polymers to obtain
+           transport properties such as viscosity, difusivities. We are
+           also interested in the flow of gases and liquids in porous
+           media.
+
+
+name:      Arturo Ortiz
+email:     arturo.ortiz-arroyo.1@ulaval.ca
+institute: Universidad Autonoma de Tlaxcala
+           Departamento de Ingenieria y Tecnologia
+           Av. Apizaquito S/N
+           Apizaco, Tlax
+           Mexico
+sent:      08.JUL.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     We are interested mainly in NEMD of confined polymers to obtain
+           transport properties such as viscosity, difusivities. We are
+           also interested in the flow of gases and liquids in porous
+           media.
+
+
+name:      Arturo Ortiz
+email:     arturo.ortiz-arroyo.1@ulaval.ca
+institute: Universidad Autonoma de Tlaxcala
+           Departamento de Ingenieria y Tecnologia
+           Av. Apizaquito S/N
+           Apizaco, Tlax
+           Mexico
+sent:      08.JUL.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     We are interested mainly in NEMD of confined polymers to obtain
+           transport properties such as viscosity, difusivities. We are
+           also interested in the flow of gases and liquids in porous
+           media.
+
+
+name:      Torsten Stuehn
+email:     stuehn@mpip-mainz.mpg.de
+institute: MPIP-P
+sent:      08.JUL.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+topic:     Dies ist nur ein Test ...
+
+
+name:      Nils
+email:     binz@mpip-mainz.mpg.de
+institute: asdf
+sent:      08.JUL.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+topic:     asdf
+
