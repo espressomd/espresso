@@ -14,6 +14,22 @@ proc ::std_analysis::foldpart { pos box } {
     return $pos
 }
 
+#
+# Returns a list of all lipids within a certain radius
+# 
+# l_orients: A list of all orient flags for all molecules obtained
+#           from a call to analyze get_lipid_orients
+# 
+# orient : Flag for top or bottom leaflet (see analyze
+#        get_lipid_orients for definitions of this flag
+#
+#
+# headp : Atom ID of central bead
+# 
+# rcatch: Catch radius in xy plane
+#
+# molid : The molecule id of the central molecule
+
 proc ::std_analysis::nbhoodlipids { l_orients orient headp rcatch molid } {
     # Search for the neighbours around this head bead
     set nblist [analyze nbhood planar 1 1 0 $headp $rcatch  ]
