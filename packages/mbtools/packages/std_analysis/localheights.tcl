@@ -15,7 +15,7 @@ proc ::std_analysis::foldpart { pos box } {
 }
 
 #
-# Returns a list of all lipids within a certain radius
+# Returns a list of the molecule ids of all lipids within a certain radius
 # 
 # l_orients: A list of all orient flags for all molecules obtained
 #           from a call to analyze get_lipid_orients
