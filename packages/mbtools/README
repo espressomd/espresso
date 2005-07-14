@@ -15,6 +15,13 @@ paper Cooke, I. R., Kremer, K. and Deserno, M. Efficient tunable
 generic model for fluid bilayer membranes, (cond-mat/0502418)
 Phys. Rev. E. to appear ). 
 
+####################################
+# Relevant Espresso Files         ##
+####################################
+modes.c
+modes.h
+statistics.c
+statistics.h
 
 
 ###################################
