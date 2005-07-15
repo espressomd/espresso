@@ -572,3 +572,26 @@ sent:      08.JUL.2005
 version:   20050525-Espresso_v1.9.4g.tar.gz
 topic:     asdf
 
+
+
+name:      András Gábor
+email:     agabor@almos.vein.hu
+institute: Department of Physics,
+           University of Veszprém,
+           H-8201 Veszprém, P.O.Box 158, Hungary
+sent:      14.JUL.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+topic:     We intend to investigate some nonequilibrium MD simulations of
+           ferrofluid mixtures and MR fluids placed in an external
+           magnetic field.
+           The main goal is, of course, to determine the changes
+           in the viscosity caused by the external field.
+           Your ESPResSo package seems to be a good starting point of our
+           program development.
+           We are also open to get involved in the further development of
+           ESPResSo in the above mentioned directions.
+           
+           Yours sincerely,
+           András Gábor   and   István Szalai
+           Univ. of Veszprém, Hungary
+
