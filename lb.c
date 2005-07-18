@@ -1,5 +1,7 @@
 /** \file lb.c  
  *  Lattice Boltzmann algorithm for solvent degrees of freedom.
+ *  The program would stop if n for any of the 18 velocities becomes negative
+ *  To avoid this problem keep time step at 0.005
  */
 
 #include <mpi.h>
@@ -56,7 +58,7 @@ typedef signed int         T_INT32;
 #define SQRT2         1.4142135624
 #define INVSQRT2      0.70710678119
 #define SPACE_DIM_INV 0.33333333333333
-#define MASSRATIO     0.5           /* mass ratio of fluid particles and monomers (fluid/mono) */
+#define MASSRATIO     1.0           /* mass ratio of fluid particles and monomers (fluid/mono) */  
 #define max_corr      900           /* max. correlation time for fluid correlations */ 
 #define max_n_veloc   30            /* not more than 30 velocities for particles to take */
 #define MAX_CHAIN     1200         /* max. length of one chain */
@@ -65,7 +67,8 @@ typedef signed int         T_INT32;
 #define N_MODE        3             /* number k-values for Fourier transform */
 #define BOTT          1e-10         /* for comparison with DOUBLE zero */   
 #define MAX_RANREPEATE 3
-
+#define FAC1          0.16666666666666666
+#define FAC2          0.08333333333333333
 
 /* data structure definitions for whole program */
 
@@ -73,7 +76,7 @@ typedef int      T_IVECTOR [SPACE_DIM];
 typedef double   T_DVECTOR [SPACE_DIM];
 typedef double   T_DMATRIX [SPACE_DIM][SPACE_DIM];
 typedef T_INT32  T_GRIDPOS [SPACE_DIM+1];
-typedef double T_RANSTORE [MAX_RANREPEATE][SPACE_DIM];
+//typedef double T_RANSTORE [NEIGH][SPACE_DIM];
 
 
 
@@ -187,7 +190,7 @@ char    defaultcurrentpar[200]= "0.0";
 double  defaultviscos     = 3.0; 
 double  defaultlambda     = (-1.0);  /*  not independent of viscosity, time step and lattice spacing! viscosity overrules lambda */
 double  defaultc_sound_sq = 1./2.;     
-double  defaulttau        = 0.05;
+double  defaulttau        = 0.01;
 double  defaultagrid      = 1.;
 int     defaultn_veloc    = 18;
 int     defaultn_abs_veloc= 2; 
@@ -233,10 +236,11 @@ LBT_BOOL   fluct;
 LBT_BOOL   siminit = FALSE; 
 LBT_BOOL   boundary1;                        /* yes if there is some other than periodic boundary */
 LBT_BOOL   fixmom = FALSE;                        /* yes if there is some other than periodic boundary */
-
+int        MomentumTransfer=0;
 int*     n_abs_which;
 double*  coef_eq;  
 int*     c_abs_sq_g;
+int      lu;
 
 /*************************** global arrays **********************************/
 
@@ -255,11 +259,10 @@ T_IVECTOR*    c_g=defaultc_g;
 T_DVECTOR*    v     = NULL;                 /* monomer velocity */
 T_DVECTOR*    force  = NULL;                 /* force on monomer */ 
 T_DVECTOR*    xrel  = NULL;                 /* monomer coordinate in unit cell (in lattice units) */
+T_DVECTOR*    store_rans = NULL;
 T_GRIDPOS*    xint  = NULL;                 /* lower left front gridpoint of monomer unit cell + PE of this monomer*/ 
-T_RANSTORE*   store_rans = NULL;
 T_DVECTOR     save_j;
-
-
+//T_RANSTORE    save_n =NULL;
 /******************************* global scalars/structs **********************/
 
 int transfer_momentum = 0;
@@ -304,7 +307,7 @@ double invgridpa;
 
 void allocmem() {/* allocate memeory */
 
-#if DEBUG
+#ifdef DEBUG
   if (!myNum) printf("Allocating memory \n");
 #endif
 
@@ -344,16 +347,14 @@ void alloc_part_mem(int npart)
     xint=(T_GRIDPOS*)realloc(xint, Npart*sizeof(T_GRIDPOS));
     v=(T_DVECTOR*)realloc(v, Npart*sizeof(T_DVECTOR));
     force=(T_DVECTOR*)realloc(force, Npart*sizeof(T_DVECTOR));
-    store_rans=(T_RANSTORE*)realloc(store_rans, (Npart+MAX_RANREPEATE)*sizeof(T_RANSTORE));
-
-    if ((!v) || (!force) || (!xrel) || (!xint) || (!store_rans))
+    store_rans=(T_DVECTOR*)realloc(store_rans, 5000*sizeof(T_DVECTOR));
+    if ((!v) || (!force) || (!xrel) || (!xint)||(!store_rans))
       {
 	fprintf(stderr,"*** ERROR in allocmem: couldn't allocate polymer memory\n");
 	ExitProgram(TERM_error);
       }
   }
 }
-
 
 /*********************************************************************/
 
@@ -385,6 +386,9 @@ void freemem(void){
   v = NULL;
   if (force) free(force);
   force = NULL;
+  if( store_rans ) free(store_rans);
+  store_rans=NULL;
+	      
 }
 
 #define MAXRANDINV (1.0/2147483647.0)
@@ -467,7 +471,7 @@ void printfields(T_DVECTOR* j,double* rho,T_DMATRIX* pi){
 if (!myNum) fflush(stdout);
 }
 	     
-
+/************************************************************/
 void calcfields(double* n,LBT_BOOL calc_pi){
 
   /***********************************************************
@@ -482,8 +486,7 @@ void calcfields(double* n,LBT_BOOL calc_pi){
 
   int i,k,m,l,h;
   double help,help2;
-
-#if DEBUG
+#ifdef DEBUG
 printf(" %d You're now in CALCFIELDS %d %d \n",this_node,xyzcube,gridsurface);
 printf(" And the first grid vector is: %f %f %f\n",c_g_d[0][0],c_g_d[0][1],c_g_d[0][2]);
 #endif  
@@ -515,7 +518,6 @@ printf(" And the first grid vector is: %f %f %f\n",c_g_d[0][0],c_g_d[0][1],c_g_d
   else {
     
 #ifdef D3Q18
-
     for(i=0;i<(xyzcube+gridsurface);i++){
 
       double* nlocal = &(n[l]);
@@ -529,26 +531,14 @@ printf(" And the first grid vector is: %f %f %f\n",c_g_d[0][0],c_g_d[0][1],c_g_d
 
       l+=n_veloc;
     }
-
-#else
-
-    for(i=0;i<(xyzcube+gridsurface);i++){
-      for(k=0;k<n_veloc;k++){
-	help=n[l];
-	rho[i]+=help;
-	for(m=0;m<3;m++){
-	  j[i][m]+=help*c_g_d[k][m];
-	}
-	l++;
-      }      
-    }  /* i */
 #endif  
 
-  }  /* else */
+  }  
 
-
+#ifdef DEBUG
+printf(" You're now exiting CALCFIELDS \n");
+#endif  
 }
-
 /******************************************************************/
 
 static void calccurrent(int current_type,char* current_par, int gridpoints,T_DVECTOR* j){
@@ -739,7 +729,7 @@ static void calcn_eq(int* n_abs_which,int* c_abs_sq_g,double* coef_eq,
     }
   }
 
-#if DEBUG
+#ifdef DEBUG
   if (!myNum) printf("Calculated n_eq, returning to NEW-routine\n");
 #endif
 
@@ -785,15 +775,15 @@ void new(){
   gridpa     = gridpoints*agrid;
   invgridpa  = 1.0/gridpa;
 
-  nPesPerDir[0] = node_grid[2]; 
+  nPesPerDir[0] = node_grid[0]; 
   nPesPerDir[1] = node_grid[1];
-  nPesPerDir[2] = node_grid[0];
+  nPesPerDir[2] = node_grid[2];
   xsize = gridpoints/nPesPerDir[0];   
   ysize = gridpoints/nPesPerDir[1];
   zsize = gridpoints/nPesPerDir[2];
-  offset[0] = xsize*node_pos[2];
+  offset[0] = xsize*node_pos[0];
   offset[1] = ysize*node_pos[1];
-  offset[2] = zsize*node_pos[0];
+  offset[2] = zsize*node_pos[2];
 
   xyzcube    = xsize*ysize*zsize;
   gridbegin  = (xsize+2)+(xsize+2)*(ysize+2)+1;       /* halo */
@@ -817,7 +807,7 @@ void new(){
   calccurrent(lbpar.current_type,lbpar.currentpar,gridpoints,j);   /* current field setup */
   for(i=0;i<xyzcube+gridsurface;i++) rho[i]=rho_bar*agrid*agrid*agrid/MASSRATIO;   /*  density setup + unit change */ 
 
-#if DEBUG
+#ifdef DEBUG
   if (!myNum) printf("Assigning density to constant value %f\n",rho_bar);
 #endif
 
@@ -828,7 +818,7 @@ void new(){
   halo_init();
   halo_update();
 
-  calcfields(n,TRUE);
+  calcfields(n,TRUE); 
 
 #ifdef DEBUG2
   {  /* write input rho and j, compare with result from n_eq */
@@ -970,15 +960,6 @@ static void propagate_n(){
    last change: Ahlrichs, 01/05/99
    ************************************************************/
   
-#ifndef D3Q18
-  int i;
-
-  for(i=0;i<(xyzsurface+gridsurface)*n_veloc;i++){
-    n_new[next[i]] = n[i];
-  }
-
-#else
-
   int l;
   int yperiod = xsize+2;  /* include halo regions */
   int zperiod = (ysize+2)*(xsize+2);
@@ -1028,7 +1009,6 @@ static void propagate_n(){
     n[l+next_15] = n[l+15];/* (0,-1,-1) */
     n[l+next_16] = n[l+16];/* (0,1,-1) */
   }
-#endif
 
 }
 
@@ -1036,7 +1016,6 @@ static void propagate_n(){
 /**************************************************************/
 
 static void add_fluct(double lblambda,double rho,double pi_lin[]){
-
 
   /**************************************************************
    calculate fluctuations in stress tensor by random contribution
@@ -1111,7 +1090,7 @@ static void calc_collis(int n_abs_veloc,
 
   double   local_rho,rhoc_sq;
   T_DVECTOR  local_j;
-
+  
 #ifdef D3Q18
 //  int* nextpoi = next;        
   double* nlocal;
@@ -1160,33 +1139,6 @@ static void calc_collis(int n_abs_veloc,
     local_pi_lin[3] = nlocal[10]+nlocal[11]-nlocal[12]-nlocal[13];
     local_pi_lin[4] = nlocal[14]+nlocal[15]-nlocal[16]-nlocal[17];
 
-#else
-
-    local_rho=0.;     
-    
-
-    for(m=0;m<3;m++) {
-      local_j[m]=0.0;
-    }
-    for(o=0;o<max_lin;o++){
-	local_pi_lin[o]=0.0;
-    }
-
-    for(k=0;k<n_veloc;k++){                      
-      nl=n[l];
-      local_rho+=nl;
-      o=0;
-      for(m=0;m<3;m++){
-	help2=nl*c_g_d[k][m];
-	local_j[m]+=help2;
-	for(h=0;h<=m;h++){
-	  local_pi_lin[o]+=help2*c_g_d[k][h];
-	  o++;
-	}
-      }
-      l++;
-    } 
-    l-=n_veloc;
 #endif
 
     /* update stress tensor */
@@ -1204,18 +1156,6 @@ static void calc_collis(int n_abs_veloc,
       local_pi_lin[1] = onepluslambda*local_pi_lin[1];
       local_pi_lin[3] = onepluslambda*local_pi_lin[3];
       local_pi_lin[4] = onepluslambda*local_pi_lin[4];
-    }
-
-#else
-    o=0;
-    rhoc_sq=local_rho*c_sound_sq;                     
-    for(m=0;m<3;m++) {
-      for(h=0;h<m;h++){
-	local_pi_lin[o]=(1.+lblambda)*(local_pi_lin[o]);
-	o++;
-      }
-      local_pi_lin[o]=rhoc_sq+(1.+lblambda)*(local_pi_lin[o]-rhoc_sq);
-      o++;
     }
 
 #endif
@@ -1259,7 +1199,7 @@ static void calc_collis(int n_abs_veloc,
     }
     l=savel;
 
-    if (fluct) add_fluct(lblambda,local_rho,local_pi_lin);         /* add random fluctuations to stress tensor */
+    if (fluct) add_fluct(lblambda,local_rho,local_pi_lin); /* add random fluctuations to stress tensor */ 
 
 
     do {           /* add fluctuations only if they do not lead to neg. n's */
@@ -1269,36 +1209,36 @@ static void calc_collis(int n_abs_veloc,
 
       {
 
-	double local_rho_times_coeff = local_rho*0.08333333333333333;
+	double local_rho_times_coeff = local_rho*FAC2;
 	double trace = (local_pi_lin[0]+local_pi_lin[2]+local_pi_lin[5])*SPACE_DIM_INV;
 	double help1,help2;
 
-	n[l] = local_rho_times_coeff + local_j[0]*0.16666666666666666 + 0.25*(local_pi_lin[0]-trace);
+	n[l] = local_rho_times_coeff + local_j[0]*FAC1+ 0.25*(local_pi_lin[0]-trace);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++;
-	n[l] = local_rho_times_coeff - local_j[0]*0.16666666666666666 + 0.25*(local_pi_lin[0]-trace);
+	n[l] = local_rho_times_coeff - local_j[0]*FAC1 + 0.25*(local_pi_lin[0]-trace);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++; 
-	n[l] = local_rho_times_coeff + local_j[1]*0.16666666666666666 + 0.25*(local_pi_lin[2]-trace);
+	n[l] = local_rho_times_coeff + local_j[1]*FAC1 + 0.25*(local_pi_lin[2]-trace);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++; 
-	n[l] = local_rho_times_coeff - local_j[1]*0.16666666666666666 + 0.25*(local_pi_lin[2]-trace);
+	n[l] = local_rho_times_coeff - local_j[1]*FAC1 + 0.25*(local_pi_lin[2]-trace);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++; 
-	n[l] = local_rho_times_coeff + local_j[2]*0.16666666666666666 + 0.25*(local_pi_lin[5]-trace);
+	n[l] = local_rho_times_coeff + local_j[2]*FAC1 + 0.25*(local_pi_lin[5]-trace);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++; 
-	n[l] = local_rho_times_coeff - local_j[2]*0.16666666666666666 + 0.25*(local_pi_lin[5]-trace);
+	n[l] = local_rho_times_coeff - local_j[2]*FAC1 + 0.25*(local_pi_lin[5]-trace);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
@@ -1307,7 +1247,7 @@ static void calc_collis(int n_abs_veloc,
 #ifndef CREEPINGFLOW
 	l-=6;
 	for(h=0;h<6;h++){
-	  n[l] += -0.16666666666666666*(trace_eq-3.*rhoc_sq);
+	  n[l] += -FAC1*(trace_eq-3.*rhoc_sq);
 	  l++;
 	} 
 #endif
@@ -1317,22 +1257,22 @@ static void calc_collis(int n_abs_veloc,
 	help1 = local_pi_lin[0]-trace+local_pi_lin[2]-trace;
 	help2 = local_pi_lin[1]+local_pi_lin[1];
 	
-	n[l] = local_rho_times_coeff + (local_j[0]+local_j[1])*0.08333333333333333+ 0.125*(help1+help2);
+	n[l] = local_rho_times_coeff + (local_j[0]+local_j[1])*FAC2+ 0.125*(help1+help2);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++; 
-	n[l] = local_rho_times_coeff - (local_j[0]+local_j[1])*0.08333333333333333+ 0.125*(help1+help2);
+	n[l] = local_rho_times_coeff - (local_j[0]+local_j[1])*FAC2+ 0.125*(help1+help2);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++; 
-	n[l] = local_rho_times_coeff + (local_j[0]-local_j[1])*0.08333333333333333+ 0.125*(help1-help2);
+	n[l] = local_rho_times_coeff + (local_j[0]-local_j[1])*FAC2+ 0.125*(help1-help2);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++; 
-	n[l] = local_rho_times_coeff - (local_j[0]-local_j[1])*0.08333333333333333+ 0.125*(help1-help2); 	
+	n[l] = local_rho_times_coeff - (local_j[0]-local_j[1])*FAC2+ 0.125*(help1-help2); 	
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
@@ -1341,22 +1281,22 @@ static void calc_collis(int n_abs_veloc,
 	help1 = local_pi_lin[0]-trace+local_pi_lin[5]-trace;
 	help2 = local_pi_lin[3]+local_pi_lin[3];
 
-	n[l] = local_rho_times_coeff + (local_j[0]+local_j[2])*0.08333333333333333+ 0.125*(help1+help2);
+	n[l] = local_rho_times_coeff + (local_j[0]+local_j[2])*FAC2+ 0.125*(help1+help2);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++; 
-	n[l] = local_rho_times_coeff - (local_j[0]+local_j[2])*0.08333333333333333+ 0.125*(help1+help2);
+	n[l] = local_rho_times_coeff - (local_j[0]+local_j[2])*FAC2+ 0.125*(help1+help2);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++; 
-	n[l] = local_rho_times_coeff + (local_j[0]-local_j[2])*0.08333333333333333+ 0.125*(help1-help2);
+	n[l] = local_rho_times_coeff + (local_j[0]-local_j[2])*FAC2+ 0.125*(help1-help2);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++; 
-	n[l]  = local_rho_times_coeff - (local_j[0]-local_j[2])*0.08333333333333333+ 0.125*(help1-help2); 
+	n[l]  = local_rho_times_coeff - (local_j[0]-local_j[2])*FAC2+ 0.125*(help1-help2); 
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
@@ -1365,22 +1305,22 @@ static void calc_collis(int n_abs_veloc,
 	help1 = local_pi_lin[2]-trace+local_pi_lin[5]-trace;
 	help2 = local_pi_lin[4]+local_pi_lin[4];
 
-	n[l]  = local_rho_times_coeff + (local_j[1]+local_j[2])*0.08333333333333333+ 0.125*(help1+help2); 
+	n[l]  = local_rho_times_coeff + (local_j[1]+local_j[2])*FAC2+ 0.125*(help1+help2); 
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++; 
-	n[l] = local_rho_times_coeff - (local_j[1]+local_j[2])*0.08333333333333333+ 0.125*(help1+help2);
+	n[l] = local_rho_times_coeff - (local_j[1]+local_j[2])*FAC2+ 0.125*(help1+help2);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++; 
-	n[l] = local_rho_times_coeff + (local_j[1]-local_j[2])*0.08333333333333333+ 0.125*(help1-help2);  
+	n[l] = local_rho_times_coeff + (local_j[1]-local_j[2])*FAC2+ 0.125*(help1-help2);  
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
 	l++; 
-	n[l] = local_rho_times_coeff - (local_j[1]-local_j[2])*0.08333333333333333+ 0.125*(help1-help2);
+	n[l] = local_rho_times_coeff - (local_j[1]-local_j[2])*FAC2+ 0.125*(help1-help2);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
 	}
@@ -1390,7 +1330,7 @@ static void calc_collis(int n_abs_veloc,
 #ifndef CREEPINGFLOW
 	l-=12;
 	for(h=6;h<n_veloc;h++){
-	  n[l]+=  0.08333333333333333*(trace_eq-3.*rhoc_sq);
+	  n[l]+= FAC2*(trace_eq-3.*rhoc_sq);
 	  l++;
 	} 
 #endif
@@ -1399,7 +1339,8 @@ static void calc_collis(int n_abs_veloc,
       }
 
       if (badrandoms) {
-	
+       	//      printf(" bad randomssssssssss \n");
+	//	errexit();
 	if (fluct) {  /* recover old values of l, the stress tensor and n */
 	  if (failcounter%100==0) printf("Warning: PE %2d:n negative (calc_collis)=>new randoms (time: %f, failcounter: %d)\n",myNum,current_time,failcounter); 
 	  local_pi_lin[0] =  save_pi_lin[0];
@@ -1418,8 +1359,8 @@ static void calc_collis(int n_abs_veloc,
 	    n[l++]=saven[o++];
 	  }
 	  l=savel;
- 
-	  add_fluct(lblambda,local_rho,local_pi_lin);         /* try new random fluctuations to stress tensor */
+	  
+	  add_fluct(lblambda,local_rho,local_pi_lin);         /* try new random fluctuations to stress tensor */ 
 	}
 	else {
 	  fprintf(stderr,"ERROR in calc_collis: n is getting negative and no random numbers are present (time: %f)\n",current_time);
@@ -1433,7 +1374,7 @@ static void calc_collis(int n_abs_veloc,
 
   l-=n_veloc;   /* update velocity distribution at one gridpoint */
   
-  if (fluct) add_fluct(lblambda,local_rho,local_pi_lin);         /* add random fluctuations to stress tensor */
+  if (fluct) add_fluct(lblambda,local_rho,local_pi_lin);         /* add random fluctuations to stress tensor */ 
 
   off3=0;
     for(k=0;k<n_abs_veloc;k++){
@@ -1619,7 +1560,7 @@ void prerun(){
   n_veloc    = defaultn_veloc; 
 
   lbfriction   = lbpar.lbfriction;
-  lbnoise      = sqrt(6.0*lbfriction*temperature/time_step);
+  lbnoise      = sqrt(6.0*lbfriction*temperature/time_step); 
 
   /*  if ((defaultlambda-lambda)<BOTT){ lambda overrules viscosity as input par. */
     lblambda=-2./(6.*viscos*tau/(agrid*agrid)+1.);
@@ -1632,7 +1573,7 @@ void prerun(){
     /*  }*/
   
   if (temperature>BOTT) {  /* fluctuating hydrodynamics ? */
-    fluct=TRUE; 
+    fluct=TRUE;
     ampl=sqrt(3.*2.*(-1./6.)*(2./lblambda+1.)*temperature*lblambda*lblambda*tau*tau/(agrid*agrid*agrid*agrid*MASSRATIO)); 
                                 /* amplitude for stochastic part, cf. Ladd + unit conversion */
                                 /* caveat:3 comes from the fact */       
@@ -1650,11 +1591,7 @@ void prerun(){
       neighbor[k][0]=k+1;
       lneighbor[k+1][0]=k;
     }
-    if (nPesPerDir[0]==1) {
-      neighbor[xsize][0]=1; 
-      lneighbor[1][0]=xsize;
-    }
-    else {
+    {
       neighbor[xsize][0]=xsize+1;
       lneighbor[1][0]=0;
     }
@@ -1662,11 +1599,7 @@ void prerun(){
       neighbor[k][1]=k+1;
       lneighbor[k+1][1]=k;
     }
-    if (nPesPerDir[1]==1) {
-      neighbor[ysize][1]=1; 
-      lneighbor[1][1]=ysize;
-    }
-    else {
+    {
       neighbor[ysize][1]=ysize+1;
       lneighbor[1][1]=0;
     }
@@ -1674,11 +1607,7 @@ void prerun(){
       neighbor[k][2]=k+1;
       lneighbor[k+1][2]=k;
     }
-    if (nPesPerDir[2]==1) {
-      neighbor[zsize][2]=1; 
-      lneighbor[1][2]=zsize;
-    }
-    else {
+    {
       neighbor[zsize][2]=zsize+1;
       lneighbor[1][2]=0;
     }    
@@ -1688,22 +1617,6 @@ void prerun(){
     neighbor[xsize+1][0]=-1;
     neighbor[ysize+1][1]=-1;
     neighbor[zsize+1][2]=-1;
-
-#ifndef D3Q18
-  l=0;
-  for(z=0;z<(zsize+2);z++){                            /* initialisation of next step's index of n */
-    for(y=0;y<(ysize+2);y++){
-      for(x=0;x<(xsize+2);x++){
-	for(i=0;i<n_veloc;i++){
-	  new_x=(x+c_g[i][0]+xsize+2)%(xsize+2);  /* assume periodic boundaries for lattice + halo */ 
-	  new_y=(y+c_g[i][1]+ysize+2)%(ysize+2);  /* for simplicity, halo region is destroyed by */
-	  new_z=(z+c_g[i][2]+zsize+2)%(zsize+2);  /* propagation anyway, so exploit this */ 
-	  next[l++]=i+(new_z*(xsize+2)*(ysize+2)+new_y*(xsize+2)+new_x)*n_veloc;
-	}
-      }
-    }
-  }
-#endif
 
   ranseed=(myNum+1)*(lbpar.ranseed);   /* initialize ran3 */
   if (ranseed>0) {
@@ -1722,14 +1635,18 @@ void prerun(){
   /*  if (boundary) InitBoundary(next,c_g,c_abs_sq_g);     initialize additional boundary */
 
     lbfriction = lbpar.lbfriction;            /* equilibration with total friction */
-    lbnoise = sqrt(6.0*lbfriction*temperature/time_step);
+    lbnoise =sqrt(6.0*lbfriction*temperature/time_step); 
 }
 
 /******************************************************************************/
-/******************************************************************************/
-
 
 void thermo_init_lb () {
+
+    if (dd.use_vList) {
+        char *errtxt = runtime_error(128);
+        ERROR_SPRINTF(errtxt, "{096 LB requires no Verlet Lists} ");
+        return;
+    }  
 
     InitCommand();     /* set default values */ 
 
@@ -1739,15 +1656,14 @@ void thermo_init_lb () {
 } 
 
 /******************************************************************************/
-/******************************************************************************/
 
 
 void LB_propagate () {
-
       fluidstep+=time_step;
-      if(fluidstep>=(tau-BOTT)) {           /* update fluid */
+      if(fluidstep>=(tau-BOTT)) {           /* update fluid */ 
 	// write_fluid_velocity(savefile,current_time-fluidstep);
 	fluidstep=0.;
+	
 	calc_collis(n_abs_veloc, 
 		    n_abs_which, coef_eq, c_abs_sq_g, c_sound_sq, 
 		    lblambda,fluct);
@@ -1765,8 +1681,6 @@ void LB_propagate () {
 } 
 
 /******************************************************************************/
-/******************************************************************************/
-
 void calc_momentum()
 { 
   Cell *cell;
@@ -1793,12 +1707,9 @@ void calc_momentum()
 
 
   }
-//   printf("result %d %f\n",this_node,momentum[0]);
-
+ 
   MPI_Allreduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
    
-//   printf("result %d %f\n",this_node,result[0]);
-
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
@@ -1817,98 +1728,137 @@ void calc_momentum()
 
 /*****************************************************************/
 void add_lb_forces(Particle *p1, int ip)
-{
-      p1->f.f[0] +=force[ip][2];
+{    /* return;*/
+      p1->f.f[0] +=force[ip][0];
       p1->f.f[1] +=force[ip][1];
-      p1->f.f[2] +=force[ip][0];
+      p1->f.f[2] +=force[ip][2];
 }
 
 /*******************************************************************************/
+
 void calc_lbforce()
-{ 
+{
+  int saved_datatype;
+
+#ifdef DEBUG
+  printf("You're now in calc_lbforce \n");
+#endif 
   Cell *cell;
   Particle *p;
-  int i, c, k; 
+  int i, c, k,mom_error,lu1,l; 
   double  inva = 1.0/agrid, invt=1.0/time_step, xpp;
   T_IVECTOR size;    
-  if(temperature > 0.0 && !fixmom) calc_momentum();
-  
-  calcfields(n,FALSE);
-  size[0]=xsize; size[1]=ysize; size[2]=zsize;
-
+   calcfields(n,FALSE);
+   size[0]=xsize; size[1]=ysize; size[2]=zsize;
+   mom_error=0;
+   l=0;
+ /**************** add  random numbers for communication****************/
   for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    nMono = cell->n;
+    for(i=0; i < nMono; i++) { 
+      for (k= 0;k < 3;k++) {
+	p[i].t.f_random[k]=lbnoise*(2.0*d_random()-1.0)/invt;
+      }     
+    }
+  }
+
+  /* NASTY: we abuse the update_ghosts communication to transfer the temporary
+     data. */
+  do { 
+    
+  saved_datatype = cell_structure.update_ghost_pos_comm.data_parts;
+  cell_structure.update_ghost_pos_comm.data_parts = GHOSTTRANS_TEMP;
+
+  ghost_communicator(&cell_structure.update_ghost_pos_comm);
+
+  cell_structure.update_ghost_pos_comm.data_parts = saved_datatype;
+   
+/***********************shift momentum*********************************/
+   lu=0;
+   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
     nMono = cell->n;
     alloc_part_mem(nMono);
 
     for(i=0; i < nMono; i++) { 
-      /*******preparing coordinates************************************/
-
-      for (k= 0;k < 3;k++) {
-	int jj = 2-k;
-      
-	v[i][k] = p[i].m.v[jj]*invt;
-	xpp = p[i].r.p[jj];
+      for (k= 0;k < 3;k++) {	
+	v[i][k] = (p[i].m.v[k]+ p[i].t.f_random[k])*invt;
+	xpp = p[i].r.p[k]-my_left[k]+agrid;
 	xint[i][k] = (int) (xpp*inva);
 	xrel[i][k] = xpp*inva - xint[i][k];
-
-	xint[i][k] = xint[i][k]%size[k]+1;               /* map to local PE */
       }
-      xint[i][3]=1; 
-
+      xint[i][3]=1;
     }
-
     calc_fluid_chain_interaction(0);
-
-    for(i=0; i< nMono; i++) { 
-      add_lb_forces(&p[i],i);
-    }        
-    
-  }
+    if(transfer_momentum) { for(i=0; i< nMono; i++) { add_lb_forces(&p[i],i); } }
+          
+      
+   }
 
 /****************************************************************
        ghost cells
 *****************************************************************/
-
-if(n_nodes>1){
-  for (c = 0; c < ghost_cells.n; c++) {
-    cell = ghost_cells.cell[c];
-    p  = cell->part;
-    nMono = cell->n;
-    alloc_part_mem(nMono);
-
-    for(i=0; i < nMono; i++) { 
-
-    xint[i][3]=1;
-
-    for (k= 0;k < 3;k++) {
-      int jj = 2-k;
-      
-      v[i][k] = p[i].m.v[jj]*invt;
-      xpp = p[i].r.p[jj]-my_left[jj]+agrid;
-
-      xint[i][k] = (int) (xpp*inva);
-      xrel[i][k] = xpp*inva - xint[i][k];
-
-	if ( xint[i][k] < 0 || xint[i][k] > size[k])    
-//	if ( xp[i][k] < my_left[jj] - agrid || xint[i][k] > my_right[jj])    
-	  xint[i][3] = 0;  
-
-      if( xint[i][k] == 0  && node_grid[jj] == 1) {
-        xint[i][3] = 0;
-	}
-
-    }
+   for (c = 0; c < ghost_cells.n; c++) {
+     cell = ghost_cells.cell[c];
+     p  = cell->part;
+     nMono = cell->n;
+     alloc_part_mem(nMono);
+     
+     for(i=0; i < nMono; i++) { 
+       xint[i][3]=1;
+       
+       for (k= 0;k < 3;k++) {
     
-}
-  calc_fluid_chain_interaction(1);
+	 v[i][k] = (p[i].m.v[k]+ p[i].t.f_random[k])*invt;
+	 xpp = p[i].r.p[k]-my_left[k]+agrid;
+	 
+	 xint[i][k] = (int) (xpp*inva);
+	 
+	 xrel[i][k] = xpp*inva - xint[i][k];
+	 
+	 if ( xpp < 0.0 || xpp >= (size[k]+agrid))    
+	   xint[i][3] =0;  
+
+       }
+       
+     }
+     
+     calc_fluid_chain_interaction(1);
+    
+   }
+   MPI_Allreduce(&MomentumTransfer, &mom_error, 1, MPI_INT, MPI_SUM,  MPI_COMM_WORLD);
+   if(mom_error>0) {
+      l+=1;
+      lu1=0;
+     for (c = 0; c < local_cells.n; c++) {
+       cell = local_cells.cell[c];
+       p  = cell->part;
+       nMono = cell->n;
+       for(i=0; i < nMono; i++) { 
+	 lu1+=1;
+	 for (k= 0;k < 3;k++) {
+	      p[i].t.f_random[k]=lbnoise*(2.0*d_random()-1.0)/invt-p[i].t.f_random[k]-2.0*p[i].m.v[k]+2.0*store_rans[lu1][k]/invt;
+	 }     
+       }
+     }
+     MomentumTransfer=0;
+   }
+
+   if(l>100){
+     printf("bad n too many times in lb \n");
+     errexit();
+   }
+  } while(mom_error>0);
+
+  if((tau-time_step)>BOTT) halo_update();
+#ifdef DEBUG
+  printf("You're now exiting calc_lbforce \n");
+#endif    
 
 }
-}
-
-}
-
 
 void calc_fluid_chain_interaction(int iamghost){ 
 
@@ -1930,31 +1880,19 @@ void calc_fluid_chain_interaction(int iamghost){
   double invh=1.0/tau;
   double invMassRatio=1.0/MASSRATIO;
   double help_x,help_y,help_z;
-  int x_int,y_int,z_int,ip,jp,i,k,l,m,index,index18,help_index_x,help_index_y,help_index_z,off4; 
+  int x_int,y_int,z_int,jp,i,k,l,m,index,index18,help_index_x,help_index_y,help_index_z,off4; 
   T_DVECTOR local_j,save_j,grid_j;
-  double save_n[max_n_veloc*8];
+  //double save_n[l][max_n_veloc*8];
   double help_rho;
 
   int yperiod = xsize+2;
   int zperiod = (ysize+2)*(xsize+2);
-
   double* nlocal;
 
-  LBT_BOOL badrandoms;
-  static int failcounter = 0;
-  int localfails;
-    
-  for (ip=0;ip<nMono+MAX_RANREPEATE;ip++) {
-    for (jp=0;jp<MAX_RANREPEATE;jp++) {
-      store_rans[ip][jp][0] = lbnoise*(2.0*d_random()-1.0);
-      store_rans[ip][jp][1] = lbnoise*(2.0*d_random()-1.0);
-      store_rans[ip][jp][2] = lbnoise*(2.0*d_random()-1.0);
-    }
-  }
-  store_rans[nMono+MAX_RANREPEATE-1][MAX_RANREPEATE-1][0] = -1.0-lbnoise; /* for checking if store of random number is used up */
-
+  //LBT_BOOL badrandoms;
+  
   for(jp=0;jp<nMono;jp++){
-
+    // l+=1;
     if (xint[jp][3]){
 
     /* where in the lattice world is my monomer */
@@ -1971,7 +1909,7 @@ void calc_fluid_chain_interaction(int iamghost){
 
     index = z_int*zperiod+y_int*yperiod+x_int; 
 
-    help_index_x=neighbor[x_int][0]-x_int; /* incr. for x-neighbor */
+    help_index_x=(neighbor[x_int][0]-x_int); /* incr. for x-neighbor */
     help_index_y=(neighbor[y_int][1]-y_int)*yperiod;
     help_index_z=(neighbor[z_int][2]-z_int)*zperiod;
    
@@ -1989,7 +1927,7 @@ void calc_fluid_chain_interaction(int iamghost){
 	  save_j[2] += help_x*help_y*help_z*j[index][2]*help_rho;
           
 	  index18 = index*n_veloc;
-	  memcpy(&(save_n[off4]),&(n[index18]),n_veloc*sizeof(double));
+	  // memcpy(&(save_n[l][off4]),&(n[index18]),n_veloc*sizeof(double));
 	  off4+=18;
 	  
 	  index+=help_index_x;
@@ -2009,23 +1947,17 @@ void calc_fluid_chain_interaction(int iamghost){
     help_index_y*=n_veloc;
     help_index_z*=n_veloc;
 
-    localfails = 0;
-    do {        /* try random numbers */
-
-      badrandoms = FALSE;        /* flag is set if n is getting negative */
-
-    for(i=0;i<3;i++) {   /* friction forces from velocity differ. */
-      
-      local_j[i] = -lbfriction*(v[jp][i]-agrid*invh*save_j[i]);  
-#ifdef DB
-      printf("i %d  v[i] %12.6e %12.6e %12.6e save_j[i] %12.6e  local %12.6e rans %f\n",jp,v[jp][i],agrid,invh,save_j[i],local_j[i],store_rans[ip][0][i]);
-#endif
-
-      local_j[i] += store_rans[jp][0][i];  /* stochastic force on monomer */
+    for(i=0;i<3;i++) {   
+      local_j[i] = -(v[jp][i]-lbfriction*agrid*invh*save_j[i]);  
     }
 
-    if (!iamghost && transfer_momentum)  /* only if not ghost, add force to particle */
-      for(i=0;i<3;i++) force[jp][i] = local_j[i]; 
+    if (!iamghost && transfer_momentum){  /* only if not ghost, add force to particle */
+      lu+=1;
+      for(i=0;i<3;i++) { 
+	force[jp][i] = local_j[i]; 
+	store_rans[lu][i]=agrid*invh*save_j[i]; 
+      }
+    }
 
     /* add contribution to monomer force */
  
@@ -2047,111 +1979,39 @@ void calc_fluid_chain_interaction(int iamghost){
 	  grid_j[1]= help_x*help_y*help_z*local_j[1];
 	  grid_j[2]= help_x*help_y*help_z*local_j[2];
 
-#ifdef D3Q18
+          if(transfer_momentum){
 
-    if(transfer_momentum){     
-	  n[index18++] = save_n[off4++] + grid_j[0]*0.16666666666666666;
-	  n[index18++] = save_n[off4++] - grid_j[0]*0.16666666666666666;
-	  n[index18++] = save_n[off4++] + grid_j[1]*0.16666666666666666;
-	  n[index18++] = save_n[off4++] - grid_j[1]*0.16666666666666666;
-	  n[index18++] = save_n[off4++] + grid_j[2]*0.16666666666666666;
-	  n[index18++] = save_n[off4++] - grid_j[2]*0.16666666666666666;
-	  n[index18++] = save_n[off4++] + (grid_j[0]+grid_j[1])*0.08333333333333333;
-	  n[index18++] = save_n[off4++] - (grid_j[0]+grid_j[1])*0.08333333333333333;
-	  n[index18++] = save_n[off4++] + (grid_j[0]-grid_j[1])*0.08333333333333333;
-	  n[index18++] = save_n[off4++] - (grid_j[0]-grid_j[1])*0.08333333333333333;
-	  n[index18++] = save_n[off4++] + (grid_j[0]+grid_j[2])*0.08333333333333333;
-	  n[index18++] = save_n[off4++] - (grid_j[0]+grid_j[2])*0.08333333333333333;
-	  n[index18++] = save_n[off4++] + (grid_j[0]-grid_j[2])*0.08333333333333333;
-	  n[index18++] = save_n[off4++] - (grid_j[0]-grid_j[2])*0.08333333333333333;
-	  n[index18++] = save_n[off4++] + (grid_j[1]+grid_j[2])*0.08333333333333333;
-	  n[index18++] = save_n[off4++] - (grid_j[1]+grid_j[2])*0.08333333333333333;
-	  n[index18++] = save_n[off4++] + (grid_j[1]-grid_j[2])*0.08333333333333333;
-	  n[index18++] = save_n[off4++] - (grid_j[1]-grid_j[2])*0.08333333333333333;
-     }
+	    n[index18++]+= + grid_j[0]*FAC1;
+	    n[index18++]+= - grid_j[0]*FAC1;
+	    n[index18++]+= + grid_j[1]*FAC1;
+	    n[index18++]+= - grid_j[1]*FAC1;
+	    n[index18++]+= + grid_j[2]*FAC1;
+	    n[index18++]+= - grid_j[2]*FAC1;
+	    n[index18++]+= + (grid_j[0]+grid_j[1])*FAC2;
+	    n[index18++]+= - (grid_j[0]+grid_j[1])*FAC2;
+	    n[index18++]+= + (grid_j[0]-grid_j[1])*FAC2;
+	    n[index18++]+= - (grid_j[0]-grid_j[1])*FAC2;
+	    n[index18++]+= + (grid_j[0]+grid_j[2])*FAC2;
+	    n[index18++]+= - (grid_j[0]+grid_j[2])*FAC2;
+	    n[index18++]+= + (grid_j[0]-grid_j[2])*FAC2;
+	    n[index18++]+= - (grid_j[0]-grid_j[2])*FAC2;
+	    n[index18++]+= + (grid_j[1]+grid_j[2])*FAC2;
+	    n[index18++]+= - (grid_j[1]+grid_j[2])*FAC2;
+	    n[index18++]+= + (grid_j[1]-grid_j[2])*FAC2;
+	    n[index18++]+= - (grid_j[1]-grid_j[2])*FAC2;
+	    
+	  }
 	  index18-=n_veloc;
 	  nlocal = &(n[index18]);
 
-	  for (i=0;i<6;i++){
-	    if (badrandoms) break;
+
+
+	  for (i=0;i<18;i++){
 	    if (*nlocal++<0.0) { 
-	      if (failcounter%999==0) {fprintf(stdout,
-	      "Warning: %d n negative (fluid_chain_interaction=> new randoms (time: %f, failcounter: %d) noise %f\n",
-	      this_node, current_time,failcounter,lbnoise); 
+	      MomentumTransfer=1;
 	      }
-	      badrandoms = TRUE; localfails++;
-	      store_rans[ip][0][0] = store_rans[ip][localfails][0]; 
-	      store_rans[ip][0][1] = store_rans[ip][localfails][1]; 
-	      store_rans[ip][0][2] = store_rans[ip][localfails][2];
-	      failcounter++; 
-
-	      if (store_rans[ip][0][0]<-lbnoise) {
-		fprintf(stderr, "%d ERROR in calc_fluid_chain_interaction: too many ranfails => INCREASE MAX_RANREPEATE\n",this_node);
-		ExitProgram(TERM_error);
-	      } 
-	      break;
-	    }	 
-	    if (*nlocal++<0.0) {  
-              if (failcounter%999==0) {fprintf(stdout,"Warning: n negative (fluid_chain_interaction=> new randoms (time: %f, failcounter: %d)\n",current_time,failcounter) ;  
-              } 
-              badrandoms = TRUE; localfails++;
-	      store_rans[ip][0][0] = store_rans[ip][localfails][0]; 
-	      store_rans[ip][0][1] = store_rans[ip][localfails][1]; 
-	      store_rans[ip][0][2] = store_rans[ip][localfails][2];
-              failcounter++; 
-              if (store_rans[ip][0][0]<-lbnoise) { 
-                fprintf(stderr, "ERROR in calc_fluid_chain_interaction: too many ranfails=> INCREASE MAX_RANREPEATE\n"); 
-                ExitProgram(TERM_error); 
-              }
-	      break;
-	    }
-	    if (*nlocal++<0.0) {   
-              if (failcounter%999==0) {fprintf(stdout,"Warning: n negative (fluid_chain_interaction=> new randoms (time: %f, failcounter: %d)\n",current_time\
-,failcounter) ;   
-              }  
-              badrandoms = TRUE;  localfails++;
-	      store_rans[ip][0][0] = store_rans[ip][localfails][0]; 
-	      store_rans[ip][0][1] = store_rans[ip][localfails][1]; 
-	      store_rans[ip][0][2] = store_rans[ip][localfails][2];
-              failcounter++;  
-              if (store_rans[ip][0][0]<-lbnoise) {  
-                fprintf(stderr, "ERROR in calc_fluid_chain_interaction: too many ranfails=> INCREASE MAX_RANREPEATE\n");  
-                ExitProgram(TERM_error);  
-              }
-	      break;
-            } 
-
 	  }
 
-#else
-
-	  off3 = 0;
-
-	  for (i=0;i<2;i++){
-	    double B_eq;
-	    int n_which;
-	    if (i==0) { n_which = 6; B_eq = 0.16666666666666666; }
-	    else { n_which = 12; B_eq =0.08333333333333333; } 
-	    
-	    for(h=0;h<n_which;h++) {
-	      n[index18] = save_n[off4] + B_eq*(grid_j[0]*c_g_d[off3][0]
-
-			  +grid_j[1]*c_g_d[off3][1]+grid_j[2]*c_g_d[off3][2]);
-	      if (n[index18]<0.0) { 
-		if (failcounter%100==0) fprintf(stdout,"Warning: n negative (fluid_chain_interaction=> new randoms (time: %f, failcounter: %d)\n",current_time,failcounter) ; 
-		badrandoms = TRUE;
-		store_rans[ip][0] = store_rans[rancounter][0]; 
-		store_rans[ip][1] = store_rans[rancounter][1]; 
-		store_rans[ip][2] = store_rans[rancounter][2];
-		failcounter++; rancounter++;
-	      }
-	      off3++;
-	      off4++;
-	      index18++;
-	    }
-	  }
-	  index18-=n_veloc;
-#endif
 
 	  index18+=help_index_x;
 	  help_x=1.0-help_x;
@@ -2166,43 +2026,32 @@ void calc_fluid_chain_interaction(int iamghost){
       help_index_z=-help_index_z;
     }      
 
-    } while (badrandoms);
-
     }  /* end of if(MonoLivesHere) */
 
   }
-
-#ifdef DEBUG2  
-     for(k=0;k<numPes;k++){
-     if (k==myNum){
-     for(i=0;i<nMono;i++){ printf("%d,%d: time %f force[%d]=%7f,%7f,%7f\n",myGroup,myGrpNum,sim_time,i,force[i][0],force[i][1],force[i][2]);
-     }
-     }
-     MPI_Barrier(MPI_COMM_WORLD);
-     } 
-#endif
 
 }
 
 /******************************************************************************/
 
+
 void halo_init(){
 /* configuration of the halo regions */
 
-  planeinfo[1].offset = (xsize+2)*(ysize+2)*n_veloc;    /* z=0 plane */
-  planeinfo[1].doffset= (xsize+2)*(ysize+2)*(zsize+1)*n_veloc;
-  planeinfo[1].stride = (xsize+2)*(ysize+2)*n_veloc;
-  planeinfo[1].skip   = (xsize+2)*(ysize+2)*n_veloc;
-  planeinfo[1].nblocks= 1;
-  
-  planeinfo[0].offset = (xsize+2)*(ysize+2)*zsize*n_veloc; /* z=zsize plane */
-  planeinfo[0].doffset= 0*n_veloc;
-  planeinfo[0].stride = (xsize+2)*(ysize+2)*n_veloc;
-  planeinfo[0].skip   = (xsize+2)*(ysize+2)*n_veloc;
-  planeinfo[0].nblocks= 1;
+  planeinfo[1].offset = 1*n_veloc;                  /* x=0 plane */
+  planeinfo[1].doffset= (xsize+1)*n_veloc;
+  planeinfo[1].stride = 1*n_veloc;
+  planeinfo[1].skip   = (xsize+2)*n_veloc;
+  planeinfo[1].nblocks= (ysize+2)*(zsize+2);
 
-  MPI_Type_contiguous(planeinfo[0].stride*sizeof(double),MPI_BYTE,&xyPlane);
-  MPI_Type_commit(&xyPlane);
+  planeinfo[0].offset = xsize*n_veloc;        /* x=gridpoints plane */
+  planeinfo[0].doffset= 0*n_veloc;
+  planeinfo[0].stride = 1*n_veloc;
+  planeinfo[0].skip   = (xsize+2)*n_veloc;
+  planeinfo[0].nblocks= (ysize+2)*(zsize+2);
+
+  MPI_Type_hvector(planeinfo[0].nblocks,planeinfo[0].stride*sizeof(double),planeinfo[0].skip*sizeof(double),MPI_BYTE,&yzPlane);
+  MPI_Type_commit(&yzPlane);
  
   planeinfo[3].offset = (xsize+2)*n_veloc;          /* y=0 plane */
   planeinfo[3].doffset= (xsize+2)*(ysize+1)*n_veloc;
@@ -2219,24 +2068,25 @@ void halo_init(){
   MPI_Type_hvector(planeinfo[2].nblocks,planeinfo[2].stride*sizeof(double),planeinfo[2].skip*sizeof(double),MPI_BYTE,&xzPlane);
   MPI_Type_commit(&xzPlane);
 
-  planeinfo[5].offset = 1*n_veloc;                  /* x=0 plane */
-  planeinfo[5].doffset= (xsize+1)*n_veloc;
-  planeinfo[5].stride = 1*n_veloc;
-  planeinfo[5].skip   = (xsize+2)*n_veloc;
-  planeinfo[5].nblocks= (ysize+2)*(zsize+2);
-
-  planeinfo[4].offset = xsize*n_veloc;        /* x=gridpoints plane */
+  planeinfo[5].offset = (xsize+2)*(ysize+2)*n_veloc;    /* z=0 plane */
+  planeinfo[5].doffset= (xsize+2)*(ysize+2)*(zsize+1)*n_veloc;
+  planeinfo[5].stride = (xsize+2)*(ysize+2)*n_veloc;
+  planeinfo[5].skip   = (xsize+2)*(ysize+2)*n_veloc;
+  planeinfo[5].nblocks= 1;
+  
+  planeinfo[4].offset = (xsize+2)*(ysize+2)*zsize*n_veloc; /* z=zsize plane */
   planeinfo[4].doffset= 0*n_veloc;
-  planeinfo[4].stride = 1*n_veloc;
-  planeinfo[4].skip   = (xsize+2)*n_veloc;
-  planeinfo[4].nblocks= (ysize+2)*(zsize+2);
+  planeinfo[4].stride = (xsize+2)*(ysize+2)*n_veloc;
+  planeinfo[4].skip   = (xsize+2)*(ysize+2)*n_veloc;
+  planeinfo[4].nblocks= 1;
 
-  MPI_Type_hvector(planeinfo[4].nblocks,planeinfo[4].stride*sizeof(double),planeinfo[4].skip*sizeof(double),MPI_BYTE,&yzPlane);
-  MPI_Type_commit(&yzPlane);
+  MPI_Type_contiguous(planeinfo[4].stride*sizeof(double),MPI_BYTE,&xyPlane);
+  MPI_Type_commit(&xyPlane);
 
 }
 
-/***************************************************************************************/
+
+/************************************************************************************************/
 static void CopyPlane(int whichplane){
 
 /* exchange by lb halo regions */
@@ -2246,8 +2096,7 @@ static void CopyPlane(int whichplane){
   int doffset= (planeinfo[whichplane].doffset);  /* destination offset */
   int skip   = (planeinfo[whichplane].skip);
   int stride = (planeinfo[whichplane].stride)*sizeof(double);
-
-  if (nPesPerDir[2-whichplane/2] == 1 ){ /*copy locally in that case */
+  if (nPesPerDir[whichplane/2] == 1 ){ /*copy locally in that case */
     for (i=0;i<planeinfo[whichplane].nblocks;i++){
       memcpy(&(n[doffset]),&(n[offset]),stride);
       offset+=skip;
@@ -2255,10 +2104,9 @@ static void CopyPlane(int whichplane){
     }
   }
 
-  else {    
+  else { 
     MPI_Status stat[2];
     MPI_Request request[2];
-
     int s_dir = whichplane;
     int  r_dir;
     if(s_dir%2==0) r_dir = s_dir+1;
@@ -2267,8 +2115,8 @@ static void CopyPlane(int whichplane){
       switch(s_dir) {
       case 0 :
       case 1 :
-	  MPI_Irecv (&n[doffset],1,xyPlane,node_neighbors[s_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&n[offset],1,xyPlane,node_neighbors[r_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[1]);
+	  MPI_Irecv (&n[doffset],1,yzPlane,node_neighbors[s_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[0]);
+	  MPI_Isend(&n[offset],1,yzPlane,node_neighbors[r_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[1]);
 
 	MPI_Waitall(2,request,stat);
 	break;
@@ -2281,8 +2129,9 @@ static void CopyPlane(int whichplane){
 	break;
       case 4 :
       case 5 : 
-	  MPI_Irecv (&n[doffset],1,yzPlane,node_neighbors[s_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&n[offset],1,yzPlane,node_neighbors[r_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[1]);
+	
+	  MPI_Irecv (&n[doffset],1,xyPlane,node_neighbors[s_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[0]);
+	  MPI_Isend(&n[offset],1,xyPlane,node_neighbors[r_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[1]);
 
 	MPI_Waitall(2,request,stat);
 	break;
@@ -2291,25 +2140,6 @@ static void CopyPlane(int whichplane){
   }
 
 }
-/************************************************************************************************/
-
-#if 0
-static void PrintPlane(int whichplane){
-  int i,j;
-  int offset = (planeinfo[whichplane].offset);   /* source offset */
-  int doffset= (planeinfo[whichplane].doffset);  /* destination offset */
-  int skip   = (planeinfo[whichplane].skip);
-  int stride = (planeinfo[whichplane].stride)*sizeof(double);
-
-  for (i=0;i<planeinfo[whichplane].nblocks;i++){
-    printf("block: %d\n",i);
-    for (j=0;j<stride;j+=n_veloc) printf("%d %f  %f, ", this_node,n[offset+j],n[doffset+j]);
-    printf("\n");				 
-    offset+=skip;
-    doffset+=skip;
-  }
-}
-#endif
 
 /************************************************************************************************/
 void halo_update(){
@@ -2324,7 +2154,6 @@ void halo_update(){
 }
 
 /************************************************************************************************/
-
 
 static void MyExit (int exitNr) {
 
@@ -2373,7 +2202,7 @@ void ExitProgram (T_TERM_FLAG why) {
     MyExit(1);
 
   case TERM_cpulimit :
-    printf("CPU-TIME-LIMIT exceeded\n");
+    printf("CPU-TIME-LIMIT exceded\n");
     MyExit(1);
 
   case TERM_sysstop :
