@@ -70,8 +70,7 @@ void force_calc()
   calc_long_range_forces();
 
 #ifdef LB
-  if(thermo_switch & THERMO_LB)
-    calc_lbforce(); 
+  if(thermo_switch & THERMO_LB) calc_lbforce(); 
 #endif
 
 #ifdef COMFORCE
@@ -116,7 +115,14 @@ void calc_long_range_forces()
 /** initialize the forces for a real particle */
 MDINLINE void init_local_particle_force(Particle *part)
 {
-  friction_thermo_langevin(part);
+  if ( thermo_switch & THERMO_LANGEVIN )
+    friction_thermo_langevin(part);
+  else {
+    part->f.f[0] = 0;
+    part->f.f[1] = 0;
+    part->f.f[2] = 0;
+  }
+
 #ifdef EXTERNAL_FORCES   
   if(part->l.ext_flag & PARTICLE_EXT_FORCE) {
     part->f.f[0] += part->l.ext_force[0];
@@ -124,7 +130,7 @@ MDINLINE void init_local_particle_force(Particle *part)
     part->f.f[2] += part->l.ext_force[2];
   }
 #endif
-
+  
 #ifdef ROTATION
   {
     double scale;
@@ -185,28 +191,17 @@ void init_forces()
     nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
 #endif
 
-  if ( thermo_switch & THERMO_LANGEVIN ) {
-    /* initialize forces with langevin thermostat forces
-       set torque to zero for all and rescale quaternions
-    */
-    for (c = 0; c < local_cells.n; c++) {
-      cell = local_cells.cell[c];
-      p  = cell->part;
-      np = cell->n;
-      for (i = 0; i < np; i++)
-	init_local_particle_force(&p[i]);
-    }
-  }
-  else {
-    /* all other thermostates need forces and torques initialized with
-       zero.  rescale quaternions. */
-    for (c = 0; c < local_cells.n; c++) {
-      cell = local_cells.cell[c];
-      p  = cell->part;
-      np = cell->n;
-      for (i = 0; i < np; i++)
-	init_ghost_force(&p[i]);
-    }
+
+  /* initialize forces with langevin thermostat forces
+     or zero depending on the thermostat
+     set torque to zero for all and rescale quaternions
+  */
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for (i = 0; i < np; i++)
+      init_local_particle_force(&p[i]);
   }
 
   /* initialize ghost forces with zero
