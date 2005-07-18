@@ -117,8 +117,10 @@ The ghost communicators are created in the init routines of the cell systems, th
 #define GHOSTTRANS_MOMENTUM 8
 /// transfer \ref ParticleForce
 #define GHOSTTRANS_FORCE    16
+/// transfer temporary data
+#define GHOSTTRANS_TEMP     32
 /// resize the receiver particle arrays to the size of the senders
-#define GHOSTTRANS_PARTNUM  32
+#define GHOSTTRANS_PARTNUM  64
 /*@}*/
 
 /** \name Data Types */

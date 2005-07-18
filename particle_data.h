@@ -135,6 +135,14 @@ typedef struct {
 
 } ParticleLocal;
 
+/** Temporary data that still has to be communicated */
+typedef struct {
+#ifdef LB
+  /** the random force */
+  double f_random[3];
+#endif
+} ParticleTemporary;
+
 /** Struct holding all information for one particle. */
 typedef struct {
   ///
@@ -147,6 +155,8 @@ typedef struct {
   ParticleForce f;
   ///
   ParticleLocal l;
+  ///
+  ParticleTemporary t;
 
   /** bonded interactions list. The format is pretty simple:
       Just the bond type, and then the particle ids. The number of particle ids can be determined
