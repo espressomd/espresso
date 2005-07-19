@@ -1759,7 +1759,7 @@ void calc_lbforce()
     nMono = cell->n;
     for(i=0; i < nMono; i++) { 
       for (k= 0;k < 3;k++) {
-	p[i].t.f_random[k]=lbnoise*(2.0*d_random()-1.0)/invt;
+	p[i].t.f_random[k]=lbnoise/lbfriction*(2.0*d_random()-1.0)/invt;
       }     
     }
   }
@@ -1840,7 +1840,7 @@ void calc_lbforce()
        for(i=0; i < nMono; i++) { 
 	 lu1+=1;
 	 for (k= 0;k < 3;k++) {
-	      p[i].t.f_random[k]=lbnoise*(2.0*d_random()-1.0)/invt-p[i].t.f_random[k]-2.0*p[i].m.v[k]+2.0*store_rans[lu1][k]/invt;
+	      p[i].t.f_random[k]=lbnoise/lbfriction*(2.0*d_random()-1.0)/invt-p[i].t.f_random[k]-2.0*p[i].m.v[k]+2.0*store_rans[lu1][k]/invt;
 	 }     
        }
      }
@@ -1948,7 +1948,7 @@ void calc_fluid_chain_interaction(int iamghost){
     help_index_z*=n_veloc;
 
     for(i=0;i<3;i++) {   
-      local_j[i] = -(v[jp][i]-lbfriction*agrid*invh*save_j[i]);  
+      local_j[i] = -lbfriction*(v[jp][i]-agrid*invh*save_j[i]);  
     }
 
     if (!iamghost && transfer_momentum){  /* only if not ghost, add force to particle */
