@@ -26,11 +26,9 @@ namespace eval ::std_analysis {
     variable localorientsnbins 100
 
 
-
-
     variable switches
     variable this [namespace current]
-    variable known_flags " possible flags are: \n cluster_calc \n pik1_calc \n pressure_calc \n box_len_calc \n fluctuation_calc \n energy_calc \n stray_lipids_calc \n orient_order_calc \n flipflop_calc \n density_profile_calc \n localheights_calc \n localorients \n distance_calc \n "
+    variable known_flags " possible flags are: \n cluster_calc \n pik1_calc \n pressure_calc \n box_len_calc \n fluctuation_calc \n energy_calc \n stray_lipids_calc \n orient_order_calc \n flipflop_calc \n density_profile_calc \n localheights_calc \n localorients \n distance_calc \n tiltangle_calc \n "
 
     #File Streams
     variable f_tvspik1
@@ -45,6 +43,8 @@ namespace eval ::std_analysis {
     variable f_localheights
     variable f_localorients
     variable f_tvsdist
+    variable f_tvstilt
+
     # Variables to be used for averaging
     variable av_localorients 0
     variable av_localorients_i 0
@@ -52,6 +52,8 @@ namespace eval ::std_analysis {
     variable av_dist  0
     variable av_dist_i 0
 
+    variable av_toptilt { 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 }
+    variable av_tilt_i 0
 
     variable av_densities
     variable av_densities_i 0
@@ -115,6 +117,7 @@ source [file join [file dirname [info script]] density_profile.tcl]
 source [file join [file dirname [info script]] localheights.tcl]
 source [file join [file dirname [info script]] localorients.tcl]
 source [file join [file dirname [info script]] distance.tcl]
+source [file join [file dirname [info script]] tiltangle.tcl]
 
 # ::std_analysis::flush_streams --
 #
@@ -136,6 +139,8 @@ proc ::std_analysis::flush_streams { } {
     variable f_localheights
     variable f_localorients
     variable f_tvsdist
+    variable f_tvstilt
+
 
     for { set i 0 } { $i < [llength $switches ] } { incr i } {
 	switch [lindex $switches $i 0] {
@@ -177,6 +182,9 @@ proc ::std_analysis::flush_streams { } {
 	    }
 	    "distance_calc" {
                flush $f_tvsdist
+	    }
+	    "tiltangle_calc" {
+               flush $f_tvstilt
 	    }
 	    "default" {
 		mmsg::warn $this "unknown analysis flag [lindex $switches $i 0] $known_flags" 
@@ -249,6 +257,10 @@ proc ::std_analysis::print_averages { } {
     variable av_dist_i
     variable av_dist
     variable f_tvsdist
+
+    variable av_tilt_i
+    variable av_toptilt
+    variable f_tvstilt
 
     variable av_components_en
     variable av_total_en
@@ -436,6 +448,38 @@ proc ::std_analysis::print_averages { } {
                    mmsg::warn $this "can't print average distance"
                    flush stdout
                }
+	    }  
+	    "tiltangle_calc" {
+               if { [lindex $switches $i 2] && $av_tilt_i > 0 } {
+                   
+		   set avtoptilt0 [expr [lindex $av_toptilt 0]/($av_tilt_i*1.0)] 
+		   set avtoptilt1 [expr [lindex $av_toptilt 1]/($av_tilt_i*1.0)]
+		   set avtoptilt2 [expr [lindex $av_toptilt 2]/($av_tilt_i*1.0)]
+		   set avtoptilt3 [expr [lindex $av_toptilt 3]/($av_tilt_i*1.0)]
+		   set avtoptilt4 [expr [lindex $av_toptilt 4]/($av_tilt_i*1.0)]
+		   set avtoptilt5 [expr [lindex $av_toptilt 5]/($av_tilt_i*1.0)]
+		   set avtoptilt6 [expr [lindex $av_toptilt 6]/($av_tilt_i*1.0)]
+		   set avtoptilt7 [expr [lindex $av_toptilt 7]/($av_tilt_i*1.0)]
+		   set avtoptilt8 [expr [lindex $av_toptilt 8]/($av_tilt_i*1.0)]
+		   set avtoptilt9 [expr [lindex $av_toptilt 9]/($av_tilt_i*1.0)]
+		   set avtoptilt10 [expr [lindex $av_toptilt 10]/($av_tilt_i*1.0)] 
+		   set avtoptilt11 [expr [lindex $av_toptilt 11]/($av_tilt_i*1.0)]
+		   set avtoptilt12 [expr [lindex $av_toptilt 12]/($av_tilt_i*1.0)]
+		   set avtoptilt13 [expr [lindex $av_toptilt 13]/($av_tilt_i*1.0)]
+		   set avtoptilt14 [expr [lindex $av_toptilt 14]/($av_tilt_i*1.0)]
+		   set avtoptilt15 [expr [lindex $av_toptilt 15]/($av_tilt_i*1.0)]
+		   set avtoptilt16 [expr [lindex $av_toptilt 16]/($av_tilt_i*1.0)]
+		   set avtoptilt17 [expr [lindex $av_toptilt 17]/($av_tilt_i*1.0)]
+		   set avtoptilt18 [expr [lindex $av_toptilt 18]/($av_tilt_i*1.0)]
+		   set avtoptilt19 [expr [lindex $av_toptilt 19]/($av_tilt_i*1.0)]
+		   
+
+                   puts $f_tvstilt "$time $avtoptilt0 $avtoptilt1 $avtoptilt2  $avtoptilt3 $avtoptilt4 $avtoptilt5 $avtoptilt6 $avtoptilt7 $avtoptilt8 $avtoptilt9 $avtoptilt10 $avtoptilt11 $avtoptilt12  $avtoptilt13 $avtoptilt14 $avtoptilt15 $avtoptilt16 $avtoptilt17 $avtoptilt18 $avtoptilt19"
+                   
+               } else {
+                   mmsg::warn $this "can't print average tilt angle"
+                   flush stdout
+               }
 	    }
 	    "default" {
 		mmsg::warn $this "unknown analysis flag [lindex $switches $i 0] $known_flags" 
@@ -495,9 +539,17 @@ proc ::std_analysis::reset_averages { } {
     variable av_dist_i
     variable av_dist
 
-    set av_dist 0.0
-    set av_dist_i 0
+    variable av_tilt_i
+    variable av_toptilt
 
+
+    set av_dist 0.0
+    set av_dist_i 0   
+
+    set av_toptilt {0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0}
+    set av_tilt_i 0
+
+    
     set av_sizehisto 0
     set av_sizehisto_i 0
     
@@ -593,6 +645,9 @@ proc ::std_analysis::do_analysis { } {
 	    "distance_calc" {
                analyze_distance [lindex $switches $i 1]
 	    }
+	    "tiltangle_calc" {
+               analyze_tiltangle [lindex $switches $i 1]
+	    }
 	    "default" {
 		mmsg::warn $this "unknown analysis flag [lindex $switches $i 0] $known_flags" 
 	    }
@@ -667,6 +722,7 @@ proc ::std_analysis::setup_analysis { switchesin topo args } {
     variable f_tvsen
     variable f_tvsclust
     variable f_tvsdist
+    variable f_tvstilt
     variable av_pow
     variable av_localheights
     variable av_localorients
@@ -936,13 +992,25 @@ proc ::std_analysis::setup_analysis { switchesin topo args } {
                if { $newfile || $iotype == "w"} {
                    puts $f_tvsdist "\# Time Distance"
                }
-		
-	    }	    
+	    }
+	    "tiltangle_calc" {
+		mmsg::debug $this "opening $outputdir/time_vs_tiltangle$suffix "
+
+		if { [file exists "$outputdir/time_vs_tiltangle$suffix"] } {
+		    set newfile 0
+		} else { 
+		    set newfile 1
+		}
+		set f_tvstilt [open "$outputdir/time_vs_tiltangle$suffix" $iotype]
+		if { $newfile || $iotype == "w"} {
+		    puts $f_tvstilt "\# Time angle1 angle2 angle3 angle4 angle5 angle6 angle7 angle8 angle9 angle10 angle11 angle12 angle13 angle14 angle15 angle16 angle17 angle18 angle19 angle20"
+		}	
+		set l_orients_start [ analyze get_lipid_orients setgrid $mgrid $mgrid 0 setstray $stray_cut_off ]
+	    }	   
 	    "default" {
 		mmsg::warn $this "unknown analysis flag [lindex $switches $i 0] $known_flags" 
 	    }
 	}
-	
     }
     mmsg::debug $this "done"
     flush stdout
@@ -973,10 +1041,14 @@ proc ::std_analysis::finish_analysis {  } {
     variable f_tvsen
     variable f_tvsclust
     variable f_tvsdist
+    variable f_tvstilt
 
     # Averaging
     variable av_dist
-    variable av_dist_i
+    variable av_dist_i  
+
+    variable av_toptilt
+    variable av_tilt_i
 
     variable av_localheights
     variable av_localorients
@@ -1093,6 +1165,19 @@ proc ::std_analysis::finish_analysis {  } {
 		set av_en_i 0
 		close $f_tvsen 		    
 	    }
+	    "distance_calc" {
+		puts "distance_calc"
+		set av_dist 0
+		set av_dist_i 0
+		close $f_tvsdist 
+	    }
+	    "tiltangle_calc" {
+		puts "tiltangle_calc"
+		set av_toptilt 0
+		set av_tilt_i 0
+		close $f_tvstilt 
+	    }
+
 	    "default" {
 		mmsg::warn $this "unknown analysis flag [lindex $switches $i 0] $known_flags"
 	    }
