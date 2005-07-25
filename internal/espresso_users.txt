@@ -595,3 +595,31 @@ topic:     We intend to investigate some nonequilibrium MD simulations of
            András Gábor   and   István Szalai
            Univ. of Veszprém, Hungary
 
+
+
+
+
+
+name:      Kristopher Wise
+email:     kewise@larc.nasa.gov
+institute: Kristopher E. Wise, Ph.D.
+           NASA Langley Research Center
+           Advanced Materials and Processing Branch D307
+           6A West Taylor Street, Mail Stop 226
+           Building 1293C Room 153G
+           Hampton, VA 23681-2199
+           
+sent:      18.JUL.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+topic:     Course-grained simulation of polymer and polymer composite
+           materials
+
+
+name:      Leonid Yelash
+email:     yelash@uni-mainz.de
+institute: Institute of Physics, Mainz
+           
+sent:      22.JUL.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+topic:     dynamics of coarse-grained chains
+
