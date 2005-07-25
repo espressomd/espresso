@@ -361,6 +361,10 @@ return
 # broken messages then quite likely you need to decrease it.  If you
 # get a mesh with holes then you need to increase it.
 
+# Assume the last atom type are the filler beads and place the
+# first atom types proportionately and in separate phases on the
+# sphere
+
 #
 # Arguments:
 #
@@ -412,13 +416,18 @@ proc ::system_generation::place_hollowsphere { mol pos args } {
 	}
     }
 
+#    puts $typeinfo
+
+
+
+
     # Place the beads in preliminary positions on the unit sphere
     for { set i 1 } { $i <= $natomscov } { incr i } {
 	set tmp [lindex $coords [expr $i -1]]
 	set partnum [lindex $mol  $i ]
 	set parttype [lindex $typeinfo 2 [expr $i -1]]
+#	puts "$i $partnum $parttype"
 	part $partnum pos [lindex $tmp 0] [lindex $tmp 1] [ lindex $tmp 2] type $parttype
-
     }
 
     # Make a list of unique particle types in the sphere
@@ -432,6 +441,25 @@ proc ::system_generation::place_hollowsphere { mol pos args } {
     set radius [expr 1.0/(1.0*$mdist)]
     mmsg::send [namespace current] "creating hollow sphere with radius $radius and $natomscov beads"
 
+
+    # Find the total number of each atom type in this hollowsphere
+    set sproportions [::mathutils::calc_proportions [lindex $typeinfo 2]]
+    set nbeads1 [lindex $sproportions 0 1]
+    set nbeads2 [lindex $sproportions 1 1]
+    set janus 0
+    # If there are exactly 3 types of atoms we assume we have a "Janus Colloid"
+    if { [llength $sproportions] == 3 && [expr $nbeads1 + $nbeads2] == $natomscov } {
+	# Find the height cutoff (relative to center) for the bead type boundary
+	set totalarea [expr 4*3.14159*$radius*$radius]
+	set fraction1 [expr $nbeads1/(1.0*$natomscov)]
+	set fraction2 [expr $nbeads2/(1.0*$natomscov)]
+	set areaf2 [expr $totalarea*$fraction2]
+	set heightcut [expr $radius - ($areaf2/(2.0*3.141592*$radius))]
+	set janus 1
+    }
+
+
+
     foreach point $coords {
 	# Shift the center of the sphere to pos and expand to radius
 	for { set x 0 } { $x < 3 } { incr x } {
@@ -440,14 +468,58 @@ proc ::system_generation::place_hollowsphere { mol pos args } {
 	lappend scaledcoords $point
     }
 
+    
+    set beadcount1 0
+    set beadcount2 0
+    set tries 0
+    set hchange 0.1
+    while { $beadcount2 != $nbeads2 && $tries < 20 } {
+	set beadcount1 0
+	set beadcount2 0
+	# Now replace the beads in their new positions
+	for { set i 1 } { $i <= $natomscov } { incr i } {
+	    set tmp [lindex $scaledcoords [expr $i -1]]
+	    set partnum [lindex $mol  $i ]
+	    set parttype [lindex $typeinfo 2 [expr $i -1]]
+	    # But if we have a janus colloid then use a different technique 
+	    # to allocate the bead types
+	    if { $janus } {
+		if { [expr [lindex $tmp 2] - [lindex $pos 2] ] > $heightcut } {
+		    set parttype [lindex $sproportions 1 0 ]
+		    incr beadcount2
+		} else {
+		    set parttype [lindex $sproportions 0 0 ]
+		    incr beadcount1
+		}
+	    } else {
+		set beadcount2 $nbeads2
+	    }
 
-    # Now replace the beads in their new positions
-    for { set i 1 } { $i <= $natomscov } { incr i } {
-	set tmp [lindex $scaledcoords [expr $i -1]]
-	set partnum [lindex $mol  $i ]
-	set parttype [lindex $typeinfo 2 [expr $i -1]]
-	part $partnum pos [lindex $tmp 0] [lindex $tmp 1] [ lindex $tmp 2] type $parttype
+	    part $partnum pos [lindex $tmp 0] [lindex $tmp 1] [ lindex $tmp 2] type $parttype
 
+	}
+
+	if { $hchange < 0 } {
+	    if { $beadcount2 < $nbeads2 } {
+		set hchange [expr $hchange*1.5]
+	    } else {
+		set hchange [expr $hchange*(-0.5)]
+	    }
+	} else {
+	    if { $beadcount2 > $nbeads2 } {
+		set hchange [expr $hchange*1.5]
+	    } else {
+		set hchange [expr $hchange*(-0.5)]
+	    }
+	}
+
+	set heightcut [expr $heightcut + $hchange]
+#	puts "$beadcount1 $beadcount2 $heightcut"
+	incr tries
+    }
+
+    if { $beadcount1 != $nbeads1 || $beadcount2 != $nbeads2 } {
+	mmsg::warn [namespace current] "deviation from intended janus colloid composition $nbeads1 $nbeads2 desired but $beadcount1 $beadcount2 obtained"
     }
 
     # Now check that the value of mdist is 1.0

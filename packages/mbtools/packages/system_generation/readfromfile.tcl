@@ -53,6 +53,7 @@ proc ::system_generation::readfromfile {topo boxl filename topofile args } {
 
     # Read the raw data
     set raw [read $fd]
+
     set fraw [lindex [read $ft] 0]
     set ftopo [lrange $fraw 1 end]
     # Extract the particle and bonding data
