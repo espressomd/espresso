@@ -2,18 +2,79 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.4j (Seska)                                                                      *
+* v1.9.6a (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.4j -
+- v1.9.6a -
 -----------
 
-(j) June 30th, 2005.
-(i) June 22th, 2005.
-(h) June 17th, 2005.
+(a) July 18th, 2005.
+
+New Features:
+(a) Added a new particle data ParticleTemporary for temporary particle informations.
+    Data is only sent around with an explicit request GHOSTTRANS_TEMP in 'ghost.c', 
+    see 'lb.c' for an example.
+
+Bugfixes:
+(a) Fixed the forces initialization such that external forces
+    are added for all thermostats, not only Langevin.
+(a) A few bugs fixed in 'lb.c', especially in momentum exchange between particles
+    and fluid.
+
+
+- v1.9.5j -
+-----------
+
+(j) July  8th, 2005.
+(i) July  7th, 2005.
+(h) July  4th, 2005.
+(g) July  1st, 2005.
+(f) June 30th, 2005.
+(e) June 22th, 2005.
+(d) June 20th, 2005.
+(c) June 17th, 2005.
+(b) May  30th, 2005.
+(a) May  26th, 2005.
+
+New Features:
+(i) Now also Mobile Pentium processors are automatically recognized.
+(e) Added the analyze bilayer_density_profile command and associated scripts in
+    packages/mbtools to allow a vertical profile analysis of a lipid bilayer
+(d) New ESPRESSO_PACKAGES environment variable can now be set to append a directory 
+    to the tcl auto_path from where customized tcl-packages can be read.
+(c) The 'polymer'-command now has a new, proper 'SAW'-mode which creates polymer chains
+    exhibiting correct statistics of a self-avoiding random walk.
+    The former implementation, also ensuring that excluded volume is observed but
+    resulting in different propabilities for the chain conformations, remains
+    available as 'PSAW' for performance reasons, as it is much faster than 'SAW'.
+(b) Added to ELC a neutralizing background and an option to not calculate it.
+    As usual, this is only interesting for nonneutral systems, although in 2D
+    even a homogenous background generates a force in the nonperiodic dimension, 
+    driving the particles towards the system center.
+
+Changes:
+(h) Changed the lipid_orient_order function so that it now takes a "all" flag 
+    which causes it to print out the orientation of every lipid instead of just the average.
+(g) Changed the interface for the orient_order command so that it now requires 
+    an argument into which the complete set of orientations for all lipids will be written.
+(f) Modified nbhood command so it now takes an optional planar argument.
+(c) Changed default mode of the 'polymer'-command to the new, proper SAW-mode.
+(c) Changed default shield-value of the 'polymer'-command to 1.0 (was: 0.0).
+(a) Renamed the callbacks to slave_callbacks to avoid a naming collision with a SSI of LAM.
+
+Bugfixes:
+(j) Added missing output for the nonneutralization flag in ELC.
+(e) Fixed a mistake in the check for the ESPRESSO_PACKAGES environment variable.
+(c) Fixed the SAW-mode of the 'polymer'-command to now reflect real SAW-statistics.
+(b) Fixed the plate energy in the constraints.
+
+
+- v1.9.4g -
+-----------
+
 (g) May  24th, 2005.
 (f) May  20th, 2005.
 (e) May  18th, 2005.
@@ -23,13 +84,6 @@ Current working revision.
 (a) May   3rd, 2005.
 
 New Features:
-(i) Added the analyze bilayer_density_profile command and associated scripts in
-    packages/mbtools to allow a vertical profile analysis of a lipid bilayer
-(h) The 'polymer'-command now has a new, proper 'SAW'-mode which creates polymer chains
-    exhibiting correct statistics of a self-avoiding random walk.
-    The former implementation, also ensuring that excluded volume is observed but
-    resulting in different propabilities for the chain conformations, remains
-    available as 'PSAW' for performance reasons, as it is much faster than 'SAW'.
 (c) The main start-up script for Espresso, calling the actual binary in the subfolder
     apropriate for the current architecture, now features a dummy mode which thoroughly
     checks whether everything necessary (e.g. the environment variables ESPRESSO_SOURCE
@@ -47,9 +101,6 @@ New Features:
     list of bin boundaries as argument and allows for arbitrary bins.
 
 Changes:
-(j) modified nbhood command so it now takes an optional planar argument
-(h) Changed default mode of the 'polymer'-command to the new, proper SAW-mode.
-(h) Changed default shield-value of the 'polymer'-command to 1.0 (was: 0.0).
 (g) When saving tcl-arrays using blockfiles, the keyword 'array' is now prepended to 
     each block to actually be able to use arrays at all. While this renders blockfiles
     written with v1.9.4g or higher _and_ including tcl-arrays incompatible with older 
@@ -62,7 +113,6 @@ Changes:
     as this is from now on done in the main start-up script itself.
 
 Bugfixes:
-(h) Fixed the SAW-mode of the 'polymer'-command to now reflect real SAW-statistics.
 (g) Fixed the handling of tcl-arrays being saved using blockfiles.
 (e) Bugfix in the parsing of the P3M-option 'epsilon metallic' (it was ignored).
 (d) Bugfix in the error formula for asymmetric boxes of MMM2D-applications.
