@@ -271,7 +271,7 @@ proc ::setup_utilities::set_nb_interactions { interactionlist } {
 	if { [catch {eval [concat inter  $int]} ] } {
 	    mmsg::err [namespace current] "couldn't set interaction: [concat $int]"
 	} else {	
-	    mmsg::send [namespace current] "set interaction: [concat $int]"
+	    mmsg::send [namespace current] "set interaction: [inter [lindex $int 0] [lindex $int 1]]"
 	}
     }
 

@@ -75,6 +75,7 @@ proc ::setup_utilities::warmup { steps times args } {
 
 	# Set the new forcecap into espresso and integrate
 	inter tabforcecap $cap
+	inter ljforcecap $cap
 	integrate $steps
 	set cap [expr $cap + $capincr ]
 	::mmsg::send [namespace current]  "run $i of $times at time=[setmd time] (cap=$cap) " 
@@ -88,6 +89,7 @@ proc ::setup_utilities::warmup { steps times args } {
     if { [expr $cap - $capincr] < $params(capgoal) } {
 	::mmsg::send [namespace current] "setting final forcecap to $params(capgoal)"
 	inter tabforcecap $params(capgoal)
+	inter ljforcecap $params(capgoal)
     }
 }
 
