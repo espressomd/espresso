@@ -14,9 +14,44 @@ namespace eval mathutils {
     namespace export normalize
     namespace export scalevec
     namespace export distance
+    namespace export find_proportions
 }
 
 source [file join [file dirname [info script]] statistics.tcl]
+
+
+# ::mathutils::calc_proportions --
+#
+# Calculate the proportion of each integer in a list of integers
+#
+# 
+# Arguments:
+# ilist: the list of integers
+#
+proc ::mathutils::calc_proportions { ilist } {
+
+    # Find all the different integers
+    set itypelist [lindex $ilist 0]
+    lappend plist [list $itypelist 0]
+    foreach i $ilist {
+	if { [lsearch $itypelist $i] == -1 } {
+	    lappend itypelist $i
+	    lappend plist [list $i 0 ]
+	}
+    }
+
+    
+    
+    # Now count the number of each type
+    foreach i $ilist {
+	set v [lindex $plist [lsearch $itypelist $i] 1 ]
+	if { [lsearch $itypelist $i] == -1 } {
+	    mmsg::err [namespace current] "could not calculate proportions"
+	}
+	lset plist [lsearch $itypelist $i] 1 [expr $v + 1]
+    }
+    return $plist
+}
 
 # ::mathutils::calc_com --
 #
