@@ -219,6 +219,18 @@ proc bond_angle { p1 p2 p3 {type "r"} } {
     return $phi 
 }
 
+proc bond_angle_min { p1 p2 p3 {type "r"} } {
+    # Calculate bond angle between particles p1, p2 and p3 using the minimum image convention
+    if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
+    if { [llength $p2]==1 } { set p2 [part $p2 print pos] }
+    if { [llength $p3]==1 } { set p3 [part $p3 print pos] }
+    set vec1 [bond_vec_min $p1 $p2]
+    set vec2 [bond_vec_min $p3 $p2]
+    set phi  [expr acos([vecdot_product $vec1 $vec2] / ([veclen $vec1] * [veclen $vec2]))]
+    if { $type == "d" } { return [expr 180.0*$phi/[PI]] } 
+    return $phi 
+}
+
 proc bond_dihedral { p1 p2 p3 p4 {type "r"} } {
     # Calculate bond dihedral between particles p1, p2, p3 and p4
     if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
