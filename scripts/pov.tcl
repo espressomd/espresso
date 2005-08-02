@@ -1,10 +1,11 @@
-proc writepov {file {folded "no"} {boxopt "no"} {render "no"} {rotate "-10 22.5 0"} } {
+proc writepov {file {folded "no"} {boxopt "no"} {render "no"} {rotate "-10 22.5 0"} {nofold_list 0} } {
 #writes the current configuration in pov-ray format
 #file is the name of the output
 #use -folded if you want folded coordinates
 #use -box if you want to output the box
 #use -render if you want to render the pov-ray file
 #render contains a vector by which the entire configuration is rotated
+#nofold_list contains a list of types that should not be folded if 'folded' is set to -folded
     if {$folded == "-folded"} {
 	set de "folded"
     } else {set de "pos"}
@@ -20,10 +21,8 @@ proc writepov {file {folded "no"} {boxopt "no"} {render "no"} {rotate "-10 22.5 
              [expr [lindex $box 1]*0.5],-[expr [lindex $box 2]*1.5]>\n\
              look_at <[expr [lindex $box 0]*0.5],[expr [lindex $box 1]*0.5],[expr [lindex $box 2]*0.5]>\n\}"
     
-
-
     #write atoms and bonds
-    set radius [expr [lindex $box 0]*0.008]
+    set radius [expr [lindex $box 0]*0.004]
     set b_radius [expr $radius*0.25]
     lappend color  <0.36,0.57,0.31> <0.66,0.0,0.12> <0.20,0.32,0.53> 
     set mp [setmd max_part]
@@ -31,6 +30,7 @@ proc writepov {file {folded "no"} {boxopt "no"} {render "no"} {rotate "-10 22.5 
     puts $f "union \{"
     for {set p 0} { $p <= $mp} {incr p} {
 	set type [part $p print type]
+	if {$nofold_list != 0} { if {[lsearch $nofold_list $type] != -1 } {set de "pos"} else {set de "folded"} }
 	set pos [part $p print $de]
 	puts $f "\/\/ $p POS\nsphere \{\n<[lindex $pos 0],[lindex $pos 1],[lindex $pos 2]>,\n$radius\n$texture\n\
                  pigment \{color rgb [lindex $color $type] \}\nno_shadow\n\}"
