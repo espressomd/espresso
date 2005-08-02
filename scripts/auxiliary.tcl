@@ -192,7 +192,7 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
 # 'write_pdb' == 0 (do nothing, ignore 'pdb_sfx'), != 0 (if all [e.g. 459] checkpoints should be converted to $write_pdb0000.pdb ... $write_pdb0459.pdb),
 # and 'pdb_sfx' (giving the number of digits to be used in enumbering the .pdb-files)
 proc checkpoint_read { origin { read_all_chks 1 } { write_pdb 0 } { pdb_sfx 5 }} {
-    variable ::ENABLE_COMPACT_CHECKPOINTS 0; global ENABLE_COMPACT_CHECKPOINTS
+    variable ::ENABLE_COMPACT_CHECKPOINTS 0; global ENABLE_COMPACT_CHECKPOINTS pdb_ind
     proc read_checkpoint_in { source write_pdb pdb_sfx } { global pdb_ind ENABLE_COMPACT_CHECKPOINTS
 	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -cd $source" r] } else { set f [open "$source" "r"] }
 	if { [blockfile $f read auto] == "eof" } { puts "\nERROR: Blockfile '$source' doesn't contain anything! Exiting..."; exit }
@@ -208,7 +208,7 @@ proc checkpoint_read { origin { read_all_chks 1 } { write_pdb 0 } { pdb_sfx 5 }}
     } else { 
 	puts "ERROR: Could not find checkpoint-list $origin!\nAborting..."; exit 
     }
-    if { $write_pdb !=0 } { set pdb_ind 0; set pdb_sfx [join [list "%0" $pdb_sfx "d"] ""] } else { set pdb_ind 0 }
+    if { $write_pdb !=0 } { set pdb_ind 0;puts $pdb_ind; set pdb_sfx [join [list "%0" $pdb_sfx "d"] ""] } else { set pdb_ind 0 }
     if { $read_all_chks } {
 	while { [eof $chk]==0 } { 
 	    if { [gets $chk source] > 0 } {
