@@ -373,7 +373,6 @@ return
 #
 proc ::system_generation::place_hollowsphere { mol pos args } {
     variable icovermagicnums
-
     set moltype [lindex $mol 0]
     set typeinfo [matchtype $moltype]
 
@@ -473,7 +472,7 @@ proc ::system_generation::place_hollowsphere { mol pos args } {
     set beadcount2 0
     set tries 0
     set hchange 0.1
-    while { $beadcount2 != $nbeads2 && $tries < 20 } {
+    while { $beadcount2 != $nbeads2 && $tries < 100 } {
 	set beadcount1 0
 	set beadcount2 0
 	# Now replace the beads in their new positions
@@ -496,7 +495,7 @@ proc ::system_generation::place_hollowsphere { mol pos args } {
 	    }
 
 	    part $partnum pos [lindex $tmp 0] [lindex $tmp 1] [ lindex $tmp 2] type $parttype
-
+	    part $partnum fix 1 1 1
 	}
 
 	if { $hchange < 0 } {
@@ -574,10 +573,19 @@ proc ::system_generation::place_hollowsphere { mol pos args } {
 	    lset bpos 0 [expr $radius*2*([t_random] -0.5) + [lindex $pos 0]]
 	    lset bpos 1 [expr $radius*2*([t_random] -0.5) + [lindex $pos 1]]
 	    lset bpos 2 [expr $radius*2*([t_random] -0.5) + [lindex $pos 2]]
-
+	    # Check to see if the random point is within our sphere and a tolerance
 	    if { [mathutils::distance $bpos $pos] < [expr $radius - $rbuff]  } {
-		set isallowed 1
-	    } 
+
+		# Now check to see that the bead is within a mindist
+		# of other beads in the colloid because these will not
+		# be allowed to warm up normally
+		part $atomid pos [lindex $bpos 0] [lindex $bpos 1] [lindex $bpos 2] type $atomtype
+		if { [analyze mindist $atomtype $atomtype] > 0.6 } {
+		    set isallowed 1
+		} else {
+		    mmsg::send [namespace current] "tried $tries to place atomid: $atomid"
+		}
+	    }
 	
 	    incr tries
 	
@@ -586,6 +594,7 @@ proc ::system_generation::place_hollowsphere { mol pos args } {
 	part $atomid pos [lindex $bpos 0] [lindex $bpos 1] [lindex $bpos 2] type $atomtype 
 	part $atomid fix 1 1 1
     }
+
 
     return
 
