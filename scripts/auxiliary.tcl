@@ -189,17 +189,20 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
 
 # this command is intended to read all the checkpoints listed in a .chk-file
 # parameters are 'read_all_chks' == 1 (if all checkpoints should be read), != 1 (if only the last one should be read),
-# 'write_pdb' == 0 (do nothing, ignore 'pdb_sfx'), != 0 (if all [e.g. 459] checkpoints should be converted to $write_pdb0000.pdb ... $write_pdb0459.pdb),
+# 'write' == 0 (do nothing, ignore 'pdb_sfx'), 
+# 'write'== 'pdb' (if all [e.g. 459] checkpoints should be converted to $name0000.pdb ... $name0459.pdb),
+# 'write'=='pov' (if all [e.g. 459] checkpoints should be converted to $name0000.pov ... $name0459.pov and rendered),
 # and 'pdb_sfx' (giving the number of digits to be used in enumbering the .pdb-files)
-proc checkpoint_read { origin { read_all_chks 1 } { write_pdb 0 } { pdb_sfx 5 }} {
+proc checkpoint_read { origin { read_all_chks 1 } { write 0 } { name "anim" } { pdb_sfx 5 }} {
     variable ::ENABLE_COMPACT_CHECKPOINTS 0; global ENABLE_COMPACT_CHECKPOINTS pdb_ind
-    proc read_checkpoint_in { source write_pdb pdb_sfx } { global pdb_ind ENABLE_COMPACT_CHECKPOINTS
+    proc read_checkpoint_in { source write name pdb_sfx } { global pdb_ind ENABLE_COMPACT_CHECKPOINTS
 	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -cd $source" r] } else { set f [open "$source" "r"] }
 	if { [blockfile $f read auto] == "eof" } { puts "\nERROR: Blockfile '$source' doesn't contain anything! Exiting..."; exit }
 	if { $ENABLE_COMPACT_CHECKPOINTS != 1 } { part deleteall }
 	while { [blockfile $f read auto] != "eof" } {}; puts -nonewline "."; flush stdout; # puts "read $source"
 	close $f
-	if { $write_pdb !=0 } { if {$pdb_ind==0} {writepsf "$write_pdb.psf"}; writepdb "$write_pdb[format $pdb_sfx $pdb_ind].pdb"; incr pdb_ind }
+	if { $write == "pdb" } { if {$pdb_ind==0} {writepsf "$name.psf"}; writepdb "$name[format $pdb_sfx $pdb_ind].pdb"; incr pdb_ind } 
+	if { $write == "pov" } { writepov $name[format $pdb_sfx $pdb_ind].pov -folded -box -render}
     }
     if { [file exists "$origin.chk"] } { 
 	set chk [open "$origin.chk" "r"] 
@@ -208,11 +211,11 @@ proc checkpoint_read { origin { read_all_chks 1 } { write_pdb 0 } { pdb_sfx 5 }}
     } else { 
 	puts "ERROR: Could not find checkpoint-list $origin!\nAborting..."; exit 
     }
-    if { $write_pdb !=0 } { set pdb_ind 0;puts $pdb_ind; set pdb_sfx [join [list "%0" $pdb_sfx "d"] ""] } else { set pdb_ind 0 }
+    if { $write !=0 } { set pdb_ind 0;puts $pdb_ind; set pdb_sfx [join [list "%0" $pdb_sfx "d"] ""] } else { set pdb_ind 0 }
     if { $read_all_chks } {
 	while { [eof $chk]==0 } { 
 	    if { [gets $chk source] > 0 } {
-		read_checkpoint_in $source $write_pdb $pdb_sfx
+		read_checkpoint_in $source $write $name $pdb_sfx
 	    }
 	}
     } else {
@@ -228,7 +231,7 @@ proc checkpoint_read { origin { read_all_chks 1 } { write_pdb 0 } { pdb_sfx 5 }}
 	} else { 
 	    set source $tmp_chk 
 	}
-	read_checkpoint_in $source $write_pdb $pdb_sfx
+	read_checkpoint_in $source $write $pdb_sfx
     }
     close $chk
 }
