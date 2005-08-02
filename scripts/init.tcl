@@ -31,7 +31,7 @@ puts "*                    ============                     *"
 puts "*      A MPI Parallel Molecular Dynamics Program      *"
 puts "*                                                     *"
 puts "*                                                     *"
-puts "* (c) 2002-2004                                       *"
+puts "* (c) 2002-2005                                       *"
 puts "* Max-Planck-Institute for Polymer Research           *"
 puts "* Mainz, Germany                                      *"
 puts "*                                                     *"
@@ -119,3 +119,8 @@ source ABHmath.tcl
 # adds 'g_random' which returns random numbers which have a Gaussian distribution
 # adds 'pair_dist <part_id1> <part_id2>' which returns the distance of two particles with identities <part_id1> and <part_id2>
 # adds 'LinRegression <tcl-list of points {{x1 y1} {x2 y2} ...}>' which returns the least-square linear fit a*x+b and the standard errors da and db
+
+source pov.tcl
+#adds 'writepov <file> [options]'
+#adds 'morph <file1> <file2> <file3> [options]'
+
