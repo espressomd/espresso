@@ -623,3 +623,22 @@ sent:      22.JUL.2005
 version:   20050525-Espresso_v1.9.4g.tar.gz
 topic:     dynamics of coarse-grained chains
 
+
+
+name:      Katsumi Hagita
+email:     hagita@nda.ac.jp
+institute: Department of Applied Physics, National Defense Academy, JAPAN
+sent:      01.AUG.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+topic:     Polymer Physics, Relaxation and slow dynamics of Polymer
+           systems.
+
+
+name:      Janka Petravic
+email:     janka@chem.usyd.edu.au
+institute: University of Sydney,
+           Dept. of Chemistry
+sent:      03.AUG.2005
+version:   20050801-Espresso_v1.9.6a.tar.gz
+topic:     tryout 2d electrostatics code
+
