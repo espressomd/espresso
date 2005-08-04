@@ -2,18 +2,21 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6a (Seska)                                                                      *
+* v1.9.6b (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6a -
+- v1.9.6b -
 -----------
 
+(b) July 29th, 2005.
 (a) July 18th, 2005.
 
 New Features:
+(b) added bond_angle_min which calculates the bond_angle between three particles using
+    the minimum image convention
 (a) Added a new particle data ParticleTemporary for temporary particle informations.
     Data is only sent around with an explicit request GHOSTTRANS_TEMP in 'ghost.c', 
     see 'lb.c' for an example.
