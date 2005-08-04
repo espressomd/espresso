@@ -339,7 +339,33 @@ proc tune_cells { { int_steps 1000 } { min_cells 1 } { max_cells 30 } { tol_cell
     array set int_times [list "0 0 0" 0.0]
     proc eval_cells { i num_cells } {
 	upvar int_steps int_steps  int_times int_times  msg_string msg_string
-	setmd max_num_cells [expr int(pow($num_cells,3))]
+
+	set maxcells [expr int(pow($num_cells,3))]
+	# calculate minimal number of cells
+	if { [setmd n_part] >= 1000 } {
+	    set mincells [expr int(5e-7*pow([setmd n_part]/[setmd n_nodes],2))]
+	} {
+	    # for small particle numbers, the boundary is wrong, and even one cells does not
+	    # mean really excessive computation time
+	    set mincells 1
+	}
+	# minimal number of cells due to node grid
+	set phys_cell_min 8
+	foreach dim [setmd node_grid] {
+	    if {$dim > 1} { set phys_cell_min [expr $phys_cell_min/2] }
+	}
+	if { $mincells < $phys_cell_min } { set mincells $phys_cell_min }
+	if { $maxcells <= $mincells } { set maxcells [expr 8*$mincells] }
+
+	if { [setmd min_num_cells] < $mincells } {
+	    # minimum is larger than before, increase maximum before to be safe
+	    setmd max_num_cells $maxcells
+	    setmd min_num_cells $mincells
+	} {
+	    # minimum is not larger than before, changing it first is safe
+	    setmd min_num_cells $mincells
+	    setmd max_num_cells $maxcells
+	}
 	setmd skin 0.0
 	set msg_string "$msg_string\n    run [expr $i+1] (t=[setmd time]; max_cells=[format %.3f $num_cells],"
 	set msg_string "$msg_string skin=[format %.3g [setmd skin [expr 0.999*[setmd max_skin]]]],"
