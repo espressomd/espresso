@@ -2,17 +2,18 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6b (Seska)                                                                      *
+* v1.9.6c (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6b -
+- v1.9.6c -
 -----------
 
-(b) July 29th, 2005.
-(a) July 18th, 2005.
+(c) August  4th, 2005.
+(b) July   29th, 2005.
+(a) July   18th, 2005.
 
 New Features:
 (b) added bond_angle_min which calculates the bond_angle between three particles using
@@ -22,6 +23,7 @@ New Features:
     see 'lb.c' for an example.
 
 Bugfixes:
+(c) fixed tune_cells to work with min_num_cells. Backport from bench_v4.tcl.
 (a) Fixed the forces initialization such that external forces
     are added for all thermostats, not only Langevin.
 (a) A few bugs fixed in 'lb.c', especially in momentum exchange between particles
