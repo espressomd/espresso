@@ -2,32 +2,42 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6c (Seska)                                                                      *
+* v1.9.6d (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6c -
+- v1.9.6d -
 -----------
 
-(c) August  4th, 2005.
+(d) August  4th, 2005.
+(c) August  2nd, 2005.
 (b) July   29th, 2005.
 (a) July   18th, 2005.
 
 New Features:
-(b) added bond_angle_min which calculates the bond_angle between three particles using
-    the minimum image convention
+(d) Enhanced 'checkpoint_read' to now also be able to write pov-files and render them.
+(d) Released several commands to convert configurations to snapshots using Povray, 
+    see $ESPRESSO_SCRIPTS/pov.tcl for details.
+    Most noticeable probably is 'writepov <output> [-folded [-box [-render]]]' which 
+    takes the current particle setup and outputs a povray compatible file (including
+    the box if '-box' is given) of all (folded) coordinates, and optionally renders it.
+    Also available is 'morph <input1> <input2> <output> [<# of steps> [-render]]' which
+    takes two povray files as input and creates an animated sequence morphing <input1>
+    into <input2> over a series of (default:) 100 intermediate steps.
+(b) Added 'bond_angle_min' which calculates the bond_angle between three particles 
+    using the minimum image convention.
 (a) Added a new particle data ParticleTemporary for temporary particle informations.
     Data is only sent around with an explicit request GHOSTTRANS_TEMP in 'ghost.c', 
     see 'lb.c' for an example.
 
 Bugfixes:
-(c) fixed tune_cells to work with min_num_cells. Backport from bench_v4.tcl.
-(a) Fixed the forces initialization such that external forces
-    are added for all thermostats, not only Langevin.
-(a) A few bugs fixed in 'lb.c', especially in momentum exchange between particles
-    and fluid.
+(d) Fixed tune_cells to work with min_num_cells. Backport from bench_v4.tcl.
+(a) Fixed the forces initialization such that external forces are added 
+    for all thermostats, not only Langevin.
+(a) A few bugs fixed in 'lb.c', especially in momentum exchange between 
+    particles and fluid.
 
 
 - v1.9.5j -
