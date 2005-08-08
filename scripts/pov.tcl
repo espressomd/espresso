@@ -30,6 +30,7 @@ proc writepov {file {folded "no"} {boxopt "no"} {render "no"} {rotate "-10 22.5 
     puts $f "union \{"
     for {set p 0} { $p <= $mp} {incr p} {
 	set type [part $p print type]
+	# if {$type==0 || $type==1} {set de "pos"} else {set de "folded"}
 	if {$nofold_list != 0} { if {[lsearch $nofold_list $type] != -1 } {set de "pos"} else {set de "folded"} }
 	set pos [part $p print $de]
 	puts $f "\/\/ $p POS\nsphere \{\n<[lindex $pos 0],[lindex $pos 1],[lindex $pos 2]>,\n$radius\n$texture\n\

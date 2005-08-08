@@ -211,7 +211,7 @@ proc checkpoint_read { origin { read_all_chks 1 } { write 0 } { name "anim" } { 
     } else { 
 	puts "ERROR: Could not find checkpoint-list $origin!\nAborting..."; exit 
     }
-    if { $write !=0 } { set pdb_ind 0;puts $pdb_ind; set pdb_sfx [join [list "%0" $pdb_sfx "d"] ""] } else { set pdb_ind 0 }
+    if { $write !=0 } { set pdb_ind 0; puts $pdb_ind; set pdb_sfx [join [list "%0" $pdb_sfx "d"] ""] } else { set pdb_ind 0 }
     if { $read_all_chks } {
 	while { [eof $chk]==0 } { 
 	    if { [gets $chk source] > 0 } {
