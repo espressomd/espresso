@@ -68,6 +68,11 @@ typedef struct {
   /** charge. */
   double q;
 #endif
+
+#ifdef DIPOLES
+  /** dipole moment (absolute value)*/
+  double dipm;
+#endif
 } ParticleProperties;
 
 /** Positional information on a particle. Information that is
@@ -85,6 +90,12 @@ typedef struct {
   /**stores the particle position at the previous time step*/
   double p_old[3];
 #endif
+
+#ifdef DIPOLES
+  /** dipol moment */
+  double dip[3];
+#endif
+
 } ParticlePosition;
 
 /** Force information on a particle. Forces of ghost particles are
@@ -97,6 +108,7 @@ typedef struct {
   /** torque */
   double torque[3];
 #endif
+
 } ParticleForce;
 
 /** Momentum information on a particle. Information not contained in
@@ -409,6 +421,22 @@ int set_particle_omega(int part, double omega[3]);
     @return TCL_OK if particle existed
 */
 int set_particle_torque(int part, double torque[3]);
+#endif
+
+#ifdef DIPOLES
+/** Call only on the master node: set particle dipole orientation.
+    @param part the particle.
+    @param dip its new dipole orientation.
+    @return TCL_OK if particle existed
+*/
+int set_particle_dip(int part, double dip[3]);
+
+/** Call only on the master node: set particle dipole moment (absolut value).
+    @param part the particle.
+    @param dipm its new dipole moment.
+    @return TCL_OK if particle existed
+*/
+int set_particle_dipm(int part, double dipm);
 #endif
 
 #ifdef EXTERNAL_FORCES

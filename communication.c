@@ -153,8 +153,12 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_BCAST_MFC 42
 /** Action number for \ref lb_set_params. */
 #define REQ_LB_BCAST 43
+/** Action number for \ref mpi_send_dip. */
+#define REQ_SET_DIP 44
+/** Action number for \ref mpi_send_dipm. */
+#define REQ_SET_DIPM 45
 /** Total number of action numbers. */
-#define REQ_MAXIMUM   44
+#define REQ_MAXIMUM   46
 
 /*@}*/
 
@@ -207,6 +211,8 @@ void mpi_gather_runtime_errors_slave(int node, int parm);
 void mpi_send_exclusion_slave(int node, int parm);
 void mpi_morse_cap_forces_slave(int node, int parm);
 void mpi_bcast_lb_params_slave(int node, int parm);
+void mpi_send_dip_slave(int node, int parm);
+void mpi_send_dipm_slave(int node, int parm);
 
 /*@}*/
 
@@ -257,6 +263,8 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_send_exclusion_slave,         /* 41: REQ_SET_EXCL */
   mpi_morse_cap_forces_slave,       /* 42: REQ_BCAST_MFC */
   mpi_bcast_lb_params_slave,        /* 43: REQ_LB_BCAST */
+  mpi_send_dip_slave,               /* 44: REQ_SET_DIP */
+  mpi_send_dipm_slave,              /* 45: REQ_SET_DIPM */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -313,6 +321,8 @@ char *names[] = {
   "SET_EXCL",       /* 41 */
   "BCAST_MFC" ,     /* 42 */
   "BCAST_LB",       /* 43 */
+  "SET_DIP",        /* 44 */
+  "SET_DIPM",       /* 45 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -842,6 +852,73 @@ void mpi_send_torque_slave(int pnode, int part)
 #endif
 }
 
+/********************* REQ_SET_DIP ********/
+
+void mpi_send_dip(int pnode, int part, double dip[3])
+{
+#ifdef DIPOLES
+  mpi_issue(REQ_SET_DIP, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->r.dip[0] = dip[0];
+    p->r.dip[1] = dip[1];
+    p->r.dip[2] = dip[2];
+  }
+  else {
+    MPI_Send(dip, 3, MPI_DOUBLE, pnode, REQ_SET_DIP, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_dip_slave(int pnode, int part)
+{
+#ifdef DIPOLES
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(p->r.dip, 3, MPI_DOUBLE, 0, REQ_SET_DIP,
+	     MPI_COMM_WORLD, &status);
+  }
+
+  on_particle_change();
+#endif
+}
+
+/********************* REQ_SET_DIPM ********/
+
+void mpi_send_dipm(int pnode, int part, double dipm)
+{
+#ifdef DIPOLES
+  mpi_issue(REQ_SET_DIPM, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.dipm = dipm;
+  }
+  else {
+    MPI_Send(&dipm, 1, MPI_DOUBLE, pnode, REQ_SET_DIPM, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_dipm_slave(int pnode, int part)
+{
+#ifdef DIPOLES
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.dipm, 1, MPI_DOUBLE, 0, REQ_SET_DIPM,
+	     MPI_COMM_WORLD, &status);
+  }
+
+  on_particle_change();
+#endif
+}
 
 /********************* REQ_SET_BOND ********/
 int mpi_send_bond(int pnode, int part, int *bond, int delete)

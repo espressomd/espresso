@@ -995,7 +995,7 @@ static void P3M_charge_assign()
     for(i = 0; i < np; i++) {
       q=p[i].p.q;
 #ifdef DIPOLES
-      mu = p[i].r.quat[0]; 		//dipole moment of i^th particle
+      mu = p[i].p.dipm; 		//dipole moment of i^th particle
 #endif
       if( q != 0.0
 #ifdef DIPOLES
@@ -1035,9 +1035,9 @@ static void P3M_charge_assign()
 	      ca_frac[cf_cnt]  = tmp1 * int_caf[i2][arg[2]];
 	      if (q  != 0.0) rs_mesh[q_ind] += q * ca_frac[cf_cnt];
 	      if (mu != 0.0) {
-		  rs_mesh_dip[0][q_ind] += p[i].r.quat[1] * ca_frac[cf_cnt];
-		  rs_mesh_dip[1][q_ind] += p[i].r.quat[2] * ca_frac[cf_cnt];
-		  rs_mesh_dip[2][q_ind] += p[i].r.quat[3] * ca_frac[cf_cnt];
+		  rs_mesh_dip[0][q_ind] += p[i].r.dip[0] * ca_frac[cf_cnt];
+		  rs_mesh_dip[1][q_ind] += p[i].r.dip[1] * ca_frac[cf_cnt];
+		  rs_mesh_dip[2][q_ind] += p[i].r.dip[2] * ca_frac[cf_cnt];
 	      }
 #else
 //In the case without dipoles, ca_frac[] contains an additionnal factor q!
@@ -1122,7 +1122,7 @@ static void P3M_assign_torques(double prefac, int d_rs)
     p  = cell->part;
     np = cell->n;
     for(i=0; i<np; i++) { 
-      if( (p[i].r.quat[0]) != 0.0 ) {  //quat[0] contains the norm of the dipole moment!
+      if( (p[i].p.dipm) != 0.0 ) {
 	q_ind = ca_fmp[cp_cnt];
 	for(i0=0; i0<p3m.cao; i0++) {
 	  for(i1=0; i1<p3m.cao; i1++) {
@@ -1135,16 +1135,16 @@ Since the torque is the dipole moment cross-product with E, we have:
 */
               switch (d_rs) {
 		case 0:	//E_x
-		  p[i].f.torque[1] -= p[i].r.quat[3]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
-		  p[i].f.torque[2] += p[i].r.quat[2]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+		  p[i].f.torque[1] -= p[i].r.dip[2]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+		  p[i].f.torque[2] += p[i].r.dip[1]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
 		  break;
 		case 1:	//E_y
-		  p[i].f.torque[0] += p[i].r.quat[3]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
-		  p[i].f.torque[2] -= p[i].r.quat[1]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+		  p[i].f.torque[0] += p[i].r.dip[2]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+		  p[i].f.torque[2] -= p[i].r.dip[0]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
 		  break;
 		case 2:	//E_z
-		  p[i].f.torque[0] -= p[i].r.quat[2]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
-		  p[i].f.torque[1] += p[i].r.quat[1]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+		  p[i].f.torque[0] -= p[i].r.dip[1]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
+		  p[i].f.torque[1] += p[i].r.dip[0]*prefac*ca_frac[cf_cnt]*rs_mesh[q_ind];
 	      }
 	      q_ind++; 
 	      cf_cnt++;
@@ -1180,15 +1180,15 @@ static void P3M_assign_forces_dip(double prefac, int d_rs)
     p  = cell->part;
     np = cell->n;
     for(i=0; i<np; i++) { 
-      if( (p[i].r.quat[0]) != 0.0 ) {  //quat[0] contains the norm of the dipole moment!
+      if( (p[i].p.dipm) != 0.0 ) {
 	q_ind = ca_fmp[cp_cnt];
 	for(i0=0; i0<p3m.cao; i0++) {
 	  for(i1=0; i1<p3m.cao; i1++) {
 	    for(i2=0; i2<p3m.cao; i2++) {
 	      p[i].f.f[d_rs] += prefac*ca_frac[cf_cnt]*
-	                          (rs_mesh_dip[0][q_ind]*p[i].r.quat[1]
-		                  +rs_mesh_dip[1][q_ind]*p[i].r.quat[2]
-				  +rs_mesh_dip[2][q_ind]*p[i].r.quat[3]);
+	                          (rs_mesh_dip[0][q_ind]*p[i].r.dip[0]
+		                  +rs_mesh_dip[1][q_ind]*p[i].r.dip[1]
+				  +rs_mesh_dip[2][q_ind]*p[i].r.dip[2]);
 	      q_ind++; 
 	      cf_cnt++;
 	    }
@@ -1402,14 +1402,7 @@ fprintf(stderr,"   (with self-energy correction)\n");
       /* redistribute force component mesh */
       spread_force_grid(rs_mesh);
       /* Assign force component from mesh to particle */
-      P3M_assign_torques(2*dipole_prefac*(2*PI/box_l[0]), d_rs);
-/* IMPORTANT NOTE:
-   The factor of 2 in the above formula is here only because I'm using the quaternions
-   with quat[0]=1=norm of the dipole moment and (quat[1],quat[2],quat[2])=(mu_x,mu_y,mu_z).
-   When we call 'integrate 0' in the tcl script, the quaternions are normalized to 1.
-   The factor of 2 in the above formula compensates the factor 1/sqrt(2)
-   that gets introduced in the quaternions by the normalization!
-*/
+      P3M_assign_torques(dipole_prefac*(2*PI/box_l[0]), d_rs);
     }
     
 /***************************
@@ -1468,14 +1461,7 @@ fprintf(stderr,"   (with self-energy correction)\n");
       spread_force_grid(rs_mesh_dip[1]);
       spread_force_grid(rs_mesh_dip[2]);
       /* Assign force component from mesh to particle */
-      P3M_assign_forces_dip(2*dipole_prefac*pow(2*PI/box_l[0],2), d_rs); 
-/* IMPORTANT NOTE:
-   The factor of 2 in the above formula is here only because I'm using the quaternions
-   with quat[0]=1=norm of the dipole moment and (quat[1],quat[2],quat[2])=(mu_x,mu_y,mu_z).
-   When we call 'integrate 0' in the tcl script, the quaternions are normalized to 1.
-   The factor of 2 in the above formula compensates the factor 1/sqrt(2)
-   that gets introduced in the quaternions by the normalization!
-*/
+      P3M_assign_forces_dip(dipole_prefac*pow(2*PI/box_l[0],2), d_rs); 
    }
 #endif
   } // if(force_flag)
@@ -2571,12 +2557,10 @@ void P3M_count_charged_particles()
 	node_sums[2] += part[i].p.q;
       }
 #ifdef DIPOLES
-//Note: quat[0] contains the norm of the dipole moment
-//and quat[1],quat[2],quat[3] are the xyz components !
-      if( part[i].r.quat[0] != 0.0 ) {
-	node_sums[3] += SQR(part[i].r.quat[1])
-	               +SQR(part[i].r.quat[2])
-		       +SQR(part[i].r.quat[3]);
+      if( part[i].p.dipm != 0.0 ) {
+	node_sums[3] += SQR(part[i].r.dip[0])
+	               +SQR(part[i].r.dip[1])
+		       +SQR(part[i].r.dip[2]);
       }
 #endif
     }

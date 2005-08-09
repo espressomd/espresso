@@ -48,6 +48,11 @@ void init_forces();
 
 void force_calc()
 {
+
+#ifdef DIPOLES
+  convert_quat_to_dip_all();
+#endif
+
   init_forces();
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
@@ -81,6 +86,7 @@ void force_calc()
 #ifdef COMFIXED
   calc_comfixed();
 #endif
+
 }
 
 /************************************************************/
