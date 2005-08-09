@@ -70,9 +70,9 @@
 
 /** number of steps in the complex cutoff table */
 #define COMPLEX_STEP 16
-/** map numbers from 0 to 1/sqrt(2) onto the complex cutoff table
+/** map numbers from 0 to 1/2 onto the complex cutoff table
     (with security margin) */
-#define COMPLEX_FAC (COMPLEX_STEP/(1/M_SQRT2 + 0.01))
+#define COMPLEX_FAC (COMPLEX_STEP/(.5 + 0.01))
 
 /****************************************
  * LOCAL VARIABLES
@@ -85,7 +85,7 @@ static double part_error;
 static IntList besselCutoff = {NULL, 0, 0};
 
 /** cutoffs for the complex sum */
-static int  complexCutoff[COMPLEX_STEP];
+static int  complexCutoff[COMPLEX_STEP + 1];
 /** bernoulli numbers divided by n */
 static DoubleList  bon = {NULL, 0, 0};
 
@@ -1112,9 +1112,11 @@ static int MMM2D_tune_near(double error)
 
   /* complex sum, determine cutoffs (dist dependent) */
   T = log(part_error/(16*M_SQRT2)*box_l[0]*box_l[1]);
-  for (i = 0; i < COMPLEX_STEP; i++)
-    complexCutoff[i] = (int)ceil(T/log((i+1)/COMPLEX_FAC));
-  prepareBernoulliNumbers(complexCutoff[COMPLEX_STEP-1]);
+  // for 0, the sum is exactly zero, so do not calculate anything
+  complexCutoff[0] = 0;
+  for (i = 1; i <= COMPLEX_STEP; i++)
+    complexCutoff[i] = (int)ceil(T/log(i/COMPLEX_FAC));
+  prepareBernoulliNumbers(complexCutoff[COMPLEX_STEP]);
 
   /* polygamma, determine order */
   n = 1;
