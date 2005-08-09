@@ -19,7 +19,7 @@ Current working revision.
 New Features:
 (d) Enhanced 'checkpoint_read' to now also be able to write pov-files and render them.
 (d) Released several commands to convert configurations to snapshots using Povray, 
-    see $ESPRESSO_SCRIPTS/pov.tcl for details.
+    see /people/thnfs/homes/despintr/Espresso/scripts/pov.tcl for details.
     Most noticeable probably is 'writepov <output> [-folded [-box [-render]]]' which 
     takes the current particle setup and outputs a povray compatible file (including
     the box if '-box' is given) of all (folded) coordinates, and optionally renders it.
