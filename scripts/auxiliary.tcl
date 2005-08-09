@@ -201,8 +201,13 @@ proc checkpoint_read { origin { read_all_chks 1 } { write 0 } { name "anim" } { 
 	if { $ENABLE_COMPACT_CHECKPOINTS != 1 } { part deleteall }
 	while { [blockfile $f read auto] != "eof" } {}; puts -nonewline "."; flush stdout; # puts "read $source"
 	close $f
-	if { $write == "pdb" } { if {$pdb_ind==0} {writepsf "$name.psf"}; writepdb "$name[format $pdb_sfx $pdb_ind].pdb"; incr pdb_ind } 
-	if { $write == "pov" } { writepov $name[format $pdb_sfx $pdb_ind].pov -folded -box -render}
+	if { $write == "pdb" } { 
+	    if {$pdb_ind==0} {writepsf "$name.psf"}; writepdb "$name[format $pdb_sfx $pdb_ind].pdb"; incr pdb_ind 
+	} elseif { $write == "pov" } { 
+	    writepov $name[format $pdb_sfx $pdb_ind].pov -folded -box -render
+	} else {
+	    error "ERROR: invalid option. $write must be either pov or pdb.\nAborting..." 
+	}
     }
     if { [file exists "$origin.chk"] } { 
 	set chk [open "$origin.chk" "r"] 
