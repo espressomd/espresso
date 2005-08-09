@@ -109,6 +109,7 @@ if { [catch {
 	cellsystem layered 10
 	inter coulomb 1.0 mmm2d 1e-20
 	integrate 0
+	set energy [analyze energy coulomb]
 	inter coulomb 0.0
 	write_data "el2d_system.data"
     }
