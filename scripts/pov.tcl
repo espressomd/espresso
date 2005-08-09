@@ -9,8 +9,11 @@ proc writepov {file {folded "no"} {boxopt "no"} {render "no"} {rotate "-10 22.5 
     if {$folded == "-folded"} {
 	set de "folded"
     } else {set de "pos"}
-
-    set f [open $file "w"]
+    if {[file exists "$file"] } {
+        error "ERROR: $file already exists; please use a different file name!\nAborting..." 
+    } else {
+        set f [open $file "w"]
+    }
     set box [setmd box_l]
     
     #write background, camera, lighting
