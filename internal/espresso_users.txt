@@ -642,3 +642,17 @@ sent:      03.AUG.2005
 version:   20050801-Espresso_v1.9.6a.tar.gz
 topic:     tryout 2d electrostatics code
 
+
+
+name:      Yojna Purohit
+email:     yojna28@gmail.com
+institute: North Carolina State University
+           Materials Science and Engineering
+           Raleigh, NC 27695
+           USA
+sent:      09.AUG.2005
+version:   20050808-Espresso_v1.9.6d.tar.gz
+topic:     I am planning to use this code for DPD simulation of colloids.
+           Right now I am looking at the feasibility of the code on my
+           system and the properties I get from different codes
+
