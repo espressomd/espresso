@@ -2,21 +2,26 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6d (Seska)                                                                      *
+* v1.9.6e (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6d -
+- v1.9.6e -
 -----------
 
+(e) August  9th, 2005.
 (d) August  4th, 2005.
 (c) August  2nd, 2005.
 (b) July   29th, 2005.
 (a) July   18th, 2005.
 
 New Features:
+(e) added new particle properties for dipoles (new part commands: dipm <m>, dip <x> <y>
+    <z>); only k-space dipolar p3m yet works, r-space still has to be done
+(e) some useful stuff for vmd written by Axel
+(e) script for viewing block-files in vmd
 (d) Enhanced 'checkpoint_read' to now also be able to write pov-files and render them.
 (d) Released several commands to convert configurations to snapshots using Povray, 
     see /people/thnfs/homes/despintr/Espresso/scripts/pov.tcl for details.
@@ -32,7 +37,14 @@ New Features:
     Data is only sent around with an explicit request GHOSTTRANS_TEMP in 'ghost.c', 
     see 'lb.c' for an example.
 
+Changes:
+(e) checkpointread now gives an error if  is not either pov or pdb
+(e) writepov now checks whether the output file already exists
+
 Bugfixes:
+(e) the cutoff calculation for the complex sum was too high, but missing
+(e) cutoff values for cases with very few cells, which can cause crashes
+(e) one incr statement was missing
 (d) Fixed tune_cells to work with min_num_cells. Backport from bench_v4.tcl.
 (a) Fixed the forces initialization such that external forces are added 
     for all thermostats, not only Langevin.
