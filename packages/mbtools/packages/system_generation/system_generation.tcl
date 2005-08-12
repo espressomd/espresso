@@ -216,9 +216,14 @@ proc ::system_generation::setup_system { system_specs setbox_l moltypes } {
 		}
 	    }
 	    "singlemol" {
+		if { [llength $geometry ] > 2 } {
+		    set orient [lindex $geometry 2]
+		} else {
+		    set orient { 0 0 1 }
+		}
 		set center [lindex $geometry 1]
 		set mol [lindex $topology 0]
-		placemol $mol $center
+		placemol $mol $center -orient $orient
 
 		# Retrieve the molecule information for this molecule type
 		set typekey [matchtype [lindex $mol 0]]

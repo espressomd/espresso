@@ -38,7 +38,7 @@ proc ::system_generation::placemol { mol pos args } {
 	    place_lipid_linear $mol $params(orient) $pos -bondl $params(bondl) -midpos 
 	}
 	"hollowsphere" {
-	    place_hollowsphere $mol $pos
+	    place_hollowsphere $mol  $pos $params(orient)
 	}
 
 	"protein" {
@@ -96,8 +96,6 @@ proc ::system_generation::place_lipid_linear { mol orient pos args } {
     }
     set usage "Usage: create_bilayer topo boxl \[bondl:uniform]"
     array set params [::cmdline::getoptions args $options $usage]
-
-
 
     # Ensure that the orientation vector is normalized
     set orient [::mathutils::normalize $orient]
@@ -281,7 +279,7 @@ proc ::system_generation::place_protein { mol pos orient args } {
 		    set posy [expr $ry+ 2*(0.9+(0.1*$a))*sin($b*(2*3.14)/(12))]
 
 		    set posz [expr $rz + ($a*1.0)*$nz]
-		  
+		    
 	  	   
 		    part $partnum1 pos $posx $posy $posz type $ptype
 		} 
@@ -371,7 +369,7 @@ return
 # mol: particle types and the molecule type id
 # pos: The center of the sphere
 #
-proc ::system_generation::place_hollowsphere { mol pos args } {
+proc ::system_generation::place_hollowsphere { mol pos orient args } {
     variable icovermagicnums
     set moltype [lindex $mol 0]
     set typeinfo [matchtype $moltype]
@@ -415,10 +413,6 @@ proc ::system_generation::place_hollowsphere { mol pos args } {
 	}
     }
 
-#    puts $typeinfo
-
-
-
 
     # Place the beads in preliminary positions on the unit sphere
     for { set i 1 } { $i <= $natomscov } { incr i } {
@@ -455,8 +449,7 @@ proc ::system_generation::place_hollowsphere { mol pos args } {
 	set areaf2 [expr $totalarea*$fraction2]
 	set heightcut [expr $radius - ($areaf2/(2.0*3.141592*$radius))]
 	set janus 1
-    }
-
+    } 
 
 
     foreach point $coords {
@@ -483,7 +476,9 @@ proc ::system_generation::place_hollowsphere { mol pos args } {
 	    # But if we have a janus colloid then use a different technique 
 	    # to allocate the bead types
 	    if { $janus } {
-		if { [expr [lindex $tmp 2] - [lindex $pos 2] ] > $heightcut } {
+		# First find the projection of the point onto the unit orient vector
+		set proj [::mathutils::dot_product $tmp $orient]
+		if { $proj > $heightcut } {
 		    set parttype [lindex $sproportions 1 0 ]
 		    incr beadcount2
 		} else {
@@ -512,7 +507,9 @@ proc ::system_generation::place_hollowsphere { mol pos args } {
 	    }
 	}
 
-	set heightcut [expr $heightcut + $hchange]
+	if { $janus } {
+	    set heightcut [expr $heightcut + $hchange]
+	}
 #	puts "$beadcount1 $beadcount2 $heightcut"
 	incr tries
     }
