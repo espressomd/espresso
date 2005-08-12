@@ -1,0 +1,89 @@
+This folder contains all the scripts that are used to run the parallel
+tempering + hybrid monte carlo simulations for the polyelectrolyte
+bundle simulation.
+
+The example script is for a simulation with 5 ensembles each with a
+different bjerrum length (lb=1.5 1.525 1.55 1.575 1.6)
+
+Various input parameters are stored in "input.txt", so that one does
+not have to modify the tcl scripts during production runs.
+
+We will assume that all ensembles will be started from the same
+configuration, and the system will be run until each system
+equilibrates. If one knows the equilibrated state for each different
+ensemble apriori that would ofcourse decrease the simulation time
+dramatically. This equilibrated configuration is named as: "
+equilibrized.gz"
+
+Next by using "hmc-prepare.tcl" one can create folders for all the
+ensembles with the proper starting configurations. Besides the folders
+a file named "wherewasI" is create, which is used to keep track of the
+current run loop for all the ensembles. One can also use
+"hmc-prepare.tcl" to tune the p3m according to the highest bjerrum
+length ensebles (which will store the information in "coulomb.txt"
+
+Once the folders for all ensembles are ready, and coulomb information
+is set, one can start the simulation by calling:
+
+Espresso hmc-master3.tcl 1 0
+
+the first input parameter to the script is the number of
+processors. The second parameter is the wait time.
+
+Let's assume that we have 3 cpu's available. The data should be stored
+in a file server, where all these cpu's have direct access to. Next,
+one has to submit 3 separate Espresso jobs with different wait
+times. The wait times are used to de-syncronize the jobs, so that no
+two jobs are working on the same ensemble at the same time. The script
+is designed so that 
+Espresso hmc-master3.tcl 1 0 
+Espresso hmc-master3.tcl 1 1 
+Espresso hmc-master3.tcl 1 2 
+
+commands will be staggered by 1000 ms.
+
+There are two phases of the simulation. In the first phase each
+processor scans the directories to find a directory where the HMC
+steps for that loop has not been preformed yet. Once such a folder
+(ensemble) is found, that job puts a lock file named as "lock_00000"
+with the number keeping track of the total number of HMC+PT loops
+accomplished. This way other processors will not attempt to work on
+this directory. When the HMC steps are done, a done file is created
+named "done_00000".
+
+When there are no free ensembles left (i.e HMC loop has been started
+in all ensembles) the second phase starts. In the second phase, the
+processors look for two consecutive ensembles where the HMC steps for
+the loop have been finished (i.e. done_00000 file is written).
+
+If we have 5 ensembles, in the odd numbered loops PT will be performed
+between 1-2 and 3-4, and on even numbered loops between 2-3 and
+3-4. Completion of PT phase is also checked by files "swpl_00000" and
+"swpd_00000".
+
+In order to accelarate the simulation, and not to have idle
+processors, waiting for other ensembles to finish: if there are no
+ensembles where the HMC has (atleast) not been started, and if all
+possible PT phases have been done, a processor can go ahead and start
+the next loop of HMC+PT. If for all ensembles the HMC and PT phases
+are accomplishes, the CPU that detects this first, increments the loop
+number in the "wherewasI" file.
+
+In my experience for a system with 49 ensembles, using upto 20 CPU's
+was optimal, in the sense that, the idle time for CPUs was at
+minimum. The completion time of the HMC steps for each Bjerrum length
+differs quite dramatically. This is the main cause of idle CPU's
+during the simulation. The HMC simulations are started from the
+highest Bjerrum length ensemble, because these are the slowest ones.
+
+
+The file list:
+hmc-watch.tcl: To visualize the saved configurations
+hmc-initialize.tcl: some common routines
+hmc-setup.tcl: Setting up the system
+hmc-master3.tcl: The master script to run on each node.
+input.txt: input for the simulation
+hex_input.tcl: the index list for creating a hexagonally packed bundle of rods
+equilibrized.gz: Starting configuration 
+aggregate-03.tcl: analyze the aggregation state of the bundles
+ave_agg_size-05.tcl: analyze the distribution of PE's, and counterions among the bundles.
