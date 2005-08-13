@@ -656,3 +656,34 @@ topic:     I am planning to use this code for DPD simulation of colloids.
            Right now I am looking at the feasibility of the code on my
            system and the properties I get from different codes
 
+
+
+name:      George Khujadze
+email:     khujadze@hyhy.tu-darmstadt.de
+institute: Arbeitsgruppe strömungsmechanik
+           Fachbereich Mechanik
+           TU Darmstadt
+sent:      12.AUG.2005
+version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
+topic:     From first of October I will work in MPIP, in the group of Dr.
+           Duenweg.
+
+
+name:      Alexander Lyubartsev
+email:     sasha@physc.su.se
+institute: Dep. Physical Chemistry
+           Stockholm University
+           S 106 91 Stockholm Sweden
+sent:      12.AUG.2005
+version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
+topic:     Coarse-grained simulations of lipids and possibly other
+           (macro)molecules
+
+
+name:      Krishnan, S.H.
+email:     krishnan.sh@gmail.com
+institute: MPI-P
+sent:      12.AUG.2005
+version:   20050808-Espresso_v1.9.6d.tar.gz
+topic:     Successor of V. Lobaskin in B. Duenwegs group
+
