@@ -2428,6 +2428,11 @@ int P3M_adaptive_tune_parameters(Tcl_Interp *interp)
   Tcl_PrintDouble(interp, p3m_sum_q2, b3);
   Tcl_AppendResult(interp, "System: box_l = ",b1,", # charged part = ",b2," Sum[q_i^2] = ",b3,"\n", (char *) NULL);
 
+  if (p3m_sum_qpart == 0) {
+    Tcl_AppendResult(interp, "no particles in the system, cannot tune P3M", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
   /* parameter ranges */
   if (p3m.mesh[0] == 0 ) {
     double expo;
