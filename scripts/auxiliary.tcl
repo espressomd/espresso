@@ -195,20 +195,28 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
 # and 'pdb_sfx' (giving the number of digits to be used in enumbering the .pdb-files)
 proc checkpoint_read { origin { read_all_chks 1 } { write 0 } { name "anim" } { pdb_sfx 5 }} {
     variable ::ENABLE_COMPACT_CHECKPOINTS 0; global ENABLE_COMPACT_CHECKPOINTS pdb_ind
+
     proc read_checkpoint_in { source write name pdb_sfx } { global pdb_ind ENABLE_COMPACT_CHECKPOINTS
 	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -cd $source" r] } else { set f [open "$source" "r"] }
 	if { [blockfile $f read auto] == "eof" } { puts "\nERROR: Blockfile '$source' doesn't contain anything! Exiting..."; exit }
 	if { $ENABLE_COMPACT_CHECKPOINTS != 1 } { part deleteall }
 	while { [blockfile $f read auto] != "eof" } {}; puts -nonewline "."; flush stdout; # puts "read $source"
 	close $f
-	if { $write == "pdb" } { 
-	    if {$pdb_ind==0} {writepsf "$name.psf"}; writepdb "$name[format $pdb_sfx $pdb_ind].pdb"; incr pdb_ind 
-	} elseif { $write == "pov" } { 
-	    writepov $name[format $pdb_sfx $pdb_ind].pov -folded -box -render; incr pdb_ind
-	} else {
-	    error "ERROR: invalid option. $write must be either pov or pdb.\nAborting..." 
+	if { $write != 0 } {
+	    switch $write {	    
+		"pdb" {
+		    if {$pdb_ind==0} {writepsf "$name.psf"}; writepdb "$name[format $pdb_sfx $pdb_ind].pdb"; incr pdb_ind 
+		}
+		"pov" {
+		    writepov $name[format $pdb_sfx $pdb_ind].pov -folded -box -render; incr pdb_ind
+		}
+		"default" {
+		    error "ERROR: invalid option. $write must be either pov, pdb or 0.\nAborting..." 
+		}
+	    }
 	}
     }
+
     if { [file exists "$origin.chk"] } { 
 	set chk [open "$origin.chk" "r"] 
     } elseif { 
@@ -236,7 +244,7 @@ proc checkpoint_read { origin { read_all_chks 1 } { write 0 } { name "anim" } { 
 	} else { 
 	    set source $tmp_chk 
 	}
-	read_checkpoint_in $source $write $pdb_sfx
+	read_checkpoint_in $source $write $name $pdb_sfx
     }
     close $chk
 }
