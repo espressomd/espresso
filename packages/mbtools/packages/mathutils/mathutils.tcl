@@ -15,9 +15,54 @@ namespace eval mathutils {
     namespace export scalevec
     namespace export distance
     namespace export find_proportions
+    namespace export matrix_multiply
 }
 
 source [file join [file dirname [info script]] statistics.tcl]
+
+# ::mathutils::dot_product
+proc ::mathutils::dot_product { A B } {
+
+    set dp 0
+    for { set i 0 } { $i < 3 } { incr i } {
+	set dp [expr $dp + [lindex $A $i]*[lindex $B $i] ]
+    }
+    return $dp
+
+}
+
+
+
+# ::mathutils::matrix_vec_multiply --
+# 
+# Perform the multiplication of a matrix A and a vector B where A is the
+# first argument and B is the second argument.  The routine will
+# return AxB
+# 
+# A should be formatted as a tcl list where each element of the
+# list represents the elements in each row of the matrix
+#
+
+proc ::mathutils::matrix_vec_multiply { A B } {
+    set AB 0
+    unset AB
+
+    set side [llength $A]
+
+    for { set i 0 } { $i < $side } { incr i } {
+	set sum 0
+	# index the row vector from A
+	set RA [lindex $A $i]
+
+	# Now find the dot product of this row with B
+	for { set j 0 } { $j < $side } { incr j } {
+	    set sum [expr $sum + [lindex $RA $j]*[lindex $B $j] ]
+	}
+	lappend AB $sum
+    }
+    return $AB
+}
+
 
 
 # ::mathutils::calc_proportions --
