@@ -1,7 +1,7 @@
 #!/bin/sh
 # \
     exec $ESPRESSO_SOURCE/Espresso $0 1 $*
-# series.tcl [output]
+# series.tcl [output] [folded [nofoldlist]]
 #    files <file 0> <file 1> .....
 #    pattern <prefix> <start> <stop> [<skip> [<pad>]]
 #####################################################
@@ -9,10 +9,29 @@
 set filename vmd
 set argv [lrange $argv 1 end]
 
+proc folding {arg1 arg2} {
+    if {[lsearch $arg2 $arg1] == -1} {
+	set coord [part $arg1 print folded]
+	part $arg1 pos [lindex $coord 0] [lindex $coord 1] [lindex $coord 2]
+	puts "folded $arg1"
+    }
+}
+
 if {[lindex $argv 0]=="output"} {
     set argv [lrange $argv 1 end]
     set output 1
 } else {set output 0}
+
+if {[lindex $argv 0]=="folded"} {
+    set folded 1
+    if { [lindex $argv 1]!="files" &&  [lindex $argv 1]!="pattern"} {
+	set nofoldlist [lindex $argv 1]
+	set argv [lrange $argv 2 end]
+    } elseif { [lindex $argv 1]=="files" || [lindex $argv 1]=="pattern"} {
+	set nofoldlist -1
+	set argv [lrange $argv 1 end]
+    }
+} else {set folded 0}
 
 switch [lindex $argv 0] {
     files {
@@ -22,6 +41,12 @@ switch [lindex $argv 0] {
 	    foreach e $argv {
 		part deleteall
 		polyBlockRead "$e"
+		if {$folded == 1} {
+		    set mp [setmd max_part]
+		    for {set p 0} {$p <= $mp} {incr p} {
+			folding $p $nofoldlist
+		    }
+		}
 		if {$i == 0} {writepsf "$filename.psf"}
 		writepdb "$filename[format %04d $i].pdb"
 		incr i 
@@ -42,6 +67,12 @@ switch [lindex $argv 0] {
 	    foreach e $argv {
 		part deleteall
 		polyBlockRead "$e"
+		if {$folded == 1} {
+		    set mp [setmd max_part]
+		    for {set p 0} {$p <= $mp} {incr p} {
+			folding $p $nofoldlist
+		    }
+		}
 		if {$i == 0} {prepare_vmd_connection $filename 3000}
 		imd positions
 		incr i 
@@ -60,6 +91,12 @@ switch [lindex $argv 0] {
 	    for {set i $start} {$i <= $stop} {incr i} {
 		part deleteall
 		polyBlockRead "$prefix[format %0${pad}d $i]"
+		if {$folded == 1} {
+		    set mp [setmd max_part]
+		    for {set p 0} {$p <= $mp} {incr p} {
+			folding $p $nofoldlist
+		    }
+		}
 		if {$i == $start} {writepsf "$filename.psf"}
 		writepdb "$filename[format %04d $j].pdb"
 		incr j
@@ -80,6 +117,12 @@ switch [lindex $argv 0] {
 	    for {set i $start} {$i <= $stop} {incr i} {
 		part deleteall
 		polyBlockRead "$prefix[format %0${pad}d $i]"
+		if {$folded == 1} {
+		    set mp [setmd max_part]
+		    for {set p 0} {$p <= $mp} {incr p} {
+			folding $p $nofoldlist
+		    }
+		}
 		if {$i == $start} {prepare_vmd_connection $filename 3000}
 		imd positions
 		incr j
