@@ -203,11 +203,16 @@ proc ::system_generation::place_sphericalconstraint { mol pos args } {
 # mol: particle types and the molecule type id
 # pos: The beads' positions
 #
+
 proc ::system_generation::place_protein { mol pos orient args } {
 
     variable middlebead
+    variable upperbead
+    variable lowerbead
 
+       
     set moltype [lindex $mol 0]
+
     set typeinfo [matchtype $moltype]
 
     set atomtypes [lindex $typeinfo 2]
@@ -279,7 +284,7 @@ proc ::system_generation::place_protein { mol pos orient args } {
 		    set posy [expr $ry+ 2*(0.9+(0.1*$a))*sin($b*(2*3.14)/(12))]
 
 		    set posz [expr $rz + ($a*1.0)*$nz]
-		    
+		  
 	  	   
 		    part $partnum1 pos $posx $posy $posz type $ptype
 		} 
@@ -320,23 +325,26 @@ proc ::system_generation::place_protein { mol pos orient args } {
     }
 }
 
+###########################################################################
+#Getting the bead's ids to measure the distance between proteins, lipid's orientations, and heights#
 
-#Get the midlle bead id#
+    #Get the midlle bead id: 19*6=114#
 
- 
-    for { set b 95 } { $b < 96 } {incr b} {
-
+    lappend middlebead [lindex $mol 115]
    
-	lappend middlebead [lindex $mol [expr $b+1]]
 
+    #Get the upper monolayer bead id: 19*8=152#
 
-    } 
+    lappend upperbead [lindex $mol 153] 
   
+
+    #Get the lower monolayer bead id: 19*5=95#
+     
+    lappend lowerbead [lindex $mol 96]
   
 
 return
 }
-
 
 
 
