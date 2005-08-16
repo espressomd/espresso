@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6e (Seska)                                                                      *
+* v1.9.6f (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6e -
+- v1.9.6f -
 -----------
 
+(f) August 15th, 2005.
 (e) August  9th, 2005.
 (d) August  4th, 2005.
 (c) August  2nd, 2005.
@@ -42,6 +43,8 @@ Changes:
 (e) writepov now checks whether the output file already exists
 
 Bugfixes:
+(f) Missing  variable for call to read_checkpoint_in for the case where  = 0 and where 
+    is false
 (e) the cutoff calculation for the complex sum was too high, but missing
 (e) cutoff values for cases with very few cells, which can cause crashes
 (e) one incr statement was missing
