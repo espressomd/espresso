@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6f (Seska)                                                                      *
+* v1.9.6g (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6f -
+- v1.9.6g -
 -----------
 
+(g) August 16th, 2005.
 (f) August 15th, 2005.
 (e) August  9th, 2005.
 (d) August  4th, 2005.
@@ -39,6 +40,9 @@ New Features:
     see 'lb.c' for an example.
 
 Changes:
+(g) Added new optional parameters folded and nofoldlist. If folded is set, folded
+    coordinates are passed on to vmd. nofoldlist is a list of types that should not be
+    folded if folded is set to folded.
 (e) checkpointread now gives an error if  is not either pov or pdb
 (e) writepov now checks whether the output file already exists
 
