@@ -78,6 +78,7 @@ AC_DEFUN([CF_TRYLINK_ADD_CFLAG],[
 
 AC_DEFUN([CF_CHECK_GCC_FLAGS],[
 	case $target_cpu in
+	i*86)		type=ia; m=32; arch=$target_cpu ;;
 	Pentium_III)	type=ia; m=32; arch=pentium3; sse=yes ;;
 	Pentium_4)	type=ia; m=32; arch=pentium4; sse2=yes ;;
 	Pentium_M)	type=ia; m=32; arch=pentium-m; sse2=yes ;;
@@ -87,6 +88,7 @@ AC_DEFUN([CF_CHECK_GCC_FLAGS],[
 	Athlon_XP)	type=ia; m=32; arch=athlon-xp; sse=yes ;;
 	Opteron)	type=ia; m=64; arch=opteron; sse2=yes ;;
 	Athlon_64)	type=ia; m=64; arch=athlon64; sse2=yes;;
+	x86_64)		type=ia; m=64; arch=k8 ;;
 	Power)		type=pwr; cpu=power ;;
 	Power2)		type=pwr; cpu=power2 ;;
 	Power*)		type=pwr; cpu=powerpc ;;

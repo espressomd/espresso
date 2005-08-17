@@ -3,6 +3,10 @@
 system=`uname -s`
 
 case $system in
+CYGWIN*)
+    # windoofs, no simple way of getting hardware info. Rely on uname -m
+    echo "`uname -m`-pc-msdos"
+    ;;
 Linux)
     # determines the type of CPU 0
     MODEL=`awk '/\\\`model name/ { \
