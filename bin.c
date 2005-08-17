@@ -21,7 +21,7 @@ int bin(ClientData cdata, Tcl_Interp *interp,
 	int argc, char **argv)
 {
   DoubleList coords, data, count, sum, bins;
-  int i, num_bins;
+  int i, num_bins, give_bincounts = 0;
   double min_bin, max_bin, contr;
   int w, s, e, c;
   char buffer[2 + TCL_DOUBLE_SPACE];
@@ -29,6 +29,12 @@ int bin(ClientData cdata, Tcl_Interp *interp,
   init_doublelist(&coords);
   init_doublelist(&data);
   init_doublelist(&bins);
+
+  /* type of the binning */
+  if (argc > 1 && ARG1_IS_S("-stats")) {
+    give_bincounts = 1;
+    argc -= 1; argv += 1;
+  }
 
   /* type of the binning */
   if (argc > 2 && ARG1_IS_S("-bins")) {
@@ -127,20 +133,25 @@ int bin(ClientData cdata, Tcl_Interp *interp,
     for (i = 0; i < count.n; i++) {
       if (data.n) {
 	if (count.e[i]) {
-	  count.e[i] = sum.e[i]/count.e[i];
-	  Tcl_PrintDouble(interp, count.e[i], buffer);
+	  double tmp = sum.e[i]/count.e[i];
+	  Tcl_PrintDouble(interp, tmp, buffer);
 	}
 	else
 	  strcpy(buffer, "n/a");
       }
       else {
-	Tcl_PrintDouble(interp, count.e[i] *= contr, buffer);
+	Tcl_PrintDouble(interp, count.e[i] * contr, buffer);
       }
  
       if (i == 0)
 	Tcl_AppendResult(interp, buffer, (char *) NULL);
       else
 	Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
+
+      if (give_bincounts) {
+	sprintf(buffer, "%d", (int)count.e[i]);
+	Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
+      }
     }
     return TCL_OK;
   }
