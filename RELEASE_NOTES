@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6g (Seska)                                                                      *
+* v1.9.6h (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6g -
+- v1.9.6h -
 -----------
 
+(h) August 17th, 2005.
 (g) August 16th, 2005.
 (f) August 15th, 2005.
 (e) August  9th, 2005.
@@ -20,6 +21,8 @@ Current working revision.
 (a) July   18th, 2005.
 
 New Features:
+(h) binning now allows to also print out the counts.
+(h) support for CYGWIN.
 (e) added new particle properties for dipoles (new part commands: dipm <m>, dip <x> <y>
     <z>); only k-space dipolar p3m yet works, r-space still has to be done
 (e) some useful stuff for vmd written by Axel
