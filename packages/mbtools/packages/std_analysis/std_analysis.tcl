@@ -315,7 +315,7 @@ proc ::std_analysis::print_averages { } {
 		    # Write out the density profiles to a file
 		    for { set bin 0 } { $bin < [llength $av_densities] } { incr bin } {
 			set currbin [lindex $av_densities $bin]
-			puts -nonewline $f_densityprof "[expr $bin*$binwidth-($binwidth/2.0)] "
+			puts -nonewline $f_densityprof "[expr $bin*$binwidth+($binwidth/2.0)] "
 			for { set bt 0 } { $bt < [llength $currbin] } { incr bt } {
 			    puts -nonewline $f_densityprof "[expr [lindex $currbin $bt]/(1.0*$av_densities_i)] "
 			}

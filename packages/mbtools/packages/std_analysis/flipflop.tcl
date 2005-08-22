@@ -14,6 +14,7 @@ namespace eval ::std_analysis {}
 proc ::std_analysis::Compliment { list1 list2 } {
     set flip 0
     set bilcnt 0
+
     for { set i 0 } { $i < [llength [lindex $list1 1] ] } {incr i } { 
 	#	    puts "[lindex $list1 1 $i ] : [lindex $list2 1 $i]"
 	if { [lindex $list1 1 $i ] != [lindex $list2 1 $i] && [lindex $list1 1 $i ] != 2 && [lindex $list2 1 $i] != 2 && [lindex $list1 1 $i ] != 3 && [lindex $list2 1 $i] != 3 } {
@@ -25,6 +26,11 @@ proc ::std_analysis::Compliment { list1 list2 } {
 	if { [lindex $list1 1 $i ] != 2 && [lindex $list2 1 $i] != 2 && [lindex $list1 1 $i ] != 3 && [lindex $list2 1 $i] != 3 } {
 	    incr bilcnt
 	}
+    }
+    if { $bilcnt == 0 } {
+	mmsg::warn [namespace current] "no lipids in bilayer: cannot perform flip-flip analysis"
+	puts "$list1 list2"
+	return 0
     }
     return [expr ($bilcnt - $flip)/(1.0*$bilcnt)]
     

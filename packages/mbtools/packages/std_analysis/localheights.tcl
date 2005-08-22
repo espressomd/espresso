@@ -111,16 +111,22 @@ proc ::std_analysis::calc_localheights {} {
 
 	    # Use the molnblist to work out height differences
 	    foreach nbmol $molnblist {
-		set hb [lindex [lindex $topology $nbmol] 1 ]
-		set tb [lindex [lindex $topology $nbmol] end ]
-		# For some old simulations where 0 was a special hb type we need this
-		if { [part $hb print type] != 0 && [part $tb print type] == 0 } {
-		    set hb $tb
-		}
-		set hbpos [foldpart [part $hb print pos] $box]
-		lappend hdiffs [expr [lindex $hpos 2] - [lindex $hbpos 2]]
-#		puts "[lindex $topology $nbmol] [part $hb print type] $hpos $hbpos $hb"
+		if { $nbmol != -1 } {
+		    set hb [lindex [lindex $topology $nbmol] 1 ]
+		    set tb [lindex [lindex $topology $nbmol] end ]
+#		    puts "$nbmol $hb $tb"
+		    if { [ catch { set dum $hb } ] || [ catch { set dum $tb } ] } {
+			mmsg::err [namespace current] "no hb"
+		    }
 		
+		    # For some old simulations where 0 was a special hb type we need this
+		    if { [part $hb print type] != 0 && [part $tb print type] == 0 } {
+			set hb $tb
+		    }
+		    set hbpos [foldpart [part $hb print pos] $box]
+		    lappend hdiffs [expr [lindex $hpos 2] - [lindex $hbpos 2]]
+		    #		puts "[lindex $topology $nbmol] [part $hb print type] $hpos $hbpos $hb"
+		}
 	    }
 	    
 #	    puts "$molnblist $hdiffs"
