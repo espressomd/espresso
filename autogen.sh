@@ -5,6 +5,11 @@ version=`echo $version | sed 's/&/\\\&/g'`
 date=`awk '/[(][a-z]*[)]/ { for(i=2;i<NF;i++) printf("%s ",$i); gsub("[.]", "", $NF); print $NF; exit}' RELEASE_NOTES`
 echo "generating configure.ac for Espresso $version, dated $date"
 sed -e "s/@VERSION@/$version/" -e "s/@TIME_STAMP@/$date/" configure.ac.raw > configure.ac
+echo "generating version.h for Espresso"
+echo "#ifdef PACKAGE_VERSION" > version.h
+echo "#undef PACKAGE_VERSION" >> version.h
+echo "#define PACKAGE_VERSION \"$version\"" >> version.h
+echo "#endif" >> version.h
 echo "generating configure"
 aclocal --acdir=config
 autoconf
