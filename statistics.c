@@ -236,6 +236,7 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
   return 0;
 }
 
+#ifdef ELECTROSTATICS
 int charge_aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_id, int *head_list, int *link_list, int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std)
 {
   int c, np, n, i;
@@ -347,7 +348,7 @@ int charge_aggregation(double dist_criteria2, int min_contact, int s_mol_id, int
   
   return 0;
 }
-
+#endif
 
 void centermass(int type, double *com)
 {
@@ -1443,6 +1444,7 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
+#ifdef ELECTROSTATICS
 static int parse_charge_aggregation(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze centermass [<type>]' */
@@ -1546,6 +1548,7 @@ static int parse_charge_aggregation(Tcl_Interp *interp, int argc, char **argv)
 
   return TCL_OK;
 }
+#endif
 
 static int parse_mindist(Tcl_Interp *interp, int argc, char **argv)
 {
@@ -2283,8 +2286,10 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     err = parse_mindist(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("aggregation"))
     err = parse_aggregation(interp, argc - 2, argv + 2);
+#ifdef ELECTROSTATICS
   else if (ARG1_IS_S("charge_aggregation"))
     err = parse_charge_aggregation(interp, argc - 2, argv + 2);
+#endif
   else if (ARG1_IS_S("centermass"))
     err = parse_centermass(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("momentofinertiamatrix"))
