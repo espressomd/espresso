@@ -1,0 +1,405 @@
+<head>
+<link href="./docustyle.css" rel="stylesheet" type="text/css"> 
+</head>
+<title> mbtools utils documentation </title>
+<body>
+
+<h2 class=center > mbtools utils </h2>
+
+<div class = overview> 
+
+  This package provides a set of general use commands for various
+  purposes including <a href="#setup">setting up a simulation and
+  managing files</a>, <a href="#warm">warming up configurations<a>, <a href="#topo">dealing with
+  topologies</a>. It also provides a small number of <a href="#math"> math utilities</a>
+  and<a href="#misc"> several other usefull procs</a>.
+
+</div>
+
+
+
+<h3><a name=setup>Setup Commands</a></h3>
+
+<ul class = commands > 
+  <li>  <em class=cmd> ::mbtools::utils::setup_outputdir </em> : <em class=args> [outputdir] -paramsfile.arg -tabdir.arg -tabnames.arg -startf.arg -ntabs.arg </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> outputdir </em> Complete path of the directory to be setup. At least the parent of the directory must exist </li>
+	<li> <em class=args> paramfile [] </em> Name of a file to be copied to the output directory </li>
+	<li> <em class=args> tabdir [] </em> Full path name of the directory where forcetables are kept </li>
+	<li> <em class=args> tabnames [] </em> Complete list of forcetables to be used in the simulation. These will be copied to the output directory </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      This routine is designed to setup a directory for simulation
+      output. It copies forcetables and the parameter file to the
+      directory after creating it if necessary.  
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::read_startfile </em> : <em class=args> [file] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> file</em> Complete path of the file to be read. Should be an espresso blockfile </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Read in particle configuration from an existing file or simulation snapshot
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::read_checkpoint </em> : <em class=args> [dir] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> dir </em>Directory containing the checkpoint file which must be called <em class=cd>checkpoint.latest.gz</em> </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Read in a checkpoint and check for success. Warn if the checkpoint does not exist.
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::read_topology </em> : <em class=args> [file] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> file </em> Complete path of the file that contains the topology information </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Read in the topology from a file and then execute the <em class=cd> analyze set "topo_part_sync" </em> command of espresso
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::set_topology </em> : <em class=args> [topo] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> topo </em> A valid topology  </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Set the given topology and then execute the <em class=cd> analyze set "topo_part_sync" </em> command of espresso
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::set_bonded_interactions </em> : <em class=args> [bonded_parms] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> bonded_parms </em> A list of bonded
+	  interactions. Each element of this list should contain all
+	  the appropriate arguments in their correct order for a
+	  particular call to the espresso <em class=cd>inter</em>
+	  command.  See the espresso inter command for a list of
+	  possible bonded interactions and correct syntax.</li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Set all the bonded interactions
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::set_nb_interactions </em> : <em class=args> [nb_parms] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> nb_parms </em> A list of
+	  interactions. Each element of this list should contain all
+	  the appropriate arguments in their correct order for a
+	  particular call to the espresso <em class=cd>inter</em>
+	  command.  See the espresso inter command for a list of
+	  possible non-bonded interactions and correct syntax.</li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Set all the bonded interactions
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::init_random </em> : <em class=args> [n_procs] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> n_procs </em> The number of processors used in this job</li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Initialize the random number generators on each processor based
+      on the current time with a fixed increment to the time seed used
+      for each proc.
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::initialize_vmd </em> : <em class=args> [flag] [outputdir] [ident] -extracommands.arg </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> flag </em> Depending on the value of this parameter initialize vmd to one of its possible states:
+	  <ul class=values>
+	    <li> <em class=cd> interactive </em>: VMD is started and a connection to espresso
+	      established for immediate viewing of the current
+              espresso process. With some luck this might even work
+              sometimes!!!  If VMD doesn't get a proper connection
+              to espresso then it will crash. </li>
+	    
+	    <li> <em class=cd> offline </em>: Just constructs the appropriate psf and
+              vmd_animation.script files and writes them to the
+              output directory so that pdb files generated with
+              writepdb can be viewed with vmd -e
+              vmd_animation.script </li>
+	    
+	    <li> <em class=cd> default </em>: Any value other than those above for flag will just result
+              in vmd not being initialized.</li>
+	  </ul>
+	<li> <em class=args> outputdir </em> The directory where vmd output will be written </li>		    
+	<li> <em class=args> ident </em> A basename to be be given to vmd files </li>
+	<li> <em class=args> extracommands [] </em> A list of strings each of which will be written to the end of the vmd_animationscript.  Use this to give additional commands to vmd </li>	
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Prepare for vmd output
+    </div>
+    
+  </li>
+</ul>
+
+
+
+<h3><a name=warm>Warmup Commands</a></h3>
+
+<ul class = commands > 
+  <li>  <em class=cmd> ::mbtools::utils::warmup </em> : <em class=args> [steps] [times] -mindist.arg -cfgs.arg -outputdir.arg -vmdflag.arg -startcap.arg -capgoal.arg </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> steps </em> number of integration steps used in each call to integrate </li>
+	<li> <em class=args> times </em>  number of times to call the integrate function during warmup </li>
+	<li> <em class=args>  mindist [0] </em> Terminate the warmup when the minimum particle distance is greater than this criterion. A value of 0 (default) results in this condition being ignored. If a condition is imposed this routine can become very very slow for large systems. </li>
+	<li> <em class=args> cfgs [-1] </em>  Write out a configuration file every <em class=cd>cfgs</em> calls to integrate </li>
+	<li> <em class=args> outputdir [./] </em>  The directory for writing output </li>
+	<li> <em class=args> vmdflag [offline] </em>  If this flag is set to "offline" (default) pdb files will be generated for each configuration file generated </li>
+	<li> <em class=args> startcap [5] </em> Starting value for the forcecap </li>
+	<li> <em class=args> capgoal [1000] </em> For the purposes of calculating a cap increment this value is used as a goal.  The final forcecap will have this value.  </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Perform a series of integration steps while increasing forcecaps from an initially small value.
+    </div>
+  </li>
+</ul>
+
+
+
+<h3><a name = topo>Topology Procs</a></h3>
+
+<ul class = commands > 
+  <li>  <em class=cmd> ::mbtools::utils::maxpartid </em> : <em class=args> [topo] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> topo </em> A valid topology </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Find the maximum particle id in a given topology
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::maxmoltypeid </em> : <em class=args> [topo] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> topo </em> A valid topology </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Find the maximum molecule type id
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::listnmols </em> : <em class=args> [topo] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> topo </em> A valid topology </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Construct a list with the number of molecules of each molecule type
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::minpartid </em> : <em class=args> [topo] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> topo </em> A valid topology </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Minimum particle id for the given topology
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::minmoltype </em> : <em class=args> [topo] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> topo </em> A valid topology </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Minimum molecule type id for this topology
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::listmoltypes </em> : <em class=args> [topo] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> topo </em> A valid topology </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Make a list of all the molecule types in a topology.  Makes a
+      check for duplication which would occur for an unsorted topology
+    </div>
+  </li>
+<li>  <em class=cmd> ::mbtools::utils::listmollengths </em> : <em class=args> [topo] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> topo </em> A valid topology </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Works out the length (number of atoms) of each molecule type and returns a list of these lengths
+    </div>
+  </li>
+
+</ul>
+
+
+<h3><a name=math>Math Procs</a></h3>
+
+<ul class = commands > 
+  <li>  <em class=cmd> ::mbtools::utils::dot_product </em> : <em class=args> A B </em>
+    <div class = synopsis >
+      Returns  A dot B
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::matrix_vec_multiply </em> : <em class=args> A B </em>
+    <div class = synopsis >
+      Return the product of a matrix <em class=cd>A</em> with a vector <em class=cd>B</em>
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::calc_proportions </em> : <em class=args> ilist </em>
+    <div class = synopsis >
+      Calculate the number of times each integer occurs in the list <em class=cd> ilist </em> 
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::average</em> : <em class=args> data from to </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> data </em> A list of numbers to be averaged </li>
+	<li> <em class=args> from </em> Optional starting index in <em class=cd>data</em> </li>
+	<li> <em class=args> to </em> Optional ending index in <em class=cd>data</em> </li>
+      </ul>
+    </div> 
+    <div class = synopsis >
+      Calculate the mean of a list of numbers starting from <em class=cd>from</em> going up to <em class=cd>to</em>
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::stdev</em> : <em class=args> data from to </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> data </em> A list of numbers to find the std deviation of </li>
+	<li> <em class=args> from </em> Optional starting index in <em class=cd>data</em> </li>
+	<li> <em class=args> to </em> Optional ending index in <em class=cd>data</em> </li>
+      </ul>
+    </div> 
+    <div class = synopsis >
+      Calculate the standard deviation of a list of numbers starting from <em class=cd>from</em> going up to <em class=cd>to</em>
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::acorr</em> : <em class=args> data  </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> data </em> Data for which an autocorrelation is to be calculated </li>
+      </ul>
+    </div> 
+    <div class = synopsis >
+      Calculate an autocorrelation function on a set of data
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::distance</em> : <em class=args> pos1 pos2  </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> pos1 </em> A position vector </li>
+	<li> <em class=args> pos2 </em> A position vector </li>
+      </ul>
+    </div> 
+    <div class = synopsis >
+      Calculate the distance between two points whose position vectors are given.
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::normalize</em> : <em class=args> vec  </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> vec </em> The vector to be normalised </li>
+      </ul>
+    </div> 
+    <div class = synopsis >
+      Normalize a vector
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::utils::scalevec</em> : <em class=args> vec scale  </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> vec </em> The vector to be scaled </li>
+	<li> <em class=args> scale </em> Scaling factor </li>
+      </ul>
+    </div> 
+    <div class = synopsis >
+      Multiply all elements of a vector by a scaling factor
+    </div>
+  </li>
+
+  <li>  <em class=cmd> ::mbtools::utils::uniquelist</em> : <em class=args> original  </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> original </em> A list possibly containing duplicate elements</li>
+      </ul>
+    </div> 
+    <div class = synopsis >
+      Construct a list of all the unique elements in the original list removing all duplication
+    </div>
+  </li>
+
+
+
+</ul>
+
+<h3><a name = misc>Miscellaneous Procs</a></h3>
+
+<ul class = commands > 
+
+  <li>  <em class=cmd> ::mbtools::utils::isoutside </em> : <em class=args> [pos] [zone] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> pos </em> The point whose status is to be determined </li>
+	<li> <em class=args> zone </em> An exclusion zone. This will be a tcl list. The first element of the list must be a string with the name of the exlusion zone type and subsequent elements will be further information about the exclusion zone. Available zones are:
+	  <ul class=values>
+	    <li> <em class=cd> sphere </em>: <em class=args> center zone </em> </li>
+	  </ul>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Determines whether the point at <em class=cd>pos</em> is outside
+      the exclusion zone.  Returns 1 if it is and 0 if it is not.
+    </div>
+  </li>
+
+  <li>  <em class=cmd> ::mbtools::utils::calc_com </em> : <em class=args> mol </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> mol </em> The molecule </li>
+      </ul>
+    </div> 
+    <div class = synopsis >
+      Calculate the center of mass of a molecule
+    </div>
+  </li>
+  
+
+
+  <li>  <em class=cmd> ::mbtools::utils::centersofmass_bymoltype </em> : <em class=args> [moltypes] </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> moltypes </em> A list of molecule type ids </li>
+      </ul>
+    </div>  
+    <div class = synopsis >
+      Determine the center of mass of every molecule whose type
+      matches an item in the list <em class=cd> moltypes</em>. Returns
+      a nested list where each element in the list is itself a list of
+      centers of mass for a given moltype.
+    </div>
+  </li>
+</ul>
+
+

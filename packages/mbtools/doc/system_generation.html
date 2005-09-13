@@ -1,0 +1,397 @@
+<head>
+<link href="./docustyle.css" rel="stylesheet" type="text/css"> 
+</head>
+<title> mbtools system_generation Documentation </title>
+<body>
+
+<h2 class=center > mbtools system_generation </h2>
+
+<div class = overview> 
+
+  This package provides routines for placing molecules into specified
+  geometries at the beginning of a simulation.  This document
+  describes first describes the <a href="#basicui">user interface routines</a> for setting up
+  the system and then goes on to give a list of all <a href="#geoms">possible geometric
+  shapes</a> and <a href="#moltypes">possible molecule types</a>.  A programmers guide describing
+  <a href="#newgeom">how to add a new geometry</a> or a <a href = "#newmol">new molecule type</a> are given at the
+  end.
+
+</div>
+
+<h3><a name = basicui>Basic Commands</a></h3>
+
+<ul class = commands > 
+
+  <li>  <em class=cmd> ::mbtools::system_generation::setup_system </em> : <em class=args> [system_specs] [iboxl] [moltypes] </em>
+    <div class = body >
+	<ul class = arguments > 
+	  <li> <em class=args> system_specs </em> This is a list of
+	    structures called system specifications.  Each such system
+	    specification in turn should be a list consisting of a
+	    geometry and a list detailing the number of each molecule
+	    type ie; 
+	    <pre><code><p> set system_spec { geometry n_molslist } </p></code></pre> 
+
+	    The <em class=cd> geometry </em> should be specified as a
+	    list with two elements.  The first element should be a
+	    string "geometry" identifying this list as a geometry.
+	    The second element is a string containing the name of a
+	    geometry type <em class=cd>mygeometry</em> followed by
+	    arguments to be passed to the routine <em
+	    class=cd>create_mygeometry</em>.
+
+	    <p> The <em class=cd> n_molslist </em> should be specified
+	    as a list with two elements.  The first element should be
+	    a string "n_molslist" identifying this list as an
+	    n_molslist.  The second element is a list each element of
+	    which specifies a molecule type and the number of such
+	    molecules.</p>
+	  </li>
+	  <li> <em class=args> boxl </em> A list containing the lengths of each of the box side lengths </li>
+	  <li> <em class=args> moltypes </em> A list, each element of
+	    which specifies a molecule type and type information.  The
+	    exact format and requirements of this list are detailed
+	    for each molecule separately (see below for a list of
+	    molecule types and their requirements) however regardless
+	    of mol type the first two elements of the list must be
+	    a <em class=cd>moltypeid</em> and a string specifying the
+	    moltype respectively.
+	  </li>
+	</ul>
+	Sets up the system including generating topologies and placing
+	molecules into specified geometries.  Each geometry and list
+	of molecules to be placed into that geometry are grouped into
+	a system spec.
+
+	<h4> Example: </h4> The following code sets out the molecule
+	types to be used in the simulation by setting a list
+	called <em class=cd>moltypes</em>.  In this case two different
+	lipid types are setup and assigned to moltypeids 0 and 1
+	respectively.  Moltype 0 will consist of three beads per
+	lipid, the first of which is of atomtype 0 and the second and
+	third of which are of atomtype 1.  Bonds in the lipid will be
+	of type 0 and 1 respectively.(see the <em
+	class=cd>::mbtools::system_generation::place_lipid_linear </em>
+	function for further details).
+	<pre>
+	  <code> 
+	    set moltypes [list { 0 lipid { 0 1 1 } { 0 1 } } { 1 lipid { 0 2 2 2 } { 0 2 } } ]
+	  </code>
+	</pre>
+	We then construct system specs for a flat bilayer and a
+	spherical bilayer and group these into a <em class=cd>system_specs</em> list
+
+	<p> First the spherical <em class=cd>system_spec</em> </p>
+	<pre>
+	  <code> 
+	    set geometry { geometry  "sphere -shuffle -c \{ 0.0 0.0 15.0 \} " }
+	    set n_molslist { n_molslist {  { 0 1000 } } }
+	    lappend spherespec $geometry
+	    lappend spherespec $n_molslist
+	  </code>
+	</pre>
+
+	<p> The flat <em class=cd>system_spec</em> </p>
+	<pre>
+	  <code>
+	    set geometry { geometry "flat -fixz" }
+	    set n_molslist { n_molslist {  { 1 3000 } } }
+	    lappend bilayerspec $geometry
+	    lappend bilayerspec $n_molslist
+	  </code>
+	</pre>
+	<p> Now group together the system_specs into a master list </p>
+	<pre>
+	  <code>
+	    lappend system_specs $spherespec
+	    lappend system_specs $bilayerspec
+	  </code>
+	</pre>
+	<p> Make the call to <em class=cd>setup_system</em>
+	<pre>
+	  <code>
+	    ::mbtools::system_generation::setup_system $system_specs [setmd box_l] $moltypes
+	</code>
+	</pre>
+    </div>  
+  </li>
+  <li> <em class=cmd>
+    ::mbtools::system_generation::get_userfixedparts </em> : returns
+    the internal list variable <em class=cd> userfixedparts </em>
+    which keeps track of all particles that have been fixed in
+    position during the setup.  This is useful for later releasing
+    particles after warmup routines have been completed.
+  </li>
+  <li> <em class=cmd>
+      ::mbtools::system_generation::get_middlebead </em> : returns
+    the internal  variable <em class=cd> middlebead </em>
+  </li>
+
+</ul>
+<h3><a name=geoms>Available geometries</a></h3>
+
+<ul class = commands > 
+  <li>  <em class=cmd> flat </em> : <em class=args> -fixz -bondl.arg </em>
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> fixz </em> Fix the vertical positions of
+	  all particles.  The ids of these particles are added to the
+	  list of <em class = cd> userfixedparts </em> which can later be obtained through a call to <em class = cd>::mbtools::system_generation::get_userfixedparts</em> 
+	</li>
+      </ul>
+    </div>
+    <div class = synopsis >
+      Creates a flat bilayer in the <em class =cd >XY</em> plane by random placement of lipids.
+    </div>
+  </li>
+  <li>  <em class=cmd> sphere </em> : <em class=args> -c.arg -initarea.arg -bondl.arg -shuffle </em>
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> c [{0.0 0.0 0.0}] </em> The location of the center of the sphere relative to the center of the box </li>
+	<li> <em class=args> initarea [1.29] </em> An initial guess
+	  for the area per lipid.  This guess is used to compute initial
+	  sphere dimensions based on the number of lipids.  This initial
+	  guess is then iteratively refined until all lipids can be fit
+	  uniformly on the sphere.</li>
+	<li> <em class=args> shuffle </em> shuffle the topology
+	  prior to placing the lipids.  This is required for a random
+	  lipid distribution because the lipids will be placed on the
+	  sphere in the order they appear in the topology </li>
+      </ul>
+    </div>
+    <div class = synopsis > Creates a spherical vesicle by placing
+      molecules in an ordered manner at uniform density on the surface
+      of the sphere.  Molecules are assumed to have a uniform cross
+      sectional area and closely matched (though not identical)
+      lengths.  The radius of the vesicle will depend on the number of
+      lipids and the area per lipid.
+    </div>
+  </li>
+  <li>  <em class=cmd> torus </em> : <em class=args> -c.arg -initarea.arg -ratio.arg -bondl.arg -shuffle </em>
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> c [{0.0 0.0 0.0}] </em> The location of the center of the torus relative to the center of the box </li>
+	<li> <em class=args> initarea [1.29] </em> An initial guess
+	  for the area per lipid.  This guess is used to compute initial
+	  radii based on the number of lipids.  This initial
+	  guess is then iteratively refined until all lipids can be fit
+	  uniformly on the torus.</li>
+	<li> <em class=args> ratio [1.4142] </em> Ratio of major toroidal radius to minor toroidal radius. Default value is for the Clifford torus.</li>
+	<li> <em class=args> shuffle </em> shuffle the topology
+	  prior to placing the lipids.  This is required for a random
+	  lipid distribution because the lipids will be placed on the
+	  torus in the order they appear in the topology </li>
+      </ul>
+    </div>
+    <div class = synopsis > 
+      Creates a toroidal vesicle by placing
+      molecules in an ordered manner at uniform density on the surface
+      of the torus.  Molecules are assumed to have a uniform cross
+      sectional area and closely matched (though not identical)
+      lengths.  The two radii of the torus will depend on the number of
+      lipids, the area per lipid and the ratio between radii.
+    </div>
+  </li>
+
+  <li>  <em class=cmd> cylinder </em> : <em class=args> -c.arg -initarea.arg -bondl.arg -shuffle  </em> 
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> c [{0.0 0.0 0.0}] </em> </li>
+	<li> <em class=args> initarea [1.29] </em></li>
+	<li> <em class=args> shuffle </em> shuffle the topology
+	  prior to placing the lipids.   </li>
+      </ul>
+    </div>
+    <div class = synopsis > 
+      Creates a cylinder which spans the box along one dimension by placing molecules uniformly on its surface.  Works in a similar way to the <em class=cd>sphere</em> routine.
+    </div>
+  </li>										    
+  <li>  <em class=cmd> random </em> : <em class=args> -exclude.arg -shuffle -bondl.arg </em> 
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> exclude.arg [] </em> an exclusion zone definition suitable for passing to <em class=cd>::mbtools::utils::isoutside</em> </li>
+	<li> <em class=args> shuffle </em> shuffle the topology
+	  prior to placing the lipids.   </li>
+      </ul>
+    </div>
+    <div class = synopsis >
+      Places molecules randomly in space with a (sortof) random orientation vector.  If an exclusion zone is defined no molecules will be placed such that their centers of mass are within the zone.
+    </div>
+  </li>
+  <li>  <em class=cmd> readfile </em> : <em class=args> -ignore.arg -f.arg -t.arg </em> 
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> ignore.arg [] </em> particle properties to be ignored during the file read </li>
+	<li> <em class=args> f.arg []</em> The file containing the
+	configuration to be used for setup. Must be an espresso
+	blockfile with box length, particle and bonding
+	information </li>
+	<li> <em class=args> t.arg [] </em> The topology file corresponding to the file to be read </li>
+	<li> <em class=args> tol.arg [0.000001] </em> Tolerance for comparison of box dimensions </li>
+      </ul>
+    </div>    
+    <div class = synopsis >
+      Use particle positions contained in a file to initialise the
+      locations of particles for a particular geometry. The box
+      dimensions in the file and those set by the user are compared
+      and an error is returned if they are not the same to within a
+      tolerance value of <em class=cd>tol </em>.  Even though we read
+      from a file we also generate a topology from the n_molslist and
+      this topology is compared with the topology that is read in to
+      check if the number of particles are the same.
+    </div>
+    
+  </li>
+  <li>  <em class=cmd> singlemol </em> : <em class=args> -c.arg -o.arg -bondl.arg </em> 
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> c.arg [ { 0.0 0.0 0.0 } ] </em> The
+	  molecule center.  Exactly what this means depends molecule
+	  type </li>
+	<li> <em class=args> o.arg [ { 0.0 0.0 1.0 } ] </em> The orientation vector for the molecule.  This is also molecule type dependent </li>
+      </ul>
+    </div>    
+    <div class = synopsis >
+      Simply place a single molecule at the desired position with the desired orientation.
+    </div>
+  </li>
+</ul>
+
+
+<h3><a name=moltypes>Available molecule types</a></h3>
+
+<ul class = commands > 
+  <li>  <em class=cmd> lipid </em> : typeinfo : <em class=cd> { moltypeid "lipid" particletypelist bondtypelist }  </em>
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> particletypelist </em> A list of the
+	particle types for each atom in the lipid.  The particles are
+	placed in the order in which they appear in this list.
+	</li>
+	<li> <em class=args> bondtypelist </em> A list of two
+	bondtypeids. The first id is used for bonds between
+	consecutive beads in the lipid.  The second bondtypeid defines
+	the pseudo bending potential which is a two body bond acting
+	across beads separated by exactly one bead.
+	</li>
+      </ul>
+    </div>
+    <div class = synopsis >
+      Places atoms in a line to create a lipid molecule
+    </div>
+  </li>
+
+  <li>  <em class=cmd> hollowsphere </em> : typeinfo : <em class=cd> { moltypeid "hollowsphere" sphereparticlelist  bondtype natomsfill }  </em>
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> sphereparticlelist </em> A list of the
+	particle types for each atom in the hollowsphere. The atoms
+	that make up the outer shell must be listed first followed by
+	the atoms that make up the inner filling.
+	</li>
+	<li> <em class=args> bondtype </em> The typeid for bonds linking atoms in the outer shell. </li>
+	<li> <em class=args> natomsfill </em> Number of filler atoms </li>
+      </ul>
+    </div>
+    <div class = synopsis >
+      Creates a sphere of beads arranged such that they have an
+      approximate spacing of <em class=cd> bondl </em> and such that
+      they optimally cover the sphere. The optimal covering is
+      obtained using the icover routines which are copyright
+      <a href="http://www.research.att.com/~njas/"> R. H. Hardin,
+      N. J. A. Sloane and W. D. Smith, 1994, 2000.</a>  Thus the
+      routine will only work if you have installed icover and if you
+      can successfully run it from the command line in the directory
+      that you started your espresso job.  These routines are serious
+      overkill so if anybody can think of a nice simple algorithm for
+      generating a covering of the sphere let me know.
+    </div>
+  </li>
+
+  <li>  <em class=cmd> protein </em> : typeinfo : <em class=cd> { moltypeid "protein" particletypelist bondtypelist }  </em>
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> particletypelist </em> A list of the
+	particle types for each atom in the protein. (Further details ?)
+	</li>
+	<li> <em class=args> bondtypelist </em> A list of 
+	bondtypeids. (Further details ?)
+	</li>
+      </ul>
+    </div>
+    <div class = synopsis >
+      Create a protein molecule.
+    </div>
+  </li>
+
+  <li>  <em class=cmd> spanlipid </em> : typeinfo : <em class=cd> { moltypeid "protein" particletypelist bondtypelist }  </em>
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> particletypelist </em> A list of the
+	particle types for each atom in the lipid.  Since this is a
+	spanning lipid the first and last elements of this list would
+	typically be head beads.
+	</li>
+	<li> <em class=args> bondtypelist </em> A list of two
+	  bondtypeids with the same meaning as explained above for standard lipids.
+	</li>
+      </ul>
+    </div>
+    <div class = synopsis >
+      Create a lipid which spans across the bilayer.
+    </div>
+  </li>
+
+</ul>
+
+
+
+
+<h3> Programming Guide </h3>
+
+<ul>
+  <li> <h4><a name = newgeom> Adding a create routine </a></h4> To create a routine for
+    setting up a system with a new type of geometry 
+    <em class=cd>mygeom </em>.  Start by creating a new file <em class=cd> mygeom.tcl </em> inside the 
+    <em class=cd>system_generation</em> directory.  
+    The new file should
+    declare a new namespace <em class=cd>mygeom</em> as a sub namespace
+    of <em class=cd>::mbtools::system_generation</em> and export the
+    proceedure <em class=cd>create_mygeom</em>.  Thus your <em class=cd>mygeom.tcl</em> file should begin with the lines;
+    <pre><code>
+	namespace eval ::mbtools::system_generation::mygeom {
+	   namespace export create_mygeom
+	}
+    </pre></code> 
+    
+    Import your new file into the system_generation
+    package by adding a line like the following to the <em>
+    system_generation.tcl </em> file.
+    
+    <pre><code>
+	source [file join [file dirname [info script]] mygeom.tcl]
+    </pre></code>
+
+    You then  need to implement the <em class=cd>create_mygeom</em> proceedure within your new namespace as follows;
+    <div class = body> 
+      <ul class = commands > 
+	<li> <em class = cd> ::mbtools::system_generation::mygeom::create_mygeom { args } </em> </li>
+      </ul>
+    </div>  
+  </li>
+  <li> <h4><a name=newmol> Adding a molecule type </a></h4> To add a new molecule type
+    you need to define a proceedure which determines how the atoms that
+    make up the molecule should be placed.  This proc will live directly
+    in the <em class=cd> ::mbtools::system_generation</em> namespace.
+    Examples can be found in <em class=cd>place.tcl</em>. 
+    
+    <p> In order to register your new molecule type to allow placement
+    in any geometry you need to add a call to it in the function <em
+    class=cd> ::mbtools::system_generation::placemol</em>.  Make sure
+    that all arguments to your <em class=cd>place_mymolecule</em>
+    routine are included in this function call.  </p>
+
+</ul>
+</body>
+
+

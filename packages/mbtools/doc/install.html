@@ -1,0 +1,94 @@
+<head>
+<link href="./docustyle.css" rel="stylesheet" type="text/css"> 
+</head>
+<title> mbtools Installation Guide</title>
+<body>
+
+<h2 class=center > Getting Started</h2>
+
+<div class = body> 
+
+  <p class= med> Since mbtools is provided as part of the espresso
+  molecular dynamics simulation package you will need to download and
+  install Espresso before you can use it.  Espresso can be downloaded
+  free from <a href="www.espresso.mpg.de"> www.espresso.mpg.de </a>.</p>
+
+  <p class=med> 
+
+    Once you have installed espresso you can find mbtools by looking
+    inside the <em class=cd> packages</em> subdirectory.  Inside the
+    <em class=cd>packages/mbtools</em> directory you will see a
+    directory for each of the mbtools subpackages as well as an <em
+    class=cd> examples</em> directory.  All of the examples scripts
+    should work out of the box except those involving colloids which
+    require you to install icover.sh (see documentation for hollowsphere molecule type).  To run the simplebilayer example
+    cd to the examples directory and then type:
+    <pre><code>
+	$ESPRESSO_SOURCE/$PLATFORM/Espresso scripts/main.tcl simplebilayer.tcl
+    </pre></code> 
+
+    The first part of this command is simply the full path to the
+    appropriate espresso executable on your machine.  Obviously you
+    will need to have the <em class=cd>$ESPRESSO_SOURCE</em> and <em
+    class=cd>$PLATFORM</em> environment variables set for it to work.
+    After this executable the relative paths to two tcl scripts are
+    given.  The first of these <em>main.tcl</em> is given as an
+    argument to espresso and is therefore interpreted first by the
+    espresso tcl interpreter.  The second tcl
+    script <em>simplebilayer.tcl</em> is in turn passed as an argument
+    to <em>main.tcl</em>.  
+  </p>
+  <p> Why separate the tcl commands into two files ? </p>
+
+  This is really a matter of preference but if we keep all of the key
+  commands and complex coding in a single file <em>main.tcl</em> and
+  delegate simple parameter setting to a separate file it tends to be
+  much easier to manage large numbers of jobs with regularly changing
+  requirements.  Regardless of your personal preferences, the
+  important point to note is that all of the important commands are
+  contained in <em>main.tcl</em> and you should probably start there
+  to get an understanding for how mbtools works.
+
+  </p>
+  <p> 
+
+
+    Running the simplebilayer example should produce a directory
+    called <em class=cd>simplebilayer</em> which contains the output
+    from your simulation.  To view the results cd to the simplebilayer
+    directory and look at the contents.  The directory contains many
+    files including; 
+  </p>
+  <ul>
+    <li> The configurations generated during warmup : <em
+							 class=cd>warm.*.gz</em></li>
+    <li>pdb files corresponding to warmup
+      configurations : <em class=cd>warm.vmd*.gz</em> </li>      
+    <li> The configurations generated during the main run : <em class=cd>simplebilayer.*.gz</em></li>
+    <li>pdb files corresponding to main run configs : <em class=cd>simplebilayer.vmd*.gz</em> </li>
+    <li>The most recently generated checkpoint file : <em class=cd>checkpoint.latest.gz</em> </li>
+    <li>A directory containing the second most recent checkpoint file : <em class=cd>checkpoint_bak</em> </li>
+    <li>A file containing the topology of the system : <em class=cd>simplebilayer.top</em> </li>
+    <li>The original parameter file with which you ran the simulation : <em class=cd>simplebilayer.tcl</em> </li>
+    <li>A original parameter file with which you ran the simulation : <em class=cd>simplebilayer.tcl</em> </li>
+    <li>Files containing analysis output for example : <em class=cd>time_vs_boxl_tmp</em> </li>
+    <li>Force and energy tables : <em class=cd>*.tab</em> </li>
+    <li>VMD script for visualising the warmup : <em class=cd>warm_animation.script</em> </li>
+    <li>VMD script for visualising the main trajectory : <em class=cd>vmd_animation.script</em> </li>
+  </ul>
+  <p class=med> To visualise your results using the vmd scripts you
+  need to make sure that you have vmd installed properly and that you
+  have the special vmd procedures used by the espresso team (ie
+  support for the loadseries command). Then you can visualise by
+  typing; </p>
+  <pre><code>
+      vmd -e vmd_animation.script
+  </pre></code>
+
+</div>
+
+    
+
+</body>
+
+

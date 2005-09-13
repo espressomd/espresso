@@ -1,0 +1,76 @@
+<head>
+<link href="./docustyle.css" rel="stylesheet" type="text/css"> 
+</head>
+<title> the main.tcl file</title>
+<body>
+
+<h2 class=center > The main.tcl file</h2>
+
+<div class = body> 
+
+  <p class= med> The main.tcl file provided in the examples directory
+  is a relatively complete script written using mbtools.  It is
+  designed to run all of the examples provided but no more.  No doubt
+  you will need to extend it for your own purposes.</p>
+
+  <h3> Variables used by main.tcl </h3>
+  <div class = synopsis> main.tcl expects the user to set various
+    parameters in a parameters.tcl file (eg simplebilayer.tcl).  Some
+    of these parameters have defaults and generally don't need to be
+    worried about except for specific cases.  In the following list
+    variables that have no default and therefore must be set in the
+    parameter file are noted with an asterisk.
+  </div>
+
+  <ul class = arguments > 
+    <li> <em class=args> thermo [Langevin] </em>The type of thermostat to be used. Set to "DPD" for a dpd thermostat. Any other value gives a langevin </li>
+    <li> <em class=args> dpd_gamma </em>Required if you set the thermo to "DPD"</li>
+    <li> <em class=args> dpd_r_cut </em>Required if you set the thermo to "DPD"</li>
+    <li> <em class=args> warmup_temp [$systemtemp] </em>The temperature at which the warmup is performed.The default behaviour is to use the system temperature  </li>
+    <li> <em class=args> warmsteps [100] </em>Number of integrate steps per warmup cycle  </li>
+    <li> <em class=args> warmtimes [20] </em>Number of calls to integrate over which the warmup occurs  </li>
+    <li> <em class=args> free_warmsteps [0] </em>Warmup steps to be used for the warmup that occurs after particles are freed of any temporary constraints.  </li>
+    <li> <em class=args> free_warmtimes [0] </em>Warmup times to be used for the warmup that occurs after particles are freed of any temporary constraints.  </li>
+    <li> <em class=args> npt [off] </em>Whether to use the constant pressure barostat  </li>
+    <li> <em class=args> p_ext </em>The pressure you want to simulate at. Required if npt is set to "on"</li>
+    <li> <em class=args> piston_mass </em>box mass. Required if npt is set to "on"</li>
+    <li> <em class=args> gamma_0 </em>Required if npt is "on". Usually set to 1 as for langevin gamma</li>
+    <li> <em class=args> gamma_v </em>Required if npt is "on". Box friction</li>
+
+    <li> <em class=args> use_vmd [offline] </em>vmd mode  </li>
+    <li> <em class=args> mgrid [8] </em> The number of meshpoints per side for dividing the bilayer plane into a grid  </li>
+    <li> <em class=args> stray_cut_off [1000.0] </em> Distance of the end tail bead from the bilayer midplane beyond which a lipid is deemed to have strayed from the membrane bulk.</li>
+    <li> <em class=args> *systemtemp </em> The temperature of the simulation during the  main run</li>
+    <li> <em class=args> *outputdir</em> Directory for output </li>
+    <li> <em class=args> *tabledir</em> Directory where forcetables are kept </li>
+    <li> <em class=args> *ident</em>a name for the simulation </li>
+    <li> <em class=args> *topofile</em>the name of the file where the topology is written. Usually $ident.top </li>
+    <li> <em class=args> *tablenames</em> A list of forcetable names to be used </li>
+    <li> <em class=args> *setbox_l</em> Box dimensions </li>
+    <li> <em class=args> *bonded_parms</em> A complete list of the bonded interactions required </li>
+    <li> <em class=args> *nb_interactions</em> A complete list of the non-bonded interactions required </li>
+    <li> <em class=args> *system_specs</em> A list of system specifications (see docu for the ::mbtools::system_generation::setup_system command) </li>
+    <li> <em class=args> *moltypes</em> A list of molecule types (see docu for ::mbtools::system_generation) </li>
+    <li> <em class=args> *warm_time_step</em> timestep to be used during warmup integration</li>
+    <li> <em class=args> *main_time_step</em> timestep for the main integration run</li>
+    <li> <em class=args> *verlet_skin</em>skin used for verlet nesting list criterion </li>
+    <li> <em class=args> *langevin_gamma</em>langevin friction term </li>
+    <li> <em class=args> *int_n_times</em>number of times to do main integration </li>
+    <li> <em class=args> *int_steps</em>number of steps in each main integration </li>
+    <li> <em class=args> *analysis_write_frequency</em>How often to calculate the analysis </li>
+    <li> <em class=args> *write_frequency</em>How often to print out configurations </li>
+
+
+    <li> <em class=args> vmdcommands </em>a list of additional lines of commands to be written to the vmd_animation.script file </li>
+
+  </ul>
+
+
+
+</div>
+
+    
+
+</body>
+
+

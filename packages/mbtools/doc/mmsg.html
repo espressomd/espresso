@@ -1,0 +1,125 @@
+<head>
+<link href="./docustyle.css" rel="stylesheet" type="text/css"> 
+</head>
+<title> mmsg Documentation</title>
+<body>
+
+<h2 class=center > mmsg </h2>
+
+<div class = overview> 
+  mmsg is designed to provide a more controlled way of printing messages than the simple <em class=cd>puts</em> command of tcl.It has facilities for formatting standard warning and error messages as well as an <a href="#control">ability to turn on or off messages from particular namespaces<a>. 
+</div>
+
+
+<h3><a name=basic>Basic Commands</a></h3>
+
+<div class = overview>
+  The following commands represent the standard interface for the <em class=cd>mmsg</em>
+  package. For consistency one should use these instead of a bare puts
+  to standard out. <em class=cd> mbtools</em> makes extensive use of these commands.
+</div>
+
+<ul class = commands >
+  <li>  <em class=cmd> ::mmsg::send </em> : <em class=args>  [namespace] [string] { [newline] } </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> namespace </em>A namespace. Typically this should be the current namespace which one can get via <em class=cd>namespace current</em></li>
+	<li> <em class=args> string </em> The message you want printed</li>
+	<li> <em class=args>  newline [yes]  </em> Set this to anything other than "yes" and no carriage return will be used after the message  </li>
+      </ul>
+    </div>
+    <div class=synopsis>
+      The mmsg equivalent of puts.  Designed for printing of simple status or progress messages.
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mmsg::err </em> : <em class=args>  [namespace] [string] { [newline] } </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> namespace </em>A namespace. Typically this should be the current namespace which one can get via <em class=cd>namespace current</em></li>
+	<li> <em class=args> string </em> The message you want printed</li>
+	<li> <em class=args> { newline } </em> Set this to anything other than "yes" and no carriage return will be used after the message  </li>
+      </ul>
+    </div>
+    <div class=synopsis>
+      Prints error messages and causes program to exit.
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mmsg::warn </em> : <em class=args>  [namespace] [string] { [newline] } </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> namespace </em>A namespace. Typically this should be the current namespace which one can get via <em class=cd>namespace current</em></li>
+	<li> <em class=args> string </em> The message you want printed</li>
+	<li> <em class=args> { newline } </em> Set this to anything other than "yes" and no carriage return will be used after the message  </li>
+      </ul>
+    </div>
+    <div class=synopsis>
+      Prints warning messages
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mmsg::debug </em> : <em class=args>  [namespace] [string] { [newline] } </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args> namespace </em>A namespace. Typically this should be the current namespace which one can get via <em class=cd>namespace current</em></li>
+	<li> <em class=args> string </em> The message you want printed</li>
+	<li> <em class=args> { newline } </em> Set this to anything other than "yes" and no carriage return will be used after the message  </li>
+      </ul>
+    </div>
+    <div class=synopsis>
+      Prints debug messages
+    </div>
+  </li>
+</ul>
+
+
+
+
+<h3><a name=control>Control commands</a></h3>
+
+<div class = overview>
+  mmsg does several checks before it decides to print a message.  For any given message type it checks if that message type is allowed.  It also checks to see if the namespace given as an argument is in the allowable namespaces list. The default behaviour is to print from the main <em class=cd>mbtools</em> namespaces and the global namespace ie; 
+  <code><pre> 
+      { :: ::mbtools::system_generation ::mbtools::utils ::mbtools::analysis }
+  </code></pre>
+  Note that children of these namespaces must be explicitly enabled. 
+  All message types except <em class=cd>debug</em> are also enabled by default.
+
+  The following commands allow this default behaviour to be changed.  
+</div>
+
+<ul class = commands >
+  <li>  <em class=cmd> ::mmsg::setnamespaces </em> : <em class=args>  namespacelist </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args>  namespacelist  </em>   A list of all namespaces from which messages are to be printed </li>
+      </ul>
+    </div>
+    <div class=synopsis>
+      Allows control over which namespaces messages can be printed from. 
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mmsg::enable </em> : <em class=args>  type </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args>  type  </em>   A string indicating a single message type to enable. Allowable values are "err", "debug", "send" and "warn" </li>
+      </ul>
+    </div>
+    <div class=synopsis>
+      Allows particular message types to be enabled: For example one could enable debug output with;
+      <pre><code> mmsg::enable "debug" </pre></code>
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mmsg::disable </em> : <em class=args>  type </em>
+    <div class = body >
+      <ul class = arguments > 
+	<li> <em class=args>  type  </em>   A string indicating a single message type to disable. Allowable values are "err", "debug", "send" and "warn" </li>
+      </ul>
+    </div>
+    <div class=synopsis>
+      Allows particular message types to be disabled: For example one could disable warning output with;
+      <pre><code> mmsg::enable "warn" </pre><code>
+    </div>
+  </li>
+</ul>
+</body>
+
+
