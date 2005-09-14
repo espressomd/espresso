@@ -2,23 +2,24 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6h (Seska)                                                                      *
+* v1.9.6i (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6h -
+- v1.9.6i -
 -----------
 
-(h) August 17th, 2005.
-(g) August 16th, 2005.
-(f) August 15th, 2005.
-(e) August  9th, 2005.
-(d) August  4th, 2005.
-(c) August  2nd, 2005.
-(b) July   29th, 2005.
-(a) July   18th, 2005.
+(i) September 13th, 2005.
+(h) August    17th, 2005.
+(g) August    16th, 2005.
+(f) August    15th, 2005.
+(e) August     9th, 2005.
+(d) August     4th, 2005.
+(c) August     2nd, 2005.
+(b) July      29th, 2005.
+(a) July      18th, 2005.
 
 New Features:
 (h) binning now allows to also print out the counts.
@@ -43,6 +44,7 @@ New Features:
     see 'lb.c' for an example.
 
 Changes:
+(i) mbtools and mmsg packages much revised and improved. Proper documentation written
 (g) Added new optional parameters folded and nofoldlist. If folded is set, folded
     coordinates are passed on to vmd. nofoldlist is a list of types that should not be
     folded if folded is set to folded.
@@ -50,6 +52,8 @@ Changes:
 (e) writepov now checks whether the output file already exists
 
 Bugfixes:
+(i) Fixed a bug which prevented espresso from reading checkpoints when quoted strings
+    within lists were present
 (f) Missing  variable for call to read_checkpoint_in for the case where  = 0 and where 
     is false
 (e) the cutoff calculation for the complex sum was too high, but missing
