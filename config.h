@@ -139,7 +139,7 @@
 #include <archconfig.h>
 
 #define PARTIAL_PERIODIC
-#define ELECTROSTATICS
+/* #define ELECTROSTATICS */
 /* #define ROTATION */
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
@@ -149,7 +149,7 @@
 /* #define COMFIXED */
 /* #define BOND_CONSTRAINT */
 
-/* #define TABULATED */
+#define TABULATED 
 #define LENNARD_JONES
 /* #define LJ_WARN_WHEN_CLOSE */
 /* #define MORSE */
@@ -162,8 +162,8 @@
 /* #define BOND_ANGLE_COSSQUARE */
 
 /* #define NEMD */
-/* #define NPT */
-/* #define DPD */
+#define NPT 
+#define DPD 
 /* #define LB */
 
 /************************************************/

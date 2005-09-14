@@ -48,6 +48,36 @@ int zdir = -1;
     all lipids are counted*/
 double stray_cut_off = 10000000.0;
 
+
+void fold_all ( void ) {
+  int i ;
+  for (i = 0 ; i < n_total_particles ; i++) {
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,xdir);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,ydir);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,zdir);
+  }
+}
+
+/* Simple helper function for calculating the reference
+   zposition. Usually the bilayer midplane. Also fold the
+   particles. Not exported */
+double calc_zref ( int tmpzdir ) {
+  float zref;
+  int i;
+
+  /* Fold all the particles */
+  fold_all ();
+
+ /* Find the mean z position of folded particles*/
+  zref = 0;
+  for (i = 0 ; i < n_total_particles ; i++) {
+    zref += partCfg[i].r.p[zdir];
+  }
+  zref = zref/(double)(n_total_particles);
+  return zref;
+}
+
+
 /** This function takes a given grid supplied by the user and
     determines the correct orientation in which to do the fourier
     transform.  In this regard one of the grid dimensions must be 0
@@ -120,11 +150,12 @@ void map_to_2dgrid() {
 
 /**
    This routine calculates the orientational order parameter for a
-   lipid bilayer 
+   lipid bilayer.  
 */
 int orient_order(double* result, double* stored_dirs)
 {
   double dir[3];
+  double refdir[3] = {0,0,1};
   double sumdir[3] = {0,0,0};
   double zref;
   int bilayer_cnt;
@@ -140,7 +171,7 @@ int orient_order(double* result, double* stored_dirs)
   *result = 0;
 
 
-
+  // Check to see if the grid has been set and if not then interpret
   if ( xdir + ydir + zdir == -3 ) {
     tmpzdir = 2;
   } else { 
@@ -156,18 +187,18 @@ int orient_order(double* result, double* stored_dirs)
     return TCL_ERROR;
   }
 
+  /* Calculate the reference z position as its mean.*/
+  zref = calc_zref( tmpzdir );
+ 
 
-  /* Find the mean z position and fold x y coordinates but not z*/
-  zref = 0;
-  for (i = 0 ; i < n_total_particles ; i++) {
-    zref += partCfg[i].r.p[tmpzdir];
-  }
-  zref = zref/(double)(n_total_particles);
-  
+  /* Calculate the orientation of all the lipids in turn and include
+   only UP or DOWN lipids in a calculation of the overall orientation
+   direction of the bilayer .. ie the reference vector from which we
+   can calculate the orientational order. */
 
   for ( i = 0 ; i < n_molecules ; i++) {
     atom = topology[i].part.e[0];
-    l_orient.e[i] = lipid_orientation(atom,partCfg,zref,dir);
+    l_orient.e[i] = lipid_orientation(atom,partCfg,zref,dir,refdir);
     stored_dirs[i*3] = dir[0];
     stored_dirs[i*3+1] = dir[1];
     stored_dirs[i*3+2] = dir[2];
@@ -186,21 +217,17 @@ int orient_order(double* result, double* stored_dirs)
     }
   }
 
-
+  /* Normalise the bilayer normal vector */
   len = 0.0;
   for ( i = 0 ; i < 3 ; i++) {
     sumdir[i] = sumdir[i]/(double)(bilayer_cnt);
     len += sumdir[i]*sumdir[i];
   }
-
-  //  printf("<n>: ");
   for ( i = 0 ; i < 3 ; i++) {
     sumdir[i] = sumdir[i]/sqrt(len);
-    //    printf("%f ",sumdir[i]); 
   }
-  //  printf("\n");
-  //  fflush(stdout);
 
+  /* Calculate the orientational order */
   for ( i = 0 ; i < n_molecules ; i++ ) {
     dir[0] = stored_dirs[i*3];
     dir[1] = stored_dirs[i*3+1];
@@ -213,14 +240,12 @@ int orient_order(double* result, double* stored_dirs)
 
   }
 
-
+  
   realloc_intlist(&l_orient, 0);
 
   *result = *result/(double)(bilayer_cnt);
   return TCL_OK;
 }
-
-
 
 
 
@@ -230,88 +255,61 @@ int orient_order(double* result, double* stored_dirs)
 
     \param id The particle identifier
     \param partCfg An array of sorted particles
-    \param zref The average z position of all particles
+
+    \param zref The average z position of all particles. This is used
+    to check for stray lipids
+
     \param director director
+    \param refdir is a vector indicating the direction indicating
+    up. This is usually the zaxis. If it is not the z axis then lipids
+    will not be returned as stray.
  */
-int lipid_orientation( int id, Particle* partCfg , double zref, double director[3]) {
+int lipid_orientation( int id, Particle* partCfg , double zref, double director[3], double refdir[3]) {
   int mol_size, head_id, tail_id, mol_id, mol_type;
-  int i, tmpzdir;
+  int i;
+  int tmpxdir,tmpydir,tmpzdir;
   double distance;
-  double fdistance;
   double tailz;
   double len;
+  double proj;
 
-  if ( xdir + ydir + zdir == -3 ) {
-    tmpzdir = 2;
-  } else { 
+  if ( zdir + ydir + zdir != -3 ) {
+    tmpxdir = xdir;
+    tmpydir = ydir;
     tmpzdir = zdir;
-  };
+  } else {
+    tmpxdir = 0;
+    tmpydir = 1;
+    tmpzdir = 2;
+  }
 
 
-  /* check molecule information */
+  /* check molecule information exists */
   if ( n_molecules < 0 ) return (TCL_ERROR);
+
+  /* Get basic molecule parameters */
   mol_id = partCfg[id].p.mol_id ;
   mol_size = topology[mol_id].part.n;
   mol_type = topology[mol_id].type;
 
-  /*
-    printf("mol_type %d \n", mol_type);  
-    printf("ids: %d %d %d N: %d parts: %d %d %d \n",id,partCfg[id].p.identity,mol_id,topology[mol_id].part.n,topology[mol_id].part.e[0],topology[mol_id].part.e[1],topology[mol_id].part.e[2]);
-  fflush(stdout);
-  */
-
-  /* Search the molecule for head and tail beads. Ordinarily we should
-     be able to assume that the first bead in every molecule is the
-     head bead BUT for backwards compatibility with some older data we
-     need to check for any bead with atom type 0 and assume that such
-     atoms are head beads.  */
-
-  head_id = 0 ;
-  tail_id = 0;
-  for ( i = 0 ; i < mol_size ; i++ ) {
-    /*    
-	  printf("type: %d %d \n", partCfg[topology[mol_id].part.e[i]].p.type, LIPID_HEAD_TYPE);
-	  fflush(stdout);
-    */
-    if ( partCfg[topology[mol_id].part.e[i]].p.type == LIPID_HEAD_TYPE ) {
-      head_id = topology[mol_id].part.e[i];
-      if ( i == 0 ) { 
-	tail_id = topology[mol_id].part.e[mol_size-1]; 
-      } else {
-	tail_id = topology[mol_id].part.e[0];
-      }
-      /*      printf("head: %d, tail %d \n", head_id, tail_id); */
-      break;
-    }
-
-  }
-
+ 
   /* If the head and tail id's were not found above then assume the
      head atom is the first and tail is the last in the molecule */
-  if ( head_id == 0 && tail_id == 0 ) {
-    head_id = topology[mol_id].part.e[0];
-    tail_id = topology[mol_id].part.e[mol_size -1];
+  head_id = topology[mol_id].part.e[0];
+  tail_id = topology[mol_id].part.e[mol_size -1];
+
+  /* Check for stray lipids only if the system is a flat bilayer and the director is in the zdirection */
+  if ( ( refdir[tmpxdir] == 0.0 ) && ( refdir[tmpydir] == 0 ) ) {
+    tailz = partCfg[tail_id].r.p[tmpzdir];
+    distance = sqrt(pow((tailz - zref),2));
+    /* Check if the lipid is a stray based on this distance */
+    if ( distance > stray_cut_off ) {
+      return REAL_LIPID_STRAY;
+    }
   }
 
-
-  /*
-  if ( mol_type == 0 ) { 
-    head_id = topology[mol_id].part.e[mol_size-1];
-    tail_id = topology[mol_id].part.e[0];
-    } else {
-    tail_id = topology[mol_id].part.e[mol_size-1];
-    head_id = topology[mol_id].part.e[0];
-    }
-  */
-
-  tailz = partCfg[tail_id].r.p[tmpzdir];
-  distance = sqrt(pow((tailz - zref),2));
-  /*  printf("zdir: %d \n", zdir);
-      printf("head pos %f : tail pos %f \n", partCfg[head_id].r.p[tmpzdir], partCfg[tail_id].r.p[tmpzdir] );
-      printf("dist %f : vect %f \n", distance,(partCfg[head_id].r.p[tmpzdir] - partCfg[tail_id].r.p[tmpzdir]) );
-      fflush(stdout);
-  */
-
+  /* Calculate a normalised vector called director that is in the
+     direction of the lipid from tail to head */
   len = 0;
   for ( i = 0 ; i < 3 ; i++ ) {
     director[i] = (partCfg[head_id].r.p[i] - 
@@ -323,35 +321,25 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
   }
   
 
-  fdistance = distance - sqrt(pow(floor(tailz/box_l[2])*box_l[2],2));
-  if ( fdistance > stray_cut_off ) {
-    return REAL_LIPID_STRAY;
-  }
-
-  if ( (partCfg[head_id].r.p[tmpzdir] - partCfg[tail_id].r.p[tmpzdir]) > 0.0 ) {
+  proj = director[0]*refdir[0] + director[1]*refdir[1] + director[2]*refdir[2];
+  if ( proj > 0.0 ) {
     /* Lipid is oriented up */
-    if (  distance  > stray_cut_off ) {
-      return LIPID_STRAY;
-    } else {
-      return LIPID_UP;
-    }
+    return LIPID_UP;
+  } else {
+    return LIPID_DOWN;
   }
-  /* else */
-  if (  distance  > stray_cut_off )
-    return LIPID_STRAY;
-  /* else */
-  return LIPID_DOWN;
 }
 
-
+/* Get a complete list of the orientations of every lipid assuming a
+   bilayer structure.  Requires grid*/
 int get_lipid_orients(IntList* l_orient) {
-  int i , j,gi,gj, atom;
-  double shift,zref, zreflocal;  
+  int i,gi,gj, atom;
+  double zreflocal,zref;  
   double dir[3];
+  double refdir[3] = {0,0,1};
   double grid_size[2];
 
   double* height_grid;
-  int* grid_parts;
 
   if ( xdir + ydir + zdir == -3 || mode_grid_3d[xdir] <= 0 || mode_grid_3d[ydir] <= 0 ) {
     char *errtxt = runtime_error(128);
@@ -361,13 +349,7 @@ int get_lipid_orients(IntList* l_orient) {
 
   /* Allocate memory for height grid arrays and initialize these arrays */
   height_grid = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
-  grid_parts = malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
-  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
-    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
-      height_grid[j+i*mode_grid_3d[xdir]] = 0;
-      grid_parts[j+i*mode_grid_3d[xdir]] = 0;
-    }
-  }
+
 
   /* Calculate physical size of grid mesh */
   grid_size[xdir] = box_l[xdir]/(double)mode_grid_3d[xdir];
@@ -380,62 +362,26 @@ int get_lipid_orients(IntList* l_orient) {
   if (!sortPartCfg()) {
     fprintf(stderr,"%d,could not sort partCfg \n",this_node);
     return -1;
-    }
+  }
   
-
-  /* Find the mean z position of unfolded coordinates */ 
-  zref = 0;
-  for (i = 0 ; i < n_total_particles ; i++) {
-    zref += partCfg[i].r.p[zdir];
-  }
-  zref = zref/(double)(n_total_particles);
-  
-  /* Calculate shift factor */
-  shift = zref - box_l[zdir]/2.0;
-
-  /* Shift bilayer to center of box */
-  for (i = 0 ; i < n_total_particles ; i++) {
-    partCfg[i].r.p[zdir] -= shift;
+  if ( !calc_height_grid(height_grid) ) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
+    return -1;
   }
 
-  /* Fold particles and find the mean z position of shifted
-     coordinates */ 
-  zref = 0;
-  for (i = 0 ; i < n_total_particles ; i++) {
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,xdir);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,ydir);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,zdir);
-    zref += partCfg[i].r.p[zdir];
-  }
-  zref = zref/(double)(n_total_particles);
+  zref = calc_zref( zdir );
 
-
- /* Calculate an initial height function of all particles */
-  for (i = 0 ; i < n_total_particles ; i++) {
-    gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
-    gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
-    height_grid[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir];
-    grid_parts[gj + gi*mode_grid_3d[xdir]] += 1;
-  }
-
-
-  /* Normalise the initial height function */
-  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
-    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
-      if ( grid_parts[j+i*mode_grid_3d[xdir]] > 0 ) {
-	height_grid[j+i*mode_grid_3d[xdir]] = height_grid[j+i*mode_grid_3d[xdir]]/(double)(grid_parts[j+i*mode_grid_3d[xdir]]);
-      } else {
-	height_grid[j+i*mode_grid_3d[xdir]] = zref;
-      }
-    }
-  }
   for ( i = 0 ; i < n_molecules ; i++) {
     atom = topology[i].part.e[0];
     gi = floor( partCfg[atom].r.p[xdir]/grid_size[xdir] );
     gj = floor( partCfg[atom].r.p[ydir]/grid_size[ydir] );
-    zreflocal = height_grid[gj+gi*mode_grid_3d[xdir]];
-    l_orient->e[i] = lipid_orientation(atom,partCfg,zreflocal,dir);
+    zreflocal = height_grid[gj+gi*mode_grid_3d[xdir]] + zref;
+    l_orient->e[i] = lipid_orientation(atom,partCfg,zreflocal,dir,refdir);
   }
+
+  free(height_grid);
+
   return 1;
 }
 
@@ -451,7 +397,6 @@ int get_lipid_orients(IntList* l_orient) {
     \li The height function is fourier transformed using the fftw library.
 */
 int modes2d(fftw_complex* modes) {
-  int i, j;
 #ifdef USEFFTW3
   /* All these variables need to be static so that the fftw3 plan can
      be initialised and reused */
@@ -503,12 +448,16 @@ int modes2d(fftw_complex* modes) {
     
   }
 
-  /* Initialize the height grid */
-  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
-    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
-      height_grid[j+i*mode_grid_3d[xdir]] = 0;
-    }
+  /* Update particles */
+  updatePartCfg(WITHOUT_BONDS);
+  //Make sure particles are sorted
+  if (!sortPartCfg()) {
+    fprintf(stderr,"%d,could not sort partCfg \n",this_node);
+    return -1;
   }
+  
+  double zref;
+  zref = calc_zref( zdir );
 
   if ( !calc_height_grid(height_grid) ) {
     char *errtxt = runtime_error(128);
@@ -534,44 +483,36 @@ int modes2d(fftw_complex* modes) {
 
 
 /** This routine calculates density profiles for given bead types as a
-    function of height relative to the bilayer midplane.
+    function of height relative to the bilayer midplane where the
+    bilayer is assumed to wrap around a sphere of radius r and center
+    cx,cy,cz.
 
-    \li First the height function is calculated
-
-    \li The height value of each bead is then calculated relative to
-    the overall height function and the population of the relevant bin
+    \li The radius value of each bead is then calculated relative to
+    the colloid radius and the population of the relevant bin
     is increased.
-
 **/
-int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *density_profile, int usegrid ) {
-  int i,j, gi,gj;
-  double* tmp_height_grid, zref,zreflocal;
+int bilayer_density_profile_sphere (IntList *beadids, double rrange , DoubleList *density_profile, double radius, double center[3]) {
+  int i,j;
   int thisbin,nbins;
-  double grid_size[2];
   double binwidth;
   int nbeadtypes,l_orient;
-  double relativeheight;
-  double direction[3];  
-
+  double relativeradius;
   nbins = density_profile[0].max;
   nbeadtypes=beadids->max;
+  double rvec[3];
+  double direction[3]; 
 
-  /* 
-     Check to see that there is a mode grid to work with
-  */
-  if ( xdir + ydir + zdir == -3 ) {
+  binwidth = 2*rrange/(double)nbins;
+
+
+  /* Update particles */
+  updatePartCfg(WITHOUT_BONDS);
+  //Make sure particles are sorted
+  if (!sortPartCfg()) {
     char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{092 attempt to perform mode analysis with uninitialized grid} ");
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
     return -1;
   }
-
-  tmp_height_grid = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
-  binwidth = hrange*2.0/(double)(nbins);
-
-  /* Calculate physical size of grid mesh */
-  grid_size[xdir] = box_l[xdir]/(double)mode_grid_3d[xdir];
-  grid_size[ydir] = box_l[ydir]/(double)mode_grid_3d[ydir];
-
 
   if ( density_profile == NULL ) {
     char *errtxt = runtime_error(128);
@@ -579,51 +520,27 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
     return -1;
   }
 
-  /* Initialize the height grid */
-  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
-    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
-      tmp_height_grid[j+i*mode_grid_3d[xdir]] = 0;
-    }
-  }
+  // Do this to fold the particles
+  fold_all( );
 
-  /* Calculate the height grid which also ensures that particle config is updated */
-  if ( !calc_height_grid(tmp_height_grid) ) {
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
-    return -1;
-  }
 
-  /* Since height grid unfolds the particles we have to refold
-     them. We also need to add the average height of the entire
-     bilayer because the height function is calculated relative to
-     this */
-  zref = 0;
-  for (i = 0 ; i < n_total_particles ; i++) {
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,xdir);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,ydir);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,zdir);
-    zref += partCfg[i].r.p[zdir];
-  }
-  zref = zref/(double)(n_total_particles);
-
-  for (i = 0 ; i < n_total_particles ; i++) {
+   for (i = 0 ; i < n_total_particles ; i++) {
     for ( j = 0 ; j < nbeadtypes ; j++ ) {
       if ( beadids->e[j] == partCfg[i].p.type ) {
-	/* Where are we on the height grid */
-	gi = (int)(floor( partCfg[i].r.p[xdir]/grid_size[xdir] ));
-	gj = (int)(floor( partCfg[i].r.p[ydir]/grid_size[ydir] ));
-	if ( usegrid ) {
-	  zreflocal = tmp_height_grid[gj + gi*mode_grid_3d[xdir]] + zref;
-	} else {
-	  zreflocal = zref;
-	}
+	/* What is the relative height compared to the grid */
+	get_mi_vector(rvec,partCfg[i].r.p,center);
+	relativeradius = sqrt(sqrlen(rvec)) - radius;
 
-	/* What is the relative height to the grid */
-	relativeheight = partCfg[i].r.p[zdir] - zreflocal;								
 	/* If the particle is within our zrange then add it to the profile */
-	if ( (relativeheight*relativeheight - hrange*hrange) <= 0 ) {
-	  thisbin = (int)(floor((relativeheight + hrange)/binwidth));
-	  l_orient = lipid_orientation(i,partCfg,zreflocal,direction);
+	if ( ( -rrange < relativeradius) && ( relativeradius < rrange) ) {
+	  thisbin = (int)(floor((relativeradius+rrange)/binwidth));
+	  if ( thisbin < 0 || thisbin >= density_profile[j].max ) {
+	        char *errtxt = runtime_error(128);
+		ERROR_SPRINTF(errtxt,"{095 bin is outside range } ");
+		return -1;
+	  }
+
+	  l_orient = lipid_orientation(i,partCfg,0.0,direction,rvec);
 	  /* Distinguish between lipids that are in the top and bottom layers */
 	  if ( l_orient == LIPID_UP ) {
 	    density_profile[j].e[thisbin] += 1.0;
@@ -633,6 +550,113 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
 	  }
 	}
 	    
+      }
+    }
+  }
+  /* Normalize the density profile */
+  double binvolume;
+  double piconst = (4.0*3.141592)/(3.0);
+  double rs = radius - rrange;
+  for ( i = 0 ; i < 2*nbeadtypes ; i++ ) {
+    for ( j = 0 ; j < nbins ; j++ ) {
+
+      double innerr = j*binwidth+rs;
+      double outerr = (j+1)*binwidth + rs;
+      binvolume = piconst*(outerr*outerr*outerr - innerr*innerr*innerr);
+      density_profile[i].e[j] = density_profile[i].e[j]/binvolume;
+    }
+  }
+
+   return 1;
+
+}
+
+
+/** This routine calculates density profiles for given bead types as a
+    function of height relative to the bilayer midplane.
+
+    \li First the height function is calculated
+
+    \li The height value of each bead is then calculated relative to
+    the overall height function and the population of the relevant bin
+    is increased.
+
+**/
+int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *density_profile, int usegrid) {
+  int i,j, gi,gj;
+  double* tmp_height_grid, zref,zreflocal;
+  int thisbin,nbins;
+  double grid_size[2];
+  double binwidth;
+  int nbeadtypes,l_orient;
+  double relativeheight;
+  double direction[3];  
+  double refdir[3] = {0,0,1};
+  nbins = density_profile[0].max;
+  nbeadtypes=beadids->max;
+  int tmpzdir;
+
+  /*        Check to see that there is a mode grid to work with    */
+  if ( xdir + ydir + zdir == -3 ) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{092 attempt to perform mode analysis with uninitialized grid} ");
+    return -1;
+  }
+  
+  /* Allocate memory for the grid if we are going to need it */
+  tmp_height_grid = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
+  /* Calculate physical size of grid mesh */
+  grid_size[xdir] = box_l[xdir]/(double)mode_grid_3d[xdir];
+  grid_size[ydir] = box_l[ydir]/(double)mode_grid_3d[ydir];
+
+  
+  /* Calculate the height grid which also ensures that particle config is updated */
+  if ( !calc_height_grid(tmp_height_grid) ) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
+    return -1;
+  } 
+  
+  tmpzdir = zdir;
+
+
+  binwidth = hrange*2.0/(double)(nbins);
+
+  if ( density_profile == NULL ) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{095 density_profile not initialized in calc_bilayer_density_profile } ");
+    return -1;
+  }
+
+  zref = calc_zref( tmpzdir );
+
+  for (i = 0 ; i < n_total_particles ; i++) {
+    for ( j = 0 ; j < nbeadtypes ; j++ ) {
+      if ( beadids->e[j] == partCfg[i].p.type ) {
+
+	if ( usegrid ) {
+	  /* Where are we on the height grid */
+	  gi = (int)(floor( partCfg[i].r.p[xdir]/grid_size[xdir] ));
+	  gj = (int)(floor( partCfg[i].r.p[ydir]/grid_size[ydir] ));
+	  zreflocal = tmp_height_grid[gj + gi*mode_grid_3d[xdir]] + zref;
+	} else {
+	  zreflocal = zref;
+	}
+
+	/* What is the relative height compared to the grid */
+	relativeheight = partCfg[i].r.p[tmpzdir] - zreflocal;							       
+	/* If the particle is within our zrange then add it to the profile */
+	if ( (relativeheight*relativeheight - hrange*hrange) <= 0 ) {
+	  thisbin = (int)(floor((relativeheight + hrange)/binwidth));
+	  l_orient = lipid_orientation(i,partCfg,zreflocal,direction,refdir);
+	  /* Distinguish between lipids that are in the top and bottom layers */
+	  if ( l_orient == LIPID_UP ) {
+	    density_profile[j].e[thisbin] += 1.0;
+	  }
+	  if ( l_orient == LIPID_DOWN ) {
+	    density_profile[2*nbeadtypes-j-1].e[thisbin] += 1.0;	    
+	  }
+	}	    
       }
     }
   }
@@ -646,8 +670,8 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
   }
 
 
-
   free(tmp_height_grid);
+
   return 1;
 }
 
@@ -666,11 +690,14 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
     surrounding cells is substituted.
 */
 
+
+
 int calc_height_grid ( double* height_grid ) {
   STAT_TRACE(fprintf(stderr,"%d,calculating height grid \n",this_node);)
   int i,j, gi, gj;
   double grid_size[2];
   double direction[3];  
+  double refdir[3] = {0,0,1};
   double* height_grid_up;
   double* height_grid_down;
   int* grid_parts;
@@ -682,16 +709,25 @@ int calc_height_grid ( double* height_grid ) {
   int nstray;
   int nrealstray;
   int l_orient;
-  double norm, shift;
+  double norm;
   int xi, yi;
   double meanval;
   int nonzerocnt, gapcnt;
 
+  if ( xdir + ydir + zdir == -3 ) {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt,"{092 attempt to calculate height grid with uninitialized grid} ");
+      return -1;
+  }
+  
+
   if ( height_grid == NULL ) {
     char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{093 you must initialize the height grid first} ");
+    ERROR_SPRINTF(errtxt,"{093 you must allocate memory for the height grid first} ");
     return -1;
   }
+
+
 
   /* Allocate memory for height grid arrays and initialize these arrays */
 
@@ -718,74 +754,53 @@ int calc_height_grid ( double* height_grid ) {
   /* Update particles */
   updatePartCfg(WITHOUT_BONDS);
   //Make sure particles are sorted
-    if (!sortPartCfg()) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
-      return -1;
-    }
+  if (!sortPartCfg()) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
+    return -1;
+  }
 
   
 
-    /* Find the mean z position of unfolded coordinates */ 
-    zref = 0;
-    for (i = 0 ; i < n_total_particles ; i++) {
-      zref += partCfg[i].r.p[zdir];
-    }
-    zref = zref/(double)(n_total_particles);
+  /* Find the mean z position of folded coordinates*/ 
+  zref = calc_zref( zdir );
     
-    /* Calculate shift factor */
-    shift = zref - box_l[zdir]/2.0;
+  /* Calculate an initial height function of all particles */
+  for (i = 0 ; i < n_total_particles ; i++) {
+    gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
+    gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
+    height_grid[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir];
+    grid_parts[gj + gi*mode_grid_3d[xdir]] += 1;
+  }
 
-    /* Shift bilayer to center of box */
-    for (i = 0 ; i < n_total_particles ; i++) {
-      partCfg[i].r.p[zdir] -= shift;
-    }
-
-    /* Fold particles and find the mean z position of shifted
-       coordinates */ 
-    zref = 0;
-    for (i = 0 ; i < n_total_particles ; i++) {
-      fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,xdir);
-      fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,ydir);
-      fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,zdir);
-      zref += partCfg[i].r.p[zdir];
-    }
-    zref = zref/(double)(n_total_particles);
-
-
-    /* Calculate an initial height function of all particles */
-    for (i = 0 ; i < n_total_particles ; i++) {
-      gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
-      gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
-      height_grid[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir];
-      grid_parts[gj + gi*mode_grid_3d[xdir]] += 1;
-    }
-
-    /* Normalise the initial height function */
-    for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
-      for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
-	if ( grid_parts[j+i*mode_grid_3d[xdir]] > 0 ) {
-	  height_grid[j+i*mode_grid_3d[xdir]] = height_grid[j+i*mode_grid_3d[xdir]]/(double)(grid_parts[j+i*mode_grid_3d[xdir]]);
-	} else {
-	  height_grid[j+i*mode_grid_3d[xdir]] = zref;
-	}
+  /* Normalise the initial height function */
+  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+      if ( grid_parts[j+i*mode_grid_3d[xdir]] > 0 ) {
+	height_grid[j+i*mode_grid_3d[xdir]] = height_grid[j+i*mode_grid_3d[xdir]]/(double)(grid_parts[j+i*mode_grid_3d[xdir]]);
+      } else {
+	height_grid[j+i*mode_grid_3d[xdir]] = zref;
       }
     }
-        
-    /* Calculate the non normalized height function of tail lipids */
+  }
+       
+  /* We now use this initial height function to calculate the
+     lipid_orientation and thereby calculate populations in upper and
+     lower leaflets */
+
+ 
+    /* Calculate the non normalized height function based on all lipids */
     nup = ndown = nstray = nrealstray = 0;
     for (i = 0 ; i < n_total_particles ; i++) {
-      if ( (partCfg[i].p.type == 1)) {
+      //      if ( (partCfg[i].p.type == 1)) {
 	gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
 	gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
 	
 	zreflocal = height_grid[gj+gi*mode_grid_3d[xdir]];
 	
-	l_orient = lipid_orientation(i,partCfg,zreflocal,direction);
-	if ( l_orient == REAL_LIPID_STRAY ) {
-	  nrealstray++;
-	}
-	
+	l_orient = lipid_orientation(i,partCfg,zreflocal,direction,refdir);
+	//	printf("i: %d l_orient %d type %d %d \n", i, l_orient, partCfg[i].p.type , partCfg[i].p.mol_id );
+
 	if ( l_orient != LIPID_STRAY && l_orient != REAL_LIPID_STRAY) {
 	  if ( l_orient == LIPID_UP ) {
 	    nup++;
@@ -797,15 +812,18 @@ int calc_height_grid ( double* height_grid ) {
 	    grid_parts_down[gj + gi*mode_grid_3d[xdir]] += 1;
 	  }
 	} else {
-	  nstray++;
+	  if ( l_orient == REAL_LIPID_STRAY ) {
+	    nrealstray++;
+	  }
 	}
-      }
-      unfold_position(partCfg[i].r.p,partCfg[i].l.i);    
+	//      }
+      //      unfold_position(partCfg[i].r.p,partCfg[i].l.i);    
     }
+    /*
     if ( nrealstray > 0 || nstray > 0) {
-      printf("Warning: there were %d stray lipids and %d realstray lipids in height calculation \n",nstray, nrealstray);
+    printf("Warning: there were %d stray lipid particles in height calculation \n", nrealstray);
     }
-    //  printf(" Lipids up = %d , Lipids down = %d \n",nup, ndown);
+    printf(" Lipid particles up = %d , Lipid particles down = %d \n",nup, ndown); */
 
     STAT_TRACE(fprintf(stderr,"%d, Lipids up = %d , Lipids down = %d \n",this_node, nup, ndown));
 
@@ -816,42 +834,9 @@ int calc_height_grid ( double* height_grid ) {
 	grid_parts[j+i*mode_grid_3d[xdir]] = 0;
       }
     }
-    /*
-    // Now for debugging purposes we impose a height function with known
-    // power spectrum
-    double qx = 0;
-    double qy = 0;
-    int qxi = 0;
-    int qyi = 0;
-    int NGrid = 8;
-    double Norm = 1/8.0;
-    //  int NGrid2 = 4;
-    double BoxLength = 28.75;
-    for ( i = 0 ; i < 8 ; i++) {
-    for ( j = 0 ; j < 8 ; j++) {
-    height_grid[j+i*8] = 0.0;
-    for ( qxi = -4 ; qxi < 4 ; qxi++) {
-    for ( qyi = -4 ; qyi < 4 ; qyi++) {
-    double dqx = qxi*2.0*3.141592/BoxLength;
-    double dqy = qyi*2.0*3.141592/BoxLength;
-    double dx = qxi*2.0*3.141592/(double)(NGrid);
-    double dy = qyi*2.0*3.141592/(double)(NGrid);
-    //	  int index = (qx+NGrid2)*NGrid + (qy+NGrid2);
-	  height_grid[j+i*NGrid] += (1/(1 + dqx*dqx + dqy*dqy ))*cos((double)(dx*i + dy*j));
-	}
-      }
-      height_grid[j+i*NGrid] *= Norm;
-    }
-  }
-  
-  // End debugging code
-  */
 
-  /* Norm we normalize the height function according the number of
-     points in each grid cell */
-  //  norm = 1.0/(double)(mode_grid_3d[xdir]);
-
-  
+    /* Norm we normalize the height function according the number of
+       points in each grid cell */
     norm = 1.0;
     for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
       for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {

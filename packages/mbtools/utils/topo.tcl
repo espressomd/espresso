@@ -20,7 +20,7 @@ namespace eval ::mbtools::utils {
 # 
 # 
 proc ::mbtools::utils::maxpartid { topo } { 
-
+    mmsg::debug [namespace current] "finding maxpartid"
     set maxpart 0
     foreach mol $topo {
 	for { set p 1 } { $p < [llength $mol] } { incr p } {
@@ -40,6 +40,7 @@ proc ::mbtools::utils::maxpartid { topo } {
 # 
 # 
 proc ::mbtools::utils::maxmoltypeid { topo } { 
+    mmsg::debug [namespace current] "finding maxmoltypeid"
     set maxtype 0
     foreach mol $topo {
 	    if { [ lindex $mol 0] > $maxtype } {
@@ -60,9 +61,10 @@ proc ::mbtools::utils::maxmoltypeid { topo } {
 # 
 # 
 proc ::mbtools::utils::listnmols { topo } { 
-
+    mmsg::debug [namespace current] "finding listnmols"
     set moltypes [listmoltypes $topo]
     set ntype 0
+    mmsg::debug [namespace current] "     moltypes: $moltypes"
 
     foreach type $moltypes {
 	foreach mol $topo {
@@ -85,6 +87,7 @@ proc ::mbtools::utils::listnmols { topo } {
 # 
 # 
 proc ::mbtools::utils::minpartid { topo } {  
+    mmsg::debug [namespace current] "finding minmolpartid"
     set startpart [lindex $topo 0 1 ]
     foreach mol $topo {
 	for { set i 1 } {$i < [llength $mol] } { incr i } {
@@ -104,6 +107,7 @@ proc ::mbtools::utils::minpartid { topo } {
 # 
 # 
 proc ::mbtools::utils::minmoltype { topo } {  
+    mmsg::debug [namespace current] "finding minmoltype"
     set moltypes [listmoltypes $topo]
     set startmol [lindex $moltypes 0]
     foreach tp $moltypes {
@@ -122,6 +126,7 @@ proc ::mbtools::utils::minmoltype { topo } {
 # topology
 #
 proc ::mbtools::utils::listmoltypes { topo } {  
+    mmsg::debug [namespace current] "finding listmoltypes"
     set currmoltype [lindex [lindex $topo 0] 0]
     foreach mol $topo {
 	set moltype [lindex $mol 0]
@@ -135,23 +140,17 @@ proc ::mbtools::utils::listmoltypes { topo } {
     # Check for duplication
     set reducedlist [lindex $typeslist 0]
     set duplicate 0
-
+    mmsg::debug [namespace current] "     now looping over [llength $typeslist] in typeslist"
+    flush stdout    
     for { set i 0 } { $i < [llength $typeslist] } { incr i } {
 	set tp1 [lindex $typeslist $i]
-	foreach tp2 $reducedlist {
-	    if { $tp1 == $tp2 } {
-		# we already have an entry for this type so mark it 
-		set duplicate 1
-	    }
-	}
-	if { !$duplicate } {
+	if { [lsearch $reducedlist $tp1] != -1 } {
+	} else {
+	    mmsg::debug [namespace current] "     added type $tp1"
 	    lappend reducedlist $tp1
 	}
-	set duplicate 0
     }
-
-
-    return $typeslist
+    return $reducedlist
 }
 
 
@@ -162,6 +161,7 @@ proc ::mbtools::utils::listmoltypes { topo } {
 #
 #
 proc ::mbtools::utils::listmollengths { topo } { 
+    mmsg::debug [namespace current] "finding listmollengths"
     set moltypes [listmoltypes $topo ]
  
 

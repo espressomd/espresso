@@ -47,14 +47,17 @@ if { [file exists "~/.espressorc" ] } {
 if { [ catch { set dummy $env(ESPRESSO_PACKAGES)} ] } {
     # If not then guess it
     cd ..
-    lappend auto_path "[pwd]/packages/mbtools/packages"
+    lappend auto_path "[pwd]/packages/mbtools/"
+    lappend auto_path "[pwd]/packages/mmsg/"
     lappend auto_path "[pwd]/packages/"
     catch { cd "scripts" }
 } else {
     # set the packages directory to the user specified value
     lappend auto_path "$env(ESPRESSO_PACKAGES)/"
-    lappend auto_path "$env(ESPRESSO_PACKAGES)/mbtools/packages/"
+    lappend auto_path "$env(ESPRESSO_PACKAGES)/mmsg/"
+    lappend auto_path "$env(ESPRESSO_PACKAGES)/mbtools/"
 }
+
 
 # Include useful tcl-scripts providing new functions etc.
 

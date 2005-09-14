@@ -61,7 +61,7 @@ proc ::mbtools::system_generation::create_simple_topo {n_mols beads_per_mol  arg
 # 
 
 proc ::mbtools::system_generation::shuffle_topo {topo} {
-    mmsg::send [namespace current] "shuffling topology"
+    mmsg::send [namespace current] "shuffling topology" 
 
     set startmol [::mbtools::utils::minmoltype $topo ]
     set startpart [::mbtools::utils::minpartid $topo ]
@@ -79,6 +79,9 @@ proc ::mbtools::system_generation::shuffle_topo {topo} {
     # The first step is to construct a list with randomly allocated
     # molecule types to serve as a template
     set n_remaining $n_molstotal
+    mmsg::send [namespace current] "constructing topo template " nonewline 
+    flush stdout
+    set dotfreq [expr int(floor($n_molstotal/10.0))]
     for { set i 0 } { $i < $n_molstotal } { incr i } {
 	
 	# According to the molecule proportions determine the type of
@@ -98,7 +101,13 @@ proc ::mbtools::system_generation::shuffle_topo {topo} {
 	}
 
 	lappend typetemplate $thislipidtype
+
+        if { $i%$dotfreq ==0 } {
+	    mmsg::send [namespace current] "." nonewline
+	    flush stdout
+	}
     }
+    mmsg::send [namespace current] "done" 
 
     # We need a list telling us how many atoms are in each molecule
     set molsizes [::mbtools::utils::listmollengths $topo ]

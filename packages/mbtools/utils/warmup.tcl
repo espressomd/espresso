@@ -85,14 +85,11 @@ proc ::mbtools::utils::warmup { steps times args } {
 	
     }
     
-    # Note that if we don't reach our desired cap as when capincr is
-    # set manually then we simply set it so at the end.
-    if { [expr $cap - $capincr] < $params(capgoal) } {
-	::mmsg::send [namespace current] "setting final forcecap to $params(capgoal)"
-	inter tabforcecap $params(capgoal)
-	inter ljforcecap $params(capgoal)
-    }
-}
+    # Turn off all forcecapping
+    ::mmsg::send [namespace current] "uncapping forces"
+    inter tabforcecap 0
+    inter ljforcecap 0
+ }
 
 
 #----------------------------------------------------------#

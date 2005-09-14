@@ -76,7 +76,7 @@ void map_to_2dgrid();
 
 
  */
-int lipid_orientation( int id, Particle* partCfg , double zref, double director[3]);
+int lipid_orientation( int id, Particle* partCfg , double zref, double director[3],double refvec[3]);
 
 /**
    This routine calculates the orientational order parameter for a
@@ -101,7 +101,7 @@ int calc_height_grid ( double* height_grid );
     \param density_profile The pre-allocated density profile into which data is written
  */
 int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *density_profile, int usegrid );
-
+int bilayer_density_profile_sphere (IntList *beadids, double rrange , DoubleList *density_profile, double radius, double center[3]);
 #endif
 
 
