@@ -35,6 +35,7 @@
 #include "buckingham.h"
 #include "tab.h"
 #include "ljcos.h"
+#include "ljcos2.h"
 #include "gb.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
@@ -1630,6 +1631,11 @@ void mpi_lj_cap_forces_slave(int node, int parm)
 #ifdef LENNARD_JONES
   MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   calc_lj_cap_radii(lj_force_cap);
+  on_short_range_ia_change();
+#endif
+#ifdef LJCOS2
+  MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  calc_ljcos2_cap_radii(lj_force_cap);
   on_short_range_ia_change();
 #endif
 }

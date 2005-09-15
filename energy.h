@@ -26,6 +26,7 @@
 #include "buckingham.h"
 #include "soft_sphere.h"
 #include "ljcos.h"
+#include "ljcos2.h"
 #include "tab.h"
 #include "gb.h"
 #include "fene.h"
@@ -85,6 +86,12 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
   /* soft-sphere */
   ret  += soft_pair_energy(p1,p2,ia_params,d,dist);
 #endif
+
+#ifdef LJCOS2
+  /* lennard jones */
+  ret += ljcos2_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+
 
 #ifdef TABULATED
   /* tabulated */

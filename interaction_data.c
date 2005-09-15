@@ -29,6 +29,7 @@
 #include "soft_sphere.h"
 #include "tab.h"
 #include "ljcos.h"
+#include "ljcos2.h"
 #include "gb.h"
 #include "parser.h"
 #include "cells.h"
@@ -132,6 +133,16 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJCOS_rmin = 0 ;
 #endif
 
+#ifdef LJCOS2
+  params->LJCOS2_eps =
+    params->LJCOS2_sig =
+    params->LJCOS2_cut =
+    params->LJCOS2_offset =
+    params->LJCOS2_w =
+    params->LJCOS2_rchange = 
+    params->LJCOS2_capradius = 0 ;
+#endif
+
 #ifdef ROTATION
   params->GB_eps =
     params->GB_sig =
@@ -216,6 +227,16 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJCOS_beta = src->LJCOS_beta;
   dst->LJCOS_rmin = src->LJCOS_rmin;
 #endif
+
+#ifdef LJCOS2
+  dst->LJCOS2_eps       = src->LJCOS2_eps;
+  dst->LJCOS2_sig       = src->LJCOS2_sig;
+  dst->LJCOS2_cut       = src->LJCOS2_cut;
+  dst->LJCOS2_offset    = src->LJCOS2_offset;
+  dst->LJCOS2_w         = src->LJCOS2_w;
+  dst->LJCOS2_rchange   = src->LJCOS2_rchange;
+  dst->LJCOS2_capradius = src->LJCOS2_capradius;
+#endif
   
 #ifdef ROTATION
   dst->GB_eps = src->GB_eps;
@@ -278,6 +299,11 @@ int checkIfParticlesInteract(int i, int j) {
 
 #ifdef LJCOS
   if (data->LJCOS_cut != 0)
+    return 1;
+#endif
+
+#ifdef LJCOS2
+  if (data->LJCOS2_cut != 0)
     return 1;
 #endif
 
@@ -492,6 +518,14 @@ void calc_maximal_cutoff()
 	     max_cut_non_bonded = (data->LJCOS_cut+data->LJCOS_offset);
 	 }
 #endif
+
+#ifdef LJCOS2
+	 if (data->LJCOS2_cut != 0) {
+	   if(max_cut_non_bonded < (data->LJCOS2_cut+data->LJCOS2_offset) )
+	     max_cut_non_bonded = (data->LJCOS2_cut+data->LJCOS2_offset);
+	 }
+#endif
+
 #ifdef ROTATION
 	 if (data->GB_cut != 0) {
 	   if(max_cut_non_bonded < (data->GB_cut) )
@@ -803,6 +837,9 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #ifdef SOFT_SPHERE
   if (data->soft_cut != 0) printsoftIAToResult(interp,i,j);
 #endif
+#ifdef LJCOS2
+  if (data->LJCOS2_cut != 0) printljcos2IAToResult(interp,i,j);
+#endif
 #ifdef ROTATION
   if (data->GB_cut != 0) printgbIAToResult(interp,i,j);
 #endif
@@ -1066,6 +1103,11 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 #ifdef COMFORCE
     else if (ARG0_IS_S("comforce"))
       change = comforce_parser(interp, part_type_a, part_type_b, argc, argv);
+#endif
+
+#ifdef LJCOS2
+    else if (ARG0_IS_S("lj-cos2"))
+      change = ljcos2_parser(interp, part_type_a, part_type_b, argc, argv);
 #endif
 
 #ifdef COMFIXED

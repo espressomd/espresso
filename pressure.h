@@ -81,6 +81,7 @@ extern nptiso_struct nptiso;
 #include "morse.h"
 #include "soft_sphere.h"
 #include "ljcos.h"
+#include "ljcos2.h"
 #include "tab.h"
 #include "gb.h"
 #include "fene.h"
@@ -159,6 +160,10 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   /* lennard jones cosine */
 #ifdef LJCOS
   add_ljcos_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+  /* lennard jones cos2 */
+#ifdef LJCOS2
+  add_ljcos2_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
   /* tabulated */
 #ifdef TABULATED

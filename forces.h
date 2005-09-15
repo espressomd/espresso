@@ -34,6 +34,7 @@
 #include "maggs.h"
 #include "tab.h"
 #include "ljcos.h"
+#include "ljcos2.h"
 #include "gb.h"
 #include "fene.h"
 #include "harmonic.h"
@@ -133,6 +134,11 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /* lennard jones cosine */
 #ifdef LJCOS
   add_ljcos_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+
+  /* lennard jones cos2 */
+#ifdef LJCOS2
+  add_ljcos2_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
 
 #ifdef ROTATION

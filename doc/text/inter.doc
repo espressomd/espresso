@@ -80,6 +80,27 @@
 		The order of the parameters is
 		\f$\epsilon, \sigma, cutoff, offset\f$.
 
+\subsection tcl_ljcos2 Lennard-Jones + cosine potential 2 (cosine tail is different than in lj-cos)
+	\verbatim lj-cos2 <epsilon> <sigma> <offset> <w> \endverbatim
+		a Lennard-Jones+Cosine potential
+
+		for	\f$ r<r_{change}=offset+2^{1/6} \sigma \f$
+            
+			\f[4 \epsilon \left(\left(\frac{\sigma}{r-offset}\right)^{12} -
+				 \left(\frac{\sigma}{r-offset}\right)^6 \right)\f]
+
+
+		for \f$ cutoff=offset+2^{1/6} \sigma + w > r > r_{change} \f$
+            
+		\f[ \epsilon \space {\cos}^2 \frac {\pi (r-r_{change})} {2 w} \f]
+            
+		The order of the parameters is
+		\f$\epsilon, \sigma, offset, w\f$.
+
+                The potential can be capped in the same way as the Lennard-Jones potential.
+		The forcecap is also set using:
+                \verbatim inter ljforcecap <maxforce> \endverbatim  
+
 \subsection tcl_tabulated Tabulated potential
 	\verbatim tabulated <filename> \endverbatim	
 		An arbitrary tabulated non-bonded pair potential.
