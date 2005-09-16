@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6i (Seska)                                                                      *
+* v1.9.6j (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6i -
+- v1.9.6j -
 -----------
 
+(j) September 15th, 2005.
 (i) September 13th, 2005.
 (h) August    17th, 2005.
 (g) August    16th, 2005.
@@ -22,6 +23,8 @@ Current working revision.
 (a) July      18th, 2005.
 
 New Features:
+(j) Added new lj-cos2 potential. Similar to existing lj-cos potential but with a
+    slightly different cosine tail.
 (h) binning now allows to also print out the counts.
 (h) support for CYGWIN.
 (e) added new particle properties for dipoles (new part commands: dipm <m>, dip <x> <y>
