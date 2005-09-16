@@ -199,13 +199,11 @@ AC_DEFUN([MPI_FIND_MPICH],[
 	if test .$cc_works_wl = .no; then
 		dnl guess the library paths or the include paths.
 		for hdrpprf in /opt/mpich /usr/mpich /usr/local/mpich /usr /usr/local; do
-			echo "test $hdrpprf/include"
 			dnl test directly ...
 			if test -f $hdrpprf/include/mpi.h; then mpich_hdr_prf=$hdrpprf; mpich_hdr=$hdrpprf/include; break; fi
 			dnl ... but it may as well be a subdir
 			for hdrprf in $hdrpprf/*; do
 				if test -d $hdrprf; then
-					echo "test inner $hdrprf"
 					if test -f $hdrprf/include/mpi.h; then mpich_hdr_prf=$hdrprf; mpich_hdr=$hdrprf/include; break; fi
 				fi
 				if test .$mpich_hdr != .; then break; fi
