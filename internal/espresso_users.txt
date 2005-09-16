@@ -103,7 +103,7 @@ sent:      11.FEB.2004
 version:   20040129-Espresso_v1.5.Beta.tar.gz
 topic:     domain nucleation and growth in thin granular ferromagnetic films 
            in PMMA
-reminded:  11.FEB.2004
+reminded:  15.Sep.2005
 
 
 name:      Salvador LEON-Cabanillas 
