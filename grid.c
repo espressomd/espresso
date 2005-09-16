@@ -37,7 +37,6 @@ int node_grid[3] = { -1, -1, -1};
 int node_pos[3] = {-1,-1,-1};
 int node_neighbors[6] = {0, 0, 0, 0, 0, 0};
 int boundary[6]   = {0, 0, 0, 0, 0, 0};
-int extended[6] = {0, 0, 0, 0, 0, 0};
 int periodic  = 7;
 
 double box_l[3]       = {1, 1, 1};
@@ -117,20 +116,16 @@ void calc_node_neighbors(int node)
     /* left boundary ? */
     if (node_pos[dir] == 0) {
       boundary[2*dir] = 1;
-      extended[2*dir] = PERIODIC(dir) ? 0 : 1;
     }
     else {
-      boundary[2*dir] =
-	extended[2*dir] = 0;
+      boundary[2*dir] = 0;
     }
     /* right boundary ? */
    if (node_pos[dir] == node_grid[dir]-1) {
       boundary[2*dir+1] = -1;
-      extended[2*dir+1] = PERIODIC(dir) ? 0 : 1;
     }
     else {
-      boundary[2*dir+1] =
-	extended[2*dir+1] = 0;
+      boundary[2*dir+1] = 0;
     }
   }
 }

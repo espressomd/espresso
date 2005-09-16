@@ -58,9 +58,6 @@ extern int node_pos[3];
 extern int node_neighbors[6];
 /** where to fold particles that leave local box in direction i. */
 extern int boundary[6];
-/** whether a node is infinitely extended in that direction
-    (necessary for non periodic coordinates). */
-extern int extended[6];
 /** Flags for all three dimensions wether pbc are applied (default).
     The first three bits give the periodicity */
 extern int periodic;
