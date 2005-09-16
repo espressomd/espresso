@@ -107,6 +107,11 @@ AC_DEFUN([CF_CHECK_GCC_FLAGS],[
 	EV56*)		type=alpha; cpu=ev56 ;;
 	EV5*)		type=alpha; cpu=ev5 ;;
 	EV4*)		type=alpha; cpu=ev4 ;;
+	sparcv7)	type=sparc; cpu=v7 ;;
+	sparcv8)	type=sparc; cpu=v8 ;;
+	sparcv9)	type=sparc; cpu=v9 ;;
+	sparclite)	type=sparc; cpu=sparclite ;;
+	sparclet)	type=sparc; cpu=sparclet ;;
 	*)	AC_MSG_WARN([could not recognize your cpu type, relying on generic optimization])
 	esac
 	if test .$m != .; then

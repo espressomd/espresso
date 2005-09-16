@@ -46,6 +46,10 @@ Darwin)
     MODEL=`hostinfo | awk '/^Processor type/ { print $3}'`
     echo $MODEL-apple-darwin`uname -r`
     ;;
+SunOS)
+    MODEL=`/usr/sbin/psrinfo -v | awk '/The .* processor/ { print $2; exit }'`
+    echo $MODEL-sun-sunos
+    ;;
 *)
     echo `uname -p | sed -e s/\ /_/ -e s/\-/_/`-unknown-`uname -s | sed -e s/\ /_/ -e s/\-/_/`
     ;;
