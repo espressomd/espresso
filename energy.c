@@ -194,7 +194,7 @@ static void print_detailed_energies(Tcl_Interp *interp)
 
 int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
 {
-  /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | subt_lj_harm <type_num> | subt_lj_fene <type_num> | subt_lj <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | gb <type1> <type2> | coulomb | kinetic | total }]' */
+  /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | subt_lj_harm <type_num> | subt_lj_fene <type_num> | subt_lj <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | ljcos2 <type1> <type2> | gb <type1> <type2> | coulomb | kinetic | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   int i, j;
   double value;
@@ -238,6 +238,7 @@ int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
 	     ARG0_IS_S("lj") ||
 	     ARG0_IS_S("buckingham") ||
 	     ARG0_IS_S("lj-cos") ||
+             ARG0_IS_S("lj-cos2") ||
 	     ARG0_IS_S("gb") ||
 	     ARG0_IS_S("tabulated")) {
       if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {

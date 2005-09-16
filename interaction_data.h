@@ -175,6 +175,19 @@ typedef struct {
   double LJCOS_rmin;
   /*@}*/
 #endif
+
+#ifdef LJCOS2
+  /** \name Lennard-Jones with a different Cos potential */
+  /*@{*/
+  double LJCOS2_eps;
+  double LJCOS2_sig;
+  double LJCOS2_cut;
+  double LJCOS2_offset;
+  double LJCOS2_w;
+  double LJCOS2_rchange;
+  double LJCOS2_capradius;
+  /*@}*/
+#endif
   
 #ifdef ROTATION
   /** \name Gay-Berne potential */
