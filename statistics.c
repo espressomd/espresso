@@ -1169,15 +1169,18 @@ static int parse_bilayer_density_profile(Tcl_Interp *interp, int argc, char **ar
   char buffer[TCL_DOUBLE_SPACE];
   int change,nbins,i,j;
   IntList beadtypes;
-  init_intlist(&beadtypes);
   double hrange;
   int usegrid;
-  usegrid = 1;
   double sradius, cx,cy,cz;
+  DoubleList* density_profile = NULL;
+  int errorValue;
+  double scenter[3] = { cx, cy ,cz };
   /* Defaults */
   sradius = 0.0;
   cx = cy = cz = 0.0;
 
+  init_intlist(&beadtypes);
+  usegrid = 1;
   if ( !ARG0_IS_D(hrange) ) {
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp,"usage: analyze bilayer_density_profile <hrange> <nbins> <beadtype1> .. <beadtypeN> [withsphere <radius> <cx> <cy> <cz> ] [nogrid]", (char *)NULL);
@@ -1235,7 +1238,6 @@ static int parse_bilayer_density_profile(Tcl_Interp *interp, int argc, char **ar
   }
 
 
-  DoubleList* density_profile = NULL;
 
   /* Allocate a two doublelists of bins for each beadtype so that we
      can keep track of beads in upper or lower lipids */
@@ -1254,9 +1256,7 @@ static int parse_bilayer_density_profile(Tcl_Interp *interp, int argc, char **ar
     return (TCL_ERROR);
   }
 
-  int errorValue;
   if ( sradius > 0 ) {
-    double scenter[3] = { cx, cy ,cz };
     errorValue = bilayer_density_profile_sphere(&beadtypes, hrange, density_profile,sradius,scenter );
   } else {
     errorValue = bilayer_density_profile(&beadtypes, hrange, density_profile, usegrid );

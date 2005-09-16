@@ -409,6 +409,9 @@ int modes2d(fftw_complex* modes) {
   static double* height_grid;
   static  rfftwnd_plan mode_analysis_plan;
 #endif
+
+  double zref;
+
   
 /** 
     Every time a change is made to the grid calculate the fftw plan
@@ -456,7 +459,6 @@ int modes2d(fftw_complex* modes) {
     return -1;
   }
   
-  double zref;
   zref = calc_zref( zdir );
 
   if ( !calc_height_grid(height_grid) ) {
@@ -497,11 +499,17 @@ int bilayer_density_profile_sphere (IntList *beadids, double rrange , DoubleList
   double binwidth;
   int nbeadtypes,l_orient;
   double relativeradius;
-  nbins = density_profile[0].max;
-  nbeadtypes=beadids->max;
   double rvec[3];
   double direction[3]; 
+  double innerr;
+  double outerr;
+  double binvolume;
+  double piconst;
+  double rs;
 
+
+  nbins = density_profile[0].max;
+  nbeadtypes=beadids->max;
   binwidth = 2*rrange/(double)nbins;
 
 
@@ -554,14 +562,13 @@ int bilayer_density_profile_sphere (IntList *beadids, double rrange , DoubleList
     }
   }
   /* Normalize the density profile */
-  double binvolume;
-  double piconst = (4.0*3.141592)/(3.0);
-  double rs = radius - rrange;
+  piconst = (4.0*3.141592)/(3.0);
+  rs = radius - rrange;
   for ( i = 0 ; i < 2*nbeadtypes ; i++ ) {
     for ( j = 0 ; j < nbins ; j++ ) {
 
-      double innerr = j*binwidth+rs;
-      double outerr = (j+1)*binwidth + rs;
+      innerr = j*binwidth+rs;
+      outerr = (j+1)*binwidth + rs;
       binvolume = piconst*(outerr*outerr*outerr - innerr*innerr*innerr);
       density_profile[i].e[j] = density_profile[i].e[j]/binvolume;
     }
@@ -592,9 +599,10 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
   double relativeheight;
   double direction[3];  
   double refdir[3] = {0,0,1};
+  int tmpzdir;
+  double binvolume = binwidth*box_l[xdir]*box_l[ydir];
   nbins = density_profile[0].max;
   nbeadtypes=beadids->max;
-  int tmpzdir;
 
   /*        Check to see that there is a mode grid to work with    */
   if ( xdir + ydir + zdir == -3 ) {
@@ -662,7 +670,7 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
   }
 
   /* Normalize the density profile */
-  double binvolume = binwidth*box_l[xdir]*box_l[ydir];
+  binvolume = binwidth*box_l[xdir]*box_l[ydir];
   for ( i = 0 ; i < 2*nbeadtypes ; i++ ) {
     for ( j = 0 ; j < nbins ; j++ ) {
       density_profile[i].e[j] = density_profile[i].e[j]/binvolume;
