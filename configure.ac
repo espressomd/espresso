@@ -3,8 +3,8 @@
 #######################################################################
 
 AC_PREREQ(2.50)
-AC_INIT(ESPResSo, [v1.9.6i (Seska)], espresso@mpip-mainz.mpg.de)
-time_stamp="September 13th, 2005"
+AC_INIT(ESPResSo, [v1.9.6j (Seska)], espresso@mpip-mainz.mpg.de)
+time_stamp="September 15th, 2005"
 
 if test "$CC" != ""; then	user_defined_CC=yes; fi
 if test "$CFLAGS" != ""; then	user_defined_CFLAGS=yes; fi
@@ -54,6 +54,22 @@ AC_SUBST(DEPEND)
 AC_SUBST(LD)
 AC_SUBST(ADD_SOURCES)
 AC_SUBST(MPI_INVOCATION)
+# check for socket
+AC_MSG_CHECKING([whether socket is available without -lsocket])
+AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY(socket)],
+    [AC_MSG_RESULT(yes)],[
+	AC_MSG_RESULT(no)
+	AC_CHECK_LIB(socket,socket,,AC_MSG_ERROR([could not find location of socket().]))
+	LDFLAGS="$LDFLAGS -lsocket"
+    ])
+# check for gethostbyname
+AC_MSG_CHECKING([whether gethostbyname is available without -lnsl])
+AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY(gethostbyname)],
+    [AC_MSG_RESULT(yes)],[
+	AC_MSG_RESULT(no)
+	AC_CHECK_LIB(nsl,gethostbyname,,AC_MSG_ERROR([could not find location of gethostbyname().]))
+	LDFLAGS="$LDFLAGS -lnsl"
+    ])
 
 
 AC_CONFIG_HEADERS([obj-$target/archconfig.h:archconfig.h.in])
