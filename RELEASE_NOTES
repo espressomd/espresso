@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6j (Seska)                                                                      *
+* v1.9.6k (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6j -
+- v1.9.6k -
 -----------
 
+(k) September 16th, 2005.
 (j) September 15th, 2005.
 (i) September 13th, 2005.
 (h) August    17th, 2005.
@@ -23,6 +24,7 @@ Current working revision.
 (a) July      18th, 2005.
 
 New Features:
+(k) Espresso now compiles and runs on SunOS
 (j) Added new lj-cos2 potential. Similar to existing lj-cos potential but with a
     slightly different cosine tail.
 (h) binning now allows to also print out the counts.
