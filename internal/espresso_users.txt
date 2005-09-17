@@ -144,12 +144,6 @@ topic:     simulations of EOF, Nanopore, polymer-polymer collisions
 reminded:  15.MAR.2004
 
 
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  29.MAR.2004
 
 
 name:      Olaf Lenz / Ulf Schiller (uschille@) / Friederike Schmid
@@ -650,3 +644,23 @@ version:   20050808-Espresso_v1.9.6d.tar.gz
 topic:     Test portability/performance/scaling on IBM Blue Gene
            Timeframe: to be done around Q4/05 or Q1/06
 reminded:  22.AUG.2005
+name:      Dr. Carol Phillips
+email:     cpc@qub.ac.uk
+institute: Dr. Carol Phillips  
+              CPC Program Library      
+              School of Computer Science        
+              The Queen\\\'s University of Belfast   
+              Belfast BT7 1NN                 
+              Northern Ireland                   
+sent:      15.SEP.2005
+version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
+topic:     Test program for the CPC article
+reminded:  15.SEP.2005
+
+
+name:      Baohua Ji
+email:     ji@mf.mpg.de
+sent:      29.MAR.2004
+version:   20040329-Espresso_v1.5.7c.tar.gz
+topic:     simulate the DNA and protein mechanics and deformation
+reminded:  16.Sep.2005
