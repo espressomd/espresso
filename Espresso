@@ -1,9 +1,9 @@
 #!/bin/sh
-if test "$ESPRESSO_SOURCE" == ""; then
+if test "$ESPRESSO_SOURCE" = ""; then
 	echo "specify the location of Espresso using the ESPRESSO_SOURCE environment variable" 1>&2
 	exit -1
 fi
-if test "$ESPRESSO_SCRIPTS" == ""; then
+if test "$ESPRESSO_SCRIPTS" = ""; then
 	export ESPRESSO_SCRIPTS=$ESPRESSO_SOURCE/scripts
 	echo "ESPRESSO_SCRIPTS was not specified, trying $ESPRESSO_SCRIPTS" 1>&2
 fi
