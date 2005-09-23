@@ -46,7 +46,8 @@ set usage "Usage: main.tcl n: paramsfile"
 array set params [::cmdline::getoptions argv $options $usage]
 set paramsfile [lindex $argv 0]
 
-::mmsg::enable debug
+# Enable debugging messages
+#::mmsg::enable debug
 
 #----------- System Parameters ----------------------------#
 # Set a bunch of default parameters.
@@ -114,9 +115,8 @@ if { !$checkpointexists } {
     # Set the generated topology into the internals of espresso.
     ::mbtools::utils::set_topology $topology
     set trappedmols [::mbtools::system_generation::get_trappedmols]
-    
     # Fix molecules if necessary
-    if { [llength $trappedmols] > 0 } {
+    if { $trappedmols != -1 } {
 	::mbtools::utils::trap_mols $trappedmols
     }
 

@@ -50,6 +50,8 @@ can be found in \ref communication.h "communication.h". During the
 actual integration, however, the communication is done synchronously.
 For more details see \ref integrate.c "integrate.c".
 
+
+
 \section requirements Requirements
 
 <ul>
@@ -173,6 +175,11 @@ was writing these lines) !!!
 <li> Try the sample script files in \ref samples "samples directory".
 <li> Complain if you experience problems.
 </ol>
+
+\section packages Tcl Packages which make use of Espresso
+<ul>
+<li> <a href="../../packages/mbtools/doc/index.html"> mbtools </a> a package for setting up and analyzing lipid membrane systems.
+</ul>
 
 \section restrictions Restrictions
 
