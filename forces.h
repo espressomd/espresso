@@ -25,7 +25,9 @@
 #include "pressure.h"
 #endif
 #include "communication.h"
-
+#ifdef MOLFORCES
+#include "topology.h"
+#endif
 /* include the force files */
 #include "p3m.h"
 #include "lj.h"
@@ -47,6 +49,7 @@
 #include "constraint.h"
 #include "comforce.h"
 #include "comfixed.h"
+#include "molforces.h"
 #include "morse.h"
 
 /** \name Exported Functions */

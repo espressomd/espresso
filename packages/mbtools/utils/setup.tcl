@@ -55,9 +55,6 @@ proc ::mbtools::utils::setup_outputdir { outputdir args } {
     # If <outputdir> doesn't exist then create it
     set errcode [catch { exec mkdir $outputdir  }]
     set ntabs [llength $params(tabnames)]
-    if { $ntabs == 0 } { 
-	::mmsg::err [namespace current]  "<tablenames> not set" 
-    }
     
     # Copy forcetables to the current directory and to output directory
     for { set i 0 } { $i < $ntabs } { incr i } {
@@ -181,11 +178,8 @@ proc ::mbtools::utils::set_bonded_interactions { bonded_parms } {
 #
 proc ::mbtools::utils::set_nb_interactions { interactionlist } {
     foreach intertype $interactionlist {
-	if { [catch {eval [concat inter  $intertype ]} ] } {
-	    mmsg::err [namespace current] "couldn't set interaction: $intertype"
-	} else {	
-	    mmsg::send [namespace current] "set interaction: $intertype "
-	}
+	eval [concat inter  $intertype ]
+	mmsg::send [namespace current] "set interaction: $intertype "
     }
     return
 }

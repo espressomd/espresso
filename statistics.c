@@ -837,6 +837,164 @@ void analyze_structurefactor(int type, int order, double **_ff) {
   }
 }
 
+int analyze_radial_density_map (int xbins,int ybins,int thetabins,double xrange,double yrange, double axis[3], double center[3], IntList *beadids, DoubleList *density_map, DoubleList *density_profile) {
+  int i,j,t;
+  int pi,bi;
+  int nbeadtypes;
+  int beadcount;
+  double vectprod[3];
+  double pvector[3];
+  double xdist,ydist,rdist,xav,yav,theta;
+  double xbinwidth,ybinwidth,binvolume;
+  double thetabinwidth;
+  double *thetaradii;
+  int *thetacounts;
+  int xindex,yindex,tindex;
+  xbinwidth = xrange/(double)(xbins);
+  ybinwidth = yrange/(double)(ybins);
+
+  nbeadtypes = beadids->n;
+  /* Update particles */
+  updatePartCfg(WITHOUT_BONDS);
+
+  /*Make sure particles are folded  */
+  for (i = 0 ; i < n_total_particles ; i++) {
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,0);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,1);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].l.i,2);
+  }
+
+  beadcount = 0;
+  xav = 0.0;
+  yav = 0.0;
+  for ( pi = 0 ; pi < n_total_particles ; pi++ ) {
+    for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
+      if ( beadids->e[bi] == partCfg[pi].p.type ) {
+
+
+	/* Find the vector from the point to the center */
+	vecsub(center,partCfg[pi].r.p,pvector);
+
+	/* Work out x and y coordinates with respect to rotation axis */
+	
+	/* Find the minimum distance of the point from the axis */
+	vector_product(axis,pvector,vectprod);
+	xdist = sqrt(sqrlen(vectprod)/sqrlen(axis));
+
+	/* Find the projection of the vector from the point to the center
+	   onto the axis vector */
+	ydist = scalar(axis,pvector)/sqrt(sqrlen(axis));
+	
+    
+	/* Work out relevant indices for x and y */
+	xindex = (int)(floor(xdist/xbinwidth));
+	yindex = (int)(floor((ydist+yrange*0.5)/ybinwidth));
+	/*
+	printf("x %d y %d \n",xindex,yindex);
+	printf("p %f %f %f \n",partCfg[pi].r.p[0],partCfg[pi].r.p[1],partCfg[pi].r.p[2]);
+	printf("pvec %f %f %f \n",pvector[0],pvector[1],pvector[2]);
+	printf("axis %f %f %f \n",axis[0],axis[1],axis[2]);
+	printf("dists %f %f \n",xdist,ydist);
+	fflush(stdout);
+	*/
+	/* Check array bounds */
+	if ( (xindex < xbins && xindex > 0) && (yindex < ybins && yindex > 0) ) {
+	  density_map[bi].e[ybins*xindex+yindex] += 1;
+	  xav += xdist;
+	  yav += ydist;
+	  beadcount += 1;
+	} else {
+	  //	    fprintf(stderr,"ERROR: outside array bounds in analyze_radial_density_map"); fflush(NULL); errexit(); 
+	}
+      }
+
+    }
+  }
+
+
+  /* Now turn counts into densities for the density map */
+  for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
+    for ( i = 0 ; i < xbins ; i++ ) {
+      /* All bins are cylinders and therefore constant in yindex */
+      binvolume = PI*(2*i*xbinwidth + xbinwidth*xbinwidth)*yrange;
+      for ( j = 0 ; j < ybins ; j++ ) {
+	density_map[bi].e[ybins*i+j] /= binvolume;
+      }
+    }
+  }
+
+
+  /* if required calculate the theta density profile */
+  if ( thetabins > 0 ) {
+    /* Convert the center to an output of the density center */
+    xav = xav/(double)(beadcount);
+    yav = yav/(double)(beadcount);
+    thetabinwidth = 2*PI/(double)(thetabins);
+    thetaradii = malloc(thetabins*nbeadtypes*sizeof(double));
+    thetacounts = malloc(thetabins*nbeadtypes*sizeof(int));
+    for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
+      for ( t = 0 ; t < thetabins ; t++ ) {
+	thetaradii[bi*thetabins+t] = 0.0;
+	thetacounts[bi*thetabins+t] = 0.0;
+      }
+    }
+    /* Maybe there is a nicer way to do this but now I will just repeat the loop over all particles */
+      for ( pi = 0 ; pi < n_total_particles ; pi++ ) {
+	for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
+	  if ( beadids->e[bi] == partCfg[pi].p.type ) {
+	    vecsub(center,partCfg[pi].r.p,pvector);
+	    vector_product(axis,pvector,vectprod);
+	    xdist = sqrt(sqrlen(vectprod)/sqrlen(axis));
+	    ydist = scalar(axis,pvector)/sqrt(sqrlen(axis));
+	    /* Center the coordinates */
+
+	    xdist = xdist - xav;
+	    ydist = ydist - yav;
+	    rdist = sqrt(xdist*xdist+ydist*ydist);
+	    if ( ydist >= 0 ) {
+	      theta = acos(xdist/rdist);
+	    } else {
+	      theta = 2*PI-acos(xdist/rdist);
+	    }
+	    tindex = (int)(floor(theta/thetabinwidth));
+	    thetaradii[bi*thetabins+tindex] += xdist + xav;
+	    thetacounts[bi*thetabins+tindex] += 1;
+	    if ( tindex >= thetabins ) {
+	      fprintf(stderr,"ERROR: outside density_profile array bounds in analyze_radial_density_map"); fflush(NULL); errexit(); 
+	    } else {
+	      density_profile[bi].e[tindex] += 1;
+	    }
+	  }	  
+	}
+      }
+
+
+
+      /* normalize the theta densities*/
+      for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
+	for ( t = 0 ; t < thetabins ; t++ ) {
+	  rdist = thetaradii[bi*thetabins+t]/(double)(thetacounts[bi*thetabins+t]);
+	  density_profile[bi].e[t] /= rdist*rdist;
+	}
+      }
+       
+
+
+      free(thetaradii);
+      free(thetacounts);
+
+  }
+  
+
+
+
+
+
+
+  //  printf("done \n");
+  return TCL_OK;
+}
+
 /****************************************************************************************
  *                                 config storage functions
  ****************************************************************************************/
@@ -1163,6 +1321,181 @@ static int parse_bilayer_set(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
+
+static int parse_radial_density_map(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze radial density profile ' */
+  char buffer[TCL_DOUBLE_SPACE+256];
+  int i,j,k;
+  IntList beadtypes;
+  double rotation_axis[3];
+  double rotation_center[3];
+  int xbins,ybins,thetabins,dobyangle;
+  double xrange,yrange;
+  DoubleList *density_profile = NULL;
+  DoubleList *density_map = NULL;
+  dobyangle = 0;
+  thetabins = 0;
+  init_intlist(&beadtypes);
+  alloc_intlist(&beadtypes,1);
+
+
+
+  if ( !ARG_IS_I(0,xbins) || !ARG_IS_I(1,ybins) || !ARG_IS_D(2,xrange) || !ARG_IS_D(3,yrange) ) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp,"first 4 args usage:  analyze radial_density_map <xbins> <ybins> <xrange> <yrange> {<axisofrotation>} {<centerofrotation>} { { <beadtypelist> } [thetabins]", (char *)NULL);
+    return (TCL_ERROR);
+  } else {
+    argc -= 4;
+    argv += 4;
+  }
+
+  if ( !ARG_IS_D(0,rotation_axis[0]) || !ARG_IS_D(1,rotation_axis[1]) || !ARG_IS_D(2,rotation_axis[2]) ) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp,"rotation_axis usage:  analyze radial_density_map <xbins> <ybins> <xrange> <yrange> {<axisofrotation>} {<centerofrotation>} { { <beadtypelist> } [thetabins]", (char *)NULL);
+    return (TCL_ERROR);
+  } else {
+    argc -= 3;
+    argv += 3;
+  }
+  
+  if ( !ARG_IS_D(0,rotation_center[0] ) || !ARG_IS_D(1,rotation_center[1] ) || !ARG_IS_D(2,rotation_center[2] ) ) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp,"rotation_center usage: analyze radial_density_map <xbins> <ybins> <xrange> <yrange> {<axisofrotation>} {<centerofrotation>} { { <beadtypelist> } [thetabins]", (char *)NULL);
+    return (TCL_ERROR);
+  } else {
+    argc -= 3;
+    argv += 3;
+  }
+
+  if ( !ARG_IS_INTLIST(0,beadtypes)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp," beadtypes usage: analyze radial_density_map <xbins> <ybins> <xrange> <yrange> {<axisofrotation>} {<centerofrotation>} { { <beadtypelist> } [thetabins] ", (char *)NULL);
+    return (TCL_ERROR);
+  } else {
+    argc -= 1;
+    argv += 1;
+  }
+
+  /* Now check for the optional thetabins argument */
+  if ( argc > 0 ) {
+    if ( !ARG_IS_I(0,thetabins)) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp,"thetabins usage:  analyze radial_density_map <xbins> <ybins> <xrange> <yrange> {<axisofrotation>} {<centerofrotation>} { { <beadtypelist> } [thetabins] ", (char *)NULL);
+      return (TCL_ERROR);
+    } else {
+      dobyangle = 1;
+      argc -= 1;
+      argv += 1;
+    }
+  }
+
+  
+  printf("nbtypes %d \n",beadtypes.max);
+  printf("bt %d \n",beadtypes.e[0]);
+  printf("bins %d %d %d %f %f \n",xbins,ybins,thetabins,xrange,yrange);
+  printf("rotationaxis %f %f %f \n",rotation_axis[0],rotation_axis[1],rotation_axis[2]);
+  printf("center %f %f %f \n",rotation_center[0],rotation_center[1],rotation_center[2]);
+
+  /* allocate memory for the profile if necessary */
+  if (thetabins > 0 ) {
+    density_profile = malloc(beadtypes.max*sizeof(DoubleList));
+    if (density_profile) {
+      for ( i = 0 ; i < beadtypes.max ; i++ ) {
+	init_doublelist(&density_profile[i]);
+	alloc_doublelist(&density_profile[i],thetabins);
+	for ( j = 0 ; j < thetabins ; j++ ) {
+	  density_profile[i].e[j] = 0.0;
+	}
+      }
+    } else {
+	Tcl_AppendResult(interp,"could not allocate memory for density_profile", (char *)NULL);
+	return (TCL_ERROR);
+    }
+  }
+  /* Allocate a doublelist of bins for each beadtype so that we
+     can keep track of beads separately */
+  density_map = malloc(beadtypes.max*sizeof(DoubleList));
+  if ( density_map ) {
+  /* Initialize all the subprofiles in density profile */
+    for ( i = 0 ; i < beadtypes.max ; i++ ) {
+      //      printf("initializing for beadtype %d and i: %d \n",beadtypes.e[i],i);
+      init_doublelist(&density_map[i]);
+      alloc_doublelist(&density_map[i],xbins*ybins);
+      if (!density_map[i].e) { 
+	Tcl_AppendResult(interp,"could not allocate memory for density_map", (char *)NULL);
+	return (TCL_ERROR);
+      } else {
+	for ( j = 0 ; j < xbins*ybins ; j++ ) {
+	  // printf("j: %d max: %d",j,density_map[i].max);
+	  density_map[i].e[j] = 0.0;
+	}
+
+      }
+      //      printf("done initializing at i: %d j: %d\n",i,j);
+    }
+  } else {
+    Tcl_AppendResult(interp,"could not allocate memory for density_map", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  //  printf("about to calculate profile \n");
+  if(analyze_radial_density_map(xbins,ybins,thetabins,xrange,yrange,rotation_axis,rotation_center,&beadtypes, density_map ,density_profile) != TCL_OK) {
+    Tcl_AppendResult(interp, "Error calculating radial density profile ", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  //  printf("done calculating profile \n");
+
+  Tcl_AppendResult(interp, "{ RadialDensityMap  { ", (char *)NULL);
+  for ( i = 0 ; i < beadtypes.n ; i++) {
+    Tcl_AppendResult(interp, " { ", (char *)NULL);
+    for ( j = 0 ; j < xbins ; j++) {
+      Tcl_AppendResult(interp, " { ", (char *)NULL);
+      for ( k = 0 ; k < ybins ; k++) {
+	Tcl_PrintDouble(interp,density_map[i].e[j*ybins+k],buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+	Tcl_AppendResult(interp, " ", (char *)NULL);
+      }
+      Tcl_AppendResult(interp, " } ", (char *)NULL);
+    }
+    Tcl_AppendResult(interp, " } ", (char *)NULL);
+  }
+  Tcl_AppendResult(interp, " } ", (char *)NULL);    
+  Tcl_AppendResult(interp, " } ", (char *)NULL); 
+  if ( thetabins > 0 ) {
+    Tcl_AppendResult(interp, "{ RadialDensityThetaProfile  { ", (char *)NULL);
+    for ( i = 0 ; i < beadtypes.n ; i++) {
+      Tcl_AppendResult(interp, " { ", (char *)NULL);
+      for ( j = 0 ; j < thetabins ; j++ ) {
+	Tcl_PrintDouble(interp,density_profile[i].e[j],buffer);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+	Tcl_AppendResult(interp, " ", (char *)NULL);
+      }
+      Tcl_AppendResult(interp, " } ", (char *)NULL);
+    }
+    Tcl_AppendResult(interp, " } ", (char *)NULL);
+    Tcl_AppendResult(interp, " } ", (char *)NULL);
+
+    /* Dealloc the density profile*/
+    for ( i = 0 ; i < beadtypes.max ; i++ ) {
+      realloc_doublelist(&density_profile[i],0);
+    }
+    free(density_profile);
+  }
+
+
+  /* Dealloc all subprofiles in density map */
+  for ( i = 0 ; i < beadtypes.max ; i++ ) {
+    realloc_doublelist(&density_map[i],0);
+  }
+  free(density_map);
+
+  realloc_intlist(&beadtypes,0);
+  return TCL_OK;
+}
+
+
 static int parse_bilayer_density_profile(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze bilayer density profile ' */
@@ -1284,7 +1617,7 @@ static int parse_bilayer_density_profile(Tcl_Interp *interp, int argc, char **ar
     realloc_doublelist(&density_profile[i],0);
   }
   free(density_profile);
-  
+  realloc_intlist(&beadtypes,0);
   return TCL_OK;
 }
 
@@ -2285,6 +2618,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     err = parse_modes2d(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("bilayer_density_profile"))
     err = parse_bilayer_density_profile(interp,argc -2, argv +2);
+  else if (ARG1_IS_S("radial_density_map"))
+    err = parse_radial_density_map(interp,argc -2, argv +2);
   else if (ARG1_IS_S("get_lipid_orients"))
     err = parse_get_lipid_orients(interp,argc-2,argv+2);
   else if (ARG1_IS_S("lipid_orient_order"))

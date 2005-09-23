@@ -116,6 +116,11 @@
     </div>  
   </li>
   <li> <em class=cmd>
+    ::mbtools::system_generation::get_fixmols </em> : returns
+    the internal list variable <em class=cd> fixedmols </em>
+    which keeps track of all molecules that have been fixed by their center of mass. This function should be called after setup and would then typically be passed to the function <em class=cd>::mbtools::utils:fix_mols</em>.
+  </li>
+  <li> <em class=cmd>
     ::mbtools::system_generation::get_userfixedparts </em> : returns
     the internal list variable <em class=cd> userfixedparts </em>
     which keeps track of all particles that have been fixed in
@@ -242,13 +247,14 @@
     </div>
     
   </li>
-  <li>  <em class=cmd> singlemol </em> : <em class=args> -c.arg -o.arg -bondl.arg </em> 
+  <li>  <em class=cmd> singlemol </em> : <em class=args> -c.arg -o.arg -bondl.arg -fix.arg </em> 
     <div class = body> 
       <ul class = arguments > 
 	<li> <em class=args> c.arg [ { 0.0 0.0 0.0 } ] </em> The
 	  molecule center.  Exactly what this means depends molecule
 	  type </li>
 	<li> <em class=args> o.arg [ { 0.0 0.0 1.0 } ] </em> The orientation vector for the molecule.  This is also molecule type dependent </li>
+	<li> <em class=args> fix.arg [ { 0 0 0 } ] </em> Set this optional argument to cause a molecule to be fixed by its center of mass.  You should give three integers corresponding to each of the three coordinate axes.  If a value of 1 is given then motion in that axis is fixed. </li>
       </ul>
     </div>    
     <div class = synopsis >

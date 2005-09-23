@@ -82,6 +82,11 @@ void force_calc()
   calc_comforce();
 #endif
 
+#ifdef MOLFORCES
+  calc_mol_forces_coms();
+  calc_moltrap();
+#endif
+
 /* this must be the last force to be calculated (Mehmet)*/
 #ifdef COMFIXED
   calc_comfixed();

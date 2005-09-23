@@ -73,6 +73,10 @@
     <li> \verbatim #define COMFIXED \endverbatim
     Compiler Flag to enable COMFIXED potential
 
+    <li> \verbatim #define MOLFORCES \endverbatim Enables molecular
+    forces. At present this only includes the trapping of molecules in
+    a harmonic potential
+
     <li> \verbatim #define BOND_CONSTRAINT \endverbatim
     Compiler Flag to enable bond constraint.
     See \ref rattle.h, merged but not tested. 
@@ -147,6 +151,7 @@
 /* #define EXCLUSIONS */
 /* #define COMFORCE */
 /* #define COMFIXED */
+/* #define MOLFORCES */
 /* #define BOND_CONSTRAINT */
 
 /* #define TABULATED */

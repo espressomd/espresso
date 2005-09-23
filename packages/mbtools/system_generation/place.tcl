@@ -21,6 +21,7 @@ proc ::mbtools::system_generation::placemol { mol pos args } {
     set options {
 	{bondl.arg     1.0   "bond length between atoms"  }
 	{orient.arg  { 0 0 1 } "orientation vector for the mol " }
+
     }
     set usage "Usage: create_bilayer topo boxl \[bondl:orient]"
     array set params [::cmdline::getoptions args $options $usage]

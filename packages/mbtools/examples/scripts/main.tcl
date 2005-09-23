@@ -46,7 +46,7 @@ set usage "Usage: main.tcl n: paramsfile"
 array set params [::cmdline::getoptions argv $options $usage]
 set paramsfile [lindex $argv 0]
 
-
+::mmsg::enable debug
 
 #----------- System Parameters ----------------------------#
 # Set a bunch of default parameters.
@@ -63,7 +63,8 @@ set npt off
 set mgrid 8
 set stray_cut_off 1000.0
 set use_vmd "offline"
-
+set tablenames ""
+set trappedmols ""
 ::mmsg::send $this "using paramsfile: $paramsfile"
 source $paramsfile
 
@@ -110,11 +111,15 @@ if { !$checkpointexists } {
 
 
     set topology [::mbtools::system_generation::setup_system $system_specs $setbox_l $moltypes]
-
-
     # Set the generated topology into the internals of espresso.
     ::mbtools::utils::set_topology $topology
+    set trappedmols [::mbtools::system_generation::get_trappedmols]
     
+    # Fix molecules if necessary
+    if { [llength $trappedmols] > 0 } {
+	::mbtools::utils::trap_mols $trappedmols
+    }
+
     #Initialise Random Number Generator
     #----------------------------------------------------------#
     ::mbtools::utils::init_random $params(n)

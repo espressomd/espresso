@@ -7,6 +7,7 @@
 
 namespace eval mbtools::system_generation {}
 
+
 #----------------------------------------------------------#
 # ::mbtools::system_generation::create_simple_topo --
 #
@@ -82,6 +83,7 @@ proc ::mbtools::system_generation::shuffle_topo {topo} {
     mmsg::send [namespace current] "constructing topo template " nonewline 
     flush stdout
     set dotfreq [expr int(floor($n_molstotal/10.0))]
+    if { $dotfreq < 1 } { set dotfreq 1}
     for { set i 0 } { $i < $n_molstotal } { incr i } {
 	
 	# According to the molecule proportions determine the type of

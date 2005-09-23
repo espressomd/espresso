@@ -31,6 +31,23 @@ typedef struct {
   int type;
   /** List of particle identities contained in that molecule */
   IntList part;
+
+  /** Total force on the molecule */
+  double f[3];
+  /** Total mass of the molecule */
+  double mass;
+  /** Center of mass position */
+  double com[3];
+  /** Whether to trap motion in a direction */
+  int trap_flag;
+
+  /** Location of a harmonic trap for this molecule */
+  double trap_center[3];
+
+  /** Trap stiffness */
+  double trap_spring_constant;
+  
+
 } Molecule;
 
 /*@}*/
@@ -44,6 +61,8 @@ typedef struct {
 extern int     n_molecules;
 /** List of molecules. */
 extern Molecule *topology;
+
+extern int topo_part_info_synced;
 
 /*@{*/
 

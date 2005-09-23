@@ -88,22 +88,24 @@ lappend bonded_parms [list 1 harmonic 10.0 4.0 ]
 
 # Non Bonded Potentials 
 #----------------------------------------------------------#
-# Define the forcetables to be used for the interaction of each pair of atom types
+# Define the interactions between lipid heads and tails
+# Useful Parameters
+set lj_eps 1.0
+set lj_cutoff 2.5
+set ljshift 0.0
+set ljoffset 0.0
+set lj_sigmah 0.95
+set lj_sigma 1.0
 
-lappend nb_interactions [list 0 0 tabulated 9_095_11.tab ]
-lappend nb_interactions [list 0 1 tabulated 9_095_11.tab ]
-lappend nb_interactions [list 0 2 tabulated 9_095_11.tab ]
-lappend nb_interactions [list 1 1 tabulated n9_c160_22.tab ]
-lappend nb_interactions [list 1 2 tabulated n9_c160_22.tab ]
-lappend nb_interactions [list 2 2 tabulated n9_c160_22.tab ]
+# Define the interaction matrix
+lappend nb_interactions [list 0 0 lennard-jones $lj_eps $lj_sigmah [expr 1.1225*$lj_sigmah] [expr 0.25*$lj_eps] $ljoffset ]
+lappend nb_interactions [list 0 1 lennard-jones $lj_eps $lj_sigmah [expr 1.1225*$lj_sigmah] [expr 0.25*$lj_eps] $ljoffset ]
+lappend nb_interactions [list 0 2 lennard-jones $lj_eps $lj_sigmah [expr 1.1225*$lj_sigmah] [expr 0.25*$lj_eps] $ljoffset ]
 
-# We also need to make a list of all the forcetable filenames so that
-# the forcetables can be copied to the working directory.
-
-lappend tablenames 9_095_11.tab 
-lappend tablenames n9_c160_22.tab
-
-
+# We use a special type of cosine attractive potential for the tail tail interactions. 
+lappend nb_interactions [list 1 1 lj-cos2 $lj_eps $lj_sigma $ljoffset 1.6 ]
+lappend nb_interactions [list 1 2 lj-cos2 $lj_eps $lj_sigma $ljoffset 1.6 ]
+lappend nb_interactions [list 2 2 lj-cos2 $lj_eps $lj_sigma $ljoffset 1.6 ]
 
 
 # Analysis Parameters

@@ -8,6 +8,21 @@ namespace eval ::mbtools::utils {
     namespace export calc_centersofmass_bymoltype
     namespace export isoutside
     namespace export calc_com
+    namespace export trap_mols
+}
+
+# ::mbtools::utils::trap_mols --
+#
+# Apply molecular traps to all molecules specified in a list
+#
+# 
+#
+proc ::mbtools::utils::trap_mols { molstotrap } {
+
+    foreach mol $molstotrap {
+	::mmsg::debug [namespace current] "applying trap : [lrange $mol 1 end] to mol : [lindex $mol 0]"
+	analyze set trapmol [lindex $mol 0] [lindex $mol 1] [lindex $mol 2] coords [lindex $mol 3]  
+    }
 }
 
 # ::mbtools::utils::calc_com --
