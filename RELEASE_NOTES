@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6k (Seska)                                                                      *
+* v1.9.6l (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6k -
+- v1.9.6l -
 -----------
 
+(l) September 23th, 2005.
 (k) September 16th, 2005.
 (j) September 15th, 2005.
 (i) September 13th, 2005.
@@ -24,6 +25,11 @@ Current working revision.
 (a) July      18th, 2005.
 
 New Features:
+(l) Analysis routine radial_density_map added to allow construction of a density map of
+    the system assuming rotational symmetry.
+(l) By turning on the MOLFORCES it is now possible to mimic an optical trap which acts
+    on the center of mass of individual molecules. To implement this the new file
+    molforces.h was added and some additional parsing has been added to topology.c
 (k) Espresso now compiles and runs on SunOS
 (j) Added new lj-cos2 potential. Similar to existing lj-cos potential but with a
     slightly different cosine tail.
