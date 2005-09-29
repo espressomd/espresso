@@ -1485,13 +1485,12 @@ Released on December 19th, 2003.
 - v1.1.2a -
 -----------
 
+(a) December 19th, 2003.
+
 New Features: 
 (a) working version of tabulated lookup potentials is
     now implemented.  Be sure to check documentation as file format
     requirements are likely to change with new versions.
-
-Changes:
-(-) none
 
 Bugfixes:
 (a) 'part <ind> delete' now correctly deletes all bonds involved
@@ -1522,9 +1521,6 @@ New Features:
 (b) command 'analyze p_IK1' replacing 'analyze p_bin'
 (a) command 'analyze p_bin' to derive the pressure tensor of a given particle list
 (a) command 'analyze bin' to create a particle list distributed into spherical bins
-
-Changes:
-(-) none
 
 Bugfixes:
 (e) fixed 'tuning.c' on Darwin-systems (e.g. MacOS)
