@@ -733,7 +733,6 @@ Bugfixes of errors introduced since 1.7.x:
 * v1.7.2e (Mezoti)                                                                     *
 ****************************************************************************************
 
-Current working revision.
 Released & tagged on September 2nd, 2004.
 
 
@@ -1438,7 +1437,7 @@ Released on January 29th, 2004.
 
 
 - v1.5.Alpha -
---------------
+-----------
 
 (b) January 15th, 2004.
 (a) January  7th, 2004.
@@ -1474,15 +1473,7 @@ Bugfixes:
     the constraint energy was wrong, even though the total energy was correct
  
 
-
-***********
-* v1.1.2  *
-***********
-
-Released on December 19th, 2003.
-
-
-- v1.1.2a -
+- v1.1.2a  -
 -----------
 
 (a) December 19th, 2003.
@@ -1496,10 +1487,9 @@ Bugfixes:
 (a) 'part <ind> delete' now correctly deletes all bonds involved
 
 
-
-***********
-* v1.1.1  *
-***********
+****************************************************************************************
+* v1.1.1                                                                               *
+****************************************************************************************
 
 Released on December 2nd, 2003.
 
