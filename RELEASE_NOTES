@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6l (Seska)                                                                      *
+* v1.9.6m (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6l -
+- v1.9.6m -
 -----------
 
+(m) September 30th, 2005.
 (l) September 23th, 2005.
 (k) September 16th, 2005.
 (j) September 15th, 2005.
@@ -25,6 +26,7 @@ Current working revision.
 (a) July      18th, 2005.
 
 New Features:
+(m) added new file
 (l) Analysis routine radial_density_map added to allow construction of a density map of
     the system assuming rotational symmetry.
 (l) By turning on the MOLFORCES it is now possible to mimic an optical trap which acts
