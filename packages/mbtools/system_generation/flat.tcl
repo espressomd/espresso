@@ -95,7 +95,7 @@ proc ::mbtools::system_generation::flat::create_flat {args } {
 	    set fixvalue [part $i print fix]
 	    #check to see if the particle has been otherwise specially fixed
 	    part [expr $i] fix [lindex $fixvalue 0] [lindex $fixvalue 1] 1
-	    lappend ::mbtools::system_generation::userfixedparts $i
+#	    lappend ::mbtools::system_generation::userfixedparts $i
 	}
     }
 
