@@ -159,7 +159,7 @@ if { !$checkpointexists } {
     # after warmup
     set userfixedparts [::mbtools::system_generation::get_userfixedparts ]
     for {set i 0} { $i <  [setmd n_part] } {incr i} {
-	if { [lsearch $userfixedparts $i ] != -1 } {
+	if { [lsearch $userfixedparts $i ] == -1 } {
 	    part [expr $i] fix 0 0 0
 	}
     }
