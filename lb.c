@@ -1,7 +1,6 @@
 /** \file lb.c  
  *  Lattice Boltzmann algorithm for solvent degrees of freedom.
- *  The program would stop if n for any of the 18 velocities becomes negative
- *  To avoid this problem keep time step at 0.005
+ *  The program would stop if n becomes negative too often
  */
 
 #include <mpi.h>
@@ -32,6 +31,7 @@
 #define REQ_LB_SPREAD   301
 
 #define CREEPINGFLOW
+
 #define D3Q18 
 
 /* granularity of particle buffer allocation */
@@ -114,7 +114,6 @@ typedef struct {
 } T_PLANEINFO;
 
 
-
 void halo_init();
 
 /*
@@ -195,6 +194,9 @@ double  defaultagrid      = 1.;
 int     defaultn_veloc    = 18;
 int     defaultn_abs_veloc= 2; 
 int     defaultn_abs_which[] ={6,12};
+
+/* 18 velocities */
+
 T_IVECTOR defaultc_g[18]={   { 1, 0, 0}, 
 			     {-1, 0, 0},
 			     { 0, 1, 0}, 
@@ -213,54 +215,48 @@ T_IVECTOR defaultc_g[18]={   { 1, 0, 0},
 			     { 0,-1,-1},
 			     { 0, 1,-1},
 			     { 0,-1, 1}};
+
 int  defaultc_abs_sq_g[]={1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2};
 double  defaultcoef_eq[]={1./12.,1./6.,1./4.,-1./6.,1./24.,1./12.,1./8.,1./12.};
 
-int  defaultranseed        = -123456789;       
-char defaultobsfile[]      ="sim";                /* observable file (.bondlen, .msd etc is added) */  
-char defaultloadfile[]     ="current_state";      /* configuration file to be loaded (e.g. after crash) */
-char defaultnicefile[]      ="sim_state";         /* file for state to be saved to (after equilibration etc.) 
-						      includes velocities, forces  and fluid per default */
-char defaultbfile[]        ="boundaries.in";
 char stopName[200]; 
 
-int      defaultchainlen    = 5000;
-int      n_abs_veloc;
-double   defaultfriction    = 20.;
-double   fluidstep;
-double   lblambda;
-double   viscos;
-double   c_sound_sq; 
-LBT_BOOL   defaultboundary   = FALSE;
-LBT_BOOL   fluct;
-LBT_BOOL   siminit = FALSE; 
-LBT_BOOL   boundary1;                        /* yes if there is some other than periodic boundary */
-LBT_BOOL   fixmom = FALSE;                        /* yes if there is some other than periodic boundary */
-int        MomentumTransfer=0;
-int*     n_abs_which;
-double*  coef_eq;  
-int*     c_abs_sq_g;
-int      lu;
+int       n_abs_veloc;
+double    defaultfriction    = 20.;
+double    fluidstep;
+double    lblambda;
+double    viscos;
+double    c_sound_sq; 
+LBT_BOOL  defaultboundary   = FALSE;
+LBT_BOOL  fluct;
+LBT_BOOL  siminit = FALSE; 
+LBT_BOOL  boundary1;                        /* yes if there is some other than periodic boundary */
+LBT_BOOL  fixmom = FALSE;                   /* yes if there is some other than periodic boundary */
+int       MomentumTransfer=0;
+int*      n_abs_which;
+double*   coef_eq;  
+int*      c_abs_sq_g;
+int       lu;
 
 /*************************** global arrays **********************************/
 
 double*       n     = NULL;                 /* distribution */
 double*       n_new = NULL;                 /* distribution to stream to */
 double*       rho   = NULL;                 /* mass density */
-int*          next  = NULL;               /* next gridpoint address */
+int*          next  = NULL;                 /* next gridpoint address */
 T_DVECTOR*    j     = NULL;                 /* current density */
 T_DVECTOR*    c_g_d = NULL;                 /* grid vectors of double type */
 T_DMATRIX*    pi    = NULL;                 /* stress tensor */
 
-T_IVECTOR*    neighbor = NULL;              /* right neighbor in grid */
-T_IVECTOR*    lneighbor = NULL;              /* left neighbor in grid */ 
+T_IVECTOR*    neighbor  = NULL;             /* right neighbor in grid */
+T_IVECTOR*    lneighbor = NULL;             /* left neighbor in grid */ 
 T_IVECTOR*    c_g=defaultc_g;
 
-T_DVECTOR*    v     = NULL;                 /* monomer velocity */
+T_DVECTOR*    v      = NULL;                 /* monomer velocity */
 T_DVECTOR*    force  = NULL;                 /* force on monomer */ 
-T_DVECTOR*    xrel  = NULL;                 /* monomer coordinate in unit cell (in lattice units) */
+T_DVECTOR*    xrel   = NULL;                 /* monomer coordinate in unit cell (in lattice units) */
 T_DVECTOR*    store_rans = NULL;
-T_GRIDPOS*    xint  = NULL;                 /* lower left front gridpoint of monomer unit cell + PE of this monomer*/ 
+T_GRIDPOS*    xint   = NULL;                 /* lower left front gridpoint of monomer unit cell + PE of this monomer*/ 
 T_DVECTOR     save_j;
 //T_RANSTORE    save_n =NULL;
 /******************************* global scalars/structs **********************/
@@ -278,20 +274,18 @@ MPI_Status stat[4];
 
 T_TERM_FLAG terminateFlag = TERM_continue; 
 
-T_IVECTOR nPesPerDir;              /* number of PEs in each Dir */
+T_IVECTOR nPesPerDir;              /* number of PEs in each Direction */
 T_IVECTOR offset;                  /* offset of local box */
 
 LB_structure  lbpar;                   /* this is the struct where all the parameters of the simulation are stored */
 
 int    counter;                         /* current step after equilibration */ 
-int    ranseed;                         /* seed for random number generator */
 int    xyzcube;                         /* volume of local box */
 int    gridpoints;
 int    xsize,ysize,zsize;               /* local size of box */ 
 int    xoffset,yoffset,zoffset;         /* local offset of box */
 int    n_veloc;                         /* # of grid velocities  */ 
 int    how_much_data;                   /* total number of steps */
-int    chainlen,nMono;                  /* chainlength and # of chains to be simulated (separately) */
 int    gridbegin;                       /* local start of real info (w.o. halo */
 int    gridsurface;                     /* surface of loacl box */
 int    Npart;        /* number of particles */
@@ -315,7 +309,7 @@ void allocmem() {/* allocate memeory */
 #ifndef D3Q18
   next=(int*)realloc(next, n_veloc*(xyzcube+gridsurface)*sizeof(int));
 #endif
-  neighbor=(T_IVECTOR*)realloc(neighbor, (gridpoints+2)*sizeof(T_IVECTOR)); /* global */
+  neighbor=(T_IVECTOR*)realloc(neighbor, (gridpoints+2)*sizeof(T_IVECTOR));   /* global */
   lneighbor=(T_IVECTOR*)realloc(lneighbor, (gridpoints+2)*sizeof(T_IVECTOR)); /* global */
   n=(double*)realloc(n, (xyzcube+gridsurface)*n_veloc*sizeof(double));
   j=(T_DVECTOR*)realloc(j, (xyzcube+gridsurface)*sizeof(T_DVECTOR));
@@ -391,66 +385,19 @@ void freemem(void){
 	      
 }
 
-#define MAXRANDINV (1.0/2147483647.0)
-static T_INT32 ibm = 1;
-/*
-static double mibmran (void) {
-
-  ibm *= 16807;
-  return ibm*MAXRANDINV;
-}
-*/
-/*
-static int GetLinearIndex (int multiIndex[], int vol[]) {
-
-  int linear = multiIndex[0];
-  int i;
-
-  for (i = 1;i < SPACE_DIM;i++) linear += vol[i-1]*multiIndex[i];
-  return linear;
-}
-
-
-*/
-void ibmset (int iseed) {
-
-  ibm = iseed*3;
-}
-
-/*********  intialize important variables       **********************/
-static void InitCommand() {
-
-    lbpar.ranseed    = defaultranseed;
-    lbpar.current_type= defaultcurrent_type ;
-    strcpy(lbpar.currentpar,defaultcurrentpar);
-
-    lbpar.chainlen   = defaultchainlen;  
-//    lbpar.boundary   = defaultboundary;
-    lbpar.lblambda     = defaultlambda;
-    lbpar.c_sound_sq = defaultc_sound_sq; 
-
-//    lbpar.agrid      = defaultagrid;       
-//    lbpar.rho        = defaultrho;
-//    lbpar.gridpoints = defaultgridpoints;
-//    lbpar.tau        = defaulttau;  		   
-//    lbpar.lbfriction   = defaultfriction;
-//    lbpar.viscos     = defaultviscos  ;
-}							       
-
-
 void printfields(T_DVECTOR* j,double* rho,T_DMATRIX* pi){
-
+  
   /**********************************************************
    print hydrodynamic fields rho,j, and pi_xz to stdout
    
    Author: Ahlrichs, 01/10/97
-   **********************************************************/
+  **********************************************************/
   
   int i,k,x,y,z,gx,gy,gz;
   int xsizep2 = xsize+2;
   int ysizep2 = ysize+2;
   int zsizep2 = zsize+2;
-
+  
   if (!myNum) printf(" x[a]  y[a]  z[a]         rho           j_x           j_y           j_z         pi_xz\n");
   for (k=0;k<numPes;k++){
     if (k==myNum) {
@@ -468,12 +415,12 @@ void printfields(T_DVECTOR* j,double* rho,T_DMATRIX* pi){
     }
     MPI_Barrier(MPI_COMM_WORLD);
   }
-if (!myNum) fflush(stdout);
+  if (!myNum) fflush(stdout);
 }
-	     
+
 /************************************************************/
 void calcfields(double* n,LBT_BOOL calc_pi){
-
+  
   /***********************************************************
    calculate hydrodynamic fields rho und j from distribution n
    also calculate stress tensor if calc_pi
@@ -482,23 +429,22 @@ void calcfields(double* n,LBT_BOOL calc_pi){
    for calculations aftwerwards which include halo?)
 
    Author: Ahlrichs, 01/10/97
-   **********************************************************/
-
+  **********************************************************/
+  
   int i,k,m,l,h;
   double help,help2;
 #ifdef DEBUG
-printf(" %d You're now in CALCFIELDS %d %d \n",this_node,xyzcube,gridsurface);
-printf(" And the first grid vector is: %f %f %f\n",c_g_d[0][0],c_g_d[0][1],c_g_d[0][2]);
+  printf(" %d You're now in CALCFIELDS %d %d \n",this_node,xyzcube,gridsurface);
+  printf(" And the first grid vector is: %f %f %f\n",c_g_d[0][0],c_g_d[0][1],c_g_d[0][2]);
 #endif  
   memset(rho,0,sizeof(double)*(xyzcube+gridsurface));
   memset(j,0,sizeof(T_DVECTOR)*(xyzcube+gridsurface));
   if (calc_pi) memset(pi,0,sizeof(T_DMATRIX)*(xyzcube+gridsurface));
-
-
+    
   l=0;
-
+  
   if (calc_pi){
-
+    
     for(i=0;i<(xyzcube+gridsurface);i++){
       for(k=0;k<n_veloc;k++){
 	help=n[l];
@@ -514,12 +460,11 @@ printf(" And the first grid vector is: %f %f %f\n",c_g_d[0][0],c_g_d[0][1],c_g_d
       }
     }
   
-  }
-  else {
+  } else {
     
 #ifdef D3Q18
     for(i=0;i<(xyzcube+gridsurface);i++){
-
+      
       double* nlocal = &(n[l]);
       rho[i]=nlocal[0]+nlocal[1]+nlocal[2]+nlocal[3]+nlocal[4]+nlocal[5]+
 	nlocal[6]+nlocal[7]+nlocal[8]+nlocal[9]+nlocal[10]+nlocal[11]+
@@ -560,63 +505,16 @@ static void calccurrent(int current_type,char* current_par, int gridpoints,T_DVE
    ***********************************************************/
 
   int i,x,y,z;
-  char* dummy;
-  double j_0,j_1;   /* parameters for construction of field */ 
-  double j_base;
-
-  switch(current_type){
-  case 0:    /*  constant current field of strength j_0 in y direction */
-    j_0=strtod(current_par,&dummy);
-    for (z=1; z<(zsize+1); z++){
+  for (z=1; z<(zsize+1); z++){
     for (y=1; y<(ysize+1); y++){
-    for (x=1; x<(xsize+1); x++){
-      i = z*(ysize+2)*(xsize+2)+y*(xsize+2)+x;
-      j[i][0]=0.0;
-      j[i][2]=0.0;
-      j[i][1]=j_0;
+      for (x=1; x<(xsize+1); x++){
+	i = z*(ysize+2)*(xsize+2)+y*(xsize+2)+x;
+	j[i][0]=0.0;
+	j[i][2]=0.0;
+	j[i][1]=0.0;
+      }
     }
-    }
-    }
-    break;
-  case 1:    /* linear z-velocity profile of max. value j_0 in x-direction */
-    j_0=strtod(current_par,&dummy);
-    j_base=2.*j_0/(double)gridpoints;
-    if (!myNum) printf("assigning linear profile: max. value = %f\n",j_0);
-    for (z=1; z<(zsize+1); z++){
-    for (y=1; y<(ysize+1); y++){
-    for (x=1; x<(xsize+1); x++){
-      i = z*(ysize+2)*(xsize+2)+y*(xsize+2)+x;
-      if (x+offset[0]<gridpoints/2+1) j[i][2]=j_base*(double)(x+offset[0]-1);
-      else j[i][2]=j_0-j_base*(double)(x+xoffset-gridpoints/2);
-      j[i][0]=0.;
-      j[i][1]=0.;
-    }
-    }
-    }
-    break;
-  case 2:   /* sine profile for z-velo of max. value j_0 in x-direction, wavenumder 2*pi*j_1/gridpoints */
-    j_0=strtod(current_par,&dummy);
-    j_1=strtod(dummy,&dummy);
-    if (!myNum) printf("Assigning sine profile: Amplitude=%f,  Mode=%f\n",j_0,j_1);
-    j_base=2.*PI*j_1/(double)gridpoints;
-    for (z=1; z<(zsize+1); z++){
-    for (y=1; y<(ysize+1); y++){
-    for (x=1; x<(xsize+1); x++){
-      i = z*(ysize+2)*(xsize+2)+y*(xsize+2)+x;
-      j[i][2]=j_0*sin(j_base*(y+offset[1]-1));
-      j[i][0]=0.;
-      j[i][1]=0.;
-    }
-    }
-    }
-    break;
-  default:
-    if (!myNum) fprintf(stderr,"*** ERROR in calccurrent: unknown current type (%d)\n",
-	    current_type);
-    ExitProgram(TERM_error);
-    break;
   }
-
 }
 
 
@@ -630,20 +528,8 @@ static double vecveccontr_trace(double *a,double *b){
 
    Author: Ahlrichs, 22/10/97
    **************************************************************/
-
-  
-  int i,k;
-  double sum=0.; 
-  double sum2=0.;
-
-  for(i=0;i<3;i++){
-    sum2=0.;
-    for(k=0;k<3;k++){
-      sum2+=a[k]*b[k];
-    }
-    sum+=sum2*a[i]*b[i];
-  }
-  sum-=scalar(a,a)*scalar(b,b)/D_SPACE_DIM;
+  double sum; 
+  sum=scalar(a,b)*scalar(a,b)-scalar(a,a)*scalar(b,b)/D_SPACE_DIM;
   return sum;
 }
 
@@ -735,15 +621,15 @@ static void calcn_eq(int* n_abs_which,int* c_abs_sq_g,double* coef_eq,
 
 }
 
-
 void new(){
 
   /***********************************************************
-   set up new configuration, allocate memory 
+   sets up new configuration.
+   allocates memory. 
    input:  big structure par 
    output: n[i]            = number density at each site
                              with certain velocity 
-	     i=(x+y*gridpoints+z*gridpoints^2)*n_veloc+veloc_now
+	   i=(x+y*gridpoints+z*gridpoints^2)*n_veloc+veloc_now
 	   j[i][3] = current field 
 	   rho[i]          = density
 	   xf,xp,xrefl,xint,v = chain pos. and velo.
@@ -765,22 +651,25 @@ void new(){
   /* initialize global variables, allocate memory */
 
   gridpoints = lbpar.gridpoints;
-  chainlen   = lbpar.chainlen;
   n_veloc    = defaultn_veloc; 
-//  boundary1   = lbpar.boundary;
+  //  boundary1   = lbpar.boundary;
   if (boundary1)  { if(!myNum) fprintf(stderr,"ERROR in NEW: boundaries are specified but not included in this version\n"); ExitProgram(TERM_error);}
+
+  //read data from the lbpar
   agrid      = lbpar.agrid;
   tau        = lbpar.tau;
-  ranseed    = lbpar.ranseed;
   gridpa     = gridpoints*agrid;
   invgridpa  = 1.0/gridpa;
 
+  //get data from the Espresso
   nPesPerDir[0] = node_grid[0]; 
   nPesPerDir[1] = node_grid[1];
   nPesPerDir[2] = node_grid[2];
   xsize = gridpoints/nPesPerDir[0];   
   ysize = gridpoints/nPesPerDir[1];
   zsize = gridpoints/nPesPerDir[2];
+
+  //set offsets for local boxes
   offset[0] = xsize*node_pos[0];
   offset[1] = ysize*node_pos[1];
   offset[2] = zsize*node_pos[2];
@@ -789,15 +678,15 @@ void new(){
   gridbegin  = (xsize+2)+(xsize+2)*(ysize+2)+1;       /* halo */
   gridsurface= (xsize+2)*(ysize+2)*(zsize+2)-xyzcube; /* halo */
   
-
+  //allocate memory for different arrays
   allocmem();
+
+  //readjusts memory for a cell
   alloc_part_mem(1);
 
   counter=0;
   current_time=0.0;
   
-  ibmset(abs((2*myGroup+1)*ranseed));
-
   for(k=0;k<n_veloc;k++){                                        /* calculate double type lattice vector */
     for(i=0;i<3;i++) c_g_d[k][i]=(double)c_g[k][i];
   }
@@ -814,8 +703,11 @@ void new(){
   memset(n,0,(xyzcube+gridsurface)*n_veloc*sizeof(double));
   calcn_eq(defaultn_abs_which,defaultc_abs_sq_g,defaultcoef_eq, defaultn_abs_veloc);       /* calc. eq. distribution */
 
-
+  //prepare halos for MPI communication
+  
   halo_init();
+  
+  //exchange halo data between diff processors
   halo_update();
 
   calcfields(n,TRUE); 
@@ -832,119 +724,6 @@ void new(){
 /*********************************************************
    end of NEW							    
 *********************************************************/
-
-
-#define IM1 2147483563
-#define IM2 2147483399
-#define AM1 (1.0/IM1)
-#define IMM1 (IM1-1)
-#define IA1 40014
-#define IA2 40692
-#define IQ1 53668
-#define IQ2 52774
-#define IR1 12211
-#define IR2 3791
-#define NTAB 32
-#define NDIV1 (1+IMM1/NTAB)
-#define EPS 1.2e-7
-//#define RNMX (1.0-EPS)
-
-double ran2(int *idum){
-  
-  int j;
-  int k;
-  static int idum2=123456789;
-  static int iy=0;
-  static int iv[NTAB];
-  double temp;
-
-  if (*idum<=0){
-    if (-(*idum)<1) *idum=1;
-    else *idum=-(*idum);
-    idum2=(*idum);
-    for(j=NTAB+7;j>=0;j--){
-      k=(*idum)/IQ1;
-      *idum=IA1*(*idum-k*IQ1)-k*IR1;
-      if (*idum<0) *idum+=IM1;
-      if (j<NTAB) iv[j]=*idum;
-    }
-    iy=iv[0];
-  }
-  k=(*idum)/IQ1;
-  *idum=IA1*(*idum-k*IQ1)-k*IR1;
-  if (*idum<0) *idum+=IM1;
-  k=idum2/IQ2;
-  idum2=IA2*(idum2-k*IQ2)-k*IR2;
-  if (idum2<0) idum2+=IM2;
-  j=iy/NDIV1;
-  iy=iv[j]-idum2;
-  iv[j]=*idum;
-  if (iy<1) iy+=IMM1;
-  if((temp=AM1*iy)>RNMX) return RNMX;
-  else {
-    /*    printf("RAN2 returns %f\n",temp);*/
-    return (temp);
-  }
-}
-
-#define MBIG 1000000000
-#define MSEED 161803398
-#define MZ 0
-#define FAC (1.0/MBIG)
-
-void ran3(int *idum,double *ranstore, int how_many)
-{
-	static int inext,inextp;
-	static int ma[56];
-	static int iff=0;
-	int mj,mk;
-	int i,ii,k;
-
-	if (*idum < 0 || iff == 0) {
-		iff=1;
-		mj=MSEED-(*idum < 0 ? -*idum : *idum);
-		mj %= MBIG;
-		ma[55]=mj;
-		mk=1;
-		for (i=1;i<=54;i++) {
-			ii=(21*i) % 55;
-			ma[ii]=mk;
-			mk=mj-mk;
-			if (mk < MZ) mk += MBIG;
-			mj=ma[ii];
-		}
-		for (k=1;k<=4;k++)
-			for (i=1;i<=55;i++) {
-				ma[i] -= ma[1+(i+30) % 55];
-				if (ma[i] < MZ) ma[i] += MBIG;
-			}
-		inext=0;
-		inextp=31;
-		*idum=1;
-	}
-	for (k=0;k<how_many;k++){
-	  if (++inext == 56) inext=1;
-	  if (++inextp == 56) inextp=1;
-	  mj=ma[inext]-ma[inextp];
-	  if (mj < MZ) mj += MBIG;
-	  ma[inext]=mj;
-	  ranstore[k]=2.0*mj*FAC-1.0;
-	}
-}
-#undef MBIG
-#undef MSEED
-#undef MZ
-#undef FAC
-  
-/**************************************************************************/
-/**************************************************************************/
-/**************************************************************************/
-/**************************************************************************/
-/**************************************************************************/
-/**************************************************************************/
-/**************************************************************************/
-/**************************************************************************/
-
 
 static void propagate_n(){ 
 
@@ -1038,17 +817,16 @@ static void add_fluct(double lblambda,double rho,double pi_lin[]){
   int k,l,o,n;
   double help,x;
   double trace=0.;
-  double ranstore[6];  /* 6 = 3*(3+1)/2 */
-
-  ran3(&ranseed,ranstore,6);
 
   o=0; n=0;
   for(k=0;k<3;k++){
-    x=ranstore[n++];
+    x=2*d_random()-1.0;
+    //   x=ranstore[n++];
     help=SQRT2*x*ampl*rootrho;
     trace+=help;
     for(l=0;l<k;l++){
-      x=ranstore[n++];
+      x=2*d_random()-1.0;
+      // x=ranstore[n++];
       pi_lin[o]-=x*ampl*rootrho;
       o++;
     }
@@ -1100,14 +878,18 @@ static void calc_collis(int n_abs_veloc,
   int yperiod     = xsize+2;
   int zperiod     = (xsize+2)*(ysize+2);
 #else
-  double   nl,help2;
+  double   nl;
   double   A_eq,B_eq,C_eq,D_eq;
   double   *dumpoi;
 #endif
 
+#ifndef CREEPINGFLOW
+  int m;
+  double help,help2,trace_eq,local_pi[3][3];
+#endif
+
   int      k,l,o,x,y,z;
   double   local_pi_lin[3*(3+1)/2];  
-
   l=0;
   for (z=1;z<zsize+1;z++){    /* go through all gridpoints except halo*/
     for (y=1;y<ysize+1;y++){
@@ -1125,8 +907,8 @@ static void calc_collis(int n_abs_veloc,
     for (k=0;k<n_veloc;k+=6){ 
       local_rho+=nlocal[k]+nlocal[k+1]+nlocal[k+2]+nlocal[k+3]+nlocal[k+4]+nlocal[k+5];
     }
-    
-    local_j[0] = nlocal[0]-nlocal[1]+nlocal[6]-nlocal[7]+nlocal[8]-nlocal[9]+nlocal[10]-nlocal[11]+nlocal[12]-nlocal[13];
+
+    local_j[0]      = nlocal[0]-nlocal[1]+nlocal[6]-nlocal[7]+nlocal[8]-nlocal[9]+nlocal[10]-nlocal[11]+nlocal[12]-nlocal[13];
     local_pi_lin[0] = nlocal[0]+nlocal[1]+nlocal[6]+nlocal[7]+nlocal[8]+nlocal[9]+nlocal[10]+nlocal[11]+nlocal[12]+nlocal[13];
 
     local_j[1] = nlocal[2]-nlocal[3]+nlocal[6]-nlocal[7]-nlocal[8]+nlocal[9]+nlocal[14]-nlocal[15]+nlocal[16]-nlocal[17];
@@ -1139,6 +921,34 @@ static void calc_collis(int n_abs_veloc,
     local_pi_lin[3] = nlocal[10]+nlocal[11]-nlocal[12]-nlocal[13];
     local_pi_lin[4] = nlocal[14]+nlocal[15]-nlocal[16]-nlocal[17];
 
+#else
+
+    local_rho=0.;     
+    
+
+    for(m=0;m<SPACE_DIM;m++) {
+      local_j[m]=0.0;
+    }
+    for(o=0;o<max_lin;o++){
+	local_pi_lin[o]=0.0;
+    }
+
+    for(k=0;k<n_veloc;k++){                      
+      nl=n[l];
+      local_rho+=nl;
+      o=0;
+      for(m=0;m<SPACE_DIM;m++){
+	help2=nl*c_g_d[k][m];
+	local_j[m]+=help2;
+	for(h=0;h<=m;h++){
+	  local_pi_lin[o]+=help2*c_g_d[k][h];
+	  o++;
+	}
+      }
+      l++;
+    } 
+    l-=n_veloc;
+
 #endif
 
     /* update stress tensor */
@@ -1146,7 +956,8 @@ static void calc_collis(int n_abs_veloc,
 #ifdef CREEPINGFLOW
 
 #ifdef D3Q18
-
+    // first calculate the momentum tensor after the collision but don't make it traceless yet as it should be.
+    // see eq. 5 , J. Chem Phys. 122, 094902 (2005)
     {
       double onepluslambda = 1.0 + lblambda;
       rhoc_sq = local_rho*c_sound_sq;
@@ -1161,7 +972,7 @@ static void calc_collis(int n_abs_veloc,
 #endif
 
 #else
-      
+    int h;  
     rhoc_sq=local_rho*c_sound_sq;  
     trace_eq=0.;
     for(m=0;m<3;m++) {
@@ -1197,14 +1008,15 @@ static void calc_collis(int n_abs_veloc,
       saven[o++] = n[l++];
       saven[o++] = n[l++];
     }
+
     l=savel;
-
-    if (fluct) add_fluct(lblambda,local_rho,local_pi_lin); /* add random fluctuations to stress tensor */ 
-
+    
+    if (fluct) add_fluct(lblambda,lbpar.rho,local_pi_lin); /* add random fluctuations to stress tensor */  
+    //if (fluct) add_fluct(lblambda,local_rho,local_pi_lin); /* add random fluctuations to stress tensor */ 
+    
 
     do {           /* add fluctuations only if they do not lead to neg. n's */
       
-
       badrandoms = FALSE;
 
       {
@@ -1212,7 +1024,7 @@ static void calc_collis(int n_abs_veloc,
 	double local_rho_times_coeff = local_rho*FAC2;
 	double trace = (local_pi_lin[0]+local_pi_lin[2]+local_pi_lin[5])*SPACE_DIM_INV;
 	double help1,help2;
-
+	// take care to make PI tracelss acroding to eq. 5  J. Chem Phys. 122, 094902 (2005)
 	n[l] = local_rho_times_coeff + local_j[0]*FAC1+ 0.25*(local_pi_lin[0]-trace);
 	if (n[l]<=0.0) { 
 	  failcounter ++; badrandoms = TRUE;
@@ -1334,7 +1146,6 @@ static void calc_collis(int n_abs_veloc,
 	  l++;
 	} 
 #endif
-
 	
       }
 
@@ -1359,8 +1170,8 @@ static void calc_collis(int n_abs_veloc,
 	    n[l++]=saven[o++];
 	  }
 	  l=savel;
-	  
-	  add_fluct(lblambda,local_rho,local_pi_lin);         /* try new random fluctuations to stress tensor */ 
+	  add_fluct(lblambda,lbpar.rho,local_pi_lin);
+	  //add_fluct(lblambda,local_rho,local_pi_lin);         /* try new random fluctuations to stress tensor */ 
 	}
 	else {
 	  fprintf(stderr,"ERROR in calc_collis: n is getting negative and no random numbers are present (time: %f)\n",current_time);
@@ -1373,8 +1184,9 @@ static void calc_collis(int n_abs_veloc,
 #else   /* = !D3Q18 */
 
   l-=n_veloc;   /* update velocity distribution at one gridpoint */
-  
-  if (fluct) add_fluct(lblambda,local_rho,local_pi_lin);         /* add random fluctuations to stress tensor */ 
+
+  if (fluct) add_fluct(lblambda,lbpar.rho,local_pi_lin);         /* add random fluctuations to stress tensor */ 
+  //if (fluct) add_fluct(lblambda,local_rho,local_pi_lin);         /* add random fluctuations to stress tensor */ 
 
   off3=0;
     for(k=0;k<n_abs_veloc;k++){
@@ -1509,7 +1321,6 @@ void print_status(char* fromroutine){
     printf("| ----------------------------\n");
   }
   printf("| technical details:\n\n");
-  printf("| ranseed      = %d\n",ranseed);
   printf("--------------------------------------------------------\n");
 
 }
@@ -1525,13 +1336,10 @@ void prerun(){
    velocity distribution function. Two main parts for one time step:
      1. calculate collisions
      2. propagate ditribution on lattice
-
-
    Author: Ahlrichs, 30/10/97; Lobaskin 10/09/04
-   *********************************************************/
+  *********************************************************/
 
   double   viscos=lbpar.viscos;
-  double   dummy[1];
   int i,k;
   
 #ifdef DEBUG
@@ -1540,45 +1348,45 @@ void prerun(){
   /* initialization of global variables, unit transfers to grid units for fluid part */
   agrid     = lbpar.agrid;
   tau       = lbpar.tau;
-
+  
   /* derived quantities for particles stuff */
-
+  
   gridpa    = agrid*gridpoints;
   invgridpa = 1.0/gridpa; 
-
+  
   c_sound_sq = lbpar.c_sound_sq; 
   n_abs_veloc= defaultn_abs_veloc;
   n_abs_which= defaultn_abs_which;
   c_g        = defaultc_g;
   coef_eq    = defaultcoef_eq;  
   c_abs_sq_g = defaultc_abs_sq_g;
-
+  
   if (lbpar.gridpoints!= gridpoints) {
     if (!myNum) fprintf(stderr,"*** ERROR in RUN: You are not allowed to change gridpoints in this stage");
     ExitProgram(TERM_error);
   }
   n_veloc    = defaultn_veloc; 
-
+  
   lbfriction   = lbpar.lbfriction;
   lbnoise      = sqrt(6.0*lbfriction*temperature/time_step); 
-
+  
   /*  if ((defaultlambda-lambda)<BOTT){ lambda overrules viscosity as input par. */
-    lblambda=-2./(6.*viscos*tau/(agrid*agrid)+1.);
-    lbpar.lblambda=lblambda;
-
+  lblambda=-2./(6.*viscos*tau/(agrid*agrid)+1.);
+  lbpar.lblambda=lblambda;
+  
 #ifdef DB
-    printf("tau %f viscos %f agrid %f lambda %f\n",tau,viscos,agrid,lblambda);
-    if (!myNum ) printf("prerun: lambda changed according to input viscosity new value: lambda = %f\n",lblambda);
+  printf("tau %f viscos %f agrid %f lambda %f\n",tau,viscos,agrid,lblambda);
+  if (!myNum ) printf("prerun: lambda changed according to input viscosity new value: lambda = %f\n",lblambda);
 #endif        
-    /*  }*/
+  /*  }*/
   
   if (temperature>BOTT) {  /* fluctuating hydrodynamics ? */
     fluct=TRUE;
     ampl=sqrt(3.*2.*(-1./6.)*(2./lblambda+1.)*temperature*lblambda*lblambda*tau*tau/(agrid*agrid*agrid*agrid*MASSRATIO)); 
-                                /* amplitude for stochastic part, cf. Ladd + unit conversion */
-                                /* caveat:3 comes from the fact */       
-                                /* that random numbers must have variance 1  */ 
-                                /* multiplication with rho is done with local value in add_fluct */
+    /* amplitude for stochastic part, cf. Ladd + unit conversion */
+    /* caveat:3 comes from the fact */       
+    /* that random numbers must have variance 1  */ 
+    /* multiplication with rho is done with local value in add_fluct */
     
   }
   else fluct=FALSE;
@@ -1586,98 +1394,78 @@ void prerun(){
   for(k=0;k<n_veloc;k++){             
     for(i=0;i<3;i++) c_g_d[k][i]=(double)c_g[k][i];
   }
-
-    for(k=0;k<xsize;k++) {
-      neighbor[k][0]=k+1;
-      lneighbor[k+1][0]=k;
-    }
-    {
-      neighbor[xsize][0]=xsize+1;
-      lneighbor[1][0]=0;
-    }
-    for(k=0;k<ysize;k++) {
-      neighbor[k][1]=k+1;
-      lneighbor[k+1][1]=k;
-    }
-    {
-      neighbor[ysize][1]=ysize+1;
-      lneighbor[1][1]=0;
-    }
-    for(k=0;k<zsize;k++) {
-      neighbor[k][2]=k+1;
-      lneighbor[k+1][2]=k;
-    }
-    {
-      neighbor[zsize][2]=zsize+1;
-      lneighbor[1][2]=0;
-    }    
-    lneighbor[0][0]=-1;   /* undefined indices get a -1 to promote segmentation faults */
-    lneighbor[0][1]=-1;
-    lneighbor[0][2]=-1;
-    neighbor[xsize+1][0]=-1;
-    neighbor[ysize+1][1]=-1;
-    neighbor[zsize+1][2]=-1;
-
-  ranseed=(myNum+1)*(lbpar.ranseed);   /* initialize ran3 */
-  if (ranseed>0) {
-//    if (!myNum) fprintf(stderr, "WARNING: ranseed is positive -> changing sign\n");
-    ranseed=-ranseed;
-    }
-  ran3(&ranseed,dummy,1);   /* initialize ran3 */
   
-  ran3(&ranseed,dummy,1);   /* test for overflow */
-//  printf("and the first random is : %f\n",dummy[0]);
-  if ((dummy[0]>1.0)||(dummy[0]<-1.0)) {
-    fprintf(stderr, "ERROR: ranseed is too large -> ran3 does not work\n");
-    ExitProgram(TERM_error);
-  }      
-
+  for(k=0;k<xsize;k++) {
+    neighbor[k][0]=k+1;
+    lneighbor[k+1][0]=k;
+  }
+  {
+    neighbor[xsize][0]=xsize+1;
+    lneighbor[1][0]=0;
+  }
+  for(k=0;k<ysize;k++) {
+    neighbor[k][1]=k+1;
+    lneighbor[k+1][1]=k;
+  }
+  {
+    neighbor[ysize][1]=ysize+1;
+    lneighbor[1][1]=0;
+  }
+  for(k=0;k<zsize;k++) {
+    neighbor[k][2]=k+1;
+    lneighbor[k+1][2]=k;
+  }
+  {
+    neighbor[zsize][2]=zsize+1;
+    lneighbor[1][2]=0;
+  }    
+  lneighbor[0][0]=-1;   /* undefined indices get a -1 to promote segmentation faults */
+  lneighbor[0][1]=-1;
+  lneighbor[0][2]=-1;
+  neighbor[xsize+1][0]=-1;
+  neighbor[ysize+1][1]=-1;
+  neighbor[zsize+1][2]=-1;
+  
   /*  if (boundary) InitBoundary(next,c_g,c_abs_sq_g);     initialize additional boundary */
-
-    lbfriction = lbpar.lbfriction;            /* equilibration with total friction */
-    lbnoise =sqrt(6.0*lbfriction*temperature/time_step); 
+  
+  lbfriction = lbpar.lbfriction;            /* equilibration with total friction */
+  lbnoise =sqrt(6.0*lbfriction*temperature/time_step); 
 }
 
 /******************************************************************************/
 
 void thermo_init_lb () {
-
-    if (dd.use_vList) {
-        char *errtxt = runtime_error(128);
-        ERROR_SPRINTF(errtxt, "{096 LB requires no Verlet Lists} ");
-        return;
-    }  
-
-    InitCommand();     /* set default values */ 
-
-    new(); 
-    prerun(); 
-
+  
+  if (dd.use_vList) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{096 LB requires no Verlet Lists} ");
+    return;
+  }    
+  new(); 
+  prerun();   
 } 
 
 /******************************************************************************/
 
-
 void LB_propagate () {
-      fluidstep+=time_step;
-      if(fluidstep>=(tau-BOTT)) {           /* update fluid */ 
-	// write_fluid_velocity(savefile,current_time-fluidstep);
-	fluidstep=0.;
-	
-	calc_collis(n_abs_veloc, 
-		    n_abs_which, coef_eq, c_abs_sq_g, c_sound_sq, 
-		    lblambda,fluct);
-	halo_update();
-	propagate_n();   /* shift distribution  */
-        halo_update();
+  fluidstep+=time_step;
+  if(fluidstep>=(tau-BOTT)) {           /* update fluid */ 
+    // write_fluid_velocity(savefile,current_time-fluidstep);
+    fluidstep=0.;
+    
+    calc_collis(n_abs_veloc, 
+		n_abs_which, coef_eq, c_abs_sq_g, c_sound_sq, 
+		lblambda,fluct);
+    halo_update();
+    propagate_n();   /* shift distribution  */
+    halo_update();
 #ifndef D3Q18
-	help=n;
-	n=n_new;
-	n_new=help;
+    help=n;
+    n=n_new;
+    n_new=help;
 #endif
-	
-      }
-
+    
+  }  
 } 
 
 /******************************************************************************/
@@ -1685,43 +1473,37 @@ void calc_momentum()
 { 
   Cell *cell;
   Particle *p;
-  int i, c, k; 
+  int i, c, k, nMono; 
   double momentum[3],result[3];
   T_IVECTOR size;    
   
   size[0]=xsize; size[1]=ysize; size[2]=zsize;
   momentum[0]=momentum[1]=momentum[2]= 0.0;
-  
     
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
     nMono = cell->n;
-
+    
     for(i=0; i < nMono; i++) { 
       
       for (k= 0;k < 3;k++) {
-         momentum[k] +=  p[i].m.v[k];
+	momentum[k] +=  p[i].m.v[k];
       }
-    }
-
-
+    }        
   }
  
   MPI_Allreduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-   
+  
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
     nMono = cell->n;
-
-    for(i=0; i < nMono; i++) { 
-      
-       for (k= 0;k < 3;k++) {
-         p[i].m.v[k] -= result[k];
-       }
-    }
-
+    for(i=0; i < nMono; i++) {       
+      for (k= 0;k < 3;k++) {
+	p[i].m.v[k] -= result[k];
+      }
+    }    
   }
   fixmom = TRUE;
 }
@@ -1729,17 +1511,17 @@ void calc_momentum()
 /*****************************************************************/
 void add_lb_forces(Particle *p1, int ip)
 {    /* return;*/
-      p1->f.f[0] +=force[ip][0];
-      p1->f.f[1] +=force[ip][1];
-      p1->f.f[2] +=force[ip][2];
+  p1->f.f[0] +=force[ip][0];
+  p1->f.f[1] +=force[ip][1];
+  p1->f.f[2] +=force[ip][2];
 }
 
 /*******************************************************************************/
 
 void calc_lbforce()
 {
-  int saved_datatype;
-
+  int saved_datatype, nMono;
+  
 #ifdef DEBUG
   printf("You're now in calc_lbforce \n");
 #endif 
@@ -1748,11 +1530,11 @@ void calc_lbforce()
   int i, c, k,mom_error,lu1,l; 
   double  inva = 1.0/agrid, invt=1.0/time_step, xpp;
   T_IVECTOR size;    
-   calcfields(n,FALSE);
-   size[0]=xsize; size[1]=ysize; size[2]=zsize;
-   mom_error=0;
-   l=0;
- /**************** add  random numbers for communication****************/
+  calcfields(n,FALSE);
+  size[0]=xsize; size[1]=ysize; size[2]=zsize;
+  mom_error=0;
+  l=0;
+  /**************** add  random numbers for communication****************/
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
@@ -1763,119 +1545,120 @@ void calc_lbforce()
       }     
     }
   }
-
+  
   /* NASTY: we abuse the update_ghosts communication to transfer the temporary
      data. */
   do { 
     
-  saved_datatype = cell_structure.update_ghost_pos_comm.data_parts;
-  cell_structure.update_ghost_pos_comm.data_parts = GHOSTTRANS_TEMP;
-
-  ghost_communicator(&cell_structure.update_ghost_pos_comm);
-
-  cell_structure.update_ghost_pos_comm.data_parts = saved_datatype;
-   
-/***********************shift momentum*********************************/
-   lu=0;
-   for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    nMono = cell->n;
-    alloc_part_mem(nMono);
-
-    for(i=0; i < nMono; i++) { 
-      for (k= 0;k < 3;k++) {	
-	v[i][k] = (p[i].m.v[k]+ p[i].t.f_random[k])*invt;
-	xpp = p[i].r.p[k]-my_left[k]+agrid;
-	xint[i][k] = (int) (xpp*inva);
-	xrel[i][k] = xpp*inva - xint[i][k];
-      }
-      xint[i][3]=1;
-    }
-    calc_fluid_chain_interaction(0);
-    if(transfer_momentum) { for(i=0; i< nMono; i++) { add_lb_forces(&p[i],i); } }
-          
+    saved_datatype = cell_structure.update_ghost_pos_comm.data_parts;
+    cell_structure.update_ghost_pos_comm.data_parts = GHOSTTRANS_TEMP;
+    
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    
+    cell_structure.update_ghost_pos_comm.data_parts = saved_datatype;
+    
+    /***********************shift momentum*********************************/
+    lu=0;
+    for (c = 0; c < local_cells.n; c++) {
+      cell = local_cells.cell[c];
+      p  = cell->part;
+      nMono = cell->n;
+      alloc_part_mem(nMono);
       
-   }
-
-/****************************************************************
+      for(i=0; i < nMono; i++) { 
+	for (k= 0;k < 3;k++) {	
+	  v[i][k] = (p[i].m.v[k]+ p[i].t.f_random[k])*invt;
+	  xpp = p[i].r.p[k]-my_left[k]+agrid;
+	  xint[i][k] = (int) (xpp*inva);
+	  xrel[i][k] = xpp*inva - xint[i][k];
+	}
+	xint[i][3]=1;
+      }
+      calc_fluid_chain_interaction(0,nMono);
+      if(transfer_momentum) { for(i=0; i< nMono; i++) { add_lb_forces(&p[i],i); } }            
+    }
+    
+    /****************************************************************
        ghost cells
-*****************************************************************/
-   for (c = 0; c < ghost_cells.n; c++) {
-     cell = ghost_cells.cell[c];
-     p  = cell->part;
-     nMono = cell->n;
-     alloc_part_mem(nMono);
-     
-     for(i=0; i < nMono; i++) { 
-       xint[i][3]=1;
-       
-       for (k= 0;k < 3;k++) {
-    
-	 v[i][k] = (p[i].m.v[k]+ p[i].t.f_random[k])*invt;
-	 xpp = p[i].r.p[k]-my_left[k]+agrid;
-	 
-	 xint[i][k] = (int) (xpp*inva);
-	 
-	 xrel[i][k] = xpp*inva - xint[i][k];
-	 
-	 if ( xpp < 0.0 || xpp >= (size[k]+agrid))    
-	   xint[i][3] =0;  
-
-       }
-       
-     }
-     
-     calc_fluid_chain_interaction(1);
-    
-   }
-   MPI_Allreduce(&MomentumTransfer, &mom_error, 1, MPI_INT, MPI_SUM,  MPI_COMM_WORLD);
-   if(mom_error>0) {
+    *****************************************************************/
+    for (c = 0; c < ghost_cells.n; c++) {
+      cell = ghost_cells.cell[c];
+      p  = cell->part;
+      nMono = cell->n;
+      alloc_part_mem(nMono);
+      
+      for(i=0; i < nMono; i++) { 
+	xint[i][3]=1;
+	
+	for (k= 0;k < 3;k++) {
+	  
+	  v[i][k] = (p[i].m.v[k]+ p[i].t.f_random[k])*invt;
+	  xpp = p[i].r.p[k]-my_left[k]+agrid;
+	  
+	  xint[i][k] = (int) (xpp*inva);
+	  
+	  xrel[i][k] = xpp*inva - xint[i][k];
+	  
+	  if ( xpp < 0.0 || xpp >= (size[k]+agrid))    
+	    xint[i][3] =0;  
+	  
+	}	
+      }
+      
+      calc_fluid_chain_interaction(1,nMono);
+      
+    }
+    MPI_Allreduce(&MomentumTransfer, &mom_error, 1, MPI_INT, MPI_SUM,  MPI_COMM_WORLD);
+    if(mom_error>0) {
       l+=1;
       lu1=0;
-     for (c = 0; c < local_cells.n; c++) {
-       cell = local_cells.cell[c];
-       p  = cell->part;
-       nMono = cell->n;
-       for(i=0; i < nMono; i++) { 
-	 lu1+=1;
-	 for (k= 0;k < 3;k++) {
-	      p[i].t.f_random[k]=lbnoise/lbfriction*(2.0*d_random()-1.0)/invt-p[i].t.f_random[k]-2.0*p[i].m.v[k]+2.0*store_rans[lu1][k]/invt;
-	 }     
-       }
-     }
-     MomentumTransfer=0;
-   }
-
-   if(l>100){
-     printf("bad n too many times in lb \n");
-     errexit();
-   }
+      for (c = 0; c < local_cells.n; c++) {
+	cell = local_cells.cell[c];
+	p  = cell->part;
+	nMono = cell->n;
+	for(i=0; i < nMono; i++) { 
+	  lu1+=1;
+	  for (k= 0;k < 3;k++) {
+	    p[i].t.f_random[k]=lbnoise/lbfriction*(2.0*d_random()-1.0)/invt-p[i].t.f_random[k]
+	      -2.0*p[i].m.v[k]+2.0*store_rans[lu1][k]/invt;
+	  }     
+	}
+      }
+      MomentumTransfer=0;
+    }
+    
+    if(l>100){
+      printf("Bad n too many times in lb; Probably force is so strong that there seems to be  \n");
+      printf("more than one particle per unit grid box of lb. Code should still work with one processor though. \n");
+      errexit();
+    }
   } while(mom_error>0);
-
+  
   if((tau-time_step)>BOTT) halo_update();
 #ifdef DEBUG
   printf("You're now exiting calc_lbforce \n");
 #endif    
-
+  
 }
 
-void calc_fluid_chain_interaction(int iamghost){ 
-
+void calc_fluid_chain_interaction(int iamghost, int nMono){ 
+  
   /**
-  ** calculation of hydrodynamic interaction. fluid and monomer velocities
-  ** are coupled by a friction coefficient
-  **
-  ** input: friction, position of monomers (xp), hydrodynamic fields (rho,j,n)
-  **        stochastic force given to monomers (forces)
-  ** output: hydrodynamic force is added to variable 'force' 
-  **         and via momentum conservation: shifting of population n
-  ** 
-  ** this works only in three dimensions
-  ** Author: Ahlrichs, 28/01/98
-  ** Last Change: Lobaskin, 20/10/04
-  */
-
+   * calculation of hydrodynamic interaction. fluid and monomer velocities
+   * are coupled by a friction coefficient
+   *
+   * input: friction, position of monomers (xp), hydrodynamic fields (rho,j,n)
+   *        stochastic force given to monomers (forces)
+   * output: hydrodynamic force is added to variable 'force' 
+   *         and via momentum conservation: shifting of population n
+   * 
+   * this works only in three dimensions
+   */
+  
+  /* Author: Ahlrichs, 28/01/98
+   * Last Change: Lobaskin, 20/10/04
+   */
+  
   double inva=1.0/agrid;
   double invh=1.0/tau;
   double invMassRatio=1.0/MASSRATIO;
@@ -1884,156 +1667,155 @@ void calc_fluid_chain_interaction(int iamghost){
   T_DVECTOR local_j,save_j,grid_j;
   //double save_n[l][max_n_veloc*8];
   double help_rho;
-
+  
   int yperiod = xsize+2;
   int zperiod = (ysize+2)*(xsize+2);
   double* nlocal;
-
+  
   //LBT_BOOL badrandoms;
   
   for(jp=0;jp<nMono;jp++){
     // l+=1;
     if (xint[jp][3]){
-
-    /* where in the lattice world is my monomer */
-
-    x_int=(xint[jp][0]);
-    y_int=(xint[jp][1]);
-    z_int=(xint[jp][2]);
-
-    help_x=1.0-xrel[jp][0];
-    help_y=1.0-xrel[jp][1];
-    help_z=1.0-xrel[jp][2];
-
-    /* calculate fluid current at that point by linear interpolation */
-
-    index = z_int*zperiod+y_int*yperiod+x_int; 
-
-    help_index_x=(neighbor[x_int][0]-x_int); /* incr. for x-neighbor */
-    help_index_y=(neighbor[y_int][1]-y_int)*yperiod;
-    help_index_z=(neighbor[z_int][2]-z_int)*zperiod;
-   
-    save_j[0]=0.0;    /* interpolated value of u (!) at monomer pos. */
-    save_j[1]=0.0;
-    save_j[2]=0.0;
-
-    off4 = 0;
-    for(k=0;k<2;k++){
-      for(l=0;l<2;l++){
-	for(m=0;m<2;m++){
-	  help_rho = 1.0/rho[index];
-	  save_j[0] += help_x*help_y*help_z*j[index][0]*help_rho;
-	  save_j[1] += help_x*help_y*help_z*j[index][1]*help_rho;
-	  save_j[2] += help_x*help_y*help_z*j[index][2]*help_rho;
-          
-	  index18 = index*n_veloc;
-	  // memcpy(&(save_n[l][off4]),&(n[index18]),n_veloc*sizeof(double));
-	  off4+=18;
-	  
-	  index+=help_index_x;
-	  help_x=1.0-help_x;
-	  help_index_x=-help_index_x;
-	}
-	index+=help_index_y;
-	help_y=1.0-help_y;
-	help_index_y=-help_index_y;
-      }
-      index+=help_index_z;
-      help_z=1.0-help_z;
-      help_index_z=-help_index_z;
-    }
-    index18 = index*n_veloc;
-    help_index_x*=n_veloc;
-    help_index_y*=n_veloc;
-    help_index_z*=n_veloc;
-
-    for(i=0;i<3;i++) {   
-      local_j[i] = -lbfriction*(v[jp][i]-agrid*invh*save_j[i]);  
-    }
-
-    if (!iamghost && transfer_momentum){  /* only if not ghost, add force to particle */
-      lu+=1;
-      for(i=0;i<3;i++) { 
-	force[jp][i] = local_j[i]; 
-	store_rans[lu][i]=agrid*invh*save_j[i]; 
-      }
-    }
-
-    /* add contribution to monomer force */
- 
-    /* now remember momentum conservation: exchange population accordingly */
-
-    /* tranfsorm units back, dt originates from time step */
-
-
-    local_j[0]*=-inva*tau*invMassRatio*time_step;
-    local_j[1]*=-inva*tau*invMassRatio*time_step;
-    local_j[2]*=-inva*tau*invMassRatio*time_step;
-
-    off4 = 0;
-    for(k=0;k<2;k++){
-      for(l=0;l<2;l++){
-	for(m=0;m<2;m++){
-         
-	  grid_j[0]= help_x*help_y*help_z*local_j[0];
-	  grid_j[1]= help_x*help_y*help_z*local_j[1];
-	  grid_j[2]= help_x*help_y*help_z*local_j[2];
-
-          if(transfer_momentum){
-
-	    n[index18++]+= + grid_j[0]*FAC1;
-	    n[index18++]+= - grid_j[0]*FAC1;
-	    n[index18++]+= + grid_j[1]*FAC1;
-	    n[index18++]+= - grid_j[1]*FAC1;
-	    n[index18++]+= + grid_j[2]*FAC1;
-	    n[index18++]+= - grid_j[2]*FAC1;
-	    n[index18++]+= + (grid_j[0]+grid_j[1])*FAC2;
-	    n[index18++]+= - (grid_j[0]+grid_j[1])*FAC2;
-	    n[index18++]+= + (grid_j[0]-grid_j[1])*FAC2;
-	    n[index18++]+= - (grid_j[0]-grid_j[1])*FAC2;
-	    n[index18++]+= + (grid_j[0]+grid_j[2])*FAC2;
-	    n[index18++]+= - (grid_j[0]+grid_j[2])*FAC2;
-	    n[index18++]+= + (grid_j[0]-grid_j[2])*FAC2;
-	    n[index18++]+= - (grid_j[0]-grid_j[2])*FAC2;
-	    n[index18++]+= + (grid_j[1]+grid_j[2])*FAC2;
-	    n[index18++]+= - (grid_j[1]+grid_j[2])*FAC2;
-	    n[index18++]+= + (grid_j[1]-grid_j[2])*FAC2;
-	    n[index18++]+= - (grid_j[1]-grid_j[2])*FAC2;
+      
+      /* where in the lattice world is my monomer */
+      
+      x_int=(xint[jp][0]);
+      y_int=(xint[jp][1]);
+      z_int=(xint[jp][2]);
+      
+      help_x=1.0-xrel[jp][0];
+      help_y=1.0-xrel[jp][1];
+      help_z=1.0-xrel[jp][2];
+      
+      /* calculate fluid current at that point by linear interpolation */
+      
+      index = z_int*zperiod+y_int*yperiod+x_int; 
+      
+      help_index_x=(neighbor[x_int][0]-x_int); /* incr. for x-neighbor */
+      help_index_y=(neighbor[y_int][1]-y_int)*yperiod;
+      help_index_z=(neighbor[z_int][2]-z_int)*zperiod;
+      
+      save_j[0]=0.0;    /* interpolated value of u (!) at monomer pos. */
+      save_j[1]=0.0;
+      save_j[2]=0.0;
+      
+      off4 = 0;
+      for(k=0;k<2;k++){
+	for(l=0;l<2;l++){
+	  for(m=0;m<2;m++){
+	    help_rho = 1.0/rho[index];
+	    save_j[0] += help_x*help_y*help_z*j[index][0]*help_rho;
+	    save_j[1] += help_x*help_y*help_z*j[index][1]*help_rho;
+	    save_j[2] += help_x*help_y*help_z*j[index][2]*help_rho;
 	    
+	    index18 = index*n_veloc;
+	    // memcpy(&(save_n[l][off4]),&(n[index18]),n_veloc*sizeof(double));
+	    off4+=18;
+	    
+	    index+=help_index_x;
+	    help_x=1.0-help_x;
+	    help_index_x=-help_index_x;
 	  }
-	  index18-=n_veloc;
-	  nlocal = &(n[index18]);
-
-
-
-	  for (i=0;i<18;i++){
-	    if (*nlocal++<0.0) { 
-	      MomentumTransfer=1;
-	      }
-	  }
-
-
-	  index18+=help_index_x;
-	  help_x=1.0-help_x;
-	  help_index_x=-help_index_x;
+	  
+	  index+=help_index_y;
+	  help_y=1.0-help_y;
+	  help_index_y=-help_index_y;
 	}
-	index18+=help_index_y;
-	help_y=1.0-help_y;
-	help_index_y=-help_index_y;
+	
+	index+=help_index_z;
+	help_z=1.0-help_z;
+	help_index_z=-help_index_z;
       }
-      index18+=help_index_z;
-      help_z=1.0-help_z;
-      help_index_z=-help_index_z;
-    }      
-
+      
+      index18 = index*n_veloc;
+      help_index_x*=n_veloc;
+      help_index_y*=n_veloc;
+      help_index_z*=n_veloc;
+      
+      for(i=0;i<3;i++) {   
+	local_j[i] = -lbfriction*(v[jp][i]-agrid*invh*save_j[i]);  
+      }
+      
+      if (!iamghost && transfer_momentum){  /* only if not ghost, add force to particle */
+	lu+=1;
+	for(i=0;i<3;i++) { 
+	  force[jp][i] = local_j[i]; 
+	  store_rans[lu][i]=agrid*invh*save_j[i]; 
+	}
+      }
+      
+      /* add contribution to monomer force */
+      
+      /* now remember momentum conservation: exchange population accordingly */
+      
+      /* tranfsorm units back, dt originates from time step */
+      
+      
+      local_j[0]*=-inva*tau*invMassRatio*time_step;
+      local_j[1]*=-inva*tau*invMassRatio*time_step;
+      local_j[2]*=-inva*tau*invMassRatio*time_step;
+      
+      off4 = 0;
+      for(k=0;k<2;k++){
+	for(l=0;l<2;l++){
+	  for(m=0;m<2;m++){
+	    
+	    grid_j[0]= help_x*help_y*help_z*local_j[0];
+	    grid_j[1]= help_x*help_y*help_z*local_j[1];
+	    grid_j[2]= help_x*help_y*help_z*local_j[2];
+	    
+	    if(transfer_momentum){
+	      
+	      n[index18++]+= + grid_j[0]*FAC1;
+	      n[index18++]+= - grid_j[0]*FAC1;
+	      n[index18++]+= + grid_j[1]*FAC1;
+	      n[index18++]+= - grid_j[1]*FAC1;
+	      n[index18++]+= + grid_j[2]*FAC1;
+	      n[index18++]+= - grid_j[2]*FAC1;
+	      n[index18++]+= + (grid_j[0]+grid_j[1])*FAC2;
+	      n[index18++]+= - (grid_j[0]+grid_j[1])*FAC2;
+	      n[index18++]+= + (grid_j[0]-grid_j[1])*FAC2;
+	      n[index18++]+= - (grid_j[0]-grid_j[1])*FAC2;
+	      n[index18++]+= + (grid_j[0]+grid_j[2])*FAC2;
+	      n[index18++]+= - (grid_j[0]+grid_j[2])*FAC2;
+	      n[index18++]+= + (grid_j[0]-grid_j[2])*FAC2;
+	      n[index18++]+= - (grid_j[0]-grid_j[2])*FAC2;
+	      n[index18++]+= + (grid_j[1]+grid_j[2])*FAC2;
+	      n[index18++]+= - (grid_j[1]+grid_j[2])*FAC2;
+	      n[index18++]+= + (grid_j[1]-grid_j[2])*FAC2;
+	      n[index18++]+= - (grid_j[1]-grid_j[2])*FAC2;
+	      
+	    }
+	    index18-=n_veloc;
+	    nlocal = &(n[index18]);
+	    	    
+	    for (i=0;i<18;i++){
+	      if (*nlocal++<0.0) { 
+		MomentumTransfer=1;
+	      }
+	    }
+	    
+	    index18+=help_index_x;
+	    help_x=1.0-help_x;
+	    help_index_x=-help_index_x;
+	  }
+	  index18+=help_index_y;
+	  help_y=1.0-help_y;
+	  help_index_y=-help_index_y;
+	}
+	index18+=help_index_z;
+	help_z=1.0-help_z;
+	help_index_z=-help_index_z;
+      }      
+      
     }  /* end of if(MonoLivesHere) */
-
+    
   }
-
+  
 }
 
 /******************************************************************************/
-
 
 void halo_init(){
 /* configuration of the halo regions */
@@ -2096,49 +1878,48 @@ static void CopyPlane(int whichplane){
   int doffset= (planeinfo[whichplane].doffset);  /* destination offset */
   int skip   = (planeinfo[whichplane].skip);
   int stride = (planeinfo[whichplane].stride)*sizeof(double);
+
   if (nPesPerDir[whichplane/2] == 1 ){ /*copy locally in that case */
     for (i=0;i<planeinfo[whichplane].nblocks;i++){
       memcpy(&(n[doffset]),&(n[offset]),stride);
       offset+=skip;
       doffset+=skip;
     }
-  }
-
-  else { 
+  } else { 
     MPI_Status stat[2];
     MPI_Request request[2];
     int s_dir = whichplane;
     int  r_dir;
     if(s_dir%2==0) r_dir = s_dir+1;
     else           r_dir = s_dir-1;
-
-      switch(s_dir) {
-      case 0 :
-      case 1 :
-	  MPI_Irecv (&n[doffset],1,yzPlane,node_neighbors[s_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&n[offset],1,yzPlane,node_neighbors[r_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[1]);
-
-	MPI_Waitall(2,request,stat);
-	break;
-      case 2 :
-      case 3 :
-	  MPI_Irecv (&n[doffset],1,xzPlane,node_neighbors[s_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&n[offset],1,xzPlane,node_neighbors[r_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[1]);
-
-  	MPI_Waitall(2,request,stat);
-	break;
-      case 4 :
-      case 5 : 
-	
-	  MPI_Irecv (&n[doffset],1,xyPlane,node_neighbors[s_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&n[offset],1,xyPlane,node_neighbors[r_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[1]);
-
-	MPI_Waitall(2,request,stat);
-	break;
-      }
-
+    
+    switch(s_dir) {
+    case 0 :
+    case 1 :
+      MPI_Irecv (&n[doffset],1,yzPlane,node_neighbors[s_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[0]);
+      MPI_Isend(&n[offset],1,yzPlane,node_neighbors[r_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[1]);
+      
+      MPI_Waitall(2,request,stat);
+      break;
+    case 2 :
+    case 3 :
+      MPI_Irecv (&n[doffset],1,xzPlane,node_neighbors[s_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[0]);
+      MPI_Isend(&n[offset],1,xzPlane,node_neighbors[r_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[1]);
+      
+      MPI_Waitall(2,request,stat);
+      break;
+    case 4 :
+    case 5 : 
+      
+      MPI_Irecv (&n[doffset],1,xyPlane,node_neighbors[s_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[0]);
+      MPI_Isend(&n[offset],1,xyPlane,node_neighbors[r_dir],REQ_LB_SPREAD,MPI_COMM_WORLD,&request[1]);
+      
+      MPI_Waitall(2,request,stat);
+      break;
+    }
+    
   }
-
+  
 }
 
 /************************************************************************************************/
@@ -2225,5 +2006,6 @@ void ExitProgram (T_TERM_FLAG why) {
     break;
   }
 }
+
 
 #endif /* LB */
