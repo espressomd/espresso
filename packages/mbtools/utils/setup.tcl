@@ -177,9 +177,7 @@ proc ::mbtools::utils::set_bonded_interactions { bonded_parms } {
 # for constraints for instance.
 #
 proc ::mbtools::utils::set_nb_interactions { interactionlist } {
-    puts $interactionlist
     foreach intertype $interactionlist {
-	puts $intertype       
 	if { [catch { eval [concat inter  $intertype ] } ] } {
 	    mmsg::err [namespace current] "could not set interaction: $intertype"
 	}
