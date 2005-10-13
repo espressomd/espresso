@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6m (Seska)                                                                      *
+* v1.9.6n (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6m -
+- v1.9.6n -
 -----------
 
+(n) October   12th, 2005.
 (m) September 30th, 2005.
 (l) September 23th, 2005.
 (k) September 16th, 2005.
@@ -64,6 +65,8 @@ Changes:
 (e) writepov now checks whether the output file already exists
 
 Bugfixes:
+(n) when setting non bonded interactions no error was given if a particular interaction
+    was not set.  An error is now thrown
 (i) Fixed a bug which prevented espresso from reading checkpoints when quoted strings
     within lists were present
 (f) Missing  variable for call to read_checkpoint_in for the case where  = 0 and where 
