@@ -49,15 +49,16 @@ institute: Drexel University, Philadelphia
 sent:      JUL 2003
 version:
 topic:
-reminded:  
+reminded:  01.JUL.2003
 
 
 name:      Hendrik Meyer
 email:     hmeyer@ics.u-strasbg.fr
+institute: 
 sent:      2003
 version:
 topic: 
-reminded:  
+reminded:  01.JUL.2003
 
 
 name:      Zuowei Wang 
@@ -66,7 +67,7 @@ institute: University of North Carolina
 sent:      2003
 version:
 topic: 
-reminded:  
+reminded:  01.JUL.2003
 
 
 name:      Elena Jarkova
@@ -74,7 +75,7 @@ email:     jarkova@mpip-mainz.mpg.de
 sent:      OKT 2003
 version:
 topic: 
-reminded:  
+reminded:  01.OKT.2003
 
 
 name:      Karel Prochazka
@@ -144,8 +145,6 @@ topic:     simulations of EOF, Nanopore, polymer-polymer collisions
 reminded:  15.MAR.2004
 
 
-
-
 name:      Olaf Lenz / Ulf Schiller (uschille@) / Friederike Schmid
 email:     olenz@Physik.Uni-Bielefeld.DE
 institute: Universitaet Bielefeld
@@ -165,7 +164,7 @@ institute: MPI fuer Physik komplexer Systeme Dresden
 sent:    
 version:    
 topic:    
-reminded:  
+reminded:  22.SEP.2004
 
 
 name:      Limbach, Hans Joerg
@@ -175,7 +174,7 @@ sent:
 version:    
 CVS:	   remote-access (user-id: limbach)
 topic:    
-reminded:  
+reminded:  01.JAN.1970
 
 
 name:      Kulic, Igor
@@ -183,7 +182,7 @@ email:
 sent:    
 version:    
 topic:    
-reminded:  
+reminded:  01.DEC.2004
 
 
 name:      Sukumaran, Sathish Kumar
@@ -191,7 +190,7 @@ email:     sathish@mpip-mainz.mpg.de, physks@leeds.ac.uk
 sent:    
 version:    
 topic:     i would like to set up espresso here in leeds and use it. would that be ok with you?
-reminded:  
+reminded:  01.DEC.2004
 
 
 name:      Moran Wang
@@ -223,16 +222,17 @@ reminded:  15.MAR.2005
 name:      Bernd Hannebauer
 email:     bernd.hannebauer@degussa.com
 institute: Degussa
+sent:      22.MAR.2005
 version:   v1.7.5-Mezoti
 topic:     I\'m interested in molecular interaction energies and want to try out ESPResSo for this purpose
-topic:     We are doing quantum and force field calculations here and
+           We are doing quantum and force field calculations here and
            we are always interested in new simulation approaches including coarse
            grained systems. I will definitely try to find out what kind of potential
            applications related to our research are suitable for ESPResSo and I am
            also interested in looking at the new features of the latest ESPResSo
            versions. However, since I'm quite busy at the moment, it may take some
            time until I will be able spend a bit more time on this matter.
-reminded:  
+reminded:  22.MAR.2005
 
 
 name:      Thomas McDermott
@@ -248,10 +248,8 @@ topic2:    I am currently finishing a PhD on the diffusion of liquids in nanosca
 	   (the model pore is infinite in one dimension) using the Lekner method.
 	   * Grand Canonical Ensemble Monte Carlo and Thermodynamic Integration for generating 
 	   initial conditions.
-
 	   I've also studied a hybrid hard-sphere/continuous liquid diffusing through a model 
 	   (MCM like)silica pore.
-
 	   I was interested in the Espresso source code mainly to see how a large scientific program 
 	   is organised/implemented in C. (Although I often write small 'tools' in C all my larger 
 	   program are implemented in Fortran 95 which I'm more familiar with and hence find much 
@@ -535,7 +533,6 @@ topic:     We intend to investigate some nonequilibrium MD simulations of
            program development.
            We are also open to get involved in the further development of
            ESPResSo in the above mentioned directions.
-           
            Yours sincerely,
            András Gábor   and   István Szalai
            Univ. of Veszprém, Hungary
@@ -550,7 +547,6 @@ institute: Kristopher E. Wise, Ph.D.
            6A West Taylor Street, Mail Stop 226
            Building 1293C Room 153G
            Hampton, VA 23681-2199
-           
 sent:      18.JUL.2005
 version:   20050525-Espresso_v1.9.4g.tar.gz
 topic:     Course-grained simulation of polymer and polymer composite
@@ -644,12 +640,13 @@ version:   20050808-Espresso_v1.9.6d.tar.gz
 topic:     Test portability/performance/scaling on IBM Blue Gene
            Timeframe: to be done around Q4/05 or Q1/06
 reminded:  22.AUG.2005
+
 name:      Dr. Carol Phillips
 email:     cpc@qub.ac.uk
 institute: Dr. Carol Phillips  
               CPC Program Library      
               School of Computer Science        
-              The Queen\\\'s University of Belfast   
+              The Queen's University of Belfast   
               Belfast BT7 1NN                 
               Northern Ireland                   
 sent:      15.SEP.2005
@@ -664,523 +661,4 @@ sent:      29.MAR.2004
 version:   20040329-Espresso_v1.5.7c.tar.gz
 topic:     simulate the DNA and protein mechanics and deformation
 reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
 
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
-name:      Dr. Carol Phillips
-email:     cpc@qub.ac.uk
-institute: Dr. Carol Phillips  
-              CPC Program Library      
-              School of Computer Science        
-              The Queen\\\'s University of Belfast   
-              Belfast BT7 1NN                 
-              Northern Ireland                   
-sent:      15.SEP.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
-topic:     Test program for the CPC article
-reminded:  15.SEP.2005
-
-
-name:      Baohua Ji
-email:     ji@mf.mpg.de
-sent:      29.MAR.2004
-version:   20040329-Espresso_v1.5.7c.tar.gz
-topic:     simulate the DNA and protein mechanics and deformation
-reminded:  16.Sep.2005
