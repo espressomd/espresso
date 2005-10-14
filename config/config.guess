@@ -9,6 +9,7 @@ CYGWIN*)
     ;;
 Linux)
     # determines the type of CPU 0
+    CPUINFO=/proc/cpuinfo
     MODEL=`awk '/\\\`model name/ { \
 	if ($4 == "Pentium") { if ($5 != "") print $4"_"$5; else print $4; } \
 	else if ($4 == "AMD" && $5 == "Opteron(tm)")   print "Opteron"; \
@@ -21,7 +22,13 @@ Linux)
 	    else                                              model="unknown"; \
 	    if ($6 == "") print model; else print model"_"$6; \
 	}; exit\
-	}' /proc/cpuinfo`
+	}' $CPUINFO`
+    if test $MODEL = Xeon -o $MODEL = Pentium_4; then
+	# thanks Intel for making the EM64T mode so EASILY detectible
+	if grep -e "^flags.* lm " $CPUINFO >&/dev/null; then
+	    MODEL=${MODEL}_64
+	fi
+    fi
     echo "$MODEL-pc-linux"
     ;;
 OSF1)
