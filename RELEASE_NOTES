@@ -10,7 +10,7 @@ Current working revision.
 
 - v1.9.6n -
 -----------
-
+(o) October   14th, 2005.
 (n) October   12th, 2005.
 (m) September 30th, 2005.
 (l) September 23th, 2005.
@@ -57,6 +57,9 @@ New Features:
     see 'lb.c' for an example.
 
 Changes:
+(o) charge_aggregation routine is removed from statistics.c. aggregation
+routine handles the charge_aggregation with an optional
+parameter. Corresponding tcl script under HMC+PT is also updated.
 (i) mbtools and mmsg packages much revised and improved. Proper documentation written
 (g) Added new optional parameters folded and nofoldlist. If folded is set, folded
     coordinates are passed on to vmd. nofoldlist is a list of types that should not be

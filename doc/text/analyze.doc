@@ -52,14 +52,16 @@ In <tt>statistics.c</tt>:<br>
          returns the moment of inertia matrix for particles of given type. The output is a list of all the elements of the 3x3 matrix.
 	 The C implementation is \ref #momentofinertiamatrix; it is parsed by \ref #parse_momentofinertiamatrix.
     <li> \verbatim analyze aggregation [{ <dist_criteria> <s_mol_id>
-    <f_mol_id> <min_contact>}] \endverbatim
+    <f_mol_id> <min_contact> <charge_criteria>}] \endverbatim
 	 returns the aggregate size distribution for the molecules in the
     molecule id range \<s_mol_id\> to \<f_mol_id\>;. If any monomers in two
     different molecules are closer than dist_criteria they are considered to
     be in the same aggregate. One can use the optional \<min_contact\> parameter
     to specify a minimum number of contacts such that only molecules having at
     least \<min_contact\> contacts will be considered to be in the same
-    aggregate.The C implementation is \ref #aggregation; it is parsed by \ref #parse_aggregation.
+    aggregate.The second optional parameter \<charge_criteria\> enables one to
+    consider aggregation state of only oppositely charged particles. 
+    The C implementation is \ref #aggregation; it is parsed by \ref #parse_aggregation.
     <li> \verbatim analyze find_principal_axis { <part_type> } \endverbatim
          returns the eigenvalues and eigenvectors of the moment of inertia
     matrix for particles of a given type. The C implementation is based on
