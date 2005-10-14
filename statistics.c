@@ -126,12 +126,31 @@ double mindist(IntList *set1, IntList *set2)
   return mindist;
 }
 
-int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_id, int *head_list, int *link_list, int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std)
+void merge_aggregate_lists(int *head_list, int *agg_id_list, int p1molid, int p2molid, int *link_list)
+{
+    int target1, target2, head_p1;
+    /* merge list containing p2molid into list containing p1molid*/
+    target1=head_list[agg_id_list[p2molid]];
+    head_list[agg_id_list[p2molid]]=-2;
+    head_p1=head_list[agg_id_list[p1molid]];
+    head_list[agg_id_list[p1molid]]=target1;
+    agg_id_list[target1]=agg_id_list[p1molid];
+    target2=link_list[target1];
+    while(target2 != -1) {
+	target1=target2;
+	target2=link_list[target1];
+	agg_id_list[target1]=agg_id_list[p1molid];
+    }
+    agg_id_list[target1]=agg_id_list[p1molid];
+    link_list[target1]=head_p1;
+}
+
+int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_id, int *head_list, int *link_list, int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std, int charge)
 {
   int c, np, n, i;
   Particle *p1, *p2, **pairs;
   double dist2;
-  int target1, target2, head_p1;
+  int target1;
   int p1molid, p2molid;
   int *contact_num, ind;
 
@@ -167,42 +186,19 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
 	  if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
 	    dist2 = min_distance2(p1->r.p, p2->r.p);
 
+#ifdef ELECTROSTATICS
+	    if (charge && (p1->p.q * p2->p.q >= 0)) {continue;}
+#endif
 	    if (dist2 < dist_criteria2) {
 	      if ( p1molid > p2molid ) { ind=p1molid*n_molecules + p2molid;} 
 	      else { ind=p2molid*n_molecules +p1molid;}
 	      if (min_contact > 1) {
 		contact_num[ind] ++;
 		if (contact_num[ind] >= min_contact) {
-		  /* merge list containing p2molid into list containing p1molid*/
-		  target1=head_list[agg_id_list[p2molid]];
-		  head_list[agg_id_list[p2molid]]=-2;
-		  head_p1=head_list[agg_id_list[p1molid]];
-		  head_list[agg_id_list[p1molid]]=target1;
-		  agg_id_list[target1]=agg_id_list[p1molid];
-		  target2=link_list[target1];
-		  while(target2 != -1) {
-		    target1=target2;
-		    target2=link_list[target1];
-		    agg_id_list[target1]=agg_id_list[p1molid];
-		  }
-		  agg_id_list[target1]=agg_id_list[p1molid];
-		  link_list[target1]=head_p1;
+		    merge_aggregate_lists( head_list, agg_id_list, p1molid, p2molid, link_list);				    
 		}
 	      } else {
-		/* merge list containing p2molid into list containing p1molid*/
-		target1=head_list[agg_id_list[p2molid]];
-		head_list[agg_id_list[p2molid]]=-2;
-		head_p1=head_list[agg_id_list[p1molid]];
-		head_list[agg_id_list[p1molid]]=target1;
-		agg_id_list[target1]=agg_id_list[p1molid];
-		target2=link_list[target1];
-		while(target2 != -1) {
-		  target1=target2;
-		  target2=link_list[target1];
-		  agg_id_list[target1]=agg_id_list[p1molid];
-		}
-		agg_id_list[target1]=agg_id_list[p1molid];
-		link_list[target1]=head_p1;
+		  merge_aggregate_lists( head_list, agg_id_list, p1molid, p2molid, link_list);				    
 	      }
 	    }
 	  }
@@ -236,119 +232,6 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
   return 0;
 }
 
-#ifdef ELECTROSTATICS
-int charge_aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_id, int *head_list, int *link_list, int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std)
-{
-  int c, np, n, i;
-  Particle *p1, *p2, **pairs;
-  double dist2;
-  int target1, target2, head_p1;
-  int p1molid, p2molid;
-  int *contact_num, ind;
-
-  if (min_contact > 1) {
-    contact_num = (int *) malloc(n_molecules*n_molecules *sizeof(int));
-    for (i = 0; i < n_molecules *n_molecules; i++) contact_num[i]=0;
-  } else {
-    contact_num = (int *) 0; /* Just to keep the compiler happy */
-  }
-  
-  build_verlet_lists();
-
-  for (i = s_mol_id; i <= f_mol_id; i++) {
-    head_list[i]=i;
-    link_list[i]=-1;
-    agg_id_list[i]=i;
-    agg_size[i]=0;
-  }
-  
-  /* Loop local cells */
-  for (c = 0; c < local_cells.n; c++) {
-    /* Loop cell neighbors */
-    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-      pairs = dd.cell_inter[c].nList[n].vList.pair;
-      np    = dd.cell_inter[c].nList[n].vList.n;
-      /* verlet list loop */
-      for(i=0; i<2*np; i+=2) {
-	p1 = pairs[i];                    /* pointer to particle 1 */
-	p2 = pairs[i+1];                  /* pointer to particle 2 */
-	p1molid = p1->p.mol_id;
-	p2molid = p2->p.mol_id;
-	if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) && ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
-	  if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
-	    dist2 = min_distance2(p1->r.p, p2->r.p);
-
-	    if(p1->p.q * p2->p.q < 0) {
-	      if (dist2 < (dist_criteria2 * SQR(p1-> p.q) * SQR (p2->p.q))) {
-		if ( p1molid > p2molid ) { ind=p1molid*n_molecules + p2molid;} 
-		else { ind=p2molid*n_molecules +p1molid;}
-		if (min_contact > 1) {
-		contact_num[ind] ++;
-		if (contact_num[ind] >= min_contact) {
-		  /* merge list containing p2molid into list containing p1molid*/
-		  target1=head_list[agg_id_list[p2molid]];
-		  head_list[agg_id_list[p2molid]]=-2;
-		  head_p1=head_list[agg_id_list[p1molid]];
-		  head_list[agg_id_list[p1molid]]=target1;
-		  agg_id_list[target1]=agg_id_list[p1molid];
-		  target2=link_list[target1];
-		  while(target2 != -1) {
-		    target1=target2;
-		    target2=link_list[target1];
-		    agg_id_list[target1]=agg_id_list[p1molid];
-		  }
-		  agg_id_list[target1]=agg_id_list[p1molid];
-		  link_list[target1]=head_p1;
-		}
-		} else {
-		  /* merge list containing p2molid into list containing p1molid*/
-		target1=head_list[agg_id_list[p2molid]];
-		head_list[agg_id_list[p2molid]]=-2;
-		head_p1=head_list[agg_id_list[p1molid]];
-		head_list[agg_id_list[p1molid]]=target1;
-		agg_id_list[target1]=agg_id_list[p1molid];
-		target2=link_list[target1];
-		while(target2 != -1) {
-		  target1=target2;
-		  target2=link_list[target1];
-		  agg_id_list[target1]=agg_id_list[p1molid];
-		}
-		agg_id_list[target1]=agg_id_list[p1molid];
-		link_list[target1]=head_p1;
-		}
-	      }
-	    }
-	  }
-	}
-      }
-    }
-  }
-  
-  /* count number of aggregates 
-     find aggregate size
-     find max and find min size, and std */
-  for (i = s_mol_id ; i <= f_mol_id ; i++) {
-    if (head_list[i] != -2) {
-      (*agg_num)++;
-      agg_size[*agg_num -1]++;
-      target1= head_list[i];
-      while( link_list[target1] != -1) {
-	target1= link_list[target1];
-	agg_size[*agg_num -1]++;
-      }
-    }
-  }
-  
-  for (i = 0 ; i < *agg_num; i++) {
-    *agg_avg += agg_size[i];
-    *agg_std += agg_size[i] * agg_size[i];
-    if (*agg_min > agg_size[i]) { *agg_min = agg_size[i]; }
-    if (*agg_max < agg_size[i]) { *agg_max = agg_size[i]; }
-  }
-  
-  return 0;
-}
-#endif
 
 void centermass(int type, double *com)
 {
@@ -1675,9 +1558,6 @@ static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-
-
-
 static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze centermass [<type>]' */
@@ -1685,7 +1565,7 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
   int i, target1;
   int *agg_id_list;
   double dist_criteria, dist_criteria2;
-  int min_contact, *head_list, *link_list;
+  int charge_criteria, min_contact, *head_list, *link_list;
   int agg_num =0, *agg_size, agg_min= n_molecules, agg_max = 0,  agg_std = 0, agg_avg = 0; 
   float fagg_avg;
   int s_mol_id, f_mol_id;
@@ -1697,25 +1577,25 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
 
   /* parse arguments */
   if (argc < 3) {
-    Tcl_AppendResult(interp, "usage: analyze aggregation <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze aggregation <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>] [<charge_criteria>]", (char *)NULL);
     return (TCL_ERROR);
   }
 
   if (!ARG_IS_D(0,dist_criteria)) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage:  analyze aggregation  <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze aggregation <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>] [<charge_criteria>]", (char *)NULL);
     return (TCL_ERROR);
   }
   dist_criteria2 = dist_criteria * dist_criteria;
 
   if (!ARG_IS_I(1,s_mol_id)) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage:  analyze aggregation  <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze aggregation <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>] [<charge_criteria>]", (char *)NULL);
     return (TCL_ERROR);
   }
   if (!ARG_IS_I(2,f_mol_id)) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage:  analyze aggregation  <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze aggregation <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>] [<charge_criteria>]", (char *)NULL);
     return (TCL_ERROR);
   }
   
@@ -1743,16 +1623,26 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
   if (argc == 4) {
       if (!ARG_IS_I(3,min_contact)) {
 	  Tcl_ResetResult(interp);
-	  Tcl_AppendResult(interp, "usage: analyze aggregation <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
+	  Tcl_AppendResult(interp, "usage: analyze aggregation <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>] [<charge_criteria>]", (char *)NULL);
 	  return (TCL_ERROR);
       }
   } else {
       min_contact = 1;
+  }
+
+  if (argc == 5) {
+      if (!ARG_IS_I(4, charge_criteria)) {
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, "usage: analyze aggregation <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>] [<charge_criteria>]", (char *)NULL);
+	  return (TCL_ERROR);
+      }
+  } else {
+      charge_criteria = 0;
   }
 
 
   aggregation(dist_criteria2, min_contact, s_mol_id, f_mol_id, head_list, link_list, agg_id_list, 
-	      &agg_num, agg_size, &agg_max, &agg_min, &agg_avg, &agg_std);
+	      &agg_num, agg_size, &agg_max, &agg_min, &agg_avg, &agg_std, charge_criteria);
 
   fagg_avg = (float) (agg_avg)/agg_num;
   sprintf (buffer, " MAX %d MIN %d AVG %f STD %f AGG_NUM %d AGGREGATES", 
@@ -1782,111 +1672,6 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
-#ifdef ELECTROSTATICS
-static int parse_charge_aggregation(Tcl_Interp *interp, int argc, char **argv)
-{
-  /* 'analyze centermass [<type>]' */
-  char buffer[256 + 3*TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE];
-  int i, target1;
-  int *agg_id_list;
-  double dist_criteria, dist_criteria2;
-  int min_contact, *head_list, *link_list;
-  int agg_num =0, *agg_size, agg_min= n_molecules, agg_max = 0,  agg_std = 0, agg_avg = 0; 
-  float fagg_avg;
-  int s_mol_id, f_mol_id;
-
-  agg_id_list = (int *) malloc(n_molecules *sizeof(int));
-  head_list =  (int *) malloc(n_molecules *sizeof(int));
-  link_list = (int *) malloc(n_molecules *sizeof(int));
-  agg_size = (int *) malloc(n_molecules *sizeof(int));
-
-  /* parse arguments */
-  if (argc < 3) {
-    Tcl_AppendResult(interp, "usage: analyze aggregation <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
-    return (TCL_ERROR);
-  }
-
-  if (!ARG_IS_D(0,dist_criteria)) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage:  analyze aggregation  <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
-    return (TCL_ERROR);
-  }
-  dist_criteria2 = dist_criteria * dist_criteria;
-
-  if (!ARG_IS_I(1,s_mol_id)) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage:  analyze aggregation  <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
-    return (TCL_ERROR);
-  }
-  if (!ARG_IS_I(2,f_mol_id)) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage:  analyze aggregation  <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
-    return (TCL_ERROR);
-  }
-  
-  if (n_nodes > 1) {
-    Tcl_AppendResult(interp, "aggregation can only be calculated on a single processor", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-    Tcl_AppendResult(interp, "aggregation can only be calculated with the domain decomposition cell system", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if ( (s_mol_id < 0) || (s_mol_id > n_molecules) || (f_mol_id < 0) || (f_mol_id > n_molecules) ) {
-    Tcl_AppendResult(interp, "check your start and finish molecule id's", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if ( max_range_non_bonded2 < dist_criteria2) {
-    Tcl_AppendResult(interp, "dist_criteria is larger than max_range_non_bonded.", (char *)NULL);
-    return TCL_ERROR;    
-    
-  }
-
-  if (argc == 4) {
-      if (!ARG_IS_I(3,min_contact)) {
-	  Tcl_ResetResult(interp);
-	  Tcl_AppendResult(interp, "usage: analyze aggregation <dist_criteria> <start mol_id> <finish mol_id> [<min_contact>]", (char *)NULL);
-	  return (TCL_ERROR);
-      }
-  } else {
-      min_contact = 1;
-  }
-
-
-  charge_aggregation(dist_criteria2, min_contact, s_mol_id, f_mol_id, head_list, link_list, agg_id_list, 
-	      &agg_num, agg_size, &agg_max, &agg_min, &agg_avg, &agg_std);
-
-  fagg_avg = (float) (agg_avg)/agg_num;
-  sprintf (buffer, " MAX %d MIN %d AVG %f STD %f AGG_NUM %d AGGREGATES", 
-	   agg_max, agg_min, fagg_avg, sqrt( (float) (agg_std/(float)(agg_num)-fagg_avg*fagg_avg)), agg_num);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-  
-  for (i = s_mol_id ; i <= f_mol_id ; i++) {
-    if (head_list[i] != -2) {
-      target1= head_list[i];
-      sprintf(buffer, " { %d ", target1); 
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-      while( link_list[target1] != -1) {
-	target1= link_list[target1];
-	sprintf(buffer, "%d ", target1); 
-	Tcl_AppendResult(interp, buffer, (char *)NULL); 
-      }
-      sprintf(buffer, "} ");
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-    }
-  }
-
-  free(agg_id_list);
-  free(head_list);
-  free(link_list);
-  free(agg_size);
-
-  return TCL_OK;
-}
-#endif
 
 static int parse_mindist(Tcl_Interp *interp, int argc, char **argv)
 {
@@ -2628,10 +2413,6 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     err = parse_mindist(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("aggregation"))
     err = parse_aggregation(interp, argc - 2, argv + 2);
-#ifdef ELECTROSTATICS
-  else if (ARG1_IS_S("charge_aggregation"))
-    err = parse_charge_aggregation(interp, argc - 2, argv + 2);
-#endif
   else if (ARG1_IS_S("centermass"))
     err = parse_centermass(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("momentofinertiamatrix"))

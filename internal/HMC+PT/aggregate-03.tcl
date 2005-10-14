@@ -87,7 +87,7 @@ for {set index 0} { $index < $ensemble_num} {incr index} {
 	    }
 	}
 
-	set result [analyze charge_aggregation [expr $bjerrum] 0 $total_agg]
+	set result [analyze aggregation [expr $bjerrum * $c_ion_val ] 0 $total_agg 1 1 ]
 	#set result [analyze aggregation 3. 0 $total_agg]
 	if {[lindex $argv 4] == "file" } {
 	    puts $f "Run $config $result" 
