@@ -147,6 +147,7 @@ typedef struct {
 
 } ParticleLocal;
 
+#ifdef USE_TEMPORARY
 /** Temporary data that still has to be communicated */
 typedef struct {
 #ifdef LB
@@ -154,6 +155,7 @@ typedef struct {
   double f_random[3];
 #endif
 } ParticleTemporary;
+#endif
 
 /** Struct holding all information for one particle. */
 typedef struct {
@@ -168,8 +170,9 @@ typedef struct {
   ///
   ParticleLocal l;
   ///
+#ifdef USE_TEMPORARY
   ParticleTemporary t;
-
+#endif
   /** bonded interactions list. The format is pretty simple:
       Just the bond type, and then the particle ids. The number of particle ids can be determined
       easily from the bonded_ia_params entry for the type. */

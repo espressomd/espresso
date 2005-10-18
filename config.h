@@ -228,3 +228,7 @@ int compilation_callback(Tcl_Interp *interp);
 /*@}*/
 
 #endif
+
+#if defined LB
+#define USE_TEMPORARY
+#endif
