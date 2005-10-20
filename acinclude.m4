@@ -9,7 +9,7 @@ AC_DEFUN([ES_ADDPATH_CHECK_LIB],[
 	save_LIBS=$LIBS
 	adp_found=no
 	dnl let's see whether it's in the default paths
-	LIBS="$save_LIBS -l$1"
+	LIBS="-l$1 $save_LIBS"
 	AC_LINK_IFELSE([AC_LANG_CALL([],[$2])],[adp_found=yes],[])
 
 	if test .$adp_found = .no; then
