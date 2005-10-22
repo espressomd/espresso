@@ -2,47 +2,48 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6o (Seska)                                                                      *
+* v1.9.6n (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6o -
+- v1.9.6n -
 -----------
-(o) October   14th, 2005.
-(n) October   12th, 2005.
-(m) September 30th, 2005.
-(l) September 23th, 2005.
-(k) September 16th, 2005.
-(j) September 15th, 2005.
-(i) September 13th, 2005.
-(h) August    17th, 2005.
-(g) August    16th, 2005.
-(f) August    15th, 2005.
-(e) August     9th, 2005.
-(d) August     4th, 2005.
+
+(n) October   14th, 2005.
+(m) October   12th, 2005.
+(l) September 30th, 2005.
+(k) September 23rd, 2005.
+(j) September 16th, 2005.
+(i) September 15th, 2005.
+(h) September 13th, 2005.
+(g) August    17th, 2005.
+(f) August    16th, 2005.
+(e) August    15th, 2005.
+(d) August     9th, 2005.
+(c) August     4th, 2005.
 (b) July      29th, 2005.
 (a) July      18th, 2005.
 
 New Features:
-(m) added new file
-(l) Analysis routine radial_density_map added to allow construction of a density map of
+(l) added new file
+(k) Analysis routine radial_density_map added to allow construction of a density map of
     the system assuming rotational symmetry.
-(l) By turning on the MOLFORCES it is now possible to mimic an optical trap which acts
+(k) By turning on the MOLFORCES it is now possible to mimic an optical trap which acts
     on the center of mass of individual molecules. To implement this the new file
     molforces.h was added and some additional parsing has been added to topology.c
-(k) Espresso now compiles and runs on SunOS
-(j) Added new lj-cos2 potential. Similar to existing lj-cos potential but with a
+(j) Espresso now compiles and runs on SunOS
+(i) Added new lj-cos2 potential. Similar to existing lj-cos potential but with a
     slightly different cosine tail.
-(h) binning now allows to also print out the counts.
-(h) support for CYGWIN.
-(e) added new particle properties for dipoles (new part commands: dipm <m>, dip <x> <y>
+(g) binning now allows to also print out the counts.
+(g) support for CYGWIN.
+(d) added new particle properties for dipoles (new part commands: dipm <m>, dip <x> <y>
     <z>); only k-space dipolar p3m yet works, r-space still has to be done
-(e) some useful stuff for vmd written by Axel
-(e) script for viewing block-files in vmd
-(d) Enhanced 'checkpoint_read' to now also be able to write pov-files and render them.
-(d) Released several commands to convert configurations to snapshots using Povray, 
+(d) some useful stuff for vmd written by Axel
+(d) script for viewing block-files in vmd
+(c) Enhanced 'checkpoint_read' to now also be able to write pov-files and render them.
+(c) Released several commands to convert configurations to snapshots using Povray, 
     see /people/thnfs/homes/despintr/Espresso/scripts/pov.tcl for details.
     Most noticeable probably is 'writepov <output> [-folded [-box [-render]]]' which 
     takes the current particle setup and outputs a povray compatible file (including
@@ -57,27 +58,27 @@ New Features:
     see 'lb.c' for an example.
 
 Changes:
-(o) charge_aggregation routine is removed from statistics.c. aggregation
+(n) charge_aggregation routine is removed from statistics.c. aggregation
     routine handles the charge_aggregation with an optional
     parameter. Corresponding tcl script under HMC+PT is also updated.
-(i) mbtools and mmsg packages much revised and improved. Proper documentation written
-(g) Added new optional parameters folded and nofoldlist. If folded is set, folded
+(h) mbtools and mmsg packages much revised and improved. Proper documentation written
+(f) Added new optional parameters folded and nofoldlist. If folded is set, folded
     coordinates are passed on to vmd. nofoldlist is a list of types that should not be
     folded if folded is set to folded.
-(e) checkpointread now gives an error if  is not either pov or pdb
-(e) writepov now checks whether the output file already exists
+(d) checkpointread now gives an error if  is not either pov or pdb
+(d) writepov now checks whether the output file already exists
 
 Bugfixes:
-(n) when setting non bonded interactions no error was given if a particular interaction
+(m) when setting non bonded interactions no error was given if a particular interaction
     was not set.  An error is now thrown
-(i) Fixed a bug which prevented espresso from reading checkpoints when quoted strings
+(h) Fixed a bug which prevented espresso from reading checkpoints when quoted strings
     within lists were present
-(f) Missing  variable for call to read_checkpoint_in for the case where  = 0 and where 
+(e) Missing  variable for call to read_checkpoint_in for the case where  = 0 and where 
     is false
-(e) the cutoff calculation for the complex sum was too high, but missing
-(e) cutoff values for cases with very few cells, which can cause crashes
-(e) one incr statement was missing
-(d) Fixed tune_cells to work with min_num_cells. Backport from bench_v4.tcl.
+(d) the cutoff calculation for the complex sum was too high, but missing
+(d) cutoff values for cases with very few cells, which can cause crashes
+(d) one incr statement was missing
+(c) Fixed tune_cells to work with min_num_cells. Backport from bench_v4.tcl.
 (a) Fixed the forces initialization such that external forces are added 
     for all thermostats, not only Langevin.
 (a) A few bugs fixed in 'lb.c', especially in momentum exchange between 
@@ -92,7 +93,7 @@ Bugfixes:
 (h) July  4th, 2005.
 (g) July  1st, 2005.
 (f) June 30th, 2005.
-(e) June 22th, 2005.
+(e) June 22nd, 2005.
 (d) June 20th, 2005.
 (c) June 17th, 2005.
 (b) May  30th, 2005.
@@ -134,13 +135,13 @@ Bugfixes:
 - v1.9.4g -
 -----------
 
-(g) May  24th, 2005.
-(f) May  20th, 2005.
-(e) May  18th, 2005.
-(d) May  12th, 2005.
-(c) May  11th, 2005.
-(b) May   4th, 2005.
-(a) May   3rd, 2005.
+(g) May 24th, 2005.
+(f) May 20th, 2005.
+(e) May 18th, 2005.
+(d) May 12th, 2005.
+(c) May 11th, 2005.
+(b) May  4th, 2005.
+(a) May  3rd, 2005.
 
 New Features:
 (c) The main start-up script for Espresso, calling the actual binary in the subfolder
@@ -306,13 +307,11 @@ Bugfixes:
     with running on ALPHA-machines.
 
 
-
 ****************************************************************************************
 * v1.8.6e (Rebi & Azan)                                                                *
 ****************************************************************************************
 
 Released & tagged on March 15th, 2005.
-
 
 
 - v1.8.6e -
@@ -417,20 +416,20 @@ Bugfixes:
 - v1.8.3f -
 -----------
 
-(f) January  14th, 2005.
-(e) January  15th, 2005.
+(f) January  15th, 2005.
+(e) January  14th, 2005.
 (d) January  11th, 2005.
 (c) January   6th, 2005.
 (b) January   4th, 2005.
 (a) December 27th, 2004.
 
 New Features:
-(f) Added background_error-codes: Every background error is now identified through its
+(f) Added some checks for the non verlet domain decomposition case.
+(f) Added an entirely re-written version of the exclusions code.
+(f) Added a generic P3M test case.
+(e) Added background_error-codes: Every background error is now identified through its
     individual error code, which is always returned as the first entry in the list element
     containing the error message.
-(e) Added some checks for the non verlet domain decomposition case.
-(e) Added an entirely re-written version of the exclusions code.
-(e) Added a generic P3M test case.
 (c) Added option to specify position of 2nd monomer of first chain in the 'polymer'-command, 
     in case a certain direction of the polymer is desired (option makes only sense 
     if no more than one polymer is to be created).
@@ -441,9 +440,9 @@ New Features:
     for determining the numerical solution of the Poisson-Boltzmann equation in the cell model.
 
 Changes:
-(e) Removed the buggy, non-interpolating version of the P3M charge assignment;
+(f) Removed the buggy, non-interpolating version of the P3M charge assignment;
     anyways, the gain is only around 10%.
-(e) Some improvements in the P3M charge assignment.
+(f) Some improvements in the P3M charge assignment.
 (d) Changed 'sprintf' in the runtime_errors to the new ERROR_SPRINTF-macro
 (c) Reduced the minimal number of cells to the correct number 8.
 (b) Reduced PARTICLE_INCREMENT to 8 as it does not cost anything, but reduces 
@@ -452,8 +451,8 @@ Changes:
     while the correction vectors are calculated.
 
 Bugfixes:
-(e) Fixed the square bug in P3M, which occurs for non-neutral systems.
-(e) Fixed a rare event bug in tunev2 which could result in wrong parameter sets
+(f) Fixed the square bug in P3M, which occurs for non-neutral systems.
+(f) Fixed a rare event bug in tunev2 which could result in wrong parameter sets
     when there was only one possible parameter set for a mesh, and that was optimal.
 (d) Fixed a bug which crashed analyze energy and pressure if the bonded interactions 
     had noncontigous numbers.
@@ -579,7 +578,7 @@ Bugfixes:
 (b) Fixed the warning with the recent icc (Blade center).
 
 
-- v1.8.0  -
+- v1.8.0a -
 -----------
 
 (a) October 18th, 2004.
@@ -598,13 +597,11 @@ New Features:
     has already been added (e.g. Rattle) without being fully functional yet.
 
 
-
 ****************************************************************************************
 * v1.8.Beta (Rebi & Azan)                                                              *
 ****************************************************************************************
 
 First preview released on October 18th, 2004.
-
 
 
 - v1.7.6e -
@@ -650,9 +647,10 @@ Released & re-tagged on September 24th, 2004.
 
 - v1.7.4f -
 -----------
+
 (f) September 23rd, 2004.
-(e) September 21th, 2004.
-(d) September 21th, 2004.
+(e) September 21st, 2004.
+(d) September 21st, 2004.
 (c) September 20th, 2004.
 (b) September 16th, 2004.
 (a) September 14th, 2004.
@@ -725,7 +723,7 @@ Changes:
 (a) To prevent the new error handling to accidentally cause memory overflow, its error
     status is now collected twice during each integration cycle (for NPT only at the moment).
 
-Bugfixes of errors introduced since 1.7.x:
+Bugfixes:
 (e) Fixed a major bug which caused the force-derivation to overestimate all nonbonded forces
     by a factor of 2 if both nonbonded and electrostatic interactions were present and active;
     this bug was introduced with the new force interface in v1.7.2a and did not affect statics,
@@ -747,7 +745,7 @@ Released & tagged on September 2nd, 2004.
 -----------
 
 (e) September 1st, 2004.
-(d) August   31th, 2004.
+(d) August   31st, 2004.
 (c) August   30th, 2004.
 (b) August   27th, 2004.
 (a) August   26th, 2004.
@@ -817,7 +815,7 @@ Bugfixes:
 (a) Various fixes in the error handling occuring when switching off parts of the code.
 
 
-- v1.7.0  -
+- v1.7.0a -
 -----------
 
 (a) August 19th, 2004.
@@ -855,13 +853,11 @@ Bugfixes:
 (a) Fixes for the Tru64 compiler.
 
 
-
 ****************************************************************************************
 * v1.7.Gold (Mezoti)                                                                   *
 ****************************************************************************************
 
 Released on August 19th, 2004.
-
 
 
 - v1.6.6h -
@@ -967,9 +963,9 @@ Bugfixes:
 - v1.6.4c -
 -----------
 
-(c) July  9th, 2004.
-(b) July  5th, 2004.
-(a) July  5th, 2004.
+(c) July 9th, 2004.
+(b) July 5th, 2004.
+(a) July 5th, 2004.
 
 Changes:
 (c) Now BOND_ANGLE_COSINE is the default three-body bonded potential 
@@ -1096,7 +1092,6 @@ New Features:
     instantaneous pressure to nptiso.p_vir[3] reflecting the three directions of
     the pressure tensor. Note that due to its periodicity electrostatic systems
     using p3m are still restricted to 3D-periodic and -isotropic systems!
-    
 
 Changes:
 (d) 'writepdbfoldchains' now requires a list of 3 box lengths (as returned from 
@@ -1112,13 +1107,11 @@ Bugfixes:
 (a) Fixed warnings in the ELC tuning routine.
 
 
-
 ****************************************************************************************
 * v1.6.Gold (Icheb)                                                                    *
 ****************************************************************************************
 
 Released on April 29th, 2004.
-
 
 
 - v1.5.8e -
@@ -1270,7 +1263,7 @@ Bugfixes:
 (b) March 17th, 2004.
 (a) March  5th, 2004.
 
-New Features: 
+New Features:
 (d) Added a new analysis command [analyze modes2d] which is designed
     to allow a fluctuation analysis of a lipid membrane system.  This
     command is currently restricted to a special type of membrane
@@ -1379,7 +1372,7 @@ New Features:
 - v1.5.2a -
 -----------
 
-(a) February  9th, 2004.
+(a) February 9th, 2004.
 
 New Features:
 (a) introducing topoplogy concept.
@@ -1397,8 +1390,8 @@ Bugfixes:
 - v1.5.1b -
 -----------
 
-(b) February  6th, 2004.
-(a) January  30th, 2004.
+(b) February 6th, 2004.
+(a) January 30th, 2004.
 
 New Features:
 (b) Inplementation of NEMD (Non Equilibrium Molecular Dynamics). This method
@@ -1435,7 +1428,6 @@ New Features:
     BOND_ANGLE_COSSQUARE  ->  V = 1/2 k (cos(phi)-cos(phi0))^2
 
 
-
 ****************************************************************************************
 * v1.5.Beta (Neelix)                                                                   *
 ****************************************************************************************
@@ -1449,7 +1441,7 @@ Released on January 29th, 2004.
 (b) January 15th, 2004.
 (a) January  7th, 2004.
 
-New Features: 
+New Features:
 (a) new command 'cellsystem { domain | nsquare }' to choose the internal particle structure.
 (a) comfixed interaction is implemented. This interaction fixes the center of mass 
     of all particles of a given type.
@@ -1478,14 +1470,14 @@ Bugfixes:
 (a) the constraint energy is printed correctly now. In the old version, if 
     the constraint particle type is smaller than any real particle type, 
     the constraint energy was wrong, even though the total energy was correct
- 
 
-- v1.1.2a  -
+
+- v1.1.2a -
 -----------
 
 (a) December 19th, 2003.
 
-New Features: 
+New Features:
 (a) working version of tabulated lookup potentials is
     now implemented.  Be sure to check documentation as file format
     requirements are likely to change with new versions.
@@ -1504,11 +1496,11 @@ Released on December 2nd, 2003.
 - v1.1.0e -
 -----------
 
-(e) December 2nd, 2003.
+(e) December  2nd, 2003.
 (d) November 18th, 2003.
 (c) November 13th, 2003.
 (b) November 11th, 2003.
-(a) November 3rd, 2003.
+(a) November  3rd, 2003.
 
 New Features:
 (e) command 'constraint maze' to create a constraint with a maze-like structure,
@@ -1527,13 +1519,11 @@ Bugfixes:
     and always returned <g3> only
 
 
-
 ****************************************************************************************
 * v1.1.Gold (Naomi)                                                                    *
 ****************************************************************************************
 
 Released on October 20th, 2003.
-
 
 
 ****************************************************************************************
