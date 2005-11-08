@@ -60,11 +60,12 @@ sorting or data analysis functions</p>
 together all the analysis for a simulation into a single simple
 interface.  At the beginning of the simulation the user specifies
 which analyses should be performed by appending its name and arguments
-to a variable, <em>analysis_flags</em>.  After the analysis is setup one can
-then simply call <em>do_analysis</em> to perform all the specified
-proceedures.  Analysis will store a data value each time <em>do_analysis</em>
-is called until a call to <em>print_averages</em> is made, at which point all
-the average of stored values is printed to a file.  </p>
+to a variable, <em>analysis_flags</em>.  After the analysis is setup
+one can then simply call <em>do_analysis</em> to perform all the
+specified proceedures.  Analysis will store a data value each
+time <em>do_analysis</em> is called. Then when a call
+to <em>print_averages</em> is made the average of all stored values is
+printed to a file and the store of values is reset to nil.  </p>
 
 <p> Several membrane specific analysis proceedures have been included
 with mbtools.  These include a fluctuation analysis which calculates
