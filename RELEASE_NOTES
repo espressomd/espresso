@@ -2,40 +2,60 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.6n (Seska)                                                                      *
+* v1.9.7g (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.6n -
+
+- v1.9.7g -
 -----------
 
-(n) October   14th, 2005.
-(m) October   12th, 2005.
-(l) September 30th, 2005.
-(k) September 23rd, 2005.
-(j) September 16th, 2005.
-(i) September 15th, 2005.
-(h) September 13th, 2005.
-(g) August    17th, 2005.
-(f) August    16th, 2005.
-(e) August    15th, 2005.
-(d) August     9th, 2005.
-(c) August     4th, 2005.
-(b) July      29th, 2005.
-(a) July      18th, 2005.
+(g) October   14th, 2005.
+(f) October   12th, 2005.
+(e) September 30th, 2005.
+(d) September 23rd, 2005.
+(c) September 16th, 2005.
+(b) September 15th, 2005.
+(a) September 13th, 2005.
 
 New Features:
-(l) added new file
-(k) Analysis routine radial_density_map added to allow construction of a density map of
+(e) added new file
+(d) Analysis routine radial_density_map added to allow construction of a density map of
     the system assuming rotational symmetry.
-(k) By turning on the MOLFORCES it is now possible to mimic an optical trap which acts
+(d) By turning on the MOLFORCES it is now possible to mimic an optical trap which acts
     on the center of mass of individual molecules. To implement this the new file
     molforces.h was added and some additional parsing has been added to topology.c
-(j) Espresso now compiles and runs on SunOS
-(i) Added new lj-cos2 potential. Similar to existing lj-cos potential but with a
+(c) Espresso now compiles and runs on SunOS
+(b) Added new lj-cos2 potential. Similar to existing lj-cos potential but with a
     slightly different cosine tail.
+
+Changes:
+(g) charge_aggregation routine is removed from statistics.c. aggregation
+    routine handles the charge_aggregation with an optional
+    parameter. Corresponding tcl script under HMC+PT is also updated.
+(a) mbtools and mmsg packages much revised and improved. Proper documentation written
+
+Bugfixes:
+(f) when setting non bonded interactions no error was given if a particular interaction
+    was not set.  An error is now thrown
+(a) Fixed a bug which prevented espresso from reading checkpoints when quoted strings
+    within lists were present
+
+
+- v1.9.6g -
+-----------
+
+(g) August 17th, 2005.
+(f) August 16th, 2005.
+(e) August 15th, 2005.
+(d) August  9th, 2005.
+(c) August  4th, 2005.
+(b) July   29th, 2005.
+(a) July   18th, 2005.
+
+New Features:
 (g) binning now allows to also print out the counts.
 (g) support for CYGWIN.
 (d) added new particle properties for dipoles (new part commands: dipm <m>, dip <x> <y>
@@ -58,10 +78,6 @@ New Features:
     see 'lb.c' for an example.
 
 Changes:
-(n) charge_aggregation routine is removed from statistics.c. aggregation
-    routine handles the charge_aggregation with an optional
-    parameter. Corresponding tcl script under HMC+PT is also updated.
-(h) mbtools and mmsg packages much revised and improved. Proper documentation written
 (f) Added new optional parameters folded and nofoldlist. If folded is set, folded
     coordinates are passed on to vmd. nofoldlist is a list of types that should not be
     folded if folded is set to folded.
@@ -69,10 +85,6 @@ Changes:
 (d) writepov now checks whether the output file already exists
 
 Bugfixes:
-(m) when setting non bonded interactions no error was given if a particular interaction
-    was not set.  An error is now thrown
-(h) Fixed a bug which prevented espresso from reading checkpoints when quoted strings
-    within lists were present
 (e) Missing  variable for call to read_checkpoint_in for the case where  = 0 and where 
     is false
 (d) the cutoff calculation for the complex sum was too high, but missing
@@ -1428,13 +1440,6 @@ New Features:
     BOND_ANGLE_COSSQUARE  ->  V = 1/2 k (cos(phi)-cos(phi0))^2
 
 
-****************************************************************************************
-* v1.5.Beta (Neelix)                                                                   *
-****************************************************************************************
-
-Released on January 29th, 2004.
-
-
 - v1.5.Alpha -
 -----------
 
@@ -1470,6 +1475,13 @@ Bugfixes:
 (a) the constraint energy is printed correctly now. In the old version, if 
     the constraint particle type is smaller than any real particle type, 
     the constraint energy was wrong, even though the total energy was correct
+
+
+****************************************************************************************
+* v1.5.Beta (Neelix)                                                                   *
+****************************************************************************************
+
+Released on January 29th, 2004.
 
 
 - v1.1.2a -

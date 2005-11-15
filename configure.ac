@@ -3,8 +3,8 @@
 #######################################################################
 
 AC_PREREQ(2.50)
-AC_INIT(ESPResSo, [v1.9.6n (Seska)], espresso@mpip-mainz.mpg.de)
-time_stamp="v1.9.6n (Seska) *"
+AC_INIT(ESPResSo, [v1.9.7g (Seska)], espresso@mpip-mainz.mpg.de)
+time_stamp="October 14th, 2005"
 
 if test "$CC" != ""; then	user_defined_CC=yes; fi
 if test "$CFLAGS" != ""; then	user_defined_CFLAGS=yes; fi
