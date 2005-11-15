@@ -2,16 +2,17 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.7g (Seska)                                                                      *
+* v1.9.7h (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
 
-- v1.9.7g -
+- v1.9.7h -
 -----------
 
+(h) October   18th, 2005.
 (g) October   14th, 2005.
 (f) October   12th, 2005.
 (e) September 30th, 2005.
@@ -21,6 +22,9 @@ Current working revision.
 (a) September 13th, 2005.
 
 New Features:
+(h) Introduced new USE_TEMPORARY define in config.h for LB, circumventing problem 
+    with empty structure.
+(g) Added support for Xeon 64 bit processor to 'configure'.
 (e) added new file
 (d) Analysis routine radial_density_map added to allow construction of a density map of
     the system assuming rotational symmetry.
@@ -35,25 +39,31 @@ Changes:
 (g) charge_aggregation routine is removed from statistics.c. aggregation
     routine handles the charge_aggregation with an optional
     parameter. Corresponding tcl script under HMC+PT is also updated.
+(c) Removed old variable: extended[6] is no longer used in grid.c
 (a) mbtools and mmsg packages much revised and improved. Proper documentation written
 
 Bugfixes:
+(h) Fixed problem with empty structure ParticleTemporary offending ANSI-C.
 (f) when setting non bonded interactions no error was given if a particular interaction
     was not set.  An error is now thrown
+(c) Fixed some SunOS issues.
+(c) Fixed some portability issues with random variable declarations in the middle of c-blocks.
 (a) Fixed a bug which prevented espresso from reading checkpoints when quoted strings
     within lists were present
 
 
-- v1.9.6g -
+- v1.9.6i -
 -----------
 
-(g) August 17th, 2005.
-(f) August 16th, 2005.
-(e) August 15th, 2005.
-(d) August  9th, 2005.
-(c) August  4th, 2005.
-(b) July   29th, 2005.
-(a) July   18th, 2005.
+(i) September  5th, 2005.
+(h) August    25th, 2005.
+(g) August    17th, 2005.
+(f) August    16th, 2005.
+(e) August    15th, 2005.
+(d) August     9th, 2005.
+(c) August     4th, 2005.
+(b) July      29th, 2005.
+(a) July      18th, 2005.
 
 New Features:
 (g) binning now allows to also print out the counts.
@@ -62,6 +72,7 @@ New Features:
     <z>); only k-space dipolar p3m yet works, r-space still has to be done
 (d) some useful stuff for vmd written by Axel
 (d) script for viewing block-files in vmd
+(d) Added an other aggregation routine which analyzes PE aggregation using the counterions.
 (c) Enhanced 'checkpoint_read' to now also be able to write pov-files and render them.
 (c) Released several commands to convert configurations to snapshots using Povray, 
     see /people/thnfs/homes/despintr/Espresso/scripts/pov.tcl for details.
@@ -78,6 +89,7 @@ New Features:
     see 'lb.c' for an example.
 
 Changes:
+(h) Added version.h for the code_info in Espresso to always be up to date.
 (f) Added new optional parameters folded and nofoldlist. If folded is set, folded
     coordinates are passed on to vmd. nofoldlist is a list of types that should not be
     folded if folded is set to folded.
@@ -85,8 +97,10 @@ Changes:
 (d) writepov now checks whether the output file already exists
 
 Bugfixes:
+(i) Fixed bug in charge_aggregation. This tool can only be used when ELECTROSTATICS is compiled in. Therefore ifdefs are placed.
 (e) Missing  variable for call to read_checkpoint_in for the case where  = 0 and where 
     is false
+(e) Electrostatic tuning using tunev2 no longer crashes for 0 charges.
 (d) the cutoff calculation for the complex sum was too high, but missing
 (d) cutoff values for cases with very few cells, which can cause crashes
 (d) one incr statement was missing
