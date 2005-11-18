@@ -81,7 +81,6 @@ extern nptiso_struct nptiso;
 #include "morse.h"
 #include "soft_sphere.h"
 #include "ljcos.h"
-#include "ljcos2.h"
 #include "tab.h"
 #include "gb.h"
 #include "fene.h"
@@ -101,6 +100,9 @@ extern Observable_stat virials, total_pressure;
 ///
 extern Observable_stat p_tensor;
 ///
+extern Observable_stat_non_bonded virials_non_bonded, total_pressure_non_bonded;
+///
+extern Observable_stat_non_bonded p_tensor_non_bonded;
 /*@}*/
 
 /** \name Exported Functions */
@@ -115,27 +117,31 @@ int p_ext_callback(Tcl_Interp *interp, void *_data);
 int p_diff_callback(Tcl_Interp *interp, void *_data);
 
 /** Calculates the pressure in the system from a virial expansion using the terms from \ref calculate_verlet_virials or \ref nsq_calculate_virials dependeing on the used cell system.<BR>
-    @param result here all the data is stored
-    @param v_comp flag which enables (1) compensation of the velocities required 
+    @param result here the data about the scalar pressure are stored
+    @param result_t here the data about the stress tensor are stored
+    @param result_nb here the data about the intra- and inter- molecular nonbonded contributions to scalar pressure are stored
+    @param result_t_nb here the data about the intra- and inter- molecular nonbonded contributions to stress tensor are stored
+    @param v_comp flag which enables (1) compensation of the velocities required
 		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
 		  (hence it only works with domain decomposition); naturally it
 		  therefore doesn't make sense to use it without NpT.
 */
-void pressure_calc(double *result, int v_comp);
+void pressure_calc(double *result, double *result_t, double *result_nb, double *result_t_nb, int v_comp);
 
 /** Calculate non bonded energies between a pair of particles.
     @param p1        pointer to particle 1.
     @param p2        pointer to particle 2.
-    @param d         vector between p1 and p2. 
+    @param d         vector between p1 and p2.
     @param dist      distance between p1 and p2.
     @param dist2     distance squared between p1 and p2. */
 MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 					  double dist, double dist2)
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+  int p1molid, p2molid, i, k, l;
   double force[3] = {0, 0, 0};
 #ifdef ELECTROSTATICS
-  double ret; 
+  double ret;
 #endif
 #ifdef ROTATION
   double t1[3], t2[3]; /* dummies */
@@ -161,10 +167,6 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 #ifdef LJCOS
   add_ljcos_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
-  /* lennard jones cos2 */
-#ifdef LJCOS2
-  add_ljcos2_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
   /* tabulated */
 #ifdef TABULATED
   add_tabulated_pair_force(p1,p2,ia_params,d,dist,force);
@@ -176,6 +178,28 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 
   *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
 
+ /* stress tensor part */
+  for(k=0;k<3;k++)
+    for(l=0;l<3;l++)
+      obsstat_nonbonded(&p_tensor, p1->p.type, p2->p.type)[k*3 + l] += force[k]*d[l];
+
+  p1molid = p1->p.mol_id;
+  p2molid = p2->p.mol_id;
+  if ( p1molid == p2molid ) {
+    *obsstat_nonbonded_intra(&virials_non_bonded, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
+    
+    for(k=0;k<3;k++)
+      for(l=0;l<3;l++)
+        obsstat_nonbonded_intra(&p_tensor_non_bonded, p1->p.type, p2->p.type)[k*3 + l] += force[k]*d[l];
+  } 
+  if ( p1molid != p2molid ) {
+    *obsstat_nonbonded_inter(&virials_non_bonded, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
+    
+    for(k=0;k<3;k++)
+      for(l=0;l<3;l++)
+        obsstat_nonbonded_inter(&p_tensor_non_bonded, p1->p.type, p2->p.type)[k*3 + l] += force[k]*d[l];
+  }
+  
 #ifdef ELECTROSTATICS
   /* real space coulomb */
   if (coulomb.method != COULOMB_NONE) {
@@ -194,7 +218,18 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
     }
     virials.coulomb[0] += ret;
   }
+ /* stress tensor part */
+      if (coulomb.method == COULOMB_DH) {
+	for (i = 0; i < 3; i++)
+	  force[i] = 0;
+
+	add_dh_coulomb_pair_force(p1,p2,d,dist, force);
+	for(k=0;k<3;k++)
+	  for(l=0;l<3;l++)
+	    p_tensor.coulomb[k*3 + l] += force[k]*d[l];
+      }
 #endif
+
 }
 
 /** Calculate bonded virials for one particle.
@@ -209,8 +244,8 @@ MDINLINE void add_bonded_virials(Particle *p1)
   Particle *p2;
   Bonded_ia_parameters *iaparams;
 
-  int i, type_num, type;
-  
+  int i, k, l, type_num, type;
+
   i = 0;
   while(i<p1->bl.n) {
     type_num = p1->bl.e[i++];
@@ -255,18 +290,25 @@ MDINLINE void add_bonded_virials(Particle *p1)
       break;
     }
     *obsstat_bonded(&virials, type_num) += dx[0]*force[0] + dx[1]*force[1] + dx[2]*force[2];
+
+ /* stress tensor part */
+    for(k=0;k<3;k++)
+      for(l=0;l<3;l++)
+	obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*dx[l];
+
   }
 }
 
 /** Calculate kinetic pressure (aka energy) for one particle.
     @param p1 particle for which to calculate pressure
-    @param v_comp flag which enables (1) compensation of the velocities required 
+    @param v_comp flag which enables (1) compensation of the velocities required
 		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
 		  (hence it only works with domain decomposition); naturally it
 		  therefore doesn't make sense to use it without NpT.
 */
 MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
 {
+  int k, l;
   /* kinetic energy */
   if(v_comp)
     virials.data.e[0] += (SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
@@ -276,13 +318,19 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
 #ifdef ROTATION
   virials.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*SQR(time_step);
 #endif
+
+  /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
+  for(k=0;k<3;k++)
+    for(l=0;l<3;l++)
+      p_tensor.data.e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*PMASS(p1);
+
 }
 
 /** implementation of 'analyze pressure'
     @param interp Tcl interpreter
     @param argc   arguments
     @param argv   arguments
-    @param v_comp flag which enables (1) compensation of the velocities required 
+    @param v_comp flag which enables (1) compensation of the velocities required
 		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
 		  (hence it only works with domain decomposition); naturally it
 		  therefore doesn't make sense to use it without NpT. */
@@ -293,6 +341,10 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv);
 
 /** implementation of 'analyze p_IK1' */
 int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv);
+
+/** implementation of 'analyze stress_tensor' */
+int parse_and_print_stress_tensor(Tcl_Interp *interp, int argc, char **argv, int v_comp);
+
 
 /*@}*/
 
