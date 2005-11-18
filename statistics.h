@@ -51,6 +51,29 @@ typedef struct {
   int chunk_size;
 } Observable_stat;
 
+/** Structure used only in the pressure and stress tensor calculation to distinguish 
+    non-bonded intra- and inter- molecular contributions. */
+typedef struct {
+  /** Status flag for observable calculation.
+      For 'analyze energy': 0 re-initialize observable struct, else every thing is fine, calculation can start.
+      For 'analyze pressure' and 'analyze p_inst': 0 or !(1+v_comp) re-initialize, else all OK. */
+  int init_status_nb;
+
+  /** Array for observables on each node. */
+  DoubleList data_nb;
+
+  /** number of non bonded interactions */
+  int n_nonbonded;
+
+  /** start of observables for non-bonded intramolecular interactions. */
+  double *non_bonded_intra;
+  /** start of observables for non-bonded intermolecular interactions. */
+  double *non_bonded_inter;
+
+  /** number of doubles per data item */
+  int chunk_size_nb;
+} Observable_stat_non_bonded;
+
 /*@}*/
 
 /** \name Exported Variables
@@ -281,10 +304,36 @@ MDINLINE double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2)
   return stat->non_bonded + stat->chunk_size*(((2 * n_particle_types - 1 - p1) * p1) / 2  +  p2);
 }
 
+MDINLINE double *obsstat_nonbonded_intra(Observable_stat_non_bonded *stat, int p1, int p2)
+{
+/*  return stat->non_bonded_intra + stat->chunk_size*1; */
+  int tmp;
+  if (p1 > p2) {
+    tmp = p2;
+    p2 = p1;
+    p1 = tmp;
+  }
+  return stat->non_bonded_intra + stat->chunk_size_nb*(((2 * n_particle_types - 1 - p1) * p1) / 2  +  p2);
+}
+
+MDINLINE double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int p1, int p2)
+{
+/*  return stat->non_bonded_inter + stat->chunk_size*1; */
+  int tmp;
+  if (p1 > p2) {
+    tmp = p2;
+    p2 = p1;
+    p1 = tmp;
+  }
+  return stat->non_bonded_inter + stat->chunk_size_nb*(((2 * n_particle_types - 1 - p1) * p1) / 2  +  p2);
+}
+
 void invalidate_obs();
 
 void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded, int n_non_bonded,
 			       int n_coulomb, int chunk_size);
+
+void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb, int n_nonbonded, int chunk_size_nb);
 
 /*@}*/
 
