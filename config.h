@@ -109,6 +109,8 @@
     </ul>
 
     <h2> Options for the style of the angle potential </h2>
+    Important: Activate <b>only one</b> of the possible variants!<br>
+    Unpredicted behaviour will occur if you enable more than one!
     <ul>
     <li> \verbatim #define BOND_ANGLE_HARMONIC \endverbatim
     Harmonic bond angle potential:      V = 1/2 k (phi - phi0)^2
@@ -162,6 +164,7 @@
 /* #define BUCKINGHAM */
 /* #define SOFT_SPHERE */
 
+/* Note: Activate ONLY ONE bonded angle potential out of the following! */
 /* #define BOND_ANGLE_HARMONIC */
 #define BOND_ANGLE_COSINE
 /* #define BOND_ANGLE_COSSQUARE */
