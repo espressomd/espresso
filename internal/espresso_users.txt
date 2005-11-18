@@ -717,3 +717,56 @@ topic:     simulate the DNA and protein mechanics and deformation
 reminded:  16.SEP.2005
 
 
+name:      Mohamed Bassyouni
+email:     mohamed.bassyouni@guc.edu.eg
+institute: German university in cairo
+sent:      17.NOV.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     \'polyurthane synthesis and prepare composite materials\'
+           I think it could be possible to get some of polymer
+           characteristics by using this program
+reminded:  X17.NOV.2005
+
+
+name:      yangwen
+email:     yangwen@iccas.ac.cn
+institute: Institute of Chemistry&#65292;The Chinese Academy of Sciences
+           Zhongguancun North First Street 2&#65292;100080 Beijing&#65292;
+           PR&#12288;China
+sent:      17.NOV.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     My research mainly focus on the molecular dynamics simulation
+           on polyelectrolytes, especially for biopolymer.
+           After I read the introductions about this software, I think I
+           have found what I need!
+reminded:  17.NOV.2005
+
+
+name:      Dongshan Wei
+email:     dswei@iccas.ac.cn
+institute: Polymer Physics and Chemistry,
+           Institute of Chemistry, the Chinese Academy of Sciences,
+           Beijing, 100080, China
+sent:      17.NOV.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     MD for polymer melts and multi-scale simulation of
+           multi-componet.
+reminded:  17.NOV.2005
+
+
+name:      sandermarco
+email:     92343003@cc.ncu.edu.tw
+institute: Taiwan National central university
+sent:      17.NOV.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     My research topic is b.c. at solid-fluid interface.
+           Now i face a problem that is how to simulate the wall atom
+           correctly (potential and force), so I think ESPResSo can help
+           me. thank you so much
+reminded:  17.NOV.2005
+
+
