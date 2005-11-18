@@ -35,7 +35,6 @@
 #include "buckingham.h"
 #include "tab.h"
 #include "ljcos.h"
-#include "ljcos2.h"
 #include "gb.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
@@ -1182,7 +1181,7 @@ void mpi_bcast_n_particle_types_slave(int pnode, int ns)
 }
 
 /*************** REQ_GATHER ************/
-void mpi_gather_stats(int job, void *result)
+void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb, void *result_t_nb)
 {
   switch (job) {
   case 1:
@@ -1190,12 +1189,13 @@ void mpi_gather_stats(int job, void *result)
     energy_calc(result);
     break;
   case 2:
+    /* calculate and reduce (sum up) virials for 'analyze pressure' or 'analyze stress_tensor'*/
     mpi_issue(REQ_GATHER, -1, 2);
-    pressure_calc(result,0);
+    pressure_calc(result,result_t,result_nb,result_t_nb,0);
     break;
   case 3:
     mpi_issue(REQ_GATHER, -1, 3);
-    pressure_calc(result,1);
+    pressure_calc(result,result_t,result_nb,result_t_nb,1);
     break;
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: illegal request %d for REQ_GATHER\n", this_node, job);
@@ -1211,18 +1211,19 @@ void mpi_gather_stats_slave(int ana_num, int job)
     energy_calc(NULL);
     break;
   case 2:
-    /* calculate and reduce (sum up) virials for 'analyze pressure' */
-    pressure_calc(NULL,0);
+    /* calculate and reduce (sum up) virials for 'analyze pressure' or 'analyze stress_tensor'*/
+    pressure_calc(NULL,NULL,NULL,NULL,0);
     break;
   case 3:
     /* calculate and reduce (sum up) virials, revert velocities half a timestep for 'analyze p_inst' */
-    pressure_calc(NULL,1);
+    pressure_calc(NULL,NULL,NULL,NULL,1);
     break;
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: illegal request %d for REQ_GATHER\n", this_node, job);
     errexit();
   }
 }
+
 
 /*************** REQ_GETPARTS ************/
 void mpi_get_particles(Particle *result, IntList *bi)
@@ -1631,11 +1632,6 @@ void mpi_lj_cap_forces_slave(int node, int parm)
 #ifdef LENNARD_JONES
   MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   calc_lj_cap_radii(lj_force_cap);
-  on_short_range_ia_change();
-#endif
-#ifdef LJCOS2
-  MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  calc_ljcos2_cap_radii(lj_force_cap);
   on_short_range_ia_change();
 #endif
 }
