@@ -265,7 +265,7 @@ void mpi_bcast_n_particle_types(int s);
     \param job what to do:
     <ul>
 	<li> 1 calculate and reduce (sum up) energies, using \ref energy_calc.
-	<li> 2 calculate and reduce (sum up) pressure, using \ref pressure_calc.
+	<li> 2 calculate and reduce (sum up) pressure, stress tensor, using \ref pressure_calc.
 	<li> 3 calculate and reduce (sum up) instantaneous pressure, using \ref pressure_calc.
     </ul>
     \param result where to store the gathered value(s):
@@ -275,9 +275,30 @@ void mpi_bcast_n_particle_types(int s);
 	     virials array of type \ref Observable_stat)
 	<li> job=3 unused (the results are stored in a global 
 	     virials array of type \ref Observable_stat)
+    \param result_t where to store the gathered value(s):
+    <ul><li> job=1 unused (the results are stored in a global 
+	     energy array of type \ref Observable_stat)
+	<li> job=2 unused (the results are stored in a global 
+	     p_tensor tensor of type \ref Observable_stat)
+	<li> job=3 unused (the results are stored in a global 
+	     p_tensor tensor of type \ref Observable_stat)
+    \param result_nb where to store the gathered value(s):
+    <ul><li> job=1 unused (the results are stored in a global 
+	     energy array of type \ref Observable_stat_non_bonded)
+	<li> job=2 unused (the results are stored in a global 
+	     virials_non_bonded array of type \ref Observable_stat_non_bonded)
+	<li> job=3 unused (the results are stored in a global 
+	     virials_non_bonded array of type \ref Observable_stat_non_bonded)
+    \param result_t_nb where to store the gathered value(s):
+    <ul><li> job=1 unused (the results are stored in a global 
+	     energy array of type \ref Observable_stat_non_bonded)
+	<li> job=2 unused (the results are stored in a global 
+	     p_tensor_non_bonded tensor of type \ref Observable_stat_non_bonded)
+	<li> job=3 unused (the results are stored in a global 
+	     p_tensor_non_bonded tensor of type \ref Observable_stat_non_bonded)
     </ul>
 */
-void mpi_gather_stats(int job, void *result);
+void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb, void *result_t_nb);
 
 /** Issue REQ_GETPARTS: gather all particle informations (except bonds).
     This is slow and may use huge amounts of memory. If il is non-NULL, also
