@@ -5,7 +5,7 @@ TESTCASES="nve_pe.tcl npt.tcl \
     lj.tcl lj-cos.tcl harm.tcl fene.tcl tabulated.tcl gb.tcl rotation.tcl constraints.tcl \
     kinetic.tcl thermostat.tcl \
     intpbc.tcl intppbc.tcl layered.tcl nsquare.tcl \
-    comforce.tcl comfixed.tcl analysis.tcl"
+    comforce.tcl comfixed.tcl analysis.tcl mass.tcl"
 
 # List of testcases to be done (and people responsible for them):
 #################################################################
@@ -44,6 +44,8 @@ TESTCASES="nve_pe.tcl npt.tcl \
 #   Testing forces, energies, pressures of the comfixed.
 # - nve_pe.tcl: (MS / Status: Done.)
 #   Testing energy conservation with PE chain 
+# - mass.tcl: (TS / Status: New.)
+#   Testing momentum conservation with masses turned on
 #
 #################################################################
 
