@@ -125,6 +125,8 @@ if { [catch {
 	    error "relative error $rel_error too large upon evaluating '$get_obs'  ([eval $get_obs] / $obs)"
 	}
     }
+    
+    # Checking p_IK1 stress tensor calculation
     if { [setmd n_nodes]==1 || $slow==1 } {
 	# since 'analyze p_IK1' is effectively running on the master node only, it will be really slow for >1 nodes;
 	# hence it is not really necessary to check it there - but if you like, set 'slow' to 1
@@ -155,6 +157,56 @@ if { [catch {
 	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
     }
 
+    # Checking stress_tensor calculation
+    # 'analyze stress_tensor' should effectively running on any node
+    #if { [setmd n_nodes]==1 || $slow==1 } {
+	for { set i 0 } { $i < [setmd n_part] } { incr i } { lappend plist $i }
+	set p_tensor_full [analyze stress_tensor];
+	set total [lindex $p_tensor_full 0]
+	set ideal [lindex $p_tensor_full 1]
+	set fene  [lindex $p_tensor_full 2]
+	set lj    [lindex $p_tensor_full 3]
+	set nb_tintra    [lindex $p_tensor_full 4]
+	set nb_tinter    [lindex $p_tensor_full 5]
+	set nb_intra    [lindex $p_tensor_full 6]
+        set p_tensorT 0; set p_tensorI 0; set p_tensorF 0; set p_tensorJ 0; 
+	# checking intra- and inter- molecular non-bonded contribution to stress tensor
+	set p_tensorJTINTRA 0; set p_tensorJTINTER 0; set p_tensorJINTRA 0; 
+	for {set i 0} {$i < 3} {incr i} {
+	    set p_tensorT [expr $p_tensorT + [lindex $total [expr 1 + 4*$i]]]
+	    set p_tensorI [expr $p_tensorI + [lindex $ideal [expr 1 + 4*$i]]]
+	    set p_tensorF [expr $p_tensorF + [lindex $fene  [expr 2 + 4*$i]]]
+	    set p_tensorJ [expr $p_tensorJ + [lindex $lj    [expr 3 + 4*$i]]]
+	    set p_tensorJTINTRA [expr $p_tensorJTINTRA + [lindex $nb_tintra    [expr 1 + 4*$i]]]
+	    set p_tensorJTINTER [expr $p_tensorJTINTER + [lindex $nb_tinter    [expr 1 + 4*$i]]]
+	    set p_tensorJINTRA [expr $p_tensorJINTRA + [lindex $nb_intra    [expr 3 + 4*$i]]]
+	}
+        set p_tot [analyze pressure total]; set p_tensor1 $p_tensorT; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure total': $rel_error  ($p_tot / $p_tensor1)"
+	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+        set p_tot [analyze pressure ideal]; set p_tensor1 $p_tensorI; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure ideal': $rel_error  ($p_tot / $p_tensor1)"
+	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+        set p_tot [analyze pressure fene 0]; set p_tensor1 $p_tensorF; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure fene 0': $rel_error  ($p_tot / $p_tensor1)"
+	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+        set p_tot [analyze pressure lj 0 0]; set p_tensor1 $p_tensorJ; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure lj 0 0': $rel_error  ($p_tot / $p_tensor1)"
+	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+        set p_tot [analyze pressure tot_nb_intra]; set p_tensor1 $p_tensorJTINTRA; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure tot_nonbonded_intra': $rel_error  ($p_tot / $p_tensor1)"
+	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+        set p_tot [analyze pressure tot_nb_inter]; 
+	if { $p_tot > 0} {
+	  set p_tensor1 $p_tensorJTINTER; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+	  puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure tot_nonbonded_inter': $rel_error  ($p_tot / $p_tensor1)"
+	  if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+	}
+        set p_tot [analyze pressure nb_intra 0 0]; set p_tensor1 $p_tensorJINTRA; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure nonbonded_intra 0 0': $rel_error  ($p_tot / $p_tensor1)"
+	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+    #}
+       
     foreach lst $listables get_lst $get_listables {
 	set rel_max 0; set abs_max 0; set absflag 0; set maxi "-"; set maxj "-"
 	foreach i $lst j [eval $get_lst] {
