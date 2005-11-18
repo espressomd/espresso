@@ -982,12 +982,25 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded, i
     stat->data.e[i] = 0.0;
 }
 
+void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb, int n_nonbonded, int c_size)
+{
+  int i, total = c_size*(n_nonbonded + n_nonbonded);
+
+  realloc_doublelist(&(stat_nb->data_nb), stat_nb->data_nb.n = total);
+  stat_nb->chunk_size_nb = c_size;
+  stat_nb->n_nonbonded = n_nonbonded;
+  stat_nb->non_bonded_intra = stat_nb->data_nb.e;
+  stat_nb->non_bonded_inter = stat_nb->non_bonded_intra + c_size*n_nonbonded;
+  
+  for(i = 0; i < total; i++)
+    stat_nb->data_nb.e[i] = 0.0;
+}
+
 void invalidate_obs()
-{ 
+{
   total_energy.init_status = 0;
   total_pressure.init_status = 0;
 }
-
 
 
 /****************************************************************************************
@@ -2431,6 +2444,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     err = parse_and_print_energy(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("pressure"))
     err = parse_and_print_pressure(interp, argc - 2, argv + 2, 0);
+  else if (ARG1_IS_S("stress_tensor"))
+    err = parse_and_print_stress_tensor(interp, argc - 2, argv + 2, 0);
   else if (ARG1_IS_S("p_inst"))
     err = parse_and_print_pressure(interp, argc - 2, argv + 2, 1);
   else if (ARG1_IS_S("bins"))
