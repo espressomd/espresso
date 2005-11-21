@@ -2,16 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.7h (Seska)                                                                      *
+* v1.9.7i (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-
-- v1.9.7h -
+- v1.9.7i -
 -----------
 
+(i) November  18th, 2005.
 (h) October   18th, 2005.
 (g) October   14th, 2005.
 (f) October   12th, 2005.
@@ -22,6 +22,8 @@ Current working revision.
 (a) September 13th, 2005.
 
 New Features:
+(i) New testcase to check conservation of momentum
+(i) Contains the data for the mass testcase
 (h) Introduced new USE_TEMPORARY define in config.h for LB, circumventing problem 
     with empty structure.
 (g) Added support for Xeon 64 bit processor to 'configure'.
@@ -55,15 +57,15 @@ Bugfixes:
 - v1.9.6i -
 -----------
 
-(i) September  5th, 2005.
-(h) August    25th, 2005.
-(g) August    17th, 2005.
-(f) August    16th, 2005.
-(e) August    15th, 2005.
-(d) August     9th, 2005.
-(c) August     4th, 2005.
-(b) July      29th, 2005.
-(a) July      18th, 2005.
+(i) September 5th, 2005.
+(h) August   25th, 2005.
+(g) August   17th, 2005.
+(f) August   16th, 2005.
+(e) August   15th, 2005.
+(d) August    9th, 2005.
+(c) August    4th, 2005.
+(b) July     29th, 2005.
+(a) July     18th, 2005.
 
 New Features:
 (g) binning now allows to also print out the counts.
@@ -1454,6 +1456,13 @@ New Features:
     BOND_ANGLE_COSSQUARE  ->  V = 1/2 k (cos(phi)-cos(phi0))^2
 
 
+****************************************************************************************
+* v1.5.Beta (Neelix)                                                                   *
+****************************************************************************************
+
+Released on January 29th, 2004.
+
+
 - v1.5.Alpha -
 -----------
 
@@ -1489,13 +1498,6 @@ Bugfixes:
 (a) the constraint energy is printed correctly now. In the old version, if 
     the constraint particle type is smaller than any real particle type, 
     the constraint energy was wrong, even though the total energy was correct
-
-
-****************************************************************************************
-* v1.5.Beta (Neelix)                                                                   *
-****************************************************************************************
-
-Released on January 29th, 2004.
 
 
 - v1.1.2a -
