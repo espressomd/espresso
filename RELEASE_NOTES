@@ -2,16 +2,42 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.7i (Seska)                                                                      *
+* v1.9.8b (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.7i -
+- v1.9.8b -
 -----------
 
-(i) November  18th, 2005.
+(b) November 21st, 2005.
+(a) November 18th, 2005.
+
+New Features:
+(b) ESPResSo is now also optimized for Celeron processors.
+(a) Added 'analyze stress_tensor' returning the 9 components of the (total or detailed) 
+    stress tensor (whose trace corresponds to the scalar pressure from 'analyze pressure').
+(a) Added everywhere the part of the calculation of the intra- and inter- molecular 
+    nonbonded pressure and stress tensor.
+(a) Added the parse part of stress tensor ("print_detailed_stress_tensor, "parse_and_print_stress_tensor").
+(a) Created new struct "Observable_stat_non_bonded" used in the calculation of intra- 
+    and inter- molecular nonbonded contributions to scalar pressure and stress tensor.
+(a) Added "*obsstat_non_bonded_intra" and "*obsstat_non_bonded_inter" pointers.
+
+Changes:
+(a) Change all the (scalar) pressure routines to calculate also the stress tensor.
+(a) Change the parse part of pressure ("print_detailed_pressure, "parse_and_print_pressure") 
+    to print out new "nonbonded" terms.
+(a) Change mpi_gather_stats to be able to gather data im multiple arrays.
+(a) The testcase 'analysis.tcl' now also checks the result of 'analyze stress_tensor'.
+
+
+- v1.9.7j -
+-----------
+
+(j) November  18th, 2005.
+(i) October   20th, 2005.
 (h) October   18th, 2005.
 (g) October   14th, 2005.
 (f) October   12th, 2005.
@@ -22,8 +48,8 @@ Current working revision.
 (a) September 13th, 2005.
 
 New Features:
-(i) New testcase to check conservation of momentum
-(i) Contains the data for the mass testcase
+(j) New testcase to check conservation of momentum has been added ('mass.tcl').
+(i) ESPResSo now also runs under MS Windows within the cygwin environment.
 (h) Introduced new USE_TEMPORARY define in config.h for LB, circumventing problem 
     with empty structure.
 (g) Added support for Xeon 64 bit processor to 'configure'.
