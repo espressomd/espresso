@@ -1482,6 +1482,13 @@ New Features:
     BOND_ANGLE_COSSQUARE  ->  V = 1/2 k (cos(phi)-cos(phi0))^2
 
 
+****************************************************************************************
+* v1.5.Beta (Neelix)                                                                   *
+****************************************************************************************
+
+Released on January 29th, 2004.
+
+
 - v1.5.Alpha -
 -----------
 
@@ -1517,13 +1524,6 @@ Bugfixes:
 (a) the constraint energy is printed correctly now. In the old version, if 
     the constraint particle type is smaller than any real particle type, 
     the constraint energy was wrong, even though the total energy was correct
-
-
-****************************************************************************************
-* v1.5.Beta (Neelix)                                                                   *
-****************************************************************************************
-
-Released on January 29th, 2004.
 
 
 - v1.1.2a -
