@@ -322,7 +322,7 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
   for(k=0;k<3;k++)
     for(l=0;l<3;l++)
-      p_tensor.data.e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*PMASS(p1);
+      p_tensor.data.e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*PMASS(*p1);
 
 }
 
