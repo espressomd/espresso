@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8b (Seska)                                                                      *
+* v1.9.8c (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8b -
+- v1.9.8c -
 -----------
 
+(c) December  2nd, 2005.
 (b) November 21st, 2005.
 (a) November 18th, 2005.
 
@@ -31,6 +32,10 @@ Changes:
     to print out new "nonbonded" terms.
 (a) Change mpi_gather_stats to be able to gather data im multiple arrays.
 (a) The testcase 'analysis.tcl' now also checks the result of 'analyze stress_tensor'.
+
+Bugfixes:
+(c) Fixed a bug in "pressure.h" which caused the program to not compile when "MASS"
+    was introduced in "config.h".
 
 
 - v1.9.7j -
