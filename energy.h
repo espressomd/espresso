@@ -126,7 +126,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
       ret = mmm1d_coulomb_pair_energy(p1,p2,d,dist2,dist);
       break;
     case COULOMB_MMM2D:
-      ret = mmm2d_coulomb_pair_energy(p1,p2,d,dist2,dist);
+      ret = mmm2d_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;
     default :
       ret = 0.;

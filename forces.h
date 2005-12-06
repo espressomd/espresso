@@ -190,7 +190,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
     add_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist,force);
     break;
   case COULOMB_MMM2D:
-    add_mmm2d_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+    add_mmm2d_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
     break;
   case COULOMB_MAGGS:
     if(maggs.yukawa == 1)

@@ -7,9 +7,10 @@
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2005; all rights reserved unless otherwise stated.
 /** \file mmm-common.c
-    common parts of the MMM family of methods for the electrostatic interaction, MMM1D, MMM2D and ELC.
-    This file contains the code for the polygamma expansions used for the near formulas of MMM1D and MMM2D,
-    and the documentation for the full family.
+    common parts of the \ref MMM_general "MMM family of methods" for the
+    electrostatic interaction, MMM1D, MMM2D and ELC.  This file contains the code for the polygamma
+    expansions used for the near formulas of MMM1D and MMM2D, and the documentation for the full
+    family.
 
     The expansion of the polygamma functions is fairly easy and follows directly from Abramowitz and Stegun.
     For details, see Axel Arnold and Christian Holm, "MMM2D: A fast and accurate summation method for
@@ -241,6 +242,23 @@ In pseudo code, the far formula algorithm looks like this
 </ul>
 
 For further details, see the articles of Arnold and Holm, 2002.
+
+\subsection dic Dielectric contrast
+
+A dielectric contrast at the lower and/or upper simulation box boundary can be included
+comparatively easy by using image charges.  Apart from the images of the lowest and topmost layer,
+the image charges are far enough to be treated by the far formula, and can be included as starting
+points in the calculation of the \f$\Xi\f$ terms. The remaining particles from the lowest and topmost
+layer are treated by direct summation of the near formula.
+
+This means, that in addition to the algorithm above, one has to only a few things: during the
+calculation of the particle and cell blocks \f$\xi\f$ and \f$\Xi\f$, one additionally calculates the
+contributions of the image charges and puts them either in a separate array or, for the boundary
+layers, into two extra \f$\xi\f$ cell blocks outside the simulation box. The entries in the separate
+array are then added up over all processors and stored in the \f$\Xi\f$-terms of the lowest/topmost
+layer. This are all modifications necessary for the far formula part. In addition to the far formula
+part, there is an additional loop over the particles at the boundary to directly calculate their
+interactions with their images. The exact details can be found in Tyagi, Arnold and Holm, 2006.
 
 \section MMM1D MMM1D
 

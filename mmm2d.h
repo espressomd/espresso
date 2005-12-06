@@ -29,6 +29,8 @@ typedef struct {
       recalculated automatically, if important parameters, such as the number of cells, change. If this
       is zero, the far cutoff has been set explicitly by the user and will not be touched by Espresso. */
   int far_calculated;
+  /** three dielectric constants, above, in and below the simulation cell */
+  double di_top, di_mid, di_bot;
 } MMM2D_struct;
 extern MMM2D_struct mmm2d_params;
 
@@ -42,12 +44,15 @@ int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv);
     For the near formula (nsquared cell structure), precision might be lost, while
     the far formula might have problems with overflows. 
     @param maxPWerror   the maximal error for the pairwise interactions. Both for
-    potential and force components. The potential is therefore always slightly
-    more precise
+                        potential and force components. The potential is therefore
+                        always slightly more precise
     @param far_cut      sets the cutoff for the far formula in inverse lengths.
+    @param top          dielectric above the simulation box
+    @param mid          dielectric in the simulation box
+    @param bot          dielectric below the simulation box
     if -1, the far cutoff is determined by maxPWerror. Probably only good for testing
 */
-int MMM2D_set_params(double maxPWerror, double far_cut);
+int MMM2D_set_params(double maxPWerror, double far_cut, double top, double mid, double bot);
 
 /** the general long range force/energy calculation */
 double MMM2D_add_far(int f, int e);
@@ -63,11 +68,11 @@ MDINLINE double MMM2D_far_energy() {
 }
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-void add_mmm2d_coulomb_pair_force(Particle *p1, Particle *p2,
+void add_mmm2d_coulomb_pair_force(double charge_factor,
 				  double dv[3], double d2, double d, double f[3]);
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-double mmm2d_coulomb_pair_energy(Particle *p1, Particle *p2,
+double mmm2d_coulomb_pair_energy(double charge_factor,
 				 double dv[3], double d2, double d);
 
 /// check that MMM2D can run with the current parameters
@@ -79,6 +84,12 @@ void MMM2D_init();
 /** if the number of particles has changed (even per node),
     the particle buffers for the coefficients have to be resized. */
 void MMM2D_on_resort_particles();
+
+/** energy contribution from dielectric layers */
+double  MMM2D_dielectric_layers_energy_contribution();
+
+/** force contribution from dielectric layers */
+void  MMM2D_dielectric_layers_force_contribution();
 
 #endif
 

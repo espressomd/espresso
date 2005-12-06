@@ -114,6 +114,7 @@ void calc_long_range_forces()
     break;
   case COULOMB_MMM2D:
     MMM2D_add_far_force();
+    MMM2D_dielectric_layers_force_contribution();
   }
 
   if (coulomb.use_elc)
