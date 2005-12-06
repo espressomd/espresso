@@ -1,7 +1,7 @@
 #!/bin/sh
 
 TESTCASES="nve_pe.tcl npt.tcl \
-    madelung.tcl mmm1d.tcl p3m.tcl el2d.tcl dh.tcl \
+    madelung.tcl mmm1d.tcl p3m.tcl el2d.tcl el2d_nonneutral.tcl dh.tcl \
     lj.tcl lj-cos.tcl harm.tcl fene.tcl tabulated.tcl gb.tcl rotation.tcl constraints.tcl \
     kinetic.tcl thermostat.tcl \
     intpbc.tcl intppbc.tcl layered.tcl nsquare.tcl \
