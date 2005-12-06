@@ -43,4 +43,7 @@ void layered_calculate_energies();
 /// calculate short ranged virials
 void layered_calculate_virials();
 
+/// calculate the minimum image vector
+void layered_get_mi_vector(double res[3], double a[3], double b[3]);
+
 #endif
