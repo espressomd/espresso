@@ -146,13 +146,13 @@ mostclean: clean docclean
 
 ########### dist
 TARFILE=Espresso-$(shell date -I).tgz
-__EXCLUDES= $(OUTDIRS:%=--exclude=%) $(DOC_RES:%=--exclude=%) --exclude=autom4te.cache --exclude=internal \
-	--exclude=*.avi --exclude=Espresso-*.tgz --exclude=*~ \
-	--exclude=core --exclude=core.* --exclude=obj-* --exclude=.\#* --exclude=CVS --exclude=TclTutor \
+__EXCLUDES= $(DOC_RES:%=--exclude=%) --exclude=autom4te.cache --exclude=internal \
+	--exclude=*.avi --exclude=*Espresso-*.tgz --exclude=*~ --exclude=Makefile.*-*-*\
+	--exclude=core --exclude=core.* --exclude=*obj-* --exclude=.\#* --exclude=CVS --exclude=TclTutor \
 	$(EXCLUDES)
 
 dist:
-	(cd ..; tar -vchzf Espresso/$(TARFILE) Espresso $(__EXCLUDES))
+	(cd ..; tar -vchzf Espresso/$(TARFILE) $(__EXCLUDES) Espresso)
 
 ########## tests
 test: $(OUTDIR)/Espresso_bin$(EXEEXT)
