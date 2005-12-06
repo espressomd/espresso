@@ -84,6 +84,8 @@ AC_DEFUN([CF_CHECK_GCC_FLAGS],[
 	Pentium_4)	type=ia; m=32; arch=pentium4; sse2=yes ;;
 	Pentium_M)	type=ia; m=32; arch=pentium-m; sse2=yes ;;
 	Xeon)		type=ia; m=32; arch=pentium4; sse2=yes ;;
+	Pentium_4_64)	type=ia; m=64; arch=nocona; sse2=yes ;;
+	Xeon_64)	type=ia; m=64; arch=noconamo; sse2=yes ;;
 	Athlon)		type=ia; m=32; arch=athlon ;;
 	Athlon_MP)	type=ia; m=32; arch=athlon-mp; sse=yes ;;
 	Athlon_XP)	type=ia; m=32; arch=athlon-xp; sse=yes ;;
