@@ -2,20 +2,25 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8c (Seska)                                                                      *
+* v1.9.8d (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8c -
+- v1.9.8d -
 -----------
 
+(d) December  6th, 2005.
 (c) December  2nd, 2005.
 (b) November 21st, 2005.
 (a) November 18th, 2005.
 
 New Features:
+(d) Added Sandeep's modifications to MMM2D for dielectric
+    contrasts.
+(d) testcase for non-neutral charged 2d systems with a homogenous background
+    (exerts a force towards the center !)
 (b) ESPResSo is now also optimized for Celeron processors.
 (a) Added 'analyze stress_tensor' returning the 9 components of the (total or detailed) 
     stress tensor (whose trace corresponds to the scalar pressure from 'analyze pressure').
