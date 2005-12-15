@@ -770,3 +770,47 @@ topic:     My research topic is b.c. at solid-fluid interface.
 reminded:  17.NOV.2005
 
 
+name:      Mary-Ann
+email:     m.thyveetil@ucl.ac.uk
+institute: Centre for Computational Science,
+           Chemistry Department,
+           University College of London,
+           20 Gordon Street,
+           WC1H 0AJ,
+           London,
+           United Kingdom
+sent:      14.DEC.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     model the intercaltion of DNA into clay-polymer nanocomposites
+reminded:  X14.DEC.2005
+
+
+name:      Howard Richards
+email:     HowardLRichards@yahoo.com
+institute: Howard Richards
+           Department of Physics
+           Texas A&M University-Commerce
+           Commerce, TX 75429
+           USA
+sent:      14.DEC.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     I was a postdoc in the Kremer group at the MPI-P working on
+           \\\\\\\\\\\\\\\"poly.c\\\\\\\\\\\\\\\" from the summer of \\\\\\\\\\\\\\\'97 to
+           Christmas of \\\\\\\\\\\\\\\'98, and I am thinking of getting back into
+           soft matter.
+reminded:  14.DEC.2005
+
+
+name:      Kam Chana
+email:     kchana@comcast.net
+institute: Independent Research
+sent:      14.DEC.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Interested in soft modeling applications for independenty
+           research and education
+reminded:  14.DEC.2005
+
+
