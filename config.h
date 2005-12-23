@@ -68,7 +68,7 @@
     currently works only with domain decomposition and Verlet lists
 
     <li> \verbatim #define COMFORCE \endverbatim
-    Compiler Flag to enable COMFIXED potential
+    Compiler Flag to enable COMFORCE potential
 
     <li> \verbatim #define COMFIXED \endverbatim
     Compiler Flag to enable COMFIXED potential
