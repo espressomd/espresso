@@ -814,3 +814,34 @@ topic:     Interested in soft modeling applications for independenty
 reminded:  14.DEC.2005
 
 
+name:      Baofu Qiao
+email:     qiaobf@iccas.ac.cn
+institute: State Key Laboratory of Polymer Physics and Chemistry,
+           Institute of Chemistry, Chinese Academy of Sciences, 
+           Zhongguancun North First Street 2, Beijing, 100080, PR China
+sent:      23.DEC.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     I will go to the group of Prof. Charistian Holm to do my
+           postdoctoral research next August. Therefore, I want to get
+           this software so that I can know how to use it in advance.
+           Thanks!
+reminded:  X23.DEC.2005
+
+
+name:      Joan J. Cerda
+email:     jcerda@imedea.uib.es
+institute: Univ. de les Illes Balears
+           E-07122, Palma de Mallorca
+           Phone:  (+34) 971 17 32 07
+           Fax:    (+34) 971 17 34 26
+sent:      23.DEC.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     I\\\'m joining the group of professor Christian Holm in March, so
+           it would be for me an advantage  having a full copy of the
+           program to get used to it and  get insight on  their procedures
+           and codes.
+reminded:  23.DEC.2005
+
+
