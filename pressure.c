@@ -249,9 +249,13 @@ void init_p_tensor(Observable_stat *stat)
   n_pre        = 1;
   n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
 
-  n_coulomb    = 0;
 #ifdef ELECTROSTATICS
-  if (coulomb.method == COULOMB_DH) n_coulomb = 1;
+  switch (coulomb.method) {
+  case COULOMB_NONE: n_coulomb = 0; break;
+  case COULOMB_DH:   n_coulomb = 1; break;
+  case COULOMB_P3M:  n_coulomb = 2; break;
+  default: n_coulomb  = 1;
+  }
 #endif
 
   obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, 9);
