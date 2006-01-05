@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8d (Seska)                                                                      *
+* v1.9.8e (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8d -
+- v1.9.8e -
 -----------
 
+(e) January   4th, 2006.
 (d) December  6th, 2005.
 (c) December  2nd, 2005.
 (b) November 21st, 2005.
@@ -39,6 +40,7 @@ Changes:
 (a) The testcase 'analysis.tcl' now also checks the result of 'analyze stress_tensor'.
 
 Bugfixes:
+(e) Fixed missing allocation in init_p_tensor
 (c) Fixed a bug in "pressure.h" which caused the program to not compile when "MASS"
     was introduced in "config.h".
 
