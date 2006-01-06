@@ -2216,7 +2216,11 @@ int parse_structurefactor(Tcl_Interp *interp, int argc, char **argv)
   
   qfak = 2.0*PI/box_l[0];
   for(i=1; i<=order*order+1; i++) { 
-    if (sf[i]>1e-6) sprintf(buffer,"{%f %f} ",qfak*sqrt(i),sf[i]); Tcl_AppendResult(interp, buffer, (char *)NULL); }
+    if (sf[i]>1e-6) { 
+      sprintf(buffer,"{%f %f} ",qfak*sqrt(i),sf[i]);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+  }
   free(sf);
   return (TCL_OK);
 }
