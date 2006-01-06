@@ -845,3 +845,20 @@ topic:     I\\\'m joining the group of professor Christian Holm in March, so
 reminded:  23.DEC.2005
 
 
+name:      Peter Kosovan
+email:     kosovan@vivien.natur.cuni.cz
+institute: Department of Physical and Macromolecular Chemistry, Faculty of
+           Science, Alberotv 2, Charles University in Prague, Prague 2,
+           Czech republic
+sent:      05.JAN.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Simulations of (branched) Polyelectorlytes in dilute
+           solutions.
+           
+           So far I have been using Espresso v 1.6Gold, provided by
+           H.J.Limbach. I\\\\\\\\\\\\\\\'ve briefly read the release notes and
+           I\\\\\\\\\\\\\\\'d like to upgrade to the newer version.
+reminded:  X05.JAN.2006
+
+
