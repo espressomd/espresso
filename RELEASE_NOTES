@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8e (Seska)                                                                      *
+* v1.9.8f (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8e -
+- v1.9.8f -
 -----------
 
+(f) January   6th, 2006.
 (e) January   4th, 2006.
 (d) December  6th, 2005.
 (c) December  2nd, 2005.
@@ -40,6 +41,8 @@ Changes:
 (a) The testcase 'analysis.tcl' now also checks the result of 'analyze stress_tensor'.
 
 Bugfixes:
+(f) In some cases, some lines in the static structure factor output were printed
+    twice. (Thanks for the hint Leonid !)
 (e) Fixed missing allocation in init_p_tensor
 (c) Fixed a bug in "pressure.h" which caused the program to not compile when "MASS"
     was introduced in "config.h".
