@@ -103,6 +103,8 @@
 #define CONSTRAINT_PLATE 5
 /** maze-like constraint applied */
 #define CONSTRAINT_MAZE 6
+/** pore constraint applied */
+#define CONSTRAINT_PORE 7
 
 /*@}*/
 
@@ -373,6 +375,18 @@ typedef struct {
   double direction;
 } Constraint_cylinder;
 
+/** Parameters for a PORE constraint. */
+typedef struct {
+  /** center of the cylinder. */
+  double pos[3];
+  /** Axis of the cylinder .*/
+  double axis[3];
+  /** cylinder radius. */
+  double rad;
+  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
+  double length;
+} Constraint_pore;
+
 /** Parameters for a ROD constraint. */
 typedef struct {
   /** center of the cylinder in the x-y plane. */
@@ -415,6 +429,7 @@ typedef struct {
     Constraint_rod rod;
     Constraint_plate plate;
     Constraint_maze maze;
+    Constraint_pore pore;
   } c;
 
   /** particle representation of this constraint. Actually needed are only the identity,

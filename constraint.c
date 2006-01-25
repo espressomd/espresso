@@ -86,6 +86,26 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
+  case CONSTRAINT_PORE:
+    Tcl_PrintDouble(interp, con->c.cyl.pos[0], buffer);
+    Tcl_AppendResult(interp, "pore center ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.cyl.pos[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.cyl.pos[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.cyl.axis[0], buffer);
+    Tcl_AppendResult(interp, " axis ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.cyl.axis[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.cyl.axis[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.cyl.rad, buffer);
+    Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.cyl.length, buffer);
+    Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->part_rep.p.type);
+    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    break;
   default:
     sprintf(buffer, "%d", con->type);
     Tcl_AppendResult(interp, "unknown constraint type ", buffer, ".", (char *) NULL);
@@ -258,7 +278,7 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
 }
 
 int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
-		    int argc, char **argv)
+			int argc, char **argv)
 {
   double axis_len;
   int i;
@@ -350,6 +370,98 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
   if (con->c.cyl.rad < 0. || con->part_rep.p.type < 0 || axis_len < 1e-30 ||
       con->c.cyl.direction == 0 || con->c.cyl.length <= 0) {
     Tcl_AppendResult(interp, "usage: constraint cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t>",
+		     (char *) NULL);
+    return (TCL_ERROR);    
+  }
+
+  /*normalize the axis vector */
+      axis_len = sqrt (axis_len);
+      for (i=0;i<3;i++) {
+	con->c.cyl.axis[i] /= axis_len;
+      }
+      
+  return (TCL_OK);
+}
+
+int constraint_pore(Constraint *con, Tcl_Interp *interp,
+		    int argc, char **argv)
+{
+  double axis_len;
+  int i;
+
+  con->type = CONSTRAINT_PORE;
+  /* invalid entries to start of */
+  con->c.cyl.pos[0] = 
+    con->c.cyl.pos[1] = 
+    con->c.cyl.pos[2] = 0;
+  con->c.cyl.axis[0] = 
+    con->c.cyl.axis[1] = 
+    con->c.cyl.axis[2] = 0;
+  con->c.cyl.rad = 0;
+  con->c.cyl.length = 0;
+  con->part_rep.p.type = -1;
+  while (argc > 0) {
+    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
+      if(argc < 4) {
+	Tcl_AppendResult(interp, "constraint cylinder center <x> <y> <z> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.pos[0])) == TCL_ERROR ||
+	  Tcl_GetDouble(interp, argv[2], &(con->c.cyl.pos[1])) == TCL_ERROR ||
+	  Tcl_GetDouble(interp, argv[3], &(con->c.cyl.pos[2])) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 4; argv += 4;
+    }
+    else if(!strncmp(argv[0], "axis", strlen(argv[0]))) {
+      if(argc < 4) {
+	Tcl_AppendResult(interp, "constraint cylinder axis <rx> <ry> <rz> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.axis[0])) == TCL_ERROR ||
+	  Tcl_GetDouble(interp, argv[2], &(con->c.cyl.axis[1])) == TCL_ERROR ||
+	  Tcl_GetDouble(interp, argv[3], &(con->c.cyl.axis[2])) == TCL_ERROR)
+	return (TCL_ERROR);
+
+      argc -= 4; argv += 4;    
+    }
+    else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint cylinder radius <rad> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.rad)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "length", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint cylinder length <len/2> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.length)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint cylinder type <t> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else
+      break;
+  }
+
+  axis_len=0.;
+  for (i=0;i<3;i++)
+    axis_len += SQR(con->c.cyl.axis[i]);
+
+  if (con->c.cyl.rad < 0. || con->part_rep.p.type < 0 || axis_len < 1e-30 ||
+      con->c.cyl.direction == 0 || con->c.cyl.length <= 0) {
+    Tcl_AppendResult(interp, "usage: constraint cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length/2> direction <direction> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
@@ -543,6 +655,10 @@ int constraint(ClientData _data, Tcl_Interp *interp,
   }
   else if(!strncmp(argv[1], "maze", strlen(argv[1]))) {
     status = constraint_maze(generate_constraint(),interp, argc - 2, argv + 2);
+    mpi_bcast_constraint(-1);
+  }
+  else if(!strncmp(argv[1], "pore", strlen(argv[1]))) {
+    status = constraint_pore(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
   else if(!strncmp(argv[1], "force", strlen(argv[1]))) {
