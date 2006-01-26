@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8f (Seska)                                                                      *
+* v1.9.8g (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8f -
+- v1.9.8g -
 -----------
 
+(g) January  25th, 2006.
 (f) January   6th, 2006.
 (e) January   4th, 2006.
 (d) December  6th, 2005.
@@ -19,6 +20,7 @@ Current working revision.
 (a) November 18th, 2005.
 
 New Features:
+(g) added a pore constraint similar to the cylinder.
 (d) Added Sandeep's modifications to MMM2D for dielectric
     contrasts.
 (d) testcase for non-neutral charged 2d systems with a homogenous background
