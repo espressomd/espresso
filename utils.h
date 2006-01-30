@@ -21,6 +21,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "config.h"
 #include "debug.h"
 
@@ -713,6 +714,61 @@ MDINLINE double unfolded_distance(double pos1[3], int image_box1[3],
   }
   return sqrt(dist);
 }
+/*@}*/
+
+/*************************************************************/
+/** \name TCL-channel operations.  */
+/*************************************************************/
+/*@{*/
+
+/** replaces one of TCLs standart channels with a named pipe
+    \param channel  either "stdout", "stdin" or "stderr"
+    \param pipename path to the named pipe
+ */
+
+MDINLINE int replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+  Tcl_Channel channel;
+  
+  if (argc != 3) {
+    Tcl_AppendResult(interp,"Wrong # of args! Usage: ",argv[0]," [stdout|stderr|stdin] <pipename>",(char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(strcmp(argv[1],"stdout")==0){
+    Tcl_UnregisterChannel(interp,Tcl_GetStdChannel(TCL_STDOUT));
+    channel = Tcl_OpenFileChannel(interp, argv[2], "WRONLY",0666);
+    if (channel == NULL) {
+      Tcl_AppendResult(interp,"could not create new stdout-channel\n",(char *)NULL);
+      Tcl_AppendResult(interp,Tcl_ErrnoMsg(Tcl_GetErrno()),(char *) NULL);
+      return TCL_ERROR;
+    }
+  }
+  else if(strcmp(argv[1],"stderr")==0){
+    Tcl_UnregisterChannel(interp,Tcl_GetStdChannel(TCL_STDERR));
+    channel = Tcl_OpenFileChannel(interp, argv[2], "WRONLY",0666);
+    if (channel == NULL) {
+      Tcl_AppendResult(interp,"could not create new stderr-channel\n",(char *)NULL);
+      Tcl_AppendResult(interp,Tcl_ErrnoMsg(Tcl_GetErrno()),(char *) NULL);
+      return TCL_ERROR;
+    }
+  }
+  else if(strcmp(argv[1],"stdin")==0){
+    Tcl_UnregisterChannel(interp,Tcl_GetStdChannel(TCL_STDIN));
+    channel = Tcl_OpenFileChannel(interp, argv[2], "RDONLY",0666);
+    if (channel == NULL) {
+      Tcl_AppendResult(interp,"could not create new stdin-channel\n",(char *)NULL);
+      Tcl_AppendResult(interp,Tcl_ErrnoMsg(Tcl_GetErrno()),(char *) NULL);
+      return TCL_ERROR;
+    }
+  }
+  else{
+    Tcl_AppendResult(interp,"invalid first argument (got: ",argv[1]," )",(char *) NULL);
+    return TCL_ERROR;
+  }
+  return TCL_OK;
+}
+
 /*@}*/
 
 #endif

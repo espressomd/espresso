@@ -458,6 +458,8 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "thermostat", (Tcl_CmdProc *)thermostat, 0, NULL);
   /* in bin.c */
   Tcl_CreateCommand(interp, "bin", (Tcl_CmdProc *)bin, 0, NULL);
+  /* in utils.h */
+  Tcl_CreateCommand(interp, "replacestdchannel", (Tcl_CmdProc *)replacestdchannel, 0, NULL);
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");
