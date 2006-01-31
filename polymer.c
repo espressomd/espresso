@@ -281,7 +281,8 @@ tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try,
 int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, int mode, double shield, int max_try, 
 	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle, double angle2, double *posed2) {
   int p,n, cnt1,cnt2,max_cnt, bond[2];
-  double theta,phi,poly[3*MPC],pos[3],poz[3],poy[3],pox[3],M[3],a[3],b[3],c[3],d[3],absc,absd,v1,v2,alpha;
+  double theta,phi,*poly,pos[3],poz[3],poy[3],pox[3],M[3],a[3],b[3],c[3],d[3],absc,absd,v1,v2,alpha;
+  poly = malloc(3*MPC*sizeof(double));
 
   cnt1 = cnt2 = max_cnt = 0;
   for (p=0; p<N_P; p++) {
@@ -306,7 +307,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	  if ((mode==1) || (collision(pos, shield)==0)) break;
 	  POLY_TRACE(printf("s"); fflush(NULL));
 	}
-	if (cnt1 >= max_try) return (-1);
+	if (cnt1 >= max_try) { free(poly); return (-1); }
       }
       poly[0] = pos[0]; poly[1] = pos[1]; poly[2] = pos[2];
       max_cnt=imax(cnt1, max_cnt);
@@ -470,20 +471,22 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
       if ((mode==1) || (n>0)) break;
     }
     POLY_TRACE(printf(" %d/%d->%d \n",cnt1,cnt2,max_cnt));
-    if (cnt2 >= max_try) return(-2); else max_cnt = imax(max_cnt,imax(cnt1,cnt2));
+    if (cnt2 >= max_try) { free(poly); return(-2); } else max_cnt = imax(max_cnt,imax(cnt1,cnt2));
 
     /* actually creating current polymer in ESPResSo */
     for (n=0; n<MPC; n++) {
       pos[0] = poly[3*n]; pos[1] = poly[3*n+1]; pos[2] = poly[3*n+2];
       bond[0] = type_FENE; bond[1] = part_id - 1;
-      if (place_particle(part_id, pos)==TCL_ERROR) return (-3);
-      if (set_particle_q(part_id, ((n % cM_dist==0) ? val_cM : 0.0) )==TCL_ERROR) return (-3);
-      if (set_particle_type(part_id, ((n % cM_dist==0) ? type_cM : type_nM) )==TCL_ERROR) return (-3);
-      if(n>0) if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3);
+      if (place_particle(part_id, pos)==TCL_ERROR ||
+	  (set_particle_q(part_id, ((n % cM_dist==0) ? val_cM : 0.0) )==TCL_ERROR) ||
+	  (set_particle_type(part_id, ((n % cM_dist==0) ? type_cM : type_nM) )==TCL_ERROR) ||
+	  (n>0 && change_particle_bond(part_id, bond, 0)==TCL_ERROR))
+	{ free(poly); return (-3); }
       part_id++;
       POLY_TRACE(/* printf("placed Monomer %d at (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
     }
   }
+  free(poly);
   return(imax(max_cnt,cnt2));
 }
 
