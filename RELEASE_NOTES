@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8g (Seska)                                                                      *
+* v1.9.8h (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8g -
+- v1.9.8h -
 -----------
 
+(h) January  30th, 2006.
 (g) January  25th, 2006.
 (f) January   6th, 2006.
 (e) January   4th, 2006.
@@ -20,6 +21,8 @@ Current working revision.
 (a) November 18th, 2005.
 
 New Features:
+(h) added new tcl-command "replacestdchannel" which replaces one of TCLs standart
+    I/O-channels with a named pipe
 (g) added a pore constraint similar to the cylinder.
 (d) Added Sandeep's modifications to MMM2D for dielectric
     contrasts.
