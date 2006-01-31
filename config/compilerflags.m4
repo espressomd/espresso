@@ -212,7 +212,7 @@ AC_DEFUN([CF_CHECK_XLC_FLAGS],[
 		CF_TRY_ADD_CFLAG(-qtune=$cpu)
 	fi
 	CF_TRY_ADD_CFLAG(-O3)
-	CF_TRY_ADD_CFLAG(-qipa)
+	CF_TRY_ADD_CFLAG([-Wc,-qipa])
 	CF_TRY_ADD_CFLAG(-qhot)
 	CF_TRY_ADD_CFLAG(-qfloat=rsqrt:fltint:fold:maf)
 	CF_TRY_ADD_CFLAG(-qcpluscmt)
@@ -220,7 +220,7 @@ AC_DEFUN([CF_CHECK_XLC_FLAGS],[
 
 	AC_ARG_ENABLE(xlc-qipa, AC_HELP_STRING(--enable-xlc-qipa,[enable the IPA of the xlc at linking]),,enable_xlc_qipa=yes)
 	if test .$enable_xlc_qipa = .yes; then
-		LDFLAGS="-qipa $LDFLAGS"
+		LDFLAGS="-Wl,-qipa $LDFLAGS"
 		AC_MSG_WARN([****** WARNING: -qipa is enabled by default ******])
 		AC_MSG_WARN([  if you encounter linking problems, such as *.dylib])
 		AC_MSG_WARN([  not found, disable it with --disable-xlc-qipa])
