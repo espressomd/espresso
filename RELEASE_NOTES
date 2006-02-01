@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8h (Seska)                                                                      *
+* v1.9.8i (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8h -
+- v1.9.8i -
 -----------
 
+(i) January  31st, 2006.
 (h) January  30th, 2006.
 (g) January  25th, 2006.
 (f) January   6th, 2006.
@@ -46,6 +47,9 @@ Changes:
 (a) The testcase 'analysis.tcl' now also checks the result of 'analyze stress_tensor'.
 
 Bugfixes:
+(i) fixed some minor problems with --disable-xlc-qipa, when using the xlc-compiler
+    from IBM
+(i) Fixed a nonconstant size local variable problem.
 (f) In some cases, some lines in the static structure factor output were printed
     twice. (Thanks for the hint Leonid !)
 (e) Fixed missing allocation in init_p_tensor
