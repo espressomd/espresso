@@ -8139,6 +8139,7 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 	Power2)		cpu=pwr2 ;;
 	Power3)		cpu=pwr3 ;;
 	Power4)		cpu=pwr4 ;;
+	Power5)		cpu=pwr5 ;;
 	ppc*)		cpu=auto ;;
 	*)	{ echo "$as_me:$LINENO: WARNING: could not recognize your cpu type, relying on generic optimization" >&5
 echo "$as_me: WARNING: could not recognize your cpu type, relying on generic optimization" >&2;}

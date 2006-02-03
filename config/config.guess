@@ -45,6 +45,7 @@ AIX)
     IBM_CPU_ID=`/usr/sbin/lsdev -C -c processor -S available | sed 1q | awk '{ print $1 }'`
     MODEL=`/usr/sbin/lsattr -El ${IBM_CPU_ID} | awk '/type/ { \
 	model=$2; \
+	if (model=="PowerPC_POWER5") print "Power5"; else \
 	if (model=="PowerPC_POWER4") print "Power4"; else \
 	if (model=="PowerPC_POWER3") print "Power3"; \
     }'`

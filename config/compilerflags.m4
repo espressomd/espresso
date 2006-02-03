@@ -204,6 +204,7 @@ AC_DEFUN([CF_CHECK_XLC_FLAGS],[
 	Power2)		cpu=pwr2 ;;
 	Power3)		cpu=pwr3 ;;
 	Power4)		cpu=pwr4 ;;
+	Power5)		cpu=pwr5 ;;
 	ppc*)		cpu=auto ;;
 	*)	AC_MSG_WARN([could not recognize your cpu type, relying on generic optimization])
 	esac
