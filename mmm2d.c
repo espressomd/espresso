@@ -1951,6 +1951,8 @@ void  MMM2D_dielectric_layers_force_contribution()
   double charge_factor;
   double a[3];
   double force[3]={0, 0, 0};
+  // prefactor for the charged plate interaction removal
+  double corr_pref = coulomb.prefactor*C_2PI*ux*uy;
 
   if(this_node==0) {
     c=1;
@@ -1968,6 +1970,7 @@ void  MMM2D_dielectric_layers_force_contribution()
        	dist2 = sqrlen(d);
 	charge_factor=p1->p.q*pl[j].p.q*delta_mid_bot; 
 	add_mmm2d_coulomb_pair_force(charge_factor, d, sqrt(dist2), dist2, force);
+	force[2] -= corr_pref*charge_factor;
       }
       for (j = 0; j < 3; j++) { 
 	p1->f.f[j] += force[j];
@@ -1990,6 +1993,7 @@ void  MMM2D_dielectric_layers_force_contribution()
 	dist2 = sqrlen(d);
 	charge_factor=p1->p.q*pl[j].p.q*delta_mid_top; 
 	add_mmm2d_coulomb_pair_force(charge_factor, d, sqrt(dist2), dist2, force);
+	force[2] += corr_pref*charge_factor;
       }
       for (j = 0; j < 3; j++) { 
 	p1->f.f[j] += force[j];
