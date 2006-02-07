@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8i (Seska)                                                                      *
+* v1.9.8j (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8i -
+- v1.9.8j -
 -----------
 
+(j) February  3rd, 2006.
 (i) January  31st, 2006.
 (h) January  30th, 2006.
 (g) January  25th, 2006.
@@ -22,6 +23,7 @@ Current working revision.
 (a) November 18th, 2005.
 
 New Features:
+(j) Added Power5 architecture to configure-scripts
 (h) added new tcl-command "replacestdchannel" which replaces one of TCLs standart
     I/O-channels with a named pipe
 (g) added a pore constraint similar to the cylinder.
