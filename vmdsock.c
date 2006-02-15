@@ -133,7 +133,7 @@ void *vmdsock_accept(void * v) {
   int rc;
   vmdsocket *new_s = NULL, *s = (vmdsocket *) v;
 #ifdef SOCKLEN_T
-  SOCKLEN_T len;
+  socklen_t len;
 #else
   int len;
 #endif
