@@ -1620,7 +1620,7 @@ void calc_lbforce()
 	  lu1+=1;
 	  for (k= 0;k < 3;k++) {
 	    p[i].t.f_random[k]=lbnoise/lbfriction*(2.0*d_random()-1.0)/invt-p[i].t.f_random[k]
-	      -2.0*p[i].m.v[k]+2.0*store_rans[lu1][k]/invt;
+	      -p[i].m.v[k]+store_rans[lu1][k]/invt;
 	  }     
 	}
       }
