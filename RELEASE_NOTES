@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8l (Seska)                                                                      *
+* v1.9.8m (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8l -
+- v1.9.8m -
 -----------
 
+(m) February 17th, 2006.
 (l) February 15th, 2006.
 (k) February  7th, 2006.
 (j) February  3rd, 2006.
@@ -51,6 +52,8 @@ Changes:
 (a) The testcase 'analysis.tcl' now also checks the result of 'analyze stress_tensor'.
 
 Bugfixes:
+(m) Fixed error in undoing the last step, when a negative lattice population is
+    encountered.
 (l) fixed a problem with socklen_t typedef on IBMs Power5 with AIX
     5.3
 (i) fixed some minor problems with --disable-xlc-qipa, when using the xlc-compiler
