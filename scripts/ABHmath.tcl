@@ -487,32 +487,14 @@ proc LinRegression {l} {
     set ssxx [expr $sumx2 - $num*$avgx*$avgx]
     if { $ssxx < 1e-4 } {
 	error "data points too close together"
-    }proc find_unit_vector { vec1 vec2} {
-    set dim [llength $vec1]
-    set vec {0. 0. 0.}
-    for {set j 0} { $j < $dim } {incr j} {
-        lset vec $j [expr [lindex $vec2 $j] - [lindex $vec1 $j] ]
     }
-
-    set sum [expr sqrt([lsqr $vec])]
-
-    set u_vec { 0. 0. 0. }
-
-    for {set j 0} { $j < $dim } {incr j} {
-        lset u_vec $j [expr [lindex $vec $j] / ($sum)]
-    }
-
-    return $u_vec
-}
-
-
     set ssyy [expr $sumy2 - $num*$avgy*$avgy]
     set ssxy [expr $sumxy - $num*$avgx*$avgy]
 
-    set a [expr $ssxy/$ssxx]
-    set b [expr $avgy - $avgx*$a]
+    set b [expr $ssxy/$ssxx]
+    set a [expr $avgy - $avgx*$b]
 
-    set chi2 [expr ($ssyy - $a*$ssxy)/double($num-2)]
+    set chi2 [expr ($ssyy - $b*$ssxy)/double($num-2)]
     if { $chi2 < 0 } {puts "LinReg warning: s^2=$chi2 should be > 0, set to 0"; set tmp 0}
     set chi [expr sqrt($chi2)]
     set da [expr $chi*sqrt(1.0/$num + $avgx*$avgx/$ssxx)]
