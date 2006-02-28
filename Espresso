@@ -1,14 +1,12 @@
 #!/bin/sh
 if test "$ESPRESSO_SOURCE" = ""; then
-	echo "specify the location of Espresso using the ESPRESSO_SOURCE environment variable" 1>&2
-	exit -1
+	export ESPRESSO_SOURCE=${0%/Espresso}
 fi
 if test "$ESPRESSO_SCRIPTS" = ""; then
 	export ESPRESSO_SCRIPTS=$ESPRESSO_SOURCE/scripts
-	echo "ESPRESSO_SCRIPTS was not specified, trying $ESPRESSO_SCRIPTS" 1>&2
 fi
 if test ! -d $ESPRESSO_SCRIPTS; then
-	echo 'ESPRESSO scripts directory SPRESSO_SCRIPTS is missing, reinstall Espresso' 1>&2
+	echo 'ESPRESSO scripts directory $ESPRESSO_SCRIPTS is missing, reinstall Espresso' 1>&2
 	exit -1
 fi
 if test ! -x $ESPRESSO_SOURCE/config/config.guess; then
