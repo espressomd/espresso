@@ -662,6 +662,11 @@ void dd_topology_init(CellPList *old)
   dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
+#ifdef USE_TEMPORARY
+  dd_prepare_comm(&cell_structure.ghost_temp_comm, GHOSTTRANS_TEMP) ;
+  dd_assign_prefetches(&cell_structure.ghost_temp_comm) ;
+#endif
+
   /* initialize cell neighbor structures */
   dd_init_cell_interactions();
 
@@ -703,6 +708,9 @@ void dd_topology_release()
   free_comm(&cell_structure.exchange_ghosts_comm);
   free_comm(&cell_structure.update_ghost_pos_comm);
   free_comm(&cell_structure.collect_ghost_force_comm);
+#ifdef USE_TEMPORARY
+  free_comm(&cell_structure.ghost_temp_comm);
+#endif
 }
 
 /************************************************************/
@@ -729,7 +737,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	  for (p = 0; p < cell->n; p++) {
 	    part = &cell->part[p];
 	    /* Move particles to the left side */
-	    if(part->r.p[dir] <   my_left[dir]) {
+	    if(part->r.p[dir] - my_left[dir] < -ROUND_ERROR_PREC) {
 #ifdef PARTIAL_PERIODIC 
 	      if( PERIODIC(dir) || (boundary[2*dir]==0) ) 
 #endif
@@ -741,7 +749,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 		}
 	    }
 	    /* Move particles to the right side */
-	    else if(part->r.p[dir] >=  my_right[dir]) {
+	    else if(part->r.p[dir] - my_right[dir] >= ROUND_ERROR_PREC) {
 #ifdef PARTIAL_PERIODIC 
 	      if( PERIODIC(dir) || (boundary[2*dir+1]==0) ) 
 #endif
