@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8n (Seska)                                                                      *
+* v1.9.8o (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8n -
+- v1.9.8o -
 -----------
 
+(o) March    11th, 2006.
 (n) February 23rd, 2006.
 (m) February 17th, 2006.
 (l) February 15th, 2006.
@@ -46,6 +47,8 @@ New Features:
 (a) Added "*obsstat_non_bonded_intra" and "*obsstat_non_bonded_inter" pointers.
 
 Changes:
+(o) Added communicator for temporary particle data (e.g. random numbers). No abuse
+    of other communicators necessary any more.
 (a) Change all the (scalar) pressure routines to calculate also the stress tensor.
 (a) Change the parse part of pressure ("print_detailed_pressure, "parse_and_print_pressure") 
     to print out new "nonbonded" terms.
