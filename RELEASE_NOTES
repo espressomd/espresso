@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8o (Seska)                                                                      *
+* v1.9.8p (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8o -
+- v1.9.8p -
 -----------
 
+(p) March    12th, 2006.
 (o) March    11th, 2006.
 (n) February 23rd, 2006.
 (m) February 17th, 2006.
@@ -56,6 +57,18 @@ Changes:
 (a) The testcase 'analysis.tcl' now also checks the result of 'analyze stress_tensor'.
 
 Bugfixes:
+(p) Made fold_coordinate tolerant to rounding errors.
+    Removed some lines introduced in rev 2.8, changed in rev 2.11.
+    These lines could lead to particles sitting on the wrong
+    processor
+    after moving over periodic boundaries between processors, i.e.
+    a
+    coordinate -\epsilon was folded to L-\epsilon \approx L and
+    then
+    to zero.
+    Now, rounding errors are tolerated, since the particle
+    allocation
+    scheme in domain_decomposition.c is robust as of rev 2.36.
 (n) Fixed a randomly chosen part of code that has been copied into the heart of
     LinRegression.
 (m) Fixed error in undoing the last step, when a negative lattice population is
