@@ -221,7 +221,7 @@ AC_DEFUN([CF_CHECK_XLC_FLAGS],[
 
 	AC_ARG_ENABLE(xlc-qipa, AC_HELP_STRING(--enable-xlc-qipa,[enable the IPA of the xlc at linking]),,enable_xlc_qipa=yes)
 	if test .$enable_xlc_qipa = .yes; then
-		LDFLAGS="-Wl,-qipa $LDFLAGS"
+		LDFLAGS="-qipa $LDFLAGS"
 		AC_MSG_WARN([****** WARNING: -qipa is enabled by default ******])
 		AC_MSG_WARN([  if you encounter linking problems, such as *.dylib])
 		AC_MSG_WARN([  not found, disable it with --disable-xlc-qipa])
