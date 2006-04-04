@@ -658,15 +658,17 @@ reminded:  12.AUG.2005
 
 name:      Alexander Lyubartsev
 email:     sasha@physc.su.se
-institute: Dep. Physical Chemistry
+institute: Physical Chemistry
            Stockholm University
-           S 106 91 Stockholm Sweden
-sent:      12.AUG.2005
-version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
+           S-10691 Stockholm Sweden
+sent:      29.MAR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
 CVS:       
-topic:     Coarse-grained simulations of lipids and possibly other
-           (macro)molecules
-reminded:  12.AUG.2005
+topic:     Simulations of coarse-grained lipid models
+           
+           I have earlier obtained version dated 2005-03-15 and I am
+           asking for uppgrade
+reminded:  29.MAR.2006
 
 
 name:      Krishnan, S.H.
@@ -860,5 +862,34 @@ topic:     Simulations of (branched) Polyelectorlytes in dilute
            H.J.Limbach. I\\\\\\\\\\\\\\\'ve briefly read the release notes and
            I\\\\\\\\\\\\\\\'d like to upgrade to the newer version.
 reminded:  X05.JAN.2006
+
+
+name:      Kelly Anderson
+email:     k_l_anderson_98@yahoo.com
+institute: Corporate Modeling and Simulation
+           Procter & Gamble
+           11810 E. Miami River Road
+           Cincinnati, OH 45252
+sent:      22.MAR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Coarse Grained MD / MC of complex fluids.
+reminded:  X22.MAR.2006
+
+
+name:      Gaurav Manik
+email:     gauravmanik@iitb.ac.in
+institute: Chemical Engineering Deaprtment
+           IIT Bombay
+           Mumbai
+           INDIA
+sent:      22.MAR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     I wish to use espresso for running a coarse grained MD with
+           Langevin Thermostat as the temperature control. It could be a
+           vital asset to my research.. thanks in advance for providing us
+           with the same..
+reminded:  22.MAR.2006
 
 
