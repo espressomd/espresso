@@ -29,21 +29,20 @@ a short description of the most common commands we need:
 <li> \anchor doc_file     \verbatim \file <name> <description> \endverbatim
 	Special anchor for a file (see \ref doc_anchor "\\anchor").
 
-<li> \anchor doc_image    \verbatim <img src="doc/figs/your_fig.gif"> \endverbatim
-	Include a picture. There are more optional parameters like
-	width. All pictures we usse reside in the directory
-	Espresso/doc/figs/.
+<li> \anchor doc_image    \verbatim \image html <image> \endverbatim
+	Include a picture. The picture has to be in \c doc/figs/.
+	<b>Do not use the HTML <tt>\<img\></tt> tag! The pictures will not be
+	copied into the documentation!</b>
 
-<li> \anchor doc_list     \verbatim 
-<ul>
+<li> \anchor doc_list 
+\verbatim <ul>
 <li> List entry
-</ul>
-\endverbatim
+</ul> \endverbatim
 	Creates a list in the documentation (For example the list you
 	are reading at the moment).
 
-<li> \anchor doc_name     \verbatim 
-/** \name <group_name> <short description>.
+<li> \anchor doc_name     
+\verbatim /** \name <group_name> <short description>.
     <long_description>
 */
 /*@{*/ 
@@ -61,12 +60,8 @@ a short description of the most common commands we need:
 <li> \anchor doc_return   \verbatim \return <description>\endverbatim
 	Documentation for the return value of a function
 <li> \anchor doc_todo     \verbatim \todo <task to be done> \endverbatim
-	Starts a paragraph where a TODO item is described. The
-	description will also add an item to a separate TODO list. The
-	two instances of the description will be
-	cross-referenced. Each item in the TODO list will be preceded
-	by a header that indicates the origin of the item. The TODO
-	list can be found under [Related Pages] 
+	Adds an item to the \ref todo. The item on the list will be
+	linked to the origin.
 </ul>
 
 */
