@@ -1,17 +1,24 @@
 /** \mainpage
 
+
 <hr>
 <center>
-<img src="logo.gif"> 
-\htmlonly
+
+\image html logo.gif
+
 <h1>
-<font color="#0000FF"> <b>E</b></font>xtensible
-<font color="#0000FF"> <b>S</b></font>imulation
-<font color="#0000FF"> <b>P</b></font>ackage <br>
-for <font color="#0000FF"> <b>Res</b></font>earch
-on <font color="#0000FF"> <b>So</b></font>ft matter
-</h1>
+
+\htmlonly
+<font color="blue"> <b>E</b></font>xtensible
+<font color="blue"> <b>S</b></font>imulation
+<font color="blue"> <b>P</b></font>ackage <br>
+for <font color="blue"> <b>Res</b></font>earch
+on <font color="blue"> <b>So</b></font>ft matter
 \endhtmlonly
+
+</h1>
+<hr>
+</center>
 \latexonly
 {\Large
 {\Huge E}xpandable
@@ -21,8 +28,6 @@ on <font color="#0000FF"> <b>So</b></font>ft matter
 {\Huge So}ft matter
 }
 \endlatexonly
-</center>
-<hr>
 
 \section introduction Introduction
 

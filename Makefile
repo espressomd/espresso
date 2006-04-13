@@ -37,7 +37,7 @@ DOC_RES= doc/html doc/rtf doc/latex doc/man
 OBJECTS=$(CSOURCES:%=%.$(OBJEXT))
 CFILES=$(CSOURCES:%=%.c)
 HEADERS=$(shell ls *.h)
-DOCFILES=$(shell ls doc/text/*.doc)
+DOCFILES=$(shell ls doc/text/*.doc) doc/text/header.html 
 
 default: all
 all: $(OUTDIR)/Espresso_bin$(EXEEXT) $(OUTDIR)/libEspresso.a
@@ -89,7 +89,7 @@ endif
 
 ########### documentation
 docu: doc/html/index.html
-doc/html/index.html: $(DOCFILES) $(CFILES) $(HEADERS)
+doc/html/index.html: doxygen_config $(DOCFILES) $(CFILES) $(HEADERS)
 ################### BACKGROUND_ERROR-CODES
 	awk -f ./scripts/background_errors.awk *.c *.h
 	sort ./doc/text/background_errors_tmp.doc -o ./doc/text/background_errors_tmp.doc
