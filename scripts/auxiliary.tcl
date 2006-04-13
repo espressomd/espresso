@@ -62,7 +62,6 @@ proc timeStamp { destination prefix postfix suffix } {
 
 
 
-
 #
 # polyBlockWrite
 # --------------
@@ -167,13 +166,13 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
     if { "$ia" != "-" } { blockfile $f write interactions; blockfile $f write integrate; blockfile $f write thermostat }
     set part_write "id pos type "
     if { $COMPACT_CHK } { set part_write "id pos " }
-    if { [regexp "ELECTROSTATICS" [code_info]] } { lappend part_write q  }
+    if { [has_feature "ELECTROSTATICS"] } { lappend part_write q  }
     lappend part_write v 
     lappend part_write f 
-    if { [regexp "MASS" [code_info]]} { lappend part_write mass  }	 	 
-    if { [regexp "ROTATION" [code_info]]} { lappend part_write quat omega torque  }
-    if { [regexp "CONSTRAINTS" [code_info]]} { lappend part_write fix  }
-    if { [regexp "EXTERNAL_FORCES" [code_info]]} { lappend part_write ext_force  }
+    if { [has_feature "MASS"] } { lappend part_write mass  }	 	 
+    if { [has_feature "ROTATION"] } { lappend part_write quat omega torque  }
+    if { [has_feature "CONSTRAINTS"] } { lappend part_write fix  }
+    if { [has_feature "EXTERNAL_FORCES"] } { lappend part_write ext_force  }
     blockfile $f write particles "$part_write"
     if { $COMPACT_CHK != 1 } { blockfile $f write bonds }
     if { "$ran" != "-" } { blockfile $f write random }
@@ -555,3 +554,42 @@ proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } } {
     }
 }
 
+#
+# has_feature
+# -----------
+# 
+# Returns, if all given features have been compiled into the Espresso
+# kernel.
+# 
+# Created:       13.04.2006 by OL
+# 
+#############################################################
+
+proc has_feature { args } {
+    for { set argnum 0 } { $argnum < [llength $args] } { incr argnum } {
+	set feature [lindex $args $argnum]
+	if { ! [regexp $feature [code_info]] } then { return 0 }
+    }
+    return 1;
+}
+
+#
+# require_feature 
+# ---------------
+# 
+# Check, if the given features have been compiled into the Espresso
+# kernel. Exits with an error if it is not.
+# 
+# Example:
+# require_feature "ELECTROSTATICS" "LJCOS"
+# 
+# Created:       13.04.2006 by OL
+# 
+#############################################################
+
+proc require_feature { args } {
+    if { ! [has_feature $args]} {
+	puts "not compiled in: $args"
+	exit -42
+    }
+}
