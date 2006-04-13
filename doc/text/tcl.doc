@@ -30,9 +30,13 @@ interface between the Tcl script and the MD code:
   </li>
 </ul>
 
-Section \ref errors "Errorhandling" describes the structure of error messages that may be returned.
+Section \ref errors "Errorhandling" describes the structure of error
+messages that may be returned.  Furthermore, you may put a file
+<tt>.espressorc</tt> into your home directory that contains
+Tcl-commands. This file will be loaded upon the start of an Espresso
+script.
 
-\section particle_setup Tools for creating a physical system
+\section particle_setup Setting up the particles
   <ul>
     <li>\verbatim part <particle_number> ( pos|type|q|v|f|quat|omega|torque|[un]fix <x> <y> <z> |ext_force|bond| [delete] <value>+ )* \endverbatim
 	modifies particle data.
@@ -75,7 +79,7 @@ Section \ref errors "Errorhandling" describes the structure of error messages th
 	to a random vector with length in [-vmax,vmax], and returns the absolute value of the total velocity assigned.
   </ul>
 
-\section inter_setup Setting interactions and parameters
+\section inter_setup Setting up the interactions and parameters
   <ul>
     <li>\verbatim inter ( <particle_type_number1> <particle_type_number2> | <bond_type_number> ) <interaction_type> <value>+ \endverbatim
 	sets the parameters for interactions.
