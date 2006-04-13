@@ -195,7 +195,7 @@
 	common operations. Otherwise just grep for CELL_STRUCTURE_DOMDEC, and add some appropriate code for your cell system. Note, however, that each cell system
 	has its specific part of the code, where only this cellsystem does something strange and unique, so here you are completely on your own. Good luck.
 
-\section errorhandling Errorhandling for developpers
+\section errorhandling Errorhandling for developers
 
     	Developers should use the errorhandling mechanism whenever it is possible to recover from an error such that
 	continuing the simulation is possible once the source of the error is removed, i. e. the bond is removed or a
