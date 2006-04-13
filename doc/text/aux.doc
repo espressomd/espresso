@@ -55,13 +55,5 @@ The following procedures are found in scripts/auxiliary.tcl and scripts/countBon
 	'\%y\%m\%d' thus leading to './scripts/DH863_config021022.gz' on
 	October 22nd, 2002.
 
-    <li>\anchor tcl_has_feature
-	\verbatim has_feature <feature> ...\endverbatim
-	tests, if \<feature\> is compiled into the Espresso kernel.
-
-    <li>\anchor tcl_require_feature
-	\verbatim require_feature <feature> ...\endverbatim
-	tests, if \<feature\> is feature is compiled into the Espresso
-	kernel, will exit the script if it isn't and return the error code 42.
 </ul>
 */

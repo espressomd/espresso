@@ -24,6 +24,10 @@ interface between the Tcl script and the MD code:
 
 	Most important commands: \ref tcl_blockfile "blockfile", \ref io "checkpoints"
   </li>
+  <li>\ref tcl_features_short       "Checking for features of Espresso"
+
+	Most important commands: \ref tcl_code_info "code_info", \ref tcl_has_feature "has_feature", \ref tcl_require_feature "require_feature"
+  </li>
   <li>\ref tcl_procs      "Additional TCL-Procedures"
 
 	File format conversions, Math, Analysis, Graphics
@@ -153,9 +157,6 @@ script.
 	while the other two use \ref tcl_blockfile to write informations about the current timestep to disk.
 	For details on checkpoints, refer to \ref io.
 
-    <li>\verbatim code_info \endverbatim
-        returns information on the version and compilation status of
-        the used Espresso programm.
 
     <li>\verbatim t_random [{ int <n> | seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }]\endverbatim
     <li>\verbatim bit_random [{ seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }] \endverbatim
@@ -165,6 +166,17 @@ script.
 	using <tt>t_random</tt> as the source of uniform deviates, and Numerical Recipes' Transformation Mehod (ch. 7.2).<br>
 	For details and more information, see \ref tcl_t_random or \ref tcl_bit_random.
   </ul>
+
+\section tcl_features_short Checking for features of the Espresso kernel
+<ul>
+    <li>\verbatim code_info \endverbatim
+    <li>\verbatim has_feature [<feature>...]\endverbatim
+    <li>\verbatim require_feature [<feature>...]\endverbatim
+	get information on version, compilation status and the
+	\ref features of the used Espresso program. For more information,
+	see \ref tcl_features.
+    <li>
+</ul>
 
 \section tcl_procs Additional TCL-Procedures
 

@@ -11,135 +11,23 @@
 
 /** \file config.h
  
-   This file contains all Precompiler Flags deciding which features
-   of Espresso to turn on/off. It is recommended to turn everything
-   off which you do not need in order to optimize the performance of
-   Espresso for your problem. 
- 
-   There are also quite a number of features which are turned off by
-   default since they are used only rarely.
- 
-   You can get information on the compilation status of the code you
-   are working with by using the tcl command \ref tcl_code_info "code_info"
-   within your tcl_script. It is highly recommended to
-   store this information with your simulation data in order to
-   maintain the reproducibility of your results.
- 
-   If you add a new compile flag you also have to add the
-   corresponding lines in the function \ref compilation_callback.
+   This file contains all preprocessor flags deciding which 
+   \ref features to turn on/off.  It is recommended to turn
+   everything off which you do not need in order to optimize the
+   performance of Espresso for your problem. There are also quite a
+   number of features which are turned off by default since they are
+   used only rarely.
+
+   To access the information on the compilation status of the code you
+   are working with in your Espresso Tcl-script, use the corresponding
+   \ref tcl_features "Tcl-commands".
+
+   If you add a new feature to Espresso, you also have to add the
+   corresponding lines in the function \ref compilation_callback and
+   to add documentation in <tt>doc/text/features.doc</tt>.
  
    <b>Responsible:</b>
    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
-
-   <h1> Configuration switches in this file </h1>
-
-   <h2> Switches for basic features </h2>
-    <ul>
-    <li> \verbatim #define PARTIAL_PERIODIC \endverbatim
-    if defined, the code will be slower, but with the \ref #periodic
-    array you can choose which coordinates are bound to p.b.c and
-    which are not. If not defined, all coordinates are bound to
-    p.b.c.
-
-    Has effect on: \ref per_callback, \ref #fields, and functions in
-    \ref domain_decomposition.c, \ref grid.c, \ref interaction_data.c,
-    \ref layered.c, \ref statistics_chain.c
-
-    <li> \verbatim #define ELECTROSTATICS \endverbatim
-    Compiler flag to enable charges and the various electrostatics algorithms.
-
-    <li> \verbatim #define ROTATION \endverbatim
-    Compiler flag to enable describing and processing particle orientations.
-    This will allow to use such particle properties as quart, omega, and torque.
-    
-    <li> \verbatim #define EXTERNAL_FORCES \endverbatim
-    Compiler flag to enable external forces. E.g. apply a fixed external force
-    to a particle or fix a particle in space.
-
-    <li> \verbatim #define CONSTRAINTS \endverbatim
-    Compiler Flag to enable constraints, eg walls, spheres.
-    See \ref constraint.h and \ref interaction_data.h
-
-    <li> \verbatim #define MASS \endverbatim
-    allow particles to have different masses.
-
-    <li> \verbatim #define EXCLUSIONS \endverbatim
-    exclusion of nonbonded interactions for specific particle pairs
-    currently works only with domain decomposition and Verlet lists
-
-    <li> \verbatim #define COMFORCE \endverbatim
-    Compiler Flag to enable COMFORCE potential
-
-    <li> \verbatim #define COMFIXED \endverbatim
-    Compiler Flag to enable COMFIXED potential
-
-    <li> \verbatim #define MOLFORCES \endverbatim Enables molecular
-    forces. At present this only includes the trapping of molecules in
-    a harmonic potential
-
-    <li> \verbatim #define BOND_CONSTRAINT \endverbatim
-    Compiler Flag to enable bond constraint.
-    See \ref rattle.h, merged but not tested. 
-    If you need this, I wish you happy debugging.
-
-    </ul>
-
-    <h2> Switches for the available short ranged potentials </h2>
-    For optimization it might be useful to switch off the ones you don't need
-    <ul>
-    <li> \verbatim #define  LENNARD_JONES \endverbatim
-    Lennard-Jones potential
-
-    <li> \verbatim #define  LJ_WARN_WHEN_CLOSE \endverbatim
-    if defined, you will get a warning when particles approach nearer than
-    0.9 sigma, because then it's likely the integration will blow up.
-
-    <li> \verbatim #define MORSE \endverbatim
-    Morse potential
-
-    <li> \verbatim #define LJCOS \endverbatim
-    Lennard-Jones potential with cosine tail
-
-    <li> \verbatim #define BUCKINGHAM \endverbatim
-    Buckingham potential
-    
-    <li> \verbatim #define SOFT_SPHERE \endverbatim
-    Soft sphere potential
-
-    </ul>
-
-    <h2> Options for the style of the angle potential </h2>
-    Important: Activate <b>only one</b> of the possible variants!<br>
-    Unpredicted behaviour will occur if you enable more than one!
-    <ul>
-    <li> \verbatim #define BOND_ANGLE_HARMONIC \endverbatim
-    Harmonic bond angle potential:      V = 1/2 k (phi - phi0)^2
-
-    <li> \verbatim #define BOND_ANGLE_COSINE \endverbatim
-    Cosine bond angle potential:        V = k (1+cos(phi-phi0))
-
-    <li> \verbatim #define BOND_ANGLE_COSSQUARE \endverbatim
-    Cosine square bond angle potential: V = 1/2 k (cos(phi)-cos(phi0))^2
-
-    </ul>
-
-    <h2> Switches for simulation methods, Integrators and Thermostats </h2>
-    <ul>
-    <li> \verbatim #define NEMD \endverbatim
-    NEMD (Non Eqilibrium Molecular Dynamics).
-    This is used to perform shear simulations
-
-    <li> \verbatim #define NPT \endverbatim
-    Allows to use (N,p,T)-ensembles during integration as well
-
-    <li> \verbatim #define DPD \endverbatim
-    DPD Thermostat (Dissipative Particle Dynamics) 
-    Flag needed only because DPD acts like a short range potential
-
-    <li> \verbatim #define LB \endverbatim
-    LB Thermostat (fluctuating Lattice Boltzmann fluid)
-
-    </ul>
 */
 
 #include <archconfig.h>

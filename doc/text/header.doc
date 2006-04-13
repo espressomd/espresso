@@ -102,9 +102,9 @@ you want to use the provided Makefiles directly.<br>
 <ol>
 <li> Linux:<br>
 <ul>
-<li> tcl8.4: The library should be installed in /usr/lib/ . The header files should reside in  /usr/include/ .
-<li> lam should be installed in /opt/lam/bin/ .
-<li> fftw: The library should be installed in /usr/local/lib/ . The header files should reside in /usr/localinclude/ .
+<li> tcl8.4: The library should be installed in <tt>/usr/lib/</tt> . The header files should reside in <tt>/usr/include/</tt>.
+<li> lam should be installed in <tt>/opt/lam/bin/</tt> .
+<li> fftw: The library should be installed in <tt>/usr/local/lib/</tt> . The header files should reside in <tt>/usr/local/include/</tt> .
 </ul>
 
 <li> OSF1:<br>
@@ -118,11 +118,13 @@ After adjusting the makefile you can compile ESPResSo. Change into the directory
 \verbatim 
 gmake
 \endverbatim
-to compile the code. The executable is in Espresso/\<your operating system\>. With
+to compile the code. The executable is in <tt>Espresso/\obj-<your operating system\></tt>. With
 \verbatim 
 gmake docu
 \endverbatim
-you can create the html documentation (... including the page you are reading at the moment). The documentation is in Espresso/doc/html.
+you can create the html documentation (... including the page you are
+reading at the moment). The documentation is in
+<tt>Espresso/doc/html</tt>, the start page is <tt>Espresso/doc/html/index.html</tt>
 
 If there are problems you can try to use 
 \verbatim 
@@ -132,7 +134,7 @@ and
 \verbatim 
 gmake dep
 \endverbatim
-befor the compilation. 
+before the compilation. 
 
 \subsection start_first First Simulations
 
