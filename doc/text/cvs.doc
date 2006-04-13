@@ -4,7 +4,7 @@
 <ol>
 <li> your file contains no conflicts with the cvs version.
 <li> the code compiles without warning on Linux and OSF1.
-<li> the not yet written maketest "test procedure" runs. 
+<li> <tt>make test</tt> runs. 
 <li> you have informed the responsible person of that file about major
 changes.
 </ol>
@@ -21,7 +21,18 @@ Here a list of the most common cvs commands we need:
 <li> \anchor cvs_commit \verbatim cvs commit <file> \endverbatim
 	Puts your changes into the cvsroot directory and makes them
 	available for the others. 
-	<b>Use with care and write a senseful comment!!!</b>
+	When you execute this command, you will be asked to enter a
+	log message. <b>Use with care and write a meaningful log
+	message!!!</b> If you have done changes that ought to go into
+	the relase notes, please start the log message with one of
+	the following tags:
+	<ul>
+	<li><tt>[NEW]</tt> or <tt>[FEATURE]</tt> for new features
+	<li><tt>[BUGFIX]</tt> or <tt>[FIX]</tt> for bug fixes
+	<li><tt>[CHANGE]</tt> for important changes
+	</ul>
+	The log message will then automatically go into the release
+	notes of the next release.
 <li> \anchor cvs_diff \verbatim cvs diff <file> \endverbatim
 	Shows differences of your local copy of \<file\> with respect
 	to the cvs version.	
