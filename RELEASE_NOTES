@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8q (Seska)                                                                      *
+* v1.9.8r (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8q -
+- v1.9.8r -
 -----------
 
+(r) April    13th, 2006.
 (q) March    23rd, 2006.
 (p) March    12th, 2006.
 (o) March    11th, 2006.
@@ -30,6 +31,7 @@ Current working revision.
 (a) November 18th, 2005.
 
 New Features:
+(r) Added convenience Tcl-functions require_feature and has_feature
 (j) Added Power5 architecture to configure-scripts
 (h) added new tcl-command "replacestdchannel" which replaces one of TCLs standart
     I/O-channels with a named pipe
