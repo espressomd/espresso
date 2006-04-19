@@ -148,7 +148,12 @@ proc polyBlockWriteTclvar { destination {tclvar "all"} } {
 
 # reads the file named '$source' into Espresso
 proc polyBlockRead { source } {
-    set inp [open "$source" r]; while { [eof $inp] != 1 } { blockfile $inp read auto }; close $inp
+    if { [string compare [lindex [split $source "."] end] "gz"]==0 } { 
+      set inp [open "|gzip -cd $source" r]
+    } else {
+      set inp [open "$source" r]
+    }
+    while { [eof $inp] != 1 } { blockfile $inp read auto }; close $inp
 }
 
 
