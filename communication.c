@@ -1633,6 +1633,9 @@ void mpi_lj_cap_forces_slave(int node, int parm)
 #ifdef LENNARD_JONES
   MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   calc_lj_cap_radii(lj_force_cap);
+#ifdef LJCOS2
+  calc_ljcos2_cap_radii(lj_force_cap);
+#endif
   on_short_range_ia_change();
 #endif
 }

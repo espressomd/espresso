@@ -49,6 +49,7 @@
 /* #define LJ_WARN_WHEN_CLOSE */
 /* #define MORSE */
 /* #define LJCOS */
+/* #define LJCOS2 */
 /* #define BUCKINGHAM */
 /* #define SOFT_SPHERE */
 
