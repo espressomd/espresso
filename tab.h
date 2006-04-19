@@ -181,7 +181,7 @@ MDINLINE int bonded_tabulated_set_params(int bond_type, int tab_type, char * fil
 
   /* copy filename */
   size = strlen(filename);
-  bonded_ia_params[bond_type].p.tab.filename = (char*)malloc(size*sizeof(char));
+  bonded_ia_params[bond_type].p.tab.filename = (char*)malloc((size+1)*sizeof(char));
   strcpy(bonded_ia_params[bond_type].p.tab.filename,filename);
 
   /* read basic parameters from file */
