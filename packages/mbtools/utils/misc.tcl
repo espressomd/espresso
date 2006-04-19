@@ -21,8 +21,10 @@ proc ::mbtools::utils::trap_mols { molstotrap } {
 
     foreach mol $molstotrap {
 	::mmsg::debug [namespace current] "applying trap : [lrange $mol 1 end] to mol : [lindex $mol 0]"
-	analyze set trapmol [lindex $mol 0] [lindex $mol 1] [lindex $mol 2] coords [lindex $mol 3]  
+	analyze set trapmol [lindex $mol 0] [lindex $mol 1] [lindex $mol 2] [lindex $mol 3] [lindex $mol 4] coords [lindex $mol 5] noforce_coords [lindex $mol 6]
     }
+    # topo_part_sync to send trap information to other nodes
+    analyze set "topo_part_sync"
 }
 
 # ::mbtools::utils::calc_com --

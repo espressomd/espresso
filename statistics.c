@@ -2397,6 +2397,63 @@ static int parse_activate(Tcl_Interp *interp, int argc, char **argv)
   sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
 }
 
+static int parse_mol(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze mol <"com" or "force"> <molecule id>' */
+  /**************************************************/
+
+  /* returns either the center of mass of a molecule or the force that a trap applies to a molecule */
+  /* mol force returns the summed force over all time_steps since it was last called along with the */
+  /* number of time steps */
+
+#ifdef MOLFORCES
+
+  int mol, i;
+  char buffer[3*TCL_DOUBLE_SPACE+256];
+
+  if (argc < 1){
+    Tcl_AppendResult(interp, "Wrong # of args! At least 1 required", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if (ARG0_IS_S("force")) {
+    argc -= 1; argv += 1;
+    if (argc != 1){
+      Tcl_AppendResult(interp, "Wrong # of args! Only mol num is required", (char *)NULL);
+      return TCL_ERROR;
+    }
+    if (!ARG0_IS_I(mol)) return (TCL_ERROR); argc--; argv++;
+    if (mol > n_molecules) return (TCL_ERROR);
+    sprintf(buffer,"%e %e %e %d", topology[mol].fav[0],topology[mol].fav[1],topology[mol].fav[2],topology[mol].favcounter );
+    for (i=0;i<3;i++) {
+      topology[mol].fav[i]=0;
+    }
+    topology[mol].favcounter = 0;
+    Tcl_AppendResult(interp,buffer, (char *)NULL);
+    return TCL_OK;
+  }
+  else if (ARG0_IS_S("com")) {
+    argc -= 1; argv += 1;
+    if (argc != 1){
+      Tcl_AppendResult(interp, "Wrong # of args! Only mol num is required", (char *)NULL);
+      return TCL_ERROR;
+    }
+    if (!ARG0_IS_I(mol)) return (TCL_ERROR); argc--; argv++;
+    if (mol > n_molecules) return (TCL_ERROR);
+    sprintf(buffer,"%e %e %e",topology[mol].com[0],topology[mol].com[1],topology[mol].com[2]);
+    Tcl_AppendResult(interp,buffer, (char *)NULL);
+    return TCL_OK;
+  }
+  else {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "The operation \"mol ", argv[1], "\" you requested is not implemented.", (char *)NULL);
+    return TCL_ERROR;
+  }
+#else
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "The operation \"mol\" you requested requires the MOLFORCES option.  Activate it in config.h", (char *)NULL);
+    return TCL_ERROR;
+#endif
+}
 
 /****************************************************************************************
  *                                 main parser for analyze
@@ -2426,6 +2483,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     err = parse_get_lipid_orients(interp,argc-2,argv+2);
   else if (ARG1_IS_S("lipid_orient_order"))
     err = parse_lipid_orient_order(interp,argc-2,argv+2);
+  else if (ARG1_IS_S("mol"))
+    err = parse_mol(interp,argc-2,argv+2);
   else if (ARG1_IS_S("mindist"))
     err = parse_mindist(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("aggregation"))

@@ -346,6 +346,7 @@ void integrate_ensemble_init()
 void integrate_vv(int n_steps)
 {
   int i;
+
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -375,8 +376,15 @@ void integrate_vv(int n_steps)
 
     /* Communication Step: ghost forces */
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
+
+    /*apply trap forces to trapped molecules*/
+#ifdef MOLFORCES         
+    calc_and_apply_mol_constraints();
+#endif
+
     rescale_forces();
     recalc_forces = 0;
+
   }
 
   if (check_runtime_errors())
@@ -438,6 +446,11 @@ void integrate_vv(int n_steps)
 
     /* Communication step: ghost forces */
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
+
+    /*apply trap forces to trapped molecules*/
+#ifdef MOLFORCES         
+    calc_and_apply_mol_constraints();
+#endif
 
     if (check_runtime_errors())
       break;

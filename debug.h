@@ -38,6 +38,7 @@
  <li> \verbatim #define ONE_PART_DEBUG <part_id> \endverbatim activate debug output, tracing everything done with particle "<part_id>".
  <li> \verbatim #define STAT_DEBUG \endverbatim activate statistics related debug output.
  <li> \verbatim #define POLY_DEBUG \endverbatim activate polymer setup debug output.
+ <li> \verbatim #define MOLFORCES_DEBUG \endverbatim activate molforces debug output.
  <li> \verbatim #define MEM_DEBUG \endverbatim activate memory allocation/freeing logging. WARNING: This generates TONS of
  output. This can only be used reasonably for a few time steps with a few particles.
  <li> \verbatim #define MAGGS_DEBUG \endverbatim activate debugging output of the Maggs electrostatics/dynamics method.
@@ -76,6 +77,7 @@
 /* #define ONEPART_DEBUG 13 */
 /* #define STAT_DEBUG */ 
 /* #define POLY_DEBUG */
+#define MOLFORCES_DEBUG
 /* #define MEM_DEBUG */
 /* #define MAGGS_DEBUG */
 
@@ -303,6 +305,12 @@ extern int check_id;
 #else
 /** Equals { cmd } iff POLY_DEBUG is set. */
 #define POLY_TRACE(cmd)
+#endif
+
+#ifdef MOLFORCES_DEBUG
+#define MOLFORCES_TRACE(cmd) { cmd; }
+#else
+#define MOLFORCES_TRACE(cmd)
 #endif
 
 

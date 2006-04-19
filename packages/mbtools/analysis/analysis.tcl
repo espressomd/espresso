@@ -16,7 +16,7 @@ namespace eval ::mbtools::analysis {
     variable stray_cut_off
 #    variable switches
     variable this [namespace current]
-    variable known_flags " possible flags are: \n cluster_calc \n pik1_calc \n pressure_calc \n box_len_calc \n fluctuation_calc \n energy_calc \n stray_lipids_calc \n orient_order_calc \n flipflop_calc \n density_profile_calc \n localheights_calc \n localorients \n distance_calc \n tiltangle_calc \n "
+    variable known_flags " possible flags are: \n cluster_calc \n pik1_calc \n pressure_calc \n box_len_calc \n fluctuation_calc \n energy_calc \n stray_lipids_calc \n orient_order_calc \n flipflop_calc \n density_profile_calc \n localheights_calc \n localorients \n distance_calc \n tiltangle_calc \n  molforce \n molcom \n"
 
     namespace export do_analysis
     namespace export setup_analysis
@@ -38,6 +38,8 @@ source [file join [file dirname [info script]] localheights.tcl]
 source [file join [file dirname [info script]] localorients.tcl]
 source [file join [file dirname [info script]] distance.tcl]
 source [file join [file dirname [info script]] tiltangle.tcl]
+source [file join [file dirname [info script]] molforce.tcl]
+source [file join [file dirname [info script]] molcom.tcl]
 
 
 # ::mbtools::analysis::print_averages --
@@ -102,7 +104,7 @@ proc ::mbtools::analysis::do_analysis { } {
     variable known_flags
 
  
-
+    analyze set "topo_part_sync"
 
     # Now run the setup commands for each of the required analysis commands
     set analyzeprefix "analyze_"
@@ -113,6 +115,9 @@ proc ::mbtools::analysis::do_analysis { } {
 	::mmsg::debug [namespace current] "executing $analyzecommand"
 	eval $analyzecommand
     }
+
+    analyze set "topo_part_sync"
+
     ::mmsg::debug [namespace current] "done"
     flush stdout
 }

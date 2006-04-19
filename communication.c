@@ -43,6 +43,7 @@
 #include "statistics_chain.h"
 #include "topology.h"
 #include "errorhandling.h"
+#include "molforces.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -1839,6 +1840,7 @@ int mpi_sync_topo_part_info() {
   int molsize;
   int moltype;
   int n_mols;
+  
   mpi_issue(REQ_SYNC_TOPO,-1,0);
   n_mols = n_molecules;
   MPI_Bcast(&n_mols,1,MPI_INT,0,MPI_COMM_WORLD);
@@ -1846,6 +1848,23 @@ int mpi_sync_topo_part_info() {
   for ( i = 0 ; i < n_molecules ; i++) {
     molsize = topology[i].part.n;
     moltype = topology[i].type;
+
+#ifdef MOLFORCES
+    MPI_Bcast(&(topology[i].trap_flag),1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(topology[i].trap_center,3,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Bcast(&(topology[i].trap_spring_constant),1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Bcast(&(topology[i].drag_constant),1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Bcast(&(topology[i].noforce_flag),1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&(topology[i].isrelative),1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&(topology[i].favcounter),1,MPI_INT,0,MPI_COMM_WORLD);
+    if (topology[i].favcounter == -1)
+      MPI_Bcast(topology[i].fav,3,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    /* check if any molecules are trapped */
+    if  ((topology[i].trap_flag != 32) && (topology[i].noforce_flag != 32)) {
+      IsTrapped = 1;
+    }
+#endif
+
     MPI_Bcast(&molsize,1,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Bcast(&moltype,1,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Bcast(topology[i].part.e,topology[i].part.n,MPI_INT,0,MPI_COMM_WORLD);
@@ -1854,6 +1873,7 @@ int mpi_sync_topo_part_info() {
   }
   
   sync_topo_part_info();
+
   return 1;
 }
 
@@ -1866,6 +1886,22 @@ void mpi_sync_topo_part_info_slave(int node,int parm ) {
   MPI_Bcast(&n_mols,1,MPI_INT,0,MPI_COMM_WORLD);
   realloc_topology(n_mols);
   for ( i = 0 ; i < n_molecules ; i++) {
+
+#ifdef MOLFORCES
+    MPI_Bcast(&(topology[i].trap_flag),1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(topology[i].trap_center,3,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Bcast(&(topology[i].trap_spring_constant),1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Bcast(&(topology[i].drag_constant),1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    MPI_Bcast(&(topology[i].noforce_flag),1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&(topology[i].isrelative),1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(&(topology[i].favcounter),1,MPI_INT,0,MPI_COMM_WORLD);
+    if (topology[i].favcounter == -1)
+      MPI_Bcast(topology[i].fav,3,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    /* check if any molecules are trapped */
+    if  ((topology[i].trap_flag != 32) && (topology[i].noforce_flag != 32)) {
+      IsTrapped = 1;
+    }
+#endif
 
     MPI_Bcast(&molsize,1,MPI_INT,0,MPI_COMM_WORLD);
     MPI_Bcast(&moltype,1,MPI_INT,0,MPI_COMM_WORLD);

@@ -21,6 +21,7 @@
 #include "particle_data.h"
 #include "cells.h"
 #include "communication.h"
+#include "molforces.h"
 
 int     n_molecules = -1;
 Molecule *topology = NULL;
@@ -30,17 +31,35 @@ void realloc_topology(int size)
 {
   int m;
 
-  for(m = size ; m < n_molecules; m++)
+  for(m = size ; m < n_molecules; m++) {
     realloc_intlist(&topology[m].part, 0);
-
+#ifdef MOLFORCES
+    free(topology[m].f);
+    free(topology[m].fav);
+    free(topology[m].v);
+    free(topology[m].trap_center);
+    free(topology[m].com);
+#endif /*MOLFORCES*/
+  }
 
   topology = realloc(topology, size*sizeof(Molecule));
 
   if (n_molecules < 0)
     n_molecules = 0;
-  for(m = n_molecules; m < size; m++)
+  for(m = n_molecules; m < size; m++) {
     init_intlist(&topology[m].part);
-  
+#ifdef MOLFORCES
+    topology[m].trap_flag = 32; 
+    topology[m].noforce_flag = 32;
+    topology[m].favcounter = -1;
+    topology[m].fav[0] = 0;
+    topology[m].fav[1] = 0;
+    topology[m].fav[2] = 0;
+    topology[m].trap_force[0] = 0;
+    topology[m].trap_force[1] = 0;
+    topology[m].trap_force[2] = 0;
+#endif /*MOLFORCES*/
+  }
   n_molecules = size;
   
   topo_part_info_synced = 0;
@@ -108,6 +127,7 @@ void sync_topo_part_info() {
 
 int parse_sync_topo_part_info(Tcl_Interp *interp) {
   int i,j,ntopoparts;
+
   if (n_molecules <= 0) {
     Tcl_AppendResult(interp, "Can't sync molecules to particle info: No molecules defined ", (char *)NULL);
     return TCL_ERROR;
@@ -137,20 +157,29 @@ int parse_sync_topo_part_info(Tcl_Interp *interp) {
   return TCL_OK;
 }
 
-int set_molecule_trap(int mol_num, int trap_flag,DoubleList *trap_center,double spring_constant) {
+int set_molecule_trap(int mol_num, int trap_flag,DoubleList *trap_center,double spring_constant, double drag_constant, int noforce_flag, int isrelative) {
+#ifdef MOLFORCES
   int i;
   if ( mol_num < n_molecules ) {
     topology[mol_num].trap_flag &= ~COORDS_FIX_MASK;
+    topology[mol_num].noforce_flag &= ~COORDS_FIX_MASK;
     /* set new values */
     topology[mol_num].trap_flag |= trap_flag;
+    topology[mol_num].noforce_flag |= noforce_flag;
 
     for ( i = 0 ; i < trap_center->max ; i++){
       topology[mol_num].trap_center[i] = trap_center->e[i];
     }
     topology[mol_num].trap_spring_constant = spring_constant;
+    topology[mol_num].drag_constant = drag_constant;
+    topology[mol_num].isrelative = isrelative;
+    /* check to see if any molecules are trapped */
+    if ((topology[i].trap_flag != 32) && (topology[i].noforce_flag != 32)) {
+      IsTrapped = 1;
+    }
     return TCL_OK;
   }
-
+#endif
   return TCL_ERROR;
 }
 
@@ -158,26 +187,32 @@ int parse_trapmol(Tcl_Interp *interp, int argc, char **argv)
 {
 
   int trap_flag = 0;
+  int noforce_flag =0;
   int i;
   int mol_num;
   double spring_constant;
+  double drag_constant;
+  int isrelative;
   DoubleList trap_center;
   IntList trap_coords;
-  
+  IntList noforce_coords;
+  char usage[] = "trapmol usage: <mol_id> { <xpos> <ypos> <zpos> } <isrelative> <spring_constant> <drag_constant> coords   { <trapped_coord> <trapped_coord> <trapped_coord> } noforce_coords {<noforce_coord> <noforce_coord> <noforce_coord>}";
+
   init_doublelist(&trap_center);
   init_intlist(&trap_coords);
   alloc_intlist(&trap_coords,3);
+  init_intlist(&noforce_coords);
+  alloc_intlist(&noforce_coords,3);
   /* Unless coords are specified the default is just to trap it completely */
   trap_coords.e[0] = 1;
   trap_coords.e[1] = 1;
   trap_coords.e[2] = 1;
 
-
   Tcl_ResetResult(interp);
   /* The first argument should be a molecule number */
   if (!ARG0_IS_I(mol_num)) {
     Tcl_AppendResult(interp, "first argument should be a molecule id", (char *)NULL);
-    Tcl_AppendResult(interp, "trapmol usage: <mol_id> { <xpos> <ypos> <zpos> } <spring_constant> coords   { <trapped_coord> <trapped_coord> <trapped_coord> } ", (char *)NULL);
+    Tcl_AppendResult(interp, usage, (char *)NULL); 
     return TCL_ERROR;
   } else {
     /* Sanity checks */
@@ -192,7 +227,17 @@ int parse_trapmol(Tcl_Interp *interp, int argc, char **argv)
   /* The next argument should be a double list specifying the trap center */
   if (!ARG0_IS_DOUBLELIST(trap_center)) {
     Tcl_AppendResult(interp, "second argument should be a double list", (char *)NULL);
-    Tcl_AppendResult(interp, "trapmol usage: <mol_id> { <xpos> <ypos> <zpos> } <spring_constant> coords   <trapped_coord> <trapped_coord> <trapped_coord> ", (char *)NULL);
+    Tcl_AppendResult(interp, usage , (char *)NULL);
+    return TCL_ERROR;
+  } else {
+    argc -= 1;
+    argv += 1;
+  }
+
+  /* The next argument should be an integer specifying whether the trap is relative (fraction of box_l) or absolute */
+  if (!ARG0_IS_I(isrelative)) {
+    Tcl_AppendResult(interp, "third argument should be an integer", (char *)NULL);
+    Tcl_AppendResult(interp, usage, (char *)NULL);
     return TCL_ERROR;
   } else {
     argc -= 1;
@@ -201,46 +246,66 @@ int parse_trapmol(Tcl_Interp *interp, int argc, char **argv)
 
   /* The next argument should be the spring constant for the trap */
   if (!ARG0_IS_D(spring_constant)) {
-    Tcl_AppendResult(interp, "third  argument should be a double", (char *)NULL);
-    Tcl_AppendResult(interp, "trapmol usage: <mol_id> { <xpos> <ypos> <zpos> } <spring_constant> coords   <trapped_coord> <trapped_coord> <trapped_coord> ", (char *)NULL);
+    Tcl_AppendResult(interp, "fourth argument should be a double", (char *)NULL);
+    Tcl_AppendResult(interp, usage, (char *)NULL);
     return TCL_ERROR;
   } else {
     argc -= 1;
     argv += 1;
   }
 
+  /* The next argument should be the drag constant for the trap */
+  if (!ARG0_IS_D(drag_constant)) {
+    Tcl_AppendResult(interp, "fifth argument should be a double", (char *)NULL);
+    Tcl_AppendResult(interp, usage, (char *)NULL);
+    return TCL_ERROR;
+  } else {
+    argc -= 1;
+    argv += 1;
+  }
 
   /* Process optional arguments */
   while ( argc > 0 ) {    
-    if ( ARG0_IS_S("coords") )
+    if ( ARG0_IS_S("coords") ) {
       if ( !ARG_IS_INTLIST(1,trap_coords) ) {
 	Tcl_AppendResult(interp, "an intlist is required to specify coords", (char *)NULL);
-	Tcl_AppendResult(interp, "trapmol usage: <mol_id> { <xpos> <ypos> <zpos> } <spring_constant> coords  { <trapped_coord> <trapped_coord> <trapped_coord> } ", (char *)NULL);
-      return TCL_ERROR;
+	Tcl_AppendResult(interp, usage, (char *)NULL);
+	return TCL_ERROR;
       }
-    argc -= 2;
-    argv += 2;
+      argc -= 2;
+      argv += 2;
+    } else if ( ARG0_IS_S("noforce_coords")) {
+      if ( !ARG_IS_INTLIST(1,noforce_coords) ) {
+	Tcl_AppendResult(interp, "an intlist is required to specify coords", (char *)NULL);
+	Tcl_AppendResult(interp, usage, (char *)NULL);
+	return TCL_ERROR;
+      }
+      argc -= 2;
+      argv += 2;
+    } else {
+      Tcl_AppendResult(interp, "an option is not recognised", (char *)NULL);
+      Tcl_AppendResult(interp, usage, (char *)NULL);
+      return TCL_ERROR;
+    }      
   }
   
-  for (i = 0; i < 3l; i++)
+  for (i = 0; i < 3; i++) {
     if (trap_coords.e[i])
       trap_flag |= COORD_FIXED(i);
-  
-  //  printf("setting trap %d %d %d %d at center %f %f %f for mol %d \n",trap_flag,trap_coords.e[0],trap_coords.e[1],trap_coords.e[2],trap_center.e[0],trap_center.e[1],trap_center.e[2],mol_num);
-  if (set_molecule_trap(mol_num, trap_flag,&trap_center,spring_constant) == TCL_ERROR) {
+    if (noforce_coords.e[i])
+      noforce_flag |= COORD_FIXED(i);
+  }
+  if (set_molecule_trap(mol_num, trap_flag,&trap_center,spring_constant, drag_constant, noforce_flag, isrelative) == TCL_ERROR) {
     Tcl_AppendResult(interp, "set topology first", (char *)NULL);
     return TCL_ERROR;
   }
 
   realloc_doublelist(&trap_center,0);
   realloc_intlist(&trap_coords,0);
-
+  realloc_intlist(&noforce_coords,0);
   return TCL_OK;
-
+  
 }
-
-
-
 
 int parse_analyze_set_topology(Tcl_Interp *interp, int argc, char **argv)
 {
@@ -254,11 +319,12 @@ int parse_analyze_set_topology(Tcl_Interp *interp, int argc, char **argv)
     return parse_sync_topo_part_info(interp);
   } else if (ARG0_IS_S("trapmol")) {
 #ifndef MOLFORCES
-    printf("WARNING: attempt to trap molecule but MOLFORCES was not defined");
-#endif
+    Tcl_AppendResult(interp, "Attempt to trap molecule, but MOLFORCES was not defined.  Turn on MOLFORCES in config.h", (char *)NULL);
+    return TCL_ERROR;
+#else
     return parse_trapmol(interp, argc - 1, argv + 1);
+#endif
   } 
-
   return parse_generic_structure_info(interp, argc, argv);
 }
 
