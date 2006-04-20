@@ -161,8 +161,13 @@ int set_molecule_trap(int mol_num, int trap_flag,DoubleList *trap_center,double 
 #ifdef MOLFORCES
   int i;
   if ( mol_num < n_molecules ) {
+#ifdef EXTERNAL_FORCES
     topology[mol_num].trap_flag &= ~COORDS_FIX_MASK;
     topology[mol_num].noforce_flag &= ~COORDS_FIX_MASK;
+#else
+    Tcl_AppendResult(interp, "Error: EXTERNAL_FORCES not defined ", (char *)NULL);
+    return TCL_ERROR;
+#endif
     /* set new values */
     topology[mol_num].trap_flag |= trap_flag;
     topology[mol_num].noforce_flag |= noforce_flag;
@@ -288,10 +293,12 @@ int parse_trapmol(Tcl_Interp *interp, int argc, char **argv)
       return TCL_ERROR;
     }      
   }
-  
+
+#ifdef EXTERNAL_FORCES  
   for (i = 0; i < 3; i++) {
     if (trap_coords.e[i])
       trap_flag |= COORD_FIXED(i);
+  
     if (noforce_coords.e[i])
       noforce_flag |= COORD_FIXED(i);
   }
@@ -299,6 +306,10 @@ int parse_trapmol(Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, "set topology first", (char *)NULL);
     return TCL_ERROR;
   }
+#else
+    Tcl_AppendResult(interp, "Error: EXTERNAL_FORCES not defined ", (char *)NULL);
+    return TCL_ERROR;
+#endif
 
   realloc_doublelist(&trap_center,0);
   realloc_intlist(&trap_coords,0);
