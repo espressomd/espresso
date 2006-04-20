@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8r (Seska)                                                                      *
+* v1.9.8s (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8r -
+- v1.9.8s -
 -----------
 
+(s) April    19th, 2006.
 (r) April    13th, 2006.
 (q) March    23rd, 2006.
 (p) March    12th, 2006.
@@ -31,6 +32,24 @@ Current working revision.
 (a) November 18th, 2005.
 
 New Features:
+(s) MOLFORCES: Various changes are made to options in the "analyze set trapmol"
+    command....
+(s) MOLFORCES: The trap position may be set to an absolute coordinate or it may be
+    relative to the box size (useful for NPT simulations)
+(s) MOLFORCES: A viscous drag (a force linearly proportional to the molecule
+    velocity) may be applied to the molecule
+(s) MOLFORCES: The net force acting on the molecule (including thermostat forces)
+    can be canceled out  (i.e. surrounding particles cannot effect a molecules
+    velocity but can effect other degrees of freedom).
+(s) MOLFORCES: The forces applied by the trap on the molecule is summed over every
+    time step.  The tcl command "analyze mol force" gives this sum of this applied
+    force along with the number of time steps since it was last
+    called.
+(s) MOLFORCES: The centre of mass of a molecule is given by the "analyze mol com"
+    command but only if the molecule is trapped.
+(s) MBTOOLS: Various changes are made to MBTOOLS to incorporate the changes made to
+    MOLFORCES.
+(s) added gzip capability to polyBlockRead
 (r) Added convenience Tcl-functions require_feature and has_feature
 (j) Added Power5 architecture to configure-scripts
 (h) added new tcl-command "replacestdchannel" which replaces one of TCLs standart
@@ -51,6 +70,8 @@ New Features:
 (a) Added "*obsstat_non_bonded_intra" and "*obsstat_non_bonded_inter" pointers.
 
 Changes:
+(s) Modifications are made to the MOLFORCES option such that it works in
+    parallel.
 (o) Added communicator for temporary particle data (e.g. random numbers). No abuse
     of other communicators necessary any more.
 (a) Change all the (scalar) pressure routines to calculate also the stress tensor.
@@ -60,6 +81,11 @@ Changes:
 (a) The testcase 'analysis.tcl' now also checks the result of 'analyze stress_tensor'.
 
 Bugfixes:
+(s) Forgot to add molforces to lists of C source files in Makefile when commiting
+    previous changes
+(s) Fixed the capping of the lj-cos2 force
+(s) Added the LJCOS2 option (commented out) to config.h
+(s) not enough memory was allocated before a strcpy command
 (q) again the -qipa problem on IBMs xlc compiler
 (q) fixed again a minor -qipa problem in configure on IBMs xlc
     compiler
