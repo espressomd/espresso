@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8s (Seska)                                                                      *
+* v1.9.8t (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8s -
+- v1.9.8t -
 -----------
 
+(t) April    20th, 2006.
 (s) April    19th, 2006.
 (r) April    13th, 2006.
 (q) March    23rd, 2006.
@@ -81,6 +82,7 @@ Changes:
 (a) The testcase 'analysis.tcl' now also checks the result of 'analyze stress_tensor'.
 
 Bugfixes:
+(t) fixed some ifdef EXTERNAL_FORCES conflicts
 (s) Forgot to add molforces to lists of C source files in Makefile when commiting
     previous changes
 (s) Fixed the capping of the lj-cos2 force
