@@ -21,36 +21,38 @@
 #                                                           #
 #############################################################
 
-puts "----------------------------------------------"
-puts "- Testcase madelung.tcl running on [format %02d [setmd n_nodes]] nodes: -"
-puts "----------------------------------------------"
-set errf [lindex $argv 1]
+puts "----------------------------------------------------"
+puts "- Testcase madelung_ewald.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "----------------------------------------------------"
+#set errf [lindex $argv 1]
 
 proc error_exit {error} {
-    global errf
-    set f [open $errf "w"]
-    puts $f "Error occured: $error"
-    close $f
-    exit -666
+#    global errf
+#    set f [open $errf "w"]
+    puts "Error occured: $error"
+#    puts $f "Error occured: $error"
+#    close $f
+#    exit -666
 }
 
 proc require_feature {feature} {
-    global errf
+#    global errf
     if { ! [regexp $feature [code_info]]} {
-	set f [open $errf "w"]
-	puts $f "not compiled in: $feature"
-	close $f
-	exit -42
+#	set f [open $errf "w"]
+	puts "not compiled in: $feature"
+#	puts $f "not compiled in: $feature"
+#	close $f
+#	exit -42
     }
 }
 
 require_feature "ELECTROSTATICS"
 
-if { [setmd n_nodes] == 3 || [setmd n_nodes] == 6 } {
-    puts "Testcase madelung.tcl does not run on 3 or 6 nodes"
-    exec rm -f $errf
-    exit 0
-}
+#if { [setmd n_nodes] == 3 || [setmd n_nodes] == 6 } {
+#    puts "Testcase madelung_ewald.tcl does not run on 3 or 6 nodes"
+#    exec rm -f $errf
+#    exit 0
+#}
 
 #############################################################
 #  Parameters                                               #
@@ -61,8 +63,8 @@ set madelung_nacl 1.747564594633182190636212035544397403481
 set force_epsilon 1e-14
 
 # System identification: 
-set name  "madelung"
-set ident "_t3"
+set name  "madelung_ewald"
+set ident "_t4"
 
 # System parameters
 #############################################################
@@ -79,23 +81,31 @@ set x0 0.0
 set y0 0.0
 set z0 0.0
 
-# Interaction parameters coulomb p3m)
+#############################################################
+#  Setup System                                             #
+#############################################################
+
+set box_l [expr 2.0*$nacl_const*$nacl_repl]
+setmd box_l $box_l $box_l $box_l
+
+puts [setmd box_l]
+
+# Interaction parameters coulomb p3m
 #############################################################
 
 set bjerrum   1.0
 set accuracy  1.0e-6
-# if you do not like the automatic tuning...
-set p3m_alpha 0.408905
-set p3m_rcut  7.95 
-set p3m_mesh  16
-set p3m_cao   7
+set ewald_alpha 0.448505
+set ewald_rcut  7.97
+set ewald_kmax  10
 
 # Integration parameters
 #############################################################
 setmd time_step 0.01
 setmd skin      0.03
-setmd gamma     1.0
-setmd temp      0.0
+# setmd gamma     1.0
+# setmd temp      0.0
+thermostat off
 
 set int_steps   1
 
@@ -103,13 +113,6 @@ set int_steps   1
 # Other parameters
 #############################################################
 set tcl_precision 12
-
-#############################################################
-#  Setup System                                             #
-#############################################################
-
-set box_l [expr 2.0*$nacl_const*$nacl_repl]
-setmd box_l $box_l $box_l $box_l
 
 # Particle setup
 #############################################################
@@ -144,19 +147,13 @@ for {set i 0} { $i < $nacl_repl } {incr i} {
     }
 }
 
-#puts -nonewline "P3M Parameter Tuning ... please wait\r"
-#flush stdout
-#puts "[inter coulomb $bjerrum p3m tune accuracy $accuracy mesh 32]"
-# Use pretuned p3m parameters:
-inter coulomb $bjerrum p3m 7.97000e+00 32 6 4.48505e-01
+inter coulomb $bjerrum ewald $ewald_rcut $ewald_alpha $ewald_kmax
 
-# print system specification
+puts [inter]
+
 set n_part [setmd n_part]
 puts "NaCl crystal with $n_part particle (grid $nc, replic $nacl_repl)"
-#puts "in cubic box of size $box_l. Crystal offset: $x0 $y0 $z0"
-#puts "Interactions: \n{ [inter] }"
 
-#writepdb "$name$ident.pdb"
 
 #puts "\nIntegrate $int_steps step(s)"
 integrate $int_steps
@@ -199,5 +196,5 @@ if { $err_pres > $accuracy } {
     error_exit "pressure derivation failed to reach accuracy goal"
 }
 
-exec rm -f $errf
+# exec rm -f $errf
 exit 0

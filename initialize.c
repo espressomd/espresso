@@ -33,6 +33,7 @@
 #include "thermostat.h"
 #include "rotation.h"
 #include "p3m.h"
+#include "ewald.h"
 #include "fft.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
@@ -169,6 +170,9 @@ void on_observable_calc()
     case COULOMB_P3M:
       P3M_count_charged_particles();
       break;
+    case COULOMB_EWALD:
+      EWALD_count_charged_particles();
+      break;
     case COULOMB_MAGGS: 
       Maggs_init(); 
       break;
@@ -206,6 +210,11 @@ void on_coulomb_change()
   switch (coulomb.method) {
   case COULOMB_P3M:
     P3M_init();
+    integrate_vv_recalc_maxrange();
+    on_parameter_change(FIELD_MAXRANGE);
+    break;
+  case COULOMB_EWALD:
+    EWALD_init();
     integrate_vv_recalc_maxrange();
     on_parameter_change(FIELD_MAXRANGE);
     break;
@@ -260,6 +269,9 @@ void on_resort_particles()
   case COULOMB_MMM2D:
     MMM2D_on_resort_particles();
     break;
+  case COULOMB_EWALD:
+    EWALD_on_resort_particles();
+    break;
   default: break;
   }
   if (coulomb.use_elc)
@@ -274,6 +286,9 @@ void on_NpT_boxl_change(double scal1) {
 #ifdef ELECTROSTATICS
   if(coulomb.method == COULOMB_P3M) {
     P3M_scaleby_box_l();
+    integrate_vv_recalc_maxrange();
+  } else if(coulomb.method == COULOMB_EWALD) {
+    EWALD_scaleby_box_l();
     integrate_vv_recalc_maxrange();
   }
 #endif
@@ -319,6 +334,14 @@ void on_parameter_change(int field)
       cc = 1;
     else if (field == FIELD_BOXL) {
       P3M_scaleby_box_l();
+      integrate_vv_recalc_maxrange(); 
+    }
+    break;
+  case COULOMB_EWALD:
+    if (field == FIELD_TEMPERATURE || field == FIELD_SKIN)
+      cc = 1;
+    else if (field == FIELD_BOXL) {
+      EWALD_scaleby_box_l();
       integrate_vv_recalc_maxrange(); 
     }
     break;

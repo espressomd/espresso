@@ -19,6 +19,7 @@
 #include "grid.h"
 #include "pressure.h"
 #include "p3m.h"
+#include "ewald.h"
 #include "debye_hueckel.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
@@ -449,7 +450,7 @@ void calc_maximal_cutoff()
       break;
 #endif
     default:
-      break;
+     break;
     }
   }
 
@@ -547,6 +548,10 @@ void calc_maximal_cutoff()
     if (max_cut_non_bonded < p3m.r_cut)
       max_cut_non_bonded = p3m.r_cut;
     break;
+  case COULOMB_EWALD:
+    if (max_cut_non_bonded < ewald.r_cut)
+      max_cut_non_bonded = ewald.r_cut;
+    break;
   case COULOMB_DH:
     if (max_cut_non_bonded < dh_params.r_cut)
       max_cut_non_bonded = dh_params.r_cut;
@@ -590,6 +595,7 @@ int check_obs_calc_initialized()
   case COULOMB_MMM1D: if (MMM1D_sanity_checks()) state = 0; break;
   case COULOMB_MMM2D: if (MMM2D_sanity_checks()) state = 0; break;
   case COULOMB_P3M: if (P3M_sanity_checks()) state = 0; break;
+  case COULOMB_EWALD: if (EWALD_sanity_checks()) state = 0; break;
   case COULOMB_MAGGS: if (Maggs_sanity_checks()) state = 0; break;
   }
   if (coulomb.use_elc && ELC_sanity_checks()) state = 0;
@@ -624,6 +630,13 @@ int coulomb_set_bjerrum(double bjerrum)
       p3m.mesh[1]  = 0;
       p3m.mesh[2]  = 0;
       p3m.cao      = 0;
+
+    } else if (coulomb.method == COULOMB_EWALD) {
+
+      ewald.alpha    = 0.0;
+      ewald.alpha_L  = 0.0;
+      ewald.r_cut    = 0.0;
+      ewald.r_cut_iL = 0.0;
 
     } else if (coulomb.method == COULOMB_DH) {
 
@@ -697,6 +710,9 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   /* check method */
   if(ARG0_IS_S("p3m"))    
     return inter_parse_p3m(interp, argc-1, argv+1);
+
+  if(ARG0_IS_S("ewald"))    
+    return inter_parse_ewald(interp, argc-1, argv+1);
 
   if (ARG0_IS_S("dh"))
     return inter_parse_dh(interp, argc-1, argv+1);    
@@ -869,6 +885,7 @@ int printCoulombIAToResult(Tcl_Interp *interp)
   Tcl_PrintDouble(interp, coulomb.bjerrum, buffer);
   Tcl_AppendResult(interp, "{coulomb ", buffer, " ", (char *) NULL);
   if (coulomb.method == COULOMB_P3M) printP3MToResult(interp);
+  else if (coulomb.method == COULOMB_EWALD) printEWALDToResult(interp);
   else if (coulomb.method == COULOMB_DH) printdhToResult(interp);
   else if (coulomb.method == COULOMB_MMM1D) printMMM1DToResult(interp);
   else if (coulomb.method == COULOMB_MMM2D) printMMM2DToResult(interp);

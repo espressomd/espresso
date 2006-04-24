@@ -26,7 +26,7 @@ Observable_stat total_energy = {0, {NULL,0,0}, 0,0,0};
 /* local prototypes                                         */
 /************************************************************/
 
-/** Calculate long range energies (P3M, MMM2d...). */
+/** Calculate long range energies (P3M, EWALD, MMM2d...). */
 void calc_long_range_energies();
 
 /** allocate energy arrays and initialize with zero */
@@ -38,7 +38,7 @@ void master_energy_calc();
 /************************************************************/
 
 void energy_calc(double *result)
-{
+{ int i;
   if (!check_obs_calc_initialized())
     return;
 
@@ -65,6 +65,9 @@ void energy_calc(double *result)
   /* rescale kinetic energy */
   energy.data.e[0] /= (2.0*time_step*time_step);
 
+  for (i=0; i<energy.data.n; i++)
+    EWALD_TRACE(fprintf(stderr,"%d: EWALD: energy.data.e[%d]=%g\n",this_node,i,energy.data.e[i]));
+
   calc_long_range_energies();
   
   /* gather data */
@@ -80,6 +83,10 @@ void calc_long_range_energies()
   switch (coulomb.method) {
   case COULOMB_P3M:
     energy.coulomb[1] = P3M_calc_kspace_forces(0,1);
+    break;
+  case COULOMB_EWALD:
+    energy.coulomb[1] = EWALD_calc_kspace_forces(0,1);
+    EWALD_TRACE(fprintf(stderr,"%d: EWALD: energy.coulomb[1]=%g\n",this_node,energy.coulomb[1]));
     break;
   case COULOMB_MMM2D:
     *energy.coulomb += MMM2D_far_energy();
@@ -107,8 +114,9 @@ void init_energies(Observable_stat *stat)
   n_coulomb    = 0;
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
-  case COULOMB_NONE: n_coulomb = 0; break;
-  case COULOMB_P3M:  n_coulomb = 2; break;
+  case COULOMB_NONE:  n_coulomb = 0; break;
+  case COULOMB_P3M:   n_coulomb = 2; break;
+  case COULOMB_EWALD: n_coulomb = 2; break;
   default: n_coulomb  = 1;
   }
   if (coulomb.use_elc)

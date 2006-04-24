@@ -394,6 +394,7 @@ int mpi_gather_runtime_errors(Tcl_Interp *interp, int ret_state);
 #define INVALIDATE_SYSTEM 1
 #define CHECK_PARTICLES   2
 #define MAGGS_COUNT_CHARGES 3
+#define EWALD_COUNT_CHARGES 4
 /*@}*/
 
 /** Issue REQ_BCAST_LB: broadcast lattice-Boltzmann parameters to all nodes. */

@@ -191,9 +191,11 @@ int set_molecule_trap(int mol_num, int trap_flag,DoubleList *trap_center,double 
 int parse_trapmol(Tcl_Interp *interp, int argc, char **argv)
 {
 
+#ifdef MOLFORCES
   int trap_flag = 0;
   int noforce_flag =0;
   int i;
+#endif
   int mol_num;
   double spring_constant;
   double drag_constant;

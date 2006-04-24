@@ -18,7 +18,7 @@ include Makefile.$(PLATFORM)
 CSOURCES+= main config initialize global communication binary_file interaction_data \
 	  verlet grid integrate cells ghosts forces rotation debug particle_data \
 	  thermostat statistics statistics_chain energy pressure vmdsock imd \
-	  p3m fft random blockfile blockfile_tcl polymer specfunc mmm1d tuning \
+	  p3m ewald fft random blockfile blockfile_tcl polymer specfunc mmm1d tuning \
 	  uwerr parser domain_decomposition nsquare layered mmm-common mmm2d \
 	  modes topology nemd statistics_cluster elc statistics_molecule \
 	  errorhandling constraint maggs rattle molforces lb bin

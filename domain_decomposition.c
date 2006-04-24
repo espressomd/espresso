@@ -938,6 +938,8 @@ void calc_link_cell()
   IA_Neighbor *neighbor;
   Particle *p1, *p2;
   double dist2, vec21[3];
+
+  EWALD_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
  
   /* Loop local cells */
   for (c = 0; c < local_cells.n; c++) {

@@ -39,6 +39,7 @@
 #include "mmm2d.h"
 #include "maggs.h"
 #include "morse.h"
+#include "ewald.h"
 
 /** \name Exported Variables */
 /************************************************************/
@@ -92,7 +93,6 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
   ret += ljcos2_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
-
 #ifdef TABULATED
   /* tabulated */
   ret += tabulated_pair_energy(p1,p2,ia_params,d,dist);
@@ -118,6 +118,9 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 #ifdef DIPOLES
       ret += p3m_dipol_pair_energy(p1,p2,d,dist2,dist); 
 #endif
+      break;
+    case COULOMB_EWALD:
+      ret = ewald_coulomb_pair_energy(p1,p2,d,dist2,dist);
       break;
     case COULOMB_DH:
       ret = dh_coulomb_pair_energy(p1,p2,dist);

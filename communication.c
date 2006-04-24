@@ -25,6 +25,7 @@
 #include "forces.h"
 #include "rotation.h"
 #include "p3m.h"
+#include "ewald.h"
 #include "statistics.h"
 #include "energy.h"
 #include "pressure.h"
@@ -520,6 +521,9 @@ void mpi_bcast_event_slave(int node, int event)
 #ifdef ELECTROSTATICS
   case P3M_COUNT_CHARGES:
     P3M_count_charged_particles();
+    break;
+  case EWALD_COUNT_CHARGES:
+    EWALD_count_charged_particles();
     break; 
   case MAGGS_COUNT_CHARGES:
     maggs_count_charged_particles();
@@ -1453,6 +1457,9 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     break;  
   case COULOMB_MAGGS:
     MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, MPI_COMM_WORLD); 
+    break;
+  case COULOMB_EWALD:
+    MPI_Bcast(&ewald, sizeof(ewald_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast coulomb params for unknown method %d\n", this_node, coulomb.method);

@@ -64,6 +64,7 @@
 /* #define VERLET_DEBUG */
 /* #define PARTICLE_DEBUG */
 /* #define P3M_DEBUG */
+#define EWALD_DEBUG
 /* #define FFT_DEBUG */
 /* #define RANDOM_DEBUG */
 /* #define FORCE_DEBUG */
@@ -217,6 +218,13 @@ extern int check_id;
 #else
 /** Equals { cmd } iff P3M_DEBUG is set. */
 #define P3M_TRACE(cmd)
+#endif
+
+#ifdef EWALD_DEBUG
+#define EWALD_TRACE(cmd) { cmd;  }
+#else
+/** Equals { cmd } if EWALD_DEBUG is set. */
+#define EWALD_TRACE(cmd)
 #endif
 
 #ifdef MAGGS_DEBUG
