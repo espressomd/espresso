@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8t (Seska)                                                                      *
+* v1.9.8u (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8t -
+- v1.9.8u -
 -----------
 
+(u) April    24th, 2006.
 (t) April    20th, 2006.
 (s) April    19th, 2006.
 (r) April    13th, 2006.
@@ -33,6 +34,8 @@ Current working revision.
 (a) November 18th, 2005.
 
 New Features:
+(u) Added Standard Ewald algorithm for longrange coulomb forces (still
+    EXPERIMENTAL)
 (s) MOLFORCES: Various changes are made to options in the "analyze set trapmol"
     command....
 (s) MOLFORCES: The trap position may be set to an absolute coordinate or it may be
