@@ -65,9 +65,6 @@ void energy_calc(double *result)
   /* rescale kinetic energy */
   energy.data.e[0] /= (2.0*time_step*time_step);
 
-  for (i=0; i<energy.data.n; i++)
-    EWALD_TRACE(fprintf(stderr,"%d: EWALD: energy.data.e[%d]=%g\n",this_node,i,energy.data.e[i]));
-
   calc_long_range_energies();
   
   /* gather data */
