@@ -64,7 +64,7 @@
 /* #define VERLET_DEBUG */
 /* #define PARTICLE_DEBUG */
 /* #define P3M_DEBUG */
-#define EWALD_DEBUG
+/* #define EWALD_DEBUG */
 /* #define FFT_DEBUG */
 /* #define RANDOM_DEBUG */
 /* #define FORCE_DEBUG */
@@ -78,7 +78,7 @@
 /* #define ONEPART_DEBUG 13 */
 /* #define STAT_DEBUG */ 
 /* #define POLY_DEBUG */
-#define MOLFORCES_DEBUG
+/* #define MOLFORCES_DEBUG */
 /* #define MEM_DEBUG */
 /* #define MAGGS_DEBUG */
 
