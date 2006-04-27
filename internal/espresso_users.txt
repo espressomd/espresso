@@ -893,3 +893,94 @@ topic:     I wish to use espresso for running a coarse grained MD with
 reminded:  22.MAR.2006
 
 
+name:      Aleksey Vishnyakov
+email:     avishnja@triprinceton.org
+institute: Textile Research Inst Princeton
+           601 Prospect ave
+           Princeton NJ 08542 USA
+           tel 1 609 430 48 25
+           avishnja@triprinceton.org
+sent:      26.APR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Physical Chemist
+           simulations of sorption, polyelectrolytes
+           trying to use pseudopotentials for MD simulations of sSEBS
+           fragments
+           
+           thanks a lot! Hope it will work 8-)
+reminded:  X26.APR.2006
+
+
+name:      Claudio Schepke
+email:     claudio.schepke@gmail.com
+institute: Instituto de Informática
+           Universidade Federal do Rio Grande do Sul (UFRGS)
+           Caixa Postal 15.064 -- 91.501-970 -- Porto Alegre -- RS --
+           Brasil
+sent:      26.APR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Hallo,
+           
+           I like to make simulations with Lattice Boltzmann Methods. I
+           have found your implementation and think that it\\\\\\\\\\\\\\\'s
+           possible to use it for tests. The idea is simulate fluid flows
+           with obstacles.
+reminded:  26.APR.2006
+
+
+name:      Jiang Jianwen
+email:     chejj@nus.edu.sg
+institute: JIANG Jianwen
+           Department of Chemical & Biomolecular Engineering
+           National University of Singapore
+           4 Engineering Drive 4
+           Singapore 117576
+sent:      26.APR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     run simulation for polyelectrolyte solutions to calculate
+           thermodynamic properties and strutrucal properties
+reminded:  26.APR.2006
+
+
+name:      Matthew Hoopes
+email:     mihoopes@ucdavis.edu
+institute: Chemical Engineering & Material Science
+           (Biophysics Graduate Group)
+           3118 Bainer Hall
+           One Shields Avenue
+           University of California, Davis
+           Davis, CA 95616
+sent:      26.APR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Water-free coarse-grain lipid bilayer simulations.
+reminded:  26.APR.2006
+
+
+name:      Alexander
+email:     yakovenko_a@ukr.net
+institute: Alexander Yakovenko
+           Zabolotnogo str 150
+           Institute of Molecular Biology and Genetics
+           Kiev
+           Ukraine
+           email: yakovenko_a@ukr.net
+sent:      26.APR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     My research topic is some software improvements for virtual
+           screening and drug design. There are some analysis, that too
+           complicate to perform with already developed applications, but
+           they require many common routines as well. Currently I require
+           a simply engine for geometry optimization and various energy
+           calculations of molecular system. I have nearly completed my
+           own engine, but looking through working code will be very
+           useful for some technical moments. In spite of a great deal of
+           open source packages I found ESPReSo documentation and codding
+           style very clear (comparing with gromacs for example)
+reminded:  26.APR.2006
+
+
