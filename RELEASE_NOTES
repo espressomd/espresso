@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8v (Seska)                                                                      *
+* v1.9.8w (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8v -
+- v1.9.8w -
 -----------
 
+(w) April    27th, 2006.
 (v) April    26th, 2006.
 (u) April    24th, 2006.
 (t) April    20th, 2006.
@@ -86,6 +87,7 @@ Changes:
 (a) The testcase 'analysis.tcl' now also checks the result of 'analyze stress_tensor'.
 
 Bugfixes:
+(w) deleted some EWALD Debug messages
 (v) deleted some superfluous Debug-Info Lines of EWALD_TRACE
 (t) fixed some ifdef EXTERNAL_FORCES conflicts
 (s) Forgot to add molforces to lists of C source files in Makefile when commiting
