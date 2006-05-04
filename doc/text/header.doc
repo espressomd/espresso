@@ -118,7 +118,7 @@ After adjusting the makefile you can compile ESPResSo. Change into the directory
 \verbatim 
 gmake
 \endverbatim
-to compile the code. The executable is in <tt>Espresso/\obj-<your operating system\></tt>. With
+to compile the code. The executable is in <tt>Espresso/obj-<your operating system\></tt>. With
 \verbatim 
 gmake docu
 \endverbatim
