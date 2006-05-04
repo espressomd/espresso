@@ -116,15 +116,21 @@ MDINLINE double add_ewald_coulomb_pair_force(Particle *p1, Particle *p2,
 
   if(dist < ewald.r_cut) {
     adist = ewald.alpha * dist;
+#if USE_ERFC_APPROXIMATION
     erfc_part_ri = AS_erfc_part(adist) / dist;
     fac1 = coulomb.prefactor * p1->p.q * p2->p.q  * exp(-adist*adist);
     fac2 = fac1 * (erfc_part_ri + 2.0*ewald.alpha*wupii) / dist2;
+#else
+    erfc_part_ri = erfc(adist) / dist;
+    fac1 = coulomb.prefactor * p1->p.q * p2->p.q;
+    fac2 = fac1 * (erfc_part_ri + 2.0*ewald.alpha*wupii*exp(-adist*adist)) / dist2;
+#endif
     for(j=0;j<3;j++)
       force[j] += fac2 * d[j];
     ESR_TRACE(fprintf(stderr,"%d: RSE: Pair (%d-%d) dist=%.3f: force (%.3e,%.3e,%.3e)\n",this_node,
  		      p1->p.identity,p2->p.identity,dist,fac*d[0],fac*d[1],fac*d[2]));
-    ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
-    ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
+    ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac2));
+    ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac2));
 
 #ifdef NPT
     return fac1 * erfc_part_ri;
@@ -141,8 +147,13 @@ MDINLINE double ewald_coulomb_pair_energy(Particle *p1, Particle *p2,
 
   if(dist < ewald.r_cut) {
     adist = ewald.alpha * dist;
+#if USE_ERFC_APPROXIMATION
     erfc_part_ri = AS_erfc_part(adist) / dist;
     return coulomb.prefactor*p1->p.q*p2->p.q *erfc_part_ri*exp(-adist*adist);
+#else
+    erfc_part_ri = erfc(adist) / dist;
+    return coulomb.prefactor*p1->p.q*p2->p.q *erfc_part_ri;
+#endif
   }
   return 0.0;
 }

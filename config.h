@@ -93,6 +93,10 @@
 	 reasonable for a while. */
 #define P3M_MAX_MESH 128
 
+/** Whether to use the approximation of Abramowitz/Stegun
+    AS_erfc_part() for \f$\exp(d^2) erfc(d)\f$, or the C function erfc. */
+#define USE_ERFC_APPROXIMATION 0
+
 /** Precision for capture of round off errors. */
 #define ROUND_ERROR_PREC 1.0e-14
 

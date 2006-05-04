@@ -306,9 +306,9 @@ MDINLINE double dround(double x) { return floor(x+0.5); }
 /** Calculates the SQuaRe of 'double' x, returning 'double'. */
 MDINLINE double SQR(double x) { return x*x; }
 
-/** approximates exp(d^2)*erfc(d) by applying a formula from:
-    Abramowitz/Stegun: Handbook of Mathematical Functions, 
-    Dover (9. ed.), chapter 7 */
+/** approximates \f$ \exp(d^2) \mathrm{erfc}(d)\f$ by applying a formula from:
+    Abramowitz/Stegun: Handbook of Mathematical Functions, Dover
+    (9. ed.), chapter 7 */
 MDINLINE double AS_erfc_part(double d)
 {
 #define AS_a1  0.254829592
