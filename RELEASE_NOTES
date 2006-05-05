@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8w (Seska)                                                                      *
+* v1.9.8x (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8w -
+- v1.9.8x -
 -----------
 
+(x) May       4th, 2006.
 (w) April    27th, 2006.
 (v) April    26th, 2006.
 (u) April    24th, 2006.
@@ -36,6 +37,9 @@ Current working revision.
 (a) November 18th, 2005.
 
 New Features:
+(x) Added USE_ERFC_APPROXIMATION to turn on or off the approximation of erfc in P3M
+    and EWALD by Abramowitz and Stegun. Turned on by default. Turn off for higher
+    precision.
 (u) Added Standard Ewald algorithm for longrange coulomb forces (still
     EXPERIMENTAL)
 (s) MOLFORCES: Various changes are made to options in the "analyze set trapmol"
