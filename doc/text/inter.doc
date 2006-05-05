@@ -405,10 +405,10 @@
 \subsection tcl_p3m P3M
 	\verbatim p3m <r_cut> <mesh> <cao> <alpha> \endverbatim
 		     or
-		     \verbatim p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value> n_interpol <n>] \endverbatim	
+		     \verbatim p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value>] \endverbatim	
 		     or
-		     \verbatim p3m tunev2 accuracy <value> [r_cut <value> mesh <value> cao <value> n_interpol <n>] \endverbatim	
-		     This is an implemantation of the 1/r Coulomb potential
+		     \verbatim p3m tunev2 accuracy <value> [r_cut <value> mesh <value> cao <value>] \endverbatim	
+		     This is an implementation of the 1/r Coulomb potential
 		     \f[ U^{C-P3M} = \ell_B T \frac{q_1 q_2}{r} \f]
 		     with help of the P3M Method described elsewhere. 
 
@@ -424,7 +424,7 @@
 		     the tune version, and normally the obtained accuracy is much closer to the desired value.
 
 		     Note that any previous settings of r_cut, cao and mesh will be remembered. So if you want to retune your
-		     electrostatics, e.g. after a major system change, you should set use
+		     electrostatics, e. g. after a major system change, you should use
 		     \verbatim inter coulomb <bjerrum> p3m tune accuracy <acc> r_cut 0 mesh 0 cao 0\endverbatim 
 
 		     Some additional p3m parameters have preset values:
@@ -432,10 +432,10 @@
 		     The dielectric constant of the surrounding medium, metallic (i.e.infinity) or some finite
 	             positive number.
 		     \verbatim n_interpol = 32768 \endverbatim 
-		     Number of interpolation points for the charge assignment function.
+		     Number of interpolation points for the charge assignment function. When this is set to 0, interpolation is turned off.
 		     \verbatim mesh_off = 0.5 0.5 0.5 \endverbatim 
 		     Offset of the first mesh point from the lower left corner of the simulation box
-		     in units of the mesh constan.
+		     in units of the mesh constant.
 		     As soon as p3m is turned on the additional parameters can be changed with:
 		     \verbatim inter coulomb <parameter-name> <value(s)>  \endverbatim
 
