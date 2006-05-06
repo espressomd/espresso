@@ -984,3 +984,14 @@ topic:     My research topic is some software improvements for virtual
 reminded:  26.APR.2006
 
 
+name:      Jacob Kirkensgaard Hansen
+email:     jacobkh@ruc.dk
+institute: Royal Veterinary and Agricultural University
+           Copenhagen, Denmark
+sent:      05.MAY.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     self-assembly of lipid bilayers
+reminded:  X05.MAY.2006
+
+
