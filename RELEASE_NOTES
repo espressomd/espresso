@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.8x (Seska)                                                                      *
+* v1.9.8y (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.8x -
+- v1.9.8y -
 -----------
 
+(y) May       5th, 2006.
 (x) May       4th, 2006.
 (w) April    27th, 2006.
 (v) April    26th, 2006.
@@ -37,6 +38,8 @@ Current working revision.
 (a) November 18th, 2005.
 
 New Features:
+(y) P3M: Added non-interpolating version of the charge assignment function for
+    higher precision.
 (x) Added USE_ERFC_APPROXIMATION to turn on or off the approximation of erfc in P3M
     and EWALD by Abramowitz and Stegun. Turned on by default. Turn off for higher
     precision.
