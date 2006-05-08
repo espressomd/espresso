@@ -46,11 +46,14 @@ install: all
 	config/install-sh -c config/config.guess $(pkglibdir)/config.guess
 	echo "#!/bin/sh" > __common_Espresso
 	echo "export ESPRESSO_SOURCE=$(pkglibdir); export ESPRESSO_SCRIPTS=$(pkglibdir)/scripts" >> __common_Espresso
+	echo "GUESS=$(pkglibdir)/config.guess" >> __common_Espresso
 	echo "if test ! -d \$$ESPRESSO_SCRIPTS; then echo 'ESPRESSO scripts directory \$$ESPRESSO_SCRIPTS is missing, reinstall Espresso' 1>&2; exit -1; fi"  >> __common_Espresso
-	echo "if test ! -x $(pkglibdir)/config.guess; then echo 'ESPRESSO configuration guess script $(pkglibdir)/config.guess is missing, reinstall Espresso' 1>&2; exit -1; fi"  >> __common_Espresso
-	echo "if test ! -x $(pkglibdir)/obj-\`$(pkglibdir)/config.guess\`/Espresso; then echo 'There is no binary for the current hardware, '\`$(pkglibdir)/config.guess\`', recompile and install Espresso for this platform' 1>&2; exit -1; fi"  >> __common_Espresso
-	echo "$(pkglibdir)/obj-\`$(pkglibdir)/config.guess\`/Espresso \$$*" >> __common_Espresso
+	echo "if test ! -x \$$GUESS; then echo 'ESPRESSO configuration guess script \$$GUESS is missing, reinstall Espresso' 1>&2; exit -1; fi"  >> __common_Espresso
+	echo "BINARY=$(pkglibdir)/obj-\`$(pkglibdir)/config.guess\`/Espresso" >> __common_Espresso
+	echo "if test ! -x \$$BINARY; then echo 'There is no binary \$$BINARY for the current hardware, recompile and install Espresso for this platform' 1>&2; exit -1; fi"  >> __common_Espresso
+	echo "\$$BINARY \$$*" >> __common_Espresso
 	config/install-sh -m 755 __common_Espresso $(bindir)/Espresso
+	if test .$(bindir:%bin=%)lib/ESPResSo == .$(pkglibdir); then config/install-sh -c -m 755 Espresso.install_reloc $(bindir)/Espresso.reloc; fi
 	config/install-sh -c $(OUTDIR)/Espresso $(pkglibdir)/$(OUTDIR)/Espresso
 	config/install-sh -c $(OUTDIR)/Espresso_bin$(EXEEXT) $(pkglibdir)/$(OUTDIR)/Espresso_bin
 	for f in scripts/*.tcl; do config/install-sh -c "$$f" "$(pkglibdir)/$$f"; done
