@@ -38,7 +38,7 @@ void master_energy_calc();
 /************************************************************/
 
 void energy_calc(double *result)
-{ int i;
+{
   if (!check_obs_calc_initialized())
     return;
 
