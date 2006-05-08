@@ -552,28 +552,67 @@ static void setup_z_force()
   int np, c, i;
   double pref = coulomb.prefactor*C_2PI*ux*uy;
   Particle *part;
-  int e_size = 1, size = 2;
+  double *lclimgebot=NULL,*lclimgetop=NULL;
+  int e_size=1,size = 2;
+  double e, e_di_l, e_di_h;
+  double fac_imgsum = 1/(1 - delta_mult);
+  double fac_delta_mid_bot = delta_mid_bot*fac_imgsum; 
+  double fac_delta_mid_top = delta_mid_top*fac_imgsum;
+  double fac_delta         = delta_mult*fac_imgsum;
 
-  if (this_node == 0)
-    /* the lowest lclcblk does not contain anything, since there are no charges below the simulation
-       box, at least for this term. */
-    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
-
-  if (this_node == n_nodes - 1)
-    /* same for the top node */
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+  clear_vec(lclimge, size); //sandeep
+  if(this_node==0) {
+    
+    lclimgebot=blwentry(lclcblk,0,e_size);
+    clear_vec(lclimgebot, e_size);
+  }
+  
+  if(this_node==n_nodes-1) {
+    
+    lclimgetop=abventry(lclcblk,n_layers+1,e_size);
+    clear_vec(lclimgetop, e_size);
+  }
 
   /* calculate local cellblks. partblks don't make sense */
   for (c = 1; c <= n_layers; c++) {
     np   = cells[c].n;
     part = cells[c].part;
     lclcblk[size*c] = 0;
-    for (i = 0; i < np; i++)
+    for (i = 0; i < np; i++) {
       lclcblk[size*c] += part[i].p.q;
-    lclcblk[size*c] *= pref;
-    /* just to be able to use the standard distribution. Here below
-       and above terms are the same */
-    lclcblk[size*c + 1] = lclcblk[size*c];
+      
+      if (dielectric_contrast_on) {
+	if (c==1 && this_node==0) {
+	  e_di_l = (delta_mid_bot+1)*fac_delta;	  
+	  e =delta_mid_bot;	  
+	  lclimgebot[QQEQQP] += part[i].p.q*e;
+	  lclimgebot[QQEQQM] += part[i].p.q*e;
+	}
+	else
+	  e_di_l = (1+delta_mid_top)*fac_delta_mid_bot;  	
+	if (c==n_layers && this_node==n_nodes-1) {
+	  e_di_h = (delta_mid_top+1)*fac_delta;
+	  e = delta_mid_top;
+	  lclimgetop[QQEQQP]+= part[i].p.q*e;
+	  lclimgetop[QQEQQM]+= part[i].p.q*e;
+	}
+	else
+	  e_di_h = (1+delta_mid_bot)*fac_delta_mid_top;	
+
+	lclimge[QQEQQP] += part[i].p.q*e_di_l;
+	lclimge[QQEQQM] += part[i].p.q*e_di_h;
+      }      
+    }
+    lclcblk[size*c] *=pref;
+    lclcblk[size*c+1] = lclcblk[size*c];   
+  }
+
+  if (dielectric_contrast_on) {
+    scale_vec(pref, lclimge, size);
+    if(this_node==0)
+      scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
+    if(this_node==n_nodes-1)
+      scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 }
 
@@ -1159,7 +1198,12 @@ static void add_force_contribution(int p, int q)
   if (q == 0) {
     if (p == 0) {
       setup_z_force();
-      clear_image_contributions(1);
+
+      if (dielectric_contrast_on)
+	gather_image_contributions(1);
+      else
+	clear_image_contributions(1);
+
       distribute(1, 1.);
       add_z_force();
       checkpoint("************2piz", 0, 0, 1);
