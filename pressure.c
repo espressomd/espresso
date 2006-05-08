@@ -256,6 +256,8 @@ void init_p_tensor(Observable_stat *stat)
   case COULOMB_P3M:  n_coulomb = 2; break;
   default: n_coulomb  = 1;
   }
+#else
+  n_coulomb = 0;
 #endif
 
   obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, 9);
