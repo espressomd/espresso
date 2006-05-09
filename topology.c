@@ -296,7 +296,7 @@ int parse_trapmol(Tcl_Interp *interp, int argc, char **argv)
     }      
   }
 
-#ifdef EXTERNAL_FORCES  
+#ifdef MOLFORCES  
   for (i = 0; i < 3; i++) {
     if (trap_coords.e[i])
       trap_flag |= COORD_FIXED(i);
