@@ -296,7 +296,8 @@ int parse_trapmol(Tcl_Interp *interp, int argc, char **argv)
     }      
   }
 
-#ifdef MOLFORCES  
+#ifdef MOLFORCES 
+#ifdef EXTERNAL_FORCES 
   for (i = 0; i < 3; i++) {
     if (trap_coords.e[i])
       trap_flag |= COORD_FIXED(i);
@@ -311,6 +312,7 @@ int parse_trapmol(Tcl_Interp *interp, int argc, char **argv)
 #else
     Tcl_AppendResult(interp, "Error: EXTERNAL_FORCES not defined ", (char *)NULL);
     return TCL_ERROR;
+#endif
 #endif
 
   realloc_doublelist(&trap_center,0);
