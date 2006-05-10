@@ -2,15 +2,22 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.9f (Seska)                                                                      *
+* v1.9.9  (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.9f -
+- v1.9.9  -
 -----------
 
+
+
+- v1.9.9h -
+-----------
+
+(h) May   10th, 2006.
+(g) May    9th, 2006.
 (f) May    8th, 2006.
 (e) May    5th, 2006.
 (d) May    4th, 2006.
@@ -19,6 +26,7 @@ Current working revision.
 (a) April 24th, 2006.
 
 New Features:
+(h) Moved to version 1.9.9
 (e) P3M: Added non-interpolating version of the charge assignment function for
     higher precision.
 (d) Added USE_ERFC_APPROXIMATION to turn on or off the approximation of erfc in P3M
@@ -28,15 +36,18 @@ New Features:
     EXPERIMENTAL)
 
 Bugfixes:
+(h) fixed RELEASE_NOTES and versions.h after END_OF_ALPHABET :-)
+(g) Using the 'polymer' command no charges were assigned if the charge was
+    negative. Fixed this.
+(g) Made compiling with just EXTERNAL_FORCES (and not MOLFORCES) possible
+    again.
+(g) The config options EXTERNAL_FORCES and MOLFORCES were not independent from one
+    another. Removed this dependency. Now it's again possible to compile with just
+    EXTERNAL_FORCES compiled in.
 (f) fixed a bug occuring for nonneutral systems with dielectric
     contrast.
 (c) deleted some EWALD Debug messages
 (b) deleted some superfluous Debug-Info Lines of EWALD_TRACE
-
-
-- v1.9.9  -
------------
-
 
 
 - v1.9.8t -
