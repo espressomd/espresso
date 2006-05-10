@@ -1,2 +1,1691 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
+
+****************************************************************************************
+* v1.9.8z (Seska)                                                                      *
+****************************************************************************************
+
+Current working revision.
+
+
+- v1.9.8z -
+-----------
+
+(z) May       8th, 2006.
+(y) May       5th, 2006.
+(x) May       4th, 2006.
+(w) April    27th, 2006.
+(v) April    26th, 2006.
+(u) April    24th, 2006.
+(t) April    20th, 2006.
+(s) April    19th, 2006.
+(r) April    13th, 2006.
+(q) March    23rd, 2006.
+(p) March    12th, 2006.
+(o) March    11th, 2006.
+(n) February 23rd, 2006.
+(m) February 17th, 2006.
+(l) February 15th, 2006.
+(k) February  7th, 2006.
+(j) February  3rd, 2006.
+(i) January  31st, 2006.
+(h) January  30th, 2006.
+(g) January  25th, 2006.
+(f) January   6th, 2006.
+(e) January   4th, 2006.
+(d) December  6th, 2005.
+(c) December  2nd, 2005.
+(b) November 21st, 2005.
+(a) November 18th, 2005.
+
+New Features:
+(y) P3M: Added non-interpolating version of the charge assignment function for
+    higher precision.
+(x) Added USE_ERFC_APPROXIMATION to turn on or off the approximation of erfc in P3M
+    and EWALD by Abramowitz and Stegun. Turned on by default. Turn off for higher
+    precision.
+(u) Added Standard Ewald algorithm for longrange coulomb forces (still
+    EXPERIMENTAL)
+(s) MOLFORCES: Various changes are made to options in the "analyze set trapmol"
+    command....
+(s) MOLFORCES: The trap position may be set to an absolute coordinate or it may be
+    relative to the box size (useful for NPT simulations)
+(s) MOLFORCES: A viscous drag (a force linearly proportional to the molecule
+    velocity) may be applied to the molecule
+(s) MOLFORCES: The net force acting on the molecule (including thermostat forces)
+    can be canceled out  (i.e. surrounding particles cannot effect a molecules
+    velocity but can effect other degrees of freedom).
+(s) MOLFORCES: The forces applied by the trap on the molecule is summed over every
+    time step.  The tcl command "analyze mol force" gives this sum of this applied
+    force along with the number of time steps since it was last
+    called.
+(s) MOLFORCES: The centre of mass of a molecule is given by the "analyze mol com"
+    command but only if the molecule is trapped.
+(s) MBTOOLS: Various changes are made to MBTOOLS to incorporate the changes made to
+    MOLFORCES.
+(s) added gzip capability to polyBlockRead
+(r) Added convenience Tcl-functions require_feature and has_feature
+(j) Added Power5 architecture to configure-scripts
+(h) added new tcl-command "replacestdchannel" which replaces one of TCLs standart
+    I/O-channels with a named pipe
+(g) added a pore constraint similar to the cylinder.
+(d) Added Sandeep's modifications to MMM2D for dielectric
+    contrasts.
+(d) testcase for non-neutral charged 2d systems with a homogenous background
+    (exerts a force towards the center !)
+(b) ESPResSo is now also optimized for Celeron processors.
+(a) Added 'analyze stress_tensor' returning the 9 components of the (total or detailed) 
+    stress tensor (whose trace corresponds to the scalar pressure from 'analyze pressure').
+(a) Added everywhere the part of the calculation of the intra- and inter- molecular 
+    nonbonded pressure and stress tensor.
+(a) Added the parse part of stress tensor ("print_detailed_stress_tensor, "parse_and_print_stress_tensor").
+(a) Created new struct "Observable_stat_non_bonded" used in the calculation of intra- 
+    and inter- molecular nonbonded contributions to scalar pressure and stress tensor.
+(a) Added "*obsstat_non_bonded_intra" and "*obsstat_non_bonded_inter" pointers.
+
+Changes:
+(s) Modifications are made to the MOLFORCES option such that it works in
+    parallel.
+(o) Added communicator for temporary particle data (e.g. random numbers). No abuse
+    of other communicators necessary any more.
+(a) Change all the (scalar) pressure routines to calculate also the stress tensor.
+(a) Change the parse part of pressure ("print_detailed_pressure, "parse_and_print_pressure") 
+    to print out new "nonbonded" terms.
+(a) Change mpi_gather_stats to be able to gather data im multiple arrays.
+(a) The testcase 'analysis.tcl' now also checks the result of 'analyze stress_tensor'.
+
+Bugfixes:
+(z) fixed a bug occuring for nonneutral systems with dielectric
+    contrast.
+(w) deleted some EWALD Debug messages
+(v) deleted some superfluous Debug-Info Lines of EWALD_TRACE
+(t) fixed some ifdef EXTERNAL_FORCES conflicts
+(s) Forgot to add molforces to lists of C source files in Makefile when commiting
+    previous changes
+(s) Fixed the capping of the lj-cos2 force
+(s) Added the LJCOS2 option (commented out) to config.h
+(s) not enough memory was allocated before a strcpy command
+(q) again the -qipa problem on IBMs xlc compiler
+(q) fixed again a minor -qipa problem in configure on IBMs xlc
+    compiler
+(p) Made fold_coordinate tolerant to rounding errors.
+    Removed some lines introduced in rev 2.8, changed in rev 2.11.
+    These lines could lead to particles sitting on the wrong
+    processor
+    after moving over periodic boundaries between processors, i.e.
+    a
+    coordinate -\epsilon was folded to L-\epsilon \approx L and
+    then
+    to zero.
+    Now, rounding errors are tolerated, since the particle
+    allocation
+    scheme in domain_decomposition.c is robust as of rev 2.36.
+(n) Fixed a randomly chosen part of code that has been copied into the heart of
+    LinRegression.
+(m) Fixed error in undoing the last step, when a negative lattice population is
+    encountered.
+(l) fixed a problem with socklen_t typedef on IBMs Power5 with AIX
+    5.3
+(i) fixed some minor problems with --disable-xlc-qipa, when using the xlc-compiler
+    from IBM
+(i) Fixed a nonconstant size local variable problem.
+(f) In some cases, some lines in the static structure factor output were printed
+    twice. (Thanks for the hint Leonid !)
+(e) Fixed missing allocation in init_p_tensor
+(c) Fixed a bug in "pressure.h" which caused the program to not compile when "MASS"
+    was introduced in "config.h".
+
+
+- v1.9.7j -
+-----------
+
+(j) November  18th, 2005.
+(i) October   20th, 2005.
+(h) October   18th, 2005.
+(g) October   14th, 2005.
+(f) October   12th, 2005.
+(e) September 30th, 2005.
+(d) September 23rd, 2005.
+(c) September 16th, 2005.
+(b) September 15th, 2005.
+(a) September 13th, 2005.
+
+New Features:
+(j) New testcase to check conservation of momentum has been added ('mass.tcl').
+(i) ESPResSo now also runs under MS Windows within the cygwin environment.
+(h) Introduced new USE_TEMPORARY define in config.h for LB, circumventing problem 
+    with empty structure.
+(g) Added support for Xeon 64 bit processor to 'configure'.
+(e) added new file
+(d) Analysis routine radial_density_map added to allow construction of a density map of
+    the system assuming rotational symmetry.
+(d) By turning on the MOLFORCES it is now possible to mimic an optical trap which acts
+    on the center of mass of individual molecules. To implement this the new file
+    molforces.h was added and some additional parsing has been added to topology.c
+(c) Espresso now compiles and runs on SunOS
+(b) Added new lj-cos2 potential. Similar to existing lj-cos potential but with a
+    slightly different cosine tail.
+
+Changes:
+(g) charge_aggregation routine is removed from statistics.c. aggregation
+    routine handles the charge_aggregation with an optional
+    parameter. Corresponding tcl script under HMC+PT is also updated.
+(c) Removed old variable: extended[6] is no longer used in grid.c
+(a) mbtools and mmsg packages much revised and improved. Proper documentation written
+
+Bugfixes:
+(h) Fixed problem with empty structure ParticleTemporary offending ANSI-C.
+(f) when setting non bonded interactions no error was given if a particular interaction
+    was not set.  An error is now thrown
+(c) Fixed some SunOS issues.
+(c) Fixed some portability issues with random variable declarations in the middle of c-blocks.
+(a) Fixed a bug which prevented espresso from reading checkpoints when quoted strings
+    within lists were present
+
+
+- v1.9.6i -
+-----------
+
+(i) September 5th, 2005.
+(h) August   25th, 2005.
+(g) August   17th, 2005.
+(f) August   16th, 2005.
+(e) August   15th, 2005.
+(d) August    9th, 2005.
+(c) August    4th, 2005.
+(b) July     29th, 2005.
+(a) July     18th, 2005.
+
+New Features:
+(g) binning now allows to also print out the counts.
+(g) support for CYGWIN.
+(d) added new particle properties for dipoles (new part commands: dipm <m>, dip <x> <y>
+    <z>); only k-space dipolar p3m yet works, r-space still has to be done
+(d) some useful stuff for vmd written by Axel
+(d) script for viewing block-files in vmd
+(d) Added an other aggregation routine which analyzes PE aggregation using the counterions.
+(c) Enhanced 'checkpoint_read' to now also be able to write pov-files and render them.
+(c) Released several commands to convert configurations to snapshots using Povray, 
+    see /people/thnfs/homes/despintr/Espresso/scripts/pov.tcl for details.
+    Most noticeable probably is 'writepov <output> [-folded [-box [-render]]]' which 
+    takes the current particle setup and outputs a povray compatible file (including
+    the box if '-box' is given) of all (folded) coordinates, and optionally renders it.
+    Also available is 'morph <input1> <input2> <output> [<# of steps> [-render]]' which
+    takes two povray files as input and creates an animated sequence morphing <input1>
+    into <input2> over a series of (default:) 100 intermediate steps.
+(b) Added 'bond_angle_min' which calculates the bond_angle between three particles 
+    using the minimum image convention.
+(a) Added a new particle data ParticleTemporary for temporary particle informations.
+    Data is only sent around with an explicit request GHOSTTRANS_TEMP in 'ghost.c', 
+    see 'lb.c' for an example.
+
+Changes:
+(h) Added version.h for the code_info in Espresso to always be up to date.
+(f) Added new optional parameters folded and nofoldlist. If folded is set, folded
+    coordinates are passed on to vmd. nofoldlist is a list of types that should not be
+    folded if folded is set to folded.
+(d) checkpointread now gives an error if  is not either pov or pdb
+(d) writepov now checks whether the output file already exists
+
+Bugfixes:
+(i) Fixed bug in charge_aggregation. This tool can only be used when ELECTROSTATICS is compiled in. Therefore ifdefs are placed.
+(e) Missing  variable for call to read_checkpoint_in for the case where  = 0 and where 
+    is false
+(e) Electrostatic tuning using tunev2 no longer crashes for 0 charges.
+(d) the cutoff calculation for the complex sum was too high, but missing
+(d) cutoff values for cases with very few cells, which can cause crashes
+(d) one incr statement was missing
+(c) Fixed tune_cells to work with min_num_cells. Backport from bench_v4.tcl.
+(a) Fixed the forces initialization such that external forces are added 
+    for all thermostats, not only Langevin.
+(a) A few bugs fixed in 'lb.c', especially in momentum exchange between 
+    particles and fluid.
+
+
+- v1.9.5j -
+-----------
+
+(j) July  8th, 2005.
+(i) July  7th, 2005.
+(h) July  4th, 2005.
+(g) July  1st, 2005.
+(f) June 30th, 2005.
+(e) June 22nd, 2005.
+(d) June 20th, 2005.
+(c) June 17th, 2005.
+(b) May  30th, 2005.
+(a) May  26th, 2005.
+
+New Features:
+(i) Now also Mobile Pentium processors are automatically recognized.
+(e) Added the analyze bilayer_density_profile command and associated scripts in
+    packages/mbtools to allow a vertical profile analysis of a lipid bilayer
+(d) New ESPRESSO_PACKAGES environment variable can now be set to append a directory 
+    to the tcl auto_path from where customized tcl-packages can be read.
+(c) The 'polymer'-command now has a new, proper 'SAW'-mode which creates polymer chains
+    exhibiting correct statistics of a self-avoiding random walk.
+    The former implementation, also ensuring that excluded volume is observed but
+    resulting in different propabilities for the chain conformations, remains
+    available as 'PSAW' for performance reasons, as it is much faster than 'SAW'.
+(b) Added to ELC a neutralizing background and an option to not calculate it.
+    As usual, this is only interesting for nonneutral systems, although in 2D
+    even a homogenous background generates a force in the nonperiodic dimension, 
+    driving the particles towards the system center.
+
+Changes:
+(h) Changed the lipid_orient_order function so that it now takes a "all" flag 
+    which causes it to print out the orientation of every lipid instead of just the average.
+(g) Changed the interface for the orient_order command so that it now requires 
+    an argument into which the complete set of orientations for all lipids will be written.
+(f) Modified nbhood command so it now takes an optional planar argument.
+(c) Changed default mode of the 'polymer'-command to the new, proper SAW-mode.
+(c) Changed default shield-value of the 'polymer'-command to 1.0 (was: 0.0).
+(a) Renamed the callbacks to slave_callbacks to avoid a naming collision with a SSI of LAM.
+
+Bugfixes:
+(j) Added missing output for the nonneutralization flag in ELC.
+(e) Fixed a mistake in the check for the ESPRESSO_PACKAGES environment variable.
+(c) Fixed the SAW-mode of the 'polymer'-command to now reflect real SAW-statistics.
+(b) Fixed the plate energy in the constraints.
+
+
+- v1.9.4g -
+-----------
+
+(g) May 24th, 2005.
+(f) May 20th, 2005.
+(e) May 18th, 2005.
+(d) May 12th, 2005.
+(c) May 11th, 2005.
+(b) May  4th, 2005.
+(a) May  3rd, 2005.
+
+New Features:
+(c) The main start-up script for Espresso, calling the actual binary in the subfolder
+    apropriate for the current architecture, now features a dummy mode which thoroughly
+    checks whether everything necessary (e.g. the environment variables ESPRESSO_SOURCE
+    and ESPRESSO_SCRIPTS) is set, employing (hopefully) comprehensible error messages.
+(b) Added an automatic parser which handels tcl-lists of doubles being sent to C.
+(b) Added new command 'bin', which allows to analyze distributions by binning 
+    given numbers into given subsets, e.g.
+        bin -linbins 0 10 10 {0 0 2 3 1 7 3 1 1}
+    for 10 bins [0,1], (1,2],...,(9,10], normalized to a weight of 1, 
+        bin -linbins 0 10 10 {{0 1} {0 2} {2 1} {3 4} {1 1} {7 9} {3 4} {1 0} {1 1}}
+    for sorting the second entries into the bin given by the first one, while
+        bin -linbins 0 10 10 -binctrwdth 
+    returns the centers and widths of the bins for pretty printing.
+    Instead of -linbins you can also use -logbins or simply -bins, which takes a 
+    list of bin boundaries as argument and allows for arbitrary bins.
+
+Changes:
+(g) When saving tcl-arrays using blockfiles, the keyword 'array' is now prepended to 
+    each block to actually be able to use arrays at all. While this renders blockfiles
+    written with v1.9.4g or higher _and_ including tcl-arrays incompatible with older 
+    version, the reverse is not true as in older versions arrays could not be stored
+    anyway.
+(f) Changed the headers of all executable tcl-files (if not already done earlier)
+    to have them use the new calling interface for ESPResSo via the main start-up
+    script
+    which also eliminates the need for distinguishing different parallel environments,
+    as this is from now on done in the main start-up script itself.
+
+Bugfixes:
+(g) Fixed the handling of tcl-arrays being saved using blockfiles.
+(e) Bugfix in the parsing of the P3M-option 'epsilon metallic' (it was ignored).
+(d) Bugfix in the error formula for asymmetric boxes of MMM2D-applications.
+(a) Fixed the 'diamond'-command which was destroyed by some idiot not knowing how
+    the checks for double, integer, etc. work.
+
+
+- v1.9.3f -
+-----------
+
+(f) April 27th, 2005.
+(e) April 21st, 2005.
+(d) April 18th, 2005.
+(c) April 15th, 2005.
+(b) April 12th, 2005.
+(a) April 11th, 2005.
+
+New Features:
+(d) Up-to-date informations on the installation procedure are now available in the
+    newly added 'INSTALL'-file.
+(a) Added a generic MPI-environment for implementations which work simply 
+    via 'mpicc' and 'mpirun' out of the box.
+
+Changes:
+(f) Added masses to 'blockfile read particles'.
+(e) The 'el2d'- and 'P3M'-testcases now also check consistency of the energy calculation.
+(e) MMM2D now uses a numerically stabilized treatment of the exponentials, 
+    which should allow for highly asymmetric simulation boxes such as 10x10x10000.
+(b) Testcase 'rotation.tcl' did not produce eventual errors correctly.
+    Added an error if BOND_CONSTRAINT and ROTATION are used simultanously.
+(b) The output of 'code_info' now also lists masses if available.
+(b) 'thalpha' now uses tcl8.4. Basically just disables gcc, which does not work.
+    'mpiccg' is now also recognized as mpi compiler (rio cluster Garching).
+
+Bugfixes:
+(e) Fixed the energy calculation of ELC.
+(c) Fixed a bug which prevented multiple Options to CFLAGS and LDFLAGS.
+(c) Fixed a bug where the 'uwerr'-error analysis crashes for single row data.
+(a) Fixed a very rare case where Espresso would either bail out with 'error 004' or 
+    loop endlessly for particles at processor boundaries due to rounding ambiguities.
+
+
+- v1.9.2f -
+-----------
+
+(f) April  4th, 2005.
+(e) April  1st, 2005.
+(d) March 31st, 2005.
+(c) March 29th, 2005.
+(b) March 25th, 2005.
+(a) March 24th, 2005.
+
+New Features:
+(f) Added functions to '$ESPRESSO_SCRIPTS/ABHmath.tcl':
+    'dist_random'    (returns random numbers in the interval [0,1] which have a 
+        distribution according to a given distribution function p(x) <dist>
+        containing equally spaced values of p(x). If p(x) contains values larger 
+        than 1 the maximum <max> or any number larger than that has to be given)
+    'list_add_value' (add numerical value <val> to each element of <list>)
+    'flatten'        (flattens a nested list)
+    'list_contains'  (checks wether list contains <val> and returns its
+        number of occurences)
+(d) Added code to read a '.espressorc'-file with user defined settings
+    for allowing customized tcl-wrapper packages, parameters, plus more.
+(c) Automatic processor detection added for automized addition of optimization options.
+(c) The tk-libraries on Mac OS-X platforms are now also found automatically.
+
+Changes:
+(f) Added functions to '$ESPRESSO_SCRIPTS/ABHmath.tcl':
+    'bond_angle'          (calculates bond angle between particles p1, p2 and p3)
+    'bond_dihedral'       (calculates bond dihedral between particles p1, p2, p3 and p4)
+    'create_dihedral_vec' (creates last vector of a dihedral (vec1, vec2, res))
+(f) Changed assumptions in the lipid orientation calculation such that now the head bead 
+    can have any type but is assumed to be either type 0 or the first bead in the molecule 
+    where a type 0 bead takes preference.
+(b) The output of 'part <part_id> bond' now also has its own code word, "bond". 
+    Conversely, 'part <part_id> bond' now also accepts the output format as parameters, 
+    e.g. "bond { { t1 p11 p12... } { t2 t21 t22... } }" is now a valid input.
+
+Bugfixes:
+(f) Finally fixed the DPD initialization bug: SQR(time_step) -> time_step.
+    See also the mails from Ulf Schiller to the 'despresso'-mailing list.
+(f) Fixed a problem with the lipid orientation calculation where the head bead 
+    was assumed to always have type 0. Now the head bead can have any type but is assumed 
+    to be either type 0 or the first bead in the molecule where a type 0 bead takes preference.
+(f) Fixed a bug in 'try_delete_exclusion'.
+(e) Fixed a bug in the dihedral forces. The new version is based on Arijits routines,
+    although it is not yet certain if the energies are correct.
+(b) Fixed the installation of directories ('scripts' and 'html_doc').
+(b) Fixed the additional sources handling, i.e. MPI fake.
+(a) Fixed a rare particle loss event.
+(a) Fixed that 'make install' was missing a '\$'.
+
+
+- v1.9.1b -
+-----------
+
+(b) March 23rd, 2005.
+(a) March 21st, 2005.
+
+New Features:
+(b) Introduced an automatic configuration ability to ESPResSo.
+    Now, executing './configure' in the root-directory will (attempt to) customize
+    the program to the current working environment, identifying most of the commonly
+    used compilers, parallel communicators, tcl-versions, etc.pp. required by itself.
+    For details, see './configure --help'. 
+    Note that in course of this, also the object file directory names have changed
+    from the old '$ESPRESSO_SOURCE/Linux', '$ESPRESSO_SOURCE/Darwin', and so on,
+    to 'obj-<cpu>-<vendor>-<os>'. There is, however, now a script in the source directory
+    which will automatically start the correct binary and MPI-implementation for the 
+    current architecture, provided it has been configured and compiled successfully.
+(b) Introduced new option 'make install' which will install ESPResSo in the directories 
+    specified using the new './configure'-ability. 
+    The installed script contains the correct settings for $ESPRESSO_SOURCE and -SCRIPTS. 
+(b) Informations on the production- and debug-status, the employed MPI-environment and
+    FFTW-version are now also included in the output of the 'code_info'-command.
+
+Changes:
+(b) File '$ESPRESSO_SCRIPTS/scripts/aux.tcl' has been renamed to 'auxiliary.tcl' 
+    for better compatibility with a certain brain damaged operating system 
+    which doesn't like the other name 'cause it confuses it with the serial port of the PC.
+(b) The internal structure of 'config.h' has been changed to allow better overview
+    on the compilation status by separating documentation and flags (as done in 'debug.h').
+(b) Changed makros FFTW_REAL and -IMAG for fftw3 to also work with systems/platforms
+    where the complex data type is used. 
+(b) Changed inclusion policy of header files: All files in ESPResSo are now required to
+    include 'utils.h' which in turn will be the only one to include 'debug.h' and 'config.h'.
+
+Bugfixes:
+(b) Fixed some inportabilities such as spaces before #
+(a) Small fixes in Lattice-Boltzmann part of the communication related to problems 
+    with running on ALPHA-machines.
+
+
+****************************************************************************************
+* v1.8.6e (Rebi & Azan)                                                                *
+****************************************************************************************
+
+Released & tagged on March 15th, 2005.
+
+
+- v1.8.6e -
+-----------
+
+(e) March    15th, 2005.
+(d) March     8th, 2005.
+(c) March     3rd, 2005.
+(b) March     1st, 2005.
+(a) February 28th, 2005.
+
+New Features:
+(c) Added a new option for aggregation analysis tool: <min_contact> option defines a criteria 
+    for minimum number of contacts for two molecules to be considered being in the same aggregate.
+(c) Added new feature to aggregation analysis routine so that there is a 
+    'minimum number of contacts'-criteria
+
+Changes:
+(e) Deactivating superfluous output of 'analyze necklace'-command.
+(b) Speedup of the Bessel functions used for 'MMM1D'-calculations:
+    - improved Chebychev series evaluation
+    - 10^-14 precision adaptive routines
+    - Combo K0/1 routine
+(a) Updated the MMM1D testcase to contain maximal precision reference data.
+
+Bugfixes:
+(d) Fixed bug in aggregation analysis tool: 
+    For calculating distances 'distance2vec' was used (which ignores periodicity), 
+    but 'min_distance2' should have been used instead.
+(c) Fixed an n^2 loop in aggregation analysis tool.
+
+
+- v1.8.5f -
+-----------
+
+(f) February 15th, 2005.
+(e) February 14th, 2005.
+(d) February  4th, 2005.
+(c) January  31st, 2005.
+(b) January  30th, 2005.
+(a) January  28th, 2005.
+
+New Features:
+(e) The new grid allocation algorithm was added.
+(d) New functionality for the part command which returns the topology of a particle:
+    part <num> print connections [<range>]
+(c) Added an argument to 'analyze_fold_molecules' which shifts the system prior to folding.
+    This matches up with the tcl-command 'writepdbfoldtopo' which has an optional shift argument 
+    to allow such shifting. This is intended to assist with visualisation.
+(a) The advanced Lattice-Boltzmann enhancement to Espresso has been released, 
+    allowing to simulate a fluctuation Lattice-Boltzmann fluid with our code.
+
+Changes:
+(c) In the analysis routine the old "gyrationtensor" routine is renamed as "momentofinertia matrix".
+(c) Checking for 1x1xn node_grid when layered cellsystem is on.
+
+Bugfixes:
+(f) Fixed a problem that the initial 'min_num_cells' was illegal in general.
+(d) Fixed a bug in 'comforce.h'.
+(c) Bugs fixed and mass implemented related to the 'gyrationtensor'.
+(c) Fixed 'imd.c' so that the shift argument is supplied to 'analyze_fold_molecules' function.
+(b) Small fixes to lattice Boltzmann input parser.
+
+
+- v1.8.4e -
+-----------
+
+(e) January 25th, 2005.
+(d) January 24th, 2005.
+(c) January 21st, 2005.
+(b) January 20th, 2005.
+(a) January 19th, 2005.
+
+New Features:
+(a) Routines to compute dipolar energies, forces and torques with the P3M method
+    have been added, embedded within a compiler flag DIPOLES to activate them
+    (disabled by default, because this feature is still under development).
+(a) Introduced 'on_observable_calc' to enforce re-calculation of number of charges.
+
+Changes:
+(b) The Debye-Hueckel-testcase now uses the nsquared cell system.
+(b) Modified 'calc_3d_grid' such that it really returns an array in ascending order.
+
+Bugfixes:
+(e) Fixed 'comfixed.tcl' testsuite script. Now it actually integrates 
+    and checks if comfixed is really working.
+(e) Fixed a buffer overflow in MMM1D, P3M, pressure-calculation, 
+    statistics, statistics_chain, topology.
+(d) Fixed the molecule parser to accept its own output for particles not having a 'mol_id'.
+    "off" is also accepted, if anybody wants to set it explicitly.
+(c) Fixed a missing '#ifdef ELECTROSTATICS' in the 'initialize.c' file.
+(b) Fixed the 'min_num_cells' feature for multi node processing.
+(b) Fixed another P3M bug if the skin was changed after setting up P3M, so that
+    P3M now honours changes to the skin.
+(b) Fixed the additional checks in P3M to contain the skin.
+(a) Fixed a severe bug that the charges for P3M and Maggs were only counted when 
+    setting up the interaction. If the interactions were set up before setting up 
+    the particles, the count of charged particles was always zero. 
+    To help fixing this, a new 'on_observable_calc' was introduced.
+
+
+- v1.8.3f -
+-----------
+
+(f) January  15th, 2005.
+(e) January  14th, 2005.
+(d) January  11th, 2005.
+(c) January   6th, 2005.
+(b) January   4th, 2005.
+(a) December 27th, 2004.
+
+New Features:
+(f) Added some checks for the non verlet domain decomposition case.
+(f) Added an entirely re-written version of the exclusions code.
+(f) Added a generic P3M test case.
+(e) Added background_error-codes: Every background error is now identified through its
+    individual error code, which is always returned as the first entry in the list element
+    containing the error message.
+(c) Added option to specify position of 2nd monomer of first chain in the 'polymer'-command, 
+    in case a certain direction of the polymer is desired (option makes only sense 
+    if no more than one polymer is to be created).
+(b) Added 2nd spherical bond angle in 'polymer'-command to allow creation of helixes or DNA.
+(b) Added the Morse-potential to Espresso.
+(a) Added new analysis routine
+    'analyze cell_gpb <Manning parameter> <outer cell radius> <inner cell radius> [<accuracy> [<# of interations>]]'
+    for determining the numerical solution of the Poisson-Boltzmann equation in the cell model.
+
+Changes:
+(f) Removed the buggy, non-interpolating version of the P3M charge assignment;
+    anyways, the gain is only around 10%.
+(f) Some improvements in the P3M charge assignment.
+(d) Changed 'sprintf' in the runtime_errors to the new ERROR_SPRINTF-macro
+(c) Reduced the minimal number of cells to the correct number 8.
+(b) Reduced PARTICLE_INCREMENT to 8 as it does not cost anything, but reduces 
+    the amount of memory used.
+(b) RATTLE is slightly faster as the tolerance conditions are now verified 
+    while the correction vectors are calculated.
+
+Bugfixes:
+(f) Fixed the square bug in P3M, which occurs for non-neutral systems.
+(f) Fixed a rare event bug in tunev2 which could result in wrong parameter sets
+    when there was only one possible parameter set for a mesh, and that was optimal.
+(d) Fixed a bug which crashed analyze energy and pressure if the bonded interactions 
+    had noncontigous numbers.
+(d) Exclusions now also work without Verlet lists.
+(d) Fixed the link cells routines to work with exclusions.
+(b) Fixed a bug in rigid_bond_set_params(), where the velocity tolerance was not 
+    multiplied by time_step; this led to inaccurate velocity corrections towards 
+    the correct velocity tolerance.
+(b) Fixed the handling of min_num_cells so that setting it updates the cell grid. 
+    The check for illegal values happens earlier, preventing some background errors.
+(b) Fixed a typographical error in on_ghost_flags_change() for activating the flag 
+    'ghosts_have_v' for the case when BOND_CONSTRAINT is compiled in.
+(b) Fixed the new tuning to correctly report the number of charges.
+
+
+- v1.8.2i -
+-----------
+
+(i) December 23rd, 2004.
+(h) December 21st, 2004.
+(g) December 14th, 2004.
+(f) December 10th, 2004.
+(e) December  9th, 2004.
+(d) December  6th, 2004.
+(c) December  2nd, 2004.
+(b) December  1st, 2004.
+(a) November 30th, 2004.
+
+New Features:
+(i) Added new optional option 'angle <angle>' to the polymer command, allowing to create
+    polymers within the freely-rotating chain model.
+(e) Added a new 'writepdbtopo' which uses the new 'analyze get_folded_positions'-function 
+    to write a pdb file using folded molecule information.
+(e) Added a new 'analyze' command 'get_folded_positions' which allows the user to get 
+    folded particle positions out to the tcl level.  The most important flag to this 
+    is '-molecule' which folds the system using topology information before constructing 
+    the output. It is also possible to shift in x, y, or z directions prior to folding.
+(c) Masses have now also been added to the 'chain_rdf' function.
+(b) Comfixed potential now also works with different masses on the particles.
+(b) Rewrote checkpointing to be able to save disk space by removing repeating informations:
+    Added new options 'COMPACT_CHK' to 'checkpoint_set', which'll take care of this, if enabled.
+
+Changes:
+(g) Replaced the O(N^2)-loop in the aggregation analysis tool.
+
+Bugfixes:
+(h) Updated the data of the 'analysis'-testcase to include the 'analyze <g3>' corrected in v1.8.2d
+(h) Fixed a bug that actually prevented reconstruction of the data files in the 'analysis'-testcase.
+(g) Removed quotes from appended items to 'part_write' in 'poly_block_write'. Use of quotes 
+    resulted in a tcl list being appended rather than a single item thereby preventing the 
+    'part'-command to execute.  Also added an extra check for ELECTROSTATICS.
+(g) Fixed a memory allocation bug in the aggregation analysis tool.
+(g) Fixed a buffer overflow in the 'polymer'-command on Darwin occuring when the bonded potential
+    to be used had not been created before execution of the command.
+(f) The 'analyze aggregation'-command now calculates correct standard deviation.
+(d) Re-fixed wrong renormalization in 'analyze g3'.
+(b) Fixed yet another bug in 'pair_dist' which used to not use the 2nd particle's z-component,
+    while now (after HL's rewrite) taking the wrong particle identities to derive the distance.
+(b) Fixed wrong renormalization in 'analyze g3'.
+(a) Lots of fixes to the documentation.
+(a) Fixed missing #ifdef BOND_CONSTRAINT in the interaction processing.
+
+
+- v1.8.1l -
+-----------
+
+(l) November 16th, 2004.
+(k) November  9th, 2004.
+(j) November  5th, 2004.
+(i) November  5th, 2004.
+(h) October  29th, 2004.
+(g) October  28th, 2004.
+(f) October  26th, 2004.
+(e) October  25th, 2004.
+(d) October  22nd, 2004.
+(c) October  20th, 2004.
+(b) October  19th, 2004.
+(a) October  18th, 2004.
+
+New Features:
+(k) Added the missing RIGID_BOND parser and printing.
+(j) Completely rewritten exclusions code. Ready for testing. Allows for 
+    general exclusions and is stored particle bound, so it should be faster.
+(j) Added the testfake target for mpifake testsuite runs ('gmake testfake').
+(j) RATTLE is now compiling and MAY work.
+(i) The Morse potential for nonbonded interactions has been added, cap included.
+(g) Added masses into statistics facilities.
+(f) Added an additional error check to parse_sync_topo_part_info
+(e) Two new subroutines for structural analysis:
+    1) total structure factor S(q)
+    2) 'analyze rdfchain' for some useful chain statistics
+(d) Added the famous soft-sphere potential.
+(c) Now the P3M limit for the mesh size is configurable and defaults to 128.
+(a) The Buckingham potential has been added.
+(a) Rattle is in, but probably not yet working.
+
+Changes:
+(j) Bugfixes by Arijit in the docu, buckingham.h and in the thermostats.
+(j) Arijit's exclusion code has more or less been removed (and rewritten, see above).
+(j) Removed 'subt_lj' and 'FENE/harm'-combos, because new exclusions are more powerful.
+(j) Inlined the RNGs (random number generators) and some thermostats.
+(j) Flags for the compilers changed: gcc is more aggressive now, while 
+    icc 8.1 should no longer issue silly warnings anymore.
+(j) New compiler flags. Makes compiling slower, but the code faster.
+    gcc is more aggressive now, while for icc, a comment was added how to avoid the 
+    silly warnings with the recent 8.1 compiler.
+(h) Changed includedir order, so that mpifake works on Darwin.
+(c) Switched from POLYGAMMA_EPS to the commonly used ROUND_ERROR_PREC.
+(b) By request of too many users, grid.h now explicitely includes limits.h (which
+    shouldn't be necessary on modern machines, but then you never know).
+(a) The new tuning now refuses to use meshes larger than 256, to avoid memory
+    allocation problems (a 512 grid consumes roughly 3 GB memory!).
+
+Bugfixes:
+(l) Fixed the complete mess in auto_exclusions, which essentially prevented it from working.
+(k) Fixed a bug which prevented tuning from working.
+(j) Fixed a mem leak in partCfg, bonds (updatePartCfg(WITH_BONDS)) where never freed.
+(j) Fixed the particle printout, not handling particles by reference.
+(j) Fixed try_delete_bond, deleting bonds probably did not work for a long time.
+(j) Fixed a bug in the center of mass (COM), where all coordinates were counted 
+    for the total weight, resulting in an off-by-3-error.
+(j) Added #ifdef statements for TABULATED and BUCKINGHAM potentials in the interprintall()   
+(b) Fixed the warning with the recent icc (Blade center).
+
+
+- v1.8.0a -
+-----------
+
+(a) October 18th, 2004.
+
+New Features:
+(a) Masses have been added to ESPResSo which may be enabled using the compilerflag MASS
+    in config.h (the usual place for such flags). 
+    This also required introduction of a macro PMASS, representing the mass of a particle,
+    which returns 1 if masses are disabled; all these products the compiler should then
+    optimize away such that without masses nothing should've changed in the final binary.
+    Nevertheless the introduction of masses naturally demands a thorough re-write of the
+    entire code to make sure that no spot where masses belong is overlooked.
+    So far the core system (I/O, integration with thermostat, NpT, pressure) works, but 
+    most of the analysis routines, the blockfile procedures, checkpointing, and all of
+    the non-standard additions have not yet been adapted; other mass-dependent stuff
+    has already been added (e.g. Rattle) without being fully functional yet.
+
+
+****************************************************************************************
+* v1.8.Beta (Rebi & Azan)                                                              *
+****************************************************************************************
+
+First preview released on October 18th, 2004.
+
+
+- v1.7.6e -
+-----------
+
+(e) October   17th, 2004.
+(d) October   11th, 2004.
+(c) October    8th, 2004.
+(b) October    6th, 2004.
+(a) September 28th, 2004.
+
+New Features:
+(d) Added Xeon CPU to the list of platforms to optimize for.
+(c) Added support for FFTW version 3. When electrostatics/p3m is used, the Fast
+    Fourier Transform should run faster with the new version. Use switch
+    USEFFTW3=yes in the Makefile.$PLATFORM to use this feature. If fftw3 is not
+    installed on your system, use the default switch USEFFTW3=no or install fftw3,
+    which you can get at www.fftw.org.
+    Be aware of different definition of fftw_complex type in fftw2 and fftw3.
+(b) Documentation update including new sections in the Programmer's Guide 
+    and informations on the cellsystem.
+
+Changes:
+(e) Two changes to avoid memory starvation due to too small cells:
+    - min_num_cells allows to define a minimal number of cells.
+    - p3m tunev2 honors this by ignoring impossible r_cuts.
+(a) Some changes in the automatic documentation system:
+    DOT is now again off, since e.g. interaction_data.h is unreadable otherwise.
+    Some features like electrostatics are now turned on in the documentation,
+    which prevents contentless pages for e.g. P3M, and lots of warnings.
+
+Bugfixes:
+(c) Fixed a bug in ELC which effectively prevented the tuning.
+(a) Fixed Makefile such that you can change the compiler and still use MPIFAKE or MPICH.
+
+
+****************************************************************************************
+* v1.7.5  (Mezoti)                                                                     *
+****************************************************************************************
+
+Released & re-tagged on September 24th, 2004.
+
+
+- v1.7.4f -
+-----------
+
+(f) September 23rd, 2004.
+(e) September 21st, 2004.
+(d) September 21st, 2004.
+(c) September 20th, 2004.
+(b) September 16th, 2004.
+(a) September 14th, 2004.
+
+New Features:
+(f) Added a fake MPI implementation for single CPU jobs (currently only for Linux),
+    called MPIFAKE: If set to 'yes', a simple fake MPI implementation (mpi.h/mpi.c)
+    is used, which only works on one processor; since most MPI calls are simply 
+    empty, single CPU jobs run MUCH faster than before. 
+    No fake mpirun is provided, start scripts by 'Linux/Espresso <scriptname>' directly. 
+    The testsuite script has a flag -nompi, which does this, to test the fake MPI.
+    Of course this does not need a lamd or whatever running in the background...
+(e) P3M now has a second tuning mechanism, tunev2, which should be faster than the old
+    one in general, but tests possible parameters more thoroughly. It uses a bisection
+    to determine r_cut, but, however, still the slow error estimate.
+(e) P3M can now be started without interpolation. Setting 'n_interpol' to 0 (which is now 
+    also a tuning parameter) switches off both the interpolation of the charge assignment 
+    function as well as the saving of the charge fractions. 
+    For charge assignment orders below 5 this is faster than the interpolation, while
+    higher charge assignment orders are rarely used.
+(c) Added ASYNC_BARRIER for easier debugging of the async comm mode. At the beginning 
+    of each comm step, there is an MPI_Barrier, which ensure that all nodes have finished 
+    the previous command, so that synchronization errors are detected earlier.
+(b) There is an additional check for errors right after the integrator's initialization 
+    to catch really fundamental problems, which do not allow the force calculation at all.
+(a) Added 'add_maggs_yukawa_forces' which was previously ommited.
+(a) New test case nve_pe.tcl added. This does an integration in the NVE ensemble 
+    with electrostatics, LJ, Fene, and Cosine angular potential.
+
+Bugfixes:
+(e) Fixed the bug fix in v1.7.3e regarding force calculation within the new framework: 
+    The short ranged parts of electrostatics methods in 'forces.h' are now divided 
+    into short and long ranged methods. For the first ones, constituting of just DH, 
+    a virial pressure calculation is used, while for the others, currently just P3M, 
+    a separate approach is used. All electrostatics methods are now ADDING forces, 
+    but the long range ones have to take care of the pressure themselves.
+(e) Fixed memory leakage in aggregation routine.
+(d) Fixed a bug in cells_update_ghosts which prevented ghost updates using the DOMDEC.
+(b) Error in cells_udate_ghosts() for the case of no_verlet_lists has been removed.
+(b) Error in the calculation of Yukawa self-forces in the Maggs algorithm has been removed.
+(a) Error for the calculation of beta[][] in the Maggs algorithm was cleaned.
+
+
+- v1.7.3e -
+-----------
+
+(e) September 13th, 2004.
+(d) September 10th, 2004.
+(c) September  6th, 2004.
+(b) September  3rd, 2004.
+(a) September  2nd, 2004.
+
+New Features:
+(e) New function 'average <tcl-list>' averages the contents of a tcl-list of values.
+(e) Re-entered new function 'polyBlockRead <source>' to read in blockfile 'source'
+    which was first added for v1.6.6e but removed in v1.7.3c accidentally.
+(e) Re-entered enhancement to 'checkpoint_read <read_all_checkpoints> <write_pdb> <pdb_sfx>'
+    to also be able to convert the whole checkpoint-series into a trajectorie / vmd-movie
+    which was first added for v1.6.6e but removed in v1.7.3c accidentally.
+(c) New auxiliary mathematical functions on tcl-script-level:
+    ABHmath.tcl: bond_length, veclensqr, min_img_bond_length, 
+    aux.tcl:     calc_aniso_box, system_com
+(b) Maggs algorithm for calculation of the electrostatics has been added.
+(b) The possibility to run domain decompostion without Verlet list has been added.
+
+Changes:
+(e) Function 'average_checkpoint <origin> <what>' replaces former 'average' to more properly 
+    display what the function is doing, avoiding confusion with new function 'average' (s.a.).
+(c) In 'energy_calc()' in the case of ELECTROSTATICS that energy now defaults to zero.
+(a) To prevent the new error handling to accidentally cause memory overflow, its error
+    status is now collected twice during each integration cycle (for NPT only at the moment).
+
+Bugfixes:
+(e) Fixed a major bug which caused the force-derivation to overestimate all nonbonded forces
+    by a factor of 2 if both nonbonded and electrostatic interactions were present and active;
+    this bug was introduced with the new force interface in v1.7.2a and did not affect statics,
+    while all trajectories (hence forces, energies) became wrong under the given circumstances.
+(d) Fixed bug in 'nemd'-code which did no longer properly check if only one CPU was used.
+(c) Fixed bug in 'add_bonded_virials' which prevented non-2-body-interactions to work properly.
+(c) Error in 'calc_link_cell_energies' has been fixed.
+(b) Fixed a bug which prevented usage of the p3m-tuning on more than one processor.
+
+
+****************************************************************************************
+* v1.7.2e (Mezoti)                                                                     *
+****************************************************************************************
+
+Released & tagged on September 2nd, 2004.
+
+
+- v1.7.2e -
+-----------
+
+(e) September 1st, 2004.
+(d) August   31st, 2004.
+(c) August   30th, 2004.
+(b) August   27th, 2004.
+(a) August   26th, 2004.
+
+New Features / Changes:
+(a) New force evaluation structure, unified force and energy interfaces 
+    for the potentials, and simpler force/pressure/energy evaluation loops.
+(a) The derivation of 'p_vir' has been moved out of each potential's header
+    file back to the force calculation's main loop; hence from now on it is
+    no longer necessary to include it into newly added potentials as long as
+    they follow the forces interface introduced thereby.
+(a) The derivation of 'analyze pressure', 'analyze p_inst', 'analyze p_IK1',
+    'analyze energy' has been adapted to the new force/energy interface.
+
+New Features:
+(c) Added error recovery in the case of out of bounds particles.
+
+Changes:
+(d) Now you can still run NpT-simulations in 2D or 1D without the -cubic_box option 
+    enabled even if electrostatics is compiled in but not used (i.e. bjerrum == 0.0);
+    otherwise -cubic_box will automatically be invoked and a warning issued.
+(b) Reduced screen output for 'checkpoint_read' with 'only_last' option enabled.
+
+Bugfixes:
+(e) Fixed bug in 'mpi_get_particles' when no bond information was requested, 
+    the slave still sends some if there are no particles on the slave.
+(e) Various fixes to prevent some warnings on Tru64 and Alpha.
+(e) Fixed premature 'return'-statement in resurrection of 'analyze Vkappa' (see v1.7.2b).
+(d) Fixed some bugs in statistics aggregate function so that it compiles on DEC machines.
+(c) Fixed recovery of error handling of negative 'nptiso_volume' in the integrator.
+(b) Fixed an endless loop in the error handling if particles moved too far.
+(b) Fixed format errors in part of the error handling output.
+(b) The tuning of p3m now checks for errors correctly and bails out accordingly.
+(b) Re-enabled possibility to re-tune p3m by allowing to disable r_cut again.
+(b) Re-entered the enhancement of the analysis routine for estimating volume 
+    fluctuations to 'analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }]'
+    allowing the user to save/restore the measurement, which was first added
+    for v1.6.5c but removed in v1.6.5d accidentally.
+(a) Fixed bug in 'check_particles' when the skin is not yet set.
+
+
+- v1.7.1c -
+-----------
+
+(c) August 26th, 2004.
+(b) August 23rd, 2004.
+(a) August 20th, 2004.
+
+New Features:
+(c) Now the 'mpich'-implementation on Linux64 is available
+    in addition to the known 'lam' one via flag in 'Makefile.Linux'.
+    Note that you'll need a link to the 'mpich'-implemented 'mpirun' 
+    to execute the resulting binary (the default is 'lam's 'mpirun').
+(c) New architecture AMD64/Opteron is now supported as well,
+    hence we have modified Makefiles with optimized settings.
+(b) A new check_particles ADDITIONAL_CHECKS has been added 
+    to test the 'part'-command.
+(b) Improved method for calculating midpoint of bilayer.
+
+Changes:
+(a) Changed the core to procedure something working on SuSE 9.1/AMD64.
+(a) Replaced the flag 'COM_on' by some reasonable checks.
+
+Bugfixes:
+(b) Fixed a bug in the 'part' command that relied on 'local_particles' 
+    to contain physical particles only, although ghosts may be in there, too.
+(a) Various fixes in the error handling occuring when switching off parts of the code.
+
+
+- v1.7.0a -
+-----------
+
+(a) August 19th, 2004.
+
+New Features:
+(a) A new error handling code has been put into Espresso:
+    Instead of the old 'fprintf(stderr, "..."); errexit()' scheme, 
+    you have to include "errorhandling.h" and call
+	char *errtxt = runtime_error(string_length);
+	sprintf(errtxt, "...");
+    The string_length just has to be larger than the actual error 
+    message, so typically '128+n_i*TCL_INTEGER_SPACE+n_d*TCL_DOUBLE_SPACE' 
+    will do.
+    Afterwards the program will go on until the runtime errors are collected.
+    If you write a new Tcl command, make sure that at the end you call 
+    'mpi_gather_runtime_errors(interp, error_code)'. If the error_code is TCL_OK 
+    and no runtime errors occured, it will simply return TCL_OK, but if an 
+    runtime error occurs, it will be set as the interpreters result. If the state 
+    was already TCL_ERROR, the background errors are appended, so the original 
+    error message is not lost. In case of errors, the routine returns TCL_ERROR, 
+    so in most cases you are done with
+        return mpi_gather_runtime_errors(interp, error_code);
+    Again, see the code.
+
+Changes:
+(a) Changed a lot of 'errexit()'s to using the new 'runtime_error' facility.
+(a) The parsers for the tabulated potentials now generate Tcl errors instead of
+    'errexit()'s.
+(a) All parsers for interactions have been moved to the corresponding force files.
+
+Bugfixes:
+(a) A lot of bugfixes all over the place, mostly in the parsers.
+(a) The layered cell system is now able to deal with moving particles.
+(a) Setting bonds now generates an 'on_particle_change' on ALL nodes.
+(a) Fixes for the Tru64 compiler.
+
+
+****************************************************************************************
+* v1.7.Gold (Mezoti)                                                                   *
+****************************************************************************************
+
+Released on August 19th, 2004.
+
+
+- v1.6.6h -
+-----------
+
+(h) August 18th, 2004.
+(g) August 16th, 2004.
+(f) August 13th, 2004.
+(e) August 12th, 2004.
+(d) August 10th, 2004.
+(c) August  2nd, 2004.
+(b) July   27th, 2004.
+(a) July   27th, 2004.
+
+New Features:
+(f) Added new analysis command "analyze aggregation" to analyze the aggregation 
+    state of molecules in the system.
+(e) Added 'polyBlockRead <source>' to read in blockfile 'source'.
+(d) Added Maxwell velocity distribution. 
+(d) Added 'analyze activate' to activate one of the stored configurations.
+(c) Added a new check for the NPT integrator to the testsuite.  
+    The compressibility is calculated from volume fluctuations and compared 
+    with a previously calculated value; this value was also checked by calculating 
+    the compressibility from the change in pressure with changes in volume.  
+    The value obtained by this method deviates at the third significant figure;
+    hopefully this means the "fluctuation response theorem" holds for our NPT integrator.
+(b) Added new analysis command for lipid bilayers 'analyze lipid_orient_order'.
+    It's another command that is really only useful for a bilayer system.
+(a) Introduced ghost system flags, at the moment just ghosts_have_v, which
+    determines wether when updating the position also the velocity is updated.
+    Needed for DPD and RATTLE. Do not directly change the variable, but modify
+    the procedure on_ghost_flags_change() and call that.
+(a) Added documentation for MMM2D, MMM1D and ELC, and the ghost communication stuff.
+
+Changes:
+(h) Improved the algorithm for the calculation of height function in modes analysis.
+(h) Improved the parser for get_lipid_orients.  
+(h) Merged 'analyze aggregation' with changes to modes analysis.
+(d) Changed classification of stray lipids to account for the fact that some lipids 
+    will become incorporated into periodic image bilayers. These lipids are still
+    discarded in modes analysis but are classified as "STRAY".  
+    Lipids which are genuinely floating in space are now classified as "REAL_STRAY".
+(a) Moved 'anounce_rebuild_vlist' to 'announce_rebuild_vlist' and changed the MPI
+    communications' 'Reduce'/'Bcast' to 'Allreduce'.
+(a) Now errors in the 'integrate set' command are actually reported as errors.
+
+Bugfixes:
+(g) Fixed bug that after a cells_re_init the ghost cells were resized only
+    for domain decomposition. Now this is handled by the cell structure code.
+(d) Fixed bug in the mindist which only worked for symmetric sets.
+(d) Fixed some bugs in the topology-mol_id sync command so that this now works 
+    properly on multiple nodes.
+(a) Fixed bug that 'thermostat set' crashes.
+
+
+- v1.6.5d -
+-----------
+
+(d) July 26th, 2004.
+(c) July 22nd, 2004.
+(b) July 15th, 2004.
+(a) July 13th, 2004.
+
+New Features:
+(d) Enhanced 'checkpoint_read <read_all_checkpoints> <write_pdb> <pdb_sfx>' to also
+    be able to convert the whole checkpoint-series into a trajectorie / vmd-movie 
+    '<write_pdb>0000.pdb' ... '<write_pdb>0359.pdb' (if e.g. 360 files were given)
+    if <write_pdb>!=0; <pdb_sfx> determines the # of digits to be used while
+    enumerating the configurations (defaults to 5).
+(c) Enhanced analysis routine for estimating volume fluctuations and the systems'
+    compressibility to 'analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }]'
+    allowing the user to save/restore the measurement.
+(b) Introduced 'setmd npt_p_diff' to save/restore the content of nptiso.p_diff
+    which might be necessary for recovering trajectories using the NpT-integrator.
+
+Changes:
+(a) The 'blockfile <channel> write thermostat' now adds an 'off'-statement to the 
+    beginning of the thermostat block; this results in all other thermostats being
+    deactivated before the stored ones are read in. Contrary to earlier versions,
+    any 'temperature' or 'gamma' field before this block will therefore no longer 
+    activate the langevin thermostat (a feature present for backwards compatibility
+    only; it should no longer be used anyway) unless there's a corresponding entry
+    within the thermostat block; however, 'temperature' or 'gamma' fields _after_
+    the thermostat block (a big DON'T - always have the setmd-variables as first
+    block in your file) will override its content nonetheless.
+
+Bugfixes:
+(b) Completed bugfix of 'integrate set npt_isotropic' by having nptiso.non_const_dim 
+    be initialized with the same value for flags '1 1 1' and for no flags at all.
+(a) Fixed a serious bug in the 'integrate set npt_isotropic' command which occured
+    if that command was invoked several times (e.g. by reading in more than one 
+    blockfile or checkpoint or by switching from NpT to NVT and back to NpT) while
+    supplying the <x> <y> <z> flags each time, causing the internal 'nptiso.volume'
+    to be too large because of a too large internal 'nptiso.dimension', resulting
+    in too small instantaneous pressures 'npt_p_inst' and consequently to small
+    volume adjustments, which consequently resulted in the wrong averaged volumes.
+(a) The aforementioned change to the 'blockfile' command also fixes a bug that when
+    a full blockfile (containing both 'temperature' and 'thermostat' fields in the
+    standard successive order) is read in, the langevin thermostat will be active
+    afterwards no matter if it was or was not contained in the 'thermostat' block.
+
+
+- v1.6.4c -
+-----------
+
+(c) July 9th, 2004.
+(b) July 5th, 2004.
+(a) July 5th, 2004.
+
+Changes:
+(c) Now BOND_ANGLE_COSINE is the default three-body bonded potential 
+    (if you don't like this, change it in 'config.h' and recompile).
+
+Bugfixes:
+(c) Fixed unintialized image box in 'map_position_node_array' before calling 'fold_position'.
+(b) Fixed bug dealing with the initialization of 'lipid_orientation' command.
+(a) Fixed pointer mismatch in 'dd_exchange_and_sort_particles' which in the rare event
+    that more than half of the particles left the current cell had that cell resized,
+    rendering the 'part = cell->part' pointer used invalid.
+
+
+- v1.6.3f -
+-----------
+
+(f) July  1st, 2004.
+(e) June 26th, 2004.
+(d) June 23rd, 2004.
+(c) June 21st, 2004.
+(b) June 12th, 2004.
+(a) June 11th, 2004.
+
+New Features:
+(e) Added new analysis routine 'analyze Vkappa' which measures the compressibility
+    of the system by looking at the volume fluctuations.
+
+Changes:
+(a) Added sqrt(3) factor to the Langevin thermostat for re-entering the integrator
+    (only if 'recalc_forces' is set as well, e.g. because a bond was removed, 
+    the box rescaled or just the forcecap changed). 
+    This is necessary since otherwise the temperature drops with the rate of 
+    force recalculations due to missing correlations while drawing random numbers.
+
+Bugfixes:
+(f) Rewrote output of 'inter coulomb' to also fix a bug which caused an incomplete
+    list to be returned if the command was used without electrostatics turned on.
+(f) Fixed blockfile storage of nested lists to prevent increase of outermost bounds.
+(d) Fixed bug in the rounding error handling code of fold_coordinate, which caused
+    a particle in the unlikely event of rounding error mismatches to not be folded
+    by box_l but by the inverse of it (box_l_i).
+(c) Fixed bug in inter_print_bonded and inter_print_bond_partners causing loss
+    of tabulated interaction data.
+(b) Fixed typo in array index causing nptiso.p_vel to be accidentially overwritten
+    while deriving virials in 'add_bonded_virials'.
+
+
+- v1.6.2d -
+-----------
+
+(d) June 11th, 2004.
+(c) June 10th, 2004.
+(b) June  9th, 2004.
+(a) June  8th, 2004.
+
+New Features:
+(b) Added new analysis routine 'analyze p_inst' which does exactly the same as
+    'analyze pressure' but compensates for the difference in the ideal component
+    between 'analyze pressure' and 'setmd npt_p_inst', hence more accurately displaying
+    the contributions to the instantaneous pressure while using NpT.
+    Note that you may use this function in both NpT- and NVT-ensembles, but be aware
+    that since it is reverting the last half timestep in the velocity propagation,
+    extra care is required to make sure that such a thing is valid upon execution.
+(b) Added new global variable 'setmd npt_p_inst_av' which displays the instantaneous
+    pressure of the NpT-integrator averaged over the last integration cycle.
+(a) Added flag to 'checkpoint_read <source> [<read_all>]' so that you don't have to 
+    read all checkpoints but can just read the last one.
+
+Changes:
+(d) Reverted 'add_non_bonded_virials'-calculation of the short range coulombic pressure
+    contribution to former potential term, but now nptiso.p_vir is also using it
+    in 'add_p3m_coulomb_pair_force' instead of the former virial expression r*F,
+    such that now both nptiso.p_vir and 'analyze pressure' and 'analyze p_inst' all
+    use U_c/(d*V) for the whole electrostatic pressure component (both r- and k-part).
+(c) Now 'add_non_bonded_virials' uses the virial expression r*F for the short range
+    coulombic interactions as well instead of the potential term (as for the k-part).
+(c) Now internal flag 'nptiso.invalidate_p_vel' helps to decide if there was already
+    an NpT-integration step (such that 'analyze p_inst' may use 'nptiso.p_vel') or if
+    the secondary timestep reversion has to be used (replaces former box_l-comparision).
+(c) Now 'analyze set chains' no longer automatically updates mol_ids.
+(a) particles mol_id is now initialized to -1, and this can be used to check whether 
+    the mol_id has been set. The topology sync function makes use of this.
+
+Bugfixes:
+(d) Fixed that a pressure calculation screwed up nptiso.p_vir when the following
+    integration step didn't recalculate the forces (which was possible after v1.6.2b).
+(b) Fixed bug that Espresso always recalculated the forces when leaving/reentering the sim loop.
+(b) Fixed NpT-integration of systems using electrostatic interactions:
+    + The bugs introduced in v1.6.1b by replacing the k-space-energy contribution to
+      nptiso.p_vir by some weird k-space-force-components have been undone, hence the
+      k-space component of the coulombic pressure should correctly enter p_inst now.
+    + The (inverse) mesh constant of the p3m-grid is now scaled with the box-length 
+      as well, adjusting lm.ld_pos accordingly to the grid's new position in the box.
+      This should prevent mysterious crashes randomly occuring in 'invalidate_ghosts' 
+      or 'P3M_calc_k_space_forces' due to invalid grid positions.
+    - Fixed output of 'integrate set' for nptiso-parameters.
+
+
+- v1.6.1g -
+-----------
+
+(g) May 18th, 2004.
+(f) May 17th, 2004.
+(e) May 13th, 2004.
+(d) May 11th, 2004.
+(c) May 10th, 2004.
+(b) May  5th, 2004.
+(a) May  3rd, 2004.
+
+New Features:
+(e) Added new option to synchronize topology and particle.mol_id information.
+(c) New command 'tune_cells' which adapts the cell-grid towards best performance.
+(c) New parameters 'integrator' and 'thermostat' for the 'blockfile'-command
+    to also save the correct states (and parameters) of these two subsystems.
+(b) New NpT Feature: The NpT-Integrator now accepts two additional arguments. 
+    The first is a set of three integers ( x y z ) each of which turns on or off 
+    the NpT integrator and thermostat in that direction; a value of 1 turns on
+    the box length motion and a value of 0 turns it off.  
+    The second new argument is a flag "-cubic_box"; when set, this flag ensures 
+    that box length changes are completely isotropic in all directions even 
+    though box length changes in one or more of these directions may in fact 
+    be decoupled from the particle motion. 
+    Internally this has been achieved by splitting up the virial part of the
+    instantaneous pressure to nptiso.p_vir[3] reflecting the three directions of
+    the pressure tensor. Note that due to its periodicity electrostatic systems
+    using p3m are still restricted to 3D-periodic and -isotropic systems!
+
+Changes:
+(d) 'writepdbfoldchains' now requires a list of 3 box lengths (as returned from 
+    [setmd box_l] ) - old scripts using these features need to be modified.
+
+Bugfixes:
+(g) Fixed problem with lipid flip-flop analysis that caused imd to fold incorrectly.
+(f) Fixed modes analysis so it doesn't crash ESPResSo when there is a hole in the membrane.
+(c) Fixed problems of 'calcObsAv' when a "-" was part of the column headers.
+(b) Fixed bug in the velocity rescaling on the master node.
+(b) Fixed warnings that occur if ELECTROSTATICS is not compiled in.
+(a) Fixed a bug in the calculation of max_skin: Now it cannot be larger than local_box_l.
+(a) Fixed warnings in the ELC tuning routine.
+
+
+****************************************************************************************
+* v1.6.Gold (Icheb)                                                                    *
+****************************************************************************************
+
+Released on April 29th, 2004.
+
+
+- v1.5.8e -
+-----------
+
+(e) April 29th, 2004.
+(d) April 28th, 2004.
+(c) April 26th, 2004.
+(b) April 23rd, 2004.
+(a) April 22nd, 2004.
+
+New Features / Changes / Bugfixes:
+(e) Final NpT-Update: The NpT-Integrator does now run efficiently and smoothly.
+    + Unlocked faster re-scaling of just the geometrical parameters of the system
+      instead of reinitialising the whole cell system more than necessary (i.e. only
+      if max_range > cell_range) in every timestep.
+    + Added missing geometrical parameter 'shift' within the GhostCommunication-structures
+      within the GhostCommunicator-structures of the 'dd_exchange_and_sort_particles'-regime
+      to the rescaling tasks in 'dd_NpT_update_cell_grid'.
+    + Until a better criterion is found, the algorithm will renew the Verlet list
+      in every timestep - not perfect, but still much better than previous treatment.
+    + Finally, fixed a mean bug that rescaling the old positions at the wrong index
+      caused the bond-list to be accidentally overwritten with nonsense data.
+(d) 1) New bonded potential: torsional dihedral angle potential.
+       Syntax is: inter i dihedral <mult> <bend> <phase>
+       This is a four body interaction. The bond has to be stored at the
+       second particle. For more information see the documentation of the
+       tcl inter command and dihedral.h
+    2) New tabulated bonded potentials:
+       Syntax is: inter i tabulated <type> <filename>
+       There are three types implemented, namely "bond" for a
+       tabulated bond length potential, "angle" for a tabulated bond
+       angle potential and "dihedral" for a tabulated dihedral
+       potential. The file format for the tabulated force and energy
+       value is the same as for the non-bonded tabulated
+       potential. For more information see the documentation of the
+       tcl inter command and tab.h. WARNING: I had no time to test the
+       tabulated dihedral angle potential yet.
+    3) New global variables: max_cut_non_bonded, max_range_non_bonded and max_range_non_bonded2
+       These variables have to do with the maximal interaction range
+       of non-bonded and short range electrostatic potentials and are
+       used by the verlet pair list algorithms. They are defined
+       similar to the variables max_cut, max_range and
+       max_range2. They keep the Verlet pair lists smaller, if the
+       maximal interaction range for non-bonded potentials is smaller
+       then the maximal interaction range of bonded interactions in
+       the system. This has no effect on the cell_structure nad the
+       communication of ghost particles.
+(a) Major NpT-Update: The NpT-Integrator does now work properly, though still not at top efficiency.
+    + The code no longer crashes when updating ghost particles after enforcing a 'cells_re_init'.
+    + Now the new box-length is communicated after the particles are rescaled.
+    + Fixed wrong p_vel that always had p_vel updated after velocities were propagated.
+    + Fixed wrong friction_g0-contribution due to new (instead of old) velocities as arguments.
+    - Slimlined 'dd_NpT_update_cell_grid' to increase processing speed; it also got the scaling
+      factor as argument (passed by 'on_NpT_boxl_change') to improve the 'max_range'-criterion.
+    - Temporarily deactivated 'cells_re_init'-shortcut as it's not yet working;
+      expect a speedup of 40x...90x once it's done.
+    + Now the old particle positions are rescaled as well.
+
+New Features:
+(e) Added poststore and prefetch to domain decomposition.
+(d) Implemented cutoff and range variables for verlet pair algorithm.
+(c) Added EVENT_TRACEs.
+(b) Added warning when pressure is calculated while MMM2D/MMM1D are on.
+(b) Added ADDITIONAL_CHECK for particles outside the allowed box.
+
+Bugfixes:
+(e) Fixed bug that electrostatic energy was written even if no electrostatics
+    were set, causing a core dump.
+(c) Now box length can no longer be zero.
+(b) Bugfix that not the full sum over p,q was done.
+
+
+- v1.5.7h -
+-----------
+
+(h) April 22nd, 2004.
+(g) April 19th, 2004.
+(f) April 13th, 2004.
+(e) April 10th, 2004.
+(d) April  1st, 2004.
+(c) March 29th, 2004.
+(b) March 22nd, 2004.
+(a) March 21st, 2004.
+
+New Features:
+(g) Writing out of far cut of MMM2D/ELC.
+(f) Electrostatic charged plane potential 'plate' added.
+(f) Added check for too far movement to ADDITIONAL_CHECKS.
+(f) Now TK and other graphical output is also supported on Darwin
+    using darwinlink.sh: adds Mac OS resource fork after linking.
+(f) Optimized compiler-flags for Pentium-M and -III on Linux.
+(e) Added new analyzation command 'analyze necklace' to examine 
+    the structure of e.g. polyelectrolytes in poor solvent.
+
+Changes:
+(g) Cell structure 'layered' now also uses the 'rebuild_verletlist' 
+    flag to avoid unnecessary updates.
+(f) Changed constraint 'rod' to be purely electrostatic;
+    Use a 'cylinder' to create the excluded volume separately.
+(f) Reversed vector treatment ('mmm2d.c').
+(f) Added check for too far movement to ADDITIONAL_CHECKS.
+(e) Moved verlet update to 'cells.c'; now it is also more general, 
+    as is 'layered.c'.
+(b) Setting 'setmd piston 0.0' now disables the nptiso-thermostat
+    (if compiled in), otherwise it does no longer complain about
+    that (essentially) improper value for compatibility reasons.
+
+Bugfixes:
+(h) Fixed a bug in 'cells_update_ghosts' that caused the ghost-communicator
+    to be executed twice; hence, the code should be faster now.
+(g) Fixed major bug that setting the skin too late in the script file
+    did not change the maximal interaction range, resulting in cells
+    becoming too small; as a consequence, interactions might have
+    been omitted on course of the simulation.
+(g) Fixed bug that switching off electrostatics was sometimes not possible.
+(g) Fixed bug that max range was not set often enough.
+(g) Fixed bug in constraint rod.
+(f) Fixed debug statements when THERMO_DEBUG is switched on.
+(f) Fixed bug in 'layered.c' that p_old was not updated.
+(f) Fixed bug in near formula for precisions below 10^-10 ('mmm2d.c').
+(d) MPI_GET_PARTICLES fixed to allow empty nodes and bonds.
+(c) Fixed several compiler issues on the OSF1-architectures in
+    'Makefile.OSF1' (now enforcing std.C which in turn enables
+    useful warnings), 'statistics_chain.c' (pow -> SQR), 'imd.c'
+    and 'mmm2d.c'.
+(b) Fixed wrong parsing of chain structure info if given in addition
+    to one of the analyze-commands in 'statistics_chain.c', e.g.
+    'analyze re [<chain_start> <n_chains> <chain_length>]'; now,
+    supplying the optional parameters will no longer result in the
+    (unfounded) error message 'only chain structure info required'.
+(a) Fixed severe bug in 'add_bonded_virials' which caused the bonded
+    component of the pressure to be derived falsely. This error was
+    introduced with the new system structure in v1.5.Alpha, so all
+    pressure results produced with that or later versions should be
+    re-derived; however, the actual simulation -as long as it's script
+    did not depend on the pressure results- was not affected by this.
+    Due to the internal storage policy of ESPResSo (forces are rescaled
+    by 0.5*timestep^2) the deviation to the true bonded pressure scales
+    with the timestep: As smaller it was as less noticable this error
+    should have been in your simulations.
+
+
+- v1.5.6d -
+-----------
+
+(d) March 19th, 2004.
+(c) March 18th, 2004.
+(b) March 17th, 2004.
+(a) March  5th, 2004.
+
+New Features:
+(d) Added a new analysis command [analyze modes2d] which is designed
+    to allow a fluctuation analysis of a lipid membrane system.  This
+    command is currently restricted to a special type of membrane
+    configuration.  A more generalized command and related tcl scripts for
+    processing the results will be added later.
+
+Changes:
+(b) [analyze bond_l] now returns a four member list with the average, standard deviation, 
+    maximum value and minumum value of the sample; the same holds true for 
+    [analyze <bond_l>], however, note that now it returns the maximum/minimum 
+    in all the configurations and the values don't have to belong to same chain. 
+    It was done this way to ensure uniformity. The testsuite has been adapted to this.
+(b) In statistics_chain.c, the bond length calculations have been modified. It 
+    actually calculates the average now (not the root mean square avg as was done 
+    before); the error is taken as one standard deviation.
+
+Bugfixes:
+(c) Falsely calling 'analyze nbhood' without any arguments no longer unintentionally
+    crashes the program but returns an appropriate error message instead.
+(a) Added nptiso-thermostat random noise to 2nd propagation of the velocities as well.
+(a) Fixed wrongly scaled prefactors of the nptiso-thermostat which do now remember
+    to include an additional 'time_step' for the propagated velocities.
+
+
+- v1.5.5b -
+-----------
+
+(b) March 2nd, 2004.
+(a) March 1st, 2004.
+
+New Features:
+(b) Introduced new structure 'nptiso' in which all global variables
+    related to the NpT-integration-scheme are contained.
+(b) Now 'integrate' returns integrator informations, too, as well as
+    'thermostat set <what>' may be used instead of 'thermostat <what>.
+
+Changes:
+(b) P3M is now entirely scaling invariant, replacing 'alpha' and 'r_cut'
+    by rescaled 'alpha_L' and 'r_cut_iL'; for performance reasons the
+    forces- and energy-derivation is still using the unscaled versions,
+    so are the I/O-routines.
+(b) Exchanged virial criterion 'if(piston!=0.0)' by test for 'integ_switch'
+    in all functions deriving forces; should result in a speed-up if compiled in.
+(a) Replaced p3m.alpha and p3m.r_cut with rescaled versions p3m.alpha_L and p3m.r_cut_iL
+    which renders the p3m-algorithm to be independent of box_l.
+    The old alpha and r_cut do still exist, mainly for I/O- and speed-purposes
+    (since the forces- and energy-routine in p3m.h use both).
+
+Bugfixes:
+(b) Fixed wrong and/or missing safety checks for nptiso-integrator.
+(b) Fixed handling of missing exceptions in 'thermostat set'.
+
+
+- v1.5.4b -
+-----------
+
+(b) February 25th, 2004.
+(a) February 20th, 2004.
+
+New Features:
+(b) Extension of the tcl command integrate. "integrate" is now 
+    also used to set the integration method and parameters of 
+    this methods. The general parameters <time_step> and <skin> 
+    remained at the 'setmd' command. The usage of integrate is now:
+        integrate <INT n steps>
+	integrate set
+	integrate set nvt
+	integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>]
+(a) New tcl command: thermostat to control the new thermostats:
+    Usage: thermostat langevin <temperature> <langevin_gamma>
+           thermostat dpd <temperature> <dpd_gamma> <dpd_r_cut> 
+           thermostat npt_isotropic <temperature> <nptiso_gamma0> <nptiso_gammav>
+           thermostat off
+	   thermostat
+    Notes: - You can combine different thermostats.
+           - At the moment they share a single temperature (if you are aware 
+	     of any problems where one would need different temperatures, 
+	     please let us know).
+	   - thermostat off turns all thermostats off and sets all 
+	     thermostat parameters to zero.
+           - For NVE ensemble use thermostat off.
+	   - DO NOT USE setmd temperature AND setmd gamma (:= langevin_gamma) 
+	     IN NEW SCRIPTS! (even though they still work).
+	   - For backwards compatibility ESPResSo starts with the 
+	     Langevin thermostat turned on.
+
+Bugfixes:
+(a) Fixed unfavourable handling of round-off errors in 'fold_coordinate'
+    which on rare occasions caused a particle to end up in the wrong box.
+
+
+- v1.5.3a -
+-----------
+
+(a) February 14th, 2004.
+
+New Features:
+(a) Implemented an (N,p,T)-ensemble integrator, as published by
+    Kolb, Duenweg, J.Chem.Phys. 111(8) 4453 (1999).
+    To activate it, use the corresponding compiler-flag in 'config.h'
+    and set the new parameters 'piston', 'g0', 'gv', and 'p_ext'.
+(a) New global variable 'p_inst' returns the measure instantaneous pressure
+    if (N,p,T)-integration is used.
+
+
+- v1.5.2a -
+-----------
+
+(a) February 9th, 2004.
+
+New Features:
+(a) introducing topoplogy concept.
+
+Changes:
+(a) 'analyze set chains <start> <N_P> <MPC>' does now set the topology,
+    hence 'analyze set chains' has been discontinued.
+
+Bugfixes:
+(a) fixed severe bug that had the p3m tuning routine to not allocate
+    the appropriate amount of memory for the final parameter set, but
+    used the last trial's settings instead.
+
+
+- v1.5.1b -
+-----------
+
+(b) February 6th, 2004.
+(a) January 30th, 2004.
+
+New Features:
+(b) Inplementation of NEMD (Non Equilibrium Molecular Dynamics). This method
+    introduces a shear rate corresponding to a Couette flow by artificially
+    pumping energy into the system via a momentum exchange between two slabs
+    of the system. For more information see for example Evans/Morriss:
+    Statistical mechanics of Nonequilibrium Liwuids (Academic Press, London,
+    1990) or Soddemann/Duenweg/Kremer (Phys. Rev. E; 68; 2003).
+    All procedures reside in the fiiles nemd.c/h. 
+    Usage of the new tcl command nemd:
+         nemd - returning nemd status
+	 nemd off - turn off nemd
+	 nemd exchange <INT n_slabs> <INT n_exchange>
+              - enable method exchange momentum 
+	 nemd shearrate <INT n_slabs> <DOUBLE shearrate>
+              - enable method with fixed shear rate
+	 nemd profile - return the velocity profile
+	 nemd viscosity - return the viscosity
+    Notes: - The slabs are oriented perpendicualr to the z direction.
+           - The shear is applied in x direction
+           - Use only with a DPD thermostat or in an NVE ensemble.
+           - Do not use other special features like part fix or 
+	     constraints inside the top and middle slab.
+	   - Per default NEMD is not compiled in.
+(a) The bond angle potential can now be used also for equilibrium angles different
+    from 180 degree (stretched configuration). This should not affect any previous
+    simulations (except numerical errors). The default potential form is now:
+    V = k (1+cos(phi+phi0)).
+(a) With help of compiler flags used as switch you can now choose between three
+    different potential forms (the corresponding #define statements are as usual
+    in config.h):
+    BOND_ANGLE_HARMONIC   ->  V = 1/2 k (phi - phi0)^2
+    BOND_ANGLE_COSINE     ->  V = k (1+cos(phi-phi0))
+    BOND_ANGLE_COSSQUARE  ->  V = 1/2 k (cos(phi)-cos(phi0))^2
+
+
+****************************************************************************************
+* v1.5.Beta (Neelix)                                                                   *
+****************************************************************************************
+
+Released on January 29th, 2004.
+
+
+- v1.5.Alpha -
+-----------
+
+(b) January 15th, 2004.
+(a) January  7th, 2004.
+
+New Features:
+(a) new command 'cellsystem { domain | nsquare }' to choose the internal particle structure.
+(a) comfixed interaction is implemented. This interaction fixes the center of mass 
+    of all particles of a given type.
+(a) comforce interaction is implemented. This interaction is used to apply a force 
+    on two differenent types of particles. The force is applied either along the
+    major axis of type_1 particles (e.g. bundle of rods), or perpendicular to the 
+    major axis of type_1 particles in the direction of the vector joining center
+    of mass's of type_1 and type_2.
+
+Changes:
+(b) 'analyze pressure ideal' does no longer use n_total_particles*temperature/volume but rather
+    measures the particles' velocities to deduct the ideal gas contribution to the pressure
+    from there; consequently, its value is at last the very same as the trace of p_IK1;
+    note however, that the ideal gas now depends on whether or not ROTATION is compiled in
+    (changing the degrees of freedom from 3 to 6), even if the particles don't use that property
+(b) 'checkpoint_set' now also saves informations on external forces, fixed particles, and
+    rotational properties if the corresponding flags are compiled in.
+(a) completely reworked the internal particle structure, now having six substructures per particle
+    and a choice of two entirely different particle administration systems (domain decomposition
+    or homogeneous N^2-mode)
+
+Bugfixes:
+(b) fixed several memory leaks occuring when using newer version of the gcc-compiler
+(b) fixed wrong prefactor of 'analyze pressure ideal' contained in early versions of v1.5.Alpha
+(a) 'part fix' fixed
+(a) the constraint energy is printed correctly now. In the old version, if 
+    the constraint particle type is smaller than any real particle type, 
+    the constraint energy was wrong, even though the total energy was correct
+
+
+- v1.1.2a -
+-----------
+
+(a) December 19th, 2003.
+
+New Features:
+(a) working version of tabulated lookup potentials is
+    now implemented.  Be sure to check documentation as file format
+    requirements are likely to change with new versions.
+
+Bugfixes:
+(a) 'part <ind> delete' now correctly deletes all bonds involved
+
+
+****************************************************************************************
+* v1.1.1                                                                               *
+****************************************************************************************
+
+Released on December 2nd, 2003.
+
+
+- v1.1.0e -
+-----------
+
+(e) December  2nd, 2003.
+(d) November 18th, 2003.
+(c) November 13th, 2003.
+(b) November 11th, 2003.
+(a) November  3rd, 2003.
+
+New Features:
+(e) command 'constraint maze' to create a constraint with a maze-like structure,
+    i.e. spheres connected by cylinders 
+(d) command 'imd positions' has new optional flag '-fold_chains'
+(c) command 'part fix' has new optional parameters, i.e. 'part fix [<x> <y> <z>]'
+(b) command 'analyze p_IK1' replacing 'analyze p_bin'
+(a) command 'analyze p_bin' to derive the pressure tensor of a given particle list
+(a) command 'analyze bin' to create a particle list distributed into spherical bins
+
+Bugfixes:
+(e) fixed 'tuning.c' on Darwin-systems (e.g. MacOS)
+(e) fixed that 'communication.c' would not compile without electrostatics-flag on
+(b) fixed implementation of 'analyze p_bin' to correspond to Kirkwood's IK1-scheme
+(a) fixed that 'analyze <g1>' and 'analyze <g2>' derived all of <g1>, <g2>, and <g3>
+    and always returned <g3> only
+
+
+****************************************************************************************
+* v1.1.Gold (Naomi)                                                                    *
+****************************************************************************************
+
+Released on October 20th, 2003.
+
+
+****************************************************************************************
+* v1.0.Gold (Kim)                                                                      *
+****************************************************************************************
+
+Released on April 25th, 2003.
+
