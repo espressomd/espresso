@@ -2,11 +2,36 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.9  (Seska)                                                                      *
+* v1.9.9f (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
+
+- v1.9.9f -
+-----------
+
+(f) May    8th, 2006.
+(e) May    5th, 2006.
+(d) May    4th, 2006.
+(c) April 27th, 2006.
+(b) April 26th, 2006.
+(a) April 24th, 2006.
+
+New Features:
+(e) P3M: Added non-interpolating version of the charge assignment function for
+    higher precision.
+(d) Added USE_ERFC_APPROXIMATION to turn on or off the approximation of erfc in P3M
+    and EWALD by Abramowitz and Stegun. Turned on by default. Turn off for higher
+    precision.
+(a) Added Standard Ewald algorithm for longrange coulomb forces (still
+    EXPERIMENTAL)
+
+Bugfixes:
+(f) fixed a bug occuring for nonneutral systems with dielectric
+    contrast.
+(c) deleted some EWALD Debug messages
+(b) deleted some superfluous Debug-Info Lines of EWALD_TRACE
 
 
 - v1.9.9  -
@@ -14,15 +39,9 @@ Current working revision.
 
 
 
-- v1.9.8z -
+- v1.9.8t -
 -----------
 
-(z) May       8th, 2006.
-(y) May       5th, 2006.
-(x) May       4th, 2006.
-(w) April    27th, 2006.
-(v) April    26th, 2006.
-(u) April    24th, 2006.
 (t) April    20th, 2006.
 (s) April    19th, 2006.
 (r) April    13th, 2006.
@@ -45,13 +64,6 @@ Current working revision.
 (a) November 18th, 2005.
 
 New Features:
-(y) P3M: Added non-interpolating version of the charge assignment function for
-    higher precision.
-(x) Added USE_ERFC_APPROXIMATION to turn on or off the approximation of erfc in P3M
-    and EWALD by Abramowitz and Stegun. Turned on by default. Turn off for higher
-    precision.
-(u) Added Standard Ewald algorithm for longrange coulomb forces (still
-    EXPERIMENTAL)
 (s) MOLFORCES: Various changes are made to options in the "analyze set trapmol"
     command....
 (s) MOLFORCES: The trap position may be set to an absolute coordinate or it may be
@@ -101,10 +113,6 @@ Changes:
 (a) The testcase 'analysis.tcl' now also checks the result of 'analyze stress_tensor'.
 
 Bugfixes:
-(z) fixed a bug occuring for nonneutral systems with dielectric
-    contrast.
-(w) deleted some EWALD Debug messages
-(v) deleted some superfluous Debug-Info Lines of EWALD_TRACE
 (t) fixed some ifdef EXTERNAL_FORCES conflicts
 (s) Forgot to add molforces to lists of C source files in Makefile when commiting
     previous changes
