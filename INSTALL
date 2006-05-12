@@ -120,6 +120,12 @@ MPICH environment (which has to be found in one of the usual places, such as
 /opt/mpich/p4). A nonstandard FFTW3 library named "doublefftw" is installed in
 the home directory of user "me".
 
+3.5. Mac OS X
+
+The FFTW3, LAM/MPI and doxygen come as Fink packages (http://fink.sf.net). However, this 
+will also install the X11 Tcl/Tk, which overrides the (much nicer) Aqua Tcl/Tk. To avoid this,
+compile with: ./configure CFLAGS="-I/sw/include" LDFLAGS="-L/usr/lib -L/sw/lib"
+
 4. Building
 
 Once the configure script succeeded in creating the necessary Makefile for the
