@@ -560,7 +560,9 @@ static void setup_z_force()
   double fac_delta_mid_top = delta_mid_top*fac_imgsum;
   double fac_delta         = delta_mult*fac_imgsum;
 
-  clear_vec(lclimge, size); //sandeep
+  if (dielectric_contrast_on) 
+    clear_vec(lclimge, size); 
+
   if(this_node==0) {
     
     lclimgebot=blwentry(lclcblk,0,e_size);
@@ -586,24 +588,22 @@ static void setup_z_force()
 	  e_di_l = (delta_mid_bot+1)*fac_delta;	  
 	  e =delta_mid_bot;	  
 	  lclimgebot[QQEQQP] += part[i].p.q*e;
-	  lclimgebot[QQEQQM] += part[i].p.q*e;
 	}
 	else
 	  e_di_l = (1+delta_mid_top)*fac_delta_mid_bot;  	
 	if (c==n_layers && this_node==n_nodes-1) {
 	  e_di_h = (delta_mid_top+1)*fac_delta;
 	  e = delta_mid_top;
-	  lclimgetop[QQEQQP]+= part[i].p.q*e;
-	  lclimgetop[QQEQQM]+= part[i].p.q*e;
+	  lclimgetop[QQEQQP] += part[i].p.q*e;
 	}
 	else
 	  e_di_h = (1+delta_mid_bot)*fac_delta_mid_top;	
 
 	lclimge[QQEQQP] += part[i].p.q*e_di_l;
-	lclimge[QQEQQM] += part[i].p.q*e_di_h;
+       	lclimge[QQEQQM] += part[i].p.q*e_di_h;
       }      
     }
-    lclcblk[size*c] *=pref;
+    lclcblk[size*c] *= pref;
     lclcblk[size*c+1] = lclcblk[size*c];   
   }
 
@@ -1344,7 +1344,6 @@ double MMM2D_add_far(int f, int e)
       for (q = undone[p]; q >= 0; q--) {
 	if (ux2*SQR(p)  + uy2*SQR(q) < SQR(R))
 	  break;
-	// printf("xxxxx %d %d\n", p, q);
 	if (f)
 	  add_force_contribution(p, q);
 	if (e)
@@ -1995,8 +1994,6 @@ void  MMM2D_dielectric_layers_force_contribution()
   double charge_factor;
   double a[3];
   double force[3]={0, 0, 0};
-  // prefactor for the charged plate interaction removal
-  double corr_pref = coulomb.prefactor*C_2PI*ux*uy;
 
   if(this_node==0) {
     c=1;
@@ -2012,9 +2009,8 @@ void  MMM2D_dielectric_layers_force_contribution()
 	a[0]=pl[j].r.p[0]; a[1]=pl[j].r.p[1];a[2]=-pl[j].r.p[2];
        	layered_get_mi_vector(d, p1->r.p, a);
        	dist2 = sqrlen(d);
-	charge_factor=p1->p.q*pl[j].p.q*delta_mid_bot; 
+	charge_factor=p1->p.q*pl[j].p.q*delta_mid_bot;
 	add_mmm2d_coulomb_pair_force(charge_factor, d, sqrt(dist2), dist2, force);
-	force[2] -= corr_pref*charge_factor;
       }
       for (j = 0; j < 3; j++) { 
 	p1->f.f[j] += force[j];
@@ -2037,7 +2033,6 @@ void  MMM2D_dielectric_layers_force_contribution()
 	dist2 = sqrlen(d);
 	charge_factor=p1->p.q*pl[j].p.q*delta_mid_top; 
 	add_mmm2d_coulomb_pair_force(charge_factor, d, sqrt(dist2), dist2, force);
-	force[2] += corr_pref*charge_factor;
       }
       for (j = 0; j < 3; j++) { 
 	p1->f.f[j] += force[j];
@@ -2094,7 +2089,6 @@ double  MMM2D_dielectric_layers_energy_contribution()
       }
     }
   }
-  //printf("energy contribution from dielectric layer is %15.13f \n", 0.5*eng); 
   return 0.5*eng;
 }
 
