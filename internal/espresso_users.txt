@@ -984,6 +984,39 @@ topic:     My research topic is some software improvements for virtual
 reminded:  26.APR.2006
 
 
+name:      Suckjoon Jun
+email:     jun@amolf.nl
+institute: AMOLF
+	   Amsterdam
+sent:      01.MAY.2006
+version:   CVS 28.04.2006
+CVS:       
+topic:     DNA segregation in confinement
+reminded:  01.MAY.2006
+
+
+name:      Bae-Yeun Ha
+email:     byha@sciborg.uwaterloo.ca
+institute: University of Waterloo
+	   Canada
+sent:      04.MAY.2006
+version:   CVS 28.04.2006
+CVS:       
+topic:     Coarse grained protein binding
+reminded:  04.MAY.2006
+
+
+name:      John Bechhoefer
+email:     bechhoef@sfu.ca
+institute: Simon Fraser University
+	   Vancouver, Canada
+sent:      01.MAY.2006
+version:   CVS 28.04.2006
+CVS:       
+topic:     thermal resonance
+reminded:  01.MAY.2006
+
+
 name:      Jacob Kirkensgaard Hansen
 email:     jacobkh@ruc.dk
 institute: Royal Veterinary and Agricultural University
