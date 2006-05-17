@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.9h (Seska)                                                                      *
+* v1.9.9i (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.9h -
+- v1.9.9i -
 -----------
 
+(i) May   16th, 2006.
 (h) May   10th, 2006.
 (g) May    9th, 2006.
 (f) May    8th, 2006.
@@ -31,6 +32,8 @@ New Features:
     EXPERIMENTAL)
 
 Bugfixes:
+(i) Fixed the handling of non-neutral systems with MMM2D and dielectric
+    contrast.
 (h) fixed RELEASE_NOTES and versions.h after END_OF_ALPHABET :-)
 (g) Using the 'polymer' command no charges were assigned if the charge was
     negative. Fixed this.
