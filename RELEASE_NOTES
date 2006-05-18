@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.9i (Seska)                                                                      *
+* v1.9.9j (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.9i -
+- v1.9.9j -
 -----------
 
+(j) May   17th, 2006.
 (i) May   16th, 2006.
 (h) May   10th, 2006.
 (g) May    9th, 2006.
@@ -22,6 +23,7 @@ Current working revision.
 (a) April 24th, 2006.
 
 New Features:
+(j) added automatic detection for Fink libraries on Macs.
 (h) Moved to version 1.9.9
 (e) P3M: Added non-interpolating version of the charge assignment function for
     higher precision.
