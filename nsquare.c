@@ -199,6 +199,8 @@ void nsq_balance_particles()
 	memcpy(&send_buf.part[i], &local->part[--local->n], sizeof(Particle));
       }
       realloc_particlelist(local, local->n);
+      update_local_particles(local);
+
       send_particles(&send_buf, l_node);
 #ifdef ADDITIONAL_CHECKS
       check_particle_consistency();
