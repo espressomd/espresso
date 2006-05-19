@@ -29,6 +29,8 @@ typedef struct {
       recalculated automatically, if important parameters, such as the number of cells, change. If this
       is zero, the far cutoff has been set explicitly by the user and will not be touched by Espresso. */
   int far_calculated;
+  /// whether there is dielectric contrast
+  int dielectric_contrast_on;
   /** three dielectric constants, above, in and below the simulation cell */
   double di_top, di_mid, di_bot;
 } MMM2D_struct;

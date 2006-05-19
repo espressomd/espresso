@@ -104,7 +104,7 @@ static double max_near, min_far;
 ///
 static double self_energy;
 
-MMM2D_struct mmm2d_params = { 1e100, 10, 1 };
+MMM2D_struct mmm2d_params = { 1e100, 10, 1, 0, 0, 1, 1, 1 };
 
 /** return codes for \ref MMM2D_tune_near and \ref MMM2D_tune_far */
 /*@{*/
@@ -187,8 +187,6 @@ static double delta_mid_bot;
 static double delta_mult;
 /** factor for infinite image sum, i.e. 1-delta_mult */
 static double delta_fac;
-/** is 1 if not all three dielectrics are equal, so that no image charges occur */
-static int dielectric_contrast_on;
 
 typedef struct {
   double s, c;
@@ -262,15 +260,12 @@ void MMM2D_setup_constants()
   uy2 = uy*uy;  
   uz  = 1/box_l[2];
 
-  if (mmm2d_params.di_mid != mmm2d_params.di_top || mmm2d_params.di_mid != mmm2d_params.di_bot) {
+  if (mmm2d_params.dielectric_contrast_on) {
     delta_mid_top = (mmm2d_params.di_mid-mmm2d_params.di_top)/(mmm2d_params.di_mid+mmm2d_params.di_top);
     delta_mid_bot = (mmm2d_params.di_mid-mmm2d_params.di_bot)/(mmm2d_params.di_mid+mmm2d_params.di_bot);
     delta_mult    = delta_mid_top*delta_mid_bot;
     delta_fac     = 1/(1-delta_mult);
-    dielectric_contrast_on = 1;
   }
-  else
-    dielectric_contrast_on = 0;
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_NSQUARE:
@@ -560,7 +555,7 @@ static void setup_z_force()
   double fac_delta_mid_top = delta_mid_top*fac_imgsum;
   double fac_delta         = delta_mult*fac_imgsum;
 
-  if (dielectric_contrast_on) 
+  if (mmm2d_params.dielectric_contrast_on) 
     clear_vec(lclimge, size); 
 
   if(this_node==0) {
@@ -583,7 +578,7 @@ static void setup_z_force()
     for (i = 0; i < np; i++) {
       lclcblk[size*c] += part[i].p.q;
       
-      if (dielectric_contrast_on) {
+      if (mmm2d_params.dielectric_contrast_on) {
 	if (c==1 && this_node==0) {
 	  e_di_l = (delta_mid_bot+1)*fac_delta;	  
 	  e =delta_mid_bot;	  
@@ -607,7 +602,7 @@ static void setup_z_force()
     lclcblk[size*c+1] = lclcblk[size*c];   
   }
 
-  if (dielectric_contrast_on) {
+  if (mmm2d_params.dielectric_contrast_on) {
     scale_vec(pref, lclimge, size);
     if(this_node==0)
       scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
@@ -709,7 +704,7 @@ static void setup_P(int p, double omega, double fac)
   double *lclimgebot = NULL, *lclimgetop = NULL;
   int e_size = 2, size = 4;
 
-  if (dielectric_contrast_on)
+  if (mmm2d_params.dielectric_contrast_on)
     clear_vec(lclimge, size); 
 
   if(this_node==0) {
@@ -742,7 +737,7 @@ static void setup_P(int p, double omega, double fac)
       partblk[size*ic + POQECP] = part[i].p.q*scxcache[o + ic].c*e;
 
       /* take images due to different dielectric constants into account */
-      if (dielectric_contrast_on) {
+      if (mmm2d_params.dielectric_contrast_on) {
 	if (c==1 && this_node==0) {
 	  /* There are image charges at -(2h+z) and -(2h-z) etc. layer_h included due to the shift
 	     in z */
@@ -792,7 +787,7 @@ static void setup_P(int p, double omega, double fac)
     layer_top += layer_h;
   }
 
-  if (dielectric_contrast_on) {
+  if (mmm2d_params.dielectric_contrast_on) {
     scale_vec(pref, lclimge, size);
     if(this_node==0)
       scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
@@ -818,7 +813,7 @@ static void setup_Q(int q, double omega, double fac)
   double *lclimgebot=NULL, *lclimgetop=NULL;
   int e_size = 2, size = 4;
  
-  if (dielectric_contrast_on)
+  if (mmm2d_params.dielectric_contrast_on)
     clear_vec(lclimge, size); 
   
   if(this_node==0) {
@@ -848,7 +843,7 @@ static void setup_Q(int q, double omega, double fac)
       partblk[size*ic + POQECM] = part[i].p.q*scycache[o + ic].c/e;
       partblk[size*ic + POQECP] = part[i].p.q*scycache[o + ic].c*e;
 
-      if (dielectric_contrast_on) {
+      if (mmm2d_params.dielectric_contrast_on) {
 	if(c==1 && this_node==0) {
 	  e_di_l = ( exp(omega*(-part[i].r.p[2] - 2*h + layer_h))*delta_mid_bot +
 		     exp(omega*( part[i].r.p[2] - 2*h + layer_h))                 )*fac_delta;
@@ -890,7 +885,7 @@ static void setup_Q(int q, double omega, double fac)
     layer_top += layer_h;
   }
 
-  if (dielectric_contrast_on) {
+  if (mmm2d_params.dielectric_contrast_on) {
     scale_vec(pref, lclimge, size);
     if(this_node==0)
       scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
@@ -1025,7 +1020,7 @@ static void setup_PQ(int p, int q, double omega, double fac)
   double *lclimgebot=NULL, *lclimgetop=NULL;
   int e_size = 4, size = 8;
 
-  if (dielectric_contrast_on)
+  if (mmm2d_params.dielectric_contrast_on)
     clear_vec(lclimge, size); 
 
   if(this_node==0) {
@@ -1060,7 +1055,7 @@ static void setup_PQ(int p, int q, double omega, double fac)
       partblk[size*ic + PQECSP] = scxcache[ox + ic].c*scycache[oy + ic].s*part[i].p.q*e;
       partblk[size*ic + PQECCP] = scxcache[ox + ic].c*scycache[oy + ic].c*part[i].p.q*e;
 
-      if (dielectric_contrast_on) {
+      if (mmm2d_params.dielectric_contrast_on) {
 	if(c==1 && this_node==0) {	
 	  e_di_l = (exp(omega*(-part[i].r.p[2] - 2*h + layer_h))*delta_mid_bot +
 		    exp(omega*( part[i].r.p[2] - 2*h + layer_h))                 )*fac_delta;
@@ -1111,7 +1106,7 @@ static void setup_PQ(int p, int q, double omega, double fac)
     layer_top += layer_h;
   }
 
-  if (dielectric_contrast_on) {
+  if (mmm2d_params.dielectric_contrast_on) {
     scale_vec(pref, lclimge, size);
 
     if(this_node==0)
@@ -1199,7 +1194,7 @@ static void add_force_contribution(int p, int q)
     if (p == 0) {
       setup_z_force();
 
-      if (dielectric_contrast_on)
+      if (mmm2d_params.dielectric_contrast_on)
 	gather_image_contributions(1);
       else
 	clear_image_contributions(1);
@@ -1212,7 +1207,7 @@ static void add_force_contribution(int p, int q)
       omega = C_2PI*ux*p;
       fac = exp(-omega*layer_h);
       setup_P(p, omega, fac);
-      if (dielectric_contrast_on)
+      if (mmm2d_params.dielectric_contrast_on)
 	gather_image_contributions(2);
       else
 	clear_image_contributions(2);
@@ -1225,7 +1220,7 @@ static void add_force_contribution(int p, int q)
     omega = C_2PI*uy*q;
     fac = exp(-omega*layer_h);
     setup_Q(q, omega, fac);
-    if (dielectric_contrast_on)
+    if (mmm2d_params.dielectric_contrast_on)
       gather_image_contributions(2);
     else
       clear_image_contributions(2);
@@ -1237,7 +1232,7 @@ static void add_force_contribution(int p, int q)
     omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
     fac = exp(-omega*layer_h);
     setup_PQ(p, q, omega, fac);
-    if (dielectric_contrast_on)
+    if (mmm2d_params.dielectric_contrast_on)
       gather_image_contributions(4);
     else
       clear_image_contributions(4);
@@ -1264,7 +1259,7 @@ static double energy_contribution(int p, int q)
       omega = C_2PI*ux*p;
       fac = exp(-omega*layer_h);
       setup_P(p, omega, fac);
-      if (dielectric_contrast_on)
+      if (mmm2d_params.dielectric_contrast_on)
 	gather_image_contributions(2);
       else
 	clear_image_contributions(2);
@@ -1277,7 +1272,7 @@ static double energy_contribution(int p, int q)
     omega = C_2PI*uy*q;
     fac = exp(-omega*layer_h);
     setup_Q(q, omega, fac);
-    if (dielectric_contrast_on)
+    if (mmm2d_params.dielectric_contrast_on)
       gather_image_contributions(2);
     else
       clear_image_contributions(2);
@@ -1289,7 +1284,7 @@ static double energy_contribution(int p, int q)
     omega = C_2PI*sqrt(SQR(ux*p) + SQR(uy*q));
     fac = exp(-omega*layer_h);
     setup_PQ(p, q, omega, fac);
-    if (dielectric_contrast_on)
+    if (mmm2d_params.dielectric_contrast_on)
       gather_image_contributions(4);
     else
       clear_image_contributions(4);
@@ -1825,6 +1820,15 @@ int printMMM2DToResult(Tcl_Interp *interp)
   Tcl_PrintDouble(interp, mmm2d_params.far_cut, buffer);
   Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
 
+  if (mmm2d_params.dielectric_contrast_on) {
+    Tcl_PrintDouble(interp, mmm2d_params.di_top, buffer);
+    Tcl_AppendResult(interp, " dielectric", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, mmm2d_params.di_mid, buffer);
+    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, mmm2d_params.di_bot, buffer);
+    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
+  }
+
   return TCL_OK;
 }
 
@@ -1889,7 +1893,9 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double top, double mid, 
   mmm2d_params.di_top = top;
   mmm2d_params.di_mid = mid;
   mmm2d_params.di_bot = bot;
-
+  if (mmm2d_params.di_mid != mmm2d_params.di_top || mmm2d_params.di_mid != mmm2d_params.di_bot)
+    mmm2d_params.dielectric_contrast_on = 1;
+    
   MMM2D_setup_constants();
 
   if ((err = MMM2D_tune_near(maxPWerror)))
