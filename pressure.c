@@ -189,7 +189,11 @@ void calc_long_range_virials()
   /* calculate k-space part of electrostatic interaction. */
   int k;
   switch (coulomb.method) {
+  case COULOMB_ELC_P3M:
+    fprintf(stderr, "WARNING: pressure calculated, but ELC pressure not implemented\n");
+    break;
   case COULOMB_P3M:
+    P3M_charge_assign();
     virials.coulomb[1] = P3M_calc_kspace_forces(0,1);
     for(k=0;k<3;k++)
       p_tensor.coulomb[9+ k*3 + k] = P3M_calc_kspace_forces(0,1)/3.;
@@ -202,8 +206,6 @@ void calc_long_range_virials()
     fprintf(stderr, "WARNING: pressure calculated, but MMM1D pressure not implemented\n");
     break;
   }
-  if (coulomb.use_elc)
-    fprintf(stderr, "WARNING: pressure calculated, but ELC pressure not implemented\n");
 #endif
 }
 

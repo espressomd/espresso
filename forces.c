@@ -5,7 +5,7 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2005; all rights reserved unless otherwise stated.
 /** \file forces.c Force calculation.
  *
  *  For more information see \ref forces.h "forces.h".
@@ -32,6 +32,18 @@
 #include "nsquare.h"
 #include "layered.h"
 #include "domain_decomposition.h"
+//sandeep
+#define top 10.0
+#define mid 1.0
+#define bot 10.0
+#define sfac (1.0)
+#define gap  (2.0)
+#define delta_mid_top ((mid - top)/(mid + top))
+//sandeep
+
+/** charge prefactor for image charges from the primary box in the upper region */
+
+#define delta_mid_bot ((mid - bot)/(mid + bot))
 
 /************************************************************/
 /* local prototypes                                         */
@@ -70,6 +82,7 @@ void force_calc()
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_calculate_ia();
+    
   }
 
   calc_long_range_forces();
@@ -96,7 +109,25 @@ void calc_long_range_forces()
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
+  case COULOMB_ELC_P3M:
+    if (elc_params.dielectric_contrast_on) {
+      ELC_P3M_modify_p3m_sums_both();
+      ELC_P3M_charge_assign_both();
+      ELC_P3M_self_forces();
+    }
+    else
+      P3M_charge_assign();
+
+    P3M_calc_kspace_forces(1,0);
+
+    if (elc_params.dielectric_contrast_on)
+      ELC_P3M_restore_p3m_sums();
+ 
+    ELC_add_force(); //sandeep
+
+    break;
   case COULOMB_P3M:
+    P3M_charge_assign();
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += P3M_calc_kspace_forces(1,1);
@@ -119,9 +150,6 @@ void calc_long_range_forces()
     MMM2D_add_far_force();
     MMM2D_dielectric_layers_force_contribution();
   }
-
-  if (coulomb.use_elc)
-    ELC_add_force();
 #endif
 }
 
@@ -234,3 +262,6 @@ void init_forces()
   init_constraint_forces();
 #endif
 }
+
+
+

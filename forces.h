@@ -51,6 +51,7 @@
 #include "comfixed.h"
 #include "molforces.h"
 #include "morse.h"
+#include "elc.h"
 
 /** \name Exported Functions */
 /************************************************************/
@@ -176,13 +177,22 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
   /* real space coulomb */
   switch (coulomb.method) {
+  case COULOMB_ELC_P3M: {
+    add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
+    
+    // forces from the virtual charges
+    // they go directly onto the particles, since they are not pairwise forces
+    if (elc_params.dielectric_contrast_on)
+      ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
+    break;
+  }
   case COULOMB_P3M: {
 #ifdef NPT
-    double eng = add_p3m_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+    double eng = add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,p1,p2,d,dist2,dist,force);
     if(integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
 #else
-    add_p3m_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+    add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
 #endif
     break;
   }

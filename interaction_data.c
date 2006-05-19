@@ -46,7 +46,7 @@ int n_interaction_types = 0;
 IA_parameters *ia_params = NULL;
 
 #ifdef ELECTROSTATICS
-Coulomb_parameters coulomb = { 0.0, 0.0, COULOMB_NONE, 0 };
+Coulomb_parameters coulomb = { 0.0, 0.0, COULOMB_NONE };
 Debye_hueckel_params dh_params = { 0.0, 0.0 };
 #endif
 
@@ -544,6 +544,10 @@ void calc_maximal_cutoff()
 #ifdef ELECTROSTATICS
   /* real space electrostatic */
   switch (coulomb.method) {
+  case COULOMB_ELC_P3M:
+    if (max_cut_non_bonded < elc_params.space_layer)
+      max_cut_non_bonded = elc_params.space_layer;
+    // fall through
   case COULOMB_P3M:
     if (max_cut_non_bonded < p3m.r_cut)
       max_cut_non_bonded = p3m.r_cut;
@@ -594,11 +598,11 @@ int check_obs_calc_initialized()
   switch (coulomb.method) {
   case COULOMB_MMM1D: if (MMM1D_sanity_checks()) state = 0; break;
   case COULOMB_MMM2D: if (MMM2D_sanity_checks()) state = 0; break;
+  case COULOMB_ELC_P3M: if (ELC_sanity_checks()) state = 0; // fall through
   case COULOMB_P3M: if (P3M_sanity_checks()) state = 0; break;
   case COULOMB_EWALD: if (EWALD_sanity_checks()) state = 0; break;
   case COULOMB_MAGGS: if (Maggs_sanity_checks()) state = 0; break;
   }
-  if (coulomb.use_elc && ELC_sanity_checks()) state = 0;
 #endif
 
   return state;
@@ -619,9 +623,9 @@ int coulomb_set_bjerrum(double bjerrum)
   coulomb.bjerrum = bjerrum;
 
   if (coulomb.bjerrum == 0.0) {
-
-    if (coulomb.method == COULOMB_P3M) {
-
+    switch (coulomb.method) {
+    case COULOMB_ELC_P3M:
+    case COULOMB_P3M:
       p3m.alpha    = 0.0;
       p3m.alpha_L  = 0.0;
       p3m.r_cut    = 0.0;
@@ -630,24 +634,19 @@ int coulomb_set_bjerrum(double bjerrum)
       p3m.mesh[1]  = 0;
       p3m.mesh[2]  = 0;
       p3m.cao      = 0;
-
-    } else if (coulomb.method == COULOMB_EWALD) {
-
+      break;
+    case COULOMB_EWALD:
       ewald.alpha    = 0.0;
       ewald.alpha_L  = 0.0;
       ewald.r_cut    = 0.0;
       ewald.r_cut_iL = 0.0;
-
-    } else if (coulomb.method == COULOMB_DH) {
-
+      break;
+    case COULOMB_DH:
       dh_params.r_cut   = 0.0;
       dh_params.kappa   = 0.0;
-
-    } else if (coulomb.method == COULOMB_MMM1D) {
-
+    case COULOMB_MMM1D:
       mmm1d_params.maxPWerror = 1e40;
       mmm1d_params.bessel_cutoff = 0;
-
     }
  
     mpi_bcast_coulomb_params();
@@ -683,7 +682,6 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
     }
   }
 
-  coulomb.use_elc = 0;
   coulomb.method  = COULOMB_NONE;
 
   if (coulomb_set_bjerrum(d1) == TCL_ERROR) {
@@ -884,14 +882,19 @@ int printCoulombIAToResult(Tcl_Interp *interp)
   }
   Tcl_PrintDouble(interp, coulomb.bjerrum, buffer);
   Tcl_AppendResult(interp, "{coulomb ", buffer, " ", (char *) NULL);
-  if (coulomb.method == COULOMB_P3M) printP3MToResult(interp);
-  else if (coulomb.method == COULOMB_EWALD) printEWALDToResult(interp);
-  else if (coulomb.method == COULOMB_DH) printdhToResult(interp);
-  else if (coulomb.method == COULOMB_MMM1D) printMMM1DToResult(interp);
-  else if (coulomb.method == COULOMB_MMM2D) printMMM2DToResult(interp);
-  else if (coulomb.method == COULOMB_MAGGS) printMaggsToResult(interp);
-  if (coulomb.use_elc) printELCToResult(interp);
-
+  switch (coulomb.method) {
+  case COULOMB_ELC_P3M:
+    printP3MToResult(interp);
+    printELCToResult(interp);
+    break;
+  case COULOMB_P3M: printP3MToResult(interp); break;
+  case COULOMB_EWALD: printEWALDToResult(interp); break;
+  case COULOMB_DH: printdhToResult(interp); break;
+  case COULOMB_MMM1D: printMMM1DToResult(interp); break;
+  case COULOMB_MMM2D: printMMM2DToResult(interp); break;
+  case COULOMB_MAGGS: printMaggsToResult(interp); break;
+  default: break;
+  }
   Tcl_AppendResult(interp, "}",(char *) NULL);
 
 #else

@@ -1442,6 +1442,9 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   switch (coulomb.method) {
   case COULOMB_NONE:
     break;
+  case COULOMB_ELC_P3M:
+    MPI_Bcast(&elc_params, sizeof(ELC_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+    // fall through
   case COULOMB_P3M:
     MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
@@ -1464,9 +1467,6 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast coulomb params for unknown method %d\n", this_node, coulomb.method);
     errexit();
-  }
-  if (coulomb.use_elc) {
-    MPI_Bcast(&elc_params, sizeof(ELC_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
   }
   on_coulomb_change();
   on_short_range_ia_change();

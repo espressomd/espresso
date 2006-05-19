@@ -44,6 +44,7 @@
 
 #include "utils.h"
 #include "interaction_data.h"
+#include "integrate.h"
 
 #ifdef ELECTROSTATICS
 
@@ -84,7 +85,64 @@ typedef struct {
   double alpha;
   /** unscaled \ref r_cut_iL for use with fast inline functions only */
   double r_cut;
+  /** full size of the interpolated assignment function */
+  int inter2;
+  /** number of points unto which a single charge is interpolated, i.e. p3m.cao^3 */
+  int cao3;
+  /** additional points around the charge assignment mesh, for method like dielectric ELC
+      creating virtual charges. */
+  double additional_mesh[3];
 } p3m_struct;
+
+/** Structure for local mesh parameters. */
+typedef struct {
+  /* local mesh characterization. */
+  /** dimension (size) of local mesh. */
+  int dim[3];
+  /** number of local mesh points. */
+  int size;
+  /** index of lower left corner of the 
+      local mesh in the global mesh. */
+  int ld_ind[3];
+  /** position of the first local mesh point. */
+  double ld_pos[3];
+  /** dimension of mesh inside node domain. */
+  int inner[3];
+  /** inner left down grid point */
+  int in_ld[3];
+  /** inner up right grid point + (1,1,1)*/
+  int in_ur[3];
+  /** number of margin mesh points. */
+  int margin[6];
+  /** number of margin mesh points from neighbour nodes */
+  int r_margin[6];
+  /** offset between mesh lines of the last dimension */
+  int q_2_off;
+  /** offset between mesh lines of the two last dimensions */
+  int q_21_off;
+} local_mesh;
+
+/** Structure for send/recv meshs. */
+typedef struct {
+  /** dimension of sub meshs to send. */
+  int s_dim[6][3];
+  /** left down corners of sub meshs to send. */
+  int s_ld[6][3];
+  /** up right corners of sub meshs to send. */
+  int s_ur[6][3];
+  /** sizes for send buffers. */
+  int s_size[6];
+  /** dimensionof sub meshs to recv. */
+  int r_dim[6][3];
+  /** left down corners of sub meshs to recv. */
+  int r_ld[6][3];
+  /** up right corners of sub meshs to recv. */
+  int r_ur[6][3];
+  /** sizes for recv buffers. */
+  int r_size[6];
+  /** maximal size for send/recv buffers. */
+  int max;
+} send_mesh;
 
 /** \name Exported Variables */
 /************************************************************/
@@ -92,6 +150,22 @@ typedef struct {
 
 /** P3M parameters. */
 extern p3m_struct p3m;
+/** local mesh. */
+extern local_mesh lm;
+/** send/recv mesh sizes */
+extern send_mesh  sm;
+
+//The following are defined in p3m.c :
+
+#define CA_INCREMENT 32  
+extern int p3m_sum_qpart;
+extern double p3m_sum_q2;
+extern double p3m_square_sum_q;
+extern int ca_num;
+extern double  *ca_frac;
+extern int *ca_fmp;
+extern double *rs_mesh;
+extern void realloc_ca_fields(int newsize);
 
 /*@}*/
 
@@ -107,7 +181,7 @@ int inter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
 
 /// parse the basic p3m parameters
 int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv);
-  
+
 /// sanity checks
 int P3M_sanity_checks();
 
@@ -178,14 +252,174 @@ int P3M_tune_parameters(Tcl_Interp *interp);
  */
 int P3M_adaptive_tune_parameters(Tcl_Interp *interp);
 
+/** assign the physical charges using the tabulated charge assignment function.
+    If store_ca_frac is true, then the charge fractions are buffered in cur_ca_fmp and
+    cur_ca_frac. */
+void P3M_charge_assign();
+
+/** assign a single charge into the current charge grid. cp_cnt gives the a running index,
+    which may be smaller than 0, in which case the charge is assumed to be virtual and is not
+    stored in the ca_frac arrays. */
+MDINLINE void P3M_assign_charge(double q,
+#ifdef DIPOLES
+				double mu,
+#endif
+				double real_pos[3],
+				int cp_cnt)
+{
+  /* we do not really want to export these, but this function should be inlined */
+  double P3M_caf(int i, double x);
+  void realloc_ca_fields(int size);
+
+  extern int    *ca_fmp;
+  extern double *ca_frac;
+  extern double *int_caf[7];
+  extern double pos_shift;
+  extern double *rs_mesh;
+#ifdef DIPOLES
+  extern double *rs_mesh_dip;
+#endif
+
+  int d, i0, i1, i2;
+  double tmp0, tmp1;
+  /* position of a particle in local mesh units */
+  double pos;
+  /* 1d-index of nearest mesh point */
+  int nmp;
+  /* distance to nearest mesh point */
+  double dist[3];
+  /* index for caf interpolation grid */
+  int arg[3];
+  /* index, index jumps for rs_mesh array */
+  int q_ind = 0;
+  double cur_ca_frac_val, *cur_ca_frac;
+
+  // make sure we have enough space
+  if (cp_cnt >= ca_num) realloc_ca_fields(cp_cnt + 1);
+  // do it here, since realloc_ca_fields may change the address of ca_frac
+  cur_ca_frac = ca_frac + p3m.cao3*cp_cnt;
+
+  if (p3m.inter == 0) {
+    for(d=0;d<3;d++) {
+      /* particle position in mesh coordinates */
+      pos    = ((real_pos[d]-lm.ld_pos[d])*p3m.ai[d]) - pos_shift;
+      /* nearest mesh point */
+      nmp  = (int)pos;
+      /* distance to nearest mesh point */
+      dist[d] = (pos-nmp)-0.5;
+      /* 3d-array index of nearest mesh point */
+      q_ind = (d == 0) ? nmp : nmp + lm.dim[d]*q_ind;
+
+#ifdef ADDITIONAL_CHECKS
+      if( pos < -skin*p3m.ai[d] ) {
+	fprintf(stderr,"%d: rs_mesh underflow! (pos %f)\n", this_node, real_pos[d]);
+	fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
+		this_node,my_left[d] - skin, my_right[d] + skin);	    
+      }
+      if( (nmp + p3m.cao) > lm.dim[d] ) {
+	fprintf(stderr,"%d: rs_mesh overflow! (pos %f, nmp=%d)\n", this_node, real_pos[d],nmp);
+	fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
+		this_node, my_left[d] - skin, my_right[d] + skin);
+      }
+#endif
+    }
+    if (cp_cnt >= 0) ca_fmp[cp_cnt] = q_ind;
+    
+    for(i0=0; i0<p3m.cao; i0++) {
+      tmp0 = P3M_caf(i0, dist[0]);
+      for(i1=0; i1<p3m.cao; i1++) {
+	tmp1 = tmp0 * P3M_caf(i1, dist[1]);
+	for(i2=0; i2<p3m.cao; i2++) {
+#ifdef DIPOLES
+	  cur_ca_frac_val = tmp1 * P3M_caf(i2, dist[2]);
+	  if (store_ca_frac) *(cur_ca_frac++) = cur_ca_frac_val;
+	  if (q  != 0.0) rs_mesh[q_ind] += q * cur_ca_frac_val;
+	  if (mu != 0.0) {
+	    rs_mesh_dip[0][q_ind] += p[i].r.dip[0] * cur_ca_frac_val;
+	    rs_mesh_dip[1][q_ind] += p[i].r.dip[1] * cur_ca_frac_val;
+	    rs_mesh_dip[2][q_ind] += p[i].r.dip[2] * cur_ca_frac_val;
+	  }
+#else
+	  // In the case without dipoles, ca_frac[] contains an additional factor q!
+	  cur_ca_frac_val = q * tmp1 * P3M_caf(i2, dist[2]);
+	  if (cp_cnt >= 0) *(cur_ca_frac++) = cur_ca_frac_val;
+	  rs_mesh[q_ind] += cur_ca_frac_val;
+#endif
+	  q_ind++;
+	}
+	q_ind += lm.q_2_off;
+      }
+      q_ind += lm.q_21_off;
+    }
+  }
+  else {
+    /* particle position in mesh coordinates */
+    for(d=0;d<3;d++) {
+      pos    = ((real_pos[d]-lm.ld_pos[d])*p3m.ai[d]) - pos_shift;
+      nmp    = (int) pos;
+      arg[d] = (int) ((pos - nmp)*p3m.inter2);
+      /* for the first dimension, q_ind is always zero, so this shifts correctly */
+      q_ind = nmp + lm.dim[d]*q_ind;
+
+#ifdef ADDITIONAL_CHECKS
+      if( pos < -skin*p3m.ai[d] ) {
+	fprintf(stderr,"%d: rs_mesh underflow! (pos %f)\n", this_node, real_pos[d]);
+	fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
+		this_node,my_left[d] - skin, my_right[d] + skin);	    
+      }
+      if( (nmp + p3m.cao) > lm.dim[d] ) {
+	fprintf(stderr,"%d: rs_mesh overflow! (pos %f, nmp=%d)\n", this_node, real_pos[d],nmp);
+	fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
+		this_node, my_left[d] - skin, my_right[d] + skin);
+      }
+#endif
+    }
+    if (cp_cnt >= 0) ca_fmp[cp_cnt] = q_ind;
+
+    for(i0=0; i0<p3m.cao; i0++) {
+      tmp0 = int_caf[i0][arg[0]];
+      for(i1=0; i1<p3m.cao; i1++) {
+	tmp1 = tmp0 * int_caf[i1][arg[1]];
+	for(i2=0; i2<p3m.cao; i2++) {
+#ifdef DIPOLES
+	  cur_ca_frac_val = tmp1 * int_caf[i2][arg[2]];
+	  if (store_ca_frac) *(cur_ca_frac++) = cur_ca_frac_val;
+	  if (q  != 0.0) rs_mesh[q_ind] += q * cur_ca_frac_val;
+	  if (mu != 0.0) {
+	    rs_mesh_dip[0][q_ind] += p[i].r.dip[0] * cur_ca_frac_val;
+	    rs_mesh_dip[1][q_ind] += p[i].r.dip[1] * cur_ca_frac_val;
+	    rs_mesh_dip[2][q_ind] += p[i].r.dip[2] * cur_ca_frac_val;
+	  }
+#else
+	  //In the case without dipoles, ca_frac[] contains an additional factor q!
+	  cur_ca_frac_val = q * tmp1 * int_caf[i2][arg[2]];
+	  if (cp_cnt >= 0) *(cur_ca_frac++) = cur_ca_frac_val;
+	  rs_mesh[q_ind] += cur_ca_frac_val;
+#endif
+	  q_ind++;
+	}
+	q_ind += lm.q_2_off;
+      }
+      q_ind += lm.q_21_off;
+    }
+  }
+}
+
+/** shrink wrap the charge grid */
+MDINLINE void P3M_shrink_wrap_charge_grid(int n_charges) {
+  /* we do not really want to export these */
+  void realloc_ca_fields(int size);
+  
+  if( n_charges < ca_num ) realloc_ca_fields(n_charges);
+}
+
 /** Calculate the k-space contribution to the coulomb interaction
     forces. */ 
 double P3M_calc_kspace_forces(int force_flag, int energy_flag);
 
 /** Calculate real space contribution of coulomb pair forces.
     If NPT is compiled in, it returns the energy, which is needed for NPT. */
-MDINLINE double add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
-					   double *d,double dist2,double dist,double force[3])
+MDINLINE double add_p3m_coulomb_pair_force(double chgfac, double *d,double dist2,double dist,double force[3])
 {
   int j;
   double fac1,fac2, adist, erfc_part_ri;
@@ -195,19 +429,17 @@ MDINLINE double add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
       adist = p3m.alpha * dist;
 #if USE_ERFC_APPROXIMATION
       erfc_part_ri = AS_erfc_part(adist) / dist;
-      fac1 = coulomb.prefactor * p1->p.q * p2->p.q  * exp(-adist*adist);
+      fac1 = coulomb.prefactor * chgfac  * exp(-adist*adist);
       fac2 = fac1 * (erfc_part_ri + 2.0*p3m.alpha*wupii) / dist2;
 #else
       erfc_part_ri = erfc(adist) / dist;
-      fac1 = coulomb.prefactor * p1->p.q * p2->p.q;
+      fac1 = coulomb.prefactor * chgfac;
       fac2 = fac1 * (erfc_part_ri + 2.0*p3m.alpha*wupii*exp(-adist*adist)) / dist2;
 #endif
       for(j=0;j<3;j++)
 	force[j] += fac2 * d[j];
-      ESR_TRACE(fprintf(stderr,"%d: RSE: Pair (%d-%d) dist=%.3f: force (%.3e,%.3e,%.3e)\n",this_node,p1->p.identity,p2->p.identity,dist,fac2*d[0],fac2*d[1],fac2*d[2]));
-      ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac2));
-      ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac2));
-      
+      ESR_TRACE(fprintf(stderr,"%d: RSE: Pair dist=%.3f: force (%.3e,%.3e,%.3e)\n",this_node,
+			dist,fac2*d[0],fac2*d[1],fac2*d[2]));
 #ifdef NPT
       return fac1 * erfc_part_ri;
 #endif
@@ -217,8 +449,7 @@ MDINLINE double add_p3m_coulomb_pair_force(Particle *p1, Particle *p2,
 }
 
 /** Calculate real space contribution of coulomb pair energy. */
-MDINLINE double p3m_coulomb_pair_energy(Particle *p1, Particle *p2,
-				     double *d,double dist2,double dist)
+MDINLINE double p3m_coulomb_pair_energy(double chgfac, double *d,double dist2,double dist)
 {
   double adist, erfc_part_ri;
 
@@ -226,10 +457,10 @@ MDINLINE double p3m_coulomb_pair_energy(Particle *p1, Particle *p2,
     adist = p3m.alpha * dist;
 #if USE_ERFC_APPROXIMATION
     erfc_part_ri = AS_erfc_part(adist) / dist;
-    return coulomb.prefactor*p1->p.q*p2->p.q *erfc_part_ri*exp(-adist*adist);
+    return coulomb.prefactor*chgfac*erfc_part_ri*exp(-adist*adist);
 #else
     erfc_part_ri = erfc(adist) / dist;
-    return coulomb.prefactor*p1->p.q*p2->p.q *erfc_part_ri;
+    return coulomb.prefactor*chgfac*erfc_part_ri;
 #endif
   }
   return 0.0;
@@ -238,7 +469,7 @@ MDINLINE double p3m_coulomb_pair_energy(Particle *p1, Particle *p2,
 #ifdef DIPOLES
 /** Calculate real space contribution of dipolar pair energy. */
 MDINLINE double p3m_dipol_pair_energy(Particle *p1, Particle *p2,
-				     double *d,double dist2,double dist)
+				      double *d,double dist2,double dist)
 {
   double adist,adist2;
   double mu1_dot_mu2;
@@ -250,8 +481,6 @@ MDINLINE double p3m_dipol_pair_energy(Particle *p1, Particle *p2,
   double erfc_ar;
   double dist3 = dist*dist2;
   
-
-
   if(dist < p3m.r_cut) {
 
     mu1_dot_mu2 = p1->r.dip[0]*p2->r.dip[0]
@@ -284,7 +513,7 @@ MDINLINE double p3m_dipol_pair_energy(Particle *p1, Particle *p2,
 #endif
 
 /** Clean up P3M memory allocations. */
-void   P3M_exit();
+void P3M_exit();
 
 /*@}*/
 #endif

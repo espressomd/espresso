@@ -138,7 +138,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 					  double dist, double dist2)
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-  int p1molid, p2molid, i, k, l;
+  int p1molid, p2molid, k, l;
   double force[3] = {0, 0, 0};
 #ifdef ELECTROSTATICS
   double ret;
@@ -205,7 +205,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   if (coulomb.method != COULOMB_NONE) {
     switch (coulomb.method) {
     case COULOMB_P3M:
-      ret = p3m_coulomb_pair_energy(p1,p2,d,dist2,dist);
+      ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;
     case COULOMB_DH:
       ret = dh_coulomb_pair_energy(p1,p2,dist);
@@ -218,18 +218,18 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
     }
     virials.coulomb[0] += ret;
   }
- /* stress tensor part */
-      if (coulomb.method == COULOMB_DH) {
-	for (i = 0; i < 3; i++)
-	  force[i] = 0;
-
-	add_dh_coulomb_pair_force(p1,p2,d,dist, force);
-	for(k=0;k<3;k++)
-	  for(l=0;l<3;l++)
-	    p_tensor.coulomb[k*3 + l] += force[k]*d[l];
-      }
+  /* stress tensor part */
+  if (coulomb.method == COULOMB_DH) {
+    int i;
+    for (i = 0; i < 3; i++)
+      force[i] = 0;
+    
+    add_dh_coulomb_pair_force(p1,p2,d,dist, force);
+    for(k=0;k<3;k++)
+      for(l=0;l<3;l++)
+	p_tensor.coulomb[k*3 + l] += force[k]*d[l];
+  }
 #endif
-
 }
 
 /** Calculate bonded virials for one particle.

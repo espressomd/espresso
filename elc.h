@@ -25,14 +25,35 @@ typedef struct {
   double far_cut, far_cut2;
   /** size of the empty gap. Note that ELC relies on the user to make sure that
       this condition is fulfilled. */
-  double minimal_dist;
+  double gap_size;
   /** whether the cutoff was set by the user, or calculated by Espresso. In the latter case, the
       cutoff will be adapted if important parameters, such as the box dimensions, change. */
   int far_calculated;
   /** if true, use a homogenous neutralizing background for nonneutral systems. Unlike
       the 3d case, this background adds an additional force pointing towards the system
       center, so be careful with this. */
+  
+  /// neutralize the box by an homogeneous background
   int neutralize;
+
+  /// flag whether there is any dielectric contrast in the system
+  int dielectric_contrast_on;
+
+  /// dielectric constants
+  double di_top, di_mid, di_bot;
+  /// dielectric prefactors
+  double di_mid_top, di_mid_bot, di_fac;
+
+  /** minimal distance of two charges for which the far formula is used. For plain ELC, this equals
+      gap_size, but for dielectric ELC it is only 1./3. of that. */
+  double minimal_dist;
+  /** layer around the dielectric contrast in which we trick around */
+  double space_layer;
+  /** the space that is finally left */
+  double space_box;
+  /** up to where particles can be found */
+  double h;
+
 } ELC_struct;
 extern ELC_struct elc_params;
 
@@ -51,7 +72,8 @@ int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv);
     @param neutralize whether to add a neutralizing background. WARNING: This background exerts forces, which
     are dependent on the simulation box; especially the gap size enters into the value of the forces.
 */
-int ELC_set_params(double maxPWerror, double min_dist, double far_cut, int neutralize);
+int ELC_set_params(double maxPWerror, double min_dist, double far_cut, int neutralize,
+		   double top, double mid, double bottom);
 
 /// the force calculation 
 void ELC_add_force();
@@ -67,5 +89,28 @@ void ELC_init();
 
 /// resize the particle buffers
 void ELC_on_resort_particles();
+
+/// pairwise contributions from the lowest and top layers to the energy
+double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1, Particle *p2); 
+/// pairwise contributions from the lowest and top layers to the force
+void   ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
+						    double force1[3], double force2[3]); 
+/// self energies of top and bottom layers with their virtual images
+double ELC_P3M_dielectric_layers_energy_self();
+/// forces of particles in border layers with themselves
+void ELC_P3M_self_forces();
+
+/// assign the additional, virtual charges, used only in energy.c
+void   ELC_P3M_charge_assign_both();
+/// assign the additional, virtual charges, used only in energy.c
+void   ELC_P3M_charge_assign_image();
+
+/// take into account the virtual charges in the charge sums, used in energy.c
+void   ELC_P3M_modify_p3m_sums_both();
+/// take into account the virtual charges in the charge sums, used in energy.c
+void   ELC_P3M_modify_p3m_sums_image();
+
+/// assign the additional, virtual charges, used only in energy.c
+void   ELC_P3M_restore_p3m_sums();
 
 #endif

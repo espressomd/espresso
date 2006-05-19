@@ -167,6 +167,7 @@ void on_observable_calc()
   if(reinit_electrostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
     switch (coulomb.method) {
+    case COULOMB_ELC_P3M:
     case COULOMB_P3M:
       P3M_count_charged_particles();
       break;
@@ -208,6 +209,9 @@ void on_coulomb_change()
   else
     coulomb.prefactor = coulomb.bjerrum;
   switch (coulomb.method) {
+  case COULOMB_ELC_P3M:
+    ELC_init();
+    // fall through
   case COULOMB_P3M:
     P3M_init();
     integrate_vv_recalc_maxrange();
@@ -229,8 +233,6 @@ void on_coulomb_change()
     break;
   default: break;
   }
-  if (coulomb.use_elc)
-    ELC_init();
 
   recalc_forces = 1;
 #endif
@@ -266,6 +268,9 @@ void on_resort_particles()
   EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
+  case COULOMB_ELC_P3M:
+    ELC_on_resort_particles();
+    break;
   case COULOMB_MMM2D:
     MMM2D_on_resort_particles();
     break;
@@ -274,22 +279,24 @@ void on_resort_particles()
     break;
   default: break;
   }
-  if (coulomb.use_elc)
-    ELC_on_resort_particles();
 #endif
 }
 
 #ifdef NPT
 void on_NpT_boxl_change(double scal1) {
   grid_changed_box_l();
-
+  
 #ifdef ELECTROSTATICS
-  if(coulomb.method == COULOMB_P3M) {
+  switch(coulomb.method) {
+  case COULOMB_P3M:
     P3M_scaleby_box_l();
     integrate_vv_recalc_maxrange();
-  } else if(coulomb.method == COULOMB_EWALD) {
+    break;
+  case COULOMB_EWALD:
     EWALD_scaleby_box_l();
     integrate_vv_recalc_maxrange();
+    break;
+  default: break;
   }
 #endif
 
@@ -329,6 +336,10 @@ void on_parameter_change(int field)
 #ifdef ELECTROSTATICS
   cc = 0;
   switch (coulomb.method) {
+  case COULOMB_ELC_P3M:
+    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
+      cc = 1;
+    // fall through
   case COULOMB_P3M:
     if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID || field == FIELD_SKIN)
       cc = 1;
@@ -364,8 +375,6 @@ void on_parameter_change(int field)
     break;
   default: break;
   }
-  if (coulomb.use_elc && (field == FIELD_TEMPERATURE || field == FIELD_BOXL))
-    cc = 1;
   if (cc)
     on_coulomb_change();
 #endif

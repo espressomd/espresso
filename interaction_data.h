@@ -66,21 +66,23 @@
 /*@{*/
 
 /** Coulomb interation switched off (NONE). */
-#define COULOMB_NONE  0
+#define COULOMB_NONE    0
 /** Coulomb method is Debye-Hueckel. */
-#define COULOMB_DH    1
+#define COULOMB_DH      1
 /** Coulomb method is Debye-Hueckel with parallel separate calculation. */
-#define COULOMB_DH_PW 2
+#define COULOMB_DH_PW   2
 /** Coulomb method is P3M. */
-#define COULOMB_P3M   3
+#define COULOMB_P3M     3
 /** Coulomb method is one-dimensional MMM */
-#define COULOMB_MMM1D 4
+#define COULOMB_MMM1D   4
 /** Coulomb method is two-dimensional MMM */
-#define COULOMB_MMM2D 5
+#define COULOMB_MMM2D   5
 /** Coulomb method is "Maggs" */
-#define COULOMB_MAGGS 6
+#define COULOMB_MAGGS   6
 /** Coulomb method is standard Ewald */
-#define COULOMB_EWALD 7
+#define COULOMB_EWALD   7
+/** Coulomb method is P3M plus ELC. */
+#define COULOMB_ELC_P3M 8
 
 /*@}*/
 
@@ -257,8 +259,6 @@ typedef struct {
   /** Method to treat coulomb interaction. See \ref COULOMB_NONE "Type codes for Coulomb" */
   int method;
 
-  /** wether to use ELC */
-  int use_elc;
 } Coulomb_parameters;
 
 /*@}*/

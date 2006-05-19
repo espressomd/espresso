@@ -79,7 +79,32 @@ void calc_long_range_energies()
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
   case COULOMB_P3M:
+    P3M_charge_assign(); 
     energy.coulomb[1] = P3M_calc_kspace_forces(0,1);
+    break;
+  case COULOMB_ELC_P3M:
+    // assign the original charges first
+    // they may not have been assigned yet
+    P3M_charge_assign(); 
+    if(!elc_params.dielectric_contrast_on)
+      energy.coulomb[1] = P3M_calc_kspace_forces(0,1);
+    else {
+      energy.coulomb[1] = 0.5*P3M_calc_kspace_forces(0,1); 
+      energy.coulomb[1]+= 0.5*ELC_P3M_dielectric_layers_energy_self(); 
+
+      //  assign both original and image charges now
+      ELC_P3M_charge_assign_both();
+      ELC_P3M_modify_p3m_sums_both();
+
+      energy.coulomb[1] += 0.5*P3M_calc_kspace_forces(0,1); 
+
+      //assign only the image charges now
+      ELC_P3M_charge_assign_image();
+      ELC_P3M_modify_p3m_sums_image();
+
+      energy.coulomb[1]-= 0.5*P3M_calc_kspace_forces(0,1); 
+    }
+    energy.coulomb[2] = ELC_energy();
     break;
   case COULOMB_EWALD:
     energy.coulomb[1] = EWALD_calc_kspace_forces(0,1);
@@ -94,8 +119,6 @@ void calc_long_range_energies()
     *energy.coulomb += maggs_electric_energy();
     break;
   }
-  if (coulomb.use_elc)
-    energy.coulomb[energy.n_coulomb - 1] = ELC_energy();
 #endif
 }
 
@@ -112,12 +135,11 @@ void init_energies(Observable_stat *stat)
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE:  n_coulomb = 0; break;
+  case COULOMB_ELC_P3M: n_coulomb = 3; break;
   case COULOMB_P3M:   n_coulomb = 2; break;
   case COULOMB_EWALD: n_coulomb = 2; break;
   default: n_coulomb  = 1;
   }
-  if (coulomb.use_elc)
-    n_coulomb++;
 #endif
   
   obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, 1);
