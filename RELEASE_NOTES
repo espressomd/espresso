@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.9j (Seska)                                                                      *
+* v1.9.9k (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.9j -
+- v1.9.9k -
 -----------
 
+(k) May   19th, 2006.
 (j) May   17th, 2006.
 (i) May   16th, 2006.
 (h) May   10th, 2006.
@@ -23,6 +24,8 @@ Current working revision.
 (a) April 24th, 2006.
 
 New Features:
+(k) Added support for derived datatypes to the mpi fake
+    implementation.
 (j) added automatic detection for Fink libraries on Macs.
 (h) Moved to version 1.9.9
 (e) P3M: Added non-interpolating version of the charge assignment function for
@@ -34,6 +37,9 @@ New Features:
     EXPERIMENTAL)
 
 Bugfixes:
+(k) added missing output of the dielectric constants.
+(k) fixed a missing update_local_particles in nsq_balance, which
+    crashed the code under some rare conditions.
 (i) Fixed the handling of non-neutral systems with MMM2D and dielectric
     contrast.
 (h) fixed RELEASE_NOTES and versions.h after END_OF_ALPHABET :-)
