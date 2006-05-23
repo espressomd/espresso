@@ -940,7 +940,7 @@ int parse_g_av(Tcl_Interp *interp, int what, int argc, char **argv)
   /******************************************************************************/
   int i;
   char buffer[TCL_DOUBLE_SPACE+2];
-  double *gx;
+  double *gx = NULL;
 
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }

@@ -2443,7 +2443,7 @@ void recv_particles(ParticleList *particles, int node)
 	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
   particles->n += transfer;
 
-  local_dyn.n = 0;
+  init_intlist(&local_dyn);
   for (pc = particles->n - transfer; pc < particles->n; pc++) {
     Particle *p = &particles->part[pc];
     local_dyn.n += p->bl.n;

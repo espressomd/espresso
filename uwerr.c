@@ -160,7 +160,7 @@ void gammacf(double * gcf, double a, double x)
 
 double gammaq(double a, double x)
 {
-    double retval;
+    double retval=0;
 
     if (x < 0.0 || a <= 0.0) {
 	puts("uwerr: Invalid arguments for gammaq.");
@@ -349,6 +349,8 @@ int UWerr_f(Tcl_Interp *interp, Tcl_CmdInfo * cmdInfo, int argc, char ** argv,
   char ** my_argv;
 
   FILE * plotDataf, * plotScriptf;
+
+  ret.Q_val = 0;
 
   if (!data) {
     Tcl_AppendElement(interp, "No data matrix given.");

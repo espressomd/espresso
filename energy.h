@@ -154,7 +154,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
   Particle *p2, *p3 = NULL, *p4 = NULL;
   Bonded_ia_parameters *iaparams;
   int i, type_num, type, n_partners, bond_broken;
-  double ret, dx[3] = {0, 0, 0};
+  double ret=0, dx[3] = {0, 0, 0};
 
   i = 0;
   while(i<p1->bl.n) {

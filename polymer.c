@@ -281,7 +281,7 @@ tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try,
 int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, int mode, double shield, int max_try, 
 	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle, double angle2, double *posed2) {
   int p,n, cnt1,cnt2,max_cnt, bond[2];
-  double theta,phi,*poly,pos[3],poz[3],poy[3],pox[3],M[3],a[3],b[3],c[3],d[3],absc,absd,v1,v2,alpha;
+  double theta,phi,*poly,pos[3],poz[3],poy[3] = {0, 0, 0},pox[3] = {0, 0, 0},M[3],a[3],b[3],c[3],d[3],absc,absd,v1,v2,alpha;
   poly = malloc(3*MPC*sizeof(double));
 
   cnt1 = cnt2 = max_cnt = 0;

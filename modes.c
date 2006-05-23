@@ -600,7 +600,7 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
   double direction[3];  
   double refdir[3] = {0,0,1};
   int tmpzdir;
-  double binvolume = binwidth*box_l[xdir]*box_l[ydir];
+  double binvolume;
   nbins = density_profile[0].max;
   nbeadtypes=beadids->max;
 

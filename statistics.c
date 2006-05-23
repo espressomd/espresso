@@ -1912,7 +1912,7 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
 static int parse_cell_gpb(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze cell_gpb <Manning parameter> <outer cell radius> <inner cell radius> [<accuracy> [<# of interations>]]' */
-  double result[3], xi_m, Rc, ro;
+  double result[3] = {0, 0, 0}, xi_m, Rc, ro;
   double gacc = 1e-6;
   int maxtry  = 30000;
   char buffer[3*TCL_DOUBLE_SPACE+20], usage[150];

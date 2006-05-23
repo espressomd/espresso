@@ -28,6 +28,7 @@ int bin(ClientData cdata, Tcl_Interp *interp,
 
   init_doublelist(&coords);
   init_doublelist(&data);
+  init_doublelist(&sum);
   init_doublelist(&bins);
 
   /* type of the binning */
