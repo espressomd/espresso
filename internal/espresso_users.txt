@@ -1028,3 +1028,18 @@ topic:     self-assembly of lipid bilayers
 reminded:  X05.MAY.2006
 
 
+name:      Karen Johnston
+email:     kjo@fyslab.hut.fi
+institute: Laboratory of Physics
+           Helsinki University of Technology
+           P.O. Box 1100
+           ESPOO 02015
+           Finland
+sent:      23.MAY.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Molecular dynamics/coarse-grained simulations of the adhesion
+           of polymer molecules to metal or ceramic surfaces.
+reminded:  X23.MAY.2006
+
+
