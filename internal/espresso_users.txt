@@ -1043,3 +1043,13 @@ topic:     Molecular dynamics/coarse-grained simulations of the adhesion
 reminded:  X23.MAY.2006
 
 
+name:      Torsten Stuehn
+email:     stuehn@mpip-mainz.mpg.de
+institute: MPIP Mainz
+sent:      24.MAY.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     This is a test only
+reminded:  X24.MAY.2006
+
+
