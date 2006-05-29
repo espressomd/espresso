@@ -598,3 +598,32 @@ proc require_feature { args } {
 	exit -42
     }
 }
+
+#
+# Create box for psf/pdb files
+#
+# Do not run integration with that, it will crash!!!
+proc vmd_create_box { {type "0"} } {
+    set pid [expr [setmd max_part] +1]; set res $pid
+    set box [setmd box_l]
+    part $pid pos 0 0 0 type $type ; incr pid
+    part $pid pos 0 0 [lindex $box 2] type $type bond 0 [expr $pid-1]; incr pid
+    part $pid pos 0 [lindex $box 1] [lindex $box 2] type $type bond 0 [expr $pid-1]; incr pid
+    part $pid pos 0 [lindex $box 1] 0 type $type bond 0 [expr $pid-1]
+    part $pid bond 0 [expr $pid-3]; incr pid
+    part $pid pos [lindex $box 0] 0 0 type $type
+    part $pid bond 0 [expr $pid-4]; incr pid
+    part $pid pos [lindex $box 0] 0 [lindex $box 2] type $type bond 0 [expr $pid-1]
+    part $pid bond 0 [expr $pid-4]; incr pid
+    part $pid pos [lindex $box 0] [lindex $box 1] [lindex $box 2] type $type bond 0 [expr $pid-1]
+    part $pid bond 0 [expr $pid-4]; incr pid
+    part $pid pos [lindex $box 0] [lindex $box 1] 0 type $type bond 0 [expr $pid-1]
+    part $pid bond 0 [expr $pid-4];    part $pid bond 0 [expr $pid-3]; incr pid
+    return $res
+}
+
+# Delete the box for vmd 
+proc vmd_delete_box { start } {
+    for { set i $start } { $i < [expr $start+8] } { incr i } { part $i del } 
+}
+	
