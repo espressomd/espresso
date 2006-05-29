@@ -214,7 +214,9 @@ proc bond_angle { p1 p2 p3 {type "r"} } {
     if { [llength $p3]==1 } { set p3 [part $p3 print pos] }
     set vec1 [unitvec $p1 $p2]
     set vec2 [unitvec $p3 $p2]
-    set phi  [expr acos([vecdot_product $vec1 $vec2])]
+    set cosphi [vecdot_product $vec1 $vec2]
+    if { $cosphi<=-1 || $cosphi >= 1} { set phi [PI]  } else {
+	set phi  [expr acos($cosphi)] }
     if { $type == "d" } { return [expr 180.0*$phi/[PI]] } 
     return $phi 
 }
@@ -233,6 +235,9 @@ proc bond_angle_min { p1 p2 p3 {type "r"} } {
 
 proc bond_dihedral { p1 p2 p3 p4 {type "r"} } {
     # Calculate bond dihedral between particles p1, p2, p3 and p4
+    # Type defines the angle convention and the unit
+    # First letter: r - radiant; d - degree
+    # second letter: "" - 0,360; b - bio convention -180,180
     if { [llength $p1]==1 } { set p1 [part $p1 print pos] }
     if { [llength $p2]==1 } { set p2 [part $p2 print pos] }
     if { [llength $p3]==1 } { set p3 [part $p3 print pos] }
@@ -242,14 +247,18 @@ proc bond_dihedral { p1 p2 p3 p4 {type "r"} } {
     set r_32 [unitvec $p2 $p3]
     set r_34 [unitvec $p4 $p3]
 
-    set aXb  [vecnorm [veccross_product3d $r_12 $r_23]]
-    set bXc  [vecnorm [veccross_product3d $r_23 $r_34]]
+    set aXb  [vecnorm [veccross_product3d $r_12 $r_32]]
+    set bXc  [vecnorm [veccross_product3d $r_32 $r_34]]
 
     set cosphi [vecdot_product $aXb $bXc]
-    set phi [expr acos($cosphi)]
+    if { $cosphi<-1 || $cosphi > 1} { set phi [PI]  } else {
+	set phi [expr acos($cosphi)] }
 
     if { [vecdot_product $aXb $r_34] < 0 } { set phi [expr 2*[PI]-$phi] }
     if { $type == "d" } { return [expr 180.0*$phi/[PI]] } 
+    if { $type == "db" } { 
+	if { $phi<[PI] } { return [expr 180.0*$phi/[PI]]
+	} else {        return [expr (180.0*$phi/[PI])-360] } } 
     return $phi
 }
 
@@ -334,6 +343,20 @@ proc veccross_product3d { a b } {
     # calculate the cross product of vectors a and b: return = (a x b)
     for {set i 0} {$i<3} {incr i} { 
 	lappend res [expr [lindex $a [expr ($i+1)%3]]*[lindex $b [expr ($i+2)%3]] - [lindex $a [expr ($i+2)%3]]*[lindex $b [expr ($i+1)%3]] ]
+    }
+    return $res
+}
+
+proc matvec_product { m v } {
+    # Caclulate the dot product m.v, where m is a (n x n) matrix 
+    # and v is a vector with n elements
+    set n [llength $m]; set res ""
+    for { set i 0 } { $i < $n } { incr i } {
+	set tmp 0
+	for { set j 0 } { $j < $n } { incr j } { 
+	    set tmp [expr $tmp+([lindex $m $i $j]*[lindex $v $j])]
+	}
+	lappend res $tmp
     }
     return $res
 }
@@ -448,6 +471,53 @@ proc nlreplace { list ind element } {
 	set list [lreplace $list $ind $ind $element]
     }
     return $list
+}
+
+#############################################################
+# Histograms
+#############################################################
+
+proc histogram { list nbins { min "auto" } { max "auto" }  { type "lin" } { ret "xy" } } {
+    # calculate a histogram for the values given in list
+    # The histogram with nbins bins accounts for values within the range min to max
+    # The bins are either aequidistant or logarythmically aequidistant
+    # The histogram is returned in xy pairs or only a list of histogram values
+    # There is no normalisation since it depends too much on what you want 
+    set num [llength $list]
+    if { $min == "auto" || $max == "auto" } {
+	set min [lindex $list 0]; set max $min
+	for { set i 1 } { $i < $num } { incr i } {
+	    if { $min > [lindex $list $i] } { set min [lindex $list $i] }
+	    if { $max < [lindex $list $i] } { set max [lindex $list $i] }
+	} 
+    } 
+
+    if { $type == "lin" || $type == "linear" } {	
+	# linear case
+	set fac [expr $nbins/(1.0*$max-$min)]
+	for  { set i 0 } { $i < $nbins } { incr i } { lappend res 0 
+	    lappend xval [expr $min+(($i+0.5)/$fac)] }
+	for { set i 1 } { $i < $num } { incr i } {
+	    set ind [expr int(([lindex $list $i]-$min)*$fac)]
+	    if { $ind >= 0 && $ind < $nbins } {  lset res $ind [expr [lindex $res $ind]+1] }
+	}
+   } else {
+       # logarithmic case 
+       set fac [expr $nbins/(1.0*log($max)-log($min))]
+       set fac2 [expr pow(($max/$min),1.0/(1.0*$nbins))]
+       set tmp [expr $min/(sqrt($fac2))]
+       for  { set i 0 } { $i < $nbins } { incr i } { lappend res 0 
+	   set tmp [expr $tmp*$fac2]
+	   lappend xval $tmp }
+       for { set i 0 } { $i < $num } { incr i } {
+	   set ind [expr int((log([lindex $list $i])-log($min))*$fac)]
+	   if { $ind >= 0 && $ind < $nbins } {  lset res $ind [expr [lindex $res $ind]+1] }
+      }
+    } 
+    if { $ret == "xy" } { 
+	for  { set i 0 } { $i < $nbins } { incr i } { lappend res2 "[lindex $xval $i] [lindex $res $i]" } 
+	return $res2
+    } else { return $res }
 }
 
 #############################################################
