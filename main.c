@@ -22,6 +22,7 @@
 #include <tk.h>
 #endif
 #include <stdlib.h>
+#include <signal.h>
 #include "initialize.h"
 #include "global.h"
 #include "communication.h"
@@ -32,6 +33,25 @@ void errexit()
   core();
 #endif
   exit(1);
+}
+
+void sigint_handler(int sig) 
+{
+  /* without this exit handler the nodes might exit asynchronously
+   * without calling MPI_Finalize, which may cause MPI to hang
+   * (e.g. this handler makes CTRL-c work properly with poe)
+   *
+   * NOTE: mpirun installs its own handler for SIGINT/SIGTERM
+   *       and takes care of proper cleanup and exit */
+
+  static int numcalls = 0;
+  if (numcalls++ > 0) exit(sig); // catch sig only once
+
+  /* we use runtime_error to indicate that sig was called;
+   * upon next call of mpi_gather_runtime_errors all nodes 
+   * will clean up and exit. */
+  char *errtxt = runtime_error(64);
+  ERROR_SPRINTF(errtxt, "{000 caught signal %d} ",sig);
 }
 
 void exitHandler(ClientData data)
@@ -64,24 +84,27 @@ int main(int argc, char **argv)
 
   mpi_init(&argc, &argv);
 
+  /* register handler for SIGINT */
+  signal(SIGINT, sigint_handler);
+
   if (this_node == 0) {
     /* master node */
-    atexit(mpi_stop);
 #ifdef FORCE_CORE
+    /* core should be the last exit handler (process dies) */
     atexit(core);
 #endif
+    atexit(mpi_stop);
 #ifdef TK
     Tk_Main(argc, argv, appinit);
 #else
     Tcl_Main(argc, argv, appinit);
 #endif
-    return 0;
-  }
-  else
+  } 
+  else {
+    /* slave node */
     on_program_start(0);
-
-  /* slave node */
-  mpi_loop();
+    mpi_loop();
+  }
 
   return 0;
 }
