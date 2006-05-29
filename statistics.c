@@ -2553,6 +2553,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     err = parse_formfactor(interp, 1, argc - 2, argv + 2);    
   else if (ARG1_IS_S("necklace")) 
     err = parse_necklace_analyzation(interp, argc - 2, argv + 2);   
+  else if (ARG1_IS_S("holes")) 
+    err = parse_hole_cluster_analyzation(interp, argc - 2, argv + 2);   
   else if (ARG1_IS_S("distribution"))
     err = parse_distribution(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("rdf"))
