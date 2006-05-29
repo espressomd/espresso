@@ -1,0 +1,4 @@
+model=`echo $1 | sed 's/^\([^-]*\)-.*$/\1/'`
+vendor=`echo $1 | sed 's/^\([^-]*\)-\([^-]*\)-.*$/\2/'`
+system=`echo $1 | sed 's/^\([^-]*\)-\([^-]*\)-\([^-]*\).*$/\3/'`
+echo $model-$vendor-$system

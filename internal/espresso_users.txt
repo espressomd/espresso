@@ -1,0 +1,1055 @@
+List of people using ESPResSo
+
+===============================================================================
+Users in the Kremer Group:
+===============================================================================
+
+Holm, Christian
+
+Arnold, Axel
+
+Mann, Bernward
+
+Antypov, Dmytro
+
+Ballenegger, Vincent
+
+Galperin, Dmitry
+
+Sayar, Mehmet
+
+Stuehn, Torsten
+
+Andrienko, Denis
+
+Cooke, Ira
+
+Deserno, Markus
+
+Dünweg, Burkhard
+
+Lobaskin, Vladimir
+
+Nowak, Christian
+
+Praprotnik, Mateij
+
+===============================================================================
+Users in MPI-P:
+===============================================================================
+
+===============================================================================
+External users:
+===============================================================================
+
+name:      Cameron Abrams
+email:     cfa22@drexel.edu
+institute: Drexel University, Philadelphia
+sent:      JUL 2003
+version:   
+CVS:       
+topic:     
+reminded:  01.JUL.2003
+
+
+name:      Hendrik Meyer
+email:     hmeyer@ics.u-strasbg.fr
+institute: 
+sent:      2003
+version:   
+CVS:       
+topic:     
+reminded:  01.JUL.2003
+
+
+name:      Zuowei Wang
+email:     wangzw@email.unc.com
+institute: University of North Carolina
+sent:      2003
+version:   
+CVS:       
+topic:     
+reminded:  01.JUL.2003
+
+
+name:      Elena Jarkova
+email:     jarkova@mpip-mainz.mpg.de
+institute: 
+sent:      OCT 2003
+version:   
+CVS:       
+topic:     
+reminded:  01.OCT.2003
+
+
+name:      Karel Prochazka
+email:     prochaz@vivien.natur.cuni.cz
+institute: Charles University Prague
+sent:      08.OCT.2003
+version:   
+CVS:       
+topic:     
+reminded:  08.OCT.2003
+
+
+name:      Arijit Maitra / Andreas Heuer
+email:     andheuer@uni-muenster.de
+institute: Universitaet Muenster
+sent:      22.OCT.2003 - 12.MAY.2004
+version:   20040512-Espresso_v1.6.1d.tar.gz
+	   20041025-Espresso_v1.8.Beta.tar.gz
+CVS:       remote-access (user-id: arijit)
+topic:     Polymers, e.g. PEO at Silica
+reminded:  22.OCT.2003
+
+
+name:      Alexey Shipov
+email:     ashipov@mail.ru
+institute: 
+sent:      11.FEB.2004
+version:   20040129-Espresso_v1.5.Beta.tar.gz
+CVS:       
+topic:     domain nucleation and growth in thin granular ferromagnetic films 
+           in PMMA
+reminded:  15.SEP.2005
+
+
+name:      Salvador LEON-Cabanillas
+email:     leon@diquima.upm.es
+institute: Universidad Politecnica de Madrid
+sent:      20.FEB.2004
+version:   
+CVS:       
+topic:     
+reminded:  20.FEB.2004
+
+
+name:      Ralph Jaquet
+email:     theo@theo.chemie.uni-siegen.de
+institute: Universitaet Siegen
+sent:      09.MAR.2004
+version:   20040129-Espresso_v1.5.Beta.tar.gz
+CVS:       
+topic:     Wir würden gerne auch im Rahmen von MD untersuchen, wie sich die 
+           smektische Phase ausrichtet (Direktor) und wie das 
+	   Temperaturverhalten ist.
+reminded:  09.MAR.2004
+
+
+name:      Alexandre Diehl
+email:     diehl@fisica.ufc.br
+institute: Universidade Federal do Ceara
+sent:      10.MAR.2004
+version:   20040129-Espresso_v1.5.Beta.tar.gz
+CVS:       
+topic:     It's my intention to work on polyelectrolyte simulation
+reminded:  10.MAR.2004
+
+
+name:      Frederic Tessier
+email:     ftessier@physics.uottawa.ca
+institute: University of Ottawa
+sent:      15.MAR.2004
+version:   20040129-Espresso_v1.5.Beta.tar.gz
+CVS:       
+topic:     simulations of EOF, Nanopore, polymer-polymer collisions
+reminded:  15.MAR.2004
+
+
+name:      Olaf Lenz / Ulf Schiller (uschille@) / Friederike Schmid
+email:     olenz@Physik.Uni-Bielefeld.DE
+institute: Universitaet Bielefeld
+sent:      26.JAN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz and higher
+CVS:       remote-access (user-id: olenz / uschille)
+topic:     Lipid-Doppelschicht, deren Koepfe zur Stabilisation an feste Waende gekoppelt; 
+	   spaeter soll dann eine Lipid-Doppelschicht in einer Loesungsmittelumgebung 
+	   simuliert werden, wobei zur Simulation des Loesungsmittels ein DPD-Thermostat
+	   angedacht ist, der eingehend untersucht wird
+reminded:  26.JAN.2005
+
+
+name:      Pasichnyk, Igor (lekaigor@compuservice.de)
+email:     pasichny@mpipks-dresden.mpg.de
+institute: MPI fuer Physik komplexer Systeme Dresden
+sent:      
+version:   
+CVS:       
+topic:     
+reminded:  22.SEP.2004
+
+
+name:      Limbach, Hans Joerg
+email:     Hans-Joerg.Limbach@rdls.nestle.com
+institute: 
+sent:      21.SEP.2004
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       remote-access (user-id: limbach)
+topic:     
+reminded:  X21.SEP.2004
+
+
+name:      Kulic, Igor
+email:     
+institute: 
+sent:      
+version:   
+CVS:       
+topic:     
+reminded:  01.DEC.2004
+
+
+name:      Sukumaran, Sathish Kumar
+email:     sathish@mpip-mainz.mpg.de, physks@leeds.ac.uk
+institute: 
+sent:      
+version:   
+CVS:       
+topic:     i would like to set up espresso here in leeds and use it. would that be ok with you?
+reminded:  01.DEC.2004
+
+
+name:      Moran Wang
+email:     moranwang@jhu.edu
+institute: Jhons Hopkins University
+sent:      08.DEC.2004
+version:   20041208-Espresso_v1.8.2d.tar.gz
+CVS:       
+topic:     I am a postdoc researcher at the Johns Hopkins University. My current
+	   work has some relationship with electrically driven flow. I notice that
+	   your code can be able to work for this. So I wonder if I can get the code
+	   and have a try to deal with this task. I will cite your papers in any of
+	   my relative productions.
+reminded:  08.DEC.2004
+
+
+name:      Giovanni Giupponi
+email:     g.giupponi@ucl.ac.uk
+institute: University College London
+sent:      15.MAR.2005 / topic added: 19.APR.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     I am interested in Espresso as me and colleagues at the IRC in Leeds are trying
+           to investigate the conformational properties and beyond of charged dendrimers.
+           Any suggestions from you and your group (including past work on coarse grained
+           simulation of charged system with espresso) are more than welcome
+reminded:  15.MAR.2005
+
+
+name:      Bernd Hannebauer
+email:     bernd.hannebauer@degussa.com
+institute: Degussa
+sent:      22.MAR.2005
+version:   v1.7.5-Mezoti
+CVS:       
+topic:     I\'m interested in molecular interaction energies and want to try out ESPResSo for this purpose
+           We are doing quantum and force field calculations here and
+           we are always interested in new simulation approaches including coarse
+           grained systems. I will definitely try to find out what kind of potential
+           applications related to our research are suitable for ESPResSo and I am
+           also interested in looking at the new features of the latest ESPResSo
+           versions. However, since I'm quite busy at the moment, it may take some
+           time until I will be able spend a bit more time on this matter.
+reminded:  22.MAR.2005
+
+
+name:      Thomas McDermott
+email:     tomemcd@yahoo.com
+institute: UCD
+sent:      23.MAR.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     Just curious at the moment. I write my own MD code in Fortran 95 but also like C.
+topic2:    I am currently finishing a PhD on the diffusion of liquids in nanoscale pores. 
+	   These include water and salt diffusing through atomistic models of protein ion-channels. 
+	   For this I developed a suite of Fortran 95 programs including programs for 
+	   * Molecular Dynamics with Nose-Poincare Thermostat and Long range Electrostatics 
+	   (the model pore is infinite in one dimension) using the Lekner method.
+	   * Grand Canonical Ensemble Monte Carlo and Thermodynamic Integration for generating 
+	   initial conditions.
+	   I've also studied a hybrid hard-sphere/continuous liquid diffusing through a model 
+	   (MCM like)silica pore.
+	   I was interested in the Espresso source code mainly to see how a large scientific program 
+	   is organised/implemented in C. (Although I often write small 'tools' in C all my larger 
+	   program are implemented in Fortran 95 which I'm more familiar with and hence find much 
+	   simpler to use). 
+	   I don't plan to use Espresso in the short term as I'm still very busy running my own codes, 
+	   but hopefully in the future I'll get time to study the code and perhaps contribute to it.
+reminded:  23.MAR.2005
+
+
+name:      Neeraj Rai
+email:     rai@chem.umn.edu
+institute: University of Minnesota
+sent:      26.MAR.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     MC/MD simulations
+reminded:  26.MAR.2005
+
+
+name:      Kristopher Wise
+email:     k.e.wise@larc.nasa.gov
+institute: National Institute of Aerospace
+sent:      26.APR.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     polymer simulations for materials development
+reminded:  26.APR.2005
+
+
+name:      Adama Tandia
+email:     adamatandia@gmail.com
+institute: Corning INC, Modeling & Simulation, Corning, NY 14831 USA
+sent:      28.APR.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     Silica glass transition
+reminded:  28.APR.2005
+
+
+name:      Christian Hinderling
+email:     christian.hinderling@csem.ch
+institute: Centre Suisse d\'Electronique et de Microtechnique (CSEM),J. Droz 1,2007 Neuchatel,Schweiz
+sent:      28.APR.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     simulation of self assembly of block-copolymers into nanostructures by DPD
+reminded:  28.APR.2005
+
+
+name:      Adolf Hille
+email:     a_hill07@uni-muenster.de
+institute: Uni Münster
+sent:      06.MAY.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     Verständnis für programmierte Lösung von P3M-Methode im Rahmen eines Seminars, das sich mit Bilderkennung durch Pratikel-Simulationsmethoden beschäftigt
+reminded:  06.MAY.2005
+
+
+name:      J. Ramos
+email:     j.ramos@iem.cfmac.csic.es
+institute: Department of Macromolecular Physics IEM-CSIC; 
+           Serrano 113bis, 28003 Madrid (Spain)
+sent:      06.MAY.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     physical properties of polyolefins
+reminded:  06.MAY.2005
+
+
+name:      David Morse
+email:     morse@cems.umn.edu
+institute: Dept. of Chemical Engineering & Material Science
+University of Minnesota
+sent:      17.MAY.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     MD and Brownian dynamics simulations of semiflexible
+           polymers in solutions and non-equilibrium MD of dense
+           neutral (i.e., LJ-ium) polymers. I received an email 
+           from Christian Holm about another matter, which brought
+           my attention to the package, and explained some of the 
+           reasons for my interest in greater detail in the reply.
+reminded:  17.MAY.2005
+
+
+name:      Peter Virnau
+email:     virnau@mit.edu
+institute: MIT
+sent:      24.MAY.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     Coarse-grained MD simulation, Translocation, Globule collapse
+reminded:  24.MAY.2005
+
+
+name:      Miguel Angelo Granato
+email:     mgranato@fe.up.pt
+institute: LSRE - Laboratory of Separation and Reaction Engineering
+           Universidade do Porto
+           Rua Dr. Roberto Frias
+           4200-465 - Porto
+           Portugal
+sent:      26.JUN.2005
+version:   1.9.4g CVS
+CVS:       
+topic:     Research on molecular simulations for alkane adsorption on zeolites. The models assume to be rigid, but the code will be suitabel to study ion interactions that are currently not found in literature. My system runs under Debian, so a Debian package would be greatly appreciated ifi possible. Otherwise, I shall be able to convert it.
+Setting the sorbate coordinates are under investigation and any help on this issue will also be acknowledged.
+reminded:  26.JUN.2005
+
+
+name:      Shiping Huang
+email:     huangsp@mail.buct.edu.cn
+           huangsp12345@163.com
+institute: Dept. of Chemical engineering
+           Beijing University of Chemical Technology
+           Beijing, 100029
+sent:      31.MAY.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     - simulation of complex materials
+           - I am going to use ESPReSo package to study the 
+             clay/polymer system at atomistic simulation, 
+             such as intercalation of polymer in layer silicate 
+             and orginic in the space between two clay sheets.
+reminded:  31.MAY.2005
+
+
+name:      Shiping Huang
+email:     huangsp12345@163.com
+institute: Dept. of Chemical engineering
+           Beijing University of Chemical Technology
+           Beijing, 100029
+sent:      02.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     - simulation of complex materials
+         - I am going to use ESPReSo package to study the clay/polymer
+           system at atomistic simulation, such as intercalation of
+           polymer in layer silicate and orginic in the space between two
+           clay sheets.
+reminded:  02.JUN.2005
+
+
+name:      Anguang Hu
+email:     ag.ahu3@gmail.com
+institute: department of chemistry,
+           the university of western ontario
+           London, Ontario, N6A 5B7,
+           Canada
+sent:      03.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     - density functional theory
+         - My research interests are mainly in first-principle modeling on
+           energetic materials, such as polymeric nitrogen, molecular
+           electronic devices and organic light-emitting diodes. So, I
+           want to use Espresso to obtain some structures of polymeric 
+           nitrogen and poly-phenylene polymers. 
+           I am also interested in MD/MC calculations in terms of 
+           thermodynamic properties of polymers.
+reminded:  03.JUN.2005
+
+
+name:      Davide Ceresoli
+email:     ceresoli@sissa.it
+institute: International School for Advanced Studies (SISSA)
+           via Beirut 2-4
+           I-34014 Trieste, Italy
+           Phone: +39-040-3787-448  Fax: +39-040-3787-528
+sent:      16.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     alkali halide nanoclusters and surfaces
+reminded:  16.JUN.2005
+
+
+name:      Cordula Rauwolf
+email:     rauwolf@ipfdd.de
+institute: Leibniz Institute of Polymer Research Dresden          
+         & Max Bergmann Center of Biomaterials Dresden 
+           Hohe Straße 6, 01069 Dresden, Germany
+sent:      16.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     simulations of amphiphilic systems and polymers in biomaterial
+           science
+reminded:  16.JUN.2005
+
+
+name:      Gianluca Lattanzi
+email:     Gianluca.Lattanzi@ba.infn.it
+institute: Department of Medical Biochemistry, Biology and Physics
+           University of Bari, Italy
+           Piazza Giulio Cesare, 11 - Policlinico
+           70124 Bari (Italy)
+sent:      16.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     We would like to study the entaglement properties of oligomers
+           with different functionalization geometries for the development
+           of organic thin films.
+reminded:  16.JUN.2005
+
+
+name:      Demetrius
+email:     dcomes@wolfshade.com
+institute: None
+sent:      20.JUN.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+CVS:       
+topic:     More interested in see the implementation of the verlet
+           integration.  I'm interested in writing a cloth simulator
+           for my own edification.
+reminded:  20.JUN.2005
+
+
+name:      Olaf Evers
+email:     mathtcl@yahoo.de
+institute: BASF AG
+sent:      20.JUN.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+CVS:       
+topic:     Collaboration with MPI
+reminded:  20.JUN.2005
+
+
+name:      Huiqun Zhou
+email:     hqzhou@nju.edu.cn
+institute: Nanjing University/Earth Sciences
+           22 Hankou Road, Gulou
+           Nanjing, 210093
+           China
+sent:      22.JUN.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+CVS:       
+topic:     - Atomistic simulation of minerals and in high PT condition and
+           various geo-fluids.
+         - quantum and atomistic simulation of minerals is just one
+           of our research interests, research of mesoscopic phenomena,
+           such as how rocks will be fractured, cracked under pressure,
+           are more focused in physics of solid earth. We are currently
+           using LAMMPS to do this kind of simulation. It will be greatly
+           appreciated if you could give us a chance to try ESPResSO.
+         - A user of Quantum-Espresso, CPMD, LAMMPS
+           and a bunch of self-made programs
+reminded:  22.JUN.2005
+
+
+name:      Javier Ramos
+email:     Barny_Beer@hotmail.com
+institute: Macromolecular Physics Departement, IEM-CSIC. Serrano 113bis,
+           28003 Madrid (Spain)
+sent:      23.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     Dynamics of branched polymer chains
+reminded:  23.JUN.2005
+
+
+name:      Luigi Sanguigno
+email:     lusangui@unina.it
+institute: Department of Material and Production, University Federico II,
+           Naples. Piazzale Tecchio, 80 (Italy)
+sent:      27.JUN.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     Polymer simulation
+reminded:  27.JUN.2005
+
+
+name:      Arturo Ortiz
+email:     arturo.ortiz-arroyo.1@ulaval.ca
+institute: Universidad Autonoma de Tlaxcala
+           Departamento de Ingenieria y Tecnologia
+           Av. Apizaquito S/N
+           Apizaco, Tlax
+           Mexico
+sent:      08.JUL.2005
+version:   20040924-Espresso_v1.7.5.Mezoti.tar.gz
+CVS:       
+topic:     We are interested mainly in NEMD of confined polymers to obtain
+           transport properties such as viscosity, difusivities. We are
+           also interested in the flow of gases and liquids in porous
+           media.
+reminded:  08.JUL.2005
+
+
+name:      András Gábor
+email:     agabor@almos.vein.hu
+institute: Department of Physics,
+           University of Veszprém,
+           H-8201 Veszprém, P.O.Box 158, Hungary
+sent:      14.JUL.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+CVS:       
+topic:     We intend to investigate some nonequilibrium MD simulations of
+           ferrofluid mixtures and MR fluids placed in an external
+           magnetic field.
+           The main goal is, of course, to determine the changes
+           in the viscosity caused by the external field.
+           Your ESPResSo package seems to be a good starting point of our
+           program development.
+           We are also open to get involved in the further development of
+           ESPResSo in the above mentioned directions.
+           Yours sincerely,
+           András Gábor   and   István Szalai
+           Univ. of Veszprém, Hungary
+reminded:  14.JUL.2005
+
+
+name:      Kristopher Wise
+email:     kewise@larc.nasa.gov
+institute: Kristopher E. Wise, Ph.D.
+           NASA Langley Research Center
+           Advanced Materials and Processing Branch D307
+           6A West Taylor Street, Mail Stop 226
+           Building 1293C Room 153G
+           Hampton, VA 23681-2199
+sent:      18.JUL.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+CVS:       
+topic:     Course-grained simulation of polymer and polymer composite
+           materials
+reminded:  18.JUL.2005
+
+
+name:      Leonid Yelash
+email:     yelash@uni-mainz.de
+institute: Institute of Physics, Mainz
+sent:      22.JUL.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+CVS:       
+topic:     dynamics of coarse-grained chains
+reminded:  22.JUL.2005
+
+
+name:      Katsumi Hagita
+email:     hagita@nda.ac.jp
+institute: Department of Applied Physics, National Defense Academy, JAPAN
+sent:      01.AUG.2005
+version:   20050525-Espresso_v1.9.4g.tar.gz
+CVS:       
+topic:     Polymer Physics, Relaxation and slow dynamics of Polymer
+           systems.
+reminded:  01.AUG.2005
+
+
+name:      Janka Petravic
+email:     janka@chem.usyd.edu.au
+institute: University of Sydney,
+           Dept. of Chemistry
+sent:      03.AUG.2005
+version:   20050801-Espresso_v1.9.6a.tar.gz
+CVS:       
+topic:     tryout 2d electrostatics code
+reminded:  03.AUG.2005
+
+
+name:      Yojna Purohit
+email:     yojna28@gmail.com
+institute: North Carolina State University
+           Materials Science and Engineering
+           Raleigh, NC 27695
+           USA
+sent:      09.AUG.2005
+version:   20050808-Espresso_v1.9.6d.tar.gz
+CVS:       
+topic:     I am planning to use this code for DPD simulation of colloids.
+           Right now I am looking at the feasibility of the code on my
+           system and the properties I get from different codes
+reminded:  09.AUG.2005
+
+
+name:      George Khujadze
+email:     khujadze@hyhy.tu-darmstadt.de
+institute: Arbeitsgruppe strömungsmechanik
+           Fachbereich Mechanik
+           TU Darmstadt
+sent:      12.AUG.2005
+version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
+CVS:       
+topic:     From first of October I will work in MPIP, in the group of Dr.
+           Duenweg.
+reminded:  12.AUG.2005
+
+
+name:      Alexander Lyubartsev
+email:     sasha@physc.su.se
+institute: Physical Chemistry
+           Stockholm University
+           S-10691 Stockholm Sweden
+sent:      29.MAR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Simulations of coarse-grained lipid models
+           
+           I have earlier obtained version dated 2005-03-15 and I am
+           asking for uppgrade
+reminded:  29.MAR.2006
+
+
+name:      Krishnan, S.H.
+email:     krishnan.sh@gmail.com
+institute: MPI-P
+sent:      12.AUG.2005
+version:   20050808-Espresso_v1.9.6d.tar.gz
+CVS:       
+topic:     Successor of V. Lobaskin in B. Duenwegs group
+reminded:  12.AUG.2005
+
+
+name:      Mathias Pütz
+email:     mpuetz@de.ibm.com
+institute: IBM High Performance Tuning Team EMEA
+           Contact via EMail (see below)
+           Mobile Phone: 0162-7120602
+sent:      22.AUG.2005
+version:   20050808-Espresso_v1.9.6d.tar.gz
+CVS:       
+topic:     Test portability/performance/scaling on IBM Blue Gene
+           Timeframe: to be done around Q4/05 or Q1/06
+reminded:  22.AUG.2005
+
+
+name:      Dr. Carol Phillips
+email:     cpc@qub.ac.uk
+institute: Dr. Carol Phillips  
+              CPC Program Library      
+              School of Computer Science        
+              The Queen's University of Belfast   
+              Belfast BT7 1NN                 
+              Northern Ireland
+sent:      15.SEP.2005
+version:   20050315-Espresso_v1.8.6e.RebiAzan.tar.gz
+CVS:       
+topic:     Test program for the CPC article
+reminded:  15.SEP.2005
+
+
+name:      Baohua Ji
+email:     ji@mf.mpg.de
+institute: 
+sent:      29.MAR.2004
+version:   20040329-Espresso_v1.5.7c.tar.gz
+CVS:       
+topic:     simulate the DNA and protein mechanics and deformation
+reminded:  16.SEP.2005
+
+
+name:      Mohamed Bassyouni
+email:     mohamed.bassyouni@guc.edu.eg
+institute: German university in cairo
+sent:      17.NOV.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     \'polyurthane synthesis and prepare composite materials\'
+           I think it could be possible to get some of polymer
+           characteristics by using this program
+reminded:  X17.NOV.2005
+
+
+name:      yangwen
+email:     yangwen@iccas.ac.cn
+institute: Institute of Chemistry&#65292;The Chinese Academy of Sciences
+           Zhongguancun North First Street 2&#65292;100080 Beijing&#65292;
+           PR&#12288;China
+sent:      17.NOV.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     My research mainly focus on the molecular dynamics simulation
+           on polyelectrolytes, especially for biopolymer.
+           After I read the introductions about this software, I think I
+           have found what I need!
+reminded:  17.NOV.2005
+
+
+name:      Dongshan Wei
+email:     dswei@iccas.ac.cn
+institute: Polymer Physics and Chemistry,
+           Institute of Chemistry, the Chinese Academy of Sciences,
+           Beijing, 100080, China
+sent:      17.NOV.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     MD for polymer melts and multi-scale simulation of
+           multi-componet.
+reminded:  17.NOV.2005
+
+
+name:      sandermarco
+email:     92343003@cc.ncu.edu.tw
+institute: Taiwan National central university
+sent:      17.NOV.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     My research topic is b.c. at solid-fluid interface.
+           Now i face a problem that is how to simulate the wall atom
+           correctly (potential and force), so I think ESPResSo can help
+           me. thank you so much
+reminded:  17.NOV.2005
+
+
+name:      Mary-Ann
+email:     m.thyveetil@ucl.ac.uk
+institute: Centre for Computational Science,
+           Chemistry Department,
+           University College of London,
+           20 Gordon Street,
+           WC1H 0AJ,
+           London,
+           United Kingdom
+sent:      14.DEC.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     model the intercaltion of DNA into clay-polymer nanocomposites
+reminded:  X14.DEC.2005
+
+
+name:      Howard Richards
+email:     HowardLRichards@yahoo.com
+institute: Howard Richards
+           Department of Physics
+           Texas A&M University-Commerce
+           Commerce, TX 75429
+           USA
+sent:      14.DEC.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     I was a postdoc in the Kremer group at the MPI-P working on
+           \\\\\\\\\\\\\\\"poly.c\\\\\\\\\\\\\\\" from the summer of \\\\\\\\\\\\\\\'97 to
+           Christmas of \\\\\\\\\\\\\\\'98, and I am thinking of getting back into
+           soft matter.
+reminded:  14.DEC.2005
+
+
+name:      Kam Chana
+email:     kchana@comcast.net
+institute: Independent Research
+sent:      14.DEC.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Interested in soft modeling applications for independenty
+           research and education
+reminded:  14.DEC.2005
+
+
+name:      Baofu Qiao
+email:     qiaobf@iccas.ac.cn
+institute: State Key Laboratory of Polymer Physics and Chemistry,
+           Institute of Chemistry, Chinese Academy of Sciences, 
+           Zhongguancun North First Street 2, Beijing, 100080, PR China
+sent:      23.DEC.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     I will go to the group of Prof. Charistian Holm to do my
+           postdoctoral research next August. Therefore, I want to get
+           this software so that I can know how to use it in advance.
+           Thanks!
+reminded:  X23.DEC.2005
+
+
+name:      Joan J. Cerda
+email:     jcerda@imedea.uib.es
+institute: Univ. de les Illes Balears
+           E-07122, Palma de Mallorca
+           Phone:  (+34) 971 17 32 07
+           Fax:    (+34) 971 17 34 26
+sent:      23.DEC.2005
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     I\\\'m joining the group of professor Christian Holm in March, so
+           it would be for me an advantage  having a full copy of the
+           program to get used to it and  get insight on  their procedures
+           and codes.
+reminded:  23.DEC.2005
+
+
+name:      Peter Kosovan
+email:     kosovan@vivien.natur.cuni.cz
+institute: Department of Physical and Macromolecular Chemistry, Faculty of
+           Science, Alberotv 2, Charles University in Prague, Prague 2,
+           Czech republic
+sent:      05.JAN.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Simulations of (branched) Polyelectorlytes in dilute
+           solutions.
+           
+           So far I have been using Espresso v 1.6Gold, provided by
+           H.J.Limbach. I\\\\\\\\\\\\\\\'ve briefly read the release notes and
+           I\\\\\\\\\\\\\\\'d like to upgrade to the newer version.
+reminded:  X05.JAN.2006
+
+
+name:      Kelly Anderson
+email:     k_l_anderson_98@yahoo.com
+institute: Corporate Modeling and Simulation
+           Procter & Gamble
+           11810 E. Miami River Road
+           Cincinnati, OH 45252
+sent:      22.MAR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Coarse Grained MD / MC of complex fluids.
+reminded:  X22.MAR.2006
+
+
+name:      Gaurav Manik
+email:     gauravmanik@iitb.ac.in
+institute: Chemical Engineering Deaprtment
+           IIT Bombay
+           Mumbai
+           INDIA
+sent:      22.MAR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     I wish to use espresso for running a coarse grained MD with
+           Langevin Thermostat as the temperature control. It could be a
+           vital asset to my research.. thanks in advance for providing us
+           with the same..
+reminded:  22.MAR.2006
+
+
+name:      Aleksey Vishnyakov
+email:     avishnja@triprinceton.org
+institute: Textile Research Inst Princeton
+           601 Prospect ave
+           Princeton NJ 08542 USA
+           tel 1 609 430 48 25
+           avishnja@triprinceton.org
+sent:      26.APR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Physical Chemist
+           simulations of sorption, polyelectrolytes
+           trying to use pseudopotentials for MD simulations of sSEBS
+           fragments
+           
+           thanks a lot! Hope it will work 8-)
+reminded:  X26.APR.2006
+
+
+name:      Claudio Schepke
+email:     claudio.schepke@gmail.com
+institute: Instituto de Informática
+           Universidade Federal do Rio Grande do Sul (UFRGS)
+           Caixa Postal 15.064 -- 91.501-970 -- Porto Alegre -- RS --
+           Brasil
+sent:      26.APR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Hallo,
+           
+           I like to make simulations with Lattice Boltzmann Methods. I
+           have found your implementation and think that it\\\\\\\\\\\\\\\'s
+           possible to use it for tests. The idea is simulate fluid flows
+           with obstacles.
+reminded:  26.APR.2006
+
+
+name:      Jiang Jianwen
+email:     chejj@nus.edu.sg
+institute: JIANG Jianwen
+           Department of Chemical & Biomolecular Engineering
+           National University of Singapore
+           4 Engineering Drive 4
+           Singapore 117576
+sent:      26.APR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     run simulation for polyelectrolyte solutions to calculate
+           thermodynamic properties and strutrucal properties
+reminded:  26.APR.2006
+
+
+name:      Matthew Hoopes
+email:     mihoopes@ucdavis.edu
+institute: Chemical Engineering & Material Science
+           (Biophysics Graduate Group)
+           3118 Bainer Hall
+           One Shields Avenue
+           University of California, Davis
+           Davis, CA 95616
+sent:      26.APR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Water-free coarse-grain lipid bilayer simulations.
+reminded:  26.APR.2006
+
+
+name:      Alexander
+email:     yakovenko_a@ukr.net
+institute: Alexander Yakovenko
+           Zabolotnogo str 150
+           Institute of Molecular Biology and Genetics
+           Kiev
+           Ukraine
+           email: yakovenko_a@ukr.net
+sent:      26.APR.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     My research topic is some software improvements for virtual
+           screening and drug design. There are some analysis, that too
+           complicate to perform with already developed applications, but
+           they require many common routines as well. Currently I require
+           a simply engine for geometry optimization and various energy
+           calculations of molecular system. I have nearly completed my
+           own engine, but looking through working code will be very
+           useful for some technical moments. In spite of a great deal of
+           open source packages I found ESPReSo documentation and codding
+           style very clear (comparing with gromacs for example)
+reminded:  26.APR.2006
+
+
+name:      Suckjoon Jun
+email:     jun@amolf.nl
+institute: AMOLF
+	   Amsterdam
+sent:      01.MAY.2006
+version:   CVS 28.04.2006
+CVS:       
+topic:     DNA segregation in confinement
+reminded:  01.MAY.2006
+
+
+name:      Bae-Yeun Ha
+email:     byha@sciborg.uwaterloo.ca
+institute: University of Waterloo
+	   Canada
+sent:      04.MAY.2006
+version:   CVS 28.04.2006
+CVS:       
+topic:     Coarse grained protein binding
+reminded:  04.MAY.2006
+
+
+name:      John Bechhoefer
+email:     bechhoef@sfu.ca
+institute: Simon Fraser University
+	   Vancouver, Canada
+sent:      01.MAY.2006
+version:   CVS 28.04.2006
+CVS:       
+topic:     thermal resonance
+reminded:  01.MAY.2006
+
+
+name:      Jacob Kirkensgaard Hansen
+email:     jacobkh@ruc.dk
+institute: Royal Veterinary and Agricultural University
+           Copenhagen, Denmark
+sent:      05.MAY.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     self-assembly of lipid bilayers
+reminded:  X05.MAY.2006
+
+
+name:      Karen Johnston
+email:     kjo@fyslab.hut.fi
+institute: Laboratory of Physics
+           Helsinki University of Technology
+           P.O. Box 1100
+           ESPOO 02015
+           Finland
+sent:      23.MAY.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Molecular dynamics/coarse-grained simulations of the adhesion
+           of polymer molecules to metal or ceramic surfaces.
+reminded:  X23.MAY.2006
+
+
+name:      Torsten Stuehn
+email:     stuehn@mpip-mainz.mpg.de
+institute: MPIP Mainz
+sent:      24.MAY.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     This is a test only
+reminded:  X24.MAY.2006
+
+

@@ -1,0 +1,578 @@
+:TITLE: Information about Files - file, glob
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+::CMD:: if {([info exists tcl_platform])} {
+  switch $tcl_platform(platform) {
+    unix        {
+                set Tutor(lsn.codeMod) {
+                    {regsub "PATTERN1" $line "/usr/bin/*ail*" line}
+                    {regsub "PATTERN2" $line "/bin/*ail*" line}
+                }
+        }
+    windows     {
+                set Tutor(lsn.codeMod) {
+                    {if {[glob -nocomplain C:/winnt] != ""} {
+                      regsub "PATTERN1" $line "C:/winnt/system32/w*.dll" line
+                      regsub "PATTERN2" $line "C:/winnt/system32/win*.exe" line
+                      } else {
+                      regsub "PATTERN1" $line "C:/windows/w*.dll" line
+                      regsub "PATTERN2" $line "C:/windows/win*.exe" line
+                      }
+                    }
+                }         
+        }
+    mac         {
+                set Tutor(lsn.codeMod) {
+		}
+                }
+    default     {
+                puts "I don't recognize the platform: $tcl_platform(platform)"
+                puts "Can't set platform specific parameters"
+                }
+    } 
+  }
+
+:LESSON_TEXT_START_LEVEL 0:
+There are two commands that provide information about the contents of
+directories and the files within those directories.  These two commands
+are <CODE>glob</CODE> and <CODE>file</CODE>.
+<P>
+<B>Glob</B> provides the access to the names of files in a directory.
+It is similar to the <B>ls</B> shell command.
+<P>
+<B>File</B> provides services similar to those provided by the stat(2) call
+<DL>
+<B><DT>glob</b> <I>?switches? pattern ?pattern?</I>
+<DD> returns a list of file names that match <I>pattern</I>
+<P>
+<I>Switches</I> may be one of:
+<DL>
+<B><DT>-nocomplain</B>
+<DD>Allows <CODE>glob</CODE> to return an empty list without causing an
+error.  Without this flag, an error would be generated when the empty
+list was returned.
+<B><DT>--</B>
+<DD>Marks the end of switches.  This allows the use of "-" in a pattern
+without confusing the glob parser.
+</DL>
+<I>Pattern</I> follows the same matching rules as the string match globbing
+rules with these exceptions:
+<UL>
+<B><LI>{a,b,...}</B> Matches any of the strings a,b, etc.
+<LI> A "." at the beginning of a filename must match a "." in the filename.
+The "." is only a wildcard if it is not the first character in a name.
+<LI>All "/" must match exactly.
+<LI>If the first two characters in <I>pattern</I> are <B>~/</B>, then the <B>~</B> is
+replaced by the value of the <B>HOME</B> environment variable.
+<LI>If the first character in <I>pattern</I> is a <B>~</B>, followed by a login id,
+then the <B>~loginid</B> is replaced by the path of loginid's home directory.
+</UL>
+Note that the filenames that match <I>pattern</I> are not in a sorted order.
+<B><DT>file atime</B> <I>name</I>
+<DD>Returns the number of seconds since 1/1/1970 when the file <I>name</I>
+was last accessed.  Generates an error if the file doesn't exist, or
+the access time cannot be queried.
+<B><DT>file dirname </B> <I>name</I>
+<DD>Returns the directory portion of a path/filename string.  If <I>name</I>
+contains no slashes, <B>file dirname</B> returns a ".".  If the last "/"
+in <I>name</I> is also the first character, it returns a "/".
+<B><DT>file executable</B> <I>name</I>
+<DD> Returns a 1 if file <I>name</I> is executable by the current
+ user, otherwise returns a 0.
+<B><DT>file exists</B> <I>name</I>
+Returns a 1 if the file <I>name</I> exists, and the user has search access
+in all the directories leading to the file.  Otherwise, a 0 is returned.
+<B><DT>file extension</B> <I>name</I>
+<DD>Returns the file extension.
+<B><DT>file isdirectory</B> <I>name</I>
+<DD>Returns 1 if file name is a directory,  otherwise returns 0.
+<B><DT>file isfile</B> <I>name</I>
+<DD> Returns 1 if file name is a regular file, otherwise returns 0.
+<B><DT>file lstat</B> <I>name varName</I>
+This returns the same information returned by the system call
+<B>lstat</B>.  The results are placed in the associative array
+<I>varName</I>.  The indexes in <I>varName</I> are:
+<UL COMPACT>
+<B><LI>atime</B>.......time of last access
+<B><LI>ctime</B>.......time of last file status change
+<B><LI>dev</B>...........inode's device
+<B><LI>gid</B>............group ID of the file's group
+<B><LI>ino</B>............inode's number
+<B><LI>mode</B>.......inode protection mode
+<B><LI>mtime</B>.....time of last data modification
+<B><LI>nlink</B>........number of hard links
+<B><LI>size</B>...........file size, in bytes
+<B><LI>type</B>..........Type of File
+<B><LI>uid</B>.............user ID of the file's owner
+</UL>
+Because this calls <B>lstat</B>, if <I>name</I> is a symbolic link,
+the values in <I>varName</I> will refer to the link, not the file
+that is linked to.  
+<P>
+See stat also.
+<B><DT>file mtime</B> <I>name</I>
+<DD>Returns the time of the last data modification in seconds since
+Jan 1, 1970.
+<B><DT>file owned</B> <I>name</I>
+<DD>Returns 1 if the file is owned by the current user, otherwise returns 0.
+<B><DT>file readable</B> <I>name</I>
+<DD>Returns 1 if the file is readable by the current user, otherwise returns 0.
+<B><DT>file readlink</B> <I>name</I>
+<DD>Returns the name of the file a symlink is pointing to.  If <I>name</I>
+isn't a symlink, or can't be read, an error is generated.
+<B><DT>file rootname</B> <I>name</I>
+<DD>Returns all the characters in <I>name</I> up to but not including the 
+last ".".  Returns <I>$name</I> if <I>name</I> doesn't include a ".".
+<B><DT>file size</B> <I>name</I>
+<DD>Returns the size of <I>name</I> in bytes.
+<B><DT>file stat</B> <I>name varName</I>
+This returns the same information returned by the system call
+<B>stat</B>.  The results are placed in the associative array
+<I>varName</I>.  The indexes in <I>varName</I> are:
+<UL COMPACT>
+<B><LI>atime</B>.......time of last access
+<B><LI>ctime</B>.......time of last file status change
+<B><LI>dev</B>...........inode's device
+<B><LI>gid</B>............group ID of the file's group
+<B><LI>ino</B>............inode's number
+<B><LI>mode</B>.......inode protection mode
+<B><LI>mtime</B>.....time of last data modification
+<B><LI>nlink</B>........number of hard links
+<B><LI>size</B>...........file size, in bytes
+<B><LI>type</B>..........Type of File
+<B><LI>uid</B>.............user ID of the file's owner
+</UL>
+<B><DT>file tail</B> <I>name</I>
+<DD>Returns  all  of  the  characters in <I>name</I> after the
+last slash.   Returns <I>$name</I> if  name  contains  no  slashes.
+<B><DT>file type</B> <I>name</I>
+<DD> Returns  a  string  giving  the  type of file name,
+              which will be one of:
+<UL COMPACT>
+<B><LI>file</B>...................................Normal file
+<B><LI>directory</B>........................Directory
+<B><LI>characterSpecial</B>.......Character oriented device
+<B><LI>blockSpecial</B>.............. Block oriented device
+<B><LI>fifo</B>...................................Named pipe
+<B><LI>link</B>..................................Symbolic link
+<B><LI>socket.</B>...........................Named socket
+</UL>
+<B><DT>file writable</B> <I>name</I>
+<DD> Returns 1 if file name is writable by the current user, otherwise returns 0.
+</DL>
+
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+There are two commands that provide information about the file system,
+<CODE>glob</CODE> and <CODE>file</CODE>.
+<P>
+<B>Glob</B> provides the access to the names of files in a directory.
+It uses a name matching mechanism similar to <B>ls</B>, to return a 
+list of names that match a pattern.
+<P>
+<B>File</B> provides two sets of functionality:
+<UL COMPACT> 
+<LI>string manipulation appropriate to parsing file names
+<UL COMPACT>
+<B><LI> dirname </B> ........ Returns directory portion of path
+<B><LI> extension</B>........ Returns file name extension
+<B><LI> rootname</B> ....... Returns file name without extension
+<B><LI> tail</B> .................... Returns filename without directory
+</UL>
+<LI> information about an entry in a directory:
+<UL COMPACT>
+<B><LI> atime</B> ................ Returns time of last access
+<B><LI> executable</B> ..... Returns 1 if file is executable by user
+<B><LI> exists</B> ................ Returns 1 if file exists
+<B><LI> isdirectory</B> ...... Returns 1 if entry is a directory
+<B><LI> isfile</B> .................. Returns 1 if entry is a regular file
+<B><LI> lstat</B> ................... Returns array of file status information
+<B><LI> mtime</B> ............... Returns time of last data modification
+<B><LI> owned</B> ................ Returns 1 if file is owned by user
+<B><LI> readable</B>............ Returns 1 if file is readable by user
+<B><LI> readlink</B>............. Returns name of file pointed to by a symbolic link
+<B><LI> size</B> ..................... Returns file size in bytes
+<B><LI> stat</B> ..................... Returns array of file status information
+<B><LI> type</B> .................... Returns type of file
+<B><LI> writable</B> ............ Returns 1 if file is writeable by user
+</UL>
+</UL>
+Between these two commands, a program can obtain most of the information that 
+it may need.
+<DL>
+<B><DT>glob</b> <I>?switches? pattern ?patternN?</I>
+<DD> returns a list of file names that match <I>pattern</I> or <I>patternN</I>
+<P>
+<I>Switches</I> may be one of:
+<DL>
+<B><DT>-nocomplain</B>
+<DD>Allows <CODE>glob</CODE> to return an empty list without causing an
+error.  Without this flag, an error would be generated when the empty
+list was returned.
+<B><DT>--</B>
+<DD>Marks the end of switches.  This allows the use of "-" in a pattern
+without confusing the glob parser.
+</DL>
+<I>Pattern</I> follows the same matching rules as the string match globbing
+rules with these exceptions:
+<UL>
+<B><LI>{a,b,...}</B> Matches any of the strings a,b, etc.
+<LI> A "." at the beginning of a filename must match a "." in the filename.
+The "." is only a wildcard if it is not the first character in a name.
+<LI>All "/" must match exactly.
+<LI>If the first two characters in <I>pattern</I> are <B>~/</B>, then the <B>~</B> is
+replaced by the value of the <B>HOME</B> environment variable.
+<LI>If the first character in <I>pattern</I> is a <B>~</B>, followed by a login id,
+then the <B>~loginid</B> is replaced by the path of loginid's home directory.
+</UL>
+Note that the filenames that match <I>pattern</I> are not in a sorted order.
+<B><DT>file atime</B> <I>name</I>
+<DD>Returns the number of seconds since 1/1/1970 when the file <I>name</I>
+was last accessed.  Generates an error if the file doesn't exist, or
+the access time cannot be queried.
+<B><DT>file dirname </B> <I>name</I>
+<DD>Returns the directory portion of a path/filename string.  If <I>name</I>
+contains no slashes, <B>file dirname</B> returns a ".".  If the last "/"
+in <I>name</I> is also the first character, it returns a "/".
+<B><DT>file executable</B> <I>name</I>
+<DD> Returns a 1 if file <I>name</I> is executable by the current
+ user, otherwise returns a 0.
+<B><DT>file exists</B> <I>name</I>
+Returns a 1 if the file <I>name</I> exists, and the user has search access
+in all the directories leading to the file.  Otherwise, a 0 is returned.
+<B><DT>file extension</B> <I>name</I>
+<DD>Returns the file extension.
+<B><DT>file isdirectory</B> <I>name</I>
+<DD>Returns 1 if file name is a directory,  otherwise returns 0.
+<B><DT>file isfile</B> <I>name</I>
+<DD> Returns 1 if file name is a regular file, otherwise returns 0.
+<B><DT>file lstat</B> <I>name varName</I>
+This returns the same information returned by the system call
+<B>lstat</B>.  The results are placed in the associative array
+<I>varName</I>.  The indexes in <I>varName</I> are:
+<UL COMPACT>
+<B><LI>atime</B>.......time of last access
+<B><LI>ctime</B>.......time of last file status change
+<B><LI>dev</B>...........inode's device
+<B><LI>gid</B>............group ID of the file's group
+<B><LI>ino</B>............inode's number
+<B><LI>mode</B>.......inode protection mode
+<B><LI>mtime</B>.....time of last data modification
+<B><LI>nlink</B>........number of hard links
+<B><LI>size</B>...........file size, in bytes
+<B><LI>type</B>..........Type of File
+<B><LI>uid</B>.............user ID of the file's owner
+</UL>
+Because this calls <B>lstat</B>, if <I>name</I> is a symbolic link,
+the values in <I>varName</I> will refer to the link, not the file
+that is linked to.  
+<P>
+See stat also.
+<B><DT>file mtime</B> <I>name</I>
+<DD>Returns the time of the last data modification in seconds since
+Jan 1, 1970.
+<B><DT>file owned</B> <I>name</I>
+<DD>Returns 1 if the file is owned by the current user, otherwise returns 0.
+<B><DT>file readable</B> <I>name</I>
+<DD>Returns 1 if the file is readable by the current user, otherwise returns 0.
+<B><DT>file readlink</B> <I>name</I>
+<DD>Returns the name of the file a symlink is pointing to.  If <I>name</I>
+isn't a symlink, or can't be read, an error is generated.
+<B><DT>file rootname</B> <I>name</I>
+<DD>Returns all the characters in <I>name</I> up to but not including the 
+last ".".  Returns <I>$name</I> if <I>name</I> doesn't include a ".".
+<B><DT>file size</B> <I>name</I>
+<DD>Returns the size of <I>name</I> in bytes.
+<B><DT>file stat</B> <I>name varName</I>
+This returns the same information returned by the system call
+<B>stat</B>.  The results are placed in the associative array
+<I>varName</I>.  The indexes in <I>varName</I> are:
+<UL COMPACT>
+<B><LI>atime</B>.......time of last access
+<B><LI>ctime</B>.......time of last file status change
+<B><LI>dev</B>...........inode's device
+<B><LI>gid</B>............group ID of the file's group
+<B><LI>ino</B>............inode's number
+<B><LI>mode</B>.......inode protection mode
+<B><LI>mtime</B>.....time of last data modification
+<B><LI>nlink</B>........number of hard links
+<B><LI>size</B>...........file size in bytes
+<B><LI>type</B>..........Type of file
+<B><LI>uid</B>.............user ID of the file's owner
+</UL>
+<B><DT>file tail</B> <I>name</I>
+<DD>Returns  all  of  the  characters in <I>name</I> after the
+last slash.   Returns <I>$name</I> if  name  contains  no  slashes.
+<B><DT>file type</B> <I>name</I>
+<DD> Returns  a  string  giving  the  type of file name,
+              which will be one of:
+<UL COMPACT>
+<B><LI>file</B>...................................Normal file
+<B><LI>directory</B>........................Directory
+<B><LI>characterSpecial</B>.......Character oriented device
+<B><LI>blockSpecial</B>.............. Block oriented device
+<B><LI>fifo</B>...................................Named pipe
+<B><LI>link</B>..................................Symbolic link
+<B><LI>socket.</B>...........................Named socket
+</UL>
+<B><DT>file writable</B> <I>name</I>
+<DD> Returns 1 if file name is writable by the current user, otherwise returns 0.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+There are two commands that provide information about the file system,
+<CODE>glob</CODE> and <CODE>file</CODE>.
+<P>
+<B>Glob</B> provides the access to the names of files in a directory.
+It uses a name matching mechanism similar to <B>ls</B>, to return a 
+list of names that match a pattern.
+<P>
+<B>File</B> provides two sets of functionality:
+<UL COMPACT> 
+<LI>string manipulation appropriate to parsing file names
+<UL COMPACT>
+<B><LI> dirname </B> ........ Returns directory portion of path
+<B><LI> extension</B>........ Returns file name extension
+<B><LI> rootname</B> ....... Returns file name without extension
+<B><LI> tail</B> .................... Returns filename without directory
+</UL>
+<LI> information about an entry in a directory:
+<UL COMPACT>
+<B><LI> atime</B> ................ Returns time of last access
+<B><LI> executable</B> ..... Returns 1 if file is executable by user
+<B><LI> exists</B> ................ Returns 1 if file exists
+<B><LI> isdirectory</B> ...... Returns 1 if entry is a directory
+<B><LI> isfile</B> .................. Returns 1 if entry is a regular file
+<B><LI> lstat</B> ................... Returns array of file status information
+<B><LI> mtime</B> ............... Returns time of last data modification
+<B><LI> owned</B> ................ Returns 1 if file is owned by user
+<B><LI> readable</B>............ Returns 1 if file is readable by user
+<B><LI> readlink</B>............. Returns name of file pointed to by a symbolic link
+<B><LI> size</B> ..................... Returns file size in bytes
+<B><LI> stat</B> ..................... Returns array of file status information
+<B><LI> type</B> .................... Returns type of file
+<B><LI> writable</B> ............ Returns 1 if file is writeable by user
+</UL>
+</UL>
+Between these two commands, a program can obtain most of the information that 
+it may need.
+<DL>
+<B><DT>glob</b> <I>?switches? pattern ?patternN?</I>
+<DD> returns a list of file names that match <I>pattern</I> or <I>patternN</I>
+<P>
+<I>Switches</I> may be one of:
+<DL>
+<B><DT>-nocomplain</B>
+<DD>Allows <CODE>glob</CODE> to return an empty list without causing an
+error.  Without this flag, an error would be generated when the empty
+list was returned.
+<B><DT>--</B>
+<DD>Marks the end of switches.  This allows the use of "-" in a pattern
+without confusing the glob parser.
+</DL>
+<I>Pattern</I> follows the same matching rules as the string match globbing
+rules with these exceptions:
+<UL>
+<B><LI>{a,b,...}</B> Matches any of the strings a,b, etc.
+<LI> A "." at the beginning of a filename must match a "." in the filename.
+The "." is only a wildcard if it is not the first character in a name.
+<LI>All "/" must match exactly.
+<LI>If the first two characters in <I>pattern</I> are <B>~/</B>, then the <B>~</B> is
+replaced by the value of the <B>HOME</B> environment variable.
+<LI>If the first character in <I>pattern</I> is a <B>~</B>, followed by a login id,
+then the <B>~loginid</B> is replaced by the path of loginid's home directory.
+</UL>
+Note that the filenames that match <I>pattern</I> are not in a sorted order.
+<B><DT>file atime</B> <I>name</I>
+<DD>Returns the number of seconds since 1/1/1970 when the file <I>name</I>
+was last accessed.  Generates an error if the file doesn't exist, or
+the access time cannot be queried.
+<B><DT>file dirname </B> <I>name</I>
+<DD>Returns the directory portion of a path/filename string.  If <I>name</I>
+contains no slashes, <B>file dirname</B> returns a ".".  If the last "/"
+in <I>name</I> is also the first character, it returns a "/".
+<B><DT>file executable</B> <I>name</I>
+<DD> Returns a 1 if file <I>name</I> is executable by the current
+ user, otherwise returns a 0.
+<B><DT>file exists</B> <I>name</I>
+Returns a 1 if the file <I>name</I> exists, and the user has search access
+in all the directories leading to the file.  Otherwise, a 0 is returned.
+<B><DT>file extension</B> <I>name</I>
+<DD>Returns the file extension.
+<B><DT>file isdirectory</B> <I>name</I>
+<DD>Returns 1 if file name is a directory,  otherwise returns 0.
+<B><DT>file isfile</B> <I>name</I>
+<DD> Returns 1 if file name is a regular file, otherwise returns 0.
+<B><DT>file lstat</B> <I>name varName</I>
+This returns the same information returned by the system call
+<B>lstat</B>.  The results are placed in the associative array
+<I>varName</I>.  The indexes in <I>varName</I> are:
+<UL COMPACT>
+<B><LI>atime</B>.......time of last access
+<B><LI>ctime</B>.......time of last file status change
+<B><LI>dev</B>...........inode's device
+<B><LI>gid</B>............group ID of the file's group
+<B><LI>ino</B>............inode's number
+<B><LI>mode</B>.......inode protection mode
+<B><LI>mtime</B>.....time of last data modification
+<B><LI>nlink</B>........number of hard links
+<B><LI>size</B>...........file size, in bytes
+<B><LI>type</B>..........Type of File
+<B><LI>uid</B>.............user ID of the file's owner
+</UL>
+Because this calls <B>lstat</B>, if <I>name</I> is a symbolic link,
+the values in <I>varName</I> will refer to the link, not the file
+that is linked to.  
+<P>
+See stat also.
+<B><DT>file mtime</B> <I>name</I>
+<DD>Returns the time of the last data modification in seconds since
+Jan 1, 1970.
+<B><DT>file owned</B> <I>name</I>
+<DD>Returns 1 if the file is owned by the current user, otherwise returns 0.
+<B><DT>file readable</B> <I>name</I>
+<DD>Returns 1 if the file is readable by the current user, otherwise returns 0.
+<B><DT>file readlink</B> <I>name</I>
+<DD>Returns the name of the file a symlink is pointing to.  If <I>name</I>
+isn't a symlink, or can't be read, an error is generated.
+<B><DT>file rootname</B> <I>name</I>
+<DD>Returns all the characters in <I>name</I> up to but not including the 
+last ".".  Returns <I>$name</I> if <I>name</I> doesn't include a ".".
+<B><DT>file size</B> <I>name</I>
+<DD>Returns the size of <I>name</I> in bytes.
+<B><DT>file stat</B> <I>name varName</I>
+This returns the same information returned by the system call
+<B>stat</B>.  The results are placed in the associative array
+<I>varName</I>.  The indexes in <I>varName</I> are:
+<UL COMPACT>
+<B><LI>atime</B>.......time of last access
+<B><LI>ctime</B>.......time of last file status change
+<B><LI>dev</B>...........inode's device
+<B><LI>gid</B>............group ID of the file's group
+<B><LI>ino</B>............inode's number
+<B><LI>mode</B>.......inode protection mode
+<B><LI>mtime</B>.....time of last data modification
+<B><LI>nlink</B>........number of hard links
+<B><LI>size</B>...........file size in bytes
+<B><LI>type</B>..........Type of file
+<B><LI>uid</B>.............user ID of the file's owner
+</UL>
+<B><DT>file tail</B> <I>name</I>
+<DD>Returns  all  of  the  characters in <I>name</I> after the
+last slash.   Returns <I>$name</I> if  name  contains  no  slashes.
+<B><DT>file type</B> <I>name</I>
+<DD> Returns  a  string  giving  the  type of file name,
+              which will be one of:
+<UL COMPACT>
+<B><LI>file</B>...................................Normal file
+<B><LI>directory</B>........................Directory
+<B><LI>characterSpecial</B>.......Character oriented device
+<B><LI>blockSpecial</B>.............. Block oriented device
+<B><LI>fifo</B>...................................Named pipe
+<B><LI>link</B>..................................Symbolic link
+<B><LI>socket.</B>...........................Named socket
+</UL>
+<B><DT>file writable</B> <I>name</I>
+<DD> Returns 1 if file name is writable by the current user, otherwise returns 0.
+</DL>
+<P>
+The example shows a way of using these commands to build a table of file
+names, directories, inodes, and types.
+<P>
+The first two lines of code use the <CODE>glob</CODE> to make two lists
+(<CODE>ail1, ail2</CODE>) of files in /bin and /usr/bin which contain the
+string <B>ail</B> as part of their name.  This will include all of the various
+mail related programs, some of which may be symbolic links to other files.
+<P>
+The next two lines of code use the <CODE>format</CODE> command to print out
+column headers for the data that will be displayed by the rest of the code.
+The <B>%-</B> construct forces these fields to be left justified, which
+looks better in a table.  This is not done for the third field because that
+field will be the inode number, and numbers look better right justified.
+<P>
+Next, the program loops through all of the names that were acquired with
+the <CODE>glob</CODE> command.  <CODE>Concat</CODE> is used to combine 
+the two lists into a single list.  If <CODE>list</CODE> were used, like
+this:
+<PRE>
+foreach name [list $ail1 $ail2]
+</PRE>
+it would treat <B>$ail1</B> and <B>$ail2</B> as single entities, and make
+a list resembling:
+<PRE>
+{ail1/file1 ail1/file2} {ail2/file1 ail2/file2}</PRE>
+ which would cause all of the <CODE>file</CODE> commands to fail, 
+since "ail1/file1 ail1/file2" is not the name of a file.
+<P>
+The file name is split into the directory and entry portions of the
+name using the <CODE>file dirname</CODE> and <CODE>file tail</CODE> commands.
+<P>
+The <CODE>file stat</CODE> command is used to build an associative array of
+the various status fields for the entry.  The only one we'll use is the 
+<B>ino</B>, which is the inode of the file.  There is a good chance that
+there will be two files displayed that have the same inode, but are listed
+as regular files.  These are 'normal' links, rather than symbolic links.
+<P>
+The results of these commands is displayed with a puts command using the
+'-nonewline' option.  This option causes puts to append a newline.  In
+this case, it lets us add a comment to each line of data after it has
+been printed.
+<P>
+Finally, if the <B>type</B> of <B>$name</B> is a file, the size is printed, 
+and if the <B>type</B> is a symbolic link, then the file it is linked to
+is printed.
+<P>
+For practice, try changing the directory to /dev, glob on the disk drives
+and tty's, and see what the types are displayed as.
+:TEXT_END:
+
+:CODE_START:
+;# Collect a bunch of files to compare
+
+set ail1 [glob PATTERN1]
+set ail2 [glob PATTERN2]
+
+;# Set the format string (see Lsn.18), and display column headers
+
+set fmt "%-12s %-16s %8s %-7s"
+puts "[format "$fmt Comment" "Directory" "Name" "Inode" "Type"]"
+
+;# Loop through the filenames collected by glob, and
+;# determine their inode, size, and type.
+;# Then display the results.
+
+foreach name [concat $ail1 $ail2] {  
+  ;# split the name into pieces for display:
+  set dir [file dirname $name]
+  set filename [file tail $name]
+  
+  ;# Collect some status and type info.
+  file stat $name arr
+  set type [file type $name]
+
+  ;# Display what we've learned.
+  puts -nonewline "[format $fmt $dir $filename $arr(ino) $type]"
+  
+  ;# and particular data depending on whether item is a file or symbolic link.
+
+  if {[string match [file type $name] "link"]} {
+      puts " points to: [file readlink $name]"
+     }
+
+  if {[string match [file type $name] "file"]} {
+      puts " Size: [file size $name] bytes "
+     }
+  }
+
+:TEXT_END:
+
+
+

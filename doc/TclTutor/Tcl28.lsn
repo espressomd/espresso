@@ -1,0 +1,256 @@
+:TITLE: State of the interpreter - info 
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+There are a number of subcommands that provide information about the current
+state of the interpreter.  These commands provide access to information like
+the current version and patchlevel, what script is currently being executed,
+how many commands have been executed, or how far down in the call tree the
+current proc is executing.
+<P>
+Note that the <B>pid</B> command is not part of the <B>info</B> command,
+but a command in its own right.
+<P>
+<B> Commands that return information about the current state of the interpreter</B>
+<DL>
+<B><DT>info cmdcount</B>
+<DD>Returns the total number of commands that have been executed by this
+interpreter.
+<B><DT>info level</B> <I>?number?</I>
+<DD>Returns the stack level at which the compiler is currently evaluating
+code.  0 is the top level, 1 is a proc called from top, 2 is a proc called
+from a proc, etc.  
+<P>
+If <I>number</I> number is a positive value, <B>info level</B> returns a the name 
+and arguments of the proc at that level on the stack.  <I>Number</I>
+is that same value that <B>file level</B> would return if it were called in
+the proc being referenced.
+<P>
+If  <I>number</I> number is a negative value, it refers to the current 
+level plus <I>number</I>.  Thus, 
+, <B>info level</B> returns a the name 
+and arguments of the proc at that level on the stack.
+<B><DT>info patchlevel</B>
+<DD>Returns the value of the global variable tcl_patchlevel.  This is the
+revision level of this interpreter.
+<B><DT>info script</B>
+<DD>Returns the name of the file currently being evaluated, if one is being
+evaluated.  If there is no file being evaluated, returns an empty string.
+<B><DT>info tclversion</B>
+<DD>Returns the value of the global variable tcl_version.  This is the
+patch level of this interpreter.
+<B><DT>pid</B>
+<DD>Returns the pid of the current Tcl interpreter.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+There are a number of subcommands that provide information about the current
+state of the interpreter.  These commands provide access to information like
+the current version and patchlevel, what script is currently being executed,
+how many commands have been executed, or how far down in the call tree the
+current proc is executing.
+<P>
+The <B>info version</B> and <B>info patchlevel</B> can be used to find out
+if the revision level of the interpreter running your code has the support
+for features you are using.  If you know that certain features are not 
+available in certain revisions of the interpreter, you can define your own
+procs to handle this, or just exit the program with an error message.
+<P>
+The <B>info cmdcount</B> and <B>info level</B> can be used while optimizing
+a Tcl script to find out how many levels and commands were necessary to
+accomplish a function.
+<P>
+Note that the <B>pid</B> command is not part of the <B>info</B> command,
+but a command in its own right.
+<P>
+<B> Commands that return information about the current state of the interpreter</B>
+<DL>
+<B><DT>info cmdcount</B>
+<DD>Returns the total number of commands that have been executed by this
+interpreter.
+<B><DT>info level</B> <I>?number?</I>
+<DD>Returns the stack level at which the compiler is currently evaluating
+code.  0 is the top level, 1 is a proc called from top, 2 is a proc called
+from a proc, etc.  
+<P>
+If <I>number</I> number is a positive value, <B>info level</B> returns a the name 
+and arguments of the proc at that level on the stack.  <I>Number</I>
+is that same value that <B>file level</B> would return if it were called in
+the proc being referenced.
+<P>
+If  <I>number</I> number is a negative value, it refers to the current 
+level plus <I>number</I>.  Thus, 
+, <B>info level</B> returns a the name 
+and arguments of the proc at that level on the stack.
+<B><DT>info patchlevel</B>
+<DD>Returns the value of the global variable tcl_patchlevel.  This is the
+revision level of this interpreter.
+<B><DT>info script</B>
+<DD>Returns the name of the file currently being evaluated, if one is being
+evaluated.  If there is no file being evaluated, returns an empty string.
+<B><DT>info tclversion</B>
+<DD>Returns the value of the global variable tcl_version.  This is the
+patch level of this interpreter.
+<B><DT>pid</B>
+<DD>Returns the pid of the current Tcl interpreter.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+
+<P>
+The <B>info</B> command also includes several subcommands which provide
+information about the 
+state of the interpreter.  These commands provide access to information like
+the current version and patchlevel, what script is currently being executed,
+how many commands have been executed, or how far down in the call tree the
+current proc is executing.
+<P>
+The <B>info version</B> and <B>info patchlevel</B> can be used to find out
+if the revision level of the interpreter running your code has the support
+for features you are using.  If you know that certain features are not 
+available in certain revisions of the interpreter, you can define your own
+procs to handle this, or just exit the program with an error message.
+<P>
+The <B>info cmdcount</B> and <B>info level</B> can be used while optimizing
+a Tcl script to find out how many levels and commands were necessary to
+accomplish a function.
+<P>
+Run the example, and examine the output while you read this description of 
+the example code.
+<P>
+The first two lines show how many instructions have been executed so far.
+The initial output is high because of all the commands that the interpreter
+executes setting itself up to run the script.  Note that the number of commands 
+increases by two between the two lines.  There are two commands in the first
+line, the <B>puts</B>, and the <B>[info cmdcount]</B>.
+<P>
+The <B>patchlevel</B> and <B>tclversion</B> calls will return the same value if
+there are no patches applied to the version of the interpreter you are running.
+If patches have been applied, then the <B>patchlevel</B> subcommand will
+return a string that includes patches, while <B>tclversion</B> will return
+the base version level.
+<P>
+The <B>info script</B> command will return the name of the script that is
+being executed.  When you click the <B>Run Example</B> button, the TclTutor
+program writes the code in the <B>Example Code</B> window to a file in
+the /tmp directory, and executes from that script.
+<P>
+When programs are invoked under the Unix operating system, they are assigned
+a number.  This number is the Program ID number, or PID for short.  When you 
+need to interact with a process at the lowest level of the operating system,
+it is referred to by that number.  That number is also guaranteed to be unique.
+No two processes on a system will be using the same PID at the same time.
+<P>
+Therefore, the PID can be used to generate a unique file name.  The file
+name reported in script is generated with a line of code like this:
+<PRE><CODE>set filename "/tmp/xmpl.[pid].tcl"
+</CODE></PRE>
+<P>
+The <B>pid</B> command is shown in this example code printing out the 
+PID of the script.  Each time you click the <B>Run Example</B> button,
+it will display a new number.
+<P>
+The proc <B>factorial</B> demonstrates a way to use the <B>info level</B>
+command to write an inefficient factorial program.  The <B>factorial</B>
+proc will continue calling itself until the current level matches the
+value that was passed as the argument.  When this level has been reached,
+the nested calls to <B>factorial</B> will unwind as each invocation of
+<B>factorial</B> returns the value from the previous call to <B>factorial</B>
+times <CODE>($val-$lvl)</CODE>.
+<P>
+When a function keeps calling itself it is called recursion.
+<P>
+When <B>factorial</B> is called the first time, the level is 1.  Since
+<CODE>$lvl</CODE> is not equal to <CODE>$val</CODE>, line after the
+if statement is executed.  The Tcl interpreter sees that the return
+statement requires the return from a call to <B>factorial</B>, and
+it then invokes <B>factorial</B> again.
+<P>
+This time, <B>$lvl</B> is 2.  Again, the if statement is false, and 
+<B>factorial</B> is invoked again.
+<P>
+This time, since a proc has called a proc which called a proc, the level is 3.  
+In the example code, this matches <CODE>$val</CODE>, so the function returns
+the value of $val.
+<P>
+That value is read in the last line of the previous invocation of <B>factorial</B>,
+when <CODE>$lvl</CODE> was 2.  <CODE>($val-$lvl)</CODE> = 3-2, = 1.  So, the
+last line becomes <CODE> 1*3</CODE>, and that invocation of <B>factorial</B>
+returns 3 to the previous (first) invocation of <B>factorial</B>.
+<P>
+In the first invocation of <B>factorial</B>, the level was 1.  <CODE>3-1=2</CODE>,
+so the last line returns <CODE>2*3</CODE>, which is 6.
+<P>
+It's obvious that multiplying a number by 1 is an unnecessary step.  Try
+modifying the example code to reduce the number of recursions and see how
+many fewer commands you can use to calculate the factorial.
+<P>
+<B> Commands that return information about the current state of the interpreter</B>
+<DL>
+<B><DT>info cmdcount</B>
+<DD>Returns the total number of commands that have been executed by this
+interpreter.
+<B><DT>info level</B> <I>?number?</I>
+<DD>Returns the stack level at which the compiler is currently evaluating
+code.  0 is the top level, 1 is a proc called from top, 2 is a proc called
+from a proc, etc.  
+<P>
+If <I>number</I> number is a positive value, <B>info level</B> returns a the name 
+and arguments of the proc at that level on the stack.  <I>Number</I>
+is that same value that <B>file level</B> would return if it were called in
+the proc being referenced.
+<P>
+If  <I>number</I> number is a negative value, it refers to the current 
+level plus <I>number</I>.  Thus, 
+, <B>info level</B> returns a the name 
+and arguments of the proc at that level on the stack.
+<B><DT>info patchlevel</B>
+<DD>Returns the value of the global variable tcl_patchlevel.  This is the
+revision and patch level of this interpreter.
+<B><DT>info tclversion</B>
+<DD>Returns the value of the global variable tcl_version.  This is the
+revision and patch level of this interpreter.
+<B><DT>info script</B>
+<DD>Returns the name of the file currently being evaluated, if one is being
+evaluated.  If there is no file being evaluated, returns an empty string.
+<B><DT>pid</B>
+<DD>Returns the pid of the current Tcl interpreter.
+</DL>
+:TEXT_END:
+
+:CODE_START:
+puts "This is how many commands have been executed: [info cmdcount]"
+puts "Now  *THIS* many commands have been executed: [info cmdcount]"
+
+puts "\nThis interpreter is revision level: [info tclversion]"
+puts "This interpreter is at patch level: [info patchlevel]"
+
+puts "\nThe temporary script this is executing is named: [info script]"
+puts "The Pid for this program is [pid]"
+
+proc factorial {val} {
+  puts "Current level: [info level] - val: $val"
+  set lvl [info level]
+  if {$lvl == $val} {return $val;}
+  return [expr ($val-$lvl) * [factorial $val]];
+  }
+
+set count1 [info cmdcount]
+set fact [factorial 3]
+set count2 [info cmdcount]
+puts "The factorial of 3 is $fact"
+puts "Before calling the factorial proc, $count1 commands had been executed"
+puts "After calling the factorial proc, $count2 commands had been executed"
+puts "It took [expr $count2-$count1] commands to calculate this factorial"
+
+
+:TEXT_END:
+

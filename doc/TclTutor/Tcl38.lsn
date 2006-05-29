@@ -1,0 +1,127 @@
+:TITLE: Command line arguments and environment strings
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+
+The number of command line arguments to a Tcl script is passed as the
+global variable <B>argc</B>.  The name of a Tcl script is passed to the
+script as the global variable <B>argv0</B>, and the rest of the command
+line arguments are passed as a list in <B>argv</B>. 
+<P>
+Under Posix compliant operating systems, environment variables are passed in a global associative
+array <B>env</B>.  The index into <B>env</B> is the name of the
+environment variable.   The command <CODE>puts "$env(PATH)"</CODE> would
+print the contents of the <B>PATH</B> environment variable.
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+
+Scripts are much more useful if they can be called with different values
+in the command line.
+<P>
+For instance, a script that extracts a particular value from a file
+could be written so that it prompts for a file name, reads the file
+name, and then extracts the data.  Or, it could be written to loop
+through as many files as are in the command line, and extract the data
+from each file, and print the file name and data. 
+<P>
+The second method of writing the program can easily be used from other 
+scripts.  This makes it more useful.
+<P>
+The number of command line arguments to a Tcl script is passed as the
+global variable <B>argc</B>.  The name of a Tcl script is passed to the
+script as the global variable <B>argv0</B>, and the rest of the command
+line arguments are passed as a list in <B>argv</B>. 
+<P>
+Another method of passing information to a script is with <B>environment
+variables</B>.  For instance, suppose you are writing a program in which
+a user provides some sort of comment to go into a record.  It would be
+friendly to allow the user to edit their comments in their favorite editor.
+If the user has defined an <B>EDITOR</B> environment variable, then you
+can invoke that editor for them to use.
+<P>
+Under Posix compliant operating systems, environment variables are passed to a Tcl script in a global
+associative array <B>env</B>.  The index into <B>env</B> is the name of
+the environment variable.  The command <CODE>puts "$env(PATH)"</CODE>
+would print the contents of the <B>PATH</B> environment variable. 
+
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+There are many ways of getting information from a user into a Tcl script.
+For example, the script could:
+<OL>
+<LI> prompt the user for the required information
+<LI> read the input from a configuration file
+<LI> read the information from the command line
+<LI> read the information from an environment variable.
+</UL>
+<P>
+We've already discussed methods 1 and 2.  In this lesson we will discuss
+methods 3 and 4.
+<P>
+When a program is invoked from a command line, it is invoked with a
+string of one or more words.  Under most operating systems, the first
+word is the name of the program, and the other words are referred to as
+the arguments to the program.  These arguments can be a file name, (as
+in <B>cat /etc/passwd</B>) or a flag (as in <B>grep -i foo bar</B>), or
+a command for the program to execute (as in <B>sed 's/one/two/g'</B>).
+The interpretation of these words is left up to the program that is
+being invoked.  
+<P>
+You can get the number of command line arguments
+from the global variable <B>argc</B>.  
+The command line arguments are passed as a list in <B>argv</B>.  
+<P>
+A program can even modify its behavior based on the name its invoked
+as.  Sometimes two programs will have most of their of code in common,
+and just a little bit of different code.  In that case, sometimes it's
+simplest to single program and link copy it into two files with two different
+names (or use the ln command to link one file to the other name).  When this
+script is run, it should look at the name it was invoked as, and
+can then choose a particular set of code to execute depending on that name. 
+<P>
+The name of a Tcl script is
+passed to the script as the global variable <B>argv0</B>.
+<P>
+There are also certain pieces of information that a computer user wants
+to set once, and let any program that needs to know this information find
+it.  These pieces of information are handled with <B>environment variables</B>,
+and are commonly set in your .profile or .login file.  For example, most
+people have their favorite editor named in the <B>EDITOR</B> environment
+variable.  Programs that let a user edit a file can check that 
+variable to see what editor to invoke.
+<P>
+In Tcl, these environment variables are passed to a script in an associative
+array named <B>env</B>.  The index into <B>env</B> is the name of the 
+environment variable your script is checking.  To set an editor to invoke
+you might write code like:
+<CODE>
+set editor "vi"
+if {[info exists env(EDITOR)]} {set editor $env(EDITOR);}
+</CODE>
+<P>
+Now, run the example, and look at the output.  In this case, there
+are no arguments to the script, so <B>argc</B> is 0.  If you invoke
+the script from another command window by typing in the name that is displayed
+in the second line (/tmp/xm...), you can add arguments to the command
+line, and see them displayed.
+:TEXT_END:
+
+:CODE_START:
+puts "There are $argc arguments to this script"
+puts "The name of this script is $argv0"
+if {$argc > 0} {puts "The other arguments are: $argv" }
+
+puts "You have these environment variables set:"
+foreach index [array names env] {
+  puts "$index: $env($index)"
+  }
+:TEXT_END:
+

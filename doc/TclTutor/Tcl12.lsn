@@ -1,0 +1,170 @@
+:TITLE: Variations in proc arguments and return values
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+
+A proc can be defined with a set number of required arguments (as was
+done with <CODE>sum</CODE> in the previous lesson, or it can have a
+variable number of arguments.  An argument can also be defined to have a
+default value. 
+<P>
+Variables can be defined with a default value by placing the variable
+name and the default within braces within <I>args</I>.  See the example
+code to see how this is done. 
+<P>
+A proc will accept a variable number of arguments if the last declared
+argument is the word <B>args</B>.  If the last argument to a proc argument 
+list is <B>args</B>, then any arguments that aren't already assigned to 
+previous variables will be assigned to <B>args</B>. 
+<P>
+<B>Example</B> is defined with three arguments.  At least one argument
+*must* be present when <B>example</B> is called.  The second argument
+can be left out, and in that case it will default to an empty string. 
+By declaring <B>args</B> as the last argument <B>example</B> can take a
+variable number of arguments. 
+<P>
+The value that the <I>body</I> of a proc returns can be defined with the
+<CODE>return</CODE> command.  The <CODE>return</CODE> command will
+return its argument to the calling program.  If there is no return, then
+<I>body</I> will return to the caller when the last closing brace has
+been reached, and the proc will return the value of the last command to
+be executed.  
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+A proc can be defined with a set number of required arguments (as was
+done with <CODE>sum</CODE> in the previous lesson, or it can have a
+variable number of arguments.  An argument can also be defined to have a
+default value. 
+<P>
+Variables can be defined with a default value by placing the variable
+name and the default within braces within <I>args</I>.  See the
+example code to see how this is done. 
+<P>
+A proc will accept a variable number of arguments if the last declared
+argument is the word <B>args</B>.  If the last argument to a proc argument 
+list is <B>args</B>, then any arguments that aren't already assigned to 
+previous variables will be assigned to <B>args</B>. 
+<P>
+<B>Example</B> is defined with three arguments.  At least one argument *must*
+be present when <B>example</B> is called.  The second argument can be left
+out, and in that case it will default to an empty string.  
+By declaring <B>args</B> as the last argument <B>example</B> can take a 
+variable number of arguments.
+<P>
+Note that if there is a variable other than <B>args</B> after a variable
+with a default, then the default will never be used.  
+For example, if you declare a proc as 
+<P><CODE>proc function { a {b 1} c} {...}</CODE><P>
+Tcl assigns values
+to a proc's variables in the order that they are listed in the command.  If
+you provide 2 arguments when you call <CODE>function</CODE> they will be
+assigned to <CODE>a</CODE> and <CODE>b</CODE>, and Tcl will generate an
+error because <CODE>c</CODE> is undefined.
+<P>
+You can, however, declare other arguments that may not have values
+as coming after an argument with a default value. For example, this
+is valid:
+<P> <CODE> proc example {required {default1 a} {default2 b} args} {...}
+</CODE>
+<P>
+In this case, <CODE>example</CODE> requires one argument, which will
+be assigned to the variable <CODE>required</CODE>.  If there are two
+arguments, the second arg will be assigned to <CODE>default1</CODE>.
+If there are 3 arguments, the first will be assigned to <CODE>required</CODE>,
+the second to <CODE>default1</CODE>, and the third to <CODE>default2</CODE>.
+If example is called with more than 3 arguments, all the arguments
+after the third will be assigned to <CODE>args</CODE>.
+
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+A proc can be defined with a set number of required arguments (as was
+done with <CODE>sum</CODE> in the previous lesson, or it can have a
+variable number of arguments.  An argument can also be defined to have a
+default value. 
+<P>
+The variable declared in <I>args</I> may also be a list.
+This is done by enclosing two strings within
+braces.  When the Tcl interpreter encounters this construct, it declares
+the variable's name to be the first string, and the default 
+value to be the second string. If the proc is called without
+an argument in that position, then the default value will be assigned to the
+variable.
+<P>
+A proc can defined to accept a variable number of arguments by using the 
+<B>args</B> argument.  If the last argument to a proc argument list is 
+<B>args</B>, then any arguments that aren't already assigned to previous 
+variables will be assigned to <B>args</B>.
+<P>
+<B>Example</B> is defined with three arguments.  At least one argument *must*
+be present when <B>example</B> is called.  The second argument can be left
+out, and in that case it will default to an empty string.  
+By declaring <B>args</B> as the last argument <B>example</B> can take a 
+variable number of arguments.
+<P>
+Note that if there is a variable other than <B>args</B> after a variable
+with a default, then the default will never be used.  
+Consider a proc declared as:
+<P><CODE>proc function { a {b 1} c} {...}</CODE><P>
+Tcl assigns values
+to a proc's variables in the order that they are listed in the command.  If
+you provide 2 arguments when you call <CODE>function</CODE> they will be
+assigned to <CODE>a</CODE> and <CODE>b</CODE>, and Tcl will generate an
+error because <CODE>c</CODE> is undefined.
+<P>
+<P>
+You can, however, declare other arguments that may not have values
+as coming after an argument with a default value. For example, this
+is valid:
+<P> <CODE> proc example {required {default1 a} {default2 b} args} {...}
+</CODE>
+<P>
+In this case, <CODE>example</CODE> requires one argument, which will
+be assigned to the variable <CODE>required</CODE>.  If there are two
+arguments, the second arg will be assigned to <CODE>default1</CODE>.
+If there are 3 arguments, the first will be assigned to <CODE>required</CODE>,
+the second to <CODE>default1</CODE>, and the third to <CODE>default2</CODE>.
+If example is called with more than 3 arguments, all the arguments
+after the third will be assigned to <CODE>args</CODE>.
+<P>
+As you see in the example, with <B>args</B> as the last argument, 
+<CODE>example</CODE> can be called with one, two, three or more arguments.
+If you call <CODE>example</CODE> with one arg, then <B>second</B> is set to
+the default, and <B>args</B> is an empty list.  When <CODE>example</CODE> is
+called with two arguments, then <B>first</B> is set to the first argument,
+<B>second</B> is set to the second argument, and <B>args</B> is still an
+empty list.  If there are more then two arguments, then the third - Nth
+arguments are assigned to <B>args</B>
+:TEXT_END:
+
+:CODE_START:
+proc example {first {second ""} args} {
+  if {$second == ""} {
+    puts "There is only one argument and it is: $first";
+    return 1;
+    } else {
+    if {$args == ""} {
+      puts "There are two arguments - $first and $second";
+      return 2;
+      } else {
+      puts "There are many arguments - $first and $second and $args";
+      return "many";
+      }
+    }
+  }
+
+set count1 [example ONE]
+set count2 [example ONE TWO]
+set count3 [example ONE TWO THREE ]
+set count4 [example ONE TWO THREE FOUR]
+
+puts "The example was called with $count1, $count2, $count3, and $count4 Arguments"
+:TEXT_END:
+

@@ -1,0 +1,349 @@
+*
+*                  ESPResSo installation guide
+******************************************************************************
+
+1. Requirements
+
+ESPResSo needs Tcl 8.3 or later, although some example scripts will only work
+with Tcl 8.4. You do not only need the interpreter, but also the header files
+and libraries, which often come in separate development packages. If you want to
+use a GUI for your simulation scripts, you need Tk as well.
+
+In addition, ESPResSo needs the FFTW library for Fourier transforms. ESPResSo
+compiles against both the 2.1.x and 3.0.x series. Again you need the development
+package containing the header files.
+
+Finally, if you want to use MPI, you need a working MPI environment. ESPResSo
+currently works with the following MPI implementations:
+
+1. LAM/MPI is the preferred variant
+2. MPICH, which seems to be considerably slower than LAM/MPI in our benchmarks.
+3. On AIX systems, ESPResSo can also use the native POE parallel environment
+4. On DEC/Compaq/HP OSF/Tru64, ESPResSo can also use the native dmpirun MPI
+   environment.
+
+Again, make sure that you have the necessary header files installed.
+
+2. Basic Installation
+
+ESPResSo has a autoconf configure script, which should detect most of the
+necessary settings automatically, so that a simple
+
+./configure && make
+
+in the ESPResSo main directory should build ESPResSo, provided all the necessary
+components as described above are found.
+
+3. Customizing
+
+The configure script offers various possibilities to manually specify compiler
+flags etc. if the configure script fails to work, for example since the CPU type
+was not detected properly.
+
+3.1. CPU type detection
+
+The CPU type is detected by the config/config.guess script, which is a
+nonstandard version which on some architectures tries to provide a finer CPU
+type specification to support CPU specific optimization. If you do not like the
+<cpu>-<vendor>-<os> output for your CPU, fix it and please report the settings to
+espresso@mpip-mainz.mpg.de for inclusion in the next ESPResSo versions.
+
+3.2. Important environment variables
+
+If you want to manually specify compiler flags, for example special paths to
+libraries, you can specify the CC, CFLAGS, LDFLAGS and LIBS environment variables
+on the command line:
+
+CC	gives the compiler to use. Note that MPI environments often need special
+	compilers rsp. wrapper scripts.
+CFLAGS	flags used in the object file compilation pass. Typically you will specify
+	additional include paths here, e.g. "-I/home/me/include", but also other
+	compiler flags such as "-O5" are possible. In the latter case, you will
+	probably want to disable the automated CPU optimization detection via
+	"--disable-processor-optimization".
+LDFLAGS the same as CFLAGS for the linking pass. Note that you should NOT
+	specify libraries here, since for some compilers they have to appear at
+	the end of the line, only additional library paths, e.g. "-L/home/me/lib".
+LIBS	Use this variable to specify additional libraries to link against, e.g.
+	"-lmycoollib".
+
+3.3 Configuration switches
+
+The configure script also has some switches to influence the auto detection
+
+  --enable-mode           specify the compilation mode, either production,
+                          debug or profiling. Default is production.
+  --disable-processor-optimization
+                          disable guessing of processor specific optimizations, if
+                          you want to specify it manually.
+  --enable-config=cfg     use a predefined configuration for known brain
+                          damaged system setups, currently supported: blade
+                          (Garching Blade Center), thalpha (DEC Alphas at MPIP).
+                          This just provides some wisdom on the cryptic paths on
+                          these systems containing the compilers, libraries or paths.
+  --disable-mpi           disables the use of MPI and builds an ESPResSo version optimized
+                          for single CPU usage.
+  --enable-mpi=<type>     compile with MPI (parallelization) support. If you
+                          specify <type>=lam,mpich,poe or dmpi the corresponding MPI
+                          implementation will used, otherwise configure tries to find
+                          the MPI environment automatically. Currently it will look
+                          for LAM/MPI and MPICH, or on AIX for poe and on Tru64 for
+                          dmpirun.
+  --enable-efence         use ElectricFence memory debugging for the debug
+                          binary. Used for debugging memory allocation bugs.
+  --disable-xlc-qipa      disable the IPA of the IBM C compiler at linking. This is
+                          necessary if you get messages about missing "*.dylib" files.
+  --enable-tcl            specify the tcl library to use (e.g. tcl8.4). This is the name
+                          of the library to use, i.e. to use "-ltclmyversion", specify
+                          "--enable-tcl=tclmyversion".
+  --enable-tk             tk version for the GUI to use. Tk is disabled by default, using
+                          this switch enables autodetection. Specifying
+                          "--enable-tk=tkmyversion" works exactly as for Tcl.
+  --enable-fftw=<version> specify the version of FFTW to use (2 or 3). This only influences
+                          the version to use, to actually specify a different library name,
+                          use CFLAGS, LDFLAGS and LIBS to include the necessary
+                          paths manually.
+  --prefix=<path>         ESPResSo can be run directly from the compilation directory,
+                          but on some systems it may be preferable to install a minimal
+                          ESPResSo somewhere else. For example one can have the
+                          source code on local scratch space, and only the
+                          binary in the NFS home directory.
+
+3.4. Example
+
+./configure --enable-mpi=mpich CC=icc CFLAGS="-I/home/me/include" \
+	LDFLAGS="-L/home/me/libs" LIBS="-ldoublefftw" \
+	--enable-fftw=3
+
+will for example compile ESPResSo using the Intel C Compiler "icc" with the
+MPICH environment (which has to be found in one of the usual places, such as
+/opt/mpich/p4). A nonstandard FFTW3 library named "doublefftw" is installed in
+the home directory of user "me".
+
+3.5. Mac OS X
+
+The FFTW3, LAM/MPI and doxygen come as Fink packages (http://fink.sf.net). However, this 
+will also install the X11 Tcl/Tk, which overrides the (much nicer) Aqua Tcl/Tk. To avoid this,
+compile with: ./configure CFLAGS="-I/sw/include" LDFLAGS="-L/usr/lib -L/sw/lib"
+
+4. Building
+
+Once the configure script succeeded in creating the necessary Makefile for the
+Hardware, use "make" to build ESPResSo. If this succeeds, you can use "make
+install" to install ESPResSo to the location speficied by --prefix to
+./configure. This step is optional. However, if you do not install ESPReSo, the
+environment variable ESPRESSO_SOURCE has to point to the Espresso source
+directory, and ESPRESSO_SCRIPTS has to point to the scripts subdirectory,
+otherwise Espresso will not run.
+
+"make docu" will build the documentation using doxygen, and "make install-doc"
+will again install the documentation.
+
+5. Testing
+
+If you plan to run Espresso for production jobs, you may be interested in first
+making sure that ESPResSo works correctly. To this aim, ESPResSo has a testsuite,
+which you can and SHOULD run by "make test" (see also 5. Running if make test
+cannot start ESPResSo).
+
+5. Running
+
+If you installed ESPResSo, and the binary directory <prefix>/bin (rsp. whatever
+you specified to --exec-prefix) is in your path, ESPResSo is simply run via
+"Espresso <script.tcl> ?N_processors? ?args?" without any other prerequisites.
+
+If you want to run ESPResSo from the source directory, the environment variable
+ESPRESSO_SOURCE has to point to the Espresso source directory, and
+ESPRESSO_SCRIPTS has to point to the scripts subdirectory. If this is the case,
+ESPResSo can be started via "<source_dir>/Espresso <script.tcl> ?N_processors?
+?args?".
+
+Note that depending on your MPI installation, MPI jobs can only be run in the
+queueing system, so that ESPResSo will not run from the command line. In that
+case, you may not be able to run the testsuite, or have to directly submit
+the testsuite script "testsuite/test.sh" to the queueing system.
+
+6. Good luck in using ESPResSo!
+
+*
+*          Generic autoconf installation instructions
+******************************************************************************
+
+   The `configure' shell script attempts to guess correct values for
+various system-dependent variables used during compilation.  It uses
+those values to create a `Makefile' in each directory of the package.
+It may also create one or more `.h' files containing system-dependent
+definitions.  Finally, it creates a shell script `config.status' that
+you can run in the future to recreate the current configuration, a file
+`config.cache' that saves the results of its tests to speed up
+reconfiguring, and a file `config.log' containing compiler output
+(useful mainly for debugging `configure').
+
+   If you need to do unusual things to compile the package, please try
+to figure out how `configure' could check whether to do them, and mail
+diffs or instructions to the address given in the `README' so they can
+be considered for the next release.  If at some point `config.cache'
+contains results you don't want to keep, you may remove or edit it.
+
+   The file `configure.in' is used to create `configure' by a program
+called `autoconf'.  You only need `configure.in' if you want to change
+it or regenerate `configure' using a newer version of `autoconf'.
+
+The simplest way to compile this package is:
+
+  1. `cd' to the directory containing the package's source code and type
+     `./configure' to configure the package for your system.  If you're
+     using `csh' on an old version of System V, you might need to type
+     `sh ./configure' instead to prevent `csh' from trying to execute
+     `configure' itself.
+
+     Running `configure' takes awhile.  While running, it prints some
+     messages telling which features it is checking for.
+
+  2. Type `make' to compile the package.
+
+  3. Optionally, type `make check' to run any self-tests that come with
+     the package.
+
+  4. Type `make install' to install the programs and any data files and
+     documentation.
+
+  5. You can remove the program binaries and object files from the
+     source code directory by typing `make clean'.  To also remove the
+     files that `configure' created (so you can compile the package for
+     a different kind of computer), type `make distclean'.  There is
+     also a `make maintainer-clean' target, but that is intended mainly
+     for the package's developers.  If you use it, you may have to get
+     all sorts of other programs in order to regenerate files that came
+     with the distribution.
+
+Compilers and Options
+=====================
+
+   Some systems require unusual options for compilation or linking that
+the `configure' script does not know about.  You can give `configure'
+initial values for variables by setting them in the environment.  Using
+a Bourne-compatible shell, you can do that on the command line like
+this:
+     CC=c89 CFLAGS=-O2 LIBS=-lposix ./configure
+
+Or on systems that have the `env' program, you can do it like this:
+     env CPPFLAGS=-I/usr/local/include LDFLAGS=-s ./configure
+
+Compiling For Multiple Architectures
+====================================
+
+   You can compile the package for more than one kind of computer at the
+same time, by placing the object files for each architecture in their
+own directory.  To do this, you must use a version of `make' that
+supports the `VPATH' variable, such as GNU `make'.  `cd' to the
+directory where you want the object files and executables to go and run
+the `configure' script.  `configure' automatically checks for the
+source code in the directory that `configure' is in and in `..'.
+
+   If you have to use a `make' that does not supports the `VPATH'
+variable, you have to compile the package for one architecture at a time
+in the source code directory.  After you have installed the package for
+one architecture, use `make distclean' before reconfiguring for another
+architecture.
+
+Installation Names
+==================
+
+   By default, `make install' will install the package's files in
+`/usr/local/bin', `/usr/local/man', etc.  You can specify an
+installation prefix other than `/usr/local' by giving `configure' the
+option `--prefix=PATH'.
+
+   You can specify separate installation prefixes for
+architecture-specific files and architecture-independent files.  If you
+give `configure' the option `--exec-prefix=PATH', the package will use
+PATH as the prefix for installing programs and libraries.
+Documentation and other data files will still use the regular prefix.
+
+   In addition, if you use an unusual directory layout you can give
+options like `--bindir=PATH' to specify different values for particular
+kinds of files.  Run `configure --help' for a list of the directories
+you can set and what kinds of files go in them.
+
+   If the package supports it, you can cause programs to be installed
+with an extra prefix or suffix on their names by giving `configure' the
+option `--program-prefix=PREFIX' or `--program-suffix=SUFFIX'.
+
+Optional Features
+=================
+
+   Some packages pay attention to `--enable-FEATURE' options to
+`configure', where FEATURE indicates an optional part of the package.
+They may also pay attention to `--with-PACKAGE' options, where PACKAGE
+is something like `gnu-as' or `x' (for the X Window System).  The
+`README' should mention any `--enable-' and `--with-' options that the
+package recognizes.
+
+   For packages that use the X Window System, `configure' can usually
+find the X include and library files automatically, but if it doesn't,
+you can use the `configure' options `--x-includes=DIR' and
+`--x-libraries=DIR' to specify their locations.
+
+Specifying the System Type
+==========================
+
+   There may be some features `configure' can not figure out
+automatically, but needs to determine by the type of host the package
+will run on.  Usually `configure' can figure that out, but if it prints
+a message saying it can not guess the host type, give it the
+`--host=TYPE' option.  TYPE can either be a short name for the system
+type, such as `sun4', or a canonical name with three fields:
+     CPU-COMPANY-SYSTEM
+
+See the file `config.sub' for the possible values of each field.  If
+`config.sub' isn't included in this package, then this package doesn't
+need to know the host type.
+
+   If you are building compiler tools for cross-compiling, you can also
+use the `--target=TYPE' option to select the type of system they will
+produce code for and the `--build=TYPE' option to select the type of
+system on which you are compiling the package.
+
+Sharing Defaults
+================
+
+   If you want to set default values for `configure' scripts to share,
+you can create a site shell script called `config.site' that gives
+default values for variables like `CC', `cache_file', and `prefix'.
+`configure' looks for `PREFIX/share/config.site' if it exists, then
+`PREFIX/etc/config.site' if it exists.  Or, you can set the
+`CONFIG_SITE' environment variable to the location of the site script.
+A warning: not all `configure' scripts look for a site script.
+
+Operation Controls
+==================
+
+   `configure' recognizes the following options to control how it
+operates.
+
+`--cache-file=FILE'
+     Use and save the results of the tests in FILE instead of
+     `./config.cache'.  Set FILE to `/dev/null' to disable caching, for
+     debugging `configure'.
+
+`--help'
+     Print a summary of the options to `configure', and exit.
+
+`--quiet'
+`--silent'
+`-q'
+     Do not print messages saying which checks are being made.  To
+     suppress all normal output, redirect it to `/dev/null' (any error
+     messages will still be shown).
+
+`--srcdir=DIR'
+     Look for the package's source code in directory DIR.  Usually
+     `configure' can determine that directory automatically.
+
+`--version'
+     Print the version of Autoconf used to generate the `configure'
+     script, and exit.
+
+`configure' also accepts some other, not widely useful, options.
+

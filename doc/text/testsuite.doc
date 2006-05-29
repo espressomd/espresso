@@ -1,0 +1,35 @@
+/** \page testsuite The Testsuite Directory
+
+The scripts in the directory your_directory/Espresso/testsuite are
+used to check wether changes in the program code affect basic
+properties of ESPResSo. Befor checking in any changes please make sure
+that this test is succesfull. To run the test type <tt>gmake test</tt>
+in the directory your_directory/Espresso. If you write any new
+features for Espresso please provide new tests for them. 
+
+This is a list of the tests that will be performed and a short
+description what they test.
+
+<ol>
+<li> <b> lj.tcl </b><br>
+     Tests Lennard-Jones potential: Energy, Pressure and Forces
+<li> <b> madelung.tcl </b><br>
+     Calculates the energy of a NaCl crystal. Test case for the
+     electrostatic energy / force.
+
+<li> <b> cell_model.tcl </b><br>
+     This example shows the use of \ref tcl_constraint "constraints"
+     and non periodic boundary conditions. It simulates a bundle of
+     semiflexible polyelectrolyes with hydrophobic side chains
+     neutralized by counterions in a spherical simulation cell.
+
+<li> <b> diamond.tcl </b><br>
+     This reproduces the data of S.Schneider/P.Linse, Eur.Phys.J.E <b>8</b>, 457-460 (2002):
+     A diamond-shape network of 16 polyelectrolyte chains with 20 monomers each connected at 8 nodes is simulated for varying
+     network packing fractions (densities) while the pressure is analysed (\ref tcl_analyze). 
+     Similar to <i>kremerGrest.tcl</i> it additionally uses electrostatics including the auto-tuning feature (\ref tcl_inter).
+
+
+</ol>
+
+*/

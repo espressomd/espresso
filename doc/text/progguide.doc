@@ -1,0 +1,242 @@
+/** \page progguide Programmer's guide
+	This page contains some hints on extending Espresso. It is not exhaustive, so for major
+	changes the best documentation are still the original developers:
+	<ul>
+	<li><a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
+	<li><a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
+	<li><a href="mailto:mann@mpip-mainz.mpg.de">Bernward</a>
+	</ul>
+
+	For some simple tasks here is a small compendium of often requested things:
+	<ul>
+	<li>\ref add_vars</li>
+	<li>\ref add_bonded</li>
+	<li>\ref add_nonbonded</li>
+	<li>\ref add_constraints</li>
+	<li>\ref part_org</li>
+	<li>\ref errorhandling</li>
+	</ul>
+
+\section add_vars Adding global variables
+	Global variables are the simplest way to communicate values between the Tcl script and
+	the C simulation code.
+	To make a C variable available to Tcl, declare the variable extern in a header file that
+	you then include in global.c. Then add a new line to \ref #fields (for details on the
+	entries see \ref Datafield). Basically you have to declare where the variable is stored,
+	which type (INT or DOUBLE) it has and how many elements. A callback procedure can be
+	given which checks if the given value is valid and stores it. It is also responsible for	
+	dispatching the new value to the other nodes, if necessary. The easiest way to do that is by using
+	\ref mpi_bcast_parameter, which will transfer the value to the other nodes. A simple example
+	is \ref box_l with the callback procedure \ref boxl_callback. For \ref mpi_bcast_parameter
+	to work, it is necessary that they occur in the \ref FIELD_BOXL "variables enumeration".
+	So please keep this list in sync! Another list to keep up to date is the \ref desc_var.
+
+\section add_bonded Adding new bonded interactions
+	Every interaction resides in an own header file. A simple example for a bonded interaction
+	is the FENE bond in \ref fene.h. The data structures, however, reside in \ref interaction_data.h.
+	The bonded interactions are all stored in a union, \ref Bonded_ia_parameters. For a new interaction,
+	just add another struct. Each bonded interaction is assigned a type number, which has the form BONDED_IA_*,
+	e. g. \ref BONDED_IA_FENE. The new interaction also has to have such a <em>unique</em> number.
+	
+	After the setup of the necessary data structures in \ref interaction_data.h, write the header file,
+	something like new_interaction.h. You may want to use fene.h as a template file.
+	Typically, you will have the following procedures:
+	<ul>
+	<li>	\verbatim int *_set_params(int bond_type, \<parameters>\) \endverbatim
+		this function is used to define the parameters for a bonded
+		interaction. The bond_type is the bond type number from the inter command, and not one of the BONDED_*. It is
+		rather an index to the \¶ef bonded_ia_params array. \ref make_bond_type_exist makes sure that all bond types
+		up the given type exist and are preinitialized with BONDED_IA_NONE, i. e. are empty bond types. Therefore fill
+		bonded_ia_params[bond_type] with the parameters of your interaction type. </li>
+	<li>	\verbatim
+		int calc_*_force(Particle *p1, Particle *p2,..., Bonded_ia_parameters *iaparams, double dx[3], double force[3],...)
+		\endverbatim
+		This routine calculate the force between the particles. ia_params represents the parameters to use for this bond,
+		dx represents the vector pointing from particle 2 to particle 1.
+		The force on particle 1 is placed in the force vector (and <em>not</em> added to it). The force on particle 2 is
+		obtained from Newton's law. For many body interactions, just add more particles in the beginning, and return the
+		forces on particles 1 to N-1. Again the force on particle N is obtained from Newton's law. The procedure should return
+		0 except when the bond is broken, in which case 1 is returned. </li>
+	<li>	\verbatim
+		int *_energy(Particle *p1, Particle *p2, ..., Bonded_ia_parameters *iaparams, double dx[3], double *_energy)
+		\endverbatim
+		This calculates the energy originating from this bond. The result is placed in the location _energy points to,
+		ia_params and dx are the same as for the force calculation, and the return value is also the flag for a broken bond.
+		</li>
+	</ul>
+
+	After the preparation of the header file, the bonded interaction has to be linked with the rest of the code. In
+	\ref interaction_data.c, most of the work has to be done:
+	<ol>
+	<li>	Add a name for the interaction to \ref get_name_of_bonded_ia. </li>
+	<li>	In \ref calc_maximal_cutoff, add a case for the new interaction which makes sure that max_cut is larger
+		than the interaction range of the new interaction, typically the bond length. This value is always used as calculated
+		by \ref calc_maximal_cutoff, therefore it is not strictly necessary that the maximal interaction range is stored
+		explicitly. </li>
+	<li>	Add a print block for the new interaction to \ref printBondedIAToResult. The print format should be such
+		that the output can be used as input to inter, and defines the same bond type. </li>
+	<li>	in \ref inter_parse_bonded, add a parser for the parameters. See the \ref parsing section below. </li>
+	</ol>
+	Besides this, you have enter the force rsp. energy calculation routines in \ref add_bonded_force, \ref add_bonded_energy,
+	\ref add_bonded_virials and \ref calc_p_tensor. The pressure occurs twice, once for the parallelized isotropic pressure and
+	once for the tensorial pressure calculation. For pair forces, the pressure is calculated using the virials, for many body
+	interactions currently no pressure is calculated.
+
+	After the new bonded interaction works properly, it would be a good idea to add a testcase to the testsuite, so that changes
+	breaking your interaction can be detected early.
+
+\section add_nonbonded Adding new nonbonded interactions
+
+	Writing nonbonded interactions is similar to writing nonbonded interactions. Again we start with \ref interaction_data.h, where
+	the parameter structure has to be setup. Just add your parameters <em>with reasonable names</em> to \ref IA_parameters. Note that
+	there must be a setting for the parameters which disables the interaction.
+
+	Now write the header file for the interaction. This time ljcos.h may be a good example. The needed routines are
+	<ul>
+	<li>	\verbatim int print*IAToResult(Tcl_Interp *interp, int i, int j) \endverbatim
+		writes out the interaction parameters between particles of type i and j to the interpreters result such that the result
+		can be fed into the inter command again to obtain the same interaction. The \ref IA_parameters pointer can be obtained
+		conveniently via \ref get_ia_param(i,j). </li>
+	<li>	\verbatim
+		int *_parser(Tcl_Interp * interp, int part_type_a, int part_type_b, int argc, char ** argv)
+		\endverbatim
+		parses the command line given by argc and argv for the parameters needed for the interaction, and writes them to the
+		IA_parameters for types part_type_a and part_type_b. For details on writing the parser, see \ref parsing. The routine
+		returns 0 on errors and otherwise the number of parameters that were read from the command line. </li>
+	<li>	\verbatim
+		void add_*_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params, double d[3], double dist2, double dist, double force[3])
+		double *_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params, double d[3], double dist2, double dist)
+		\endverbatim
+		are the force rsp. energy calculation routines. ia_params gives the interaction parameters for the particle types of
+		particles p1 and p2, d gives the vector from particle 2 to particle 1, dist its length and dist2 its squared length. The last
+		three parameters can be chosen on demand. Note that unlike in the bonded case, the force routine is called <em>add_*</em>, i. e.
+		the force has to be <em>added</em> to force. The *_pair_energy routine simply returns the energy directly instead of the pointer approach
+		of the bonded interactions. </li>
+	</ul>
+
+	Change \ref interaction_data.c as follows (most changes are pretty much the same for all potentials):
+	<ol>
+	<li> modify \ref initialize_ia_params and \ref copy_ia_params to take care of the additional parameters needed for your potential.
+	<li> \ref checkIfParticlesInteract has to be modified to also check for the no interaction condition for the new interaction (typically zero cutoff).
+	<li> \ref calc_maximal_cutoff has to modified such that max_cut is larger than the maximal cutoff your interaction needs. Again, the code always uses
+		the result from this function, therefore the cutoff does not have to be stored explicitly in the interaction parameters.	
+	<li> add your print*IAToResult routine to \ref printNonbondedIAToResult.
+	<li> add the *_parser routine to \ref inter_parse_bonded.
+	</ol>
+	After this, add the force calculation to \ref add_non_bonded_pair_force, \ref add_non_bonded_pair_virials and \ref calc_p_tensor, and the energy calculation to
+	\ref add_non_bonded_pair_energy. 
+
+	After the new nonbonded interaction works properly, it would be a good idea to add a testcase to the testsuite, so that changes
+	breaking your interaction can be detected early.
+
+\section add_constraints Adding constraints
+
+\section parsing Tcl I/O - Parsing and printing
+	<ul>
+	<li> ARG_0_IS
+	<li> Tcl_GetDouble/Int etc
+	<li> Tcl_PrintDouble/Int
+	<li> take care of number of arguments
+	<li> TCL_INTEGER_SPACE...
+	</ul>
+
+\section part_org Particle data organization
+
+	The particle data organization is described in \ref tcl_cellsystem, its implementation is briefly described in \ref cells.h and
+	\ref ghosts.h. Here only some details on how to access the data is assembled. Writing a new cellsystem almost always requires
+	deep interactions with the most low level parts of the code and cannot be explained in detail here.
+
+	Typically, one has to access all real particles stored on this node, or all ghosts. This is done via a loop similar to the
+	following:
+\verbatim
+   Cell *cell;
+   int c,i,np,cnt=0;
+   Particle *part;
+ 
+   for (c = 0; c < local_cells.n; c++) {
+     cell = local_cells.cell[c];
+     part = cell->part;
+     np   = cell->n;
+     for(i=0 ; i < np; i++) {
+	do_something_with_particle(part[i]);
+     }
+   }
+\endverbatim
+	To access the ghosts instead of the real particles, use \ref ghost_cells instead of \ref local_cells.
+
+	Another way to access particle data is via \ref local_particles. This array has as index the particle identity, so that local_particles[25]
+	will give you an pointer to the particle with identity 25, or NULL, if the particle is not stored on this node, neither as ghost nor as
+	real particle. Note that the local_particle array does not discriminate between ghosts and real particles. Its primary use is for the
+	calculation of the bonded interactions, where it is used to efficiently determine the addresses of the bonding partner(s).
+
+	The master node can add and remove particles via \ref place_particle and \ref remove_particle, or change properties via \ref
+	set_particle_v etc. This is the preferred way to handle particles, since it is multiprocessor save.
+
+	However, some algorithms, especially new cellsystems, may force you to operate locally on the particle data and shift them around manually.
+	Since the particle organization is pretty complex, there are additional routines to move around particles between particle lists. The routines
+	exist in two versions, one indexed, and one unindexed. The indexed version take care of the \ref local_particles array, which for each particle
+	index tells where to find the particle on this node (or NULL if the particle is not stored on this node), while the unindexed versions require
+	you to take care of that yourself (for example by calling \ref update_local_particles). The second way is much faster if you do a lot of particle
+	shifting. To move particles locally from one cell to another, use \ref move_indexed_particle or \ref move_unindexed_particle, never try to change
+	something directly in the lists, you will create a mess! Inserting particles locally is done via \ref append_indexed_particle or
+	\ref append_unindexed_particle.
+
+	Besides the \ref local_particles array, which has to be up to date at any time, there is a second array \ref particle_node, which is available on the
+	master node only outside of the integrator, i. e. in the Tcl script evaluation phases. If particle_node is NULL, you have to call
+	\ref build_particle_node to rebuild it. It contains for each particle identity the node the particle is currently located on.
+	
+	The proper cell for a particle is obtained via \ref CellStructure::position_to_node, which calculates for a given position the node it belongs to,
+	and \ref CellStructure::position_to_cell, which calculates the cell it belongs to on this node, or NULL, if the cell is from a different node.
+	However, you should normally not be bothered with this information, as long as you stick to \ref place_particle and the other routines to modify
+	particle data.
+
+	Writing a new cellsystem basically requires only to create the functions listed in \ref CellStructure. The init function has to also setup the communicators,
+	which is the most complex part of writing a new cellsystem and contains all the communication details. \ref prepare_comm is a small wrapper for the most
+	common operations. Otherwise just grep for CELL_STRUCTURE_DOMDEC, and add some appropriate code for your cell system. Note, however, that each cell system
+	has its specific part of the code, where only this cellsystem does something strange and unique, so here you are completely on your own. Good luck.
+
+\section errorhandling Errorhandling for developers
+
+    	Developers should use the errorhandling mechanism whenever it is possible to recover from an error such that
+	continuing the simulation is possible once the source of the error is removed, i. e. the bond is removed or a
+	parameter changed. For example, if due to excessive forces, particles have been far out of their current node,
+	Espresso puts them into one of the local cells. Since the position is unphysical anyways, it is of no importance
+	anymore, but now the user can place the particles anew and perhaps decrease the time step such that the simulation
+	can continue without error. However, most often the recovery requires no special action.
+
+    	To issue an background error, call errtxt=\ref runtime_error(length), where length should be the maximal length of the
+    	error message (you can use TCL_DOUBLE_SPACE rsp. TCL_INTEGER_SPACE to obtain space for a double rsp. integer).
+    	The function returns a pointer to the current end of the string in \ref error_msg. After doing so, you should use the 
+	"ERROR_SPRINTF" - macro, which substitutes to a simple "sprintf", so that your errormessage will automatically be added
+	to the "runtime_errors resolved"-page. Please make sure that you give each of your errors an unique 3-digit errorcode
+	(for already used errorcodes have a look at the "runtime_errors resolved"-page), have the curled braces around your
+	message and the space at the end, otherwise the final error message will look awful and will propably not automatically be
+	added to our error-page. Typically, this looks like this:
+    	\verbatim
+    	if (some_error_code != OK) {
+      	  char *errtxt = runtime_error(TCL_INTEGER_SPACE + 128);
+      	  ERROR_SPRINTF(errtxt, "{error occured %d} ", some_error_code);
+      	  recovery;
+    	}
+    	\endverbatim
+
+    	If you have long loops during which runtime errors can occur, such as the integrator loop, you should call
+    	\ref check_runtime_errors from time to time inbetween and exit the loop on errors. Note that this function requires
+    	all nodes to call it synchronously.
+
+    	In all cases, all Tcl commands should call \ref mpi_gather_runtime_errors before exiting. You simply handover the
+    	result you were just about to return. If the result was TCL_ERROR, then \ref mpi_gather_runtime_errors will keep the
+    	Tcl error message and eventually append the background errors. If the result was TCL_OK, i. e. your function did not
+	find an error, the result will be reset (since Espresso is in an undefined state, the result is meaningless), and only
+	the background errors are returned. Whenever a Tcl command returns, instead of "return TCL_OK/TCL_ERROR" you should use
+	\verbatim return mpi_gather_runtime_errors(interp, TCL_OK/TCL_ERROR); \endverbatim
+
+	For a full list of background-errors visit the \ref background_errors page
+
+	\section add_other Adding other stuff
+	Here you are mostly on your own. Contacting the original developers might \em really help.
+	Nevertheless the next two sections contain some information you very likely will need.
+	But keep in mind that Espresso is a parallel code; therefore the organization is more
+	complicated as one thinks it has to be.
+
+*/	

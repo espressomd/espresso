@@ -1,0 +1,48 @@
+		         ESPResSo License
+		      Version 1, October 2003
+
+Copyright (C) 2003-2004, Max-Planck-Institute for Polymer Research, 
+                         Theory Group, 
+		         PO Box 3148, 55021 Mainz, Germany.
+
+                             Preamble
+
+The name ESPResSo stands for Extensible Simulation Package for Research in 
+Soft Matter and collectively refers to programs in source code, scripts, 
+documentation and test data. 
+The name ESPResSo is a registered trademark. 
+
+		         ESPResSo License
+TERMS AND CONDITIONS FOR USAGE, COPYING, DISTRIBUTION AND MODIFICATION
+
+1. The GNU GENERAL PUBLIC LICENSE (GPL) applies with the following 
+   additions.
+
+2. Use of ESPResSo is properly acknowledged in publications and 
+   communications. At present ESPResSo is cited as: 
+   ESPResSo, http://www.espresso.mpg.de
+
+3. Users are encouraged to send feedback about bugs, code extensions, 
+   script additions and third party usage to: espresso@mpip-mainz.mpg.de
+
+4. ESPResSo is intended only to be used for academic research ensuring 
+   proper knowledge about simulation techniques. It is not suited for
+   commercial or industrial purposes.
+
+5. ESPResSo is delivered without any warranty, expressed or implied. The
+   authors are not liable for any loss or damage arising from the use of 
+   ESPResSo.
+
+6. Severability Clause: The provisions, sections, subdivisions and articles 
+   of this license shall be considered to be severable, so that 
+   if any section, paragraph, sentence, clause, phrase 
+   or any part of this license is declared to be unconstitutional or void, 
+   or if for any reason is declared to be invalid or of no effect, 
+   or its application to any person or circumstance is altered 
+   amended, abrogated, repealed, superseded by state law or held invalid,
+   the remaining sections, paragraphs, sentences, clauses, phrases or parts thereof 
+   shall be in no manner affected thereby but shall remain in full force and effect.
+
+A copy of the GPL can be found in the file GPL.TXT which is part of ESPResSo.
+If for some reasons that file is missing, it may be obtained online 
+at http://www.gnu.org/copyleft/gpl.html or by writing to the adress given above.

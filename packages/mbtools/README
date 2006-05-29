@@ -1,0 +1,75 @@
+####################################
+# About                           ##
+####################################
+
+mbtools is a collection of tcl packages designed to perform certain
+common tasks in the simulation of bilayer membranes such as
+preconstructing vesicles with certain geometries or calculating common
+observables.  
+
+In the examples directory you will find a set of simulations ranging
+from basic to more complicated systems.  In all examples the membrane
+model that is used is the solvent free model of "Cooke, Kremer and
+Deserno" which makes use of broad attractive tail potentials. 
+
+####################################
+# Relevant Espresso Files         ##
+####################################
+modes.c
+modes.h
+statistics.c
+statistics.h
+
+
+###################################
+######## Versions #################
+###################################
+
+9-9-05: Complete reorganisation of all packages.  All packages are now version 1.0.0
+
+19-4-05: system_generation changed to version 0.1.0 and is
+         incompatible with previous versions
+
+####################################
+# Installation and configuration ###
+####################################
+
+If all goes well Espresso should know where this package is.  If not
+then you can set the environment variable ESPRESSO_PACKAGES to the
+full path of the packages directory within mbtools
+
+To test that everything works try running a script in the examples directory eg.
+
+cd examples
+
+$ESPRESSO_SOURCE/$PLATFORM/Espresso ./scripts/main.tcl simplebilayer.tcl
+
+Much more help can be found in the doc directory
+
+####################################
+# Messages interface             ###
+####################################
+
+All of the packages in mbtools print messages through the package
+mmsg.  The idea of this is to try and obtain some consistency in the
+style and format of messages and some control over what is printed.
+There are four types of messages (send, warn, err , debug).  To write
+a standard message for instance just use ::mmsg::send [namespace
+current] "text string".  The [namespace current] gives the current
+namespace to mmsg where it is checked to see that messages from that
+namespace are allowed.  By setting which namespaces are allowed you
+can have some broad control over messages.  
+
+In order to configure the allowed namespaces for messaging you should
+add a line to your .espressorc file such as
+
+set message_allowlist { :: ::system_generation ::setup_utilities ::std_analysis }
+ which in this case will allow messaging from all packages.  To turn messaging off simply make an empty list like 
+set message_allowlist { }
+
+
+
+
+
+
+

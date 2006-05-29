@@ -1,0 +1,297 @@
+:TITLE: Debugging & Errors - errorInfo errorCode catch error return
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+Tcl commands and procs return both a status and value.
+A command or proc always returns a status, and may 
+optionally return a value.
+<P>
+When a command executes correctly, the 
+return status is TCL_OK.
+When an error occurs within a Tcl command, it returns TCL_ERROR
+instead of TCL_OK.  When this occurs, the Tcl command that had the
+error places an informational string in the global variable errorInfo and
+returns a status of TCL_ERROR to the calling command.  
+As the Tcl call stack unwinds,
+each Tcl command appends an
+informational message to the global variable errorInfo, and returns
+TCL_ERROR to the command above it.
+<P>
+This actually occurs when any exception condition occurs, including 
+<B>break</B> and <B>continue</B>.  <B>Break</B> and <B>continue</B> 
+normally occur within a loop of some sort, and the loop command catches
+the exception and processes it properly.
+<P>
+Interpreted Tcl code can also catch exceptions.  If a Tcl command is
+the argument to the <B>catch</B> command, any exception that the command
+generates is captured and returned.  At this point the calling proc can 
+decide how to handle the event.
+<P>
+<DL>
+<B><DT>error</B> <I>message ?info? ?code?</I>
+<DD>Generates an error condition and forces the Tcl call stack to unwind,
+with error information being added at each step.
+<P>
+If <I>info</I> or <I>code</I> are provided, the errorInfo and errorCode
+variables are initialized with these values.
+<B><DT>catch</B> <I>script ?varName?</I>
+<DD>Evaluates and executes <I>script</I>.  The return value of catch is
+the status return of the Tcl interpreter after it executes <I>script</I>  If 
+there are
+no errors in <I>script</I>, this value is TCL_OK.  Otherwise it is
+an error value.
+<P>
+If <I>varName</I> is supplied, the value returned by <I>script</I> is
+placed in <I>varName</I>.
+<B><DT>return</B> <I>?-code code? ?-errorinfo info? ?-errorcode errorcode? ?value?</I>
+<DD>Generates a return exception condition.  The possible arguments are:
+<DL>
+<I><DT>-code</I> 
+<DD> the next value specifies the return status.
+<I>Code</I> must be one of:
+<UL>
+ok ........ Normal status return
+error ..... Proc returns error status
+return .... Normal return
+break ..... Proc returns break status
+continue .. Proc returns continue status
+<I><DT>-errorinfo</I>
+<DD> <I>info</I> will be the first string in the <B>errorInfo</B> variable.
+<I><DT>-errorcode</I>
+<DD> The proc will set <B>errorCode</B> to <I>errorcode</I>.
+<I><DT>value</I>
+<DD>The string <I>value</I> will be the value returned by this proc.
+</UL>
+</DL>
+<B><DT>errorInfo</B>
+<DD><B>errorInfo</B> is a global variable that contains the error 
+information from commands that have failed.
+<B><DT>errorCode</B>
+<DD><B>errorCode</B> is a global variable that contains the error 
+code from command that failed.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+In previous lessons we discussed how the  <B>return</B> command could
+be used to return a value from a proc.  In Tcl, a proc may return a
+value, but it always returns a status.
+<P>
+When a command executes correctly, the return status is TCL_OK.
+When an error occurs within a Tcl command, it returns TCL_ERROR
+instead of TCL_OK.  When this occurs, the Tcl command that had the
+error places an informational string in the global variable errorInfo and
+returns a status of TCL_ERROR to the calling command.  
+As the Tcl call stack unwinds,
+each Tcl command appends an
+informational message to the global variable errorInfo, and returns
+TCL_ERROR to the command above it.
+<P>
+This actually occurs when any exception condition occurs, including 
+<B>break</B> and <B>continue</B>.  <B>Break</B> and <B>continue</B> 
+normally occur within a loop of some sort, and the loop command catches
+the exception and processes it properly.
+<P>
+Interpreted Tcl code can also catch exceptions.  If a Tcl command is
+the argument to the <B>catch</B> command, any exception that the command
+generates is captured and returned.  At this point the calling proc can 
+decide how to handle the event.
+<P>
+For example, if an <B>open</B> call returns an error, the user could
+be prompted to provide another file name.
+<P>
+A Tcl proc can also generate an error status condition.  This can be
+done by specifying an error return with an option to the <B>return</B> command, 
+or by using the <B>error</B> command.  In either case, a message will be
+placed in <B>errorInfo</B>, and the proc will return a TLC_ERROR status.
+<P>
+<DL>
+<B><DT>error</B> <I>message ?info? ?code?</I>
+<DD>Generates an error condition and forces the Tcl call stack to unwind,
+with error information being added at each step.
+<P>
+If <I>info</I> or <I>code</I> are provided, the errorInfo and errorCode
+variables are initialized with these values.
+<B><DT>catch</B> <I>script ?varName?</I>
+<DD>Evaluates and executes <I>script</I>.  The return value of catch is
+the status return of the Tcl interpreter after it executes <I>script</I>  If 
+there are
+no errors in <I>script</I>, this value is TCL_OK.  Otherwise it is
+an error value.
+<P>
+If <I>varName</I> is supplied, the value returned by <I>script</I> is
+placed in <I>varName</I>.
+<B><DT>return</B> <I>?-code code? ?-errorinfo info? ?-errorcode errorcode? ?value?</I>
+<DD>Generates a return exception condition.  The possible arguments are:
+<DL>
+<I><DT>-code</I> 
+<DD> the next value specifies the return status.
+<I>Code</I> must be one of:
+<UL>
+ok ........ Normal status return
+error ..... Proc returns error status
+return .... Normal return
+break ..... Proc returns break status
+continue .. Proc returns continue status
+<I><DT>-errorinfo</I>
+<DD> <I>info</I> will be the first string in the <B>errorInfo</B> variable.
+<I><DT>-errorcode</I>
+<DD> The proc will set <B>errorCode</B> to <I>errorcode</I>.
+<I><DT>value</I>
+<DD>The string <I>value</I> will be the value returned by this proc.
+</UL>
+</DL>
+<B><DT>errorInfo</B>
+<DD><B>errorInfo</B> is a global variable that contains the error 
+information from commands that have failed.
+<B><DT>errorCode</B>
+<DD><B>errorCode</B> is a global variable that contains the error 
+code from command that failed.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+In previous lessons we discussed how the  <B>return</B> command could
+be used to return a value from a proc, and how some commands (such as the
+<B>string match</B> command) return a success or failure code when they execute.
+This value that is explicitly returned is only one of the values that is
+returned.  All Tcl commands also return a status when they execute.  The
+status return tells whether the command executed correctly, or if an exception
+occurred while it was executing.
+<P>
+For example, when a <B>string match</B> command finds a match, it returns
+a 1 for its return value.  It also returns TCL_OK as its status.  If there
+were no match, <B>string match</B> would return a 0, but the status would
+still be TCL_OK.  However, if <B>string match</B> were called with only
+one argument, it would return an error string, and the status returned
+would be TCL_ERROR.
+<P>
+When an error occurs within a Tcl command, it returns TCL_ERROR
+instead of TCL_OK.  When this occurs, the Tcl command that had the
+error places an informational string in the global variable errorInfo and
+returns a status of TCL_ERROR to the calling command.  
+As the Tcl call stack unwinds,
+each Tcl command appends an
+informational message to the global variable errorInfo, and returns
+TCL_ERROR to the command above it.
+<P>
+This actually occurs when any exception condition occurs, including 
+<B>break</B> and <B>continue</B>.  <B>Break</B> and <B>continue</B> 
+normally occur within a loop of some sort, and the loop command catches
+the exception and processes it properly.
+<P>
+Interpreted Tcl code can also catch exceptions.  If a Tcl command is
+the argument to the <B>catch</B> command, any exception that the command
+generates is captured and returned.  At this point the calling proc can 
+decide how to handle the event.
+<P>
+For example, if an <B>open</B> call returns an error, the user could
+be prompted to provide another file name.
+<P>
+A Tcl proc can also generate an error status condition.  This can be
+done by specifying an error return with an option to the <B>return</B> command, 
+or by using the <B>error</B> command.  In either case, a message will be
+placed in <B>errorInfo</B>, and the proc will return a TLC_ERROR status.
+<P>
+The example code shows the <B>catch</B> command being used several times.
+All of the procs in this example will generate an exception.  The <B>catch</B>
+command is used to catch that exception.  After the exception has been caught,
+<B>errorInfo</B> and <B>errorCode</B> are reported.
+<P>
+Run the example, and examine the output.  You'll see that <B>errorInfo</B>
+is always set if an error occurs, but errorCode may not be set.  The last
+example, trying to open a non-existent file, does set errorCode.
+<DL>
+<B><DT>error</B> <I>message ?info? ?code?</I>
+<DD>Generates an error condition and forces the Tcl call stack to unwind,
+with error information being added at each step.
+<P>
+If <I>info</I> or <I>code</I> are provided, the errorInfo and errorCode
+variables are initialized with these values.
+<B><DT>catch</B> <I>script ?varName?</I>
+<DD>Evaluates and executes <I>script</I>.  The return value of catch is
+the status return of the Tcl interpreter after it executes <I>script</I>  If 
+there are
+no errors in <I>script</I>, this value is TCL_OK.  Otherwise it is
+an error value.
+<P>
+If <I>varName</I> is supplied, the value returned by <I>script</I> is
+placed in <I>varName</I>.
+<B><DT>return</B> <I>?-code code? ?-errorinfo info? ?-errorcode errorcode? ?value?</I>
+<DD>Generates a return exception condition.  The possible arguments are:
+<DL>
+<I><DT>-code</I> 
+<DD> the next value specifies the return status.
+<I>Code</I> must be one of:
+<UL>
+ok ........ Normal status return
+error ..... Proc returns error status
+return .... Normal return
+break ..... Proc returns break status
+continue .. Proc returns continue status
+<I><DT>-errorinfo</I>
+<DD> <I>info</I> will be the first string in the <B>errorInfo</B> variable.
+<I><DT>-errorcode</I>
+<DD> The proc will set <B>errorCode</B> to <I>errorcode</I>.
+<I><DT>value</I>
+<DD>The string <I>value</I> will be the value returned by this proc.
+</UL>
+</DL>
+<B><DT>errorInfo</B>
+<DD><B>errorInfo</B> is a global variable that contains the error 
+information from commands that have failed.
+<B><DT>errorCode</B>
+<DD><B>errorCode</B> is a global variable that contains the error 
+code from command that failed.
+</DL>
+:TEXT_END:
+
+:CODE_START:
+proc errorproc {x} { 
+  if {$x > 0} {
+    error "Error generated by error" "Info String for error" $x
+    }
+  }
+
+catch errorproc
+puts "after bad proc call: ErrorCode: $errorCode"
+puts "ERRORINFO:\n$errorInfo\n"
+
+set errorInfo "";
+catch {errorproc 0}
+puts "after proc call with no error: ErrorCode: $errorCode"
+puts "ERRORINFO:\n$errorInfo\n"
+
+catch {errorproc 2}
+puts "after error generated in proc: ErrorCode: $errorCode"
+puts "ERRORINFO:\n$errorInfo\n"
+
+
+proc returnErr { x } {
+  return -code error -errorinfo "Return Generates This" -errorcode "-999"
+  }
+
+catch {returnErr 2}
+puts "after proc that uses return to generate an error: ErrorCode: $errorCode"
+puts "ERRORINFO:\n$errorInfo\n"
+
+proc withError {x} {
+  set x $a
+  }
+
+catch {withError 2}
+puts "after proc with an error: ErrorCode: $errorCode"
+puts "ERRORINFO:\n$errorInfo\n"
+
+catch {open "/no_such_directory/no_such_file" "r"}
+puts "after an error call to a nonexistent file:"
+puts "ErrorCode: $errorCode"
+puts "ERRORINFO:\n$errorInfo\n"
+
+:TEXT_END:

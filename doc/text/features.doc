@@ -1,0 +1,168 @@
+/** \page features Features of the Espresso program
+
+Espresso provides a number of features that can be compiled into the
+program. It is recommended to turn on only the required features to
+optimise Espresso for your problem.
+
+\section all_features List of features
+
+
+\subsection basic Basic features
+<dl>
+  <dt> PARTIAL_PERIODIC
+  <dd>
+  if defined, the code will be slower, but with the \ref #periodic
+  array you can choose which coordinates are bound to p.b.c and
+  which are not. If not defined, all coordinates are bound to
+  p.b.c.
+
+  Has effect on: per_callback(), #fields, and functions in
+  domain_decomposition.c, grid.c, interaction_data.c, layered.c, statistics_chain.c
+
+  <dt>ELECTROSTATICS
+  <dd>Enable charges and the various electrostatics algorithms.
+
+  <dt>ROTATION
+  <dd>Enable describing and processing particle orientations. This
+  will allow to use such particle properties as quart, omega, and torque. 
+    
+  <dt>EXTERNAL_FORCES
+  <dd>Enable external forces. Eg. apply a fixed external force to a
+   particle or fix a particle in space.
+
+   <dt>CONSTRAINTS
+   <dd>Enable constraints, eg. walls or spheres. See constraint.h and
+   interaction_data.h
+
+   <dt>MASS
+   <dd>Allow particles to have different masses.
+
+   <dt>EXCLUSIONS
+   <dd>Exclusion of nonbonded interactions for specific particle pairs.
+   Currently works only with domain decomposition and Verlet lists.
+
+   <dt>COMFORCE
+   <dd>Enable the COMFORCE potential.
+
+   <dt>COMFIXED
+   <dd>Enable the COMFIXED potential.
+
+   <dt>MOLFORCES
+   <dd> Enables molecular forces. At present this only includes the
+   trapping of molecules in a harmonic potential
+
+   <dt>BOND_CONSTRAINT
+   <dd>Enable bond constraints. See rattle.h (merged but not
+    tested). If you need this, I wish you happy debugging.
+</dl>
+
+\subsection short_range_potentials Short ranged potentials
+
+For optimization it might be useful to switch off the ones you don't need.
+
+<dl>
+    <dt>LENNARD_JONES
+    <dd>Enable the 12-6-Lennard-Jones potential.
+
+    <dt>LJ_WARN_WHEN_CLOSE
+    <dd>If defined, you will get a warning when particles approach
+    closer than 0.9 \f$\sigma\f$, because then it's likely the
+    integration will blow up.
+
+    <dt>MORSE
+    <dd>Enable the Morse potential.
+
+    <dt>LJCOS
+    <dd>Enable the Lennard-Jones potential with cosine tail.
+
+    <dt>BUCKINGHAM
+    <dd>Enable the Buckingham potential.
+    
+    <dt>SOFT_SPHERE
+    <dd>Enable the soft sphere potential.
+</dl>
+
+
+\subsection angle_potential Angle potential
+
+Important: Activate <b>only one</b> of the possible variants!
+
+Unpredicted behaviour will occur if you enable more than one!
+
+<dl>
+    <dt>BOND_ANGLE_HARMONIC
+    <dd>Harmonic bond angle potential: \f$V = \frac{1}{2} k (\phi - \phi_0)^2\f$
+
+    <dt>BOND_ANGLE_COSINE
+    <dd>Cosine bond angle potential: \f$V = k (1+\cos(\phi-\phi_0))\f$
+
+    <dt>BOND_ANGLE_COSSQUARE
+    <dd>Cosine square bond angle potential: 
+	\f$V = \frac{1}{2} k (\cos(\phi)-cos(\phi_0))^2\f$
+
+</dl>
+
+\subsection methods Simulation methods, integrators and thermostats
+<dl>
+    <dt>NEMD
+    <dd>Non Eqilibrium Molecular Dynamics. This is used to perform
+    shear simulations.
+
+    <dt>NPT
+    <dd>Allows to use (N,p,T)-ensembles during integration as well.
+
+    <dt>DPD
+    <dd>DPD Thermostat (Dissipative Particle Dynamics). Flag needed
+    only because DPD acts like a short range potential.
+
+    <dt>LB
+    <dd>LB Thermostat (fluctuating Lattice Boltzmann fluid).
+
+</dl>
+
+\section tcl_features Checking for features in the Espresso Tcl-Script
+In the Espresso-script, you can get information whether or not one or
+some of \ref all_features "the features above" are compiled into the
+current program with help of the following Tcl-commands:
+
+<ul>
+    <li>\anchor tcl_code_info
+	\verbatim code_info \endverbatim
+	provides information on the version, compilation status and
+	the debug status of the used code. It is highly recommended to
+	store this information with your simulation data in order to
+	maintain the reproducibility of your results.
+ 
+	\par Exemplaric output: 
+\verbatim
+ESPRESSO: v1.5.Beta (Neelix), Last Change: 23.01.2004
+{ Compilation status { PARTIAL_PERIODIC } { ELECTROSTATICS } { EXTERNAL_FORCES } { CONSTRAINTS } { TABULATED } { LENNARD_JONES } { BOND_ANGLE_COSINE } }
+{ Debug status { MPI_CORE FORCE_CORE } }
+\endverbatim
+
+    <li>\anchor tcl_has_feature
+	\verbatim has_feature <feature> ...\endverbatim
+	tests, if \<feature\> is compiled into the Espresso kernel. 
+	A list of possible features and their names can be found 
+	\ref config.h "here".
+
+    <li>\anchor tcl_require_feature
+	\verbatim require_feature <feature> ...\endverbatim
+	tests, if \<feature\> is feature is compiled into the Espresso
+	kernel, will exit the script if it isn't and return the error
+	code 42.
+	A list of possible features and their names can be found 
+	\ref config.h "here".
+</ul>
+
+\section compile_features Adding and removing features from the Espresso program
+
+The file config.h contains the preprocessor switches that can be used
+to activate or deactivate a certain feature in Espresso.
+It is recommended to turn everything off which you do not need in
+order to optimize the performance of Espresso for your problem. There
+are also quite a number of  features which are turned off by default
+since they are used only rarely.
+
+
+*/

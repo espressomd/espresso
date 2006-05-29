@@ -1,0 +1,67 @@
+/** \page our_doxygen How to do the documentation (Doxygen)
+
+The documentation for Espresso is mainly contained in the source code
+and is automatically generated using doxygen.
+<p>
+For each modul the documentation of the user interface, these are
+public funtions and external variable, should be in the header
+file. All other documentation should be in the c-file.
+<p>
+The documentation for each function should contain a short
+description, if necessary a more detailed description and a
+description for the return value and parameters.
+<p>
+Look at the documentation of existing files and functions to get a
+feeling how it should be!
+<p>
+Doxygen is able to understand simple LaTex and HTML commands as well
+as some special command in order to give the documentation a nice
+structure and to make it more readable. In the following list you find 
+a short description of the most common commands we need:
+
+<ul>
+<li> \anchor doc_anchor   \verbatim \anchor <name> <description> \endverbatim
+	Set an anchor to which you can refer using \ref doc_dref "\\ref"
+
+<li> \anchor doc_href     \verbatim <a href="http://www.your_url.html"> name </a> \endverbatim
+	Link to an external html source.
+
+<li> \anchor doc_file     \verbatim \file <name> <description> \endverbatim
+	Special anchor for a file (see \ref doc_anchor "\\anchor").
+
+<li> \anchor doc_image    \verbatim \image html <image> \endverbatim
+	Include a picture. The picture has to be in \c doc/figs/.
+	<b>Do not use the HTML <tt>\<img\></tt> tag! The pictures will not be
+	copied into the documentation!</b>
+
+<li> \anchor doc_list 
+\verbatim <ul>
+<li> List entry
+</ul> \endverbatim
+	Creates a list in the documentation (For example the list you
+	are reading at the moment).
+
+<li> \anchor doc_name     
+\verbatim /** \name <group_name> <short description>.
+    <long_description>
+*/
+/*@{*/ 
+<group members>
+...
+/*@}*/ 
+\endverbatim
+	Introduces a group to which one can refer with 
+	\ref doc_dref "\\ref". The documentation of the group members
+	must be inside the \@{ ... \@} comments.
+<li> \anchor doc_param    \verbatim \param <parameter> <description> \endverbatim
+	Documentation for a parameter of a function
+<li> \anchor doc_dref      \verbatim \ref <name> ["<text>"] \endverbatim
+	Inserts a link to the documentation of \<name\>.
+<li> \anchor doc_return   \verbatim \return <description>\endverbatim
+	Documentation for the return value of a function
+<li> \anchor doc_todo     \verbatim \todo <task to be done> \endverbatim
+	Adds an item to the \ref todo. The item on the list will be
+	linked to the origin.
+</ul>
+
+*/

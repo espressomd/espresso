@@ -1,0 +1,59 @@
+PROGRAMM:
+===============================================================================
+
+Espresso is a parallel molecular dynamics program.  It uses Tcl
+(http://tcl.activestate.com) as controlling language to allow great
+flexibility.
+
+GETTING STARTED:
+===============================================================================
+
+System requirements:
+Script language:   tcl 8.4 or higher
+OS:                Linux, Unix, MacOS X,...
+
+CODE COMPILATION
+===============================================================================
+
+Configure using ./configure
+Compile using   make (must be GNU compatible, on some systems call gmake)
+
+Installation is not necessary, if you set the ESPRESSO_SOURCE and ESPRESSO_SCRIPTS
+environment variables to the source directory location and to the location of
+its subfolder "scripts", respectively. In that case Espresso is started via
+"Espresso" from the source directory.
+
+If you install Espresso, the environment variables do not have to be set. Just make
+sure, that the installation binary path is included in your PATH variable. Then
+Espresso can be started as "Espresso" from anywhere.
+
+To clean junk from old compilation runs:
+                make clean
+
+For further details, see INSTALL
+
+DOCUMENTATION
+===============================================================================
+
+To generate documentation (requires doxygen to be installed):
+
+change into the Espresso source directory and execute
+                gmake docu
+
+The documentation is in:
+HTML version:  doc/html/index.html
+
+
+CVS
+===============================================================================
+
+The Espresso CVS is located on cvsth.mpip-mainz.mpg.de. Currently, there is no
+anonymous CVS access, so you need a personal account to access CVS.
+The CVS root is /cvs/cvsroot
+
+You need to tell cvs to access the server via ssh by setting the environment
+variable CVS_RSH to ssh. Then you get your private copy by
+                cvs -d :ext:<me>@cvsth.mpip-mainz.mpg.de:/cvs/cvsroot heckout Espresso 
+
+This will create a new directory Espresso in the CWD, containing an
+up-to-date version of Espresso.

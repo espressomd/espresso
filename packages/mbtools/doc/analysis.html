@@ -1,0 +1,290 @@
+<head>
+<link href="./docustyle.css" rel="stylesheet" type="text/css"> 
+</head>
+<title> mbtools analysis Documentation</title>
+<body>
+
+<h2 class=center > mbtools Analysis </h2>
+
+<div class = overview> 
+
+  The analysis package is designed to help organise the many possible
+  analysis routines that can be performed during a simulation.  This
+  documentation describes the <a href="#basic">basic user interface commands</a> and then
+  all of the <a href="#available">possible analysis routines</a>.  Instructions on <a href="#analysispguide">how to add a
+  new analysis routine</a> are given at the end of this document.
+
+</div>
+
+
+<h3><a name=basic>Basic Commands</a></h3>
+
+<div class = overview>
+  The following commands comprise the user interface to the analysis package.
+
+  <p> At the start of a simulation all of the analysis that is to be
+  performed is specified using the <em class=cd> setup_analysis</em>
+  command.  Each time you want the analysis performed a call to <em
+  class=cd> do_analysis</em> should be made.  One can then call <em
+  class=cd> print_averages </em> to write results to file.</p>
+</div>
+
+<ul class = commands >
+
+  <li>  <em class=cmd> ::mbtools::analysis::setup_analysis </em> : <em class=args> -outputdir.arg -suffix.arg -iotype.arg -g.arg -str.arg </em>
+    <div class = body >
+	<ul class = arguments > 
+	  <li> <em class=args> commands [./] </em> A tcl list where each element of the list is a string specifying the name and complete argument list for a particular analysis to be carried out. </li>
+	  <li> <em class=args> outputdir [./] </em> The directory where analysis output files will be created </li>
+	  <li> <em class=args> suffix [tmp] </em> Suffix that will be appended to standard file names for analysis output </li>
+	  <li> <em class=args> iotype [a] </em> The iotype that will be used when opening files for analysis. For an explanation of the different iotypes see the documentation for the standard tcl command <em class = cd > open </em> </li>
+	  <li> <em class=args> g [8]</em>Number of grid points per side with which to divide the bilayer for height profile analyses </li>
+	  <li> <em class=args> str [4.0] </em>Distance of a tail bead from bilayer midplane beyond which a lipid is deemed to be a stray lipid. </li>
+	</ul>
+    </div>
+    <div class=synopsis>
+      Sets up the analysis package for a simulation run or analysis run that is about to be performed. This routine needs to be called before any analysis can be performed.
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::analysis::do_analysis </em> : 
+    <ul class = arguments>
+    </ul> Calls all of the <em class =  cd>  analyze </em> routines corresponding to commands setup in <em class =  cd> setup_analysis </em>
+    <div class = body >
+      <h4> Example: </h4> 
+      <em class = cd> do_analysis </em> should be called only after <em class = cd> setup_analysis </em> has already been called.  After that one simply uses;
+      <pre><code>
+	  ::mbtools::analysis::do_analysis 
+	  </code></pre>
+    </div>
+  </li>
+
+  <li>  <em class=cmd> ::mbtools::analysis::reset_averages </em> : 
+    <ul class = arguments>
+    </ul>
+Calls all of the <em class = cd > resetav </em> routines corresponding to commands setup in <em class =  cd> setup_analysis </em>.  These routines vary from command to command but they typically reset the storage and counter variables used for analysis results.
+    <div class = body >
+      <em class = cd> reset_averages </em> is typically only called internally by <em class = cd> print_averages </em>
+    </div>
+  </li>
+  <li>  <em class=cmd> ::mbtools::analysis::print_averages </em> : 
+    <ul class = arguments>
+    </ul>
+    Calls all of the <em class = cd > printav </em> routines
+    corresponding to commands setup in <em class = cd>
+    setup_analysis </em>.  These routines typically print results to a
+    file buffer.  After printing the <em class = cd >
+    reset_averages </em> routine is called internally
+    <div class = body >
+      <h4> Example: </h4> 
+      <em class = cd> print_averages </em> should be called only after <em class = cd> setup_analysis </em> has already been called.  After that one simply uses;
+      <pre><code>
+	  ::mbtools::analysis::print_averages 
+	  </code></pre>
+    </div>
+  </li>
+
+
+</ul>
+<h3><a name=available>Available analysis routines</a></h3>
+
+<ul class = commands > 
+  <li>  <em class=cmd> boxl </em> : <em class=args> -verbose </em> : output || <em> time_vs_boxl </em>
+    <div class = synopsis >
+      Simply obtains the box dimensions from expresso </div>
+  </li>
+  <li>  <em class=cmd> clusters </em> : <em class=args> -alipid.arg -verbose </em> : output || <em> time_vs_clust, sizehisto.[format %05d $time] </em>
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> alipid [1.29] </em> Value for the area
+	  per lipid to be used in a making a rough calculation of the
+	  area of clusters </li>
+      </ul>
+    </div>
+    <div class = synopsis > 
+
+      Calls the espresso command <em class=cd> analyze
+	aggregation </em> which groups molecules in the system into
+      aggregates.  Output to <em> time_vs_clust </em> is: maximum
+      clusqqter size, minimum cluster size, average size of clusters
+      including those of size 2 or greater ,standard deviation of
+      clusters including those of size 2 or greater, number of clusters
+      of size 2 or greater, total average cluster size, total cluster
+      size std deviation, total number of clusters, length of the
+      interface between clusters, standard deviation of the interface
+      length, number of clusters for which length was calculate.
+      
+      <p> Additionally, at each call of <em class = cd>
+	print_averages </em> the complete size histogram is printed to
+	a file with the formatted name sizehisto.[format %05d $time]
+    </div>
+  </li>
+  <li>  <em class=cmd> density_profile </em> : <em class=args>  -nbins.arg -hrange.arg -beadtypes.arg  -colloidmoltypes.arg -r.arg -nogrid -verbose </em> : output || <em> av_zprof</em>
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> nbins [100] </em> Number of slices into which the height range is divided for the purpose of calculating densities </li>
+	<li> <em class=args> hrange [6] </em> The maximum vertical distance from the bilayer midplane for which to calculate densities. Note that the complete vertical range is therefore 2*hrange </li>
+	<li> <em class=args> beadtypes [0] </em>  A tcl list of the bead types for which to calculate a density profile</li>
+	<li> <em class=args> colloidmoltypes [] </em>  A tcl list of molecule types identifying the molecules which are colloids in the system. The default value is a null list </li>
+	<li> <em class=args> r [0] </em>  A tcl list of sphere radii corresponding to the radii for each colloid type in the system. If this is non-zero the density profile will be calculated in spherical shells about the colloids in the system identified via <em class=cd > colloidmoltypes </em> or if <em class=cd > colloidmoltypes </em> is not set then the system center of mass is assumed for the colloid/vesicle center</li>
+	<li> <em class=args> nogrid </em> If this is set a grid mesh will not be used to refine the density profile calculation by taking into account vertical differences between mesh points </li>
+      </ul>
+    </div>
+    <div class = synopsis > 
+
+      Calculates the number density of each of the beadtypes given
+      in <em class=cd > beadtypes </em> as a function of the vertical
+      distance from the bilayer midplane. Lipids are also sorted
+      according to their orientation and assigned to upper or lower
+      leaflets accordingly.  Thus for a system with 3 beadtypes we
+      would obtain 6 columns of output corresponding to <em class =
+      cd> 0 (lower) 1 (lower) 2 (lower) 2 (upper) 1 (upper) 0
+      (upper) </em> where the number refers to the bead type and upper
+      or lower refers to the bilayer leaflet.
+    </div>
+  </li>										    
+ <li>  <em class=cmd> energy </em> : <em class=args> -verbose </em> : output || <em> time_vs_energy </em>
+    <div class = synopsis >
+      Obtains the internal energies of the system from the <em class=cd> analyze energy </em> command of espresso. </div>
+  </li>
+ <li>  <em class=cmd> flipflop </em> : <em class=args> -verbose </em> : output || <em> time_vs_flip </em>
+    <div class = synopsis >
+      Makes a call to the <em class=cd> analyze
+      get_lipid_orients </em> command of espresso and compares this
+      with a reference set of lipid orients obtained at the start of
+      the simulation with <em class=cd> setup_analysis </em>.  Based
+      on this comparison the number of lipids which have flipped from
+      their original positions is calculated </div>
+  </li>
+  <li>  <em class=cmd> fluctuations </em> : <em class=args> -verbose </em> : output || <em> powav.dat </em>
+    <div class = body> 
+      <ul class = arguments > 
+      </ul>
+    </div>
+    <div class = synopsis >
+      Routine for calculating the power spectrum of fluctuations for a
+      flat bilayer sheet.  Uses the <em class = cd> modes_2d </em>
+      routine in espresso to calculate the height function and perform
+      the fft. See the documentation in the file <em>
+	fluctuations.tcl </em> for detail on what is calculated and how to
+      obtain a stiffness value from the resulting output.
+      
+      <p> Note that this routine causes a crash if it detects a large hole in the bilayer </p>
+      
+  </div>
+  </li>
+  <li>  <em class=cmd> localheights </em> : <em class=args> -range.arg -nbins.arg -rcatch.arg -verbose </em> : output || <em> av_localh </em>
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> range [1.0] </em> Range of local height deviations over which to bin </li>
+	<li> <em class=args> nbins [100] </em> Number of slices to
+	divide up the height range into for the purposes of creating a
+	profile </li>
+	<li> <em class=args> rcatch [1.9] </em> The distance about a
+	single lipid to use a starting value for finding the 6
+	closest neighbours</li>
+      </ul>
+    </div>
+    <div class = synopsis >
+      For each lipid we calculate its 6 nearest neighbours and then
+      calculate the height difference between the central lipid and
+      these neighbours.  Taking these 6 values for each lipid we then
+      create a histogram of number densities as a function of the
+      height difference.
+  </div>
+  </li>
+  <li>  <em class=cmd> localorients </em> : <em class=args> -range.arg -nbins.arg -verbose </em> : output || <em> av_localo </em>
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class=args> range [1.0] </em> Range of orientation deviations to consider </li>
+	<li> <em class=args> nbins [100] </em> Number of bins to use for histogram </li>
+      </ul>
+    </div>
+    <div class = synopsis >
+      Calculates the projection of the lipid orientation vector onto
+      the xy plane for each lipid and then bins the absolute values of
+      these vectors.
+  </div>
+  </li>
+  <li>  <em class=cmd> orient_order </em> : <em class=args> -verbose </em> : output || <em> time_vs_oop </em>
+    <div class = synopsis >
+      Calculates the orientational order parameter S  for each lipid through a call to the espresso command <em class=cd > analyze lipid_orient_order </em>
+  </div>
+  </li>
+  <li>  <em class=cmd> pik1 </em> : <em class=args> -verbose </em> : output || <em> time_vs_pik1 </em>
+    <div class = synopsis > Calculates all 9 elements of the pressure tensor for the system through a call to the espresso command <em class=cd > analyze pIK1 </em>
+    </div>
+  </li>
+  <li>  <em class=cmd> pressure </em> : <em class=args> -verbose </em> : output || <em> time_vs_pressure </em>
+    <div class = synopsis > Calculates the isotropic pressure through
+    a call to <em class=cd > analyze pressure </em>.  Results are
+    printed as a list of the various contributions in the following
+    order: p_inst, total, ideal, FENE, harmonic, nonbonded.  Where
+    p_inst is the instantaneous pressure obtained directly from the barostat.
+    </div>
+  </li>
+
+  <li>  <em class=cmd> stray </em> : <em class=args> -verbose </em> : output || <em> time_vs_stray </em>
+    <div class = synopsis > Calculates the number of stray lipids based on a call to <em class = cd> analyze get_lipid_orients </em>
+    </div>
+  </li>
+  <li>  <em class=cmd> distance </em> : <em class=args> -verbose </em> : output || <em> time_vs_distance </em>
+    <div class = synopsis > Missing documentation
+    </div>
+  </li>
+  <li>  <em class=cmd> tiltangle </em> : <em class=args>  -verbose </em> : output || <em> time_vs_tiltangle </em>
+    <div class = synopsis > Missing documentation </em>
+    </div>
+  </li>
+</ul>
+
+<h3><a name=analysispguide> Programming Guide</a> </h3>
+
+<ul>
+  <li> <h4> Adding a new analysis routine </h4> To add a new analysis
+  routine you should create a new file called <em>
+  myanalysis.tcl </em> which will contain all of your code.  At the
+  top of this file you should declare a namespace for your analysis
+    code and include all of the internal variables inside that namespace as follows; 
+    <pre><code>
+    namespace eval ::mbtools::analysis::myanalysis {
+	variable av_myresult
+	variable av_myresult_i
+	variable f_tvsresult
+	variable verbose
+	
+	namespace export setup_myanalysis
+	namespace export analyze_myanalysis
+	namespace export printav_myanalysis
+	namespace export resetav_myanalisis
+    }
+    </pre></code>
+    Import your new file into the analysis package by adding a line like the following to the <em> analysis.tcl </em> file. 
+    <pre><code>
+    source [file join [file dirname [info script]] myanalysis.tcl]
+    </pre></code>
+
+    You then  need to implement the following essential functions within your new namespace. 
+    <div class = body> 
+      <ul class = arguments > 
+	<li> <em class = cd> ::mbtools::analysis::myanalysis::setup_myanalysis { args } </em> 
+	  Typically you would use this function to initialise variables and open files.  Called by <em class = cd> ::mbtools::analysis::setup_analysis </em>.  Arguments are allowed.
+	</li>
+	<li> <em class = cd> ::mbtools::analysis::myanalysis::printav_myanalysis { void } </em> 
+	 This function should print results to a file. Called by <em class = cd> ::mbtools::analysis::print_averages </em>.  Arguments are <b> not </b>allowed.
+	</li>
+	<li> <em class = cd> ::mbtools::analysis::myanalysis::analyze_myanalysis { void } </em> 
+	  This function performs the actual analysis and should update the storage and averaging variables   Called by <em class = cd> ::mbtools::analysis::do_analysis </em>.  Arguments are <b> not </b> allowed.
+	</li>
+	<li> <em class = cd> ::mbtools::analysis::myanalysis::resetav_myanalysis { void } </em> 
+	  This function should update averages and reset variables accordingly depending on your requirements.  Called by <em class = cd> ::mbtools::analysis::reset_averages </em>.  Arguments are <b> not </b> allowed.
+	</li>
+      </ul>
+    </div>
+    If any of these functions is not implemented the program will
+    probably crash.
+
+    
+
+</body>
+
+

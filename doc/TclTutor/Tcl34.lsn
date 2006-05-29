@@ -1,0 +1,215 @@
+:TITLE: Substitution without evaluation - format, subst
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+The Tcl interpreter does only one substitution pass during command
+evaluation.  Some situations, such as placing the name of a variable in
+a variable, require two passes through the substitution phase.  In this
+case, the <B>subst</B> command is useful.  It performs a substitution
+pass without performing any execution of commands except those required
+for the substitution to occur, ie: commands within <B>[]</B> will be
+executed, and the results placed in the return string.
+<P>
+The <B>format</B> command can also be used to force some levels of
+substitution to occur.
+<DL>
+<B><DT>subst ?-nobackslashes? ?-nocommands? ?-novariables? </B> <I>string</I>
+<DD>Passes <I>string</I> through the Tcl substitution phase, and returns the
+original string with the 
+backslash sequences, commands and variables replaced by their equivalents.  
+<P>
+If any of the <B>-no...</B> arguments are present, then that set of 
+substitutions will not be done.
+<P>
+NOTE: <B>subst</B> does not honor braces or quotes.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+The Tcl interpreter does only one substitution pass during command
+evaluation.  Some situations, such as placing the name of a variable in
+a variable, require two passes through the substitution phase.  In this
+case, the <B>subst</B> command is useful.  
+<P>
+<B>Subst</B> performs a substitution pass without performing any
+execution of commands except those required for the substitution to
+occur, ie: commands within <B>[]</B> will be executed, and the results
+placed in the return string. 
+<P>
+In the example code: <CODE>puts "[subst $$c]\n"</CODE shows an example
+of placing a variable name in a variable, and evaluating through the
+indirection.
+<P>
+The <B>format</B> command can also be used to force some levels of
+substitution to occur.
+<DL>
+<B><DT>subst ?-nobackslashes? ?-nocommands? ?-novariables? </B> <I>string</I>
+<DD>Passes <I>string</I> through the Tcl substitution phase, and returns the
+original string with the 
+backslash sequences, commands and variables replaced by their equivalents.  
+<P>
+If any of the <B>-no...</B> arguments are present, then that set of 
+substitutions will not be done.
+<P>
+NOTE: <B>subst</B> does not honor braces or quotes.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+Many programming languages support a concept called indirection.  This
+means that instead of a variable containing data it contains a pointer
+to where the data actually is.  
+<P>
+In Tcl this concept can be implemented by placing the name of another
+variable in a variable.
+<P>
+For example:
+<PRE><CODE>
+set a "alpha"
+set c a
+</CODE></PRE>
+Now, the variable <B>c</B> contains the name of the variable (<B>a</B>) that
+actually contains the data (<B>alpha</B>).
+<P>
+If you were to try and print the value <B>alpha</B>, you might try something
+like:
+<PRE><CODE>
+puts "$$c"
+</CODE></PRE>
+This won't work.  It will print out <B>$a</B>.
+<P>
+This is because Tcl only makes one pass at substitution.  If a variable
+requires two substitution passes, it won't happen.
+<P>
+The <B>subst</B> command is the solution to this problem.  When a string
+is passed to the <B>subst</B> it passes through the normal Tcl substitution
+phase, and then within <B>subst</B> it is passed through a second substitution
+phase.  The result of the two substitution phases is returned.
+<P>
+The <B>format</B> command can also be used to force some levels of
+substitution to occur.
+<P>
+Run the example, and follow along with this explanation.
+<P>
+The first line in the example:<PRE><CODE>
+set a "alpha"
+</CODE></PRE>
+just assigns a simple string to a variable.
+<P>
+The next line:<PRE><CODE>
+set b a
+</CODE></PRE>
+Sets the variable <B>b</B> to contain the name of the variable <B>a</B>.
+<P>
+The next two lines show the results from executing <B>puts</B> with the
+arguments within braces (no substitution at all) or within quotes (one
+pass of substitution when Tcl evaluates the command).  
+<P>
+The two lines after that show the same arguments, but process the
+argument with the <B>subst</B> command before evaluating the <B>puts</B>
+Note that using braces
+around the argument causes <B>subst</B> to perform a single pass
+of substitution, just as is done by the Tcl interpreter.  If the
+arguments are enclosed in quotes, then there is a pass of substitution
+when <B>subst</B> is evaluated, and then within <B>subst</B>, a second
+pass of substitution occurs.
+When the string <B>$$b</B> is substituted while evaluating the arguments
+for the call to <B>subst</B>, it gets substituted
+with <B>$a</B>, and then within the <B>subst</B> command the string 
+gets substituted with <B>alpha</B>.
+<P>
+The next three lines show two different methods of forcing the second
+substitution phase to occur.  The first example is just using <B>format</B>,
+and getting no substitution.  The next line shows the output of
+<B>format</B> ($a) being used as the argument to <B>subst</B>.  This
+causes two passes of the substitution to occur, and <B>alpha</B> is
+output.
+<P>
+The third of these lines shows the <B>puts ...</B> command being evaluated
+by <B>eval</B>.  In this case, the <B>$b</B> is replaced by <B>a</B> when
+the <B>format</B> command is evaluated.  This creates the string:
+<PRE><CODE>
+"puts \"eval after format: $a\""
+</CODE></PRE>
+When that string is passed to <B>eval</B>, another pass of substitutions
+occurs, and the <B>$a</B> is replaced with the string <B>alpha</B>.
+<P>
+The final seven lines in this example show how the tempFileName proc
+that was defined in the previous two lessons could also be defined 
+using the <B>format</B> command.  The third line of this example,
+<CODE>set cmd [format "%s {global num; incr num;" $cmd]</CODE>, just appends the
+string <B>{global num: incr num;</B> to <B>cmd</B>.
+<P>
+The fourth line: <CODE>set cmd [format {%s return "/tmp/TMP.%s.$num"} $cmd [pid] ]</CODE>
+appends the text <B>return "/tmp/TMP.%s.$num</B> to <B>cmd</B>, and also
+substitutes the <B>%s</B> with the return from <B>pid</B>.  Because the
+format string is within braces, <B>$num</B> is not substituted.
+<P>
+The last line of this example shows the body of the tempFileName proc.
+This is the same as the body that was created in the previous lessons
+using the list commands.
+<P>
+If you need to pass the name of an array to a proc, and then access
+a value within that array, the format command can be used, as shown in
+the last example.  If you use a line like <CODE><PRE>
+eval [set $a($b) $c]</PRE></CODE> it will try to evaluate the value
+of the <B>$b</B> index into array <B>a</B>, instead of substituting
+<B>$a</B> with the value of <B>a</B>, and <B>$b</B> with the value of
+<B>b</B>.
+<DL>
+<B><DT>subst ?-nobackslashes? ?-nocommands? ?-novariables? </B> <I>string</I>
+<DD>Passes <I>string</I> through the Tcl substitution phase, and returns the
+original string with the 
+backslash sequences, commands and variables replaced by their equivalents.  
+<P>
+If any of the <B>-no...</B> arguments are present, then that set of 
+substitutions will not be done.
+<P>
+NOTE: <B>subst</B> does not honor braces or quotes.
+</DL>
+
+:TEXT_END:
+
+:CODE_START:
+;# Some examples of subst:
+set a "alpha"
+set b a
+
+puts {a and b with no substitution: $a $$b}
+puts "a and b with one pass of substitution: $a $$b"
+puts "a and b with subst in braces: [subst {$a $$b}]"
+puts "a and b with subst in quotes: [subst "$a $$b"]\n"
+
+
+puts "format with no subst [format {$%s} $b]"
+puts "format with subst: [subst [format {$%s} $b]]"
+eval "puts \"eval after format: [format {$%s} $b]\""
+
+;# Creating the tempFileName proc with format
+
+set num 0;
+set cmd "proc tempFileName {} "
+set cmd [format "%s {global num; incr num;" $cmd]
+set cmd [format {%s return "/tmp/TMP.%s.$num"} $cmd [pid] ]
+set cmd [format "%s }" $cmd ]
+eval $cmd
+
+puts "[info body tempFileName]"
+
+;# An example where format works 
+set a arrayname
+set b index
+set c newvalue
+eval [format "set %s(%s) %s" $a $b $c]
+
+puts "Index: $b of $a was set to: $arrayname(index)"
+
+:TEXT_END:
+
+

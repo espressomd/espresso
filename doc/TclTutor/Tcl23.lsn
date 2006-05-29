@@ -1,0 +1,166 @@
+:TITLE: More Array Commands - Iterating through array
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+There are two methods for iterating through the contents of an associative
+array.
+<UL>
+<LI> Using a foreach loop with the output from the <CODE>array names</CODE> command
+<LI> Using the <CODE>array startsearch</CODE> commands
+</UL>
+<P>
+In a loop, the foreach mechanism is the simplest.  If the code iterating
+through the array is distributed through several proc's, then the <CODE>array startsearch, array 
+nextelement, </CODE>etc. commands are more appropriate.
+<DL>
+<B><DT>array startsearch</B> <I>arrayName</I>
+<DD> Initializes <I>arrayName</I> for use with the iterating commands, and
+returns the <I>searchID</I> token that must be passed to those commands.  
+Multiple iterations may be in progress for a single array at the same time
+provided that there is a separate <I>searchID</I> for each iteration.
+<B><DT>array nextelement</B> <I>arrayName searchID</I>
+<DD> Returns the index of the next element in <I>arrayName</I>.  If there 
+are no more elements in <I>arrayName</I>, then an empty string is returned.
+<B><DT>array anymore</B> <I>arrayName searchID</I>
+<DD>Returns a 1 if there are still elements in <I>arrayName</I> to be
+returned by <CODE>nextelement</CODE>.  Otherwise, it returns 0.
+<B><DT>array donesearch</B> <I>arrayName searchID</I>
+<DD>Destroys the state information associated with the iteration commands.
+This command should be executed when an iteration is complete.
+</DL>
+<P>
+Note that if you add or delete an array element while an iteration is in
+progress, then that iteration is no longer valid.  After such a
+modification ot the array, <CODE>array nextelement</CODE> will return an
+empty string, and <CODE>array anymore</CODE> will return a zero. 
+
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+There are two methods for iterating through the contents of an associative
+array.
+<UL>
+<LI> Using a foreach loop with the output from the <CODE>array names</CODE> command
+<LI> Using the <CODE>array startsearch</CODE> commands
+</UL>
+<P>
+The foreach mechanism is the simplest method of iterating through an array.
+However, if the code iterating through the array is distributed through
+several proc's, then the <CODE>array startsearch, array nextelement,
+</CODE>etc.  commands are more appropriate. 
+<DL>
+<B><DT>array startsearch</B> <I>arrayName</I>
+<DD> Initializes <I>arrayName</I> for use with the iterating commands, and
+returns the <I>searchID</I> token that must be passed to those commands.  
+Multiple iterations may be in progress for a single array at the same time
+provided that there is a separate <I>searchID</I> for each iteration.
+<B><DT>array nextelement</B> <I>arrayName searchID</I>
+<DD> Returns the index of the next element in <I>arrayName</I>.  If there 
+are no more elements in <I>arrayName</I>, then an empty string is returned.
+<B><DT>array anymore</B> <I>arrayName searchID</I>
+<DD>Returns a 1 if there are still elements in <I>arrayName</I> to be
+returned by <CODE>nextelement</CODE>.  Otherwise, it returns 0.
+<B><DT>array donesearch</B> <I>arrayName searchID</I>
+<DD>Destroys the state information associated with the iteration commands.
+This command should be executed when an iteration is complete.
+</DL>
+<P>
+Note that if you add or delete an array element while an iteration is in
+progress, then that iteration is no longer valid.  After such a
+modification ot the array, <CODE>array nextelement</CODE> will return an
+empty string, and <CODE>array anymore</CODE> will return a zero. 
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+There are two methods for iterating through the contents of an associative
+array.
+<UL>
+<LI> Using a foreach loop with the output from the <CODE>array names</CODE> command
+<LI> Using the <CODE>array startsearch</CODE> commands
+</UL>
+<P>
+In a loop, the foreach mechanism is the simplest.  If the code iterating
+through the array is distributed through several proc's, then the <CODE>array startsearch, array 
+nextelement, </CODE>etc. commands are more appropriate.
+<DL>
+<B><DT>array startsearch</B> <I>arrayName</I>
+<DD> Initializes <I>arrayName</I> for use with the iterating commands, and
+returns the <I>searchID</I> token that must be passed to those commands.  
+Multiple iterations may be in progress for a single array at the same time
+provided that there is a separate <I>searchID</I> for each iteration.
+<B><DT>array nextelement</B> <I>arrayName searchID</I>
+<DD> Returns the index of the next element in <I>arrayName</I>.  If there 
+are no more elements in <I>arrayName</I>, then an empty string is returned.
+<B><DT>array anymore</B> <I>arrayName searchID</I>
+<DD>Returns a 1 if there are still elements in <I>arrayName</I> to be
+returned by <CODE>nextelement</CODE>.  Otherwise, it returns 0.
+<B><DT>array donesearch</B> <I>arrayName searchID</I>
+<DD>Destroys the state information associated with the iteration commands.
+This command should be executed when an iteration is complete.
+</DL>
+<P>
+Note that if you add or delete an array element while an iteration is in
+progress, then that iteration is no longer valid.  After such a
+modification ot the array, <CODE>array nextelement</CODE> will return an
+empty string, and <CODE>array anymore</CODE> will return a zero. 
+:TEXT_END:
+
+:CODE_START:
+array set array1 [list {123} {Abigail Aardvark} \
+		       {234} {Bob Baboon} \
+                       {345} {Cathy Coyote} \
+		       {456} {Daniel Dog} ]
+
+;#
+;# Simply iterating through an array with a foreach loop:
+;#
+
+foreach id [array names array1] {
+  puts "$array1($id) has ID: $id"
+  }
+
+;#
+;# Two procs iterating through the same array with iteration commands
+;#
+
+proc getrec_format1 {arrayVar searchid} {
+  global $arrayVar
+  upvar $searchid id
+  set record [array nextelement $arrayVar $id];
+  return "The current ID is: $record"
+  }
+
+proc getrec_format2 {arrayVar searchid} {
+  global $arrayVar 
+  upvar $searchid id
+  set record [array nextelement $arrayVar $id];
+  return $record;
+  }
+
+set searchId [array startsearch array1];
+
+puts ""
+set item 0;
+while {[array anymore array1 $searchId]} {
+  incr item;
+  if {[expr $item %2]} {
+    set format1 [getrec_format1 array1 searchId]
+    puts "item number: $item format 1: $format1"
+    } else {
+    set format2 [getrec_format2 array1 searchId]
+    puts "item number: $item format 2: $format2"
+    }
+  }
+
+:TEXT_END:
+
+
+
+
+

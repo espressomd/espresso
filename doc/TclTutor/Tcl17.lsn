@@ -1,0 +1,70 @@
+:TITLE: String Subcommands - length index range
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+One feature of Tcl is that commands may have subcommands.  <B>String</B> is
+an example of one of these.  The <B>string</B> command treats the first
+argument as a subcommand.  This lesson covers these string subcommands:
+<DL>
+<B><DT>string length</B> <I>string</I>
+<DD>Returns the length of <I>string</I>
+<B><DT>string index</B> <I>string index</I>
+<DD>Returns the char at the <I>index'th</I> position in <I>string</I>
+<B><DT>string range</B> <I>string first last</I>
+<DD>Returns a string composed of the characters from <I>first</I> to <I>last</I>
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+One feature of Tcl is that commands may have subcommands.  <B>String</B> is
+an example of one of these.  The <B>string</B> command treats the first
+argument as a subcommand.  This lesson covers these string subcommands:
+<DL>
+<B><DT>string length</B> <I>string</I>
+<DD>Returns the length of <I>string</I>
+<B><DT>string index</B> <I>string index</I>
+<DD>Returns the char at the <I>index'th</I> position in <I>string</I>
+<B><DT>string range</B> <I>string first last</I>
+<DD>Returns a string composed of the characters from <I>first</I> to <I>last</I>
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+The string is one of the other trivial data structures in Tcl.  Like the
+list, it is just a set of characters grouped in a single unit.  Unlike
+the list, there is no structure to a string larger than a single character.
+<P>
+Tcl commands may have subcommands.  Manipulating strings is done with a
+set of subcommands of the <B>string</B> command.  The <B>string</B>
+command treats the first argument as a subcommand and performs the operation
+requested.
+<P>
+This set of string commands returns portions or information about a string.
+<P>
+This lesson covers these string subcommands:
+<DL>
+<B><DT>string length</B> <I>string</I>
+<DD>Returns the length of <I>string</I> in characters.
+<B><DT>string index</B> <I>string index</I>
+<DD>Returns the character at the <I>index'th</I> position in <I>string</I>
+<B><DT>string range</B> <I>string first last</I>
+<DD>Returns a string composed of the characters from <I>first</I> to <I>last</I>
+</DL>
+:TEXT_END:
+
+:CODE_START:
+set string "this is my test string"
+
+puts "There are [string length $string] characters in \"$string\""
+
+puts "[string index $string 1] is the second character in \"$string\""
+
+puts "\"[string range $string 5 10]\" are characters between the 5'th and 10'th"
+:TEXT_END:
+

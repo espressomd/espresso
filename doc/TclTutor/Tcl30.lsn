@@ -1,0 +1,229 @@
+:TITLE: Modularization - source
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+::CMD:: if {([info exists tcl_platform])} {
+  switch $tcl_platform(platform) {
+    unix        {
+                set Tutor(lsn.codeMod) {
+                }
+        }
+    windows     {
+                set Tutor(lsn.codeMod) {
+		    {regsub {cat} $line {command.com /C type} line}
+                    {if {[glob -nocomplain C:/temp] != ""} {
+                      regsub "/tmp/" $line {C:\\\\temp\\\\} line
+		    }
+		    }
+                    {if {[glob -nocomplain C:/windows/temp] != ""} {
+                      regsub "/tmp/" $line {C:\\\\windows\\\\temp\\\\} line
+		    }
+		    }
+                    {if {[glob -nocomplain C:/winnt/temp] != ""} {
+                      regsub "/tmp/" $line {C:\\\\winnt\\\\temp\\\\} line
+		    }
+		    }
+                }         
+        }
+    mac         {
+                set Tutor(lsn.codeMod) {
+		}
+                }
+    default     {
+                puts "I don't recognize the platform: $tcl_platform(platform)"
+                puts "Can't set platform specific parameters"
+                }
+    } 
+  }
+
+:LESSON_TEXT_START_LEVEL 0:
+Like other modern languages, Tcl supports mechanisms for separating a
+program into multiple files.
+This function is implemented with the source command.
+<DL>
+<B><DT> source</B> <I>fileName</I>
+<DD>Reads the script in <I>fileName</I> and executes it.  If the script
+executes successfully, <B>source</B> returns the value of the last statement
+in the script.  
+<P>
+If there is an error in the script, <B>source</B> will return that error.
+<P>
+If there is a return (other than within a <B>proc</B> definition) then
+<B>source</B> will return immediately, without executing the remainder of
+the script.
+<P>
+If <I>fileName</I> starts with a tilde (<B>~</B>) then $HOME will
+substituted for the tilde, as is done in the <B>file</B> command.  More
+details on this substitution is available on the <B>TildeSubst</B> man page.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 1:
+Since Tcl is an interpreter, it doesn't have a dynamic loader the way compiled
+languages do.  However, there is a mechanism to load and execute the script
+in a file.  This command is the <B>source</B> command.
+<P>
+The <B>source</B> command will load a file and execute it.
+<P>
+This command can be used to:
+<UL COMPACT>
+<LI> separate a program into multiple files.
+<LI> make a library file that contains all the procs for a particular
+set of functions.
+<LI> configure programs 
+<LI> load data files 
+</UL>
+<DL>
+<B><DT> source</B> <I>fileName</I>
+<DD>Reads the script in <I>fileName</I> and executes it.  If the script
+executes successfully, <B>source</B> returns the value of the last statement
+in the script.  
+<P>
+If there is an error in the script, <B>source</B> will return that error.
+<P>
+If there is a return (other than within a <B>proc</B> definition) then
+<B>source</B> will return immediately, without executing the remainder of
+the script.
+<P>
+If <I>fileName</I> starts with a tilde (<B>~</B>) then $HOME will
+substituted for the tilde, as is done in the <B>file</B> command.  More
+details on this substitution is available on the <B>TildeSubst</B> man page.
+</DL>
+:TEXT_END:
+
+:LESSON_TEXT_START_LEVEL 2:
+Since Tcl is an interpreter, it doesn't have a dynamic loader the way compiled
+languages do.  However, there is a mechanism to load and execute the script
+in a file.  This command is the <B>source</B> command.
+<P>
+The <B>source</B> command will load a file and execute it.
+<P>
+This command can be used to:
+<UL COMPACT>
+<LI> separate a program into multiple files.
+<LI> make a library file that contains all the procs for a particular
+set of functions.
+<LI> configure programs 
+<LI> load data files 
+</UL>
+<P>
+As you can see, there are many uses for the <B>source</B> command.  The
+main use is that this command lets you separate a set of related procs into
+a single file. You can then <B>source</B> that file into different applications
+and have those procs available.
+<P>
+Now, you could get the same effect by pasting the code from a set of procs
+into each application you write that needs those procs.  The reason you
+shouldn't do this is that the odds are good that eventually you will find a
+bug, or a nifty way to do something better, and if the code is copied in
+a dozen files, you'll have to modify all those files.  If the code exists
+in one file that is sourced into the other files, then you'll just have
+to make the fix once.
+<P>
+Run the example, and examine the output and example code now.
+<P> 
+The example code creates a file with a proc, a data definition, a return,
+and another data definition.  
+<P>
+The first two lines create a unique temporary filename using the <B>pid</B>
+command, and then open the file for writing.
+<P>
+The next five lines are writing the contents of the file, and then closing
+the file.  Closing the file forces it to be flushed.  Without closing or
+flushing the file, the data might remain in an I/O buffer, and not be 
+available when the script tries to source that file.
+<P>
+Next, the file is displayed using <B>exec</B> to cat the file to the
+standard output.  <B>Exec</B> returns the output of the program it executes,
+which is then output by the puts command.
+<P>
+Just as a check, the visible variables are displayed next.  After the
+temporary file has been sourced, the variables will be displayed again.
+<P>
+The call to <CODE>info procs testproc</CODE> will return an empty string,
+since <B>testproc</B> hasn't been defined yet.  The test will be a success,
+and the temporary file will be sourced.
+<P>
+Once the temporary file has been sourced, <B>testproc</B> can be executed.
+It will display the name of the file it was sourced from as an example of
+using the <B>info script</B> command.  If you delete the <B>\</B> before
+the square bracket in the <B>[info script]</B> call, the call will be
+evaluated before being written, and it will display the name of the
+example script that is writing the temp file.  (It will be something
+like /tmp/xmpl.PID.tcl)
+<P>
+Next, the visible variables are displayed again.  Note that <B>abc</B> is in
+the list, but <B>aaaa</B> is not.  This is because of the <B>return</B> 
+command just before <B>aaaa</B> is defined.
+<P>
+Finally, the temporary file is deleted, to keep things neat and clean.
+<DL>
+<B><DT> source</B> <I>fileName</I>
+<DD>Reads the script in <I>fileName</I> and executes it.  If the script
+executes successfully, <B>source</B> returns the value of the last statement
+in the script.
+<P>
+If there is an error in the script, <B>source</B> will return that error.
+<P>
+If there is a return (other than within a <B>proc</B> definition) then
+<B>source</B> will return immediately, without executing the remainder of
+the script.
+<P>
+If <I>fileName</I> starts with a tilde (<B>~</B>) then $HOME will
+substituted for the tilde, as is done in the <B>file</B> command.  More
+details on this substitution is available on the <B>TildeSubst</B> man page.
+</DL>
+:TEXT_END:
+
+:CODE_START:
+;# Set up a temporary file with a test proc.
+
+set filename "/tmp/TT_[pid]"
+set outfile [open "$filename" "w"];
+
+
+puts $outfile {set scr [info script]}
+puts $outfile "proc testproc {} {"
+puts $outfile "global scr;"
+puts $outfile "puts \"testproc source file: \$scr.\""
+puts $outfile "puts \"testproc executing from \[info script]\n\""
+puts $outfile "}"
+puts $outfile {set abc 1};
+puts $outfile {return};
+puts $outfile {set aaaa 1};
+
+close $outfile;
+
+puts "This is the contents of $filename:"
+puts ".............................................................."
+puts "[exec cat $filename]"
+puts ".............................................................."
+puts "\n"
+
+puts "Global variables visible before sourceing $filename:"
+puts "[lsort [info globals]]\n"
+
+;# Check that the proc does not exist, and source the file.
+
+if {[info procs testproc] == ""} {
+ 	puts "testproc does not exist.  sourceing $filename"
+	source $filename
+	}
+
+;# run the proc.
+puts "\nNow executing testproc"
+testproc;
+
+puts "Global variables visible after sourceing $filename:"
+puts "[lsort [info globals]]\n"
+
+
+;# Remove the extra file.
+exec rm $filename
+:TEXT_END:
+

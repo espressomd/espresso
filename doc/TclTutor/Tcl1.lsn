@@ -1,0 +1,156 @@
+:TITLE: Simple Text Output
+;#
+;# RCSID: $Header$
+;# Copyright (c) 1995 Clif Flynt
+;# 9300 Fleming Rd.
+;# Dexter, MI  48130
+;# clif@cflynt.com
+;# See file "NOTICE" for licensing terms.
+;#
+:LESSON_TEXT_START_LEVEL 0:
+<CODE>Puts</CODE> is the output command for text.
+<P>
+A single unit of text after the <CODE>puts</CODE> command will be
+printed to the standard output device (in this case, the lower window). 
+The default behavior is to append a newline to the string. 
+<P>
+Strings of multiple words must be grouped with quotes or braces.  The
+effect of quotes and braces isn't quite identical.  See the next
+lesson for the first intro to <EM>Quoting Hell.</EM>
+<P>
+See later lessons on <CODE>puts</CODE> for the options to <CODE>puts</CODE>.
+<P>
+A command in Tcl is a list of words terminated by a newline or semicolon.
+Comments in Tcl have a <CODE>#</CODE> in the position where a command could be.
+In order to put a comment on a line after a command, it must be
+preceded by a semi-colon, to terminate the command.
+<P>
+See <B>File I/O</B> if you are interested in sending output to a file.
+<P>
+See <B>format</B> if you want to use formatted output.
+:TEXT_END:
+:LESSON_TEXT_START_LEVEL 1:
+The traditional starting place for programming discussions is the 
+classic "Hello, World" program.  Once you can print out a string,
+you are prepared to conquer the world (of programming).
+<P>
+The command to output a string in Tcl is the '<CODE>puts</CODE>' command.  
+<P>
+A single unit of text after the <CODE>puts</CODE> command will be printed to the 
+standard output device (in this case, the lower window).  The default 
+behavior is to move the cursor to the beginning of the next line after
+printing out a line of text, instead of leaving the cursor at the end
+of the text.
+<P>
+If the string has more than one word, you must enclose the string in quotes or
+braces ({}).  A set of words enclosed in quotes or braces is treated
+as a single unit, while words separated by whitespace are treated as
+multiple arguments to the command.  Quotes and braces can both be used
+to group several words into a single unit.  However, they actually behave
+differently.  In the next lesson you'll start to learn some of the
+differences between their behaviors.
+<P>
+Many commands in TCL (including <CODE>puts</CODE>) can accept
+multiple arguments.  If a string is not enclosed in
+quotes or braces, the TCL interpreter will consider
+each word in the string as a separate argument, and pass
+each individually to the <CODE>puts</CODE> command.  The <CODE>puts</CODE> command
+will try to evaluate the words as optional arguments.
+This will probably result in an error.
+<P>
+A command in Tcl is a list of words terminated by a newline or
+semicolon.  Comments in Tcl have a <CODE>#</CODE> in the position where a command
+could be.  Some commands in Tcl may contain multiple words, so in order
+to put a comment on a line after a command the comment must be preceded
+by a semi-colon, to terminate the command. 
+<P>
+My personal style is to always use the ;# for comments.
+<P>
+For now, run the example, and try modifying the string a little to get
+familiar with the tutorial system, and running scripts.  When you are
+comfortable with the <CODE>puts</CODE> command, click <B>Next Lesson</B> to continue.
+:TEXT_END:
+<P>
+:LESSON_TEXT_START_LEVEL 2:
+
+When Kernighan and Richie wrote the first book about the language C,
+they used a simple program that printed out the string "Hello World" as
+the first example program.  Over the years, the traditional starting
+place for programming discussions has become the "Hello, World" program. 
+Once you can print out a string, you've mastered the mechanics of getting
+something to run without delving into the intricacies of getting a real
+program to work the way you expect it to work.  
+<P>
+The command to output a string in Tcl is the '<CODE>puts</CODE>' command.  
+<P>
+The <CODE>puts</CODE> command will print a single unit of text to the standard
+output device.
+In the tutorial package, <CODE>puts</CODE> is redirected to print to the bottom
+screen.  By default, <CODE>puts</CODE> will move the cursor to the beginning of
+the next line after printing out a line of text, instead of leaving the
+cursor at the end of the text. 
+<P>
+A single unit of text is either a single word (for example:
+<CODE>puts OUCH!</CODE>), or several words within quotes or braces.  
+(for example: <CODE>puts "Two Words" </CODE>).Placing
+multiple words within braces or quotes tells the Tcl
+interpreter to consider them as a single unit.
+<P>
+In the simple examples in this lesson, the quotes and
+braces will work the same.  However, there are differences
+between them, which we will explore in the next lesson.
+<P>
+Many commands in TCL (including <CODE>puts</CODE>) can accept
+multiple arguments.  If a string is not enclosed in
+quotes or braces, the TCL interpreter will consider
+each word in the string as a separate argument, and pass
+each individually to the <CODE>puts</CODE> command.  The <CODE>puts</CODE> command
+will try to evaluate the words as optional arguments.
+This will probably result in an error.
+<P>
+For example, if you typed <CODE>puts Two Words</CODE> without the quotes 
+around <CODE>Two Words</CODE>, the <CODE>puts</CODE> command would try to
+interpret the first word (Two) in a special way, and would give you an
+error. 
+<P>
+A command string in Tcl is simply a list of words.  The
+first word is the command to be executed, the following
+words are the arguments.  The command string is
+terminated by a newline or a semicolon.  The newline
+is the character sent to the computer when you press
+the ENTER key.  The newline may be a carriage return,
+a line feed, or both.
+<P>
+A comment is also a list of words.  To distinguish it as
+a comment to the Tcl interpreter, begin the comment string
+with the # symbol.  This tells the Tcl interpreter not
+to parse or execute the next words as a command.
+<P>
+A comment can be put on a line by itself, or after a
+command string on the same line.  In the latter case,
+the comment string must be preceded by a semicolon, to
+terminate the preceeding command.  Without the semicolon,
+the Tcl interpreter will consider the # symbol as an
+argument to the command, resulting in an error.
+<P>
+My personal style is to always use the ;# for comments.  This form
+is always correct.
+<P>
+For now, run the example, and try modifying the string a little to get
+familiar with the tutorial system, and running scripts.  When you are
+comfortable with the <CODE>puts</CODE> command, click <B>Next Lesson</B> to continue.
+:TEXT_END:
+<P>
+:CODE_START:
+;# This is a single line comment
+puts "Hello, World - In quotes"    ;# This is a comment after the command.
+puts {Hello, World - In Braces}	    # Add a semicolon to make this OK
+
+;# Because of the semicolon this is two puts commands on one line.
+puts "This is line 1"; puts "this is line 2"
+
+;# The semicolon inside quotes does not end the command
+puts "Hello, World; - With  a semicolon inside the quotes"
+:TEXT_END:
+<P>
+

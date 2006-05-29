@@ -1,0 +1,59 @@
+/** \page aux Auxiliary Tcl functions
+The following procedures are found in scripts/auxiliary.tcl and scripts/countBonds.tcl. See \ref io for further functions as well.
+<ul>
+    <li>\anchor tcl_stopparticles
+	\verbatim stopParticles 
+ stop_particles \endverbatim
+	halts all particles in the current simulation, setting their velocities and forces to zero. 
+	The latter syntax does not provide feedback on the execution status.
+
+    <li>\anchor tcl_countBonds
+	\verbatim countBonds <particle_list>\endverbatim
+	returns a tcl-list of the <i> complete </i> topology described by
+	\<particle_list\>, which must have the same format as [part] (see 
+	\ref tcl_part).<BR>
+	The output list contains only particle_number and the
+	corresponding bonding informations, thus it looks like e. g.
+	\verbatim {106 {0 107}} {107 {0 106} {0 108}} {108 {0 107} {0 109}} ... {210 {0 209} {0 211}} {211 {0 210}} 212 213 ... \endverbatim
+	for a single chain of 106 monomers between particle 106 and
+	211, with additional loose particles 212, 213, ... (e. g. counter-ions). <BR>
+	Note, that \ref tcl_part stores any bonds only with the
+	particle of <i>lower</i> particle number, which is why [part 109] 
+	would only return {... bonds {{0 110}}}, therefore not
+	revealing the bond between particle 109 and (the preceding)
+	particle 108, while <i>countBonds</i> would return <i>all</i>
+	bonds particle 109 participates in.
+
+    <li>\anchor tcl_findPropPos
+	\verbatim findPropPos <particle_property_list> <property>\endverbatim
+	returns the index of \<property\> within
+	\<particle_property_list\>, which is expected to have the same
+	format as [part \<particle_number\>]. If \<property\> is not
+	found, -1 is returned.<BR>
+	This function is useful to access certain properties of
+	particles without hard-wiring their index-position, which
+	might (again) change in future releases of \ref #part.
+	\verbatim [lindex [part $i] [findPropPos [part $i] type]]\endverbatim
+	for example returns the \<particle_type\> of particle $i without fixing
+	where exactly that information has to be in the output of
+	[part $i].
+    <li>\anchor tcl_findBondPos
+	\verbatim findBondPos <particle_property_list>\endverbatim
+	returns the index of the bonds within
+	\<particle_property_list\>, which is expected to have the same
+	format as [part \<particle_number\>];<BR>
+	hence its output is the	same as [findPropPos \<particle_property_list\> bonds].
+	If the particle does not have any bonds, -1 is returned.
+
+    <li>\anchor tcl_timeStamp
+	\verbatim timeStamp <path> <prefix> <postfix> <suffix>\endverbatim
+	modifies the filename contained within \<path\> to be preceded by
+	a \<prefix\> and having a \<postfix\> before the \<suffix\>; e. g.
+	\verbatim timeStamp ./scripts/config.gz DH863 001 gz\endverbatim
+	returns './scripts/DH863_config001.gz'.<BR>
+	If \<postfix\> is '-1' the current date is used in the format
+	'\%y\%m\%d' thus leading to './scripts/DH863_config021022.gz' on
+	October 22nd, 2002.
+
+</ul>
+*/

@@ -1,0 +1,44 @@
+Naming convention for ESPResSo:
+
+
+*******************
+* Versions v1.x.x *
+*******************
+
+v1.0	Kim
+v1.1	Naomi
+	(skipped version numbers v1.2 through v1.4)
+v1.5	Neelix
+v1.6	Icheb
+v1.7	Mezoti
+v1.8	Rebi & Azan
+v1.9	Seska
+
+
+*******************
+* Versions v2.x.x *
+*******************
+
+v2.0	Ydalir
+v2.1	Alsheim
+v2.2	Walaskialf
+v2.3	Gladsheim
+v2.4	Thrymheim
+v2.5	Breidablick
+v2.6	Folkwang
+v2.7	Glitnir
+v2.8	Noatun
+v2.9	Widi
+
+
+*******************
+* Alternate Route *
+*******************
+
+Possible new schemes include:
+- http://de.wikipedia.org/wiki/R%C3%B6mische_Kaiser
+- http://de.wikipedia.org/wiki/Nordische_Mythologie
+- http://de.wikipedia.org/wiki/Germanischen_Mythologie
+- http://de.wikipedia.org/wiki/Liste_griechischer_G%C3%B6tter
+
+
