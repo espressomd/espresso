@@ -61,7 +61,14 @@
 /* #define NEMD */
 /* #define NPT */ 
 /* #define DPD */
-/* #define LB */
+#define LB
+
+/* Lattice Boltzmann needs lattice structures and temporary particle data */
+#ifdef LB
+#define USE_TEMPORARY
+#define LATTICE
+//#define ALTERNATIVE_INTEGRATOR
+#endif
 
 /************************************************/
 /** \name Default Parameter Settings            */
@@ -124,8 +131,4 @@ int version_callback(Tcl_Interp *interp);
 int compilation_callback(Tcl_Interp *interp);
 /*@}*/
 
-#endif
-
-#if defined LB
-#define USE_TEMPORARY
 #endif
