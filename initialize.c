@@ -50,6 +50,8 @@
 #include "errorhandling.h"
 #include "rattle.h"
 #include "bin.h"
+#include "lattice.h"
+#include "lb-boundaries.h"
 
 /** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
@@ -132,6 +134,27 @@ void on_integration_start()
 
   if (!check_obs_calc_initialized()) return;
 
+#ifdef LB
+  if(lattice_switch & LATTICE_LB) {
+    if (lbpar.agrid < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
+    }
+    if (lbpar.tau < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
+    }
+    if (lbpar.rho < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
+    }
+    if (lbpar.viscosity < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
+    }
+  }
+#endif
+
   /********************************************/
   /* end sanity checks                        */
   /********************************************/
@@ -190,7 +213,6 @@ void on_particle_change()
   resort_particles = 1;
   reinit_electrostatics = 1;
   rebuild_verletlist = 1;
-  if (thermo_switch & THERMO_LB) reinit_thermo = 1;
 
   invalidate_obs();
 
@@ -254,7 +276,15 @@ void on_constraint_change()
   EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
 
-  recalc_forces = 1;  
+#ifdef LB
+#ifdef CONSTRAINTS
+  if(lattice_switch & LATTICE_LB) {
+    lb_init_constraints();
+  }
+#endif
+#endif
+
+  recalc_forces = 1;
 }
 
 void on_cell_structure_change()
@@ -385,12 +415,6 @@ void on_parameter_change(int field)
     cells_re_init(CELL_STRUCTURE_CURRENT);
   }
 
-#ifdef LB
-  if (field == FIELD_BOXL || field == FIELD_CELLGRID || field == FIELD_NNODES || field == FIELD_NODEGRID || field == FIELD_PERIODIC ||
-  field == FIELD_NPART)
-    reinit_thermo = 1;
-#endif
-
   if (field == FIELD_MAXRANGE)
     rebuild_verletlist = 1;
 
@@ -411,7 +435,40 @@ void on_parameter_change(int field)
       cells_re_init(CELL_STRUCTURE_DOMDEC);
     break;
   }
+
+#ifdef LB
+  /* LB needs ghost velocities */
+  if (field == FIELD_LATTICE_SWITCH) {
+    on_ghost_flags_change();
+    cells_re_init(CELL_STRUCTURE_CURRENT);
+  }
+
+  if (lattice_switch & LATTICE_LB) {
+    if (field == FIELD_TEMPERATURE) {
+      lb_reinit_parameters();
+    }
+
+    if (field == FIELD_BOXL || field == FIELD_CELLGRID || field == FIELD_NNODES || field == FIELD_NODEGRID) {
+      lb_init();
+    }
+  }
+#endif
 }
+
+#ifdef LB
+void on_lb_params_change(int field) {
+
+  if (field & LBPAR_AGRID) {
+    lb_init();
+  }
+  if (field & LBPAR_DENSITY) {
+    lb_reinit_fluid();
+  }
+
+  lb_reinit_parameters();
+
+}
+#endif
 
 void on_ghost_flags_change()
 {
@@ -419,11 +476,13 @@ void on_ghost_flags_change()
   extern int ghosts_have_v;
   ghosts_have_v = 0;
   
+  /* DPD and LB need also ghost velocities */
   if (thermo_switch & THERMO_DPD)
-    /* DPD and LB need also ghost velocities */
     ghosts_have_v = 1;
-  if (thermo_switch & THERMO_LB)
+#ifdef LB
+  if (lattice_switch & LATTICE_LB)
     ghosts_have_v = 1;
+#endif
 #ifdef BOND_CONSTRAINT
   else if (n_rigidbonds)
     ghosts_have_v = 1;
@@ -473,7 +532,7 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "crosslink", (Tcl_CmdProc *)crosslink, 0, NULL);
   Tcl_CreateCommand(interp, "diamond", (Tcl_CmdProc *)diamond, 0, NULL);
   Tcl_CreateCommand(interp, "icosaeder", (Tcl_CmdProc *)icosaeder, 0, NULL);
-   /* in file imd.c */
+  /* in file imd.c */
   Tcl_CreateCommand(interp, "imd", (Tcl_CmdProc *)imd, 0, NULL);
   /* in file random.c */
   Tcl_CreateCommand(interp, "t_random", (Tcl_CmdProc *)t_random, 0, NULL);
@@ -490,6 +549,10 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, "thermostat", (Tcl_CmdProc *)thermostat, 0, NULL);
   /* in bin.c */
   Tcl_CreateCommand(interp, "bin", (Tcl_CmdProc *)bin, 0, NULL);
+#ifdef LB
+  /* in lb.c */
+  Tcl_CreateCommand(interp, "lbfluid", (Tcl_CmdProc *)lbfluid_cmd, 0, NULL);
+#endif
   /* in utils.h */
   Tcl_CreateCommand(interp, "replacestdchannel", (Tcl_CmdProc *)replacestdchannel, 0, NULL);
 

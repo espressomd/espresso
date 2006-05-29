@@ -87,6 +87,11 @@ void integrate_ensemble_init();
  */
 void integrate_vv(int n_steps);
 
+/** EXPERIMENTAL: integrate with position verlet integrator.
+ *  \param n_steps number of steps to integrate.
+ */
+void integrate_pv(int n_steps);
+
 /** function that rescales all velocities on one node according to a
     new time step. */
 void rescale_velocities(); 

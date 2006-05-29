@@ -31,6 +31,7 @@
 #include "layered.h"
 #include "pressure.h"
 #include "rattle.h"
+#include "lattice.h"
 
 /**********************************************
  * description of variables
@@ -82,6 +83,10 @@ const Datafield fields[] = {
   {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback,     2 },        /* 34 from imd.c */
   {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback,     8 },        /* 35 from verlet.c */
   {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback,     8 },        /* 36 from integrate.c */
+#ifdef LATTICE
+  {&lattice_switch,     TYPE_INT, 1, "lattice_switch", ro_callback,    2 },
+  /* 37 from lattice.c */
+#endif
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 

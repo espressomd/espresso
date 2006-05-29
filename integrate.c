@@ -6,6 +6,7 @@
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+
 /** \file integrate.c   Molecular dynamics integrator.
  *
  *  For more information about the integrator 
@@ -39,6 +40,7 @@
 #include "nemd.h"
 #include "rattle.h"
 #include "errorhandling.h"
+#include "lattice.h"
 #include "lb.h"
 
 /************************************************
@@ -460,7 +462,8 @@ void integrate_vv(int n_steps)
     rescale_forces_propagate_vel();
 
 #ifdef LB
-  if(thermo_switch & THERMO_LB) LB_propagate();
+  if (lattice_switch & LATTICE_LB) lb_propagate();
+  if (check_runtime_errors()) break;
 #endif
 
 #ifdef BOND_CONSTRAINT
@@ -552,6 +555,12 @@ int time_step_callback(Tcl_Interp *interp, void *_data)
     Tcl_AppendResult(interp, "time step must be positive.", (char *) NULL);
     return (TCL_ERROR);
   }
+#ifdef LB
+  else if ((lbpar.tau >= 0.0) && (data > lbpar.tau)) {
+    Tcl_AppendResult(interp, "MD time step must be smaller than LB time step.", (char *)NULL);
+    return (TCL_ERROR);
+  }
+#endif
   mpi_set_time_step(data);
 
   return (TCL_OK);
@@ -910,7 +919,7 @@ void force_and_velocity_check(Particle *p)
   for (i = 0; i < 3; i++)
     if(fabs(p->r.p[i] - p->l.p_old[i]) > local_box_l[i]) {
       /* put any cellsystems here which do not rely on rebuild_verletlist */
-      if (cell_structure.type != CELL_STRUCTURE_NSQUARE) {
+      if ((cell_structure.type != CELL_STRUCTURE_NSQUARE) && (dd.use_vList)) {
 	fprintf(stderr, "%d: particle %d moved further than local box length by %lf %lf %lf\n",
 		this_node, p->p.identity, p->r.p[0] - p->l.p_old[0], p->r.p[1] - p->l.p_old[1],
 		p->r.p[2] - p->l.p_old[2]);
@@ -947,3 +956,310 @@ void force_and_velocity_display()
 	    local_particles[db_maxv_id]->m.v[1],local_particles[db_maxv_id]->m.v[2]);
 #endif
 }
+
+/************************************************************
+ * EXPERIMENTAL: Position Verlet Integrator                 *
+ * [Tuckerman et al., JCP 97(3):1990 (1992)]                *
+ ************************************************************/
+MDINLINE void pv_propagate_pos() {
+
+    int c, i, j, np;
+    Cell *cell;
+    Particle *p;
+
+    rebuild_verletlist = 0;
+
+    for (c=0; c<local_cells.n; c++) {
+	cell = local_cells.cell[c];
+	p = cell->part;
+	np = cell->n;
+
+	for (i=0; i<np; i++) {
+	    for (j=0; j<3; j++) {
+#ifdef EXTERNAL_FORCES
+		if (!(p[i].l.ext_flag & COORD_FIXED(j)))
+#endif
+		{
+		  //p[i].l.p_old[j] = p[i].r.p[j];
+		  p[i].r.p[j] += 0.5 * p[i].m.v[j];
+
+		}
+
+		if (distance2(p[i].r.p,p[i].l.p_old) > skin2)
+		    rebuild_verletlist = 1;
+	    }
+
+	    ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
+		
+	}
+
+    }
+    
+    announce_rebuild_vlist();
+
+}
+
+MDINLINE void pv_propagate_vel() {
+
+    int c, i, j, np;
+    Cell *cell;
+    Particle *p;
+
+    for (c=0; c<local_cells.n; c++) {
+	cell = local_cells.cell[c];
+	p = cell->part;
+	np = cell-> n;
+
+	for (i=0; i<np; i++) {
+	    for (j=0; j<3; j++) {
+#ifdef EXTERNAL_FORCES
+		if (!(p[i].l.ext_flag & COORD_FIXED(j)))
+#endif
+		  {
+		    p[i].m.v[j] += 2.0*p[i].f.f[j];
+		  }
+	    }
+#ifdef ADDITIONAL_CHECKS
+	    force_and_velocity_check(&p[i]);
+#endif
+	}
+
+    }
+
+#ifdef ADDITIONAL_CHECKS
+    force_and_velocity_display();
+#endif
+
+}
+
+MDINLINE void pv_propagate_pos_and_volume() {
+#ifdef NPT
+    int i, j, c, np;
+    double scale, L_new;
+    Cell *cell;
+    Particle *p;
+
+    if (this_node == 0) {
+	nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
+        L_new = pow(nptiso.volume,1./nptiso.dimension);
+	scale = L_new/box_l[nptiso.non_const_dim];
+	if (nptiso.volume < 0.0) {
+	    char *errtxt = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
+	    ERROR_SPRINTF(errtxt, "{015 your choice of piston=%f, dt=%f, p_diff=%f just caused the volume to become negative, decrease dt} ",
+			  nptiso.piston,time_step,nptiso.p_diff);
+	    nptiso.volume = box_l[0]*box_l[1]*box_l[2];
+	    L_new = box_l[nptiso.non_const_dim];
+	    scale = 1.0;
+	}
+	for (i=0; i<3; i++) {
+	    if (nptiso.cubic_box || (nptiso.geometry & nptiso.nptgeom_dir[i])) {
+		box_l[i] = L_new;
+	    }
+	}
+    }
+
+    MPI_Bcast(&scale, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    on_NpT_boxl_change(scale);
+    
+    for (c=0; c<local_cells.n; c++) {
+	cell = local_cells.cell[c];
+	p = cell->part;
+	np = cell->n;
+
+	for (i=0; i<np; i++) {
+	    for (j=0; j<3; j++) {
+#ifdef EXTERNAL_FORCES
+	      if (!(p[i].l.ext_flag & COORD_FIXED(j)))
+#endif
+		{
+		  if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
+		    p[i].r.p[j] = scale * (p[i].r.p[j] + 0.5 * p[i].m.v[j]);
+		    p[i].m.v[j] /= scale;
+		    p[i].l.p_old[j] *= scale;	    
+		  } else {
+		    p[i].r.p[j] += 0.5 * p[i].m.v[j] ;
+		  }
+		}
+	    }
+	}
+
+    }
+
+    nptiso.p_vel[0] /= SQR(scale);
+    nptiso.p_vel[1] /= SQR(scale);
+    nptiso.p_vel[2] /= SQR(scale);
+	
+    rebuild_verletlist = 1;
+    announce_rebuild_vlist();
+#endif /* NPT */
+}
+
+MDINLINE void pv_propagate_volume_and_pos() {
+#ifdef NPT
+    int i, j, c, np;
+    double scale, L_new;
+    Cell *cell;
+    Particle *p;
+
+    if (this_node == 0) {
+	nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
+        L_new = pow(nptiso.volume,1./nptiso.dimension);
+	scale = L_new/box_l[nptiso.non_const_dim];
+	if (nptiso.volume < 0.0) {
+	    char *errtxt = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
+	    ERROR_SPRINTF(errtxt, "{015 your choice of piston=%f, dt=%f, p_diff=%f just caused the volume to become negative, decrease dt} ",
+			  nptiso.piston,time_step,nptiso.p_diff);
+	    nptiso.volume = box_l[0]*box_l[1]*box_l[2];
+	    L_new = box_l[nptiso.non_const_dim];
+	    scale = 1.0;
+	}
+	for (i=0; i<3; i++) {
+	    if (nptiso.cubic_box || (nptiso.geometry & nptiso.nptgeom_dir[i])) {
+		box_l[i] = L_new;
+	    }
+	}
+    }
+    MPI_Bcast(&scale, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    on_NpT_boxl_change(scale);
+    
+    for (c=0; c<local_cells.n; c++) {
+	cell = local_cells.cell[c];
+	p = cell->part;
+	np = cell->n;
+
+	for (i=0; i<np; i++) {
+	    for (j=0; j<3; j++) {
+#ifdef EXTERNAL_FORCES
+	      if (!(p[i].l.ext_flag & COORD_FIXED(j)))
+#endif
+		{
+		  if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
+		    p[i].m.v[j] /= scale;
+		    p[i].r.p[j] = scale * p[i].r.p[j] + 0.5 * p[i].m.v[j];
+		    p[i].l.p_old[j] *= scale;	    
+		  } else {
+		    p[i].r.p[j] += 0.5 * p[i].m.v[j] ;
+		  }
+		}
+	    }
+	}
+
+    }
+
+    nptiso.p_vel[0] /= SQR(scale);
+    nptiso.p_vel[1] /= SQR(scale);
+    nptiso.p_vel[2] /= SQR(scale);
+	
+    rebuild_verletlist = 1;
+    announce_rebuild_vlist();
+#endif /* NPT */    
+}
+
+MDINLINE void pv_propagate_press_vel_press() {
+#ifdef NPT
+  int c, i, j, np;
+  Cell *cell;
+  Particle *p;
+
+  finalize_p_inst_npt();
+
+  nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
+
+  for (c=0; c<local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p =cell->part;
+    np = cell->n;
+
+    for (i=0; i<np; i++) {
+      for (j=0; j<3; j++) {
+#ifdef EXTERNAL_FORCES
+	if (!(p[i].l.ext_flag & COORD_FIXED(j)))
+#endif
+	  {
+	    if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
+	      p[i].m.v[j] += 2.0*p[i].f.f[j] + yavv_friction_therm0_nptiso(p[i].m.v[j])/PMASS(p[i]);
+	      nptiso.p_vel[j] += SQR(p[i].m.v[j])*PMASS(p[i]);
+	    } else {
+	      p[i].m.v[j] += 2.0*p[i].f.f[j];
+	    }
+	  }
+      }
+#ifdef ADDITIONAL_CHECKS
+      force_and_velocity_check(&p[i]);
+#endif
+    }
+
+  }
+
+  finalize_p_inst_npt();
+#ifdef ADDITIONAL_CHECKS
+  force_and_velocity_display();
+#endif
+#endif /* NPT */
+}
+
+/** EXPERIMENTAL: Position Verlet integrator. */
+void integrate_pv(int n_steps) {
+    int i;
+
+    on_integration_start();
+
+    skin2 = SQR(0.5*skin);
+    
+    n_verlet_updates = 0;
+
+    for (i=0;i<n_steps;i++) {
+
+      pv_propagate_pos();
+      cells_update_ghosts();
+
+#ifdef LB
+	transfer_momentum = 1;
+#endif
+	force_calc();
+	ghost_communicator(&cell_structure.collect_ghost_force_comm);
+	rescale_forces();
+
+	pv_propagate_vel();
+	pv_propagate_pos();
+
+#ifdef LB
+	if (lattice_switch & LATTICE_LB) lb_propagate();
+#endif
+
+	if (this_node == 0) sim_time += time_step;
+
+    }
+
+    recalc_forces = 0;
+#ifdef LB
+    transfer_momentum = 0;
+#endif
+
+    if (n_verlet_updates > 0)
+	verlet_reuse = n_steps/(double)n_verlet_updates;
+    else
+	verlet_reuse = 0;
+
+}
+
+
+#ifdef ALTERNATIVE_INTEGRATOR
+#ifdef NEMD
+#error NEMD is not implemented in alternative integrator. Go for it, if you need it!
+#endif
+#ifdef BOND_CONSTRAINT
+#error BOND_CONSTRAINT is not implemented in alternative integrator! Go for it, if you need it!
+#endif
+#ifdef ROTATION
+#error ROTATION is not implemented in alternative integrator! Go for it, if you need it!
+#endif
+#ifdef EXTERNAL_FORCES
+#error EXTERNAL_FORCES are not implemented in alternative integrator! Go for it, if you need it!
+#endif
+#ifdef NPT
+#error NPT is not implemented in alternative integrator! Go for it, if you need it!
+#endif
+#endif
