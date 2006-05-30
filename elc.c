@@ -1290,7 +1290,7 @@ int ELC_sanity_checks()
 void ELC_init()
 {
   char *errtxt;
-  double minsl;
+  double maxsl;
 
   ELC_setup_constants();
 
@@ -1300,14 +1300,14 @@ void ELC_init()
     elc_params.space_layer = (1./3.)*elc_params.gap_size;
     // but make sure we leave enough space to not have to bother with overlapping
     // realspace P3M
-    minsl = elc_params.gap_size - p3m.r_cut;
-    if (elc_params.space_layer < minsl) {
-      if (elc_params.gap_size <= 2*minsl) {
+    maxsl = elc_params.gap_size - p3m.r_cut;
+    if (elc_params.space_layer > maxsl) {
+      if (2*maxsl >= elc_params.gap_size) {
 	errtxt = runtime_error(128);
 	ERROR_SPRINTF(errtxt, "{007 P3M real space cutoff too large for ELC w/ dielectric contrast} ");
       }
       else
-	elc_params.space_layer = minsl;
+	elc_params.space_layer = maxsl;
     }
 
     // set the space_box 
@@ -1316,7 +1316,8 @@ void ELC_init()
     elc_params.minimal_dist = dmin(elc_params.space_box, elc_params.space_layer);
   }
 
-  if (elc_params.far_calculated) {
+  if (elc_params.far_calculated ||
+      (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on)) {
     if (ELC_tune(elc_params.maxPWerror) == TCL_ERROR) {
       errtxt = runtime_error(128);
       ERROR_SPRINTF(errtxt, "{008 ELC auto-retuning failed, gap size too small} ");

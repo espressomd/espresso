@@ -29,6 +29,7 @@
 #include "thermostat.h"
 #include "cells.h"
 #include "tuning.h"
+#include "elc.h"
 
 #ifdef ELECTROSTATICS
 
@@ -2162,11 +2163,26 @@ static double p3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
      we know that the desired minimal accuracy is obtained */
   *_r_cut_iL = r_cut_iL = r_cut_iL_max;
 
+  /* check whether we are running P3M+ELC, and whether we leave a reasonable gap space */
+  if (coulomb.method == COULOMB_ELC_P3M && elc_params.gap_size <= 1.1*r_cut_iL*box_l[0]) {
+    P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh %d cao %d r_cut %f reject r_cut %f > gap %f\n", mesh, cao, r_cut_iL,
+		      2*r_cut_iL*box_l[0], elc_params.gap_size));
+    /* print result */
+    sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
+    Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
+    sprintf(b1,"%.5e",r_cut_iL_max); sprintf(b2,"%.5e",*_alpha_L); sprintf(b3,"%.5e",*_accuracy);
+    Tcl_AppendResult(interp, b1,"  ", b2,"  ",b3," ", (char *) NULL);
+    sprintf(b1,"%.3e",rs_err); sprintf(b2,"%.3e",ks_err);
+    Tcl_AppendResult(interp, b1,"  ", b2,"  conflict with ELC\n", (char *) NULL);
+    return -2;
+  }
+
   /* check whether this radius is too large, so that we would use less cells than allowed */
   n_cells = 1;
   for (i = 0; i < 3; i++)
     n_cells *= (int)(floor(local_box_l[i]/(r_cut_iL*box_l[0] + skin)));
   if (n_cells < min_num_cells) {
+    P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh %d cao %d r_cut %f reject n_cells %d\n", mesh, cao, r_cut_iL, n_cells));
     /* print result */
     sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
     Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
