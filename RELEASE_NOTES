@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.9k (Seska)                                                                      *
+* v1.9.9l (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.9k -
+- v1.9.9l -
 -----------
 
+(l) May   29th, 2006.
 (k) May   19th, 2006.
 (j) May   17th, 2006.
 (i) May   16th, 2006.
@@ -24,6 +25,11 @@ Current working revision.
 (a) April 24th, 2006.
 
 New Features:
+(l) Generic halo parallelization scheme for lattice algorithms.
+(l) Lattice data structures for lattice dynamics (e.g. Lattice
+    Boltzmann).
+(l) Boundary conditions for Lattice Boltzmann.
+(l) Analysis routines for Lattice Boltzmann fluid.
 (k) Added support for derived datatypes to the mpi fake
     implementation.
 (j) added automatic detection for Fink libraries on Macs.
@@ -35,6 +41,11 @@ New Features:
     precision.
 (a) Added Standard Ewald algorithm for longrange coulomb forces (still
     EXPERIMENTAL)
+
+Changes:
+(l) Re-implementation of Lattice Boltzmann fluid dynamics.
+(l) There are now lattice data structures, a generic
+(l) parallelization scheme and more modular functionality.
 
 Bugfixes:
 (k) added missing output of the dielectric constants.
