@@ -254,6 +254,26 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	      double r_min, double r_max, int r_bins, double *rdf, int n_conf);
 
+/** Calculates the van Hove auto correlation function and as a side product the mean sqaure displacement (msd).
+
+    Calculates the van Hove auto correlation function (acf)  G(r,t) which is the probability that a particle has moved
+    a distance r after time t. In the case of a random walk G(r,t)/(4 pi r*r) is a gaussian. The mean square 
+    displacement (msd) is connected to the van Hove acf via sqrt(msd(t)) = int G(r,t) dr. This is very useful for
+    the investigation of diffusion processes.
+    calc_vanhove does the calculation for one particle type ptype and stores the functions specified by rmin, rmax and
+    rbins in the arrays msd and vanhove.
+
+    @param ptype    particle type for which the analysis should be performed
+    @param rmin     minimal distance for G(r,t)
+    @param rmax     maximal distance for G(r,t)
+    @param rbins    number of bins for the r distribution in G(r,t)
+    @param msd      array to store the mean square displacement (size n_configs-1)
+    @param vanhove  array to store G(r,t) (size (n_configs-1)*(rbins))
+
+*/
+double calc_vanhove(int ptype, double rmin, double rmax, int rbins, double *msd, double **vanhove);
+
+
 /** Calculates the spherically averaged structure factor.
 
     Calculates the spherically averaged structure factor of particles of a

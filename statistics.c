@@ -878,6 +878,50 @@ int analyze_radial_density_map (int xbins,int ybins,int thetabins,double xrange,
   return TCL_OK;
 }
 
+double calc_vanhove(int ptype, double rmin, double rmax, int rbins, double *msd, double **vanhove) 
+{
+  int i, c1, c3, ind, np=0;
+  double p1[3],p2[3],dist;
+  double bin_width, inv_bin_width;
+  IntList p;
+
+  /* create particle list */
+  init_intlist(&p);
+  for(i=0; i<n_total_particles; i++) { if( partCfg[i].p.type == ptype ) { np ++; } }
+  if(np==0) { return 0; }
+  alloc_intlist(&p,np);
+  for(i=0; i<n_total_particles; i++) { if( partCfg[i].p.type == ptype ) { p.e[p.n]=i; p.n++; } }
+
+  /* preparation */
+  bin_width     = (rmax-rmin) / (double)rbins;
+  inv_bin_width = 1.0 / bin_width;
+ 
+  /* calculate msd and store distribution in vanhove */
+  for(c1=0; c1<n_configs; c1++) { 
+    for(c3=(c1+1); c3<n_configs; c3++) { 
+      for(i=0; i<p.n; i++) {
+	p1[0]=configs[c1][3*i  ]; p1[1]=configs[c1][3*i+1]; p1[2]=configs[c1][3*i+2];
+	p2[0]=configs[c3][3*i  ]; p2[1]=configs[c3][3*i+1]; p2[2]=configs[c3][3*i+2];
+	dist = distance(p1, p2);
+	if(dist > rmin && dist < rmax) {
+	  ind = (int) ( (dist - rmin)*inv_bin_width );
+	  vanhove[(c3-c1-1)][ind]++;
+	}
+	msd[(c3-c1-1)] += dist*dist;
+      }
+    }
+  }
+
+  /* normalize */
+  for(c1=0; c1<(n_configs-1); c1++) { 
+    for(i=0; i<rbins; i++) { vanhove[c1][i] /= (double) (n_configs-c1-1)*p.n; }
+    msd[c1] /= (double) (n_configs-c1-1)*p.n;
+  }
+
+  realloc_intlist(&p,0);
+  return np;
+}
+
 /****************************************************************************************
  *                                 config storage functions
  ****************************************************************************************/
@@ -2225,6 +2269,78 @@ int parse_structurefactor(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
+static int parse_vanhove(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze vanhove' (van Hove Auto correlation function) */
+  /**********************************************************/
+
+  char buffer[2*TCL_DOUBLE_SPACE+4];
+  int c,i,ptype=0, rbins=0, np=0;
+  double rmin=0, rmax=0;
+  double **vanhove=NULL;
+  double *msd=NULL;
+
+  /* checks */
+  if (argc < 4) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze vanhove <part_type> <r_min> <r_max> <r_bins>", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  
+  if (!ARG0_IS_I(ptype)) return (TCL_ERROR); argc--; argv++;
+  if (!ARG0_IS_D(rmin))  return (TCL_ERROR); argc--; argv++;
+  if (!ARG0_IS_D(rmax))  return (TCL_ERROR); argc--; argv++;
+  if (!ARG0_IS_I(rbins)) return (TCL_ERROR); argc--; argv++;
+
+  if (n_configs == 0) {
+	Tcl_AppendResult(interp, "no configurations found! (This is a dynamic quantity!)", (char *)NULL);
+	return TCL_ERROR;
+  }
+
+  /* allocate space */
+  vanhove = (double **) malloc((n_configs)*sizeof(double *));
+  for(c=0; c<n_configs; c++) { 
+    vanhove[c] = (double *) malloc(rbins*sizeof(double));
+    for(i=0; i<rbins; i++) { vanhove[c][i] = 0; }
+  }
+  msd = (double *) malloc(n_configs*sizeof(double));
+  for(i=0; i<n_configs; i++) { msd[i] = 0; }
+ 
+  /* calculation */
+  np = calc_vanhove(ptype,rmin,rmax,rbins,msd,vanhove);
+ 
+  /* return results */
+  if(np==0) {
+    Tcl_AppendResult(interp, "{ no particles }", (char *)NULL);
+  } else {
+    Tcl_AppendResult(interp, "{ msd { ", (char *)NULL);
+    for(c=0; c<(n_configs-1); c++) {
+      sprintf(buffer,"%f ",msd[c]);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    Tcl_AppendResult(interp, "} } { vanhove { ", (char *)NULL);
+    for(c=0; c<(n_configs-1); c++) {
+      Tcl_AppendResult(interp, "{ ", (char *)NULL);
+      for(i=0; i<rbins; i++) {
+	sprintf(buffer,"%f ",vanhove[c][i]);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      Tcl_AppendResult(interp, "} ", (char *)NULL);
+    }
+    Tcl_AppendResult(interp, "} } ", (char *)NULL);
+  }
+
+
+  // free space of times and vanhove
+  for(c=0; c<n_configs; c++) { free(vanhove[c]); } 
+  free(vanhove);
+  free(msd);
+
+  if(np>0) { return (TCL_OK); } else { return (TCL_ERROR); }
+
+}
+
+
 /****************************************************************************************
  *                                 parser for config storage stuff
  ****************************************************************************************/
@@ -2567,6 +2683,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     err = parse_rdfchain(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("structurefactor"))
     err = parse_structurefactor(interp, argc - 2, argv + 2);
+  else if (ARG1_IS_S("vanhove"))
+    err = parse_vanhove(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("append"))
     err = parse_append(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("push"))

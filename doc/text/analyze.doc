@@ -45,6 +45,24 @@ In <tt>statistics.c</tt>:<br>
 	 \<order\>^3. The output corresponds to the blockfile format (\ref blockformat): <br>
 	 { \<q-value\> \<S(q)-value\> } ...  <br>
 	 The C implementation is \ref #calc_structurefactor; it is parsed by \ref #parse_structurefactor.	 
+    <li> \verbatim analyze vanhove { <type> <rmin> <rmax> <rbins> } \endverbatim
+	 returns the van Hove auto correlation function G(r,t) and the mean square displacement msd(t) for 
+	 particles of type \<ptype\> for the configurations stored in the array \ref #configs. This tool
+	 assumes that the configurations stored with 'analyze append' (\ref #analyze_append) are stored at 
+	 equidistant time intervals. G(r,t) is calculated for each multiple of this time intervals. For 
+	 each time t the distribution of particle displacements is calculated acoording to the specification
+	 given by \<rmin\>, \<rmax\> and \<rbins\>. \\
+	 If the particles perform a random walk ('normal diffusion process') G(r,t)/(r*r) is a gaussian 
+	 distribution for all times. Deviations of this behavior hint on another diffusion process or on
+	 the fact that your system has not reached the diffusive regime. In this case it is also very
+	 questionable to calculate a diffusion constant from the mean square displacement via the Stokes-Einstein
+	 relation.\\
+	 Output format:
+	 \verbatim	
+	 { msd { msd(0) msd(1) ... } }
+	 { vanhove { { G(0,0) G(1,0) ... } { G(0,1) G (1,1) ... } ... }	
+	 \endverbatim
+	 The G(r,t) are normalized such that the integral over space always yields 1.
     <li> \verbatim analyze centermass { <part_type> } \endverbatim
          returns the center of mass of particles of given type.
 	 The C implementation is \ref #centermass; it is parsed by \ref #parse_centermass.
