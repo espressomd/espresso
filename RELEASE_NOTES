@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.9l (Seska)                                                                      *
+* v1.9.9m (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.9l -
+- v1.9.9m -
 -----------
 
+(m) May   30th, 2006.
 (l) May   29th, 2006.
 (k) May   19th, 2006.
 (j) May   17th, 2006.
@@ -25,6 +26,10 @@ Current working revision.
 (a) April 24th, 2006.
 
 New Features:
+(m) P3M tunev2 now takes care of ELC+dielectrics
+(m) new analysis 'analyze vanhove <ptype> <rmin> <rmax> <rbins>' added which
+    calculates the van Hove auto correlation function G(r,t) and the mean square
+    displacement of the particles with type ptype.
 (l) Generic halo parallelization scheme for lattice algorithms.
 (l) Lattice data structures for lattice dynamics (e.g. Lattice
     Boltzmann).
