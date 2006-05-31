@@ -11,9 +11,10 @@
  */
 #include "thermostat.h"
 #include "communication.h"
+#include "lattice.h"
 
 /* thermostat switch */
-int thermo_switch = THERMO_LANGEVIN;
+int thermo_switch = THERMO_OFF;
 /** Temperature */
 double temperature = -1.0;
 
@@ -285,9 +286,9 @@ int thermo_print(Tcl_Interp *interp)
   if(thermo_switch & THERMO_LB) {
     Tcl_PrintDouble(interp, temperature, buffer);
     Tcl_AppendResult(interp,"{ lb ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, lbpar.lbfriction, buffer);
+    Tcl_PrintDouble(interp, lbpar.friction, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, lbpar.viscos, buffer);
+    Tcl_PrintDouble(interp, lbpar.viscosity, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
     Tcl_PrintDouble(interp, lbpar.tau, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
@@ -414,9 +415,6 @@ void thermo_init()
 #ifdef NPT
   if(thermo_switch & THERMO_NPT_ISO)   thermo_init_npt_isotropic();
 #endif
-#ifdef LB
-  if(thermo_switch & THERMO_LB)        thermo_init_lb();
-#endif
 }
 
 void thermo_heat_up()
@@ -439,8 +437,9 @@ void thermo_cool_down()
 
 int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
 {
+
 #ifdef LB
-  double temp, lbfriction, viscosity, tgrid, density, agrid, gamma = 0.0;
+    double agrid, tau, temp, density, friction, viscosity;
   /* get lb interaction type */
   if (argc < 7) {
     Tcl_AppendResult(interp, "lattice-Boltzmann needs 6 parameters: "
@@ -451,9 +450,9 @@ int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
 
   /* copy lattice-boltzmann parameters */
   if ((! ARG_IS_D(1, temp))   ||
-      (! ARG_IS_D(2, lbfriction))   ||
+      (! ARG_IS_D(2, friction))   ||
       (! ARG_IS_D(3, viscosity))   ||
-      (! ARG_IS_D(4, tgrid))   ||
+      (! ARG_IS_D(4, tau))   ||
       (! ARG_IS_D(5, density)) ||
       (! ARG_IS_D(6, agrid)    )) {
     Tcl_AppendResult(interp, "lattice-boltzmann needs 6 DOUBLE parameters: "
@@ -462,7 +461,7 @@ int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
     return TCL_ERROR;
   }
 
-  if ( temp < 0.0 ||  viscosity <= 0.0 ||  density <= 0.0 || lbfriction <= 0.0 || tgrid < 0.0 || agrid < 0.0 )
+  if ( temp < 0.0 ||  viscosity <= 0.0 ||  density <= 0.0 || friction <= 0.0 || tau < 0.0 || agrid < 0.0 )
   {
     Tcl_AppendResult(interp, "these parameters must be non-negative "
 		     "<temperature> <friction> <viscosity> <tgrid> <density> <gridsize> ",
@@ -471,15 +470,26 @@ int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
   }
 	
   Tcl_ResetResult(interp);
-  if (lb_set_params(temp, lbfriction, viscosity, tgrid, density, agrid) == TCL_ERROR) {
-    Tcl_AppendResult(interp, "lb simulation set", (char *) NULL);
-    return 0;
-  }
+
+  /* thermo_switch is retained for backwards compatibility */
+  thermo_switch = ( thermo_switch | THERMO_LB );
+  mpi_bcast_parameter(FIELD_THERMO_SWITCH);
+
+  lattice_switch = ( lattice_switch | LATTICE_LB) ;
+  mpi_bcast_parameter(FIELD_LATTICE_SWITCH) ;
 
   if(temp_callback(interp, &temp) == TCL_ERROR) return (TCL_ERROR);
-  if(langevin_gamma_callback(interp, &gamma) == TCL_ERROR) return (TCL_ERROR);
-  thermo_switch = ( (thermo_switch ^ THERMO_LANGEVIN) | THERMO_LB);
-  mpi_bcast_parameter(FIELD_THERMO_SWITCH);
+  
+  lbpar.agrid = agrid;
+  lbpar.tau = tau;
+  lbpar.rho = density;
+  lbpar.viscosity = viscosity;
+  lbpar.friction = friction;
+
+  mpi_bcast_lb_params(LBPAR_DENSITY|LBPAR_VISCOSITY|LBPAR_AGRID|LBPAR_TAU|LBPAR_FRICTION);
+
+  Tcl_AppendResult(interp, "NOTE: Usage of \"thermostat lb\" is deprecated. Use the \"lbfluid\" command instead!\n", (char *)NULL);
 #endif
+  
   return TCL_OK;
 }

@@ -42,6 +42,7 @@
 #include "maggs.h"
 #include "elc.h"
 #include "statistics_chain.h"
+#include "statistics_fluid.h"
 #include "topology.h"
 #include "errorhandling.h"
 #include "molforces.h"
@@ -153,14 +154,18 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_EXCL  41
 /** Action number for \ref mpi_morse_cap_forces. */
 #define REQ_BCAST_MFC 42
-/** Action number for \ref lb_set_params. */
-#define REQ_LB_BCAST 43
+/** Action number for \ref mpi_bcast_lb_params. */
+#define REQ_BCAST_LBPAR 43
 /** Action number for \ref mpi_send_dip. */
 #define REQ_SET_DIP 44
 /** Action number for \ref mpi_send_dipm. */
 #define REQ_SET_DIPM 45
+/** Action number for \ref mpi_send_fluid. */
+#define REQ_SET_FLUID 46
+/** Action number for \ref mpi_recv_fluid. */
+#define REQ_GET_FLUID 47
 /** Total number of action numbers. */
-#define REQ_MAXIMUM   46
+#define REQ_MAXIMUM 48
 
 /*@}*/
 
@@ -215,7 +220,8 @@ void mpi_morse_cap_forces_slave(int node, int parm);
 void mpi_bcast_lb_params_slave(int node, int parm);
 void mpi_send_dip_slave(int node, int parm);
 void mpi_send_dipm_slave(int node, int parm);
-
+void mpi_send_fluid_slave(int node, int parm);
+void mpi_recv_fluid_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -267,6 +273,8 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_bcast_lb_params_slave,        /* 43: REQ_LB_BCAST */
   mpi_send_dip_slave,               /* 44: REQ_SET_DIP */
   mpi_send_dipm_slave,              /* 45: REQ_SET_DIPM */
+  mpi_send_fluid_slave,             /* 46: REQ_SET_FLUID */
+  mpi_recv_fluid_slave,             /* 47: REQ_GET_FLUID */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -325,6 +333,8 @@ char *names[] = {
   "BCAST_LB",       /* 43 */
   "SET_DIP",        /* 44 */
   "SET_DIPM",       /* 45 */
+  "SET_FLUID",      /* 46 */
+  "GET_FLUID",      /* 47 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -336,8 +346,10 @@ static int request[3];
 
 #ifdef MPI_CORE
 void mpi_core(MPI_Comm *comm, int *errcode,...) {
-  fprintf(stderr, "%d: Aborting due to MPI error %d, forcing core dump\n", this_node, *errcode);
-  fflush(stderr);
+  int len;
+  char string[1024];
+  MPI_Error_string(*errcode, string, &len);
+  fprintf(stderr, "%d: Aborting due to MPI error %d: %s. Forcing core dump.\n", this_node, *errcode, string);
   core();
 }
 #endif
@@ -1069,7 +1081,11 @@ int mpi_integrate(int n_steps)
 {
   mpi_issue(REQ_INTEGRATE, -1, n_steps);
 
+#ifndef ALTERNATIVE_INTEGRATOR
   integrate_vv(n_steps);
+#else
+  integrate_pv(n_steps);
+#endif
   COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", this_node, n_steps));
 
   return check_runtime_errors();
@@ -1202,6 +1218,24 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb, vo
     mpi_issue(REQ_GATHER, -1, 3);
     pressure_calc(result,result_t,result_nb,result_t_nb,1);
     break;
+  case 4:
+    mpi_issue(REQ_GATHER, -1, 4);
+    predict_momentum_particles(result);
+    break;
+#ifdef LB
+  case 5:
+    mpi_issue(REQ_GATHER, -1, 5);
+    lb_calc_fluid_mass(result);
+    break;
+  case 6: 
+    mpi_issue(REQ_GATHER, -1, 6);
+    lb_calc_fluid_momentum(result);
+    break;
+  case 7:
+    mpi_issue(REQ_GATHER, -1, 7);
+    lb_calc_fluid_temp(result);
+    break;
+#endif
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: illegal request %d for REQ_GATHER\n", this_node, job);
     errexit();
@@ -1223,12 +1257,25 @@ void mpi_gather_stats_slave(int ana_num, int job)
     /* calculate and reduce (sum up) virials, revert velocities half a timestep for 'analyze p_inst' */
     pressure_calc(NULL,NULL,NULL,NULL,1);
     break;
+  case 4:
+    predict_momentum_particles(NULL);
+    break;
+#ifdef LB
+  case 5:
+    lb_calc_fluid_mass(NULL);
+    break;
+  case 6:
+    lb_calc_fluid_momentum(NULL);
+    break;
+  case 7:
+    lb_calc_fluid_temp(NULL);
+    break;
+#endif
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: illegal request %d for REQ_GATHER\n", this_node, job);
     errexit();
   }
 }
-
 
 /*************** REQ_GETPARTS ************/
 void mpi_get_particles(Particle *result, IntList *bi)
@@ -1928,32 +1975,20 @@ void mpi_sync_topo_part_info_slave(int node,int parm ) {
 
 }
 
-int lb_set_params(double temp, double lbfriction, double viscosity, double tgrid,
-		  double density, double agrid)
-{
-#ifdef LB
-  temperature      = temp;
-  lbpar.lbfriction = lbfriction;
-  lbpar.viscos     = viscosity;
-  lbpar.agrid      = agrid;
-  lbpar.tau        = tgrid;
-  lbpar.rho        = density;  
-  lbpar.gridpoints = box_l[2]/agrid;  
+/******************* REQ_BCAST_LBPAR ********************/
 
-  mpi_issue(REQ_LB_BCAST, 1, 0);
-  mpi_bcast_lb_params_slave(-1, 0);
-#endif  
-  return TCL_OK;
+void mpi_bcast_lb_params(int field) {
+#ifdef LB
+  mpi_issue(REQ_BCAST_LBPAR, -1, field);
+  mpi_bcast_lb_params_slave(-1, field);
+#endif
 }
 
-
-void mpi_bcast_lb_params_slave(int node, int parm)
-{
-  /* broadcast lb parameters */
-#ifdef LB  
-  MPI_Bcast(&lbpar, sizeof(LB_structure), MPI_BYTE, 0, MPI_COMM_WORLD);
-  thermo_init_lb();
-#endif  
+void mpi_bcast_lb_params_slave(int node, int field) {
+#ifdef LB
+  MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, MPI_COMM_WORLD);
+  on_lb_params_change(field);
+#endif
 }
 
 /******************* REQ_GET_ERRS ********************/
@@ -1981,7 +2016,6 @@ int mpi_gather_runtime_errors(Tcl_Interp *interp, int error_code)
   /* gather the maximum length of the error messages, and allocate transfer space */
   errcnt = malloc(n_nodes*sizeof(int));
   MPI_Gather(&n_error_msg, 1, MPI_INT, errcnt, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
   /* allocate transfer buffer for maximal error message length */
   n_other_error_msg = n_error_msg;
   for (node = 1; node < n_nodes; node++)
@@ -1996,11 +2030,10 @@ int mpi_gather_runtime_errors(Tcl_Interp *interp, int error_code)
   for (node = 1; node < n_nodes; node++) {
     if (errcnt[node] > 0) {
       MPI_Recv(other_error_msg, errcnt[node], MPI_CHAR, node, 0, MPI_COMM_WORLD, &status);
-
       sprintf(nr_buf, "%d ", node);
 
       /* check wether it's the same message as from the master, then just consent */
-      if (strcmp(other_error_msg, error_msg) == 0) {
+      if (error_msg && strcmp(other_error_msg, error_msg) == 0) {
 	Tcl_AppendResult(interp, nr_buf, "<consent> ", (char *) NULL);
       }
       else {
@@ -2023,7 +2056,6 @@ void mpi_gather_runtime_errors_slave(int node, int parm)
     return;
 
   MPI_Gather(&n_error_msg, 1, MPI_INT, NULL, 0, MPI_INT, 0, MPI_COMM_WORLD);
-
   if (n_error_msg > 0) {
     MPI_Send(error_msg, n_error_msg, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
     /* reset error message on slave node */
@@ -2053,6 +2085,59 @@ void mpi_send_exclusion_slave(int part1, int part2)
 #endif
 }
 
+/************** REQ_SET_FLUID **************/
+void mpi_send_fluid(int node, int index, double rho, double *j) {
+#ifdef LB
+  if (node==this_node) {
+    lb_set_local_fields(index, rho, j);
+  } else {
+    double data[4] = { rho, j[0], j[1], j[2] };
+    mpi_issue(REQ_SET_FLUID, node, index);
+    MPI_Send(data, 4, MPI_DOUBLE, node, REQ_SET_FLUID, MPI_COMM_WORLD);
+  }
+#endif
+}
+
+void mpi_send_fluid_slave(int node, int index) {
+#ifdef LB
+  if (node==this_node) {
+    double data[4];
+    MPI_Status status;
+    MPI_Recv(data, 4, MPI_DOUBLE, 0, REQ_SET_FLUID, MPI_COMM_WORLD, &status);
+    lb_set_local_fields(index, data[0], &data[1]);
+  }
+#endif
+}
+
+/************** REQ_GET_FLUID **************/
+void mpi_recv_fluid(int node, int index, double *rho, double *j) {
+#ifdef LB
+  if (node==this_node) {
+    double pi[6];
+    lb_get_local_fields(index, rho, j, pi);
+  } else {
+    double data[4];
+    mpi_issue(REQ_GET_FLUID, node, index);
+    MPI_Status status;
+    MPI_Recv(data, 4, MPI_DOUBLE, node, REQ_GET_FLUID, MPI_COMM_WORLD, &status);
+    *rho = data[0];
+    j[0] = data[1];
+    j[1] = data[2];
+    j[2] = data[3];
+  }
+#endif
+}
+
+void mpi_recv_fluid_slave(int node, int index) {
+#ifdef LB
+  if (node==this_node) {
+    double data[10];
+    lb_get_local_fields(index, &data[0], &data[1], &data[4]);
+    MPI_Send(data, 4, MPI_DOUBLE, 0, REQ_GET_FLUID, MPI_COMM_WORLD);
+  }
+#endif
+}
+
 /*********************** MAIN LOOP for slaves ****************/
 
 void mpi_loop()
@@ -2074,4 +2159,3 @@ void mpi_loop()
 		       names[request[0]], request[1], request[2]));
   }
 }
-

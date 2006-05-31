@@ -151,7 +151,8 @@ extern const Datafield fields[];
 #define FIELD_VERLETFLAG          35
 /** index of \ref verlet_reuse in  \ref #fields */
 #define FIELD_VERLETREUSE         36
-
+/** index of \ref lattice_switch in \ref #fields */
+#define FIELD_LATTICE_SWITCH      37
 /*@}*/
 
 /**********************************************

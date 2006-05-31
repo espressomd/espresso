@@ -18,6 +18,7 @@
 #include "statistics_chain.h"
 #include "statistics_molecule.h"
 #include "statistics_cluster.h"
+#include "statistics_fluid.h"
 #include "energy.h"
 #include "modes.h"
 #include "pressure.h"
@@ -28,6 +29,7 @@
 #include "interaction_data.h"
 #include "domain_decomposition.h"
 #include "verlet.h"
+#include "lb.h"
 
 /** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
@@ -232,6 +234,52 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
   return 0;
 }
 
+/** Calculate momentum of all particles in the local domain
+ * @param result Result for this processor (Output)
+ */
+void predict_momentum_particles(double *result)
+{
+  Cell *cell;
+  Particle *p;
+  int i, c, np;
+
+  double momentum[3] = { 0.0, 0.0, 0.0 };
+
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    np = cell->n;
+    p  = cell->part;
+
+    for(i=0; i < np; i++) {
+         momentum[0] +=  p[i].m.v[0] + p[i].f.f[0];
+         momentum[1] +=  p[i].m.v[1] + p[i].f.f[1];
+         momentum[2] +=  p[i].m.v[2] + p[i].f.f[2];
+    }
+  }
+
+  momentum[0] /= time_step;
+  momentum[1] /= time_step;
+  momentum[2] /= time_step;
+
+  MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+}
+
+/** Calculate total momentum of the system (particles & LB fluid)
+ * @param momentum Rsult for this processor (Output)
+ */
+void momentum_calc(double *momentum) 
+{
+    double momentum_fluid[3] = { 0., 0., 0. };
+    double momentum_particles[3] = { 0., 0., 0. };
+
+    mpi_gather_stats(4, momentum_particles, NULL, NULL, NULL);
+    mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+
+    momentum[0] = momentum_fluid[0] + momentum_particles[0];
+    momentum[1] = momentum_fluid[1] + momentum_particles[1];
+    momentum[2] = momentum_fluid[2] + momentum_particles[2];
+
+}
 
 void centermass(int type, double *com)
 {
@@ -2571,6 +2619,97 @@ static int parse_mol(Tcl_Interp *interp, int argc, char **argv)
 #endif
 }
 
+static int parse_and_print_momentum(Tcl_Interp *interp, int argc, char **argv)
+{
+    char buffer[TCL_DOUBLE_SPACE];
+    double momentum[3] = { 0., 0., 0. };
+
+    momentum_calc(momentum);
+
+    if (argc == 0) {
+      Tcl_PrintDouble(interp, momentum[0], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, momentum[1], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, momentum[2], buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    else if (ARG0_IS_S("particles")) {
+      mpi_gather_stats(4, momentum, NULL, NULL, NULL);
+      Tcl_PrintDouble(interp, momentum[0], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, momentum[1], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      Tcl_PrintDouble(interp, momentum[2], buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    else {
+	Tcl_AppendResult(interp, "unknown feature of: analyze momentum",
+			 (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+
+/** EXPERIMENTAL [uschille] */
+static int acf_parse_init(Tcl_Interp *interp, int argc, char **argv, int slot_num) {
+  Tcl_AppendResult(interp, "TODO: This is not implemented yet!", (char *)NULL) ;
+  return TCL_ERROR ;
+}
+
+/** EXPERIMENTAL [uschille] */
+static int acf_parse_append(Tcl_Interp *interp, int argc, char **argv, int slot_num) {
+  Tcl_AppendResult(interp, "TODO: This is not implemented yet!", (char *)NULL) ;  return TCL_ERROR ;
+}
+
+static int acf_print(Tcl_Interp *interp, int slot_num) {
+  Tcl_AppendResult(interp, "TODO: This is not implemented yet!", (char *)NULL) ;  return TCL_ERROR ;
+}
+
+/** EXPERIMENTAL [uschille] */
+int acf_cmd(ClientData data, Tcl_Interp *interp, int argc, char ** argv) {
+
+  int err = TCL_OK ;
+  int slot_num = 0 ;
+
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "Wrong # of args!", (char *)NULL) ;
+    return TCL_ERROR ;
+  }
+    
+  if (!ARG1_IS_I(slot_num)) {
+    Tcl_AppendResult(interp, "Error while parsing arg 1 of acf!", (char *)NULL) ;
+    return TCL_ERROR ;
+  }
+
+  if (slot_num < 0) {
+    Tcl_AppendResult(interp, "Error: slot number must be positive", (char *)NULL) ;
+    return TCL_ERROR ;
+  }
+  
+  if (argc == 2) {
+    err = acf_print(interp, slot_num) ;
+  }
+  else if (ARG_IS_S(2,"init")) {
+    err = acf_parse_init(interp, argc-3, argv+3, slot_num) ;
+  }
+  else if (ARG_IS_S(2,"append")) {
+    err = acf_parse_append(interp, argc-3, argv+3, slot_num) ;
+  }
+  else {
+    Tcl_AppendResult(interp, "Error: unknown acf instruction \"",argv[2],"\"", (char *)NULL) ;
+    err = TCL_ERROR ;
+  }
+
+  if (err==TCL_ERROR) {
+    Tcl_AppendResult(interp, "Usage:", (char *)NULL) ;
+  }
+
+  return err ;
+
+}
+
 /****************************************************************************************
  *                                 main parser for analyze
  ****************************************************************************************/
@@ -2585,6 +2724,10 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
   if (ARG1_IS_S("set"))
     err = parse_analyze_set_topology(interp, argc - 2, argv + 2);
+#ifdef LB
+  else if (ARG1_IS_S("fluid"))
+    err = parse_analyze_fluid(interp, argc - 2, argv + 2);
+#endif
   else if (ARG1_IS_S("get_folded_positions"))
     err = parse_get_folded_positions(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("set_bilayer"))
@@ -2627,6 +2770,8 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     err = parse_and_print_stress_tensor(interp, argc - 2, argv + 2, 0);
   else if (ARG1_IS_S("p_inst"))
     err = parse_and_print_pressure(interp, argc - 2, argv + 2, 1);
+  else if (ARG1_IS_S("momentum"))
+    err = parse_and_print_momentum(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("bins"))
     err = parse_bins(interp, argc - 2, argv + 2);
   else if (ARG1_IS_S("p_IK1"))

@@ -21,6 +21,8 @@
  <li> \verbatim #define INTEG_DEBUG \endverbatim activate integration debug output.
  <li> \verbatim #define CELL_DEBUG \endverbatim activate cell code debug output.
  <li> \verbatim #define GHOST_DEBUG \endverbatim activate ghost code debug output.
+ <li> \verbatim #define LATTICE_DEBUG \endverbatim activate lattice code debug output.
+ <li> \verbatim #define HALO_DEBUG \endverbatim activate halo code debug output.
  <li> \verbatim #define GRID_DEBUG \endverbatim activate grid debug output.
  <li> \verbatim #define VERLET_DEBUG \endverbatim activate verlet debug output.
  <li> \verbatim #define PARTICLE_DEBUG \endverbatim activate particle data related debug output.
@@ -42,6 +44,7 @@
  <li> \verbatim #define MEM_DEBUG \endverbatim activate memory allocation/freeing logging. WARNING: This generates TONS of
  output. This can only be used reasonably for a few time steps with a few particles.
  <li> \verbatim #define MAGGS_DEBUG \endverbatim activate debugging output of the Maggs electrostatics/dynamics method.
+ <li> \verbatim #define LB_DEBUG \endverbatim activate debugging output for Lattice Boltzmann fluid dynamics.
  <li> \verbatim #define MPI_CORE \endverbatim generate a core dump when exiting abnormally due
  to MPI errors.
  <li> \verbatim #define FORCE_CORE \endverbatim generate a core dump even on regular termination.
@@ -60,6 +63,8 @@
 /* #define INTEG_DEBUG */
 /* #define CELL_DEBUG */
 /* #define GHOST_DEBUG */
+/* #define LATTICE_DEBUG */
+/* #define HALO_DEBUG */
 /* #define GRID_DEBUG */
 /* #define VERLET_DEBUG */
 /* #define PARTICLE_DEBUG */
@@ -81,6 +86,7 @@
 /* #define MOLFORCES_DEBUG */
 /* #define MEM_DEBUG */
 /* #define MAGGS_DEBUG */
+/* #define LB_DEBUG */
 
 /** do an MPI_Barrier at the beginning of the communication slave loop.
     Helps a lot in debugging */
@@ -192,11 +198,25 @@ extern int check_id;
 #define GHOST_TRACE(cmd)
 #endif
 
+#ifdef HALO_DEBUG
+#define HALO_TRACE(cmd) { cmd; }
+#else
+/** Equals { cmd  } iff HALO_DEBUG is set. */
+#define HALO_TRACE(cmd)
+#endif
+
 #ifdef GRID_DEBUG
 #define GRID_TRACE(cmd) { cmd;  }
 #else
 /** Equals { cmd } iff GRID_DEBUG is set. */
 #define GRID_TRACE(cmd)
+#endif
+
+#ifdef LATTICE_DEBUG
+#define LATTICE_TRACE(cmd) { cmd; }
+#else
+/** Equals { cmd } iff LATTICE_DEBUG is set. */
+#define LATTICE_TRACE(cmd)
 #endif
 
 #ifdef FORCE_DEBUG
@@ -321,4 +341,9 @@ extern int check_id;
 #define MOLFORCES_TRACE(cmd)
 #endif
 
-
+#ifdef LB_DEBUG
+#define LB_TRACE(cmd) { cmd; }
+#else
+/** Equals { cmd } iff LB_DEBUG is set. */
+#define LB_TRACE(cmd)
+#endif

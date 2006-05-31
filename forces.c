@@ -28,6 +28,7 @@
 #include "rotation.h"
 #include "forces.h"
 #include "elc.h"
+#include "lattice.h"
 #include "lb.h"
 #include "nsquare.h"
 #include "layered.h"
@@ -48,6 +49,7 @@ void init_forces();
 
 void force_calc()
 {
+  
 
 #ifdef DIPOLES
   convert_quat_to_dip_all();
@@ -76,7 +78,7 @@ void force_calc()
   calc_long_range_forces();
 
 #ifdef LB
-  if(thermo_switch & THERMO_LB) calc_lbforce(); 
+  if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
 #endif
 
 #ifdef COMFORCE

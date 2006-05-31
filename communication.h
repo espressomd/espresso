@@ -80,6 +80,9 @@ void mpi_loop();
 /** Issue REQ_TERM: stop Espresso, all slave nodes exit. */
 void mpi_stop();
 
+/** Finalize MPI. Called by all nodes upon exit */
+void mpi_finalize();
+
 /** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.
     @param i the number from \ref global.h "global.h" referencing the datafield.
     @return nonzero on error
@@ -372,6 +375,27 @@ void mpi_update_mol_ids(void);
 /** Issue REQ_SYNC_TOPO: Update the molecules ids to that they correspond to the topology */
 int mpi_sync_topo_part_info(void);
 
+/** Issue REQ_BCAST_LBPAR: Broadcast a parameter for Lattice Boltzmann.
+ * @param field References the parameter field to be broadcasted. The references are defined in \ref lb.h "lb.h"
+ */
+void mpi_bcast_lb_params(int field);
+
+/** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
+ * @param node  processor to send to
+ * @param index index of the lattice site
+ * @param rho   local fluid density
+ * @param j     local fluid velocity
+ */
+void mpi_send_fluid(int node, int index, double rho, double *j);
+
+/** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
+ * @param node  processor to send to
+ * @param index index of the lattice site
+ * @param rho   local fluid density
+ * @param j     local fluid velocity
+ */
+void mpi_recv_fluid(int node, int index, double *rho, double *j);
+
 /** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result
     to these error messages. This called only on the master node.
     The errors are append to the result, if ret_state == TCL_ERROR, otherwise the result is overwritten.
@@ -397,8 +421,4 @@ int mpi_gather_runtime_errors(Tcl_Interp *interp, int ret_state);
 #define EWALD_COUNT_CHARGES 4
 /*@}*/
 
-/** Issue REQ_BCAST_LB: broadcast lattice-Boltzmann parameters to all nodes. */
-int lb_set_params(double temp, double friction, double viscosity, double tgrid,
-                                      double density, double agrid);
-				      
 #endif

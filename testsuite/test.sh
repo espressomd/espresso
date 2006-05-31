@@ -5,7 +5,7 @@ TESTCASES="nve_pe.tcl npt.tcl \
     lj.tcl lj-cos.tcl harm.tcl fene.tcl tabulated.tcl gb.tcl rotation.tcl constraints.tcl \
     kinetic.tcl thermostat.tcl \
     intpbc.tcl intppbc.tcl layered.tcl nsquare.tcl \
-    comforce.tcl comfixed.tcl analysis.tcl mass.tcl"
+    comforce.tcl comfixed.tcl analysis.tcl mass.tcl lb.tcl"
 
 # List of testcases to be done (and people responsible for them):
 #################################################################

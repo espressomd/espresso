@@ -96,6 +96,9 @@ extern int n_part_conf;
 */
 int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
+/** EXPERIMENTAL: Implements the Tcl command \ref tcl_acf for online calculation of autocorrelation functions. */
+int acf_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
 /** the minimal distance of two particles with types in set1 rsp. set2.
     @param set1 types of particles
     @param set2 types of particles
@@ -307,6 +310,11 @@ MDINLINE double min_distance(double pos1[3], double pos2[3]) {
 void centermass(int type, double *com);
 void momentofinertiamatrix(int type, double *MofImatrix);
 void calculate_verlet_neighbors();
+
+/** returns the momentum of the particles in the simulation box.
+ * \param result Momentum of particles.
+ */
+void predict_momentum_particles(double *result);
 
 MDINLINE double *obsstat_bonded(Observable_stat *stat, int j)
 {

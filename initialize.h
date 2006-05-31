@@ -81,6 +81,8 @@ void on_parameter_change(int parameter);
 */
 void on_ghost_flags_change();
 
+void on_lb_params_change(int field);
+
 /*@}*/
 
 #endif
