@@ -471,7 +471,7 @@ static double dipole_energy()
 
 /*****************************************************************/
 
-static double image_sum_b(double q, double z) 
+MDINLINE double image_sum_b(double q, double z) 
 {
   double shift = 0.5*box_l[2];
   double fac=elc_params.di_mid_top*elc_params.di_mid_bot;
@@ -480,7 +480,7 @@ static double image_sum_b(double q, double z)
   return image_sum;
 }
 
-static double image_sum_t(double q, double z) 
+MDINLINE double image_sum_t(double q, double z) 
 {
   double shift = 0.5*box_l[2];
   double fac=elc_params.di_mid_top*elc_params.di_mid_bot;
@@ -1302,7 +1302,7 @@ void ELC_init()
     // realspace P3M
     maxsl = elc_params.gap_size - p3m.r_cut;
     if (elc_params.space_layer > maxsl) {
-      if (2*maxsl >= elc_params.gap_size) {
+      if (maxsl <= 0) {
 	errtxt = runtime_error(128);
 	ERROR_SPRINTF(errtxt, "{007 P3M real space cutoff too large for ELC w/ dielectric contrast} ");
       }
