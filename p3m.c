@@ -978,11 +978,11 @@ void P3M_charge_assign()
 	  || p[i].p.dipm != 0.0
 #endif      
 	  ) {
-	P3M_assign_charge(p[i].p.q,
+	P3M_assign_charge(p[i].p.q, p[i].r.p,
 #ifdef DIPOLES
-			  p[i].p.dipm,
+			  p[i].p.dipm, p[i].r.dip, 
 #endif
-			  p[i].r.p, cp_cnt);
+			  cp_cnt);
 	cp_cnt++;
       }
     }

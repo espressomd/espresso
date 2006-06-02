@@ -261,10 +261,11 @@ void P3M_charge_assign();
     which may be smaller than 0, in which case the charge is assumed to be virtual and is not
     stored in the ca_frac arrays. */
 MDINLINE void P3M_assign_charge(double q,
+				double real_pos[3],
 #ifdef DIPOLES
 				double mu,
+				double dip[3],
 #endif
-				double real_pos[3],
 				int cp_cnt)
 {
   /* we do not really want to export these, but this function should be inlined */
@@ -277,7 +278,7 @@ MDINLINE void P3M_assign_charge(double q,
   extern double pos_shift;
   extern double *rs_mesh;
 #ifdef DIPOLES
-  extern double *rs_mesh_dip;
+  extern double *rs_mesh_dip[3];
 #endif
 
   int d, i0, i1, i2;
@@ -332,12 +333,12 @@ MDINLINE void P3M_assign_charge(double q,
 	for(i2=0; i2<p3m.cao; i2++) {
 #ifdef DIPOLES
 	  cur_ca_frac_val = tmp1 * P3M_caf(i2, dist[2]);
-	  if (store_ca_frac) *(cur_ca_frac++) = cur_ca_frac_val;
+	  if (cp_cnt >= 0) *(cur_ca_frac++) = cur_ca_frac_val;
 	  if (q  != 0.0) rs_mesh[q_ind] += q * cur_ca_frac_val;
 	  if (mu != 0.0) {
-	    rs_mesh_dip[0][q_ind] += p[i].r.dip[0] * cur_ca_frac_val;
-	    rs_mesh_dip[1][q_ind] += p[i].r.dip[1] * cur_ca_frac_val;
-	    rs_mesh_dip[2][q_ind] += p[i].r.dip[2] * cur_ca_frac_val;
+	    rs_mesh_dip[0][q_ind] += dip[0] * cur_ca_frac_val;
+	    rs_mesh_dip[1][q_ind] += dip[1] * cur_ca_frac_val;
+	    rs_mesh_dip[2][q_ind] += dip[2] * cur_ca_frac_val;
 	  }
 #else
 	  // In the case without dipoles, ca_frac[] contains an additional factor q!
@@ -383,12 +384,12 @@ MDINLINE void P3M_assign_charge(double q,
 	for(i2=0; i2<p3m.cao; i2++) {
 #ifdef DIPOLES
 	  cur_ca_frac_val = tmp1 * int_caf[i2][arg[2]];
-	  if (store_ca_frac) *(cur_ca_frac++) = cur_ca_frac_val;
+	  if (cp_cnt >= 0) *(cur_ca_frac++) = cur_ca_frac_val;
 	  if (q  != 0.0) rs_mesh[q_ind] += q * cur_ca_frac_val;
 	  if (mu != 0.0) {
-	    rs_mesh_dip[0][q_ind] += p[i].r.dip[0] * cur_ca_frac_val;
-	    rs_mesh_dip[1][q_ind] += p[i].r.dip[1] * cur_ca_frac_val;
-	    rs_mesh_dip[2][q_ind] += p[i].r.dip[2] * cur_ca_frac_val;
+	    rs_mesh_dip[0][q_ind] += dip[0] * cur_ca_frac_val;
+	    rs_mesh_dip[1][q_ind] += dip[1] * cur_ca_frac_val;
+	    rs_mesh_dip[2][q_ind] += dip[2] * cur_ca_frac_val;
 	  }
 #else
 	  //In the case without dipoles, ca_frac[] contains an additional factor q!

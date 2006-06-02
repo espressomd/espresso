@@ -1456,6 +1456,7 @@ void ELC_P3M_charge_assign_both()
   for(i=0; i<lm.size; i++) rs_mesh[i] = 0.0;
 #ifdef DIPOLES
   { int j;
+    extern double *rs_mesh_dip[3];
     for(i=0;i<3;i++)
       for(j=0; j<lm.size; j++) rs_mesh_dip[i][j] = 0.0;
   }
@@ -1467,30 +1468,30 @@ void ELC_P3M_charge_assign_both()
     np = cell->n;
     for(i = 0; i < np; i++) {
       if( p[i].p.q != 0.0 ) {
-	P3M_assign_charge(p[i].p.q,
+	P3M_assign_charge(p[i].p.q, p[i].r.p,
 #ifdef DIPOLES
-			  0,
+			  0, pos,
 #endif
-			  p[i].r.p, cp_cnt);
+			  cp_cnt);
 
 	if(p[i].r.p[2]<elc_params.space_layer) {
 	  double q=elc_params.di_mid_bot*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=-p[i].r.p[2];
-	  P3M_assign_charge(q,
+	  P3M_assign_charge(q, pos,
 #ifdef DIPOLES
-			    0,
+			    0, pos,
 #endif
-			    pos, -1);
+			    -1);
 	}
 	
 	if(p[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
 	  double q=elc_params.di_mid_top*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=2*elc_params.h-p[i].r.p[2];
-	  P3M_assign_charge(q,
+	  P3M_assign_charge(q, pos,
 #ifdef DIPOLES
-			    0,
+			    0, pos,
 #endif
-			    pos, -1);
+			    -1);
 	}
 
 	cp_cnt++;
@@ -1510,6 +1511,7 @@ void ELC_P3M_charge_assign_image()
   for(i=0; i<lm.size; i++) rs_mesh[i] = 0.0;
 #ifdef DIPOLES
   { int j;
+    extern double *rs_mesh_dip[3];
     for(i=0;i<3;i++)
       for(j=0; j<lm.size; j++) rs_mesh_dip[i][j] = 0.0;
   }
@@ -1525,21 +1527,21 @@ void ELC_P3M_charge_assign_image()
 	if(p[i].r.p[2]<elc_params.space_layer) {
 	  double q=elc_params.di_mid_bot*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=-p[i].r.p[2];
-	  P3M_assign_charge(q,
+	  P3M_assign_charge(q, pos,
 #ifdef DIPOLES
-			    0,
+			    0, pos,
 #endif
-			    pos, -1);
+			    -1);
 	}
 	
 	if(p[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
 	  double q=elc_params.di_mid_top*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=2*elc_params.h-p[i].r.p[2];
-	  P3M_assign_charge(q,
+	  P3M_assign_charge(q, pos,
 #ifdef DIPOLES
-			    0,
+			    0, pos,
 #endif
-			    pos, -1);
+			    -1);
 	}
       }
     }
