@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.9m (Seska)                                                                      *
+* v1.9.9n (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.9m -
+- v1.9.9n -
 -----------
 
+(n) June   2nd, 2006.
 (m) May   30th, 2006.
 (l) May   29th, 2006.
 (k) May   19th, 2006.
@@ -26,6 +27,7 @@ Current working revision.
 (a) April 24th, 2006.
 
 New Features:
+(n) config.guess now works for Intel Core Duo CPUs
 (m) P3M tunev2 now takes care of ELC+dielectrics
 (m) new analysis 'analyze vanhove <ptype> <rmin> <rmax> <rbins>' added which
     calculates the van Hove auto correlation function G(r,t) and the mean square
