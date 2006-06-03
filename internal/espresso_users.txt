@@ -1053,3 +1053,31 @@ topic:     This is a test only
 reminded:  X24.MAY.2006
 
 
+name:      Calvin
+email:     lixu@rpi.edu
+institute: ME, Rensselear Polytechnic Institute
+           110 8th street
+           Troy, NY 12180
+sent:      02.JUN.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     I am thinking about using it in heat transfer topics. and I
+           guess it will help me to understand more on the phenomena.
+reminded:  X02.JUN.2006
+
+
+name:      Xianren ZHANG
+email:     zhangxr@mail.buct.edu.cn
+institute: PO Box 100
+           College of Chemical Engineering
+           Beijing University of Chemical Technology
+           Beijing 100029
+           China
+sent:      02.JUN.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Recently, I am studying the adsorption of polymers on solid
+           surfaces. so I think I can do my research with ESPResSo.
+reminded:  02.JUN.2006
+
+
