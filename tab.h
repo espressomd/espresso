@@ -632,6 +632,11 @@ MDINLINE int calc_tab_dihedral_force(Particle *p2, Particle *p1,
 
   /* dihedral angle */
   calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23, v23Xv34, &l_v23Xv34, &cosphi, &phi);
+  /* dihedral angle not defined - force zero */
+  if ( phi == -1.0 ) { 
+    for(i=0;i<3;i++) { force1[i] = 0.0; force2[i] = 0.0; force3[i] = 0.0; }
+    return 0;
+  }
 
   /* calculate force components (directions) */
   for(i=0;i<3;i++)  {
