@@ -13,6 +13,7 @@ Linux)
     MODEL=`awk '/\\\`model name/ { \
 	if ($4 == "Pentium") { if ($5 != "") print $4"_"$5; else print $4; } \
 	else if ($4 == "AMD" && $5 == "Opteron(tm)")   print "Opteron"; \
+	else if ($4 == "AMD" && $5 == "Opteron" && $6 == "(tm)")   print "Opteron"; \
 	else if ($4 == "Dual" && $5 == "Core" && $6 == "AMD" && $7 == "Opteron(tm)")   print "Opteron"; \
 	else if ($4 == "Intel(R)" && $5 == "Xeon(TM)") print "Xeon"; \
         else if ($4 == "Intel(R)" && $5 == "Celeron(R)") print "Celeron"; \
