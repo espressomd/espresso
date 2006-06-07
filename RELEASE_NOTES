@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.9n (Seska)                                                                      *
+* v1.9.9o (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.9n -
+- v1.9.9o -
 -----------
 
+(o) June   6th, 2006.
 (n) June   2nd, 2006.
 (m) May   30th, 2006.
 (l) May   29th, 2006.
@@ -55,6 +56,9 @@ Changes:
 (l) parallelization scheme and more modular functionality.
 
 Bugfixes:
+(o) Fixed bug for dihedral calculation when the dihedral angle is not
+    defined.
+(o) Fixed dihedral energy bug.
 (k) added missing output of the dielectric constants.
 (k) fixed a missing update_local_particles in nsq_balance, which
     crashed the code under some rare conditions.
