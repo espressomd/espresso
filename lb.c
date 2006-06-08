@@ -295,7 +295,7 @@ static void lb_prepare_communication() {
     Fieldtype fieldtype;
     halo_create_fieldtype(1, lens, disps, disps[1], &fieldtype);
 
-     /* setup the halo communication */
+    /* setup the halo communication */
     prepare_halo_communication(&update_halo_comm,&lblattice,fieldtype,datatype);
  
     MPI_Type_free(&datatype);
@@ -1061,9 +1061,9 @@ MDINLINE void lb_calc_collisions() {
   double save_local_n[n_veloc], save_local_pi[6] ; 
 
   /* loop over all nodes (halo excluded) */
-  for (z=1;z<=lblattice.grid[0];z++) {
+  for (z=1;z<=lblattice.grid[2];z++) {
     for (y=1;y<=lblattice.grid[1];y++) {
-      for (x=1;x<=lblattice.grid[2];x++) {
+      for (x=1;x<=lblattice.grid[0];x++) {
 
         index = get_linear_index(x,y,z,lblattice.halo_grid) ;
 	local_n   = lbfluid[index].n;
@@ -1429,14 +1429,11 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, int *badrandoms, int p_i
   double old_rho[8];
 #endif
 
-  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f_random = (%.3e,%.3e,%.3e)\n",this_node,p->t.f_random[0],p->t.f_random[1],p->t.f_random[2]));
-  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
-
   /* determine elementary lattice cell surrounding the particle 
      and the relative position of the particle in this cell */ 
   map_position_to_lattice(&lblattice,p->r.p,node_index,delta) ;
 
-  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) pos=(%.3f,%.3f,%.3f)\n",this_node,delta[0],delta[1],delta[2],delta[3],delta[4],delta[5],p->r.p[0],p->r.p[1],p->r.p[2]));
+  ONEPART_TRACE(if(p->p.identity==check_id && !p_is_ghost) fprintf(stderr,"%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) pos=(%.3f,%.3f,%.3f)\n",this_node,delta[0],delta[1],delta[2],delta[3],delta[4],delta[5],p->r.p[0],p->r.p[1],p->r.p[2]));
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
@@ -1451,7 +1448,7 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, int *badrandoms, int p_i
 	old_rho[z*4+y*2+x] = *local_rho;
 #endif
 	local_j = lbfluid[node_index[z*4+y*2+x]].j ;
-	ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB fluid (%d,%d,%d) local_rho=%.3f local_j=(%.16e,%.3f,%.3f)\n",this_node,x,y,z,*local_rho,local_j[0],local_j[1],local_j[2]));
+	ONEPART_TRACE(if(p->p.identity==check_id && !p_is_ghost) fprintf(stderr,"%d: OPT: LB fluid (%d,%d,%d local_rho=%.3f local_j=(%.3e,%.3f,%.3f) weight=%.3f\n",this_node,x,y,z,*local_rho,local_j[0],local_j[1],local_j[2],delta[3*x+0]*delta[3*y+1]*delta[3*z+2]));
 
 	for (dir=0;dir<3;dir++) {
 	  interpolated_u[dir] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[dir]/(*local_rho) ;
@@ -1461,7 +1458,7 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, int *badrandoms, int p_i
     }
   }
   
-  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB u = (%.16e,%.3e,%.3e) v = (%.16e,%.3e,%.3e)\n",this_node,interpolated_u[0],interpolated_u[1],interpolated_u[2],p->m.v[0],p->m.v[1],p->m.v[2]));
+  ONEPART_TRACE(if(p->p.identity==check_id && !p_is_ghost) fprintf(stderr,"%d: OPT: LB u = (%.3e,%.3e,%.3e) v = (%.16e,%.3e,%.3e)\n",this_node,interpolated_u[0],interpolated_u[1],interpolated_u[2],p->m.v[0],p->m.v[1],p->m.v[2]));
 
   /* calculate viscous force and add to random force
      (take care to rescale the velocities with the time_step
@@ -1480,7 +1477,7 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, int *badrandoms, int p_i
       p->f.f[1] += p->t.f_random[1];
       p->f.f[2] += p->t.f_random[2];
 
-      ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.9e,%.3e,%.3e)\n",this_node,p->t.f_random[0],p->t.f_random[1],p->t.f_random[2]));
+      ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.3e,%.3e,%.3e)\n",this_node,p->t.f_random[0],p->t.f_random[1],p->t.f_random[2]));
       ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.9e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
     }
 
@@ -1565,7 +1562,7 @@ void calc_particle_lattice_ia() {
 	x[dir] = d_random()-0.5;
 	p[i].t.f_random[dir] = -lb_coupl_pref*x[dir] ;
       }
-      ONEPART_TRACE(if (p[i].p.identity==check_id) fprintf(stderr, "f_random1 = (%.3e,%.3e,%.3e) (%.3e,%.3e,%.3e)\n",p[i].t.f_random[0],p[i].t.f_random[1],p[i].t.f_random[2],2.*x[0],2.*x[1],2.*x[2]));
+      ONEPART_TRACE(if (p[i].p.identity==check_id) fprintf(stderr, "%d: OPT: LB f_random = (%.3e,%.3e,%.3e) (%.3e,%.3e,%.3e)\n",this_node,p[i].t.f_random[0],p[i].t.f_random[1],p[i].t.f_random[2],2.*x[0],2.*x[1],2.*x[2]));
     }
   }
 
@@ -1629,6 +1626,7 @@ void calc_particle_lattice_ia() {
 	    }
 	  }
 	}
+
     }
 
   } while (allbadrandoms>0) ;
