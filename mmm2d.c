@@ -1822,7 +1822,7 @@ int printMMM2DToResult(Tcl_Interp *interp)
 
   if (mmm2d_params.dielectric_contrast_on) {
     Tcl_PrintDouble(interp, mmm2d_params.di_top, buffer);
-    Tcl_AppendResult(interp, " dielectric", buffer, (char *) NULL);
+    Tcl_AppendResult(interp, " dielectric ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, mmm2d_params.di_mid, buffer);
     Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, mmm2d_params.di_bot, buffer);
