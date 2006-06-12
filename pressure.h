@@ -280,6 +280,20 @@ MDINLINE void add_bonded_virials(Particle *p1)
       i++; force[0] = force[1] = force[2] = 0; break;
     case BONDED_IA_DIHEDRAL:
       i+=2; force[0] = force[1] = force[2] = 0; break;
+
+#ifdef TABULATED
+    case BONDED_IA_TABULATED:
+      type_tab = bonded_ia_params[type_num].p.tab.type;
+      // printf("BONDED TAB, Particle: %d, P2: %d TYPE_TAB: %d\n",p1->p.identity,p2->p.identity,type_tab);
+      switch(type_tab) {
+        case TAB_BOND_ANGLE:
+          i++; force[0] = force[1] = force[2] = 0; break;
+        case TAB_BOND_DIHEDRAL:
+          i+=2; force[0] = force[1] = force[2] = 0; break;
+      }
+      break;
+#endif
+
 #ifdef BOND_CONSTRAINT
     case BONDED_IA_RIGID_BOND:
       i +=2; force[0] = force[1] = force[2] = 0; break;
