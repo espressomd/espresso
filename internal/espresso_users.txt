@@ -1081,3 +1081,15 @@ topic:     Recently, I am studying the adsorption of polymers on solid
 reminded:  02.JUN.2006
 
 
+name:      Zhimin Xiong
+email:     xiongzm@iccas.ac.cn
+institute: State Key Lab. of Polymer Physics and Chemistry
+           Institute of Chemistry
+           Chinese Academy of Sciences
+sent:      13.JUN.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     polymer thin film
+reminded:  X13.JUN.2006
+
+
