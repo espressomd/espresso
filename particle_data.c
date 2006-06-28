@@ -2265,11 +2265,13 @@ int try_delete_bond(Particle *part, int *bond)
       i += 1 + partners;
     else {
       for(j = 1; j <= partners; j++)
+      { 
 	if (bond[j] != bl->e[i + j])
 	  break;
+      }
       if (j > partners) {
 	bl->n -= 1 + partners;
-	memcpy(bl->e + i, bl->e + i + 1 + partners, bl->n - i);
+	memcpy(bl->e + i, bl->e + i + 1 + partners, sizeof(int)*(bl->n - i));
 	realloc_intlist(bl, bl->n);
 	return TCL_OK;
       }
@@ -2301,7 +2303,7 @@ void remove_all_bonds_to(int identity)
 	if (j <= partners) {
 	  bl->n -= 1 + partners;
 	  memcpy(bl->e + i, bl->e + i + 1 + partners,
-		 bl->n - i);
+		 sizeof(int)*(bl->n - i));
 	  realloc_intlist(bl, bl->n);
 	}
 	else
