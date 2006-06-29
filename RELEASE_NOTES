@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.9r (Seska)                                                                      *
+* v1.9.9s (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v1.9.9r -
+- v1.9.9s -
 -----------
 
+(s) June  28th, 2006.
 (r) June  22nd, 2006.
 (q) June  12th, 2006.
 (p) June   8th, 2006.
@@ -59,6 +60,7 @@ Changes:
 (l) parallelization scheme and more modular functionality.
 
 Bugfixes:
+(s) Bond deletion did not work. Fixed.
 (r) fixed problem of missing type_tab declaration in pressure.h
 (q) Added handling of tabulated potentials in add_bonded_virials
 (p) Fixed bug in Lattice Boltzmann collision loop (upper bounds for x and z were
