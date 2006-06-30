@@ -795,9 +795,9 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
   case BONDED_IA_RIGID_BOND:
     Tcl_PrintDouble(interp, sqrt(params->p.rigid_bond.d2), buffer);
     Tcl_AppendResult(interp, "RIGID_BOND ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.rigid_bond.p_tol, buffer);
+    Tcl_PrintDouble(interp, params->p.rigid_bond.p_tol/2.0, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.rigid_bond.v_tol, buffer);
+    Tcl_PrintDouble(interp, params->p.rigid_bond.v_tol/time_step, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
 #endif
