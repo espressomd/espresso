@@ -1093,3 +1093,30 @@ topic:     polymer thin film
 reminded:  X13.JUN.2006
 
 
+name:      Yang Ye
+email:     yangye@pmail.ntu.edu.sg
+institute: School of Biological Sciences
+           Nanyang Technological University
+           60 Nanyang Drive
+           Singapore 637551
+           Republic of Singapore
+sent:      03.JUL.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     Coarse-grain simulation
+reminded:  X03.JUL.2006
+
+
+name:      Li, Dechang
+email:     lidc02@mails.tsinghua.edu.cn
+institute: Department of Engineering Mechanics
+           Tsinghua University
+           Beijing 100084
+           China
+sent:      03.JUL.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     To develop coarse-grained model for protein or polymer
+reminded:  03.JUL.2006
+
+
