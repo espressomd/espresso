@@ -1120,3 +1120,16 @@ topic:     To develop coarse-grained model for protein or polymer
 reminded:  03.JUL.2006
 
 
+name:      Florian Buerzle
+email:     florian.buerzle@uni-konstanz.de
+institute: Universitaet Konstanz
+           Fachbereich Physik
+           Lehrstuhl Prof. Nielaba
+           78457 Konstanz
+sent:      04.JUL.2006
+version:   20051115-Espresso_v1.9.7h.tar.gz
+CVS:       
+topic:     colloidal dispersions in reduced geometry
+reminded:  X04.JUL.2006
+
+
