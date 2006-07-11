@@ -244,7 +244,10 @@ MDINLINE void add_bonded_virials(Particle *p1)
   Particle *p2;
   Bonded_ia_parameters *iaparams;
 
-  int i, k, l, type_num, type, type_tab;
+  int i, k, l, type_num, type;
+#ifdef TABULATED
+  int type_tab;
+#endif
 
   i = 0;
   while(i<p1->bl.n) {
