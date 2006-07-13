@@ -2,10 +2,33 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v1.9.9t (Seska)                                                                      *
+* v2.0.0b (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
+
+
+- v2.0.0b -
+-----------
+
+(b) July 13th, 2006.
+(a) July 11th, 2006.
+
+New Features:
+(b) Moved ESPResSo Version to 2.0.0
+(b) updated version number
+
+Bugfixes:
+(a) fftw3 is no longer necessary even without LB switched on.
+(a) Fixed warning about unused var type_tab if tabulated potentials are not
+    compiled in
+
+
+****************************************************************************************
+* v1.9.9t (Seska)                                                                      *
+****************************************************************************************
+
+ran out of characters
 
 
 - v1.9.9t -
