@@ -2,130 +2,95 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0d (Ydalir)                                                                     *
+* v1.9.9t (Seska)                                                                      *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0d -
+- v1.9.9t -
 -----------
 
-(d) November 30th, 1999.
-(c) November 30th, 1999.
-(b) November 30th, 1999.
-(a) November 30th, 1999.
+(t) June  30th, 2006.
+(s) June  28th, 2006.
+(r) June  22nd, 2006.
+(q) June  12th, 2006.
+(p) June   8th, 2006.
+(o) June   6th, 2006.
+(n) June   2nd, 2006.
+(m) May   30th, 2006.
+(l) May   29th, 2006.
+(k) May   19th, 2006.
+(j) May   17th, 2006.
+(i) May   16th, 2006.
+(h) May   10th, 2006.
+(g) May    9th, 2006.
+(f) May    8th, 2006.
+(e) May    5th, 2006.
+(d) May    4th, 2006.
+(c) April 27th, 2006.
+(b) April 26th, 2006.
+(a) April 24th, 2006.
 
 New Features:
-(b) esSo Version to 2.0.0
-(a) rsion number
-
-Bugfixes:
-(d) o longer necessary even without LB switched on.
-(c) ing about unused var type_tab if tabulated potentials are not compiled
-    in
-
-
-****************************************************************************************
-* v1.9.9x (Seska)                                                                      *
-****************************************************************************************
-
-nearly no sub-characters left in 1.9.9? release
-
-
-- v1.9.9x -
------------
-
-(x) June     30th, 2006.
-(w) June     28th, 2006.
-(v) June     22nd, 2006.
-(u) June     12th, 2006.
-(t) June      8th, 2006.
-(s) June      6th, 2006.
-(r) June      2nd, 2006.
-(q) May      30th, 2006.
-(p) May      29th, 2006.
-(o) May      19th, 2006.
-(n) May      17th, 2006.
-(m) May      16th, 2006.
-(l) May      10th, 2006.
-(k) May       9th, 2006.
-(j) May       8th, 2006.
-(i) May       5th, 2006.
-(h) May       4th, 2006.
-(g) April    27th, 2006.
-(f) April    26th, 2006.
-(e) April    24th, 2006.
-(d) November 30th, 1999.
-(c) November 30th, 1999.
-(b) November 30th, 1999.
-(a) November 30th, 1999.
-
-New Features:
-(r) config.guess now works for Intel Core Duo CPUs
-(q) P3M tunev2 now takes care of ELC+dielectrics
-(q) new analysis 'analyze vanhove <ptype> <rmin> <rmax> <rbins>' added which
+(n) config.guess now works for Intel Core Duo CPUs
+(m) P3M tunev2 now takes care of ELC+dielectrics
+(m) new analysis 'analyze vanhove <ptype> <rmin> <rmax> <rbins>' added which
     calculates the van Hove auto correlation function G(r,t) and the mean square
     displacement of the particles with type ptype.
-(p) Generic halo parallelization scheme for lattice algorithms.
-(p) Lattice data structures for lattice dynamics (e.g. Lattice
+(l) Generic halo parallelization scheme for lattice algorithms.
+(l) Lattice data structures for lattice dynamics (e.g. Lattice
     Boltzmann).
-(p) Boundary conditions for Lattice Boltzmann.
-(p) Analysis routines for Lattice Boltzmann fluid.
-(o) Added support for derived datatypes to the mpi fake
+(l) Boundary conditions for Lattice Boltzmann.
+(l) Analysis routines for Lattice Boltzmann fluid.
+(k) Added support for derived datatypes to the mpi fake
     implementation.
-(n) added automatic detection for Fink libraries on Macs.
-(l) Moved to version 1.9.9
-(i) P3M: Added non-interpolating version of the charge assignment function for
+(j) added automatic detection for Fink libraries on Macs.
+(h) Moved to version 1.9.9
+(e) P3M: Added non-interpolating version of the charge assignment function for
     higher precision.
-(h) Added USE_ERFC_APPROXIMATION to turn on or off the approximation of erfc in P3M
+(d) Added USE_ERFC_APPROXIMATION to turn on or off the approximation of erfc in P3M
     and EWALD by Abramowitz and Stegun. Turned on by default. Turn off for higher
     precision.
-(e) Added Standard Ewald algorithm for longrange coulomb forces (still
+(a) Added Standard Ewald algorithm for longrange coulomb forces (still
     EXPERIMENTAL)
 
 Changes:
-(p) Re-implementation of Lattice Boltzmann fluid dynamics.
-(p) There are now lattice data structures, a generic
-(p) parallelization scheme and more modular functionality.
+(l) Re-implementation of Lattice Boltzmann fluid dynamics.
+(l) There are now lattice data structures, a generic
+(l) parallelization scheme and more modular functionality.
 
 Bugfixes:
-(x) corrected bug in printBondedIAToResult for RIGID_BOND:
+(t) corrected bug in printBondedIAToResult for RIGID_BOND:
     p_tol -> p_tol/2.0 and v_tol -> v_tol/time_step
     because these values are multiplied by 2.0 and time_step, when
     read
     from checkpoint file.
-(w) Bond deletion did not work. Fixed.
-(v) fixed problem of missing type_tab declaration in pressure.h
-(u) Added handling of tabulated potentials in add_bonded_virials
-(t) Fixed bug in Lattice Boltzmann collision loop (upper bounds for x and z were
+(s) Bond deletion did not work. Fixed.
+(r) fixed problem of missing type_tab declaration in pressure.h
+(q) Added handling of tabulated potentials in add_bonded_virials
+(p) Fixed bug in Lattice Boltzmann collision loop (upper bounds for x and z were
     mixed up).
-(s) Fixed bug for dihedral calculation when the dihedral angle is not
+(o) Fixed bug for dihedral calculation when the dihedral angle is not
     defined.
-(s) Fixed dihedral energy bug.
-(o) added missing output of the dielectric constants.
-(o) fixed a missing update_local_particles in nsq_balance, which
+(o) Fixed dihedral energy bug.
+(k) added missing output of the dielectric constants.
+(k) fixed a missing update_local_particles in nsq_balance, which
     crashed the code under some rare conditions.
-(m) Fixed the handling of non-neutral systems with MMM2D and dielectric
+(i) Fixed the handling of non-neutral systems with MMM2D and dielectric
     contrast.
-(l) fixed RELEASE_NOTES and versions.h after END_OF_ALPHABET :-)
-(k) Using the 'polymer' command no charges were assigned if the charge was
+(h) fixed RELEASE_NOTES and versions.h after END_OF_ALPHABET :-)
+(g) Using the 'polymer' command no charges were assigned if the charge was
     negative. Fixed this.
-(k) Made compiling with just EXTERNAL_FORCES (and not MOLFORCES) possible
+(g) Made compiling with just EXTERNAL_FORCES (and not MOLFORCES) possible
     again.
-(k) The config options EXTERNAL_FORCES and MOLFORCES were not independent from one
+(g) The config options EXTERNAL_FORCES and MOLFORCES were not independent from one
     another. Removed this dependency. Now it's again possible to compile with just
     EXTERNAL_FORCES compiled in.
-(j) fixed a bug occuring for nonneutral systems with dielectric
+(f) fixed a bug occuring for nonneutral systems with dielectric
     contrast.
-(g) deleted some EWALD Debug messages
-(f) deleted some superfluous Debug-Info Lines of EWALD_TRACE
-(d) o longer necessary even without LB switched on.
-(c) ing about unused var type_tab if tabulated potentials are not compiled
-    in
-(b) o longer necessary even without LB switched on.
-(a) ing about unused var type_tab if tabulated potentials are not compiled
-    in
+(c) deleted some EWALD Debug messages
+(b) deleted some superfluous Debug-Info Lines of EWALD_TRACE
 
 
 - v1.9.8t -
