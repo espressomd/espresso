@@ -1,4 +1,4 @@
 #ifdef PACKAGE_VERSION
 #undef PACKAGE_VERSION
-#define PACKAGE_VERSION "v1.9.9x (Seska)"
+#define PACKAGE_VERSION "v2.0.0 (Ydalir)"
 #endif
