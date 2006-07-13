@@ -2,15 +2,28 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0  (Ydalir)                                                                     *
+* v2.0.0d (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0  -
+- v2.0.0d -
 -----------
 
+(d) November 30th, 1999.
+(c) November 30th, 1999.
+(b) November 30th, 1999.
+(a) November 30th, 1999.
+
+New Features:
+(b) esSo Version to 2.0.0
+(a) rsion number
+
+Bugfixes:
+(d) o longer necessary even without LB switched on.
+(c) ing about unused var type_tab if tabulated potentials are not compiled
+    in
 
 
 ****************************************************************************************
