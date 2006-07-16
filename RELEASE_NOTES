@@ -2,19 +2,22 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0b (Ydalir)                                                                     *
+* v2.0.0c (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0b -
+- v2.0.0c -
 -----------
 
+(c) July 15th, 2006.
 (b) July 13th, 2006.
 (a) July 11th, 2006.
 
 New Features:
+(c) determining the OS release for AIX, and changes for mawk on
+    Linux/Debian
 (b) Moved ESPResSo Version to 2.0.0
 (b) updated version number
 
