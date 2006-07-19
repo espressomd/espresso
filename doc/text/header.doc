@@ -64,6 +64,8 @@ For more details see \ref integrate.c "integrate.c".
 <li> mpi programming environment: depends on operating system (see below).
 <li> Fast Fourier Transformation: <a href="http://www.fftw.org">fftw</a> 
 </ul>
+\todo Requirements: Which version of MPI is required?
+\todo Requirements: MPI is only required for parallel execution
 
 Supported operating systems:
 <ul>
@@ -81,6 +83,8 @@ sample script demo.tcl, you will also need
 \section start Getting Started
 
 \subsection start_env Environment Variables:
+
+\todo Compilation and installation docs do not match the configure procedure!
 
 For the work with ESPResSo you need to set the following environment variables (Please check the exact syntax for your shell/system):<br>
 The path for the mpi binary has to be included in your execution path (For Linux this would be for example lam).

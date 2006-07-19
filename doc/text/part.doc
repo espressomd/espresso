@@ -51,6 +51,7 @@
 	<li> \verbatim bond delete\endverbatim
 	will delete all bonds attached to this particle.
 	</ul>
+	\todo Document argument \verbatim folded \endverbatim
 
 	<hr>
 
