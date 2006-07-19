@@ -120,8 +120,8 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "Number of monomers must be integer (got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR); }
   else {
-    if(MPC < 0) {
-      Tcl_AppendResult(interp, "Number of monomers must be positive (got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR); }
+    if(MPC < 2) {
+      Tcl_AppendResult(interp, "Number of monomers must be greater than 1 (got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR); }
   }
   if (!ARG_IS_D(3, bond_length)) {
     Tcl_ResetResult(interp);
