@@ -14,7 +14,7 @@
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned on).
- *  \todo Implement more flexible thermostat, e.g. which thermostat to use.
+ *  \todo Implement more flexible thermostat, e. g. which thermostat to use.
  *
  *  For more information see \ref forces.c "forces.c".
  */

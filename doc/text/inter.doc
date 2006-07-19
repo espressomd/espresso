@@ -53,8 +53,18 @@
 		To return to the uncapped potential you have to set \f$  maxforce \f$ to zero using
 		\verbatim inter ljforcecap 0 \endverbatim
 		Note that ljforcecap applies to all given
-		Lennard-Jones interactions regardless the particle
+		Lennard-Jones interactions regardless of the particle
 		types.
+
+	Implemented in lj.h.
+
+\subsection tcl_ss Soft sphere potential
+
+	\verbatim soft-sphere <a> <n> <cut> <offset> \endverbatim
+
+	Implemented in soft.h.
+
+	\todo Write docs for the soft sphere potential.
 
 \subsection tcl_ljcos Lennard-Jones + cosine potential
 	\verbatim lj-cos <epsilon> <sigma> <cutoff> <offset> \endverbatim
@@ -80,6 +90,8 @@
 		The order of the parameters is
 		\f$\epsilon, \sigma, cutoff, offset\f$.
 
+	Implemented in ljcos.h.
+
 \subsection tcl_ljcos2 Lennard-Jones + cosine potential 2 (cosine tail is different than in lj-cos)
 	\verbatim lj-cos2 <epsilon> <sigma> <offset> <w> \endverbatim
 		a Lennard-Jones+Cosine potential
@@ -100,6 +112,26 @@
                 The potential can be capped in the same way as the Lennard-Jones potential.
 		The forcecap is also set using:
                 \verbatim inter ljforcecap <maxforce> \endverbatim  
+
+	Implemented in ljcos2.h.
+
+\subsection tcl_morse Morse potential
+
+	\verbatim morse <epsilon> <alpha> <rmin> <cut> \endverbatim
+
+	\verbatim morseforcecap <maxforce> \endverbatim
+
+	Implemented in morse.h.
+
+	\todo Write docs for the morse potential.
+
+\subsection tcl_buck Buckingham potential
+
+	\verbatim buckingham <A> <B> <C> <D> <cut> <discontinuity> <shift> \endverbatim
+
+	Implemented in buckingham.h.
+
+	\todo Write docs for the Buckingham potential.
 
 \subsection tcl_tabulated Tabulated potential
 	\verbatim tabulated <filename> \endverbatim	

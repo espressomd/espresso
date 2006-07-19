@@ -16,25 +16,25 @@
 	<li> \verbatim q <charge> \endverbatim
 	<li> \verbatim v <x value> <y value> <z value> \endverbatim
 	<li> \verbatim f <x value> <y value> <z value> \endverbatim
-	If flag ROTATION is set in config.h \ref config.h, particle properties such as
+	If flag ROTATION is set in config.h, particle properties such as
 	quat, omega, and torque can be used:
 	<li> \verbatim quat <q1> <q2> <q3> <q4> \endverbatim
 	<li> \verbatim omega <x value> <y value> <z value> \endverbatim
 	<li> \verbatim torque <x value> <y value> <z value> \endverbatim
-	Fixes the particle in space (Needs compile flag EXTERNAL_FORCES in config.h \ref config.h).
+	Fixes the particle in space (Needs compile flag EXTERNAL_FORCES in config.h ).
 	<li> \verbatim fix <x> <y> <z> \endverbatim
 	Fixes the particle in space. By supplying a set of 3 integers
 	as arguments it is possible to fix motion in \a x, \a y , or \a z coordinates
 	independently.  For example <tt> fix 0 0 1 </tt> will fix
 	motion only in z.  Note that <tt> fix </tt> without
 	arguments is equivalent to <tt> fix 1 1 1 </tt> (Needs
-	compile flag EXTERNAL_FORCES in \ref config.h config.h).
+	compile flag EXTERNAL_FORCES in  config.h).
         <li> \verbatim ext_force <x value> <y value> <z value> \endverbatim
 	An additional external force is applied to the particle
-	(Needs compile flag EXTERNAL_FORCES in \ref config.h config.h).
+	(Needs compile flag EXTERNAL_FORCES in config.h).
         <li> \verbatim unfix \endverbatim
 	Release any external influence from the particle 
-	(Needs compile flag EXTERNAL_FORCES in \ref config.h config.h).
+	(Needs compile flag EXTERNAL_FORCES in  config.h).
 	<li> \verbatim bond <bond_type_number> <partner>+ \endverbatim
 	Restrictions: \<bond_type_number\> \>= 0; partner must be an existing particle.<BR>
 	The \<bond_type_number\> is used for \ref tcl_inter to define bonded interactions.
@@ -43,7 +43,7 @@
 	<li> \verbatim exclude <exclusion partner>+ \endverbatim
 	Restrictions: partner must be an existing particle.<BR>
 	Between the current particle and the exclusion partner(s), no nonbonded interactions are
-	calculated (Needs compile flag EXCLUSIONS in config.h \ref config.h). Note that unlike bonds,
+	calculated (Needs compile flag EXCLUSIONS in config.h). Note that unlike bonds,
 	exclusions are stored with both partners. Therefore this command adds the defined exclusions
 	to both partners.
 	<li> \verbatim exclude delete <exclusion partner>+ \endverbatim

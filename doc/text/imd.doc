@@ -57,10 +57,10 @@ Then click on "Molecule", choose fileformat "psf and pdb", and select your psf/p
 the corresponding entries. Now click on "Load Molecule". You should see the snapshot you
 saved in the psf/pdb files.
 
-Then execute "imd connect \<host\> \<port\>", where \<host\> is the host running the simulation
+Then execute "imd connect <host> <port>", where \<host\> is the host running the simulation
 and \<port\> is the port it listens to. <em> Note that VMD crashes, if you do that without
 loading the molecule before </em>.
 
 For more information on how to use VMD to extract more information or hide parts of configuration,
-see the <a http://www.ks.uiuc.edu/Research/vmd/vmd_help.html>VMD Quick Help</a>.
+see the <a href="http://www.ks.uiuc.edu/Research/vmd/vmd_help.html">VMD Quick Help</a>.
 */

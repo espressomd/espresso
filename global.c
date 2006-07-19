@@ -116,14 +116,13 @@ const Datafield fields[] = {
 	     \ref local_box_l - Local simulation box length of the nodes.
 	<li> \verbatim max_cut double (ro) \endverbatim
 	     \ref max_cut - Maximal cutoff of real space interactions.
-	<li> \verbatim max_num_cells int> \endverbatim
+	<li> \verbatim max_num_cells int \endverbatim
              \ref max_num_cells - Maximal number of cells for the link cell
 	     algorithm. Reasonable values are between 125 and 1000, or for
 	     some problems (\ref n_total_particles / \ref n_nodes).
 	<li> \verbatim max_part int (ro) \endverbatim
   	     \ref max_seen_particle - Maximal identity of a particle.
-	     THIS IS IN GENERAL _NOT_ RELATED
-	     TO THE NUMBER OF PARTICLES.
+	     THIS IS IN GENERAL _NOT_ RELATED TO THE NUMBER OF PARTICLES.
 	<li> \verbatim max_range double (ro)\endverbatim
 	     \ref max_range - Maximal range of real space interactions: max_cut + skin.
 	<li> \verbatim max_skin double (ro)\endverbatim
