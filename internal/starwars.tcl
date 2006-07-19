@@ -24,6 +24,11 @@
 #############################################################
 #  Initialization                                           #
 #############################################################
+require_feature "TK"
+require_feature "LENNARD_JONES"
+require_feature "ELECTROSTATICS"
+require_feature "CONSTRAINTS"
+require_feature "PARTIAL_PERIODIC"
 
 source ../scripts/bundle.tcl
 
