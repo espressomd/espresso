@@ -100,7 +100,9 @@ const Datafield fields[] = {
 
 	<ol>
 	<li> \verbatim box_l double[3] \endverbatim
-             \ref box_l - Simulation box length.	<li> \verbatim cell_grid int[3] (ro) \endverbatim
+             \ref box_l - Simulation box length.
+	     \todo document what happens to particles when \a box_l is changed!
+	<li> \verbatim cell_grid int[3] (ro) \endverbatim
              \ref DomainDecomposition::cell_grid - dimension of the inner cell grid.
 	<li> \verbatim cell_size double[3] (ro) \endverbatim
 	     \ref DomainDecomposition::cell_size - box length of a cell.
