@@ -1133,3 +1133,22 @@ topic:     colloidal dispersions in reduced geometry
 reminded:  X04.JUL.2006
 
 
+name:      Niloofar Faghihi
+email:     n_faghihi@yahoo.com
+institute: Department of Physics
+           Sharif University of Technology
+           Tehran, Iran.
+           P.O.Box: 11365-9161
+sent:      18.JUL.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Dear Madam/Sir
+           I am a master\\\\\\\\\\\\\\\'s degree student in the soft matter group
+           at Sharif university of technology under the supervision of Dr.
+           Ejtehadi. I need ESPResSo for some simulations of liquid
+           crystals.
+           Sincerely Yours,
+           Niloofar Faghihi
+reminded:  X18.JUL.2006
+
+
