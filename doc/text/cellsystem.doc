@@ -24,7 +24,7 @@ on the density. The number of interactions is therefore of the order N instead o
 to calculate all pair interactions. For further details, see \ref domain_decomposition.h "domain_decomposition.h".
 
 \section cellsystem_nsq N-squared
-\verbatim nsquared \endverbatim
+\verbatim nsquare \endverbatim
 This selects the very primitive nsquared cellsystem, which calculates the interactions for all particle
 pairs. Therefore it loops overall particles, giving an unfavorable computation time scaling of N^2. However,
 algorithms like MMM1D or the plain Coulomb interaction in the cell model require the calculation of all pair
@@ -43,7 +43,7 @@ processors, the interactions are 0-0, 1-1, 2-2, 0-1, 1-2, 0-2. Of these interact
 treats 1-1 and 0-1, and node 2 treats 2-2 and 1-2.
 
 Therefore it is highly recommended that you use nsquared only with an odd number of nodes, if with multiple processors
-at all. For further details, see \ref nsquare.h "nsquare.h".
+at all. For further details, see nsquare.h.
 
 \section cellsystem_layered Layered cell system
 \verbatim layered ?<n_layers>? \endverbatim
