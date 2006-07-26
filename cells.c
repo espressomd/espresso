@@ -207,7 +207,7 @@ int cellsystem(ClientData data, Tcl_Interp *interp,
       mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED);
   }
   else {
-    Tcl_AppendResult(interp, "unkown cell structure type \"", argv[0],"\"", (char *)NULL);
+    Tcl_AppendResult(interp, "unkown cell structure type \"", argv[1],"\"", (char *)NULL);
     return TCL_ERROR;
   }
   return mpi_gather_runtime_errors(interp, TCL_OK);
