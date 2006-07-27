@@ -35,7 +35,7 @@
 /* #define PARTIAL_PERIODIC */
 #define ELECTROSTATICS
 /* #define ROTATION */
-#define EXTERNAL_FORCES */
+/* #define EXTERNAL_FORCES */
 /* #define CONSTRAINTS */
 /* #define MASS */
 /* #define EXCLUSIONS */
@@ -55,13 +55,13 @@
 
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */
 /* #define BOND_ANGLE_HARMONIC */
-#define BOND_ANGLE_COSINE */
+/* #define BOND_ANGLE_COSINE */
 /* #define BOND_ANGLE_COSSQUARE */
 
 /* #define NEMD */
 /* #define NPT */ 
 /* #define DPD */
-#define LB */
+/* #define LB */
 
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
 #ifdef LB
