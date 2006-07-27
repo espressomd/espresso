@@ -62,6 +62,10 @@ install: all
 install-doc:
 	(cd doc/html; for f in *; do ../../config/install-sh -c "$$f" "$(pkglibdir)/html_doc/$$f"; done)
 
+
+define gcc-makedepend
+endef
+
 ########### dependencies
 ifeq ($(DEPEND),makedepend)
 $(OUTDIR)/.depend:
@@ -78,8 +82,11 @@ else
 ifeq ($(DEPEND),gcc)
 $(OUTDIR)/.depend:
 	rm -f $@
-	touch $@
-	$(CC) -MM -MF $@ $(CFLAGS) $(CFILES)
+	for cfile in $(CFILES); do \
+		$(CC) -MM -MF $@.tmp $(CFLAGS) $$cfile; \
+		cat $@.tmp >> $@; \
+	done
+	rm -f $@.tmp
 else
 $(OUTDIR)/.depend:
 	rm -f $@
