@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0c (Ydalir)                                                                     *
+* v2.0.0d (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0c -
+- v2.0.0d -
 -----------
 
+(d) July 27th, 2006.
 (c) July 15th, 2006.
 (b) July 13th, 2006.
 (a) July 11th, 2006.
@@ -22,6 +23,7 @@ New Features:
 (b) updated version number
 
 Bugfixes:
+(d) Makefile: Fixed dependency generation with gcc.
 (a) fftw3 is no longer necessary even without LB switched on.
 (a) Fixed warning about unused var type_tab if tabulated potentials are not
     compiled in
