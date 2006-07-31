@@ -18,6 +18,7 @@ Linux)
 	else if ($4 == "Intel(R)" && $5 == "Xeon(TM)") print "Xeon"; \
         else if ($4 == "Intel(R)" && $5 == "Celeron(R)") print "Celeron"; \
 	else if ($4 == "Mobile"   && $5 == "Intel(R)" && $6 == "Pentium(R)") print"Pentium_"$7; \
+        else if ($4 == "Genuine" && $5 == "Intel(R)" && $6 == "CPU" && $7 == "T2500") print"Pentium_4"; \
 	else { \
 	    if      ($4 == "Intel(R)" && $5 == "Pentium(R)")  model="Pentium"; \
 	    else if ($4 == "AMD"      && $5 == "Athlon(TM)")  model="Athlon"; \
