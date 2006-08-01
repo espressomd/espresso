@@ -1152,3 +1152,17 @@ topic:     Dear Madam/Sir
 reminded:  X18.JUL.2006
 
 
+name:      sarah
+email:     sarah@iasbs.ac.ir,s_2_sara@yahoo.com
+institute: Institute for Advanced Studies in Basic Sciences.
+           Physics department.
+           Site:http://iasbs.ac.ir/
+sent:      31.JUL.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     We are working on \\\\\\\\\\\\\\\"stiff polyelectrolytes\\\\\\\\\\\\\\\". My
+           supervisor, Dr.Fazli, believes that your software is very
+           useful for our application.
+reminded:  X31.JUL.2006
+
+
