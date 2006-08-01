@@ -2,21 +2,23 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0d (Ydalir)                                                                     *
+* v2.0.0e (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0d -
+- v2.0.0e -
 -----------
 
+(e) July 31st, 2006.
 (d) July 27th, 2006.
 (c) July 15th, 2006.
 (b) July 13th, 2006.
 (a) July 11th, 2006.
 
 New Features:
+(e) incorporated intel dual cpus into config.guess
 (c) determining the OS release for AIX, and changes for mawk on
     Linux/Debian
 (b) Moved ESPResSo Version to 2.0.0
