@@ -65,11 +65,16 @@ AC_DEFUN([MPI_GUESS_ENV],[
 
 	dnl out of guesses
 	if test .$enable_mpi = .guess; then
-		AC_MSG_WARN([could neither detect LAM nor MPICH nor a native MPI environment,
-			using the FAKE implementation for one processor only.
-			If you have an MPI environment, please specify its type and
-			the compiler or includes/libraries of your MPI implementation manually,
-			or, even better, add your MPI environment to config/mpi.m4])
+		AC_MSG_WARN([
+********************************************************************
+* could neither detect LAM nor MPICH nor a native MPI environment, *
+* using the FAKE implementation for one processor only.            *
+* If you have an MPI environment, please specify its type and      *
+* the compiler or includes/libraries of your MPI implementation    *
+* manually, or, even better, add your MPI environment to           * 
+* config/mpi.m4                                                    *
+********************************************************************
+])
 		enable_mpi=fake
 		MPI_SETUP_FAKE
 	fi
