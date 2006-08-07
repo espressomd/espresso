@@ -1215,7 +1215,7 @@ if (p3m_sum_q2 > 0) {
     for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {
       for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
 	for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {	 
-	  node_k_space_energy_dip += g2[i] * (
+	  node_k_space_energy_dip += g[i] * (
 	  SQR(rs_mesh_dip[0][ind]*d_op[j[2]+fft_plan[3].start[0]]+
 	      rs_mesh_dip[1][ind]*d_op[j[0]+fft_plan[3].start[1]]+
 	      rs_mesh_dip[2][ind]*d_op[j[1]+fft_plan[3].start[2]]
