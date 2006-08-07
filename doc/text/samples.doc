@@ -40,8 +40,8 @@ serve as samples how to use Espresso.
      roughly 15 000 tau.
      <ul>
      <li> <b> pe_analyze.tcl </b><br>
-          Example for an analyzation after the actual simulation run
-          (offline analyzation). Calculates the integrated
+          Example for doing the analysis after the actual simulation run
+          (offline analysis). Calculates the integrated
           iondistribution P(r) for several different time slaps,
           compares them and presents the final result using gnuplot to
           generate some ps-files.
