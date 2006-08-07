@@ -7,8 +7,8 @@
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 /** \file statistics.c
-    This is the place for analysation (so far...).
-    Implementation of \ref statistics.h "statistics.h"
+    This is the place for analysis (so far...).
+    Implementation of statistics.h
 */
 #include <tcl.h>
 #include <stdlib.h>
@@ -59,8 +59,8 @@ static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
 			       double pos[3], int *pid)
 {
   *pid = -1;
-  
-  if (*argc < 3) {
+
+  if (*argc == 1) {
     Particle ref;
     if (Tcl_GetInt(interp, (*argv)[0], pid) == TCL_ERROR)
       return TCL_ERROR;
@@ -78,17 +78,17 @@ static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
 
     free_particle(&ref);
     return TCL_OK;
-  }
-  /* else */
-  if (Tcl_GetDouble(interp, (*argv)[0], &pos[0]) == TCL_ERROR ||
-      Tcl_GetDouble(interp, (*argv)[1], &pos[1]) == TCL_ERROR ||
-      Tcl_GetDouble(interp, (*argv)[2], &pos[2]) == TCL_ERROR)
-    return TCL_ERROR;
+  } else if (*argc == 3) {
+    if (Tcl_GetDouble(interp, (*argv)[0], &pos[0]) == TCL_ERROR ||
+	Tcl_GetDouble(interp, (*argv)[1], &pos[1]) == TCL_ERROR ||
+	Tcl_GetDouble(interp, (*argv)[2], &pos[2]) == TCL_ERROR)
+      return TCL_ERROR;
 
-  (*argc) -= 3;
-  (*argv) += 3;
+    (*argc) -= 3;
+    (*argv) += 3;
 
-  return TCL_OK;
+    return TCL_OK;
+  } else return TCL_ERROR;
 }
 
 /****************************************************************************************
@@ -1976,7 +1976,8 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
   double result;
   int p;
   double pos[3];
-  char buffer[TCL_DOUBLE_SPACE];  
+  char buffer[TCL_DOUBLE_SPACE], usage[150];
+  sprintf(usage, "distto { <partid> | <posx> <posy> <posz> }");
 
   if (n_total_particles == 0) {
     Tcl_AppendResult(interp, "(no particles)",
@@ -1984,10 +1985,14 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
 
+  if (argc == 0) {
+    Tcl_AppendResult(interp, "usage: ", usage, (char*)NULL);
+    return TCL_ERROR;
+  }
+
   get_reference_point(interp, &argc, &argv, pos, &p);
   if (argc != 0) {
-    Tcl_AppendResult(interp, "usage: distto { <partid> | <posx> <posy> <posz> }",
-		     (char *)NULL);
+    Tcl_AppendResult(interp, "usage: ", usage, (char *)NULL);
     return TCL_ERROR;
   }
 
