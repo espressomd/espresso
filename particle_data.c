@@ -14,7 +14,7 @@
     section where you have to find a nice and short name for your property to appear in
     the Tcl code. Then you just parse your part out of argc and argv.
 
-    The corresponding header file is \ref particle_data.h "particle_data.h".
+    The corresponding header file is particle_data.h.
 */
 #include <stdlib.h>
 #include <string.h>

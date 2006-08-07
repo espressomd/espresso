@@ -51,7 +51,6 @@
 	<li> \verbatim bond delete\endverbatim
 	will delete all bonds attached to this particle.
 	</ul>
-	\todo Document argument \verbatim folded \endverbatim
 
 	<hr>
 
@@ -63,7 +62,7 @@
 	<hr>	
 
         \anchor tcl_part_print
-	\verbatim part <particle_number> print (id|pos|type|q|v|f|fix|ext_force|bond|connections)* \endverbatim
+	\verbatim part <particle_number> print (id|pos|folded_position|type|q|v|f|fix|ext_force|bond|connections)* \endverbatim
         If instead of a property "print" is given the specified 
 	properties are written in a simple list form like
         \verbatim 40 8.849 1.8172 1.4677 1.0 {} \endverbatim
