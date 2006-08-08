@@ -55,15 +55,27 @@ double min_distance2(double pos1[3], double pos2[3])
   return sqrlen(diff);
 }
 
+/** Parses a reference point, i.e. either three doubles representing a
+    position, or a particle id. */
 static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
 			       double pos[3], int *pid)
 {
   *pid = -1;
 
-  if (*argc == 1) {
+  if (*argc >= 3 &&
+      (Tcl_GetDouble(interp, (*argv)[0], &pos[0]) != TCL_ERROR) &&
+      (Tcl_GetDouble(interp, (*argv)[1], &pos[1]) != TCL_ERROR) &&
+      (Tcl_GetDouble(interp, (*argv)[2], &pos[2]) != TCL_ERROR)) {
+    /* Found three doubles representing a position. */
+    (*argc) -= 3;
+    (*argv) += 3;
+    return TCL_OK;
+  }
+  /* else */
+  if (*argc >= 1 && 
+      (Tcl_GetInt(interp, (*argv)[0], pid) != TCL_ERROR)) {
+    /* Found a single integer representing a particle id. */
     Particle ref;
-    if (Tcl_GetInt(interp, (*argv)[0], pid) == TCL_ERROR)
-      return TCL_ERROR;
     
     if (get_particle_data(*pid, &ref) != TCL_OK) {
       Tcl_AppendResult(interp, "reference particle does not exist", (char *)NULL);
@@ -78,17 +90,9 @@ static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
 
     free_particle(&ref);
     return TCL_OK;
-  } else if (*argc == 3) {
-    if (Tcl_GetDouble(interp, (*argv)[0], &pos[0]) == TCL_ERROR ||
-	Tcl_GetDouble(interp, (*argv)[1], &pos[1]) == TCL_ERROR ||
-	Tcl_GetDouble(interp, (*argv)[2], &pos[2]) == TCL_ERROR)
-      return TCL_ERROR;
-
-    (*argc) -= 3;
-    (*argv) += 3;
-
-    return TCL_OK;
-  } else return TCL_ERROR;
+  }
+  /* else */
+  return TCL_ERROR;
 }
 
 /****************************************************************************************
