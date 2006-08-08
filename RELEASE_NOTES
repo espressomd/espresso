@@ -2,20 +2,21 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0e (Ydalir)                                                                     *
+* v2.0.0f (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0e -
+- v2.0.0f -
 -----------
 
-(e) July 31st, 2006.
-(d) July 27th, 2006.
-(c) July 15th, 2006.
-(b) July 13th, 2006.
-(a) July 11th, 2006.
+(f) August 7th, 2006.
+(e) July  31st, 2006.
+(d) July  27th, 2006.
+(c) July  15th, 2006.
+(b) July  13th, 2006.
+(a) July  11th, 2006.
 
 New Features:
 (e) incorporated intel dual cpus into config.guess
@@ -25,6 +26,8 @@ New Features:
 (b) updated version number
 
 Bugfixes:
+(f) Fixed segfault in "analyze distto" when called without
+    argument.
 (d) Makefile: Fixed dependency generation with gcc.
 (a) fftw3 is no longer necessary even without LB switched on.
 (a) Fixed warning about unused var type_tab if tabulated potentials are not
