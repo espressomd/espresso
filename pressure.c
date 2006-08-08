@@ -499,7 +499,7 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_co
     else if( ARG0_IS_S("nb_intra")) {
       if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
 	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nonbonded <type1> <type2>",
+	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nb_intra <type1> <type2>",
 			 (char *)NULL);
 	return (TCL_ERROR);
       }
@@ -512,7 +512,7 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_co
     else if( ARG0_IS_S("nb_inter")) {
       if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
 	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nonbonded <type1> <type2>",
+	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nb_inter <type1> <type2>",
 			 (char *)NULL);
 	return (TCL_ERROR);
       }
