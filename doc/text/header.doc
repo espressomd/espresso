@@ -61,24 +61,20 @@ For more details see \ref integrate.c "integrate.c".
 
 <ul>
 <li> Script language: <a href="http://tcl.activestate.com">Tcl 8.3</a> or higher version
-<li> mpi programming environment: depends on operating system (see below).
+<li> An implementation of the MPI-1.2 standard (only required for parallel execution). The programming environment depends on the operating system.
 <li> Fast Fourier Transformation: <a href="http://www.fftw.org">fftw</a> 
-</ul>
-\todo Requirements: Which version of MPI is required?
-\todo Requirements: MPI is only required for parallel execution
-
-Supported operating systems:
-<ul>
-<li> LINUX (mpi programming environment: <a href="http://www.lam-mpi.org">lam</a>)
-<li> OSF1
-<li> AIX
-</ul>
-
-
-Only for some special purpose, for example you want to supplement your
+<li> Only for some special purpose, for example if you want to supplement your
 simulations with a graphical user interface like it is done in the
 sample script demo.tcl, you will also need  
 <a href="http://tcl.activestate.com">tk 8.3</a> or higher version.
+</ul>
+
+\section os_support Supported operating systems
+
+<ul>
+<li> LINUX (MPI programming environment: <a href="http://www.lam-mpi.org">LAM/MPI</a>)
+<li> AIX
+</ul>
 
 \section start Getting Started
 
@@ -112,7 +108,7 @@ you want to use the provided Makefiles directly.<br>
 </ul>
 
 <li> OSF1:<br>
-Documentation not ready.
+Not supported any more at the moment.
 
 <li> AIX:<br>
 Special settings for an IBM Regatta system.
