@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0f (Ydalir)                                                                     *
+* v2.0.0g (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0f -
+- v2.0.0g -
 -----------
 
+(g) August 8th, 2006.
 (f) August 7th, 2006.
 (e) July  31st, 2006.
 (d) July  27th, 2006.
@@ -24,6 +25,10 @@ New Features:
     Linux/Debian
 (b) Moved ESPResSo Version to 2.0.0
 (b) updated version number
+
+Changes:
+(g) Documentation now explicitly mentions the required MPI-1.2
+    standard.
 
 Bugfixes:
 (f) Fixed segfault in "analyze distto" when called without
