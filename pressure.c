@@ -484,19 +484,22 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_co
       }
       value = *obsstat_nonbonded(&total_pressure, i, j);
     }
-    else if( ARG0_IS_S("tot_nb_intra")) {
+    else if( ARG0_IS_S("tot_nb_intra") ||
+	     ARG0_IS_S("tot_nonbonded_intra")) {
       value = 0.0;
       for (i = 0; i < n_particle_types; i++)
         for (j = i; j < n_particle_types; j++)
         value += *obsstat_nonbonded_intra(&total_pressure_non_bonded, i, j);
     }
-    else if( ARG0_IS_S("tot_nb_inter")) {
+    else if( ARG0_IS_S("tot_nb_inter") ||
+	     ARG0_IS_S("tot_nonbonded_inter")) {
       value = 0.0;
       for (i = 0; i < n_particle_types; i++)
         for (j = i; j < n_particle_types; j++)
         value += *obsstat_nonbonded_inter(&total_pressure_non_bonded, i, j);
     }
-    else if( ARG0_IS_S("nb_intra")) {
+    else if( ARG0_IS_S("nb_intra") ||
+	     ARG0_IS_S("nonbonded_intra")) {
       if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nb_intra <type1> <type2>",
@@ -509,7 +512,8 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_co
       }
       value = *obsstat_nonbonded_intra(&total_pressure_non_bonded, i, j);
     }   
-    else if( ARG0_IS_S("nb_inter")) {
+    else if( ARG0_IS_S("nb_inter") ||
+	     ARG0_IS_S("nonbonded_inter")) {
       if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nb_inter <type1> <type2>",

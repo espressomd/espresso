@@ -77,9 +77,9 @@ if { [catch {
     # write_data "gb_system.data"
 
     # ensures that no other forces are on
-    set cureng [expr [analyze energy gb 0 0]]
+    set cureng [expr [analyze energy nonbonded 0 0]]
     # tbrs
-    set curprs [expr [lindex [analyze pressure gb 0 0] 0] ]
+    set curprs [expr [lindex [analyze pressure nonbonded 0 0] 0] ]
 
     ############## end
 

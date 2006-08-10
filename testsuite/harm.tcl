@@ -70,9 +70,9 @@ if { [catch {
     # write_data "harm_system.data2"
 
     # ensures that no other forces are on
-    set cureng [analyze energy harm 0 0]
+    set cureng [analyze energy bonded 0 0]
     # tbrs
-    set curprs [lindex [analyze pressure harm 0 0] 0]
+    set curprs [lindex [analyze pressure bonded 0 0] 0]
     ############## end
 
     set toteng [analyze energy total]

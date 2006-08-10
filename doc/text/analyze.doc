@@ -88,55 +88,56 @@ In <tt>statistics.c</tt>:<br>
 
 
 </ul>In <tt>energy.c</tt>:<ul>
-    <li> \verbatim analyze energy [{ <interaction_type> [options] | kinetic | total }] \endverbatim
-         returns the energies of the system. The output corresponds to the  blockfile format (\ref blockformat):
-	 { energy \<value\> } { kinetic \<value\> } { interaction \<value\> } ... <BR>
-	 If you specify \<interaction_type\>, e. g. 
-	 \verbatim bonded     |  fene <type_num>     |  harmonic <type_num>
- nonbonded  |  lj <type1> <type2>  |  lj-cos <type1> <type2>  |  gb <type1> <type2> | tabulated <type1> <type2> 
- coulomb
- kinetic \endverbatim
-         it returns just that energy; if you specify <tt>total</tt>, it only returns the total energy without giving the details on its contributors.
-	 The C implementation is \ref energy_calc, which calls \ref energy_calc on all nodes; it is parsed by \ref #parse_and_print_energy.
+    <li> \verbatim analyze energy [{ total |
+                   kinetic | bonded <bond_type> | nonbonded <part_type1> <part_type2> | coulomb }] \endverbatim
+        returns the energies of the system. 
+
+	If you do not specify an argument, it returns all the
+	contributions to the total energy in the the \ref blockformat "blockfile format"
+	\verbatim { energy <value> } { kinetic <value> } { interaction <value> } ... \endverbatim
+
+	If you specify <tt>total</tt>, it returns just the total energy without
+	giving the details on its contributors. 
+	Any other argument will return the corresponding contribution.
+
+	The C implementation is \ref energy_calc, which calls 
+	\ref energy_calc on all nodes; it is parsed by \ref parse_and_print_energy. 
 
 </ul>In <tt>pressure.c</tt>:<ul>
-    <li> \verbatim analyze pressure [{ total[s] | ideal | <interaction_type> [options] }]\endverbatim
+    <li> \verbatim analyze pressure [{ total[s] | ideal | 
+                  bonded <bond_type> | nonbonded <part_type1> <part_type2> | coulomb |
+                  tot_nonbonded_intra | tot_nonbonded_inter | 
+                  nonbonded_intra <part_type1> | nonbonded_inter <part_type2> }] \endverbatim
          derives the <i>pressure</i> and all its contributions in the
-         system. Return value is a tcl-list looking like
+         system. 
+
+	Without an argument, <tt>analyze pressure</tt> will return a tcl-list looking like
 	 \verbatim 0.002753 0.000008 { ideal 0.002000 } { { FENE -0.006172 0.000038 } }  { lj 0.005996 0.000023 } { coulomb 0.000930 0.000001 }\endverbatim
 	 specifying the pressure, its square, the ideal gas pressure,
 	 the contributions from bonded interactions, the contributions
-	 from
-	 non-bonded interactions, the electrostatic contributions. If
-	 only certain contributions are desired, the additional
-	 options may be used
-	 to access those; in that case only a two-value tcl-list is
+	 from non-bonded interactions and the electrostatic contributions.
+
+	 If only a certain contribution is desired, the additional
+	 arguments may be used to access those; in that case only a two-value tcl-list is
 	 returned (e. g. <tt>-0.006172 0.000038</tt> for <tt>analyze
-	 pressure fene</tt>
-	 in the above example), consisting of the requested
+	 pressure bonded</tt> in the above example), consisting of the requested
 	 contribution and its square (except for <tt>analyze pressure
-	 total</tt>
-	 which only returns the pressure, while <tt>analyze pressure
+	 total</tt> which only returns the pressure, while <tt>analyze pressure
 	 totals</tt> returns both, e. g. <tt>0.002753 0.000008</tt> in
 	 the above example).
-	 If the \<type_num\> are given as well, only the contributions
-	 of interactions with that specific \<type_num\> are
-	 considered, returning e. g.
-	 <tt>0.006136 0.000023</tt> for <tt>analyze pressure lj 0</tt>
-	 and <tt>-0.006172 0.000038</tt> for <tt>analyze pressure fene
-	 0</tt>.<br>
-	 The possible choices for <tt>\<interaction_type\></tt> are
-	 the same as those for '<tt>analyze energy</tt>' given
-	 previously.<br>
+
 	 Note that the ideal pressure is derived using the
 	 temperature, hence for systems with <tt>temp = 0</tt> it will
-	 be zero;
-	 in those cases it is preferable to use <tt>analyze p_IK1</tt>
-	 which looks at the velocities of the particles.<BR>
+	 be zero; in those cases it is preferable to use <tt>analyze p_IK1</tt>
+	 which looks at the velocities of the particles.
+
 	 This command is implemented as a parallel algorithm:
 	 The C implementation is \ref pressure_calc, which calls \ref
 	 pressure_calc on all nodes; it is parsed by \ref
 	 #parse_and_print_pressure.
+
+	\todo Document arguments <tt>nb_inter</tt>, <tt>nb_intra</tt>,
+	<tt>tot_nb_inter</tt> and <tt>tot_nb_intra</tt> of <tt>analyze pressure</tt>.
     <li> \verbatim analyze p_IK1 <bin_volume> <ind_list> <flag_all>\endverbatim
          derives the <i>pressure-tensor</i> and all its contributions
          in the system. Return value is a tcl-list looking like

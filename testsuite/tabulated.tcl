@@ -92,11 +92,11 @@ if { [catch {
     # write_data "tabulated_system.data"
 
     # ensures that no other forces are on
-    set cureng [expr [analyze energy tabulated 0 0] + [analyze energy tabulated 0 1] + [analyze energy tabulated 1 1]]
+    set cureng [expr [analyze energy nonbonded 0 0] + [analyze energy nonbonded 0 1] + [analyze energy nonbonded 1 1]]
     # tbrs
-    set curprs [expr [lindex [analyze pressure tabulated 0 0] 0] + \
-		[lindex [analyze pressure tabulated 0 1] 0] + \
-		[lindex [analyze pressure tabulated 1 1] 0]]
+    set curprs [expr [lindex [analyze pressure nonbonded 0 0] 0] + \
+		[lindex [analyze pressure nonbonded 0 1] 0] + \
+		[lindex [analyze pressure nonbonded 1 1] 0]]
 
     ############## end
 
