@@ -109,16 +109,14 @@ AC_DEFUN([ES_CHECK_DEPEND],[
 ])
 
 AC_DEFUN([ES_CHECK_INLINING],[
-	if test $enable_mode = production; then
+	if test "$enable_mode" = production; then
 		CF_CHECK_INLINE
 	else
-		CFLAGS="$CFLAGS -DMDINLINE=\"static\""
+		AC_DEFINE([MDINLINE],[static],[How to inline functions])
 	fi
 ])
 
 AC_DEFUN([ES_CHECK_TCL],[
-	AC_DEFINE(USE_NON_CONST)
-
 	AC_ARG_ENABLE(tcl,AC_HELP_STRING([--enable-tcl],[specify the tcl library to use (e.g. tcl8.4)]),
 		[tclversion=$enable_tcl], [tclversion=yes])
 	if test .$tclversion = .yes; then
@@ -194,7 +192,7 @@ AC_DEFUN([ES_CHECK_TK],[
 		*) ;;
 		esac
 		ES_ADDPATH_CHECK_HEADER(tk.h, [], [AC_MSG_ERROR(Tk headers not found)],$extrapaths)
-		AC_DEFINE(TK)
+		AC_DEFINE(TK,,[Whether to use Tk])
 	fi
 ])
 
@@ -235,7 +233,7 @@ AC_DEFUN([ES_CHECK_FFTW],[
 		fi
 	fi
 	if test $enable_fftw = 3; then
-		AC_DEFINE(USEFFTW3)
+		AC_DEFINE(USEFFTW3,,[Whether to use the FFTW3 library])
 		ES_CHECK_FFTW3
 		if test .$fftw3_found != .yes; then
 			AC_MSG_ERROR([could not link against FFTW3, please specify its header and library locations in CFLAGS and LDFLAGS])
