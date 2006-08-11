@@ -17,7 +17,6 @@
 */
 #include <tcl.h>
 #include "utils.h"
-#include "version.h"
 
 #ifdef BOND_CONSTRAINT
 #ifdef ROTATION
