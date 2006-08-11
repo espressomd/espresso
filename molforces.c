@@ -66,7 +66,9 @@ void calc_trap_force()
 {
   Molecule *m;
   int mi,j;
+#ifdef EXTERNAL_FORCES
   double trappos;
+#endif
   
 
   if ( !topo_part_info_synced ) {
@@ -80,6 +82,7 @@ void calc_trap_force()
     for (mi = 0; mi < n_molecules; mi++) {
       m = &topology[mi];
       for(j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
 	if (m->trap_flag & COORD_FIXED(j)) {
 	  /* Is the molecule trapped at a certain position in space? */
 	  if (m->isrelative == 1) {
@@ -105,6 +108,7 @@ void calc_trap_force()
 	  m->trap_force[j] -= m->f[j]/(double)m->part.n;
 	  if (m->favcounter > -1) m->fav[j] -= m->f[j];
 	}
+#endif
       }
       m->favcounter++;
     }
@@ -128,8 +132,10 @@ void get_local_trapped_mols (IntList *local_trapped_mols)
       /* Check to see if this molecule is fixed */
       fixed =0;
       for(j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
 	if (topology[mol].trap_flag & COORD_FIXED(j)) fixed = 1;
 	if (topology[mol].noforce_flag & COORD_FIXED(j)) fixed = 1;
+#endif
       }  
       if (fixed) {
 	/* if this molecule isn't already in local_trapped_mols then add it in */
@@ -179,8 +185,10 @@ void calc_local_mol_info (IntList *local_trapped_mols)
       /* Check to see if this molecule is fixed */
       fixed =0;
       for(j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
 	if (topology[mol].trap_flag & COORD_FIXED(j)) fixed = 1;
 	if (topology[mol].noforce_flag & COORD_FIXED(j)) fixed = 1;
+#endif
       }  
       if (fixed) {
 	topology[mol].mass += PMASS(p[i]);

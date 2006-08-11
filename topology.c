@@ -164,9 +164,6 @@ int set_molecule_trap(int mol_num, int trap_flag,DoubleList *trap_center,double 
 #ifdef EXTERNAL_FORCES
     topology[mol_num].trap_flag &= ~COORDS_FIX_MASK;
     topology[mol_num].noforce_flag &= ~COORDS_FIX_MASK;
-#else
-    Tcl_AppendResult(interp, "Error: EXTERNAL_FORCES not defined ", (char *)NULL);
-    return TCL_ERROR;
 #endif
     /* set new values */
     topology[mol_num].trap_flag |= trap_flag;
@@ -192,9 +189,11 @@ int parse_trapmol(Tcl_Interp *interp, int argc, char **argv)
 {
 
 #ifdef MOLFORCES
+#ifdef EXTERNAL_FORCES
   int trap_flag = 0;
   int noforce_flag =0;
   int i;
+#endif
 #endif
   int mol_num;
   double spring_constant;
