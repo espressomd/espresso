@@ -2,24 +2,27 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0g (Ydalir)                                                                     *
+* v2.0.0h (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0g -
+- v2.0.0h -
 -----------
 
-(g) August 8th, 2006.
-(f) August 7th, 2006.
-(e) July  31st, 2006.
-(d) July  27th, 2006.
-(c) July  15th, 2006.
-(b) July  13th, 2006.
-(a) July  11th, 2006.
+(h) August 10th, 2006.
+(g) August  8th, 2006.
+(f) August  7th, 2006.
+(e) July   31st, 2006.
+(d) July   27th, 2006.
+(c) July   15th, 2006.
+(b) July   13th, 2006.
+(a) July   11th, 2006.
 
 New Features:
+(h) Added keywords tot_nonbonded_intra, tot_nonbonded_inter,
+    nonbonded_intra and nonbonded_inter to "analyze pressure".
 (e) incorporated intel dual cpus into config.guess
 (c) determining the OS release for AIX, and changes for mawk on
     Linux/Debian
@@ -31,6 +34,11 @@ Changes:
     standard.
 
 Bugfixes:
+(h) Removed specialized keywords for nonbonded and bonded
+    interaction
+    contributions from the documentation of "analyze energy" and
+    "analyze
+    pressure".
 (f) Fixed segfault in "analyze distto" when called without
     argument.
 (d) Makefile: Fixed dependency generation with gcc.
