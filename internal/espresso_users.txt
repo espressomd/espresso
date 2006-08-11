@@ -1166,3 +1166,25 @@ topic:     We are working on \\\\\\\\\\\\\\\"stiff polyelectrolytes\\\\\\\\\\\\\
 reminded:  X31.JUL.2006
 
 
+name:      Christian Klinke
+email:     klinke@chemie.uni-hamburg.de
+institute: University of Hamburg
+           Institut of Physical Chemistry
+sent:      09.AUG.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Simulations on carbon nanotubes ...
+reminded:  X09.AUG.2006
+
+
+name:      Christian Klinke
+email:     klinke@chemie.uni-hamburg.de
+institute: University of Hamburg
+           Institut of Physical Chemistry
+sent:      09.AUG.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Simulations on carbon nanotubes ...
+reminded:  X09.AUG.2006
+
+
