@@ -11,7 +11,7 @@ MDINLINE void test() {}],[test();])],[works=yes],[works=no])
 	if test .$works = .no; then
 		AC_MSG_ERROR([your compiler does not even support "static"])
 	fi
-	AC_DEFINE_UNQUOTED(MDINLINE,$mdinline)
+	AC_DEFINE_UNQUOTED(MDINLINE,$mdinline,[How to inline functions])
 	AC_MSG_RESULT([$mdinline])
 ])
 
