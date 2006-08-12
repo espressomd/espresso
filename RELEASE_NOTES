@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0h (Ydalir)                                                                     *
+* v2.0.0i (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0h -
+- v2.0.0i -
 -----------
 
+(i) August 11th, 2006.
 (h) August 10th, 2006.
 (g) August  8th, 2006.
 (f) August  7th, 2006.
@@ -34,6 +35,8 @@ Changes:
     standard.
 
 Bugfixes:
+(i) could not compile when MOLFORCES was switched on and EXTERNAL_FORCES was
+    switched off
 (h) Removed specialized keywords for nonbonded and bonded
     interaction
     contributions from the documentation of "analyze energy" and
