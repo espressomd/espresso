@@ -1,7 +1,19 @@
-# Process this file with autoconf to produce a configure script.
-AC_INIT(ESPResSo, 2.0-automake, 
-		  [espresso@mpip-mainz.mpg.de])
-time_stamp="20060808"
+dnl Process this file with autoconf to produce a configure script.
+dnl Fetch the version and timestamp
+m4_define([ESPRESSO_VERSION],
+  [esyscmd([awk '/^\* /\
+    { for(i=2;i<NF-1;i++) printf("%s ",$i); printf $(NF-1); exit}'\
+   RELEASE_NOTES]
+  )])
+m4_define([ESPRESSO_TIMESTAMP],
+  ['esyscmd([awk '/[(][a-z]*[)]/\
+    { for(i=2;i<NF;i++) printf("%s ",$i); gsub("[.]", "", $NF); printf $NF; exit}'\
+   RELEASE_NOTES]
+  )'])
+
+# Initialise autoconf
+AC_INIT(ESPResSo, ESPRESSO_VERSION, [espresso@mpip-mainz.mpg.de])
+time_stamp=ESPRESSO_TIMESTAMP
 
 AC_PREREQ(2.50)
 AC_CONFIG_SRCDIR([$unique_file])
@@ -31,7 +43,6 @@ fi
 AM_INIT_AUTOMAKE
 
 AC_PREFIX_DEFAULT($HOME/Espresso)
-
 
 # Checks for programs.
 AC_PROG_AWK
