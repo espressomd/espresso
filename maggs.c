@@ -9,7 +9,7 @@
 /** \file maggs.c  
  *  Local Maggs algorithm for long range coulomb interaction.
  */
-#include <mpi.h>
+#include <mpi_wrap.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

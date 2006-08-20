@@ -23,7 +23,7 @@
  *
  */
 
-#include <mpi.h>
+#include <mpi_wrap.h>
 #include <tcl.h>
 #include <stdio.h>
 #include "utils.h"

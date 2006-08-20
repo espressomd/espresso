@@ -20,7 +20,7 @@
 #ifndef HALO_H
 #define HALO_H
 
-#include <mpi.h>
+#include <mpi_wrap.h>
 #include "utils.h"
 #include "lattice.h"
 

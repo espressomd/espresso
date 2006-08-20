@@ -9,7 +9,7 @@
 /** \file layered.c
     Implementation of \ref layered.h "layered.h".
  */
-#include <mpi.h>
+#include <mpi_wrap.h>
 #include <string.h>
 #include "utils.h"
 #include "cells.h"

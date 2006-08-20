@@ -9,7 +9,7 @@
 /** \file communication.c
     Implementation of \ref communication.h "communication.h".
 */
-#include <mpi.h>
+#include <mpi_wrap.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

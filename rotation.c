@@ -15,7 +15,7 @@
  *  flag is set in \ref config.h "config.h".
 */
 
-#include <mpi.h>
+#include <mpi_wrap.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

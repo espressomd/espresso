@@ -13,7 +13,7 @@
  *  see \ref integrate.h "integrate.h".
 */
 
-#include <mpi.h>
+#include <mpi_wrap.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

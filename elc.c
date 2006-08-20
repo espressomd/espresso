@@ -11,7 +11,7 @@
  *  For more information about ELC, see \ref elc.h "elc.h".
  */
 #include <math.h>
-#include <mpi.h>
+#include <mpi_wrap.h>
 #include "utils.h"
 #include "communication.h"
 #include "particle_data.h"

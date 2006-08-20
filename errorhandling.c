@@ -9,7 +9,7 @@
 /** \file errorhandling.c
     Implementation of \ref errorhandling.h "errorhandling.h".
 */
-#include <mpi.h>
+#include <mpi_wrap.h>
 #include <string.h>
 #include "utils.h"
 #include "errorhandling.h"
