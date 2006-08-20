@@ -35,7 +35,7 @@ if test "$srcdir" = "."; then
 	AC_MSG_NOTICE([Starting configure from $objdir])
 	# restart configure in the objdir
 	cd $objdir
-	../configure $@
+	../configure "$@"
 	cd ..
 	exit
 else
