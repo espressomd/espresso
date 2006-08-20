@@ -117,6 +117,8 @@ AC_DEFUN([ES_CHECK_INLINING],[
 ])
 
 AC_DEFUN([ES_CHECK_TCL],[
+        AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
+
 	AC_ARG_ENABLE(tcl,AC_HELP_STRING([--enable-tcl],[specify the tcl library to use (e.g. tcl8.4)]),
 		[tclversion=$enable_tcl], [tclversion=yes])
 	if test .$tclversion = .yes; then
