@@ -74,6 +74,13 @@ AC_DEFUN([CF_TRYLINK_ADD_CFLAG],[
 	saved_CFLAGS=$CFLAGS
 	CFLAGS="$1 $CFLAGS"
 	AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])],[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS ])
+	if test .$2 != . ; then
+		if [ "$CFLAGS" = "$saved_CFLAGS" ]; then
+			$2=yes
+		else
+			$2=no
+		fi
+	fi
 ])
 
 AC_DEFUN([CF_CHECK_GCC_FLAGS],[
@@ -95,16 +102,7 @@ AC_DEFUN([CF_CHECK_GCC_FLAGS],[
 	Power)		type=pwr; cpu=power ;;
 	Power2)		type=pwr; cpu=power2 ;;
 	Power*)		type=pwr; cpu=powerpc ;;
-	ppc*)		case $target_os in
-			*darwin*)	type=pwr
-					case $target_cpu in
-					ppc970)	 cpu=G5 ;;
-					ppc7450) cpu=7450 ;;
-					ppc*)    cpu=powerpc ;;
-					esac
-					altivec=yes ;;
-			*)		type=pwr; cpu=powerpc;
-			esac ;;
+	ppc*)		type=pwr; cpu=powerpc; altivec=yes ;;
 	EV67*)		type=alpha; cpu=ev67 ;;
 	EV6*)		type=alpha; cpu=ev6 ;;
 	EV56*)		type=alpha; cpu=ev56 ;;
@@ -117,6 +115,12 @@ AC_DEFUN([CF_CHECK_GCC_FLAGS],[
 	sparclet)	type=sparc; cpu=sparclet ;;
 	*)	AC_MSG_WARN([could not recognize your cpu type, relying on generic optimization])
 	esac
+	# first try wether the compiler accepts -fast (Apple)
+	# then do not try CPU specific flags
+	CF_TRY_ADD_CFLAG(-fast, accept_fast)
+	if test .$accept_fast != .yes ; then
+
+	# try CPU specific flags
 	if test .$m != .; then
 		CF_TRY_ADD_CFLAG(-m$m)
 	fi
@@ -138,6 +142,10 @@ AC_DEFUN([CF_CHECK_GCC_FLAGS],[
 	if test .$type = .ia; then
 		CF_TRY_ADD_CFLAG(-malign-double)
 	fi
+
+	fi
+	# end of CPU specific flags
+
 	CF_TRY_ADD_CFLAG(-O3)
 	CF_TRY_ADD_CFLAG(-Wno-unused-function)
 	CF_TRY_ADD_CFLAG(-Wall)

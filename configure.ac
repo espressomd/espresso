@@ -19,6 +19,8 @@ AC_PREREQ(2.50)
 AC_CONFIG_SRCDIR([$unique_file])
 AC_CONFIG_HEADER([archconfig.h])
 AC_CONFIG_AUX_DIR(config)
+AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
 
 # First test if we are in the source directory
 AC_MSG_CHECKING([whether configure is running in the source directory])
@@ -70,11 +72,16 @@ AC_CHECK_FUNCS([atexit floor getcwd gethostbyname memset pow rint select socket 
 # Other tests
 
 AC_ARG_ENABLE(mode,AC_HELP_STRING(--enable-mode,[specify the compilation mode, either production, debug or profiling]),,enable_mode=production)
+AC_ARG_ENABLE(processor-optimization,AC_HELP_STRING(--enable-processor-optimization,[enable guessing of processor specific optimizations]),,enable_processor_optimization=yes)
+
 AC_DEFINE_UNQUOTED(COMPILE_MODE,"$enable_mode",[Compilation mode])
 
 ES_CHECK_MPI
 ES_CHECK_EFENCE
 ES_CHECK_INLINING
+if test .$enable_processor_optimization = .yes; then
+        CF_CHECK_OPTFLAGS
+fi
 ES_CHECK_LINK
 ES_CHECK_TCL
 ES_CHECK_TK
