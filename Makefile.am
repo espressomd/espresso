@@ -1,3 +1,5 @@
+EXTRA_DIST=Makefile Espresso RELEASE_NOTES
+
 bin_PROGRAMS = Espresso
 
 Espresso_SOURCES =											\
@@ -8,5 +10,5 @@ Espresso_SOURCES =											\
 	uwerr.c parser.c domain_decomposition.c nsquare.c layered.c mmm-common.c mmm2d.c		\
 	modes.c topology.c nemd.c statistics_cluster.c elc.c statistics_molecule.c			\
 	errorhandling.c constraint.c maggs.c rattle.c molforces.c lb.c					\
-	bin.c lattice.c halo.c statistics_fluid.c lb-boundaries.c
+	bin.c lattice.c halo.c statistics_fluid.c lb-boundaries.c mpifake.c
 

@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl Fetch the version and timestamp
 m4_define([ESPRESSO_VERSION],
   [esyscmd([awk '/^\* /\
-    { for(i=2;i<NF-1;i++) printf("%s ",$i); printf $(NF-1); exit}'\
+    { for(i=2;i<NF-1;i++) printf("%s-",$i); printf $(NF-1); exit}'\
    RELEASE_NOTES]
   )])
 m4_define([ESPRESSO_TIMESTAMP],
