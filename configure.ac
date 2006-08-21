@@ -2,12 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl Fetch the version and timestamp
 m4_define([ESPRESSO_VERSION],
   [esyscmd([awk '/^\* /\
-    { for(i=2;i<NF-1;i++) printf("%s ",$i); printf $(NF-1); exit}'\
-   RELEASE_NOTES]
-  )])
-m4_define([ESPRESSO_TARNAME],
-  [esyscmd([awk '/^\* /\
-    { i=2; version=substr($i,2); printf("espresso-%s.tar.gz",version); exit}'\
+    { i=2; printf("%s", substr($i,2)); exit}'\
    RELEASE_NOTES]
   )])
 m4_define([ESPRESSO_TIMESTAMP],
@@ -17,10 +12,7 @@ m4_define([ESPRESSO_TIMESTAMP],
   )'])
 
 # Initialise autoconf
-AC_INIT(ESPResSo, 
-  [ESPRESSO_VERSION], 
-  [espresso@mpip-mainz.mpg.de],
-  [ESPRESSO_TARNAME])
+AC_INIT(ESPResSo, [ESPRESSO_VERSION], [espresso@mpip-mainz.mpg.de])
 time_stamp=ESPRESSO_TIMESTAMP
 
 AC_PREREQ(2.50)

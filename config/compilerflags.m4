@@ -162,7 +162,6 @@ AC_DEFUN([CF_CHECK_GCC_FLAGS],[
 		CF_TRY_ADD_CFLAG(-pg)
 		LDFLAGS="-pg $LDFLAGS"
 	fi	  
-
 	if test .$enable_debug=.yes || test .$enable_profiling=.yes; then
 		CF_TRY_ADD_CFLAG(-fno-inline)
 	else
@@ -243,7 +242,6 @@ AC_DEFUN([CF_CHECK_XLC_FLAGS],[
 		CF_TRY_ADD_CFLAG(-pg)
 		LDFLAGS="-pg $LDFLAGS"
 	fi	  
-
 	if test .$enable_debug!=.yes && test .$enable_profiling=!.yes; then
 		CF_TRY_ADD_CFLAG(-qinline=100000)
 	fi
@@ -271,7 +269,7 @@ AC_DEFUN([CF_CHECK_DEC_FLAGS],[
 		CF_TRY_ADD_CFLAG(-pg)
 		LDFLAGS="-pg $LDFLAGS"
 	fi
-	if test .$enable_debug=.yes || test .$enable_profiling=.yes; then
+	if test .$enable_debug!=.yes && test .$enable_profiling!=.yes; then
 		CF_TRY_ADD_CFLAG(-O3)
 	fi
 ])
@@ -291,9 +289,11 @@ AC_DEFUN([CF_CHECK_OPTFLAGS],[
 		CF_TRY_ADD_CFLAG(-pg)
 		LDFLAGS="-pg $LDFLAGS"
 	fi
-	if test .$enable_debug=.yes || test .$enable_profiling=.yes; then
+	if test .$enable_debug!=.yes && test .$enable_profiling!=.yes; then
 		CF_TRY_ADD_CFLAG(-O2)
-	fi
+	fi 
+	;;
+	esac
 ])
 
 AC_DEFUN([CF_SET_ARCH_FLAGS],[
