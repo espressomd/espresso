@@ -1,5 +1,10 @@
+objdir := obj-$(shell config/config.guess)
+
 all:
-	cd obj-`config/config.guess`; $(MAKE) --print-directory $(MAKEFLAGS) $@
+	cd ${objdir}; $(MAKE) --print-directory $(MAKEFLAGS) $@
+
+# dist:
+# 	cd ${objdir}; $(MAKE) --print-directory $(MAKEFLAGS) $@
 
 %:
-	cd obj-`config/config.guess`; $(MAKE) --print-directory $(MAKEFLAGS) $@
+	cd ${objdir}; $(MAKE) --print-directory $(MAKEFLAGS) $@
