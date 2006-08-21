@@ -153,19 +153,21 @@ AC_DEFUN([CF_CHECK_GCC_FLAGS],[
 	CF_TRY_ADD_CFLAG(-floop-optimize)
 	CF_TRY_ADD_CFLAG(-funroll-loops)
 
-	case $enable_mode in
-	production) CF_TRY_ADD_CFLAG(-finline-limit=1000000)
+	if test .$enable_debug=.yes; then
+		CF_TRY_ADD_CFLAG(-g)
+	else
 		CF_TRY_ADD_CFLAG(-fomit-frame-pointer)
-		;;
-	debug)	CF_TRY_ADD_CFLAG(-g)
-		CF_TRY_ADD_CFLAG(-fno-inline)
-		;;
-	profile) CF_TRY_ADD_CFLAG(-pg)
-		CF_TRY_ADD_CFLAG(-fno-inline)
-		CF_TRY_ADD_CFLAG(-fomit-frame-pointer)
+	fi
+	if test .$enable_profiling=.yes; then
+		CF_TRY_ADD_CFLAG(-pg)
 		LDFLAGS="-pg $LDFLAGS"
-		;;
-	esac
+	fi	  
+
+	if test .$enable_debug=.yes || test .$enable_profiling=.yes; then
+		CF_TRY_ADD_CFLAG(-fno-inline)
+	else
+		CF_TRY_ADD_CFLAG(-finline-limit=1000000)
+	fi
 ])
 
 AC_DEFUN([CF_CHECK_ICC_FLAGS],[
@@ -193,17 +195,16 @@ AC_DEFUN([CF_CHECK_ICC_FLAGS],[
 	dnl stupid warnings from version 8.1 and above
 	CF_TRY_ADD_CFLAG([-wd 1572,1173])
 
-	case $enable_mode in
-	production)
-		;;
-	debug)	CF_TRY_ADD_CFLAG(-g)
-		CF_TRY_ADD_CFLAG(-Ob0)
-		;;
-	profile) CF_TRY_ADD_CFLAG(-pg)
-		CF_TRY_ADD_CFLAG(-Ob0)
+	if test .$enable_debug = .yes; then
+		CF_TRY_ADD_CFLAG(-g)
+	fi
+	if test .$enable_profiling = .yes; then
+		CF_TRY_ADD_CFLAG(-pg)
 		LDFLAGS="-pg $LDFLAGS"
-		;;
-	esac
+	fi
+	if test .$enable_debug=.yes || test .$enable_profiling=.yes; then
+		CF_TRY_ADD_CFLAG(-Ob0)
+	fi
 ])
 
 AC_DEFUN([CF_CHECK_XLC_FLAGS],[
@@ -235,15 +236,17 @@ AC_DEFUN([CF_CHECK_XLC_FLAGS],[
 		AC_MSG_WARN([  not found, disable it with --disable-xlc-qipa])
 	fi
 
-	case $enable_mode in
-	production) CF_TRY_ADD_CFLAG(-qinline=100000)
-		;;
-	debug)	CF_TRY_ADD_CFLAG(-g)
-		;;
-	profile) CF_TRY_ADD_CFLAG(-pg)
+	if test .$enable_debug=.yes; then
+		CF_TRY_ADD_CFLAG(-g)
+	fi
+	if test .$enable_profiling=.yes; then
+		CF_TRY_ADD_CFLAG(-pg)
 		LDFLAGS="-pg $LDFLAGS"
-		;;
-	esac
+	fi	  
+
+	if test .$enable_debug!=.yes && test .$enable_profiling=!.yes; then
+		CF_TRY_ADD_CFLAG(-qinline=100000)
+	fi
 ])
 
 AC_DEFUN([CF_CHECK_DEC_FLAGS],[
@@ -261,15 +264,16 @@ AC_DEFUN([CF_CHECK_DEC_FLAGS],[
 	dnl in the latter case, it compiles nicely, but does not link...
 	CF_TRYLINK_ADD_CFLAG(-w0 -check)
 
-	case $enable_mode in
-	production) CF_TRY_ADD_CFLAG(-O3)
-		;;
-	debug)	CF_TRY_ADD_CFLAG(-g)
-		;;
-	profile) CF_TRY_ADD_CFLAG(-pg)
+	if test .$enable_debug = .yes; then
+		CF_TRY_ADD_CFLAG(-g)
+	fi
+	if test .$enable_profiling = .yes; then
+		CF_TRY_ADD_CFLAG(-pg)
 		LDFLAGS="-pg $LDFLAGS"
-		;;
-	esac
+	fi
+	if test .$enable_debug=.yes || test .$enable_profiling=.yes; then
+		CF_TRY_ADD_CFLAG(-O3)
+	fi
 ])
 
 AC_DEFUN([CF_CHECK_OPTFLAGS],[
@@ -279,13 +283,17 @@ AC_DEFUN([CF_CHECK_OPTFLAGS],[
 	icc)	CF_CHECK_ICC_FLAGS ;;
 	xlc)	CF_CHECK_XLC_FLAGS ;;
 	dec)	CF_CHECK_DEC_FLAGS ;;
-	unknown) case $enable_mode in
-		production)	CFLAGS="-O2 $CFLAGS" ;;
-		debug)		CFLAGS="-g -O2 $CFLAGS" ;;
-		debug)		CFLAGS="-pg-O2 $CFLAGS"
-		 		LDFLAGS="-pg $LDFLAGS" ;;
-		esac
-	esac
+	unknown) 
+	if test .$enable_debug = .yes; then
+		CF_TRY_ADD_CFLAG(-g)
+	fi
+	if test .$enable_profiling = .yes; then
+		CF_TRY_ADD_CFLAG(-pg)
+		LDFLAGS="-pg $LDFLAGS"
+	fi
+	if test .$enable_debug=.yes || test .$enable_profiling=.yes; then
+		CF_TRY_ADD_CFLAG(-O2)
+	fi
 ])
 
 AC_DEFUN([CF_SET_ARCH_FLAGS],[

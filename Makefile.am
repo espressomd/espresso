@@ -1,6 +1,10 @@
 EXTRA_DIST=Makefile Espresso RELEASE_NOTES
 
+if USE_WRAPPER
 bin_PROGRAMS = Espresso
+else
+objlib_PROGRAMS = Espresso
+endif
 
 Espresso_SOURCES =											\
 	main.c config.c initialize.c global.c communication.c binary_file.c interaction_data.c		\

@@ -34,7 +34,12 @@ int version_callback(Tcl_Interp *interp)
 int compilation_callback(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, "{ Compilation status ", (char *) NULL);
-  Tcl_AppendResult(interp, "{ " COMPILE_MODE " } ", (char *) NULL);
+#ifdef DEBUG
+  Tcl_AppendResult(interp, "{ " DEBUG " } ", (char *) NULL);
+#endif
+#ifdef PROFILING
+  Tcl_AppendResult(interp, "{ " PROFILING " } ", (char *) NULL);
+#endif
   Tcl_AppendResult(interp, "{ MPI " MPI " } ", (char *) NULL);
 #ifdef USEFFTW3
   Tcl_AppendResult(interp, "{ FFTW3 } ", (char *) NULL);
