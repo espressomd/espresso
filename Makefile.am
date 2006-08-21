@@ -7,12 +7,81 @@ objlib_PROGRAMS = Espresso
 endif
 
 Espresso_SOURCES =											\
-	main.c config.c initialize.c global.c communication.c binary_file.c interaction_data.c		\
-	verlet.c grid.c integrate.c cells.c ghosts.c forces.c rotation.c debug.c particle_data.c	\
-	thermostat.c statistics.c statistics_chain.c energy.c pressure.c vmdsock.c imd.c		\
-	p3m.c ewald.c fft.c random.c blockfile.c blockfile_tcl.c polymer.c specfunc.c mmm1d.c tuning.c	\
-	uwerr.c parser.c domain_decomposition.c nsquare.c layered.c mmm-common.c mmm2d.c		\
-	modes.c topology.c nemd.c statistics_cluster.c elc.c statistics_molecule.c			\
-	errorhandling.c constraint.c maggs.c rattle.c molforces.c lb.c					\
-	bin.c lattice.c halo.c statistics_fluid.c lb-boundaries.c mpifake.c
-
+	main.c \
+	config.c config.h \
+	initialize.c initialize.h \
+	global.c global.h \
+	communication.c communication.h \
+	binary_file.c binary_file.h \
+	interaction_data.c interaction_data.h\
+	verlet.c verlet.h \
+	grid.c grid.h \
+	integrate.c integrate.h \
+	cells.c cells.h \
+	ghosts.c ghosts.h \
+	forces.c forces.h \
+	rotation.c rotation.h \
+	debug.c debug.h \
+	particle_data.c	particle_data.h \
+	thermostat.c thermostat.h \
+	statistics.c statistics.h \
+	statistics_chain.c statistics_chain.h \
+	energy.c energy.h \
+	pressure.c pressure.h \
+	vmdsock.c vmdsock.h \
+	imd.c imd.h \
+	p3m.c p3m.h \
+	ewald.c ewald.h \
+	fft.c fft.h \
+	random.c random.h \
+	blockfile.c blockfile.h \
+	blockfile_tcl.c blockfile_tcl.h \
+	polymer.c polymer.h \
+	specfunc.c specfunc.h \
+	tuning.c tuning.h \
+	uwerr.c	uwerr.h \
+	parser.c parser.h \
+	domain_decomposition.c domain_decomposition.h \
+	nsquare.c nsquare.h \
+	layered.c layered.h \
+	mmm-common.c mmm-common.h \
+	mmm1d.c mmm1d.h \
+	mmm2d.c	mmm2d.h \
+	modes.c	modes.h \
+	topology.c topology.h \
+	nemd.c nemd.h \
+	statistics_cluster.c statistics_cluster.h \
+	elc.c elc.h \
+	statistics_molecule.c statistics_molecule.h \
+	errorhandling.c	errorhandling.h \
+	constraint.c constraint.h \
+	maggs.c maggs.h \
+	rattle.c rattle.h \
+	molforces.c molforces.h \
+	lb.c lb.h \
+	bin.c bin.h \
+	lattice.c lattice.h \
+	halo.c halo.h \
+	statistics_fluid.c statistics_fluid.h \
+	lb-boundaries.c lb-boundaries.h \
+	mpifake.c mpifake.h \
+	angle.h \
+	buckingham.h \
+	comfixed.h \
+	comforce.h \
+	debye_hueckel.h \
+	dihedral.h \
+	fene.h \
+	gb.h \
+	harmonic.h \
+	imd.h \
+	ljcos2.h \
+	ljcos.h \
+	lj.h \
+	morse.h \
+	mpi_wrap.h \
+	polynom.h \
+	soft_sphere.h \
+	subt_lj.h \
+	tab.h \
+	utils.h
