@@ -74,14 +74,14 @@
 #define TYPE_DOUBLE 1
 #endif
 
-#ifdef TCL_FILE_IO
-#include <tcl.h>
-/** \internal */
-#define FILETYPE Tcl_Channel
-#else
+#ifdef BLOCKFILE_STDIO
 #include <stdio.h>
 /** \internal */
 #define FILETYPE FILE *
+#else
+#include <tcl.h>
+/** \internal */
+#define FILETYPE Tcl_Channel
 #endif
 
 /** read the title of a block. 
