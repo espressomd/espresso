@@ -1,8 +1,12 @@
-Time-stamp: <2006-08-21 11:09 olenz>
+Time-stamp: <2006-08-21 12:33 olenz>
 
 - Handling of the wrappers: Do NOT use the wrapper when configure is
   not called from srcdir.
 
 - make docu -> "make doxygen" oder "make html" und "make rtf"
 
-- Add headers and files in subdirs to dist-target
+- Fix "dist" target
+
+- Add automake-conditional to remove mpifake.c-compilation.
+
+- Testsuite
