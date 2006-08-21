@@ -7,7 +7,7 @@ m4_define([ESPRESSO_VERSION],
   )])
 m4_define([ESPRESSO_TIMESTAMP],
   ['esyscmd([awk '/[(][a-z]*[)]/\
-    { for(i=2;i<NF;i++) printf("%s ",$i); gsub("[.]", "", $NF); printf $NF; exit}'\
+    { i=1; if ($i == "*") { next; }; for(i=2;i<NF;i++) printf("%s ",$i); gsub("[.]", "", $NF); printf $NF; exit}'\
    RELEASE_NOTES]
   )'])
 
