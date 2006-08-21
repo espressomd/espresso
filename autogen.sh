@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 aclocal -I config
 autoheader
 automake --foreign --add-missing
