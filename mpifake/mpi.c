@@ -10,8 +10,7 @@
  *
  *  For more information about MPIFake, see \ref mpifake.h "mpifake.h".
  */
-#include "mpi_wrap.h"
-#ifdef MPI_FAKE
+#include "mpi.h"
 
 struct mpifake_dtype 
   mpifake_dtype_lb = { 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL },
@@ -263,4 +262,3 @@ int mpifake_checked_copy(void *s, int scount, MPI_Datatype sdtype,
   return MPI_SUCCESS;
 }
 
-#endif

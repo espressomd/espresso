@@ -11,7 +11,7 @@
  *  For more information on ghosts,
  *  see \ref ghosts.h "ghosts.h" 
 */
-#include <mpi_wrap.h>
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

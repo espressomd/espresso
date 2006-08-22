@@ -10,7 +10,7 @@
  *
  *  For more information see \ref forces.h "forces.h".
 */
-#include <mpi_wrap.h>
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

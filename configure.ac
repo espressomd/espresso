@@ -124,9 +124,10 @@ AC_ARG_ENABLE(processor-optimization,
 	[enable guessing of processor specific optimizations])
 	,,enable_processor_optimization=yes)
 
-
 # TODO: Replace some --enable-FEATURE by --with-PACKAGE
 ES_CHECK_MPI
+AM_CONDITIONAL(MPI_FAKE, test .$enable_mpi = .fake)
+
 ES_CHECK_EFENCE
 ES_CHECK_INLINING
 if test .$enable_processor_optimization = .yes; then

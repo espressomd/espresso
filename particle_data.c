@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <mpi_wrap.h>
+#include <mpi.h>
 #include "utils.h"
 #include "particle_data.h"
 #include "global.h"

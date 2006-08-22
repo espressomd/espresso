@@ -76,7 +76,7 @@ send operation (with a precreated send buffer) is finished.
 The ghost communicators are created in the init routines of the cell systems, therefore have a look at \ref dd_topology_init or
 \ref nsq_topology_init for further details.
 */
-#include <mpi_wrap.h>
+#include <mpi.h>
 #include "particle_data.h"
 
 /** \name Transfer types, for \ref GhostCommunicator::type */

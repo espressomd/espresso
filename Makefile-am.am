@@ -1,12 +1,19 @@
 EXTRA_DIST=Makefile RELEASE_NOTES
 
 if USE_WRAPPER
-bin_PROGRAMS = Espresso
-else
-objlib_PROGRAMS = Espresso
+bin_SCRIPT = Espresso
 endif
 
-Espresso_SOURCES =											\
+objlib_SCRIPT = Espresso
+objlib_PROGRAMS = Espresso_bin
+
+if MPI_FAKE
+MPIFAKE_SOURCES = mpifake/mpi.h mpifake/mpi.c
+else
+MPIFAKE_SOURCES =
+endif
+
+Espresso_bin_SOURCES =											\
 	main.c \
 	config.c config.h \
 	initialize.c initialize.h \
@@ -64,7 +71,6 @@ Espresso_SOURCES =											\
 	halo.c halo.h \
 	statistics_fluid.c statistics_fluid.h \
 	lb-boundaries.c lb-boundaries.h \
-	mpifake.c mpifake.h \
 	angle.h \
 	buckingham.h \
 	comfixed.h \
@@ -79,11 +85,11 @@ Espresso_SOURCES =											\
 	ljcos.h \
 	lj.h \
 	morse.h \
-	mpi_wrap.h \
 	polynom.h \
 	soft_sphere.h \
 	subt_lj.h \
 	tab.h \
-	utils.h
+	utils.h \
+	$(MPIFAKE_SOURCES)
 
 Makefile: Makefile-am

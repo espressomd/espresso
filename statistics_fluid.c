@@ -21,7 +21,7 @@
  *
  */
 
-#include <mpi_wrap.h>
+#include <mpi.h>
 #include "utils.h"
 #include "parser.h"
 #include "communication.h"

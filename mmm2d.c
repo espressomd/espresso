@@ -12,7 +12,7 @@
  */
 
 #include <math.h>
-#include <mpi_wrap.h>
+#include <mpi.h>
 #include "utils.h"
 #include "communication.h"
 #include "particle_data.h"

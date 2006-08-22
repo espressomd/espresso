@@ -9,7 +9,7 @@
 /** \file debug.c
     Implements the malloc replacements as described in \ref debug.h "debug.h". */
 
-#include <mpi_wrap.h>
+#include <mpi.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -11,7 +11,7 @@
  *  For more information about MMM1D, see \ref mmm1d.h "mmm1d.h".
  */
 
-#include <mpi_wrap.h>
+#include <mpi.h>
 #include <tcl.h>
 #include "utils.h"
 #include "mmm1d.h"

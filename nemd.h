@@ -69,7 +69,7 @@
  */
 
 #include <tcl.h>
-#include <mpi_wrap.h>
+#include <mpi.h>
 #include <stdio.h>
 #include "particle_data.h"
 #include "grid.h"

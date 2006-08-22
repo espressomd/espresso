@@ -80,18 +80,18 @@ AC_DEFUN([ES_CHECK_MPI],[
 	otherwise the native environment of the platform is used. If
 	none is found, the fake implementation for only one processor
 	is used]),,enable_mpi=yes)
-	if test $enable_mpi = fake; then
+	if test .$enable_mpi = .fake; then
 		MPI_SETUP_FAKE
-	elif test $enable_mpi = no; then
+	elif test .$enable_mpi = .no; then
 		enable_mpi=fake
 		MPI_SETUP_FAKE
 	else
-		if test $enable_mpi = yes; then
+		if test .$enable_mpi = .yes; then
 			if test .$use_mpi != .; then
 				enable_mpi=$use_mpi
 			fi
 		fi
-		if test $enable_mpi = yes; then
+		if test .$enable_mpi = .yes; then
 			MPI_GUESS_ENV
 		else
 			MPI_SETUP($enable_mpi)

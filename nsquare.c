@@ -11,7 +11,7 @@
  *  Implementation of  \ref nsquare.h "nsquare.h".
  */
 
-#include <mpi_wrap.h>
+#include <mpi.h>
 #include <string.h>
 #include "utils.h"
 #include "nsquare.h"

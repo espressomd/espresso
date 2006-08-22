@@ -12,7 +12,7 @@
  *  see \ref p3m.h "p3m.h"
 */
 
-#include <mpi_wrap.h>
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

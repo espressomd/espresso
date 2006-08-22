@@ -11,7 +11,7 @@
  *  For more information on the domain decomposition, 
  *  see \ref grid.h "grid.h". 
 */
-#include <mpi_wrap.h>
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
