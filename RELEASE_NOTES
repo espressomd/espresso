@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0i (Ydalir)                                                                     *
+* v2.0.0j (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0i -
+- v2.0.0j -
 -----------
 
+(j) August 21st, 2006.
 (i) August 11th, 2006.
 (h) August 10th, 2006.
 (g) August  8th, 2006.
@@ -35,6 +36,7 @@ Changes:
     standard.
 
 Bugfixes:
+(j) Removed doc/TclTutor as discussed in the CCC meeting.
 (i) could not compile when MOLFORCES was switched on and EXTERNAL_FORCES was
     switched off
 (h) Removed specialized keywords for nonbonded and bonded
