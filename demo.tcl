@@ -112,8 +112,7 @@ setmd skin      0.3
 set intsteps 20
 set maxtime 1000
 
-setmd gamma 1.0
-setmd temp 1.0
+thermostat langevin 1.0 1.0
 
 # Other parameters
 #############################################################

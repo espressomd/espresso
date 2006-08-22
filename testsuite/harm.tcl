@@ -16,8 +16,7 @@ puts "- Testcase harm.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------"
 setmd time_step 0.006
 setmd skin      0.0
-setmd gamma     0.0
-setmd temp      0.0
+thermostat off
 
 set epsilon 1e-4
 

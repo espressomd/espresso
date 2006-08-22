@@ -78,8 +78,7 @@ set accuracy    1.0e-1
 
 setmd time_step 0.012
 setmd skin      0.4
-setmd gamma     1.0
-setmd temp      1.0
+thermostat langevin 1.0 1.0
 
 # warmup integration (with capped LJ potential) until particles are at least $min_dist apart (but at least $min_loop loops)
 set warm_step   200

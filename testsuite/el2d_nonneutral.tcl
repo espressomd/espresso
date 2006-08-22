@@ -38,7 +38,7 @@ require_feature "ELECTROSTATICS"
 require_feature "PARTIAL_PERIODIC"
 
 set epsilon 1e-3
-setmd temp 0
+thermostat off
 setmd time_step 0.01
 setmd skin 0.05
 

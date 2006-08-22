@@ -21,7 +21,7 @@ puts "-------------------------------------------------"
 
 set data_file "constraints_system.data"
 set epsilon 1e-4
-setmd temp 0
+thermostat off
 setmd time_step 0.01
 setmd skin 0.05
 set energy 0

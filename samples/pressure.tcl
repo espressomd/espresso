@@ -64,8 +64,7 @@ set kappa       [expr sqrt(4*[PI]*$bjerrum*1.0*$density)]
 
 setmd time_step 0.01
 setmd skin      0.5
-setmd gamma     1.0
-setmd temp      1.0
+thermostat langevin 1.0 1.0
 
 # integration
 set int_steps    100
@@ -160,7 +159,7 @@ puts "transfer_rate [setmd transfer_rate]"
 puts "verlet_reuse  [setmd verlet_reuse]" 
 
 # write parameter file
-if { $write_stuff=="yes" } { polyBlockWrite "$name$ident.set" {box_l time_step skin temp gamma } "" }
+if { $write_stuff=="yes" } { polyBlockWrite "$name$ident.set" {box_l time_step skin} "" }
 
 
 puts "\nStart integration: run $int_n_times times $int_steps steps, averaging the pressure over the past $int_avg measurements"

@@ -79,8 +79,7 @@ proc rewrite {in out} {
 }
 
 set epsilon  1e-4
-setmd temp   0.0
-setmd gamma  0.0
+thermostat off
 #set tcl_precision  6
 set slow     0
 

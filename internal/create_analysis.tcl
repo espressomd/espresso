@@ -57,8 +57,7 @@ set fene_r      1.5
 
 setmd time_step 0.006
 setmd skin      0.4
-setmd gamma     0.5
-setmd temp      1.0
+thermostat langevin 1.0 0.5
 
 # warmup integration (with capped LJ potential) until particles are at least $min_dist apart
 set warm_step   200
@@ -169,7 +168,7 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 	setmd time 0; set int_loop [expr int($int_time_i/([setmd time_step]*$int_step_i)+0.56)]; set tmp_step 0
 #if {$int_step_i == 500 && $int_time_i == 14400} { set int_loop 2000 }
 if {$int_step_i == 500 && $int_time_i == 14400} { set int_loop 10; set int_step_i 100000 }
-setmd temp 0.0; setmd gamma 0.0
+thermostat off
 	puts -nonewline "\nStart integration (full interactions) with timestep [setmd time_step] until time t>=$int_time_i (-> $int_loop loops); "
 	puts "aiming for re = [expr sqrt([lindex $re2 [expr $i-1]])], rg = [expr sqrt([lindex $rg2 [expr $i-1]])], and p = $pKG_i."
 	puts -nonewline "    Remove capping of LJ-interactions... "; flush stdout; inter ljforcecap 0; puts "Done."

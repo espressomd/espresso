@@ -39,7 +39,7 @@ require_feature "COMFIXED"
 require_feature "PARTIAL_PERIODIC"
 
 set epsilon 1e-4
-setmd temp 0
+thermostat off
 setmd time_step 1
 setmd skin 0
 
@@ -78,8 +78,7 @@ if { [catch {
     setmd skin  0.5
     setmd time_step 0.005
     setmd periodic  0 0 0
-    setmd gamma     1.0
-    setmd temp      1.0
+    thermostat langevin 1.0 1.0
 
     inter 0 0 lennard-jones 1.0 1.0 1.12246 0.25 0.0
     constraint sphere center 5. 5. 5.  radius 4. type 5

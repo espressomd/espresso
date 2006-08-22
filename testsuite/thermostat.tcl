@@ -25,8 +25,7 @@ puts "------------------------------------------------"
 puts "- Testcase thermostat.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------------"
 set epsilon 3e-2
-setmd temp 1
-setmd gamma 1
+thermostat langevin 1.0 1.0
 setmd time_step 0.01
 setmd skin 0.5
 set n_part 100

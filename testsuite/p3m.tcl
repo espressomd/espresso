@@ -37,7 +37,7 @@ proc require_feature {feature} {
 require_feature "ELECTROSTATICS"
 
 set epsilon 1e-3
-setmd temp 0
+thermostat off
 setmd time_step 0.01
 setmd skin 0.05
 

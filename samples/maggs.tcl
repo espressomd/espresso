@@ -100,8 +100,7 @@ setmd max_num_cells $max_cells3d
 
 setmd time_step $time_step
 setmd skin      $skin      
-setmd gamma     $gamma    
-setmd temp      $temp    
+thermostat langevin $temp $gamma
 integrate 0
 
 #############################################################

@@ -39,7 +39,7 @@ puts "----------------------------------------"
 
 set epsilon 1e-6
 #set tab_epsilon 1000
-setmd temp 0
+thermostat off
 setmd time_step 1
 setmd skin 0
 

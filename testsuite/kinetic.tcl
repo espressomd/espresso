@@ -39,8 +39,7 @@ require_feature "PARTIAL_PERIODIC"
 require_feature "EXTERNAL_FORCES"
 
 set epsilon 1e-8
-setmd temp 0
-setmd gamma 0
+thermostat off
 setmd time_step 1
 setmd skin 0
 

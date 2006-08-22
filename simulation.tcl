@@ -480,8 +480,8 @@ if {$max_type!=[setmd n_part_types]} {
 }
 if { $warmup == 1 } {
     puts -nonewline "    Prepare environement for the warm-up process ("; flush stdout
-    setmd temp  $ljcp_temp;   puts -nonewline "temperature T=[setmd temp], "; flush stdout
-    setmd gamma $ljcp_gamma;  puts -nonewline "friction Gamma=[setmd gamma], "; flush stdout
+    thermostat langevin $ljcp_temp $ljcp_gamma
+    puts -nonewline "temperature T=[setmd temp], friction gamma=[setmd gamma], "; flush stdout
     setmd time_step $ljcp_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... "
     puts -nonewline "        Capping all LJ-interactions... "; flush stdout
@@ -528,8 +528,8 @@ puts "($section) Equilibrating & Crosslinking:"
 
 if { $equl_loop > 0 } {
     puts -nonewline "    Prepare environement for the equilibration process ("; flush stdout
-    setmd temp  $equl_temp;   puts -nonewline "temperature T=[setmd temp], "; flush stdout
-    setmd gamma $equl_gamma;  puts -nonewline "friction Gamma=[setmd gamma], "; flush stdout
+    thermostat langevin $equl_temp $equl_gamma
+    puts -nonewline "temperature T=[setmd temp], friction gamma=[setmd gamma], "; flush stdout
     setmd time_step $equl_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... "
     puts -nonewline "        Remove capping of LJ-interactions... "; flush stdout
@@ -588,8 +588,8 @@ puts "($section) Main Integration:"
 
 if { $main_loop > 0 } {
     puts -nonewline "    Prepare environement for the main integration process ("; flush stdout
-    setmd temp  $main_temp;   puts -nonewline "temperature T=[setmd temp], "; flush stdout
-    setmd gamma $main_gamma;  puts -nonewline "friction Gamma=[setmd gamma], "; flush stdout
+    thermostat $main_temp $main_gamma
+    puts -nonewline "temperature T=[setmd temp], friction gamma=[setmd gamma], "; flush stdout
     setmd time_step $main_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... Done."
     puts -nonewline "        Making sure that capping of the LJ-interactions is removed... "; flush stdout; 

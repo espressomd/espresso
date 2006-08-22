@@ -79,8 +79,7 @@ set accuracy      1.0e-4
 
 setmd time_step 0.01
 setmd skin      1.0
-setmd gamma     1.0
-setmd temp      1.0
+thermostat langevin 1.0 1.0
 
 # warmup integration (with capped LJ potential)
 set fixed_steps   10

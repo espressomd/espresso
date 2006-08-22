@@ -135,8 +135,7 @@ setmd box_l     $box_l $box_l $box_l
 setmd periodic  1 1 1
 setmd time_step $time_step
 setmd skin      $skin
-setmd gamma     0.0
-setmd temp      0.0
+thermostat off
 
 # Interaction setup
 #############################################################
