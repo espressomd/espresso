@@ -30,8 +30,6 @@
    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 */
 
-#include <archconfig.h>
-
 /* #define PARTIAL_PERIODIC */
 #define ELECTROSTATICS
 /* #define ROTATION */
@@ -63,12 +61,6 @@
 /* #define DPD */
 /* #define LB */
 
-/* Lattice Boltzmann needs lattice structures and temporary particle data */
-#ifdef LB
-#define USE_TEMPORARY
-#define LATTICE
-//#define ALTERNATIVE_INTEGRATOR
-#endif
 
 /************************************************/
 /** \name Default Parameter Settings            */
@@ -117,6 +109,15 @@
 #define SHAKE_MAX_ITERATIONS 1000
 
 /*@}*/
+
+#include <acconfig.h>
+
+/* Lattice Boltzmann needs lattice structures and temporary particle data */
+#ifdef LB
+#define USE_TEMPORARY
+#define LATTICE
+//#define ALTERNATIVE_INTEGRATOR
+#endif
 
 /********************************************/
 /* \name exported functions of config.c     */

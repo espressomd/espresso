@@ -17,7 +17,6 @@ time_stamp=ESPRESSO_TIMESTAMP
 
 AC_PREREQ(2.50)
 AC_CONFIG_SRCDIR([main.c])
-AC_CONFIG_HEADER([archconfig.h])
 AC_CONFIG_AUX_DIR(config)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
@@ -144,8 +143,27 @@ AC_CHECK_PROG(doxygen, doxygen, yes, no)
 
 AC_DEFINE_UNQUOTED(LAST_CHANGE,"$time_stamp",[When the last change to the code was done])
 
+dnl Handling the myconfig-header
+AC_ARG_WITH(myconfig, 
+	AC_HELP_STRING(--with-myconfig=FILE,[name of the local config file [[myconfig.h]]]),
+	[ test .$with_myconfig != .no && MYCONFIG_H=$with_myconfig ],
+	[ MYCONFIG_H=myconfig.h ])
+
+if test ! -f $srcdir/$MYCONFIG_H && test ! -f $MYCONFIG_H; then
+   touch $MYCONFIG_H
+fi
+
+AC_SUBST(MYCONFIG_H)
+AC_DEFINE_UNQUOTED(MYCONFIG_H,"$MYCONFIG_H",[The local configure header])
+AH_BOTTOM([
+#ifdef MYCONFIG_H
+#include MYCONFIG_H
+#endif
+])
+
 # Creating the output
+AC_CONFIG_HEADER([acconfig.h])
 AC_CONFIG_LINKS(Makefile)
-AC_CONFIG_FILES([Makefile-am mpi-wrapper/Espresso])
+AC_CONFIG_FILES([Makefile-am])
 AC_OUTPUT
 
