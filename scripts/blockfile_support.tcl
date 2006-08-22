@@ -358,10 +358,10 @@ proc blockfile_read_auto_variable {channel read auto} {
 	foreach vblock $vars {
 	    set vname [lindex $vblock 0]
 	    set data [lrange $vblock 1 end]
+
 	    if {[catch {eval "setmd $vname $data"} error]} {
-		if { $error != "variable is readonly" } {
-		    error "blockfile_read_auto_variable: setmd $vname $data reported: $error"
-		}
+		if {[string match "variable is readonly*" $error]} { continue }
+		error "blockfile_read_auto_variable: setmd $vname $data reported: $error"
 	    }   
 	}
     }
