@@ -32,7 +32,7 @@ AC_DEFUN([ES_ADDPATH_CHECK_LIB],[
 dnl search for a header file in additional paths
 AC_DEFUN([ES_ADDPATH_CHECK_HEADER],[
 	AC_MSG_CHECKING([for $1])
-	save_CFLAGS=$CFLAGS
+	save_CPPFLAGS=$CPPFLAGS
 	adp_found=no
 	dnl let's see whether it's in the default paths
 	AC_COMPILE_IFELSE([
@@ -41,7 +41,7 @@ AC_DEFUN([ES_ADDPATH_CHECK_HEADER],[
 
 	if test .$adp_found = .no; then
 		for path in $4 /sw/include /usr/include /usr/local/include /opt/include; do
-			CFLAGS="$save_CFLAGS -I$path"
+			CPPFLAGS="$save_CPPFLAGS -I$path"
 			AC_COMPILE_IFELSE([
 				#include <$1>
 			],[adp_found=yes],[])
@@ -52,7 +52,7 @@ AC_DEFUN([ES_ADDPATH_CHECK_HEADER],[
 		AC_MSG_RESULT(yes)
 	else
 		AC_MSG_RESULT(no)
-		CFLAGS=$save_CFLAGS
+		CPPFLAGS=$save_CPPFLAGS
 	fi
 	AS_IF([test .$adp_found = .yes], [$2],[$3])
 ])
@@ -151,16 +151,16 @@ AC_DEFUN([ES_CHECK_TK],[
 	if test .$tkversion != .no; then
 		dnl test for X11
 		AC_PATH_XTRA
-		saved_CFLAGS=$CFLAGS
+		saved_CPPFLAGS=$CPPFLAGS
 		saved_LDFLAGS=$LDFLAGS
 		saved_LIBS=$LIBS
-		CFLAGS="$CFLAGS $X_CFLAGS"
+		CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 		LDFLAGS="$LDFLAGS $X_LIBS"
 		LIBS="$LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
 		AC_LINK_IFELSE([AC_LANG_CALL([],[XOpenDisplay])],[x11_works=yes],[x11_works=no])
 		if test $x11_works = no ;then
 			AC_MSG_WARN([could not link against X11, hoping Tk works without])
-			CFLAGS=$saved_CFLAGS
+			CPPFLAGS=$saved_CPPFLAGS
 			LDFLAGS=$saved_LDFLAGS
 			LIBS=$saved_LIBS
 		fi
@@ -238,12 +238,12 @@ AC_DEFUN([ES_CHECK_FFTW],[
 		AC_DEFINE(USEFFTW3,,[Whether to use the FFTW3 library])
 		ES_CHECK_FFTW3
 		if test .$fftw3_found != .yes; then
-			AC_MSG_ERROR([could not link against FFTW3, please specify its header and library locations in CFLAGS and LDFLAGS])
+			AC_MSG_ERROR([could not link against FFTW3, please specify its header and library locations in CPPFLAGS and LDFLAGS])
 		fi
 	elif test $enable_fftw = 2; then
 		ES_CHECK_FFTW2
 		if test .$fftw2_found != .yes; then
-			AC_MSG_ERROR([could not link against FFTW2, please specify its header and library locations in CFLAGS and LDFLAGS])
+			AC_MSG_ERROR([could not link against FFTW2, please specify its header and library locations in CPPFLAGS and LDFLAGS])
 		fi
 	else
 		ES_CHECK_FFTW3

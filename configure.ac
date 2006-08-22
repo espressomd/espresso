@@ -112,11 +112,14 @@ fi
 AC_ARG_ENABLE(wrapper,
 	AC_HELP_STRING(--enable-wrapper,[Create a wrapper for the Espresso binary])
 	,,)
-if test .$enable_wrapper = .yes; then
-   objlibdir=${libdir}/obj-`${srcdir}/config/config.guess`
-fi
+dnl if test .$enable_wrapper = .yes; then
+dnl     objlibexecdir=${libexecdir}/obj-`${srcdir}/config/config.guess`
+dnl 	ESPRESSO_BINARY=${objlibexecdir}/Espresso_bin
+dnl else
+dnl 	ESPRESSO_BINARY=${libexecdir}/Espresso_bin
+dnl fi
+dnl AC_SUBST(objlibexecdir)
 AM_CONDITIONAL(USE_WRAPPER, test .$enable_wrapper = .yes)
-AC_SUBST(objlibdir)
 
 # test whether to enable processor optimisation
 AC_ARG_ENABLE(processor-optimization,
@@ -143,6 +146,6 @@ AC_DEFINE_UNQUOTED(LAST_CHANGE,"$time_stamp",[When the last change to the code w
 
 # Creating the output
 AC_CONFIG_LINKS(Makefile)
-AC_CONFIG_FILES([Makefile-am])
+AC_CONFIG_FILES([Makefile-am mpi-wrapper/Espresso])
 AC_OUTPUT
 

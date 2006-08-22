@@ -118,16 +118,16 @@ AC_DEFUN([MPI_FIND_LAM],[
 	AC_MSG_NOTICE([trying to find a LAM environment])
 	lam_found=yes
 	if test $mpicc_works = yes; then
-		lam_cflags=$CFLAGS
+		lam_cppflags=$CPPFLAGS
 		lam_ldflags=$LDFLAGS
 		lam_libs=$LIBS
 	else
-		save_cflags=$CFLAGS
+		save_cppflags=$CPPFLAGS
 		save_ldflags=$LDFLAGS
 		save_libs=$LIBS
 
 		AC_MSG_CHECKING([whether the $CC command works without additional flags])
-		lam_cflags=$CFLAGS
+		lam_cppflags=$CPPFLAGS
 		lam_ldflags=$LDFLAGS
 		lam_libs="$LIBS -lmpi -llam -lpthread"
 		LIBS=$lam_libs
@@ -139,7 +139,7 @@ AC_DEFUN([MPI_FIND_LAM],[
 				if test -f $hdrprf/include/lam.h; then lam_hdr_prf=$hdrprf; lam_hdr=$hdrprf/include; break; fi
 			done
 			if test $lam_hdr. = .; then
-				AC_MSG_NOTICE([did not find lam.h, if you want to use LAM, please specify its location via CFLAGS])
+				AC_MSG_NOTICE([did not find lam.h, if you want to use LAM, please specify its location via CPPFLAGS])
 				lam_found=no
 			fi
 			for libprf in /opt/lam /usr/lam /usr/local/lam /usr /usr/local; do
@@ -153,16 +153,16 @@ AC_DEFUN([MPI_FIND_LAM],[
 				lam_found=no
 			fi
 			if test $lam_found = yes; then
-				lam_cflags="$CFLAGS -I$lam_hdr"
+				lam_cppflags="$CPPFLAGS -I$lam_hdr"
 				lam_ldflags="$LDFLAGS -L$lam_lib"
-				CFLAGS=$lam_cflags
+				CPPFLAGS=$lam_cppflags
 				LDFLAGS=$lam_ldflags
 				AC_MSG_CHECKING([whether the $CC command works with guessed headers and libraries])
 	 			AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY(MPI_Init)],
 		    			AC_MSG_RESULT(yes),[AC_MSG_RESULT(no); lam_found=no])
 			fi
 		fi
-		CFLAGS=$save_cflags
+		CPPFLAGS=$save_cppflags
 		LDFLAGS=$save_ldflags
 		LIBS=$save_libs
 	fi
@@ -177,7 +177,7 @@ AC_DEFUN([MPI_FIND_LAM],[
 	rm -f conftmp.log
 	if test $lam_found = yes; then
 		AC_DEFINE(MPI,"lam")
-		CFLAGS=$lam_cflags
+		CPPFLAGS=$lam_cppflags
 		LDFLAGS=$lam_ldflags
 		LIBS=$lam_libs
 		MPI_INVOCATION="$lam_bin -np @NP@ -nsigs \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
@@ -188,12 +188,12 @@ AC_DEFUN([MPI_FIND_LAM],[
 AC_DEFUN([MPI_FIND_MPICH],[
 	AC_MSG_NOTICE([trying to find a MPICH environment])
 	mpich_found=yes
-	save_cflags=$CFLAGS
+	save_cppflags=$CPPFLAGS
 	save_ldflags=$LDFLAGS
 	save_libs=$LIBS
 
 	AC_MSG_CHECKING([whether the $CC command works without flags])
-	mpich_cflags=$CFLAGS
+	mpich_cppflags=$CPPFLAGS
 	mpich_ldflags=$LDFLAGS
 	mpich_libs="$LIBS -lmpich"
 	LIBS=$mpich_libs
@@ -214,7 +214,7 @@ AC_DEFUN([MPI_FIND_MPICH],[
 			if test .$mpich_hdr != .; then break; fi
 		done
 		if test $mpich_hdr. = .; then
-			AC_MSG_NOTICE([did not find mpi.h, please specify its location via CFLAGS])
+			AC_MSG_NOTICE([did not find mpi.h, please specify its location via CPPFLAGS])
 			mpich_found=no
 		fi
 		for libpprf in /opt/mpich /usr/mpich /usr/local/mpich /usr /usr/local; do
@@ -238,18 +238,18 @@ AC_DEFUN([MPI_FIND_MPICH],[
 			mpich_found=no
 		fi
 		if test $mpich_found = yes; then
-			mpich_cflags="$CFLAGS -I$mpich_hdr"
+			mpich_cppflags="$CPPFLAGS -I$mpich_hdr"
 			mpich_ldflags="$LDFLAGS -L$mpich_lib"
-			CFLAGS=$mpich_cflags
+			CPPFLAGS=$mpich_cppflags
 			LDFLAGS=$mpich_ldflags
 			AC_MSG_CHECKING([whether the $CC command works with guessed headers and libraries])
 	 		AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY(MPI_Init)],
 		    		AC_MSG_RESULT(yes),[AC_MSG_RESULT(no); mpich_found=no])
-			CFLAGS=$save_cflags
+			CPPFLAGS=$save_cppflags
 			LDFLAGS=$save_ldflags
 		fi
 	fi
-	CFLAGS=$save_cflags
+	CPPFLAGS=$save_cppflags
 	LDFLAGS=$save_ldflags
 	LIBS=$save_libs
 
@@ -264,7 +264,7 @@ AC_DEFUN([MPI_FIND_MPICH],[
 	rm -f conftmp.log
 	if test $mpich_found = yes; then
 		AC_DEFINE(MPI,"mpich")
-		CFLAGS="$mpich_cflags"
+		CPPFLAGS="$mpich_cppflags"
 		LDFLAGS=$mpich_ldflags
 		LIBS=$mpich_libs
 		MPI_INVOCATION="$mpich_bin -np @NP@ \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"

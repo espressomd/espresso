@@ -1,17 +1,20 @@
 EXTRA_DIST=Makefile RELEASE_NOTES
 
-if USE_WRAPPER
-bin_SCRIPTS = Espresso
-objlib_SCRIPT = Espresso
-objlib_PROGRAMS = Espresso_bin
-else
-bin_SCRIPTS = Espresso
-libexec_SCRIPTS = Espresso
+# if USE_WRAPPER
+# bin_SCRIPTS = wrapper/Espresso
+# libexec_SCRIPTS = config/config.guess
+# objlibexec_SCRIPTS = mpi-wrapper/Espresso
+# objlibexec_PROGRAMS = Espresso_bin
+# else
+# bin_SCRIPTS = Espresso
+# libexec_SCRIPTS = mpi-wrapper/Espresso
+# endif
+
 libexec_PROGRAMS = Espresso_bin
-endif
 
 if MPI_FAKE
 MPIFAKE_SOURCES = mpifake/mpi.h mpifake/mpi.c
+# mpifake should come before any system includes
 INCLUDES = -I @srcdir@/mpifake
 else
 MPIFAKE_SOURCES =
