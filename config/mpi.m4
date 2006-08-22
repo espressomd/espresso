@@ -81,7 +81,6 @@ AC_DEFUN([MPI_GUESS_ENV],[
 ])
 
 AC_DEFUN([MPI_SETUP_FAKE],[
-	CPPFLAGS="-I $srcdir/mpifake $CPPFLAGS"
 	MPI_INVOCATION="\$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
 	AC_DEFINE(MPI,"fake",[Which MPI implementation to use?])
 ])
