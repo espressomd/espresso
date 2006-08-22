@@ -1,4 +1,4 @@
-EXTRA_DIST=Makefile Espresso RELEASE_NOTES
+EXTRA_DIST=Makefile RELEASE_NOTES
 
 if USE_WRAPPER
 bin_PROGRAMS = Espresso
@@ -85,3 +85,5 @@ Espresso_SOURCES =											\
 	subt_lj.h \
 	tab.h \
 	utils.h
+
+Makefile: Makefile-am

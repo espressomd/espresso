@@ -30,7 +30,6 @@ dnl m4_divert_pop([HELP_BEGIN])dnl
 # Test if we are in the source directory
 AC_MSG_CHECKING([whether configure is running in the source directory])
 if test "$srcdir" = "."; then
-	# If we are, do the following
 	objdir="obj-`config/config.guess`"
 	AC_MSG_RESULT([yes])
 	# create an objdir if necessary
@@ -41,8 +40,9 @@ if test "$srcdir" = "."; then
 	# restart configure in the objdir
 	cd $objdir
 	../configure --enable-wrapper "$@"
+	ec=$?
 	cd ..
-	exit
+	exit $ec
 else
 	AC_MSG_RESULT(no)
 fi
@@ -141,6 +141,7 @@ AC_CHECK_PROG(doxygen, doxygen, yes, no)
 AC_DEFINE_UNQUOTED(LAST_CHANGE,"$time_stamp",[When the last change to the code was done])
 
 # Creating the output
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_LINKS(Makefile)
+AC_CONFIG_FILES([Makefile-am])
 AC_OUTPUT
 
