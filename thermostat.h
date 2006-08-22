@@ -91,7 +91,7 @@
 #define THERMO_LANGEVIN 1
 #define THERMO_DPD      2
 #define THERMO_NPT_ISO  4
-#define THERMO_LB       8 // deprecated!
+#define THERMO_LB       8
 
 /*@}*/
 
@@ -108,44 +108,21 @@
     temperature for all thermostats so far. */
 extern int thermo_switch;
 
-/** Temperature. */
+/** temperature. */
 extern double temperature;
 
-/** Langevin Friction coefficient gamma. */
+/** Langevin friction coefficient gamma. */
 extern double langevin_gamma;
-/** langevin Friction coefficient gamma for rotation */
-extern double langevin_gamma_rotation;
-
-/** prefactors of the Langevin thermostats, both rotational and not */
-extern double langevin_pref1, langevin_pref2, langevin_pref2_rotation;
 
 /** DPD Friction coefficient gamma. */
 extern double dpd_gamma;
 /** DPD thermostat cutoff */
 extern double dpd_r_cut;
-/** inverse off DPD thermostat cutoff */
-extern double dpd_r_cut_inv;
-
 
 /** Friction coefficient for nptiso-thermostat's inline-function friction_therm0_nptiso */
 extern double nptiso_gamma0;
 /** Friction coefficient for nptiso-thermostat's inline-function friction_thermV_nptiso */
 extern double nptiso_gammav;
-#ifdef NPT
-/** Prefactors for nptiso-thermostat's inline-functions \ref friction_therm0_nptiso */
-extern double nptiso_pref1;
-extern double nptiso_pref2;
-/** Prefactors for nptiso-thermostat's inline-functions \ref friction_thermV_nptiso */
-extern double nptiso_pref3;
-extern double nptiso_pref4;
-#endif
-
-#ifdef DPD
-/** DPD thermostat: prefactor friction force. */
-extern double dpd_pref1;
-/** DPD thermostat: prefactor random force */
-extern double dpd_pref2;
-#endif
 
 /************************************************
  * functions
@@ -177,6 +154,7 @@ void thermo_cool_down();
     @param dt_vj  j-component of the velocity scaled by time_step dt 
     @return       j-component of the noise added to the velocity, also scaled by dt (contained in prefactors) */
 MDINLINE double friction_therm0_nptiso(double dt_vj) {
+  extern double nptiso_pref1, nptiso_pref2;
   if(thermo_switch & THERMO_NPT_ISO)   
     return ( nptiso_pref1*dt_vj + nptiso_pref2*(d_random()-0.5) );
   return 0.0;
@@ -184,22 +162,23 @@ MDINLINE double friction_therm0_nptiso(double dt_vj) {
 
 /** add p_diff-dependend noise and friction for NpT-sims to \ref nptiso_struct::p_diff */
 MDINLINE double friction_thermV_nptiso(double p_diff) {
+  extern double nptiso_pref3, nptiso_pref4;
   if(thermo_switch & THERMO_NPT_ISO)   
     return ( nptiso_pref3*p_diff + nptiso_pref4*(d_random()-0.5) );
   return 0.0;
 }
 #endif
 
-/** Callback for setting \ref #temperature */
-int temp_callback(Tcl_Interp *interp, void *_data);
-/** Callback for setting \ref langevin_gamma */
-int langevin_gamma_callback(Tcl_Interp *interp, void *_data);
+/** Callback marking setting the temperature as outdated */
+int thermo_ro_callback(Tcl_Interp *interp, void *_data);
 
 /** overwrite the forces of a particle with
     the friction term, i.e. \f$ F_i= -\gamma v_i + \xi_i\f$.
 */
 MDINLINE void friction_thermo_langevin(Particle *p)
 {
+  extern double langevin_pref1, langevin_pref2;
+
   int j;
 #ifdef MASS
   double massf = sqrt(PMASS(*p));
@@ -224,6 +203,8 @@ MDINLINE void friction_thermo_langevin(Particle *p)
 */
 MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 {
+  extern double langevin_pref2;
+
   int j;
 #ifdef EXTERNAL_FORCES
   if(!(p->l.ext_flag & COORDS_FIX_MASK))
@@ -243,6 +224,8 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
     p1 and p2 and add them to their forces. */
 MDINLINE void add_to_part_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist)
 {
+  extern double dpd_pref1, dpd_pref2, dpd_r_cut_inv;
+
   int j;
   /* velocity difference between p1 and p2 */
   double vel12_dot_d12=0.0;

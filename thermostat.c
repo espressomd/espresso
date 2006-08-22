@@ -55,97 +55,38 @@ double nptiso_pref4;
 #endif
 
 
-int temp_callback(Tcl_Interp *interp, void *_data)
+int thermo_ro_callback(Tcl_Interp *interp, void *_data)
 {
-  double data = *(double *)_data;
-  if (data < 0) {
-    Tcl_AppendResult(interp, "Temperature must be non-negative.", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  temperature = data;
-  mpi_bcast_parameter(FIELD_TEMPERATURE);
-  return (TCL_OK);
+  Tcl_AppendResult(interp, "variable is readonly: use the thermostat command to set thermostat parameters.", (char *) NULL);
+  return (TCL_ERROR);
 }
-
-int langevin_gamma_callback(Tcl_Interp *interp, void *_data)
-{
-  double data = *(double *)_data;
-  if (data < 0) {
-    Tcl_AppendResult(interp, "Gamma must be non negativ.", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  langevin_gamma = data;
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
-  return (TCL_OK);
-}
-
-int dpd_gamma_callback(Tcl_Interp *interp, void *_data)
-{
-  double data = *(double *)_data;
-  if (data < 0) {
-    Tcl_AppendResult(interp, "Gamma must be non negativ.", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  dpd_gamma = data;
-  mpi_bcast_parameter(FIELD_DPD_GAMMA);
-  return (TCL_OK);
-}
-
-int dpd_r_cut_callback(Tcl_Interp *interp, void *_data) {
-  double data = *(double *)_data;
-  if (data < 0) { 
-    Tcl_AppendResult(interp, "dpd_r_cut must be non negativ.", (char *) NULL); 
-    return (TCL_ERROR); 
-  }
-  dpd_r_cut = data;
-  mpi_bcast_parameter(FIELD_DPD_RCUT);
-  return (TCL_OK);
-}
-
-int nptiso_g0_callback(Tcl_Interp *interp, void *_data) {
-  double data = *(double *)_data;
-  if (data < 0) { 
-    Tcl_AppendResult(interp, "Gamma_0 must be non negativ.", (char *) NULL); 
-    return (TCL_ERROR); }
-  nptiso_gamma0 = data;
-  mpi_bcast_parameter(FIELD_NPTISO_G0);
-  return (TCL_OK);
-}
-
-int nptiso_gv_callback(Tcl_Interp *interp, void *_data) {
-  double data = *(double *)_data;
-  if (data < 0) { 
-    Tcl_AppendResult(interp, "Gamma_V must be non negativ.", (char *) NULL); 
-    return (TCL_ERROR); 
-  }
-  nptiso_gammav= data;
-  mpi_bcast_parameter(FIELD_NPTISO_GV);
-  return (TCL_OK);
-}
-
 int thermo_parse_off(Tcl_Interp *interp, int argc, char **argv) 
 {
-  double zero=0.0;
   /* set temperature to zero */
-  temp_callback(interp, &zero);
+  temperature = 0;
+  mpi_bcast_parameter(FIELD_TEMPERATURE);
   /* langevin thermostat */
-  langevin_gamma_callback(interp,  &zero);
+  langevin_gamma = 0;
+  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
 #ifdef DPD
   /* dpd thermostat */  
-  dpd_gamma_callback(interp,  &zero);
-  dpd_r_cut_callback(interp,  &zero);
+  dpd_gamma = 0;
+  mpi_bcast_parameter(FIELD_DPD_GAMMA);
+  dpd_r_cut = 0;
+  mpi_bcast_parameter(FIELD_DPD_RCUT);
 #endif
 #ifdef NPT
   /* npt isotropic thermostat */
-  nptiso_g0_callback(interp,  &zero);
-  nptiso_gv_callback(interp,  &zero);
+  nptiso_gamma0 = 0;
+  mpi_bcast_parameter(FIELD_NPTISO_G0);
+  nptiso_gammav = 0;
+  mpi_bcast_parameter(FIELD_NPTISO_GV);
 #endif
   /* switch thermostat off */
   thermo_switch = THERMO_OFF;
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
   return (TCL_OK);
 }
-
 
 int thermo_parse_langevin(Tcl_Interp *interp, int argc, char **argv) 
 {
@@ -164,11 +105,18 @@ int thermo_parse_langevin(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_ERROR);
   }
 
+  if (temp < 0 || gamma < 0) {
+    Tcl_AppendResult(interp, "temperature and gamma must be positive", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
   /* broadcast parameters */
-  if(temp_callback(interp, &temp) == TCL_ERROR) return (TCL_ERROR);
-  if(langevin_gamma_callback(interp, &gamma) == TCL_ERROR) return (TCL_ERROR);
+  temperature = temp;
+  langevin_gamma = gamma;
   thermo_switch = ( thermo_switch | THERMO_LANGEVIN );
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
+  mpi_bcast_parameter(FIELD_TEMPERATURE);
+  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
   return (TCL_OK);
 }
  
@@ -199,11 +147,14 @@ int thermo_parse_dpd(Tcl_Interp *interp, int argc, char **argv)
   }
 
   /* broadcast parameters */
-  if(temp_callback(interp, &temp) == TCL_ERROR) return (TCL_ERROR);
-  if(dpd_gamma_callback(interp, &gamma) == TCL_ERROR) return (TCL_ERROR);
-  if(dpd_r_cut_callback(interp, &r_cut) == TCL_ERROR) return (TCL_ERROR);
+  temperature = temp;
+  dpd_gamma = gamma;
+  dpd_r_cut = r_cut;
   thermo_switch = ( thermo_switch | THERMO_DPD );
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
+  mpi_bcast_parameter(FIELD_TEMPERATURE);
+  mpi_bcast_parameter(FIELD_DPD_GAMMA);
+  mpi_bcast_parameter(FIELD_DPD_RCUT);
 
   return (TCL_OK);
 }
@@ -225,11 +176,15 @@ int thermo_parse_nptiso(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_ERROR);
   }
   /* broadcast parameters */
-  if(temp_callback(interp, &temp) == TCL_ERROR) return (TCL_ERROR);
-  if(nptiso_g0_callback(interp, &gamma0) == TCL_ERROR) return (TCL_ERROR);
-  if(nptiso_gv_callback(interp, &gammav) == TCL_ERROR) return (TCL_ERROR);
+  temperature = temp;
+  nptiso_gamma0 = gamma0;
+  nptiso_gammav = gammav;
+
   thermo_switch = ( thermo_switch | THERMO_NPT_ISO );
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
+  mpi_bcast_parameter(FIELD_TEMPERATURE);
+  mpi_bcast_parameter(FIELD_NPTISO_G0);
+  mpi_bcast_parameter(FIELD_NPTISO_GV);
   return (TCL_OK);
 }
 #endif
@@ -285,17 +240,7 @@ int thermo_print(Tcl_Interp *interp)
  /* lb */
   if(thermo_switch & THERMO_LB) {
     Tcl_PrintDouble(interp, temperature, buffer);
-    Tcl_AppendResult(interp,"{ lb ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, lbpar.friction, buffer);
-    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, lbpar.viscosity, buffer);
-    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, lbpar.tau, buffer);
-    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, lbpar.rho, buffer);
-    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, lbpar.agrid, buffer);
-    Tcl_AppendResult(interp," ",buffer, " } ", (char *)NULL);
+    Tcl_AppendResult(interp,"{ lb ",buffer, " } ", (char *)NULL);
   }
 #endif
 
@@ -315,7 +260,7 @@ int thermo_usage(Tcl_Interp *interp, int argc, char **argv)
   Tcl_AppendResult(interp, "'", argv[0], " set npt_isotropic <temp> <gamma0> <gammav>' ", (char *)NULL);
 #endif
 #ifdef LB
-  Tcl_AppendResult(interp, "'", argv[0], " set lb <temperature> <friction> <viscosity> <tgrid> <density> <gridsize>" , (char *)NULL);
+  Tcl_AppendResult(interp, "'", argv[0], " set lb <temperature>" , (char *)NULL);
 #endif
   return (TCL_ERROR);
 }
@@ -437,58 +382,29 @@ void thermo_cool_down()
 
 int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
 {
+  double temp;
 
 #ifdef LB
-    double agrid, tau, temp, density, friction, viscosity;
   /* get lb interaction type */
-  if (argc < 7) {
-    Tcl_AppendResult(interp, "lattice-Boltzmann needs 6 parameters: "
-		     "<temperature> <friction> <viscosity> <tgrid> <density> <gridsize>",
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "lattice-Boltzmann needs 1 parameter: "
+		     "<temperature>",
 		     (char *) NULL);
     return TCL_ERROR;
   }
 
   /* copy lattice-boltzmann parameters */
-  if ((! ARG_IS_D(1, temp))   ||
-      (! ARG_IS_D(2, friction))   ||
-      (! ARG_IS_D(3, viscosity))   ||
-      (! ARG_IS_D(4, tau))   ||
-      (! ARG_IS_D(5, density)) ||
-      (! ARG_IS_D(6, agrid)    )) {
-    Tcl_AppendResult(interp, "lattice-boltzmann needs 6 DOUBLE parameters: "
-		     "<temperature> <friction> <viscosity> <tgrid> <density> <gridsize>",
-		     (char *) NULL);
+  if (! ARG_IS_D(1, temp)) { return TCL_ERROR; }
+
+  if ( temp < 0.0 ) {
+    Tcl_AppendResult(interp, "temperature must be non-negative", (char *) NULL);
     return TCL_ERROR;
   }
-
-  if ( temp < 0.0 ||  viscosity <= 0.0 ||  density <= 0.0 || friction <= 0.0 || tau < 0.0 || agrid < 0.0 )
-  {
-    Tcl_AppendResult(interp, "these parameters must be non-negative "
-		     "<temperature> <friction> <viscosity> <tgrid> <density> <gridsize> ",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-	
-  Tcl_ResetResult(interp);
-
-  /* thermo_switch is retained for backwards compatibility */
+  temperature = temp;
   thermo_switch = ( thermo_switch | THERMO_LB );
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
-
-  lattice_switch = ( lattice_switch | LATTICE_LB) ;
-  mpi_bcast_parameter(FIELD_LATTICE_SWITCH) ;
-
-  if(temp_callback(interp, &temp) == TCL_ERROR) return (TCL_ERROR);
+  mpi_bcast_parameter(FIELD_TEMPERATURE);
   
-  lbpar.agrid = agrid;
-  lbpar.tau = tau;
-  lbpar.rho = density;
-  lbpar.viscosity = viscosity;
-  lbpar.friction = friction;
-
-  mpi_bcast_lb_params(LBPAR_DENSITY|LBPAR_VISCOSITY|LBPAR_AGRID|LBPAR_TAU|LBPAR_FRICTION);
-
-  Tcl_AppendResult(interp, "NOTE: Usage of \"thermostat lb\" is deprecated. Use the \"lbfluid\" command instead!\n", (char *)NULL);
 #endif
   
   return TCL_OK;

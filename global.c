@@ -51,7 +51,7 @@ const Datafield fields[] = {
   {dd.cell_size,     TYPE_DOUBLE, 3, "cell_size",     ro_callback,    6 },         /* 2  from cells.c */
   {&dpd_gamma,       TYPE_DOUBLE, 1, "dpd_gamma",     ro_callback,    5 },         /* 3  from thermostat.c */
   {&dpd_r_cut,       TYPE_DOUBLE, 1, "dpd_r_cut",     ro_callback,    5 },         /* 4  from thermostat.c */
-  {&langevin_gamma,  TYPE_DOUBLE, 1, "gamma",         langevin_gamma_callback, 1 },/* 5  from thermostat.c */
+  {&langevin_gamma,  TYPE_DOUBLE, 1, "gamma",         thermo_ro_callback, 1 },     /* 5  from thermostat.c */
   {&integ_switch,       TYPE_INT, 1, "integ_switch",  ro_callback,    1 },         /* 6  from integrate.c */
   {local_box_l,      TYPE_DOUBLE, 3, "local_box_l",   ro_callback,    2 },         /* 7  from global.c */
   {&max_cut,         TYPE_DOUBLE, 1, "max_cut",       ro_callback,    5 },         /* 8  from interaction_data.c */
@@ -75,7 +75,7 @@ const Datafield fields[] = {
   {&nptiso.piston,   TYPE_DOUBLE, 1, "npt_piston",    piston_callback, 6 },        /* 26 from pressure.c */
   {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback,    1 },        /* 27 from grid.c */
   {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback,   2 },        /* 28 from integrate.c */
-  {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback,   2 },        /* 29 from thermostat.c */
+  {&temperature,     TYPE_DOUBLE, 1, "temperature",   thermo_ro_callback,   2 },   /* 29 from thermostat.c */
   {&thermo_switch,      TYPE_INT, 1, "thermo_switch", ro_callback,     2 },        /* 30 from thermostat.c */
   {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback,   4 },        /* 31 from integrate.c */
   {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },     /* 32 from integrate.c */
@@ -111,7 +111,7 @@ const Datafield fields[] = {
 	     \ref dpd_gamma - Friction constant for DPD thermostat.
 	<li> \verbatim dpd_r_cut double (ro) \endverbatim
 	     \ref dpd_r_cut - Cutoff for DPD thermostat.
-	<li> \verbatim gamma double \endverbatim
+	<li> \verbatim gamma double (ro) \endverbatim
 	     \ref langevin_gamma - Friction constant for LANGEVIN thermostat.
 	<li> \verbatim integ_switch int (ro) \endverbatim
 	     \ref integ_switch - internal switch which integrator to use.
@@ -167,7 +167,7 @@ const Datafield fields[] = {
 	     If not it is readonly and gives the default setting (1,1,1).
 	<li> \verbatim skin double \endverbatim
 	     \ref #skin - Skin for the Verlet list.
-	<li> \verbatim temperature double \endverbatim
+	<li> \verbatim temperature double (ro) \endverbatim
 	     \ref #temperature - Temperature of the simulation.
 	     Enters the thermostat and the coulomb prefactor = bjerrum * temperature.
 	<li> \verbatim thermo_switch double (ro)\endverbatim
