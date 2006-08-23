@@ -1,0 +1,8 @@
+/* This is the default file @MYCONFIG_H@.
+   DO NOT MODIFY THIS FILE! 
+   Instead, copy the file to 
+   @top_srcdir@ or @top_builddir@ 
+   and modify it there!
+*/
+#define ELECTROSTATICS
+#define LENNARD_JONES

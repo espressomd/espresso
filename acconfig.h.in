@@ -113,7 +113,7 @@
 /* Which MPI implementation to use? */
 #undef MPI
 
-/* The local configure header */
+/* The name of the local configure header */
 #undef MYCONFIG_H
 
 /* Name of package */
@@ -134,7 +134,7 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Turn on PROFILING? */
+/* Turn on profiling? */
 #undef PROFILING
 
 /* Define as the return type of signal handlers (`int' or `void'). */

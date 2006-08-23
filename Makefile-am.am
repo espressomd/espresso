@@ -10,6 +10,8 @@ EXTRA_DIST=Makefile RELEASE_NOTES
 # libexec_SCRIPTS = mpi-wrapper/Espresso
 # endif
 
+
+noinst_HEADERS = myconfig-sample.h
 libexec_PROGRAMS = Espresso_bin
 
 Espresso_bin_SOURCES =											\
@@ -90,13 +92,22 @@ Espresso_bin_SOURCES =											\
 	tab.h \
 	utils.h
 
+# Handling of local configure headers
 
+# add config/ to the INCLUDES so that the default config/@MYCONFIG_H@ is
+# found at compile time
+INCLUDES = -I config
+
+# add config/ to the VPATH so that @MYCONFIG_H@ can be found by make
+vpath @MYCONFIG_H@ @builddir@:@top_srcdir@:@builddir@/config
+
+# add @MYCONFIG_H@ to the dependencies of all object files so that
+# they get rebuilt when @MYCONFIG_H@ is changed
+$(Espresso_bin_OBJECTS): @MYCONFIG_H@
+
+# Handling of the MPI fake implementation
 if MPI_FAKE
 Espresso_bin_SOURCES += mpifake/mpi.h mpifake/mpi.c
 # mpifake should come before any system includes
-INCLUDES = -I @srcdir@/mpifake
+INCLUDES += -I @srcdir@/mpifake -I config
 endif
-
-# Additional dependencies
-Makefile: Makefile-am
-config.h: @MYCONFIG_H@

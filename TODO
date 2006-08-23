@@ -1,12 +1,11 @@
-Time-stamp: <2006-08-21 12:33 olenz>
+Time-stamp: <2006-08-23 15:31 olenz>
 
-- Handling of the wrappers: Do NOT use the wrapper when configure is
-  not called from srcdir.
+- add all files to Makefile-am.am (scripts, packages, ...)
+
+- wrappers:
+  - overtake MPI wrapper
+  - fix handling of chooser-wrapper in installed version
 
 - make docu -> "make doxygen" oder "make html" und "make rtf"
 
-- Fix "dist" target
-
-- Add automake-conditional to remove mpifake.c-compilation.
-
-- Testsuite
+- testsuite

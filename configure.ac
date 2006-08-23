@@ -86,7 +86,7 @@ AC_ARG_ENABLE(mode,[],
 * The option --enable-mode is obsolete and will be removed in a future version *
 * of Espresso! Please use --enable-debug or --enable-profiling instead!        *
 ********************************************************************************\
-])
+	])
 	if test .$enable_mode = .debug; then
 	   enable_debug=yes
 	fi
@@ -98,13 +98,14 @@ AC_ARG_ENABLE(mode,[],
 
 # test whether to enable debugging
 AC_ARG_ENABLE(debug,AC_HELP_STRING(--enable-debug,[Turn on debugging]),,)
-if test .$enable_debug=.yes; then
-	AC_DEFINE_UNQUOTED(DEBUG,"DEBUG",[Turn on debugging?])
+if test .$enable_debug = .yes; then
+   AC_DEFINE(DEBUG,,[Turn on debugging?])
 fi
+
 # test whether to enable profiling
-AC_ARG_ENABLE(profile,AC_HELP_STRING(--enable-profile,[Turn on profiling]),,)
-if test .$enable_debug=.yes; then
-	AC_DEFINE_UNQUOTED(PROFILING,"PROFILING",[Turn on PROFILING?])
+AC_ARG_ENABLE(profiling,AC_HELP_STRING(--enable-profiling,[Turn on profiling]),,)
+if test .$enable_profiling = .yes; then
+   AC_DEFINE(PROFILING,,[Turn on profiling?])
 fi
 
 # test whether to use the wrapper or not
@@ -149,12 +150,8 @@ AC_ARG_WITH(myconfig,
 	[ test .$with_myconfig != .no && MYCONFIG_H=$with_myconfig ],
 	[ MYCONFIG_H=myconfig.h ])
 
-if test ! -f $srcdir/$MYCONFIG_H && test ! -f $MYCONFIG_H; then
-   touch $MYCONFIG_H
-fi
-
 AC_SUBST(MYCONFIG_H)
-AC_DEFINE_UNQUOTED(MYCONFIG_H,"$MYCONFIG_H",[The local configure header])
+AC_DEFINE_UNQUOTED(MYCONFIG_H,"$MYCONFIG_H",[The name of the local configure header])
 AH_BOTTOM([
 #ifdef MYCONFIG_H
 #include MYCONFIG_H
@@ -164,6 +161,6 @@ AH_BOTTOM([
 # Creating the output
 AC_CONFIG_HEADER([acconfig.h])
 AC_CONFIG_LINKS(Makefile)
-AC_CONFIG_FILES([Makefile-am])
+AC_CONFIG_FILES([Makefile-am config/$MYCONFIG_H:config/myconfig-default.h.in])
 AC_OUTPUT
 
