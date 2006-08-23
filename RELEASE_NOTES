@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0j (Ydalir)                                                                     *
+* v2.0.0k (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0j -
+- v2.0.0k -
 -----------
 
+(k) August 22nd, 2006.
 (j) August 21st, 2006.
 (i) August 11th, 2006.
 (h) August 10th, 2006.
@@ -32,6 +33,16 @@ New Features:
 (b) updated version number
 
 Changes:
+(k) Sample scripts now use the thermostat command, instead of
+(k) setting the global variables temperature and gamma.
+(k) as agreed on by the CCC, temperature and gamma have become readonly
+    variables.
+(k) Please use the thermostat langevin <t> <g> commands to setup a
+    Langevin
+(k) simulation instead.
+(k) the code for variable blocks now also ignores readonly
+    variables
+(k) with explanation (temperature/gamma).
 (g) Documentation now explicitly mentions the required MPI-1.2
     standard.
 
