@@ -1,8 +1,8 @@
 check_SCRIPTS = test.sh
 TESTS=test.sh
 
-processors="1 2 3 4 6 8"
-TESTS_ENVIRONMENT=TESTCASES="$(tests)" PROCESSORS="$(processors)" ESPRESSO_SCRIPTS="$(srcdir)/scripts"
+processors=1 2 3 4 6 8
+TESTS_ENVIRONMENT=TESTCASES='$(tests)' PROCESSORS='$(processors)' ESPRESSO_SCRIPTS='$(srcdir)/scripts'
 
 # all the test scripts
 tests= \

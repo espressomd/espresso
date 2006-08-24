@@ -1,5 +1,6 @@
 #!/bin/sh
 
+
 errf=_test.sh_error.$$
 
 # list of tests that are not supported by this version
@@ -19,8 +20,9 @@ for np in $PROCESSORS; do
 	if test $ignore -eq 0; then
 	    # this is removed if the script runs through
 	    echo "execution of script failed at unexpected point" > $errf
-	    odir=`pwd`
-	    ( cd $srcdir/testsuite; $odir/Espresso ../$f $np $odir/$errf )
+	    cdir=`pwd`
+	    odir=$cdir/..
+	    ( cd $srcdir; $odir/Espresso $f $np $cdir/$errf )
 	    if test -f $errf; then
 		if grep -q -e "^not compiled in:" $errf; then
 		    missing="$missing$f: `cat $errf`\n"
