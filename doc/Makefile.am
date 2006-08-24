@@ -1,0 +1,1 @@
+EXTRA_DIST=background_errors.awk

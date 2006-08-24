@@ -1,11 +1,9 @@
-Time-stamp: <2006-08-23 15:31 olenz>
+Time-stamp: <2006-08-24 19:24 olenz>
 
-- add all files to Makefile-am.am (scripts, packages, ...)
-
-- wrappers:
-  - overtake MPI wrapper
-  - fix handling of chooser-wrapper in installed version
+- add all files to Makefile-am.am (packages, ...)
 
 - make docu -> "make doxygen" oder "make html" und "make rtf"
 
-- testsuite
+- handle unser defined CC, CFLAGS, LDFLAGS, ...
+
+- Espresso library?

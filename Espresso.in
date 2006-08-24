@@ -33,9 +33,9 @@ else
 
     # call Espresso
     if test .$2 != .; then NP=$2; else NP=2; fi
-    ESPRESSO_SCRIPTS=/home/users/olenz/projects/espresso/src/automake/obj-Athlon_64-pc-linux/../scripts
+    ESPRESSO_SCRIPTS=@abs_srcdir@/scripts
     export ESPRESSO_SCRIPTS
     ESPRESSO_CALL="$dir/Espresso_bin $*"
-    /usr/bin/mpirun -x ESPRESSO_SCRIPTS -np $NP -nsigs $ESPRESSO_CALL
+    @MPI_INVOCATION@
 fi
 

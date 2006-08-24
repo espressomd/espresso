@@ -153,16 +153,16 @@ AC_DEFUN([CF_CHECK_GCC_FLAGS],[
 	CF_TRY_ADD_CFLAG(-floop-optimize)
 	CF_TRY_ADD_CFLAG(-funroll-loops)
 
-	if test .$enable_debug=.yes; then
+	if test .$enable_debug = .yes; then
 		CF_TRY_ADD_CFLAG(-g)
 	else
 		CF_TRY_ADD_CFLAG(-fomit-frame-pointer)
 	fi
-	if test .$enable_profiling=.yes; then
+	if test .$enable_profiling = .yes; then
 		CF_TRY_ADD_CFLAG(-pg)
 		LDFLAGS="-pg $LDFLAGS"
 	fi	  
-	if test .$enable_debug=.yes || test .$enable_profiling=.yes; then
+	if test .$enable_debug = .yes || test .$enable_profiling = .yes; then
 		CF_TRY_ADD_CFLAG(-fno-inline)
 	else
 		CF_TRY_ADD_CFLAG(-finline-limit=1000000)

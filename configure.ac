@@ -38,7 +38,7 @@ if test "$srcdir" = "."; then
 	AC_MSG_NOTICE([Running configure in $objdir])
 	# restart configure in the objdir
 	cd $objdir
-	../configure --enable-wrapper "$@"
+	../configure --enable-chooser "$@"
 	ec=$?
 	cd ..
 	exit $ec
@@ -53,7 +53,10 @@ AC_PREFIX_DEFAULT($HOME/Espresso)
 
 # Checks for programs.
 AC_PROG_AWK
+
+save_CFLAGS=$CFLAGS
 AC_PROG_CC
+CFLAGS=$save_CFLAGS
 
 # Checks for libraries.
 
@@ -76,7 +79,26 @@ AC_TYPE_SIGNAL
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([atexit floor getcwd gethostbyname memset pow rint select socket sqrt])
 
-# Other tests
+# ESPRESSO Tests
+
+# TODO: Replace some --enable-FEATURE by --with-PACKAGE
+ES_KNOWN_CONFIGS
+
+ES_CHECK_MPI
+AM_CONDITIONAL(MPI_FAKE, test .$enable_mpi = .fake)
+AC_SUBST(MPI_INVOCATION)
+
+ES_CHECK_EFENCE
+ES_CHECK_INLINING
+if test .$enable_processor_optimization = .yes; then
+        CF_CHECK_OPTFLAGS
+fi
+ES_CHECK_LINK
+ES_CHECK_TCL
+ES_CHECK_TK
+ES_CHECK_FFTW
+AC_CHECK_PROG(doxygen, doxygen, yes, no)
+
 
 # Test for (obsolete) option --enable-mode
 AC_ARG_ENABLE(mode,[],
@@ -108,18 +130,19 @@ if test .$enable_profiling = .yes; then
    AC_DEFINE(PROFILING,,[Turn on profiling?])
 fi
 
-# test whether to use the wrapper or not
-AC_ARG_ENABLE(wrapper,
-	AC_HELP_STRING(--enable-wrapper,[Create a wrapper for the Espresso binary])
+# test whether to use the chooser or not
+AC_ARG_ENABLE(chooser,
+	AC_HELP_STRING(--enable-chooser,[Create a chooser for the Espresso binary])
 	,,)
-dnl if test .$enable_wrapper = .yes; then
-dnl     objlibexecdir=${libexecdir}/obj-`${srcdir}/config/config.guess`
-dnl 	ESPRESSO_BINARY=${objlibexecdir}/Espresso_bin
-dnl else
-dnl 	ESPRESSO_BINARY=${libexecdir}/Espresso_bin
-dnl fi
-dnl AC_SUBST(objlibexecdir)
-AM_CONDITIONAL(USE_WRAPPER, test .$enable_wrapper = .yes)
+AM_CONDITIONAL(USE_CHOOSER, test .$enable_chooser = .yes)
+if test .$enable_chooser = .yes; then
+   execpkglibdir='${pkglibdir}'/obj-`$srcdir/config/config.guess`
+   scriptsdir='${pkglibdir}/scripts'
+else
+   scriptsdir='${pkgdatadir}/scripts'
+fi
+AC_SUBST(scriptsdir)
+AC_SUBST(execpkglibdir)
 
 # test whether to enable processor optimisation
 AC_ARG_ENABLE(processor-optimization,
@@ -127,22 +150,9 @@ AC_ARG_ENABLE(processor-optimization,
 	[enable guessing of processor specific optimizations])
 	,,enable_processor_optimization=yes)
 
-# TODO: Replace some --enable-FEATURE by --with-PACKAGE
-ES_CHECK_MPI
-AM_CONDITIONAL(MPI_FAKE, test .$enable_mpi = .fake)
-
-ES_CHECK_EFENCE
-ES_CHECK_INLINING
-if test .$enable_processor_optimization = .yes; then
-        CF_CHECK_OPTFLAGS
-fi
-ES_CHECK_LINK
-ES_CHECK_TCL
-ES_CHECK_TK
-ES_CHECK_FFTW
-AC_CHECK_PROG(doxygen, doxygen, yes, no)
 
 AC_DEFINE_UNQUOTED(LAST_CHANGE,"$time_stamp",[When the last change to the code was done])
+AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
 
 dnl Handling the myconfig-header
 AC_ARG_WITH(myconfig, 
@@ -161,6 +171,12 @@ AH_BOTTOM([
 # Creating the output
 AC_CONFIG_HEADER([acconfig.h])
 AC_CONFIG_LINKS(Makefile)
-AC_CONFIG_FILES([Makefile-am config/$MYCONFIG_H:config/myconfig-default.h.in])
+AC_CONFIG_FILES(
+	[Makefile-am scripts/Makefile testsuite/Makefile doc/Makefile] 
+	[config/$MYCONFIG_H:config/myconfig-default.h.in]
+	[chooser/Espresso mpiwrap/Espresso],
+	)
+AC_CONFIG_FILES([Espresso],[chmod 755 Espresso])
+
 AC_OUTPUT
 

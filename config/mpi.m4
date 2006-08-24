@@ -81,7 +81,7 @@ AC_DEFUN([MPI_GUESS_ENV],[
 ])
 
 AC_DEFUN([MPI_SETUP_FAKE],[
-	MPI_INVOCATION="\$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+	MPI_INVOCATION="\$ESPRESSO_CALL"
 	AC_DEFINE(MPI,"fake",[Which MPI implementation to use?])
 ])
 
@@ -109,7 +109,7 @@ AC_DEFUN([MPI_FIND_GENERIC],[
 	fi
 	if test $generic_found = yes; then
 		AC_DEFINE(MPI,"generic")
-		MPI_INVOCATION="$generic_bin -np @NP@ \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+		MPI_INVOCATION="$generic_bin -np \$NP \$ESPRESSO_CALL"
 		AC_MSG_NOTICE([found a generic MPI environment])
 	fi
 ])
@@ -180,7 +180,7 @@ AC_DEFUN([MPI_FIND_LAM],[
 		CPPFLAGS=$lam_cppflags
 		LDFLAGS=$lam_ldflags
 		LIBS=$lam_libs
-		MPI_INVOCATION="$lam_bin -np @NP@ -nsigs \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+		MPI_INVOCATION="$lam_bin -x ESPRESSO_SCRIPTS -np \$NP -nsigs \$ESPRESSO_CALL"
 		AC_MSG_NOTICE([found a working LAM environment])
 	fi
 ])
@@ -267,7 +267,7 @@ AC_DEFUN([MPI_FIND_MPICH],[
 		CPPFLAGS="$mpich_cppflags"
 		LDFLAGS=$mpich_ldflags
 		LIBS=$mpich_libs
-		MPI_INVOCATION="$mpich_bin -np @NP@ \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+		MPI_INVOCATION="$mpich_bin -np \$NP \$ESPRESSO_CALL"
 		AC_MSG_NOTICE([found a working MPICH environment])
 	fi
 ])
@@ -281,7 +281,7 @@ AC_DEFUN([MPI_FIND_POE],[
 	if test .$poe_found = .yes; then
 		AC_PATH_PROG(poe_bin, poe, poe, $PATH)
 		AC_DEFINE(MPI,"poe")
-		MPI_INVOCATION="$poe_bin \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@ -procs @NP@"
+		MPI_INVOCATION="$poe_bin \$ESPRESSO_CALL -procs \$NP"
 	fi
 ])
 
@@ -296,6 +296,6 @@ AC_DEFUN([MPI_FIND_DMPI],[
 	if test .$dmpi_found = .yes; then
 		AC_PATH_PROG(dmpi_bin, dmpirun, dmpirun, $PATH)
 		AC_DEFINE(MPI, "dmpi")
-		MPI_INVOCATION="$dmpi_bin -np @NP@ \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+		MPI_INVOCATION="$dmpi_bin -np \$NP \$ESPRESSO_CALL"
 	fi
 ])

@@ -1,20 +1,13 @@
-EXTRA_DIST=Makefile RELEASE_NOTES Espresso
+SUBDIRS = . scripts testsuite doc
 
-# if USE_WRAPPER
-# bin_SCRIPTS = wrapper/Espresso
-# libexec_SCRIPTS = config/config.guess
-# objlibexec_SCRIPTS = mpi-wrapper/Espresso
-# objlibexec_PROGRAMS = Espresso_bin
-# else
-# bin_SCRIPTS = Espresso
-# libexec_SCRIPTS = mpi-wrapper/Espresso
-# endif
+# List files that should go into the distribution but are not required
+# by any other means
+EXTRA_DIST = Makefile RELEASE_NOTES 
 
-
+# List headers that are not used by the program here
 noinst_HEADERS = myconfig-sample.h
-libexec_PROGRAMS = Espresso_bin
 
-##################################
+# List the sources of the Espresso binary here
 Espresso_bin_SOURCES =											\
 	main.c \
 	config.c config.h \
@@ -93,7 +86,46 @@ Espresso_bin_SOURCES =											\
 	tab.h \
 	utils.h
 
+#################################################################
+# Installation of the main program and wrapper scripts
+#################################################################
+if USE_CHOOSER
+
+bin_SCRIPTS = chooser/Espresso
+pkglib_SCRIPTS = config/config.guess
+execpkglib_SCRIPTS = mpiwrap/Espresso
+execpkglib_PROGRAMS = Espresso_bin
+
+# Substitute some remaining variables in the installed Espresso
+# wrappers. This is necessary as the required values are only known at
+# installation time.
+install-exec-hook:
+	sed -i \
+	-e "s,[@]ESPRESSO_PKGLIBDIR[@],$(pkglibdir),g" \
+	$(bindir)/Espresso
+	sed -i \
+	-e "s,[@]ESPRESSO_BIN[@],$(execpkglibdir)/Espresso_bin,g" \
+	-e "s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
+	$(execpkglibdir)/Espresso
+
+else
+
+bin_SCRIPTS=mpiwrap/Espresso
+libexec_PROGRAMS=Espresso_bin
+
+# Substitute some remaining variables in the installed Espresso
+# wrappers. This is necessary as the required values are only known at
+# installation time.
+install-exec-hook:
+	sed -i \
+	-e "s,[@]ESPRESSO_BIN[@],$(libexecdir)/Espresso_bin,g" \
+	-e "s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
+	$(bindir)/Espresso
+endif
+
+#################################################################
 # Handling of local configure headers
+#################################################################
 
 # add config/ to the INCLUDES so that the default config/@MYCONFIG_H@ is
 # found at compile time
@@ -106,61 +138,17 @@ vpath @MYCONFIG_H@ @builddir@:@top_srcdir@:@builddir@/config
 # they get rebuilt when @MYCONFIG_H@ is changed
 $(Espresso_bin_OBJECTS): @MYCONFIG_H@
 
+#################################################################
 # Handling of the MPI fake implementation
+#################################################################
 if MPI_FAKE
 Espresso_bin_SOURCES += mpifake/mpi.h mpifake/mpi.c
 # mpifake should come before any system includes
 INCLUDES += -I @srcdir@/mpifake -I config
 endif
 
-#################################################################
-#                            testsuite
-#################################################################
-
-check_SCRIPTS = testsuite/test.sh
-TESTS=testsuite/test.sh
-
-processors="1 2 3 4 6 8"
-TESTS_ENVIRONMENT=TESTCASES="$(tests)" PROCESSORS="$(processors)" ESPRESSO_SCRIPTS="$(srcdir)/scripts"
-
-# all the test scripts
-tests= \
-	testsuite/nve_pe.tcl testsuite/npt.tcl \
-	testsuite/madelung.tcl testsuite/p3m.tcl testsuite/el2d.tcl \
-	testsuite/el2d_nonneutral.tcl testsuite/mmm1d.tcl testsuite/dh.tcl \
-	testsuite/lj.tcl testsuite/lj-cos.tcl testsuite/tabulated.tcl testsuite/gb.tcl \
-	testsuite/harm.tcl testsuite/fene.tcl \
-	testsuite/kinetic.tcl testsuite/thermostat.tcl \
-	testsuite/intpbc.tcl testsuite/intppbc.tcl \
-	testsuite/layered.tcl testsuite/nsquare.tcl \
-	testsuite/comforce.tcl testsuite/comfixed.tcl \
-	testsuite/analysis.tcl \
-	testsuite/rotation.tcl \
-	testsuite/constraints.tcl \
-	testsuite/mass.tcl \
-	testsuite/lb.tcl
-
-# add data files for the tests here
-nobase_dist_check_DATA = $(tests) \
-	testsuite/analysis_system.data.00.gz testsuite/analysis_system.data.01.gz \
-	testsuite/analysis_system.data.02.gz testsuite/analysis_system.data.03.gz \
-	testsuite/analysis_system.data.04.gz testsuite/analysis_system.data.05.gz \
-	testsuite/analysis_system.data.06.gz testsuite/analysis_system.data.07.gz \
-	testsuite/analysis_system.data.08.gz testsuite/analysis_system.data.09.gz \
-	testsuite/analysis_system.data.10.gz testsuite/analysis_system.data.chk \
-	testsuite/comforce_system.data testsuite/comfixed_system.data \
-	testsuite/constraints_system.data \
-	testsuite/p3m_system.data testsuite/el2d_system.data \
-	testsuite/mmm1d_system.data testsuite/dh_system.data \
-	testsuite/lj_system.data testsuite/lj-cos_system.data \
-	testsuite/gb_system.data \
-	testsuite/tabulated_system.data	testsuite/lj1.tab testsuite/lj2.tab testsuite/lj3.tab \
-	testsuite/fene_system.data.gz testsuite/harm_system.data.gz \
-	testsuite/intpbc_system.data.gz testsuite/intppbc.tcl testsuite/intppbc_system.data.gz \
-	testsuite/npt_lj_system.data \
-	testsuite/thermostat.data testsuite/thermostat_rot.data \
-	testsuite/mass_system.data \
-	testsuite/lb_system.data \
-	\
-	testsuite/pe_micelle.tcl testsuite/pe_micelle_input.txt \
-	testsuite/uwerr_test.tcl testsuite/uwerr_test.data
+##################################################
+# Targets for backwards compatibility
+##################################################
+test: check
+mostclean: mostlyclean
