@@ -13,7 +13,7 @@
 # 
 set errf [lindex $argv 1]
 
-source ../scripts/bundle.tcl
+source "$env(ESPRESSO_SCRIPTS)/bundle.tcl"
 
 puts "-------------------------------------------------"
 puts "- Testcase constraints.tcl running on [format %02d [setmd n_nodes]] nodes: -"
