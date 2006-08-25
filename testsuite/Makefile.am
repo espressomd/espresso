@@ -1,10 +1,3 @@
-check_SCRIPTS = test.sh
-TESTS=test.sh
-CLEANFILES=_test.sh_error.* fftw*_wisdom_*.file
-
-processors=1 2 3 4 6 8
-TESTS_ENVIRONMENT=TESTCASES='$(tests)' PROCESSORS='$(processors)' ESPRESSO_SCRIPTS='$(srcdir)/scripts'
-
 # all the test scripts
 tests= \
 	nve_pe.tcl npt.tcl \
@@ -46,3 +39,16 @@ EXTRA_DIST = $(tests) \
 	\
 	pe_micelle.tcl pe_micelle_input.txt \
 	uwerr_test.tcl uwerr_test.data
+
+processors=1 2 3 4 6 8
+
+# rules, don't fiddle around with that
+TESTS_ENVIRONMENT=TESTCASES='$(tests)' PROCESSORS='$(processors)' ESPRESSO_SCRIPTS='$(srcdir)/scripts'
+check_SCRIPTS = test.sh
+TESTS=test.sh
+
+CLEANKEEPFILES=Makefile
+clean-local:
+	-for f in *; do keep=; \
+		for cf in $(CLEANKEEPFILES); do if test "$$f" == "$$cf"; then keep=y; fi; done; \
+		if test -z "$$keep"; then rm -f "$$f"; fi; done
