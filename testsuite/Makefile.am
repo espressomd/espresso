@@ -1,5 +1,6 @@
 check_SCRIPTS = test.sh
 TESTS=test.sh
+CLEANFILES=_test.sh_error.* fftw*_wisdom_*.file
 
 processors=1 2 3 4 6 8
 TESTS_ENVIRONMENT=TESTCASES='$(tests)' PROCESSORS='$(processors)' ESPRESSO_SCRIPTS='$(srcdir)/scripts'
