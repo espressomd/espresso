@@ -159,7 +159,7 @@ int cellsystem(ClientData data, Tcl_Interp *interp,
 {
   int err = 0;
 
-  if (argc < 1) {
+  if (argc <= 1) {
     Tcl_AppendResult(interp, "usage: cellsystem <system> <params>", (char *)NULL);
     return TCL_ERROR;
   }
