@@ -6,3 +6,6 @@
 */
 #define ELECTROSTATICS
 #define LENNARD_JONES
+
+#define MPI_CORE
+#define FORCE_CORE

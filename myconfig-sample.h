@@ -19,6 +19,11 @@
     <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 
 */
+
+/**********************************************************************/
+/*                       general core features                        */
+/**********************************************************************/
+
 /* #define PARTIAL_PERIODIC */
 /* #define ELECTROSTATICS */
 /* #define ROTATION */
@@ -30,6 +35,19 @@
 /* #define COMFIXED */
 /* #define MOLFORCES */
 /* #define BOND_CONSTRAINT */
+
+/**********************************************************************/
+/*                        integrator features                         */
+/**********************************************************************/
+
+/* #define NEMD */
+/* #define NPT */ 
+/* #define DPD */
+/* #define LB */
+
+/**********************************************************************/
+/*                           interactions                             */
+/**********************************************************************/
 
 /* #define TABULATED */
 /* #define LENNARD_JONES */
@@ -45,7 +63,43 @@
 /* #define BOND_ANGLE_COSINE */
 /* #define BOND_ANGLE_COSSQUARE */
 
-/* #define NEMD */
-/* #define NPT */ 
-/* #define DPD */
-/* #define LB */
+/**********************************************************************/
+/*                            debugging                               */
+/**********************************************************************/
+
+/* #define ADDITIONAL_CHECKS */
+
+/* #define COMM_DEBUG */
+/* #define EVENT_DEBUG */
+/* #define INTEG_DEBUG */
+/* #define CELL_DEBUG */
+/* #define GHOST_DEBUG */
+/* #define LATTICE_DEBUG */
+/* #define HALO_DEBUG */
+/* #define GRID_DEBUG */
+/* #define VERLET_DEBUG */
+/* #define PARTICLE_DEBUG */
+/* #define P3M_DEBUG */
+/* #define EWALD_DEBUG */
+/* #define FFT_DEBUG */
+/* #define RANDOM_DEBUG */
+/* #define FORCE_DEBUG */
+/* #define THERMO_DEBUG */ 
+/* #define LJ_DEBUG */
+/* #define MORSE_DEBUG */
+/* #define ESR_DEBUG */
+/* #define ESK_DEBUG */
+/* #define FENE_DEBUG */
+/* #define GHOST_FORCE_DEBUG */
+/* #define ONEPART_DEBUG 13 */
+/* #define STAT_DEBUG */ 
+/* #define POLY_DEBUG */
+/* #define MOLFORCES_DEBUG */
+/* #define MEM_DEBUG */
+/* #define MAGGS_DEBUG */
+/* #define LB_DEBUG */
+
+/* #define ASYNC_BARRIER */
+
+/* #define MPI_CORE */
+/* #define FORCE_CORE */
