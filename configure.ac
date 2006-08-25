@@ -79,26 +79,6 @@ AC_TYPE_SIGNAL
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([atexit floor getcwd gethostbyname memset pow rint select socket sqrt])
 
-# ESPRESSO Tests
-
-# TODO: Replace some --enable-FEATURE by --with-PACKAGE
-ES_KNOWN_CONFIGS
-
-ES_CHECK_MPI
-AM_CONDITIONAL(MPI_FAKE, test .$enable_mpi = .fake)
-AC_SUBST(MPI_INVOCATION)
-
-ES_CHECK_EFENCE
-ES_CHECK_INLINING
-if test .$enable_processor_optimization = .yes; then
-        CF_CHECK_OPTFLAGS
-fi
-ES_CHECK_LINK
-ES_CHECK_TCL
-ES_CHECK_TK
-ES_CHECK_FFTW
-AC_CHECK_PROG(doxygen, doxygen, yes, no)
-
 
 # Test for (obsolete) option --enable-mode
 AC_ARG_ENABLE(mode,[],
@@ -130,6 +110,32 @@ if test .$enable_profiling = .yes; then
    AC_DEFINE(PROFILING,,[Turn on profiling?])
 fi
 
+# test whether to enable processor optimisation
+AC_ARG_ENABLE(processor-optimization,
+	AC_HELP_STRING(--enable-processor-optimization,
+	[enable guessing of processor specific optimizations])
+	,,enable_processor_optimization=yes)
+
+# ESPRESSO Tests
+
+# TODO: Replace some --enable-FEATURE by --with-PACKAGE
+ES_KNOWN_CONFIGS
+
+ES_CHECK_MPI
+AM_CONDITIONAL(MPI_FAKE, test .$enable_mpi = .fake)
+AC_SUBST(MPI_INVOCATION)
+
+ES_CHECK_EFENCE
+ES_CHECK_INLINING
+if test .$enable_processor_optimization = .yes; then
+        CF_CHECK_OPTFLAGS
+fi
+ES_CHECK_LINK
+ES_CHECK_TCL
+ES_CHECK_TK
+ES_CHECK_FFTW
+AC_CHECK_PROG(doxygen, doxygen, yes, no)
+
 # test whether to use the chooser or not
 AC_ARG_ENABLE(chooser,
 	AC_HELP_STRING(--enable-chooser,[Create a chooser for the Espresso binary])
@@ -143,13 +149,6 @@ else
 fi
 AC_SUBST(scriptsdir)
 AC_SUBST(execpkglibdir)
-
-# test whether to enable processor optimisation
-AC_ARG_ENABLE(processor-optimization,
-	AC_HELP_STRING(--enable-processor-optimization,
-	[enable guessing of processor specific optimizations])
-	,,enable_processor_optimization=yes)
-
 
 AC_DEFINE_UNQUOTED(LAST_CHANGE,"$time_stamp",[When the last change to the code was done])
 AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
