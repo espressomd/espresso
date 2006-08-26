@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0k (Ydalir)                                                                     *
+* v2.0.0l (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0k -
+- v2.0.0l -
 -----------
 
+(l) August 25th, 2006.
 (k) August 22nd, 2006.
 (j) August 21st, 2006.
 (i) August 11th, 2006.
@@ -47,6 +48,7 @@ Changes:
     standard.
 
 Bugfixes:
+(l) fixed crash for cellsystem call without parameters.
 (j) Removed doc/TclTutor as discussed in the CCC meeting.
 (i) could not compile when MOLFORCES was switched on and EXTERNAL_FORCES was
     switched off
