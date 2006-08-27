@@ -2,7 +2,8 @@ SUBDIRS = . scripts testsuite doc
 
 # List files that should go into the distribution but are not required
 # by any other means
-EXTRA_DIST = Makefile RELEASE_NOTES 
+EXTRA_DIST = Makefile RELEASE_NOTES \
+	samples packages internal
 
 # List headers that are not used by the program here
 noinst_HEADERS = myconfig-sample.h
@@ -86,6 +87,17 @@ Espresso_bin_SOURCES =											\
 	tab.h \
 	utils.h
 
+libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
+
+dist-internal: AM_MAKEFLAGS += "internal=1"
+dist-internal: dist
+	echo $(AM_MAKEFLAGS)
+
+# Remove all CVS files from the distribution
+dist-hook:
+	-rm -rf `find $(distdir) -name CVS`
+	-test ! "$(internal)" && rm -rf $(distdir)/internal
+
 #################################################################
 # Installation of the main program and wrapper scripts
 #################################################################
@@ -95,6 +107,7 @@ bin_SCRIPTS = chooser/Espresso
 pkglib_SCRIPTS = config/config.guess
 execpkglib_SCRIPTS = mpiwrap/Espresso
 execpkglib_PROGRAMS = Espresso_bin
+execpkglib_LIBRARIES = libEspresso.a
 
 # Substitute some remaining variables in the installed Espresso
 # wrappers. This is necessary as the required values are only known at
@@ -112,6 +125,7 @@ else
 
 bin_SCRIPTS=mpiwrap/Espresso
 libexec_PROGRAMS=Espresso_bin
+lib_LIBRARIES = libEspresso.a
 
 # Substitute some remaining variables in the installed Espresso
 # wrappers. This is necessary as the required values are only known at
@@ -122,6 +136,13 @@ install-exec-hook:
 	-e "s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
 	$(bindir)/Espresso
 endif
+
+#################################################################
+# Documentation
+#################################################################
+doxygen doxygen-html: FORCE
+	cd doc; $(MAKE) $@
+FORCE:
 
 #################################################################
 # Handling of local configure headers
@@ -138,6 +159,7 @@ vpath @MYCONFIG_H@ @builddir@:@top_srcdir@:@builddir@/config
 # they get rebuilt when @MYCONFIG_H@ is changed
 $(Espresso_bin_OBJECTS): @MYCONFIG_H@
 
+
 #################################################################
 # Handling of the MPI fake implementation
 #################################################################
@@ -147,8 +169,10 @@ Espresso_bin_SOURCES += mpifake/mpi.h mpifake/mpi.c
 INCLUDES += -I @srcdir@/mpifake -I config
 endif
 
+
 ##################################################
 # Targets for backwards compatibility
 ##################################################
 test: check
 mostclean: mostlyclean
+docu: doxygen

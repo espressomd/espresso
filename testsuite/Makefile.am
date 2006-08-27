@@ -44,7 +44,7 @@ processors=1 2 3 4 6 8
 
 # rules, don't fiddle around with that
 TESTS_ENVIRONMENT=TESTCASES='$(tests)' PROCESSORS='$(processors)' ESPRESSO_SCRIPTS='$(srcdir)/scripts'
-check_SCRIPTS = test.sh
+dist_check_SCRIPTS = test.sh
 TESTS=test.sh
 
 CLEANKEEPFILES=Makefile

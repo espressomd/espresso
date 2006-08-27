@@ -104,7 +104,7 @@ int block_startread(FILETYPE f, char index[MAXBLOCKTITLE]);
  @param spacer if this character is read and no brace is open, i. e. open_braces=1,
         reading also terminates. A spacer of 0 disables this feature. This can be used
 	to read in for example space separated lists:
-	\verbatim {demoblock 1 2 3}\end verbatim
+	\verbatim {demoblock 1 2 3}\endverbatim
  @return returns the number of open braces or \ref RETURN_CODE_EOF or \ref RETURN_CODE_ERROR.
          The number of open_braces will be non-zero if the data space was exhausted.
 */

@@ -102,9 +102,8 @@ AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. 
 
 # Checks for programs
 AC_PROG_AWK
+AC_PROG_RANLIB
 AC_PATH_PROG([DOXYGEN],doxygen,no)
-
-
 
 cat <<EOF
 ****************************************************************
@@ -115,9 +114,12 @@ EOF
 AC_CONFIG_HEADER([acconfig.h])
 AC_CONFIG_LINKS(Makefile)
 AC_CONFIG_FILES(
-	[Makefile-am scripts/Makefile testsuite/Makefile doc/Makefile] 
-	[config/$MYCONFIG_H:config/myconfig-default.h.in]
-	[chooser/Espresso mpiwrap/Espresso],
+	[
+	Makefile-am scripts/Makefile testsuite/Makefile
+	doc/Makefile 
+	config/$MYCONFIG_H:config/myconfig-default.h.in
+	chooser/Espresso mpiwrap/Espresso
+	],
 	)
 AC_CONFIG_FILES([Espresso],[chmod 755 Espresso])
 

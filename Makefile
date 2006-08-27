@@ -20,7 +20,9 @@ ifeq ($(shell test -d $(objdir) && test -f $(objdir)/$(SUBMAKEFILE) && echo "yes
 
 # if it is, run make in the objdir
 all %:
-	cd $(objdir); $(MAKE) --print-directory $(MAKEFLAGS) $@
+	cd $(objdir); $(MAKE) --print-directory $@
+
+FORCE:
 
 # otherwise try to run configure
 else
@@ -28,7 +30,7 @@ else
 all:
 	@echo "No configured directory found, running configure..."
 	@./configure
-	@$(MAKE) $(MAKEFLAGS) $@
+	@$(MAKE) $@
 
 endif
 endif
