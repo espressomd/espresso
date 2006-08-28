@@ -140,8 +140,9 @@ endif
 #################################################################
 # Documentation
 #################################################################
-doxygen doxygen-html: FORCE
-	cd doc; $(MAKE) $@
+.PHONY: FORCE doc doxygen doxygen-html
+doc doxygen doxygen-html: FORCE
+	cd doc; $(MAKE) --print-directory $@
 FORCE:
 
 #################################################################

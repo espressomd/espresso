@@ -1146,8 +1146,9 @@ dist-hook:
 #################################################################
 # Documentation
 #################################################################
-doxygen doxygen-html: FORCE
-	cd doc; $(MAKE) $@
+.PHONY: FORCE doc doxygen doxygen-html
+doc doxygen doxygen-html: FORCE
+	cd doc; $(MAKE) --print-directory $@
 FORCE:
 
 # add config/ to the VPATH so that @MYCONFIG_H@ can be found by make

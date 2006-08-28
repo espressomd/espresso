@@ -19,9 +19,12 @@ objdir := obj-$(shell config/config.guess)
 ifeq ($(shell test -d $(objdir) && test -f $(objdir)/$(SUBMAKEFILE) && echo "yes"),yes)
 
 # if it is, run make in the objdir
-all %:
-	cd $(objdir); $(MAKE) --print-directory $@
-
+# add phony targets to the following
+# all doc %: FORCE
+# 	cd $(objdir) && $(MAKE) --print-directory $@
+.PHONY: all doc
+all doc %:: FORCE
+	cd $(objdir) && $(MAKE) --print-directory $@
 FORCE:
 
 # otherwise try to run configure
