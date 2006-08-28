@@ -96,7 +96,10 @@ AC_DEFUN([ES_CHECK_TCL],[
 	*darwin*) extrapaths=/Library/Frameworks/Tcl.framework/Headers ;;
 	*) ;;
 	esac
-	ES_ADDPATH_CHECK_HEADER(tcl.h, [], [AC_MSG_ERROR(TCL headers not found)],$extrapaths)
+	ES_ADDPATH_CHECK_HEADER(tcl.h, [], 
+		[AC_MSG_ERROR([TCL headers not found. Please add the include path to CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/tcl8.4).])
+		],
+		$extrapaths)
 ])
 
 AC_DEFUN([ES_CHECK_TK],[
@@ -158,7 +161,10 @@ AC_DEFUN([ES_CHECK_TK],[
 		*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Headers ;;
 		*) ;;
 		esac
-		ES_ADDPATH_CHECK_HEADER(tk.h, [], [AC_MSG_ERROR(Tk headers not found)],$extrapaths)
+		ES_ADDPATH_CHECK_HEADER(tk.h, [], 
+			[AC_MSG_ERROR([Tk headers not found. Please add the include path to CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/tcl8.4).])
+			]
+			,$extrapaths)
 		AC_DEFINE(TK,,[Whether to use Tk])
 	fi
 ])
