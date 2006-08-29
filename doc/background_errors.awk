@@ -1,4 +1,6 @@
-/ *ERROR_SPRINTF.*/ {
+# Parse the ERROR_SPRINTF lines
+/\ *ERROR_SPRINTF.*/ {
+  # skip define of ERROR_SPRINTF
   if($0 == "#define ERROR_SPRINTF sprintf")
     nextfile;
   out = "";
@@ -19,9 +21,10 @@
   }
   filename = FILENAME;
   gsub(/.*\//,"",filename);
-  result[numres++] = errcode ": " filename ": " fname "() : \" {" out;
+  print "<li>" errcode ": " filename ": " fname "() : \" {" out "</li>";
 }
 
+# Parse all aother lines for the function name
 /.*/ {
   if(FNR == 1){
     i = 0;
@@ -48,6 +51,7 @@
   j = i;
 }
 
+# ignore comment lines
 function nocomments(){
   tmp0 = "";
   spos = match($0,/\/\*/)
@@ -77,17 +81,5 @@ function nocomments(){
 }
 
 function para_match(s){
-	 return (split(s,a,"(") - split(s,b,")"));
-}
-
-END { 
-  asort(result)
-
-  print "/** \\page background_errors background_errors resolved"
-  print "<ul>"
-  for (i = 0; i < numres; i++) {
-    print "<li>" result[i] "</li>"
-  }
-  print "</ul>"
-  print "*/"
+  return (split(s,a,"(") - split(s,b,")"));
 }

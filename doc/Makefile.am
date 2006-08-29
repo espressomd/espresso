@@ -6,14 +6,17 @@ EXTRA_DIST=\
 doc: doxygen
 doxygen: doxygen-html
 doxygen-html:
-	$(AWK) -f $(srcdir)/background_errors.awk $(top_srcdir)/*.c $(top_srcdir)/*.h > background_errors.doc
-	SRCDIR=$(top_srcdir) $(DOXYGEN) $(srcdir)/doxygen.cfg | grep -ve "^\(Generating\|Parsing\|Preprocessing\)"
+	SRCDIR=$(srcdir) AWK=$(AWK)\
+	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/*.c $(top_srcdir)/*.h 
+	SRCDIR=$(top_srcdir) \
+	  $(DOXYGEN) $(srcdir)/doxygen.cfg \
+	  | grep -ve "^\(Generating\|Parsing\|Preprocessing\)"
 	@echo "***************************************************************************"
 	@echo "* The developer's guide is now accessible at"
 	@echo "*  file://`pwd`/html/index.html"
 	@echo "***************************************************************************"
 
-CLEANFILES=background_errors.doc
+CLEANFILES=background_errors.doc background_errors.sorted background_errors.unsorted
 
 clean-local:
 	-rm -rf html
