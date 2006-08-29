@@ -20,6 +20,8 @@
    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 */
 
+/* Include the defines created by configure. */
+#include <acconfig.h>
 
 /************************************************/
 /** \name Default Parameter Settings            */
@@ -69,13 +71,16 @@
 
 /*@}*/
 
-#include <acconfig.h>
 
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
 #ifdef LB
 #define USE_TEMPORARY
 #define LATTICE
 //#define ALTERNATIVE_INTEGRATOR
+#endif
+
+#ifdef MYCONFIG_H
+#include MYCONFIG_H
 #endif
 
 /********************************************/

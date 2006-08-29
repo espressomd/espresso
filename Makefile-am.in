@@ -47,7 +47,7 @@ target_triplet = @target@
 #################################################################
 @MPI_FAKE_TRUE@am__append_1 = mpifake/mpi.h mpifake/mpi.c
 # mpifake should come before any system includes
-@MPI_FAKE_TRUE@am__append_2 = -I @srcdir@/mpifake -I config
+@MPI_FAKE_TRUE@am__append_2 = -I $(srcdir)/mpifake -I config
 DIST_COMMON = README $(am__configure_deps) $(noinst_HEADERS) \
 	$(srcdir)/Espresso.in $(srcdir)/Makefile-am.am \
 	$(srcdir)/Makefile-am.in $(srcdir)/acconfig.h.in \
@@ -69,7 +69,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno configure.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = acconfig.h
-CONFIG_CLEAN_FILES = config/$MYCONFIG_H chooser/Espresso \
+CONFIG_CLEAN_FILES = config/$myconfig chooser/Espresso \
 	mpiwrap/Espresso Espresso
 am__installdirs = "$(DESTDIR)$(execpkglibdir)" \
 	"$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(bindir)" \
@@ -176,7 +176,7 @@ CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DEFS = @DEFS@
+DEFS = -D "MYCONFIG_H=<$(myconfig)>"
 DEPDIR = @DEPDIR@
 DOXYGEN = @DOXYGEN@
 ECHO_C = @ECHO_C@
@@ -197,7 +197,6 @@ MPICC = @MPICC@
 MPI_FAKE_FALSE = @MPI_FAKE_FALSE@
 MPI_FAKE_TRUE = @MPI_FAKE_TRUE@
 MPI_INVOCATION = @MPI_INVOCATION@
-MYCONFIG_H = @MYCONFIG_H@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -254,6 +253,7 @@ localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 mpich_bin = @mpich_bin@
+myconfig = @myconfig@
 oldincludedir = @oldincludedir@
 poe_bin = @poe_bin@
 prefix = @prefix@
@@ -318,7 +318,7 @@ Espresso_bin_SOURCES = main.c config.c config.h initialize.c \
 # Handling of local configure headers
 #################################################################
 
-# add config/ to the INCLUDES so that the default config/@MYCONFIG_H@ is
+# add config/ to the INCLUDES so that the default config/$(myconfig) is
 # found at compile time
 INCLUDES = -I config $(am__append_2)
 all: acconfig.h
@@ -376,7 +376,7 @@ $(srcdir)/acconfig.h.in:  $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f acconfig.h stamp-h1
-config/$MYCONFIG_H: $(top_builddir)/config.status $(top_srcdir)/config/myconfig-default.h.in
+config/$myconfig: $(top_builddir)/config.status $(top_srcdir)/config/myconfig-default.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 chooser/Espresso: $(top_builddir)/config.status $(top_srcdir)/chooser/Espresso.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
@@ -979,14 +979,14 @@ uninstall-info: uninstall-info-recursive
 #deactivate building of the library
 #libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
 
-dist-internal: AM_MAKEFLAGS += "internal=1"
+dist-internal: AM_MAKEFLAGS += internal=1
 dist-internal: dist
-	echo $(AM_MAKEFLAGS)
 
 # Remove all CVS files from the distribution
+# and remove the internal dir if not dist-internal is used
 dist-hook:
 	-rm -rf `find $(distdir) -name CVS`
-	-test ! "$(internal)" && rm -rf $(distdir)/internal
+	if test ! "$(internal)"; then rm -rf $(distdir)/internal; fi
 #execpkglib_LIBRARIES = libEspresso.a
 
 # Substitute some remaining variables in the installed Espresso
@@ -1019,12 +1019,12 @@ doc doxygen doxygen-html: FORCE
 	cd doc; $(MAKE) --print-directory $@
 FORCE:
 
-# add config/ to the VPATH so that @MYCONFIG_H@ can be found by make
-vpath @MYCONFIG_H@ @builddir@:@top_srcdir@:@builddir@/config
+# add config/ to the VPATH so that $(myconfig) can be found by make
+vpath $(myconfig) $(top_builddir):$(top_srcdir):$(top_builddir)/config
 
-# add @MYCONFIG_H@ to the dependencies of all object files so that
-# they get rebuilt when @MYCONFIG_H@ is changed
-$(Espresso_bin_OBJECTS): @MYCONFIG_H@
+# add $(myconfig) to the dependencies of all object files so that
+# they get rebuilt when $(myconfig) is changed
+$(Espresso_bin_OBJECTS): $(myconfig)
 
 ##################################################
 # Targets for backwards compatibility

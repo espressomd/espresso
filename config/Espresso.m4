@@ -22,17 +22,11 @@ AC_DEFUN([ES_INIT_MYCONFIG],[
 	# Handling the myconfig-header
 	AC_ARG_WITH(myconfig, 
 		AC_HELP_STRING(--with-myconfig=FILE,
-			[name of the local config file [[myconfig.h]]]),
+			[default name of the local config file [[myconfig.h]]]),
 		[ test .$with_myconfig = .no && with_myconfig=myconfig.h],
 		[ with_myconfig=myconfig.h ])
-	MYCONFIG_H=$with_myconfig
-	AC_SUBST(MYCONFIG_H)
-	AC_DEFINE_UNQUOTED(MYCONFIG_H,"$with_myconfig",[The name of the local configure header])
-	AH_BOTTOM([
-#ifdef MYCONFIG_H
-#include MYCONFIG_H
-#endif
-	])
+	myconfig=$with_myconfig
+	AC_SUBST(myconfig)
 ])
 
 AC_DEFUN([ES_CHECK_EFENCE],[

@@ -117,7 +117,7 @@ AC_CONFIG_FILES(
 	[
 	Makefile-am scripts/Makefile testsuite/Makefile
 	doc/Makefile 
-	config/$MYCONFIG_H:config/myconfig-default.h.in
+	config/$myconfig:config/myconfig-default.h.in
 	chooser/Espresso mpiwrap/Espresso
 	],
 	)
@@ -181,7 +181,7 @@ cat <<EOF
 Other settings:
 ---------------
 using Espresso chooser	= $enable_chooser
-local config header	= $with_myconfig
+local config header	= $myconfig
 doxygen			= $DOXYGEN
 EOF
 

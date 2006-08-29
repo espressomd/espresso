@@ -90,14 +90,14 @@ Espresso_bin_SOURCES =											\
 #deactivate building of the library
 #libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
 
-dist-internal: AM_MAKEFLAGS += "internal=1"
+dist-internal: AM_MAKEFLAGS += internal=1
 dist-internal: dist
-	echo $(AM_MAKEFLAGS)
 
 # Remove all CVS files from the distribution
+# and remove the internal dir if not dist-internal is used
 dist-hook:
 	-rm -rf `find $(distdir) -name CVS`
-	-test ! "$(internal)" && rm -rf $(distdir)/internal
+	if test ! "$(internal)"; then rm -rf $(distdir)/internal; fi
 
 #################################################################
 # Installation of the main program and wrapper scripts
@@ -150,17 +150,17 @@ FORCE:
 # Handling of local configure headers
 #################################################################
 
-# add config/ to the INCLUDES so that the default config/@MYCONFIG_H@ is
+# add config/ to the INCLUDES so that the default config/$(myconfig) is
 # found at compile time
 INCLUDES = -I config
+DEFS = -D "MYCONFIG_H=<$(myconfig)>"
 
-# add config/ to the VPATH so that @MYCONFIG_H@ can be found by make
-vpath @MYCONFIG_H@ @builddir@:@top_srcdir@:@builddir@/config
+# add config/ to the VPATH so that $(myconfig) can be found by make
+vpath $(myconfig) $(top_builddir):$(top_srcdir):$(top_builddir)/config
 
-# add @MYCONFIG_H@ to the dependencies of all object files so that
-# they get rebuilt when @MYCONFIG_H@ is changed
-$(Espresso_bin_OBJECTS): @MYCONFIG_H@
-
+# add $(myconfig) to the dependencies of all object files so that
+# they get rebuilt when $(myconfig) is changed
+$(Espresso_bin_OBJECTS): $(myconfig)
 
 #################################################################
 # Handling of the MPI fake implementation
@@ -168,9 +168,8 @@ $(Espresso_bin_OBJECTS): @MYCONFIG_H@
 if MPI_FAKE
 Espresso_bin_SOURCES += mpifake/mpi.h mpifake/mpi.c
 # mpifake should come before any system includes
-INCLUDES += -I @srcdir@/mpifake -I config
+INCLUDES += -I $(srcdir)/mpifake -I config
 endif
-
 
 ##################################################
 # Targets for backwards compatibility

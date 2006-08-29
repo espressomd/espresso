@@ -113,9 +113,6 @@
 /* Which MPI implementation to use? */
 #undef MPI
 
-/* The name of the local configure header */
-#undef MYCONFIG_H
-
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 #undef NO_MINUS_C_MINUS_O
 
@@ -181,9 +178,3 @@
 
 /* Define to rpl_realloc if the replacement function should be used. */
 #undef realloc
-
-
-#ifdef MYCONFIG_H
-#include MYCONFIG_H
-#endif
-	
