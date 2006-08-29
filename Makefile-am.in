@@ -16,7 +16,6 @@
 
 
 
-
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 VPATH = @srcdir@
@@ -72,74 +71,9 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = acconfig.h
 CONFIG_CLEAN_FILES = config/$MYCONFIG_H chooser/Espresso \
 	mpiwrap/Espresso Espresso
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
-am__installdirs = "$(DESTDIR)$(execpkglibdir)" "$(DESTDIR)$(libdir)" \
-	"$(DESTDIR)$(execpkglibdir)" "$(DESTDIR)$(libexecdir)" \
-	"$(DESTDIR)$(bindir)" "$(DESTDIR)$(execpkglibdir)" \
-	"$(DESTDIR)$(pkglibdir)"
-execpkglibLIBRARIES_INSTALL = $(INSTALL_DATA)
-libLIBRARIES_INSTALL = $(INSTALL_DATA)
-LIBRARIES = $(execpkglib_LIBRARIES) $(lib_LIBRARIES)
-AR = ar
-ARFLAGS = cru
-libEspresso_a_AR = $(AR) $(ARFLAGS)
-libEspresso_a_LIBADD =
-am__libEspresso_a_SOURCES_DIST = main.c config.c config.h initialize.c \
-	initialize.h global.c global.h communication.c communication.h \
-	binary_file.c binary_file.h interaction_data.c \
-	interaction_data.h verlet.c verlet.h grid.c grid.h integrate.c \
-	integrate.h cells.c cells.h ghosts.c ghosts.h forces.c \
-	forces.h rotation.c rotation.h debug.c debug.h particle_data.c \
-	particle_data.h thermostat.c thermostat.h statistics.c \
-	statistics.h statistics_chain.c statistics_chain.h energy.c \
-	energy.h pressure.c pressure.h vmdsock.c vmdsock.h imd.c imd.h \
-	p3m.c p3m.h ewald.c ewald.h fft.c fft.h random.c random.h \
-	blockfile.c blockfile.h blockfile_tcl.c blockfile_tcl.h \
-	polymer.c polymer.h specfunc.c specfunc.h tuning.c tuning.h \
-	uwerr.c uwerr.h parser.c parser.h domain_decomposition.c \
-	domain_decomposition.h nsquare.c nsquare.h layered.c layered.h \
-	mmm-common.c mmm-common.h mmm1d.c mmm1d.h mmm2d.c mmm2d.h \
-	modes.c modes.h topology.c topology.h nemd.c nemd.h \
-	statistics_cluster.c statistics_cluster.h elc.c elc.h \
-	statistics_molecule.c statistics_molecule.h errorhandling.c \
-	errorhandling.h constraint.c constraint.h maggs.c maggs.h \
-	rattle.c rattle.h molforces.c molforces.h lb.c lb.h bin.c \
-	bin.h lattice.c lattice.h halo.c halo.h statistics_fluid.c \
-	statistics_fluid.h lb-boundaries.c lb-boundaries.h angle.h \
-	buckingham.h comfixed.h comforce.h debye_hueckel.h dihedral.h \
-	fene.h gb.h harmonic.h ljcos2.h ljcos.h lj.h morse.h polynom.h \
-	soft_sphere.h subt_lj.h tab.h utils.h mpifake/mpi.h \
-	mpifake/mpi.c
-am__dirstamp = $(am__leading_dot)dirstamp
-@MPI_FAKE_TRUE@am__objects_1 = mpifake/mpi.$(OBJEXT)
-am__objects_2 = main.$(OBJEXT) config.$(OBJEXT) initialize.$(OBJEXT) \
-	global.$(OBJEXT) communication.$(OBJEXT) binary_file.$(OBJEXT) \
-	interaction_data.$(OBJEXT) verlet.$(OBJEXT) grid.$(OBJEXT) \
-	integrate.$(OBJEXT) cells.$(OBJEXT) ghosts.$(OBJEXT) \
-	forces.$(OBJEXT) rotation.$(OBJEXT) debug.$(OBJEXT) \
-	particle_data.$(OBJEXT) thermostat.$(OBJEXT) \
-	statistics.$(OBJEXT) statistics_chain.$(OBJEXT) \
-	energy.$(OBJEXT) pressure.$(OBJEXT) vmdsock.$(OBJEXT) \
-	imd.$(OBJEXT) p3m.$(OBJEXT) ewald.$(OBJEXT) fft.$(OBJEXT) \
-	random.$(OBJEXT) blockfile.$(OBJEXT) blockfile_tcl.$(OBJEXT) \
-	polymer.$(OBJEXT) specfunc.$(OBJEXT) tuning.$(OBJEXT) \
-	uwerr.$(OBJEXT) parser.$(OBJEXT) \
-	domain_decomposition.$(OBJEXT) nsquare.$(OBJEXT) \
-	layered.$(OBJEXT) mmm-common.$(OBJEXT) mmm1d.$(OBJEXT) \
-	mmm2d.$(OBJEXT) modes.$(OBJEXT) topology.$(OBJEXT) \
-	nemd.$(OBJEXT) statistics_cluster.$(OBJEXT) elc.$(OBJEXT) \
-	statistics_molecule.$(OBJEXT) errorhandling.$(OBJEXT) \
-	constraint.$(OBJEXT) maggs.$(OBJEXT) rattle.$(OBJEXT) \
-	molforces.$(OBJEXT) lb.$(OBJEXT) bin.$(OBJEXT) \
-	lattice.$(OBJEXT) halo.$(OBJEXT) statistics_fluid.$(OBJEXT) \
-	lb-boundaries.$(OBJEXT) $(am__objects_1)
-am_libEspresso_a_OBJECTS = $(am__objects_2)
-libEspresso_a_OBJECTS = $(am_libEspresso_a_OBJECTS)
+am__installdirs = "$(DESTDIR)$(execpkglibdir)" \
+	"$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(bindir)" \
+	"$(DESTDIR)$(execpkglibdir)" "$(DESTDIR)$(pkglibdir)"
 execpkglibPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 libexecPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(execpkglib_PROGRAMS) $(libexec_PROGRAMS)
@@ -169,6 +103,8 @@ am__Espresso_bin_SOURCES_DIST = main.c config.c config.h initialize.c \
 	fene.h gb.h harmonic.h ljcos2.h ljcos.h lj.h morse.h polynom.h \
 	soft_sphere.h subt_lj.h tab.h utils.h mpifake/mpi.h \
 	mpifake/mpi.c
+am__dirstamp = $(am__leading_dot)dirstamp
+@MPI_FAKE_TRUE@am__objects_1 = mpifake/mpi.$(OBJEXT)
 am_Espresso_bin_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) \
 	initialize.$(OBJEXT) global.$(OBJEXT) communication.$(OBJEXT) \
 	binary_file.$(OBJEXT) interaction_data.$(OBJEXT) \
@@ -203,9 +139,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libEspresso_a_SOURCES) $(Espresso_bin_SOURCES)
-DIST_SOURCES = $(am__libEspresso_a_SOURCES_DIST) \
-	$(am__Espresso_bin_SOURCES_DIST)
+SOURCES = $(Espresso_bin_SOURCES)
+DIST_SOURCES = $(am__Espresso_bin_SOURCES_DIST)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-exec-recursive install-info-recursive \
@@ -370,7 +305,6 @@ Espresso_bin_SOURCES = main.c config.c config.h initialize.c \
 	fene.h gb.h harmonic.h imd.h ljcos2.h ljcos.h lj.h morse.h \
 	polynom.h soft_sphere.h subt_lj.h tab.h utils.h \
 	$(am__append_1)
-libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
 @USE_CHOOSER_FALSE@bin_SCRIPTS = mpiwrap/Espresso
 
 #################################################################
@@ -379,8 +313,6 @@ libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
 @USE_CHOOSER_TRUE@bin_SCRIPTS = chooser/Espresso
 @USE_CHOOSER_TRUE@pkglib_SCRIPTS = config/config.guess
 @USE_CHOOSER_TRUE@execpkglib_SCRIPTS = mpiwrap/Espresso
-@USE_CHOOSER_TRUE@execpkglib_LIBRARIES = libEspresso.a
-@USE_CHOOSER_FALSE@lib_LIBRARIES = libEspresso.a
 
 #################################################################
 # Handling of local configure headers
@@ -452,76 +384,6 @@ mpiwrap/Espresso: $(top_builddir)/config.status $(top_srcdir)/mpiwrap/Espresso.i
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 Espresso: $(top_builddir)/config.status $(srcdir)/Espresso.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
-install-execpkglibLIBRARIES: $(execpkglib_LIBRARIES)
-	@$(NORMAL_INSTALL)
-	test -z "$(execpkglibdir)" || $(mkdir_p) "$(DESTDIR)$(execpkglibdir)"
-	@list='$(execpkglib_LIBRARIES)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    f=$(am__strip_dir) \
-	    echo " $(execpkglibLIBRARIES_INSTALL) '$$p' '$(DESTDIR)$(execpkglibdir)/$$f'"; \
-	    $(execpkglibLIBRARIES_INSTALL) "$$p" "$(DESTDIR)$(execpkglibdir)/$$f"; \
-	  else :; fi; \
-	done
-	@$(POST_INSTALL)
-	@list='$(execpkglib_LIBRARIES)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    p=$(am__strip_dir) \
-	    echo " $(RANLIB) '$(DESTDIR)$(execpkglibdir)/$$p'"; \
-	    $(RANLIB) "$(DESTDIR)$(execpkglibdir)/$$p"; \
-	  else :; fi; \
-	done
-
-uninstall-execpkglibLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(execpkglib_LIBRARIES)'; for p in $$list; do \
-	  p=$(am__strip_dir) \
-	  echo " rm -f '$(DESTDIR)$(execpkglibdir)/$$p'"; \
-	  rm -f "$(DESTDIR)$(execpkglibdir)/$$p"; \
-	done
-
-clean-execpkglibLIBRARIES:
-	-test -z "$(execpkglib_LIBRARIES)" || rm -f $(execpkglib_LIBRARIES)
-install-libLIBRARIES: $(lib_LIBRARIES)
-	@$(NORMAL_INSTALL)
-	test -z "$(libdir)" || $(mkdir_p) "$(DESTDIR)$(libdir)"
-	@list='$(lib_LIBRARIES)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    f=$(am__strip_dir) \
-	    echo " $(libLIBRARIES_INSTALL) '$$p' '$(DESTDIR)$(libdir)/$$f'"; \
-	    $(libLIBRARIES_INSTALL) "$$p" "$(DESTDIR)$(libdir)/$$f"; \
-	  else :; fi; \
-	done
-	@$(POST_INSTALL)
-	@list='$(lib_LIBRARIES)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    p=$(am__strip_dir) \
-	    echo " $(RANLIB) '$(DESTDIR)$(libdir)/$$p'"; \
-	    $(RANLIB) "$(DESTDIR)$(libdir)/$$p"; \
-	  else :; fi; \
-	done
-
-uninstall-libLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(lib_LIBRARIES)'; for p in $$list; do \
-	  p=$(am__strip_dir) \
-	  echo " rm -f '$(DESTDIR)$(libdir)/$$p'"; \
-	  rm -f "$(DESTDIR)$(libdir)/$$p"; \
-	done
-
-clean-libLIBRARIES:
-	-test -z "$(lib_LIBRARIES)" || rm -f $(lib_LIBRARIES)
-mpifake/$(am__dirstamp):
-	@$(mkdir_p) mpifake
-	@: > mpifake/$(am__dirstamp)
-mpifake/$(DEPDIR)/$(am__dirstamp):
-	@$(mkdir_p) mpifake/$(DEPDIR)
-	@: > mpifake/$(DEPDIR)/$(am__dirstamp)
-mpifake/mpi.$(OBJEXT): mpifake/$(am__dirstamp) \
-	mpifake/$(DEPDIR)/$(am__dirstamp)
-libEspresso.a: $(libEspresso_a_OBJECTS) $(libEspresso_a_DEPENDENCIES) 
-	-rm -f libEspresso.a
-	$(libEspresso_a_AR) libEspresso.a $(libEspresso_a_OBJECTS) $(libEspresso_a_LIBADD)
-	$(RANLIB) libEspresso.a
 install-execpkglibPROGRAMS: $(execpkglib_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(execpkglibdir)" || $(mkdir_p) "$(DESTDIR)$(execpkglibdir)"
@@ -568,6 +430,14 @@ uninstall-libexecPROGRAMS:
 
 clean-libexecPROGRAMS:
 	-test -z "$(libexec_PROGRAMS)" || rm -f $(libexec_PROGRAMS)
+mpifake/$(am__dirstamp):
+	@$(mkdir_p) mpifake
+	@: > mpifake/$(am__dirstamp)
+mpifake/$(DEPDIR)/$(am__dirstamp):
+	@$(mkdir_p) mpifake/$(DEPDIR)
+	@: > mpifake/$(DEPDIR)/$(am__dirstamp)
+mpifake/mpi.$(OBJEXT): mpifake/$(am__dirstamp) \
+	mpifake/$(DEPDIR)/$(am__dirstamp)
 Espresso_bin$(EXEEXT): $(Espresso_bin_OBJECTS) $(Espresso_bin_DEPENDENCIES) 
 	@rm -f Espresso_bin$(EXEEXT)
 	$(LINK) $(Espresso_bin_LDFLAGS) $(Espresso_bin_OBJECTS) $(Espresso_bin_LDADD) $(LIBS)
@@ -991,11 +861,10 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile-am $(LIBRARIES) $(PROGRAMS) $(SCRIPTS) $(HEADERS) \
-		acconfig.h
+all-am: Makefile-am $(PROGRAMS) $(SCRIPTS) $(HEADERS) acconfig.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(execpkglibdir)" "$(DESTDIR)$(libdir)" "$(DESTDIR)$(execpkglibdir)" "$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(execpkglibdir)" "$(DESTDIR)$(pkglibdir)"; do \
+	for dir in "$(DESTDIR)$(execpkglibdir)" "$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(execpkglibdir)" "$(DESTDIR)$(pkglibdir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-recursive
@@ -1026,8 +895,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-execpkglibLIBRARIES clean-execpkglibPROGRAMS \
-	clean-generic clean-libLIBRARIES clean-libexecPROGRAMS \
+clean-am: clean-execpkglibPROGRAMS clean-generic clean-libexecPROGRAMS \
 	mostlyclean-am
 
 distclean: distclean-recursive
@@ -1049,9 +917,8 @@ info-am:
 
 install-data-am:
 
-install-exec-am: install-binSCRIPTS install-execpkglibLIBRARIES \
-	install-execpkglibPROGRAMS install-execpkglibSCRIPTS \
-	install-libLIBRARIES install-libexecPROGRAMS \
+install-exec-am: install-binSCRIPTS install-execpkglibPROGRAMS \
+	install-execpkglibSCRIPTS install-libexecPROGRAMS \
 	install-pkglibSCRIPTS
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
@@ -1081,16 +948,14 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-binSCRIPTS uninstall-execpkglibLIBRARIES \
-	uninstall-execpkglibPROGRAMS uninstall-execpkglibSCRIPTS \
-	uninstall-info-am uninstall-libLIBRARIES \
+uninstall-am: uninstall-binSCRIPTS uninstall-execpkglibPROGRAMS \
+	uninstall-execpkglibSCRIPTS uninstall-info-am \
 	uninstall-libexecPROGRAMS uninstall-pkglibSCRIPTS
 
 uninstall-info: uninstall-info-recursive
 
 .PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am am--refresh check \
-	check-am clean clean-execpkglibLIBRARIES \
-	clean-execpkglibPROGRAMS clean-generic clean-libLIBRARIES \
+	check-am clean clean-execpkglibPROGRAMS clean-generic \
 	clean-libexecPROGRAMS clean-recursive ctags ctags-recursive \
 	dist dist-all dist-bzip2 dist-gzip dist-hook dist-shar \
 	dist-tarZ dist-zip distcheck distclean distclean-compile \
@@ -1098,20 +963,21 @@ uninstall-info: uninstall-info-recursive
 	distclean-tags distcleancheck distdir distuninstallcheck dvi \
 	dvi-am html html-am info info-am install install-am \
 	install-binSCRIPTS install-data install-data-am install-exec \
-	install-exec-am install-exec-hook install-execpkglibLIBRARIES \
-	install-execpkglibPROGRAMS install-execpkglibSCRIPTS \
-	install-info install-info-am install-libLIBRARIES \
+	install-exec-am install-exec-hook install-execpkglibPROGRAMS \
+	install-execpkglibSCRIPTS install-info install-info-am \
 	install-libexecPROGRAMS install-man install-pkglibSCRIPTS \
 	install-strip installcheck installcheck-am installdirs \
 	installdirs-am maintainer-clean maintainer-clean-generic \
 	maintainer-clean-recursive mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-recursive pdf pdf-am ps ps-am \
 	tags tags-recursive uninstall uninstall-am \
-	uninstall-binSCRIPTS uninstall-execpkglibLIBRARIES \
-	uninstall-execpkglibPROGRAMS uninstall-execpkglibSCRIPTS \
-	uninstall-info-am uninstall-libLIBRARIES \
+	uninstall-binSCRIPTS uninstall-execpkglibPROGRAMS \
+	uninstall-execpkglibSCRIPTS uninstall-info-am \
 	uninstall-libexecPROGRAMS uninstall-pkglibSCRIPTS
 
+
+#deactivate building of the library
+#libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
 
 dist-internal: AM_MAKEFLAGS += "internal=1"
 dist-internal: dist
@@ -1121,6 +987,7 @@ dist-internal: dist
 dist-hook:
 	-rm -rf `find $(distdir) -name CVS`
 	-test ! "$(internal)" && rm -rf $(distdir)/internal
+#execpkglib_LIBRARIES = libEspresso.a
 
 # Substitute some remaining variables in the installed Espresso
 # wrappers. This is necessary as the required values are only known at
@@ -1133,6 +1000,7 @@ dist-hook:
 @USE_CHOOSER_TRUE@	-e "s,[@]ESPRESSO_BIN[@],$(execpkglibdir)/Espresso_bin,g" \
 @USE_CHOOSER_TRUE@	-e "s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
 @USE_CHOOSER_TRUE@	$(execpkglibdir)/Espresso
+#lib_LIBRARIES = libEspresso.a
 
 # Substitute some remaining variables in the installed Espresso
 # wrappers. This is necessary as the required values are only known at

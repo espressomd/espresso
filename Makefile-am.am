@@ -87,7 +87,8 @@ Espresso_bin_SOURCES =											\
 	tab.h \
 	utils.h
 
-libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
+#deactivate building of the library
+#libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
 
 dist-internal: AM_MAKEFLAGS += "internal=1"
 dist-internal: dist
@@ -107,7 +108,7 @@ bin_SCRIPTS = chooser/Espresso
 pkglib_SCRIPTS = config/config.guess
 execpkglib_SCRIPTS = mpiwrap/Espresso
 execpkglib_PROGRAMS = Espresso_bin
-execpkglib_LIBRARIES = libEspresso.a
+#execpkglib_LIBRARIES = libEspresso.a
 
 # Substitute some remaining variables in the installed Espresso
 # wrappers. This is necessary as the required values are only known at
@@ -125,7 +126,7 @@ else
 
 bin_SCRIPTS=mpiwrap/Espresso
 libexec_PROGRAMS=Espresso_bin
-lib_LIBRARIES = libEspresso.a
+#lib_LIBRARIES = libEspresso.a
 
 # Substitute some remaining variables in the installed Espresso
 # wrappers. This is necessary as the required values are only known at
