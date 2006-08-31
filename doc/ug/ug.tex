@@ -1,0 +1,263 @@
+\documentclass[
+a4paper,                        % paper size
+11pt,                           % font size
+twoside,                        % two sided
+footsepline,                    % add a line to separate the footer
+headsepline,                    % add a line to separate the header
+headexclude,                    % header does not belong to the text
+footexclude,                    % footer does not belong to the text
+pagesize,                       % set the pagesize in a DVI document
+bibtotocnumbered,               % add the bibliography to the TOC
+idxtotoc                        % add the index to the TOC
+%openright,                      % start a new chapter on the right page
+%,DIV12
+%,draft
+]{scrreprt}
+
+\usepackage{nameref}            % nameref, varioref, hyperref must be
+                                % used in this order (see hyperref
+                                % README)!
+\usepackage[draft]{varioref}    % defines \vref
+\usepackage{hyperref}           % automatically creates links when
+                                % using pdflatex, defines \url
+\usepackage{ifpdf}              % defines \ifpdf
+\usepackage{graphicx}           % handles graphics
+\usepackage{makeidx}            % creates the index
+\usepackage{fancybox}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%% New Commands and Environments %%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\es}{\textsf{ESPResSo}}
+\newcommand{\ie}{\textit{i.e.\/}}
+\newcommand{\eg}{\textit{e.g.\/}}
+\newcommand{\etal}{\textit{et al.\/}}
+
+\newcommand{\variant}[2]{(#1) \texttt{#2}\\}
+%\newcommand{\lit}[1]{\texttt{#1}}
+\newcommand{\var}[1]{\textrm{\textit{#1}}}
+\newenvironment{syntax}{%
+  \begin{Sbox}
+    \begin{minipage}{0.9\linewidth}
+    }{%
+    \end{minipage}
+  \end{Sbox}
+  \begin{center}
+    \fbox{\TheSbox}
+  \end{center}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% Other Settings %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagestyle{headings}
+\makeindex
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%% Main Document %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\titlehead{
+  \begin{center}
+    \includegraphics[width=5cm]{logo.jpg}
+  \end{center}
+}
+%\subject{Dissertation}
+\title{\es{} User's Guide}
+%\author{Dipl.-Inform. Olaf~Lenz}
+%\date{\today}
+\maketitle
+
+\tableofcontents
+
+\chapter{Introduction}
+\label{chap:intro}
+
+(new)
+
+\begin{itemize}
+\item \es{} is a generic soft matter simulation packages
+\item for molecular dynamics simulations in soft matter research
+\item focussed on coarse-grained models
+\item employs modern algorithms (Lattice-Boltzmann, DPD, P3M, \ldots)
+\item written in C for maximal portability
+\item Tcl-controlled
+\item parallelized
+\end{itemize}
+
+\section{Guiding principles}
+\label{sec:ideas}
+
+(from paper: 2.1 Goals and principles)
+
+\es
+\begin{itemize}
+\item does \emph{not} do the physics for you!
+\item requires you to understand what you do (can not be used as a
+  black box)
+\item gives you maximal freedom (flexibility)
+\item is extensible
+\item integrates system setup, simulation and analysis, as this can't
+  be strictly separated in soft matter simulations
+\item has no predefined units
+\item sets as few defaults as possible
+\end{itemize}
+
+\section{Algorithms contained in \es}
+
+The following algorithms are implemented in \es{}:
+
+\begin{itemize}
+\item ensembles: NVE, NVT, NpT
+\item charged systems:
+  \begin{itemize}
+  \item P3M for fully periodic systems
+  \item ELC and MMM-family of algorithms for charged systems with
+    non-periodic boundary conditions
+  \item Maggs algorithm 
+  \end{itemize}
+\item Hydrodynamics:
+  \begin{itemize}
+  \item DPD (as a thermostat)
+  \item Lattice-Boltzmann
+  \end{itemize}
+\end{itemize}
+
+\section{Basic program structure}
+\label{sec:structure}
+
+(from paper: 2.2 Basic program structure)
+
+\begin{itemize}
+\item Control level: \texttt{Tcl}
+\item ``Kernel'' written in \texttt{C}
+\item This manual will focus on the control level
+\end{itemize}
+
+\section{On units}
+\label{sec:units}
+
+(new)
+
+\begin{itemize}
+\item Reduced units
+\item comparison to ``real units''
+\item three examples on different length scales
+  \begin{itemize}
+  \item some atomistic model?
+  \item coarse-grained model (\eg lipid bilayer)
+  \item billards?
+  \end{itemize}
+\end{itemize}
+
+\include{installation}
+
+\chapter{Tutorial}
+\label{chap:tutorial}
+
+(from \verb!erice_tutorial! or appendix A from paper)
+
+\begin{itemize}
+\item \es: script interpreter
+\item interactive use (sample session)
+\item script execution
+\item example script
+\item Reference to \verb!tutorial.tcl! (?)
+\end{itemize}
+
+\chapter{\es{} command reference}
+\label{chap:ref}
+
+(most from paper and from related pages)
+
+\begin{itemize}
+\item Will contain description of all Tcl-commands
+\item Reference to appendix \vref{chap:quickref}
+\item basic identifiers:
+  \begin{itemize}
+  \item particle type
+  \item bonded interaction type
+  \item molecule id
+  \end{itemize}
+\end{itemize}
+
+
+\section{\texttt{inter}: Setting up interactions}
+\label{sec:inter}
+\begin{syntax}
+  \variant{1}
+  {inter 
+    \var{part\_type\_id1} 
+    \var{part\_type\_id2}
+    \var{inter\_type} 
+    [ \var{parameters}\ldots ]
+  }
+  \variant{2}
+  {inter 
+    \var{bond\_type\_id} \var{bond\_type} [
+    \var{parameters}\ldots ]
+  }
+  \variant{3}
+  {inter}
+\end{syntax}
+    % \section{Creating particles}
+% \label{sec:part}
+% \texttt{part}
+
+% \section{Interactions}
+% \label{sec:inter}
+% \texttt{inter}
+
+% \section{Analysis}
+% \label{sec:analysis}
+
+\chapter{Under the hood}
+\label{chap:underhood}
+
+(new)
+
+\begin{itemize}
+\item Implementation issues that are interesting for the user
+\item Main loop in pseudo code (for comparison)
+\item from doxygen: ``Cell systems'' 
+\end{itemize}
+
+
+\chapter{Getting involved}
+\label{chap:devel}
+
+\begin{itemize}
+\item What to do when you want to become involved
+\item How to submit a bug report
+\end{itemize}
+
+
+\appendix
+\chapter{\es{} quick reference}
+\label{chap:quickref}
+
+\begin{itemize}
+\item Short reference table of all commands
+\item Complete syntax of \es{} commands
+\item Features required for different commands
+\end{itemize}
+
+\chapter{The MMM family of algorithms}
+\label{chap:mmm}
+
+\chapter{Maggs algorithm}
+\label{chap:maggs}
+
+\end{document}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

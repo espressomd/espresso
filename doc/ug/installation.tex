@@ -1,0 +1,281 @@
+%\chapter{Installation}
+%\label{chap:install}
+
+\begin{itemize}
+\item Compiling \es{} is a necessary evil
+\item Features can be compiled in or not
+\item For maximal efficiency, compile in only the features that you
+  use
+\item \es{} can be obtained from the \es{} home page
+  \footnote{\url{http://www.espresso.mpg.de}}.
+\end{itemize}
+
+
+
+\section{Requirements}
+\label{sec:requirements}
+
+\begin{description}
+\item[Tcl/Tk] \es{} requires the Toolkit Command Language Tcl/Tk
+  \footnote{\url{http://www.tcl.tk/}} in the version 8.3 or later.
+  Some example scripts will only work with Tcl 8.4. You do not only
+  need the interpreter, but also the header files and libraries.
+  Depending on the operating system, these may come in separate
+  development packages. If you want to use a graphical user interface
+  (GUI) for your simulation scripts, you will also need Tk.
+  
+\item[FFTW] In addition, \es{} needs the FFTW library
+  \footnote{\url{http://www.fftw.org/}} for Fourier transforms.
+  ESPResSo can work with both the 2.1.x and 3.0.x series. Again, the
+  header files are required.
+  
+\item[MPI] Finally, if you want to use ESPResSo in parallel, you need
+  a working MPI environment (version 1.2). ESPResSo currently supports
+  the following MPI implementations:
+  \begin{itemize}
+  \item LAM/MPI is the preferred variant
+  \item MPICH, which seems to be considerably slower than LAM/MPI in
+    our benchmarks.
+  \item On AIX systems, \es{} can also use the native POE parallel
+    environment.
+  \item On DEC/Compaq/HP OSF/Tru64, \es{} can also use the native
+    dmpirun MPI environment.
+  \end{itemize}
+\end{description}
+
+\section{Quick start}
+
+In many cases, to compile \es{}, it is enough to execute the following
+sequence of two steps in the directory where you have unpacked the
+sources:
+
+\begin{verbatim}
+> configure
+> make
+\end{verbatim}
+
+In some cases, \eg{} when \es{} needs to be compiled for several
+different machines or when different versions with different features
+are required, it might be useful to execute the commands not in the
+source directory itself, but to start \texttt{configure} from another
+directory (see section \vref{sec:builddir}). Furthermore, many
+features of \es{} can be selectively turned on or off in the local
+configuration header of \es{} (see section \vref{sec:myconfig}) before
+starting the compilation with \texttt{make}.
+
+The shell script \texttt{configure} prepares the source code for
+compilation. It will determine how to use and where to find the
+different libraries and tools required by the compilation process, and
+it will test what compiler flags are to be used.  The script will find
+out most of these things automatically.  If something is missing, it
+will complain and give hints how to solve the problem.  The
+configuration process can be controlled with the help of a number of
+options that are explained in section \vref{sec:configure}.
+
+The command \texttt{make} will compile the source code. Depending on
+the options passed to the program, \texttt{make} can also be used for
+a number of other things:
+\begin{itemize}
+\item It can install and uninstall the program to some other
+  directories. However, normally it is not necessary to actually
+  \textit{install} \es{} to run it.
+\item It can test the \es{} program for correctness.
+\item It can build the documentation.
+\end{itemize}
+The details of the usage of \texttt{make} are described in section
+\vref{sec:make}.
+
+When these steps have successfully completed, \es{} can be started
+with the command (see section \vref{sec:run})
+\begin{verbatim}
+> Espresso
+\end{verbatim}
+
+\section{Separation of source and build directory}
+\label{sec:builddir}
+
+\begin{itemize}
+\item srcdir
+\item builddir
+\item when called from srcdir, builddir will be
+  created automatically (obj-PLATFORM)
+\item in srcdir, you can do 
+  \begin{itemize}
+  \item configure
+  \item make
+  \item Espresso 
+  \end{itemize}
+  but all files will be created in builddir (obj-PLATFORM)!
+\end{itemize}
+
+\section{The configuration header \texttt{myconfig.h}}
+\label{sec:myconfig}
+
+\verb!(1) > configure --with-myconfig=MYCONFIG_HEADER!\\
+or\\
+\verb!(2) > make myconfig=MYCONFIG_HEADER!
+
+\noindent 
+Sample file: \verb!$srcdir/myconfig-sample.h! \\
+Default file: \verb!$builddir/config/myconfig.h!
+
+Priority: 
+\begin{enumerate}
+\item builddir
+\item srcdir
+\item builddir/config (default, don't touch)
+\end{enumerate}
+
+\section{Running configure}
+\label{sec:configure}
+
+\texttt{configure} will save the assembled information in the
+different \texttt{Makefile}s, the header file \texttt{acconfig.h}, and
+some other shell scripts required later on.
+
+The following options are recognised by \texttt{configure}:
+\begin{verbatim}
+--prefix=PREFIX (Default: $HOME/Espresso)
+--exec-prefix=EXEC_PREFIX (DEFAULT: PREFIX)
+
+--enable-chooser (Default: depends on current directory)
+--with-myconfig=MYCONFIG_HEADER (Default: myconfig.h)
+--enable-config=KNOWN_CONFIG (Default: no)
+
+--enable-debug (Default: off)
+--enable-profiling (Default: off)
+--disable-processor-optimization (Default: enabled)
+--enable-xlc-qipa (Default: yes)
+
+--with-mpi=MPI (Default: guess)
+--with-efence (Default: no)
+--with-tcl=VERSION (Default: guess)
+--with-tk[=VERSION] (Default: no)
+--with-fftw=VERSION (Default: guess)
+\end{verbatim}
+
+\section{Compiling, testing and installing \es}
+\label{sec:make}
+
+\begin{verbatim}
+> make [all] [myconfig=MYCONFIG_HEADER]
+
+  Compiles Espresso. 
+
+  Variables:
+  ----------
+  myconfig=MYCONFIG_HEADER
+    Sets the name of the local configuration header file where you can
+    turn on the different features and debug messages.
+    This can be useful if you want to compile Espresso with different
+    sets of features from the same sources.
+    WARNING:
+    If you use this when compiling Espresso, it is necessary to use
+    the same setting when you recompile Espresso or to call "make
+    clean" before. Otherwise, you will end up with an inconsistent
+    version of Espresso.
+    DO NOT USE THIS WHEN YOU WORK ON THE SOURCE CODE! 
+    USE configure --with-myconfig instead!
+
+> make check [processors=PROC] [tests=TESTS]
+
+  Runs the Espresso testsuite.
+
+  Variables:
+  ----------
+  processors=PROC (Default: "1 2 3 4 6 8")
+    Sets the list of processor numbers that are to be tested,
+    e.g. 'make check processors="1 2"' will run the testsuite on only
+    one and two processors. 
+
+  tests=TESTS (Default: all tests)
+    Sets the tests of the testsuite that are run, e.g. 
+    'make check tests="madelung.tcl"' will run only the test
+    madelung.tcl.
+
+> make clean
+
+  Deletes the files that were created during the compilation.
+
+> make mostlyclean
+
+  Deletes most files that were created during the compilation. Will
+  keep for example the built doxygen documentation and the Espresso
+  binary.
+
+> make dist [internal=1]
+
+  Creates a .tar.gz-file of the Espresso sources. This will include all
+  source files of Espresso as they currently are in the source
+  directory, i.e. it will include local changes.
+  This is useful to give your version of Espresso to other people.
+
+  Variables:
+  ----------
+  internal=1
+    When this is give, include the "internal" directory into the
+    distribution file.
+
+> make dist-internal
+
+  Same as "make dist internal=1"
+
+> make install [prefix=DIR] [exec-prefix=DIR]
+
+  Installs Espresso.
+
+  Variables:
+  ----------
+  prefix=PREFIX (Default: configure option --prefix)
+    Sets the directory where to install Espresso. This
+    defaults to the directory given to configure.
+
+  exec-prefix=PREFIX (Default: configure option --exec-prefix)
+    Sets the directory where to install the executable files of
+    Espresso. This is only required, when the executable files are to
+    be installed into some architecture-specific directory. Otherwise,
+    it is identical to the prefix.
+
+> make uninstall [prefix=DIR] [exec-prefix=DIR]
+
+  Uninstalls Espresso. The variables are identical to the variables of
+  "make install".
+\end{verbatim}
+
+\section{Running \es}
+\label{sec:run}
+
+A number of wrapper scripts are used in running \es{}:
+\begin{itemize}
+\item The script \texttt{Espresso} in the source and build directory
+  will try to run the compiled version of \es. If it is called from
+  the source directory, it assumes that \es{} was also configured in
+  the source directory and will try to recursively start the script in
+  the corresponding \texttt{obj-PLATFORM} build directory. If it is
+  called in the build directory, it will start the \es-binary with the
+  right MPI implementation.
+\item The chooser script \texttt{Espresso} 
+  \begin{itemize}
+  \item installed when \verb!--enable-chooser! was given
+  \item installed to bindir
+  \item tries to run the correct version of the MPI-wrapper
+    \texttt{Espresso}
+  \end{itemize}
+\item The MPI-wrapper \texttt{Espresso}
+  \begin{itemize}
+  \item installed next to \es{} binary
+  \item starts the binary with the right MPI implementation
+  \end{itemize}
+\item The \es{} binary \texttt{Espresso-bin} can also be started
+  directly, however, it requires that the environment variable
+  \verb!ESPRESSO_SCRIPTS! is set to the directory where the scripts
+  are installed (usually \verb!$(prefix)/lib/espresso/scripts! or
+  \verb!$(prefix)/share/espresso/scripts!).
+\end{itemize}
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 

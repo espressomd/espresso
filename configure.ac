@@ -103,7 +103,11 @@ AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. 
 # Checks for programs
 AC_PROG_AWK
 AC_PROG_RANLIB
-AC_PATH_PROG([DOXYGEN],doxygen,no)
+AC_PROG_LN_S
+AC_PATH_PROG(DOXYGEN,doxygen,no)
+AM_CONDITIONAL(HAVE_DOXYGEN,test .$DOXYGEN != .no)
+AC_PATH_PROG(PDFLATEX,pdflatex,no)
+AM_CONDITIONAL(HAVE_PDFLATEX,test .$PDFLATEX != .no)
 
 cat <<EOF
 ****************************************************************
@@ -116,7 +120,7 @@ AC_CONFIG_LINKS(Makefile)
 AC_CONFIG_FILES(
 	[
 	Makefile-am scripts/Makefile testsuite/Makefile
-	doc/Makefile 
+	doc/Makefile doc/ug/Makefile doc/dg/Makefile
 	config/$myconfig:config/myconfig-default.h.in
 	chooser/Espresso mpiwrap/Espresso
 	],
@@ -182,9 +186,13 @@ Other settings:
 ---------------
 using Espresso chooser	= $enable_chooser
 local config header	= $myconfig
+pdflatex		= $PDFLATEX
 doxygen			= $DOXYGEN
 EOF
 
+if test .$pdflatex = .no; then
+   echo "To be able to rebuild the user's guide, add pdflatex to your PATH."
+fi
 if test .$doxygen = .no; then
    echo "To be able to build the developer's guide, add doxygen to your PATH."
 fi

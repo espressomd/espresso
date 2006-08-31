@@ -19,7 +19,7 @@ VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-top_builddir = ..
+top_builddir = ../..
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 INSTALL = @INSTALL@
 install_sh_DATA = $(install_sh) -c -m 644
@@ -36,7 +36,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-subdir = doc
+subdir = doc/ug
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/Espresso.m4 \
@@ -162,6 +162,9 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
+ug_SOURCES = ug.tex installation.tex logo.jpg
+EXTRA_DIST = $(ug_SOURCES) ug.pdf
+CLEANFILES = ug.aux ug.idx ug.ilg ug.ind ug.log ug.out ug.toc
 all: all-am
 
 .SUFFIXES:
@@ -174,9 +177,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  doc/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  doc/ug/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  doc/Makefile
+	  $(AUTOMAKE) --foreign  doc/ug/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -250,6 +253,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -312,13 +316,23 @@ uninstall-am: uninstall-info-am
 	mostlyclean-generic pdf pdf-am ps ps-am uninstall uninstall-am \
 	uninstall-info-am
 
-.PHONY: FORCE doc dg ug
-doc: ug dg
-dg: FORCE
-	cd dg; $(MAKE) --print-directory $@
-ug: FORCE
-	cd ug; $(MAKE) --print-directory $@
-FORCE:
+
+.PHONY: doc ug
+doc: ug
+
+ug: ug.pdf
+
+ug.pdf: $(ug_SOURCES)
+@HAVE_PDFLATEX_TRUE@	for file in $(ug_SOURCES); do \
+@HAVE_PDFLATEX_TRUE@	  if test ! -e $$file; then $(LN_S) $(srcdir)/$$file .; fi\
+@HAVE_PDFLATEX_TRUE@	done
+@HAVE_PDFLATEX_TRUE@	$(PDFLATEX) ug.tex
+@HAVE_PDFLATEX_TRUE@	$(PDFLATEX) ug.tex
+@HAVE_PDFLATEX_FALSE@	@echo "pdflatex was not found in your PATH."
+@HAVE_PDFLATEX_FALSE@	@echo "Can't build user's guide without pdflatex."
+@HAVE_PDFLATEX_FALSE@	@echo "Install pdflatex and rerun configure."
+
+#MOSTLYCLEANFILES=
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

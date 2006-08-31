@@ -141,12 +141,6 @@ CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(Espresso_bin_SOURCES)
 DIST_SOURCES = $(am__Espresso_bin_SOURCES_DIST)
-RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
-	html-recursive info-recursive install-data-recursive \
-	install-exec-recursive install-info-recursive \
-	install-recursive installcheck-recursive installdirs-recursive \
-	pdf-recursive ps-recursive uninstall-info-recursive \
-	uninstall-recursive
 HEADERS = $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -184,6 +178,10 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+HAVE_DOXYGEN_FALSE = @HAVE_DOXYGEN_FALSE@
+HAVE_DOXYGEN_TRUE = @HAVE_DOXYGEN_TRUE@
+HAVE_PDFLATEX_FALSE = @HAVE_PDFLATEX_FALSE@
+HAVE_PDFLATEX_TRUE = @HAVE_PDFLATEX_TRUE@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -191,6 +189,7 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MPICC = @MPICC@
@@ -205,6 +204,7 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PDFLATEX = @PDFLATEX@
 POW_LIB = @POW_LIB@
 RANLIB = @RANLIB@
 SET_MAKE = @SET_MAKE@
@@ -267,7 +267,7 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
-SUBDIRS = . scripts testsuite doc
+SUBDIRS = . scripts testsuite doc doc/ug doc/dg
 
 # List files that should go into the distribution but are not required
 # by any other means
@@ -305,6 +305,7 @@ Espresso_bin_SOURCES = main.c config.c config.h initialize.c \
 	fene.h gb.h harmonic.h imd.h ljcos2.h ljcos.h lj.h morse.h \
 	polynom.h soft_sphere.h subt_lj.h tab.h utils.h \
 	$(am__append_1)
+RECURSIVE_TARGETS = doc-recursive
 @USE_CHOOSER_FALSE@bin_SCRIPTS = mpiwrap/Espresso
 
 #################################################################
@@ -1014,8 +1015,8 @@ dist-hook:
 #################################################################
 # Documentation
 #################################################################
-.PHONY: FORCE doc doxygen doxygen-html
-doc doxygen doxygen-html: FORCE
+.PHONY: FORCE doc ug dg
+doc ug dg: FORCE
 	cd doc; $(MAKE) --print-directory $@
 FORCE:
 

@@ -1,4 +1,4 @@
-SUBDIRS = . scripts testsuite doc
+SUBDIRS = . scripts testsuite doc doc/ug doc/dg
 
 # List files that should go into the distribution but are not required
 # by any other means
@@ -99,6 +99,8 @@ dist-hook:
 	-rm -rf `find $(distdir) -name CVS`
 	if test ! "$(internal)"; then rm -rf $(distdir)/internal; fi
 
+RECURSIVE_TARGETS=doc-recursive
+
 #################################################################
 # Installation of the main program and wrapper scripts
 #################################################################
@@ -141,8 +143,8 @@ endif
 #################################################################
 # Documentation
 #################################################################
-.PHONY: FORCE doc doxygen doxygen-html
-doc doxygen doxygen-html: FORCE
+.PHONY: FORCE doc ug dg
+doc ug dg: FORCE
 	cd doc; $(MAKE) --print-directory $@
 FORCE:
 

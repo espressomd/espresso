@@ -312,7 +312,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MPICC poe_bin dmpi_bin lam_bin mpich_bin generic_bin MPI_FAKE_TRUE MPI_FAKE_FALSE MPI_INVOCATION CPP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS EGREP LIBOBJS POW_LIB USE_CHOOSER_TRUE USE_CHOOSER_FALSE scriptsdir execpkglibdir myconfig RANLIB ac_ct_RANLIB DOXYGEN LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MPICC poe_bin dmpi_bin lam_bin mpich_bin generic_bin MPI_FAKE_TRUE MPI_FAKE_FALSE MPI_INVOCATION CPP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS EGREP LIBOBJS POW_LIB USE_CHOOSER_TRUE USE_CHOOSER_FALSE scriptsdir execpkglibdir myconfig RANLIB ac_ct_RANLIB LN_S DOXYGEN HAVE_DOXYGEN_TRUE HAVE_DOXYGEN_FALSE PDFLATEX HAVE_PDFLATEX_TRUE HAVE_PDFLATEX_FALSE LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -15881,6 +15881,17 @@ else
   RANLIB="$ac_cv_prog_RANLIB"
 fi
 
+echo "$as_me:$LINENO: checking whether ln -s works" >&5
+echo $ECHO_N "checking whether ln -s works... $ECHO_C" >&6
+LN_S=$as_ln_s
+if test "$LN_S" = "ln -s"; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me:$LINENO: result: no, using $LN_S" >&5
+echo "${ECHO_T}no, using $LN_S" >&6
+fi
+
 # Extract the first word of "doxygen", so it can be a program name with args.
 set dummy doxygen; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -15922,6 +15933,66 @@ echo "${ECHO_T}no" >&6
 fi
 
 
+
+if test .$DOXYGEN != .no; then
+  HAVE_DOXYGEN_TRUE=
+  HAVE_DOXYGEN_FALSE='#'
+else
+  HAVE_DOXYGEN_TRUE='#'
+  HAVE_DOXYGEN_FALSE=
+fi
+
+# Extract the first word of "pdflatex", so it can be a program name with args.
+set dummy pdflatex; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PDFLATEX+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PDFLATEX in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PDFLATEX="$PDFLATEX" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PDFLATEX="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_PDFLATEX" && ac_cv_path_PDFLATEX="no"
+  ;;
+esac
+fi
+PDFLATEX=$ac_cv_path_PDFLATEX
+
+if test -n "$PDFLATEX"; then
+  echo "$as_me:$LINENO: result: $PDFLATEX" >&5
+echo "${ECHO_T}$PDFLATEX" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
+
+if test .$PDFLATEX != .no; then
+  HAVE_PDFLATEX_TRUE=
+  HAVE_PDFLATEX_FALSE='#'
+else
+  HAVE_PDFLATEX_TRUE='#'
+  HAVE_PDFLATEX_FALSE=
+fi
+
+
 cat <<EOF
 ****************************************************************
 *                   Creating output files                      *
@@ -15932,7 +16003,7 @@ EOF
 
           ac_config_links="$ac_config_links Makefile"
 
-                                                                      ac_config_files="$ac_config_files Makefile-am scripts/Makefile testsuite/Makefile doc/Makefile config/$myconfig:config/myconfig-default.h.in chooser/Espresso mpiwrap/Espresso"
+                                                                                          ac_config_files="$ac_config_files Makefile-am scripts/Makefile testsuite/Makefile doc/Makefile doc/ug/Makefile doc/dg/Makefile config/$myconfig:config/myconfig-default.h.in chooser/Espresso mpiwrap/Espresso"
 
           ac_config_files="$ac_config_files Espresso"
 
@@ -16053,6 +16124,20 @@ if test -z "${USE_CHOOSER_TRUE}" && test -z "${USE_CHOOSER_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"USE_CHOOSER\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"USE_CHOOSER\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${HAVE_DOXYGEN_TRUE}" && test -z "${HAVE_DOXYGEN_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"HAVE_DOXYGEN\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"HAVE_DOXYGEN\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${HAVE_PDFLATEX_TRUE}" && test -z "${HAVE_PDFLATEX_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"HAVE_PDFLATEX\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"HAVE_PDFLATEX\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -16507,6 +16592,8 @@ do
   "scripts/Makefile" ) CONFIG_FILES="$CONFIG_FILES scripts/Makefile" ;;
   "testsuite/Makefile" ) CONFIG_FILES="$CONFIG_FILES testsuite/Makefile" ;;
   "doc/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
+  "doc/ug/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/ug/Makefile" ;;
+  "doc/dg/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/dg/Makefile" ;;
   "config/$myconfig" ) CONFIG_FILES="$CONFIG_FILES config/$myconfig:config/myconfig-default.h.in" ;;
   "chooser/Espresso" ) CONFIG_FILES="$CONFIG_FILES chooser/Espresso" ;;
   "mpiwrap/Espresso" ) CONFIG_FILES="$CONFIG_FILES mpiwrap/Espresso" ;;
@@ -16674,7 +16761,13 @@ s,@execpkglibdir@,$execpkglibdir,;t t
 s,@myconfig@,$myconfig,;t t
 s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
+s,@LN_S@,$LN_S,;t t
 s,@DOXYGEN@,$DOXYGEN,;t t
+s,@HAVE_DOXYGEN_TRUE@,$HAVE_DOXYGEN_TRUE,;t t
+s,@HAVE_DOXYGEN_FALSE@,$HAVE_DOXYGEN_FALSE,;t t
+s,@PDFLATEX@,$PDFLATEX,;t t
+s,@HAVE_PDFLATEX_TRUE@,$HAVE_PDFLATEX_TRUE,;t t
+s,@HAVE_PDFLATEX_FALSE@,$HAVE_PDFLATEX_FALSE,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
 
@@ -17591,9 +17684,13 @@ Other settings:
 ---------------
 using Espresso chooser	= $enable_chooser
 local config header	= $myconfig
+pdflatex		= $PDFLATEX
 doxygen			= $DOXYGEN
 EOF
 
+if test .$pdflatex = .no; then
+   echo "To be able to rebuild the user's guide, add pdflatex to your PATH."
+fi
 if test .$doxygen = .no; then
    echo "To be able to build the developer's guide, add doxygen to your PATH."
 fi
