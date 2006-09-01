@@ -36,6 +36,9 @@
 /*@{*/
 #define HALO_LOCL     0 /**< Tag for local exchange of halo regions on the same processor */
 #define HALO_SENDRECV 1 /**< Tag for halo exchange between different processors */
+#define HALO_SEND     2 /**< Tag for halo send only */
+#define HALO_RECV     3 /**< Tag for halo receive only */
+#define HALO_OPEN     4 /**< Tag for halo open boundary */
 /*@}*/
 
 /** \name Tags for halo communications
