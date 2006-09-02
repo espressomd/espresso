@@ -2,29 +2,32 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0l (Ydalir)                                                                     *
+* v2.0.0m (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0l -
+- v2.0.0m -
 -----------
 
-(l) August 25th, 2006.
-(k) August 22nd, 2006.
-(j) August 21st, 2006.
-(i) August 11th, 2006.
-(h) August 10th, 2006.
-(g) August  8th, 2006.
-(f) August  7th, 2006.
-(e) July   31st, 2006.
-(d) July   27th, 2006.
-(c) July   15th, 2006.
-(b) July   13th, 2006.
-(a) July   11th, 2006.
+(m) September 1st, 2006.
+(l) August   25th, 2006.
+(k) August   22nd, 2006.
+(j) August   21st, 2006.
+(i) August   11th, 2006.
+(h) August   10th, 2006.
+(g) August    8th, 2006.
+(f) August    7th, 2006.
+(e) July     31st, 2006.
+(d) July     27th, 2006.
+(c) July     15th, 2006.
+(b) July     13th, 2006.
+(a) July     11th, 2006.
 
 New Features:
+(m) Support for non-periodic directions in lattice halo scheme (non-periodic halos
+    are memset to zero).
 (h) Added keywords tot_nonbonded_intra, tot_nonbonded_inter,
     nonbonded_intra and nonbonded_inter to "analyze pressure".
 (e) incorporated intel dual cpus into config.guess
