@@ -956,17 +956,3 @@ void force_and_velocity_display()
 	    local_particles[db_maxv_id]->m.v[1],local_particles[db_maxv_id]->m.v[2]);
 #endif
 }
-
-#ifdef BOND_CONSTRAINT
-#error BOND_CONSTRAINT is not implemented in alternative integrator! Go for it, if you need it!
-#endif
-#ifdef ROTATION
-#error ROTATION is not implemented in alternative integrator! Go for it, if you need it!
-#endif
-#ifdef EXTERNAL_FORCES
-#error EXTERNAL_FORCES are not implemented in alternative integrator! Go for it, if you need it!
-#endif
-#ifdef NPT
-#error NPT is not implemented in alternative integrator! Go for it, if you need it!
-#endif
-#endif
