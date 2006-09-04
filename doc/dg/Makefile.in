@@ -162,7 +162,7 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
-EXTRA_DIST = background_errors.awk doxygen.cfg pages figs
+EXTRA_DIST = background_errors.awk doxygen.cfg pages figs html
 MOSTLYCLEANFILES = background_errors.doc background_errors.sorted background_errors.unsorted
 all: all-am
 
@@ -331,7 +331,6 @@ dg:
 @HAVE_DOXYGEN_FALSE@	@echo "doxygen was not found in your PATH."
 @HAVE_DOXYGEN_FALSE@	@echo "Can't build developer's guide without doxygen."
 @HAVE_DOXYGEN_FALSE@	@echo "Install doxygen and rerun configure."
-
 clean-local:
 	-rm -rf html
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

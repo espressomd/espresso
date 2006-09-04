@@ -1,4 +1,4 @@
-EXTRA_DIST=background_errors.awk doxygen.cfg pages figs
+EXTRA_DIST=background_errors.awk doxygen.cfg pages figs html
 
 .PHONY: doc dg
 doc: dg
@@ -21,6 +21,5 @@ else
 endif
 
 MOSTLYCLEANFILES=background_errors.doc background_errors.sorted background_errors.unsorted
-
 clean-local:
 	-rm -rf html
