@@ -164,7 +164,12 @@ target_os = @target_os@
 target_vendor = @target_vendor@
 ug_SOURCES = ug.tex installation.tex logo.jpg
 EXTRA_DIST = $(ug_SOURCES) ug.pdf
-CLEANFILES = ug.aux ug.idx ug.ilg ug.ind ug.log ug.out ug.toc
+CLEANFILES = ug.pdf
+MOSTLYCLEANFILES = \
+	*.aux *.aux.bak\
+	ug.idx ug.idx.bak ug.ilg ug.ind\
+	ug.log ug.out ug.toc
+
 all: all-am
 
 .SUFFIXES:
@@ -251,6 +256,7 @@ install-strip:
 	  `test -z '$(STRIP)' || \
 	    echo "INSTALL_PROGRAM_ENV=STRIPPROG='$(STRIP)'"` install
 mostlyclean-generic:
+	-test -z "$(MOSTLYCLEANFILES)" || rm -f $(MOSTLYCLEANFILES)
 
 clean-generic:
 	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
@@ -316,15 +322,13 @@ uninstall-am: uninstall-info-am
 	mostlyclean-generic pdf pdf-am ps ps-am uninstall uninstall-am \
 	uninstall-info-am
 
-
 .PHONY: doc ug
+
 doc: ug
-
 ug: ug.pdf
-
 ug.pdf: $(ug_SOURCES)
 @HAVE_PDFLATEX_TRUE@	for file in $(ug_SOURCES); do \
-@HAVE_PDFLATEX_TRUE@	  if test ! -e $$file; then $(LN_S) $(srcdir)/$$file .; fi\
+@HAVE_PDFLATEX_TRUE@	  if test ! -e $$file; then $(LN_S) $(srcdir)/$$file .; fi;\
 @HAVE_PDFLATEX_TRUE@	done
 @HAVE_PDFLATEX_TRUE@	$(PDFLATEX) ug.tex
 @HAVE_PDFLATEX_TRUE@	$(PDFLATEX) ug.tex
