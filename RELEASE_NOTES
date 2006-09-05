@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0m (Ydalir)                                                                     *
+* v2.0.0n (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0m -
+- v2.0.0n -
 -----------
 
+(n) September 4th, 2006.
 (m) September 1st, 2006.
 (l) August   25th, 2006.
 (k) August   22nd, 2006.
@@ -37,6 +38,7 @@ New Features:
 (b) updated version number
 
 Changes:
+(n) Removed Position-Verlet integrator which was only experimental.
 (k) Sample scripts now use the thermostat command, instead of
 (k) setting the global variables temperature and gamma.
 (k) as agreed on by the CCC, temperature and gamma have become readonly
