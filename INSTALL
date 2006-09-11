@@ -2,9 +2,16 @@
 *                  ESPResSo installation
 ******************************************************************************
 
-The ESPResSo compilation and installation process 
+The ESPResSo compilation and installation process is decribed in
+detail in the ESPResSo user's guide. When you have obtained the
+sources in a .tar.gz file, the user's guide can be found in the file
+"ug.pdf" in the subdirectory "doc/ug/" relative to the directory where
+this file resided.
 
-A detailed installation guide for ESPResSo is found in
+When you have obtained the sources from the ESPResSo-CVS or by other
+means, the user's guide can be found on the ESPResSo-Homepage at
+
+	http://www.espresso.mpg.de/
 
 
 QUICK START
@@ -20,7 +27,3 @@ help of the command
 
 > Espresso
 
-WHEN THIS ISN'T ENOUGH
-----------------------
-A detailed installation guide that explains the different options of
-configure and make can be found in the ESPResSo's User's Guide "ug.pdf"
