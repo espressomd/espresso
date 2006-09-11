@@ -2,7 +2,7 @@ AC_DEFUN([KC_BLADE],[
 	AC_MSG_NOTICE([using preconfigured settings for the Blade Center Garching])
         use_mpi=mpich
         CC=mpicci
-        CFLAGS="-I/afs/ipp/@sys/soft/fftw/f95i/include"
+        CPPFLAGS="-I/afs/ipp/@sys/soft/fftw/f95i/include"
         LDFLAGS="-L/afs/ipp/@sys/soft/fftw/f95i/lib -L/afs/ipp/@sys/soft/gnu/lib"
         use_fftw=2
 ])
