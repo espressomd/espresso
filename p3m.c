@@ -70,6 +70,8 @@ double p3m_sum_q2 = 0.0;
 double p3m_square_sum_q = 0.0;
 #ifdef DIPOLES
 double p3m_sum_mu2 = 0.0;
+/** number of dipolar particles (only on master node). */
+int p3m_sum_dip_part=0;  //JJCP 15/5/06
 #endif
 
 /** local mesh. */
@@ -109,6 +111,16 @@ double *d_op = NULL;
 double *g = NULL;
 /** Optimal influence function (k-space) for energy*/
 double *g2 = NULL;
+
+//ER
+#ifdef DIPOLES
+/** Optimal influence function (k-space) for dipolar forces */
+double *g_dip = NULL;
+
+/** Optimal influence function (k-space) for dipolar energy and torques */
+double *g2_dip = NULL;
+#endif
+//ER_end
 
 /** number of charged particles on the node. */
 int ca_num=0;
@@ -211,6 +223,15 @@ void calc_influence_function();
 /** Calculates the influence function optimized for the energy.  */
 void calc_influence_function2();
 
+//ER
+#ifdef DIPOLES
+/** Calculates the influence function optimized for the dipolar forces. */
+void calc_influence_function_dip();
+/** Calculates the influence function optimized for the dipolar energy and torques. */
+void calc_influence_function2_dip();
+#endif
+//ER_end
+
 /** Calculates the aliasing sums for the optimal influence function.
  *
  * Calculates the aliasing sums in the nominator and denominator of
@@ -223,6 +244,8 @@ void calc_influence_function2();
  */
 MDINLINE double perform_aliasing_sums(int n[3], double nominator[3]);
 MDINLINE double perform_aliasing_sums2(int n[3]);
+MDINLINE double perform_aliasing_sums3(int n[3], double nominator[1]); /* JJCP 26-4-06 */
+MDINLINE double perform_aliasing_sums4(int n[3], double nominator[1]); /* JJCP 26-4-06 */
 /*@}*/
 
 
@@ -260,6 +283,30 @@ double P3M_real_space_error(double box_size, double prefac, double r_cut_iL,
 double P3M_k_space_error(double box_size, double prefac, int mesh, 
 			 int cao, int n_c_part, double sum_q2, double alpha_L);
 
+#ifdef DIPOLES
+
+// These 3 functions are to tune the P3M code in the case of dipolar interactions
+
+double P3M_DIPOLAR_real_space_error(double box_size, double prefac, double r_cut_iL,
+			    int n_c_part, double sum_q2, double alpha_L);
+double P3M_DIPOLAR_k_space_error(double box_size, double prefac, int mesh,
+			 int cao, int n_c_part, double sum_q2, double alpha_L); 
+			 
+void P3M_DIPOLAR_tune_aliasing_sums(int nx, int ny, int nz, 
+			    int mesh, double mesh_i, int cao, double alpha_L_i, 
+			    double *alias1, double *alias2)	;		 
+
+// To compute the value of alpha  through a bibisection method from the formula 33 of JCP115,6351,(2001).
+
+double JJ_rtbisection(double (*func)(double,double,double,int,double,double), 
+             double box_size, double prefac, double r_cut_iL,        
+	     int n_c_part, double sum_q2, 
+	     double x1, double x2, double xacc, double tuned_accuracy);
+
+			 
+#endif
+// end JJCP
+
 /** One of the aliasing sums used by \ref P3M_k_space_error. 
     (fortunately the one which is most important (because it converges
     most slowly, since it is not damped exponentially)) can be
@@ -273,7 +320,224 @@ double analytic_cotangent_sum(int n, double mesh_i, int cao);
 void P3M_tune_aliasing_sums(int nx, int ny, int nz, 
 			    int mesh, double mesh_i, int cao, double alpha_L_i, 
 			    double *alias1, double *alias2);
+/* These functions are used for calculation of a charge assignment function */
+double caf10(double x);
+
+double caf20(double x);
+double caf21(double x);
+
+double caf30(double x);
+double caf31(double x);
+double caf32(double x);
+
+double caf40(double x);
+double caf41(double x);
+double caf42(double x);
+double caf43(double x);
+
+double caf50(double x);
+double caf51(double x);
+double caf52(double x);
+double caf53(double x);
+double caf54(double x);
+
+double caf60(double x);
+double caf61(double x);
+double caf62(double x);
+double caf63(double x);
+double caf64(double x);
+double caf65(double x);
+
+double caf70(double x);
+double caf71(double x);
+double caf72(double x);
+double caf73(double x);
+double caf74(double x);
+double caf75(double x);
+double caf76(double x);
+
+/* the function to calculate caf without interpolation */
+typedef double func(double);
+func *int_caf_wi[7][7] = { {caf10},
+                            {caf20, caf21},
+			    {caf30, caf31, caf32},
+			    {caf40, caf41, caf42, caf43},
+			    {caf50, caf51, caf52, caf53, caf54},
+			    {caf60, caf61, caf62, caf63, caf64, caf65},
+			    {caf70, caf71, caf72, caf73, caf74, caf75, caf76}
+                          };
+
 /*@}*/
+
+/************************************************************/
+
+double caf10(double x)
+{ double y;
+   y = 1.0;
+  return y;
+}
+
+double caf20(double x)
+{ double y;
+   y = 0.5-x;
+  return y;
+}
+
+double caf21(double x)
+{ double y;
+   y = 0.5+x;
+  return y;
+}
+
+double caf30(double x)
+{ double y;
+   y = 0.5*SQR(0.5 - x);
+  return y;
+}
+
+double caf31(double x)
+{ double y;
+   y = 0.75 - SQR(x);
+  return y;
+}
+
+double caf32(double x)
+{ double y;
+   y = 0.5*SQR(0.5 + x);
+  return y;
+}
+
+double caf40(double x)
+{ double y;
+   y = ( 1.0+x*( -6.0+x*( 12.0-x* 8.0)))/48.0;
+  return y;
+}
+
+double caf41(double x)
+{ double y;
+   y = (23.0+x*(-30.0+x*(-12.0+x*24.0)))/48.0;
+  return y;
+}
+
+double caf42(double x)
+{ double y;
+   y = (23.0+x*( 30.0+x*(-12.0-x*24.0)))/48.0;
+  return y;
+}
+
+double caf43(double x)
+{ double y;
+   y = ( 1.0+x*(  6.0+x*( 12.0+x* 8.0)))/48.0;
+  return y;
+}
+
+double caf50(double x)
+{ double y;
+   y = (  1.0+x*( -8.0+x*(  24.0+x*(-32.0+x*16.0))))/384.0;
+  return y;
+}
+
+double caf51(double x)
+{ double y;
+   y = ( 19.0+x*(-44.0+x*(  24.0+x*( 16.0-x*16.0))))/ 96.0;
+  return y;
+}
+
+double caf52(double x)
+{ double y;
+   y = (115.0+x*       x*(-120.0+x*       x*48.0))  /192.0;
+  return y;
+}
+
+double caf53(double x)
+{ double y;
+   y = ( 19.0+x*( 44.0+x*(  24.0+x*(-16.0-x*16.0))))/ 96.0;
+  return y;
+}
+
+double caf54(double x)
+{ double y;
+   y = (  1.0+x*(  8.0+x*(  24.0+x*( 32.0+x*16.0))))/384.0;
+  return y;
+}
+
+double caf60(double x)
+{ double y;
+   y = (  1.0+x*( -10.0+x*(  40.0+x*( -80.0+x*(  80.0-x* 32.0)))))/3840.0;
+  return y;
+}
+
+double caf61(double x)
+{ double y;
+   y = (237.0+x*(-750.0+x*( 840.0+x*(-240.0+x*(-240.0+x*160.0)))))/3840.0;
+  return y;
+}
+
+double caf62(double x)
+{ double y;
+   y = (841.0+x*(-770.0+x*(-440.0+x*( 560.0+x*(  80.0-x*160.0)))))/1920.0;
+  return y;
+}
+
+double caf63(double x)
+{ double y;
+   y = (841.0+x*(+770.0+x*(-440.0+x*(-560.0+x*(  80.0+x*160.0)))))/1920.0;
+  return y;
+}
+
+double caf64(double x)
+{ double y;
+   y = (237.0+x*( 750.0+x*( 840.0+x*( 240.0+x*(-240.0-x*160.0)))))/3840.0;
+  return y;
+}
+
+double caf65(double x)
+{ double y;
+   y = (  1.0+x*(  10.0+x*(  40.0+x*(  80.0+x*(  80.0+x* 32.0)))))/3840.0;
+  return y;
+}
+
+double caf70(double x)
+{ double y;
+   y = (    1.0+x*(   -12.0+x*(   60.0+x*( -160.0+x*(  240.0+x*(-192.0+x* 64.0))))))/46080.0;
+  return y;
+}
+
+double caf71(double x)
+{ double y;
+   y = (  361.0+x*( -1416.0+x*( 2220.0+x*(-1600.0+x*(  240.0+x*( 384.0-x*192.0))))))/23040.0;
+  return y;
+}
+
+double caf72(double x)
+{ double y;
+   y = (10543.0+x*(-17340.0+x*( 4740.0+x*( 6880.0+x*(-4080.0+x*(-960.0+x*960.0))))))/46080.0;
+  return y;
+}
+
+double caf73(double x)
+{ double y;
+   y = ( 5887.0+x*          x*(-4620.0+x*         x*( 1680.0-x*        x*320.0)))   /11520.0;
+  return y;
+}
+
+double caf74(double x)
+{ double y;
+   y = (10543.0+x*( 17340.0+x*( 4740.0+x*(-6880.0+x*(-4080.0+x*( 960.0+x*960.0))))))/46080.0;
+  return y;
+}
+
+double caf75(double x)
+{ double y;
+   y = (  361.0+x*(  1416.0+x*( 2220.0+x*( 1600.0+x*(  240.0+x*(-384.0-x*192.0))))))/23040.0;
+  return y;
+}
+
+double caf76(double x)
+{ double y;
+   y = (    1.0+x*(    12.0+x*(   60.0+x*(  160.0+x*(  240.0+x*( 192.0+x* 64.0))))))/46080.0;
+  return y;
+}
 
 
 /************************************************************/
@@ -841,6 +1105,13 @@ void   P3M_init()
     calc_influence_function();
     calc_influence_function2();
 
+//ER
+#ifdef DIPOLES
+    calc_influence_function_dip();
+    calc_influence_function2_dip();
+#endif    
+//ER_end
+
     P3M_count_charged_particles();
 
     P3M_TRACE(fprintf(stderr,"%d: p3m initialized\n",this_node));
@@ -1215,7 +1486,7 @@ if (p3m_sum_q2 > 0) {
     for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {
       for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
 	for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {	 
-	  node_k_space_energy_dip += g[i] * (
+	  node_k_space_energy_dip += g2_dip[i] * (
 	  SQR(rs_mesh_dip[0][ind]*d_op[j[2]+fft_plan[3].start[0]]+
 	      rs_mesh_dip[1][ind]*d_op[j[0]+fft_plan[3].start[1]]+
 	      rs_mesh_dip[2][ind]*d_op[j[1]+fft_plan[3].start[2]]
@@ -1236,8 +1507,8 @@ if (p3m_sum_q2 > 0) {
       k_space_energy_dip -= coulomb.prefactor*(p3m_sum_mu2*2*pow(p3m.alpha_L*box_l_i[0],3) * wupii/3.0);
     }
     //Modify above 'coulomb.prefactor' by something more appropriate!
-    fprintf(stderr,"k-space dipolar energy: %8.6f\n",k_space_energy_dip);
-    fprintf(stderr,"   (with self-energy correction)\n");
+    fprintf(stderr,"k-space dipolar energy: %25.20f\n",k_space_energy_dip);
+    //     fprintf(stderr,"   (with self-energy correction)\n");
 #endif
   } //if (energy_flag)
 
@@ -1298,8 +1569,11 @@ if (p3m_sum_q2 > 0) {
 	  tmp1 = rs_mesh_dip[0][ind+1]*d_op[j[2]+fft_plan[3].start[0]]+
 		 rs_mesh_dip[1][ind+1]*d_op[j[0]+fft_plan[3].start[1]]+
 		 rs_mesh_dip[2][ind+1]*d_op[j[1]+fft_plan[3].start[2]];
-	  ks_mesh[ind]   = tmp0*g[i];
-	  ks_mesh[ind+1] = tmp1*g[i];
+//	  ks_mesh[ind]   = tmp0*g[i];
+//	  ks_mesh[ind+1] = tmp1*g[i];
+          /* Next two lines modified by JJCP 26-4-06 */
+ 	  ks_mesh[ind]   = tmp0*g2_dip[i];    /* Because the Gopt is the same for torques and Energy */
+	  ks_mesh[ind+1] = tmp1*g2_dip[i];
 	  ind += 2;
 	  i++;
 	}
@@ -1345,8 +1619,11 @@ if (p3m_sum_q2 > 0) {
 	  tmp1 = rs_mesh_dip[0][ind]*d_op[j[2]+fft_plan[3].start[0]]+
 		 rs_mesh_dip[1][ind]*d_op[j[0]+fft_plan[3].start[1]]+
 		 rs_mesh_dip[2][ind]*d_op[j[1]+fft_plan[3].start[2]];
-	  ks_mesh[ind]   = tmp0*g[i];
-	  ks_mesh[ind+1] = -tmp1*g[i];
+//	  ks_mesh[ind]   = tmp0*g[i];
+//	  ks_mesh[ind+1] = -tmp1*g[i];
+          /* Next two lines modified by JJCP 26-4-06 */
+	  ks_mesh[ind]   = tmp0*g_dip[i];
+	  ks_mesh[ind+1] = -tmp1*g_dip[i];
 	  ind += 2;
 	  i++;
 	}
@@ -1891,6 +2168,178 @@ MDINLINE double perform_aliasing_sums2(int n[3])
   return nominator/SQR(denominator);
 }
 
+//ER
+#ifdef DIPOLES
+void calc_influence_function_dip()
+{
+  int i,n[3],ind;
+  int end[3];
+  int size=1;
+  double fak1,fak2;
+  double nominator[1]={0.0},denominator=0.0;   /* JJCP 26-4-06 */
+
+  calc_meshift();
+
+  for(i=0;i<3;i++) {
+    size *= fft_plan[3].new_mesh[i];
+    end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
+  }
+  //g_dip = (double *) realloc(g, size*sizeof(double));
+    g_dip = (double *) realloc(g_dip, size*sizeof(double));  /* JJCP 26-4-06 */
+  fak1  = p3m.mesh[0]*p3m.mesh[0]*p3m.mesh[0]*2.0/(box_l[0]*box_l[0]);
+
+  for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++)
+    for(n[1]=fft_plan[3].start[1]; n[1]<end[1]; n[1]++)
+      for(n[2]=fft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
+	ind = (n[2]-fft_plan[3].start[2]) + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1]) + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
+
+	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
+	  g_dip[ind] = 0.0;
+	else if( (n[0]%(p3m.mesh[0]/2)==0) &&
+		 (n[1]%(p3m.mesh[0]/2)==0) &&
+		 (n[2]%(p3m.mesh[0]/2)==0) )
+	  g_dip[ind] = 0.0;
+	else {
+	  denominator = perform_aliasing_sums3(n,nominator);
+	  fak2 =  nominator[0];   /* JJCP 26-4-06 */
+	  fak2 /= pow(SQR(d_op[n[0]])+SQR(d_op[n[1]])+SQR(d_op[n[2]]),3)  * SQR(denominator) ;
+	  g_dip[ind] = fak1*fak2;
+	}
+      }
+}
+
+MDINLINE double perform_aliasing_sums3(int n[3], double nominator[1])  /* JJCP 26-4-06 */
+{
+  //int i;  /* JJCP 26-4-06 */
+  double denominator=0.0;
+  /* lots of temporary variables... */
+  double sx,sy,sz,f1,f2,f3,mx,my,mz,nmx,nmy,nmz,nm2,expo;
+  double limit = 30;
+  double n_nm;
+  double n_nm3;
+
+  //for(i=0;i<3;i++) nominator[i]=0.0;    /* JJCP 26-4-06 */
+  nominator[0]=0.0;                          /* JJCP 26-4-06 */
+  
+  f1 = 1.0/(double)p3m.mesh[0];
+  f2 = SQR(PI/(p3m.alpha_L));
+
+  for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
+    nmx = meshift[n[0]] + p3m.mesh[0]*mx;
+    sx  = pow(sinc(f1*nmx),2.0*p3m.cao);
+    for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
+      nmy = meshift[n[1]] + p3m.mesh[0]*my;
+      sy  = sx*pow(sinc(f1*nmy),2.0*p3m.cao);
+      for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
+	nmz = meshift[n[2]] + p3m.mesh[0]*mz;
+	sz  = sy*pow(sinc(f1*nmz),2.0*p3m.cao);
+	
+	nm2          =  SQR(nmx)+SQR(nmy)+SQR(nmz);
+	expo         =  f2*nm2;
+	f3           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
+
+	
+
+
+	//n_nm = n[0]*nmx + n[1]*nmy + n[2]*nmz;  
+	n_nm = d_op[n[0]]*nmx + d_op[n[1]]*nmy + d_op[n[2]]*nmz; /* JJCP 26-4-06 */
+	n_nm3 = n_nm*n_nm*n_nm; 
+	
+	
+	
+	nominator[0] += f3*n_nm3;       /* JJCP 26-4-06 */
+	denominator  += sz;
+      }
+    }
+  }
+  return denominator;
+}
+
+
+
+void calc_influence_function2_dip()
+{
+  int i,n[3],ind;
+  int end[3];
+  int size=1;
+  double fak1,fak2;
+  double nominator[1]={0.0},denominator=0.0;            /* JJCP 26-4-06 */
+
+  calc_meshift();
+
+  for(i=0;i<3;i++) {
+    size *= fft_plan[3].new_mesh[i];
+    end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
+  }
+  //g2_dip = (double *) realloc(g, size*sizeof(double));
+    g2_dip = (double *) realloc(g2_dip, size*sizeof(double));  /* JJCP 24-4-06 */
+  fak1  = p3m.mesh[0]*p3m.mesh[0]*p3m.mesh[0]*2.0/(box_l[0]*box_l[0]);
+
+  for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++)
+    for(n[1]=fft_plan[3].start[1]; n[1]<end[1]; n[1]++)
+      for(n[2]=fft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
+	ind = (n[2]-fft_plan[3].start[2]) + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1]) + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
+
+	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
+	  g2_dip[ind] = 0.0;
+	else if( (n[0]%(p3m.mesh[0]/2)==0) &&
+		 (n[1]%(p3m.mesh[0]/2)==0) &&
+		 (n[2]%(p3m.mesh[0]/2)==0) )
+	  g2_dip[ind] = 0.0;
+	else {
+	  denominator = perform_aliasing_sums4(n,nominator);
+	  fak2 =  nominator[0];      /* JJCP 26-4-06 */
+	  fak2 /= pow(SQR(d_op[n[0]])+SQR(d_op[n[1]])+SQR(d_op[n[2]]),2)  * SQR(denominator) ;
+	  g2_dip[ind] = fak1*fak2;
+	}
+      }
+}
+
+MDINLINE double perform_aliasing_sums4(int n[3], double nominator[1])    /* JJCP 26-4-06 */
+{ 
+  //int i; /* JJCP 26-4-06 */   
+  double denominator=0.0;
+  /* lots of temporary variables... */
+  double sx,sy,sz,f1,f2,f3,mx,my,mz,nmx,nmy,nmz,nm2,expo;
+  double limit = 30;
+  double n_nm;
+  double n_nm2;
+
+  //for(i=0;i<3;i++) nominator[i]=0.0;
+    nominator[0]=0.0;                              /* JJCP 26-4-06 */
+    
+  f1 = 1.0/(double)p3m.mesh[0];
+  f2 = SQR(PI/(p3m.alpha_L));
+
+  for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
+    nmx = meshift[n[0]] + p3m.mesh[0]*mx;
+    sx  = pow(sinc(f1*nmx),2.0*p3m.cao);
+    for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
+      nmy = meshift[n[1]] + p3m.mesh[0]*my;
+      sy  = sx*pow(sinc(f1*nmy),2.0*p3m.cao);
+      for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
+	nmz = meshift[n[2]] + p3m.mesh[0]*mz;
+	sz  = sy*pow(sinc(f1*nmz),2.0*p3m.cao);
+	
+	nm2          =  SQR(nmx)+SQR(nmy)+SQR(nmz);
+	expo         =  f2*nm2;
+	f3           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
+
+	//n_nm = n[0]*nmx + n[1]*nmy + n[2]*nmz; 
+	n_nm = d_op[n[0]]*nmx + d_op[n[1]]*nmy + d_op[n[2]]*nmz;  /* JJCP 26-4-06 */
+	n_nm2 = n_nm*n_nm; 
+	nominator[0] += f3*n_nm2;                   /* JJCP 26-4-06 */
+	denominator  += sz;
+      }
+    }
+  }
+  return denominator;
+}
+
+
+#endif
+//ER_end
+
 /************************************************
  * Functions for P3M Parameter tuning
  * This tuning is based on P3M_tune by M. Deserno
@@ -1940,6 +2389,11 @@ int P3M_tune_parameters(Tcl_Interp *interp)
   /* calculate mesh tune range */
   if(p3m.mesh[0] == 0 ) {
     double expo;
+  #ifdef DIPOLES  
+     expo = log(pow((double)p3m_sum_dip_part,(1.0/3.0)))/log(2.0);    //JJCP 15/5/06
+   #else
+     expo = log(pow((double)p3m_sum_qpart,(1.0/3.0)))/log(2.0);
+  #endif   
     expo = log(pow((double)p3m_sum_qpart,(1.0/3.0)))/log(2.0);
     mesh_min = (int)(pow(2.0,(double)((int)expo))+0.1);
     mesh_max = mesh_min*4;
@@ -1954,7 +2408,13 @@ int P3M_tune_parameters(Tcl_Interp *interp)
   sprintf(b1,"%.5e",p3m.accuracy);
   Tcl_AppendResult(interp, "P3M tune parameters: Accuracy goal = ",b1,"\n", (char *) NULL);
   Tcl_PrintDouble(interp, box_l[0], b1);
-  sprintf(b2,"%d",p3m_sum_qpart);
+
+  #ifdef DIPOLES  
+      sprintf(b2,"%d",p3m_sum_dip_part);    //JJCP 15/5/06
+   #else
+     sprintf(b2,"%d",p3m_sum_qpart);
+  #endif   
+
   Tcl_PrintDouble(interp, p3m_sum_q2, b3);
   Tcl_AppendResult(interp, "System: box_l = ",b1,", # charged part = ",b2," Sum[q_i^2] = ",b3,"\n", (char *) NULL);
   Tcl_PrintDouble(interp, r_cut_iL_min, b1);  Tcl_PrintDouble(interp, r_cut_iL_max, b2);
@@ -1968,7 +2428,13 @@ int P3M_tune_parameters(Tcl_Interp *interp)
   /* Tuning Loops */
   for(mesh = mesh_min; mesh <= mesh_max; mesh*=2) { /* mesh loop */
     cut_start = box_l[0] * box_l_i[0];
-    if(mesh <= 32 || p3m_sum_qpart > 2000) int_num=5; else int_num=1;
+
+    #ifdef DIPOLES  
+       if(mesh <= 32 || p3m_sum_dip_part > 2000) int_num=5; else int_num=1;  //JJCP 15/5/06
+    #else
+      if(mesh <= 32 || p3m_sum_qpart > 2000) int_num=5; else int_num=1;
+    #endif  
+
     for(cao = cao_min; cao <= cao_max; cao++) {     /* cao loop */
       mesh_size = box_l[0]/(double)mesh;
       k_cut =  mesh_size*cao/2.0;
@@ -1980,13 +2446,61 @@ int P3M_tune_parameters(Tcl_Interp *interp)
 	while (ind < n_cuts) {           /* r_cut_iL loop */
 	  r_cut_iL = cuts[ind];
 	  /* calc maximal real space error for setting */
-	  rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,0);
+	  //Beginning of JJCP modification 15/5/2006 
+          #ifdef DIPOLES
+	  
+	     if(r_cut_iL *box_l[0] < 1.0) break;   // It has little sense checking so little rcuts ...  
+	  
+	     if(p3m_sum_q2>0)  {
+	        printf("Warning: Charges are present, but are not supported by the current implementation of P3M-dipoles.\n");
+	        printf("When DIPOLES flag is activated: we optimize for dipoles not for coulombic charges\n");
+	        printf("This message comes from line 2551 p3m.c file in function P3M_tune_parameters\n");
+             }
+	     if(fabs(p3m_sum_mu2-(double)p3m_sum_dip_part)> 0.001)  {
+	        printf("p3m_sum_mu2 = %le \n",p3m_sum_mu2);
+	        printf("p3m_sum_dip_part = %le \n", (double) p3m_sum_dip_part);
+	        printf("p3m_sum_mu2-p3m_sum_dip_part = %le \n",p3m_sum_mu2-(double)p3m_sum_dip_part);
+		
+	     	printf("Warning: Theoretical formulas have a factor mu square missing somewhere so when mu different from 1 we have problems, here mu is different of 1.\n");
+         	printf("Warning: Tuning is just prepared for all particles with mu=1.\n");
+	        printf("This message comes from line 2556 p3m.c file in function P3M_tune_parameters\n");
+	     }
+	         
+		 
+	     //Alpha cannot be zero in the dipolar case because real_space formula breaks down	 
+	     
+	     // Here we follow a method different from Coulombic case because the formula for the real space error
+	     // is a trascendental equation for alpha in difference to the coulomb case 
+	     
+	    
+	     
+	    rs_err=P3M_DIPOLAR_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_dip_part,p3m_sum_mu2,0.001);
+	     
+	  #else
+	    rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,0);
+          #endif
+	  //Original line -> rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,0);
+
 	  if(sqrt(2.0)*rs_err > p3m.accuracy) {
 	    /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
 	    alpha_L = sqrt(log(sqrt(2.0)*rs_err/p3m.accuracy)) / r_cut_iL;
 	    /* calculate real space and k space error for this alpha_L */
+          #ifdef DIPOLES
+	    alpha_L=JJ_rtbisection(P3M_DIPOLAR_real_space_error,box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_dip_part,p3m_sum_mu2,
+                    0.01*box_l[0],5.0*box_l[0],0.0001,p3m.accuracy);
+	    
+	    
+	    rs_err = P3M_DIPOLAR_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_dip_part,p3m_sum_mu2,alpha_L);
+	    ks_err = P3M_DIPOLAR_k_space_error(box_l[0],coulomb.prefactor,mesh,cao,p3m_sum_dip_part,p3m_sum_mu2,alpha_L);
+	  #else
+	    alpha_L = sqrt(log(sqrt(2.0)*rs_err/p3m.accuracy)) / r_cut_iL;
 	    rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,alpha_L);
 	    ks_err = P3M_k_space_error(box_l[0],coulomb.prefactor,mesh,cao,p3m_sum_qpart,p3m_sum_q2,alpha_L);
+          #endif
+	  //End of JJCP modification 15/5/2006 
+	  // Original line -> rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,alpha_L);
+	  // Original line ->  ks_err = P3M_k_space_error(box_l[0],coulomb.prefactor,mesh,cao,p3m_sum_qpart,p3m_sum_q2,alpha_L);
+	  //End of JJCP modification 15/5/2006 
 	    accuracy = sqrt(SQR(rs_err)+SQR(ks_err));
 	    /* check if this matches the accuracy goal */
 	    if(accuracy <= p3m.accuracy) {
@@ -2072,10 +2586,40 @@ static double get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
   P3M_TRACE(fprintf(stderr, "get_accuracy: mesh %d, cao %d, r_cut %f ", mesh, cao, r_cut_iL));
 
   /* calc maximal real space error for setting */
+  /* calc maximal real space error for setting */
+  //Beginning of JJCP modification 15/5/2006 
+  #ifdef DIPOLES
+     if(p3m_sum_q2>0)  {
+        printf("Warning: Charges are present, but are not supported by the current implementation of P3M-dipoles.\n");
+        printf("When DIPOLES flag is activated: we optimize for dipoles not for coulombic charges\n");
+        printf("This message comes from line 2675 p3m.c file in function get_accuracy\n");
+     }
+     if(fabs(p3m_sum_mu2-(double)p3m_sum_dip_part)>0.001)  {
+     	printf("Warning: Theoretical formulas have a factor mu square missing somewhere so when mu different from 1 we have problems, here mu is different of 1.\n");
+     	printf("Warning: Tuning is just prepared for all particles with mu=1.\n");
+        printf("This message comes from line 2680 p3m.c file in function get_accuracy\n");
+     }
+    //Alpha cannot be zero in the dipolar case because real_space formula breaks down	     
+    //Idem of the previous function P3M_tune_parameters, here we do nothing
+    rs_err =P3M_DIPOLAR_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_dip_part,p3m_sum_mu2,0.001);
+    
+  #else
   rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,0);
-  if(M_SQRT2*rs_err > p3m.accuracy)
-    /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
-    alpha_L = sqrt(log(M_SQRT2*rs_err/p3m.accuracy)) / r_cut_iL;
+  #endif
+  //Original line ->  rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,0);
+  
+    if(M_SQRT2*rs_err > p3m.accuracy) {
+     /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
+     #ifdef DIPOLES
+ 
+         alpha_L=JJ_rtbisection(P3M_DIPOLAR_real_space_error,box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_dip_part,p3m_sum_mu2,
+   	     0.01*box_l[0],5.0*box_l[0],0.0001,p3m.accuracy);
+   
+     #else
+        alpha_L = sqrt(log(M_SQRT2*rs_err/p3m.accuracy)) / r_cut_iL;
+     #endif
+    }
+
   else
     /* even alpha=0 is ok, however, we cannot choose it since it kills the k-space error formula.
        Anyways, this very likely NOT the optimal solution */
@@ -2083,8 +2627,14 @@ static double get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
 
   *_alpha_L = alpha_L;
   /* calculate real space and k space error for this alpha_L */
-  rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,alpha_L);
-  ks_err = P3M_k_space_error(box_l[0],coulomb.prefactor,mesh,cao,p3m_sum_qpart,p3m_sum_q2,alpha_L);
+  #ifdef DIPOLES
+    rs_err = P3M_DIPOLAR_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_dip_part,p3m_sum_mu2,alpha_L);
+    ks_err = P3M_DIPOLAR_k_space_error(box_l[0],coulomb.prefactor,mesh,cao,p3m_sum_dip_part,p3m_sum_mu2,alpha_L);
+  #else
+    rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,alpha_L);
+    ks_err = P3M_k_space_error(box_l[0],coulomb.prefactor,mesh,cao,p3m_sum_qpart,p3m_sum_q2,alpha_L);
+  #endif
+ //End of JJCP modification 15/5/2006 
   *_rs_err = rs_err;
   *_ks_err = ks_err;
   P3M_TRACE(fprintf(stderr, "resulting: %f -> %f %f\n", alpha_L, rs_err, ks_err));
@@ -2095,7 +2645,12 @@ static double get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
 static double p3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
 {
   /* rounded up 2000/n_charges timing force evaluations */
+  #ifdef DIPOLES
+    int int_num = (1999 + p3m_sum_dip_part)/p3m_sum_dip_part;
+  #else
+
   int int_num = (1999 + p3m_sum_qpart)/p3m_sum_qpart;
+  #endif
 
   /* broadcast p3m parameters for test run */
   p3m.r_cut_iL = r_cut_iL;
@@ -2365,19 +2920,40 @@ int P3M_adaptive_tune_parameters(Tcl_Interp *interp)
   sprintf(b1,"%.5e",p3m.accuracy);
   Tcl_AppendResult(interp, "P3M tune parameters: Accuracy goal = ",b1,"\n", (char *) NULL);
   Tcl_PrintDouble(interp, box_l[0], b1);
-  sprintf(b2,"%d",p3m_sum_qpart);
+
+
+  #ifdef DIPOLES
+    sprintf(b2,"%d",p3m_sum_dip_part); // JJCP 15/5/2006
+  #else
+    sprintf(b2,"%d",p3m_sum_qpart);
+  #endif
   Tcl_PrintDouble(interp, p3m_sum_q2, b3);
   Tcl_AppendResult(interp, "System: box_l = ",b1,", # charged part = ",b2," Sum[q_i^2] = ",b3,"\n", (char *) NULL);
 
-  if (p3m_sum_qpart == 0) {
-    Tcl_AppendResult(interp, "no particles in the system, cannot tune P3M", (char *) NULL);
+  #ifdef DIPOLES
+   // JJCP 15/5/2006
+  if (p3m_sum_dip_part == 0) {
+    Tcl_AppendResult(interp, "no dipolar particles in the system, cannot tune P3M", (char *) NULL);
     return (TCL_ERROR);
   }
+  
+  #else
+
+  if (p3m_sum_qpart == 0) {
+    Tcl_AppendResult(interp, "no charged particles in the system, cannot tune P3M", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  #endif
 
   /* parameter ranges */
   if (p3m.mesh[0] == 0 ) {
     double expo;
+  #ifdef DIPOLES
+    expo = log(pow((double)p3m_sum_dip_part,(1.0/3.0)))/log(2.0);  
+  #else
     expo = log(pow((double)p3m_sum_qpart,(1.0/3.0)))/log(2.0);
+  #endif
+
     tmp_mesh = (int)(pow(2.0,(double)((int)expo))+0.1);
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
@@ -2480,13 +3056,13 @@ void P3M_count_charged_particles()
   Particle *part;
   int i,c,np;
 #ifdef DIPOLES
-  double node_sums[4], tot_sums[4];
+  double node_sums[5], tot_sums[5];
 #else
   double node_sums[3], tot_sums[3];
 #endif
 
 #ifdef DIPOLES
-  for(i=0;i<4;i++)
+  for(i=0;i<5;i++)
 #else
   for(i=0;i<3;i++)
 #endif
@@ -2507,13 +3083,14 @@ void P3M_count_charged_particles()
 	node_sums[3] += SQR(part[i].r.dip[0])
 	               +SQR(part[i].r.dip[1])
 		       +SQR(part[i].r.dip[2]);
+	node_sums[4] += 1.0;	       
       }
 #endif
     }
   }
   
 #ifdef DIPOLES
-  MPI_Allreduce(node_sums, tot_sums, 4, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(node_sums, tot_sums, 5, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #else
   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
@@ -2522,6 +3099,7 @@ void P3M_count_charged_particles()
   p3m_square_sum_q = SQR(tot_sums[2]);
 #ifdef DIPOLES
   p3m_sum_mu2 = tot_sums[3];
+  p3m_sum_dip_part    = (int)(tot_sums[4]+0.1);
 #endif
 }
 
@@ -2529,7 +3107,9 @@ void P3M_count_charged_particles()
 double P3M_real_space_error(double box_size, double prefac, double r_cut_iL, 
 			    int n_c_part, double sum_q2, double alpha_L)
 {
-  return (2.0*prefac*sum_q2*exp(-SQR(r_cut_iL*alpha_L))) / (sqrt(n_c_part*r_cut_iL)*box_size*box_size);
+// Modification done just to be sure about n_c_part,  JJCP 15/5/06
+//  return (2.0*prefac*sum_q2*exp(-SQR(r_cut_iL*alpha_L))) / (sqrt(n_c_part*r_cut_iL)*box_size*box_size);
+  return (2.0*prefac*sum_q2*exp(-SQR(r_cut_iL*alpha_L))) / (sqrt((double)n_c_part*r_cut_iL)*box_size*box_size);
 }
 
 double P3M_k_space_error(double box_size, double prefac, int mesh, 
@@ -2643,6 +3223,207 @@ void p3m_print_p3m_struct(p3m_struct ps) {
   fprintf(stderr,"   a=(%f,%f,%f), ai=(%f,%f,%f)\n",
 	  ps.a[0],ps.a[1],ps.a[2],ps.ai[0],ps.ai[1],ps.ai[2]);
 }
+
+
+#ifdef DIPOLES
+
+/* Following are the two functions for computing the error in dipolar P3M and 
+   tune the parameters to minimize the time with the desired accuracy.
+   
+   
+   This functions are called by the functions: get_accuracy() and
+   P3M_tune_parameters.
+     
+   This addition to p3m.c wad done by JJCP, 15/05/06.    */
+
+   
+double P3M_DIPOLAR_k_space_error(double box_size, double prefac, int mesh,
+			 int cao, int n_c_part, double sum_q2, double alpha_L)
+{
+  int  nx, ny, nz;
+  double he_q = 0.0, mesh_i = 1./mesh, alpha_L_i = 1./alpha_L;
+  double alias1, alias2, n2, cs;
+
+/*
+  fprintf(stderr,"box_size= %e \n",box_size);   //A LLEVAR
+  fprintf(stderr,"mesh= %d \n",mesh);   //A LLEVAR
+  fprintf(stderr,"cao= %d \n",cao);   //A LLEVAR
+  fprintf(stderr,"n_c_part= %d \n",n_c_part);   //A LLEVAR
+  fprintf(stderr,"sum_q2= %e \n",sum_q2);   //A LLEVAR
+ fprintf(stderr,"prefac= %e \n",prefac);   //A LLEVAR
+ 
+  fprintf(stderr,"alpha_L= %e \n",alpha_L);   //A LLEVAR
+*/
+
+ 
+  for (nx=-mesh/2; nx<mesh/2; nx++)
+    for (ny=-mesh/2; ny<mesh/2; ny++)
+      for (nz=-mesh/2; nz<mesh/2; nz++)
+	if((nx!=0) || (ny!=0) || (nz!=0)) {
+	  n2 = SQR(nx) + SQR(ny) + SQR(nz);
+	  cs = analytic_cotangent_sum(nx,mesh_i,cao)*
+ 	       analytic_cotangent_sum(ny,mesh_i,cao)*
+	       analytic_cotangent_sum(nz,mesh_i,cao);
+	  P3M_DIPOLAR_tune_aliasing_sums(nx,ny,nz,mesh,mesh_i,cao,alpha_L_i,&alias1,&alias2);
+	  he_q += (alias1  -  SQR(alias2/cs) / (n2*n2*n2));
+	  /* fprintf(stderr,"%d %d %d he_q = %.20f %.20f %.20f %.20f\n",nx,ny,nz,he_q,cs,alias1,alias2); */
+	}
+
+ /* fprintf(stderr,"he_q= %e \n",he_q);   //A LLEVAR
+ */
+       
+
+  return 8.*PI*PI/3.*sum_q2*sqrt(he_q/(double)n_c_part) / (box_size*box_size*box_size*box_size);
+}
+   
+
+void P3M_DIPOLAR_tune_aliasing_sums(int nx, int ny, int nz, 
+			    int mesh, double mesh_i, int cao, double alpha_L_i, 
+			    double *alias1, double *alias2)
+{
+
+  int    mx,my,mz;
+  double nmx,nmy,nmz;
+  double fnmx,fnmy,fnmz;
+
+  double ex,ex2,nm2,U2,factor1;
+
+  factor1 = SQR(PI*alpha_L_i);
+
+  *alias1 = *alias2 = 0.0;
+  for (mx=-P3M_BRILLOUIN; mx<=P3M_BRILLOUIN; mx++) {
+    fnmx = mesh_i * (nmx = nx + mx*mesh);
+    for (my=-P3M_BRILLOUIN; my<=P3M_BRILLOUIN; my++) {
+      fnmy = mesh_i * (nmy = ny + my*mesh);
+      for (mz=-P3M_BRILLOUIN; mz<=P3M_BRILLOUIN; mz++) {
+	fnmz = mesh_i * (nmz = nz + mz*mesh);
+	
+	nm2 = SQR(nmx) + SQR(nmy) + SQR(nmz);
+	ex2 = SQR( ex = exp(-factor1*nm2) );
+	
+	U2 = pow(sinc(fnmx)*sinc(fnmy)*sinc(fnmz), 2.0*cao);
+	
+	*alias1 += ex2 * nm2;
+	*alias2 += U2 * ex * pow((nx*nmx + ny*nmy + nz*nmz),3.) / nm2;
+	/* fprintf(stderr,"%d %d %d : %d %d %d alias %.20f %.20f\n",nx,ny,nz,mx,my,mz,*alias1,*alias2); */
+      }
+    }
+  }
+}
+
+
+
+
+//----------------------------------------------------------
+//  Function used to calculate the value of the errors
+//  for the REAL part of the force in terms of the Spliting parameter alpha of Ewald
+//  based on the formulas 33, the paper of Zuowei-HolmJCP, 115,6351,(2001).
+
+//  Please, notice than in this more refined approach we don't use
+//  formulas 37, but 33 which mantains all the powers in alpha
+
+//------------------------------------------------------------
+
+//We assume here that all particles have Mu=1  
+
+
+   
+ double P3M_DIPOLAR_real_space_error(double box_size, double prefac, double r_cut_iL, 
+			    int n_c_part, double sum_q2, double alpha_L)
+{
+  double d_error_f,d_cc,d_dc,d_bc,d_rcut2,d_con;
+  double d_a2,d_c,d_RCUT;
+ 
+ /*fprintf(stderr,"ENTRAM DINS REAL SPACE ERROR \n");   //A LLEVAR
+ fprintf(stderr,"box_size= %e \n",box_size);   //A LLEVAR
+ fprintf(stderr,"r_cut_iL= %e \n",r_cut_iL);   //A LLEVAR
+ fprintf(stderr,"sum_q2= %e \n",sum_q2);   //A LLEVAR
+ fprintf(stderr,"prefac= %e \n",prefac);   //A LLEVAR
+   fprintf(stderr,"n_c_part= %d \n",n_c_part);   //A LLEVAR
+
+  fprintf(stderr,"alpha_L= %e \n",alpha_L);   //A LLEVAR
+
+   */
+   
+   
+   
+  d_RCUT=r_cut_iL*box_size;
+  d_rcut2=d_RCUT*d_RCUT;
+  
+  //fprintf(stderr,"d_RCUT= %e \n",d_RCUT);   //A LLEVAR
+  //fprintf(stderr,"d_rcut2= %e \n",d_rcut2);   //A LLEVAR
+
+ d_a2=alpha_L*alpha_L/(box_size*box_size);
+
+  //fprintf(stderr,"d_a2= %e \n",d_a2);   //A LLEVAR
+
+ d_c =sum_q2*exp(-d_a2*d_RCUT*d_RCUT);
+//  fprintf(stderr,"d_c= %e \n",d_c);   //A LLEVAR
+
+ d_cc=4.0*d_a2*d_a2*d_rcut2*d_rcut2+6.0*d_a2*d_rcut2+3.0;
+
+  //fprintf(stderr,"d_cc= %e \n",d_cc);   //A LLEVAR
+
+ d_dc=8.0*d_a2*d_a2*d_a2*d_rcut2*d_rcut2*d_rcut2+20.0*d_a2*d_a2*d_rcut2*d_rcut2 \
+      +30*d_a2*d_rcut2+15.0;
+
+  //fprintf(stderr,"d_dc= %e \n",d_dc);   //A LLEVAR
+
+ d_bc=2.0*d_a2*d_rcut2 +1.0;
+
+  //fprintf(stderr,"d_bc= %e \n",d_bc);   //A LLEVAR
+
+ d_con=1.0/sqrt(box_size*box_size*box_size*d_a2*d_a2*d_rcut2*d_rcut2*d_rcut2*d_rcut2*d_RCUT*(double)n_c_part);
+
+  //fprintf(stderr,"d_con= %e \n",d_con);   //A LLEVAR
+
+ d_error_f=d_c*d_con*sqrt((13./6.)*d_cc*d_cc+(2./15.)*d_dc*d_dc-(13./15.)*d_cc*d_dc);
+ 
+  //fprintf(stderr,"d_error_f= %e \n",d_error_f);   //A LLEVAR
+
+
+  return d_error_f;
+}
+
+  
+  
+ 
+#define JJ_RTBIS_MAX 40
+double JJ_rtbisection(double (*func)(double,double,double,int,double,double), 
+             double box_size, double prefac, double r_cut_iL,        
+	     int n_c_part, double sum_q2, 
+	     double x1, double x2, double xacc, double tuned_accuracy)
+       // Using bisection find the root of a function "func-tuned_accuracy/sqrt(2.)" known to lie
+       //between x1 and x2. The root, returned as rtbis, will be refined
+       //until its accuracy is +-xacc.
+{
+
+ int j;
+ double dx,f,fmid,xmid,rtb,constant;
+ 
+ constant=tuned_accuracy/sqrt(2.);
+ 
+ 
+ f=(*func)(box_size,prefac,r_cut_iL,n_c_part,sum_q2,       x1)-constant;
+ fmid=(*func)(box_size,prefac,r_cut_iL,n_c_part,sum_q2,    x2)-constant;
+ if(f*fmid >=0.0) fprintf(stderr,"Root must be bracketed for bisection in JJ_rtbisection");
+ rtb = f < 0.0 ? (dx=x2-x1,x1) : (dx=x1-x2,x2);  // Orient the search dx, and set rtb to x1 or x2 ...
+ for (j=1;j<=JJ_RTBIS_MAX;j++){
+   fmid=(*func)(box_size,prefac,r_cut_iL,n_c_part,sum_q2,  xmid=rtb+(dx *= 0.5))-constant;
+   if(fmid<=0.0) rtb=xmid;
+   if(fabs(dx) < xacc || fmid == 0.0) return rtb;
+  }
+  fprintf(stderr,"Too many bisections in JJ_rtbissection");
+  return -9999999.9999;  
+
+}       
+    
+  
+  
+   
+   
+#endif //DIPOLES
+
 
 #endif
 

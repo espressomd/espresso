@@ -109,6 +109,10 @@
 #define CONSTRAINT_MAZE 6
 /** pore constraint applied */
 #define CONSTRAINT_PORE 7
+//ER
+/** External magnetic field constraint applied */
+#define CONSTRAINT_EXT_MAGN_FIELD 8
+//end ER
 
 /*@}*/
 
@@ -419,6 +423,14 @@ typedef struct {
   double cylrad;
 } Constraint_maze;
 
+//ER
+/** Parameters for a EXTERNAL MAGNETIC FIELD constraint */
+typedef struct{
+  /** vector (direction and magnitude) of the external magnetic field */
+  double ext_magn_field[3];
+} Constraint_ext_magn_field;
+//end ER
+
 /** Structure to specify a constraint. */
 typedef struct {
   /** type of the constraint. */
@@ -432,6 +444,9 @@ typedef struct {
     Constraint_plate plate;
     Constraint_maze maze;
     Constraint_pore pore;
+    //ER
+    Constraint_ext_magn_field emfield;
+    //end ER
   } c;
 
   /** particle representation of this constraint. Actually needed are only the identity,

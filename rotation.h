@@ -38,22 +38,25 @@ void convert_torqes_propagate_omega();
     the integration loop */
 void convert_initial_torques();
 
+/** convert torques from the body-fixed frames to space-fixed coordinates */
+void convert_torques_body_to_space(Particle *p, double torque[3]);
+
 /** convert omega to the body-fixed frames */
 void convert_initial_omega(Particle *p, double omega[3]);
 
 /** convert omega from the body-fixed frames to space-fixed coordinates */
 void convert_omega_body_to_space(Particle *p, double omega[3]);
 
-/* convert dipole moment of one particle to the quaternions  */
+/** convert dipole moment of one particle to the quaternions  */
 int convert_dip_to_quat_one(double dip[3], double quat[4]);
 
-/* convert dipole moments of particles to the quaternions  */
+/** convert dipole moments of particles to the quaternions  */
 void convert_dip_to_quat_all();
 
-/* convert quaternions to the dipole moment of the particle  */
+/** convert quaternions to the dipole moment of the particle  */
 void convert_quat_to_dip_one(double dip[3], double dipm, double quat[4]);
 
-/* convert quaternions to the dipole moments of particles  */
+/** convert quaternions to the dipole moments of particles  */
 void convert_quat_to_dip_all();
 
 

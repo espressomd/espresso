@@ -117,7 +117,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
     case COULOMB_P3M:
       ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
 #ifdef DIPOLES
-      ret += p3m_dipol_pair_energy(p1,p2,d,dist2,dist); 
+      ret += p3m_dipolar_pair_energy(p1,p2,d,dist2,dist); 
 #endif
       break;
     case COULOMB_ELC_P3M:

@@ -35,6 +35,7 @@
 /* #define PARTIAL_PERIODIC */
 #define ELECTROSTATICS
 /* #define ROTATION */
+/* #define DIPOLES */
 /* #define EXTERNAL_FORCES */
 /* #define CONSTRAINTS */
 /* #define MASS */
