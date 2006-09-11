@@ -132,14 +132,14 @@ void  fft_pre_init();
 int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum);
 
 /** perform the forward 3D FFT.
-    The assigned charges are in data. The result is also stored in data.
-    \warning The content of data is owerwritten.
+    The assigned charges are in \a data. The result is also stored in \a data.
+    \warning The content of \a data is overwritten.
     \param data Mesh.
 */
 void fft_perform_forw(double *data);
 
 /** perform the backward 3D FFT.
-    \warning The content of data is owerwritten.
+    \warning The content of \a data is overwritten.
     \param data Mesh.
 */
 void fft_perform_back(double *data);
