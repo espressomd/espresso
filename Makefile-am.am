@@ -99,8 +99,6 @@ dist-hook:
 	-rm -rf `find $(distdir) -name CVS`
 	if test ! "$(internal)"; then rm -rf $(distdir)/internal; fi
 
-RECURSIVE_TARGETS=doc-recursive
-
 #################################################################
 # Installation of the main program and wrapper scripts
 #################################################################

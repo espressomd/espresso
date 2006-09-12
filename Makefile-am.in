@@ -141,6 +141,12 @@ CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(Espresso_bin_SOURCES)
 DIST_SOURCES = $(am__Espresso_bin_SOURCES_DIST)
+RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
+	html-recursive info-recursive install-data-recursive \
+	install-exec-recursive install-info-recursive \
+	install-recursive installcheck-recursive installdirs-recursive \
+	pdf-recursive ps-recursive uninstall-info-recursive \
+	uninstall-recursive
 HEADERS = $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -305,7 +311,6 @@ Espresso_bin_SOURCES = main.c config.c config.h initialize.c \
 	fene.h gb.h harmonic.h imd.h ljcos2.h ljcos.h lj.h morse.h \
 	polynom.h soft_sphere.h subt_lj.h tab.h utils.h \
 	$(am__append_1)
-RECURSIVE_TARGETS = doc-recursive
 @USE_CHOOSER_FALSE@bin_SCRIPTS = mpiwrap/Espresso
 
 #################################################################
