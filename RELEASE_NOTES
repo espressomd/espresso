@@ -2,31 +2,36 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0n (Ydalir)                                                                     *
+* v2.0.0o (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0n -
+- v2.0.0o -
 -----------
 
-(n) September 4th, 2006.
-(m) September 1st, 2006.
-(l) August   25th, 2006.
-(k) August   22nd, 2006.
-(j) August   21st, 2006.
-(i) August   11th, 2006.
-(h) August   10th, 2006.
-(g) August    8th, 2006.
-(f) August    7th, 2006.
-(e) July     31st, 2006.
-(d) July     27th, 2006.
-(c) July     15th, 2006.
-(b) July     13th, 2006.
-(a) July     11th, 2006.
+(o) September 11th, 2006.
+(n) September  4th, 2006.
+(m) September  1st, 2006.
+(l) August    25th, 2006.
+(k) August    22nd, 2006.
+(j) August    21st, 2006.
+(i) August    11th, 2006.
+(h) August    10th, 2006.
+(g) August     8th, 2006.
+(f) August     7th, 2006.
+(e) July      31st, 2006.
+(d) July      27th, 2006.
+(c) July      15th, 2006.
+(b) July      13th, 2006.
+(a) July      11th, 2006.
 
 New Features:
+(o) Implemented module for dipolar point-charges in ESPResSo.
+    Currently only works with FFTW2 and single CPU (use switches
+    --enable-fftw=2 --disable-mpi in configure).
+    Use new switch DIPOLES (together with ROTATION) in config.h
 (m) Support for non-periodic directions in lattice halo scheme (non-periodic halos
     are memset to zero).
 (h) Added keywords tot_nonbonded_intra, tot_nonbonded_inter,
