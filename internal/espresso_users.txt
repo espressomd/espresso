@@ -1188,3 +1188,15 @@ topic:     Simulations on carbon nanotubes ...
 reminded:  X09.AUG.2006
 
 
+name:      sahin uyaver
+email:     uyaver@maltepe.edu.tr
+institute: maltepe university
+           fac. of engineering
+           maltepe istanbul turkey
+sent:      11.SEP.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     simulation of weak polyelectrolytes, working with Ch. Seidel.
+reminded:  X11.SEP.2006
+
+
