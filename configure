@@ -6894,7 +6894,7 @@ echo "$as_me: error: MPICH not working" >&2;}
 		fi
 	fi
 
-cat >>confdefs.h <<\_ACEOF
+cat >>confdefs.h <<_ACEOF
 #define MPI "$with_mpi"
 _ACEOF
 
@@ -6971,17 +6971,12 @@ _ACEOF
 
 
 	if test .$enable_debug = .yes || test .$enable_profiling = .yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define MDINLINE static
-_ACEOF
-
+		mdinline=static
 	else
-
-	echo "$as_me:$LINENO: checking how to inline functions" >&5
+		echo "$as_me:$LINENO: checking how to inline functions" >&5
 echo $ECHO_N "checking how to inline functions... $ECHO_C" >&6
-	for mdinline in "static inline" "inline static" "inline" "static"; do
-		cat >conftest.$ac_ext <<_ACEOF
+		for mdinline in "static inline" "inline static" "inline" "static"; do
+		    cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -7028,22 +7023,21 @@ sed 's/^/| /' conftest.$ac_ext >&5
 works=no
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-		if test .$works = .yes; then break; fi
-	done
-	if test .$works = .no; then
-		{ { echo "$as_me:$LINENO: error: your compiler does not even support \"static\"" >&5
+		    if test .$works = .yes; then break; fi
+		done
+		if test .$works = .no; then
+		   { { echo "$as_me:$LINENO: error: your compiler does not even support \"static\"" >&5
 echo "$as_me: error: your compiler does not even support \"static\"" >&2;}
    { (exit 1); exit 1; }; }
+		fi
+		echo "$as_me:$LINENO: result: $mdinline" >&5
+echo "${ECHO_T}$mdinline" >&6
 	fi
 
 cat >>confdefs.h <<_ACEOF
 #define MDINLINE $mdinline
 _ACEOF
 
-	echo "$as_me:$LINENO: result: $mdinline" >&5
-echo "${ECHO_T}$mdinline" >&6
-
-	fi
 
 
 	# test whether to enable processor optimisation
@@ -17509,6 +17503,7 @@ linker flags		= $LDFLAGS
 libraries		= $LIBS
 using debug flags	= $enable_debug
 using profiling flags	= $enable_profiling
+inline			= $MDINLINE
 EOF
 
 if test .$with_mpi = .generic; then

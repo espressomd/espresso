@@ -115,16 +115,14 @@ cat <<EOF
 ****************************************************************
 EOF
 # Creating the output
-AC_CONFIG_HEADER([acconfig.h])
+AC_CONFIG_HEADERS([acconfig.h])
 AC_CONFIG_LINKS(Makefile)
-AC_CONFIG_FILES(
-	[
+AC_CONFIG_FILES([
 	Makefile-am scripts/Makefile testsuite/Makefile
 	doc/Makefile doc/ug/Makefile doc/dg/Makefile
 	config/$myconfig:config/myconfig-default.h.in
 	chooser/Espresso mpiwrap/Espresso
-	],
-	)
+	])
 AC_CONFIG_FILES([Espresso],[chmod 755 Espresso])
 
 AC_OUTPUT
@@ -146,6 +144,7 @@ linker flags		= $LDFLAGS
 libraries		= $LIBS
 using debug flags	= $enable_debug
 using profiling flags	= $enable_profiling
+inline			= $MDINLINE
 EOF
 
 if test .$with_mpi = .generic; then
