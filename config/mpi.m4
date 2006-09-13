@@ -43,7 +43,7 @@ AC_DEFUN([ES_CHECK_MPI],[
 			ES_MPI_SETUP($with_mpi)
 		fi
 	fi
-	AC_DEFINE(MPI,"$with_mpi",[Which MPI implementation to use?])
+	AC_DEFINE_UNQUOTED(MPI,"$with_mpi",[Which MPI implementation to use?])
 	AM_CONDITIONAL(MPI_FAKE, test .$with_mpi = .fake)
 	AC_SUBST(MPI_INVOCATION)
 ])
