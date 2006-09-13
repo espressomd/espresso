@@ -56,26 +56,23 @@ AC_DEFUN([ES_CHECK_COMPILER],[
 dnl ********************************** inlining ******************************
 AC_DEFUN([ES_CHECK_INLINING],[
 	if test .$enable_debug = .yes || test .$enable_profiling = .yes; then
-		AC_DEFINE([MDINLINE],[static],[How to inline functions])
+		mdinline=static
 	else
-		ES_CHECK_INLINE
-	fi
-])
-
-AC_DEFUN([ES_CHECK_INLINE],[
-	AC_MSG_CHECKING([how to inline functions])
-	for mdinline in "static inline" "inline static" "inline" "static"; do
-		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+		AC_MSG_CHECKING([how to inline functions])
+		for mdinline in "static inline" "inline static" "inline" "static"; do
+		    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 /**** This HAS to be at the beginning of the line for some compilers ****/
 #define MDINLINE $mdinline
-MDINLINE void test() {}],[test();])],[works=yes],[works=no])
-		if test .$works = .yes; then break; fi
-	done
-	if test .$works = .no; then
-		AC_MSG_ERROR([your compiler does not even support "static"])
+MDINLINE void test() {}],
+			[test();])],[works=yes],[works=no])
+		    if test .$works = .yes; then break; fi
+		done
+		if test .$works = .no; then
+		   AC_MSG_ERROR([your compiler does not even support "static"])
+		fi
+		AC_MSG_RESULT([$mdinline])
 	fi
 	AC_DEFINE_UNQUOTED(MDINLINE,$mdinline,[How to inline functions])
-	AC_MSG_RESULT([$mdinline])
 ])
 
 dnl ***************************** compiler type ******************************
