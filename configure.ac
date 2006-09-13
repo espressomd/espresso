@@ -44,6 +44,9 @@ fi
 
 # Initialise automake
 AM_INIT_AUTOMAKE([1.9 foreign subdir-objects])
+AM_MAINTAINER_MODE
+# Make the release notes a dependency of configure
+AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/RELEASE_NOTES'])
 
 ES_KNOWN_CONFIGS
 

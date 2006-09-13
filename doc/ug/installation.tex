@@ -341,8 +341,13 @@ following targets are available:
   sources.  This will include all source files as they currently are
   in the source directory, \ie{} it will include local changes.  This
   is useful to give your version of \es{} to other people.
-\item[\texttt{dist-internal}] Same as \texttt{dist}, but will also
-  include the directory \texttt{internal/} into the archive file.
+  The variable \texttt{extra} can be used to specify additional
+  files and directories that are to be included in the archive
+  file. \\
+  \textbf{Example:} \verb!make dist extra="myconfig.h internal"!\\
+  will create the archive file and include the file
+  \texttt{myconfig.h} and the directory \texttt{internal} with all
+  files and subdirectories.
 \item[\texttt{install}] Install \es{}. The variables \texttt{prefix}
   and \texttt{exec-prefix} can be used to specify the installation
   directories, otherwise the defaults defined by the

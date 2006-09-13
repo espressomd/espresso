@@ -2,14 +2,13 @@ SUBDIRS = . scripts testsuite doc doc/ug doc/dg
 
 # List files that should go into the distribution but are not required
 # by any other means
-EXTRA_DIST = Makefile RELEASE_NOTES \
-	samples packages internal
+EXTRA_DIST = Makefile RELEASE_NOTES samples packages $(extra)
 
 # List headers that are not used by the program here
 noinst_HEADERS = myconfig-sample.h
 
 # List the sources of the Espresso binary here
-Espresso_bin_SOURCES =											\
+Espresso_bin_SOURCES = \
 	main.c \
 	config.c config.h \
 	initialize.c initialize.h \
@@ -90,14 +89,10 @@ Espresso_bin_SOURCES =											\
 #deactivate building of the library
 #libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
 
-dist-internal: AM_MAKEFLAGS += internal=1
-dist-internal: dist
-
 # Remove all CVS files from the distribution
 # and remove the internal dir if not dist-internal is used
 dist-hook:
 	-rm -rf `find $(distdir) -name CVS`
-	if test ! "$(internal)"; then rm -rf $(distdir)/internal; fi
 
 #################################################################
 # Installation of the main program and wrapper scripts
@@ -116,11 +111,11 @@ execpkglib_PROGRAMS = Espresso_bin
 install-exec-hook:
 	sed -i \
 	-e "s,[@]ESPRESSO_PKGLIBDIR[@],$(pkglibdir),g" \
-	$(bindir)/Espresso
+	$(DESTDIR)/$(bindir)/Espresso
 	sed -i \
 	-e "s,[@]ESPRESSO_BIN[@],$(execpkglibdir)/Espresso_bin,g" \
 	-e "s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
-	$(execpkglibdir)/Espresso
+	$(DESTDIR)/$(execpkglibdir)/Espresso
 
 else
 
@@ -135,7 +130,7 @@ install-exec-hook:
 	sed -i \
 	-e "s,[@]ESPRESSO_BIN[@],$(libexecdir)/Espresso_bin,g" \
 	-e "s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
-	$(bindir)/Espresso
+	$(DESTDIR)/$(bindir)/Espresso
 endif
 
 #################################################################
@@ -162,6 +157,8 @@ vpath $(myconfig) $(top_builddir):$(top_srcdir):$(top_builddir)/config
 # they get rebuilt when $(myconfig) is changed
 $(Espresso_bin_OBJECTS): $(myconfig)
 
+DISTCLEANFILES = $(top_builddir)/config/$(myconfig)
+
 #################################################################
 # Handling of the MPI fake implementation
 #################################################################
@@ -170,6 +167,8 @@ Espresso_bin_SOURCES += mpifake/mpi.h mpifake/mpi.c
 # mpifake should come before any system includes
 INCLUDES += -I $(srcdir)/mpifake -I config
 endif
+
+ACLOCAL_AMFLAGS = -I config
 
 ##################################################
 # Targets for backwards compatibility

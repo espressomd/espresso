@@ -173,6 +173,7 @@ AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+CONFIGURE_DEPENDENCIES = @CONFIGURE_DEPENDENCIES@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
@@ -197,6 +198,9 @@ LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+MAINT = @MAINT@
+MAINTAINER_MODE_FALSE = @MAINTAINER_MODE_FALSE@
+MAINTAINER_MODE_TRUE = @MAINTAINER_MODE_TRUE@
 MAKEINFO = @MAKEINFO@
 MPICC = @MPICC@
 MPI_FAKE_FALSE = @MPI_FAKE_FALSE@
@@ -277,9 +281,7 @@ SUBDIRS = . scripts testsuite doc doc/ug doc/dg
 
 # List files that should go into the distribution but are not required
 # by any other means
-EXTRA_DIST = Makefile RELEASE_NOTES \
-	samples packages internal
-
+EXTRA_DIST = Makefile RELEASE_NOTES samples packages $(extra)
 
 # List headers that are not used by the program here
 noinst_HEADERS = myconfig-sample.h
@@ -327,6 +329,8 @@ Espresso_bin_SOURCES = main.c config.c config.h initialize.c \
 # add config/ to the INCLUDES so that the default config/$(myconfig) is
 # found at compile time
 INCLUDES = -I config $(am__append_2)
+DISTCLEANFILES = $(top_builddir)/config/$(myconfig)
+ACLOCAL_AMFLAGS = -I config
 all: acconfig.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -334,7 +338,7 @@ all: acconfig.h
 .SUFFIXES: .c .o .obj
 am--refresh:
 	@:
-$(srcdir)/Makefile-am.in:  $(srcdir)/Makefile-am.am  $(am__configure_deps)
+$(srcdir)/Makefile-am.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile-am.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -361,9 +365,9 @@ Makefile-am: $(srcdir)/Makefile-am.in $(top_builddir)/config.status
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck
 
-$(top_srcdir)/configure:  $(am__configure_deps)
+$(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(srcdir) && $(AUTOCONF)
-$(ACLOCAL_M4):  $(am__aclocal_m4_deps)
+$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 
 acconfig.h: stamp-h1
@@ -375,7 +379,7 @@ acconfig.h: stamp-h1
 stamp-h1: $(srcdir)/acconfig.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status acconfig.h
-$(srcdir)/acconfig.h.in:  $(am__configure_deps) 
+$(srcdir)/acconfig.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps) 
 	cd $(top_srcdir) && $(AUTOHEADER)
 	rm -f stamp-h1
 	touch $@
@@ -895,6 +899,7 @@ distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-rm -f mpifake/$(DEPDIR)/$(am__dirstamp)
 	-rm -f mpifake/$(am__dirstamp)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -985,14 +990,10 @@ uninstall-info: uninstall-info-recursive
 #deactivate building of the library
 #libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
 
-dist-internal: AM_MAKEFLAGS += internal=1
-dist-internal: dist
-
 # Remove all CVS files from the distribution
 # and remove the internal dir if not dist-internal is used
 dist-hook:
 	-rm -rf `find $(distdir) -name CVS`
-	if test ! "$(internal)"; then rm -rf $(distdir)/internal; fi
 #execpkglib_LIBRARIES = libEspresso.a
 
 # Substitute some remaining variables in the installed Espresso
@@ -1001,11 +1002,11 @@ dist-hook:
 @USE_CHOOSER_TRUE@install-exec-hook:
 @USE_CHOOSER_TRUE@	sed -i \
 @USE_CHOOSER_TRUE@	-e "s,[@]ESPRESSO_PKGLIBDIR[@],$(pkglibdir),g" \
-@USE_CHOOSER_TRUE@	$(bindir)/Espresso
+@USE_CHOOSER_TRUE@	$(DESTDIR)/$(bindir)/Espresso
 @USE_CHOOSER_TRUE@	sed -i \
 @USE_CHOOSER_TRUE@	-e "s,[@]ESPRESSO_BIN[@],$(execpkglibdir)/Espresso_bin,g" \
 @USE_CHOOSER_TRUE@	-e "s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
-@USE_CHOOSER_TRUE@	$(execpkglibdir)/Espresso
+@USE_CHOOSER_TRUE@	$(DESTDIR)/$(execpkglibdir)/Espresso
 #lib_LIBRARIES = libEspresso.a
 
 # Substitute some remaining variables in the installed Espresso
@@ -1015,7 +1016,7 @@ dist-hook:
 @USE_CHOOSER_FALSE@	sed -i \
 @USE_CHOOSER_FALSE@	-e "s,[@]ESPRESSO_BIN[@],$(libexecdir)/Espresso_bin,g" \
 @USE_CHOOSER_FALSE@	-e "s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
-@USE_CHOOSER_FALSE@	$(bindir)/Espresso
+@USE_CHOOSER_FALSE@	$(DESTDIR)/$(bindir)/Espresso
 
 #################################################################
 # Documentation
