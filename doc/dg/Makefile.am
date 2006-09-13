@@ -1,4 +1,4 @@
-EXTRA_DIST=background_errors.awk doxygen.cfg pages figs html
+EXTRA_DIST=background_errors.awk doxygen.cfg pages figs
 
 .PHONY: doc dg
 doc: dg
