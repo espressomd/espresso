@@ -1,0 +1,67 @@
+/** \page samples The Samples Directory
+
+In the directory Espresso/samples you find several scripts that can
+serve as samples how to use Espresso.
+
+<ol>
+
+<li> <b> lj_liquid.tcl </b><br>
+     Simple Lennard-Jones particle liquid. Shows the basic features of
+     Espresso: How to set up system parameters, particles and
+     interactions. How to warm up and integrate. How to write
+     parameters, configurations and observables to files. How to
+     handle the connection to VMD.
+
+<li> <b> kremerGrest.tcl </b><br>
+     This reproduces the data of K.Kremer/G.S.Grest,
+     J.Chem.Phys. <b>92</b>(8), 5057-5086 (1990):
+     Multiple systems with different number of neutral polymer chains
+     of various lengths are simulated for very
+     long times at melt density 0.85 while their static and some
+     dynamic properties are measured.<br>
+     Shows the advanced features of Espresso: How to run several
+     simulations from a single script. How to use online-analysis
+     (\ref tcl_analyze) with comparision to expectation values. How to
+     get averages of the observables. How to set/restore
+     checkpoints (\ref io) including auto-detection of previously
+     derived parts of the simulation(s).
+     How to create gnuplots from within the script and combine
+     multiple plots onto duplex pages (\ref statistics). <BR>
+     In the end the script will provide plots of all important
+     quantities as .ps- and .pdf-files while compressing the
+     data-files.
+     Note however, that the simulation uses the original time scale,
+     hence it may take <i>quite</i> some time to finish.
+
+<li> <b> pe_solution.tcl </b><br>
+     Polyelectrolyte solution under poor solvent condition. Test case
+     for comparison with data produced by polysim9 from
+     M.Deserno. Note that the ewuilibration of this system takes
+     roughly 15 000 tau.
+     <ul>
+     <li> <b> pe_analyze.tcl </b><br>
+          Example for doing the analysis after the actual simulation run
+          (offline analysis). Calculates the integrated
+          iondistribution P(r) for several different time slaps,
+          compares them and presents the final result using gnuplot to
+          generate some ps-files.
+     </ul> <BR>
+
+<li> <b> harmonic_oscillator.tcl </b><br>
+     A chain of harmonic oscillators. This is a T=0 simulation to test
+     the energy conservation.
+
+<li> <b> espresso_logo.tcl </b><br>
+     The Espresso Logo, the exploding espresso cup, has been created
+     with this script. It is a regular simulation of a polyelectrolyte
+     solution. It makes use of some nice features of the \ref tcl_part
+     command, namely the capability to fix a particle in space and to
+     apply an external force.
+
+<li> <b> watch.tcl  </b><br>
+     Script to visualize any of your productions. Use the -h option
+     when calling it to see how it works.  
+
+</ol>
+
+*/

@@ -31,7 +31,7 @@
     up to 64 bit integers */
 #define INT_SPACE 32
 
-#ifdef TCL_FILE_IO
+#ifndef BLOCKFILE_STDIO
 static int readchar(Tcl_Channel f)
 {
   char c;

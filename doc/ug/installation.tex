@@ -1,0 +1,416 @@
+\chapter{Installation}
+\label{chap:install}
+\index{Installation|textbf}
+
+\begin{itemize}
+\item Compiling \es{} is a necessary evil
+\item Features can be compiled in or not
+\item For maximal efficiency, compile in only the features that you
+  use
+\item \es{} can be obtained from the \es{} home page
+  \footnote{\url{http://www.espresso.mpg.de}}.
+\end{itemize}
+
+\section{Requirements}
+\label{sec:requirements}
+\index{requirements}
+
+\begin{description}
+\item[Tcl/Tk] \index{Tcl/Tk} \es{} requires the Toolkit Command
+  Language Tcl/Tk \footnote{\url{http://www.tcl.tk/}} in the version
+  8.3 or later.  Some example scripts will only work with Tcl 8.4. You
+  do not only need the interpreter, but also the header files and
+  libraries.  Depending on the operating system, these may come in
+  separate development packages. If you want to use a graphical user
+  interface (GUI) for your simulation scripts, you will also need Tk.
+  
+\item[FFTW] \index{FFTW} In addition, \es{} needs the FFTW library
+  \footnote{\url{http://www.fftw.org/}} for Fourier transforms.
+  ESPResSo can work with both the 2.1.x and 3.0.x series. Again, the
+  header files are required.
+  
+\item[MPI] \index{MPI} Finally, if you want to use \es{} in parallel,
+  you need a working MPI environment (version 1.2). Currently, the
+  following MPI implementations are supported:
+  \begin{itemize}
+  \item LAM/MPI is the preferred variant
+  \item MPICH, which seems to be considerably slower than LAM/MPI in
+    our benchmarks.
+  \item On AIX systems, \es{} can also use the native POE parallel
+    environment.
+  \item On DEC/Compaq/HP OSF/Tru64, \es{} can also use the native
+    dmpirun MPI environment.
+  \end{itemize}
+\end{description}
+
+\section{Quick start}
+
+\index{configure}\index{make}
+
+In many cases, to compile \es{}, it is enough to execute the following
+sequence of two steps in the directory where you have unpacked the
+sources:
+\begin{verbatim}
+> configure
+> make
+\end{verbatim}
+
+In some cases, \eg{} when \es{} needs to be compiled for several
+different platforms or when different versions with different sets of
+features are required, it might be useful to execute the commands not
+in the source directory itself, but to start \texttt{configure} from
+another directory (see section \vref{sec:builddir}). Furthermore, many
+features of \es{} can be selectively turned on or off in the local
+configuration header of \es{} (see section \vref{sec:myconfig}) before
+starting the compilation with \texttt{make}.
+
+The shell script \texttt{configure} prepares the source code for
+compilation. It will determine how to use and where to find the
+different libraries and tools required by the compilation process, and
+it will test what compiler flags are to be used.  The script will find
+out most of these things automatically.  If something is missing, it
+will complain and give hints how to solve the problem.  The
+configuration process can be controlled with the help of a number of
+options that are explained in section \vref{sec:configure}.
+
+The command \texttt{make} will compile the source code. Depending on
+the options passed to the program, \texttt{make} can also be used for
+a number of other things:
+\begin{itemize}
+\item It can install and uninstall the program to some other
+  directories. However, normally it is not necessary to actually
+  \textit{install} \es{} to run it.
+\item It can test the \es{} program for correctness.
+\item It can build the documentation.
+\end{itemize}
+The details of the usage of \texttt{make} are described in section
+\vref{sec:make}.
+
+When these steps have successfully completed, \es{} can be started
+with the command (see section \vref{sec:run})
+\begin{verbatim}
+> Espresso
+\end{verbatim}
+
+\section{Source and build directory}
+\label{sec:builddir}
+\index{build directory} \index{source directory}
+
+If you plan to use \es{} with a single configuration, you can skip the
+rest of this section. If then you have problems finding the \es{}
+binary or you come upon a reference to the \emph{build directory} in
+the documentation, you might have to read it, anyway. 
+
+Usually, when a program is compiled, the resulting binary files are
+put into the same directory as the sources of the program. In \es{},
+the \emph{source directory} that contains all the source files can be
+completely separated from the \emph{build directory} where the files
+created by the build process are put. As the source directory is not
+touched during the compilation process, it is possible to compile more
+than one binary version of \es{} from the same set of source files.
+This is useful in cases when \es{} is to be used on different computer
+hardware or with a different configuration.
+
+The source directory is the directory that contains the source files.
+The location of the build directory is determined when the
+\texttt{configure}-script is called.  Usually, the build directory is
+assigned to the current working directory when the
+\texttt{configure}-script was called. All further commands concerning
+compiling and running \es{} have to be called from this directory.
+
+\paragraph{Example}
+When the source directory is \texttt{\$srcdir} (\ie{} the files where
+unpacked to this directory), then the build directory can be set to
+\texttt{\$builddir} by calling the \texttt{configure}-script from
+there:
+\begin{verbatim}
+> cd $builddir
+> $srcdir/configure
+> make
+> Espresso
+\end{verbatim}
+
+When \texttt{configure} is called directly from the source directory,
+the \es{} build system is prepared to handle different platforms.  A
+new subdirectory is created and \texttt{configure} is recursively
+called from this directory, making the subdirectory the build
+directory.  The directory is called
+\texttt{obj-}\textit{platform}\texttt{/}, where \textit{platform} is a
+descriptor of the CPU type where the script was started, \eg{}
+\texttt{obj-Athlon\_64-pc-linux}.
+
+In this case it is also possible to run the commands \texttt{make} and
+\texttt{Espresso} directly in the source directory.
+
+Furthermore, the option \texttt{--enable-chooser} will be set in the
+recursive call of \texttt{configure} that activates the automatic
+binary chooser (see section \vref{sec:install_dir}).
+
+\section{Installation directories}
+\label{sec:install_dir}
+
+Normally, the \es-binary \texttt{Espresso-bin} is installed in the
+directory \texttt{\$prefix/libexec/} and a the wrapper script
+\texttt{Espresso} in the directory \texttt{\$prefix/bin/} that handles
+the MPI invocation.
+
+When the \texttt{configure}-script is called from the source directory
+or when the option \texttt{--enable-chooser} is given, an automatic
+binary chooser is installed in the directory \texttt{\$prefix/bin/}
+and the \es{}-binary and the MPI wrapper script are installed in an
+architecture-specific subdirectory
+\mbox{\texttt{\$exec-prefix/lib/espresso/obj-}\textit{platform}\texttt{/}}.
+When called, the binary chooser will automatically call the MPI
+wrapper script in the right subdirectory.
+
+\section{The configuration header \texttt{myconfig.h}}
+\label{sec:myconfig}
+
+\index{myconfig.h} \index{configuration header} \es{} has a great
+number of features that can be compiled into the binary (see chapter
+\vref{chap:features}).  However, it is not recommended to actually
+compile in all possible features, as this will negatively affect \es's
+performance. Instead, compile in only the features that are actually
+required. For the developers, it is also possible to turn on or off a
+number of debugging messages. The features and debug messages can be
+controlled via a configuration header file that contains
+C-preprocessor declarations.
+
+By default, the configuration header is called \texttt{myconfig.h}.
+The name of the configuration header can be either changed when the
+\texttt{configure}-script is called with the option
+\texttt{--with-myconfig} (see section \vref{sec:configure}), or when
+\texttt{make} is called with the setting
+\texttt{myconfig=}\textit{myconfig\_header} (see section
+\vref{sec:make}).
+
+The configuration header can be put in the build directory, or in the
+source directory. When a configuration header is found in both
+directories, the one in the build directory will be used. If both
+directories do not contain a configuration header, a default header
+will be used that turns on the default features.
+
+The file \texttt{myconfig-sample.h} in the source directory contains
+an example configuration header.
+
+\paragraph{Example}
+The configuration header can be used to compile different versions
+from the same source directory. Suppose that you have a source
+directory \texttt{\$srcdir} and two build directories
+\texttt{\$builddir1} and \texttt{\$builddir2} that contain different
+configuration headers:
+
+\begin{itemize}
+\item \texttt{\$builddir1/myconfig.h}:
+\begin{verbatim}
+#define ELECTROSTATICS
+#define LENNARD-JONES
+\end{verbatim}
+
+\item \texttt{\$builddir2/myconfig.h}:
+\begin{verbatim}
+#define LJCOS
+\end{verbatim}
+\end{itemize}
+
+\noindent Then you can simply compile two different versions of \es{} via
+\begin{verbatim}
+cd $builddir1
+$srcdir/configure
+make
+
+cd $builddir2
+$srcdir/configure
+make
+\end{verbatim}
+
+\section{Running configure}
+\label{sec:configure}
+
+\index{configure}
+The shell script \texttt{configure} collects all the information
+required by the compilation process. It will determine how to use and
+where to find the different libraries and tools required by the
+compilation process, and it will test what compiler flags are to be
+used.  The script will find out most of these things automatically.
+If something is missing, it will complain and give hints how to solve
+the problem.
+
+The generic syntax of calling the \texttt{configure} script is:
+\begin{syntax}
+ $>$ configure [\var{options} ...] [\var{variable}=\var{value} ...]
+\end{syntax}
+
+\index{configure options}
+The behaviour of \texttt{configure} can be controlled by the means of
+command line options. In the following, only those command line
+options that are special to \es{} will be explained.  For a complete
+list of options and explanations thereof, call
+\begin{verbatim}
+> configure --help
+\end{verbatim}
+
+\begin{description}
+\item [\texttt{--enable-chooser}] This option will enable the
+  automatic choosing mechanism for \es{} (see section
+  \vref{sec:install_dir}).  This option will be automatically enabled,
+  when the \texttt{configure} script is called from the source
+  directory, otherwise it will be disabled. It is not recommended to
+  set the option manually.
+\item[\texttt{--enable-config=KNOWN\_CONFIG}] For some known systems,
+  where \texttt{configure} does not find the required libraries and
+  compiler options, predefined settings can be used. The following
+  configuration names are known: \texttt{dino} and \texttt{blade}. The
+  default for this option is: \texttt{none}.
+\item[\texttt{--enable-debug}] This option will enable compiler flags
+  required for debugging \es{} and is disabled by default.
+\item[\texttt{--enable-profiling}] This option will enable compiler
+  flags required for profiling \es{} and is disabled by default.
+\item[\texttt{--disable-processor-optimization}] This option will
+  control whether \texttt{configure} will check for several
+  optimization flags to be used by the compiler. This option is
+  enabled by default.
+\item[\texttt{--enable-xlc-qipa}] This option is only useful when the
+  IBM C-compiler \texttt{xlc} is used and will control whether or not
+  the compiler flag \texttt{-qipa} is used. This option is enabled by
+  default.
+
+\item[\texttt{--with-myconfig=MYCONFIG\_HEADER}] This option sets the
+  name of the local configuration header (see \vref{sec:myconfig}). It
+  defaults to ``\texttt{myconfig.h}''.
+\item[\texttt{--with-mpi=MPI}] Sets the MPI implementation that should
+  be used. By default, \texttt{configure} will test autoamtically what
+  MPI implementation is available. The following implementations are
+  known: 
+  \begin{description}
+  \item[\texttt{fake}, \texttt{no}] This will disable MPI completely.
+  \item[\texttt{lam}] Use the LAM/MPI environment
+    (\url{http://www.lam-mpi.org/}).
+  \item[\texttt{mpich}] Use the MPICH environment
+    (\url{http://www-unix.mcs.anl.gov/mpi/mpich/}).
+  \item[\texttt{poe}] Use the POE environment (IBM).
+  \item[\texttt{dmpi}] Use the DMPI environment (Tru64).
+  \item[\texttt{generic}] Use a generic MPI implementation. This will
+    try to find an MPI compiler and an MPI runtime environment.
+  \end{description}
+\item[\texttt{--with-efence}] Whether or not to use the ``electric
+  fence'' memory debugging library
+  (\url{http://freshmeat.net/projects/efence/}). Efence is not used by
+  default.
+\item[\texttt{--with-tcl=TCL}] When the wrong version of the Tcl
+  library is used by configure, the name of the Tcl-library can be
+  specified with this option, \eg{} \texttt{tcl8.4}.
+\item[\texttt{--with-tk=TK}] By default, the GUI toolkit Tk is not
+  used by \es. This option can be used to activate Tk and to specify
+  which Tk version to use, \eg{} \texttt{tk8.4}.
+\item[\texttt{--with-fftw=VERSION}] This can be used to specify which
+  version of fftw is to be used. By default, version 3 will be used if
+  it is found, otherwise version 2 is used.
+\end{description}
+
+\section{Compiling, testing and installing \es}
+\label{sec:make}
+
+The command \texttt{make} is mainly used to compile the \es{} source
+code, but it can do a number of other things. The generic syntax of
+the \texttt{make} command is:
+\begin{syntax}
+ $>$ make [\var{target}...] [\var{variable}=\var{value}]
+\end{syntax}
+When no target is given, the target \texttt{all} is used. The
+following targets are available:
+\begin{description}
+\item[\texttt{all}] Compiles the complete \es{} source code.
+\item[\texttt{check}] Runs the testsuite. By default, all available
+  tests will be run on 1, 2, 3, 4, 6, or 8 processors. Which tests are
+  run can be controlled by means of the variable \texttt{tests}, which
+  processor numbers are to be used can be controlled via the variable
+  \texttt{processors}. Note that depending on your MPI installation,
+  MPI jobs can only be run in the queueing system, so that \es{} will
+  not run from the command line. In that case, you may not be able to
+  run the testsuite, or you have to directly submit the testsuite script
+  \verb!testsuite/test.sh! to the queueing system.\\
+  \textbf{Example:} \verb!make check tests="madelung.tcl" processors="1 2"!\\
+  will run the test \texttt{madlung.tcl} on one and two processors.
+\item[\texttt{clean}] Deletes all files that were created furing the
+  compilation.
+\item[\texttt{mostlyclean}] Deletes most files that were created
+  during the compilation. Will keep for example the built doxygen
+  documentation and the \es{} binary.
+\item[\texttt{dist}] Creates a \texttt{.tar.gz}-file of the \es{}
+  sources.  This will include all source files as they currently are
+  in the source directory, \ie{} it will include local changes.  This
+  is useful to give your version of \es{} to other people.
+  The variable \texttt{extra} can be used to specify additional
+  files and directories that are to be included in the archive
+  file. \\
+  \textbf{Example:} \verb!make dist extra="myconfig.h internal"!\\
+  will create the archive file and include the file
+  \texttt{myconfig.h} and the directory \texttt{internal} with all
+  files and subdirectories.
+\item[\texttt{install}] Install \es{}. The variables \texttt{prefix}
+  and \texttt{exec-prefix} can be used to specify the installation
+  directories, otherwise the defaults defined by the
+  \texttt{configure} script are used. \texttt{prefix} sets the basic
+  prefix where all \es{} files are to be installed,
+  \texttt{exec-prefix} sets the prefix where the executable files are
+  to be installed and is required only when there is an
+  architecture-specific directory.\\
+  \textbf{Example:} \verb!make install prefix=/usr/local!\\
+  will install all files below \texttt{/usr/local}.
+\item[\texttt{uninstall}] Uninstalls \es{}, \ie{} removes all files
+  that were installed during \texttt{make install}. The variables are
+  identical to the variables of the \texttt{install}-target.
+\end{description}
+
+\section{Running \es}
+\label{sec:run}
+
+\es{} can be run via
+\begin{syntax}
+$>$ Espresso [\var{tcl\_script} [\var{N\_processors} [\var{args}]]]
+\end{syntax}
+
+\index{interactive mode} When \es{} is called without any arguments,
+it is started in the interactive mode, where new commands can be
+entered on the command line. When the name of a \textit{tcl\_script}
+is given, the script is executed. \textit{N\_processors} is the number
+of processors that are to be used. Any further arguments are passed to
+the script. Note that depending on your MPI installation, MPI jobs can
+only be run in the queueing system, so that \es{} will not run from
+the command line.
+
+% A number of wrapper scripts are used in running \es{}:
+% \begin{itemize}
+% \item The script \texttt{Espresso} in the source and build directory
+%   will try to run the compiled version of \es. If it is called from
+%   the source directory, it assumes that \es{} was also configured in
+%   the source directory and will try to recursively start the script in
+%   the corresponding \texttt{obj-PLATFORM} build directory. If it is
+%   called in the build directory, it will start the \es-binary with the
+%   right MPI implementation.
+% \item The chooser script \texttt{Espresso} 
+%   \begin{itemize}
+%   \item installed when \verb!--enable-chooser! was given
+%   \item installed to bindir
+%   \item tries to run the correct version of the MPI-wrapper
+%     \texttt{Espresso}
+%   \end{itemize}
+% \item The MPI-wrapper \texttt{Espresso}
+%   \begin{itemize}
+%   \item installed next to \es{} binary
+%   \item starts the binary with the right MPI implementation
+%   \end{itemize}
+% \item The \es{} binary \texttt{Espresso-bin} can also be started
+%   directly, however, it requires that the environment variable
+%   \verb!ESPRESSO_SCRIPTS! is set to the directory where the scripts
+%   are installed (usually \verb!$(prefix)/lib/espresso/scripts! or
+%   \verb!$(prefix)/share/espresso/scripts!).
+% \end{itemize}
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 

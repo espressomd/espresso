@@ -1,93 +1,131 @@
-AC_DEFUN([MPI_SETUP],[
-	if test .$1 = .; then MPI_GUESS_ENV
+dnl -*- mode: autoconf -*-
+
+AC_DEFUN([ES_CHECK_MPI],[
+	AC_BEFORE([$0],[ES_CHECK_COMPILER])
+
+	AC_ARG_WITH(mpi,
+		AC_HELP_STRING([--with-mpi=TYPE],
+			[compile with MPI (parallelization)
+			support. If you specify
+			TYPE=fake,generic,lam,mpich,poe or dmpi, the
+			corresponding MPI implementation will used,
+			otherwise the native environment of the
+			platform is used. If none is found, the fake
+			implementation for only one processor is
+			used.]
+			),
+		,with_mpi=yes)
+
+	AC_ARG_ENABLE(mpi,,
+		[
+		with_mpi=$enable_mpi
+		AC_MSG_WARN([
+********************************************************************************
+* The option --enable-mpi is deprecated and will be removed in a future        *
+* version of Espresso! Please use --with-mpi instead!                          *
+********************************************************************************\
+		])])
+
+	if test .$with_mpi = .fake; then
+		ES_MPI_SETUP_FAKE
+	elif test .$with_mpi = .no; then
+		with_mpi=fake
+		ES_MPI_SETUP_FAKE
+	else
+		if test .$with_mpi = .yes; then
+			if test .$known_mpi != .; then
+				with_mpi=$known_mpi
+			fi
+		fi
+		if test .$with_mpi = .yes; then
+			ES_MPI_GUESS_ENV
+		else
+			ES_MPI_SETUP($with_mpi)
+		fi
+	fi
+	AC_DEFINE_UNQUOTED(MPI,"$with_mpi",[Which MPI implementation to use?])
+	AM_CONDITIONAL(MPI_FAKE, test .$with_mpi = .fake)
+	AC_SUBST(MPI_INVOCATION)
+])
+
+AC_DEFUN([ES_MPI_SETUP],[
+	if test .$1 = .; then ES_MPI_GUESS_ENV
 	else
 		case $1 in
-		poe)	MPI_FIND_MPICC
-			MPI_FIND_POE
+		poe)	ES_MPI_FIND_MPICC
+			ES_MPI_FIND_POE
 			if test $poe_found != yes; then AC_MSG_ERROR([IBM POE MPI not working]); fi
 			;;
-		dmpi)	MPI_FIND_DMPI
+		dmpi)	ES_MPI_FIND_DMPI
 			if test $dmpi_found != yes; then AC_MSG_ERROR([Tru64/OSF MPI not working]); fi
 			;;
-		generic) MPI_FIND_MPICC
-			MPI_FIND_GENERIC
+		generic) ES_MPI_FIND_MPICC
+			ES_MPI_FIND_GENERIC
 			if test $generic_found != yes; then AC_MSG_ERROR([generic MPI not working]); fi
 			;;
-		lam)	MPI_FIND_MPICC
-			MPI_FIND_LAM
+		lam)	ES_MPI_FIND_MPICC
+			ES_MPI_FIND_LAM
 			if test $lam_found != yes; then	AC_MSG_ERROR([LAM/MPI not working]); fi
 			;;
-		mpich)	MPI_FIND_MPICH
+		mpich)	ES_MPI_FIND_MPICH
 			if test $mpich_found != yes; then AC_MSG_ERROR([MPICH not working]); fi
 			;;
 		esac
 	fi
 ])
 
-AC_DEFUN([MPI_GUESS_ENV],[
-	enable_mpi=guess
+AC_DEFUN([ES_MPI_GUESS_ENV],[
+	with_mpi=guess
 	dnl look for special implementations
 	case $target_os in
-	*aix*)	MPI_FIND_MPICC
+	*aix*)	ES_MPI_FIND_MPICC
 		mpicc_done=y
-		MPI_FIND_POE
-		if test .$poe_found = .yes; then enable_mpi=poe; fi
+		ES_MPI_FIND_POE
+		if test .$poe_found = .yes; then with_mpi=poe; fi
 		;;
-	*osf*)	MPI_FIND_DMPI
-		if test .$dmpi_found = .yes; then enable_mpi=dmpi; fi
+	*osf*)	ES_MPI_FIND_DMPI
+		if test .$dmpi_found = .yes; then with_mpi=dmpi; fi
 		;;
 	esac
 
 	dnl always check for generic, LAM/MPI and MPICH, as they are multiplatform
 
-	if test .$enable_mpi = .guess; then
+	if test .$with_mpi = .guess; then
 		if test .$mpicc_done = .; then
-			MPI_FIND_MPICC
+			ES_MPI_FIND_MPICC
 		fi
-		MPI_FIND_LAM
-		if test .$lam_found = .yes; then enable_mpi=lam; fi
+		ES_MPI_FIND_LAM
+		if test .$lam_found = .yes; then with_mpi=lam; fi
 	fi
 
-	if test .$enable_mpi = .guess; then
-		MPI_FIND_MPICH
-		if test .$mpich_found = .yes; then enable_mpi=mpich; fi
+	if test .$with_mpi = .guess; then
+		ES_MPI_FIND_MPICH
+		if test .$mpich_found = .yes; then with_mpi=mpich; fi
 	fi
 
 	dnl generic last, since here we just assume how to run mpirun
 
-	if test .$enable_mpi = .guess; then
+	if test .$with_mpi = .guess; then
 		if test .$mpicc_done = .; then
-			MPI_FIND_MPICC
+			ES_MPI_FIND_MPICC
 		fi
-		MPI_FIND_GENERIC
-		if test .$generic_found = .yes; then enable_mpi=generic; fi
+		ES_MPI_FIND_GENERIC
+		if test .$generic_found = .yes; then with_mpi=generic; fi
 	fi
 
 	dnl out of guesses
-	if test .$enable_mpi = .guess; then
-		AC_MSG_WARN([
-********************************************************************
-* could neither detect LAM nor MPICH nor a native MPI environment, *
-* using the FAKE implementation for one processor only.            *
-* If you have an MPI environment, please specify its type and      *
-* the compiler or includes/libraries of your MPI implementation    *
-* manually, or, even better, add your MPI environment to           * 
-* config/mpi.m4                                                    *
-********************************************************************
-])
-		enable_mpi=fake
-		MPI_SETUP_FAKE
+	if test .$with_mpi = .guess; then
+		issue_fake_warning=yes
+		with_mpi=fake
+		ES_MPI_SETUP_FAKE
 	fi
 ])
 
-AC_DEFUN([MPI_SETUP_FAKE],[
-	CFLAGS="$CFLAGS -I."
-	AC_DEFINE(MPI,"fake")
-	ADD_SOURCES="$ADD_SOURCES mpi"
-	MPI_INVOCATION="\$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+AC_DEFUN([ES_MPI_SETUP_FAKE],[
+	MPI_INVOCATION="\$ESPRESSO_CALL"
 ])
 
-AC_DEFUN([MPI_FIND_MPICC],[
+AC_DEFUN([ES_MPI_FIND_MPICC],[
 	# only test the compiler if not overridden by the user
 	if test .$user_defined_CC != .yes; then
 		AC_CHECK_PROGS(MPICC,[mpcc mpxlc mpicc mpicci mpiccg hcc cc icc gcc])
@@ -98,7 +136,7 @@ AC_DEFUN([MPI_FIND_MPICC],[
     		[AC_MSG_RESULT(yes); mpicc_works=yes],[AC_MSG_RESULT(no); mpicc_works=no])
 ])
 
-AC_DEFUN([MPI_FIND_GENERIC],[
+AC_DEFUN([ES_MPI_FIND_GENERIC],[
 	AC_MSG_NOTICE([trying to find a generic MPI])
 	generic_found=yes
 	if test .$mpicc_works != .yes; then
@@ -110,26 +148,25 @@ AC_DEFUN([MPI_FIND_GENERIC],[
 		fi
 	fi
 	if test $generic_found = yes; then
-		AC_DEFINE(MPI,"generic")
-		MPI_INVOCATION="$generic_bin -np @NP@ \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+		MPI_INVOCATION="$generic_bin -np \$NP \$ESPRESSO_CALL"
 		AC_MSG_NOTICE([found a generic MPI environment])
 	fi
 ])
 
-AC_DEFUN([MPI_FIND_LAM],[
+AC_DEFUN([ES_MPI_FIND_LAM],[
 	AC_MSG_NOTICE([trying to find a LAM environment])
 	lam_found=yes
 	if test $mpicc_works = yes; then
-		lam_cflags=$CFLAGS
+		lam_cppflags=$CPPFLAGS
 		lam_ldflags=$LDFLAGS
 		lam_libs=$LIBS
 	else
-		save_cflags=$CFLAGS
+		save_cppflags=$CPPFLAGS
 		save_ldflags=$LDFLAGS
 		save_libs=$LIBS
 
 		AC_MSG_CHECKING([whether the $CC command works without additional flags])
-		lam_cflags=$CFLAGS
+		lam_cppflags=$CPPFLAGS
 		lam_ldflags=$LDFLAGS
 		lam_libs="$LIBS -lmpi -llam -lpthread"
 		LIBS=$lam_libs
@@ -141,7 +178,7 @@ AC_DEFUN([MPI_FIND_LAM],[
 				if test -f $hdrprf/include/lam.h; then lam_hdr_prf=$hdrprf; lam_hdr=$hdrprf/include; break; fi
 			done
 			if test $lam_hdr. = .; then
-				AC_MSG_NOTICE([did not find lam.h, if you want to use LAM, please specify its location via CFLAGS])
+				AC_MSG_NOTICE([did not find lam.h, if you want to use LAM, please specify its location via CPPFLAGS])
 				lam_found=no
 			fi
 			for libprf in /opt/lam /usr/lam /usr/local/lam /usr /usr/local; do
@@ -155,16 +192,16 @@ AC_DEFUN([MPI_FIND_LAM],[
 				lam_found=no
 			fi
 			if test $lam_found = yes; then
-				lam_cflags="$CFLAGS -I$lam_hdr"
+				lam_cppflags="$CPPFLAGS -I$lam_hdr"
 				lam_ldflags="$LDFLAGS -L$lam_lib"
-				CFLAGS=$lam_cflags
+				CPPFLAGS=$lam_cppflags
 				LDFLAGS=$lam_ldflags
 				AC_MSG_CHECKING([whether the $CC command works with guessed headers and libraries])
 	 			AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY(MPI_Init)],
 		    			AC_MSG_RESULT(yes),[AC_MSG_RESULT(no); lam_found=no])
 			fi
 		fi
-		CFLAGS=$save_cflags
+		CPPFLAGS=$save_cppflags
 		LDFLAGS=$save_ldflags
 		LIBS=$save_libs
 	fi
@@ -178,24 +215,23 @@ AC_DEFUN([MPI_FIND_LAM],[
 	fi
 	rm -f conftmp.log
 	if test $lam_found = yes; then
-		AC_DEFINE(MPI,"lam")
-		CFLAGS=$lam_cflags
+		CPPFLAGS=$lam_cppflags
 		LDFLAGS=$lam_ldflags
 		LIBS=$lam_libs
-		MPI_INVOCATION="$lam_bin -np @NP@ -nsigs \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+		MPI_INVOCATION="$lam_bin -x ESPRESSO_SCRIPTS -np \$NP -nsigs \$ESPRESSO_CALL"
 		AC_MSG_NOTICE([found a working LAM environment])
 	fi
 ])
 
-AC_DEFUN([MPI_FIND_MPICH],[
+AC_DEFUN([ES_MPI_FIND_MPICH],[
 	AC_MSG_NOTICE([trying to find a MPICH environment])
 	mpich_found=yes
-	save_cflags=$CFLAGS
+	save_cppflags=$CPPFLAGS
 	save_ldflags=$LDFLAGS
 	save_libs=$LIBS
 
 	AC_MSG_CHECKING([whether the $CC command works without flags])
-	mpich_cflags=$CFLAGS
+	mpich_cppflags=$CPPFLAGS
 	mpich_ldflags=$LDFLAGS
 	mpich_libs="$LIBS -lmpich"
 	LIBS=$mpich_libs
@@ -216,7 +252,7 @@ AC_DEFUN([MPI_FIND_MPICH],[
 			if test .$mpich_hdr != .; then break; fi
 		done
 		if test $mpich_hdr. = .; then
-			AC_MSG_NOTICE([did not find mpi.h, please specify its location via CFLAGS])
+			AC_MSG_NOTICE([did not find mpi.h, please specify its location via CPPFLAGS])
 			mpich_found=no
 		fi
 		for libpprf in /opt/mpich /usr/mpich /usr/local/mpich /usr /usr/local; do
@@ -240,18 +276,18 @@ AC_DEFUN([MPI_FIND_MPICH],[
 			mpich_found=no
 		fi
 		if test $mpich_found = yes; then
-			mpich_cflags="$CFLAGS -I$mpich_hdr"
+			mpich_cppflags="$CPPFLAGS -I$mpich_hdr"
 			mpich_ldflags="$LDFLAGS -L$mpich_lib"
-			CFLAGS=$mpich_cflags
+			CPPFLAGS=$mpich_cppflags
 			LDFLAGS=$mpich_ldflags
 			AC_MSG_CHECKING([whether the $CC command works with guessed headers and libraries])
 	 		AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY(MPI_Init)],
 		    		AC_MSG_RESULT(yes),[AC_MSG_RESULT(no); mpich_found=no])
-			CFLAGS=$save_cflags
+			CPPFLAGS=$save_cppflags
 			LDFLAGS=$save_ldflags
 		fi
 	fi
-	CFLAGS=$save_cflags
+	CPPFLAGS=$save_cppflags
 	LDFLAGS=$save_ldflags
 	LIBS=$save_libs
 
@@ -265,16 +301,15 @@ AC_DEFUN([MPI_FIND_MPICH],[
 	fi
 	rm -f conftmp.log
 	if test $mpich_found = yes; then
-		AC_DEFINE(MPI,"mpich")
-		CFLAGS="$mpich_cflags"
+		CPPFLAGS="$mpich_cppflags"
 		LDFLAGS=$mpich_ldflags
 		LIBS=$mpich_libs
-		MPI_INVOCATION="$mpich_bin -np @NP@ \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+		MPI_INVOCATION="$mpich_bin -np \$NP \$ESPRESSO_CALL"
 		AC_MSG_NOTICE([found a working MPICH environment])
 	fi
 ])
 
-AC_DEFUN([MPI_FIND_POE],[
+AC_DEFUN([ES_MPI_FIND_POE],[
 	poe_found=yes
 	if test .$mpicc_works != .yes; then
 		AC_MSG_NOTICE([the poe environment only works via mpcc, please specify your c compiler])
@@ -282,12 +317,11 @@ AC_DEFUN([MPI_FIND_POE],[
 	fi
 	if test .$poe_found = .yes; then
 		AC_PATH_PROG(poe_bin, poe, poe, $PATH)
-		AC_DEFINE(MPI,"poe")
-		MPI_INVOCATION="$poe_bin \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@ -procs @NP@"
+		MPI_INVOCATION="$poe_bin \$ESPRESSO_CALL -procs \$NP"
 	fi
 ])
 
-AC_DEFUN([MPI_FIND_DMPI],[
+AC_DEFUN([ES_MPI_FIND_DMPI],[
 	saved_libs=$LIBS
 	dmpi_found=yes
 	AC_MSG_CHECKING([whether the $CC command works for MPI])
@@ -297,7 +331,6 @@ AC_DEFUN([MPI_FIND_DMPI],[
     			[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no); dmpi_found=no])
 	if test .$dmpi_found = .yes; then
 		AC_PATH_PROG(dmpi_bin, dmpirun, dmpirun, $PATH)
-		AC_DEFINE(MPI, "dmpi")
-		MPI_INVOCATION="$dmpi_bin -np @NP@ \$ESPRESSO_SOURCE/obj-$target/Espresso_bin @ARGUMENTS@"
+		MPI_INVOCATION="$dmpi_bin -np \$NP \$ESPRESSO_CALL"
 	fi
 ])

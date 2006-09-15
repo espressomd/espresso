@@ -1,0 +1,15 @@
+/* This is the default file @myconfig@.
+   DO NOT MODIFY THIS FILE! 
+   Instead, copy the file 
+   @top_srcdir@/myconfig-sample.h 
+   to
+   @top_builddir@/@myconfig@
+   or 
+   @top_srcdir@/@myconfig@
+   and modify it there!
+*/
+#define ELECTROSTATICS
+#define LENNARD_JONES
+
+#define MPI_CORE
+#define FORCE_CORE

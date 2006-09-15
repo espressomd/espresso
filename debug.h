@@ -14,90 +14,13 @@
 
  The implementation is found in
  \ref debug.c "debug.c".
- This file contains a couple of commented out defines. If they are commented in,
- they activate debug output for various aspects:
- <ul>
- <li> \verbatim #define COMM_DEBUG \endverbatim activate printing of communicated actions.
- <li> \verbatim #define INTEG_DEBUG \endverbatim activate integration debug output.
- <li> \verbatim #define CELL_DEBUG \endverbatim activate cell code debug output.
- <li> \verbatim #define GHOST_DEBUG \endverbatim activate ghost code debug output.
- <li> \verbatim #define LATTICE_DEBUG \endverbatim activate lattice code debug output.
- <li> \verbatim #define HALO_DEBUG \endverbatim activate halo code debug output.
- <li> \verbatim #define GRID_DEBUG \endverbatim activate grid debug output.
- <li> \verbatim #define VERLET_DEBUG \endverbatim activate verlet debug output.
- <li> \verbatim #define PARTICLE_DEBUG \endverbatim activate particle data related debug output.
- <li> \verbatim #define P3M_DEBUG \endverbatim activate P3M related debug output.
- <li> \verbatim #define FFT_DEBUG \endverbatim activate FFT related debug output.
- <li> \verbatim #define RANDOM_DEBUG \endverbatim activate debug output for the random number generator.
- <li> \verbatim #define FORCE_DEBUG \endverbatim activate detailed Force debugging -> gives explicitely all forces.
- <li> \verbatim #define THERMO_DEBUG \endverbatim activate debug output for the theromostat.
- <li> \verbatim #define LJ_DEBUG \endverbatim activate debug output for the LJ-potential.
- <li> \verbatim #define MORSE_DEBUG \endverbatim activate debug output for the MORSE-potential.
- <li> \verbatim #define ESR_DEBUG \endverbatim activate ??? debug output.
- <li> \verbatim #define ESK_DEBUG \endverbatim activate ??? debug output.
- <li> \verbatim #define FENE_DEBUG \endverbatim activate debug output for the FENE-potential.
- <li> \verbatim #define GHOST_FORCE_DEBUG \endverbatim activate debug output for ghost forces.
- <li> \verbatim #define ONE_PART_DEBUG <part_id> \endverbatim activate debug output, tracing everything done with particle "<part_id>".
- <li> \verbatim #define STAT_DEBUG \endverbatim activate statistics related debug output.
- <li> \verbatim #define POLY_DEBUG \endverbatim activate polymer setup debug output.
- <li> \verbatim #define MOLFORCES_DEBUG \endverbatim activate molforces debug output.
- <li> \verbatim #define MEM_DEBUG \endverbatim activate memory allocation/freeing logging. WARNING: This generates TONS of
- output. This can only be used reasonably for a few time steps with a few particles.
- <li> \verbatim #define MAGGS_DEBUG \endverbatim activate debugging output of the Maggs electrostatics/dynamics method.
- <li> \verbatim #define LB_DEBUG \endverbatim activate debugging output for Lattice Boltzmann fluid dynamics.
- <li> \verbatim #define MPI_CORE \endverbatim generate a core dump when exiting abnormally due
- to MPI errors.
- <li> \verbatim #define FORCE_CORE \endverbatim generate a core dump even on regular termination.
- <li> \verbatim #define ADDITIONAL_CHECKS \endverbatim adds additional checks which indicate failure
- of the code.
- </ul>
 
  For every define there exists a macro that can be used to encapsulate short lines (like printf("...",...);)
  of code that should be executed iff the respective *_DEBUG macro is defined.
 */
 
+#include "config.h"
 #include <tcl.h>
-
-/* #define COMM_DEBUG */
-/* #define EVENT_DEBUG */
-/* #define INTEG_DEBUG */
-/* #define CELL_DEBUG */
-/* #define GHOST_DEBUG */
-/* #define LATTICE_DEBUG */
-/* #define HALO_DEBUG */
-/* #define GRID_DEBUG */
-/* #define VERLET_DEBUG */
-/* #define PARTICLE_DEBUG */
-/* #define P3M_DEBUG */
-/* #define EWALD_DEBUG */
-/* #define FFT_DEBUG */
-/* #define RANDOM_DEBUG */
-/* #define FORCE_DEBUG */
-/* #define THERMO_DEBUG */ 
-/* #define LJ_DEBUG */
-/* #define MORSE_DEBUG */
-/* #define ESR_DEBUG */
-/* #define ESK_DEBUG */
-/* #define FENE_DEBUG */
-/* #define GHOST_FORCE_DEBUG */
-/* #define ONEPART_DEBUG 13 */
-/* #define STAT_DEBUG */ 
-/* #define POLY_DEBUG */
-/* #define MOLFORCES_DEBUG */
-/* #define MEM_DEBUG */
-/* #define MAGGS_DEBUG */
-/* #define LB_DEBUG */
-
-/** do an MPI_Barrier at the beginning of the communication slave loop.
-    Helps a lot in debugging */
-/* #define ASYNC_BARRIER */
-
-/** generate a core file on MPI errors */
-#define MPI_CORE
-/** generate a core file on errexit() */
-#define FORCE_CORE
-
-/* #define ADDITIONAL_CHECKS */
 
 #ifdef MEM_DEBUG
 #ifdef __GNUC__

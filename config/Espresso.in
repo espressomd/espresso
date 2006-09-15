@@ -1,3 +1,0 @@
-#!/bin/sh
-if test .$2 != .; then NP=$2; else NP=2; fi
-@MPI_INVOCATION@

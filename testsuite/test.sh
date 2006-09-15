@@ -1,63 +1,51 @@
 #!/bin/sh
 
-TESTCASES="nve_pe.tcl npt.tcl \
-    madelung.tcl mmm1d.tcl p3m.tcl el2d.tcl el2d_nonneutral.tcl dh.tcl \
-    lj.tcl lj-cos.tcl harm.tcl fene.tcl tabulated.tcl gb.tcl rotation.tcl constraints.tcl \
-    kinetic.tcl thermostat.tcl \
-    intpbc.tcl intppbc.tcl layered.tcl nsquare.tcl \
-    comforce.tcl comfixed.tcl analysis.tcl mass.tcl lb.tcl"
+####### guess srcdir from script location for manual execution
+if test ! -f $srcdir/test.sh; then
+    srcdir=`dirname $0`
+fi
 
-# List of testcases to be done (and people responsible for them):
-#################################################################
-#
-# - madelung: (HL / Status: Done.)
-#   Calculating the Madelung constant in a NaCl-crystal.
-# - lj/lj-cos: (AxA / Status: Done.)
-#   Testing forces, energies, pressures of the LJ/LJ-cos-interaction.
-# - harm/fene: (BAM / Status: Done.)
-#   Testing forces, energies, pressures of the harmonic-/FENE-interaction.
-# - p3m/dh: (HL / Status: Done.)
-#   Testing electrostatic interactions.
-# - tabulated (Ira / Status: Done. )
-#   Testing forces, energies, pressures of the tabulated interaction.
-# - mmm1d: (AxA / Status: Done.)
-#   Testing forces of the mmm1D-interaction.
-# - gb: (DmA / Status: Done.)
-#   Testing forces, energies, pressures of the Gay-Berne-Potential.
-# - rotation: (DmA / Status: Done.)
-#   Testing system with rotational degrees of freedom.
-# - constraints: (HL / Status: Done.)
-#   Check if constraints are working.
-# - kinetic: (BAM / Status: Done.)
-#   Small check of velocities, forces and kinetic energy for a two-particle-electrostatic system
-# - thermostat: (FRM / Status: Done.)
-#   10000 timesteps only thermostat - does the given temperature (i.e. Ekin) remain constant?
-# - Int-PBC/Int-PPBC: (AxA / Status: Done.)
-#   (Partial) Periodic Boundary Integration.
-# - layered/nsquare: (AxA / Status: Done.)
-#   Testcases for the layered- and N^2-particle structures available since v1.5.
-# - Analysis: (BAM / Status: Done.)
-#   Checking checkpoints and analysis routines.
-# - comfixed: (MS / Status: Done.)
-#   Testing forces, energies, pressures of the comfixed.
-# - comforce: (MS / Status: Done.)
-#   Testing forces, energies, pressures of the comfixed.
-# - nve_pe.tcl: (MS / Status: Done.)
-#   Testing energy conservation with PE chain 
-# - mass.tcl: (TS / Status: New.)
-#   Testing momentum conservation with masses turned on
-#
-#################################################################
+if test -x ../Espresso; then
+    ESPRESSO=`pwd`/../Espresso
+fi
 
+# bail out if the environment is not correctly set
+bail=
+if test ! -f "$srcdir/test.sh"; then
+    echo "please specify the variable srcdir pointing to the testsuite directory" 1>&2
+    bail=y
+fi
+if test ! -x "$ESPRESSO"; then
+    echo "please specify the variable ESPRESSO pointing to the Espresso program" 1>&2
+    bail=y
+fi
+if test -z "$PROCESSORS"; then
+    echo "please specify the processor numbers in PROCESSORS" 1>&2
+    bail=y
+fi
+if test -z "$TESTCASES"; then
+    echo "please specify the testcases to run in TESTCASES" 1>&2
+    bail=y
+fi
+if test -n "$bail"; then
+    exit -1
+fi
+
+# here go the error messages
 errf=_test.sh_error.$$
 
-nplist="1 2 3 4 6 8"
+# absolute path of source directory
+srcpath=`cd $srcdir && pwd`
+####### link all files from the src directory to the run directory, if they are not identical
+if test `pwd` != $srcpath; then
+    for f in $srcpath/*; do ln -f -s $f .; done
+fi
 
 # list of tests that are not supported by this version
 blacklist=
 # and what is missing for what test
 missing=
-for np in $nplist; do
+for np in $PROCESSORS; do
     for f in $TESTCASES; do
 	ignore=0
 	for ft in $blacklist; do
@@ -70,7 +58,7 @@ for np in $nplist; do
 	if test $ignore -eq 0; then
 	    # this is removed if the script runs through
 	    echo "execution of script failed at unexpected point" > $errf
-	    ../Espresso $f $np $errf
+	    $ESPRESSO $srcpath/$f $np $errf
 	    if test -f $errf; then
 		if grep -q -e "^not compiled in:" $errf; then
 		    missing="$missing$f: `cat $errf`\n"

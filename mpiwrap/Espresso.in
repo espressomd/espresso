@@ -1,0 +1,7 @@
+#!/bin/sh
+# This is the MPI wrapper for Espresso
+if test .$2 != .; then NP=$2; else NP=2; fi
+ESPRESSO_SCRIPTS="@ESPRESSO_SCRIPTS@"
+export ESPRESSO_SCRIPTS
+ESPRESSO_CALL="@ESPRESSO_BIN@ $*"
+@MPI_INVOCATION@

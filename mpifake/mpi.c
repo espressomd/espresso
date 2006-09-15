@@ -8,7 +8,7 @@
 // Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 /** \file mpi.c
  *
- *  For more information about MPIFake, see \ref mpi.h "mpi.h".
+ *  For more information about MPIFake, see \ref mpifake.h "mpifake.h".
  */
 #include "mpi.h"
 
@@ -261,3 +261,4 @@ int mpifake_checked_copy(void *s, int scount, MPI_Datatype sdtype,
   mpifake_copy(s, r, &rcount, &rdtype);
   return MPI_SUCCESS;
 }
+

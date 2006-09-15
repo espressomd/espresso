@@ -17,6 +17,7 @@
 */
 #ifndef BLOCKFILE_TCL_H
 #define BLOCKFILE_TCL_H
+#include "config.h"
 #include <tcl.h>
 
 /** Implementation of the Tcl command \ref tcl_blockfile. Allows to read and write
