@@ -2,10 +2,11 @@
 
     This is a sample for the file myconfig.h.
 
-    Uncomment and add any of the following lines to myconfig.h to
-    activate the corresponding feature of Espresso. It is recommended
-    to turn only those features on that you actually need to optimize
-    the performance of Espresso for your problem. 
+    Uncomment any of the following lines to myconfig.h to activate
+    the corresponding feature of Espresso. It is recommended to turn
+    only those features on that you actually need to optimize the
+    performance of Espresso for your problem. For details on these
+    features see the user's guide, Sec. 2.6 "Configuration options".
 
     To access the information on the compilation status of the code
     you are working with in your Espresso Tcl-script, use the
