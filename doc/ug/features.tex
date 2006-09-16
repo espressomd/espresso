@@ -1,0 +1,142 @@
+\chapter{Features of \es}
+\label{chap:features}
+\index{features|textbf}
+
+\newcommand{\feature}[1]{\texttt{\textbf{#1}}}
+
+This chapter describes the features that can be activated in \es. Even
+if possible, it is not recommended to activate all features, because
+this will negatively effect \es's performance.
+
+Features can be activated in the configuration header (see section
+\vref{sec:myconfig}). Too activate \texttt{FEATURE}, add the following
+line to the header file:
+\begin{verbatim}
+#define FEATURE
+\end{verbatim}
+
+\section{General features}
+\begin{itemize}
+\item \feature{PARTIAL\_PERIODIC} By default, all coordinates in \es{} are periodic. With
+  \texttt{PARTIAL\_PERIODIC} turned on, the \es{} global variable \texttt{periodic} (see
+  Sec.~\ref{sec:globalvar}) controls the periodicity of the individual coordinates. Note that this
+  slows the integrator down by around $10-30\%$.
+\item \feature{ELECTROSTATICS} This switches on the various electrostatics algorithms, such as
+  the Ewald summation. See Sec.~\ref{sec:electrostatics} for details on this algorithms.
+\item \feature{ROTATION} Switch on rotational degrees of freedom for the particles, as well as
+  the corresponding quaternion integrator. See Sec.~\ref{sec:rotation} for details.
+\item \feature{DIPOLES} This activates the dipole support in P$^3$M. Currently, a mixing of
+  dipoles and charges is not possible, i.~e. all particles have to have charge $q=0$.
+  Requires \texttt{ELECTROSTATICS} and \texttt{ROTATION}.
+\item \feature{EXTERNAL\_FORCES} Allows to define an arbitrary constant force for each particle
+  individually. Also allows to fix individual coordinates of particles, e.~g. keep them at a fixed
+  position or within a plane.
+\item \feature{CONSTRAINTS} Turns on various spatial constraints such as spherical compartments
+  or walls. This constraints interact with the particles through regular short ranged potentials
+  such as the Lennard--Jones potential. See Sec.~\ref{sec:constraints} for possible constraint
+  forms.
+\item \feature{MASS} Allows particles to have individual masses. Note that some analyzation
+  procedures have not yet been adapted to take the masses into account correctly.
+\item \feature{EXCLUSIONS} Allows to exclude specific short ranged interactions within
+  molecules, which is necessary for some atomistic models.
+\item \feature{COMFORCE}
+\item \feature{COMFIXED}
+\item \feature{MOLFORCES}
+\item \feature{BOND\_CONSTRAINT} Turns on the RATTLE integrator which allows for fixed lengths
+  bonds between particles.
+\end{itemize}
+
+In addition, there are switches that enable additional features in the integrator:
+\begin{itemize}
+\item \feature{NEMD} Enables the non-equilbrium (shear) MD support (see Sec.~\ref{sec:NEMD}).
+\item \feature{NPT} Enables an on--the--fly NPT integration scheme (see Sec.~\ref{sec:NPT}).
+\item \feature{DPD} Enables the dissipative particle dynamics thermostat (see
+  Sec.~\ref{sec:DPD}).
+\item \feature{LB} Enables the lattice-Boltzmann fluid code (see Sec.~\ref{sec:LB}).
+\end{itemize}
+
+\section{Interactions}
+The following switches turn on various short ranged interactions (see Sec.~\ref{sec:shortrange}):
+\begin{itemize}
+\item \feature{TABULATED} Enable support for user--defined interactions, e.~g. for atomistic
+  simulations.
+\item \feature{LENNARD\_JONES} Enable the Lennard--Jones potential.
+\item \feature{LJ\_WARN\_WHEN\_CLOSE} This adds an additional check to the Lennard--Jones
+  potential that prints a warning of particles come too close so that the simulation becomes
+  unphysical.
+\item \feature{MORSE} Enable the Morse potential.
+\item \feature{LJCOS} Enable the Lennard--Jones potential with a cosine--tail.
+\item \feature{LJCOS2}
+\item \feature{BUCKINGHAM} Enable the Buckingham potential.
+\item \feature{SOFT\_SPHERE} Enable the soft sphere potential.
+\end{itemize}
+
+If you want to use angle bonds, you currently need to choose the type
+a priori (see section \vref{sec:angle}). This will change in the near
+future to three independent angle potentials:
+\begin{itemize}
+\item \feature{BOND\_ANGLE\_HARMONIC}
+\item \feature{BOND\_ANGLE\_COSINE}
+\item \feature{BOND\_ANGLE\_COSSQUARE}
+\end{itemize}
+
+\section{Debug messages}
+Finally, there are a number of flags for debugging. The most important one are
+\begin{itemize}
+\item \feature{ADDITIONAL\_CHECKS} Enables numerous additional checks which can detect
+  inconsistencies especially in the cell systems. This checks are however too slow to be enabled in
+  production runs.
+\item \feature{MEM\_DEBUG} Enables an internal memory allocation checking system. This produces
+  output for each allocation and freeing of a memory chunk, and therefore allows to track down
+  memory leaks. This works by internally replacing \texttt{malloc}, \texttt{realloc} and
+  \texttt{free}.
+\end{itemize}
+
+The following flags control the debug output of various sections of Espresso. You will however
+understand the output very often only by looking directly at the code.
+\begin{itemize}
+\item \feature{COMM\_DEBUG} Output from the asynchronous communication code.
+\item \feature{EVENT\_DEBUG} Notifications for event calls, i.~e. the \texttt{on\_?} functions
+  in \texttt{initialize.c}. Useful if some module does not correctly respond to changes of e.~g.
+  global variables.
+\item \feature{INTEG\_DEBUG} Integrator output.
+\item \feature{CELL\_DEBUG} Cellsystem output.
+\item \feature{GHOST\_DEBUG} Cellsystem output specific to the handling of ghost cells and the
+  ghost cell communication.
+\item \feature{GHOST\_FORCE\_DEBUG}
+\item \feature{VERLET\_DEBUG} Debugging of the Verlet list code of the domain decomposition cell
+  system.
+\item \feature{LATTICE\_DEBUG} Universal lattice structure debugging.
+\item \feature{HALO\_DEBUG}
+\item \feature{GRID\_DEBUG}
+\item \feature{PARTICLE\_DEBUG} Output from the particle handling code.
+\item \feature{P3M\_DEBUG}
+\item \feature{ESR\_DEBUG} debugging of P$^3$Ms real space part.
+\item \feature{ESK\_DEBUG} debugging of P$^3$Ms $k$--space part.
+\item \feature{EWALD\_DEBUG}
+\item \feature{FFT\_DEBUG} Output from the unified FFT code.
+\item \feature{MAGGS\_DEBUG}
+\item \feature{RANDOM\_DEBUG}
+\item \feature{FORCE\_DEBUG} Output from the force calculation loops.
+\item \feature{THERMO\_DEBUG} Output from the thermostats.
+\item \feature{LJ\_DEBUG} Output from the Lennard--Jones code.
+\item \feature{MORSE\_DEBUG} Output from the Morse code.
+\item \feature{FENE\_DEBUG}
+\item \feature{ONEPART\_DEBUG} Define to a number of a particle to obtain output on the forces
+  calculated for this particle.
+\item \feature{STAT\_DEBUG}
+\item \feature{POLY\_DEBUG}
+\item \feature{MOLFORCES\_DEBUG}
+\item \feature{LB\_DEBUG} Output from the lattice--Boltzmann code.
+\item \feature{ASYNC\_BARRIER} Introduce a barrier after each asynchronous command
+  completion. Helps in detection of mismatching communication.
+\item \feature{FORCE\_CORE} Causes \es{} to try to provoke a core dump when exiting
+  unexpectedly.
+\item \feature{MPI\_CORE} Causes \es{} to try this even with MPI errors.
+\end{itemize}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 

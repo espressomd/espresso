@@ -1,4 +1,4 @@
-ug_SOURCES=ug.tex installation.tex logo.jpg
+ug_SOURCES=ug.tex installation.tex features.tex logo.jpg
 
 EXTRA_DIST=$(ug_SOURCES) ug.pdf
 .PHONY: doc ug
