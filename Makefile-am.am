@@ -2,7 +2,7 @@ SUBDIRS = . scripts testsuite doc doc/ug doc/dg
 
 # List files that should go into the distribution but are not required
 # by any other means
-EXTRA_DIST = Makefile RELEASE_NOTES samples packages $(extra)
+EXTRA_DIST = Makefile RELEASE_NOTES darwinlink.sh autogen.sh copyright.sh demo.tcl simulation.tcl samples packages $(extra)
 
 # List headers that are not used by the program here
 noinst_HEADERS = myconfig-sample.h
