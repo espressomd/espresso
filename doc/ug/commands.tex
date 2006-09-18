@@ -1,5 +1,8 @@
-\chapter{Features of \es}
-\label{chap:features}
+\chapter{\es{} command reference}
+\label{chap:ref}
+
+\section{Features}
+\label{sec:features}
 \index{features|textbf}
 
 \newcommand{\feature}[1]{\texttt{\textbf{#1}}}
@@ -15,7 +18,7 @@ line to the header file:
 #define FEATURE
 \end{verbatim}
 
-\section{General features}
+\subsection{General features}
 \begin{itemize}
 \item \feature{PARTIAL\_PERIODIC} By default, all coordinates in \es{} are periodic. With
   \texttt{PARTIAL\_PERIODIC} turned on, the \es{} global variable \texttt{periodic} (see
@@ -55,7 +58,7 @@ In addition, there are switches that enable additional features in the integrato
 \item \feature{LB} Enables the lattice-Boltzmann fluid code (see Sec.~\ref{sec:LB}).
 \end{itemize}
 
-\section{Interactions}
+\subsection{Interactions}
 The following switches turn on various short ranged interactions (see Sec.~\ref{sec:shortrange}):
 \begin{itemize}
 \item \feature{TABULATED} Enable support for user--defined interactions, e.~g. for atomistic
@@ -80,7 +83,7 @@ future to three independent angle potentials:
 \item \feature{BOND\_ANGLE\_COSSQUARE}
 \end{itemize}
 
-\section{Debug messages}
+\subsection{Debug messages}
 Finally, there are a number of flags for debugging. The most important one are
 \begin{itemize}
 \item \feature{ADDITIONAL\_CHECKS} Enables numerous additional checks which can detect
@@ -135,6 +138,55 @@ understand the output very often only by looking directly at the code.
 \item \feature{MPI\_CORE} Causes \es{} to try this even with MPI errors.
 \end{itemize}
 
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 
+
+
+(most from paper and from related pages)
+
+\begin{itemize}
+\item Will contain description of all Tcl-commands
+\item Reference to appendix \vref{chap:quickref}
+\item basic identifiers:
+  \begin{itemize}
+  \item particle type
+  \item bonded interaction type
+  \item molecule id
+  \end{itemize}
+\end{itemize}
+
+
+\section{\texttt{inter}: Setting up interactions}
+\label{sec:inter}
+\begin{syntax}
+  \variant{1}
+  {inter 
+    \var{part\_type\_id1} 
+    \var{part\_type\_id2}
+    \var{inter\_type} 
+    [ \var{parameters}\ldots ]
+  }
+  \variant{2}
+  {inter 
+    \var{bond\_type\_id} \var{bond\_type} [
+    \var{parameters}\ldots ]
+  }
+  \variant{3}
+  {inter}
+\end{syntax}
+    % \section{Creating particles}
+% \label{sec:part}
+% \texttt{part}
+
+% \section{Interactions}
+% \label{sec:inter}
+% \texttt{inter}
+
+% \section{Analysis}
+% \label{sec:analysis}
 
 %%% Local Variables: 
 %%% mode: latex

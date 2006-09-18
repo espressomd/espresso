@@ -1,4 +1,11 @@
-ug_SOURCES=ug.tex installation.tex features.tex logo.jpg
+ug_SOURCES=ug.tex \
+	introduction.tex \
+	tutorial.tex \
+	installation.tex \
+	commands.tex \
+	internal.tex \
+	contributing.tex \
+	logo.jpg
 
 EXTRA_DIST=$(ug_SOURCES) ug.pdf
 .PHONY: doc ug
@@ -10,6 +17,8 @@ if HAVE_PDFLATEX
 	for file in $(ug_SOURCES); do \
 	  if test ! -e $$file; then $(LN_S) $(srcdir)/$$file .; fi;\
 	done
+	$(PDFLATEX) ug.tex
+	makeindex ug
 	$(PDFLATEX) ug.tex
 	$(PDFLATEX) ug.tex
 else

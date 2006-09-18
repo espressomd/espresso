@@ -166,7 +166,15 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
-ug_SOURCES = ug.tex installation.tex features.tex logo.jpg
+ug_SOURCES = ug.tex \
+	introduction.tex \
+	tutorial.tex \
+	installation.tex \
+	commands.tex \
+	internal.tex \
+	contributing.tex \
+	logo.jpg
+
 EXTRA_DIST = $(ug_SOURCES) ug.pdf
 CLEANFILES = ug.pdf
 MOSTLYCLEANFILES = \
@@ -334,6 +342,8 @@ ug.pdf: $(ug_SOURCES)
 @HAVE_PDFLATEX_TRUE@	for file in $(ug_SOURCES); do \
 @HAVE_PDFLATEX_TRUE@	  if test ! -e $$file; then $(LN_S) $(srcdir)/$$file .; fi;\
 @HAVE_PDFLATEX_TRUE@	done
+@HAVE_PDFLATEX_TRUE@	$(PDFLATEX) ug.tex
+@HAVE_PDFLATEX_TRUE@	makeindex ug
 @HAVE_PDFLATEX_TRUE@	$(PDFLATEX) ug.tex
 @HAVE_PDFLATEX_TRUE@	$(PDFLATEX) ug.tex
 @HAVE_PDFLATEX_FALSE@	@echo "pdflatex was not found in your PATH."

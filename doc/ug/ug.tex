@@ -68,177 +68,20 @@ idxtotoc                        % add the index to the TOC
     \includegraphics[width=5cm]{logo.jpg}
   \end{center}
 }
-%\subject{Dissertation}
+%\subject{}
 \title{\es{} User's Guide}
-%\author{Dipl.-Inform. Olaf~Lenz}
+%\author{}
 %\date{\today}
 \maketitle
 
 \tableofcontents
 
-\chapter{Introduction}
-\label{chap:intro}
-
-(new)
-
-\begin{itemize}
-\item \es{} is a generic soft matter simulation packages
-\item for molecular dynamics simulations in soft matter research
-\item focussed on coarse-grained models
-\item employs modern algorithms (Lattice-Boltzmann, DPD, P3M, \ldots)
-\item written in C for maximal portability
-\item Tcl-controlled
-\item parallelized
-\end{itemize}
-
-\section{Guiding principles}
-\label{sec:ideas}
-
-(from paper: 2.1 Goals and principles)
-
-\es
-\begin{itemize}
-\item does \emph{not} do the physics for you!
-\item requires you to understand what you do (can not be used as a
-  black box)
-\item gives you maximal freedom (flexibility)
-\item is extensible
-\item integrates system setup, simulation and analysis, as this can't
-  be strictly separated in soft matter simulations
-\item has no predefined units
-\item sets as few defaults as possible
-\end{itemize}
-
-\section{Algorithms contained in \es}
-
-The following algorithms are implemented in \es{}:
-
-\begin{itemize}
-\item ensembles: NVE, NVT, NpT
-\item charged systems:
-  \begin{itemize}
-  \item P3M for fully periodic systems
-  \item ELC and MMM-family of algorithms for charged systems with
-    non-periodic boundary conditions
-  \item Maggs algorithm 
-  \end{itemize}
-\item Hydrodynamics:
-  \begin{itemize}
-  \item DPD (as a thermostat)
-  \item Lattice-Boltzmann
-  \end{itemize}
-\end{itemize}
-
-\section{Basic program structure}
-\label{sec:structure}
-
-(from paper: 2.2 Basic program structure)
-
-\begin{itemize}
-\item Control level: \texttt{Tcl}
-\item ``Kernel'' written in \texttt{C}
-\item This manual will focus on the control level
-\end{itemize}
-
-\section{On units}
-\label{sec:units}
-
-(new)
-
-\begin{itemize}
-\item Reduced units
-\item comparison to ``real units''
-\item three examples on different length scales
-  \begin{itemize}
-  \item some atomistic model?
-  \item coarse-grained model (\eg lipid bilayer)
-  \item billards?
-  \end{itemize}
-\end{itemize}
-
+\include{introduction}
+\include{tutorial}
 \include{installation}
-
-\chapter{Tutorial}
-\label{chap:tutorial}
-
-(from \verb!erice_tutorial! or appendix A from paper)
-
-\begin{itemize}
-\item \es: script interpreter
-\item interactive use (sample session)
-\item script execution
-\item example script
-\item Reference to \verb!tutorial.tcl! (?)
-\end{itemize}
-
-\include{features}
-
-\chapter{\es{} command reference}
-\label{chap:ref}
-
-(most from paper and from related pages)
-
-\begin{itemize}
-\item Will contain description of all Tcl-commands
-\item Reference to appendix \vref{chap:quickref}
-\item basic identifiers:
-  \begin{itemize}
-  \item particle type
-  \item bonded interaction type
-  \item molecule id
-  \end{itemize}
-\end{itemize}
-
-
-\section{\texttt{inter}: Setting up interactions}
-\label{sec:inter}
-\begin{syntax}
-  \variant{1}
-  {inter 
-    \var{part\_type\_id1} 
-    \var{part\_type\_id2}
-    \var{inter\_type} 
-    [ \var{parameters}\ldots ]
-  }
-  \variant{2}
-  {inter 
-    \var{bond\_type\_id} \var{bond\_type} [
-    \var{parameters}\ldots ]
-  }
-  \variant{3}
-  {inter}
-\end{syntax}
-    % \section{Creating particles}
-% \label{sec:part}
-% \texttt{part}
-
-% \section{Interactions}
-% \label{sec:inter}
-% \texttt{inter}
-
-% \section{Analysis}
-% \label{sec:analysis}
-
-\chapter{Under the hood}
-\label{chap:underhood}
-
-(new)
-
-\begin{itemize}
-\item Implementation issues that are interesting for the user
-\item Main loop in pseudo code (for comparison)
-\item from doxygen: ``Cell systems'' 
-\end{itemize}
-
-
-\chapter{Getting involved}
-\label{chap:devel}
-
-\begin{itemize}
-\item What to do when you want to become involved
-\item How to submit a bug report
-\end{itemize}
-
+\include{commands}
+\include{internal}
+\include{contributing}
 
 \appendix
 \chapter{\es{} quick reference}
