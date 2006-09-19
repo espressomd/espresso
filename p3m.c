@@ -1477,9 +1477,6 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 /*********************
    Dipolar energy
 **********************/
-if (p3m_sum_q2 > 0) {
-   printf("Warning: Charges are present, but are not supported by the current implementation of P3M-dipoles.\n");
-}
     /* i*k differentiation for dipolar gradients: |(\Fourier{\vect{mu}}(k)\cdot \vect{k})|^2 */
     ind=0;
     i=0;
