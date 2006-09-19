@@ -6,10 +6,13 @@ ug_SOURCES=ug.tex \
 	internal.tex \
 	contributing.tex \
 	features.tex \
-	quickref.tex \
-	logo.jpg
+	quickref.tex
 
-EXTRA_DIST=$(ug_SOURCES) ug.pdf
+ug_FIGURES=logo.jpg \
+	nacl-rdf.pdf \
+	salt.png
+
+EXTRA_DIST=$(ug_SOURCES) figures ug.pdf
 .PHONY: doc ug
 
 doc: ug
@@ -18,6 +21,10 @@ ug.pdf: $(ug_SOURCES)
 if HAVE_PDFLATEX
 	for file in $(ug_SOURCES); do \
 	  if test ! -e $$file; then $(LN_S) $(srcdir)/$$file .; fi;\
+	done
+	mkdir -p figures
+	for file in $(ug_FIGURES); do \
+	  if test ! -e figures/$$file; then $(LN_S) ../$(srcdir)/figures/$$file figures; fi;\
 	done
 	$(PDFLATEX) ug.tex
 	makeindex ug
