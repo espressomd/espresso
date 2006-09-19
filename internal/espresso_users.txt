@@ -1200,3 +1200,22 @@ topic:     simulation of weak polyelectrolytes, working with Ch. Seidel.
 reminded:  X11.SEP.2006
 
 
+name:      Ben Evans
+email:     Ben.Evans@anusf.anu.edu.au
+institute: Australian National University
+           Supercomputer Facility
+           
+           APAC National Facility
+           
+           Leonard Huxley Building (#56)
+           Mills Road, ANU, ACT 0200
+sent:      13.SEP.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Assisting a research team who plan to see whether it can
+           simulate assembly of novel three- (and maybe larger) arm
+           \\\\\\\\\\\\\\\'polyphiles\\\\\\\\\\\\\\\', with more than two mutually
+           repulsive arms.
+reminded:  X13.SEP.2006
+
+
