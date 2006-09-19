@@ -66,6 +66,7 @@ Espresso_bin_SOURCES = \
 	halo.c halo.h \
 	statistics_fluid.c statistics_fluid.h \
 	lb-boundaries.c lb-boundaries.h \
+	utils.c utils.h \
 	angle.h \
 	buckingham.h \
 	comfixed.h \
@@ -83,9 +84,7 @@ Espresso_bin_SOURCES = \
 	polynom.h \
 	soft_sphere.h \
 	subt_lj.h \
-	tab.h \
-	utils.h
-
+	tab.h
 #deactivate building of the library
 #libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
 
