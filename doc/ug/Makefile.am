@@ -5,6 +5,8 @@ ug_SOURCES=ug.tex \
 	commands.tex \
 	internal.tex \
 	contributing.tex \
+	features.tex \
+	quickref.tex \
 	logo.jpg
 
 EXTRA_DIST=$(ug_SOURCES) ug.pdf
