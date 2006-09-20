@@ -72,15 +72,15 @@
 /*@}*/
 
 
+#ifdef MYCONFIG_H
+#include MYCONFIG_H
+#endif
+
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
 #ifdef LB
 #define USE_TEMPORARY
 #define LATTICE
 //#define ALTERNATIVE_INTEGRATOR
-#endif
-
-#ifdef MYCONFIG_H
-#include MYCONFIG_H
 #endif
 
 /********************************************/
