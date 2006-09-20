@@ -147,7 +147,7 @@ FORCE:
 # add config/ to the INCLUDES so that the default config/$(myconfig) is
 # found at compile time
 INCLUDES = -I config
-DEFS = -D "MYCONFIG_H=<$(myconfig)>"
+DEFS = -D 'MYCONFIG_H="$(myconfig)"'
 
 # add config/ to the VPATH so that $(myconfig) can be found by make
 vpath $(myconfig) $(top_builddir):$(top_srcdir):$(top_builddir)/config
