@@ -174,4 +174,4 @@ ACLOCAL_AMFLAGS = -I config
 ##################################################
 test: check
 mostclean: mostlyclean
-docu: doxygen
+docu: doc

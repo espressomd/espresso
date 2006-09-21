@@ -1037,7 +1037,7 @@ $(Espresso_bin_OBJECTS): $(myconfig)
 ##################################################
 test: check
 mostclean: mostlyclean
-docu: doxygen
+docu: doc
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
