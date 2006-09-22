@@ -1219,3 +1219,30 @@ topic:     Assisting a research team who plan to see whether it can
 reminded:  X13.SEP.2006
 
 
+name:      Brett Donovan
+email:     brettdonovan@gmail.com
+institute: University of Leeds
+           UK
+sent:      21.SEP.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Look at Bio Membranes.
+           
+           Thanks
+reminded:  X21.SEP.2006
+
+
+name:      Reinier Akkermans
+email:     ReinierA@Accelrys.com
+institute: Dr. R.L.C. Akkermans, Senior Scientist, Materials Science R&D
+           Accelrys Inc, 334 Science Park, Cambridge, CB4 0WN, United
+           Kingdom
+           Tel: 00 44 1223 228682 (direct) Fax: 00 44 1223 228501 
+           e-Mail: ReinierA@Accelrys.
+sent:      21.SEP.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     benchmarking
+reminded:  21.SEP.2006
+
+
