@@ -66,11 +66,6 @@ fft_forw_plan fft_plan[4];
 /** Information for Back FFTs (see fft_plan). */
 fft_back_plan fft_back[4];
 
-#ifdef USEFFTW3
-fft_forw_plan fft_plan_buf[4];
-fft_back_plan fft_back_buf[4];
-#endif
-
 /** Maximal size of the communication buffers. */
 static int max_comm_size=0;
 /** Maximal local mesh size. */
@@ -388,11 +383,6 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
                          c_data,NULL,1,fft_plan[i].new_mesh[2],
                          c_data,NULL,1,fft_plan[i].new_mesh[2],
                          fft_plan[i].dir,FFTW_PATIENT);
-    fft_plan_buf[i].fft_plan =
-      fftw_plan_many_dft(1,&fft_plan[i].new_mesh[2],fft_plan[i].n_ffts,
-                         c_data_buf,NULL,1,fft_plan[i].new_mesh[2],
-                         c_data_buf,NULL,1,fft_plan[i].new_mesh[2],
-                         fft_plan[i].dir,FFTW_PATIENT);
 #else
     fft_plan[i].fft_plan = 
       fftw_create_plan_specific(fft_plan[i].new_mesh[2], fft_plan[i].dir,
@@ -406,7 +396,6 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
     }
 #ifdef USEFFTW3
     fft_plan[i].fft_function = fftw_execute;       
-    fft_plan_buf[i].fft_function = fftw_execute;       
 #else
     fft_plan[i].fft_function = fftw;       
 #endif
@@ -430,11 +419,6 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
                          c_data,NULL,1,fft_plan[i].new_mesh[2],
                          c_data,NULL,1,fft_plan[i].new_mesh[2],
                          fft_back[i].dir,FFTW_PATIENT);
-    fft_back_buf[i].fft_plan =
-      fftw_plan_many_dft(1,&fft_plan[i].new_mesh[2],fft_plan[i].n_ffts,
-                         c_data_buf,NULL,1,fft_plan[i].new_mesh[2],
-                         c_data_buf,NULL,1,fft_plan[i].new_mesh[2],
-                         fft_back[i].dir,FFTW_PATIENT);
 #else
     fft_back[i].fft_plan = 
       fftw_create_plan_specific(fft_plan[i].new_mesh[2], fft_back[i].dir,
@@ -448,7 +432,6 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
     }
 #ifdef USEFFTW3
     fft_back[i].fft_function = fftw_execute;
-    fft_back_buf[i].fft_function = fftw_execute;
 #else
     fft_back[i].fft_function = fftw;
 #endif
@@ -476,10 +459,8 @@ void fft_perform_forw(double *data)
   /* ===== first direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_forw: dir 1:\n",this_node));
 
-#ifndef USEFFTW3  
   c_data     = (fftw_complex *) data;
   c_data_buf = (fftw_complex *) data_buf;
-#endif
 
   /* communication to current dir row format (in is data) */
   forw_grid_comm(fft_plan[1], data, data_buf);
@@ -506,7 +487,7 @@ void fft_perform_forw(double *data)
   }
   /* perform FFT (in/out is data)*/
 #ifdef USEFFTW3
-  fft_plan[1].fft_function(fft_plan[1].fft_plan);
+  fftw_execute_dft(fft_plan[1].fft_plan,c_data,c_data);
 #else
   fft_plan[1].fft_function(fft_plan[1].fft_plan, fft_plan[1].n_ffts,
   			   c_data, 1, fft_plan[1].new_mesh[2],
@@ -518,7 +499,7 @@ void fft_perform_forw(double *data)
   forw_grid_comm(fft_plan[2], data, data_buf);
   /* perform FFT (in/out is data_buf)*/
 #ifdef USEFFTW3
-  fft_plan_buf[2].fft_function(fft_plan_buf[2].fft_plan);
+  fftw_execute_dft(fft_plan[2].fft_plan,c_data_buf,c_data_buf);
 #else
   fft_plan[2].fft_function(fft_plan[2].fft_plan, fft_plan[2].n_ffts,
   			   c_data_buf, 1, fft_plan[2].new_mesh[2],
@@ -530,7 +511,7 @@ void fft_perform_forw(double *data)
   forw_grid_comm(fft_plan[3], data_buf, data);
   /* perform FFT (in/out is data)*/
 #ifdef USEFFTW3
-  fft_plan[3].fft_function(fft_plan[3].fft_plan);
+  fftw_execute_dft(fft_plan[3].fft_plan,c_data,c_data);
 #else
   fft_plan[3].fft_function(fft_plan[3].fft_plan, fft_plan[3].n_ffts,
   			   c_data, 1, fft_plan[3].new_mesh[2],
@@ -547,10 +528,8 @@ void fft_perform_back(double *data)
   
 //The next 4 lines were added by Vincent:
 
-#ifndef USEFFTW3  
   c_data     = (fftw_complex *) data;
   c_data_buf = (fftw_complex *) data_buf;
-#endif
   
   /* ===== third direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 3:\n",this_node));
@@ -558,7 +537,7 @@ void fft_perform_back(double *data)
 
   /* perform FFT (in is data) */
 #ifdef USEFFTW3
-  fft_back[3].fft_function(fft_back[3].fft_plan);
+  fftw_execute_dft(fft_back[3].fft_plan,c_data,c_data);
 #else
   fft_back[3].fft_function(fft_back[3].fft_plan, fft_plan[3].n_ffts,
   			   c_data, 1, fft_plan[3].new_mesh[2],
@@ -571,7 +550,7 @@ void fft_perform_back(double *data)
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 2:\n",this_node));
   /* perform FFT (in is data_buf) */
 #ifdef USEFFTW3
-  fft_back_buf[2].fft_function(fft_back_buf[2].fft_plan);
+  fftw_execute_dft(fft_back[2].fft_plan,c_data_buf,c_data_buf);
 #else
   fft_back[2].fft_function(fft_back[2].fft_plan, fft_plan[2].n_ffts,
   			   c_data_buf, 1, fft_plan[2].new_mesh[2],
@@ -584,7 +563,7 @@ void fft_perform_back(double *data)
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 1:\n",this_node));
   /* perform FFT (in is data) */
 #ifdef USEFFTW3
-  fft_back[1].fft_function(fft_back[1].fft_plan);
+  fftw_execute_dft(fft_back[1].fft_plan,c_data,c_data);
 #else
   fft_back[1].fft_function(fft_back[1].fft_plan, fft_plan[1].n_ffts,
   			   c_data, 1, fft_plan[1].new_mesh[2],
