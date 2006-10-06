@@ -137,13 +137,17 @@ reminded:  09.MAR.2004
 
 
 name:      Alexandre Diehl
-email:     diehl@fisica.ufc.br
-institute: Universidade Federal do Ceara
-sent:      10.MAR.2004
-version:   20040129-Espresso_v1.5.Beta.tar.gz
+email:     diehl@ufpel.edu.br
+institute: Universidade Federal de Pelotas
+           Instituto de Física e Matemática
+           Departamento de Física, Caixa Postal 354
+           CEP 96160-000, Pelotas, RS, Brasil
+sent:      05.OCT.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
 CVS:       
-topic:     It's my intention to work on polyelectrolyte simulation
-reminded:  10.MAR.2004
+topic:     - Simulation in charged systems, such as electrolytes,
+           polyelectrolytes.
+reminded:  X05.OCT.2006
 
 
 name:      Frederic Tessier
