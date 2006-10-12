@@ -2,15 +2,20 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0o (Ydalir)                                                                     *
+* v2.0.0t (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0o -
+- v2.0.0t -
 -----------
 
+(t) September 26th, 2006.
+(s) September 25th, 2006.
+(r) September 19th, 2006.
+(q) September 16th, 2006.
+(p) September 15th, 2006.
 (o) September 11th, 2006.
 (n) September  4th, 2006.
 (m) September  1st, 2006.
@@ -28,6 +33,15 @@ Current working revision.
 (a) July      11th, 2006.
 
 New Features:
+(r) added tutorial section
+(r) check_consistency.sh allows to cross-check features.tex vs.
+    myconfig-sample.h
+(q) added documentation for the define-switches.
+(p) automake-based configuration system. For details on the
+    additional
+(p) features, see the users' guide.
+(p) documentation structure decomposed into users' and developers'
+(p) guides
 (o) Implemented module for dipolar point-charges in ESPResSo.
     Currently only works with FFTW2 and single CPU (use switches
     --enable-fftw=2 --disable-mpi in configure).
@@ -43,6 +57,10 @@ New Features:
 (b) updated version number
 
 Changes:
+(r) figures are now in the figures subdirectory
+(p) mpifake resides in a seperate subdirectory
+(p) Outdated library support removed; manual compilation is still
+(p) possible. Use -DSTDIO_FILE_IO
 (n) Removed Position-Verlet integrator which was only experimental.
 (k) Sample scripts now use the thermostat command, instead of
 (k) setting the global variables temperature and gamma.
@@ -58,6 +76,15 @@ Changes:
     standard.
 
 Bugfixes:
+(t) p3m-dipoles now work with fftw 2 and 3 (but still only with 1
+    cpu)
+(s) fixed minor bug in mbtools (random seed setting did not work for multiple
+    proc)
+(r) repaired replacestdchannel-function (used for web-interface)
+(r) added file "utils.c" to sources
+(r) Dipoles and point charges can now be used in parallel, but dipoles still do not
+    interact with point charges.
+(q) Added some missing files to the dist-target.
 (l) fixed crash for cellsystem call without parameters.
 (j) Removed doc/TclTutor as discussed in the CCC meeting.
 (i) could not compile when MOLFORCES was switched on and EXTERNAL_FORCES was
