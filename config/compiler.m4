@@ -127,13 +127,6 @@ AC_DEFUN([ES_TRY_ADD_CFLAG],[
 	saved_CFLAGS=$CFLAGS
 	CFLAGS="$1 $CFLAGS"
 	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS ])
-])
-
-AC_DEFUN([ES_TRYLINK_ADD_CFLAG],[
-	AC_MSG_CHECKING([whether the compiler accepts $1])
-	saved_CFLAGS=$CFLAGS
-	CFLAGS="$1 $CFLAGS"
-	AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])],[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS ])
 	if test .$2 != . ; then
 		if [ "$CFLAGS" = "$saved_CFLAGS" ]; then
 			$2=yes
@@ -141,6 +134,13 @@ AC_DEFUN([ES_TRYLINK_ADD_CFLAG],[
 			$2=no
 		fi
 	fi
+])
+
+AC_DEFUN([ES_TRYLINK_ADD_CFLAG],[
+	AC_MSG_CHECKING([whether the compiler accepts $1])
+	saved_CFLAGS=$CFLAGS
+	CFLAGS="$1 $CFLAGS"
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])],[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS ])
 ])
 
 AC_DEFUN([ES_CHECK_GCC_FLAGS],[

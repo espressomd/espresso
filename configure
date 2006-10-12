@@ -7234,6 +7234,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test .accept_fast != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			accept_fast=yes
+		else
+			accept_fast=no
+		fi
+	fi
 
 	if test .$accept_fast != .yes ; then
 
@@ -7291,6 +7298,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 	if test .$arch != .; then
@@ -7346,6 +7360,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 	if test .$cpu != .; then
@@ -7401,6 +7422,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 	if test .$altivec != .; then
@@ -7456,6 +7484,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 	if test .$sse != .; then
@@ -7511,6 +7546,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 	if test .$sse2 != .; then
@@ -7566,6 +7608,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 	if test .$type = .ia; then
@@ -7621,6 +7670,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 
@@ -7679,6 +7735,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -Wno-unused-function" >&5
@@ -7732,6 +7795,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -Wall" >&5
@@ -7785,6 +7855,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -ffast-math" >&5
@@ -7838,6 +7915,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -floop-optimize" >&5
@@ -7891,6 +7975,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -funroll-loops" >&5
@@ -7944,6 +8035,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	if test .$enable_debug = .yes; then
@@ -7999,6 +8097,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	else
 
@@ -8053,6 +8158,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 	if test .$enable_profiling = .yes; then
@@ -8108,6 +8220,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 		LDFLAGS="-pg $LDFLAGS"
 	fi
@@ -8164,6 +8283,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	else
 
@@ -8218,6 +8344,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
  ;;
@@ -8290,6 +8423,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 
@@ -8344,6 +8484,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -ip" >&5
@@ -8397,6 +8544,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -unroll" >&5
@@ -8450,6 +8604,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -w1" >&5
@@ -8503,6 +8664,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -wd 1572,1173" >&5
@@ -8556,6 +8724,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	if test .$enable_debug = .yes; then
@@ -8611,6 +8786,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 	if test .$enable_profiling = .yes; then
@@ -8666,6 +8848,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 		LDFLAGS="-pg $LDFLAGS"
 	fi
@@ -8722,6 +8911,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
  ;;
@@ -8789,6 +8985,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -qtune=$cpu" >&5
@@ -8842,6 +9045,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 
@@ -8896,6 +9106,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -Wc,-qipa" >&5
@@ -8949,6 +9166,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -qhot" >&5
@@ -9002,6 +9226,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -qfloat=rsqrt:fltint:fold:maf" >&5
@@ -9055,6 +9286,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -qcpluscmt" >&5
@@ -9108,6 +9346,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -qmaxmem=-1" >&5
@@ -9161,6 +9406,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	# Check whether --enable-xlc-qipa or --disable-xlc-qipa was given.
@@ -9233,6 +9485,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 	if test .$enable_profiling=.yes; then
@@ -9288,6 +9547,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 		LDFLAGS="-pg $LDFLAGS"
 	fi
@@ -9344,6 +9610,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
  ;;
@@ -9400,6 +9673,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -fp_reorder" >&5
@@ -9453,6 +9733,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 
 	echo "$as_me:$LINENO: checking whether the compiler accepts -std" >&5
@@ -9506,6 +9793,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 		for flag in uncalled ignorecallval noparmlist uncalled alignment unknownmacro \
         	strctpadding unusedincl needconstext newlocale cxxcomment \
@@ -9562,6 +9856,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	done
 
@@ -9617,13 +9918,6 @@ echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
-	if test . != . ; then
-		if  "$CFLAGS" = "$saved_CFLAGS" ; then
-			=yes
-		else
-			=no
-		fi
-	fi
 
 
 	if test .$enable_debug = .yes; then
@@ -9679,6 +9973,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 	if test .$enable_profiling = .yes; then
@@ -9734,6 +10035,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 		LDFLAGS="-pg $LDFLAGS"
 	fi
@@ -9790,6 +10098,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
  ;;
@@ -9847,6 +10162,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 	if test .$enable_profiling = .yes; then
@@ -9902,6 +10224,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 		LDFLAGS="-pg $LDFLAGS"
 	fi
@@ -9958,6 +10287,13 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; CFLAGS=$saved_CFLAGS
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test . != . ; then
+		if  "$CFLAGS" = "$saved_CFLAGS" ; then
+			=yes
+		else
+			=no
+		fi
+	fi
 
 	fi
 	;;
