@@ -126,13 +126,9 @@ AC_DEFUN([ES_TRY_ADD_CFLAG],[
 	AC_MSG_CHECKING([whether the compiler accepts $1])
 	saved_CFLAGS=$CFLAGS
 	CFLAGS="$1 $CFLAGS"
-	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS ])
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[AC_MSG_RESULT(yes);try_add_flag_res=yes],[AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no ])
 	if test .$2 != . ; then
-		if [ "$CFLAGS" = "$saved_CFLAGS" ]; then
-			$2=yes
-		else
-			$2=no
-		fi
+		$2=$try_add_flag_res
 	fi
 ])
 
