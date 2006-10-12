@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0t (Ydalir)                                                                     *
+* v2.0.0u (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0t -
+- v2.0.0u -
 -----------
 
+(u) October   12th, 2006.
 (t) September 26th, 2006.
 (s) September 25th, 2006.
 (r) September 19th, 2006.
@@ -76,6 +77,7 @@ Changes:
     standard.
 
 Bugfixes:
+(u) compiler flags for Intel-Macs
 (t) p3m-dipoles now work with fftw 2 and 3 (but still only with 1
     cpu)
 (s) fixed minor bug in mbtools (random seed setting did not work for multiple
