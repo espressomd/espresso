@@ -352,7 +352,7 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
 		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
 		  (hence it only works with domain decomposition); naturally it
 		  therefore doesn't make sense to use it without NpT. */
-int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_comp);
+int parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **argv);
 
 /** Implementation of 'analyze bins' */
 int parse_bins(Tcl_Interp *interp, int argc, char **argv);
@@ -361,7 +361,7 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv);
 int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv);
 
 /** implementation of 'analyze stress_tensor' */
-int parse_and_print_stress_tensor(Tcl_Interp *interp, int argc, char **argv, int v_comp);
+int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char **argv);
 
 
 /*@}*/

@@ -503,58 +503,61 @@ static void init_tcl(Tcl_Interp *interp)
     installation of tcl commands
   */
 
+#define REGISTER_COMMAND(name, routine)					\
+  Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
+
   /* in cells.c */
-  Tcl_CreateCommand(interp, "cellsystem", (Tcl_CmdProc *)cellsystem, 0, NULL);
+  REGISTER_COMMAND("cellsystem", cellsystem);
   /* in integrate.c */
-  Tcl_CreateCommand(interp, "invalidate_system", (Tcl_CmdProc *)invalidate_system, 0, NULL);
-  Tcl_CreateCommand(interp, "integrate", (Tcl_CmdProc *)integrate, 0, NULL);
+  REGISTER_COMMAND("invalidate_system", invalidate_system);
+  REGISTER_COMMAND("integrate", integrate);
   /* in global.c */
-  Tcl_CreateCommand(interp, "setmd", (Tcl_CmdProc *)setmd, 0, NULL);
+  REGISTER_COMMAND("setmd", setmd);
   /* in grid.c */
-  Tcl_CreateCommand(interp, "change_volume", (Tcl_CmdProc *)change_volume, 0, NULL);
+  REGISTER_COMMAND("change_volume", change_volume);
   /* in interaction_data.c */
-  Tcl_CreateCommand(interp, "code_info", (Tcl_CmdProc *)code_info, 0, NULL);
+  REGISTER_COMMAND("code_info", code_info);
   /* in interaction_data.c */
-  Tcl_CreateCommand(interp, "inter", (Tcl_CmdProc *)inter, 0, NULL);
+  REGISTER_COMMAND("inter", inter);
   /* in particle_data.c */
-  Tcl_CreateCommand(interp, "part", (Tcl_CmdProc *)part, 0, NULL);
+  REGISTER_COMMAND("part", part);
   /* in file binaryfile.c */
-  Tcl_CreateCommand(interp, "writemd", (Tcl_CmdProc *)writemd, 0, NULL);
-  Tcl_CreateCommand(interp, "readmd", (Tcl_CmdProc *)readmd, 0, NULL);
+  REGISTER_COMMAND("writemd", writemd);
+  REGISTER_COMMAND("readmd", readmd);
   /* in file statistics.c */
-  Tcl_CreateCommand(interp, "analyze", (Tcl_CmdProc *)analyze, 0, NULL);
+  REGISTER_COMMAND("analyze", analyze);
   /* in file polymer.c */
-  Tcl_CreateCommand(interp, "polymer", (Tcl_CmdProc *)polymer, 0, NULL);
-  Tcl_CreateCommand(interp, "counterions", (Tcl_CmdProc *)counterions, 0, NULL);
-  Tcl_CreateCommand(interp, "salt", (Tcl_CmdProc *)salt, 0, NULL);
-  Tcl_CreateCommand(interp, "velocities", (Tcl_CmdProc *)velocities, 0, NULL);
-  Tcl_CreateCommand(interp, "maxwell_velocities", (Tcl_CmdProc *)maxwell_velocities, 0, NULL);
-  Tcl_CreateCommand(interp, "crosslink", (Tcl_CmdProc *)crosslink, 0, NULL);
-  Tcl_CreateCommand(interp, "diamond", (Tcl_CmdProc *)diamond, 0, NULL);
-  Tcl_CreateCommand(interp, "icosaeder", (Tcl_CmdProc *)icosaeder, 0, NULL);
+  REGISTER_COMMAND("polymer", polymer);
+  REGISTER_COMMAND("counterions", counterions);
+  REGISTER_COMMAND("salt", salt);
+  REGISTER_COMMAND("velocities", velocities);
+  REGISTER_COMMAND("maxwell_velocities", maxwell_velocities);
+  REGISTER_COMMAND("crosslink", crosslink);
+  REGISTER_COMMAND("diamond", diamond);
+  REGISTER_COMMAND("icosaeder", icosaeder);
   /* in file imd.c */
-  Tcl_CreateCommand(interp, "imd", (Tcl_CmdProc *)imd, 0, NULL);
+  REGISTER_COMMAND("imd", imd);
   /* in file random.c */
-  Tcl_CreateCommand(interp, "t_random", (Tcl_CmdProc *)t_random, 0, NULL);
-  Tcl_CreateCommand(interp, "bit_random", (Tcl_CmdProc *)bit_random, 0, NULL);
+  REGISTER_COMMAND("t_random", t_random);
+  REGISTER_COMMAND("bit_random", bit_random);
   /* in file blockfile_tcl.c */
-  Tcl_CreateCommand(interp, "blockfile", (Tcl_CmdProc *)blockfile, 0, NULL);
+  REGISTER_COMMAND("blockfile", blockfile);
   /* in constraint.c */
-  Tcl_CreateCommand(interp, "constraint", (Tcl_CmdProc *)constraint, 0, NULL);
+  REGISTER_COMMAND("constraint", constraint);
   /* in uwerr.c */
-  Tcl_CreateCommand(interp, "uwerr", (Tcl_CmdProc *)uwerr, 0, NULL);
+  REGISTER_COMMAND("uwerr", uwerr);
   /* in nemd.c */
-  Tcl_CreateCommand(interp, "nemd", (Tcl_CmdProc *)nemd, 0, NULL);
+  REGISTER_COMMAND("nemd", nemd);
   /* in thermostat.c */
-  Tcl_CreateCommand(interp, "thermostat", (Tcl_CmdProc *)thermostat, 0, NULL);
+  REGISTER_COMMAND("thermostat", thermostat);
   /* in bin.c */
-  Tcl_CreateCommand(interp, "bin", (Tcl_CmdProc *)bin, 0, NULL);
+  REGISTER_COMMAND("bin", bin);
 #ifdef LB
   /* in lb.c */
-  Tcl_CreateCommand(interp, "lbfluid", (Tcl_CmdProc *)lbfluid_cmd, 0, NULL);
+  REGISTER_COMMAND("lbfluid", lbfluid_cmd);
 #endif
   /* in utils.h */
-  Tcl_CreateCommand(interp, "replacestdchannel", (Tcl_CmdProc *)replacestdchannel, 0, NULL);
+  REGISTER_COMMAND("replacestdchannel", replacestdchannel);
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");

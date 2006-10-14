@@ -2498,6 +2498,20 @@ static int parse_remove(Tcl_Interp *interp, int argc, char **argv)
   sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
 }
 
+static int parse_stored(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze stored' */
+  /********************/
+  char buffer[TCL_INTEGER_SPACE];
+  if (argc != 2) {
+    Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze stored", (char *)NULL);
+    return TCL_ERROR; 
+  }
+  sprintf(buffer,"%d",n_configs);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return TCL_OK;
+}
+
 static int parse_configs(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze configs [ { <which> | <configuration> } ]' */
@@ -2731,138 +2745,85 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_ERROR);
   }
 
-  if (ARG1_IS_S("set"))
-    err = parse_analyze_set_topology(interp, argc - 2, argv + 2);
+  /* for general options */
+#define REGISTER_ANALYZE_OPTION(name, parser)				\
+  else if (ARG1_IS_S(name)) err = parser(interp, argc - 2, argv + 2)
+
+  /* for commands of the config storage */
+#define REGISTER_ANALYZE_STORAGE(name, parser) \
+  else if (ARG1_IS_S(name)) err = parser(interp, argc - 2, argv + 2)
+
+  /* for actual observables */
+#define REGISTER_ANALYSIS(name, parser)					\
+  else if (ARG1_IS_S(name)) err = parser(interp, argc - 2, argv + 2)
+#define REGISTER_ANALYSIS_W_ARG(name, parser, arg)			\
+  else if (ARG1_IS_S(name)) err = parser(interp, arg, argc - 2, argv + 2)
+
+  /* for the elses below */
+  if (0);
+
+  REGISTER_ANALYZE_OPTION("set", parse_analyze_set_topology);
 #ifdef LB
-  else if (ARG1_IS_S("fluid"))
-    err = parse_analyze_fluid(interp, argc - 2, argv + 2);
+  REGISTER_ANALYZE_OPTION("fluid", parse_analyze_fluid);
 #endif
-  else if (ARG1_IS_S("get_folded_positions"))
-    err = parse_get_folded_positions(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("set_bilayer"))
-    err = parse_bilayer_set(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("modes2d"))
-    err = parse_modes2d(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("bilayer_density_profile"))
-    err = parse_bilayer_density_profile(interp,argc -2, argv +2);
-  else if (ARG1_IS_S("radial_density_map"))
-    err = parse_radial_density_map(interp,argc -2, argv +2);
-  else if (ARG1_IS_S("get_lipid_orients"))
-    err = parse_get_lipid_orients(interp,argc-2,argv+2);
-  else if (ARG1_IS_S("lipid_orient_order"))
-    err = parse_lipid_orient_order(interp,argc-2,argv+2);
-  else if (ARG1_IS_S("mol"))
-    err = parse_mol(interp,argc-2,argv+2);
-  else if (ARG1_IS_S("mindist"))
-    err = parse_mindist(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("aggregation"))
-    err = parse_aggregation(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("centermass"))
-    err = parse_centermass(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("momentofinertiamatrix"))
-    err = parse_momentofinertiamatrix(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("find_principal_axis"))
-    err = parse_find_principal_axis(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("nbhood"))
-    err = parse_nbhood(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("distto"))
-    err = parse_distto(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("cell_gpb"))
-    err = parse_cell_gpb(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("Vkappa"))
-    err = parse_Vkappa(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("energy"))
-    err = parse_and_print_energy(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("pressure"))
-    err = parse_and_print_pressure(interp, argc - 2, argv + 2, 0);
-  else if (ARG1_IS_S("stress_tensor"))
-    err = parse_and_print_stress_tensor(interp, argc - 2, argv + 2, 0);
-  else if (ARG1_IS_S("p_inst"))
-    err = parse_and_print_pressure(interp, argc - 2, argv + 2, 1);
-  else if (ARG1_IS_S("momentum"))
-    err = parse_and_print_momentum(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("bins"))
-    err = parse_bins(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("p_IK1"))
-    err = parse_and_print_p_IK1(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("re"))
-    err = parse_re(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<re>"))
-    err = parse_re(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("rg"))
-    err = parse_rg(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<rg>"))
-    err = parse_rg(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("rh"))
-    err = parse_rh(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<rh>"))
-    err = parse_rh(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("internal_dist"))
-    err = parse_intdist(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<internal_dist>"))
-    err = parse_intdist(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("bond_l"))
-    err = parse_bond_l(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<bond_l>"))
-    err = parse_bond_l(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("bond_dist"))
-    err = parse_bond_dist(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<bond_dist>"))
-    err = parse_bond_dist(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("g123"))
-    err = parse_g123(interp, 1, argc - 2, argv + 2);    
-  else if (ARG1_IS_S("<g1>"))
-    err = parse_g_av(interp, 1, argc - 2, argv + 2);    
-  else if (ARG1_IS_S("<g2>"))
-    err = parse_g_av(interp, 2, argc - 2, argv + 2);    
-  else if (ARG1_IS_S("<g3>"))
-    err = parse_g_av(interp, 3, argc - 2, argv + 2);
-  else if (ARG1_IS_S("formfactor"))
-    err = parse_formfactor(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<formfactor>")) 
-    err = parse_formfactor(interp, 1, argc - 2, argv + 2);    
-  else if (ARG1_IS_S("necklace")) 
-    err = parse_necklace_analyzation(interp, argc - 2, argv + 2);   
-  else if (ARG1_IS_S("holes")) 
-    err = parse_hole_cluster_analyzation(interp, argc - 2, argv + 2);   
-  else if (ARG1_IS_S("distribution"))
-    err = parse_distribution(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("rdf"))
-    err = parse_rdf(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<rdf>"))
-    err = parse_rdf(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<rdf-intermol>"))
-    err = parse_rdf(interp, 2, argc - 2, argv + 2);
-  else if (ARG1_IS_S("rdfchain"))
-    err = parse_rdfchain(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("structurefactor"))
-    err = parse_structurefactor(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("vanhove"))
-    err = parse_vanhove(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("append"))
-    err = parse_append(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("push"))
-    err = parse_push(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("replace"))
-    err = parse_replace(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("activate"))
-    err = parse_activate(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("remove"))
-    err = parse_remove(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("stored")) {
-    /* 'analyze stored' */
-    /********************/
-    char buffer[TCL_INTEGER_SPACE];
-    if (argc != 2) {
-      Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze stored", (char *)NULL);
-      err = TCL_ERROR; 
-    }
-    sprintf(buffer,"%d",n_configs);
-    Tcl_AppendResult(interp, buffer, (char *)NULL);
-    err = TCL_OK;
-  }
-  else if (ARG1_IS_S("configs"))
-    err = parse_configs(interp, argc - 2, argv + 2);
+  REGISTER_ANALYSIS("get_folded_positions", parse_get_folded_positions);
+  REGISTER_ANALYZE_OPTION("set_bilayer", parse_bilayer_set);
+  REGISTER_ANALYSIS("modes2d", parse_modes2d);
+  REGISTER_ANALYSIS("bilayer_density_profile", parse_bilayer_density_profile);
+  REGISTER_ANALYSIS("radial_density_map", parse_radial_density_map);
+  REGISTER_ANALYSIS("get_lipid_orients", parse_get_lipid_orients);
+  REGISTER_ANALYSIS("lipid_orient_order", parse_lipid_orient_order);
+  REGISTER_ANALYSIS("mol", parse_mol);
+  REGISTER_ANALYSIS("mindist", parse_mindist);
+  REGISTER_ANALYSIS("aggregation", parse_aggregation);
+  REGISTER_ANALYSIS("centermass", parse_centermass);
+  REGISTER_ANALYSIS("momentofinertiamatrix", parse_momentofinertiamatrix);
+  REGISTER_ANALYSIS("find_principal_axis", parse_find_principal_axis);
+  REGISTER_ANALYSIS("nbhood", parse_nbhood);
+  REGISTER_ANALYSIS("distto", parse_distto);
+  REGISTER_ANALYSIS("cell_gpb", parse_cell_gpb);
+  REGISTER_ANALYSIS("Vkappa", parse_Vkappa);
+  REGISTER_ANALYSIS("energy", parse_and_print_energy);
+  REGISTER_ANALYSIS_W_ARG("pressure", parse_and_print_pressure, 0);
+  REGISTER_ANALYSIS_W_ARG("stress_tensor", parse_and_print_stress_tensor, 0);
+  REGISTER_ANALYSIS_W_ARG("p_inst", parse_and_print_pressure, 1);
+  REGISTER_ANALYSIS("momentum", parse_and_print_momentum);
+  REGISTER_ANALYSIS("bins", parse_bins);
+  REGISTER_ANALYSIS("p_IK1", parse_and_print_p_IK1);
+  REGISTER_ANALYSIS_W_ARG("re", parse_re, 0);
+  REGISTER_ANALYSIS_W_ARG("<re>", parse_re, 1);
+  REGISTER_ANALYSIS_W_ARG("rg", parse_rg, 0);
+  REGISTER_ANALYSIS_W_ARG("<rg>", parse_rg, 1);
+  REGISTER_ANALYSIS_W_ARG("rh", parse_rh, 0);
+  REGISTER_ANALYSIS_W_ARG("<rh>", parse_rh, 1);
+  REGISTER_ANALYSIS_W_ARG("internal_dist", parse_intdist, 0);
+  REGISTER_ANALYSIS_W_ARG("<internal_dist>", parse_intdist, 1);
+  REGISTER_ANALYSIS_W_ARG("bond_l", parse_bond_l, 0);
+  REGISTER_ANALYSIS_W_ARG("<bond_l>", parse_bond_l, 1);
+  REGISTER_ANALYSIS_W_ARG("bond_dist", parse_bond_dist, 0);
+  REGISTER_ANALYSIS_W_ARG("<bond_dist>", parse_bond_dist, 1);
+  REGISTER_ANALYSIS_W_ARG("g123", parse_g123, 1);    
+  REGISTER_ANALYSIS_W_ARG("<g1>", parse_g_av, 1);    
+  REGISTER_ANALYSIS_W_ARG("<g2>", parse_g_av, 2);    
+  REGISTER_ANALYSIS_W_ARG("<g3>", parse_g_av, 3);
+  REGISTER_ANALYSIS_W_ARG("formfactor", parse_formfactor, 0);
+  REGISTER_ANALYSIS_W_ARG("<formfactor>", parse_formfactor, 1);    
+  REGISTER_ANALYSIS("necklace", parse_necklace_analyzation);   
+  REGISTER_ANALYSIS("holes", parse_hole_cluster_analyzation);   
+  REGISTER_ANALYSIS("distribution", parse_distribution);
+  REGISTER_ANALYSIS_W_ARG("rdf", parse_rdf, 0);
+  REGISTER_ANALYSIS_W_ARG("<rdf>", parse_rdf, 1);
+  REGISTER_ANALYSIS_W_ARG("<rdf-intermol>", parse_rdf, 2);
+  REGISTER_ANALYSIS("rdfchain", parse_rdfchain);
+  REGISTER_ANALYSIS("structurefactor", parse_structurefactor);
+  REGISTER_ANALYSIS("vanhove", parse_vanhove);
+  REGISTER_ANALYZE_STORAGE("append", parse_append);
+  REGISTER_ANALYZE_STORAGE("push", parse_push);
+  REGISTER_ANALYZE_STORAGE("replace", parse_replace);
+  REGISTER_ANALYZE_STORAGE("activate", parse_activate);
+  REGISTER_ANALYZE_STORAGE("remove", parse_remove);
+  REGISTER_ANALYZE_STORAGE("stored", parse_stored);
+  REGISTER_ANALYZE_STORAGE("configs", parse_configs);
   else {
     /* the default */
     /***************/

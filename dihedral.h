@@ -41,6 +41,26 @@ MDINLINE int dihedral_set_params(int bond_type, int mult, double bend, double ph
   return TCL_OK;
 }
 
+/// parse parameters for the dihedral potential
+MDINLINE int inter_parse_dihedral(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+{
+  int mult;
+  double bend, phase;
+
+  if (argc < 4 ) {
+    Tcl_AppendResult(interp, "dihedral needs 3 parameters: "
+		     "<mult> <bend> <phase>", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  if ( !ARG_IS_I(1, mult) || !ARG_IS_D(2, bend) || !ARG_IS_D(3, phase) ) {
+    Tcl_AppendResult(interp, "dihedral needs 3 parameters of types INT DOUBLE DOUBLE: "
+		     "<mult> <bend> <phase> ", (char *) NULL);
+    return TCL_ERROR;
+  }
+  
+  CHECK_VALUE(dihedral_set_params(bond_type, mult, bend, phase), "bond type must be nonnegative");
+}
+
 /** Calculates the dihedral angle between particle quadruple p1, p2,
 p3 and p4. The dihedral angle is the angle between the planes
 specified by the particle triples (p1,p2,p3) and (p2,p3,p4). 

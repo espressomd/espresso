@@ -704,26 +704,22 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   }
 
   /* check method */
-  if(ARG0_IS_S("p3m"))    
-    return inter_parse_p3m(interp, argc-1, argv+1);
 
-  if(ARG0_IS_S("ewald"))    
-    return inter_parse_ewald(interp, argc-1, argv+1);
+#define REGISTER_COULOMB(name, parser)			\
+  if(ARG0_IS_S(name))					\
+    return parser(interp, argc-1, argv+1);
 
-  if (ARG0_IS_S("dh"))
-    return inter_parse_dh(interp, argc-1, argv+1);    
+  REGISTER_COULOMB("p3m", inter_parse_p3m);
+
+  REGISTER_COULOMB("ewald", inter_parse_ewald);
+
+  REGISTER_COULOMB("dh", inter_parse_dh);    
     
-  if (ARG0_IS_S("mmm1d"))
-    return inter_parse_mmm1d(interp, argc-1, argv+1);
+  REGISTER_COULOMB("mmm1d", inter_parse_mmm1d);
 
-  if (ARG0_IS_S("mmm2d"))
-    return inter_parse_mmm2d(interp, argc-1, argv+1);
+  REGISTER_COULOMB("mmm2d", inter_parse_mmm2d);
 
-  if (ARG0_IS_S("maggs")) {
-
-    coulomb.method = COULOMB_MAGGS;
-    return inter_parse_maggs(interp, argc-1, argv+1);
-  }
+  REGISTER_COULOMB("maggs", inter_parse_maggs);
 
   /* fallback */
   coulomb.method  = COULOMB_NONE;
@@ -1091,57 +1087,52 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
     /* The various parsers return the number of parsed parameters.
        If an error occured, 0 should be returned, since none of the parameters were
        understood */
-#ifdef LENNARD_JONES
-    if (ARG0_IS_S("lennard-jones"))
-      change = lj_parser(interp, part_type_a, part_type_b, argc, argv);
-#else
+
     /* that's just for the else below... */
     if (0);
+
+#define REGISTER_NONBONDED(name, parser)				\
+    else if (ARG0_IS_S(name))						\
+      change = parser(interp, part_type_a, part_type_b, argc, argv)
+
+#ifdef LENNARD_JONES
+    REGISTER_NONBONDED("lennard-jones", lj_parser);
 #endif
 
 #ifdef MORSE
-    else if (ARG0_IS_S("morse"))
-      change = morse_parser(interp, part_type_a, part_type_b, argc, argv);
+    REGISTER_NONBONDED("morse", morse_parser);
 #endif
 
 #ifdef LJCOS
-    else if (ARG0_IS_S("lj-cos"))
-      change = ljcos_parser(interp, part_type_a, part_type_b, argc, argv);
+    REGISTER_NONBONDED("lj-cos", ljcos_parser);
 #endif
 
 #ifdef BUCKINGHAM
-    else if (ARG0_IS_S("buckingham"))
-      change = buckingham_parser(interp, part_type_a, part_type_b, argc, argv);
+    REGISTER_NONBONDED("buckingham", buckingham_parser);
 #endif
 
 #ifdef SOFT_SPHERE
-    else if (ARG0_IS_S("soft-sphere"))
-      change = soft_parser(interp, part_type_a, part_type_b, argc, argv);
+    REGISTER_NONBONDED("soft-sphere", soft_parser);
 #endif
 
 #ifdef COMFORCE
-    else if (ARG0_IS_S("comforce"))
-      change = comforce_parser(interp, part_type_a, part_type_b, argc, argv);
+    REGISTER_NONBONDED("comforce", comforce_parser);
 #endif
 
 #ifdef LJCOS2
-    else if (ARG0_IS_S("lj-cos2"))
-      change = ljcos2_parser(interp, part_type_a, part_type_b, argc, argv);
+    REGISTER_NONBONDED("lj-cos2", ljcos2_parser);
 #endif
 
 #ifdef COMFIXED
-    else if (ARG0_IS_S("comfixed"))
-      change = comfixed_parser(interp, part_type_a, part_type_b, argc, argv);
+    REGISTER_NONBONDED("comfixed", comfixed_parser);
 #endif
 
 #ifdef ROTATION
-    else if (ARG0_IS_S("gay-berne"))
-      change = gb_parser(interp, part_type_a, part_type_b, argc, argv);
+    REGISTER_NONBONDED("gay-berne", gb_parser);
 #endif
 
 #ifdef TABULATED
-    else if (ARG0_IS_S("tabulated"))
-      change = tab_parser(interp, part_type_a, part_type_b, argc, argv);
+    REGISTER_NONBONDED("tabulated", tab_parser);
 #endif
     else {
       Tcl_AppendResult(interp, "excessive parameter/unknown interaction type \"", argv[0],
@@ -1191,9 +1182,6 @@ int inter_parse_bonded(Tcl_Interp *interp,
 		       int bond_type,
 		       int argc, char ** argv)
 {
-  int mult;
-  double k, r, bend, phi0, phase;
-
   if (ARG0_IS_S("num")) {
     if (argc == 1)
       return inter_print_partner_num(interp, bond_type);
@@ -1204,164 +1192,21 @@ int inter_parse_bonded(Tcl_Interp *interp,
     }
   }
 
-  if (ARG0_IS_S("fene")) {
-
-      if (argc != 3) {
-	Tcl_AppendResult(interp, "fene needs 2 parameters: "
-			 "<k_fene> <r_fene>", (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) 
-	{
-	  Tcl_AppendResult(interp, "fene needs 2 DOUBLE parameters: "
-			   "<k_fene> <r_fene>", (char *) NULL);
-	  return TCL_ERROR;
-	}
-
-      CHECK_VALUE(fene_set_params(bond_type, k, r), "bond type must be nonnegative");
-  }
-    
-  if (ARG0_IS_S("harmonic")) {
-
-      if (argc != 3) {
-	Tcl_AppendResult(interp, "harmonic needs 2 parameters: "
-			 "<k_harmonic> <r_harmonic>", (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) {
-	Tcl_AppendResult(interp, "harmonic needs 2 DOUBLE parameters: "
-			 "<k_harmonic> <r_harmonic>", (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      CHECK_VALUE(harmonic_set_params(bond_type, k, r), "bond type must be nonnegative");
-  }  
+#define REGISTER_BONDED(name,parser)			\
+  if (ARG0_IS_S(name)) return parser(interp, bond_type, argc, argv);
   
+  REGISTER_BONDED("fene", inter_parse_fene);
+  REGISTER_BONDED("harmonic", inter_parse_harmonic);
 #ifdef LENNARD_JONES  
-  if (ARG0_IS_S("subt_lj")) {
-
-      if (argc != 3) {
-	Tcl_AppendResult(interp, "subt_lj needs 2 dummy parameters: "
-			 "<k_subt_lj> <r_subt_lj>", (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) {
-	Tcl_AppendResult(interp, "subt_lj needs 2 dummy DOUBLE parameters: "
-			 "<k_subt_lj> <r_subt_lj>", (char *) NULL);
-	return TCL_ERROR;
-      }
-
-      CHECK_VALUE(subt_lj_set_params(bond_type, k, r), "bond type must be nonnegative");
-  }
+  REGISTER_BONDED("subt_lj", inter_parse_subt_lj);
 #endif
-
-  if (ARG0_IS_S("angle")) {
-    /* the optional parameter phi0 is due to backwards compatibility and is set to PI if not given */
-    if (argc != 2 && argc != 3) {
-      Tcl_AppendResult(interp, "angle needs 1 or 2 parameters: "
-		       "<bend> [<phi0>]", (char *) NULL);
-      return (TCL_ERROR);
-    }
-
-    if (! ARG_IS_D(1, bend)) {
-      Tcl_AppendResult(interp, "angle needs a DOUBLE parameter: "
-		       "<bend> ", (char *) NULL);
-      return TCL_ERROR;
-    }
-
-    /* special treatment of the optional parameter phi0 */
-    if (argc == 3) {
-      if (! ARG_IS_D(2, phi0)) {
-	Tcl_AppendResult(interp, "angle needs a DOUBLE parameter: "
-			 "<phi0> ", (char *) NULL);
-	return TCL_ERROR;
-      }
-    } else {
-      phi0 = PI;
-    }
-    CHECK_VALUE(angle_set_params(bond_type, bend, phi0), "bond type must be nonnegative");
-  }
-    
-  if (ARG0_IS_S("dihedral")) {
-    if (argc < 4 ) {
-      Tcl_AppendResult(interp, "dihedral needs 3 parameters: "
-		       "<mult> <bend> <phase>", (char *) NULL);
-      return (TCL_ERROR);
-    }
-    if ( !ARG_IS_I(1, mult) || !ARG_IS_D(2, bend) || !ARG_IS_D(3, phase) ) {
-      Tcl_AppendResult(interp, "dihedral needs 3 parameters of types INT DOUBLE DOUBLE: "
-		       "<mult> <bend> <phase> ", (char *) NULL);
-     return TCL_ERROR;
-    }
-  
-   CHECK_VALUE(dihedral_set_params(bond_type, mult, bend, phase), "bond type must be nonnegative");
-  }
-
-  if (ARG0_IS_S("tabulated")) {
+  REGISTER_BONDED("angle", inter_parse_angle);
+  REGISTER_BONDED("dihedral", inter_parse_dihedral);
 #ifdef TABULATED
-    int tab_type = TAB_UNKNOWN;
-
-    if (argc < 3 ) {
-      Tcl_AppendResult(interp, "tabulated needs two string parameter: "
-		       "<type> <filename>", (char *) NULL);
-      return (TCL_ERROR);
-    }  
-
-    if (ARG_IS_S(1,"bond"))     tab_type = TAB_BOND_LENGTH;
-    if (ARG_IS_S(1,"angle"))    tab_type = TAB_BOND_ANGLE;
-    if (ARG_IS_S(1,"dihedral")) tab_type = TAB_BOND_DIHEDRAL;
-    if (tab_type == TAB_UNKNOWN) {
-       Tcl_AppendResult(interp, "Unknown type of bonded tabulated interaction. Should be: "
-		       "\"bond\" or \"angle\" or \"dihedral\"", (char *) NULL);
-      return (TCL_ERROR);
-    }
-
-    switch (bonded_tabulated_set_params(bond_type, tab_type, argv[2])) {
-    case 1:
-      Tcl_AppendResult(interp, "illegal bond type", (char *)NULL);
-      return TCL_ERROR;
-    case 2:
-      Tcl_AppendResult(interp, "cannot open \"", argv[2], "\"", (char *)NULL);
-      return TCL_ERROR;
-    case 3:
-      Tcl_AppendResult(interp, "attempt to read file \"", argv[2], "\" failed."
-		       "Could not find start the start token <#>", (char *)NULL);
-      return TCL_ERROR;
-    case 4:
-      Tcl_AppendResult(interp, "bond angle potential has to be defined in the interval 0 to pi", (char *)NULL);
-      return TCL_ERROR;
-    case 5:
-      Tcl_AppendResult(interp, "bond angle potential has to be defined in the interval 0 to 2pi", (char *)NULL);
-      return TCL_ERROR;
-    default:
-      return TCL_OK;
-    }
-#else
-    Tcl_AppendResult(interp, "Tabulated potentials not compiled in! see config.h\n", (char *) NULL);
-    return (TCL_ERROR);
+  REGISTER_BONDED("tabulated", inter_parse_bonded_tabulated);
 #endif
-  }
 #ifdef BOND_CONSTRAINT
-  if (ARG0_IS_S("rigid_bond")) {
-    double d, p_tol, v_tol;
-    
-    if (argc != 4) {
-      Tcl_AppendResult(interp, "rigid bond needs 3 parameters: "
-		       "<constrained_bond_distance> <Positional_tolerance> <Velocity_tolerance>", (char *) NULL);
-      return TCL_ERROR;
-    }
-
-    if ((! ARG_IS_D(1, d)) || (! ARG_IS_D(2, p_tol)) || (! ARG_IS_D(3, v_tol)) ) {
-      Tcl_AppendResult(interp, "rigid bond needs 3 DOUBLE parameters: "
-		       "<constrained_bond_distance> <Positional_tolerance> <Velocity_tolerance>", (char *) NULL);
-      return TCL_ERROR;
-    }
-
-    CHECK_VALUE(rigid_bond_set_params(bond_type, d, p_tol, v_tol), "bond type must be nonnegative");
-  }
+  REGISTER_BONDED("rigid_bond", inter_parse_rigid_bonds);
 #endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);

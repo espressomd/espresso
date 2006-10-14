@@ -235,6 +235,48 @@ MDINLINE int bonded_tabulated_set_params(int bond_type, int tab_type, char * fil
   return TCL_OK;
 }
 
+/// parse parameters for the tabulated bonded potential
+MDINLINE int inter_parse_bonded_tabulated(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+{
+  int tab_type = TAB_UNKNOWN;
+
+  if (argc < 3 ) {
+    Tcl_AppendResult(interp, "tabulated needs two string parameter: "
+		     "<type> <filename>", (char *) NULL);
+    return (TCL_ERROR);
+  }  
+
+  if (ARG_IS_S(1,"bond"))     tab_type = TAB_BOND_LENGTH;
+  if (ARG_IS_S(1,"angle"))    tab_type = TAB_BOND_ANGLE;
+  if (ARG_IS_S(1,"dihedral")) tab_type = TAB_BOND_DIHEDRAL;
+  if (tab_type == TAB_UNKNOWN) {
+    Tcl_AppendResult(interp, "Unknown type of bonded tabulated interaction. Should be: "
+		     "\"bond\" or \"angle\" or \"dihedral\"", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  switch (bonded_tabulated_set_params(bond_type, tab_type, argv[2])) {
+  case 1:
+    Tcl_AppendResult(interp, "illegal bond type", (char *)NULL);
+    return TCL_ERROR;
+  case 2:
+    Tcl_AppendResult(interp, "cannot open \"", argv[2], "\"", (char *)NULL);
+    return TCL_ERROR;
+  case 3:
+    Tcl_AppendResult(interp, "attempt to read file \"", argv[2], "\" failed."
+		     "Could not find start the start token <#>", (char *)NULL);
+    return TCL_ERROR;
+  case 4:
+    Tcl_AppendResult(interp, "bond angle potential has to be defined in the interval 0 to pi", (char *)NULL);
+    return TCL_ERROR;
+  case 5:
+    Tcl_AppendResult(interp, "bond angle potential has to be defined in the interval 0 to 2pi", (char *)NULL);
+    return TCL_ERROR;
+  default:
+    return TCL_OK;
+  }
+}
+
 /// parser for the force cap
 MDINLINE int inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {

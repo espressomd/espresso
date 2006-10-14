@@ -404,7 +404,7 @@ static void print_detailed_pressure(Tcl_Interp *interp)
 
 /************************************************************/
 
-int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_comp)
+int parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **argv)
 {
   /* 'analyze pressure [{ bond <type_num> | nonbonded <type1> <type2> | coulomb | ideal | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
@@ -1041,7 +1041,7 @@ static void print_detailed_stress_tensor(Tcl_Interp *interp)
 }
 
 /************************************************************/
-int parse_and_print_stress_tensor(Tcl_Interp *interp, int argc, char **argv, int v_comp)
+int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char **argv)
 {
   /* 'analyze stress_tensor [{ bond <type_num> | nonbonded <type1> <type2> | coulomb | ideal | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];

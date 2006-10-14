@@ -39,6 +39,26 @@ MDINLINE int harmonic_set_params(int bond_type, double k, double r)
   return TCL_OK;
 }
 
+/// parse parameters for the harmonic potential
+MDINLINE int inter_parse_harmonic(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+{
+  double k, r;
+
+  if (argc != 3) {
+    Tcl_AppendResult(interp, "harmonic needs 2 parameters: "
+		     "<k_harmonic> <r_harmonic>", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) {
+    Tcl_AppendResult(interp, "harmonic needs 2 DOUBLE parameters: "
+		     "<k_harmonic> <r_harmonic>", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  CHECK_VALUE(harmonic_set_params(bond_type, k, r), "bond type must be nonnegative");
+}
+
 /** Computes the HARMONIC pair force and adds this
     force to the particle forces (see \ref #inter). 
     @param p1        Pointer to first particle.

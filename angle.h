@@ -49,6 +49,37 @@ MDINLINE int angle_set_params(int bond_type, double bend, double phi0)
   return TCL_OK;
 }
 
+/// parse parameters for the angle potential
+MDINLINE int inter_parse_angle(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+{
+  double bend, phi0;
+
+  /* the optional parameter phi0 is due to backwards compatibility and is set to PI if not given */
+  if (argc != 2 && argc != 3) {
+    Tcl_AppendResult(interp, "angle needs 1 or 2 parameters: "
+		     "<bend> [<phi0>]", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  if (! ARG_IS_D(1, bend)) {
+    Tcl_AppendResult(interp, "angle needs a DOUBLE parameter: "
+		     "<bend> ", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* special treatment of the optional parameter phi0 */
+  if (argc == 3) {
+    if (! ARG_IS_D(2, phi0)) {
+      Tcl_AppendResult(interp, "angle needs a DOUBLE parameter: "
+		       "<phi0> ", (char *) NULL);
+      return TCL_ERROR;
+    }
+  } else {
+    phi0 = PI;
+  }
+  CHECK_VALUE(angle_set_params(bond_type, bend, phi0), "bond type must be nonnegative");
+}
+
 /** Computes the three body angle interaction force and adds this
     force to the particle forces (see \ref #inter). 
     @param p_mid     Pointer to second/middle particle.
