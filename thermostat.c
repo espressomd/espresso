@@ -382,9 +382,9 @@ void thermo_cool_down()
 
 int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
 {
+#ifdef LB
   double temp;
 
-#ifdef LB
   /* get lb interaction type */
   if (argc < 1) {
     Tcl_AppendResult(interp, "lattice-Boltzmann needs 1 parameter: "
