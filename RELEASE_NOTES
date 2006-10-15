@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0u (Ydalir)                                                                     *
+* v2.0.0v (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0u -
+- v2.0.0v -
 -----------
 
+(v) October   14th, 2006.
 (u) October   12th, 2006.
 (t) September 26th, 2006.
 (s) September 25th, 2006.
@@ -58,6 +59,15 @@ New Features:
 (b) updated version number
 
 Changes:
+(v) now using macros for the parsing of Tcl-commands. This is a
+    prerequisite
+(v) for automated cross-checking the documentation in the user's
+    guide.
+(v) This change required to finally also isolate the parser for the
+    bonded
+(v) potentials, and some slght changes to the interfaces to some
+    parsers
+(v) of the analyze command.
 (r) figures are now in the figures subdirectory
 (p) mpifake resides in a seperate subdirectory
 (p) Outdated library support removed; manual compilation is still
@@ -77,6 +87,7 @@ Changes:
     standard.
 
 Bugfixes:
+(v) fixed a warning due to an unused variable temp in parse_lb.
 (u) compiler flags for Intel-Macs
 (t) p3m-dipoles now work with fftw 2 and 3 (but still only with 1
     cpu)
