@@ -24,6 +24,7 @@ proc ::mbtools::system_generation::singlemol::create_singlemol { args } {
     set options {
 	{c.arg   "  0.0 0.0 0.0 "   "location of the molecule"  }
 	{o.arg    "  0.0 0.0 1.0  " "orientation of the molecule" }
+	{o2.arg    "  1.0 0.0 0.0  " "orientation of the molecule" }
 	{trapflag.arg {0 0 0} "which coordinates to trap molecule center of mass"}
 	{ctrap.arg   ""   "position of the trap center"  }
 	{trapspring.arg   "0"   "spring constant for the trap"  }
@@ -61,7 +62,7 @@ proc ::mbtools::system_generation::singlemol::create_singlemol { args } {
     set typekey [::mbtools::system_generation::matchtype [lindex $mol 0]]
 
 #    puts "singlmol: placing lipid $mol $params(c) $params(o)"
-    ::mbtools::system_generation::placemol $mol $params(c) -orient $params(o)
+    ::mbtools::system_generation::placemol $mol $params(c) -orient $params(o) -orient2 $params(o2)
 
 
 

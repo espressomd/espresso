@@ -2503,7 +2503,7 @@ static int parse_stored(Tcl_Interp *interp, int argc, char **argv)
   /* 'analyze stored' */
   /********************/
   char buffer[TCL_INTEGER_SPACE];
-  if (argc != 2) {
+  if (argc != 0) {
     Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze stored", (char *)NULL);
     return TCL_ERROR; 
   }

@@ -127,8 +127,8 @@ if { !$checkpointexists } {
     # ----------- Integration Parameters before warmup -----------#
     setmd time_step $warm_time_step
     setmd skin      $verlet_skin
-    setmd gamma     $langevin_gamma
-    setmd temp      $warmup_temp
+    thermostat langevin $warmup_temp $langevin_gamma
+    
     
     # Set the topology and molecule information
     #----------------------------------------------------------#
@@ -165,14 +165,14 @@ if { !$checkpointexists } {
     }
 
     setmd time_step $main_time_step
-    setmd temp     [lindex $systemtemp 0]
+    thermostat langevin  [lindex $systemtemp 0] $langevin_gamma
     ::mmsg::send $this "warming up again at  [setmd temp]"
     ::mbtools::utils::warmup $free_warmsteps $free_warmtimes -startcap 1000 -outputdir $outputdir
     
 
     # ----------- Integration Parameters after warmup -----------#
     setmd time_step $main_time_step
-    setmd temp     [lindex $systemtemp 0]
+    thermostat langevin  [lindex $systemtemp 0] $langevin_gamma
  
     ::mbtools::analysis::setup_analysis $analysis_flags -outputdir  $outputdir -g $mgrid -str $stray_cut_off
     
@@ -200,7 +200,8 @@ if { !$checkpointexists } {
 
 set j $startj
 
-setmd temp $systemtemp
+thermostat langevin $systemtemp $langevin_gamma
+
 if { $thermo == "DPD" } {
     thermostat off
     thermostat set dpd $systemtemp $dpd_gamma $dpd_r_cut
