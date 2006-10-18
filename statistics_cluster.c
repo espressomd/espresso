@@ -360,9 +360,11 @@ int parse_necklace_analyzation(Tcl_Interp *interp, int argc, char **argv)
 
 /* HOLE CLUSTER ALGORITHM */
 
-/** test if a mesh point belongs to free (return -1) or occupied (return -2) volume */
+/** test if a mesh point belongs to free (return -1) or occupied (return -2) volume.
+Needs feature LENNARD_JONES compiled in. */
 int test_mesh_element(double pos[3], int probe_part_type) 
 {
+#ifdef LENNARD_JONES
   int i;
   double dist,vec[3];
 
@@ -374,12 +376,14 @@ int test_mesh_element(double pos[3], int probe_part_type)
     if ( dist < (ia_params->LJ_cut+ia_params->LJ_offset) ) return -2;
     
   }
+#endif
   return -1;
 } 
 
 
 /** Test which mesh points belong to the free and occupied volume. 
-    Free volume is marked by -1 and occupied volume by -2 */
+    Free volume is marked by -1 and occupied volume by -2.
+    Needs feature LENNARD_JONES compiled in. */
 void create_free_volume_grid(IntList mesh, int dim[3], int probe_part_type)
 {
   int i,ix=0,iy=0,iz=0;
@@ -519,8 +523,8 @@ void cluster_free_volume_surface(IntList mesh, int dim[3], int nholes, int **hol
 }
 
 /* parser for hole cluster analyzation:
-   analyze holes <prob_part_type_number> <mesh_size>
- */
+   analyze holes <prob_part_type_number> <mesh_size>.
+   Needs feature LENNARD_JONES compiled in. */
 int parse_hole_cluster_analyzation(Tcl_Interp *interp, int argc, char **argv)
 {
   int i,j;
@@ -535,6 +539,11 @@ int parse_hole_cluster_analyzation(Tcl_Interp *interp, int argc, char **argv)
   int **holes;
   int max_size=0;
   int *surface;
+
+#ifndef LENNARD_JONES
+   Tcl_AppendResult(interp, "analyze holes needs feature LENNARD_JONES compiled in.\n", (char *)NULL);
+    return TCL_ERROR;
+#endif
 
   /* check # of parameters */
   if (argc < 2) {
