@@ -70,21 +70,69 @@ In <tt>statistics.c</tt>:<br>
          returns the moment of inertia matrix for particles of given type. The output is a list of all the elements of the 3x3 matrix.
 	 The C implementation is \ref #momentofinertiamatrix; it is parsed by \ref #parse_momentofinertiamatrix.
     <li> \verbatim analyze aggregation [{ <dist_criteria> <s_mol_id>
-    <f_mol_id> <min_contact> <charge_criteria>}] \endverbatim
+   	 <f_mol_id> <min_contact> <charge_criteria>}] \endverbatim
 	 returns the aggregate size distribution for the molecules in the
-    molecule id range \<s_mol_id\> to \<f_mol_id\>;. If any monomers in two
-    different molecules are closer than dist_criteria they are considered to
-    be in the same aggregate. One can use the optional \<min_contact\> parameter
-    to specify a minimum number of contacts such that only molecules having at
-    least \<min_contact\> contacts will be considered to be in the same
-    aggregate.The second optional parameter \<charge_criteria\> enables one to
-    consider aggregation state of only oppositely charged particles. 
-    The C implementation is \ref #aggregation; it is parsed by \ref #parse_aggregation.
+	 molecule id range \<s_mol_id\> to \<f_mol_id\>;. If any monomers in two
+    	 different molecules are closer than dist_criteria they are considered to
+    	 be in the same aggregate. One can use the optional \<min_contact\> parameter
+   	 to specify a minimum number of contacts such that only molecules having at
+   	 least \<min_contact\> contacts will be considered to be in the same
+   	 aggregate.The second optional parameter \<charge_criteria\> enables one to
+   	 consider aggregation state of only oppositely charged particles. 
+   	 The C implementation is \ref #aggregation; it is parsed by \ref #parse_aggregation.
     <li> \verbatim analyze find_principal_axis { <part_type> } \endverbatim
          returns the eigenvalues and eigenvectors of the moment of inertia
-    matrix for particles of a given type. The C implementation is based on
-    \ref #calc_eigenvalues_3x3 and \ref #calc_eigenvector_3x3; it is parsed by
-    \ref #parse_find_principal_axis.
+   	 matrix for particles of a given type. The C implementation is based on
+   	 \ref #calc_eigenvalues_3x3 and \ref #calc_eigenvector_3x3; it is parsed by
+   	 \ref #parse_find_principal_axis.
+    <li> \verbatim analyze necklace <pearl_treshold> <back_dist> <space_dist> <first> <length> \endverbatim 
+	 Algoritm for identifying pearl necklace structures for polyelectrolytes in poor solvent.
+   	 For more information see: Limbach H.J. and Holm C.  Single-Chain
+   	 Properties of Polyelectrolytes in Poor Solvent J. Phys. Chem. B,
+   	 107 (32), 8041 -8055, AUG 14 2003.  The first three parameters are
+   	 tune parameters for the algorithm: pearl_treshold is the minimal
+   	 number of monomers in a pearl. back_dist is the number of monomers
+   	 along the chain backbone which are excluded from the space
+   	 distance criterion to form clusters. space_dist is the distance
+   	 between two monomers up to which they are considered to belong to
+   	 the same clusters. The three parameters may be connected by
+   	 scaling arguments. Make sure that your results are only weakly
+   	 dependent on the exact choice of your parameters. For the
+   	 algorithm the coordinates stored in \ref partCfg are used. The
+   	 chain itself is defined by the identity first of its first monomer
+   	 and the chain length length.
+	 Attention: This function is very specific to the problem and might not give useful results for other cases with similar structures.
+   <li>  \verbatim analyze holes <prob_part_type_number> <mesh_size> \endverbatim
+	 Function for calculation of the unoccupied volume (often also called free volume) in a system. Details can be found in 
+	 Schmitz, H. and Mueller-Plathe, F., J. Chem. Phys. 112, 1040-1045 (2000).
+   	 Identifies free space in the simulation box via a mesh based 
+   	 cluster algorithm. Free space is defined via a probe particle 
+   	 and its interactions with other particles which have to be 
+   	 defined through LJ interactions with the other existing particle
+   	 types via the inter command before calling this routine. A point 
+   	 of the mesh is counted as free space if the distance of the point 
+   	 is larger than LJ_cut+LJ_offset to any particle as defined by the 
+   	 LJ interaction parameters between the probe particle type and other 
+   	 particle types.\\
+
+	 How to use this function:\\
+	 Define interactions between all (or the ones you are interested in) particle types in your system and a fictious particle type. 
+	 Practically one uses the van der Wals radius of the particles plus the size of the probe you want to use as the Lennard Jones cutoff. \\
+	 Define the mesh_size. The mesh spacing is the box_length / mesh_size.\\
+
+	 Results:\\
+	 \verbatim { n_holes mean_hole_size max_hole_size free_volume_fraction { sizes } { surfaces }  { element_lists } } \endverbatim
+	 A hole is defined as a continous cluster of mesh elements that belong to the unoccupied volume.
+  	 Since the function is quide rudimentary it gives back the whole information suitable for further processing on the script level. 
+	 Sizes and Surfaces are given in number of mesh points, which means you have to calculate the actual size via the corresponding 
+	 volume or surface elements yourself. The complete information is given in the element_lists for each hole. The element numbers 
+	 give the position of a mesh point in the linear representation of the 3D grid (coordinates are in the order x, y, z). But if you 
+	 want to use the detailed information you better have a look in the source code in \ref statistics_cluster.c 
+
+	 Attention:\\
+	 Assumes cubic box.\\
+	 Surface results have not been tested. I think there is still a bug in there (Hanjo).
+   	 Needs feature LENNARD_JONES compiled in.
 
 
 </ul>In <tt>energy.c</tt>:<ul>
