@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0v (Ydalir)                                                                     *
+* v2.0.0w (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0v -
+- v2.0.0w -
 -----------
 
+(w) October   18th, 2006.
 (v) October   14th, 2006.
 (u) October   12th, 2006.
 (t) September 26th, 2006.
@@ -87,6 +88,8 @@ Changes:
     standard.
 
 Bugfixes:
+(w) Bug fixed in "analyze stored" introduced by parsing change
+(w) Fixed afew bugs in mbtools due to recent changes in Espresso
 (v) fixed a warning due to an unused variable temp in parse_lb.
 (u) compiler flags for Intel-Macs
 (t) p3m-dipoles now work with fftw 2 and 3 (but still only with 1
