@@ -127,3 +127,6 @@ source pov.tcl
 #adds 'writepov <file> [options]'
 #adds 'morph <file1> <file2> <file3> [options]'
 
+source vtf.tcl
+#adds 'writevsf <file> [options]'
+#adds 'writevcf <file> [options]'

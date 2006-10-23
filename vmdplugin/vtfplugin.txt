@@ -1,0 +1,131 @@
+The VMD trajectory/structure/coordinate format
+----------------------------------------------
+Time-stamp: <2006-10-11 17:41 olenz>
+
+- comment lines start with '#'
+- empty lines are ignored
+- leading whitespace is ignored
+- files consist of structure and timestep blocks
+- a block consists of an arbitrary number of lines
+- lines ending with '\' are concatenated with the next line
+- lines are identified by a keyword starting the line
+- in fact, the first non-whitespace character is sufficient to
+  identify the line type
+- VSF/VTF files start with a structure block
+- VCF files start with a timestep block
+
+STRUCTURE BLOCK:
+----------------
+- contains atom-, bond-, unitcell- and timestep lines
+- timestep/coordinate lines end the structure block and start a
+  timestep block
+
+ATOM LINE:
+----------
+Syntax: [a[tom]] <aid-specifier> [<keyword> <value>]...
+- the line starts with an aid specifier or the keywords "a" or "atom"
+- the aid-specifier specifies which atoms the line refers to
+  - "default" refers to the default atom that is used as a template
+    for new atoms
+  - a comma-separated list of atom ids lists the atoms refered to
+  - instead of an atom id, a range specifier <to>:<from> defines a
+    range of atoms
+  - whenever an atom id greater than the greatest id so far is
+    specified, all atom up to the new greates id are created (from the
+    default atom)
+  - Example: 8,10:20,22,24 refers to the atoms 8, 10 to 20, 22 and 24
+- the following keywords to specify atom characteristics exist
+  - n[ame] <char[16]>		name
+  - t[ype] <char[16]>		type
+  - resid <int>			residue id
+  - res[name] <char[8]>		residue name
+  - r[adius] <float>		VDW-radius
+  - s[egid] <char[8]>		segment id
+  - c[hain] <char[2]>		chain id
+  - (charge|q) <float>		charge
+  - a[tomicnumber] <int>	atomic number
+  - altloc <char[2]>		PDB alternative location
+  - i[nsertion] <char[]>	PDB insertion
+  - o[ccupancy] <float>		occupancy
+  - b[factor] <float>		b-factor
+  - m[ass] <float>		mass
+
+Example:
+--------
+# Specify 4 coarse-grained lipids with 7 beads each
+atom 0,7,14,21 name HEAD resname LIPID radius 1.1
+atom 1:2,8:13,15:20,22:27 name TAIL resname LIPID radius 1.0
+atom 0:6 resid 0 segid UPPER
+atom 7:13 resid 1 segid UPPER
+atom 14:20 resid 2 segid LOWER
+atom 21:27 resid 3 segid LOWER
+
+BOND LINE:
+----------
+Syntax: b[ond] <bond-specifier>
+- the line starts with the keywords "b" or "bond"
+- the bond-specifier is a comma-separated list of bond definitions:
+  - <from>:<to> specifies a bond between atoms <from> and <to>
+  - <from>::<to> specifies, that the atoms between <from> and <to> are
+    a chain with bonds between two adjacent atoms
+
+Example:
+--------
+# Specify a ring of 6 atoms
+bond 0::5,5:0
+
+UNITCELL/PERIODIC BOUNDARY CONDITIONS LINE
+------------------------------------------
+Syntax: p[bc]|u[nitcell] <float> <float> <float> [<float> <float> <float>]
+- the line starts with the keyword "p", "pbc", "u" or "unitcell"
+- the first three float values specify the dimensions of the unitcell
+  in x,y and z-directions
+- the next three float values give the angles of the unitcell alpha,
+  beta and gamma
+- if the angles are omitted, the default value is 90.0 for all angles
+
+TIMESTEP/COORDINATES LINE
+-------------------------
+Syntax: [t[imestep]|c[oordinates] [i[ndexed]|o[rdered]]]|i[ndexed]|o[rdered]
+- the line starts with the keywords "t", "timestep", "c",
+  "coordinates", "o", "ordered", "i" or "indexed"
+- if the keyword is "t", "timestep", "c" or "coordinates", a second
+  keyword "o", "ordered", "i" or "indexed" specifies the type of the
+  next timestep block
+- the keywords "o" or "ordered" specify that the next timestep block
+  is ordered
+- the keywords "i" or "indexed" specify that the next timestep block
+  is indexed
+- if no corresponding keyword is given, the next timestep block is ordered
+
+TIMESTEP BLOCK:
+---------------
+- contains unitcell-lines and coordinate lines
+- unitcell-lines are like in the structure block
+- all other lines define atom coordinates
+- in an indexed block, the coordinates lines have the syntax:
+  <int> <float> <float> <float>
+  where the <int> specifies the atom id and the <float> values specify
+  the coordinates
+- in an ordered block, the coordinates lines have the syntax:
+  <float> <float> <float>
+  where the <float> values specify the coordinates
+- in the ordered block, the coordinate lines are associated with
+  ascending atom ids
+- if atoms or unitcell boundaries are not specified, they are taken
+  from the last timestep
+- this is useful, when a system has a number of fixed atoms
+
+Example:
+--------
+timestep ordered
+pbc 10.0 10.0 10.0
+4.0 7.0 5.0
+6.0 7.0 5.0
+7.0 5.0 5.0
+6.0 3.0 5.0
+4.0 3.0 5.0
+3.0 5.0 5.0
+
+timestep indexed
+0 5.0 7.0 5.0
