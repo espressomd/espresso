@@ -7,7 +7,7 @@
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 /** \file interaction_data.c
-    Implementation of \ref interaction_data.h "interaction_data.h"
+    Implementation of interaction_data.h
  */
 #include <string.h>
 #include <stdlib.h>

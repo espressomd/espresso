@@ -10,8 +10,7 @@
  *
  *  This file contains functions for the cell system.
  *
- *  For more information on cells,
- *  see \ref cells.h "cells.h"
+ *  For more information on cells, see cells.h
  *   */
 #include <stdio.h>
 #include <stdlib.h>

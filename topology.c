@@ -11,7 +11,7 @@
  *
  *  This file contains functions for handling the system topology.
  *
- *  For more information see \ref topology.h "topology.h"
+ *  For more information see topology.h
  *   */
 
 #include "utils.h"
