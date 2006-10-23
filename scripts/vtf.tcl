@@ -151,7 +151,7 @@ proc writevsf { file args } {
 # Write the coordinates of the system to the file
 # OPTIONS:
 #   short|verbose - [verbose]
-#   folded|unfolded - write the coordinates folded or not [0]
+#   folded|absolute - write the coordinates folded or not [absolute]
 proc writevcf { file args } {
     # set defaults
     set folded 0
@@ -163,7 +163,7 @@ proc writevcf { file args } {
 	set val [ lindex $args [expr $argnum + 1]]
 	switch -- $arg {
 	    "folded" { set folded 1 }
-	    "unfolded" { set folded 0 }
+	    "absolute" { set folded 0 }
 	    "verbose" { set short 0 }
 	    "short" { set short 1 }
 	    default { 
