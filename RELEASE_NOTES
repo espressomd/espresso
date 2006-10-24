@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.0w (Ydalir)                                                                     *
+* v2.0.0x (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.0w -
+- v2.0.0x -
 -----------
 
+(x) October   23rd, 2006.
 (w) October   18th, 2006.
 (v) October   14th, 2006.
 (u) October   12th, 2006.
@@ -36,6 +37,10 @@ Current working revision.
 (a) July      11th, 2006.
 
 New Features:
+(x) Added Tcl-commands "writevsf" and "writevcf" that can be used
+    to
+    generate files in the VSF, VCF and VTF formats.
+(x) Added VMD file reader plugin for the VSF, VCF and VTF formats.
 (r) added tutorial section
 (r) check_consistency.sh allows to cross-check features.tex vs.
     myconfig-sample.h
