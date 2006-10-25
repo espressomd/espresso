@@ -1,6 +1,6 @@
 The VMD trajectory/structure/coordinate format
 ----------------------------------------------
-Time-stamp: <2006-10-11 17:41 olenz>
+Time-stamp: <2006-10-25 17:52 olenz>
 
 - comment lines start with '#'
 - empty lines are ignored
@@ -11,8 +11,10 @@ Time-stamp: <2006-10-11 17:41 olenz>
 - lines are identified by a keyword starting the line
 - in fact, the first non-whitespace character is sufficient to
   identify the line type
-- VSF/VTF files start with a structure block
-- VCF files start with a timestep block
+- VSF files only contain a structure block
+- VCF files only contain timestep blocks
+- VTF files start with a structure block and contain an arbitrary
+  number of timestep blocks afterwards
 
 STRUCTURE BLOCK:
 ----------------
