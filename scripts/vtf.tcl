@@ -152,10 +152,12 @@ proc writevsf { file args } {
 # OPTIONS:
 #   short|verbose - [verbose]
 #   folded|absolute - write the coordinates folded or not [absolute]
+#   pids <pids> - write only the coordinates of these particles [all]
 proc writevcf { file args } {
     # set defaults
     set folded 0
     set short 0
+    set pids "all"
 
     # Parse options
     for { set argnum 0 } { $argnum < [llength $args] } { incr argnum } {
@@ -166,6 +168,7 @@ proc writevcf { file args } {
 	    "absolute" { set folded 0 }
 	    "verbose" { set short 0 }
 	    "short" { set short 1 }
+	    "pids" { set pids $val; incr argnum }
 	    default { 
 		puts "unknown option to writevcf: $arg"
 		return 
@@ -176,10 +179,14 @@ proc writevcf { file args } {
     # write the data
     set n_part [setmd n_part]
 
-    if { $short } then { 
-	puts $file "t" 
-    } else { 
-	puts $file "timestep" 
+    if { $pids eq "all" } then {
+	if { $short } \
+	    then { puts $file "t" } \
+	    else { puts $file "timestep ordered" }
+    } else {
+	if { $short } \
+	    then { puts $file "i" } \
+	    else { puts $file "timestep indexed" }
     }
 
     # unitcell
@@ -191,12 +198,24 @@ proc writevcf { file args } {
 	}
     }
 
-    for { set pid 0 } { $pid < $n_part } { incr pid } {
-	if { $folded } then {
-	    puts $file [part $pid print folded_pos]
-	} else {
-	    puts $file [part $pid print pos]
+    # output particle data
+    if { $pids eq "all" } then {
+	for { set pid 0 } { $pid < $n_part } { incr pid } {
+	    if { $folded } then {
+		puts $file [part $pid print folded_pos]
+	    } else {
+		puts $file [part $pid print pos]
+	    }
+	}
+    } else {
+	foreach pid $pids {
+	    if { $folded } then {
+		puts $file "$pid [part $pid print folded_pos]"
+	    } else {
+		puts $file "$pid [part $pid print pos]"
+	    }
 	}
     }
+
     if { ! $short } then { puts $file "" }
 }
