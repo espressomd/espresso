@@ -158,9 +158,9 @@ If something is missing, it will complain and give hints how to solve
 the problem.
 
 The generic syntax of calling the \texttt{configure} script is:
-\begin{syntax}
+\begin{code}
  $>$ configure [\var{options} ...] [\var{variable}=\var{value} ...]
-\end{syntax}
+\end{code}
 
 \index{configure options}
 The behaviour of \texttt{configure} can be controlled by the means of
@@ -235,9 +235,9 @@ list of options and explanations thereof, call
 The command \texttt{make} is mainly used to compile the \es{} source
 code, but it can do a number of other things. The generic syntax of
 the \texttt{make} command is:
-\begin{syntax}
+\begin{code}
  $>$ make [\var{target}...] [\var{variable}=\var{value}]
-\end{syntax}
+\end{code}
 When no target is given, the target \texttt{all} is used. The
 following targets are available:
 \begin{description}
@@ -288,9 +288,9 @@ following targets are available:
 \label{sec:run}
 
 \es{} can be run via
-\begin{syntax}
+\begin{code}
 $>$ Espresso [\var{tcl\_script} [\var{N\_processors} [\var{args}]]]
-\end{syntax}
+\end{code}
 
 \index{interactive mode} When \es{} is called without any arguments,
 it is started in the interactive mode, where new commands can be

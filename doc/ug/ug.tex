@@ -35,18 +35,46 @@ idxtotoc                        % add the index to the TOC
 \newcommand{\eg}{\textit{e.g.\/}}
 \newcommand{\etal}{\textit{et al.\/}}
 
-\newcommand{\variant}[2]{(#1) \texttt{#2}\\}
-%\newcommand{\lit}[1]{\texttt{#1}}
-\newcommand{\var}[1]{\textrm{\textit{#1}}}
-\newenvironment{syntax}{%
+\newenvironment{code}{%
   \begin{Sbox}
     \begin{minipage}{0.9\linewidth}
+      \ttfamily
     }{%
     \end{minipage}
   \end{Sbox}
   \begin{center}
     \fbox{\TheSbox}
   \end{center}
+}
+
+%% Syntax Description
+% for command and option variants (e.g. (1) inter <pid1> <pid2>)
+\newcommand{\variant}[2]{(#1) \texttt{#2}\\}
+
+% keywords and literals
+\newcommand{\lit}[1]{\texttt{#1}}
+\newcommand{\keyword}[1]{\texttt{#1}}
+% variables
+\newcommand{\var}[1]{\textrm{\textit{#1}}}
+
+
+% syntax environment (with box around it)
+\newenvironment{command}{%
+  \begin{Sbox}
+    \begin{minipage}{0.95\linewidth}
+      \ttfamily
+    }{%
+    \end{minipage}
+  \end{Sbox}
+  \begin{center}
+    \fbox{\TheSbox}
+  \end{center}
+}
+
+\newenvironment{options}{%
+  \begin{code}
+  }{%
+  \end{code}
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -65,7 +93,7 @@ idxtotoc                        % add the index to the TOC
 \begin{document}
 \titlehead{
   \begin{center}
-    \includegraphics[width=5cm]{figures/logo.jpg}
+    \includegraphics[width=5cm]{figures/logo}
   \end{center}
 }
 %\subject{}
