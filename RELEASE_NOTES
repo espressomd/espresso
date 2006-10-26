@@ -2,16 +2,20 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1  (Ydalir)                                                                     *
+* v2.0.1a (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-
-- v2.0.1  -
+- v2.0.1a -
 -----------
 
+(a) October 25th, 2006.
+
+Changes:
+(a) Renamed demo.tcl to samples/tk_pe_solution.tcl and
+    simulation.tcl to samples/pe_network.tcl. Removed renice.tcl.
 
 
 - v2.0.0x -
