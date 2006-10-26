@@ -142,7 +142,7 @@ for { set pid 0 } { $pid < [setmd n_part] } { incr pid } {
 setmd time 0.0
 
 puts "Tuning P3M..."
-puts [inter coulomb 1 p3m tunev2 accuracy 0.01]
+#puts [inter coulomb 1 p3m tunev2 accuracy 0.01]
 #inter coulomb 1 p3m 13.9629 8 3 0.127621 0.000832468
 
 puts "Starting simulation..."
