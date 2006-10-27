@@ -1250,3 +1250,20 @@ topic:     benchmarking
 reminded:  21.SEP.2006
 
 
+name:      Hugouvieux Virginie
+email:     virginie.hugouvieux@nantes.inra.fr
+institute: INRA
+           Unité Biopolymères, Interactions, Assemblages
+           Rue de la Géraudière
+           BP 71627
+           44316 Nantes cedex 3
+           France
+sent:      26.OCT.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Modelling and simulation of supramolecular assemblies of
+           biopolymers (described at a mesoscopic scale) in solution and
+           at air/water interfaces.
+reminded:  X26.OCT.2006
+
+
