@@ -1267,3 +1267,14 @@ topic:     Modelling and simulation of supramolecular assemblies of
 reminded:  X26.OCT.2006
 
 
+name:      Zhangman Shi
+email:     shizhangman@yahoo.de
+institute: Zeunerstr.82 /EG
+           01069 Dresden
+sent:      27.OCT.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Simulation
+reminded:  X27.OCT.2006
+
+
