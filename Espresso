@@ -1,8 +1,13 @@
 #!/bin/sh
 # This is the Espresso-wrapper that is used in the source directory
 
-# get the name of the directory
-dir=${0%/Espresso}
+# get the name of the directory from the script name
+script=$0
+
+while test -L $script; do
+    script=`readlink $script`
+done
+dir=`dirname $script`
 
 # if Makefile-am is not found there, we must assume that we are in
 # the srcdir
@@ -33,9 +38,9 @@ else
 
     # call Espresso
     if test .$2 != .; then NP=$2; else NP=2; fi
-    ESPRESSO_SCRIPTS=/home/users/olenz/projects/espresso/src/automake/obj-Athlon_64-pc-linux/../scripts
+    ESPRESSO_SCRIPTS=/home/fias/olenz/projects/espresso/obj.fias/devel/../../src/devel/scripts
     export ESPRESSO_SCRIPTS
     ESPRESSO_CALL="$dir/Espresso_bin $*"
-    /usr/bin/mpirun -x ESPRESSO_SCRIPTS -np $NP -nsigs $ESPRESSO_CALL
+    $ESPRESSO_CALL
 fi
 
