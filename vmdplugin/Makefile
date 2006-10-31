@@ -4,7 +4,7 @@
 VMDDIR=/usr/local
 VMDINCLUDES=$(VMDDIR)/lib/vmd/plugins/include
 
-CPPFLAGS=-I $(VMDDINCLUDES)
+CPPFLAGS=-I $(VMDINCLUDES)
 
 CC=gcc
 CFLAGS=-g -O0
