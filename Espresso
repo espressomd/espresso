@@ -5,7 +5,7 @@
 script=$0
 
 while test -L $script; do
-    script=`readlink $script`
+    script=`readlink -f "$script"`
 done
 dir=`dirname $script`
 
@@ -38,7 +38,7 @@ else
 
     # call Espresso
     if test .$2 != .; then NP=$2; else NP=2; fi
-    ESPRESSO_SCRIPTS=/home/fias/olenz/projects/espresso/obj.fias/devel/../../src/devel/scripts
+    ESPRESSO_SCRIPTS=/home/olenz/projects/espresso/obj.fatra/devel/../../src/devel/scripts
     export ESPRESSO_SCRIPTS
     ESPRESSO_CALL="$dir/Espresso_bin $*"
     $ESPRESSO_CALL
