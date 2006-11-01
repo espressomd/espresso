@@ -12,4 +12,5 @@ dist_scripts_DATA =\
 	polymer.tcl \
 	pov.tcl \
 	statistics.tcl \
-	vmd_plg.tcl
+	vmd_plg.tcl \
+	vtf.tcl
