@@ -219,6 +219,7 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     }
     /* [angle <angle> [\<angle2\>]] */
     else if (ARG_IS_S(i, "angle")) {
+      Tcl_AppendResult(interp, "Warning: The definition of angle has been changed. See Release-Notes.", (char *)NULL);
       if(i+1 < argc) {
 	if (!ARG_IS_D(i+1, angle)) {
 	  Tcl_ResetResult(interp);
@@ -376,9 +377,9 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	poz[0]=pos[0]; poz[1]=pos[1]; poz[2]=pos[2]; /*save last monomer*/
 	for (cnt1=0; cnt1<max_try; cnt1++) {
 	  if(angle > -1.0 &&  n>1) {
-	    a[0]=poz[0]-poy[0];
-	    a[1]=poz[1]-poy[1];
-	    a[2]=poz[2]-poy[2];
+	    a[0]=poy[0]-poz[0];
+	    a[1]=poy[1]-poz[1];
+	    a[2]=poy[2]-poz[2];
 	    
 	    if(angle2 > -1.0 && n>2) {
 	      b[0]=poy[0]-pox[0];
