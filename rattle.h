@@ -25,6 +25,8 @@
 /** number of rigid bonds */
 extern int n_rigidbonds;
 
+#ifdef BOND_CONSTRAINT
+
 /** Transfers the current particle positions from r.p[3] to r.p_pold[3]
     of the \ref Particle structure. Invoked from \ref correct_pos_shake() */
 void save_old_pos();
@@ -57,5 +59,5 @@ MDINLINE int inter_parse_rigid_bonds(Tcl_Interp *interp, int bond_type, int argc
 
   CHECK_VALUE(rigid_bond_set_params(bond_type, d, p_tol, v_tol), "bond type must be nonnegative");
 }
-
+#endif
 #endif
