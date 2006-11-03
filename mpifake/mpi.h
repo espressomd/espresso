@@ -114,6 +114,9 @@ MDINLINE int MPI_Wait(MPI_Request *reqs, MPI_Status *stats) { return MPI_SUCCESS
 MDINLINE int MPI_Errhandler_create(MPI_Handler_function *errfunc, MPI_Errhandler *errhdl) { return MPI_SUCCESS; }
 MDINLINE int MPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhdl) { return MPI_SUCCESS; }
 MDINLINE int MPI_Bcast(void *buff, int count, MPI_Datatype datatype, int root, MPI_Comm comm) { return MPI_SUCCESS; }
+
+#ifndef GNU_MPIFAKE_DEBUG
+
 MDINLINE int MPI_Recv(void *buf, int count, MPI_Datatype dtype, int src, int tag, MPI_Comm comm, MPI_Status *stat) {
   fprintf(stderr, "MPI_Recv on a single node\n"); errexit(); return MPI_SUCCESS; }
 MDINLINE int MPI_Irecv(void *buf, int count, MPI_Datatype dtype, int src, int tag, MPI_Comm comm, MPI_Request *req) {
@@ -125,6 +128,23 @@ MDINLINE int MPI_Sendrecv(void *sbuf, int scount, MPI_Datatype stype, int dst, i
 }
 MDINLINE int MPI_Isend(void *buf, int count, MPI_Datatype dtype, int dst, int tag, MPI_Comm comm, MPI_Request *req) {
   fprintf(stderr, "MPI_Recv on a single node\n"); errexit(); return MPI_SUCCESS; }
+
+#else
+
+MDINLINE int __MPI_ERR(char *func, char *file, int line) {
+  fprintf(stderr, "%s on a single node at %s:%d\n", func, file, line);
+  errexit(); return MPI_ERR_RANK;
+}
+
+#define MPI_Recv(buf, count, dtype, src, tag, comm, stat)  __MPI_ERR("MPI_Recv", __FILE__, __LINE__)
+#define MPI_Irecv(buf, count, dtype, src, tag, comm, req) __MPI_ERR("MPI_IRecv", __FILE__, __LINE__)
+#define MPI_Send(buf, count, dtype, dst, tag, comm) __MPI_ERR("MPI_Send", __FILE__, __LINE__)
+#define MPI_Isend(buf, count, dtype, dst, tag, comm, req) __MPI_ERR("MPI_Isend", __FILE__, __LINE__)
+#define MPI_Sendrecv(sbuf, scount, stype, dst, stag, rbuf, rcount, rtype, src, rtag, comm, stat) \
+  __MPI_ERR("MPI_Sendrecv", __FILE__, __LINE__)
+
+#endif
+
 MDINLINE int MPI_Gather(void *sbuf, int scount, MPI_Datatype sdtype,
 			void *rbuf, int rcount, MPI_Datatype rdtype,
 			int root, MPI_Comm comm)
