@@ -2,18 +2,21 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1a (Ydalir)                                                                     *
+* v2.0.1b (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1a -
+- v2.0.1b -
 -----------
 
+(b) November 2nd, 2006.
 (a) October 25th, 2006.
 
 Changes:
+(b) In the polymer-command an angle of PI now results in a stretched
+    polymer.
 (a) Renamed demo.tcl to samples/tk_pe_solution.tcl and
     simulation.tcl to samples/pe_network.tcl. Removed renice.tcl.
 
