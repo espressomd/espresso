@@ -1278,3 +1278,17 @@ topic:     Simulation
 reminded:  X27.OCT.2006
 
 
+name:      Mirko Kunowsky
+email:     kunowsky@ua.es
+institute: University of Alicante
+           Dept. Química Inorgánica
+           Apartado de Correos 99
+           03080 Alicante
+           España
+sent:      02.NOV.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Simulation of gas adsorption on carbon materials
+reminded:  X02.NOV.2006
+
+
