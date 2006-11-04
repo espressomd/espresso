@@ -2,23 +2,33 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1b (Ydalir)                                                                     *
+* v2.0.1c (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1b -
+- v2.0.1c -
 -----------
 
+(c) November 3rd, 2006.
 (b) November 2nd, 2006.
 (a) October 25th, 2006.
+
+New Features:
+(c) mpifake now can drop error messages with file and line number information with
+    gcc.
+(c) For this, define GNU_MPIFAKE_DEBUG in myconfig.h.
 
 Changes:
 (b) In the polymer-command an angle of PI now results in a stretched
     polymer.
 (a) Renamed demo.tcl to samples/tk_pe_solution.tcl and
     simulation.tcl to samples/pe_network.tcl. Removed renice.tcl.
+
+Bugfixes:
+(c) Added missing Espresso to EXTRA_DIST
+(c) added missing #ifdef BOND_CONSTRAINT
 
 
 - v2.0.0x -
