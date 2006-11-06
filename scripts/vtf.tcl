@@ -96,6 +96,12 @@ proc writevsf { file args } {
 	set type [part $pid print type]
 	if { $type > $type_max } then { set type_max $type }
     }
+    foreach {i j} $radius {
+	if { $i > $type_max } then { set type_max $i }
+    }
+    foreach {i j} $typedesc {
+	if { $i > $type_max } then { set type_max $i }
+    }
 
     set typedesclist [get_typedesc_list $type_max $typedesc]
     set radiuslist [get_radius_list $type_max $radius]
