@@ -832,10 +832,9 @@ static molfile_plugin_t vcfplugin;
 
 VMDPLUGIN_API int VMDPLUGIN_init() {
   memset(&vsfplugin, 0, sizeof(molfile_plugin_t));
-  vsfplugin.abiversion = 9;
+  vsfplugin.abiversion = vmdplugin_ABIVERSION;
   vsfplugin.type = MOLFILE_PLUGIN_TYPE;
   vsfplugin.name = "vsf";
-  vsfplugin.prettyname = "VMD structure format";
   vsfplugin.author = "Olaf Lenz";
   vsfplugin.majorv = 1;
   vsfplugin.minorv = 0;
@@ -846,12 +845,14 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
   vsfplugin.read_bonds = vtf_read_bonds;
   /* plugin.read_next_timestep = vtf_read_next_timestep; */
   vsfplugin.close_file_read = vtf_close_file_read;
+#if vmdplugin_ABIVERSION >= 9
+  vsfplugin.prettyname = "VMD structure format";
+#endif
 
   memset(&vcfplugin, 0, sizeof(molfile_plugin_t));
-  vcfplugin.abiversion = 9;
+  vcfplugin.abiversion = vmdplugin_ABIVERSION;
   vcfplugin.type = MOLFILE_PLUGIN_TYPE;
   vcfplugin.name = "vcf";
-  vcfplugin.prettyname = "VMD coordinate format";
   vcfplugin.author = "Olaf Lenz";
   vcfplugin.majorv = 1;
   vcfplugin.minorv = 0;
@@ -860,12 +861,14 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
   vcfplugin.open_file_read = vtf_open_file_read;
   vcfplugin.read_next_timestep = vtf_read_next_timestep;
   vcfplugin.close_file_read = vtf_close_file_read;
+#if vmdplugin_ABIVERSION >= 9
+  vcfplugin.prettyname = "VMD coordinate format";
+#endif
 
   memset(&vtfplugin, 0, sizeof(molfile_plugin_t));
-  vtfplugin.abiversion = 9;
+  vtfplugin.abiversion = vmdplugin_ABIVERSION;
   vtfplugin.type = MOLFILE_PLUGIN_TYPE;
   vtfplugin.name = "vtf";
-  vtfplugin.prettyname = "VMD trajectory format";
   vtfplugin.author = "Olaf Lenz";
   vtfplugin.majorv = 1;
   vtfplugin.minorv = 0;
@@ -876,6 +879,9 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
   vtfplugin.read_bonds = vtf_read_bonds;
   vtfplugin.read_next_timestep = vtf_read_next_timestep;
   vtfplugin.close_file_read = vtf_close_file_read;
+#if vmdplugin_ABIVERSION >= 9
+  vtfplugin.prettyname = "VMD trajectory format";
+#endif
 
   return VMDPLUGIN_SUCCESS;
 }
