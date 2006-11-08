@@ -37,8 +37,6 @@
 		the well known Lennard-Jones potential
 		\f[4 \epsilon \left(\left(\frac{\sigma}{r-offset}\right)^{12} -
 				 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
-		The order of the parameters is
-		\f$\epsilon, \sigma, cutoff, shift, offset\f$.
 		
 		The potential is cut off if 
 		\f[r > offset + cutoff\f]
