@@ -676,16 +676,7 @@ double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist, chain_ma
   }  
 }
 
-double print_vac(double *vac, int length) { 
-	int i;
-	printf("SI:\n"); 
-	for(i=0;i<length;i++){
-		printf("%d %f\n",i, vac[i]);
-	}
-	printf("\n");
-	return 1.0;
-}
-
+#ifdef ELECTROSTATICS
 void analyze_cwvac(int maxtau, int interval, double **_avac, double **_evac) {
     int i,j,k,ic,n,mon,tau;
     double *vac=NULL, *avac=NULL, *evac=NULL;
@@ -756,7 +747,7 @@ void analyze_cwvac(int maxtau, int interval, double **_avac, double **_evac) {
     
     free(vac); free(varr);
  }
-
+#endif
 
 /****************************************************************************************
  *                                 chain structure commands parsing
@@ -1150,6 +1141,7 @@ int parse_rdfchain(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
+#ifdef ELECTROSTATICS
 int parse_cwvac(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze { cwvac } <maxtau> <interval> [<chain_start> <n_chains> <chain_length>]' */
@@ -1202,3 +1194,5 @@ int parse_cwvac(Tcl_Interp *interp, int argc, char **argv)
   free(avac); free(evac);
   return (TCL_OK);
 }
+#endif
+

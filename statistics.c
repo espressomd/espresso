@@ -2815,7 +2815,9 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS_W_ARG("<rdf>", parse_rdf, 1);
   REGISTER_ANALYSIS_W_ARG("<rdf-intermol>", parse_rdf, 2);
   REGISTER_ANALYSIS("rdfchain", parse_rdfchain);
+#ifdef ELECTROSTATICS
   REGISTER_ANALYSIS("cwvac", parse_cwvac);
+#endif
   REGISTER_ANALYSIS("structurefactor", parse_structurefactor);
   REGISTER_ANALYSIS("vanhove", parse_vanhove);
   REGISTER_ANALYZE_STORAGE("append", parse_append);
