@@ -39,6 +39,9 @@
 				 \left(\frac{\sigma}{r-offset}\right)^6 + shift\right)\f]
 		The order of the parameters is
 		\f$\epsilon, \sigma, cutoff, shift, offset\f$.
+		
+		The potential is cut off if 
+		\f[r < offset + cutoff\f]
 
 		For system warmup you can cap the Lennard-Jones
 		potential with a maximal force which can be set with:
