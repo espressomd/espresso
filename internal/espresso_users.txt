@@ -1340,3 +1340,15 @@ topic:     1-Transport properties of Mesoscopic systems
 reminded:  06.NOV.2006
 
 
+name:      Arun Kumar V
+email:     arun.target@gmail.com
+institute: M.E, Chemical Engineering,
+           IISc,Bangalore-12,
+           India
+sent:      08.NOV.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Simulations of surfactant solutions & Study of Lamellar phases,
+reminded:  X08.NOV.2006
+
+
