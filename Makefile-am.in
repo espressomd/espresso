@@ -15,7 +15,6 @@
 @SET_MAKE@
 
 
-
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 VPATH = @srcdir@
@@ -39,8 +38,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@USE_CHOOSER_TRUE@execpkglib_PROGRAMS = Espresso_bin$(EXEEXT)
-@USE_CHOOSER_FALSE@libexec_PROGRAMS = Espresso_bin$(EXEEXT)
+noinst_PROGRAMS = Espresso_bin$(EXEEXT)
 
 #################################################################
 # Handling of the MPI fake implementation
@@ -70,12 +68,7 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = acconfig.h
 CONFIG_CLEAN_FILES = config/$myconfig chooser/Espresso \
 	mpiwrap/Espresso Espresso
-am__installdirs = "$(DESTDIR)$(execpkglibdir)" \
-	"$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(bindir)" \
-	"$(DESTDIR)$(execpkglibdir)" "$(DESTDIR)$(pkglibdir)"
-execpkglibPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
-libexecPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
-PROGRAMS = $(execpkglib_PROGRAMS) $(libexec_PROGRAMS)
+PROGRAMS = $(noinst_PROGRAMS)
 am__Espresso_bin_SOURCES_DIST = main.c config.c config.h initialize.c \
 	initialize.h global.c global.h communication.c communication.h \
 	binary_file.c binary_file.h interaction_data.c \
@@ -127,10 +120,6 @@ am_Espresso_bin_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) \
 	lb-boundaries.$(OBJEXT) utils.$(OBJEXT) $(am__objects_1)
 Espresso_bin_OBJECTS = $(am_Espresso_bin_OBJECTS)
 Espresso_bin_LDADD = $(LDADD)
-binSCRIPT_INSTALL = $(INSTALL_SCRIPT)
-execpkglibSCRIPT_INSTALL = $(INSTALL_SCRIPT)
-pkglibSCRIPT_INSTALL = $(INSTALL_SCRIPT)
-SCRIPTS = $(bin_SCRIPTS) $(execpkglib_SCRIPTS) $(pkglib_SCRIPTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
@@ -312,14 +301,6 @@ Espresso_bin_SOURCES = main.c config.c config.h initialize.c \
 	debye_hueckel.h dihedral.h fene.h gb.h harmonic.h imd.h \
 	ljcos2.h ljcos.h lj.h morse.h polynom.h soft_sphere.h \
 	subt_lj.h tab.h $(am__append_1)
-@USE_CHOOSER_FALSE@bin_SCRIPTS = mpiwrap/Espresso
-
-#################################################################
-# Installation of the main program and wrapper scripts
-#################################################################
-@USE_CHOOSER_TRUE@bin_SCRIPTS = chooser/Espresso
-@USE_CHOOSER_TRUE@pkglib_SCRIPTS = config/config.guess
-@USE_CHOOSER_TRUE@execpkglib_SCRIPTS = mpiwrap/Espresso
 
 #################################################################
 # Handling of local configure headers
@@ -393,52 +374,9 @@ mpiwrap/Espresso: $(top_builddir)/config.status $(top_srcdir)/mpiwrap/Espresso.i
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 Espresso: $(top_builddir)/config.status $(srcdir)/Espresso.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
-install-execpkglibPROGRAMS: $(execpkglib_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	test -z "$(execpkglibdir)" || $(mkdir_p) "$(DESTDIR)$(execpkglibdir)"
-	@list='$(execpkglib_PROGRAMS)'; for p in $$list; do \
-	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  if test -f $$p \
-	  ; then \
-	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(execpkglibPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(execpkglibdir)/$$f'"; \
-	   $(INSTALL_PROGRAM_ENV) $(execpkglibPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(execpkglibdir)/$$f" || exit 1; \
-	  else :; fi; \
-	done
 
-uninstall-execpkglibPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(execpkglib_PROGRAMS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
-	  echo " rm -f '$(DESTDIR)$(execpkglibdir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(execpkglibdir)/$$f"; \
-	done
-
-clean-execpkglibPROGRAMS:
-	-test -z "$(execpkglib_PROGRAMS)" || rm -f $(execpkglib_PROGRAMS)
-install-libexecPROGRAMS: $(libexec_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	test -z "$(libexecdir)" || $(mkdir_p) "$(DESTDIR)$(libexecdir)"
-	@list='$(libexec_PROGRAMS)'; for p in $$list; do \
-	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  if test -f $$p \
-	  ; then \
-	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(libexecPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(libexecdir)/$$f'"; \
-	   $(INSTALL_PROGRAM_ENV) $(libexecPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(libexecdir)/$$f" || exit 1; \
-	  else :; fi; \
-	done
-
-uninstall-libexecPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(libexec_PROGRAMS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
-	  echo " rm -f '$(DESTDIR)$(libexecdir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(libexecdir)/$$f"; \
-	done
-
-clean-libexecPROGRAMS:
-	-test -z "$(libexec_PROGRAMS)" || rm -f $(libexec_PROGRAMS)
+clean-noinstPROGRAMS:
+	-test -z "$(noinst_PROGRAMS)" || rm -f $(noinst_PROGRAMS)
 mpifake/$(am__dirstamp):
 	@$(mkdir_p) mpifake
 	@: > mpifake/$(am__dirstamp)
@@ -450,63 +388,6 @@ mpifake/mpi.$(OBJEXT): mpifake/$(am__dirstamp) \
 Espresso_bin$(EXEEXT): $(Espresso_bin_OBJECTS) $(Espresso_bin_DEPENDENCIES) 
 	@rm -f Espresso_bin$(EXEEXT)
 	$(LINK) $(Espresso_bin_LDFLAGS) $(Espresso_bin_OBJECTS) $(Espresso_bin_LDADD) $(LIBS)
-install-binSCRIPTS: $(bin_SCRIPTS)
-	@$(NORMAL_INSTALL)
-	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
-	@list='$(bin_SCRIPTS)'; for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  if test -f $$d$$p; then \
-	    f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
-	    echo " $(binSCRIPT_INSTALL) '$$d$$p' '$(DESTDIR)$(bindir)/$$f'"; \
-	    $(binSCRIPT_INSTALL) "$$d$$p" "$(DESTDIR)$(bindir)/$$f"; \
-	  else :; fi; \
-	done
-
-uninstall-binSCRIPTS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(bin_SCRIPTS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
-	  echo " rm -f '$(DESTDIR)$(bindir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(bindir)/$$f"; \
-	done
-install-execpkglibSCRIPTS: $(execpkglib_SCRIPTS)
-	@$(NORMAL_INSTALL)
-	test -z "$(execpkglibdir)" || $(mkdir_p) "$(DESTDIR)$(execpkglibdir)"
-	@list='$(execpkglib_SCRIPTS)'; for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  if test -f $$d$$p; then \
-	    f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
-	    echo " $(execpkglibSCRIPT_INSTALL) '$$d$$p' '$(DESTDIR)$(execpkglibdir)/$$f'"; \
-	    $(execpkglibSCRIPT_INSTALL) "$$d$$p" "$(DESTDIR)$(execpkglibdir)/$$f"; \
-	  else :; fi; \
-	done
-
-uninstall-execpkglibSCRIPTS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(execpkglib_SCRIPTS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
-	  echo " rm -f '$(DESTDIR)$(execpkglibdir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(execpkglibdir)/$$f"; \
-	done
-install-pkglibSCRIPTS: $(pkglib_SCRIPTS)
-	@$(NORMAL_INSTALL)
-	test -z "$(pkglibdir)" || $(mkdir_p) "$(DESTDIR)$(pkglibdir)"
-	@list='$(pkglib_SCRIPTS)'; for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  if test -f $$d$$p; then \
-	    f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
-	    echo " $(pkglibSCRIPT_INSTALL) '$$d$$p' '$(DESTDIR)$(pkglibdir)/$$f'"; \
-	    $(pkglibSCRIPT_INSTALL) "$$d$$p" "$(DESTDIR)$(pkglibdir)/$$f"; \
-	  else :; fi; \
-	done
-
-uninstall-pkglibSCRIPTS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(pkglib_SCRIPTS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
-	  echo " rm -f '$(DESTDIR)$(pkglibdir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(pkglibdir)/$$f"; \
-	done
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -871,12 +752,9 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile-am $(PROGRAMS) $(SCRIPTS) $(HEADERS) acconfig.h
+all-am: Makefile-am $(PROGRAMS) $(HEADERS) acconfig.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(execpkglibdir)" "$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(execpkglibdir)" "$(DESTDIR)$(pkglibdir)"; do \
-	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
-	done
 install: install-recursive
 install-exec: install-exec-recursive
 install-data: install-data-recursive
@@ -904,10 +782,11 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+@USE_CHOOSER_FALSE@install-exec-local:
+@USE_CHOOSER_TRUE@install-exec-hook:
 clean: clean-recursive
 
-clean-am: clean-execpkglibPROGRAMS clean-generic clean-libexecPROGRAMS \
-	mostlyclean-am
+clean-am: clean-generic clean-noinstPROGRAMS mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -928,9 +807,7 @@ info-am:
 
 install-data-am:
 
-install-exec-am: install-binSCRIPTS install-execpkglibPROGRAMS \
-	install-execpkglibSCRIPTS install-libexecPROGRAMS \
-	install-pkglibSCRIPTS
+install-exec-am: install-exec-local
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 
@@ -959,32 +836,25 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-binSCRIPTS uninstall-execpkglibPROGRAMS \
-	uninstall-execpkglibSCRIPTS uninstall-info-am \
-	uninstall-libexecPROGRAMS uninstall-pkglibSCRIPTS
+uninstall-am: uninstall-info-am
 
 uninstall-info: uninstall-info-recursive
 
 .PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am am--refresh check \
-	check-am clean clean-execpkglibPROGRAMS clean-generic \
-	clean-libexecPROGRAMS clean-recursive ctags ctags-recursive \
-	dist dist-all dist-bzip2 dist-gzip dist-hook dist-shar \
-	dist-tarZ dist-zip distcheck distclean distclean-compile \
-	distclean-generic distclean-hdr distclean-recursive \
-	distclean-tags distcleancheck distdir distuninstallcheck dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-binSCRIPTS install-data install-data-am install-exec \
-	install-exec-am install-exec-hook install-execpkglibPROGRAMS \
-	install-execpkglibSCRIPTS install-info install-info-am \
-	install-libexecPROGRAMS install-man install-pkglibSCRIPTS \
-	install-strip installcheck installcheck-am installdirs \
-	installdirs-am maintainer-clean maintainer-clean-generic \
+	check-am clean clean-generic clean-noinstPROGRAMS \
+	clean-recursive ctags ctags-recursive dist dist-all dist-bzip2 \
+	dist-gzip dist-hook dist-shar dist-tarZ dist-zip distcheck \
+	distclean distclean-compile distclean-generic distclean-hdr \
+	distclean-recursive distclean-tags distcleancheck distdir \
+	distuninstallcheck dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-exec \
+	install-exec-am install-exec-hook install-exec-local \
+	install-info install-info-am install-man install-strip \
+	installcheck installcheck-am installdirs installdirs-am \
+	maintainer-clean maintainer-clean-generic \
 	maintainer-clean-recursive mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-recursive pdf pdf-am ps ps-am \
-	tags tags-recursive uninstall uninstall-am \
-	uninstall-binSCRIPTS uninstall-execpkglibPROGRAMS \
-	uninstall-execpkglibSCRIPTS uninstall-info-am \
-	uninstall-libexecPROGRAMS uninstall-pkglibSCRIPTS
+	tags tags-recursive uninstall uninstall-am uninstall-info-am
 
 #deactivate building of the library
 #libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
@@ -993,27 +863,53 @@ uninstall-info: uninstall-info-recursive
 # and remove the internal dir if not dist-internal is used
 dist-hook:
 	-rm -rf `find $(distdir) -name CVS`
+
+#pkglib_SCRIPTS = config/config.guess
+#bin_SCRIPTS = chooser/Espresso
+#execpkglib_SCRIPTS = mpiwrap/Espresso
 #execpkglib_LIBRARIES = libEspresso.a
 
-# Substitute some remaining variables in the installed Espresso
-# wrappers. This is necessary as the required values are only known at
-# installation time.
-@USE_CHOOSER_TRUE@install-exec-hook:
-@USE_CHOOSER_TRUE@	sed -i"" \
-@USE_CHOOSER_TRUE@	-e "s,[@]ESPRESSO_PKGLIBDIR[@],$(pkglibdir),g" \
-@USE_CHOOSER_TRUE@	$(DESTDIR)/$(bindir)/Espresso
-@USE_CHOOSER_TRUE@	sed -i"" \
-@USE_CHOOSER_TRUE@	-e "s,[@]ESPRESSO_BIN[@],$(execpkglibdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
-@USE_CHOOSER_TRUE@	$(DESTDIR)/$(execpkglibdir)/Espresso
+# Substitute some remaining variables in the Espresso wrappers. This
+# is necessary as the required values are only known at installation
+# time.
+@USE_CHOOSER_TRUE@install-exec-local:
+# create directories
+@USE_CHOOSER_TRUE@	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+@USE_CHOOSER_TRUE@	test -z "$(pkglibdir)" || $(mkdir_p) "$(DESTDIR)$(pkglibdir)"
+@USE_CHOOSER_TRUE@	test -z "$(execpkglibdir)" || $(mkdir_p) "$(DESTDIR)$(execpkglibdir)"
+# install chooser
+@USE_CHOOSER_TRUE@	sed -e "s,[@]ESPRESSO_PKGLIBDIR[@],$(pkglibdir),g" \
+@USE_CHOOSER_TRUE@	chooser/Espresso > $(DESTDIR)/$(bindir)/Espresso
+@USE_CHOOSER_TRUE@	chmod 755 $(DESTDIR)/$(bindir)/Espresso
+# install config.guess script
+@USE_CHOOSER_TRUE@	$(INSTALL_SCRIPT) \
+@USE_CHOOSER_TRUE@	$(srcdir)/config/config.guess $(DESTDIR)/$(pkglibdir)/
+# install mpi wrapper
+@USE_CHOOSER_TRUE@	sed -e "s,[@]ESPRESSO_BIN[@],$(execpkglibdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
+@USE_CHOOSER_TRUE@	mpiwrap/Espresso > $(DESTDIR)/$(execpkglibdir)/Espresso
+@USE_CHOOSER_TRUE@	chmod 755 $(DESTDIR)/$(execpkglibdir)/Espresso
+# install binary
+@USE_CHOOSER_TRUE@	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) \
+@USE_CHOOSER_TRUE@	Espresso_bin $(DESTDIR)/$(execpkglibdir)/
+
+#libexec_PROGRAMS=Espresso_bin
+#bin_SCRIPTS=mpiwrap/Espresso
 #lib_LIBRARIES = libEspresso.a
 
-# Substitute some remaining variables in the installed Espresso
-# wrappers. This is necessary as the required values are only known at
-# installation time.
+# Substitute some remaining variables in the Espresso wrappers. This
+# is necessary as the required values are only known at installation
+# time.
 @USE_CHOOSER_FALSE@install-exec-hook:
-@USE_CHOOSER_FALSE@	sed -i"" \
-@USE_CHOOSER_FALSE@	-e "s,[@]ESPRESSO_BIN[@],$(libexecdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
-@USE_CHOOSER_FALSE@	$(DESTDIR)/$(bindir)/Espresso
+# create directories
+@USE_CHOOSER_FALSE@	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+@USE_CHOOSER_FALSE@	test -z "$(libexecdir)" || $(mkdir_p) "$(DESTDIR)$(libexecdir)"
+# install mpi wrapper
+@USE_CHOOSER_FALSE@	sed -e "s,[@]ESPRESSO_BIN[@],$(libexecdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
+@USE_CHOOSER_FALSE@	mpiwrap/Espresso > $(DESTDIR)/$(bindir)/Espresso
+@USE_CHOOSER_FALSE@	chmod 755 $(DESTDIR)/$(bindir)/Espresso
+# install binary
+@USE_CHOOSER_FALSE@	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) \
+@USE_CHOOSER_FALSE@	Espresso_bin $(DESTDIR)/$(libexecdir)/
 
 #################################################################
 # Documentation

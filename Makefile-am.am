@@ -96,38 +96,48 @@ dist-hook:
 #################################################################
 # Installation of the main program and wrapper scripts
 #################################################################
+noinst_PROGRAMS = Espresso_bin
+
 if USE_CHOOSER
 
-bin_SCRIPTS = chooser/Espresso
-pkglib_SCRIPTS = config/config.guess
-execpkglib_SCRIPTS = mpiwrap/Espresso
-execpkglib_PROGRAMS = Espresso_bin
-#execpkglib_LIBRARIES = libEspresso.a
-
-# Substitute some remaining variables in the installed Espresso
-# wrappers. This is necessary as the required values are only known at
-# installation time.
-install-exec-hook:
-	sed -i"" \
-	-e "s,[@]ESPRESSO_PKGLIBDIR[@],$(pkglibdir),g" \
-	$(DESTDIR)/$(bindir)/Espresso
-	sed -i"" \
-	-e "s,[@]ESPRESSO_BIN[@],$(execpkglibdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
-	$(DESTDIR)/$(execpkglibdir)/Espresso
-
+# Substitute some remaining variables in the Espresso wrappers. This
+# is necessary as the required values are only known at installation
+# time.
+install-exec-local:
+# create directories
+	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	test -z "$(pkglibdir)" || $(mkdir_p) "$(DESTDIR)$(pkglibdir)"
+	test -z "$(execpkglibdir)" || $(mkdir_p) "$(DESTDIR)$(execpkglibdir)"
+# install chooser
+	sed -e "s,[@]ESPRESSO_PKGLIBDIR[@],$(pkglibdir),g" \
+	chooser/Espresso > $(DESTDIR)/$(bindir)/Espresso
+	chmod 755 $(DESTDIR)/$(bindir)/Espresso
+# install config.guess script
+	$(INSTALL_SCRIPT) \
+	$(srcdir)/config/config.guess $(DESTDIR)/$(pkglibdir)/
+# install mpi wrapper
+	sed -e "s,[@]ESPRESSO_BIN[@],$(execpkglibdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
+	mpiwrap/Espresso > $(DESTDIR)/$(execpkglibdir)/Espresso
+	chmod 755 $(DESTDIR)/$(execpkglibdir)/Espresso
+# install binary
+	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) \
+	Espresso_bin $(DESTDIR)/$(execpkglibdir)/
 else
 
-bin_SCRIPTS=mpiwrap/Espresso
-libexec_PROGRAMS=Espresso_bin
-#lib_LIBRARIES = libEspresso.a
-
-# Substitute some remaining variables in the installed Espresso
-# wrappers. This is necessary as the required values are only known at
-# installation time.
-install-exec-hook:
-	sed -i"" \
-	-e "s,[@]ESPRESSO_BIN[@],$(libexecdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
-	$(DESTDIR)/$(bindir)/Espresso
+# Substitute some remaining variables in the Espresso wrappers. This
+# is necessary as the required values are only known at installation
+# time.
+install-exec-local:
+# create directories
+	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	test -z "$(libexecdir)" || $(mkdir_p) "$(DESTDIR)$(libexecdir)"
+# install mpi wrapper
+	sed -e "s,[@]ESPRESSO_BIN[@],$(libexecdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
+	mpiwrap/Espresso > $(DESTDIR)/$(bindir)/Espresso
+	chmod 755 $(DESTDIR)/$(bindir)/Espresso
+# install binary
+	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) \
+	Espresso_bin $(DESTDIR)/$(libexecdir)/
 endif
 
 #################################################################
