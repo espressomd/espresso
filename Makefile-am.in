@@ -280,7 +280,7 @@ SUBDIRS = . scripts testsuite doc doc/ug doc/dg
 
 # List files that should go into the distribution but are not required
 # by any other means
-EXTRA_DIST = Makefile RELEASE_NOTES darwinlink.sh autogen.sh copyright.sh demo.tcl simulation.tcl samples packages $(extra)
+EXTRA_DIST = Makefile RELEASE_NOTES darwinlink.sh autogen.sh copyright.sh samples packages Espresso $(extra)
 
 # List headers that are not used by the program here
 noinst_HEADERS = myconfig-sample.h
@@ -999,12 +999,11 @@ dist-hook:
 # wrappers. This is necessary as the required values are only known at
 # installation time.
 @USE_CHOOSER_TRUE@install-exec-hook:
-@USE_CHOOSER_TRUE@	sed -i \
+@USE_CHOOSER_TRUE@	sed -i"" \
 @USE_CHOOSER_TRUE@	-e "s,[@]ESPRESSO_PKGLIBDIR[@],$(pkglibdir),g" \
 @USE_CHOOSER_TRUE@	$(DESTDIR)/$(bindir)/Espresso
-@USE_CHOOSER_TRUE@	sed -i \
-@USE_CHOOSER_TRUE@	-e "s,[@]ESPRESSO_BIN[@],$(execpkglibdir)/Espresso_bin,g" \
-@USE_CHOOSER_TRUE@	-e "s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
+@USE_CHOOSER_TRUE@	sed -i"" \
+@USE_CHOOSER_TRUE@	-e "s,[@]ESPRESSO_BIN[@],$(execpkglibdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
 @USE_CHOOSER_TRUE@	$(DESTDIR)/$(execpkglibdir)/Espresso
 #lib_LIBRARIES = libEspresso.a
 
@@ -1012,9 +1011,8 @@ dist-hook:
 # wrappers. This is necessary as the required values are only known at
 # installation time.
 @USE_CHOOSER_FALSE@install-exec-hook:
-@USE_CHOOSER_FALSE@	sed -i \
-@USE_CHOOSER_FALSE@	-e "s,[@]ESPRESSO_BIN[@],$(libexecdir)/Espresso_bin,g" \
-@USE_CHOOSER_FALSE@	-e "s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
+@USE_CHOOSER_FALSE@	sed -i"" \
+@USE_CHOOSER_FALSE@	-e "s,[@]ESPRESSO_BIN[@],$(libexecdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
 @USE_CHOOSER_FALSE@	$(DESTDIR)/$(bindir)/Espresso
 
 #################################################################

@@ -108,12 +108,11 @@ execpkglib_PROGRAMS = Espresso_bin
 # wrappers. This is necessary as the required values are only known at
 # installation time.
 install-exec-hook:
-	sed -i \
+	sed -i"" \
 	-e "s,[@]ESPRESSO_PKGLIBDIR[@],$(pkglibdir),g" \
 	$(DESTDIR)/$(bindir)/Espresso
-	sed -i \
-	-e "s,[@]ESPRESSO_BIN[@],$(execpkglibdir)/Espresso_bin,g" \
-	-e "s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
+	sed -i"" \
+	-e "s,[@]ESPRESSO_BIN[@],$(execpkglibdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
 	$(DESTDIR)/$(execpkglibdir)/Espresso
 
 else
@@ -126,9 +125,8 @@ libexec_PROGRAMS=Espresso_bin
 # wrappers. This is necessary as the required values are only known at
 # installation time.
 install-exec-hook:
-	sed -i \
-	-e "s,[@]ESPRESSO_BIN[@],$(libexecdir)/Espresso_bin,g" \
-	-e "s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
+	sed -i"" \
+	-e "s,[@]ESPRESSO_BIN[@],$(libexecdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
 	$(DESTDIR)/$(bindir)/Espresso
 endif
 
