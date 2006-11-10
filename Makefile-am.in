@@ -782,8 +782,6 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-@USE_CHOOSER_FALSE@install-exec-local:
-@USE_CHOOSER_TRUE@install-exec-hook:
 clean: clean-recursive
 
 clean-am: clean-generic clean-noinstPROGRAMS mostlyclean-am
@@ -808,8 +806,6 @@ info-am:
 install-data-am:
 
 install-exec-am: install-exec-local
-	@$(NORMAL_INSTALL)
-	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 
 install-info: install-info-recursive
 
@@ -848,13 +844,13 @@ uninstall-info: uninstall-info-recursive
 	distclean-recursive distclean-tags distcleancheck distdir \
 	distuninstallcheck dvi dvi-am html html-am info info-am \
 	install install-am install-data install-data-am install-exec \
-	install-exec-am install-exec-hook install-exec-local \
-	install-info install-info-am install-man install-strip \
-	installcheck installcheck-am installdirs installdirs-am \
-	maintainer-clean maintainer-clean-generic \
-	maintainer-clean-recursive mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-recursive pdf pdf-am ps ps-am \
-	tags tags-recursive uninstall uninstall-am uninstall-info-am
+	install-exec-am install-exec-local install-info \
+	install-info-am install-man install-strip installcheck \
+	installcheck-am installdirs installdirs-am maintainer-clean \
+	maintainer-clean-generic maintainer-clean-recursive \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-recursive pdf pdf-am ps ps-am tags tags-recursive \
+	uninstall uninstall-am uninstall-info-am
 
 #deactivate building of the library
 #libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
@@ -863,11 +859,6 @@ uninstall-info: uninstall-info-recursive
 # and remove the internal dir if not dist-internal is used
 dist-hook:
 	-rm -rf `find $(distdir) -name CVS`
-
-#pkglib_SCRIPTS = config/config.guess
-#bin_SCRIPTS = chooser/Espresso
-#execpkglib_SCRIPTS = mpiwrap/Espresso
-#execpkglib_LIBRARIES = libEspresso.a
 
 # Substitute some remaining variables in the Espresso wrappers. This
 # is necessary as the required values are only known at installation
@@ -892,14 +883,10 @@ dist-hook:
 @USE_CHOOSER_TRUE@	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) \
 @USE_CHOOSER_TRUE@	Espresso_bin $(DESTDIR)/$(execpkglibdir)/
 
-#libexec_PROGRAMS=Espresso_bin
-#bin_SCRIPTS=mpiwrap/Espresso
-#lib_LIBRARIES = libEspresso.a
-
 # Substitute some remaining variables in the Espresso wrappers. This
 # is necessary as the required values are only known at installation
 # time.
-@USE_CHOOSER_FALSE@install-exec-hook:
+@USE_CHOOSER_FALSE@install-exec-local:
 # create directories
 @USE_CHOOSER_FALSE@	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
 @USE_CHOOSER_FALSE@	test -z "$(libexecdir)" || $(mkdir_p) "$(DESTDIR)$(libexecdir)"
