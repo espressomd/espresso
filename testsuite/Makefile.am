@@ -40,7 +40,11 @@ EXTRA_DIST = $(tests) \
 	pe_micelle.tcl pe_micelle_input.txt \
 	uwerr_test.tcl uwerr_test.data
 
+if MPI_FAKE
+processors=1
+else
 processors=1 2 3 4 6 8
+endif
 
 # rules, don't fiddle around with that
 TESTS_ENVIRONMENT=TESTCASES='$(tests)' PROCESSORS='$(processors)' ESPRESSO_SCRIPTS='$(srcdir)/scripts'
