@@ -2,19 +2,20 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1d (Ydalir)                                                                     *
+* v2.0.1e (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1d -
+- v2.0.1e -
 -----------
 
-(d) November 6th, 2006.
-(c) November 3rd, 2006.
-(b) November 2nd, 2006.
-(a) October 25th, 2006.
+(e) November 10th, 2006.
+(d) November  6th, 2006.
+(c) November  3rd, 2006.
+(b) November  2nd, 2006.
+(a) October  25th, 2006.
 
 New Features:
 (d) : analyze cwvac calculates the (charge-weighted) velocity auto-correlation.
@@ -24,6 +25,8 @@ New Features:
 (c) For this, define GNU_MPIFAKE_DEBUG in myconfig.h.
 
 Changes:
+(e) When MPI=fake is used, use only a single processor for the
+    testsuite.
 (b) In the polymer-command an angle of PI now results in a stretched
     polymer.
 (a) Renamed demo.tcl to samples/tk_pe_solution.tcl and
