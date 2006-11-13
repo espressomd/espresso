@@ -6,13 +6,15 @@
 
 \anchor tcl_writepsf
 \verbatim
-writepsf <file> { <N_P> <MPC> <N_CI> <N_pS> <N_nS> }
+writepsf <file> { <N_P> <MPC> <N_CI> <N_pS> <N_nS> }|-molecule
 \endverbatim
 writes the current topology to the file \<file\> (here \<file\> is not
 a channel since additional information cannot be written anyways).
 \<N_P\>, \<MPC\> and so on are parameters describing a system consisting
 of equally long charged polymers, counterions and salt. This information
-can be used to color the atoms in VMD. Of course different kinds of
+is used to set the residue name and can be used to color the atoms in VMD.
+If you specify -molecule, the residue name is taken from the molecule
+identity of the particle. Of course different kinds of
 topologies can also be handled by modified versions of writepsf.
 
 \anchor tcl_writepdb
