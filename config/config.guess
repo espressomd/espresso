@@ -17,8 +17,9 @@ Linux)
 	else if ($4 == "Dual" && $5 == "Core" && $6 == "AMD" && $7 == "Opteron(tm)")   print "Opteron"; \
 	else if ($4 == "Intel(R)" && $5 == "Xeon(TM)") print "Xeon"; \
         else if ($4 == "Intel(R)" && $5 == "Celeron(R)") print "Celeron"; \
-	else if ($4 == "Mobile"   && $5 == "Intel(R)" && $6 == "Pentium(R)") print"Pentium_"$7; \
-        else if ($4 == "Genuine" && $5 == "Intel(R)" && $6 == "CPU" && $7 == "T2500") print"Pentium_4"; \
+        else if ($4 == "Intel(R)" && $5 == "Core(TM)2") print "Pentium_4"; \
+	else if ($4 == "Mobile"   && $5 == "Intel(R)" && $6 == "Pentium(R)") print "Pentium_"$7; \
+        else if ($4 == "Genuine" && $5 == "Intel(R)" && $6 == "CPU") print "Pentium_4"; \
 	else { \
 	    if      ($4 == "Intel(R)" && $5 == "Pentium(R)")  model="Pentium"; \
 	    else if ($4 == "AMD"      && $5 == "Athlon(TM)")  model="Athlon"; \
@@ -27,7 +28,8 @@ Linux)
 	    if ($6 == "") print model; else print model"_"$6; \
 	}; exit\
 	}' $CPUINFO`
-    if test $MODEL = Xeon -o $MODEL = Pentium_4; then
+    if test -z "$MODEL"; then MODEL="unknown"; fi
+    if test "$MODEL" = "Xeon" -o "$MODEL" = "Pentium_4"; then
 	# thanks Intel for making the EM64T mode so EASILY detectible
 	if grep -e "^flags.* lm " $CPUINFO >&/dev/null; then
 	    MODEL=${MODEL}_64
