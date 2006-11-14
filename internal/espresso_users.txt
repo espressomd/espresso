@@ -1352,3 +1352,32 @@ topic:     Simulations of surfactant solutions & Study of Lamellar phases,
 reminded:  X08.NOV.2006
 
 
+name:      hassan
+email:     hassan.pezeshki@gmail.com
+institute: Iran Tehran Sharif Univerity of Tech. Chemical and Petroleum
+           Dep
+sent:      13.NOV.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Polymers
+reminded:  X13.NOV.2006
+
+
+name:      Majid Baratlo
+email:     majid_baratlo@yahoo.com
+institute: PhD student of Condensed Matter Physics
+           Institute for Advanced Studies in Basic Sciences
+           Gava Zang Zanjan
+           Zanjan  45195-1159
+           IRAN
+           
+           Email:m_baratlo@iasbs.ac.ir
+                 majid_baratlo
+sent:      13.NOV.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     In my PhD thesis, I am going to simulate the polymer and
+           polyelectrolytes systems using this software.
+reminded:  13.NOV.2006
+
+
