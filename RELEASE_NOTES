@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1f (Ydalir)                                                                     *
+* v2.0.1g (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1f -
+- v2.0.1g -
 -----------
 
+(g) November 14th, 2006.
 (f) November 13th, 2006.
 (e) November 10th, 2006.
 (d) November  6th, 2006.
@@ -26,6 +27,9 @@ New Features:
 (c) For this, define GNU_MPIFAKE_DEBUG in myconfig.h.
 
 Changes:
+(g) fixed the Genuine Intel(R) CPU to match all Intel CPUs
+(g) and added Core2 as Pentium_4. Should really be a new cpu,
+(g) once gcc can handle it.
 (f) writepsf now has an option -molecule for putting the molecule id of a particle
     into
 (f) the residue name.
