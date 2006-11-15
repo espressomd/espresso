@@ -1382,6 +1382,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
   ELC_setup_constants();
 
   switch (coulomb.method) {
+  case COULOMB_ELC_P3M:
   case COULOMB_P3M:
     p3m.epsilon = P3M_EPSILON_METALLIC;
     coulomb.method = COULOMB_ELC_P3M;

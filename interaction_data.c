@@ -671,7 +671,7 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   
   if (! ARG0_IS_D(d1)) {
     Tcl_ResetResult(interp);
-    if (ARG0_IS_S("elc") && (coulomb.method == COULOMB_P3M))
+    if (ARG0_IS_S("elc") && ((coulomb.method == COULOMB_P3M) || (coulomb.method == COULOMB_ELC_P3M)))
       return inter_parse_elc_params(interp, argc - 1, argv + 1);
     if (coulomb.method == COULOMB_P3M)
       return inter_parse_p3m_opt_params(interp, argc, argv);
