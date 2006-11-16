@@ -1,8 +1,11 @@
 ug_SOURCES=ug.tex \
 	introduction.tex \
-	tutorial.tex \
+	firststeps.tex \
 	installation.tex \
-	commands.tex \
+	setup.tex \
+	run.tex \
+	analysis.tex \
+	aux.tex \
 	internal.tex \
 	contributing.tex \
 	features.tex \
