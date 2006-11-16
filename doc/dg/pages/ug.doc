@@ -1,0 +1,160 @@
+/** \page ug Writing the User's Guide
+
+\section Structure
+
+  The User's Guide is written in LaTeX and contains the following
+  parts:
+  - Introduction: this chapter shall give the reader an overview
+    over all of ESPResSo's algorithms and methods.
+  - First steps: shall give a quick introduction on compiling and
+      running ESPResSo, as well as on how to write a script.
+  - Installation: shall explain the installation of ESPResSo in
+      detail.
+  - Setting up the system, Running the simulation, Analysis and
+      Auxilliary commands: shall explain all of ESPResSo's
+      Tcl-commands in detail.
+  - Under the hood: shall explain the important internals of
+      ESPResSo: parallelization, cell system, ...
+  - Getting involved: where to find the DG, how to get started in
+      using the C-code, where to report bugs, mailing list, etc.
+  - ESPResSo quick reference: automatically generated list of all
+      Tcl command syntax descriptions
+  - Features: lists all features of ESPResSo
+  - The rest of the chapters contain scientific descriptions of some
+      of the employed algorithms that are not to be found anywhere
+      else.
+
+\section general General issues
+  - Headings should start with a capital letter and continue with
+      lower-case letters (<i>First steps</i> and <strong>not</strong>
+      <i>First Steps</i>)
+
+\section newcommands Additional environments and commands
+
+  To maintain a consistent layout, a number of environments and
+  commands have been defined that should be used where applicable. 
+  - For the description of Tcl-commands, read \ref tclcommand.
+  - The name of ESPResSo should be set via the command \c \\es.
+  - The strings <em>i.e.</em>, <em>e.g.</em> and <em>et al.</em>
+    should be set via \c \\ie, \c \\eg and \c \\etal.
+  - For short code pieces that can be displayed inline, use 
+\verbatim
+\codebox{<text>}
+\endverbatim
+  - For longer code pieces or the syntax decription of non-Tcl
+commands, the environment \c code exists:
+\verbatim
+\begin{code}
+  ...
+\end{code}
+\endverbatim
+    This is \e not a verbatim environment, i.e. it will evaluate
+    LaTeX-commands inside. Therefore, it is necessary to be careful
+    when using the characters \c \\,\c { and \c } inside! On the other
+    hand, it is possible to use other layout commands (like \c
+    \\textit inside.
+  - For pieces of Tcl-code that use { and }, a verbatim environment \c
+    tclcode exists:
+\verbatim
+\begin{tclcode}
+ ...
+\end{tclcode}
+\endverbatim
+
+\section tclcommand Documentation of Tcl commands
+
+  In general, \e all Tcl-commands have to be documented in the User's
+  Guide. The documentation consists of two parts:
+  <ul>
+    <li>The <em>formal syntax definition</em> as described in the UG in
+      the chapter \e Introduction. This syntax description should be as
+      simple as possible, as it will be what a user references
+      to. Avoid very long definitions and constructs like nested
+      alternatives and options! In those cases, prefer to split the
+      syntax definition into several subdefinitions instead of writing
+      it in a single, complicated definition! 
+    
+      Example:<p>
+      Instead of using<p>
+      \c inter \< <em>particle_type_number1 particle_type_number2</em> |
+      <em>bond_type_number</em> \> <em>interaction_type</em> <em>value</em>+<p>
+      better use<p>
+      \c inter <em>type1 type2 nb_inter_type parameters</em><br>
+      \c inter <em>bond_type bond_inter_type parameters</em><br>
+    </li>
+    <li>The <em>description</em> of the command. In this description,
+      every variable argument introduced via the <tt>\\var</tt>
+      command in the definition has to be explained in detail:
+        - state explicitly the \e type of the argument (integer,
+          float, string, Tcl-list)
+        - explain the meaning of the argument
+    </li> 
+  </ul>
+
+  As the Tcl-commands shall also be added to the quick reference in
+  the appendix and furthermore a script should check whether all
+  implemented commands are documented, Tcl commands have to be
+  documented as follows:
+
+  - For the syntax definition, the following LaTeX-commands exist:
+    - <tt>\\var{\<text\>}</tt> to typeset a variable argument
+    - <tt>\\keyword{\<text\>}</tt> or <tt>\\lit{\<text\>}</tt> to
+      typeset keywords or literals
+    These commands should be used in the syntax definition as well as
+    in the description of the command.
+  - The syntax definition of a command has to be introduced via
+\verbatim
+\tclcommand[<required_features>]{<name>}{<arguments>}
+\endverbatim.
+    \arg <tt>\<required_features\></tt> should contain a whitespace-separated
+      list of features that are required for the command. If the
+      fetaures are only required for certain subcommands, use brackets
+      \c "()" to indicate this.
+    \arg <tt>\<name\></tt> gives the base name of the command.
+    \arg <tt>\<arguments\></tt> defines the arguments of the command. In this
+      definition, stick to the description given in the Introduction
+      and use the commands \c \\var , \c \\lit, \c \\keyword. To
+      separate lines, \c \\\\ can be used.
+
+    The command will generate the subheadings \e Syntax, <em>Required
+    features</em> and \e Description. Furthermore, it will generate
+    the corresponding entry in the quick reference. Example:
+\verbatim
+\tclcommand[LENNARD\_JONES]{inter}{%
+  \var{type1 type2} 
+  lennard\_jones 
+  \var{epsilon sigma cutoff shift offset}
+}
+
+Defines a Lennard-Jones interaction...
+\endverbatim
+
+  - If the command has a number of different options, i.e.
+    independent, optional arguments, they can be described in the \c
+    tcloptions environment:
+\verbatim
+\begin{tcloptions}
+  \option{<option1>}
+  <description>
+  \option{<option2>}
+  <description>
+  ...
+\end{tcloptions}
+\endverbatim
+   The environment will generate the subheading \e Options and nicely
+   format the descriptions. Example:
+\verbatim
+\begin{tcloptions}
+  \option{<short|verbose>}
+  Specify, whether the output is in a human-readable, but somewhat
+  longer format (\keyword{verbose}), or in a more compact form
+  (\keyword{short}). The default is \keyword{verbose}.
+  
+  \option{<radius \var{radii}|auto>}
+  Specify the VDW radii of the atoms. \var{radii} is either
+  \keyword{auto}, or a Tcl-list describing the radii of the different
+  ...
+\end{tcloptions}
+\endverbatim
+
+*/

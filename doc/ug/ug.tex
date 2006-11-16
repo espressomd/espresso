@@ -18,64 +18,158 @@ idxtotoc                        % add the index to the TOC
                                 % used in this order (see hyperref
                                 % README)!
 \usepackage[draft]{varioref}    % defines \vref
-\usepackage{hyperref}           % automatically creates links when
+\usepackage[bookmarksopen=true]
+{hyperref}                      % automatically creates links when
                                 % using pdflatex, defines \url
 \usepackage{ifpdf}              % defines \ifpdf
 \usepackage{graphicx}           % handles graphics
 \usepackage{makeidx}            % creates the index
-\usepackage{fancybox}
+\usepackage{color}              % use colors
+
+\usepackage{verbatim}           % required for \verbatim and \endverbatim
+\usepackage{alltt}              % almost verbatim environment (code)
+\usepackage{tocloft}            % required for the quickref
+\usepackage{calc}               % compute length
+\usepackage{ifthen}             % provide ifthen
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%% New Commands and Environments %%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newcommand{\es}{\textsf{ESPResSo}}
+\newcommand{\es}{\mbox{\textsf{ESPResSo}}}
 \newcommand{\ie}{\textit{i.e.\/}}
 \newcommand{\eg}{\textit{e.g.\/}}
 \newcommand{\etal}{\textit{et al.\/}}
 
-\newenvironment{code}{%
-  \begin{Sbox}
-    \begin{minipage}{0.9\linewidth}
-      \ttfamily
-    }{%
+\newcommand{\codebox}[1]%
+{\fcolorbox[rgb]{0,0,0}{0.9,0.9,0.9}{\ttfamily#1}}
+
+\newsavebox{\thecodebox}
+\newenvironment{code}{
+  \begin{lrbox}{\thecodebox}
+    \begin{minipage}{\linewidth-2em}
+      \begin{alltt}
+      }{
+      \end{alltt}
     \end{minipage}
-  \end{Sbox}
-  \begin{center}
-    \fbox{\TheSbox}
-  \end{center}
+  \end{lrbox}
+  \smallskip
+  \begin{addmargin}[1em]{0pt}
+    \codebox{\usebox{\thecodebox}}
+  \end{addmargin}
+  \smallskip
 }
 
-%% Syntax Description
-% for command and option variants (e.g. (1) inter <pid1> <pid2>)
-\newcommand{\variant}[2]{(#1) \texttt{#2}\\}
+\makeatletter
+\newenvironment{tclcode}
+{
+  \addtolength{\linewidth}{-2em}% set the line length
+  \@minipagetrue%%%DPC%%%
+  \@tempswatrue%%%DPC%%%
+  \hsize=\linewidth%
+  \setbox0=\vbox\bgroup\verbatim
+}{\endverbatim
+  \unskip\setbox0=\lastbox%%%DPC%%%
+  \egroup
+  \par
+  \smallskip
+  \noindent
+  \begin{addmargin}[1em]{0pt}
+    \codebox{\box0}
+  \end{addmargin}
+  \par
+  \smallskip
+  \noindent
+}
+\makeatother
 
-% keywords and literals
+
+%%%%%%%%%%%%%% Syntax Description %%%%%%%%%%%%%%%
+
+%%%%%% SYNTAX DEFININTION LAYOUT
+% typesetting inside a command definition
+% keywords/literals
 \newcommand{\lit}[1]{\texttt{#1}}
 \newcommand{\keyword}[1]{\texttt{#1}}
 % variables
 \newcommand{\var}[1]{\textrm{\textit{#1}}}
 
+% command definition
+\newcommand{\tclcommand}[3][]{%
+  \stepcounter{qrfcounter}
+  \index{#2@\texttt{#2}|textbf}
+  \index{Tcl-commands!#2@\texttt{#2}|textbf}
+  \addtocontents{qrf}{\protect\qrfcommand{#1}{#2}{#3}{\thepage}{qrf\alph{qrfcounter}}}
+  \minisec{Syntax}
+  \smallskip
+  \hypertarget{qrf\alph{qrfcounter}}{%
+    \codebox{%
+      #2
+      \parbox[t]{0.9\linewidth-\widthof{#2}}%
+      {\ttfamily\raggedright\mbox{}#3}
+    }%
+  }%
+  \ifthenelse{\equal{#1}{}}{}{%
+    \minisec{Required features}
+    \texttt{#1}
+  }
+  \minisec{Description}
+}
 
-% syntax environment (with box around it)
-\newenvironment{command}{%
-  \begin{Sbox}
-    \begin{minipage}{0.95\linewidth}
+\newcommand{\option}[1]{%
+  \medskip
+  \noindent\hspace*{-1em}\codebox{#1}\\[0.2\baselineskip]
+}
+
+\newenvironment{tcloptions}{
+  \minisec{Options}
+  \begin{addmargin}[2em]{1em}
+  }{
+  \end{addmargin}
+}
+
+\newcommand{\addtoquickref}[1]{\addtocontents{qrf}{#1}}
+\newcommand{\quickrefheading}[1]{%
+  \stepcounter{qrfcounter}
+  \addtocontents{qrf}{\protect\qrfheading{#1}{\thepage}{qrf\alph{qrfcounter}}}
+  \hypertarget{qrf\alph{qrfcounter}}{}
+}
+
+
+%%%%% QUICK REFERENCE LAYOUT
+% Create quick reference list
+\newlistof{commands}{qrf}{}
+\newcommand{\qrflastpage}{} % save the last page number
+\newcounter{qrfcounter} % the current number of the cmd
+
+\makeatletter
+\newcommand{\qrfheading}[3]{
+  \@dottedtocline{1}{0pt}{0pt}{\hyperlink{#3}{\textsf{\textbf{#1}}}}{#2}
+  \renewcommand{\qrflastpage}{#2}%
+}
+\makeatother
+
+% command definition in the quickref
+\newcommand{\qrfcommand}[5]{%
+  \begin{addmargin}[1em]{0pt}%
+    \hyperlink{#5}{%
       \ttfamily
-    }{%
-    \end{minipage}
-  \end{Sbox}
-  \begin{center}
-    \fbox{\TheSbox}
-  \end{center}
+      #2
+      \parbox[t]{0.9\linewidth-\widthof{#2}}%
+      {\raggedright #3}%
+    }%
+  % print the page number if it is differnet from the last entry
+    \ifthenelse{\equal{\qrflastpage}{#4}}{}{\hfill\scriptsize #4}%
+    \ifthenelse{\equal{#1}{}}{}{%
+      \scriptsize\\\hspace*{1em} Required features: \texttt{#1}%
+    }%
+  \end{addmargin}%
+  \ifthenelse{\equal{\qrflastpage}{#4}}{}{\renewcommand{\qrflastpage}{#4}}%
+  \smallskip
 }
 
-\newenvironment{options}{%
-  \begin{code}
-  }{%
-  \end{code}
-}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -102,12 +196,17 @@ idxtotoc                        % add the index to the TOC
 %\date{\today}
 \maketitle
 
+\pdfbookmark{Contents}{toc}
 \tableofcontents
 
 \include{introduction}
-\include{tutorial}
+
+\include{firststeps}
 \include{installation}
-\include{commands}
+\include{setup}
+\include{run}
+\include{analysis}
+\include{aux}
 \include{internal}
 \include{contributing}
 

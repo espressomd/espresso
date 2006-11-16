@@ -59,7 +59,7 @@ The following algorithms are implemented in \es{}:
 \begin{itemize}
 \item Control level: \texttt{Tcl}
 \item ``Kernel'' written in \texttt{C}
-\item This manual will focus on the control level
+\item This user's guide will focus on the control level
 \end{itemize}
 
 \section{On units}
@@ -113,6 +113,32 @@ and use \es:
     dmpirun MPI environment.
   \end{itemize}
 \end{description}
+
+
+\section{Syntax description}
+\label{sec:syntax}
+
+Throughout the user's guide, formal definitions of the syntax of
+several Tcl- and shell-commands can be found. The following
+conventions are used in these decriptions:
+\begin{itemize}
+\item Keywords and literals of the command that have to be typed
+  exactly as given are written in \lit{typewriter} font.
+\item If the command has variable arguments, they are set in
+  \var{italic font}. The description following the syntax definition
+  should contain a detailed explanation of the argument and its
+  type.
+\item \texttt{[\var{argument}]} specifies, that \var{argument} is
+  optional, \ie{} it can be omitted.
+\item \texttt{<\var{alt1}|\var{alt2}>} specifies, that one of the
+  alternatives \var{alt1} or \var{alt2} can be used.
+\end{itemize}
+
+\minisec{Example}
+\begin{code}
+writevsf \var{file} [<short|verbose>] [<\var{radii}|auto>] [typedesc \var{typedesc}]
+\end{code}
+
 
 %%% Local Variables: 
 %%% mode: latex

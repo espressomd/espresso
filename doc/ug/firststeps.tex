@@ -1,5 +1,5 @@
-\chapter{Tutorial}
-\label{chap:tutorial}
+\chapter{First steps}
+\label{chap:firststeps}
 
 \section{Quick installation}
 
@@ -9,10 +9,10 @@ If you have the requirements (see section \vref{sec:requirements})
 installed, in many cases, to compile \es{}, it is enough to execute
 the following sequence of two steps in the directory where you have
 unpacked the sources:
-\begin{verbatim}
-> configure
-> make
-\end{verbatim}
+\begin{code}
+configure
+make
+\end{code}
 
 In some cases, \eg{} when \es{} needs to be compiled for several
 different platforms or when different versions with different sets of
@@ -47,19 +47,13 @@ The details of the usage of \texttt{make} are described in section
 
 When these steps have successfully completed, \es{} can be started
 with the command (see section \vref{sec:run})
-\begin{verbatim}
-> Espresso
-\end{verbatim}
+\begin{code}
+Espresso
+\end{code}
 
-\section{Running \es{}}
-\begin{itemize}
-\item Do we need that?
-\item interactive use (sample session) ?really advertise that?
-\item small sample session ????
-\item script execution (see below)
-\end{itemize}
+\section{Running \es}
 
-\section{Doing a simulation}
+\footnote{\url{http://www.tcl.tk/man/tcl8.5/tutorial/tcltutorial.html}}
 
 \es{} is implemented as an extension to the Tcl script language. This means that you need to write a
 script for any task you want to perform with \es. To learn about the Tcl script language and
@@ -68,7 +62,7 @@ step by step through creating your first simulation script, while the second scr
 documented example simulation script. Since the latter is slightly more complex and uses more
 advanced features of \es{}, we recommend to work through both scripts in the presented order.
 
-\subsection{Creating your first simulation script}
+\section{Creating the first simulation script}
 
 This section introduces some of the features of \es\ by
 constructing step by step a simulation script for a simple salt crystal.
@@ -81,10 +75,10 @@ step into a file, which then can be run using \verb|Espresso <file>| from the
 Our script starts with setting up the initial configuration.  Most conveniently,
 one would like to specify the density and the number of particles of the system
 as parameters:
-\begin{verbatim}
+\begin{tclcode}
 set n_part 200; set density 0.7
 set box_l [expr pow($n_part/$density,1./3.)]
-\end{verbatim}
+\end{tclcode}
 These variables do not change anything in the simulation engine, but are just
 standard Tcl variables; they are used to increase the readability and
 flexibility of the script. The box length is not a parameter of this simulation;
@@ -94,22 +88,23 @@ system.
 
 The parameters of the simulation engine are modified by the \verb|setmd|
 command. For example
-\begin{verbatim}
+\begin{tclcode}
 setmd box_l $box_l $box_l $box_l
 setmd periodic 1 1 1
-\end{verbatim}
+\end{tclcode}
 defines a cubic simulation box of size \verb|box_l|, and periodic boundary
 conditions in all spatial dimensions. We now fill this simulation box with
 particles
-\begin{verbatim}
+\begin{tclcode}
 set q 1; set type 0
 for {set i 0} { $i < $n_part } {incr i} {
   set posx [expr $box_l*[t_random]]
   set posy [expr $box_l*[t_random]]
   set posz [expr $box_l*[t_random]]
   set q [expr -$q]; set type [expr 1-$type]
-  part $i pos $posx $posy $posz q $q type $type }
-\end{verbatim}
+  part $i pos $posx $posy $posz q $q type $type 
+}
+\end{tclcode}
 This loop adds \verb|n_part| particles at random positions, one by one.  In this
 construct, only two commands are not standard Tcl commands: the random
 number generator \verb|t_random| and the \verb|part| command, which is used to
@@ -120,11 +115,11 @@ charges: positive charges have type 0, negative charges have type 1.
 
 Now we define the ensemble that we will be simulating. This is done using the
 \verb|thermostat| command. We also set some integration scheme parameters:
-\begin{verbatim}
+\begin{tclcode}
 setmd time_step 0.01; setmd skin 0.4
 set temp 1; set gamma 1
 thermostat langevin $temp $gamma
-\end{verbatim}
+\end{tclcode}
 This switches on the Langevin thermostat for the NVT ensemble, with temperature
 \verb|temp| and friction \verb|gamma|. The skin depth \verb|skin| is a parameter
 for the link--cell system which tunes its performance, but cannot be discussed
@@ -134,14 +129,14 @@ Before we can really start the simulation, we have to specify the interactions
 between our particles.  We use a simple, purely repulsive Lennard-Jones
 interaction to model the hard core repulsion \cite{grest86a}, and the charges interact via the
 Coulomb potential:
-\begin{verbatim}
+\begin{tclcode}
 set sig 1.0; set cut   [expr 1.12246*$sig]
 set eps 1.0; set shift [expr 0.25*$eps]
 inter 0 0 lennard-jones $eps $sig $cut $shift 0
 inter 1 0 lennard-jones $eps $sig $cut $shift 0
 inter 1 1 lennard-jones $eps $sig $cut $shift 0
 inter coulomb 10.0 p3m tunev2 accuracy 1e-3 mesh 32
-\end{verbatim}
+\end{tclcode}
 The first three \verb|inter| commands instruct \es\ to use the same purely
 repulsive Lennard--Jones potential for the interaction between all combinations
 of the two particle types 0 and 1; by using different parameters for different
@@ -153,13 +148,14 @@ size of 32. The mesh is fixed here to speed up the tuning; for a real
 simulation, one will also tune this parameter.
 
 Now we can integrate the system:
-\begin{verbatim}
+\begin{tclcode}
 set integ_steps 200
 for {set i 0} { $i < 20 } { incr i} {
   set temp [expr [analyze energy kinetic]/(1.5*$n_part)]
   puts "t=[setmd time] E=[analyze energy total], T=$temp"
-  integrate $integ_steps }
-\end{verbatim}
+  integrate $integ_steps 
+}
+\end{tclcode}
 This code block is the primary simulation loop and runs
 $20\times$\verb|integ_steps| MD steps. Every \verb|integ_steps| time steps, the
 potential, electrostatic and kinetic energies are printed out (the latter one as
@@ -170,12 +166,13 @@ have to remove from the system. In \es, this is can be accelerated by capping
 the forces, i.~e.\ modifying the Lennard--Jones force such that it is constant
 below a certain distance. Before the integration loop, we therefore insert this
 equilibration loop:
-\begin{verbatim}
+\begin{tclcode}
 for {set cap 20} {$cap < 200} {incr cap 20} {
   puts "t=[setmd time] E=[analyze energy total]"
-  inter ljforcecap $cap; integrate $integ_steps }
+  inter ljforcecap $cap; integrate $integ_steps 
+}
 inter ljforcecap 0
-\end{verbatim}
+\end{tclcode}
 This loop integrates the system with a force cap of initially 20 and finally
 200.  The last command switches the force cap off again. With this
 equilibration, the simulation script runs fine.
@@ -185,15 +182,14 @@ to write out simulation data to configuration files, for later analysis. For
 this purpose \es\ has commands to write simulation data to a Tcl stream
 in an easily parsable form.  We add the following lines at end of integration
 loop to write the configuration files ``config\_0'' through ``config\_19'':
-\begin{verbatim}
-  set f [open "config_$i" "w"]
-  blockfile $f write tclvariable {box_l density}
-  blockfile $f write particles {id pos type}
-  close $f
-\end{verbatim}
+\begin{tclcode}
+set f [open "config_$i" "w"]
+blockfile $f write tclvariable {box_l density}
+blockfile $f write particles {id pos type}
+close $f
+\end{tclcode}
 The created files ``config\_...'' are human--readable and look like
-{\footnotesize
-\begin{verbatim}
+\begin{tclcode}
 {tclvariable
         {box_l 10}
         {density 0.7}
@@ -203,15 +199,15 @@ The created files ``config\_...'' are human--readable and look like
         {1 3.93145531704 6.58506447035 6.95045147034 1}
         ...
 }
-\end{verbatim}}
+\end{tclcode}
 As you can see, such a \emph{blockfile} consists of several Tcl lists,
 which are called \emph{blocks}, and can store any data available from the
 simulation. Reading a configuration is done by the following simple script:
-\begin{verbatim}
+\begin{tclcode}
 set f [open $filename "r"]
 while { [blockfile $f read auto] != "eof" } {}
 close $f
-\end{verbatim}
+\end{tclcode}
 The \verb|blockfile read auto| commands will set the Tcl variables \verb|box_l| and
 \verb|density| to the values specified in the file when encountering the \verb|tclvariable| block,
 and the particle positions and types of all 216 particles are restored when the \verb|particles|
@@ -228,12 +224,13 @@ With these configurations, we can now investigate the system. As an example, we
 will create a second script which calculates the averaged radial distribution
 functions $g_{++}(r)$ and $g_{+-}(r)$. The radial distribution function for a
 the current configuration can be obtained using the \verb|analyze| command:
-\begin{verbatim}
+\begin{tclcode}
 set rdf [analyze rdf 0 1 0.9 [expr $box_l/2] 100]
 foreach value [lindex $rdf 1] {
   lappend rlist   [lindex $value 0]
-  lappend rdflist [lindex $value 1] }
-\end{verbatim}
+  lappend rdflist [lindex $value 1] 
+}
+\end{tclcode}
 The shown \verb|analyze rdf| command returns the distribution function of
 particles of type 1 around particles of type 0 (i.~e.\ of opposite charges) for
 radii between $0.9$ and half the box length, subdivided into $100$ bins.
@@ -244,7 +241,7 @@ $g(r)$ pairs, which the following foreach loop divides up onto two lists
 
 To average over a set of configurations, we put the two last code snippets into
 a loop like this:
-\begin{verbatim}
+\begin{tclcode}
 set cnt 0
 for {set i 0} {$i < 100} {incr i} { lappend avg_rdf 0}
 foreach filename $argv {
@@ -256,16 +253,19 @@ foreach filename $argv {
      lappend rlist   [lindex $value 0]
      lappend rdflist [lindex $value 1] }
   set avg_rdf [vecadd $avg_rdf $rdflist]
-  incr cnt }
+  incr cnt 
+}
 set avg_rdf [vecscale [expr 1/$cnt] $avg_rdf]
-\end{verbatim}
+\end{tclcode}
 Initially, the sum of all $g(r)$, which is stored in \verb|avg_rdf|, is set to
 0.  Then the loops over all configurations given by \verb|argv|, calculates
 $g(r)$ for each configuration and adds up all the $g(r)$ in \verb|avg_rdf|.
 Finally, this sum is normalized by dividing by the number of configurations.
 Note that \verb|argv| is a predefined variable: it contains all the command line
-parameters. Therefore this analyzation script should be called like\\
-\verb|Espresso <script> <config 1> <config 2> ...|. 
+parameters. Therefore this script should be called like
+\begin{code}
+Espresso \var{script} [\var{config}... ]
+\end{code}
 
 \begin{figure}[tb]
   \centering
@@ -278,12 +278,12 @@ parameters. Therefore this analyzation script should be called like\\
 
 The printing of the calculated radial distribution functions is simple. Add to the end of the
 previous snippet the following lines:
-\begin{verbatim}
+\begin{tclcode}
 set plot [open "rdf.data" "w"]
 puts $plot "\# r rdf(r)"
 foreach r $rlist rdf $avg_rdf { puts $plot "$r $rdf" }
 close $plot
-\end{verbatim}
+\end{tclcode}
 This instructs the Tcl interpreter to write the \verb|avg_rdf| to the file \verb|rdf.data| in
 gnuplot--compatible format. Fig.~\ref{fig:rdf} shows the resulting radial distribution functions,
 averaged over 100 configurations. In addition, the distribution for a neutral
@@ -302,23 +302,27 @@ annealing. The possibility to perform non--standard simulations without the need
 of modifications to the simulation core was one of the main reasons why we
 decided to use a script language for controlling the simulation core.
 
-\subsection{\texttt{tutorial.tcl}}
+\section{\texttt{tutorial.tcl}}
 
-In the samples folder you will find a well documented simulation script \texttt{tutorial.tcl}, which
-takes you step by step through a slightly more complicated simulation of a polyelectrolyte
-system. The basic structure of the script is however the same as in the previous example and
-probably the same as the structure of most \es{} simulation scripts.
+In the directory \texttt{samples/} of the es{} sources, you will find
+a well documented simulation script \texttt{tutorial.tcl}, which takes
+you step by step through a slightly more complicated simulation of a
+polyelectrolyte system. The basic structure of the script is however
+the same as in the previous example and probably the same as the
+structure of most \es{} simulation scripts.
 
-Initially, some parameters and
-global variables are set, the interactions are initialized, and particles are added. For this, the
-script makes use of the \verb|polymer| command, which provides a faster way to set up chain
-molecules.
+Initially, some parameters and global variables are set, the
+interactions are initialized, and particles are added. For this, the
+script makes use of the \verb|polymer| command, which provides a
+faster way to set up chain molecules.
 
-The actual simulation falls apart again into two loops, the warmup loop with increasing force
-capping, and the final simulation loop. Note that the electrostatic interaction is only activated
-after equilibrating the excluded volume interactions, which speeds up the warmup phase. However,
-depending on the problem, this splitted warmup may not be possible due to physical
-restrictions. \es{} cannot detect these mistakes and it is your responsibility to find simulation
+The actual simulation falls apart again into two loops, the warmup
+loop with increasing force capping, and the final simulation loop.
+Note that the electrostatic interaction is only activated after
+equilibrating the excluded volume interactions, which speeds up the
+warmup phase. However, depending on the problem, this splitted warmup
+may not be possible due to physical restrictions. \es{} cannot detect
+these mistakes and it is your responsibility to find simulation
 procedure suitable to your specific problem.
 
 %%% Local Variables: 

@@ -43,12 +43,12 @@ When the source directory is \texttt{\$srcdir} (\ie{} the files where
 unpacked to this directory), then the build directory can be set to
 \texttt{\$builddir} by calling the \texttt{configure}-script from
 there:
-\begin{verbatim}
-> cd $builddir
-> $srcdir/configure
-> make
-> Espresso
-\end{verbatim}
+\begin{code}
+cd $builddir
+$srcdir/configure
+make
+Espresso
+\end{code}
 
 When \texttt{configure} is called directly from the source directory,
 the \es{} build system is prepared to handle different platforms.  A
@@ -122,19 +122,19 @@ configuration headers:
 
 \begin{itemize}
 \item \texttt{\$builddir1/myconfig.h}:
-\begin{verbatim}
+\begin{code}
 #define ELECTROSTATICS
 #define LENNARD-JONES
-\end{verbatim}
+\end{code}
 
 \item \texttt{\$builddir2/myconfig.h}:
-\begin{verbatim}
+\begin{code}
 #define LJCOS
-\end{verbatim}
+\end{code}
 \end{itemize}
 
 \noindent Then you can simply compile two different versions of \es{} via
-\begin{verbatim}
+\begin{code}
 cd $builddir1
 $srcdir/configure
 make
@@ -142,34 +142,35 @@ make
 cd $builddir2
 $srcdir/configure
 make
-\end{verbatim}
+\end{code}
 
 
 \section{Running configure}
 \label{sec:configure}
 
-\index{configure}
-The shell script \texttt{configure} collects all the information
-required by the compilation process. It will determine how to use and
-where to find the different libraries and tools required by the
-compilation process, and it will test what compiler flags are to be
-used.  The script will find out most of these things automatically.
-If something is missing, it will complain and give hints how to solve
-the problem.
+% Description of basic options: --prefix, --exec-prefix, CPPFLAGS,
+% CFLAGS, LDFLAGS
 
-The generic syntax of calling the \texttt{configure} script is:
+\index{configure} The shell script \texttt{configure} collects all the
+information required by the compilation process. It will determine how
+to use and where to find the different libraries and tools required by
+the compilation process, and it will test what compiler flags are to
+be used.  The script will find out most of these things automatically.
+If something is missing, it will complain and give hints how to solve
+the problem.  The generic syntax of calling the \texttt{configure}
+script is:
 \begin{code}
- $>$ configure [\var{options} ...] [\var{variable}=\var{value} ...]
+configure [\var{options} ...] [\var{variable}=\var{value} ...]
 \end{code}
 
-\index{configure options}
-The behaviour of \texttt{configure} can be controlled by the means of
-command line options. In the following, only those command line
-options that are special to \es{} will be explained.  For a complete
-list of options and explanations thereof, call
-\begin{verbatim}
-> configure --help
-\end{verbatim}
+\index{configure options} The behaviour of \texttt{configure} can be
+controlled by the means of command line options. In the following,
+only those command line options that are specific to \es{} will be
+explained.  For a complete list of options and explanations thereof,
+call
+\begin{code}
+configure --help
+\end{code}
 
 \begin{description}
 \item [\texttt{--enable-chooser}] This option will enable the
@@ -236,7 +237,7 @@ The command \texttt{make} is mainly used to compile the \es{} source
 code, but it can do a number of other things. The generic syntax of
 the \texttt{make} command is:
 \begin{code}
- $>$ make [\var{target}...] [\var{variable}=\var{value}]
+make [\var{target}...] [\var{variable}=\var{value}]
 \end{code}
 When no target is given, the target \texttt{all} is used. The
 following targets are available:
@@ -289,7 +290,7 @@ following targets are available:
 
 \es{} can be run via
 \begin{code}
-$>$ Espresso [\var{tcl\_script} [\var{N\_processors} [\var{args}]]]
+Espresso [\var{tcl\_script} [\var{N\_processors} [\var{args}]]]
 \end{code}
 
 \index{interactive mode} When \es{} is called without any arguments,

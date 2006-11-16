@@ -1,0 +1,44 @@
+\chapter{Setting up the system}
+\label{chap:setup}
+
+\section{\texttt{inter}: Setting up interactions}
+\label{sec:inter}
+
+\subsection{Nonbonded interactions}
+\label{sec:inter_nb}
+%\quickrefheading{Nonbonded interactions}
+
+\tclcommand[LENNARD\_JONES]{inter}{%
+  \var{type1 type2} 
+  lennard\_jones 
+  \var{epsilon sigma cutoff shift offset}
+}
+
+Defines a Lennard-Jones interaction between particles of the types
+\var{type1} and \var{type2}.
+\bigskip
+
+\subsection{Bonded interactions}
+\label{sec:inter_bonded}
+
+\index{Bonded interactions} \index{Bonded interaction type id} Bonded
+interactions possess an \emph{bonded interaction type id}. On the one
+hand, this id is used when particles and bonds between particles are
+specified in the command \texttt{part} (see section \vref{sec:part}).
+On the other hand, the id is used when the interaction is specified.
+
+\subsection{Coulomb interaction}
+\label{sec:inter_electrostatics}
+
+\subsection{Other interaction types}
+\label{sec:inter_other}
+
+\subsection{Getting the currently defined interactions}
+
+%\quickrefheading{Getting interactions}
+\tclcommand{inter}{ }
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 

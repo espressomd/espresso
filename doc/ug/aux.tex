@@ -1,0 +1,88 @@
+\chapter{Auxilliary commands}
+\label{chap:aux}
+
+\section{Writing VTF files}
+%\quickrefheading{Handling of VTF files}
+
+There are two commands in \es{} that support writing files in the VMD
+formats VTF, VSF and VCF.\footnote{A description of the format and a
+  plugin to read the format in VMD is found in the subdirectory
+  \texttt{vmdplugin/} of the \es{} source directory.} The commands can
+be used to write the structure (\texttt{writevsf}) and coordinates
+(\texttt{writevcf}) of the system to a single trajectory file (usually
+with the extension \texttt{.vtf}), or to separate files (extensions
+\texttt{.vsf} and \texttt{.vtf}).
+
+\subsection{\texttt{writevsf}}
+
+\tclcommand{writevsf}
+{\var{file} [<short|verbose>] [<\var{radii}|auto>] [typedesc \var{typedesc}]}
+
+Writes a structure block describing the system's structure to
+\var{file}. The atom ids used in the file are identical to \es's
+particle ids.  This makes it easy to write additional structure lines
+to the file, e.g. to specify the \texttt{resname} of particle
+compounds, like chains.  The output of this file can be used in a
+standalone VSF file, or at the beginning of a trajectory VTF file that
+contains a trajectory of a whole simulation.
+
+\begin{tcloptions}
+  \option{<short|verbose>}
+  Specify, whether the output is in a human-readable, but somewhat
+  longer format (\keyword{verbose}), or in a more compact form
+  (\keyword{short}). The default is \keyword{verbose}.
+  
+  \option{<radius \var{radii}|auto>}
+  Specify the VDW radii of the atoms. \var{radii} is either
+  \keyword{auto}, or a Tcl-list describing the radii of the different
+  particle types. When the keyword \keyword{auto} is used and a
+  Lennard-Jones interaction between two particles of the given type is
+  defined, the radius is set to be $\frac{\sigma_{LJ}}{2}$ plus the LJ
+  shift.  Otherwise, the radius $0.5$ is substituted. The default is
+  \keyword{auto}.
+  
+  Example: \verb!writevsf "show.tcl" radius {{0 2.0} {1 auto} {2 1.0}}!
+  
+  \option{typedesc \var{typedesc}}
+  \var{typedesc} is a Tcl-list giving additional VTF atom-keywords to
+  specify additional VMD characteristics of the atoms of the given type.
+  If no description is given for a certain particle type, it defaults to
+  \texttt{segid \textit{n}}, where \textit{n} is the type id.
+
+  Example: \verb!writevsf "show.tcl" typedesc {{0 "segid colloid"} {1 "segid pe"}}!
+\end{tcloptions}
+
+
+\subsection{\texttt{writevcf}}
+\tclcommand{writevcf}
+{\var{file} [<short|verbose>] [<folded|absolute>]}
+
+Writes a coordinate (or timestep) block that contains all coordinates
+of the system's particles to \var{file}.
+
+\begin{tcloptions}
+  \option{<short|verbose>} Specify, whether the output is in a
+  human-readable, but somewhat longer format (\keyword{verbose}), or
+  in a more compact form (\keyword{short}). The default is
+  \keyword{verbose}.
+
+  \option{<folded|absolute>} Specify whether the particle positions
+  are written in absolute coordinates (\keyword{absolute}) or folded
+  into the central image of a periodic system (\keyword{folded}). The
+  default is \keyword{absolute}.
+
+  \option{<pids \var{pids}|all>} Specify the coordinates of which particles
+  should be written. If \keyword{all} is used, all coordinates will be
+  written (in the ordered timestep format). Otherwise, \var{pids} has
+  to be a Tcl-list specifying the pids of the particles. The default
+  is \keyword{all}.
+  
+  Example: \verb!pids {0 23 42}!
+
+\end{tcloptions}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 
