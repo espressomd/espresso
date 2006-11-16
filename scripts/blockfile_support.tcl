@@ -354,16 +354,26 @@ proc blockfile_read_auto_variable {channel read auto} {
 	if { $type != "_ival_" && $type != "_dval_"} { error "old style variable block corrupt"}
 	eval "setmd $vname [lrange $data 1 end]"
     } {
-	# new format
-	foreach vblock $vars {
-	    set vname [lindex $vblock 0]
-	    set data [lrange $vblock 1 end]
+        # new format
+        foreach vblock $vars {
+            set vname [lindex $vblock 0]
+            set data [lrange $vblock 1 end]
 
-	    if {[catch {eval "setmd $vname $data"} error]} {
-		if {[string match "variable is readonly*" $error]} { continue }
-		error "blockfile_read_auto_variable: setmd $vname $data reported: $error"
-	    }   
-	}
+            if {[catch {eval "setmd $vname $data"} error]} {
+                switch -glob $error {
+		    "min_num_cells must be at least*" {
+			puts stderr "WARNING: min_num_cells incompatible with current n_nodes, ignoring"
+			continue
+		    }
+		    "node grid does not fit n_nodes" {
+			puts stderr "WARNING: node_grid incompatible with current n_nodes, ignoring"
+			continue
+		    }
+		    "variable is readonly*" { continue }
+		}
+                error "blockfile_read_auto_variable: setmd $vname $data reported: $error"
+            }
+        }
     }
 
     return "variable"
