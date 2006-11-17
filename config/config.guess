@@ -10,7 +10,6 @@ CYGWIN*)
 Linux)
     # determines the type of CPU 0
     CPUINFO=/proc/cpuinfo
-    CPUINFO=/tmp/cpu
     MODEL=`awk '/model name/ { if ($1 != "model") { next; }\
 	if ($4 == "Pentium") { if ($5 != "") print $4"_"$5; else print $4; } \
 	else if ($4 == "AMD" && $5 == "Opteron(tm)")   print "Opteron"; \
