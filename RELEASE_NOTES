@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1h (Ydalir)                                                                     *
+* v2.0.1i (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1h -
+- v2.0.1i -
 -----------
 
+(i) November 16th, 2006.
 (h) November 15th, 2006.
 (g) November 14th, 2006.
 (f) November 13th, 2006.
@@ -21,6 +22,7 @@ Current working revision.
 (a) October  25th, 2006.
 
 New Features:
+(i) Added "How to write the User's Guide" to the Developer's Guide.
 (d) : analyze cwvac calculates the (charge-weighted) velocity auto-correlation.
     (see documentation for further info)
 (c) mpifake now can drop error messages with file and line number information with
@@ -28,6 +30,9 @@ New Features:
 (c) For this, define GNU_MPIFAKE_DEBUG in myconfig.h.
 
 Changes:
+(i) Added syntax definition commands to the User's Guide.
+(i) reading a variables block will now only issue a warning of min_num_cell or
+    node_grid do not fit the current n_nodes
 (g) fixed the Genuine Intel(R) CPU to match all Intel CPUs
 (g) and added Core2 as Pentium_4. Should really be a new cpu,
 (g) once gcc can handle it.
