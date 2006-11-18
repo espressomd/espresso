@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1i (Ydalir)                                                                     *
+* v2.0.1j (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1i -
+- v2.0.1j -
 -----------
 
+(j) November 17th, 2006.
 (i) November 16th, 2006.
 (h) November 15th, 2006.
 (g) November 14th, 2006.
@@ -47,6 +48,8 @@ Changes:
     simulation.tcl to samples/pe_network.tcl. Removed renice.tcl.
 
 Bugfixes:
+(j) removed the >& which is not sh-compatible, and also not
+    necessary.
 (h) inter coulomb p3m/elc can now be repeatedly used to change
     parameters.
 (c) Added missing Espresso to EXTRA_DIST
