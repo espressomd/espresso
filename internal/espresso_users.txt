@@ -1381,3 +1381,61 @@ topic:     In my PhD thesis, I am going to simulate the polymer and
 reminded:  13.NOV.2006
 
 
+name:      Dr. Andrei Komolkin
+email:     komolkin@esr.phys.spbu.ru
+institute: Department of Quantum Magnetic Phenomena,
+           V.A.Fock Institute of Physics,
+           Saint Petersburg State University,
+           Ulianovskaya str., 1
+           198504, Saint Petersburg
+           Russia
+sent:      20.NOV.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Thermotropic Liquid Crystals,
+           Lyotropic Liquid Crystals,
+           Liquid Crystalline Polymers
+reminded:  X20.NOV.2006
+
+
+name:      George Papakonstantopoulos
+email:     gjpapakonsta@wisc.edu
+institute: university of wisconsin madison
+           1415 engineering dr
+sent:      20.NOV.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     polymer physics
+reminded:  20.NOV.2006
+
+
+name:      Martin KRAL
+email:     n2542010@ipc.shizuoka.ac.jp
+institute: GSEST
+           Shizuoka University
+           Johoku 3-5-1
+           Hamamatsu
+           432-8561
+           Japan
+sent:      20.NOV.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Polymer research aimed to amination of the polymer surface.
+           PU, PE, and maybe others.
+           I would like try to simulate whats going on on the surface of
+           the polymer during the treatment, but I think it\\\\\\\\\\\\\\\'s quite
+           difficult to simulate such a complex system. At least I would
+           like try simulation for myself to know little more about it.
+reminded:  20.NOV.2006
+
+
+name:      sarosh
+email:     esarosh@rediffmail.com
+institute: IIT Kharagpur
+sent:      20.NOV.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     CNT modeling
+reminded:  20.NOV.2006
+
+
