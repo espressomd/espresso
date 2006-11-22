@@ -1,0 +1,985 @@
+.TH LATEXMK 1L "16 May 2004" ""
+.SH NAME
+latexmk \- generate LaTeX document
+.SH SYNOPSIS
+.B latexmk [options] [file ...] 
+.SH DESCRIPTION
+.I LatexMk
+completely automates the process of compiling a LaTeX document.
+Essentially, it is a highly specialized relative of the general
+\fImake\fR utility.  Given the source files for a document,
+\fIlatexmk\fR issues the appropriate sequence of commands to generate
+a .dvi, .ps, .pdf and/or hardcopy version of the document.  It can also be set
+to run continuously with a previewer; in that case the latex program,
+etc, are rerun 
+whenever one of the source files is modified.  
+.PP
+\fILatexmk\fR will normally determine which are the source files by
+examining the log file.  It has an option to parse the TeX file instead
+--- see later. When \fIlatexmk\fR is run, it will examine the timestamps
+on the source files.
+If any of the source files have been changed since the last document
+generation, \fIlatexmk\fR will run the various LaTeX processing
+programs
+as necessary.  In particular, it will repeat the run of LaTeX (or
+pdflatex) often enough
+to resolve all cross references; depending on the macro packages used.
+With some macro packages and document styles four, or even more, runs may
+be needed. If necessary, \fIlatexmk\fR will also run bibtex and/or
+makeindex.  
+.PP
+[If the option \fB-it\fR to scan the LaTeX file is used, the main LaTeX
+file and all input and included files (recursively) are scanned for
+LaTeX commands 
+for inputting and including other TeX files and figure files.  Then on
+subsequent runs, 
+\fIlatexmk\fR with the \fB-it\fR switch reads the dependency 
+information from this file.  If the dependencies of the document are
+changed (e.g., by adding or removing an \\input command), an additional
+pass of \fIlatexmk -i\fR or \fIlatexmk -I\fR will update the dependency
+file.]
+.PP
+\fILatexmk\fR has two different previewing options.  In the simple
+\fB-pv\fR option, a dvi, postscript or pdf previewer is automatically run
+after generating the dvi, postscript or pdf version of the document.  The
+type of viewer is selected automatically depending on the \fB-ps\fR,
+\fB-pdf\fR  or \fB-pdfps\fR options.    The kind of file to be viewed can
+also be explicitly selected by using the \fB-view\fR option
+(\fB-view=ps\fR, etc).
+.PP
+The second previewing option is 
+the powerful \fB-pvc\fR option (mnemonic:  "preview continuously").  
+Particularly when a document is reaching the final stages of editing, it
+is often useful to have a previewer open continuously and have it update
+its display whenever changes are made to the source file(s), and this
+is done by  the \fB-pvc\fR option.  With this option, \fIlatexmk\fR
+runs a previewer for the 
+document,  and then \fIlatexmk\fR repeatedly monitors the source files of
+the document to see if any changes have been made since the last dependent
+file
+was produced.  When changes are detected, \fIlatexmk\fR runs the
+appropriate LaTeX commands to regenerate the .dvi, .ps and/or .pdf files
+(depending on the which of the \fB-ps\fR, \fB-pdf\fR  and \fB-pdfps\fR
+options was specified).  A good previewer (like 
+\fIgv\fR) will then automatically update its display.  
+Thus the user can simply edit a file and, when the
+changes are written to disk, \fIlatexmk\fR completely automates the
+cycle of updating the .dvi (and possibly the .ps and .pdf) file,
+and refreshing the previewer's display.
+It's not quite WYSIWYG, but usefully close.
+.PP
+For other
+previewers, the user will have to manually make the previewer update
+its display, which can be (xdvi and gsview) as forcing a redraw of its
+display.
+.PP
+\fILatexmk\fR has the ability to print a banner in gray diagonally across
+each page when making the postscript file.  It can also, if needed,
+call an external program to do other postprocessing on the generated
+files. 
+.PP
+\fILatexmk\fR is highly configurable, both from the command line and
+in configuration files, so that it can accommodate a wide variety of
+user needs and system configurations. 
+.SH LATEXMK OPTIONS AND ARGUMENTS
+(All options can be introduced by single or double "-" characters,
+e.g., "latexmk -help" or "latexmk --help".)
+.TP
+.B file
+One or more files can be specified.  If no files are specified,
+\fIlatexmk\fR will, by default, run on all files in the current working directory
+with a ".tex" extension.  This behavior can be changed: see the
+sections concerning the \fI@default_files\fR variables.
+
+If a file is specified without an extension, then the ".tex" extension is
+automatically added, just as LaTeX does.  (e.g.  If you specify:
+
+	latexmk foo
+
+then \fIlatexmk\fR will operate on the file "foo.tex".  
+.TP
+.B -bm <message>
+A banner message to print diagonally across each page when converting
+the dvi file to postscript.  The message must be a single argument on
+the command line so be careful with quoting spaces and such.
+
+Note that if the \fB-bm\fR option is specified, the \fB-ps\fR option is
+assumed and the postscript file is always generated, even if it is newer
+than the dvi file.
+.TP
+.B -bi <intensity>
+How dark to print the banner message.  A decimal number between 0 and 1.
+0 is black and 1 is white, default is 0.95 which is OK unless your
+toner cartridge is getting low.
+.TP
+.B -bs <scale>
+A decimal number that specifies how large the banner message will be
+printed.  Experimentation is necessary to get the right scale for your
+message, as a rule of thumb the scale should be about equal to 1100
+divided by the number of characters in the message.  Default is 220.0
+which is just right for 5 character messages.
+.TP 
+.B -commands
+List the commands used by \fIlatexmk\fR for processing files, and then
+exit. 
+.TP 
+.B -c
+Clean up (remove) all regenerateable files generated by \fIlatex\fR and
+\fIbibtex\fR except dvi, postscript and pdf.
+.TP 
+.B -C
+Clean up (remove) all regenerateable files generated by \fIlatex\fR and
+\fIbibtex\fR including aux, dep, dvi, postscript and pdf.
+.TP
+.B -c1
+Clean up (remove) all regenerateable files generated by \fIlatex\fR and
+\fIbibtex\fR except aux and dep.
+.TP 
+.B -d
+Set draft mode.  This prints the banner message "DRAFT" across your
+page when converting the dvi file to postscript.  Size and intensity
+can be modified with the \fB-bs\fR and \fB-bi\fR options.  The \fB-bm\fR
+option will override this option as this is really just a short way of
+specifying:
+
+	latexmk -bm DRAFT
+
+Note that if the \fB-d\fR option is specified, the \fB-ps\fR option is
+assumed and the postscript file is always generated, even if it is newer
+than the dvi file.
+.TP
+.B -dF
+Dvi file filtering.  The argument to this option is a filter which will
+generate a filtered dvi file with the extension ".dviF".  All extra
+processing (e.g. conversion to postscript, preview, printing) will then
+be performed on this filtered dvi file.
+
+Example usage: To use dviselect to select only the even pages of the dvi file:
+
+	latexmk -dF 'dviselect even' foo.tex
+.TP
+.B -dvi
+Generate dvi version of document.
+.TP
+.B -dvi-
+Turn off generation of dvi version of document.  (This may get
+overridden, if some other file is made (a .ps file) that is generated from
+the dvi file, or if no generated file at all is requested.)
+.TP
+.B -diagnostics
+Whenever a log file is parsed to determine the input and included
+files, print a list of these files.
+.TP
+.B -f
+Force \fIlatexmk\fR to continue document processing despite errors.
+Normally, when \fIlatexmk\fR detects that \fIlatex\fR has found an error
+which will not be resolved by further processing, the program terminates.
+.TP
+.B -f-
+Turn off the forced processing-past-errors such as is set by the
+\fB-f\fR option.  This could be used to override a setting in a
+configuration file.
+.TP
+.B -F
+Force \fIlatexmk\fR to include files that don't exist when generating
+dependency files.  A warning is produced instead of an error message and
+the program terminating.  If the file name is not an absolute path, it
+is assumed to be relative to the current working directory.  (Note: This
+option is only relevant if you are using the \fB-it\fR to obtain the
+dependency information from the tex files.  The default is to obtain
+this information from the log file and it that case the \fB-F\fR
+option has no effect.)
+.TP
+.B -F-
+Turn off \fB-F\fR.
+.TP
+.B -g
+Force \fIlatexmk\fR to process document, disregarding the timestamps of the 
+source files.
+This option is useful, for example, if you change some options and
+wish to reprocess the files.
+.TP
+.B -g-
+Turn off \fB-g\fR.
+.TP
+.B -h, -help
+Print help information.
+.TP
+.B -i
+Generate new dependency file if root file is newer
+than dependency file or dependency file does not exist.
+The dependency information is taken from the log file or the source file,
+depending on the setting made by the \fB-il\fR and \fB-it\fR switches.
+.TP
+.B -i-
+Turn off \fB-i\fR.
+.TP
+.B -il
+Extract dependency information from log file.  This is normally the best
+method, so it is the default. However, some packages do not put
+information on files read in the log file, and then it may be better to
+tell \fIlatexmk\fR to get the information from the TeX file(s) --- see the 
+switch \fB-it\fR. 
+(Default)
+.TP
+.B -it
+Extract dependency information by scanning the source TeX file(s), rather
+than the log file.
+This is the method used by earlier versions of \fIlatexmk\fR.  It relies on
+parsing TeX files, which can be confused by definitions of new commands,
+etc.  Normally it is better to tell \fIlatexmk\fR to scan the log file --- see
+the switch \fB-il\fR.  
+.TP
+.B -I
+Always generate new dependency file, even if newer
+dependency file exists.  
+The dependency information is taken from the log file or the source file,
+depending on the setting made by the \fB-il\fR and \fB-it\fR switches.
+.TP
+.B -I-
+Turn off \fB-I\fR.
+.TP
+.B -l
+Run in landscape mode, using the landscape mode for the previewers and
+the dvi to postscript converters.
+.TP
+.B -l-
+Turn off \fB-l\fR.
+.TP
+.B -p
+Print out the file.  By default, this is done using lpr after
+generating the postscript version.  But you can use the
+-print=... option to print the dvi or pdf files instead, and you can
+configure this in a start up file (by setting the \fI$print_type\fR
+variable. 
+
+Under MS-Windows you must have configured the print commands used by
+\fIlatexmk\fR.
+
+This option is incompatible with the \fB-pv\fR and \fB-pvc\fR options,
+so it turns them off. 
+.TP
+.B -pdf
+Generate pdf version of document using pdflatex.
+.TP
+.B -pdfdvi
+Generate pdf version of document from the dvi file, by default using dvipdf.
+.TP
+.B -pdfps
+Generate pdf version of document from the ps file, by default using
+ps2pdf. 
+.TP
+.B -pdf-
+Turn off generation of pdf version of document.  
+(This can be used to override a setting in a configuration file.
+It may get overridden if some other option requires the generation of
+a pdf file.)
+.TP
+.B -print=dvi, -print=ps, -print=pdf
+Define which kind of file is printed.  This option also ensures that
+the requisite file is made, and turns on printing.
+.TP
+.B -ps
+Generate postscript version of document.
+.TP
+.B -ps-
+Turn off generation of postscript version of document.
+This can be used to override a setting in a configuration file.
+(It may get overridden by some other option that requires a postscript
+file, for example a request for printing.)
+.TP
+.B -pF
+Postscript file filtering.  The argument to this option is a filter
+which will generate a filtered postscript file with the extension
+".psF".  All extra processing (e.g. preview, printing) will then be
+performed on this filtered postscript file.
+
+Example usage: Use psnup to print two pages on the one page:
+
+	latexmk -ps -pF 'psnup -2' foo.tex
+
+or
+
+	latexmk -ps -pF "psnup -2" foo.tex
+
+Whether to use single or double quotes round the "psnup -2" will depend on
+your command interpreter, in particular on the operating system.
+.TP
+.B -pv
+Run file previewer.  If the \fB-view\fR option is used, this will select
+the kind of file to be previewed (dvi, ps or pdf).
+Otherwise the viewer views the "highest" kind of file selected, by the
+\fB-dvi\fR, \fB-ps\fR, \fB-pdf\fR, \fB-pdfps\fR options, in the
+order dvi, ps, pdf (low to high).
+If no file type has been selected, the dvi previewer will be used.
+This option is incompatible with the \fB-p\fR and \fB-pvc\fR options,
+so it turns them off.
+.TP
+.B -pv-
+Turn off \fB-pv\fR.
+.TP
+.B -pvc
+Run a file previewer and continually update the .dvi, .ps, and/or .pdf
+files whenever changes are made to source files (see the Description
+above).  Which of these files is generated and which is viewed is
+governed by the other options, and is the same as for the \fB-pv\fR
+option. 
+This option also turns on the \fB-f\fR option, since it is normally
+desirable in preview-continuous-mode to continue working even if
+errors are found.
+The preview-continuous option \fB-pvc\fR can only work with one file.
+So in this case you will normally only specify one filename on
+the command line.  It is also incompatible with the 
+\fB-p\fR and \fB-pv\fR options, so it turns these options off
+
+With a good previewer the display will be automatically 
+updated.  (Under UNIX "gv -watch" does this for postscript files; it
+would also do it for pdf files except for an apparent bug in gv that
+causes an error when the newly updated pdf file is read.) Other
+previewers will need a manual update.  
+
+Important note: the acroread program on MS-Windows locks the pdf file,
+and prevents new versions being written, so it is a bad idea to use
+acroread to view pdf files in preview-continuous mode.  It is better
+to use a dvi or ps viewer, as set by one of the \fB-view=dvi\fR and
+\fB-view=ps\fR options.
+
+Note that if \fIlatexmk\fR dies because it encounters an error, the
+"forked" previewer will continue to run.  Successive invocations with
+the \fB-pvc\fR option will not fork new previewers, but \fIlatexmk\fR
+will use the existing previewer.  (At least this will happen when
+\fIlatexmk\fR is running under an operating system where it knows how
+to determine whether an existing previewer is running.)
+.TP
+.B -pvc-
+Turn off \fB-pvc\fR.
+.TP
+.B -quiet
+Same as -silent
+.TP
+.B -r <rcfile>
+Read the specified initialization file ("RC file") before processing.  
+Be careful about the ordering: Standard initialization files --- see
+the section below on "Initialization (RC) files" --- are read first,
+then the options on the command line in the order they are given.
+Thus an initialization file specified with the \fB-r\fR option can
+override both the standard initialization files and previously
+specified options.  But all of these can be overridden by later
+options. 
+See below for more details about initialization (RC) files.
+.TP
+.B -silent
+Run commands silently, i.e., with options that reduce the amount of
+diagnostics generated.  For example, with the default settings for
+commands under UNIX, the command "latex -interaction=batchmode" is used
+for latex.
+
+Also reduce the number of informational messages that \fIlatexmk\fR
+generates. 
+.TP
+.B -v, -version
+Print version number of \fILatexmk\fR.
+.TP
+.B -verbose
+Opposite of \fB-silent\fR.  This is the default setting.
+.TP
+.B -view=default, -view=dvi, -view=ps, -view=pdf
+Set the kind of file used when previewing is requested (e.g., by the
+\fB-pv\fR or \fB-pvc\fR switches).  The default is to view the "highest"
+kind of requested file (in the order dvi, ps, pdf).  
+.PP
+The preview-continuous option \fB-pvc\fR can only work with one file.
+So in this case you will normally only specify one filename on
+the command line.  
+.PP
+Options \fB-p\fR, \fB-pv\fR and \fB-pvc\fR are mutually exclusive.  So
+each of these options turns the others off.
+.SH EXAMPLES
+.nf
+.ta 2i
+% \fBlatexmk thesis\fR		\fI# run latex enough times to resolve
+				cross-references\fR 
+
+% \fBlatexmk -pvc -ps thesis\fR	\fI# run latex enough times to resolve
+					cross-references, make a postscript
+					file, start a previewer.  Then
+					watch for changes in the source
+					file thesis.tex and any files it
+					uses.  After any changes rerun latex
+					the appropriate number of times and
+					remake the postscript file.  If latex
+					encounters an error, latexmk will
+					keep running.
+
+% \fBlatexmk -c\fR		\fI# remove .aux, .log, .bbl, .blg, .dep,
+				.dvi, .pdf, .ps & .bbl files\fR
+.SH INITIALIZATION (RC) FILES
+.PP
+There are four initialization files ("RC files") that \fIlatexmk\fR can
+read at startup: 
+.PP
+1) The system RC file, if it exists.  
+   On a UNIX system, \fIlatexmk\fR searches for following places for its
+   system RC file, in the following order, and reads the first it finds:
+   "/opt/local/share/latexmk/LatexMk",
+   "/usr/local/share/latexmk/LatexMk",
+   "/usr/local/lib/latexmk/LatexMk".
+   On a MS-WINDOWS system it looks for "C:\\latexmk\\LatexMk".
+.PP
+2) The user's RC file in "$HOME/.latexmkrc", where $HOME is the value
+of the environment variable HOME.  On UNIX and clones (including LINUX),
+this variable 
+is set by the system; on MS-Windows, the user may choose to set it.
+.PP
+3) The RC file in the current working directory called "latexmkrc".
+.PP
+4) Any RC file(s) specified on the command line with the \fB-r\fR option.
+.PP
+Each RC file is a sequence of Perl commands.  Usually it will be just a
+sequence of assignment statements that override the built-in settings of
+\fILatexmk\fR.  Comment lines are introduced by the "#" character.
+
+Note that command line options are obeyed in the order in which
+they are written; thus any RC file specified on the command line with
+the \fB-r\fR option can override previous options but can be itself
+overridden by later options on the command line.  
+
+.SH RC VARIABLES IN INITIALIZATION FILES
+.PP
+Many of the available variables that can be set are shown in the next
+section.  Syntax for the statements in an initialization file is of
+the form:
+.PP
+	$bibtex = 'bibtex';
+.PP
+for the setting of a string variable, 
+.PP
+	$preview_mode = 1;
+.PP
+for the setting of a numeric variable, and
+.PP
+	@default_files = ('paper', 'paper1');
+.PP
+for the setting of an array of strings.
+
+Some of the variables set the names of the commands that \fIlatexmk\fR
+uses. Here are some tricks to note for these:
+
+\fB"Detaching" a command\fR: If a command is to be run detached this
+is indicated by preceding it with "start", as in
+.PP
+	$dvi_previewer = 'start xdvi';
+.PP
+This will be translated to whatever is appropriate for your operating
+system. (Note: in some circumstances, \fIlatex\fR will always run a
+command detached.  This is the case for a previewer in preview
+continuous mode, since otherwise previewing continuously makes no
+sense.)
+
+\fBCommand names containing spaces\fR: Under MS-Windows it is common
+that the name of a command includes spaces, since software is often
+installed in a subdirectory of "C:\Program Files".  Such command names
+should be enclosed in double quotes, as in
+
+  $lpr_pdf = '"c:/Program Files/Ghostgum/gsview/gsview32.exe" /p';
+
+\fBUsing MS-Windows file associations\fR: A useful trick under modern
+versions of MS-Windows (e.g., WinXP) is to use just the command
+'start' by itself:
+.PP
+	$dvi_previewer = 'start';
+.PP
+Under recent versions of MS-Windows, this will cause to be run
+whatever program the system has associated with dvi files.  (The same
+applies for a postscript viewer and a pdf viewer.)  
+
+\fBNot using a certain command\fR: If a command is not to be run, the
+command name NONE is used, as in
+.PP
+	$lpr  = 'NONE lpr';
+.PP
+
+\fBOptions to commands\fR:
+Setting the name of a command can be used not only for changing the
+name of the command called, but also to add options to command.
+Suppose you want \fIlatexmk\fR to use latex with source specials
+enabled.  Then you might use the following line in an initialization
+file:
+.PP
+	$latex = 'latex --src-specials';
+.PP
+
+\fBAdvanced tricks\fR: Normally \fIlatexmk\fR assumes certain behavior
+for commands and in particular it assumes certain kinds and ordering
+of command line arguments.  Sometimes this assumption is wrong.  For
+example you might want to use Distiller to convert postscript files to
+pdf files.  You cannot simply change the name of the ps2pdf conversion
+program, as in
+.PP
+	$ps2pdf = 'distiller';  ######### WRONG
+.PP
+because the command line arguments will be wrong.  In such a
+situation, your best bet is to write a batch file (under MS-Windows) or
+a script (under UNIX) that will do the conversion.  Then you set
+.PP
+	$ps2pdf = 'special_script';
+.PP
+Your script will be invoked by \fIlatexmk\fR in its usual way as
+"Special_script file.ps file.pdf".  Your script calls Distiller with
+Distiller's correct arguments.
+
+.SH LIST OF RC VARIABLES IN INITIALIZATION FILES
+.PP
+Default values are indicated in brackets.
+.TP
+.B $banner [0]
+If nonzero, the banner message is printed across each page when converting
+the dvi file to postscript.  Without modifying $banner_message, this is
+equivalent to specifying the \fB-d\fR option.
+
+Note that if \fB$banner\fR is nonzero, the \fB$postscript_mode\fR is
+assumed and the postscript file is always generated, even if it is newer
+than the dvi file.
+.TP
+.B $banner_intensity [0.95]
+Equivalent to the \fB-bi\fR option, this is a decimal number between 0
+and 1 that specifies how dark to print the banner message. 0 is black,
+1 is white.  The default is just right if your toner cartridge isn't
+running too low.
+.TP
+.B $banner_message ["DRAFT"]
+The banner message to print across each page when converting the dvi
+file to postscript.  This is equivalent to the \fB-bm\fR option.
+.TP
+.B $banner_scale [220.0]
+A decimal number that specifies how large the banner message will be
+printed.  Experimentation is necessary to get the right scale for your
+message, as a rule of thumb the scale should be about equal to 1100
+divided by the number of characters in the message.  The Default is
+just right for 5 character messages.  This is equivalent to the
+\fB-bs\fR option.
+.TP
+.B $bibtex ["bibtex"]
+The BibTeX processing program.
+.TP
+.B $bibtex_silent_switch ["-terse"]
+\fBSwitch(es)\fR for the BibTeX processing program when silent mode is on.
+.TP
+.B $cleanup_mode [0]
+If nonzero, specifies cleanup mode: 1 for full cleanup, 2 for  cleanup
+except for dvi, ps and pdf files, 3 for cleanup except for dep and aux
+files. 
+This variable is equivalent to specifying one of
+the \fB-c\fR, \fB-c1\fR, or \fB-C\fR options.  There should be no need
+to set this variable from an RC file.
+.TP
+.B $clean_ext [""]
+Extra extensions of files for \fIlatexmk\fR to remove when the \fB-c\fR
+option is selected.
+.TP
+.B $clean_full_ext [""]
+Extra extensions of files for \fIlatexmk\fR to remove when the \fB-C\fR
+option is selected.
+.TP
+.B @cus_dep_list [()]
+Custom dependency list -- see section on "Custom Dependencies".
+.TP
+.B @default_files [('*.tex')]
+Default list of files to be processed.  
+
+Normally, if no filenames are specified on the command line,
+\fIlatexmk\fR processes all tex files specified in the @default_files
+variable, which by default is set to all tex files ('*.tex') in the
+current directory.  This is a convenience: just run \fIlatexmk\fR and
+it will process an appropriate set of files.  But sometimes you want
+only some of these files to be processed.  In this case you set the
+(PERL array variable) \fI@default_files\fR in an initialization file
+(e.g., the file "latexmkrc" in the current directory).  Then if no
+files are specified on the command line then the files you specify by
+setting \fI@default_files\fR are processed.
+
+Three examples:
+
+	@default_files = ('paper_current');
+
+	@default_files = ('paper1', 'paper2.tex');
+
+	@default_files = ('*.tex', '*.dtx');
+
+Note that more than file may be given, and that the default extension
+is '.tex'.  Wild cards are allowed.  
+.TP
+.B $dvi_filter [empty]
+The dvi file filter to be run on the newly produced dvi file before
+other processing.  Equivalent to specifying the \fB-dF\fR option.
+.TP
+.B $dvi_previewer ["start xdvi" under UNIX]
+The command to invoke a dvi-previewer.
+[Default is "start" under MS-WINDOWS; under more recent versions of
+Windows, this will cause to be run whatever command the system has
+associated with .dvi files.] 
+.TP
+.B $dvi_previewer_landscape ["start xdvi"]
+The command to invoke a dvi-previewer in landscape mode.
+[Default is "start" under MS-WINDOWS; under more recent versions of
+Windows, this will cause to be run whatever command the system has
+associated with .dvi files.] 
+.TP
+.B $dvipdf ["dvipdf"]
+Command to convert dvi to pdf file.  (WARNING: The default dvipdf
+script generates pdf files with bitmapped fonts, which don't look
+good when viewed by acroread.  The script should be modified to give
+dvips the options "-P pdf" to ensure that type 1 fonts are used in the
+pdf file.)
+.TP
+.B $dvips ["dvips"]
+The program to used as a filter to convert a .dvi file to a .ps file.  
+If pdf is going to be generated from pdf, then the value of the
+$dvips_pdf_switch --- see below --- will be appended.
+.TP
+.B $dvips_landscape ["dvips -tlandscape"]
+The program to used as a filter to convert a .dvi file to a .ps file
+in landscape mode.
+.TP
+.B $dvips_pdf_switch ["-P pdf"]
+\fBSwitch(es)\fR for dvips program when pdf file is to be generated from
+ps file. 
+.TP
+.B $dvips_silent_switch ["-q"]
+\fBSwitch(es)\fR for dvips program when silent mode is on.
+.TP
+.B $dvi_update_method [2 under UNIX, 1 under MS-Windows]
+How the dvi viewer updates its display when the dvi file has changed.
+0 => update is automatic, 
+1=> manual update by user, which may only mean a mouse click on the
+   viewer's window or may mean a more serious action.
+2 => Send the signal SIGUSR1 (as for xdvi under UNIX),
+3 => Viewer cannot do an update, because it locks the file. (As with
+acroread under MS-Windows.)
+.TP
+.B $force_generate_and_save_includes [0]
+If nonzero, specifies that the dependency file should always be
+generated.  Equivalent to specifying the \fB-I\fR option.
+.TP
+.B $force_mode [0]
+If nonzero, continue processing past minor \fIlatex\fR errors 
+including unrecognized cross references.  Equivalent to specifying the
+\fB-f\fR option.
+Note that specifying the \fB-pvc\fR sets $forec_mode to 1.
+.TP
+.B $force_include_mode [0]
+If nonzero, force \fIlatexmk\fR to include files that don't exist when
+generating dependency files.  A warning is produced instead of an error
+message and the program terminating.  If the file name is not an
+absolute path, it is assumed to be relative to the current working
+directory.  Equivalent to specifying the \fB-F\fR option.
+.TP
+.B $generate_and_save_includes [0]
+If nonzero, generates dependency file if it does not exist or is older
+than the root file (the base .tex file).  Equivalent to specifying
+the \fB-i\fR option.
+.TP
+.B @generated_exts [( 'ind', 'lof', 'lot', 'toc')]
+This contains a list of extensions for files that are generated
+(directly or indirectly) during a LaTeX run and that are read in by
+LaTeX in later runs.  When \fIlatexmk\fR generates a dependency list
+from the .log file, it will ignore files with the extensions in
+\fI@generated_exts\fR, since NORMALLY they are not true source files,
+and the time stamps of these may mislead \fIlatexmk\fR as to whether
+the real output files are up-to-date.
+
+The extensions "aux" and "bbl" are always excluded from the dependents,
+because they get special treatment, so they do not need to be in this
+list. 
+.TP
+.B $go_mode [0]
+If nonzero, process files regardless of timestamps.  Equivalent to the
+\fB-g\fR option.
+.TP
+.B $includes_from_log [1]
+If nonzero, extract dependency information from the log file, rather than
+the source TeX file(s); this is equivalent to the \fB-il\fR option.
+If zero, extract dependency information by scanning the source TeX file(s);
+this is equivalent to the \fB-it\fR option. 
+.TP
+.B $index_mode [0 and then as determined from the results of a run]
+If nonzero, run \fImakeindex\fR to produce index of document.  
+Normally you should not need to set this variable in an RC file, since
+latexmk determines automatically if \fImakeindex\fR needs to be run.
+.TP
+.B $landscape_mode [0]
+If nonzero, run in landscape mode, using the landscape mode previewers and
+dvi to postscript converters.  Equivalent to the \fB-l\fR option.
+.TP
+.B $latex ["latex"]
+The LaTeX processing program.  Note that as with other programs, you
+can use this variable not just to change the name of the program used,
+but also specify options to the program.  E.g.,
+
+	$latex = 'latex --src-specials';
+.TP
+.B $latex_silent_switch ["-interaction=batchmode"]
+\fBSwitch(es)\fR for the LaTeX processing program when silent mode is on.
+Under MS-Windows, the default value is changed to 
+"-interaction=batchmode -c-style-errors", as used by MikTeX and fpTeX.
+.TP
+.B $lpr ["lpr"]
+[Default is "NONE lpr" under MS-WINDOWS.]
+The printing program to print postscript files.
+
+Under MS-Windows (unlike UNIX/LINUX), there is no standard program for
+printing files.  But there are ways you can do it.  For example, if
+you have gsview installed, you can use it with the option '/p':
+
+    $lpr = '"c:/Program Files/Ghostgum/gsview/gsview32.exe" /p';
+
+If gsview is installed in a different directory, you will need to make
+the appropriate change.  Note the double quotes around the name: this
+is necessary because one part of the command name ('Program Files')
+contains a space which would otherwise be misinterpreted. 
+
+.TP
+.B $lpr_dvi ["NONE lpr_dvi"]
+The printing program to print dvi files.
+.TP
+.B $lpr_pdf ["NONE lpr_pdf"]
+The printing program to print pdf files.
+
+Under MS-Windows you could set this to use gsview, if it is installed,
+e.g.,
+
+    $lpr = '"c:/Program Files/Ghostgum/gsview/gsview32.exe" /p';
+
+If gsview is installed in a different directory, you will need to make
+the appropriate change.  Note the double quotes around the name: this
+is necessary because one part of the command name ('Program Files')
+contains a space which would otherwise be misinterpreted. 
+
+.TP
+.B $makeindex ["makeindex"]
+The index processing program.
+.TP
+.B $pdf_mode [0]
+If zero, do NOT generate a pdf version of the document.
+If equal to 1, generate a pdf version of the document using pdflatex.  
+If equal to 2, generate a pdf version of the document from the ps
+file, by using the command specified by the $ps2pdf variable.  
+If equal to 3, generate a pdf version of the document from the dvi
+file, by using the command specified by the $dvipdf variable.  
+Equivalent to the \fB-pdf-\fR, \fB-pdf\fR, \fB-pdfdvi\fR, 
+\fB-pdfps\fR options,
+and is stored in the dependency file
+if generated.
+.TP
+.B $pdflatex ["pdflatex"]
+The LaTeX processing program in the version that makes a pdf file instead
+of a dvi file.
+.TP
+.B $pdflatex_silent_switch  ["-interaction=batchmode"]
+\fBSwitch(es)\fR for the LaTeX processing program when silent mode is on.
+Under MS-Windows, the default value is changed to 
+"-interaction=batchmode -c-style-errors", as used by MikTeX and fpTeX.
+.TP
+.B $pdf_previewer ["start acroread"]
+The command to invoke a pdf-previewer.
+[Default is changed to "start" on MS-WINDOWS; under more recent versions of
+Windows, this will cause to be run whatever command the system has
+associated with .pdf files.]  
+
+Potential problem under MS-Windows:
+if acroread is used as the pdf previewer, and it is
+actually viewing a pdf file, the pdf file cannot be updated.  Thus
+makes acroread a bad choice of previewer if you use \fIlatexmk\fR's
+previous-continuous mode (option \fB-pvc\fR) under MS-windows.
+This problem does not occur if ghostview, gv or gsview is used to
+view pdf files.
+.TP
+.B $pdf_update_method [1 under UNIX, 3 under MS-Windows]
+How the pdf viewer updates its display when the pdf file has
+changed. See $dvi_update_method for the codes.
+Note that acroread under MS-Windows (but not UNIX) locks the pdf file, so
+the default value is then 3.  
+.TP
+.B $pid_position = [1 under UNIX, -1 under MS-Windows]     
+Command used to get all the processes currently run by the user.  
+The -pvc option uses the command specified by the variable $pscmd to
+determine if there is an already running previewer, and to find the
+process ID (needed if \fIlatexmk\fR needs to signal the previewer about
+file changes).  The variable $pid_position is used to specify which word
+in lines of the output from $pscmd corresponds to the process ID.  The
+first word in the line is numbered 0.  The default value of 1 (2nd word in
+line) is correct for Solaris 2.6 and Linux.  Setting the variable to -1 is
+used to indicate that $pscmd is not to be used.
+.TP
+.B $postscript_mode [0]
+If nonzero, generate a postscript version of the document.  
+Equivalent to the \fB-ps\fR option.
+.TP
+.B $preview_continuous_mode [0]
+If nonzero, run a previewer to view the document, and
+continue running \fIlatexmk\fR to keep .dvi up-to-date.  Equivalent to
+the \fB-pvc\fR option.
+Which previewer is run depends on the other settings, see the command
+line options $\fB-view=\fR.  
+.TP
+.B $preview_mode [0]
+If nonzero, run a previewer to preview the document.
+Equivalent to the \fB-pv\fR option.  
+Which previewer is run depends on the other settings, see the command
+line options $\fB-view=\fR.  
+.TP
+.B $printout_mode [0]
+If nonzero, print the document using \fIlpr\fR.  Equivalent to the
+\fB-p\fR option.  Recommend that this is not set from an RC file or
+you could waste lots of paper.
+.TP
+.B $print_type = ["ps"]
+Type of file to printout: possibilities are "dvi", "none", "pdf", or
+"ps".  
+.TP
+.B $pscmd 
+[On UNIX, the default is "ps -f -u $ENV{USER}".
+On MS-WINDOWS the default in "NONE pscmd".]
+Command used to get all the processes currently run by the user.  This
+is used by the -pvc option to determine if there is an already running
+previewer. 
+The command line options for this command under the different flavors of
+UNIX are quite variable.  
+The command given is suitable for Solaris 2.6 and for Linux.
+The variable $pid_position must also be set: see its description.
+.TP
+.B $ps2pdf ["ps2pdf"]
+Command to convert ps to pdf file.  
+.TP
+.B $ps_filter [empty]
+The postscript file filter to be run on the newly produced postscript
+file before other processing.  Equivalent to specifying the \fB-pF\fR
+option.
+.TP
+.B $ps_previewer ["start gv -watch"]
+The command to invoke a ps-previewer.
+[Default is "start" on MS-WINDOWS; under more recent versions of
+Windows, this will cause to be run whatever command the system has
+associated with .ps files.]  
+
+Note that gv with the -watch option updates its display whenever the
+postscript file changes, whereas ghostview does not. 
+.TP
+.B $ps_previewer_landscape ["start gv -swap -watch"]
+The command to invoke a ps-previewer in landscape mode.
+[Default is "start" on MS-WINDOWS; under more recent versions of
+Windows, this will cause to be run whatever command the system has
+associated with .ps files.]  
+.TP
+.B $ps_update_method [0 under UNIX, 1 under MS-Windows]
+How the postscript viewer updates its display when the ps file has
+changed. See $dvi_update_method for the codes.
+.TP
+.B $sleep_time [2]
+The time to sleep (in seconds) between checking for source file 
+changes when running the \fB-pvc\fR option.
+.TP
+.B $texfile_search [""]
+This is an obsolete variable, replaced by the \fI@default_files\fR
+variable -- see the description of \fI@default_files\fR for how it
+works.  
+
+For backward compatibility, if you choose to set it,
+\fI$texfile_search\fR is a string of space-separated filenames, and
+then \fIlatexmk\fR replaces \fI@default_files\fR with the filenames in
+\fI$texfile_search\fR to which is added '*.tex'.
+.TP
+.B $tmpdir ["/tmp" under UNIX, value of environment variable TEMP under MS-Windows]
+Directory to store temporary files that \fIlatexmk\fR generates while
+running.  Currently it only has a minor use, when making a banner to
+insert in a postscript file.  There should be no trailing separator.
+It should not be necessary to change this value except when running
+under Cygwin.
+
+.SH CUSTOM DEPENDENCIES
+.PP
+In any RC file a set of custom dependencies can be set up to convert a
+file with one extension to a file with another.  An example use of this
+would be to allow \fIlatexmk\fR to convert a \fI.fig\fR file to
+\fI.eps\fR to be included in the \fI.tex\fR file.  A table of custom
+dependencies are set up by using the \fB@cus_dep_list\fR array.  Each
+string in the array has four arguments, separated by a space:
+.TP
+.B from extension:
+The extension of the file we are converting from (e.g. "fig").
+.TP
+.B to extension:
+The extension of the file we are converting to (e.g. "eps").
+.TP
+.B must:
+If non-zero, the file we are converting from \fBmust\fR exist, if it
+doesn't exist \fIlatexmk\fR will give an error message and exit unless
+the \fB-f\fR option is specified.  If \fImust\fR is zero and the file
+we are converting from doesn't exist, then no action is taken.
+.TP
+.B function:
+The name of the subroutine that \fIlatexmk\fR should call to perform the
+file conversion.  The first argument to the subroutine is the base name
+of the file to be converted without any extension.  The subroutines are
+declared in the syntax of \fIperl\fR.  The function should return 0 if
+it was successful and a nonzero number if it failed.
+.PP
+Example in an RC file to convert a \fI.fig\fR file to a \fI.eps\fR file:
+
+@cus_dep_list = (@cus_dep_list, "fig eps 0 fig2eps");
+
+sub fig2eps
+{
+  system("fig2dev -Lps $_[0].fig $_[0].eps");
+}
+
+The subroutine \fIfig2eps\fR will only be called if the \fI.fig\fR file
+was modified more recently then the \fI.eps\fR file, or the \fI.eps\fR
+file does not exist.
+
+If the return value of the subroutine is non-zero, then \fIlatexmk\fR
+will assume an error occurred during the execution of the subroutine.
+
+.SH SEE ALSO
+latex(1), bibtex(1).
+.SH BUGS
+Search for .bib files is not correct if they are not in the current
+directory; the problem is that the log file generated by bibtex does not
+give the full path to the .bib files.  The easiest fix at the moment is to
+set the BIBINPUTS environment variable to include explicitly the path
+containing your .bib files.  Or you can set the $BIBINPUTS variable
+explicitly in one of latexmk's startup files.  
+
+If .bbl file exists and is used, but the .bib file does not exist,
+then latexmk should not try to run bibtex, but it does.
+
+Sometimes a viewer (gv) tries to read an updated .ps or .pdf file
+after its creation is started but before the file is complete.  Work
+around: manually refresh (or reopen) display.
+
+(The following isn't really a bug, but concerns features of previewers.)
+Preview continuous mode only works perfectly with certain previewers:
+Xdvi on UNIX/LINUX works for dvi files.  
+Gv on UNIX/LINUX works for both postscript and pdf.
+Ghostview on UNIX/LINUX needs a manual update (reopen); it views
+postscript and pdf. 
+Gsview under MS-Windows works for both postscript and pdf, 
+but only reads the updated file when its screen is refreshed.
+Acroread under UNIX/LINUX views pdf, but the file needs to be closed
+and reopened to view an updated version.
+Under MS-Windows, acroread locks its input file and so the
+pdf file cannot be updated.  (Remedy: configure \fIlatexmk\fR use gsview
+instead.) 
+.SH THANKS TO
+David Coppit (username david at node coppit.org) made many useful
+suggestions that contributed to version 3. (Please note that the
+e-mail addresses are not written in their standard form to avoid being
+harvested by worms and viruses.)
+.SH IDENTIFICATION
+Current version, with substantial modifications, enhancements and bug
+fixes by John Collins (username collins at node phys.psu.edu).
+(Version 3.07).
+.br
+Modifications and enhancements by Evan McLean (Version 2.0)
+.br
+Original script called "go" by David J. Musliner (RCS Version 3.2)
