@@ -27,7 +27,7 @@ e. g. for creating and using checkpoints. Hence you can transfer all accessible 
 </li></ul>
 And now the full documentation on how \ref tcl_blockfile actually works:<BR>
     \verbatim blockfile <channel> read|write start|end|variable|auto|toend <param>?\endverbatim
-        blockfile allows for convienent access to a block format structured file \<channel\>. The
+        blockfile allows for convienent access to a block format structured file \<channel\>. Some of the
 	possible actions are:
 <ol>
 	<li>\verbatim blockfile <channel>  write start <tag> \endverbatim which writes a start "{"
@@ -35,12 +35,14 @@ And now the full documentation on how \ref tcl_blockfile actually works:<BR>
         <li>\verbatim blockfile <channel>  write end \endverbatim just writes a "}" to \<channel\>.
 	<li>\verbatim blockfile <channel>  write variable {<varname1> <varname2> ...} \endverbatim
             writes the variables \<varname1\>, \<varname2\>,..., which are known to \ref tcl_setmd (a list
-	    can be found in \ref variables_page), to \<channel\>.
+	    can be found in \ref variables_page), to \<channel\>. When reading the block, all variables with
+	    names listed in blockfile_variable_blacklist are ignored.
 	<li>\verbatim blockfile <channel>  write variable all\endverbatim
             will write all variables known to \ref tcl_setmd to \<channel\>.
 	<li>\verbatim blockfile <channel>  write tclvariable {<varname1> <varname2> ...} \endverbatim
             writes the tcl <i>global</i> variables \<varname1\>, \<varname2\>,..., to \<channel\>. Global
-	    variables are those declared in the top scope or those declared global in procedures.
+	    variables are those declared in the top scope or those declared global in procedures. When reading
+	    the block, all variables with names listed in blockfile_tclvariable_blacklist are ignored.
 	<li>\verbatim blockfile <channel>  write tclvariable all\endverbatim
             will write all global variables to \<channel\>. The predefined globals from Tcl (tcl_version, argv,
 		argv0, tcl_interactive, auto_oldpath, errorCode, auto_path, errorInfo, auto_index, env,
