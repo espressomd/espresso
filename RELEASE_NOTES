@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1j (Ydalir)                                                                     *
+* v2.0.1k (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1j -
+- v2.0.1k -
 -----------
 
+(k) November 22nd, 2006.
 (j) November 17th, 2006.
 (i) November 16th, 2006.
 (h) November 15th, 2006.
@@ -23,6 +24,10 @@ Current working revision.
 (a) October  25th, 2006.
 
 New Features:
+(k) for (tcl)variable blocks there exist now global lists
+    blockfile_(tcl)variable_blacklist
+(k) which allow to to block the reading of variables during blockfile
+    read.
 (i) Added "How to write the User's Guide" to the Developer's Guide.
 (d) : analyze cwvac calculates the (charge-weighted) velocity auto-correlation.
     (see documentation for further info)
