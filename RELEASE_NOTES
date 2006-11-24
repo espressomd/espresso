@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1k (Ydalir)                                                                     *
+* v2.0.1l (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1k -
+- v2.0.1l -
 -----------
 
+(l) November 23rd, 2006.
 (k) November 22nd, 2006.
 (j) November 17th, 2006.
 (i) November 16th, 2006.
@@ -53,6 +54,8 @@ Changes:
     simulation.tcl to samples/pe_network.tcl. Removed renice.tcl.
 
 Bugfixes:
+(l) Fixed a bug in on_paramter_change where reinit_thermo was erroneously set to
+    1.
 (j) removed the >& which is not sh-compatible, and also not
     necessary.
 (h) inter coulomb p3m/elc can now be repeatedly used to change
