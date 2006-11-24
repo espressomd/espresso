@@ -1439,3 +1439,14 @@ topic:     CNT modeling
 reminded:  20.NOV.2006
 
 
+name:      backouche
+email:     backouch@bgu.ac.il
+institute: ben gurion university 
+           biomedical engeenering
+sent:      23.NOV.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     brownian molecular dynamic simulation
+reminded:  X23.NOV.2006
+
+
