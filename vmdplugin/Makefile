@@ -14,3 +14,6 @@ all: vtftest vtfplugin.so
 vtftest: vtfplugin.o
 vtfplugin.so: vtfplugin.o
 	$(CC) $(LDFLAGS) -shared $< -o vtfplugin.so
+# to compile the vtfplugin on MacOS X use the following line instead
+#       $(CC) $(LDFLAGS) -bundle $< -o vtfplugin.so
+

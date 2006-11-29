@@ -45,6 +45,8 @@ it should be enough to modify the VMDDIR line to match the path where
 you have installed VMD. Then you can compile the plugin via
 "make". This will generate the plugin "vtfplugin.so" and the test
 program "vtftest".
+NOTE: If you want to compile the plugin on Mac OS X, you have to replace
+the '-shared' option by '-bundle' as annotated in the Makefile.
 
 TESTING
 -------
