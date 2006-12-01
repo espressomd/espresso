@@ -43,7 +43,11 @@ idxtotoc                        % add the index to the TOC
 \newcommand{\etal}{\textit{et al.\/}}
 
 \newcommand{\codebox}[1]%
-{\fcolorbox[rgb]{0,0,0}{0.9,0.9,0.9}{\ttfamily#1}}
+{%
+  \begingroup\setlength{\fboxsep}{1pt}%
+  \fcolorbox[rgb]{0,0,0}{0.9,0.9,0.9}{\ttfamily#1}%
+  \endgroup%
+}
 
 \newsavebox{\thecodebox}
 \newenvironment{code}{
@@ -90,10 +94,12 @@ idxtotoc                        % add the index to the TOC
 %%%%%% SYNTAX DEFININTION LAYOUT
 % typesetting inside a command definition
 % keywords/literals
-\newcommand{\lit}[1]{\texttt{#1}}
-\newcommand{\keyword}[1]{\texttt{#1}}
+\newcommand{\lit}[1]{\mbox{\texttt{#1}}}
+\newcommand{\keyword}[1]{\mbox{\texttt{#1}}}
 % variables
-\newcommand{\var}[1]{\textrm{\textit{#1}}}
+\newcommand{\var}[1]{\mbox{\textrm{\textit{#1}}}}
+% option
+\newcommand{\opt}[1]{\mbox{[#1]}}
 
 % command definition
 \newcommand{\tclcommand}[3][]{%
@@ -117,16 +123,22 @@ idxtotoc                        % add the index to the TOC
   \minisec{Description}
 }
 
-\newcommand{\option}[1]{%
-  \medskip
-  \noindent\hspace*{-1em}\codebox{#1}\\[0.2\baselineskip]
-}
 
-\newenvironment{tcloptions}{
-  \minisec{Options}
-  \begin{addmargin}[2em]{1em}
+\newenvironment{arguments}{
+  \minisec{Arguments}
+  \begin{list}{}{
+      \setlength{\rightmargin}{1em}
+      \setlength{\leftmargin}{2em}
+      \setlength{\partopsep}{0pt}
+      \setlength{\topsep}{1ex}
+      \setlength{\parsep}{0.5ex}
+      \setlength{\listparindent}{1em}
+      \setlength{\labelwidth}{0.5em}
+      \setlength{\labelsep}{0.5em}
+      \renewcommand{\makelabel}[1]{\codebox{##1}}
+    }
   }{
-  \end{addmargin}
+  \end{list}
 }
 
 \newcommand{\addtoquickref}[1]{\addtocontents{qrf}{#1}}

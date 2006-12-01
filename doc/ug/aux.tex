@@ -16,23 +16,26 @@ with the extension \texttt{.vtf}), or to separate files (extensions
 \subsection{\texttt{writevsf}}
 
 \tclcommand{writevsf}
-{\var{file} [<short|verbose>] [<\var{radii}|auto>] [typedesc \var{typedesc}]}
+{\var{channelId} [<short|verbose>] [radius <\var{radii}|auto>]\\{} [typedesc \var{typedesc}]}
 
-Writes a structure block describing the system's structure to
-\var{file}. The atom ids used in the file are identical to \es's
-particle ids.  This makes it easy to write additional structure lines
-to the file, e.g. to specify the \texttt{resname} of particle
-compounds, like chains.  The output of this file can be used in a
-standalone VSF file, or at the beginning of a trajectory VTF file that
-contains a trajectory of a whole simulation.
+Writes a structure block describing the system's structure to the
+channel given by \var{channelId}. \var{channelId} must be an
+identifier for an open channel such as the return value of an
+invocation of \keyword{open}. The atom ids used in the file are
+identical to \es's particle ids.  This makes it easy to write
+additional structure lines to the file, e.g. to specify the
+\texttt{resname} of particle compounds, like chains.  The output of
+this file can be used in a standalone VSF file, or at the beginning of
+a trajectory VTF file that contains a trajectory of a whole
+simulation.
 
-\begin{tcloptions}
-  \option{<short|verbose>}
+\begin{arguments}
+\item[<short|verbose>]
   Specify, whether the output is in a human-readable, but somewhat
   longer format (\keyword{verbose}), or in a more compact form
   (\keyword{short}). The default is \keyword{verbose}.
   
-  \option{<radius \var{radii}|auto>}
+\item[radius <\var{radii}|auto>]
   Specify the VDW radii of the atoms. \var{radii} is either
   \keyword{auto}, or a Tcl-list describing the radii of the different
   particle types. When the keyword \keyword{auto} is used and a
@@ -41,45 +44,47 @@ contains a trajectory of a whole simulation.
   shift.  Otherwise, the radius $0.5$ is substituted. The default is
   \keyword{auto}.
   
-  Example: \verb!writevsf "show.tcl" radius {{0 2.0} {1 auto} {2 1.0}}!
+  Example: \verb!writevsf $file radius {{0 2.0} {1 auto} {2 1.0}}!
   
-  \option{typedesc \var{typedesc}}
+\item[typedesc \var{typedesc}]
   \var{typedesc} is a Tcl-list giving additional VTF atom-keywords to
   specify additional VMD characteristics of the atoms of the given type.
   If no description is given for a certain particle type, it defaults to
   \texttt{segid \textit{n}}, where \textit{n} is the type id.
-
-  Example: \verb!writevsf "show.tcl" typedesc {{0 "segid colloid"} {1 "segid pe"}}!
-\end{tcloptions}
+  
+  Example: \verb!writevsf $file typedesc {{0 "segid colloid"} {1 "segid pe"}}!
+\end{arguments}
 
 
 \subsection{\texttt{writevcf}}
 \tclcommand{writevcf}
-{\var{file} [<short|verbose>] [<folded|absolute>]}
+{\var{channelId} [<short|verbose>] [<folded|absolute>]}
 
 Writes a coordinate (or timestep) block that contains all coordinates
-of the system's particles to \var{file}.
+of the system's particles to the channel given by \var{channelId}.
+\var{channelId} must be an identifier for an open channel such as the
+return value of an invocation of \keyword{open}.
 
-\begin{tcloptions}
-  \option{<short|verbose>} Specify, whether the output is in a
+\begin{arguments}
+\item[<short|verbose>] Specify, whether the output is in a
   human-readable, but somewhat longer format (\keyword{verbose}), or
   in a more compact form (\keyword{short}). The default is
   \keyword{verbose}.
-
-  \option{<folded|absolute>} Specify whether the particle positions
+  
+\item[<folded|absolute>] Specify whether the particle positions
   are written in absolute coordinates (\keyword{absolute}) or folded
   into the central image of a periodic system (\keyword{folded}). The
   default is \keyword{absolute}.
-
-  \option{<pids \var{pids}|all>} Specify the coordinates of which particles
+  
+\item[<pids \var{pids}|all>] Specify the coordinates of which particles
   should be written. If \keyword{all} is used, all coordinates will be
   written (in the ordered timestep format). Otherwise, \var{pids} has
   to be a Tcl-list specifying the pids of the particles. The default
   is \keyword{all}.
   
   Example: \verb!pids {0 23 42}!
-
-\end{tcloptions}
+  
+\end{arguments}
 
 
 %%% Local Variables: 

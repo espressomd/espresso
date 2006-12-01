@@ -1,6 +1,84 @@
 \chapter{Setting up the system}
 \label{chap:setup}
 
+\section{\texttt{part}: Setting up particles}
+\label{sec:part}
+
+
+\section{\texttt{polymer}: Setting up polymer chains}
+\label{sec:polymer}
+
+\tclcommand{polymer}
+{\var{num\_polymers} 
+  \var{monomers\_per\_chain} 
+  \var{bond\_length}\\{}
+  \opt{start \var{part\_id}}
+  \opt{pos \var{x} \var{y} \var{z}}
+  \opt{mode < SAW | RW > [\var{shield} [\var{max\_try}]]}
+  \opt{charge \var{val\_charged\_monomer}}
+  \opt{distance \var{dist\_charged\_monomer}}
+  \opt{types \var{type\_neutral\_monomer} [\var{type\_charged\_monomer}]}
+  \opt{FENE \var{type\_FENE}}
+  \opt{angle \var{angle} [\var{angle2}]}
+}
+
+This command will create \var{num\_polymers} polymer or
+polyelectrolyte chains with \var{monomers\_per\_chain} monomers per
+chain. The length of the bond between two adjacent monomers will be
+set up to be \var{bond\_length}.
+
+\begin{arguments}
+\item[\var{num\_polymers}] Sets the number of polymer chains.
+\item[\var{monomers\_per\_chain}] Sets the number of monomers per
+  chain.
+\item[\var{bond\_length}] Sets the initial distance between two
+  adjacent monomers.
+\item[\opt{start \var{part\_id}}] Sets the particle number of the
+  start monomer to be used with the \keyword{part} command. This
+  defaults to 0.
+
+\item[\opt{pos \var{x} \var{y} \var{z}}] Sets the position of the
+  first monomer in the chain to \var{x}, \var{y}, \var{z} (defaults to
+  a randomly chosen value)
+  
+\item[\opt{mode < SAW | RW > [\var{shield} [\var{max\_try}]]}] Selects
+  the setup mode: Self avoiding walk (SAW) or plain random walk (RW)
+  (defaults to 'SAW').  If 'SAW' was selected, the position randomly
+  chosen for the current monomer to be placed is dismissed every time
+  it would get closer to another particle's position than \var{shield}
+  (defaults to '0.0'); the attempt to find a suitable unobstructed
+  random place for the current monomer is then repeated for up to
+  \var{max\_try} times (defaults to '30000')
+  
+\item[\opt{charge \var{val\_charged\_monomer}}] Sets the valency of
+  the charged monomers.  If the valency of the charged polymers
+  \var{val\_charged\_monomer} is smaller than $10^{-10}$, the charge
+  is assumed to be zero, and the types are set to
+  \var{type\_charged\_monomer} = \var{type\_neutral\_monomer}. This
+  defaults to 0.0.
+
+\item[\opt{distance \var{dist\_charged\_monomer}}] Sets the stride
+  between the indices of two charged monomers. This defaults defaults
+  to 1, meaning that all monomers in the chain are charged.
+  
+\item[\opt{types \var{type\_neutral\_monomer}
+    \var{type\_charged\_monomer}}] Sets the type numbers of the
+  neutral and charged monomer types to be used with the \keyword{part}
+  command. If \var{type\_neutral\_monomer} is defined,
+  \var{type\_charged\_monomer} defaults to 1. If the option is
+  omitted, both monomer types default to 0.
+  
+\item[\opt{FENE \var{type\_FENE}}] Sets the type number of the
+  FENE-typed bonded interaction bonds to be set between the
+  monomers. This defaults to 0.
+  
+\item[\opt{angle \var{phi} [[\var{theta}] \var{x} \var{y} \var{z}]}]
+  Allows for setting up helices or planar polymers: \var{phi} sets
+  the angle $\phi$ and \var{theta} sets the angle $\theta$ between
+  adjacent bonds. \var{x}, \var{y} and \var{z} set the position of the
+  second monomer of the first chain.
+\end{arguments}
+
 \section{\texttt{inter}: Setting up interactions}
 \label{sec:inter}
 
