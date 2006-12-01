@@ -15,6 +15,8 @@ ug_FIGURES=logo.jpg \
 	nacl-rdf.pdf \
 	salt.png
 
+data_DATA=ug.pdf
+
 EXTRA_DIST=$(ug_SOURCES) figures ug.pdf
 .PHONY: doc ug
 
