@@ -16,7 +16,7 @@ with the extension \texttt{.vtf}), or to separate files (extensions
 \subsection{\texttt{writevsf}}
 
 \tclcommand{writevsf}
-{\var{channelId} [<short|verbose>] [radius <\var{radii}|auto>]\\{} [typedesc \var{typedesc}]}
+{\var{channelId} \opt{<short|verbose>} \opt{radius <\var{radii}|auto>} \opt{typedesc \var{typedesc}}}
 
 Writes a structure block describing the system's structure to the
 channel given by \var{channelId}. \var{channelId} must be an
@@ -30,12 +30,12 @@ a trajectory VTF file that contains a trajectory of a whole
 simulation.
 
 \begin{arguments}
-\item[<short|verbose>]
+\item[\opt{<short|verbose>}]
   Specify, whether the output is in a human-readable, but somewhat
   longer format (\keyword{verbose}), or in a more compact form
   (\keyword{short}). The default is \keyword{verbose}.
   
-\item[radius <\var{radii}|auto>]
+\item[\opt{radius <\var{radii}|auto>}]
   Specify the VDW radii of the atoms. \var{radii} is either
   \keyword{auto}, or a Tcl-list describing the radii of the different
   particle types. When the keyword \keyword{auto} is used and a
@@ -46,7 +46,7 @@ simulation.
   
   Example: \verb!writevsf $file radius {{0 2.0} {1 auto} {2 1.0}}!
   
-\item[typedesc \var{typedesc}]
+\item[\opt{typedesc \var{typedesc}}]
   \var{typedesc} is a Tcl-list giving additional VTF atom-keywords to
   specify additional VMD characteristics of the atoms of the given type.
   If no description is given for a certain particle type, it defaults to
@@ -66,21 +66,21 @@ of the system's particles to the channel given by \var{channelId}.
 return value of an invocation of \keyword{open}.
 
 \begin{arguments}
-\item[<short|verbose>] Specify, whether the output is in a
+\item[\opt{<short|verbose>}] Specify, whether the output is in a
   human-readable, but somewhat longer format (\keyword{verbose}), or
   in a more compact form (\keyword{short}). The default is
   \keyword{verbose}.
   
-\item[<folded|absolute>] Specify whether the particle positions
+\item[\opt{<folded|absolute>}] Specify whether the particle positions
   are written in absolute coordinates (\keyword{absolute}) or folded
   into the central image of a periodic system (\keyword{folded}). The
   default is \keyword{absolute}.
   
-\item[<pids \var{pids}|all>] Specify the coordinates of which particles
-  should be written. If \keyword{all} is used, all coordinates will be
-  written (in the ordered timestep format). Otherwise, \var{pids} has
-  to be a Tcl-list specifying the pids of the particles. The default
-  is \keyword{all}.
+\item[\opt{pids <\var{pids}|all>}] Specify the coordinates of which
+  particles should be written. If \keyword{all} is used, all
+  coordinates will be written (in the ordered timestep format).
+  Otherwise, \var{pids} has to be a Tcl-list specifying the pids of
+  the particles. The default is \keyword{all}.
   
   Example: \verb!pids {0 23 42}!
   
