@@ -19,7 +19,7 @@
   \opt{distance \var{dist\_charged\_monomer}}
   \opt{types \var{type\_neutral\_monomer} [\var{type\_charged\_monomer}]}
   \opt{FENE \var{type\_FENE}}
-  \opt{angle \var{angle} [\var{angle2}]}
+  \opt{angle \var{phi} [\var{theta} [\var{x} \var{y} \var{z}]]}
 }
 
 This command will create \var{num\_polymers} polymer or
@@ -72,7 +72,7 @@ set up to be \var{bond\_length}.
   FENE-typed bonded interaction bonds to be set between the
   monomers. This defaults to 0.
   
-\item[\opt{angle \var{phi} [[\var{theta}] \var{x} \var{y} \var{z}]}]
+\item[\opt{angle \var{phi} [\var{theta} [\var{x} \var{y} \var{z}]]}]
   Allows for setting up helices or planar polymers: \var{phi} sets
   the angle $\phi$ and \var{theta} sets the angle $\theta$ between
   adjacent bonds. \var{x}, \var{y} and \var{z} set the position of the
