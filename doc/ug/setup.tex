@@ -18,7 +18,7 @@
   \opt{charge \var{val\_charged\_monomer}}
   \opt{distance \var{dist\_charged\_monomer}}
   \opt{types \var{type\_neutral\_monomer} [\var{type\_charged\_monomer}]}
-  \opt{FENE \var{type\_FENE}}
+  \opt{bond \var{type\_bond}}
   \opt{angle \var{phi} [\var{theta} [\var{x} \var{y} \var{z}]]}
 }
 
@@ -68,9 +68,8 @@ set up to be \var{bond\_length}.
   \var{type\_charged\_monomer} defaults to 1. If the option is
   omitted, both monomer types default to 0.
   
-\item[\opt{FENE \var{type\_FENE}}] Sets the type number of the
-  FENE-typed bonded interaction bonds to be set between the
-  monomers. This defaults to 0.
+\item[\opt{bond \var{type\_bond}}] Sets the type number of the bonded
+  interaction to be set between the monomers. This defaults to 0.
   
 \item[\opt{angle \var{phi} [\var{theta} [\var{x} \var{y} \var{z}]]}]
   Allows for setting up helices or planar polymers: \var{phi} sets

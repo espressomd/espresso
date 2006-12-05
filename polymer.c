@@ -102,7 +102,7 @@ int collision(double pos[3], double shield) {
 int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int N_P, MPC; double bond_length; int part_id = 0; double *posed = NULL; double *posed2 = NULL;
   int mode = 0; double shield = 1.0; int tmp_try,max_try = 30000;       /* mode==0 equals "SAW", mode==1 equals "RW", mode==2 equals "PSAW" */
-  double val_cM = 0.0; int cM_dist = 1, type_nM = 0, type_cM = 1, type_FENE = 0;
+  double val_cM = 0.0; int cM_dist = 1, type_nM = 0, type_cM = 1, type_bond = 0;
   double angle = -1.0, angle2 = -1.0;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
@@ -207,45 +207,50 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
       }
       else {Tcl_AppendResult(interp, "Not enough arguments for types", (char *)NULL); return (TCL_ERROR); }
     }
-    /* [FENE <type_FENE>] */
-    else if (ARG_IS_S(i, "FENE")) {
-      if(i+1 < argc) {
-	if (!ARG_IS_I(i+1, type_FENE)) {
+    /* [bond <type_bond>] */
+    else if (ARG_IS_S(i, "bond") || ARG_IS_S(i, "FENE")) {
+      if (i+1 < argc) {
+	if (!ARG_IS_I(i+1, type_bond)) {
 	  Tcl_ResetResult(interp);
-	  Tcl_AppendResult(interp, "The type-# of the FENE-interaction must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-	else { i++; }
+	  Tcl_AppendResult(interp, 
+			   "The type-# of the bond-interaction must be integer (got: ",
+			   argv[i+1],")!", (char *)NULL); 
+	  return (TCL_ERROR); 
+	} else { i++; }
+      } else {
+	Tcl_AppendResult(interp, "Not enough arguments for bond", 
+			 (char *)NULL); 
+	return (TCL_ERROR); 
       }
-      else {Tcl_AppendResult(interp, "Not enough arguments for FENE", (char *)NULL); return (TCL_ERROR); }
     }
     /* [angle <angle> [\<angle2\>]] */
     else if (ARG_IS_S(i, "angle")) {
-      Tcl_AppendResult(interp, "Warning: The definition of angle has been changed. See Release-Notes.", (char *)NULL);
-      if(i+1 < argc) {
-	if (!ARG_IS_D(i+1, angle)) {
-	  Tcl_ResetResult(interp);
-	  Tcl_AppendResult(interp, "The angle must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-	else {
-	  if (angle<0) {
+      Tcl_AppendResult(interp, "Warning: The angle definition has been changed. See RELEASE-NOTES.\n", (char *)NULL);
+      if (i+1 < argc) {
+	if (ARG_IS_D(i+1, angle)) {
+	  if (angle < 0.0) {
 	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, "The angle must be positive (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-	  while(angle >= 2*PI) angle -= 2*PI;
+	    Tcl_AppendResult(interp, "The angle phi must be positive (got: ",argv[i+1],")!", (char *)NULL); 
+	    return (TCL_ERROR);
+	  }
+	  while (angle >= 2.0*PI) angle -= 2.0*PI;
 	  i++;
-    	  if(i+1 < argc) {
-	    if (!ARG_IS_D(i+1, angle2)) {
-	      Tcl_AppendResult(interp);
-	      Tcl_AppendResult(interp, "The 2nd angle must be double (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-	    else {
-	      if (angle2<0) {
+    	  if (i+1 < argc) {
+	    if (ARG_IS_D(i+1, angle2)) {
+	      if (angle2 < 0.0) {
 		Tcl_ResetResult(interp);
-		Tcl_AppendResult(interp, "The 2nd angle must be positive (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-	      while(angle2 >= 2*PI) angle2 -= 2*PI;
+		Tcl_AppendResult(interp, "The angle theta must be positive (got: ",argv[i+1],")!", (char *)NULL); 
+		return (TCL_ERROR); 
+	      }
+	      while(angle2 >= 2.0*PI) angle2 -= 2.0*PI;
 	      i++;
-	      if(i+3 < argc) {
+	      if (i+3 < argc) {
 		posed2=malloc(3*sizeof(double));
 		if (ARG_IS_D(i+1, posed2[0]) && ARG_IS_D(i+2, posed2[1]) && ARG_IS_D(i+3, posed2[2])) {
-		  i+=3; }
-		else {
-		  free(posed2); }
+		  i+=3; 
+		} else {
+		  free(posed2); 
+		}
 	      }
 	    }
 	  }
@@ -258,9 +263,9 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   }
   if (fabs(val_cM) < 1e-10) { val_cM = 0.0; type_cM = type_nM; }
 
-  POLY_TRACE(if (posed!=NULL) {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed (%f,%f,%f), int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f, double posed (%f,%f,%f)\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle,angle2, posed2[0], posed2[1], posed2[2]); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed (%f,%f,%f), int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f, double posed2 NULL\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle,angle2);} else {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f, double posed2 (%f,%f,%f)\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle, angle2,posed2[0],posed2[1],posed2[2]); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_FENE %d, double angle %f, double angle2 %f, double posed2 NULL\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle, angle2);});
+  POLY_TRACE(if (posed!=NULL) {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed (%f,%f,%f), int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed (%f,%f,%f)\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle,angle2, posed2[0], posed2[1], posed2[2]); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed (%f,%f,%f), int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed2 NULL\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle,angle2);} else {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed2 (%f,%f,%f)\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle, angle2,posed2[0],posed2[1],posed2[2]); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed2 NULL\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle, angle2);});
 
-tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_FENE, angle, angle2, posed2);
+tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle, angle2, posed2);
   if (tmp_try == -1) {
     sprintf(buffer, "Failed to find a suitable place for the start-monomer for %d times!\nUse option 'mode { SAW | RW | PSAW } <shield> <max_try>' to increase this limit...\n",max_try); tmp_try = TCL_ERROR; }
   else if (tmp_try == -2) {
@@ -279,28 +284,37 @@ tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try,
 
 
 
-int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, int mode, double shield, int max_try, 
-	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle, double angle2, double *posed2) {
+int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, 
+	     int mode, double shield, int max_try, double val_cM, int cM_dist, 
+	     int type_nM, int type_cM, int type_bond, 
+	     double angle, double angle2, double *posed2) {
   int p,n, cnt1,cnt2,max_cnt, bond[2];
-  double theta,phi,*poly,pos[3],poz[3],poy[3] = {0, 0, 0},pox[3] = {0, 0, 0},M[3],a[3],b[3],c[3],d[3],absc,absd,v1,v2,alpha;
+  double theta,phi;
+  double *poly;
+  double pos[3];
+  double poz[3];
+  double poy[3] = {0, 0, 0};
+  double pox[3] = {0, 0, 0};
+  double M[3],a[3],b[3],c[3],d[3];
+  double absc,absd,v1,v2,alpha;
   poly = malloc(3*MPC*sizeof(double));
 
   cnt1 = cnt2 = max_cnt = 0;
-  for (p=0; p<N_P; p++) {
-    for (cnt2=0; cnt2<max_try; cnt2++) {
+  for (p=0; p < N_P; p++) {
+    for (cnt2=0; cnt2 < max_try; cnt2++) {
       /* place start monomer */
       if (posed!=NULL) {
+	/* if position of 1st monomer is given */
 	if (p > 0) {
 	  free(posed);
 	  posed=NULL;
-	}
-	else {
+	} else {
 	  pos[0]=posed[0];
 	  pos[1]=posed[1];
 	  pos[2]=posed[2];
 	}
-      }
-      else {
+      } else {
+	/* randomly set position */
 	for (cnt1=0; cnt1<max_try; cnt1++) {
 	  pos[0]=box_l[0]*d_random();
 	  pos[1]=box_l[1]*d_random();
@@ -319,18 +333,19 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 
       /* place 2nd monomer */
       n=1;
-      if (posed2!=NULL && posed!=NULL && angle2>-1.0) {
+      if (posed2 != NULL && posed != NULL && angle2 > -1.0) {
+	/* if position of 2nd monomer is given */
 	pos[0]=posed2[0];
 	pos[1]=posed2[1];
 	pos[2]=posed2[2];
-	/*calculate preceding monomer so that bond_length is correct*/
+	/* calculate preceding monomer so that bond_length is correct */
 	absc=sqrt(SQR(pos[0]-poz[0])+SQR(pos[1]-poz[1])+SQR(pos[2]-poz[2]));
 	poz[0]=pos[0]+(poz[0]-pos[0])*bond_length/absc;
 	poz[1]=pos[1]+(poz[1]-pos[1])*bond_length/absc;
 	poz[2]=pos[2]+(poz[2]-pos[2])*bond_length/absc;
 	POLY_TRACE(/* printf("virtually shifted position of first monomer to (%f,%f,%f)\n",poz[0],poz[1],poz[2]) */);
-      }
-      else {
+      } else {
+	/* randomly place 2nd monomer */
 	for (cnt1=0; cnt1<max_try; cnt1++) {
 	  theta  = PI*d_random();
 	  phi    = 2.0*PI*d_random();
@@ -360,23 +375,28 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
       
       /* place remaining monomers */
       for (n=2; n<MPC; n++) { 
-	if(angle2 > -1.0) {
-	  if(n==2) { /*if 2nd angle is set, construct preceding monomer with resulting plane perpendicular on the xy-plane*/
+	if (angle2 > -1.0) {
+	  if(n==2) { /* if the 2nd angle is set, construct preceding monomer 
+		       with resulting plane perpendicular on the xy-plane */
 	    poy[0]=2*poz[0]-pos[0];
 	    poy[1]=2*poz[1]-pos[1];
 	    if(pos[2]==poz[2])
 	      poy[2]=poz[2]+1;
 	    else
 	      poy[2]=poz[2];
+	  } else { 
+	    /* save 3rd last monomer */
+	    pox[0]=poy[0]; pox[1]=poy[1]; pox[2]=poy[2]; 
 	  }
-	  else { /*save 3rd last monomer*/
-	    pox[0]=poy[0]; pox[1]=poy[1]; pox[2]=poy[2]; }
 	}
-	if(angle > -1.0) { /*save one but last monomer*/
-	  poy[0]=poz[0]; poy[1]=poz[1]; poy[2]=poz[2]; }
-	poz[0]=pos[0]; poz[1]=pos[1]; poz[2]=pos[2]; /*save last monomer*/
+	if (angle > -1.0) { 
+	  /* save one but last monomer */
+	  poy[0]=poz[0]; poy[1]=poz[1]; poy[2]=poz[2]; 
+	}
+	poz[0]=pos[0]; poz[1]=pos[1]; poz[2]=pos[2]; 
+	/* save last monomer */
 	for (cnt1=0; cnt1<max_try; cnt1++) {
-	  if(angle > -1.0 &&  n>1) {
+	  if(angle > -1.0 && n>1) {
 	    a[0]=poy[0]-poz[0];
 	    a[1]=poy[1]-poz[1];
 	    a[2]=poy[2]-poz[2];
@@ -409,22 +429,19 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	      c[0]=a[0]-((SQR(a[0])+SQR(a[1])+SQR(a[2]))/(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))*b[0];
 	      c[1]=a[1]-((SQR(a[0])+SQR(a[1])+SQR(a[2]))/(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))*b[1];
 	      c[2]=a[2]-((SQR(a[0])+SQR(a[1])+SQR(a[2]))/(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))*b[2];
-	    }
-	    else {
+	    } else {
 	      v1 = 1-2*d_random();
 	      v2 = 1-2*d_random();
 	      
-	      if(a[0] != 0) {
+	      if(a[0] != 0.0) {
 		c[1] = v1;
 		c[2] = v2;
 		c[0] = -(a[1]*c[1]+a[2]*c[2])/a[0];
-	      }
-	      else if(a[1] !=0) {
+	      } else if (a[1] != 0.0) {
 		c[0] = v1;
 		c[2] = v2;
 		c[1] = -(a[0]*c[0]+a[2]*c[2])/a[1];
-	      }
-	      else {
+	      } else {
 		c[1] = v1;
 		c[0] = v2;
 		c[2] = -(a[1]*c[1]+a[0]*c[0])/a[2];
@@ -442,8 +459,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	    pos[0] += M[0]+c[0];
 	    pos[1] += M[1]+c[1];
 	    pos[2] += M[2]+c[2];
-	  }
-	  else {
+	  } else {
 	    theta  = PI*d_random();
 	    phi    = 2.0*PI*d_random();
 	    pos[0] = poz[0]+bond_length*sin(theta)*cos(phi);
@@ -470,14 +486,14 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 	POLY_TRACE(printf("M"); fflush(NULL));
       }
       if ((mode==1) || (n>0)) break;
-    }
+    } /* cnt2 */
     POLY_TRACE(printf(" %d/%d->%d \n",cnt1,cnt2,max_cnt));
     if (cnt2 >= max_try) { free(poly); return(-2); } else max_cnt = imax(max_cnt,imax(cnt1,cnt2));
 
     /* actually creating current polymer in ESPResSo */
     for (n=0; n<MPC; n++) {
       pos[0] = poly[3*n]; pos[1] = poly[3*n+1]; pos[2] = poly[3*n+2];
-      bond[0] = type_FENE; bond[1] = part_id - 1;
+      bond[0] = type_bond; bond[1] = part_id - 1;
       if (place_particle(part_id, pos)==TCL_ERROR ||
 	  (set_particle_q(part_id, ((n % cM_dist==0) ? val_cM : 0.0) )==TCL_ERROR) ||
 	  (set_particle_type(part_id, ((n % cM_dist==0) ? type_cM : type_nM) )==TCL_ERROR) ||
@@ -960,7 +976,7 @@ double maxwell_velocitiesC(int part_id, int N_T) {
 
 int crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int N_P, MPC; int part_id=0;
-  double r_catch=1.9; int link_dist=2, chain_dist, type_FENE=0, tmp_try,max_try=30000; 
+  double r_catch=1.9; int link_dist=2, chain_dist, type_bond=0, tmp_try,max_try=30000; 
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
 
@@ -1035,37 +1051,48 @@ int crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
       else {
 	Tcl_AppendResult(interp, "Not enough arguments for distChain!",(char *)NULL); return (TCL_ERROR); }
     }
-    /* [FENE <type_FENE>] */
-    else if (ARG_IS_S(i, "FENE")) {
+    /* [bond <type_bond>] */
+    else if (ARG_IS_S(i, "bond") || ARG_IS_S(i, "FENE")) {
       if(i+1 < argc) {
-	if (ARG_IS_I(i+1, type_FENE)) { 
-	  Tcl_AppendResult(interp, "The type-# of the FENE-interaction must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-	else { i++; }
+	if (ARG_IS_I(i+1, type_bond)) { 
+	  Tcl_AppendResult(interp, "The type-# of the bind-interaction must be integer (got: ",
+			   argv[i+1],")!", (char *)NULL); 
+	  return (TCL_ERROR); 
+	} else { i++; }
+      } else {
+	Tcl_AppendResult(interp, "Not enough arguments for bond!",(char *)NULL); 
+	return (TCL_ERROR); 
       }
-      else {
-	Tcl_AppendResult(interp, "Not enough arguments for FENE!",(char *)NULL); return (TCL_ERROR); }
     }
     /* [trials <max_try>] */
     else if (ARG_IS_S(i, "trials")) {
       if(i+1 < argc) {
 	if (!ARG_IS_I(i+1, max_try)) {	
-	  Tcl_AppendResult(interp, "Amount of retries must be integer (got: ",argv[i+1],")!", (char *)NULL); return (TCL_ERROR); }
-	else {
+	  Tcl_AppendResult(interp, "Amount of retries must be integer (got: ",argv[i+1],")!", 
+			   (char *)NULL); 
+	  return (TCL_ERROR); 
+	} else {
 	  if (max_try < 0) {
 	    sprintf(buffer,"Amount of retries must be positive (got: ");
 	    Tcl_AppendResult(interp, buffer,argv[i+1],")!", (char *)NULL); return (TCL_ERROR); } }
 	i++;
+      } else {
+	Tcl_AppendResult(interp, "Not enough arguments for trials!",(char *)NULL); 
+	return (TCL_ERROR); 
       }
-      else {
-	Tcl_AppendResult(interp, "Not enough arguments for trials!",(char *)NULL); return (TCL_ERROR); }
     }
     /* default */
-    else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
+    else { 
+      Tcl_AppendResult(interp, 
+		       "The parameters you supplied do not seem to be valid (stuck at: ",
+		       argv[i],")!", (char *)NULL); 
+      return (TCL_ERROR); 
+    }
   }
 
-  POLY_TRACE(printf("int N_P %d, int MPC %d, int part_id %d, double r_catch %f, int link_dist %d, int chain_dist %d, int type_FENE %d, int max_try %d\n", N_P, MPC, part_id, r_catch, link_dist, chain_dist, type_FENE, max_try));
+  POLY_TRACE(printf("int N_P %d, int MPC %d, int part_id %d, double r_catch %f, int link_dist %d, int chain_dist %d, int type_bond %d, int max_try %d\n", N_P, MPC, part_id, r_catch, link_dist, chain_dist, type_bond, max_try));
 
-  tmp_try = crosslinkC(N_P, MPC, part_id, r_catch, link_dist, chain_dist, type_FENE, max_try);
+  tmp_try = crosslinkC(N_P, MPC, part_id, r_catch, link_dist, chain_dist, type_bond, max_try);
   if (tmp_try == -1) {
     sprintf(buffer, "Failed to crosslink current system for %d times!\nAborting...\n",max_try); tmp_try = TCL_ERROR; }
   else if (tmp_try == -2) {
@@ -1165,11 +1192,11 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond, int **b
 
 
 
-int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int chain_dist, int type_FENE, int max_try) {
+int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int chain_dist, int type_bond, int max_try) {
   int i,j,k,ii,size, bondN[2], *bond, **bonds, *link, **links, *cross, crossL;
 
   /* Find all the bonds leading to and from each monomer. */
-  if (collectBonds(2, part_id, N_P, MPC, type_FENE, &bond, &bonds)) return(-2);
+  if (collectBonds(2, part_id, N_P, MPC, type_bond, &bond, &bonds)) return(-2);
   POLY_TRACE(for (i=0; i < N_P*MPC + part_id; i++) { 
     printf("%d:\t",i); if(bond[i]>0) for(j=0;j<bond[i];j++) printf("%d ",bonds[i][j]); printf("\t=%d\n",bond[i]); 
   });
@@ -1258,11 +1285,11 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
     size = 0;
     for (i=0; i < N_P; i++) {
       if (cross[2*i] >= 0 ) {
-	bondN[0] = type_FENE; bondN[1] = i*MPC + part_id; size++;
+	bondN[0] = type_bond; bondN[1] = i*MPC + part_id; size++;
 	if (change_particle_bond(cross[2*i], bondN, 0)==TCL_ERROR) return (-3);
       }
       if (cross[2*i+1] >= 0) {
-	bondN[0] = type_FENE; bondN[1] = cross[2*i+1]; size++;
+	bondN[0] = type_bond; bondN[1] = cross[2*i+1]; size++;
 	if (change_particle_bond(i*MPC+(MPC-1) + part_id, bondN, 0)==TCL_ERROR) return (-3);
       }
       free(bonds[2*i]);    if (link[2*i]   >= 0) free(links[2*i]);    /* else crash(); because links[2*i]   has never been malloc()ed then */
@@ -1355,7 +1382,7 @@ int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 
 int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, double val_cM, double val_CI, int cM_dist, int nonet) {
-  int i,j,k, part_id, bond[2], type_FENE=0,type_node=0,type_cM=1,type_nM=1, type_CI=2;
+  int i,j,k, part_id, bond[2], type_bond=0,type_node=0,type_cM=1,type_nM=1, type_CI=2;
   double pos[3], off = bond_length/sqrt(3);
   double dnodes[8][3]  = {{0,0,0}, {1,1,1}, {2,2,0}, {0,2,2}, {2,0,2}, {3,3,1}, {1,3,3}, {3,1,3}};
   int    dchain[16][5] = {{0,1, +1,+1,+1}, {1,2, +1,+1,-1}, {1,3, -1,+1,+1}, {1,4, +1,-1,+1},
@@ -1382,7 +1409,7 @@ int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, 
       if (place_particle(part_id, pos)==TCL_ERROR) return (-3);
       if (set_particle_q(part_id, (k % cM_dist==0) ? val_cM : 0.0)==TCL_ERROR) return (-3);
       if (set_particle_type(part_id, (k % cM_dist==0) ? type_cM : type_nM)==TCL_ERROR) return (-3);
-      bond[0] = type_FENE; 
+      bond[0] = type_bond; 
       if(k==1) { 
 	if(nonet!=1) { bond[1] = dchain[i][0]; if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3); } }
       else { 
@@ -1473,7 +1500,7 @@ int icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 
 int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI, int cM_dist) {
-  int i,j,k,l, part_id, bond[2], type_FENE=0,type_cM=0,type_nM=1, type_CI=2;
+  int i,j,k,l, part_id, bond[2], type_bond=0,type_cM=0,type_nM=1, type_CI=2;
   double pos[3],pos_shift[3], vec[3],e_vec[3],vec_l, bond_length=(2*ico_a/3.)/(1.*MPC);
   double ico_g=ico_a*(1+sqrt(5))/2.0, shift=0.0;
   double ico_coord[12][3] = {{0,+ico_a,+ico_g}, {0,+ico_a,-ico_g}, {0,-ico_a,+ico_g}, {0,-ico_a,-ico_g},
@@ -1518,7 +1545,7 @@ int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI, in
 	if (place_particle(part_id, pos_shift)==TCL_ERROR) return (-3);
 	if (set_particle_q(part_id, val_cM)==TCL_ERROR) return (-3);
 	if (set_particle_type(part_id, type_cM)==TCL_ERROR) return (-3);
-	bond[0] = type_FENE;
+	bond[0] = type_bond;
 	if (k > 0) {
 	  bond[1] = part_id-1; if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3); 
 	}
@@ -1539,7 +1566,7 @@ int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI, in
 	  if (place_particle(part_id, pos_shift)==TCL_ERROR) return (-3);
 	  if (set_particle_q(part_id, 0.0)==TCL_ERROR) return (-3);
 	  if (set_particle_type(part_id, type_nM)==TCL_ERROR) return (-3);
-	  bond[0] = type_FENE;
+	  bond[0] = type_bond;
 	  if (k > 1) {
 	    bond[1] = part_id-1; if (change_particle_bond(part_id, bond, 0)==TCL_ERROR) return (-3); }
 	  else {
@@ -1552,14 +1579,14 @@ int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI, in
 
     for(j=0; j<5; j++) {
       /* add bonds between the edges around the vertices */
-      bond[0] = type_FENE;
+      bond[0] = type_bond;
       //      if(j>0) bond[1] = ico_ind[i][j-1] + (MPC-1); else bond[1] = ico_ind[i][4] + (MPC-1);
       if(j>0) bond[1] = ico_ind[i][j-1] + (MPC-1); else if(MPC>0) bond[1] = ico_ind[i][4] + (MPC-1); else bond[1] = ico_ind[i][4];
       if (change_particle_bond(ico_ind[i][j], bond, 0)==TCL_ERROR) return (-2);
 
       /* connect loose edges around vertices with chains along the middle third already created earlier */
       if(i > ico_NN[i][j]) {
-	bond[0] = type_FENE;
+	bond[0] = type_bond;
 	for(l=0; l<5; l++) if(ico_NN[ico_NN[i][j]][l] == i) break;
 	if(l==5) {
 	  fprintf(stderr, "INTERNAL ERROR: Couldn't find my neighbouring edge upon creating the icosaeder!\n");

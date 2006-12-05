@@ -1,6 +1,6 @@
 /** \page tcl_polymer The polymer command
     \verbatim polymer <N_P> <MPC> <bond_length> [start <part_id>] [pos <x> <y> <z>] [mode { SAW | RW } [<shield> [<max_try>]]] 
-                                   [charge <val_cM>] [distance <cM_dist>] [types <type_nM> [<type_cM>]] [FENE <type_FENE>] 
+                                   [charge <val_cM>] [distance <cM_dist>] [types <type_nM> [<type_cM>]] [bond <type_bond>] 
 				   [angle <angle> [<angle2> [<x2> <y2> <z2>]]] \endverbatim
     Creates some polymer chains within the simulation box, 
     and returns how often the attempt to place a monomer failed in the worst case.
@@ -22,8 +22,8 @@
 	<li> \verbatim <type_nP>       \endverbatim type number of neutral monomers to be used with \ref tcl_part (default to '0')
 	<li> \verbatim <type_cP>       \endverbatim 
              type number of charged monomers to be used with \ref tcl_part (default to '1'); if unset, \<type_cM\> = \<type_nM\> is assumed
-	<li> \verbatim <type_FENE>     \endverbatim 
-             type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0')
+	<li> \verbatim <type_bond>     \endverbatim 
+             type number of the bonded interaction to be set between the monomers (defaults to '0')
 	<li> \verbatim <angle>	       \endverbatim
 	     freely rotating bond-angle to be fixed
 	<li> \verbatim <angle2>        \endverbatim
@@ -81,7 +81,7 @@
 
 
 /** \page tcl_crosslink The crosslink command
-    \verbatim crosslink <N_P> <MPC> [start <part_id>] [catch <r_catch>] [distLink <link_dist>] [distChain <chain_dist>] [FENE <type_FENE>] [trials <max_try>] \endverbatim
+    \verbatim crosslink <N_P> <MPC> [start <part_id>] [catch <r_catch>] [distLink <link_dist>] [distChain <chain_dist>] [bond <type_bond>] [trials <max_try>] \endverbatim
 	Evaluates the current configuration of \<N_P\> equally long polymers with \<MPC\> monomers each, for any chain's ends mapping all monomers 
 	within a radius of \<r_catch\> around the end-monomer, randomly choosing one of them, establishing a crosslink to it if the next crosslink 
 	from there is \<link_dist\> monomers away and if both prospective partners, in case they reside on the same chain, are at least \<chain_dist\> 
@@ -96,8 +96,8 @@
 	     binding partners; high values prevent stiffness, low values make crosslinking easier (defaults to '2')
 	<li> \verbatim distChain <chain_dist> \endverbatim minimum difference between the indices of the crosslink partners if the chain's end
 	     wants to connect to a monomer on the same chain (defaults to '\<MPC\>' hence preventing crosslinks to the same chain)
-	<li> \verbatim FENE <type_FENE>\endverbatim 
-             type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0')
+	<li> \verbatim bond <type_bond>\endverbatim 
+             type number of the bonded interaction to be set between the monomers (defaults to '0')
 	<li> \verbatim trials <max_try>\endverbatim how often a different set of crosslinks should be searched for if the currently chosen ones
 	     do not fullfill the requirements of \<link_dist\> and \<chain_dist\> (defaults to '30000'); if \<max_try\> is exceeded, all irregular crosslinks
 	     are dismissed and the function returns successfully, allowing the user to retry crosslinking after integrating the configuration 
