@@ -16,7 +16,8 @@ with the extension \texttt{.vtf}), or to separate files (extensions
 \subsection{\texttt{writevsf}}
 
 \tclcommand{writevsf}
-{\var{channelId} \opt{<short|verbose>} \opt{radius <\var{radii}|auto>} \opt{typedesc \var{typedesc}}}
+{\var{channelId} \opt{<short|verbose>} \opt{radius <\var{radii}|auto>} 
+  \opt{typedesc \var{typedesc}}}
 
 Writes a structure block describing the system's structure to the
 channel given by \var{channelId}. \var{channelId} must be an
@@ -44,21 +45,22 @@ simulation.
   shift.  Otherwise, the radius $0.5$ is substituted. The default is
   \keyword{auto}.
   
-  Example: \verb!writevsf $file radius {{0 2.0} {1 auto} {2 1.0}}!
+  Example: \verb!writevsf $file radius {0 2.0 1 auto 2 1.0}!
   
 \item[\opt{typedesc \var{typedesc}}]
   \var{typedesc} is a Tcl-list giving additional VTF atom-keywords to
   specify additional VMD characteristics of the atoms of the given type.
   If no description is given for a certain particle type, it defaults to
-  \texttt{segid \textit{n}}, where \textit{n} is the type id.
+  \texttt{name \textit{name} type \textit{type}}, where \textit{name}
+  is an atom name and \textit{type} is the type id.
   
-  Example: \verb!writevsf $file typedesc {{0 "segid colloid"} {1 "segid pe"}}!
+  Example: \verb!writevsf $file typedesc {0 "name colloid" 1 "name pe"}!
 \end{arguments}
-
 
 \subsection{\texttt{writevcf}}
 \tclcommand{writevcf}
-{\var{channelId} [<short|verbose>] [<folded|absolute>]}
+{\var{channelId} \opt{<short|verbose>} \opt{<folded|absolute>}
+  \opt{pids <\var{pids}|all>}}
 
 Writes a coordinate (or timestep) block that contains all coordinates
 of the system's particles to the channel given by \var{channelId}.
