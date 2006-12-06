@@ -31,8 +31,8 @@ set up to be \var{bond\_length}.
 \item[\var{num\_polymers}] Sets the number of polymer chains.
 \item[\var{monomers\_per\_chain}] Sets the number of monomers per
   chain.
-\item[\var{bond\_length}] Sets the initial distance between two
-  adjacent monomers.
+\item[\var{bond\_length}] Sets the distance between two adjacent
+  monomers.
 \item[\opt{start \var{part\_id}}] Sets the particle number of the
   start monomer to be used with the \keyword{part} command. This
   defaults to 0.
@@ -41,15 +41,32 @@ set up to be \var{bond\_length}.
   first monomer in the chain to \var{x}, \var{y}, \var{z} (defaults to
   a randomly chosen value)
   
-\item[\opt{mode < RW | SAW | PSAW > [\var{shield} [\var{max\_try}]]}]
-  Selects the setup mode: Self avoiding walk (SAW) or plain random
-  walk (RW) (defaults to 'SAW').  If 'SAW' was selected, the position
-  randomly chosen for the current monomer to be placed is dismissed
-  every time it would get closer to another particle's position than
-  \var{shield} (defaults to '0.0'); the attempt to find a suitable
-  unobstructed random place for the current monomer is then repeated
-  for up to \var{max\_try} times (defaults to '30000').
-  
+\item[\opt{mode < RW | PSAW | SAW > [\var{shield} [\var{max\_try}]]}]
+  Selects the setup mode:
+  \begin{description}
+  \item[\keyword{RW} (Random walk)] The monomers are
+    randomly placed by a random walk with a steps size of
+    \var{bond\_length}.
+  \item[\keyword{PSAW} (Pruned self-avoiding walk)] The position of a
+    monomer is randomly chosen in a distance of \var{bond\_length} to
+    the previous monomer. If the position is closer to another
+    particle than \var{shield}, the attempt is repeated up to
+    \var{try\_max} times. Note, that this is not a real self-avoiding
+    random walk, as the particle distribution is not the same. If you
+    want a real self-avoiding walk, use the \keyword{SAW} mode.
+    However, \keyword{PSAW} is several orders of magnitude faster than
+    \keyword{SAW}, especially for long chains.
+  \item[\keyword{SAW} (Self-avoiding random walk)] The positions of
+    the monomers are chosen as in the plain random walk. However, if
+    this results in a chain that has a monomer that is closer to
+    another particle than \var{shield}, a new attempt of setting up
+    the whole chain is done, up to \var{max\_try} times.
+  \end{description}
+  The default for the mode is \keyword{RW}, the default for the
+  \var{shield} is $1.0$, and the default for \var{max\_try} is
+  $30000$, which is usually enough for \keyword{PSAW}. Depending on
+  the length of the chain, for the \keyword{SAW} mode, \var{max\_try}
+  has to be increased by several orders of magnitude.
 \item[\opt{charge \var{val\_charged\_monomer}}] Sets the valency of
   the charged monomers.  If the valency of the charged polymers
   \var{val\_charged\_monomer} is smaller than $10^{-10}$, the charge
