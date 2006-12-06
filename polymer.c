@@ -90,10 +90,25 @@ double mindist4(double pos[3]) {
   return (-1.0);
 }
 
+double buf_mindist4(double pos[3], int n_add, double *add) {
+  double mindist=30000.0, dx,dy,dz;
+  int i;
+
+  if (n_add == 0) return (dmin(dmin(box_l[0],box_l[1]),box_l[2]));
+  for (i=0; i<n_add; i++) {
+    dx = pos[0] - add[3*i + 0];   dx -= dround(dx/box_l[0])*box_l[0];
+    dy = pos[1] - add[3*i + 1];   dy -= dround(dy/box_l[1])*box_l[1];
+    dz = pos[2] - add[3*i + 2];   dz -= dround(dz/box_l[2])*box_l[2];
+    mindist = dmin(mindist, SQR(dx)+SQR(dy)+SQR(dz));
+  }
+  if (mindist<30000.0) return (sqrt(mindist));
+  return (-1.0);
+}
 
 
-int collision(double pos[3], double shield) {
-  if (mindist4(pos) > shield) return (0);
+
+int collision(double pos[3], double shield, int n_add, double *add) {
+  if (mindist4(pos) > shield && buf_mindist4(pos, n_add, add) > shield) return (0);
   return (1);
 }
 
@@ -319,7 +334,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	  pos[0]=box_l[0]*d_random();
 	  pos[1]=box_l[1]*d_random();
 	  pos[2]=box_l[2]*d_random();
-	  if ((mode==1) || (collision(pos, shield)==0)) break;
+	  if ((mode==1) || (collision(pos, shield, 0, NULL)==0)) break;
 	  POLY_TRACE(printf("s"); fflush(NULL));
 	}
 	if (cnt1 >= max_try) { free(poly); return (-1); }
@@ -352,7 +367,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	  pos[0] = poz[0]+bond_length*sin(theta)*cos(phi);
 	  pos[1] = poz[1]+bond_length*sin(theta)*sin(phi);
 	  pos[2] = poz[2]+bond_length*cos(theta);
-	  if (mode==1 || collision(pos, shield)==0) break;
+	  if (mode==1 || collision(pos, shield, n, poly)==0) break;
 	  if (mode==0) { cnt1 = -1; break; }
 	  POLY_TRACE(printf("m"); fflush(NULL));
 	}
@@ -470,7 +485,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	  POLY_TRACE(/* printf("a=(%f,%f,%f) absa=%f M=(%f,%f,%f) c=(%f,%f,%f) absMc=%f a*c=%f)\n",a[0],a[1],a[2],sqrt(SQR(a[0])+SQR(a[1])+SQR(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(SQR(M[0]+c[0])+SQR(M[1]+c[1])+SQR(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2]) */);
 	  POLY_TRACE(/* printf("placed Monomer %d at (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
 	  
-	  if (mode==1 || collision(pos, shield)==0) break;
+	  if (mode==1 || collision(pos, shield, n, poly)==0) break;
 	  if (mode==0) { cnt1 = -2; break; }
 	  POLY_TRACE(printf("m"); fflush(NULL));
 	}
@@ -605,7 +620,7 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try, do
       pos[0]=box_l[0]*d_random();
       pos[1]=box_l[1]*d_random();
       pos[2]=box_l[2]*d_random();
-      if ((mode!=0) || (collision(pos, shield)==0)) break;
+      if ((mode!=0) || (collision(pos, shield, 0, NULL)==0)) break;
       POLY_TRACE(printf("c"); fflush(NULL));
     }
     if (cnt1 >= max_try) return (-1);
@@ -758,12 +773,12 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
         pos[0] += box_l[0]*0.5;
         pos[1] += box_l[1]*0.5;
         pos[2] += box_l[2]*0.5;
-        if (((mode!=0) || (collision(pos, shield)==0)) && (dis2 < (rad * rad))) break;
+        if (((mode!=0) || (collision(pos, shield, 0, NULL)==0)) && (dis2 < (rad * rad))) break;
       } else {
         pos[0]=box_l[0]*d_random();
         pos[1]=box_l[1]*d_random();
         pos[2]=box_l[2]*d_random();
-        if ((mode!=0) || (collision(pos, shield)==0)) break;
+        if ((mode!=0) || (collision(pos, shield, 0, NULL)==0)) break;
       }
       POLY_TRACE(printf("p"); fflush(NULL));
     }
@@ -788,12 +803,12 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
         pos[0] += box_l[0]*0.5;
         pos[1] += box_l[1]*0.5;
         pos[2] += box_l[2]*0.5;
-        if (((mode!=0) || (collision(pos, shield)==0)) && (dis2 < (rad * rad))) break;
+        if (((mode!=0) || (collision(pos, shield, 0, NULL)==0)) && (dis2 < (rad * rad))) break;
       } else {
         pos[0]=box_l[0]*d_random();
         pos[1]=box_l[1]*d_random();
         pos[2]=box_l[2]*d_random();
-        if ((mode!=0) || (collision(pos, shield)==0)) break;
+        if ((mode!=0) || (collision(pos, shield, 0, NULL)==0)) break;
       }
       POLY_TRACE(printf("n"); fflush(NULL));
     }

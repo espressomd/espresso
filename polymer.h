@@ -43,8 +43,9 @@ int mindist3(int part_id, double r_catch, int *ids);
 
 /** Checks whether a particle at coordinates (\<posx\>, \<posy\>, \<posz\>) collides
     with any other particle due to a minimum image distance smaller than \<shield\>. 
+    @param add additional coordinates to check
     @return Returns '1' if there is a collision, '0' otherwise. */
-int collision(double pos[3], double shield);
+int collision(double pos[3], double shield, int n_add, double *add);
 
 /** Implementation of the tcl-command <br>
     polymer \<N_P\> \<MPC\> \<bond_length\> [start \<part_id\>] [pos \<x\> \<y\> \<z\>] [mode { SAW | RW | PSAW } [\<shield\> [\<max_try\>]]] 
