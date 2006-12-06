@@ -11,7 +11,7 @@
     of (partially charged) polymer chains with counterions and salt molecules,
     assigning velocities to the particles and crosslinking the polymers if necessary.
  
-    The corresponding header file is \ref polymer.h "polymer.h".
+    The corresponding header file is polymer.h.
  
     Created:       27.02.2003 by BAM
        Based upon 'polymer.tcl' by BAM (20.02.2003).

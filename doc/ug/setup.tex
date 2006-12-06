@@ -14,7 +14,7 @@
   \var{bond\_length}\\{}
   \opt{start \var{part\_id}}
   \opt{pos \var{x} \var{y} \var{z}}
-  \opt{mode < SAW | RW > [\var{shield} [\var{max\_try}]]}
+  \opt{mode < RW | SAW | PSAW > [\var{shield} [\var{max\_try}]]}
   \opt{charge \var{val\_charged\_monomer}}
   \opt{distance \var{dist\_charged\_monomer}}
   \opt{types \var{type\_neutral\_monomer} [\var{type\_charged\_monomer}]}
@@ -41,14 +41,14 @@ set up to be \var{bond\_length}.
   first monomer in the chain to \var{x}, \var{y}, \var{z} (defaults to
   a randomly chosen value)
   
-\item[\opt{mode < SAW | RW > [\var{shield} [\var{max\_try}]]}] Selects
-  the setup mode: Self avoiding walk (SAW) or plain random walk (RW)
-  (defaults to 'SAW').  If 'SAW' was selected, the position randomly
-  chosen for the current monomer to be placed is dismissed every time
-  it would get closer to another particle's position than \var{shield}
-  (defaults to '0.0'); the attempt to find a suitable unobstructed
-  random place for the current monomer is then repeated for up to
-  \var{max\_try} times (defaults to '30000')
+\item[\opt{mode < RW | SAW | PSAW > [\var{shield} [\var{max\_try}]]}]
+  Selects the setup mode: Self avoiding walk (SAW) or plain random
+  walk (RW) (defaults to 'SAW').  If 'SAW' was selected, the position
+  randomly chosen for the current monomer to be placed is dismissed
+  every time it would get closer to another particle's position than
+  \var{shield} (defaults to '0.0'); the attempt to find a suitable
+  unobstructed random place for the current monomer is then repeated
+  for up to \var{max\_try} times (defaults to '30000').
   
 \item[\opt{charge \var{val\_charged\_monomer}}] Sets the valency of
   the charged monomers.  If the valency of the charged polymers

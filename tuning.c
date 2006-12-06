@@ -7,7 +7,7 @@
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 /** \file tuning.c
-    Implementation of \ref tuning.h "tuning.h".
+    Implementation of tuning.h .
 */
 #include <sys/time.h>
 #include <sys/resource.h>
