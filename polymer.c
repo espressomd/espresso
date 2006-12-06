@@ -115,9 +115,17 @@ int collision(double pos[3], double shield, int n_add, double *add) {
 
 
 int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  int N_P, MPC; double bond_length; int part_id = 0; double *posed = NULL; double *posed2 = NULL;
-  int mode = 0; double shield = 1.0; int tmp_try,max_try = 30000;       /* mode==0 equals "SAW", mode==1 equals "RW", mode==2 equals "PSAW" */
-  double val_cM = 0.0; int cM_dist = 1, type_nM = 0, type_cM = 1, type_bond = 0;
+  int N_P, MPC; 
+  double bond_length; 
+  int part_id = 0; 
+  double *posed = NULL; 
+  double *posed2 = NULL;
+  /* mode==0 equals "SAW", mode==1 equals "RW", mode==2 equals "PSAW" */
+  int mode = 1; 
+  double shield = 1.0; 
+  int tmp_try,max_try = 30000;       
+  double val_cM = 0.0; 
+  int cM_dist = 1, type_nM = 0, type_cM = 1, type_bond = 0;
   double angle = -1.0, angle2 = -1.0;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i;
@@ -376,7 +384,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	  fprintf(stderr,"         Retrying by re-setting the start-monomer of current chain...\n");
 	}
 	if (cnt1 == -1 || cnt1 >= max_try) {
-	  continue;
+	  continue; /* continue the main loop */
 	}
       }
       if(posed2!=NULL && p>0) {
