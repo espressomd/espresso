@@ -430,6 +430,24 @@ MDINLINE void vector_product(double a[3], double b[3], double c[3]) {
   return ;
 }
  
+/** rotates vector around axis by alpha */
+MDINLINE void vec_rotate(double *axis, double alpha, double *vector, double *result){
+  double sina,cosa,absa,a[3];
+  sina=sin(alpha);
+  cosa=cos(alpha);
+  absa=sqrt(scalar(axis,axis));
+
+  a[0]=axis[0]/absa;
+  a[1]=axis[1]/absa;
+  a[2]=axis[2]/absa;
+
+  result[0]=(cosa+SQR(a[0])*(1-cosa))*vector[0]+(a[0]*a[1]*(1-cosa)-a[2]*sina)*vector[1]+(a[0]*a[2]*(1-cosa)+a[1]*sina)*vector[2];
+  result[1]=(a[0]*a[1]*(1-cosa)+a[2]*sina)*vector[0]+(cosa+SQR(a[1])*(1-cosa))*vector[1]+(a[1]*a[2]*(1-cosa)-a[0]*sina)*vector[2];
+  result[2]=(a[0]*a[2]*(1-cosa)-a[1]*sina)*vector[0]+(a[1]*a[2]*(1-cosa)+a[0]*sina)*vector[1]+(cosa+SQR(a[2])*(1-cosa))*vector[2];
+
+  return;
+}
+
 /** Calc eigevalues of a 3x3 matrix stored in q as a 9x1 array*/
 MDINLINE int calc_eigenvalues_3x3(double *q,  double *eva) {
   double q11,q22,q33,q12,q13,q23;
