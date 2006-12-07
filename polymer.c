@@ -318,8 +318,8 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
   double poz[3];
   double poy[3] = {0, 0, 0};
   double pox[3] = {0, 0, 0};
-  double M[3],a[3],b[3],c[3],d[3];
-  double absc,absd,v1,v2,alpha;
+  double a[3],b[3],c[3],d[3];
+  double absc;
   poly = malloc(3*MPC*sizeof(double));
 
   cnt1 = cnt2 = max_cnt = 0;
@@ -416,72 +416,37 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	  /* save one but last monomer */
 	  poy[0]=poz[0]; poy[1]=poz[1]; poy[2]=poz[2]; 
 	}
-	poz[0]=pos[0]; poz[1]=pos[1]; poz[2]=pos[2]; 
 	/* save last monomer */
+	poz[0]=pos[0]; poz[1]=pos[1]; poz[2]=pos[2];
+
+	if(angle > -1.0){
+	  a[0]=poy[0]-poz[0];
+	  a[1]=poy[1]-poz[1];
+	  a[2]=poy[2]-poz[2];
+
+	  b[0]=pox[0]-poy[0];
+	  b[1]=pox[1]-poy[1];
+	  b[2]=pox[2]-poy[2];
+
+	  vector_product(a,b,c);	  
+	}
+
 	for (cnt1=0; cnt1<max_try; cnt1++) {
-	  if(angle > -1.0 && n>1) {
-	    a[0]=poy[0]-poz[0];
-	    a[1]=poy[1]-poz[1];
-	    a[2]=poy[2]-poz[2];
-	    
+	  if(angle > -1.0) {
+
 	    if(angle2 > -1.0 && n>2) {
-	      b[0]=poy[0]-pox[0];
-	      b[1]=poy[1]-pox[1];
-	      b[2]=poy[2]-pox[2];
-	      
-	      alpha=acos((a[0]*b[0]+a[1]*b[1]+a[2]*b[2])/SQR(bond_length));
-	      
-	      d[0]=b[0]/cos(alpha);
-	      d[1]=b[1]/cos(alpha);
-	      d[2]=b[2]/cos(alpha);
-	      
-	      c[0]=a[1]*b[2]-a[2]*b[1];
-	      c[1]=a[2]*b[0]-a[0]*b[2];
-	      c[2]=a[0]*b[1]-a[1]*b[0];
-	      
-	      absd=sqrt(SQR(d[0])+SQR(d[1])+SQR(d[2]));
-	      absc=sqrt(SQR(c[0])+SQR(c[1])+SQR(c[2]));
-	      c[0]=c[0]*absd*tan(angle2)/absc;
-	      c[1]=c[1]*absd*tan(angle2)/absc;
-	      c[2]=c[2]*absd*tan(angle2)/absc;
-	      
-	      b[0]=a[0]+c[0]+d[0];
-	      b[1]=a[1]+c[1]+d[1];
-	      b[2]=a[2]+c[2]+d[2];
-	      
-	      c[0]=a[0]-((SQR(a[0])+SQR(a[1])+SQR(a[2]))/(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))*b[0];
-	      c[1]=a[1]-((SQR(a[0])+SQR(a[1])+SQR(a[2]))/(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))*b[1];
-	      c[2]=a[2]-((SQR(a[0])+SQR(a[1])+SQR(a[2]))/(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))*b[2];
+	      vec_rotate(a,angle2,c,d);
 	    } else {
-	      v1 = 1-2*d_random();
-	      v2 = 1-2*d_random();
-	      
-	      if(a[0] != 0.0) {
-		c[1] = v1;
-		c[2] = v2;
-		c[0] = -(a[1]*c[1]+a[2]*c[2])/a[0];
-	      } else if (a[1] != 0.0) {
-		c[0] = v1;
-		c[2] = v2;
-		c[1] = -(a[0]*c[0]+a[2]*c[2])/a[1];
-	      } else {
-		c[1] = v1;
-		c[0] = v2;
-		c[2] = -(a[1]*c[1]+a[0]*c[0])/a[2];
-	      }
+	      phi = 2.0*d_random();
+	      vec_rotate(a,phi,c,d);
 	    }
-	    absc = sqrt(SQR(c[0])+SQR(c[1])+SQR(c[2]));
-	    c[0] = (sin(angle)*bond_length/absc)*c[0];
-	    c[1] = (sin(angle)*bond_length/absc)*c[1];
-	    c[2] = (sin(angle)*bond_length/absc)*c[2];
-	    
-	    M[0] = cos(angle)*(a[0]);
-	    M[1] = cos(angle)*(a[1]);
-	    M[2] = cos(angle)*(a[2]);
-	    
-	    pos[0] += M[0]+c[0];
-	    pos[1] += M[1]+c[1];
-	    pos[2] += M[2]+c[2];
+
+	    vec_rotate(d,angle,a,b);
+
+	    pos[0] += b[0];
+	    pos[1] += b[1];
+	    pos[2] += b[2];
+
 	  } else {
 	    theta  = PI*d_random();
 	    phi    = 2.0*PI*d_random();
