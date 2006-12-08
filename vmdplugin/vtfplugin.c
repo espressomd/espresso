@@ -11,6 +11,17 @@ VMD file reader plugin for:
 #include <ctype.h>
 #include <string.h>
 
+#ifdef HAVE_ZLIB
+#include <zlib.h>
+#define VTFFILE gzFile
+#define fopen gzopen
+#define feof gzeof
+#define fgets(buf,size,file) gzgets(file,buf,size)
+#define fclose gzclose
+#else
+#define VTFFILE FILE*
+#endif
+
 /* TODO:
 - handling of gzipped files?
 - volumetric/graphics format
@@ -27,7 +38,7 @@ molfile_atom_t default_atom;
 /* Plugin data structure to communciate data between the functions. */
 typedef struct {
   /* opened file */
-  FILE* file;
+  VTFFILE file;
   /* return code */
   int return_code;
 
@@ -72,7 +83,7 @@ void vtf_error(const char *msg, const char *line) {
    error occured or eof occurs while no characters have been read.
    The function will set the global variable lineno.
 */
-char *vtf_getline(FILE *file) {
+char *vtf_getline(VTFFILE file) {
   static char *buffer = NULL;
   static int buffer_size = 0;
   char *s;   /* pointer to the place where the line will be read to */
