@@ -646,6 +646,8 @@ void *vtf_open_file_read(const char *filepath,
   /* initialize the data structure */
   d = malloc(sizeof(vtf_data));
 
+  errno = 0;
+
   /* Open the file */
   d->file = fopen(filepath, "r");
   if (d->file == NULL) {
@@ -693,6 +695,8 @@ int vtf_read_next_timestep(void *data,
   char c;
   int aid;
   int n;
+
+  errno = 0;
 
   d = (vtf_data*)data;
 

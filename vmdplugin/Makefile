@@ -15,10 +15,9 @@ SHLD=$(CC)
 SHLDFLAGS=-shared $(LDFLAGS)
 
 # if you use MAX OS X, use the following
-#CC=cc
 #CFLAGS=-Os -fPIC -dynamic
 #SHLD=$(CC)
-#SHLDFLAGS=-bundle
+#SHLDFLAGS=-bundle $(LDFLAGS)
 
 ifdef HAVE_ZLIB
 # if you want to enable compressed files, use these
