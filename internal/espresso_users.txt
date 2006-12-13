@@ -1464,3 +1464,24 @@ topic:     simulation of DNA
 reminded:  X29.NOV.2006
 
 
+name:      Kitam Volodymyr
+email:     Kitam@univ.kiev.ua
+institute: Institute of Molecular Biology and Genetics
+sent:      04.DEC.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Investigating on Cyp2E1
+reminded:  X04.DEC.2006
+
+
+name:      liu
+email:     zl.liu@163.com
+institute: Institute of Atomic and Molecular Physics, Sichuan University,
+           Chengdu 610065, P. R. China
+sent:      11.DEC.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     materials simulation, thermodynamics,...
+reminded:  11.DEC.2006
+
+
