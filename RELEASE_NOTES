@@ -2,15 +2,18 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1l (Ydalir)                                                                     *
+* v2.0.1o (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1l -
+- v2.0.1o -
 -----------
 
+(o) December  7th, 2006.
+(n) December  6th, 2006.
+(m) December  5th, 2006.
 (l) November 23rd, 2006.
 (k) November 22nd, 2006.
 (j) November 17th, 2006.
@@ -25,6 +28,8 @@ Current working revision.
 (a) October  25th, 2006.
 
 New Features:
+(o) added "vec_rotate" function which rotates a 3d-vector around a given axis by
+    some angle phi
 (k) for (tcl)variable blocks there exist now global lists
     blockfile_(tcl)variable_blacklist
 (k) which allow to to block the reading of variables during blockfile
@@ -37,6 +42,10 @@ New Features:
 (c) For this, define GNU_MPIFAKE_DEBUG in myconfig.h.
 
 Changes:
+(m) The "FENE"-argument of the polymer and crosslink commands are
+    called "bond" now, to reflect that any bonded interaction can
+    be
+    used. "FENE" does still work, however.
 (i) Added syntax definition commands to the User's Guide.
 (i) reading a variables block will now only issue a warning of min_num_cell or
     node_grid do not fit the current n_nodes
@@ -54,6 +63,11 @@ Changes:
     simulation.tcl to samples/pe_network.tcl. Removed renice.tcl.
 
 Bugfixes:
+(o) angle-argument in polymer-command has been reprogrammed and should now work
+    properly
+(n) the SAW mode of the polymer now really sets up a SAW/PSAW. Since the PSAW
+    change,
+(n) it was only a RW within the other particles as obstacles.
 (l) Fixed a bug in on_paramter_change where reinit_thermo was erroneously set to
     1.
 (j) removed the >& which is not sh-compatible, and also not
