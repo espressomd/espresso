@@ -1485,3 +1485,16 @@ topic:     materials simulation, thermodynamics,...
 reminded:  11.DEC.2006
 
 
+name:      solomon
+email:     zhang.solomon@gmail.com
+institute: MMlab
+           Yanshan university,China
+sent:      14.DEC.2006
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     I want to find a software to simulate some materials \\\\\\\\\\\\\\\'s
+           melting process. I think ESPResSo maybe to do it. I want to
+           try.
+reminded:  X14.DEC.2006
+
+
