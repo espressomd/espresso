@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1o (Ydalir)                                                                     *
+* v2.0.1p (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1o -
+- v2.0.1p -
 -----------
 
+(p) December 18th, 2006.
 (o) December  7th, 2006.
 (n) December  6th, 2006.
 (m) December  5th, 2006.
@@ -28,6 +29,8 @@ Current working revision.
 (a) October  25th, 2006.
 
 New Features:
+(p) added testcases for MMM2D/ELC with dielectric interfaces
+    *ignore* fixed name output
 (o) added "vec_rotate" function which rotates a 3d-vector around a given axis by
     some angle phi
 (k) for (tcl)variable blocks there exist now global lists
