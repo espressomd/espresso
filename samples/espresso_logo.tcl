@@ -28,7 +28,7 @@ puts "=    Sample script 5: espresso_logo.tcl               ="
 puts "======================================================="
 puts " "
 
-require_feature "LENNARD_JONES" "EXTERNAL_FORCE"
+require_feature "LENNARD_JONES" "EXTERNAL_FORCES"
 
 #############################################################
 #  Parameters                                               #
