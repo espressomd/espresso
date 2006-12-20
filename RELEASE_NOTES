@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1p (Ydalir)                                                                     *
+* v2.0.1q (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1p -
+- v2.0.1q -
 -----------
 
+(q) December 19th, 2006.
 (p) December 18th, 2006.
 (o) December  7th, 2006.
 (n) December  6th, 2006.
@@ -66,6 +67,7 @@ Changes:
     simulation.tcl to samples/pe_network.tcl. Removed renice.tcl.
 
 Bugfixes:
+(q) require_feature now really works with multiple requirements
 (o) angle-argument in polymer-command has been reprogrammed and should now work
     properly
 (n) the SAW mode of the polymer now really sets up a SAW/PSAW. Since the PSAW
