@@ -22,6 +22,8 @@ struct mpifake_dtype
   mpifake_dtype_double = { 0, 0, sizeof(double), sizeof(double), 1, 1, sizeof(double), NULL, NULL, NULL, NULL };
 
 static void mpifake_dtblock(MPI_Datatype newtype, MPI_Datatype oldtype, int count, int disp);
+static void mpifake_pack(void *dest, void *src, int num, MPI_Datatype dtype);
+static int mpifake_unpack(void *dest, void *src, int num, MPI_Datatype dtype);
 
 int MPI_Type_struct(int count, int *lengths, MPI_Aint *disps, MPI_Datatype *oldtypes, MPI_Datatype *newtype) {
 
@@ -181,6 +183,179 @@ static void mpifake_dtblock(MPI_Datatype newtype, MPI_Datatype oldtype, int coun
 
 }
 
+static void mpifake_pack_hvector(void *dest, void *src, int num, MPI_Datatype dtype, int vflag) {
+
+  MPI_Datatype subtype = dtype->dtype;
+  char *s;
+  int count   = dtype->count;
+  int stride  = dtype->stride;
+  int extent  = dtype->upper - dtype->lower;
+  int blksize = dtype->length * subtype->size; 
+  int i, j;
+
+  if (vflag) {
+    stride *= subtype->upper - subtype->lower;
+  }
+
+  for (i=0; i<num; i++, src+=extent) {
+    s = src;
+    for (j=0; j<count; j++) {
+      mpifake_pack(dest, s, dtype->length, dtype->dtype);
+      dest += blksize;
+      s += stride;
+    }
+  }
+
+}
+
+static void mpifake_pack_struct(void *dest, void *src, int num, MPI_Datatype dtype) {
+
+  char *s;
+  int *len;
+  int *disp;
+  MPI_Datatype *type;
+  int extent = dtype->upper - dtype->lower;
+  int blksize;
+  int i, j;
+
+  for (i=0; i<num; i++, src+=extent) {
+    s = src;
+    len = dtype->lengths;
+    disp = dtype->disps;
+    type = dtype->dtypes;
+    for (j=0; j<dtype->count; j++, len++, disp++, type++) {
+      blksize = *len * (*type)->size;
+      if (blksize >0) {
+	mpifake_pack(dest, s + *disp, *len, *type);
+	dest += blksize;
+      }
+    }
+  }
+
+}
+
+static void mpifake_pack(void *dest, void *src, int count, MPI_Datatype dtype) {
+
+  switch (dtype->format) {
+
+  case LAM_DTSTRUCT:
+    mpifake_pack_struct(dest, src, count, dtype);
+    break;
+
+  case LAM_DTCONTIG:
+    mpifake_pack(dest, src, count * dtype->count, dtype->dtype);
+    break;
+
+  case LAM_DTVECTOR:
+    mpifake_pack_hvector(dest, src, count, dtype, 1);
+    break;
+
+  case LAM_DTHVECTOR:
+    mpifake_pack_hvector(dest, src, count, dtype, 0);
+    break;
+
+  default:
+    memcpy((char *)dest, (char *)src, count *dtype->size);
+
+  }
+
+}   
+
+static int mpifake_unpack_hvector(void *dest, void *src, int num, MPI_Datatype dtype, int vflag) {
+
+  MPI_Datatype subtype = dtype->dtype;
+  char *d;
+  char *start = src;
+  int count   = dtype->count;
+  int stride  = dtype->stride;
+  int extent  = dtype->upper - dtype->lower;
+  int blksize = dtype->length * subtype->size;
+  int size;
+  int i, j;
+
+  if (vflag) {
+    stride *= subtype->upper - subtype->lower;
+  }
+
+  for (i=0; i<num; i++, dest+=extent) {
+    d = dest;
+    for (j=0; j<count; j++) {
+      size = mpifake_unpack(d, src, dtype->length, subtype);
+      src += size;
+
+      if (size != blksize) {
+	fprintf(stderr,"mpifake_unpack_hvector: size != blksize\n");
+	errexit();
+      }
+
+      d += stride;
+    }
+  }
+
+  return (char *)src - start;
+}
+
+static int mpifake_unpack_struct(void *dest, void *src, int num, MPI_Datatype dtype) {
+
+  char *d;
+  char *start = src;
+  int *len;
+  int *disp;
+  MPI_Datatype *type;
+  int extent = dtype->upper - dtype->lower;
+  int size;
+  int blksize;
+  int i, j;
+
+  for (i=0; i<num; i++, dest+=extent) {
+    d =dest;
+    len = dtype->lengths;
+    disp = dtype->disps;
+    type = dtype->dtypes;
+    for (j=0; j<dtype->count; j++, len++, disp++, type++) {
+      blksize = *len * (*type)->size;
+      if (blksize >0) {
+	size = mpifake_unpack(d + *disp, src, *len, *type);
+	src += size;
+
+	if (size != blksize) {
+	  fprintf(stderr,"mpifake_unpack_struct: size != blksize\n");
+	  errexit();
+	}
+
+      }
+    }
+  }
+  
+  return (char *)src - start;
+}
+
+static int mpifake_unpack(void *dest, void *src, int count, MPI_Datatype dtype) {
+  int size;
+
+  switch (dtype->format) {
+
+  case LAM_DTSTRUCT:
+    return mpifake_unpack_struct(dest, src, count, dtype);
+    
+  case LAM_DTCONTIG:
+    return mpifake_unpack(dest, src, count * dtype->count, dtype->dtype);
+
+  case LAM_DTVECTOR:
+    return mpifake_unpack_hvector(dest, src, count, dtype, 1);
+
+  case LAM_DTHVECTOR:
+    return mpifake_unpack_hvector(dest, src, count, dtype, 0);
+
+  default:
+    size = count * dtype->size;
+    memcpy((char *)dest, (char *)src, size);
+    return size;
+
+  }
+
+}
+
 static void mpifake_cpy_hvector(void *dest, void *src, int num, MPI_Datatype dtype, int vflag) {
 
   int i, j;
@@ -251,14 +426,25 @@ void mpifake_copy(void *src, void *dest, int *count, MPI_Datatype *dtype) {
 
 }
 
-int mpifake_checked_copy(void *s, int scount, MPI_Datatype sdtype,
+int mpifake_sendrecv(void *s, int scount, MPI_Datatype sdtype,
 			 void *r, int rcount, MPI_Datatype rdtype)
 {
-  if (sdtype != rdtype || scount != rcount) {
-    fprintf(stderr, "MPI_Gather: send type != recv type || scount != rcount\n");
-    errexit();
+  char *packbuf;
+
+  if (sdtype == rdtype) {
+    if (scount > rcount) {
+      fprintf(stderr, "MPI_Gather: scount > rcount\n");
+      errexit();
+    } else {
+      mpifake_copy(s, r, &rcount, &rdtype);
+    }
+  } else {
+    packbuf = malloc(scount * sdtype->size);
+    mpifake_pack(packbuf, s, scount, sdtype);
+    mpifake_unpack(r, packbuf, rcount, rdtype);
+    free(packbuf);
   }
-  mpifake_copy(s, r, &rcount, &rdtype);
+
   return MPI_SUCCESS;
 }
 

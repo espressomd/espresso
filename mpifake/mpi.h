@@ -63,7 +63,7 @@ typedef void (MPI_Handler_function)(MPI_Comm *, int *, ...);
 typedef MPI_User_function *MPI_Op;
 
 void mpifake_copy(void *from, void *to, int *count, MPI_Datatype *dtype);
-int mpifake_checked_copy(void *s, int scount, MPI_Datatype sdtype,
+int mpifake_sendrecv(void *s, int scount, MPI_Datatype sdtype,
 			 void *r, int rcount, MPI_Datatype rdtype);
 
 #define MPI_LOR mpifake_copy
@@ -148,15 +148,15 @@ MDINLINE int __MPI_ERR(char *func, char *file, int line) {
 MDINLINE int MPI_Gather(void *sbuf, int scount, MPI_Datatype sdtype,
 			void *rbuf, int rcount, MPI_Datatype rdtype,
 			int root, MPI_Comm comm)
-{ return mpifake_checked_copy(sbuf, scount, sdtype, rbuf, rcount, rdtype); }
+{ return mpifake_sendrecv(sbuf, scount, sdtype, rbuf, rcount, rdtype); }
 MDINLINE int MPI_Allgather(void *sbuf, int scount, MPI_Datatype sdtype,
 			   void *rbuf, int rcount, MPI_Datatype rdtype,
 			   MPI_Comm comm)
-{ return mpifake_checked_copy(sbuf, scount, sdtype, rbuf, rcount, rdtype); }
+{ return mpifake_sendrecv(sbuf, scount, sdtype, rbuf, rcount, rdtype); }
 MDINLINE int MPI_Scatter(void *sbuf, int scount, MPI_Datatype sdtype,
 			 void *rbuf, int rcount, MPI_Datatype rdtype,
 			 int root, MPI_Comm comm)
-{ return mpifake_checked_copy(sbuf, scount, sdtype, rbuf, rcount, rdtype); }
+{ return mpifake_sendrecv(sbuf, scount, sdtype, rbuf, rcount, rdtype); }
 MDINLINE int MPI_Op_create(MPI_User_function func, int commute, MPI_Op *pop) { *pop = func; return MPI_SUCCESS; }
 MDINLINE int MPI_Reduce(void *sbuf, void* rbuf, int count, MPI_Datatype dtype, MPI_Op op, int root, MPI_Comm comm)
 { op(sbuf, rbuf, &count, &dtype); return MPI_SUCCESS; }
