@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1q (Ydalir)                                                                     *
+* v2.0.1r (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1q -
+- v2.0.1r -
 -----------
 
+(r) December 21st, 2006.
 (q) December 19th, 2006.
 (p) December 18th, 2006.
 (o) December  7th, 2006.
@@ -30,6 +31,11 @@ Current working revision.
 (a) October  25th, 2006.
 
 New Features:
+(r) Support for mixed datatype SendRecv in mpifake. Very convenient
+(r) for communicating subsets of vector datatypes in one shot
+(r) (e.g. slices or subregions of a lattice).
+(r) Includes packing/unpacking functions which might be useful
+    elsewhere.
 (p) added testcases for MMM2D/ELC with dielectric interfaces
     *ignore* fixed name output
 (o) added "vec_rotate" function which rotates a 3d-vector around a given axis by
