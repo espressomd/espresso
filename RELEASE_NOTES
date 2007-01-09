@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1r (Ydalir)                                                                     *
+* v2.0.1s (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1r -
+- v2.0.1s -
 -----------
 
+(s) January   8th, 2007.
 (r) December 21st, 2006.
 (q) December 19th, 2006.
 (p) December 18th, 2006.
@@ -73,6 +74,8 @@ Changes:
     simulation.tcl to samples/pe_network.tcl. Removed renice.tcl.
 
 Bugfixes:
+(s) removed uncommon path in main ./Espresso script
+(s) fixed header of samples/tutorial.tcl script
 (q) require_feature now really works with multiple requirements
 (o) angle-argument in polymer-command has been reprogrammed and should now work
     properly
