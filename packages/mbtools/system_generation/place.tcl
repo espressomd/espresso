@@ -38,7 +38,7 @@ proc ::mbtools::system_generation::placemol { mol pos args } {
 	    place_lipid $mol $params(orient) $pos -bondl $params(bondl) 
 	}
 	"hollowsphere" {
-	    place_hollowsphere $mol $params(orient) $pos 
+	    place_hollowsphere $mol $pos $params(orient)
 	}
 	"spanlipid" {
 	    place_lipid $mol $params(orient) $pos -bondl $params(bondl) -midpos 
@@ -1140,7 +1140,7 @@ proc ::mbtools::system_generation::place_hollowsphere { mol pos orient } {
 	lappend scaledcoords $point
     }
 
-    
+   
     set beadcount1 0
     set beadcount2 0
     set tries 0
