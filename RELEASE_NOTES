@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1s (Ydalir)                                                                     *
+* v2.0.1t (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1s -
+- v2.0.1t -
 -----------
 
+(t) January  10th, 2007.
 (s) January   8th, 2007.
 (r) December 21st, 2006.
 (q) December 19th, 2006.
@@ -74,6 +75,8 @@ Changes:
     simulation.tcl to samples/pe_network.tcl. Removed renice.tcl.
 
 Bugfixes:
+(t) - Minor bug fix for mbtools package.  Only effects use of hollowsphere
+    molecule.
 (s) removed uncommon path in main ./Espresso script
 (s) fixed header of samples/tutorial.tcl script
 (q) require_feature now really works with multiple requirements
