@@ -1498,3 +1498,29 @@ topic:     I want to find a software to simulate some materials \\\\\\\\\\\\\\\'
 reminded:  X14.DEC.2006
 
 
+name:      somaye mohamadi
+email:     smohamadi_1360@yahoo.com
+institute: Departement of Physical science, University of Helsinki,
+           Finland
+sent:      15.JAN.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     the Topic of Research:molecular dynamics simulation
+           I need this software for using in my research for Simulation of
+           Ideal Gas and Polymer.
+reminded:  X15.JAN.2007
+
+
+name:      YANG kai
+email:     yangkaiemail@gmail.com
+institute: Department of Physics, Nanjing University,P.R.China
+sent:      15.JAN.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     I want to do some work on biomembrane, specially in lipid
+           organization and its dynamics.
+           I think CG model is more physical in understanding the nature
+           of the biomembrane
+reminded:  15.JAN.2007
+
+
