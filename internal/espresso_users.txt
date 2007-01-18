@@ -1524,3 +1524,16 @@ topic:     I want to do some work on biomembrane, specially in lipid
 reminded:  15.JAN.2007
 
 
+name:      Dr. Viorel Chihaia
+email:     vchihaia@gmail.com
+institute: Institute of Physical Chemistry of Romanian Academy
+           Lab. Surface Chemistry and Catalysis
+           Splaiul Independentei 202
+           Bucharest, Romania
+sent:      17.JAN.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Surface Science, Material Science
+reminded:  X17.JAN.2007
+
+
