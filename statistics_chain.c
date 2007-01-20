@@ -178,7 +178,7 @@ void calc_rh(double **_rh)
   double dx,dy,dz, r_H=0.0,r_H2=0.0, *rh=NULL, ri=0.0, prefac, tmp;
   *_rh = rh = realloc(rh,2*sizeof(double));
 
-  prefac = 0.5*(chain_length*(chain_length-1));
+  prefac = 0.5*chain_length*chain_length; /* 1/N^2 is not a normalization factor */
   for(p=0;p<chain_n_chains;p++) {
     ri=0.0;
     for(i=chain_start+chain_length*p;i<chain_start+chain_length*(p+1);i++) {
@@ -204,7 +204,7 @@ void calc_rh_av(double **_rh)
   double dx,dy,dz, r_H=0.0,r_H2=0.0, *rh=NULL, ri=0.0, prefac, tmp;
   *_rh = rh = realloc(rh,2*sizeof(double));
 
-  prefac = 0.5*(chain_length*(chain_length-1));
+  prefac = 0.5*chain_length*chain_length;
   for(k=0; k<n_configs; k++) {
     for(p=0;p<chain_n_chains;p++) {
       ri=0.0;

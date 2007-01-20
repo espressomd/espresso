@@ -39,7 +39,7 @@ void calc_rg(double **rg);
     @return the averaged radius of gyration */
 void calc_rg_av(double **rg);
 
-/** calculate the hydrodynamic radius. chain information \ref chain_start etc. must be set!
+/** calculate the hydrodynamic radius (ref. Kirkwood-Zimm theory). chain information \ref chain_start etc. must be set!
     @return the hydrodynamic radius */
 void calc_rh(double **rh);
 
