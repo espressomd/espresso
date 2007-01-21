@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.1t (Ydalir)                                                                     *
+* v2.0.1u (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.1t -
+- v2.0.1u -
 -----------
 
+(u) January  20th, 2007.
 (t) January  10th, 2007.
 (s) January   8th, 2007.
 (r) December 21st, 2006.
@@ -75,6 +76,8 @@ Changes:
     simulation.tcl to samples/pe_network.tcl. Removed renice.tcl.
 
 Bugfixes:
+(u) Corrected the calculation of the hydrodynamic radius. The factor 1/N^2 is
+    derived in order to match Kirkwood-Zimm theory.
 (t) - Minor bug fix for mbtools package.  Only effects use of hollowsphere
     molecule.
 (s) removed uncommon path in main ./Espresso script
