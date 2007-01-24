@@ -1537,3 +1537,14 @@ topic:     Surface Science, Material Science
 reminded:  X17.JAN.2007
 
 
+name:      Dmytro Antypov
+email:     da275@cam.ac.uk
+institute: University of Cambridge
+sent:      23.JAN.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Can\\\\\\\\\\\\\\\'t compile my old version of Espresso on Opteron,
+           thought new ./configure might solve the problem.
+reminded:  X23.JAN.2007
+
+
