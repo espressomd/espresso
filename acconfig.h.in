@@ -178,3 +178,6 @@
 
 /* Define to rpl_realloc if the replacement function should be used. */
 #undef realloc
+
+/* Define to `unsigned' if <sys/types.h> does not define. */
+#undef size_t
