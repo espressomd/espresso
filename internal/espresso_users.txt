@@ -1548,3 +1548,33 @@ topic:     Can\\\\\\\\\\\\\\\'t compile my old version of Espresso on Opteron,
 reminded:  X23.JAN.2007
 
 
+name:      Rui Qiao
+email:     ruiqiao@gmail.com
+institute: 245 Fluor Daniel Building
+sent:      29.JAN.2007
+version:   
+CVS:       
+topic:     nanofluidics and self-assembly processes.
+           
+           I am interested in participating in the development of ESPResSo
+           package for using in these above applications. I would like to
+           get a copy of the source code to evaluate how easy/difficult is
+           it to extend the package, and thus the possibility of joining
+           the developer team.
+           
+           Thanks,
+           
+           Rui
+reminded:  X29.JAN.2007
+
+
+name:      Hanjo
+email:     hans-joerg.limbach@rdls.nestle.com
+institute: 
+sent:      29.JAN.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Test
+reminded:  29.JAN.2007
+
+
