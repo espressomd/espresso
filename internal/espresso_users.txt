@@ -1578,3 +1578,45 @@ topic:     Test
 reminded:  29.JAN.2007
 
 
+name:      Sharon Loverde
+email:     s-loverde@northwestern.edu
+institute: Materials Science and Engineering,
+           Northwestern University
+           2220 Campus Dr. #2036
+           Evanston, IL 60208
+           USA
+sent:      31.JAN.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     2 dimensional charged systems
+reminded:  X31.JAN.2007
+
+
+name:      Dhananjay Tambe
+email:     dhananjaytambe@yahoo.com
+institute: Box D,
+           Brown University,
+           Providence, RI-02912
+           USA
+sent:      31.JAN.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Molecular Biophysics
+reminded:  31.JAN.2007
+
+
+name:      Roman Bedau
+email:     bedau@itp2.uni-stuttgart.de
+institute: II. Institut für Theoretische Physik
+           Universität Stuttgart
+           Pfaffenwaldring 57
+           70550 Stuttgart
+           Tel.: +49-(0)711-68564940
+           Fax.: +49-(0)711-68564902
+sent:      31.JAN.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     softmatter physics
+reminded:  31.JAN.2007
+
+
