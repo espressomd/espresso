@@ -107,20 +107,17 @@ double pos_shift;
 double *meshift = NULL;
 /** Spatial differential operator in k-space. We use an i*k differentiation. */
 double *d_op = NULL;
-/** Optimal influence function (k-space) */
-double *g = NULL;
-/** Optimal influence function (k-space) for energy*/
-double *g2 = NULL;
+/** Force optimised influence function (k-space) */
+double *g_force = NULL;
+/** Energy optimised influence function (k-space) */
+double *g_energy = NULL;
 
-//ER
 #ifdef DIPOLES
 /** Optimal influence function (k-space) for dipolar forces */
-double *g_dip = NULL;
-
+double *g_force_dip = NULL;
 /** Optimal influence function (k-space) for dipolar energy and torques */
-double *g2_dip = NULL;
+double *g_energy_dip = NULL;
 #endif
-//ER_end
 
 /** number of charged particles on the node. */
 int ca_num=0;
@@ -212,25 +209,25 @@ void calc_meshift();
  *           i.e. the prefactor i*2*PI/L is missing! */
 void calc_differential_operator();
 /** Calculates the optimal influence function of Hockney and Eastwood. 
+ * (optimised for force calculations)
  *
  *  Each node calculates only the values for its domain in k-space
  *  (see fft_plan[3].mesh and fft_plan[3].start).
-
+ *
  *  See also: Hockney/Eastwood 8-22 (p275). Note the somewhat
  *  different convention for the prefactors, which is described in
  *  Deserno/Holm. */
-void calc_influence_function();
-/** Calculates the influence function optimized for the energy.  */
-void calc_influence_function2();
+void calc_influence_function_force();
+/** Calculates the influence function optimized for the energy and the
+    self energy correction.  */
+void calc_influence_function_energy();
 
-//ER
 #ifdef DIPOLES
 /** Calculates the influence function optimized for the dipolar forces. */
-void calc_influence_function_dip();
+void calc_influence_function_force_dip();
 /** Calculates the influence function optimized for the dipolar energy and torques. */
-void calc_influence_function2_dip();
+void calc_influence_function_energy_dip();
 #endif
-//ER_end
 
 /** Calculates the aliasing sums for the optimal influence function.
  *
@@ -242,10 +239,12 @@ void calc_influence_function2_dip();
  * \param  nominator   aliasing sums in the nominator.
  * \return denominator aliasing sum in the denominator
  */
-MDINLINE double perform_aliasing_sums(int n[3], double nominator[3]);
-MDINLINE double perform_aliasing_sums2(int n[3]);
-MDINLINE double perform_aliasing_sums3(int n[3], double nominator[1]); /* JJCP 26-4-06 */
-MDINLINE double perform_aliasing_sums4(int n[3], double nominator[1]); /* JJCP 26-4-06 */
+MDINLINE double perform_aliasing_sums_force(int n[3], double nominator[3]);
+MDINLINE double perform_aliasing_sums_energy(int n[3]);
+#ifdef DIPOLES
+MDINLINE double perform_aliasing_sums_force_dip(int n[3], double nominator[1]);
+MDINLINE double perform_aliasing_sums_energy_dip(int n[3], double nominator[1]);
+#endif
 /*@}*/
 
 
@@ -1102,15 +1101,13 @@ void   P3M_init()
  
     /* k-space part: */
     calc_differential_operator();
-    calc_influence_function();
-    calc_influence_function2();
+    calc_influence_function_force();
+    calc_influence_function_energy();
 
-//ER
 #ifdef DIPOLES
-    calc_influence_function_dip();
-    calc_influence_function2_dip();
+    calc_influence_function_force_dip();
+    calc_influence_function_energy_dip();
 #endif    
-//ER_end
 
     P3M_count_charged_particles();
 
@@ -1457,8 +1454,8 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
    if (p3m_sum_q2 > 0) {
     ind = 0;
     for(i=0; i<fft_plan[3].new_size; i++) {
-      //Use green function g2 optimized for energy!
-      node_k_space_energy += g[i] * ( SQR(rs_mesh[ind]) + SQR(rs_mesh[ind+1]) );
+      // Use the energy optimized influence function for energy!
+      node_k_space_energy += g_energy[i] * ( SQR(rs_mesh[ind]) + SQR(rs_mesh[ind+1]) );
       ind += 2;
     }
     node_k_space_energy *= force_prefac * box_l[0] / (4.0*PI) ;
@@ -1483,7 +1480,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
     for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {
       for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
 	for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {	 
-	  node_k_space_energy_dip += g2_dip[i] * (
+	  node_k_space_energy_dip += g_dip_energy[i] * (
 	  SQR(rs_mesh_dip[0][ind]*d_op[j[2]+fft_plan[3].start[0]]+
 	      rs_mesh_dip[1][ind]*d_op[j[0]+fft_plan[3].start[1]]+
 	      rs_mesh_dip[2][ind]*d_op[j[1]+fft_plan[3].start[2]]
@@ -1518,8 +1515,8 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
     /* Force preparation */
     ind = 0;
     for(i=0; i<fft_plan[3].new_size; i++) {
-      ks_mesh[ind] = g[i] * rs_mesh[ind]; ind++;
-      ks_mesh[ind] = g[i] * rs_mesh[ind]; ind++;
+      ks_mesh[ind] = g_force[i] * rs_mesh[ind]; ind++;
+      ks_mesh[ind] = g_force[i] * rs_mesh[ind]; ind++;
     }
     
     /* === 3 Fold backward 3D FFT (Force Component Meshs) === */
@@ -1541,7 +1538,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
       }
       /* Back FFT force componenet mesh */
       fft_perform_back(rs_mesh);
-      /* redistribute force componenet mesh */
+      /* redistribute force component mesh */
       spread_force_grid(rs_mesh);
       /* Assign force component from mesh to particle */
       P3M_assign_forces(force_prefac, d_rs);
@@ -1566,11 +1563,10 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 	  tmp1 = rs_mesh_dip[0][ind+1]*d_op[j[2]+fft_plan[3].start[0]]+
 		 rs_mesh_dip[1][ind+1]*d_op[j[0]+fft_plan[3].start[1]]+
 		 rs_mesh_dip[2][ind+1]*d_op[j[1]+fft_plan[3].start[2]];
-//	  ks_mesh[ind]   = tmp0*g[i];
-//	  ks_mesh[ind+1] = tmp1*g[i];
-          /* Next two lines modified by JJCP 26-4-06 */
- 	  ks_mesh[ind]   = tmp0*g2_dip[i];    /* Because the Gopt is the same for torques and Energy */
-	  ks_mesh[ind+1] = tmp1*g2_dip[i];
+	  /* the optimal influence function is the same for torques
+	     and energy */ 
+ 	  ks_mesh[ind]   = tmp0*g_energy_dip[i];    
+	  ks_mesh[ind+1] = tmp1*g_energy_dip[i];
 	  ind += 2;
 	  i++;
 	}
@@ -1619,8 +1615,8 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 //	  ks_mesh[ind]   = tmp0*g[i];
 //	  ks_mesh[ind+1] = -tmp1*g[i];
           /* Next two lines modified by JJCP 26-4-06 */
-	  ks_mesh[ind]   = tmp0*g_dip[i];
-	  ks_mesh[ind+1] = -tmp1*g_dip[i];
+	  ks_mesh[ind]   = tmp0*g_force_dip[i];
+	  ks_mesh[ind+1] = -tmp1*g_force_dip[i];
 	  ind += 2;
 	  i++;
 	}
@@ -2026,7 +2022,7 @@ void calc_differential_operator()
   d_op[p3m.mesh[0]/2] = 0;
 }
 
-void calc_influence_function()
+void calc_influence_function_force()
 {
   int i,n[3],ind;
   int end[3];
@@ -2040,7 +2036,7 @@ void calc_influence_function()
     size *= fft_plan[3].new_mesh[i];
     end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
   }
-  g = (double *) realloc(g, size*sizeof(double));
+  g_force = (double *) realloc(g_force, size*sizeof(double));
 
   fak1  = p3m.mesh[0]*p3m.mesh[0]*p3m.mesh[0]*2.0/(box_l[0]*box_l[0]);
 
@@ -2050,21 +2046,21 @@ void calc_influence_function()
 	ind = (n[2]-fft_plan[3].start[2]) + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1]) + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
 
 	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
-	  g[ind] = 0.0;
+	  g_force[ind] = 0.0;
 	else if( (n[0]%(p3m.mesh[0]/2)==0) && 
 		 (n[1]%(p3m.mesh[0]/2)==0) && 
 		 (n[2]%(p3m.mesh[0]/2)==0) )
-	  g[ind] = 0.0;
+	  g_force[ind] = 0.0;
 	else {
-	  denominator = perform_aliasing_sums(n,nominator);
+	  denominator = perform_aliasing_sums_force(n,nominator);
 	  fak2 =  d_op[n[0]]*nominator[0] + d_op[n[1]]*nominator[1] + d_op[n[2]]*nominator[2];  
 	  fak2 /= ( ( SQR(d_op[n[0]])+SQR(d_op[n[1]])+SQR(d_op[n[2]]) ) * SQR(denominator) );
-	  g[ind] = fak1*fak2;
+	  g_force[ind] = fak1*fak2;
 	}
       }
 }
 
-MDINLINE double perform_aliasing_sums(int n[3], double nominator[3])
+MDINLINE double perform_aliasing_sums_force(int n[3], double nominator[3])
 {
   int i;
   double denominator=0.0;
@@ -2100,7 +2096,7 @@ MDINLINE double perform_aliasing_sums(int n[3], double nominator[3])
   return denominator;
 }
 
-void calc_influence_function2()
+void calc_influence_function_energy()
 {
   int i,n[3],ind;
   int end[3];
@@ -2113,7 +2109,7 @@ void calc_influence_function2()
     size *= fft_plan[3].new_mesh[i];
     end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
   }
-  g2 = (double *) realloc(g2, size*sizeof(double));
+  g_energy = (double *) realloc(g_energy, size*sizeof(double));
 
   fak1  = p3m.mesh[0]*p3m.mesh[0]*p3m.mesh[0]*2.0/(box_l[0]*box_l[0]);
 
@@ -2122,18 +2118,18 @@ void calc_influence_function2()
       for(n[2]=fft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
 	ind = (n[2]-fft_plan[3].start[2]) + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1]) + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
 	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
-	  g2[ind] = 0.0;
+	  g_energy[ind] = 0.0;
 	else if( (n[0]%(p3m.mesh[0]/2)==0) && 
 		 (n[1]%(p3m.mesh[0]/2)==0) && 
 		 (n[2]%(p3m.mesh[0]/2)==0) )
-	  g2[ind] = 0.0;
+	  g_energy[ind] = 0.0;
 	else {
-	  g2[ind] = fak1*perform_aliasing_sums2(n);
+	  g_energy[ind] = fak1*perform_aliasing_sums_energy(n);
 	}
       }
 }
 
-MDINLINE double perform_aliasing_sums2(int n[3])
+MDINLINE double perform_aliasing_sums_energy(int n[3])
 {
   double nominator=0.0,denominator=0.0;
   /* lots of temporary variables... */
@@ -2165,15 +2161,14 @@ MDINLINE double perform_aliasing_sums2(int n[3])
   return nominator/SQR(denominator);
 }
 
-//ER
 #ifdef DIPOLES
-void calc_influence_function_dip()
+void calc_influence_function_force_dip()
 {
   int i,n[3],ind;
   int end[3];
   int size=1;
   double fak1,fak2;
-  double nominator[1]={0.0},denominator=0.0;   /* JJCP 26-4-06 */
+  double nominator[1]={0.0},denominator=0.0;
 
   calc_meshift();
 
@@ -2181,8 +2176,7 @@ void calc_influence_function_dip()
     size *= fft_plan[3].new_mesh[i];
     end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
   }
-  //g_dip = (double *) realloc(g, size*sizeof(double));
-    g_dip = (double *) realloc(g_dip, size*sizeof(double));  /* JJCP 26-4-06 */
+  g_force_dip = (double *) realloc(g_force_dip, size*sizeof(double));
   fak1  = p3m.mesh[0]*p3m.mesh[0]*p3m.mesh[0]*2.0/(box_l[0]*box_l[0]);
 
   for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++)
@@ -2191,23 +2185,22 @@ void calc_influence_function_dip()
 	ind = (n[2]-fft_plan[3].start[2]) + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1]) + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
 
 	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
-	  g_dip[ind] = 0.0;
+	  g_force_dip[ind] = 0.0;
 	else if( (n[0]%(p3m.mesh[0]/2)==0) &&
 		 (n[1]%(p3m.mesh[0]/2)==0) &&
 		 (n[2]%(p3m.mesh[0]/2)==0) )
-	  g_dip[ind] = 0.0;
+	  g_force_dip[ind] = 0.0;
 	else {
-	  denominator = perform_aliasing_sums3(n,nominator);
-	  fak2 =  nominator[0];   /* JJCP 26-4-06 */
+	  denominator = perform_aliasing_sums_force_dip(n,nominator);
+	  fak2 =  nominator[0];
 	  fak2 /= pow(SQR(d_op[n[0]])+SQR(d_op[n[1]])+SQR(d_op[n[2]]),3)  * SQR(denominator) ;
-	  g_dip[ind] = fak1*fak2;
+	  g_force_dip[ind] = fak1*fak2;
 	}
       }
 }
 
-MDINLINE double perform_aliasing_sums3(int n[3], double nominator[1])  /* JJCP 26-4-06 */
+MDINLINE double perform_aliasing_sums_force_dip(int n[3], double nominator[1])
 {
-  //int i;  /* JJCP 26-4-06 */
   double denominator=0.0;
   /* lots of temporary variables... */
   double sx,sy,sz,f1,f2,f3,mx,my,mz,nmx,nmy,nmz,nm2,expo;
@@ -2215,8 +2208,7 @@ MDINLINE double perform_aliasing_sums3(int n[3], double nominator[1])  /* JJCP 2
   double n_nm;
   double n_nm3;
 
-  //for(i=0;i<3;i++) nominator[i]=0.0;    /* JJCP 26-4-06 */
-  nominator[0]=0.0;                          /* JJCP 26-4-06 */
+  nominator[0]=0.0;
   
   f1 = 1.0/(double)p3m.mesh[0];
   f2 = SQR(PI/(p3m.alpha_L));
@@ -2235,16 +2227,10 @@ MDINLINE double perform_aliasing_sums3(int n[3], double nominator[1])  /* JJCP 2
 	expo         =  f2*nm2;
 	f3           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
 
-	
-
-
-	//n_nm = n[0]*nmx + n[1]*nmy + n[2]*nmz;  
-	n_nm = d_op[n[0]]*nmx + d_op[n[1]]*nmy + d_op[n[2]]*nmz; /* JJCP 26-4-06 */
+	n_nm = d_op[n[0]]*nmx + d_op[n[1]]*nmy + d_op[n[2]]*nmz;
 	n_nm3 = n_nm*n_nm*n_nm; 
 	
-	
-	
-	nominator[0] += f3*n_nm3;       /* JJCP 26-4-06 */
+	nominator[0] += f3*n_nm3;
 	denominator  += sz;
       }
     }
@@ -2254,13 +2240,13 @@ MDINLINE double perform_aliasing_sums3(int n[3], double nominator[1])  /* JJCP 2
 
 
 
-void calc_influence_function2_dip()
+void calc_influence_function_energy_dip()
 {
   int i,n[3],ind;
   int end[3];
   int size=1;
   double fak1,fak2;
-  double nominator[1]={0.0},denominator=0.0;            /* JJCP 26-4-06 */
+  double nominator[1]={0.0},denominator=0.0;
 
   calc_meshift();
 
@@ -2268,8 +2254,7 @@ void calc_influence_function2_dip()
     size *= fft_plan[3].new_mesh[i];
     end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
   }
-  //g2_dip = (double *) realloc(g, size*sizeof(double));
-    g2_dip = (double *) realloc(g2_dip, size*sizeof(double));  /* JJCP 24-4-06 */
+  g_energy__dip = (double *) realloc(g_energy_dip, size*sizeof(double));
   fak1  = p3m.mesh[0]*p3m.mesh[0]*p3m.mesh[0]*2.0/(box_l[0]*box_l[0]);
 
   for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++)
@@ -2278,23 +2263,22 @@ void calc_influence_function2_dip()
 	ind = (n[2]-fft_plan[3].start[2]) + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1]) + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
 
 	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
-	  g2_dip[ind] = 0.0;
+	  g_energy_dip[ind] = 0.0;
 	else if( (n[0]%(p3m.mesh[0]/2)==0) &&
 		 (n[1]%(p3m.mesh[0]/2)==0) &&
 		 (n[2]%(p3m.mesh[0]/2)==0) )
-	  g2_dip[ind] = 0.0;
+	  g_energy_dip[ind] = 0.0;
 	else {
-	  denominator = perform_aliasing_sums4(n,nominator);
-	  fak2 =  nominator[0];      /* JJCP 26-4-06 */
+	  denominator = perform_aliasing_sums_energy_dip(n,nominator);
+	  fak2 =  nominator[0];
 	  fak2 /= pow(SQR(d_op[n[0]])+SQR(d_op[n[1]])+SQR(d_op[n[2]]),2)  * SQR(denominator) ;
-	  g2_dip[ind] = fak1*fak2;
+	  g_energy_dip[ind] = fak1*fak2;
 	}
       }
 }
 
-MDINLINE double perform_aliasing_sums4(int n[3], double nominator[1])    /* JJCP 26-4-06 */
+MDINLINE double perform_aliasing_sums_energy_dip(int n[3], double nominator[1])
 { 
-  //int i; /* JJCP 26-4-06 */   
   double denominator=0.0;
   /* lots of temporary variables... */
   double sx,sy,sz,f1,f2,f3,mx,my,mz,nmx,nmy,nmz,nm2,expo;
@@ -2302,8 +2286,7 @@ MDINLINE double perform_aliasing_sums4(int n[3], double nominator[1])    /* JJCP
   double n_nm;
   double n_nm2;
 
-  //for(i=0;i<3;i++) nominator[i]=0.0;
-    nominator[0]=0.0;                              /* JJCP 26-4-06 */
+  nominator[0]=0.0;
     
   f1 = 1.0/(double)p3m.mesh[0];
   f2 = SQR(PI/(p3m.alpha_L));
@@ -2322,10 +2305,9 @@ MDINLINE double perform_aliasing_sums4(int n[3], double nominator[1])    /* JJCP
 	expo         =  f2*nm2;
 	f3           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
 
-	//n_nm = n[0]*nmx + n[1]*nmy + n[2]*nmz; 
 	n_nm = d_op[n[0]]*nmx + d_op[n[1]]*nmy + d_op[n[2]]*nmz;  /* JJCP 26-4-06 */
 	n_nm2 = n_nm*n_nm; 
-	nominator[0] += f3*n_nm2;                   /* JJCP 26-4-06 */
+	nominator[0] += f3*n_nm2;
 	denominator  += sz;
       }
     }
