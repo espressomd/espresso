@@ -1663,7 +1663,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
   } // if(force_flag)
 
   if (p3m.epsilon != P3M_EPSILON_METALLIC) {
-    k_space_energy -= calc_dipole_term(force_flag, energy_flag);
+    k_space_energy += calc_dipole_term(force_flag, energy_flag);
 #ifdef DIPOLES
     printf("ERROR: using non-metallic boundary condition, but this is currently not supported for a system with dipoles.\n");
 #endif
