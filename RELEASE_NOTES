@@ -2,15 +2,21 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2  (Ydalir)                                                                     *
+* v2.0.2a (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2  -
+- v2.0.2a -
 -----------
 
+(a) February 2nd, 2007.
+
+Bugfixes:
+(a) P3M: When using non-metallic boundary conditions, the computed
+    energies were wrong because the diploar term goes in with the wrong
+    sign.
 
 
 - v2.0.1u -
