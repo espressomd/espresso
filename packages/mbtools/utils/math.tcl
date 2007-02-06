@@ -50,7 +50,7 @@ proc ::mbtools::utils::perp_vec {A} {
 	set ratio [expr $y / $x]
 	set y [expr $x * $ratio * 2]
     }
-    set some_vector "$x $y [lindex $intial_orient 2]"
+    set some_vector "$x $y [lindex $A 2]"
     set some_vector [::mbtools::utils::normalize $some_vector]
     return [::mbtools::utils::cross_product $A $some_vector]
 }
