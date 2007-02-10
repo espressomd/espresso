@@ -1620,3 +1620,17 @@ topic:     softmatter physics
 reminded:  31.JAN.2007
 
 
+name:      Juan Gabriel Ramírez
+email:     gabrielr@calima.univalle.edu.co
+institute: Universidad del Valle
+           Department of physics
+           Calle 13 # 100-00
+           Cali, Colombia, South America
+           Phone: (+572) 3394610 ext 49
+sent:      09.FEB.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Interface analysis of oxide thin films
+reminded:  X09.FEB.2007
+
+
