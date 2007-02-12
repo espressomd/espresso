@@ -10,8 +10,13 @@ CYGWIN*)
 Linux)
     # determines the type of CPU 0
     CPUINFO=/proc/cpuinfo
-    MODEL=`awk '/model name/ { if ($1 != "model") { next; }\
+    MODEL=`awk '\
+        /cpu.*/ { if ($1 == "cpu") { \
+		if ($3 == "PPC970FX,") { print "ppc970";exit } } }\
+        /family.*: Itanium 2/ { print "Itanium"; exit }\
+    	/model name/ { if ($1 != "model") { next; }\
 	if ($4 == "Pentium") { if ($5 != "") print $4"_"$5; else print $4; } \
+	else if ($4 == "AMD" && $5 == "Sempron(tm)")   print "Athlon_XP"; \
 	else if ($4 == "AMD" && $5 == "Opteron(tm)")   print "Opteron"; \
 	else if ($4 == "AMD" && $5 == "Opteron" && $6 == "(tm)")   print "Opteron"; \
 	else if ($4 == "Dual" && $5 == "Core" && $6 == "AMD" && $7 == "Opteron(tm)")   print "Opteron"; \
