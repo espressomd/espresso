@@ -1634,3 +1634,15 @@ topic:     Interface analysis of oxide thin films
 reminded:  X09.FEB.2007
 
 
+name:      Michael Lang
+email:     langm@email.unc.edu
+institute: Department of Chemistry,
+           University of North Carolina at Chapel Hill,
+           27599 Chapel Hill, NC, USA
+sent:      12.FEB.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     dynamics of polymer melts
+reminded:  X12.FEB.2007
+
+
