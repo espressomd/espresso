@@ -58,9 +58,9 @@ proc writevsf { file args } {
 	upvar 1 radiuslist radiuslist typedesclist typedesclist
 	set desc "radius [lindex $radiuslist $type] [lindex $typedesclist $type]"
 	if { $to == $from } then { 
-	    return "atom $to $desc" 
+	    return "atom [vtfpid $to] $desc" 
 	} else {
-	    return "atom $from:$to $desc"
+	    return "atom [vtfpid $from]:[vtfpid $to] $desc"
 	}
     }
 
@@ -93,23 +93,19 @@ proc writevsf { file args } {
 	}
     }
 
-    set n_part [setmd n_part]
+    set max_pid [setmd max_part]
 
-    # get the maximal type
-    set type_max 0
-    for { set pid 1 } { $pid < $n_part } { incr pid } {
-	set type [part $pid print type]
-	if { $type > $type_max } then { set type_max $type }
-    }
+    # compute the maximal type
+    set max_type [setmd n_part_types]
     foreach {i j} $radius {
-	if { $i > $type_max } then { set type_max $i }
+	if { $i > $max_type } then { set max_type $i }
     }
     foreach {i j} $typedesc {
-	if { $i > $type_max } then { set type_max $i }
+	if { $i > $max_type } then { set max_type $i }
     }
 
-    set typedesclist [get_typedesc_list $type_max $typedesc]
-    set radiuslist [get_radius_list $type_max $radius]
+    set typedesclist [get_typedesc_list $max_type $typedesc]
+    set radiuslist [get_radius_list $max_type $radius]
 
     ##################################################
     # OUTPUT
@@ -122,37 +118,43 @@ proc writevsf { file args } {
     }
 
     # Print atom data
-
     set from 0
     set to 0
-    set prev_type [part 0 print type]
-    for { set pid 1 } { $pid < $n_part } { incr pid } {
-	set type [part $pid print type]
-	if { $prev_type == $type } then { 
-	    incr to 
-	} else {
-	    # output from $from to $to
-	    puts $file [get_atom_record $from $to $prev_type]
+    set prev_type "na"
 
-	    set from $pid
-	    set to $pid
-	    set prev_type $type
+    for { set pid 0 } { $pid <= $max_pid } { incr pid } {
+	if { [part $pid] != "na" } then {
+	    # look for the type
+	    set type [part $pid print type]
+	    if { $prev_type == "na" } then { 
+		set prev_type $type 
+	    } elseif { $prev_type == $type } then {
+		set to $pid
+	    } else { 
+		# output from $from to $pid
+		puts $file [get_atom_record $from $to $prev_type]
+		
+		set to $pid
+		set from $pid
+		set prev_type $type
+	    }
 	}
     }
     puts $file [get_atom_record $from $to $prev_type]
 
     # Print bond data
-    for { set from 0 } { $from < $n_part } { incr from } {
-	set bonds [lindex [part $from print bond] 0]
-	for { set i 0 } { $i < [llength $bonds] } { incr i } {
-	    set to [lindex $bonds $i 1]
-
-	    if { $short } then {
-		puts $file "b $from:$to"
-	    } else {
-		puts $file "bond $from:$to"
-	    }
+    for { set from 0 } { $from <= $max_pid } { incr from } {
+	if { [part $pid] != "na" } then {
+	    set bonds [lindex [part $from print bond] 0]
+	    for { set i 0 } { $i < [llength $bonds] } { incr i } {
+		set to [lindex $bonds $i 1]
 		
+		if { $short } then {
+		    puts $file "b [vtfpid($from)]:[vtfpid($to)]"
+		} else {
+		    puts $file "bond [vtfpid($from)]:[vtfpid($to)]"
+		}
+	    }
 	}
     }
 
@@ -188,7 +190,7 @@ proc writevcf { file args } {
     }
 
     # write the data
-    set n_part [setmd n_part]
+    set max_pid [setmd max_part]
 
     if { $pids eq "all" } then {
 	if { $short } \
@@ -211,22 +213,46 @@ proc writevcf { file args } {
 
     # output particle data
     if { $pids eq "all" } then {
-	for { set pid 0 } { $pid < $n_part } { incr pid } {
-	    if { $folded } then {
-		puts $file [part $pid print folded_pos]
-	    } else {
-		puts $file [part $pid print pos]
+	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
+	    if {[part $pid] != "na"} then {
+		if { $folded } then {
+		    puts $file [part $pid print folded_pos]
+		} else {
+		    puts $file [part $pid print pos]
+		}
 	    }
 	}
     } else {
 	foreach pid $pids {
-	    if { $folded } then {
-		puts $file "$pid [part $pid print folded_pos]"
-	    } else {
-		puts $file "$pid [part $pid print pos]"
+	    if {[part $pid] != "na"} then {
+		if { $folded } then {
+		    puts $file "[vtfpid($pid)] [part $pid print folded_pos]"
+		} else {
+		    puts $file "[vtfpid($pid)] [part $pid print pos]"
+		}
 	    }
 	}
     }
 
     if { ! $short } then { puts $file "" }
 }
+
+# get the VMD pid of a given ESPResSo-PID
+proc vtfpid { pid } {
+    global vtf_pid
+    if {! [array exists vtf_pid]} then {
+	# compute the mapping from Espresso PIDS to VMD PIDS
+	set i 0
+	set max_pid [setmd max_part]
+	for { set epid 0 } { $epid <= $max_pid } { incr epid } {
+	    if {[part $epid] == "na"} then {
+		set vtf_pid($epid) "na"
+	    } else {
+		set vtf_pid($epid) $i
+		incr i
+	    }
+	}
+    }
+    return $vtf_pid($pid)
+}
+
