@@ -1646,3 +1646,28 @@ topic:     dynamics of polymer melts
 reminded:  X12.FEB.2007
 
 
+name:      Dhiraj Kumar Mahajan
+email:     dhiraj@iitk.ac.in
+institute: Research Scholar
+           Department of Mechanical Engineering
+           Indian Institute of Technology Kanpur
+           Kanpur, UP-208016
+sent:      13.FEB.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     I am into multiscale modeling of mechanical behavior of glassy
+           polymers. For this, i am using information from atomistic
+           simulations to make a more detailed constitutive continuum
+           model of these polymers.
+           
+           But in my research using atomistic molecular simulations of
+           these polymers, i am finding lots of results given by coarse
+           grained simulations of these polymers as very difficult to
+           attain in my simulations. 
+           So, I want to explore this software in order to get a clearer
+           picture of the  differences in atomistic and coarse grain
+           simulations and to find a common way to compare the results
+           from both these simulations.
+reminded:  X13.FEB.2007
+
+
