@@ -22,13 +22,15 @@ with the extension \texttt{.vtf}), or to separate files (extensions
 Writes a structure block describing the system's structure to the
 channel given by \var{channelId}. \var{channelId} must be an
 identifier for an open channel such as the return value of an
-invocation of \keyword{open}. The atom ids used in the file are
-identical to \es's particle ids.  This makes it easy to write
+invocation of \keyword{open}. The atom ids used in the file are not
+necessarily identical to \es's particle ids. To get the atom id used
+in the vtf file from an \es particle id, use the command
+\keyword{vtfpid} described below. This makes it easy to write
 additional structure lines to the file, e.g. to specify the
 \texttt{resname} of particle compounds, like chains.  The output of
-this file can be used in a standalone VSF file, or at the beginning of
-a trajectory VTF file that contains a trajectory of a whole
-simulation.
+this command can be used for a standalone VSF file, or at the
+beginning of a trajectory VTF file that contains a trajectory of a
+whole simulation.
 
 \begin{arguments}
 \item[\opt{<short|verbose>}]
@@ -87,6 +89,12 @@ return value of an invocation of \keyword{open}.
   Example: \verb!pids {0 23 42}!
   
 \end{arguments}
+
+\subsection{\texttt{vtfpid}}
+\tclcommand{vtfpid}{\var{pid}}
+
+If \var{pid} is the id of a particle as used in \es, this command
+returns the atom id used in the VTF, VSF or VCF formats.
 
 
 %%% Local Variables: 
