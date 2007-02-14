@@ -191,7 +191,11 @@ MDINLINE void friction_thermo_langevin(Particle *p)
     if (!(p->l.ext_flag & COORD_FIXED(j)))
 #endif
       p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
+#ifdef EXTERNAL_FORCES
+    else p->f.f[j] = 0;
+#endif
   }
+  
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
   THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
