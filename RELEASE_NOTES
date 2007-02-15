@@ -2,19 +2,23 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2b (Ydalir)                                                                     *
+* v2.0.2c (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2b -
+- v2.0.2c -
 -----------
 
-(b) February 6th, 2007.
-(a) February 2nd, 2007.
+(c) February 14th, 2007.
+(b) February  6th, 2007.
+(a) February  2nd, 2007.
 
 Bugfixes:
+(c) When working with fixed particles and langevin thermostat, the forces of the
+    fixed coordinates haven't been initialized. This is now
+    corrected.
 (b) minor bug in MBTOOLS-
 (a) P3M: When using non-metallic boundary conditions, the computed
     energies were wrong because the diploar term goes in with the wrong
