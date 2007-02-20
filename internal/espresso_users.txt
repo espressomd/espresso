@@ -1671,3 +1671,18 @@ topic:     I am into multiscale modeling of mechanical behavior of glassy
 reminded:  X13.FEB.2007
 
 
+name:      Marco Malvaldi
+email:     marco@dcci.unipi.it
+institute: Dipartimento di Chimica Bioorganica e biofarmacia 
+           Via Bonanno 33
+           56126 Pisa
+           Italy
+sent:      19.FEB.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     I work principally on MD and MC simulation of complex fluids.
+           I\\\\\\\\\\\\\\\'m beginning to plan simulations on  coarse-grained
+           room-temperature ionic liquids.
+reminded:  X19.FEB.2007
+
+
