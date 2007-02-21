@@ -49,7 +49,7 @@ const Datafield fields[] = {
   {box_l,            TYPE_DOUBLE, 3, "box_l",         boxl_callback,  1 },         /* 0  from grid.c */
   {dd.cell_grid,        TYPE_INT, 3, "cell_grid",     ro_callback,    6 },         /* 1  from cells.c */
   {dd.cell_size,     TYPE_DOUBLE, 3, "cell_size",     ro_callback,    6 },         /* 2  from cells.c */
-  {&dpd_gamma,       TYPE_DOUBLE, 1, "dpd_gamma",     ro_callback,    5 },         /* 3  from thermostat.c */
+  {&dpd_gamma1,       TYPE_DOUBLE, 1, "dpd_gamma1",     ro_callback,    10 },         /* 3  from thermostat.c */
   {&dpd_r_cut,       TYPE_DOUBLE, 1, "dpd_r_cut",     ro_callback,    5 },         /* 4  from thermostat.c */
   {&langevin_gamma,  TYPE_DOUBLE, 1, "gamma",         thermo_ro_callback, 1 },     /* 5  from thermostat.c */
   {&integ_switch,       TYPE_INT, 1, "integ_switch",  ro_callback,    1 },         /* 6  from integrate.c */
@@ -87,6 +87,7 @@ const Datafield fields[] = {
   {&lattice_switch,     TYPE_INT, 1, "lattice_switch", ro_callback,    2 },
   /* 37 from lattice.c */
 #endif
+  {&dpd_gamma2,      TYPE_DOUBLE, 1, "dpd_gamma2",    ro_callback,     10 },         /* 38 from thermostat.c */
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 
@@ -107,8 +108,8 @@ const Datafield fields[] = {
              \ref DomainDecomposition::cell_grid - dimension of the inner cell grid.
 	<li> \verbatim cell_size double[3] (ro) \endverbatim
 	     \ref DomainDecomposition::cell_size - box length of a cell.
-	<li> \verbatim dpd_gamma double (ro) \endverbatim
-	     \ref dpd_gamma - Friction constant for DPD thermostat.
+	<li> \verbatim dpd_gamma1 double (ro) \endverbatim
+	     \ref dpd_gamma1 - longitudinal Friction constant for DPD thermostat.
 	<li> \verbatim dpd_r_cut double (ro) \endverbatim
 	     \ref dpd_r_cut - Cutoff for DPD thermostat.
 	<li> \verbatim gamma double (ro) \endverbatim
@@ -187,6 +188,8 @@ const Datafield fields[] = {
 	     see \ref initialize.h "initialize.h" for more information
 	<li> \verbatim verlet_reuse bool \endverbatim
 	     \ref verlet_reuse - Average number of integration steps the verlet list has been re-used.
+	<li> \verbatim dpd_gamma2 double (ro) \endverbatim
+	     \ref dpd_gamma2 - Transversale Friction constant for DPD thermostat.
 	</ol>    
 
  */

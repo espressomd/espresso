@@ -103,7 +103,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
 #ifdef DPD
   /* DPD thermostat forces */
-  add_to_part_dpd_thermo_pair_force(p1,p2,d,dist);
+  add_dpd_thermo_pair_force(p1,p2,d,dist,dist2);
 #endif
 
   /***********************************************/

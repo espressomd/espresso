@@ -57,7 +57,7 @@
     relative velocity of particle pairs.
     DPD is better for dynamics, since it mimics hydrodynamics in the system.
     Good values to choos are dpd_cutoff = \f$ 2^{\frac{1}{6}} \f$, namely the cutoff of the LJ interaction. That means the thermostat acts on the relative velocities between nearest neighbor particles. Larger cutoffs including next nearest neighbors or even more are unphysical.
-    dpd_gamma is basically an invers timescale on which the system thermally equilibrates. Values between 0.1 and 1 are o.k, but you propably want to try yourself to get a feeling for how fast temperature jumps during a simulation are. The dpd thermostat does not act on the system center of mass motion. So befor using dpd you have to stop the center of mass motion of your system, which you can achieve by using the command "galileiTransformParticles" in the file scripts/auxiliary.tcl. This may be repeated once in a while for long runs due to round off errors (check with the command "system_com_vel").
+    dpd_gamma1 is basically an invers timescale on which the system thermally equilibrates. Values between 0.1 and 1 are o.k, but you propably want to try yourself to get a feeling for how fast temperature jumps during a simulation are. The dpd thermostat does not act on the system center of mass motion. So befor using dpd you have to stop the center of mass motion of your system, which you can achieve by using the command "galileiTransformParticles" in the file scripts/auxiliary.tcl. This may be repeated once in a while for long runs due to round off errors (check with the command "system_com_vel").
 
     <li> NPT ISOTROPIC THERMOSTAT:
     
@@ -115,9 +115,11 @@ extern double temperature;
 extern double langevin_gamma;
 
 /** DPD Friction coefficient gamma. */
-extern double dpd_gamma;
+extern double dpd_gamma1;
 /** DPD thermostat cutoff */
 extern double dpd_r_cut;
+/** DPD transversal Friction coefficient gamma. */
+extern double dpd_gamma2;
 
 /** Friction coefficient for nptiso-thermostat's inline-function friction_therm0_nptiso */
 extern double nptiso_gamma0;
@@ -226,32 +228,66 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 #ifdef DPD
 /** Calculate Random Force and Friction Force acting between particle
     p1 and p2 and add them to their forces. */
-MDINLINE void add_to_part_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist)
+MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double dist2)
 {
-  extern double dpd_pref1, dpd_pref2, dpd_r_cut_inv;
-
-  int j;
-  /* velocity difference between p1 and p2 */
+  extern double dpd_pref1, dpd_pref2, dpd_pref3, dpd_pref4,dpd_r_cut_inv;
+  extern double dpd_gamma1,dpd_gamma2;
+  int i,j;
+  // velocity difference between p1 and p2
   double vel12_dot_d12=0.0;
-  /* inverse distance */
+  // inverse distance
   double dist_inv;
-  /* temporary storage variable */
+  // weighting functions for friction and random force
+  double omega,omega2;// omega = w_R/dist
+  double friction, noise,noise_vec[3];
+  //Projection martix
+  double P_times_dist_sqr[3][3]={{dist2,0,0},{0,dist2,0},{0,0,dist2}};  
+  double f_D[3],f_R[3];
   double tmp;
-  /* weighting functions for friction and random force */
-  double omega, friction, noise;
+//  double tmp;
   if(dist < dpd_r_cut) {
-    /* random force prefactor */
     dist_inv = 1.0/dist;
     omega    = dist_inv - dpd_r_cut_inv;
-    /* friction force prefactor */
-    for(j=0; j<3; j++)  vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
-    friction = dpd_pref1 * SQR(omega) * vel12_dot_d12;
-    /* random force prefactor */
-    noise    = dpd_pref2 * omega      * (d_random()-0.5);
-
-    for(j=0; j<3; j++) {
-      p1->f.f[j] += ( tmp = (noise - friction)*d[j] );
-      p2->f.f[j] -= tmp;
+    omega2   = SQR(omega);
+    //DPD part
+    if (dpd_gamma1 > 0.0 ){
+       // friction force prefactor
+      for(j=0; j<3; j++)  vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
+      friction = dpd_pref1 * omega2 * vel12_dot_d12;
+      // random force prefactor
+      noise    = dpd_pref2 * omega      * (d_random()-0.5);
+      for(j=0; j<3; j++) {
+        p1->f.f[j] += ( tmp = (noise - friction)*d[j] );
+        p2->f.f[j] -= tmp;
+      }
+    }
+    //DPD2 part
+    if (dpd_gamma2 > 0.0 ){      
+      for (i=0;i<3;i++){
+        //noise vector
+        noise_vec[i]=d_random()-0.5;
+        // Projection Matrix
+        for (j=0;j<3;j++){
+          P_times_dist_sqr[i][j]-=d[i]*d[j];
+        }
+      }
+      for (i=0;i<3;i++){
+        //Damping force
+        f_D[i]=0;
+        //Random force
+        f_R[i]=0;
+        for (j=0;j<3;j++){
+          f_D[i]+=P_times_dist_sqr[i][j]*(p1->m.v[j] - p2->m.v[j]);
+          f_R[i]+=P_times_dist_sqr[i][j]*noise_vec[j];
+        }
+        f_D[i]*=dpd_pref3*omega2;
+        f_R[i]*=dpd_pref4*omega*dist_inv;
+      }
+      for(j=0; j<3; j++) {
+        tmp=f_R[j]-f_D[j];
+        p1->f.f[j] += tmp;
+        p2->f.f[j] -= tmp;
+      }
     }
   }
 }
