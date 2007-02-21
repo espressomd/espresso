@@ -393,12 +393,14 @@ void thermo_heat_up()
     langevin_pref2 *= sqrt(3);
     langevin_pref2_rotation *= sqrt(3);
   }
+#ifdef DPD
   else if (thermo_switch & THERMO_DPD){
       dpd_pref2_buffer = dpd_pref2;
       dpd_pref2 *= sqrt(3);
       dpd_pref4_buffer = dpd_pref4;
       dpd_pref4 *= sqrt(3);
   }
+#endif
 }
 
 void thermo_cool_down()
@@ -407,10 +409,12 @@ void thermo_cool_down()
     langevin_pref2          = langevin_pref2_buffer;
     langevin_pref2_rotation = langevin_pref2_rotation_buffer;
   }
+#ifdef DPD
   else if (thermo_switch & THERMO_DPD){
       dpd_pref2 = dpd_pref2_buffer;
       dpd_pref4 = dpd_pref4_buffer;
   }
+#endif
 }
 
 int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
