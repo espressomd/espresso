@@ -2,20 +2,28 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2c (Ydalir)                                                                     *
+* v2.0.2d (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2c -
+- v2.0.2d -
 -----------
 
+(d) February 21st, 2007.
 (c) February 14th, 2007.
 (b) February  6th, 2007.
 (a) February  2nd, 2007.
 
+New Features:
+(d) added DPD thermostat with transversal damping and random force
+(d) Added LU-decomposition for matrices. Can be used for
+(d) solving linear equation systems.
+
 Bugfixes:
+(d) added DPD thermostat to thermo_heat_up() and thermo_cool_down()
+(d) for the same reason as the langevin thermostat
 (c) When working with fixed particles and langevin thermostat, the forces of the
     fixed coordinates haven't been initialized. This is now
     corrected.
