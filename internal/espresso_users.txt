@@ -1686,3 +1686,26 @@ topic:     I work principally on MD and MC simulation of complex fluids.
 reminded:  X19.FEB.2007
 
 
+name:      Paulo Krebs
+email:     krebs@ufpel.edu.br
+institute: Universidade Federal de Pelotas
+           Departamento de Física
+           Caixa Postal 354
+           CEP 96010-900 Pelotas RS
+sent:      23.FEB.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Polymer simulation
+reminded:  X23.FEB.2007
+
+
+name:      Jean-Claude Berthet
+email:     berthet@theochem.org
+institute: University of Iceland
+sent:      23.FEB.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     I am interested in the rattle subroutine.
+reminded:  23.FEB.2007
+
+
