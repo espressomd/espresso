@@ -106,10 +106,10 @@ idxtotoc                        % add the index to the TOC
   \stepcounter{qrfcounter}
   \index{#2@\texttt{#2}|textbf}
   \index{Tcl-commands!#2@\texttt{#2}|textbf}
-  \addtocontents{qrf}{\protect\qrfcommand{#1}{#2}{#3}{\thepage}{qrf\alph{qrfcounter}}}
+  \addtocontents{qrf}{\protect\qrfcommand{#1}{#2}{#3}{\thepage}{qrf\arabic{qrfcounter}}}
   \minisec{Syntax}
   \smallskip
-  \hypertarget{qrf\alph{qrfcounter}}{%
+  \hypertarget{qrf\arabic{qrfcounter}}{%
     \codebox{%
       #2
       \parbox[t]{0.9\linewidth-\widthof{#2}}%
@@ -144,8 +144,8 @@ idxtotoc                        % add the index to the TOC
 \newcommand{\addtoquickref}[1]{\addtocontents{qrf}{#1}}
 \newcommand{\quickrefheading}[1]{%
   \stepcounter{qrfcounter}
-  \addtocontents{qrf}{\protect\qrfheading{#1}{\thepage}{qrf\alph{qrfcounter}}}
-  \hypertarget{qrf\alph{qrfcounter}}{}
+  \addtocontents{qrf}{\protect\qrfheading{#1}{\thepage}{qrf\arabic{qrfcounter}}}
+  \hypertarget{qrf\arabic{qrfcounter}}{}
 }
 
 
