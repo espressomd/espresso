@@ -353,8 +353,8 @@ void on_parameter_change(int field)
     grid_changed_n_nodes();
   if (field == FIELD_BOXL || field == FIELD_NODEGRID)
     grid_changed_box_l();
-  if (field == FIELD_TIMESTEP || field == FIELD_TEMPERATURE || field == FIELD_LANGEVIN_GAMMA || field == FIELD_DPD_GAMMA2
-      || field == FIELD_DPD_GAMMA1 || field == FIELD_NPTISO_G0 || field == FIELD_NPTISO_GV || field == FIELD_NPTISO_PISTON )
+  if (field == FIELD_TIMESTEP || field == FIELD_TEMPERATURE || field == FIELD_LANGEVIN_GAMMA || field == FIELD_DPD_TGAMMA
+      || field == FIELD_DPD_GAMMA || field == FIELD_NPTISO_G0 || field == FIELD_NPTISO_GV || field == FIELD_NPTISO_PISTON )
     reinit_thermo = 1;
 
 #ifdef NPT

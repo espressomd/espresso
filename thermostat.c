@@ -26,13 +26,13 @@ double langevin_gamma_rotation;
 
 /* DPD THERMOSTAT */
 /* DPD longitudinal friction coefficient gamma. */
-double dpd_gamma1 = 0.0;
+double dpd_gamma = 0.0;
 /* DPD thermostat cutoff */
 double dpd_r_cut = 0.0;
 /* inverse off DPD thermostat cutoff */
 double dpd_r_cut_inv = 0.0;
 /* DPD transversal friction coefficient gamma. */
-double dpd_gamma2 = 0.0;
+double dpd_tgamma = 0.0;
 
 /* NPT ISOTROPIC THERMOSTAT */
 // INSERT COMMENT
@@ -76,12 +76,12 @@ int thermo_parse_off(Tcl_Interp *interp, int argc, char **argv)
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
 #ifdef DPD
   /* dpd thermostat */  
-  dpd_gamma1 = 0;
-  mpi_bcast_parameter(FIELD_DPD_GAMMA1);
+  dpd_gamma = 0;
+  mpi_bcast_parameter(FIELD_DPD_GAMMA);
   dpd_r_cut = 0;
   mpi_bcast_parameter(FIELD_DPD_RCUT);
-  dpd_gamma2 = 0;
-  mpi_bcast_parameter(FIELD_DPD_GAMMA2);
+  dpd_tgamma = 0;
+  mpi_bcast_parameter(FIELD_DPD_TGAMMA);
 #endif
 #ifdef NPT
   /* npt isotropic thermostat */
@@ -131,7 +131,7 @@ int thermo_parse_langevin(Tcl_Interp *interp, int argc, char **argv)
 #ifdef DPD
 int thermo_parse_dpd(Tcl_Interp *interp, int argc, char **argv) 
 {
-  double temp, gamma, r_cut,gamma2;
+  double temp, gamma, r_cut,tgamma;
 
 #ifdef ROTATION
     fprintf(stderr,"WARNING: Do not use DPD with ROTATION compiled in\n");
@@ -144,7 +144,7 @@ int thermo_parse_dpd(Tcl_Interp *interp, int argc, char **argv)
   /* check number of arguments */
   if (argc < 5) {
     Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
-		     argv[0]," ",argv[1]," <temp> <gamma> <r_cut> {<gamma2>}\"", (char *)NULL);
+		     argv[0]," ",argv[1]," <temp> <gamma> <r_cut> {<tgamma>}\"", (char *)NULL);
     return (TCL_ERROR);
   }
 
@@ -155,26 +155,26 @@ int thermo_parse_dpd(Tcl_Interp *interp, int argc, char **argv)
   }
   
   if (argc == 6){
-    if ( !ARG_IS_D(5,gamma2) ){
-      Tcl_AppendResult(interp, argv[0]," ",argv[1],": Gamma2 should be double",(char *)NULL);
+    if ( !ARG_IS_D(5,tgamma) ){
+      Tcl_AppendResult(interp, argv[0]," ",argv[1],": tgamma should be double",(char *)NULL);
       return (TCL_ERROR);
     }
   }
   else{
-    gamma2=0.0;
+    tgamma=0.0;
   }
 
   /* broadcast parameters */
   temperature = temp;
-  dpd_gamma1 = gamma;
+  dpd_gamma = gamma;
   dpd_r_cut = r_cut;
-  dpd_gamma2 = gamma2;
+  dpd_tgamma = tgamma;
   thermo_switch = ( thermo_switch | THERMO_DPD );
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
   mpi_bcast_parameter(FIELD_TEMPERATURE);
-  mpi_bcast_parameter(FIELD_DPD_GAMMA1);
+  mpi_bcast_parameter(FIELD_DPD_GAMMA);
   mpi_bcast_parameter(FIELD_DPD_RCUT);
-  mpi_bcast_parameter(FIELD_DPD_GAMMA2);
+  mpi_bcast_parameter(FIELD_DPD_TGAMMA);
   return (TCL_OK);
 }
 #endif
@@ -236,11 +236,11 @@ int thermo_print(Tcl_Interp *interp)
   if(thermo_switch & THERMO_DPD) {
     Tcl_PrintDouble(interp, temperature, buffer);
     Tcl_AppendResult(interp,"{ dpd ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, dpd_gamma1, buffer);
+    Tcl_PrintDouble(interp, dpd_gamma, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
     Tcl_PrintDouble(interp, dpd_r_cut, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, dpd_gamma2, buffer);
+    Tcl_PrintDouble(interp, dpd_tgamma, buffer);
     Tcl_AppendResult(interp," ",buffer, " } ", (char *)NULL);
   }
 #endif
@@ -345,12 +345,12 @@ void thermo_init_langevin()
 void thermo_init_dpd()
 {
   /* prefactor friction force */
-  dpd_pref1 = dpd_gamma1/time_step;
+  dpd_pref1 = dpd_gamma/time_step;
   /* prefactor random force */
-  dpd_pref2 = sqrt(24.0*temperature*dpd_gamma1/time_step);
+  dpd_pref2 = sqrt(24.0*temperature*dpd_gamma/time_step);
   dpd_r_cut_inv = 1.0/dpd_r_cut;
-  dpd_pref3 = dpd_gamma2/time_step;
-  dpd_pref4 = sqrt(24.0*temperature*dpd_gamma2/time_step);
+  dpd_pref3 = dpd_tgamma/time_step;
+  dpd_pref4 = sqrt(24.0*temperature*dpd_tgamma/time_step);
   THERMO_TRACE(fprintf(stderr,"%d: thermo_init_dpd: dpd_pref1=%f, dpd_pref2=%f, dpd_r_cut_inv=%f,dpd_pref1=%f, dpd_pref2=%f\n",
 		       this_node,dpd_pref1,dpd_pref2,dpd_r_cut_inv,dpd_pref3,dpd_pref4));
 }
