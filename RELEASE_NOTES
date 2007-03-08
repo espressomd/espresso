@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2e (Ydalir)                                                                     *
+* v2.0.2f (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2e -
+- v2.0.2f -
 -----------
 
+(f) March     7th, 2007.
 (e) March     1st, 2007.
 (d) February 21st, 2007.
 (c) February 14th, 2007.
@@ -27,6 +28,8 @@ Changes:
     be set in the ug.
 
 Bugfixes:
+(f) fixed a problem with older checkpoint files and the transversale
+    dpd
 (d) added DPD thermostat to thermo_heat_up() and thermo_cool_down()
 (d) for the same reason as the langevin thermostat
 (c) When working with fixed particles and langevin thermostat, the forces of the
