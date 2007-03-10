@@ -1719,3 +1719,15 @@ topic:     Disordered Media
 reminded:  X01.MAR.2007
 
 
+name:      Silke Pelzer
+email:     silke.pelzer@gkss.de
+institute: GKSS
+           Kantstraﬂe 55
+           14153 Teltow
+sent:      09.MAR.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Controlled Release calculations
+reminded:  X09.MAR.2007
+
+
