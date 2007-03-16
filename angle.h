@@ -17,6 +17,8 @@
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
 */
 
+#ifdef BOND_ANGLE
+
 #include "utils.h"
 
 /************************************************************/
@@ -182,5 +184,5 @@ MDINLINE int angle_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
   return 0;
 }
 
-
-#endif
+#endif /* BOND_ANGLE */
+#endif /* ANGLE_H */

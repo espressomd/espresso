@@ -83,6 +83,11 @@
 //#define ALTERNATIVE_INTEGRATOR
 #endif
 
+/* If any bond angle potential is activated, actiavte the whole bond angle code */
+#if defined(BOND_ANGLE_HARMONIC) || defined(BOND_ANGLE_COSINE) || defined(BOND_ANGLE_COSSQUARE)
+#define BOND_ANGLE
+#endif
+
 /********************************************/
 /* \name exported functions of config.c     */
 /********************************************/

@@ -1200,7 +1200,9 @@ int inter_parse_bonded(Tcl_Interp *interp,
 #ifdef LENNARD_JONES  
   REGISTER_BONDED("subt_lj", inter_parse_subt_lj);
 #endif
+#ifdef BOND_ANGLE
   REGISTER_BONDED("angle", inter_parse_angle);
+#endif
   REGISTER_BONDED("dihedral", inter_parse_dihedral);
 #ifdef TABULATED
   REGISTER_BONDED("tabulated", inter_parse_bonded_tabulated);

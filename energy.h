@@ -210,9 +210,11 @@ MDINLINE void add_bonded_energy(Particle *p1)
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
+#ifdef BOND_ANGLE
     case BONDED_IA_ANGLE:
       bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
       break;
+#endif
     case BONDED_IA_DIHEDRAL:
       bond_broken = dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
       break;

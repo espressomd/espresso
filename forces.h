@@ -308,9 +308,11 @@ MDINLINE void add_bonded_force(Particle *p1)
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
+#ifdef BOND_ANGLE
     case BONDED_IA_ANGLE:
       bond_broken = calc_angle_force(p1, p2, p3, iaparams, force, force2);
       break;
+#endif
     case BONDED_IA_DIHEDRAL:
       bond_broken = calc_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
       break;
