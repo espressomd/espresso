@@ -301,7 +301,7 @@
 	     </td>	     
 	     <td>
 	     \image latex bond_angle.eps "Definitiion of the bond angle" width=5cm
-	     <img src="../figs/bond_angle.gif" width=50>
+	     \image html bond_angle.gif" width=50
 	     </td>
 	     </tr></table>
 \subsection tcl_angle Angle potential
@@ -352,8 +352,8 @@
 	     at particle p2!.
 	     </td>	     
 	     <td>
-	     \image latex dihedral_angle.eps "Definitiion of the dihedral angle" width=5cm
-	     <img src="../figs/dihedral_angle.gif" width=50>
+	     \image latex dihedral_angle.eps "Definition of the dihedral angle" width=5cm
+	     \image html dihedral_angle.gif
 	     </td>
 	     </tr></table>
 
