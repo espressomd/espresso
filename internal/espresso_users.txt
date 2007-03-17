@@ -1731,3 +1731,26 @@ topic:     Controlled Release calculations
 reminded:  X09.MAR.2007
 
 
+name:      Ezequiel Leiva
+email:     eleiva@fcq.unc.edu.ar
+institute: Unidad de Matamática y Física. Facultad de Ciencias Químicas.
+           Universidad Nacional de Córdoba. Argentina
+sent:      16.MAR.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Polyelectrolyte Adsorption on charged surfaces.
+reminded:  X16.MAR.2007
+
+
+name:      Dino Leporini
+email:     dino.leporini@df.unipi.it
+institute: Dipartimento di Fisica “Enrico Fermi”, Universit`a di Pisa,
+           Largo B.Pontecorvo 3, I-56127 Pisa, Italy
+sent:      16.MAR.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Large-scale Molecular dynamics simulations of polymer melt,
+           with respect to glass transition.
+reminded:  16.MAR.2007
+
+
