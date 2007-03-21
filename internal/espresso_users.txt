@@ -1754,3 +1754,13 @@ topic:     Large-scale Molecular dynamics simulations of polymer melt,
 reminded:  16.MAR.2007
 
 
+name:      Maurizio Davini
+email:     maurizio.davini@df.unipi.it
+institute: Department of Physics University of Pisa
+sent:      20.MAR.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     Molecular Dynamics
+reminded:  X20.MAR.2007
+
+
