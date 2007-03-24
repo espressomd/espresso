@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2f (Ydalir)                                                                     *
+* v2.0.2g (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2f -
+- v2.0.2g -
 -----------
 
+(g) March    23rd, 2007.
 (f) March     7th, 2007.
 (e) March     1st, 2007.
 (d) February 21st, 2007.
@@ -19,6 +20,7 @@ Current working revision.
 (a) February  2nd, 2007.
 
 New Features:
+(g) New users guide
 (d) added DPD thermostat with transversal damping and random force
 (d) Added LU-decomposition for matrices. Can be used for
 (d) solving linear equation systems.
