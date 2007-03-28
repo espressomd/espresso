@@ -450,14 +450,15 @@ void calc_g123(double *_g1, double *_g2, double *_g3)
   *_g3 = g3 / (1.*chain_n_chains);
 }
 
-void calc_g1_av(double **_g1) {
-  int i, j, p, t,k;
+void calc_g1_av(double **_g1, int window) {
+  int i, j, p, t,k, cnt;
   double *g1=NULL;
   *_g1 = g1 = realloc(g1,n_configs*sizeof(double));
 
   for(k=0; k < n_configs; k++) {
     g1[k] = 0.0;
-    for(t=0; t < n_configs-k; t++) {
+    cnt = window?n_configs-k:1;
+    for(t=window?0:n_configs-k-1; t < n_configs-k; t++) {
       for(j=0; j<chain_n_chains; j++) {
 	for(i=0; i<chain_length; i++) {
 	  p = chain_start+j*chain_length + i;
@@ -467,19 +468,20 @@ void calc_g1_av(double **_g1) {
 	}
       }
     }
-    g1[k] /= ((double)chain_n_chains*chain_length*(n_configs-k));
+    g1[k] /= ((double)chain_n_chains*chain_length*cnt);
   }
 }
 
-void calc_g2_av(double **_g2) {
-  int i, j, p, t,k;
+void calc_g2_av(double **_g2, int window) {
+  int i, j, p, t,k,cnt;
   double *g2=NULL, cm_tmp[3];
   double M;
   *_g2 = g2 = realloc(g2,n_configs*sizeof(double));
 
   for(k=0; k < n_configs; k++) {
     g2[k] = 0.0;
-    for(t=0; t < n_configs-k; t++) {
+    cnt = window?n_configs-k:1;
+    for(t=window?0:n_configs-k-1; t < n_configs-k; t++) {
       for(j=0; j<chain_n_chains; j++) {
 	cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
         M=0.0;
@@ -499,19 +501,20 @@ void calc_g2_av(double **_g2) {
 	}
       }
     }
-    g2[k] /= ((double)chain_n_chains*chain_length*(n_configs-k));
+    g2[k] /= ((double)chain_n_chains*chain_length*cnt);
   }
 }
 
-void calc_g3_av(double **_g3) {
-  int i, j, p, t,k;
+void calc_g3_av(double **_g3, int window) {
+  int i, j, p, t,k,cnt;
   double *g3=NULL, cm_tmp[3];
   double M;
   *_g3 = g3 = realloc(g3,n_configs*sizeof(double));
 
   for(k=0; k < n_configs; k++) {
     g3[k] = 0.0;
-    for(t=0; t < n_configs-k; t++) {
+    cnt = window?n_configs-k:1;
+    for(t=window?0:n_configs-k-1; t < n_configs-k; t++) {
       for(j=0; j<chain_n_chains; j++) {
 	cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
         M=0.0;
@@ -525,7 +528,7 @@ void calc_g3_av(double **_g3) {
 	g3[k] += (SQR(cm_tmp[0]) + SQR(cm_tmp[1]) + SQR(cm_tmp[2]))/SQR(M);
       }
     }
-    g3[k] /= ((double)chain_n_chains*(n_configs-k));
+    g3[k] /= ((double)chain_n_chains*cnt);
   }
 }
 
@@ -1011,20 +1014,21 @@ int parse_g_av(Tcl_Interp *interp, int what, int argc, char **argv)
 {
   /* 'analyze { <g1> | <g2> | <g3> } [<chain_start> <n_chains> <chain_length>]' */
   /******************************************************************************/
-  int i;
+  int i, window = 1;
   char buffer[TCL_DOUBLE_SPACE+2];
   double *gx = NULL;
 
+  if (argc >= 1 && ARG0_IS_S("-sliding")) { window = 0; argc--; argv++; }
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
-  if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
+  if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info or -sliding allowed", (char *)NULL); return TCL_ERROR; }
   if (n_configs == 0) { Tcl_AppendResult(interp, "no configurations found! Use 'analyze append' to save some!", (char *)NULL); return TCL_ERROR; }
   switch (what) {
   case 1:
-    calc_g1_av(&gx); break;
+    calc_g1_av(&gx, window); break;
   case 2:
-    calc_g2_av(&gx); break;
+    calc_g2_av(&gx, window); break;
   case 3:
-    calc_g3_av(&gx); break;
+    calc_g3_av(&gx, window); break;
   default: ;
   }
   for (i=0; i<n_configs; i++) { 
