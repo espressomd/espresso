@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2g (Ydalir)                                                                     *
+* v2.0.2h (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2g -
+- v2.0.2h -
 -----------
 
+(h) March    28th, 2007.
 (g) March    23rd, 2007.
 (f) March     7th, 2007.
 (e) March     1st, 2007.
@@ -20,6 +21,8 @@ Current working revision.
 (a) February  2nd, 2007.
 
 New Features:
+(h) analyze <g1>-<g3> now have a parameter -sliding for a sliding window analysis
+    instead of averaging.
 (g) New users guide
 (d) added DPD thermostat with transversal damping and random force
 (d) Added LU-decomposition for matrices. Can be used for
@@ -30,6 +33,7 @@ Changes:
     be set in the ug.
 
 Bugfixes:
+(h) added error message if skin is larger than the layer height.
 (f) fixed a problem with older checkpoint files and the transversale
     dpd
 (d) added DPD thermostat to thermo_heat_up() and thermo_cool_down()
