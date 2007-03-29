@@ -1094,7 +1094,7 @@ halts all particles in the current simulation, setting their velocities and forc
 countBonds <particle_list> 
 \end{code}
 
-returns a tcl-list of the complete topology described by <particle\_list>, which must have the same format as [part] (see The part command).
+returns a tcl-list of the complete topology described by \var{particle\_list}, which must have the same format as \codebox{part} (see The part command).
 The output list contains only particle\_number and the corresponding bonding informations, thus it looks like e. g.
 \begin{tclcode}
 {106 {0 107}} {107 {0 106} {0 108}} {108 {0 107} {0 109}} ...
@@ -1106,7 +1106,7 @@ Note, that The part command stores any bonds only with the particle of lower par
 \begin{tclcode}
 findPropPos <particle_property_list> <property>
 \end{tclcode}
-returns the index of <property> within <particle\_property\_list>, which is expected to have the same format as [part <particle\_number>]. If <property> is not found, -1 is returned.
+returns the index of \var{property} within \var{particle\_property\_list}, which is expected to have the same format as \codebox{part <particle\_number>}. If \var{property} is not found, -1 is returned.
 This function is useful to access certain properties of particles without hard-wiring their index-position, which might (again) change in future releases of part.
 \begin{tclcode}
 [lindex [part $i] [findPropPos [part $i] type]]
@@ -1115,17 +1115,17 @@ for example returns the \var{particle\_type} of particle \$i without fixing wher
 \begin{code}
 findBondPos <particle_property_list>
 \end{code}
-returns the index of the bonds within var{particle\_property\_list}, which is expected to have the same format as [part \var{particle\_number}];
-hence its output is the same as [findPropPos <particle\_property\_list> bonds]. If the particle does not have any bonds, -1 is returned.
+returns the index of the bonds within var{particle\_property\_list}, which is expected to have the same format as \codebox{part <particle\_number>};
+hence its output is the same as \codebox{findPropPos <particle\_property\_list> bonds}. If the particle does not have any bonds, -1 is returned.
 \begin{code}
 timeStamp <path> <prefix> <postfix> <suffix>
 \end{code}
-modifies the filename contained within <path> to be preceded by a <prefix> and having a <postfix> before the <suffix>; e. g.
+modifies the filename contained within \var{path} to be preceded by a \var{prefix} and having a \var{postfix} before the \var{suffix}; e. g.
 \begin{tclcode}
 timeStamp ./scripts/config.gz DH863 001 gz
 \end{tclcode}
 returns './scripts/DH863\_config001.gz'.
-If <postfix> is '-1' the current date is used in the format '%y%m%d' thus leading to './scripts/DH863\_config021022.gz' on October 22nd, 2002.
+If \var{postfix} is '-1' the current date is used in the format \codebox{\%y\%m\%d} thus leading to \codebox{./scripts/DH863\_config021022.gz on October 22nd, 2002}.
 
 \section{Running Jobs at the Blade-Center}
 The MPI-P has a 28 node Blade-Cluster at the RZG in Garching (see http://www.mpip-mainz.mpg.de/theory/computers/blade/index.html and
@@ -1271,7 +1271,7 @@ blockfile allows for convienent access to a block format structured file \var{ch
 \begin{code}
 blockfile <channel>  write start <tag> 
 \end{code}
-  which writes a start "\{" and the title of the block given by tag.
+  which writes a start "\{" and the title of the block given by \var{tag}.
  \item
 \begin{code}
 blockfile <channel> write end 
@@ -1428,13 +1428,13 @@ cellsystem domain_decomposition -no_verlet_list
 \end{code}
 This selects the domain decomposition cell scheme, using Verlet for the calculation of the interactions. If you specify -no\_verlet\_list, only the domain decomposition is done, but no Verlet lists.
 
-The domain decomposition cellsystem is the default system and suits most applications with short ranged interactions. The particles are divided up spatially into small compartments, the cells, such that the cell size is larger than the maximal interaction range. In this case interactions only occur between particles in adjacent cells. Since the interaction range should be much smaller than the total system size, leaving out all interactions between non-adjacent cells can mean a tremendous speed-up. Moreover, since for constant interaction range, the number of particles in a cell depends only on the density. The number of interactions is therefore of the order N instead of order N\^2 if one has to calculate all pair interactions. For further details, see domain\_decomposition.h.
+The domain decomposition cellsystem is the default system and suits most applications with short ranged interactions. The particles are divided up spatially into small compartments, the cells, such that the cell size is larger than the maximal interaction range. In this case interactions only occur between particles in adjacent cells. Since the interaction range should be much smaller than the total system size, leaving out all interactions between non-adjacent cells can mean a tremendous speed-up. Moreover, since for constant interaction range, the number of particles in a cell depends only on the density. The number of interactions is therefore of the order N instead of order $N^2$ if one has to calculate all pair interactions. For further details, see domain\_decomposition.h.
 
 \subsection{N-squared}
 \begin{code}
 nsquare 
 \end{code}
-This selects the very primitive nsquared cellsystem, which calculates the interactions for all particle pairs. Therefore it loops overall particles, giving an unfavorable computation time scaling of N\^2. However, algorithms like MMM1D or the plain Coulomb interaction in the cell model require the calculation of all pair interactions.
+This selects the very primitive nsquared cellsystem, which calculates the interactions for all particle pairs. Therefore it loops overall particles, giving an unfavorable computation time scaling of $N^2$. However, algorithms like MMM1D or the plain Coulomb interaction in the cell model require the calculation of all pair interactions.
 
 In a multiple processor environment, the nsquared cellsystem uses a simple particle balancing scheme to have a nearly equal number of particles per CPU, i. e. n nodes have m particles, and p-n nodes have m+1 particles, such that n*m+(p-n)*(m+1)=N, the total number of particles. Therefore the computational load should be balanced fairly equal among the nodes, with one exception: This code always uses one CPU for the interaction between two different nodes. For an odd number of nodes, this is fine, because the total number of interactions to calculate is a multiple of the number of nodes, but for an even number of nodes, for each of the p-1 communication rounds, one processor is idle.
 
@@ -1446,7 +1446,7 @@ Therefore it is highly recommended that you use nsquared only with an odd number
 \begin{code}
 layered <n_layers>
 \end{code}
-This selects the layered cell system, which is specifically designed for the needs of the MMM2D algorithm. Basically it consists of a nsquared algorithm in x and y, but a domain decomposition along z, i. e. the system is cut into equally sized layers along the z axis. The current implementation allows for the cpus to align only along the z axis, therefore the processor grid has to have the form 1x1xN. However, each processor may be responsible for several layers, which is determined by <n\_layers>, i. e. the system is split into N*<n\_layers> layers along the z axis. Since in x and y direction there are no processor boundaries, the implementation is basically just a stripped down version of the domain decomposition cellsystem.
+This selects the layered cell system, which is specifically designed for the needs of the MMM2D algorithm. Basically it consists of a nsquared algorithm in x and y, but a domain decomposition along z, i. e. the system is cut into equally sized layers along the z axis. The current implementation allows for the cpus to align only along the z axis, therefore the processor grid has to have the form 1x1xN. However, each processor may be responsible for several layers, which is determined by \var{n\_layers}, i. e. the system is split into N*\var{n\_layers} layers along the z axis. Since in x and y direction there are no processor boundaries, the implementation is basically just a stripped down version of the domain decomposition cellsystem.
 
 \subsection{Internal particle organization}
 
@@ -1598,16 +1598,16 @@ cvs add <file>
 \begin{code}
 cvs checkout <project>
 \end{code}
-  This will create a new directory \var{project} in the CWD, containing an up-to-date version of <project>.
+  This will create a new directory \var{project} in the CWD, containing an up-to-date version of \var{project}.
  \item
 \begin{code}
 cvs commit <file>
 \end{code}
   Puts your changes into the cvsroot directory and makes them available for the others. When you execute this command, you will be asked to enter a log message. Use with care and write a meaningful log message!!! If you have done changes that ought to go into the relase notes, please start the log message with one of the following tags:
   \begin{itemize}
-   \item [NEW] or [FEATURE] for new features
-   \item [BUGFIX] or [FIX] for bug fixes
-   \item [CHANGE] for important changes
+   \item \codebox{[NEW]...} or \codebox{[FEATURE]...} for new features
+   \item \codebox{[BUG]...} or \codebox{[FIX]...} for bug fixes
+   \item \codebox{[CHANGE]...} for important changes
   \end{itemize}
   The log message will then automatically go into the release notes of the next release.
  \item
