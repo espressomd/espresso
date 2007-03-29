@@ -1764,3 +1764,13 @@ topic:     Molecular Dynamics
 reminded:  X20.MAR.2007
 
 
+name:      Nils Binz
+email:     binz@mpip-mainz.mpg.de
+institute: sorry, letzter test hoffentlich
+sent:      28.MAR.2007
+version:   20051115-Espresso_v1.9.7hs.tar.gz
+CVS:       
+topic:     asdf
+reminded:  X28.MAR.2007
+
+
