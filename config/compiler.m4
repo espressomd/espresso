@@ -158,6 +158,7 @@ AC_DEFUN([ES_CHECK_GCC_FLAGS],[
 	Power)		type=pwr; cpu=power ;;
 	Power2)		type=pwr; cpu=power2 ;;
 	Power*)		type=pwr; cpu=powerpc ;;
+	ppc7450)	type=pwr; cpu=7450; altivec=yes ;;
 	ppc*)		type=pwr; cpu=powerpc; altivec=yes ;;
 	EV67*)		type=alpha; cpu=ev67 ;;
 	EV6*)		type=alpha; cpu=ev6 ;;
@@ -172,9 +173,7 @@ AC_DEFUN([ES_CHECK_GCC_FLAGS],[
 	*)	AC_MSG_WARN([could not recognize your cpu type, relying on generic optimization])
 	esac
 	# first try wether the compiler accepts -fast (Apple)
-	# then do not try CPU specific flags
 	ES_TRY_ADD_CFLAG(-fast, accept_fast)
-	if test .$accept_fast != .yes ; then
 
 	# try CPU specific flags
 	if test .$m != .; then
@@ -186,6 +185,10 @@ AC_DEFUN([ES_CHECK_GCC_FLAGS],[
 	if test .$cpu != .; then
 		ES_TRY_ADD_CFLAG(-mcpu=$cpu)
 	fi
+
+	# if fast works, then do not try CPU specific manual optimization flags
+	if test .$accept_fast != .yes ; then
+
 	if test .$altivec != .; then
 		ES_TRY_ADD_CFLAG(-maltivec)
 	fi
