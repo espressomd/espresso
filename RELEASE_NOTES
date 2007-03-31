@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2h (Ydalir)                                                                     *
+* v2.0.2i (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2h -
+- v2.0.2i -
 -----------
 
+(i) March    30th, 2007.
 (h) March    28th, 2007.
 (g) March    23rd, 2007.
 (f) March     7th, 2007.
@@ -21,6 +22,7 @@ Current working revision.
 (a) February  2nd, 2007.
 
 New Features:
+(i) support for G4/ppc7450 on Apple
 (h) analyze <g1>-<g3> now have a parameter -sliding for a sliding window analysis
     instead of averaging.
 (g) New users guide
@@ -33,6 +35,7 @@ Changes:
     be set in the ug.
 
 Bugfixes:
+(i) fixed buggy ntoh function.
 (h) added error message if skin is larger than the layer height.
 (f) fixed a problem with older checkpoint files and the transversale
     dpd
