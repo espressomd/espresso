@@ -90,11 +90,11 @@ void master_pressure_calc(int v_comp);
 */
 void calc_bins_sphere(int *_new_bin,int *_elements,double *_volumes,double r_min,double r_max,int r_bins, double *center);
 
-/** Initializes extern Energy_stat \ref #p_tensor to be used by \ref calc_p_tensor. */
-void init_p_tensor();
+/** Initializes stat to be used by \ref calc_p_tensor. */
+void init_p_tensor(Observable_stat *stat);
 
-/** Initializes extern Energy_stat \ref #p_tensor to be used by \ref calc_p_tensor. */
-void init_p_tensor_non_bonded();
+/** Initializes stat_nb to be used by \ref calc_p_tensor. */
+void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 
 /** Calculates the pressure in the system from a virial expansion as a tensor.<BR>
     Output is stored in the \ref #p_tensor array, in which the <tt>p_tensor.sum</tt>-components contain the sum of the component-tensors
@@ -1059,6 +1059,10 @@ int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char
    if (total_pressure.init_status != 1+v_comp ) {
     init_virials(&total_pressure);
     init_p_tensor(&total_p_tensor);
+
+    init_virials_non_bonded(&total_pressure_non_bonded);
+    init_p_tensor_non_bonded(&total_p_tensor_non_bonded);
+
     if(v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) && !(nptiso.invalidate_p_vel)) {
       if (total_pressure.init_status == 0)
 	master_pressure_calc(0);
