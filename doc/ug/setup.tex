@@ -2027,10 +2027,6 @@ sqr <arg>
 \begin{code}
 min <arg1> <arg2>
 \end{code}
-   \item
-\begin{code}
-min <arg1> <arg2>
-\end{code}
     returns the minimum of \var{arg1} and \var{arg2}.
    \item
 \begin{code}
@@ -2487,7 +2483,7 @@ modifies variables declared in fields. More information can be found in Global v
 \begin{code}
 [setmd <variable>]
 \end{code}
-gives the actual value of <variable> in the MD code back to the Tcl script.
+gives the actual value of \var{variable} in the MD code back to the Tcl script.
 
 
 \section{Statistical Analysis and Creating Gnuplots}
@@ -2504,20 +2500,20 @@ plotObs <file> {x:y1 ... x:yn} [titles {"title.y1" ... "title.yn"}]
 
   With titles each of the data-series can be given an individual description. labels allow to set the annotation of the axis; if only the xlabel is specified, the filename \var{file} is used for the y-axis.
   If the different data series are in multiple files, \var{files} may be given as a tcl-list '{ \var{file1} \var{file2} ... }'; however, in this case each x:yi refers to one file only, hence the length of both tcl-lists must be equal.
-  For executing any other gnuplot-commands simply pass them as one-liner using the 'cmd <gnuplot-command>'-option, e. g. plotObs ... cmd "set key left" to adjust the titles on the left side.
-  To specify a different output-file than the default \var{file}.ps, use the out \var{out}-option; in that case <out>.ps is the result.
+  For executing any other gnuplot-commands simply pass them as one-liner using the \codebox{cmd <gnuplot-command>}-option, e. g. \codebox{plotObs ... cmd "set key left"} to adjust the titles on the left side.
+  To specify a different output-file than the default \var{file}.ps, use the out \var{out}-option; in that case \var{out}.ps is the result.
  \item
 \begin{code}
-plotJoin <destinations> <final>
+plotJoin <sources> <final>
 \end{code}
-  joins the .ps-files given by the tcl-list <destinations> into one single .ps-file '<final>.ps' while placing any two files on one page.
+  joins the .ps-files given by the tcl-list \var{sources} into one single .ps-file \var{final}.ps while placing any two files on one page.
   Note that the resulting files may be huge and therefore hard to print!
  \item
 \begin{code}
 calcObAv <file> <index> [<start>]
 \end{code}
   returns the average of the column with index \var{index} in \var{file}.
-  If the optional parameter <start> is given, the first <start> lines are discarded, the average is only taken for the remaining data in <file>.
+  If the optional parameter \var{start} is given, the first <start> lines are discarded, the average is only taken for the remaining data in \var{file}.
  \item
 \begin{code}
 calcObErr <file> <index> [<start>]
@@ -2658,12 +2654,12 @@ crosslink <N_P> <MPC> [start <part_id>] [catch <r_catch>]
  [distLink <link_dist>] [distChain <chain_dist>] [FENE
  <type_FENE>] [trials <max_try>] 
 \end{code}
-  Attempts to end-crosslink the current configuration of <N\_P> equally long polymers with <MPC> monomers each, returning how many ends are successfully connected. For more information, see The crosslink command.
+  Attempts to end-crosslink the current configuration of \var{N\_P} equally long polymers with \var{MPC} monomers each, returning how many ends are successfully connected. For more information, see The crosslink command.
  \item
 \begin{code}
 velocities <v_max> [start <part_id>] [count <N_T>] 
 \end{code}
-  Sets the velocities of the particles with particle ID (see The part command) between <part\_id> and <part\_id>+<N\_T> (defaults to '0' \& '[setmd npart]-<part\_id>') to a random vector with length in [-vmax,vmax], and returns the absolute value of the total velocity assigned.
+  Sets the velocities of the particles with particle ID (see The part command) between \var{part\_id} and \var{part\_id}+\var{N\_T} (defaults to '0' \& '[setmd npart]-\var{part\_id}') to a random vector with length in [-vmax,vmax], and returns the absolute value of the total velocity assigned.
 \end{itemize}
 
 \subsection{Setting up the interactions and parameters}
@@ -2692,7 +2688,7 @@ constraint <type_name | delete> [parameters]
 \begin{code}
 integrate { <steps> | set <method> <parameter>+ } 
 \end{code}
-  Run <steps> integration steps or set an integration method. The C implementation is integrate.
+  Run \var{steps} integration steps or set an integration method. The C implementation is integrate.
  \item
 \begin{code}
 thermostat { <method> <parameter>+ | off } 
@@ -2702,7 +2698,7 @@ thermostat { <method> <parameter>+ | off }
 \begin{code}
 change_volume { <V_new> | <L_new> { x | y | z | xyz } } 
 \end{code}
-  changes the volume of either a cubic simulation box to the new volume <V\_new> or its given x-/y-/z-/xyz-extension to the new box-length <L\_new>, and isotropically adjusts the particles coordinates as well. The function returns the new volume of the deformed simulation box. The C implementation is change\_volume.
+  changes the volume of either a cubic simulation box to the new volume \var{V\_new} or its given x-/y-/z-/xyz-extension to the new box-length \var{L\_new}, and isotropically adjusts the particles coordinates as well. The function returns the new volume of the deformed simulation box. The C implementation is change\_volume.
  \item
 \begin{code}
 invalidate_system 
@@ -3051,7 +3047,7 @@ The PDB (Brookhaven Protein DataBase) format is a widely used format for describ
 \begin{tclcode}
 writepsf <file> { <N_P> <MPC> <N_CI> <N_pS> <N_nS> }|-molecule
 \end{tclcode}
-writes the current topology to the file <file> (here <file> is not a channel since additional information cannot be written anyways). <N\_P>, <MPC> and so on are parameters describing a system consisting of equally long charged polymers, counterions and salt. This information is used to set the residue name and can be used to color the atoms in VMD. If you specify -molecule, the residue name is taken from the molecule identity of the particle. Of course different kinds of topologies can also be handled by modified versions of writepsf.
+writes the current topology to the file <file> (here <file> is not a channel since additional information cannot be written anyways). \var{N\_P}, \var{MPC} and so on are parameters describing a system consisting of equally long charged polymers, counterions and salt. This information is used to set the residue name and can be used to color the atoms in VMD. If you specify -molecule, the residue name is taken from the molecule identity of the particle. Of course different kinds of topologies can also be handled by modified versions of writepsf.
 \begin{code}
 writepdb <file>
 \end{code}
