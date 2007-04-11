@@ -96,9 +96,9 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts)
       n_buffer_new += sizeof(ParticleMomentum);
     if (data_parts & GHOSTTRANS_FORCE)
       n_buffer_new += sizeof(ParticleForce);
-#ifdef USE_TEMPORARY
-    if (data_parts & GHOSTTRANS_TEMP)
-      n_buffer_new += sizeof(ParticleTemporary);
+#ifdef LB
+    if (data_parts & GHOSTTRANS_COUPLING)
+      n_buffer_new += sizeof(ParticleLatticeCoupling);
 #endif
     n_buffer_new *= count;
   }
@@ -161,10 +161,10 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
 	  memcpy(insert, &pt->f, sizeof(ParticleForce));
 	  insert +=  sizeof(ParticleForce);
 	}
-#ifdef USE_TEMPORARY
-	if (data_parts & GHOSTTRANS_TEMP) {
-	  memcpy(insert, &pt->t, sizeof(ParticleTemporary));
-	  insert +=  sizeof(ParticleTemporary);
+#ifdef LB
+	if (data_parts & GHOSTTRANS_COUPLING) {
+	  memcpy(insert, &pt->lc, sizeof(ParticleLatticeCoupling));
+	  insert +=  sizeof(ParticleLatticeCoupling);
 	}
 #endif
       }
@@ -236,10 +236,10 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 	  memcpy(&pt->f, retrieve, sizeof(ParticleForce));
 	  retrieve +=  sizeof(ParticleForce);
 	}
-#ifdef USE_TEMPORARY
-	if (data_parts & GHOSTTRANS_TEMP) {
-	  memcpy(&pt->t, retrieve, sizeof(ParticleTemporary));
-	  retrieve +=  sizeof(ParticleTemporary);
+#ifdef LB
+	if (data_parts & GHOSTTRANS_COUPLING) {
+	  memcpy(&pt->lc, retrieve, sizeof(ParticleLatticeCoupling));
+	  retrieve +=  sizeof(ParticleLatticeCoupling);
 	}
 #endif
       }
@@ -314,9 +314,9 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
 	  memcpy(&pt2->m, &pt1->m, sizeof(ParticleMomentum));
 	if (data_parts & GHOSTTRANS_FORCE)
 	  add_force(&pt2->f, &pt1->f);
-#ifdef USE_TEMPORARY
-	if (data_parts & GHOSTTRANS_TEMP)
-	  memcpy(&pt2->t, &pt1->t, sizeof(ParticleTemporary));
+#ifdef LB
+	if (data_parts & GHOSTTRANS_COUPLING)
+	  memcpy(&pt2->lc, &pt1->lc, sizeof(ParticleLatticeCoupling));
 #endif
       }
     }

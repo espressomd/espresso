@@ -662,9 +662,9 @@ void dd_topology_init(CellPList *old)
   dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
-#ifdef USE_TEMPORARY
-  dd_prepare_comm(&cell_structure.ghost_temp_comm, GHOSTTRANS_TEMP) ;
-  dd_assign_prefetches(&cell_structure.ghost_temp_comm) ;
+#ifdef LB
+  dd_prepare_comm(&cell_structure.ghost_lbcoupling_comm, GHOSTTRANS_COUPLING) ;
+  dd_assign_prefetches(&cell_structure.ghost_lbcoupling_comm) ;
 #endif
 
   /* initialize cell neighbor structures */
@@ -708,8 +708,8 @@ void dd_topology_release()
   free_comm(&cell_structure.exchange_ghosts_comm);
   free_comm(&cell_structure.update_ghost_pos_comm);
   free_comm(&cell_structure.collect_ghost_force_comm);
-#ifdef USE_TEMPORARY
-  free_comm(&cell_structure.ghost_temp_comm);
+#ifdef LB
+  free_comm(&cell_structure.ghost_lbcoupling_comm);
 #endif
 }
 

@@ -118,6 +118,21 @@
 
 /*@}*/
 
+
+#ifdef MYCONFIG_H
+#include MYCONFIG_H
+#endif
+
+/* Lattice Boltzmann needs lattice structures */
+#ifdef LB
+#define LATTICE
+#endif
+
+/* If any bond angle potential is activated, actiavte the whole bond angle code */
+#if defined(BOND_ANGLE_HARMONIC) || defined(BOND_ANGLE_COSINE) || defined(BOND_ANGLE_COSSQUARE)
+#define BOND_ANGLE
+#endif
+
 /********************************************/
 /* \name exported functions of config.c     */
 /********************************************/

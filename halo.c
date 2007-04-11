@@ -277,6 +277,38 @@ void halo_communication(HaloCommunicator *hc) {
 			   r_buffer, 1, datatype, s_node, REQ_HALO_SPREAD,
 			   MPI_COMM_WORLD, &status[0]);
 	      break ;
+
+	    case HALO_SEND:
+	      datatype = hc->halo_info[n].datatype;
+	      fieldtype = hc->halo_info[n].fieldtype;
+	      s_node = hc->halo_info[n].source_node ;
+	      r_node = hc->halo_info[n].dest_node ;
+	      
+	      HALO_TRACE(fprintf(stderr,"%d: halo_comm send to %d.\n",this_node,r_node));
+
+	      MPI_Isend(s_buffer, 1, datatype, r_node, REQ_HALO_SPREAD, MPI_COMM_WORLD, &request);
+	      halo_dtset(r_buffer,0,fieldtype);
+	      MPI_Wait(&request,&status);
+	      break;
+
+	    case HALO_RECV:
+	      datatype = hc->halo_info[n].datatype;
+	      s_node = hc->halo_info[n].source_node ;
+	      r_node = hc->halo_info[n].dest_node ;
+
+	      HALO_TRACE(fprintf(stderr,"%d: halo_comm recv from %d.\n",this_node,s_node));
+
+	      MPI_Irecv(r_buffer, 1, datatype, s_node, REQ_HALO_SPREAD, MPI_COMM_WORLD, &request);
+	      MPI_Wait(&request,&status);
+	      break;
+
+	    case HALO_OPEN:
+	      fieldtype = hc->halo_info[n].fieldtype;
+
+	      HALO_TRACE(fprintf(stderr,"%d: halo_comm open boundaries\n",this_node));
+
+	      //halo_dtset(r_buffer,0,fieldtype);
+	      break;
 	      
 	}
 
