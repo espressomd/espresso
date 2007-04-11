@@ -10,65 +10,18 @@
 #define CONFIG_H
 
 /** \file config.h
- 
-   This file contains all preprocessor flags deciding which 
-   \ref features to turn on/off.  It is recommended to turn
-   everything off which you do not need in order to optimize the
-   performance of Espresso for your problem. There are also quite a
-   number of features which are turned off by default since they are
-   used only rarely.
 
-   To access the information on the compilation status of the code you
-   are working with in your Espresso Tcl-script, use the corresponding
-   \ref tcl_features "Tcl-commands".
-
-   If you add a new feature to Espresso, you also have to add the
-   corresponding lines in the function \ref compilation_callback and
-   to add documentation in <tt>doc/text/features.doc</tt>.
+    This file contains the defaults for Espresso. To modify them, add
+    an appropriate line in myconfig.h. To find a list of features that
+    can be compiled into Espresso, refer to myconfig-sample.h or to
+    \ref tcl_features "the documentation of the features".
  
    <b>Responsible:</b>
    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 */
 
-#include <archconfig.h>
-
-/* #define PARTIAL_PERIODIC */
-#define ELECTROSTATICS
-/* #define ROTATION */
-/* #define EXTERNAL_FORCES */
-/* #define CONSTRAINTS */
-/* #define MASS */
-/* #define EXCLUSIONS */
-/* #define COMFORCE */
-/* #define COMFIXED */
-/* #define MOLFORCES */
-/* #define BOND_CONSTRAINT */
-
-/* #define TABULATED */
-#define LENNARD_JONES
-/* #define LJ_WARN_WHEN_CLOSE */
-/* #define MORSE */
-/* #define LJCOS */
-/* #define LJCOS2 */
-/* #define BUCKINGHAM */
-/* #define SOFT_SPHERE */
-
-/* Note: Activate ONLY ONE bonded angle potential out of the following! */
-/* #define BOND_ANGLE_HARMONIC */
-/* #define BOND_ANGLE_COSINE */
-/* #define BOND_ANGLE_COSSQUARE */
-
-/* #define NEMD */
-/* #define NPT */ 
-/* #define DPD */
-#define LB
-
-/* Lattice Boltzmann needs lattice structures and temporary particle data */
-#ifdef LB
-#define USE_TEMPORARY
-#define LATTICE
-//#define ALTERNATIVE_INTEGRATOR
-#endif
+/* Include the defines created by configure. */
+#include <acconfig.h>
 
 /************************************************/
 /** \name Default Parameter Settings            */
