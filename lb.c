@@ -1171,17 +1171,17 @@ MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_inde
  *                   image. However, ghosts must be treated to
  *                   transfer momentum to sites on different processors.
  */
-MDINLINE void lb_viscous_momentum_exchange(Particle *p, int *badrandoms, int p_is_ghost) {
+MDINLINE void lb_viscous_momentum_exchange(Particle *p, int p_is_ghost) {
 
-  int x,y,z,dir ;
-  int node_index[8] ;
-  double delta[6] ;
+  int x,y,z;
+  int node_index[8];
+  double delta[6];
   double *local_rho, *local_j, interpolated_u[3], force[3], delta_j[3];
 #ifdef ADDITIONAL_CHECKS
   double old_rho[8];
 #endif
+  int try, badrandoms;
 
-  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f_random = (%.3e,%.3e,%.3e)\n",this_node,p->lc.f_random[0],p->lc.f_random[1],p->lc.f_random[2]));
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
 
   /* determine elementary lattice cell surrounding the particle 
@@ -1198,16 +1198,16 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, int *badrandoms, int p_i
     for (y=0;y<2;y++) {
       for (x=0;x<2;x++) {
 
-	local_rho = lbfluid[node_index[z*4+y*2+x]].rho;
+	local_rho = lbfluid[node_index[(z*2+y)*2+x]].rho;
 #ifdef ADDITIONAL_CHECKS
-	old_rho[z*4+y*2+x] = *local_rho;
+	old_rho[(z*2+y)*2+x] = *local_rho;
 #endif
 	local_j = lbfluid[node_index[z*4+y*2+x]].j ;
 	ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB fluid (%d,%d,%d) local_rho=%.3f local_j=(%.16e,%.3f,%.3f)\n",this_node,x,y,z,*local_rho,local_j[0],local_j[1],local_j[2]));
 
-	for (dir=0;dir<3;dir++) {
-	  interpolated_u[dir] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[dir]/(*local_rho) ;
-	}
+	interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(*local_rho);
+	interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(*local_rho);	  
+	interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(*local_rho) ;
 
       }
     }
@@ -1215,45 +1215,66 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, int *badrandoms, int p_i
   
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB u = (%.16e,%.3e,%.3e) v = (%.16e,%.3e,%.3e)\n",this_node,interpolated_u[0],interpolated_u[1],interpolated_u[2],p->m.v[0],p->m.v[1],p->m.v[2]));
 
-   /* calculate viscous force and add to random force
-     (take care to rescale the velocities with the time_step
-     and transform fluid velocity to MD units) 
-     (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  for (dir=0;dir<3;dir++) {
-    force[dir] = - lbpar.friction * (p->m.v[dir]/time_step - interpolated_u[dir]*agrid/tau);    
-    p->lc.f_random[dir] += - lbpar.friction * (p->m.v[dir]/time_step - interpolated_u[dir]*agrid/tau);
-  }
+  /* calculate viscous force
+   * take care to rescale velocities with time_step and transform to MD units 
+   * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau);
+  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau);
+  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau);
 
-  /* exchange momentum */
-  if (transfer_momentum) {
+  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_drag = (%.6e,%.3e,%.3e)\n",this_node,force[0],force[1],force[2]));
 
+  try = 0;
+
+  do { /* try random numbers */
+      
+    badrandoms = 0;
+
+    p->lc.f_random[try][0] += force[0];
+    p->lc.f_random[try][1] += force[1];
+    p->lc.f_random[try][2] += force[2];
+    
+    ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_tot = (%.6e,%.3e,%.3e)\n",this_node,p->lc.f_random[try][0],p->lc.f_random[try][1],p->lc.f_random[try][2]));
+      
     /* add force to particle if not ghost */
     if (!p_is_ghost) {
-      p->f.f[0] += p->lc.f_random[0];
-      p->f.f[1] += p->lc.f_random[1];
-      p->f.f[2] += p->lc.f_random[2];
-
-      ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_drag = (%.6e,%.3e,%.3e)\n",this_node,force[0],force[1],force[2]));
-      ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_tot = (%.6e,%.3e,%.3e)\n",this_node,p->lc.f_random[0],p->lc.f_random[1],p->lc.f_random[2]));
-      ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+      p->f.f[0] += p->lc.f_random[try][0];
+      p->f.f[1] += p->lc.f_random[try][1];
+      p->f.f[2] += p->lc.f_random[try][2];
     }
 
+    ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+    
     /* transform momentum transfer to lattice units
        (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-    for (dir=0;dir<3;dir++) {
-      delta_j[dir] = - p->lc.f_random[dir]*time_step*tau/agrid;
+    delta_j[0] = - p->lc.f_random[try][0]*time_step*tau/agrid;
+    delta_j[1] = - p->lc.f_random[try][1]*time_step*tau/agrid;
+    delta_j[2] = - p->lc.f_random[try][2]*time_step*tau/agrid;
+    
+    lb_transfer_momentum(delta_j,node_index,delta,&badrandoms);
+    
+    if (badrandoms) {
+      
+      fprintf(stderr,"Badrandoms! Check your parameters if this happens too often.\n");
+
+      if (++try >= MAX_RANDOMS) {
+	char* errtxt = runtime_error(128);
+	ERROR_SPRINTF(errtxt,"{109 Too many bad random numbers} ");
+	return;
+      } else {
+	
+	/* subtract the current total force from the next random force
+	 * in order to cancel the force which has just been applied */
+	p->lc.f_random[try][0] = - p->lc.f_random[try-1][0];
+	p->lc.f_random[try][1] = - p->lc.f_random[try-1][1];
+	p->lc.f_random[try][2] = - p->lc.f_random[try-1][2];
+	
+      }
+      
     }
-
-    int save_bad = *badrandoms;
-    lb_transfer_momentum(delta_j,node_index,delta,badrandoms);
-
-    if (*badrandoms > save_bad) {
-      fprintf(stderr,"%d: badrandoms=%d for particle %d!\n",this_node,*badrandoms,p->p.identity);
-      if (*badrandoms > 1000) errexit(1);
-    }
-
-  }
-
+    
+  } while (badrandoms);
+  
 #ifdef ADDITIONAL_CHECKS
   int i;
   for (i=0;i<8;i++) {
@@ -1302,44 +1323,37 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, int *badrandoms, int p_i
  * probably makes this method preferable compared to the above one.
  */
 void calc_particle_lattice_ia() {
-
-  int i, k, dir, c, np, badrandoms, allbadrandoms ;
+ 
+  int i, j, k, c, np;
   Cell *cell ;
   Particle *p ;
 
-  /* exchange halo regions */
-  halo_communication(&update_halo_comm) ;
+  if (transfer_momentum) {
+
+    /* exchange halo regions */
+    halo_communication(&update_halo_comm) ;
 #ifdef ADDITIONAL_CHECKS
-  lb_check_halo_regions();
+    lb_check_halo_regions();
 #endif
     
-  for (k=0;k<lblattice.halo_grid_volume;k++) {
-    lb_calc_local_fields(&lbfluid[k],0);
-  }
-
-   /* draw random numbers for local particles */
-  for (c=0;c<local_cells.n;c++) {
-    cell = local_cells.cell[c] ;
-    p = cell->part ;
-    np = cell->n ;
-    for (i=0;i<np;i++) {
-      double x[3];
-      for (dir=0;dir<3;dir++) {
-	x[dir] = d_random()-0.5;
-	p[i].lc.f_random[dir] = -lb_coupl_pref*x[dir] ;
-      }
-      ONEPART_TRACE(if (p[i].p.identity==check_id) fprintf(stderr, "%d: OPT: LB f_random = (%.6e,%.3e,%.3e)\n",this_node,p[i].lc.f_random[0],p[i].lc.f_random[1],p[i].lc.f_random[2]));
+    for (k=0;k<lblattice.halo_grid_volume;k++) {
+      lb_calc_local_fields(&lbfluid[k],0);
     }
-  }
 
-  /* try random numbers until no failure occurs during a whole sweep */
-  int try = 0;
-  do {
-
-    allbadrandoms = 0;
-    badrandoms = 0;
-    try++;
-
+    /* draw random numbers for local particles */
+    for (c=0;c<local_cells.n;c++) {
+      cell = local_cells.cell[c] ;
+      p = cell->part ;
+      np = cell->n ;
+      for (i=0;i<np;i++) {
+	for (j=0;j<MAX_RANDOMS;j++) {
+	  p[i].lc.f_random[j][0] = -lb_coupl_pref*(d_random()-0.5);
+	  p[i].lc.f_random[j][1] = -lb_coupl_pref*(d_random()-0.5);
+	  p[i].lc.f_random[j][2] = -lb_coupl_pref*(d_random()-0.5);
+	}
+      }
+    }
+    
     /* communicate the random numbers */
     ghost_communicator(&cell_structure.ghost_lbcoupling_comm) ;
     
@@ -1351,7 +1365,7 @@ void calc_particle_lattice_ia() {
 
       for (i=0;i<np;i++) {
 
-	lb_viscous_momentum_exchange(&p[i],&badrandoms,0) ;
+	lb_viscous_momentum_exchange(&p[i],0) ;
 
       }
 
@@ -1364,47 +1378,20 @@ void calc_particle_lattice_ia() {
       np = cell->n ;
 
       for (i=0;i<np;i++) {
-
-	  /* for ghost particles we have to check if they lie
-	   * in the range of the local lattice nodes */
+	/* for ghost particles we have to check if they lie
+	 * in the range of the local lattice nodes */
 	if (p[i].r.p[0] >= my_left[0]-lblattice.agrid && p[i].r.p[0] < my_right[0]
 	    && p[i].r.p[1] >= my_left[1]-lblattice.agrid && p[i].r.p[1] < my_right[1]
 	    && p[i].r.p[2] >= my_left[2]-lblattice.agrid && p[i].r.p[2] < my_right[2]) {
 
 	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: coupling of ghost\n",this_node));
-	  lb_viscous_momentum_exchange(&p[i],&badrandoms,1) ;
+	  lb_viscous_momentum_exchange(&p[i],1) ;
 
 	}
       }
     }
-
-    MPI_Allreduce(&badrandoms, &allbadrandoms, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD) ;
-
-    if (allbadrandoms>0) {
-
-        fprintf(stderr, "%d: Momentum error (badrandoms=%d, allbadrandoms=%d). Check your parameters if this happens too often!\n",this_node,badrandoms,allbadrandoms);
-
-	if (try > 100) {
-	  fprintf(stderr, "too many tries %d\n",try);
-	  errexit(1);
-	}
-
-	for (c=0;c<local_cells.n;c++) {
-	  cell = local_cells.cell[c] ;
-	  p = cell->part ;
-	  np = cell->n ;
-	  for (i=0;i<np;i++) {
-	    double x[3];
-	    for (dir=0;dir<3;dir++) {
-	      x[dir] = lb_coupl_pref*(d_random()-0.5);
-	      p[i].lc.f_random[dir] = x[dir] - p[i].lc.f_random[dir] ;
-	    }
-	    ONEPART_TRACE(if (p[i].p.identity==check_id) fprintf(stderr, "%d: OPT: LB f_newran = (%.6e,%.3e,%.3e)\n",this_node,x[0],x[1],x[2]));
-	  }
-	}
-    }
-
-  } while (allbadrandoms>0) ;
+    
+  }
 
 }
 
