@@ -73,17 +73,21 @@ typedef struct {
 /** Data structure for fluid on a local lattice site */
 typedef struct {
 
-  /** local populations of the velocity directions */
-  double *n;
-
   /** local density */
-  double *rho;
+  double rho[1];
 
   /** local momentum */
-  double *j;
+  double j[3];
 
   /** local stress tensor */
-  double *pi;
+  double pi[6];
+
+  /** local populations of the velocity directions */
+  double *n;
+#ifndef D3Q19
+  /** temporary storage for the new populations */
+  double *n_new;
+#endif
 
 #ifdef CONSTRAINTS
    /** flag indicating whether this site belongs to a boundary */
@@ -91,11 +95,6 @@ typedef struct {
 
   /** normal vector of the boundary surface */
   double *nvec;
-#endif
-
-#ifndef D3Q19
-  /** temporary storage for the new populations */
-  double *n_new;
 #endif
 
 } LB_FluidNode;
@@ -144,8 +143,10 @@ extern LB_FluidNode *lbfluid;
 /** Switch indicating momentum exchange between particles and fluid */
 extern int transfer_momentum;
 
+/** Eigenvalue of collision operator corresponding to shear viscosity. */
 extern double lblambda;
 
+/** Eigenvalue of collision operator corresponding to bulk viscosity. */
 extern double lblambda_bulk;
 
 /************************************************************/
@@ -171,7 +172,7 @@ void lb_reinit_fluid();
  * @param rho   Local density of the fluid (Input)
  * @param j     Local momentum of the fluid (Input)
  */
-void lb_set_local_fields(int index, const double rho, const double *v);
+void lb_set_local_fields(int index, const double rho, const double *v, const double *pi);
 
 /** Returns the mass, momentum and stress of a local lattice site.
  * @param index The index of the lattice site within the local domain (Input)
