@@ -91,6 +91,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef LENNARD_JONES
   Tcl_AppendResult(interp, "{ LENNARD_JONES } ", (char *) NULL);
 #endif
+#ifdef SMOOTH_STEP
+  Tcl_AppendResult(interp, "{ SMOOTH_STEP } ", (char *) NULL);
+#endif
 #ifdef MORSE
   Tcl_AppendResult(interp, "{ MORSE } ", (char *) NULL);
 #endif

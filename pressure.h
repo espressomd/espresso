@@ -77,6 +77,7 @@ extern nptiso_struct nptiso;
 /* include the potential files */
 #include "p3m.h"
 #include "lj.h"
+#include "steppot.h"
 #include "buckingham.h"
 #include "morse.h"
 #include "soft_sphere.h"
@@ -150,6 +151,10 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   /* lennard jones */
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist, force);
+#endif
+  /* smooth step */
+#ifdef SMOOTH_STEP
+  add_SmSt_pair_force(p1,p2,ia_params,d,dist,dist2, force);
 #endif
   /* buckingham*/
 #ifdef BUCKINGHAM

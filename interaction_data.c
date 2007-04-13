@@ -26,6 +26,7 @@
 #include "maggs.h"
 #include "elc.h"
 #include "lj.h"
+#include "steppot.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
 #include "tab.h"
@@ -93,6 +94,15 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJ_shift =
     params->LJ_offset =
     params->LJ_capradius = 0;
+#endif
+
+#ifdef SMOOTH_STEP
+  params->SmSt_eps =
+    params->SmSt_sig =
+    params->SmSt_cut =
+    params->SmSt_d =
+    params->SmSt_n =
+    params->SmSt_k0 = 0;
 #endif
 
 #ifdef MORSE
@@ -190,6 +200,15 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJ_capradius = src->LJ_capradius;
 #endif
 
+#ifdef SMOOTH_STEP
+  dst->SmSt_eps = src->SmSt_eps;
+  dst->SmSt_sig = src->SmSt_sig;
+  dst->SmSt_cut = src->SmSt_cut;
+  dst->SmSt_d = src->SmSt_d;
+  dst->SmSt_n = src->SmSt_n;
+  dst->SmSt_k0 = src->SmSt_k0;
+#endif
+
 #ifdef MORSE
   dst->MORSE_eps = src->MORSE_eps;
   dst->MORSE_alpha = src->MORSE_alpha;
@@ -280,6 +299,11 @@ int checkIfParticlesInteract(int i, int j) {
 
 #ifdef LENNARD_JONES
   if (data->LJ_cut != 0)
+    return 1;
+#endif
+
+#ifdef SMOOTH_STEP
+  if (data->SmSt_cut != 0)
     return 1;
 #endif
   
@@ -490,6 +514,13 @@ void calc_maximal_cutoff()
 	   if(max_cut_non_bonded < (data->LJ_cut+data->LJ_offset) )
 	     max_cut_non_bonded = (data->LJ_cut+data->LJ_offset);
 	 }
+#endif
+
+#ifdef SMOOTH_STEP
+         if (data->SmSt_cut != 0) {
+           if(max_cut_non_bonded < data->SmSt_cut)
+             max_cut_non_bonded = data->SmSt_cut;
+         }
 #endif
 
 #ifdef MORSE
@@ -834,6 +865,9 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #ifdef LENNARD_JONES
   if (data->LJ_cut != 0) printljIAToResult(interp,i,j);
 #endif
+#ifdef SMOOTH_STEP
+  if (data->SmSt_cut != 0) printSmStIAToResult(interp,i,j);
+#endif
 #ifdef MORSE
   if (data->MORSE_cut != 0) printmorseIAToResult(interp,i,j);
 #endif
@@ -1097,6 +1131,10 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 
 #ifdef LENNARD_JONES
     REGISTER_NONBONDED("lennard-jones", lj_parser);
+#endif
+
+#ifdef SMOOTH_STEP
+    REGISTER_NONBONDED("smooth-step", SmSt_parser);
 #endif
 
 #ifdef MORSE

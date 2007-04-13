@@ -135,6 +135,18 @@ typedef struct {
   /*@}*/
 #endif
 
+#ifdef SMOOTH_STEP
+  /** \name smooth step potential */
+  /*@{*/
+  double SmSt_eps;
+  double SmSt_sig;
+  double SmSt_cut;
+  double SmSt_d;
+  int    SmSt_n;
+  double SmSt_k0;
+  /*@}*/
+#endif
+
 #ifdef MORSE 
   /** \name Morse potential */
   /*@{*/
