@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2j (Ydalir)                                                                     *
+* v2.0.2k (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2j -
+- v2.0.2k -
 -----------
 
+(k) April    13th, 2007.
 (j) April     2nd, 2007.
 (i) March    30th, 2007.
 (h) March    28th, 2007.
@@ -23,6 +24,7 @@ Current working revision.
 (a) February  2nd, 2007.
 
 New Features:
+(k) added smooth step potential.
 (i) support for G4/ppc7450 on Apple
 (h) analyze <g1>-<g3> now have a parameter -sliding for a sliding window analysis
     instead of averaging.
@@ -36,6 +38,7 @@ Changes:
     be set in the ug.
 
 Bugfixes:
+(k) in the dist-tgz, GPL.TXT and LICENSE.TXT were missing
 (j) added missing allocations in stress tensor calculation.
 (i) fixed buggy ntoh function.
 (h) added error message if skin is larger than the layer height.
