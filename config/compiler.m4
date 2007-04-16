@@ -79,45 +79,49 @@ dnl ***************************** compiler type ******************************
 
 AC_DEFUN([ES_CHECK_DEC],[
 	if $CC -V 2>&1 | grep "Compaq C" >/dev/null 2>&1; then
-		compiler_type=dec
+		with_compilertype=dec
 	fi
 	if $CC -V 2>&1 | grep "Digital UNIX Compiler" >/dev/null 2>&1; then
-		compiler_type=dec
+		with_compilertype=dec
 	fi
 ])
 
 AC_DEFUN([ES_CHECK_ICC],[
 	if $CC -V 2>&1 | grep "Intel" >/dev/null 2>&1; then
-		compiler_type=icc
+		with_compilertype=icc
 	fi
 ])
 
 AC_DEFUN([ES_CHECK_GCC],[
 	if $CC -v 2>&1 | grep "gcc" >/dev/null 2>&1; then
-		compiler_type=gcc
+		with_compilertype=gcc
 	fi
 ])
 
 AC_DEFUN([ES_CHECK_XLC],[
 	if $CC 2>&1 | grep "xlc" >/dev/null 2>&1; then
-		compiler_type=xlc
+		with_compilertype=xlc
 	fi
 ])
 
 AC_DEFUN([ES_CHECK_COMPILERTYPE],[
-	compiler_type=unknown
+	AC_ARG_WITH(compilertype,
+                AC_HELP_STRING(--with-compilertype=TYPE,
+                        [type of the compiler]),
+                [ test .$with_compilertype = .no && with_compilertype=unknown ],
+                [ with_compilertype=unknown ])
 	AC_MSG_CHECKING([the compiler type])
 	ES_CHECK_XLC
-	if test $compiler_type = unknown; then
+	if test $with_compilertype = unknown; then
 		ES_CHECK_DEC
-		if test $compiler_type = unknown; then
+		if test $with_compilertype = unknown; then
 			ES_CHECK_ICC
-			if test $compiler_type = unknown; then
+			if test $with_compilertype = unknown; then
 				ES_CHECK_GCC
 			fi
 		fi
 	fi
-	AC_MSG_RESULT($compiler_type)
+	AC_MSG_RESULT($with_compilertype)
 ])
 
 dnl ******************************* optimizations ********************************
@@ -335,7 +339,7 @@ AC_DEFUN([ES_CHECK_DEC_FLAGS],[
 
 AC_DEFUN([ES_CHECK_OPTFLAGS],[
 	ES_CHECK_COMPILERTYPE
-	case $compiler_type in
+	case $with_compilertype in
 	gcc)	ES_CHECK_GCC_FLAGS ;;
 	icc)	ES_CHECK_ICC_FLAGS ;;
 	xlc)	ES_CHECK_XLC_FLAGS ;;
@@ -358,7 +362,7 @@ AC_DEFUN([ES_CHECK_OPTFLAGS],[
 AC_DEFUN([ES_SET_ARCH_FLAGS],[
 	dnl os/binutils dependent stuff
 	case $target_os in
-	*aix*)	if test .$compiler_type = .xlc; then
+	*aix*)	if test .$with_compilertype = .xlc; then
 			LDFLAGS="$LDFLAGS -brtl"
 		else
 			LDFLAGS="$LDFLAGS -Wl,-brtl"
