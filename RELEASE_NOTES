@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2k (Ydalir)                                                                     *
+* v2.0.2l (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2k -
+- v2.0.2l -
 -----------
 
+(l) April    17th, 2007.
 (k) April    13th, 2007.
 (j) April     2nd, 2007.
 (i) March    30th, 2007.
@@ -24,6 +25,9 @@ Current working revision.
 (a) February  2nd, 2007.
 
 New Features:
+(l) configure has now a flag --with-compilertype, to manually specify the compiler
+    type in case
+(l) the auto detection fails (e. g. mpicc + xlc)
 (k) added smooth step potential.
 (i) support for G4/ppc7450 on Apple
 (h) analyze <g1>-<g3> now have a parameter -sliding for a sliding window analysis
