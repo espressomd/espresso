@@ -1,4 +1,4 @@
-dnl -*- mode: autoconf -*-
+ldnl -*- mode: autoconf -*-
 
 AC_DEFUN([ES_CHECK_MPI],[
 	AC_BEFORE([$0],[ES_CHECK_COMPILER])
@@ -127,7 +127,7 @@ AC_DEFUN([ES_MPI_SETUP_FAKE],[
 
 AC_DEFUN([ES_MPI_FIND_MPICC],[
 	# only test the compiler if not overridden by the user
-	if test .$user_defined_CC != .yes; then
+	if test .$ac_env_CC_set != .set; then
 		AC_CHECK_PROGS(MPICC,[mpcc mpxlc mpicc mpicci mpiccg hcc cc icc gcc])
 		CC=$MPICC
 	fi
