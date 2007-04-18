@@ -33,7 +33,7 @@
 
 #include "utils.h"
 
-#ifdef ELECTROSTATICS
+#ifdef FFTW
 
 /************************************************
  * data types

@@ -99,6 +99,7 @@ void calc_long_range_forces()
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
+#ifdef ELP3M
   case COULOMB_ELC_P3M:
     if (elc_params.dielectric_contrast_on) {
       ELC_P3M_modify_p3m_sums_both();
@@ -125,6 +126,7 @@ void calc_long_range_forces()
 #endif
       P3M_calc_kspace_forces(1,0);
     break;
+#endif
   case COULOMB_EWALD:
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO)

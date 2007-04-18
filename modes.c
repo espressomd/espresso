@@ -15,9 +15,11 @@
 #include "communication.h"
 #include "errorhandling.h"
 
+#ifdef MODES
+
 /** fftw plan for calculating the 2d mode analysis */
 
-#ifdef USEFFTW3
+#if FFTW == 3
 #  ifdef FFTW_ENABLE_FLOAT
 typedef float fftw_real;
 #  else
@@ -397,7 +399,7 @@ int get_lipid_orients(IntList* l_orient) {
     \li The height function is fourier transformed using the fftw library.
 */
 int modes2d(fftw_complex* modes) {
-#ifdef USEFFTW3
+#if FFTW == 3
   /* All these variables need to be static so that the fftw3 plan can
      be initialised and reused */
   static  fftw_plan mode_analysis_plan;
@@ -427,7 +429,7 @@ int modes2d(fftw_complex* modes) {
 
     STAT_TRACE(fprintf(stderr,"%d,destroying old fftw plan \n",this_node));
 
-#ifdef USEFFTW3
+#if FFTW == 3
     /* Make sure all memory is free and old plan is destroyed. It's ok
        to call these functions on uninitialised pointers I think */
     fftw_free(result); 
@@ -469,7 +471,7 @@ int modes2d(fftw_complex* modes) {
 
   STAT_TRACE(fprintf(stderr,"%d,calling fftw \n",this_node));
 
-#ifdef USEFFTW3
+#if FFTW == 3
   fftw_execute(mode_analysis_plan);
   /* Copy result to modes */
   memcpy(modes, result, mode_grid_3d[xdir]*(mode_grid_3d[ydir]/2 + 1)*sizeof(fftw_complex));
@@ -902,7 +904,6 @@ int calc_height_grid ( double* height_grid ) {
 
 }
 
-
-
 #undef MODES2D_NUM_TOL
 
+#endif

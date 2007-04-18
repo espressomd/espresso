@@ -37,6 +37,7 @@
 /* #define COMFIXED */
 /* #define MOLFORCES */
 /* #define BOND_CONSTRAINT */
+/* #define MODES */
 
 /**********************************************************************/
 /*                        integrator features                         */

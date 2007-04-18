@@ -31,7 +31,7 @@
 #include "tuning.h"
 #include "elc.h"
 
-#ifdef ELECTROSTATICS
+#ifdef ELP3M
 
 /************************************************
  * DEFINES
@@ -3396,13 +3396,7 @@ double JJ_rtbisection(double (*func)(double,double,double,int,double,double),
   return -9999999.9999;  
 
 }       
-    
-  
-  
-   
-   
+
 #endif //DIPOLES
 
-
 #endif
-

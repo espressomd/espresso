@@ -1185,7 +1185,7 @@ static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
 
 }
 
-
+#ifdef MODES
 
 static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
 {
@@ -1666,6 +1666,7 @@ static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
   return TCL_ERROR;
 }
 
+#endif
 
 static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
 {
@@ -2767,12 +2768,14 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYZE_OPTION("fluid", parse_analyze_fluid);
 #endif
   REGISTER_ANALYSIS("get_folded_positions", parse_get_folded_positions);
+#ifdef MODES
   REGISTER_ANALYZE_OPTION("set_bilayer", parse_bilayer_set);
   REGISTER_ANALYSIS("modes2d", parse_modes2d);
   REGISTER_ANALYSIS("bilayer_density_profile", parse_bilayer_density_profile);
   REGISTER_ANALYSIS("radial_density_map", parse_radial_density_map);
   REGISTER_ANALYSIS("get_lipid_orients", parse_get_lipid_orients);
   REGISTER_ANALYSIS("lipid_orient_order", parse_lipid_orient_order);
+#endif
   REGISTER_ANALYSIS("mol", parse_mol);
   REGISTER_ANALYSIS("mindist", parse_mindist);
   REGISTER_ANALYSIS("aggregation", parse_aggregation);

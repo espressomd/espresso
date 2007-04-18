@@ -77,7 +77,7 @@ int on_program_start(Tcl_Interp *interp)
   /* Initialise force and energy tables */
   force_and_energy_tables_init();
 
-#ifdef ELECTROSTATICS
+#ifdef FFTW
   fft_pre_init();
 #endif
 
@@ -190,10 +190,12 @@ void on_observable_calc()
   if(reinit_electrostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
     switch (coulomb.method) {
+#ifdef ELP3M
     case COULOMB_ELC_P3M:
     case COULOMB_P3M:
       P3M_count_charged_particles();
       break;
+#endif
     case COULOMB_EWALD:
       EWALD_count_charged_particles();
       break;
@@ -231,6 +233,7 @@ void on_coulomb_change()
   else
     coulomb.prefactor = coulomb.bjerrum;
   switch (coulomb.method) {
+#ifdef ELP3M
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
@@ -239,6 +242,7 @@ void on_coulomb_change()
     integrate_vv_recalc_maxrange();
     on_parameter_change(FIELD_MAXRANGE);
     break;
+#endif
   case COULOMB_EWALD:
     EWALD_init();
     integrate_vv_recalc_maxrange();
@@ -298,9 +302,11 @@ void on_resort_particles()
   EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
+#ifdef ELP3M
   case COULOMB_ELC_P3M:
     ELC_on_resort_particles();
     break;
+#endif
   case COULOMB_MMM2D:
     MMM2D_on_resort_particles();
     break;
@@ -318,10 +324,12 @@ void on_NpT_boxl_change(double scal1) {
   
 #ifdef ELECTROSTATICS
   switch(coulomb.method) {
+#ifdef ELP3M
   case COULOMB_P3M:
     P3M_scaleby_box_l();
     integrate_vv_recalc_maxrange();
     break;
+#endif
   case COULOMB_EWALD:
     EWALD_scaleby_box_l();
     integrate_vv_recalc_maxrange();
@@ -365,6 +373,7 @@ void on_parameter_change(int field)
 #ifdef ELECTROSTATICS
   cc = 0;
   switch (coulomb.method) {
+#ifdef ELP3M
   case COULOMB_ELC_P3M:
     if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
       cc = 1;
@@ -377,6 +386,7 @@ void on_parameter_change(int field)
       integrate_vv_recalc_maxrange(); 
     }
     break;
+#endif
   case COULOMB_EWALD:
     if (field == FIELD_TEMPERATURE || field == FIELD_SKIN)
       cc = 1;

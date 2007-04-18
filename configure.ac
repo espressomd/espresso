@@ -170,18 +170,15 @@ cat <<EOF
 
 Libraries:
 ----------
-Tcl version		= $tclversion
-Tk version		= $tkversion
-FFTW version		= $with_fftw
+Tcl version		= $use_tcl
+Tk version		= $use_tk
+FFTW version		= $use_fftw
 efence			= $with_efence
 EOF
 
-if test .$tclversion != .tcl8.5 && test .$tclversion != .tcl8.4; then
+if test .$use_tcl != .tcl8.5 && test .$use_tcl != .tcl8.4; then
    echo "WARNING: Not all supplied scripts work properly with Tcl version before 8.4, consider upgrading"
 fi 
-if test .$tkversion = .no; then
-   echo "Tk disabled (enable with --enable-tk)"
-fi
 
 cat <<EOF
 

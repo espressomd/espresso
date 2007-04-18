@@ -21,7 +21,9 @@
 #include "statistics.h"
 #include "parser.h"
 
-#ifdef USEFFTW3
+#ifdef FFTW
+
+#if FFTW == 3
 #ifdef _Complex_I
 #  warning the complex data type is predefined on your system, hoping it is compatible to a double[2]
 #endif
@@ -104,5 +106,4 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
 int bilayer_density_profile_sphere (IntList *beadids, double rrange , DoubleList *density_profile, double radius, double center[3]);
 #endif
 
-
-
+#endif

@@ -24,6 +24,19 @@
 #endif
 #endif
 
+/* errors for all modules that require fftw if not present */
+#ifndef FFTW
+
+#ifdef MODES
+#error MODES requires the fftw
+#endif
+
+#ifdef LB
+#error LB requires the fftw
+#endif
+
+#endif
+
 int version_callback(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, PACKAGE_NAME ": " PACKAGE_VERSION ", Last Change: " LAST_CHANGE, (char *) NULL);
@@ -41,13 +54,16 @@ int compilation_callback(Tcl_Interp *interp)
   Tcl_AppendResult(interp, "{ " PROFILING " } ", (char *) NULL);
 #endif
   Tcl_AppendResult(interp, "{ MPI " MPI " } ", (char *) NULL);
-#ifdef USEFFTW3
-  Tcl_AppendResult(interp, "{ FFTW3 } ", (char *) NULL);
-#else
+#if FFTW == 2
   Tcl_AppendResult(interp, "{ FFTW2 } ", (char *) NULL);
+#elif FFTW == 3
+  Tcl_AppendResult(interp, "{ FFTW3 } ", (char *) NULL);
 #endif
 #ifdef TK
   Tcl_AppendResult(interp, "{ TK } ", (char *) NULL);
+#endif
+#ifdef MODES
+  Tcl_AppendResult(interp, "{ MODES } ", (char *) NULL);
 #endif
 #ifdef PARTIAL_PERIODIC
   Tcl_AppendResult(interp, "{ PARTIAL_PERIODIC } ", (char *) NULL);

@@ -2,4 +2,4 @@
 # This is the chooser wrapper for Espresso
 ESPRESSO_PKGLIBDIR="@ESPRESSO_PKGLIBDIR@"
 objdir=$ESPRESSO_PKGLIBDIR/obj-`$ESPRESSO_PKGLIBDIR/config.guess`
-exec $objdir/Espresso
+exec $objdir/Espresso $*

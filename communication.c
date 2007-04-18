@@ -531,9 +531,11 @@ void mpi_bcast_event_slave(int node, int event)
 {
   switch (event) {
 #ifdef ELECTROSTATICS
+#ifdef ELP3M
   case P3M_COUNT_CHARGES:
     P3M_count_charged_particles();
     break;
+#endif
   case EWALD_COUNT_CHARGES:
     EWALD_count_charged_particles();
     break; 
@@ -1489,12 +1491,14 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   switch (coulomb.method) {
   case COULOMB_NONE:
     break;
+#ifdef ELP3M
   case COULOMB_ELC_P3M:
     MPI_Bcast(&elc_params, sizeof(ELC_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     // fall through
   case COULOMB_P3M:
     MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
+#endif
   case COULOMB_DH:
   case COULOMB_DH_PW:
     MPI_Bcast(&dh_params, sizeof(Debye_hueckel_params), MPI_BYTE, 0, MPI_COMM_WORLD);

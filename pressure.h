@@ -209,9 +209,11 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   /* real space coulomb */
   if (coulomb.method != COULOMB_NONE) {
     switch (coulomb.method) {
+#ifdef ELP3M
     case COULOMB_P3M:
       ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;
+#endif
     case COULOMB_DH:
       ret = dh_coulomb_pair_energy(p1,p2,dist);
       break;

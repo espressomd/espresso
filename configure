@@ -894,8 +894,7 @@ Optional Packages:
   --with-efence           use ElectricFence memory debugging for the debug
                           binary
   --with-tcl=VERSION      specify the tcl library to use (e.g. tcl8.4)
-  --with-tk=VERSION       whether to use Tk and which version to use for the
-                          GUI
+  --with-tk=VERSION       whether to use Tk, and which version to use
   --with-x                use the X Window System
   --with-fftw=VERSION     specify the version of FFTW to use (2 or 3)
   --with-myconfig=FILE    default name of the local config file [myconfig.h]
@@ -10159,7 +10158,7 @@ echo "$as_me: WARNING:
 ********************************************************************************\
 		       " >&2;}
 fi;
-	if test $with_efence = yes; then
+	if test .$with_efence = .yes; then
 
 echo "$as_me:$LINENO: checking for malloc in -lefence" >&5
 echo $ECHO_N "checking for malloc in -lefence... $ECHO_C" >&6
@@ -10256,16 +10255,16 @@ _ACEOF
 # Check whether --with-tcl or --without-tcl was given.
 if test "${with_tcl+set}" = set; then
   withval="$with_tcl"
-  tclversion=$with_tcl
+
 else
-  tclversion=yes
+  with_tcl=yes
 fi;
 
 	# Check whether --enable-tcl or --disable-tcl was given.
 if test "${enable_tcl+set}" = set; then
   enableval="$enable_tcl"
 
-		tclversion=$enable_tcl
+		with_tcl=$enable_tcl
 		{ echo "$as_me:$LINENO: WARNING:
 ********************************************************************************
 * The option --enable-tcl is deprecated and will be removed in a future        *
@@ -10280,8 +10279,12 @@ echo "$as_me: WARNING:
 		" >&2;}
 fi;
 
-	if test .$tclversion = .yes; then
-		tclversion=""
+
+	if test .$with_tcl = .no; then
+	   { { echo "$as_me:$LINENO: error: Tcl is required!" >&5
+echo "$as_me: error: Tcl is required!" >&2;}
+   { (exit 1); exit 1; }; }
+	elif test .$with_tcl = .yes; then
 		for version in $TCL_VERSION tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
 
 	echo "$as_me:$LINENO: checking for lib$version" >&5
@@ -10411,20 +10414,20 @@ echo "${ECHO_T}no" >&6
 		LIBS=$save_LIBS
 	fi
 	if test .$adp_found = .yes; then
-  tclversion=$version
+  use_tcl=$version
 fi
 
 
-			if test .$tclversion != .; then break; fi
+			if test .$use_tcl != .; then break; fi
 		done
 	else
 
-	echo "$as_me:$LINENO: checking for lib$tclversion" >&5
-echo $ECHO_N "checking for lib$tclversion... $ECHO_C" >&6
+	echo "$as_me:$LINENO: checking for lib$with_tcl" >&5
+echo $ECHO_N "checking for lib$with_tcl... $ECHO_C" >&6
 	save_LDFLAGS=$LDFLAGS
 	save_LIBS=$LIBS
 	adp_found=no
-		LIBS="-l$tclversion $save_LIBS"
+		LIBS="-l$with_tcl $save_LIBS"
 	cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -10546,23 +10549,24 @@ echo "${ECHO_T}no" >&6
 		LIBS=$save_LIBS
 	fi
 	if test .$adp_found = .yes; then
-  :
-else
-  tclversion=""
+  use_tcl=$with_tcl
 fi
 
 
 	fi
-	if test .$tclversion = .; then
-		case $target_os in
+
+	# check the results
+	if test .$use_tcl = .; then
+	   # Tcl was not found
+	   case $target_os in
 		*darwin*) { echo "$as_me:$LINENO: If you have Tcl installed, make sure that in one of the library paths, e.g. /usr/local/lib,
 	there is a link from lib<tclversion>.dylib to the Tcl library, which usually is
 	/Library/Frameworks/Tcl.framework/Tcl." >&5
 echo "$as_me: If you have Tcl installed, make sure that in one of the library paths, e.g. /usr/local/lib,
 	there is a link from lib<tclversion>.dylib to the Tcl library, which usually is
 	/Library/Frameworks/Tcl.framework/Tcl." >&6;} ;;
-		*)	{ { echo "$as_me:$LINENO: error: Tcl library $tclversion not found" >&5
-echo "$as_me: error: Tcl library $tclversion not found" >&2;}
+		*)	{ { echo "$as_me:$LINENO: error: Tcl library not found!" >&5
+echo "$as_me: error: Tcl library not found!" >&2;}
    { (exit 1); exit 1; }; } ;;
 		esac
 	fi
@@ -10664,10 +10668,13 @@ else
   { { echo "$as_me:$LINENO: error: TCL headers not found. Please add the include path to CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/tcl8.4)." >&5
 echo "$as_me: error: TCL headers not found. Please add the include path to CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/tcl8.4)." >&2;}
    { (exit 1); exit 1; }; }
-
 fi
 
 
+
+	if test .$use_tcl = .; then
+	   use_tcl=none
+	fi
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -11143,15 +11150,15 @@ fi
 # Check whether --with-tk or --without-tk was given.
 if test "${with_tk+set}" = set; then
   withval="$with_tk"
-  tkversion=$with_tk
+
 else
-  tkversion=no
+  with_tk=no
 fi;
 	# Check whether --enable-tk or --disable-tk was given.
 if test "${enable_tk+set}" = set; then
   enableval="$enable_tk"
 
-		tkversion=$enable_tk
+		with_tk=$enable_tk
 		{ echo "$as_me:$LINENO: WARNING:
 ********************************************************************************
 * The option --enable-tk is deprecated and will be removed in a future         *
@@ -11165,8 +11172,9 @@ echo "$as_me: WARNING:
 ********************************************************************************\
 		" >&2;}
 fi;
-	if test .$tkversion != .no; then
-				if test "$no_x" = yes; then
+				if test .$with_tk != .no; then
+		# test for X11
+		if test "$no_x" = yes; then
   # Not all programs may use this symbol, but it does not hurt to define it.
 
 cat >>confdefs.h <<\_ACEOF
@@ -12379,15 +12387,15 @@ x11_works=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
-		if test $x11_works = no ;then
+		if test $x11_works = no; then
 			{ echo "$as_me:$LINENO: WARNING: could not link against X11, hoping Tk works without" >&5
 echo "$as_me: WARNING: could not link against X11, hoping Tk works without" >&2;}
 			CPPFLAGS=$saved_CPPFLAGS
 			LDFLAGS=$saved_LDFLAGS
 			LIBS=$saved_LIBS
 		fi
-		if test .$tkversion = .yes; then
-			tkversion=""
+		# now test whether Tk can be found
+		if test .$with_tk = .yes; then
 			for version in $TK_VERSION tk8.5 tk8.4 tk8.3 tk8.2 tk; do
 
 	echo "$as_me:$LINENO: checking for lib$version" >&5
@@ -12517,22 +12525,20 @@ echo "${ECHO_T}no" >&6
 		LIBS=$save_LIBS
 	fi
 	if test .$adp_found = .yes; then
-  tkversion=$version
+  use_tk=$version
 fi
 
 
-				if test .$tkversion != .; then
-					break;
-				fi
+				if test .$use_tk != .; then break; fi
 			done
 		else
 
-	echo "$as_me:$LINENO: checking for lib$tkversion" >&5
-echo $ECHO_N "checking for lib$tkversion... $ECHO_C" >&6
+	echo "$as_me:$LINENO: checking for lib$with_tk" >&5
+echo $ECHO_N "checking for lib$with_tk... $ECHO_C" >&6
 	save_LDFLAGS=$LDFLAGS
 	save_LIBS=$LIBS
 	adp_found=no
-		LIBS="-l$tkversion $save_LIBS"
+		LIBS="-l$with_tk $save_LIBS"
 	cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -12654,38 +12660,36 @@ echo "${ECHO_T}no" >&6
 		LIBS=$save_LIBS
 	fi
 	if test .$adp_found = .yes; then
-  :
-else
-  tkversion=""
+  use_tk=$with_tk
 fi
 
 
 		fi
-		if test .$tkversion = .; then
+		if test .$use_tk = .; then
 			case $target_os in
-			*darwin*) { { echo "$as_me:$LINENO: error: If you have Tk installed, make sure that in one of the library paths, e.g. /usr/local/lib,
+			(*darwin*) { { echo "$as_me:$LINENO: error: If you have Tk installed, make sure that in one of the library paths, e.g. /usr/local/lib,
 	there is a link from lib<tkversion>.dylib to the Tk library, which usually is
 	/Library/Frameworks/Tk.framework/Tk." >&5
 echo "$as_me: error: If you have Tk installed, make sure that in one of the library paths, e.g. /usr/local/lib,
 	there is a link from lib<tkversion>.dylib to the Tk library, which usually is
 	/Library/Frameworks/Tk.framework/Tk." >&2;}
    { (exit 1); exit 1; }; } ;;
-			*)	{ { echo "$as_me:$LINENO: error: Tk library $tkversion not found" >&5
-echo "$as_me: error: Tk library $tkversion not found" >&2;}
+			(*)	{ { echo "$as_me:$LINENO: error: Tk library $with_tk not found" >&5
+echo "$as_me: error: Tk library $with_tk not found" >&2;}
    { (exit 1); exit 1; }; } ;;
 			esac
 		fi
-		if test $tkversion = tk; then
-			if test .$tclversion != .tcl; then
+		if test .$use_tk = .tk; then
+			if test .$use_tcl != .tcl; then
 				{ echo "$as_me:$LINENO: WARNING: You are using a generic Tk version, but a defined Tcl version. This may cause problems.
-	Try --tcl-version=tcl to also use a generic Tcl version, which may fit better." >&5
+	Try --with-tcl=tcl to also use a generic Tcl version, which may fit better." >&5
 echo "$as_me: WARNING: You are using a generic Tk version, but a defined Tcl version. This may cause problems.
-	Try --tcl-version=tcl to also use a generic Tcl version, which may fit better." >&2;}
+	Try --with-tcl=tcl to also use a generic Tcl version, which may fit better." >&2;}
 			fi
 		fi
 		case $target_os in
-		*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Headers ;;
-		*) ;;
+		(*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Headers ;;
+		(*) ;;
 		esac
 
 	echo "$as_me:$LINENO: checking for tk.h" >&5
@@ -12787,10 +12791,12 @@ fi
 
 
 
-cat >>confdefs.h <<\_ACEOF
-#define TK
+cat >>confdefs.h <<_ACEOF
+#define TK $use_tk
 _ACEOF
 
+	else
+		use_tk=none
 	fi
 
 
@@ -12799,8 +12805,6 @@ _ACEOF
 if test "${with_fftw+set}" = set; then
   withval="$with_fftw"
 
-else
-  with_fftw=guess
 fi;
 	# Check whether --enable-fftw or --disable-fftw was given.
 if test "${enable_fftw+set}" = set; then
@@ -12821,17 +12825,635 @@ echo "$as_me: WARNING:
 		" >&2;}
 fi;
 
-	if test $with_fftw = guess; then
-		if test .$known_fftw != .; then
-			with_fftw=$known_fftw
+	if test .$with_fftw = . || test .$with_fftw = .yes; then
+	     # search for FFTW
+	     if test .$known_fftw != .; then
+		# FFTW is predefined
+		use_fftw=$known_fftw
+	     else
+		# search for FFTW
+
+
+	echo "$as_me:$LINENO: checking for libfftw3" >&5
+echo $ECHO_N "checking for libfftw3... $ECHO_C" >&6
+	save_LDFLAGS=$LDFLAGS
+	save_LIBS=$LIBS
+	adp_found=no
+		LIBS="-lfftw3 $save_LIBS"
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char fftw_plan_many_dft ();
+int
+main ()
+{
+fftw_plan_many_dft ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  adp_found=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+
+	if test .$adp_found = .no; then
+		for path in  /sw/lib /usr/lib64 /usr/local/lib64 /opt/lib64 /usr/lib /usr/local/lib /opt/lib; do
+			LDFLAGS="$save_LDFLAGS -L$path"
+			cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char fftw_plan_many_dft ();
+int
+main ()
+{
+fftw_plan_many_dft ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  adp_found=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+			if test .$adp_found = .yes; then break; fi
+		done
+	fi
+	if test .$adp_found = .yes; then
+		echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+	else
+		echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+		LDFLAGS=$save_LDFLAGS
+		LIBS=$save_LIBS
+	fi
+	if test .$adp_found = .yes; then
+  fftw3_found=yes
+else
+  fftw3_found=no
+fi
+
+
+	if test .$fftw3_found = .yes; then
+
+	echo "$as_me:$LINENO: checking for fftw3.h" >&5
+echo $ECHO_N "checking for fftw3.h... $ECHO_C" >&6
+	save_CPPFLAGS=$CPPFLAGS
+	adp_found=no
+		cat >conftest.$ac_ext <<_ACEOF
+
+		#include <fftw3.h>
+
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  adp_found=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+
+	if test .$adp_found = .no; then
+		for path in  /sw/include /usr/include /usr/local/include /opt/include; do
+			CPPFLAGS="$save_CPPFLAGS -I$path"
+			cat >conftest.$ac_ext <<_ACEOF
+
+				#include <fftw3.h>
+
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  adp_found=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+			if test .$adp_found = .yes; then break; fi
+		done
+	fi
+	if test .$adp_found = .yes; then
+		echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+	else
+		echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+		CPPFLAGS=$save_CPPFLAGS
+	fi
+	if test .$adp_found = .yes; then
+  :
+else
+  fftw3_found=no
+fi
+
+
+	fi
+
+		if test .$fftw3_found = .yes; then
+		   use_fftw=3
+		else
+
+						saved_LIBS=$LIBS
+
+	echo "$as_me:$LINENO: checking for libdfftw" >&5
+echo $ECHO_N "checking for libdfftw... $ECHO_C" >&6
+	save_LDFLAGS=$LDFLAGS
+	save_LIBS=$LIBS
+	adp_found=no
+		LIBS="-ldfftw $save_LIBS"
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char fftw_create_plan_specific ();
+int
+main ()
+{
+fftw_create_plan_specific ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  adp_found=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+
+	if test .$adp_found = .no; then
+		for path in  /sw/lib /usr/lib64 /usr/local/lib64 /opt/lib64 /usr/lib /usr/local/lib /opt/lib; do
+			LDFLAGS="$save_LDFLAGS -L$path"
+			cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char fftw_create_plan_specific ();
+int
+main ()
+{
+fftw_create_plan_specific ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  adp_found=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+			if test .$adp_found = .yes; then break; fi
+		done
+	fi
+	if test .$adp_found = .yes; then
+		echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+	else
+		echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+		LDFLAGS=$save_LDFLAGS
+		LIBS=$save_LIBS
+	fi
+	if test .$adp_found = .yes; then
+  fftw2_found=yes
+else
+  fftw2_found=no
+fi
+
+
+	if test .$fftw2_found = .yes; then
+		LIBS="$saved_LIBS -ldrfftw -ldfftw"
+	else
+
+	echo "$as_me:$LINENO: checking for libfftw" >&5
+echo $ECHO_N "checking for libfftw... $ECHO_C" >&6
+	save_LDFLAGS=$LDFLAGS
+	save_LIBS=$LIBS
+	adp_found=no
+		LIBS="-lfftw $save_LIBS"
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char fftw_create_plan_specific ();
+int
+main ()
+{
+fftw_create_plan_specific ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  adp_found=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+
+	if test .$adp_found = .no; then
+		for path in  /sw/lib /usr/lib64 /usr/local/lib64 /opt/lib64 /usr/lib /usr/local/lib /opt/lib; do
+			LDFLAGS="$save_LDFLAGS -L$path"
+			cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char fftw_create_plan_specific ();
+int
+main ()
+{
+fftw_create_plan_specific ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  adp_found=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+			if test .$adp_found = .yes; then break; fi
+		done
+	fi
+	if test .$adp_found = .yes; then
+		echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+	else
+		echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+		LDFLAGS=$save_LDFLAGS
+		LIBS=$save_LIBS
+	fi
+	if test .$adp_found = .yes; then
+  fftw2_found=yes
+else
+  fftw2_found=no
+fi
+
+
+		if test .$fftw2_found = .yes; then
+			LIBS="$LIBS -lrfftw -lfftw"
 		fi
 	fi
-	if test $with_fftw = 3; then
+	if test .$fftw2_found = .yes; then
 
-cat >>confdefs.h <<\_ACEOF
-#define USEFFTW3
+	echo "$as_me:$LINENO: checking for fftw.h" >&5
+echo $ECHO_N "checking for fftw.h... $ECHO_C" >&6
+	save_CPPFLAGS=$CPPFLAGS
+	adp_found=no
+		cat >conftest.$ac_ext <<_ACEOF
+
+		#include <fftw.h>
+
 _ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  adp_found=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
 
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+
+	if test .$adp_found = .no; then
+		for path in  /sw/include /usr/include /usr/local/include /opt/include; do
+			CPPFLAGS="$save_CPPFLAGS -I$path"
+			cat >conftest.$ac_ext <<_ACEOF
+
+				#include <fftw.h>
+
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  adp_found=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+			if test .$adp_found = .yes; then break; fi
+		done
+	fi
+	if test .$adp_found = .yes; then
+		echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+	else
+		echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+		CPPFLAGS=$save_CPPFLAGS
+	fi
+	if test .$adp_found = .yes; then
+  :
+else
+  fftw2_found=no
+fi
+
+
+	fi
+
+		  if test .$fftw2_found = .yes; then
+		     use_fftw=2
+		  elif test .$with_fftw = .yes; then
+		     { { echo "$as_me:$LINENO: error: no FFTW found" >&5
+echo "$as_me: error: no FFTW found" >&2;}
+   { (exit 1); exit 1; }; }
+		  fi
+		fi
+	     fi
+	elif test .$with_fftw = .3; then
+                use_fftw=3
 
 
 	echo "$as_me:$LINENO: checking for libfftw3" >&5
@@ -13070,7 +13692,8 @@ fi
 echo "$as_me: error: could not link against FFTW3, please specify its header and library locations in CPPFLAGS and LDFLAGS" >&2;}
    { (exit 1); exit 1; }; }
 		fi
-	elif test $with_fftw = 2; then
+	elif test .$with_fftw = .2; then
+		use_fftw=2
 
 						saved_LIBS=$LIBS
 
@@ -13451,629 +14074,21 @@ fi
 echo "$as_me: error: could not link against FFTW2, please specify its header and library locations in CPPFLAGS and LDFLAGS" >&2;}
    { (exit 1); exit 1; }; }
 		fi
-	else
-
-
-	echo "$as_me:$LINENO: checking for libfftw3" >&5
-echo $ECHO_N "checking for libfftw3... $ECHO_C" >&6
-	save_LDFLAGS=$LDFLAGS
-	save_LIBS=$LIBS
-	adp_found=no
-		LIBS="-lfftw3 $save_LIBS"
-	cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char fftw_plan_many_dft ();
-int
-main ()
-{
-fftw_plan_many_dft ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  adp_found=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-
-	if test .$adp_found = .no; then
-		for path in  /sw/lib /usr/lib64 /usr/local/lib64 /opt/lib64 /usr/lib /usr/local/lib /opt/lib; do
-			LDFLAGS="$save_LDFLAGS -L$path"
-			cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char fftw_plan_many_dft ();
-int
-main ()
-{
-fftw_plan_many_dft ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  adp_found=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-			if test .$adp_found = .yes; then break; fi
-		done
-	fi
-	if test .$adp_found = .yes; then
-		echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-	else
-		echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-		LDFLAGS=$save_LDFLAGS
-		LIBS=$save_LIBS
-	fi
-	if test .$adp_found = .yes; then
-  fftw3_found=yes
-else
-  fftw3_found=no
-fi
-
-
-	if test .$fftw3_found = .yes; then
-
-	echo "$as_me:$LINENO: checking for fftw3.h" >&5
-echo $ECHO_N "checking for fftw3.h... $ECHO_C" >&6
-	save_CPPFLAGS=$CPPFLAGS
-	adp_found=no
-		cat >conftest.$ac_ext <<_ACEOF
-
-		#include <fftw3.h>
-
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  adp_found=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-
-	if test .$adp_found = .no; then
-		for path in  /sw/include /usr/include /usr/local/include /opt/include; do
-			CPPFLAGS="$save_CPPFLAGS -I$path"
-			cat >conftest.$ac_ext <<_ACEOF
-
-				#include <fftw3.h>
-
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  adp_found=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-			if test .$adp_found = .yes; then break; fi
-		done
-	fi
-	if test .$adp_found = .yes; then
-		echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-	else
-		echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-		CPPFLAGS=$save_CPPFLAGS
-	fi
-	if test .$adp_found = .yes; then
-  :
-else
-  fftw3_found=no
-fi
-
-
-	fi
-
-		if test .$fftw3_found = .yes; then
-			with_fftw=3
-			cat >>confdefs.h <<\_ACEOF
-#define USEFFTW3 1
-_ACEOF
-
-		else
-
-						saved_LIBS=$LIBS
-
-	echo "$as_me:$LINENO: checking for libdfftw" >&5
-echo $ECHO_N "checking for libdfftw... $ECHO_C" >&6
-	save_LDFLAGS=$LDFLAGS
-	save_LIBS=$LIBS
-	adp_found=no
-		LIBS="-ldfftw $save_LIBS"
-	cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char fftw_create_plan_specific ();
-int
-main ()
-{
-fftw_create_plan_specific ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  adp_found=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-
-	if test .$adp_found = .no; then
-		for path in  /sw/lib /usr/lib64 /usr/local/lib64 /opt/lib64 /usr/lib /usr/local/lib /opt/lib; do
-			LDFLAGS="$save_LDFLAGS -L$path"
-			cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char fftw_create_plan_specific ();
-int
-main ()
-{
-fftw_create_plan_specific ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  adp_found=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-			if test .$adp_found = .yes; then break; fi
-		done
-	fi
-	if test .$adp_found = .yes; then
-		echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-	else
-		echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-		LDFLAGS=$save_LDFLAGS
-		LIBS=$save_LIBS
-	fi
-	if test .$adp_found = .yes; then
-  fftw2_found=yes
-else
-  fftw2_found=no
-fi
-
-
-	if test .$fftw2_found = .yes; then
-		LIBS="$saved_LIBS -ldrfftw -ldfftw"
-	else
-
-	echo "$as_me:$LINENO: checking for libfftw" >&5
-echo $ECHO_N "checking for libfftw... $ECHO_C" >&6
-	save_LDFLAGS=$LDFLAGS
-	save_LIBS=$LIBS
-	adp_found=no
-		LIBS="-lfftw $save_LIBS"
-	cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char fftw_create_plan_specific ();
-int
-main ()
-{
-fftw_create_plan_specific ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  adp_found=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-
-	if test .$adp_found = .no; then
-		for path in  /sw/lib /usr/lib64 /usr/local/lib64 /opt/lib64 /usr/lib /usr/local/lib /opt/lib; do
-			LDFLAGS="$save_LDFLAGS -L$path"
-			cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char fftw_create_plan_specific ();
-int
-main ()
-{
-fftw_create_plan_specific ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  adp_found=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-			if test .$adp_found = .yes; then break; fi
-		done
-	fi
-	if test .$adp_found = .yes; then
-		echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-	else
-		echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-		LDFLAGS=$save_LDFLAGS
-		LIBS=$save_LIBS
-	fi
-	if test .$adp_found = .yes; then
-  fftw2_found=yes
-else
-  fftw2_found=no
-fi
-
-
-		if test .$fftw2_found = .yes; then
-			LIBS="$LIBS -lrfftw -lfftw"
-		fi
-	fi
-	if test .$fftw2_found = .yes; then
-
-	echo "$as_me:$LINENO: checking for fftw.h" >&5
-echo $ECHO_N "checking for fftw.h... $ECHO_C" >&6
-	save_CPPFLAGS=$CPPFLAGS
-	adp_found=no
-		cat >conftest.$ac_ext <<_ACEOF
-
-		#include <fftw.h>
-
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  adp_found=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-
-	if test .$adp_found = .no; then
-		for path in  /sw/include /usr/include /usr/local/include /opt/include; do
-			CPPFLAGS="$save_CPPFLAGS -I$path"
-			cat >conftest.$ac_ext <<_ACEOF
-
-				#include <fftw.h>
-
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  adp_found=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-			if test .$adp_found = .yes; then break; fi
-		done
-	fi
-	if test .$adp_found = .yes; then
-		echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-	else
-		echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-		CPPFLAGS=$save_CPPFLAGS
-	fi
-	if test .$adp_found = .yes; then
-  :
-else
-  fftw2_found=no
-fi
-
-
-	fi
-
-			if test .$fftw2_found != .yes; then
-				{ { echo "$as_me:$LINENO: error: no FFTW found" >&5
-echo "$as_me: error: no FFTW found" >&2;}
+	elif test .$with_fftw != .no; then
+	  { { echo "$as_me:$LINENO: error: specified bad FFTW version ($with_fftw)" >&5
+echo "$as_me: error: specified bad FFTW version ($with_fftw)" >&2;}
    { (exit 1); exit 1; }; }
-			fi
-			with_fftw=2
-		fi
+	fi
+
+	# now save the result
+	if test .$use_fftw = .; then
+	   use_fftw=none
+	else
+
+cat >>confdefs.h <<_ACEOF
+#define FFTW $use_fftw
+_ACEOF
+
 	fi
 
 
@@ -17918,17 +17933,14 @@ cat <<EOF
 
 Libraries:
 ----------
-Tcl version		= $tclversion
-Tk version		= $tkversion
-FFTW version		= $with_fftw
+Tcl version		= $use_tcl
+Tk version		= $use_tk
+FFTW version		= $use_fftw
 efence			= $with_efence
 EOF
 
-if test .$tclversion != .tcl8.5 && test .$tclversion != .tcl8.4; then
+if test .$use_tcl != .tcl8.5 && test .$use_tcl != .tcl8.4; then
    echo "WARNING: Not all supplied scripts work properly with Tcl version before 8.4, consider upgrading"
-fi
-if test .$tkversion = .no; then
-   echo "Tk disabled (enable with --enable-tk)"
 fi
 
 cat <<EOF

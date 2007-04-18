@@ -120,6 +120,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
   if (coulomb.method != COULOMB_NONE) {
     /* real space coulomb */
     switch (coulomb.method) {
+#ifdef ELP3M
     case COULOMB_P3M:
       ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
 #ifdef DIPOLES
@@ -131,6 +132,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
       if (elc_params.dielectric_contrast_on)
 	ret += 0.5*ELC_P3M_dielectric_layers_energy_contribution(p1,p2);
       break;
+#endif
     case COULOMB_EWALD:
       ret = ewald_coulomb_pair_energy(p1,p2,d,dist2,dist);
       break;

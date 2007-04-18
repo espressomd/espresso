@@ -23,7 +23,7 @@
 #include "p3m.h"
 #include "errorhandling.h"
 
-#ifdef ELECTROSTATICS
+#ifdef ELP3M
 
 // #define CHECKPOINTS
 // #define LOG_FORCES

@@ -78,6 +78,7 @@ void calc_long_range_energies()
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
+#ifdef ELP3M
   case COULOMB_P3M:
     P3M_charge_assign(); 
     energy.coulomb[1] = P3M_calc_kspace_forces(0,1);
@@ -106,6 +107,7 @@ void calc_long_range_energies()
     }
     energy.coulomb[2] = ELC_energy();
     break;
+#endif
   case COULOMB_EWALD:
     energy.coulomb[1] = EWALD_calc_kspace_forces(0,1);
     EWALD_TRACE(fprintf(stderr,"%d: EWALD: energy.coulomb[1]=%g\n",this_node,energy.coulomb[1]));
@@ -135,8 +137,10 @@ void init_energies(Observable_stat *stat)
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE:  n_coulomb = 0; break;
+#ifdef ELP3M
   case COULOMB_ELC_P3M: n_coulomb = 3; break;
   case COULOMB_P3M:   n_coulomb = 2; break;
+#endif
   case COULOMB_EWALD: n_coulomb = 2; break;
   default: n_coulomb  = 1;
   }

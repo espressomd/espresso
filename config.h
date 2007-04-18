@@ -76,6 +76,11 @@
 #include MYCONFIG_H
 #endif
 
+/* activate P3M only with FFTW */
+#if defined(ELECTROSTATICS) && defined(FFTW)
+#define ELP3M
+#endif
+
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
 #ifdef LB
 #define USE_TEMPORARY

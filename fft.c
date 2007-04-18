@@ -21,7 +21,9 @@
 #include <math.h>
 #include "utils.h"
 
-#ifdef USEFFTW3
+#ifdef FFTW
+
+#if FFTW == 3
 #  include <fftw3.h>
 #else
 #  include <fftw.h>
@@ -36,8 +38,6 @@
 #include "fft.h"
 #include "p3m.h"
 
-#ifdef ELECTROSTATICS
-
 /************************************************
  * DEFINES
  ************************************************/
@@ -49,7 +49,7 @@
 #define REQ_FFT_FORW   301
 /** Tag for communication in back_grid_comm() */
 #define REQ_FFT_BACK   302
-#ifdef USEFFTW3
+#if FFTW == 3
 /* Tag for wisdom file I/O */
 #  define FFTW_FAILURE 0
 #endif
@@ -205,7 +205,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
   /* FFTW WISDOM stuff. */
   char wisdom_file_name[255];
   FILE *wisdom_file;
-#ifdef USEFFTW3
+#if FFTW == 3
   int wisdom_status;
 #else
   fftw_status wisdom_status;
@@ -376,7 +376,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
       fclose(wisdom_file);
     }
     if(fft_init_tag==1) fftw_destroy_plan(fft_plan[i].fft_plan);
-#ifdef USEFFTW3
+#if FFTW == 3
 //printf("fft_plan[%d].n_ffts=%d\n",i,fft_plan[i].n_ffts);
     fft_plan[i].fft_plan =
       fftw_plan_many_dft(1,&fft_plan[i].new_mesh[2],fft_plan[i].n_ffts,
@@ -394,7 +394,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
       fftw_export_wisdom_to_file(wisdom_file);
       fclose(wisdom_file);
     }
-#ifdef USEFFTW3
+#if FFTW == 3
     fft_plan[i].fft_function = fftw_execute;       
 #else
     fft_plan[i].fft_function = fftw;       
@@ -413,7 +413,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
       fclose(wisdom_file);
     }    
     if(fft_init_tag==1) fftw_destroy_plan(fft_back[i].fft_plan);
-#ifdef USEFFTW3
+#if FFTW == 3
     fft_back[i].fft_plan =
       fftw_plan_many_dft(1,&fft_plan[i].new_mesh[2],fft_plan[i].n_ffts,
                          c_data,NULL,1,fft_plan[i].new_mesh[2],
@@ -430,7 +430,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
       fftw_export_wisdom_to_file(wisdom_file);
       fclose(wisdom_file);
     }
-#ifdef USEFFTW3
+#if FFTW == 3
     fft_back[i].fft_function = fftw_execute;
 #else
     fft_back[i].fft_function = fftw;
@@ -486,7 +486,7 @@ void fft_perform_forw(double *data)
     data[(2*i)+1] = 0;       /* complex value */
   }
   /* perform FFT (in/out is data)*/
-#ifdef USEFFTW3
+#if FFTW == 3
   fftw_execute_dft(fft_plan[1].fft_plan,c_data,c_data);
 #else
   fft_plan[1].fft_function(fft_plan[1].fft_plan, fft_plan[1].n_ffts,
@@ -498,7 +498,7 @@ void fft_perform_forw(double *data)
   /* communication to current dir row format (in is data) */
   forw_grid_comm(fft_plan[2], data, data_buf);
   /* perform FFT (in/out is data_buf)*/
-#ifdef USEFFTW3
+#if FFTW == 3
   fftw_execute_dft(fft_plan[2].fft_plan,c_data_buf,c_data_buf);
 #else
   fft_plan[2].fft_function(fft_plan[2].fft_plan, fft_plan[2].n_ffts,
@@ -510,7 +510,7 @@ void fft_perform_forw(double *data)
   /* communication to current dir row format (in is data_buf) */
   forw_grid_comm(fft_plan[3], data_buf, data);
   /* perform FFT (in/out is data)*/
-#ifdef USEFFTW3
+#if FFTW == 3
   fftw_execute_dft(fft_plan[3].fft_plan,c_data,c_data);
 #else
   fft_plan[3].fft_function(fft_plan[3].fft_plan, fft_plan[3].n_ffts,
@@ -536,7 +536,7 @@ void fft_perform_back(double *data)
 
 
   /* perform FFT (in is data) */
-#ifdef USEFFTW3
+#if FFTW == 3
   fftw_execute_dft(fft_back[3].fft_plan,c_data,c_data);
 #else
   fft_back[3].fft_function(fft_back[3].fft_plan, fft_plan[3].n_ffts,
@@ -549,7 +549,7 @@ void fft_perform_back(double *data)
   /* ===== second direction ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 2:\n",this_node));
   /* perform FFT (in is data_buf) */
-#ifdef USEFFTW3
+#if FFTW == 3
   fftw_execute_dft(fft_back[2].fft_plan,c_data_buf,c_data_buf);
 #else
   fft_back[2].fft_function(fft_back[2].fft_plan, fft_plan[2].n_ffts,
@@ -562,7 +562,7 @@ void fft_perform_back(double *data)
   /* ===== first direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 1:\n",this_node));
   /* perform FFT (in is data) */
-#ifdef USEFFTW3
+#if FFTW == 3
   fftw_execute_dft(fft_back[1].fft_plan,c_data,c_data);
 #else
   fft_back[1].fft_function(fft_back[1].fft_plan, fft_plan[1].n_ffts,

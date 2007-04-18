@@ -3,6 +3,9 @@
 /* Turn on debugging? */
 #undef DEBUG
 
+/* Whether to use the FFTW library, and which version to use */
+#undef FFTW
+
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 
@@ -157,9 +160,6 @@
 
 /* Whether to use Tk */
 #undef TK
-
-/* Whether to use the FFTW3 library */
-#undef USEFFTW3
 
 /* prevent TCL from defining const ptrs */
 #undef USE_NON_CONST

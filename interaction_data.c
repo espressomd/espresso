@@ -575,6 +575,7 @@ void calc_maximal_cutoff()
 #ifdef ELECTROSTATICS
   /* real space electrostatic */
   switch (coulomb.method) {
+#ifdef ELP3M
   case COULOMB_ELC_P3M:
     if (max_cut_non_bonded < elc_params.space_layer)
       max_cut_non_bonded = elc_params.space_layer;
@@ -583,6 +584,7 @@ void calc_maximal_cutoff()
     if (max_cut_non_bonded < p3m.r_cut)
       max_cut_non_bonded = p3m.r_cut;
     break;
+#endif
   case COULOMB_EWALD:
     if (max_cut_non_bonded < ewald.r_cut)
       max_cut_non_bonded = ewald.r_cut;
@@ -629,8 +631,10 @@ int check_obs_calc_initialized()
   switch (coulomb.method) {
   case COULOMB_MMM1D: if (MMM1D_sanity_checks()) state = 0; break;
   case COULOMB_MMM2D: if (MMM2D_sanity_checks()) state = 0; break;
+#ifdef ELP3M
   case COULOMB_ELC_P3M: if (ELC_sanity_checks()) state = 0; // fall through
   case COULOMB_P3M: if (P3M_sanity_checks()) state = 0; break;
+#endif
   case COULOMB_EWALD: if (EWALD_sanity_checks()) state = 0; break;
   case COULOMB_MAGGS: if (Maggs_sanity_checks()) state = 0; break;
   }
@@ -655,6 +659,7 @@ int coulomb_set_bjerrum(double bjerrum)
 
   if (coulomb.bjerrum == 0.0) {
     switch (coulomb.method) {
+#ifdef ELP3M
     case COULOMB_ELC_P3M:
     case COULOMB_P3M:
       p3m.alpha    = 0.0;
@@ -666,6 +671,7 @@ int coulomb_set_bjerrum(double bjerrum)
       p3m.mesh[2]  = 0;
       p3m.cao      = 0;
       break;
+#endif
     case COULOMB_EWALD:
       ewald.alpha    = 0.0;
       ewald.alpha_L  = 0.0;
@@ -701,6 +707,7 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   }
   
   if (! ARG0_IS_D(d1)) {
+#ifdef ELP3M
     Tcl_ResetResult(interp);
     if (ARG0_IS_S("elc") && ((coulomb.method == COULOMB_P3M) || (coulomb.method == COULOMB_ELC_P3M)))
       return inter_parse_elc_params(interp, argc - 1, argv + 1);
@@ -711,6 +718,9 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 		       (char *) NULL);
       return TCL_ERROR;
     }
+#else
+    return TCL_ERROR;
+#endif
   }
 
   if (coulomb_set_bjerrum(d1) == TCL_ERROR) {
@@ -740,7 +750,9 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   if(ARG0_IS_S(name))					\
     return parser(interp, argc-1, argv+1);
 
+#ifdef ELP3M
   REGISTER_COULOMB("p3m", inter_parse_p3m);
+#endif
 
   REGISTER_COULOMB("ewald", inter_parse_ewald);
 
@@ -912,11 +924,13 @@ int printCoulombIAToResult(Tcl_Interp *interp)
   Tcl_PrintDouble(interp, coulomb.bjerrum, buffer);
   Tcl_AppendResult(interp, "{coulomb ", buffer, " ", (char *) NULL);
   switch (coulomb.method) {
+#ifdef ELP3M
   case COULOMB_ELC_P3M:
     printP3MToResult(interp);
     printELCToResult(interp);
     break;
   case COULOMB_P3M: printP3MToResult(interp); break;
+#endif
   case COULOMB_EWALD: printEWALDToResult(interp); break;
   case COULOMB_DH: printdhToResult(interp); break;
   case COULOMB_MMM1D: printMMM1DToResult(interp); break;

@@ -182,6 +182,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
   /* real space coulomb */
   switch (coulomb.method) {
+#ifdef ELP3M
   case COULOMB_ELC_P3M: {
     add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
     
@@ -209,6 +210,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #endif
     break;
   }
+#endif
   case COULOMB_EWALD: {
 #ifdef NPT
     double eng = add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
