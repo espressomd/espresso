@@ -233,7 +233,20 @@ AC_DEFUN([ES_CHECK_GCC_FLAGS],[
 ])
 
 AC_DEFUN([ES_CHECK_ICC_FLAGS],[
+	# check for svml for the vectorizer
+	AC_MSG_CHECKING([whether we have libsvml])
+	save_LIBS=$LIBS
+	svml_found=no
 	LIBS="$LIBS -lsvml"
+	# we just try to link, because the functions are not well documented
+	# and can change
+	AC_LINK_IFELSE([AC_LANG_SOURCE(int main() {})],[svml_found=yes],[])
+	if test .$svml_found = .yes; then
+		AC_MSG_RESULT(yes)
+	else
+		AC_MSG_RESULT(no)
+		LIBS=$save_LIBS
+	fi
 
 	case $target_cpu in
 	Pentium_III)	xflag=K ;;
@@ -245,6 +258,7 @@ AC_DEFUN([ES_CHECK_ICC_FLAGS],[
 	Athlon_XP)	xflag=K ;;
 	Opteron)	xflag=W ;;
 	Athlon_64)	xflag=W ;;
+	Itanium)	;;
 	*)	AC_MSG_WARN([could not recognize your cpu type, relying on generic optimization])
 	esac
 	if test .$xflag != .; then
