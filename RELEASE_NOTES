@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2l (Ydalir)                                                                     *
+* v2.0.2m (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2l -
+- v2.0.2m -
 -----------
 
+(m) April    18th, 2007.
 (l) April    17th, 2007.
 (k) April    13th, 2007.
 (j) April     2nd, 2007.
@@ -25,6 +26,7 @@ Current working revision.
 (a) February  2nd, 2007.
 
 New Features:
+(m) configuration now disables fftw with --without-fftw
 (l) configure has now a flag --with-compilertype, to manually specify the compiler
     type in case
 (l) the auto detection fails (e. g. mpicc + xlc)
@@ -42,6 +44,10 @@ Changes:
     be set in the ug.
 
 Bugfixes:
+(m) do not include svml with icc on Itanium, it doesn't exist
+(m) CC environment variable can now override the MPI compiler
+    again.
+(m) This was broken during the switch to automake.
 (k) in the dist-tgz, GPL.TXT and LICENSE.TXT were missing
 (j) added missing allocations in stress tensor calculation.
 (i) fixed buggy ntoh function.
