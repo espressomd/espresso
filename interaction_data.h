@@ -147,6 +147,18 @@ typedef struct {
   /*@}*/
 #endif
 
+#ifdef BMHTF_NACL
+  /** \name BMHTF NaCl potential */
+  /*@{*/
+  double BMHTF_A;
+  double BMHTF_B;
+  double BMHTF_C;
+  double BMHTF_D;
+  double BMHTF_sig;
+  double BMHTF_cut;
+  /*@}*/
+#endif
+
 #ifdef MORSE 
   /** \name Morse potential */
   /*@{*/

@@ -856,9 +856,9 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
 #ifdef LENNARD_JONES
 	add_lj_pair_force(&p1,&p2,ia_params,d,dist,force);
 #endif
-	/* smooth step */
-#ifdef SMOOTH_STEP
-	add_SmSt_pair_force(&p1,&p2,ia_params,d,dist,dist2,force);
+	/* BMHTF NaCl */
+#ifdef BMHTF_NACL
+	add_BMHTF_pair_force(&p1,&p2,ia_params,d,dist,dist2,force);
 #endif
 	/* buckingham potential */
 #ifdef BUCKINGHAM

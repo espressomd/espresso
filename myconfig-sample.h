@@ -55,6 +55,7 @@
 /* #define TABULATED */
 /* #define LENNARD_JONES */
 /* #define SMOOTH_STEP */
+/* #define BMHTF_NACL */
 /* #define LJ_WARN_WHEN_CLOSE */
 /* #define MORSE */
 /* #define LJCOS */

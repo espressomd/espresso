@@ -24,6 +24,7 @@
 #include "p3m.h"
 #include "lj.h"
 #include "steppot.h"
+#include "bmhtf-nacl.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
 #include "ljcos.h"
@@ -78,6 +79,11 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 #ifdef SMOOTH_STEP
   /* smooth step */
   ret += SmSt_pair_energy(p1,p2,ia_params,d,dist,dist2);
+#endif
+
+#ifdef BMHTF_NACL
+  /* BMHTF NaCl */
+  ret += BMHTF_pair_energy(p1,p2,ia_params,d,dist,dist2);
 #endif
 
 #ifdef MORSE

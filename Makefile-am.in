@@ -95,8 +95,8 @@ am__Espresso_bin_SOURCES_DIST = main.c config.c config.h initialize.c \
 	statistics_fluid.h lb-boundaries.c lb-boundaries.h utils.c \
 	utils.h angle.h buckingham.h comfixed.h comforce.h \
 	debye_hueckel.h dihedral.h fene.h gb.h harmonic.h ljcos2.h \
-	ljcos.h lj.h steppot.h morse.h polynom.h soft_sphere.h \
-	subt_lj.h tab.h mpifake/mpi.h mpifake/mpi.c
+	ljcos.h lj.h steppot.h bmhtf-nacl.h morse.h polynom.h \
+	soft_sphere.h subt_lj.h tab.h mpifake/mpi.h mpifake/mpi.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @MPI_FAKE_TRUE@am__objects_1 = mpifake/mpi.$(OBJEXT)
 am_Espresso_bin_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) \
@@ -301,7 +301,7 @@ Espresso_bin_SOURCES = main.c config.c config.h initialize.c \
 	statistics_fluid.h lb-boundaries.c lb-boundaries.h utils.c \
 	utils.h angle.h buckingham.h comfixed.h comforce.h \
 	debye_hueckel.h dihedral.h fene.h gb.h harmonic.h imd.h \
-	ljcos2.h ljcos.h lj.h steppot.h morse.h polynom.h \
+	ljcos2.h ljcos.h lj.h steppot.h bmhtf-nacl.h morse.h polynom.h \
 	soft_sphere.h subt_lj.h tab.h $(am__append_1)
 
 #################################################################

@@ -105,6 +105,15 @@ void initialize_ia_params(IA_parameters *params) {
     params->SmSt_k0 = 0;
 #endif
 
+#ifdef BMHTF_NACL
+  params->BMHTF_A =
+    params->BMHTF_B =
+    params->BMHTF_C =
+    params->BMHTF_D =
+    params->BMHTF_sig =
+    params->BMHTF_cut = 0;
+#endif
+
 #ifdef MORSE
   params->MORSE_eps = 
     params->MORSE_alpha =
@@ -209,6 +218,15 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->SmSt_k0 = src->SmSt_k0;
 #endif
 
+#ifdef BMHTF_NACL
+  dst->BMHTF_A = src->BMHTF_A;
+  dst->BMHTF_B = src->BMHTF_B;
+  dst->BMHTF_C = src->BMHTF_C;
+  dst->BMHTF_D = src->BMHTF_D;
+  dst->BMHTF_sig = src->BMHTF_sig;
+  dst->BMHTF_cut = src->BMHTF_cut;
+#endif
+
 #ifdef MORSE
   dst->MORSE_eps = src->MORSE_eps;
   dst->MORSE_alpha = src->MORSE_alpha;
@@ -304,6 +322,11 @@ int checkIfParticlesInteract(int i, int j) {
 
 #ifdef SMOOTH_STEP
   if (data->SmSt_cut != 0)
+    return 1;
+#endif
+  
+#ifdef BMHTF_NACL
+  if (data->BMHTF_cut != 0)
     return 1;
 #endif
   
@@ -520,6 +543,13 @@ void calc_maximal_cutoff()
          if (data->SmSt_cut != 0) {
            if(max_cut_non_bonded < data->SmSt_cut)
              max_cut_non_bonded = data->SmSt_cut;
+         }
+#endif
+
+#ifdef BMHTF_NACL
+         if (data->BMHTF_cut != 0) {
+           if(max_cut_non_bonded < data->BMHTF_cut)
+             max_cut_non_bonded = data->BMHTF_cut;
          }
 #endif
 
@@ -880,6 +910,9 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #ifdef SMOOTH_STEP
   if (data->SmSt_cut != 0) printSmStIAToResult(interp,i,j);
 #endif
+#ifdef BMHTF_NACL
+  if (data->BMHTF_cut != 0) printBMHTFIAToResult(interp,i,j);
+#endif
 #ifdef MORSE
   if (data->MORSE_cut != 0) printmorseIAToResult(interp,i,j);
 #endif
@@ -1149,6 +1182,10 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 
 #ifdef SMOOTH_STEP
     REGISTER_NONBONDED("smooth-step", SmSt_parser);
+#endif
+
+#ifdef BMHTF_NACL
+    REGISTER_NONBONDED("bmhtf-nacl", BMHTF_parser);
 #endif
 
 #ifdef MORSE
