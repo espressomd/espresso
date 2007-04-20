@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2m (Ydalir)                                                                     *
+* v2.0.2n (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2m -
+- v2.0.2n -
 -----------
 
+(n) April    19th, 2007.
 (m) April    18th, 2007.
 (l) April    17th, 2007.
 (k) April    13th, 2007.
@@ -26,6 +27,7 @@ Current working revision.
 (a) February  2nd, 2007.
 
 New Features:
+(n) added BMHTF (Born-Meyer-Huggins-Tosi-Fumi) NaCl potential.
 (m) configuration now disables fftw with --without-fftw
 (l) configure has now a flag --with-compilertype, to manually specify the compiler
     type in case
