@@ -111,7 +111,8 @@ void initialize_ia_params(IA_parameters *params) {
     params->BMHTF_C =
     params->BMHTF_D =
     params->BMHTF_sig =
-    params->BMHTF_cut = 0;
+    params->BMHTF_cut =
+    params->BMHTF_computed_shift = 0;
 #endif
 
 #ifdef MORSE
@@ -225,6 +226,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->BMHTF_D = src->BMHTF_D;
   dst->BMHTF_sig = src->BMHTF_sig;
   dst->BMHTF_cut = src->BMHTF_cut;
+  dst->BMHTF_computed_shift = src->BMHTF_computed_shift;
 #endif
 
 #ifdef MORSE

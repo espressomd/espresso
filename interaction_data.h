@@ -156,6 +156,7 @@ typedef struct {
   double BMHTF_D;
   double BMHTF_sig;
   double BMHTF_cut;
+  double BMHTF_computed_shift;
   /*@}*/
 #endif
 
