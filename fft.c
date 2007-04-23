@@ -21,7 +21,7 @@
 #include <math.h>
 #include "utils.h"
 
-#ifdef FFTW
+#ifdef ELP3M
 
 #if FFTW == 3
 #  include <fftw3.h>

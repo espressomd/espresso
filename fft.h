@@ -33,7 +33,7 @@
 
 #include "utils.h"
 
-#ifdef FFTW
+#ifdef ELP3M
 
 /************************************************
  * data types

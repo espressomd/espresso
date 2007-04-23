@@ -77,7 +77,7 @@ int on_program_start(Tcl_Interp *interp)
   /* Initialise force and energy tables */
   force_and_energy_tables_init();
 
-#ifdef FFTW
+#ifdef ELP3M
   fft_pre_init();
 #endif
 
