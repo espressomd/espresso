@@ -47,6 +47,7 @@ MDINLINE int BMHTF_set_params(int part_type_a, int part_type_b,
 			      double D, double sig, double cut)
 {
   IA_parameters *data, *data_sym;
+  double shift, dist2, pw6;
 
   make_particle_type_exist(part_type_a);
   make_particle_type_exist(part_type_b);
@@ -65,6 +66,12 @@ MDINLINE int BMHTF_set_params(int part_type_a, int part_type_b,
   data->BMHTF_D   = data_sym->BMHTF_D   = D;
   data->BMHTF_sig = data_sym->BMHTF_sig = sig;
   data->BMHTF_cut = data_sym->BMHTF_cut = cut;
+  dist2 = cut*cut;
+  pw6 = dist2*dist2*dist2;
+  shift = -(A*exp(B*(sig - cut)) - C/pw6 - D/pw6/dist2);
+
+  data->BMHTF_computed_shift =
+    data_sym->BMHTF_computed_shift = shift;
  
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
@@ -115,9 +122,9 @@ MDINLINE void add_BMHTF_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
   double pw8, fac = 0.0;
   if(dist < ia_params->BMHTF_cut) {
     pw8 = dist2*dist2*dist2*dist2;
-    fac = -ia_params->BMHTF_A*ia_params->BMHTF_B*
-      exp(ia_params->BMHTF_B*(ia_params->BMHTF_sig - dist))/dist +
-      6*ia_params->BMHTF_C/pw8 + 8*ia_params->BMHTF_D/pw8/dist2;
+    fac = ia_params->BMHTF_A*ia_params->BMHTF_B*
+      exp(ia_params->BMHTF_B*(ia_params->BMHTF_sig - dist))/dist -
+      6*ia_params->BMHTF_C/pw8 - 8*ia_params->BMHTF_D/pw8/dist2;
 
     for(j=0;j<3;j++) force[j] += fac * d[j];
   }
@@ -131,9 +138,9 @@ MDINLINE double BMHTF_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_
  
   if(dist < ia_params->BMHTF_cut) {
     pw6 = dist2*dist2*dist2;
-    return -ia_params->BMHTF_A*
+    return ia_params->BMHTF_A*
       exp(ia_params->BMHTF_B*(ia_params->BMHTF_sig - dist)) -
-      ia_params->BMHTF_C/pw6 + ia_params->BMHTF_D/pw6/dist2;
+      ia_params->BMHTF_C/pw6 - ia_params->BMHTF_D/pw6/dist2 + ia_params->BMHTF_computed_shift;
   }
   return 0.0;
 }
