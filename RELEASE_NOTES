@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2n (Ydalir)                                                                     *
+* v2.0.2o (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2n -
+- v2.0.2o -
 -----------
 
+(o) April    23rd, 2007.
 (n) April    19th, 2007.
 (m) April    18th, 2007.
 (l) April    17th, 2007.
@@ -46,6 +47,9 @@ Changes:
     be set in the ug.
 
 Bugfixes:
+(o) Added necessary energy shift and fixed potential.
+(o) fft.c depends heavily on p3m.c. So has to be included with
+    ELP3M
 (m) do not include svml with icc on Itanium, it doesn't exist
 (m) CC environment variable can now override the MPI compiler
     again.
