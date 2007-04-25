@@ -282,14 +282,18 @@ double calc_vanhove(int ptype, double rmin, double rmax, int rbins, double *msd,
     Calculates the spherically averaged structure factor of particles of a
     given type. The possible wave vectors are given by q = 2PI/L sqrt(nx^2 + ny^2 + nz^2).
     The S(q) is calculated up to a given length measured in 2PI/L (the recommended order of
-    the wave vector is less than 20)
+    the wave vector is less than 20).
+    The data is stored starting with q=1, and contains alternatingly S(q-1) and the number
+    of wave vectors l with l^2=q. Only if the second number is nonzero, the first is meaningful.
+    This means the q=1 entries are sf[0]=S(1) and sf[1]=1. For q=7, there are no possible wave vectors,
+    so sf[2*(7-1)]=sf[2*(7-1)+1]=0.
     
     @param type   the type of the particles to be analyzed
     @param order  the maximum wave vector length in 2PI/L
-    @param sf     array to store the result (size: order^2+1).
+    @param sf     pointer to hold the base of the array containing the result (size: 2*order^2).
 */
 
-void calc_structurefactor(int type, int order, double *sf);
+void calc_structurefactor(int type, int order, double **sf);
 	      
 /** returns the minimal squared distance between two positions in the perhaps periodic
     simulation box.

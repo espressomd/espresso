@@ -727,27 +727,25 @@ void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 
 }
 
-void analyze_structurefactor(int type, int order, double **_ff) {
-  int i, j, k, n, qi, p, order2, *fn=NULL;
+void calc_structurefactor(int type, int order, double **_ff) {
+  int i, j, k, n, qi, p, order2;
   double qr, twoPI_L, C_sum, S_sum, *ff=NULL;
   
   order2 = order*order;
-  *_ff = ff = realloc(ff,(order2+1)*sizeof(double));
-  fn = realloc(fn,(order2+1)*sizeof(int));
+  *_ff = ff = realloc(ff,2*order2*sizeof(double));
   twoPI_L = 2*PI/box_l[0];
   
   if ((type < 0) || (type > n_particle_types)) { fprintf(stderr,"WARNING: Type %i does not exist!",type); fflush(NULL); errexit(); }
   else if (order < 1) { fprintf(stderr,"WARNING: parameter \"order\" has to be a whole positive number"); fflush(NULL); errexit(); }
   else {
-    for(qi=1; qi<=order2; qi++) {
+    for(qi=0; qi<2*order2; qi++) {
       ff[qi] = 0.0;
-      fn[qi] = 0;
     }
     for(i=0; i<=order; i++) {
       for(j=-order; j<=order; j++) {
         for(k=-order; k<=order; k++) {
 	  n = i*i + j*j + k*k;
-	  if ((n<=order2) && (n>0)) {
+	  if ((n<=order2) && (n>=1)) {
 	    C_sum = S_sum = 0.0;
 	    for(p=0; p<n_total_particles; p++) {
 	      if (partCfg[p].p.type == type) {
@@ -756,8 +754,8 @@ void analyze_structurefactor(int type, int order, double **_ff) {
 		S_sum+= sin(qr);
 	      }
 	    }
-	    ff[n]+= C_sum*C_sum + S_sum*S_sum;
-	    fn[n]++;
+	    ff[2*n-2]+= C_sum*C_sum + S_sum*S_sum;
+	    ff[2*n-1]++;
 	  }
 	}
       }
@@ -766,13 +764,12 @@ void analyze_structurefactor(int type, int order, double **_ff) {
     for(p=0; p<n_total_particles; p++) {
       if (partCfg[p].p.type == type) n++;
     }
-    for(qi=0; qi<=order2; qi++) 
-      if (fn[qi]!=0) ff[qi]/= n*fn[qi];
-    free(fn);
+    for(qi=0; qi<order2; qi++) 
+      if (ff[2*qi+1]!=0) ff[2*qi]/= n*ff[2*qi+1];
   }
 }
 
-int analyze_radial_density_map (int xbins,int ybins,int thetabins,double xrange,double yrange, double axis[3], double center[3], IntList *beadids, DoubleList *density_map, DoubleList *density_profile) {
+int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,double yrange, double axis[3], double center[3], IntList *beadids, DoubleList *density_map, DoubleList *density_profile) {
   int i,j,t;
   int pi,bi;
   int nbeadtypes;
@@ -839,7 +836,7 @@ int analyze_radial_density_map (int xbins,int ybins,int thetabins,double xrange,
 	  yav += ydist;
 	  beadcount += 1;
 	} else {
-	  //	    fprintf(stderr,"ERROR: outside array bounds in analyze_radial_density_map"); fflush(NULL); errexit(); 
+	  //	    fprintf(stderr,"ERROR: outside array bounds in calc_radial_density_map"); fflush(NULL); errexit(); 
 	}
       }
 
@@ -895,7 +892,7 @@ int analyze_radial_density_map (int xbins,int ybins,int thetabins,double xrange,
 	    thetaradii[bi*thetabins+tindex] += xdist + xav;
 	    thetacounts[bi*thetabins+tindex] += 1;
 	    if ( tindex >= thetabins ) {
-	      fprintf(stderr,"ERROR: outside density_profile array bounds in analyze_radial_density_map"); fflush(NULL); errexit(); 
+	      fprintf(stderr,"ERROR: outside density_profile array bounds in calc_radial_density_map"); fflush(NULL); errexit(); 
 	    } else {
 	      density_profile[bi].e[tindex] += 1;
 	    }
@@ -1432,7 +1429,7 @@ static int parse_radial_density_map(Tcl_Interp *interp, int argc, char **argv)
   }
 
   //  printf("about to calculate profile \n");
-  if(analyze_radial_density_map(xbins,ybins,thetabins,xrange,yrange,rotation_axis,rotation_center,&beadtypes, density_map ,density_profile) != TCL_OK) {
+  if(calc_radial_density_map(xbins,ybins,thetabins,xrange,yrange,rotation_axis,rotation_center,&beadtypes, density_map ,density_profile) != TCL_OK) {
     Tcl_AppendResult(interp, "Error calculating radial density profile ", (char *)NULL);
     return TCL_ERROR;
   }
@@ -2314,12 +2311,12 @@ int parse_structurefactor(Tcl_Interp *interp, int argc, char **argv)
     argc-=2; argv+=2;
   }
   updatePartCfg(WITHOUT_BONDS);
-  analyze_structurefactor(type, order, &sf); 
+  calc_structurefactor(type, order, &sf); 
   
   qfak = 2.0*PI/box_l[0];
-  for(i=1; i<=order*order+1; i++) { 
-    if (sf[i]>1e-6) { 
-      sprintf(buffer,"{%f %f} ",qfak*sqrt(i),sf[i]);
+  for(i=0; i<order*order; i++) { 
+    if (sf[2*i+1]> 0) { 
+      sprintf(buffer,"{%f %f} ",qfak*sqrt(i+1),sf[2*i]);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
   }
