@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2o (Ydalir)                                                                     *
+* v2.0.2p (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2o -
+- v2.0.2p -
 -----------
 
+(p) April    25th, 2007.
 (o) April    23rd, 2007.
 (n) April    19th, 2007.
 (m) April    18th, 2007.
@@ -47,6 +48,10 @@ Changes:
     be set in the ug.
 
 Bugfixes:
+(p) analyze structurefactor now outputs all wavevectors, even those with small
+    S(q).
+(p) Also fixed the function name, which was inconsistent between header file and
+    implementation.
 (o) Added necessary energy shift and fixed potential.
 (o) fft.c depends heavily on p3m.c. So has to be included with
     ELP3M
