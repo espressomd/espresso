@@ -76,14 +76,10 @@ int map_position_node_array(double pos[3])
 
   for (i = 0; i < 3; i++) {
     im[i] = (int)floor(node_grid[i]*f_pos[i]*box_l_i[i]);
-#ifdef PARTIAL_PERIODIC
-    if (!PERIODIC(i)) {
-      if (im[i] < 0)
-	im[i] = 0;
-      else if (im[i] >= node_grid[i])
-	im[i] = node_grid[i] - 1;
-    }
-#endif
+    if (im[i] < 0)
+      im[i] = 0;
+    else if (im[i] >= node_grid[i])
+      im[i] = node_grid[i] - 1;
   }
   return map_array_node(im);
 }
