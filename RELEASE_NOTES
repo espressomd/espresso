@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2p (Ydalir)                                                                     *
+* v2.0.2q (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2p -
+- v2.0.2q -
 -----------
 
+(q) April    27th, 2007.
 (p) April    25th, 2007.
 (o) April    23rd, 2007.
 (n) April    19th, 2007.
@@ -48,6 +49,8 @@ Changes:
     be set in the ug.
 
 Bugfixes:
+(q) fixed a rare condition in which a particle would end up on a nonexistent node
+    when close to the box boundaries.
 (p) analyze structurefactor now outputs all wavevectors, even those with small
     S(q).
 (p) Also fixed the function name, which was inconsistent between header file and
