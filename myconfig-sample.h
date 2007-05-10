@@ -46,6 +46,7 @@
 /* #define NEMD */
 /* #define NPT */ 
 /* #define DPD */
+/* #define TRANS_DPD */
 /* #define LB */
 
 /**********************************************************************/

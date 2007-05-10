@@ -87,7 +87,9 @@ const Datafield fields[] = {
   {&lattice_switch,     TYPE_INT, 1, "lattice_switch", ro_callback,    2 },
   /* 37 from lattice.c */
 #endif
+#ifdef TRANS_DPD
   {&dpd_tgamma,      TYPE_DOUBLE, 1, "dpd_tgamma",    ro_callback,     5 },         /* 38 from thermostat.c */
+#endif
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 

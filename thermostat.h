@@ -118,8 +118,10 @@ extern double langevin_gamma;
 extern double dpd_gamma;
 /** DPD thermostat cutoff */
 extern double dpd_r_cut;
+#ifdef TRANS_DPD
 /** DPD transversal Friction coefficient gamma. */
 extern double dpd_tgamma;
+#endif
 
 /** Friction coefficient for nptiso-thermostat's inline-function friction_therm0_nptiso */
 extern double nptiso_gamma0;
@@ -230,23 +232,30 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
     p1 and p2 and add them to their forces. */
 MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double dist2)
 {
-  extern double dpd_pref1, dpd_pref2, dpd_pref3, dpd_pref4,dpd_r_cut,dpd_r_cut_inv;
-  extern double dpd_gamma,dpd_tgamma;
-  int i,j;
+  extern double dpd_gamma,dpd_pref1, dpd_pref2,dpd_r_cut,dpd_r_cut_inv;
+#ifdef TRANS_DPD
+  extern double dpd_tgamma, dpd_pref3, dpd_pref4;
+#endif
+  int j;
   // velocity difference between p1 and p2
   double vel12_dot_d12=0.0;
   // inverse distance
   double dist_inv;
   // weighting functions for friction and random force
   double omega,omega2;// omega = w_R/dist
-  double friction, noise,noise_vec[3];
+  double friction, noise;
   //Projection martix
-  double P_times_dist_sqr[3][3]={{dist2,0,0},{0,dist2,0},{0,0,dist2}};  
+#ifdef TRANS_DPD
+  int i;
+  double P_times_dist_sqr[3][3]={{dist2,0,0},{0,dist2,0},{0,0,dist2}},noise_vec[3];
   double f_D[3],f_R[3];
+#endif
   double tmp;
   if(dist < dpd_r_cut) {
     dist_inv = 1.0/dist;
     omega    = dist_inv - dpd_r_cut_inv;
+    /* use this weight function for hard potentials1 */
+    /* omega=dist_inv; //Step function */
     omega2   = SQR(omega);
     //DPD part
     if (dpd_gamma > 0.0 ){
@@ -260,8 +269,9 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
         p2->f.f[j] -= tmp;
       }
     }
+#ifdef TRANS_DPD
     //DPD2 part
-    if (dpd_tgamma > 0.0 ){      
+    if (dpd_tgamma > 0.0 ){
       for (i=0;i<3;i++){
         //noise vector
         noise_vec[i]=d_random()-0.5;
@@ -288,6 +298,7 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
         p2->f.f[j] -= tmp;
       }
     }
+#endif
   }
 }
 #endif
