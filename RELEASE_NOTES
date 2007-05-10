@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2q (Ydalir)                                                                     *
+* v2.0.2r (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2q -
+- v2.0.2r -
 -----------
 
+(r) May       9th, 2007.
 (q) April    27th, 2007.
 (p) April    25th, 2007.
 (o) April    23rd, 2007.
@@ -49,6 +50,9 @@ Changes:
     be set in the ug.
 
 Bugfixes:
+(r) under certain circumstances, MMM1D would allow to manual set impossible
+    switching radii.
+(r) corrected counting in writepsf() and writepdb()
 (q) fixed a rare condition in which a particle would end up on a nonexistent node
     when close to the box boundaries.
 (p) analyze structurefactor now outputs all wavevectors, even those with small
