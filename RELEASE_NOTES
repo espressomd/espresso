@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2r (Ydalir)                                                                     *
+* v2.0.2s (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2r -
+- v2.0.2s -
 -----------
 
+(s) May      10th, 2007.
 (r) May       9th, 2007.
 (q) April    27th, 2007.
 (p) April    25th, 2007.
@@ -46,6 +47,8 @@ New Features:
 (d) solving linear equation systems.
 
 Changes:
+(s) Adding the TRANS_DPD macro to switch on or off the transversal
+    DPD
 (e) replaced the \alph function with \arabic, allowing more than 26 hypertargets to
     be set in the ug.
 
