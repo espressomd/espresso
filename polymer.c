@@ -30,6 +30,7 @@
 #include "random.h"
 #include "parser.h"
 #include "integrate.h"
+#include "constraint.h"
 
 
 
@@ -127,8 +128,9 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   double val_cM = 0.0; 
   int cM_dist = 1, type_nM = 0, type_cM = 1, type_bond = 0;
   double angle = -1.0, angle2 = -1.0;
+  int constr = 0;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-  int i;
+  int i,j;
 
   if (argc < 4) { Tcl_AppendResult(interp, "Wrong # of args! Usage: polymer <N_P> <MPC> <bond_length> [options]", (char *)NULL); return (TCL_ERROR); }
   if (!ARG_IS_I(1, N_P)) {
@@ -281,14 +283,27 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
       }
       else {Tcl_AppendResult(interp, "Not enough arguments for angle", (char *)NULL); return (TCL_ERROR); }
     }
+    /* [constraints] */
+    else if (ARG_IS_S(i, "constraints")) {
+      constr=1;
+      tmp_try=0;
+      for(j=0;j<n_constraints;j++){
+	if(constraints[j].type==CONSTRAINT_MAZE || constraints[j].type==CONSTRAINT_PORE || constraints[j].type==CONSTRAINT_PLATE)
+	  tmp_try++;
+      }
+      if (tmp_try>0) {
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp, "Warning: Only constraints of type WALL/SPHERE/CYLINDER are respected!", (char *)NULL); return (TCL_ERROR); }
+      else { i++; }
+    }
     /* Default */
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
   }
   if (fabs(val_cM) < 1e-10) { val_cM = 0.0; type_cM = type_nM; }
 
-  POLY_TRACE(if (posed!=NULL) {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed (%f,%f,%f), int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed (%f,%f,%f)\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle,angle2, posed2[0], posed2[1], posed2[2]); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed (%f,%f,%f), int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed2 NULL\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle,angle2);} else {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed2 (%f,%f,%f)\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle, angle2,posed2[0],posed2[1],posed2[2]); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed2 NULL\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle, angle2);});
+  POLY_TRACE(if (posed!=NULL) {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed (%f,%f,%f), int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed (%f,%f,%f), int constraints %d\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle,angle2, posed2[0], posed2[1], posed2[2], constr); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed (%f,%f,%f), int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed2 NULL, constraints %d\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond,angle,angle2,constr);} else {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed2 (%f,%f,%f), int constraints %d\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle, angle2,posed2[0],posed2[1],posed2[2],constr); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed2 NULL, int constraints %d\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle, angle2, constr);});
 
-tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle, angle2, posed2);
+  tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle, angle2, posed2, constr);
   if (tmp_try == -1) {
     sprintf(buffer, "Failed to find a suitable place for the start-monomer for %d times!\nUse option 'mode { SAW | RW | PSAW } <shield> <max_try>' to increase this limit...\n",max_try); tmp_try = TCL_ERROR; }
   else if (tmp_try == -2) {
@@ -306,11 +321,52 @@ tmp_try = polymerC(N_P, MPC, bond_length, part_id, posed, mode, shield, max_try,
 }
 
 
+int constraint_collision(double *p1,double *p2){
+  Particle part1,part2;
+  double d1,d2,v[3];
+  Constraint *c;
+  int i;
+  part1.r.p[0]=p1[0];
+  part1.r.p[1]=p1[1];
+  part1.r.p[2]=p1[2];
+  part2.r.p[0]=p2[0];
+  part2.r.p[1]=p2[1];
+  part2.r.p[2]=p2[2];
+  
+  for(i=0;i<n_constraints;i++){
+    c=&constraints[i];
+    switch(c->type){
+    case CONSTRAINT_WAL:
+      calculate_wall_dist(&part1,&part1,&c->c.wal,&d1,v);
+      calculate_wall_dist(&part2,&part2,&c->c.wal,&d2,v);
+      if(d1*d2<=0)
+	return 1;
+      break;
+    case CONSTRAINT_SPH:
+      calculate_sphere_dist(&part1,&part1,&c->c.sph,&d1,v);
+      calculate_sphere_dist(&part2,&part2,&c->c.sph,&d2,v);
+      if(d1*d2<0)
+	return 1;
+      break;
+    case CONSTRAINT_CYL:
+      calculate_cylinder_dist(&part1,&part1,&c->c.cyl,&d1,v);
+      calculate_cylinder_dist(&part2,&part2,&c->c.cyl,&d2,v);
+      if(d1*d2<0)
+	return 1;
+      break;
+    case CONSTRAINT_MAZE:
+    case CONSTRAINT_PORE:
+    case CONSTRAINT_PLATE:
+      break;
+    }
+  }
+  return 0;
+}
 
 int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, 
 	     int mode, double shield, int max_try, double val_cM, int cM_dist, 
 	     int type_nM, int type_cM, int type_bond, 
-	     double angle, double angle2, double *posed2) {
+	     double angle, double angle2, double *posed2, int constr) {
   int p,n, cnt1,cnt2,max_cnt, bond[2];
   double theta,phi;
   double *poly;
@@ -457,9 +513,11 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	  
 	  POLY_TRACE(/* printf("a=(%f,%f,%f) absa=%f M=(%f,%f,%f) c=(%f,%f,%f) absMc=%f a*c=%f)\n",a[0],a[1],a[2],sqrt(SQR(a[0])+SQR(a[1])+SQR(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(SQR(M[0]+c[0])+SQR(M[1]+c[1])+SQR(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2]) */);
 	  POLY_TRACE(/* printf("placed Monomer %d at (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
-	  
-	  if (mode==1 || collision(pos, shield, n, poly)==0) break;
-	  if (mode==0) { cnt1 = -2; break; }
+
+	  if(constr==0 || constraint_collision(pos,poly+3*(n-1))==0){
+	    if (mode==1 || collision(pos, shield, n, poly)==0) break;
+	    if (mode==0) { cnt1 = -2; break; }
+	  }
 	  POLY_TRACE(printf("m"); fflush(NULL));
 	}
 	if (cnt1 >= max_try) {
