@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2s (Ydalir)                                                                     *
+* v2.0.2t (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2s -
+- v2.0.2t -
 -----------
 
+(t) May      14th, 2007.
 (s) May      10th, 2007.
 (r) May       9th, 2007.
 (q) April    27th, 2007.
@@ -32,6 +33,8 @@ Current working revision.
 (a) February  2nd, 2007.
 
 New Features:
+(t) added possibility to respect constraints when setting up
+    polymers
 (n) added BMHTF (Born-Meyer-Huggins-Tosi-Fumi) NaCl potential.
 (m) configuration now disables fftw with --without-fftw
 (l) configure has now a flag --with-compilertype, to manually specify the compiler
