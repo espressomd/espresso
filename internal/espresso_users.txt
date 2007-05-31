@@ -1774,3 +1774,15 @@ topic:     asdf
 reminded:  X28.MAR.2007
 
 
+name:      Hendrick de Haan
+email:     hendrick.dehaan@gmail.com
+institute: MacDonald Hall,
+           Ottawa, ON, Canada
+           K1N 6N5
+sent:      30.MAY.2007
+version:   20070423-Espresso_v2.0.2n.tar.gz
+CVS:       
+topic:     micro/naonofludics simulations with polymer chains
+reminded:  X30.MAY.2007
+
+
