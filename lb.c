@@ -50,6 +50,9 @@ LB_Parameters lbpar = { 0.0, 0.0, -1.0, -1.0, -1.0, 0.0, { 0.0, 0.0, 0.0} };
 
 /** The DnQm model to be used. */
 LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, 1./3. };
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * ! MAKE SURE THAT D3Q19 is #undefined WHEN USING OTHER MODELS !
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 /** The underlying lattice structure */
 Lattice lblattice = { {0,0,0}, {0,0,0}, 0, 0, 0, 0, -1.0, -1.0, NULL, NULL };
@@ -97,6 +100,8 @@ static double fluidstep=0.0;
 
 static int failcounter=0;
 static int rancounter=0;
+static int maxfail=0;
+static int ghostfail=0;
 
 /***********************************************************************/
 
@@ -481,7 +486,7 @@ MDINLINE void lb_calc_local_n(LB_FluidNode *local_node) {
   double *local_j   = local_node->j;
   double *local_pi  = local_node->pi;
   double trace;
-  const double rhoc_sq = *local_rho/3.0;
+  const double rhoc_sq = *local_rho*lbmodel.c_sound_sq;
   const double avg_rho = lbpar.rho/(agrid*agrid*agrid);
 
   /* see Eq. (4) in Berk Usta, Ladd and Butler, JCP 122, 094902 (2005) */
@@ -539,16 +544,15 @@ MDINLINE void lb_calc_local_n(LB_FluidNode *local_node) {
 
 #else
   int i;
-  double tmp;
-  const double (*c)[3] = lbmodel.c;
-  const double (*coeff)[4] = lbmodel.coeff;
+  double tmp=0.0;
+  double (*c)[3] = lbmodel.c;
+  double (*coeff)[4] = lbmodel.coeff;
 
   for (i=0;i<n_veloc;i++) {
 
-    tmp = 0.0;
-    tmp += local_pi[0]*c[i][0]*c[i][0];
-    tmp += (2.0*local_pi[1]*c[i][0]+local_pi[2]*c[i][1])*c[i][1];
-    tmp += (2.0*(local_pi[3]*c[i][0]+local_pi[4]*c[i][1])+local_pi[5]*c[i][2])*c[i][2];
+    tmp = local_pi[0]*c[i][0]*c[i][0]
+      + (2.0*local_pi[1]*c[i][0]+local_pi[2]*c[i][1])*c[i][1]
+      + (2.0*(local_pi[3]*c[i][0]+local_pi[4]*c[i][1])+local_pi[5]*c[i][2])*c[i][2];
 
     local_n[i] =  coeff[i][0] * (*local_rho-avg_rho);
     local_n[i] += coeff[i][1] * scalar(local_j,c[i]);
@@ -699,7 +703,7 @@ MDINLINE int lb_check_negative_n(LB_FluidNode *local_node) {
     if (local_n[i]+lbmodel.coeff[i][0]*lbpar.rho < 0.0) {
       ++badrandoms;
       ++failcounter;
-      fprintf(stderr,"%d: Negative population n[%d]=%.6e. Check your parameters if this happens too often! (failcounter=%d, rancounter=%d)\n",this_node,i,lbmodel.coeff[i][0]*lbpar.rho+local_n[i],failcounter,rancounter);
+      fprintf(stderr,"%d: Negative population n[%d]=%le (failcounter=%d, rancounter=%d)\n   Check your parameters if this occurs too often!\n",this_node,i,lbmodel.coeff[i][0]*lbpar.rho+local_n[i],failcounter,rancounter);
       break;
    }
   }
@@ -747,7 +751,7 @@ MDINLINE void lb_calc_collisions() {
 
 	  do { /* try random numbers until no negative populations occur */
 	    
-	    badrandoms = 0 ;
+	    badrandoms = 0;
 	    
 	    lb_add_fluct_pi(local_node);
 	    lb_calc_local_n(local_node);
@@ -896,9 +900,7 @@ MDINLINE void lb_propagate_n() {
 
   double *n     = lbfluid[0].n;
   double *n_new = lbfluid[0].n_tmp;
-  const double (*c)[3] = lbmodel.c;
-
-  //fprintf(stderr,"\nn=%p n_new=%p\n",n,n_new);
+  double (*c)[3] = lbmodel.c;
 
   /* calculate the index shift for all velocities */
   for (i=0;i<n_veloc;i++) {
@@ -1083,7 +1085,7 @@ void lb_propagate() {
  */
 MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_index[8], const double delta[6], int *badrandoms) {
 
-  int x, y, z;
+  int x, y, z, index;
   LB_FluidNode *local_node;
   double *local_n, *n_tmp;
   double *local_j, delta_j[3];
@@ -1102,7 +1104,8 @@ MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_inde
     for (y=0;y<2;y++) {
       for (x=0;x<2;x++) {
 	
-	local_node = &lbfluid[node_index[(z*2+y)*2+x]];
+	index = node_index[(z*2+y)*2+x];
+	local_node = &lbfluid[index];
 	local_n = n_tmp = local_node->n;
 	local_j = local_node->j;
 
@@ -1131,8 +1134,8 @@ MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_inde
 	local_n[18] = n_tmp[18] - 1./12.*(delta_j[1]-delta_j[2]);
 #else
 	int i;
-	const double (*c)[3] = lbmodel.c;
-	const double (*coeff)[4] = lbmodel.coeff;
+	double (*c)[3] = lbmodel.c;
+	double (*coeff)[4] = lbmodel.coeff;
 
 	for (i=0;i<n_veloc;i++) {
 	  local_n[i] = n_tmp[i] + coeff[i][1] * scalar(delta_j,c[i]);
@@ -1140,11 +1143,7 @@ MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_inde
 
 #endif
 
-	*badrandoms = lb_check_negative_n(local_node);
-
-	if (*badrandoms) {
-	  fprintf(stderr,"%d: Negative population node %d (%d,%d,%d)\n",this_node,node_index[(z*2+y)*2+x],x,y,z);
-	}
+	*badrandoms += lb_check_negative_n(local_node);
 
       }
     }
@@ -1197,7 +1196,7 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, int p_is_ghost) {
 	local_node = &lbfluid[node_index[(z*2+y)*2+x]];
 	local_rho  = local_node->rho;
 	local_j    = local_node->j;
-	
+
 #ifdef ADDITIONAL_CHECKS
 	old_rho[(z*2+y)*2+x] = *local_rho;
 #endif
@@ -1242,12 +1241,15 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, int p_is_ghost) {
     delta_j[2] = - f_tmp[2]*time_step*tau/agrid;
     
     lb_transfer_momentum(delta_j,node_index,delta,&badrandoms);
-    
+
     if (badrandoms) {
       
       ++try;
 
-      fprintf(stderr,"%d: %d bad randoms for particle %d! Check your parameters if this happens too often.\n",this_node,try,p->p.identity);
+      if (try > maxfail) maxfail = try;
+      if (p_is_ghost) ++ghostfail;
+
+      fprintf(stderr,"%d: %d bad randoms for particle %d (p_is_ghost=%d) (maxfail=%d) (ghostfail=%d)\n   Check your parameters if this occurs too often!\n",this_node,try,p->p.identity,p_is_ghost,maxfail,ghostfail);
 
       if (try >= MAX_RANDOMS) {
 	char* errtxt = runtime_error(128);

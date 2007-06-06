@@ -292,7 +292,7 @@ MDINLINE void lb_calc_local_pi(LB_FluidNode *local_node) {
 #else
   int i;
   double tmp;
-  const double (*c)[3] = lbmodel.c;
+  double (*c)[3] = lbmodel.c;
   local_pi[0] = 0.0;
   local_pi[1] = 0.0;
   local_pi[2] = 0.0;
@@ -370,7 +370,7 @@ MDINLINE void lb_calc_local_fields(LB_FluidNode *local_node,int calc_pi_flag) {
 #else
   int i;
   double tmp;
-  const double (*c)[3] = lbmodel.c;
+  double (*c)[3] = lbmodel.c;
 
   *local_rho = 0.0;
 
