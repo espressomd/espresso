@@ -118,9 +118,9 @@ typedef struct {
   GhostCommunicator update_ghost_pos_comm;
   /** Communicator to collect ghost forces. */
   GhostCommunicator collect_ghost_force_comm;
-#ifdef USE_TEMPORARY
-  /** Communicator for temporary particle data (e.g. random forces). */
-  GhostCommunicator ghost_temp_comm;
+#ifdef LB
+  /** Communicator for particle data used by lattice Boltzmann */
+  GhostCommunicator ghost_lbcoupling_comm;
 #endif
 
   /** Cell system dependent function to find the right node for a
