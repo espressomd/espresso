@@ -1786,3 +1786,18 @@ topic:     micro/naonofludics simulations with polymer chains
 reminded:  X30.MAY.2007
 
 
+name:      jian yin
+email:     smayinj@nus.edu.sg
+institute: Yin Jian (PhD)
+           Research Fellow
+           SMA
+           E5-04-27
+           National University of Singapore
+           Singapore
+sent:      11.JUN.2007
+version:   20070423-Espresso_v2.0.2n.tar.gz
+CVS:       
+topic:     Protein/peptide aggregation
+reminded:  X11.JUN.2007
+
+
