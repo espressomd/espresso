@@ -853,19 +853,14 @@ reminded:  23.DEC.2005
 
 name:      Peter Kosovan
 email:     kosovan@vivien.natur.cuni.cz
-institute: Department of Physical and Macromolecular Chemistry, Faculty of
-           Science, Alberotv 2, Charles University in Prague, Prague 2,
-           Czech republic
-sent:      05.JAN.2006
-version:   20051115-Espresso_v1.9.7h.tar.gz
+institute: Department of Physical and Macromolecular Chemistry, Charles
+           University in Prague, Czech Republic
+sent:      12.JUN.2007
+version:   20070423-Espresso_v2.0.2n.tar.gz
 CVS:       
-topic:     Simulations of (branched) Polyelectorlytes in dilute
-           solutions.
-           
-           So far I have been using Espresso v 1.6Gold, provided by
-           H.J.Limbach. I\\\\\\\\\\\\\\\'ve briefly read the release notes and
-           I\\\\\\\\\\\\\\\'d like to upgrade to the newer version.
-reminded:  X05.JAN.2006
+topic:     I have already been using older versions of Espresso. I am
+           working on simulations of polyelectrolytes in dilute solutions.
+reminded:  X12.JUN.2007
 
 
 name:      Kelly Anderson
