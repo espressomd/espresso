@@ -1,209 +1,245 @@
 \chapter{Input / Output}
 \label{cha:io}
 
-\section{\texttt{blockfile}}
-In a nutshell: The blockfile command is provided for saving and
-restoring the current state of \es, e. g. for creating and using
-checkpoints. Hence you can transfer all accessible informations to and
-from disk from and to \es.
+\section{\texttt{blockfile}: Using the structured file format}
+\label{sec:structured-file-format}
+\eslabel{blockfile}
 
-\begin{itemize}
- \item
-\begin{code}
-set out [open "|gzip -c - > checkpoint.block.gz" "w"]
-blockfile $out write variable all
-blockfile $out write interactions
-blockfile $out write random
-blockfile $out write bitrandom
-blockfile $out write particles "id pos type q v f" all
-blockfile $out write bonds all
-blockfile $out write configs
-close $out 
-\end{code}
-
-This example writes all variables accessible by The setmd command, all
-interactions known to The inter command, the full current state of the
-random number generator (The t\_random command or The bit\_random
-command), all informations (i.e. id, position, type-number, charge,
-velocity, forces, bonds) on all particles, and all particle
-configurations appended (using e. g. analyze append) for
-offline-analysis purposes to the file 'checkpoint.block.gz' which is
-even being compressed on-the-fly (if you don't want that, use
-\codebox{set out [open "checkpoint.block" "w"]}
-instead).
-Note that interactions must be stored before particles before bonding
-informations, as for the bonds to be set all particles and all
-interactions must already be known to \es{}.
-
- \item
+\es uses a standardized ASCII block format to write structured files
+for analysis or storage. Basically the file consists of blocks in
+curled braces, which have a single word title and some data. The data
+itself may consist again of such blocks. An example is:
 \begin{tclcode}
-set in [open "|gzip -cd checkpoint.block.gz" "r"]
-while { [blockfile $in read auto] != "eof" } {}
-close $in 
+{file {Demonstration of the block format}
+{variable epsilon {_dval_ 1} } 
+{variable p3m_mesh_offset {_dval_ 5.0000000000e-01
+   5.0000000000e-01 5.0000000000e-01 } } 
+{variable node_grid {_ival_ 2 2 2 } } 
+{end} 
 \end{tclcode}
-This is basically all you need to restore the informations in the
-blockfile (again, if you don't have a compressed file, use
-\begin{code}
-set out [open "checkpoint.block" "r"]
-\end{code}
-instead) overwriting the current settings in \es{}.
-\end{itemize}
-And now the full documentation on how The blockfile command actually
-works:
 
-\tclcommand{blockfile}
-{
-  \var{channel} 
-  read|write 
-  start|end|variable|auto|toend
-  \opt{\var{param}}
-}
+\index{whitespace}
+Whitespace will be ignored within the format (space, tab and return).
 
-blockfile allows for convienent access to a block format structured
-file \var{channel}. Some of the possible actions are:
-\begin{enumerate}
- \item
-\begin{code}
-blockfile <channel>  write start <tag> 
-\end{code}
-which writes a start "\{" and the title of the block given by
-\var{tag}.
- \item
-\begin{code}
-blockfile <channel> write end 
-\end{code}
-just writes a "\}" to \var{channel}.
- \item
-\begin{code}
-blockfile <channel> write variable {<varname1> <varname2> ...}
-\end{code}
-writes the variables \var{varname1}, \var{varname2},..., which are
-known to The setmd command (a list can be found in Global variables),
-to \var{channel}. When reading the block, all variables with names
-listed in blockfile\_variable\_blacklist are ignored.
- \item
-\begin{code}
-blockfile <channel> write variable all
-\end{code}
-  will write all variables known to The setmd command to \var{channel}.
- \item
-\begin{code}
-blockfile <channel> write tclvariable {<varname1> <varname2> ...}
-\end{code}
-writes the tcl global variables \var{varname1}, \var{varname2},..., to
-\var{channel}. Global variables are those declared in the top scope or
-those declared global in procedures. When reading the block, all
-variables with names listed in blockfile\_tclvariable\_blacklist are
-ignored.
- \item
-\begin{code}
-blockfile <channel> write tclvariable all
-\end{code}
-will write all global variables to \var{channel}. The predefined
-globals from Tcl (tcl\_version, argv, argv0, tcl\_interactive,
-auto\_oldpath, errorCode, auto\_path, errorInfo, auto\_index, env,
-tcl\_pkgPath, tcl\_patchLevel, argc, tcl\_libPath, tcl\_library and
-tcl\_platform) are omitted.
- \item
-\begin{code}
-blockfile <channel> write tclvariable reallyall
-\end{code}
-  will even write those variables, which you probably almost never want...
- \item
-\begin{code}
-blockfile <channel> write particles <what> <range>
-\end{code}
-writes particle information in a standardized format to the file
-\var{channel}. \var{what} can be any list of parameters that part
-\var{x} print takes except for "bonds". Notice that if "id" or "pos"
-is missing, this is added in the front to the list automatically.
-\var{range} is a Tcl list of ranges which particles to write. The
-range "all" is valid as well as a boundary of "end". For example
-\begin{code}
- blockfile file10 write particles "id pos q" "all 0-end 0" 
-\end{code}
-  will write all particles two times to file10 and then particle 0 alone.
- \item
-\begin{code}
- blockfile <channel> write interactions
-\end{code}
-  writes interactions information in a standardized format to the file \var{channel}.
- \item
-\begin{code}
-blockfile <channel> write bonds <range>
-\end{code}
-writes bonds information in a standardized format to the file
-\var{channel}. The involved particles and bond types must exist and be
-valid.
- \item
-\begin{code}
-blockfile <channel> write random
-\end{code}
-writes the full informations on the current state of the random number
-generators on any node to the file \var{channel}. Using this
-information, it is possible to recover the exact state the generators
-were in at that moment.
- \item
-\begin{code}
-blockfile <channel> write seed
-\end{code}
-writes only the seed(s) which were used to initialize the random
-number generators. Note that this information is not sufficient to
-pick up the random sequences where they were left, because The
-t\_random command also uses a table of previous random numbers to
-determine the next one; to also save that information use
-tcl\_blockfile\_write\_random.
- \item
-\begin{code}
-blockfile <channel> write bitrandom
-\end{code}
-writes the full informations on the current state of the R250 random
-number generators on any node to the file \var{channel}. Using this
-information, it is possible to recover the exact state the generators
-were in at that moment.
- \item
-\begin{code}
-blockfile <channel> write bitseed
-\end{code}
-writes only the seed(s) which were used to initialize the bit random
-number generators. Note that this information is not sufficient to
-pick up the random sequences where they were left, because The
-bit\_random command uses a huge matrix of integers whose bit-patterns
-are XOR-ed to determine the next one; to also save that information
-use tcl\_blockfile\_write\_bitrandom.
- \item
-\begin{code}
-blockfile <channel> write configs
-\end{code}
-writes the complete content of the 'configs'-array in statistics.c to
-\var{channel}, thereby saving all particle configurations appended (e.
-g. using analyze append) for analysis-purposes.  Using this
-offline-analysis is quite easy: Just append regularly the current
-configurations, include this command after the derivation of the last
-time step, and blockfile read auto will load them later on resetting
-'configs' to the state needed for most of the more complex
-analyze-commands.
- \item
-\begin{code}
-blockfile <channel> read start 
-\end{code}
-  reads the start part of a block and returns the block title.
- \item
-\begin{code}
-blockfile <channel> read toend 
-\end{code}
+The keyword variable should be used to indicate that a variable
+definition follows in the form \var{name} \var{data}. \var{data}
+itself is a block with title \lit{_ival_} or \lit{_dval_} denoting
+integer rsp. double values, which then follow in a whitespace
+separated list.  Such blocks can be read in conveniently using
+\lit{block_read_data} and written using \lit{block_write_data}.
+
+\todo{Sampe C-code doesn't work, as \es-library has been removed!}
+% An example C-code generating the example above is:
+% \begin{tclcode}
+% // This file is part of the ESPResSo distribution
+%    (http://www.espresso.mpg.de).
+% // It is therefore subject to the ESPResSo license agreement which
+%    you accepted upon receiving the distribution
+% // and by which you are legally bound while utilizing this file in
+%    any form or way.
+% // There is NO WARRANTY, not even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+% // You should have received a copy of that license along with this
+%    program;
+% // if not, refer to http://www.espresso.mpg.de/license.html where its
+%    current version can be found, or
+% // write to Max-Planck-Institute for Polymer Research, Theory Group,
+%    PO Box 3148, 55021 Mainz, Germany.
+% // Copyright (c) 2002-2006; all rights reserved unless otherwise
+%    stated.
+% #include "blockfile.h"
+
+% /*
+%   Demonstration of the use of the blockfile interface.
+%   Build using gcc -Wall -o test test.c -LLinux -lEspresso.
+% */
+% int main()
+% {
+%   double epsilon = 1;
+%   double p3m_mesh_offset[3] = {.5, .5, .5};
+%   int    node_grid[3] = {2, 2, 2};
+
+%   FILE *f = fopen("demofile","w");
+%   block_writestart(f, "file");
+%   fprintf(f, "{Demonstration of the block format}\\n");
+
+%   /* variable epsilon */
+%   block_writestart(f, "variable");
+%   fprintf(f, "epsilon ");
+%   block_write_data(f, TYPE_DOUBLE, 1, &epsilon);
+%   block_writeend(f);
+%   fprintf(f, "\\n");
+
+%   /* variable p3m_mesh_offset */
+%   block_writestart(f, "variable");
+%   fprintf(f, "p3m_mesh_offset ");
+%   block_write_data(f, TYPE_DOUBLE, 1, p3m_mesh_offset);
+%   block_writeend(f);
+%   fprintf(f, "\\n");
+
+% \end{tclcode}
+% \begin{tclcode}
+%   /* variable node_grid */
+%   block_writestart(f, "variable");
+%   fprintf(f, "node_grid ");
+%   block_write_data(f, TYPE_DOUBLE, 1, node_grid);
+%   block_writeend(f);
+%   fprintf(f, "\\n");
+
+%   /* end tag */
+%   block_writestart(f, "end");
+%   block_writeend(f);
+
+%   block_writeend(f);
+%   fclose(f);
+%   return 0;
+% }
+% \end{tclcode}
+
+\subsection{Writing \es's global variables}
+\index{global variables}
+
+\begin{essyntax}
+  \variant{1} blockfile \var{channel} 
+  write variable \{\var{varname1} \var{varname2} \dots \}
+  \variant{2} blockfile \var{channel} write variable all
+\end{essyntax}
+
+Variant \variant{1} writes the global variables \var{varname1}
+\var{varname2} \dots (which are known to the \lit{setmd} command (see
+section \vref{tcl:setmd}) to \var{channel}. Variant \variant{2} will
+write all known global variables.
+
+Note, that when the block is read, all variables with names listed in
+the Tcl variable \lit{blockfile_variable_blacklist} are ignored.
+
+\subsection{Writing Tcl variables}
+\index{Tcl global variables}
+
+\begin{essyntax}
+  \variant{1} blockfile \var{channel} write tclvariable \{
+  \var{varname1} \var{varname2} \dots \}
+  \variant{2} blockfile \var{channel} write tclvariable all
+  \variant{2} blockfile \var{channel} write tclvariable reallyall
+\end{essyntax}
+
+These commands will write Tcl global variables to \var{channel}.
+Global variables are those declared in the top scope of the Tcl
+script, or those that were explicitly declared global.  When reading
+the block, all variables with names listed in the Tcl variable
+\lit{blockfile_tclvariable_blacklist} are ignored.
+
+Variant \variant{1} writes the Tcl global variables \var{varname1},
+\var{varname2}, \dots to \var{channel}. Variant \variant{2} will write
+all Tcl variables to the file, with the exception of the internally
+predefined globals from Tcl (\lit{tcl_version}, \lit{argv},
+\lit{argv0}, \lit{argc}, \lit{tcl_interactive}, \lit{auto_oldpath},
+\lit{errorCode}, \lit{auto_path}, \lit{errorInfo}, \lit{auto_index},
+\lit{env}, \lit{tcl_pkgPath}, \lit{tcl_patchLevel}, \lit{tcl_libPath},
+\lit{tcl_library} and \lit{tcl_platform}). Variant \variant{3} will
+even write those.
+
+\subsection{Writing particles, bonds and interactions}
+\begin{essyntax}
+  \variant{1} blockfile \var{channel} write particles 
+  \var{what} \alt{\var{range} \asep all}
+  \variant{2} blockfile \var{channel} write bonds \var{range}
+  \variant{3} blockfile \var{channel} write interactions
+\end{essyntax}
+
+\todo{How is a Tcl-range specified?}  Variant \variant{1} writes
+particle information in a standardized format to \var{channel}.
+\var{what} can be any list of parameters that can be specified in
+\codebox{part \var{part_id} print}, except for \lit{bonds}.  Note that
+\lit{id} and \lit{pos} will automatically be added if missing.
+\var{range} is a Tcl list of ranges which particles to write.  The
+keyword \keyword{all} denotes all known particles.
+
+Variant \variant{2} writes the bond information in a standardized
+format to \var{channel}. The involved particles and bond types must
+exist and be valid.
+
+Variant \variant{3} writes the interactions in a standardized format
+to \var{channel}.
+
+\subsection{Writing the random number generator states}
+\index{random number generators}
+\index{random seed}
+\begin{essyntax}
+  \variant{1} blockfile \var{channel} write random
+  \variant{2} blockfile \var{channel} write bit_random
+  \variant{3} blockfile \var{channel} write seed
+  \variant{4} blockfile \var{channel} write bitseed
+\end{essyntax}
+
+Variants \variant{1} and \variant{2} write the full information on the
+current states of the respecitve random number generators (see section
+\vref{sec:rng}) on any node to \var{channel}.  Using this information,
+it is possible to recover the exact states of the generators.
+
+Variants \variant{3} and \variant{4} write only the seed(s) which were
+used to initialize the random number generators. Note that this
+information is not sufficient to restore the full state of a random
+number generator, because the internal state might contain more
+information.
+
+\subsection{Writing all stored configurations}
+\label{sec:blockfile:configs}
+\index{stored configurations}
+\begin{essyntax}
+  blockfile \var{channel} write configs
+\end{essyntax}
+
+This command writes all configurations currently stored for off-line
+analysis (see section \vref{sec:stored-configs}) to \var{channel}.
+
+\subsection{Writing arbitrary blocks}
+\index{blocks}
+
+\begin{essyntax}
+  \variant{1} blockfile \var{channel} write start \var{tag}
+  \variant{2} blockfile \var{channel} write end
+\end{essyntax}
+
+\var{channel} has to be a Tcl channel.  Variant \variant{1} starts a
+block and gives it the title \var{tag}, variant \variant{2} ends the
+block. Between two calls to the command, arbitrary data can be written
+to the channel.
+
+\minisec{Example}
+
+\begin{tclcode}
+set file [open "data.dat" w]
+blockfile $file write start "mydata"
+puts $file "{This is my data!}"
+blockfile $file write end
+\end{tclcode}
+%$
+will write 
+\begin{tclcode}
+{mydata {This is my data!}}
+\end{tclcode}
+to the file \lit{data.dat}.
+
+
+\subsection{Reading blocks}
+
+\begin{essyntax}
+  \variant{1} blockfile \var{channel} read auto 
+  \variant{2} blockfile \var{channel} read \alt{particles \asep
+    interactions \asep bonds \asep variable \asep seed \asep random
+    \asep bitrandom \asep configs}
+  \variant{3} blockfile \var{channel} read start 
+  \variant{4} blockfile \var{channel} read toend 
+\end{essyntax}
+
+reads the start part of a block and returns the block title.
+
   reads the blocks data and returns it.
- \item
-\begin{code}
-blockfile <channel> read particles|interactions|bonds|variable
- |seed|random|bitrandom|configs
-\end{code}
+
 reads one block, checks wether it contains data of the given type and
 reads it.
- \item
-\begin{code}
-blockfile <channel> read auto 
-\end{code}
+
   reads in one block and does the following:
   \begin{enumerate}
   \item if a procedure blockfile\_read\_auto\_\var{tag} exists, this
@@ -216,7 +252,7 @@ blockfile <channel> read auto
       <tag> <rest of block>}
   \item if the file is at end, it returns \codebox{eof}
   \end{enumerate}
-\end{enumerate}
+
 If \codebox{blockfile <channel> read auto} finds a block, it tries to
 load the corresponding procedure as described above.
 \codebox{blockfile <channel> read <block>} checks for a block with tag
@@ -263,7 +299,58 @@ which reads the block data and the closing brace. The parameters
 will always have the specified value. They occur just for technical
 reasons.
 
-\section{Using Checkpoints, saving configurations}
+
+
+
+In a nutshell: The blockfile command is provided for saving and
+restoring the current state of \es, e. g. for creating and using
+checkpoints. Hence you can transfer all accessible informations to and
+from disk from and to \es.
+
+\begin{itemize}
+ \item
+\begin{code}
+set out [open "|gzip -c - > checkpoint.block.gz" "w"]
+blockfile $out write variable all
+blockfile $out write interactions
+blockfile $out write random
+blockfile $out write bitrandom
+blockfile $out write particles "id pos type q v f" all
+blockfile $out write bonds all
+blockfile $out write configs
+close $out 
+\end{code}
+
+This example writes all variables accessible by The setmd command, all
+interactions known to The inter command, the full current state of the
+random number generator (The t\_random command or The bit\_random
+command), all informations (i.e. id, position, type-number, charge,
+velocity, forces, bonds) on all particles, and all particle
+configurations appended (using e. g. analyze append) for
+offline-analysis purposes to the file 'checkpoint.block.gz' which is
+even being compressed on-the-fly (if you don't want that, use
+\codebox{set out [open "checkpoint.block" "w"]}
+instead).
+Note that interactions must be stored before particles before bonding
+informations, as for the bonds to be set all particles and all
+interactions must already be known to \es{}.
+
+ \item
+\begin{tclcode}
+set in [open "|gzip -cd checkpoint.block.gz" "r"]
+while { [blockfile $in read auto] != "eof" } {}
+close $in 
+\end{tclcode}
+This is basically all you need to restore the informations in the
+blockfile (again, if you don't have a compressed file, use
+\begin{code}
+set out [open "checkpoint.block" "r"]
+\end{code}
+instead) overwriting the current settings in \es{}.
+\end{itemize}
+
+
+\section{Checkpointing}
 The following procedures may be used to save/restore checkpoints to
 minimize the hassel involved when your simulations crashes after long
 runs. The scripts are located in scripts/auxiliary.tcl and use The
@@ -371,98 +458,6 @@ skips that entry.  With this one can set real checkpoints which should
 reproduce the script-state as precisely as possible.
 \end{itemize}
 
-\section{The structured file format}
-\label{sec:structured-file-format}
-
-This describes the ASCII block format used for writing structured
-files for analysis or storage. Basically the file consists of blocks
-in curled braces, which have a single word title and some data. The
-data itself may consist again of such blocks. An example is:
-\begin{tclcode}
-{file {Demonstration of the block format}
-{variable epsilon {_dval_ 1} } 
-{variable p3m_mesh_offset {_dval_ 5.0000000000e-01
- 5.0000000000e-01 5.0000000000e-01 } } 
-{variable node_grid {_ival_ 2 2 2 } } 
-{end } }
-\end{tclcode}
-
-The format does not specify the number of whitespaces or which are
-used as delimiters, space, tab and return are ok.
-
-The keyword variable should be used to indicate that a variable
-definition follows in the form \var{name} \var{data}. \var{data}
-itself is a block with title \_ival\_ or \_dval\_ denoting integer
-rsp. double values, which then follow in a whitespace separated list.
-Such blocks can be read in conveniently using block\_read\_data and
-written using block\_write\_data.
-
-An example C-code generating the example above is:
-\begin{tclcode}
-// This file is part of the ESPResSo distribution
-   (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which
-   you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in
-   any form or way.
-// There is NO WARRANTY, not even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this
-   program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its
-   current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group,
-   PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise
-   stated.
-#include "blockfile.h"
-
-/*
-  Demonstration of the use of the blockfile interface.
-  Build using gcc -Wall -o test test.c -LLinux -lEspresso.
-*/
-int main()
-{
-  double epsilon = 1;
-  double p3m_mesh_offset[3] = {.5, .5, .5};
-  int    node_grid[3] = {2, 2, 2};
-
-  FILE *f = fopen("demofile","w");
-  block_writestart(f, "file");
-  fprintf(f, "{Demonstration of the block format}\\n");
-
-  /* variable epsilon */
-  block_writestart(f, "variable");
-  fprintf(f, "epsilon ");
-  block_write_data(f, TYPE_DOUBLE, 1, &epsilon);
-  block_writeend(f);
-  fprintf(f, "\\n");
-
-  /* variable p3m_mesh_offset */
-  block_writestart(f, "variable");
-  fprintf(f, "p3m_mesh_offset ");
-  block_write_data(f, TYPE_DOUBLE, 1, p3m_mesh_offset);
-  block_writeend(f);
-  fprintf(f, "\\n");
-
-\end{tclcode}
-\begin{tclcode}
-  /* variable node_grid */
-  block_writestart(f, "variable");
-  fprintf(f, "node_grid ");
-  block_write_data(f, TYPE_DOUBLE, 1, node_grid);
-  block_writeend(f);
-  fprintf(f, "\\n");
-
-  /* end tag */
-  block_writestart(f, "end");
-  block_writeend(f);
-
-  block_writeend(f);
-  fclose(f);
-  return 0;
-}
-\end{tclcode}
 
 \section{Writing pdb/psf files}
 The PDB (Brookhaven Protein DataBase) format is a widely used format

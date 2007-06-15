@@ -3,14 +3,19 @@ ug_SOURCES=\
 	introduction.tex \
 	firststeps.tex \
 	installation.tex \
+	part.tex \
+	inter.tex \
 	setup.tex \
 	run.tex \
 	analysis.tex \
+	io.tex \
 	aux.tex \
 	internal.tex \
 	contributing.tex \
+	quickref.tex \
 	features.tex \
-	quickref.tex
+	examples.tex \
+	deserno.tex
 
 ug_FIGURES=\
 	logo.jpg \

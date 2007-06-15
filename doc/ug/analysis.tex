@@ -137,7 +137,7 @@ Returns the van Hove auto correlation function $G(r,t)$ and the mean
 square displacement $msd(t)$ for particles of type \var{ptype} for the
 configurations stored in the array configs. This tool assumes that the
 configurations stored with \codebox{analyze append} (see section
-\vref{analyze:append}) are stored at equidistant time intervals.
+\vref{sec:stored-configs}) are stored at equidistant time intervals.
 $G(r,t)$ is calculated for each multiple of this time intervals. For
 each time t the distribution of particle displacements is calculated
 acoording to the specification given by \var{rmin}, \var{rmax} and
@@ -456,7 +456,7 @@ required once.
 \end{essyntax}
 Returns the quadratic end-to-end-distance and its root averaged over
 all chains.  If \lit{<re>} is used, the distance is averaged over all
-stored configurations (see section \vref{analyze:append}).
+stored configurations (see section \vref{sec:stored-configs}).
 
 \minisec{Output format}
 \begin{code}
@@ -473,7 +473,7 @@ stored configurations (see section \vref{analyze:append}).
 \todo{Reference?}
 Returns the radius of gyration averaged over all chains.  If
 \lit{<rg>} is used, the radius of gyration is averaged over all stored
-configurations (see section \vref{analyze:append}).
+configurations (see section \vref{sec:stored-configs}).
 
 \minisec{Output format}
 \begin{code}
@@ -489,7 +489,7 @@ configurations (see section \vref{analyze:append}).
 \todo{Reference?}
 Returns the hydrodynamic radius averaged over all chains.  If
 \lit{<rh>} is used, the hydodynamic radius is averaged over all stored
-configurations (see section \vref{analyze:append}).
+configurations (see section \vref{sec:stored-configs}).
 \minisec{Output format}
 \begin{code}
 \{ \var{rh} \var{error\_of\_rh} \}
@@ -503,7 +503,7 @@ configurations (see section \vref{analyze:append}).
 \end{essyntax}
 Returns the averaged internal distances within the chains.  If
 \lit{<internal_dist>} is used, the values are averaged over all stored
-configurations (see section \vref{analyze:append}).
+configurations (see section \vref{sec:stored-configs}).
 \minisec{Output format}
 \begin{code}
 \{ \var{idf(0)} \var{idf(1)} \dots \var{idf(chain\_length-1)} \}
@@ -522,7 +522,7 @@ the whole chain, but rather takes the chain monomer at position
 \var{index} (default: $0$, \ie the first monomer on the chain) to be
 the reference point to which all internal distances are calculated. If
 \lit{<bond_dist>} is used, the values will be averaged over all stored
-configurations (see section \vref{analyze:append}).
+configurations (see section \vref{sec:stored-configs}).
 
 \minisec{Output format}
 \begin{code}
@@ -542,7 +542,7 @@ chains, use the optional arguments, \ie $\var{chain\_start} =
 2*\var{MPC}$ and $\var{n\_chains} = 1$ to only include the third
 chain's monomers. If \lit{<bond_l>} is used, the value will be
 averaged over all stored configurations (see section
-\vref{analyze:append}).
+\vref{sec:stored-configs}).
 
 \subsubsection{Form factor}
 \analyzeindex{form factor of a chain}
@@ -563,7 +563,7 @@ of a single chain, averaged over all chains for $\var{qbin}+1$
 logarithmically spaced q-vectors $\var{qmin}, \dots ,\var{qmax}$ where
 $\var{qmin}>0$ and $\var{qmax}>\var{qmin}$.  If \lit{<formfactor>} is
 used, the form factor will be averaged over all stored configurations
-(see section \vref{analyze:append}).
+(see section \vref{sec:stored-configs}).
 
 \minisec{Output format}
 
@@ -617,12 +617,12 @@ Variant \variant{1} returns
 \begin{itemize}
 \item the mean-square displacement of the beads in the
   chain (\lit{<g1>})
-\item the mean-square displacement in the center of
-  gravity of the chain itself (\lit{<g2>})
+\item the mean-square displacement of the beads in the center of
+  mass of the chain (\lit{<g2>})
 \item or the motion of the center of mass (\lit{<g3>})
 \end{itemize}
 averaged over all stored configurations (see section
-\vref{analyze:append}).
+\vref{sec:stored-configs}).
 
 Variant \variant{2} returns all of these observables for the current
 configuration, as compared to the reference configuration. The
@@ -639,27 +639,30 @@ reference configuration is set, when the option \lit{-init} is used.
 \end{code}
 
 \section{Storing configurations}
-\label{analyze:append}
-\label{analyze:push}
-\label{analyze:replace}
-\label{analyze:remove}
-\label{analyze:configs}
-\label{analyze:stored}
+\label{sec:stored-configs}
+\index{stored configurations}
 
 Some observables (\ie non-static ones) require knowledge of the
 particles' positions at more than one or two times. Therefore, it is
-possible to store configurations for later analysis (see section
-\vref{analyze:append}).  Using this mechanism, the program is also
-able to work quasi-offline by successively reading in previously saved
-configurations and storing them to perform any analysis desired
-afterwards.
+possible to store configurations for later analysis.  Using this
+mechanism, the program is also able to work quasi-offline by
+successively reading in previously saved configurations and storing
+them to perform any analysis desired afterwards.
 
 Note that the time at which configurations were taken is not
 stored.  The most observables that work with the set of stored
 configurations do expect that the configurations are taken at
 equidistant timesteps.
 
+Note also, that the stored configurations can be written to a file and
+read from it via the \lit{blockfile} command (see section
+\vref{tcl:blockfile}).
+
 \subsection{Storing and removing configurations}
+\label{analyze:append}
+\label{analyze:push}
+\label{analyze:replace}
+\label{analyze:remove}
 
 \begin{essyntax}
   \variant{1} analyze append
@@ -692,6 +695,8 @@ for all configurations in the format:
 \end{code}
 
 \subsection{Getting the stored configurations}
+\label{analyze:configs}
+\label{analyze:stored}
 \begin{essyntax}
   \variant{1} analyze configs
   \variant{2} analyze stored 

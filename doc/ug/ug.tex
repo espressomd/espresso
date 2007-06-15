@@ -105,11 +105,7 @@ idxtotoc                        % add the index to the TOC
 \newcommand{\lit}[1]{\mbox{\texttt{#1}}}
 \newcommand{\keyword}[1]{\mbox{\texttt{#1}}}
 % variables
-\newcommand{\var}[1]{%
-  \ifthenelse{\boolean{mmode}}%
-  {\mathit{#1}}%
-  {\mbox{\textrm{\textit{#1}}}}%
-}
+\newcommand{\var}[1]{\mbox{\textrm{\textit{#1}}}}
 % option
 \newcommand{\opt}[1]{\mbox{\textrm{[}#1\textrm{]}}}
 % alternatives
@@ -121,16 +117,27 @@ idxtotoc                        % add the index to the TOC
 \newcommand{\rawvariant}[1]{\mbox{\textnormal{(#1)}}\xspace}
 \newcommand{\variant}[1]{\rawvariant{#1}}
 % requiresfeature
+\gdef\requiresfeaturesave{}
 \newlength{\requiresfeaturewidth}
 \newcounter{requiresfeaturecounter}
-\newcommand{\requiresfeature}[2][NONE]{%
-  \ifthenelse{\equal{#1}{NONE}}{}{%
+\newcommand{\requiresfeature}[2]{%
+  \mbox{%
     \begingroup%
     \setlength{\fboxsep}{2pt}%
     \fbox{#1}\,%
     \endgroup%
+    \raisebox{0.5ex}{\footnotesize%
+      \arabic{requiresfeaturecounter}%
+    }%
   }%
-  \footnote{Required features: \texttt{#2}}%
+  % append the feature 
+  \xdef\requiresfeaturesave{%
+    \requiresfeaturesave\noexpand\newline%
+    \noexpand\raisebox{0.5ex}{\noexpand\footnotesize%
+      \arabic{requiresfeaturecounter}%
+    }\,%
+    #2%
+  }%
   \stepcounter{requiresfeaturecounter}%
 }
 
@@ -159,7 +166,10 @@ idxtotoc                        % add the index to the TOC
 
 %% Environment for syntax descriptions
 %\newlength{\essyntaxindent}
-\newenvironment{essyntax}{%
+\newenvironment{essyntax}[1][NONE]{%
+  \ifthenelse{\equal{#1}{NONE}}{}{%
+    \gdef\requiresfeaturesave{#1}%
+  }%
   \setcounter{requiresfeaturecounter}{1}%
   % Create headings
   \minisec{Syntax}\nopagebreak%
@@ -167,7 +177,12 @@ idxtotoc                        % add the index to the TOC
   \begin{essyntaxbox}%
   }{%
   \end{essyntaxbox}%
-  \nopagebreak%
+%  \ifthenelse{\equal{\requiresfeaturesave}{}}{}{
+    \minisec{Required features}\nopagebreak%
+    \nopagebreak%
+    \ttfamily\requiresfeaturesave%
+    \gdef\requiresfeaturesave{}%
+%  }
   \minisec{Description}%
 }
 

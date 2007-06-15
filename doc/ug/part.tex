@@ -6,12 +6,12 @@
 
 \subsection{Defining particle properties}
 
-\begin{essyntax}
+\begin{essyntax}[PART]
   part
   \var{particle_number}
   \opt{pos \var{x} \var{y} \var{z}}
   \opt{type \var{particle_type_number}}
-  \opt{q \var{charge}}
+  \requiresfeature{\opt{q \var{charge}}}{ELECTROSTATICS}
   \opt{v \var{x_value} \var{y_value} \var{z_value}}
   \opt{f \var{x_value} \var{y_value} \var{z_value}}
   \opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}

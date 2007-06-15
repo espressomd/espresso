@@ -19,60 +19,61 @@ Features can be activated in the configuration header
 \begin{itemize}
 \item \feature{PARTIAL\_PERIODIC} By default, all coordinates in \es{}
   are periodic. With \texttt{PARTIAL\_PERIODIC} turned on, the \es{}
-  global variable \texttt{periodic} (see section \vref{sec:globalvar})
+  global variable \texttt{periodic} (see section \vref{tcl:setmd})
   controls the periodicity of the individual coordinates. Note that
   this slows the integrator down by around $10-30\%$.
 \item \feature{ELECTROSTATICS} This switches on the various
-  electrostatics algorithms, such as the Ewald summation. See section
-  \vref{sec:electrostatics} for details on this algorithms.
+  electrostatics algorithms, such as P3M. See section
+  \vref{sec:inter-electrostatics} for details on these algorithms.
 \item \feature{ROTATION} Switch on rotational degrees of freedom for
   the particles, as well as the corresponding quaternion integrator.
   See section \vref{sec:rotation} for details.
+  \todo{Docs for rotation missing}
 \item \feature{DIPOLES} This activates the dipole support in P$^3$M.
-  Currently, a mixing of dipoles and charges is not possible, i.~e.
-  all particles have to have charge $q=0$.  Requires
+  Currently, a mixing of dipoles and charges is not possible, \ie all
+  particles have to have charge $q=0$.  Requires
   \texttt{ELECTROSTATICS} and \texttt{ROTATION}.
 \item \feature{EXTERNAL\_FORCES} Allows to define an arbitrary
   constant force for each particle individually. Also allows to fix
-  individual coordinates of particles, e.~g. keep them at a fixed
+  individual coordinates of particles, \eg keep them at a fixed
   position or within a plane.
 \item \feature{CONSTRAINTS} Turns on various spatial constraints such
   as spherical compartments or walls. This constraints interact with
   the particles through regular short ranged potentials such as the
-  Lennard--Jones potential. See section \vref{sec:constraints} for
+  Lennard--Jones potential. See section \vref{tcl:constraint} for
   possible constraint forms.
 \item \feature{MASS} Allows particles to have individual masses. Note
-  that some analyzation procedures have not yet been adapted to take
-  the masses into account correctly.
+  that some analysis procedures have not yet been adapted to take the
+  masses into account correctly.
 \item \feature{EXCLUSIONS} Allows to exclude specific short ranged
-  interactions within molecules, which is necessary for some atomistic
-  models.
-\item \feature{COMFORCE}
-\item \feature{COMFIXED}
-\item \feature{MOLFORCES}
+  interactions within molecules.
+\item \feature{COMFORCE} \todo{Docs missing}
+\item \feature{COMFIXED} \todo{Docs missing}
+\item \feature{MOLFORCES} \todo{Docs missing}
 \item \feature{BOND\_CONSTRAINT} Turns on the RATTLE integrator which
-  allows for fixed lengths bonds between particles.
+  allows for fixed lengths bonds between particles. \todo{How to use it?}
 \end{itemize}
 
-In addition, there are switches that enable additional features in the integrator:
+In addition, there are switches that enable additional features in the
+integrator:
 \begin{itemize}
 \item \feature{NEMD} Enables the non-equilbrium (shear) MD support
-  (see section \vref{sec:NEMD}).
+  (see section \vref{sec:NEMD}).\todo{Docs missing}
 \item \feature{NPT} Enables an on--the--fly NPT integration scheme
-  (see section \vref{sec:NPT}).
+  (see section \vref{sec:NPT}).\todo{Docs missing}
 \item \feature{DPD} Enables the dissipative particle dynamics
-  thermostat (see section \vref{sec:DPD}).
+  thermostat (see section \vref{sec:DPD}).\todo{Docs missing}
 \item \feature{LB} Enables the lattice-Boltzmann fluid code (see
-  section \vref{sec:LB}).
+  section \vref{sec:LB}).\todo{Docs missing}
 \end{itemize}
 
 \section{Interactions}
 
 The following switches turn on various short ranged interactions (see section
-\vref{sec:shortrange}):
+\vref{sec:inter-nb}):
 \begin{itemize}
 \item \feature{TABULATED} Enable support for user--defined
-  interactions, e.~g. for atomistic simulations.
+  interactions.
 \item \feature{LENNARD\_JONES} Enable the Lennard--Jones potential.
 \item \feature{LJ\_WARN\_WHEN\_CLOSE} This adds an additional check to
   the Lennard--Jones potential that prints a warning of particles come
@@ -84,9 +85,9 @@ The following switches turn on various short ranged interactions (see section
 \item \feature{SOFT\_SPHERE} Enable the soft sphere potential.
 \end{itemize}
 
-If you want to use angle bonds, you currently need to choose the type
-a priori (see section \vref{sec:angle}). This will change in the near
-future to three independent angle potentials:
+If you want to use bondangle potentials, you currently need to choose
+the type by the feature (see section \vref{sec:angle}). This will
+change in the near future to three independent angle potentials:
 \begin{itemize}
 \item \feature{BOND\_ANGLE\_HARMONIC}
 \item \feature{BOND\_ANGLE\_COSINE}
