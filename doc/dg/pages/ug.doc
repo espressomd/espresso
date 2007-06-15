@@ -52,9 +52,9 @@ commands, the environment \c code exists:
     LaTeX-commands inside. Therefore, it is necessary to be careful
     when using the characters \c \\,\c { and \c } inside! On the other
     hand, it is possible to use other layout commands (like \c
-    \\textit inside.
-  - For pieces of Tcl-code that use { and }, a verbatim environment \c
-    tclcode exists:
+    \\textit) inside.
+  - For pieces of Tcl-code that make extensive use of \c { and \c }, a
+    verbatim environment \c tclcode exists:
 \verbatim
 \begin{tclcode}
  ...
@@ -63,98 +63,88 @@ commands, the environment \c code exists:
 
 \section tclcommand Documentation of Tcl commands
 
-  In general, \e all Tcl-commands have to be documented in the User's
-  Guide. The documentation consists of two parts:
-  <ul>
-    <li>The <em>formal syntax definition</em> as described in the UG in
-      the chapter \e Introduction. This syntax description should be as
-      simple as possible, as it will be what a user references
-      to. Avoid very long definitions and constructs like nested
-      alternatives and options! In those cases, prefer to split the
-      syntax definition into several subdefinitions instead of writing
-      it in a single, complicated definition! 
+\subsection syntax_definition Formal syntax definition
+
+\e All Tcl-commands have to be documented in the User's Guide.
+
+At the beginning of each of the command descriptions, pleasue use the
+command <tt>\\eslabel{\e commandname }</tt> to automatically generate a
+label <tt>tcl:\e commandname</tt> and create appropriate index
+entries.
+
+For the <em>formal syntax definition</em>, you have to use the
+environment \c essyntax. It will generate the headings
+<em>Syntax</em>, <em>Required features</em> and <em>Description</em>,
+and furthermore it will copy the syntax definition to the quick
+reference guide. Inside the \c essyntax environment, you have to use
+the following commands for typesetting the definition:
+
+- <tt>\\variant{\e number }</tt> to typeset the label of a command
+  variant
+- <tt>\\var{\e name }</tt> to typeset a variable argument
+- <tt>\\keyword{\e text }</tt> or <tt>\\lit{\e text }</tt> to
+  typeset keywords or literals
+- <tt>\\opt{\e text }</tt> to typeset optional arguments
+- <tt>\<\e alt1 |\e alt2 |\e alt3 \></tt> to typeset alternatives
+- <tt>\\requiresfeature[\e text]{\e features }</tt> will add a marking
+  that the command requires the features \e features. If the optional
+  argument \e text is used, it will be marked that \e text requires
+  the feature, not the whole command.
+
+The <em>formal syntax definition</em> should be as simple and as
+readable as possible, as it will be what a user references to. Avoid
+very long definitions and constructs like nested alternatives and
+options! In those cases, prefer to split the syntax definition into
+several subdefinitions instead of writing it in a single, complicated
+definition!
     
-      Example:<p>
-      Instead of using<p>
-      \c inter \< <em>particle_type_number1 particle_type_number2</em> |
-      <em>bond_type_number</em> \> <em>interaction_type</em> <em>value</em>+<p>
-      better use<p>
-      \c inter <em>type1 type2 nb_inter_type parameters</em><br>
-      \c inter <em>bond_type bond_inter_type parameters</em><br>
-    </li>
-    <li>The <em>description</em> of the command. In this description,
-      every variable argument introduced via the <tt>\\var</tt>
-      command in the definition has to be explained in detail:
-        - state explicitly the \e type of the argument (integer,
-          float, string, Tcl-list)
-        - explain the meaning of the argument
-    </li> 
-  </ul>
+Example:<p>
+Instead of using
+<p>
+\c inter \< <em>particle_type_number1 particle_type_number2</em> |
+<em>bond_type_number</em> \> <em>interaction_type</em> <em>value</em>+
+<p>
+better use
+<p>
+(1) \c inter <em>type1 type2 nb_inter_type parameters</em><br>
+(2) \c inter <em>bond_type bond_inter_type parameters</em><br>
 
-  As the Tcl-commands shall also be added to the quick reference in
-  the appendix and furthermore a script should check whether all
-  implemented commands are documented, Tcl commands have to be
-  documented as follows:
+\subsection command_desc Description
 
-  - For the syntax definition, the following LaTeX-commands exist:
-    - <tt>\\var{\<text\>}</tt> to typeset a variable argument
-    - <tt>\\keyword{\<text\>}</tt> or <tt>\\lit{\<text\>}</tt> to
-      typeset keywords or literals
-    These commands should be used in the syntax definition as well as
-    in the description of the command.
-  - The syntax definition of a command has to be introduced via
+In the description, you should use all of the above typesetting
+commands when you refer to them in the text.  In particular, every
+variable argument introduced via the <tt>\\var</tt> command in the
+definition has to be explained in detail: 
+- state explicitly the \e type of the argument (integer, float,
+  string, Tcl-list)        
+- explain the meaning of the argument
+
+If the command has a number of different options, i.e. independent,
+optional arguments, they can be described in the \c arguments
+environment:
 \verbatim
-\tclcommand[<required_features>]{<name>}{<arguments>}
-\endverbatim.
-    \arg <tt>\<required_features\></tt> should contain a whitespace-separated
-      list of features that are required for the command. If the
-      fetaures are only required for certain subcommands, use brackets
-      \c "()" to indicate this.
-    \arg <tt>\<name\></tt> gives the base name of the command.
-    \arg <tt>\<arguments\></tt> defines the arguments of the command. In this
-      definition, stick to the description given in the Introduction
-      and use the commands \c \\var , \c \\lit, \c \\keyword. To
-      separate lines, \c \\\\ can be used.
-
-    The command will generate the subheadings \e Syntax, <em>Required
-    features</em> and \e Description. Furthermore, it will generate
-    the corresponding entry in the quick reference. Example:
-\verbatim
-\tclcommand[LENNARD\_JONES]{inter}{%
-  \var{type1 type2} 
-  lennard\_jones 
-  \var{epsilon sigma cutoff shift offset}
-}
-
-Defines a Lennard-Jones interaction...
-\endverbatim
-
-  - If the command has a number of different options, i.e.
-    independent, optional arguments, they can be described in the \c
-    tcloptions environment:
-\verbatim
-\begin{tcloptions}
-  \option{<option1>}
-  <description>
-  \option{<option2>}
-  <description>
+\begin{arguments}
+  \item[<arg1>] <description of arg1>
+  \item[<arg2>] <description of arg2>
   ...
-\end{tcloptions}
+\end{arguments}
 \endverbatim
-   The environment will generate the subheading \e Options and nicely
-   format the descriptions. Example:
-\verbatim
-\begin{tcloptions}
-  \option{<short|verbose>}
+
+The environment will generate the subheading \e Arguments and nicely
+format the descriptions. 
+
+Example: 
+\verbatim \begin{arguments}
+  \item[<short|verbose>]
   Specify, whether the output is in a human-readable, but somewhat
   longer format (\keyword{verbose}), or in a more compact form
   (\keyword{short}). The default is \keyword{verbose}.
   
-  \option{<radius \var{radii}|auto>}
+  \item[<radius \var{radii}|auto>]
   Specify the VDW radii of the atoms. \var{radii} is either
   \keyword{auto}, or a Tcl-list describing the radii of the different
   ...
-\end{tcloptions}
+\end{arguments}
 \endverbatim
 
 */
