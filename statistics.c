@@ -344,6 +344,9 @@ void nbhood(double pt[3], double r, IntList *il, int planedims[3] )
 {
   double d[3],dsize;
   int i,j;
+  double r2;
+
+  r2 = r*r;
 
   init_intlist(il);
  
@@ -360,7 +363,7 @@ void nbhood(double pt[3], double r, IntList *il, int planedims[3] )
       }
     }
 
-    if (sqrt(sqrlen(d)) < r) {
+    if (sqrlen(d) < r2) {
       realloc_intlist(il, il->n + 1);
       il->e[il->n] = partCfg[i].p.identity;
       il->n++;
