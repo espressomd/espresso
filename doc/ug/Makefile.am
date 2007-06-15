@@ -1,4 +1,5 @@
-ug_SOURCES=ug.tex \
+ug_SOURCES=\
+	ug.tex \
 	introduction.tex \
 	firststeps.tex \
 	installation.tex \
@@ -11,7 +12,8 @@ ug_SOURCES=ug.tex \
 	features.tex \
 	quickref.tex
 
-ug_FIGURES=logo.jpg \
+ug_FIGURES=\
+	logo.jpg \
 	nacl-rdf.pdf \
 	salt.png
 

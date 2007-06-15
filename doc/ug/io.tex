@@ -1,0 +1,733 @@
+\chapter{Input / Output}
+\label{cha:io}
+
+\section{\texttt{blockfile}}
+In a nutshell: The blockfile command is provided for saving and
+restoring the current state of \es, e. g. for creating and using
+checkpoints. Hence you can transfer all accessible informations to and
+from disk from and to \es.
+
+\begin{itemize}
+ \item
+\begin{code}
+set out [open "|gzip -c - > checkpoint.block.gz" "w"]
+blockfile $out write variable all
+blockfile $out write interactions
+blockfile $out write random
+blockfile $out write bitrandom
+blockfile $out write particles "id pos type q v f" all
+blockfile $out write bonds all
+blockfile $out write configs
+close $out 
+\end{code}
+
+This example writes all variables accessible by The setmd command, all
+interactions known to The inter command, the full current state of the
+random number generator (The t\_random command or The bit\_random
+command), all informations (i.e. id, position, type-number, charge,
+velocity, forces, bonds) on all particles, and all particle
+configurations appended (using e. g. analyze append) for
+offline-analysis purposes to the file 'checkpoint.block.gz' which is
+even being compressed on-the-fly (if you don't want that, use
+\codebox{set out [open "checkpoint.block" "w"]}
+instead).
+Note that interactions must be stored before particles before bonding
+informations, as for the bonds to be set all particles and all
+interactions must already be known to \es{}.
+
+ \item
+\begin{tclcode}
+set in [open "|gzip -cd checkpoint.block.gz" "r"]
+while { [blockfile $in read auto] != "eof" } {}
+close $in 
+\end{tclcode}
+This is basically all you need to restore the informations in the
+blockfile (again, if you don't have a compressed file, use
+\begin{code}
+set out [open "checkpoint.block" "r"]
+\end{code}
+instead) overwriting the current settings in \es{}.
+\end{itemize}
+And now the full documentation on how The blockfile command actually
+works:
+
+\tclcommand{blockfile}
+{
+  \var{channel} 
+  read|write 
+  start|end|variable|auto|toend
+  \opt{\var{param}}
+}
+
+blockfile allows for convienent access to a block format structured
+file \var{channel}. Some of the possible actions are:
+\begin{enumerate}
+ \item
+\begin{code}
+blockfile <channel>  write start <tag> 
+\end{code}
+which writes a start "\{" and the title of the block given by
+\var{tag}.
+ \item
+\begin{code}
+blockfile <channel> write end 
+\end{code}
+just writes a "\}" to \var{channel}.
+ \item
+\begin{code}
+blockfile <channel> write variable {<varname1> <varname2> ...}
+\end{code}
+writes the variables \var{varname1}, \var{varname2},..., which are
+known to The setmd command (a list can be found in Global variables),
+to \var{channel}. When reading the block, all variables with names
+listed in blockfile\_variable\_blacklist are ignored.
+ \item
+\begin{code}
+blockfile <channel> write variable all
+\end{code}
+  will write all variables known to The setmd command to \var{channel}.
+ \item
+\begin{code}
+blockfile <channel> write tclvariable {<varname1> <varname2> ...}
+\end{code}
+writes the tcl global variables \var{varname1}, \var{varname2},..., to
+\var{channel}. Global variables are those declared in the top scope or
+those declared global in procedures. When reading the block, all
+variables with names listed in blockfile\_tclvariable\_blacklist are
+ignored.
+ \item
+\begin{code}
+blockfile <channel> write tclvariable all
+\end{code}
+will write all global variables to \var{channel}. The predefined
+globals from Tcl (tcl\_version, argv, argv0, tcl\_interactive,
+auto\_oldpath, errorCode, auto\_path, errorInfo, auto\_index, env,
+tcl\_pkgPath, tcl\_patchLevel, argc, tcl\_libPath, tcl\_library and
+tcl\_platform) are omitted.
+ \item
+\begin{code}
+blockfile <channel> write tclvariable reallyall
+\end{code}
+  will even write those variables, which you probably almost never want...
+ \item
+\begin{code}
+blockfile <channel> write particles <what> <range>
+\end{code}
+writes particle information in a standardized format to the file
+\var{channel}. \var{what} can be any list of parameters that part
+\var{x} print takes except for "bonds". Notice that if "id" or "pos"
+is missing, this is added in the front to the list automatically.
+\var{range} is a Tcl list of ranges which particles to write. The
+range "all" is valid as well as a boundary of "end". For example
+\begin{code}
+ blockfile file10 write particles "id pos q" "all 0-end 0" 
+\end{code}
+  will write all particles two times to file10 and then particle 0 alone.
+ \item
+\begin{code}
+ blockfile <channel> write interactions
+\end{code}
+  writes interactions information in a standardized format to the file \var{channel}.
+ \item
+\begin{code}
+blockfile <channel> write bonds <range>
+\end{code}
+writes bonds information in a standardized format to the file
+\var{channel}. The involved particles and bond types must exist and be
+valid.
+ \item
+\begin{code}
+blockfile <channel> write random
+\end{code}
+writes the full informations on the current state of the random number
+generators on any node to the file \var{channel}. Using this
+information, it is possible to recover the exact state the generators
+were in at that moment.
+ \item
+\begin{code}
+blockfile <channel> write seed
+\end{code}
+writes only the seed(s) which were used to initialize the random
+number generators. Note that this information is not sufficient to
+pick up the random sequences where they were left, because The
+t\_random command also uses a table of previous random numbers to
+determine the next one; to also save that information use
+tcl\_blockfile\_write\_random.
+ \item
+\begin{code}
+blockfile <channel> write bitrandom
+\end{code}
+writes the full informations on the current state of the R250 random
+number generators on any node to the file \var{channel}. Using this
+information, it is possible to recover the exact state the generators
+were in at that moment.
+ \item
+\begin{code}
+blockfile <channel> write bitseed
+\end{code}
+writes only the seed(s) which were used to initialize the bit random
+number generators. Note that this information is not sufficient to
+pick up the random sequences where they were left, because The
+bit\_random command uses a huge matrix of integers whose bit-patterns
+are XOR-ed to determine the next one; to also save that information
+use tcl\_blockfile\_write\_bitrandom.
+ \item
+\begin{code}
+blockfile <channel> write configs
+\end{code}
+writes the complete content of the 'configs'-array in statistics.c to
+\var{channel}, thereby saving all particle configurations appended (e.
+g. using analyze append) for analysis-purposes.  Using this
+offline-analysis is quite easy: Just append regularly the current
+configurations, include this command after the derivation of the last
+time step, and blockfile read auto will load them later on resetting
+'configs' to the state needed for most of the more complex
+analyze-commands.
+ \item
+\begin{code}
+blockfile <channel> read start 
+\end{code}
+  reads the start part of a block and returns the block title.
+ \item
+\begin{code}
+blockfile <channel> read toend 
+\end{code}
+  reads the blocks data and returns it.
+ \item
+\begin{code}
+blockfile <channel> read particles|interactions|bonds|variable
+ |seed|random|bitrandom|configs
+\end{code}
+reads one block, checks wether it contains data of the given type and
+reads it.
+ \item
+\begin{code}
+blockfile <channel> read auto 
+\end{code}
+  reads in one block and does the following:
+  \begin{enumerate}
+  \item if a procedure blockfile\_read\_auto\_\var{tag} exists, this
+    procedure takes over (\var{tag} is the first expression in the
+    block). For most block types, at least all mentioned above, i. e.
+    particles, interactions, bonds, seed, random, bitrandom, configs,
+    and variable, the corresponding procedure will overwrite the
+    current information with the information from the block.
+  \item if the procedure does not exist, it returns \codebox{usertag
+      <tag> <rest of block>}
+  \item if the file is at end, it returns \codebox{eof}
+  \end{enumerate}
+\end{enumerate}
+If \codebox{blockfile <channel> read auto} finds a block, it tries to
+load the corresponding procedure as described above.
+\codebox{blockfile <channel> read <block>} checks for a block with tag
+\var{block} and then again executes the corresponding
+blockfile\_read\_auto\_\var{tag}, if it exists.
+
+If that fails, blockfile executes \codebox{blockfile\_arg1\_arg2}, if
+it exists, with the all arguments given to blockfile. For example
+\begin{code}
+blockfile channel write particles "id pos" all 
+\end{code}
+results in the evaluation of
+\begin{code}
+blockfile\_write\_particles channel write particles "id pos" all 
+\end{code}
+If the next block in a blockfile is a particle block, e. g.
+\begin{tclcode}
+{particles {id pos type q}
+           {0 27.251 62.31 58.707 1 1.0}
+           {1 27.226 61.483 58.146 0 0.0}
+}
+\end{tclcode}	
+\begin{code}
+  blockfile <channel> read auto
+\end{code}
+will call
+\begin{code}
+blockfile_read_auto_particles <channel> read auto
+\end{code}
+, which then will delete all particles and insert the two particles
+above.
+
+In the contrary that means that for a new blocktype you will normally
+implement two procedures:
+\begin{tclcode}
+blockfile_write_<tag> {channel write <tag> param...}
+\end{tclcode}
+which writes the block including the header and enclosing braces and
+\begin{tclcode}
+blockfile_read_auto_<tag> {channel "read" "auto"}
+\end{tclcode}
+which reads the block data and the closing brace. The parameters
+"write", "read", "\var{tag}" and "auto" are regular parameters which
+will always have the specified value. They occur just for technical
+reasons.
+
+\section{Using Checkpoints, saving configurations}
+The following procedures may be used to save/restore checkpoints to
+minimize the hassel involved when your simulations crashes after long
+runs. The scripts are located in scripts/auxiliary.tcl and use The
+blockfile command as file format.
+\begin{itemize}
+ \item
+\begin{code}
+checkpoint\_set <destination> [<\# of configs> [<tclvar>
+ [<ia\_flag> [<var\_flag> [<ran\_flag]]]]]
+\end{code}
+creates a checkpoint with path/filename \var{destination} (compressed
+if \var{destination} ends with '.gz'), saving the last \var{\# of
+  configs} which have been appended using analyze\_append (defaults to
+'all'), adds all tcl-embedded variables specified in the tcl-list
+\var{tclvar} (defaults to '-'), all interactions (The inter command) /
+\es{}-variables (The setmd command) / random-number-generator
+informations (The t\_random command etc.) unless their respective
+flags \var{ia\_flag} / \var{var\_flag} / \var{ran\_flag} are set to
+'-'; you may however choose to only include certain \es{}-variables
+(The setmd command) by providing their names as a tcl-list in place of
+\var{var\_flag}.  When you're reading this, tcl\_checkpoint\_set will
+be using The invalidate\_system command automatically; therefore
+continuing an integration after setting a checkpoint or restarting it
+there by reading one should make absolutely no difference anymore,
+since the current state of the random number generator(s) is/are
+completely (re)stored to (from) the checkpoint and the integrator is
+forced to re-init the forces (incl. thermostat) no matter what.  It
+may be a good choice to use filenames such as
+'kremer\_checkpoint.[eval format 05 \$integration\_step]' or
+'kremer\_checkpoint.029.gz' for \var{destination} because the command
+stores all the names of checkpoints set to a file derived from
+\var{destination} by replacing the very last suffix plus maybe '.gz'
+with '.chk' (in the above examples: 'kremer\_checkpoint.chk') which is
+used by tcl\_checkpoint\_read to restore all checkpoints.  Although
+'checkpoint\_set \var{destination}' without the optional parameters
+will store a complete checkpoint sufficient for re-starting the
+simulation later on, you may run out of memory while trying to save a
+huge number of timesteps appended (analyze\_append). Hence one should
+rather only save those configurations newly added since the last
+checkpoint, i.e. if a checkpoint is created every 100,000 steps while
+a configuration is appended every 500 steps you may want to use
+'checkpoint\_set \var{destination} 200' which saves the current
+configuration, all interactions, all bonds, the precise state of the
+random number generator(s), and the last 200 entries appended to
+configs since the last checkpoint was created. Since
+tcl\_checkpoint\_read reads in successively the checkpoints given in
+the '.chk'-file, the configs-array will nevertheless be completely
+restored to its original state although each checkpoint-file contains
+only a fraction of the whole array.
+ \item
+\begin{code}
+checkpoint\_read <origin>
+\end{code}
+
+restores all the checkpoints whose filenames are listed in
+\var{origin} in the order given therein, consequently putting the
+simulation into the state it was in when tc\_checkpoint\_set was
+called. If parts of the configs array are given in the files listed in
+\var{origin}, it is assumed that they represent a fraction of the
+whole array.
+ \item
+\begin{code}
+polyBlockWrite <path> <param\_list> <part\_list>
+\end{code}
+writes out the current '\es{}' configuration as an AxA-blockfile,
+including parameters, interactions, particles, and bonds.  \var{path}
+should contain the filename including the full path to it.
+\var{param\_list} gives a tcl-list of the '\es{}'-parameters (out of )
+to be saved; if an empty list '{}' is supplied, no parameters are
+written. If 'all', all parameters available through The setmd command
+are written. Defaults to the full parameter set.  \var{part\_list}
+gives a string of the particle-properties (out of pos | type | q | v |
+f) to be saved to disk; if an empty string ' "" 'is provided, no
+particles, no bonds, and no interactions are written. Defaults (if
+omitted) to all particle-properties.  Depending on the file-name's
+suffix, the output will be compressed (if \var{path} ends with '.gz'),
+too.  Note, that 'polyBlockWrite' in combination with
+tcl\_convertMD2Deserno replaces the (undocumented) function 'polywr':
+To save the current configuration to a Deserno-compatible file (e. g.
+for use with 'poly2pdb') you may now use tcl\_polyBlockWrite to save
+your current configuration to a blockfile, and convert that with
+tcl\_convertMD2Deserno afterwards, or you directly write a
+Deserno-compatible file by invoking
+\begin{code}
+convertMD2Deserno "-1" <output-filename>
+\end{code}
+
+out of \es to save your current active configuration.  However, this
+last paragraph now has only historical meaning (see Writing pdb/psf
+files).
+ \item
+\begin{code}
+polyBlockWriteAll <destination> [<tcl-var> [<rdm> [<configs>]]]
+\end{code}
+
+does even more than tcl\_polyBlockWrite, i.e. it saves all current
+interactions, particles, bonds, \es{}-variables to \var{destination},
+but in addition it also saves the tcl-variables specified by
+\var{tcl-var} (if 'all', then all the variables in the active script
+are stored), it saves the state of the random number generator if
+\var{rdm} is 'random' (= complete state) or 'seed' (= only the seeds),
+and it saves all the particle configurations used for analysis
+purposes if \var{configs} is all but '-'.  Using '-' as value usually
+skips that entry.  With this one can set real checkpoints which should
+reproduce the script-state as precisely as possible.
+\end{itemize}
+
+\section{The structured file format}
+\label{sec:structured-file-format}
+
+This describes the ASCII block format used for writing structured
+files for analysis or storage. Basically the file consists of blocks
+in curled braces, which have a single word title and some data. The
+data itself may consist again of such blocks. An example is:
+\begin{tclcode}
+{file {Demonstration of the block format}
+{variable epsilon {_dval_ 1} } 
+{variable p3m_mesh_offset {_dval_ 5.0000000000e-01
+ 5.0000000000e-01 5.0000000000e-01 } } 
+{variable node_grid {_ival_ 2 2 2 } } 
+{end } }
+\end{tclcode}
+
+The format does not specify the number of whitespaces or which are
+used as delimiters, space, tab and return are ok.
+
+The keyword variable should be used to indicate that a variable
+definition follows in the form \var{name} \var{data}. \var{data}
+itself is a block with title \_ival\_ or \_dval\_ denoting integer
+rsp. double values, which then follow in a whitespace separated list.
+Such blocks can be read in conveniently using block\_read\_data and
+written using block\_write\_data.
+
+An example C-code generating the example above is:
+\begin{tclcode}
+// This file is part of the ESPResSo distribution
+   (http://www.espresso.mpg.de).
+// It is therefore subject to the ESPResSo license agreement which
+   you accepted upon receiving the distribution
+// and by which you are legally bound while utilizing this file in
+   any form or way.
+// There is NO WARRANTY, not even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// You should have received a copy of that license along with this
+   program;
+// if not, refer to http://www.espresso.mpg.de/license.html where its
+   current version can be found, or
+// write to Max-Planck-Institute for Polymer Research, Theory Group,
+   PO Box 3148, 55021 Mainz, Germany.
+// Copyright (c) 2002-2006; all rights reserved unless otherwise
+   stated.
+#include "blockfile.h"
+
+/*
+  Demonstration of the use of the blockfile interface.
+  Build using gcc -Wall -o test test.c -LLinux -lEspresso.
+*/
+int main()
+{
+  double epsilon = 1;
+  double p3m_mesh_offset[3] = {.5, .5, .5};
+  int    node_grid[3] = {2, 2, 2};
+
+  FILE *f = fopen("demofile","w");
+  block_writestart(f, "file");
+  fprintf(f, "{Demonstration of the block format}\\n");
+
+  /* variable epsilon */
+  block_writestart(f, "variable");
+  fprintf(f, "epsilon ");
+  block_write_data(f, TYPE_DOUBLE, 1, &epsilon);
+  block_writeend(f);
+  fprintf(f, "\\n");
+
+  /* variable p3m_mesh_offset */
+  block_writestart(f, "variable");
+  fprintf(f, "p3m_mesh_offset ");
+  block_write_data(f, TYPE_DOUBLE, 1, p3m_mesh_offset);
+  block_writeend(f);
+  fprintf(f, "\\n");
+
+\end{tclcode}
+\begin{tclcode}
+  /* variable node_grid */
+  block_writestart(f, "variable");
+  fprintf(f, "node_grid ");
+  block_write_data(f, TYPE_DOUBLE, 1, node_grid);
+  block_writeend(f);
+  fprintf(f, "\\n");
+
+  /* end tag */
+  block_writestart(f, "end");
+  block_writeend(f);
+
+  block_writeend(f);
+  fclose(f);
+  return 0;
+}
+\end{tclcode}
+
+\section{Writing pdb/psf files}
+The PDB (Brookhaven Protein DataBase) format is a widely used format
+for describing atomic configurations. PSF is a format that is used by
+VMD to describe the topology of a PDB file. You need the PDB and PSF
+files for example for IMD.
+\begin{tclcode}
+writepsf <file> { <N_P> <MPC> <N_CI> <N_pS> <N_nS> }|-molecule
+\end{tclcode}
+writes the current topology to the file <file> (here <file> is not a
+channel since additional information cannot be written anyways).
+\var{N\_P}, \var{MPC} and so on are parameters describing a system
+consisting of equally long charged polymers, counterions and salt.
+This information is used to set the residue name and can be used to
+color the atoms in VMD. If you specify -molecule, the residue name is
+taken from the molecule identity of the particle. Of course different
+kinds of topologies can also be handled by modified versions of
+writepsf.
+\begin{code}
+writepdb <file>
+\end{code}
+writes the corresponding particle data.
+\begin{tclcode}
+writepdbfoldchains <file> { < chain_start> <n_chains> <chain_length>
+ <box_l> }
+\end{tclcode}
+Writes folded particle data where the folding is performed on chain
+centers of mass rather than single particles. In order to fold in this
+way the chain topology and box length must be specified. Note that
+this method is outdated. Use writepdbfoldtopo instead.
+\begin{tclcode}
+writepdbfoldtopo <file> { <shift> } 
+\end{tclcode}
+Writes folded particle data where the folding is performed on chain
+centers of mass rather than single particles. This method uses the
+internal box length and topology information from espresso. If you
+wish to shift particles prior to folding then supply the optional
+shift information. Shift should be a three member tcl list consisting
+of x, y, and z shifts respectively and each number should be a
+floating point (ie with decimal point).
+
+\section{Writing VTF files}
+%\quickrefheading{Handling of VTF files}
+
+There are two commands in \es{} that support writing files in the VMD
+formats VTF, VSF and VCF.\footnote{A description of the format and a
+  plugin to read the format in VMD is found in the subdirectory
+  \texttt{vmdplugin/} of the \es{} source directory.} The commands can
+be used to write the structure (\texttt{writevsf}) and coordinates
+(\texttt{writevcf}) of the system to a single trajectory file (usually
+with the extension \texttt{.vtf}), or to separate files (extensions
+\texttt{.vsf} and \texttt{.vtf}).
+
+\subsection{\texttt{writevsf}}
+
+\tclcommand{writevsf}
+{\var{channelId} \opt{<short|verbose>} \opt{radius <\var{radii}|auto>} 
+  \opt{typedesc \var{typedesc}}}
+
+Writes a structure block describing the system's structure to the
+channel given by \var{channelId}. \var{channelId} must be an
+identifier for an open channel such as the return value of an
+invocation of \keyword{open}. The atom ids used in the file are not
+necessarily identical to \es's particle ids. To get the atom id used
+in the vtf file from an \es particle id, use the command
+\keyword{vtfpid} described below. This makes it easy to write
+additional structure lines to the file, e.g. to specify the
+\texttt{resname} of particle compounds, like chains.  The output of
+this command can be used for a standalone VSF file, or at the
+beginning of a trajectory VTF file that contains a trajectory of a
+whole simulation.
+
+\begin{arguments}
+\item[\opt{<short|verbose>}]
+  Specify, whether the output is in a human-readable, but somewhat
+  longer format (\keyword{verbose}), or in a more compact form
+  (\keyword{short}). The default is \keyword{verbose}.
+  
+\item[\opt{radius <\var{radii}|auto>}]
+  Specify the VDW radii of the atoms. \var{radii} is either
+  \keyword{auto}, or a Tcl-list describing the radii of the different
+  particle types. When the keyword \keyword{auto} is used and a
+  Lennard-Jones interaction between two particles of the given type is
+  defined, the radius is set to be $\frac{\sigma_{LJ}}{2}$ plus the LJ
+  shift.  Otherwise, the radius $0.5$ is substituted. The default is
+  \keyword{auto}.
+  
+  Example: \verb!writevsf $file radius {0 2.0 1 auto 2 1.0}!
+  
+\item[\opt{typedesc \var{typedesc}}]
+  \var{typedesc} is a Tcl-list giving additional VTF atom-keywords to
+  specify additional VMD characteristics of the atoms of the given type.
+  If no description is given for a certain particle type, it defaults to
+  \texttt{name \textit{name} type \textit{type}}, where \textit{name}
+  is an atom name and \textit{type} is the type id.
+  
+  Example: \verb!writevsf $file typedesc {0 "name colloid" 1 "name pe"}!
+\end{arguments}
+
+\subsection{\texttt{writevcf}}
+\tclcommand{writevcf}
+{\var{channelId} \opt{<short|verbose>} \opt{<folded|absolute>}
+  \opt{pids <\var{pids}|all>}}
+
+Writes a coordinate (or timestep) block that contains all coordinates
+of the system's particles to the channel given by \var{channelId}.
+\var{channelId} must be an identifier for an open channel such as the
+return value of an invocation of \keyword{open}.
+
+\begin{arguments}
+\item[\opt{<short|verbose>}] Specify, whether the output is in a
+  human-readable, but somewhat longer format (\keyword{verbose}), or
+  in a more compact form (\keyword{short}). The default is
+  \keyword{verbose}.
+  
+\item[\opt{<folded|absolute>}] Specify whether the particle positions
+  are written in absolute coordinates (\keyword{absolute}) or folded
+  into the central image of a periodic system (\keyword{folded}). The
+  default is \keyword{absolute}.
+  
+\item[\opt{pids <\var{pids}|all>}] Specify the coordinates of which
+  particles should be written. If \keyword{all} is used, all
+  coordinates will be written (in the ordered timestep format).
+  Otherwise, \var{pids} has to be a Tcl-list specifying the pids of
+  the particles. The default is \keyword{all}.
+  
+  Example: \verb!pids {0 23 42}!
+  
+\end{arguments}
+
+\subsection{\texttt{vtfpid}}
+\tclcommand{vtfpid}{\var{pid}}
+
+If \var{pid} is the id of a particle as used in \es, this command
+returns the atom id used in the VTF, VSF or VCF formats.
+
+
+\section{\texttt{imd}: Online-visualisation with VMD}
+IMD (Interactive Molecular Dynamics) is the protocol VMD uses to
+communicate with a simulation. Tcl\_md implements this protocol to
+allow online visual analysis of running simulations.
+
+In IMD, the simulation acts as a data server. That means that a
+simulation can provide the possibility of connecting VMD, but VMD need
+not be connected all the time. You can watch the simulation just from
+time to time.
+
+In the following the setup up and using of IMD is described.
+
+\subsection{IMD in the script}
+
+In your simulation, the IMD connection is setup up using \codebox{imd
+  connect <port>}
+
+where \var{port} is an arbitrary port number (it has to be between
+1024 and 65000). Normally \es{} will try to open port 10000, but the
+port may be in use already by another \es{} simulation. In that case
+it is a good idea to just try another port (see lj\_liquid.tcl).
+
+Now while the simulation is running, you should execute
+\begin{code}
+imd positions <flag>
+\end{code}
+from time to time, which will transfer the current coordinates to VMD,
+if it is connected. If not, nothing happens and imd connect just
+consumes a small amount of CPU time. The optional flag argument can
+take values -unfolded or -fold\_chains. By specifying -unfolded the
+unfolded coordinates for each particle will be given to VMD.
+Specifying -fold\_chains causes imd to call the routine
+analyze\_fold\_molecules which folds chains according to their centers
+of mass and retains bonding connectivity. Note that this routine
+requires the chain structure to be specified first using the analyze
+command.
+\begin{code}
+imd listen <seconds>
+\end{code}
+can be used to let the simulation wait for \var{seconds} seconds or
+until IMD has connected. This is normally only useful in demo scripts,
+if you want to see all frames of the simulation.
+
+If your simulations terminates,
+\begin{code}
+imd disconnect
+\end{code}
+
+will terminate the IMD session. This is normally not only nice but
+also the operating system will not free the port for some time, so
+that without disconnecting for some 10 seconds you will not be able to
+reuse the port.
+
+Additionally, you have to provide VMD with the structural information
+for your system. Therefore your program has to write out
+psf-/pdb-files using tcl\_writepsf and tcl\_writepdb.
+
+That hassle is greatly reduced by using the built-in auxiliary script
+\begin{code}
+prepare\_vmd\_connection [<filename> [<wait> [<start>]]]
+\end{code}
+
+which writes out the necessary psf-/pdb-files to \var{filename}.psf
+and \var{filename}.pdb (default for <filename is 'vmd'), doing some
+nice stuff such as coloring the molecules, bonds and counterions
+appropriately, rotating your viewpoint, and connecting your system to
+the visualization server. If \var{start} is 1 (the default), it does
+all that by itself; otherwise it writes those steps out to a
+script-file 'vmd\_start.script and waits for \var{wait} seconds
+(default: 0) for you to connect.
+
+\subsection{Using IMD in VMD}
+So after your simulation runs and has written the psf/pdb files, you
+start VMD. Then click on "Molecule", choose fileformat "psf and pdb",
+and select your psf/pdb files in the corresponding entries. Now click
+on "Load Molecule". You should see the snapshot you saved in the
+psf/pdb files.
+
+Then execute "imd connect \var{host} \var{port}", where \var{host} is
+the host running the simulation and \var{port} is the port it listens
+to. Note that VMD crashes, if you do that without loading the molecule
+before .
+
+For more information on how to use VMD to extract more information or
+hide parts of configuration, see the VMD Quick Help.
+
+\section{Errorhandling}
+Errors in the parameters are detected as early as possible, and
+hopefully self-explanatory error messages returned without any changes
+to the data in the internal data of \es. This include errors such as
+setting nonexistent properties of particles or simply misspelled
+commands. These errors are returned as standard Tcl errors and can be
+caught on the Tcl level via
+\begin{tclcode}
+catch {script} err 
+\end{tclcode}
+When run noninteractively, Tcl will return a nice stack backtrace
+which allows to quickly find the line causing the error.
+
+However, some errors can only be detected after changing the internal
+structures, so that \es{} is left in a state such that integration is
+not possible without massive fixes by the users. Especially errors
+occuring on nodes other than the primary node fall under this
+condition, for example a broken bond or illegal parameter
+combinations.
+
+For error conditions such as the examples given above, an Tcl error
+message of the form
+\begin{tclcode}
+<Tcl error> background 0 {<error a>} {<error b>} 1 {<error c>}
+\end{tclcode}
+is returned. Following possibly a normal Tcl error message, after the
+background keyword all severe errors are listed node by node,
+preceeded by the node number. a special error is "<consent>", which
+means that one of the slave nodes found exactly the same errors as the
+master node. This happens mainly during the initialization of the
+integrate, \eg if the time step is not set. In this case the error
+message will be
+\begin{tclcode}
+background_errors 0 {time_step not set} 1 <consent> 
+\end{tclcode}
+In each case, the current action was not fulfilled, and possibly other
+parts of the internal data also had to be changed to allow \es{} to
+continue, so you should really know what you do if you try and catch
+these errors.
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 

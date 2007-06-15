@@ -1,0 +1,426 @@
+\chapter{Setting up particles}
+\label{chap:part}
+
+\section{\texttt{part}: Creating single particles}
+\eslabel{part}
+
+\subsection{Defining particle properties}
+
+\begin{essyntax}
+  part
+  \var{particle_number}
+  \opt{pos \var{x} \var{y} \var{z}}
+  \opt{type \var{particle_type_number}}
+  \opt{q \var{charge}}
+  \opt{v \var{x_value} \var{y_value} \var{z_value}}
+  \opt{f \var{x_value} \var{y_value} \var{z_value}}
+  \opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}
+  \opt{omega \var{x_value} \var{y_value} \var{z_value}}
+  \opt{torque \var{x_value} \var{y_value} \var{z_value}}
+  \opt{\opt{un}fix \var{x} \var{y} \var{z}}
+  \opt{ext_force \var{x_value} \var{y_value} \var{z_value}}
+  \opt{bond \var{bond_type_number}}
+  \opt{exclude \var{exclusion_partner}\ldots}
+\end{essyntax}
+
+This command modifies particle data, namely position, type (monomer,
+ion, \dots), charge, velocity, force and bonds. Multiple properties can
+be changed at once. If you add a new particle the position has to be
+set first because of the spatial decomposition.
+
+\begin{arguments}
+\item[\var{particle_number}]
+\item[\opt{pos \var{x} \var{y} \var{z}}] Sets the position of this
+  particle to $(x,y,z)$.
+\item[\opt{type \var{particle_type_number}}] Restrictions:
+  \var{particle_type_type_number} $\geq 0$.\\  The
+  \var{particle_type_number} is used in the inter command to define
+  the parameters of the non bonded interactions between different
+  kinds of particles.
+\item[\opt{q \var{charge}}]
+\item[\opt{v \var{x_value} \var{y_value} \var{z_value}}]
+\item[\opt{f \var{x_value} \var{y_value} \var{z_value}}] 
+\item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}} 
+  \opt{omega \var{x_value} \var{y_value} \var{z_value}} 
+  \opt{torque \var{x_value} \var{y_value} \var{z_value}}]
+  Require the feature ROTATION.
+\item[\opt{fix \var{x} \var{y} \var{z}}] Fixes the particle in space.
+  By supplying a set of 3 integers as arguments it is possible to fix
+  motion in \var{x}, \var{y}, or \var{z} coordinates independetly. For
+  example \var{fix 0 0 1} will fix motion only in z. Note that
+  \var{fix} without arguments is equivalent to \var{fix 1 1 1} (Needs
+  compiled flag EXTERNAL_FORCES in config.h).
+\item[\opt{ext_force \var{x_value} \var{y_value} \var{z_value}}]
+  An additional external force is applied to the particle (Needs
+  compiled flag EXTERNAL_FORCES in config.h).
+\item[\opt{unfix}] Release any external influence from the particle
+  (Needs compiled flag EXTERNAL_FORCES in config.h).
+\item[\opt{bond \var{bond_type_number} \var{partner}+}]
+  Restrictions: \var{bond_type_number} $\geq 0$; \var{partner} must
+  be an existing particle.  The \var{bond_type_number} is used for
+  the inter command to define bonded interactions.
+\item[bond delete] Will delete all bonds attached to this particle.
+\item[\opt{exclude \var{exclusion_partner}+}] Restrictions:
+  \var{exclusion_partner} must be an existing particle.  Between the
+  current particle an the exclusion partner(s), no nonbonded
+  interactions are calculated (Needs compiled flag EXTERNAL_FORCES in
+  config.h). Note that unlike bonds, exclusions are stored with both
+  partners.  Therefore this command adds the defined exclusions to
+  both partners.
+\item[\opt{exclude delete \var{exclusion_partner}+}] Searches for the
+  given exclusion and deletes it. Again deletes the exclusion with
+  both partners.
+\end{arguments}
+
+\subsection{Getting particle properties}
+
+\begin{essyntax}
+  \variant{1}part \var{particle_number} print\\
+  \alt{id \asep pos \asep type \asep folded_position \asep type \asep
+    q \asep v \asep f \asep fix \asep ext_force \asep bond \asep
+    \mbox{connections \opt{\var{range}}}}+
+  \variant{2}part
+\end{essyntax}
+
+Variant \variant{1} will return a list of the specified properties of
+particle \var{particle_number}, or all properties, if no keyword is
+specified.  Variant \variant{2} will return a list of all properties
+of all particles.
+
+\minisec{Example}
+\begin{code}
+part 40 print id pos q bonds
+\end{code}
+will return a list like
+\begin{tclcode}
+40 8.849 1.8172 1.4677 1.0 {}
+\end{tclcode}
+This routine is primarily intended for effective use in Tcl scripts.
+
+When the keyword \keyword{connection} is specified, it returns the
+connectivity of the particle up to \var{range} (defaults to 1). For
+particle 5 in a linear chain the result up to \var{range} = 3 would
+look like:
+\begin{tclcode}
+{ { 4 } { 6 } } { { 4 3 } { 6 7 } } { {4 3 2 } { 6 7 8 } } 
+\end{tclcode}
+The function is useful when you want to create bonded interactions to
+all other particles a certain particle is connected to. Note that this
+output can not be used as input to the part command. Check results if
+you use them in ring structures.
+
+If none of the options is specified, it returns all properties of the
+particle, if it exists, in the form
+\begin{tclcode}
+  0 pos 2.1 6.4 3.1 type 0 q -1.0 v 0.0 0.0 0.0 f 0.0 0.0 0.0
+  bonds { {0 480} {0 368} ... } 
+\end{tclcode}
+which may be used as an input to this function later on. The first
+integer is the particle number.
+
+Variant \variant{2} returns the properties of all stored particles in
+a tcl-list with the same format as specified above:
+\begin{tclcode}
+{0 pos 2.1 6.4 3.1 type 0 q -1.0 v 0.0 0.0 0.0 f 0.0 0.0 0.0
+ bonds{{0 480}{0 368}...}} 
+{1 pos 1.0 2.0 3.0 type 0 q 1.0 v 0.0 0.0 0.0 f 0.0 0.0 0.0
+ bonds{{0 340}{0 83}...}} 
+{2...{{...}...}}
+{3...{{...}...}}
+...
+\end{tclcode}
+
+\subsection{Deleting  particles}
+%\label{tcl:part:delete}
+
+\begin{essyntax}
+  \variant{1} part \var{particle_number} delete
+  \variant{2} part deleteall
+\end{essyntax}
+
+In variant \variant{1}, the particle \var{particle_number} is deleted
+and all bonds referencing it.  Variant \variant{2} will delete all
+particles currently present in the simulation. Variant \variant{3}
+will delete all currently defined exclusions.
+
+\subsection{Exclusions}
+
+\begin{essyntax}
+  \variant{1} part auto_exclusions \opt{\var{range}}
+  \variant{2} part delete_exclusions
+\end{essyntax}
+
+Variant \variant{1} will create exclusions for all particles pairs
+connected by not more than \var{range} bonds (\var{range} defaults to
+2). This is typically used in atomistic simulations, where nearest and
+next nearest neigbor interactions along the chain have to be omitted
+since they are included in the bonding potentials. For example, if the
+system contains particles $0$ \dots $100$, where particle $n$ is
+bonded to particle $n-1$ for $1 \leq n \leq 100$, then it will result
+in the exclusions:
+\begin{itemize}
+  \item particle 1 does not interact with particles 2 and 3
+  \item particle 2 does not interact with particles 1, 3 and 4
+  \item particle 3 does not interact with particles 1, 2, 4 and 5
+  \item ...
+\end{itemize}
+
+Variant \variant{2} deletes all exclusions currently present in the
+system.
+
+\section{Creating groups of particle}
+
+\subsection{\texttt{polymer}: Setting up polymer chains}
+
+\eslabel{polymer}
+\begin{essyntax}
+  \variant{1}
+  polymer 
+  \var{num_polymers} \var{monomers_per_chain}
+  \var{bond_length}\\
+  \opt{start \var{part_id}} 
+  \opt{pos \var{x} \var{y} \var{z}}
+  \opt{mode \alt{RW \asep SAW \asep PSAW} 
+    \opt{\var{shield} \opt{\var{max_try}}}} 
+  \opt{charge \var{val_charged_monomer}} 
+  \opt{distance \var{dist_charged_monomer}}\\ 
+  \opt{types \var{type_neutral_monomer}
+    \opt{\var{type_charged_monomer}}} 
+  \opt{bond \var{type_bond}} 
+  \opt{angle \var{phi} \opt{\var{theta} \opt{\var{x} \var{y}
+        \var{z}}}}
+
+  \variant{2}
+  polymer
+\end{essyntax}
+
+This command will create \var{num_polymers} polymer or
+polyelectrolyte chains with \var{monomers_per_chain} monomers per
+chain. The length of the bond between two adjacent monomers will be
+set up to be \var{bond_length}.
+
+\begin{arguments}
+\item[\var{num_polymers}] Sets the number of polymer chains.
+\item[\var{monomers_per_chain}] Sets the number of monomers per
+  chain.
+\item[\var{bond_length}] Sets the distance between two adjacent
+  monomers.
+\item[\opt{start \var{part_id}}] Sets the particle number of the
+  start monomer to be used with the \keyword{part} command. This
+  defaults to 0.
+
+\item[\opt{pos \var{x} \var{y} \var{z}}] Sets the position of the
+  first monomer in the chain to \var{x}, \var{y}, \var{z} (defaults to
+  a randomly chosen value)
+  
+\item[\opt{mode \alt{RW  \asep  PSAW  \asep  SAW} \opt{\var{shield}
+      \opt{\var{max_try}}}}]
+  Selects the setup mode:
+  \begin{description}
+  \item[\keyword{RW} (Random walk)] The monomers are
+    randomly placed by a random walk with a steps size of
+    \var{bond_length}.
+  \item[\keyword{PSAW} (Pruned self-avoiding walk)] The position of a
+    monomer is randomly chosen in a distance of \var{bond_length} to
+    the previous monomer. If the position is closer to another
+    particle than \var{shield}, the attempt is repeated up to
+    \var{try_max} times. Note, that this is not a real self-avoiding
+    random walk, as the particle distribution is not the same. If you
+    want a real self-avoiding walk, use the \keyword{SAW} mode.
+    However, \keyword{PSAW} is several orders of magnitude faster than
+    \keyword{SAW}, especially for long chains.
+  \item[\keyword{SAW} (Self-avoiding random walk)] The positions of
+    the monomers are chosen as in the plain random walk. However, if
+    this results in a chain that has a monomer that is closer to
+    another particle than \var{shield}, a new attempt of setting up
+    the whole chain is done, up to \var{max_try} times.
+  \end{description}
+  The default for the mode is \keyword{RW}, the default for the
+  \var{shield} is $1.0$, and the default for \var{max_try} is
+  $30000$, which is usually enough for \keyword{PSAW}. Depending on
+  the length of the chain, for the \keyword{SAW} mode, \var{max_try}
+  has to be increased by several orders of magnitude.
+\item[\opt{charge \var{val_charged_monomer}}] Sets the valency of
+  the charged monomers.  If the valency of the charged polymers
+  \var{val_charged_monomer} is smaller than $10^{-10}$, the charge
+  is assumed to be zero, and the types are set to
+  \var{type_charged_monomer} = \var{type_neutral_monomer}. This
+  defaults to 0.0.
+
+\item[\opt{distance \var{dist_charged_monomer}}] Sets the stride
+  between the indices of two charged monomers. This defaults defaults
+  to 1, meaning that all monomers in the chain are charged.
+  
+\item[\opt{types \var{type_neutral_monomer}
+    \var{type_charged_monomer}}] Sets the type numbers of the
+  neutral and charged monomer types to be used with the \keyword{part}
+  command. If \var{type_neutral_monomer} is defined,
+  \var{type_charged_monomer} defaults to 1. If the option is
+  omitted, both monomer types default to 0.
+  
+\item[\opt{bond \var{type_bond}}] Sets the type number of the bonded
+  interaction to be set between the monomers. This defaults to 0.
+  
+\item[\opt{angle \var{phi} [\var{theta} [\var{x} \var{y} \var{z}]]}]
+  Allows for setting up helices or planar polymers: \var{phi} sets
+  the angle $\phi$ and \var{theta} sets the angle $\theta$ between
+  adjacent bonds. \var{x}, \var{y} and \var{z} set the position of the
+  second monomer of the first chain.
+\end{arguments}
+
+\subsection{\texttt{counterions}: Set up counterions}
+\eslabel{counterions}
+\begin{essyntax}
+  counterions
+  \var{N_CI} 
+  \opt{\var{shield} \opt{\var{max_try} }} 
+  \opt{start \var{part_id}} 
+  \opt{mode \alt{SAW \asep RW}} 
+  \opt{charge \var{val_CI}} 
+  \opt{type \var{type_CI}}
+\end{essyntax}
+Create \var{N_CI} counterions in the simulation box.
+\todo{Docs required.}
+
+\smallskip
+\subsection{\texttt{salt}: Set up salt ions}
+\eslabel{salt}
+\begin{essyntax}
+  salt 
+  \var{N_pS} \var{N_nS} 
+  \opt{start \var{part_id}} 
+  \opt{mode \alt{SAW \asep RW} \opt{\var{shield} \opt{\var{max_try}}}}
+  \opt{charges \var{val_pS} \opt{\var{val_nS}}} 
+  \opt{types \var{type_pS} \opt{\var{type_nS}}}
+\end{essyntax}
+Create \var{N_pS} positively and \var{N_nS} negatively charged salt
+ions of charge \var{val_pS} and \var{val_nS} within the simulation
+box.
+
+\subsection{\texttt{diamond}: Setting up diamond polymer networks}
+\eslabel{diamond}
+\begin{essyntax}
+  diamond 
+  \var{a} \var{bond_length} \var{MPC} 
+  \opt{counterions \var{N_CI}} 
+  \opt{charges \var{val_nodes} \var{val_cM} \var{val_CI}} 
+  \opt{distance \var{cM_dist}} 
+  \opt{nonet}
+\end{essyntax}
+\todo{Docs missing.}
+Creates a diamond-shaped polymer network with 8 tetra-functional nodes
+connected by $2*8$ polymer chains of length \var{MPC}.
+
+\subsection{\texttt{icosahedron}: Setting up an icosahedron}
+\eslabel{icosahedron}
+\begin{essyntax}
+  icosahedron 
+  \var{a} \var{MPC} 
+  \opt{counterions \var{N_CI}} 
+  \opt{charges \var{val_cM} \var{val_CI}} 
+  \opt{distance \var{cM_dist}}
+\end{essyntax}
+\todo{Docs missing.}
+Creates a modified icosahedron to model a fulleren (or soccer ball).
+
+\subsection{\texttt{crosslink}: Cross-linking polymers}
+\eslabel{crosslink}
+\begin{essyntax}
+  crosslink 
+  \var{N_P} \var{MPC} 
+  \opt{start \var{part_id}} 
+  \opt{catch \var{r_catch}}
+  \opt{distLink \var{link_dist}} 
+  \opt{distChain \var{chain_dist}} 
+  \opt{FENE \var{type_FENE}} 
+  \opt{trials \var{max_try}} 
+\end{essyntax}
+\todo{Docs missing.}
+Attempts to end-crosslink the current configuration of \var{N_P}
+equally long polymers with \var{MPC} monomers each, returning how many
+ends are successfully connected. 
+
+\section{\texttt{constraint}: Setting up constraints}
+\eslabel{constraint}
+
+\begin{essyntax}
+  \variant{1} 
+  constraint wall normal \var{n_x} \var{n_y} \var{n_z} 
+  dist \var{d} type \var{id}
+
+  \variant{2}
+  constraint sphere center \var{c_x} \var{c_y} \var{c_z} 
+  radius \var{rad} direction \var{direction} type \var{id} 
+  
+  \variant{3}
+  constraint cylinder center \var{c_x} \var{c_y} \var{c_z} 
+  axis \var{n_x} \var{n_y} \var{n_z} 
+  radius \var{rad} length \var{length} 
+  direction \var{direction} 
+  type \var{id} 
+  
+  \variant{4}
+  constraint maze nsphere \var{n} 
+  dim \var{d} sphrad \var{r_s} cylrad \var{r_c}
+  type 10 \var{id} 
+\end{essyntax}
+
+\todo{Does it really only work for LJ-potentials?}
+A constraint is a surface which interacts with the desired particles
+via a Lennard-Jones potential.
+\[4 \epsilon \left(\left(\frac{\sigma}{r}\right)^{12} -
+  \left(\frac{\sigma}{r}\right)^6 + shift\right)\] with r being the
+distance of the center of the particle to the surface. The
+corresponding force acts in direction of the normal vector of the
+surface. The constraints are identified like a particle for the
+lennard-jones force calculation. 
+
+After a type is defined for each constraint one has to define the
+interaction of all different particle types with the constraint using
+the \codebox{inter} command.
+
+The resulting surface in variant \variant{1} is a plane defined by the
+normal vector \var{n_x} \var{n_y} \var{n_z} and the distance
+\var{d} from the origin. The resulting surface in variant \variant{2}
+is a sphere with center \var{c_x} \var{c_y} \var{c_z} and radius
+\var{rad}. The \var{direction} determines the force direction, -1 or
+inside for inward and +1 or outside for outward. The resulting surface
+in variant \variant{3} is a cylinder with center \var{c_x} \var{c_y}
+\var{c_z} and radius \var{rad}. The \var{length} parameter is not the
+whole length but a half of the cylinder length. The \var{axis} is a
+vector along the cylinder axis, which is normalized in the program.
+The \var{direction} is defined the same way as for the spherical
+constraint. The resulting surface in variant \variant{4} is \var{n}
+spheres of radius \var{r_s} along each dimension, connected by
+cylinders of radius \var{r_c}. The spheres have simple cubic
+symmetry. The spheres are distributed evenly by dividing the
+\var{box_l} by \var{n}.  Dimension of the maze can be controlled by
+\var{d}: 0 for one dimensional, 1 for two dimensional and 2 for three
+dimensional maze.
+
+
+\subsection{Deleting a constraint}
+\begin{essyntax}
+  constraint delete \var{num} 
+\end{essyntax}
+
+This will delete the constraint with the number \var{num}.
+
+\subsection{Getting the force on a constraint}
+\begin{essyntax}
+constraint force \var{n} 
+\end{essyntax}
+Returns the force acting on the \var{n}th constraint.
+
+
+\subsection{Getting the currently defined constraints}
+\begin{essyntax}
+constraint 
+\end{essyntax}
+Prints out all constraint information.
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 

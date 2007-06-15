@@ -70,7 +70,7 @@ We cannot give a full Tcl tutorial here; however, most of the constructs
 should be self--explanatory. We also assume that the reader is familiar with the
 basic concepts of a MD simulation here. The code pieces can be copied step by
 step into a file, which then can be run using \verb|Espresso <file>| from the
-\es{} source directory.
+\es source directory.
 
 Our script starts with setting up the initial configuration.  Most conveniently,
 one would like to specify the density and the number of particles of the system
@@ -125,10 +125,10 @@ This switches on the Langevin thermostat for the NVT ensemble, with temperature
 for the link--cell system which tunes its performance, but cannot be discussed
 here.
 
-Before we can really start the simulation, we have to specify the interactions
-between our particles.  We use a simple, purely repulsive Lennard-Jones
-interaction to model the hard core repulsion \cite{grest86a}, and the charges interact via the
-Coulomb potential:
+Before we can really start the simulation, we have to specify the
+interactions between our particles.  We use a simple, purely repulsive
+Lennard-Jones interaction to model the hard core repulsion
+\citep{grest86a}, and the charges interact via the Coulomb potential:
 \begin{tclcode}
 set sig 1.0; set cut   [expr 1.12246*$sig]
 set eps 1.0; set shift [expr 0.25*$eps]

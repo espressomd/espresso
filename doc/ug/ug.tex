@@ -14,11 +14,10 @@ idxtotoc                        % add the index to the TOC
 %,draft
 ]{scrreprt}
 
-\usepackage{nameref}            % nameref, varioref, hyperref must be
-                                % used in this order (see hyperref
-                                % README)!
 \usepackage[draft]{varioref}    % defines \vref
-\usepackage[bookmarksopen=true]
+\usepackage[
+%bookmarksopen=true
+]
 {hyperref}                      % automatically creates links when
                                 % using pdflatex, defines \url
 \usepackage{ifpdf}              % defines \ifpdf
@@ -27,48 +26,39 @@ idxtotoc                        % add the index to the TOC
 \usepackage{color}              % use colors
 
 \usepackage{verbatim}           % required for \verbatim and \endverbatim
-\usepackage{alltt}              % almost verbatim environment (code)
+\usepackage{fancyvrb}
 \usepackage{tocloft}            % required for the quickref
 \usepackage{calc}               % compute length
 \usepackage{ifthen}             % provide ifthen
+\usepackage{xspace}
+\usepackage[numbers]{natbib}
 
+% Make '_' a normal character (from http://www.tug.org/TeXnik/mainFAQ.cgi)
+\usepackage{underscore}
+% \begingroup
+%   \lccode`\~=`\_
+% \lowercase{\endgroup
+%   \pdfstringdefDisableCommands{\let~\relax}%
+% }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%% New Commands and Environments %%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newcommand{\es}{\mbox{\textsf{ESPResSo}}}
-\newcommand{\ie}{\textit{i.e.\/}}
-\newcommand{\eg}{\textit{e.g.\/}}
-\newcommand{\etal}{\textit{et al.\/}}
+\newcommand{\es}{\mbox{\textsf{ESPResSo}}\xspace}
+\newcommand{\ie}{\textit{i.e.}\xspace}
+\newcommand{\eg}{\textit{e.g.}\xspace}
+\newcommand{\etal}{\textit{et al.}\xspace}
 
 \newcommand{\codebox}[1]%
-{%
-  \begingroup\setlength{\fboxsep}{1pt}%
-  \fcolorbox[rgb]{0,0,0}{0.9,0.9,0.9}{\ttfamily#1}%
-  \endgroup%
-}
+{\texttt{#1}}
 
-\newsavebox{\thecodebox}
-\newenvironment{code}{
-  \begin{lrbox}{\thecodebox}
-    \begin{minipage}{\linewidth-2em}
-      \begin{alltt}
-      }{
-      \end{alltt}
-    \end{minipage}
-  \end{lrbox}
-  \smallskip
-  \begin{addmargin}[1em]{0pt}
-    \codebox{\usebox{\thecodebox}}
-  \end{addmargin}
-  \smallskip
-}
-
+\DefineVerbatimEnvironment{code}{Verbatim}%
+{commandchars=\\\{\}}
 \makeatletter
 \newenvironment{tclcode}
-{
-  \addtolength{\linewidth}{-2em}% set the line lengt
+{%
+  \addtolength{\linewidth}{-2em}% set the line length
   \@minipagetrue%%%DPC%%%
   \@tempswatrue%%%DPC%%%
   \hsize=\linewidth%
@@ -76,54 +66,112 @@ idxtotoc                        % add the index to the TOC
 }{\endverbatim
   \unskip\setbox0=\lastbox%%%DPC%%%
   \egroup
-  \par
-  \smallskip
-  \noindent
-  \begin{addmargin}[1em]{0pt}
-    \codebox{\box0}
-  \end{addmargin}
-  \par
-  \smallskip
-  \noindent
+  \par%
+  \noindent\hspace{1em}%
+  \codebox{\box0}%
+  \par\noindent%
 }
 \makeatother
 
+% required so that we can set index numbers bold
+% \index{Some example|main}
+\newcommand*{\mainindex}[1]{\textbf{\hyperpage{#1}}}
+
+\newcommand{\todo}[1]{
+  \marginpar{%
+    \setlength{\fboxrule}{1pt}
+    \fcolorbox{red}{yellow}{%
+      \parbox{\marginparwidth-2\fboxrule-2\fboxsep}{%
+        \bf\raggedright\scriptsize #1%
+      }%
+    }%
+  }%
+}
+
+\makeatletter
+\renewcommand{\minisec}[1]{\@afterindentfalse \vskip 1.5ex
+  {\parindent \z@
+    \raggedsection\normalfont\sffamily\itshape\nobreak#1\par\nobreak}%
+  \@afterheading}
+\makeatother
 
 %%%%%%%%%%%%%% Syntax Description %%%%%%%%%%%%%%%
 
-%%%%%% SYNTAX DEFININTION LAYOUT
+%%%%%% SYNTAX DEFINITION LAYOUT
+%% Defines environments and commands to be used when defining the
+%% syntax of a Tcl command.
 % typesetting inside a command definition
 % keywords/literals
 \newcommand{\lit}[1]{\mbox{\texttt{#1}}}
 \newcommand{\keyword}[1]{\mbox{\texttt{#1}}}
 % variables
-\newcommand{\var}[1]{\mbox{\textrm{\textit{#1}}}}
+\newcommand{\var}[1]{%
+  \ifthenelse{\boolean{mmode}}%
+  {\mathit{#1}}%
+  {\mbox{\textrm{\textit{#1}}}}%
+}
 % option
-\newcommand{\opt}[1]{\mbox{[#1]}}
-
-% command definition
-\newcommand{\tclcommand}[3][]{%
-  \stepcounter{qrfcounter}
-  \index{#2@\texttt{#2}|textbf}
-  \index{Tcl-commands!#2@\texttt{#2}|textbf}
-  \addtocontents{qrf}{\protect\qrfcommand{#1}{#2}{#3}{\thepage}{qrf\arabic{qrfcounter}}}
-  \minisec{Syntax}
-  \smallskip
-  \hypertarget{qrf\arabic{qrfcounter}}{%
-    \codebox{%
-      #2
-      \parbox[t]{0.9\linewidth-\widthof{#2}}%
-      {\ttfamily\raggedright\mbox{}#3}
-    }%
+\newcommand{\opt}[1]{\mbox{\textrm{[}#1\textrm{]}}}
+% alternatives
+\newcommand{\alt}[1]{\textrm{(} #1 \textrm{)}}
+\newcommand{\asep}{$|$\xspace}
+% variant
+% \rawvariant is required, as the command is changed during the
+% essyntax environment
+\newcommand{\rawvariant}[1]{\mbox{\textnormal{(#1)}}\xspace}
+\newcommand{\variant}[1]{\rawvariant{#1}}
+% requiresfeature
+\newlength{\requiresfeaturewidth}
+\newcounter{requiresfeaturecounter}
+\newcommand{\requiresfeature}[2][NONE]{%
+  \ifthenelse{\equal{#1}{NONE}}{}{%
+    \begingroup%
+    \setlength{\fboxsep}{2pt}%
+    \fbox{#1}\,%
+    \endgroup%
   }%
-  \ifthenelse{\equal{#1}{}}{}{%
-    \minisec{Required features}
-    \texttt{#1}
-  }
-  \minisec{Description}
+  \footnote{Required features: \texttt{#2}}%
+  \stepcounter{requiresfeaturecounter}%
 }
 
+\newsavebox{\theessyntaxbox}
+\newlength{\essyntaxboxheight}
+\newlength{\essyntaxboxdepth}
+\newenvironment{essyntaxbox}{%
+  \par\noindent%
+  \setcounter{requiresfeaturecounter}{1}%
+  \begin{lrbox}{\theessyntaxbox}%
+    \begin{minipage}{\linewidth-5em}%
+      \ttfamily%
+      \setlength{\parindent}{-3em}%
+      \renewcommand{\variant}[1]{\par\rawvariant{##1}}
+    }{%
+      \renewcommand{\variant}[1]{\rawvariant{##1}}
+    \end{minipage}%
+  \end{lrbox}%
+  \settoheight{\essyntaxboxheight}{\usebox{\theessyntaxbox}}%
+  \settodepth{\essyntaxboxdepth}{\usebox{\theessyntaxbox}}%
+  \hspace{1.5em}%
+  \rule[-\essyntaxboxdepth]{1pt}{\essyntaxboxheight+\essyntaxboxdepth}%
+  \hspace{3.5em}%
+  \usebox{\theessyntaxbox}%
+}
 
+%% Environment for syntax descriptions
+%\newlength{\essyntaxindent}
+\newenvironment{essyntax}{%
+  \setcounter{requiresfeaturecounter}{1}%
+  % Create headings
+  \minisec{Syntax}\nopagebreak%
+  \smallskip\nopagebreak%
+  \begin{essyntaxbox}%
+  }{%
+  \end{essyntaxbox}%
+  \nopagebreak%
+  \minisec{Description}%
+}
+
+%% List-environment for the description of the arguments of a command
 \newenvironment{arguments}{
   \minisec{Arguments}
   \begin{list}{}{
@@ -132,13 +180,71 @@ idxtotoc                        % add the index to the TOC
       \setlength{\partopsep}{0pt}
       \setlength{\topsep}{1ex}
       \setlength{\parsep}{0.5ex}
-      \setlength{\listparindent}{1em}
+      \setlength{\listparindent}{-1em}
       \setlength{\labelwidth}{0.5em}
       \setlength{\labelsep}{0.5em}
-      \renewcommand{\makelabel}[1]{\codebox{##1}}
+      \renewcommand{\makelabel}[1]{\textbullet\,\texttt{##1}}
     }
   }{
   \end{list}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Create labels and index entries
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Create label and index entries for an Espresso tcl command
+\newcommand{\eslabel}[2][NONE]{%
+  \ifthenelse{\equal{#1}{NONE}}%
+  {\label{tcl:#2}}%
+  {\label{tcl:#1}}%
+  \index{#2@\texttt{#2} (Tcl-command)|mainindex}%
+  \index{Tcl-commands!#2@\texttt{#2}|mainindex}%
+}
+
+% Create label and index entries for analysis functions
+\newcommand{\analyzeindex}[1]{%
+  \index{#1|mainindex}%
+  \index{analysis!#1|mainindex}%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% OLD STUFF, TO BE REMOVED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Environment for syntax descriptions
+\newsavebox{\thetclsyntaxbox}
+\newenvironment{tclsyntax}[1][]{
+  % Create index entries
+  \index{#1@\texttt{#1}|mainindex}%
+  \index{Tcl-commands!#1@\texttt{#1}|mainindex}%
+  % Create headings
+  \minisec{Syntax}
+  \smallskip%
+  \begin{lrbox}{\thetclsyntaxbox}%
+    \begin{minipage}{\linewidth-2em}%
+      \ttfamily\setlength{\parindent}{-2em}%
+    }{%
+    \end{minipage}%
+  \end{lrbox}%
+  \begin{addmargin}{4em}%
+    \usebox{\thetclsyntaxbox}%
+  \end{addmargin}%
+  \minisec{Description}
+}
+
+% command definition
+% first, optional argument: variant number
+% second. mandatory argument: syntax description of a command
+\newcommand{\tclcommand}[2][]{%
+  \stepcounter{qrfcounter}%
+  \addtocontents{qrf}{%
+    \protect\qrfcommand{}{#2}{\thepage}{qrf\arabic{qrfcounter}}%
+  }%
+  \hypertarget{qrf\arabic{qrfcounter}}{%
+    \mbox{%
+      \ifthenelse{\equal{#1}{}}{}{\variant{#1}\hspace{0.3em}}%
+      \hspace{2em}\parbox[t]{\linewidth-4em}{%
+        \raggedright\ttfamily\hspace{-2em}#2%
+      }}}%
 }
 
 \newcommand{\addtoquickref}[1]{\addtocontents{qrf}{#1}}
@@ -147,7 +253,8 @@ idxtotoc                        % add the index to the TOC
   \addtocontents{qrf}{\protect\qrfheading{#1}{\thepage}{qrf\arabic{qrfcounter}}}
   \hypertarget{qrf\arabic{qrfcounter}}{}
 }
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% QUICK REFERENCE LAYOUT
 % Create quick reference list
@@ -163,32 +270,35 @@ idxtotoc                        % add the index to the TOC
 \makeatother
 
 % command definition in the quickref
-\newcommand{\qrfcommand}[5]{%
-  \begin{addmargin}[1em]{0pt}%
-    \hyperlink{#5}{%
-      \ttfamily
-      #2
-      \parbox[t]{0.9\linewidth-\widthof{#2}}%
-      {\raggedright #3}%
-    }%
-  % print the page number if it is differnet from the last entry
-    \ifthenelse{\equal{\qrflastpage}{#4}}{}{\hfill\scriptsize #4}%
+\newcommand{\qrfcommand}[4]{%
+  \begin{addmargin}{1em}%
+    \hyperlink{#4}{%
+      \mbox{\hspace{2em}%
+        \parbox[t]{\linewidth-4em}{%
+          \raggedright\ttfamily%
+          \hspace{-2em}#2
+        }}}%
+    % print the page number if it is different from the last entry
+    \ifthenelse{\equal{\qrflastpage}{#3}}{}{\hfill\scriptsize #3}%
     \ifthenelse{\equal{#1}{}}{}{%
-      \scriptsize\\\hspace*{1em} Required features: \texttt{#1}%
+      \scriptsize\\\hspace*{1em}Required features: \texttt{#1}%
     }%
   \end{addmargin}%
-  \ifthenelse{\equal{\qrflastpage}{#4}}{}{\renewcommand{\qrflastpage}{#4}}%
+  \ifthenelse{\equal{\qrflastpage}{#3}}{}{\renewcommand{\qrflastpage}{#3}}%
   \smallskip
 }
 
-
+% Feature declaration
+\newcommand{\feature}[1]{%
+  \index{features!{\scriptsize #1}|mainindex}%
+  \hypertarget{#1}{\texttt{\textbf{#1}}}%
+}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% Other Settings %%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\pagestyle{headings}
 \makeindex
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -215,22 +325,31 @@ idxtotoc                        % add the index to the TOC
 
 \include{firststeps}
 \include{installation}
+
+\include{part}
+\include{inter}
 \include{setup}
 \include{run}
 \include{analysis}
+\include{io}
 \include{aux}
+
 \include{internal}
 \include{contributing}
 
 \appendix
 \include{quickref}
 \include{features}
+\include{examples}
+\include{deserno}
 
-\chapter{The MMM family of algorithms}
-\label{chap:mmm}
-
+%% Scientific appendices: description of algorithms
+\include{mmm}
 \chapter{Maggs algorithm}
 \label{chap:maggs}
+
+\bibliographystyle{plainnat}
+\bibliography{bibliography}
 
 \printindex
 
