@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2v (Ydalir)                                                                     *
+* v2.0.2w (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2v -
+- v2.0.2w -
 -----------
 
+(w) June     15th, 2007.
 (v) June      4th, 2007.
 (u) May      30th, 2007.
 (t) May      14th, 2007.
@@ -35,6 +36,9 @@ Current working revision.
 (a) February  2nd, 2007.
 
 New Features:
+(w) Rewrote "How to write the User's Guide" in the Developer's
+    Guide
+(w) First version of the new User's Guide
 (t) added possibility to respect constraints when setting up
     polymers
 (n) added BMHTF (Born-Meyer-Huggins-Tosi-Fumi) NaCl potential.
@@ -52,6 +56,8 @@ New Features:
 (d) solving linear equation systems.
 
 Changes:
+(w) Moved documentation of Tcl commands from Developer's guide (doxygen) to User's
+    Guide (LaTeX)
 (s) Adding the TRANS_DPD macro to switch on or off the transversal
     DPD
 (e) replaced the \alph function with \arabic, allowing more than 26 hypertargets to
