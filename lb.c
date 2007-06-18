@@ -98,10 +98,12 @@ static double tau;
 /** measures the MD time since the last fluid update */
 static double fluidstep=0.0;
 
-static int failcounter=0;
+#ifdef ADDITIONAL_CHECKS
+/** counts the random numbers drawn for fluctuating LB and the coupling */
 static int rancounter=0;
-static int maxfail=0;
-static int ghostfail=0;
+/** counts the occurences of negative populations due to fluctuations */
+static int failcounter=0;
+#endif
 
 /***********************************************************************/
 
@@ -650,9 +652,6 @@ MDINLINE void lb_update_local_pi(LB_FluidNode *local_node) {
  * Ahlrichs, PhD-Thesis (2000).
  *   
  * @param local_node Pointer to the local lattice site.
- * @param trace      Trace of local stress tensor (Input).
- * @param trace_eq   Trace of equilibrium part of the stress tensor (Input).
- * @param badrandoms Flag/Counter for the occurence of negative populations (Output).
  */
 MDINLINE void lb_add_fluct_pi(LB_FluidNode *local_node) {
 
@@ -683,33 +682,37 @@ MDINLINE void lb_add_fluct_pi(LB_FluidNode *local_node) {
   local_pi[2] += sum;
   local_pi[5] += sum;
 
+#ifdef ADDITIONAL_CHECKS
   rancounter += 6;
+#endif
 
 }
 
+#ifdef ADDITIONAL_CHECKS
 /** Check for negative populations.  
  *
- * Looks for negative populations and increases badrandoms for each
+ * Checks for negative populations and increases failcounter for each
  * occurence.
  *
- * @param local_node Pointer to the local lattice site (Input).
- * @param badrandoms Counts occurences of negative populations (Output).
+ * @param  local_node Pointer to the local lattice site (Input).
+ * @return Number of negative populations on the local lattice site.
  */
 MDINLINE int lb_check_negative_n(LB_FluidNode *local_node) {
-  int i, badrandoms=0;
+  int i, localfails=0;
   const double *local_n = local_node->n;
 
   for (i=0; i<n_veloc; i++) {
     if (local_n[i]+lbmodel.coeff[i][0]*lbpar.rho < 0.0) {
-      ++badrandoms;
+      ++localfails;
       ++failcounter;
-      fprintf(stderr,"%d: Negative population n[%d]=%le (failcounter=%d, rancounter=%d)\n   Check your parameters if this occurs too often!\n",this_node,i,lbmodel.coeff[i][0]*lbpar.rho+local_n[i],failcounter,rancounter);
+      fprintf(stderr,"%d: Negative population n[%d]=%le (failcounter=%d, rancounter=%d).\n   Check your parameters if this occurs too often!\n",this_node,i,lbmodel.coeff[i][0]*lbpar.rho+local_n[i],failcounter,rancounter);
       break;
    }
   }
 
-  return badrandoms;
+  return localfails;
 }
+#endif
 
 /** The Lattice Boltzmann collision step.
  * Loop over all lattice sites and perform the collision update.
@@ -719,10 +722,8 @@ MDINLINE int lb_check_negative_n(LB_FluidNode *local_node) {
  */
 MDINLINE void lb_calc_collisions() {
 
-  int i, index, x, y, z;
-  int badrandoms;
+  int index, x, y, z;
   LB_FluidNode *local_node;
-  double *local_pi, save_local_pi[6] ; 
   
   /* loop over all nodes (halo excluded) */
   index = lblattice.halo_offset;
@@ -738,41 +739,16 @@ MDINLINE void lb_calc_collisions() {
 	double old_rho = *(local_node->rho);
 #endif
 
-	lb_update_local_pi(local_node) ;
+	lb_update_local_pi(local_node);
 	
-	if (fluct) {
+	if (fluct) lb_add_fluct_pi(local_node);
 	  
-	  local_pi  = local_node->pi;
+	lb_calc_local_n(local_node);
 	  
-	  /* save the pressure tensor */
-	  for (i=0;i<6;i++) {
-	    save_local_pi[i] = local_pi[i];
-	  }
+#ifdef ADDITIONAL_CHECKS
+	lb_check_negative_n(local_node);
+#endif
 
-	  do { /* try random numbers until no negative populations occur */
-	    
-	    badrandoms = 0;
-	    
-	    lb_add_fluct_pi(local_node);
-	    lb_calc_local_n(local_node);
-	    badrandoms = lb_check_negative_n(local_node);
-	    
-	    if (badrandoms) {
-
-	      /* restore the local pressure tensor */
-	      for (i=0;i<6;i++) {
-		local_pi[i] = save_local_pi[i];
-	      }
-	    }
-	    
-	  } while (badrandoms);
-
-	} else {
-	  
-	  lb_calc_local_n(local_node);
-	  
-	}
-	  
 #ifdef ADDITIONAL_CHECKS
 	int j;
 	double *local_n = local_node->n;
@@ -1083,7 +1059,7 @@ void lb_propagate() {
  * @param badrandoms Flag/Counter for the occurrence negative
  *                   populations (Output).
  */
-MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_index[8], const double delta[6], int *badrandoms) {
+MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_index[8], const double delta[6]) {
 
   int x, y, z, index;
   LB_FluidNode *local_node;
@@ -1143,7 +1119,9 @@ MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_inde
 
 #endif
 
-	*badrandoms += lb_check_negative_n(local_node);
+#ifdef ADDITIONAL_CHECKS
+	lb_check_negative_n(local_node);
+#endif
 
       }
     }
@@ -1156,26 +1134,18 @@ MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_inde
  * Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
  *
  * @param p          The coupled particle (Input).
- * @param badrandoms Flag/Counter for occurence of negative
- *                   populations (Output).
- * @param p_is_ghost Flag indicating whether the particle is a ghost
- *                   particle. Ghost particles must not have the force
- *                   added since it is already included in the real
- *                   image. However, ghosts must be treated to
- *                   transfer momentum to sites on different processors.
+ * @param force      Coupling force between particle and fluid (Output).
  */
-MDINLINE void lb_viscous_momentum_exchange(Particle *p, int p_is_ghost) {
+MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3]) {
 
   int x,y,z;
   int node_index[8];
   double delta[6];
   LB_FluidNode *local_node;
   double *local_rho, *local_j, interpolated_u[3], delta_j[3];
-  double force[3], f_drag[3], f_tmp[3];
 #ifdef ADDITIONAL_CHECKS
   double old_rho[8];
 #endif
-  int try, badrandoms;
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
 
@@ -1214,71 +1184,28 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, int p_is_ghost) {
   /* calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units 
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  f_drag[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau);
-  f_drag[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau);
-  f_drag[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau);
+  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau);
+  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau);
+  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau);
 
-  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_drag = (%.6e,%.3e,%.3e)\n",this_node,f_drag[0],f_drag[1],f_drag[2]));
+  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_drag = (%.6e,%.3e,%.3e)\n",this_node,force[0],force[1],force[2]));
 
-  try = 0;
+  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_random = (%.6e,%.3e,%.3e)\n",this_node,p->lc.f_random[try][0],p->lc.f_random[try][1],p->lc.f_random[try][2]));
 
-  f_tmp[0] = f_drag[0] + p->lc.f_random[try][0];
-  f_tmp[1] = f_drag[1] + p->lc.f_random[try][1];
-  f_tmp[2] = f_drag[2] + p->lc.f_random[try][2];
+  force[0] = force[0] + p->lc.f_random[0];
+  force[1] = force[1] + p->lc.f_random[1];
+  force[2] = force[2] + p->lc.f_random[2];
 
-  do { /* try random numbers */
+  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_tot = (%.6e,%.3e,%.3e) (try=%d)\n",this_node,force[0],force[1],force[2],try));
       
-    badrandoms = 0;
-
-    ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_random = (%.6e,%.3e,%.3e)\n",this_node,p->lc.f_random[try][0],p->lc.f_random[try][1],p->lc.f_random[try][2]));
-
-    ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_tmp = (%.6e,%.3e,%.3e) (try=%d)\n",this_node,f_tmp[0],f_tmp[1],f_tmp[2],try));
-      
-    /* transform momentum transfer to lattice units
-       (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-    delta_j[0] = - f_tmp[0]*time_step*tau/agrid;
-    delta_j[1] = - f_tmp[1]*time_step*tau/agrid;
-    delta_j[2] = - f_tmp[2]*time_step*tau/agrid;
+  /* transform momentum transfer to lattice units
+     (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  delta_j[0] = - force[0]*time_step*tau/agrid;
+  delta_j[1] = - force[1]*time_step*tau/agrid;
+  delta_j[2] = - force[2]*time_step*tau/agrid;
     
-    lb_transfer_momentum(delta_j,node_index,delta,&badrandoms);
+  lb_transfer_momentum(delta_j,node_index,delta);
 
-    if (badrandoms) {
-      
-      ++try;
-
-      if (try > maxfail) maxfail = try;
-      if (p_is_ghost) ++ghostfail;
-
-      fprintf(stderr,"%d: %d bad randoms for particle %d (p_is_ghost=%d) (maxfail=%d) (ghostfail=%d)\n   Check your parameters if this occurs too often!\n",this_node,try,p->p.identity,p_is_ghost,maxfail,ghostfail);
-
-      if (try >= MAX_RANDOMS) {
-	char* errtxt = runtime_error(128);
-	ERROR_SPRINTF(errtxt,"{109 Too many bad random numbers %d} ",try);
-	return;
-      } else {
-
-	/* subtract the current random force from the next random
-	 * force in order to cancel the random force which has just
-	 * been applied */
-	f_tmp[0] = - p->lc.f_random[try-1][0] + p->lc.f_random[try][0];
-	f_tmp[1] = - p->lc.f_random[try-1][1] + p->lc.f_random[try][1];
-	f_tmp[2] = - p->lc.f_random[try-1][2] + p->lc.f_random[try][2];
-	
-      }
-      
-    }
-    
-  } while (badrandoms);
-
-  /* add force to particle if not ghost */
-  if (!p_is_ghost) {
-    p->f.f[0] += f_drag[0] + p->lc.f_random[try][0];
-    p->f.f[1] += f_drag[1] + p->lc.f_random[try][1];
-    p->f.f[2] += f_drag[2] + p->lc.f_random[try][2];
-  }
-
-  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
-  
 #ifdef ADDITIONAL_CHECKS
   int i;
   for (i=0;i<8;i++) {
@@ -1328,9 +1255,10 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, int p_is_ghost) {
  */
 void calc_particle_lattice_ia() {
  
-  int i, j, k, c, np;
+  int i, k, c, np;
   Cell *cell ;
   Particle *p ;
+  double force[3];
 
   if (transfer_momentum) {
 
@@ -1350,12 +1278,13 @@ void calc_particle_lattice_ia() {
       p = cell->part ;
       np = cell->n ;
       for (i=0;i<np;i++) {
-	for (j=0;j<MAX_RANDOMS;j++) {
-	  p[i].lc.f_random[j][0] = -lb_coupl_pref*(d_random()-0.5);
-	  p[i].lc.f_random[j][1] = -lb_coupl_pref*(d_random()-0.5);
-	  p[i].lc.f_random[j][2] = -lb_coupl_pref*(d_random()-0.5);
-	  rancounter += 3;
-	}
+	p[i].lc.f_random[0] = -lb_coupl_pref*(d_random()-0.5);
+	p[i].lc.f_random[1] = -lb_coupl_pref*(d_random()-0.5);
+	p[i].lc.f_random[2] = -lb_coupl_pref*(d_random()-0.5);
+
+#ifdef ADDITIONAL_CHECKS
+	rancounter += 3;
+#endif
       }
     }
     
@@ -1370,14 +1299,18 @@ void calc_particle_lattice_ia() {
 
       for (i=0;i<np;i++) {
 
-	lb_viscous_momentum_exchange(&p[i],0) ;
+	lb_viscous_momentum_exchange(&p[i],force) ;
 
+	/* add force to the particle */
+	p[i].f.f[0] += force[0];
+	p[i].f.f[1] += force[1];
+	p[i].f.f[2] += force[2];
+
+	ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+  
       }
 
     }
-
-    /* \todo Is this really necessary? */
-    halo_communication(&update_halo_comm);
 
     /* ghost cells */
     for (c=0;c<ghost_cells.n;c++) {
@@ -1393,7 +1326,12 @@ void calc_particle_lattice_ia() {
 	    && p[i].r.p[2] >= my_left[2]-lblattice.agrid && p[i].r.p[2] < my_right[2]) {
 
 	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
-	  lb_viscous_momentum_exchange(&p[i],1) ;
+
+	  lb_viscous_momentum_exchange(&p[i],force) ;
+
+	  /* ghosts must not have the force added! */
+
+	  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
 
 	}
       }

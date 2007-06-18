@@ -151,7 +151,7 @@ typedef struct {
 /** Data related to the Lattice Boltzmann hydrodynamic coupling */
 typedef struct {
   /** fluctuating part of the coupling force */
-  double f_random[MAX_RANDOMS][3];
+  double f_random[3];
 } ParticleLatticeCoupling;
 #endif
 
