@@ -1083,11 +1083,8 @@ int mpi_integrate(int n_steps)
 {
   mpi_issue(REQ_INTEGRATE, -1, n_steps);
 
-#ifndef ALTERNATIVE_INTEGRATOR
   integrate_vv(n_steps);
-#else
-  integrate_pv(n_steps);
-#endif
+
   COMM_TRACE(fprintf(stderr, "%d: integration task %d done.\n", this_node, n_steps));
 
   return check_runtime_errors();
@@ -2090,14 +2087,14 @@ void mpi_send_exclusion_slave(int part1, int part2)
 }
 
 /************** REQ_SET_FLUID **************/
-void mpi_send_fluid(int node, int index, double rho, double *j) {
+void mpi_send_fluid(int node, int index, double rho, double *j, double *pi) {
 #ifdef LB
   if (node==this_node) {
-    lb_set_local_fields(index, rho, j);
+    lb_set_local_fields(index, rho, j, pi);
   } else {
-    double data[4] = { rho, j[0], j[1], j[2] };
+    double data[10] = { rho, j[0], j[1], j[2], pi[0], pi[1], pi[2], pi[3], pi[4], pi[5] };
     mpi_issue(REQ_SET_FLUID, node, index);
-    MPI_Send(data, 4, MPI_DOUBLE, node, REQ_SET_FLUID, MPI_COMM_WORLD);
+    MPI_Send(data, 10, MPI_DOUBLE, node, REQ_SET_FLUID, MPI_COMM_WORLD);
   }
 #endif
 }
@@ -2105,29 +2102,35 @@ void mpi_send_fluid(int node, int index, double rho, double *j) {
 void mpi_send_fluid_slave(int node, int index) {
 #ifdef LB
   if (node==this_node) {
-    double data[4];
+    double data[10];
     MPI_Status status;
-    MPI_Recv(data, 4, MPI_DOUBLE, 0, REQ_SET_FLUID, MPI_COMM_WORLD, &status);
-    lb_set_local_fields(index, data[0], &data[1]);
+    MPI_Recv(data, 10, MPI_DOUBLE, 0, REQ_SET_FLUID, MPI_COMM_WORLD, &status);
+    lb_set_local_fields(index, data[0], &data[1], &data[4]);
   }
 #endif
 }
 
 /************** REQ_GET_FLUID **************/
-void mpi_recv_fluid(int node, int index, double *rho, double *j) {
+void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi) {
 #ifdef LB
   if (node==this_node) {
-    double pi[6];
     lb_get_local_fields(index, rho, j, pi);
   } else {
-    double data[4];
+    double data[10];
     mpi_issue(REQ_GET_FLUID, node, index);
     MPI_Status status;
-    MPI_Recv(data, 4, MPI_DOUBLE, node, REQ_GET_FLUID, MPI_COMM_WORLD, &status);
+    MPI_Recv(data, 10, MPI_DOUBLE, node, REQ_GET_FLUID, MPI_COMM_WORLD, &status);
     *rho = data[0];
     j[0] = data[1];
     j[1] = data[2];
     j[2] = data[3];
+    pi[0] = data[4];
+    pi[1] = data[5];
+    pi[2] = data[6];
+    pi[3] = data[7];
+    pi[4] = data[8];
+    pi[5] = data[9];
+
   }
 #endif
 }
@@ -2137,7 +2140,7 @@ void mpi_recv_fluid_slave(int node, int index) {
   if (node==this_node) {
     double data[10];
     lb_get_local_fields(index, &data[0], &data[1], &data[4]);
-    MPI_Send(data, 4, MPI_DOUBLE, 0, REQ_GET_FLUID, MPI_COMM_WORLD);
+    MPI_Send(data, 10, MPI_DOUBLE, 0, REQ_GET_FLUID, MPI_COMM_WORLD);
   }
 #endif
 }

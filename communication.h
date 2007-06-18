@@ -386,7 +386,7 @@ void mpi_bcast_lb_params(int field);
  * @param rho   local fluid density
  * @param j     local fluid velocity
  */
-void mpi_send_fluid(int node, int index, double rho, double *j);
+void mpi_send_fluid(int node, int index, double rho, double *j, double *pi);
 
 /** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
  * @param node  processor to send to
@@ -394,7 +394,7 @@ void mpi_send_fluid(int node, int index, double rho, double *j);
  * @param rho   local fluid density
  * @param j     local fluid velocity
  */
-void mpi_recv_fluid(int node, int index, double *rho, double *j);
+void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi);
 
 /** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result
     to these error messages. This called only on the master node.

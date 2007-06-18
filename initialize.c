@@ -467,10 +467,10 @@ void on_parameter_change(int field)
 #ifdef LB
 void on_lb_params_change(int field) {
 
-  if (field & LBPAR_AGRID) {
+  if (field == LBPAR_AGRID) {
     lb_init();
   }
-  if (field & LBPAR_DENSITY) {
+  if (field == LBPAR_DENSITY) {
     lb_reinit_fluid();
   }
 
@@ -561,10 +561,8 @@ static void init_tcl(Tcl_Interp *interp)
   REGISTER_COMMAND("thermostat", thermostat);
   /* in bin.c */
   REGISTER_COMMAND("bin", bin);
-#ifdef LB
   /* in lb.c */
   REGISTER_COMMAND("lbfluid", lbfluid_cmd);
-#endif
   /* in utils.h */
   REGISTER_COMMAND("replacestdchannel", replacestdchannel);
 
