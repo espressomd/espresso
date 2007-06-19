@@ -79,8 +79,7 @@ proc rewrite {in out} {
 }
 
 set epsilon  1e-4
-setmd temp   0.0
-setmd gamma  0.0
+thermostat off
 #set tcl_precision  6
 set slow     0
 
@@ -149,11 +148,11 @@ if { [catch {
         set p_tot [analyze pressure ideal]; set p_IK1 $p_IKI; set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
 	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure ideal': $rel_error  ($p_tot / $p_IK1)"
 	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-        set p_tot [analyze pressure fene 0]; set p_IK1 $p_IKF; set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure fene 0': $rel_error  ($p_tot / $p_IK1)"
+        set p_tot [analyze pressure bonded 0]; set p_IK1 $p_IKF; set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure bonded 0': $rel_error  ($p_tot / $p_IK1)"
 	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-        set p_tot [analyze pressure lj 0 0]; set p_IK1 $p_IKJ; set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure lj 0 0': $rel_error  ($p_tot / $p_IK1)"
+        set p_tot [analyze pressure nonbonded 0 0]; set p_IK1 $p_IKJ; set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure nonbonded 0 0': $rel_error  ($p_tot / $p_IK1)"
 	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
     }
 
@@ -187,11 +186,11 @@ if { [catch {
         set p_tot [analyze pressure ideal]; set p_tensor1 $p_tensorI; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
 	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure ideal': $rel_error  ($p_tot / $p_tensor1)"
 	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-        set p_tot [analyze pressure fene 0]; set p_tensor1 $p_tensorF; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure fene 0': $rel_error  ($p_tot / $p_tensor1)"
+        set p_tot [analyze pressure bonded 0]; set p_tensor1 $p_tensorF; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure bonded 0': $rel_error  ($p_tot / $p_tensor1)"
 	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-        set p_tot [analyze pressure lj 0 0]; set p_tensor1 $p_tensorJ; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure lj 0 0': $rel_error  ($p_tot / $p_tensor1)"
+        set p_tot [analyze pressure nonbonded 0 0]; set p_tensor1 $p_tensorJ; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure nonbonded 0 0': $rel_error  ($p_tot / $p_tensor1)"
 	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
         set p_tot [analyze pressure tot_nb_intra]; set p_tensor1 $p_tensorJTINTRA; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
 	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure tot_nonbonded_intra': $rel_error  ($p_tot / $p_tensor1)"

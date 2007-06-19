@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 system=`uname -s`
 
@@ -10,12 +10,21 @@ CYGWIN*)
 Linux)
     # determines the type of CPU 0
     CPUINFO=/proc/cpuinfo
-    MODEL=`awk '/\\\`model name/ { \
+    MODEL=`awk '\
+        /cpu.*/ { if ($1 == "cpu") { \
+		if ($3 == "PPC970FX,") { print "ppc970";exit } } }\
+        /family.*: Itanium 2/ { print "Itanium"; exit }\
+    	/model name/ { if ($1 != "model") { next; }\
 	if ($4 == "Pentium") { if ($5 != "") print $4"_"$5; else print $4; } \
+	else if ($4 == "AMD" && $5 == "Sempron(tm)")   print "Athlon_XP"; \
 	else if ($4 == "AMD" && $5 == "Opteron(tm)")   print "Opteron"; \
+	else if ($4 == "AMD" && $5 == "Opteron" && $6 == "(tm)")   print "Opteron"; \
+	else if ($4 == "Dual" && $5 == "Core" && $6 == "AMD" && $7 == "Opteron(tm)")   print "Opteron"; \
 	else if ($4 == "Intel(R)" && $5 == "Xeon(TM)") print "Xeon"; \
         else if ($4 == "Intel(R)" && $5 == "Celeron(R)") print "Celeron"; \
-	else if ($4 == "Mobile"   && $5 == "Intel(R)" && $6 == "Pentium(R)") print"Pentium_"$7; \
+        else if ($4 == "Intel(R)" && $5 == "Core(TM)2") print "Pentium_4"; \
+	else if ($4 == "Mobile"   && $5 == "Intel(R)" && $6 == "Pentium(R)") print "Pentium_"$7; \
+        else if ($4 == "Genuine" && $5 == "Intel(R)" && $6 == "CPU") print "Pentium_4"; \
 	else { \
 	    if      ($4 == "Intel(R)" && $5 == "Pentium(R)")  model="Pentium"; \
 	    else if ($4 == "AMD"      && $5 == "Athlon(TM)")  model="Athlon"; \
@@ -24,9 +33,10 @@ Linux)
 	    if ($6 == "") print model; else print model"_"$6; \
 	}; exit\
 	}' $CPUINFO`
-    if test $MODEL = Xeon -o $MODEL = Pentium_4; then
+    if test -z "$MODEL"; then MODEL="unknown"; fi
+    if test "$MODEL" = "Xeon" -o "$MODEL" = "Pentium_4"; then
 	# thanks Intel for making the EM64T mode so EASILY detectible
-	if grep -e "^flags.* lm " $CPUINFO >&/dev/null; then
+	if grep -e "^flags.* lm " $CPUINFO >/dev/null; then
 	    MODEL=${MODEL}_64
 	fi
     fi
@@ -44,12 +54,14 @@ OSF1)
 AIX)
     IBM_CPU_ID=`/usr/sbin/lsdev -C -c processor -S available | sed 1q | awk '{ print $1 }'`
     MODEL=`/usr/sbin/lsattr -El ${IBM_CPU_ID} | awk '/type/ { \
-	model=$2; \
+    	model=$2; \
 	if (model=="PowerPC_POWER5") print "Power5"; else \
 	if (model=="PowerPC_POWER4") print "Power4"; else \
 	if (model=="PowerPC_POWER3") print "Power3"; \
     }'`
-    echo $MODEL-ibm-aix5.2
+    VERSION=`/usr/bin/uname -v`
+    RELEASE=`/usr/bin/uname -r`
+    echo $MODEL-ibm-aix$VERSION.$RELEASE
     ;;
 Darwin)
     MODEL=`hostinfo | awk '/^Processor type/ { print $3}'`

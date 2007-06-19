@@ -17,12 +17,24 @@
 */
 #include <tcl.h>
 #include "utils.h"
-#include "version.h"
 
 #ifdef BOND_CONSTRAINT
 #ifdef ROTATION
 #error BOND_CONSTRAINT and ROTATION currently do not work together
 #endif
+#endif
+
+/* errors for all modules that require fftw if not present */
+#ifndef FFTW
+
+#ifdef MODES
+#error MODES requires the fftw
+#endif
+
+#ifdef LB
+#error LB requires the fftw
+#endif
+
 #endif
 
 int version_callback(Tcl_Interp *interp)
@@ -35,15 +47,23 @@ int version_callback(Tcl_Interp *interp)
 int compilation_callback(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, "{ Compilation status ", (char *) NULL);
-  Tcl_AppendResult(interp, "{ " COMPILE_MODE " } ", (char *) NULL);
+#ifdef DEBUG
+  Tcl_AppendResult(interp, "{ " DEBUG " } ", (char *) NULL);
+#endif
+#ifdef PROFILING
+  Tcl_AppendResult(interp, "{ " PROFILING " } ", (char *) NULL);
+#endif
   Tcl_AppendResult(interp, "{ MPI " MPI " } ", (char *) NULL);
-#ifdef USEFFTW3
-  Tcl_AppendResult(interp, "{ FFTW3 } ", (char *) NULL);
-#else
+#if FFTW == 2
   Tcl_AppendResult(interp, "{ FFTW2 } ", (char *) NULL);
+#elif FFTW == 3
+  Tcl_AppendResult(interp, "{ FFTW3 } ", (char *) NULL);
 #endif
 #ifdef TK
   Tcl_AppendResult(interp, "{ TK } ", (char *) NULL);
+#endif
+#ifdef MODES
+  Tcl_AppendResult(interp, "{ MODES } ", (char *) NULL);
 #endif
 #ifdef PARTIAL_PERIODIC
   Tcl_AppendResult(interp, "{ PARTIAL_PERIODIC } ", (char *) NULL);
@@ -86,6 +106,12 @@ int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef LENNARD_JONES
   Tcl_AppendResult(interp, "{ LENNARD_JONES } ", (char *) NULL);
+#endif
+#ifdef SMOOTH_STEP
+  Tcl_AppendResult(interp, "{ SMOOTH_STEP } ", (char *) NULL);
+#endif
+#ifdef BMHTF_NACL
+  Tcl_AppendResult(interp, "{ BMHTF_NACL } ", (char *) NULL);
 #endif
 #ifdef MORSE
   Tcl_AppendResult(interp, "{ MORSE } ", (char *) NULL);

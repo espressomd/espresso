@@ -14,9 +14,9 @@
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned on).
- *  \todo Implement more flexible thermostat, e.g. which thermostat to use.
+ *  \todo Implement more flexible thermostat, %e.g. which thermostat to use.
  *
- *  For more information see \ref forces.c "forces.c".
+ *  For more information see forces.c .
  */
 #include <tcl.h>
 #include "utils.h"
@@ -31,6 +31,8 @@
 /* include the force files */
 #include "p3m.h"
 #include "lj.h"
+#include "steppot.h"
+#include "bmhtf-nacl.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
 #include "maggs.h"
@@ -103,7 +105,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
 #ifdef DPD
   /* DPD thermostat forces */
-  add_to_part_dpd_thermo_pair_force(p1,p2,d,dist);
+  add_dpd_thermo_pair_force(p1,p2,d,dist,dist2);
 #endif
 
   /***********************************************/
@@ -118,6 +120,14 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /* lennard jones */
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+
+#ifdef SMOOTH_STEP
+  add_SmSt_pair_force(p1,p2,ia_params,d,dist,dist2,force);
+#endif
+
+#ifdef BMHTF_NACL
+  add_BMHTF_pair_force(p1,p2,ia_params,d,dist,dist2,force);
 #endif
 
   /* morse */
@@ -177,6 +187,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
   /* real space coulomb */
   switch (coulomb.method) {
+#ifdef ELP3M
   case COULOMB_ELC_P3M: {
     add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
     
@@ -188,14 +199,23 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   }
   case COULOMB_P3M: {
 #ifdef NPT
+  #ifdef DIPOLES
+    double eng = add_p3m_dipolar_pair_force(p1,p2,d,dist2,dist,force);
+  #else
     double eng = add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
-    if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += eng;
+  #endif
+  if(integ_switch == INTEG_METHOD_NPT_ISO)
+    nptiso.p_vir[0] += eng;
 #else
-    add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
+  #ifdef DIPOLES
+     add_p3m_dipolar_pair_force(p1,p2,d,dist2,dist,force);
+  #else
+     add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
+  #endif
 #endif
     break;
   }
+#endif
   case COULOMB_EWALD: {
 #ifdef NPT
     double eng = add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
@@ -300,9 +320,11 @@ MDINLINE void add_bonded_force(Particle *p1)
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
+#ifdef BOND_ANGLE
     case BONDED_IA_ANGLE:
       bond_broken = calc_angle_force(p1, p2, p3, iaparams, force, force2);
       break;
+#endif
     case BONDED_IA_DIHEDRAL:
       bond_broken = calc_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
       break;

@@ -1,0 +1,146 @@
+\chapter{Introduction}
+\label{chap:intro}
+
+(new)
+
+\begin{itemize}
+\item \es{} is a generic soft matter simulation packages
+\item for molecular dynamics simulations in soft matter research
+\item focussed on coarse-grained models
+\item employs modern algorithms (Lattice-Boltzmann, DPD, P3M, \ldots)
+\item written in C for maximal portability
+\item Tcl-controlled
+\item parallelized
+\end{itemize}
+
+\section{Guiding principles}
+\label{sec:ideas}
+
+(from paper: 2.1 Goals and principles)
+
+\es
+\begin{itemize}
+\item does \emph{not} do the physics for you!
+\item requires you to understand what you do (can not be used as a
+  black box)
+\item gives you maximal freedom (flexibility)
+\item is extensible
+\item integrates system setup, simulation and analysis, as this can't
+  be strictly separated in soft matter simulations
+\item has no predefined units
+\item sets as few defaults as possible
+\end{itemize}
+
+\section{Algorithms contained in \es}
+
+The following algorithms are implemented in \es{}:
+
+\begin{itemize}
+\item ensembles: NVE, NVT, NpT
+\item charged systems:
+  \begin{itemize}
+  \item P3M for fully periodic systems
+  \item ELC and MMM-family of algorithms for charged systems with
+    non-periodic boundary conditions
+  \item Maggs algorithm 
+  \end{itemize}
+\item Hydrodynamics:
+  \begin{itemize}
+  \item DPD (as a thermostat)
+  \item Lattice-Boltzmann
+  \end{itemize}
+\end{itemize}
+
+\section{Basic program structure}
+\label{sec:structure}
+
+(from paper: 2.2 Basic program structure)
+
+\begin{itemize}
+\item Control level: \texttt{Tcl}
+\item ``Kernel'' written in \texttt{C}
+\item This user's guide will focus on the control level
+\end{itemize}
+
+\section{On units}
+\label{sec:units}
+\index{units}
+\index{physical units}
+(new)
+
+\begin{itemize}
+\item Reduced units
+\item comparison to ``real units''
+\item three examples on different length scales
+  \begin{itemize}
+  \item some atomistic model?
+  \item coarse-grained model (\eg lipid bilayer)
+  \item billards?
+  \end{itemize}
+\end{itemize}
+
+\section{Requirements}
+\label{sec:requirements}
+\index{requirements}
+
+The following libraries and tools are required to be able to compile
+and use \es:
+
+\begin{description}
+\item[Tcl/Tk] \index{Tcl/Tk} \es{} requires the Toolkit Command
+  Language Tcl/Tk \footnote{\url{http://www.tcl.tk/}} in the version
+  8.3 or later.  Some example scripts will only work with Tcl 8.4. You
+  do not only need the interpreter, but also the header files and
+  libraries.  Depending on the operating system, these may come in
+  separate development packages. If you want to use a graphical user
+  interface (GUI) for your simulation scripts, you will also need Tk.
+  
+\item[FFTW] \index{FFTW} In addition, \es{} needs the FFTW library
+  \footnote{\url{http://www.fftw.org/}} for Fourier transforms.
+  ESPResSo can work with both the 2.1.x and 3.0.x series. Again, the
+  header files are required.
+  
+\item[MPI] \index{MPI} Finally, if you want to use \es{} in parallel,
+  you need a working MPI environment (version 1.2). Currently, the
+  following MPI implementations are supported:
+  \begin{itemize}
+  \item LAM/MPI is the preferred variant
+  \item MPICH, which seems to be considerably slower than LAM/MPI in
+    our benchmarks.
+  \item On AIX systems, \es{} can also use the native POE parallel
+    environment.
+  \item On DEC/Compaq/HP OSF/Tru64, \es{} can also use the native
+    dmpirun MPI environment.
+  \end{itemize}
+\end{description}
+
+
+\section{Syntax description}
+\label{sec:syntax}
+
+Throughout the user's guide, formal definitions of the syntax of
+several Tcl- and shell-commands can be found. The following
+conventions are used in these decriptions:
+\begin{itemize}
+\item Keywords and literals of the command that have to be typed
+  exactly as given are written in \lit{typewriter} font.
+\item If the command has variable arguments, they are set in
+  \var{italic font}. The description following the syntax definition
+  should contain a detailed explanation of the argument and its
+  type.
+\item \texttt{[\var{argument}]} specifies, that \var{argument} is
+  optional, \ie{} it can be omitted.
+\item \texttt{<\var{alt1}|\var{alt2}>} specifies, that one of the
+  alternatives \var{alt1} or \var{alt2} can be used.
+\end{itemize}
+
+\minisec{Example}
+\begin{code}
+writevsf \var{file} [<short|verbose>] [<\var{radii}|auto>] [typedesc \var{typedesc}]
+\end{code}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 

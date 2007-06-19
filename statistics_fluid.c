@@ -22,7 +22,6 @@
  */
 
 #include <mpi.h>
-#include <fftw3.h>
 #include "utils.h"
 #include "parser.h"
 #include "communication.h"
@@ -30,6 +29,8 @@
 #include "statistics_fluid.h"
 
 #ifdef LB
+
+#include <fftw3.h>
 
 /** Caclulate mass of the LB fluid.
  * \param result Fluid mass

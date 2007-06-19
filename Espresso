@@ -1,20 +1,46 @@
 #!/bin/sh
-if test "$ESPRESSO_SOURCE" = ""; then
-	export ESPRESSO_SOURCE=${0%/Espresso}
+# This is the Espresso-wrapper that is used in the source directory
+
+# get the name of the directory from the script name
+script=$0
+
+while test -L $script; do
+    script=`readlink -f "$script"`
+done
+dir=`dirname $script`
+
+# if Makefile-am is not found there, we must assume that we are in
+# the srcdir
+if test ! -f $dir/Makefile-am; then
+    # try to find the objdir
+    objdir="$dir/obj-`$dir/config/config.guess`"
+    if test ! -d $objdir; then
+	# we didn't find the objdir
+	echo "Error: Could not find the build dir $objdir"
+	exit 1
+    fi
+    if test ! -f $objdir/Espresso; then
+	# we didn't find the Espresso script
+	echo "Error: Could not find Espresso in $objdir"
+	exit 1
+    fi
+
+    # found it: execute Espresso there
+    exec $objdir/Espresso "$@"
+
+# otherwise we are in the objdir 
+else
+    # try to find the Espresso binary
+    if test ! -f $dir/Espresso_bin; then
+	echo "Error: Could not find Espresso_bin in $dir"
+	exit 1
+    fi
+
+    # call Espresso
+    if test .$2 != .; then NP=$2; else NP=2; fi
+    ESPRESSO_SCRIPTS=$HOME/Espresso/scripts
+    export ESPRESSO_SCRIPTS
+    ESPRESSO_CALL="$dir/Espresso_bin $*"
+    $ESPRESSO_CALL
 fi
-if test "$ESPRESSO_SCRIPTS" = ""; then
-	export ESPRESSO_SCRIPTS=$ESPRESSO_SOURCE/scripts
-fi
-if test ! -d $ESPRESSO_SCRIPTS; then
-	echo 'ESPRESSO scripts directory $ESPRESSO_SCRIPTS is missing, reinstall Espresso' 1>&2
-	exit -1
-fi
-if test ! -x $ESPRESSO_SOURCE/config/config.guess; then
-	echo 'ESPRESSO configuration guess script $ESPRESSO_SOURCE/config/config.guess is missing, repair your Espresso source dir' 1>&2
-	exit -1
-fi
-if test ! -x $ESPRESSO_SOURCE/obj-`$ESPRESSO_SOURCE/config/config.guess`/Espresso; then
-	echo 'There is no binary for the current hardware, '`$ESPRESSO_SOURCE/config/config.guess`', reinstall Espresso on this platform' 1>&2
-	exit -1
-fi
-$ESPRESSO_SOURCE/obj-`$ESPRESSO_SOURCE/config/config.guess`/Espresso $*
+

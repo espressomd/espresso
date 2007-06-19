@@ -76,9 +76,21 @@
 #include MYCONFIG_H
 #endif
 
-/* Lattice Boltzmann needs lattice structures */
+/* activate P3M only with FFTW */
+#if defined(ELECTROSTATICS) && defined(FFTW)
+#define ELP3M
+#endif
+
+/* Lattice Boltzmann needs lattice structures and temporary particle data */
 #ifdef LB
+#define USE_TEMPORARY
 #define LATTICE
+//#define ALTERNATIVE_INTEGRATOR
+#endif
+
+/*Transversal DPD -> needs normal DPD*/
+#ifdef TRANS_DPD
+#define DPD
 #endif
 
 /* If any bond angle potential is activated, actiavte the whole bond angle code */

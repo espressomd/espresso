@@ -106,6 +106,16 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
+//ER
+  case CONSTRAINT_EXT_MAGN_FIELD:
+    Tcl_PrintDouble(interp, con->c.emfield.ext_magn_field[0], buffer);
+    Tcl_AppendResult(interp, "ext_magn_field ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.emfield.ext_magn_field[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.emfield.ext_magn_field[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    break; 
+//end ER
   default:
     sprintf(buffer, "%d", con->type);
     Tcl_AppendResult(interp, "unknown constraint type ", buffer, ".", (char *) NULL);
@@ -622,6 +632,30 @@ int constraint_maze(Constraint *con, Tcl_Interp *interp,
   return (TCL_OK);
 }
 
+//ER
+int constraint_ext_magn_field(Constraint *con, Tcl_Interp *interp,
+		      int argc, char **argv)
+{
+  int i;
+  con->type = CONSTRAINT_EXT_MAGN_FIELD;
+
+  for(i=0; i<3; i++)
+     con->c.emfield.ext_magn_field[i] = 0.;
+
+  if(argc < 3) {
+      Tcl_AppendResult(interp, "usage: constraint ext_magn_field <x> <y> <z>", (char *) NULL);
+      return (TCL_ERROR);
+  }
+  for(i=0; i<3; i++){
+     if (Tcl_GetDouble(interp, argv[i], &(con->c.emfield.ext_magn_field[i])) == TCL_ERROR)
+	return (TCL_ERROR);
+  }
+  argc -= 3; argv += 3;
+
+  return (TCL_OK);
+}
+//end ER
+
 #endif
 
 
@@ -661,6 +695,12 @@ int constraint(ClientData _data, Tcl_Interp *interp,
     status = constraint_pore(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
+  //ER
+  else if(!strncmp(argv[1], "ext_magn_field", strlen(argv[1]))) {
+    status = constraint_ext_magn_field(generate_constraint(),interp, argc - 2, argv + 2);
+    mpi_bcast_constraint(-1);
+  }
+  //end ER
   else if(!strncmp(argv[1], "force", strlen(argv[1]))) {
     if(argc < 3) {
       Tcl_AppendResult(interp, "which particles force?",(char *) NULL);
@@ -695,7 +735,8 @@ int constraint(ClientData _data, Tcl_Interp *interp,
     status = TCL_OK;
   }
   else {
-    Tcl_AppendResult(interp, "possible constraints: wall sphere cylinder maze or constraint delete {c} to delete constraint(s)",(char *) NULL);
+  //ER "ext_magn_field" was put in the next line //end ER
+    Tcl_AppendResult(interp, "possible constraints: wall sphere cylinder maze pore ext_magn_field or constraint delete {c} to delete constraint(s)",(char *) NULL);
     return (TCL_ERROR);
   }
 

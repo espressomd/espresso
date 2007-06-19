@@ -15,6 +15,12 @@ namespace eval mbtools::utils {
     namespace export distance
     namespace export find_proportions
     namespace export matrix_multiply
+    namespace export matrix_vec_multiply
+    namespace export cross_product
+    namespace export rotation_matrix
+    namespace export add_vecs
+    namespace export dot_product
+    namespace export perp_vec
 }
 
 
@@ -28,7 +34,26 @@ proc ::mbtools::utils::dot_product { A B } {
 
 }
 
-
+# ::mbtools::utils::perp_vec
+#
+#  returns a vector perpendicular to A
+#  nothing special about the vector except that it's one of the perpendicular options and is normalized
+#
+proc ::mbtools::utils::perp_vec {A} {
+    set x [lindex $A 0]
+    set y [lindex $A 1]
+    if {$x  == 0} {
+	set x 1
+    } elseif {$y == 0} {
+	set y 1
+    } else {
+	set ratio [expr $y / $x]
+	set y [expr $x * $ratio * 2]
+    }
+    set some_vector "$x $y [lindex $A 2]"
+    set some_vector [::mbtools::utils::normalize $some_vector]
+    return [::mbtools::utils::cross_product $A $some_vector]
+}
 
 # ::mbtools::utils::matrix_vec_multiply --
 # 
@@ -253,4 +278,90 @@ proc ::mbtools::utils::uniquelist { original } {
     }
 
     return $short
+}
+
+#
+#
+# :: mbtools::utils::rotate --
+#
+# Take a {x y z} point and rotate it an angle sigma around either
+# the x y or z axis.
+#
+#
+proc ::mbtools::utils::rotation_matrix {axis phi} {
+    
+    set x [lindex $axis 0]
+    set y [lindex $axis 1]
+    set z [lindex $axis 2]
+    set x2 [expr $x * $x]
+    set y2 [expr $y * $y]
+    set z2 [expr $z * $z]
+
+    set rcos  [expr cos($phi)]
+    set rsin  [expr sin($phi)]
+
+    set row0 ""
+    set row1 ""
+    set row2 ""
+
+    lappend row0 [expr $x2 + ($y2+$z2)*$rcos]
+    lappend row0 [expr $x*$y*(1.0-$rcos) - $z*$rsin]
+    lappend row0 [expr $x*$z*(1.0-$rcos) + $y*$rsin]
+    lappend row1 [expr $x*$y*(1.0-$rcos) + $z*$rsin]
+    lappend row1 [expr $y2 + ($x2+$z2)*$rcos]
+    lappend row1 [expr $y*$z*(1.0-$rcos) - $x*$rsin]
+    lappend row2 [expr $x*$z*(1.0-$rcos) - $y*$rsin]
+    lappend row2 [expr $y*$z*(1.0-$rcos) + $x*$rsin]
+    lappend row2 [expr $z2 + ($x2+$y2)*$rcos]
+
+
+    set rotation_matrix ""
+    lappend rotation_matrix $row0
+    lappend rotation_matrix $row1
+    lappend rotation_matrix $row2
+
+    return $rotation_matrix
+}
+
+# ::mbtools::utils::cross_product
+proc ::mbtools::utils::cross_product { A B } {
+    set cp ""
+    set Ax [lindex $A 0]
+    set Ay [lindex $A 1]
+    set Az [lindex $A 2]
+    set Bx [lindex $B 0]
+    set By [lindex $B 1]
+    set Bz [lindex $B 2]
+
+    lappend cp [expr  $Ay*$Bz - $Az*$By]
+    lappend cp [expr -$Ax*$Bz + $Az*$Bx]
+    lappend cp [expr  $Ax*$By - $Ay*$Bx]
+
+    return $cp
+
+}
+
+# ::mbtools::utils::add_vecs
+proc ::mbtools::utils::add_vecs { A B} {
+    lappend C [expr [lindex $A 0] + [lindex $B 0]]    
+    lappend C [expr [lindex $A 1] + [lindex $B 1]]
+    lappend C [expr [lindex $A 2] + [lindex $B 2]]
+    return $C
+}
+
+# ::mbtools::utils::matrix_multiply
+proc ::mbtools::utils::matrix_multiply {A B} {
+    set C ""
+    for {set i 0} {$i < 3} {incr i} {
+	set row ""
+	for {set j 0} {$j < 3} {incr j} {
+	set sum 0
+	    for {set k 0} {$k < 3} {incr k} {
+		set sum [expr $sum + [lindex [lindex $A $i] $k] * [lindex [lindex $B $k] $j]]
+	    }
+	    lappend row $sum
+	}
+	lappend C $row
+    }
+    return $C
 }

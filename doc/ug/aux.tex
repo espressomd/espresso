@@ -1,0 +1,522 @@
+\chapter{Auxilliary commands}
+\label{chap:aux}
+
+
+\section{Finding particles and bonds}
+
+
+\subsection{\texttt{countBonds}}
+\tclcommand{countBonds}{\var{particle\_list}}
+
+Returns a Tcl-list of the complete topology described by
+\var{particle\_list}, which must have the same format as the output of
+the command \lit{part} (see section \vref{sec:part}).
+
+The output list contains only the particle id and the corresponding
+bonding information, thus it looks like \eg{}
+\begin{tclcode}
+{106 {0 107}} {107 {0 106} {0 108}} {108 {0 107} {0 109}} ...
+{210 {0 209} {0 211}} {211 {0 210}} 212 213 ... 
+\end{tclcode}
+for a single chain of 106 monomers between particle 106 and 211, with
+additional loose particles 212, 213, ... (\eg{} counter-ions).  Note,
+that the \lit{part} command stores any bonds only with the particle of
+lower particle number, which is why \codebox{[part 109]} would only
+return \codebox{{... bonds {{0 110}}}}, therefore not revealing the
+bond between particle 109 and (the preceding) particle 108, while
+\lit{countBonds} would return all bonds particle 109 participates in.
+
+\subsection{\texttt{findPropPos}}
+\tclcommand{findPropPos}{\var{particle\_property\_list} \var{property}}
+
+Returns the index of \var{property} within
+\var{particle\_property\_list}, which is expected to have the same
+format as \codebox{[part \var{particle\_id}]}. If \var{property} is
+not found, -1 is returned.
+
+This function is useful to access certain properties of particles
+without hard-wiring their index-position, which might change in future
+releases of \lit{part}.
+
+\begin{tclcode}
+[lindex [part $i] [findPropPos [part $i] type]]
+\end{tclcode}
+for example returns the particle type id of particle \$i without
+fixing where exactly that information has to be in the output of
+\codebox{[part \$i]}.
+
+
+\tclcommand{findBondPos}{\var{particle\_property\_list}}
+
+Returns the index of the bonds within var{particle\_property\_list},
+which is expected to have the same format as [part
+\var{particle\_number}]; hence its output is the same as [findPropPos
+<particle\_property\_list> bonds]. If the particle does not have any
+bonds, -1 is returned.
+
+
+\subsection{\texttt{timeStamp}}
+\tclcommand{timeStamp}{\var{path} \var{prefix} \var{postfix} \var{suffix}}
+
+modifies the filename contained within \var{path} to be preceded by a
+\var{prefix} and having \var{postfix} before the \var{suffix}; e. g.
+\begin{tclcode}
+timeStamp ./scripts/config.gz DH863 001 gz
+\end{tclcode}
+returns \texttt{./scripts/DH863\_config001.gz}.
+If \var{postfix} is $-1$, the current date is used in the format
+\texttt{\%y\%m\%d}. This would results in
+\texttt{./scripts/DH863\_config021022.gz} on October 22nd, 2002.
+
+
+
+\section{Additional Tcl math-functions}
+The following procedures are found in scripts/ABHmath.tcl.
+\begin{itemize}
+ \item
+  CONSTANTS
+  \begin{itemize}
+   \item
+\begin{code}
+PI
+\end{code}
+    returns $\pi$ with 16 digits precision.
+   \item
+\begin{code}
+KBOLTZ
+\end{code}
+Returns Boltzmann constant in Joule/Kelvin
+   \item
+\begin{code}
+ECHARGE
+\end{code}
+    Returns elementary charge in Coulomb
+   \item
+\begin{code}
+NAVOGADRO
+\end{code}
+    Returns Avogadro number
+   \item
+\begin{code}
+SPEEDOFLIGHT
+\end{code}
+    Returns speed of light in meter/second
+   \item
+\begin{code}
+EPSILON0
+\end{code}
+Returns dielectric constant of vaccum in Coulomb\^2/(Joule meter)
+   \item
+\begin{code}
+ATOMICMASS
+\end{code}
+    Returns the atomic mass unit u in kilogramms
+  \end{itemize}
+ \item
+  MATHEMATICAL FUNCTIONS
+  \begin{itemize}
+   \item
+\begin{code}
+sqr <arg>
+\end{code}
+    returns the square of \var{arg}.
+   \item
+\begin{code}
+min <arg1> <arg2>
+\end{code}
+    returns the minimum of \var{arg1} and \var{arg2}.
+   \item
+\begin{code}
+max <arg1> <arg2>
+\end{code}
+    returns the maximum of \var{arg1} and \var{arg2}.
+   \item
+\begin{code}
+sign <arg>
+\end{code}
+returns the signum-function of \var{arg}, namely +1 for \var{arg}
+$>0$, -1 for $<0$, and =0 otherwise.
+  \end{itemize}
+ \item
+  RANDOM FUNCTIONS
+  \begin{itemize}
+   \item
+\begin{code}
+gauss\_random
+\end{code}
+returns random numbers which have a Gaussian distribution
+   \item
+\begin{code}
+dist\_random <dist> [max]
+\end{code}
+returns random numbers in the interval $[0,1]$ which have a
+distribution according to the distribution function p(x) \var{dist}
+which has to be given as a tcl list containing equally spaced values
+of p(x). If p(x) contains values larger than 1 (default value of max)
+the maximum or any number larger than that has to be given \var{max}.
+This routine basically takes the function p(x) and places it into a
+rectangular area ([0,1],[0,max]). Then it uses to random numbers to
+specify a point in this area and checks wether it resides in the area
+under p(x). Attention: Since this is written in tcl it is probably not
+the fastest way to do this!
+   \item
+\begin{code}
+vec\_random [len]
+\end{code}
+returns a random vector of length \var{len} (uniform distribution on a
+sphere) This is done by chosing 3 uniformly distributed random numbers
+$[-1,1]$ If the length of the resulting vector is $<= 1.0$ the vector
+is taken and normalized to the desired length, otherwise the procedure
+is repeated until succes. On average the procedure needs 5.739 random
+numbers per vector. (This is probably not the most efficient way, but
+it works!) Ask your favorit mathematician for a proof!
+   \item
+\begin{code}
+phivec\_random <v> <phi> [len]
+\end{code}
+    return a random vector at angle \var{phi} with \var{v} and length \var{len}
+  \end{itemize}
+ \item
+  PARTICLE OPERATIONS
+
+  Operations involving particle positions. The parameters \var{pi} can
+  either denote the particle identity (then the particle position is
+  extracted with the The part command command) or the particle
+  position directly When the optional \var{box} parameter for minimum
+  image conventions is omited the functions use the the \codebox{setmd
+    box\_l} command.
+  \begin{itemize}
+   \item
+\begin{code}
+bond\_vec <p1> <p2>
+\end{code}
+    Calculate bond vector pointing from particles \var{p2} to \var{p1}
+    return = (\var{p1}.pos - \var{p2}.pos)
+   \item
+\begin{code}
+bond\_vec\_min <p1> <p2> [box]
+\end{code}
+    Calculate bond vector pointing from particles \var{p2} to \var{p1}
+    return = MinimumImage(\var{p1}.pos - \var{p2}.pos)
+   \item
+\begin{code}
+bond\_length <p1> <p2>
+\end{code}
+    Calculate bond length between particles \var{p1} and \var{p2}
+   \item
+\begin{code}
+bond\_length\_min <p1> <p2> [box]
+\end{code}
+    Calculate minimum image bond length between particles \var{p1} and \var{p2}
+   \item
+\begin{code}
+bond\_angle <p1> <p2> <p3> [type]
+\end{code}
+Calculate bond angle between particles \var{p1}, \var{p2} and
+\var{p3}. If \var{type} is "r" the return value is in radiant. If it
+is "d" the return value is in degree. The default for \var{type} is
+"r".
+   \item
+\begin{code}
+bond\_dihedral <p1> <p2> <p3> <p4> [type]
+\end{code}
+Calculate bond dihedral between particles \var{p1}, \var{p2}, \var{p3}
+and \var{p4} If \var{type} is "r" the return value is in radiant. If
+it is "d" the return value is in degree The default for \var{type} is
+"r".
+   \item
+\begin{code}
+part\_at\_dist <p> <dist>
+\end{code}
+return position of a new particle at distance \var{dist} from \var{p}
+with random orientation
+   \item
+\begin{code}
+part\_at\_angle <p1> <p2> <phi> [len]
+\end{code}
+return position of a new particle at distance \var{len} (default=1.0)
+from \var{p2} which builds a bond angle \var{phi} for (\var{p1},
+\var{p2}, p-new)
+   \item
+\begin{code}
+part\_at\_dihedral <p1> <p2> <p3> <theta> [phi] [len]
+\end{code}
+return position of a new particle at distance \var{len} (default=1.0)
+from \var{p3} which builds a bond angle \var{phi} (default=random) for
+(\var{p2}, \var{p3}, p-new) and a dihedral angle \var{theta} for
+(\var{p1}, \var{p2}, \var{p3}, p-new)
+  \end{itemize}
+ \item
+  VECTOR OPERATIONS
+
+  A vector \var{v} is a tcl list of numbers with an arbitrary length
+  Some functions are provided only for three dimensional vectors.
+  corresponding functions contain 3d at the end of the name.
+  \begin{itemize}
+   \item
+\begin{code}
+veclen <v>
+\end{code}
+    return the length of a vector
+   \item
+\begin{code}
+veclensqr <v>
+\end{code}
+    return the length of a vector squared
+   \item
+\begin{code}
+vecadd <a> <b>
+\end{code}
+    add vector \var{a} to vector \var{b}: return = (\var{a}+\var{b})
+   \item
+\begin{code}
+vecsub <a> <b>
+\end{code}
+    subtract vector \var{b} from vector \var{a}: return = (\var{a}-\var{b})
+   \item
+\begin{code}
+vecscale <s> <v>
+\end{code}
+    scale vector \var{v} with factor \var{s}: return = (\var{s}*\var{v})
+   \item
+\begin{code}
+vecdot\_product <a> <b>
+\end{code}
+    calculate dot product of vectors \var{a} and \var{b}: return = (\var{a}.\var{b})
+   \item
+\begin{code}
+veccross\_product3d <a> <b>
+\end{code}
+calculate the cross product of vectors \var{a} and \var{b}: return =
+(\var{a} x \var{b})
+   \item
+\begin{code}
+vecnorm <v> [len]
+\end{code}
+    normalize a vector to length \var{len} (default 1.0)
+   \item
+\begin{code}
+unitvec <p1> <p2>
+\end{code}
+    return unit vector pointing from position \var{p1} to position \var{p2}
+   \item
+\begin{code}
+orthovec3d <v> [len]
+\end{code}
+return orthogonal vector to \var{v} with length \var{len} (default
+1.0) This vector does not have a random orientation in the plane
+perpendicular to \var{v}
+   \item
+\begin{code}
+create\_dihedral\_vec <v1> <v2> <theta> [phi] [len]
+\end{code}
+create last vector of a dihedral (\var{v1}, \var{v2}, res) with
+dihedral angle \var{theta} and bond angle (\var{v2}, res) \var{phi}
+and length \var{len} (default 1.0). If \var{phi} is ommited or set to
+rnd then \var{phi} is assigned a random value between 0 and 2 Pi.
+  \end{itemize}
+ \item
+  TCL LIST OPERATIONS
+  \begin{itemize}
+   \item
+\begin{code}
+average <list>
+\end{code}
+    Returns the avarage of the provided \var{list}
+   \item
+\begin{code}
+list\_add\_value <list> <val>
+\end{code}
+    Add \var{val} to each element of \var{list}
+   \item
+\begin{code}
+flatten <list>
+\end{code}
+    flattens a nested \var{list}
+   \item
+\begin{code}
+list\_contains <list> <val>
+\end{code}
+Checks wether \var{list} contains \var{val}. returns the number of
+occurences of \var{val} in \var{list}.
+  \end{itemize}
+ \item
+  REGRESSION
+  \begin{itemize}
+   \item
+\begin{code}
+LinRegression <l>
+\end{code}
+\var{l} is a list {{x1 y1} {x2 y2} ...} of points. LinRegression
+returns the least-square linear fit a*x+b and the standard errors da
+and db.
+   \item
+\begin{code}
+LinRegressionWithSigma <l>
+\end{code}
+\var{l} is a list {{x1 y1 s1} {x2 y2 s2} ...} of points with standard
+deviations. LinRegression returns the least-square linear fit a*x+b
+plus the standard errors da and db, cov(a,b) and chi.
+  \end{itemize}
+\end{itemize}
+
+\subsection{\texttt{t\_random}}
+\begin{itemize}
+ \item
+   Without further arguments,
+\begin{code}
+t\_random
+\end{code}
+returns a random double between 0 and 1 using the 'ran1' random number
+generator from Numerical Recipes.
+ \item
+\begin{code}
+t\_random int <n>
+\end{code}
+  returns a random integer between 0 and n-1.
+ \item
+\begin{code}
+t\_random seed
+\end{code}
+returns a tcl-list with the seeds of the random number generators on
+each of the 'n\_nodes' nodes, while
+\begin{code}
+t\_random seed <seed(0)> ... <seed(n\_nodes-1)>
+\end{code}
+sets those seeds to the new values respectively, re-initialising the
+random number generators on each node.  Note that this is
+automatically done on invoking Espresso, however due to that your
+simulation will always start with the same random sequence on any node
+unless you use this tcl-command to reset the sequences' seeds.
+\item Since internally the random number generators' random sequences
+  are not based on mere seeds but rather on whole random number
+  tables, to recover the exact state of the random number generators
+  at a given time during the simulation run (e. g. for saving a
+  checkpoint) requires knowledge of all these values. They can be
+  accessed by
+\begin{code}
+t\_random stat
+\end{code}
+which returns a tcl-list with all status informations for any node (e.
+g. 8 nodes $=>$ approx. 350 parameters). To overwrite those internally
+in Espresso (e. g. upon restoring a checkpoint) submit the whole list
+back using
+\begin{code}
+t\_random stat <status-list>
+\end{code}
+with \var{status-list} being the tcl-list mentioned above without any
+braces.  Be careful! A complete recovery of the current state of the
+simulation is only possible if you make sure to include a call to The
+invalidate\_system command after you saved the checkpoint
+(tcl\_checkpoint\_set will do this automatically for you), because the
+integration algorithm re-uses the old forces calculated in the
+previous time-step; if something has changed in the system (or if it
+has just been read from a file) the forces are re-derived (including
+application of the thermostat and its random numbers) leading to
+slightly different results compared to the uninterrupted run (see The
+invalidate\_system command for details)!
+\end{itemize}
+The C implementation is t\_random
+
+\subsection{\texttt{The bit\_random command}}
+\begin{itemize}
+ \item
+  Without further arguments,
+\begin{code}
+bit\_random
+\end{code}
+returns a random double between 0 and 1 using the R250 generator
+XOR-ing a table of 250 linear independent integers.
+ \item
+\begin{code}
+bit\_random seed
+\end{code}
+returns a tcl-list with the seeds of the random number generators on
+each of the 'n\_nodes' nodes, while
+\begin{code}
+bit\_random seed <seed(0)> ... <seed(n\_nodes-1)>
+\end{code}
+sets those seeds to the new values respectively, re-initialising the
+random number generators on each node.  Note that this is
+automatically done on invoking Espresso, however due to that your
+simulation will always start with the same random sequence on any node
+unless you use this tcl-command to reset the sequences' seeds.
+\item Since internally the random number generators' random sequences
+  are not based on mere seeds but an array of 250 linear independent
+  integers whose bits are used as matrix elements which are XOR-ed, to
+  recover the exact state of the random number generators at a given
+  time during the simulation run (e. g. for saving a checkpoint)
+  requires knowledge of all these values. They can be accessed by
+\begin{code}
+bit\_random stat
+\end{code}
+which returns a tcl-list with all status informations for any node (e.
+g. 8 nodes $=>$ approx. 2016 parameters). To overwrite those
+internally in Espresso (e. g. upon restoring a checkpoint) submit the
+whole list back using
+\begin{code}
+bit\_random stat <status-list>
+\end{code}
+with <status-list> being the tcl-list mentioned above without any
+braces.  Be careful! A complete recovery of the current state of the
+simulation is only possible if you make sure to include a call to The
+invalidate\_system command after you saved the checkpoint
+(tcl\_checkpoint\_set will do this automatically for you), because the
+integration algorithm re-uses the old forces calculated in the
+previous time-step; if something has changed in the system (or if it
+has just been read from a file) the forces are re-derived (including
+application of the thermostat and its random numbers) leading to
+slightly different results compared to the uninterrupted run (see The
+invalidate\_system command for details)!
+\item Note further that the bit-wise display of integers, as it is
+  used by this random number generator, is platform dependent. As long
+  as you stay on the same architecture this doesn't matter at all;
+  however, it wouldn't be wise to use a checkpoint including the state
+  of the R250 to restart the simulation on a different platform - most
+  likely, the integers will have a different bit-muster leading to a
+  completely different random matrix.  So, if you're using this random
+  number generator, always remain on the same platform!
+\end{itemize}
+
+
+\section{Checking for features of \es}
+
+In an \es-Tcl-script, you can get information whether or not one or
+some of the features are compiled into the current program with help
+of the following Tcl-commands:
+\begin{itemize}
+ \item
+\begin{code}
+code\_info
+\end{code}
+provides information on the version, compilation status and the debug
+status of the used code. It is highly recommended to store this
+information with your simulation data in order to maintain the
+reproducibility of your results.  Exemplaric output:
+\begin{tclcode}
+ESPRESSO: v1.5.Beta (Neelix), Last Change: 23.01.2004
+{ Compilation status { PARTIAL_PERIODIC } { ELECTROSTATICS }
+{ EXTERNAL_FORCES } { CONSTRAINTS } { TABULATED }
+{ LENNARD_JONES } { BOND_ANGLE_COSINE } }
+{ Debug status { MPI_CORE FORCE_CORE } }
+\end{tclcode}
+ \item
+\begin{code}
+has\_feature <feature> ...
+\end{code}
+tests, if \var{feature} is compiled into the \es{} kernel. A list of
+possible features and their names can be found here.
+\item
+\begin{code}
+  require\_feature <feature> ...
+\end{code}
+tests, if \var{feature} is feature is compiled into the \es{} kernel,
+will exit the script if it isn't and return the error code 42. A list
+of possible features and their names can be found here.
+\end{itemize}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 

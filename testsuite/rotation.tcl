@@ -36,8 +36,8 @@ puts "- Testcase rotation.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------------"
 require_feature "ROTATION"
 set epsilon 5e-4
-setmd temp 0
-setmd gamma 0
+thermostat off
+
 setmd time_step 0.001
 setmd skin 0.5
 

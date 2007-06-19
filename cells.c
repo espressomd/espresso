@@ -10,8 +10,7 @@
  *
  *  This file contains functions for the cell system.
  *
- *  For more information on cells,
- *  see \ref cells.h "cells.h"
+ *  For more information on cells, see cells.h
  *   */
 #include <stdio.h>
 #include <stdlib.h>
@@ -159,7 +158,7 @@ int cellsystem(ClientData data, Tcl_Interp *interp,
 {
   int err = 0;
 
-  if (argc < 1) {
+  if (argc <= 1) {
     Tcl_AppendResult(interp, "usage: cellsystem <system> <params>", (char *)NULL);
     return TCL_ERROR;
   }
@@ -207,7 +206,7 @@ int cellsystem(ClientData data, Tcl_Interp *interp,
       mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED);
   }
   else {
-    Tcl_AppendResult(interp, "unkown cell structure type \"", argv[0],"\"", (char *)NULL);
+    Tcl_AppendResult(interp, "unkown cell structure type \"", argv[1],"\"", (char *)NULL);
     return TCL_ERROR;
   }
   return mpi_gather_runtime_errors(interp, TCL_OK);

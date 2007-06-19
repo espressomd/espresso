@@ -23,6 +23,8 @@
 /* include the energy files */
 #include "p3m.h"
 #include "lj.h"
+#include "steppot.h"
+#include "bmhtf-nacl.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
 #include "ljcos.h"
@@ -74,6 +76,16 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
   ret += lj_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
+#ifdef SMOOTH_STEP
+  /* smooth step */
+  ret += SmSt_pair_energy(p1,p2,ia_params,d,dist,dist2);
+#endif
+
+#ifdef BMHTF_NACL
+  /* BMHTF NaCl */
+  ret += BMHTF_pair_energy(p1,p2,ia_params,d,dist,dist2);
+#endif
+
 #ifdef MORSE
   /* morse */
   ret +=morse_pair_energy(p1,p2,ia_params,d,dist);
@@ -114,10 +126,11 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
   if (coulomb.method != COULOMB_NONE) {
     /* real space coulomb */
     switch (coulomb.method) {
+#ifdef ELP3M
     case COULOMB_P3M:
       ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
 #ifdef DIPOLES
-      ret += p3m_dipol_pair_energy(p1,p2,d,dist2,dist); 
+      ret += p3m_dipolar_pair_energy(p1,p2,d,dist2,dist); 
 #endif
       break;
     case COULOMB_ELC_P3M:
@@ -125,6 +138,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
       if (elc_params.dielectric_contrast_on)
 	ret += 0.5*ELC_P3M_dielectric_layers_energy_contribution(p1,p2);
       break;
+#endif
     case COULOMB_EWALD:
       ret = ewald_coulomb_pair_energy(p1,p2,d,dist2,dist);
       break;
@@ -210,9 +224,11 @@ MDINLINE void add_bonded_energy(Particle *p1)
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
+#ifdef BOND_ANGLE
     case BONDED_IA_ANGLE:
       bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
       break;
+#endif
     case BONDED_IA_DIHEDRAL:
       bond_broken = dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
       break;

@@ -33,18 +33,6 @@
 #include "nsquare.h"
 #include "layered.h"
 #include "domain_decomposition.h"
-//sandeep
-#define top 10.0
-#define mid 1.0
-#define bot 10.0
-#define sfac (1.0)
-#define gap  (2.0)
-#define delta_mid_top ((mid - top)/(mid + top))
-//sandeep
-
-/** charge prefactor for image charges from the primary box in the upper region */
-
-#define delta_mid_bot ((mid - bot)/(mid + bot))
 
 /************************************************************/
 /* local prototypes                                         */
@@ -111,6 +99,7 @@ void calc_long_range_forces()
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
+#ifdef ELP3M
   case COULOMB_ELC_P3M:
     if (elc_params.dielectric_contrast_on) {
       ELC_P3M_modify_p3m_sums_both();
@@ -125,7 +114,7 @@ void calc_long_range_forces()
     if (elc_params.dielectric_contrast_on)
       ELC_P3M_restore_p3m_sums();
  
-    ELC_add_force(); //sandeep
+    ELC_add_force(); 
 
     break;
   case COULOMB_P3M:
@@ -137,6 +126,7 @@ void calc_long_range_forces()
 #endif
       P3M_calc_kspace_forces(1,0);
     break;
+#endif
   case COULOMB_EWALD:
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO)

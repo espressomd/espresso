@@ -42,6 +42,27 @@ MDINLINE int fene_set_params(int bond_type, double k, double r)
   return TCL_OK;
 }
 
+/// parse parameters for the fene potential
+MDINLINE int inter_parse_fene(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+{
+  double k, r;
+
+  if (argc != 3) {
+    Tcl_AppendResult(interp, "fene needs 2 parameters: "
+		     "<k_fene> <r_fene>", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) 
+    {
+      Tcl_AppendResult(interp, "fene needs 2 DOUBLE parameters: "
+		       "<k_fene> <r_fene>", (char *) NULL);
+      return TCL_ERROR;
+    }
+  
+  CHECK_VALUE(fene_set_params(bond_type, k, r), "bond type must be nonnegative");
+}
+
 /** Computes the FENE pair force and adds this
     force to the particle forces (see \ref #inter). 
     @param p1        Pointer to first particle.

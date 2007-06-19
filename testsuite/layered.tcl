@@ -34,8 +34,7 @@ if { [setmd n_nodes] >= 5 } {
 cellsystem layered
 
 set epsilon 1e-4
-setmd temp 0
-setmd gamma 0
+thermostat off
 setmd time_step 0.001
 setmd skin 0.05
 

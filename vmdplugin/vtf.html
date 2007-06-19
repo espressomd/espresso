@@ -1,0 +1,265 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<title>VMD trajectory/structure/coordinate format</title>
+</head>
+
+<body>
+<h1>VMD trajectory/structure/coordinate format</h1>
+
+The VMD trajectory/structure/coordinate format was designed for people
+using their own hand-written simulation codes and coarse-grained
+simulations that want to visualize their simulations using VMD. In
+VTF, VSF and VTF files, it is possible to specify all properties that
+are used by the VMD viewer.
+
+
+<h2>Basic file format</h2>
+<ul>
+  <li>The basic unit of a file is a <em>line</em>.</li>
+  <li>A <em>block</em> consists of an arbitrary number of lines, up to a line
+  starting a new block.</li>
+  <li>Files consist of <a
+  href="#structure"><strong>structure</strong></a> and
+  <a href="#timestep" ><strong>timestep</strong></a> blocks.</li>
+  <li>VSF files only contain a structure block.</li>
+  <li>VCF files only contain timestep blocks.</li>
+  <li>VTF files start with a structure block and contain an arbitrary
+  number of timestep blocks afterwards.</li>
+  <li>Lines ending with the character <code>\</code> are continuation
+  lines, i.e. the line is concatenated with the next line to form a
+  single line.  </li>
+  <li>Comment lines starting with <code>#</code> and lines containing
+  only whitespace characters are ignored.</li>
+  <li>Leading whitespace characters in a line are ignored.</li>
+</ul>
+
+<a name="structure"><h2>Structure blocks</h2></a>
+
+Structure blocks describe the structure of a simulated system,
+i.e. the characteristics of the atoms, the bonds, and the unitcell
+size.  Structure blocks consist of <a
+href="#atom"><strong>atom</strong></a>, <a href="#bond"
+><strong>bond</strong></a> and <a href="unitcell"
+><strong>unitcell</strong></a> lines. Each line is identified by the
+first non-whitespace character.
+
+<a name="atom">
+<h3>Atom lines</h3>
+</a>
+
+Atom lines define atoms and their properties.
+
+<dl>
+  <dt>Syntax
+  <dd>
+    <pre>
+[a[tom]] <i>aid-specifier</i>[,<i>aid-specifier</i>...] [<i>options</i>...]
+    </pre>
+  <dt>Options
+  <dd>
+    <pre>
+n[ame] <i>char[16]</i>       - atom name
+t[ype] <i>char[16]</i>       - atom type
+resid <i>int</i>             - residue id
+res[name] <i>char[8]</i>     - residue name
+r[adius] <i>float</i>        - VDW radius
+s[egid] <i>char[8]</i>       - segment id
+c[hain] <i>char[2]</i>       - chain id
+charge|q <i>float</i>        - charge
+a[tomicnumber] <i>int</i>    - atomic number
+altloc <i>char[2]</i>        - PDB alternative location
+i[nsertion] <i>char[]</i>    - PDB insertion
+o[ccupancy] <i>float</i>     - occupancy
+b[factor] <i>float</i>       - b-factor
+m[ass] <i>float</i>          - mass
+    </pre>
+  <dt>Example
+  <dd>
+    <pre>
+# Specify 4 coarse-grained lipids with 7 beads each
+atom 0,7,14,21 name HEAD resname LIPID radius 1.1
+atom 1:2,8:13,15:20,22:27 name TAIL resname LIPID radius 1.0
+atom 0:6 resid 0 segid UPPER
+atom 7:13 resid 1 segid UPPER
+# in fact, 'a' is enough to identify an atom line
+a 14:20 resid 2 segid LOWER
+# or even no keyword at all
+21:27 resid 3 segid LOWER
+    </pre>
+</dl>
+
+<ul>
+  <li>The line starts with an <i>aid-specifier</i>
+  or the keyword <code>a[tom]</code>.</li>
+  <li>An <i>aid-specifier</i> specifies, which atoms the line refers
+  to:
+  <ul>
+    <li><code>default</code> refers to the default atom that is used as
+    a template for new atoms.</li>
+    <li>A single atom id specifies a single atom.</li> 
+    <li>A range specifier <i>from</i><code>:</code><i>to</i> denotes a
+    range of atoms.</li>
+    <li>Whenever an atom id is used that is greater than the greatest
+    atom id so far, all atoms up to this new greatest id are made
+    copies of the default atom.</li>
+  </ul>
+  <li>The <i>options</i> can be used to specify the different
+  properties of the atoms.</li>
+</ul>
+
+<a name="bond"><h3>Bond lines</h3></a>
+
+Bond lines define bonds between atoms.
+
+<dl>
+  <dt>Syntax
+  <dd>
+    <pre>
+ b[ond] <i>bond-specifier</i>[,<i>bond-specifier</i>...]
+    </pre>
+  <dt>Example
+  <dd>
+    <pre>
+# Specify a ring of 6 atoms
+bond 0::5,5:0
+    </pre>
+</dl>
+
+<ul>
+  <li>The line starts with the keyword <code>b[ond]</code>.</li>
+  <li>A <i>bond-specifier</i> defines one or more bonds:</li>
+  <ul>
+    <li><i>from</i><code>:</code><i>to</i> defines a bond between
+    atoms <i>from</i> and <i>to</i></li>
+    <li><i>from</i><code>::</code><i>to</i> defines, that the atoms
+    between <i>from</i> and <i>to</i> are a chain with bonds between
+    two adjacent atoms</li>
+  </ul>
+</ul>
+
+<a name="unitcell"><h3>Unitcell/PBC lines</h3></a>
+
+Unitcell lines define the size of the unitcell (or periodic boundary
+conditions) of the system.
+
+<dl>
+  <dt>Syntax
+  <dd>
+    <pre>
+p[bc]|u[nitcell] <i>a</i> <i>b</i> <i>c</i> [<i>alpha</i> <i>beta</i> <i>gamma</i>]
+    </pre>
+  <dt>Example
+  <dd>
+    <pre>
+unitcell 10.0 10.0 10.0 90 90 90
+    </pre>
+</dl>
+
+<ul>
+  <li>The line starts with one of the keywords <code>u[nitcell]</code>
+  or <code>p[bc]</code>.</li>
+  <li><i>a</i>,<i>b</i> and <i>c</i> define the dimensions of the
+  unitcell in x,y and z directions.</li>
+  <li><i>alpha</i>, <i>beta</i> and <i>gamma</i> define the angles of
+  the unitcell as defined in the VMD user's guide.</li>
+  <li>If the angles are omitted, the unitcell is assumed to be
+  rectangular.</li>
+</ul>
+
+
+<a name="timestep"><h2>Timestep/Coordinates blocks</h2></a>
+
+Timestep/Coordinate blocks describe the positions of the atoms in a
+simulated system, as well as the size of the unitcell in a given
+timestep in a simulation where the unitcell size changes.
+
+A timestep/coordinate block starts with a <a href="#timestep_line"
+>timestep line</a>. Depending on the timestep line, the following
+lines are either <a href="#unitcell" >unitcell lines</a> (as in the
+structure block) or <a href="#coordinate_definition" >coordinate
+definition lines</a> in ordered or indexed format.
+
+If the unitcell data or the coordinates of some of the atoms are not
+specified in a timestep, they are taken from the previous timestep, if
+accessible.
+
+<a name="timestep_line"><h3>Timestep/Coordinates line</h3></a>
+
+A timestep/coordinate line defines a new set of coordinates that
+should be read into a new frame in VMD.
+
+<dl>
+  <dt>Syntax
+  <dd>
+    <pre>
+t[imestep]|c[oordinates] [i[ndexed]|o[rdered]]|i[ndexed]|o[rdered]
+    </pre>
+  <dt>Example
+  <dd>
+    <pre>
+# several variants
+timestep
+coordinates
+timestep indexed
+ordered
+# very short
+t i
+     </pre>
+</dl>
+<ul>
+  <li>The line starts with one of the keywords
+  <code>t[imestep]</code>, <code>c[oordinates]</code>,
+  <code>i[ndexed]</code> or <code>o[rdered]</code>.</li>
+  <li>The keyword <code>o[rdered]</code> specifies that the following
+   coordinate definition lines are in ordered format.</li>
+  <li>The keyword <code>i[ndexed]</code> specifies that the following
+  coordinate definition lines are in indexed format.</li>
+  <li>If no corresponding keyword is found, the following coordinate
+  definition lines are assumend to be in ordered format.</li> 
+</ul>
+
+<a name="coordinate_definition"><h3>Coordinate definition lines</h3></a>
+
+Coordinate definition lines define the coordinates of a single atom in
+the system.
+
+<dl>
+  <dt>Syntax (ordered format)
+  <dd>
+    <pre>
+<i>x</i> <i>y</i> <i>z</i>
+    </pre>
+  <dt>Syntax (indexed format)
+  <dd>
+    <pre>
+<i>aid</i> <i>x</i> <i>y</i> <i>z</i>
+    </pre>
+  <dt>Example
+  <dd>
+    <pre>
+timestep ordered
+4.0 7.0 5.0
+6.0 7.0 5.0
+7.0 5.0 5.0
+6.0 3.0 5.0
+4.0 3.0 5.0
+3.0 5.0 5.0
+
+timestep indexed
+0 5.0 7.0 5.0
+     </pre>
+</dl>
+
+<ul>
+  <li>In ordered format, the lines are associated with ascending atom
+  ids.</li>
+  <li>In indexed format, the coordinates <i>x</i>, <i>y</i> and
+  <i>z</i> are associated with the atom id <i>aid</i>.</li>
+  <li>The first timestep in a multi-timestep file should be an ordered
+  timestep, so that all atoms are defined.</li>
+  <li>The timestep in a single-timestep file should be an ordered
+  timestep, so that all atoms are defined.</li>
+</ul>
+
+</body>
+</html>

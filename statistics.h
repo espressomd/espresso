@@ -257,19 +257,43 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	      double r_min, double r_max, int r_bins, double *rdf, int n_conf);
 
+/** Calculates the van Hove auto correlation function and as a side product the mean sqaure displacement (msd).
+
+    Calculates the van Hove auto correlation function (acf)  G(r,t) which is the probability that a particle has moved
+    a distance r after time t. In the case of a random walk G(r,t)/(4 pi r*r) is a gaussian. The mean square 
+    displacement (msd) is connected to the van Hove acf via sqrt(msd(t)) = int G(r,t) dr. This is very useful for
+    the investigation of diffusion processes.
+    calc_vanhove does the calculation for one particle type ptype and stores the functions specified by rmin, rmax and
+    rbins in the arrays msd and vanhove.
+
+    @param ptype    particle type for which the analysis should be performed
+    @param rmin     minimal distance for G(r,t)
+    @param rmax     maximal distance for G(r,t)
+    @param rbins    number of bins for the r distribution in G(r,t)
+    @param msd      array to store the mean square displacement (size n_configs-1)
+    @param vanhove  array to store G(r,t) (size (n_configs-1)*(rbins))
+
+*/
+double calc_vanhove(int ptype, double rmin, double rmax, int rbins, double *msd, double **vanhove);
+
+
 /** Calculates the spherically averaged structure factor.
 
     Calculates the spherically averaged structure factor of particles of a
     given type. The possible wave vectors are given by q = 2PI/L sqrt(nx^2 + ny^2 + nz^2).
     The S(q) is calculated up to a given length measured in 2PI/L (the recommended order of
-    the wave vector is less than 20)
+    the wave vector is less than 20).
+    The data is stored starting with q=1, and contains alternatingly S(q-1) and the number
+    of wave vectors l with l^2=q. Only if the second number is nonzero, the first is meaningful.
+    This means the q=1 entries are sf[0]=S(1) and sf[1]=1. For q=7, there are no possible wave vectors,
+    so sf[2*(7-1)]=sf[2*(7-1)+1]=0.
     
     @param type   the type of the particles to be analyzed
     @param order  the maximum wave vector length in 2PI/L
-    @param sf     array to store the result (size: order^2+1).
+    @param sf     pointer to hold the base of the array containing the result (size: 2*order^2).
 */
 
-void calc_structurefactor(int type, int order, double *sf);
+void calc_structurefactor(int type, int order, double **sf);
 	      
 /** returns the minimal squared distance between two positions in the perhaps periodic
     simulation box.

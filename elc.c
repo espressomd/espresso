@@ -23,7 +23,7 @@
 #include "p3m.h"
 #include "errorhandling.h"
 
-#ifdef ELECTROSTATICS
+#ifdef ELP3M
 
 // #define CHECKPOINTS
 // #define LOG_FORCES
@@ -83,7 +83,7 @@ typedef struct {
   double s, c;
 } SCCache;
 
-/** sin/cos caching */ 
+/** \name sin/cos caching */ 
 /*@{*/
 static SCCache *scxcache = NULL;
 static int    n_scxcache;  
@@ -95,28 +95,28 @@ static int    n_scycache;
  * LOCAL FUNCTIONS
  ****************************************/
 
-/** sin/cos storage */
+/** \name sin/cos storage */
 /*@{*/
 static void prepare_scx_cache();
 static void prepare_scy_cache();
 /*@}*/
-/** common code */
+/** \name common code */
 /*@{*/
 static void distribute(int size);
 /*@}*/
-/** p=0 per frequency code */
+/** \name p=0 per frequency code */
 /*@{*/
 static void setup_P(int p, double omega);
 static void add_P_force();
 static double   P_energy(double omega);
 /*@}*/
-/** q=0 per frequency code */
+/** \name q=0 per frequency code */
 /*@{*/
 static void setup_Q(int q, double omega);
 static void add_Q_force();
 static double   Q_energy(double omega);
 /*@}*/
-/** p,q <> 0 per frequency code */
+/** \name p,q <> 0 per frequency code */
 /*@{*/
 static void setup_PQ(int p, int q, double omega);
 static void add_PQ_force(int p, int q, double omega);
@@ -210,6 +210,13 @@ MDINLINE void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size)
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
+}
+
+MDINLINE void addscale_vec(double *pdc_d, double scale, double *pdc_s1, double *pdc_s2, int size)
+{
+  int i;
+  for (i = 0; i < size; i++)
+    pdc_d[i] = scale*pdc_s1[i] + pdc_s2[i];
 }
 
 MDINLINE void scale_vec(double scale, double *pdc, int size)
@@ -339,7 +346,7 @@ static void add_dipole_force()
 	  if(part[i].r.p[2]<elc_params.space_layer)
 	    gblcblk[0] +=elc_params.di_mid_bot*part[i].p.q;
 	  if(part[i].r.p[2]>(elc_params.h-elc_params.space_layer))
-	    gblcblk[0] -=elc_params.di_mid_top*part[i].p.q;
+	    gblcblk[0] +=elc_params.di_mid_top*part[i].p.q;
 	}
       }
     }
@@ -464,7 +471,7 @@ static double dipole_energy()
 
 /*****************************************************************/
 
-static double image_sum_b(double q, double z) 
+MDINLINE double image_sum_b(double q, double z) 
 {
   double shift = 0.5*box_l[2];
   double fac=elc_params.di_mid_top*elc_params.di_mid_bot;
@@ -473,7 +480,7 @@ static double image_sum_b(double q, double z)
   return image_sum;
 }
 
-static double image_sum_t(double q, double z) 
+MDINLINE double image_sum_t(double q, double z) 
 {
   double shift = 0.5*box_l[2];
   double fac=elc_params.di_mid_top*elc_params.di_mid_bot;
@@ -551,10 +558,10 @@ static void add_z_force()
   double pref = coulomb.prefactor*2*M_PI*ux*uy;
   int size = 2;
   double fac_delta_mid_bot=1,fac_delta_mid_top=1,fac_delta=1;
-
   if(elc_params.dielectric_contrast_on) {
-    fac_delta_mid_bot=elc_params.di_mid_bot/(1-elc_params.di_mid_top*elc_params.di_mid_bot); 
-    fac_delta_mid_top=elc_params.di_mid_top/(1-elc_params.di_mid_top*elc_params.di_mid_bot); 
+    double fac_elc=1.0/(1-elc_params.di_mid_top*elc_params.di_mid_bot); 
+    fac_delta_mid_bot=elc_params.di_mid_bot*fac_elc; 
+    fac_delta_mid_top=elc_params.di_mid_top*fac_elc; 
     fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
   }
 
@@ -612,10 +619,12 @@ static void setup_P(int p, double omega)
   int size = 4;
   double lclimgebot[4],lclimgetop[4],lclimge[4];  
   double fac_delta_mid_bot=1,fac_delta_mid_top=1,fac_delta=1;
+  double scale=1;
 
   if(elc_params.dielectric_contrast_on) {
-    fac_delta_mid_bot=elc_params.di_mid_bot/(1-elc_params.di_mid_top*elc_params.di_mid_bot*exp(-omega*2*elc_params.h)); 
-    fac_delta_mid_top=elc_params.di_mid_top/(1-elc_params.di_mid_top*elc_params.di_mid_bot*exp(-omega*2*elc_params.h)); 
+    double fac_elc=1.0/(1-elc_params.di_mid_top*elc_params.di_mid_bot*exp(-omega*2*elc_params.h));
+    fac_delta_mid_bot=elc_params.di_mid_bot*fac_elc;
+    fac_delta_mid_top=elc_params.di_mid_top*fac_elc; 
     fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
   }
 
@@ -642,12 +651,14 @@ static void setup_P(int p, double omega)
 	  
 	  e= exp(-omega*part[i].r.p[2]);
 	  
-	  lclimgebot[POQESM]=elc_params.di_mid_bot*part[i].p.q*scxcache[o + ic].s/e;
-	  lclimgebot[POQESP]=elc_params.di_mid_bot*part[i].p.q*scxcache[o + ic].s*e;	
-	  lclimgebot[POQECM]=elc_params.di_mid_bot*part[i].p.q*scxcache[o + ic].c/e;
-	  lclimgebot[POQECP]=elc_params.di_mid_bot*part[i].p.q*scxcache[o + ic].c*e;
+	  scale = part[i].p.q*elc_params.di_mid_bot;
 	  
-	  add_vec(gblcblk, gblcblk, lclimgebot, size);
+	  lclimgebot[POQESM]=scxcache[o + ic].s/e;
+	  lclimgebot[POQESP]=scxcache[o + ic].s*e;	
+	  lclimgebot[POQECM]=scxcache[o + ic].c/e;
+	  lclimgebot[POQECP]=scxcache[o + ic].c*e;
+	  
+	  addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
 	  
 	  e = ( exp(omega*(-part[i].r.p[2] - 2*elc_params.h  ))*elc_params.di_mid_bot +
 		exp(omega*( part[i].r.p[2] - 2*elc_params.h )) )*fac_delta;  
@@ -665,13 +676,15 @@ static void setup_P(int p, double omega)
 	if(part[i].r.p[2]>(elc_params.h-elc_params.space_layer)) { //handle the upper case now
 	  
 	  e=exp(omega*(2*elc_params.h-part[i].r.p[2]));
+      
+	  scale =part[i].p.q*elc_params.di_mid_top;      
 	  
-	  lclimgetop[POQESM]=elc_params.di_mid_top*part[i].p.q*scxcache[o + ic].s/e;
-	  lclimgetop[POQESP]=elc_params.di_mid_top*part[i].p.q*scxcache[o + ic].s*e;	
-	  lclimgetop[POQECM]=elc_params.di_mid_top*part[i].p.q*scxcache[o + ic].c/e;
-	  lclimgetop[POQECP]=elc_params.di_mid_top*part[i].p.q*scxcache[o + ic].c*e;
+	  lclimgetop[POQESM]=scxcache[o + ic].s/e;
+	  lclimgetop[POQESP]=scxcache[o + ic].s*e;	
+	  lclimgetop[POQECM]=scxcache[o + ic].c/e;
+	  lclimgetop[POQECP]=scxcache[o + ic].c*e;
 	  
-	  add_vec(gblcblk, gblcblk, lclimgetop, size);
+	  addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
 	  
 	  e = ( exp(omega*( part[i].r.p[2] -4*elc_params.h ))*elc_params.di_mid_top +
 		exp(omega*(-part[i].r.p[2] -2*elc_params.h )) )*fac_delta; 
@@ -708,10 +721,12 @@ static void setup_Q(int q, double omega)
   int size = 4;
   double lclimgebot[4],lclimgetop[4],lclimge[4];
   double fac_delta_mid_bot=1,fac_delta_mid_top=1,fac_delta=1;
+  double scale=1;
 
   if(elc_params.dielectric_contrast_on) {
-    fac_delta_mid_bot=elc_params.di_mid_bot/(1-elc_params.di_mid_top*elc_params.di_mid_bot*exp(-omega*2*elc_params.h)); 
-    fac_delta_mid_top=elc_params.di_mid_top/(1-elc_params.di_mid_top*elc_params.di_mid_bot*exp(-omega*2*elc_params.h)); 
+    double fac_elc=1.0/(1-elc_params.di_mid_top*elc_params.di_mid_bot*exp(-omega*2*elc_params.h)); 
+    fac_delta_mid_bot=elc_params.di_mid_bot*fac_elc; 
+    fac_delta_mid_top=elc_params.di_mid_top*fac_elc; 
     fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
   }
 
@@ -736,13 +751,15 @@ static void setup_Q(int q, double omega)
 	  //negative sign before omega is okay here as the image is located at -part[i].r.p[2]
 	  
 	  e= exp(-omega*part[i].r.p[2]);
+
+	  scale = part[i].p.q*elc_params.di_mid_bot;
+
+	  lclimgebot[POQESM]=scycache[o + ic].s/e;
+	  lclimgebot[POQESP]=scycache[o + ic].s*e;	
+	  lclimgebot[POQECM]=scycache[o + ic].c/e;
+	  lclimgebot[POQECP]=scycache[o + ic].c*e;
 	  
-	  lclimgebot[POQESM]=elc_params.di_mid_bot*part[i].p.q*scycache[o + ic].s/e;
-	  lclimgebot[POQESP]=elc_params.di_mid_bot*part[i].p.q*scycache[o + ic].s*e;	
-	  lclimgebot[POQECM]=elc_params.di_mid_bot*part[i].p.q*scycache[o + ic].c/e;
-	  lclimgebot[POQECP]=elc_params.di_mid_bot*part[i].p.q*scycache[o + ic].c*e;
-	  
-	  add_vec(gblcblk, gblcblk, lclimgebot, size);
+	  addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
 	  
 	  e = ( exp(omega*(-part[i].r.p[2] - 2*elc_params.h  ))*elc_params.di_mid_bot +
 		exp(omega*( part[i].r.p[2] - 2*elc_params.h )) )*fac_delta;  
@@ -760,13 +777,15 @@ static void setup_Q(int q, double omega)
 	if(part[i].r.p[2]>(elc_params.h-elc_params.space_layer)) { //handle the upper case now
 	  
 	  e=exp(omega*(2*elc_params.h-part[i].r.p[2]));
+
+	  scale = part[i].p.q*elc_params.di_mid_top;
+
+	  lclimgetop[POQESM]=scycache[o + ic].s/e;
+	  lclimgetop[POQESP]=scycache[o + ic].s*e;	
+	  lclimgetop[POQECM]=scycache[o + ic].c/e;
+	  lclimgetop[POQECP]=scycache[o + ic].c*e;
 	  
-	  lclimgetop[POQESM]=elc_params.di_mid_top*part[i].p.q*scycache[o + ic].s/e;
-	  lclimgetop[POQESP]=elc_params.di_mid_top*part[i].p.q*scycache[o + ic].s*e;	
-	  lclimgetop[POQECM]=elc_params.di_mid_top*part[i].p.q*scycache[o + ic].c/e;
-	  lclimgetop[POQECP]=elc_params.di_mid_top*part[i].p.q*scycache[o + ic].c*e;
-	  
-	  add_vec(gblcblk, gblcblk, lclimgetop, size); 
+	  addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size); 
 	  
 	  e = ( exp(omega*( part[i].r.p[2] -4*elc_params.h ))*elc_params.di_mid_top +
 		exp(omega*(-part[i].r.p[2] -2*elc_params.h )) )*fac_delta; 
@@ -893,10 +912,11 @@ static void setup_PQ(int p, int q, double omega)
   int size = 8;
   double lclimgebot[8],lclimgetop[8],lclimge[8];
   double fac_delta_mid_bot=1,fac_delta_mid_top=1,fac_delta=1;
- 
+  double scale=1;
   if(elc_params.dielectric_contrast_on) {
-    fac_delta_mid_bot=elc_params.di_mid_bot/(1-elc_params.di_mid_top*elc_params.di_mid_bot*exp(-omega*2*elc_params.h)); 
-    fac_delta_mid_top=elc_params.di_mid_top/(1-elc_params.di_mid_top*elc_params.di_mid_bot*exp(-omega*2*elc_params.h)); 
+    double fac_elc=1.0/(1-elc_params.di_mid_top*elc_params.di_mid_bot*exp(-omega*2*elc_params.h)); 
+    fac_delta_mid_bot=elc_params.di_mid_bot*fac_elc;
+    fac_delta_mid_top=elc_params.di_mid_top*fac_elc; 
     fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
   }
 
@@ -927,18 +947,19 @@ static void setup_PQ(int p, int q, double omega)
 	  //change e to take into account the z position of the images
 	  
 	  e= exp(-omega*part[i].r.p[2]);
+	  scale = part[i].p.q*elc_params.di_mid_bot;
 	  
-	  lclimgebot[PQESSM] = scxcache[ox + ic].s*scycache[oy + ic].s*part[i].p.q/e*elc_params.di_mid_bot;
-	  lclimgebot[PQESCM] = scxcache[ox + ic].s*scycache[oy + ic].c*part[i].p.q/e*elc_params.di_mid_bot;
-	  lclimgebot[PQECSM] = scxcache[ox + ic].c*scycache[oy + ic].s*part[i].p.q/e*elc_params.di_mid_bot;
-	  lclimgebot[PQECCM] = scxcache[ox + ic].c*scycache[oy + ic].c*part[i].p.q/e*elc_params.di_mid_bot;
+	  lclimgebot[PQESSM] = scxcache[ox + ic].s*scycache[oy + ic].s/e;
+	  lclimgebot[PQESCM] = scxcache[ox + ic].s*scycache[oy + ic].c/e;
+	  lclimgebot[PQECSM] = scxcache[ox + ic].c*scycache[oy + ic].s/e;
+	  lclimgebot[PQECCM] = scxcache[ox + ic].c*scycache[oy + ic].c/e;
 	  
-	  lclimgebot[PQESSP] = scxcache[ox + ic].s*scycache[oy + ic].s*part[i].p.q*e*elc_params.di_mid_bot;
-	  lclimgebot[PQESCP] = scxcache[ox + ic].s*scycache[oy + ic].c*part[i].p.q*e*elc_params.di_mid_bot;
-	  lclimgebot[PQECSP] = scxcache[ox + ic].c*scycache[oy + ic].s*part[i].p.q*e*elc_params.di_mid_bot;
-	  lclimgebot[PQECCP] = scxcache[ox + ic].c*scycache[oy + ic].c*part[i].p.q*e*elc_params.di_mid_bot;
+	  lclimgebot[PQESSP] = scxcache[ox + ic].s*scycache[oy + ic].s*e;
+	  lclimgebot[PQESCP] = scxcache[ox + ic].s*scycache[oy + ic].c*e;
+	  lclimgebot[PQECSP] = scxcache[ox + ic].c*scycache[oy + ic].s*e;
+	  lclimgebot[PQECCP] = scxcache[ox + ic].c*scycache[oy + ic].c*e;
 	  
-	  add_vec(gblcblk, gblcblk, lclimgebot, size);
+	  addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
 	  
 	  e = ( exp(omega*(-part[i].r.p[2] - 2*elc_params.h  ))*elc_params.di_mid_bot +
 		exp(omega*( part[i].r.p[2] - 2*elc_params.h )) )*fac_delta*part[i].p.q;  
@@ -958,18 +979,19 @@ static void setup_PQ(int p, int q, double omega)
 	if(part[i].r.p[2]>(elc_params.h-elc_params.space_layer)) { //handle the upper case now
 	  
 	  e=exp(omega*(2*elc_params.h-part[i].r.p[2]));
+	  scale = part[i].p.q*elc_params.di_mid_top;
 	  
-	  lclimgetop[PQESSM] = scxcache[ox + ic].s*scycache[oy + ic].s*part[i].p.q/e*elc_params.di_mid_top;
-	  lclimgetop[PQESCM] = scxcache[ox + ic].s*scycache[oy + ic].c*part[i].p.q/e*elc_params.di_mid_top;
-	  lclimgetop[PQECSM] = scxcache[ox + ic].c*scycache[oy + ic].s*part[i].p.q/e*elc_params.di_mid_top;
-	  lclimgetop[PQECCM] = scxcache[ox + ic].c*scycache[oy + ic].c*part[i].p.q/e*elc_params.di_mid_top;
+	  lclimgetop[PQESSM] = scxcache[ox + ic].s*scycache[oy + ic].s/e;
+	  lclimgetop[PQESCM] = scxcache[ox + ic].s*scycache[oy + ic].c/e;
+	  lclimgetop[PQECSM] = scxcache[ox + ic].c*scycache[oy + ic].s/e;
+	  lclimgetop[PQECCM] = scxcache[ox + ic].c*scycache[oy + ic].c/e;
 	  
-	  lclimgetop[PQESSP] = scxcache[ox + ic].s*scycache[oy + ic].s*part[i].p.q*e*elc_params.di_mid_top;
-	  lclimgetop[PQESCP] = scxcache[ox + ic].s*scycache[oy + ic].c*part[i].p.q*e*elc_params.di_mid_top;
-	  lclimgetop[PQECSP] = scxcache[ox + ic].c*scycache[oy + ic].s*part[i].p.q*e*elc_params.di_mid_top;
-	  lclimgetop[PQECCP] = scxcache[ox + ic].c*scycache[oy + ic].c*part[i].p.q*e*elc_params.di_mid_top;
+	  lclimgetop[PQESSP] = scxcache[ox + ic].s*scycache[oy + ic].s*e;
+	  lclimgetop[PQESCP] = scxcache[ox + ic].s*scycache[oy + ic].c*e;
+	  lclimgetop[PQECSP] = scxcache[ox + ic].c*scycache[oy + ic].s*e;
+	  lclimgetop[PQECCP] = scxcache[ox + ic].c*scycache[oy + ic].c*e;
 	  
-	  add_vec(gblcblk, gblcblk, lclimgetop, size); 
+	  addscale_vec(gblcblk,scale, lclimgetop, gblcblk, size); 
 	  
 	  e = ( exp(omega*( part[i].r.p[2] -4*elc_params.h ))*elc_params.di_mid_top +
 		exp(omega*(-part[i].r.p[2] -2*elc_params.h )) )*fac_delta*part[i].p.q; 
@@ -1268,17 +1290,42 @@ int ELC_sanity_checks()
 void ELC_init()
 {
   char *errtxt;
+  double maxsl;
 
   ELC_setup_constants();
-  if (elc_params.far_calculated) {
+
+  if (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on) {
+    // recalculate the space layer size
+    // set the space_layer to be 1/3 of the gap size, so that box = layer
+    elc_params.space_layer = (1./3.)*elc_params.gap_size;
+    // but make sure we leave enough space to not have to bother with overlapping
+    // realspace P3M
+    maxsl = elc_params.gap_size - p3m.r_cut;
+    if (elc_params.space_layer > maxsl) {
+      if (maxsl <= 0) {
+	errtxt = runtime_error(128);
+	ERROR_SPRINTF(errtxt, "{007 P3M real space cutoff too large for ELC w/ dielectric contrast} ");
+      }
+      else
+	elc_params.space_layer = maxsl;
+    }
+
+    // set the space_box 
+    elc_params.space_box = elc_params.gap_size - 2*elc_params.space_layer;
+    // reset minimal_dist for tuning
+    elc_params.minimal_dist = dmin(elc_params.space_box, elc_params.space_layer);
+  }
+
+  if (elc_params.far_calculated ||
+      (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on)) {
     if (ELC_tune(elc_params.maxPWerror) == TCL_ERROR) {
       errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{008 ELC auto-retuning failed, elc_params.gap size too small} ");
+      ERROR_SPRINTF(errtxt, "{008 ELC auto-retuning failed, gap size too small} ");
     }
   }
   if (coulomb.method == COULOMB_ELC_P3M) {
     p3m.additional_mesh[0] = p3m.additional_mesh[1] = 0;
-    p3m.additional_mesh[2] = elc_params.space_layer;
+    p3m.additional_mesh[2] = elc_params.space_layer; 
   }
 }
 
@@ -1291,6 +1338,10 @@ void ELC_on_resort_particles()
   scycache = realloc(scycache, n_scycache*n_localpart*sizeof(SCCache));
     
   partblk   = realloc(partblk,  n_localpart*8*sizeof(double));
+}
+
+void ELC_on_coulomb_change()
+{
 }
 
 int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutralize,
@@ -1311,6 +1362,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
 
     // cannot neutralize with dielectric contrast
     elc_params.neutralize = 0;
+    // initial setup of parameters, may change later when P3M is finally tuned
     // set the space_layer to be 1/3 of the gap size, so that box = layer
     elc_params.space_layer = (1./3.)*gap_size;
     // set the space_box 
@@ -1330,6 +1382,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
   ELC_setup_constants();
 
   switch (coulomb.method) {
+  case COULOMB_ELC_P3M:
   case COULOMB_P3M:
     p3m.epsilon = P3M_EPSILON_METALLIC;
     coulomb.method = COULOMB_ELC_P3M;
@@ -1404,6 +1457,7 @@ void ELC_P3M_charge_assign_both()
   for(i=0; i<lm.size; i++) rs_mesh[i] = 0.0;
 #ifdef DIPOLES
   { int j;
+    extern double *rs_mesh_dip[3];
     for(i=0;i<3;i++)
       for(j=0; j<lm.size; j++) rs_mesh_dip[i][j] = 0.0;
   }
@@ -1415,30 +1469,30 @@ void ELC_P3M_charge_assign_both()
     np = cell->n;
     for(i = 0; i < np; i++) {
       if( p[i].p.q != 0.0 ) {
-	P3M_assign_charge(p[i].p.q,
+	P3M_assign_charge(p[i].p.q, p[i].r.p,
 #ifdef DIPOLES
-			  0,
+			  0, pos,
 #endif
-			  p[i].r.p, cp_cnt);
+			  cp_cnt);
 
 	if(p[i].r.p[2]<elc_params.space_layer) {
 	  double q=elc_params.di_mid_bot*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=-p[i].r.p[2];
-	  P3M_assign_charge(q,
+	  P3M_assign_charge(q, pos,
 #ifdef DIPOLES
-			    0,
+			    0, pos,
 #endif
-			    pos, -1);
+			    -1);
 	}
 	
 	if(p[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
 	  double q=elc_params.di_mid_top*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=2*elc_params.h-p[i].r.p[2];
-	  P3M_assign_charge(q,
+	  P3M_assign_charge(q, pos,
 #ifdef DIPOLES
-			    0,
+			    0, pos,
 #endif
-			    pos, -1);
+			    -1);
 	}
 
 	cp_cnt++;
@@ -1458,6 +1512,7 @@ void ELC_P3M_charge_assign_image()
   for(i=0; i<lm.size; i++) rs_mesh[i] = 0.0;
 #ifdef DIPOLES
   { int j;
+    extern double *rs_mesh_dip[3];
     for(i=0;i<3;i++)
       for(j=0; j<lm.size; j++) rs_mesh_dip[i][j] = 0.0;
   }
@@ -1473,21 +1528,21 @@ void ELC_P3M_charge_assign_image()
 	if(p[i].r.p[2]<elc_params.space_layer) {
 	  double q=elc_params.di_mid_bot*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=-p[i].r.p[2];
-	  P3M_assign_charge(q,
+	  P3M_assign_charge(q, pos,
 #ifdef DIPOLES
-			    0,
+			    0, pos,
 #endif
-			    pos, -1);
+			    -1);
 	}
 	
 	if(p[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
 	  double q=elc_params.di_mid_top*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=2*elc_params.h-p[i].r.p[2];
-	  P3M_assign_charge(q,
+	  P3M_assign_charge(q, pos,
 #ifdef DIPOLES
-			    0,
+			    0, pos,
 #endif
-			    pos, -1);
+			    -1);
 	}
       }
     }

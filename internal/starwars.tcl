@@ -24,6 +24,11 @@
 #############################################################
 #  Initialization                                           #
 #############################################################
+require_feature "TK"
+require_feature "LENNARD_JONES"
+require_feature "ELECTROSTATICS"
+require_feature "CONSTRAINTS"
+require_feature "PARTIAL_PERIODIC"
 
 source ../scripts/bundle.tcl
 
@@ -199,8 +204,7 @@ proc CreateSystem {} {
     # Integrator
     set_time_step -2
     set_skin 0.5
-    setmd gamma 1.0
-    setmd temperature 1.0
+    thermostat langevin 1.0 1.0
 
     # Particle types and interactions:
     # uncharged monomer 0, charge monomer 2, counterion 1, star center 3, wall 4

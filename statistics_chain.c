@@ -178,7 +178,7 @@ void calc_rh(double **_rh)
   double dx,dy,dz, r_H=0.0,r_H2=0.0, *rh=NULL, ri=0.0, prefac, tmp;
   *_rh = rh = realloc(rh,2*sizeof(double));
 
-  prefac = 0.5*(chain_length*(chain_length-1));
+  prefac = 0.5*chain_length*chain_length; /* 1/N^2 is not a normalization factor */
   for(p=0;p<chain_n_chains;p++) {
     ri=0.0;
     for(i=chain_start+chain_length*p;i<chain_start+chain_length*(p+1);i++) {
@@ -204,7 +204,7 @@ void calc_rh_av(double **_rh)
   double dx,dy,dz, r_H=0.0,r_H2=0.0, *rh=NULL, ri=0.0, prefac, tmp;
   *_rh = rh = realloc(rh,2*sizeof(double));
 
-  prefac = 0.5*(chain_length*(chain_length-1));
+  prefac = 0.5*chain_length*chain_length;
   for(k=0; k<n_configs; k++) {
     for(p=0;p<chain_n_chains;p++) {
       ri=0.0;
@@ -450,14 +450,15 @@ void calc_g123(double *_g1, double *_g2, double *_g3)
   *_g3 = g3 / (1.*chain_n_chains);
 }
 
-void calc_g1_av(double **_g1) {
-  int i, j, p, t,k;
+void calc_g1_av(double **_g1, int window) {
+  int i, j, p, t,k, cnt;
   double *g1=NULL;
   *_g1 = g1 = realloc(g1,n_configs*sizeof(double));
 
   for(k=0; k < n_configs; k++) {
     g1[k] = 0.0;
-    for(t=0; t < n_configs-k; t++) {
+    cnt = window?n_configs-k:1;
+    for(t=window?0:n_configs-k-1; t < n_configs-k; t++) {
       for(j=0; j<chain_n_chains; j++) {
 	for(i=0; i<chain_length; i++) {
 	  p = chain_start+j*chain_length + i;
@@ -467,19 +468,20 @@ void calc_g1_av(double **_g1) {
 	}
       }
     }
-    g1[k] /= ((double)chain_n_chains*chain_length*(n_configs-k));
+    g1[k] /= ((double)chain_n_chains*chain_length*cnt);
   }
 }
 
-void calc_g2_av(double **_g2) {
-  int i, j, p, t,k;
+void calc_g2_av(double **_g2, int window) {
+  int i, j, p, t,k,cnt;
   double *g2=NULL, cm_tmp[3];
   double M;
   *_g2 = g2 = realloc(g2,n_configs*sizeof(double));
 
   for(k=0; k < n_configs; k++) {
     g2[k] = 0.0;
-    for(t=0; t < n_configs-k; t++) {
+    cnt = window?n_configs-k:1;
+    for(t=window?0:n_configs-k-1; t < n_configs-k; t++) {
       for(j=0; j<chain_n_chains; j++) {
 	cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
         M=0.0;
@@ -499,19 +501,20 @@ void calc_g2_av(double **_g2) {
 	}
       }
     }
-    g2[k] /= ((double)chain_n_chains*chain_length*(n_configs-k));
+    g2[k] /= ((double)chain_n_chains*chain_length*cnt);
   }
 }
 
-void calc_g3_av(double **_g3) {
-  int i, j, p, t,k;
+void calc_g3_av(double **_g3, int window) {
+  int i, j, p, t,k,cnt;
   double *g3=NULL, cm_tmp[3];
   double M;
   *_g3 = g3 = realloc(g3,n_configs*sizeof(double));
 
   for(k=0; k < n_configs; k++) {
     g3[k] = 0.0;
-    for(t=0; t < n_configs-k; t++) {
+    cnt = window?n_configs-k:1;
+    for(t=window?0:n_configs-k-1; t < n_configs-k; t++) {
       for(j=0; j<chain_n_chains; j++) {
 	cm_tmp[0] = cm_tmp[1] = cm_tmp[2] = 0.0;
         M=0.0;
@@ -525,7 +528,7 @@ void calc_g3_av(double **_g3) {
 	g3[k] += (SQR(cm_tmp[0]) + SQR(cm_tmp[1]) + SQR(cm_tmp[2]))/SQR(M);
       }
     }
-    g3[k] /= ((double)chain_n_chains*(n_configs-k));
+    g3[k] /= ((double)chain_n_chains*cnt);
   }
 }
 
@@ -675,6 +678,79 @@ double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist, chain_ma
      f3[i] *= factor / bin_volume;
   }  
 }
+
+#ifdef ELECTROSTATICS
+void analyze_cwvac(int maxtau, int interval, double **_avac, double **_evac) {
+    int i,j,k,ic,n,mon,tau;
+    double *vac=NULL, *avac=NULL, *evac=NULL;
+    double *varr=NULL;
+    double vcm[3];
+    
+    // result
+    vac = realloc(vac,(maxtau+1)*sizeof(double));
+    *_avac = avac = realloc(avac,(maxtau+1)*sizeof(double));
+    *_evac = evac = realloc(evac,(maxtau+1)*sizeof(double));
+    
+    // set up velarray
+    varr = realloc(varr,(3*(n_configs-1)*n_total_particles)*sizeof(double));
+    
+    // fill varr
+    for(k=0;k<n_configs-1;k++) {
+      for(i=0;i<n_total_particles;i++) {
+    	for(j=0;j<3;j++) {
+          varr[k*3*n_total_particles+i*3+j]=configs[k+1][3*i+j]-configs[k][3*i+j];	
+    	}
+      }
+    } 
+    
+    // loop over chain
+    for(tau=0;tau<=maxtau;tau++) { avac[tau] = 0.0; evac[tau] = 0.0; }
+    for(n=0;n<chain_n_chains;n++) {
+      for(tau=0;tau<=maxtau;tau++) { vac[tau] = 0.0; }
+      // loop over configuration (interval)
+      for(ic=(n_configs-2);ic>=0;ic -= interval) {
+      	if(ic < maxtau) break;
+    	// calc center of mass velocity
+    	vcm[0] = vcm[1] = vcm[2] = 0.0;
+    	for(k=0;k<chain_length;k++) {
+    	  mon = chain_start+n*chain_length+k;
+    	  for(j=0;j<3;j++) {
+    	    vcm[j] +=  varr[ic*3*n_total_particles+mon*3+j];
+    	  }
+    	}
+    	for(j=0;j<3;j++) {
+    	  vcm[j] /=  chain_length;
+    	}
+        // loop over tau (maxtau)
+        for(tau=0;tau<=maxtau;tau++) {
+          // loop over particles 
+          for(k=0;k<n_total_particles;k++) {
+            vac[tau] += partCfg[k].p.q*(
+                            varr[(ic-tau)*3*n_total_particles+k*3  ]*vcm[0]
+                         +  varr[(ic-tau)*3*n_total_particles+k*3+1]*vcm[1]
+                         +  varr[(ic-tau)*3*n_total_particles+k*3+2]*vcm[2]);
+            }
+        }
+      }
+    
+      // normalize vac and sum up to average
+      for(tau=0;tau<=maxtau;tau++) { 
+      	vac[tau] /= ((n_configs-maxtau)/interval); 
+      	avac[tau] += vac[tau];
+      	evac[tau] += vac[tau]*vac[tau];
+      }
+    }
+   
+    // normalize
+    // NOTE: normalization with time step and KbT has to be done on script level 
+    for(tau=0;tau<=maxtau;tau++) { 
+    	evac[tau] = sqrt((evac[tau]-avac[tau]*avac[tau]/chain_n_chains)/(chain_n_chains*(chain_n_chains-1)));
+    	avac[tau] /= chain_n_chains;
+    }
+    
+    free(vac); free(varr);
+ }
+#endif
 
 /****************************************************************************************
  *                                 chain structure commands parsing
@@ -938,20 +1014,21 @@ int parse_g_av(Tcl_Interp *interp, int what, int argc, char **argv)
 {
   /* 'analyze { <g1> | <g2> | <g3> } [<chain_start> <n_chains> <chain_length>]' */
   /******************************************************************************/
-  int i;
+  int i, window = 1;
   char buffer[TCL_DOUBLE_SPACE+2];
   double *gx = NULL;
 
+  if (argc >= 1 && ARG0_IS_S("-sliding")) { window = 0; argc--; argv++; }
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
-  if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
+  if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info or -sliding allowed", (char *)NULL); return TCL_ERROR; }
   if (n_configs == 0) { Tcl_AppendResult(interp, "no configurations found! Use 'analyze append' to save some!", (char *)NULL); return TCL_ERROR; }
   switch (what) {
   case 1:
-    calc_g1_av(&gx); break;
+    calc_g1_av(&gx, window); break;
   case 2:
-    calc_g2_av(&gx); break;
+    calc_g2_av(&gx, window); break;
   case 3:
-    calc_g3_av(&gx); break;
+    calc_g3_av(&gx, window); break;
   default: ;
   }
   for (i=0; i<n_configs; i++) { 
@@ -1067,3 +1144,59 @@ int parse_rdfchain(Tcl_Interp *interp, int argc, char **argv)
   free(f1); free(f2); free(f3);
   return (TCL_OK);
 }
+
+#ifdef ELECTROSTATICS
+int parse_cwvac(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze { cwvac } <maxtau> <interval> [<chain_start> <n_chains> <chain_length>]' */
+  /***********************************************************************************************************/
+  char buffer[4*TCL_DOUBLE_SPACE+7];
+  int i, maxtau, interval;
+  double *avac, *evac;
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze gkmobility <maxtau> <interval> [<chain_start> <n_chains> <chain_length>]",
+		     (char *)NULL);
+    return (TCL_ERROR);
+  } else {
+    if (!ARG0_IS_I(maxtau))
+      return (TCL_ERROR);
+    if (!ARG1_IS_I(interval))
+      return (TCL_ERROR);
+    argc-=2; argv+=2;
+  }
+  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
+  
+  if ((chain_n_chains == 0) || (chain_length == 0)) {
+    Tcl_AppendResult(interp, "The chain topology has not been set",(char *)NULL); return TCL_ERROR;
+  }
+  
+  if (maxtau <=0) {
+    Tcl_AppendResult(interp, "Nothing to be done - choose <maxtau> greater zero!",(char *)NULL); return TCL_ERROR;
+  }
+
+  if (interval <= 0) {
+    Tcl_AppendResult(interp, "<interval> has to be positive", (char *)NULL);
+    return TCL_ERROR;
+  }
+  updatePartCfg(WITHOUT_BONDS);
+  analyze_cwvac(maxtau, interval, &avac, &evac);
+  // create return string
+  sprintf(buffer, "{ ");
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  for(i=0;i<=maxtau;i++) {
+    sprintf(buffer,"%e ",avac[i]);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+  }
+  sprintf(buffer, "} { ");
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  for(i=0;i<=maxtau;i++) {
+    sprintf(buffer,"%e ",evac[i]);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+  }
+  sprintf(buffer, "}");
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  free(avac); free(evac);
+  return (TCL_OK);
+}
+#endif
+

@@ -1,9 +1,0 @@
-#undef COMPILE_MODE
-#undef LAST_CHANGE
-#undef MDINLINE
-#undef MPI
-#undef TK
-#undef USEFFTW3
-#undef USE_NON_CONST
-#undef PACKAGE_NAME
-#undef PACKAGE_VERSION

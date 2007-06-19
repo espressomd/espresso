@@ -27,7 +27,7 @@ puts "----------------------------------------"
 
 
 set epsilon 1e-4
-setmd temp 0
+thermostat off
 setmd time_step 1
 setmd skin 0
 

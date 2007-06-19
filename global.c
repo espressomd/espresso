@@ -51,7 +51,7 @@ const Datafield fields[] = {
   {dd.cell_size,     TYPE_DOUBLE, 3, "cell_size",     ro_callback,    6 },         /* 2  from cells.c */
   {&dpd_gamma,       TYPE_DOUBLE, 1, "dpd_gamma",     ro_callback,    5 },         /* 3  from thermostat.c */
   {&dpd_r_cut,       TYPE_DOUBLE, 1, "dpd_r_cut",     ro_callback,    5 },         /* 4  from thermostat.c */
-  {&langevin_gamma,  TYPE_DOUBLE, 1, "gamma",         langevin_gamma_callback, 1 },/* 5  from thermostat.c */
+  {&langevin_gamma,  TYPE_DOUBLE, 1, "gamma",         thermo_ro_callback, 1 },     /* 5  from thermostat.c */
   {&integ_switch,       TYPE_INT, 1, "integ_switch",  ro_callback,    1 },         /* 6  from integrate.c */
   {local_box_l,      TYPE_DOUBLE, 3, "local_box_l",   ro_callback,    2 },         /* 7  from global.c */
   {&max_cut,         TYPE_DOUBLE, 1, "max_cut",       ro_callback,    5 },         /* 8  from interaction_data.c */
@@ -75,7 +75,7 @@ const Datafield fields[] = {
   {&nptiso.piston,   TYPE_DOUBLE, 1, "npt_piston",    piston_callback, 6 },        /* 26 from pressure.c */
   {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback,    1 },        /* 27 from grid.c */
   {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback,   2 },        /* 28 from integrate.c */
-  {&temperature,     TYPE_DOUBLE, 1, "temperature",   temp_callback,   2 },        /* 29 from thermostat.c */
+  {&temperature,     TYPE_DOUBLE, 1, "temperature",   thermo_ro_callback,   2 },   /* 29 from thermostat.c */
   {&thermo_switch,      TYPE_INT, 1, "thermo_switch", ro_callback,     2 },        /* 30 from thermostat.c */
   {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback,   4 },        /* 31 from integrate.c */
   {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },     /* 32 from integrate.c */
@@ -86,6 +86,9 @@ const Datafield fields[] = {
 #ifdef LATTICE
   {&lattice_switch,     TYPE_INT, 1, "lattice_switch", ro_callback,    2 },
   /* 37 from lattice.c */
+#endif
+#ifdef TRANS_DPD
+  {&dpd_tgamma,      TYPE_DOUBLE, 1, "dpd_tgamma",    ro_callback,     5 },         /* 38 from thermostat.c */
 #endif
   { NULL, 0, 0, NULL, NULL, 0 }
 };
@@ -100,15 +103,18 @@ const Datafield fields[] = {
 
 	<ol>
 	<li> \verbatim box_l double[3] \endverbatim
-             \ref box_l - Simulation box length.	<li> \verbatim cell_grid int[3] (ro) \endverbatim
+             \ref box_l - Simulation box length.
+	     \todo document what happens to particles when \a box_l is changed!
+
+	<li> \verbatim cell_grid int[3] (ro) \endverbatim
              \ref DomainDecomposition::cell_grid - dimension of the inner cell grid.
 	<li> \verbatim cell_size double[3] (ro) \endverbatim
 	     \ref DomainDecomposition::cell_size - box length of a cell.
 	<li> \verbatim dpd_gamma double (ro) \endverbatim
-	     \ref dpd_gamma - Friction constant for DPD thermostat.
+	     \ref dpd_gamma - longitudinal Friction constant for DPD thermostat.
 	<li> \verbatim dpd_r_cut double (ro) \endverbatim
 	     \ref dpd_r_cut - Cutoff for DPD thermostat.
-	<li> \verbatim gamma double \endverbatim
+	<li> \verbatim gamma double (ro) \endverbatim
 	     \ref langevin_gamma - Friction constant for LANGEVIN thermostat.
 	<li> \verbatim integ_switch int (ro) \endverbatim
 	     \ref integ_switch - internal switch which integrator to use.
@@ -116,14 +122,13 @@ const Datafield fields[] = {
 	     \ref local_box_l - Local simulation box length of the nodes.
 	<li> \verbatim max_cut double (ro) \endverbatim
 	     \ref max_cut - Maximal cutoff of real space interactions.
-	<li> \verbatim max_num_cells int> \endverbatim
+	<li> \verbatim max_num_cells int \endverbatim
              \ref max_num_cells - Maximal number of cells for the link cell
 	     algorithm. Reasonable values are between 125 and 1000, or for
 	     some problems (\ref n_total_particles / \ref n_nodes).
 	<li> \verbatim max_part int (ro) \endverbatim
   	     \ref max_seen_particle - Maximal identity of a particle.
-	     THIS IS IN GENERAL _NOT_ RELATED
-	     TO THE NUMBER OF PARTICLES.
+	     THIS IS IN GENERAL _NOT_ RELATED TO THE NUMBER OF PARTICLES.
 	<li> \verbatim max_range double (ro)\endverbatim
 	     \ref max_range - Maximal range of real space interactions: max_cut + skin.
 	<li> \verbatim max_skin double (ro)\endverbatim
@@ -165,7 +170,7 @@ const Datafield fields[] = {
 	     If not it is readonly and gives the default setting (1,1,1).
 	<li> \verbatim skin double \endverbatim
 	     \ref #skin - Skin for the Verlet list.
-	<li> \verbatim temperature double \endverbatim
+	<li> \verbatim temperature double (ro) \endverbatim
 	     \ref #temperature - Temperature of the simulation.
 	     Enters the thermostat and the coulomb prefactor = bjerrum * temperature.
 	<li> \verbatim thermo_switch double (ro)\endverbatim
@@ -185,6 +190,8 @@ const Datafield fields[] = {
 	     see \ref initialize.h "initialize.h" for more information
 	<li> \verbatim verlet_reuse bool \endverbatim
 	     \ref verlet_reuse - Average number of integration steps the verlet list has been re-used.
+	<li> \verbatim dpd_tgamma double (ro) \endverbatim
+	     \ref dpd_tgamma - Transversale Friction constant for DPD thermostat.
 	</ol>    
 
  */

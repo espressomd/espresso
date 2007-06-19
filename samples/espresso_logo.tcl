@@ -28,6 +28,8 @@ puts "=    Sample script 5: espresso_logo.tcl               ="
 puts "======================================================="
 puts " "
 
+require_feature "LENNARD_JONES" "EXTERNAL_FORCES"
+
 #############################################################
 #  Parameters                                               #
 #############################################################
@@ -46,7 +48,7 @@ set box_l 20.0
 
 set cup_top_circ 21
 set cup_bot_circ 15
-set cup_heigth   6
+set cup_height   6
 
 set saucer_circ  30
 
@@ -77,8 +79,7 @@ set accuracy      1.0e-4
 
 setmd time_step 0.01
 setmd skin      1.0
-setmd gamma     1.0
-setmd temp      1.0
+thermostat langevin 1.0 1.0
 
 # warmup integration (with capped LJ potential)
 set fixed_steps   10
@@ -118,8 +119,8 @@ set mypi   3.141592653589793
 
 # espresso cup (polyelectrolytes)
 set pid 0
-for {set i 0} { $i < $cup_heigth } {incr i} {
-    set circ [expr $cup_bot_circ + $i*($cup_top_circ-$cup_bot_circ)/double($cup_heigth-1)]
+for {set i 0} { $i < $cup_height } {incr i} {
+    set circ [expr $cup_bot_circ + $i*($cup_top_circ-$cup_bot_circ)/double($cup_height-1)]
     set rad  [expr $circ/(2.0*$mypi)]
     set alpha [expr 2.0*$mypi/int($circ)]
     set posy [expr 2.0+$i] 
@@ -149,12 +150,12 @@ while { $rad > 1.0 } {
 }
 
 # cup handle (one more polyelectrolyte)
-set hand_rad  [expr ($cup_heigth-4.0)/sqrt(2.0)]
+set hand_rad  [expr ($cup_height-4.0)/sqrt(2.0)]
 set hand_circ [expr (1.5*$mypi*$hand_rad)]
 set hand_xoff [expr ($cup_bot_circ+$cup_top_circ)/(4.0*$mypi)+1.2]
-set hand_yoff [expr 2.0+$cup_heigth/2.0 -0.2]
+set hand_yoff [expr 2.0+$cup_height/2.0 -0.2]
 set alpha [expr 2.0*$mypi/int(4.0*$hand_circ/3.0)]
-set beta  [expr sin(($cup_top_circ-$cup_bot_circ)/(2.0*$mypi*$cup_heigth-1))]
+set beta  [expr sin(($cup_top_circ-$cup_bot_circ)/(2.0*$mypi*$cup_height-1))]
 set beta [expr $beta - $mypi/8.0]
 puts "handle rad=$hand_rad circ=$hand_circ beta $beta"
 set posz [expr ($box_l/2.0)+0.5]
@@ -193,7 +194,7 @@ for {set i 0} { $i < $pid} {incr i} { part $i fix }
 
 # steam (some neutral polymers)
 for {set i 0} { $i < $n_steam } {incr i} {
-    set posy [expr $cup_heigth] 
+    set posy [expr $cup_height] 
     set rad  [expr ($cup_top_circ-12.0)/(2.0*$mypi)]
     set alpha [expr 2.0*$mypi/int($n_steam)]
     set posx [expr $box_l/2.0 + $rad*sin($i*$alpha)]

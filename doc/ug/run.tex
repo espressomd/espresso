@@ -1,0 +1,84 @@
+\chapter{Running the simulation}
+\label{chap:run}
+
+\section{\texttt{integrate}: Running the simulation}
+\eslabel{integrate}
+
+\begin{essyntax}
+  \variant{1} integrate \var{steps}
+  \variant{2} integrate set \var{method} \opt{\var{parameter}}+
+\end{essyntax}
+
+\todo{Docs missing!}
+\todo{Which integrators do exist?}
+
+\section{\texttt{change_volume}: Changing the box volume}
+\eslabel[change-volume]{change_volume}
+
+\begin{essyntax}
+  \variant{1} change_volume \var{V_new} 
+  \variant{2} change_volume \var{L_new} \alt{x \asep y \asep z \asep xyz}
+\end{essyntax}
+Changes the volume of either a cubic simulation box to the new volume
+\var{V_new} or its given x-/y-/z-/xyz-extension to the new box-length
+\var{L_new}, and isotropically adjusts the particles coordinates as
+well. The function returns the new volume of the deformed simulation
+box.
+
+\section{Stopping particles}
+\eslabel{stopParticles}
+\eslabel[stop-particles]{stop_particles}
+
+\begin{essyntax}
+  \variant{1} stopParticles
+  \variant{2} stop_particles
+\end{essyntax}
+Halts all particles in the current simulation, setting their
+velocities and forces to zero. Variant \variant{2} does not provide
+feedback on the execution status.
+
+\section{\texttt{velocities}: Setting the velocities}
+\eslabel{velocities}
+\begin{essyntax}
+  velocities \var{v_max} 
+  \opt{start \var{part_id}} 
+  \opt{count \var{N_T}}
+\end{essyntax}
+Sets the velocities of the particles with particle ID (see The part
+command) between \var{part_id} and \var{part_id}+\var{N_T}
+(defaults to '0' \& '[setmd npart]-\var{part_id}') to a random vector
+with length in [-vmax,vmax], and returns the absolute value of the
+total velocity assigned.
+
+\section{\texttt{invalidate_system}}
+\eslabel[invalidate-system]{invalidate_system}
+\begin{essyntax}
+  invalidate_system
+\end{essyntax}
+\todo{Documentation not up to date!}
+
+Forces a system re-init which, among others, causes the integrator to
+also update the forces at its beginning (instead of re-using the
+values from the previous integration step).  This is particularly
+necessary to ensure continuity after setting a checkpoint:
+\texttt{integrate} - \texttt{set_checkpoint} - \texttt{integrate} has
+only one call to \todo{???}???, while \texttt{read_checkpoint} -
+\texttt{integrate} has two at the beginning of the 2nd integrate
+(because loading a new system from disk typically requires
+re-initializing the system), and since ??? also uses the thermostat
+which in turn draws random numbers, the two situations do not end up
+at the same segment of the random number sequence, all random events
+will therefore slightly differ.  To prevent this, simply include a
+call to invalidate_system upon setting the checkpoint (this is being
+done automatically if using tcl_checkpoint_set and
+tcl_checkpoint_read beginning with v1.1 of \es{}), because in that
+case both scenarios will call ??? twice at the beginning of the second
+integration phase thus having their random number sequences in total
+sync. The C implementation is invalidate_system.
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 

@@ -1,0 +1,226 @@
+\chapter{Setting up the system}
+\label{chap:setup}
+
+\section{\texttt{setmd}: Setting global variables.}
+\eslabel{setmd}
+
+\begin{essyntax}
+\variant{1} setmd \var{variable}
+\variant{2} setmd \var{variable} \opt{\var{value}}+
+\end{essyntax}
+\todo{Explain '+' in intro.}
+
+Variant \variant{1} returns the value of the \es global variable
+\var{variable}, variant \variant{2} can be used to set the variable
+\var{variable} to \var{value}. The following global variables can be
+set:
+
+%% List-environment for the description of the global variables
+\newenvironment{globvar}{
+  \begin{list}{}{
+      \setlength{\rightmargin}{1em}
+      \setlength{\leftmargin}{2em}
+      \setlength{\partopsep}{0pt}
+      \setlength{\topsep}{1ex}
+      \setlength{\parsep}{0.5ex}
+      \setlength{\listparindent}{-1em}
+      \setlength{\labelwidth}{0.5em}
+      \setlength{\labelsep}{0.5em}
+      \renewcommand{\makelabel}[1]{%
+        \index{##1@\texttt{##1} (global variable)|mainindex}%
+        \index{global variables!\texttt{##1}|mainindex}%
+        \texttt{##1}%
+      }
+    }
+  }{
+  \end{list}
+}
+\newcommand{\ro}{\emph{read-only}}
+
+\todo{Better throw some out (\eg switches)?}
+\todo{Missing: lattice_switch, dpd_tgamma, n_rigidbonds}
+\todo{Which commands can be used to set the \emph{read-only}
+  variables?}
+\begin{globvar}
+\item[box_l] (double[3]) Simulation box length.
+  \todo{document what happens to the particles when \keyword{box_l} is
+    changed!}
+\item[cell_grid] (int[3], \ro) Dimension of the inner
+  cell grid.
+\item[cell_size] (double[3], \ro) Box-length of a cell.
+\item[dpd_gamma] (double, \ro) Friction constant for the
+  DPD thermostat.
+\item[dpd_r_cut] (double, \ro) Cutoff for DPD thermostat.
+\item[gamma] (double, \ro) Friction constant for the
+  Langevin thermostat.
+\item[integ_switch] (int, \ro) Internal switch which integrator to
+  use.
+\item[local_box_l] (int[3], \ro) Local simulation box length of the
+  nodes.
+\item[max_cut] (double, \ro) Maximal cutoff of real space
+  interactions.
+\item[max_num_cells] (int) Maximal number of cells for the link cell
+  algorithm.  Reasonable values are between 125 and 1000, or for some
+  problems (\var{n_total_particles} / \var{n_nodes}).
+\item[max_seen_particle] (int, \ro) Maximal identity of a particle.
+  \emph{This is in general not related to the number of particles!}
+\item[max_range] (double, \ro) Maximal range of real space
+  interactions: \var{max_cut} + \var{skin}.
+\item[max_skin] (double, \ro) Maximal skin to be used for the link
+  cell/verlet algorithm. This is the minimum of \var{cell_size} -
+  \var{max_range}. \todo{???}
+\item[min_num_cells] (int) \todo{???} Minimal number of cells for the
+  link cell algorithm. Reasonable values range in $1e-6 N^2$ to $1e-7
+  N^2$. In general just make sure that the Verlet lists are not
+  incredibly large. By default the minimum is 0, but for the automatic
+  P3M tuning it may be wise to larger values for high particle
+  numbers.
+\item[n_layers] (int, \ro) Number of layers in cell structure LAYERED
+  (see section \vref{sec:cell-systems}).
+\item[n_nodes] (int, \ro) Number of nodes.
+\item[n_total_particles] (int, \ro) Total number of particles.
+\item[n_particle_types] (int, \ro) Number of particle types that were
+  used so far in the \keyword{inter} command (see chapter{tcl:inter}).
+\item[node_grid] (int[3]) 3D node grid for real space domain
+  decomposition (optional, if unset an optimal set is chosen
+  automatically).
+\item[nptiso_gamma0] (double, \ro)\todo{Docs missing.}
+\item[nptiso_gammav] (double, \ro)\todo{Docs missing.}
+\item[npt_p_ext] (double, \ro) Pressure for NPT simulations.
+\item[npt_p_inst] (double) Pressure calculated during an
+  NPT_isotropic integration.
+\item[piston] (double, \ro) Mass off the box when using NPT_isotropic
+  integrator.
+\item[periodicity] (bool[3]) Specifies periodicity for the three
+  directions. If the feature PARTIAL_PERIODIC is set, this variable
+  can be set to (1,1,1) or (0,0,0) at the moment.  If not it is
+  readonly and gives the default setting (1,1,1).\todo{Correct?}
+\item[skin] (double) Skin for the Verlet list.
+\item [temperature] (double, \ro) Temperature of the
+  simulation.
+\item[thermo_switch] (double, \ro) Internal variable which thermostat
+  to use. 
+\item[time] (double) The simulation time.
+\item[time_step] (double) Time step for MD integration.
+\item[timings] (int) Number of timing samples to take into account if
+  set.\todo{???}
+\item[transfer_rate] (int, \ro) Transfer rate for VMD connection. You
+  can use this to transfer any integer value to the simulation from
+  VMD.
+\item[verlet_flag] (bool) Indicates whether the Verlet list will be
+  rebuild. The program decides this normally automatically based on
+  your actions on the data.
+\item[verlet_reuse] (double) Average number of integration steps the
+  verlet list has been re-used.
+\end{globvar}
+
+\section{\texttt{thermostat}: Setting up the thermostat}
+\eslabel{thermostat}
+
+\begin{essyntax}
+  \variant{1} thermostat off
+  \variant{2} theormstat \var{method} \opt{\var{parameter}}+
+\end{essyntax}
+\todo{Include docs from \texttt{thermostat.h}!}
+Change thermostat settings.
+
+\section{\texttt{nemd}: Setting up non-equilibrium MD}
+\eslabel{nemd}
+
+\begin{essyntax}
+  \variant{1}nemd \var{method} \var{parameter} 
+  \variant{2}nemd off
+  \variant{3}nemd profile
+  \variant{4}nemd viscosity
+\end{essyntax}
+\todo{Include docs from \texttt{nemd.h}!}
+\todo{Put \texttt{nemd profile|viscosity} into \texttt{analyze}?}  
+Use NEMD (Non Equilibrium Molecular Dynamics) to simulate a system
+under shear.
+
+\section{\texttt{cellsystem}: Setting up the cell system}
+\label{sec:cell-systems}
+\eslabel{cellsystem}
+
+This section deals with the flexible particle data organization of
+\es.  Due to different needs of different algorithms, \es is able to
+change the organization of the particles in the computer memory,
+according to the needs of the used algorithms. For details on the
+internal organization, refer to section
+\vref{sec:internal-particle-organization}.
+
+\subsection{Domain decomposition}
+\index{domain decomposition}
+\begin{essyntax}
+  cellsystem domain_decomposition \opt{-no_verlet_list}
+\end{essyntax}
+This selects the domain decomposition cell scheme, using Verlet lists
+for the calculation of the interactions. If you specify
+\keyword{-no_verlet_list}, only the domain decomposition is used, but
+not the Verlet lists.
+
+The domain decomposition cellsystem is the default system and suits
+most applications with short ranged interactions. The particles are
+divided up spatially into small compartments, the cells, such that the
+cell size is larger than the maximal interaction range. In this case
+interactions only occur between particles in adjacent cells. Since the
+interaction range should be much smaller than the total system size,
+leaving out all interactions between non-adjacent cells can mean a
+tremendous speed-up. Moreover, since for constant interaction range,
+the number of particles in a cell depends only on the density. The
+number of interactions is therefore of the order N instead of order
+$N^2$ if one has to calculate all pair interactions.
+
+\subsection{N-squared}
+\begin{essyntax}
+  cellsystem nsquare 
+\end{essyntax}
+This selects the very primitive nsquared cellsystem, which calculates
+the interactions for all particle pairs. Therefore it loops over all
+particles, giving an unfavorable computation time scaling of $N^2$.
+However, algorithms like MMM1D or the plain Coulomb interaction in the
+cell model require the calculation of all pair interactions.
+
+In a multiple processor environment, the nsquared cellsystem uses a
+simple particle balancing scheme to have a nearly equal number of
+particles per CPU, \ie $n$ nodes have $m$ particles, and $p-n$ nodes
+have $m+1$ particles, such that $n*m+(p-n)*(m+1)=N$, the total number
+of particles. Therefore the computational load should be balanced
+fairly equal among the nodes, with one exception: This code always
+uses one CPU for the interaction between two different nodes. For an
+odd number of nodes, this is fine, because the total number of
+interactions to calculate is a multiple of the number of nodes, but
+for an even number of nodes, for each of the $p-1$ communication
+rounds, one processor is idle.
+
+E.g. for 2 processors, there are 3 interactions: 0-0, 1-1, 0-1.
+Naturally, 0-0 and 1-1 are treated by processor 0 and 1, respectively.
+But the 0-1 interaction is treated by node 1 alone, so the workload
+for this node is twice as high. For 3 processors, the interactions are
+0-0, 1-1, 2-2, 0-1, 1-2, 0-2. Of these interactions, node 0 treats 0-0
+and 0-2, node 1 treats 1-1 and 0-1, and node 2 treats 2-2 and 1-2.
+
+Therefore it is highly recommended that you use nsquared only with an
+odd number of nodes, if with multiple processors at all. 
+
+\subsection{Layered cell system}
+\begin{essyntax}
+  cellsystem layered \var{n_layers}
+\end{essyntax}
+
+This selects the layered cell system, which is specifically designed
+for the needs of the MMM2D algorithm. Basically it consists of a
+nsquared algorithm in x and y, but a domain decomposition along z, i.
+e. the system is cut into equally sized layers along the z axis. The
+current implementation allows for the cpus to align only along the z
+axis, therefore the processor grid has to have the form 1x1xN.
+However, each processor may be responsible for several layers, which
+is determined by \var{n\_layers}, i. e. the system is split into
+N*\var{n\_layers} layers along the z axis. Since in x and y direction
+there are no processor boundaries, the implementation is basically
+just a stripped down version of the domain decomposition cellsystem.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 

@@ -109,7 +109,7 @@ MMM2D_struct mmm2d_params = { 1e100, 10, 1, 0, 0, 1, 1, 1 };
 /** return codes for \ref MMM2D_tune_near and \ref MMM2D_tune_far */
 /*@{*/
 /** cell too large */
-#define ERROR_HEIGHT 1
+#define ERROR_LARGE 1
 /** box too large */
 #define ERROR_BOXL 2
 /** no reasonable bessel cutoff found */
@@ -118,6 +118,8 @@ MMM2D_struct mmm2d_params = { 1e100, 10, 1, 0, 0, 1, 1, 1 };
 #define ERROR_POLY 4
 /** no reasonable cutoff for the far formula found */
 #define ERROR_FARC 5
+/** cell too small */
+#define ERROR_SMALL 6
 /*@}*/
 
 /** error messages, see above */
@@ -127,7 +129,8 @@ static char *mmm2d_errors[] = {
   "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and y",
   "Could find not reasonable Bessel cutoff. Please decrease n_layers or the error bound",
   "Could find not reasonable Polygamma cutoff. Consider exchanging x and y",
-  "Far cutoff too large, decrease the error bound"
+  "Far cutoff too large, decrease the error bound",
+  "Layer height too small for MMM2D far formula, decrease n_layers or skin",
 };
 
 /****************************************
@@ -275,7 +278,7 @@ void MMM2D_setup_constants()
     break;
   case CELL_STRUCTURE_LAYERED:
     max_near = 2*layer_h + skin;
-    min_far  =   layer_h - skin;
+    min_far  =   layer_h - skin;    
     break;
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: MMM2D setup for cell structure it should reject\n", this_node);
@@ -1374,6 +1377,7 @@ static int MMM2D_tune_far(double error)
   do {
     err = exp(-2*M_PI*mmm2d_params.far_cut*min_far)/min_far*
       (C_2PI*mmm2d_params.far_cut + 2*(ux + uy) + 1/min_far);
+    // fprintf(stderr, "far tuning: %f -> %f, %f\n", mmm2d_params.far_cut, err, min_far);
     mmm2d_params.far_cut += min_inv_boxl;
   }
   while (err > error && mmm2d_params.far_cut*layer_h < MAXIMAL_FAR_CUT);
@@ -1399,7 +1403,9 @@ static int MMM2D_tune_near(double error)
 
   /* yes, it's y only... */
   if (max_near > box_l[1]/2)
-    return ERROR_HEIGHT;
+    return ERROR_LARGE;
+  if (min_far <= 0)
+    return ERROR_SMALL;
   if (ux*box_l[1] >= 3/M_SQRT2 )
     return ERROR_BOXL;
 
@@ -1822,7 +1828,7 @@ int printMMM2DToResult(Tcl_Interp *interp)
 
   if (mmm2d_params.dielectric_contrast_on) {
     Tcl_PrintDouble(interp, mmm2d_params.di_top, buffer);
-    Tcl_AppendResult(interp, " dielectric", buffer, (char *) NULL);
+    Tcl_AppendResult(interp, " dielectric ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, mmm2d_params.di_mid, buffer);
     Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, mmm2d_params.di_bot, buffer);

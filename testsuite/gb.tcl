@@ -37,8 +37,7 @@ puts "----------------------------------------"
 require_feature "ROTATION"
 
 set epsilon 1e-4
-setmd temp 0
-setmd gamma 0
+thermostat off
 setmd time_step 1
 setmd skin 0
 
@@ -77,9 +76,9 @@ if { [catch {
     # write_data "gb_system.data"
 
     # ensures that no other forces are on
-    set cureng [expr [analyze energy gb 0 0]]
+    set cureng [expr [analyze energy nonbonded 0 0]]
     # tbrs
-    set curprs [expr [lindex [analyze pressure gb 0 0] 0] ]
+    set curprs [expr [lindex [analyze pressure nonbonded 0 0] 0] ]
 
     ############## end
 

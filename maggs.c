@@ -2332,6 +2332,9 @@ int inter_parse_maggs(Tcl_Interp * interp, int argc, char ** argv)
 	  return TCL_ERROR;
     } 
   }
+
+  coulomb.method = COULOMB_MAGGS;
+
   return set_maggs_params(interp, coulomb.bjerrum, f_mass, mesh, gamma, yukawa, kappa, r_cut);
 }
 

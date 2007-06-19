@@ -12,7 +12,7 @@
 #  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 # 
 puts "-------------------------------------------"
-puts "- Testcase el2d.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "- Testcase el2d_nonneutral.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "-------------------------------------------"
 set errf [lindex $argv 1]
 
@@ -38,7 +38,7 @@ require_feature "ELECTROSTATICS"
 require_feature "PARTIAL_PERIODIC"
 
 set epsilon 1e-3
-setmd temp 0
+thermostat off
 setmd time_step 0.01
 setmd skin 0.05
 

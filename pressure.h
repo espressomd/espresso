@@ -77,6 +77,8 @@ extern nptiso_struct nptiso;
 /* include the potential files */
 #include "p3m.h"
 #include "lj.h"
+#include "steppot.h"
+#include "bmhtf-nacl.h"
 #include "buckingham.h"
 #include "morse.h"
 #include "soft_sphere.h"
@@ -151,6 +153,14 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist, force);
 #endif
+  /* smooth step */
+#ifdef SMOOTH_STEP
+  add_SmSt_pair_force(p1,p2,ia_params,d,dist,dist2, force);
+#endif
+  /* BMHTF NaCl */
+#ifdef BMHTF_NACL
+  add_BMHTF_pair_force(p1,p2,ia_params,d,dist,dist2, force);
+#endif
   /* buckingham*/
 #ifdef BUCKINGHAM
   add_buck_pair_force(p1,p2,ia_params,d,dist,force);
@@ -204,9 +214,11 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   /* real space coulomb */
   if (coulomb.method != COULOMB_NONE) {
     switch (coulomb.method) {
+#ifdef ELP3M
     case COULOMB_P3M:
       ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;
+#endif
     case COULOMB_DH:
       ret = dh_coulomb_pair_energy(p1,p2,dist);
       break;
@@ -245,6 +257,9 @@ MDINLINE void add_bonded_virials(Particle *p1)
   Bonded_ia_parameters *iaparams;
 
   int i, k, l, type_num, type;
+#ifdef TABULATED
+  int type_tab;
+#endif
 
   i = 0;
   while(i<p1->bl.n) {
@@ -280,12 +295,27 @@ MDINLINE void add_bonded_virials(Particle *p1)
       i++; force[0] = force[1] = force[2] = 0; break;
     case BONDED_IA_DIHEDRAL:
       i+=2; force[0] = force[1] = force[2] = 0; break;
+
+#ifdef TABULATED
+    case BONDED_IA_TABULATED:
+      type_tab = bonded_ia_params[type_num].p.tab.type;
+      // printf("BONDED TAB, Particle: %d, P2: %d TYPE_TAB: %d\n",p1->p.identity,p2->p.identity,type_tab);
+      switch(type_tab) {
+        case TAB_BOND_ANGLE:
+          i++; force[0] = force[1] = force[2] = 0; break;
+        case TAB_BOND_DIHEDRAL:
+          i+=2; force[0] = force[1] = force[2] = 0; break;
+      }
+      break;
+#endif
+
 #ifdef BOND_CONSTRAINT
     case BONDED_IA_RIGID_BOND:
       i +=2; force[0] = force[1] = force[2] = 0; break;
 #endif
     default :
-      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of atom %d unhandled\n",bonded_ia_params[type_num].type,p1->p.identity);
+      //      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of atom %d unhandled\n",bonded_ia_params[type_num].type,p1->p.identity);
+      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of Type: %d, atom %d unhandled, Atom 2: %d\n",type,type_num,p1->p.identity,p2->p.identity);
       force[0] = force[1] = force[2] = 0;
       break;
     }
@@ -334,7 +364,7 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
 		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
 		  (hence it only works with domain decomposition); naturally it
 		  therefore doesn't make sense to use it without NpT. */
-int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_comp);
+int parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **argv);
 
 /** Implementation of 'analyze bins' */
 int parse_bins(Tcl_Interp *interp, int argc, char **argv);
@@ -343,7 +373,7 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv);
 int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv);
 
 /** implementation of 'analyze stress_tensor' */
-int parse_and_print_stress_tensor(Tcl_Interp *interp, int argc, char **argv, int v_comp);
+int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char **argv);
 
 
 /*@}*/

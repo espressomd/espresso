@@ -5,9 +5,10 @@
 
 
 
-namespace eval mbtools::system_generation {
+namespace eval mbtools::system_generation {}
 
-
+namespace eval ::mbtools::system_generation::placemol {
+    #variable dists 
 }
 
 
@@ -21,6 +22,7 @@ proc ::mbtools::system_generation::placemol { mol pos args } {
     set options {
 	{bondl.arg     1.0   "bond length between atoms"  }
 	{orient.arg  { 0 0 1 } "orientation vector for the mol " }
+	{orient2.arg  { 1 0 0 } "a second orientation vector for the mol " }
 
     }
     set usage "Usage: create_bilayer topo boxl \[bondl:orient]"
@@ -35,11 +37,20 @@ proc ::mbtools::system_generation::placemol { mol pos args } {
 	"lipid" {
 	    place_lipid $mol $params(orient) $pos -bondl $params(bondl) 
 	}
+	"hollowsphere" {
+	    place_hollowsphere $mol $pos $params(orient)
+	}
 	"spanlipid" {
 	    place_lipid $mol $params(orient) $pos -bondl $params(bondl) -midpos 
 	}
-	"hollowsphere" {
-	    place_hollowsphere $mol  $pos $params(orient)
+	"sphericalcap" {
+	    place_sphericalcap $mol  $pos $params(orient)
+	}
+	"cylindricalsegment" {
+	    place_cylindricalsegment $mol  $pos $params(orient) $params(orient2)
+	}
+	"hexagon" {
+	    place_hexagon $mol  $pos $params(orient)
 	}
 
 	"protein" {
@@ -72,6 +83,122 @@ proc ::mbtools::system_generation::matchtype { mol } {
     }
     mmsg::err [namespace current] "could not find a matching key to moltype [lindex $mol 0]"
 }
+
+
+
+
+# ::mbtools::system_generation::place_bonds--
+#
+# place bonds between particles.  adjust lengths of bonds appropriately
+# usefull routine for creating stiff structures
+#
+# mol : list of atoms in the molecule
+# cutoff : cutoff distance for placing bonds
+# params : lj params for repulsions between the molecules (only between first half of atoms)
+# dists  : a list of the lengths of the bonds
+# startingbondno : index number of first bond in molecule - they then go sequentially
+proc ::mbtools::system_generation::place_bonds {mol cutoff params dists startingbondno minpartnum laynum} {
+    set harm_k [lindex $params 0]
+    set lj_eps [lindex $params 1]
+    set lj_sigma [lindex $params 2]
+    set lj_cutoff [lindex $params 3]
+    # Figure out which beads are neigbours (2*$midist) is used to decide who should be bonded to who)
+    set totnum [expr ([llength $mol ] -1) ]
+    for { set i 1 } { $i <= $totnum } { incr i } {
+	set partnum [lindex $mol  $i ]
+	lappend nbrs [analyze nbhood $partnum $cutoff]
+    }
+
+    puts "dists at beginning are $dists"
+    
+    # Bond the neighbours
+    # We require a unique type of bond for each length of bond required.
+    # Thus we work out how many types of bonds we need, of what lengths, and between which particles they should be applied.
+    # The bond length takes into account the lj repulsions between the particles such that the resting ground state length of the bond
+    # corresponds to what we geometrically require for our spherical cap.
+    set count [llength $dists]
+    for { set i 1 } { $i <= $totnum } { incr i } {
+	set partnum [lindex $mol  $i ]
+	# get a list of the neighbours for this particle
+	set nblist [lindex $nbrs [expr $i - 1]]
+	# find out what the distance is to each of its neighbours
+	foreach atom $nblist {	    
+	    if { $atom > $partnum } {
+		set part1pos [part $partnum print pos]
+		set part2pos [part $atom print pos]
+		set boxl [setmd box_l]
+		set xdist [expr [lindex $part1pos 0]-[lindex $part2pos 0]]
+		set ydist [expr [lindex $part1pos 1]-[lindex $part2pos 1]]
+		set zdist [expr [lindex $part1pos 2]-[lindex $part2pos 2]]
+		set box_l [setmd box_l]
+		while {$xdist > [expr [lindex $box_l 0]/2.0]} {
+		    set xdist [expr $xdist - [lindex $box_l 0]]
+		}
+		while {$xdist < [expr -[lindex $box_l 0]/2.0]} {
+		    set xdist [expr $xdist + [lindex $box_l 0]]
+		}
+		while {$ydist > [expr [lindex $box_l 1]/2.0]} {
+		    set ydist [expr $ydist - [lindex $box_l 1]]
+		}
+		while {$ydist < [expr -[lindex $box_l 1]/2.0]} {
+		    set ydist [expr $ydist + [lindex $box_l 1]]
+		}
+		while {$zdist > [expr [lindex $box_l 2]/2.0]} {
+		    set zdist [expr $zdist - [lindex $box_l 2]]
+		}
+		while {$zdist < [expr -[lindex $box_l 2]/2.0]} {
+		    set zdist [expr $zdist + [lindex $box_l 2]]
+		}
+		set dist [expr pow($xdist,2) +  pow($ydist,2) + pow($zdist,2)]
+		set dist [expr pow($dist,0.5)]
+		set exist 0
+		# have we already created a bond with this length
+		#puts "dists is $dists"
+		for { set j 0} {$j < $count} {incr j} {
+		    set val [lindex $dists $j]
+		    if {[expr pow($dist - $val,2)] < 0.00000001} {
+			set exist 1
+			set bondno [expr $j + $startingbondno]
+			# we have already created one, so just apply another instance of it
+			#puts "setting bond between $partnum and $atom of type $bondno"
+			#puts "part $partnum bond $bondno $atom with dist $dist"
+			part $partnum bond $bondno $atom
+			set j $count
+		    }
+		}
+		# if we haven't already created one of this length then
+		if {$exist == 0} {
+		    lappend dists $dist
+		    set bondno [expr $count + $startingbondno]
+		    incr count
+		    set actualdist $dist
+		    # do they two atoms have a nonbonded forces between them
+		    # if they do then compensate for it in the bond length
+		    if {($partnum <= $minpartnum + $laynum - 1) && ($atom <= $minpartnum + $laynum -1) && ($dist < $lj_cutoff)} {
+			set lj_force [expr - 24.0 * $lj_eps / $dist * (2.0 * pow($lj_sigma/$dist,12)-pow($lj_sigma/$dist,6))]
+			if {$lj_force > 0} {
+			    puts "****************OH DEAR --------- error is setting up sphere "
+			}
+			set harm_offset [expr pow(-$lj_force/$harm_k,0.5)]
+			set dist [expr $dist - $harm_offset]
+		    }
+		    # create new bond type and apply it to pair
+		    inter $bondno harmonic $harm_k $dist
+		    puts "creating new bond number $bondno with length $actualdist"
+		    #puts "part $partnum bond $bondno $atom with dist $actualdist"
+		    part $partnum bond $bondno $atom 
+		}
+	    }
+	}
+    }
+    return $dists
+}
+
+
+
+
+
+
 
 
 
@@ -133,7 +260,7 @@ proc ::mbtools::system_generation::place_lipid { mol orient pos args } {
 	set partnum [lindex $mol [expr $b + 1]]
 
 	# Note that because the head bead is given first but we start
-	# placement from the tail we need to use the following
+	# placement     variable av_molcom_ifrom the tail we need to use the following
 	# formulas for position
 	set posx [expr $rx+($nbeads - $b -1.0)*$params(bondl)*$nx]
 	set posy [expr $ry+($nbeads - $b -1.0)*$params(bondl)*$ny]
@@ -341,6 +468,558 @@ return
 
 
 
+# ::mbtools::system_generation::place_sphericalcap-- 
+#
+# Construct a spherical cap
+#
+#
+
+# Note that this routine uses the icosahedral codes from R. H. Hardin,
+# N. J. A. Sloane and W. D. Smith .  In order to get this to work you
+# first need to make sure that you have their program creconstruct in
+# your path and that their script icover.sh runs fine from the command
+# line in the directory where you execute espresso.  You then need to
+# ensure that the number of atoms you used corresponds to one which
+# they have actually tabulated.
+
+#
+# Arguments:
+#
+# mol: particle types and the molecule type id
+# pos: The center of the sphere
+#
+proc ::mbtools::system_generation::place_sphericalcap { mol pos orient } {
+    variable icovermagicnums
+    variable dists
+
+    # check to see if dists has already been worked out.  i.e. has a hollowsphere already been placed?
+    set err [catch {set dists $dists}]
+    if {$err == 1} {
+	set dists ""
+    } 
+
+    puts "orientation is $orient"
+
+    # what molecule type (number) is this
+    set moltype [lindex $mol 0]
+    # info on molecules of this type
+    set typeinfo [matchtype $moltype]
+    # A number of bonds may be defined in the process of creating this molecule.
+    # this variable defines the index number of the first such bond.  Other follow sequentially.
+    set startingbondno [lindex $typeinfo 3]
+    # the radii of the inner and outer shells of the sphere
+    set radii [lindex $typeinfo 4]
+    set rout [lindex $radii 0]
+    set rin [lindex $radii 1]
+    # the number of atoms it would take to cover the entire sphere if we were generating the entire sphere
+    set natomscov [lindex $typeinfo 5]
+    # the lj parameters for the nb interactions between atoms in the molecule (must all be the same)
+    set int_params [lindex $typeinfo 6]
+    set harm_k [lindex $int_params 0]
+    set lj_eps [lindex $int_params 1]
+    set lj_sigma [lindex $int_params 2]
+    set lj_cutoff [lindex $int_params 3]
+    # the total number of atoms in our spherical cap
+    set totnum [expr ([llength $mol ] -1) ]
+    # the total number of atoms in each layer
+    set laynum [expr $totnum / 2]
+
+    #---------------------------------------------------------------------------------------------------------------
+    # use the icover routine to get a list of coordinates for particles on a sphere
+    set imagic [lsearch -integer -exact $icovermagicnums $natomscov]
+    if { $imagic == -1 } {
+	foreach val $icovermagicnums {
+	    if { $val > $natomscov } {
+		set isuggest [expr $imagic ]
+		break;
+	    }
+	    incr imagic
+	}
+	mmsg::err [namespace current] "can't construct hollowsphere because $natomscov is not an icover magic number try [lindex $icovermagicnums $isuggest] or [lindex $icovermagicnums [expr $isuggest + 1]]"
+    }
+    if { [catch { set cov [exec icover.sh $natomscov  ] } ] } {
+	::mmsg::err [namespace current] "couldn't construct hollowsphere because errors occured when trying to run icover with $natomscov atoms.  icover extracts the icosahedral codes which are copyright R. H. Hardin, N. J. A. Sloane and W. D. Smith, 1994, 2000. so you should obtain them yourself from http://www.research.att.com/~njas/"
+    } else {
+
+
+	set ncov [expr int([llength $cov]/3.0)]
+
+	if { $natomscov != $ncov } {
+	    mmsg::err [namespace current] "icover.sh returned $ncov atoms but our hollowsphere has $natomscov"
+	}
+
+	# Now sort all the data in cov into a list of points
+	for { set i 0 } { $i < $ncov } { incr i } {
+	    lappend tmp [lindex $cov [expr 3*$i]]
+	    lappend tmp [lindex $cov [expr 3*$i + 1]]
+	    lappend tmp [lindex $cov [expr 3*$i + 2]]
+	    lappend coords $tmp
+	    unset tmp
+	}
+    }
+    # -------------------------------------------------------------------------------------------------------------
+    # neighbours is number of atoms withing a certain distance "cutoff" of each atom
+    # we use neighbours to orientate the spherical cap (i.e. we want a centre of symmetry to correspond to the centre of our spherical cap)
+    for {set i 0} {$i < $ncov} {incr i} {
+	lappend neighbours 0
+    }
+    set cutoff [expr 1.5*sqrt(12/($ncov*1.0))]
+    
+    # caculate neighbours for each atom
+    set mdist -1
+    for {set i 0} {$i < $ncov} {incr i} {
+	for {set j [expr $i + 1]} {$j < $ncov} {incr j} {
+	    set distance [::mbtools::utils::distance [lindex $coords $i] [lindex $coords $j]]
+	    if {$distance  < $cutoff} {
+		set neighbours [lreplace $neighbours $i $i [expr [lindex $neighbours $i] + 1]]
+		set neighbours [lreplace $neighbours $j $j [expr [lindex $neighbours $j] + 1]]
+		if {($distance < $mdist) || ($mdist == -1)} {
+		    set mdist $distance
+		}
+	    }
+	}
+    }
+
+    # numneigh_freq givens the number of atoms which have a certain number of neighbours
+    set jcount 0
+    for {set i 0} {$i < $ncov} {incr i} {
+	set alreadythere 0
+	for {set j 0} {$j < $jcount} {incr j} {
+	    if {[lindex $numneigh $j] == [lindex $neighbours $i]} {
+		set alreadythere 1
+		set numneigh_freq [lreplace $numneigh_freq $j $j [expr 1+[lindex $numneigh_freq $j] ]]
+		set j $jcount
+	    }
+	}
+	if {$alreadythere == 0} {
+	    lappend numneigh [lindex $neighbours $i]
+	    lappend numneigh_freq 1
+	    incr jcount
+	}
+    }
+    set minfreq -1
+    # we then look to see what is the rarest number of neighbours to have
+    for {set j 0} {$j < $jcount} {incr j} {
+	if {($minfreq == -1) || ($minfreq > [lindex $numneigh_freq $j])} {
+	    set minfreq [lindex $numneigh_freq $j]
+	    set numneigh_rarest [lindex $numneigh $j]
+	}
+    }
+    # we select an atom from this rare group.  This will be the centre of our spherical cap.
+    for {set i 0} {$i < $ncov} {incr i} {
+	if {[lindex $neighbours $i] == $numneigh_rarest} {
+	    set rare_atom $i
+	    set i $ncov
+	}
+    }
+
+    set coord_centre [lindex $coords $rare_atom]
+
+
+    # we know select the $laynum many atoms closest to the rare atom we have selected as the centre.
+    # previously we had coordinates for an entire sphere. 
+    set coordslength $ncov
+    for {set i 0} {$i < $laynum} {incr i} {
+	set minind -1
+	for {set j 0} {$j < $coordslength} {incr j} {
+	    set val [::mbtools::utils::distance $coord_centre [lindex $coords $j]]
+	    if {($minind == -1) || ($val < $minval)} {
+		set minind $j
+		set minval $val    
+		
+	    }
+	}
+	lappend newcoords [lindex $coords $minind]
+	set coords [lreplace $coords $minind $minind]
+	set coordslength [expr $coordslength - 1]
+    }
+
+    set coords $newcoords
+
+    for {set i 0} {$i < $laynum} {incr i} {
+	if { [lindex $coords $i] == $coord_centre} {
+	    set rare_atom $i
+	}
+    }
+    
+
+    # we rotate the coordinates of the particles in the sphere such that the chosen atom lies at the bottom of the sphere (minimum z value).
+    set coord_centre [::mbtools::utils::normalize $coord_centre]
+    set orient [::mbtools::utils::normalize $orient]
+    set desired_centre [::mbtools::utils::scalevec $orient -1]
+    set rotation_angle [expr acos([::mbtools::utils::dot_product $coord_centre $desired_centre])]
+    set rotation_axis [::mbtools::utils::cross_product $coord_centre $desired_centre]
+    set rotation_axis [::mbtools::utils::normalize $rotation_axis]
+    set rotation_matrix [::mbtools::utils::rotation_matrix $rotation_axis $rotation_angle]
+
+    set tmp ""
+    foreach coord $coords {
+	lappend tmp [::mbtools::utils::matrix_vec_multiply $rotation_matrix $coord]
+    }
+    set coords $tmp
+
+    set minpartnum -1
+
+    # Place the beads in preliminary positions on the outer surface of the spherical cap
+    for { set i 0 } { $i < $laynum } { incr i } {
+	set tmp [lindex $coords $i]
+	set partnum [lindex $mol  [expr $i +1]]
+	set parttype [lindex $typeinfo 2 $i]
+	set xpos [expr $rout * [lindex $tmp 0] + [lindex $pos 0]]
+	set ypos [expr $rout * [lindex $tmp 1] + [lindex $pos 1]]
+	set zpos [expr $rout * [lindex $tmp 2] + [lindex $pos 2]]
+	part $partnum pos $xpos $ypos $zpos type $parttype
+	if {($partnum < $minpartnum) || ($minpartnum == -1)} {
+	    set minpartnum $partnum
+	}
+    }    
+
+    
+    set mdist [expr $mdist * $rout]
+
+    # Place the beads in preliminary positions on the inner surface of the spherical cap
+    for { set i 0 } { $i < $laynum } { incr i } {
+	set tmp [lindex $coords $i]
+	set partnum [lindex $mol  [expr $i +1 + $laynum]]
+	set parttype [lindex $typeinfo 2 [expr $i + $laynum]]
+	set xpos [expr $rin * [lindex $tmp 0] + [lindex $pos 0]]
+	set ypos [expr $rin * [lindex $tmp 1] + [lindex $pos 1]]
+	set zpos [expr $rin * [lindex $tmp 2] + [lindex $pos 2]]
+	part $partnum pos $xpos $ypos $zpos type $parttype
+	if {($partnum < $minpartnum) || ($minpartnum == -1)} {
+	    set minpartnum $partnum
+	}
+    }    
+
+    # Based on a desired value of mdist equal to 1.0 find the required radius
+    mmsg::send [namespace current] "creating hollow sphere with radius $rout, $rin and $natomscov beads on both shells"
+
+    set cutoff [expr $mdist * 2.0]
+
+    set dists [::mbtools::system_generation::place_bonds $mol $cutoff $int_params $dists $startingbondno $minpartnum $laynum]
+
+    return
+
+}
+
+
+proc ::mbtools::system_generation::place_cylindricalsegment { mol pos orient orient2} {
+    variable dists
+    
+    # check to see if dists has already been worked out.  i.e. has a hollowsphere already been placed?
+    set err [catch {set dists $dists}]
+    if {$err == 1} {
+	set dists ""
+    } 
+
+    # what molecule type (number) is this
+    set moltype [lindex $mol 0]
+    # info on molecules of this type
+    set typeinfo [matchtype $moltype]
+    # A number of bonds may be defined in the process of creating this molecule.
+    # this variable defines the index number of the first such bond.  Other follow sequentially.
+    set startingbondno [lindex $typeinfo 3]
+    # the radii of the inner and outer shells of the sphere
+    set radii [lindex $typeinfo 4]
+    set rout [lindex $radii 0]
+    set rin [lindex $radii 1]
+    # the lj parameters for the nb interactions between atoms in the molecule (must all be the same)
+    set int_params [lindex $typeinfo 5]
+    set harm_k [lindex $int_params 0]
+    set lj_eps [lindex $int_params 1]
+    set lj_sigma [lindex $int_params 2]
+    set lj_cutoff [lindex $int_params 3]
+    # the total number of atoms in our spherical cap
+    set totnum [expr ([llength $mol ] -1) ]
+    # the total number of atoms in each layer
+    set laynum [expr $totnum / 2]
+    # the surface of the cylinder is covered in a hexagonal lattice of points
+    set shape [lindex $typeinfo 6]
+    # number of layers in direction1
+    set width1 [lindex $shape 0]    
+    # number of layers in direction2
+    set width2 [lindex $shape 1]
+    # bond length
+    set bl [lindex $shape 2]
+
+    # since the beads are placed on a hexagon lattice the two sets of edges will be different from each other
+    # along two edges the beads will all be in a straight line
+    # along the other the beads will go in a zigzag
+    # for this reason it is necessary to specify in which direction the cylinder should be curved and
+    # whether the zigzag edges should be symmetric or antisymmetric.
+
+    # the direction in which the cylinder should be curved
+    # the options are 1,0,-1 (0 corresponds to no curvature)
+    set curvedir [lindex $shape 3]
+
+    # whether the edges shuld be symmetric or antisymmetric
+    # set edgesim to 0 unless you want cylinder to span the box in which case set it to 1
+    set edgesym [lindex $shape 4]
+
+    # calculate the total number of bead required to make the cylinder based on shape parameters given
+    if {$edgesym == 1} {
+	set totnum_implied [expr $width2*$width1*2.0]
+    } else {
+	set totnum_implied [expr (($width2 + 0.5) * $width1 -0.5)*2.0 ]
+	set edgesym 0
+    }
+
+    # compare the beads required to the list of bead given.
+    if {$totnum_implied != $totnum} {
+	puts "the molcule parameters are not consistent. according to the two widths given ($width1 , $width2) there should be $totnum_implied atoms but there are $totnum in the specifications."
+	return 1
+    }
+
+    if {$curvedir == 0} {
+	puts "curvedir is 0 so molecule will not be curved"
+    }
+
+    #calculate the rotation matrix necessary to rotate the cylinder into the correct position
+    set initial_orient {0 0 1}
+    set initial_orient2 {1 0 0}
+    set orient [::mbtools::utils::normalize $orient]
+    set rotation_angle [expr acos([::mbtools::utils::dot_product $initial_orient $orient])]
+    set rotation_axis [::mbtools::utils::cross_product $initial_orient $orient]
+    if {[::mbtools::utils::distance $rotation_axis {0 0 0}] == 0} {
+	# if initial_orient and orient are parellel then we  can use any vector perpendicular to this line as the rotation axis
+	set rotation_axis [::mbtools::utils::perp_vec $orient]
+    }
+    set rotation_axis [::mbtools::utils::normalize $rotation_axis]
+    set rotation_matrix [::mbtools::utils::rotation_matrix $rotation_axis $rotation_angle]
+
+    set initial_orient2 [::mbtools::utils::matrix_vec_multiply $rotation_matrix $initial_orient2]
+    set orient2 [::mbtools::utils::scalevec $orient2 [expr 1 - [::mbtools::utils::dot_product $orient2 $orient]]]
+    set orient2 [::mbtools::utils::normalize $orient2]
+    set rotation_angle [expr acos([::mbtools::utils::dot_product $initial_orient2 $orient2])]
+    set rotation_axis [::mbtools::utils::cross_product $initial_orient2 $orient2]
+    if {[::mbtools::utils::distance $rotation_axis {0 0 0}] == 0} {
+	# if initial_orient and orient are parellel then we  can use any vector perpendicular to this line as the rotation axis
+	set rotation_axis [::mbtools::utils::perp_vec $orient2]
+    }
+    set rotation_axis [::mbtools::utils::normalize $rotation_axis]
+    set rotation_matrix2 [::mbtools::utils::rotation_matrix $rotation_axis $rotation_angle]
+
+    set rotation_matrix [::mbtools::utils::matrix_multiply $rotation_matrix2 $rotation_matrix]
+
+    # loop over the two widths and place the particles
+    set atom 0
+    for {set i 0} {$i < $width1} {incr i} {
+	if {$i%2 == 0} {
+	    set thick $width2
+	    # the variable 'adjust' is used to make the edges of the cylinder symmetric or antisymmetric
+	    set adjust 0
+	} else {
+	    set thick [expr $width2+1]
+	    set adjust [expr $edgesym]
+	}
+	for {set j 0} {$j < [expr $thick - $adjust]} {incr j} {
+	    #initially set x and y to positions on a rectangle
+	    set x [expr (-($width1-1.0)/2.0 + $i)*$bl*pow(3,0.5)/2.0]
+	    set y [expr (-($thick-1.0)/2.0 + $j)*$bl]
+
+	    #place the particles in the outer layer
+	    if {$curvedir == 0} {
+		set z 0
+	    } else  {
+		# then reset the x and y coordinates and set the z coordinate so that the rectangle curves upwards
+		if {$curvedir > 0 } {
+		    set arcl $y
+		} else {
+		    set arcl $x
+		}
+		set angle [expr $arcl/$rout]
+		set xy [expr $rout * sin($angle)]	    
+		set z [expr $rout * (1-cos($angle))]
+		if {$curvedir > 0 } {
+		    set y $xy
+		} else {
+		    set x $xy
+		}
+	    }
+	    set rotated_coord [::mbtools::utils::matrix_vec_multiply $rotation_matrix "$x $y $z"]
+	    set x [lindex $rotated_coord 0]
+	    set y [lindex $rotated_coord 1]
+	    set z [lindex $rotated_coord 2]
+	    # set the rectangle to have the correct base point
+	    set x [expr $x + [lindex $pos 0]]
+	    set y [expr $y + [lindex $pos 1]]
+	    set z [expr $z + [lindex $pos 2]]
+	    set partnum [lindex $mol  [expr $atom +1]]
+	    set parttype [lindex $typeinfo 2 $atom]
+	    part $partnum pos $x $y $z type $parttype
+
+	    #place the particles in the inner layer
+	    if {$curvedir == 0} {
+		set z 0
+	    } else {
+		set xy [expr $rin * sin($angle)]	    
+		set z [expr $rout - $rin*cos($angle)]
+		if {$curvedir > 0 } {
+		    set y $xy
+		    set x [expr (-($width1-1.0)/2.0 + $i)*$bl*pow(3,0.5)/2.0]
+		} else {
+		    set x $xy
+		    set y [expr (-($thick-1.0)/2.0 + $j)*$bl]
+		}
+	    }
+	    set rotated_coord [::mbtools::utils::matrix_vec_multiply $rotation_matrix "$x $y $z"]
+	    set x [lindex $rotated_coord 0]
+	    set y [lindex $rotated_coord 1]
+	    set z [lindex $rotated_coord 2]
+	    set x [expr $x + [lindex $pos 0]]
+	    set y [expr $y + [lindex $pos 1]]
+	    set z [expr $z + [lindex $pos 2]]
+	    set partnum [lindex $mol  [expr $atom +$laynum +1]]
+	    set parttype [lindex $typeinfo 2 [expr $atom+$laynum]]
+	    part $partnum pos $x $y $z type $parttype
+
+	    incr atom
+	}
+    }
+    set cutoff [expr $bl * 2.0]
+    set minpartnum [lindex $mol 1]
+
+    set dists [::mbtools::system_generation::place_bonds $mol $cutoff $int_params $dists $startingbondno $minpartnum $laynum]
+    puts "dists are $dists"
+   
+}
+
+
+
+proc ::mbtools::system_generation::place_hexagon { mol pos orient } {
+    variable dists
+    
+    # check to see if dists has already been worked out.  i.e. has a hollowsphere already been placed?
+    set err [catch {set dists $dists}]
+    if {$err == 1} {
+	set dists ""
+    } 
+
+    # what molecule type (number) is this
+    set moltype [lindex $mol 0]
+    # info on molecules of this type
+    set typeinfo [matchtype $moltype]
+    # A number of bonds may be defined in the process of creating this molecule.
+    # this variable defines the index number of the first such bond.  Other follow sequentially.
+    set startingbondno [lindex $typeinfo 3]
+    # the lj parameters for the nb interactions between atoms in the molecule (must all be the same)
+    set int_params [lindex $typeinfo 4]
+    set harm_k [lindex $int_params 0]
+    set lj_eps [lindex $int_params 1]
+    set lj_sigma [lindex $int_params 2]
+    set lj_cutoff [lindex $int_params 3]
+    # the total number of atoms in our spherical cap
+    set totnum [expr ([llength $mol ] -1) ]
+    # the total number of atoms in each layer
+    set laynum [expr $totnum / 2]
+    # the surface of the cylinder is covered in a hexagonal lattice of points
+    # number of layers in direction1
+    set bl [lindex $typeinfo 5]
+
+    set length 0
+    set x [lindex $pos 0]
+    set y [lindex $pos 1]
+    set z [lindex $pos 2]
+    set Dy [expr $bl * sqrt(3.0) / 2.0]
+    set Dx [expr $bl/2.0]
+    set atom 0
+    if {$atom < $laynum} {
+	set partnum [lindex $mol  [expr $atom +1]]
+	set parttype [lindex $typeinfo 2 $atom]
+	part $partnum pos $x $y $z type $parttype
+	set partnum [lindex $mol  [expr $atom +$laynum +1]]
+	set parttype [lindex $typeinfo 2 [expr $atom + $laynum]]
+	part $partnum pos $x $y [expr $z+$bl] type $parttype
+    }
+    incr atom
+    while {$atom < $laynum} {
+	incr length
+	for {set i 0} {$i < $length} {incr i} {
+	    set x [expr $x + $Dx]
+	    set y [expr $y + $Dy]
+	    if {$atom < $laynum} {
+		set partnum [lindex $mol  [expr $atom +1]]
+		set parttype [lindex $typeinfo 2 $atom]
+		part $partnum pos $x $y $z type $parttype
+		set partnum [lindex $mol  [expr $atom +$laynum +1]]
+		set parttype [lindex $typeinfo 2 [expr $atom + $laynum]]
+		part $partnum pos $x $y [expr $z+$bl] type $parttype
+	    }
+	    incr atom
+	}
+	for {set i 0} {$i < [expr $length - 1.0]} {incr i} {
+	    set x [expr $x - $Dx]
+	    set y [expr $y + $Dy]
+	    if {$atom < $laynum} {
+		set partnum [lindex $mol  [expr $atom +1]]
+		set parttype [lindex $typeinfo 2 $atom]
+		part $partnum pos $x $y $z type $parttype
+		set partnum [lindex $mol  [expr $atom +$laynum +1]]
+		set parttype [lindex $typeinfo 2 [expr $atom + $laynum]]
+		part $partnum pos $x $y [expr $z+$bl] type $parttype
+	    }
+	    incr atom
+	}
+	for {set i 0} {$i < [expr $length]} {incr i} {
+	    set x [expr $x - $bl]
+	    if {$atom < $laynum} {
+		set partnum [lindex $mol  [expr $atom +1]]
+		set parttype [lindex $typeinfo 2 $atom]
+		part $partnum pos $x $y $z type $parttype
+		set partnum [lindex $mol  [expr $atom +$laynum +1]]
+		set parttype [lindex $typeinfo 2 [expr $atom + $laynum]]
+		part $partnum pos $x $y [expr $z+$bl] type $parttype
+	    }
+	    incr atom
+	}
+	for {set i 0} {$i < [expr $length]} {incr i} {
+	    set x [expr $x - $Dx]
+	    set y [expr $y - $Dy]
+	    if {$atom < $laynum} {
+		set partnum [lindex $mol  [expr $atom +1]]
+		set parttype [lindex $typeinfo 2 $atom]
+		part $partnum pos $x $y $z type $parttype
+		set partnum [lindex $mol  [expr $atom +$laynum +1]]
+		set parttype [lindex $typeinfo 2 [expr $atom + $laynum]]
+		part $partnum pos $x $y [expr $z+$bl] type $parttype
+	    }
+	    incr atom
+	}
+	for {set i 0} {$i < [expr $length]} {incr i} {
+	    set x [expr $x + $Dx]
+	    set y [expr $y - $Dy]
+	    if {$atom < $laynum} {
+		set partnum [lindex $mol  [expr $atom +1]]
+		set parttype [lindex $typeinfo 2 $atom]
+		part $partnum pos $x $y $z type $parttype
+		set partnum [lindex $mol  [expr $atom +$laynum +1]]
+		set parttype [lindex $typeinfo 2 [expr $atom + $laynum]]
+		part $partnum pos $x $y [expr $z+$bl] type $parttype
+	    }
+	    incr atom
+	}
+	for {set i 0} {$i < [expr $length]} {incr i} {
+	    set x [expr $x + $bl]
+	    if {$atom < $laynum} {
+		set partnum [lindex $mol  [expr $atom +1]]
+		set parttype [lindex $typeinfo 2 $atom]
+		part $partnum pos $x $y $z type $parttype
+		set partnum [lindex $mol  [expr $atom +$laynum +1]]
+		set parttype [lindex $typeinfo 2 [expr $atom + $laynum]]
+		part $partnum pos $x $y [expr $z+$bl] type $parttype
+	    }
+	    incr atom
+	}
+    }
+
+    set cutoff [expr $bl * 2.0]
+    set minpartnum [lindex $mol 1]
+
+    set dists [::mbtools::system_generation::place_bonds $mol $cutoff $int_params $dists $startingbondno $minpartnum $laynum]
+   
+}
+
+
 # ::mbtools::system_generation::place_hollowsphere-- 
 #
 # Construct a large hollow sphere from small beads
@@ -461,7 +1140,7 @@ proc ::mbtools::system_generation::place_hollowsphere { mol pos orient } {
 	lappend scaledcoords $point
     }
 
-    
+   
     set beadcount1 0
     set beadcount2 0
     set tries 0
@@ -599,5 +1278,4 @@ proc ::mbtools::system_generation::place_hollowsphere { mol pos orient } {
     return
 
 }
-
 

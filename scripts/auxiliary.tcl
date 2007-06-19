@@ -571,11 +571,10 @@ proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } } {
 #############################################################
 
 proc has_feature { args } {
-    for { set argnum 0 } { $argnum < [llength $args] } { incr argnum } {
-	set feature [lindex $args $argnum]
+    foreach feature $args {
 	if { ! [regexp $feature [code_info]] } then { return 0 }
     }
-    return 1;
+    return 1
 }
 
 #
@@ -593,7 +592,7 @@ proc has_feature { args } {
 #############################################################
 
 proc require_feature { args } {
-    if { ! [has_feature $args]} {
+    if { ! [eval has_feature $args]} {
 	puts "not compiled in: $args"
 	exit -42
     }

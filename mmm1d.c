@@ -156,6 +156,11 @@ int MMM1D_set_params(double switch_rad, int bessel_cutoff, double maxPWerror)
 
   mmm1d_params.far_switch_radius_2 = (switch_rad > 0) ? SQR(switch_rad) : -1;
   mmm1d_params.bessel_cutoff = bessel_cutoff;
+  // if parameters come from here they are never calculated
+  // that is only the case if you call MMM1D_tune, which then changes
+  // this flag
+  mmm1d_params.bessel_calculated = 0;
+
   mmm1d_params.maxPWerror = maxPWerror;
   coulomb.method = COULOMB_MMM1D;
 
@@ -280,10 +285,7 @@ void MMM1D_init()
   MMM1D_setup_constants();
 
   if (mmm1d_params.bessel_calculated) {
-    // if the radius has not been calculated previously, we are
-    // in the tuning process, and do not need to determine the cutoff here
-    if (mmm1d_params.far_switch_radius_2 > 0)
-      mmm1d_params.bessel_cutoff = determine_bessel_cutoff(sqrt(mmm1d_params.far_switch_radius_2), mmm1d_params.maxPWerror, 1000);
+    mmm1d_params.bessel_cutoff = determine_bessel_cutoff(sqrt(mmm1d_params.far_switch_radius_2), mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
   }
   MMM1D_recalcTables();
 }

@@ -430,6 +430,24 @@ MDINLINE void vector_product(double a[3], double b[3], double c[3]) {
   return ;
 }
  
+/** rotates vector around axis by alpha */
+MDINLINE void vec_rotate(double *axis, double alpha, double *vector, double *result){
+  double sina,cosa,absa,a[3];
+  sina=sin(alpha);
+  cosa=cos(alpha);
+  absa=sqrt(scalar(axis,axis));
+
+  a[0]=axis[0]/absa;
+  a[1]=axis[1]/absa;
+  a[2]=axis[2]/absa;
+
+  result[0]=(cosa+SQR(a[0])*(1-cosa))*vector[0]+(a[0]*a[1]*(1-cosa)-a[2]*sina)*vector[1]+(a[0]*a[2]*(1-cosa)+a[1]*sina)*vector[2];
+  result[1]=(a[0]*a[1]*(1-cosa)+a[2]*sina)*vector[0]+(cosa+SQR(a[1])*(1-cosa))*vector[1]+(a[1]*a[2]*(1-cosa)-a[0]*sina)*vector[2];
+  result[2]=(a[0]*a[2]*(1-cosa)-a[1]*sina)*vector[0]+(a[1]*a[2]*(1-cosa)+a[0]*sina)*vector[1]+(cosa+SQR(a[2])*(1-cosa))*vector[2];
+
+  return;
+}
+
 /** Calc eigevalues of a 3x3 matrix stored in q as a 9x1 array*/
 MDINLINE int calc_eigenvalues_3x3(double *q,  double *eva) {
   double q11,q22,q33,q12,q13,q23;
@@ -550,6 +568,141 @@ MDINLINE int calc_eigenvector_3x3(double *a,double eva,double *eve) {
 
   /* the try failed => not a singular matrix: only solution is (0,0,0) */                    
   return 0;
+}
+/*@}*/
+
+/*************************************************************/
+/** \name Linear algebra functions                           */
+/*************************************************************/
+/*@{*/
+
+/** Calculate the LU decomposition of a matrix A. Uses Crout's method
+ *  with partial implicit pivoting.  The original matrix A is replaced
+ *  by its LU decomposition.  Due to the partial pivoting the result
+ *  may contain row permutations which are recorded in perms.
+ *  @return 0 for success, -1 otherwise (i.e. matrix is singular)
+ *  @param A     Matrix to be decomposed (Input/Output) 
+ *  @param n     Dimension of the matrix (Input) 
+ *  @param perms Records row permutations effected by pivoting (Output)
+ */
+MDINLINE int lu_decompose_matrix(double **A, int n, int *perms) {
+  int i, j, k, ip;
+  double max, sum, tmp;
+
+  double *scal = malloc(n*sizeof(double));
+
+  /* loop over rows and store implicit scaling factors */
+  for (i=0; i<n; i++) {
+    max = 0.0;
+    for (j=0; j<n; j++) {
+      if ( (tmp=fabs(A[i][j])) > max) max=tmp;
+    }
+    if (max == 0.0) {
+      /* matrix has a zero row and is singular */
+      return -1;
+    }
+    scal[i] = 1.0/max;
+  }
+
+  /** Crout's algorithm: Calculate L and U columnwise from top to
+   *  bottom. The diagonal elements of L are chosen to be 1. Only
+   *  previously determined entries are used in the calculation. The
+   *  original matrix elements are used only once and can be
+   *  overwritten with the elements of L and U, the diagonal of L not
+   *  being stored. Rows may be permuted according to the largest
+   *  element (pivot) in the lower part, where rows are normalized to
+   *  have the largest element scaled to unity.
+   */
+
+  /* loop over columns */
+  for (j=0; j<n; j++) {
+
+    /* calculate upper triangle part (without diagonal) */
+    for (i=0; i<j; i++) {
+      sum = A[i][j];
+      for (k=0;k<=i-1;k++) sum -= A[i][k]*A[k][j];
+      A[i][j] = sum;
+    }
+    
+    /* calculate diagonal and lower triangle part */
+    /* pivot is determined on the fly, but not yet divided by */
+    ip = j;
+    max = 0.0;
+    for (i=j; i<n; i++) {
+      sum = A[i][j];
+      for (k=0; k<=j-1; k++) sum -= A[i][k]*A[k][j];
+      A[i][j] = sum;
+      if ((tmp=scal[i]*fabs(sum)) > max) {
+	max = tmp;
+	ip = i;
+      }
+    }
+
+    /* swap rows according to pivot index */
+    if (j != ip) {
+      for (k=0; k<n; k++) {
+	tmp = A[j][k];
+	A[j][k] = A[ip][k];
+	A[ip][k] = tmp;
+      }
+      scal[ip] = scal[j];
+    }
+    perms[j] = ip;
+
+    if (A[j][j] == 0.0) {
+      /* zero pivot indicates singular matrix */
+      return -1;
+    }
+
+    /* now divide by pivot element */
+    if (j != n) {
+      tmp = 1.0/A[j][j];
+      for (i=j+1; i<n; i++)
+	A[i][j] *= tmp;
+    }
+
+  }
+
+  free(scal);
+  
+  return 0;
+}
+
+/** Solve the linear equation system for a LU decomposed matrix A.
+ *  Uses forward substitution for the lower triangle part and
+ *  backsubstitution for the upper triangle part. Row permutations as
+ *  indicated in perms are applied to b accordingly. The solution is
+ *  written to b in place.
+ *  @param A     Matrix in LU decomposed form (Input) 
+ *  @param n     Dimension of the matrix (Input) 
+ *  @param perms Indicates row permutations due to pivoting (Input)
+ *  @param b     Right-hand side of equation system (Input).
+ *               Is destroyed and contains the solution x afterwards (Output).
+ */
+MDINLINE void lu_solve_system(double **A, int n, int *perms, double *b) {
+  int i, j;
+  double sum;
+
+  /* Step 1: Solve Ly=b */
+
+  /* forward substitution for lower triangle part */
+  for (i=0; i<n; i++) {
+    /* take care of the correct permutations */
+    sum=b[perms[i]];
+    b[perms[i]]=b[i];
+    for (j=0; j<=i-1; j++) sum -= A[i][j]*b[j];
+    b[i] = sum;
+  }
+
+  /* Step 2: Solve Ux=y */
+
+  /* backsubstitution for upper triangle part */
+  for (i=n-1; i>=0; i--) {
+    sum = b[i];
+    for (j=i+1; j<n; j++) sum -= A[i][j]*b[j];
+    b[i]=sum/A[i][i];
+  }
+
 }
 /*@}*/
 
@@ -726,48 +879,7 @@ MDINLINE double unfolded_distance(double pos1[3], int image_box1[3],
     \param pipename path to the named pipe
  */
 
-MDINLINE int replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-  Tcl_Channel channel;
-  
-  if (argc != 3) {
-    Tcl_AppendResult(interp,"Wrong # of args! Usage: ",argv[0]," [stdout|stderr|stdin] <pipename>",(char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if(strcmp(argv[1],"stdout")==0){
-    Tcl_UnregisterChannel(interp,Tcl_GetStdChannel(TCL_STDOUT));
-    channel = Tcl_OpenFileChannel(interp, argv[2], "WRONLY",0666);
-    if (channel == NULL) {
-      Tcl_AppendResult(interp,"could not create new stdout-channel\n",(char *)NULL);
-      Tcl_AppendResult(interp,Tcl_ErrnoMsg(Tcl_GetErrno()),(char *) NULL);
-      return TCL_ERROR;
-    }
-  }
-  else if(strcmp(argv[1],"stderr")==0){
-    Tcl_UnregisterChannel(interp,Tcl_GetStdChannel(TCL_STDERR));
-    channel = Tcl_OpenFileChannel(interp, argv[2], "WRONLY",0666);
-    if (channel == NULL) {
-      Tcl_AppendResult(interp,"could not create new stderr-channel\n",(char *)NULL);
-      Tcl_AppendResult(interp,Tcl_ErrnoMsg(Tcl_GetErrno()),(char *) NULL);
-      return TCL_ERROR;
-    }
-  }
-  else if(strcmp(argv[1],"stdin")==0){
-    Tcl_UnregisterChannel(interp,Tcl_GetStdChannel(TCL_STDIN));
-    channel = Tcl_OpenFileChannel(interp, argv[2], "RDONLY",0666);
-    if (channel == NULL) {
-      Tcl_AppendResult(interp,"could not create new stdin-channel\n",(char *)NULL);
-      Tcl_AppendResult(interp,Tcl_ErrnoMsg(Tcl_GetErrno()),(char *) NULL);
-      return TCL_ERROR;
-    }
-  }
-  else{
-    Tcl_AppendResult(interp,"invalid first argument (got: ",argv[1]," )",(char *) NULL);
-    return TCL_ERROR;
-  }
-  return TCL_OK;
-}
+int replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
 

@@ -40,6 +40,25 @@ MDINLINE int subt_lj_set_params(int bond_type, double k, double r)
   return TCL_OK;
 }
 
+/// parse parameters for the subt_lj potential
+MDINLINE int inter_parse_subt_lj(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+{
+  double k, r;
+  if (argc != 3) {
+    Tcl_AppendResult(interp, "subt_lj needs 2 dummy parameters: "
+		     "<k_subt_lj> <r_subt_lj>", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) {
+    Tcl_AppendResult(interp, "subt_lj needs 2 dummy DOUBLE parameters: "
+		     "<k_subt_lj> <r_subt_lj>", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  CHECK_VALUE(subt_lj_set_params(bond_type, k, r), "bond type must be nonnegative");
+}
+
 /** Computes the negative of the LENNARD-JONES pair forces 
     and adds this force to the particle forces (see \ref #inter). 
     @param p1        Pointer to first particle.

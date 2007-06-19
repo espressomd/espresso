@@ -1,0 +1,46 @@
+#!/bin/sh
+# This is the Espresso-wrapper that is used in the source directory
+
+# get the name of the directory from the script name
+script=$0
+
+while test -L $script; do
+    script=`readlink -f "$script"`
+done
+dir=`dirname $script`
+
+# if Makefile-am is not found there, we must assume that we are in
+# the srcdir
+if test ! -f $dir/Makefile-am; then
+    # try to find the objdir
+    objdir="$dir/obj-`$dir/config/config.guess`"
+    if test ! -d $objdir; then
+	# we didn't find the objdir
+	echo "Error: Could not find the build dir $objdir"
+	exit 1
+    fi
+    if test ! -f $objdir/Espresso; then
+	# we didn't find the Espresso script
+	echo "Error: Could not find Espresso in $objdir"
+	exit 1
+    fi
+
+    # found it: execute Espresso there
+    exec $objdir/Espresso "$@"
+
+# otherwise we are in the objdir 
+else
+    # try to find the Espresso binary
+    if test ! -f $dir/Espresso_bin; then
+	echo "Error: Could not find Espresso_bin in $dir"
+	exit 1
+    fi
+
+    # call Espresso
+    if test .$2 != .; then NP=$2; else NP=2; fi
+    ESPRESSO_SCRIPTS=@abs_srcdir@/scripts
+    export ESPRESSO_SCRIPTS
+    ESPRESSO_CALL="$dir/Espresso_bin $*"
+    @MPI_INVOCATION@
+fi
+

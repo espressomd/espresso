@@ -305,6 +305,30 @@ MDINLINE double plate_energy(Particle *p1, Particle *c_p, Constraint_plate *c)
   return 0;
 }
 
+//ER
+MDINLINE void add_ext_magn_field_force(Particle *p1, Constraint_ext_magn_field *c)
+{
+#ifdef ROTATION
+#ifdef DIPOLES
+  p1->f.torque[0] += p1->r.dip[1]*c->ext_magn_field[2]-p1->r.dip[2]*c->ext_magn_field[1];
+  p1->f.torque[1] += p1->r.dip[2]*c->ext_magn_field[0]-p1->r.dip[0]*c->ext_magn_field[2];
+  p1->f.torque[2] += p1->r.dip[0]*c->ext_magn_field[1]-p1->r.dip[1]*c->ext_magn_field[0];
+#endif
+#endif
+}
+
+MDINLINE double ext_magn_field_energy(Particle *p1, Constraint_ext_magn_field *c)
+{
+#ifdef DIPOLES
+  if (c->ext_magn_field[0]*c->ext_magn_field[0] + c->ext_magn_field[1]*c->ext_magn_field[1] + c->ext_magn_field[2]*c->ext_magn_field[2] != 0.0)
+     return c->ext_magn_field[0]*p1->r.dip[0] + c->ext_magn_field[1]*p1->r.dip[1] + c->ext_magn_field[2]*p1->r.dip[2];
+//Do we really need this "if" ?
+//Check the sign of the sum. Do we need "-" before?
+#endif
+  return 0;
+}
+//end ER
+
 MDINLINE void add_constraints_forces(Particle *p1)
 {
   int n, j;
@@ -390,6 +414,11 @@ MDINLINE void add_constraints_forces(Particle *p1)
     case CONSTRAINT_PLATE:
       add_plate_force(p1, &constraints[n].part_rep, &constraints[n].c.plate);
       break;
+    //ER
+    case CONSTRAINT_EXT_MAGN_FIELD:
+        add_ext_magn_field_force(p1, &constraints[n].c.emfield);
+        break;
+    //end ER
     }
 
     for (j = 0; j < 3; j++) {
@@ -483,6 +512,12 @@ MDINLINE double add_constraints_energy(Particle *p1)
     case CONSTRAINT_PLATE:
       coulomb_en = plate_energy(p1, &constraints[n].part_rep, &constraints[n].c.plate);
       break;
+    //ER
+    case CONSTRAINT_EXT_MAGN_FIELD:
+      // Torsten, I'm not sure if I should add this energy to energy.coloumb
+      coulomb_en = ext_magn_field_energy(p1, &constraints[n].c.emfield);
+      break;
+    //end ER
     }
 
     if (energy.n_coulomb > 0)

@@ -1,0 +1,8 @@
+# LaTeXMk-Config file. Will be used by latexmk.
+#
+@default_files=("ug.tex");
+
+$pdf_mode=1;
+#$bibtex_mode=1;
+$index_mode=1;
+$pdf_previewer="start xpdf";

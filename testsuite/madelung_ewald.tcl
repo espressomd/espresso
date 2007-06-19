@@ -103,8 +103,6 @@ set ewald_kmax  10
 #############################################################
 setmd time_step 0.01
 setmd skin      0.03
-# setmd gamma     1.0
-# setmd temp      0.0
 thermostat off
 
 set int_steps   1

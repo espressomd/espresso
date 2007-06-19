@@ -7,8 +7,8 @@
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 /** \file statistics.c
-    This is the place for analysation (so far...).
-    Implementation of \ref statistics.h "statistics.h"
+    This is the place for analysis (so far...).
+    Implementation of statistics.h
 */
 #include <tcl.h>
 #include <stdlib.h>
@@ -55,15 +55,27 @@ double min_distance2(double pos1[3], double pos2[3])
   return sqrlen(diff);
 }
 
+/** Parses a reference point, i.e. either three doubles representing a
+    position, or a particle id. */
 static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
 			       double pos[3], int *pid)
 {
   *pid = -1;
-  
-  if (*argc < 3) {
+
+  if (*argc >= 3 &&
+      (Tcl_GetDouble(interp, (*argv)[0], &pos[0]) != TCL_ERROR) &&
+      (Tcl_GetDouble(interp, (*argv)[1], &pos[1]) != TCL_ERROR) &&
+      (Tcl_GetDouble(interp, (*argv)[2], &pos[2]) != TCL_ERROR)) {
+    /* Found three doubles representing a position. */
+    (*argc) -= 3;
+    (*argv) += 3;
+    return TCL_OK;
+  }
+  /* else */
+  if (*argc >= 1 && 
+      (Tcl_GetInt(interp, (*argv)[0], pid) != TCL_ERROR)) {
+    /* Found a single integer representing a particle id. */
     Particle ref;
-    if (Tcl_GetInt(interp, (*argv)[0], pid) == TCL_ERROR)
-      return TCL_ERROR;
     
     if (get_particle_data(*pid, &ref) != TCL_OK) {
       Tcl_AppendResult(interp, "reference particle does not exist", (char *)NULL);
@@ -80,15 +92,7 @@ static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
     return TCL_OK;
   }
   /* else */
-  if (Tcl_GetDouble(interp, (*argv)[0], &pos[0]) == TCL_ERROR ||
-      Tcl_GetDouble(interp, (*argv)[1], &pos[1]) == TCL_ERROR ||
-      Tcl_GetDouble(interp, (*argv)[2], &pos[2]) == TCL_ERROR)
-    return TCL_ERROR;
-
-  (*argc) -= 3;
-  (*argv) += 3;
-
-  return TCL_OK;
+  return TCL_ERROR;
 }
 
 /****************************************************************************************
@@ -340,6 +344,9 @@ void nbhood(double pt[3], double r, IntList *il, int planedims[3] )
 {
   double d[3],dsize;
   int i,j;
+  double r2;
+
+  r2 = r*r;
 
   init_intlist(il);
  
@@ -356,7 +363,7 @@ void nbhood(double pt[3], double r, IntList *il, int planedims[3] )
       }
     }
 
-    if (sqrt(sqrlen(d)) < r) {
+    if (sqrlen(d) < r2) {
       realloc_intlist(il, il->n + 1);
       il->e[il->n] = partCfg[i].p.identity;
       il->n++;
@@ -723,27 +730,25 @@ void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 
 }
 
-void analyze_structurefactor(int type, int order, double **_ff) {
-  int i, j, k, n, qi, p, order2, *fn=NULL;
+void calc_structurefactor(int type, int order, double **_ff) {
+  int i, j, k, n, qi, p, order2;
   double qr, twoPI_L, C_sum, S_sum, *ff=NULL;
   
   order2 = order*order;
-  *_ff = ff = realloc(ff,(order2+1)*sizeof(double));
-  fn = realloc(fn,(order2+1)*sizeof(int));
+  *_ff = ff = realloc(ff,2*order2*sizeof(double));
   twoPI_L = 2*PI/box_l[0];
   
   if ((type < 0) || (type > n_particle_types)) { fprintf(stderr,"WARNING: Type %i does not exist!",type); fflush(NULL); errexit(); }
   else if (order < 1) { fprintf(stderr,"WARNING: parameter \"order\" has to be a whole positive number"); fflush(NULL); errexit(); }
   else {
-    for(qi=1; qi<=order2; qi++) {
+    for(qi=0; qi<2*order2; qi++) {
       ff[qi] = 0.0;
-      fn[qi] = 0;
     }
     for(i=0; i<=order; i++) {
       for(j=-order; j<=order; j++) {
         for(k=-order; k<=order; k++) {
 	  n = i*i + j*j + k*k;
-	  if ((n<=order2) && (n>0)) {
+	  if ((n<=order2) && (n>=1)) {
 	    C_sum = S_sum = 0.0;
 	    for(p=0; p<n_total_particles; p++) {
 	      if (partCfg[p].p.type == type) {
@@ -752,8 +757,8 @@ void analyze_structurefactor(int type, int order, double **_ff) {
 		S_sum+= sin(qr);
 	      }
 	    }
-	    ff[n]+= C_sum*C_sum + S_sum*S_sum;
-	    fn[n]++;
+	    ff[2*n-2]+= C_sum*C_sum + S_sum*S_sum;
+	    ff[2*n-1]++;
 	  }
 	}
       }
@@ -762,13 +767,12 @@ void analyze_structurefactor(int type, int order, double **_ff) {
     for(p=0; p<n_total_particles; p++) {
       if (partCfg[p].p.type == type) n++;
     }
-    for(qi=0; qi<=order2; qi++) 
-      if (fn[qi]!=0) ff[qi]/= n*fn[qi];
-    free(fn);
+    for(qi=0; qi<order2; qi++) 
+      if (ff[2*qi+1]!=0) ff[2*qi]/= n*ff[2*qi+1];
   }
 }
 
-int analyze_radial_density_map (int xbins,int ybins,int thetabins,double xrange,double yrange, double axis[3], double center[3], IntList *beadids, DoubleList *density_map, DoubleList *density_profile) {
+int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,double yrange, double axis[3], double center[3], IntList *beadids, DoubleList *density_map, DoubleList *density_profile) {
   int i,j,t;
   int pi,bi;
   int nbeadtypes;
@@ -835,7 +839,7 @@ int analyze_radial_density_map (int xbins,int ybins,int thetabins,double xrange,
 	  yav += ydist;
 	  beadcount += 1;
 	} else {
-	  //	    fprintf(stderr,"ERROR: outside array bounds in analyze_radial_density_map"); fflush(NULL); errexit(); 
+	  //	    fprintf(stderr,"ERROR: outside array bounds in calc_radial_density_map"); fflush(NULL); errexit(); 
 	}
       }
 
@@ -891,7 +895,7 @@ int analyze_radial_density_map (int xbins,int ybins,int thetabins,double xrange,
 	    thetaradii[bi*thetabins+tindex] += xdist + xav;
 	    thetacounts[bi*thetabins+tindex] += 1;
 	    if ( tindex >= thetabins ) {
-	      fprintf(stderr,"ERROR: outside density_profile array bounds in analyze_radial_density_map"); fflush(NULL); errexit(); 
+	      fprintf(stderr,"ERROR: outside density_profile array bounds in calc_radial_density_map"); fflush(NULL); errexit(); 
 	    } else {
 	      density_profile[bi].e[tindex] += 1;
 	    }
@@ -924,6 +928,50 @@ int analyze_radial_density_map (int xbins,int ybins,int thetabins,double xrange,
 
   //  printf("done \n");
   return TCL_OK;
+}
+
+double calc_vanhove(int ptype, double rmin, double rmax, int rbins, double *msd, double **vanhove) 
+{
+  int i, c1, c3, ind, np=0;
+  double p1[3],p2[3],dist;
+  double bin_width, inv_bin_width;
+  IntList p;
+
+  /* create particle list */
+  init_intlist(&p);
+  for(i=0; i<n_total_particles; i++) { if( partCfg[i].p.type == ptype ) { np ++; } }
+  if(np==0) { return 0; }
+  alloc_intlist(&p,np);
+  for(i=0; i<n_total_particles; i++) { if( partCfg[i].p.type == ptype ) { p.e[p.n]=i; p.n++; } }
+
+  /* preparation */
+  bin_width     = (rmax-rmin) / (double)rbins;
+  inv_bin_width = 1.0 / bin_width;
+ 
+  /* calculate msd and store distribution in vanhove */
+  for(c1=0; c1<n_configs; c1++) { 
+    for(c3=(c1+1); c3<n_configs; c3++) { 
+      for(i=0; i<p.n; i++) {
+	p1[0]=configs[c1][3*i  ]; p1[1]=configs[c1][3*i+1]; p1[2]=configs[c1][3*i+2];
+	p2[0]=configs[c3][3*i  ]; p2[1]=configs[c3][3*i+1]; p2[2]=configs[c3][3*i+2];
+	dist = distance(p1, p2);
+	if(dist > rmin && dist < rmax) {
+	  ind = (int) ( (dist - rmin)*inv_bin_width );
+	  vanhove[(c3-c1-1)][ind]++;
+	}
+	msd[(c3-c1-1)] += dist*dist;
+      }
+    }
+  }
+
+  /* normalize */
+  for(c1=0; c1<(n_configs-1); c1++) { 
+    for(i=0; i<rbins; i++) { vanhove[c1][i] /= (double) (n_configs-c1-1)*p.n; }
+    msd[c1] /= (double) (n_configs-c1-1)*p.n;
+  }
+
+  realloc_intlist(&p,0);
+  return np;
 }
 
 /****************************************************************************************
@@ -1137,7 +1185,7 @@ static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
 
 }
 
-
+#ifdef MODES
 
 static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
 {
@@ -1384,7 +1432,7 @@ static int parse_radial_density_map(Tcl_Interp *interp, int argc, char **argv)
   }
 
   //  printf("about to calculate profile \n");
-  if(analyze_radial_density_map(xbins,ybins,thetabins,xrange,yrange,rotation_axis,rotation_center,&beadtypes, density_map ,density_profile) != TCL_OK) {
+  if(calc_radial_density_map(xbins,ybins,thetabins,xrange,yrange,rotation_axis,rotation_center,&beadtypes, density_map ,density_profile) != TCL_OK) {
     Tcl_AppendResult(interp, "Error calculating radial density profile ", (char *)NULL);
     return TCL_ERROR;
   }
@@ -1618,6 +1666,7 @@ static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
   return TCL_ERROR;
 }
 
+#endif
 
 static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
 {
@@ -1932,7 +1981,8 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
   double result;
   int p;
   double pos[3];
-  char buffer[TCL_DOUBLE_SPACE];  
+  char buffer[TCL_DOUBLE_SPACE], usage[150];
+  sprintf(usage, "distto { <partid> | <posx> <posy> <posz> }");
 
   if (n_total_particles == 0) {
     Tcl_AppendResult(interp, "(no particles)",
@@ -1940,10 +1990,14 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
 
+  if (argc == 0) {
+    Tcl_AppendResult(interp, "usage: ", usage, (char*)NULL);
+    return TCL_ERROR;
+  }
+
   get_reference_point(interp, &argc, &argv, pos, &p);
   if (argc != 0) {
-    Tcl_AppendResult(interp, "usage: distto { <partid> | <posx> <posy> <posz> }",
-		     (char *)NULL);
+    Tcl_AppendResult(interp, "usage: ", usage, (char *)NULL);
     return TCL_ERROR;
   }
 
@@ -2260,18 +2314,90 @@ int parse_structurefactor(Tcl_Interp *interp, int argc, char **argv)
     argc-=2; argv+=2;
   }
   updatePartCfg(WITHOUT_BONDS);
-  analyze_structurefactor(type, order, &sf); 
+  calc_structurefactor(type, order, &sf); 
   
   qfak = 2.0*PI/box_l[0];
-  for(i=1; i<=order*order+1; i++) { 
-    if (sf[i]>1e-6) { 
-      sprintf(buffer,"{%f %f} ",qfak*sqrt(i),sf[i]);
+  for(i=0; i<order*order; i++) { 
+    if (sf[2*i+1]> 0) { 
+      sprintf(buffer,"{%f %f} ",qfak*sqrt(i+1),sf[2*i]);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
   }
   free(sf);
   return (TCL_OK);
 }
+
+static int parse_vanhove(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze vanhove' (van Hove Auto correlation function) */
+  /**********************************************************/
+
+  char buffer[2*TCL_DOUBLE_SPACE+4];
+  int c,i,ptype=0, rbins=0, np=0;
+  double rmin=0, rmax=0;
+  double **vanhove=NULL;
+  double *msd=NULL;
+
+  /* checks */
+  if (argc < 4) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze vanhove <part_type> <r_min> <r_max> <r_bins>", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  
+  if (!ARG0_IS_I(ptype)) return (TCL_ERROR); argc--; argv++;
+  if (!ARG0_IS_D(rmin))  return (TCL_ERROR); argc--; argv++;
+  if (!ARG0_IS_D(rmax))  return (TCL_ERROR); argc--; argv++;
+  if (!ARG0_IS_I(rbins)) return (TCL_ERROR); argc--; argv++;
+
+  if (n_configs == 0) {
+	Tcl_AppendResult(interp, "no configurations found! (This is a dynamic quantity!)", (char *)NULL);
+	return TCL_ERROR;
+  }
+
+  /* allocate space */
+  vanhove = (double **) malloc((n_configs)*sizeof(double *));
+  for(c=0; c<n_configs; c++) { 
+    vanhove[c] = (double *) malloc(rbins*sizeof(double));
+    for(i=0; i<rbins; i++) { vanhove[c][i] = 0; }
+  }
+  msd = (double *) malloc(n_configs*sizeof(double));
+  for(i=0; i<n_configs; i++) { msd[i] = 0; }
+ 
+  /* calculation */
+  np = calc_vanhove(ptype,rmin,rmax,rbins,msd,vanhove);
+ 
+  /* return results */
+  if(np==0) {
+    Tcl_AppendResult(interp, "{ no particles }", (char *)NULL);
+  } else {
+    Tcl_AppendResult(interp, "{ msd { ", (char *)NULL);
+    for(c=0; c<(n_configs-1); c++) {
+      sprintf(buffer,"%f ",msd[c]);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+    Tcl_AppendResult(interp, "} } { vanhove { ", (char *)NULL);
+    for(c=0; c<(n_configs-1); c++) {
+      Tcl_AppendResult(interp, "{ ", (char *)NULL);
+      for(i=0; i<rbins; i++) {
+	sprintf(buffer,"%f ",vanhove[c][i]);
+	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      Tcl_AppendResult(interp, "} ", (char *)NULL);
+    }
+    Tcl_AppendResult(interp, "} } ", (char *)NULL);
+  }
+
+
+  // free space of times and vanhove
+  for(c=0; c<n_configs; c++) { free(vanhove[c]); } 
+  free(vanhove);
+  free(msd);
+
+  if(np>0) { return (TCL_OK); } else { return (TCL_ERROR); }
+
+}
+
 
 /****************************************************************************************
  *                                 parser for config storage stuff
@@ -2371,6 +2497,20 @@ static int parse_remove(Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze remove [<index>]", (char *)NULL); return TCL_ERROR; 
   }
   sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
+}
+
+static int parse_stored(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze stored' */
+  /********************/
+  char buffer[TCL_INTEGER_SPACE];
+  if (argc != 0) {
+    Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze stored", (char *)NULL);
+    return TCL_ERROR; 
+  }
+  sprintf(buffer,"%d",n_configs);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return TCL_OK;
 }
 
 static int parse_configs(Tcl_Interp *interp, int argc, char **argv)
@@ -2606,134 +2746,90 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return (TCL_ERROR);
   }
 
-  if (ARG1_IS_S("set"))
-    err = parse_analyze_set_topology(interp, argc - 2, argv + 2);
+  /* for general options */
+#define REGISTER_ANALYZE_OPTION(name, parser)				\
+  else if (ARG1_IS_S(name)) err = parser(interp, argc - 2, argv + 2)
+
+  /* for commands of the config storage */
+#define REGISTER_ANALYZE_STORAGE(name, parser) \
+  else if (ARG1_IS_S(name)) err = parser(interp, argc - 2, argv + 2)
+
+  /* for actual observables */
+#define REGISTER_ANALYSIS(name, parser)					\
+  else if (ARG1_IS_S(name)) err = parser(interp, argc - 2, argv + 2)
+#define REGISTER_ANALYSIS_W_ARG(name, parser, arg)			\
+  else if (ARG1_IS_S(name)) err = parser(interp, arg, argc - 2, argv + 2)
+
+  /* for the elses below */
+  if (0);
+
+  REGISTER_ANALYZE_OPTION("set", parse_analyze_set_topology);
 #ifdef LB
-  else if (ARG1_IS_S("fluid"))
-    err = parse_analyze_fluid(interp, argc - 2, argv + 2);
+  REGISTER_ANALYZE_OPTION("fluid", parse_analyze_fluid);
 #endif
-  else if (ARG1_IS_S("get_folded_positions"))
-    err = parse_get_folded_positions(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("set_bilayer"))
-    err = parse_bilayer_set(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("modes2d"))
-    err = parse_modes2d(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("bilayer_density_profile"))
-    err = parse_bilayer_density_profile(interp,argc -2, argv +2);
-  else if (ARG1_IS_S("radial_density_map"))
-    err = parse_radial_density_map(interp,argc -2, argv +2);
-  else if (ARG1_IS_S("get_lipid_orients"))
-    err = parse_get_lipid_orients(interp,argc-2,argv+2);
-  else if (ARG1_IS_S("lipid_orient_order"))
-    err = parse_lipid_orient_order(interp,argc-2,argv+2);
-  else if (ARG1_IS_S("mol"))
-    err = parse_mol(interp,argc-2,argv+2);
-  else if (ARG1_IS_S("mindist"))
-    err = parse_mindist(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("aggregation"))
-    err = parse_aggregation(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("centermass"))
-    err = parse_centermass(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("momentofinertiamatrix"))
-    err = parse_momentofinertiamatrix(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("find_principal_axis"))
-    err = parse_find_principal_axis(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("nbhood"))
-    err = parse_nbhood(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("distto"))
-    err = parse_distto(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("cell_gpb"))
-    err = parse_cell_gpb(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("Vkappa"))
-    err = parse_Vkappa(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("energy"))
-    err = parse_and_print_energy(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("pressure"))
-    err = parse_and_print_pressure(interp, argc - 2, argv + 2, 0);
-  else if (ARG1_IS_S("stress_tensor"))
-    err = parse_and_print_stress_tensor(interp, argc - 2, argv + 2, 0);
-  else if (ARG1_IS_S("p_inst"))
-    err = parse_and_print_pressure(interp, argc - 2, argv + 2, 1);
-  else if (ARG1_IS_S("momentum"))
-    err = parse_and_print_momentum(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("bins"))
-    err = parse_bins(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("p_IK1"))
-    err = parse_and_print_p_IK1(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("re"))
-    err = parse_re(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<re>"))
-    err = parse_re(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("rg"))
-    err = parse_rg(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<rg>"))
-    err = parse_rg(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("rh"))
-    err = parse_rh(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<rh>"))
-    err = parse_rh(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("internal_dist"))
-    err = parse_intdist(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<internal_dist>"))
-    err = parse_intdist(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("bond_l"))
-    err = parse_bond_l(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<bond_l>"))
-    err = parse_bond_l(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("bond_dist"))
-    err = parse_bond_dist(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<bond_dist>"))
-    err = parse_bond_dist(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("g123"))
-    err = parse_g123(interp, 1, argc - 2, argv + 2);    
-  else if (ARG1_IS_S("<g1>"))
-    err = parse_g_av(interp, 1, argc - 2, argv + 2);    
-  else if (ARG1_IS_S("<g2>"))
-    err = parse_g_av(interp, 2, argc - 2, argv + 2);    
-  else if (ARG1_IS_S("<g3>"))
-    err = parse_g_av(interp, 3, argc - 2, argv + 2);
-  else if (ARG1_IS_S("formfactor"))
-    err = parse_formfactor(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<formfactor>")) 
-    err = parse_formfactor(interp, 1, argc - 2, argv + 2);    
-  else if (ARG1_IS_S("necklace")) 
-    err = parse_necklace_analyzation(interp, argc - 2, argv + 2);   
-  else if (ARG1_IS_S("distribution"))
-    err = parse_distribution(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("rdf"))
-    err = parse_rdf(interp, 0, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<rdf>"))
-    err = parse_rdf(interp, 1, argc - 2, argv + 2);
-  else if (ARG1_IS_S("<rdf-intermol>"))
-    err = parse_rdf(interp, 2, argc - 2, argv + 2);
-  else if (ARG1_IS_S("rdfchain"))
-    err = parse_rdfchain(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("structurefactor"))
-    err = parse_structurefactor(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("append"))
-    err = parse_append(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("push"))
-    err = parse_push(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("replace"))
-    err = parse_replace(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("activate"))
-    err = parse_activate(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("remove"))
-    err = parse_remove(interp, argc - 2, argv + 2);
-  else if (ARG1_IS_S("stored")) {
-    /* 'analyze stored' */
-    /********************/
-    char buffer[TCL_INTEGER_SPACE];
-    if (argc != 2) {
-      Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze stored", (char *)NULL);
-      err = TCL_ERROR; 
-    }
-    sprintf(buffer,"%d",n_configs);
-    Tcl_AppendResult(interp, buffer, (char *)NULL);
-    err = TCL_OK;
-  }
-  else if (ARG1_IS_S("configs"))
-    err = parse_configs(interp, argc - 2, argv + 2);
+  REGISTER_ANALYSIS("get_folded_positions", parse_get_folded_positions);
+#ifdef MODES
+  REGISTER_ANALYZE_OPTION("set_bilayer", parse_bilayer_set);
+  REGISTER_ANALYSIS("modes2d", parse_modes2d);
+  REGISTER_ANALYSIS("bilayer_density_profile", parse_bilayer_density_profile);
+  REGISTER_ANALYSIS("radial_density_map", parse_radial_density_map);
+  REGISTER_ANALYSIS("get_lipid_orients", parse_get_lipid_orients);
+  REGISTER_ANALYSIS("lipid_orient_order", parse_lipid_orient_order);
+#endif
+  REGISTER_ANALYSIS("mol", parse_mol);
+  REGISTER_ANALYSIS("mindist", parse_mindist);
+  REGISTER_ANALYSIS("aggregation", parse_aggregation);
+  REGISTER_ANALYSIS("centermass", parse_centermass);
+  REGISTER_ANALYSIS("momentofinertiamatrix", parse_momentofinertiamatrix);
+  REGISTER_ANALYSIS("find_principal_axis", parse_find_principal_axis);
+  REGISTER_ANALYSIS("nbhood", parse_nbhood);
+  REGISTER_ANALYSIS("distto", parse_distto);
+  REGISTER_ANALYSIS("cell_gpb", parse_cell_gpb);
+  REGISTER_ANALYSIS("Vkappa", parse_Vkappa);
+  REGISTER_ANALYSIS("energy", parse_and_print_energy);
+  REGISTER_ANALYSIS_W_ARG("pressure", parse_and_print_pressure, 0);
+  REGISTER_ANALYSIS_W_ARG("stress_tensor", parse_and_print_stress_tensor, 0);
+  REGISTER_ANALYSIS_W_ARG("p_inst", parse_and_print_pressure, 1);
+  REGISTER_ANALYSIS("momentum", parse_and_print_momentum);
+  REGISTER_ANALYSIS("bins", parse_bins);
+  REGISTER_ANALYSIS("p_IK1", parse_and_print_p_IK1);
+  REGISTER_ANALYSIS_W_ARG("re", parse_re, 0);
+  REGISTER_ANALYSIS_W_ARG("<re>", parse_re, 1);
+  REGISTER_ANALYSIS_W_ARG("rg", parse_rg, 0);
+  REGISTER_ANALYSIS_W_ARG("<rg>", parse_rg, 1);
+  REGISTER_ANALYSIS_W_ARG("rh", parse_rh, 0);
+  REGISTER_ANALYSIS_W_ARG("<rh>", parse_rh, 1);
+  REGISTER_ANALYSIS_W_ARG("internal_dist", parse_intdist, 0);
+  REGISTER_ANALYSIS_W_ARG("<internal_dist>", parse_intdist, 1);
+  REGISTER_ANALYSIS_W_ARG("bond_l", parse_bond_l, 0);
+  REGISTER_ANALYSIS_W_ARG("<bond_l>", parse_bond_l, 1);
+  REGISTER_ANALYSIS_W_ARG("bond_dist", parse_bond_dist, 0);
+  REGISTER_ANALYSIS_W_ARG("<bond_dist>", parse_bond_dist, 1);
+  REGISTER_ANALYSIS_W_ARG("g123", parse_g123, 1);    
+  REGISTER_ANALYSIS_W_ARG("<g1>", parse_g_av, 1);    
+  REGISTER_ANALYSIS_W_ARG("<g2>", parse_g_av, 2);    
+  REGISTER_ANALYSIS_W_ARG("<g3>", parse_g_av, 3);
+  REGISTER_ANALYSIS_W_ARG("formfactor", parse_formfactor, 0);
+  REGISTER_ANALYSIS_W_ARG("<formfactor>", parse_formfactor, 1);    
+  REGISTER_ANALYSIS("necklace", parse_necklace_analyzation);   
+  REGISTER_ANALYSIS("holes", parse_hole_cluster_analyzation);   
+  REGISTER_ANALYSIS("distribution", parse_distribution);
+  REGISTER_ANALYSIS_W_ARG("rdf", parse_rdf, 0);
+  REGISTER_ANALYSIS_W_ARG("<rdf>", parse_rdf, 1);
+  REGISTER_ANALYSIS_W_ARG("<rdf-intermol>", parse_rdf, 2);
+  REGISTER_ANALYSIS("rdfchain", parse_rdfchain);
+#ifdef ELECTROSTATICS
+  REGISTER_ANALYSIS("cwvac", parse_cwvac);
+#endif
+  REGISTER_ANALYSIS("structurefactor", parse_structurefactor);
+  REGISTER_ANALYSIS("vanhove", parse_vanhove);
+  REGISTER_ANALYZE_STORAGE("append", parse_append);
+  REGISTER_ANALYZE_STORAGE("push", parse_push);
+  REGISTER_ANALYZE_STORAGE("replace", parse_replace);
+  REGISTER_ANALYZE_STORAGE("activate", parse_activate);
+  REGISTER_ANALYZE_STORAGE("remove", parse_remove);
+  REGISTER_ANALYZE_STORAGE("stored", parse_stored);
+  REGISTER_ANALYZE_STORAGE("configs", parse_configs);
   else {
     /* the default */
     /***************/

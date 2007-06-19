@@ -277,7 +277,7 @@ proc ::mbtools::utils::init_random { n_procs } {
     for { set i 1 } { $i < $n_procs } { incr i } {
 	lappend seedbase [expr $c + 2304*$i]
     }
-    t_random seed [concat $seedbase]
+    eval t_random seed $seedbase
     
     flush stdout
 }

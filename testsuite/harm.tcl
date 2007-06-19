@@ -16,8 +16,7 @@ puts "- Testcase harm.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------"
 setmd time_step 0.006
 setmd skin      0.0
-setmd gamma     0.0
-setmd temp      0.0
+thermostat off
 
 set epsilon 1e-4
 
@@ -70,9 +69,9 @@ if { [catch {
     # write_data "harm_system.data2"
 
     # ensures that no other forces are on
-    set cureng [analyze energy harm 0 0]
+    set cureng [analyze energy bonded 0 0]
     # tbrs
-    set curprs [lindex [analyze pressure harm 0 0] 0]
+    set curprs [lindex [analyze pressure bonded 0 0] 0]
     ############## end
 
     set toteng [analyze energy total]

@@ -73,8 +73,7 @@ setmd periodic  0 0 0
 setmd time_step $time_step
 setmd skin      $skin
 #thermostat is turned off for pure MD simulation
-setmd gamma     0.0
-setmd temp      0.0
+thermostat off
 
 # Interaction setup
 #############################################################

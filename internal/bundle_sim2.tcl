@@ -180,8 +180,7 @@ if { $restart == 0 } { setmd box_l     $box_l $box_l $box_l }
 setmd periodic  0 0 0
 setmd time_step $time_step
 setmd skin      $skin
-setmd gamma     1.0
-setmd temp      1.0
+thermostat langevin 1.0 1.0
 
 # Interaction setup
 #############################################################

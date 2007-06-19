@@ -73,8 +73,7 @@ set fene_r      1.5
 
 setmd time_step 0.006
 setmd skin      0.4
-setmd gamma     0.5
-setmd temp      1.0
+thermostat langevin 1.0 0.5
 
 # warmup integration (with capped LJ potential) until particles are at least $min_dist apart
 set warm_step   200

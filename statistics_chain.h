@@ -39,7 +39,7 @@ void calc_rg(double **rg);
     @return the averaged radius of gyration */
 void calc_rg_av(double **rg);
 
-/** calculate the hydrodynamic radius. chain information \ref chain_start etc. must be set!
+/** calculate the hydrodynamic radius (ref. Kirkwood-Zimm theory). chain information \ref chain_start etc. must be set!
     @return the hydrodynamic radius */
 void calc_rh(double **rh);
 
@@ -135,6 +135,19 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff);
     */
 void analyze_rdfchain(double r_min, double r_max, int r_bins, double **_rdf, double **_rdf_cm, double **_rdf_d);
 
+#ifdef ELECTROSTATICS
+/** Calculates the (charge weighted) velocity auto-correlation function from the stored configurations.
+ *  The charge weighted velocity auto-correlation function is used to determine
+ *  the electrophoretic mobility of a chain using Green-Kubo relation.
+ * 
+ *  cwvac(tau) = < sum_i^N ( q_i*v_i(t0)*v_CM(t0+tau) ) >
+  @param maxtau maximal tau
+  @param interval step between t0, sampling frequency
+  @param _avac contains the averaged(=over all chains in the system) velocity auto-correlation
+  @param _evac contains the error associated with the averaged velocity auto-correlation function
+  */
+void analyze_cwvac(int maxtau, int interval, double **_avac, double **_evac); 
+#endif
 ///
 int print_chain_structure_info(Tcl_Interp *interp);
 
@@ -170,7 +183,10 @@ int parse_g_av(Tcl_Interp *interp, int average, int argc, char **argv);
 int parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv);
 ///
 int parse_rdfchain(Tcl_Interp *interp, int argc, char **argv);
-
+///
+#ifdef ELECTROSTATICS
+int parse_cwvac(Tcl_Interp *interp, int argc, char **argv);
+#endif
 /*@}*/
 
 #endif

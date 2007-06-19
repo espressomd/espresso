@@ -60,8 +60,7 @@ set lj1_shift   $lj1_eps
 
 setmd time_step 0.01
 setmd skin      0.4
-setmd gamma     1.0
-setmd temp      1.0
+thermostat langevin 1.0 1.0
 
 # warmup integration (with capped LJ potential)
 set warm_steps   100
@@ -174,7 +173,7 @@ puts "transfer_rate [setmd transfer_rate]"
 puts "verlet_reuse  [setmd verlet_reuse]" 
 
 # write parameter file
-polyBlockWrite "$name$ident.set" {box_l time_step skin temp gamma } "" 
+polyBlockWrite "$name$ident.set" {box_l time_step skin} "" 
 
 #############################################################
 #      Integration                                          #

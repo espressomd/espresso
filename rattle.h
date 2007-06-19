@@ -18,12 +18,14 @@
  *
  *  For more information see \ref rattle.c "rattle.c".
 */
-#include <tcl.h>
+#include "parser.h"
 #include "global.h"
 #include "particle_data.h"
 
 /** number of rigid bonds */
 extern int n_rigidbonds;
+
+#ifdef BOND_CONSTRAINT
 
 /** Transfers the current particle positions from r.p[3] to r.p_pold[3]
     of the \ref Particle structure. Invoked from \ref correct_pos_shake() */
@@ -38,4 +40,24 @@ void correct_vel_shake();
 /** set the parameter for a rigid, aka RATTLE bond */
 int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol);
 
+/// parse parameters for the rigid bonds
+MDINLINE int inter_parse_rigid_bonds(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+{
+  double d, p_tol, v_tol;
+    
+  if (argc != 4) {
+    Tcl_AppendResult(interp, "rigid bond needs 3 parameters: "
+		     "<constrained_bond_distance> <Positional_tolerance> <Velocity_tolerance>", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if ((! ARG_IS_D(1, d)) || (! ARG_IS_D(2, p_tol)) || (! ARG_IS_D(3, v_tol)) ) {
+    Tcl_AppendResult(interp, "rigid bond needs 3 DOUBLE parameters: "
+		     "<constrained_bond_distance> <Positional_tolerance> <Velocity_tolerance>", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  CHECK_VALUE(rigid_bond_set_params(bond_type, d, p_tol, v_tol), "bond type must be nonnegative");
+}
+#endif
 #endif

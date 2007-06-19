@@ -15,6 +15,8 @@
 #ifndef ELC_H
 #define ELC_H
 
+#ifdef ELP3M
+
 /** parameters for the ELC method */
 typedef struct {
   /** maximal pairwise error of the potential and force */
@@ -112,5 +114,7 @@ void   ELC_P3M_modify_p3m_sums_image();
 
 /// assign the additional, virtual charges, used only in energy.c
 void   ELC_P3M_restore_p3m_sums();
+
+#endif
 
 #endif

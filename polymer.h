@@ -43,8 +43,9 @@ int mindist3(int part_id, double r_catch, int *ids);
 
 /** Checks whether a particle at coordinates (\<posx\>, \<posy\>, \<posz\>) collides
     with any other particle due to a minimum image distance smaller than \<shield\>. 
+    @param add additional coordinates to check
     @return Returns '1' if there is a collision, '0' otherwise. */
-int collision(double pos[3], double shield);
+int collision(double pos[3], double shield, int n_add, double *add);
 
 /** Implementation of the tcl-command <br>
     polymer \<N_P\> \<MPC\> \<bond_length\> [start \<part_id\>] [pos \<x\> \<y\> \<z\>] [mode { SAW | RW | PSAW } [\<shield\> [\<max_try\>]]] 
@@ -66,10 +67,19 @@ int collision(double pos[3], double shield);
 	         \<type_{n|c}P\> = type number of {neutral|charged} monomers to be used with "part" (default to '0' and '1') <br>
 	         \<type_FENE\>   = type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0') <br>
 		 \<angle\>       = freely rotating bond-angle to be fixed <br>
-	         \<angle2\>      = second spherical bond-angle (for setting up helixes or planar polymers)<br>
-		 \<x2,y2,z2\>    = sets the position of the 2nd monomer of the first chain
+	         \<angle2\>      = second spherical bond-angle (for setting up helixes or planar polymers) <br>
+		 \<x2,y2,z2\>    = sets the position of the 2nd monomer of the first chain <br>
+		 \<constr\>      = shall constraints be respected when setting up polymer? (0=no, 1=yes, default: 0)
     <br>For more informations on the parameters see \ref polymerC. */
 int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
+/** Function used by polymerC to determine wether a constraint has been violated while setting up a polymer. Currently only "wall", "sphere" and "cylinder" constraints are respected.
+    @param p1           = position of first particle given as double-array of lenght 3
+    @param p2           = position of second particle given as double-array of length 3
+    @return Returns 1 if p1 and p2 sit on opposite sites of any constraint currently defined in the system and 0 otherwise
+ */
+int constraint_collision(double *p1,double *p2);
+
 
 /** C implementation of 'polymer \<N_P\> \<MPC\> \<bond_length\> [options]', which returns how often the attempt to place a monomer failed in the worst case.
     @param  N_P         = how many polymers to create <br>
@@ -86,12 +96,13 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv);
     @param  type_cM     = type number of charged monomers (default to '1') <br>
     @param  type_FENE   = type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0') <br>
     @param  angle       = desired bond-angle to be fixed <br>
-    @param  angle2      = secon spherical bond-angle<br>
-    @param  posed2      = sets the position of the 2nd monomer of the first chain
+    @param  angle2      = secon spherical bond-angle <br>
+    @param  posed2      = sets the position of the 2nd monomer of the first chain <br>
+    @param  constr      = shall constraints be respected when setting up polymer?  (0=no, 1=yes, default: 0)
     @return Returns how often the attempt to place a monomer failed in the worst case. <br>
     If val_cM \< 1e-10, the charge is assumed to be zero, and type_cM = type_nM.  */
 int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, int mode, double shield, int max_try, 
-	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle, double angle2, double* posed2);
+	     double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle, double angle2, double* posed2, int constr);
 
 /** Implementation of the tcl-command <br>
     counterions \<N_CI\> [start \<part_id\>] [mode { SAW | RW } [\<shield\> [\<max_try\>]]] [charge \<val_CI\>] [type \<type_CI\>] <br>

@@ -14,7 +14,7 @@
     section where you have to find a nice and short name for your property to appear in
     the Tcl code. Then you just parse your part out of argc and argv.
 
-    The corresponding header file is \ref particle_data.h "particle_data.h".
+    The corresponding header file is particle_data.h.
 */
 #include <stdlib.h>
 #include <string.h>
@@ -29,6 +29,7 @@
 #include "integrate.h"
 #include "cells.h"
 #include "parser.h"
+#include "rotation.h"
 
 
 /************************************************
@@ -404,11 +405,15 @@ void part_print_omega(Particle *part, char *buffer, Tcl_Interp *interp)
 
 void part_print_torque(Particle *part, char *buffer, Tcl_Interp *interp)
 {
-  Tcl_PrintDouble(interp, part->f.torque[0], buffer);
+  double torque[3];
+//in Espresso torques are in body-fixed frames. We should convert they to the space-fixed coordinates.
+convert_torques_body_to_space(part, torque);
+
+  Tcl_PrintDouble(interp, torque[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->f.torque[1], buffer);
+  Tcl_PrintDouble(interp, torque[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->f.torque[2], buffer);
+  Tcl_PrintDouble(interp, torque[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
@@ -977,7 +982,8 @@ int part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   double dip[3];
-  double dip_tot;
+  double quat[4];
+  double dipm;
   *change = 3;
 
   if (argc < 3) {
@@ -994,15 +1000,29 @@ int part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
   if (! ARG_IS_D(2, dip[2]))
     return TCL_ERROR;
 
-  dip_tot = sqrt(dip[0]*dip[0] + dip[1]*dip[1] + dip[2]*dip[2]);
-  if (dip_tot == 0) {
-     //Error. there is no direction for dipole
-  }
-  else{
+  dipm = sqrt(dip[0]*dip[0] + dip[1]*dip[1] + dip[2]*dip[2]);
 
+  if (dipm == 0) {
+     Tcl_AppendResult(interp, "cannot set dipole with zero length", (char *)NULL);
+
+    return TCL_ERROR;
   }
+
+  convert_dip_to_quat_one(dip, quat);
 
   if (set_particle_dip(part_num, dip) == TCL_ERROR) {
+   Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+    return TCL_ERROR;
+  }
+
+   if (set_particle_dipm(part_num, dipm) == TCL_ERROR) {
+     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+      return TCL_ERROR;
+   }
+
+  if (set_particle_quat(part_num, quat) == TCL_ERROR) {
    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
 
     return TCL_ERROR;
@@ -2265,11 +2285,13 @@ int try_delete_bond(Particle *part, int *bond)
       i += 1 + partners;
     else {
       for(j = 1; j <= partners; j++)
+      { 
 	if (bond[j] != bl->e[i + j])
 	  break;
+      }
       if (j > partners) {
 	bl->n -= 1 + partners;
-	memcpy(bl->e + i, bl->e + i + 1 + partners, bl->n - i);
+	memcpy(bl->e + i, bl->e + i + 1 + partners, sizeof(int)*(bl->n - i));
 	realloc_intlist(bl, bl->n);
 	return TCL_OK;
       }
@@ -2301,7 +2323,7 @@ void remove_all_bonds_to(int identity)
 	if (j <= partners) {
 	  bl->n -= 1 + partners;
 	  memcpy(bl->e + i, bl->e + i + 1 + partners,
-		 bl->n - i);
+		 sizeof(int)*(bl->n - i));
 	  realloc_intlist(bl, bl->n);
 	}
 	else

@@ -1,5 +1,21 @@
 #!/usr/bin/tclsh8.4
 
+#
+# parse the output from the MEM_DEBUG feature.
+# This script looks for the allocation, reallocation
+# and freeing of memory locations to find possible
+# double frees and memory leaks.
+# Because it has to track a quite a few memory locations,
+# it takes a while to run, usually longer than Espresso
+# itself. Therefore this can only be used for really short
+# runs.
+#
+# The script will output all location that got freed, but
+# were not allocated before (or got freed twice), and the
+# locations that never got freed, i.e. potential memory
+# leaks.
+###########################################################
+
 set f [open [lindex $argv 0] "r"]
 if { $argc > 1} {
     set n [lindex $argv 1]

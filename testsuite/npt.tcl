@@ -66,7 +66,6 @@ puts "----------------------------------------"
 
 
 set epsilon 1e-4
-setmd temp 0
 setmd time_step 1
 setmd skin 0
 
@@ -112,7 +111,6 @@ read_data "npt_lj_system.data"
 setmd time_step 0.01
 setmd skin      0.4
 thermostat set langevin 1.0 1.0 
-setmd temp      1.0
 
 set p_ext 2.0
 set piston_mass 0.0001

@@ -343,29 +343,31 @@ proc blockfile_write_variable {channel write variable {which "all"}} {
     puts $channel "\}"
 }
 
-# this is more tricky since we want to read old files
 proc blockfile_read_auto_variable {channel read auto} {
+    global blockfile_variable_blacklist
+    if {![info exists blockfile_variable_blacklist]} { set blockfile_variable_blacklist "" }
     set vars [blockfile $channel read toend]
-    set vname [lindex $vars 0]
-    if {[llength $vname] == 1} {
-	# old format
-	set data [lindex $vars 1]
-	set type [lindex $data 0]
-	if { $type != "_ival_" && $type != "_dval_"} { error "old style variable block corrupt"}
-	eval "setmd $vname [lrange $data 1 end]"
-    } {
-	# new format
-	foreach vblock $vars {
-	    set vname [lindex $vblock 0]
-	    set data [lrange $vblock 1 end]
-	    if {[catch {eval "setmd $vname $data"} error]} {
-		if { $error != "variable is readonly" } {
-		    error "blockfile_read_auto_variable: setmd $vname $data reported: $error"
+    # new format
+    foreach vblock $vars {
+	set vname [lindex $vblock 0]
+	if {[lsearch -exact $blockfile_variable_blacklist $vname] != -1} { continue }
+	set data [lrange $vblock 1 end]
+	if {[catch {eval "setmd $vname $data"} error]} {
+	    switch -glob $error {
+		"min_num_cells must be at least*" {
+		    puts stderr "WARNING: min_num_cells incompatible with current n_nodes, ignoring"
+		    continue
 		}
-	    }   
+		"node grid does not fit n_nodes" {
+		    puts stderr "WARNING: node_grid incompatible with current n_nodes, ignoring"
+		    continue
+		}
+		"variable is readonly*" { continue }
+	    }
+	    error "blockfile_read_auto_variable: setmd $vname $data reported: $error"
 	}
     }
-
+    
     return "variable"
 }
 
@@ -398,14 +400,14 @@ proc blockfile_write_tclvariable {channel write tclvariable {which "all"}} {
     puts $channel "\}"
 }
 
-# this is more tricky since we want to read old files
 proc blockfile_read_auto_tclvariable {channel read auto} {
+    global blockfile_tclvariable_blacklist
+    if {![info exists blockfile_tclvariable_blacklist]} { set blockfile_tclvariable_blacklist "" }
     set vars [blockfile $channel read toend]
-#    puts "--$vars"
     foreach vblock $vars {
 	set vname [lindex $vblock 0]
+	if {[lsearch -exact $blockfile_tclvariable_blacklist $vname] != -1} { continue }
 	set data [lrange $vblock 1 end]
-#	puts "----$vname-$data-"
 	if { "$vname" != "array" } {
 	    global $vname
 	    if {[catch {eval "set $vname {$data}"} error]} {

@@ -41,10 +41,32 @@ MDINLINE int dihedral_set_params(int bond_type, int mult, double bend, double ph
   return TCL_OK;
 }
 
+/// parse parameters for the dihedral potential
+MDINLINE int inter_parse_dihedral(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+{
+  int mult;
+  double bend, phase;
+
+  if (argc < 4 ) {
+    Tcl_AppendResult(interp, "dihedral needs 3 parameters: "
+		     "<mult> <bend> <phase>", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  if ( !ARG_IS_I(1, mult) || !ARG_IS_D(2, bend) || !ARG_IS_D(3, phase) ) {
+    Tcl_AppendResult(interp, "dihedral needs 3 parameters of types INT DOUBLE DOUBLE: "
+		     "<mult> <bend> <phase> ", (char *) NULL);
+    return TCL_ERROR;
+  }
+  
+  CHECK_VALUE(dihedral_set_params(bond_type, mult, bend, phase), "bond type must be nonnegative");
+}
+
 /** Calculates the dihedral angle between particle quadruple p1, p2,
 p3 and p4. The dihedral angle is the angle between the planes
 specified by the particle triples (p1,p2,p3) and (p2,p3,p4). 
 Vectors a, b and c are the bond vectors between consequtive particles.
+If the a,b or b,c are parallel the dihedral angle is not defined in which
+case the routine returns phi=-1. Calling functions should check for that
 (Written by: Arijit Maitra) */
 MDINLINE void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Particle *p4, 
 				  double a[3], double b[3], double c[3], 
@@ -64,6 +86,10 @@ MDINLINE void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Part
   /* calculate the unit vectors */
   *l_aXb = sqrt(sqrlen(aXb));
   *l_bXc = sqrt(sqrlen(bXc));
+
+  /* catch case of undefined dihedral angle */
+  if ( *l_aXb == 0.0 || *l_bXc == 0.0 ) { *phi = -1.0; *cosphi = 0; return;}
+
   for (i=0;i<3;i++) {
     aXb[i] /= *l_aXb;
     bXc[i] /= *l_bXc;
@@ -96,6 +122,11 @@ MDINLINE int calc_dihedral_force(Particle *p2, Particle *p1, Particle *p3, Parti
 
   /* dihedral angle */
   calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23, v23Xv34, &l_v23Xv34, &cosphi, &phi);
+  /* dihedral angle not defined - force zero */
+  if ( phi == -1.0 ) { 
+    for(i=0;i<3;i++) { force1[i] = 0.0; force2[i] = 0.0; force3[i] = 0.0; }
+    return 0;
+  }
 
   /* calculate force components (directions) */
   for(i=0;i<3;i++)  {
@@ -147,7 +178,9 @@ MDINLINE int dihedral_energy(Particle *p1, Particle *p2, Particle *p3, Particle 
   fac += 1.0;
   fac *=  iaparams->p.dihedral.bend;
 
-  return fac;
+  *_energy = fac;
+
+  return 0;
 }
 
 #endif

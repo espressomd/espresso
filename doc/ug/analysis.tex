@@ -1,0 +1,884 @@
+\chapter{Analysis}
+\label{chap:analysis}
+\index{analysis}
+\eslabel{analyze}
+
+\todo{Intro: \lit{analyze} can measure observables, but also define
+  topologies and store configurations}
+\section{Measuring observables}
+
+The \keyword{analyze}-command provides online-calculation of local and
+global observables.
+
+\subsection{Minimal distances between particles}
+\label{analyze:mindist}
+\label{analyze:distto}
+\analyzeindex{minimal particle distance}
+\analyzeindex{particle distance}
+
+\begin{essyntax}
+  \variant{1} analyze mindist \opt{\var{type_list_a} \var{type_list_b}}
+  \variant{2} analyze distto \var{part_id}
+  \variant{3} analyze distto \var{posx} \var{posy} \var{posz}
+\end{essyntax}
+
+Variant \variant{1} returns the minimal distance between two particles
+in the system. If the type-lists are given, then the minimal distance
+between particles of only those types is determined.
+
+\keyword{distto} returns the minimal distance of all particles to
+particle \var{part_id} (Variant \variant{2}) or to the coordinates
+(\var{posx}, \var{posy}, \var{posz}) (Variant \variant{3}).
+
+\subsection{Particles in the neighbourhood}
+\label{analyze:nbhood}
+\analyzeindex{particles in the neighbourhood}
+
+\begin{essyntax}
+ \variant{1} analyze nbhood \var{part_id} \var{r_catch}
+ \variant{2} analyze nbhood \var{posx} \var{posy} \var{posz}
+ \var{r_catch}
+\end{essyntax}
+Returns a Tcl-list of the particle ids of all particles within a given
+radius \var{r_catch} around the position of the particle with number
+\var{part_id} in variant \variant{1} or around the spatial coordinate
+(\var{posx}, \var{posy}, \var{posz}) in variant \variant{2}.
+
+\subsection{Particle distribution}
+\label{analyze:distribution}
+\analyzeindex{particle distribution}
+
+\begin{essyntax}
+  analyze distribution \var{part_type_list_a} \var{part_type_list_b}
+  \opt{\var{r_min} \opt{\var{r_max} \opt{\var{r_bins} 
+        \opt{\var{log_flag} \opt{\var{int_flag}}}}}}
+\end{essyntax}
+Returns its parameters and the distance distribution of particles with
+types specified in \var{part_type_list_a} (group a) around
+particles with types specified in \var{part_type_list_b} (group b)
+with distances between \var{r_min} and \var{r_max}, binned into
+\var{r_bins} bins. The bins are either equidistant
+(\var{log_flag}=0) or logarithmically equidistant ($\var{log_flag}
+\geq 1$). If an integrated distribution is required, use
+\var{int_flag}=1. The distance is defined as the minimal distance
+between a particle of group a to any of group b. 
+
+\minisec{Output format} 
+
+The output corresponds to the blockfile format (see section
+\vref{sec:structured-file-format}):
+\begin{code}
+\{ \var{parameters} \} 
+\{ 
+  \{ \var{r} \var{dist(r)} \} 
+  \vdots 
+\}
+\end{code}
+
+\subsection{Radial distribution function}
+\label{analyze:rdf}
+\label{analyze:<rdf>}
+\analyzeindex{radial distribution function $g(r)$}
+
+\begin{essyntax}
+  analyze \alt{rdf \asep <rdf>} 
+  \var{part_type_list_a} \var{part_type_list_b} 
+  \opt{\var{r_min} \var{r_max} \var{r_bins}}
+\end{essyntax}
+Returns its parameters and the radial distribution function (rdf) of
+particles with types specified in \var{part_type_list_a} (group a)
+around particles with types specified in \var{part_type_list_b} (group
+b). The range is given by \var{r_min} and \var{r_max} and is divided
+into \var{r_bins} equidistant bins. 
+
+\minisec{Output format}
+
+The output corresponds to the blockfile format (see section
+\vref{sec:structured-file-format}):
+\begin{code}
+\{ \var{parameters} \} 
+\{ 
+  \{ \var{r} \var{rdf(r)} \} 
+  \vdots
+\}
+\end{code}
+
+\subsection{Structure factor}
+\label{analyze:structurefactor}
+\analyzeindex{structure factor $S(q)$}
+
+\begin{essyntax}
+  analyze structurefactor \var{type} \var{order}
+\end{essyntax}
+
+Returns the spherically averaged structure factor $S(q)$ for particles
+of a given type \var{type}. The $S(q)$ is calculated for all possible
+wave vectors, $\frac{2\pi}{L} <= q <= \frac{2\pi}{L}\var{order}$. Do
+not chose parameter \var{order} too large, becase the number of
+calculations grows as $\var{order}^3$. 
+
+
+\minisec{Output format} 
+
+The output corresponds to the blockfile format (see section
+\vref{sec:structured-file-format}):
+\begin{code}
+\{ \var{q_value} \var{S(q)_value} \} 
+\vdots
+\end{code}
+
+\subsection{Van-Hove autocorrelation function $G(r,t)$}
+\label{analyze:vanhove}
+\analyzeindex{van Hove autocorrelation function $G(r,t)$}
+\begin{essyntax}
+  analyze vanhove \var{type} \var{rmin} \var{rmax} \var{rbins}
+\end{essyntax}
+Returns the van Hove auto correlation function $G(r,t)$ and the mean
+square displacement $msd(t)$ for particles of type \var{ptype} for the
+configurations stored in the array configs. This tool assumes that the
+configurations stored with \codebox{analyze append} (see section
+\vref{sec:stored-configs}) are stored at equidistant time intervals.
+$G(r,t)$ is calculated for each multiple of this time intervals. For
+each time t the distribution of particle displacements is calculated
+acoording to the specification given by \var{rmin}, \var{rmax} and
+\var{rbins}. If the particles perform a random walk (\ie a normal
+diffusion process) $G(r,t)/r^2$ is a gaussian distribution for all
+times.  Deviations of this behavior hint on another diffusion process
+or on the fact that your system has not reached the diffusive regime.
+In this case it is also very questionable to calculate a diffusion
+constant from the mean square displacement via the Stokes-Einstein
+relation. 
+
+\minisec{Output format}
+The output corresponds to the blockfile format (see section
+\vref{sec:structured-file-format}):
+\begin{code}
+\{ msd \{ \var{msd(0)} \var{msd(1)} \dots \} \} 
+\{ vanhove \{ \{ \var{G(0,0)} \var{G(1,0)} \dots \} 
+            \{ \var{G(0,1)} \var{G(1,1)} \dots \}
+\vdots
+          \}
+\}
+\end{code}
+
+The $G(r,t)$ are normalized such that the integral over space always
+yields $1$.
+
+\subsection{Center of mass}
+\label{analyze:centermass}
+\analyzeindex{center of mass}
+\begin{essyntax}
+  analyze centermass \var{part_type}
+\end{essyntax}
+Returns the center of mass of particles of the given type.
+
+\subsection{Moment of intertia matrix}
+\label{analyze:momentofinteratiamatrix}
+\label{analyze:find-principal-axis}
+\analyzeindex{moment of inertia matrix}
+\analyzeindex{principal axis of the moment of inertia}
+
+\begin{essyntax}
+  \variant{1} analyze momentofinertiamatrix { \var{part_type} } 
+  \variant{2} analyze find_principal_axis \var{part_type}
+\end{essyntax}
+Variant \variant{1} returns the moment of inertia matrix for particles
+of given type \var{part_type}. The output is a list of all the
+elements of the 3x3 matrix. Variant \variant{2} returns the
+eigenvalues and eigenvectors of the matrix.
+
+\subsection{Aggregation}
+\label{analyze:aggregation}
+\analyzeindex{aggregation}
+
+\begin{essyntax}
+  analyze aggregation \var{dist_criteria} \var{s_mol_id}
+  \var{f_mol_id} \opt{\var{min_contact} \opt{\var{charge_criteria}}}
+\end{essyntax}
+Returns the aggregate size distribution for the molecules in the
+molecule id range \var{s_mol_id} to \var{f_mol_id}. If any monomers in
+two different molecules are closer than \var{dist_criteria} they are
+considered to be in the same aggregate. One can use the optional
+\var{min_contact} parameter to specify a minimum number of contacts
+such that only molecules having at least \var{min_contact} contacts
+will be considered to be in the same aggregate. The second optional
+parameter \var{charge_criteria} enables one to consider aggregation
+state of only oppositely charged particles.
+
+
+\subsection{Identifying pearl-necklace structures}
+\label{analyze:necklace}
+\analyzeindex{pearl-necklace structures}
+
+\begin{essyntax}
+ analyze necklace \var{pearl_treshold} \var{back_dist} \var{space_dist}
+\var{first} \var{length} 
+\end{essyntax}
+Algorithm for identifying pearl necklace structures for
+polyelectrolytes in poor solvent \citep{limbach03a}. The first three
+parameters are tuning parameters for the algorithm:
+\var{pearl_treshold} is the minimal number of monomers in a pearl.
+\var{back_dist} is the number of monomers along the chain backbone
+which are excluded from the space distance criterion to form clusters.
+\var{space_dist} is the distance between two monomers up to which they
+are considered to belong to the same clusters. The three parameters
+may be connected by scaling arguments. Make sure that your results are
+only weakly dependent on the exact choice of your parameters. For the
+algorithm the coordinates stored in partCfg are used. The chain itself
+is defined by the identity first of its first monomer and the chain
+length length.  Attention: This function is very specific to the
+problem and might not give useful results for other cases with similar
+structures.
+
+
+\subsection{Finding holes}
+\label{analyze:holes}
+\analyzeindex{finding holes}
+
+\begin{essyntax}
+  analyze holes \var{prob_part_type_number} \var{mesh_size} 
+\end{essyntax}
+Function for the calculation of the unoccupied volume (often also
+called free volume) in a system. Details can be found in
+\citet{schmitz00a}.  It identifies free space in the simulation box
+via a mesh based cluster algorithm.  Free space is defined via a probe
+particle and its interactions with other particles which have to be
+defined through LJ interactions with the other existing particle types
+via the inter command before calling this routine. A point of the mesh
+is counted as free space if the distance of the point is larger than
+LJ_cut+LJ_offset to any particle as defined by the LJ interaction
+parameters between the probe particle type and other particle types.\
+How to use this function:\ Define interactions between all (or the
+ones you are interested in) particle types in your system and a
+fictious particle type.  Practically one uses the van der Waals radius
+of the particles plus the size of the probe you want to use as the
+Lennard Jones cutoff. The mesh spacing is the box length divided by
+the \var{mesh_size}.
+
+\minisec{Output format}
+\begin{code}
+\{ \var{n\_holes} \var{mean\_hole\_size} \var{max\_hole\_size} \var{free\_volume\_fraction} 
+    \{ \var{sizes} \}
+    \{ \var{surfaces} \} 
+    \{ \var{element\_lists} \} 
+\} 
+\end{code}
+
+A hole is defined as a continous cluster of mesh elements that belong
+to the unoccupied volume. Since the function is quite rudimentary it
+gives back the whole information suitable for further processing on
+the script level. \var{sizes} and \var{surfaces} are given in number
+of mesh points, which means you have to calculate the actual size via
+the corresponding volume or surface elements yourself. The complete
+information is given in the element_lists for each hole. The element
+numbers give the position of a mesh point in the linear representation
+of the 3D grid (coordinates are in the order x, y, z). Attention: the
+algorithm assumes a cubic box. Surface results have not been tested.
+Requires the feature LENNARD_JONES.  \todo{I think there is still a
+  bug in there (Hanjo)}.
+
+\subsection{Energies}
+\label{analyze:energy}
+\analyzeindex{energies}
+
+\begin{essyntax}
+  \variant{1} analyze energy
+  \variant{2} analyze energy \alt{total \asep kinetic \asep coulomb}
+  \variant{3} analyze energy bonded \var{bond_type}
+  \variant{4} analyze energy nonbonded \var{part_type1} \var{part_type2}
+\end{essyntax}
+Returns the energies of the system. Variant \variant{1} returns all
+the contributions to the total energy. Variant \variant{2} returns the
+numerical value of the total energy or its kinetic or Coulomb
+contributions only. Variants \variant{3} and \variant{4} return the
+energy contributions of the bonded resp. non-bonded interactions.
+
+\minisec{Output format (variant \variant{1})}
+\begin{code}
+\{ energy \var{value} \} \{ kinetic \var{value} \} \{ interaction \var{value} \} \dots 
+\end{code}
+
+
+\subsection{Pressure}
+\label{analyze:pressure}
+\analyzeindex{pressure}
+
+\begin{essyntax}
+  \variant{1} analyze pressure
+  \variant{2} analyze pressure total
+  \variant{3} analyze pressure \alt{totals \asep ideal \asep coulomb
+    \asep \\tot_nonbonded_inter \asep tot_nonbonded_intra}
+  \variant{4} analyze pressure bonded \var{bond_type}
+  \variant{5} analyze pressure nonbonded \var{part_type1} \var{part_type2}
+  \variant{6} analyze pressure nonbonded_intra \opt{\var{part_type}}
+  \variant{7} analyze pressure nonbonded_inter \opt{\var{part_type}}
+\end{essyntax}
+
+Computes the pressure and its contributions in the system. Variant
+\variant{1} returns all the contributions to the total pressure.
+Variant \variant{2} will return the total pressure only.  Variants
+\variant{3}, \variant{4} and \variant{5} return the corresponding
+contributions to the total pressure; in that case only a two-value
+tcl-list is returned, consisting of the requested contribution and its
+square.  
+
+\todo{Document arguments nb_inter, nb_intra, tot_nb_inter and
+  tot_nb_intra}
+
+Note that the ideal pressure is derived using the temperature, hence
+for systems with $\var{temp} = 0$ it will be zero; in those cases it
+is preferable to use \codebox{analyze p_IK1} (see
+\vref{analyze:p-IK1}) which looks at the velocities of the particles.
+
+The command is implemented in parallel.
+
+\minisec{Output format (variant \variant{1})}
+
+\begin{code}
+\{ \var{total\_pressure} \var{pressure\_square} 
+   \{ ideal \var{ideal\_gas\_pressure} \} 
+   \{ \{ \var{bond\_type} \var{pressure} \var{pressure\_square} \}
+      \vdots
+   \}
+   \{ \{ \var{nonbonded\_type} \var{pressure} \var{pressure\_square} \}
+      \vdots
+   \}
+   \{ coulomb \var{pressure} \var{pressure\_square}\}
+\}
+\end{code}
+specifying the pressure, its square, the ideal gas pressure, the
+contributions from bonded interactions, the contributions from
+non-bonded interactions and the electrostatic contributions.
+
+
+\subsection{Pressure tensor}
+\label{analyze:p-IK1}
+\analyzeindex{pressure tensor}
+
+\begin{essyntax}
+ analyze p_IK1 \var{bin_volume} \var{ind_list} \var{flag_all}
+\end{essyntax}
+
+Computes the pressure-tensor and all its contributions in the system.
+ Note that the
+tensorial entries $p^{(k,l)}$ are directly derived from
+
+\begin{equation}
+  p^{(k,l)} = \sum_{j>i\in \var{bin}} F_{ij}^{(k)} \cdot r_{ij}^{(l)}
+\end{equation}
+where \eg $ F_{ij}^{(k)} $ denotes the $k$th entry of the difference
+vector between the force vectors of particles $i$ and $j$, while the
+ideal pressure is determined from the particles' velocities, \ie
+
+\begin{equation}
+  p^{(k,l)}_{\var{ideal}} = \sum_{i\in \var{bin}} v_{i}^{(k)} \cdot
+  v_{i}^{(l)}
+\end{equation}
+contrary to \keyword{analyze pressure ideal} which uses the
+temperature. In both cases, the sum is taken over only those particles
+whose identities have been provided in \var{ind_list} if
+\var{flag_all}=0, otherwise $i$ loops over \var{ind_list} while $j$
+represents all particles in the system. Since this command is intended
+to follow the Kirkwood-scheme IK1, all particles given in
+\var{ind_list} should represent a bin geometry with volume
+\var{bin_volume} for the algorithm to make sense, although this is not
+checked; hence it is preferable to obtain \var{ind_list} from
+\keyword{analyze bins}.
+
+This command is executed on the master node only, hence a higher
+number of nodes only slows it down due to the increasing amount of
+communication processes required between the nodes to gather all
+needed particle information. Furthermore, all interactions including
+electrostatic ones are treated with the virial ansatz given above,
+which makes non-periodic systems highly recommendable, and which slows
+electrostatic systems down due to the long-range interactions.
+
+
+\minisec{Output format}
+
+\begin{code}
+\{ \var{total\_pressure} \var{pressure\_square}
+   \{ total \var{pxx} \var{pxy} \var{pxz} \var{pyx} \dots \} 
+   \{ ideal \var{pxx} \var{pxy} \var{pxz} \var{pyx} \dots \} 
+   \{ bonded \var{pxx} \var{pxy} \var{pxz} \var{pyx} \dots \} 
+     \{ \var{bond\_type} \var{pxx} \var{pxy} \var{pxz} \var{pyx} \dots \}
+     \vdots
+   \}
+   \{ nonbonded \var{pxx} \var{pxy} \var{pxz} \var{pyx} \dots \}
+\}
+\end{code}
+
+specifying the pressure, its square, its tensorial form, and the
+tensorial form of its components ideal, bonded, nonbonded, coulombic
+pressure (if applicable); the bonded component is further split up
+into its different contributions (FENE, ANGLE, HARMONIC) sorted
+according to the interaction type number specified by the
+\keyword{inter} command (see section \vref{tcl:inter}).
+
+\section{Topologies}
+\analyzeindex{topologies}
+\label{analyze:set}
+
+\todo{Topologies intro}
+
+The \lit{analyze set} command defines the structure of the current
+system to be used with some of the analysis functions.
+
+\begin{essyntax}
+  \variant{1} analyze set chains \opt{\var{chain_start} \var{n_chains}
+    \var{chain_length}}
+  \variant{2} analyze set chains
+\end{essyntax}
+
+\todo{Update documentation for set_topology}
+
+Variant \variant{1} defines a set of \var{n_chains} chains of equal
+length \var{chain_length} which start with the particle with particle
+number \var{chain_start} and are consecutively numbered (\ie the last
+particle in that topology has number $\var{chain_start} +
+\var{n_chains}*\var{chain_length}$). Variant \variant{2} will return
+the chains currently stored.
+
+\subsection{Chains}
+\analyzeindex{chains}
+
+All analysis functions in this section require the topology of the
+chains to be set correctly.  The topology can be provided upon
+calling. This (re-)sets the structure info permanently, \ie it is only
+required once.
+
+\subsubsection{End-to-end distance}
+\analyzeindex{end-to-end distance of a chain}
+
+\begin{essyntax}
+  analyze \alt{re \asep <re>} 
+  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+\end{essyntax}
+Returns the quadratic end-to-end-distance and its root averaged over
+all chains.  If \lit{<re>} is used, the distance is averaged over all
+stored configurations (see section \vref{sec:stored-configs}).
+
+\minisec{Output format}
+\begin{code}
+\{ \var{re} \var{error\_of\_re} \var{re2} \var{error\_of\_re2} \}
+\end{code}
+
+\subsubsection{Radius of gyration}
+\analyzeindex{radius of gyration of a chain}
+
+\begin{essyntax}
+  analyze \alt{rg \asep <rg>} 
+  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+\end{essyntax}
+\todo{Reference?}
+Returns the radius of gyration averaged over all chains.  If
+\lit{<rg>} is used, the radius of gyration is averaged over all stored
+configurations (see section \vref{sec:stored-configs}).
+
+\minisec{Output format}
+\begin{code}
+\{ \var{rg} \var{error\_of\_rg} \var{rg2} \var{error\_of\_rg2} \}
+\end{code}
+
+\subsubsection{Hydrodynamic radius}
+\analyzeindex{hydrodynamic radius of a chain}
+\begin{essyntax}
+  analyze \alt{rh \asep <rh>} 
+  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+\end{essyntax}
+\todo{Reference?}
+Returns the hydrodynamic radius averaged over all chains.  If
+\lit{<rh>} is used, the hydodynamic radius is averaged over all stored
+configurations (see section \vref{sec:stored-configs}).
+\minisec{Output format}
+\begin{code}
+\{ \var{rh} \var{error\_of\_rh} \}
+\end{code}
+
+\subsubsection{Internal distances}
+\analyzeindex{internal distances within a chain}
+\begin{essyntax}
+ analyze \alt{internal_dist \asep <internal_dist>} 
+ \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+\end{essyntax}
+Returns the averaged internal distances within the chains.  If
+\lit{<internal_dist>} is used, the values are averaged over all stored
+configurations (see section \vref{sec:stored-configs}).
+\minisec{Output format}
+\begin{code}
+\{ \var{idf(0)} \var{idf(1)} \dots \var{idf(chain\_length-1)} \}
+\end{code}
+The index corresponds to the number of beads between the two monomers
+considered (0 = next neighbours, 1 = one monomer in between, \dots).
+
+\subsubsection{Bond distances}
+\analyzeindex{bond distances}
+\begin{essyntax}
+  analyze \alt{bond_dist \asep <bond_dist>} \opt{index \var{index}} 
+  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+\end{essyntax}
+In contrast to \lit{analyze internal_dist}, it does not average over
+the whole chain, but rather takes the chain monomer at position
+\var{index} (default: $0$, \ie the first monomer on the chain) to be
+the reference point to which all internal distances are calculated. If
+\lit{<bond_dist>} is used, the values will be averaged over all stored
+configurations (see section \vref{sec:stored-configs}).
+
+\minisec{Output format}
+\begin{code}
+\{ \var{bdf(0)} \var{bdf(1)} \dots \var{bdf(chain\_length-1-index)} \}
+\end{code}
+
+\subsubsection{Bond lengths}
+\analyzeindex{bond lengths}
+\begin{essyntax}
+  analyze \alt{bond_l \asep <bond_l>} 
+  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+\end{essyntax}
+Returns the average bond-length within a chain, averaged over all
+chains in the system; hence, it gives the same result as \var{idf(0)}
+from \lit{analyze internal_dist}. If you want to look only at specific
+chains, use the optional arguments, \ie $\var{chain\_start} =
+2*\var{MPC}$ and $\var{n\_chains} = 1$ to only include the third
+chain's monomers. If \lit{<bond_l>} is used, the value will be
+averaged over all stored configurations (see section
+\vref{sec:stored-configs}).
+
+\subsubsection{Form factor}
+\analyzeindex{form factor of a chain}
+\begin{essyntax}
+  analyze \alt{formfactor \asep <formfactor> } 
+  \var{qmin} \var{qmax} \var{qbins}\\
+  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+\end{essyntax}
+
+\todo{Check this!}
+Computes the spherically averaged form factor of a single chain, which
+is defined by
+\begin{equation}
+  S(q) = \frac{1}{\var{chain\_length}} \sum_{i,j=1}^{\var{chain\_length}}
+  \frac{\sin(q r_{ij})}{q r_{ij}}
+\end{equation}
+of a single chain, averaged over all chains for $\var{qbin}+1$
+logarithmically spaced q-vectors $\var{qmin}, \dots ,\var{qmax}$ where
+$\var{qmin}>0$ and $\var{qmax}>\var{qmin}$.  If \lit{<formfactor>} is
+used, the form factor will be averaged over all stored configurations
+(see section \vref{sec:stored-configs}).
+
+\minisec{Output format}
+
+\begin{code}
+\{
+  \{ \var{q} \var{S(q)} \}
+  \vdots
+\}
+\end{code}
+with $q \in \{\var{qmin},\dots,\var{qmax}\}$.
+
+\subsubsection{Chain radial distribution function}
+\analyzeindex{radial distribution function}
+
+\begin{essyntax}
+ analyze rdfchain \var{r_min} \var{r_max} \var{r_bins} 
+ \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+\end{essyntax}
+Returns three radial distribution functions (rdf) for the chains. The
+first rdf is calculated for monomers belonging to different chains,
+the second rdf is for the centers of mass of the chains and the third
+one is the distribution of the closest distances between the chains
+(\ie the shortest monomer-monomer distances). The distance range is
+given by \var{r_min} and \var{r_max} and it is divided into
+\var{r_bins} equidistant bins.
+
+\minisec{Output format}
+\begin{code}
+\{ 
+  \{\var{r} \var{rdf1(r)} \var{rdf2(r)} \var{rdf3(r)} \}
+  \vdots
+\}
+\end{code}
+
+\subsubsection{g123}
+\label{analyze:<g1>}
+\label{analyze:<g2>}
+\label{analyze:<g3>}
+\label{analyze:g123}
+
+\todo{Title?}
+\begin{essyntax}
+  \variant{1} analyze \alt{<g1>\asep<g2>\asep<g3>} 
+  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+  \variant{2} analyze g123 \opt{-init} 
+  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+\end{essyntax}
+
+Variant \variant{1} returns 
+\todo{What's the difference between g2 and g3???}
+\begin{itemize}
+\item the mean-square displacement of the beads in the
+  chain (\lit{<g1>})
+\item the mean-square displacement of the beads in the center of
+  mass of the chain (\lit{<g2>})
+\item or the motion of the center of mass (\lit{<g3>})
+\end{itemize}
+averaged over all stored configurations (see section
+\vref{sec:stored-configs}).
+
+Variant \variant{2} returns all of these observables for the current
+configuration, as compared to the reference configuration. The
+reference configuration is set, when the option \lit{-init} is used.
+
+\minisec{Output format (variant \variant{1})}
+\begin{code}
+  \{ \var{gi(0*dt)} \var{gi(1*dt)} \dots \}
+\end{code}
+
+\minisec{Output format (variant \variant{2})}
+\begin{code}
+  \{ \var{g1(t)} \var{g2(t)} \var{g3(t)} \}
+\end{code}
+
+\section{Storing configurations}
+\label{sec:stored-configs}
+\index{stored configurations}
+
+Some observables (\ie non-static ones) require knowledge of the
+particles' positions at more than one or two times. Therefore, it is
+possible to store configurations for later analysis.  Using this
+mechanism, the program is also able to work quasi-offline by
+successively reading in previously saved configurations and storing
+them to perform any analysis desired afterwards.
+
+Note that the time at which configurations were taken is not
+stored.  The most observables that work with the set of stored
+configurations do expect that the configurations are taken at
+equidistant timesteps.
+
+Note also, that the stored configurations can be written to a file and
+read from it via the \lit{blockfile} command (see section
+\vref{tcl:blockfile}).
+
+\subsection{Storing and removing configurations}
+\label{analyze:append}
+\label{analyze:push}
+\label{analyze:replace}
+\label{analyze:remove}
+
+\begin{essyntax}
+  \variant{1} analyze append
+  \variant{2} analyze remove \opt{\var{index}}
+  \variant{3} analyze replace \var{index} 
+  \variant{4} analyze push \opt{\var{size}}
+  \variant{5} analyze configs \var{config}
+\end{essyntax}
+
+Variant \variant{1} appends the current configuration to the set of
+stored configurations.  Variant \variant{2} removes the \var{index}th
+stored configuration, or all, if \var{index} is not specified.  Variant
+\variant{3} will replace the \var{index}th configuration with the
+current configuration.
+
+Variant \variant{4} will append the current configuration to the set
+of stored configuration and remove configurations from the beginning
+of the set until the number of stored configurations is equal to
+\var{size}. If \var{size} is not specified, only the first
+configuration in the set is removed.
+
+Variants \variant{1} to \variant{4} return the number of currently
+stored configurations.
+
+Variant \variant{5} will append the configuration \var{config} to the
+set of stored configurations. \var{config} has to define coordinates
+for all configurations in the format:
+\begin{code}
+ \{\var{x1} \var{y1} \var{z1} \var{x2} \var{y2} \var{z2} \dots \}
+\end{code}
+
+\subsection{Getting the stored configurations}
+\label{analyze:configs}
+\label{analyze:stored}
+\begin{essyntax}
+  \variant{1} analyze configs
+  \variant{2} analyze stored 
+\end{essyntax}
+
+Variant \variant{1} returns all stored configurations, while variant
+\variant{2} returns only the number of stored configurations.
+
+\minisec{Output format (variant \variant{1})}
+\begin{code}
+\{
+  \{\var{x1} \var{y1} \var{z1} \var{x2} \var{y2} \var{z2} \dots \}
+  \vdots
+\}
+\end{code}
+
+\section{Statistical analysis and plotting}
+
+\todo{Make this an appendix?}
+
+
+\subsection{Plotting}
+
+\begin{essyntax}
+  plotObs \var{file} \{ \var{x1}:\var{y1} \var{x2}:\var{y2} \dots \}
+  \opt{titles \{ \var{title1} \var{title2} \dots \}}
+  \opt{labels \{ \var{xlabel} \opt{\var{ylabel}} \}} 
+  \opt{scale \var{gnuplot-scale}}
+  \opt{cmd \var{gnuplot-command}} 
+  \opt{out \var{filebase}}
+\end{essyntax}
+Uses \textsc{gnuplot} to create plots of the data in \var{file} and
+writes it to the file \var{filebase}\lit{.ps} (default:
+\var{file}\lit{.ps}). The data in \var{file} should be stored
+column-wise. $\var{x1}, \var{x2} \dots$ and $\var{y1}, \var{y2} \dots$
+denote the columns used for the data of the x- and y-axis,
+respectively.
+
+\begin{arguments}
+\item[\opt{titles \{ \var{title1} \var{title2} \dots \}}] can be used
+  to specify the titles of the different plots
+\item[\opt{labels \{ \var{xlabel} \opt{\var{ylabel}} \}}] will define the
+  labels of the axis. If \var{ylabel} is omitted, the filename
+  \var{file} is used as label for the y-axis.
+\item[\opt{scale \var{gnuplot-scale}}] will define the scaling of the
+  axis (\eg \lit{scale logscale xy}) (default: \lit{nologscale xy})
+\item[\opt{cmd \var{gnuplot-command}}] allows to pass any other
+  commands to gnuplot. For example, use
+  \codebox{plotObs \dots cmd "set key left"} to adjust the titles on
+  the left side.
+\item[\opt{out \var{filebase}}] can be used to change the output
+  file. By default, the plot will be written to \var{file}\lit{.ps}.
+\end{arguments}
+
+\subsection{Joining plots}
+\begin{essyntax}
+  plotJoin \{ \var{source1} \var{source2} \dots \} \var{final}
+\end{essyntax}
+Joins the plot files $\var{source1}, \var{source2}, \dots$ into a
+single file \var{final}, while placing any two files on one page.
+Note that the resulting files may be huge and therefore hard to print!
+
+
+\subsection{Computing averages and errors}
+
+\begin{essyntax}
+  \variant{1} calcObAv \var{file} \var{index} \opt{\var{start}}
+  \variant{2} calcObErr \var{file} \var{index} \opt{\var{start}}
+  \variant{3} calcObsAv \var{file} \{ \var{i1} \var{i2} \dots \} \opt{\var{start}}
+  \variant{4} nameObsAv \var{file} \{ \var{name1} \var{name2} \dots \} \opt{\var{start}}
+  \variant{5} findObsAv \var{val} \var{what}
+\end{essyntax}
+
+These commands will compute mean values or errors of the data in file
+\var{file}. The data in \var{file} should be stored column-wise. If
+\var{start} is specified, the first \var{start} lines will be ignored.
+
+Variant \variant{1} returns the mean value of the column with index
+\var{index} in \var{file}, variant \variant{2} returns the error of
+its mean value. Variant \variant{3} computes mean values and errors of
+the observables with index $\var{i1}, \var{i2}, \dots$ in
+\var{file}. It expects the first line of \var{file} to contain the
+names of the columns, which it will also return.
+
+In variant \variant{4}, the names used in the first line of \var{file}
+can be used to specify which column is to be used.  The mean value and
+its error are computed for each of the columns.
+
+\todo{????}  Variant \variant{5} extracts the values whose names are
+given in the tcl-list \var{val} at their respective positions in
+\var{what}, where \var{what} has the list-format as returned by
+variant \variant{3}, returning just these values as tiny tcl-list.
+
+\minisec{Output format (variant \variant{3})}
+
+\begin{code}
+\{
+  \var{#samples} 
+  \{ \var{name1} \var{name2} \dots \}
+  \{ \var{mean1} \var{mean2} \dots \} 
+  \{ \var{error1} \var{error2} \dots \}
+\}
+\end{code}
+
+\minisec{Output format (variant \variant{4})}
+
+\begin{code}
+\{
+  \var{#samples} 
+  \var{mean1} \var{mean2} \dots
+  \var{error1} \var{error2} \dots
+\}
+\end{code}
+
+\section{\lit{uwerr}: Computing statistical errors in time series}
+\eslabel{uwerr}
+
+\begin{essyntax}
+  \variant{1} uwerr \var{data} \var{nrep} 
+  \var{col} \opt{\var{a_tau}} \opt{plot}
+
+  \variant{2} uwerr \var{data} \var{nrep} 
+  \var{f} \opt{\var{a_tau} \opt{\var{f_args}}} \opt{plot}
+\end{essyntax}
+Calculates the mean value, the error and the error of the error for an
+arbitrary numerical time series accordings to \citet{wolff04a}.
+
+\begin{arguments}
+\item[\var{data}] is a matrix filled with the primary estimates
+  $a_\alpha^{i,r}$ from $R\/$ replica with $N_1,N_2,\ldots,N_R$
+  measurements each.
+  \todo{How exactly does the Tcl-list look like?}
+  \begin{displaymath}
+    \var{data}=\left(
+      \begin{array}
+        {*{4}{c}} a_1^{1,1}&a_2^{1,1}&a_3^{1,1}&\cdots\\ 
+        a_1^{2,1}&a_2^{2,1}&a_3^{2,1}&\cdots\\
+        \vdots&\vdots&\vdots&\vdots\\
+        a_1^{{N_1},1}&a_2^{{N_1},1}&a_3^{{N_1},1}&\cdots\\
+        a_1^{1,2}&a_2^{1,2}&a_3^{1,2}&\cdots\\
+        \vdots&\vdots&\vdots&\vdots\\
+        a_1^{{N_R},R}&a_2^{{N_R},R}&a_3^{{N_R},R}&\cdots\\
+      \end{array}
+    \right)
+  \end{displaymath}
+\item[\var{nrep}] is a vector whose elements specify the length of the
+  individual replica. 
+  \begin{displaymath}
+    nrep=\left(N_1,N_2,\ldots,N_R\right)
+  \end{displaymath}
+\item[\var{f}] is a user defined Tcl function returning a double with
+  first argument a vector which has as many entries as data has
+  columns. If \var{f} is given instead of the column, the
+  corresponding derived quantity is analyzed.
+
+\item[\var{f_args}] are further arguments to \var{f}.
+
+\item[\var{s_tau}] is the estimate $S=\tau/tau_{\textrm{int}}$ as
+  explained in section (3.3) of [1]. The default is 1.5 and it is
+  never taken larger than $\min_{r=1}^R{N_r}/2$.
+
+\item[\opt{plot}] If plot is specified, you will get the plots of
+  $\Gamma/\Gamma(0)$ and $\tau_{int}$ vs. $W$.  The data and gnuplot
+  script is written to the current directory.
+\end{arguments}
+
+
+\minisec{Output format}
+
+\begin{code}
+  \var{mean} \var{error} \var{error\_of\_error} \var{act}
+  \var{error\_of\_act} \opt{\var{Q}}
+\end{code}
+
+where \var{act} denotes the integrated autocorrelation time, and
+\var{Q} denotes a \emph{quality measure}, \ie the probability to find
+a $\chi^2$ fit of the replica estimates.
+
+The function returns an error message if the windowing failed or if
+the error in one of the replica is to large.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 

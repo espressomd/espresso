@@ -39,8 +39,7 @@ set fene_r      1.5
 
 setmd time_step 0.006
 setmd skin      0.0
-setmd gamma     0.0
-setmd temp      0.0
+thermostat off
 
 set epsilon 1e-4
 

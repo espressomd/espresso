@@ -10,9 +10,12 @@
 #define STATISTICS_CLUSTER_H
 /** \file statistics_cluster.h
  *
- *  This file contains the necklace cluster algorithm. It can be used
+ *  1: This file contains the necklace cluster algorithm. It can be used
  *  to identify the substructures 'pearls' and 'strings' on a linear
  *  chain.
+ *
+ *  2: mesh based cluster algorithm to identify hole spaces 
+ *  (see thesis chapter 3 of H. Schmitz for details) 
  *
  *  <b>Responsible:</b>
  *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
@@ -20,6 +23,7 @@
  */
 
 #include <tcl.h>
+#include "interaction_data.h"
 #include "particle_data.h"
 #include "parser.h"
 
@@ -43,4 +47,16 @@
     and the chain length length.
 */
 int parse_necklace_analyzation(Tcl_Interp *interp, int argc, char **argv);
+
+/** Parser for Hole cluster algorithm
+    \verbatim analyze holes <prob_part_type_number> <mesh_size> \endverbatim
+
+    Identifies free space in the simulation box via a mesh based 
+    cluster algorithm. Free space is defined via a probe particle 
+    and its interactions with other particles which have to be 
+    defined through LJ interactions with the other existing particle
+    types via the inter command before calling this routine.
+*/
+int parse_hole_cluster_analyzation(Tcl_Interp *interp, int argc, char **argv);
+
 #endif

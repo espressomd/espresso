@@ -292,7 +292,17 @@ tz = A[2][0]*p[i].f.torque[0] + A[2][1]*p[i].f.torque[1] + A[2][2]*p[i].f.torque
   }
 }
 
+ /** convert torques from the body-fixed frames to space-fixed coordinates */
 
+void convert_torques_body_to_space(Particle *p, double *torque)
+{
+  define_rotation_matrix(p);
+
+  torque[0] = A[0][0]*p->f.torque[0] + A[1][0]*p->f.torque[1] + A[2][0]*p->f.torque[2];
+  torque[1] = A[0][1]*p->f.torque[0] + A[1][1]*p->f.torque[1] + A[2][1]*p->f.torque[2];
+  torque[2] = A[0][2]*p->f.torque[0] + A[1][2]*p->f.torque[1] + A[2][2]*p->f.torque[2];
+
+}
 
 /** convert omega from space-fixed coordinates to the body-fixed frames */
 /*
@@ -325,7 +335,7 @@ void convert_omega_body_to_space(Particle *p, double omega[3])
 
 #ifdef DIPOLES
 
-/* convert dipole moment of one particle to the quaternions  */
+/** convert dipole moment of one particle to the quaternions  */
 int convert_dip_to_quat_one(double dip[3], double quat[4])
 {
   double dip_tot, dip_xy;
@@ -350,7 +360,8 @@ int convert_dip_to_quat_one(double dip[3], double quat[4])
         //Here we suppose that theta2 = 0.5*theta and phi2 = 0.5*(phi - PI/2),
 	//where theta and phi - angles are in spherical coordinates
         theta2 = 0.5*acos(dip[2]/dip_tot);
-        phi2 = 0.5*acos(dip[0]/dip_xy) - PI*0.25;
+        if (dip[1] < 0) phi2 = -0.5*acos(dip[0]/dip_xy) - PI*0.25;
+        else phi2 = 0.5*acos(dip[0]/dip_xy) - PI*0.25;
      }
 
      quat[0] =  cos(theta2) * cos(phi2);
@@ -363,7 +374,7 @@ int convert_dip_to_quat_one(double dip[3], double quat[4])
 
 
 
-/* convert dipole moments of particles to the quaternions  */
+/** convert dipole moments of particles to the quaternions  */
 void convert_dip_to_quat_all()
 {
   Particle *p;
@@ -390,7 +401,7 @@ void convert_dip_to_quat_all()
   }
 }
 
-/* convert quaternions to the dipole moment of the particle  */
+/** convert quaternions to the dipole moment of the particle  */
 void convert_quat_to_dip_one(double dip[3], double dipm, double quat[4])
 {
    dip[0] = 2*(quat[1]*quat[3] + quat[0]*quat[2])*dipm;
@@ -398,7 +409,7 @@ void convert_quat_to_dip_one(double dip[3], double dipm, double quat[4])
    dip[2] = (quat[0]*quat[0] - quat[1]*quat[1] - quat[2]*quat[2] + quat[3]*quat[3])*dipm;
 }
 
-/* convert quaternions to the dipole moments of particles  */
+/** convert quaternions to the dipole moments of particles  */
 void convert_quat_to_dip_all()
 {
   Particle *p;

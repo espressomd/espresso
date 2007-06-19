@@ -357,4 +357,287 @@ int parse_necklace_analyzation(Tcl_Interp *interp, int argc, char **argv)
   
   return (TCL_OK);
 }
+
+/* HOLE CLUSTER ALGORITHM */
+
+/** test if a mesh point belongs to free (return -1) or occupied (return -2) volume.
+Needs feature LENNARD_JONES compiled in. */
+int test_mesh_element(double pos[3], int probe_part_type) 
+{
+#ifdef LENNARD_JONES
+  int i;
+  double dist,vec[3];
+
+  for (i=0; i<n_total_particles; i++) {
+    IA_parameters *ia_params = get_ia_param(partCfg[i].p.type,probe_part_type);
+    get_mi_vector(vec, pos, partCfg[i].r.p);
+    dist = sqrt(sqrlen(vec));
+
+    if ( dist < (ia_params->LJ_cut+ia_params->LJ_offset) ) return -2;
+    
+  }
+#endif
+  return -1;
+} 
+
+
+/** Test which mesh points belong to the free and occupied volume. 
+    Free volume is marked by -1 and occupied volume by -2.
+    Needs feature LENNARD_JONES compiled in. */
+void create_free_volume_grid(IntList mesh, int dim[3], int probe_part_type)
+{
+  int i,ix=0,iy=0,iz=0;
+  double pos[3];
+  double mesh_c[3];
+
+  for ( i=0; i<3; i++) mesh_c[i] = box_l[i] / (double)dim[i];
+
+  for ( i=0; i<(dim[0]*dim[1]*dim[2]); i++) {
+    
+    pos[0] = (ix+0.5)*mesh_c[0];
+    pos[1] = (iy+0.5)*mesh_c[1];
+    pos[2] = (iz+0.5)*mesh_c[2];
+
+    mesh.e[i] = test_mesh_element(pos, probe_part_type);
+
+    ix++; 
+    if ( ix >= dim[0]) { ix = ix - dim[0]; iy++; }
+    if ( iy >= dim[1]) { iy = iy - dim[1]; iz++; }   
+  }  
+
+
+}
+
+void cluster_neighbors(int point, int dim[3], int neighbors[6])
+{
+  int x,y,z,a;
+  get_grid_pos(point, &x, &y, &z, dim);
+
+  a = x-1; if ( a<0 ) a = dim[0]-1;
+  neighbors[0] = get_linear_index(a, y, z, dim);
+  a = x+1; if ( a==dim[0] ) a = 0;
+  neighbors[1] = get_linear_index(a, y, z, dim);
+
+  a = y-1; if ( a<0 ) a = dim[1]-1;
+  neighbors[2] = get_linear_index(x, a, z, dim);
+  a = y+1; if ( a==dim[1] ) a = 0;
+  neighbors[3] = get_linear_index(x, a, z, dim);
+
+  a = z-1; if ( a<0 ) a = dim[2]-1;
+  neighbors[4] = get_linear_index(x, y, a, dim);
+  a = z+1; if ( a==dim[2] ) a = 0;
+  neighbors[5] = get_linear_index(x, y, a, dim);
+
+}
+
+/** hole cluster algorithm. 
+    returns the number of holes and a list of mesh points belonging to each of them */
+int cluster_free_volume_grid(IntList mesh, int dim[3], int ***holes)
+{
+  int i=0,j, k, n=-1, li;
+  int neighbors[6];
+  
+  int *tmp = (int *) malloc( sizeof(int)* (dim[0]*dim[1]*dim[2]));
+  int *sizes = (int *) malloc( sizeof(int)* (dim[0]*dim[1]*dim[2]));
+ 
+
+  // step 1 go through all mesh points
+  while ( i < (dim[0]*dim[1]*dim[2]) ) {
+    // step 2 test if mesh point is occupied or allready assigned
+    if ( mesh.e[i] == -2 || mesh.e[i] >= 0 ) { i++; }
+    else {
+      // step 3 mesh point is free, create a new cluster
+      n++;
+      mesh.e[i] = n;
+      // start new cluster, put mesh point as first element, and set list pointer on first element
+      sizes[n] = 1;
+      tmp[0] = i;
+      li = 0;
+      // step 4 go through all elements of the cluster
+      while ( li < sizes[n] ) {
+	// step 5 go through all neighbors
+	j =  tmp[li];
+	cluster_neighbors(j, dim, neighbors);
+	for ( k=0; k<6; k++ ) {
+	  // step 5 b test if status is free and append it to the cluster
+	  if ( mesh.e[ neighbors[k] ] == -1 ) {
+	    mesh.e[ neighbors[k] ] = n;
+	    // append mesh point as element in the list
+	    tmp[ sizes[n] ] = neighbors[k];
+	    sizes[n]++;
+	  }
+	  if (  mesh.e[ neighbors[k] ] > 0 &&  mesh.e[ neighbors[k] ]<n ) {
+	    fprintf(stderr,"cfvg:error: i=%d, li=%d, n=%d, mesh.e[x]=%d, x=%d\n",i,li,n,mesh.e[ neighbors[k] ],neighbors[k]); fflush(stderr);
+	  }
+	}
+	li++;
+      }
+    }
+    
+ }
+
+
+  // allocate list space
+  (*holes) = (int **) malloc ( sizeof(int *)*(n+1) );
+  for ( i=0; i<=n; i++ ) { 
+    (*holes)[i] = (int *) malloc ( sizeof(int)*(sizes[i]+1) );
+    (*holes)[i][0] = 0;
+  }
+
+  for ( i=0; i<(dim[0]*dim[1]*dim[2]); i++ ) {
+    j = mesh.e[i];
+    if ( j >= 0 ) { 
+      (*holes)[j][0] ++;
+      (*holes)[j][ (*holes)[j][0] ] = i;
+    }
+  }
+
+  free(tmp);
+  free(sizes);
+
+  return n;
+}
+
+/** Calculates the surface to volume ratios of the holes */
+void cluster_free_volume_surface(IntList mesh, int dim[3], int nholes, int **holes, int *surface) 
+{
+  int i, j, n, neighbors[6], inner;
+
+  for ( i=0; i<nholes; i++ ) surface[i] = 0;
+
+  // go through all ellements
+  for ( i=0; i<(dim[0]*dim[1]*dim[2]); i++ ) {
+    n = mesh.e[i];
+    // check all cluster elements
+    if ( n >= 0 ) {
+      inner = 1;
+      cluster_neighbors(i, dim, neighbors);
+      // check if all neighbors belong to the same cluster
+      for ( j=0; j<6; j++ ) {
+	if ( mesh.e[ neighbors[j] ] != n ) inner = 0;
+      }
+      if ( inner == 0 ) { surface[n]+=1.0; }
+    }
+  }
+
+}
+
+/* parser for hole cluster analyzation:
+   analyze holes <prob_part_type_number> <mesh_size>.
+   Needs feature LENNARD_JONES compiled in. */
+int parse_hole_cluster_analyzation(Tcl_Interp *interp, int argc, char **argv)
+{
+  int i,j;
+  int probe_part_type;
+  int mesh_size=1, meshdim[3];
+  double freevol=0.0;
+  char buffer[TCL_INTEGER_SPACE+TCL_DOUBLE_SPACE];
+
+  IntList mesh;
+
+  int n_holes;
+  int **holes;
+  int max_size=0;
+  int *surface;
+
+#ifndef LENNARD_JONES
+   Tcl_AppendResult(interp, "analyze holes needs feature LENNARD_JONES compiled in.\n", (char *)NULL);
+    return TCL_ERROR;
+#endif
+
+  /* check # of parameters */
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "analyze holes needs 2 parameters:\n", (char *)NULL);
+    Tcl_AppendResult(interp, "<prob_part_type_number> <mesh_size>", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  /* check parameter types */
+  if( (! ARG_IS_I(0, probe_part_type)) ||
+      (! ARG_IS_I(1, mesh_size))  ) {
+    Tcl_AppendResult(interp, "analyze holes needs 2 parameters of type and meaning:\n", (char *)NULL);
+    Tcl_AppendResult(interp, "INT INT\n", (char *)NULL);
+    Tcl_AppendResult(interp, "<prob_part_type_number> <mesh_size>", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  /* check parameter values */
+  if( probe_part_type > n_particle_types || probe_part_type < 0 ) {
+    Tcl_AppendResult(interp, "analyze holes: probe particle type number does not exist", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if( mesh_size < 1  ) {
+    Tcl_AppendResult(interp, "analyze holes: mesh size must be positive (min=1)", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  /* preparation */
+  updatePartCfg(WITHOUT_BONDS);
+  meshdim[0]=mesh_size;
+  meshdim[1]=mesh_size;
+  meshdim[2]=mesh_size;
+  alloc_intlist(&mesh, (meshdim[0]*meshdim[1]*meshdim[2]));
+
+  /* perform free space identification*/
+  create_free_volume_grid(mesh, meshdim, probe_part_type);
+  /* perfrom hole cluster algorithm */
+  n_holes = cluster_free_volume_grid(mesh, meshdim, &holes);
+  /* surface to volume ratio */
+  surface = (int *) malloc(sizeof(int)*(n_holes+1));
+  cluster_free_volume_surface(mesh, meshdim, n_holes, holes, surface);
+  /* calculate accessible volume / max size*/
+  for ( i=0; i<=n_holes; i++ ) { 
+    freevol += holes[i][0];
+    if ( holes[i][0]> max_size ) max_size = holes[i][0];
+  }
+
+  /* Append result to tcl interpreter */
+  Tcl_AppendResult(interp, "{ n_holes mean_hole_size max_hole_size free_volume_fraction { sizes } { surfaces }  { element_lists } } ", (char *)NULL);
+
+  Tcl_AppendResult(interp, "{", (char *)NULL);
+
+  /* number of holes */
+  sprintf(buffer,"%d ",n_holes+1); Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  /* mean hole size */
+  sprintf(buffer,"%f ",freevol/(n_holes+1.0)); Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  /* max hole size */
+  sprintf(buffer,"%d ",max_size); Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  /* free volume fraction */
+  sprintf(buffer,"%f ",freevol/(meshdim[0]*meshdim[1]*meshdim[2]));
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  /* hole sizes */
+  Tcl_AppendResult(interp, "{ ", (char *)NULL);
+  for ( i=0; i<=n_holes; i++ ) { 
+    sprintf(buffer,"%d ",holes[i][0]); Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  }
+  Tcl_AppendResult(interp, "} ", (char *)NULL);
+  /* hole surfaces */
+  Tcl_AppendResult(interp, "{ ", (char *)NULL);
+  for ( i=0; i<=n_holes; i++ ) { 
+    sprintf(buffer,"%d ",surface[i]); Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  }
+  Tcl_AppendResult(interp, "} ", (char *)NULL);
+  /* hole elements */ 
+  Tcl_AppendResult(interp, "{ ", (char *)NULL);
+  for ( i=0; i<=n_holes; i++ ) { 
+    Tcl_AppendResult(interp, "{ ", (char *)NULL);
+    for ( j=1; j <= holes[i][0]; j++ ) {
+      sprintf(buffer,"%d",holes[i][j]);
+      Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
+    }
+    Tcl_AppendResult(interp, "} ", (char *)NULL);
+  }
+  Tcl_AppendResult(interp, "} ", (char *)NULL);
+  
+  Tcl_AppendResult(interp, "}", (char *)NULL);
+
+  /* free allocated memory */
+  realloc_intlist(&mesh, 0);
+  free(surface);
+  for ( i=0; i<=n_holes; i++ ) { free(holes[i]); }
+  free(holes);
+
+  return (TCL_OK);
+}
+
 /*@}*/

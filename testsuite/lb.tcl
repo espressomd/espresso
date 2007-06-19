@@ -120,7 +120,7 @@ cellsystem domain_decomposition -no_verlet_list
 lbfluid dens $dens visc $viscosity agrid $agrid tau $tau
 lbfluid friction $friction
 
-setmd temperature $temp
+thermostat lb $temp
 
 # Particles
 #############################################################

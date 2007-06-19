@@ -1,0 +1,377 @@
+\documentclass[
+a4paper,                        % paper size
+11pt,                           % font size
+twoside,                        % two sided
+footsepline,                    % add a line to separate the footer
+headsepline,                    % add a line to separate the header
+headexclude,                    % header does not belong to the text
+footexclude,                    % footer does not belong to the text
+pagesize,                       % set the pagesize in a DVI document
+bibtotocnumbered,               % add the bibliography to the TOC
+idxtotoc                        % add the index to the TOC
+%openright,                      % start a new chapter on the right page
+%,DIV12
+%,draft
+]{scrreprt}
+
+\usepackage[draft]{varioref}    % defines \vref
+\usepackage[
+%bookmarksopen=true
+]
+{hyperref}                      % automatically creates links when
+                                % using pdflatex, defines \url
+\usepackage{ifpdf}              % defines \ifpdf
+\usepackage{graphicx}           % handles graphics
+\usepackage{makeidx}            % creates the index
+\usepackage{color}              % use colors
+
+\usepackage{verbatim}           % required for \verbatim and \endverbatim
+\usepackage{fancyvrb}
+\usepackage{tocloft}            % required for the quickref
+\usepackage{calc}               % compute length
+\usepackage{ifthen}             % provide ifthen
+\usepackage{xspace}
+\usepackage[numbers]{natbib}
+
+% Make '_' a normal character (from http://www.tug.org/TeXnik/mainFAQ.cgi)
+\usepackage{underscore}
+% \begingroup
+%   \lccode`\~=`\_
+% \lowercase{\endgroup
+%   \pdfstringdefDisableCommands{\let~\relax}%
+% }
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%% New Commands and Environments %%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\es}{\mbox{\textsf{ESPResSo}}\xspace}
+\newcommand{\ie}{\textit{i.e.}\xspace}
+\newcommand{\eg}{\textit{e.g.}\xspace}
+\newcommand{\etal}{\textit{et al.}\xspace}
+
+\newcommand{\codebox}[1]%
+{\texttt{#1}}
+
+\DefineVerbatimEnvironment{code}{Verbatim}%
+{commandchars=\\\{\}}
+\makeatletter
+\newenvironment{tclcode}
+{%
+  \addtolength{\linewidth}{-2em}% set the line length
+  \@minipagetrue%%%DPC%%%
+  \@tempswatrue%%%DPC%%%
+  \hsize=\linewidth%
+  \setbox0=\vbox\bgroup\verbatim
+}{\endverbatim
+  \unskip\setbox0=\lastbox%%%DPC%%%
+  \egroup
+  \par%
+  \noindent\hspace{1em}%
+  \codebox{\box0}%
+  \par\noindent%
+}
+\makeatother
+
+% required so that we can set index numbers bold
+% \index{Some example|main}
+\newcommand*{\mainindex}[1]{\textbf{\hyperpage{#1}}}
+
+\newcommand{\todo}[1]{
+  \marginpar{%
+    \setlength{\fboxrule}{1pt}
+    \fcolorbox{red}{yellow}{%
+      \parbox{\marginparwidth-2\fboxrule-2\fboxsep}{%
+        \bf\raggedright\scriptsize #1%
+      }%
+    }%
+  }%
+}
+
+\makeatletter
+\renewcommand{\minisec}[1]{\@afterindentfalse \vskip 1.5ex
+  {\parindent \z@
+    \raggedsection\normalfont\sffamily\itshape\nobreak#1\par\nobreak}%
+  \@afterheading}
+\makeatother
+
+%%%%%%%%%%%%%% Syntax Description %%%%%%%%%%%%%%%
+
+%%%%%% SYNTAX DEFINITION LAYOUT
+%% Defines environments and commands to be used when defining the
+%% syntax of a Tcl command.
+% typesetting inside a command definition
+% keywords/literals
+\newcommand{\lit}[1]{\mbox{\texttt{#1}}}
+\newcommand{\keyword}[1]{\mbox{\texttt{#1}}}
+% variables
+\newcommand{\var}[1]{\mbox{\textrm{\textit{#1}}}}
+% option
+\newcommand{\opt}[1]{\mbox{\textrm{[}#1\textrm{]}}}
+% alternatives
+\newcommand{\alt}[1]{\textrm{(} #1 \textrm{)}}
+\newcommand{\asep}{$|$\xspace}
+% variant
+% \rawvariant is required, as the command is changed during the
+% essyntax environment
+\newcommand{\rawvariant}[1]{\mbox{\textnormal{(#1)}}\xspace}
+\newcommand{\variant}[1]{\rawvariant{#1}}
+% requiresfeature
+\gdef\requiresfeaturesave{}
+\newlength{\requiresfeaturewidth}
+\newcounter{requiresfeaturecounter}
+\newcommand{\requiresfeature}[2]{%
+  \mbox{%
+    \begingroup%
+    \setlength{\fboxsep}{2pt}%
+    \fbox{#1}\,%
+    \endgroup%
+    \raisebox{0.5ex}{\footnotesize%
+      \arabic{requiresfeaturecounter}%
+    }%
+  }%
+  % append the feature 
+  \xdef\requiresfeaturesave{%
+    \requiresfeaturesave\noexpand\newline%
+    \noexpand\raisebox{0.5ex}{\noexpand\footnotesize%
+      \arabic{requiresfeaturecounter}%
+    }\,%
+    #2%
+  }%
+  \stepcounter{requiresfeaturecounter}%
+}
+
+\newsavebox{\theessyntaxbox}
+\newlength{\essyntaxboxheight}
+\newlength{\essyntaxboxdepth}
+\newenvironment{essyntaxbox}{%
+  \par\noindent%
+  \setcounter{requiresfeaturecounter}{1}%
+  \begin{lrbox}{\theessyntaxbox}%
+    \begin{minipage}{\linewidth-5em}%
+      \ttfamily%
+      \setlength{\parindent}{-3em}%
+      \renewcommand{\variant}[1]{\par\rawvariant{##1}}
+    }{%
+      \renewcommand{\variant}[1]{\rawvariant{##1}}
+    \end{minipage}%
+  \end{lrbox}%
+  \settoheight{\essyntaxboxheight}{\usebox{\theessyntaxbox}}%
+  \settodepth{\essyntaxboxdepth}{\usebox{\theessyntaxbox}}%
+  \hspace{1.5em}%
+  \rule[-\essyntaxboxdepth]{1pt}{\essyntaxboxheight+\essyntaxboxdepth}%
+  \hspace{3.5em}%
+  \usebox{\theessyntaxbox}%
+}
+
+%% Environment for syntax descriptions
+%\newlength{\essyntaxindent}
+\newenvironment{essyntax}[1][NONE]{%
+  \ifthenelse{\equal{#1}{NONE}}{}{%
+    \gdef\requiresfeaturesave{#1}%
+  }%
+  \setcounter{requiresfeaturecounter}{1}%
+  % Create headings
+  \minisec{Syntax}\nopagebreak%
+  \smallskip\nopagebreak%
+  \begin{essyntaxbox}%
+  }{%
+  \end{essyntaxbox}%
+%  \ifthenelse{\equal{\requiresfeaturesave}{}}{}{
+    \minisec{Required features}\nopagebreak%
+    \nopagebreak%
+    \ttfamily\requiresfeaturesave%
+    \gdef\requiresfeaturesave{}%
+%  }
+  \minisec{Description}%
+}
+
+%% List-environment for the description of the arguments of a command
+\newenvironment{arguments}{
+  \minisec{Arguments}
+  \begin{list}{}{
+      \setlength{\rightmargin}{1em}
+      \setlength{\leftmargin}{2em}
+      \setlength{\partopsep}{0pt}
+      \setlength{\topsep}{1ex}
+      \setlength{\parsep}{0.5ex}
+      \setlength{\listparindent}{-1em}
+      \setlength{\labelwidth}{0.5em}
+      \setlength{\labelsep}{0.5em}
+      \renewcommand{\makelabel}[1]{\textbullet\,\texttt{##1}}
+    }
+  }{
+  \end{list}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Create labels and index entries
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Create label and index entries for an Espresso tcl command
+\newcommand{\eslabel}[2][NONE]{%
+  \ifthenelse{\equal{#1}{NONE}}%
+  {\label{tcl:#2}}%
+  {\label{tcl:#1}}%
+  \index{#2@\texttt{#2} (Tcl-command)|mainindex}%
+  \index{Tcl-commands!#2@\texttt{#2}|mainindex}%
+}
+
+% Create label and index entries for analysis functions
+\newcommand{\analyzeindex}[1]{%
+  \index{#1|mainindex}%
+  \index{analysis!#1|mainindex}%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% OLD STUFF, TO BE REMOVED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Environment for syntax descriptions
+\newsavebox{\thetclsyntaxbox}
+\newenvironment{tclsyntax}[1][]{
+  % Create index entries
+  \index{#1@\texttt{#1}|mainindex}%
+  \index{Tcl-commands!#1@\texttt{#1}|mainindex}%
+  % Create headings
+  \minisec{Syntax}
+  \smallskip%
+  \begin{lrbox}{\thetclsyntaxbox}%
+    \begin{minipage}{\linewidth-2em}%
+      \ttfamily\setlength{\parindent}{-2em}%
+    }{%
+    \end{minipage}%
+  \end{lrbox}%
+  \begin{addmargin}{4em}%
+    \usebox{\thetclsyntaxbox}%
+  \end{addmargin}%
+  \minisec{Description}
+}
+
+% command definition
+% first, optional argument: variant number
+% second. mandatory argument: syntax description of a command
+\newcommand{\tclcommand}[2][]{%
+  \stepcounter{qrfcounter}%
+  \addtocontents{qrf}{%
+    \protect\qrfcommand{}{#2}{\thepage}{qrf\arabic{qrfcounter}}%
+  }%
+  \hypertarget{qrf\arabic{qrfcounter}}{%
+    \mbox{%
+      \ifthenelse{\equal{#1}{}}{}{\variant{#1}\hspace{0.3em}}%
+      \hspace{2em}\parbox[t]{\linewidth-4em}{%
+        \raggedright\ttfamily\hspace{-2em}#2%
+      }}}%
+}
+
+\newcommand{\addtoquickref}[1]{\addtocontents{qrf}{#1}}
+\newcommand{\quickrefheading}[1]{%
+  \stepcounter{qrfcounter}
+  \addtocontents{qrf}{\protect\qrfheading{#1}{\thepage}{qrf\arabic{qrfcounter}}}
+  \hypertarget{qrf\arabic{qrfcounter}}{}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%% QUICK REFERENCE LAYOUT
+% Create quick reference list
+\newlistof{commands}{qrf}{}
+\newcommand{\qrflastpage}{} % save the last page number
+\newcounter{qrfcounter} % the current number of the cmd
+
+\makeatletter
+\newcommand{\qrfheading}[3]{
+  \@dottedtocline{1}{0pt}{0pt}{\hyperlink{#3}{\textsf{\textbf{#1}}}}{#2}
+  \renewcommand{\qrflastpage}{#2}%
+}
+\makeatother
+
+% command definition in the quickref
+\newcommand{\qrfcommand}[4]{%
+  \begin{addmargin}{1em}%
+    \hyperlink{#4}{%
+      \mbox{\hspace{2em}%
+        \parbox[t]{\linewidth-4em}{%
+          \raggedright\ttfamily%
+          \hspace{-2em}#2
+        }}}%
+    % print the page number if it is different from the last entry
+    \ifthenelse{\equal{\qrflastpage}{#3}}{}{\hfill\scriptsize #3}%
+    \ifthenelse{\equal{#1}{}}{}{%
+      \scriptsize\\\hspace*{1em}Required features: \texttt{#1}%
+    }%
+  \end{addmargin}%
+  \ifthenelse{\equal{\qrflastpage}{#3}}{}{\renewcommand{\qrflastpage}{#3}}%
+  \smallskip
+}
+
+% Feature declaration
+\newcommand{\feature}[1]{%
+  \index{features!{\scriptsize #1}|mainindex}%
+  \hypertarget{#1}{\texttt{\textbf{#1}}}%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% Other Settings %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\makeindex
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%% Main Document %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\titlehead{
+  \begin{center}
+    \includegraphics[width=5cm]{figures/logo}
+  \end{center}
+}
+%\subject{}
+\title{\es{} User's Guide}
+%\author{}
+%\date{\today}
+\maketitle
+
+\pdfbookmark{Contents}{toc}
+\tableofcontents
+
+\include{introduction}
+
+\include{firststeps}
+\include{installation}
+
+\include{part}
+\include{inter}
+\include{setup}
+\include{run}
+\include{analysis}
+\include{io}
+\include{aux}
+
+\include{internal}
+\include{contributing}
+
+\appendix
+\include{quickref}
+\include{features}
+\include{examples}
+\include{deserno}
+
+%% Scientific appendices: description of algorithms
+\include{mmm}
+\chapter{Maggs algorithm}
+\label{chap:maggs}
+
+\bibliographystyle{plainnat}
+\bibliography{bibliography}
+
+\printindex
+
+\end{document}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

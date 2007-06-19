@@ -109,6 +109,10 @@
 #define CONSTRAINT_MAZE 6
 /** pore constraint applied */
 #define CONSTRAINT_PORE 7
+//ER
+/** External magnetic field constraint applied */
+#define CONSTRAINT_EXT_MAGN_FIELD 8
+//end ER
 
 /*@}*/
 
@@ -128,6 +132,31 @@ typedef struct {
   double LJ_shift;
   double LJ_offset;
   double LJ_capradius;
+  /*@}*/
+#endif
+
+#ifdef SMOOTH_STEP
+  /** \name smooth step potential */
+  /*@{*/
+  double SmSt_eps;
+  double SmSt_sig;
+  double SmSt_cut;
+  double SmSt_d;
+  int    SmSt_n;
+  double SmSt_k0;
+  /*@}*/
+#endif
+
+#ifdef BMHTF_NACL
+  /** \name BMHTF NaCl potential */
+  /*@{*/
+  double BMHTF_A;
+  double BMHTF_B;
+  double BMHTF_C;
+  double BMHTF_D;
+  double BMHTF_sig;
+  double BMHTF_cut;
+  double BMHTF_computed_shift;
   /*@}*/
 #endif
 
@@ -419,6 +448,14 @@ typedef struct {
   double cylrad;
 } Constraint_maze;
 
+//ER
+/** Parameters for a EXTERNAL MAGNETIC FIELD constraint */
+typedef struct{
+  /** vector (direction and magnitude) of the external magnetic field */
+  double ext_magn_field[3];
+} Constraint_ext_magn_field;
+//end ER
+
 /** Structure to specify a constraint. */
 typedef struct {
   /** type of the constraint. */
@@ -432,6 +469,9 @@ typedef struct {
     Constraint_plate plate;
     Constraint_maze maze;
     Constraint_pore pore;
+    //ER
+    Constraint_ext_magn_field emfield;
+    //end ER
   } c;
 
   /** particle representation of this constraint. Actually needed are only the identity,
@@ -529,7 +569,7 @@ int constraint(ClientData _data, Tcl_Interp *interp,
 /** Callback for setmd niatypes. */
 int niatypes_callback(Tcl_Interp *interp, void *data);
 
-/** get interaction particles between particle sorts i and j */
+/** get interaction parameters between particle sorts i and j */
 MDINLINE IA_parameters *get_ia_param(int i, int j) {
   extern IA_parameters *ia_params;
   extern int n_particle_types;

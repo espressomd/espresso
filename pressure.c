@@ -90,11 +90,11 @@ void master_pressure_calc(int v_comp);
 */
 void calc_bins_sphere(int *_new_bin,int *_elements,double *_volumes,double r_min,double r_max,int r_bins, double *center);
 
-/** Initializes extern Energy_stat \ref #p_tensor to be used by \ref calc_p_tensor. */
-void init_p_tensor();
+/** Initializes stat to be used by \ref calc_p_tensor. */
+void init_p_tensor(Observable_stat *stat);
 
-/** Initializes extern Energy_stat \ref #p_tensor to be used by \ref calc_p_tensor. */
-void init_p_tensor_non_bonded();
+/** Initializes stat_nb to be used by \ref calc_p_tensor. */
+void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 
 /** Calculates the pressure in the system from a virial expansion as a tensor.<BR>
     Output is stored in the \ref #p_tensor array, in which the <tt>p_tensor.sum</tt>-components contain the sum of the component-tensors
@@ -187,18 +187,21 @@ void calc_long_range_virials()
 {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  int k;
   switch (coulomb.method) {
+#ifdef ELP3M
   case COULOMB_ELC_P3M:
     fprintf(stderr, "WARNING: pressure calculated, but ELC pressure not implemented\n");
     break;
-  case COULOMB_P3M:
+  case COULOMB_P3M: {
+    int k;
     P3M_charge_assign();
     virials.coulomb[1] = P3M_calc_kspace_forces(0,1);
     for(k=0;k<3;k++)
       p_tensor.coulomb[9+ k*3 + k] = P3M_calc_kspace_forces(0,1)/3.;
     fprintf(stderr, "WARNING: stress tensor calculated, but P3M stress tensor not implemented\n");
     break;
+  }
+#endif
   case COULOMB_MMM2D:
     fprintf(stderr, "WARNING: pressure calculated, but MMM2D pressure not implemented\n");
     break;
@@ -404,7 +407,7 @@ static void print_detailed_pressure(Tcl_Interp *interp)
 
 /************************************************************/
 
-int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_comp)
+int parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **argv)
 {
   /* 'analyze pressure [{ bond <type_num> | nonbonded <type1> <type2> | coulomb | ideal | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
@@ -484,22 +487,25 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_co
       }
       value = *obsstat_nonbonded(&total_pressure, i, j);
     }
-    else if( ARG0_IS_S("tot_nb_intra")) {
+    else if( ARG0_IS_S("tot_nb_intra") ||
+	     ARG0_IS_S("tot_nonbonded_intra")) {
       value = 0.0;
       for (i = 0; i < n_particle_types; i++)
         for (j = i; j < n_particle_types; j++)
         value += *obsstat_nonbonded_intra(&total_pressure_non_bonded, i, j);
     }
-    else if( ARG0_IS_S("tot_nb_inter")) {
+    else if( ARG0_IS_S("tot_nb_inter") ||
+	     ARG0_IS_S("tot_nonbonded_inter")) {
       value = 0.0;
       for (i = 0; i < n_particle_types; i++)
         for (j = i; j < n_particle_types; j++)
         value += *obsstat_nonbonded_inter(&total_pressure_non_bonded, i, j);
     }
-    else if( ARG0_IS_S("nb_intra")) {
+    else if( ARG0_IS_S("nb_intra") ||
+	     ARG0_IS_S("nonbonded_intra")) {
       if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
 	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nonbonded <type1> <type2>",
+	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nb_intra <type1> <type2>",
 			 (char *)NULL);
 	return (TCL_ERROR);
       }
@@ -509,10 +515,11 @@ int parse_and_print_pressure(Tcl_Interp *interp, int argc, char **argv, int v_co
       }
       value = *obsstat_nonbonded_intra(&total_pressure_non_bonded, i, j);
     }   
-    else if( ARG0_IS_S("nb_inter")) {
+    else if( ARG0_IS_S("nb_inter") ||
+	     ARG0_IS_S("nonbonded_inter")) {
       if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
 	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nonbonded <type1> <type2>",
+	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nb_inter <type1> <type2>",
 			 (char *)NULL);
 	return (TCL_ERROR);
       }
@@ -849,6 +856,10 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
 #ifdef LENNARD_JONES
 	add_lj_pair_force(&p1,&p2,ia_params,d,dist,force);
 #endif
+	/* BMHTF NaCl */
+#ifdef BMHTF_NACL
+	add_BMHTF_pair_force(&p1,&p2,ia_params,d,dist,dist2,force);
+#endif
 	/* buckingham potential */
 #ifdef BUCKINGHAM
 	add_buck_pair_force(&p1,&p2,ia_params,d,dist,force);
@@ -1037,7 +1048,7 @@ static void print_detailed_stress_tensor(Tcl_Interp *interp)
 }
 
 /************************************************************/
-int parse_and_print_stress_tensor(Tcl_Interp *interp, int argc, char **argv, int v_comp)
+int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char **argv)
 {
   /* 'analyze stress_tensor [{ bond <type_num> | nonbonded <type1> <type2> | coulomb | ideal | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
@@ -1055,6 +1066,10 @@ int parse_and_print_stress_tensor(Tcl_Interp *interp, int argc, char **argv, int
    if (total_pressure.init_status != 1+v_comp ) {
     init_virials(&total_pressure);
     init_p_tensor(&total_p_tensor);
+
+    init_virials_non_bonded(&total_pressure_non_bonded);
+    init_p_tensor_non_bonded(&total_p_tensor_non_bonded);
+
     if(v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) && !(nptiso.invalidate_p_vel)) {
       if (total_pressure.init_status == 0)
 	master_pressure_calc(0);
