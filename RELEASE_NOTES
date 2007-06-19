@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2w (Ydalir)                                                                     *
+* v2.0.2x (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2w -
+- v2.0.2x -
 -----------
 
+(x) June     18th, 2007.
 (w) June     15th, 2007.
 (v) June      4th, 2007.
 (u) May      30th, 2007.
@@ -56,6 +57,25 @@ New Features:
 (d) solving linear equation systems.
 
 Changes:
+(x) Major changes in Lattice Boltzmann implementation:
+(x) 1) Changed the LB model from D3Q18 to D3Q19. D3Q19 is now the
+(x) standard model. Switching to a different model is still
+(x) possible, but MAKE SURE to #undefine the D3Q19 macro in order
+(x) to use the generic implementation.
+(x) 2) Removed CREEPING_FLOW macro. The implementation now always
+(x) includes the nonlinear term in the equilibrium distribution.
+(x) While the computational overhead is small, this term is
+(x) necessary to retain Galilean invariance. Note that the
+(x) exclusion of the nonlinear term had a stabilizing effect
+(x) which now of course is absent as well.
+(x) 3) Removed special treatment of negative populations.
+(x) Negative populations are now always accepted. This avoids the
+(x) need to redraw random numbers, which is a pain in the neck to
+(x) parallelize and was actually never 100% correct. The code
+(x) runs just fine with negative populations. If results get
+(x) screwed up, the simulation parameters are probably physically
+(x) insane. Try to reduce the time steps and/or the temperature
+(x) in that case.
 (w) Moved documentation of Tcl commands from Developer's guide (doxygen) to User's
     Guide (LaTeX)
 (s) Adding the TRANS_DPD macro to switch on or off the transversal
