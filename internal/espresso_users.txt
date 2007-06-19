@@ -1796,3 +1796,24 @@ topic:     Protein/peptide aggregation
 reminded:  X11.JUN.2007
 
 
+name:      Martinez Michael
+email:     michael.martinez@eml-r.villa-bosch.de
+institute: EML Research, gmbH
+           Villa Bosch
+           Schloss-Wolfsbrunnenweg 31c
+           69118 Heidelberg
+sent:      18.JUN.2007
+version:   20070423-Espresso_v2.0.2n.tar.gz
+CVS:       
+topic:     I begin my postdoc on the interactions between lipids membranes
+           and proteins. I got interest to see what Espresso 
+           can do at a coarse-grained level.
+           Mainly, the group had great interest in electrostatic potential
+           for protein-protein docking. Extension to (flexible) membrane
+           is a goal of my new research.
+           
+           We are also doing full MD simulation of membranes systems in
+           the group, that could allow comparison.
+reminded:  X18.JUN.2007
+
+
