@@ -602,57 +602,79 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv)
   int *elements;
   double *volumes;
 
-  if (ARG0_IS_S("sphere")) {
-    argc--; argv++;
-    if(argc < 6) { Tcl_AppendResult(interp,"Too few arguments! Usage: 'analyze bins sphere <r_min> <r_max> <r_bins> <center1> <center2> <center3> '",(char *)NULL); return (TCL_ERROR); }
-    if( argc>0 ) { if (!ARG0_IS_D(r_min)) return (TCL_ERROR); argc--; argv++; }
-    if( argc>0 ) { if (!ARG0_IS_D(r_max)) return (TCL_ERROR); argc--; argv++; }
-    if( argc>0 ) { if (!ARG0_IS_I(r_bins)) return (TCL_ERROR); argc--; argv++; }
-    if( argc>0 ) { if (!ARG0_IS_D(center[0])) return (TCL_ERROR); argc--; argv++; }
-    if( argc>0 ) { if (!ARG0_IS_D(center[1])) return (TCL_ERROR); argc--; argv++; }
-    if( argc>0 ) { if (!ARG0_IS_D(center[2])) return (TCL_ERROR); argc--; argv++; }
+  if (argc> 0){
+    if (ARG0_IS_S("sphere")) {
+      argc--; argv++;
+      if(argc < 6) { Tcl_AppendResult(interp,"Too few arguments! Usage: 'analyze bins sphere <r_min> <r_max> <r_bins> <center1> <center2> <center3> '",(char *)NULL); return (TCL_ERROR); }
+      if( argc>0 ) { if (!ARG0_IS_D(r_min)) return (TCL_ERROR); argc--; argv++; }
+      if( argc>0 ) { if (!ARG0_IS_D(r_max)) return (TCL_ERROR); argc--; argv++; }
+      if( argc>0 ) { if (!ARG0_IS_I(r_bins)) return (TCL_ERROR); argc--; argv++; }
+      if( argc>0 ) { if (!ARG0_IS_D(center[0])) return (TCL_ERROR); argc--; argv++; }
+      if( argc>0 ) { if (!ARG0_IS_D(center[1])) return (TCL_ERROR); argc--; argv++; }
+      if( argc>0 ) { if (!ARG0_IS_D(center[2])) return (TCL_ERROR); argc--; argv++; }
 
+      /* if not given use default */
+      if(r_max == -1.0) r_max = min_box_l/2.0;
+      if(r_bins == -1) r_bins = n_total_particles / 20;
 
-    /* if not given use default */
-    if(r_max == -1.0) r_max = min_box_l/2.0;
-    if(r_bins == -1) r_bins = n_total_particles / 20;
+      /* give back what you do */
 
-    /* give back what you do */
-
-    elements = malloc(n_total_particles*sizeof(int));
-    new_bin = malloc(r_bins*sizeof(int));
-    volumes = malloc(r_bins*sizeof(double));
-    updatePartCfg(WITHOUT_BONDS);
-    calc_bins_sphere(new_bin,elements,volumes, r_min, r_max, r_bins, center);
-    /* append result */
-    {
-      Tcl_AppendResult(interp, " { ", (char *)NULL);
-      sprintf(buffer,"%le",volumes[0]);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-      Tcl_AppendResult(interp, " { ", (char *)NULL);
-      /* i->particles, j->bin, k->particle/bin */
-      for(i=0,j=0,k=0;i<n_total_particles;i++,k++){
-	if(k==new_bin[j] || new_bin[j] == 0){
-	  /* if all bins are full, rest of particles are outside r_min/r_max */
-	  k=0,j++;
-	  if(j==r_bins) break;
-	  Tcl_AppendResult(interp, "} } { ", (char *)NULL);
-	  sprintf(buffer,"%le",volumes[j]);
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
-	  Tcl_AppendResult(interp, " { ", (char *)NULL);
-	}
-	sprintf(buffer,"%d ",elements[i]);
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
+      elements = malloc(n_total_particles*sizeof(int));
+      new_bin = malloc(r_bins*sizeof(int));
+      volumes = malloc(r_bins*sizeof(double));
+      updatePartCfg(WITHOUT_BONDS);
+      calc_bins_sphere(new_bin,elements,volumes, r_min, r_max, r_bins, center);
+      /* append result */
+      {
+        //Tcl_AppendResult(interp, " { ", (char *)NULL);
+        sprintf(buffer,"%le",volumes[0]);
+        Tcl_AppendResult(interp, buffer, (char *)NULL);
+        Tcl_AppendResult(interp, " { ", (char *)NULL);
+        /* i->particles, j->bin, k->particle/bin */
+        for(i=0,j=0,k=0;i<n_total_particles;i++,k++){
+          if(k==new_bin[j] || new_bin[j] == 0){
+            /* if all bins are full, rest of particles are outside r_min/r_max */
+            k=0,j++;
+            if(j==r_bins) break;
+            Tcl_AppendResult(interp, "} } { ", (char *)NULL);
+            sprintf(buffer,"%le",volumes[j]);
+            Tcl_AppendResult(interp, buffer, (char *)NULL);
+            Tcl_AppendResult(interp, " { ", (char *)NULL);
+          }
+          sprintf(buffer,"%d ",elements[i]);
+          Tcl_AppendResult(interp, buffer, (char *)NULL);
+        }
+        Tcl_AppendResult(interp, "}", (char *)NULL);
       }
-      Tcl_AppendResult(interp, "}\n", (char *)NULL);
+      free(new_bin);
+      free(elements);
+      free(volumes);
+      return (TCL_OK);
     }
-    free(new_bin);
-    free(elements);
-    return (TCL_OK);
+    else if (ARG0_IS_S("all")){
+      argc--; argv++;
+      updatePartCfg(WITHOUT_BONDS);
+      // volume
+      r_min=box_l[0]*box_l[1]*box_l[2];
+      Tcl_PrintDouble(interp,r_min,buffer);
+      Tcl_AppendResult(interp,buffer," { ",(char *)NULL);
+      for (i=0;i<n_total_particles;i++)
+      {
+        sprintf(buffer,"%d ",partCfg[i].p.identity);
+        Tcl_AppendResult(interp,buffer,(char *)NULL);
+      }
+      Tcl_AppendResult(interp,"}",(char *)NULL);
+      return (TCL_OK);
+    }
+    else{//ARG0 is not (all or sphere)
+      Tcl_AppendResult(interp,"The feature 'analyze bins ",argv[0],"' is not yet implemented.",(char *)NULL);
+      return (TCL_ERROR);
+    }
   }
-  /* else */
-  Tcl_AppendResult(interp,"The feature 'analyze bins ", argv[0], "' you requested is not yet implemented.",(char *)NULL);
-  return (TCL_ERROR);
+  else{//argc==0
+    Tcl_AppendResult(interp,"The feature for 'analyze bins' you requested is not yet implemented.",(char *)NULL);
+    return (TCL_ERROR);
+  }
 }
 
 int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
