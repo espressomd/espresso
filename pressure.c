@@ -583,7 +583,6 @@ void calc_bins_sphere(int *new_bin,int *elements,double *volumes,double r_min,do
 	new_bin[i] += 1;
       }
     }
-    printf("vol %d %le\n",i,volumes[i]);
   }
 }
 
