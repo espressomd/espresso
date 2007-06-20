@@ -37,6 +37,7 @@
 #include "angle.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
+#include "reaction_field.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
 #include "maggs.h"
@@ -144,6 +145,9 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
       break;
     case COULOMB_DH:
       ret = dh_coulomb_pair_energy(p1,p2,dist);
+      break;
+    case COULOMB_RF:
+      ret = rf_coulomb_pair_energy(p1,p2,dist);
       break;
     case COULOMB_MMM1D:
       ret = mmm1d_coulomb_pair_energy(p1,p2,d,dist2,dist);

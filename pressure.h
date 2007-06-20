@@ -91,6 +91,7 @@ extern nptiso_struct nptiso;
 #include "angle.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
+#include "reaction_field.h"
 #include "mmm1d.h"
 
 
@@ -222,6 +223,9 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
     case COULOMB_DH:
       ret = dh_coulomb_pair_energy(p1,p2,dist);
       break;
+    case COULOMB_RF:
+      ret = rf_coulomb_pair_energy(p1,p2,dist);
+      break;
     case COULOMB_MMM1D:
       ret = mmm1d_coulomb_pair_energy(p1,p2,d, dist2,dist);
       break;
@@ -237,6 +241,16 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
       force[i] = 0;
     
     add_dh_coulomb_pair_force(p1,p2,d,dist, force);
+    for(k=0;k<3;k++)
+      for(l=0;l<3;l++)
+	p_tensor.coulomb[k*3 + l] += force[k]*d[l];
+  }
+  if (coulomb.method == COULOMB_RF) {
+    int i;
+    for (i = 0; i < 3; i++)
+      force[i] = 0;
+    
+    add_rf_coulomb_pair_force(p1,p2,d,dist, force);
     for(k=0;k<3;k++)
       for(l=0;l<3;l++)
 	p_tensor.coulomb[k*3 + l] += force[k]*d[l];

@@ -21,6 +21,7 @@
 #include "p3m.h"
 #include "ewald.h"
 #include "debye_hueckel.h"
+#include "reaction_field.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
 #include "maggs.h"
@@ -49,6 +50,7 @@ IA_parameters *ia_params = NULL;
 #ifdef ELECTROSTATICS
 Coulomb_parameters coulomb = { 0.0, 0.0, COULOMB_NONE };
 Debye_hueckel_params dh_params = { 0.0, 0.0 };
+Reaction_field_params rf_params = { 0.0, 0.0 };
 #endif
 
 int n_bonded_ia = 0;
@@ -789,7 +791,9 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_COULOMB("ewald", inter_parse_ewald);
 
   REGISTER_COULOMB("dh", inter_parse_dh);    
-    
+
+  REGISTER_COULOMB("rf", inter_parse_rf);
+
   REGISTER_COULOMB("mmm1d", inter_parse_mmm1d);
 
   REGISTER_COULOMB("mmm2d", inter_parse_mmm2d);
@@ -968,6 +972,7 @@ int printCoulombIAToResult(Tcl_Interp *interp)
 #endif
   case COULOMB_EWALD: printEWALDToResult(interp); break;
   case COULOMB_DH: printdhToResult(interp); break;
+  case COULOMB_RF: printrfToResult(interp); break;
   case COULOMB_MMM1D: printMMM1DToResult(interp); break;
   case COULOMB_MMM2D: printMMM2DToResult(interp); break;
   case COULOMB_MAGGS: printMaggsToResult(interp); break;

@@ -42,6 +42,7 @@
 #include "lb.h"
 #include "ghosts.h"
 #include "debye_hueckel.h"
+#include "reaction_field.h"
 #include "forces.h"
 #include "uwerr.h"
 #include "nsquare.h"

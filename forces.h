@@ -46,6 +46,7 @@
 #include "angle.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
+#include "reaction_field.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
 #include "constraint.h"
@@ -167,6 +168,9 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #ifdef ELECTROSTATICS
   if (coulomb.method == COULOMB_DH)
     add_dh_coulomb_pair_force(p1,p2,d,dist,force);
+  
+  if (coulomb.method == COULOMB_RF)
+    add_rf_coulomb_pair_force(p1,p2,d,dist,force);
 #endif
 
   /*********************************************************************/
