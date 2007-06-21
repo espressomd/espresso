@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2x (Ydalir)                                                                     *
+* v2.0.2y (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2x -
+- v2.0.2y -
 -----------
 
+(y) June     20th, 2007.
 (x) June     18th, 2007.
 (w) June     15th, 2007.
 (v) June      4th, 2007.
@@ -37,6 +38,9 @@ Current working revision.
 (a) February  2nd, 2007.
 
 New Features:
+(y) added Reaction Field to Coulomb interactions
+(y) added readline features (history, lineediting, tab, etc.) for interactive
+    started Espresso
 (w) Rewrote "How to write the User's Guide" in the Developer's
     Guide
 (w) First version of the new User's Guide
@@ -57,6 +61,9 @@ New Features:
 (d) solving linear equation systems.
 
 Changes:
+(y) added the feature "analyze bin all" to get a list of all particles, removed
+    some prints to stdout and a Segmentation fault when calling "analyze bin"
+    without argument.
 (x) Major changes in Lattice Boltzmann implementation:
 (x) 1) Changed the LB model from D3Q18 to D3Q19. D3Q19 is now the
 (x) standard model. Switching to a different model is still
@@ -84,6 +91,7 @@ Changes:
     be set in the ug.
 
 Bugfixes:
+(y) removed some printf to stdout in calc_bins_sphere()
 (v) We actually use some bash features, so explicitely state it.
 (u) resubmitted changes, now with proper #ifdefs
 (r) under certain circumstances, MMM1D would allow to manual set impossible
