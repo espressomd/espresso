@@ -1,4 +1,6 @@
-ug_SOURCES=\
+ug_FILES=\
+	underscore.sty \
+	bibliography.bib \
 	ug.tex \
 	introduction.tex \
 	firststeps.tex \
@@ -15,37 +17,38 @@ ug_SOURCES=\
 	quickref.tex \
 	features.tex \
 	examples.tex \
-	deserno.tex
+	deserno.tex \
+	figures
 
-ug_FIGURES=\
+ug_figures_FILES=\
 	logo.jpg \
 	nacl-rdf.pdf \
 	salt.png
 
 data_DATA=ug.pdf
 
-EXTRA_DIST=$(ug_SOURCES) figures ug.pdf
+EXTRA_DIST= $(ug_FILES) \
+	ug.pdf \
+	latexmk latexmk.1 latexmkrc
+
 .PHONY: doc ug
 
 doc: ug
 ug: ug.pdf
-ug.pdf: $(ug_SOURCES)
-if HAVE_PDFLATEX
-	for file in $(ug_SOURCES); do \
+ug.pdf: $(ug_FILES)
+if HAVE_LATEX
+	for file in $(ug_FILES); do \
 	  if test ! -e $$file; then $(LN_S) $(srcdir)/$$file .; fi;\
 	done
-	mkdir -p figures
-	for file in $(ug_FIGURES); do \
-	  if test ! -e figures/$$file; then $(LN_S) ../$(srcdir)/figures/$$file figures; fi;\
-	done
 	$(PDFLATEX) ug.tex
-	makeindex ug
+	$(MAKEINDEX) ug
+	$(BIBTEX) ug
 	$(PDFLATEX) ug.tex
 	$(PDFLATEX) ug.tex
 else
-	@echo "pdflatex was not found in your PATH."
-	@echo "Can't build user's guide without pdflatex."
-	@echo "Install pdflatex and rerun configure."
+	@echo "No complete LaTeX-installation was not found in your PATH."
+	@echo "Can't build the User's Guide without pdflatex, makeindex and bibtex."
+	@echo "Install these and rerun configure."
 endif
 
 CLEANFILES=ug.pdf

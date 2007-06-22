@@ -111,7 +111,9 @@ AC_PROG_LN_S
 AC_PATH_PROG(DOXYGEN,doxygen,no)
 AM_CONDITIONAL(HAVE_DOXYGEN,test .$DOXYGEN != .no)
 AC_PATH_PROG(PDFLATEX,pdflatex,no)
-AM_CONDITIONAL(HAVE_PDFLATEX,test .$PDFLATEX != .no)
+AC_PATH_PROG(MAKEINDEX,makeindex,no)
+AC_PATH_PROG(BIBTEX,bibtex,no)
+AM_CONDITIONAL(HAVE_LATEX,test .$PDFLATEX != .no && test .$MAKEINDEX != .no && test .$BIBTEX != .no)
 
 cat <<EOF
 ****************************************************************
@@ -120,7 +122,7 @@ cat <<EOF
 EOF
 # Creating the output
 AC_CONFIG_HEADERS([acconfig.h])
-AC_CONFIG_LINKS(Makefile)
+AC_CONFIG_LINKS(Makefile:Makefile)
 AC_CONFIG_FILES([
 	Makefile-am scripts/Makefile testsuite/Makefile
 	doc/Makefile doc/ug/Makefile doc/dg/Makefile
@@ -187,11 +189,19 @@ Other settings:
 using Espresso chooser	= $enable_chooser
 local config header	= $myconfig
 pdflatex		= $PDFLATEX
+makeindex		= $MAKEINDEX
+bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
 EOF
 
 if test .$pdflatex = .no; then
    echo "To be able to rebuild the user's guide, add pdflatex to your PATH."
+fi
+if test .$makeindex = .no; then
+   echo "To be able to rebuild the user's guide, add makeindex to your PATH."
+fi
+if test .$bibtex = .no; then
+   echo "To be able to rebuild the user's guide, add bibtex to your PATH."
 fi
 if test .$doxygen = .no; then
    echo "To be able to build the developer's guide, add doxygen to your PATH."
