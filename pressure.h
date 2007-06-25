@@ -77,6 +77,7 @@ extern nptiso_struct nptiso;
 /* include the potential files */
 #include "p3m.h"
 #include "lj.h"
+#include "ljgen.h"
 #include "steppot.h"
 #include "bmhtf-nacl.h"
 #include "buckingham.h"

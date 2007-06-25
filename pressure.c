@@ -877,6 +877,12 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
 #ifdef LENNARD_JONES
 	add_lj_pair_force(&p1,&p2,ia_params,d,dist,force);
 #endif
+
+	/* Generic lennnard jones */
+#ifdef LENNARD_JONES_GENERIC
+	add_ljgen_pair_force(&p1,&p2,ia_params,d,dist,force);
+#endif
+
 	/* BMHTF NaCl */
 #ifdef BMHTF_NACL
 	add_BMHTF_pair_force(&p1,&p2,ia_params,d,dist,dist2,force);

@@ -31,6 +31,7 @@
 /* include the force files */
 #include "p3m.h"
 #include "lj.h"
+#include "ljgen.h"
 #include "steppot.h"
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
@@ -121,6 +122,11 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /* lennard jones */
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+
+  /* Generic lennard jones */
+#ifdef LENNARD_JONES_GENERIC
+  add_ljgen_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
 
 #ifdef SMOOTH_STEP

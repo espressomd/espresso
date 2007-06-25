@@ -81,6 +81,7 @@ Espresso_bin_SOURCES = \
 	ljcos2.h \
 	ljcos.h \
 	lj.h \
+	ljgen.h \
 	steppot.h \
 	bmhtf-nacl.h \
 	morse.h \

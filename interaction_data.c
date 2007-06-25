@@ -27,6 +27,7 @@
 #include "maggs.h"
 #include "elc.h"
 #include "lj.h"
+#include "ljgen.h"
 #include "steppot.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
@@ -96,6 +97,17 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJ_shift =
     params->LJ_offset =
     params->LJ_capradius = 0;
+#endif
+
+#ifdef LENNARD_JONES_GENERIC
+  params->LJGEN_eps =
+    params->LJGEN_sig =
+    params->LJGEN_cut =
+    params->LJGEN_shift =
+    params->LJGEN_offset =
+    params->LJGEN_capradius =
+    params->LJGEN_a1 =
+    params->LJGEN_a2 = 0;
 #endif
 
 #ifdef SMOOTH_STEP
@@ -212,6 +224,17 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJ_capradius = src->LJ_capradius;
 #endif
 
+#ifdef LENNARD_JONES_GENERIC
+  dst->LJGEN_eps = src->LJGEN_eps;
+  dst->LJGEN_sig = src->LJGEN_sig;
+  dst->LJGEN_cut = src->LJGEN_cut;
+  dst->LJGEN_shift = src->LJGEN_shift;
+  dst->LJGEN_offset = src->LJGEN_offset;
+  dst->LJGEN_capradius = src->LJGEN_capradius;
+  dst->LJGEN_a1 = src->LJGEN_a1;
+  dst->LJGEN_a2 = src->LJGEN_a2;
+#endif
+
 #ifdef SMOOTH_STEP
   dst->SmSt_eps = src->SmSt_eps;
   dst->SmSt_sig = src->SmSt_sig;
@@ -321,6 +344,11 @@ int checkIfParticlesInteract(int i, int j) {
 
 #ifdef LENNARD_JONES
   if (data->LJ_cut != 0)
+    return 1;
+#endif
+
+#ifdef LENNARD_JONES_GENERIC
+  if (data->LJGEN_cut != 0)
     return 1;
 #endif
 
@@ -540,6 +568,13 @@ void calc_maximal_cutoff()
 	 if (data->LJ_cut != 0) {
 	   if(max_cut_non_bonded < (data->LJ_cut+data->LJ_offset) )
 	     max_cut_non_bonded = (data->LJ_cut+data->LJ_offset);
+	 }
+#endif
+
+#ifdef LENNARD_JONES_GENERIC
+	 if (data->LJGEN_cut != 0) {
+	   if(max_cut_non_bonded < (data->LJGEN_cut+data->LJGEN_offset) )
+	     max_cut_non_bonded = (data->LJGEN_cut+data->LJGEN_offset);
 	 }
 #endif
 
@@ -913,6 +948,9 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #ifdef LENNARD_JONES
   if (data->LJ_cut != 0) printljIAToResult(interp,i,j);
 #endif
+#ifdef LENNARD_JONES_GENERIC
+  if (data->LJGEN_cut != 0) printljgenIAToResult(interp,i,j);
+#endif
 #ifdef SMOOTH_STEP
   if (data->SmSt_cut != 0) printSmStIAToResult(interp,i,j);
 #endif
@@ -1187,6 +1225,10 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
     REGISTER_NONBONDED("lennard-jones", lj_parser);
 #endif
 
+#ifdef LENNARD_JONES_GENERIC
+    REGISTER_NONBONDED("lj-gen", ljgen_parser);
+#endif
+
 #ifdef SMOOTH_STEP
     REGISTER_NONBONDED("smooth-step", SmSt_parser);
 #endif
@@ -1313,7 +1355,7 @@ int inter_parse_bonded(Tcl_Interp *interp,
 
 int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 {
-#ifdef LENNARD_JONES
+#ifdef LENNARD_JONES || LENNARD_JONES_GENERIC
   if(ARG0_IS_S("ljforcecap"))
     return inter_parse_ljforcecap(interp, argc-1, argv+1);
 #endif

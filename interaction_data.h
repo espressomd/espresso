@@ -137,6 +137,20 @@ typedef struct {
   /*@}*/
 #endif
 
+#ifdef LENNARD_JONES_GENERIC
+  /** \name Generic Lennard-Jones with shift */
+  /*@{*/
+  double LJGEN_eps;
+  double LJGEN_sig;
+  double LJGEN_cut;
+  double LJGEN_shift;
+  double LJGEN_offset;
+  double LJGEN_capradius;
+  int LJGEN_a1;
+  int LJGEN_a2;
+  /*@}*/
+#endif
+
 #ifdef SMOOTH_STEP
   /** \name smooth step potential */
   /*@{*/

@@ -23,6 +23,7 @@
 /* include the energy files */
 #include "p3m.h"
 #include "lj.h"
+#include "ljgen.h"
 #include "steppot.h"
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
@@ -75,6 +76,11 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 #ifdef LENNARD_JONES
   /* lennard jones */
   ret += lj_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+
+#ifdef LENNARD_JONES_GENERIC
+  /* Generic lennard jones */
+  ret += ljgen_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
 #ifdef SMOOTH_STEP
