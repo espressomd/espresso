@@ -82,11 +82,6 @@
 #endif
 
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
-#ifdef LB
-#define USE_TEMPORARY
-#define LATTICE
-//#define ALTERNATIVE_INTEGRATOR
-#endif
 
 /* If any bond angle potential is activated, actiavte the whole bond angle code */
 #if defined(BOND_ANGLE_HARMONIC) || defined(BOND_ANGLE_COSINE) || defined(BOND_ANGLE_COSSQUARE)

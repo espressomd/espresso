@@ -28,7 +28,6 @@
 /* #define PARTIAL_PERIODIC */
 /* #define ELECTROSTATICS */
 /* #define ROTATION */
-/* #define DIPOLES */
 /* #define EXTERNAL_FORCES */
 /* #define CONSTRAINTS */
 /* #define MASS */
@@ -46,7 +45,6 @@
 /* #define NEMD */
 /* #define NPT */ 
 /* #define DPD */
-/* #define LB */
 
 /**********************************************************************/
 /*                           interactions                             */
@@ -102,7 +100,6 @@
 /* #define MOLFORCES_DEBUG */
 /* #define MEM_DEBUG */
 /* #define MAGGS_DEBUG */
-/* #define LB_DEBUG */
 
 /* #define ASYNC_BARRIER */
 

@@ -366,9 +366,6 @@ void integrate_vv(int n_steps)
      Calculate forces f(t) as function of positions p(t) ( and velocities v(t) ) */
   if (recalc_forces) {
     thermo_heat_up();
-#ifdef LB
-    transfer_momentum = 0;
-#endif    
     force_calc(); 
 
     thermo_cool_down();
@@ -442,9 +439,6 @@ void integrate_vv(int n_steps)
 
     /* Integration Step: Step 3 of Velocity Verlet scheme:
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities v(t+0.5*dt) ) */
-#ifdef LB
-    transfer_momentum = 1;
-#endif    
     force_calc();
 
     /* Communication step: ghost forces */
@@ -462,10 +456,6 @@ void integrate_vv(int n_steps)
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
 
-#ifdef LB
-  if (lattice_switch & LATTICE_LB) lb_propagate();
-  if (check_runtime_errors()) break;
-#endif
 
 #ifdef BOND_CONSTRAINT
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
@@ -556,12 +546,6 @@ int time_step_callback(Tcl_Interp *interp, void *_data)
     Tcl_AppendResult(interp, "time step must be positive.", (char *) NULL);
     return (TCL_ERROR);
   }
-#ifdef LB
-  else if ((lbpar.tau >= 0.0) && (data > lbpar.tau)) {
-    Tcl_AppendResult(interp, "MD time step must be smaller than LB time step.", (char *)NULL);
-    return (TCL_ERROR);
-  }
-#endif
   mpi_set_time_step(data);
 
   return (TCL_OK);

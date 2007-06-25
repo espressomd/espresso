@@ -292,8 +292,5 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
 }
 #endif
 
-#ifdef LB
-int thermo_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
-#endif
 
 #endif

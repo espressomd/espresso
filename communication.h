@@ -171,22 +171,6 @@ void mpi_send_omega(int node, int part, double omega[3]);
 void mpi_send_torque(int node, int part, double torque[3]);
 #endif
 
-#ifdef DIPOLES 
-/** Issue REQ_SET_DIP: send particle dipole orientation.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param dip its new dipole orientation.
-*/
-void mpi_send_dip(int node, int part, double dip[3]);
-/** Issue REQ_SET_DIPM: send particle dipole moment.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param dipm its new dipole moment (absolut value).
-*/
-void mpi_send_dipm(int node, int part, double dipm);
-#endif
 
 /** Issue REQ_SET_TYPE: send particle type.
     Also calls \ref on_particle_change.

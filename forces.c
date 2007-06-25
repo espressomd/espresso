@@ -51,9 +51,6 @@ void force_calc()
 {
   
 
-#ifdef DIPOLES
-  convert_quat_to_dip_all();
-#endif
 
   init_forces();
   switch (cell_structure.type) {
@@ -77,9 +74,6 @@ void force_calc()
 
   calc_long_range_forces();
 
-#ifdef LB
-  if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
-#endif
 
 #ifdef COMFORCE
   calc_comforce();

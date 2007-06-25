@@ -199,19 +199,11 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   }
   case COULOMB_P3M: {
 #ifdef NPT
-  #ifdef DIPOLES
-    double eng = add_p3m_dipolar_pair_force(p1,p2,d,dist2,dist,force);
-  #else
     double eng = add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
-  #endif
   if(integ_switch == INTEG_METHOD_NPT_ISO)
     nptiso.p_vir[0] += eng;
 #else
-  #ifdef DIPOLES
-     add_p3m_dipolar_pair_force(p1,p2,d,dist2,dist,force);
-  #else
      add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
-  #endif
 #endif
     break;
   }

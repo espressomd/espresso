@@ -262,10 +262,6 @@ void P3M_charge_assign();
     stored in the ca_frac arrays. */
 MDINLINE void P3M_assign_charge(double q,
 				double real_pos[3],
-#ifdef DIPOLES
-				double mu,
-				double dip[3],
-#endif
 				int cp_cnt)
 {
   /* we do not really want to export these, but this function should be inlined */
@@ -277,9 +273,6 @@ MDINLINE void P3M_assign_charge(double q,
   extern double *int_caf[7];
   extern double pos_shift;
   extern double *rs_mesh;
-#ifdef DIPOLES
-  extern double *rs_mesh_dip[3];
-#endif
 
   int d, i0, i1, i2;
   double tmp0, tmp1;
@@ -331,21 +324,10 @@ MDINLINE void P3M_assign_charge(double q,
       for(i1=0; i1<p3m.cao; i1++) {
 	tmp1 = tmp0 * P3M_caf(i1, dist[1]);
 	for(i2=0; i2<p3m.cao; i2++) {
-#ifdef DIPOLES
-	  cur_ca_frac_val = tmp1 * P3M_caf(i2, dist[2]);
-	  if (cp_cnt >= 0) *(cur_ca_frac++) = cur_ca_frac_val;
-	  if (q  != 0.0) rs_mesh[q_ind] += q * cur_ca_frac_val;
-	  if (mu != 0.0) {
-	    rs_mesh_dip[0][q_ind] += dip[0] * cur_ca_frac_val;
-	    rs_mesh_dip[1][q_ind] += dip[1] * cur_ca_frac_val;
-	    rs_mesh_dip[2][q_ind] += dip[2] * cur_ca_frac_val;
-	  }
-#else
 	  // In the case without dipoles, ca_frac[] contains an additional factor q!
 	  cur_ca_frac_val = q * tmp1 * P3M_caf(i2, dist[2]);
 	  if (cp_cnt >= 0) *(cur_ca_frac++) = cur_ca_frac_val;
 	  rs_mesh[q_ind] += cur_ca_frac_val;
-#endif
 	  q_ind++;
 	}
 	q_ind += lm.q_2_off;
@@ -382,21 +364,10 @@ MDINLINE void P3M_assign_charge(double q,
       for(i1=0; i1<p3m.cao; i1++) {
 	tmp1 = tmp0 * int_caf[i1][arg[1]];
 	for(i2=0; i2<p3m.cao; i2++) {
-#ifdef DIPOLES
-	  cur_ca_frac_val = tmp1 * int_caf[i2][arg[2]];
-	  if (cp_cnt >= 0) *(cur_ca_frac++) = cur_ca_frac_val;
-	  if (q  != 0.0) rs_mesh[q_ind] += q * cur_ca_frac_val;
-	  if (mu != 0.0) {
-	    rs_mesh_dip[0][q_ind] += dip[0] * cur_ca_frac_val;
-	    rs_mesh_dip[1][q_ind] += dip[1] * cur_ca_frac_val;
-	    rs_mesh_dip[2][q_ind] += dip[2] * cur_ca_frac_val;
-	  }
-#else
 	  //In the case without dipoles, ca_frac[] contains an additional factor q!
 	  cur_ca_frac_val = q * tmp1 * int_caf[i2][arg[2]];
 	  if (cp_cnt >= 0) *(cur_ca_frac++) = cur_ca_frac_val;
 	  rs_mesh[q_ind] += cur_ca_frac_val;
-#endif
 	  q_ind++;
 	}
 	q_ind += lm.q_2_off;
@@ -448,82 +419,6 @@ MDINLINE double add_p3m_coulomb_pair_force(double chgfac, double *d,double dist2
   return 0.0;
 }
 
-#ifdef DIPOLES
-
-/** Calculate real space contribution of p3m dipolar pair forces and torques.
-    If NPT is compiled in, it returns the energy, which is needed for NPT. */
-MDINLINE double add_p3m_dipolar_pair_force(Particle *p1, Particle *p2,
-					   double *d,double dist2,double dist,double force[3])
-{
-  int j;
-  double fac1,fac2, adist, erfc_part_ri, coeff, exp_adist2, dist2i;
-  double mimj, mir, mjr;
-  double B_r, C_r, D_r;
-  double alpsq = p3m.alpha * p3m.alpha;
-  double mixmj[3], mixr[3], mjxr[3];
-
-
-  if(dist < p3m.r_cut) {
-  if(dist > 0){
-    adist = p3m.alpha * dist;
-#if USE_ERFC_APPROXIMATION
-      erfc_part_ri = AS_erfc_part(adist) / dist;
-      fac1 = coulomb.prefactor * p1->p.dipm*p2->p.dipm * exp(-adist*adist);
-      fac2 = fac1 * (erfc_part_ri + 2.0*p3m.alpha*wupii) / dist2;
-#else
-      erfc_part_ri = erfc(adist) / dist;
-      fac1 = coulomb.prefactor * p1->p.dipm*p2->p.dipm;
-      fac2 = fac1 * (erfc_part_ri + 2.0*p3m.alpha*wupii*exp(-adist*adist)) / dist2;
-#endif
-
-  //Calculate scalar multiplications for vectors mi, mj, rij
-  mimj = p1->r.dip[0]*p2->r.dip[0] + p1->r.dip[1]*p2->r.dip[1] + p1->r.dip[2]*p2->r.dip[2];
-  mir = p1->r.dip[0]*d[0] + p1->r.dip[1]*d[1] + p1->r.dip[2]*d[2];
-  mjr = p2->r.dip[0]*d[0] + p2->r.dip[1]*d[1] + p2->r.dip[2]*d[2];
-
-  coeff = 2.0*p3m.alpha*wupii;
-  dist2i = 1 / dist2;
-  exp_adist2 = exp(-adist*adist);
-
-  if(p3m.accuracy > 5e-06)
-    B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
-  else
-    B_r = (erfc(adist)/dist + coeff * exp_adist2) * dist2i;
-  C_r = (3*B_r + 2*alpsq*coeff*exp_adist2) * dist2i;
-  D_r = (5*C_r + 4*coeff*alpsq*alpsq*exp_adist2) * dist2i;
-
-  // Calculate real-space forces
-  for(j=0;j<3;j++)
-    force[j] += (mimj*d[j] + p1->r.dip[j]*mjr + p2->r.dip[j]*mir) * C_r - mir*mjr*D_r*d[j] ;
-
-  //Calculate vector multiplications for vectors mi, mj, rij
-
-  mixmj[0] = p1->r.dip[1]*p2->r.dip[2] - p1->r.dip[2]*p2->r.dip[1];
-  mixmj[1] = p1->r.dip[2]*p2->r.dip[0] - p1->r.dip[0]*p2->r.dip[2];
-  mixmj[2] = p1->r.dip[0]*p2->r.dip[1] - p1->r.dip[1]*p2->r.dip[0];
-
-  mixr[0] = p1->r.dip[1]*d[2] - p1->r.dip[2]*d[1];
-  mixr[1] = p1->r.dip[2]*d[0] - p1->r.dip[0]*d[2];
-  mixr[2] = p1->r.dip[0]*d[1] - p1->r.dip[1]*d[0];
-
-  mjxr[0] = p2->r.dip[1]*d[2] - p2->r.dip[2]*d[1];
-  mjxr[1] = p2->r.dip[2]*d[0] - p2->r.dip[0]*d[2];
-  mjxr[2] = p2->r.dip[0]*d[1] - p2->r.dip[1]*d[0];
-
-  // Calculate real-space torques
-
-  for(j=0;j<3;j++){
-    p1->f.torque[j] += -mixmj[j]*B_r + mixr[j]*mjr*C_r;
-    p2->f.torque[j] +=  mixmj[j]*B_r + mjxr[j]*mir*C_r;
-  }
-
-#ifdef NPT
-  return fac1 * ( mimj*B_r - mir*mjr * C_r );
-#endif
-  }}
-  return 0.0;
-}
-#endif  /* ifdef DIPOLES */
 
 /** Calculate real space contribution of coulomb pair energy. */
 MDINLINE double p3m_coulomb_pair_energy(double chgfac, double *d,double dist2,double dist)
@@ -543,53 +438,6 @@ MDINLINE double p3m_coulomb_pair_energy(double chgfac, double *d,double dist2,do
   return 0.0;
 }
 
-#ifdef DIPOLES
-/** Calculate real space contribution of dipolar pair energy. */
-MDINLINE double p3m_dipolar_pair_energy(Particle *p1, Particle *p2,
-				      double *d,double dist2,double dist)
-{
-  double fac1, adist, erfc_part_ri, coeff, exp_adist2, dist2i;
-  double mimj, mir, mjr;
-  double B_r, C_r;
-  double alpsq = p3m.alpha * p3m.alpha;
- 
-  if(dist < p3m.r_cut) {
-  if(dist > 0){
-    adist = p3m.alpha * dist;
-#if USE_ERFC_APPROXIMATION
-      erfc_part_ri = AS_erfc_part(adist) / dist;
-      fac1 = coulomb.prefactor * p1->p.dipm*p2->p.dipm; /* *exp(-adist*adist); */
-#else
-      erfc_part_ri = erfc(adist) / dist;
-      fac1 = coulomb.prefactor * p1->p.dipm*p2->p.dipm;
-#endif
-
-  //Calculate scalar multiplications for vectors mi, mj, rij
-  mimj = p1->r.dip[0]*p2->r.dip[0] + p1->r.dip[1]*p2->r.dip[1] + p1->r.dip[2]*p2->r.dip[2];
-  mir = p1->r.dip[0]*d[0] + p1->r.dip[1]*d[1] + p1->r.dip[2]*d[2];
-  mjr = p2->r.dip[0]*d[0] + p2->r.dip[1]*d[1] + p2->r.dip[2]*d[2];
-
-  coeff = 2.0*p3m.alpha*wupii;
-  dist2i = 1 / dist2;
-  exp_adist2 = exp(-adist*adist);
-
-  if(p3m.accuracy > 5e-06)
-    B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
-  else
-    B_r = (erfc(adist)/dist + coeff * exp_adist2) * dist2i;
-  
-  C_r = (3*B_r + 2*alpsq*coeff*exp_adist2) * dist2i;
-
-  /*
-  printf("(%4i %4i) pair energy = %f (B_r=%15.12f C_r=%15.12f)\n",p1->p.identity,p2->p.identity,fac1*(mimj*B_r-mir*mjr*C_r),B_r,C_r);
-  */
-  
-  return fac1 * ( mimj*B_r - mir*mjr * C_r );
-
-  }}
-  return 0.0;
-}
-#endif /* ifdef DIPOLES */
 
 /** Clean up P3M memory allocations. */
 void P3M_exit();

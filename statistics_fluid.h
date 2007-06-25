@@ -26,26 +26,5 @@
 
 #include "utils.h"
 
-#ifdef LB
-
-/** Caclulate mass of the LB fluid.
- * \param result Fluid mass
- */
-void lb_calc_fluid_mass(double *result);
-
-/** Calculate momentum of the LB fluid.
- * \param result Fluid momentum
- */
-void lb_calc_fluid_momentum(double *result);
-
-/** Calculate temperature of the LB fluid.
- * \param result Fluid temperature
- */
-void lb_calc_fluid_temp(double *result);
-
-/** Parser for fluid related analysis functions. */
-int parse_analyze_fluid(Tcl_Interp *interp, int argc, char **argv);
-
-#endif /* LB */
 
 #endif /* STATISTICS_FLUID_H */

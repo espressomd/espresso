@@ -264,9 +264,5 @@ extern int check_id;
 #define MOLFORCES_TRACE(cmd)
 #endif
 
-#ifdef LB_DEBUG
-#define LB_TRACE(cmd) { cmd; }
-#else
 /** Equals { cmd } iff LB_DEBUG is set. */
 #define LB_TRACE(cmd)
-#endif

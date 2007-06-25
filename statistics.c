@@ -2764,9 +2764,6 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   if (0);
 
   REGISTER_ANALYZE_OPTION("set", parse_analyze_set_topology);
-#ifdef LB
-  REGISTER_ANALYZE_OPTION("fluid", parse_analyze_fluid);
-#endif
   REGISTER_ANALYSIS("get_folded_positions", parse_get_folded_positions);
 #ifdef MODES
   REGISTER_ANALYZE_OPTION("set_bilayer", parse_bilayer_set);

@@ -69,10 +69,6 @@ typedef struct {
   double q;
 #endif
 
-#ifdef DIPOLES
-  /** dipole moment (absolute value)*/
-  double dipm;
-#endif
 } ParticleProperties;
 
 /** Positional information on a particle. Information that is
@@ -91,10 +87,6 @@ typedef struct {
   double p_old[3];
 #endif
 
-#ifdef DIPOLES
-  /** dipol moment */
-  double dip[3];
-#endif
 
 } ParticlePosition;
 
@@ -150,10 +142,6 @@ typedef struct {
 #ifdef USE_TEMPORARY
 /** Temporary data that still has to be communicated */
 typedef struct {
-#ifdef LB
-  /** the random force */
-  double f_random[3];
-#endif
 } ParticleTemporary;
 #endif
 
@@ -426,21 +414,6 @@ int set_particle_omega(int part, double omega[3]);
 int set_particle_torque(int part, double torque[3]);
 #endif
 
-#ifdef DIPOLES
-/** Call only on the master node: set particle dipole orientation.
-    @param part the particle.
-    @param dip its new dipole orientation.
-    @return TCL_OK if particle existed
-*/
-int set_particle_dip(int part, double dip[3]);
-
-/** Call only on the master node: set particle dipole moment (absolut value).
-    @param part the particle.
-    @param dipm its new dipole moment.
-    @return TCL_OK if particle existed
-*/
-int set_particle_dipm(int part, double dipm);
-#endif
 
 #ifdef EXTERNAL_FORCES
 /** Call only on the master node: set particle external forced.
