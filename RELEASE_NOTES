@@ -2,17 +2,21 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3b (Ydalir)                                                                     *
+* v2.0.3c (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3b -
+- v2.0.3c -
 -----------
 
+(c) June 25th, 2007.
 (b) June 22nd, 2007.
 (a) June 21st, 2007.
+
+New Features:
+(c) 
 
 Changes:
 (b) added reaction_field.h to Makefile-am.am
