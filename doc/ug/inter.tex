@@ -1,6 +1,6 @@
 \chapter{\lit{inter}: Setting up interactions}
 \label{sec:inter}
-\eslabel{inter}
+\newescommand{inter}
 
 \section{Non-bonded, short-ranged interactions}
 \label{sec:inter-nb}
@@ -479,9 +479,9 @@ When this is set to 0, interpolation is turned off.
 Offset of the first mesh point from the lower left corner of the
 simulation box in units of the mesh constant. As soon as p3m is turned
 on the additional parameters can be changed with:
-\begin{essyntaxbox}
+\begin{code}
 inter coulomb \var{parameter_name} \var{value}+
-\end{essyntaxbox}
+\end{code}
 
 
 \subsection{Debye-H\"uckel potential}

@@ -2,7 +2,7 @@
 \label{chap:run}
 
 \section{\texttt{integrate}: Running the simulation}
-\eslabel{integrate}
+\newescommand{integrate}
 
 \begin{essyntax}
   \variant{1} integrate \var{steps}
@@ -13,7 +13,7 @@
 \todo{Which integrators do exist?}
 
 \section{\texttt{change_volume}: Changing the box volume}
-\eslabel[change-volume]{change_volume}
+\newescommand[change-volume]{change_volume}
 
 \begin{essyntax}
   \variant{1} change_volume \var{V_new} 
@@ -26,8 +26,8 @@ well. The function returns the new volume of the deformed simulation
 box.
 
 \section{Stopping particles}
-\eslabel{stopParticles}
-\eslabel[stop-particles]{stop_particles}
+\newescommand{stopParticles}
+\newescommand[stop-particles]{stop_particles}
 
 \begin{essyntax}
   \variant{1} stopParticles
@@ -38,7 +38,7 @@ velocities and forces to zero. Variant \variant{2} does not provide
 feedback on the execution status.
 
 \section{\texttt{velocities}: Setting the velocities}
-\eslabel{velocities}
+\newescommand{velocities}
 \begin{essyntax}
   velocities \var{v_max} 
   \opt{start \var{part_id}} 
@@ -51,7 +51,7 @@ with length in [-vmax,vmax], and returns the absolute value of the
 total velocity assigned.
 
 \section{\texttt{invalidate_system}}
-\eslabel[invalidate-system]{invalidate_system}
+\newescommand[invalidate-system]{invalidate_system}
 \begin{essyntax}
   invalidate_system
 \end{essyntax}

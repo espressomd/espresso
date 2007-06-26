@@ -20,11 +20,11 @@ listdiff() {
 
 #### 1. get switches from features.tex
 
-doc_switches=`awk 'BEGIN { tag="feature{"; l=length(tag) }
-    /feature/ {
+doc_switches=`awk 'BEGIN { tag="newfeature{"; l=length(tag) }
+    /newfeature/ {
 	s=$0;
 	while(1) {
-	    pos=index(s, "feature{");
+	    pos=index(s, "newfeature{");
 	    if (pos==0) break;
 	    s=substr(s,pos+l);
 	    pos=index(s, "}");

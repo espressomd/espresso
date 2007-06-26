@@ -3,7 +3,7 @@
 
 \section{\texttt{blockfile}: Using the structured file format}
 \label{sec:structured-file-format}
-\eslabel{blockfile}
+\newescommand{blockfile}
 
 \es uses a standardized ASCII block format to write structured files
 for analysis or storage. Basically the file consists of blocks in
@@ -199,12 +199,15 @@ analysis (see section \vref{sec:stored-configs}) to \var{channel}.
 \begin{essyntax}
   \variant{1} blockfile \var{channel} write start \var{tag}
   \variant{2} blockfile \var{channel} write end
+  \variant{3} blockfile \var{channel} write \var{tag} \opt{\var{arg}}\dots
 \end{essyntax}
 
-\var{channel} has to be a Tcl channel.  Variant \variant{1} starts a
+\var{channel} has to be a Tcl channel. Variant \variant{1} starts a
 block and gives it the title \var{tag}, variant \variant{2} ends the
 block. Between two calls to the command, arbitrary data can be written
-to the channel.
+to the channel.  When variant \variant{3} is used, the function
+\lit{blockfile_write_}\var{tag} is called with all of the commands
+arguments. This function should then write the data.
 
 \minisec{Example}
 
@@ -225,91 +228,64 @@ to the file \lit{data.dat}.
 \subsection{Reading blocks}
 
 \begin{essyntax}
-  \variant{1} blockfile \var{channel} read auto 
-  \variant{2} blockfile \var{channel} read \alt{particles \asep
+  \variant{1} blockfile \var{channel} read start 
+  \variant{2} blockfile \var{channel} read toend 
+  \variant{3} blockfile \var{channel} read \alt{particles \asep
     interactions \asep bonds \asep variable \asep seed \asep random
     \asep bitrandom \asep configs}
-  \variant{3} blockfile \var{channel} read start 
-  \variant{4} blockfile \var{channel} read toend 
+  \variant{4} blockfile \var{channel} read auto 
 \end{essyntax}
 
-reads the start part of a block and returns the block title.
+Variants \variant{1} and \variant{2} are the low-level block-reading
+commands. Variant \variant{1} reads the start part of a block and
+returns the block title, while variant \variant{2} reads the block
+data and returns it.
 
-  reads the blocks data and returns it.
+\todo{Needs to be rewritten!}
+Variants \variant{3} and \variant{4} read whole blocks.  Variant
+\variant{3} reads the beginning of one block, checks wether it
+contains data of the given type and reads it. Variant \variant{4}
+reads in one block and does the following:
+\begin{enumerate}
+\item if a procedure \keyword{blockfile_read_auto_\var{tag}} exists,
+  this procedure takes over (\var{tag} is the first expression in the
+  block). For most block types, at least all mentioned above, \ie
+  \keyword{particles}, \keyword{interactions}, \keyword{bonds},
+  \keyword{seed}, \keyword{random}, \keyword{bitrandom},
+  \keyword{configs}, and \keyword{variable}, the corresponding
+  procedure will overwrite the current information with the
+  information from the block.
+\item if the procedure does not exist, it returns 
+  \begin{code}
+    \{ \var{usertag} \var{rest\_of\_block} \}
+  \end{code}
+\item if the file is at the end, it returns \lit{eof}
+\end{enumerate}
 
-reads one block, checks wether it contains data of the given type and
-reads it.
-
-  reads in one block and does the following:
-  \begin{enumerate}
-  \item if a procedure blockfile\_read\_auto\_\var{tag} exists, this
-    procedure takes over (\var{tag} is the first expression in the
-    block). For most block types, at least all mentioned above, i. e.
-    particles, interactions, bonds, seed, random, bitrandom, configs,
-    and variable, the corresponding procedure will overwrite the
-    current information with the information from the block.
-  \item if the procedure does not exist, it returns \codebox{usertag
-      <tag> <rest of block>}
-  \item if the file is at end, it returns \codebox{eof}
-  \end{enumerate}
-
-If \codebox{blockfile <channel> read auto} finds a block, it tries to
-load the corresponding procedure as described above.
-\codebox{blockfile <channel> read <block>} checks for a block with tag
-\var{block} and then again executes the corresponding
-blockfile\_read\_auto\_\var{tag}, if it exists.
-
-If that fails, blockfile executes \codebox{blockfile\_arg1\_arg2}, if
-it exists, with the all arguments given to blockfile. For example
-\begin{code}
-blockfile channel write particles "id pos" all 
-\end{code}
-results in the evaluation of
-\begin{code}
-blockfile\_write\_particles channel write particles "id pos" all 
-\end{code}
-If the next block in a blockfile is a particle block, e. g.
-\begin{tclcode}
-{particles {id pos type q}
-           {0 27.251 62.31 58.707 1 1.0}
-           {1 27.226 61.483 58.146 0 0.0}
-}
-\end{tclcode}	
-\begin{code}
-  blockfile <channel> read auto
-\end{code}
-will call
-\begin{code}
-blockfile_read_auto_particles <channel> read auto
-\end{code}
-, which then will delete all particles and insert the two particles
-above.
+Variant \variant{3} checks for a block with tag \var{block} and then
+again executes the corresponding \lit{blockfile_read_auto_\var{tag}},
+if it exists.
 
 In the contrary that means that for a new blocktype you will normally
 implement two procedures:
-\begin{tclcode}
-blockfile_write_<tag> {channel write <tag> param...}
-\end{tclcode}
+\begin{essyntaxbox}
+  blockfile_write_\var{tag} \var{channel} \var{write} \var{tag} \var{arg}\dots
+\end{essyntaxbox}
 which writes the block including the header and enclosing braces and
-\begin{tclcode}
-blockfile_read_auto_<tag> {channel "read" "auto"}
-\end{tclcode}
+\begin{essyntaxbox}
+  blockfile_read_auto_\var{tag} \var{channel} \var{read} \var{auto}
+\end{essyntaxbox}
 which reads the block data and the closing brace. The parameters
-"write", "read", "\var{tag}" and "auto" are regular parameters which
-will always have the specified value. They occur just for technical
-reasons.
-
-
-
+\var{write}, \var{read}, \var{tag} and \var{auto} are regular
+parameters which will always have the specified value. They occur just
+for technical reasons.
 
 In a nutshell: The blockfile command is provided for saving and
-restoring the current state of \es, e. g. for creating and using
-checkpoints. Hence you can transfer all accessible informations to and
-from disk from and to \es.
+restoring the current state of \es, \eg for creating and using
+checkpoints. Hence you can transfer all accessible information from
+files to \es and vice versa.
 
-\begin{itemize}
- \item
-\begin{code}
+\begin{tclcode}
 set out [open "|gzip -c - > checkpoint.block.gz" "w"]
 blockfile $out write variable all
 blockfile $out write interactions
@@ -319,35 +295,25 @@ blockfile $out write particles "id pos type q v f" all
 blockfile $out write bonds all
 blockfile $out write configs
 close $out 
-\end{code}
+\end{tclcode}
 
-This example writes all variables accessible by The setmd command, all
-interactions known to The inter command, the full current state of the
-random number generator (The t\_random command or The bit\_random
-command), all informations (i.e. id, position, type-number, charge,
-velocity, forces, bonds) on all particles, and all particle
-configurations appended (using e. g. analyze append) for
-offline-analysis purposes to the file 'checkpoint.block.gz' which is
-even being compressed on-the-fly (if you don't want that, use
-\codebox{set out [open "checkpoint.block" "w"]}
-instead).
-Note that interactions must be stored before particles before bonding
-informations, as for the bonds to be set all particles and all
-interactions must already be known to \es{}.
+This example writes all global variables, all interactions, the full
+current state of the random number generator, all information (\ie id,
+position, type-number, charge, velocity, forces, bonds) of all
+particles, and all stored particle configurations to the file
+\lit{checkpoint.block.gz} which is compressed on-the-fly.  If you want
+to be able to read in the information using \es, note that
+interactions must be stored before particles before bonding
+information, as for the bonds to be set all particles and all
+interactions must already be known to \es.
 
- \item
 \begin{tclcode}
 set in [open "|gzip -cd checkpoint.block.gz" "r"]
 while { [blockfile $in read auto] != "eof" } {}
 close $in 
 \end{tclcode}
-This is basically all you need to restore the informations in the
-blockfile (again, if you don't have a compressed file, use
-\begin{code}
-set out [open "checkpoint.block" "r"]
-\end{code}
-instead) overwriting the current settings in \es{}.
-\end{itemize}
+This is basically all you need to restore the information in the
+blockfile, overwriting the current settings in \es.
 
 
 \section{Checkpointing}
@@ -513,10 +479,12 @@ with the extension \texttt{.vtf}), or to separate files (extensions
 
 \subsection{\texttt{writevsf}}
 
-\tclcommand{writevsf}
-{\var{channelId} \opt{<short|verbose>} \opt{radius <\var{radii}|auto>} 
-  \opt{typedesc \var{typedesc}}}
-
+\begin{essyntax}
+  writevsf \var{channelId} 
+  \opt{\alt{short \asep verbose}}
+  \opt{radius \alt{\var{radii} \asep auto}} 
+  \opt{typedesc \var{typedesc}}
+\end{essyntax}
 Writes a structure block describing the system's structure to the
 channel given by \var{channelId}. \var{channelId} must be an
 identifier for an open channel such as the return value of an
@@ -531,69 +499,67 @@ beginning of a trajectory VTF file that contains a trajectory of a
 whole simulation.
 
 \begin{arguments}
-\item[\opt{<short|verbose>}]
+\item[\opt{\alt{short \asep verbose}}]
   Specify, whether the output is in a human-readable, but somewhat
   longer format (\keyword{verbose}), or in a more compact form
   (\keyword{short}). The default is \keyword{verbose}.
   
-\item[\opt{radius <\var{radii}|auto>}]
+\item[\opt{radius \alt{\var{radii} \asep auto}}] 
   Specify the VDW radii of the atoms. \var{radii} is either
   \keyword{auto}, or a Tcl-list describing the radii of the different
   particle types. When the keyword \keyword{auto} is used and a
   Lennard-Jones interaction between two particles of the given type is
   defined, the radius is set to be $\frac{\sigma_{LJ}}{2}$ plus the LJ
   shift.  Otherwise, the radius $0.5$ is substituted. The default is
-  \keyword{auto}.
-  
+  \keyword{auto}.\\
   Example: \verb!writevsf $file radius {0 2.0 1 auto 2 1.0}!
-  
 \item[\opt{typedesc \var{typedesc}}]
   \var{typedesc} is a Tcl-list giving additional VTF atom-keywords to
   specify additional VMD characteristics of the atoms of the given type.
   If no description is given for a certain particle type, it defaults to
   \texttt{name \textit{name} type \textit{type}}, where \textit{name}
-  is an atom name and \textit{type} is the type id.
-  
+  is an atom name and \textit{type} is the type id.\\
   Example: \verb!writevsf $file typedesc {0 "name colloid" 1 "name pe"}!
 \end{arguments}
 
 \subsection{\texttt{writevcf}}
-\tclcommand{writevcf}
-{\var{channelId} \opt{<short|verbose>} \opt{<folded|absolute>}
-  \opt{pids <\var{pids}|all>}}
-
+\begin{essyntax}
+  writevcf \var{channelId} 
+  \opt{\alt{short \asep verbose}}
+  \opt{\alt{folded \asep absolute}}
+  \opt{pids \alt{\var{pids} \asep all}}
+\end{essyntax}
 Writes a coordinate (or timestep) block that contains all coordinates
 of the system's particles to the channel given by \var{channelId}.
 \var{channelId} must be an identifier for an open channel such as the
 return value of an invocation of \keyword{open}.
 
 \begin{arguments}
-\item[\opt{<short|verbose>}] Specify, whether the output is in a
-  human-readable, but somewhat longer format (\keyword{verbose}), or
-  in a more compact form (\keyword{short}). The default is
+\item[\opt{\alt{short \asep verbose}}] Specify, whether the output is
+  in a human-readable, but somewhat longer format (\keyword{verbose}),
+  or in a more compact form (\keyword{short}). The default is
   \keyword{verbose}.
   
-\item[\opt{<folded|absolute>}] Specify whether the particle positions
-  are written in absolute coordinates (\keyword{absolute}) or folded
-  into the central image of a periodic system (\keyword{folded}). The
-  default is \keyword{absolute}.
+\item[\opt{\alt{folded \asep absolute}}] Specify whether the particle
+  positions are written in absolute coordinates (\keyword{absolute})
+  or folded into the central image of a periodic system
+  (\keyword{folded}). The default is \keyword{absolute}.
   
-\item[\opt{pids <\var{pids}|all>}] Specify the coordinates of which
-  particles should be written. If \keyword{all} is used, all
+\item[\opt{pids \alt{\var{pids} \asep all}}] Specify the coordinates
+  of which particles should be written. If \keyword{all} is used, all
   coordinates will be written (in the ordered timestep format).
   Otherwise, \var{pids} has to be a Tcl-list specifying the pids of
-  the particles. The default is \keyword{all}.
-  
+  the particles. The default is \keyword{all}.\\
   Example: \verb!pids {0 23 42}!
   
 \end{arguments}
 
 \subsection{\texttt{vtfpid}}
-\tclcommand{vtfpid}{\var{pid}}
-
+\begin{essyntax}
+  vtfpid \var{pid}
+\end{essyntax}
 If \var{pid} is the id of a particle as used in \es, this command
 returns the atom id used in the VTF, VSF or VCF formats.
-
 
 \section{\texttt{imd}: Online-visualisation with VMD}
 IMD (Interactive Molecular Dynamics) is the protocol VMD uses to

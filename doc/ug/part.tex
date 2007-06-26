@@ -2,25 +2,31 @@
 \label{chap:part}
 
 \section{\texttt{part}: Creating single particles}
-\eslabel{part}
+\newescommand{part}
 
 \subsection{Defining particle properties}
 
-\begin{essyntax}[PART]
+\begin{essyntax}
   part
   \var{particle_number}
   \opt{pos \var{x} \var{y} \var{z}}
   \opt{type \var{particle_type_number}}
-  \requiresfeature{\opt{q \var{charge}}}{ELECTROSTATICS}
   \opt{v \var{x_value} \var{y_value} \var{z_value}}
   \opt{f \var{x_value} \var{y_value} \var{z_value}}
-  \opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}
-  \opt{omega \var{x_value} \var{y_value} \var{z_value}}
-  \opt{torque \var{x_value} \var{y_value} \var{z_value}}
-  \opt{\opt{un}fix \var{x} \var{y} \var{z}}
-  \opt{ext_force \var{x_value} \var{y_value} \var{z_value}}
-  \opt{bond \var{bond_type_number}}
-  \opt{exclude \var{exclusion_partner}\ldots}
+  \opt{bond \var{bond_type_number} \var{partner} \dots}
+  \require{1}{\opt{q \var{charge}}}
+  \require{2}{\opt{quat \var{q1}} \var{q2} \var{q3} \var{q4}}
+  \require{2}{\opt{omega \var{x_value} \var{y_value} \var{z_value}}}
+  \require{2}{\opt{torque \var{x_value} \var{y_value} \var{z_value}}}\\
+  \require{3}{\opt{\opt{un}fix \var{x} \var{y} \var{z}}}
+  \require{3}{\opt{ext_force \var{x_value} \var{y_value} \var{z_value}}}
+  \require{3}{\opt{exclude \var{exclusion_partner}\dots}}
+  \require{3}{\opt{exclude delete \var{exclusion_partner}\dots}}
+  \features{%
+    \fmark{1} ELECTROSTATICS
+    \fmark{2} ROTATION
+    \fmark{3} EXTERNAL_FORCES
+  }
 \end{essyntax}
 
 This command modifies particle data, namely position, type (monomer,
@@ -33,28 +39,24 @@ set first because of the spatial decomposition.
 \item[\opt{pos \var{x} \var{y} \var{z}}] Sets the position of this
   particle to $(x,y,z)$.
 \item[\opt{type \var{particle_type_number}}] Restrictions:
-  \var{particle_type_type_number} $\geq 0$.\\  The
-  \var{particle_type_number} is used in the inter command to define
-  the parameters of the non bonded interactions between different
-  kinds of particles.
+  $\var{particle_type_number} \geq 0$.\\ The
+  \var{particle_type_number} is used in the \keyword{inter} command
+  (see section \vref{tcl:inter}) to define the parameters of the non
+  bonded interactions between different kinds of particles.
 \item[\opt{q \var{charge}}]
 \item[\opt{v \var{x_value} \var{y_value} \var{z_value}}]
 \item[\opt{f \var{x_value} \var{y_value} \var{z_value}}] 
 \item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}} 
   \opt{omega \var{x_value} \var{y_value} \var{z_value}} 
   \opt{torque \var{x_value} \var{y_value} \var{z_value}}]
-  Require the feature ROTATION.
 \item[\opt{fix \var{x} \var{y} \var{z}}] Fixes the particle in space.
   By supplying a set of 3 integers as arguments it is possible to fix
   motion in \var{x}, \var{y}, or \var{z} coordinates independetly. For
   example \var{fix 0 0 1} will fix motion only in z. Note that
-  \var{fix} without arguments is equivalent to \var{fix 1 1 1} (Needs
-  compiled flag EXTERNAL_FORCES in config.h).
+  \var{fix} without arguments is equivalent to \var{fix 1 1 1}.
 \item[\opt{ext_force \var{x_value} \var{y_value} \var{z_value}}]
-  An additional external force is applied to the particle (Needs
-  compiled flag EXTERNAL_FORCES in config.h).
-\item[\opt{unfix}] Release any external influence from the particle
-  (Needs compiled flag EXTERNAL_FORCES in config.h).
+  An additional external force is applied to the particle.
+\item[\opt{unfix}] Release any external influence from the particle.
 \item[\opt{bond \var{bond_type_number} \var{partner}+}]
   Restrictions: \var{bond_type_number} $\geq 0$; \var{partner} must
   be an existing particle.  The \var{bond_type_number} is used for
@@ -63,10 +65,9 @@ set first because of the spatial decomposition.
 \item[\opt{exclude \var{exclusion_partner}+}] Restrictions:
   \var{exclusion_partner} must be an existing particle.  Between the
   current particle an the exclusion partner(s), no nonbonded
-  interactions are calculated (Needs compiled flag EXTERNAL_FORCES in
-  config.h). Note that unlike bonds, exclusions are stored with both
-  partners.  Therefore this command adds the defined exclusions to
-  both partners.
+  interactions are calculated. Note that unlike bonds, exclusions are
+  stored with both partners.  Therefore this command adds the defined
+  exclusions to both partners.
 \item[\opt{exclude delete \var{exclusion_partner}+}] Searches for the
   given exclusion and deletes it. Again deletes the exclusion with
   both partners.
@@ -75,11 +76,12 @@ set first because of the spatial decomposition.
 \subsection{Getting particle properties}
 
 \begin{essyntax}
-  \variant{1}part \var{particle_number} print\\
-  \alt{id \asep pos \asep type \asep folded_position \asep type \asep
-    q \asep v \asep f \asep fix \asep ext_force \asep bond \asep
-    \mbox{connections \opt{\var{range}}}}+
-  \variant{2}part
+  \variant{1}
+  part \var{particle_number} print
+  \optlong{\alt{id \asep pos \asep type \asep folded_position \asep type \asep
+      q \asep v \asep f \asep fix \asep ext_force \asep bond \asep
+      \mbox{connections \opt{\var{range}}}}}\dots
+  \variant{2} part
 \end{essyntax}
 
 Variant \variant{1} will return a list of the specified properties of
@@ -131,7 +133,7 @@ a tcl-list with the same format as specified above:
 \end{tclcode}
 
 \subsection{Deleting  particles}
-%\label{tcl:part:delete}
+\label{tcl:part:delete}
 
 \begin{essyntax}
   \variant{1} part \var{particle_number} delete
@@ -172,7 +174,7 @@ system.
 
 \subsection{\texttt{polymer}: Setting up polymer chains}
 
-\eslabel{polymer}
+\newescommand{polymer}
 \begin{essyntax}
   \variant{1}
   polymer 
@@ -269,7 +271,7 @@ set up to be \var{bond_length}.
 \end{arguments}
 
 \subsection{\texttt{counterions}: Set up counterions}
-\eslabel{counterions}
+\newescommand{counterions}
 \begin{essyntax}
   counterions
   \var{N_CI} 
@@ -284,7 +286,7 @@ Create \var{N_CI} counterions in the simulation box.
 
 \smallskip
 \subsection{\texttt{salt}: Set up salt ions}
-\eslabel{salt}
+\newescommand{salt}
 \begin{essyntax}
   salt 
   \var{N_pS} \var{N_nS} 
@@ -298,7 +300,7 @@ ions of charge \var{val_pS} and \var{val_nS} within the simulation
 box.
 
 \subsection{\texttt{diamond}: Setting up diamond polymer networks}
-\eslabel{diamond}
+\newescommand{diamond}
 \begin{essyntax}
   diamond 
   \var{a} \var{bond_length} \var{MPC} 
@@ -312,7 +314,7 @@ Creates a diamond-shaped polymer network with 8 tetra-functional nodes
 connected by $2*8$ polymer chains of length \var{MPC}.
 
 \subsection{\texttt{icosahedron}: Setting up an icosahedron}
-\eslabel{icosahedron}
+\newescommand{icosahedron}
 \begin{essyntax}
   icosahedron 
   \var{a} \var{MPC} 
@@ -324,7 +326,7 @@ connected by $2*8$ polymer chains of length \var{MPC}.
 Creates a modified icosahedron to model a fulleren (or soccer ball).
 
 \subsection{\texttt{crosslink}: Cross-linking polymers}
-\eslabel{crosslink}
+\newescommand{crosslink}
 \begin{essyntax}
   crosslink 
   \var{N_P} \var{MPC} 
@@ -341,7 +343,7 @@ equally long polymers with \var{MPC} monomers each, returning how many
 ends are successfully connected. 
 
 \section{\texttt{constraint}: Setting up constraints}
-\eslabel{constraint}
+\newescommand{constraint}
 
 \begin{essyntax}
   \variant{1} 
@@ -363,6 +365,8 @@ ends are successfully connected.
   constraint maze nsphere \var{n} 
   dim \var{d} sphrad \var{r_s} cylrad \var{r_c}
   type 10 \var{id} 
+
+  \features{CONSTRAINTS}
 \end{essyntax}
 
 \todo{Does it really only work for LJ-potentials?}
