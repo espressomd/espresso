@@ -13,4 +13,5 @@ dist_scripts_DATA =\
 	pov.tcl \
 	statistics.tcl \
 	vmd_plg.tcl \
-	vtf.tcl
+	vtf.tcl \
+	tclline.tcl
