@@ -279,4 +279,5 @@ MDINLINE void calc_ljgen_cap_radii(double force_cap)
 }
 
 #endif /* ifdef LENNARD_JONES_GENERIC */
-#endif /* LJGEN_H */
+/* LJGEN_H */
+#endif 
