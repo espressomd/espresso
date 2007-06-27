@@ -23,7 +23,7 @@ ug_FILES=$(ug_TEXFILES) \
 	bibliography.bib \
 	figures
 
-data_DATA=ug.pdf
+#data_DATA=ug.pdf
 
 EXTRA_DIST= $(ug_FILES) \
 	ug.pdf \

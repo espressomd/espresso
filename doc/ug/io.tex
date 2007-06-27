@@ -317,17 +317,24 @@ blockfile, overwriting the current settings in \es.
 
 
 \section{Checkpointing}
-The following procedures may be used to save/restore checkpoints to
-minimize the hassel involved when your simulations crashes after long
-runs. The scripts are located in scripts/auxiliary.tcl and use The
-blockfile command as file format.
-\begin{itemize}
- \item
-\begin{code}
-checkpoint\_set <destination> [<\# of configs> [<tclvar>
- [<ia\_flag> [<var\_flag> [<ran\_flag]]]]]
-\end{code}
-creates a checkpoint with path/filename \var{destination} (compressed
+\newescommand[checkpoint-set]{checkpoint_set}
+\newescommand[checkpoint-read]{checkpoint_read}
+
+The following procedures may be used to save and restore checkpoints
+to minimize the hassel involved when your simulations crashes after
+long runs.
+
+\subsection{Creating a checkpoint}
+
+\begin{essyntax}
+  checkpoint_set \var{destination} 
+  \opt{\var{num_configs}
+    \opt{\var{tclvar} 
+      \opt{\var{ia_flag}
+        \opt{\var{var_flag}
+          \opt{\var{ran_flag}}}}}}
+\end{essyntax}
+Creates a checkpoint with path/filename \var{destination} (compressed
 if \var{destination} ends with '.gz'), saving the last \var{\# of
   configs} which have been appended using analyze\_append (defaults to
 'all'), adds all tcl-embedded variables specified in the tcl-list
@@ -366,104 +373,110 @@ tcl\_checkpoint\_read reads in successively the checkpoints given in
 the '.chk'-file, the configs-array will nevertheless be completely
 restored to its original state although each checkpoint-file contains
 only a fraction of the whole array.
- \item
-\begin{code}
-checkpoint\_read <origin>
-\end{code}
 
-restores all the checkpoints whose filenames are listed in
-\var{origin} in the order given therein, consequently putting the
-simulation into the state it was in when tc\_checkpoint\_set was
+\subsection{Reading a checkpoint}
+\begin{essyntax}
+  checkpoint_read \var{source}
+\end{essyntax}
+Restores all the checkpoints whose filenames are listed in
+\var{source} in the order given therein, consequently putting the
+simulation into the state it was in when \lit{checkpoint_set} was
 called. If parts of the configs array are given in the files listed in
-\var{origin}, it is assumed that they represent a fraction of the
+\var{source}, it is assumed that they represent a fraction of the
 whole array.
- \item
-\begin{code}
-polyBlockWrite <path> <param\_list> <part\_list>
-\end{code}
-writes out the current '\es{}' configuration as an AxA-blockfile,
-including parameters, interactions, particles, and bonds.  \var{path}
-should contain the filename including the full path to it.
-\var{param\_list} gives a tcl-list of the '\es{}'-parameters (out of )
-to be saved; if an empty list '{}' is supplied, no parameters are
-written. If 'all', all parameters available through The setmd command
-are written. Defaults to the full parameter set.  \var{part\_list}
-gives a string of the particle-properties (out of pos | type | q | v |
-f) to be saved to disk; if an empty string ' "" 'is provided, no
-particles, no bonds, and no interactions are written. Defaults (if
-omitted) to all particle-properties.  Depending on the file-name's
-suffix, the output will be compressed (if \var{path} ends with '.gz'),
-too.  Note, that 'polyBlockWrite' in combination with
-tcl\_convertMD2Deserno replaces the (undocumented) function 'polywr':
-To save the current configuration to a Deserno-compatible file (e. g.
-for use with 'poly2pdb') you may now use tcl\_polyBlockWrite to save
-your current configuration to a blockfile, and convert that with
-tcl\_convertMD2Deserno afterwards, or you directly write a
-Deserno-compatible file by invoking
-\begin{code}
-convertMD2Deserno "-1" <output-filename>
-\end{code}
 
-out of \es to save your current active configuration.  However, this
-last paragraph now has only historical meaning (see Writing pdb/psf
-files).
- \item
-\begin{code}
-polyBlockWriteAll <destination> [<tcl-var> [<rdm> [<configs>]]]
-\end{code}
+\subsection{Writing a checkpoint 2}
+\begin{essyntax}
+  \variant{1} polyBlockWrite \var{path} 
+  \alt{\var{param_list} \asep all} \var{part_list}
+\end{essyntax}
+\todo{Title!}
+\todo{Clean up. Describe arguments in argument env.}  
 
-does even more than tcl\_polyBlockWrite, i.e. it saves all current
-interactions, particles, bonds, \es{}-variables to \var{destination},
-but in addition it also saves the tcl-variables specified by
-\var{tcl-var} (if 'all', then all the variables in the active script
-are stored), it saves the state of the random number generator if
-\var{rdm} is 'random' (= complete state) or 'seed' (= only the seeds),
-and it saves all the particle configurations used for analysis
-purposes if \var{configs} is all but '-'.  Using '-' as value usually
-skips that entry.  With this one can set real checkpoints which should
-reproduce the script-state as precisely as possible.
-\end{itemize}
+Variant \variant{1} writes out the current \es-configuration as a
+blockfile, including parameters, interactions, particles, and bonds.
+\var{path} should contain the filename including the full path to it.
+\var{param_list} gives a tcl-list of the \es-parameters to be saved;
+if an empty list \verb!{}! is supplied, no parameters are written.  If
+\lit{all}, all global variables are written. This defaults to
+\lit{all}. \var{part_list} gives a list of the particle-properties
+(out of \lit{pos}, \lit{type}, \lit{q}, \lit{v}, \lit{f}) to be saved
+to disk; if an empty list \verb!{}! is provided, no particles, no
+bonds, and no interactions are written.  Defaults to all particle
+properties.  If the suffix of \var{path} is \lit{.gz}, the output will
+be compressed.
 
+\subsection{Writing a checkpoint 3}
+\begin{essyntax}
+  \variant{2} polyBlockWriteAll \var{destination} 
+  \optlong{\alt{\var{tclvar} \asep all} 
+    \optlong{\alt{\var{whatever} \asep -}
+      \opt{\alt{state \asep seed \asep -}}}}
+  
+\end{essyntax}
+\todo{Title!}
+\todo{Clean up. Describe arguments in argument env.}  
 
-\section{Writing pdb/psf files}
+Variant \variant{2} saves all current interactions, particles, bonds,
+and global variables to \var{destination}, but in addition it also
+saves the tcl-variables specified by \var{tclvar} (if \lit{all}, then
+all the variables in the active script are stored), it saves all the
+stored configurations if \var{whatever} is whatever, but \lit{-}.
+Furthermore, it saves the state (\lit{state}) or the seed (\lit{seed})
+of the random number generator.  With this one can set real
+checkpoints which should reproduce the script-state as precisely as
+possible.
+
+\section{Writing PDB/PSF files}
 The PDB (Brookhaven Protein DataBase) format is a widely used format
-for describing atomic configurations. PSF is a format that is used by
-VMD to describe the topology of a PDB file. You need the PDB and PSF
-files for example for IMD.
-\begin{tclcode}
-writepsf <file> { <N_P> <MPC> <N_CI> <N_pS> <N_nS> }|-molecule
-\end{tclcode}
-writes the current topology to the file <file> (here <file> is not a
-channel since additional information cannot be written anyways).
-\var{N\_P}, \var{MPC} and so on are parameters describing a system
-consisting of equally long charged polymers, counterions and salt.
-This information is used to set the residue name and can be used to
-color the atoms in VMD. If you specify -molecule, the residue name is
-taken from the molecule identity of the particle. Of course different
-kinds of topologies can also be handled by modified versions of
-writepsf.
-\begin{code}
-writepdb <file>
-\end{code}
-writes the corresponding particle data.
-\begin{tclcode}
-writepdbfoldchains <file> { < chain_start> <n_chains> <chain_length>
- <box_l> }
-\end{tclcode}
-Writes folded particle data where the folding is performed on chain
-centers of mass rather than single particles. In order to fold in this
-way the chain topology and box length must be specified. Note that
-this method is outdated. Use writepdbfoldtopo instead.
-\begin{tclcode}
-writepdbfoldtopo <file> { <shift> } 
-\end{tclcode}
-Writes folded particle data where the folding is performed on chain
-centers of mass rather than single particles. This method uses the
-internal box length and topology information from espresso. If you
-wish to shift particles prior to folding then supply the optional
-shift information. Shift should be a three member tcl list consisting
-of x, y, and z shifts respectively and each number should be a
-floating point (ie with decimal point).
+for describing atomistic configurations. PSF is a format that is used
+by VMD to describe the topology of a PDB file. You need the PDB and
+PSF files for example for IMD.
+
+\subsection{\lit{writepsf}: Writing the topology}
+\newescommand{writepsf}
+
+\begin{essyntax}
+  writepsf \var{file} \opt{-molecule} \var{N_P} \var{MPC} \var{N_CI}
+  \var{N_pS} \var{N_nS}
+\end{essyntax}
+Writes the current topology to the file \var{file} (here, \var{file}
+is not a channel, since additional information cannot be written
+anyway).  \var{N\_P}, \var{MPC} and so on are parameters describing a
+system consisting of equally long charged polymers, counterions and
+salt.  This information is used to set the residue name and can be
+used to color the atoms in VMD. If you specify \lit{-molecule}, the
+residue name is taken from the molecule identity of the particle. Of
+course different kinds of topologies can also be handled by modified
+versions of \lit{writepsf}.
+
+
+\subsection{\lit{writepdb}: Writing the coordinates}
+\newescommand{writepdb}
+\newescommand{writepdbfoldchains}
+\newescommand{writepdbfoldtopo}
+
+\begin{essyntax}
+  \variant{1} writepdb \var{file}
+  \variant{2} writepdbfoldchains \var{file} \var{chain_start}
+  \var{n_chains} \var{chain_length} \var{box_l}
+  \variant{3} writepdbfoldtopo \var{file} \var{shift}
+\end{essyntax}
+
+Variant \variant{1} writes the corresponding particle data. 
+
+Variant \variant{2} writes folded particle data where the folding is performed
+on chain centers of mass rather than single particles. In order to
+fold in this way the chain topology and box length must be specified.
+Note that this method is outdated. Use variant \variant{3} instead.
+
+Variant \variant{3} writes folded particle data where the folding is
+performed on chain centers of mass rather than single particles. This
+method uses the internal box length and topology information from
+espresso. If you wish to shift particles prior to folding then supply
+the optional shift information. \var{shift} should be a three member
+tcl list consisting of x, y, and z shifts respectively and each number
+should be a floating point (ie with decimal point).
 
 \section{Writing VTF files}
 %\quickrefheading{Handling of VTF files}
@@ -477,7 +490,8 @@ be used to write the structure (\texttt{writevsf}) and coordinates
 with the extension \texttt{.vtf}), or to separate files (extensions
 \texttt{.vsf} and \texttt{.vtf}).
 
-\subsection{\texttt{writevsf}}
+\subsection{\texttt{writevsf}: Writing the topology}
+\newescommand{writevsf}
 
 \begin{essyntax}
   writevsf \var{channelId} 
@@ -522,7 +536,9 @@ whole simulation.
   Example: \verb!writevsf $file typedesc {0 "name colloid" 1 "name pe"}!
 \end{arguments}
 
-\subsection{\texttt{writevcf}}
+\subsection{\texttt{writevcf}: Writing  the coordinates}
+\newescommand{writevcf}
+
 \begin{essyntax}
   writevcf \var{channelId} 
   \opt{\alt{short \asep verbose}}
@@ -554,15 +570,16 @@ return value of an invocation of \keyword{open}.
   
 \end{arguments}
 
-\subsection{\texttt{vtfpid}}
+\subsection{\texttt{vtfpid}: Translating \es particles ids to VMD
+  particle ids}
 \begin{essyntax}
   vtfpid \var{pid}
 \end{essyntax}
 If \var{pid} is the id of a particle as used in \es, this command
 returns the atom id used in the VTF, VSF or VCF formats.
 
-\section{\texttt{imd}: Online-visualisation with VMD}
-IMD (Interactive Molecular Dynamics) is the protocol VMD uses to
+\section{Online-visualisation with VMD}
+IMD (Interactive Molecular Dynamics) is the protocol that VMD uses to
 communicate with a simulation. Tcl\_md implements this protocol to
 allow online visual analysis of running simulations.
 
@@ -571,81 +588,97 @@ simulation can provide the possibility of connecting VMD, but VMD need
 not be connected all the time. You can watch the simulation just from
 time to time.
 
-In the following the setup up and using of IMD is described.
+In the following the setup and usage of IMD is described.
 
-\subsection{IMD in the script}
+\subsection{\texttt{imd}: Using IMD in the script}
+\newescommand{imd}
 
-In your simulation, the IMD connection is setup up using \codebox{imd
-  connect <port>}
+\begin{essyntax}
+  \variant{1} imd connect \opt{\var{port}}
+  \variant{2} imd positions \opt{\alt{-unfolded \asep -fold_chains}}
+  \variant{3} imd listen \var{seconds}
+  \variant{4} imd disconnect
+\end{essyntax}
 
-where \var{port} is an arbitrary port number (it has to be between
-1024 and 65000). Normally \es{} will try to open port 10000, but the
-port may be in use already by another \es{} simulation. In that case
-it is a good idea to just try another port (see lj\_liquid.tcl).
+In your simulation, the IMD connection is setup up using variant
+\variant{1}, where \var{port} is an arbitrary port number (which
+usually has to be between 1024 and 65000). By default, \es will try to
+open port $10000$, but the port may be in use already by another \es
+simulation. In that case it is a good idea to just try another port.
 
-Now while the simulation is running, you should execute
-\begin{code}
-imd positions <flag>
-\end{code}
-from time to time, which will transfer the current coordinates to VMD,
-if it is connected. If not, nothing happens and imd connect just
-consumes a small amount of CPU time. The optional flag argument can
-take values -unfolded or -fold\_chains. By specifying -unfolded the
-unfolded coordinates for each particle will be given to VMD.
-Specifying -fold\_chains causes imd to call the routine
-analyze\_fold\_molecules which folds chains according to their centers
-of mass and retains bonding connectivity. Note that this routine
-requires the chain structure to be specified first using the analyze
-command.
-\begin{code}
-imd listen <seconds>
-\end{code}
-can be used to let the simulation wait for \var{seconds} seconds or
-until IMD has connected. This is normally only useful in demo scripts,
-if you want to see all frames of the simulation.
+While the simulation is running, variant \variant{2} can be used to
+transfer the current coordinates to VMD, if it is connected.  If not,
+nothing happens and the command just consumes a small amount of CPU
+time. Note, that before you can transfer coordinates to VMD, VMD needs
+to be aware of the structure of the system. For that, you first need
+to load a corresponding structure file (PSF or VSF) into VMD. Also
+note, that the command \lit{prepare_vmd_connection} (see section
+\vref{es:prepare-vmd-connection}) can be used to automatically set up
+the VMD connection and transfer the structure file.
 
-If your simulations terminates,
-\begin{code}
-imd disconnect
-\end{code}
+By specifying \lit{-unfolded}, the unfolded coordinates of the
+particles will transferred, while \lit{-fold_chains} will fold chains
+according to their centers of mass and retains bonding connectivity.
+Note that this requires the chain structure to be specified first
+using the analyze command.
 
-will terminate the IMD session. This is normally not only nice but
-also the operating system will not free the port for some time, so
-that without disconnecting for some 10 seconds you will not be able to
-reuse the port.
+Variant \variant{3} can be used to let the simulation wait for
+\var{seconds} seconds or until IMD has connected, before the script is
+continued. This is normally only useful in demo scripts, if you want
+to see all frames of the simulation.
 
-Additionally, you have to provide VMD with the structural information
-for your system. Therefore your program has to write out
-psf-/pdb-files using tcl\_writepsf and tcl\_writepdb.
-
-That hassle is greatly reduced by using the built-in auxiliary script
-\begin{code}
-prepare\_vmd\_connection [<filename> [<wait> [<start>]]]
-\end{code}
-
-which writes out the necessary psf-/pdb-files to \var{filename}.psf
-and \var{filename}.pdb (default for <filename is 'vmd'), doing some
-nice stuff such as coloring the molecules, bonds and counterions
-appropriately, rotating your viewpoint, and connecting your system to
-the visualization server. If \var{start} is 1 (the default), it does
-all that by itself; otherwise it writes those steps out to a
-script-file 'vmd\_start.script and waits for \var{wait} seconds
-(default: 0) for you to connect.
+Variant \variant{4} will terminate the IMD session. This is normally
+not only nice but also the operating system will not free the port for
+some time, so that without disconnecting for some 10 seconds you will
+not be able to reuse the port.
 
 \subsection{Using IMD in VMD}
-So after your simulation runs and has written the psf/pdb files, you
-start VMD. Then click on "Molecule", choose fileformat "psf and pdb",
-and select your psf/pdb files in the corresponding entries. Now click
-on "Load Molecule". You should see the snapshot you saved in the
-psf/pdb files.
 
-Then execute "imd connect \var{host} \var{port}", where \var{host} is
-the host running the simulation and \var{port} is the port it listens
-to. Note that VMD crashes, if you do that without loading the molecule
-before .
+The PDB/PSF files created by \es via the command \lit{writepsf} and
+\lit{writepdb} can be loaded into VMD. This should bring up an initial
+configuration.
 
-For more information on how to use VMD to extract more information or
-hide parts of configuration, see the VMD Quick Help.
+Then you can use the VMD console to execute the command
+\begin{code}
+  imd connect \var{host} \var{port}
+\end{code}
+where \var{host} is the host running the simulation and \var{port} is
+the port it listens to. Note that VMD crashes, if you do that without
+loading a structure file before.  For more information on how to use
+VMD to extract more information or hide parts of configuration, see
+the VMD Quick Help.
+
+\subsection{Automatically setting up a VMD connection}
+\newescommand[prepare-vmd-connection]{prepare_vmd_connection}
+
+\begin{essyntax}
+prepare_vmd_connection 
+\opt{\var{filename} \opt{\var{wait} \opt{\var{start}}}}
+\end{essyntax}
+
+To reduce the effort involved in setting up the IMD connection,
+starting VMD and loading the structure file, \es provides the command
+\lit{prepare_vmd_connection}.  It writes out the required
+PSF/PDB-files to \var{filename}.psf and \var{filename}.pdb (default
+for \var{filename} is \lit{vmd}), doing some nice stuff such as
+coloring the molecules, bonds and counterions appropriately, rotating
+your viewpoint, and connecting your system to the visualization
+server. When \var{wait} is provided, \es will wait for \var{wait}
+seconds before it continues, giving VMD some time to start up and
+connect.
+
+If \var{start} is 1 (the default), it will automatically try to start
+VMD and connect to the \es simulation, otherwise it writes a
+corresponding script to the file \lit{vmd_start.script}, that can be
+executed via VMD, either from the command line
+\begin{code}
+  vmd -e vmd_start.script
+\end{code}
+or from the Tcl console of VMD with the command
+\begin{code}
+  play "vmd\_start.script"
+\end{code}
+
 
 \section{Errorhandling}
 Errors in the parameters are detected as early as possible, and
@@ -661,29 +694,30 @@ When run noninteractively, Tcl will return a nice stack backtrace
 which allows to quickly find the line causing the error.
 
 However, some errors can only be detected after changing the internal
-structures, so that \es{} is left in a state such that integration is
+structures, so that \es is left in a state such that integration is
 not possible without massive fixes by the users. Especially errors
 occuring on nodes other than the primary node fall under this
 condition, for example a broken bond or illegal parameter
 combinations.
 
-For error conditions such as the examples given above, an Tcl error
+\todo{I do not understand this. How does the error look?}
+For error conditions such as the examples given above, a Tcl error
 message of the form
-\begin{tclcode}
-<Tcl error> background 0 {<error a>} {<error b>} 1 {<error c>}
-\end{tclcode}
+\begin{code}
+\var{tcl\_error} background 0 \var{error\_a} \var{error\_b} 1 \var{error\_c}
+\end{code}
 is returned. Following possibly a normal Tcl error message, after the
 background keyword all severe errors are listed node by node,
-preceeded by the node number. a special error is "<consent>", which
-means that one of the slave nodes found exactly the same errors as the
-master node. This happens mainly during the initialization of the
-integrate, \eg if the time step is not set. In this case the error
+preceeded by the node number. A special error is \lit{<consent>},
+which means that one of the slave nodes found exactly the same errors
+as the master node. This happens mainly during the initialization of
+the integrate, \eg if the time step is not set. In this case the error
 message will be
-\begin{tclcode}
-background_errors 0 {time_step not set} 1 <consent> 
-\end{tclcode}
+\begin{code}
+background\_errors 0 \{time\_step not set\} 1 <consent> 
+\end{code}
 In each case, the current action was not fulfilled, and possibly other
-parts of the internal data also had to be changed to allow \es{} to
+parts of the internal data also had to be changed to allow \es to
 continue, so you should really know what you do if you try and catch
 these errors.
 

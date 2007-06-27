@@ -15,10 +15,7 @@ idxtotoc                        % add the index to the TOC
 ]{scrreprt}
 
 \usepackage[draft]{varioref}    % defines \vref
-\usepackage[
-%bookmarksopen=true
-]
-{hyperref}                      % automatically creates links when
+\usepackage{hyperref}                      % automatically creates links when
                                 % using pdflatex, defines \url
 \usepackage{ifpdf}              % defines \ifpdf
 \usepackage{graphicx}           % handles graphics
@@ -74,7 +71,7 @@ idxtotoc                        % add the index to the TOC
 \makeatother
 
 % required so that we can set index numbers bold
-% \index{Some example|main}
+% \index{Some example|mainindex}
 \newcommand*{\mainindex}[1]{\textbf{\hyperpage{#1}}}
 
 \newcommand{\todo}[1]{
@@ -190,7 +187,6 @@ idxtotoc                        % add the index to the TOC
   \end{list}
 }
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Declare new features/commands/analyze subcommands
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -214,49 +210,6 @@ idxtotoc                        % add the index to the TOC
   \index{#1|mainindex}%
   \index{analysis!#1|mainindex}%
 }
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% OLD STUFF, TO BE REMOVED
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Environment for syntax descriptions
-\newsavebox{\thetclsyntaxbox}
-\newenvironment{tclsyntax}[1][]{
-  % Create index entries
-  \index{#1@\texttt{#1}|mainindex}%
-  \index{Tcl-commands!#1@\texttt{#1}|mainindex}%
-  % Create headings
-  \minisec{Syntax}
-  \smallskip%
-  \begin{lrbox}{\thetclsyntaxbox}%
-    \begin{minipage}{\linewidth-2em}%
-      \ttfamily\setlength{\parindent}{-2em}%
-    }{%
-    \end{minipage}%
-  \end{lrbox}%
-  \begin{addmargin}{4em}%
-    \usebox{\thetclsyntaxbox}%
-  \end{addmargin}%
-  \minisec{Description}
-}
-
-% % command definition
-% % first, optional argument: variant number
-% % second. mandatory argument: syntax description of a command
-\newcommand{\tclcommand}[2][]{%
-  \mbox{%
-    \ifthenelse{\equal{#1}{}}{}{\variant{#1}\hspace{0.3em}}%
-    \hspace{2em}\parbox[t]{\linewidth-4em}{%
-      \raggedright\ttfamily\hspace{-2em}#2%
-    }}%
-}
-
-% \newcommand{\addtoquickref}[1]{\addtocontents{qrf}{#1}}
-% \newcommand{\quickrefheading}[1]{%
-%   \stepcounter{qrfcounter}
-%   \addtocontents{qrf}{\protect\qrfheading{#1}{\thepage}{qrf\arabic{qrfcounter}}}
-%   \hypertarget{qrf\arabic{qrfcounter}}{}
-% }
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
