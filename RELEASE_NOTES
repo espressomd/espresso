@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3c (Ydalir)                                                                     *
+* v2.0.3d (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3c -
+- v2.0.3d -
 -----------
 
+(d) June 26th, 2007.
 (c) June 25th, 2007.
 (b) June 22nd, 2007.
 (a) June 21st, 2007.
@@ -19,8 +20,13 @@ New Features:
 (c) 
 
 Changes:
+(d) User's Guide: Quickref works
 (b) added reaction_field.h to Makefile-am.am
 (a) RELEASE_NOTES maintenance
+
+Bugfixes:
+(d) added newline at the end to avoid nasty warnings
+(d) tclline.tcl was missing in install target.
 
 
 - v2.0.2y -
