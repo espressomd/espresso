@@ -19,8 +19,10 @@
 #ifndef LATTICE_H
 #define LATTICE_H
 
+#include <mpi.h>
 #include "utils.h"
 #include "grid.h"
+#include "particle_data.h"
 
 #ifdef LATTICE
 
@@ -72,6 +74,14 @@ typedef struct _Lattice {
    *  This can be a contiguous field of arbitrary data. */
   void *data;
 
+  /** particle representation of this lattice. This is needed to
+   *  specify interactions between particles and the lattice.
+   *  Actually used are only the identity and the type. */
+  Particle part_rep;
+
+  /** MPI datatype that describes the data layout of the lattice. */
+  MPI_Datatype datatype;
+
 } Lattice;
 
 /** Initialize lattice.
@@ -96,21 +106,22 @@ void init_lattice(Lattice *lattice, double agrid, double tau);
  * \param  ind     local coordinates of the lattice site (Output)
  * \return         index of the node for the lattice site
  */
-MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind) {
-  int im[3];
+MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
   
   /* determine coordinates in node_grid */
-  im[0] = (int)floor(ind[0]*lattice->agrid*box_l_i[0]*node_grid[0]);
-  im[1] = (int)floor(ind[1]*lattice->agrid*box_l_i[1]*node_grid[1]);
-  im[2] = (int)floor(ind[2]*lattice->agrid*box_l_i[2]*node_grid[2]);
+  grid[0] = (int)floor(ind[0]*lattice->agrid*box_l_i[0]*node_grid[0]);
+  grid[1] = (int)floor(ind[1]*lattice->agrid*box_l_i[1]*node_grid[1]);
+  grid[2] = (int)floor(ind[2]*lattice->agrid*box_l_i[2]*node_grid[2]);
+
+  //fprintf(stderr,"%d: (%d,%d,%d)\n",this_node,grid[0],grid[1],grid[2]);
 
   /* change from global to local lattice coordinates */
-  ind[0] -= im[0]*lattice->grid[0];
-  ind[1] -= im[1]*lattice->grid[1];
-  ind[2] -= im[2]*lattice->grid[2];
+  ind[0] -= grid[0]*lattice->grid[0];
+  ind[1] -= grid[1]*lattice->grid[1];
+  ind[2] -= grid[2]*lattice->grid[2];
 
   /* return linear index into node array */
-  return map_array_node(im);
+  return map_array_node(grid);
 }
 
 /** Map a spatial position to the surrounding lattice sites.
@@ -131,7 +142,7 @@ MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind) {
  */
 MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], int node_index[8], double delta[6]) {
 
-  int x,y,z,dir,ind[3] ;
+  int dir,ind[3] ;
   double lpos, rel;
 
   /* determine the elementary lattice cell containing the particle
@@ -158,13 +169,14 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], int
 
   }
 
-  for (x=0;x<2;x++) {
-    for (y=0;y<2;y++) {
-      for (z=0;z<2;z++) {
-	node_index[z*4+y*2+x] = get_linear_index(ind[0]+x,ind[1]+y,ind[2]+z,lattice->halo_grid) ;
-      }
-    }
-  }
+  node_index[0] = get_linear_index(ind[0],ind[1],ind[2],lattice->halo_grid);
+  node_index[1] = node_index[0] + 1;
+  node_index[2] = node_index[0] + lattice->halo_grid[0];
+  node_index[3] = node_index[0] + lattice->halo_grid[0] + 1;
+  node_index[4] = node_index[0] + lattice->halo_grid[0]*lattice->halo_grid[1];
+  node_index[5] = node_index[4] + 1;
+  node_index[6] = node_index[4] + lattice->halo_grid[0];
+  node_index[7] = node_index[4] + lattice->halo_grid[0] + 1;
 
 }
 
