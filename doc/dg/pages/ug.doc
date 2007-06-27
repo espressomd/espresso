@@ -25,22 +25,62 @@
       else.
 
 \section general General issues
+  - Other than usual, in the UG's \c .tex -files, the underscore \c _
+    is a normal character in most cases, i.e. it can be used
+    unquoted. Unfortunately, however, this makes it impossible to use
+    \c _ in LaTeX-labels (don't ask me why!).
   - Headings should start with a capital letter and continue with
       lower-case letters (<i>First steps</i> and <strong>not</strong>
       <i>First Steps</i>)
+  - Use the "-ing" form in heading, i. e. "Setting up particles"
+    instead of "Particle setup" or the like.
+
+\section building_ug Building the User's Guide
+  - To build the User's Guide, you need to have a LaTeX-installation
+    that includes BibTeX, PDFLaTeX and makeindex. All installations
+    that I know of provide these tools.
+  - The following LaTeX-packages that might not be standard are
+    required:
+    - koma-script: the koma-script classes provide a nicer layout than
+      the standard LaTeX classes.
+    - hyperref: allows hyperlinks and bookmarks within PDF documents
+  - There are two methods to build the User's Guide:
+    - Use <tt>make ug</tt> from the build directory
+      (<tt>obj.</tt><i>arch</i><tt>/doc/ug</tt>) to build it. This
+      will automatically generate the ESPResSo quick reference and
+      call latex, bibtex and makeindex as required.
+    - Use <tt>perl latexmk</tt> from the source directory. This will
+      basically do the same, however, it will \e not automatically
+      update the quick reference. The davantage of this method is,
+      that you can use all of \c latexmk s nice features, such as
+      <tt>-pvc</tt>. You can always rebuild the quick reference
+      manually by calling
+\verbatim
+awk -f assemble_quickref.awk > quickref.inp
+\endverbatim
+ 
+\section adding_files_ug Adding new files
+
+  To add new LaTeX-files to the User's Guide, you need to modify
+  - \c ug.tex : add an appropriate include command near the end of the
+    file 
+  - \c Makefile.am : add the file to the variable \c ug_TEXFILES . Run
+    \c autogen.sh from the top level source directory to regenerate
+    <tt>Makefile.in</tt> and <tt>configure</tt> from the build
+    directory to regenerate the Makefile itself.
 
 \section newcommands Additional environments and commands
 
   To maintain a consistent layout, a number of environments and
   commands have been defined that should be used where applicable. 
-  - For the description of Tcl-commands, read \ref tclcommand.
+  - For the description of ESPResSo's Tcl-commands, read \ref
+    essyntax.
   - The name of ESPResSo should be set via the command \c \\es.
   - The strings <em>i.e.</em>, <em>e.g.</em> and <em>et al.</em>
     should be set via \c \\ie, \c \\eg and \c \\etal.
   - For short code pieces that can be displayed inline, use 
-\verbatim
-\codebox{<text>}
-\endverbatim
+    <tt>\\codebox{<i>text</i>}</tt> or 
+    <tt>\\verb!<i>text</i>!</tt>
   - For longer code pieces or the syntax decription of non-Tcl
 commands, the environment \c code exists:
 \verbatim
@@ -49,10 +89,11 @@ commands, the environment \c code exists:
 \end{code}
 \endverbatim
     This is \e not a verbatim environment, i.e. it will evaluate
-    LaTeX-commands inside. Therefore, it is necessary to be careful
-    when using the characters \c \\,\c { and \c } inside! On the other
-    hand, it is possible to use other layout commands (like \c
-    \\textit) inside.
+    LaTeX-commands inside. Therefore, the characters \c \\,\c { and 
+    \c } need to be quoted like \c \\\\, \c \\\{, \c \\\} inside!
+    Also, the underscore character \c _ needs qo be quoted like 
+    \c \\_. On the other  hand, it is possible to use other layout
+    commands (like \c \\textit) inside.
   - For pieces of Tcl-code that make extensive use of \c { and \c }, a
     verbatim environment \c tclcode exists:
 \verbatim
@@ -65,31 +106,48 @@ commands, the environment \c code exists:
 
 \subsection syntax_definition Formal syntax definition
 
-\e All Tcl-commands have to be documented in the User's Guide.
+\e All ESPResSo-commands have to be documented in the User's Guide.
 
-At the beginning of each of the command descriptions, pleasue use the
-command <tt>\\eslabel{\e commandname }</tt> to automatically generate a
-label <tt>tcl:\e commandname</tt> and create appropriate index
-entries.
+At the beginning of each of the command descriptions, please use the
+command
+<tt>\\newescommand[<i>label</i>]{<i>command</i>}</tt> to
+automatically generate a label <tt>es:<i>command</i></tt> and
+create appropriate index entries. The optional argument <i>label</i>
+is only required, when <i>command</i> contains an underscore character
+(\c _ ). 
 
 For the <em>formal syntax definition</em>, you have to use the
-environment \c essyntax. It will generate the headings
-<em>Syntax</em>, <em>Required features</em> and <em>Description</em>,
-and furthermore it will copy the syntax definition to the quick
-reference guide. Inside the \c essyntax environment, you have to use
-the following commands for typesetting the definition:
+environment \c essyntax. It will generate the headings <em>Syntax</em>
+and <em>Description</em>, and furthermore it will copy the syntax
+definition to the quick reference guide. For an example, look to the
+documentation of the \c part command in the file \c part.tex . Inside
+the \c essyntax environment, you have to use the following commands
+for typesetting the definition:
 
-- <tt>\\variant{\e number }</tt> to typeset the label of a command
+- <tt>\\variant{<i>number</i>}</tt> to typeset the label of a command
   variant
-- <tt>\\var{\e name }</tt> to typeset a variable argument
-- <tt>\\keyword{\e text }</tt> or <tt>\\lit{\e text }</tt> to
+- <tt>\\var{<i>name</i>}</tt> to typeset a variable argument
+- <tt>\\keyword{<i>text</i>}</tt> or <tt>\\lit{<i>text</i>}</tt> to
   typeset keywords or literals
-- <tt>\\opt{\e text }</tt> to typeset optional arguments
-- <tt>\<\e alt1 |\e alt2 |\e alt3 \></tt> to typeset alternatives
-- <tt>\\requiresfeature[\e text]{\e features }</tt> will add a marking
-  that the command requires the features \e features. If the optional
-  argument \e text is used, it will be marked that \e text requires
-  the feature, not the whole command.
+- <tt>\\opt{<i>text</i>}</tt> to typeset optional arguments. Note that
+  usually, the text inside the \c opt command will not be wrapped. If
+  the optional argument is pretty long and needs to be wrapped, use \c
+  \\optlong .
+- <tt>\\optlong{<i>text</i>}</tt> to typeset long optional argument
+  blocks
+- <tt>\\alt{<i>alt1</i> \\asep <i>alt2</i> \\asep <i>alt3</i> ...}</tt>
+  to typeset alternatives
+- <tt>\\require{<i>number</i>}{<i>text</i>}</tt> to typeset
+  <i>text</i> to show that it requires certain features of
+  ESPResSo. <i>number</i> denotes the mark that is shown next to
+  <i>text</i>. When this command is used, you also have to use the
+  command <tt>\\features</tt> (see below) at the end of the \c
+  essyntax environment, where all of the <i>number</i>s used are
+  explained.
+- <tt>\\features{<i>text</i>}</tt> to typeset which features are
+  required by the command. List all features space-separated in
+  capital letters, and put <tt>\\fmark{<i>number</i>}</tt> in front of
+  those that were defined using <tt>\\require</tt>.
 
 The <em>formal syntax definition</em> should be as simple and as
 readable as possible, as it will be what a user references to. Avoid
@@ -97,17 +155,6 @@ very long definitions and constructs like nested alternatives and
 options! In those cases, prefer to split the syntax definition into
 several subdefinitions instead of writing it in a single, complicated
 definition!
-    
-Example:<p>
-Instead of using
-<p>
-\c inter \< <em>particle_type_number1 particle_type_number2</em> |
-<em>bond_type_number</em> \> <em>interaction_type</em> <em>value</em>+
-<p>
-better use
-<p>
-(1) \c inter <em>type1 type2 nb_inter_type parameters</em><br>
-(2) \c inter <em>bond_type bond_inter_type parameters</em><br>
 
 \subsection command_desc Description
 
