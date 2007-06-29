@@ -1,0 +1,16 @@
+/** \page new_files How to add new files to ESPResSo
+
+To add new files to ESPResSo (like C-source-files or C-header-files)
+you need to do the following:
+- add the files to the corresponding 
+  <tt>\ref automake_file "Makefile.am"</tt>
+- run <tt>\ref autogen "autogen.sh"</tt> to regenerate
+  <tt>configure</tt> and the different <tt>Makefile.in</tt>
+- (ideally, you should also check the distribution by running 
+   <tt>\ref create_distro "make distcheck"</tt>
+- add the new file(s) and changed Makefiles to the \ref our_cvs "CVS"
+
+\section automake_file Adding the file to automake
+
+
+*/

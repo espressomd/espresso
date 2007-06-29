@@ -1,4 +1,4 @@
-/** \page our_doxygen How to do the documentation (Doxygen)
+/** \page our_doxygen How to write the Developer's Guide (Doxygen)
 
 The documentation for Espresso is mainly contained in the source code
 and is automatically generated using doxygen.

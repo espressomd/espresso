@@ -2,7 +2,7 @@
 
 The scripts in the directory your_directory/Espresso/testsuite are
 used to check wether changes in the program code affect basic
-properties of ESPResSo. Befor checking in any changes please make sure
+properties of ESPResSo. Before checking in any changes please make sure
 that this test is succesfull. To run the test type <tt>gmake test</tt>
 in the directory your_directory/Espresso. If you write any new
 features for Espresso please provide new tests for them. 
