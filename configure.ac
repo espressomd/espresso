@@ -55,9 +55,19 @@ cat <<EOF
 *                   Check the compiler and MPI                 *
 ****************************************************************
 EOF
+dnl Save and restore CFLAGS to avoid unwanted "-g -O2"-flags
+dnl Suggested improvement:
+dnl - check --with-mpi: 
+dnl     "no" => no MPI, 
+dnl     "yes" => guess MPI, bail out if none is found
+dnl     "auto" => guess MPI, continue with "no" if NONE is found
+dnl     * => check for specific implementation, bail out if it doesn't work
+dnl - from this compute "check_CC_list"
+dnl - call AC_PROC_CC($check_CC_list)
+dnl - now test for the other MPI components
+dnl - set the value only when MPI is complete and working
 save_CFLAGS=$CFLAGS
 AC_PROG_CC
-AC_PROG_CC_C_O
 AM_PROG_CC_C_O
 CFLAGS=$save_CFLAGS
 ES_CHECK_MPI
@@ -125,7 +135,8 @@ AC_CONFIG_HEADERS([acconfig.h])
 AC_CONFIG_LINKS(Makefile:Makefile)
 AC_CONFIG_FILES([
 	Makefile-am scripts/Makefile testsuite/Makefile
-	doc/Makefile doc/ug/Makefile doc/dg/Makefile
+	doc/Makefile doc/ug/Makefile doc/ug/figures/Makefile 
+	doc/dg/Makefile
 	config/$myconfig:config/myconfig-default.h.in
 	chooser/Espresso mpiwrap/Espresso
 	])

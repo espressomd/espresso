@@ -172,7 +172,7 @@ ug_TEXFILES = \
 	ug.tex \
 	introduction.tex \
 	firststeps.tex \
-	installation.tex	 \
+	installation.tex \
 	part.tex \
 	inter.tex \
 	setup.tex \
@@ -189,8 +189,7 @@ ug_TEXFILES = \
 
 ug_FILES = $(ug_TEXFILES) \
 	underscore.sty \
-	bibliography.bib \
-	figures
+	bibliography.bib
 
 
 #data_DATA=ug.pdf
@@ -363,9 +362,18 @@ uninstall-am: uninstall-info-am
 
 doc: ug
 ug: ug.pdf
+	cd figures; $(MAKE) --print-directory $@
 ug.pdf: $(ug_FILES)
 @HAVE_LATEX_TRUE@	for file in $(ug_FILES); do \
-@HAVE_LATEX_TRUE@	  if test ! -e $$file; then $(LN_S) $(srcdir)/$$file .; fi;\
+@HAVE_LATEX_TRUE@	  test -e $$file || \
+@HAVE_LATEX_TRUE@	    $(LN_S) $(srcdir)/$$file .; \
+@HAVE_LATEX_TRUE@	done
+@HAVE_LATEX_TRUE@	test -d figures || mkdir figures
+@HAVE_LATEX_TRUE@	fi
+@HAVE_LATEX_TRUE@	for file in $(srcdir)/figures/*; do \
+@HAVE_LATEX_TRUE@	  if test ! -e $$file; then \
+@HAVE_LATEX_TRUE@	    $(LN_S) $$file figures/; \
+@HAVE_LATEX_TRUE@	  fi \
 @HAVE_LATEX_TRUE@	done
 @HAVE_LATEX_TRUE@	$(AWK) -f $(srcdir)/assemble_quickref.awk $(ug_TEXFILES) > quickref.inp
 @HAVE_LATEX_TRUE@	$(PDFLATEX) ug.tex

@@ -1,4 +1,4 @@
-SUBDIRS = . scripts testsuite doc doc/ug doc/dg
+SUBDIRS = . scripts testsuite doc doc/ug doc/ug/figures doc/dg
 
 # List files that should go into the distribution but are not required
 # by any other means
@@ -61,6 +61,7 @@ Espresso_bin_SOURCES = \
 	rattle.c rattle.h \
 	molforces.c molforces.h \
 	lb.c lb.h \
+	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
 	lattice.c lattice.h \
 	halo.c halo.h \
@@ -126,6 +127,12 @@ install-exec-local:
 # install binary
 	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) \
 	Espresso_bin $(DESTDIR)/$(execpkglibdir)/
+
+unistall-local:
+	rm $(DESTDIR)/$(bindir)/Espresso
+	rm $(DESTDIR)/$(execpkglibdir)/Espresso
+	rm $(DESTDIR)/$(execpkglibdir)/Espresso_bin
+
 else
 
 # Substitute some remaining variables in the Espresso wrappers. This
@@ -142,6 +149,10 @@ install-exec-local:
 # install binary
 	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) \
 	Espresso_bin $(DESTDIR)/$(libexecdir)/
+
+uninstall-local:
+	rm $(DESTDIR)/$(bindir)/Espresso
+	rm $(DESTDIR)/$(libexecdir)/Espresso_bin
 endif
 
 #################################################################

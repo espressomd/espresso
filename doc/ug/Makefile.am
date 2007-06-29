@@ -2,7 +2,7 @@ ug_TEXFILES=\
 	ug.tex \
 	introduction.tex \
 	firststeps.tex \
-	installation.tex	 \
+	installation.tex \
 	part.tex \
 	inter.tex \
 	setup.tex \
@@ -20,8 +20,7 @@ ug_TEXFILES=\
 
 ug_FILES=$(ug_TEXFILES) \
 	underscore.sty \
-	bibliography.bib \
-	figures
+	bibliography.bib
 
 #data_DATA=ug.pdf
 
@@ -34,10 +33,19 @@ EXTRA_DIST= $(ug_FILES) \
 
 doc: ug
 ug: ug.pdf
+	cd figures; $(MAKE) --print-directory $@
 ug.pdf: $(ug_FILES)
 if HAVE_LATEX
 	for file in $(ug_FILES); do \
-	  if test ! -e $$file; then $(LN_S) $(srcdir)/$$file .; fi;\
+	  test -e $$file || \
+	    $(LN_S) $(srcdir)/$$file .; \
+	done
+	test -d figures || mkdir figures
+	fi
+	for file in $(srcdir)/figures/*; do \
+	  if test ! -e $$file; then \
+	    $(LN_S) $$file figures/; \
+	  fi \
 	done
 	$(AWK) -f $(srcdir)/assemble_quickref.awk $(ug_TEXFILES) > quickref.inp
 	$(PDFLATEX) ug.tex
