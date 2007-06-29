@@ -11,38 +11,6 @@
     The file can be either a Tcl channel or a FILE *, which is called FILETYPE here.
     See \ref blockfile.c "blockfile.c" for more information.
 */
-/** \page libEspresso The Espresso library
-    All functions described here are also contained in a library
-    called libEspresso.a which can be used with any C-program. The file type is FILE *.
-    To compile using the Espresso library, simply add the switches
-    \verbatim -L<Espresso dir>/<PLATFORM> -lEspresso \endverbatim to your compiler switches.
-*/
-#ifndef BLOCKFILE_H
-#define BLOCKFILE_H
-
-/** \page blockformat The structured file format
-    This describes the ASCII block format used for writing structured files for analysis
-    or storage. Basically the file consists of blocks in curled braces, which have a
-    single word title and some data. The data itself may consist again of such blocks.
-    An example is:
-    \verbatim
-    {file {Demonstration of the block format}
-    {variable epsilon {_dval_ 1} } 
-    {variable p3m_mesh_offset {_dval_ 5.0000000000e-01 5.0000000000e-01 5.0000000000e-01 } } 
-    {variable node_grid {_ival_ 2 2 2 } } 
-    {end } }
-    \endverbatim
-    The format does not specify the number of whitespaces or which are used as delimiters,
-    space, tab and return are ok.
-
-    The keyword variable should be used to indicate that a variable definition follows in the
-    form \<name\> \<data\>. \<data\> itself is a block with title _ival_ or _dval_ denoting integer
-    rsp. double values, which then follow in a whitespace separated list. Such blocks can be
-    read in conveniently using \ref block_read_data and written using \ref block_write_data.
-
-    An example C-code generating the example above is:
-    \include blockfile_test.c
-*/
 
 /** The maximal size allowed for block titles. */
 #define MAXBLOCKTITLE 64
