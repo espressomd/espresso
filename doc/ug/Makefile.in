@@ -369,7 +369,6 @@ ug.pdf: $(ug_FILES)
 @HAVE_LATEX_TRUE@	    $(LN_S) $(srcdir)/$$file .; \
 @HAVE_LATEX_TRUE@	done
 @HAVE_LATEX_TRUE@	test -d figures || mkdir figures
-@HAVE_LATEX_TRUE@	fi
 @HAVE_LATEX_TRUE@	for file in $(srcdir)/figures/*; do \
 @HAVE_LATEX_TRUE@	  if test ! -e $$file; then \
 @HAVE_LATEX_TRUE@	    $(LN_S) $$file figures/; \

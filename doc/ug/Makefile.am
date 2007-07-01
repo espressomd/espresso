@@ -41,7 +41,6 @@ if HAVE_LATEX
 	    $(LN_S) $(srcdir)/$$file .; \
 	done
 	test -d figures || mkdir figures
-	fi
 	for file in $(srcdir)/figures/*; do \
 	  if test ! -e $$file; then \
 	    $(LN_S) $$file figures/; \
