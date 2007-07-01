@@ -11,7 +11,10 @@
     The file can be either a Tcl channel or a FILE *, which is called FILETYPE here.
     See \ref blockfile.c "blockfile.c" for more information.
 */
-
+ 
+#ifndef BLOCKFILE_H
+#define BLOCKFILE_H
+ 
 /** The maximal size allowed for block titles. */
 #define MAXBLOCKTITLE 64
 
