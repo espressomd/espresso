@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 system=`uname -s`
 
@@ -21,6 +21,7 @@ Linux)
 	else if ($4 == "AMD" && $5 == "Opteron" && $6 == "(tm)")   print "Opteron"; \
 	else if ($4 == "Dual" && $5 == "Core" && $6 == "AMD" && $7 == "Opteron(tm)")   print "Opteron"; \
 	else if ($4 == "Intel(R)" && $5 == "Xeon(TM)") print "Xeon"; \
+	else if ($4 == "Intel(R)" && $5 == "Xeon(R)") print "Xeon"; \
         else if ($4 == "Intel(R)" && $5 == "Celeron(R)") print "Celeron"; \
         else if ($4 == "Intel(R)" && $5 == "Core(TM)2") print "Pentium_4"; \
 	else if ($4 == "Mobile"   && $5 == "Intel(R)" && $6 == "Pentium(R)") print "Pentium_"$7; \
