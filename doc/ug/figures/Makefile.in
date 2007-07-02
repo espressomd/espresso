@@ -329,7 +329,9 @@ uninstall-am:
 	mostlyclean-generic pdf pdf-am ps ps-am uninstall uninstall-am
 
 
-ug: FORCE
+.PHONY: ug.pdf
+
+ug.pdf: FORCE
 @HAVE_LATEX_TRUE@	for file in $(ug_FIGURES); do \
 @HAVE_LATEX_TRUE@	  test -e $$file || \
 @HAVE_LATEX_TRUE@	    $(LN_S) $(srcdir)/$$file .; \

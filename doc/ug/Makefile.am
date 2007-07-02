@@ -33,18 +33,12 @@ EXTRA_DIST= $(ug_FILES) \
 
 doc: ug
 ug: ug.pdf
-	cd figures; $(MAKE) --print-directory $@
 ug.pdf: $(ug_FILES)
 if HAVE_LATEX
+	cd figures; $(MAKE) --print-directory $@
 	for file in $(ug_FILES); do \
 	  test -e $$file || \
 	    $(LN_S) $(srcdir)/$$file .; \
-	done
-	test -d figures || mkdir figures
-	for file in $(srcdir)/figures/*; do \
-	  if test ! -e $$file; then \
-	    $(LN_S) $$file figures/; \
-	  fi \
 	done
 	$(AWK) -f $(srcdir)/assemble_quickref.awk $(ug_TEXFILES) > quickref.inp
 	$(PDFLATEX) ug.tex
