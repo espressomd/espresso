@@ -7480,7 +7480,7 @@ echo $ECHO_N "checking the compiler type... $ECHO_C" >&6; }
 		with_compilertype=xlc
 	fi
 
-	if test $with_compilertype = unknown; then
+	if test .$with_compilertype = .unknown; then
 
 	if $CC -V 2>&1 | grep "Compaq C" >/dev/null 2>&1; then
 		with_compilertype=dec
@@ -7489,13 +7489,13 @@ echo $ECHO_N "checking the compiler type... $ECHO_C" >&6; }
 		with_compilertype=dec
 	fi
 
-		if test $with_compilertype = unknown; then
+		if test .$with_compilertype = .unknown; then
 
 	if $CC -V 2>&1 | grep "Intel" >/dev/null 2>&1; then
 		with_compilertype=icc
 	fi
 
-			if test $with_compilertype = unknown; then
+			if test .$with_compilertype = .unknown; then
 
 	if $CC -v 2>&1 | grep "gcc" >/dev/null 2>&1; then
 		with_compilertype=gcc
