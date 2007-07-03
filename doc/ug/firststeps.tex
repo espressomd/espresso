@@ -14,6 +14,7 @@ configure
 make
 \end{code}
 
+\todo{Mention minimal configuration without myconfig.h}
 In some cases, \eg{} when \es{} needs to be compiled for several
 different platforms or when different versions with different sets of
 features are required, it might be useful to execute the commands not
@@ -143,7 +144,7 @@ of the two particle types 0 and 1; by using different parameters for different
 combinations, one could simulate differently sized particles.  The last line sets
 the Bjerrum length to the value 10, and then
 instructs \es\ to use P$^3$M for the Coulombic interaction and to try to find
-suitable parameters for an rms force error below $10^{-4}$, with a fixed mesh
+suitable parameters for an rms force error below $10^{-3}$, with a fixed mesh
 size of 32. The mesh is fixed here to speed up the tuning; for a real
 simulation, one will also tune this parameter.
 
@@ -226,6 +227,8 @@ functions $g_{++}(r)$ and $g_{+-}(r)$. The radial distribution function for a
 the current configuration can be obtained using the \verb|analyze| command:
 \begin{tclcode}
 set rdf [analyze rdf 0 1 0.9 [expr $box_l/2] 100]
+set rlist ""
+set rdflist ""
 foreach value [lindex $rdf 1] {
   lappend rlist   [lindex $value 0]
   lappend rdflist [lindex $value 1] 
@@ -249,6 +252,8 @@ foreach filename $argv {
   while { [blockfile $f read auto] != "eof" } {}
   close $f
   set rdf [analyze rdf 0 1 0.9 [expr $box_l/2] 100]
+  set rlist ""
+  set rdflist ""
   foreach value [lindex $rdf 1] {
      lappend rlist   [lindex $value 0]
      lappend rdflist [lindex $value 1] }
