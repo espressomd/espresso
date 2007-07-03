@@ -7,19 +7,21 @@
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 #  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 #
-#############################################################
-#                                                           #
-# tclline.tcl                                               #
-# ===========                                               #
-#                                                           #
-# tclline: An attempt at a pure tcl readline.               #
-#                                                           #
-# Created:       20.06.2007 by CJ                           #
-#                                                           #
-# taken from the tcl-wiki                                   #
-# http://wiki.tcl.tk/16139                                  #
-#                                                           #
-#############################################################
+###############################################################
+#                                                             #
+# tclline.tcl                                                 #
+# ===========                                                 #
+#                                                             #
+# tclline: An attempt at a pure tcl readline.                 #
+# the original version of this script has been taken from     #
+# http://wiki.tcl.tk/16139                                    #
+# and was written by Adly Abdullah (http://wiki.tcl.tk/13212) #
+# who holds the Copyright of the original version             #
+#                                                             #
+# Modified:      20.06.2007 by CJ                             #
+#                                                             #
+#                                                             #
+###############################################################
 
 # Use Tclx if available:
 catch {
