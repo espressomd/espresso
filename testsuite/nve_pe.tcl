@@ -188,7 +188,7 @@ inter coulomb 2 p3m 125.07 8 6 0.0195788 9.47835e-07
 
 # Status report
 puts "$n_poly PE chain of length $p_length and charge distance $b_length"
-puts "Constraints:\n[constraint]"
+#puts "Constraints:\n[constraint]"
 puts "Interactions:\n[inter]\n"
 puts "Particles:\n[part]\n"
 
