@@ -18,7 +18,7 @@
 #  it is actually a real polyelectrolyte solution           #
 #                                                           #
 #  Created:       17.03.2003 by HL                          #
-#  Last modified: 18.03.2003 by HL                          #
+#  Last modified: 28.6.2007 by OL                           #
 #                                                           #
 #############################################################
 
@@ -28,7 +28,7 @@ puts "=    Sample script 5: espresso_logo.tcl               ="
 puts "======================================================="
 puts " "
 
-require_feature "LENNARD_JONES" "EXTERNAL_FORCES"
+require_feature "LENNARD_JONES" "EXTERNAL_FORCES" "ELECTROSTATICS"
 
 #############################################################
 #  Parameters                                               #
@@ -38,8 +38,12 @@ require_feature "LENNARD_JONES" "EXTERNAL_FORCES"
 set name  "espresso"
 set ident "_s5"
 
-# 
-set vmd_output "yes"
+# Data output
+set write_blocks "no"
+
+# Visualisation: online (imd), or offline (vtf-file)
+set vmd_online "no"
+set vmd_offline "yes"
 
 # System parameters
 #############################################################
@@ -117,8 +121,12 @@ for {set ia1 0} { $ia1 < $n_part_types } { incr ia1 } {
 
 set mypi   3.141592653589793
 
+set vtf_bonds ""
+
 # espresso cup (polyelectrolytes)
+append vtf_bonds "\#cup\n"
 set pid 0
+set start_pid 0
 for {set i 0} { $i < $cup_height } {incr i} {
     set circ [expr $cup_bot_circ + $i*($cup_top_circ-$cup_bot_circ)/double($cup_height-1)]
     set rad  [expr $circ/(2.0*$mypi)]
@@ -131,8 +139,12 @@ for {set i 0} { $i < $cup_height } {incr i} {
 	if { $j > 0 } { part $pid bond 0 [expr $pid-1] }
 	incr pid
     }   
+    set end_pid [expr $pid-1]
+    append vtf_bonds "bond " $start_pid "::" $end_pid "," $start_pid ":" $end_pid "\n"
+    set start_pid $pid
 }
 
+append vtf_bonds "\#cup bottom\n"
 set rad [expr $cup_bot_circ/(2.0*$mypi)]
 set posy 2.0
 puts "cup: bottom_rad $rad"
@@ -147,9 +159,13 @@ while { $rad > 1.0 } {
 	if { $j > 0 } { part $pid bond 0 [expr $pid-1] }
 	incr pid
     }   
+    set end_pid [expr $pid-1]
+    append vtf_bonds "bond " $start_pid "::" $end_pid "," $start_pid ":" $end_pid "\n"
+    set start_pid $pid
 }
 
 # cup handle (one more polyelectrolyte)
+append vtf_bonds "\#handle\n"
 set hand_rad  [expr ($cup_height-4.0)/sqrt(2.0)]
 set hand_circ [expr (1.5*$mypi*$hand_rad)]
 set hand_xoff [expr ($cup_bot_circ+$cup_top_circ)/(4.0*$mypi)+1.2]
@@ -166,6 +182,9 @@ for {set i 0} { $i < [expr int($hand_circ)]} {incr i} {
     if { $i > 0 } { part $pid bond 0 [expr $pid-1] }
     incr pid
 }
+set end_pid [expr $pid-1]
+append vtf_bonds "bond " $start_pid "::" $end_pid "\n"
+set start_pid $pid
 
 # saucer (counterions)
 set s_rad_o [expr $saucer_circ/(2.0*$mypi)]
@@ -193,6 +212,8 @@ for { set i 0 } { $i < $n_saucer } { incr i } {
 for {set i 0} { $i < $pid} {incr i} { part $i fix }
 
 # steam (some neutral polymers)
+append vtf_bonds "\#steam\n"
+set start_pid $pid
 for {set i 0} { $i < $n_steam } {incr i} {
     set posy [expr $cup_height] 
     set rad  [expr ($cup_top_circ-12.0)/(2.0*$mypi)]
@@ -209,7 +230,11 @@ for {set i 0} { $i < $n_steam } {incr i} {
 	incr pid
 	set posy [expr $posy+1.0]
     }
+    set end_pid [expr $pid-1]
+    append vtf_bonds "bond " $start_pid "::" $end_pid "\n"
+    set start_pid $pid
 }
+
 
 #rerun only when you have changed some parameters
 #puts "[inter coulomb $bjerrum p3m tune accuracy 0.0005]"
@@ -223,25 +248,41 @@ puts "Start with minimal distance $act_min_dist"
 #  Fixed Integration                                       #
 #############################################################
 
+# open vmd connection and start vmd
+if { $vmd_online == "yes" } then {
+    set vtf_file [open "espresso_logo_online.vtf" w]
+    writevsf $vtf_file
+    puts $vtf_file $vtf_bonds
+    writevcf $vtf_file
+    close $vtf_file
 
-# vmd connection
-writepsf "espresso.psf"
-writepdb "espresso.pdb"
-for {set port 10000} { $port < 65000 } { incr port } {
-    catch {imd connect $port} res
-    if {$res == ""} break
+    for {set port 10000} { $port < 65000 } { incr port } {
+	catch {imd connect $port} res
+	if {$res == ""} break
+    }
+
+    set HOSTNAME [exec hostname]
+    set vmdout_file [open "vmd_start.script" "w"]
+    puts $vmdout_file "axes location off"
+    puts $vmdout_file "mol load vtf espresso_logo_online.vtf"
+    puts $vmdout_file "rock y by -2"
+    puts $vmdout_file "mol modstyle 0 0 CPK 1.500000 0.600000 8.000000 6.000000"
+    puts $vmdout_file "mol modcolor 0 0 SegName"
+    puts $vmdout_file "imd connect $HOSTNAME $port"
+    close $vmdout_file
+
+    exec vmd -e vmd_start.script &
 }
-set HOSTNAME [exec hostname]
-set vmdout_file [open "vmd_start.script" "w"]
-puts $vmdout_file "axes location off"
-puts $vmdout_file "mol load psf espresso.psf pdb espresso.pdb"
-puts $vmdout_file "rock y by -2"
-puts $vmdout_file "mol modstyle 0 0 CPK 1.500000 0.600000 8.000000 6.000000"
-puts $vmdout_file "mol modcolor 0 0 SegName"
-puts $vmdout_file "imd connect $HOSTNAME $port"
-close $vmdout_file
 
-exec vmd -e vmd_start.script &
+
+# create vtf-file
+if { $vmd_offline == "yes" } then {
+    set vtf_file [open "espresso_logo.vtf" w]
+    writevsf $vtf_file
+    # connect cup
+    puts $vtf_file $vtf_bonds
+    writevcf $vtf_file
+}
 
 #############################################################
 #      Integration                                          #
@@ -254,9 +295,12 @@ set j 0
 for {set i 0} { $i < $fixed_n_times } { incr i} {
     puts -nonewline "run $i at time=[setmd time]\r"
     integrate $fixed_steps
-    polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
-    incr j
-    if { $vmd_output=="yes" } { imd positions }
+    if { $write_blocks=="yes" } then { 
+	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type} 
+	incr j
+    }
+    if { $vmd_online=="yes" } { imd positions }
+    if { $vmd_offline=="yes" } then { writevcf $vtf_file }
     flush stdout
     incr i
 }
@@ -270,12 +314,17 @@ for {set i 0} { $i < $int_n_times } { incr i} {
     flush stdout
 
     integrate $int_steps
-    polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
-    incr j
+    if { $write_blocks=="yes" } then { 
+	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
+	incr j
+    }
 
-    if { $vmd_output=="yes" } { imd positions }
+    if { $vmd_online=="yes" } { imd positions }
+    if { $vmd_offline=="yes" } then { writevcf $vtf_file }
 }
 
-exec rm vmd_start.script
+if { $vmd_online=="yes" } { exec rm vmd_start.script }
+if { $vmd_offline=="yes" } then { close $vtf_file }
+
 puts "\n\nFinished"
 exit
