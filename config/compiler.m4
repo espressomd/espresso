@@ -112,11 +112,11 @@ AC_DEFUN([ES_CHECK_COMPILERTYPE],[
                 [ with_compilertype=unknown ])
 	AC_MSG_CHECKING([the compiler type])
 	ES_CHECK_XLC
-	if test $with_compilertype = unknown; then
+	if test .$with_compilertype = .unknown; then
 		ES_CHECK_DEC
-		if test $with_compilertype = unknown; then
+		if test .$with_compilertype = .unknown; then
 			ES_CHECK_ICC
-			if test $with_compilertype = unknown; then
+			if test .$with_compilertype = .unknown; then
 				ES_CHECK_GCC
 			fi
 		fi
