@@ -45,6 +45,9 @@ set write_blocks "no"
 set vmd_online "no"
 set vmd_offline "yes"
 
+# name of the vmd start script
+set vmd_script "espresso_logo_vmd.tcl"
+
 # System parameters
 #############################################################
 
@@ -248,6 +251,51 @@ puts "Start with minimal distance $act_min_dist"
 #  Fixed Integration                                       #
 #############################################################
 
+# create VMD start script
+if { $vmd_offline == "yes" || $vmd_online == "yes" } then {
+    puts "Creating $vmd_script..."
+    set vmdout_file [open $vmd_script "w"]
+
+    if { $vmd_online == "yes" } then {
+	puts $vmdout_file "mol load vtf espresso_logo_online.vtf"
+	puts $vmdout_file "imd connect $HOSTNAME $port"
+    } elseif { $vmd_offline == "yes" } then {
+	puts $vmdout_file "mol load vtf espresso_logo.vtf"
+    }
+
+    puts $vmdout_file {
+display resize 600 600
+render options POV3 vmd_povray +W600 +H600 +ua -I%s +FN &
+axes location off
+color Display Background 8
+\# cup blue
+color Name O 0
+\# saucer red
+color Name N 1 
+\# steam silver
+color Name S 6
+
+animate goto 44
+scale to 0.12
+translate to 0 0.4 0.5
+
+mol addrep 0
+
+\# cup and saucer
+mol modselect 0 0 "not name S"
+mol modstyle 0 0 CPK 3 0.3 8 6
+mol modmaterial 0 0 Glossy
+
+\# steam
+mol modselect 1 0 "name S"
+mol modstyle 1 0 CPK 3 0.3 8 6
+mol modmaterial 1 0 Glass2
+}
+    
+    close $vmdout_file
+    puts "$vmd_script finished."
+}
+
 # open vmd connection and start vmd
 if { $vmd_online == "yes" } then {
     set vtf_file [open "espresso_logo_online.vtf" w]
@@ -261,16 +309,7 @@ if { $vmd_online == "yes" } then {
 	if {$res == ""} break
     }
 
-    set HOSTNAME [exec hostname]
-    set vmdout_file [open "vmd_start.script" "w"]
-    puts $vmdout_file "axes location off"
-    puts $vmdout_file "mol load vtf espresso_logo_online.vtf"
-    puts $vmdout_file "rock y by -2"
-    puts $vmdout_file "mol modstyle 0 0 CPK 1.500000 0.600000 8.000000 6.000000"
-    puts $vmdout_file "mol modcolor 0 0 SegName"
-    puts $vmdout_file "imd connect $HOSTNAME $port"
-    close $vmdout_file
-
+    # start VMD
     exec vmd -e vmd_start.script &
 }
 
@@ -283,6 +322,8 @@ if { $vmd_offline == "yes" } then {
     puts $vtf_file $vtf_bonds
     writevcf $vtf_file
 }
+
+
 
 #############################################################
 #      Integration                                          #
