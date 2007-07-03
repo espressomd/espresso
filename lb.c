@@ -314,7 +314,8 @@ static void lb_create_fluid() {
   int lens[2] = { n_veloc, 1 };
   MPI_Aint disps[2] = { 0, n_veloc*sizeof(double) };
   MPI_Datatype types[2] = { MPI_DOUBLE, MPI_UB };
-  MPI_Type_free(&lblattice.datatype);
+  //KG: Quick fix
+  //MPI_Type_free(&lblattice.datatype);
   MPI_Type_struct(2, lens, disps, types, &lblattice.datatype);
   MPI_Type_commit(&lblattice.datatype);
   LB_TRACE(fprintf(stderr,"Potential memory hole!\n"));
