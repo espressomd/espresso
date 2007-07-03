@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3e (Ydalir)                                                                     *
+* v2.0.3f (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3e -
+- v2.0.3f -
 -----------
 
+(f) July  2nd, 2007.
 (e) June 29th, 2007.
 (d) June 26th, 2007.
 (c) June 25th, 2007.
@@ -18,6 +19,8 @@ Current working revision.
 (a) June 21st, 2007.
 
 New Features:
+(f) added detection for Core2-Xeons.
+(f) added CECAM_Tutorial_2006 to internal folder
 (e) Added docs on the build system.
 (c) 
 
