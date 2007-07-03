@@ -114,7 +114,8 @@ command
 automatically generate a label <tt>es:<i>command</i></tt> and
 create appropriate index entries. The optional argument <i>label</i>
 is only required, when <i>command</i> contains an underscore character
-(\c _ ). 
+(\c _ ). In that case, a label <tt>es:</tt><i>label</i> is generated
+that should not contain an underscore character.
 
 For the <em>formal syntax definition</em>, you have to use the
 environment \c essyntax. It will generate the headings <em>Syntax</em>
@@ -141,13 +142,14 @@ for typesetting the definition:
   <i>text</i> to show that it requires certain features of
   ESPResSo. <i>number</i> denotes the mark that is shown next to
   <i>text</i>. When this command is used, you also have to use the
-  command <tt>\\features</tt> (see below) at the end of the \c
+  <tt>features</tt>-environment (see below) at the end of the \c
   essyntax environment, where all of the <i>number</i>s used are
   explained.
-- <tt>\\features{<i>text</i>}</tt> to typeset which features are
-  required by the command. List all features space-separated in
-  capital letters, and put <tt>\\fmark{<i>number</i>}</tt> in front of
-  those that were defined using <tt>\\require</tt>.
+- The environment <tt>features</tt> to typeset which features are
+  required by the Tcl-command. Each feature should be declared via the
+  command <tt>\\required[<i>number</i>]{<i>feature</i>}</tt>, where
+  the optional argument <i>number</i> is the number used above and
+  <i>feature</i> is the feature in capital letters.
 
 The <em>formal syntax definition</em> should be as simple and as
 readable as possible, as it will be what a user references to. Avoid
@@ -155,6 +157,36 @@ very long definitions and constructs like nested alternatives and
 options! In those cases, prefer to split the syntax definition into
 several subdefinitions instead of writing it in a single, complicated
 definition!
+
+Example:
+\verbatim
+\begin{essyntax}
+[clip]
+\variant{5} constraint pore center \var{c_x} \var{c_y} \var{c_z} 
+axis \var{n_x} \var{n_y} \var{n_z} radius \var{rad} length \var{length} type \var{id} 
+
+\require{1}{%
+  \variant{6} constraint rod center \var{c_x} \var{c_y} 
+  lambda \var{lambda}
+} 
+  
+\require{1}{%
+  \variant{7} constraint plate height \var{h}
+  sigma \var{sigma} 
+}
+  
+\require{2,3}{%
+  \variant{8} constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
+}
+
+  \begin{features}
+  \required{CONSTRAINTS}
+  \required[1]{ELECTROSTATICS}
+  \required[2]{ROTATION}
+  \required[3]{DIPOLES}
+  \end{features}
+\end{essyntax}
+\endverbatim
 
 \subsection command_desc Description
 

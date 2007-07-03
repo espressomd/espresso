@@ -25,14 +25,14 @@
   \require{5}{\opt{mass \var{mass}}}
   \require{6}{\opt{dipm \var{moment}}}
   \require{6}{\opt{dip \var{dx} \var{dy} \var{dz}}}
-  \features{%
-    \fmark{1} ELECTROSTATICS
-    \fmark{2} ROTATION
-    \fmark{3} EXTERNAL_FORCES
-    \fmark{4} EXCLUSION
-    \fmark{5} MASS
-    \fmark{6} DIPOLES
-  }
+  \begin{features}
+    \required[1]{ELECTROSTATICS} 
+    \required[2]{ROTATION}
+    \required[3]{EXTERNAL_FORCES}
+    \required[4]{EXCLUSION}
+    \required[5]{MASS}
+    \required[6]{DIPOLES}
+  \end{features}
 \end{essyntax}
 
 This command modifies particle data, namely position, type (monomer,
@@ -207,10 +207,10 @@ system.
   \opt{angle \var{phi} \opt{\var{theta} \opt{\var{x} \var{y}
         \var{z}}}}
   \require{2}{\opt{constraints}}
-  \features{%
-    \fmark{1} ELECTROSTATICS
-    \fmark{2} CONSTRAINTS
-  }
+  \begin{features}
+    \required[1]{ELECTROSTATICS}
+    \required[2]{CONSTRAINTS}
+  \end{features}
 \end{essyntax}
 
 This command will create \var{num_polymers} polymer or
@@ -301,9 +301,9 @@ set up to be \var{bond_length}.
   \opt{mode \alt{SAW \asep RW} \opt{\var{shield} \opt{\var{max_try} }}} 
   \require{1}{\opt{charge \var{val_CI}}}
   \opt{type \var{type_CI}}
-    \features{%
-    \fmark{1} ELECTROSTATICS
-  }
+  \begin{features}
+    \required[1]{ELECTROSTATICS}
+  \end{features}
 \end{essyntax}
 This command will create \var{N_CI} counterions in the simulation box.
 \begin{arguments}
@@ -331,9 +331,9 @@ This command will create \var{N_CI} counterions in the simulation box.
   \require{1}{\opt{charges \var{val_pS} \opt{\var{val_nS}}}} 
   \opt{types \var{type_pS} \opt{\var{type_nS}}}
   \opt{rad \var{radius}}
-    \features{%
-    \fmark{1} ELECTROSTATICS
-  }
+  \begin{features}
+    \required[1]{ELECTROSTATICS}
+  \end{features}
 \end{essyntax}
 
 Create \var{N_pS} positively and \var{N_nS} negatively charged salt
@@ -366,10 +366,9 @@ box.
   \require{1}{\opt{charges \var{val_nodes} \var{val_cM} \var{val_CI}}}
   \require{1}{\opt{distance \var{cM_dist}}}
   \opt{nonet}
-    \features{%
-    \fmark{1} ELECTROSTATICS
-  }
-  
+  \begin{features}
+    \required[1]{ELECTROSTATICS}
+  \end{features}
 \end{essyntax}
 
 Creates a diamond-shaped polymer network with 8 tetra-functional nodes
@@ -402,9 +401,9 @@ connected by $2*8$ polymer chains of length \var{MPC} in a unit cell of length
   \opt{counterions \var{N_CI}} 
   \require{1}{\opt{charges \var{val_cM} \var{val_CI}}}
   \require{1}{\opt{distance \var{cM_dist}}}
-    \features{%
-    \fmark{1} ELECTROSTATICS
-  }
+  \begin{features}
+    \required[1]{ELECTROSTATICS}
+  \end{features}
 \end{essyntax}
 
 Creates a modified icosaeder to model a fulleren (or soccer ball). The edges are
@@ -462,11 +461,10 @@ ends are successfully connected.
 \newescommand{constraint}
 
 \begin{essyntax}
-  
   \variant{1} 
   constraint wall normal \var{n_x} \var{n_y} \var{n_z} 
   dist \var{d} type \var{id}
-
+  
   \variant{2}
   constraint sphere center \var{c_x} \var{c_y} \var{c_z} 
   radius \var{rad} direction \var{direction} type \var{id} 
@@ -477,36 +475,41 @@ ends are successfully connected.
   radius \var{rad} length \var{length} 
   direction \var{direction} 
   type \var{id} 
-
+  
   \variant{4}
   constraint maze nsphere \var{n} 
   dim \var{d} sphrad \var{r_s} cylrad \var{r_c}
   type \var{id}
-
+  
   \variant{5}  
   constraint pore center \var{c_x} \var{c_y} \var{c_z} 
   axis \var{n_x} \var{n_y} \var{n_z} 
   radius \var{rad} length \var{length} 
   type \var{id} 
+  
+  \require{1}{%
+    \variant{6}
+    constraint rod center \var{c_x} \var{c_y} 
+    lambda \var{lambda}
+  } 
+  
+  \require{1}{%
+    \variant{7}
+    constraint plate height \var{h}
+    sigma \var{sigma} 
+  }
+  
+  \require{2,3}{%
+    \variant{8}
+    constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
+  }
 
- \require{1}{\variant{6}
-  constraint rod center \var{c_x} \var{c_y} 
-  lambda \var{lambda}} 
-  
-  \require{1}{\variant{7}
-  constraint plate height \var{h}
-  sigma \var{sigma} 
-  }
-  
-  \require{2,3}{\variant{8}
-  constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
-  }
-  \features{%
-    \fmark{all} CONSTRAINTS
-    \fmark{1} ELECTROSTATICS
-    \fmark{2} ROTATION
-    \fmark{3} DIPOLES
-  }
+  \begin{features}
+    \required{CONSTRAINTS}
+    \required[1]{ELECTROSTATICS}
+    \required[2]{ROTATION}
+    \required[3]{DIPOLES}
+  \end{features}
 \end{essyntax}
 
 The \codebox{constraint} command offers a variety of surfaces that can be

@@ -120,15 +120,19 @@ idxtotoc                        % add the index to the TOC
   }%
 }
 \newcommand{\require}[2]{%
-  \fbox{#2}\,\fmark{#1}%
+  \mbox{#2\,\fmark{#1}}%
 }
-\newcommand{\features}[1]{%
-  \par\smallskip
-  \begingroup%
+\newcommand{\required}[2][]{%
+  \ifthenelse{\equal{#1}{}}{#2}{%
+    \mbox{\fmark{#1}\,#2}%
+  }
+}
+\newenvironment{features}{%
+  \par\smallskip%
   \small%
-  \textrm{Required features:} \texttt{#1}%
-  \endgroup%
-}
+  \textrm{Required\hspace{1ex}features:}%
+  \raggedright%
+}{}
 
 %% Layout thesyntax description box
 \newsavebox{\theessyntaxbox}
