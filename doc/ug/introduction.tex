@@ -118,27 +118,63 @@ and use \es:
 \section{Syntax description}
 \label{sec:syntax}
 
+
 Throughout the user's guide, formal definitions of the syntax of
-several Tcl- and shell-commands can be found. The following
-conventions are used in these decriptions:
+several Tcl-commands can be found. The following conventions are used
+in these decriptions:
 \begin{itemize}
+\item Different \emph{variants} of a command are labelled \variant{1},
+  \variant{2}, \ldots
 \item Keywords and literals of the command that have to be typed
   exactly as given are written in \lit{typewriter} font.
 \item If the command has variable arguments, they are set in
   \var{italic font}. The description following the syntax definition
   should contain a detailed explanation of the argument and its
   type.
-\item \texttt{[\var{argument}]} specifies, that \var{argument} is
-  optional, \ie{} it can be omitted.
-\item \texttt{<\var{alt1}|\var{alt2}>} specifies, that one of the
-  alternatives \var{alt1} or \var{alt2} can be used.
+\item \texttt{\alt{\var{alt1} \asep \var{alt2}}} specifies, that one
+  of the alternatives \var{alt1} or \var{alt2} can be used.
+\item \texttt{\opt{\var{argument}}} specifies, that the arugment
+  \var{argument} is optional, \ie{} it can be omitted.
+\item When an optional argument or a whole command is marked by a
+  superscript label (\fmark{1}), this denotes that the argument can
+  only be used, when the corresponding feature (see appendix
+  \vref{chap:features}) specified in ``Required features'' is
+  activated.
 \end{itemize}
 
-\minisec{Example}
-\begin{code}
-writevsf \var{file} [<short|verbose>] [<\var{radii}|auto>] [typedesc \var{typedesc}]
-\end{code}
 
+\minisec{Example}
+
+\renewcommand{\variant}[1]{\par\rawvariant{#1}}
+\begin{essyntaxbox}
+  \variant{1} 
+  constraint wall normal \var{n_x} \var{n_y} \var{n_z} 
+  dist \var{d} type \var{id}
+  
+  \variant{2}
+  constraint sphere center \var{c_x} \var{c_y} \var{c_z} 
+  radius \var{rad} direction \var{direction} type \var{id} 
+  
+  \require{1}{%
+    \variant{3}
+    constraint rod center \var{c_x} \var{c_y} 
+    lambda \var{lambda}
+  } 
+  
+  \require{2,3}{%
+    \variant{4}
+    constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
+  }
+
+  \begin{features}
+    \required{CONSTRAINTS}
+    \required[1]{ELECTROSTATICS}
+    \required[2]{ROTATION}
+    \required[3]{DIPOLES}
+  \end{features}
+
+\end{essyntaxbox}
+\renewcommand{\variant}[1]{\rawvariant{#1}}
 
 %%% Local Variables: 
 %%% mode: latex
