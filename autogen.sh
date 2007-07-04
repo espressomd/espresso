@@ -2,4 +2,4 @@
 aclocal -I config
 autoheader
 automake --add-missing --copy
-autoconf
+autoconf configure-ac.ac > configure-ac
