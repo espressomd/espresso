@@ -46,7 +46,7 @@ proc rewrite {in out} {
 	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -cd $source" r]
 	} else { set f [open "$source" "r"] }
 	while { [blockfile $f read auto] != "eof" } {}
-	puts -nonewline "."; flush stdout; close $f
+	puts -nonewline "."; flush stdout;  if { [catch { close $f } fid] } { puts "Error while closing $file caught: $fid." }
 
 	analyze set chains 0 20 30; set observables ""; set listables ""
 	set mindist1 [analyze mindist]; set mindist2 [analyze mindist 0 0]; lappend observables $mindist1 $mindist2

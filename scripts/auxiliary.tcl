@@ -205,7 +205,7 @@ proc checkpoint_read { origin { read_all_chks 1 } { write 0 } { name "anim" } { 
 	if { [blockfile $f read auto] == "eof" } { puts "\nERROR: Blockfile '$source' doesn't contain anything! Exiting..."; exit }
 	if { $ENABLE_COMPACT_CHECKPOINTS != 1 } { part deleteall }
 	while { [blockfile $f read auto] != "eof" } {}; puts -nonewline "."; flush stdout; # puts "read $source"
-	close $f
+	 if { [catch { close $f } fid] } { puts "Error while closing $source caught: $fid." }
 	if { $write != 0 } {
 	    switch $write {	    
 		"pdb" {

@@ -33,7 +33,7 @@ proc read_data {file} {
     if { [string compare [lindex [split $file "."] end] "gz"]==0 } { set f [open "|gzip -cd $file" r]
     } else { set f [open "$file" "r"] }
     while {![eof $f]} { blockfile $f read auto}
-    close $f
+   if { [catch { close $f } fid] } { puts "Error while closing $file caught: $fid." }
 }
 
 proc write_data {file} {
@@ -49,22 +49,20 @@ proc write_data {file} {
     close $f
 }
 
+
 if { [catch {
     ############## harm-specific part
     set harm_k      30.0
     set harm_r      1.5
     setmd box_l     99 99 99
     inter 0 harm $harm_k $harm_r
-
     read_data "harm_system.data.gz"
-
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set F($i) [part $i pr f]
     }
     # to ensure force recalculation
     invalidate_system
     integrate 0
-
     # here you can create the necessary snapshot
     # write_data "harm_system.data2"
 

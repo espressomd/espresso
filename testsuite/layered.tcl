@@ -41,7 +41,7 @@ setmd skin 0.05
 proc read_data {file} {
     set f [open "|gzip -cd $file" "r"]
     while {![eof $f]} { blockfile $f read auto}
-    close $f
+     if { [catch { close $f } fid] } { puts "Error while closing $file caught: $fid." }
 }
 
 proc write_data {file} {
