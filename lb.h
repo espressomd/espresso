@@ -145,10 +145,10 @@ extern LB_FluidNode *lbfluid;
 extern int transfer_momentum;
 
 /** Eigenvalue of collision operator corresponding to shear viscosity. */
-extern double lblambda;
+//extern double lblambda;
 
 /** Eigenvalue of collision operator corresponding to bulk viscosity. */
-extern double lblambda_bulk;
+//extern double lblambda_bulk;
 
 /************************************************************/
 /** \name Exported Functions */
