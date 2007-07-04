@@ -1355,7 +1355,7 @@ int inter_parse_bonded(Tcl_Interp *interp,
 
 int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 {
-#ifdef LENNARD_JONES || LENNARD_JONES_GENERIC
+#if defined(LENNARD_JONES) || defined(LENNARD_JONES_GENERIC)
   if(ARG0_IS_S("ljforcecap"))
     return inter_parse_ljforcecap(interp, argc-1, argv+1);
 #endif
