@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3f (Ydalir)                                                                     *
+* v2.0.3g (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3f -
+- v2.0.3g -
 -----------
 
+(g) July  3rd, 2007.
 (f) July  2nd, 2007.
 (e) June 29th, 2007.
 (d) June 26th, 2007.
@@ -25,11 +26,18 @@ New Features:
 (c) 
 
 Changes:
+(g) samples/espresso_logo.tcl: prepared for off- or online visualisation, creates
+    VTF-file instead of PSF file.
 (d) User's Guide: Quickref works
 (b) added reaction_field.h to Makefile-am.am
 (a) RELEASE_NOTES maintenance
 
 Bugfixes:
+(g) Quick fix to enable MPI for LB again.
+(g) sorting CECAM Tutorial
+(g) added some legal stuff to tclline.tcl that we included
+(g) Testcase nve_pe.tcl doesn't require feature CONSTRAINTS but calls constraint
+    command.
 (d) added newline at the end to avoid nasty warnings
 (d) tclline.tcl was missing in install target.
 
