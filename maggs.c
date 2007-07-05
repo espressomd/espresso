@@ -1108,7 +1108,7 @@ void minimize_transverse_field()
   int k, l, m;
   int i, d;
   int ind_i, ind_j;
-  int size[2];
+  int size[2]={0,0};
   int index = -1; // force allocation error
   
   FOR3D(d) {

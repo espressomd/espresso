@@ -2756,7 +2756,7 @@ static double p3m_m_time(Tcl_Interp *interp, int mesh,
 			 double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
 			 double *_alpha_L, double *_accuracy)
 {
-  double best_time = -1, tmp_time, tmp_r_cut_iL, tmp_alpha_L, tmp_accuracy;
+  double best_time = -1, tmp_time, tmp_r_cut_iL, tmp_alpha_L=0.0, tmp_accuracy=0.0;
   /* in which direction improvement is possible. Initially, we dont know it yet. */
   int final_dir = 0;
   int cao = *_cao;
@@ -2874,11 +2874,11 @@ static double p3m_m_time(Tcl_Interp *interp, int mesh,
 int P3M_adaptive_tune_parameters(Tcl_Interp *interp)
 {
   int    mesh_max,                   mesh     = -1, tmp_mesh;
-  double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL;
+  double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL=0.0;
   int    cao_min, cao_max,           cao      = -1, tmp_cao;
 
-  double                             alpha_L  = -1, tmp_alpha_L;
-  double                             accuracy = -1, tmp_accuracy;
+  double                             alpha_L  = -1, tmp_alpha_L=0.0;
+  double                             accuracy = -1, tmp_accuracy=0.0;
   double                            time_best=1e20, tmp_time;
   char
     b1[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12],
