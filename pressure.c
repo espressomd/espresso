@@ -473,6 +473,7 @@ int parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **ar
              ARG0_IS_S("morse") ||
              ARG0_IS_S("soft-sphere") ||
 	     ARG0_IS_S("lj-cos") ||
+	     ARG0_IS_S("lj-cos2") ||
 	     ARG0_IS_S("tabulated") ||
 	     ARG0_IS_S("gb")) {
       if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
@@ -903,6 +904,10 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
 #ifdef LJCOS
 	add_ljcos_pair_force(&p1,&p2,ia_params,d,dist,force);
 #endif
+	/* lennard jones cosine 2 */
+#ifdef LJCOS2
+	add_ljcos2_pair_force(&p1,&p2,ia_params,d,dist,force);
+#endif
 	/* tabulated */
 #ifdef TABULATED
 	add_tabulated_pair_force(&p1,&p2,ia_params,d,dist,force);
@@ -1151,6 +1156,7 @@ int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char
              ARG0_IS_S("morse") ||
              ARG0_IS_S("soft-sphere") ||
 	     ARG0_IS_S("lj-cos") ||
+	     ARG0_IS_S("lj-cos2") ||
 	     ARG0_IS_S("tabulated") ||
 	     ARG0_IS_S("gb")) {
       if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
