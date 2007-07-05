@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3g (Ydalir)                                                                     *
+* v2.0.3h (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3g -
+- v2.0.3h -
 -----------
 
+(h) July  4th, 2007.
 (g) July  3rd, 2007.
 (f) July  2nd, 2007.
 (e) June 29th, 2007.
@@ -26,6 +27,10 @@ New Features:
 (c) 
 
 Changes:
+(h) Updated build system. configure is a simple shell script now that calls the
+    autoconf-script configure-ac.
+(h) Extended default configuration.
+(h) testsuite/test.sh is configured now.
 (g) samples/espresso_logo.tcl: prepared for off- or online visualisation, creates
     VTF-file instead of PSF file.
 (d) User's Guide: Quickref works
@@ -33,6 +38,10 @@ Changes:
 (a) RELEASE_NOTES maintenance
 
 Bugfixes:
+(h) called autogen, so that configure works correctly with fresh Espresso
+    checkout
+(h) Static variables cannot be defined as extern since they are not accessible
+    outside the scope of the object.
 (g) Quick fix to enable MPI for LB again.
 (g) sorting CECAM Tutorial
 (g) added some legal stuff to tclline.tcl that we included
