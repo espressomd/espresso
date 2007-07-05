@@ -1168,7 +1168,7 @@ void calc_init_e_field()
   double qplane, qline;
   int    i, k, ix, iy, iz;
   int index = 0;
-  double sqrE, invasq, tmp_field;
+  double sqrE, invasq, tmp_field=0.0;
   double gsqrE, goldE, gavgEx, gavgEy, gavgEz;
   double qz, qy, qx, avgEx, avgEy, avgEz;
   double Eall[SPACE_DIM], gEall[SPACE_DIM], maxcurl;

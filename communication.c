@@ -942,7 +942,7 @@ void mpi_send_dipm_slave(int pnode, int part)
 /********************* REQ_SET_BOND ********/
 int mpi_send_bond(int pnode, int part, int *bond, int delete)
 {
-  int bond_size, stat;
+  int bond_size, stat=0;
   MPI_Status status;
 
   mpi_issue(REQ_SET_BOND, pnode, part);
@@ -966,7 +966,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete)
 
 void mpi_send_bond_slave(int pnode, int part)
 {
-  int bond_size, *bond, delete, stat;
+  int bond_size=0, *bond, delete=0, stat;
   MPI_Status status;
 
   if (pnode == this_node) {
@@ -1101,7 +1101,7 @@ void mpi_integrate_slave(int pnode, int task)
 /*************** REQ_BCAST_IA ************/
 void mpi_bcast_ia_params(int i, int j)
 {
-  int tablesize;
+  int tablesize=0;
 
   mpi_issue(REQ_BCAST_IA, i, j);
   tablesize = tabulated_forces.max;
@@ -1151,7 +1151,7 @@ void mpi_bcast_ia_params_slave(int i, int j)
 	      0, MPI_COMM_WORLD);
 #ifdef TABULATED
     {
-      int tablesize;
+      int tablesize=0;
       /* If there are tabulated forces broadcast those as well */
       if ( get_ia_param(i,j)->TAB_maxval > 0) {
 	/* Determine the new size for force and energy tables */
@@ -1551,7 +1551,7 @@ void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3])
 void mpi_send_ext_slave(int pnode, int part)
 {
 #ifdef EXTERNAL_FORCES
-  int s_buf[2];
+  int s_buf[2]={0,0};
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
@@ -1843,7 +1843,7 @@ void mpi_rescale_particles(int dir, double scale) {
 }
 
 void mpi_rescale_particles_slave(int pnode, int dir) {
-  double scale; MPI_Status status;
+  double scale=0.0; MPI_Status status;
 
   MPI_Recv(&scale, 1, MPI_DOUBLE, 0, REQ_PLACE, MPI_COMM_WORLD, &status);
   local_rescale_particles(dir, scale);
@@ -1898,9 +1898,9 @@ void mpi_update_mol_ids_slave(int node,int parm)
 /******************* REQ_SYNC_TOPO ********************/
 int mpi_sync_topo_part_info() {
   int i;
-  int molsize;
-  int moltype;
-  int n_mols;
+  int molsize=0;
+  int moltype=0;
+  int n_mols=0;
   
   mpi_issue(REQ_SYNC_TOPO,-1,0);
   n_mols = n_molecules;
@@ -1940,9 +1940,9 @@ int mpi_sync_topo_part_info() {
 
 void mpi_sync_topo_part_info_slave(int node,int parm ) {
   int i;
-  int molsize;
-  int moltype;
-  int n_mols;
+  int molsize=0;
+  int moltype=0;
+  int n_mols=0;
 
   MPI_Bcast(&n_mols,1,MPI_INT,0,MPI_COMM_WORLD);
   realloc_topology(n_mols);
@@ -2082,7 +2082,7 @@ void mpi_send_exclusion(int part1, int part2, int delete)
 void mpi_send_exclusion_slave(int part1, int part2)
 {
 #ifdef EXCLUSIONS
-  int delete;
+  int delete=0;
   MPI_Bcast(&delete, 1, MPI_INT, 0, MPI_COMM_WORLD);  
   local_change_exclusion(part1, part2, delete);
   on_particle_change();

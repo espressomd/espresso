@@ -2449,7 +2449,7 @@ void send_particles(ParticleList *particles, int node)
 
 void recv_particles(ParticleList *particles, int node)
 {
-  int transfer, read, pc;
+  int transfer=0, read, pc;
   MPI_Status status;
   IntList local_dyn;
 

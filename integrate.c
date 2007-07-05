@@ -689,7 +689,7 @@ void propagate_press_box_pos_and_rescale_npt()
     Cell *cell;
     Particle *p;
     int i, j, np, c;
-    double scal[3], L_new=0.0;
+    double scal[3]={0.,0.,0.}, L_new=0.0;
 
     rebuild_verletlist = 0;
 
