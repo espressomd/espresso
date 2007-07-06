@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3h (Ydalir)                                                                     *
+* v2.0.3i (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3h -
+- v2.0.3i -
 -----------
 
+(i) July  5th, 2007.
 (h) July  4th, 2007.
 (g) July  3rd, 2007.
 (f) July  2nd, 2007.
@@ -38,6 +39,7 @@ Changes:
 (a) RELEASE_NOTES maintenance
 
 Bugfixes:
+(i) added ljcos2 force into pressure calculations
 (h) called autogen, so that configure works correctly with fresh Espresso
     checkout
 (h) Static variables cannot be defined as extern since they are not accessible
