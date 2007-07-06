@@ -25,7 +25,7 @@ EXTRA_DIST = $(tests) \
 	analysis_system.data.10.gz analysis_system.data.chk \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
-	p3m_system.data el2d_system.data \
+	p3m_system.data el2d_system.data el2d_system_die.data\
 	mmm1d_system.data dh_system.data \
 	lj_system.data lj-cos_system.data \
 	gb_system.data \
@@ -51,7 +51,7 @@ TESTS_ENVIRONMENT=TESTCASES='$(tests)' PROCESSORS='$(processors)' ESPRESSO_SCRIP
 dist_check_SCRIPTS = test.sh
 TESTS=test.sh
 
-CLEANKEEPFILES=Makefile
+CLEANKEEPFILES=Makefile test.sh $(EXTRA_DIST)
 clean-local:
 	-for f in *; do keep=; \
 		for cf in $(CLEANKEEPFILES); do if test "$$f" == "$$cf"; then keep=y; fi; done; \

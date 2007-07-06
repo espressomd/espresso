@@ -20,7 +20,10 @@ errf=_test.sh_error.$$
 
 # link all files from the src directory to the run directory, if they are not identical
 for file in `ls $srcdir/`; do
-    test -f $file || @LN_S@ $srcdir/$file .
+    if ! test -f $file; then
+	echo @LN_S@ $srcdir/$file .
+	@LN_S@ $srcdir/$file .
+    fi
 done
 
 # list of tests that are not supported by this version
