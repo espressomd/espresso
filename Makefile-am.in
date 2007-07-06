@@ -49,8 +49,9 @@ DIST_COMMON = README $(am__configure_deps) $(noinst_HEADERS) \
 	$(top_srcdir)/chooser/Espresso.in \
 	$(top_srcdir)/config/myconfig-default.h.in \
 	$(top_srcdir)/configure $(top_srcdir)/mpiwrap/Espresso.in \
-	INSTALL config/compile config/config.guess config/config.sub \
-	config/depcomp config/install-sh config/missing
+	COPYING INSTALL config/compile config/config.guess \
+	config/config.sub config/depcomp config/install-sh \
+	config/ltmain.sh config/missing config/mkinstalldirs
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/Espresso.m4 \
 	$(top_srcdir)/config/compiler.m4 $(top_srcdir)/config/fftw.m4 \
@@ -60,7 +61,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
-mkinstalldirs = $(install_sh) -d
+mkinstalldirs = $(SHELL) $(top_srcdir)/config/mkinstalldirs
 CONFIG_HEADER = acconfig.h
 CONFIG_CLEAN_FILES = chooser/Espresso mpiwrap/Espresso Espresso \
 	Makefile
@@ -314,9 +315,9 @@ Espresso_bin_SOURCES = main.c config.c config.h initialize.c \
 
 # add config/ to the INCLUDES so that the default config/$(myconfig) is
 # found at compile time
-INCLUDES = -I config $(am__append_2)
+INCLUDES = -Iconfig $(am__append_2)
 DISTCLEANFILES = $(top_builddir)/config/$(myconfig)
-ACLOCAL_AMFLAGS = -I config
+ACLOCAL_AMFLAGS = -Iconfig
 all: acconfig.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 

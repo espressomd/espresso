@@ -67,11 +67,14 @@ AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PATH_PROG(DOXYGEN,doxygen,no)
-AM_CONDITIONAL(HAVE_DOXYGEN,test .$DOXYGEN != .no)
+AM_CONDITIONAL(HAVE_DOXYGEN,[test .$DOXYGEN != .no])
 AC_PATH_PROG(PDFLATEX,pdflatex,no)
 AC_PATH_PROG(MAKEINDEX,makeindex,no)
 AC_PATH_PROG(BIBTEX,bibtex,no)
-AM_CONDITIONAL(HAVE_LATEX,test .$PDFLATEX != .no && test .$MAKEINDEX != .no && test .$BIBTEX != .no)
+AM_CONDITIONAL(HAVE_LATEX,
+	[test .$PDFLATEX != .no && 
+	test .$MAKEINDEX != .no && 
+	test .$BIBTEX != .no])
 
 cat <<EOF
 ****************************************************************
@@ -113,7 +116,6 @@ ES_INIT_CHOOSER
 ES_INIT_MYCONFIG
 AC_DEFINE(LAST_CHANGE,["ESPRESSO_TIMESTAMP"],[When the last change to the code was done])
 AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
-
 
 cat <<EOF
 ****************************************************************
