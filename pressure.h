@@ -181,7 +181,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   add_ljcos_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
   /* lennard jones cosine 2*/
-#ifdef LJCOS
+#ifdef LJCOS2
   add_ljcos2_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
   /* tabulated */
