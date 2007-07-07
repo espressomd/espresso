@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3i (Ydalir)                                                                     *
+* v2.0.3j (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3i -
+- v2.0.3j -
 -----------
 
+(j) July  6th, 2007.
 (i) July  5th, 2007.
 (h) July  4th, 2007.
 (g) July  3rd, 2007.
@@ -39,6 +40,7 @@ Changes:
 (a) RELEASE_NOTES maintenance
 
 Bugfixes:
+(j) ljcos2 force in pressure.h
 (i) added ljcos2 force into pressure calculations
 (h) called autogen, so that configure works correctly with fresh Espresso
     checkout
