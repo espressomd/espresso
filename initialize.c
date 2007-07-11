@@ -400,6 +400,10 @@ void on_parameter_change(int field)
     if (field == FIELD_TEMPERATURE)
       cc = 1;
     break;
+  case COULOMB_RF:
+    if (field == FIELD_TEMPERATURE)
+      cc = 1;
+    break;
   case COULOMB_MMM1D:
     if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
       cc = 1;

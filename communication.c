@@ -1512,6 +1512,9 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   case COULOMB_EWALD:
     MPI_Bcast(&ewald, sizeof(ewald_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
+  case COULOMB_RF:
+    MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0, MPI_COMM_WORLD);
+    break;
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast coulomb params for unknown method %d\n", this_node, coulomb.method);
     errexit();

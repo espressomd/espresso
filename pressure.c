@@ -257,7 +257,6 @@ void init_p_tensor(Observable_stat *stat)
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE: n_coulomb = 0; break;
-  case COULOMB_DH:   n_coulomb = 1; break;
   case COULOMB_P3M:  n_coulomb = 2; break;
   default: n_coulomb  = 1;
   }
@@ -784,7 +783,7 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
     return 1;
 
 #ifdef ELECTROSTATICS
-  if (coulomb.method != COULOMB_NONE && coulomb.method != COULOMB_DH)
+  if (coulomb.method != COULOMB_NONE && coulomb.method != COULOMB_DH && coulomb.method != COULOMB_RF)
     return 2;
 #endif
 

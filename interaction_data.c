@@ -662,6 +662,10 @@ void calc_maximal_cutoff()
     if (max_cut_non_bonded < dh_params.r_cut)
       max_cut_non_bonded = dh_params.r_cut;
     break;
+  case COULOMB_RF:
+    if (max_cut_non_bonded < rf_params.r_cut)
+      max_cut_non_bonded = rf_params.r_cut;
+    break;
   case COULOMB_MMM1D:
     /* needs n-squared calculation anyways */
     if (max_cut_non_bonded < 0)
@@ -750,6 +754,9 @@ int coulomb_set_bjerrum(double bjerrum)
     case COULOMB_DH:
       dh_params.r_cut   = 0.0;
       dh_params.kappa   = 0.0;
+    case COULOMB_RF:
+      rf_params.r_cut   = 0.0;
+      rf_params.eps   = 0.0;
     case COULOMB_MMM1D:
       mmm1d_params.maxPWerror = 1e40;
       mmm1d_params.bessel_cutoff = 0;
