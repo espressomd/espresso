@@ -102,11 +102,17 @@ proc clearline {} {
 }
 
 proc getColumns {} {
-    set cols 0
+    set cols1 0
+    set cols2 0
     if {![catch {exec stty -a} err]} {
-        regexp {rows \d+; columns (\d+)} $err -> cols
+        regexp {; *(\d+)? *columns *(\d+)?} $err -> cols1 cols2
     }
-    return $cols
+    if { [string length $cols1] > 0 } {
+	return $cols1
+    }
+    if { [string length $cols2] > 0 } {
+	return $cols2
+    }
 }
 
 proc prompt {{txt ""}} {
