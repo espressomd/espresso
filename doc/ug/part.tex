@@ -280,7 +280,9 @@ set up to be \var{bond_length}.
   omitted, both monomer types default to 0.
   
 \item[\opt{bond \var{type_bond}}] Sets the type number of the bonded
-  interaction to be set between the monomers. This defaults to 0. \todo{Link to
+  interaction to be set between the monomers. This defaults to 0. Any bonded
+  interaction, no matter how many bonding-partners needed, is stored with the
+  second particle in this bond. \todo{Link to
   bonded interactions}
   
 \item[\opt{angle \var{phi} [\var{theta} [\var{x} \var{y} \var{z}]]}]
@@ -373,7 +375,8 @@ box.
 
 Creates a diamond-shaped polymer network with 8 tetra-functional nodes
 connected by $2*8$ polymer chains of length \var{MPC} in a unit cell of length
-\var{a}. \todo{A picture would be helpful.}
+\var{a}. For inter-particle bonds interaction 0 is taken which must be a
+two-particle bond. \todo{A picture would be helpful.}
 
 \begin{arguments}
   \item[\var{a}] Determines the size of the of the unit cell.
@@ -407,7 +410,8 @@ connected by $2*8$ polymer chains of length \var{MPC} in a unit cell of length
 \end{essyntax}
 
 Creates a modified icosaeder to model a fulleren (or soccer ball). The edges are
-modeled by polymer chains connected at the corners of the icosaeder.
+modeled by polymer chains connected at the corners of the icosaeder. For 
+inter-particle bonds interaction 0 is taken which must be a two-particle bond.
 \todo{A picture would be helpful}
 
 \begin{arguments}
