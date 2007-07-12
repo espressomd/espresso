@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3j (Ydalir)                                                                     *
+* v2.0.3k (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3j -
+- v2.0.3k -
 -----------
 
+(k) July 11th, 2007.
 (j) July  6th, 2007.
 (i) July  5th, 2007.
 (h) July  4th, 2007.
@@ -40,6 +41,12 @@ Changes:
 (a) RELEASE_NOTES maintenance
 
 Bugfixes:
+(k) fixes problems with reaction field and mpi
+(k) polymers can be set up with bonds which need more than 2 bonding
+    partners
+(k) diamond and icosaeder now break when interaction 0 is not a 2 particle
+    bond
+(k) tclline now works with macintosh
 (j) ljcos2 force in pressure.h
 (i) added ljcos2 force into pressure calculations
 (h) called autogen, so that configure works correctly with fresh Espresso
