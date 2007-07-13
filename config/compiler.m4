@@ -278,7 +278,7 @@ AC_DEFUN([ES_CHECK_ICC_FLAGS],[
 		ES_TRY_ADD_CFLAG(-pg)
 		LDFLAGS="-pg $LDFLAGS"
 	fi
-	if test .$enable_debug=.yes || test .$enable_profiling=.yes; then
+	if test .$enable_debug = .yes || test .$enable_profiling = .yes; then
 		ES_TRY_ADD_CFLAG(-Ob0)
 	fi
 ])
@@ -312,14 +312,14 @@ AC_DEFUN([ES_CHECK_XLC_FLAGS],[
 		AC_MSG_WARN([  not found, disable it with --disable-xlc-qipa])
 	fi
 
-	if test .$enable_debug=.yes; then
+	if test .$enable_debug = .yes; then
 		ES_TRY_ADD_CFLAG(-g)
 	fi
-	if test .$enable_profiling=.yes; then
+	if test .$enable_profiling = .yes; then
 		ES_TRY_ADD_CFLAG(-pg)
 		LDFLAGS="-pg $LDFLAGS"
 	fi	  
-	if test .$enable_debug!=.yes && test .$enable_profiling=!.yes; then
+	if test .$enable_debug! = .yes && test .$enable_profiling=!.yes; then
 		ES_TRY_ADD_CFLAG(-qinline=100000)
 	fi
 ])
@@ -346,7 +346,7 @@ AC_DEFUN([ES_CHECK_DEC_FLAGS],[
 		ES_TRY_ADD_CFLAG(-pg)
 		LDFLAGS="-pg $LDFLAGS"
 	fi
-	if test .$enable_debug!=.yes && test .$enable_profiling!=.yes; then
+	if test .$enable_debug! = .yes && test .$enable_profiling! = .yes; then
 		ES_TRY_ADD_CFLAG(-O3)
 	fi
 ])
@@ -366,7 +366,7 @@ AC_DEFUN([ES_CHECK_OPTFLAGS],[
 		ES_TRY_ADD_CFLAG(-pg)
 		LDFLAGS="-pg $LDFLAGS"
 	fi
-	if test .$enable_debug!=.yes && test .$enable_profiling!=.yes; then
+	if test .$enable_debug! = .yes && test .$enable_profiling! = .yes; then
 		ES_TRY_ADD_CFLAG(-O2)
 	fi 
 	;;

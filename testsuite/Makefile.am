@@ -12,8 +12,7 @@ tests= \
 	analysis.tcl \
 	rotation.tcl \
 	constraints.tcl \
-	mass.tcl \
-	lb.tcl
+	mass.tcl
 
 # add data files for the tests here
 EXTRA_DIST = $(tests) \

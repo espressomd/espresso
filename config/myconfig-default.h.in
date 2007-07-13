@@ -13,6 +13,7 @@
 #define ELECTROSTATICS
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
+#define MASS
 #define EXCLUSIONS
 #define COMFORCE
 #define COMFIXED
@@ -28,7 +29,7 @@
 #define LJCOS2
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define BOND_ANGLE_HARMONIC
+#define BOND_ANGLE_COSINE
 
 #define MPI_CORE
 #define FORCE_CORE
