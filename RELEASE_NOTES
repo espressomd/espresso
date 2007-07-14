@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3k (Ydalir)                                                                     *
+* v2.0.3l (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3k -
+- v2.0.3l -
 -----------
 
+(l) July 13th, 2007.
 (k) July 11th, 2007.
 (j) July  6th, 2007.
 (i) July  5th, 2007.
@@ -41,6 +42,9 @@ Changes:
 (a) RELEASE_NOTES maintenance
 
 Bugfixes:
+(l) synchronized testsuite and default configuration
+(l) ESPResSo configures, compiles and runs again on IBM Regatta, some automake
+    things had to be fixed.
 (k) fixes problems with reaction field and mpi
 (k) polymers can be set up with bonds which need more than 2 bonding
     partners
