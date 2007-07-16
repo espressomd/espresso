@@ -380,8 +380,9 @@ above). The parameter \var{type} defines the type of the potential:
     on the middle particle balances the other two forces. The forces
     are scaled with the invers length of the connecting vectors. It is
     assumed that the potential is tabulated for all angles between 0
-    and $ \pi $. The C implementations are calc_tab_angle_force and
-    tab_angle_energy in tab.h.
+    and $ \pi $, where 0 corresponds to a stretched polymer. The C 
+    implementations are calc_tab_angle_force and tab_angle_energy in
+    tab.h.
 
   \item \var{type} = dihedral (three body interaction)
 
