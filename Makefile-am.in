@@ -41,7 +41,7 @@ noinst_PROGRAMS = Espresso_bin$(EXEEXT)
 #################################################################
 @MPI_FAKE_TRUE@am__append_1 = mpifake/mpi.h mpifake/mpi.c
 # mpifake should come before any system includes
-@MPI_FAKE_TRUE@am__append_2 = -I $(srcdir)/mpifake -I config
+@MPI_FAKE_TRUE@am__append_2 = -I$(srcdir)/mpifake -Iconfig
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(noinst_HEADERS) \
 	$(srcdir)/Espresso.in $(srcdir)/Makefile-am.am \
