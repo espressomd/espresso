@@ -11,7 +11,7 @@ EOF
 }
 
 # list of tests that are not supported by this version
-BLACKLIST=nve_pe.tcl
+BLACKLIST=
 
 srcdir=@srcdir@
 ESPRESSO=@top_builddir@/Espresso
