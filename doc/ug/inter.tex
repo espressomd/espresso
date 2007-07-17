@@ -368,8 +368,7 @@ above). The parameter \var{type} defines the type of the potential:
     of the connecting vector between the particles. The cutoff is
     given by the maximal tabulated distance. For distances smaller
     than the tabulated range it uses a linear extrapolation based on
-    the first two tabulated force values. The C implementations are
-    calc_tab_bond_force and tab_bond_energy in tab.h.
+    the first two tabulated force values. 
 
   \item \var{type} = angle (three body interaction)
 
@@ -380,18 +379,14 @@ above). The parameter \var{type} defines the type of the potential:
     on the middle particle balances the other two forces. The forces
     are scaled with the invers length of the connecting vectors. It is
     assumed that the potential is tabulated for all angles between 0
-    and $ \pi $, where 0 corresponds to a stretched polymer. The C 
-    implementations are calc_tab_angle_force and tab_angle_energy in
-    tab.h.
+    and $ \pi $, where 0 corresponds to a stretched polymer. 
 
   \item \var{type} = dihedral (three body interaction)
 
     Tabulated torsional dihedral angle potenetial (see also the normal
     implemented dihedral potentials). It is assumed that the potential
     is tabulated for all angles between 0 and $ 2\pi $. This potential
-    is not tested yet! Use on own risk. The C implementations are
-    calc_tab_dihedral_force and tab_dihedral_energy in tab.h.
-
+    is not tested yet! Use on own risk. 
 \end{itemize}
 
 \section{Coulomb interaction}
