@@ -46,11 +46,15 @@ dnl - from this compute "check_CC_list"
 dnl - call AC_PROC_CC($check_CC_list)
 dnl - now test for the other MPI components
 dnl - set the value only when MPI is complete and working
+
+dnl overwrite _AC_PROC_CC_G to avoid check for -g and -O2 flags
+m4_define([_AC_PROG_CC_G],[])
+
 AC_PROG_CPP
-save_CFLAGS=$CFLAGS
 AC_PROG_CC
+AC_PROG_CC_C_O
 AM_PROG_CC_C_O
-CFLAGS=$save_CFLAGS
+
 ES_CHECK_MPI
 ES_CHECK_COMPILER
 
@@ -61,7 +65,6 @@ cat <<EOF
 EOF
 
 AC_PROG_AWK
-AC_PROG_GREP
 AC_PROG_EGREP
 AC_PROG_RANLIB
 AC_PROG_INSTALL
@@ -194,6 +197,7 @@ Other settings:
 ---------------
 using Espresso chooser	= $enable_chooser
 local config header	= $myconfig
+installation prefix	= $prefix
 pdflatex		= $PDFLATEX
 makeindex		= $MAKEINDEX
 bibtex			= $BIBTEX

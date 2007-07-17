@@ -12,7 +12,8 @@ tests= \
 	analysis.tcl \
 	rotation.tcl \
 	constraints.tcl \
-	mass.tcl
+	mass.tcl \
+	lb.tcl
 
 # add data files for the tests here
 EXTRA_DIST = $(tests) \
@@ -28,7 +29,7 @@ EXTRA_DIST = $(tests) \
 	mmm1d_system.data dh_system.data \
 	lj_system.data lj-cos_system.data \
 	gb_system.data \
-	tabulated_system.data	lj1.tab lj2.tab lj3.tab \
+	tabulated_system.data lj1.tab lj2.tab lj3.tab \
 	fene_system.data.gz harm_system.data.gz \
 	intpbc_system.data.gz intppbc.tcl intppbc_system.data.gz \
 	npt_lj_system.data \
@@ -45,13 +46,18 @@ else
 processors=1 2 3 4 6 8
 endif
 
-# rules, don't fiddle around with that
-TESTS_ENVIRONMENT=TESTCASES='$(tests)' PROCESSORS='$(processors)' ESPRESSO_SCRIPTS='$(srcdir)/scripts'
-dist_check_SCRIPTS = test.sh
-TESTS=test.sh
+# run the testsuite
+check-local:
+	@builddir@/test.sh -p $(processors) $(tests)
+
+DISTCLEANFILES=test.sh
 
 CLEANKEEPFILES=Makefile test.sh $(EXTRA_DIST)
 clean-local:
-	-for f in *; do keep=; \
-		for cf in $(CLEANKEEPFILES); do if test "$$f" == "$$cf"; then keep=y; fi; done; \
-		if test -z "$$keep"; then rm -f "$$f"; fi; done
+	-for f in *; do \
+	   keep=; \
+	   for cf in $(CLEANKEEPFILES); do \
+	     if test "$$f" = "$$cf"; then keep=y; fi; \
+	   done; \
+	   if test -z "$$keep"; then rm -f "$$f"; fi; \
+	 done
