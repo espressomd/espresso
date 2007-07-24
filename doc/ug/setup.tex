@@ -128,15 +128,66 @@ Change thermostat settings.
 \newescommand{nemd}
 
 \begin{essyntax}
-  \variant{1}nemd \var{method} \var{parameter} 
-  \variant{2}nemd off
-  \variant{3}nemd profile
-  \variant{4}nemd viscosity
+  \variant{1}nemd exchange \var{n_slabs} \var{n_exchange}
+  \variant{2}nemd shearrate \var{n_slabs} \var{shearrate}
+  \variant{3}nemd off
+  \variant{4}nemd
+  \variant{5}nemd profile
+  \variant{6}nemd viscosity
 \end{essyntax}
-\todo{Include docs from \texttt{nemd.h}!}
+\index{NEMD}
 \todo{Put \texttt{nemd profile|viscosity} into \texttt{analyze}?}  
 Use NEMD (Non Equilibrium Molecular Dynamics) to simulate a system
-under shear.
+under shear with help of an unphysical momentum change in two slabs in
+the system.
+
+Variants \variant{1} and \variant{2} will initialise NEMD. Two
+distinct methods exist.  Both methods divide the simulation box into
+\var{n_slab} slabs that lie parallel to the x-y-plane and apply a
+shear in x direction.  The shear is applied in the top and the middle
+slabs. Note, that the methods should be used with a DPD thermostat or
+in an NVE ensemble.  Furthermore, you should not use other special
+features like \keyword{part fix} or \keyword{constraints} inside the
+top and middle slabs.
+
+\todo{Why should NEMD only be used with DPD or in NVE?}
+\todo{References for the methods}
+
+\index{momentum exchange method}
+Variant \variant{1} chooses the momentum exchange method.  In this
+method, in each step the \var{n_exchange} largest positive
+x-components of the velocity in the middle slab are selected and
+exchanged with the \var{n_exchange} largest negative x-components of
+the velocity in the top slab. 
+
+\index{shear-rate method}
+Variant \variant{2} chooses the shear-rate method. In this method, the
+targetted x-component of the mean velocity in the top and middle slabs
+are given by 
+\begin{equation}
+  \var{target_velocity} = \pm \var{shearrate}\,\frac{L_z}{4}
+\end{equation}
+where $L_z$ is the simulation box size in z-direction. During the
+integration, the x-component of the mean velocities of the top and
+middle slabs are measured.  Then, the difference between the mean
+x-velocities and the target x-velocities are added to the x-component
+of the velocities of the particles in the respective slabs. 
+
+Variant \variant{3} will turn off NEMD, variant \variant{4} will
+return the parameters of NEMD. Variant \variant{5} will return the
+velocity profile of the system in x-direction.
+
+\todo{Describe return format of variants 4 and 5.}
+
+Variant \variant{6} will return the viscosity of the system, that is
+computed via
+\begin{equation}
+  \eta = \frac{F}{\dot{\gamma} L_x L_y}
+\end{equation}
+where $F$ is the mean force (momentum transfer per unit time) acting
+on the slab and $L_x L_y$ is the area of the slab.
+\todo{What is $\dot{\gamma}$?}
+
 
 \section{\texttt{cellsystem}: Setting up the cell system}
 \label{sec:cell-systems}
