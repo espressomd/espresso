@@ -129,6 +129,11 @@ proc prompt {{txt ""}} {
     set cursorLen [expr {$env(CMDLINE_CURSOR)+[string length $prompt]}]
     set row 0
     set col 0
+    set envcols 0
+
+    if {$envcols <= 0} {
+	set envcols 80
+    }
 
     # Render output line-by-line to $out then copy back to $txt:
     set found 0
@@ -138,8 +143,8 @@ proc prompt {{txt ""}} {
         incr totalLen $len
         if {$found == 0 && $totalLen >= $cursorLen} {
             set cursorLen [expr {$cursorLen - ($totalLen - $len)}]
-            set col [expr {$cursorLen % $env(COLUMNS)}]
-            set row [expr {$n + ($cursorLen / $env(COLUMNS)) + 1}]
+            set col [expr {$cursorLen % $envcols}]
+            set row [expr {$n + ($cursorLen / $envcols) + 1}]
 
             if {$cursorLen >= $len} {
                 set col 0
@@ -147,11 +152,11 @@ proc prompt {{txt ""}} {
             }
             set found 1
         }
-        incr n [expr {int(ceil(double($len)/$env(COLUMNS)))}]
+        incr n [expr {int(ceil(double($len)/$envcols))}]
         while {$len > 0} {
-            lappend out [string range $line 0 [expr {$env(COLUMNS)-1}]]
-            set line [string range $line $env(COLUMNS) end]
-            set len [expr {$len-$env(COLUMNS)}]
+            lappend out [string range $line 0 [expr {$envcols-1}]]
+            set line [string range $line $envcols end]
+            set len [expr {$len-$envcols}]
         }
     }
     set txt [join $out "\n"]
