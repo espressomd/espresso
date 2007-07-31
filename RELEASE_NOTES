@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3m (Ydalir)                                                                     *
+* v2.0.3n (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3m -
+- v2.0.3n -
 -----------
 
+(n) July 30th, 2007.
 (m) July 25th, 2007.
 (l) July 13th, 2007.
 (k) July 11th, 2007.
@@ -32,6 +33,8 @@ New Features:
 (c) 
 
 Changes:
+(n) Removed vmdplugin/ from Espresso sources: the plugin is now part of VMD (from
+    version 1.8.6).
 (h) Updated build system. configure is a simple shell script now that calls the
     autoconf-script configure-ac.
 (h) Extended default configuration.
