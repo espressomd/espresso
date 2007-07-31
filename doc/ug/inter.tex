@@ -10,12 +10,15 @@
 
 \index{Lennard-Jones interaction|mainindex}
 \index{interactions!Lennard-Jones|mainindex}
-\begin{essyntax}[LENNARD_JONES]
+\begin{essyntax}
   inter \var{type1} 
   \var{type2}
   lennard-jones 
   \var{$\epsilon$} \var{$\sigma$} 
   \var{cutoff} \var{shift} \var{offset}
+  \begin{features}
+    \required{LENNARD_JONES}
+  \end{features}
 \end{essyntax}
 This command will define a Lennard-Jones interaction between particles
 of the types \var{type1} and \var{type2}.  The potential is defined by
@@ -109,8 +112,11 @@ $\varepsilon * cos^2(\frac{\pi * (r - r_{change})}{2 * \omega})$
 \index{tabulated interaction|mainindex}
 \index{interactions!tabulated|mainindex}
 
-\begin{essyntax}[TABULATED]
+\begin{essyntax}
   inter \var{type1} \var{type2} tabulated \var{filename}%
+  \begin{features}
+    \required{TABULATED}
+  \end{features}
 \end{essyntax}
 
 An arbitrary tabulated non-bonded pair potential.
