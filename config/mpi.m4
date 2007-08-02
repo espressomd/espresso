@@ -34,11 +34,6 @@ dnl "no" is equivalent to "fake", "yes" means to guess
 		ES_MPI_SETUP_FAKE
 	else
 		if test .$with_mpi = .yes; then
-			if test .$known_mpi != .; then
-				with_mpi=$known_mpi
-			fi
-		fi
-		if test .$with_mpi = .yes; then
 			ES_MPI_GUESS_ENV
 		else
 			ES_MPI_SETUP($with_mpi)

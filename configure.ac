@@ -28,8 +28,6 @@ AM_MAINTAINER_MODE
 # Make the release notes a dependency of configure
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/RELEASE_NOTES'])
 
-ES_KNOWN_CONFIGS
-
 cat <<EOF
 ****************************************************************
 *                   Check the compiler and MPI                 *
