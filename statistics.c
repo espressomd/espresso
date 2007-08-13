@@ -307,6 +307,27 @@ void centermass(int type, double *com)
   return;
 }
 
+void angularmomentum(int type, double *com)
+{
+  int i, j;
+  double tmp[3];
+  double pre_factor;
+  com[0]=com[1]=com[2]=0.;
+
+  updatePartCfg(WITHOUT_BONDS);
+  for (j=0; j<n_total_particles; j++) 
+  {
+    if (type == partCfg[j].p.type) 
+    {
+      vector_product(partCfg[j].r.p,partCfg[j].m.v,tmp);
+      pre_factor=PMASS(partCfg[j]);
+      for (i=0; i<3; i++) {
+        com[i] += tmp[i]*pre_factor;
+      }
+    }
+  }
+  return;
+}
 
 void  momentofinertiamatrix(int type, double *MofImatrix)
 {
@@ -1849,6 +1870,32 @@ static int parse_centermass(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
+static int parse_angularmomentum(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze angularmomentum [<type>]' */
+  double com[3];
+  char buffer[3*TCL_DOUBLE_SPACE+3];
+  int p1;
+
+  /* parse arguments */
+  if (argc != 1) {
+    Tcl_AppendResult(interp, "usage: analyze angularmomentum [<type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  if (!ARG0_IS_I(p1)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze angularmomentum [<type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  angularmomentum(p1, com);
+
+  sprintf(buffer,"%f %f %f",com[0],com[1],com[2]);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  return TCL_OK;
+}
+
 static int parse_momentofinertiamatrix(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze  momentofinertiamatrix [<type>]' */
@@ -2780,6 +2827,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("mindist", parse_mindist);
   REGISTER_ANALYSIS("aggregation", parse_aggregation);
   REGISTER_ANALYSIS("centermass", parse_centermass);
+  REGISTER_ANALYSIS("angularmomentum",parse_angularmomentum);
   REGISTER_ANALYSIS("momentofinertiamatrix", parse_momentofinertiamatrix);
   REGISTER_ANALYSIS("find_principal_axis", parse_find_principal_axis);
   REGISTER_ANALYSIS("nbhood", parse_nbhood);

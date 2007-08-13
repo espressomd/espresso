@@ -312,6 +312,7 @@ MDINLINE double min_distance(double pos1[3], double pos2[3]) {
 }
 
 void centermass(int type, double *com);
+void angularmomentum(int type, double *com);
 void momentofinertiamatrix(int type, double *MofImatrix);
 void calculate_verlet_neighbors();
 
