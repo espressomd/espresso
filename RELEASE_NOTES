@@ -2,30 +2,31 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3o (Ydalir)                                                                     *
+* v2.0.3p (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3o -
+- v2.0.3p -
 -----------
 
-(o) August 2nd, 2007.
-(n) July  30th, 2007.
-(m) July  25th, 2007.
-(l) July  13th, 2007.
-(k) July  11th, 2007.
-(j) July   6th, 2007.
-(i) July   5th, 2007.
-(h) July   4th, 2007.
-(g) July   3rd, 2007.
-(f) July   2nd, 2007.
-(e) June  29th, 2007.
-(d) June  26th, 2007.
-(c) June  25th, 2007.
-(b) June  22nd, 2007.
-(a) June  21st, 2007.
+(p) August 13th, 2007.
+(o) August  2nd, 2007.
+(n) July   30th, 2007.
+(m) July   25th, 2007.
+(l) July   13th, 2007.
+(k) July   11th, 2007.
+(j) July    6th, 2007.
+(i) July    5th, 2007.
+(h) July    4th, 2007.
+(g) July    3rd, 2007.
+(f) July    2nd, 2007.
+(e) June   29th, 2007.
+(d) June   26th, 2007.
+(c) June   25th, 2007.
+(b) June   22nd, 2007.
+(a) June   21st, 2007.
 
 New Features:
 (f) added detection for Core2-Xeons.
@@ -34,6 +35,7 @@ New Features:
 (c) 
 
 Changes:
+(p) added feature analyze angularmomentum
 (o) Removed "--enable-config"-option from configure script.
 (n) Removed vmdplugin/ from Espresso sources: the plugin is now part of VMD (from
     version 1.8.6).
