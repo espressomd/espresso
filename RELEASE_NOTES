@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3p (Ydalir)                                                                     *
+* v2.0.3q (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3p -
+- v2.0.3q -
 -----------
 
+(q) August 14th, 2007.
 (p) August 13th, 2007.
 (o) August  2nd, 2007.
 (n) July   30th, 2007.
@@ -50,6 +51,9 @@ Changes:
 (a) RELEASE_NOTES maintenance
 
 Bugfixes:
+(q) part <p> print folded_position now actually prints the folded
+    position
+(q) instead of the cellsystem folded position.
 (m) env(COLUMNS) was 0 when compiled with XCode
 (l) synchronized testsuite and default configuration
 (l) ESPResSo configures, compiles and runs again on IBM Regatta, some automake
