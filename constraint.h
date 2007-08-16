@@ -205,41 +205,60 @@ MDINLINE void calculate_pore_dist(Particle *p1, Particle *c_p, Constraint_pore *
   int i;
   double d_per, d_per_sh, d_par, d_par_sh, d_real, d_real_2,
     d_per_vec[3], d_par_vec[3], d_real_vec[3];
-
+  
+  /* compute the position relative to the center of the pore */
   d_real_2 = 0.0;
   for(i=0;i<3;i++) {
-    d_real_vec[i] = p1->r.p[i] - c->pos[i];
-    d_real_2 += SQR(d_real_vec[i]);
-  }
+    d_real_vec[i] = p1->r.p[i] - c->pos[i]; 
+    d_real_2 += SQR(d_real_vec[i]);  
+  } 
   d_real = sqrt(d_real_2);
-    
-  d_par=0.;
+  
+  /* compute the component parallel to the pore axis */
+  d_par=0.; 
   for(i=0;i<3;i++) {
     d_par += (d_real_vec[i] * c->axis[i]);
   }
-    
+  
+  /* decompose the position into parallel and perpendicular to the axis */
   for(i=0;i<3;i++) {
-    d_par_vec[i] = d_par * c->axis[i];
+    d_par_vec[i] = d_par * c->axis[i]; 
     d_per_vec[i] = d_real_vec[i] - d_par_vec[i];
-  }
-
-  d_per = sqrt(d_real_2 - SQR(d_par));
+  } 
+  /* compute the norm of the above vectors */
+  d_per = sqrt(fabs(d_real_2 - SQR(d_par)));
   d_par = fabs(d_par);
 
+  /* compute the distance from the pore (cylinder and wall) surfaces */
   d_par_sh = d_par - c->length;
   d_per_sh = c->rad - d_per;
-  if (d_per_sh > d_par_sh)  {
-    *dist = d_per_sh;   
-    for (i=0; i<3;i++) {
-      vec[i]= -d_per_vec[i] * (d_per_sh /  d_per);
-    }
-  } else {
-    *dist = d_par_sh;
-    for (i=0; i<3;i++) {
-      vec[i]= d_par_vec[i] * (d_par_sh /  d_par) ;
+
+  if(d_par_sh <= 0.) { /* within the channel OR the constraint violated */
+    if(d_per_sh <= 0.) { /* constraint violated */
+	    *dist=-1.0;
+	    vec[0]=vec[1]=vec[2]=0.0;
+    } 
+    else {           /* within the channel */
+	    *dist = d_per_sh;   
+            for (i=0; i<3;i++) 
+               vec[i]= -d_per_vec[i] * (d_per_sh /  d_per);
     }
   }
-  /* fprintf(stderr, "cnsrt %d %f %f %f -> (%f,%f), (%f, %f), %f -> %f %f %f\n", p1->p.identity, p1->r.p[0], p1->r.p[1], p1->r.p[2], d_par, d_per, d_par_sh, d_per_sh, *dist, vec[0], vec[1], vec[2]); */
+  else { /* out of the channel (aligned or not) ( d_par_sh > 0 ) */
+	  if (d_per_sh < 0) /* not aligned, feel the wall */
+	  {
+             *dist = d_par_sh;
+             for (i=0; i<3;i++) 
+                 vec[i]= d_par_vec[i] * (d_par_sh /  d_par) ;
+	  }
+	  else /* aligned, feel the "ring" */
+	  {
+	     *dist = sqrt(SQR(d_par_sh)+SQR(d_per_sh));
+             for (i=0; i<3;i++) 
+               vec[i]= -d_per_vec[i] * (d_per_sh /  d_per)  + 
+	                d_par_vec[i] * (d_par_sh /  d_par);
+	  }
+  }
 }
 
 MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
@@ -344,7 +363,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
 	
     switch(constraints[n].type) {
     case CONSTRAINT_WAL: 
-      if(ia_params->LJ_cut > 0. ) {
+      if(ia_params->LJ_cut > 0. ) { /* dirty trick to use walls and LB+particles*/
 	calculate_wall_dist(p1, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
 	if (dist > 0) {
 	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist, force);
