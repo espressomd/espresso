@@ -138,6 +138,8 @@ for typesetting the definition:
   blocks
 - <tt>\\alt{<i>alt1</i> \\asep <i>alt2</i> \\asep <i>alt3</i> ...}</tt>
   to typeset alternatives
+- <tt>\\feature{<i>feature</i>}</tt> to typeset when a <i>feature</i>
+  is referred to.
 - <tt>\\require{<i>number</i>}{<i>text</i>}</tt> to typeset
   <i>text</i> to show that it requires certain features of
   ESPResSo. <i>number</i> denotes the mark that is shown next to

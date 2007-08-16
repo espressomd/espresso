@@ -119,12 +119,15 @@ idxtotoc                        % add the index to the TOC
     \textrm{\footnotesize #1}%
   }%
 }
+% feature
+\newcommand{\feature}[1]{\texttt{\MakeUppercase{#1}}}
+
 \newcommand{\require}[2]{%
   \mbox{#2\,\fmark{#1}}%
 }
 \newcommand{\required}[2][]{%
   \ifthenelse{\equal{#1}{}}{#2}{%
-    \mbox{\fmark{#1}\,#2}%
+    \mbox{\fmark{#1}\,\feature{#2}}%
   }
 }
 \newenvironment{features}{%

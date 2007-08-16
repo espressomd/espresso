@@ -117,12 +117,81 @@ set:
 \section{\texttt{thermostat}: Setting up the thermostat}
 \newescommand{thermostat}
 
+The \keyword{thermostat} command is used to change settings of the
+thermostat.  
+
+The different available thermostats will be described in the following
+subsections. Note that for a simulation of the NPT ensemble, you need
+to use a standard thermostat for the particle velocities (\eg Langevin
+or DPD), and a thermostat for the box geometry (\eg the isotropic NPT
+thermostat).
+
+You may combine different thermostats at your own risk by turning them
+on one by one. Note that there is only one temperature for all
+thermostats.
+
+\subsection{Langevin thermostat}
 \begin{essyntax}
-  \variant{1} thermostat off
-  \variant{2} theormstat \var{method} \opt{\var{parameter}}+
+  thermostat langevin \var{temperature} \var{gamma}
 \end{essyntax}
-\todo{Include docs from \texttt{thermostat.h}!}
-Change thermostat settings.
+
+The Langevin thermostat consists of a friction and noise term coupled
+via the fluctuation-dissipation theorem. The friction term is a
+function of the particle velocities.  \todo{Reference}
+
+If the feature \feature{ROTATION} is compiled in, the rotational
+degrees of freedom are also coupled to the thermostat.
+
+\subsection{Dissipative Particle Dynamics (DPD) thermostat}
+\begin{essyntax}
+  thermostat dpd \var{temperature} \var{gamma} \var{r_cut}
+\end{essyntax}
+
+Consists of a friction and noise term coupled via the fluctuation-
+dissipation theorem. The friction term is a function of the relative
+velocity of particle pairs.  The DPD thermostat is better for dynamics
+than the Langevin thermostat, since it mimics hydrodynamics in the
+system.  
+
+When using a Lennard-Jones interaction, $\var{r_cut} = 2^{\frac{1}{6}}
+\sigma$ is a good value to choose, so that the thermostat acts on the
+relative velocities between nearest neighbor particles.  Larger
+cutoffs including next nearest neighbors or even more are unphysical.
+
+\var{gamma} is basically an inverse timescale on which the system
+thermally equilibrates.  Values between $0.1$ and $1$ are o.k, but you
+propably want to try yourself to get a feeling for how fast
+temperature jumps during a simulation are. The dpd thermostat does not
+act on the system center of mass motion.  Therefore, before using dpd,
+you have to stop the center of mass motion of your system, which you
+can achieve by using the command \keyword{galileiTransformParticles}
+(see section \vref{tcl:galileiTransformParticles}) . This may be
+repeated once in a while for long runs due to round off errors (check
+this with the command \keyword{system_com_vel} from section
+\vref{tcl:system-com-vel}).
+
+\subsection{Isotropic NPT thermostat}
+\begin{essyntax}
+  thermostat npt_isotropic \var{temperature} \var{gamma0} \var{gammaV}
+\end{essyntax}
+
+This theormstat is based on the Anderson thermostat and will
+thermalize the box geometry. It will only do isotropic changes of the
+box.\todo{Docs, reference}
+
+\subsection{Turning off all thermostats}
+\begin{essyntax}
+  thermostat off
+\end{essyntax}
+
+Turns off all thermostats and sets all thermostat variables to zero.
+
+\subsection{Getting the parameters}
+\begin{essyntax}
+  thermostat
+\end{essyntax}
+
+Returns the thermostat parameters. \todo{Document return format.}
 
 \section{\texttt{nemd}: Setting up non-equilibrium MD}
 \newescommand{nemd}

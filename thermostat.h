@@ -10,60 +10,6 @@
 #define THERMOSTAT_H
 /** \file thermostat.h 
 
-    Contains all thermostats.
-    
-    <ul>
-    <li> For NVT Simulations one can chose either a Langevin thermostat or
-    a DPD (Dissipative Particle Dynamics) thermostat.
-    \verbatim thermostat langevin <temperature> <gamma> \endverbatim
-    \verbatim thermostat dpd <temperature> <gamma> <r_cut> \endverbatim
-
-    <li> For NPT Simulations one can use a thermostat for the box (Based on
-    an Anderson thermostat) and a Langevin thermostat.
-    \verbatim thermostat langevin <temperature> <gamma> \endverbatim
-    \verbatim thermostat npt_isotropic <temperature> <gamma0> <gammaV> \endverbatim
-
-    <li> \verbatim thermostat off \endverbatim
-    Turns off all thermostats and sets all thermostat variables to zero.
-
-    <li> \verbatim thermostat \endverbatim
-    Returns the current thermostat status.
-    </ul>
-
-    Further important  remarks:
-    <ul>
-    <li> If ROTATION is compiled in, the rotational degrees of freedom
-    are coupled to a Langevin thermostat as well if you use a Langevin
-    thermostat.
-
-    <li> All thermostats use the same temperature (So far we did not
-    see any physical sense to change that!).
-    </ul>
-
-    Thermostat description:
-
-    <ul>
-
-    <li> LANGEVIN THERMOSTAT:
-
-    Consists of a friction and noise term coupled via the fluctuation
-    dissipation theorem. The Friction term is a function of the
-    particles velocity.
-
-    <li> DPD THERMOSTT (Dissipative Particle Dynamics):
-
-    Consists of a friction and noise term coupled via the fluctuation
-    dissipation theorem. The Friction term is a function of the
-    relative velocity of particle pairs.
-    DPD is better for dynamics, since it mimics hydrodynamics in the system.
-    Good values to choos are dpd_cutoff = \f$ 2^{\frac{1}{6}} \f$, namely the cutoff of the LJ interaction. That means the thermostat acts on the relative velocities between nearest neighbor particles. Larger cutoffs including next nearest neighbors or even more are unphysical.
-    dpd_gamma is basically an invers timescale on which the system thermally equilibrates. Values between 0.1 and 1 are o.k, but you propably want to try yourself to get a feeling for how fast temperature jumps during a simulation are. The dpd thermostat does not act on the system center of mass motion. So befor using dpd you have to stop the center of mass motion of your system, which you can achieve by using the command "galileiTransformParticles" in the file scripts/auxiliary.tcl. This may be repeated once in a while for long runs due to round off errors (check with the command "system_com_vel").
-
-    <li> NPT ISOTROPIC THERMOSTAT:
-    
-    INSERT COMMENT
-
-    </ul>
 
     <b>Responsible:</b>
     <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
