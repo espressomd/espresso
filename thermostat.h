@@ -49,9 +49,7 @@
     of the different possible thermostats (defines: \ref THERMO_OFF,
     \ref THERMO_LANGEVIN, \ref THERMO_DPD \ref THERMO_NPT_ISO). If it
     is zero all thermostats are switched off and the temperature is
-    set to zero. You may combine different thermostats at your own
-    risk by turning them on one by one. Note that there is only one
-    temperature for all thermostats so far. */
+    set to zero.  */
 extern int thermo_switch;
 
 /** temperature. */
