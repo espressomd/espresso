@@ -311,8 +311,33 @@ MDINLINE double min_distance(double pos1[3], double pos2[3]) {
   return sqrt(min_distance2(pos1, pos2));
 }
 
+/** calculate the center of mass of a special type of the current configuration
+ *  \param type  type of the particle
+ *  \param com   center of mass position
+ */
 void centermass(int type, double *com);
+
+/** calculate the angular momentum of a special type of the current configuration
+ *  \param type  type of the particle
+ *  \param com   angular momentum vector
+ */
 void angularmomentum(int type, double *com);
+
+
+/** calculate the center of mass of a special type of a saved configuration
+ *  \param k     number of the saved configuration
+ *  \param type  type of the particle, -1 for all
+ *  \param com   center of mass position
+ */
+void centermass_conf(int k, int type_1, double *com);
+
+/** return the approx diffusion constant of a special type of particle
+ *  \param type_m  type of the particle, -1 for all
+ *  \param n_time_steps number of timestep between saved configurations
+ *  \param n_conf  number of saved contributions taken into account
+ */
+double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n_conf);
+
 void momentofinertiamatrix(int type, double *MofImatrix);
 void calculate_verlet_neighbors();
 
