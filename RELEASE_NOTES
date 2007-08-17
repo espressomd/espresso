@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3q (Ydalir)                                                                     *
+* v2.0.3r (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3q -
+- v2.0.3r -
 -----------
 
+(r) August 16th, 2007.
 (q) August 14th, 2007.
 (p) August 13th, 2007.
 (o) August  2nd, 2007.
@@ -30,12 +31,14 @@ Current working revision.
 (a) June   21st, 2007.
 
 New Features:
+(r) added feature analyze MSD
 (f) added detection for Core2-Xeons.
 (f) added CECAM_Tutorial_2006 to internal folder
 (e) Added docs on the build system.
 (c) 
 
 Changes:
+(r) Pore constraint rewritten.
 (p) added feature analyze angularmomentum
 (o) Removed "--enable-config"-option from configure script.
 (n) Removed vmdplugin/ from Espresso sources: the plugin is now part of VMD (from
