@@ -143,6 +143,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef NPT
   Tcl_AppendResult(interp, "{ NPT } ", (char *) NULL);
 #endif
+#ifdef TRANS_DPD
+  Tcl_AppendResult(interp, "{ TRANS_DPD } ", (char *) NULL);
+#endif
 #ifdef DPD
   Tcl_AppendResult(interp, "{ DPD } ", (char *) NULL);
 #endif
