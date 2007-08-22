@@ -211,7 +211,7 @@ EXTRA_DIST = $(tests) \
 	pe_micelle.tcl pe_micelle_input.txt \
 	uwerr_test.tcl uwerr_test.data
 
-@MPI_FAKE_FALSE@processors = 1 2 3 4 6 8
+@MPI_FAKE_FALSE@processors = "1 2 3 4 6 8"
 @MPI_FAKE_TRUE@processors = 1
 DISTCLEANFILES = test.sh
 CLEANKEEPFILES = Makefile test.sh $(EXTRA_DIST)
