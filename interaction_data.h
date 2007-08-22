@@ -49,6 +49,8 @@
 #define BONDED_IA_SUBT_LJ   5
 /** Type of a Rigid/Constrained bond*/
 #define BONDED_IA_RIGID_BOND  6
+/** Type of a virtual bond*/
+#define BONDED_IA_VIRTUAL_BOND  7
 
 /* Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0

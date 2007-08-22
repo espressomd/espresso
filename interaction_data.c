@@ -416,6 +416,8 @@ char *get_name_of_bonded_ia(int i) {
     return "tabulated";
   case BONDED_IA_RIGID_BOND:
     return "RIGID_BOND";
+  case BONDED_IA_VIRTUAL_BOND:
+    return "VIRTUAL_BOND";
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
 	    this_node, i);
@@ -918,6 +920,11 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
 #endif
+#ifdef BOND_VIRTUAL
+  case BONDED_IA_VIRTUAL_BOND:
+    Tcl_AppendResult(interp, "VIRTUAL_BOND ", (char *) NULL);
+    return (TCL_OK);
+#endif
 #ifdef LENNARD_JONES
   case BONDED_IA_SUBT_LJ:
     Tcl_PrintDouble(interp, params->p.subt_lj.k, buffer);
@@ -1323,6 +1330,29 @@ int inter_print_partner_num(Tcl_Interp *interp, int bond_type)
 /*                                       parsing                                */
 /********************************************************************************/
 
+#ifdef BOND_VIRTUAL
+int virtual_set_params(int bond_type)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].type = BONDED_IA_VIRTUAL_BOND;
+  bonded_ia_params[bond_type].num  = 1;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return TCL_OK;
+}
+
+int inter_parse_virtual_bonds(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+{
+	CHECK_VALUE(virtual_set_params(bond_type), "bond type must be nonnegative");
+}
+#endif
+
 int inter_parse_bonded(Tcl_Interp *interp,
 		       int bond_type,
 		       int argc, char ** argv)
@@ -1354,6 +1384,9 @@ int inter_parse_bonded(Tcl_Interp *interp,
 #endif
 #ifdef BOND_CONSTRAINT
   REGISTER_BONDED("rigid_bond", inter_parse_rigid_bonds);
+#endif
+#ifdef BOND_VIRTUAL
+  REGISTER_BONDED("virtual_bond", inter_parse_virtual_bonds);
 #endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);

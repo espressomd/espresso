@@ -363,6 +363,11 @@ MDINLINE void add_bonded_force(Particle *p1)
       }
       break;
 #endif
+#ifdef VIRTUAL_BOND
+    case BONDED_IA_VIRTUAL_BOND:
+      bond_broken = 0; 
+      break;
+#endif
     default :
       errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{082 add_bonded_force: bond type of atom %d unknown\n", p1->p.identity);

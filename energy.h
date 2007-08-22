@@ -267,6 +267,12 @@ MDINLINE void add_bonded_energy(Particle *p1)
       }
       break;
 #endif
+#ifdef BOND_VIRUTAL
+    case BONDED_IA_VIRTUAL_BOND:
+      bond_broken = 0;
+      ret = 0;
+      break;
+#endif
     default :
       errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{073 add_bonded_energy: bond type of atom %d unknown\n", p1->p.identity);

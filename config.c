@@ -92,6 +92,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef BOND_CONSTRAINT
   Tcl_AppendResult(interp, "{ BOND_CONSTRAINT } ", (char *) NULL);
 #endif
+#ifdef BOND_VIRTUAL
+  Tcl_AppendResult(interp, "{ BOND_VIRTUAL } ", (char *) NULL);
+#endif
 #ifdef EXCLUSIONS
   Tcl_AppendResult(interp, "{ EXCLUSIONS } ", (char *) NULL);
 #endif

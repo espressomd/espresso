@@ -333,6 +333,10 @@ MDINLINE void add_bonded_virials(Particle *p1)
     case BONDED_IA_RIGID_BOND:
       i +=2; force[0] = force[1] = force[2] = 0; break;
 #endif
+#ifdef BOND_VIRTUAL
+    case BONDED_IA_VIRTUAL_BOND:
+      force[0] = force[1] = force[2] = 0; break;
+#endif
     default :
       //      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of atom %d unhandled\n",bonded_ia_params[type_num].type,p1->p.identity);
       fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of Type: %d, atom %d unhandled, Atom 2: %d\n",type,type_num,p1->p.identity,p2->p.identity);

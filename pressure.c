@@ -843,6 +843,10 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
 	case BONDED_IA_RIGID_BOND:
           i+=2; break;
 #endif
+#ifdef BOND_VIRTUAL
+	case BONDED_IA_VIRTUAL_BOND:
+          break;
+#endif
 	default :
 	  fprintf(stderr,"WARNING: Bond type %d of atom %d unhandled\n",type_num, p1.p.identity);
 	  break;

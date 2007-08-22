@@ -38,6 +38,7 @@
 /* #define MOLFORCES */
 /* #define BOND_CONSTRAINT */
 /* #define MODES */
+/* #define BOND_VIRTUAL */
 
 /**********************************************************************/
 /*                        integrator features                         */
