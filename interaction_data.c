@@ -573,6 +573,13 @@ void calc_maximal_cutoff()
 	 }
 #endif
 
+#ifdef DPD
+	 if (dpd_r_cut !=0) {
+	   if(max_cut_non_bonded < dpd_r_cut)
+	     max_cut_non_bonded = dpd_r_cut;
+	 }
+#endif
+
 #ifdef LENNARD_JONES_GENERIC
 	 if (data->LJGEN_cut != 0) {
 	   if(max_cut_non_bonded < (data->LJGEN_cut+data->LJGEN_offset) )
