@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3r (Ydalir)                                                                     *
+* v2.0.3s (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3r -
+- v2.0.3s -
 -----------
 
+(s) August 21st, 2007.
 (r) August 16th, 2007.
 (q) August 14th, 2007.
 (p) August 13th, 2007.
@@ -54,6 +55,7 @@ Changes:
 (a) RELEASE_NOTES maintenance
 
 Bugfixes:
+(s) added TRANS_DPD to code info
 (q) part <p> print folded_position now actually prints the folded
     position
 (q) instead of the cellsystem folded position.
