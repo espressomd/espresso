@@ -49,9 +49,8 @@ DIST_COMMON = README $(am__configure_deps) $(noinst_HEADERS) \
 	$(top_srcdir)/chooser/Espresso.in \
 	$(top_srcdir)/config/myconfig-default.h.in \
 	$(top_srcdir)/configure $(top_srcdir)/mpiwrap/Espresso.in \
-	COPYING INSTALL config/compile config/config.guess \
-	config/config.sub config/depcomp config/install-sh \
-	config/ltmain.sh config/missing config/mkinstalldirs
+	INSTALL config/compile config/config.guess config/config.sub \
+	config/depcomp config/install-sh config/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/Espresso.m4 \
 	$(top_srcdir)/config/compiler.m4 $(top_srcdir)/config/fftw.m4 \
@@ -60,7 +59,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
-mkinstalldirs = $(SHELL) $(top_srcdir)/config/mkinstalldirs
+mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = acconfig.h
 CONFIG_CLEAN_FILES = chooser/Espresso mpiwrap/Espresso Espresso \
 	Makefile
