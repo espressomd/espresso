@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3s (Ydalir)                                                                     *
+* v2.0.3t (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3s -
+- v2.0.3t -
 -----------
 
+(t) August 22nd, 2007.
 (s) August 21st, 2007.
 (r) August 16th, 2007.
 (q) August 14th, 2007.
@@ -32,6 +33,7 @@ Current working revision.
 (a) June   21st, 2007.
 
 New Features:
+(t) added feature VIRTUAL_BOND, like HARMONIC with k=0, but faster
 (r) added feature analyze MSD
 (f) added detection for Core2-Xeons.
 (f) added CECAM_Tutorial_2006 to internal folder
@@ -55,6 +57,8 @@ Changes:
 (a) RELEASE_NOTES maintenance
 
 Bugfixes:
+(t) max_range takes into account the DPD cutoff now
+(t) testsuite runs with multiple CPUs again
 (s) added TRANS_DPD to code info
 (q) part <p> print folded_position now actually prints the folded
     position
