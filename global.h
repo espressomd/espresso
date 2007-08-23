@@ -155,6 +155,12 @@ extern const Datafield fields[];
 #define FIELD_LATTICE_SWITCH      37
 /** index of \ref dpd_tgamma in \ref #fields */
 #define FIELD_DPD_TGAMMA          38
+/** index of \ref dpd_tr_cut in \ref #fields */
+#define FIELD_DPD_TRCUT          39
+/** index of \ref dpd_twf in \ref #fields */
+#define FIELD_DPD_TWF          40
+/** index of \ref dpd_wf in \ref #fields */
+#define FIELD_DPD_WF           41
 /*@}*/
 
 /**********************************************

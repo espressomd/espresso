@@ -62,9 +62,15 @@ extern double langevin_gamma;
 extern double dpd_gamma;
 /** DPD thermostat cutoff */
 extern double dpd_r_cut;
+/** DPD thermostat weight function */
+extern int dpd_wf;
 #ifdef TRANS_DPD
 /** DPD transversal Friction coefficient gamma. */
 extern double dpd_tgamma;
+/** trans DPD thermostat cutoff */
+extern double dpd_tr_cut;
+/** trans DPD thermostat weight function */
+extern int dpd_twf;
 #endif
 
 /** Friction coefficient for nptiso-thermostat's inline-function friction_therm0_nptiso */
@@ -177,8 +183,10 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double dist2)
 {
   extern double dpd_gamma,dpd_pref1, dpd_pref2,dpd_r_cut,dpd_r_cut_inv;
+  extern int dpd_wf;
 #ifdef TRANS_DPD
-  extern double dpd_tgamma, dpd_pref3, dpd_pref4;
+  extern double dpd_tgamma, dpd_pref3, dpd_pref4,dpd_tr_cut,dpd_tr_cut_inv;
+  extern int dpd_twf;
 #endif
   int j;
   // velocity difference between p1 and p2
@@ -195,11 +203,16 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   double f_D[3],f_R[3];
 #endif
   double tmp;
-  if(dist < dpd_r_cut) {
-    dist_inv = 1.0/dist;
-    omega    = dist_inv - dpd_r_cut_inv;
-    /* use this weight function for hard potentials1 */
-    /* omega=dist_inv; //Step function */
+  dist_inv = 1.0/dist;
+  if((dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
+    if ( dpd_wf == 1 )
+    {
+       omega    = dist_inv;
+    }
+    else 
+    {
+    	omega    = dist_inv- dpd_r_cut_inv;
+    }
     omega2   = SQR(omega);
     //DPD part
     if (dpd_gamma > 0.0 ){
@@ -213,9 +226,19 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
         p2->f.f[j] -= tmp;
       }
     }
+  }
 #ifdef TRANS_DPD
     //DPD2 part
-    if (dpd_tgamma > 0.0 ){
+  if ((dist < dpd_tr_cut)&&(dpd_tgamma > 0.0)){
+      if ( dpd_twf == 1 )
+      {
+        omega    = dist_inv;
+      }
+      else 
+      {
+        omega    = dist_inv- dpd_tr_cut_inv;
+      }
+      omega2   = SQR(omega);
       for (i=0;i<3;i++){
         //noise vector
         noise_vec[i]=d_random()-0.5;
@@ -241,9 +264,8 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
         p1->f.f[j] += tmp;
         p2->f.f[j] -= tmp;
       }
-    }
-#endif
   }
+#endif
 }
 #endif
 
