@@ -14,12 +14,12 @@
 #include "errorhandling.h"
 
 /** \file constraint.h
- *  Routines for handling of constraints. Implemented are walls, cylinders and spheres.
- *  Only activ if you define CONSTRAINTS in \ref config.h.
+ *  Routines for handling of constraints.
+ *  Only active if the feature CONSTRAINTS is activated.
  *  see also \ref interaction_data.h
  *
  *  <b>Responsible:</b>
- *  <a href="mailto:sayar@mpip-mainz.mpg.de">Mehmet</a>
+ *  <a href="mailto:olenz@fias.uni-frankfurt.de">Olaf</a>
  */
 
 #ifdef CONSTRAINTS
@@ -33,26 +33,26 @@
 
 #define C_GAMMA   0.57721566490153286060651209008
 
-MDINLINE void calculate_wall_dist(Particle *p1, Particle *c_p, Constraint_wall *c, double *dist, double *vec)
+MDINLINE void calculate_wall_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_wall *c, double *dist, double *vec)
 {
   int i;
 
   *dist = -c->d;
-  for(i=0;i<3;i++) *dist += p1->r.p[i]*c->n[i];
+  for(i=0;i<3;i++) *dist += ppos[i]*c->n[i];
   
   for(i=0;i<3;i++) vec[i] = c->n[i] * *dist;
   
 }
 
 
-MDINLINE void calculate_sphere_dist(Particle *p1, Particle *c_p, Constraint_sphere *c, double *dist, double *vec)
+MDINLINE void calculate_sphere_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_sphere *c, double *dist, double *vec)
 {
   int i;
   double fac,  c_dist;
- 
+
   c_dist=0.0;
   for(i=0;i<3;i++) {
-    vec[i] = c->pos[i] - p1->r.p[i];
+    vec[i] = c->pos[i] - ppos[i];
     c_dist += SQR(vec[i]);
   }
   c_dist = sqrt(c_dist);
@@ -61,8 +61,8 @@ MDINLINE void calculate_sphere_dist(Particle *p1, Particle *c_p, Constraint_sphe
   /* apply force towards inside the sphere */
     *dist = c->rad - c_dist;
     fac = *dist / c_dist;
-    for(i=0;i<3;i++) vec[i] *= fac;}
-  else  {
+    for(i=0;i<3;i++) vec[i] *= fac;
+  } else {
    /* apply force towards outside the sphere */
     *dist = c_dist - c->rad;
     fac = *dist / c_dist;
@@ -71,20 +71,20 @@ MDINLINE void calculate_sphere_dist(Particle *p1, Particle *c_p, Constraint_sphe
 }
 
 
-MDINLINE void calculate_maze_dist(Particle *p1, Particle *c_p, Constraint_maze *c, double *dist, double *vec)
+MDINLINE void calculate_maze_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_maze *c, double *dist, double *vec)
 {
   int i,min_axis,cursph[3],dim;
-  float diasph,fac,c_dist,sph_dist,cyl_dist,temp_dis;
-  float sph_vec[3],cyl_vec[3];
+  double diasph,fac,c_dist,sph_dist,cyl_dist,temp_dis;
+  double sph_vec[3],cyl_vec[3];
 
   dim=(int) c->dim;
   diasph = box_l[0]/c->nsphere;
-  
+
   /* First determine the distance to the sphere */
   c_dist=0.0;
   for(i=0;i<3;i++) {
-    cursph[i] = (int) (p1->r.p[i]/diasph);
-    sph_vec[i] = (cursph[i]+0.5) * diasph  - (p1->r.p[i]);
+    cursph[i] = (int) (ppos[i]/diasph);
+    sph_vec[i] = (cursph[i]+0.5) * diasph  - (ppos[i]);
     c_dist += SQR(sph_vec[i]);
   }
   c_dist = sqrt(c_dist);
@@ -135,14 +135,14 @@ MDINLINE void calculate_maze_dist(Particle *p1, Particle *c_p, Constraint_maze *
   }
 }
 
-MDINLINE void calculate_cylinder_dist(Particle *p1, Particle *c_p, Constraint_cylinder *c, double *dist, double *vec)
+MDINLINE void calculate_cylinder_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_cylinder *c, double *dist, double *vec)
 {
   int i;
   double d_per,d_par,d_real,d_per_vec[3],d_par_vec[3],d_real_vec[3];
 
   d_real = 0.0;
   for(i=0;i<3;i++) {
-    d_real_vec[i] = p1->r.p[i] - c->pos[i];
+    d_real_vec[i] = ppos[i] - c->pos[i];
     d_real += SQR(d_real_vec[i]);
   }
   d_real = sqrt(d_real);
@@ -154,7 +154,7 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, Particle *c_p, Constraint_cy
     
   for(i=0;i<3;i++) {
     d_par_vec[i] = d_par * c->axis[i] ;
-    d_per_vec[i] = p1->r.p[i] - (c->pos[i] + d_par_vec[i]) ;
+    d_per_vec[i] = ppos[i] - (c->pos[i] + d_par_vec[i]) ;
   }
 		
   d_per=sqrt(SQR(d_real)-SQR(d_par));
@@ -200,16 +200,16 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, Particle *c_p, Constraint_cy
   }
 }
 
-MDINLINE void calculate_pore_dist(Particle *p1, Particle *c_p, Constraint_pore *c, double *dist, double *vec)
+MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_pore *c, double *dist, double *vec)
 {
   int i;
   double d_per, d_per_sh, d_par, d_par_sh, d_real, d_real_2,
     d_per_vec[3], d_par_vec[3], d_real_vec[3];
-  
+
   /* compute the position relative to the center of the pore */
   d_real_2 = 0.0;
   for(i=0;i<3;i++) {
-    d_real_vec[i] = p1->r.p[i] - c->pos[i]; 
+    d_real_vec[i] = ppos[i] - c->pos[i]; 
     d_real_2 += SQR(d_real_vec[i]);  
   } 
   d_real = sqrt(d_real_2);
@@ -261,7 +261,7 @@ MDINLINE void calculate_pore_dist(Particle *p1, Particle *c_p, Constraint_pore *
   }
 }
 
-MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
+MDINLINE void add_rod_force(Particle *p1, double ppos[3], Particle *c_p, Constraint_rod *c)
 {
 #ifdef ELECTROSTATICS
   int i;
@@ -269,7 +269,7 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
 
   c_dist_2 = 0.0;
   for(i=0;i<2;i++) {
-    vec[i] = p1->r.p[i] - c->pos[i];
+    vec[i] = ppos[i] - c->pos[i];
     c_dist_2 += SQR(vec[i]);
   }
 
@@ -283,7 +283,7 @@ MDINLINE void add_rod_force(Particle *p1, Particle *c_p, Constraint_rod *c)
 #endif
 }
 
-MDINLINE double rod_energy(Particle *p1, Particle *c_p, Constraint_rod *c)
+MDINLINE double rod_energy(Particle *p1, double ppos[3], Particle *c_p, Constraint_rod *c)
 {
 #ifdef ELECTROSTATICS
   int i;
@@ -291,7 +291,7 @@ MDINLINE double rod_energy(Particle *p1, Particle *c_p, Constraint_rod *c)
 
   c_dist_2 = 0.0;
   for(i=0;i<2;i++) {
-    vec[i] = p1->r.p[i] - c->pos[i];
+    vec[i] = ppos[i] - c->pos[i];
     c_dist_2 += SQR(vec[i]);
   }
 
@@ -301,13 +301,14 @@ MDINLINE double rod_energy(Particle *p1, Particle *c_p, Constraint_rod *c)
   return 0;
 }
 
-MDINLINE void add_plate_force(Particle *p1, Particle *c_p, Constraint_plate *c)
+MDINLINE void add_plate_force(Particle *p1, double ppos[3], Particle *c_p, Constraint_plate *c)
 {
 #ifdef ELECTROSTATICS
   double f;
+
   if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->sigma != 0.0) {
     f = 2*M_PI*coulomb.prefactor*c->sigma*p1->p.q;
-    if (p1->r.p[2] < c->pos)
+    if (ppos[2] < c->pos)
       f = -f;
     p1->f.f[2]  += f;
     c_p->f.f[2] -= f;
@@ -315,11 +316,11 @@ MDINLINE void add_plate_force(Particle *p1, Particle *c_p, Constraint_plate *c)
 #endif
 }
 
-MDINLINE double plate_energy(Particle *p1, Particle *c_p, Constraint_plate *c)
+MDINLINE double plate_energy(Particle *p1, double ppos[3], Particle *c_p, Constraint_plate *c)
 {
 #ifdef ELECTROSTATICS
   if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->sigma != 0.0)
-    return 2*M_PI*coulomb.prefactor*c->sigma*p1->p.q*fabs(p1->r.p[2] - c->pos);
+    return 2*M_PI*coulomb.prefactor*c->sigma*p1->p.q*fabs(ppos[2] - c->pos);
 #endif
   return 0;
 }
@@ -354,6 +355,13 @@ MDINLINE void add_constraints_forces(Particle *p1)
   double dist, vec[3], force[3];
   IA_parameters *ia_params;
   char *errtxt;
+  double folded_pos[3];
+  int img[3];
+
+  /* fold the coordinate[2] of the particle */
+  memcpy(folded_pos, p1->r.p, 3*sizeof(double));
+  memcpy(img, p1->l.i, 3*sizeof(int));
+  fold_position(folded_pos, img);
 
   for(n=0;n<n_constraints;n++) {
     ia_params=get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
@@ -364,7 +372,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
     switch(constraints[n].type) {
     case CONSTRAINT_WAL: 
       if(ia_params->LJ_cut > 0. ) { /* dirty trick to use walls and LB+particles*/
-	calculate_wall_dist(p1, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
+	calculate_wall_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
 	if (dist > 0) {
 	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist, force);
 	}
@@ -377,7 +385,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
 
     case CONSTRAINT_SPH:
       if(ia_params->LJ_cut > 0. ) {
-	calculate_sphere_dist(p1, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
+	calculate_sphere_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
 	if (dist > 0) {
 	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist, force);
 	}
@@ -390,7 +398,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
     
     case CONSTRAINT_CYL: 
       if(ia_params->LJ_cut > 0. ) {
-	calculate_cylinder_dist(p1, &constraints[n].part_rep, &constraints[n].c.cyl, &dist, vec); 
+	calculate_cylinder_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.cyl, &dist, vec); 
 	if ( dist > 0 ) {
 	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist, force);
 	}
@@ -402,7 +410,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
       break;
 	
     case CONSTRAINT_MAZE: 
-      calculate_maze_dist(p1, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
+      calculate_maze_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
       if (dist > 0) {
 	add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist, force);
       }
@@ -414,7 +422,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
 
     case CONSTRAINT_PORE: 
       if(ia_params->LJ_cut > 0. ) {
-	calculate_pore_dist(p1, &constraints[n].part_rep, &constraints[n].c.pore, &dist, vec); 
+	calculate_pore_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist, vec); 
 	if ( dist > 0 ) {
 	  add_lj_pair_force(p1, &constraints[n].part_rep, ia_params, vec, dist, force);
 	}
@@ -427,11 +435,11 @@ MDINLINE void add_constraints_forces(Particle *p1)
 	
       /* electrostatic "constraints" */
     case CONSTRAINT_ROD:
-      add_rod_force(p1, &constraints[n].part_rep, &constraints[n].c.rod);
+      add_rod_force(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rod);
       break;
 
     case CONSTRAINT_PLATE:
-      add_plate_force(p1, &constraints[n].part_rep, &constraints[n].c.plate);
+      add_plate_force(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plate);
       break;
     //ER
     case CONSTRAINT_EXT_MAGN_FIELD:
@@ -454,6 +462,13 @@ MDINLINE double add_constraints_energy(Particle *p1)
   double lj_en, coulomb_en;
   IA_parameters *ia_params;
   char *errtxt;
+  double folded_pos[3];
+  int img[3];
+
+  /* fold the coordinate[2] of the particle */
+  memcpy(folded_pos, p1->r.p, 3*sizeof(double));
+  memcpy(img, p1->l.i, 3*sizeof(int));
+  fold_position(folded_pos, img);
 
   for(n=0;n<n_constraints;n++) { 
     ia_params = get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
@@ -464,7 +479,7 @@ MDINLINE double add_constraints_energy(Particle *p1)
     switch(constraints[n].type) {
     case CONSTRAINT_WAL: 
       if(ia_params->LJ_cut > 0. ) {
-	calculate_wall_dist(p1, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
+	calculate_wall_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
 	if (dist > 0)
 	  lj_en = lj_pair_energy(p1, &constraints[n].part_rep, ia_params, vec, dist);
 	else {
@@ -476,7 +491,7 @@ MDINLINE double add_constraints_energy(Particle *p1)
 	
     case CONSTRAINT_SPH: 
       if(ia_params->LJ_cut > 0. ) {
-	calculate_sphere_dist(p1, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
+	calculate_sphere_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
 	if (dist > 0) {
 	  lj_en = lj_pair_energy(p1, &constraints[n].part_rep, ia_params, vec, dist);
 	}
@@ -489,7 +504,7 @@ MDINLINE double add_constraints_energy(Particle *p1)
 	
     case CONSTRAINT_CYL: 
       if(ia_params->LJ_cut > 0. ) {
-	calculate_cylinder_dist(p1, &constraints[n].part_rep, &constraints[n].c.cyl, &dist , vec); 
+	calculate_cylinder_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.cyl, &dist , vec); 
 	if ( dist > 0 ) {
 	  lj_en = lj_pair_energy(&constraints[n].part_rep, p1, ia_params, vec, dist);
 	}
@@ -501,7 +516,7 @@ MDINLINE double add_constraints_energy(Particle *p1)
       break;
 
     case CONSTRAINT_MAZE: 
-      calculate_maze_dist(p1, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
+      calculate_maze_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
       if (dist > 0) {
 	lj_en = lj_pair_energy(&constraints[n].part_rep, p1, ia_params, vec, dist);
       }
@@ -513,7 +528,7 @@ MDINLINE double add_constraints_energy(Particle *p1)
 
     case CONSTRAINT_PORE: 
       if(ia_params->LJ_cut > 0. ) {
-	calculate_pore_dist(p1, &constraints[n].part_rep, &constraints[n].c.pore, &dist , vec); 
+	calculate_pore_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist , vec); 
 	if ( dist > 0 ) {
 	  lj_en = lj_pair_energy(&constraints[n].part_rep, p1, ia_params, vec, dist);
 	}
@@ -525,11 +540,11 @@ MDINLINE double add_constraints_energy(Particle *p1)
       break;
 
     case CONSTRAINT_ROD:
-      coulomb_en = rod_energy(p1, &constraints[n].part_rep, &constraints[n].c.rod);
+      coulomb_en = rod_energy(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rod);
       break;
 
     case CONSTRAINT_PLATE:
-      coulomb_en = plate_energy(p1, &constraints[n].part_rep, &constraints[n].c.plate);
+      coulomb_en = plate_energy(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plate);
       break;
     //ER
     case CONSTRAINT_EXT_MAGN_FIELD:

@@ -329,7 +329,7 @@ if(type_bond<0 || type_bond>=n_bonded_ia){
     sprintf(buffer, "Failed upon removing one of the monomers in Espresso while trying to reset current chain!\nAborting...\n"); tmp_try = TCL_ERROR; }
   else if (tmp_try >= 0) {
     sprintf(buffer, "%d", tmp_try); tmp_try = TCL_OK; }
-  else {
+else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return mpi_gather_runtime_errors(interp, tmp_try);
@@ -337,37 +337,44 @@ if(type_bond<0 || type_bond>=n_bonded_ia){
 
 #ifdef CONSTRAINTS
 
-int constraint_collision(double *p1,double *p2){
+int constraint_collision(double *p1, double *p2){
   Particle part1,part2;
   double d1,d2,v[3];
   Constraint *c;
   int i;
-  part1.r.p[0]=p1[0];
-  part1.r.p[1]=p1[1];
-  part1.r.p[2]=p1[2];
-  part2.r.p[0]=p2[0];
-  part2.r.p[1]=p2[1];
-  part2.r.p[2]=p2[2];
+  double folded_pos1[3];
+  double folded_pos2[3];
+  int img[3];
+
+printf("CP1\n");
+
+  memcpy(folded_pos1, p1, 3*sizeof(double));
+  fold_position(folded_pos1, img);
+
+  memcpy(folded_pos2, p2, 3*sizeof(double));
+  fold_position(folded_pos2, img);
   
+printf("CP2\n");
+
   for(i=0;i<n_constraints;i++){
     c=&constraints[i];
     switch(c->type){
     case CONSTRAINT_WAL:
-      calculate_wall_dist(&part1,&part1,&c->c.wal,&d1,v);
-      calculate_wall_dist(&part2,&part2,&c->c.wal,&d2,v);
-      if(d1*d2<=0)
+      calculate_wall_dist(&part1,folded_pos1,&part1,&c->c.wal,&d1,v);
+      calculate_wall_dist(&part2,folded_pos2,&part2,&c->c.wal,&d2,v);
+      if(d1*d2<=0.0)
 	return 1;
       break;
     case CONSTRAINT_SPH:
-      calculate_sphere_dist(&part1,&part1,&c->c.sph,&d1,v);
-      calculate_sphere_dist(&part2,&part2,&c->c.sph,&d2,v);
-      if(d1*d2<0)
+      calculate_sphere_dist(&part1,folded_pos1,&part1,&c->c.sph,&d1,v);
+      calculate_sphere_dist(&part2,folded_pos2,&part2,&c->c.sph,&d2,v);
+      if(d1*d2<0.0)
 	return 1;
       break;
     case CONSTRAINT_CYL:
-      calculate_cylinder_dist(&part1,&part1,&c->c.cyl,&d1,v);
-      calculate_cylinder_dist(&part2,&part2,&c->c.cyl,&d2,v);
-      if(d1*d2<0)
+      calculate_cylinder_dist(&part1,folded_pos1,&part1,&c->c.cyl,&d1,v);
+      calculate_cylinder_dist(&part2,folded_pos2,&part2,&c->c.cyl,&d2,v);
+      if(d1*d2<0.0)
 	return 1;
       break;
     case CONSTRAINT_MAZE:
