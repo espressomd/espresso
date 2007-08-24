@@ -46,7 +46,7 @@
    node. \ref ghost_cells contains pointers to all cells containing
    the ghost particles of that node. The size of these lists has to be
    changed with \ref realloc_cellplist
-   <li> An example using the cell pointer lists to acces particle data
+   <li> An example using the cell pointer lists to access particle data
    can be found in the function \ref
    print_local_particle_positions. DO NOT INVENT YOUR OWN WAY!!!
    </ul>
