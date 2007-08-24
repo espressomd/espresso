@@ -207,13 +207,15 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
     else
       break;
   }
+  /* length of the normal vector */
   norm = SQR(con->c.wal.n[0])+SQR(con->c.wal.n[1])+SQR(con->c.wal.n[2]);
   if (norm < 1e-10 || con->part_rep.p.type < 0) {
     Tcl_AppendResult(interp, "usage: constraint wall normal <nx> <ny> <nz> dist <d> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
-  for(i=0;i<3;i++) con->c.wal.n[i] /= sqrt(norm);
+  /* normalize the normal vector */
+  for (i=0;i<3;i++) con->c.wal.n[i] /= sqrt(norm);
 
   return (TCL_OK);
 }
