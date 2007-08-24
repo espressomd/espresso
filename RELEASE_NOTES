@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3t (Ydalir)                                                                     *
+* v2.0.3u (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3t -
+- v2.0.3u -
 -----------
 
+(u) August 23rd, 2007.
 (t) August 22nd, 2007.
 (s) August 21st, 2007.
 (r) August 16th, 2007.
@@ -33,6 +34,8 @@ Current working revision.
 (a) June   21st, 2007.
 
 New Features:
+(u) adding several change possibilities for dpd thermostat, change weighting
+    function, different cutoff for dpd and trans_dpd....
 (t) added feature VIRTUAL_BOND, like HARMONIC with k=0, but faster
 (r) added feature analyze MSD
 (f) added detection for Core2-Xeons.
