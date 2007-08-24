@@ -381,8 +381,8 @@ uninstall-am:
 
 
 # run the testsuite
-check-local:
-	@builddir@/test.sh -p $(processors) $(tests)
+check-local: test.sh
+	@builddir@/test.sh -p "$(processors)" $(tests)
 clean-local:
 	-for f in *; do \
 	   keep=; \

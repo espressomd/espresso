@@ -21,8 +21,8 @@ ESPRESSO=@top_builddir@/Espresso
 # handle processors
 processors=$PROCESSORS
 if test $1 = "-p"; then
-    processors=$2;
-    shift 2;
+    processors=$2
+    shift 2
 fi
 
 # handle testcases
@@ -74,15 +74,15 @@ for np in $processors; do
     ignored=
     for testcase in $testcases; do
 	CMD="$ESPRESSO $srcdir/$testcase $np $errf"
-	echo $CMD
+	echo "Running \"$CMD\""
 	$CMD
 	case $? in
 	    (0) ;;
-	    (214) ignored="$ignored $testcase";;
-	    (*) failed="$failed $testcase ($np processors)";;
+	    (214) ignored="$ignored $testcase(${np}p)";;
+	    (*) failed="$failed $testcase(${np}p)";;
 	esac
     done
-    if test "$failed"; then break; fi
+    if test -n "$failed"; then break; fi
 done
 
 echo ""
@@ -113,5 +113,7 @@ else
     echo "All tests were successful!"
 fi
 
-exec test -z $failed
+if test -n "$failed"; then
+    exit 1
+fi
 

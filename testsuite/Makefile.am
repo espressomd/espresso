@@ -47,8 +47,8 @@ processors="1 2 3 4 6 8"
 endif
 
 # run the testsuite
-check-local:
-	@builddir@/test.sh -p $(processors) $(tests)
+check-local: test.sh
+	@builddir@/test.sh -p "$(processors)" $(tests)
 
 DISTCLEANFILES=test.sh
 
