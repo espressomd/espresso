@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3u (Ydalir)                                                                     *
+* v2.0.3v (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3u -
+- v2.0.3v -
 -----------
 
+(v) August 24th, 2007.
 (u) August 23rd, 2007.
 (t) August 22nd, 2007.
 (s) August 21st, 2007.
@@ -60,6 +61,8 @@ Changes:
 (a) RELEASE_NOTES maintenance
 
 Bugfixes:
+(v) Fixed constraints so that they now work together with any
+    cellsystem.
 (t) max_range takes into account the DPD cutoff now
 (t) testsuite runs with multiple CPUs again
 (s) added TRANS_DPD to code info
