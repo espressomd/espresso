@@ -841,7 +841,7 @@ int calc_p_tensor(double volume, IntList *p_list, int flag)
           i+=2; break;
 #ifdef BOND_CONSTRAINT
 	case BONDED_IA_RIGID_BOND:
-          i+=2; break;
+          break;
 #endif
 #ifdef BOND_VIRTUAL
 	case BONDED_IA_VIRTUAL_BOND:

@@ -331,7 +331,7 @@ MDINLINE void add_bonded_virials(Particle *p1)
 
 #ifdef BOND_CONSTRAINT
     case BONDED_IA_RIGID_BOND:
-      i +=2; force[0] = force[1] = force[2] = 0; break;
+      force[0] = force[1] = force[2] = 0; break;
 #endif
 #ifdef BOND_VIRTUAL
     case BONDED_IA_VIRTUAL_BOND:

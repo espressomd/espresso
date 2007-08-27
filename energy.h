@@ -267,7 +267,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
       }
       break;
 #endif
-#ifdef BOND_VIRUTAL
+#ifdef BOND_VIRTUAL
     case BONDED_IA_VIRTUAL_BOND:
       bond_broken = 0;
       ret = 0;
