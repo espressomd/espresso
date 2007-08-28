@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.3v (Ydalir)                                                                     *
+* v2.0.3w (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.3v -
+- v2.0.3w -
 -----------
 
+(w) August 27th, 2007.
 (v) August 24th, 2007.
 (u) August 23rd, 2007.
 (t) August 22nd, 2007.
@@ -61,6 +62,7 @@ Changes:
 (a) RELEASE_NOTES maintenance
 
 Bugfixes:
+(w) change pressure calculation for BOND_CONTRAINT
 (v) Fixed constraints so that they now work together with any
     cellsystem.
 (t) max_range takes into account the DPD cutoff now
