@@ -33,15 +33,8 @@ void realloc_topology(int size)
 
   for(m = size ; m < n_molecules; m++) {
     realloc_intlist(&topology[m].part, 0);
-#ifdef MOLFORCES
-    free(topology[m].f);
-    free(topology[m].fav);
-    free(topology[m].v);
-    free(topology[m].trap_center);
-    free(topology[m].com);
-#endif /*MOLFORCES*/
   }
-
+  
   topology = realloc(topology, size*sizeof(Molecule));
 
   if (n_molecules < 0)
