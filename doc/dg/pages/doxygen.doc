@@ -1,12 +1,5 @@
-/** \page our_doxygen How to write the Developer's Guide (Doxygen)
+/** \page our_doxygen Writing the Developer's Guide (Doxygen)
 
-The documentation for Espresso is mainly contained in the source code
-and is automatically generated using doxygen.
-<p>
-For each modul the documentation of the user interface, these are
-public funtions and external variable, should be in the header
-file. All other documentation should be in the c-file.
-<p>
 The documentation for each function should contain a short
 description, if necessary a more detailed description and a
 description for the return value and parameters.

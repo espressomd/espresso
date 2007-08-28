@@ -1,28 +1,14 @@
 /** \page ug Writing the User's Guide
 
-\section Structure
+\section structure Structure
 
-  The User's Guide is written in LaTeX and contains the following
-  parts:
-  - Introduction: this chapter shall give the reader an overview
-    over all of ESPResSo's algorithms and methods.
-  - First steps: shall give a quick introduction on compiling and
-      running ESPResSo, as well as on how to write a script.
-  - Installation: shall explain the installation of ESPResSo in
-      detail.
-  - Setting up the system, Running the simulation, Analysis and
-      Auxilliary commands: shall explain all of ESPResSo's
-      Tcl-commands in detail.
-  - Under the hood: shall explain the important internals of
-      ESPResSo: parallelization, cell system, ...
-  - Getting involved: where to find the DG, how to get started in
-      using the C-code, where to report bugs, mailing list, etc.
-  - ESPResSo quick reference: automatically generated list of all
-      Tcl command syntax descriptions
-  - Features: lists all features of ESPResSo
-  - The rest of the chapters contain scientific descriptions of some
-      of the employed algorithms that are not to be found anywhere
-      else.
+  The User's Guide is written in LaTeX. The source files reside in the
+  subdirectory 
+\verbatim
+doc/ug/
+\endverbatim
+  in the ESPResSo sources. The master
+  file is \c ug.tex , each chapter is contained in its own source file.
 
 \section general General issues
   - Other than usual, in the UG's \c .tex -files, the underscore \c _
@@ -51,7 +37,7 @@
       call latex, bibtex and makeindex as required.
     - Use <tt>perl latexmk</tt> from the source directory. This will
       basically do the same, however, it will \e not automatically
-      update the quick reference. The davantage of this method is,
+      update the quick reference. The advantage of this method is,
       that you can use all of \c latexmk s nice features, such as
       <tt>-pvc</tt>. You can always rebuild the quick reference
       manually by calling
