@@ -1480,7 +1480,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
     for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {
       for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
 	for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {	 
-	  node_k_space_energy_dip += g_dip_energy[i] * (
+	  node_k_space_energy_dip += g_energy_dip[i] * (
 	  SQR(rs_mesh_dip[0][ind]*d_op[j[2]+fft_plan[3].start[0]]+
 	      rs_mesh_dip[1][ind]*d_op[j[0]+fft_plan[3].start[1]]+
 	      rs_mesh_dip[2][ind]*d_op[j[1]+fft_plan[3].start[2]]
@@ -2254,7 +2254,7 @@ void calc_influence_function_energy_dip()
     size *= fft_plan[3].new_mesh[i];
     end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
   }
-  g_energy__dip = (double *) realloc(g_energy_dip, size*sizeof(double));
+  g_energy_dip = (double *) realloc(g_energy_dip, size*sizeof(double));
   fak1  = p3m.mesh[0]*p3m.mesh[0]*p3m.mesh[0]*2.0/(box_l[0]*box_l[0]);
 
   for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++)
