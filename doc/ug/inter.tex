@@ -11,10 +11,10 @@
 \index{Lennard-Jones interaction|mainindex}
 \index{interactions!Lennard-Jones|mainindex}
 \begin{essyntax}
-  inter \var{type1} 
+  inter \var{type1}
   \var{type2}
-  lennard-jones 
-  \var{$\epsilon$} \var{$\sigma$} 
+  lennard-jones
+  \var{$\epsilon$} \var{$\sigma$}
   \var{cutoff} \var{shift} \var{offset}
   \begin{features}
     \required{LENNARD_JONES}
@@ -27,9 +27,9 @@ of the types \var{type1} and \var{type2}.  The potential is defined by
   V_\mathrm{LJ}(r) = \left\{
     \begin{array}{ll}
       4\varepsilon((\frac{\sigma}{r-\mathit{offset}})^{12}
-      -(\frac{\sigma}{r-\mathit{offset}})^6+\mathit{shift}) 
+      -(\frac{\sigma}{r-\mathit{offset}})^6+\mathit{shift})
       & \mathrm{, if~} r < \mathit{cutoff}+\mathit{offset}\\
-      \mathit{0} 
+      \mathit{0}
       & \mathrm{, otherwise}\\
     \end{array}
   \right.
@@ -39,7 +39,7 @@ of the types \var{type1} and \var{type2}.  The potential is defined by
 \index{soft-sphere interaction|mainindex}
 \index{interactions!soft-sphere|mainindex}
 \begin{essyntax}
-  inter \var{type1} \var{type2} 
+  inter \var{type1} \var{type2}
   soft-sphere \var{a} \var{n} \var{cut} \var{offset}
 \end{essyntax}
 \todo{Docs missing.}
@@ -55,11 +55,11 @@ of the types \var{type1} and \var{type2}.  The potential is defined by
   inter \var{type1} \var{type2} lj-cos2
   \var{epsilon} \var{sigma} \var{offset} \var{$\omega$}
 \end{essyntax}
-The Lennard-Jones+Cosine potential 
+The Lennard-Jones+Cosine potential
 \todo{Create bibtex reference}
 (Soddemann et. al. Eur. Phys. J. E. 6, 409-419 (2001))
 
-\todo{Equations} 
+\todo{Equations}
 
 Variant \variant{1}: for $r < r_{min} = offset * 2^{\frac{1}{6}} *
 \sigma$ :
@@ -103,7 +103,7 @@ $\varepsilon * cos^2(\frac{\pi * (r - r_{change})}{2 * \omega})$
 
 \begin{essyntax}
   inter \var{type1} \var{type2} buckingham
-  \var{A} \var{B} \var{C} \var{D} 
+  \var{A} \var{B} \var{C} \var{D}
   \var{cut} \var{discontinuity} \var{shift}
 \end{essyntax}
 \todo{Docs}
@@ -164,7 +164,7 @@ energy: $U(r)$
 
 \begin{essyntax}
   inter \var{type1} \var{type2} gay-berne
-  \var{epsilon} \var{sigma} \var{cutoff} 
+  \var{epsilon} \var{sigma} \var{cutoff}
   \var{k1} \var{k2} \var{mu} \var{nu}
 \end{essyntax}
 
@@ -253,7 +253,7 @@ hand, the id is used when the interaction is specified.
 \index{interactions!FENE|mainindex}
 
 \begin{essyntax}
-  inter \var{bond_type_number} 
+  inter \var{bond_type_number}
   fene
   \var{K_fene} \var{R_fene}
 \end{essyntax}
@@ -265,19 +265,19 @@ hand, the id is used when the interaction is specified.
 \index{interactions!harmonic|mainindex}
 
 \begin{essyntax}
-  inter \var{bond_type_number} 
+  inter \var{bond_type_number}
   harmonic
   \var{K_harmonic R_harmonic}
 \end{essyntax}
 
-\[ U^{Harmonic} = \frac{1}{2} K_{harmonic} \left( r - R_{harmonic} \right)^2 \] 
+\[ U^{Harmonic} = \frac{1}{2} K_{harmonic} \left( r - R_{harmonic} \right)^2 \]
 
 \subsection{Subtracted Lennard-Jones bond}
 \index{subtracted Lennard-Jones bond|mainindex}
 \index{interactions!subtracted Lennard-Jones|mainindex}
 
 \begin{essyntax}
-  inter \var{bond_type_number} 
+  inter \var{bond_type_number}
   subt_lj
   \var{K_subt_lj} \var{R_subt_lj}
 \end{essyntax}
@@ -297,7 +297,7 @@ appropriately so that round-off errors can be avoided.
 \index{interactions!bond-angle|mainindex}
 
 \begin{essyntax}
-  inter \var{bond_type_number} 
+  inter \var{bond_type_number}
   angle \var{bend} \opt{\var{phi0}}
 \end{essyntax}
 
@@ -322,7 +322,7 @@ configuration.
       BOND_ANGLE_COSSQUARE) A form which is used for example in the
       GROMOS96 force field.
 
-      \[ U^{bend}_{cossquare} = \frac{bend}{2} (\cos(\phi) - \cos(\phi_0))^2 \] 
+      \[ U^{bend}_{cossquare} = \frac{bend}{2} (\cos(\phi) - \cos(\phi_0))^2 \]
 \end{itemize}
 
 \subsection{Dihedral interactions}
@@ -330,7 +330,7 @@ configuration.
 \index{interactions!dihedral|mainindex}
 
 \begin{essyntax}
-  inter \var{bond_type_number} 
+  inter \var{bond_type_number}
   dihedral \var{mult} \var{bend} \var{phase}
 \end{essyntax}
 
@@ -352,11 +352,11 @@ bonds have to be stored at particle p2!
 \index{interactions!tabulated bond|mainindex}
 
 \begin{essyntax}
-    \variant{1} inter \var{bond_type_number} 
+    \variant{1} inter \var{bond_type_number}
     tabulated bond \var{filename}
-    \variant{2} inter \var{bond_type_number} 
+    \variant{2} inter \var{bond_type_number}
     tabulated angle \var{filename}
-    \variant{3} inter \var{bond_type_number} 
+    \variant{3} inter \var{bond_type_number}
     tabulated dihedral \var{filename}
 \end{essyntax}
 
@@ -374,7 +374,7 @@ above). The parameter \var{type} defines the type of the potential:
     of the connecting vector between the particles. The cutoff is
     given by the maximal tabulated distance. For distances smaller
     than the tabulated range it uses a linear extrapolation based on
-    the first two tabulated force values. 
+    the first two tabulated force values.
 
   \item \var{type} = angle (three body interaction)
 
@@ -385,14 +385,14 @@ above). The parameter \var{type} defines the type of the potential:
     on the middle particle balances the other two forces. The forces
     are scaled with the invers length of the connecting vectors. It is
     assumed that the potential is tabulated for all angles between 0
-    and $ \pi $, where 0 corresponds to a stretched polymer. 
+    and $ \pi $, where 0 corresponds to a stretched polymer.
 
   \item \var{type} = dihedral (three body interaction)
 
     Tabulated torsional dihedral angle potenetial (see also the normal
     implemented dihedral potentials). It is assumed that the potential
     is tabulated for all angles between 0 and $ 2\pi $. This potential
-    is not tested yet! Use on own risk. 
+    is not tested yet! Use on own risk.
 \end{itemize}
 
 \section{Coulomb interaction}
@@ -430,15 +430,15 @@ interaction
   U^{C-P3M} = \ell_B T \frac{q_1 q_2}{r}
 \end{equation}
 Make sure that you know the relevance of the P3M parameters before
-using P3M!
+using P3M! If you are not sure, read the following references \cite{ewald21,hockney88,kolafa92,deserno98,deserno98a,deserno00,deserno00a}.
 
 \subsubsection{Tuning P3M}
 \begin{essyntax}
   inter coulomb p3m \alt{tune \asep tunev2}
   accuracy \var{accuracy}\\
-  \opt{r_cut \var{r_cut}} 
-  \opt{mesh \var{mesh}} 
-  \opt{cao \var{cao}} 
+  \opt{r_cut \var{r_cut}}
+  \opt{mesh \var{mesh}}
+  \opt{cao \var{cao}}
   \opt{alpha \var{alpha}}
 \end{essyntax}
 
@@ -446,7 +446,9 @@ using P3M!
 
 Make sure you know how to tune p3m parameters before using the
 automatic tuning feature. Details are described in the documentation
-of P3M_tune_parameters rsp P3M_adaptive_tune_parameters.
+of P3M_tune_parameters rsp P3M_adaptive_tune_parameters in source file p3m.h.
+
+The function utilizes the analytic expression of the error estimate for the P3M method in the book of Hockney and Eastwood (\cite{hockney88} Eqn. 8.23) in order to obtain the rms error in the force for a system of N randomly distributed particles in a cubic box. For the real space error the estimate of Kolafa and Perram\cite{kolafa92} is used.
 
 The two tuning methods follow different methods for determining the
 optimal parameter. While the \keyword{tune} version simply tests
@@ -466,17 +468,17 @@ inter coulomb \var{bjerrum} p3m tune accuracy \var{acc} r_cut 0 mesh 0 cao 0
 \end{code}
 Some additional p3m parameters have preset value
 \begin{tclcode}
- epsilon = metallic 
+ epsilon = metallic
 \end{tclcode}
 The dielectric constant of the surrounding medium, metallic
 (i.e.infinity) or some finite positive number.
 \begin{tclcode}
- n_interpol = 32768 
+ n_interpol = 32768
 \end{tclcode}
 Number of interpolation points for the charge assignment function.
 When this is set to 0, interpolation is turned off.
 \begin{tclcode}
- mesh_off = 0.5 0.5 0.5 
+ mesh_off = 0.5 0.5 0.5
 \end{tclcode}
 Offset of the first mesh point from the lower left corner of the
 simulation box in units of the mesh constant. As soon as p3m is turned
@@ -524,10 +526,10 @@ refer to appendix \vref{chap:mmm}.
 
 \begin{essyntax}
   \variant{1}
-  inter coulomb mmm1d \var{switch_radius} 
+  inter coulomb mmm1d \var{switch_radius}
   \opt{\var{bessel_cutoff}} \var{maximal_pairwise_error}
 
-  \variant{2}  
+  \variant{2}
   inter coulomb mmm1d tune \var{maximal_pairwise_error}
 \end{essyntax}
 MMM1D coulomb method for systems with periodicity 0 0 1. Needs the
@@ -548,7 +550,7 @@ refer to appendix \vref{chap:mmm}.
 \index{interactions!Maggs' method|mainindex}
 
 \begin{essyntax}
-  inter coulomb 
+  inter coulomb
   maggs \var{f_mass} \var{mesh} \var{field_friction}
   \opt{yukawa \var{kappa} \var{r_cut}}
 \end{essyntax}
@@ -585,7 +587,7 @@ potential \var{r_cut}.
 \index{interactions!ELC method|mainindex}
 
 \begin{essyntax}
-  inter coulomb elc \var{maximal_pairwise_error} \var{gap_size} 
+  inter coulomb elc \var{maximal_pairwise_error} \var{gap_size}
   \opt{\var{far_cutoff}}
 \end{essyntax}
 This is a special procedure that converts a 3d method, \ie P3M at the
@@ -668,7 +670,7 @@ Tcl-list, in the same formats as above, \eg
 
 
 
-%%% Local Variables: 
+%%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "ug"
-%%% End: 
+%%% End:
