@@ -2,16 +2,29 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4  (Ydalir)                                                                     *
+* v2.0.4a (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-
-- v2.0.4  -
+- v2.0.4a -
 -----------
 
+(a) August 28th, 2007.
+
+New Features:
+(a) Added a whitelist in addition to the blacklist. If
+    blockfile_(tcl)variable_whitelist is a defined global_variable, it defines the
+    set of variables to read.
+
+Bugfixes:
+(a) ESPResSo again compiles and runs with DIPOLES and ROTATION switched
+    on.
+(a) The blockfile_(tcl)variable_blacklist variable is now no longer silently
+    created when writing a a (tcl)variable.
+(a) Fixed the handling of single element lists in
+    blockfile_write_(tcl)variable
 
 
 - v2.0.3w -
