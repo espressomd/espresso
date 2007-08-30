@@ -427,8 +427,10 @@ well.
 Activates the P3M method to handle the Coulomb
 interaction
 \begin{equation}
-  U^{C-P3M} = \ell_B T \frac{q_1 q_2}{r}
+  U^{C-P3M} = \ell_B k_B T \frac{q_1 q_2}{r}
 \end{equation}
+
+Here $\ell_B = e_o^2 / (4 \pi \epsilon k_B T)$ is the Bjerrum length.
 Make sure that you know the relevance of the P3M parameters before
 using P3M! If you are not sure, read the following references \cite{ewald21,hockney88,kolafa92,deserno98,deserno98a,deserno00,deserno00a}.
 
@@ -460,12 +462,15 @@ results of \keyword{tunev2} are always at least as good as the
 parameters achievable from the \keyword{tune} version, and normally
 the obtained accuracy is much closer to the desired value.
 
+During execution the tuning routines report the parameter sets tested, the corresponding k-space and real-space errors and timings needed for force calculations (the setmd variable \var{timings} controls the number of test force calculations). Since the error depends on \var{r_cut}/\var{box_l} and \var{alpha}\var{box_l} the output is given in these units, called \var{r_cut_iL} and \var{alpha_L}.
+
 Note that any previous settings of \var{r_cut}, \var{cao} and
 \var{mesh} will be remembered. So if you want to retune your
 electrostatics, \eg after a major system change, you should use
 \begin{code}
 inter coulomb \var{bjerrum} p3m tune accuracy \var{acc} r_cut 0 mesh 0 cao 0
 \end{code}
+
 Some additional p3m parameters have preset value
 \begin{tclcode}
  epsilon = metallic
@@ -495,7 +500,7 @@ inter coulomb \var{parameter_name} \var{value}+
 \begin{essyntax}
   inter coulomb dh \var{kappa} \var{r_cut}
 \end{essyntax}
-\[ U^{C-DH} = \ell_B T \frac{q_1 q_2 exp(-\kappa r)}{r} \]
+\[ U^{C-DH} = \ell_B k_B T \frac{q_1 q_2 exp(-\kappa r)}{r} \]
 
 For
 
@@ -557,7 +562,7 @@ refer to appendix \vref{chap:mmm}.
 
 This is an implementation of the instantaneous 1/r Coulomb interaction
 
-\[ U = \ell_B T \frac{q_1 q_2}{r} \]
+\[ U = \ell_B k_B T \frac{q_1 q_2}{r} \]
 
 as the potential of mean force between charges which are dynamically
 coupled to a local electromagnetic field.
