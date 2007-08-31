@@ -155,23 +155,20 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 
     
  /* stress tensor part */
-  for(i=0; i<9; i++) {
-#ifdef ROTATION
-    p_tensor.data.e[i] /= (6.0*volume*time_step*time_step);
-#else
-    p_tensor.data.e[i] /= (3.0*volume*time_step*time_step);
-#endif
-  }
+ /* ROTATION option does not effect stress tensor calculations since rotational
+    energy is not included in the ideal term (unlike for the pressure) */
+  for(i=0; i<9; i++)
+    p_tensor.data.e[i] /= (volume*time_step*time_step);
   
   for(i=9; i<p_tensor.data.n; i++)
-    p_tensor.data.e[i]  /= 3.0*volume;
+    p_tensor.data.e[i]  /= volume;
   
   /* Intra- and Inter- part of nonbonded interaction */
   for (n = 0; n < virials_non_bonded.data_nb.n; n++)
     virials_non_bonded.data_nb.e[n] /= 3.0*volume;
   
   for(i=0; i<p_tensor_non_bonded.data_nb.n; i++)
-    p_tensor_non_bonded.data_nb.e[i]  /= 3.0*volume;
+    p_tensor_non_bonded.data_nb.e[i]  /= volume;
   
   /* gather data */
   MPI_Reduce(virials.data.e, result, virials.data.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
