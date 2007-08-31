@@ -76,7 +76,190 @@ case both scenarios will call ??? twice at the beginning of the second
 integration phase thus having their random number sequences in total
 sync. The C implementation is invalidate_system.
 
+\section{Parallel tempering}
+\newescommand[parallel-tempering]{parallel_tempering}
+\begin{essyntax}
+  parallel_tempering::main
+  -rounds \var{$N$}
+  -swap \var{swap}
+  -perform \var{perform}
+  \opt{-init \var{init}}
+  \opt{-values \var{$\{T_i\}$}}
+  \opt{-connect \var{master}}
+  \opt{-port \var{port}}
+  \opt{-load \var{$j_\mathrm{node}$}}
+  \opt{-resrate \var{$N_\mathrm{reset}$}}
+  \opt{-info \var{info}}
+\end{essyntax}
 
+This command can be used to run a parallel tempering simulation. Since the simulation routines and
+the calculation of the swap probabilities are provided by the user, the method is not limited to
+sampling in the temperature space. However, we assume in the following that the sampled values are
+temperatures, and call them accordingly. It is possible to use multiple processors via TCP/IP
+networking, but the number of processors can be smaller than the number of temperatures.
+
+\begin{arguments}
+\item[\var{swap}] specifies the name of the routine calculating the swap probability for a
+  system. The routine has to accept three parameters: the \var{id} of the system to
+  evaluate, and two temperatures \var{$T_1$} and \var{$T_2$}. The routine should return a list
+  containing the energy of the system at temperatures \var{$T_1$} and \var{$T_2$}, respectively.
+\item[\var{perform}] specifies the name of the routine performing the simulation between two swap
+  tries. The routine has to accept two parameters: the \var{id} of the system to
+  propagate and the temperature \var{$T$} at which to run it. Return values are ignored.
+\item[\var{init}] specifies the name of a routine initializing a system. This routine can for
+  example create the particles, perform some intial equilibration or open output files.
+  The routine has to accept two parameters: the \var{id} of the system to
+  initialize and its initial temperature \var{$T$}. Return values are ignored.
+\item[\var{$R$}] specifies the number of swap trial rounds; in each round, neighboring temperatures
+  are tried for swapping alternatingly, i.e. with four temperatures, The first swap trial round
+  tries to swap $1\leftrightarrow 2$ and $3\leftrightarrow 4$, the second round $2\leftrightarrow
+  3$, and so on.
+\item[\var{master}] the name of the host on which the parallel_tempering master node is running.
+\item[\var{port}] the TCP/IP port on which the parallel_tempering master should listen. This
+  defaults to 12000.
+\item[\var{$j_\mathrm{node}$}] specifies how many systems to run per \es{}-instance. If this is
+  more than 1, it is the user's responsibility to manage the storage of configurations, see below
+  for examples.  This defaults to 1.
+\item[\var{$R_\mathrm{reset}$}] specifies after how many swap trial rounds to reset the counters
+  for the acceptance rate statistics. This defaults to 10.
+\item[\var{info}] specifies which output the parallel tempering code should produce:
+  \begin{itemize}
+  \item[\texttt{none}] parallel tempering will be totally quiet, except for fatal errors
+  \item[\texttt{comm}] information on client activities, such as connecting, is printed to stderr
+  \item[\texttt{all}] print lots of information on swap energies and probabilities to stdout. This
+    is useful for debugging and quickly checking the acceptance rates.
+  \end{itemize}
+  This defaults to \texttt{all}.
+\end{arguments}
+
+\subsubsection{Introduction}
+
+The basic idea of parallel tempering is to run $N$ simulations with configurations $C_i$ in
+parallel at different temperatures $T_1<T_2<\hdots<T_N$, and exchange configurations between
+neighboring temperatures. This is done according to the Boltzmann rule, \ie the swap probability
+for two configurations A and B at two different parameters $T_1$ and $T_2$ is given by
+\begin{equation}
+  \label{eq:ptacceptance}
+  \min\left(1,\exp -\left[\beta(T_2)U_\text{A}(T_2) + \beta(T_1)U_\text{B}(T_1) -
+    \beta(T_1)U_\text{A}(T_1) - \beta(T_2)U_\text{B}(T_2)\right]\right),
+\end{equation}
+where $U_C(T)$ denotes the potential energy of configuration $C$ at parameter $T$ and $\beta(T)$
+the corresponding inverse temperature. If $T$ is the temperature, $U_C$ is indepedent of $T$, and
+$\beta(T)=1/(k_BT)$. In this case, the swap probability reduces to the textbook result
+\begin{equation}
+  \min(1,\exp -\left[\left(1/T_2 - 1/T_1\right)\left(U_\text{A} - U_\text{B}\right)/k_B\right].
+\end{equation}
+However, $T$ can also be chosen to be any other parameter, for example the Bjerrum length, \ie the
+the strength of the electrostatic interaction. In this case, $\beta(T)=\beta$ is a constant, but
+the energy $U_C(T)$ of a configuration $C$ depends on $T$, and one needs the full
+expression~\eqref{eq:ptacceptance}. \es{} always uses this expression.
+
+In practice, one does not swap configurations, but temperatures, simply because exchanging
+temperatures requires much less communication than exchanging the properties of all particles.
+
+Th \es{} implementation of parallel tempering repeatedly propagates all configurations $C_i$ and
+tries to swap neighboring temperatures. After the first propagation, the routine attempts to swap
+temperatures $T_1$ and $T_2$, $T_3$ and $T_4$, and so on. After the second propagation, swaps are
+attempted between temperatures $T_2$ and $T_3$, $T_4$ and $T_5$, and so on.  For the propagation,
+parallel tempering relies on a user routine; typically, one will simply propagate the configuration
+by a few 100 MD time steps.
+
+\subsubsection{Details on usage and an example}
+
+The parallel tempering code has to be loaded explicitely by {\tt source
+  "scripts/parallel_tempering.tcl"} from the Espresso directory. To make use of the parallel
+tempering tool, one needs to implement three methods: the propagation, the energy calculation and
+an initialization routine for a configuration. A typical initialization routine will look roughly
+like this:
+\begin{verbatim}
+proc init {id temp} {
+  # create output files for temperature temp
+  set f [open "out-$temp.dat" w]; close $f
+  init_particle_positions
+  thermostat langevin $temp 1.0
+  equilibration_integration
+  global config
+  set config($id) "{[part]} [setmd time]"
+}
+\end{verbatim}
+The last two lines are only necessary if each instance of \es{} handles more than one
+configuration, \eg if you have 300 temperatures, but only 10 \es{} processes
+(\ie {\tt -load 30}).  In this case, all
+user provided routines need to save and restore the configurations. Saving the time is not
+necessary because the simulation tine across swaps is not meaningful anyways; it is however
+convenient for investigating the (temperature-)history of individual configurations.
+
+A typical propagation routine accordingly looks like this
+\begin{verbatim}
+proc perform {id temp} {
+  global config
+  foreach p [lindex $config($id) 0] { eval part $p }
+  setmd time [lindex $config($id) 1]
+  thermostat langevin $temp 1.0
+  set f [open "out-$temp.dat" a];
+  integrate 1000
+  puts $f "[setmd time] [analyze energy]"
+  close $f
+  set config($id) "{[part]} [setmd time]"
+}
+\end{verbatim}
+Again, the saving and storing of the current particle properties in the config array are only
+necessary if there is more than one configuration per process. In practice, one will rescale the
+velocities at the beginning of perform to match the current temperature, otherwise the thermostat
+needs a short time to equilibrate. The energies necessary to determine the swap probablility are
+calculated like this:
+\begin{verbatim}
+proc swap {id temp1 temp2} {
+  global config
+  foreach p $config($id) { eval part $p }
+  set epot [expr [analyze energy total] - [analyze energy kinetic]]
+  return "[expr $epot/$temp1] [expr $epot/$temp2]"
+}
+\end{verbatim} % make emacs happy: $
+Note that only the potential energy is taken into account. The temperature enters only indirectly
+through the inverse temperature prefactor, see Eqn.~\eqref{eq:ptacceptance}.
+
+The simulation is then started as follows. One of the processes runs the command
+\begin{verbatim}
+for {set T 0} {$T < 3} {set T [expr $T + 0.01]} {
+    lappend temperatures $T }
+parallel_tempering::main -load 30 -values $temperatures -rounds 1000 \
+    -init init -swap swap -perform perform
+\end{verbatim}
+This command turns the \es{} instance executing it into the master part of the parallel tempering
+simulation. It waits until a sufficient number of clients has connected. This are additional \es{}
+instances, which are identical to the master script, except that they execute
+\begin{verbatim}
+parallel_tempering::main -connect $host -load 30 \
+    -init init -swap swap -perform perform
+\end{verbatim} % make emacs happy: $
+Here, {\tt host} is a variable containing the TCP/IP hostname of the computer running the master
+process. Note that the master process waits until enough processes have connected to start the
+simulation. In the example, there are 300 temperatures, and each process, including the master
+process, will deal with 30 of them. Therefore, 1 master and 9 slave processes are required. For a
+typical queueing system, a starting routine could look like this:
+\begin{verbatim}
+master=
+for h in $HOSTS; do
+  if [ "$master" == "" ]; then
+    ssh $h "cd run; ./pt_test.tcl"
+    master=$h;
+  else
+    ssh $h "cd run; ./pt_test.tcl -connect $host"
+  fi
+done
+\end{verbatim}
+where {\tt pt_test.tcl} passes the {\tt -connect} option on to {\tt parallel_tempering::main}.
+
+\subsubsection{Sharing data}
+
+\begin{essyntax}
+  parallel_tempering::set_shareddata \var{data}
+\end{essyntax}
+
+can be used at any time {\em by the master process} to specify additional data that is available on
+all processes of the parallel_tempering simulation. The data is accessible from all processes as
+{\tt parallel_tempering::shareddata}.
 
 %%% Local Variables: 
 %%% mode: latex
