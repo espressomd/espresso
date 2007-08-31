@@ -1,39 +1,96 @@
 \chapter{Setting up interactions}
 \label{sec:inter}
 \newescommand{inter}
+\index{interactions|mainindex}
+
+In \es, interactions are setup by the inter command. There are mainly two types
+of interactions: non-bonded and bonded interactions. Non-bonded interactions
+only depend on the type of the two involved particles. This also applies to the
+electrostatic interaction; however, due to its long-ranged nature, it requires
+special care and \es{} handles it separately with a number of state of the art
+algorithms. The particle type and the charge are both defined using the {\tt
+  part} command.
+
+A bonded interaction defines an interaction between a number of particles; it
+however only applies to sets of particles for which it has been explicitely set.
+A bonded interaction between a set of particles has to be specified explicitely
+by the {\tt part bond} command, while the inter command is used to define the
+interaction parameters.
 
 \section{Non-bonded, short-ranged interactions}
 \label{sec:inter-nb}
-%\quickrefheading{Nonbonded interactions}
+\index{Non-bonded interactions|mainindex}
+\index{interactions!non-bonded|mainindex}
+
+\begin{essyntax}
+  inter \var{type1} 
+  \var{type2}
+  \opt{\var{interaction}}
+  \opt{\var{parameters}}
+\end{essyntax}
+defines an interaction of type \var{interaction} between all particles of type
+\var{type1} and \var{type2}. The possible interaction types and their parameters
+are listed below. If the interaction is omitted, the command returns the
+currently defined interaction between the two types.
 
 \subsection{Lennard-Jones interaction}
 
 \index{Lennard-Jones interaction|mainindex}
 \index{interactions!Lennard-Jones|mainindex}
 \begin{essyntax}
-  inter \var{type1}
-  \var{type2}
-  lennard-jones
-  \var{$\epsilon$} \var{$\sigma$}
-  \var{cutoff} \var{shift} \var{offset}
+  \require{1}{\variant{1}
+    inter \var{type1} 
+    \var{type2}
+    lennard-jones 
+    \var{$\epsilon$} \var{$\sigma$} 
+    \var{$r_\text{cut}$} \var{$c_\text{shift}$} \var{$r_\text{off}$}
+  }
+
+  \require{2}{\variant{2}
+    inter \var{type1} 
+    \var{type2}
+    lj-gen
+    \var{$\epsilon$} \var{$\sigma$} 
+    \var{$r_\text{cut}$} \var{$c_\text{shift}$} \var{$r_\text{off}$} \var{$e_1$} \var{$e_2$} 
+  }
   \begin{features}
-    \required{LENNARD_JONES}
+    \required[1]{LENNARD_JONES}
+    \required[2]{LENNARD_JONES_GENERIC}
   \end{features}
 \end{essyntax}
-This command will define a Lennard-Jones interaction between particles
-of the types \var{type1} and \var{type2}.  The potential is defined by
 
+These two commands define a Lennard-Jones interaction between particles of the
+types \var{type1} and \var{type2}.  The potential is defined by
 \begin{equation}
-  V_\mathrm{LJ}(r) = \left\{
+  \label{eq:lj}
+  V_\mathrm{LJ}(r) = \Biggl\{
     \begin{array}{ll}
-      4\varepsilon((\frac{\sigma}{r-\mathit{offset}})^{12}
-      -(\frac{\sigma}{r-\mathit{offset}})^6+\mathit{shift})
-      & \mathrm{, if~} r < \mathit{cutoff}+\mathit{offset}\\
-      \mathit{0}
+      4\epsilon((\frac{\sigma}{r-r_\text{\var{off}}})^{e_1}
+      -(\frac{\sigma}{r-r_\text{\var{off}}})^{e_2}+c_\text{\var{shift}}) 
+      & \mathrm{, if~} r < r_\text{\var{cut}}+r_\text{\var{off}}\\
+      \mathit{0} 
       & \mathrm{, otherwise}\\
-    \end{array}
-  \right.
+    \end{array}.
 \end{equation}
+The first form of the command specifies the traditional Lennard--Jones potential
+with exponents $e_1=12$ and $e_2=6$, the second form allows to choose arbitrary
+exponents.
+
+The traditional Lennard--Jones potential is the ``work--horse'' potential for
+particle--particle interactions in coarse--grained simulations. It is a simple
+model for the van--der--Waals interaction, and is attractive at large distance,
+but strongly repulsive at short distances. $r_\text{\var{off}} + \sigma$
+corresponds to the sum of the radii of the interaction particles; at this
+radius, the potential equals to $\epsilon(1+c_\text{\var{shift}})$. The
+attractive part starts beyond $r=r_\text{\var{off}} + \sqrt[6]\sigma$.
+\var{$r_\text{cut}$} determines from which radius on the interaction is not
+calculated. Typically, one will choose the shift such that the energy is
+continuous at the cutoff radius.
+
+A special case of the Lennard--Jones potential is the Weeks--Chandler--Andersen
+(WCA) potential, which one obtains by putting the cutoff into the minimum, \ie
+choosing $r_\text{\var{cut}}=\sqrt[6]{2}$ and $c_\text{\var{shift}}=1/4$. The WCA
+potential is purely repulsive, and is often used to mimick hard sphere repulsion.
 
 \subsection{Soft-sphere interaction}
 \index{soft-sphere interaction|mainindex}
