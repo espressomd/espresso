@@ -303,6 +303,12 @@ void mpi_bcast_n_particle_types(int s);
 */
 void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb, void *result_t_nb);
 
+/** Issue GET_LOCAL_STRESS_TENSOR: gather the contribution to the local stress tensors from
+    each node.
+ */
+
+void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3]);
+
 /** Issue REQ_GETPARTS: gather all particle informations (except bonds).
     This is slow and may use huge amounts of memory. If il is non-NULL, also
     the bonding information is also fetched and stored in a single intlist

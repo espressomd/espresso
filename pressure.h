@@ -133,21 +133,11 @@ int p_diff_callback(Tcl_Interp *interp, void *_data);
 */
 void pressure_calc(double *result, double *result_t, double *result_nb, double *result_t_nb, int v_comp);
 
-/** Calculate non bonded energies between a pair of particles.
-    @param p1        pointer to particle 1.
-    @param p2        pointer to particle 2.
-    @param d         vector between p1 and p2.
-    @param dist      distance between p1 and p2.
-    @param dist2     distance squared between p1 and p2. */
-MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
-					  double dist, double dist2)
+MDINLINE void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
+					 double dist, double dist2, double force[3])
+     /* calculates the non-bonded pair force between particles excluding electrostatics */
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-  int p1molid, p2molid, k, l;
-  double force[3] = {0, 0, 0};
-#ifdef ELECTROSTATICS
-  double ret;
-#endif
 #ifdef ROTATION
   double t1[3], t2[3]; /* dummies */
 #endif
@@ -180,7 +170,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 #ifdef LJCOS
   add_ljcos_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
-  /* lennard jones cosine 2*/
+  /* lennard jones cosine */
 #ifdef LJCOS2
   add_ljcos2_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
@@ -192,6 +182,25 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 #ifdef ROTATION
   add_gb_pair_force(p1,p2,ia_params,d,dist,force,t1,t2);
 #endif
+  
+}
+
+/** Calculate non bonded energies between a pair of particles.
+    @param p1        pointer to particle 1.
+    @param p2        pointer to particle 2.
+    @param d         vector between p1 and p2.
+    @param dist      distance between p1 and p2.
+    @param dist2     distance squared between p1 and p2. */
+MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
+					  double dist, double dist2)
+{
+  int p1molid, p2molid, k, l;
+  double force[3] = {0, 0, 0};
+#ifdef ELECTROSTATICS
+  double ret;
+#endif
+
+  calc_non_bonded_pair_force(p1, p2, d, dist, dist2,force);
 
   *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
 
@@ -264,41 +273,9 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 #endif
 }
 
-/** Calculate bonded virials for one particle.
-    For performance reasons the force routines add their values directly to the particles.
-    So here we do some tricks to get the value out without changing the forces.
-    @param p1 particle for which to calculate virials
-*/
-MDINLINE void add_bonded_virials(Particle *p1)
-{
-  double dx[3], force[3];
-  char *errtxt;
-  Particle *p2;
-  Bonded_ia_parameters *iaparams;
-
-  int i, k, l, type_num, type;
-#ifdef TABULATED
-  int type_tab;
-#endif
-
-  i = 0;
-  while(i<p1->bl.n) {
-    type_num = p1->bl.e[i++];
-    iaparams = &bonded_ia_params[type_num];
-    type = bonded_ia_params[type_num].type;
-
-    /* fetch particle 2 */
-    p2 = local_particles[p1->bl.e[i++]];
-    if (!p2) {
-      errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"{088 bond broken between particles %d and %d (particles not stored on the same node)} ",
-	      p1->p.identity, p1->bl.e[i-1]);
-      return;
-    }
-
-    get_mi_vector(dx, p1->r.p, p2->r.p);
-
-    switch(type) {
+MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, int *i, double dx[3], double force[3]) {
+  /* Calculates the bonded force between two particles */
+    switch(iaparams->type) {
     case BONDED_IA_FENE:
       calc_fene_pair_force(p1,p2,iaparams,dx,force);
       break;
@@ -318,9 +295,8 @@ MDINLINE void add_bonded_virials(Particle *p1)
 
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
-      type_tab = bonded_ia_params[type_num].p.tab.type;
-      // printf("BONDED TAB, Particle: %d, P2: %d TYPE_TAB: %d\n",p1->p.identity,p2->p.identity,type_tab);
-      switch(type_tab) {
+      // printf("BONDED TAB, Particle: %d, P2: %d TYPE_TAB: %d\n",p1->p.identity,p2->p.identity,iparams->p.tab.type);
+      switch(iaparams->p.tab.type) {
         case TAB_BOND_ANGLE:
           i++; force[0] = force[1] = force[2] = 0; break;
         case TAB_BOND_DIHEDRAL:
@@ -331,7 +307,7 @@ MDINLINE void add_bonded_virials(Particle *p1)
 
 #ifdef BOND_CONSTRAINT
     case BONDED_IA_RIGID_BOND:
-      force[0] = force[1] = force[2] = 0; break;
+      i +=2; force[0] = force[1] = force[2] = 0; break;
 #endif
 #ifdef BOND_VIRTUAL
     case BONDED_IA_VIRTUAL_BOND:
@@ -339,10 +315,42 @@ MDINLINE void add_bonded_virials(Particle *p1)
 #endif
     default :
       //      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of atom %d unhandled\n",bonded_ia_params[type_num].type,p1->p.identity);
-      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d of Type: %d, atom %d unhandled, Atom 2: %d\n",type,type_num,p1->p.identity,p2->p.identity);
+      fprintf(stderr,"add_bonded_virials: WARNING: Bond type %d , atom %d unhandled, Atom 2: %d\n",iaparams->type,p1->p.identity,p2->p.identity);
       force[0] = force[1] = force[2] = 0;
       break;
     }
+}
+/** Calculate bonded virials for one particle.
+    For performance reasons the force routines add their values directly to the particles.
+    So here we do some tricks to get the value out without changing the forces.
+    @param p1 particle for which to calculate virials
+*/
+MDINLINE void add_bonded_virials(Particle *p1)
+{
+  double dx[3], force[3];
+  char *errtxt;
+  Particle *p2;
+  Bonded_ia_parameters *iaparams;
+
+  int i, k, l;
+  int type_num;
+
+  i = 0;
+  while(i<p1->bl.n) {
+    type_num = p1->bl.e[i++];
+    iaparams = &bonded_ia_params[type_num];
+
+    /* fetch particle 2 */
+    p2 = local_particles[p1->bl.e[i++]];
+    if ( ! p2 ) {
+      errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt,"{088 bond broken between particles %d and %d (particles not stored on the same node)} ",
+		    p1->p.identity, p1->bl.e[i-1]);
+      return;
+    }
+
+    get_mi_vector(dx, p1->r.p, p2->r.p);
+    calc_bonded_force(p1,p2,iaparams,&i,dx,force);
     *obsstat_bonded(&virials, type_num) += dx[0]*force[0] + dx[1]*force[1] + dx[2]*force[2];
 
  /* stress tensor part */
@@ -352,7 +360,7 @@ MDINLINE void add_bonded_virials(Particle *p1)
 
   }
 }
-
+ 
 /** Calculate kinetic pressure (aka energy) for one particle.
     @param p1 particle for which to calculate pressure
     @param v_comp flag which enables (1) compensation of the velocities required
@@ -399,6 +407,9 @@ int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv);
 /** implementation of 'analyze stress_tensor' */
 int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char **argv);
 
+/** implementation of 'analyse local_stress_tensor */
+int local_stress_tensor_calc (DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3]);
+int parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
 

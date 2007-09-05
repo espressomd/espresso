@@ -2973,6 +2973,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("energy", parse_and_print_energy);
   REGISTER_ANALYSIS_W_ARG("pressure", parse_and_print_pressure, 0);
   REGISTER_ANALYSIS_W_ARG("stress_tensor", parse_and_print_stress_tensor, 0);
+  REGISTER_ANALYSIS("local_stress_tensor", parse_local_stress_tensor);
   REGISTER_ANALYSIS_W_ARG("p_inst", parse_and_print_pressure, 1);
   REGISTER_ANALYSIS("momentum", parse_and_print_momentum);
   REGISTER_ANALYSIS("bins", parse_bins);

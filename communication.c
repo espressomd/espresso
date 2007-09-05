@@ -164,8 +164,10 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_FLUID 46
 /** Action number for \ref mpi_recv_fluid. */
 #define REQ_GET_FLUID 47
+/** Action number for \ref mpi_local_stress_tensor*/
+#define REQ_GET_LOCAL_STRESS_TENSOR 48
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 48
+#define REQ_MAXIMUM 49
 
 /*@}*/
 
@@ -222,6 +224,7 @@ void mpi_send_dip_slave(int node, int parm);
 void mpi_send_dipm_slave(int node, int parm);
 void mpi_send_fluid_slave(int node, int parm);
 void mpi_recv_fluid_slave(int node, int parm);
+void mpi_local_stress_tensor_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -275,6 +278,7 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_send_dipm_slave,              /* 45: REQ_SET_DIPM */
   mpi_send_fluid_slave,             /* 46: REQ_SET_FLUID */
   mpi_recv_fluid_slave,             /* 47: REQ_GET_FLUID */
+  mpi_local_stress_tensor_slave,    /* 48: REQ_GET_LOCAL_STRESS_TENSOR */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -1274,6 +1278,80 @@ void mpi_gather_stats_slave(int ana_num, int job)
     fprintf(stderr, "%d: INTERNAL ERROR: illegal request %d for REQ_GATHER\n", this_node, job);
     errexit();
   }
+}
+
+/*************** REQ_GET_LOCAL_STRESS_TENSOR ************/
+void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3]) {
+  
+  PTENSOR_TRACE(fprintf(stderr,"%d: mpi_local_stress_tensor: Broadcasting local_stress_tensor parameters\n",this_node));
+
+  int i,j;
+
+  mpi_issue(REQ_GET_LOCAL_STRESS_TENSOR,-1,0);
+
+  DoubleList *TensorInBin_;
+  TensorInBin_ = malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
+  for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {
+    init_doublelist(&TensorInBin_[i]);
+    alloc_doublelist(&TensorInBin_[i],9);
+    for ( j = 0 ; j < 9 ; j++ ) {
+      TensorInBin_[i].e[j] = TensorInBin[i].e[j];
+      TensorInBin[i].e[j] = 0;
+    }
+  }
+  
+  MPI_Bcast(bins, 3, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(periodic, 3, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(range_start, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(range, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  
+  PTENSOR_TRACE(fprintf(stderr,"%d: mpi_local_stress_tensor: Call local_stress_tensor_calc\n",this_node));
+  local_stress_tensor_calc(TensorInBin_, bins, periodic, range_start, range);
+  
+  PTENSOR_TRACE(fprintf(stderr,"%d: mpi_local_stress_tensor: Reduce local stress tensors with MPI_Reduce\n",this_node));
+  for (i=0;i<bins[0]*bins[1]*bins[2];i++) {
+    MPI_Reduce(TensorInBin_[i].e, TensorInBin[i].e, 9, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+  }
+  
+}
+
+void mpi_local_stress_tensor_slave(int ana_num, int job) {
+  int bins[3];
+  int periodic[3];
+  double range_start[3];
+  double range[3];
+  DoubleList *TensorInBin;
+  int i, j;
+
+  MPI_Bcast(bins, 3, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(periodic, 3, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(range_start, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(range, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  
+  TensorInBin = malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
+  for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {
+    init_doublelist(&TensorInBin[i]);
+    alloc_doublelist(&TensorInBin[i],9);
+    for ( j = 0 ; j < 9 ; j++ ) {
+      TensorInBin[i].e[j] = 0.0;
+    }
+  }
+  
+  local_stress_tensor_calc(TensorInBin, bins, periodic, range_start, range);
+
+  for (i=0;i<bins[0]*bins[1]*bins[2];i++) {
+    MPI_Reduce(TensorInBin[i].e, NULL, 9, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    PTENSOR_TRACE(fprintf(stderr,"%d: mpi_local_stress_tensor: Tensor sent in bin %d is {",this_node,i));
+    for (j=0; j<9;j++) {
+      PTENSOR_TRACE(fprintf(stderr,"%f ",TensorInBin[i].e[j]));
+    }
+    PTENSOR_TRACE(fprintf(stderr,"}\n"));
+  }
+
+  for ( i = 0 ; i < bins[0]*bins[1]*bins[2] ; i++ ) {
+    realloc_doublelist(&TensorInBin[i],0);
+  }
+  free(TensorInBin);
 }
 
 /*************** REQ_GETPARTS ************/

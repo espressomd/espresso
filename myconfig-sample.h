@@ -103,6 +103,7 @@
 /* #define STAT_DEBUG */ 
 /* #define POLY_DEBUG */
 /* #define MOLFORCES_DEBUG */
+/* #define PTENSOR_DEBUG*/
 /* #define MEM_DEBUG */
 /* #define MAGGS_DEBUG */
 /* #define LB_DEBUG */

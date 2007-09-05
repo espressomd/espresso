@@ -261,6 +261,9 @@ MDINLINE int imax(int a, int b) { return (a>b) ? a : b; }
 /** Calculates the minimum of 'int'-typed a and b, returning 'int'. */
 MDINLINE int imin(int a, int b) { return (a<b) ? a : b; }
 
+/** Calculates the remainder of a division */
+MDINLINE double drem_down(double a, double b) { return a - floor(a/b)*b; }
+
 /** vector difference */
 MDINLINE void vector_subt(double res[3], double a[3], double b[3])
 {

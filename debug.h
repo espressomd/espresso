@@ -264,6 +264,13 @@ extern int check_id;
 #define MOLFORCES_TRACE(cmd)
 #endif
 
+
+#ifdef PTENSOR_DEBUG
+#define PTENSOR_TRACE(cmd) { cmd; }
+#else
+#define PTENSOR_TRACE(cmd)
+#endif
+
 #ifdef LB_DEBUG
 #define LB_TRACE(cmd) { cmd; }
 #else
