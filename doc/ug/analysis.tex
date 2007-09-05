@@ -332,101 +332,146 @@ Computes the pressure and its contributions in the system. Variant
 \variant{1} returns all the contributions to the total pressure.
 Variant \variant{2} will return the total pressure only.  Variants
 \variant{3}, \variant{4} and \variant{5} return the corresponding
-contributions to the total pressure; in that case only a two-value
-tcl-list is returned, consisting of the requested contribution and its
-square.  
+contributions to the total pressure.
 
 \todo{Document arguments nb_inter, nb_intra, tot_nb_inter and
   tot_nb_intra}
 
-Note that the ideal pressure is derived using the temperature, hence
-for systems with $\var{temp} = 0$ it will be zero; in those cases it
-is preferable to use \codebox{analyze p_IK1} (see
-\vref{analyze:p-IK1}) which looks at the velocities of the particles.
+\todo{Description of how electrostatic contribution to Pressure is calculated}
+
+The pressure is calculated (if there are no electrostatic interactions) by 
+\begin{equation}
+  p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
+\end{equation}
+where $f$ is the number of degrees of freedom of each particle, $V$
+is the volume of the system, $E_{kinetic}$ is the kinetic energy, $F_{ij}$ the force between
+particles i and j, and $r_{ij}$ is the distance between them.  The kinetic energy divided by the
+degrees of freedom is
+\begin{equation}
+\frac{2E_{kinetic}}{f} = \frac{1}{3}\sum_{i} {m_{i}v_{i}^{2}}
+\end {equation}
+when the ROTATION option is turned off and
+\begin{equation}
+\frac{2E_{kinetic}}{f} = \frac{1}{6}\sum_{i}{(m_{i}v_{i}^{2} + I_{i}w_{i}^{2})})
+\end{equation}
+ when the ROTATION option is compiled in.  $I_{i}$ is the moment of inertia of the particle and
+ $w_{i}$ is the angular velocity.
+
+Care should be taken when using constraints of any kind, since these are not accounted for
+in the pressure calculations.
 
 The command is implemented in parallel.
 
 \minisec{Output format (variant \variant{1})}
 
 \begin{code}
-\{ \var{total\_pressure} \var{pressure\_square} 
+\{ \{ pressure \var{total\_pressure} \}
    \{ ideal \var{ideal\_gas\_pressure} \} 
-   \{ \{ \var{bond\_type} \var{pressure} \var{pressure\_square} \}
+   \{ \{ \var{bond\_type} \var{pressure} \}
       \vdots
    \}
-   \{ \{ \var{nonbonded\_type} \var{pressure} \var{pressure\_square} \}
+   \{ \{ \var{nonbonded\_type} \var{pressure} \}
       \vdots
    \}
-   \{ coulomb \var{pressure} \var{pressure\_square}\}
+   \{ coulomb \var{pressure} \}
 \}
 \end{code}
-specifying the pressure, its square, the ideal gas pressure, the
+specifying the pressure, the ideal gas pressure, the
 contributions from bonded interactions, the contributions from
 non-bonded interactions and the electrostatic contributions.
 
 
-\subsection{Pressure tensor}
-\label{analyze:p-IK1}
-\analyzeindex{pressure tensor}
+\subsection{Stress Tensor}
+\label{analyze:stress_tensor}
+\analyzeindex{stress tensor}
 
 \begin{essyntax}
- analyze p_IK1 \var{bin_volume} \var{ind_list} \var{flag_all}
+  \variant{1} analyze stress_tensor
+  \variant{2} analyze stress_tensor total
+  \variant{3} analyze stress_tensor \alt{totals \asep ideal \asep coulomb
+    \asep \\tot_nonbonded_inter \asep tot_nonbonded_intra}
+  \variant{4} analyze stress_tensor bonded \var{bond_type}
+  \variant{5} analyze stress_tensor nonbonded \var{part_type1} \var{part_type2}
+  \variant{6} analyze stress_tensor nonbonded_intra \opt{\var{part_type}}
+  \variant{7} analyze stress_tensor nonbonded_inter \opt{\var{part_type}}
 \end{essyntax}
 
-Computes the pressure-tensor and all its contributions in the system.
- Note that the
-tensorial entries $p^{(k,l)}$ are directly derived from
+Computes the stress tensor of the system.  The various options are equivalent to those described by
+\keyword{analyze pressure} in \vref{analyze:pressure}. It is called a stress tensor but the sign
+convention follows that of a pressure tensor.
 
+The stress tensor is calculated by 
 \begin{equation}
-  p^{(k,l)} = \sum_{j>i\in \var{bin}} F_{ij}^{(k)} \cdot r_{ij}^{(l)}
+  p^{(kl)} = \frac{\sum_{i} {m_{i}v_{i}^{(k)}v_{i}^{(l)}}}{V} + \frac{\sum_{j>i}{F_{ij}^{(k)}r_{ij}^{(l)}}}{V}
 \end{equation}
-where \eg $ F_{ij}^{(k)} $ denotes the $k$th entry of the difference
-vector between the force vectors of particles $i$ and $j$, while the
-ideal pressure is determined from the particles' velocities, \ie
+where the notation is the same as for \keyword{analyze pressure} in \vref{analyze:pressure} and the
+superscripts $k$ and $l$ correspond to the components in the tensors and vectors.  Note that the
+angular velocities of the particles are not included in the calculation of the stress tensor.  This
+means that when the ROTATION option is compiled in the instantaneous pressure calculated with
+\keyword{analyze pressure} will be different from the pressure implied by
+the stress tensor.  However, the time averages should be in agreement.
 
-\begin{equation}
-  p^{(k,l)}_{\var{ideal}} = \sum_{i\in \var{bin}} v_{i}^{(k)} \cdot
-  v_{i}^{(l)}
-\end{equation}
-contrary to \keyword{analyze pressure ideal} which uses the
-temperature. In both cases, the sum is taken over only those particles
-whose identities have been provided in \var{ind_list} if
-\var{flag_all}=0, otherwise $i$ loops over \var{ind_list} while $j$
-represents all particles in the system. Since this command is intended
-to follow the Kirkwood-scheme IK1, all particles given in
-\var{ind_list} should represent a bin geometry with volume
-\var{bin_volume} for the algorithm to make sense, although this is not
-checked; hence it is preferable to obtain \var{ind_list} from
-\keyword{analyze bins}.
+If the P3M and MMM1D electostatic methods are used, these interactions are not included in the
+stress tensor.  The DH and RF methods, in contrast, are included.
 
-This command is executed on the master node only, hence a higher
-number of nodes only slows it down due to the increasing amount of
-communication processes required between the nodes to gather all
-needed particle information. Furthermore, all interactions including
-electrostatic ones are treated with the virial ansatz given above,
-which makes non-periodic systems highly recommendable, and which slows
-electrostatic systems down due to the long-range interactions.
+Care should be taken when using constraints of any kind, since these are not accounted for
+in the stress tensor calculations.
 
-\minisec{Output format}
+The command is implemented in parallel.
+
+\minisec{Output format (variant \variant{1})}
 
 \begin{code}
-\{ \var{total\_pressure} \var{pressure\_square}
-   \{ total \var{pxx} \var{pxy} \var{pxz} \var{pyx} \dots \} 
-   \{ ideal \var{pxx} \var{pxy} \var{pxz} \var{pyx} \dots \} 
-   \{ bonded \var{pxx} \var{pxy} \var{pxz} \var{pyx} \dots \} 
-     \{ \var{bond\_type} \var{pxx} \var{pxy} \var{pxz} \var{pyx} \dots \}
-     \vdots
+\{ \{ pressure \var{total\_pressure\_tensor} \}
+   \{ ideal \var{ideal\_gas\_pressure\_tensor} \} 
+   \{ \{ \var{bond\_type} \var{pressure\_tensor} \}
+      \vdots
    \}
-   \{ nonbonded \var{pxx} \var{pxy} \var{pxz} \var{pyx} \dots \}
+   \{ \{ \var{nonbonded\_type} \var{pressure\_tensor} \}
+      \vdots
+   \}
+   \{ coulomb \var{pressure\_tensor} \}
 \}
 \end{code}
+specifying the pressure tensor, the ideal gas pressure tensor, the
+contributions from bonded interactions, the contributions from
+non-bonded interactions and the electrostatic contributions.
 
-specifying the pressure, its square, its tensorial form, and the
-tensorial form of its components ideal, bonded, nonbonded, coulombic
-pressure (if applicable); the bonded component is further split up
-into its different contributions (FENE, ANGLE, HARMONIC) sorted
-according to the interaction type number specified by the
-\keyword{inter} command (see section \vref{tcl:inter}).
+\subsection{Local Stress Tensor}
+\label{analyze:local_stress_tensor}
+\analyzeindex{local stress tensor}
+
+\begin{essyntex}
+  analyze local_stress_tensor \var{periodic_x} \var{periodic_y} \var{periodic_z} \var{range_start_x} \var{range_start_y} \var{range_start_z} \var{range_x} \var{range_y} \var{range_z}  \var{bins_x} \var{bins_y} \var{bins_z}
+\end{essyntax}
+
+Computes local stress tensors in the system.  A cuboid is defined starting at the coordinate
+(\var{range_start_x},\var{range_start_y},\var{range_start_z}) and going to the coordinate
+(\var{range_start_x}+\var{range_x}, \var{range_start_y}+\var{range_y},
+\var{range_start_z}+\var{range_z}).  This cuboid in divided into \var{bins_x} bins in the x
+direction, \var{bins_y} bins in the y direction and \var{bins_z} bins in the z direction such that
+the total number of bins is \var{bins_x}*\var{bins_y}*\var{bins_z}.  For each of these bins a stress
+tensor is calculated using the Irving Kirkwood method.  That is, a given interaction contributes
+towards the stress tensor in a bin proportional to the fraction of the line connecting the two
+particles that is within the bin.
+
+If the P3M and MMM1D electostatic methods are used, these interactions are not included in the
+local stress tensor.  The DH and RF methods, in contrast, are included.
+
+Care should be taken when using constraints of any kind, since these are not accounted for
+in the local stress tensor calculations.
+
+The command is implemented in parallel.
+
+\minisec{Output format (variant \variant{1})}
+
+\begin{code}
+\{ \{ LocalStressTensor \}
+   \{ \{ \var{x_bin} \var{y_bin} \var{z_bin} \} \{ \var{pressure\_tensor} \} \}
+      \vdots
+\}
+\end{code}
+specifying the local pressure tensor in each bin.
 
 \section{Topologies}
 \analyzeindex{topologies}
