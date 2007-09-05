@@ -1570,10 +1570,13 @@ int parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv)
   PTENSOR_TRACE(fprintf(stderr,"%d: parse_local_stress_tensor: finished mpi_local_stress_tensor \n",this_node));
 
   /* Write stress profile to Tcl export */
-  Tcl_AppendResult(interp, "{ LocalStressTensor } {", (char *)NULL);
+  Tcl_AppendResult(interp, "{ LocalStressTensor } ", (char *)NULL);
   for ( i = 0 ; i < bins[0] ; i++) {
     for ( j = 0 ; j < bins[1] ; j++) {
       for ( k = 0 ; k < bins[2] ; k++) {
+	Tcl_AppendResult(interp, " { ", (char *)NULL);
+	sprintf(buffer," { %d %d %d } ",i,j,k);
+	Tcl_AppendResult(interp,buffer, (char *)NULL);
 	Tcl_AppendResult(interp, " { ", (char *)NULL);
 	for ( l = 0 ; l < 9 ; l++) {
 	  Tcl_PrintDouble(interp,TensorInBin[i*bins[1]*bins[2]+j*bins[2]+k].e[l],buffer);
@@ -1581,10 +1584,10 @@ int parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv)
 	  Tcl_AppendResult(interp, " ", (char *)NULL);
 	}
 	Tcl_AppendResult(interp, " } ", (char *)NULL);
+	Tcl_AppendResult(interp, " } ", (char *)NULL);
       }
     }
   }
-  Tcl_AppendResult(interp, " } ", (char *)NULL);
   
   /* Free memory */
   for ( i = 0 ; i < bins[0]*bins[1]*bins[2] ; i++ ) {

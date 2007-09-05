@@ -168,17 +168,17 @@ if { [catch {
     set local_p_tensor_sum3 0
     set local_p_tensor_sum4 0
 
-    for {set i 0} {$i < [expr [lindex $bins1 0]*[lindex $bins1 1]*[lindex $bins1 2]]} {incr i} {
-	set local_p_tensor_sum1 [expr $local_p_tensor_sum1+([lindex $local_p_tensor1 1 $i 0] + [lindex $local_p_tensor1 1 $i 4] + [lindex $local_p_tensor1 1 $i 8])*$volume1/[lindex $bins1 0]/[lindex $bins1 1]/[lindex $bins1 2]]
+    for {set i 1} {$i < [expr [lindex $bins1 0]*[lindex $bins1 1]*[lindex $bins1 2]+1]} {incr i} {
+	set local_p_tensor_sum1 [expr $local_p_tensor_sum1+([lindex $local_p_tensor1 $i 1 0] + [lindex $local_p_tensor1 $i 1 4] + [lindex $local_p_tensor1 $i 1 8])*$volume1/[lindex $bins1 0]/[lindex $bins1 1]/[lindex $bins1 2]]
     }
-    for {set i 0} {$i < [expr [lindex $bins2 0]*[lindex $bins2 1]*[lindex $bins2 2]]} {incr i} {
-	set local_p_tensor_sum2 [expr $local_p_tensor_sum2+([lindex $local_p_tensor2 1 $i 0] + [lindex $local_p_tensor2 1 $i 4] + [lindex $local_p_tensor2 1 $i 8])*$volume2/[lindex $bins2 0]/[lindex $bins2 1]/[lindex $bins2 2]]
+    for {set i 1} {$i < [expr [lindex $bins2 0]*[lindex $bins2 1]*[lindex $bins2 2]+1]} {incr i} {
+	set local_p_tensor_sum2 [expr $local_p_tensor_sum2+([lindex $local_p_tensor2 $i 1 0] + [lindex $local_p_tensor2 $i 1 4] + [lindex $local_p_tensor2 $i 1 8])*$volume2/[lindex $bins2 0]/[lindex $bins2 1]/[lindex $bins2 2]]
     }
-    for {set i 0} {$i < [expr [lindex $bins3 0]*[lindex $bins3 1]*[lindex $bins3 2]]} {incr i} {
-	set local_p_tensor_sum3 [expr $local_p_tensor_sum3+([lindex $local_p_tensor3 1 $i 0] + [lindex $local_p_tensor3 1 $i 4] + [lindex $local_p_tensor3 1 $i 8])*$volume3/[lindex $bins3 0]/[lindex $bins3 1]/[lindex $bins3 2]]
+    for {set i 1} {$i < [expr [lindex $bins3 0]*[lindex $bins3 1]*[lindex $bins3 2]+1]} {incr i} {
+	set local_p_tensor_sum3 [expr $local_p_tensor_sum3+([lindex $local_p_tensor3 $i 1 0] + [lindex $local_p_tensor3 $i 1 4] + [lindex $local_p_tensor3 $i 1 8])*$volume3/[lindex $bins3 0]/[lindex $bins3 1]/[lindex $bins3 2]]
     }
-    for {set i 0} {$i < [expr [lindex $bins4 0]*[lindex $bins4 1]*[lindex $bins4 2]]} {incr i} {
-	set local_p_tensor_sum4 [expr $local_p_tensor_sum4+([lindex $local_p_tensor4 1 $i 0] + [lindex $local_p_tensor4 1 $i 4] + [lindex $local_p_tensor4 1 $i 8])*$volume4/[lindex $bins4 0]/[lindex $bins4 1]/[lindex $bins4 2]]
+    for {set i 1} {$i < [expr [lindex $bins4 0]*[lindex $bins4 1]*[lindex $bins4 2]+1]} {incr i} {
+	set local_p_tensor_sum4 [expr $local_p_tensor_sum4+([lindex $local_p_tensor4 $i 1 0] + [lindex $local_p_tensor4 $i 1 4] + [lindex $local_p_tensor4 $i 1 8])*$volume4/[lindex $bins4 0]/[lindex $bins4 1]/[lindex $bins4 2]]
     }
     set local_p_tensor_sum [expr $local_p_tensor_sum1 + $local_p_tensor_sum2 + $local_p_tensor_sum3 + $local_p_tensor_sum4]
     set local_p_tensor_total [expr $local_p_tensor_sum/3/[lindex $box_l 0]/[lindex $box_l 1]/[lindex $box_l 2]]
