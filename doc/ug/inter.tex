@@ -3,19 +3,30 @@
 \newescommand{inter}
 \index{interactions|mainindex}
 
-In \es, interactions are setup by the inter command. There are mainly two types
-of interactions: non-bonded and bonded interactions. Non-bonded interactions
-only depend on the type of the two involved particles. This also applies to the
-electrostatic interaction; however, due to its long-ranged nature, it requires
-special care and \es{} handles it separately with a number of state of the art
-algorithms. The particle type and the charge are both defined using the {\tt
-  part} command.
+\begin{essyntax}
+  inter
+\end{essyntax}
+
+In \es, interactions are setup and investigated by the inter command. There are
+mainly two types of interactions: non-bonded and bonded interactions. Non-bonded
+interactions only depend on the type of the two involved particles. This also
+applies to the electrostatic interaction; however, due to its long-ranged
+nature, it requires special care and \es{} handles it separately with a number
+of state of the art algorithms. The particle type and the charge are both
+defined using the {\tt part} command.
 
 A bonded interaction defines an interaction between a number of particles; it
 however only applies to sets of particles for which it has been explicitely set.
 A bonded interaction between a set of particles has to be specified explicitely
 by the {\tt part bond} command, while the inter command is used to define the
 interaction parameters.
+
+Without any arguments, {\tt inter} returns a list of all defined interactions as a
+Tcl-list. The format of each entry corresponds to the syntax described below,
+\eg
+\begin{tclcode}
+  {0 0 lennard-jones 1.0 2.0 1.1225 0.0 0.0} {0 FENE 7.0 2.0} {1 angle 1.0}
+\end{tclcode}
 
 \section{Non-bonded, short-ranged interactions}
 \label{sec:inter-nb}
@@ -74,7 +85,8 @@ types \var{type1} and \var{type2}.  The potential is defined by
 \end{equation}
 The first form of the command specifies the traditional Lennard--Jones potential
 with exponents $e_1=12$ and $e_2=6$, the second form allows to choose arbitrary
-exponents.
+exponents. Both forms allow capping the force using {\tt inter ljforcecap},
+see section~\ref{sec:forcecap}.
 
 The traditional Lennard--Jones potential is the ``work--horse'' potential for
 particle--particle interactions in coarse--grained simulations. It is a simple
@@ -92,57 +104,102 @@ A special case of the Lennard--Jones potential is the Weeks--Chandler--Andersen
 choosing $r_\text{\var{cut}}=\sqrt[6]{2}$ and $c_\text{\var{shift}}=1/4$. The WCA
 potential is purely repulsive, and is often used to mimick hard sphere repulsion.
 
-\subsection{Soft-sphere interaction}
-\index{soft-sphere interaction|mainindex}
-\index{interactions!soft-sphere|mainindex}
-\begin{essyntax}
-  inter \var{type1} \var{type2}
-  soft-sphere \var{a} \var{n} \var{cut} \var{offset}
-\end{essyntax}
-\todo{Docs missing.}
-
 \subsection{Lennard-Jones cosine interaction}
-\index{Lennard-Jones cosine interactions|mainindex}
+\index{Lennard-Jones cosine interaction|mainindex}
 \index{interactions!Lennard-Jones cosine|mainindex}
 \begin{essyntax}
   \variant{1}
   inter \var{type1} \var{type2} lj-cos
-  \var{epsilon} \var{sigma} \var{cutoff} \var{offset}
+  \var{$\epsilon$} \var{$\sigma$}
+  \var{$r_\text{cut}$} \var{$r_\text{off}$}
   \variant{2}
   inter \var{type1} \var{type2} lj-cos2
-  \var{epsilon} \var{sigma} \var{offset} \var{$\omega$}
+  \var{$\epsilon$} \var{$\sigma$} 
+  \var{$r_\text{off}$} \var{$\omega$}
+  \begin{features}
+    LENNARD_JONES
+  \end{features}
 \end{essyntax}
-The Lennard-Jones+Cosine potential
-\todo{Create bibtex reference}
-(Soddemann et. al. Eur. Phys. J. E. 6, 409-419 (2001))
+specifies a Lennard-Jones interaction with cosine tail~\cite{soddeman01a} between
+particles of the types \var{type1} and \var{type2}. The first variant behaves as
+follows: Until the minimum of the Lennard-Jones potential at \var{$r_\text{min}
+  = r_\text{off} + 2^{\frac{1}{6}}\sigma$}, it behaves identical to the
+unshifted Lennard-Jones potential (\var{$c_\text{shift}=0$}).  Between
+\var{$r_\text{min}$} and \var{$r_\text{cut}$}, a cosine is used to smoothly
+connect the potential to 0, \ie
+\begin{equation}
+  V(r)=\frac{1}{2}\epsilon\left(cos\left[\alpha(r-r_\text{\var{off}})^2 + \beta\right]-1\right),
+\end{equation}
+where
+\var{$\alpha = \pi\left[(r_\text{cut}-r_\text{off})^2-(r_\text{min}-r_\text{off})^2\right]^{-1}$}
+and
+\var{$\beta = \pi - \left(r_\text{min}-r_\text{off}\right)^2\alpha$}.
 
-\todo{Equations}
+In the second variant, the cutoff radius is $r_\text{cut}=r_\text{\var{min}} +
+\omega$, and the potential between $r_\text{min}$ and $r_\text{cut}$ is given by
+\begin{equation}
+  V(r)=\epsilon\cos^2\left[\frac{\pi}{2\omega}(r - r_\text{min})\right].
+\end{equation}
 
-Variant \variant{1}: for $r < r_{min} = offset * 2^{\frac{1}{6}} *
-\sigma$ :
-\begin{center}
-$4\varepsilon((\frac{\sigma}{r-offset})^{12}-(\frac{\sigma}{r-offset})^6)$
-\end{center}
-for $cutoff > r > r_{min} = offset * 2^{\frac{1}{6}} * \sigma$ :
-\begin{center}
-$\frac{1}{2}\varepsilon(cos(\alpha(r-offset)^2 + \beta)-1)$
-\end{center}
-where $\alpha$ and $\beta$ are given by:
+Only the second variant allows capping the force using {\tt inter ljforcecap},
+see section~\ref{sec:forcecap}.
 
-$\alpha = \frac{\pi}{(cutoff-offset)^2-(r_{min}-offset)^2}$
+\subsection{Smooth step interaction}
+\index{smooth-step interaction|mainindex}
+\index{interactions!smooth-step|mainindex}
+\begin{essyntax}
+  inter \var{type1} \var{type2}
+  smooth-step \var{$\sigma_1$} \var{$n$} \var{$\epsilon$} \var{$k_0$}
+  \var{$\sigma_2$} \var{$r_\text{cut}$}
+\end{essyntax}
+This defines a smooth step interaction between particles of the
+types \var{type1} and \var{type2}, for which the potential is
+\begin{equation}
+  V(r)= \left(\sigma_1/d\right)^n + \epsilon/(1 + \exp\left[2k_0 (r - \sigma_2)\right])
+\end{equation}
+for $r<r_\text{\var{cut}}$, and $V(r)=0$ elsewhere. With $n$ around 10, the
+first term creates a short range repulsion similar to the Lennard-Jones
+potential, while the second term provides a much softer repulsion. This
+potential therefore introduces two length scales, the range of the first term,
+$\sigma_1$, and the range of the second one, $\sigma_2$, where in general
+$\sigma_1<\sigma_2$.
 
-$\beta = \pi * (1 -
-\frac{(r_{min}-offset)^2}{(cutoff-offset)^2-(r_{min}-offset)^2})$
+\subsection{BMHTF potential}
+\index{BMHTF interaction|mainindex}
+\index{interactions!BMHTF|mainindex}
+\begin{essyntax}
+  inter \var{type1} \var{type2}
+  bmhtf-nacl \var{A} \var{B} \var{C} \var{D} \var{$\sigma$} \var{$r_\text{cut}$}
+\end{essyntax}
+This defines an interaction with the {\em short-ranged part} of the
+Born-Meyer-Huggins-Tosi-Fumi potential between particles of the types
+\var{type1} and \var{type2}, which is often used to simulate NaCl crystals. The
+potential is as follows:
+\begin{equation}
+  V(r)= A\exp\left[B(\sigma - r)\right] -
+  C r^{-6} - D r^{-8} + \epsilon_\text{shift},
+\end{equation}
+where $\epsilon_\text{shift}$ is chosen such that $V(r_\text{cut})=0$. For
+\var{$r\ge r_\text{cut}$}, the $V(r)=0$.
 
-Variant \variant{2}:
-for $r < r_{change} = offset * 2^{\frac{1}{6}} * \sigma$ :
-\begin{center}
-$4 \varepsilon((\frac{\sigma}{r-offset})^{12}-(\frac{\sigma}{r-offset})^6)$
-\end{center}
-for $cutoff = offset * 2^{\frac{1}{6}} * \sigma + \omega > r > r_{change}$:
-\begin{center}
-$\varepsilon * cos^2(\frac{\pi * (r - r_{change})}{2 * \omega})$
-\end{center}
+For NaCl, the parameters should be chosen as follows:\\[.5em]
+{\centering
+  \begin{tabular}{r|l|l|l|l|l}
+    types & $A [kJ/mol] $ & $B [\AA^{-1}]$ &
+    $C [\AA^6 kJ/mol]$ & $D [\AA^8 kJ/mol]$ & $\sigma [\AA]$ \\
+    \hline
+    Na-Na & 25.4435 & 3.1546 &  101.1719 &    48.1771 & 2.34 \\
+    Na-Cl & 20.3548 & 3.1546 &  674.4793 &   837.0770 & 2.755 \\
+    Cl-Cl & 15.2661 & 3.1546 & 6985.6786 & 14031.5785 & 3.170 \\
+  \end{tabular}
+}\\[.5em]
+The cutoff can be chosen relatively freely because the potential decays
+fast; a value around 10 seems reasonable.
+
+In addition to this short ranged interaction, one needs to add a Coulombic,
+long--ranged part. If one uses elementary charges, \ie a charge of $q=+1$ for
+the Na--particles, and $q=-1$ for the Cl--particles, the corresponding prefactor
+of the Coulomb interaction is $\approx 1389.3549 \AA\,kJ/mol$.
 
 \subsection{Morse interaction}
 \index{Morse interaction|mainindex}
@@ -150,9 +207,23 @@ $\varepsilon * cos^2(\frac{\pi * (r - r_{change})}{2 * \omega})$
 
 \begin{essyntax}
   inter \var{type1} \var{type2} morse
-  \var{epsilon} \var{alpha} \var{rmin} \var{cut}
+  \var{$\epsilon$} \var{$\alpha$} \var{$r_\text{min}$} \var{$r_\text{cut}$}
 \end{essyntax}
-\todo{Docs}
+This defines an interaction using the Morse potential between particles of the
+types \var{type1} and \var{type2}. It serves similar purposes as the
+Lennard-Jones potential, but has a deeper minimum, around which it is harmonic.
+This models the potential energy in a diatomic molecule.  This potential allows
+capping the force using {\tt inter morseforcecap}, see
+section~\ref{sec:forcecap}.
+
+For \var{$r < r_\text{cut}$}, this potential is given by
+\begin{equation}
+  V(r)=\epsilon\left(\exp\left[-2 \alpha \left(r - r_\text{min}\right)\right]
+    - 2\exp\left[-\alpha\left(r - r_\text{min}\right)\right]\right) -
+  \epsilon_\text{shift},
+\end{equation}
+where \var{$\epsilon_\text{shift}$} is again chosen such that
+$V(r_\text{\var{cut}})=0$. For \var{$r\ge r_\text{cut}$}, the $V(r)=0$.
 
 \subsection{Buckingham interaction}
 \index{Buckingham interaction|mainindex}
@@ -161,9 +232,99 @@ $\varepsilon * cos^2(\frac{\pi * (r - r_{change})}{2 * \omega})$
 \begin{essyntax}
   inter \var{type1} \var{type2} buckingham
   \var{A} \var{B} \var{C} \var{D}
-  \var{cut} \var{discontinuity} \var{shift}
+  \var{$r_\text{cut}$} \var{$r_\text{discont}$} \var{$\epsilon_\text{shift}$}
 \end{essyntax}
-\todo{Docs}
+This defines a Buckingham interaction between particles of the types
+\var{type1} and \var{type2}, for which the potential is given by
+\begin{equation}
+  V(r)= A\exp(-B r) - Cr^{-6} - Dr^{-4} + \epsilon_\text{\var{shift}}
+\end{equation}
+for \var{$r_\text{discont} < r < r_\text{cut}$}. Below \var{$r_\text{discont}$},
+the potential is linearly continued towards $r=0$, similarly to force capping,
+see below. Above \var{$r=r_\text{cut}$}, the potential is 0. This potential
+allows capping the force using {\tt inter buckforcecap}, see
+section~\ref{sec:forcecap}.
+
+\subsection{Soft-sphere interaction}
+\index{soft-sphere interaction|mainindex}
+\index{interactions!soft-sphere|mainindex}
+
+\begin{essyntax}
+  inter \var{type1} \var{type2}
+  soft-sphere \var{a} \var{n} \var{$r_\text{cut}$} \var{$r_\text{offset}$}
+\end{essyntax}
+This defines a soft sphere interaction between particles of the types
+\var{type1} and \var{type2}, which is defined by a single power law:
+\begin{equation}
+  V(r)=a\left(r-r_\text{\var{offset}}\right)^{-n}
+\end{equation}
+for $r<r_\text{\var{cut}}$, and $V(r)=0$ above. There is no shift implemented
+currently, which means that the potential is discontinuous at
+$r=r_\text{\var{cut}}$. Therefore energy calculations should be used with great
+caution.
+
+\subsection{Gay-Berne interaction}
+\index{Gay-Berne interaction|mainindex}
+\index{interactions!Gay-Berne|mainindex}
+
+\begin{essyntax}
+  inter \var{type1} \var{type2} gay-berne
+  \var{$\epsilon_0$} \var{$\sigma_0$} \var{$r_\text{cutoff}$}
+  \var{k1} \var{k2} \var{$\mu$} \var{$\nu$}
+\end{essyntax}
+This defines a Gay-Berne potential for prolate and oblate particles between
+particles of the types \var{type1} and \var{type2}. The Gay-Berne potential is
+an anisotropic version of the classic Lennard-Jones potential, with
+orientational dependence of the range $\sigma$ and the well-depth $\epsilon$.
+
+Assume two particles with orientations given by the unit vectors
+$\mathbf{\hat{u}}_i$ and $\mathbf{\hat{u}}_j$ and intermolecular vector
+$\mathbf{r} = r\mathbf{\hat{r}}$. If $r<r_\text{\var{cut}}$, then the
+interaction between these two particles is given by
+\begin{equation}
+  V(\mathbf{r}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j) = 4
+  \epsilon(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i,
+  \mathbf{\hat{u}}_j) \left( \tilde{r}_{ij}^{-12}-\tilde{r}_{ij}^{-6}
+  \right),
+\end{equation}
+otherwise $V(r)=0$. The reduced radius is
+\begin{equation}
+  \tilde{r}=\frac{r - \sigma(\mathbf{\hat{r}},
+    \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)+\sigma_0}{\sigma_0},
+\end{equation}
+\begin{equation}
+  \sigma( \mathbf{\hat{r}}, \mathbf{\hat{u}}_i,
+  \mathbf{\hat{u}}_j) = \sigma_{0} \left\{ 1 - \frac{1}{2} \chi \left[
+      \frac{ \left( \mathbf{\hat{r}} \cdot \mathbf{\hat{u}}_i +
+          \mathbf{\hat{r}} \cdot \mathbf{\hat{u}}_j \right)^{2} }
+      {1 + \chi \mathbf{\hat{u}}_i \cdot \mathbf{\hat{u}}_j } +
+      \frac{ \left( \mathbf{\hat{r}} \cdot \mathbf{\hat{u}}_i -
+          \mathbf{\hat{r}} \cdot \mathbf{\hat{u}}_j \right)^{2} }
+      {1 - \chi \mathbf{\hat{u}}_i \cdot \mathbf{\hat{u}}_j}
+    \right] \right\}^{-\frac{1}{2}}
+\end{equation}
+and
+\begin{multline}
+  \epsilon(\mathbf{\hat{r}}, \mathbf{\hat{u}}_i,
+  \mathbf{\hat{u}}_j) = \\
+  \epsilon_0 \left( 1- \chi^{2}(\mathbf{\hat{u}}_i
+    \cdot \mathbf{\hat{u}}_j) \right)^{-\frac {\nu}{2}} \left[1-\frac
+    {\chi'}{2} \left( \frac { (\mathbf{\hat{r}} \cdot
+        \mathbf{\hat{u}}_i+ \mathbf{\hat{r}} \cdot
+        \mathbf{\hat{u}}_j)^{2}} {1+\chi' \, \mathbf{\hat{u}}_i \cdot
+        \mathbf{\hat{u}}_j }+ \frac {(\mathbf{\hat{r}} \cdot
+        \mathbf{\hat{u}}_i-\mathbf{\hat{r}} \cdot
+        \mathbf{\hat{u}}_j)^{2}} {1-\chi' \, \mathbf{\hat{u}}_i \cdot
+        \mathbf{\hat{u}}_j } \right) \right]^{\mu}.
+\end{multline}
+The parameters $\chi = \left(k_1^{2} - 1\right)/\left(k_1^{2} + 1\right)$ and
+$\chi' = \left(k_2^{1/\mu} - 1\right)/\left(k_2^{1/\mu} + 1\right)$ are
+responsible for the degree of anisotropy of the molecular properties.
+\var{$k_1$} is the molecular elongation, and \var{$k_2$} is the ratio of the
+potential well depths for the side-by-side and end-to-end configurations.  The
+exponents $ \mu $ and $ \nu $ are adjustable parameters of the potential.
+Several Gay-Berne parametrizations exist, the original one being $k_1 = 3$,
+$k_2 = 5$, $\mu = 2$ and $\nu = 1$.
 
 \subsection{Tabulated interaction}
 \index{tabulated interaction|mainindex}
@@ -215,76 +376,23 @@ force: $-\frac{U'(r)}{r}$
 
 energy: $U(r)$
 
-\subsection{Gay-Berne interaction}
-\index{Gay-Berne interaction|mainindex}
-\index{interactions!Gay-Berne|mainindex}
-
-\begin{essyntax}
-  inter \var{type1} \var{type2} gay-berne
-  \var{epsilon} \var{sigma} \var{cutoff}
-  \var{k1} \var{k2} \var{mu} \var{nu}
-\end{essyntax}
-
-The Gay-Berne potential for prolate and oblate particles. The
-Gay-Berne potential is an anisotropic version of the classic
-Lennard-Jones potential, with orientational dependence in the range
-and well-depth functions $\sigma$ and $\epsilon$:
-
-\todo{Typeset formulas}
-\[ U(\mathbf{r}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j) = 4
-\epsilon(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i,
-\mathbf{\hat{u}}_j) \left[ \left(\frac
-    {\sigma_0}{\mathbf{r}_{ij}-\sigma(\mathbf{\hat{r}}_{ij},
-      \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)+\sigma_0}\right)^{12}-
-  \left(\frac {\sigma_0}{\mathbf{r}_{ij}-\sigma(\mathbf{\hat{r}}_{ij},
-      \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)+\sigma_0}\right)^{6}
-\right] \]
-
-where
-
-\[ \sigma( \mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i,
-\mathbf{\hat{u}}_j) = \sigma_{0} \left\{ 1 - \frac{1}{2} \chi \left[
-    \frac{ \left( \mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_i +
-        \mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_j \right)^{2} }
-    {1 + \chi \left( \mathbf{\hat{u}}_i.\mathbf{\hat{u}}_j \right) } +
-    \frac{ \left( \mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_i -
-        \mathbf{\hat{r}}_{ij} \cdot \mathbf{\hat{u}}_j \right)^{2} }
-    {1 - \chi \left( \mathbf{\hat{u}}_i \cdot \mathbf{\hat{u}}_j
-      \right) } \right] \right\}^{-\frac{1}{2}} \]
-
-and
-
-\[ \epsilon(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i,
-\mathbf{\hat{u}}_j) = \epsilon_0 \left( 1- \chi^{2}(\mathbf{\hat{u}}_i
-  \cdot \mathbf{\hat{u}}_j) \right)^{-\frac {\nu}{2}} \left[1-\frac
-  {\chi'}{2} \left( \frac { (\mathbf{\hat{r}}_{ij} \cdot
-      \mathbf{\hat{u}}_i+ \mathbf{\hat{r}}_{ij} \cdot
-      \mathbf{\hat{u}}_j)^{2}} {1+\chi' \, \mathbf{\hat{u}}_i \cdot
-      \mathbf{\hat{u}}_j }+ \frac {(\mathbf{\hat{r}}_{ij} \cdot
-      \mathbf{\hat{u}}_i-\mathbf{\hat{r}}_{ij} \cdot
-      \mathbf{\hat{u}}_j)^{2}} {1-\chi' \, \mathbf{\hat{u}}_i \cdot
-      \mathbf{\hat{u}}_j } \right) \right]^{\mu} \]
-
-re unit vectors $ \mathbf{\hat{u}}_i $ and $ \mathbf{\hat{u}}_j $ give
-the orientation of the two particles and vector $ \mathbf{r}_{ij} =
-r_{ij} \mathbf{\hat{r}}_{ij} $ is the intermolecular vector.
-
-The parameters $ \chi = \frac{k_1^{2} - 1}{k_1^{2} + 1 } $ and $ \chi'
-= \frac{k_2^{1/\mu} - 1}{k_2^{1/\mu} + 1 } $ are responsible for the
-degree of anisotropy of the molecular properties. $ k_1 $ is the
-molecular elongation, and $ k_2 $ is the ratio of the potential well
-depths for the side-by-side and end-to-end configurations. Exponents $
-\mu $ and $ \nu $ are adjastable parameters of the potential. There
-are several Gay-Berne paremeterizations exist; the original one being
-$ k_1 = 3 $, $ k_1 = 5 $, $ \mu = 2 $ and $ \nu = 1 $.
-
 \subsection{Capping the force during warmup}
+\label{sec:forcecap}
 
 \begin{essyntax}
   inter ljforcecap \var{maxforce}
 \end{essyntax}
 
 \todo{For which potentials does it work?}
+
+Non-bonded interactions are often used to model the hard core repulsion between
+particles. Many of the following potentials are therefore singular at zero
+distance. This is not a problem during the simulation, as particles will simply not
+overlap, but my cause a problem during the equilibration of the system.
+
+lj_forcecap: LJ, LJ generic and ljcos2
+
+
 This command will cap the force to \var{maxforce}, \ie for particle
 distances which would lead to larger forces than \var{maxforce} the
 Lennard-Jones potential is replaced by \var{$r*maxforce$}. Particles
@@ -717,20 +825,6 @@ applied force on the bundle and on the target molecule the same. A
 force of magnitude \var{comforce_force} is applied on t2 particles,
 and a force of magnitude (\var{comforce_force} *
 \var{comforce_fratio}) is applied on t1 particles.
-
-\section{Getting the currently defined  interactions}
-\begin{essyntax}
-  inter
-\end{essyntax}
-Returns a list of all bonded and non-bonded interactions as a
-Tcl-list, in the same formats as above, \eg
-
-\begin{tclcode}
-{0 0 lennard-jones 1.0 2.0 1.1225 0.0 0.0} {0 FENE 7.0 2.0} {1 angle
- 1.0}
-\end{tclcode}
-
-
 
 %%% Local Variables:
 %%% mode: latex
