@@ -46,7 +46,7 @@ proc rewrite {in out} {
 	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -cd $source" r]
 	} else { set f [open "$source" "r"] }
 	while { [blockfile $f read auto] != "eof" } {}
-	puts -nonewline "."; flush stdout; close $f
+	puts -nonewline "."; flush stdout;  if { [catch { close $f } fid] } { puts "Error while closing $file caught: $fid." }
 
 	analyze set chains 0 20 30; set observables ""; set listables ""
 	set mindist1 [analyze mindist]; set mindist2 [analyze mindist 0 0]; lappend observables $mindist1 $mindist2
@@ -124,88 +124,120 @@ if { [catch {
 	    error "relative error $rel_error too large upon evaluating '$get_obs'  ([eval $get_obs] / $obs)"
 	}
     }
-    
-    # Checking p_IK1 stress tensor calculation
-    if { [setmd n_nodes]==1 || $slow==1 } {
-	# since 'analyze p_IK1' is effectively running on the master node only, it will be really slow for >1 nodes;
-	# hence it is not really necessary to check it there - but if you like, set 'slow' to 1
-	for { set i 0 } { $i < [setmd n_part] } { incr i } { lappend plist $i }
-	set p_IK1_full [analyze p_IK1 $volume $plist 0];
-	set total [lindex $p_IK1_full 0]
-	set ideal [lindex $p_IK1_full 1]
-	set fene  [lindex $p_IK1_full 2]
-	set lj    [lindex $p_IK1_full 3]
-        set p_IKT 0; set p_IKI 0; set p_IKF 0; set p_IKJ 0
-	for {set i 0} {$i < 3} {incr i} {
-	    set p_IKT [expr $p_IKT + [lindex $total [expr 1 + 4*$i]]]
-	    set p_IKI [expr $p_IKI + [lindex $ideal [expr 1 + 4*$i]]]
-	    set p_IKF [expr $p_IKF + [lindex $fene  [expr 2 + 4*$i]]]
-	    set p_IKJ [expr $p_IKJ + [lindex $lj    [expr 3 + 4*$i]]]
-	}
-        set p_tot [analyze pressure total]; set p_IK1 $p_IKT; set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure total': $rel_error  ($p_tot / $p_IK1)"
-	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-        set p_tot [analyze pressure ideal]; set p_IK1 $p_IKI; set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure ideal': $rel_error  ($p_tot / $p_IK1)"
-	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-        set p_tot [analyze pressure bonded 0]; set p_IK1 $p_IKF; set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure bonded 0': $rel_error  ($p_tot / $p_IK1)"
-	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-        set p_tot [analyze pressure nonbonded 0 0]; set p_IK1 $p_IKJ; set rel_error [expr abs(($p_IK1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze p_IK1' to 'analyze pressure nonbonded 0 0': $rel_error  ($p_tot / $p_IK1)"
-	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-    }
 
-    # Checking stress_tensor calculation
+    # Checking stress_tensor and local_stress_tensor calculations
+    # the pressure and the stress_tensor may give different answers when the ROTATION option is activated
     # 'analyze stress_tensor' should effectively running on any node
-    #if { [setmd n_nodes]==1 || $slow==1 } {
-	for { set i 0 } { $i < [setmd n_part] } { incr i } { lappend plist $i }
-	set p_tensor_full [analyze stress_tensor];
-	set total [lindex $p_tensor_full 0]
-	set ideal [lindex $p_tensor_full 1]
-	set fene  [lindex $p_tensor_full 2]
-	set lj    [lindex $p_tensor_full 3]
-	set nb_tintra    [lindex $p_tensor_full 4]
-	set nb_tinter    [lindex $p_tensor_full 5]
-	set nb_intra    [lindex $p_tensor_full 6]
-        set p_tensorT 0; set p_tensorI 0; set p_tensorF 0; set p_tensorJ 0; 
-	# checking intra- and inter- molecular non-bonded contribution to stress tensor
-	set p_tensorJTINTRA 0; set p_tensorJTINTER 0; set p_tensorJINTRA 0; 
-	for {set i 0} {$i < 3} {incr i} {
-	    set p_tensorT [expr $p_tensorT + [lindex $total [expr 1 + 4*$i]]]
-	    set p_tensorI [expr $p_tensorI + [lindex $ideal [expr 1 + 4*$i]]]
-	    set p_tensorF [expr $p_tensorF + [lindex $fene  [expr 2 + 4*$i]]]
-	    set p_tensorJ [expr $p_tensorJ + [lindex $lj    [expr 3 + 4*$i]]]
-	    set p_tensorJTINTRA [expr $p_tensorJTINTRA + [lindex $nb_tintra    [expr 1 + 4*$i]]]
-	    set p_tensorJTINTER [expr $p_tensorJTINTER + [lindex $nb_tinter    [expr 1 + 4*$i]]]
-	    set p_tensorJINTRA [expr $p_tensorJINTRA + [lindex $nb_intra    [expr 3 + 4*$i]]]
-	}
-        set p_tot [analyze pressure total]; set p_tensor1 $p_tensorT; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+
+    for { set i 0 } { $i < [setmd n_part] } { incr i } { lappend plist $i }
+    #dived box into 4 cuboids - analyse local_stress_tensor in each cuboid  (many bins in each cuboid)
+    set box_l [setmd box_l]
+    set startx 0.93
+    set widthx 0.49
+    set starty 0.33
+    set widthy 0.57
+    set startz 0.10
+    set widthz 0.47
+    set range_start1 "[expr [lindex $box_l 0]*$startx] 99 99"
+    set periodic1 "0 1 1"
+    set bins1 "12 1 13"
+    set volume1 [expr [lindex $box_l 0]*$widthx * [lindex $box_l 1] * [lindex $box_l 2]]
+    set range1 "[expr [lindex $box_l 0]*$widthx] 0 0"
+    set range_start2 "[expr [lindex $box_l 0]*($startx+$widthx)] [expr [lindex $box_l 1]*$starty] 99"
+    set periodic2 "0 0 1"
+    set bins2 "1 1 1"
+    set range2 "[expr [lindex $box_l 0]*(1-$widthx)] [expr [lindex $box_l 1]* $widthy] 99"
+    set volume2 [expr [lindex $box_l 0]*(1-$widthx) * [lindex $box_l 1]*$widthy * [lindex $box_l 2]]
+    set range_start3 "[expr [lindex $box_l 0]*($startx+$widthx)] [expr [lindex $box_l 1]*($starty+$widthy)] [expr [lindex $box_l 2]*$startz]"
+    set periodic3 "0 0 0"
+    set bins3 "2 4 20"
+    set range3 "[expr [lindex $box_l 0]*(1-$widthx)] [expr [lindex $box_l 1]* (1-$widthy)] [expr [lindex $box_l 2]* $widthz]"
+    set volume3 [expr [lindex $box_l 0]*(1-$widthx) * [lindex $box_l 1]*(1-$widthy) * [lindex $box_l 2]*$widthz]
+    set range_start4 "[expr [lindex $box_l 0]*($startx+$widthx)] [expr [lindex $box_l 1]*($starty+$widthy)] [expr [lindex $box_l 2]*($startz+$widthz)]"
+    set periodic4 "0 0 0"
+    set range4 "[expr [lindex $box_l 0]*(1-$widthx)] [expr [lindex $box_l 1]* (1-$widthy)] [expr [lindex $box_l 2]* (1-$widthz)]"
+    set bins4 " 13 11 3"
+    set volume4 [expr [lindex $box_l 0]*(1-$widthx) * [lindex $box_l 1]*(1-$widthy) * [lindex $box_l 2]*(1-$widthz)]
+
+    set local_p_tensor1 [analyze local_stress_tensor [lindex $periodic1 0] [lindex $periodic1 1] [lindex $periodic1 2] [lindex $range_start1 0] [lindex $range_start1 1] [lindex $range_start1 2] [lindex $range1 0] [lindex $range1 1] [lindex $range1 2]  [lindex $bins1 0] [lindex $bins1 1] [lindex $bins1 2]]     
+    set local_p_tensor2 [analyze local_stress_tensor [lindex $periodic2 0] [lindex $periodic2 1] [lindex $periodic2 2] [lindex $range_start2 0] [lindex $range_start2 1] [lindex $range_start2 2] [lindex $range2 0] [lindex $range2 1] [lindex $range2 2]  [lindex $bins2 0] [lindex $bins2 1] [lindex $bins2 2]]     
+    set local_p_tensor3 [analyze local_stress_tensor [lindex $periodic3 0] [lindex $periodic3 1] [lindex $periodic3 2] [lindex $range_start3 0] [lindex $range_start3 1] [lindex $range_start3 2] [lindex $range3 0] [lindex $range3 1] [lindex $range3 2]  [lindex $bins3 0] [lindex $bins3 1] [lindex $bins3 2]]     
+    set local_p_tensor4 [analyze local_stress_tensor [lindex $periodic4 0] [lindex $periodic4 1] [lindex $periodic4 2] [lindex $range_start4 0] [lindex $range_start4 1] [lindex $range_start4 2] [lindex $range4 0] [lindex $range4 1] [lindex $range4 2]  [lindex $bins4 0] [lindex $bins4 1] [lindex $bins4 2]]     
+    set local_p_tensor_sum1 0
+    set local_p_tensor_sum2 0
+    set local_p_tensor_sum3 0
+    set local_p_tensor_sum4 0
+
+    for {set i 1} {$i < [expr [lindex $bins1 0]*[lindex $bins1 1]*[lindex $bins1 2]+1]} {incr i} {
+	set local_p_tensor_sum1 [expr $local_p_tensor_sum1+([lindex $local_p_tensor1 $i 1 0] + [lindex $local_p_tensor1 $i 1 4] + [lindex $local_p_tensor1 $i 1 8])*$volume1/[lindex $bins1 0]/[lindex $bins1 1]/[lindex $bins1 2]]
+    }
+    for {set i 1} {$i < [expr [lindex $bins2 0]*[lindex $bins2 1]*[lindex $bins2 2]+1]} {incr i} {
+	set local_p_tensor_sum2 [expr $local_p_tensor_sum2+([lindex $local_p_tensor2 $i 1 0] + [lindex $local_p_tensor2 $i 1 4] + [lindex $local_p_tensor2 $i 1 8])*$volume2/[lindex $bins2 0]/[lindex $bins2 1]/[lindex $bins2 2]]
+    }
+    for {set i 1} {$i < [expr [lindex $bins3 0]*[lindex $bins3 1]*[lindex $bins3 2]+1]} {incr i} {
+	set local_p_tensor_sum3 [expr $local_p_tensor_sum3+([lindex $local_p_tensor3 $i 1 0] + [lindex $local_p_tensor3 $i 1 4] + [lindex $local_p_tensor3 $i 1 8])*$volume3/[lindex $bins3 0]/[lindex $bins3 1]/[lindex $bins3 2]]
+    }
+    for {set i 1} {$i < [expr [lindex $bins4 0]*[lindex $bins4 1]*[lindex $bins4 2]+1]} {incr i} {
+	set local_p_tensor_sum4 [expr $local_p_tensor_sum4+([lindex $local_p_tensor4 $i 1 0] + [lindex $local_p_tensor4 $i 1 4] + [lindex $local_p_tensor4 $i 1 8])*$volume4/[lindex $bins4 0]/[lindex $bins4 1]/[lindex $bins4 2]]
+    }
+    set local_p_tensor_sum [expr $local_p_tensor_sum1 + $local_p_tensor_sum2 + $local_p_tensor_sum3 + $local_p_tensor_sum4]
+    set local_p_tensor_total [expr $local_p_tensor_sum/3/[lindex $box_l 0]/[lindex $box_l 1]/[lindex $box_l 2]]
+ 
+    set p_tensor_full [analyze stress_tensor];
+    set total [lindex $p_tensor_full 0]
+    set ideal [lindex $p_tensor_full 1]
+    set fene  [lindex $p_tensor_full 2]
+    set lj    [lindex $p_tensor_full 3]
+    set nb_tintra    [lindex $p_tensor_full 4]
+    set nb_tinter    [lindex $p_tensor_full 5]
+    set nb_intra    [lindex $p_tensor_full 6]
+    set p_tensorT 0; set p_tensorI 0; set p_tensorF 0; set p_tensorJ 0; 
+    # checking intra- and inter- molecular non-bonded contribution to stress tensor
+    set p_tensorJTINTRA 0; set p_tensorJTINTER 0; set p_tensorJINTRA 0; 
+    for {set i 0} {$i < 3} {incr i} {
+	set p_tensorT [expr $p_tensorT + [lindex $total [expr 1 + 4*$i]]/3.0]
+	set p_tensorI [expr $p_tensorI + [lindex $ideal [expr 1 + 4*$i]]/3.0]
+	set p_tensorF [expr $p_tensorF + [lindex $fene  [expr 2 + 4*$i]]/3.0]
+	set p_tensorJ [expr $p_tensorJ + [lindex $lj    [expr 3 + 4*$i]]/3.0]
+	set p_tensorJTINTRA [expr $p_tensorJTINTRA + [lindex $nb_tintra    [expr 1 + 4*$i]]/3.0]
+	set p_tensorJTINTER [expr $p_tensorJTINTER + [lindex $nb_tinter    [expr 1 + 4*$i]]/3.0]
+	set p_tensorJINTRA [expr $p_tensorJINTRA + [lindex $nb_intra    [expr 3 + 4*$i]]/3.0]
+    }
+    set p_tensor1 $p_tensorT; 
+    set rel_error [expr abs(($p_tensor1 - $local_p_tensor_total)/$p_tensor1)]
+    puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze local_stress_tensor...': $rel_error  ($p_tensor1 / $local_p_tensor_total)"
+    if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the stress tensors" }
+    if { ! [regexp "ROTATION" [code_info]]} {
+	set p_tot [analyze pressure total]; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
 	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure total': $rel_error  ($p_tot / $p_tensor1)"
 	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-        set p_tot [analyze pressure ideal]; set p_tensor1 $p_tensorI; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure total': $rel_error  ($p_tot / $p_tensor1)"
+	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+	set p_tot [analyze pressure ideal]; set p_tensor1 $p_tensorI; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
 	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure ideal': $rel_error  ($p_tot / $p_tensor1)"
 	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-        set p_tot [analyze pressure bonded 0]; set p_tensor1 $p_tensorF; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure bonded 0': $rel_error  ($p_tot / $p_tensor1)"
+    } else {
+	puts "ROTATION is compiled in so total and ideal components of pressure cannot be compared with stress_tensor"
+    }
+    set p_tot [analyze pressure bonded 0]; set p_tensor1 $p_tensorF; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+    puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure bonded 0': $rel_error  ($p_tot / $p_tensor1)"
+    if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+    set p_tot [analyze pressure nonbonded 0 0]; set p_tensor1 $p_tensorJ; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+    puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure nonbonded 0 0': $rel_error  ($p_tot / $p_tensor1)"
+    if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+    set p_tot [analyze pressure tot_nb_intra]; set p_tensor1 $p_tensorJTINTRA; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+    puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure tot_nonbonded_intra': $rel_error  ($p_tot / $p_tensor1)"
+    if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+    set p_tot [analyze pressure tot_nb_inter]; 
+    if { $p_tot > 0} {
+	set p_tensor1 $p_tensorJTINTER; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure tot_nonbonded_inter': $rel_error  ($p_tot / $p_tensor1)"
 	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-        set p_tot [analyze pressure nonbonded 0 0]; set p_tensor1 $p_tensorJ; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure nonbonded 0 0': $rel_error  ($p_tot / $p_tensor1)"
-	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-        set p_tot [analyze pressure tot_nb_intra]; set p_tensor1 $p_tensorJTINTRA; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure tot_nonbonded_intra': $rel_error  ($p_tot / $p_tensor1)"
-	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-        set p_tot [analyze pressure tot_nb_inter]; 
-	if { $p_tot > 0} {
-	  set p_tensor1 $p_tensorJTINTER; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
-	  puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure tot_nonbonded_inter': $rel_error  ($p_tot / $p_tensor1)"
-	  if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-	}
-        set p_tot [analyze pressure nb_intra 0 0]; set p_tensor1 $p_tensorJINTRA; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure nonbonded_intra 0 0': $rel_error  ($p_tot / $p_tensor1)"
-	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
-    #}
-       
+    }
+    set p_tot [analyze pressure nb_intra 0 0]; set p_tensor1 $p_tensorJINTRA; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+    puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure nonbonded_intra 0 0': $rel_error  ($p_tot / $p_tensor1)"
+    if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+    
     foreach lst $listables get_lst $get_listables {
 	set rel_max 0; set abs_max 0; set absflag 0; set maxi "-"; set maxj "-"
 	foreach i $lst j [eval $get_lst] {
