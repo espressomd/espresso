@@ -1,8 +1,10 @@
-SUBDIRS = . scripts testsuite doc doc/ug doc/dg
+SUBDIRS = . scripts testsuite doc doc/ug doc/ug/figures doc/dg
 
 # List files that should go into the distribution but are not required
 # by any other means
-EXTRA_DIST = Makefile GPL.TXT LICENSE.TXT RELEASE_NOTES darwinlink.sh autogen.sh copyright.sh samples packages Espresso $(extra)
+EXTRA_DIST = Makefile GPL.TXT LICENSE.TXT RELEASE_NOTES darwinlink.sh \
+	autogen.sh configure-ac copyright.sh samples packages Espresso \
+	$(extra)
 
 # List headers that are not used by the program here
 noinst_HEADERS = myconfig-sample.h
@@ -61,6 +63,7 @@ Espresso_bin_SOURCES = \
 	rattle.c rattle.h \
 	molforces.c molforces.h \
 	lb.c lb.h \
+	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
 	lattice.c lattice.h \
 	halo.c halo.h \
@@ -72,6 +75,7 @@ Espresso_bin_SOURCES = \
 	comfixed.h \
 	comforce.h \
 	debye_hueckel.h \
+	reaction_field.h \
 	dihedral.h \
 	fene.h \
 	gb.h \
@@ -80,6 +84,7 @@ Espresso_bin_SOURCES = \
 	ljcos2.h \
 	ljcos.h \
 	lj.h \
+	ljgen.h \
 	steppot.h \
 	bmhtf-nacl.h \
 	morse.h \
@@ -124,6 +129,12 @@ install-exec-local:
 # install binary
 	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) \
 	Espresso_bin $(DESTDIR)/$(execpkglibdir)/
+
+unistall-local:
+	rm $(DESTDIR)/$(bindir)/Espresso
+	rm $(DESTDIR)/$(execpkglibdir)/Espresso
+	rm $(DESTDIR)/$(execpkglibdir)/Espresso_bin
+
 else
 
 # Substitute some remaining variables in the Espresso wrappers. This
@@ -140,6 +151,10 @@ install-exec-local:
 # install binary
 	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) \
 	Espresso_bin $(DESTDIR)/$(libexecdir)/
+
+uninstall-local:
+	rm $(DESTDIR)/$(bindir)/Espresso
+	rm $(DESTDIR)/$(libexecdir)/Espresso_bin
 endif
 
 #################################################################
@@ -156,7 +171,7 @@ FORCE:
 
 # add config/ to the INCLUDES so that the default config/$(myconfig) is
 # found at compile time
-INCLUDES = -I config
+INCLUDES = -Iconfig
 DEFS = -D 'MYCONFIG_H="$(myconfig)"'
 
 # add config/ to the VPATH so that $(myconfig) can be found by make
@@ -174,10 +189,10 @@ DISTCLEANFILES = $(top_builddir)/config/$(myconfig)
 if MPI_FAKE
 Espresso_bin_SOURCES += mpifake/mpi.h mpifake/mpi.c
 # mpifake should come before any system includes
-INCLUDES += -I $(srcdir)/mpifake -I config
+INCLUDES += -I$(srcdir)/mpifake -Iconfig
 endif
 
-ACLOCAL_AMFLAGS = -I config
+ACLOCAL_AMFLAGS = -Iconfig
 
 ##################################################
 # Targets for backwards compatibility

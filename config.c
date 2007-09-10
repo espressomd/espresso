@@ -92,6 +92,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef BOND_CONSTRAINT
   Tcl_AppendResult(interp, "{ BOND_CONSTRAINT } ", (char *) NULL);
 #endif
+#ifdef BOND_VIRTUAL
+  Tcl_AppendResult(interp, "{ BOND_VIRTUAL } ", (char *) NULL);
+#endif
 #ifdef EXCLUSIONS
   Tcl_AppendResult(interp, "{ EXCLUSIONS } ", (char *) NULL);
 #endif
@@ -106,6 +109,9 @@ int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef LENNARD_JONES
   Tcl_AppendResult(interp, "{ LENNARD_JONES } ", (char *) NULL);
+#endif
+#ifdef LENNARD_JONES_GENERIC
+  Tcl_AppendResult(interp, "{ LENNARD_JONES_GENERIC } ", (char *) NULL);
 #endif
 #ifdef SMOOTH_STEP
   Tcl_AppendResult(interp, "{ SMOOTH_STEP } ", (char *) NULL);
@@ -139,6 +145,9 @@ int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef NPT
   Tcl_AppendResult(interp, "{ NPT } ", (char *) NULL);
+#endif
+#ifdef TRANS_DPD
+  Tcl_AppendResult(interp, "{ TRANS_DPD } ", (char *) NULL);
 #endif
 #ifdef DPD
   Tcl_AppendResult(interp, "{ DPD } ", (char *) NULL);

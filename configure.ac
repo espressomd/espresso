@@ -22,46 +22,60 @@ AC_PREFIX_DEFAULT($HOME/Espresso)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-# Test if we are in the source directory
-AC_MSG_CHECKING([whether configure is running in the source directory])
-if test "$srcdir" = "."; then
-	objdir="obj-`config/config.guess`"
-	AC_MSG_RESULT([yes])
-	# create an objdir if necessary
-	if test ! -d "$objdir"; then
-		mkdir $objdir
-	fi
-	AC_MSG_NOTICE([Running configure in $objdir])
-	# restart configure in the objdir
-	cd $objdir
-	../configure --enable-chooser "$@"
-	ec=$?
-	cd ..
-	exit $ec
-else
-	AC_MSG_RESULT(no)
-fi
-
 # Initialise automake
 AM_INIT_AUTOMAKE([1.9 foreign subdir-objects])
 AM_MAINTAINER_MODE
 # Make the release notes a dependency of configure
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/RELEASE_NOTES'])
 
-ES_KNOWN_CONFIGS
-
 cat <<EOF
 ****************************************************************
 *                   Check the compiler and MPI                 *
 ****************************************************************
 EOF
-save_CFLAGS=$CFLAGS
+dnl Save and restore CFLAGS to avoid unwanted "-g -O2"-flags
+dnl Suggested improvement:
+dnl - check --with-mpi: 
+dnl     "no" => no MPI, 
+dnl     "yes" => guess MPI, bail out if none is found
+dnl     "auto" => guess MPI, continue with "no" if NONE is found
+dnl     * => check for specific implementation, bail out if it doesn't work
+dnl - from this compute "check_CC_list"
+dnl - call AC_PROC_CC($check_CC_list)
+dnl - now test for the other MPI components
+dnl - set the value only when MPI is complete and working
+
+dnl overwrite _AC_PROC_CC_G to avoid check for -g and -O2 flags
+m4_define([_AC_PROG_CC_G],[])
+
+AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_CC_C_O
 AM_PROG_CC_C_O
-CFLAGS=$save_CFLAGS
+
 ES_CHECK_MPI
 ES_CHECK_COMPILER
+
+cat <<EOF
+****************************************************************
+*                          Check for programs                  *
+****************************************************************
+EOF
+
+AC_PROG_AWK
+AC_PROG_EGREP
+AC_PROG_RANLIB
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PATH_PROG(DOXYGEN,doxygen,no)
+AM_CONDITIONAL(HAVE_DOXYGEN,[test .$DOXYGEN != .no])
+AC_PATH_PROG(PDFLATEX,pdflatex,no)
+AC_PATH_PROG(MAKEINDEX,makeindex,no)
+AC_PATH_PROG(BIBTEX,bibtex,no)
+AM_CONDITIONAL(HAVE_LATEX,
+	[test .$PDFLATEX != .no && 
+	test .$MAKEINDEX != .no && 
+	test .$BIBTEX != .no])
 
 cat <<EOF
 ****************************************************************
@@ -104,15 +118,6 @@ ES_INIT_MYCONFIG
 AC_DEFINE(LAST_CHANGE,["ESPRESSO_TIMESTAMP"],[When the last change to the code was done])
 AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
 
-# Checks for programs
-AC_PROG_AWK
-AC_PROG_RANLIB
-AC_PROG_LN_S
-AC_PATH_PROG(DOXYGEN,doxygen,no)
-AM_CONDITIONAL(HAVE_DOXYGEN,test .$DOXYGEN != .no)
-AC_PATH_PROG(PDFLATEX,pdflatex,no)
-AM_CONDITIONAL(HAVE_PDFLATEX,test .$PDFLATEX != .no)
-
 cat <<EOF
 ****************************************************************
 *                   Creating output files                      *
@@ -120,14 +125,18 @@ cat <<EOF
 EOF
 # Creating the output
 AC_CONFIG_HEADERS([acconfig.h])
-AC_CONFIG_LINKS(Makefile)
+AC_CONFIG_LINKS(Makefile:Makefile)
 AC_CONFIG_FILES([
 	Makefile-am scripts/Makefile testsuite/Makefile
-	doc/Makefile doc/ug/Makefile doc/dg/Makefile
+	doc/Makefile doc/ug/Makefile doc/ug/figures/Makefile 
+	doc/dg/Makefile
 	config/$myconfig:config/myconfig-default.h.in
 	chooser/Espresso mpiwrap/Espresso
 	])
-AC_CONFIG_FILES([Espresso],[chmod 755 Espresso])
+AC_CONFIG_FILES([testsuite/test.sh],
+	[chmod 755 testsuite/test.sh])
+AC_CONFIG_FILES([Espresso],
+	[chmod 755 Espresso])
 
 AC_OUTPUT
 
@@ -186,12 +195,21 @@ Other settings:
 ---------------
 using Espresso chooser	= $enable_chooser
 local config header	= $myconfig
+installation prefix	= $prefix
 pdflatex		= $PDFLATEX
+makeindex		= $MAKEINDEX
+bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
 EOF
 
 if test .$pdflatex = .no; then
    echo "To be able to rebuild the user's guide, add pdflatex to your PATH."
+fi
+if test .$makeindex = .no; then
+   echo "To be able to rebuild the user's guide, add makeindex to your PATH."
+fi
+if test .$bibtex = .no; then
+   echo "To be able to rebuild the user's guide, add bibtex to your PATH."
 fi
 if test .$doxygen = .no; then
    echo "To be able to build the developer's guide, add doxygen to your PATH."

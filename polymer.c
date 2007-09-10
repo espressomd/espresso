@@ -240,11 +240,13 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
       if (i+1 < argc) {
 	if (!ARG_IS_I(i+1, type_bond)) {
 	  Tcl_ResetResult(interp);
-	  Tcl_AppendResult(interp, 
-			   "The type-# of the bond-interaction must be integer (got: ",
-			   argv[i+1],")!", (char *)NULL); 
+	  Tcl_AppendResult(interp, "The type-# of the bond-interaction must be integer (got: ", argv[i+1],")!", (char *)NULL); 
 	  return (TCL_ERROR); 
-	} else { i++; }
+	}
+	else {
+	  i++;
+	  
+	}
       } else {
 	Tcl_AppendResult(interp, "Not enough arguments for bond", 
 			 (char *)NULL); 
@@ -304,8 +306,14 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     }
 #endif
     /* Default */
-    else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
-  }
+  else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
+}
+
+if(type_bond<0 || type_bond>=n_bonded_ia){
+  Tcl_AppendResult(interp, "Please define an interaction before setting up polymers!", (char *)NULL);
+  return(TCL_ERROR);
+ }
+
   if (fabs(val_cM) < 1e-10) { val_cM = 0.0; type_cM = type_nM; }
 
   POLY_TRACE(if (posed!=NULL) {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed (%f,%f,%f), int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed (%f,%f,%f), int constraints %d\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle,angle2, posed2[0], posed2[1], posed2[2], constr); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed (%f,%f,%f), int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed2 NULL, constraints %d\n", N_P, MPC, bond_length, part_id, posed[0],posed[1],posed[2], mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond,angle,angle2,constr);} else {if (posed2!=NULL) printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed2 (%f,%f,%f), int constraints %d\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle, angle2,posed2[0],posed2[1],posed2[2],constr); else printf("int N_P %d, int MPC %d, double bond_length %f, int part_id %d, double posed NULL, int mode %d, double shield %f, int max_try %d, double val_cM %f, int cM_dist %d, int type_nM %d, int type_cM %d, int type_bond %d, double angle %f, double angle2 %f, double posed2 NULL, int constraints %d\n", N_P, MPC, bond_length, part_id, mode, shield, max_try, val_cM, cM_dist, type_nM, type_cM, type_bond, angle, angle2, constr);});
@@ -321,7 +329,7 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     sprintf(buffer, "Failed upon removing one of the monomers in Espresso while trying to reset current chain!\nAborting...\n"); tmp_try = TCL_ERROR; }
   else if (tmp_try >= 0) {
     sprintf(buffer, "%d", tmp_try); tmp_try = TCL_OK; }
-  else {
+else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return mpi_gather_runtime_errors(interp, tmp_try);
@@ -329,37 +337,44 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 #ifdef CONSTRAINTS
 
-int constraint_collision(double *p1,double *p2){
+int constraint_collision(double *p1, double *p2){
   Particle part1,part2;
   double d1,d2,v[3];
   Constraint *c;
   int i;
-  part1.r.p[0]=p1[0];
-  part1.r.p[1]=p1[1];
-  part1.r.p[2]=p1[2];
-  part2.r.p[0]=p2[0];
-  part2.r.p[1]=p2[1];
-  part2.r.p[2]=p2[2];
+  double folded_pos1[3];
+  double folded_pos2[3];
+  int img[3];
+
+printf("CP1\n");
+
+  memcpy(folded_pos1, p1, 3*sizeof(double));
+  fold_position(folded_pos1, img);
+
+  memcpy(folded_pos2, p2, 3*sizeof(double));
+  fold_position(folded_pos2, img);
   
+printf("CP2\n");
+
   for(i=0;i<n_constraints;i++){
     c=&constraints[i];
     switch(c->type){
     case CONSTRAINT_WAL:
-      calculate_wall_dist(&part1,&part1,&c->c.wal,&d1,v);
-      calculate_wall_dist(&part2,&part2,&c->c.wal,&d2,v);
-      if(d1*d2<=0)
+      calculate_wall_dist(&part1,folded_pos1,&part1,&c->c.wal,&d1,v);
+      calculate_wall_dist(&part2,folded_pos2,&part2,&c->c.wal,&d2,v);
+      if(d1*d2<=0.0)
 	return 1;
       break;
     case CONSTRAINT_SPH:
-      calculate_sphere_dist(&part1,&part1,&c->c.sph,&d1,v);
-      calculate_sphere_dist(&part2,&part2,&c->c.sph,&d2,v);
-      if(d1*d2<0)
+      calculate_sphere_dist(&part1,folded_pos1,&part1,&c->c.sph,&d1,v);
+      calculate_sphere_dist(&part2,folded_pos2,&part2,&c->c.sph,&d2,v);
+      if(d1*d2<0.0)
 	return 1;
       break;
     case CONSTRAINT_CYL:
-      calculate_cylinder_dist(&part1,&part1,&c->c.cyl,&d1,v);
-      calculate_cylinder_dist(&part2,&part2,&c->c.cyl,&d2,v);
-      if(d1*d2<0)
+      calculate_cylinder_dist(&part1,folded_pos1,&part1,&c->c.cyl,&d1,v);
+      calculate_cylinder_dist(&part2,folded_pos2,&part2,&c->c.cyl,&d2,v);
+      if(d1*d2<0.0)
 	return 1;
       break;
     case CONSTRAINT_MAZE:
@@ -377,16 +392,20 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	     int mode, double shield, int max_try, double val_cM, int cM_dist, 
 	     int type_nM, int type_cM, int type_bond, 
 	     double angle, double angle2, double *posed2, int constr) {
-  int p,n, cnt1,cnt2,max_cnt, bond[2];
+  int p,n, cnt1,cnt2,max_cnt, bond_size, *bond, i;
   double theta,phi;
   double *poly;
   double pos[3];
   double poz[3];
   double poy[3] = {0, 0, 0};
   double pox[3] = {0, 0, 0};
-  double a[3],b[3],c[3],d[3];
+  double a[3],b[3],c[3]={0., 0., 0.},d[3];
   double absc;
   poly = malloc(3*MPC*sizeof(double));
+
+  bond_size = bonded_ia_params[type_bond].num;
+  bond = malloc(sizeof(int) * (bond_size + 1));
+  bond[0] = type_bond;
 
   cnt1 = cnt2 = max_cnt = 0;
   for (p=0; p < N_P; p++) {
@@ -552,13 +571,21 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 
     /* actually creating current polymer in ESPResSo */
     for (n=0; n<MPC; n++) {
+      
       pos[0] = poly[3*n]; pos[1] = poly[3*n+1]; pos[2] = poly[3*n+2];
-      bond[0] = type_bond; bond[1] = part_id - 1;
       if (place_particle(part_id, pos)==TCL_ERROR ||
 	  (set_particle_q(part_id, ((n % cM_dist==0) ? val_cM : 0.0) )==TCL_ERROR) ||
-	  (set_particle_type(part_id, ((n % cM_dist==0) ? type_cM : type_nM) )==TCL_ERROR) ||
-	  (n>0 && change_particle_bond(part_id, bond, 0)==TCL_ERROR))
+	  (set_particle_type(part_id, ((n % cM_dist==0) ? type_cM : type_nM) )==TCL_ERROR))
 	{ free(poly); return (-3); }
+      
+      if(n>=bond_size){
+	bond[1] = part_id - bond_size;
+	for(i=2;i<=bond_size;i++){
+	  bond[i] = part_id - bond_size + i;
+	}
+	if(change_particle_bond(part_id-bond_size+1, bond, 0)==TCL_ERROR)
+	  { free(poly); return (-3); }
+      }
       part_id++;
       POLY_TRACE(/* printf("placed Monomer %d at (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
     }
@@ -1427,6 +1454,17 @@ int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
   }
 
+if(0 == n_bonded_ia){
+  Tcl_AppendResult(interp, "Please define an interaction before setting up polymers!", (char *)NULL);
+  return(TCL_ERROR);
+ }
+ else{
+   if(bonded_ia_params[0].num > 1){
+     Tcl_AppendResult(interp, "Only two-body interacions are allowed with this command!", (char *)NULL);
+     return(TCL_ERROR);
+   }
+ }
+
   POLY_TRACE(printf("double a %f, bond_length %f, int MPC %d, N_CI %d, double val_nodes %f, val_cM %f, val_CI %f, int cM_dist %d, nonet %d\n", a, bond_length, MPC, N_CI, val_nodes, val_cM, val_CI, cM_dist,nonet));
 
   tmp_try = diamondC(a, bond_length, MPC, N_CI, val_nodes, val_cM, val_CI, cM_dist, nonet);
@@ -1540,6 +1578,17 @@ int icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     /* default */
     else { Tcl_AppendResult(interp, "The parameters you supplied do not seem to be valid (stuck at: ",argv[i],")!", (char *)NULL); return (TCL_ERROR); }
   }
+
+if(0 == n_bonded_ia){
+  Tcl_AppendResult(interp, "Please define an interaction before setting up polymers!", (char *)NULL);
+  return(TCL_ERROR);
+ }
+ else{
+   if(bonded_ia_params[0].num > 1){
+     Tcl_AppendResult(interp, "Only two-body interacions are allowed with this command!", (char *)NULL);
+     return(TCL_ERROR);
+   }
+ }
 
   POLY_TRACE(printf("double a %f, int MPC %d, N_CI %d, double val_cM %f, val_CI %f, int cM_dist %d\n", a, MPC, N_CI, val_cM, val_CI, cM_dist));
 

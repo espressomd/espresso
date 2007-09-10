@@ -2,15 +2,129 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.2x (Ydalir)                                                                     *
+* v2.0.4c (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.2x -
+- v2.0.4c -
 -----------
 
+(c) September 5th, 2007.
+(b) August   31st, 2007.
+(a) August   28th, 2007.
+
+New Features:
+(c) analyze local_pressure_tensor has been added.  analyze p_IK1 has been
+    removed.
+(b) parallel tempering via TCP/IP
+(a) Added a whitelist in addition to the blacklist. If
+    blockfile_(tcl)variable_whitelist is a defined global_variable, it defines the
+    set of variables to read.
+
+Bugfixes:
+(b) stress tensor off by a factor of 3
+(a) ESPResSo again compiles and runs with DIPOLES and ROTATION switched
+    on.
+(a) The blockfile_(tcl)variable_blacklist variable is now no longer silently
+    created when writing a a (tcl)variable.
+(a) Fixed the handling of single element lists in
+    blockfile_write_(tcl)variable
+
+
+- v2.0.3w -
+-----------
+
+(w) August 27th, 2007.
+(v) August 24th, 2007.
+(u) August 23rd, 2007.
+(t) August 22nd, 2007.
+(s) August 21st, 2007.
+(r) August 16th, 2007.
+(q) August 14th, 2007.
+(p) August 13th, 2007.
+(o) August  2nd, 2007.
+(n) July   30th, 2007.
+(m) July   25th, 2007.
+(l) July   13th, 2007.
+(k) July   11th, 2007.
+(j) July    6th, 2007.
+(i) July    5th, 2007.
+(h) July    4th, 2007.
+(g) July    3rd, 2007.
+(f) July    2nd, 2007.
+(e) June   29th, 2007.
+(d) June   26th, 2007.
+(c) June   25th, 2007.
+(b) June   22nd, 2007.
+(a) June   21st, 2007.
+
+New Features:
+(u) adding several change possibilities for dpd thermostat, change weighting
+    function, different cutoff for dpd and trans_dpd....
+(t) added feature VIRTUAL_BOND, like HARMONIC with k=0, but faster
+(r) added feature analyze MSD
+(f) added detection for Core2-Xeons.
+(f) added CECAM_Tutorial_2006 to internal folder
+(e) Added docs on the build system.
+(c) 
+
+Changes:
+(r) Pore constraint rewritten.
+(p) added feature analyze angularmomentum
+(o) Removed "--enable-config"-option from configure script.
+(n) Removed vmdplugin/ from Espresso sources: the plugin is now part of VMD (from
+    version 1.8.6).
+(h) Updated build system. configure is a simple shell script now that calls the
+    autoconf-script configure-ac.
+(h) Extended default configuration.
+(h) testsuite/test.sh is configured now.
+(g) samples/espresso_logo.tcl: prepared for off- or online visualisation, creates
+    VTF-file instead of PSF file.
+(d) User's Guide: Quickref works
+(b) added reaction_field.h to Makefile-am.am
+(a) RELEASE_NOTES maintenance
+
+Bugfixes:
+(w) change pressure calculation for BOND_CONTRAINT
+(v) Fixed constraints so that they now work together with any
+    cellsystem.
+(t) max_range takes into account the DPD cutoff now
+(t) testsuite runs with multiple CPUs again
+(s) added TRANS_DPD to code info
+(q) part <p> print folded_position now actually prints the folded
+    position
+(q) instead of the cellsystem folded position.
+(m) env(COLUMNS) was 0 when compiled with XCode
+(l) synchronized testsuite and default configuration
+(l) ESPResSo configures, compiles and runs again on IBM Regatta, some automake
+    things had to be fixed.
+(k) fixes problems with reaction field and mpi
+(k) polymers can be set up with bonds which need more than 2 bonding
+    partners
+(k) diamond and icosaeder now break when interaction 0 is not a 2 particle
+    bond
+(k) tclline now works with macintosh
+(j) ljcos2 force in pressure.h
+(i) added ljcos2 force into pressure calculations
+(h) called autogen, so that configure works correctly with fresh Espresso
+    checkout
+(h) Static variables cannot be defined as extern since they are not accessible
+    outside the scope of the object.
+(g) Quick fix to enable MPI for LB again.
+(g) sorting CECAM Tutorial
+(g) added some legal stuff to tclline.tcl that we included
+(g) Testcase nve_pe.tcl doesn't require feature CONSTRAINTS but calls constraint
+    command.
+(d) added newline at the end to avoid nasty warnings
+(d) tclline.tcl was missing in install target.
+
+
+- v2.0.2y -
+-----------
+
+(y) June     20th, 2007.
 (x) June     18th, 2007.
 (w) June     15th, 2007.
 (v) June      4th, 2007.
@@ -37,6 +151,9 @@ Current working revision.
 (a) February  2nd, 2007.
 
 New Features:
+(y) added Reaction Field to Coulomb interactions
+(y) added readline features (history, lineediting, tab, etc.) for interactive
+    started Espresso
 (w) Rewrote "How to write the User's Guide" in the Developer's
     Guide
 (w) First version of the new User's Guide
@@ -57,6 +174,9 @@ New Features:
 (d) solving linear equation systems.
 
 Changes:
+(y) added the feature "analyze bin all" to get a list of all particles, removed
+    some prints to stdout and a Segmentation fault when calling "analyze bin"
+    without argument.
 (x) Major changes in Lattice Boltzmann implementation:
 (x) 1) Changed the LB model from D3Q18 to D3Q19. D3Q19 is now the
 (x) standard model. Switching to a different model is still
@@ -84,6 +204,7 @@ Changes:
     be set in the ug.
 
 Bugfixes:
+(y) removed some printf to stdout in calc_bins_sphere()
 (v) We actually use some bash features, so explicitely state it.
 (u) resubmitted changes, now with proper #ifdefs
 (r) under certain circumstances, MMM1D would allow to manual set impossible

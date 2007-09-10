@@ -31,6 +31,7 @@
 /* include the force files */
 #include "p3m.h"
 #include "lj.h"
+#include "ljgen.h"
 #include "steppot.h"
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
@@ -46,6 +47,7 @@
 #include "angle.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
+#include "reaction_field.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
 #include "constraint.h"
@@ -94,7 +96,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 					double d[3], double dist, double dist2)
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-  double force[3] = { 0, 0, 0 };
+  double force[3] = { 0., 0., 0. };
   int j;
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node, p1->p.identity, p2->p.identity, dist));
@@ -120,6 +122,11 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /* lennard jones */
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+
+  /* Generic lennard jones */
+#ifdef LENNARD_JONES_GENERIC
+  add_ljgen_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
 
 #ifdef SMOOTH_STEP
@@ -167,6 +174,9 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #ifdef ELECTROSTATICS
   if (coulomb.method == COULOMB_DH)
     add_dh_coulomb_pair_force(p1,p2,d,dist,force);
+  
+  if (coulomb.method == COULOMB_RF)
+    add_rf_coulomb_pair_force(p1,p2,d,dist,force);
 #endif
 
   /*********************************************************************/
@@ -351,6 +361,11 @@ MDINLINE void add_bonded_force(Particle *p1)
 	ERROR_SPRINTF(errtxt,"{081 add_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
 	return;
       }
+      break;
+#endif
+#ifdef VIRTUAL_BOND
+    case BONDED_IA_VIRTUAL_BOND:
+      bond_broken = 0; 
       break;
 #endif
     default :

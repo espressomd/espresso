@@ -18,13 +18,10 @@ AC_DEFUN([ES_CHECK_FFTW],[
 	dnl with_fftw=  (not set) try to find a working FFTW, continue if none is found
 	dnl otherwise       use the specified version
 
+        LIBS=" $LIBS -lm "
+
 	if test .$with_fftw = . || test .$with_fftw = .yes; then
-	     # search for FFTW
-	     if test .$known_fftw != .; then
-		# FFTW is predefined
-		use_fftw=$known_fftw
-	     else
-		# search for FFTW
+     		# search for FFTW
 		ES_CHECK_FFTW3
 		if test .$fftw3_found = .yes; then
 		   use_fftw=3
@@ -36,7 +33,6 @@ AC_DEFUN([ES_CHECK_FFTW],[
 		     AC_MSG_ERROR([no FFTW found])
 		  fi
 		fi
-	     fi
 	elif test .$with_fftw = .3; then
                 use_fftw=3
 		ES_CHECK_FFTW3

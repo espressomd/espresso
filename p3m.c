@@ -1480,7 +1480,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
     for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {
       for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
 	for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {	 
-	  node_k_space_energy_dip += g_dip_energy[i] * (
+	  node_k_space_energy_dip += g_energy_dip[i] * (
 	  SQR(rs_mesh_dip[0][ind]*d_op[j[2]+fft_plan[3].start[0]]+
 	      rs_mesh_dip[1][ind]*d_op[j[0]+fft_plan[3].start[1]]+
 	      rs_mesh_dip[2][ind]*d_op[j[1]+fft_plan[3].start[2]]
@@ -2254,7 +2254,7 @@ void calc_influence_function_energy_dip()
     size *= fft_plan[3].new_mesh[i];
     end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
   }
-  g_energy__dip = (double *) realloc(g_energy_dip, size*sizeof(double));
+  g_energy_dip = (double *) realloc(g_energy_dip, size*sizeof(double));
   fak1  = p3m.mesh[0]*p3m.mesh[0]*p3m.mesh[0]*2.0/(box_l[0]*box_l[0]);
 
   for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++)
@@ -2756,7 +2756,7 @@ static double p3m_m_time(Tcl_Interp *interp, int mesh,
 			 double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
 			 double *_alpha_L, double *_accuracy)
 {
-  double best_time = -1, tmp_time, tmp_r_cut_iL, tmp_alpha_L, tmp_accuracy;
+  double best_time = -1, tmp_time, tmp_r_cut_iL, tmp_alpha_L=0.0, tmp_accuracy=0.0;
   /* in which direction improvement is possible. Initially, we dont know it yet. */
   int final_dir = 0;
   int cao = *_cao;
@@ -2874,11 +2874,11 @@ static double p3m_m_time(Tcl_Interp *interp, int mesh,
 int P3M_adaptive_tune_parameters(Tcl_Interp *interp)
 {
   int    mesh_max,                   mesh     = -1, tmp_mesh;
-  double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL;
+  double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL=0.0;
   int    cao_min, cao_max,           cao      = -1, tmp_cao;
 
-  double                             alpha_L  = -1, tmp_alpha_L;
-  double                             accuracy = -1, tmp_accuracy;
+  double                             alpha_L  = -1, tmp_alpha_L=0.0;
+  double                             accuracy = -1, tmp_accuracy=0.0;
   double                            time_best=1e20, tmp_time;
   char
     b1[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12],

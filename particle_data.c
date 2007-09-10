@@ -481,11 +481,17 @@ void part_print_position(Particle *part, char *buffer, Tcl_Interp *interp)
 
 void part_print_folded_position(Particle *part, char *buffer, Tcl_Interp *interp)
 {
-  Tcl_PrintDouble(interp, part->r.p[0], buffer);
+  double ppos[3];
+  int img[3];
+  memcpy(ppos, part->r.p, 3*sizeof(double));
+  memcpy(img, part->l.i, 3*sizeof(int));
+  fold_position(ppos, img);
+
+  Tcl_PrintDouble(interp, ppos[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->r.p[1], buffer);
+  Tcl_PrintDouble(interp, ppos[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->r.p[2], buffer);
+  Tcl_PrintDouble(interp, ppos[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
@@ -2449,7 +2455,7 @@ void send_particles(ParticleList *particles, int node)
 
 void recv_particles(ParticleList *particles, int node)
 {
-  int transfer, read, pc;
+  int transfer=0, read, pc;
   MPI_Status status;
   IntList local_dyn;
 

@@ -23,6 +23,7 @@
 /* include the energy files */
 #include "p3m.h"
 #include "lj.h"
+#include "ljgen.h"
 #include "steppot.h"
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
@@ -37,6 +38,7 @@
 #include "angle.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
+#include "reaction_field.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
 #include "maggs.h"
@@ -74,6 +76,11 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 #ifdef LENNARD_JONES
   /* lennard jones */
   ret += lj_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+
+#ifdef LENNARD_JONES_GENERIC
+  /* Generic lennard jones */
+  ret += ljgen_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
 #ifdef SMOOTH_STEP
@@ -144,6 +151,9 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
       break;
     case COULOMB_DH:
       ret = dh_coulomb_pair_energy(p1,p2,dist);
+      break;
+    case COULOMB_RF:
+      ret = rf_coulomb_pair_energy(p1,p2,dist);
       break;
     case COULOMB_MMM1D:
       ret = mmm1d_coulomb_pair_energy(p1,p2,d,dist2,dist);
@@ -255,6 +265,12 @@ MDINLINE void add_bonded_energy(Particle *p1)
 	ERROR_SPRINTF(errtxt,"{072 add_bonded_energy: tabulated bond type of atom %d unknown\n", p1->p.identity);
 	return;
       }
+      break;
+#endif
+#ifdef BOND_VIRTUAL
+    case BONDED_IA_VIRTUAL_BOND:
+      bond_broken = 0;
+      ret = 0;
       break;
 #endif
     default :

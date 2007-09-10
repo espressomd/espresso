@@ -31,9 +31,17 @@ double dpd_gamma = 0.0;
 double dpd_r_cut = 0.0;
 /* inverse off DPD thermostat cutoff */
 double dpd_r_cut_inv = 0.0;
+/* DPD weightfunction */
+int dpd_wf = 0;
 #ifdef TRANS_DPD
 /* DPD transversal friction coefficient gamma. */
 double dpd_tgamma = 0.0;
+/* DPD thermostat trans cutoff */
+double dpd_tr_cut = 0.0;
+/* inverse off trans DPD thermostat cutoff */
+double dpd_tr_cut_inv = 0.0;
+/* trans DPD weightfunction */
+int dpd_twf = 0;
 #endif
 /* NPT ISOTROPIC THERMOSTAT */
 // INSERT COMMENT
@@ -138,8 +146,11 @@ int thermo_parse_langevin(Tcl_Interp *interp, int argc, char **argv)
 int thermo_parse_dpd(Tcl_Interp *interp, int argc, char **argv) 
 {
   double temp, gamma, r_cut;
+  int wf=0;
 #ifdef TRANS_DPD
-  double tgamma;
+  double tgamma=0.0,tr_cut;
+  int twf;
+  int set_tgamma=0;
 #endif
 
 #ifdef ROTATION
@@ -155,7 +166,11 @@ int thermo_parse_dpd(Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
 		     argv[0]," ",argv[1]," <temp> <gamma> <r_cut>", (char *)NULL);
 #ifdef TRANS_DPD
-    Tcl_AppendResult(interp,"{<tgamma>}", (char *)NULL);
+    Tcl_AppendResult(interp,"[<tgamma>] [<tR_cut>]", (char *)NULL);
+#endif
+    Tcl_AppendResult(interp," [WF <wf>]", (char *)NULL);
+#ifdef TRANS_DPD
+    Tcl_AppendResult(interp," [TWF <twf>]", (char *)NULL);
 #endif
     Tcl_AppendResult(interp,"\"", (char *)NULL);
     return (TCL_ERROR);
@@ -166,32 +181,93 @@ int thermo_parse_dpd(Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs at least three DOUBLES", (char *)NULL);
     return (TCL_ERROR);
   }
+  argc-=5;
+  argv+=5;
 
 #ifdef TRANS_DPD
-  if (argc == 6){
-    if ( !ARG_IS_D(5,tgamma) ){
-      Tcl_AppendResult(interp, argv[0]," ",argv[1],": tgamma should be double",(char *)NULL);
-      return (TCL_ERROR);
-    }
-  }
-  else{
-    tgamma=0.0;
+  tgamma=0;
+  tr_cut=r_cut;
+  twf=wf;
+  if ( (argc>0) && (!ARG0_IS_S("WF")) ) {
+     if (!ARG0_IS_D(tgamma)) {
+        Tcl_AppendResult(interp," thermostat dpd:  tgamma should be double",(char *)NULL);
+        return (TCL_ERROR);
+     }
+     else{
+        argc--;
+        argv++;
+        set_tgamma++;
+     }
   }
 #endif
+//try for WF
+  if ( (argc>0) && (ARG0_IS_S("WF")) ){
+    if (!ARG1_IS_I(wf)){
+      Tcl_AppendResult(interp," thermostat dpd:  wf should be int",(char *)NULL);
+      return (TCL_ERROR);
+    }
+    else{
+      argc-=2;argv+=2;
+#ifdef TRANS_DPD
+      twf=wf;
+#endif
+    }
+  }
+#ifdef TRANS_DPD
+  if ( (set_tgamma==0) && (argc>0) && (!ARG0_IS_S("TWF")) ) {
+     if (!ARG0_IS_D(tgamma)) {
+        Tcl_AppendResult(interp," thermostat dpd:  tgamma should be double",(char *)NULL);
+        return (TCL_ERROR);
+     }
+     else{
+        argc--;
+        argv++;
+        set_tgamma++;
+     }
+  }
+
+  if ( (argc>0) && (ARG0_IS_S("TWF")) ) {
+     if (set_tgamma!=0) {
+       if (!ARG1_IS_I(wf)) {
+          Tcl_AppendResult(interp," thermostat dpd: twf should be int",(char *)NULL);
+          return (TCL_ERROR);
+       }
+       else{
+          argc-=2;argv+=2;
+       }
+     }
+     else{
+       Tcl_AppendResult(interp," thermostat dpd: tgamma must be set before twf",(char *)NULL);
+       return (TCL_ERROR);
+     }
+  }
+#endif
+
+  if (argc > 0){
+       Tcl_AppendResult(interp," thermostat dpd: too many arguments - don't know how to parse them!!!",(char *)NULL);
+       return (TCL_ERROR);
+  }
+
   /* broadcast parameters */
   temperature = temp;
   dpd_gamma = gamma;
   dpd_r_cut = r_cut;
+  dpd_wf = wf;
 #ifdef TRANS_DPD
   dpd_tgamma = tgamma;
+  dpd_tr_cut= tr_cut;
+  dpd_twf=twf;
 #endif
   thermo_switch = ( thermo_switch | THERMO_DPD );
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   mpi_bcast_parameter(FIELD_DPD_GAMMA);
   mpi_bcast_parameter(FIELD_DPD_RCUT);
+  mpi_bcast_parameter(FIELD_DPD_WF);
 #ifdef TRANS_DPD
   mpi_bcast_parameter(FIELD_DPD_TGAMMA);
+  mpi_bcast_parameter(FIELD_DPD_TRCUT);
+  mpi_bcast_parameter(FIELD_DPD_TWF);
 #endif
   return (TCL_OK);
 }
@@ -253,15 +329,22 @@ int thermo_print(Tcl_Interp *interp)
  /* dpd */
   if(thermo_switch & THERMO_DPD) {
     Tcl_PrintDouble(interp, temperature, buffer);
-    Tcl_AppendResult(interp,"{ dpd ",buffer, (char *)NULL);
+    Tcl_AppendResult(interp,"{ dpd: temp",buffer, (char *)NULL);
     Tcl_PrintDouble(interp, dpd_gamma, buffer);
-    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
+    Tcl_AppendResult(interp," gamma ",buffer, (char *)NULL);
     Tcl_PrintDouble(interp, dpd_r_cut, buffer);
+    Tcl_AppendResult(interp," r_cut ",buffer, (char *)NULL);
+    sprintf(buffer,"%i",dpd_wf);
+    Tcl_AppendResult(interp," WF ",buffer, (char *)NULL);
 #ifdef TRANS_DPD
-    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
     Tcl_PrintDouble(interp, dpd_tgamma, buffer);
+    Tcl_AppendResult(interp," tgamma ",buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, dpd_tr_cut, buffer);
+    Tcl_AppendResult(interp," tr_cut ",buffer, (char *)NULL);
+    sprintf(buffer,"%i",dpd_twf);
+    Tcl_AppendResult(interp," TWF ",buffer, (char *)NULL);
 #endif
-    Tcl_AppendResult(interp," ",buffer, " } ", (char *)NULL);
+    Tcl_AppendResult(interp," } ", (char *)NULL);
   }
 #endif
 
@@ -295,11 +378,11 @@ int thermo_usage(Tcl_Interp *interp, int argc, char **argv)
   Tcl_AppendResult(interp, "'", argv[0], " off' to deactivate it (=> NVE-ensemble) \n ", (char *)NULL);
   Tcl_AppendResult(interp, "'", argv[0], " set langevin <temp> <gamma>' or \n ", (char *)NULL);
 #ifdef DPD
-  Tcl_AppendResult(interp, "'", argv[0], " set dpd <temp> <gamma> <r_cut>'", (char *)NULL);
+  Tcl_AppendResult(interp, "'", argv[0], " set dpd <temp> <gamma> <r_cut> [WF <wf>]", (char *)NULL);
 #ifdef TRANS_DPD
-  Tcl_AppendResult(interp, " [<tgamma>]", (char *)NULL);
+  Tcl_AppendResult(interp, " [<tgamma>] [TWF <twf>]", (char *)NULL);
 #endif
-  Tcl_AppendResult(interp, " or \n ", (char *)NULL);
+  Tcl_AppendResult(interp, " ' or\n ", (char *)NULL);
 #endif
 #ifdef NPT
   Tcl_AppendResult(interp, "'", argv[0], " set npt_isotropic <temp> <gamma0> <gammav>' ", (char *)NULL);
@@ -376,9 +459,10 @@ void thermo_init_dpd()
 #ifdef TRANS_DPD
   dpd_pref3 = dpd_tgamma/time_step;
   dpd_pref4 = sqrt(24.0*temperature*dpd_tgamma/time_step);
+  dpd_tr_cut_inv = 1.0/dpd_tr_cut;
 #endif
-  THERMO_TRACE(fprintf(stderr,"%d: thermo_init_dpd: dpd_pref1=%f, dpd_pref2=%f, dpd_r_cut_inv=%f",
-		       this_node,dpd_pref1,dpd_pref2,dpd_r_cut_inv));
+  THERMO_TRACE(fprintf(stderr,"%d: thermo_init_dpd: dpd_pref1=%f, dpd_pref2=%f",
+		       this_node,dpd_pref1,dpd_pref2));
 #ifdef TRANS_DPD
   THERMO_TRACE(fprintf(stderr,",dpd_pref3=%f, dpd_pref4=%f\n",dpd_pref3,dpd_pref4));
 #endif

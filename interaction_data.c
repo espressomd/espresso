@@ -21,11 +21,13 @@
 #include "p3m.h"
 #include "ewald.h"
 #include "debye_hueckel.h"
+#include "reaction_field.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
 #include "maggs.h"
 #include "elc.h"
 #include "lj.h"
+#include "ljgen.h"
 #include "steppot.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
@@ -49,6 +51,7 @@ IA_parameters *ia_params = NULL;
 #ifdef ELECTROSTATICS
 Coulomb_parameters coulomb = { 0.0, 0.0, COULOMB_NONE };
 Debye_hueckel_params dh_params = { 0.0, 0.0 };
+Reaction_field_params rf_params = { 0.0, 0.0 };
 #endif
 
 int n_bonded_ia = 0;
@@ -94,6 +97,17 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJ_shift =
     params->LJ_offset =
     params->LJ_capradius = 0;
+#endif
+
+#ifdef LENNARD_JONES_GENERIC
+  params->LJGEN_eps =
+    params->LJGEN_sig =
+    params->LJGEN_cut =
+    params->LJGEN_shift =
+    params->LJGEN_offset =
+    params->LJGEN_capradius =
+    params->LJGEN_a1 =
+    params->LJGEN_a2 = 0;
 #endif
 
 #ifdef SMOOTH_STEP
@@ -210,6 +224,17 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJ_capradius = src->LJ_capradius;
 #endif
 
+#ifdef LENNARD_JONES_GENERIC
+  dst->LJGEN_eps = src->LJGEN_eps;
+  dst->LJGEN_sig = src->LJGEN_sig;
+  dst->LJGEN_cut = src->LJGEN_cut;
+  dst->LJGEN_shift = src->LJGEN_shift;
+  dst->LJGEN_offset = src->LJGEN_offset;
+  dst->LJGEN_capradius = src->LJGEN_capradius;
+  dst->LJGEN_a1 = src->LJGEN_a1;
+  dst->LJGEN_a2 = src->LJGEN_a2;
+#endif
+
 #ifdef SMOOTH_STEP
   dst->SmSt_eps = src->SmSt_eps;
   dst->SmSt_sig = src->SmSt_sig;
@@ -322,6 +347,11 @@ int checkIfParticlesInteract(int i, int j) {
     return 1;
 #endif
 
+#ifdef LENNARD_JONES_GENERIC
+  if (data->LJGEN_cut != 0)
+    return 1;
+#endif
+
 #ifdef SMOOTH_STEP
   if (data->SmSt_cut != 0)
     return 1;
@@ -386,6 +416,8 @@ char *get_name_of_bonded_ia(int i) {
     return "tabulated";
   case BONDED_IA_RIGID_BOND:
     return "RIGID_BOND";
+  case BONDED_IA_VIRTUAL_BOND:
+    return "VIRTUAL_BOND";
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
 	    this_node, i);
@@ -541,6 +573,27 @@ void calc_maximal_cutoff()
 	 }
 #endif
 
+#ifdef DPD
+	 if (dpd_r_cut !=0) {
+	   if(max_cut_non_bonded < dpd_r_cut)
+	     max_cut_non_bonded = dpd_r_cut;
+	 }
+#endif
+
+#ifdef TRANS_DPD
+	 if (dpd_tr_cut !=0) {
+	   if(max_cut_non_bonded < dpd_tr_cut)
+	     max_cut_non_bonded = dpd_tr_cut;
+	 }
+#endif
+
+#ifdef LENNARD_JONES_GENERIC
+	 if (data->LJGEN_cut != 0) {
+	   if(max_cut_non_bonded < (data->LJGEN_cut+data->LJGEN_offset) )
+	     max_cut_non_bonded = (data->LJGEN_cut+data->LJGEN_offset);
+	 }
+#endif
+
 #ifdef SMOOTH_STEP
          if (data->SmSt_cut != 0) {
            if(max_cut_non_bonded < data->SmSt_cut)
@@ -624,6 +677,10 @@ void calc_maximal_cutoff()
   case COULOMB_DH:
     if (max_cut_non_bonded < dh_params.r_cut)
       max_cut_non_bonded = dh_params.r_cut;
+    break;
+  case COULOMB_RF:
+    if (max_cut_non_bonded < rf_params.r_cut)
+      max_cut_non_bonded = rf_params.r_cut;
     break;
   case COULOMB_MMM1D:
     /* needs n-squared calculation anyways */
@@ -713,6 +770,9 @@ int coulomb_set_bjerrum(double bjerrum)
     case COULOMB_DH:
       dh_params.r_cut   = 0.0;
       dh_params.kappa   = 0.0;
+    case COULOMB_RF:
+      rf_params.r_cut   = 0.0;
+      rf_params.eps   = 0.0;
     case COULOMB_MMM1D:
       mmm1d_params.maxPWerror = 1e40;
       mmm1d_params.bessel_cutoff = 0;
@@ -789,7 +849,9 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_COULOMB("ewald", inter_parse_ewald);
 
   REGISTER_COULOMB("dh", inter_parse_dh);    
-    
+
+  REGISTER_COULOMB("rf", inter_parse_rf);
+
   REGISTER_COULOMB("mmm1d", inter_parse_mmm1d);
 
   REGISTER_COULOMB("mmm2d", inter_parse_mmm2d);
@@ -872,6 +934,11 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
 #endif
+#ifdef BOND_VIRTUAL
+  case BONDED_IA_VIRTUAL_BOND:
+    Tcl_AppendResult(interp, "VIRTUAL_BOND ", (char *) NULL);
+    return (TCL_OK);
+#endif
 #ifdef LENNARD_JONES
   case BONDED_IA_SUBT_LJ:
     Tcl_PrintDouble(interp, params->p.subt_lj.k, buffer);
@@ -908,6 +975,9 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
   Tcl_AppendResult(interp, buffer, (char *) NULL);
 #ifdef LENNARD_JONES
   if (data->LJ_cut != 0) printljIAToResult(interp,i,j);
+#endif
+#ifdef LENNARD_JONES_GENERIC
+  if (data->LJGEN_cut != 0) printljgenIAToResult(interp,i,j);
 #endif
 #ifdef SMOOTH_STEP
   if (data->SmSt_cut != 0) printSmStIAToResult(interp,i,j);
@@ -968,6 +1038,7 @@ int printCoulombIAToResult(Tcl_Interp *interp)
 #endif
   case COULOMB_EWALD: printEWALDToResult(interp); break;
   case COULOMB_DH: printdhToResult(interp); break;
+  case COULOMB_RF: printrfToResult(interp); break;
   case COULOMB_MMM1D: printMMM1DToResult(interp); break;
   case COULOMB_MMM2D: printMMM2DToResult(interp); break;
   case COULOMB_MAGGS: printMaggsToResult(interp); break;
@@ -1182,6 +1253,10 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
     REGISTER_NONBONDED("lennard-jones", lj_parser);
 #endif
 
+#ifdef LENNARD_JONES_GENERIC
+    REGISTER_NONBONDED("lj-gen", ljgen_parser);
+#endif
+
 #ifdef SMOOTH_STEP
     REGISTER_NONBONDED("smooth-step", SmSt_parser);
 #endif
@@ -1269,6 +1344,29 @@ int inter_print_partner_num(Tcl_Interp *interp, int bond_type)
 /*                                       parsing                                */
 /********************************************************************************/
 
+#ifdef BOND_VIRTUAL
+int virtual_set_params(int bond_type)
+{
+  if(bond_type < 0)
+    return TCL_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].type = BONDED_IA_VIRTUAL_BOND;
+  bonded_ia_params[bond_type].num  = 1;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return TCL_OK;
+}
+
+int inter_parse_virtual_bonds(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+{
+	CHECK_VALUE(virtual_set_params(bond_type), "bond type must be nonnegative");
+}
+#endif
+
 int inter_parse_bonded(Tcl_Interp *interp,
 		       int bond_type,
 		       int argc, char ** argv)
@@ -1301,6 +1399,9 @@ int inter_parse_bonded(Tcl_Interp *interp,
 #ifdef BOND_CONSTRAINT
   REGISTER_BONDED("rigid_bond", inter_parse_rigid_bonds);
 #endif
+#ifdef BOND_VIRTUAL
+  REGISTER_BONDED("virtual_bond", inter_parse_virtual_bonds);
+#endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);
   return TCL_ERROR;
@@ -1308,7 +1409,7 @@ int inter_parse_bonded(Tcl_Interp *interp,
 
 int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 {
-#ifdef LENNARD_JONES
+#if defined(LENNARD_JONES) || defined(LENNARD_JONES_GENERIC)
   if(ARG0_IS_S("ljforcecap"))
     return inter_parse_ljforcecap(interp, argc-1, argv+1);
 #endif

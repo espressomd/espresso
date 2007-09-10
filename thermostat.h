@@ -10,60 +10,6 @@
 #define THERMOSTAT_H
 /** \file thermostat.h 
 
-    Contains all thermostats.
-    
-    <ul>
-    <li> For NVT Simulations one can chose either a Langevin thermostat or
-    a DPD (Dissipative Particle Dynamics) thermostat.
-    \verbatim thermostat langevin <temperature> <gamma> \endverbatim
-    \verbatim thermostat dpd <temperature> <gamma> <r_cut> \endverbatim
-
-    <li> For NPT Simulations one can use a thermostat for the box (Based on
-    an Anderson thermostat) and a Langevin thermostat.
-    \verbatim thermostat langevin <temperature> <gamma> \endverbatim
-    \verbatim thermostat npt_isotropic <temperature> <gamma0> <gammaV> \endverbatim
-
-    <li> \verbatim thermostat off \endverbatim
-    Turns off all thermostats and sets all thermostat variables to zero.
-
-    <li> \verbatim thermostat \endverbatim
-    Returns the current thermostat status.
-    </ul>
-
-    Further important  remarks:
-    <ul>
-    <li> If ROTATION is compiled in, the rotational degrees of freedom
-    are coupled to a Langevin thermostat as well if you use a Langevin
-    thermostat.
-
-    <li> All thermostats use the same temperature (So far we did not
-    see any physical sense to change that!).
-    </ul>
-
-    Thermostat description:
-
-    <ul>
-
-    <li> LANGEVIN THERMOSTAT:
-
-    Consists of a friction and noise term coupled via the fluctuation
-    dissipation theorem. The Friction term is a function of the
-    particles velocity.
-
-    <li> DPD THERMOSTT (Dissipative Particle Dynamics):
-
-    Consists of a friction and noise term coupled via the fluctuation
-    dissipation theorem. The Friction term is a function of the
-    relative velocity of particle pairs.
-    DPD is better for dynamics, since it mimics hydrodynamics in the system.
-    Good values to choos are dpd_cutoff = \f$ 2^{\frac{1}{6}} \f$, namely the cutoff of the LJ interaction. That means the thermostat acts on the relative velocities between nearest neighbor particles. Larger cutoffs including next nearest neighbors or even more are unphysical.
-    dpd_gamma is basically an invers timescale on which the system thermally equilibrates. Values between 0.1 and 1 are o.k, but you propably want to try yourself to get a feeling for how fast temperature jumps during a simulation are. The dpd thermostat does not act on the system center of mass motion. So befor using dpd you have to stop the center of mass motion of your system, which you can achieve by using the command "galileiTransformParticles" in the file scripts/auxiliary.tcl. This may be repeated once in a while for long runs due to round off errors (check with the command "system_com_vel").
-
-    <li> NPT ISOTROPIC THERMOSTAT:
-    
-    INSERT COMMENT
-
-    </ul>
 
     <b>Responsible:</b>
     <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
@@ -103,9 +49,7 @@
     of the different possible thermostats (defines: \ref THERMO_OFF,
     \ref THERMO_LANGEVIN, \ref THERMO_DPD \ref THERMO_NPT_ISO). If it
     is zero all thermostats are switched off and the temperature is
-    set to zero. You may combine different thermostats at your own
-    risk by turning them on one by one. Note that there is only one
-    temperature for all thermostats so far. */
+    set to zero.  */
 extern int thermo_switch;
 
 /** temperature. */
@@ -118,9 +62,15 @@ extern double langevin_gamma;
 extern double dpd_gamma;
 /** DPD thermostat cutoff */
 extern double dpd_r_cut;
+/** DPD thermostat weight function */
+extern int dpd_wf;
 #ifdef TRANS_DPD
 /** DPD transversal Friction coefficient gamma. */
 extern double dpd_tgamma;
+/** trans DPD thermostat cutoff */
+extern double dpd_tr_cut;
+/** trans DPD thermostat weight function */
+extern int dpd_twf;
 #endif
 
 /** Friction coefficient for nptiso-thermostat's inline-function friction_therm0_nptiso */
@@ -233,8 +183,10 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double dist2)
 {
   extern double dpd_gamma,dpd_pref1, dpd_pref2,dpd_r_cut,dpd_r_cut_inv;
+  extern int dpd_wf;
 #ifdef TRANS_DPD
-  extern double dpd_tgamma, dpd_pref3, dpd_pref4;
+  extern double dpd_tgamma, dpd_pref3, dpd_pref4,dpd_tr_cut,dpd_tr_cut_inv;
+  extern int dpd_twf;
 #endif
   int j;
   // velocity difference between p1 and p2
@@ -251,11 +203,16 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   double f_D[3],f_R[3];
 #endif
   double tmp;
-  if(dist < dpd_r_cut) {
-    dist_inv = 1.0/dist;
-    omega    = dist_inv - dpd_r_cut_inv;
-    /* use this weight function for hard potentials1 */
-    /* omega=dist_inv; //Step function */
+  dist_inv = 1.0/dist;
+  if((dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
+    if ( dpd_wf == 1 )
+    {
+       omega    = dist_inv;
+    }
+    else 
+    {
+    	omega    = dist_inv- dpd_r_cut_inv;
+    }
     omega2   = SQR(omega);
     //DPD part
     if (dpd_gamma > 0.0 ){
@@ -269,9 +226,19 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
         p2->f.f[j] -= tmp;
       }
     }
+  }
 #ifdef TRANS_DPD
     //DPD2 part
-    if (dpd_tgamma > 0.0 ){
+  if ((dist < dpd_tr_cut)&&(dpd_tgamma > 0.0)){
+      if ( dpd_twf == 1 )
+      {
+        omega    = dist_inv;
+      }
+      else 
+      {
+        omega    = dist_inv- dpd_tr_cut_inv;
+      }
+      omega2   = SQR(omega);
       for (i=0;i<3;i++){
         //noise vector
         noise_vec[i]=d_random()-0.5;
@@ -297,9 +264,8 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
         p1->f.f[j] += tmp;
         p2->f.f[j] -= tmp;
       }
-    }
-#endif
   }
+#endif
 }
 #endif
 

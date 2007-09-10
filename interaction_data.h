@@ -49,6 +49,8 @@
 #define BONDED_IA_SUBT_LJ   5
 /** Type of a Rigid/Constrained bond*/
 #define BONDED_IA_RIGID_BOND  6
+/** Type of a virtual bond*/
+#define BONDED_IA_VIRTUAL_BOND  7
 
 /* Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
@@ -83,6 +85,8 @@
 #define COULOMB_EWALD   7
 /** Coulomb method is P3M plus ELC. */
 #define COULOMB_ELC_P3M 8
+/** Coulomb method is Reaction-Field. */
+#define COULOMB_RF 9
 
 /*@}*/
 
@@ -132,6 +136,20 @@ typedef struct {
   double LJ_shift;
   double LJ_offset;
   double LJ_capradius;
+  /*@}*/
+#endif
+
+#ifdef LENNARD_JONES_GENERIC
+  /** \name Generic Lennard-Jones with shift */
+  /*@{*/
+  double LJGEN_eps;
+  double LJGEN_sig;
+  double LJGEN_cut;
+  double LJGEN_shift;
+  double LJGEN_offset;
+  double LJGEN_capradius;
+  int LJGEN_a1;
+  int LJGEN_a2;
   /*@}*/
 #endif
 

@@ -26,17 +26,13 @@ AC_DEFUN([ES_CHECK_MPI],[
 ********************************************************************************\
 		])])
 
+dnl "no" is equivalent to "fake", "yes" means to guess
 	if test .$with_mpi = .fake; then
 		ES_MPI_SETUP_FAKE
 	elif test .$with_mpi = .no; then
 		with_mpi=fake
 		ES_MPI_SETUP_FAKE
 	else
-		if test .$with_mpi = .yes; then
-			if test .$known_mpi != .; then
-				with_mpi=$known_mpi
-			fi
-		fi
 		if test .$with_mpi = .yes; then
 			ES_MPI_GUESS_ENV
 		else

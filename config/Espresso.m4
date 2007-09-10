@@ -7,10 +7,13 @@ AC_DEFUN([ES_INIT_CHOOSER],[
 			[create a chooser for the Espresso binary [[no]]]
 			),
 		,[enable_chooser=no])
+	AC_MSG_CHECKING([whether to enable the chooser])
 	if test .$enable_chooser = .yes; then
+	   AC_MSG_RESULT(yes)
 	   execpkglibdir='${pkglibdir}'/obj-`$srcdir/config/config.guess`
 	   scriptsdir='${pkglibdir}/scripts'
 	else
+	   AC_MSG_RESULT(no)
 	   scriptsdir='${pkgdatadir}/scripts'
 	fi
 	AM_CONDITIONAL(USE_CHOOSER, test .$enable_chooser = .yes)
@@ -25,7 +28,9 @@ AC_DEFUN([ES_INIT_MYCONFIG],[
 			[default name of the local config file [[myconfig.h]]]),
 		[ test .$with_myconfig = .no && with_myconfig=myconfig.h],
 		[ with_myconfig=myconfig.h ])
+	AC_MSG_CHECKING([the name of the configuration header])
 	myconfig=$with_myconfig
+	AC_MSG_RESULT($myconfig)
 	AC_SUBST(myconfig)
 ])
 

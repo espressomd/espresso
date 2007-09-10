@@ -207,13 +207,15 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
     else
       break;
   }
+  /* length of the normal vector */
   norm = SQR(con->c.wal.n[0])+SQR(con->c.wal.n[1])+SQR(con->c.wal.n[2]);
   if (norm < 1e-10 || con->part_rep.p.type < 0) {
     Tcl_AppendResult(interp, "usage: constraint wall normal <nx> <ny> <nz> dist <d> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
-  for(i=0;i<3;i++) con->c.wal.n[i] /= sqrt(norm);
+  /* normalize the normal vector */
+  for (i=0;i<3;i++) con->c.wal.n[i] /= sqrt(norm);
 
   return (TCL_OK);
 }
@@ -254,7 +256,7 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
     }
     else if(!strncmp(argv[0], "direction", strlen(argv[0]))) {
       if (argc < 1) {
-	Tcl_AppendResult(interp, "1/-1 or inside/outside is expected", (char *) NULL);
+	Tcl_AppendResult(interp, "-1/1 or inside/outside is expected", (char *) NULL);
 	return (TCL_ERROR);
       }
       if (!strncmp(argv[1], "inside", strlen(argv[1])))
@@ -504,11 +506,11 @@ int constraint_rod(Constraint *con, Tcl_Interp *interp,
       argc -= 3; argv += 3;
     }
     else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
-      Tcl_AppendResult(interp, "constraint rod radius <r> is deprecated, please a cylinder for LJ component", (char *) NULL);
+      Tcl_AppendResult(interp, "constraint rod radius <r> is deprecated, please use a cylinder for LJ component", (char *) NULL);
       return (TCL_ERROR);
     }
     else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      Tcl_AppendResult(interp, "constraint rod type <t> is deprecated, please a cylinder for LJ component", (char *) NULL);
+      Tcl_AppendResult(interp, "constraint rod type <t> is deprecated, please use a cylinder for LJ component", (char *) NULL);
       return (TCL_ERROR);
     }
     else if(!strncmp(argv[0], "lambda", strlen(argv[0]))) {
@@ -627,6 +629,7 @@ int constraint_maze(Constraint *con, Tcl_Interp *interp,
     return (TCL_ERROR);    
   }
 
+  // KG: Is this line neccessary???
   make_particle_type_exist(con->type);
 
   return (TCL_OK);

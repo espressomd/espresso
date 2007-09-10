@@ -38,6 +38,7 @@
 /* #define MOLFORCES */
 /* #define BOND_CONSTRAINT */
 /* #define MODES */
+/* #define BOND_VIRTUAL */
 
 /**********************************************************************/
 /*                        integrator features                         */
@@ -55,6 +56,7 @@
 
 /* #define TABULATED */
 /* #define LENNARD_JONES */
+/* #define LENNARD_JONES_GENERIC */
 /* #define SMOOTH_STEP */
 /* #define BMHTF_NACL */
 /* #define LJ_WARN_WHEN_CLOSE */
@@ -101,6 +103,7 @@
 /* #define STAT_DEBUG */ 
 /* #define POLY_DEBUG */
 /* #define MOLFORCES_DEBUG */
+/* #define PTENSOR_DEBUG*/
 /* #define MEM_DEBUG */
 /* #define MAGGS_DEBUG */
 /* #define LB_DEBUG */
