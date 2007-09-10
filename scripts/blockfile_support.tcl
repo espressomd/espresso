@@ -334,6 +334,7 @@ proc blockfile_write_variable {channel write variable {which "all"}} {
 	puts $channel "\n\t{[join [setmd] "\}\n\t\{"]}"
     } {
 	if {[llength $which] == 1} {
+	    set which [lindex $which 0]
 	    puts -nonewline $channel " {$which [setmd $which]} "
 	} {
 	    puts $channel ""
@@ -344,13 +345,15 @@ proc blockfile_write_variable {channel write variable {which "all"}} {
 }
 
 proc blockfile_read_auto_variable {channel read auto} {
-    global blockfile_variable_blacklist
-    if {![info exists blockfile_variable_blacklist]} { set blockfile_variable_blacklist "" }
+    global blockfile_variable_blacklist blockfile_variable_whitelist
     set vars [blockfile $channel read toend]
     # new format
     foreach vblock $vars {
 	set vname [lindex $vblock 0]
-	if {[lsearch -exact $blockfile_variable_blacklist $vname] != -1} { continue }
+	if {[info exists blockfile_variable_blacklist] && \
+		[lsearch -exact $blockfile_variable_blacklist $vname] != -1} { continue }
+	if {[info exists blockfile_variable_whitelist] && \
+		[lsearch -exact $blockfile_variable_whitelist $vname] == -1} { continue }
 	set data [lrange $vblock 1 end]
 	if {[catch {eval "setmd $vname $data"} error]} {
 	    switch -glob $error {
@@ -389,6 +392,7 @@ proc blockfile_write_tclvariable {channel write tclvariable {which "all"}} {
 	}
     }
     if {[llength $which] == 1} {
+	set which [lindex $which 0]
 	global $which
 	if { ![array exists $which] } {
 	    puts -nonewline $channel " {$which [set $which]} "
@@ -401,12 +405,14 @@ proc blockfile_write_tclvariable {channel write tclvariable {which "all"}} {
 }
 
 proc blockfile_read_auto_tclvariable {channel read auto} {
-    global blockfile_tclvariable_blacklist
-    if {![info exists blockfile_tclvariable_blacklist]} { set blockfile_tclvariable_blacklist "" }
+    global blockfile_tclvariable_blacklist blockfile_tclvariable_whitelist
     set vars [blockfile $channel read toend]
     foreach vblock $vars {
 	set vname [lindex $vblock 0]
-	if {[lsearch -exact $blockfile_tclvariable_blacklist $vname] != -1} { continue }
+	if {[info exists blockfile_tclvariable_blacklist] && \
+		[lsearch -exact $blockfile_tclvariable_blacklist $vname] != -1} { continue }
+	if {[info exists blockfile_tclvariable_whitelist] && \
+		[lsearch -exact $blockfile_tclvariable_whitelist $vname] == -1} { continue }
 	set data [lrange $vblock 1 end]
 	if { "$vname" != "array" } {
 	    global $vname

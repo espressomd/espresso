@@ -36,6 +36,7 @@ proc require_feature {feature} {
 
 require_feature "ELECTROSTATICS"
 require_feature "PARTIAL_PERIODIC"
+require_feature "CONSTRAINTS"
 
 set epsilon 1e-3
 thermostat off

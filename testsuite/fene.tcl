@@ -33,7 +33,7 @@ proc read_data {file} {
     if { [string compare [lindex [split $file "."] end] "gz"]==0 } { set f [open "|gzip -cd $file" r]
     } else { set f [open "$file" "r"] }
     while {![eof $f]} { blockfile $f read auto}
-    close $f
+    if { [catch { close $f } fid] } { puts "Error while closing $file caught: $fid." }
 }
 
 proc write_data {file} {

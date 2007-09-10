@@ -1,0 +1,117 @@
+#!/bin/sh
+
+usage() {
+    cat <<EOF
+Usage: $0 [-p PROCESSOR] [TESTCASES]...
+  Run TESTCASE on PROCESSOR processors.
+  Instead of specifying PROCESSORS and TESTCASES on the command line,
+  you can set the environment variables TESTCASES and PROCESSORS.
+EOF
+    exit 2
+}
+
+# list of tests that are not supported by this version
+BLACKLIST=
+
+srcdir=@srcdir@
+ESPRESSO=@top_builddir@/Espresso
+#ESPRESSO_SCRIPTS=@top_srcdir@/scripts
+#export ESPRESSO_SCRIPTS
+
+# handle processors
+processors=$PROCESSORS
+if test $1 = "-p"; then
+    processors=$2;
+    shift 2;
+fi
+
+# handle testcases
+testcases=$TESTCASES
+if test $# -ge 1; then
+    testcases="$@"
+fi
+
+# check if variables are available
+if test -z "$processors" || test -z "$testcases"; then
+    test -z "$processors" && echo "Processors not specified!"
+    test -z "$testcases" && echo "No testcases specified!"
+    usage
+fi
+
+# check for blacklisted tests
+testcases_old=$testcases
+testcases=
+blacklisted=
+for testcase in $testcases_old; do
+    ignore=
+    for bl_testcase in $BLACKLIST; do
+	if test "$bl_testcase" = "$testcase"; then
+	    ignore=1
+	    break;
+	fi
+    done
+    if ! test "$ignore"; then
+	testcases="$testcases $testcase"
+    else
+	blacklisted="$blacklisted $testcase"
+    fi
+done
+
+# link all files from the src directory to the run directory, if they are not identical
+for file in `ls $srcdir/`; do
+    if ! test -f $file; then
+	echo @LN_S@ $srcdir/$file .
+	@LN_S@ $srcdir/$file .
+    fi
+done
+
+# here go the error messages
+errf=_test.sh_error.$$
+
+# execute the tests
+for np in $processors; do
+    failed=
+    ignored=
+    for testcase in $testcases; do
+	CMD="$ESPRESSO $srcdir/$testcase $np $errf"
+	echo $CMD
+	$CMD
+	case $? in
+	    (0) ;;
+	    (214) ignored="$ignored $testcase";;
+	    (*) failed="$failed $testcase ($np processors)";;
+	esac
+    done
+    if test "$failed"; then break; fi
+done
+
+echo ""
+echo "***************"
+echo "**  SUMMARY  **"
+echo "***************"
+
+if test "$blacklisted"; then
+    echo "BLACKLISTED TESTS:"
+    for testcase in $blacklisted; do
+	echo "  $testcase"
+    done
+fi
+
+if test "$ignored"; then
+    echo "IGNORED TESTS:"
+    for testcase in $ignored; do
+	echo "  $testcase"
+    done
+fi
+
+if test "$failed"; then
+    echo "FAILED TESTS:"
+    for testcase in $failed; do
+	echo "  $testcase"
+    done
+else
+    echo "All tests were successful!"
+fi
+
+exec test -z $failed
+

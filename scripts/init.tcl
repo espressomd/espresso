@@ -130,3 +130,8 @@ source pov.tcl
 source vtf.tcl
 #adds 'writevsf <file> [options]'
 #adds 'writevcf <file> [options]'
+
+# make available readline if Espresso is interactive
+if {$tcl_interactive} {
+	source tclline.tcl
+}
