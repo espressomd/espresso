@@ -307,6 +307,28 @@ void centermass(int type, double *com)
   return;
 }
 
+void centermass_vel(int type, double *com)
+{
+  int i, j;
+  int count = 0;
+  com[0]=com[1]=com[2]=0.;
+   	
+  updatePartCfg(WITHOUT_BONDS);
+  for (j=0; j<n_total_particles; j++) {
+    if (type == partCfg[j].p.type) {
+      for (i=0; i<3; i++) {
+      	com[i] += partCfg[j].m.v[i];
+      }
+      count++;
+    }
+  }
+  
+  for (i=0; i<3; i++) {
+    com[i] /= count;
+  }
+  return;
+}
+
 void angularmomentum(int type, double *com)
 {
   int i, j;
@@ -561,6 +583,70 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
   /* normalization */
   *low /= (double)cnt;
   for(i=0;i<r_bins;i++) dist[i] /= (double)cnt;
+}
+
+void calc_vel_distr(Tcl_Interp *interp, int type,int bins,double given_max)
+{
+   int i,j,p_count,dist_count,ind;
+   double min,max,bin_width,inv_bin_width,com[3],vel;
+   max=given_max;
+   min=-given_max;
+   p_count=0;
+   long distribution[bins];
+   char buffer[2*TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE+256];
+   
+   for(i=0; i<bins; i++) {distribution[i]=0;}
+
+   centermass_vel(type,com);
+
+   for (i=0;i<n_total_particles;i++)
+   {
+      if (partCfg[i].p.type==type)
+      {
+        p_count++;
+        for (j=0;j<3;j++)
+        {
+           if (min > (partCfg[i].m.v[j]-com[j]) ){min=partCfg[i].m.v[j]-com[j];}
+           if (max < (partCfg[i].m.v[j]-com[j]) ){max=partCfg[i].m.v[j]-com[j];}
+        }
+      }
+   }
+   if (p_count==0) {return;}
+
+   //fprintf(stderr,"max min %e %e\n",min,max);
+   if ( (-min) > max ) {
+      max = -min;
+   }
+   else{
+      min = -max;
+   }
+   //fprintf(stderr,"max min %e %e\n",min,max);
+
+   bin_width     = (max-min) / (double)bins;
+   inv_bin_width = 1.0 / bin_width;
+   dist_count=0;
+   for (i=0;i<n_total_particles;i++)
+   {
+     if (partCfg[i].p.type==type)
+     {
+        for (j=0;j<3;j++)
+        {
+          vel= partCfg[i].m.v[j]-com[j];
+          ind = (int) ( (vel - min)*inv_bin_width );
+          distribution[ind]++;
+          dist_count++;
+        }
+     }
+   }
+   
+   vel=min + bin_width/2.0;
+   Tcl_AppendResult(interp, " {\n", (char *)NULL);
+   for(i=0; i<bins; i++) {
+      sprintf(buffer,"%f %f",vel,distribution[i]/(double)dist_count);
+      Tcl_AppendResult(interp, "{ ",buffer," }\n", (char *)NULL);
+      vel += bin_width;
+   }
+   Tcl_AppendResult(interp, "}\n", (char *)NULL);
 }
 
 void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
@@ -2230,6 +2316,49 @@ static int parse_distribution(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
+static int parse_vel_distr(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze vel_distr [<type>]' */
+  char buffer[3*TCL_DOUBLE_SPACE+3];
+  int p1;
+  int bins=100;
+  double max=0.0;
+
+  /* parse arguments */
+  if (argc == 0) {
+    Tcl_AppendResult(interp, "usage: analyze vel_distr <type> [bins max]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  if (!ARG0_IS_I(p1)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze vel_distr <type> [bins max]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  if (argc > 1){
+    if (!ARG1_IS_I(bins)) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "usage: analyze vel_distr <type> [bins max]", (char *)NULL);
+      return (TCL_ERROR);
+    }
+  }
+
+  if (argc > 2){
+    if (!ARG_IS_D(2,max)) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "usage: analyze vel_distr <type> [bins max]", (char *)NULL);
+      return (TCL_ERROR);
+    }
+  }
+
+  sprintf(buffer,"%i %i %f",p1,bins,max);
+  Tcl_AppendResult(interp, "{ analyze vel_distr ",buffer,"} ",(char *)NULL);
+  updatePartCfg(WITHOUT_BONDS);
+  calc_vel_distr(interp,p1,bins,max);
+
+  return TCL_OK;
+}
 
 static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
 {
@@ -2999,6 +3128,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("necklace", parse_necklace_analyzation);   
   REGISTER_ANALYSIS("holes", parse_hole_cluster_analyzation);   
   REGISTER_ANALYSIS("distribution", parse_distribution);
+  REGISTER_ANALYSIS("vel_distr", parse_vel_distr);
   REGISTER_ANALYSIS_W_ARG("rdf", parse_rdf, 0);
   REGISTER_ANALYSIS_W_ARG("<rdf>", parse_rdf, 1);
   REGISTER_ANALYSIS_W_ARG("<rdf-intermol>", parse_rdf, 2);
