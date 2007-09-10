@@ -73,29 +73,29 @@ make
 Espresso
 \end{code}
 
-\section{The configuration header \texttt{myconfig.h}}
+\section{\texttt{myconfig.h}: Activating and deactivting features}
 \label{sec:myconfig}
 
-\index{myconfig.h} \index{configuration header} \es has a large number
-of features that can be compiled into the binary. However, it is not
-recommended to actually compile in all possible features, as this will
-negatively affect \es's performance.  Instead, compile in only the
-features that are actually required.  For the developers, it is also
-possible to turn on or off a number of debugging messages.  The
-features and debug messages can be controlled via a configuration
-header file that contains C-preprocessor declarations. Appendix
-\vref{chap:features} lists and describes all available features.  When
-no configuration header is provided by the user, a default header will
-be used that turns on the default features.  The file
-\texttt{myconfig-sample.h} in the source directory contains a list of
-all possible features that can be copied into your own configuration
-file.
+\index{features} \index{myconfig.h} \index{configuration header} \es
+has a large number of features that can be compiled into the binary.
+However, it is not recommended to actually compile in all possible
+features, as this will negatively affect \es's performance.  Instead,
+compile in only the features that are actually required.  For the
+developers, it is also possible to turn on or off a number of
+debugging messages.  The features and debug messages can be controlled
+via a configuration header file that contains C-preprocessor
+declarations. Appendix \vref{chap:features} lists and describes all
+available features.  When no configuration header is provided by the
+user, a default header will be used that turns on the default
+features.  The file \texttt{myconfig-sample.h} in the source directory
+contains a list of all possible features that can be copied into your
+own configuration file.
 
 When you distinguish between the build and the source directory (see
 \vref{sec:builddir}), the configuration header can be put in either of
 these. Note, however, that when a configuration header is found in
 both directories, the one in the build directory will be used.  For an
-example how this can be exploited, see section \ref{sec:builddir}.
+example how this can be employed, see section \ref{sec:builddir}.
 
 By default, the configuration header is called \texttt{myconfig.h}.
 The name of the configuration header can be changed either when the
@@ -175,11 +175,6 @@ configure --help
   when the \texttt{configure} script is called from the source
   directory, otherwise it will be disabled. It is not recommended to
   set the option manually.
-\item[\texttt{--enable-config=KNOWN\_CONFIG}] For some known systems,
-  where \texttt{configure} does not find the required libraries and
-  compiler options, predefined settings can be used. The following
-  configuration names are known: \texttt{dino} and \texttt{blade}. The
-  default for this option is: \texttt{none}.
 \item[\texttt{--enable-debug}] This option will enable compiler flags
   required for debugging the \es binary and is disabled by default.
 \item[\texttt{--enable-profiling}] This option will enable compiler
@@ -246,7 +241,9 @@ make [\var{target}...] [\var{variable}=\var{value}]
 When no target is given, the target \texttt{all} is used. The
 following targets are available:
 \begin{description}
-\item[\texttt{all}] Compiles the complete \es{} source code.
+\item[\texttt{all}] Compiles the complete \es source code. The
+  variable \lit{myconf} can be used to specify the name of the
+  configuration header to be used.
 \item[\texttt{check}] Runs the testsuite. By default, all available
   tests will be run on 1, 2, 3, 4, 6, or 8 processors. Which tests are
   run can be controlled by means of the variable \texttt{tests}, which
@@ -258,7 +255,7 @@ following targets are available:
   \verb!testsuite/test.sh! to the queueing system.\\
   \textbf{Example:} \verb!make check tests="madelung.tcl" processors="1 2"!\\
   will run the test \texttt{madlung.tcl} on one and two processors.
-\item[\texttt{clean}] Deletes all files that were created furing the
+\item[\texttt{clean}] Deletes all files that were created during the
   compilation.
 \item[\texttt{mostlyclean}] Deletes most files that were created
   during the compilation. Will keep for example the built doxygen

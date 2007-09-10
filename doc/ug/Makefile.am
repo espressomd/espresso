@@ -1,4 +1,4 @@
-ug_SOURCES=\
+ug_TEXFILES=\
 	ug.tex \
 	introduction.tex \
 	firststeps.tex \
@@ -17,39 +17,44 @@ ug_SOURCES=\
 	examples.tex \
 	deserno.tex
 
-ug_FIGURES=\
-	logo.jpg \
-	nacl-rdf.pdf \
-	salt.png
 
-data_DATA=ug.pdf
+ug_FILES=$(ug_TEXFILES) \
+	underscore.sty \
+	bibliography.bib
 
-EXTRA_DIST=$(ug_SOURCES) figures ug.pdf
+#data_DATA=ug.pdf
+
+EXTRA_DIST= $(ug_FILES) \
+	ug.pdf \
+	check_consistency.sh assemble_quickref.awk \
+	latexmk latexmk.1 latexmkrc
+
 .PHONY: doc ug
 
 doc: ug
 ug: ug.pdf
-ug.pdf: $(ug_SOURCES)
-if HAVE_PDFLATEX
-	for file in $(ug_SOURCES); do \
-	  if test ! -e $$file; then $(LN_S) $(srcdir)/$$file .; fi;\
+ug.pdf: $(ug_FILES)
+if HAVE_LATEX
+	cd figures; $(MAKE) --print-directory $@
+	for file in $(ug_FILES); do \
+	  test -e $$file || \
+	    $(LN_S) $(srcdir)/$$file .; \
 	done
-	mkdir -p figures
-	for file in $(ug_FIGURES); do \
-	  if test ! -e figures/$$file; then $(LN_S) ../$(srcdir)/figures/$$file figures; fi;\
-	done
+	$(AWK) -f $(srcdir)/assemble_quickref.awk $(ug_TEXFILES) > quickref.inp
 	$(PDFLATEX) ug.tex
-	makeindex ug
+	$(MAKEINDEX) ug
+	$(BIBTEX) ug
 	$(PDFLATEX) ug.tex
 	$(PDFLATEX) ug.tex
 else
-	@echo "pdflatex was not found in your PATH."
-	@echo "Can't build user's guide without pdflatex."
-	@echo "Install pdflatex and rerun configure."
+	@echo "No complete LaTeX-installation was not found in your PATH."
+	@echo "Can't build the User's Guide without pdflatex, makeindex and bibtex."
+	@echo "Install these and rerun configure."
 endif
 
 CLEANFILES=ug.pdf
 MOSTLYCLEANFILES=\
+	quickref.inp \
 	*.aux *.aux.bak\
 	ug.idx ug.idx.bak ug.ilg ug.ind\
 	ug.log ug.out ug.toc

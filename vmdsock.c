@@ -135,7 +135,7 @@ void *vmdsock_accept(void * v) {
 #ifdef SOCKLEN_T
   socklen_t len;
 #else
-  int len;
+  unsigned int len;
 #endif
 
   len = sizeof(s->addr);

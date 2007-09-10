@@ -6,11 +6,12 @@
 
 
 \subsection{\texttt{countBonds}}
-\tclcommand{countBonds}{\var{particle\_list}}
-
+\begin{essyntax}
+  countBonds \var{particle_list}
+\end{essyntax}
 Returns a Tcl-list of the complete topology described by
 \var{particle\_list}, which must have the same format as the output of
-the command \lit{part} (see section \vref{sec:part}).
+the command \lit{part} (see section \vref{tcl:part}).
 
 The output list contains only the particle id and the corresponding
 bonding information, thus it looks like \eg{}
@@ -27,48 +28,50 @@ bond between particle 109 and (the preceding) particle 108, while
 \lit{countBonds} would return all bonds particle 109 participates in.
 
 \subsection{\texttt{findPropPos}}
-\tclcommand{findPropPos}{\var{particle\_property\_list} \var{property}}
-
+\begin{essyntax}
+  findPropPos \var{particle_property_list} \var{property}
+\end{essyntax}
 Returns the index of \var{property} within
-\var{particle\_property\_list}, which is expected to have the same
-format as \codebox{[part \var{particle\_id}]}. If \var{property} is
-not found, -1 is returned.
+\var{particle_property_list}, which is expected to have the same
+format as \codebox{[part \var{particle_id}]}. If \var{property} is not
+found, \lit{-1} is returned.
 
 This function is useful to access certain properties of particles
 without hard-wiring their index-position, which might change in future
 releases of \lit{part}.
 
+\minisec{Example}
 \begin{tclcode}
 [lindex [part $i] [findPropPos [part $i] type]]
 \end{tclcode}
-for example returns the particle type id of particle \$i without
-fixing where exactly that information has to be in the output of
+This returns the particle type id of particle \var{i} without fixing
+where exactly that information has to be in the output of 
 \codebox{[part \$i]}.
 
+\subsection{\texttt{findBondPos}}
+\begin{essyntax}
+  findBondPos \var{particle_property_list}
+\end{essyntax}
 
-\tclcommand{findBondPos}{\var{particle\_property\_list}}
-
-Returns the index of the bonds within var{particle\_property\_list},
-which is expected to have the same format as [part
-\var{particle\_number}]; hence its output is the same as [findPropPos
-<particle\_property\_list> bonds]. If the particle does not have any
-bonds, -1 is returned.
-
+Returns the index of the bonds within \var{particle_property_list},
+which is expected to have the same format as \codebox{[part
+  \var{particle\_number}]}; hence its output is the same as
+\codebox{[findPropPos \var{particle_property_list} bonds]}. If the
+particle does not have any bonds, \lit{-1} is returned.
 
 \subsection{\texttt{timeStamp}}
-\tclcommand{timeStamp}{\var{path} \var{prefix} \var{postfix} \var{suffix}}
-
-modifies the filename contained within \var{path} to be preceded by a
-\var{prefix} and having \var{postfix} before the \var{suffix}; e. g.
+\begin{essyntax}
+  timeStamp \var{path} \var{prefix} \var{postfix} \var{suffix}
+\end{essyntax}
+Modifies the filename contained within \var{path} to be preceded by a
+\var{prefix} and having \var{postfix} before the \var{suffix}; \eg
 \begin{tclcode}
-timeStamp ./scripts/config.gz DH863 001 gz
+  timeStamp ./scripts/config.gz DH863 001 gz
 \end{tclcode}
-returns \texttt{./scripts/DH863\_config001.gz}.
-If \var{postfix} is $-1$, the current date is used in the format
-\texttt{\%y\%m\%d}. This would results in
-\texttt{./scripts/DH863\_config021022.gz} on October 22nd, 2002.
-
-
+returns \lit{./scripts/DH863_config001.gz}.  If \var{postfix} is $-1$,
+the current date is used in the format \lit{\%y\%m\%d}. This would
+results in \lit{./scripts/DH863\_config021022.gz} on October 22nd,
+2002.
 
 \section{Additional Tcl math-functions}
 The following procedures are found in scripts/ABHmath.tcl.

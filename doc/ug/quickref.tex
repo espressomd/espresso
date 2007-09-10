@@ -2,8 +2,25 @@
 \label{chap:quickref}
 
 \index{quick reference of Tcl-commands}
-%\input{ug.qrf}
-%\listofcommands
+
+\setcounter{essyntaxcounter}{0}
+% Redefine the layout commands
+\renewenvironment{essyntax}{%
+  \stepcounter{essyntaxcounter}%
+  \par\noindent%
+  \makebox[0pt][l]{\rule[0.8\baselineskip]{\linewidth}{1pt}}
+  \hspace{3em}%
+  \begin{minipage}[t]{\linewidth-5em}%
+    \setlength{\parindent}{-3em}%
+    \ttfamily
+  }{%
+  \end{minipage}%
+  \hfill{\small\pageref{essyntax:\arabic{essyntaxcounter}}}
+}
+\renewcommand{\variant}[1]{\par}
+
+% Now input the file
+\input{quickref.inp}
 
 %%% Local Variables: 
 %%% mode: latex

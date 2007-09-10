@@ -15,10 +15,7 @@ idxtotoc                        % add the index to the TOC
 ]{scrreprt}
 
 \usepackage[draft]{varioref}    % defines \vref
-\usepackage[
-%bookmarksopen=true
-]
-{hyperref}                      % automatically creates links when
+\usepackage{hyperref}                      % automatically creates links when
                                 % using pdflatex, defines \url
 \usepackage{ifpdf}              % defines \ifpdf
 \usepackage{graphicx}           % handles graphics
@@ -74,7 +71,7 @@ idxtotoc                        % add the index to the TOC
 \makeatother
 
 % required so that we can set index numbers bold
-% \index{Some example|main}
+% \index{Some example|mainindex}
 \newcommand*{\mainindex}[1]{\textbf{\hyperpage{#1}}}
 
 \newcommand{\todo}[1]{
@@ -108,6 +105,7 @@ idxtotoc                        % add the index to the TOC
 \newcommand{\var}[1]{\mbox{\textrm{\textit{#1}}}}
 % option
 \newcommand{\opt}[1]{\mbox{\textrm{[}#1\textrm{]}}}
+\newcommand{\optlong}[1]{\textrm{[}#1\textrm{]}}
 % alternatives
 \newcommand{\alt}[1]{\textrm{(} #1 \textrm{)}}
 \newcommand{\asep}{$|$\xspace}
@@ -116,75 +114,64 @@ idxtotoc                        % add the index to the TOC
 % essyntax environment
 \newcommand{\rawvariant}[1]{\mbox{\textnormal{(#1)}}\xspace}
 \newcommand{\variant}[1]{\rawvariant{#1}}
-% requiresfeature
-\gdef\requiresfeaturesave{}
-\newlength{\requiresfeaturewidth}
-\newcounter{requiresfeaturecounter}
-\newcommand{\requiresfeature}[2]{%
-  \mbox{%
-    \begingroup%
-    \setlength{\fboxsep}{2pt}%
-    \fbox{#1}\,%
-    \endgroup%
-    \raisebox{0.5ex}{\footnotesize%
-      \arabic{requiresfeaturecounter}%
-    }%
+\newcommand{\fmark}[1]{%
+  \raisebox{1ex}{%
+    \textrm{\footnotesize #1}%
   }%
-  % append the feature 
-  \xdef\requiresfeaturesave{%
-    \requiresfeaturesave\noexpand\newline%
-    \noexpand\raisebox{0.5ex}{\noexpand\footnotesize%
-      \arabic{requiresfeaturecounter}%
-    }\,%
-    #2%
-  }%
-  \stepcounter{requiresfeaturecounter}%
 }
+\newcommand{\require}[2]{%
+  \mbox{#2\,\fmark{#1}}%
+}
+\newcommand{\required}[2][]{%
+  \ifthenelse{\equal{#1}{}}{#2}{%
+    \mbox{\fmark{#1}\,#2}%
+  }
+}
+\newenvironment{features}{%
+  \par\smallskip%
+  \small%
+  \textrm{Required\hspace{1ex}features:}%
+  \raggedright%
+}{}
 
+%% Layout thesyntax description box
 \newsavebox{\theessyntaxbox}
 \newlength{\essyntaxboxheight}
 \newlength{\essyntaxboxdepth}
 \newenvironment{essyntaxbox}{%
   \par\noindent%
-  \setcounter{requiresfeaturecounter}{1}%
-  \begin{lrbox}{\theessyntaxbox}%
-    \begin{minipage}{\linewidth-5em}%
-      \ttfamily%
-      \setlength{\parindent}{-3em}%
-      \renewcommand{\variant}[1]{\par\rawvariant{##1}}
-    }{%
-      \renewcommand{\variant}[1]{\rawvariant{##1}}
-    \end{minipage}%
-  \end{lrbox}%
-  \settoheight{\essyntaxboxheight}{\usebox{\theessyntaxbox}}%
-  \settodepth{\essyntaxboxdepth}{\usebox{\theessyntaxbox}}%
-  \hspace{1.5em}%
-  \rule[-\essyntaxboxdepth]{1pt}{\essyntaxboxheight+\essyntaxboxdepth}%
-  \hspace{3.5em}%
-  \usebox{\theessyntaxbox}%
+ \begin{lrbox}{\theessyntaxbox}%
+   \begin{minipage}{\linewidth-5em}%
+     \ttfamily%
+     \setlength{\parindent}{-3em}%
+   }{%
+   \end{minipage}%
+ \end{lrbox}%
+ \settoheight{\essyntaxboxheight}{\usebox{\theessyntaxbox}}%
+ \settodepth{\essyntaxboxdepth}{\usebox{\theessyntaxbox}}%
+ \hspace{1.5em}%
+ \rule[-\essyntaxboxdepth]{1pt}{\essyntaxboxheight+\essyntaxboxdepth}%
+ \hspace{3.5em}%
+ \usebox{\theessyntaxbox}%
 }
 
 %% Environment for syntax descriptions
-%\newlength{\essyntaxindent}
-\newenvironment{essyntax}[1][NONE]{%
-  \ifthenelse{\equal{#1}{NONE}}{}{%
-    \gdef\requiresfeaturesave{#1}%
-  }%
-  \setcounter{requiresfeaturecounter}{1}%
+\newcounter{essyntaxcounter}
+\setcounter{essyntaxcounter}{0}
+\newenvironment{essyntax}{%
+  \stepcounter{essyntaxcounter}%
+  \label{essyntax:\arabic{essyntaxcounter}}
   % Create headings
   \minisec{Syntax}\nopagebreak%
   \smallskip\nopagebreak%
+  \renewcommand{\variant}[1]{\par\rawvariant{##1}}
   \begin{essyntaxbox}%
   }{%
   \end{essyntaxbox}%
-%  \ifthenelse{\equal{\requiresfeaturesave}{}}{}{
-    \minisec{Required features}\nopagebreak%
-    \nopagebreak%
-    \ttfamily\requiresfeaturesave%
-    \gdef\requiresfeaturesave{}%
-%  }
+  \renewcommand{\variant}[1]{\rawvariant{##1}}
   \minisec{Description}%
 }
+
 
 %% List-environment for the description of the arguments of a command
 \newenvironment{arguments}{
@@ -205,10 +192,16 @@ idxtotoc                        % add the index to the TOC
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Create labels and index entries
+%%% Declare new features/commands/analyze subcommands
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Feature declaration
+\newcommand{\newfeature}[1]{%
+  \index{features!{\scriptsize #1}|mainindex}%
+  \hypertarget{#1}{\texttt{\textbf{#1}}}%
+}
+
 % Create label and index entries for an Espresso tcl command
-\newcommand{\eslabel}[2][NONE]{%
+\newcommand{\newescommand}[2][NONE]{%
   \ifthenelse{\equal{#1}{NONE}}%
   {\label{tcl:#2}}%
   {\label{tcl:#1}}%
@@ -216,97 +209,10 @@ idxtotoc                        % add the index to the TOC
   \index{Tcl-commands!#2@\texttt{#2}|mainindex}%
 }
 
-% Create label and index entries for analysis functions
+% Create index entries for analysis functions
 \newcommand{\analyzeindex}[1]{%
   \index{#1|mainindex}%
   \index{analysis!#1|mainindex}%
-}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% OLD STUFF, TO BE REMOVED
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Environment for syntax descriptions
-\newsavebox{\thetclsyntaxbox}
-\newenvironment{tclsyntax}[1][]{
-  % Create index entries
-  \index{#1@\texttt{#1}|mainindex}%
-  \index{Tcl-commands!#1@\texttt{#1}|mainindex}%
-  % Create headings
-  \minisec{Syntax}
-  \smallskip%
-  \begin{lrbox}{\thetclsyntaxbox}%
-    \begin{minipage}{\linewidth-2em}%
-      \ttfamily\setlength{\parindent}{-2em}%
-    }{%
-    \end{minipage}%
-  \end{lrbox}%
-  \begin{addmargin}{4em}%
-    \usebox{\thetclsyntaxbox}%
-  \end{addmargin}%
-  \minisec{Description}
-}
-
-% command definition
-% first, optional argument: variant number
-% second. mandatory argument: syntax description of a command
-\newcommand{\tclcommand}[2][]{%
-  \stepcounter{qrfcounter}%
-  \addtocontents{qrf}{%
-    \protect\qrfcommand{}{#2}{\thepage}{qrf\arabic{qrfcounter}}%
-  }%
-  \hypertarget{qrf\arabic{qrfcounter}}{%
-    \mbox{%
-      \ifthenelse{\equal{#1}{}}{}{\variant{#1}\hspace{0.3em}}%
-      \hspace{2em}\parbox[t]{\linewidth-4em}{%
-        \raggedright\ttfamily\hspace{-2em}#2%
-      }}}%
-}
-
-\newcommand{\addtoquickref}[1]{\addtocontents{qrf}{#1}}
-\newcommand{\quickrefheading}[1]{%
-  \stepcounter{qrfcounter}
-  \addtocontents{qrf}{\protect\qrfheading{#1}{\thepage}{qrf\arabic{qrfcounter}}}
-  \hypertarget{qrf\arabic{qrfcounter}}{}
-}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%% QUICK REFERENCE LAYOUT
-% Create quick reference list
-\newlistof{commands}{qrf}{}
-\newcommand{\qrflastpage}{} % save the last page number
-\newcounter{qrfcounter} % the current number of the cmd
-
-\makeatletter
-\newcommand{\qrfheading}[3]{
-  \@dottedtocline{1}{0pt}{0pt}{\hyperlink{#3}{\textsf{\textbf{#1}}}}{#2}
-  \renewcommand{\qrflastpage}{#2}%
-}
-\makeatother
-
-% command definition in the quickref
-\newcommand{\qrfcommand}[4]{%
-  \begin{addmargin}{1em}%
-    \hyperlink{#4}{%
-      \mbox{\hspace{2em}%
-        \parbox[t]{\linewidth-4em}{%
-          \raggedright\ttfamily%
-          \hspace{-2em}#2
-        }}}%
-    % print the page number if it is different from the last entry
-    \ifthenelse{\equal{\qrflastpage}{#3}}{}{\hfill\scriptsize #3}%
-    \ifthenelse{\equal{#1}{}}{}{%
-      \scriptsize\\\hspace*{1em}Required features: \texttt{#1}%
-    }%
-  \end{addmargin}%
-  \ifthenelse{\equal{\qrflastpage}{#3}}{}{\renewcommand{\qrflastpage}{#3}}%
-  \smallskip
-}
-
-% Feature declaration
-\newcommand{\feature}[1]{%
-  \index{features!{\scriptsize #1}|mainindex}%
-  \hypertarget{#1}{\texttt{\textbf{#1}}}%
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

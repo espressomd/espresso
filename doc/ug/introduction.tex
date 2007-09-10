@@ -65,19 +65,41 @@ The following algorithms are implemented in \es{}:
 \section{On units}
 \label{sec:units}
 \index{units}
+\index{length unit}
+\index{time unit}
+\index{energy unit}
 \index{physical units}
-(new)
 
-\begin{itemize}
-\item Reduced units
-\item comparison to ``real units''
-\item three examples on different length scales
-  \begin{itemize}
-  \item some atomistic model?
-  \item coarse-grained model (\eg lipid bilayer)
-  \item billards?
-  \end{itemize}
-\end{itemize}
+What is probably one of the most confusing subjects for beginners of
+\es is, that \es does not predefine any units.  While most MD programs
+specify a set of units, like, for example, that all lengths are
+measured in \AA ngstr\"om or nanometers, times are measured in nano- or
+picoseconds and energies are measured in $\frac{kJ}{\mathrm{mol}}$,
+\es does not do so.
+
+Instead, the length-, time- and energy scales can be freely chosen by
+the user.  A length of $1.0$ can mean a nanometer, an \AA ngstr\"om,
+or a kilometer - depending on the physical system, that the user has
+in mind when he writes his \es-script.  The user can choose the unit
+system that suits the system best.
+
+When creating particles that are intended to represent a specific type
+of atoms, one will probably use a length scale of \AA ngstr\"om.  This
+would mean, that \eg the parameter $\sigma$ of the Lennard-Jones
+interaction between two atoms would be set to twice the van-der-Waals
+radius of the atom in \AA ngstr\"om.  Alternatively, one could set
+$\sigma$ to $2.0$ and measure all lengths in multiples of the
+van-der-Waals radius.
+
+The second choice to be made is the energy (and time-) scale.  One can
+for example choose to set the Lennard-Jones parameter $\epsilon$ to
+the energy in $\frac{kJ}{\mathrm{mol}}$.  Then all energies will be
+measured in that unit.  Alternatively, one can choose to set it to
+$1.0$ and measure everything in multiples of the van-der-Waals binding
+energy.
+
+As long as one remains within the same unit system throughout the
+whole \es-script, there should be no problems.
 
 \section{Requirements}
 \label{sec:requirements}
@@ -118,27 +140,63 @@ and use \es:
 \section{Syntax description}
 \label{sec:syntax}
 
+
 Throughout the user's guide, formal definitions of the syntax of
-several Tcl- and shell-commands can be found. The following
-conventions are used in these decriptions:
+several Tcl-commands can be found. The following conventions are used
+in these decriptions:
 \begin{itemize}
+\item Different \emph{variants} of a command are labelled \variant{1},
+  \variant{2}, \ldots
 \item Keywords and literals of the command that have to be typed
   exactly as given are written in \lit{typewriter} font.
 \item If the command has variable arguments, they are set in
   \var{italic font}. The description following the syntax definition
   should contain a detailed explanation of the argument and its
   type.
-\item \texttt{[\var{argument}]} specifies, that \var{argument} is
-  optional, \ie{} it can be omitted.
-\item \texttt{<\var{alt1}|\var{alt2}>} specifies, that one of the
-  alternatives \var{alt1} or \var{alt2} can be used.
+\item \texttt{\alt{\var{alt1} \asep \var{alt2}}} specifies, that one
+  of the alternatives \var{alt1} or \var{alt2} can be used.
+\item \texttt{\opt{\var{argument}}} specifies, that the arugment
+  \var{argument} is optional, \ie{} it can be omitted.
+\item When an optional argument or a whole command is marked by a
+  superscript label (\fmark{1}), this denotes that the argument can
+  only be used, when the corresponding feature (see appendix
+  \vref{chap:features}) specified in ``Required features'' is
+  activated.
 \end{itemize}
 
-\minisec{Example}
-\begin{code}
-writevsf \var{file} [<short|verbose>] [<\var{radii}|auto>] [typedesc \var{typedesc}]
-\end{code}
 
+\minisec{Example}
+
+\renewcommand{\variant}[1]{\par\rawvariant{#1}}
+\begin{essyntaxbox}
+  \variant{1} 
+  constraint wall normal \var{n_x} \var{n_y} \var{n_z} 
+  dist \var{d} type \var{id}
+  
+  \variant{2}
+  constraint sphere center \var{c_x} \var{c_y} \var{c_z} 
+  radius \var{rad} direction \var{direction} type \var{id} 
+  
+  \require{1}{%
+    \variant{3}
+    constraint rod center \var{c_x} \var{c_y} 
+    lambda \var{lambda}
+  } 
+  
+  \require{2,3}{%
+    \variant{4}
+    constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
+  }
+
+  \begin{features}
+    \required{CONSTRAINTS}
+    \required[1]{ELECTROSTATICS}
+    \required[2]{ROTATION}
+    \required[3]{DIPOLES}
+  \end{features}
+
+\end{essyntaxbox}
+\renewcommand{\variant}[1]{\rawvariant{#1}}
 
 %%% Local Variables: 
 %%% mode: latex

@@ -1,7 +1,7 @@
 \chapter{Analysis}
 \label{chap:analysis}
 \index{analysis}
-\eslabel{analyze}
+\newescommand{analyze}
 
 \todo{Intro: \lit{analyze} can measure observables, but also define
   topologies and store configurations}
@@ -9,6 +9,18 @@
 
 The \keyword{analyze}-command provides online-calculation of local and
 global observables.
+
+\todo{Missing: 
+  \keyword{radial_density_map}, 
+  \keyword{modes2d},
+  \keyword{get_lipid_orients},
+  \keyword{get_folded_positions},
+  \keyword{bilayer_set},
+  \keyword{bilayer_density_profile},
+  \keyword{lipid_orient_order},
+  \keyword{cell_gpb},
+  \keyword{Vkappa}
+}
 
 \subsection{Minimal distances between particles}
 \label{analyze:mindist}
@@ -287,6 +299,8 @@ Requires the feature LENNARD_JONES.  \todo{I think there is still a
   \variant{3} analyze energy bonded \var{bond_type}
   \variant{4} analyze energy nonbonded \var{part_type1} \var{part_type2}
 \end{essyntax}
+\todo{Describe the different energies components returned by the
+  different commands!}
 Returns the energies of the system. Variant \variant{1} returns all
 the contributions to the total energy. Variant \variant{2} returns the
 numerical value of the total energy or its kinetic or Coulomb
@@ -392,7 +406,6 @@ needed particle information. Furthermore, all interactions including
 electrostatic ones are treated with the virial ansatz given above,
 which makes non-periodic systems highly recommendable, and which slows
 electrostatic systems down due to the long-range interactions.
-
 
 \minisec{Output format}
 
@@ -812,7 +825,7 @@ variant \variant{3}, returning just these values as tiny tcl-list.
 \end{code}
 
 \section{\lit{uwerr}: Computing statistical errors in time series}
-\eslabel{uwerr}
+\newescommand{uwerr}
 
 \begin{essyntax}
   \variant{1} uwerr \var{data} \var{nrep} 

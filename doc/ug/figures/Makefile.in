@@ -19,7 +19,7 @@ VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-top_builddir = ../..
+top_builddir = ../../..
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 INSTALL = @INSTALL@
 install_sh_DATA = $(install_sh) -c -m 644
@@ -36,7 +36,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-subdir = doc/ug
+subdir = doc/ug/figures
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/Espresso.m4 \
@@ -167,43 +167,8 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
-ug_TEXFILES = \
-	ug.tex \
-	introduction.tex \
-	firststeps.tex \
-	installation.tex \
-	part.tex \
-	inter.tex \
-	setup.tex \
-	run.tex \
-	analysis.tex \
-	io.tex \
-	aux.tex \
-	internal.tex \
-	contributing.tex \
-	quickref.tex \
-	features.tex \
-	examples.tex \
-	deserno.tex
-
-ug_FILES = $(ug_TEXFILES) \
-	underscore.sty \
-	bibliography.bib
-
-
-#data_DATA=ug.pdf
-EXTRA_DIST = $(ug_FILES) \
-	ug.pdf \
-	check_consistency.sh assemble_quickref.awk \
-	latexmk latexmk.1 latexmkrc
-
-CLEANFILES = ug.pdf
-MOSTLYCLEANFILES = \
-	quickref.inp \
-	*.aux *.aux.bak\
-	ug.idx ug.idx.bak ug.ilg ug.ind\
-	ug.log ug.out ug.toc
-
+ug_FIGURES = logo.png nacl-rdf.pdf salt.png
+EXTRA_DIST = $(ug_FIGURES)
 all: all-am
 
 .SUFFIXES:
@@ -216,9 +181,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  doc/ug/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  doc/ug/figures/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  doc/ug/Makefile
+	  $(AUTOMAKE) --foreign  doc/ug/figures/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -290,10 +255,8 @@ install-strip:
 	  `test -z '$(STRIP)' || \
 	    echo "INSTALL_PROGRAM_ENV=STRIPPROG='$(STRIP)'"` install
 mostlyclean-generic:
-	-test -z "$(MOSTLYCLEANFILES)" || rm -f $(MOSTLYCLEANFILES)
 
 clean-generic:
-	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -357,27 +320,15 @@ uninstall-am: uninstall-info-am
 	uninstall-info-am
 
 
-.PHONY: doc ug
+.PHONY: ug.pdf
 
-doc: ug
-ug: ug.pdf
-ug.pdf: $(ug_FILES)
-@HAVE_LATEX_TRUE@	cd figures; $(MAKE) --print-directory $@
-@HAVE_LATEX_TRUE@	for file in $(ug_FILES); do \
+ug.pdf: FORCE
+@HAVE_LATEX_TRUE@	for file in $(ug_FIGURES); do \
 @HAVE_LATEX_TRUE@	  test -e $$file || \
 @HAVE_LATEX_TRUE@	    $(LN_S) $(srcdir)/$$file .; \
 @HAVE_LATEX_TRUE@	done
-@HAVE_LATEX_TRUE@	$(AWK) -f $(srcdir)/assemble_quickref.awk $(ug_TEXFILES) > quickref.inp
-@HAVE_LATEX_TRUE@	$(PDFLATEX) ug.tex
-@HAVE_LATEX_TRUE@	$(MAKEINDEX) ug
-@HAVE_LATEX_TRUE@	$(BIBTEX) ug
-@HAVE_LATEX_TRUE@	$(PDFLATEX) ug.tex
-@HAVE_LATEX_TRUE@	$(PDFLATEX) ug.tex
-@HAVE_LATEX_FALSE@	@echo "No complete LaTeX-installation was not found in your PATH."
-@HAVE_LATEX_FALSE@	@echo "Can't build the User's Guide without pdflatex, makeindex and bibtex."
-@HAVE_LATEX_FALSE@	@echo "Install these and rerun configure."
 
-#MOSTLYCLEANFILES=
+FORCE:
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
