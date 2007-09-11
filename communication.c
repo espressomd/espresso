@@ -164,8 +164,10 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_FLUID 46
 /** Action number for \ref mpi_recv_fluid. */
 #define REQ_GET_FLUID 47
+/** Action number for \ref mpi_local_stress_tensor*/
+#define REQ_GET_LOCAL_STRESS_TENSOR 48
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 48
+#define REQ_MAXIMUM 49
 
 /*@}*/
 
@@ -222,6 +224,7 @@ void mpi_send_dip_slave(int node, int parm);
 void mpi_send_dipm_slave(int node, int parm);
 void mpi_send_fluid_slave(int node, int parm);
 void mpi_recv_fluid_slave(int node, int parm);
+void mpi_local_stress_tensor_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -275,6 +278,7 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_send_dipm_slave,              /* 45: REQ_SET_DIPM */
   mpi_send_fluid_slave,             /* 46: REQ_SET_FLUID */
   mpi_recv_fluid_slave,             /* 47: REQ_GET_FLUID */
+  mpi_local_stress_tensor_slave,    /* 48: REQ_GET_LOCAL_STRESS_TENSOR */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -942,7 +946,7 @@ void mpi_send_dipm_slave(int pnode, int part)
 /********************* REQ_SET_BOND ********/
 int mpi_send_bond(int pnode, int part, int *bond, int delete)
 {
-  int bond_size, stat;
+  int bond_size, stat=0;
   MPI_Status status;
 
   mpi_issue(REQ_SET_BOND, pnode, part);
@@ -966,7 +970,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete)
 
 void mpi_send_bond_slave(int pnode, int part)
 {
-  int bond_size, *bond, delete, stat;
+  int bond_size=0, *bond, delete=0, stat;
   MPI_Status status;
 
   if (pnode == this_node) {
@@ -1101,7 +1105,7 @@ void mpi_integrate_slave(int pnode, int task)
 /*************** REQ_BCAST_IA ************/
 void mpi_bcast_ia_params(int i, int j)
 {
-  int tablesize;
+  int tablesize=0;
 
   mpi_issue(REQ_BCAST_IA, i, j);
   tablesize = tabulated_forces.max;
@@ -1151,7 +1155,7 @@ void mpi_bcast_ia_params_slave(int i, int j)
 	      0, MPI_COMM_WORLD);
 #ifdef TABULATED
     {
-      int tablesize;
+      int tablesize=0;
       /* If there are tabulated forces broadcast those as well */
       if ( get_ia_param(i,j)->TAB_maxval > 0) {
 	/* Determine the new size for force and energy tables */
@@ -1274,6 +1278,80 @@ void mpi_gather_stats_slave(int ana_num, int job)
     fprintf(stderr, "%d: INTERNAL ERROR: illegal request %d for REQ_GATHER\n", this_node, job);
     errexit();
   }
+}
+
+/*************** REQ_GET_LOCAL_STRESS_TENSOR ************/
+void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3]) {
+  
+  PTENSOR_TRACE(fprintf(stderr,"%d: mpi_local_stress_tensor: Broadcasting local_stress_tensor parameters\n",this_node));
+
+  int i,j;
+
+  mpi_issue(REQ_GET_LOCAL_STRESS_TENSOR,-1,0);
+
+  DoubleList *TensorInBin_;
+  TensorInBin_ = malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
+  for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {
+    init_doublelist(&TensorInBin_[i]);
+    alloc_doublelist(&TensorInBin_[i],9);
+    for ( j = 0 ; j < 9 ; j++ ) {
+      TensorInBin_[i].e[j] = TensorInBin[i].e[j];
+      TensorInBin[i].e[j] = 0;
+    }
+  }
+  
+  MPI_Bcast(bins, 3, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(periodic, 3, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(range_start, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(range, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  
+  PTENSOR_TRACE(fprintf(stderr,"%d: mpi_local_stress_tensor: Call local_stress_tensor_calc\n",this_node));
+  local_stress_tensor_calc(TensorInBin_, bins, periodic, range_start, range);
+  
+  PTENSOR_TRACE(fprintf(stderr,"%d: mpi_local_stress_tensor: Reduce local stress tensors with MPI_Reduce\n",this_node));
+  for (i=0;i<bins[0]*bins[1]*bins[2];i++) {
+    MPI_Reduce(TensorInBin_[i].e, TensorInBin[i].e, 9, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+  }
+  
+}
+
+void mpi_local_stress_tensor_slave(int ana_num, int job) {
+  int bins[3];
+  int periodic[3];
+  double range_start[3];
+  double range[3];
+  DoubleList *TensorInBin;
+  int i, j;
+
+  MPI_Bcast(bins, 3, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(periodic, 3, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(range_start, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(range, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  
+  TensorInBin = malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
+  for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {
+    init_doublelist(&TensorInBin[i]);
+    alloc_doublelist(&TensorInBin[i],9);
+    for ( j = 0 ; j < 9 ; j++ ) {
+      TensorInBin[i].e[j] = 0.0;
+    }
+  }
+  
+  local_stress_tensor_calc(TensorInBin, bins, periodic, range_start, range);
+
+  for (i=0;i<bins[0]*bins[1]*bins[2];i++) {
+    MPI_Reduce(TensorInBin[i].e, NULL, 9, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    PTENSOR_TRACE(fprintf(stderr,"%d: mpi_local_stress_tensor: Tensor sent in bin %d is {",this_node,i));
+    for (j=0; j<9;j++) {
+      PTENSOR_TRACE(fprintf(stderr,"%f ",TensorInBin[i].e[j]));
+    }
+    PTENSOR_TRACE(fprintf(stderr,"}\n"));
+  }
+
+  for ( i = 0 ; i < bins[0]*bins[1]*bins[2] ; i++ ) {
+    realloc_doublelist(&TensorInBin[i],0);
+  }
+  free(TensorInBin);
 }
 
 /*************** REQ_GETPARTS ************/
@@ -1512,6 +1590,9 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   case COULOMB_EWALD:
     MPI_Bcast(&ewald, sizeof(ewald_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
+  case COULOMB_RF:
+    MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0, MPI_COMM_WORLD);
+    break;
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast coulomb params for unknown method %d\n", this_node, coulomb.method);
     errexit();
@@ -1551,7 +1632,7 @@ void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3])
 void mpi_send_ext_slave(int pnode, int part)
 {
 #ifdef EXTERNAL_FORCES
-  int s_buf[2];
+  int s_buf[2]={0,0};
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
@@ -1688,6 +1769,9 @@ void mpi_lj_cap_forces_slave(int node, int parm)
 #ifdef LENNARD_JONES
   MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   calc_lj_cap_radii(lj_force_cap);
+#ifdef LENNARD_JONES_GENERIC
+  calc_ljgen_cap_radii(lj_force_cap);
+#endif
 #ifdef LJCOS2
   calc_ljcos2_cap_radii(lj_force_cap);
 #endif
@@ -1840,7 +1924,7 @@ void mpi_rescale_particles(int dir, double scale) {
 }
 
 void mpi_rescale_particles_slave(int pnode, int dir) {
-  double scale; MPI_Status status;
+  double scale=0.0; MPI_Status status;
 
   MPI_Recv(&scale, 1, MPI_DOUBLE, 0, REQ_PLACE, MPI_COMM_WORLD, &status);
   local_rescale_particles(dir, scale);
@@ -1895,9 +1979,9 @@ void mpi_update_mol_ids_slave(int node,int parm)
 /******************* REQ_SYNC_TOPO ********************/
 int mpi_sync_topo_part_info() {
   int i;
-  int molsize;
-  int moltype;
-  int n_mols;
+  int molsize=0;
+  int moltype=0;
+  int n_mols=0;
   
   mpi_issue(REQ_SYNC_TOPO,-1,0);
   n_mols = n_molecules;
@@ -1937,9 +2021,9 @@ int mpi_sync_topo_part_info() {
 
 void mpi_sync_topo_part_info_slave(int node,int parm ) {
   int i;
-  int molsize;
-  int moltype;
-  int n_mols;
+  int molsize=0;
+  int moltype=0;
+  int n_mols=0;
 
   MPI_Bcast(&n_mols,1,MPI_INT,0,MPI_COMM_WORLD);
   realloc_topology(n_mols);
@@ -2079,7 +2163,7 @@ void mpi_send_exclusion(int part1, int part2, int delete)
 void mpi_send_exclusion_slave(int part1, int part2)
 {
 #ifdef EXCLUSIONS
-  int delete;
+  int delete=0;
   MPI_Bcast(&delete, 1, MPI_INT, 0, MPI_COMM_WORLD);  
   local_change_exclusion(part1, part2, delete);
   on_particle_change();
