@@ -1,4 +1,4 @@
-ug_FIGURES=logo.png nacl-rdf.pdf salt.png
+ug_FIGURES=logo.png nacl-rdf.pdf dihedral-angle.pdf salt.png
 
 EXTRA_DIST=$(ug_FIGURES)
 
