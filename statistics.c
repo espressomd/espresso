@@ -309,10 +309,11 @@ void centermass(int type, double *com)
 
 void centermass_vel(int type, double *com)
 {
+  /*center of mass velocity scaled with time_step*/
   int i, j;
   int count = 0;
   com[0]=com[1]=com[2]=0.;
-   	
+
   updatePartCfg(WITHOUT_BONDS);
   for (j=0; j<n_total_particles; j++) {
     if (type == partCfg[j].p.type) {
@@ -322,7 +323,7 @@ void centermass_vel(int type, double *com)
       count++;
     }
   }
-  
+
   for (i=0; i<3; i++) {
     com[i] /= count;
   }
@@ -589,12 +590,12 @@ void calc_vel_distr(Tcl_Interp *interp, int type,int bins,double given_max)
 {
    int i,j,p_count,dist_count,ind;
    double min,max,bin_width,inv_bin_width,com[3],vel;
-   max=given_max;
-   min=-given_max;
-   p_count=0;
    long distribution[bins];
    char buffer[2*TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE+256];
-   
+
+   max=given_max*time_step;
+   min=-given_max*time_step;
+   p_count=0;
    for(i=0; i<bins; i++) {distribution[i]=0;}
 
    centermass_vel(type,com);
@@ -606,21 +607,21 @@ void calc_vel_distr(Tcl_Interp *interp, int type,int bins,double given_max)
         p_count++;
         for (j=0;j<3;j++)
         {
-           if (min > (partCfg[i].m.v[j]-com[j]) ){min=partCfg[i].m.v[j]-com[j];}
-           if (max < (partCfg[i].m.v[j]-com[j]) ){max=partCfg[i].m.v[j]-com[j];}
+           vel=partCfg[i].m.v[j] - com[j];
+           if (min > vel ){min = vel;}
+           if (max < vel ){max = vel;}
         }
       }
    }
+
    if (p_count==0) {return;}
 
-   //fprintf(stderr,"max min %e %e\n",min,max);
    if ( (-min) > max ) {
       max = -min;
    }
    else{
       min = -max;
    }
-   //fprintf(stderr,"max min %e %e\n",min,max);
 
    bin_width     = (max-min) / (double)bins;
    inv_bin_width = 1.0 / bin_width;
@@ -631,7 +632,7 @@ void calc_vel_distr(Tcl_Interp *interp, int type,int bins,double given_max)
      {
         for (j=0;j<3;j++)
         {
-          vel= partCfg[i].m.v[j]-com[j];
+          vel= partCfg[i].m.v[j] - com[j];
           ind = (int) ( (vel - min)*inv_bin_width );
           distribution[ind]++;
           dist_count++;
@@ -642,7 +643,7 @@ void calc_vel_distr(Tcl_Interp *interp, int type,int bins,double given_max)
    vel=min + bin_width/2.0;
    Tcl_AppendResult(interp, " {\n", (char *)NULL);
    for(i=0; i<bins; i++) {
-      sprintf(buffer,"%f %f",vel,distribution[i]/(double)dist_count);
+      sprintf(buffer,"%f %f",vel/time_step,distribution[i]/(double)dist_count);
       Tcl_AppendResult(interp, "{ ",buffer," }\n", (char *)NULL);
       vel += bin_width;
    }
