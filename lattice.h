@@ -115,10 +115,10 @@ MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
 
   //fprintf(stderr,"%d: (%d,%d,%d)\n",this_node,grid[0],grid[1],grid[2]);
 
-  /* change from global to local lattice coordinates */
-  ind[0] -= grid[0]*lattice->grid[0];
-  ind[1] -= grid[1]*lattice->grid[1];
-  ind[2] -= grid[2]*lattice->grid[2];
+  /* change from global to local lattice coordinates (+1 is for halo) */
+  ind[0] = ind[0] - grid[0]*lattice->grid[0] + 1;
+  ind[1] = ind[1] - grid[1]*lattice->grid[1] + 1;
+  ind[2] = ind[2] - grid[2]*lattice->grid[2] + 1;
 
   /* return linear index into node array */
   return map_array_node(grid);
