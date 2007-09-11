@@ -58,13 +58,16 @@ typedef const struct {
   int n_veloc ;
 
   /** unit vectors of the velocity sublattice */
-  double (*c)[3] ;
+  double (*c)[3];
 
   /** coefficients in the pseudo-equilibrium distribution */
   double (*coeff)[4];
 
   /** weights in the functional for the equilibrium distribution */
   double (*w);
+
+  /** basis of moment space */
+  double (*e)[];
 
   /** speed of sound squared */
   double c_sound_sq;
@@ -82,6 +85,9 @@ typedef struct {
 
   /** local stress tensor */
   double pi[6];
+
+  /** local modes */
+  double modes[19];
 
   /** local populations of the velocity directions */
   double *n;
@@ -259,6 +265,12 @@ MDINLINE void lb_calc_local_j(LB_FluidNode *local_node) {
     local_j[1] += lbmodel.c[i][1] * tmp;
     local_j[2] += lbmodel.c[i][2] * tmp;
   }
+#endif
+
+#ifdef EXTERNAL_FORCES
+  local_j[0] += 0.5*lbpar.ext_force[0]*SQR(lbpar.tau)*SQR(lbpar.agrid);
+  local_j[1] += 0.5*lbpar.ext_force[1]*SQR(lbpar.tau)*SQR(lbpar.agrid);
+  local_j[2] += 0.5*lbpar.ext_force[2]*SQR(lbpar.tau)*SQR(lbpar.agrid);
 #endif
 
 }
