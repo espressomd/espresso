@@ -450,7 +450,7 @@ void calc_g123(double *_g1, double *_g2, double *_g3)
   *_g3 = g3 / (1.*chain_n_chains);
 }
 
-void calc_g1_av(double **_g1, int window) {
+void calc_g1_av(double **_g1, int window, double weights[3]) {
   int i, j, p, t,k, cnt;
   double *g1=NULL;
   *_g1 = g1 = realloc(g1,n_configs*sizeof(double));
@@ -462,9 +462,9 @@ void calc_g1_av(double **_g1, int window) {
       for(j=0; j<chain_n_chains; j++) {
 	for(i=0; i<chain_length; i++) {
 	  p = chain_start+j*chain_length + i;
-	  g1[k] += SQR(configs[t+k][3*p]-configs[t][3*p])
-	    + SQR(configs[t+k][3*p+1]-configs[t][3*p+1])
-	    + SQR(configs[t+k][3*p+2]-configs[t][3*p+2]);
+	  g1[k] += weights[0]*SQR(configs[t+k][3*p]-configs[t][3*p])
+	    + weights[1]*SQR(configs[t+k][3*p+1]-configs[t][3*p+1])
+	    + weights[2]*SQR(configs[t+k][3*p+2]-configs[t][3*p+2]);
 	}
       }
     }
@@ -472,7 +472,7 @@ void calc_g1_av(double **_g1, int window) {
   }
 }
 
-void calc_g2_av(double **_g2, int window) {
+void calc_g2_av(double **_g2, int window, double weights[3]) {
   int i, j, p, t,k,cnt;
   double *g2=NULL, cm_tmp[3];
   double M;
@@ -495,9 +495,9 @@ void calc_g2_av(double **_g2, int window) {
 	cm_tmp[0] /= M;	cm_tmp[1] /= M;	cm_tmp[2] /= M;
 	for(i=0; i<chain_length; i++) {
 	  p = chain_start+j*chain_length + i;
-	  g2[k] += SQR( (configs[t+k][3*p]-configs[t][3*p]) - cm_tmp[0] )
-	    + SQR( (configs[t+k][3*p+1]-configs[t][3*p+1])  - cm_tmp[1] ) 
-	    + SQR( (configs[t+k][3*p+2]-configs[t][3*p+2])  - cm_tmp[2] );
+	  g2[k] += weights[0]*SQR( (configs[t+k][3*p]-configs[t][3*p]) - cm_tmp[0] )
+	    + weights[1]*SQR( (configs[t+k][3*p+1]-configs[t][3*p+1])  - cm_tmp[1] ) 
+	    + weights[2]*SQR( (configs[t+k][3*p+2]-configs[t][3*p+2])  - cm_tmp[2] );
 	}
       }
     }
@@ -505,7 +505,7 @@ void calc_g2_av(double **_g2, int window) {
   }
 }
 
-void calc_g3_av(double **_g3, int window) {
+void calc_g3_av(double **_g3, int window, double weights[3]) {
   int i, j, p, t,k,cnt;
   double *g3=NULL, cm_tmp[3];
   double M;
@@ -525,7 +525,7 @@ void calc_g3_av(double **_g3, int window) {
 	  cm_tmp[2] += (configs[t+k][3*p+2] - configs[t][3*p+2])*PMASS(partCfg[p]);
           M += PMASS(partCfg[p]);
 	}
-	g3[k] += (SQR(cm_tmp[0]) + SQR(cm_tmp[1]) + SQR(cm_tmp[2]))/SQR(M);
+	g3[k] += (weights[0]*SQR(cm_tmp[0]) + weights[1]*SQR(cm_tmp[1]) + weights[2]*SQR(cm_tmp[2]))/SQR(M);
       }
     }
     g3[k] /= ((double)chain_n_chains*cnt);
@@ -1017,18 +1017,30 @@ int parse_g_av(Tcl_Interp *interp, int what, int argc, char **argv)
   int i, window = 1;
   char buffer[TCL_DOUBLE_SPACE+2];
   double *gx = NULL;
+  double weights[3]; weights[0] = weights[1] = weights[2] = 1;
 
-  if (argc >= 1 && ARG0_IS_S("-sliding")) { window = 0; argc--; argv++; }
+  while (argc >= 1) {
+    if (ARG0_IS_S("-sliding")) {
+      window = 0;
+      argc--; argv++;
+    }
+    else if (ARG0_IS_S("-weights")) {
+      if (argc < 4 || !ARG_IS_D(1,weights[0]) || !ARG_IS_D(2,weights[1]) || !ARG_IS_D(3,weights[2]) )
+	return (TCL_ERROR);
+      argc-=4; argv+=4;
+    }
+    else break;
+  }
   if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info or -sliding allowed", (char *)NULL); return TCL_ERROR; }
   if (n_configs == 0) { Tcl_AppendResult(interp, "no configurations found! Use 'analyze append' to save some!", (char *)NULL); return TCL_ERROR; }
   switch (what) {
   case 1:
-    calc_g1_av(&gx, window); break;
+    calc_g1_av(&gx, window, weights); break;
   case 2:
-    calc_g2_av(&gx, window); break;
+    calc_g2_av(&gx, window, weights); break;
   case 3:
-    calc_g3_av(&gx, window); break;
+    calc_g3_av(&gx, window, weights); break;
   default: ;
   }
   for (i=0; i<n_configs; i++) { 
