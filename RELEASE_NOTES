@@ -2,20 +2,22 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4c (Ydalir)                                                                     *
+* v2.0.4d (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4c -
+- v2.0.4d -
 -----------
 
-(c) September 5th, 2007.
-(b) August   31st, 2007.
-(a) August   28th, 2007.
+(d) September 10th, 2007.
+(c) September  5th, 2007.
+(b) August    31st, 2007.
+(a) August    28th, 2007.
 
 New Features:
+(d) added analyze vel_distr to calc velocity distribution
 (c) analyze local_pressure_tensor has been added.  analyze p_IK1 has been
     removed.
 (b) parallel tempering via TCP/IP
