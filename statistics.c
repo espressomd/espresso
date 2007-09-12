@@ -1983,6 +1983,95 @@ static int parse_angularmomentum(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
+static int parse_cluster_size_dist(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze cluster_size_dist [<type>]' */
+
+  //subfunction: mark all neighbors of a particle and their neighbors (recursiv!)
+  void mark_neighbours(int pa_nr,double dist,int *list){
+     int k;
+     for (k=0;k<n_total_particles;k++){
+        //only unmarked and particles with right distance
+        if ( (list[k] == 0) && (min_distance(partCfg[pa_nr].r.p,partCfg[k].r.p) < dist) ){
+          //mark particle with same number as calling particle
+          list[k]=list[pa_nr];
+          mark_neighbours(k,dist,list);
+        }
+     }
+  }
+
+  char buffer[3*TCL_DOUBLE_SPACE+3];
+  int p1;
+  double dist;
+  int i,j,max_cluster_number,size;
+  int cluster_number[n_total_particles];//cluster number of particle number
+  int cluster_size[n_total_particles+1]; //number of clusters with some size
+
+  /* parse arguments */
+  if (argc != 2) {
+    Tcl_AppendResult(interp, "usage: analyze cluster_size_dist <type> <dist>", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  if (!ARG0_IS_I(p1)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "ERROR: type must be int !", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  if (!ARG1_IS_D(dist)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "ERROR: dist must be double !", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  updatePartCfg(WITHOUT_BONDS);
+  for (i=0;i<n_total_particles;i++){
+     cluster_number[i]=0;
+     cluster_size[i]=0;
+  }
+  cluster_size[n_total_particles]=0;
+
+  max_cluster_number=1;
+  for (i=0;i<n_total_particles-1;i++){
+     //if particle was not marked till now
+     if (cluster_number[i]==0){
+       //mark current particle with max_cluster_number
+       cluster_number[i]=max_cluster_number;
+       mark_neighbours(i,dist,cluster_number);
+       max_cluster_number++;
+     }
+  }
+
+  for (i=0;i<n_total_particles;i++){
+    if (cluster_number[i]==0) {
+       Tcl_ResetResult(interp);
+       Tcl_AppendResult(interp, "ERROR: at least one particle is not marked !", (char *)NULL);
+       return (TCL_ERROR);
+    }
+  }
+
+  for (i=1;i<max_cluster_number;i++){
+     size=0;
+     for (j=0;j<n_total_particles;j++){
+        if (cluster_number[j]==i) {size++;}
+     }
+     cluster_size[size]++;
+  }
+
+  sprintf(buffer,"%i %f",p1,dist);
+  Tcl_AppendResult(interp, "{ analyze cluster_size_dist ",buffer,"} {\n",(char *)NULL);
+  for (i=0;i<n_total_particles+1;i++){
+      if (cluster_size[i]!=0){
+         sprintf(buffer,"%i %i",i,cluster_size[i]);
+         Tcl_AppendResult(interp, "{ ",buffer," }\n", (char *)NULL);
+      }
+  }
+  Tcl_AppendResult(interp, "}",(char *)NULL);
+
+  return TCL_OK;
+}
+
 static int parse_momentofinertiamatrix(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze  momentofinertiamatrix [<type>]' */
@@ -3089,6 +3178,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("lipid_orient_order", parse_lipid_orient_order);
 #endif
   REGISTER_ANALYSIS("mol", parse_mol);
+  REGISTER_ANALYSIS("cluster_size_dist", parse_cluster_size_dist);
   REGISTER_ANALYSIS("mindist", parse_mindist);
   REGISTER_ANALYSIS("aggregation", parse_aggregation);
   REGISTER_ANALYSIS("centermass", parse_centermass);
