@@ -1988,14 +1988,14 @@ static int parse_cluster_size_dist(Tcl_Interp *interp, int argc, char **argv)
   /* 'analyze cluster_size_dist [<type>]' */
 
   //subfunction: mark all neighbors of a particle and their neighbors (recursiv!)
-  void mark_neighbours(int pa_nr,double dist,int *list){
+  void mark_neighbours(int type,int pa_nr,double dist,int *list){
      int k;
      for (k=0;k<n_total_particles;k++){
         //only unmarked and particles with right distance
-        if ( (list[k] == 0) && (min_distance(partCfg[pa_nr].r.p,partCfg[k].r.p) < dist) ){
+        if ( (partCfg[k].p.type == type) && (list[k] == 0) && (min_distance(partCfg[pa_nr].r.p,partCfg[k].r.p) < dist) ){
           //mark particle with same number as calling particle
           list[k]=list[pa_nr];
-          mark_neighbours(k,dist,list);
+          mark_neighbours(type,k,dist,list);
         }
      }
   }
@@ -2035,16 +2035,16 @@ static int parse_cluster_size_dist(Tcl_Interp *interp, int argc, char **argv)
   max_cluster_number=1;
   for (i=0;i<n_total_particles-1;i++){
      //if particle was not marked till now
-     if (cluster_number[i]==0){
+     if ( (partCfg[i].p.type == p1) && (cluster_number[i]==0) ){
        //mark current particle with max_cluster_number
        cluster_number[i]=max_cluster_number;
-       mark_neighbours(i,dist,cluster_number);
+       mark_neighbours(p1,i,dist,cluster_number);
        max_cluster_number++;
      }
   }
 
   for (i=0;i<n_total_particles;i++){
-    if (cluster_number[i]==0) {
+    if ( (partCfg[i].p.type == p1) && (cluster_number[i]==0) ) {
        Tcl_ResetResult(interp);
        Tcl_AppendResult(interp, "ERROR: at least one particle is not marked !", (char *)NULL);
        return (TCL_ERROR);
@@ -2054,7 +2054,8 @@ static int parse_cluster_size_dist(Tcl_Interp *interp, int argc, char **argv)
   for (i=1;i<max_cluster_number;i++){
      size=0;
      for (j=0;j<n_total_particles;j++){
-        if (cluster_number[j]==i) {size++;}
+        //Finding particles belonging to cluster i
+        if ( (partCfg[j].p.type == p1) && (cluster_number[j]==i)) {size++;}
      }
      cluster_size[size]++;
   }
