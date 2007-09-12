@@ -1983,23 +1983,22 @@ static int parse_angularmomentum(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
+  //subfunction: mark all neighbors of a particle and their neighbors (recursiv!)
+void mark_neighbours(int type,int pa_nr,double dist,int *list){
+  int k;
+  for (k=0;k<n_total_particles;k++){
+     //only unmarked and particles with right distance
+     if ( (partCfg[k].p.type == type) && (list[k] == 0) && (min_distance(partCfg[pa_nr].r.p,partCfg[k].r.p) < dist) ){
+        //mark particle with same number as calling particle
+        list[k]=list[pa_nr];
+        mark_neighbours(type,k,dist,list);
+     }
+  }
+}
+
 static int parse_cluster_size_dist(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze cluster_size_dist [<type>]' */
-
-  //subfunction: mark all neighbors of a particle and their neighbors (recursiv!)
-  void mark_neighbours(int type,int pa_nr,double dist,int *list){
-     int k;
-     for (k=0;k<n_total_particles;k++){
-        //only unmarked and particles with right distance
-        if ( (partCfg[k].p.type == type) && (list[k] == 0) && (min_distance(partCfg[pa_nr].r.p,partCfg[k].r.p) < dist) ){
-          //mark particle with same number as calling particle
-          list[k]=list[pa_nr];
-          mark_neighbours(type,k,dist,list);
-        }
-     }
-  }
-
   char buffer[3*TCL_DOUBLE_SPACE+3];
   int p1;
   double dist;
