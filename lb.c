@@ -316,7 +316,8 @@ static void lb_create_fluid() {
   int lens[2] = { n_veloc, 1 };
   MPI_Aint disps[2] = { 0, n_veloc*sizeof(double) };
   MPI_Datatype types[2] = { MPI_DOUBLE, MPI_UB };
-  MPI_Type_free(&lblattice.datatype);
+  //KG: Quick fix
+  //MPI_Type_free(&lblattice.datatype);
   MPI_Type_struct(2, lens, disps, types, &lblattice.datatype);
   MPI_Type_commit(&lblattice.datatype);
   LB_TRACE(fprintf(stderr,"Potential memory hole!\n"));
@@ -428,12 +429,12 @@ void lb_reinit_fluid() {
 
 #ifdef CONSTRAINTS
       if (lbfluid[k].boundary==0) {
-	lb_set_local_fields(k,rho,v,pi);
+	lb_set_local_fields(&lbfluid[k],rho,v,pi);
       } else {
-	lb_set_local_fields(k,0.0,v,pi);
+        lb_set_boundary_fields(&lbfluid[k],rho,v,pi);
       }
 #else
-      lb_set_local_fields(k,rho,v,pi);
+      lb_set_local_fields(&lbfluid[k],rho,v,pi);
 #endif
 
     }
@@ -1091,7 +1092,7 @@ MDINLINE void lb_calc_n_from_modes(LB_FluidNode *node) {
 MDINLINE void lb_relax_modes(LB_FluidNode *node) {
 
   double *mode = node->modes;
-  double rho, *j=mode+1, pi_eq[6];
+  double rho, j[3], pi_eq[6];
   double gamma_bulk  = 1. + lblambda_bulk;
   double gamma_shear = 1. + lblambda;
   double avg_rho = lbpar.rho*agrid*agrid*agrid;
@@ -1101,13 +1102,17 @@ MDINLINE void lb_relax_modes(LB_FluidNode *node) {
    * to their equilibrium value */
   rho = mode[0] + avg_rho;
 
+  j[0] = mode[1];
+  j[1] = mode[2];
+  j[2] = mode[3];
+
 #ifdef EXTERNAL_FORCES
-  /* if external forces are present, the momentum density has
-   * to include one half-step of the force action.
+  /* if external forces are present, the momentum density is
+   * redefined to inlcude one half-step of the force action.
    * See the Chapman-Enskog expansion in [Ladd & Verberg]. */
-  mode[1] += 0.5*lbpar.ext_force[0]*tau*tau*agrid*agrid;
-  mode[2] += 0.5*lbpar.ext_force[1]*tau*tau*agrid*agrid;
-  mode[3] += 0.5*lbpar.ext_force[2]*tau*tau*agrid*agrid;
+  j[0] += 0.5*lbpar.ext_force[0];
+  j[1] += 0.5*lbpar.ext_force[1];
+  j[2] += 0.5*lbpar.ext_force[2];
 #endif
 
   /* equilibrium part of the stress modes */
@@ -1193,6 +1198,9 @@ MDINLINE void lb_calc_collisions() {
 
 	local_node = &lbfluid[index];
 
+#ifdef CONSTRAINTS
+	if (local_node->boundary==0)
+#endif
 	{
 
 	  lb_calc_modes(local_node);
@@ -1218,9 +1226,9 @@ MDINLINE void lb_calc_collisions() {
 	  double *local_rho = local_node->rho;
 	  lb_calc_local_rho(local_node);
 	  if (fabs(*local_rho-lbpar.rho-old_rho) > ROUND_ERROR_PREC) {
-	  char *errtxt = runtime_error(128 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE);
-	  ERROR_SPRINTF(errtxt,"{106 Mass loss/gain %le in lb_calc_collisions on site (%d,%d,%d)} ",*local_rho-lbpar.rho-old_rho,x,y,z);
-	}
+	    char *errtxt = runtime_error(128 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE);
+	    ERROR_SPRINTF(errtxt,"{106 Mass loss/gain %le in lb_calc_collisions on site (%d,%d,%d)} ",*local_rho-lbpar.rho-old_rho,x,y,z);
+	  }
 #endif
 
 	}
@@ -1386,15 +1394,16 @@ MDINLINE void lb_propagate_n() {
  * Eq. (28) Ladd and Verberg, J. Stat. Phys. 104(5/6):1191 (2001).
  * Note that the second moment of the force is neglected.
  */
+#ifdef EXTERNAL_FORCES
 MDINLINE void lb_external_forces() {
 
   int x, y, z, index;
-  double local_rho, *local_n, *local_j;
-  double u[3], f[3], C[6], trace;
+  double *local_rho, *local_n, *local_j, *local_pi;
+  double u[3], f[3], B[3], C[6];
 
-  f[0] = lbpar.ext_force[0]*tau*tau*agrid*agrid;
-  f[1] = lbpar.ext_force[1]*tau*tau*agrid*agrid;
-  f[2] = lbpar.ext_force[2]*tau*tau*agrid*agrid;
+  f[0] = lbpar.ext_force[0];
+  f[1] = lbpar.ext_force[1];
+  f[2] = lbpar.ext_force[2];
 
   index = lblattice.halo_offset;
   for (z=1; z<=lblattice.grid[2]; z++) {
@@ -1407,18 +1416,15 @@ MDINLINE void lb_external_forces() {
 	{
 
 	  local_n   = lbfluid[index].n;
-	  local_rho = *(lbfluid[index].rho);
+	  local_rho = lbfluid[index].rho;
 	  local_j   = lbfluid[index].j;
+	  local_pi  = lbfluid[index].pi;
 
 	  lb_calc_local_fields(&lbfluid[index],0);
 	  
-	  u[0] = local_j[0]/local_rho;
-	  u[1] = local_j[1]/local_rho;
-	  u[2] = local_j[2]/local_rho;
-
-	  local_j[0] += f[0];
-	  local_j[1] += f[1];
-	  local_j[2] += f[2];
+	  u[0] = local_j[0]/(*local_rho);
+	  u[1] = local_j[1]/(*local_rho);
+	  u[2] = local_j[2]/(*local_rho);
 	  
 	  C[0] = (2.+lblambda)*u[0]*f[0] + 1./3.*(lblambda_bulk-lblambda)*scalar(u,f);
 	  C[2] = (2.+lblambda)*u[1]*f[1] + 1./3.*(lblambda_bulk-lblambda)*scalar(u,f);
@@ -1427,79 +1433,55 @@ MDINLINE void lb_external_forces() {
 	  C[3] = 1./2.*(2.+lblambda)*(u[0]*f[2]+u[2]*f[0]);
 	  C[4] = 1./2.*(2.+lblambda)*(u[1]*f[2]+u[2]*f[1]);
 
-	  trace = C[0]+C[2]+C[5];
-
 #ifdef D3Q19
 	  double tmp1, tmp2, tmp3, tmp4;
 
-	  f[0] /= 6.;
-	  f[1] /= 6.;
-	  f[2] /= 6.;
-	  C[0] /= 4.;
-	  C[1] /= 4.;
-	  C[2] /= 4.;
-	  C[3] /= 4.;
-	  C[4] /= 4.;
-	  C[5] /= 4.;
-	  trace /= 12.;
+	  B[0] = f[0]/6.;
+	  B[1] = f[1]/6.;
+	  B[2] = f[2]/6.;
 
-	  local_n[1]  +=   f[0] + C[0] - trace;
-	  local_n[2]  += - f[0] + C[0] - trace;
-	  local_n[3]  +=   f[1] + C[2] - trace;
-	  local_n[4]  += - f[1] + C[2] - trace;
-	  local_n[5]  +=   f[2] + C[5] - trace;
-	  local_n[6]  += - f[2] + C[5] - trace;
+	  tmp1 = 0.5 * (C[0] + C[2] + C[5]);
+
+	  local_n[0]  += - tmp1;
+
+	  tmp1 /= 6.;
+
+	  local_n[1]  +=   B[0] + 0.25*C[0] - tmp1;
+	  local_n[2]  += - B[0] + 0.25*C[0] - tmp1;
+	  local_n[3]  +=   B[1] + 0.25*C[2] - tmp1;
+	  local_n[4]  += - B[1] + 0.25*C[2] - tmp1;
+	  local_n[5]  +=   B[2] + 0.25*C[5] - tmp1;
+	  local_n[6]  += - B[2] + 0.25*C[5] - tmp1;
 	  
-	  tmp1 = 1./2.*(f[0]+f[1]);
-	  tmp2 = 1./2.*(f[0]-f[1]);
-	  tmp3 = 1./2.*(C[0] + C[2] + 2.*C[1] - trace);
-	  tmp4 = 1./2.*(C[0] + C[2] - 2.*C[1] - trace);
+	  tmp1 = 0.5*(B[0] + B[1]);
+	  tmp2 = 0.5*(B[0] - B[1]);
+	  tmp3 = (C[0] + C[2] - 0.5*C[5])/12.;
+	  tmp4 = C[1]/4.;
 
-	  local_n[7]  +=   tmp1 + tmp3;
-	  local_n[8]  += - tmp1 + tmp3;
-	  local_n[9]  +=   tmp2 + tmp4;
-	  local_n[10] += - tmp2 + tmp4;
+	  local_n[7]  +=   tmp1 + tmp3 + tmp4;
+	  local_n[8]  += - tmp1 + tmp3 + tmp4;
+	  local_n[9]  +=   tmp2 + tmp3 - tmp4;
+	  local_n[10] += - tmp2 + tmp3 - tmp4;
 
-	  tmp1 = 1./2.*(f[0]+f[2]);
-	  tmp2 = 1./2.*(f[0]-f[2]);
-	  tmp3 = 1./2.*(C[0] + C[5] + 2.*C[3] - trace);
-	  tmp4 = 1./2.*(C[0] + C[5] - 2.*C[3] - trace);
+	  tmp1 = 0.5*(B[0] + B[2]);
+	  tmp2 = 0.5*(B[0] - B[2]);
+	  tmp3 = (C[0] + C[5] - 0.5*C[2])/12.;
+	  tmp4 = C[3]/4.;
+	  
+	  local_n[11] +=   tmp1 + tmp3 + tmp4;
+	  local_n[12] += - tmp1 + tmp3 + tmp4;
+	  local_n[13] +=   tmp2 + tmp3 - tmp4;
+	  local_n[14] += - tmp2 + tmp3 - tmp4;
 
-	  local_n[11] +=   tmp1 + tmp3;
-	  local_n[12] += - tmp1 + tmp3;
-	  local_n[13] +=   tmp2 + tmp4;
-	  local_n[14] += - tmp2 + tmp4;
+	  tmp1 = 0.5*(B[1] + B[2]);
+	  tmp2 = 0.5*(B[1] - B[2]);
+	  tmp3 = (C[2] + C[5] - 0.5*C[0])/12.;
+	  tmp4 = C[4]/4.;
 
-	  tmp1 = 1./2.*(f[1]+f[2]);
-	  tmp2 = 1./2.*(f[1]-f[2]);
-	  tmp3 = 1./2.*(C[2] + C[5] + 2.*C[4] - trace);
-	  tmp4 = 1./2.*(C[2] + C[5] - 2.*C[4] - trace);
-
-	  local_n[15] +=   tmp1 + tmp3;
-	  local_n[16] += - tmp1 + tmp3;
-	  local_n[17] +=   tmp2 + tmp4;
-	  local_n[18] += - tmp2 + tmp4;
-
-#if 0
-	  local_n[1]  +=   1./6. * delta_j[0];
-	  local_n[2]  += - 1./6. * delta_j[0];
-	  local_n[3]  +=   1./6. * delta_j[1];
-	  local_n[4]  += - 1./6. * delta_j[1];
-	  local_n[5]  +=   1./6. * delta_j[2];
-	  local_n[6]  += - 1./6. * delta_j[2];
-	  local_n[7]  +=   1./12. * (delta_j[0]+delta_j[1]);
-	  local_n[8]  += - 1./12. * (delta_j[0]+delta_j[1]);
-	  local_n[9]  +=   1./12. * (delta_j[0]-delta_j[1]);
-	  local_n[10] += - 1./12. * (delta_j[0]-delta_j[1]);
-	  local_n[11] +=   1./12. * (delta_j[0]+delta_j[2]);
-	  local_n[12] += - 1./12. * (delta_j[0]+delta_j[2]);
-	  local_n[13] +=   1./12. * (delta_j[0]-delta_j[1]);
-	  local_n[14] += - 1./12. * (delta_j[0]-delta_j[1]);
-	  local_n[15] +=   1./12. * (delta_j[1]+delta_j[2]);
-	  local_n[16] += - 1./12. * (delta_j[1]+delta_j[2]);
-	  local_n[17] +=   1./12. * (delta_j[1]-delta_j[2]);
-	  local_n[18] += - 1./12. * (delta_j[1]-delta_j[2]);
-#endif
+	  local_n[15] +=   tmp1 + tmp3 + tmp4;
+	  local_n[16] += - tmp1 + tmp3 + tmp4;
+	  local_n[17] +=   tmp2 + tmp3 - tmp4;
+	  local_n[18] += - tmp2 + tmp3 - tmp4;
 
 #else
 	  int i;
@@ -1515,7 +1497,7 @@ MDINLINE void lb_external_forces() {
 
 	    local_n[i] += coeff[i][1] * scalar(f,c[i]);
 	    local_n[i] += coeff[i][2] * tmp;
-	    local_n[i] += coeff[i][3] * trace;
+	    local_n[i] += coeff[i][3] * (C[0]+C[2]+C[5])/3.0;
 
 	  }
 #endif
@@ -1529,7 +1511,7 @@ MDINLINE void lb_external_forces() {
   }
 
 }
-
+#endif
 /*@}*/
 
 /***********************************************************************/
@@ -1915,15 +1897,15 @@ void lb_calc_average_rho() {
  * @param j     Local momentum of the fluid (Output)
  * @param pi    Local stress tensor of the fluid (Output)
  */
-void lb_get_local_fields(int index, double *rho, double *j, double *pi) {
+void lb_get_local_fields(LB_FluidNode *node, double *rho, double *j, double *pi) {
 
   int i,k,m;
 
-  double *local_rho = lbfluid[index].rho;
-  double *local_j   = lbfluid[index].j;
-  double *local_pi  = lbfluid[index].pi;
+  double *local_rho = node->rho;
+  double *local_j   = node->j;
+  double *local_pi  = node->pi;
 
-  lb_calc_local_fields(&lbfluid[index],1);
+  lb_calc_local_fields(node,1);
 
   *rho = *local_rho;
   m = 0;
@@ -1942,12 +1924,11 @@ void lb_get_local_fields(int index, double *rho, double *j, double *pi) {
  * @param rho   Local density of the fluid (Input)
  * @param v     Local velocity of the fluid (Input)
  */
-void lb_set_local_fields(int index, const double rho, const double *v, const double *pi) {
+void lb_set_local_fields(LB_FluidNode *node, const double rho, const double *v, const double *pi) {
 
-  LB_FluidNode *local_node = &lbfluid[index];
-  double *local_rho = local_node->rho;
-  double *local_j = local_node->j;
-  double *local_pi = local_node->pi;
+  double *local_rho = node->rho;
+  double *local_j   = node->j;
+  double *local_pi  = node->pi;
 
   *local_rho = rho;
 
@@ -1963,7 +1944,7 @@ void lb_set_local_fields(int index, const double rho, const double *v, const dou
   local_pi[5] = pi[5];
 
   /* calculate populations according to equilibrium distribution */
-  lb_calc_local_n(local_node);
+  lb_calc_local_n(node);
 
 }
 
@@ -2304,9 +2285,11 @@ static int lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], i
     }
     
     *change = 3;
-    lbpar.ext_force[0] = ext_f[0];
-    lbpar.ext_force[1] = ext_f[1];
-    lbpar.ext_force[2] = ext_f[2];
+
+    /* external force is stored in lattice units */
+    lbpar.ext_force[0] = ext_f[0]*agrid*agrid*tau*tau;
+    lbpar.ext_force[1] = ext_f[1]*agrid*agrid*tau*tau;
+    lbpar.ext_force[2] = ext_f[2]*agrid*agrid*tau*tau;
     
     mpi_bcast_lb_params(LBPAR_EXTFORCE);
  

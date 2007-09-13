@@ -130,7 +130,7 @@ typedef struct {
    * lead to numerical artifacts with low order integrators */
   double friction;
 
-  /** external force applied to the fluid at each lattice site (LJ units) */
+  /** external force applied to the fluid at each lattice site */
   double ext_force[3];
           
 } LB_Parameters;
@@ -179,7 +179,7 @@ void lb_reinit_fluid();
  * @param rho   Local density of the fluid (Input)
  * @param j     Local momentum of the fluid (Input)
  */
-void lb_set_local_fields(int index, const double rho, const double *v, const double *pi);
+void lb_set_local_fields(LB_FluidNode *node, const double rho, const double *v, const double *pi);
 
 /** Returns the mass, momentum and stress of a local lattice site.
  * @param index The index of the lattice site within the local domain (Input)
@@ -187,7 +187,7 @@ void lb_set_local_fields(int index, const double rho, const double *v, const dou
  * @param j     Local momentum of the fluid (Output)
  * @param pi    Local stress tensor of the fluid (Output)
  */
-void lb_get_local_fields(int index, double *rho, double *j, double *pi);
+void lb_get_local_fields(LB_FluidNode *node, double *rho, double *j, double *pi);
 
 /** Propagates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
@@ -268,9 +268,9 @@ MDINLINE void lb_calc_local_j(LB_FluidNode *local_node) {
 #endif
 
 #ifdef EXTERNAL_FORCES
-  local_j[0] += 0.5*lbpar.ext_force[0]*SQR(lbpar.tau)*SQR(lbpar.agrid);
-  local_j[1] += 0.5*lbpar.ext_force[1]*SQR(lbpar.tau)*SQR(lbpar.agrid);
-  local_j[2] += 0.5*lbpar.ext_force[2]*SQR(lbpar.tau)*SQR(lbpar.agrid);
+  local_j[0] += 0.5*lbpar.ext_force[0];
+  local_j[1] += 0.5*lbpar.ext_force[1];
+  local_j[2] += 0.5*lbpar.ext_force[2];
 #endif
 
 }
@@ -418,6 +418,12 @@ MDINLINE void lb_calc_local_fields(LB_FluidNode *local_node,int calc_pi_flag) {
     }
 
   }
+#endif
+
+#ifdef EXTERNAL_FORCES
+  local_j[0] += 0.5*lbpar.ext_force[0];
+  local_j[1] += 0.5*lbpar.ext_force[1];
+  local_j[2] += 0.5*lbpar.ext_force[2];
 #endif
 
 }
