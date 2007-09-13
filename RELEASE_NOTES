@@ -2,21 +2,30 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4d (Ydalir)                                                                     *
+* v2.0.4f (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4d -
+- v2.0.4f -
 -----------
 
+(f) September 12th, 2007.
+(e) September 11th, 2007.
 (d) September 10th, 2007.
 (c) September  5th, 2007.
 (b) August    31st, 2007.
 (a) August    28th, 2007.
 
 New Features:
+(f) added analyze cluster_size_dist
+(e) Added gaussian random numbers via Box-Muller transformation.
+(e) added an option -weights to <g1>, <g1> and <g3> to weight the
+    coordinates.
+(e) <g1> -weights 1 0 0 for example calculates the MSD along the x-coordinate
+    only.
+(e) This is necessary for anisotropic systems.
 (d) added analyze vel_distr to calc velocity distribution
 (c) analyze local_pressure_tensor has been added.  analyze p_IK1 has been
     removed.
@@ -25,7 +34,17 @@ New Features:
     blockfile_(tcl)variable_whitelist is a defined global_variable, it defines the
     set of variables to read.
 
+Changes:
+(e) Implemented MRT model in mode space.
+(e) Fluctuations are now also applied to kinetic modes.
+(e) External force now includes higher order terms (viscosity
+    dependent).
+
 Bugfixes:
+(f) change function style of mark_neighbours
+(f) makes analyze cluster_size_dist working with types
+(e) map_lattice_to_node now respects +1 offset for halo region
+(e) scale with time_step in analyze vel_distr
 (b) stress tensor off by a factor of 3
 (a) ESPResSo again compiles and runs with DIPOLES and ROTATION switched
     on.
