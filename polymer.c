@@ -460,8 +460,15 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	  pos[0] = poz[0]+bond_length*sin(theta)*cos(phi);
 	  pos[1] = poz[1]+bond_length*sin(theta)*sin(phi);
 	  pos[2] = poz[2]+bond_length*cos(theta);
-	  if (mode==1 || collision(pos, shield, n, poly)==0) break;
-	  if (mode==0) { cnt1 = -1; break; }
+#ifdef CONSTRAINTS
+	  if(constr==0 || constraint_collision(pos,poly+3*(n-1))==0){
+#endif
+
+	    if (mode==1 || collision(pos, shield, n, poly)==0) break;
+	    if (mode==0) { cnt1 = -1; break; }
+#ifdef CONSTRAINTS
+	  }
+#endif
 	  POLY_TRACE(printf("m"); fflush(NULL));
 	}
 	if (cnt1 >= max_try) {
