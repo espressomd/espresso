@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4f (Ydalir)                                                                     *
+* v2.0.4g (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4f -
+- v2.0.4g -
 -----------
 
+(g) September 13th, 2007.
 (f) September 12th, 2007.
 (e) September 11th, 2007.
 (d) September 10th, 2007.
@@ -41,6 +42,8 @@ Changes:
     dependent).
 
 Bugfixes:
+(g) fixed constraints-bug which allowed the 2nd monomer of a chain to cross
+    constraints
 (f) change function style of mark_neighbours
 (f) makes analyze cluster_size_dist working with types
 (e) map_lattice_to_node now respects +1 offset for halo region
