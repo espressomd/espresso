@@ -161,6 +161,13 @@ extern double lblambda_bulk;
 /************************************************************/
 /*@{*/
 
+/** Updates the Lattice Boltzmann system for one time step.
+ * This function performs the collision step and the streaming step.
+ * If external forces are present, they are applied prior to the collisions.
+ * If boundaries are present, it also applies the boundary conditions.
+ */
+void lattice_boltzmann_update();
+
 /** Performs a full initialization of
  *  the Lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
@@ -188,13 +195,6 @@ void lb_set_local_fields(LB_FluidNode *node, const double rho, const double *v, 
  * @param pi    Local stress tensor of the fluid (Output)
  */
 void lb_get_local_fields(LB_FluidNode *node, double *rho, double *j, double *pi);
-
-/** Propagates the Lattice Boltzmann system for one time step.
- * This function performs the collision step and the streaming step.
- * If external forces are present, they are applied prior to the collisions.
- * If boundaries are present, it also applies the boundary conditions.
- */
-void lb_propagate();
 
 /** Calculates the coupling of MD particles to the LB fluid.
  * This function  is called from \ref force_calc. The force is added
