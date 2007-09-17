@@ -506,6 +506,10 @@ void on_ghost_flags_change()
   else if(coulomb.method == COULOMB_MAGGS)
       ghosts_have_v = 1;
 #endif
+#ifdef INTER_DPD
+  //maybe we have to add a new global to differ between compile in and acctual use.
+  ghosts_have_v = 1;
+#endif
 }
 
 static void init_tcl(Tcl_Interp *interp)

@@ -48,6 +48,7 @@
 /* #define NPT */ 
 /* #define DPD */
 /* #define TRANS_DPD */
+/* #define INTER_DPD */
 /* #define LB */
 
 /**********************************************************************/

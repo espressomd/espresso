@@ -290,6 +290,23 @@ typedef struct {
   /*@}*/
 #endif
 
+#ifdef INTER_DPD
+  /** \name DPD as interaction */
+  /*@{*/
+  double dpd_temp;
+  double dpd_gamma;
+  double dpd_r_cut;
+  int dpd_wf;
+  double dpd_pref1;
+  double dpd_pref2;
+  double dpd_tgamma;
+  double dpd_tr_cut;
+  int dpd_twf;
+  double dpd_pref3;
+  double dpd_pref4;
+  /*@}*/  
+#endif
+
 } IA_parameters;
 
 /** \name Compounds for Coulomb interactions */

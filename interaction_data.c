@@ -40,6 +40,7 @@
 #include "comforce.h"
 #include "comfixed.h"
 #include "morse.h"
+#include "dpd.h"
 
 /****************************************
  * variables
@@ -211,6 +212,20 @@ void initialize_ia_params(IA_parameters *params) {
 #ifdef COMFIXED
   params->COMFIXED_flag = 0;
 #endif
+
+#ifdef INTER_DPD
+  params->dpd_temp = -1;
+  params->dpd_gamma = 0.0;
+  params->dpd_r_cut = 0.0;
+  params->dpd_wf = 0;
+  params->dpd_pref1 = 0.0;
+  params->dpd_pref2 = 0.0;
+  params->dpd_tgamma = 0.0;
+  params->dpd_tr_cut = 0.0;
+  params->dpd_wf = 0;
+  params->dpd_pref3 = 0;
+  params->dpd_pref4 = 0;
+#endif
 }
 
 /** Copy interaction parameters. */
@@ -336,6 +351,21 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 #ifdef COMFIXED
   dst->COMFIXED_flag = src->COMFIXED_flag;
 #endif
+
+#ifdef INTER_DPD
+  dst->dpd_temp   = src->dpd_temp;
+  dst->dpd_gamma  = src->dpd_gamma;
+  dst->dpd_r_cut  = src-> dpd_r_cut;
+  dst->dpd_wf     = src->dpd_wf;
+  dst->dpd_pref1  = src->dpd_pref1;
+  dst->dpd_pref2  = src->dpd_pref2;
+  dst->dpd_tgamma = src->dpd_tgamma;
+  dst->dpd_tr_cut = src-> dpd_tr_cut;
+  dst->dpd_twf    = src->dpd_twf;
+  dst->dpd_pref3  = src->dpd_pref3;
+  dst->dpd_pref4  = src->dpd_pref4;
+#endif
+
 }
 
 /** returns non-zero if particles of type i and j have a nonbonded interaction */
@@ -394,6 +424,11 @@ int checkIfParticlesInteract(int i, int j) {
 
 #ifdef TABULATED
   if (data->TAB_maxval != 0)
+    return 1;
+#endif
+
+#ifdef INTER_DPD
+  if ( (data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0) )
     return 1;
 #endif
 
@@ -591,6 +626,13 @@ void calc_maximal_cutoff()
 	 if (data->LJGEN_cut != 0) {
 	   if(max_cut_non_bonded < (data->LJGEN_cut+data->LJGEN_offset) )
 	     max_cut_non_bonded = (data->LJGEN_cut+data->LJGEN_offset);
+	 }
+#endif
+
+#ifdef INTER_DPD
+	 if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)){
+	   if(max_cut_non_bonded < ( (data->dpd_r_cut > data->dpd_tr_cut)?data->dpd_r_cut:data->dpd_tr_cut ) )
+	     max_cut_non_bonded = ( (data->dpd_r_cut > data->dpd_tr_cut)?data->dpd_r_cut:data->dpd_tr_cut );
 	 }
 #endif
 
@@ -1015,6 +1057,10 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
   if (data->COMFIXED_flag != 0) printcomfixedIAToResult(interp,i,j);
 #endif
 
+#ifdef INTER_DPD
+  if ((data->dpd_r_cut != 0)||(data->dpd_tr_cut != 0)) printinterdpdIAToResult(interp,i,j);
+#endif
+
   return (TCL_OK);
 }
 
@@ -1299,6 +1345,9 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 
 #ifdef TABULATED
     REGISTER_NONBONDED("tabulated", tab_parser);
+#endif
+#ifdef INTER_DPD
+    REGISTER_NONBONDED("inter_dpd", interdpd_parser);
 #endif
     else {
       Tcl_AppendResult(interp, "excessive parameter/unknown interaction type \"", argv[0],

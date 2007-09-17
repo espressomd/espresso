@@ -28,6 +28,7 @@ Espresso_bin_SOURCES = \
 	debug.c debug.h \
 	particle_data.c	particle_data.h \
 	thermostat.c thermostat.h \
+	dpd.c dpd.h \
 	statistics.c statistics.h \
 	statistics_chain.c statistics_chain.h \
 	energy.c energy.h \
