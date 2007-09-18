@@ -3123,8 +3123,6 @@ int acf_cmd(ClientData data, Tcl_Interp *interp, int argc, char ** argv) {
 
 }
 
-<<<<<<< statistics.c
-//added by CJ from Matej
 void centermass_conf(int k, int type_1, double *com)
 {
   int i, j;
@@ -3320,142 +3318,6 @@ static int parse_MSD(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze MSD [ <type_m> <n_time_steps>]' */
   int n_time_steps;
-  int type_m,n_conf;
-  char buffer[TCL_DOUBLE_SPACE];
-  double D;
-  
-  /* parse arguments */
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "usage: analyze MSD [<type_m> <n_time_steps>]", (char *)NULL);
-    return (TCL_ERROR);
-  }
-
-
-  if (!ARG0_IS_I(type_m)) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze MSD [<type_m> <n_time_steps> <number of conf>]", (char *)NULL);
-    return (TCL_ERROR);
-  }
-
-  if (!ARG1_IS_I(n_time_steps)) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze MSD [<type_m> <n_time_steps> <number of conf>]", (char *)NULL);
-    return (TCL_ERROR);
-  }
-  argc-=2; argv+=2;
-
-  if (n_configs == 0) 
-  {
-    Tcl_AppendResult(interp, "No configurations found! ", (char *)NULL);
-    Tcl_AppendResult(interp, "Use 'analyze append' to save some !", (char *)NULL);
-    return TCL_ERROR;
-  }
-  if( argc>0 ) {
-    if (!ARG0_IS_I(n_conf)) return (TCL_ERROR);
-    argc--;
-    argv++;
-  }
-  else
-  {
-    n_conf  = n_configs;
-  }
-  
-  sprintf(buffer,"%i %i %i",type_m,n_time_steps,n_configs);
-  Tcl_AppendResult(interp, "{ analyze MSD ",buffer," } {\n",(char *)NULL);
-  D=calc_diffusion_coef(interp,type_m, n_time_steps,n_conf);
-  sprintf(buffer,"%e",D);
-  Tcl_AppendResult(interp, "}\n{approx. D=",buffer,"}", (char *)NULL);
-  return TCL_OK;
-}
-// added by CJ end
-
-=======
-void centermass_conf(int k, int type_1, double *com)
-{
-  int i, j;
-  double M = 0.0;
-  com[0]=com[1]=com[2]=0.;
-
-  for (j=0; j<n_total_particles; j++) {
-    if ((partCfg[j].p.type == type_1) || (type_1 == -1))
-    {
-      for (i=0; i<3; i++)
-      {
-         com[i] += configs[k][3*j+i]*PMASS(partCfg[j]);
-      }
-      M += PMASS(partCfg[j]);
-    }
-  }
-  for (i=0; i<3; i++) 
-  {
-    com[i] /= M;
-  }
-  return;
-}
-
-double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n_conf)
-{
-  int i,j,k;
-  double  p1[3],p2[3],p_com[3],p_x[n_configs],p_y[n_configs],p_z[n_configs];
-  double MSD[n_configs],MSD_time;
-  double D;
-  char buffer[TCL_DOUBLE_SPACE];
-  int MSD_particles=0;
-  int start_value=n_configs-n_conf;
-
-  updatePartCfg(WITHOUT_BONDS);
-  for(i=start_value;i<n_configs;i++)
-  {
-      MSD[i]=0.0;//MSD for all saved confs
-      centermass_conf(i, type_m, p_com); //COM for all saved confs
-      p_x[i]=p_com[0];
-      p_y[i]=p_com[1];
-      p_z[i]=p_com[2];
-  }
-
-  for(j=0; j<n_total_particles; j++) {
-     if((partCfg[j].p.type == type_m)||(type_m == -1)) {
-       MSD_particles++;//count particles for MSD
-       for(i=start_value;i<n_configs;i++) {
-          p1[0]=configs[i][3*j  ]-p_x[i];
-          p1[1]=configs[i][3*j+1]-p_y[i];
-          p1[2]=configs[i][3*j+2]-p_z[i];
-          for (k=i;k<n_configs;k++)
-          {
-             p2[0]=configs[k][3*j  ]-p_x[k];
-             p2[1]=configs[k][3*j+1]-p_y[k];
-             p2[2]=configs[k][3*j+2]-p_z[k];
-             MSD[k-i]+=distance2(p1, p2);
-          }
-        }
-     }
-  }
-
- // normalization
-  if (MSD_particles!=0) 
-  {
-      //average over all com particles and time origins
-      for (i=start_value;i<n_configs;i++)
-      {
-          MSD[i]/=(double)(MSD_particles*(n_configs-i));
-          MSD_time=time_step*n_time_steps*(i-start_value);
-          sprintf(buffer,"{ %e %e }",MSD_time,MSD[i]);
-          Tcl_AppendResult(interp,buffer,"\n",(char *)NULL);
-      }
-      MSD_time=time_step*n_time_steps*(n_configs-1-start_value);
-      D=(MSD[n_configs-1]-MSD[start_value])/(6.0*MSD_time);
-  }
-  else
-  {
-      D=0;
-  }
-  return D;
-}
-
-static int parse_MSD(Tcl_Interp *interp, int argc, char **argv)
-{
-  /* 'analyze MSD [ <type_m> <n_time_steps>]' */
-  int n_time_steps;
   int type_m;
   int n_conf;
   char buffer[3*TCL_DOUBLE_SPACE];
@@ -3505,7 +3367,6 @@ static int parse_MSD(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
->>>>>>> 2.110
 /****************************************************************************************
  *                                 main parser for analyze
  ****************************************************************************************/
