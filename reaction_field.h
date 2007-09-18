@@ -148,6 +148,129 @@ MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
   return 0.0;
 }
 
+#ifdef INTER_RF
+/*from I. G. Tironi et al., J. Chem. Phys. 102, 5451 (1995)*/
+MDINLINE int printinterrfIAToResult(Tcl_Interp *interp, int i, int j)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+  IA_parameters *data = get_ia_param(i, j);
+
+  Tcl_PrintDouble(interp, data->rf_coul_pref, buffer);
+  Tcl_AppendResult(interp, "inter_rf ", buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->rf_kappa, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->rf_epsilon1, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->rf_epsilon2, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->rf_r_cut, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+
+  return TCL_OK;
+}
+
+MDINLINE int interrf_set_params(int part_type_a, int part_type_b,double coul_pref,
+				      double kappa, double epsilon1, double epsilon2,
+				      double r_cut)
+{
+  double B0,B1;
+  IA_parameters *data, *data_sym;
+
+  make_particle_type_exist(part_type_a);
+  make_particle_type_exist(part_type_b);
+    
+  data     = get_ia_param(part_type_a, part_type_b);
+  data_sym = get_ia_param(part_type_b, part_type_a);
+
+  if (!data || !data_sym) {
+    return TCL_ERROR;
+  }
+
+  B0=(epsilon1-2*epsilon2*(1+kappa*r_cut))/(epsilon2*(1+kappa*r_cut));
+  B1=((epsilon1-4*epsilon2)*(1+kappa*r_cut)-2*epsilon2*kappa*kappa*r_cut*r_cut)/((epsilon1+2*epsilon2)*(1+kappa*r_cut)+epsilon2*kappa*kappa*r_cut*r_cut);
+
+  /* LJ should be symmetrically */
+  data->rf_coul_pref = data_sym->rf_coul_pref = coul_pref;
+  data->rf_kappa     = data_sym->rf_kappa     = kappa;
+  data->rf_epsilon1  = data_sym->rf_epsilon1  = epsilon1;
+  data->rf_epsilon2  = data_sym->rf_epsilon2  = epsilon2;
+  data->rf_r_cut     = data_sym->rf_r_cut     = r_cut;
+  data->rf_B0        = data_sym->rf_B0        = B0;
+  data->rf_B1        = data_sym->rf_B1        = B1;
+ 
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+  mpi_bcast_ia_params(part_type_b, part_type_a);
+
+  return TCL_OK;
+}
+
+MDINLINE int interrf_parser(Tcl_Interp * interp,
+		       int part_type_a, int part_type_b,
+		       int argc, char ** argv)
+{
+  /* parameters needed for RF */
+  double coul_pref,kappa,epsilon1,epsilon2,r_cut;
+  int change;
+
+  /* get lennard-jones interaction type */
+  if (argc < 6) {
+    Tcl_AppendResult(interp, "inter_rf needs 5 parameters: "
+		     "<coul_pref> <kappa> <epsilon1> <epsilon2> <r_cut>",
+		     (char *) NULL);
+    return 0;
+  }
+
+  /* copy lennard-jones parameters */
+  if ((! ARG_IS_D(1, coul_pref))      ||
+      (! ARG_IS_D(2, kappa))   ||
+      (! ARG_IS_D(3, epsilon1))   ||
+      (! ARG_IS_D(4, epsilon2))   ||
+      (! ARG_IS_D(5, r_cut)        )) {
+    Tcl_AppendResult(interp, "inter_rf needs 5 parameters: "
+		     "<coul_pref> <kappa> <epsilon1> <epsilon2> <r_cut>",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+  change = 6;
+	
+  if (interrf_set_params(part_type_a, part_type_b,coul_pref,
+			       kappa,epsilon1,epsilon2,r_cut
+			       ) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+    return 0;
+  }
+  return change;
+}
+MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+				double d[3], double dist, double force[3])
+{
+  int j;
+  double fac;
+  if(dist < ia_params->rf_r_cut) {
+    /*reaction field prefactor*/
+    fac = (1.0/(dist*dist*dist)-(1+ia_params->rf_B1)/(ia_params->rf_r_cut*ia_params->rf_r_cut*ia_params->rf_r_cut));
+    fac *= ia_params->rf_coul_pref * p1->p.q * p2->p.q;
+    for(j=0;j<3;j++)
+       force[j] += fac * d[j];
+
+    ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
+    ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
+  }
+}
+
+MDINLINE double interrf_pair_energy(Particle *p1, Particle *p2,IA_parameters *ia_params, double dist)
+{
+  double fac;
+  if(dist < ia_params->rf_r_cut) {
+    fac =ia_params->rf_coul_pref * p1->p.q * p2->p.q*(1.0/dist+(1+ia_params->rf_B0)/ia_params->rf_r_cut);
+    return fac;
+  }
+  return 0.0;
+}
+
+#endif
+
 /*@}*/
 #endif
 

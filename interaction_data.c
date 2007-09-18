@@ -226,6 +226,16 @@ void initialize_ia_params(IA_parameters *params) {
   params->dpd_pref3 = 0;
   params->dpd_pref4 = 0;
 #endif
+
+#ifdef INTER_RF
+  params->rf_coul_pref = 0;
+  params->rf_kappa = 0;
+  params->rf_epsilon1 = 0;
+  params->rf_epsilon2 = 0;
+  params->rf_r_cut = 0;
+  params->rf_B0 = 0;
+  params->rf_B1 = 0;
+#endif
 }
 
 /** Copy interaction parameters. */
@@ -366,6 +376,16 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->dpd_pref4  = src->dpd_pref4;
 #endif
 
+#ifdef INTER_RF
+  dst->rf_coul_pref = src->rf_coul_pref;
+  dst->rf_kappa     = src->rf_kappa;
+  dst->rf_epsilon1  = src->rf_epsilon1;
+  dst->rf_epsilon2  = src->rf_epsilon2;
+  dst->rf_r_cut     = src->rf_r_cut;
+  dst->rf_B0        = src->rf_B0;
+  dst->rf_B1        = src->rf_B1;
+#endif
+
 }
 
 /** returns non-zero if particles of type i and j have a nonbonded interaction */
@@ -429,6 +449,11 @@ int checkIfParticlesInteract(int i, int j) {
 
 #ifdef INTER_DPD
   if ( (data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0) )
+    return 1;
+#endif
+
+#ifdef INTER_RF
+  if (data->rf_r_cut != 0)
     return 1;
 #endif
 
@@ -682,6 +707,13 @@ void calc_maximal_cutoff()
 	 if (data->LJCOS2_cut != 0) {
 	   if(max_cut_non_bonded < (data->LJCOS2_cut+data->LJCOS2_offset) )
 	     max_cut_non_bonded = (data->LJCOS2_cut+data->LJCOS2_offset);
+	 }
+#endif
+
+#ifdef INTER_RF
+	 if (data->rf_r_cut != 0) {
+	   if(max_cut_non_bonded < data->rf_r_cut )
+	     max_cut_non_bonded = data->rf_r_cut;
 	 }
 #endif
 
@@ -1061,6 +1093,10 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
   if ((data->dpd_r_cut != 0)||(data->dpd_tr_cut != 0)) printinterdpdIAToResult(interp,i,j);
 #endif
 
+#ifdef INTER_RF
+  if (data->rf_r_cut != 0) printinterrfIAToResult(interp,i,j);
+#endif
+  
   return (TCL_OK);
 }
 
@@ -1348,6 +1384,9 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 #endif
 #ifdef INTER_DPD
     REGISTER_NONBONDED("inter_dpd", interdpd_parser);
+#endif
+#ifdef INTER_RF
+    REGISTER_NONBONDED("inter_rf", interrf_parser);
 #endif
     else {
       Tcl_AppendResult(interp, "excessive parameter/unknown interaction type \"", argv[0],

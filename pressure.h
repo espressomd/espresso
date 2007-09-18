@@ -182,7 +182,9 @@ MDINLINE void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3]
 #ifdef ROTATION
   add_gb_pair_force(p1,p2,ia_params,d,dist,force,t1,t2);
 #endif
-  
+#ifdef INTER_RF
+  add_interrf_pair_force(p1,p2,ia_params,d,dist, force);
+#endif
 }
 
 /** Calculate non bonded energies between a pair of particles.

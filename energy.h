@@ -129,6 +129,10 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 #endif
   *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) += ret;
 
+#ifdef INTER_RF
+  ret += interrf_pair_energy(p1,p2,ia_params,dist);
+#endif
+
 #ifdef ELECTROSTATICS
   if (coulomb.method != COULOMB_NONE) {
     /* real space coulomb */

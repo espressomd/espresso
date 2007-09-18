@@ -48,7 +48,6 @@
 /* #define NPT */ 
 /* #define DPD */
 /* #define TRANS_DPD */
-/* #define INTER_DPD */
 /* #define LB */
 
 /**********************************************************************/
@@ -66,6 +65,8 @@
 /* #define LJCOS2 */
 /* #define BUCKINGHAM */
 /* #define SOFT_SPHERE */
+/* #define INTER_DPD */
+/* #define INTER_RF */
 
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */
 /* #define BOND_ANGLE_HARMONIC */
