@@ -3553,16 +3553,9 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("mindist", parse_mindist);
   REGISTER_ANALYSIS("aggregation", parse_aggregation);
   REGISTER_ANALYSIS("centermass", parse_centermass);
-<<<<<<< statistics.c
-// added by CJ
   REGISTER_ANALYSIS("angularmomentum",parse_angularmomentum);
-// added by CJ from Matej
   REGISTER_ANALYSIS("MSD",parse_MSD);
   REGISTER_ANALYSIS("MSDH20",parse_MSDH20);
-=======
-  REGISTER_ANALYSIS("angularmomentum",parse_angularmomentum);
-  REGISTER_ANALYSIS("MSD",parse_MSD);
->>>>>>> 2.110
   REGISTER_ANALYSIS("momentofinertiamatrix", parse_momentofinertiamatrix);
   REGISTER_ANALYSIS("find_principal_axis", parse_find_principal_axis);
   REGISTER_ANALYSIS("nbhood", parse_nbhood);
