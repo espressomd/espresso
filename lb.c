@@ -521,8 +521,19 @@ static int lb_sanity_checks() {
 
 /***********************************************************************/
 
+/** (Pre-)allocate memory for data structures */
+void lb_pre_init() {
+
+  int lens[2] = { n_veloc, 1 };
+  MPI_Aint disps[2] = { 0, n_veloc*sizeof(double) };
+  MPI_Datatype types[2] = { MPI_DOUBLE, MPI_UB };
+  MPI_Type_struct(2, lens, disps, types, &lblattice.datatype);
+  MPI_Type_commit(&lblattice.datatype);
+
+}
+
 /** (Re-)allocate memory for the fluid and initialize pointers. */
-static void lb_create_fluid() {
+static void lb_realloc_fluid() {
 
   int index;
 
@@ -530,7 +541,8 @@ static void lb_create_fluid() {
   lblattice.data = realloc(lblattice.data,2*lblattice.halo_grid_volume*n_fields*sizeof(double));
 
   lbfluid = (LB_FluidNode *)lblattice.fields;
-  lbfluid_new = &lbfluid[lblattice.halo_grid_volume];
+  lbfluid_new = (LB_FluidNode *)lbfluid + lblattice.halo_grid_volume;
+
   lbfluid[0].n = (double *)lblattice.data;
 #ifndef D3Q19
   lbfluid[0].n_tmp = (double *)lblattice.data + lblattice.halo_grid_volume*n_veloc;
@@ -542,15 +554,6 @@ static void lb_create_fluid() {
     lbfluid[index].n_tmp = lbfluid[0].n_tmp + index*n_veloc;
 #endif
   }
-
-  int lens[2] = { n_veloc, 1 };
-  MPI_Aint disps[2] = { 0, n_veloc*sizeof(double) };
-  MPI_Datatype types[2] = { MPI_DOUBLE, MPI_UB };
-  //KG: Quick fix
-  //MPI_Type_free(&lblattice.datatype);
-  MPI_Type_struct(2, lens, disps, types, &lblattice.datatype);
-  MPI_Type_commit(&lblattice.datatype);
-  LB_TRACE(fprintf(stderr,"Potential memory hole!\n"));
 
 }
 
@@ -570,13 +573,6 @@ static void lb_prepare_communication() {
  
     halo_free_fieldtype(&fieldtype);
 
-}
-
-/** Release the fluid. */
-static void lb_release_fluid() {
-  MPI_Type_free(&lblattice.datatype);
-  free(lbfluid[0].n);
-  free(lbfluid);
 }
 
 /** (Re-)initializes the fluid. */
@@ -668,16 +664,19 @@ void lb_init() {
 
   if (lb_sanity_checks()) return;
 
-  /* initialize derived parameters */
-  lb_reinit_parameters();
-
   /* initialize the local lattice domain */
-  init_lattice(&lblattice,agrid,tau);  
+  init_lattice(&lblattice,lbpar.agrid,lbpar.tau);  
 
   if (check_runtime_errors()) return;
 
   /* allocate memory for data structures */
-  lb_create_fluid();
+  lb_realloc_fluid();
+
+  /* prepare the halo communication */
+  lb_prepare_communication();
+
+  /* initialize derived parameters */
+  lb_reinit_parameters();
 
 #ifdef CONSTRAINTS
   /* setup boundaries of constraints */
@@ -687,9 +686,12 @@ void lb_init() {
   /* setup the initial particle velocity distribution */
   lb_reinit_fluid();
 
-  /* prepare the halo communication */
-  lb_prepare_communication();
+}
 
+/** Release the fluid. */
+static void lb_release_fluid() {
+  free(lbfluid[0].n);
+  free(lbfluid);
 }
 
 /** Release fluid and communication. */
@@ -697,6 +699,7 @@ void lb_release() {
   release_halo_communication(&update_halo_comm[0]);
   release_halo_communication(&update_halo_comm[1]);
   lb_release_fluid();
+  MPI_Type_free(&lblattice.datatype);
 }
 
 /***********************************************************************/
@@ -805,26 +808,6 @@ MDINLINE void lb_calc_n_equilibrium(LB_FluidNode *local_node) {
 
 }
   
-#if 0
-MDINLINE void lb_map_fields_to_populations() {
-    int k;
-
-    for (k=0; k<lblattice.halo_grid_volume; k++) {
-	lb_calc_local_fields(&lbfluid[k],1);
-    }
-
-}
-
-MDINLINE void lb_map_populations_to_fields() {
-    int k;
-
-    for (k=0; k<lblattice.halo_grid_volume; k++) {
-	lb_calc_local_n(&lbfluid[k]);
-    }
-
-}
-#endif
-
 /*@}*/
 
 /***********************************************************************/
@@ -1463,6 +1446,7 @@ MDINLINE void lb_external_forces() {
 #endif
 /*@}*/
 
+/** Stream-collide step (pull scheme) */
 MDINLINE void lb_sc_calc_modes(int index, double *mode) {
 
   int yperiod = lblattice.halo_grid[0];
@@ -1901,7 +1885,7 @@ MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_inde
 #endif
 
 #ifdef ADDITIONAL_CHECKS
-	//lb_check_negative_n(local_node);
+	lb_check_negative_n(local_node);
 #endif
 
       }

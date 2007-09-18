@@ -168,6 +168,9 @@ extern double lblambda_bulk;
  */
 void lattice_boltzmann_update();
 
+/** (Pre-)initializes data structures. */
+void lb_pre_init();
+
 /** Performs a full initialization of
  *  the Lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
