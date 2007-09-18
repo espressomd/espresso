@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4g (Ydalir)                                                                     *
+* v2.0.4h (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4g -
+- v2.0.4h -
 -----------
 
+(h) September 17th, 2007.
 (g) September 13th, 2007.
 (f) September 12th, 2007.
 (e) September 11th, 2007.
@@ -20,6 +21,7 @@ Current working revision.
 (a) August    28th, 2007.
 
 New Features:
+(h) added interaction dpd and created dpd.h/dpd.c
 (f) added analyze cluster_size_dist
 (e) Added gaussian random numbers via Box-Muller transformation.
 (e) added an option -weights to <g1>, <g1> and <g3> to weight the
