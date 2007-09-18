@@ -463,8 +463,9 @@ void integrate_vv(int n_steps)
     rescale_forces_propagate_vel();
 
 #ifdef LB
-  if (lattice_switch & LATTICE_LB) lb_propagate();
-  if (check_runtime_errors()) break;
+    /* update the lattice Boltzmann fluid */
+    if (lattice_switch & LATTICE_LB) lattice_boltzmann_update();
+    if (check_runtime_errors()) break;
 #endif
 
 #ifdef BOND_CONSTRAINT
