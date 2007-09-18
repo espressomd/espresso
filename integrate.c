@@ -801,7 +801,12 @@ void propagate_vel()
 
 	    /* SPECIAL TASKS in particle loop */
 #ifdef NEMD
-	    if(j==0) nemd_get_velocity(p[i]);
+	    if(j==0){
+#ifdef WATER
+	           if(p[i].p.type==0)
+#endif
+	           {nemd_get_velocity(p[i]);}
+	    }
 #endif
 	  }
 
@@ -850,7 +855,11 @@ void propagate_pos()
 	    {
 #ifdef NEMD
 	      /* change momentum of each particle in top and bottom slab */
-	      if(j==0) nemd_add_velocity(&p[i]);
+	      if(j==0){
+#ifdef WATER
+	           if(p[i].p.type==0)
+#endif
+	              {nemd_add_velocity(&p[i]);}
 #endif
 	      /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
 	      p[i].r.p[j] += p[i].m.v[j];
