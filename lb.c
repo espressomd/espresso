@@ -524,8 +524,8 @@ static int lb_sanity_checks() {
 /** (Pre-)allocate memory for data structures */
 void lb_pre_init() {
 
-  int lens[2] = { n_veloc, 1 };
-  MPI_Aint disps[2] = { 0, n_veloc*sizeof(double) };
+  int lens[2] = { lbmodel.n_veloc, 1 };
+  MPI_Aint disps[2] = { 0, lbmodel.n_veloc*sizeof(double) };
   MPI_Datatype types[2] = { MPI_DOUBLE, MPI_UB };
   MPI_Type_struct(2, lens, disps, types, &lblattice.datatype);
   MPI_Type_commit(&lblattice.datatype);
@@ -549,9 +549,9 @@ static void lb_realloc_fluid() {
 #endif
   
   for (index=0; index<2*lblattice.halo_grid_volume; index++) {
-    lbfluid[index].n = lbfluid[0].n + index*n_veloc;
+    lbfluid[index].n = lbfluid[0].n + index*lbmodel.n_veloc;
 #ifndef D3Q19
-    lbfluid[index].n_tmp = lbfluid[0].n_tmp + index*n_veloc;
+    lbfluid[index].n_tmp = lbfluid[0].n_tmp + index*lbmodel.n_veloc;
 #endif
   }
 
@@ -562,10 +562,17 @@ static void lb_realloc_fluid() {
 static void lb_prepare_communication() {
 
     /* create types for lattice data layout */
-    int lens[2] = { n_veloc*sizeof(double), 1 };
-    int disps[2] = { 0, n_veloc*sizeof(double) };
+    int lens[2] = { lbmodel.n_veloc, 1 };
+    MPI_Aint disps[2] = { 0, lbmodel.n_veloc*sizeof(double) };
+    MPI_Datatype types[2] = { MPI_DOUBLE, MPI_UB };
+    MPI_Type_free(&lblattice.datatype);
+    MPI_Type_struct(2, lens, disps, types, &lblattice.datatype);
+    MPI_Type_commit(&lblattice.datatype);
+
+    int ilens[2] = { lbmodel.n_veloc*sizeof(double), 1 };
+    int idisps[2] = { 0, lbmodel.n_veloc*sizeof(double) };
     Fieldtype fieldtype;
-    halo_create_fieldtype(1, lens, disps, disps[1], &fieldtype);
+    halo_create_fieldtype(1, ilens, idisps, idisps[1], &fieldtype);
 
     /* setup the halo communication */
     prepare_halo_communication(&update_halo_comm[0],&lblattice,fieldtype,lblattice.datatype,0);
