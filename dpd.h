@@ -78,8 +78,23 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   double f_D[3],f_R[3];
 #endif
   double tmp;
+
+#ifdef WATER
+  //change for h2o
+  double p1_com[3],p2_com[3],com_dist;
+
+  if (p1->p.mol_id==p2->p.mol_id) return;
+  get_com_h2o(p1,p1_com);
+  get_com_h2o(p2,p2_com);
+  com_dist=min_distance(p1_com,p2_com);
+#endif
+  
   dist_inv = 1.0/dist;
+#ifdef WATER
+  if((com_dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
+#else
   if((dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
+#endif
     if ( dpd_wf == 1 )
     {
        omega    = dist_inv;
@@ -104,7 +119,11 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 #ifdef TRANS_DPD
     //DPD2 part
+#ifdef WATER
+  if ((com_dist < dpd_tr_cut)&&(dpd_tgamma > 0.0)){
+#else
   if ((dist < dpd_tr_cut)&&(dpd_tgamma > 0.0)){
+#endif
       if ( dpd_twf == 1 )
       {
         omega    = dist_inv;

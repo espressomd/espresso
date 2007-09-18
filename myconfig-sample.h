@@ -49,6 +49,8 @@
 /* #define DPD */
 /* #define TRANS_DPD */
 /* #define LB */
+/* #define WATER */
+/* #define WATER_DEBUG */
 
 /**********************************************************************/
 /*                           interactions                             */

@@ -113,7 +113,20 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
   int j;
   double B0, fac, fac_rf;
 
+#ifdef WATER
+  //Change
+  double p1_com[3],p2_com[3],com_dist;
+
+  if (p1->p.mol_id==p2->p.mol_id) return;
+
+  get_com_h2o(p1,p1_com);
+  get_com_h2o(p2,p2_com);
+  com_dist=min_distance(p1_com,p2_com);
+
+  if(com_dist < rf_params.r_cut) {
+#else
   if(dist < rf_params.r_cut) {
+#endif
     /*reaction field prefactor*/
     B0 = 2.0*(rf_params.eps-1.0)/(2.0*rf_params.eps+1.0);
     fac_rf = -B0*coulomb.prefactor * p1->p.q * p2->p.q / (rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
@@ -135,7 +148,21 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
 MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 {
   double  B0, fac, fac_cut,fac_rf;
+
+#ifdef WATER
+  //Change H2O
+  double p1_com[3],p2_com[3],com_dist;
+
+  if (p1->p.mol_id==p2->p.mol_id) return 0.0;
+
+  get_com_h2o(p1,p1_com);
+  get_com_h2o(p2,p2_com);
+  com_dist=min_distance(p1_com,p2_com);
+
+  if(com_dist < rf_params.r_cut) {
+#else
   if(dist < rf_params.r_cut) {
+#endif
     B0 = 2.0*(rf_params.eps-1.0)/(2.0*rf_params.eps+1.0);
     //no minus here
     fac_rf = B0*coulomb.prefactor * p1->p.q * p2->p.q * dist * dist   / (2.0 * rf_params.r_cut * rf_params.r_cut * rf_params.r_cut); 

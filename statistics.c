@@ -768,6 +768,125 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 
 }
 
+void calc_H20rdf_av( double r_min, double r_max, int r_bins, double *rdf, int n_conf)
+{
+  int i,j,k,l,ind,cnt=0,cnt_conf=1;
+  double inv_bin_width=0.0,bin_width=0.0, dist;
+  double volume, bin_volume, r_in, r_out;
+  double *rdf_tmp, p1[3],p2[3];
+
+  rdf_tmp = malloc(r_bins*sizeof(double));
+
+  bin_width     = (r_max-r_min) / (double)r_bins;
+  inv_bin_width = 1.0 / bin_width;
+  volume = box_l[0]*box_l[1]*box_l[2];
+  for(l=0;l<r_bins;l++) rdf_tmp[l]=rdf[l] = 0.0;
+
+  while(cnt_conf<=n_conf) {
+    for(l=0;l<r_bins;l++) rdf_tmp[l]=0.0;
+    cnt=0;
+    k=n_configs-cnt_conf;
+    for(i=0; i<n_total_particles; i++) {
+	if(partCfg[i].p.type == 0) {
+	  H20_COM_unper(k,i,p1);
+	  //particle loop: p2_types
+	  for(j=i+1; j<n_total_particles; j++) {
+	      if(partCfg[j].p.type == 0) {
+	        H20_COM_unper(k,j,p2);
+		dist =min_distance(p1, p2);
+		if(dist > r_min && dist < r_max) {
+		  ind = (int) ( (dist - r_min)*inv_bin_width );
+		  rdf_tmp[ind]++;
+		}
+		cnt++;
+	      }
+	  }
+	}
+    }
+    // normalization
+  
+    for(i=0; i<r_bins; i++) {
+      r_in       = i*bin_width + r_min;
+      r_out      = r_in + bin_width;
+      bin_volume = (4.0/3.0) * PI * ((r_out*r_out*r_out) - (r_in*r_in*r_in));
+      rdf[i] += rdf_tmp[i]*volume / (bin_volume * cnt);
+    }
+
+    cnt_conf++;
+  } //cnt_conf loop
+  for(i=0; i<r_bins; i++) {
+    rdf[i] /= (cnt_conf-1);
+  }
+  free(rdf_tmp);
+
+}
+
+/*void H20_COM_per(int knr,int pnr,double *p_com)
+{
+	//int ibox[3]={0,0,0};
+	H20_COM_unper(knr, pnr,p_com);
+	//fold_position(p_com,ibox);
+}*/
+
+void H20_COM_unper(int knr,int pnr,double *p_com)
+{
+	int i,p;
+	double M;
+	#ifdef WATER/*_DEBUG*/
+	double p_O[3],p_H[3];
+	if (partCfg[pnr].p.type != 0)
+	{
+		fprintf(stderr,"Calling part. is not type 0 (in H20_COM_unper)! knr=%i pnr=%i\n",knr,pnr);
+		exit(182);
+	}
+	#endif
+	for (i=0;i<3;i++)
+	{
+		p_com[i]=configs[knr][3*(pnr)+i]*PMASS(partCfg[pnr]);
+		#ifdef WATER_DEBUG
+		p_O[i]=configs[knr][3*(pnr)+i];
+		#endif
+	}
+	M=PMASS(partCfg[pnr]);
+	for (p=1; p<3; p++) {
+		#ifdef WATER_DEBUG
+		if (partCfg[p+pnr].p.type != 2)
+		{
+			fprintf(stderr,"%ith part is not type 2 (in H20_COM_unper)! knr=%i pnr=%i\n",p,knr,pnr);
+			exit(182);
+		}
+		for (i=0;i<3;i++)
+		{
+			p_H[i]=configs[knr][3*(pnr+p)+i];
+		}
+		if (fabs(min_distance(p_H,p_O)-0.303814)>0.001)
+		{
+			fprintf(stderr,"Dist O(%i)-H(%i) wrong(%e) (in H20_COM_unper)! knr=%i pnr=%i\n",pnr,p+pnr,min_distance(p_H,p_O),knr,pnr);
+			fprintf(stderr,"H20_COM %i %e %e %e %e %i\n",p+pnr,p_H[0],p_H[1],p_H[2],PMASS(partCfg[pnr+p]),partCfg[p].p.type);
+			fprintf(stderr,"H20_COM %i %e %e %e %e %i\n",pnr,p_O[0],p_O[1],p_O[2],PMASS(partCfg[pnr]),partCfg[p+pnr].p.type);
+			exit(182);
+		}
+		#endif
+		for (i=0; i<3; i++) {
+			p_com[i]+=configs[knr][3*(pnr+p)+i]*PMASS(partCfg[p+pnr]);
+		}
+		M+=PMASS(partCfg[p+pnr]);
+		//printf("H20_COM %i %i %e %e %e %e\n",p,pnr,p_com[0],p_com[1],p_com[2],M);
+	}
+	#ifdef WATER_DEBUG
+	if (fabs(M -1.1250)> 0.001)
+	{
+		fprintf(stderr,"M unequal in H20_COM_unper ! knr=%i pnr=%i\n",knr,pnr);
+		exit(182);
+	}
+	#endif
+	for (i=0;i<3;i++)
+	{
+		p_com[i]/=M;
+	}
+	//printf("H20_COM 4 %i %e %e %e %e\n",pnr,p_com[0],p_com[1],p_com[2],M);
+}
+
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 			  double r_min, double r_max, int r_bins, double *rdf, int n_conf)
 {
@@ -2508,6 +2627,8 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
     Tcl_AppendResult(interp, "{ analyze <rdf> { ", (char *)NULL);
   else if(average==2)
     Tcl_AppendResult(interp, "{ analyze <rdf-intermol> { ", (char *)NULL);
+  else if(average==3)
+    Tcl_AppendResult(interp, "{ analyze rdfH20 { ", (char *)NULL);
   else
     {
       Tcl_AppendResult(interp, "WRONG PARAMETER PASSED ", (char *)NULL);
@@ -2541,6 +2662,8 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
     calc_rdf_av(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf, n_conf);
   else if(average==2)
     calc_rdf_intermol_av(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf, n_conf);
+  else if(average==3)
+    calc_H20rdf_av(r_min, r_max, r_bins, rdf, n_conf);
   else ;
 
   /* append result */
@@ -3000,6 +3123,253 @@ int acf_cmd(ClientData data, Tcl_Interp *interp, int argc, char ** argv) {
 
 }
 
+<<<<<<< statistics.c
+//added by CJ from Matej
+void centermass_conf(int k, int type_1, double *com)
+{
+  int i, j;
+  double M = 0.0;
+  com[0]=com[1]=com[2]=0.;
+
+  for (j=0; j<n_total_particles; j++) {
+    if ((partCfg[j].p.type == type_1) || (type_1 == -1))
+    {
+      for (i=0; i<3; i++)
+      {
+         com[i] += configs[k][3*j+i]*PMASS(partCfg[j]);
+      }
+      M += PMASS(partCfg[j]);
+    }
+  }
+  for (i=0; i<3; i++) 
+  {
+    com[i] /= M;
+  }
+  return;
+}
+
+double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n_conf)
+{
+  int i,j,k;
+  double  p1[3],p2[3],p_com[3],p_x[n_configs],p_y[n_configs],p_z[n_configs];
+  double MSD[n_configs],MSD_time;
+  double D;
+  char buffer[TCL_DOUBLE_SPACE];
+  int MSD_particles=0;
+  int start_value=n_configs-n_conf;
+
+  updatePartCfg(WITHOUT_BONDS);
+  for(i=start_value;i<n_configs;i++)
+  {
+      MSD[i]=0.0;//MSD for all saved confs
+      centermass_conf(i, type_m, p_com); //COM for all saved confs
+      p_x[i]=p_com[0];
+      p_y[i]=p_com[1];
+      p_z[i]=p_com[2];
+  }
+
+  for(j=0; j<n_total_particles; j++) {
+     if((partCfg[j].p.type == type_m)||(type_m == -1)) {
+       MSD_particles++;//count particles for MSD
+       for(i=start_value;i<n_configs;i++) {
+          p1[0]=configs[i][3*j  ]-p_x[i];
+          p1[1]=configs[i][3*j+1]-p_y[i];
+          p1[2]=configs[i][3*j+2]-p_z[i];
+          for (k=i;k<n_configs;k++)
+          {
+             p2[0]=configs[k][3*j  ]-p_x[k];
+             p2[1]=configs[k][3*j+1]-p_y[k];
+             p2[2]=configs[k][3*j+2]-p_z[k];
+             MSD[k-i]+=distance2(p1, p2);
+          }
+        }
+     }
+  }
+
+ // normalization
+  if (MSD_particles!=0) 
+  {
+      //average over all com particles and time origins
+      for (i=start_value;i<n_configs;i++)
+      {
+          MSD[i]/=(double)(MSD_particles*(n_configs-i));
+          MSD_time=time_step*n_time_steps*(i-start_value);
+          sprintf(buffer,"{ %e %e }",MSD_time,MSD[i]);
+          Tcl_AppendResult(interp,buffer,"\n",(char *)NULL);
+      }
+      MSD_time=time_step*n_time_steps*(n_configs-1-start_value);
+      D=(MSD[n_configs-1]-MSD[start_value])/(6.0*MSD_time);
+  }
+  else
+  {
+      D=0;
+  }
+  return D;
+}
+
+double calc_diffusion_coefH20(Tcl_Interp *interp, int n_time_steps,int n_conf)
+{
+  int i,j,k;
+  double  p1[3],p2[3],p_com[3],p_x[n_configs],p_y[n_configs],p_z[n_configs];
+  double MSD[n_configs],MSD_time;
+  double D;
+  char buffer[TCL_DOUBLE_SPACE];
+  int MSD_particles=0;
+  int start_value=n_configs-n_conf;
+
+  updatePartCfg(WITHOUT_BONDS);
+  for(i=start_value;i<n_configs;i++)
+  {
+      MSD[i]=0.0;//MSD for all saved confs
+      centermass_conf(i, -1, p_com); //COM for all saved confs
+      p_x[i]=p_com[0];
+      p_y[i]=p_com[1];
+      p_z[i]=p_com[2];
+  }
+
+  for(j=0; j<n_total_particles; j++) {
+     if(partCfg[j].p.type == 0) {
+       MSD_particles++;//count n particles for MSD
+     }
+     for(i=start_value;i<n_configs;i++) {
+        if(partCfg[j].p.type == 0) {
+            H20_COM_unper(i,j,p1);
+            p1[0]=p1[0]-p_x[i];
+            p1[1]=p1[1]-p_y[i];
+            p1[2]=p1[2]-p_z[i];
+            for (k=i;k<n_configs;k++)
+            {
+            	H20_COM_unper(k,j,p2);
+                p2[0]=p2[0]-p_x[k];
+                p2[1]=p2[1]-p_y[k];
+                p2[2]=p2[2]-p_z[k];
+                MSD[k-i]+=distance2(p1, p2);
+            }
+        }
+     }
+  }
+
+ // normalization
+  if (MSD_particles!=0) 
+  {
+      //average over all com particles and time origins
+      for (i=start_value;i<n_configs;i++)
+      {
+          MSD[i]/=(double)(MSD_particles*(n_configs-i));
+          MSD_time=time_step*n_time_steps*(i-start_value);
+          sprintf(buffer,"{ %e %e }",MSD_time,MSD[i]);
+          Tcl_AppendResult(interp,buffer,"\n",(char *)NULL);
+      }
+      MSD_time=time_step*n_time_steps*(n_configs-1-start_value);
+      D=(MSD[n_configs-1]-MSD[start_value])/(6.0*MSD_time);
+  }
+  else
+  {
+      D=0;
+  }
+  return D;
+}
+
+static int parse_MSDH20(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze MSD [ <type_m> <n_time_steps>]' */
+  int n_time_steps,n_conf;
+  char buffer[TCL_DOUBLE_SPACE];
+  double D;
+  
+  /* parse arguments */
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "usage: analyze MSDH20 <n_time_steps>", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+
+  if (!ARG0_IS_I(n_time_steps)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze MSDH20 <n_time_steps>", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  argc--; argv++;
+
+    if (n_configs == 0) 
+  {
+    Tcl_AppendResult(interp, "No configurations found! ", (char *)NULL);
+    Tcl_AppendResult(interp, "Use 'analyze append' to save some !", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if( argc>0 ) {
+    if (!ARG0_IS_I(n_conf)) return (TCL_ERROR);
+    argc--;
+    argv++;
+  }
+  else
+  {
+    n_conf  = n_configs;
+  }
+  
+  sprintf(buffer,"%i %i",n_time_steps,n_configs);
+  Tcl_AppendResult(interp, "{ analyze MSD ",buffer," } {\n",(char *)NULL);
+  D=calc_diffusion_coefH20(interp, n_time_steps,n_conf);
+  sprintf(buffer,"%e",D);
+  Tcl_AppendResult(interp, "}\n{approx. Dh2o=",buffer,"}", (char *)NULL);
+  return TCL_OK;
+}
+
+static int parse_MSD(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze MSD [ <type_m> <n_time_steps>]' */
+  int n_time_steps;
+  int type_m,n_conf;
+  char buffer[TCL_DOUBLE_SPACE];
+  double D;
+  
+  /* parse arguments */
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "usage: analyze MSD [<type_m> <n_time_steps>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+
+  if (!ARG0_IS_I(type_m)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze MSD [<type_m> <n_time_steps> <number of conf>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  if (!ARG1_IS_I(n_time_steps)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze MSD [<type_m> <n_time_steps> <number of conf>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  argc-=2; argv+=2;
+
+  if (n_configs == 0) 
+  {
+    Tcl_AppendResult(interp, "No configurations found! ", (char *)NULL);
+    Tcl_AppendResult(interp, "Use 'analyze append' to save some !", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if( argc>0 ) {
+    if (!ARG0_IS_I(n_conf)) return (TCL_ERROR);
+    argc--;
+    argv++;
+  }
+  else
+  {
+    n_conf  = n_configs;
+  }
+  
+  sprintf(buffer,"%i %i %i",type_m,n_time_steps,n_configs);
+  Tcl_AppendResult(interp, "{ analyze MSD ",buffer," } {\n",(char *)NULL);
+  D=calc_diffusion_coef(interp,type_m, n_time_steps,n_conf);
+  sprintf(buffer,"%e",D);
+  Tcl_AppendResult(interp, "}\n{approx. D=",buffer,"}", (char *)NULL);
+  return TCL_OK;
+}
+// added by CJ end
+
+=======
 void centermass_conf(int k, int type_1, double *com)
 {
   int i, j;
@@ -3135,6 +3505,7 @@ static int parse_MSD(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
+>>>>>>> 2.110
 /****************************************************************************************
  *                                 main parser for analyze
  ****************************************************************************************/
@@ -3182,8 +3553,16 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("mindist", parse_mindist);
   REGISTER_ANALYSIS("aggregation", parse_aggregation);
   REGISTER_ANALYSIS("centermass", parse_centermass);
+<<<<<<< statistics.c
+// added by CJ
+  REGISTER_ANALYSIS("angularmomentum",parse_angularmomentum);
+// added by CJ from Matej
+  REGISTER_ANALYSIS("MSD",parse_MSD);
+  REGISTER_ANALYSIS("MSDH20",parse_MSDH20);
+=======
   REGISTER_ANALYSIS("angularmomentum",parse_angularmomentum);
   REGISTER_ANALYSIS("MSD",parse_MSD);
+>>>>>>> 2.110
   REGISTER_ANALYSIS("momentofinertiamatrix", parse_momentofinertiamatrix);
   REGISTER_ANALYSIS("find_principal_axis", parse_find_principal_axis);
   REGISTER_ANALYSIS("nbhood", parse_nbhood);
@@ -3223,6 +3602,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS_W_ARG("rdf", parse_rdf, 0);
   REGISTER_ANALYSIS_W_ARG("<rdf>", parse_rdf, 1);
   REGISTER_ANALYSIS_W_ARG("<rdf-intermol>", parse_rdf, 2);
+  REGISTER_ANALYSIS_W_ARG("rdfH20", parse_rdf, 3);
   REGISTER_ANALYSIS("rdfchain", parse_rdfchain);
 #ifdef ELECTROSTATICS
   REGISTER_ANALYSIS("cwvac", parse_cwvac);
