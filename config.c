@@ -155,6 +155,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef LB
   Tcl_AppendResult(interp, "{ LB } ", (char *) NULL);
 #endif
+#ifdef INTER_DPD
+  Tcl_AppendResult(interp, "{ INTER_DPD } ", (char *) NULL);
+#endif
   Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);
 }
