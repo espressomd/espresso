@@ -832,7 +832,7 @@ void H20_COM_unper(int knr,int pnr,double *p_com)
 {
 	int i,p;
 	double M;
-	#ifdef WATER/*_DEBUG*/
+	#ifdef WATER_DEBUG
 	double p_O[3],p_H[3];
 	if (partCfg[pnr].p.type != 0)
 	{
