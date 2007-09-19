@@ -313,8 +313,7 @@ typedef struct {
   double rf_epsilon1;
   double rf_epsilon2;
   double rf_r_cut;
-  double rf_B0;
-  double rf_B1;
+  double rf_B;
 #endif
 
 } IA_parameters;

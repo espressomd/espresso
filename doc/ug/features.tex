@@ -27,7 +27,10 @@ Features can be activated in the configuration header
   \vref{sec:inter-electrostatics} for details on these algorithms.
 \item \newfeature{ROTATION} Switch on rotational degrees of freedom for
   the particles, as well as the corresponding quaternion integrator.
-  See section \vref{sec:rotation} for details.
+  See section \vref{sec:rotation} for details. Note, that when the
+  feature is activated, every particle has three additional degrees of
+  freedom, which might severely influence the temperature
+  measurements.
   \todo{Docs for rotation missing}
 \item \newfeature{DIPOLES} This activates the dipole support in P$^3$M.
   Currently, a mixing of dipoles and charges is not possible, \ie all
