@@ -50,9 +50,9 @@ MDINLINE int printrfToResult(Tcl_Interp *interp)
   Tcl_PrintDouble(interp, rf_params.kappa, buffer);
   Tcl_AppendResult(interp, "rf ", buffer, " ",(char *) NULL);
   Tcl_PrintDouble(interp, rf_params.epsilon1, buffer);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, rf_params.epsilon2, buffer);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, rf_params.r_cut, buffer);
   Tcl_AppendResult(interp, buffer, (char *) NULL);
 
