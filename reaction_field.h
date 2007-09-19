@@ -85,8 +85,9 @@ MDINLINE int inter_parse_rf(Tcl_Interp * interp, int argc, char ** argv)
   double kappa,epsilon1,epsilon2, r_cut;
   int i;
 
-  if(argc < 2) {
-    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb rf <eps> <r_cut>", (char *) NULL);
+  if(argc < 4) {
+    Tcl_AppendResult(interp, "rf needs 4 parameters: "
+                               "<kappa> <epsilon1> <epsilon2> <r_cut>",(char *) NULL);
     return TCL_ERROR;
   }
 
