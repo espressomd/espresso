@@ -233,8 +233,7 @@ void initialize_ia_params(IA_parameters *params) {
   params->rf_epsilon1 = 0;
   params->rf_epsilon2 = 0;
   params->rf_r_cut = 0;
-  params->rf_B0 = 0;
-  params->rf_B1 = 0;
+  params->rf_B = 0;
 #endif
 }
 
@@ -382,8 +381,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->rf_epsilon1  = src->rf_epsilon1;
   dst->rf_epsilon2  = src->rf_epsilon2;
   dst->rf_r_cut     = src->rf_r_cut;
-  dst->rf_B0        = src->rf_B0;
-  dst->rf_B1        = src->rf_B1;
+  dst->rf_B         = src->rf_B;
 #endif
 
 }
@@ -845,8 +843,11 @@ int coulomb_set_bjerrum(double bjerrum)
       dh_params.r_cut   = 0.0;
       dh_params.kappa   = 0.0;
     case COULOMB_RF:
+      rf_params.kappa  = 0.0;
+      rf_params.epsilon1   = 0.0;
+      rf_params.epsilon2   = 0.0;
       rf_params.r_cut   = 0.0;
-      rf_params.eps   = 0.0;
+      rf_params.B   = 0.0;
     case COULOMB_MMM1D:
       mmm1d_params.maxPWerror = 1e40;
       mmm1d_params.bessel_cutoff = 0;
