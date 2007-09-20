@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4i (Ydalir)                                                                     *
+* v2.0.4j (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4i -
+- v2.0.4j -
 -----------
 
+(j) September 19th, 2007.
 (i) September 18th, 2007.
 (h) September 17th, 2007.
 (g) September 13th, 2007.
@@ -49,6 +50,12 @@ Changes:
     dependent).
 
 Bugfixes:
+(j) merge from trunc
+(j) change to generalized reaction field
+(j) rf output correction
+(j) Reaction field bug fix
+(j) bugfix from trunc
+(j) wrong define
 (i) added inter_dpd to code info
 (i) code syntax error
 (i) syntax error
