@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4j (Ydalir)                                                                     *
+* v2.0.4k (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4j -
+- v2.0.4k -
 -----------
 
+(k) September 20th, 2007.
 (j) September 19th, 2007.
 (i) September 18th, 2007.
 (h) September 17th, 2007.
@@ -50,6 +51,7 @@ Changes:
     dependent).
 
 Bugfixes:
+(k) define fix for BOND_VIRTUAL
 (j) merge from trunc
 (j) change to generalized reaction field
 (j) rf output correction
