@@ -37,7 +37,7 @@
  *  combined by or'ing the respective flags.
  *  So far, only \ref LATTICE_OFF and \ref LATTICE_LB exist.
  */
-extern int lattice_switch ;
+extern int lattice_switch;
 
 /** Data structure describing a lattice.
  *  Contains the lattice layout and pointers to the data fields.
@@ -79,8 +79,9 @@ typedef struct _Lattice {
    *  Actually used are only the identity and the type. */
   Particle part_rep;
 
-  /** MPI datatype that describes the data layout of the lattice. */
+  /** datatypes that describe the data layout of the lattice. */
   MPI_Datatype datatype;
+  struct _Fieldtype *fieldtype;
 
 } Lattice;
 
