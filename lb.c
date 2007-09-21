@@ -286,6 +286,9 @@ static void lb_check_halo_regions() {
   free(r_buffer);
   free(s_buffer);
 
+  //if (check_runtime_errors());
+  //else fprintf(stderr,"halo check successful\n");
+
 }
 #endif /* ADDITIONAL_CHECKS */
 
@@ -752,7 +755,7 @@ void lb_calc_n_equilibrium(const int index, const double rho, const double *v, d
 
   local_j[0] = rho * v[0];
   local_j[1] = rho * v[1];
-  local_j[3] = rho * v[2];
+  local_j[2] = rho * v[2];
 
   local_pi = pi;
 
@@ -1188,6 +1191,7 @@ void lattice_boltzmann_update() {
     }
 
     /* swap the pointers for old and new population fields */
+    //fprintf(stderr,"swapping pointers\n");
     tmp = lbfluid[0];
     lbfluid[0] = lbfluid[1];
     lbfluid[1] = tmp;
@@ -1286,7 +1290,7 @@ MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_inde
  * @param p          The coupled particle (Input).
  * @param force      Coupling force between particle and fluid (Output).
  */
-MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3]) {
+MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3], double *flowfield) {
 
   int x,y,z;
   int node_index[8];
@@ -1311,8 +1315,11 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3]) {
   for (z=0;z<2;z++) {
     for (y=0;y<2;y++) {
       for (x=0;x<2;x++) {
-
-	lb_calc_local_fields(node_index[(z*2+y)*2+x],local_rho,local_j,NULL,0);
+	
+	*local_rho = flowfield[4*node_index[(z*2+y)*2+x]];
+        local_j[0] = flowfield[4*node_index[(z*2+y)*2+x]+1];
+        local_j[1] = flowfield[4*node_index[(z*2+y)*2+x]+2];
+        local_j[2] = flowfield[4*node_index[(z*2+y)*2+x]+3];
 
 #ifdef ADDITIONAL_CHECKS
 	old_rho[(z*2+y)*2+x] = *local_rho;
@@ -1405,8 +1412,11 @@ void calc_particle_lattice_ia() {
   Cell *cell ;
   Particle *p ;
   double force[3];
+  double *flowfield;
 
   if (transfer_momentum) {
+
+    flowfield = malloc(lblattice.halo_grid_volume*4*sizeof(double));
 
     /* exchange halo regions */
     halo_communication(&update_halo_comm,**lbfluid);
@@ -1414,6 +1424,10 @@ void calc_particle_lattice_ia() {
     //fprintf(stderr,"calc_particle_lattice_ia() checking halos\n");
     lb_check_halo_regions();
 #endif
+
+    for (i=0; i<lblattice.halo_grid_volume; i++) {
+      lb_calc_local_fields(i, &flowfield[4*i], &flowfield[4*i+1], NULL, 0);
+    }
     
     /* draw random numbers for local particles */
     for (c=0;c<local_cells.n;c++) {
@@ -1442,7 +1456,7 @@ void calc_particle_lattice_ia() {
 
       for (i=0;i<np;i++) {
 
-	lb_viscous_momentum_exchange(&p[i],force) ;
+	lb_viscous_momentum_exchange(&p[i],force,flowfield) ;
 
 	/* add force to the particle */
 	p[i].f.f[0] += force[0];
@@ -1470,7 +1484,7 @@ void calc_particle_lattice_ia() {
 
 	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
 
-	  lb_viscous_momentum_exchange(&p[i],force) ;
+	  lb_viscous_momentum_exchange(&p[i],force,flowfield) ;
 
 	  /* ghosts must not have the force added! */
 
@@ -1479,7 +1493,9 @@ void calc_particle_lattice_ia() {
 	}
       }
     }
-    
+
+    free(flowfield);
+
   }
 
 }
