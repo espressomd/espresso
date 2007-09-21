@@ -540,6 +540,7 @@ static int lb_sanity_checks() {
 
 /** (Pre-)allocate memory for data structures */
 void lb_pre_init() {
+  n_veloc = lbmodel.n_veloc;
   lbfluid[0]    = malloc(2*lbmodel.n_veloc*sizeof(double *));
   lbfluid[0][0] = malloc(2*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
 }
@@ -629,7 +630,11 @@ void lb_reinit_parameters() {
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
      * Note that the modes are not normalized as in the paper here! */
     double mu = temperature/lbmodel.c_sound_sq*tau*tau/(agrid*agrid);
+#ifdef D3Q19
     double (*e)[19] = d3q19_modebase;
+#else
+    double **e = lbmodel.e;
+#endif
     for (i=0; i<3; i++) lb_phi[i] = 0.0;
     lb_phi[4] = sqrt(mu*e[19][4]*(1.-SQR(gamma_bulk)));
     for (i=5; i<10; i++) lb_phi[i] = sqrt(mu*e[19][i]*(1.-SQR(gamma_shear)));
@@ -822,7 +827,7 @@ void lb_calc_n_equilibrium(const int index, const double rho, const double *v, d
       + (2.0*local_pi[1]*c[i][0]+local_pi[2]*c[i][1])*c[i][1]
       + (2.0*(local_pi[3]*c[i][0]+local_pi[4]*c[i][1])+local_pi[5]*c[i][2])*c[i][2];
 
-    lbfluid[0][i][index] =  coeff[i][0] * (*local_rho-avg_rho);
+    lbfluid[0][i][index] =  coeff[i][0] * (local_rho-avg_rho);
     lbfluid[0][i][index] += coeff[i][1] * scalar(local_j,c[i]);
     lbfluid[0][i][index] += coeff[i][2] * tmp;
     lbfluid[0][i][index] += coeff[i][3] * trace;
@@ -866,6 +871,7 @@ MDINLINE void lb_sc_calc_modes(int index, double *mode) {
   n[17] = lbfluid[0][17][index-(yperiod-zperiod)];
   n[18] = lbfluid[0][18][index+(yperiod-zperiod)];
 
+#ifdef D3Q19
   /* mass mode */
   mode[ 0] =   n[ 0] + n[ 1] + n[ 2] + n[ 3] + n[4] + n[5] + n[6]
              + n[ 7] + n[ 8] + n[ 9] + n[10]
@@ -915,7 +921,16 @@ MDINLINE void lb_sc_calc_modes(int index, double *mode) {
   mode[18] = - n[ 1] - n[ 2] - n[ 3] - n[ 4] 
              - n[11] - n[12] - n[13] - n[14] - n[15] - n[16] - n[17] - n[18]
              + 2.*(n[5] + n[6] + n[7] + n[8] + n[9] + n[10]);
-
+#else
+  int i, j;
+  double **e = lbmodel.e;
+  for (i=0; i<n_veloc; i++) {
+    mode[i] = 0.0;
+    for (j=0; j<n_veloc; j++) {
+      mode[i] += e[i][j]*n[j];
+    }
+  }
+#endif
 }
 
 MDINLINE void lb_relax_modes(double *mode) {
@@ -1042,12 +1057,12 @@ MDINLINE void lb_external_forces(double* mode) {
 
 MDINLINE void lb_calc_n_from_modes(int index, double *mode) {
 
-  double *w = lbmodel.w;
-  double m[19];
   int i;
+  double *w = lbmodel.w;
 
 #ifdef D3Q19
   double (*e)[19] = d3q19_modebase;
+  double m[19];
 
   /* normalization factors enter in the back transformation */
   for (i=0;i<n_veloc;i++) {
@@ -1093,17 +1108,13 @@ MDINLINE void lb_calc_n_from_modes(int index, double *mode) {
 
 #else
   int j;
-  double n2[n_veloc];
+  double **e = lbmodel.e;
   for (i=0; i<n_veloc;i++) {
-    n2[i] = 0.0;
+    lbfluid[1][i][index] = 0.0;
     for (j=0;j<n_veloc;j++) {
-      n2[i] += 1./e[19][j]*mode[j]*e[j][i];
+      lbfluid[1][i][index] += mode[j]*e[j][i]/e[19][j];
     }
-    n2[i] = w[i]*(n2[i]);
-  }
-
-  for (i=0;i<n_veloc;i++) {
-    fprintf(stderr,"n[%d]=%f n2[%d]=%f\n",i,n[i],i,n2[i]);
+    lbfluid[1][i][index] *= w[i];
   }
 #endif
 
@@ -1268,13 +1279,12 @@ MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_inde
 	double (*coeff)[4] = lbmodel.coeff;
 
 	for (i=0;i<n_veloc;i++) {
-	  local_n[i] = n_tmp[i] + coeff[i][1] * scalar(delta_j,c[i]);
+	  lbfluid[0][i][index] += coeff[i][1] * scalar(delta_j,c[i]);
 	}
-
 #endif
 
 #ifdef ADDITIONAL_CHECKS
-	lb_check_negative_n(index);
+	//lb_check_negative_n(index);
 #endif
 
       }

@@ -67,7 +67,7 @@ typedef const struct {
   double (*w);
 
   /** basis of moment space */
-  double (*e)[];
+  double **e;
 
   /** speed of sound squared */
   double c_sound_sq;
@@ -224,9 +224,9 @@ MDINLINE void lb_calc_local_rho(int index, double *rho) {
 	 + lbfluid[0][17][index] + lbfluid[0][18][index];
 #else
   int i;
-  *local_rho = avg_rho;
+  *rho = avg_rho;
   for (i=0;i<lbmodel.n_veloc;i++) {
-    *local_rho += lbfluid[0][i][index];// + lbmodel.coeff[i][0]*avg_rho;
+    *rho += lbfluid[0][i][index];// + lbmodel.coeff[i][0]*avg_rho;
   }
 #endif
 
@@ -257,10 +257,10 @@ MDINLINE void lb_calc_local_j(int index, double *j) {
 #else
   int i;
   double tmp;
-  double avg_rho = lbpar.rho/(lbpar.agrid*lbpar.agrid*lbpar.agrid);
-  local_j[0] = 0.0;
-  local_j[1] = 0.0;
-  local_j[2] = 0.0;
+  //double avg_rho = lbpar.rho/(lbpar.agrid*lbpar.agrid*lbpar.agrid);
+  j[0] = 0.0;
+  j[1] = 0.0;
+  j[2] = 0.0;
   for (i=0;i<lbmodel.n_veloc;i++) {
     tmp = lbfluid[0][i][index];// + lbmodel.coeff[i][0]*avg_rho;
     j[0] += lbmodel.c[i][0] * tmp;
