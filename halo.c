@@ -24,6 +24,9 @@
 
 #ifdef LATTICE
 
+/** Primitive fieldtypes and their initializers */
+struct _Fieldtype fieldtype_double = { 0, NULL, NULL, sizeof(double), 0, 0, 0, 0, NULL };
+
 /** Creates a fieldtype describing the data layout 
  *  @param count   number of subtypes (Input)
  *  @param lengths array of lenghts of the subtytpes (Input)
@@ -35,6 +38,9 @@ void halo_create_fieldtype(int count, int* lengths, int *disps, int extent, Fiel
   int i;
 
   Fieldtype ntype = *newtype = malloc(sizeof(*ntype));
+
+  ntype->subtype = NULL;
+  ntype->vflag   = 0;
 
   ntype->vblocks = 1;
   ntype->vstride = 1;
@@ -69,17 +75,45 @@ void halo_create_field_vector(int vblocks, int vstride, int vskip, Fieldtype old
   int i;
 
   Fieldtype ntype = *newtype = malloc(sizeof(*ntype));
+  
+  ntype->subtype = oldtype;
+  ntype->vflag   = 1;
 
   ntype->vblocks = vblocks;
   ntype->vstride = vstride;
-  ntype->vskip = vskip;
+  ntype->vskip   = vskip;
 
-  ntype->extent = oldtype->extent;
+  ntype->extent = oldtype->extent * ((vblocks-1)*vskip + vstride);
+  
+  int count = ntype->count = oldtype->count;
+  ntype->lengths = malloc(count*2*sizeof(int));
+  ntype->disps = (int *)((char *)ntype->lengths + count*sizeof(int));
+  
+  for (i=0;i<count;i++) {
+      ntype->disps[i] = oldtype->disps[i];
+      ntype->lengths[i] = oldtype->lengths[i];
+  }
+
+}
+
+void halo_create_field_hvector(int vblocks, int vstride, int vskip, Fieldtype oldtype, Fieldtype *newtype) {
+  int i;
+
+  Fieldtype ntype = *newtype = malloc(sizeof(*ntype));
+
+  ntype->subtype = oldtype;
+  ntype->vflag   = 0;
+
+  ntype->vblocks = vblocks;
+  ntype->vstride = vstride;
+  ntype->vskip   = vskip;
+
+  ntype->extent = oldtype->extent*vstride + (vblocks-1)*vskip;
 
   int count = ntype->count = oldtype->count;
   ntype->lengths = malloc(count*2*sizeof(int));
   ntype->disps = (int *)((char *)ntype->lengths + count*sizeof(int));
-
+  
   for (i=0;i<count;i++) {
       ntype->disps[i] = oldtype->disps[i];
       ntype->lengths[i] = oldtype->lengths[i];
@@ -125,31 +159,58 @@ MDINLINE void halo_dtset(void *dest, int value, Fieldtype type) {
 
 }
 
+MDINLINE void halo_dtcopy(void *r_buffer, void *s_buffer, int count, Fieldtype type);
+
+MDINLINE void halo_copy_vector(void *r_buffer, void *s_buffer, int count, Fieldtype type, int vflag) {
+  int i, j;
+  void *dest, *src;
+
+  int vblocks = type->vblocks;
+  int vstride = type->vstride;
+  int vskip   = type->vskip;
+  int extent  = type->extent;
+
+  HALO_TRACE(fprintf(stderr, "%d: halo_copy_vector %p %p vblocks=%d vstride=%d vskip=%d extent=%d subtype_extent=%d\n",this_node,r_buffer,s_buffer,vblocks,vstride,vskip,extent,type->subtype->extent));
+
+  if (vflag){
+    vskip *= type->subtype->extent;
+  }  
+
+  for (i=0; i<count; i++, s_buffer+=extent, r_buffer+=extent) {
+    for (j=0, dest=r_buffer, src=s_buffer; j<vblocks; j++, dest+=vskip, src+=vskip) {
+      halo_dtcopy(dest,src,vstride,type->subtype);
+    }
+  }
+
+}
+
 /** Copy lattice data with layout described by fieldtype.
  * @param r_buffer data destination
  * @param s_buffer data source
  * @param type     field layout type
  */
-MDINLINE void halo_dtcopy(void *r_buffer, void *s_buffer, Fieldtype type) { 
-    int i, j, k;
-    void *dest, *src;
+MDINLINE void halo_dtcopy(void *r_buffer, void *s_buffer, int count, Fieldtype type) { 
+    int i, j;
 
-    int vblocks = type->vblocks;
-    int vstride = type->vstride;
-    int vskip   = type->vskip;
-    int count   = type->count;
-    int *lens   = type->lengths;
-    int *disps  = type->disps;
-    int extent  = type->extent;
+    HALO_TRACE(fprintf(stderr, "%d: halo_dtcopy r_buffer=%p s_buffer=%p blocks=%d stride=%d skip=%d\n",this_node,r_buffer,s_buffer,type->vblocks,type->vstride,type->vskip));
 
-    HALO_TRACE(fprintf(stderr, "%d: halo comm local copy r_buffer=%p s_buffer=%p\n",this_node,r_buffer,s_buffer));
+    if (type->subtype) {
+      halo_copy_vector(r_buffer, s_buffer, count, type, type->vflag);
+    } else {
+      
+      for (i=0; i<count; i++, s_buffer+=type->extent, r_buffer+=type->extent) { 
+	if (!type->count) {
+	  memcpy(r_buffer,s_buffer,type->extent);
+	} else {
+	    
+	  for (j=0; j<type->count; j++) {
+	    memcpy(r_buffer+type->disps[j],s_buffer+type->disps[j],type->lengths[j]);
+	  }
 
-    for (i=0; i<vblocks; i++, r_buffer+=vskip*extent, s_buffer+=vskip*extent) {
-	for (j=0, dest=r_buffer, src=s_buffer; j<vstride; j++, dest+=extent, src+=extent) {
-	    for (k=0; k<count; k++) {
-		memcpy(dest+disps[k],src+disps[k],lens[k]);
-	    }
 	}
+
+      }
+
     }
 
 }
@@ -165,13 +226,12 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice, Fieldtyp
   int k, n, dir, lr, cnt, num = 0 ;
   int *grid  = lattice->grid ;
   int *period = lattice->halo_grid ;
-  void *data = lattice->data;
 
   for (n=0; n<hc->num; n++) {
     MPI_Type_free(&(hc->halo_info[n].datatype));
   }
 
-  num = 2*3; // two communications in each space direction
+  num = 2*3; /* two communications in each space direction */
 
   hc->num = num ;
   hc->halo_info = realloc(hc->halo_info,num*sizeof(HaloInfo)) ;
@@ -199,12 +259,13 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice, Fieldtyp
 
 	      if (lr==0) {
 		/* send to left, recv from right */
-		hinfo->send_buffer = &(((char *)data)[extent * stride * 1]);
-		hinfo->recv_buffer = &(((char *)data)[extent * stride * (grid[dir]+1)]);
+		hinfo->s_offset = extent * stride * 1;
+		hinfo->r_offset = extent * stride * (grid[dir]+1);	      
 	      } else {
 		/* send to right, recv from left */
-		hinfo->send_buffer = &(((char *)data)[extent * stride * grid[dir]]);
-		hinfo->recv_buffer   = &(((char *)data)[extent * stride * 0]);
+		hinfo->s_offset = extent * stride * grid[dir];
+		hinfo->r_offset = extent * stride * 0;
+
 	      } 
 
 	      hinfo->source_node = node_neighbors[2*dir+1-lr];
@@ -214,7 +275,7 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice, Fieldtyp
 	      
 	      MPI_Type_vector(nblocks, stride, skip, datatype, &hinfo->datatype);
 	      MPI_Type_commit(&hinfo->datatype);
-			       
+
 #ifdef PARTIAL_PERIODIC
 	      if ( !PERIODIC(dir) && (boundary[2*dir+lr] != 0 || boundary[2*dir+1-lr] != 0) ) {
 		if (node_grid[dir] == 1) {
@@ -245,7 +306,7 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice, Fieldtyp
 		}
 	      }
 
-	      HALO_TRACE(fprintf(stderr,"%d: prepare_halo_communication dir=%d lr=%d s_buffer=%p r_buffer=%p, s_node=%d d_node=%d extent=%d type=%d\n",this_node,dir,lr,hinfo->send_buffer,hinfo->recv_buffer,hinfo->source_node,hinfo->dest_node,(int)extent,hinfo->type)) ;
+	      HALO_TRACE(fprintf(stderr,"%d: prepare_halo_communication dir=%d lr=%d s_offset=%ld r_offset=%ld s_node=%d d_node=%d type=%d\n",this_node,dir,lr,hinfo->s_offset,hinfo->r_offset,hinfo->source_node,hinfo->dest_node,hinfo->type)) ;
 
 	      cnt++;
 
@@ -261,7 +322,6 @@ void release_halo_communication(HaloCommunicator *hc) {
   int n;
 
   for (n=0; n<hc->num; n++) {
-    HALO_TRACE(fprintf(stderr,"%d: freeing %p\n",this_node,&(hc->halo_info[n].datatype)));
     MPI_Type_free(&(hc->halo_info[n].datatype));
   }
 
@@ -273,7 +333,7 @@ void release_halo_communication(HaloCommunicator *hc) {
  *  described by the halo communicator
  * @param hc halo communicator describing the parallelization scheme
  */
-void halo_communication(HaloCommunicator *hc) {
+void halo_communication(HaloCommunicator *hc, void *base) {
   int n, comm_type, s_node, r_node;
   void *s_buffer, *r_buffer ;
 
@@ -282,21 +342,21 @@ void halo_communication(HaloCommunicator *hc) {
   MPI_Request request;
   MPI_Status status;
 
-    HALO_TRACE(fprintf(stderr, "%d: halo_comm %p (num=%d)\n", this_node, hc, hc->num)) ;
+    HALO_TRACE(fprintf(stderr, "%d: halo_comm base=%p num=%d\n", this_node, base, hc->num)) ;
 
     for (n = 0; n < hc->num; n++) {
 
 	HALO_TRACE(fprintf(stderr, "%d: halo_comm round %d\n", this_node, n)) ;
 
 	comm_type = hc->halo_info[n].type ;
-	s_buffer = hc->halo_info[n].send_buffer ;
-	r_buffer = hc->halo_info[n].recv_buffer ;
+	s_buffer = (char *)base + hc->halo_info[n].s_offset;
+	r_buffer = (char *)base + hc->halo_info[n].r_offset;
 
 	switch (comm_type) {
 
 	    case HALO_LOCL:
 	      fieldtype = hc->halo_info[n].fieldtype;
-	      halo_dtcopy(r_buffer,s_buffer,fieldtype);
+	      halo_dtcopy(r_buffer,s_buffer,1,fieldtype);
 	      break ;
 
 	    case HALO_SENDRECV:
@@ -340,14 +400,13 @@ void halo_communication(HaloCommunicator *hc) {
 
 	      HALO_TRACE(fprintf(stderr,"%d: halo_comm open boundaries\n",this_node));
 
-	      //halo_dtset(r_buffer,0,fieldtype);
+	      /* \todo this does not work for the n_i - <n_i> */
+	      halo_dtset(r_buffer,0,fieldtype);
 	      break;
 	      
 	}
 
     }
-
-    HALO_TRACE(fprintf(stderr, "%d: halo_comm %p finished\n", this_node, hc));
 
 }
 
