@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4k (Ydalir)                                                                     *
+* v2.0.4l (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4k -
+- v2.0.4l -
 -----------
 
+(l) September 21st, 2007.
 (k) September 20th, 2007.
 (j) September 19th, 2007.
 (i) September 18th, 2007.
@@ -51,6 +52,9 @@ Changes:
     dependent).
 
 Bugfixes:
+(l) Flowfield needs to be computed before calculating couplings. It has to persist
+    throughout, because otherwise the parallelization does not
+    work.
 (k) define fix for BOND_VIRTUAL
 (j) merge from trunc
 (j) change to generalized reaction field
