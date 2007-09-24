@@ -453,7 +453,10 @@ MDINLINE void get_com_h2o(Particle *p,double p_com[3])
 			fprintf(stderr,"Dist H(%i)-H(%i) wrong(%e) (in get_com_h2o)!\n",calling_p->p.identity,bonded_p->p.identity,min_distance(bonded_p->r.p,calling_p->r.p));
 			fprintf(stderr,"bonded_Part %i %e %e %e %e %i\n",bonded_p->p.identity,bonded_p->r.p[0],bonded_p->r.p[1],bonded_p->r.p[2],bonded_p->p.mass,bonded_p->p.type);
 			fprintf(stderr,"calling_Part %i %e %e %e %e %i\n",calling_p->p.identity,calling_p->r.p[0],calling_p->r.p[1],calling_p->r.p[2],calling_p->p.mass,calling_p->p.type);
-			fprintf(stderr,"XXX %i \n",calling_p->bl.e[p_nr]);
+			for (i=0;i<calling_p->bl.n;i++)
+			{
+				fprintf(stderr,"XXX %i %i %i \n",i,calling_p->p.identity,calling_p->bl.e[i]);
+			}
 			exit(182);
 		}
 		#endif

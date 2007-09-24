@@ -84,11 +84,31 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   double p1_com[3],p2_com[3],com_dist;
 
   if (p1->p.mol_id==p2->p.mol_id) return;
-  get_com_h2o(p1,p1_com);
-  get_com_h2o(p2,p2_com);
+
+  //p1 is a water part
+  if (p1->p.type < 3 ){
+     get_com_h2o(p1,p1_com);
+  }
+  else//p1 is ion
+  {
+    p1_com[0]=p1->r.p[0];
+    p1_com[1]=p1->r.p[1];
+    p1_com[2]=p1->r.p[2];
+  }
+
+  //p2 is a water part
+  if (p2->p.type < 3 ){
+     get_com_h2o(p2,p2_com);
+  }
+  else//p2 is ion
+  {
+     p2_com[0]=p2->r.p[0];
+     p2_com[1]=p2->r.p[1];
+     p2_com[2]=p2->r.p[2];
+  }
   com_dist=min_distance(p1_com,p2_com);
 #endif
-  
+
   dist_inv = 1.0/dist;
 #ifdef WATER
   if((com_dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
