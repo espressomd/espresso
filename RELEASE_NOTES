@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4l (Ydalir)                                                                     *
+* v2.0.4m (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4l -
+- v2.0.4m -
 -----------
 
+(m) September 24th, 2007.
 (l) September 21st, 2007.
 (k) September 20th, 2007.
 (j) September 19th, 2007.
@@ -52,6 +53,7 @@ Changes:
     dependent).
 
 Bugfixes:
+(m) amd dual-core is supported now by config.guess
 (l) Flowfield needs to be computed before calculating couplings. It has to persist
     throughout, because otherwise the parallelization does not
     work.
