@@ -77,6 +77,9 @@ typedef const struct {
 /** Data structure for fluid on a local lattice site */
 typedef struct {
 
+  /** flag indicating whether fields have to be recomputed */
+  int recalc_fields;
+
   /** local density */
   double rho[1];
 
@@ -86,8 +89,11 @@ typedef struct {
   /** local stress tensor */
   double pi[6];
 
-  /** local modes */
-  double modes[19];
+  /** flag indicating whether a force is acting on the node */
+  int has_force;
+
+  /** local force density */
+  double force[3];
 
 #ifdef CONSTRAINTS
    /** flag indicating whether this site belongs to a boundary */

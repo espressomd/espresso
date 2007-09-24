@@ -61,7 +61,10 @@ LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3.
 Lattice lblattice = { {0,0,0}, {0,0,0}, 0, 0, 0, 0, -1.0, -1.0 };
 
 /** Pointer to the velocity populations of the fluid nodes */
-double **lbfluid[2];
+double **lbfluid[2] = { NULL, NULL };
+
+/** Pointer to the hydrodynamic fields of the fluid nodes */
+LB_FluidNode *lbfields = NULL;
 
 /** Communicator for halo exchange between processors */
 HaloCommunicator update_halo_comm = { 0, NULL };
@@ -559,6 +562,8 @@ static void lb_realloc_fluid() {
     lbfluid[1][i] = lbfluid[1][0] + i*lblattice.halo_grid_volume;
   }
 
+  lbfields = realloc(lbfields,lblattice.halo_grid_volume*sizeof(*lbfields));
+
 }
 
 /** Sets up the structures for exchange of the halo regions.
@@ -722,6 +727,7 @@ void lb_init() {
 MDINLINE void lb_release_fluid() {
   free(lbfluid[0][0]);
   free(lbfluid[0]);
+  free(lbfields);
 }
 
 /** Release fluid and communication. */
@@ -1216,70 +1222,38 @@ void lattice_boltzmann_update() {
 /***********************************************************************/
 /*@{*/
 
-/** Transfer a certain amount of momentum to a elementray cell of fluid.
- * 
- * Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
- *
- * @param momentum   Momentum to be transfered to the fluid (lattice
- *                   units) (Input).
- * @param node_index Indices of the sites of the elementary lattice
- *                   cell (Input).
- * @param delta      Weights for the assignment to the single lattice
- *                   sites (Input).
- * @param badrandoms Flag/Counter for the occurrence negative
- *                   populations (Output).
- */
-MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_index[8], const double delta[6]) {
+MDINLINE void lb_apply_force(int index) {
 
-  int x, y, z, index;
-  double delta_j[3];
+  double *force = lbfields[index].force;
 
-  /* We don't need to save the local populations because 
-   * we use a trick for their restoration:
-   * We substract the old random force from the new one,
-   * hence the previous change in the local populations
-   * is automatically revoked during the recalculation.
-   * Note that this makes it necessary to actually apply 
-   * all changes and forbids to return immediately when negative
-   * populations occur.
-   */
-
-  for (z=0;z<2;z++) {
-    for (y=0;y<2;y++) {
-      for (x=0;x<2;x++) {
-	
-	index = node_index[(z*2+y)*2+x];
-
-	delta_j[0] = delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*momentum[0];
-	delta_j[1] = delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*momentum[1];
-	delta_j[2] = delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*momentum[2];
+  if (lbfields[index].has_force) {
 
 #ifdef D3Q19
-	lbfluid[0][1][index]  += + 1./6.*delta_j[0];
-	lbfluid[0][2][index]  += - 1./6.*delta_j[0];
-	lbfluid[0][3][index]  += + 1./6.*delta_j[1];
-	lbfluid[0][4][index]  += - 1./6.*delta_j[1];
-	lbfluid[0][5][index]  += + 1./6.*delta_j[2];
-	lbfluid[0][6][index]  += - 1./6.*delta_j[2];
-	lbfluid[0][7][index]  += + 1./12.*(delta_j[0]+delta_j[1]);
-	lbfluid[0][8][index]  += - 1./12.*(delta_j[0]+delta_j[1]);
-	lbfluid[0][9][index]  += + 1./12.*(delta_j[0]-delta_j[1]);
-	lbfluid[0][10][index] += - 1./12.*(delta_j[0]-delta_j[1]);
-	lbfluid[0][11][index] += + 1./12.*(delta_j[0]+delta_j[2]);
-	lbfluid[0][12][index] += - 1./12.*(delta_j[0]+delta_j[2]);
-	lbfluid[0][13][index] += + 1./12.*(delta_j[0]-delta_j[2]);
-	lbfluid[0][14][index] += - 1./12.*(delta_j[0]-delta_j[2]);
-	lbfluid[0][15][index] += + 1./12.*(delta_j[1]+delta_j[2]);
-	lbfluid[0][16][index] += - 1./12.*(delta_j[1]+delta_j[2]);
-	lbfluid[0][17][index] += + 1./12.*(delta_j[1]-delta_j[2]);
-	lbfluid[0][18][index] += - 1./12.*(delta_j[1]-delta_j[2]);
+	lbfluid[0][1][index]  += + 1./6.*force[0];
+	lbfluid[0][2][index]  += - 1./6.*force[0];
+	lbfluid[0][3][index]  += + 1./6.*force[1];
+	lbfluid[0][4][index]  += - 1./6.*force[1];
+	lbfluid[0][5][index]  += + 1./6.*force[2];
+	lbfluid[0][6][index]  += - 1./6.*force[2];
+	lbfluid[0][7][index]  += + 1./12.*(force[0]+force[1]);
+	lbfluid[0][8][index]  += - 1./12.*(force[0]+force[1]);
+	lbfluid[0][9][index]  += + 1./12.*(force[0]-force[1]);
+	lbfluid[0][10][index] += - 1./12.*(force[0]-force[1]);
+	lbfluid[0][11][index] += + 1./12.*(force[0]+force[2]);
+	lbfluid[0][12][index] += - 1./12.*(force[0]+force[2]);
+	lbfluid[0][13][index] += + 1./12.*(force[0]-force[2]);
+	lbfluid[0][14][index] += - 1./12.*(force[0]-force[2]);
+	lbfluid[0][15][index] += + 1./12.*(force[1]+force[2]);
+	lbfluid[0][16][index] += - 1./12.*(force[1]+force[2]);
+	lbfluid[0][17][index] += + 1./12.*(force[1]-force[2]);
+	lbfluid[0][18][index] += - 1./12.*(force[1]-force[2]);
 #else
 	int i;
 	double (*c)[3] = lbmodel.c;
 	double (*coeff)[4] = lbmodel.coeff;
 
 	for (i=0;i<n_veloc;i++) {
-	  lbfluid[0][i][index] += coeff[i][1] * scalar(delta_j,c[i]);
+	  lbfluid[0][i][index] += coeff[i][1] * scalar(force,c[i]);
 	}
 #endif
 
@@ -1287,8 +1261,6 @@ MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_inde
 	//lb_check_negative_n(index);
 #endif
 
-      }
-    }
   }
 
 }
@@ -1300,16 +1272,17 @@ MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_inde
  * @param p          The coupled particle (Input).
  * @param force      Coupling force between particle and fluid (Output).
  */
-MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3], double *flowfield) {
+MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 
   int x,y,z;
   int node_index[8];
   double delta[6];
-  double local_rho[1], local_j[3], interpolated_u[3], delta_j[3];
+  double *local_rho, *local_j, *local_f, interpolated_u[3],delta_j[3];
+  LB_FluidNode *local_node;
 #ifdef ADDITIONAL_CHECKS
   double old_rho[8];
 #endif
-
+  
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
 
   /* determine elementary lattice cell surrounding the particle 
@@ -1326,10 +1299,15 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3], double 
     for (y=0;y<2;y++) {
       for (x=0;x<2;x++) {
 	
-	*local_rho = flowfield[4*node_index[(z*2+y)*2+x]];
-        local_j[0] = flowfield[4*node_index[(z*2+y)*2+x]+1];
-        local_j[1] = flowfield[4*node_index[(z*2+y)*2+x]+2];
-        local_j[2] = flowfield[4*node_index[(z*2+y)*2+x]+3];
+	local_node = &lbfields[node_index[(z*2+y)*2+x]];
+	local_rho  = local_node->rho;
+	local_j    = local_node->j;
+
+	if (local_node->recalc_fields) {
+	  lb_calc_local_fields(node_index[(z*2+y)*2+x],local_rho,local_j,NULL,0);
+	  local_node->recalc_fields = 0;
+	  local_node->has_force = 1;
+	}
 
 #ifdef ADDITIONAL_CHECKS
 	old_rho[(z*2+y)*2+x] = *local_rho;
@@ -1368,7 +1346,19 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3], double 
   delta_j[1] = - force[1]*time_step*tau/agrid;
   delta_j[2] = - force[2]*time_step*tau/agrid;
     
-  lb_transfer_momentum(delta_j,node_index,delta);
+  for (z=0;z<2;z++) {
+    for (y=0;y<2;y++) {
+      for (x=0;x<2;x++) {
+	
+	local_f = lbfields[node_index[(z*2+y)*2+x]].force;
+
+	local_f[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[0];
+	local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
+	local_f[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[2];
+
+      }
+    }
+  }
 
 #ifdef ADDITIONAL_CHECKS
   int i;
@@ -1422,11 +1412,8 @@ void calc_particle_lattice_ia() {
   Cell *cell ;
   Particle *p ;
   double force[3];
-  double *flowfield;
 
   if (transfer_momentum) {
-
-    flowfield = malloc(lblattice.halo_grid_volume*4*sizeof(double));
 
     /* exchange halo regions */
     halo_communication(&update_halo_comm,**lbfluid);
@@ -1436,7 +1423,11 @@ void calc_particle_lattice_ia() {
 #endif
 
     for (i=0; i<lblattice.halo_grid_volume; i++) {
-      lb_calc_local_fields(i, &flowfield[4*i], &flowfield[4*i+1], NULL, 0);
+      lbfields[i].recalc_fields = 1;
+      lbfields[i].has_force = 0;
+      lbfields[i].force[0] = 0.0;
+      lbfields[i].force[1] = 0.0;
+      lbfields[i].force[2] = 0.0;
     }
     
     /* draw random numbers for local particles */
@@ -1466,7 +1457,7 @@ void calc_particle_lattice_ia() {
 
       for (i=0;i<np;i++) {
 
-	lb_viscous_momentum_exchange(&p[i],force,flowfield) ;
+	lb_viscous_coupling(&p[i],force);
 
 	/* add force to the particle */
 	p[i].f.f[0] += force[0];
@@ -1494,7 +1485,7 @@ void calc_particle_lattice_ia() {
 
 	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
 
-	  lb_viscous_momentum_exchange(&p[i],force,flowfield) ;
+	  lb_viscous_coupling(&p[i],force);
 
 	  /* ghosts must not have the force added! */
 
@@ -1504,8 +1495,10 @@ void calc_particle_lattice_ia() {
       }
     }
 
-    free(flowfield);
-
+    for (i=0; i<lblattice.halo_grid_volume; i++) {
+      lb_apply_force(i);
+    }
+    
   }
 
 }
