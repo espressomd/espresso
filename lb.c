@@ -1009,6 +1009,8 @@ void lb_reinit_fluid() {
       lbfields[index].force[2] = 0.0;
       lbfields[index].has_force = 0;
 
+      lbfields[index].recalc_fields = 1;
+
     }
 
 }
@@ -1675,6 +1677,23 @@ MDINLINE void lb_collide_stream() {
     /* exchange halo regions */
     halo_push_communication();
 
+    /* swap the pointers for old and new population fields */
+    //fprintf(stderr,"swapping pointers\n");
+    double **tmp = lbfluid[0];
+    lbfluid[0] = lbfluid[1];
+    lbfluid[1] = tmp;
+
+    /* exchange halo regions (for fluid-particle coupling) */
+    halo_communication(&update_halo_comm, **lbfluid);
+#ifdef ADDITIONAL_CHECKS
+    lb_check_halo_regions();
+#endif
+
+    /* all fields have to be recalculated */
+    for (index=0; index<lblattice.halo_grid_volume; ++index) {
+      lbfields[index].recalc_fields = 1;
+    }
+      
 }
 
 /** Streaming and collisions (pull scheme) */
@@ -1725,6 +1744,23 @@ MDINLINE void lb_stream_collide() {
       index += 2*lblattice.halo_grid[0]; /* skip halo region */
     }
 
+    /* swap the pointers for old and new population fields */
+    //fprintf(stderr,"swapping pointers\n");
+    double **tmp = lbfluid[0];
+    lbfluid[0] = lbfluid[1];
+    lbfluid[1] = tmp;
+
+    /* exchange halo regions (for fluid-particle coupling) */
+    halo_communication(&update_halo_comm, **lbfluid);
+#ifdef ADDITIONAL_CHECKS
+    lb_check_halo_regions();
+#endif
+
+    /* all fields have to be recalculated */
+    for (index=0; index<lblattice.halo_grid_volume; ++index) {
+      lbfields[index].recalc_fields = 1;
+    }
+      
 }
 
 /***********************************************************************/
@@ -1765,7 +1801,6 @@ MDINLINE void check_mass() {
  * monitor the time since the last lattice update.
  */
 void lattice_boltzmann_update() {
-  double** tmp;
 
   fluidstep += time_step;
 
@@ -1783,12 +1818,6 @@ void lattice_boltzmann_update() {
     double old_rho;
     lb_calc_fluid_mass(&old_rho);
 #endif
-
-    /* swap the pointers for old and new population fields */
-    //fprintf(stderr,"swapping pointers\n");
-    tmp = lbfluid[0];
-    lbfluid[0] = lbfluid[1];
-    lbfluid[1] = tmp;
 
 #if 0
     double rho;
@@ -2005,17 +2034,6 @@ void calc_particle_lattice_ia() {
 
   if (transfer_momentum) {
 
-    /* exchange halo regions */
-    halo_communication(&update_halo_comm,**lbfluid);
-#ifdef ADDITIONAL_CHECKS
-    //fprintf(stderr,"calc_particle_lattice_ia() checking halos\n");
-    lb_check_halo_regions();
-#endif
-
-    for (i=0; i<lblattice.halo_grid_volume; i++) {
-      lbfields[i].recalc_fields = 1;
-    }
-    
     /* draw random numbers for local particles */
     for (c=0;c<local_cells.n;c++) {
       cell = local_cells.cell[c] ;
