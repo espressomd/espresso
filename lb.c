@@ -926,7 +926,7 @@ void lb_reinit_parameters() {
   agrid   = lbpar.agrid;
   tau     = lbpar.tau;
 
-#ifdef ALTERNATIVE_INTEGRATOR
+#ifdef LANGEVIN_INTEGRATOR
   /* force prefactor for the 2nd-order Langevin integrator */
   integrate_pref2 = (1.-exp(-lbpar.friction*time_step))/lbpar.friction*time_step;  /* one factor time_step is due to the scaled velocities */
 #endif
@@ -964,7 +964,7 @@ void lb_reinit_parameters() {
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
      */
-#ifdef ALTERNATIVE_INTEGRATOR
+#ifdef LANGEVIN_INTEGRATOR
     double tmp = exp(-lbpar.friction*time_step);
     lb_coupl_pref = lbpar.friction*sqrt(temperature*(1.+tmp)/(1.-tmp));
 #else
@@ -1003,6 +1003,11 @@ void lb_reinit_fluid() {
 #else
       lb_calc_n_equilibrium(index,rho,v,pi);
 #endif
+
+      lbfields[index].force[0] = 0.0;
+      lbfields[index].force[1] = 0.0;
+      lbfields[index].force[2] = 0.0;
+      lbfields[index].has_force = 0;
 
     }
 
@@ -1404,6 +1409,7 @@ MDINLINE void lb_thermalize_modes(double *mode) {
 #endif
 }
 
+#if 0
 MDINLINE void lb_external_forces(double* mode) {
 
 #ifdef EXTERNAL_FORCES
@@ -1440,6 +1446,50 @@ MDINLINE void lb_external_forces(double* mode) {
   mode[8] += C[3];
   mode[9] += C[4];
 #endif
+
+}
+#endif
+
+MDINLINE void lb_apply_forces(int index, double* mode) {
+
+  double rho, f[3], u[3], C[6];
+  
+  f[0] = lbfields[index].force[0];
+  f[1] = lbfields[index].force[1];
+  f[2] = lbfields[index].force[2];
+
+  rho = mode[0] + lbpar.rho;
+
+  /* hydrodynamic momentum density is redefined when external forces present */
+  u[0] = (mode[1] + 0.5*f[0])/rho;
+  u[1] = (mode[2] + 0.5*f[1])/rho;
+  u[2] = (mode[3] + 0.5*f[2])/rho;
+
+  C[0] = (1.+gamma_bulk)*u[0]*f[0] + 1./3.*(gamma_bulk-gamma_shear)*scalar(u,f);
+  C[2] = (1.+gamma_bulk)*u[1]*f[1] + 1./3.*(gamma_bulk-gamma_shear)*scalar(u,f);
+  C[5] = (1.+gamma_bulk)*u[2]*f[2] + 1./3.*(gamma_bulk-gamma_shear)*scalar(u,f);
+  C[1] = 1./2.*(1.+gamma_shear)*(u[0]*f[1]+u[1]*f[0]);
+  C[3] = 1./2.*(1.+gamma_shear)*(u[0]*f[2]+u[2]*f[0]);
+  C[4] = 1./2.*(1.+gamma_shear)*(u[1]*f[2]+u[2]*f[1]);
+
+  /* update momentum modes */
+  mode[1] += f[0];
+  mode[2] += f[1];
+  mode[3] += f[2];
+
+  /* update stress modes */
+  mode[4] += C[0] + C[2] + C[5];
+  mode[5] += 2.*C[0] - C[2] - C[5];
+  mode[6] += C[2] - C[5];
+  mode[7] += C[1];
+  mode[8] += C[3];
+  mode[9] += C[4];
+
+  /* reset force to zero */
+  lbfields[index].force[0] = 0.0;
+  lbfields[index].force[1] = 0.0;
+  lbfields[index].force[2] = 0.0;
+  lbfields[index].has_force = 0;
 
 }
 
@@ -1580,6 +1630,7 @@ MDINLINE void lb_calc_n_from_modes_push(int index, double *m) {
 
 }
 
+/* Collisions and streaming (push scheme) */
 MDINLINE void lb_collide_stream() {
     int x, y, z, index;
     double modes[19];
@@ -1604,10 +1655,8 @@ MDINLINE void lb_collide_stream() {
 	    /* fluctuating hydrodynamics */
 	    if (fluct) lb_thermalize_modes(modes);
 
-#ifdef EXTERNAL_FORCES
-	    /* external forces */
-n	    lb_external_forces(modes);
-#endif
+	    /* apply forces */
+	    if (lbfields[index].has_force) lb_apply_forces(index, modes);
 
 	    /* transform back to populations and streaming */
 	    lb_calc_n_from_modes_push(index, modes);
@@ -1659,10 +1708,8 @@ MDINLINE void lb_stream_collide() {
 	    /* fluctuating hydrodynamics */
 	    if (fluct) lb_thermalize_modes(modes);
   
-#ifdef EXTERNAL_FORCES
-	    /* external forces */
-	    lb_external_forces(modes);
-#endif
+	    /* apply forces */
+	    if (lbfields[index].has_force) lb_apply_forces(index, modes);
     
 	    /* calculate new particle populations */
 	    lb_calc_n_from_modes(index, modes);
@@ -1760,6 +1807,7 @@ void lattice_boltzmann_update() {
 /***********************************************************************/
 /*@{*/
 
+#if 0
 MDINLINE void lb_apply_force(int index) {
 
   double *force = lbfields[index].force;
@@ -1802,8 +1850,7 @@ MDINLINE void lb_apply_force(int index) {
   }
 
 }
-
-extern double integrate_pref2;
+#endif
 
 /** Coupling of a particle to viscous fluid with Stokesian friction.
  * 
@@ -1967,10 +2014,6 @@ void calc_particle_lattice_ia() {
 
     for (i=0; i<lblattice.halo_grid_volume; i++) {
       lbfields[i].recalc_fields = 1;
-      lbfields[i].has_force = 0;
-      lbfields[i].force[0] = 0.0;
-      lbfields[i].force[1] = 0.0;
-      lbfields[i].force[2] = 0.0;
     }
     
     /* draw random numbers for local particles */
@@ -2038,10 +2081,6 @@ void calc_particle_lattice_ia() {
       }
     }
 
-    for (i=0; i<lblattice.halo_grid_volume; i++) {
-      lb_apply_force(i);
-    }
-    
   }
 
 }
