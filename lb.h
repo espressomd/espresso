@@ -146,6 +146,9 @@ extern Lattice lblattice;
 /** Pointer to the velocity populations of the fluid */
 extern double **lbfluid[2];
 
+/** Pointer to the hydrodynamic fields of the fluid */
+extern LB_FluidNode *lbfields;
+
 /** Switch indicating momentum exchange between particles and fluid */
 extern int transfer_momentum;
 
