@@ -241,7 +241,14 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
       ret = dh_coulomb_pair_energy(p1,p2,dist);
       break;
     case COULOMB_RF:
-      ret = rf_coulomb_pair_energy(p1,p2,dist);
+      /*RF has normal pressure*/
+      /*ret = rf_coulomb_pair_energy(p1,p2,dist);*/
+      ret=0;
+      for (l = 0; l < 3; l++)
+          force[l] = 0;
+      add_rf_coulomb_pair_force(p1,p2,d,dist, force);
+      for (l=0;l<3;l++)
+          ret += force[l]*d[l];
       break;
     case COULOMB_MMM1D:
       ret = mmm1d_coulomb_pair_energy(p1,p2,d, dist2,dist);
