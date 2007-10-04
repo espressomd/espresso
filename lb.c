@@ -844,6 +844,12 @@ static int lb_sanity_checks() {
       ret = -1;
     }    
 
+    if (thermo_switch & ~THERMO_LB) {
+      errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{122 LB must not be used with other thermostats} ");
+      ret = 1;
+    }
+
     return ret;
 
 }
