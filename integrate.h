@@ -61,6 +61,11 @@ extern int    recalc_forces;
     used. */
 extern double verlet_reuse;
 
+#ifdef LANGEVIN_INTEGRATOR
+/** Prefactor for the momentum update in the second order integrator */
+extern double integrate_pref2;
+#endif
+
 /*@}*/
 
 /** \name Exported Functions */
@@ -86,6 +91,13 @@ void integrate_ensemble_init();
     \param n_steps number of steps to integrate.
  */
 void integrate_vv(int n_steps);
+
+#ifdef LANGEVIN_INTEGRATOR
+/** integrate with second order Langevin integrator.
+    \param n_steps number of steps to integrate.
+*/
+void integrate_2nd_order(int n_steps);
+#endif
 
 /** function that rescales all velocities on one node according to a
     new time step. */

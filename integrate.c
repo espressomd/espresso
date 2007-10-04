@@ -65,6 +65,10 @@ double max_range2       = -1.0;
 double max_range_non_bonded  = 0.0;
 double max_range_non_bonded2 = 0.0;
 
+#ifdef LANGEVIN_INTEGRATOR
+double integrate_pref2 = -1.0;
+#endif
+
 int    resort_particles = 1;
 int    recalc_forces    = 1;
 
@@ -958,3 +962,83 @@ void force_and_velocity_display()
 	    local_particles[db_maxv_id]->m.v[1],local_particles[db_maxv_id]->m.v[2]);
 #endif
 }
+
+#ifdef LANGEVIN_INTEGRATOR
+/** Propagate positions for one half step according to current velocities. */
+MDINLINE void propagate_pos_2nd_order() {
+  int c, i, np;
+  Cell *cell;
+  Particle *p;
+
+  for (c=0; c<local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p = cell->part;
+    np = cell->n;
+
+    for (i=0; i<np; i++) {
+      p[i].r.p[0] += 0.5 * p[i].m.v[0];
+      p[i].r.p[1] += 0.5 * p[i].m.v[1];
+      p[i].r.p[2] += 0.5 * p[i].m.v[2];
+
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: POS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
+    }
+
+  }
+		
+}
+
+/* Propagate velocities for a full time step according to current forces
+ * including friction forces. Given the correct setting of the
+ * prefactor the integration is second order in the time step. */
+MDINLINE void propagate_vel_2nd_order() {
+  int c, i, np;
+  Cell *cell;
+  Particle *p;
+
+  for (c=0; c<local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p = cell->part;
+    np = cell->n;
+
+    for (i=0; i<np; i++) {
+      p[i].m.v[0] += integrate_pref2 * p[i].f.f[0];
+      p[i].m.v[1] += integrate_pref2 * p[i].f.f[1];
+      p[i].m.v[2] += integrate_pref2 * p[i].f.f[2];
+
+      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: VEL v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+    }
+
+  }
+
+}
+
+/* Second order Langevin integrator */
+void integrate_2nd_order(int n_steps) {
+  int i;
+
+  on_integration_start();
+
+  for (i=0; i<n_steps; i++) {
+    
+    propagate_pos_2nd_order();
+    cells_update_ghosts();
+
+    force_calc();
+    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+
+    propagate_vel_2nd_order();
+
+    propagate_pos_2nd_order();
+
+#ifdef LB
+    if (lattice_switch & LATTICE_LB) lattice_boltzmann_update();
+#endif
+
+    if (this_node == 0) sim_time += time_step;
+
+  }
+
+  recalc_forces = 0;
+
+}
+#endif
