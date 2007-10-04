@@ -440,6 +440,16 @@ void thermo_init_langevin()
   langevin_pref1 = -langevin_gamma/time_step;
   langevin_pref2 = sqrt(24.0*temperature*langevin_gamma/time_step);
 
+#ifdef LANGEVIN_INTEGRATOR
+  if (!(thermo_switch & ~THERMO_LANGEVIN)) {
+    integrate_pref2 = (1.-exp(-langevin_gamma*time_step))/langevin_gamma*time_step;
+  } else {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{121 Multiple thermostats are not allowed with Langevin integrator} ");
+    return;
+  }
+#endif
+
 #ifdef ROTATION 
   langevin_gamma_rotation = langevin_gamma/3;
   langevin_pref2_rotation = sqrt(24.0*temperature*langevin_gamma_rotation/time_step);
@@ -489,7 +499,12 @@ void thermo_init_npt_isotropic()
 
 void thermo_init()
 {
-  if(thermo_switch == THERMO_OFF)      return;
+  if(thermo_switch == THERMO_OFF) {
+#ifdef LANGEVIN_INTEGRATOR
+    integrate_pref2 = SQR(time_step);
+#endif
+    return;
+  }
   if(thermo_switch & THERMO_LANGEVIN ) thermo_init_langevin();
 #ifdef DPD
   if(thermo_switch & THERMO_DPD)       thermo_init_dpd();
