@@ -41,9 +41,6 @@
 
 #ifdef LB
 
-/** Flag indicating momentum exchange between particles and fluid */
-int transfer_momentum = 0;
-
 /** Struct holding the Lattice Boltzmann parameters */
 LB_Parameters lbpar = { 0.0, 0.0, -1.0, -1.0, -1.0, 0.0, { 0.0, 0.0, 0.0} };
 
@@ -68,6 +65,12 @@ LB_FluidNode *lbfields = NULL;
 
 /** Communicator for halo exchange between processors */
 HaloCommunicator update_halo_comm = { 0, NULL };
+
+/** Flag indicating momentum exchange between particles and fluid */
+int transfer_momentum = 0;
+
+/** Flag indicating whether the halo region is up to date */
+static int resend_halo = 0;
 
 /** \name Derived parameters */
 /*@{*/
@@ -1013,6 +1016,8 @@ void lb_reinit_fluid() {
 
     }
 
+    resend_halo = 0;
+
 }
 
 /** Performs a full initialization of
@@ -1683,17 +1688,9 @@ MDINLINE void lb_collide_stream() {
     lbfluid[0] = lbfluid[1];
     lbfluid[1] = tmp;
 
-    /* exchange halo regions (for fluid-particle coupling) */
-    halo_communication(&update_halo_comm, **lbfluid);
-#ifdef ADDITIONAL_CHECKS
-    lb_check_halo_regions();
-#endif
+    /* halo region is invalid after update */
+    resend_halo = 1;
 
-    /* all fields have to be recalculated */
-    for (index=0; index<lblattice.halo_grid_volume; ++index) {
-      lbfields[index].recalc_fields = 1;
-    }
-      
 }
 
 /** Streaming and collisions (pull scheme) */
@@ -1750,16 +1747,8 @@ MDINLINE void lb_stream_collide() {
     lbfluid[0] = lbfluid[1];
     lbfluid[1] = tmp;
 
-    /* exchange halo regions (for fluid-particle coupling) */
-    halo_communication(&update_halo_comm, **lbfluid);
-#ifdef ADDITIONAL_CHECKS
-    lb_check_halo_regions();
-#endif
-
-    /* all fields have to be recalculated */
-    for (index=0; index<lblattice.halo_grid_volume; ++index) {
-      lbfields[index].recalc_fields = 1;
-    }
+    /* halo region is invalid after update */
+    resend_halo = 1;
       
 }
 
@@ -2032,8 +2021,29 @@ void calc_particle_lattice_ia() {
   Particle *p ;
   double force[3];
 
-  if (transfer_momentum) {
+#ifndef LANGEVIN_INTEGRATOR
+  if (transfer_momentum) 
+#endif
+  {
 
+    if (resend_halo) { /* first MD step after last LB update */
+      
+      /* exchange halo regions (for fluid-particle coupling) */
+      halo_communication(&update_halo_comm, **lbfluid);
+#ifdef ADDITIONAL_CHECKS
+      lb_check_halo_regions();
+#endif
+      
+      /* halo is valid now */
+      resend_halo = 0;
+
+      /* all fields have to be recalculated */
+      for (i=0; i<lblattice.halo_grid_volume; ++i) {
+	lbfields[i].recalc_fields = 1;
+      }
+
+    }
+      
     /* draw random numbers for local particles */
     for (c=0;c<local_cells.n;c++) {
       cell = local_cells.cell[c] ;
