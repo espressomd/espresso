@@ -486,6 +486,57 @@ MDINLINE void get_com_h2o(Particle *p,double p_com[3])
 	//fold_position(p_com,ibox);
 }
 
+MDINLINE void get_comvel_h2o(Particle *p,double v_com[3])
+{
+	int i,p_nr;
+	Particle* bonded_p,*calling_p;
+	double M;
+	#ifdef WATER_DEBUG
+	int type;
+	#endif
+	calling_p=local_particles[p->p.identity];
+	#ifdef WATER_DEBUG
+	type=calling_p->p.type+1;
+	if (p->p.identity!=calling_p->p.identity)
+	{
+		fprintf(stderr,"ID differ in get_com_h2o %i %i\n",p->p.identity,calling_p->p.identity);
+		exit(182);
+	}
+	#endif
+	for (i=0;i<3;i++)
+	{
+		v_com[i]=calling_p->p.mass*calling_p->m.v[i];
+	}
+	M=calling_p->p.mass;
+	for (p_nr=1;p_nr<calling_p->bl.n;p_nr+=2)/*bl list has entrie bond type, particle id, bond type, particle id*/
+	{
+		bonded_p=local_particles[calling_p->bl.e[p_nr]];
+		#ifdef WATER_DEBUG
+		type*=bonded_p->p.type+1;
+		#endif
+		for (i=0;i<3;i++)
+		{
+			v_com[i]+=bonded_p->p.mass*bonded_p->m.v[i];
+		}
+		M+=bonded_p->p.mass;
+	}
+	#ifdef WATER_DEBUG
+	if (type!=9)
+	{
+		fprintf(stderr,"Product of  part type is not  (%i) !(in get_com_h2o)! pnr=%i\n",type,calling_p->p.identity);
+		exit(182);
+	}
+	if (fabs(M -1.1250)> 0.001)
+	{
+		fprintf(stderr,"M unequal in get_com_h2o ! pnr=%i\n",calling_p->p.identity);
+		exit(182);
+	}
+	#endif
+	for (i=0;i<3;i++)
+	{
+		v_com[i]/=M;
+	}
+}
 /*@}*/
 
 #endif
