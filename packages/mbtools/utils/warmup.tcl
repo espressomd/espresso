@@ -75,7 +75,7 @@ proc ::mbtools::utils::warmup { steps times args } {
 	}
 
 	# Set the new forcecap into espresso and integrate
-	#inter tabforcecap $cap
+	inter tabforcecap $cap
 	inter ljforcecap $cap
 	integrate $steps
 	set cap [expr $cap + $capincr ]
@@ -87,7 +87,7 @@ proc ::mbtools::utils::warmup { steps times args } {
     
     # Turn off all forcecapping
     ::mmsg::send [namespace current] "uncapping forces"
-    #inter tabforcecap 0
+    inter tabforcecap 0
     inter ljforcecap 0
  }
 
