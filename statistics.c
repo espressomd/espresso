@@ -254,11 +254,26 @@ void predict_momentum_particles(double *result)
     np = cell->n;
     p  = cell->part;
 
+#ifdef LANGEVIN_INTEGRATOR
+    /* no prediction is needed for the Langevin integrator since the
+     * force is always applied for the full time step */
+    for(i=0; i < np; i++) {
+         momentum[0] +=  p[i].m.v[0];
+         momentum[1] +=  p[i].m.v[1];
+         momentum[2] +=  p[i].m.v[2];
+    }
+#else
+    /* in the velocity verlet integrator the force has only been
+     * applied once to the particles while the fluid has already
+     * received the full momentum transfer, hence we have to predict
+     * the particle momenta */
     for(i=0; i < np; i++) {
          momentum[0] +=  p[i].m.v[0] + p[i].f.f[0];
          momentum[1] +=  p[i].m.v[1] + p[i].f.f[1];
          momentum[2] +=  p[i].m.v[2] + p[i].f.f[2];
     }
+#endif
+
   }
 
   momentum[0] /= time_step;
