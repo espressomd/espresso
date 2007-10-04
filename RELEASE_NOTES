@@ -2,15 +2,20 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4i (Ydalir)                                                                     *
+* v2.0.4n (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4i -
+- v2.0.4n -
 -----------
 
+(n) September 28th, 2007.
+(m) September 24th, 2007.
+(l) September 21st, 2007.
+(k) September 20th, 2007.
+(j) September 19th, 2007.
 (i) September 18th, 2007.
 (h) September 17th, 2007.
 (g) September 13th, 2007.
@@ -49,6 +54,18 @@ Changes:
     dependent).
 
 Bugfixes:
+(n) fixed the tutorial scripts in the user's guide.
+(m) amd dual-core is supported now by config.guess
+(l) Flowfield needs to be computed before calculating couplings. It has to persist
+    throughout, because otherwise the parallelization does not
+    work.
+(k) define fix for BOND_VIRTUAL
+(j) merge from trunc
+(j) change to generalized reaction field
+(j) rf output correction
+(j) Reaction field bug fix
+(j) bugfix from trunc
+(j) wrong define
 (i) added inter_dpd to code info
 (i) code syntax error
 (i) syntax error
