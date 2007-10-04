@@ -254,9 +254,7 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
     @param n_conf   Number of configurations from the last stored configuration.
 */
 
-void calc_H20rdf_av(double r_min, double r_max, int r_bins, double *rdf, int n_conf);
-void H20_COM_per(int knr,int pnr,double *p_com);
-void H20_COM_unper(int knr,int pnr,double *p_com);
+//void calc_h2o_rdf_av(double r_min, double r_max, int r_bins, double *rdf, int n_conf);
 
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	      double r_min, double r_max, int r_bins, double *rdf, int n_conf);
@@ -486,6 +484,7 @@ MDINLINE void get_com_h2o(Particle *p,double p_com[3])
 	//fold_position(p_com,ibox);
 }
 
+#ifdef WATER
 MDINLINE void get_comvel_h2o(Particle *p,double v_com[3])
 {
 	int i,p_nr;
@@ -537,6 +536,8 @@ MDINLINE void get_comvel_h2o(Particle *p,double v_com[3])
 		v_com[i]/=M;
 	}
 }
+#endif
+
 /*@}*/
 
 #endif

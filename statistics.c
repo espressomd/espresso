@@ -768,7 +768,110 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 
 }
 
-void calc_H20rdf_av( double r_min, double r_max, int r_bins, double *rdf, int n_conf)
+#ifdef WATER
+void h2o_com_unper(int knr,int pnr,double *p_com)
+{
+	int i,p;
+	double M;
+	#ifdef WATER_DEBUG
+	double p_O[3],p_H[3];
+	if (partCfg[pnr].p.type != 0)
+	{
+		fprintf(stderr,"Calling part. is not type 0 (in h2o_com_unper)! knr=%i pnr=%i\n",knr,pnr);
+		exit(182);
+	}
+	#endif
+	for (i=0;i<3;i++)
+	{
+		p_com[i]=configs[knr][3*(pnr)+i]*PMASS(partCfg[pnr]);
+		#ifdef WATER_DEBUG
+		p_O[i]=configs[knr][3*(pnr)+i];
+		#endif
+	}
+	M=PMASS(partCfg[pnr]);
+	for (p=1; p<3; p++) {
+		#ifdef WATER_DEBUG
+		if (partCfg[p+pnr].p.type != 2)
+		{
+			fprintf(stderr,"%ith part is not type 2 (in h2o_com_unper)! knr=%i pnr=%i\n",p,knr,pnr);
+			exit(182);
+		}
+		for (i=0;i<3;i++)
+		{
+			p_H[i]=configs[knr][3*(pnr+p)+i];
+		}
+		if (fabs(min_distance(p_H,p_O)-0.303814)>0.001)
+		{
+			fprintf(stderr,"Dist O(%i)-H(%i) wrong(%e) (in h2o_com_unper)! knr=%i pnr=%i\n",pnr,p+pnr,min_distance(p_H,p_O),knr,pnr);
+			fprintf(stderr,"h2o_com %i %e %e %e %e %i\n",p+pnr,p_H[0],p_H[1],p_H[2],PMASS(partCfg[pnr+p]),partCfg[p].p.type);
+			fprintf(stderr,"h2o_com %i %e %e %e %e %i\n",pnr,p_O[0],p_O[1],p_O[2],PMASS(partCfg[pnr]),partCfg[p+pnr].p.type);
+			exit(182);
+		}
+		#endif
+		for (i=0; i<3; i++) {
+			p_com[i]+=configs[knr][3*(pnr+p)+i]*PMASS(partCfg[p+pnr]);
+		}
+		M+=PMASS(partCfg[p+pnr]);
+		//printf("h2o_com %i %i %e %e %e %e\n",p,pnr,p_com[0],p_com[1],p_com[2],M);
+	}
+	#ifdef WATER_DEBUG
+	if (fabs(M -1.1250)> 0.001)
+	{
+		fprintf(stderr,"M unequal in h2o_com_unper ! knr=%i pnr=%i\n",knr,pnr);
+		exit(182);
+	}
+	#endif
+	for (i=0;i<3;i++)
+	{
+		p_com[i]/=M;
+	}
+	//printf("h2o_com 4 %i %e %e %e %e\n",pnr,p_com[0],p_com[1],p_com[2],M);
+}
+
+void h2o_com_vel_unper(int pnr,double *v_com)
+{
+	int i,p;
+	double M;
+	#ifdef WATER_DEBUG
+	if (partCfg[pnr].p.type != 0)
+	{
+		fprintf(stderr,"Calling part. is not type 0 (in h2o_com_vel_unper)! pnr=%i\n",pnr);
+		exit(182);
+	}
+	#endif
+	for (i=0;i<3;i++)
+	{
+		v_com[i]=partCfg[pnr].m.v[i]*PMASS(partCfg[pnr]);
+	}
+	M=PMASS(partCfg[pnr]);
+	for (p=1; p<3; p++) {
+		#ifdef WATER_DEBUG
+		if (partCfg[p+pnr].p.type != 2)
+		{
+			fprintf(stderr,"%ith part is not type 2 (in h2o_com_vel_unper)! pnr=%i\n",p,pnr);
+			exit(182);
+		}
+		#endif
+		for (i=0; i<3; i++) {
+			v_com[i]+=partCfg[pnr+p].m.v[i]*PMASS(partCfg[p+pnr]);
+		}
+		M+=PMASS(partCfg[p+pnr]);
+		//printf("h2o_com %i %i %e %e %e %e\n",p,pnr,p_com[0],p_com[1],p_com[2],M);
+	}
+	#ifdef WATER_DEBUG
+	if (fabs(M -1.1250)> 0.001)
+	{
+		fprintf(stderr,"M unequal in h2o_com_vel_unper ! pnr=%i\n",pnr);
+		exit(182);
+	}
+	#endif
+	for (i=0;i<3;i++)
+	{
+		v_com[i]/=M;
+	}
+}
+
+void calc_h2o_rdf_av( double r_min, double r_max, int r_bins, double *rdf, int n_conf)
 {
   int i,j,k,l,ind,cnt=0,cnt_conf=1;
   double inv_bin_width=0.0,bin_width=0.0, dist;
@@ -788,11 +891,11 @@ void calc_H20rdf_av( double r_min, double r_max, int r_bins, double *rdf, int n_
     k=n_configs-cnt_conf;
     for(i=0; i<n_total_particles; i++) {
 	if(partCfg[i].p.type == 0) {
-	  H20_COM_unper(k,i,p1);
+	  h2o_com_unper(k,i,p1);
 	  //particle loop: p2_types
 	  for(j=i+1; j<n_total_particles; j++) {
 	      if(partCfg[j].p.type == 0) {
-	        H20_COM_unper(k,j,p2);
+	        h2o_com_unper(k,j,p2);
 		dist =min_distance(p1, p2);
 		if(dist > r_min && dist < r_max) {
 		  ind = (int) ( (dist - r_min)*inv_bin_width );
@@ -820,72 +923,7 @@ void calc_H20rdf_av( double r_min, double r_max, int r_bins, double *rdf, int n_
   free(rdf_tmp);
 
 }
-
-/*void H20_COM_per(int knr,int pnr,double *p_com)
-{
-	//int ibox[3]={0,0,0};
-	H20_COM_unper(knr, pnr,p_com);
-	//fold_position(p_com,ibox);
-}*/
-
-void H20_COM_unper(int knr,int pnr,double *p_com)
-{
-	int i,p;
-	double M;
-	#ifdef WATER_DEBUG
-	double p_O[3],p_H[3];
-	if (partCfg[pnr].p.type != 0)
-	{
-		fprintf(stderr,"Calling part. is not type 0 (in H20_COM_unper)! knr=%i pnr=%i\n",knr,pnr);
-		exit(182);
-	}
-	#endif
-	for (i=0;i<3;i++)
-	{
-		p_com[i]=configs[knr][3*(pnr)+i]*PMASS(partCfg[pnr]);
-		#ifdef WATER_DEBUG
-		p_O[i]=configs[knr][3*(pnr)+i];
-		#endif
-	}
-	M=PMASS(partCfg[pnr]);
-	for (p=1; p<3; p++) {
-		#ifdef WATER_DEBUG
-		if (partCfg[p+pnr].p.type != 2)
-		{
-			fprintf(stderr,"%ith part is not type 2 (in H20_COM_unper)! knr=%i pnr=%i\n",p,knr,pnr);
-			exit(182);
-		}
-		for (i=0;i<3;i++)
-		{
-			p_H[i]=configs[knr][3*(pnr+p)+i];
-		}
-		if (fabs(min_distance(p_H,p_O)-0.303814)>0.001)
-		{
-			fprintf(stderr,"Dist O(%i)-H(%i) wrong(%e) (in H20_COM_unper)! knr=%i pnr=%i\n",pnr,p+pnr,min_distance(p_H,p_O),knr,pnr);
-			fprintf(stderr,"H20_COM %i %e %e %e %e %i\n",p+pnr,p_H[0],p_H[1],p_H[2],PMASS(partCfg[pnr+p]),partCfg[p].p.type);
-			fprintf(stderr,"H20_COM %i %e %e %e %e %i\n",pnr,p_O[0],p_O[1],p_O[2],PMASS(partCfg[pnr]),partCfg[p+pnr].p.type);
-			exit(182);
-		}
-		#endif
-		for (i=0; i<3; i++) {
-			p_com[i]+=configs[knr][3*(pnr+p)+i]*PMASS(partCfg[p+pnr]);
-		}
-		M+=PMASS(partCfg[p+pnr]);
-		//printf("H20_COM %i %i %e %e %e %e\n",p,pnr,p_com[0],p_com[1],p_com[2],M);
-	}
-	#ifdef WATER_DEBUG
-	if (fabs(M -1.1250)> 0.001)
-	{
-		fprintf(stderr,"M unequal in H20_COM_unper ! knr=%i pnr=%i\n",knr,pnr);
-		exit(182);
-	}
-	#endif
-	for (i=0;i<3;i++)
-	{
-		p_com[i]/=M;
-	}
-	//printf("H20_COM 4 %i %e %e %e %e\n",pnr,p_com[0],p_com[1],p_com[2],M);
-}
+#endif
 
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 			  double r_min, double r_max, int r_bins, double *rdf, int n_conf)
@@ -2627,8 +2665,10 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
     Tcl_AppendResult(interp, "{ analyze <rdf> { ", (char *)NULL);
   else if(average==2)
     Tcl_AppendResult(interp, "{ analyze <rdf-intermol> { ", (char *)NULL);
+#ifdef WATER
   else if(average==3)
-    Tcl_AppendResult(interp, "{ analyze rdfH20 { ", (char *)NULL);
+    Tcl_AppendResult(interp, "{ analyze rdf_h2o { ", (char *)NULL);
+#endif
   else
     {
       Tcl_AppendResult(interp, "WRONG PARAMETER PASSED ", (char *)NULL);
@@ -2662,8 +2702,10 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
     calc_rdf_av(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf, n_conf);
   else if(average==2)
     calc_rdf_intermol_av(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf, n_conf);
+#ifdef WATER
   else if(average==3)
-    calc_H20rdf_av(r_min, r_max, r_bins, rdf, n_conf);
+    calc_h2o_rdf_av(r_min, r_max, r_bins, rdf, n_conf);
+#endif
   else ;
 
   /* append result */
@@ -3205,7 +3247,8 @@ double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n
   return D;
 }
 
-double calc_diffusion_coefH20(Tcl_Interp *interp, int n_time_steps,int n_conf)
+#ifdef WATER
+double calc_diffusion_coef_h2o(Tcl_Interp *interp, int n_time_steps,int n_conf)
 {
   int i,j,k;
   double  p1[3],p2[3],p_com[3],p_x[n_configs],p_y[n_configs],p_z[n_configs];
@@ -3231,13 +3274,13 @@ double calc_diffusion_coefH20(Tcl_Interp *interp, int n_time_steps,int n_conf)
      }
      for(i=start_value;i<n_configs;i++) {
         if(partCfg[j].p.type == 0) {
-            H20_COM_unper(i,j,p1);
+            h2o_com_unper(i,j,p1);
             p1[0]=p1[0]-p_x[i];
             p1[1]=p1[1]-p_y[i];
             p1[2]=p1[2]-p_z[i];
             for (k=i;k<n_configs;k++)
             {
-            	H20_COM_unper(k,j,p2);
+            	h2o_com_unper(k,j,p2);
                 p2[0]=p2[0]-p_x[k];
                 p2[1]=p2[1]-p_y[k];
                 p2[2]=p2[2]-p_z[k];
@@ -3268,7 +3311,7 @@ double calc_diffusion_coefH20(Tcl_Interp *interp, int n_time_steps,int n_conf)
   return D;
 }
 
-static int parse_MSDH20(Tcl_Interp *interp, int argc, char **argv)
+static int parse_MSD_h2o(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze MSD [ <type_m> <n_time_steps>]' */
   int n_time_steps,n_conf;
@@ -3277,14 +3320,14 @@ static int parse_MSDH20(Tcl_Interp *interp, int argc, char **argv)
   
   /* parse arguments */
   if (argc < 1) {
-    Tcl_AppendResult(interp, "usage: analyze MSDH20 <n_time_steps>", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze MSD_h2o <n_time_steps>", (char *)NULL);
     return (TCL_ERROR);
   }
 
 
   if (!ARG0_IS_I(n_time_steps)) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze MSDH20 <n_time_steps>", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze MSD_h2o <n_time_steps>", (char *)NULL);
     return (TCL_ERROR);
   }
 
@@ -3308,11 +3351,36 @@ static int parse_MSDH20(Tcl_Interp *interp, int argc, char **argv)
   
   sprintf(buffer,"%i %i",n_time_steps,n_configs);
   Tcl_AppendResult(interp, "{ analyze MSD ",buffer," } {\n",(char *)NULL);
-  D=calc_diffusion_coefH20(interp, n_time_steps,n_conf);
+  D=calc_diffusion_coef_h2o(interp, n_time_steps,n_conf);
   sprintf(buffer,"%e",D);
   Tcl_AppendResult(interp, "}\n{approx. Dh2o=",buffer,"}", (char *)NULL);
   return TCL_OK;
 }
+
+
+static int parse_and_print_Ekin_h2o(Tcl_Interp *interp,int argc, char **argv)
+{
+   int i;
+   char buffer[TCL_DOUBLE_SPACE];
+   int n_mol=0;
+   double E_kin=0;
+   double v_com[3];
+   updatePartCfg(WITHOUT_BONDS);
+   for (i=0;i<n_total_particles;i++)
+   {
+      if (partCfg[i].p.type == 0 )
+      {
+         h2o_com_vel_unper(i,v_com);
+         E_kin+=sqrlen(v_com);
+         n_mol++;
+      }
+   }
+   E_kin*=0.5/n_mol*1.1250/time_step;
+   sprintf(buffer,"%e",E_kin);
+   Tcl_AppendResult(interp, "{ analyze Ekin_h2o ",buffer," } {\n",(char *)NULL);
+   return TCL_OK;
+}
+#endif
 
 static int parse_MSD(Tcl_Interp *interp, int argc, char **argv)
 {
@@ -3416,7 +3484,10 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("centermass", parse_centermass);
   REGISTER_ANALYSIS("angularmomentum",parse_angularmomentum);
   REGISTER_ANALYSIS("MSD",parse_MSD);
-  REGISTER_ANALYSIS("MSDH20",parse_MSDH20);
+#ifdef WATER
+  REGISTER_ANALYSIS("MSD_h2o",parse_MSD_h2o);
+  REGISTER_ANALYSIS("Ekin_h2o",parse_and_print_Ekin_h2o);
+#endif
   REGISTER_ANALYSIS("momentofinertiamatrix", parse_momentofinertiamatrix);
   REGISTER_ANALYSIS("find_principal_axis", parse_find_principal_axis);
   REGISTER_ANALYSIS("nbhood", parse_nbhood);
@@ -3456,7 +3527,9 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS_W_ARG("rdf", parse_rdf, 0);
   REGISTER_ANALYSIS_W_ARG("<rdf>", parse_rdf, 1);
   REGISTER_ANALYSIS_W_ARG("<rdf-intermol>", parse_rdf, 2);
-  REGISTER_ANALYSIS_W_ARG("rdfH20", parse_rdf, 3);
+#ifdef WATER
+  REGISTER_ANALYSIS_W_ARG("rdf_h2o", parse_rdf, 3);
+#endif
   REGISTER_ANALYSIS("rdfchain", parse_rdfchain);
 #ifdef ELECTROSTATICS
   REGISTER_ANALYSIS("cwvac", parse_cwvac);
