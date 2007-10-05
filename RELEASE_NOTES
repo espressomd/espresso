@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4n (Ydalir)                                                                     *
+* v2.0.4o (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4n -
+- v2.0.4o -
 -----------
 
+(o) October    4th, 2007.
 (n) September 28th, 2007.
 (m) September 24th, 2007.
 (l) September 21st, 2007.
@@ -27,6 +28,8 @@ Current working revision.
 (a) August    28th, 2007.
 
 New Features:
+(o) on lattice Boltzmann branch: Implemented second order Langevin
+    integrator.
 (i) added the interaction reaction field(inter_rf) for ionic
     solvents
 (i) added WATER functions
