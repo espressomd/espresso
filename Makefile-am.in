@@ -79,7 +79,7 @@ am__Espresso_bin_SOURCES_DIST = main.c config.c config.h initialize.c \
 	statistics_chain.h energy.c energy.h pressure.c pressure.h \
 	vmdsock.c vmdsock.h imd.c imd.h p3m.c p3m.h ewald.c ewald.h \
 	fft.c fft.h random.c random.h blockfile.c blockfile.h \
-	blockfile_tcl.c blockfile_tcl.h polymer.c polymer.h specfunc.c \
+	blockfile_tcl.c blockfile_tcl.h iccp3m.c iccp3m.h polymer.c polymer.h specfunc.c \
 	specfunc.h tuning.c tuning.h uwerr.c uwerr.h parser.c parser.h \
 	domain_decomposition.c domain_decomposition.h nsquare.c \
 	nsquare.h layered.c layered.h mmm-common.c mmm-common.h \
@@ -106,7 +106,7 @@ am_Espresso_bin_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) \
 	rotation.$(OBJEXT) debug.$(OBJEXT) particle_data.$(OBJEXT) \
 	thermostat.$(OBJEXT) dpd.$(OBJEXT) statistics.$(OBJEXT) \
 	statistics_chain.$(OBJEXT) energy.$(OBJEXT) pressure.$(OBJEXT) \
-	vmdsock.$(OBJEXT) imd.$(OBJEXT) p3m.$(OBJEXT) ewald.$(OBJEXT) \
+	vmdsock.$(OBJEXT) imd.$(OBJEXT) p3m.$(OBJEXT) iccp3m.$(OBJEXT) ewald.$(OBJEXT) \
 	fft.$(OBJEXT) random.$(OBJEXT) blockfile.$(OBJEXT) \
 	blockfile_tcl.$(OBJEXT) polymer.$(OBJEXT) specfunc.$(OBJEXT) \
 	tuning.$(OBJEXT) uwerr.$(OBJEXT) parser.$(OBJEXT) \
@@ -299,7 +299,7 @@ Espresso_bin_SOURCES = main.c config.c config.h initialize.c \
 	statistics_chain.h energy.c energy.h pressure.c pressure.h \
 	vmdsock.c vmdsock.h imd.c imd.h p3m.c p3m.h ewald.c ewald.h \
 	fft.c fft.h random.c random.h blockfile.c blockfile.h \
-	blockfile_tcl.c blockfile_tcl.h polymer.c polymer.h specfunc.c \
+	blockfile_tcl.c blockfile_tcl.h iccp3m.c iccp3m.h polymer.c polymer.h specfunc.c \
 	specfunc.h tuning.c tuning.h uwerr.c uwerr.h parser.c parser.h \
 	domain_decomposition.c domain_decomposition.h nsquare.c \
 	nsquare.h layered.c layered.h mmm-common.c mmm-common.h \
@@ -450,6 +450,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nemd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nsquare.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/p3m.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iccp3m.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/particle_data.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/polymer.Po@am__quote@

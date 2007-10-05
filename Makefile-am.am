@@ -35,6 +35,7 @@ Espresso_bin_SOURCES = \
 	pressure.c pressure.h \
 	vmdsock.c vmdsock.h \
 	imd.c imd.h \
+	iccp3m.c iccp3m.h \
 	p3m.c p3m.h \
 	ewald.c ewald.h \
 	fft.c fft.h \
