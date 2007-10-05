@@ -991,10 +991,33 @@ void lb_reinit_parameters() {
 
 }
 
+
+/** Resets the forces on the fluid nodes */
+void lb_reinit_forces() {
+  int index;
+
+  for (index=0; index<lblattice.halo_grid_volume; index++) {
+
+#ifdef EXTERNAL_FORCES
+      lbfields[index].force[0] = lbpar.ext_force[0];
+      lbfields[index].force[1] = lbpar.ext_force[1];
+      lbfields[index].force[2] = lbpar.ext_force[2];
+#else
+      lbfields[index].force[0] = 0.0;
+      lbfields[index].force[1] = 0.0;
+      lbfields[index].force[2] = 0.0;
+      lbfields[index].has_force = 0;
+#endif
+
+  }
+
+}
+
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
 
     int index;
+    double **tmp;
 
     /* default values for fields in lattice units */
     double rho = lbpar.rho/(agrid*agrid*agrid) ;
@@ -1004,19 +1027,18 @@ void lb_reinit_fluid() {
     for (index=0; index<lblattice.halo_grid_volume; index++) {
 
 #ifdef CONSTRAINTS
-      if (lbfluid[k].boundary==0) {
-	lb_set_local_fields(index,rho,v,pi);
+      if (lbfields[index].boundary==0) {
+	lb_calc_n_equilibrium(index,rho,v,pi);
       } else {
-        lb_set_boundary_fields(index,rho,v,pi);
+	tmp = lbfluid[0];
+	lb_set_boundary_node(index,rho,v,pi);
+	lbfluid[0] = lbfluid[1];
+        lb_set_boundary_node(index,rho,v,pi);
+	lbfluid[0] = tmp;
       }
 #else
       lb_calc_n_equilibrium(index,rho,v,pi);
 #endif
-
-      lbfields[index].force[0] = 0.0;
-      lbfields[index].force[1] = 0.0;
-      lbfields[index].force[2] = 0.0;
-      lbfields[index].has_force = 0;
 
       lbfields[index].recalc_fields = 1;
 
@@ -1054,6 +1076,9 @@ void lb_init() {
 
   /* setup the initial particle velocity distribution */
   lb_reinit_fluid();
+
+  /* setup the external forces */
+  lb_reinit_forces();
 
 }
 
@@ -1339,7 +1364,7 @@ MDINLINE void lb_pull_calc_modes(int index, double *mode) {
 #endif
 }
 
-MDINLINE void lb_relax_modes(double *mode) {
+MDINLINE void lb_relax_modes(int index, double *mode) {
 
   double rho, j[3], pi_eq[6];
 
@@ -1352,14 +1377,17 @@ MDINLINE void lb_relax_modes(double *mode) {
   j[1] = mode[2];
   j[2] = mode[3];
 
-#ifdef EXTERNAL_FORCES
-  /* if external forces are present, the momentum density is
-   * redefined to inlcude one half-step of the force action.
-   * See the Chapman-Enskog expansion in [Ladd & Verberg]. */
-  j[0] += 0.5*lbpar.ext_force[0];
-  j[1] += 0.5*lbpar.ext_force[1];
-  j[2] += 0.5*lbpar.ext_force[2];
+  /* if forces are present, the momentum density is redefined to
+   * inlcude one half-step of the force action.  See the
+   * Chapman-Enskog expansion in [Ladd & Verberg]. */
+#ifndef EXTERNAL_FORCES
+  if (lbfields[index].has_force) 
 #endif
+  {
+    j[0] += 0.5*lbfields[index].force[0];
+    j[1] += 0.5*lbfields[index].force[1];
+    j[2] += 0.5*lbfields[index].force[2];
+  }
 
   /* equilibrium part of the stress modes */
   pi_eq[0] = scalar(j,j)/rho;
@@ -1465,11 +1493,9 @@ MDINLINE void lb_external_forces(double* mode) {
 
 MDINLINE void lb_apply_forces(int index, double* mode) {
 
-  double rho, f[3], u[3], C[6];
+  double rho, *f, u[3], C[6];
   
-  f[0] = lbfields[index].force[0];
-  f[1] = lbfields[index].force[1];
-  f[2] = lbfields[index].force[2];
+  f = lbfields[index].force;
 
   rho = mode[0] + lbpar.rho;
 
@@ -1498,11 +1524,17 @@ MDINLINE void lb_apply_forces(int index, double* mode) {
   mode[8] += C[3];
   mode[9] += C[4];
 
-  /* reset force to zero */
+  /* reset force */
+#ifdef EXTERNAL_FORCES
+  lbfields[index].force[0] = lbpar.ext_force[0];
+  lbfields[index].force[1] = lbpar.ext_force[1];
+  lbfields[index].force[2] = lbpar.ext_force[2];
+#else
   lbfields[index].force[0] = 0.0;
   lbfields[index].force[1] = 0.0;
   lbfields[index].force[2] = 0.0;
   lbfields[index].has_force = 0;
+#endif
 
 }
 
@@ -1655,7 +1687,7 @@ MDINLINE void lb_collide_stream() {
 	for (x=1; x<=lblattice.grid[0]; x++) {
 	  
 #ifdef CONSTRAINTS
-	  //if (!lbfluid[index].boundary)
+	  if (!lbfields[index].boundary)
 #endif
 	  {
 	
@@ -1663,13 +1695,17 @@ MDINLINE void lb_collide_stream() {
 	    lb_calc_modes(index, modes);
 
 	    /* deterministic collisions */
-	    lb_relax_modes(modes);
+	    lb_relax_modes(index, modes);
 
 	    /* fluctuating hydrodynamics */
 	    if (fluct) lb_thermalize_modes(modes);
 
 	    /* apply forces */
+#ifdef EXTERNAL_FORCES
+	    lb_apply_forces(index, modes);
+#else
 	    if (lbfields[index].has_force) lb_apply_forces(index, modes);
+#endif
 
 	    /* transform back to populations and streaming */
 	    lb_calc_n_from_modes_push(index, modes);
@@ -1688,7 +1724,12 @@ MDINLINE void lb_collide_stream() {
     /* exchange halo regions */
     halo_push_communication();
 
-    /* swap the pointers for old and new population fields */
+#ifdef CONSTRAINTS
+    /* boundary conditions */
+    lb_boundary_conditions();
+#endif
+
+   /* swap the pointers for old and new population fields */
     //fprintf(stderr,"swapping pointers\n");
     double **tmp = lbfluid[0];
     lbfluid[0] = lbfluid[1];
@@ -1717,7 +1758,7 @@ MDINLINE void lb_stream_collide() {
 	for (x=1; x<=lblattice.grid[0]; x++) {
 	  
 #ifdef CONSTRAINTS
-	  //if (!lbfluid[index].boundary)
+	  if (!lbfields[index].boundary)
 #endif
 	  {
 
@@ -1725,7 +1766,7 @@ MDINLINE void lb_stream_collide() {
 	    lb_pull_calc_modes(index, modes);
   
 	    /* deterministic collisions */
-	    lb_relax_modes(modes);
+	    lb_relax_modes(index, modes);
     
 	    /* fluctuating hydrodynamics */
 	    if (fluct) lb_thermalize_modes(modes);

@@ -279,9 +279,10 @@ MDINLINE void lb_calc_local_j(int index, double *j) {
 #endif
 
 #ifdef EXTERNAL_FORCES
-  local_j[0] += 0.5*lbpar.ext_force[0];
-  local_j[1] += 0.5*lbpar.ext_force[1];
-  local_j[2] += 0.5*lbpar.ext_force[2];
+  /* the coupling forces are not yet included self-consistently */
+  j[0] += 0.5*lbpar.ext_force[0];
+  j[1] += 0.5*lbpar.ext_force[1];
+  j[2] += 0.5*lbpar.ext_force[2];
 #endif
 
 }
@@ -453,6 +454,7 @@ MDINLINE void lb_calc_local_fields(int index, double *rho, double *j, double *pi
 #endif
 
 #ifdef EXTERNAL_FORCES
+  /* the coupling forces are not yet included self-consistently */
   j[0] += 0.5*lbpar.ext_force[0];
   j[1] += 0.5*lbpar.ext_force[1];
   j[2] += 0.5*lbpar.ext_force[2];
