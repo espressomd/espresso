@@ -137,7 +137,7 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
   //Change
   double p1_com[3],p2_com[3],com_dist;
 
-  if (p1->p.mol_id==p2->p.mol_id) return;
+  //if (p1->p.mol_id==p2->p.mol_id) return;
 
   //p1 is a water part
   if (p1->p.type < 3 ){
@@ -162,7 +162,7 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
   }
   com_dist=min_distance(p1_com,p2_com);
 
-  if(com_dist < rf_params.r_cut) {
+  if((com_dist < rf_params.r_cut)  && (com_dist > 0.001)){
 #else
   if(dist < rf_params.r_cut) {
 #endif
@@ -320,7 +320,39 @@ MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *
 {
   int j;
   double fac;
+#ifdef WATER
+  //Change
+  double p1_com[3],p2_com[3],com_dist;
+
+  if (p1->p.mol_id==p2->p.mol_id) return;
+
+  //p1 is a water part
+  if (p1->p.type < 3 ){
+     get_com_h2o(p1,p1_com);
+  }
+  else//p1 is ion
+  {
+    p1_com[0]=p1->r.p[0];
+    p1_com[1]=p1->r.p[1];
+    p1_com[2]=p1->r.p[2];
+  }
+
+  //p2 is a water part
+  if (p2->p.type < 3 ){
+     get_com_h2o(p2,p2_com);
+  }
+  else//p2 is ion
+  {
+     p2_com[0]=p2->r.p[0];
+     p2_com[1]=p2->r.p[1];
+     p2_com[2]=p2->r.p[2];
+  }
+  com_dist=min_distance(p1_com,p2_com);
+
+  if (com_dist < ia_params->rf_r_cut) {
+#else
   if(dist < ia_params->rf_r_cut) {
+#endif
     /*reaction field prefactor*/
     fac = 1.0 / (dist*dist*dist)  +  ia_params->rf_B / (ia_params->rf_r_cut*ia_params->rf_r_cut*ia_params->rf_r_cut);
     fac *= ia_params->rf_coul_pref * p1->p.q * p2->p.q;
@@ -335,7 +367,39 @@ MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *
 MDINLINE double interrf_pair_energy(Particle *p1, Particle *p2,IA_parameters *ia_params, double dist)
 {
   double fac;
+#ifdef WATER
+  //Change H2O
+  double p1_com[3],p2_com[3],com_dist;
+
+  if (p1->p.mol_id==p2->p.mol_id) return 0.0;
+
+  //p1 is a water part
+  if (p1->p.type < 3 ){
+     get_com_h2o(p1,p1_com);
+  }
+  else//p1 is ion
+  {
+    p1_com[0]=p1->r.p[0];
+    p1_com[1]=p1->r.p[1];
+    p1_com[2]=p1->r.p[2];
+  }
+
+  //p2 is a water part
+  if (p2->p.type < 3 ){
+     get_com_h2o(p2,p2_com);
+  }
+  else//p2 is ion
+  {
+     p2_com[0]=p2->r.p[0];
+     p2_com[1]=p2->r.p[1];
+     p2_com[2]=p2->r.p[2];
+  }
+  com_dist=min_distance(p1_com,p2_com);
+
+  if(com_dist < ia_params->rf_r_cut) {
+#else
   if(dist < ia_params->rf_r_cut) {
+#endif
     fac = 1.0 / dist  -  (ia_params->rf_B*dist*dist) / (2*ia_params->rf_r_cut*ia_params->rf_r_cut*ia_params->rf_r_cut);
     //cut off part
     fac -= (1-ia_params->rf_B/2)  / ia_params->rf_r_cut;

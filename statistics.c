@@ -848,7 +848,9 @@ void h2o_com_vel_unper(int pnr,double *v_com)
 		#ifdef WATER_DEBUG
 		if (partCfg[p+pnr].p.type != 2)
 		{
-			fprintf(stderr,"%ith part is not type 2 (in h2o_com_vel_unper)! pnr=%i\n",p,pnr);
+			fprintf(stderr,"%ith part type is not 2 (in h2o_com_vel_unper)! pnr=%i\n",p,pnr);
+			fprintf(stderr,"nr %i type %i\n",pnr,partCfg[pnr].p.type);
+			fprintf(stderr,"nr %i type %i\n",pnr+p,partCfg[pnr+p].p.type);
 			exit(182);
 		}
 		#endif
@@ -856,7 +858,6 @@ void h2o_com_vel_unper(int pnr,double *v_com)
 			v_com[i]+=partCfg[pnr+p].m.v[i]*PMASS(partCfg[p+pnr]);
 		}
 		M+=PMASS(partCfg[p+pnr]);
-		//printf("h2o_com %i %i %e %e %e %e\n",p,pnr,p_com[0],p_com[1],p_com[2],M);
 	}
 	#ifdef WATER_DEBUG
 	if (fabs(M -1.1250)> 0.001)
@@ -2703,8 +2704,14 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
   else if(average==2)
     calc_rdf_intermol_av(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf, n_conf);
 #ifdef WATER
-  else if(average==3)
+  else if(average==3){
+    if (!sortPartCfg()) {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{059 parse_rdf: could not sort particle config, particle ids not consecutive?} ");
+      return TCL_ERROR;
+    }
     calc_h2o_rdf_av(r_min, r_max, r_bins, rdf, n_conf);
+  }
 #endif
   else ;
 
@@ -3348,7 +3355,14 @@ static int parse_MSD_h2o(Tcl_Interp *interp, int argc, char **argv)
   {
     n_conf  = n_configs;
   }
-  
+
+  updatePartCfg(WITHOUT_BONDS);
+  if (!sortPartCfg()) {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{059 parse_MSD_h2o: could not sort particle config, particle ids not consecutive?} ");
+      return TCL_ERROR;
+  }
+
   sprintf(buffer,"%i %i",n_time_steps,n_configs);
   Tcl_AppendResult(interp, "{ analyze MSD ",buffer," } {\n",(char *)NULL);
   D=calc_diffusion_coef_h2o(interp, n_time_steps,n_conf);
@@ -3362,22 +3376,25 @@ static int parse_and_print_Ekin_h2o(Tcl_Interp *interp,int argc, char **argv)
 {
    int i;
    char buffer[TCL_DOUBLE_SPACE];
-   int n_mol=0;
    double E_kin=0;
    double v_com[3];
    updatePartCfg(WITHOUT_BONDS);
+   if (!sortPartCfg()) {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{059 parse_and_print_Ekin_h2o: could not sort particle config, particle ids not consecutive?} ");
+      return TCL_ERROR;
+   }
    for (i=0;i<n_total_particles;i++)
    {
       if (partCfg[i].p.type == 0 )
       {
          h2o_com_vel_unper(i,v_com);
          E_kin+=sqrlen(v_com);
-         n_mol++;
       }
    }
-   E_kin*=0.5/n_mol*1.1250/time_step;
+   E_kin*=0.5*1.1250/time_step/time_step;
    sprintf(buffer,"%e",E_kin);
-   Tcl_AppendResult(interp, "{ analyze Ekin_h2o ",buffer," } {\n",(char *)NULL);
+   Tcl_AppendResult(interp, buffer,(char *)NULL);
    return TCL_OK;
 }
 #endif

@@ -794,7 +794,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
       case COULOMB_RF:
 	for (i = 0; i < 3; i++)
 	  eforce[i] = 0;
-	add_rf_coulomb_pair_force(p1,p2,d,dist, force);
+	add_rf_coulomb_pair_force(p1,p2,d,dist, eforce);
 	for(i=0;i<3;i++)
 	    force[i] += eforce[i];
 	break;
