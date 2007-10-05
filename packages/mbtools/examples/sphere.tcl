@@ -113,7 +113,7 @@ lappend tablenames n9_c160_22.tab
 #lappend analysis_flags "fluctuations"
 
 lappend analysis_flags pressure
-lappend analysis_flags pik1
+lappend analysis_flags stress_tensor
 lappend analysis_flags boxl
 lappend analysis_flags energy
 lappend analysis_flags "density_profile -beadtypes \{ 0 1 \} -r 8.0 "

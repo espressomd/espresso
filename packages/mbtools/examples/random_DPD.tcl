@@ -112,6 +112,6 @@ lappend tablenames n9_c160_22.tab
 lappend analysis_flags boxl	;# calculate box length
 lappend analysis_flags energy ;# calculate energy
 lappend analysis_flags pressure ;# pressure calculation
-lappend analysis_flags pik1	;# stress tensor calculation
+lappend analysis_flags stress_tensor	;# stress tensor calculation
 lappend analysis_flags clusters	;# analyzing "clusters"
 

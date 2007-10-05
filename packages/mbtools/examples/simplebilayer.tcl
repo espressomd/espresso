@@ -124,7 +124,7 @@ set stray_cut_off 3
 # details
 lappend analysis_flags orient_order
 lappend analysis_flags pressure 
-lappend analysis_flags pik1  
+lappend analysis_flags stress_tensor 
 lappend analysis_flags boxl
 lappend analysis_flags flipflop
 lappend analysis_flags energy
