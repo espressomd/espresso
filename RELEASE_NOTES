@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4o (Ydalir)                                                                     *
+* v2.0.4p (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4o -
+- v2.0.4p -
 -----------
 
+(p) October    5th, 2007.
 (o) October    4th, 2007.
 (n) September 28th, 2007.
 (m) September 24th, 2007.
@@ -57,6 +58,7 @@ Changes:
     dependent).
 
 Bugfixes:
+(p) bug pressure calc of reaction field
 (n) fixed the tutorial scripts in the user's guide.
 (m) amd dual-core is supported now by config.guess
 (l) Flowfield needs to be computed before calculating couplings. It has to persist
