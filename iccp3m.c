@@ -23,7 +23,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#define _GNU_SOURCE
+/* #define _GNU_SOURCE  */
 #include <string.h>
 #include <stddef.h>
 #include <math.h>
