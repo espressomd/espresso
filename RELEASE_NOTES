@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4p (Ydalir)                                                                     *
+* v2.0.4q (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4p -
+- v2.0.4q -
 -----------
 
+(q) October    8th, 2007.
 (p) October    5th, 2007.
 (o) October    4th, 2007.
 (n) September 28th, 2007.
@@ -58,6 +59,8 @@ Changes:
     dependent).
 
 Bugfixes:
+(q) fixed some minor issues in the new p3m iterative scheme iccp3m. Espresso
+    compiles again.
 (p) bug pressure calc of reaction field
 (n) fixed the tutorial scripts in the user's guide.
 (m) amd dual-core is supported now by config.guess
