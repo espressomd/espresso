@@ -46,6 +46,8 @@
 
 #ifdef ELP3M
 
+iccp3m_struct iccp3m_cfg;
+
 /* p3m functions that is used in iccp3m to avoid short range forces computation! */
 void init_forces_iccp3m();
 void calc_long_range_forces_iccp3m();

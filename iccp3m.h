@@ -51,7 +51,7 @@ typedef struct {
   int citeration ; /* current number of iterations*/
 } iccp3m_struct;
 
-iccp3m_struct iccp3m_cfg;
+extern iccp3m_struct iccp3m_cfg;
 /* parse iccp3m options */
 int iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 /* iccp3m : get trial electrostatic forces from p3m and related functions*/
