@@ -26,7 +26,6 @@
 #include <mpi.h>
 #include <tcl.h>
 #include <stdio.h>
-#include <fftw3.h>
 #include "utils.h"
 #include "parser.h"
 #include "communication.h"
@@ -41,6 +40,8 @@
 #include "lb.h"
 
 #ifdef LB
+
+#include <fftw3.h>
 
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum = 0;
