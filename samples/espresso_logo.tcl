@@ -70,7 +70,7 @@ set n_part_types  3
 set lj1_eps     1.0
 set lj1_sig     1.0
 set lj1_cut     1.12246
-set lj1_shift   $lj1_eps
+set lj1_shift   [calc_lj_shift $lj1_sig $lj1_cut]
 
 # FENE
 set fene_cut      2.0
@@ -268,11 +268,11 @@ display resize 600 600
 render options POV3 vmd_povray +W600 +H600 +ua -I%s +FN &
 axes location off
 color Display Background 8
-\# cup blue
+# cup blue
 color Name O 0
-\# saucer red
+# saucer red
 color Name N 1 
-\# steam silver
+# steam silver
 color Name S 6
 
 animate goto 44
@@ -281,12 +281,12 @@ translate to 0 0.4 0.5
 
 mol addrep 0
 
-\# cup and saucer
+# cup and saucer
 mol modselect 0 0 "not name S"
 mol modstyle 0 0 CPK 3 0.3 8 6
 mol modmaterial 0 0 Glossy
 
-\# steam
+# steam
 mol modselect 1 0 "name S"
 mol modstyle 1 0 CPK 3 0.3 8 6
 mol modmaterial 1 0 Glass2
