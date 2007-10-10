@@ -297,8 +297,8 @@ proc part_at_dihedral { p1 p2 p3 theta {phi "rnd"} {len "1.0"} } {
 #############################################################
 
 # Calculate the shift value for the lennard jones interaction
-proc calc_lj_shift { lj_sigma lj_cutoff lj_offset } {
-    set fcut [expr $lj_sigma / ( $lj_cutoff - $lj_offset )]
+proc calc_lj_shift { lj_sigma lj_cutoff } {
+    set fcut [expr $lj_sigma / (1.0*$lj_cutoff) ]
     return [expr -(pow($fcut,12)-pow($fcut,6))]
 }
 
