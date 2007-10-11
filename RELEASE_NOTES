@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4q (Ydalir)                                                                     *
+* v2.0.4r (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4q -
+- v2.0.4r -
 -----------
 
+(r) October   10th, 2007.
 (q) October    8th, 2007.
 (p) October    5th, 2007.
 (o) October    4th, 2007.
@@ -59,6 +60,14 @@ Changes:
     dependent).
 
 Bugfixes:
+(r) iccp3m_cfg was defined in the header file instead of declared.
+(r) Definition is now in the c-file. This prevented compilation with gcc4.0 on
+    MacOS
+(r) moved unconditional #include <fttw3.h> into LB condition.
+(r) This prevented compilation on systems without fftw3.h.
+(r) Introduced the new calc_lj_shift function to replace our various
+    ways
+(r) of assigning random shifts to the LJ potential.
 (q) fixed some minor issues in the new p3m iterative scheme iccp3m. Espresso
     compiles again.
 (p) bug pressure calc of reaction field
