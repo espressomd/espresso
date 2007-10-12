@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4r (Ydalir)                                                                     *
+* v2.0.4s (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4r -
+- v2.0.4s -
 -----------
 
+(s) October   11th, 2007.
 (r) October   10th, 2007.
 (q) October    8th, 2007.
 (p) October    5th, 2007.
@@ -60,6 +61,7 @@ Changes:
     dependent).
 
 Bugfixes:
+(s) rigid bonds skip to many particles
 (r) iccp3m_cfg was defined in the header file instead of declared.
 (r) Definition is now in the c-file. This prevented compilation with gcc4.0 on
     MacOS
