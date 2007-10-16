@@ -117,6 +117,25 @@ void init_correction_vector()
   }
 }
 
+void init_f_shake()
+{
+
+  int c, i, j, np;
+  Particle *p;
+  Cell *cell;
+
+  for (c = 0; c < local_cells.n; c++)
+  {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i = 0; i < np; i++) {
+      for(j=0;j<3;j++)
+        p[i].r.shake_f[j]=0.0;
+     } //for i loop
+  }// for c loop
+}
+
 /**Compute positional corrections*/
 void compute_pos_corr_vec(int *repeat_)
 {
@@ -160,6 +179,7 @@ void compute_pos_corr_vec(int *repeat_)
 	      pos_corr = G*r_ij_t[j];
 	      p1->f.f[j] += pos_corr*PMASS(*p2);
 	      p2->f.f[j] -= pos_corr*PMASS(*p1);
+	      local_particles[p1->p.identity]->r.shake_f[j]+=pos_corr;
 	    }
 	    /*Increase the 'repeat' flag by one */
 	      *repeat_ = *repeat_ + 1;
@@ -335,6 +355,8 @@ void compute_vel_corr_vec(int *repeat_)
 		    vel_corr = K*r_ij[j];
 		    p1->f.f[j] -= vel_corr*PMASS(*p2);
 		    p2->f.f[j] += vel_corr*PMASS(*p1);
+		    local_particles[p1->p.identity]->r.shake_f[j]-=vel_corr;
+
 		  }
 		  *repeat_ = *repeat_ + 1 ;
 		}

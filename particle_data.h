@@ -89,6 +89,7 @@ typedef struct {
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
   double p_old[3];
+  double shake_f[3];
 #endif
 
 #ifdef DIPOLES
