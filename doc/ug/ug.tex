@@ -30,6 +30,7 @@ idxtotoc                        % add the index to the TOC
 \usepackage{calc}               % compute length
 \usepackage{ifthen}             % provide ifthen
 \usepackage{xspace}
+\usepackage{units}
 \usepackage[numbers]{natbib}
 
 % Make '_' a normal character (from http://www.tug.org/TeXnik/mainFAQ.cgi)
@@ -104,7 +105,7 @@ idxtotoc                        % add the index to the TOC
 \newcommand{\lit}[1]{\mbox{\texttt{#1}}}
 \newcommand{\keyword}[1]{\mbox{\texttt{#1}}}
 % variables
-\newcommand{\var}[1]{\mbox{\textrm{\textit{#1}}}}
+\newcommand{\var}[1]{\ensuremath{\mathrm{\mathit{#1}}}}
 % option
 \newcommand{\opt}[1]{\mbox{\textrm{[}#1\textrm{]}}}
 \newcommand{\optlong}[1]{\textrm{[}#1\textrm{]}}
@@ -176,7 +177,9 @@ idxtotoc                        % add the index to the TOC
   \renewcommand{\variant}[1]{\rawvariant{##1}}
   \minisec{Description}%
 }
-
+% Define the starred environment (identical to unstarred, only it is
+% not copied to the Quick reference)
+\newenvironment{essyntax*}{\essyntax}{\endessyntax}
 
 %% List-environment for the description of the arguments of a command
 \newenvironment{arguments}{

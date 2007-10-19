@@ -3,27 +3,31 @@
 \newescommand{inter}
 \index{interactions|mainindex}
 
+In \es, interactions are setup and investigated by the \keyword{inter}
+command. There are mainly two types of interactions: non-bonded and
+bonded interactions. Non-bonded interactions only depend on the type
+of the two involved particles. This also applies to the electrostatic
+interaction; however, due to its long-ranged nature, it requires
+special care and \es handles it separately with a number of state of
+the art algorithms. The particle type and the charge are both defined
+using the \lit{part} command.
+
+A bonded interaction defines an interaction between a number of
+particles; it however only applies to sets of particles for which it
+has been explicitely set.  A bonded interaction between a set of
+particles has to be specified explicitely by the \lit{part bond}
+command, while the \lit{inter} command is used to define the
+interaction parameters.
+
+\section{Getting the currently defined interactions}
 \begin{essyntax}
   inter
 \end{essyntax}
 
-In \es, interactions are setup and investigated by the inter command. There are
-mainly two types of interactions: non-bonded and bonded interactions. Non-bonded
-interactions only depend on the type of the two involved particles. This also
-applies to the electrostatic interaction; however, due to its long-ranged
-nature, it requires special care and \es{} handles it separately with a number
-of state of the art algorithms. The particle type and the charge are both
-defined using the {\tt part} command.
-
-A bonded interaction defines an interaction between a number of particles; it
-however only applies to sets of particles for which it has been explicitely set.
-A bonded interaction between a set of particles has to be specified explicitely
-by the {\tt part bond} command, while the inter command is used to define the
-interaction parameters.
-
-Without any arguments, {\tt inter} returns a list of all defined interactions as
-a Tcl-list. The format of each entry corresponds to the syntax for defining the
-interaction as described below. Typically, this list looks like
+Without any arguments, \lit{inter} returns a list of all defined
+interactions as a Tcl-list. The format of each entry corresponds to
+the syntax for defining the interaction as described below. Typically,
+this list looks like
 \begin{tclcode}
   {0 0 lennard-jones 1.0 2.0 1.1225 0.0 0.0} {0 FENE 7.0 2.0}
 \end{tclcode}
@@ -33,12 +37,12 @@ interaction as described below. Typically, this list looks like
 \index{Non-bonded interactions|mainindex}
 \index{interactions!non-bonded|mainindex}
 
-\begin{essyntax}
+\begin{essyntax*}
   inter \var{type1} 
   \var{type2}
   \opt{\var{interaction}}
   \opt{\var{parameters}}
-\end{essyntax}
+\end{essyntax*}
 defines an interaction of type \var{interaction} between all particles of type
 \var{type1} and \var{type2}. The possible interaction types and their parameters
 are listed below. If the interaction is omitted, the command returns the
@@ -57,24 +61,23 @@ subsection~\ref{sec:forcecap} for details.
 \index{Lennard-Jones interaction|mainindex}
 \index{interactions!Lennard-Jones|mainindex}
 \begin{essyntax}
-  \require{1}{\variant{1}
-    inter \var{type1} 
-    \var{type2}
-    lennard-jones 
-    \var{$\epsilon$} \var{$\sigma$} 
-    \var{$r_\text{cut}$} \var{$c_\text{shift}$} \var{$r_\text{off}$}
-  }
-
-  \require{2}{\variant{2}
-    inter \var{type1} 
-    \var{type2}
-    lj-gen
-    \var{$\epsilon$} \var{$\sigma$} 
-    \var{$r_\text{cut}$} \var{$c_\text{shift}$} \var{$r_\text{off}$} \var{$e_1$} \var{$e_2$} 
-  }
+  \variant{1}%
+  inter \var{type1} 
+  \var{type2}
+  lennard-jones 
+  \var{\epsilon} \var{\sigma} 
+  \var{r_\mathrm{cut}} \var{c_\mathrm{shift}} \var{r_\mathrm{off}}
+  
+  \variant{2}%
+  inter \var{type1} 
+  \var{type2}
+  lj-gen
+  \var{\epsilon} \var{\sigma} 
+  \var{r_\mathrm{cut}} \var{c_\mathrm{shift}} \var{r_\mathrm{off}}
+  \var{e_1} \var{e_2} 
   \begin{features}
-    \required[1]{LENNARD_JONES}
-    \required[2]{LENNARD_JONES_GENERIC}
+    \required[\variant{1}]{LENNARD_JONES}
+    \required[\variant{2}]{LENNARD_JONES_GENERIC}
   \end{features}
 \end{essyntax}
 
@@ -84,33 +87,37 @@ types \var{type1} and \var{type2}.  The potential is defined by
   \label{eq:lj}
   V_\mathrm{LJ}(r) = \Biggl\{
     \begin{array}{ll}
-      4\epsilon((\frac{\sigma}{r-r_\text{\var{off}}})^{e_1}
-      -(\frac{\sigma}{r-r_\text{\var{off}}})^{e_2}+c_\text{\var{shift}}) 
-      & \mathrm{, if~} r < r_\text{\var{cut}}+r_\text{\var{off}}\\
+      4\epsilon((\frac{\var{\sigma}}{r-\var{r_\mathrm{off}}})^\var{e_1}
+      -(\frac{\var{\sigma}}{r-\var{r_\mathrm{off}}})^{e_2}+\var{c_\mathrm{shift}}) 
+      & \mathrm{, if~} \var{r} < \var{r_\mathrm{cut}}+\var{r_\mathrm{off}}\\
       \mathit{0} 
       & \mathrm{, otherwise}\\
     \end{array}.
 \end{equation}
-The first form of the command specifies the traditional Lennard--Jones potential
-with exponents $e_1=12$ and $e_2=6$, the second form allows to choose arbitrary
-exponents. Both forms allow capping the force using {\tt inter ljforcecap},
-see section~\ref{sec:forcecap}.
+The first form of the command specifies the traditional Lennard--Jones
+potential with exponents $\var{e_1}=12$ and $\var{e_2}=6$, the second
+form allows to choose arbitrary exponents. Both forms allow capping
+the force using \lit{inter ljforcecap}, see
+section~\ref{sec:forcecap}.
 
-The traditional Lennard--Jones potential is the ``work--horse'' potential for
-particle--particle interactions in coarse--grained simulations. It is a simple
-model for the van--der--Waals interaction, and is attractive at large distance,
-but strongly repulsive at short distances. $r_\text{\var{off}} + \sigma$
-corresponds to the sum of the radii of the interaction particles; at this
-radius, the potential equals to $\epsilon(1+c_\text{\var{shift}})$. The
-attractive part starts beyond $r=r_\text{\var{off}} + \sqrt[6]\sigma$.
-\var{$r_\text{cut}$} determines from which radius on the interaction is not
-calculated. Typically, one will choose the shift such that the energy is
-continuous at the cutoff radius.
+The traditional Lennard--Jones potential is the ``work--horse''
+potential for particle--particle interactions in coarse--grained
+simulations. It is a simple model of the van--der--Waals interaction,
+and is attractive at large distance, but strongly repulsive at short
+distances. $\var{r_\mathrm{off}} + \var{\sigma}$ corresponds to the sum
+of the radii of the interaction particles; at this radius, the
+potential equals to $\var{\epsilon}(1+\var{c_\mathrm{shift}})$. The
+attractive part starts beyond $\var{r} = \var{r_\mathrm{off}} +
+\sqrt[6]{\var{\sigma}}$.  \var{r_\mathrm{cut}} determines the radius where
+the potential is cut off. Typically, one will choose the shift such
+that the potential is continuous at the cutoff radius.
 
-A special case of the Lennard--Jones potential is the Weeks--Chandler--Andersen
-(WCA) potential, which one obtains by putting the cutoff into the minimum, \ie
-choosing $r_\text{\var{cut}}=\sqrt[6]{2}$ and $c_\text{\var{shift}}=1/4$. The WCA
-potential is purely repulsive, and is often used to mimick hard sphere repulsion.
+A special case of the Lennard--Jones potential is the
+Weeks--Chandler--Andersen (WCA) potential, which one obtains by
+putting the cutoff into the minimum, \ie choosing
+$\var{r_\mathrm{cut}}=\sqrt[6]{\var{\sigma}}$ and
+$\var{c_\mathrm{shift}}=1/4$. The WCA potential is purely repulsive, and
+is often used to mimick hard sphere repulsion.
 
 \subsection{Lennard-Jones cosine interaction}
 \index{Lennard-Jones cosine interaction|mainindex}
@@ -118,48 +125,50 @@ potential is purely repulsive, and is often used to mimick hard sphere repulsion
 \begin{essyntax}
   \variant{1}
   inter \var{type1} \var{type2} lj-cos
-  \var{$\epsilon$} \var{$\sigma$}
-  \var{$r_\text{cut}$} \var{$r_\text{off}$}
+  \var{\epsilon} \var{\sigma}
+  \var{r_\mathrm{cut}} \var{r_\mathrm{off}}
   \variant{2}
   inter \var{type1} \var{type2} lj-cos2
-  \var{$\epsilon$} \var{$\sigma$} 
-  \var{$r_\text{off}$} \var{$\omega$}
+  \var{\epsilon} \var{\sigma} 
+  \var{r_\mathrm{off}} \var{\omega}
   \begin{features}
-    \required[1]{LJCOS}
-    \required[2]{LJCOS2}
+    \required[\variant{1}]{LJCOS}
+    \required[\variant{2}]{LJCOS2}
   \end{features}
 \end{essyntax}
-specifies a Lennard-Jones interaction with cosine tail~\cite{soddeman01a} between
-particles of the types \var{type1} and \var{type2}. The first variant behaves as
-follows: Until the minimum of the Lennard-Jones potential at \var{$r_\text{min}
-  = r_\text{off} + 2^{\frac{1}{6}}\sigma$}, it behaves identical to the
-unshifted Lennard-Jones potential (\var{$c_\text{shift}=0$}).  Between
-\var{$r_\text{min}$} and \var{$r_\text{cut}$}, a cosine is used to smoothly
-connect the potential to 0, \ie
+specifies a Lennard-Jones interaction with cosine
+tail~\cite{soddeman01a} between particles of the types \var{type1} and
+\var{type2}. The first variant behaves as follows: Until the minimum
+of the Lennard-Jones potential at $\var{r_\mathrm{min}} = r_\mathrm{off} +
+2^{\frac{1}{6}}\sigma$, it behaves identical to the unshifted
+Lennard-Jones potential ($\var{c_\mathrm{shift}}=0$).  Between
+\var{r_\mathrm{min}} and \var{r_\mathrm{cut}}, a cosine is used to
+smoothly connect the potential to 0, \ie
 \begin{equation}
-  V(r)=\frac{1}{2}\epsilon\left(cos\left[\alpha(r-r_\text{\var{off}})^2 + \beta\right]-1\right),
+  V(r)=\frac{1}{2}\epsilon\left(cos\left[\alpha(\var{r}-\var{r_\mathrm{off}})^2 + \beta\right]-1\right),
 \end{equation}
 where
-\var{$\alpha = \pi\left[(r_\text{cut}-r_\text{off})^2-(r_\text{min}-r_\text{off})^2\right]^{-1}$}
+$\alpha = \pi\left[(\var{r_\mathrm{cut}}-\var{r_\mathrm{off}})^2-(\var{r_\mathrm{min}}-\var{r_\mathrm{off}})^2\right]^{-1}$
 and
-\var{$\beta = \pi - \left(r_\text{min}-r_\text{off}\right)^2\alpha$}.
+$\beta = \pi - \left(\var{r_\mathrm{min}}-\var{r_\mathrm{off}}\right)^2\alpha$.
 
-In the second variant, the cutoff radius is $r_\text{cut}=r_\text{\var{min}} +
-\omega$, and the potential between $r_\text{min}$ and $r_\text{cut}$ is given by
+In the second variant, the cutoff radius is
+$\var{r_\mathrm{cut}}=\var{r_\mathrm{min}} + \omega$, and the potential
+between $\var{r_\mathrm{min}}$ and $\var{r_\mathrm{cut}}$ is given by
 \begin{equation}
-  V(r)=\epsilon\cos^2\left[\frac{\pi}{2\omega}(r - r_\text{min})\right].
+  V(r)=\epsilon\cos^2\left[\frac{\pi}{2\omega}(\var{r} - \var{r_\mathrm{min}})\right].
 \end{equation}
 
-Only the second variant allows capping the force using {\tt inter ljforcecap},
-see section~\ref{sec:forcecap}.
+Only the second variant allows capping the force using \lit{inter
+  ljforcecap}, see section~\ref{sec:forcecap}.
 
 \subsection{Smooth step interaction}
 \index{smooth-step interaction|mainindex}
 \index{interactions!smooth-step|mainindex}
 \begin{essyntax}
   inter \var{type1} \var{type2}
-  smooth-step \var{$\sigma_1$} \var{$n$} \var{$\epsilon$} \var{$k_0$}
-  \var{$\sigma_2$} \var{$r_\text{cut}$}
+  smooth-step \var{\sigma_1} \var{n} \var{\epsilon} \var{k_0}
+  \var{\sigma_2} \var{r_\mathrm{cut}}
   \begin{features}
     \required{SMOOTH_STEP}
   \end{features}
@@ -167,9 +176,9 @@ see section~\ref{sec:forcecap}.
 This defines a smooth step interaction between particles of the
 types \var{type1} and \var{type2}, for which the potential is
 \begin{equation}
-  V(r)= \left(\sigma_1/d\right)^n + \epsilon/(1 + \exp\left[2k_0 (r - \sigma_2)\right])
+  V(r)= \left(\var{\sigma_1}/d\right)^\var{n} + \epsilon/(1 + \exp\left[2k_0 (r - \sigma_2)\right])
 \end{equation}
-for $r<r_\text{\var{cut}}$, and $V(r)=0$ elsewhere. With $n$ around 10, the
+for $r<r_\mathrm{\var{cut}}$, and $V(r)=0$ elsewhere. With $n$ around 10, the
 first term creates a short range repulsion similar to the Lennard-Jones
 potential, while the second term provides a much softer repulsion. This
 potential therefore introduces two length scales, the range of the first term,
@@ -181,35 +190,37 @@ $\sigma_1<\sigma_2$.
 \index{interactions!BMHTF|mainindex}
 \begin{essyntax}
   inter \var{type1} \var{type2}
-  bmhtf-nacl \var{A} \var{B} \var{C} \var{D} \var{$\sigma$} \var{$r_\text{cut}$}
+  bmhtf-nacl \var{A} \var{B} \var{C} \var{D} \var{\sigma} \var{r_\mathrm{cut}}
   \begin{features}
     \required{BMHTF_NACL}
   \end{features}
 \end{essyntax}
 This defines an interaction with the {\em short-ranged part} of the
 Born-Meyer-Huggins-Tosi-Fumi potential between particles of the types
-\var{type1} and \var{type2}, which is often used to simulate NaCl crystals. The
-potential is as follows:
+\var{type1} and \var{type2}, which is often used to simulate NaCl
+crystals. The potential is defined by:
 \begin{equation}
-  V(r)= A\exp\left[B(\sigma - r)\right] -
-  C r^{-6} - D r^{-8} + \epsilon_\text{shift},
+  V(r)= \var{A}\exp\left[\var{B}(\var{\sigma} - \var{r})\right] -
+  \var{C} \var{r}^{-6} - \var{D} \var{r}^{-8} + \epsilon_\mathrm{shift},
 \end{equation}
-where $\epsilon_\text{shift}$ is chosen such that $V(r_\text{cut})=0$. For
-\var{$r\ge r_\text{cut}$}, the $V(r)=0$.
+where $\epsilon_\mathrm{shift}$ is chosen such that
+$V(\var{r_\mathrm{cut}})=0$. For $r\ge \var{r_\mathrm{cut}}$, the
+$V(r)=0$.
 
-For NaCl, the parameters should be chosen as follows:\\[.5em]
-{\centering
-  \begin{tabular}{r|l|l|l|l|l}
-    types & $A [kJ/mol] $ & $B [\AA^{-1}]$ &
-    $C [\AA^6 kJ/mol]$ & $D [\AA^8 kJ/mol]$ & $\sigma [\AA]$ \\
-    \hline
-    Na-Na & 25.4435 & 3.1546 &  101.1719 &    48.1771 & 2.34 \\
-    Na-Cl & 20.3548 & 3.1546 &  674.4793 &   837.0770 & 2.755 \\
-    Cl-Cl & 15.2661 & 3.1546 & 6985.6786 & 14031.5785 & 3.170 \\
-  \end{tabular}
-}\\[.5em]
-The cutoff can be chosen relatively freely because the potential decays
-fast; a value around 10 seems reasonable.
+For NaCl, the parameters should be chosen as follows:
+
+\begin{tabular}{r|l|l|l|l|l}
+  types & \var{A} (\unitfrac{kJ}{mol}) & \var{B} ($\unit{\AA^{-1}}$) &
+  \var{C} ($\unit{\AA^6}$\unitfrac{kJ}{mol}) & \var{D}
+  $\unit{\AA^8}$\unitfrac{kJ}{mol} & \var{\sigma} (\unit{\AA}) \\
+  \hline
+  Na-Na & 25.4435 & 3.1546 &  101.1719 &    48.1771 & 2.34 \\
+  Na-Cl & 20.3548 & 3.1546 &  674.4793 &   837.0770 & 2.755 \\
+  Cl-Cl & 15.2661 & 3.1546 & 6985.6786 & 14031.5785 & 3.170 \\
+\end{tabular}
+
+The cutoff can be chosen relatively freely because the potential
+decays fast; a value around 10 seems reasonable.
 
 In addition to this short ranged interaction, one needs to add a Coulombic,
 long--ranged part. If one uses elementary charges, \ie a charge of $q=+1$ for
@@ -222,7 +233,7 @@ of the Coulomb interaction is $\approx 1389.3549 \AA\,kJ/mol$.
 
 \begin{essyntax}
   inter \var{type1} \var{type2} morse
-  \var{$\epsilon$} \var{$\alpha$} \var{$r_\text{min}$} \var{$r_\text{cut}$}
+  \var{\epsilon} \var{\alpha} \var{r_\mathrm{min}} \var{r_\mathrm{cut}}
   \begin{features}
     \required{MORSE}
   \end{features}
@@ -234,14 +245,14 @@ This models the potential energy in a diatomic molecule.  This potential allows
 capping the force using {\tt inter morseforcecap}, see
 section~\ref{sec:forcecap}.
 
-For \var{$r < r_\text{cut}$}, this potential is given by
+For $r < \var{r_\mathrm{cut}}$, this potential is given by
 \begin{equation}
-  V(r)=\epsilon\left(\exp\left[-2 \alpha \left(r - r_\text{min}\right)\right]
-    - 2\exp\left[-\alpha\left(r - r_\text{min}\right)\right]\right) -
-  \epsilon_\text{shift},
+  V(r)=\var{\epsilon}\left(\exp\left[-2 \var{\alpha} \left(r - \var{r_\mathrm{min}}\right)\right]
+    - 2\exp\left[-\alpha\left(r - r_\mathrm{min}\right)\right]\right) -
+  \epsilon_\mathrm{shift},
 \end{equation}
-where \var{$\epsilon_\text{shift}$} is again chosen such that
-$V(r_\text{\var{cut}})=0$. For \var{$r\ge r_\text{cut}$}, the $V(r)=0$.
+where \var{\epsilon_\mathrm{shift}} is again chosen such that
+$V(\var{r_\mathrm{cut}})=0$. For $r\ge \var{r_\mathrm{cut}}$, the $V(r)=0$.
 
 \subsection{Buckingham interaction}
 \index{Buckingham interaction|mainindex}
@@ -250,7 +261,7 @@ $V(r_\text{\var{cut}})=0$. For \var{$r\ge r_\text{cut}$}, the $V(r)=0$.
 \begin{essyntax}
   inter \var{type1} \var{type2} buckingham
   \var{A} \var{B} \var{C} \var{D}
-  \var{$r_\text{cut}$} \var{$r_\text{discont}$} \var{$\epsilon_\text{shift}$}
+  \var{r_\mathrm{cut}} \var{r_\mathrm{discont}} \var{\epsilon_\mathrm{shift}}
   \begin{features}
     \required{BUCKINGHAM}
   \end{features}
@@ -258,12 +269,12 @@ $V(r_\text{\var{cut}})=0$. For \var{$r\ge r_\text{cut}$}, the $V(r)=0$.
 This defines a Buckingham interaction between particles of the types
 \var{type1} and \var{type2}, for which the potential is given by
 \begin{equation}
-  V(r)= A\exp(-B r) - Cr^{-6} - Dr^{-4} + \epsilon_\text{\var{shift}}
+  V(r)= A\exp(-B r) - Cr^{-6} - Dr^{-4} + \var{\epsilon_\mathrm{shift}}
 \end{equation}
-for \var{$r_\text{discont} < r < r_\text{cut}$}. Below \var{$r_\text{discont}$},
+for $\var{r_\mathrm{discont}} < r < \var{r_\mathrm{cut}}$. Below \var{r_\mathrm{discont}},
 the potential is linearly continued towards $r=0$, similarly to force capping,
-see below. Above \var{$r=r_\text{cut}$}, the potential is 0. This potential
-allows capping the force using {\tt inter buckforcecap}, see
+see below. Above $r=\var{r_\mathrm{cut}}$, the potential is $0$. This potential
+allows capping the force using \lit{inter buckforcecap}, see
 section~\ref{sec:forcecap}.
 
 \subsection{Soft-sphere interaction}
@@ -272,7 +283,7 @@ section~\ref{sec:forcecap}.
 
 \begin{essyntax}
   inter \var{type1} \var{type2}
-  soft-sphere \var{a} \var{n} \var{$r_\text{cut}$} \var{$r_\text{offset}$}
+  soft-sphere \var{a} \var{n} \var{r_\mathrm{cut}} \var{r_\mathrm{offset}}
   \begin{features}
     \required{SOFT_SPHERE}
   \end{features}
@@ -280,12 +291,12 @@ section~\ref{sec:forcecap}.
 This defines a soft sphere interaction between particles of the types
 \var{type1} and \var{type2}, which is defined by a single power law:
 \begin{equation}
-  V(r)=a\left(r-r_\text{\var{offset}}\right)^{-n}
+  V(r)=a\left(r-r_\mathrm{\var{offset}}\right)^{-n}
 \end{equation}
-for $r<r_\text{\var{cut}}$, and $V(r)=0$ above. There is no shift implemented
-currently, which means that the potential is discontinuous at
-$r=r_\text{\var{cut}}$. Therefore energy calculations should be used with great
-caution.
+for $r<\var{r_\mathrm{cut}}$, and $V(r)=0$ above. There is no shift
+implemented currently, which means that the potential is discontinuous
+at $r=\var{r_\mathrm{cut}}$. Therefore energy calculations should be
+used with great caution.
 
 \subsection{Gay-Berne interaction}
 \index{Gay-Berne interaction|mainindex}
@@ -293,20 +304,21 @@ caution.
 
 \begin{essyntax}
   inter \var{type1} \var{type2} gay-berne
-  \var{$\epsilon_0$} \var{$\sigma_0$} \var{$r_\text{cutoff}$}
-  \var{k1} \var{k2} \var{$\mu$} \var{$\nu$}
+  \var{\epsilon_0} \var{\sigma_0} \var{r_\mathrm{cutoff}}
+  \var{k1} \var{k2} \var{\mu} \var{\nu}
   \begin{features}
     \required{ROTATION}
   \end{features}
 \end{essyntax}
-This defines a Gay-Berne potential for prolate and oblate particles between
-particles of the types \var{type1} and \var{type2}. The Gay-Berne potential is
-an anisotropic version of the classic Lennard-Jones potential, with
-orientational dependence of the range $\sigma$ and the well-depth $\epsilon$.
+This defines a Gay-Berne potential for prolate and oblate particles
+between particles of the types \var{type1} and \var{type2}. The
+Gay-Berne potential is an anisotropic version of the classic
+Lennard-Jones potential, with orientational dependence of the range
+\var{\sigma_0} and the well-depth \var{\epsilon_0}.
 
 Assume two particles with orientations given by the unit vectors
 $\mathbf{\hat{u}}_i$ and $\mathbf{\hat{u}}_j$ and intermolecular vector
-$\mathbf{r} = r\mathbf{\hat{r}}$. If $r<r_\text{\var{cut}}$, then the
+$\mathbf{r} = r\mathbf{\hat{r}}$. If $r<r_\mathrm{\var{cut}}$, then the
 interaction between these two particles is given by
 \begin{equation}
   V(\mathbf{r}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j) = 4
@@ -344,14 +356,16 @@ and
         \mathbf{\hat{u}}_j)^{2}} {1-\chi' \, \mathbf{\hat{u}}_i \cdot
         \mathbf{\hat{u}}_j } \right) \right]^{\mu}.
 \end{multline}
-The parameters $\chi = \left(k_1^{2} - 1\right)/\left(k_1^{2} + 1\right)$ and
-$\chi' = \left(k_2^{1/\mu} - 1\right)/\left(k_2^{1/\mu} + 1\right)$ are
-responsible for the degree of anisotropy of the molecular properties.
-\var{$k_1$} is the molecular elongation, and \var{$k_2$} is the ratio of the
-potential well depths for the side-by-side and end-to-end configurations.  The
-exponents $ \mu $ and $ \nu $ are adjustable parameters of the potential.
-Several Gay-Berne parametrizations exist, the original one being $k_1 = 3$,
-$k_2 = 5$, $\mu = 2$ and $\nu = 1$.
+The parameters $\chi = \left(k_1^{2} - 1\right)/\left(k_1^{2} +
+  1\right)$ and $\chi' = \left(k_2^{1/\mu} -
+  1\right)/\left(k_2^{1/\mu} + 1\right)$ are responsible for the
+degree of anisotropy of the molecular properties.  \var{k_1} is the
+molecular elongation, and \var{k_2} is the ratio of the potential well
+depths for the side-by-side and end-to-end configurations.  The
+exponents \var{\mu} and \var{\nu} are adjustable parameters of the
+potential.  Several Gay-Berne parametrizations exist, the original one
+being $\var{k_1} = 3$, $\var{k_2} = 5$, $\var{\mu} = 2$ and $\var{\nu}
+= 1$.
 
 \subsection{Tabulated interaction}
 \index{tabulated interaction|mainindex}
@@ -377,8 +391,8 @@ reading from that point in the file. Anything before the {\tt \#} will be
 ignored.
 
 The first three parameters after the {\tt \#} specify the number of data points
-$N_\text{points}$ and the minimal and maximal tabulated separation distances
-$r_\text{min}$ and $r_\text{max}$. The number of data points obviously should
+$N_\mathrm{points}$ and the minimal and maximal tabulated separation distances
+$r_\mathrm{min}$ and $r_\mathrm{max}$. The number of data points obviously should
 be an integer, the two other can be arbitrary positive doubles. Take care when
 choosing the number of points, since a copy of each lookup table is kept on each
 node and must be referenced very frequently. The maximal tabulated separation
@@ -387,68 +401,73 @@ distance also acts as the effective cutoff value for the potential.
 The remaining data in the file should consist of n data triples $r$, $F(r)$ and
 $V(r)$. $r$ gives the particle separation, $V(r)$ specifies the interaction
 potential, and $F(r)= -V'(r)/r$ the force (note the factor $1/r$!). The values
-of $r$ are assumed to be equally distributed between $r_\text{min}$ and
-$r_\text{max}$ with a fixed distance of
-$(r_\text{max}-r_\text{min})/(N_\text{points}-1)$; the distance values $r$ in
+of $r$ are assumed to be equally distributed between $r_\mathrm{min}$ and
+$r_\mathrm{max}$ with a fixed distance of
+$(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)$; the distance values $r$ in
 the file are ignored and only included for human readability.
 
 \subsection{Capping the force during warmup}
 \label{sec:forcecap}
 
 \begin{essyntax}
-  \variant{1} inter ljforcecap    \var{$F_\text{max}$}
-  \variant{2} inter morseforcecap \var{$F_\text{max}$}
-  \variant{3} inter buckforcecap  \var{$F_\text{max}$}
-  \variant{4} inter tabforcecap   \var{$F_\text{max}$}
+  \variant{1} inter ljforcecap \var{F_\mathrm{max}}
+  \variant{2} inter morseforcecap \var{F_\mathrm{max}}
+  \variant{3} inter buckforcecap \var{F_\mathrm{max}}
+  \variant{4} inter tabforcecap \var{F_\mathrm{max}}
   \begin{features}
-    \required[1]{LENNARD_JONES}
-    \required[2]{MORSE}
-    \required[3]{BUCKINGHAM}
-    \required[4]{TABULATED}
+    \required[\variant{1}]{LENNARD_JONES}
+    \required[\variant{2}]{MORSE}
+    \required[\variant{3}]{BUCKINGHAM}
+    \required[\variant{4}]{TABULATED}
   \end{features}  
 \end{essyntax}
 
-Non-bonded interactions are often used to model the hard core repulsion between
-particles. Most of the potentials in the section are therefore singular at zero
-distance, and forces usually become very large for distances below the particle
-size. This is not a problem during the simulation, as particles will simply
-avoid overlapping. However, creating an initial dense random configuration
-without overlap is often difficult.
+Non-bonded interactions are often used to model the hard core
+repulsion between particles. Most of the potentials in the section are
+therefore singular at zero distance, and forces usually become very
+large for distances below the particle size. This is not a problem
+during the simulation, as particles will simply avoid overlapping.
+However, creating an initial dense random configuration without
+overlap is often difficult.
 
-By artificially capping the forces, it is possible to simulate a system with
-overlaps. By gradually raising the cap value $F_\text{max}$, possible overlaps
-become unfavorable, and the system equilibrates to a overlap free configuration.
+By artificially capping the forces, it is possible to simulate a
+system with overlaps. By gradually raising the cap value
+\var{F_\mathrm{max}}, possible overlaps become unfavorable, and the
+system equilibrates to a overlap free configuration.
 
-This command will cap the force to $F_\text{\var{max}}$, \ie for particle
-distances which would lead to larger forces than $F_\text{\var{max}}$, the force
-remains at $F_\text{\var{max}}$. Accordingly, the potential is replaced by
-replaced by $r F_\text{\var{max}}$. Particles placed exactly on top of each other
-will be subject to a force of magnitude $F_\text{\var{max}}$ along the first
-coordinate axis.
+This command will cap the force to \var{F_\mathrm{\var{max}}}, \ie for
+particle distances which would lead to larger forces than
+\var{F_\mathrm{max}}, the force remains at \var{F_\mathrm{max}}.
+Accordingly, the potential is replaced by replaced by $r
+\var{F_\mathrm{max}}$. Particles placed exactly on top of each other
+will be subject to a force of magnitude \var{F_\mathrm{max}} along
+the first coordinate axis.
 
-The force capping is switched off by setting $F_\text{\var{max}}=0$. Note that
-force capping always applies to all interactions of the corresponding type (\eg
-all Lennard-Jones interactions) regardless of the particle types.
+The force capping is switched off by setting $\var{F_\mathrm{max}}=0$.
+Note that force capping always applies to all interactions of the
+corresponding type (\eg all Lennard-Jones interactions) regardless of
+the particle types.
 
 \section{Bonded interactions}
 \label{sec:inter-bonded}
 \index{bonded interactions|mainindex}
 \index{interactions!bonded|mainindex}
 
-\begin{essyntax}
-  inter \var{bond_type_number}
+\begin{essyntax*}
+  inter \var{bondid}
   \opt{\var{interaction}}
   \opt{\var{parameters}}
-\end{essyntax}
+\end{essyntax*}
 
-\index{bonded interaction type id} Bonded interactions are identified by their
-\emph{bonded interaction type identificator} \var{bond_type_number}, which is a
-non-negative integer.  The \texttt{inter} \var{bond_type_number} command is used
-to specify the type and parameters of a bonded interaction, which applies to all
-particles connected explicitely by this bond using the \texttt{part} command
-(see section \vref{tcl:part}).  Therefore, defining a bond between two particles
-always involves two steps: defining the interaction and applying it. Assuming
-that two particles with ids 42 and 43 already exist, one can create \eg a
+\index{bonded interaction type id} Bonded interactions are identified
+by their \emph{bonded interaction type identificator} \var{bondid},
+which is a non-negative integer.  The \lit{inter} \var{bondid} command
+is used to specify the type and parameters of a bonded interaction,
+which applies to all particles connected explicitely by this bond
+using the \keyword{part} command (see section \vref{tcl:part}).
+Therefore, defining a bond between two particles always involves two
+steps: defining the interaction and applying it. Assuming that two
+particles with ids 42 and 43 already exist, one can create \eg a
 FENE-bond between them using
 \begin{tclcode}
   inter 1 fene 10.0 2.0
@@ -461,9 +480,9 @@ particles (\eg in a simple chain molecule), one can use the sampe type \var{id}:
   part 42 bond 1 43; part 43 bond 1 44 
 \end{tclcode}
 
-Bonds can have more than just two bond partners. For the \texttt{inter} command
+Bonds can have more than just two bond partners. For the \keyword{inter} command
 that does not play a role as it only specifies the parameters, only when
-applying the bond using the \texttt{bond} particle, the number of involved
+applying the bond using the \keyword{bond} particle, the number of involved
 particles plays a role. The number of involved particles and their order, if
 important, is nevertheless specified here for completeness.
 
@@ -472,17 +491,20 @@ important, is nevertheless specified here for completeness.
 \index{interactions!FENE|mainindex}
 
 \begin{essyntax}
-  inter \var{bond_type_number}
+  inter \var{bondid}
   fene
-  \var{$K$} \var{$R$}
+  \var{K} \var{\Delta r_\mathrm{max}} \opt{\var{r_0}}
 \end{essyntax}
-This creates a bond type with identificator \var{bond_type_number} with a FENE
-(finite extension nonlinear expander) interaction. This is a rubber-band-like,
-symmetric interaction betweeen two particles with prefactor $K$, and maximal
-distance $R$, \ie the bond potential diverges at a particle distance $r=R$. It
-is given by
+This creates a bond type with identificator \var{bondid} with a
+FENE (finite extension nonlinear expander) interaction. This is a
+rubber-band-like, symmetric interaction betweeen two particles with
+prefactor \var{K}, maximal stretching \var{\Delta r_\mathrm{max}} and
+equilibrium bond length \var{r_0}.  The bond potential diverges at a
+particle distance $r=\var{r_0}-\var{\Delta r_\mathrm{max}}$ and
+$r=\var{r_0}+\var{\Delta r_\mathrm{max}}$. It is given by
 \begin{equation}
-  V(r) = -\frac{1}{2} K R^2\ln \left[ 1 - \left( \frac{r}{R} \right)^2 \right].
+  V(r) = -\frac{1}{2} \var{K} \var{\Delta r_\mathrm{max}}^2\ln \left[ 1 - \left(
+      \frac{r-\var{r_0}}{\var{\Delta r_\mathrm{max}}} \right)^2 \right].
 \end{equation}
 
 \subsection{Harmonic bond}
@@ -490,10 +512,10 @@ is given by
 \index{interactions!harmonic|mainindex}
 
 \begin{essyntax}
-  inter \var{bond_type_number}
+  inter \var{bondid}
   harmonic \var{K} \var{R}
 \end{essyntax}
-This creates a bond type with identificator \var{bond_type_number} with a
+This creates a bond type with identificator \var{bondid} with a
 classical harmonic potential. It is a symmetric interaction between two
 particles. The potential is minimal at particle distance $r=R$, and the
 prefactor is $K$. It is given by
@@ -506,11 +528,11 @@ prefactor is $K$. It is given by
 \index{interactions!subtracted Lennard-Jones|mainindex}
 
 \begin{essyntax}
-  inter \var{bond_type_number}
+  inter \var{bondid}
   subt_lj
   \var{reserved} \var{R}
 \end{essyntax}
-This creates a ``bond'' type with identificator \var{bond_type_number}, which
+This creates a ``bond'' type with identificator \var{bondid}, which
 acts between two particles and actually subtracts the Lennard-Jones interaction
 between the involved particles.  The first parameter, \var{reserved} is a dummy
 just kept for compatibility reasons. The second parameter, \var{R}, is used as a
@@ -529,7 +551,7 @@ general tabulated potentials.
 \index{RATTLE}
 
 \begin{essyntax}
-  inter \var{bond_type_number}
+  inter \var{bondid}
   rigid_bond
   \var{constrained_bond_distance} \var{positional_tolerance} 
   \var{velocity_tolerance}
@@ -542,26 +564,27 @@ general tabulated potentials.
 \label{sec:angle}
 
 \begin{essyntax}
-  inter \var{bond_type_number}
-  angle \var{K} \opt{\var{$\phi_0$}}
+  inter \var{bondid}
+  angle \var{K} \opt{\var{\phi_0}}
   \begin{features}
-    BOND_ANGLE_HARMONIC, BOND_ANGLE_COSINE or\\
-    BOND_ANGLE_COSSQUARE
+    \required{BOND_ANGLE_HARMONIC, BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE}
   \end{features}
 \end{essyntax}
 
-This creates a bond type with identificator \var{bond_type_number} with an angle
-dependent potential. This potential is defined between three particles. The
-particle for which the bond is created, is the central particle, and the angle
-$\phi$ between the vectors from this particle to the two others determines the
-interaction.  $K$ is the bending constant, and the optional parameter
-\var{$phi_0$} is the equilibirum bond angle in radiants ranging from 0 to $\pi$.
-If this parameter is not given, it defaults to \var{$\phi_0 = \pi$}, which
-corresponds to a stretched configuration. For example, for a bond defined by
-\begin{center}
-  \tt part $p_2$ bond 4 $p_1$ $p_3$
-\end{center}
-the following minimal energy configurations are
+This creates a bond type with identificator \var{bondid}
+with an angle dependent potential. This potential is defined between
+three particles. The particle for which the bond is created, is the
+central particle, and the angle $\phi$ between the vectors from this
+particle to the two others determines the interaction.  \var{K} is the
+bending constant, and the optional parameter \var{phi_0} is the
+equilibirum bond angle in radian ranging from 0 to $\pi$.  If this
+parameter is not given, it defaults to $\var{\phi_0} = \pi$, which
+corresponds to a stretched configuration. For example, for a bond
+defined by
+\begin{code}
+  part \$p_2 bond 4 \$p_1 \$p_3
+\end{code}
+the minimal energy configurations are the following:
 \begin{center}
   \setlength{\unitlength}{3000sp}
   \begin{picture}(8381,2684)(1570,-5393)
@@ -584,8 +607,8 @@ the following minimal energy configurations are
     \put(7021,-5191){\makebox(0,0)[b]{$p_1$}}
     \put(8371,-3751){\makebox(0,0)[b]{$p_3$}}
     \put(7921,-5191){\makebox(0,0)[b]{$p_2$}}
-    \put(7921,-2941){\makebox(0,0)[b]{\texttt{inter 4 angle 1.0 1.57}}}
-    \put(3601,-2941){\makebox(0,0)[b]{\texttt{inter 4 angle 1.0 3.14}}}
+    \put(7921,-2941){\makebox(0,0)[b]{\keyword{inter 4 angle 1.0 [expr [PI]/2]}}}
+    \put(3601,-2941){\makebox(0,0)[b]{\keyword{inter 4 angle 1.0 [PI]}}}
   \end{picture}%
 \end{center}
 
@@ -623,44 +646,46 @@ possible, which have to be activated in \texttt{myconfig.h}
 \label{sec:dihedral}
 
 \begin{essyntax}
-  inter \var{bond_type_number}
-  dihedral \var{n} \var{K} \var{$\phi$}
+  inter \var{bondid}
+  dihedral \var{n} \var{K} \var{\phi}
 \end{essyntax}
 
-This creates a bond type with identificator \var{bond_type_number} with a
-dihedral potential, \ie a four-body-potential. In the followin, let the particle
-for which the bond is created be particle $p_2$, and the other bond partners
-$p_1$, $p_3$, $p_4$, in this order, \ie \texttt{part $p_2$ bond bond_type_number
-  $p_1$ $p_3$ $p_4$}. Then the dihedral potential is given by
+This creates a bond type with identificator \var{bondid}
+with a dihedral potential, \ie a four-body-potential. In the followin,
+let the particle for which the bond is created be particle $p_2$, and
+the other bond partners $p_1$, $p_3$, $p_4$, in this order, \ie
+\lit{part $p_2$ bond bondid $p_1$ $p_3$ $p_4$}. Then, the
+dihedral potential is given by
 \begin{equation}
-  V(r) = K\left[1 + \phi\,\cos(n\phi)\right],
+  V(r) = \var{K}\left[1 + \var{\phi}\,\cos(\var{n}\var{\phi})\right],
 \end{equation}
-where \var{n} is the multiplicity of the potential (number of minimas) and can
-take integer values from 1 to 6, \var{phi} is a phase parameter which takes the
-values $\pm1$ and \var{K} is the bending constant of the potential. $\phi$ is
-the dihedral angle between the particles defined by the particle quadrupel
-$p_1$, $p_2$, $p_3$ and $p_4$, \ie the angle between the planes defined by the
-particle triples $p_1$, $p_2$ and $p_3$ and $p_2$, $p_3$ and $p_4$, \ie
+where \var{n} is the multiplicity of the potential (number of minimas)
+and can take integer values from 1 to 6, \var{phi} is a phase
+parameter which takes the values $\pm1$ and \var{K} is the bending
+constant of the potential. $\phi$ is the dihedral angle between the
+particles defined by the particle quadrupel $p_1$, $p_2$, $p_3$ and
+$p_4$, \ie the angle between the planes defined by the particle
+triples $p_1$, $p_2$ and $p_3$ and $p_2$, $p_3$ and $p_4$, \ie
 \begin{center}
-  \includegraphics[height=8em]{figures/dihedral-angle.pdf}
+  \includegraphics[height=8em]{figures/dihedral-angle}
 \end{center}
-Together with appropriate Lennard-Jones interactions, this potential can mimic a
-large number of atomic torsion potentials.
+Together with appropriate Lennard-Jones interactions, this potential
+can mimic a large number of atomic torsion potentials.
 
 \subsection{Tabulated bond interactions}
 \index{tabulated bond interactions|mainindex}
 \index{interactions!tabulated bond|mainindex}
 
 \begin{essyntax}
-    \variant{1} inter \var{bond_type_number}
+    \variant{1} inter \var{bondid}
     tabulated bond \var{filename}
-    \variant{2} inter \var{bond_type_number}
+    \variant{2} inter \var{bondid}
     tabulated angle \var{filename}
-    \variant{3} inter \var{bond_type_number}
+    \variant{3} inter \var{bondid}
     tabulated dihedral \var{filename}
 \end{essyntax}
 
-This creates a bond type with identificator \var{bond_type_number} with a
+This creates a bond type with identificator \var{bondid} with a
 two-body bond length (\variant{1}), three-body angle (\variant{2}) or four-body
 dihedral (\variant{3}) tabulated potential. The tabulated forces and energies
 have to be provided in a file \var{filename}, which is formatted identically as
@@ -693,10 +718,10 @@ The potential is calculated as follows:
 \subsection{Virtual bonds}
 
 \begin{essyntax}
-  inter \var{bond_type_number} virtual_bond
+  inter \var{bondid} virtual_bond
 \end{essyntax}
 
-This creates a virtual bond type with identificator \var{bond_type_number}, \ie
+This creates a virtual bond type with identificator \var{bondid}, \ie
 a pair bond without associated potential or force. It can used to specify
 topologies and for some analysis that rely on bonds, or \eg for bonds that
 should be displayed in VMD.
@@ -713,15 +738,18 @@ Uneducated use can result in completely unphysical simulations.
 
 \begin{essyntax}
   \variant{1} inter coulomb 0.0
-  \variant{2} inter coulomb \opt{\var{$l_B$} \var{method}} \opt{\var{parameters}}
+  \variant{2} inter coulomb \opt{\var{l_B} \var{method}} \opt{\var{parameters}}
+  \variant{3} inter coulomb
 \end{essyntax}
 
-This command defines how \es{} deals with electrostatic interactions. Variant
-\variant{1} completely disables Coulomb interactions hence deactivating the
-electrostatic subsystem, while variant \variant{2} sets up one of the methods
-described below to treat electrostatic interactions. \var{$l_B$} denotes the
-Bjerrum length, which measures the strength of the electrostatic interaction.
-For a pair of particles at distance $r$ with charge $q$ each, the interaction is given by
+This command defines how \es deals with electrostatic interactions.
+
+Variant \variant{1} completely disables Coulomb interactions hence
+deactivating the electrostatic subsystem, while variant \variant{2}
+sets up one of the methods described below to treat electrostatic
+interactions. \var{l_B} denotes the Bjerrum length, which measures the
+strength of the electrostatic interaction.  For a pair of particles at
+distance $r$ with charge $q$ each, the interaction is given by
 \begin{equation}
   U^C(r)=l_B k_B T\frac{q^2}{r}.
 \end{equation}
@@ -734,10 +762,9 @@ particles. This is done using the \texttt{part} command to set the charge
   part 0 q 1.0; part 1 q -1.0
 \end{tclcode}
 
-When not given a method or \texttt{0.0}, \texttt{inter coulomb} returns the
-current parameters of the coulomb interaction as a tcl-list using the same
-syntax as used to setup the method, \eg
-
+Variant \variant{3} returns the current parameters of the coulomb
+interaction as a tcl-list using the same syntax as used to setup the
+method, \eg
 \begin{tclcode}
   {coulomb 1.0 p3m 7.75 8 5 0.1138 0.0}
   {coulomb epsilon 0.1 n_interpol 32768 mesh_off 0.5 0.5 0.5}
@@ -748,7 +775,7 @@ syntax as used to setup the method, \eg
 \index{interactions!P3M|mainindex}
 
 \begin{essyntax}
-  inter coulomb p3m \var{r_cut} \var{mesh} \var{cao} \var{alpha}
+  inter coulomb p3m \var{r_\mathrm{cut}} \var{mesh} \var{cao} \var{alpha}
 \end{essyntax}
 
 Activates the P3M method to handle the Coulomb
@@ -759,25 +786,28 @@ interaction
 
 Here $\ell_B = e_o^2 / (4 \pi \epsilon k_B T)$ is the Bjerrum length.
 Make sure that you know the relevance of the P3M parameters before
-using P3M! If you are not sure, read the following references \cite{ewald21,hockney88,kolafa92,deserno98,deserno98a,deserno00,deserno00a}.
+using P3M! If you are not sure, read the following references
+\cite{ewald21,hockney88,kolafa92,deserno98,deserno98a,deserno00,deserno00a}.
 
 \subsubsection{Tuning P3M}
 \begin{essyntax}
   inter coulomb p3m \alt{tune \asep tunev2}
   accuracy \var{accuracy}\\
-  \opt{r_cut \var{r_cut}}
+  \opt{r_cut \var{r_\mathrm{cut}}}
   \opt{mesh \var{mesh}}
   \opt{cao \var{cao}}
-  \opt{alpha \var{alpha}}
+  \opt{alpha \var{\alpha}}
 \end{essyntax}
 
-\todo{Insert docs from \texttt{p3m.h}}
-
 Make sure you know how to tune p3m parameters before using the
-automatic tuning feature. Details are described in the documentation
-of P3M_tune_parameters rsp P3M_adaptive_tune_parameters in source file p3m.h.
+automatic tuning feature.
 
-The function utilizes the analytic expression of the error estimate for the P3M method in the book of Hockney and Eastwood (\cite{hockney88} Eqn. 8.23) in order to obtain the rms error in the force for a system of N randomly distributed particles in a cubic box. For the real space error the estimate of Kolafa and Perram\cite{kolafa92} is used.
+The function utilizes the analytic expression of the error estimate
+for the P3M method in the book of Hockney and Eastwood \cite[eqn
+8.23]{hockney88} in order to obtain the rms error in the force for a
+system of N randomly distributed particles in a cubic box.  For the
+real space error the estimate of Kolafa and Perram\cite{kolafa92} is
+used.
 
 The two tuning methods follow different methods for determining the
 optimal parameter. While the \keyword{tune} version simply tests
@@ -789,13 +819,18 @@ results of \keyword{tunev2} are always at least as good as the
 parameters achievable from the \keyword{tune} version, and normally
 the obtained accuracy is much closer to the desired value.
 
-During execution the tuning routines report the parameter sets tested, the corresponding k-space and real-space errors and timings needed for force calculations (the setmd variable \var{timings} controls the number of test force calculations). Since the error depends on \var{r_cut}/\var{box_l} and \var{alpha}\var{box_l} the output is given in these units, called \var{r_cut_iL} and \var{alpha_L}.
+During execution the tuning routines report the parameter sets tested,
+the corresponding k-space and real-space errors and timings needed for
+force calculations (the setmd variable \var{timings} controls the
+number of test force calculations). Since the error depends on
+\var{r_\mathrm{cut}}/\var{box\_l} and \var{\alpha}\var{box\_l} the
+output is given in these units.
 
-Note that any previous settings of \var{r_cut}, \var{cao} and
+Note that any previous settings of \var{r_\mathrm{cut}}, \var{cao} and
 \var{mesh} will be remembered. So if you want to retune your
 electrostatics, \eg after a major system change, you should use
 \begin{code}
-inter coulomb \var{bjerrum} p3m tune accuracy \var{acc} r_cut 0 mesh 0 cao 0
+inter coulomb \var{l_B} p3m tune accuracy \var{acc} r_cut 0 mesh 0 cao 0
 \end{code}
 
 Some additional p3m parameters have preset value
@@ -824,23 +859,25 @@ inter coulomb \var{parameter_name} \var{value}+
 \index{Debye-H\"uckel potential|mainindex}
 \index{interactions!Debye-H\"uckel|mainindex}
 
+\todo{How is the cutoff handled? Why is this not a normal short-raged
+  potential?}
 \begin{essyntax}
-  inter coulomb dh \var{kappa} \var{r_cut}
+  inter coulomb dh \var{\kappa} \var{r_\mathrm{cut}}
 \end{essyntax}
-\[ U^{C-DH} = \ell_B k_B T \frac{q_1 q_2 exp(-\kappa r)}{r} \]
 
-For
+Defines the electrostatic potential by
+\begin{equation}
+  U^{C-DH} = \ell_B k_B T \frac{q_1 q_2 exp(-\kappa r)}{r}
+\end{equation}
 
-\[ \kappa = 0 \]
-
-this corresponds to the plain coulomb potential.
+For $\kappa = 0$, this corresponds to the plain coulomb potential.
 
 \subsection{MMM2D}
 \index{MMM2D method|mainindex}
 \index{interactions!MMM2D|mainindex}
 
 \begin{essyntax}
- inter coulomb mmm2d \var{maximal_pairwise_error} \opt{\var{fixed_far_cutoff}}
+ inter coulomb mmm2d \var{maximal\_pairwise\_error} \opt{\var{fixed\_far\_cutoff}}
 \end{essyntax}
 MMM2D coulomb method for systems with periodicity 1 1 0. Needs the
 layered cell system. The performance of the method depends on the
@@ -858,11 +895,11 @@ refer to appendix \vref{chap:mmm}.
 
 \begin{essyntax}
   \variant{1}
-  inter coulomb mmm1d \var{switch_radius}
-  \opt{\var{bessel_cutoff}} \var{maximal_pairwise_error}
+  inter coulomb mmm1d \var{switch\_radius}
+  \opt{\var{bessel\_cutoff}} \var{maximal\_pairwise\_error}
 
   \variant{2}
-  inter coulomb mmm1d tune \var{maximal_pairwise_error}
+  inter coulomb mmm1d tune \var{maximal\_pairwise\_error}
 \end{essyntax}
 MMM1D coulomb method for systems with periodicity 0 0 1. Needs the
 nsquared cell system (see section \vref{sec:cell-systems}). The first
@@ -873,8 +910,8 @@ determined from the maximal pairwise error, otherwise this error only
 counts for the near formula. The second, tuning form just takes the
 maximal pairwise error and tries out a lot of switching radii to find
 out the fastest one. If this takes too long, you can change the value
-of the setmd variable "timings" which controls the number of test
-force calculations. For details on the MMM family of algorithms,
+of the setmd variable \keyword{timings}, which controls the number of
+test force calculations. For details on the MMM family of algorithms,
 refer to appendix \vref{chap:mmm}.
 
 \subsection{Maggs' method}
@@ -883,27 +920,26 @@ refer to appendix \vref{chap:mmm}.
 
 \begin{essyntax}
   inter coulomb
-  maggs \var{f_mass} \var{mesh} \var{field_friction}
-  \opt{yukawa \var{kappa} \var{r_cut}}
+  maggs \var{f\_mass} \var{mesh} \var{field\_friction}
+  \opt{yukawa \var{kappa} \var{r_\mathrm{cut}}}
 \end{essyntax}
 
 This is an implementation of the instantaneous 1/r Coulomb interaction
-
-\[ U = \ell_B k_B T \frac{q_1 q_2}{r} \]
-
+\begin{equation}
+  U = \ell_B k_B T \frac{q_1 q_2}{r}
+\end{equation}
 as the potential of mean force between charges which are dynamically
 coupled to a local electromagnetic field.
 
-\var{f_mass} is the mass of the field degree of freedom and equals to
-the square root of the inverted speed of light.
-
-\var{mesh} is the number of mesh points for the interpolation of the
-electromagnetic field
-
-\var{field_friction} value of the friction coefficient for the
-transversal field degrees of freedom (reserved for future
-developments)
-
+\begin{arguments}
+\item[\var{f\_mass}] is the mass of the field degree of freedom and equals
+  to the square root of the inverted speed of light.
+\item[\var{mesh}] is the number of mesh points for the interpolation
+  of the electromagnetic field.
+\item[\var{field\_friction}] is the value of the friction coefficient
+  for the transversal field degrees of freedom (reserved for future
+  development).
+\end{arguments}
 Unphysical self--energies that arise as a result of the lattice
 interpolation of charges, are corrected by a subtraction scheme based
 either on the exact lattice Green's function or the combination of the
@@ -912,15 +948,15 @@ method).
 
 For the case of Yukawa screened simulation (second method) one has to
 enter screening parameter \var{kappa} and the cut-off of the Yukawa
-potential \var{r_cut}.
+potential \var{r_\mathrm{cut}}.
 
 \subsection{ELC}
 \index{ELC method|mainindex}
 \index{interactions!ELC method|mainindex}
 
 \begin{essyntax}
-  inter coulomb elc \var{maximal_pairwise_error} \var{gap_size}
-  \opt{\var{far_cutoff}}
+  inter coulomb elc \var{maximal\_pairwise\_error} \var{gap\_size}
+  \opt{\var{far\_cutoff}}
 \end{essyntax}
 This is a special procedure that converts a 3d method, \ie P3M at the
 moment, to a 2d method, in computational order N. This is definitely
@@ -947,46 +983,43 @@ Make sure that you read the papers on ELC before using it !!!
 
 \subsection{Fixing the center of mass}
 \begin{essyntax}
-  inter \var{particle_type_number1} \var{particle_type_number1}
-  comfixed \var{comfixed_flag}
+  inter \var{typeid1} \var{typeid1} comfixed \var{flag}
 \end{essyntax}
 This interaction type applies a constraint on particles of type
-\var{particle_type_number1} such that during the integration the
-center of mass of these particles is fixed. This is accomplished as
-follows: The sum of all the forces acting on particles of type
-\var{particle_type_number1} are calculated. These include all the
-forces due to other interaction types and also the thermostat. Next a
-force equal in magnitude, but in the oppositte direction is applied on
-the particles. This force is divided equally on all the particles of
-type \var{particle_type_number1}, since currently there is no mass
-concept in \es. Note that the syntax of the declaration of comfixed
-interaction requires the same particle type to be input twice. If
-different particle types are given in the input, the program exits
-with an error message. The \var{comfixed_flag} can be set to 1 (which
-turns on the interaction) or 0 (to turn off the interaction).
+\var{typeid1} such that during the integration the center of mass of
+these particles is fixed. This is accomplished as follows: The sum of
+all the forces acting on particles of type \var{typeid1} are
+calculated. These include all the forces due to other interaction
+types and also the thermostat. Next a force equal in magnitude, but in
+the oppositte direction is applied on the particles. This force is
+divided equally on all the particles of type \var{typeid1}, since
+currently there is no mass concept in \es. Note that the syntax of the
+declaration of comfixed interaction requires the same particle type to
+be input twice. If different particle types are given in the input,
+the program exits with an error message. \var{flag} can be set to 1
+(which turns on the interaction) or 0 (to turn off the interaction).
 
 \subsection{Pulling particles apart}
 \begin{essyntax}
-  inter \var{particle_type_number1} \var{particle_type_number2}\\
-  comforce \var{comforce_flag} \var{comforce_dir} \var{comforce_force}
-  \var{comforce_fratio}
+  inter \var{typeid1} \var{typeid2}
+  comforce \var{flag} \var{dir} \var{force} \var{fratio}
 \end{essyntax}
 The comforce interaction type enables one to pull away particle groups
 of two different types. It is mainly designed for pulling experiments
-on bundles. Within a bundle of molecules of type number 1 (t1) lets
-mark one molecule as of type 2 (t2). Using comforce one can apply a
-force such that t2 can be pulled away from the bundle. The
+on bundles. Within a bundle of molecules of type number \var{typeid1}
+lets mark one molecule as of type \var{typeid2}. Using comforce one
+can apply a force such that t2 can be pulled away from the bundle. The
 \var{comforce_flag} is set to 1 to turn on the interaction, and to 0
 otherwise. The pulling can be done in two different directions. Either
-parallel to the major axis of the bundle ( \var{comforce_dir} = 0) or
-perpendicular to the major axis of the bundle (\var{comforce_dir} =
-1). \var{comforce_force} is used to set the magnitude of the force.
-\var{comforce_fratio} is used to set the ratio of the force applied on
-particles of t1 vs t2. This is useful if one has to keep the total
-applied force on the bundle and on the target molecule the same. A
-force of magnitude \var{comforce_force} is applied on t2 particles,
-and a force of magnitude (\var{comforce_force} *
-\var{comforce_fratio}) is applied on t1 particles.
+parallel to the major axis of the bundle ($\var{dir} = 0$) or
+perpendicular to the major axis of the bundle ($\var{dir} = 1$).
+\var{force} is used to set the magnitude of the force.  \var{fratio}
+is used to set the ratio of the force applied on particles of
+\var{typeid1} vs. \var{typeid2}. This is useful if one has to keep the
+total applied force on the bundle and on the target molecule the same.
+A force of magnitude \var{force} is applied on \var{typeid2}
+particles, and a force of magnitude (\var{force} * \var{fratio}) is
+applied on \var{typeid1} particles.
 
 %%% Local Variables:
 %%% mode: latex

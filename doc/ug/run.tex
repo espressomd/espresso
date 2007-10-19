@@ -6,7 +6,7 @@
 
 \begin{essyntax}
   \variant{1} integrate \var{steps}
-  \variant{2} integrate set \var{method} \opt{\var{parameter}}+
+  \variant{2} integrate set \var{method} \opt{\var{parameter}}\dots
 \end{essyntax}
 
 \todo{Docs missing!}
@@ -16,14 +16,14 @@
 \newescommand[change-volume]{change_volume}
 
 \begin{essyntax}
-  \variant{1} change_volume \var{V_new} 
-  \variant{2} change_volume \var{L_new} \alt{x \asep y \asep z \asep xyz}
+  \variant{1} change_volume \var{V_\mathrm{new}} 
+  \variant{2} change_volume \var{L_\mathrm{new}} \alt{x \asep y \asep z \asep xyz}
 \end{essyntax}
 Changes the volume of either a cubic simulation box to the new volume
-\var{V_new} or its given x-/y-/z-/xyz-extension to the new box-length
-\var{L_new}, and isotropically adjusts the particles coordinates as
-well. The function returns the new volume of the deformed simulation
-box.
+\var{V_\mathrm{new}} or its given x-/y-/z-/xyz-extension to the new
+box-length \var{L_\mathrm{new}}, and isotropically adjusts the
+particles coordinates as well. The function returns the new volume of
+the deformed simulation box.
 
 \section{Stopping particles}
 \newescommand{stopParticles}
@@ -40,15 +40,14 @@ feedback on the execution status.
 \section{\texttt{velocities}: Setting the velocities}
 \newescommand{velocities}
 \begin{essyntax}
-  velocities \var{v_max} 
-  \opt{start \var{part_id}} 
-  \opt{count \var{N_T}}
+  velocities \var{v_\mathrm{max}} 
+  \opt{start \var{pid}} 
+  \opt{count \var{N}}
 \end{essyntax}
-Sets the velocities of the particles with particle ID (see The part
-command) between \var{part_id} and \var{part_id}+\var{N_T}
-(defaults to '0' \& '[setmd npart]-\var{part_id}') to a random vector
-with length in [-vmax,vmax], and returns the absolute value of the
-total velocity assigned.
+Sets the velocities of the particles with particle IDs between
+\var{pid} and $\var{pid}+\var{N}$ to a random vector with a length
+less than \var{v_\mathrm{max}}, and returns the absolute value of the
+total velocity assigned. By default, all particles are affected.
 
 \section{\texttt{invalidate_system}}
 \newescommand[invalidate-system]{invalidate_system}
@@ -74,21 +73,21 @@ done automatically if using tcl_checkpoint_set and
 tcl_checkpoint_read beginning with v1.1 of \es{}), because in that
 case both scenarios will call ??? twice at the beginning of the second
 integration phase thus having their random number sequences in total
-sync. The C implementation is invalidate_system.
+sync.
 
 \section{Parallel tempering}
 \newescommand[parallel-tempering]{parallel_tempering}
 \begin{essyntax}
   parallel_tempering::main
-  -rounds \var{$N$}
+  -rounds \var{N}
   -swap \var{swap}
   -perform \var{perform}
   \opt{-init \var{init}}
-  \opt{-values \var{$\{T_i\}$}}
+  \opt{-values \var{\{T_i\}}}
   \opt{-connect \var{master}}
   \opt{-port \var{port}}
-  \opt{-load \var{$j_\mathrm{node}$}}
-  \opt{-resrate \var{$N_\mathrm{reset}$}}
+  \opt{-load \var{j_\mathrm{node}}}
+  \opt{-resrate \var{N_\mathrm{reset}}}
   \opt{-info \var{info}}
 \end{essyntax}
 
@@ -99,35 +98,47 @@ temperatures, and call them accordingly. It is possible to use multiple processo
 networking, but the number of processors can be smaller than the number of temperatures.
 
 \begin{arguments}
-\item[\var{swap}] specifies the name of the routine calculating the swap probability for a
-  system. The routine has to accept three parameters: the \var{id} of the system to
-  evaluate, and two temperatures \var{$T_1$} and \var{$T_2$}. The routine should return a list
-  containing the energy of the system at temperatures \var{$T_1$} and \var{$T_2$}, respectively.
-\item[\var{perform}] specifies the name of the routine performing the simulation between two swap
-  tries. The routine has to accept two parameters: the \var{id} of the system to
-  propagate and the temperature \var{$T$} at which to run it. Return values are ignored.
-\item[\var{init}] specifies the name of a routine initializing a system. This routine can for
-  example create the particles, perform some intial equilibration or open output files.
-  The routine has to accept two parameters: the \var{id} of the system to
-  initialize and its initial temperature \var{$T$}. Return values are ignored.
-\item[\var{$R$}] specifies the number of swap trial rounds; in each round, neighboring temperatures
-  are tried for swapping alternatingly, i.e. with four temperatures, The first swap trial round
-  tries to swap $1\leftrightarrow 2$ and $3\leftrightarrow 4$, the second round $2\leftrightarrow
-  3$, and so on.
-\item[\var{master}] the name of the host on which the parallel_tempering master node is running.
-\item[\var{port}] the TCP/IP port on which the parallel_tempering master should listen. This
-  defaults to 12000.
-\item[\var{$j_\mathrm{node}$}] specifies how many systems to run per \es{}-instance. If this is
-  more than 1, it is the user's responsibility to manage the storage of configurations, see below
+\item[\var{swap}] specifies the name of the routine calculating the
+  swap probability for a system. The routine has to accept three
+  parameters: the \var{id} of the system to evaluate, and two
+  temperatures \var{T_1} and \var{T_2}. The routine should return a
+  list containing the energy of the system at temperatures \var{T_1}
+  and \var{T_2}, respectively.
+\item[\var{perform}] specifies the name of the routine performing the
+  simulation between two swap tries. The routine has to accept two
+  parameters: the \var{id} of the system to propagate and the
+  temperature \var{T} at which to run it. Return values are ignored.
+\item[\var{init}] specifies the name of a routine initializing a
+  system. This routine can for example create the particles, perform
+  some intial equilibration or open output files.  The routine has to
+  accept two parameters: the \var{id} of the system to initialize and
+  its initial temperature \var{T}. Return values are ignored.
+\item[\var{R}] specifies the number of swap trial rounds; in each
+  round, neighboring temperatures are tried for swapping
+  alternatingly, i.e. with four temperatures, The first swap trial
+  round tries to swap $1\leftrightarrow 2$ and $3\leftrightarrow 4$,
+  the second round $2\leftrightarrow 3$, and so on.
+\item[\var{master}] the name of the host on which the
+  parallel_tempering master node is running.
+\item[\var{port}] the TCP/IP port on which the parallel_tempering
+  master should listen. This defaults to 12000.
+\item[\var{j_\mathrm{node}}] specifies how many systems to run per
+  \es{}-instance. If this is more than 1, it is the user's
+  responsibility to manage the storage of configurations, see below
   for examples.  This defaults to 1.
-\item[\var{$R_\mathrm{reset}$}] specifies after how many swap trial rounds to reset the counters
-  for the acceptance rate statistics. This defaults to 10.
-\item[\var{info}] specifies which output the parallel tempering code should produce:
+\item[\var{R_\mathrm{reset}}] specifies after how many swap trial
+  rounds to reset the counters for the acceptance rate statistics.
+  This defaults to 10.
+\item[\var{info}] specifies which output the parallel tempering code
+  should produce:
   \begin{itemize}
-  \item[\texttt{none}] parallel tempering will be totally quiet, except for fatal errors
-  \item[\texttt{comm}] information on client activities, such as connecting, is printed to stderr
-  \item[\texttt{all}] print lots of information on swap energies and probabilities to stdout. This
-    is useful for debugging and quickly checking the acceptance rates.
+  \item[\texttt{none}] parallel tempering will be totally quiet,
+    except for fatal errors
+  \item[\texttt{comm}] information on client activities, such as
+    connecting, is printed to stderr
+  \item[\texttt{all}] print lots of information on swap energies and
+    probabilities to stdout. This is useful for debugging and quickly
+    checking the acceptance rates.
   \end{itemize}
   This defaults to \texttt{all}.
 \end{arguments}
@@ -226,7 +237,7 @@ for {set T 0} {$T < 3} {set T [expr $T + 0.01]} {
 parallel_tempering::main -load 30 -values $temperatures -rounds 1000 \
     -init init -swap swap -perform perform
 \end{verbatim}
-This command turns the \es{} instance executing it into the master part of the parallel tempering
+This command turns the \es instance executing it into the master part of the parallel tempering
 simulation. It waits until a sufficient number of clients has connected. This are additional \es{}
 instances, which are identical to the master script, except that they execute
 \begin{verbatim}
