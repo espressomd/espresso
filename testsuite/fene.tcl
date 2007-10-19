@@ -12,7 +12,7 @@
 #  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 # 
 #
-# to generate the test system, use gen_fene.tcl
+# To generate the test system, use gen_fene.tcl.
 #
 puts "------------------------------------------"
 puts "- Testcase fene.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -40,7 +40,6 @@ proc read_data {file} {
 }
 
 if { [catch {
-    ############## fene-specific part
     read_data "fene_system.data.gz"
 
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
