@@ -346,12 +346,16 @@ typedef struct {
   union {
     /** Parameters for FENE bond Potential.
 	k - spring constant.
-	r - cutoff radius (maximal bond length).
-	r2 - suare of r (internal parameter). */
+	drmax - maximal bond streching.
+	r0 - equilibrium bond length.
+	drmax2 - square of drmax (internal parameter). 
+    */
     struct {
       double k;
-      double r;
-      double r2;
+      double drmax;
+      double r0;
+      double drmax2;
+      double drmax2i;
     } fene;
     /** Parameters for harmonic bond Potential */
     struct {

@@ -566,8 +566,9 @@ void calc_maximal_cutoff()
   for (i = 0; i < n_bonded_ia; i++) {
     switch (bonded_ia_params[i].type) {
     case BONDED_IA_FENE:
-      if(max_cut < bonded_ia_params[i].p.fene.r)
-	max_cut = bonded_ia_params[i].p.fene.r;
+      max_cut_tmp = bonded_ia_params[i].p.fene.r0+bonded_ia_params[i].p.fene.drmax;
+      if(max_cut < max_cut_tmp)
+	max_cut = max_cut_tmp;
       break;
     case BONDED_IA_HARMONIC:
       if(max_cut < bonded_ia_params[i].p.harmonic.r)
@@ -962,8 +963,10 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
   case BONDED_IA_FENE:
     Tcl_PrintDouble(interp, params->p.fene.k, buffer);
     Tcl_AppendResult(interp, "FENE ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.fene.r, buffer);
+    Tcl_PrintDouble(interp, params->p.fene.drmax, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.fene.r0, buffer);
+    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
     return (TCL_OK);
   case BONDED_IA_HARMONIC:
     Tcl_PrintDouble(interp, params->p.harmonic.k, buffer);

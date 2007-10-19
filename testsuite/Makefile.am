@@ -38,7 +38,9 @@ EXTRA_DIST = $(tests) \
 	lb_system.data \
 	\
 	pe_micelle.tcl pe_micelle_input.txt \
-	uwerr_test.tcl uwerr_test.data
+	uwerr_test.tcl uwerr_test.data \
+	\
+	gen_fene.tcl
 
 if MPI_FAKE
 processors=1
