@@ -76,7 +76,7 @@ void print_particle_forces();
 */
 extern int regular_exit;
 
-/** Identity of the particle to chekc extenively if ONEPART_DEBUG is defined. */
+/** Identity of the particle to check extensively if ONEPART_DEBUG is defined. */
 extern int check_id;
 
 #ifdef COMM_DEBUG
