@@ -410,7 +410,7 @@ void lb_reinit_fluid() {
     int k ;
 
     /* default values for fields in lattice units */
-    double rho = lbpar.rho/(agrid*agrid*agrid) ;
+    double rho = lbpar.rho*(agrid*agrid*agrid) ;
     double v[3] = { 0., 0., 0. };
     double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0., 0., rho*lbmodel.c_sound_sq };
 
@@ -491,7 +491,7 @@ MDINLINE void lb_calc_local_n(LB_FluidNode *local_node) {
   double *local_pi  = local_node->pi;
   double trace;
   const double rhoc_sq = *local_rho*lbmodel.c_sound_sq;
-  const double avg_rho = lbpar.rho/(agrid*agrid*agrid);
+  const double avg_rho = lbpar.rho*(agrid*agrid*agrid);
 
   /* see Eq. (4) in Berk Usta, Ladd and Butler, JCP 122, 094902 (2005) */
   
