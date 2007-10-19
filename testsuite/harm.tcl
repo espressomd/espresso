@@ -11,6 +11,10 @@
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 #  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 # 
+#
+# To generate the test system, use gen_harm.tcl.
+#
+
 puts "------------------------------------------"
 puts "- Testcase harm.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------"
@@ -36,27 +40,9 @@ proc read_data {file} {
    if { [catch { close $f } fid] } { puts "Error while closing $file caught: $fid." }
 }
 
-proc write_data {file} {
-    global energy pressure
-    if { [string compare [lindex [split $file "."] end] "gz"]==0 } { set f [open "|gzip -c - >$file" w]
-    } else { set f [open $file "w"] }
-    set energy [analyze energy total]
-    set pressure [analyze pressure total]
-    blockfile $f write tclvariable {energy pressure}
-    blockfile $f write variable box_l
-    blockfile $f write particles {id pos f}
-    blockfile $f write bonds all
-    close $f
-}
-
-
 if { [catch {
-    ############## harm-specific part
-    set harm_k      30.0
-    set harm_r      1.5
-    setmd box_l     99 99 99
-    inter 0 harm $harm_k $harm_r
     read_data "harm_system.data.gz"
+
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set F($i) [part $i pr f]
     }
