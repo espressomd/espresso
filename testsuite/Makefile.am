@@ -40,7 +40,7 @@ EXTRA_DIST = $(tests) \
 	pe_micelle.tcl pe_micelle_input.txt \
 	uwerr_test.tcl uwerr_test.data \
 	\
-	gen_fene.tcl
+	gen_fene.tcl gen_harm.tcl
 
 if MPI_FAKE
 processors=1
