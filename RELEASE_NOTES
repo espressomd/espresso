@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4s (Ydalir)                                                                     *
+* v2.0.4t (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4s -
+- v2.0.4t -
 -----------
 
+(t) October   19th, 2007.
 (s) October   11th, 2007.
 (r) October   10th, 2007.
 (q) October    8th, 2007.
@@ -55,12 +56,21 @@ New Features:
     set of variables to read.
 
 Changes:
+(t) Added third, optional parameter to FENE potential that allows specification of
+    the equilibrium length of the bond r0. Adapted testcase
+    accordingly.
+(t) Added essyntax* environment that will not be included into the quickeref.
+    Changed \var command so that it assumes math mode.
+(t) Generated new testcase for the harmonic bond potential: the previous testcase
+    was useless: all bonds had the same length!
 (e) Implemented MRT model in mode space.
 (e) Fluctuations are now also applied to kinetic modes.
 (e) External force now includes higher order terms (viscosity
     dependent).
 
 Bugfixes:
+(t) LB grid size change now correctly implemented - but not extensively
+    tested.
 (s) rigid bonds skip to many particles
 (r) iccp3m_cfg was defined in the header file instead of declared.
 (r) Definition is now in the c-file. This prevented compilation with gcc4.0 on
