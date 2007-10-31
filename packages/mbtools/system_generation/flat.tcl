@@ -45,8 +45,10 @@ proc ::mbtools::system_generation::flat::create_flat {args } {
     set options {
 	{bondl.arg     1.0   "bond length between atoms"  }
 	{fixz "fix the z positions of all particles in this bilayer"}
+	{crystal "set the lipids on a grid, instead of a random placement"}
+	{half "fills only half ot the xy plane with lipids, PBC in only one direction"}
     }
-    set usage "Usage: create_flat  \[bondl:fixz\] ]"
+    set usage "Usage: create_flat  \[bondl:fixz:crystal:half\] ]"
     array set params [::cmdline::getoptions args $options $usage]
 
     # First work out how many mol types there are and construct a list
@@ -66,22 +68,49 @@ proc ::mbtools::system_generation::flat::create_flat {args } {
     # orientation vector
     set orient [list 0 0 1.0 ]
     
+    # need dummy variables to iterate for the crystal structure
+    set i 0; set j 0
+    # ratio of two lengths r
+    set r [expr $bx/$by]
+    # number of molecules
+    set Npart 0
+    foreach mol $topology {
+	incr Npart
+    }
+    # determine the number of lipids along each axis
+    set N_x [expr sqrt($Npart*$r)]
+    set N_y [expr sqrt($Npart/$r)]
 
     foreach mol $topology {
-
-
-	# First we choose a point in the xy plane to place the lipid the
-	# standard choice is random but we might also add an option for
-	# uniform placement
-	lappend tailpos [expr $bx*[t_random]]
-	lappend tailpos [expr $by*[t_random]]
+	
+	#CRYSTAL STRUCTURE
+	if ($params(crystal)) {
+	    incr i
+	    if {$i*$bx/$N_x>$bx} { 
+		set i 0
+		incr j
+	    }
+	    lappend tailpos [expr $i*$bx/$N_x]
+	    lappend tailpos [expr $j*$by/$N_y]
+	} elseif ($params(half)) { 
+		  # Half bilayer
+		  lappend tailpos [expr .25*$bx+.5*$bx*[t_random]]
+		  lappend tailpos [expr $by*[t_random]]
+	      } else {
+		  # RANDOM PLACEMENT
+		  # First we choose a point in the xy plane to place the lipid the
+		  # standard choice is random but we might also add an option for
+		  # uniform placement
+		  lappend tailpos [expr $bx*[t_random]]
+		  lappend tailpos [expr $by*[t_random]]
+	      }
 	# We want the flat midplane at the box center so we need to
 	# place the first tailbead half a bond length up or down
 	# depending on the leaflet
 	lappend tailpos [expr $bz/2.0 + 0.5*$params(bondl)*[lindex $orient 2]] 
-
+	
 	::mbtools::system_generation::placemol $mol $tailpos -orient $orient -bondl $params(bondl)
-
+	
 	#  Since we are just making a flat we alternate between upper
 	#  and lower layers and therefore orient should be reversed
 	set orient [::mbtools::utils::scalevec $orient -1]
