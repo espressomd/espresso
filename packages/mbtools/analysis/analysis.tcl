@@ -41,7 +41,7 @@ source [file join [file dirname [info script]] distance.tcl]
 source [file join [file dirname [info script]] tiltangle.tcl]
 source [file join [file dirname [info script]] molforce.tcl]
 source [file join [file dirname [info script]] molcom.tcl]
-
+source [file join [file dirname [info script]] cylinder_radius.tcl]
 
 # ::mbtools::analysis::print_averages --
 #
@@ -104,8 +104,8 @@ proc ::mbtools::analysis::do_analysis { } {
     variable docommands
     variable known_flags
 
- 
-    analyze set "topo_part_sync"
+    #analyze set "topo_part_sync"
+    
 
     # Now run the setup commands for each of the required analysis commands
     set analyzeprefix "analyze_"
@@ -117,7 +117,7 @@ proc ::mbtools::analysis::do_analysis { } {
 	eval $analyzecommand
     }
 
-    analyze set "topo_part_sync"
+    #analyze set "topo_part_sync"
 
     ::mmsg::debug [namespace current] "done"
     flush stdout
