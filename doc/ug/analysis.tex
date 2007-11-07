@@ -321,7 +321,7 @@ energy contributions of the bonded resp. non-bonded interactions.
   \variant{2} analyze pressure total
   \variant{3} analyze pressure \alt{totals \asep ideal \asep coulomb
     \asep \\tot_nonbonded_inter \asep tot_nonbonded_intra}
-  \variant{4} analyze pressure bonded \var{bond_type}
+  \variant{4} analyze pressure bonded \var{bondid}
   \variant{5} analyze pressure nonbonded \var{typeid1} \var{typeid2}
   \variant{6} analyze pressure nonbonded_intra \opt{\var{typeid}}
   \variant{7} analyze pressure nonbonded_inter \opt{\var{typeid}}
@@ -592,14 +592,19 @@ configurations (see section \vref{sec:stored-configs}).
   analyze \alt{bond_l \asep <bond_l>} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
-Returns the average bond-length within a chain, averaged over all
-chains in the system; hence, it gives the same result as \var{idf(0)}
-from \lit{analyze internal_dist}. If you want to look only at specific
-chains, use the optional arguments, \ie $\var{chain\_start} =
+
+Analyses the bond lengths of the chains in the system.  Returns its average, the
+standard deviation, the maximum and the minimum.  If you want to look
+only at specific chains, use the optional arguments, \ie $\var{chain\_start} =
 2*\var{MPC}$ and $\var{n\_chains} = 1$ to only include the third
 chain's monomers. If \lit{<bond_l>} is used, the value will be
 averaged over all stored configurations (see section
 \vref{sec:stored-configs}).
+
+\minisec{Output format}
+\begin{code}
+\{ \var{mean} \var{stddev} \var{max} \var{min} \}
+\end{code}
 
 \subsubsection{Form factor}
 \analyzeindex{form factor of a chain}
