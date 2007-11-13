@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4t (Ydalir)                                                                     *
+* v2.0.4u (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4t -
+- v2.0.4u -
 -----------
 
+(u) November  12th, 2007.
 (t) October   19th, 2007.
 (s) October   11th, 2007.
 (r) October   10th, 2007.
@@ -69,6 +70,7 @@ Changes:
     dependent).
 
 Bugfixes:
+(u) removed debug-messages
 (t) LB grid size change now correctly implemented - but not extensively
     tested.
 (s) rigid bonds skip to many particles
