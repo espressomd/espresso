@@ -420,7 +420,7 @@ void integrate_vv(int n_steps)
 #endif
 
 #ifdef BOND_CONSTRAINT
-    init_f_shake();
+    init_shake_p();
     /**Correct those particle positions that participate in a rigid/constrained bond */
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     correct_pos_shake();

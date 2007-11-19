@@ -395,7 +395,7 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded, i
 
 void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb, int n_nonbonded, int chunk_size_nb);
 
-MDINLINE void get_com_h2o(Particle *p,double p_com[3])
+MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 {
 	int i,p_nr;
 	Particle* bonded_p,*calling_p;
@@ -405,87 +405,102 @@ MDINLINE void get_com_h2o(Particle *p,double p_com[3])
 	int type;
 	#endif
 	calling_p=local_particles[p->p.identity];
-	#ifdef WATER_DEBUG
-	type=calling_p->p.type+1;
-	if (p->p.identity!=calling_p->p.identity)
-	{
-		fprintf(stderr,"ID differ in get_com_h2o %i %i\n",p->p.identity,calling_p->p.identity);
-		exit(182);
-	}
-	#endif
-	for (i=0;i<3;i++)
-	{
-		tmp[i]=calling_p->r.p[i];
-		ibox[i]=calling_p->l.i[i];
-	}
-	unfold_position(tmp,ibox);
-	for (i=0;i<3;i++)
-	{
-		p_com[i]=calling_p->p.mass*tmp[i];
-	}
-	M=calling_p->p.mass;
-	for (p_nr=1;p_nr<calling_p->bl.n;p_nr+=2)/*bl list has entrie bond type, particle id, bond type, particle id*/
-	{
-		bonded_p=local_particles[calling_p->bl.e[p_nr]];
-		for (i=0;i<3;i++)
-		{
-			tmp[i]=bonded_p->r.p[i];
-			ibox[i]=bonded_p->l.i[i];
-		}
-		unfold_position(tmp,ibox);
+	if ((calling_p->p.type == 0) ||(calling_p->p.type == 2) ){
 		#ifdef WATER_DEBUG
-		type*=bonded_p->p.type+1;
-		if ((bonded_p->p.type+calling_p->p.type==2) && (fabs(min_distance(bonded_p->r.p,calling_p->r.p)-0.303814)>0.001))		
+		type=calling_p->p.type+1;
+		if (p->p.identity!=calling_p->p.identity)
 		{
-			fprintf(stderr,"Dist O(%i)-H(%i) wrong(%e) (in get_com_h2o)!\n",calling_p->p.identity,bonded_p->p.identity,min_distance(bonded_p->r.p,calling_p->r.p));
-			fprintf(stderr,"bonded_Part %i %e %e %e %e %i\n",bonded_p->p.identity,bonded_p->r.p[0],bonded_p->r.p[1],bonded_p->r.p[2],bonded_p->p.mass,bonded_p->p.type);
-			fprintf(stderr,"calling_Part %i %e %e %e %e %i\n",calling_p->p.identity,calling_p->r.p[0],calling_p->r.p[1],calling_p->r.p[2],calling_p->p.mass,calling_p->p.type);
-			for (i=0;i<calling_p->bl.n;i++)
-			{
-				fprintf(stderr,"XXX %i %i %i \n",i,calling_p->p.identity,calling_p->bl.e[i]);
-			}
+			fprintf(stderr,"ID differ in get_com_h2o %i %i\n",p->p.identity,calling_p->p.identity);
 			exit(182);
 		}
-		if ((bonded_p->p.type+calling_p->p.type==4) && (fabs(min_distance(bonded_p->r.p,calling_p->r.p)-0.504331)>0.001))
+		#endif
+		
+		for (i=0;i<3;i++)
 		{
-			fprintf(stderr,"Dist H(%i)-H(%i) wrong(%e) (in get_com_h2o)!\n",calling_p->p.identity,bonded_p->p.identity,min_distance(bonded_p->r.p,calling_p->r.p));
-			fprintf(stderr,"bonded_Part %i %e %e %e %e %i\n",bonded_p->p.identity,bonded_p->r.p[0],bonded_p->r.p[1],bonded_p->r.p[2],bonded_p->p.mass,bonded_p->p.type);
-			fprintf(stderr,"calling_Part %i %e %e %e %e %i\n",calling_p->p.identity,calling_p->r.p[0],calling_p->r.p[1],calling_p->r.p[2],calling_p->p.mass,calling_p->p.type);
-			for (i=0;i<calling_p->bl.n;i++)
+			tmp[i]=calling_p->r.p[i];
+			ibox[i]=calling_p->l.i[i];
+		}
+		unfold_position(tmp,ibox);
+		for (i=0;i<3;i++)
+		{
+			p_com[i]=calling_p->p.mass*tmp[i];
+		}
+		M=calling_p->p.mass;
+		for (p_nr=1;p_nr<calling_p->bl.n;p_nr+=2)/*bl list has entrie bond type, particle id, bond type, particle id*/
+		{
+			bonded_p=local_particles[calling_p->bl.e[p_nr]];
+			for (i=0;i<3;i++)
 			{
-				fprintf(stderr,"XXX %i %i %i \n",i,calling_p->p.identity,calling_p->bl.e[i]);
+				tmp[i]=bonded_p->r.p[i];
+				ibox[i]=bonded_p->l.i[i];
 			}
+			unfold_position(tmp,ibox);
+			#ifdef WATER_DEBUG
+			type*=bonded_p->p.type+1;
+			if ((bonded_p->p.type+calling_p->p.type==2) && (fabs(min_distance(bonded_p->r.p,calling_p->r.p)-0.303814)>0.001))		
+			{
+				fprintf(stderr,"Dist O(%i)-H(%i) wrong(%e) (in get_com_h2o)!\n",calling_p->p.identity,bonded_p->p.identity,min_distance(bonded_p->r.p,calling_p->r.p));
+				fprintf(stderr,"bonded_Part %i %e %e %e %e %i\n",bonded_p->p.identity,bonded_p->r.p[0],bonded_p->r.p[1],bonded_p->r.p[2],bonded_p->p.mass,bonded_p->p.type);
+				fprintf(stderr,"calling_Part %i %e %e %e %e %i\n",calling_p->p.identity,calling_p->r.p[0],calling_p->r.p[1],calling_p->r.p[2],calling_p->p.mass,calling_p->p.type);
+				for (i=0;i<calling_p->bl.n;i++)
+				{
+					fprintf(stderr,"XXX %i %i %i \n",i,calling_p->p.identity,calling_p->bl.e[i]);
+				}
+				exit(182);
+			}
+			if ((bonded_p->p.type+calling_p->p.type==4) && (fabs(min_distance(bonded_p->r.p,calling_p->r.p)-0.504331)>0.001))
+			{
+				fprintf(stderr,"Dist H(%i)-H(%i) wrong(%e) (in get_com_h2o)!\n",calling_p->p.identity,bonded_p->p.identity,min_distance(bonded_p->r.p,calling_p->r.p));
+				fprintf(stderr,"bonded_Part %i %e %e %e %e %i\n",bonded_p->p.identity,bonded_p->r.p[0],bonded_p->r.p[1],bonded_p->r.p[2],bonded_p->p.mass,bonded_p->p.type);
+				fprintf(stderr,"calling_Part %i %e %e %e %e %i\n",calling_p->p.identity,calling_p->r.p[0],calling_p->r.p[1],calling_p->r.p[2],calling_p->p.mass,calling_p->p.type);
+				for (i=0;i<calling_p->bl.n;i++)
+				{
+					fprintf(stderr,"XXX %i %i %i \n",i,calling_p->p.identity,calling_p->bl.e[i]);
+				}
+				exit(182);
+			}
+			#endif
+			for (i=0;i<3;i++)
+			{
+				p_com[i]+=bonded_p->p.mass*tmp[i];
+			}
+			M+=bonded_p->p.mass;
+		}
+		#ifdef WATER_DEBUG
+		if (type!=9)
+		{if ((calling_p->p.type == 0) ||(calling_p->p.type == 2) ){
+			fprintf(stderr,"Product of  part type is not  (%i) !(in get_com_h2o)! pnr=%i\n",type,calling_p->p.identity);
+			exit(182);
+		}
+		if (fabs(M -1.1250)> 0.001)
+		{
+			fprintf(stderr,"M unequal in get_com_h2o ! pnr=%i\n",calling_p->p.identity);
 			exit(182);
 		}
 		#endif
 		for (i=0;i<3;i++)
 		{
-			p_com[i]+=bonded_p->p.mass*tmp[i];
+			p_com[i]/=M;
+			ibox[i]=0;
 		}
-		M+=bonded_p->p.mass;
+		//fold_position(p_com,ibox);
+		return 3;
 	}
-	#ifdef WATER_DEBUG
-	if (type!=9)
+	else if ((calling_p->p.type == 4) ||(calling_p->p.type == 5) ){
+		for (i=0;i<3;i++)
+		{
+			p_com[i]=calling_p->r.p[i];
+		}
+		return 1;
+	}
+	else
 	{
-		fprintf(stderr,"Product of  part type is not  (%i) !(in get_com_h2o)! pnr=%i\n",type,calling_p->p.identity);
-		exit(182);
+		return (-1);
 	}
-	if (fabs(M -1.1250)> 0.001)
-	{
-		fprintf(stderr,"M unequal in get_com_h2o ! pnr=%i\n",calling_p->p.identity);
-		exit(182);
-	}
-	#endif
-	for (i=0;i<3;i++)
-	{
-		p_com[i]/=M;
-		ibox[i]=0;
-	}
-	//fold_position(p_com,ibox);
 }
 
 #ifdef WATER
-MDINLINE void get_comvel_h2o(Particle *p,double v_com[3])
+MDINLINE int get_comvel_h2o(Particle *p,double v_com[3])
 {
 	int i,p_nr;
 	Particle* bonded_p,*calling_p;
@@ -502,38 +517,53 @@ MDINLINE void get_comvel_h2o(Particle *p,double v_com[3])
 		exit(182);
 	}
 	#endif
-	for (i=0;i<3;i++)
-	{
-		v_com[i]=calling_p->p.mass*calling_p->m.v[i];
-	}
-	M=calling_p->p.mass;
-	for (p_nr=1;p_nr<calling_p->bl.n;p_nr+=2)/*bl list has entrie bond type, particle id, bond type, particle id*/
-	{
-		bonded_p=local_particles[calling_p->bl.e[p_nr]];
+	if ((calling_p->p.type == 0) ||(calling_p->p.type == 2) ){
+		for (i=0;i<3;i++)
+		{
+			v_com[i]=calling_p->p.mass*calling_p->m.v[i];
+		}
+		M=calling_p->p.mass;
+		for (p_nr=1;p_nr<calling_p->bl.n;p_nr+=2)/*bl list has entrie bond type, particle id, bond type, particle id*/
+		{
+			bonded_p=local_particles[calling_p->bl.e[p_nr]];
+			#ifdef WATER_DEBUG
+			type*=bonded_p->p.type+1;
+			#endif
+			for (i=0;i<3;i++)
+			{
+				v_com[i]+=bonded_p->p.mass*bonded_p->m.v[i];
+			}
+			M+=bonded_p->p.mass;
+		}
 		#ifdef WATER_DEBUG
-		type*=bonded_p->p.type+1;
+		if (type!=9)
+		{
+			fprintf(stderr,"Product of  part type is not  (%i) !(in get_com_h2o)! pnr=%i\n",type,calling_p->p.identity);
+			exit(182);
+		}
+		if (fabs(M -1.1250)> 0.001)
+		{
+			fprintf(stderr,"M unequal in get_com_h2o ! pnr=%i\n",calling_p->p.identity);
+			exit(182);
+		}
 		#endif
 		for (i=0;i<3;i++)
 		{
-			v_com[i]+=bonded_p->p.mass*bonded_p->m.v[i];
+			v_com[i]/=M;
 		}
-		M+=bonded_p->p.mass;
 	}
-	#ifdef WATER_DEBUG
-	if (type!=9)
+	else if ((calling_p->p.type == 4) ||(calling_p->p.type == 5) ){
+		for (i=0;i<3;i++)
+		{
+			v_com[i]=calling_p->m.v[i];
+		}
+		return 1;
+	}
+	else
 	{
-		fprintf(stderr,"Product of  part type is not  (%i) !(in get_com_h2o)! pnr=%i\n",type,calling_p->p.identity);
+		fprintf(stderr,"unknown type in get_com_h2o ! pnr=%i\n",calling_p->p.identity);
 		exit(182);
-	}
-	if (fabs(M -1.1250)> 0.001)
-	{
-		fprintf(stderr,"M unequal in get_com_h2o ! pnr=%i\n",calling_p->p.identity);
-		exit(182);
-	}
-	#endif
-	for (i=0;i<3;i++)
-	{
-		v_com[i]/=M;
+		return (-1);
 	}
 }
 #endif

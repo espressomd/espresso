@@ -285,7 +285,6 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, int *i, double dx[3], double force[3]) {
   /* Calculates the bonded force between two particles */
 #ifdef BOND_CONSTRAINT
-    int k;
     double pref;
 #endif
     switch(iaparams->type) {
@@ -321,7 +320,7 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
 #ifdef BOND_CONSTRAINT
     case BONDED_IA_RIGID_BOND:
       pref=PMASS(*p1)*PMASS(*p2)/time_step/time_step;
-      for (k=0;k<3;k++){force[k]=pref * (p1->r.shake_f[k]);}
+      force[0]=pref * p1->r.shake_p/dx[0];force[1]=force[2]=0.0;
 /*      pref=PMASS(*p1)/time_step/time_step;
       for (k=0;k<3;k++){force[k]+=pref*(p1->r.p[k]-p1->r.p_old_2[k])* p1->r.p[k];}
       pref=PMASS(*p2)/time_step/time_step;

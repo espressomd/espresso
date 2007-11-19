@@ -30,7 +30,7 @@ extern int n_rigidbonds;
 /** Transfers the current particle positions from r.p[3] to r.p_pold[3]
     of the \ref Particle structure. Invoked from \ref correct_pos_shake() */
 void save_old_pos();
-void init_f_shake();
+void init_shake_p();
 /** Propagate velocity and position while using SHAKE algorithm for bond constraint.*/
 void correct_pos_shake();
 
