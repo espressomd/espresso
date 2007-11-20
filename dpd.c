@@ -260,18 +260,18 @@ void dpd_print(Tcl_Interp *interp)
 #endif
   char buffer[TCL_DOUBLE_SPACE];
   Tcl_PrintDouble(interp, temperature, buffer);
-  Tcl_AppendResult(interp,"{ dpd: temp ",buffer, (char *)NULL);
+  Tcl_AppendResult(interp,"{ dpd ",buffer, (char *)NULL);
   Tcl_PrintDouble(interp, dpd_gamma, buffer);
-  Tcl_AppendResult(interp," gamma ",buffer, (char *)NULL);
+  Tcl_AppendResult(interp," ",buffer, (char *)NULL);
   Tcl_PrintDouble(interp, dpd_r_cut, buffer);
-  Tcl_AppendResult(interp," r_cut ",buffer, (char *)NULL);
+  Tcl_AppendResult(interp," ",buffer, (char *)NULL);
   sprintf(buffer,"%i",dpd_wf);
   Tcl_AppendResult(interp," WF ",buffer, (char *)NULL);
 #ifdef TRANS_DPD
   Tcl_PrintDouble(interp, dpd_tgamma, buffer);
-  Tcl_AppendResult(interp," tgamma ",buffer, (char *)NULL);
+  Tcl_AppendResult(interp," ",buffer, (char *)NULL);
   Tcl_PrintDouble(interp, dpd_tr_cut, buffer);
-  Tcl_AppendResult(interp," tr_cut ",buffer, (char *)NULL);
+  Tcl_AppendResult(interp," ",buffer, (char *)NULL);
   sprintf(buffer,"%i",dpd_twf);
   Tcl_AppendResult(interp," TWF ",buffer, (char *)NULL);
 #endif
