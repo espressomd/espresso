@@ -75,7 +75,8 @@ proc ::mbtools::utils::warmup { steps times args } {
 	}
 
 	# Set the new forcecap into espresso and integrate
-	inter tabforcecap $cap
+	# catch tabulated force cap error in case tabulated option is not turned on
+	catch {inter tabforcecap $cap}
 	inter ljforcecap $cap
 	integrate $steps
 	set cap [expr $cap + $capincr ]
@@ -87,7 +88,7 @@ proc ::mbtools::utils::warmup { steps times args } {
     
     # Turn off all forcecapping
     ::mmsg::send [namespace current] "uncapping forces"
-    inter tabforcecap 0
+    catch {inter tabforcecap 0}
     inter ljforcecap 0
  }
 
