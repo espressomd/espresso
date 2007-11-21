@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4u (Ydalir)                                                                     *
+* v2.0.4v (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4u -
+- v2.0.4v -
 -----------
 
+(v) November  20th, 2007.
 (u) November  12th, 2007.
 (t) October   19th, 2007.
 (s) October   11th, 2007.
@@ -70,6 +71,7 @@ Changes:
     dependent).
 
 Bugfixes:
+(v) dpd_print works now with checkpoint
 (u) removed debug-messages
 (t) LB grid size change now correctly implemented - but not extensively
     tested.
