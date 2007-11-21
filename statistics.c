@@ -953,9 +953,9 @@ int h2o_com_vel_unper(int pnr,double *v_com)
 	}
 }
 
-void calc_h2o_rdf_av( double r_min, double r_max, int r_bins, double *rdf, int n_conf)
+void calc_h2o_rdf_av(int type, double r_min, double r_max, int r_bins, double *rdf, int n_conf)
 {
-  int i,j,k,l,ind,cnt=0,cnt_conf=1;
+  int i,j,k,l,ind,cnt=0,cnt_conf=1,start;
   double inv_bin_width=0.0,bin_width=0.0, dist;
   double volume, bin_volume, r_in, r_out;
   double *rdf_tmp, p1[3],p2[3];
@@ -972,17 +972,29 @@ void calc_h2o_rdf_av( double r_min, double r_max, int r_bins, double *rdf, int n
     cnt=0;
     k=n_configs-cnt_conf;
     for(i=0; i<n_total_particles; i++) {
-	if(h2o_com_unper_k(k,i,p1) != -1) {
-	  //particle loop: p2_types
-	  for(j=i+1; j<n_total_particles; j++) {
-	      if(h2o_com_unper_k(k,j,p2) != -1) {
-		dist =min_distance(p1, p2);
-		if(dist > r_min && dist < r_max) {
-		  ind = (int) ( (dist - r_min)*inv_bin_width );
-		  rdf_tmp[ind]++;
+        //p1 is O-Atom
+	if(h2o_com_unper_k(k,i,p1) == 3) {
+	  //p2 is O-Atom
+	  if ( type == 0 ){
+	     start=i+1;
+	  }
+	  //p2 is Na or Cl !
+	  else if (( type == 4 )||( type == 5 )){
+	    start=0;
+	  }
+	  else {
+	    start = -1;
+	  }
+	  for(j=start; j<n_total_particles; j++) {
+	        //p2 is right type and get com of p2 !
+		if((partCfg[j].p.type==type)&&(h2o_com_unper_k(k,j,p2) != -1)) {
+			dist =min_distance(p1, p2);
+			if(dist > r_min && dist < r_max) {
+			ind = (int) ( (dist - r_min)*inv_bin_width );
+			rdf_tmp[ind]++;
+			}
+			cnt++;
 		}
-		cnt++;
-	      }
 	  }
 	}
     }
@@ -2789,7 +2801,7 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
       ERROR_SPRINTF(errtxt, "{059 parse_rdf: could not sort particle config, particle ids not consecutive?} ");
       return TCL_ERROR;
     }
-    calc_h2o_rdf_av(r_min, r_max, r_bins, rdf, n_conf);
+    calc_h2o_rdf_av(p1.e[0],r_min, r_max, r_bins, rdf, n_conf);
   }
 #endif
   else ;
