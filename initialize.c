@@ -53,6 +53,7 @@
 #include "bin.h"
 #include "lattice.h"
 #include "lb-boundaries.h"
+#include "iccp3m.h" /* -iccp3m- */
 
 /** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
@@ -574,6 +575,12 @@ static void init_tcl(Tcl_Interp *interp)
   REGISTER_COMMAND("lbfluid", lbfluid_cmd);
   /* in utils.h */
   REGISTER_COMMAND("replacestdchannel", replacestdchannel);
+  /* in iccp3m.h */
+#ifdef ELECTROSTATICS
+#ifdef ELP3M
+  REGISTER_COMMAND("iccp3m", iccp3m);
+#endif 
+#endif 
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");

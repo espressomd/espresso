@@ -79,34 +79,11 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb);
 		  therefore doesn't make sense to use it without NpT. */
 void master_pressure_calc(int v_comp);
 
-/** Does the binning for calc_p_tensor
-    @param _new_bin   NOT_DOCUMENTED
-    @param _elements  NOT_DOCUMENTED
-    @param _volumes   NOT_DOCUMENTED
-    @param r_min      minimum distance for binning
-    @param r_max      maximum distance for binning
-    @param r_bins     number of bins
-    @param center     3 dim pointer to sphere origin
-*/
-void calc_bins_sphere(int *_new_bin,int *_elements,double *_volumes,double r_min,double r_max,int r_bins, double *center);
-
 /** Initializes stat to be used by \ref calc_p_tensor. */
 void init_p_tensor(Observable_stat *stat);
 
 /** Initializes stat_nb to be used by \ref calc_p_tensor. */
 void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
-
-/** Calculates the pressure in the system from a virial expansion as a tensor.<BR>
-    Output is stored in the \ref #p_tensor array, in which the <tt>p_tensor.sum</tt>-components contain the sum of the component-tensors
-    stored in <tt>p_tensor.node</tt>. The function is executed on the master node only and uses sort of a N^2-loop to calculate the virials,
-    so it is rather slow.
-    @param volume the volume of the bin to be considered
-    @param p_list contains the list of particles to look at
-    @param flag   decides whether to derive the interactions of the particles in p_list to <i>all</i> other particles (=1) or not (=0).
-    @return error code
-*/
-int calc_p_tensor(double volume, IntList *p_list, int flag);
-
 
 /*********************************/
 /* Scalar and Tensorial Pressure */

@@ -11,10 +11,13 @@
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 #  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 # 
+#
+# To generate the test system, use gen_fene.tcl.
+#
 puts "------------------------------------------"
 puts "- Testcase fene.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------"
-setmd time_step 0.006
+setmd time_step 0.001
 setmd skin      0.0
 thermostat off
 
@@ -36,26 +39,7 @@ proc read_data {file} {
     if { [catch { close $f } fid] } { puts "Error while closing $file caught: $fid." }
 }
 
-proc write_data {file} {
-    global energy pressure
-    if { [string compare [lindex [split $file "."] end] "gz"]==0 } { set f [open "|gzip -c - >$file" w]
-    } else { set f [open $file "w"] }
-    set energy [analyze energy total]
-    set pressure [analyze pressure total]
-    blockfile $f write tclvariable {energy pressure}
-    blockfile $f write variable box_l
-    blockfile $f write particles {id pos f}
-    blockfile $f write bonds all
-    close $f
-}
-
 if { [catch {
-    ############## fene-specific part
-    set fene_k      30.0
-    set fene_r      1.5
-    setmd box_l     99 99 99
-    inter 0 fene $fene_k $fene_r
-
     read_data "fene_system.data.gz"
 
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
@@ -64,9 +48,6 @@ if { [catch {
     # to ensure force recalculation
     invalidate_system
     integrate 0
-
-    # here you can create the necessary snapshot
-    # write_data "fene_system.data2"
 
     # ensures that no other forces are on
     set cureng [analyze energy bonded 0 0]

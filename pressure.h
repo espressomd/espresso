@@ -321,11 +321,6 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
     case BONDED_IA_RIGID_BOND:
       pref=PMASS(*p1)*PMASS(*p2)/time_step/time_step;
       force[0]=pref * p1->r.shake_p/dx[0];force[1]=force[2]=0.0;
-/*      pref=PMASS(*p1)/time_step/time_step;
-      for (k=0;k<3;k++){force[k]+=pref*(p1->r.p[k]-p1->r.p_old_2[k])* p1->r.p[k];}
-      pref=PMASS(*p2)/time_step/time_step;
-      for (k=0;k<3;k++){force[k]+=pref*(p2->r.p[k]-p2->r.p_old_2[k])* p2->r.p[k];}
-      for (k=0;k<3;k++){force[k]/=dx[k];}*/
       break;
 #endif
 #ifdef BOND_VIRTUAL

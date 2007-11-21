@@ -206,7 +206,7 @@ MDINLINE void lb_calc_local_rho(LB_FluidNode *local_node) {
 
   double *local_n = local_node->n;
   double *local_rho = local_node->rho;
-  double avg_rho = lbpar.rho/(lbpar.agrid*lbpar.agrid*lbpar.agrid);
+  double avg_rho = lbpar.rho*(lbpar.agrid*lbpar.agrid*lbpar.agrid);
 
 #ifdef D3Q19
   *local_rho =   avg_rho
@@ -249,7 +249,7 @@ MDINLINE void lb_calc_local_j(LB_FluidNode *local_node) {
 #else
   int i;
   double tmp;
-  double avg_rho = lbpar.rho/(lbpar.agrid*lbpar.agrid*lbpar.agrid);
+  double avg_rho = lbpar.rho*(lbpar.agrid*lbpar.agrid*lbpar.agrid);
   local_j[0] = 0.0;
   local_j[1] = 0.0;
   local_j[2] = 0.0;
@@ -271,7 +271,7 @@ MDINLINE void lb_calc_local_pi(LB_FluidNode *local_node) {
 
   double *local_n  = local_node->n;
   double *local_pi = local_node->pi;
-  double avg_rho = lbpar.rho/(lbpar.agrid*lbpar.agrid*lbpar.agrid);
+  double avg_rho = lbpar.rho*(lbpar.agrid*lbpar.agrid*lbpar.agrid);
     
 #ifdef D3Q19
   local_pi[0] =   avg_rho/3.0
@@ -327,7 +327,7 @@ MDINLINE void lb_calc_local_fields(LB_FluidNode *local_node,int calc_pi_flag) {
   double *local_rho = local_node->rho;
   double *local_j   = local_node->j;
   double *local_pi  = local_node->pi;
-  double avg_rho = lbpar.rho/(lbpar.agrid*lbpar.agrid*lbpar.agrid);
+  double avg_rho = lbpar.rho*(lbpar.agrid*lbpar.agrid*lbpar.agrid);
 
 #ifdef D3Q19
   *local_rho =   avg_rho

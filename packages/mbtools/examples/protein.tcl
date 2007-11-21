@@ -159,7 +159,7 @@ lappend tablenames n9_c160_22.tab
 # time_vs_parametername. See the module analysis for more
 # details
 lappend analysis_flags pressure
-#lappend analysis_flags pik1
+#lappend analysis_flags stress_tensor
 lappend analysis_flags boxl
 #lappend analysis_flags flipflop
 lappend analysis_flags energy

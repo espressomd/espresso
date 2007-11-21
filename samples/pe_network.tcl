@@ -97,7 +97,7 @@ set distChain $MPC
 set LJ_eps       1.0
 set LJ_sigma     1.0
 set LJ_cut       1.122462048
-set LJ_shift     0
+set LJ_shift     [calc_lj_shift $lj1_sig $lj1_cut]
 set LJ_offset    0
 
 set fene_k       7.0

@@ -60,7 +60,7 @@ set density 0.85
 set lj1_eps     1.0
 set lj1_sig     1.0
 set lj1_cut     1.12246
-set lj1_shift   0.25
+set lj1_shift   [calc_lj_shift $lj1_sig $lj1_cut]
 set lj1_off     0.0
 
 # attractive FENE

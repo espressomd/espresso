@@ -145,7 +145,7 @@ lappend nb_interactions [list 2 2 lj-cos2 $lj_eps $lj_sigma $ljoffset 1.6 ]
 # time_vs_parametername. See the module ::std_analysis for more
 # details
 lappend analysis_flags pressure
-#lappend analysis_flags pik1
+#lappend analysis_flags stress_tensor
 lappend analysis_flags boxl
 #lappend analysis_flags flipflop
 lappend analysis_flags energy

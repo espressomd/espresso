@@ -330,9 +330,9 @@ long runs.
   checkpoint_set \var{destination} 
   \opt{\var{num_configs}
     \opt{\var{tclvar} 
-      \opt{\var{ia_flag}
-        \opt{\var{var_flag}
-          \opt{\var{ran_flag}}}}}}
+      \opt{\var{iaflag}
+        \opt{\var{varflag}
+          \opt{\var{ranflag}}}}}}
 \end{essyntax}
 Creates a checkpoint with path/filename \var{destination} (compressed
 if \var{destination} ends with '.gz'), saving the last \var{\# of
@@ -341,11 +341,11 @@ if \var{destination} ends with '.gz'), saving the last \var{\# of
 \var{tclvar} (defaults to '-'), all interactions (The inter command) /
 \es{}-variables (The setmd command) / random-number-generator
 informations (The t\_random command etc.) unless their respective
-flags \var{ia\_flag} / \var{var\_flag} / \var{ran\_flag} are set to
-'-'; you may however choose to only include certain \es{}-variables
-(The setmd command) by providing their names as a tcl-list in place of
-\var{var\_flag}.  When you're reading this, tcl\_checkpoint\_set will
-be using The invalidate\_system command automatically; therefore
+flags \var{iaflag} / \var{varflag} / \var{ranflag} are set to '-'; you
+may however choose to only include certain \es-variables (The setmd
+command) by providing their names as a tcl-list in place of
+\var{varflag}.  When you're reading this, tcl\_checkpoint\_set will be
+using the invalidate\_system command automatically; therefore
 continuing an integration after setting a checkpoint or restarting it
 there by reading one should make absolutely no difference anymore,
 since the current state of the random number generator(s) is/are
@@ -388,7 +388,7 @@ whole array.
 \subsection{Writing a checkpoint 2}
 \begin{essyntax}
   \variant{1} polyBlockWrite \var{path} 
-  \alt{\var{param_list} \asep all} \var{part_list}
+  \alt{\var{param\_list} \asep all} \var{part\_list}
 \end{essyntax}
 \todo{Title!}
 \todo{Clean up. Describe arguments in argument env.}  
@@ -442,7 +442,7 @@ PSF files for example for IMD.
 \end{essyntax}
 Writes the current topology to the file \var{file} (here, \var{file}
 is not a channel, since additional information cannot be written
-anyway).  \var{N\_P}, \var{MPC} and so on are parameters describing a
+anyway).  \var{N_P}, \var{MPC} and so on are parameters describing a
 system consisting of equally long charged polymers, counterions and
 salt.  This information is used to set the residue name and can be
 used to color the atoms in VMD. If you specify \lit{-molecule}, the
@@ -458,17 +458,18 @@ versions of \lit{writepsf}.
 
 \begin{essyntax}
   \variant{1} writepdb \var{file}
-  \variant{2} writepdbfoldchains \var{file} \var{chain_start}
-  \var{n_chains} \var{chain_length} \var{box_l}
+  \variant{2} writepdbfoldchains \var{file} \var{chain\_start}
+  \var{n\_chains} \var{chain\_length} \var{box\_l}
   \variant{3} writepdbfoldtopo \var{file} \var{shift}
 \end{essyntax}
 
 Variant \variant{1} writes the corresponding particle data. 
 
-Variant \variant{2} writes folded particle data where the folding is performed
-on chain centers of mass rather than single particles. In order to
-fold in this way the chain topology and box length must be specified.
-Note that this method is outdated. Use variant \variant{3} instead.
+Variant \variant{2} writes folded particle data where the folding is
+performed on chain centers of mass rather than single particles. In
+order to fold in this way the chain topology and box length must be
+specified.  Note that this method is outdated. Use variant \variant{3}
+instead.
 
 Variant \variant{3} writes folded particle data where the folding is
 performed on chain centers of mass rather than single particles. This

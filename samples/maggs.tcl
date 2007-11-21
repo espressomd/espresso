@@ -47,7 +47,7 @@ set max_cells   16
 set lj1_eps     1.0
 set lj1_sig     1.0
 set lj1_cut     1.12246
-set lj1_shift   [expr 0.25*$lj1_eps]
+set lj1_shift   [calc_lj_shift $lj1_sig $lj1_cut]
 
 # Coulomb
 set bjerrum       5.0

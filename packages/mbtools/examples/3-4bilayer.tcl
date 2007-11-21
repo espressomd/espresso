@@ -125,7 +125,7 @@ lappend tablenames n9_c140_22.tab
 # details
 lappend analysis_flags orient_order
 lappend analysis_flags pressure 
-lappend analysis_flags pik1  
+lappend analysis_flags stress_tensor  
 lappend analysis_flags boxl
 lappend analysis_flags flipflop
 lappend analysis_flags energy

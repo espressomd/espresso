@@ -116,12 +116,8 @@ set box_length [expr pow(($npart/$density),(1.0/3.0))]
 puts "cubic box length         : $box_length"
 
 # Dependent Parameters
-set lj1_shift  [expr -4.0*$lj1_epsilon*(pow($lj1_cut,-12)-pow($lj1_cut,-6))]
-set lj2_shift  [expr -4.0*$lj2_epsilon*(pow($lj2_cut,-12)-pow($lj2_cut,-6))]
-set lj1_cutforce [expr 48*$lj1_epsilon*(0.5*pow($lj1_cut,-7)-pow($lj1_cut,-13))]
-set lj2_cutforce [expr 48*$lj2_epsilon*(0.5*pow($lj2_cut,-7)-pow($lj2_cut,-13))]
-#puts "LJ shifts:     1: $lj1_shift           2: $lj2_shift"
-#puts "LJ Cut forces: 1: $lj1_cutforce   2: $lj2_cutforce"
+set lj1_shift  [calc_lj_shift 1 $lj1_cut]
+set lj2_shift  [calc_lj_shift 1 $lj2_cut]
 
 # Setup
 #############################################################

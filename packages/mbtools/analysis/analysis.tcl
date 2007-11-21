@@ -16,7 +16,7 @@ namespace eval ::mbtools::analysis {
     variable stray_cut_off
 #    variable switches
     variable this [namespace current]
-    variable known_flags " possible flags are: \n cluster_calc \n pik1_calc \n pressure_calc \n box_len_calc \n fluctuation_calc \n energy_calc \n stray_lipids_calc \n orient_order_calc \n flipflop_calc \n density_profile_calc \n localheights_calc \n localorients \n distance_calc \n tiltangle_calc \n  molforce \n molcom \n"
+    variable known_flags " possible flags are: \n cluster_calc \n stress_tensor_calc \n pressure_calc \n box_len_calc \n fluctuation_calc \n energy_calc \n stray_lipids_calc \n orient_order_calc \n flipflop_calc \n density_profile_calc \n localheights_calc \n localorients \n distance_calc \n tiltangle_calc \n  molforce \n molcom \n"
 
     namespace export do_analysis
     namespace export setup_analysis
@@ -28,7 +28,7 @@ source [file join [file dirname [info script]] boxl.tcl]
 source [file join [file dirname [info script]] clusters.tcl]
 source [file join [file dirname [info script]] energy.tcl]
 source [file join [file dirname [info script]] pressure.tcl]
-source [file join [file dirname [info script]] pik1.tcl]
+source [file join [file dirname [info script]] stress_tensor.tcl]
 source [file join [file dirname [info script]] oop.tcl]
 source [file join [file dirname [info script]] fluctuations.tcl]
 source [file join [file dirname [info script]] stray.tcl]
@@ -104,8 +104,8 @@ proc ::mbtools::analysis::do_analysis { } {
     variable docommands
     variable known_flags
 
- 
-    analyze set "topo_part_sync"
+    #analyze set "topo_part_sync"
+    
 
     # Now run the setup commands for each of the required analysis commands
     set analyzeprefix "analyze_"
@@ -117,7 +117,7 @@ proc ::mbtools::analysis::do_analysis { } {
 	eval $analyzecommand
     }
 
-    analyze set "topo_part_sync"
+    #analyze set "topo_part_sync"
 
     ::mmsg::debug [namespace current] "done"
     flush stdout

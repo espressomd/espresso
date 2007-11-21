@@ -8,20 +8,20 @@
 
 \begin{essyntax}
   part
-  \var{particle_number}
+  \var{pid}
   \opt{pos \var{x} \var{y} \var{z}}
-  \opt{type \var{particle_type_number}}
+  \opt{type \var{typeid}}
   \opt{v \var{vx} \var{vy} \var{vz}}
   \opt{f \var{fx} \var{fy} \var{fz}}
-  \opt{bond \var{bond_type_number} \var{partner} \dots}
+  \opt{bond \var{bondid} \var{pid2} \dots}
   \require{1}{\opt{q \var{charge}}}
   \require{2}{\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}}
-  \require{2}{\opt{omega \var{x_value} \var{y_value} \var{z_value}}}
-  \require{2}{\opt{torque \var{x_value} \var{y_value} \var{z_value}}}\\
+  \require{2}{\opt{omega \var{x} \var{y} \var{z}}}
+  \require{2}{\opt{torque \var{x} \var{y} \var{z}}}\\
   \require{3}{\opt{\opt{un}fix \var{x} \var{y} \var{z}}}
-  \require{3}{\opt{ext_force \var{x_value} \var{y_value} \var{z_value}}}
-  \require{4}{\opt{exclude \var{exclusion_partner}\dots}}
-  \require{4}{\opt{exclude delete \var{exclusion_partner}\dots}}
+  \require{3}{\opt{ext_force \var{x} \var{y} \var{z}}}
+  \require{4}{\opt{exclude \var{pid2}\dots}}
+  \require{4}{\opt{exclude delete \var{pid2}\dots}}
   \require{5}{\opt{mass \var{mass}}}
   \require{6}{\opt{dipm \var{moment}}}
   \require{6}{\opt{dip \var{dx} \var{dy} \var{dz}}}
@@ -41,12 +41,12 @@ be changed at once. If you add a new particle the position has to be
 set first because of the spatial decomposition.
 
 \begin{arguments}
-\item[\var{particle_number}]
+\item[\var{pid}]
 \item[\opt{pos \var{x} \var{y} \var{z}}] Sets the position of this
   particle to $(x,y,z)$.
-\item[\opt{type \var{particle_type_number}}] Restrictions:
-  $\var{particle_type_number} \geq 0$.\\ The
-  \var{particle_type_number} is used in the \keyword{inter} command
+\item[\opt{type \var{typeid}}] Restrictions:
+  $\var{typeid} \geq 0$.\\ The
+  \var{typeid} is used in the \keyword{inter} command
   (see section \vref{tcl:inter}) to define the parameters of the non
   bonded interactions between different kinds of particles.
 \item[\opt{v \var{vx} \var{vy} \var{vz}}] Sets the velocity of
@@ -54,32 +54,32 @@ this particle to $(vx,vy,vz)$. The velocity remains variable and will be changed
 during integration.
 \item[\opt{f \var{fx} \var{fy} \var{fz}}] Set the force acting on this particle
 to $(fx,fy,fz)$. The force remains variable and will be changed during integration.
-\item[\opt{bond \var{bond_type_number} \var{partner}+}]
-  Restrictions: \var{bond_type_number} $\geq 0$; \var{partner} must
-  be an existing particle.  The \var{bond_type_number} is used for
+\item[\opt{bond \var{bondid} \var{pid2}\dots}]
+  Restrictions: \var{bondid} $\geq 0$; \var{pid2} must
+  be an existing particle.  The \var{bondid} is used for
   the inter command to define bonded interactions.
 \item[bond delete] Will delete all bonds attached to this particle.
 \item[\opt{q \var{charge}}] Sets the charge of this praticle to $q$.
 \item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}] \todo{Docs required (JC?).} 
-  \item[\opt{omega \var{x_value} \var{y_value} \var{z_value}}] \todo{Docs
+  \item[\opt{omega \var{x} \var{y} \var{z}}] \todo{Docs
   required (JC?).} 
-  \item[\opt{torque \var{x_value} \var{y_value} \var{z_value}}] \todo{Docs
+  \item[\opt{torque \var{x} \var{y} \var{z}}] \todo{Docs
   required (JC?).}
 \item[\opt{fix \var{x} \var{y} \var{z}}] Fixes the particle in space.
   By supplying a set of 3 integers as arguments it is possible to fix
   motion in \var{x}, \var{y}, or \var{z} coordinates independently. For
   example \var{fix 0 0 1} will fix motion only in z. Note that
   \var{fix} without arguments is equivalent to \var{fix 1 1 1}.
-\item[\opt{ext_force \var{x_value} \var{y_value} \var{z_value}}]
+\item[\opt{ext_force \var{x} \var{y} \var{z}}]
   An additional external force is applied to the particle.
 \item[\opt{unfix}] Release any external influence from the particle.
-\item[\opt{exclude \var{exclusion_partner}+}] Restrictions:
-  \var{exclusion_partner} must be an existing particle.  Between the
+\item[\opt{exclude \var{pid2}\dots+}] Restrictions:
+  \var{pid2} must be an existing particle.  Between the
   current particle an the exclusion partner(s), no nonbonded
   interactions are calculated. Note that unlike bonds, exclusions are
   stored with both partners.  Therefore this command adds the defined
   exclusions to both partners.
-\item[\opt{exclude delete \var{exclusion_partner}+}] Searches for the
+\item[\opt{exclude delete \var{pid2}\dots}] Searches for the
   given exclusion and deletes it. Again deletes the exclusion with
   both partners.
   \item[\opt{mass \var{mass}}] Sets the mass of this particle to $mass$. If not
@@ -93,7 +93,7 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
 
 \begin{essyntax}
   \variant{1}
-  part \var{particle_number} print
+  part \var{pid} print
   \optlong{\alt{id \asep pos \asep type \asep folded_position \asep type \asep
       q \asep v \asep f \asep fix \asep ext_force \asep bond \asep
       \mbox{connections \opt{\var{range}}}}}\dots
@@ -101,7 +101,7 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
 \end{essyntax}
 
 Variant \variant{1} will return a list of the specified properties of
-particle \var{particle_number}, or all properties, if no keyword is
+particle \var{pid}, or all properties, if no keyword is
 specified.  Variant \variant{2} will return a list of all properties
 of all particles.
 
@@ -152,11 +152,11 @@ a tcl-list with the same format as specified above:
 \label{tcl:part:delete}
 
 \begin{essyntax}
-  \variant{1} part \var{particle_number} delete
+  \variant{1} part \var{pid} delete
   \variant{2} part deleteall
 \end{essyntax}
 
-In variant \variant{1}, the particle \var{particle_number} is deleted
+In variant \variant{1}, the particle \var{pid} is deleted
 and all bonds referencing it.  Variant \variant{2} will delete all
 particles currently present in the simulation. Variant \variant{3}
 will delete all currently defined exclusions.
@@ -193,18 +193,18 @@ system.
 \newescommand{polymer}
 \begin{essyntax}
   polymer 
-  \var{num_polymers} \var{monomers_per_chain}
-  \var{bond_length}\\
-  \opt{start \var{part_id}} 
+  \var{num\_polymers} \var{monomers\_per\_chain}
+  \var{bond\_length}\\
+  \opt{start \var{pid}} 
   \opt{pos \var{x} \var{y} \var{z}}
   \opt{mode \alt{RW \asep SAW \asep PSAW} 
-    \opt{\var{shield} \opt{\var{max_try}}}} 
-  \require{1}{\opt{charge \var{val_charged_monomer}}} 
-  \require{1}{\opt{distance \var{dist_charged_monomer}}}
-  \opt{types \var{type_neutral_monomer}
-    \opt{\var{type_charged_monomer}}} 
-  \opt{bond \var{type_bond}} 
-  \opt{angle \var{phi} \opt{\var{theta} \opt{\var{x} \var{y}
+    \opt{\var{shield} \opt{\var{try_\mathrm{max}}}}} 
+  \require{1}{\opt{charge \var{q}}} 
+  \require{1}{\opt{distance \var{d_\mathrm{charged}}}}
+  \opt{types \var{typeid_\mathrm{neutral}}
+    \opt{\var{typeid_\mathrm{charged}}}} 
+  \opt{bond \var{bondid}} 
+  \opt{angle \var{\phi} \opt{\var{\theta} \opt{\var{x} \var{y}
         \var{z}}}}
   \require{2}{\opt{constraints}}
   \begin{features}
@@ -213,20 +213,20 @@ system.
   \end{features}
 \end{essyntax}
 
-This command will create \var{num_polymers} polymer or
-polyelectrolyte chains with \var{monomers_per_chain} monomers per
+This command will create \var{num\_polymers} polymer or
+polyelectrolyte chains with \var{monomers\_per\_chain} monomers per
 chain. The length of the bond between two adjacent monomers will be
-set up to be \var{bond_length}.
+set up to be \var{bond\_length}.
 
 \begin{arguments}
-\item[\var{num_polymers}] Sets the number of polymer chains.
-\item[\var{monomers_per_chain}] Sets the number of monomers per
+\item[\var{num\_polymers}] Sets the number of polymer chains.
+\item[\var{monomers\_per\_chain}] Sets the number of monomers per
   chain.
-\item[\var{bond_length}] Sets the initial distance between two adjacent
+\item[\var{bond\_length}] Sets the initial distance between two adjacent
   monomers. The distance during the course of the simulation depends on the
-  applied potentials. For fixed box length please refer to the SHAKE algorithm.
+  applied potentials. For fixed bond length please refer to the SHAKE algorithm.
   \todo{Link to rattle/shake.}
-\item[\opt{start \var{part_id}}] Sets the particle number of the
+\item[\opt{start \var{pid}}] Sets the particle number of the
   start monomer to be used with the \keyword{part} command. This
   defaults to 0.
 
@@ -235,7 +235,7 @@ set up to be \var{bond_length}.
   a randomly chosen value)
   
 \item[\opt{mode \alt{RW  \asep  PSAW  \asep  SAW} \opt{\var{shield}
-      \opt{\var{max_try}}}}]
+      \opt{\var{try_\mathrm{max}}}}}]
   Selects the setup mode:
   \begin{description}
   \item[\keyword{RW} (Random walk)] The monomers are
@@ -245,7 +245,7 @@ set up to be \var{bond_length}.
     monomer is randomly chosen in a distance of \var{bond_length} to
     the previous monomer. If the position is closer to another
     particle than \var{shield}, the attempt is repeated up to
-    \var{try_max} times. Note, that this is not a real self-avoiding
+    \var{try_\mathrm{max}} times. Note, that this is not a real self-avoiding
     random walk, as the particle distribution is not the same. If you
     want a real self-avoiding walk, use the \keyword{SAW} mode.
     However, \keyword{PSAW} is several orders of magnitude faster than
@@ -257,69 +257,66 @@ set up to be \var{bond_length}.
     the whole chain is done, up to \var{max_try} times.
   \end{description}
   The default for the mode is \keyword{RW}, the default for the
-  \var{shield} is $1.0$, and the default for \var{max_try} is
+  \var{shield} is $1.0$, and the default for \var{try_\mathrm{max}} is
   $30000$, which is usually enough for \keyword{PSAW}. Depending on
-  the length of the chain, for the \keyword{SAW} mode, \var{max_try}
-  has to be increased by several orders of magnitude.
-\item[\opt{charge \var{val_charged_monomer}}] Sets the valency of
-  the charged monomers.  If the valency of the charged polymers
-  \var{val_charged_monomer} is smaller than $10^{-10}$, the charge
-  is assumed to be zero, and the types are set to
-  \var{type_charged_monomer} = \var{type_neutral_monomer}. If charge is not set,
-  it defaults to 0.0.
-
-\item[\opt{distance \var{dist_charged_monomer}}] Sets the stride
+  the length of the chain, for the \keyword{SAW} mode,
+  \var{try_\mathrm{max}} has to be increased by several orders of
+  magnitude.
+\item[\opt{charge \var{valency}}] Sets the valency of the charged
+  monomers.  If the valency of the charged polymers \var{valency} is
+  smaller than $10^{-10}$, the charge is assumed to be zero, and the
+  types are set to $\var{typeid_\mathrm{charged}} =
+  \var{typeid_\mathrm{neutral}}$. If charge is not set, it defaults to
+  0.0.
+\item[\opt{distance \var{d_\mathrm{charged}}}] Sets the stride
   between the indices of two charged monomers. This defaults defaults
   to 1, meaning that all monomers in the chain are charged.
-  
-\item[\opt{types \var{type_neutral_monomer}
-    \var{type_charged_monomer}}] Sets the type numbers of the
-  neutral and charged monomer types to be used with the \keyword{part}
-  command. If \var{type_neutral_monomer} is defined,
-  \var{type_charged_monomer} defaults to 1. If the option is
-  omitted, both monomer types default to 0.
-  
-\item[\opt{bond \var{type_bond}}] Sets the type number of the bonded
-  interaction to be set between the monomers. This defaults to 0. Any bonded
-  interaction, no matter how many bonding-partners needed, is stored with the
-  second particle in this bond. \todo{Link to
-  bonded interactions}
-  
-\item[\opt{angle \var{phi} [\var{theta} [\var{x} \var{y} \var{z}]]}]
-  Allows for setting up helices or planar polymers: \var{phi} sets
-  the angle $\phi$ and \var{theta} sets the angle $\theta$ between
-  adjacent bonds. \var{x}, \var{y} and \var{z} set the position of the
-  second monomer of the first chain.
+\item[\opt{types \var{typeid_\mathrm{neutral}}
+    \var{typeid_\mathrm{charged}}}] Sets the type ids of the neutral
+    and charged monomer types to be used with the \keyword{part}
+    command. If only \var{typeid_\mathrm{neutral}} is defined,
+    \var{typeid_\mathrm{charged}} defaults to $1$. If the option is
+    omitted, both monomer types default to $0$.
+  \item[\opt{bond \var{bondid}}] Sets the type number of the bonded
+    interaction to be set between the monomers. This defaults to $0$.
+    Any bonded interaction, no matter how many bonding-partners
+    needed, is stored with the second particle in this bond.
+    \todo{Link to bonded interactions}
+  \item[\opt{angle \var{\phi} [\var{\theta} [\var{x} \var{y}
+      \var{z}]]}] Allows for setting up helices or planar polymers:
+    \var{\phi} and \var{theta} are the angles between adjacent bonds.
+    \var{x}, \var{y} and \var{z} set the position of the second
+    monomer of the first chain.
   \item[\opt{constraints}] If this option is specified, the particle setup-up
-  tries to obey previously defined constraints (see Section \vref{sec:constraint}).
+  tries to obey previously defined constraints (see section \vref{sec:constraint}).
 \end{arguments}
 
 \subsection{\texttt{counterions}: Set up counterions}
 \newescommand{counterions}
 \begin{essyntax}
   counterions
-  \var{N_CI} 
-  \opt{start \var{part_id}} 
-  \opt{mode \alt{SAW \asep RW} \opt{\var{shield} \opt{\var{max_try} }}} 
-  \require{1}{\opt{charge \var{val_CI}}}
-  \opt{type \var{type_CI}}
+  \var{N} 
+  \opt{start \var{pid}} 
+  \opt{mode \alt{SAW \asep RW} \opt{\var{shield} \opt{\var{try_\mathrm{max}} }}} 
+  \require{1}{\opt{charge \var{val}}}
+  \opt{type \var{typeid}}
   \begin{features}
     \required[1]{ELECTROSTATICS}
   \end{features}
 \end{essyntax}
-This command will create \var{N_CI} counterions in the simulation box.
+This command will create \var{N} counterions in the simulation box.
 \begin{arguments}
-  \item[\var{N_CI}] Sets the number of counterions to setup.
-  \item[\opt{start \var{part_id}}] Sets the particle id of the first counterion.
-  It defaults to the current number of particles, \ie counterions are placed
-  after all previously defined particles.
-  \item[\opt{mode \alt{SAW \asep RW} \opt{\var{shield} \opt{\var{max_try} }}}]
-  Specifies the setup method to place the counterions. It defaults to
-  \texttt{SAW}. See the \texttt{polymer} command for a detailed description.
-  \item[\opt{charge \var{val_CI}}] Specifies the charge of the counterions. If not
-  set, it defaults to -1.0.
-  \item[\opt{type \var{type_CI}}] Specifies the particle type of the counterions. It
-  defaults to 2.
+\item[\opt{start \var{pid}}] Sets the particle id of the first
+  counterion.  It defaults to the current number of particles, \ie
+  counterions are placed after all previously defined particles.
+\item[\opt{mode \alt{SAW \asep RW} \opt{\var{shield}
+      \opt{\var{try_\mathrm{max}} }}}] Specifies the setup method to
+  place the counterions. It defaults to \keyword{SAW}. See the
+  \keyword{polymer} command for a detailed description.
+\item[\opt{charge \var{val}}] Specifies the charge of the counterions.
+  If not set, it defaults to $-1.0$.
+\item[\opt{type \var{typeid}}] Specifies the particle type of the
+  counterions. It defaults to $2$.
 \end{arguments}
 
 \smallskip
@@ -327,35 +324,35 @@ This command will create \var{N_CI} counterions in the simulation box.
 \newescommand{salt}
 \begin{essyntax}
   salt 
-  \var{N_pS} \var{N_nS} 
-  \opt{start \var{part_id}} 
-  \opt{mode \alt{SAW \asep RW} \opt{\var{shield} \opt{\var{max_try}}}}
-  \require{1}{\opt{charges \var{val_pS} \opt{\var{val_nS}}}} 
-  \opt{types \var{type_pS} \opt{\var{type_nS}}}
-  \opt{rad \var{radius}}
+  \var{N_+} \var{N_-} 
+  \opt{start \var{pid}} 
+  \opt{mode \alt{SAW \asep RW} \opt{\var{shield} \opt{\var{try_\mathrm{max}}}}}
+  \require{1}{\opt{charges \var{val_+} \opt{\var{val_-}}}} 
+  \opt{types \var{typeid_+} \opt{\var{typeid_-}}}
+  \opt{rad \var{r}}
   \begin{features}
     \required[1]{ELECTROSTATICS}
   \end{features}
 \end{essyntax}
 
-Create \var{N_pS} positively and \var{N_nS} negatively charged salt
-ions of charge \var{val_pS} and \var{val_nS} within the simulation
-box.
+Create \var{N_+} positively and \var{N_-} negatively charged salt ions
+of charge \var{val_+} and \var{val_-} within the simulation box.
 \begin{arguments}
-  \item[\var{N_pS}] Sets the number of positively charged salt ions.
-  \item[\var{N_nS}] Sets the number of negatively charged salt ions.
-  \item[\opt{start \var{part_id}}] Sets the particle id of the first
-  (positively charged) salt ion. It defaults to the current number of particles.
-  \item[\opt{mode \alt{SAW \asep RW} \opt{\var{shield} \opt{\var{max_try} }}}]
-  Specifies the setup method to place the counterions. It defaults to 
-  \texttt{SAW}. See the \texttt{polymer} command for a detailed description.
-  \item[\opt{charge \var{val_pS} \opt{\var{val_nS}}}] Sets the charge of the
-  positive salt ions to \var{val_pS} and the one of the negatively charged salt
-  ions to \var{val_nS}. If not set, the values default to 1.0 and -1.0.
-  \item[\opt{type \var{type_pS} \opt{\var{type_nS}}}] Specifies the particle type of the
-  salt ions. It defaults to 3 for positive ions and 4 for negative ions.
-  \item[\opt{rad \var{radius}}] When working within the cell model, the salt
-  ions are only placed in a sphere with radius \var{radius} around the origin. 
+\item[\opt{start \var{pid}}] Sets the particle id of the first
+  (positively charged) salt ion. It defaults to the current number of
+  particles.
+\item[\opt{mode \alt{SAW \asep RW} \opt{\var{shield}
+      \opt{\var{try_\mathrm{max}} }}}] Specifies the setup method to
+  place the counterions. It defaults to \keyword{SAW}. See the
+  \keyword{polymer} command for a detailed description.
+\item[\opt{charge \var{val_+} \opt{\var{val_-}}}] Sets the charge of
+  the positive salt ions to \var{val_+} and the one of the negatively
+  charged salt ions to \var{val_-}. If not set, the values default to
+  $1.0$ and $-1.0$, respectively.
+\item[\opt{type \var{typeid_+} \opt{\var{typeid_-}}}] Specifies the
+  particle type of the salt ions. It defaults to $3$ respectively $4$.
+\item[\opt{rad \var{r}}] The salt ions are only placed in a
+  sphere with radius \var{r} around the origin.
 \end{arguments}
 
 
@@ -363,10 +360,11 @@ box.
 \newescommand{diamond}
 \begin{essyntax}
   diamond 
-  \var{a} \var{bond_length} \var{MPC} 
-  \opt{counterions \var{N_CI}}\\ 
-  \require{1}{\opt{charges \var{val_nodes} \var{val_cM} \var{val_CI}}}
-  \require{1}{\opt{distance \var{cM_dist}}}
+  \var{a} \var{bond\_length} \var{monomers\_per\_chain} 
+  \opt{counterions \var{N_\mathrm{CI}}}\\ 
+  \require{1}{\opt{charges \var{val_\mathrm{node}}
+      \var{val_\mathrm{monomer}} \var{val_\mathrm{CI}}}}
+  \require{1}{\opt{distance \var{d_\mathrm{charged}}}}
   \opt{nonet}
   \begin{features}
     \required[1]{ELECTROSTATICS}
@@ -375,23 +373,28 @@ box.
 
 Creates a diamond-shaped polymer network with 8 tetra-functional nodes
 connected by $2*8$ polymer chains of length \var{MPC} in a unit cell of length
-\var{a}. For inter-particle bonds interaction 0 is taken which must be a
-two-particle bond. \todo{A picture would be helpful.}
+\var{a}. For inter-particle bonds interaction $0$ is taken which must be a
+two-particle bond. 
+\todo{A picture would be helpful.}
+\todo{Which typeids are used for the different particles?}
 
 \begin{arguments}
-  \item[\var{a}] Determines the size of the of the unit cell.
-  \item[\var{bond_length}] Specifies the bond length of the polymer chains
-  connecting the 8 tetra-functional nodes.
-  \item[\var{MPC}] Sets the number of chain monomers between the funtional
-  nodes.
-  \item[\opt{counterions \var{N_CI}}] Adds \var{N_CI} counterions to the system.
-  
-  \item[\opt{charges \var{val_nodes} \var{val_cM} \var{val_CI}}] Sets the
-  charges of the nodes to \var{val_nodes}, the charge of the connecting monomers
-  to \var{val_cM}, and the charge of the counterions to \var{val_CI}.
-  \item[\opt{distance \var{cM_dist}}] Specifies the distance between charged
-  monomers along the interconnecting chains. If $\var{cM_dist} > 1$ the remaining
-  chain monomers are uncharged.
+\item[\var{a}] Determines the size of the of the unit cell.
+\item[\var{bond\_length}] Specifies the bond length of the polymer
+  chains connecting the 8 tetra-functional nodes.
+\item[\var{monomers\_per\_chain}] Sets the number of chain monomers
+  between the functional nodes.
+\item[\opt{counterions \var{N_\mathrm{CI}}}] Adds \var{N_\mathrm{CI}}
+  counterions to the system.
+\item[\opt{charges \var{val_\mathrm{node}} \var{val_\mathrm{monomer}}
+    \var{val_\mathrm{CI}}}] Sets the charge of the nodes to
+  \var{val_\mathrm{node}}, the charge of the connecting monomers to
+  \var{val_\mathrm{monomer}}, and the charge of the counterions to
+  \var{val_\mathrm{CI}}.
+\item[\opt{distance \var{d_\mathrm{charged}}}] Specifies the distance
+  between charged monomers along the interconnecting chains. If
+  $\var{d_\mathrm{charged}} > 1$ the remaining chain monomers are
+  uncharged.
   \item[\opt{nonet}] \todo{Define what \var{nonet} does.}
 \end{arguments}
 
@@ -400,65 +403,67 @@ two-particle bond. \todo{A picture would be helpful.}
 \newescommand{icosaeder}
 \begin{essyntax}
   icosaeder 
-  \var{a} \var{MPC} 
-  \opt{counterions \var{N_CI}} 
-  \require{1}{\opt{charges \var{val_cM} \var{val_CI}}}
-  \require{1}{\opt{distance \var{cM_dist}}}
+  \var{a} \var{monomers\_per\_chain} 
+  \opt{counterions \var{N_\mathrm{CI}}} 
+  \require{1}{\opt{charges \var{val_\mathrm{monomers}} \var{val_\mathrm{CI}}}}
+  \require{1}{\opt{distance \var{d_\mathrm{charged}}}}
   \begin{features}
     \required[1]{ELECTROSTATICS}
   \end{features}
 \end{essyntax}
 
-Creates a modified icosaeder to model a fulleren (or soccer ball). The edges are
-modeled by polymer chains connected at the corners of the icosaeder. For 
-inter-particle bonds interaction 0 is taken which must be a two-particle bond.
-\todo{A picture would be helpful}
+Creates a modified icosaeder to model a fullerene (or soccer ball).
+The edges are modeled by polymer chains connected at the corners of
+the icosaeder. For inter-particle bonds interaction $0$ is taken which
+must be a two-particle bond.  \todo{A picture would be helpful}
 
 \begin{arguments}
-  \item[\var{a}] Defines the size of the icosaeder.
-  \item[\var{MPC}] Specifies the number of chain monomers along one edge.
-  \item[\opt{counterions \var{N_CI}}] Specifies the number of counterions to be
-  placed into the system.
-  \item[\opt{charges \var{val_cM} \var{val_CI}}] Set the charges of the monomers
-  to \var{val_cM} and the charges of the counterions to \var{val_CI}.
-  \item[\opt{distance \var{cM_dist}}] Specifies the distance between two charged
-  monomer along the edge. If $\var{cM_dist} > 1$ the remaining monomers are uncharged.
+\item[\var{a}] Defines the size of the icosaeder.
+\item[\var{monomers\_per\_chain}] Specifies the number of chain monomers along one edge.
+\item[\opt{counterions \var{N_\mathrm{CI}}}] Specifies the number of
+  counterions to be placed into the system.
+\item[\opt{charges \var{val_\mathrm{monomers}} \var{val_\mathrm{CI}}}]
+  Set the charges of the monomers to \var{val_\mathrm{monomers}} and
+  the charges of the counterions to \var{val_\mathrm{CI}}.
+\item[\opt{distance \var{d_\mathrm{charged}}}] Specifies the distance
+  between two charged monomer along the edge. If
+  $\var{d_\mathrm{charged}} > 1$ the remaining monomers are uncharged.
 \end{arguments}
 
 \subsection{\texttt{crosslink}: Cross-linking polymers}
 \newescommand{crosslink}
 \begin{essyntax}
   crosslink 
-  \var{N_P} \var{MPC} 
-  \opt{start \var{part_id}} 
-  \opt{catch \var{r_catch}}
-  \opt{distLink \var{link_dist}} 
-  \opt{distChain \var{chain_dist}} 
-  \opt{FENE \var{type_FENE}} 
-  \opt{trials \var{max_try}} 
+  \var{num\_polymer} \var{monomers\_per\_chain} 
+  \opt{start \var{pid}} 
+  \opt{catch \var{r_\mathrm{catch}}}
+  \opt{distLink \var{link\_dist}} 
+  \opt{distChain \var{chain\_dist}} 
+  \opt{FENE \var{bondid}} 
+  \opt{trials \var{try_\mathrm{max}}} 
 \end{essyntax}
 
-Attempts to end-crosslink the current configuration of \var{N_P}
-equally long polymers with \var{MPC} monomers each, returning how many
-ends are successfully connected. 
+Attempts to end-crosslink the current configuration of
+\var{num\_polymer} equally long polymers with
+\var{monomers\_per\_chain} monomers each, returning how many ends are
+successfully connected.
 
 \begin{arguments}
-  \item[\var{N_P}] The number of polymers in the current configuration to be
-  linked. 
-  \item[\var{MPC}] The number of monomers per chain to be linked.
-  \item[\opt{start \var{part_id}}] \var{part_id} specifies the first monomer of
-  the chains to be linked. It has to be specified if the polymers do not start
-  at id 0.
-  \item[\opt{catch \var{r_catch}}] Set the radius around each monomer which is
-  searched for possible new monomers to connect to. \var{r_catch} defaults to
-  1.9.
-  \item[\opt{distLink \var{link_dist}}] The minimal distance of two
-  interconnecting links. It defaults to 2.
-  \item[\opt{distChain \var{chain_dist}}] The minimal distance for an
-  interconnection along the same chain. It defaults to 0. If set to \var{MPC},
-  no interchain connections are created.
-  \item[\opt{FENE \var{type_FENE}}] Sets the bond type for the connections to \var{type_FENE}.
-  \item[\opt{trials \var{max_try}}] If not specified, \var{max_try} defaults to 30000.
+\item[\opt{start \var{pid}}] \var{pid} specifies the first monomer of
+  the chains to be linked. It has to be specified if the polymers do
+  not start at id 0.
+\item[\opt{catch \var{r_catch}}] Set the radius around each monomer
+  which is searched for possible new monomers to connect to.
+  \var{r_\mathrm{catch}} defaults to $1.9$.
+\item[\opt{distLink \var{link\_dist}}] The minimal distance of two
+  interconnecting links. It defaults to $2$.
+\item[\opt{distChain \var{chain\_dist}}] The minimal distance for an
+  interconnection along the same chain. It defaults to $0$. If set to
+  \var{monomers\_per\_chain}, no interchain connections are created.
+\item[\opt{FENE \var{bondid}}] Sets the bond type for the connections
+  to \var{bondid}.
+\item[\opt{trials \var{try_\mathrm{max}}}] If not specified,
+  \var{try_\mathrm{max}} defaults to $30000$.
 \end{arguments}
 
 \section{\texttt{constraint}: Setting up constraints}\label{sec:constraint}

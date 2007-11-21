@@ -29,9 +29,9 @@ global observables.
 \analyzeindex{particle distance}
 
 \begin{essyntax}
-  \variant{1} analyze mindist \opt{\var{type_list_a} \var{type_list_b}}
-  \variant{2} analyze distto \var{part_id}
-  \variant{3} analyze distto \var{posx} \var{posy} \var{posz}
+  \variant{1} analyze mindist \opt{\var{type\_list\_a} \var{type\_list\_b}}
+  \variant{2} analyze distto \var{pid}
+  \variant{3} analyze distto \var{x} \var{y} \var{z}
 \end{essyntax}
 
 Variant \variant{1} returns the minimal distance between two particles
@@ -39,41 +39,41 @@ in the system. If the type-lists are given, then the minimal distance
 between particles of only those types is determined.
 
 \keyword{distto} returns the minimal distance of all particles to
-particle \var{part_id} (Variant \variant{2}) or to the coordinates
-(\var{posx}, \var{posy}, \var{posz}) (Variant \variant{3}).
+particle \var{pid} (variant \variant{2}), or to the coordinates
+(\var{x}, \var{y}, \var{z}) (Variant \variant{3}).
 
 \subsection{Particles in the neighbourhood}
 \label{analyze:nbhood}
 \analyzeindex{particles in the neighbourhood}
 
 \begin{essyntax}
- \variant{1} analyze nbhood \var{part_id} \var{r_catch}
- \variant{2} analyze nbhood \var{posx} \var{posy} \var{posz}
+ \variant{1} analyze nbhood \var{pid} \var{r\_catch}
+ \variant{2} analyze nbhood \var{x} \var{y} \var{z}
  \var{r_catch}
 \end{essyntax}
 Returns a Tcl-list of the particle ids of all particles within a given
-radius \var{r_catch} around the position of the particle with number
-\var{part_id} in variant \variant{1} or around the spatial coordinate
-(\var{posx}, \var{posy}, \var{posz}) in variant \variant{2}.
+radius \var{r\_catch} around the position of the particle with number
+\var{pid} in variant \variant{1} or around the spatial coordinate
+(\var{x}, \var{y}, \var{z}) in variant \variant{2}.
 
 \subsection{Particle distribution}
 \label{analyze:distribution}
 \analyzeindex{particle distribution}
 
 \begin{essyntax}
-  analyze distribution \var{part_type_list_a} \var{part_type_list_b}
-  \opt{\var{r_min} \opt{\var{r_max} \opt{\var{r_bins} 
-        \opt{\var{log_flag} \opt{\var{int_flag}}}}}}
+  analyze distribution \var{part\_type\_list\_a} \var{part\_type\_list\_b}
+  \opt{\var{rmin} \opt{\var{rmax} \opt{\var{rbins} 
+        \opt{\var{log\_flag} \opt{\var{int\_flag}}}}}}
 \end{essyntax}
 Returns its parameters and the distance distribution of particles with
-types specified in \var{part_type_list_a} (group a) around
-particles with types specified in \var{part_type_list_b} (group b)
-with distances between \var{r_min} and \var{r_max}, binned into
-\var{r_bins} bins. The bins are either equidistant
-(\var{log_flag}=0) or logarithmically equidistant ($\var{log_flag}
-\geq 1$). If an integrated distribution is required, use
-\var{int_flag}=1. The distance is defined as the minimal distance
-between a particle of group a to any of group b. 
+types specified in \var{part\_type\_list\_a} around particles with
+types specified in \var{part\_type\_list\_b} with distances between
+\var{rmin} and \var{rmax}, binned into \var{rbins} bins. The
+bins are either equidistant (if $\var{log\_flag} = 0$) or
+logarithmically equidistant (if $\var{log_flag} \geq 1$). If an
+integrated distribution is required, use $\var{int_flag}=1$. The
+distance is defined as the \emph{minimal} distance between a particle
+of one group to any of the other group.
 
 \minisec{Output format} 
 
@@ -94,14 +94,14 @@ The output corresponds to the blockfile format (see section
 
 \begin{essyntax}
   analyze \alt{rdf \asep <rdf>} 
-  \var{part_type_list_a} \var{part_type_list_b} 
-  \opt{\var{r_min} \var{r_max} \var{r_bins}}
+  \var{part\_type\_list\_a} \var{part\_type\_list\_b} 
+  \opt{\var{rmin} \var{rmax} \var{rbins}}
 \end{essyntax}
 Returns its parameters and the radial distribution function (rdf) of
-particles with types specified in \var{part_type_list_a} (group a)
-around particles with types specified in \var{part_type_list_b} (group
-b). The range is given by \var{r_min} and \var{r_max} and is divided
-into \var{r_bins} equidistant bins. 
+particles with types specified in \var{part\_type\_list\_a} around
+particles with types specified in \var{part\_type\_list\_b}. The range
+is given by \var{rmin} and \var{rmax} and is divided into
+\var{rbins} equidistant bins.
 
 \minisec{Output format}
 
@@ -135,7 +135,7 @@ calculations grows as $\var{order}^3$.
 The output corresponds to the blockfile format (see section
 \vref{sec:structured-file-format}):
 \begin{code}
-\{ \var{q_value} \var{S(q)_value} \} 
+\{ \var{q\_value} \var{S(q)\_value} \} 
 \vdots
 \end{code}
 
@@ -191,64 +191,63 @@ Returns the center of mass of particles of the given type.
 \analyzeindex{principal axis of the moment of inertia}
 
 \begin{essyntax}
-  \variant{1} analyze momentofinertiamatrix { \var{part_type} } 
-  \variant{2} analyze find_principal_axis \var{part_type}
+  \variant{1} analyze momentofinertiamatrix { \var{typeid} } 
+  \variant{2} analyze find_principal_axis \var{typeid}
 \end{essyntax}
 Variant \variant{1} returns the moment of inertia matrix for particles
-of given type \var{part_type}. The output is a list of all the
-elements of the 3x3 matrix. Variant \variant{2} returns the
-eigenvalues and eigenvectors of the matrix.
+of given type \var{typeid}. The output is a list of all the elements
+of the 3x3 matrix. Variant \variant{2} returns the eigenvalues and
+eigenvectors of the matrix.
 
 \subsection{Aggregation}
 \label{analyze:aggregation}
 \analyzeindex{aggregation}
 
 \begin{essyntax}
-  analyze aggregation \var{dist_criteria} \var{s_mol_id}
-  \var{f_mol_id} \opt{\var{min_contact} \opt{\var{charge_criteria}}}
+  analyze aggregation \var{dist\_criteria} \var{s\_mol\_id}
+  \var{f\_mol\_id} \opt{\var{min\_contact} \opt{\var{charge\_criteria}}}
 \end{essyntax}
 Returns the aggregate size distribution for the molecules in the
-molecule id range \var{s_mol_id} to \var{f_mol_id}. If any monomers in
-two different molecules are closer than \var{dist_criteria} they are
-considered to be in the same aggregate. One can use the optional
-\var{min_contact} parameter to specify a minimum number of contacts
-such that only molecules having at least \var{min_contact} contacts
-will be considered to be in the same aggregate. The second optional
-parameter \var{charge_criteria} enables one to consider aggregation
-state of only oppositely charged particles.
-
+molecule id range \var{s\_mol\_id} to \var{f\_mol\_id}. If any
+monomers in two different molecules are closer than
+\var{dist\_criteria} they are considered to be in the same aggregate.
+One can use the optional \var{min\_contact} parameter to specify a
+minimum number of contacts such that only molecules having at least
+\var{min\_contact} contacts will be considered to be in the same
+aggregate. The second optional parameter \var{charge\_criteria}
+enables one to consider aggregation state of only oppositely charged
+particles.
 
 \subsection{Identifying pearl-necklace structures}
 \label{analyze:necklace}
 \analyzeindex{pearl-necklace structures}
 
 \begin{essyntax}
- analyze necklace \var{pearl_treshold} \var{back_dist} \var{space_dist}
+ analyze necklace \var{pearl\_treshold} \var{back\_dist} \var{space\_dist}
 \var{first} \var{length} 
 \end{essyntax}
 Algorithm for identifying pearl necklace structures for
 polyelectrolytes in poor solvent \citep{limbach03a}. The first three
 parameters are tuning parameters for the algorithm:
-\var{pearl_treshold} is the minimal number of monomers in a pearl.
-\var{back_dist} is the number of monomers along the chain backbone
+\var{pearl\_treshold} is the minimal number of monomers in a pearl.
+\var{back\_dist} is the number of monomers along the chain backbone
 which are excluded from the space distance criterion to form clusters.
-\var{space_dist} is the distance between two monomers up to which they
-are considered to belong to the same clusters. The three parameters
-may be connected by scaling arguments. Make sure that your results are
-only weakly dependent on the exact choice of your parameters. For the
-algorithm the coordinates stored in partCfg are used. The chain itself
-is defined by the identity first of its first monomer and the chain
-length length.  Attention: This function is very specific to the
-problem and might not give useful results for other cases with similar
-structures.
-
+\var{space\_dist} is the distance between two monomers up to which
+they are considered to belong to the same clusters. The three
+parameters may be connected by scaling arguments. Make sure that your
+results are only weakly dependent on the exact choice of your
+parameters. For the algorithm the coordinates stored in partCfg are
+used. The chain itself is defined by the identity first of its first
+monomer and the chain length length.  Attention: This function is very
+specific to the problem and might not give useful results for other
+cases with similar structures.
 
 \subsection{Finding holes}
 \label{analyze:holes}
 \analyzeindex{finding holes}
 
 \begin{essyntax}
-  analyze holes \var{prob_part_type_number} \var{mesh_size} 
+  analyze holes \var{typeid_\mathrm{probe}} \var{mesh\_size} 
 \end{essyntax}
 Function for the calculation of the unoccupied volume (often also
 called free volume) in a system. Details can be found in
@@ -296,8 +295,8 @@ Requires the feature LENNARD_JONES.  \todo{I think there is still a
 \begin{essyntax}
   \variant{1} analyze energy
   \variant{2} analyze energy \alt{total \asep kinetic \asep coulomb}
-  \variant{3} analyze energy bonded \var{bond_type}
-  \variant{4} analyze energy nonbonded \var{part_type1} \var{part_type2}
+  \variant{3} analyze energy bonded \var{bondid}
+  \variant{4} analyze energy nonbonded \var{typeid1} \var{typeid2}
 \end{essyntax}
 \todo{Describe the different energies components returned by the
   different commands!}
@@ -322,10 +321,10 @@ energy contributions of the bonded resp. non-bonded interactions.
   \variant{2} analyze pressure total
   \variant{3} analyze pressure \alt{totals \asep ideal \asep coulomb
     \asep \\tot_nonbonded_inter \asep tot_nonbonded_intra}
-  \variant{4} analyze pressure bonded \var{bond_type}
-  \variant{5} analyze pressure nonbonded \var{part_type1} \var{part_type2}
-  \variant{6} analyze pressure nonbonded_intra \opt{\var{part_type}}
-  \variant{7} analyze pressure nonbonded_inter \opt{\var{part_type}}
+  \variant{4} analyze pressure bonded \var{bondid}
+  \variant{5} analyze pressure nonbonded \var{typeid1} \var{typeid2}
+  \variant{6} analyze pressure nonbonded_intra \opt{\var{typeid}}
+  \variant{7} analyze pressure nonbonded_inter \opt{\var{typeid}}
 \end{essyntax}
 
 Computes the pressure and its contributions in the system. Variant
@@ -391,9 +390,9 @@ non-bonded interactions and the electrostatic contributions.
   \variant{3} analyze stress_tensor \alt{totals \asep ideal \asep coulomb
     \asep \\tot_nonbonded_inter \asep tot_nonbonded_intra}
   \variant{4} analyze stress_tensor bonded \var{bond_type}
-  \variant{5} analyze stress_tensor nonbonded \var{part_type1} \var{part_type2}
-  \variant{6} analyze stress_tensor nonbonded_intra \opt{\var{part_type}}
-  \variant{7} analyze stress_tensor nonbonded_inter \opt{\var{part_type}}
+  \variant{5} analyze stress_tensor nonbonded \var{typeid1} \var{typeid2}
+  \variant{6} analyze stress_tensor nonbonded_intra \opt{\var{typeid}}
+  \variant{7} analyze stress_tensor nonbonded_inter \opt{\var{typeid}}
 \end{essyntax}
 
 Computes the stress tensor of the system.  The various options are equivalent to those described by
@@ -442,15 +441,15 @@ non-bonded interactions and the electrostatic contributions.
 \analyzeindex{local stress tensor}
 
 \begin{essyntax}
-  analyze local_stress_tensor \var{periodic_x} \var{periodic_y} \var{periodic_z} \var{range_start_x} \var{range_start_y} \var{range_start_z} \var{range_x} \var{range_y} \var{range_z}  \var{bins_x} \var{bins_y} \var{bins_z}
+  analyze local_stress_tensor \var{periodic\_x} \var{periodic\_y} \var{periodic\_z} \var{range\_start\_x} \var{range\_start\_y} \var{range\_start\_z} \var{range\_x} \var{range\_y} \var{range\_z}  \var{bins\_x} \var{bins\_y} \var{bins\_z}
 \end{essyntax}
 
 Computes local stress tensors in the system.  A cuboid is defined starting at the coordinate
-(\var{range_start_x},\var{range_start_y},\var{range_start_z}) and going to the coordinate
-(\var{range_start_x}+\var{range_x}, \var{range_start_y}+\var{range_y},
-\var{range_start_z}+\var{range_z}).  This cuboid in divided into \var{bins_x} bins in the x
-direction, \var{bins_y} bins in the y direction and \var{bins_z} bins in the z direction such that
-the total number of bins is \var{bins_x}*\var{bins_y}*\var{bins_z}.  For each of these bins a stress
+(\var{range\_start\_x},\var{range\_start\_y},\var{range\_start\_z}) and going to the coordinate
+(\var{range\_start\_x}+\var{range\_x}, \var{range\_start\_y}+\var{range\_y},
+\var{range\_start\_z}+\var{range\_z}).  This cuboid in divided into \var{bins\_x} bins in the x
+direction, \var{bins\_y} bins in the y direction and \var{bins\_z} bins in the z direction such that
+the total number of bins is \var{bins\_x}*\var{bins\_y}*\var{bins\_z}.  For each of these bins a stress
 tensor is calculated using the Irving Kirkwood method.  That is, a given interaction contributes
 towards the stress tensor in a bin proportional to the fraction of the line connecting the two
 particles that is within the bin.
@@ -467,7 +466,7 @@ The command is implemented in parallel.
 
 \begin{code}
 \{ \{ LocalStressTensor \}
-   \{ \{ \var{x_bin} \var{y_bin} \var{z_bin} \} \{ \var{pressure\_tensor} \} \}
+   \{ \{ \var{x\_bin} \var{y\_bin} \var{z\_bin} \} \{ \var{pressure\_tensor} \} \}
       \vdots
 \}
 \end{code}
@@ -483,18 +482,18 @@ The \lit{analyze set} command defines the structure of the current
 system to be used with some of the analysis functions.
 
 \begin{essyntax}
-  \variant{1} analyze set chains \opt{\var{chain_start} \var{n_chains}
-    \var{chain_length}}
+  \variant{1} analyze set chains \opt{\var{chain\_start} \var{n\_chains}
+    \var{chain\_length}}
   \variant{2} analyze set chains
 \end{essyntax}
 
 \todo{Update documentation for set_topology}
 
-Variant \variant{1} defines a set of \var{n_chains} chains of equal
-length \var{chain_length} which start with the particle with particle
-number \var{chain_start} and are consecutively numbered (\ie the last
-particle in that topology has number $\var{chain_start} +
-\var{n_chains}*\var{chain_length}$). Variant \variant{2} will return
+Variant \variant{1} defines a set of \var{n\_chains} chains of equal
+length \var{chain\_length} which start with the particle with particle
+number \var{chain\_start} and are consecutively numbered (\ie the last
+particle in that topology has number $\var{chain\_start} +
+\var{n\_chains}*\var{chain\_length}$). Variant \variant{2} will return
 the chains currently stored.
 
 \subsection{Chains}
@@ -510,7 +509,7 @@ required once.
 
 \begin{essyntax}
   analyze \alt{re \asep <re>} 
-  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+  \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
 Returns the quadratic end-to-end-distance and its root averaged over
 all chains.  If \lit{<re>} is used, the distance is averaged over all
@@ -526,7 +525,7 @@ stored configurations (see section \vref{sec:stored-configs}).
 
 \begin{essyntax}
   analyze \alt{rg \asep <rg>} 
-  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+  \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
 \todo{Reference?}
 Returns the radius of gyration averaged over all chains.  If
@@ -542,7 +541,7 @@ configurations (see section \vref{sec:stored-configs}).
 \analyzeindex{hydrodynamic radius of a chain}
 \begin{essyntax}
   analyze \alt{rh \asep <rh>} 
-  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+  \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
 \todo{Reference?}
 Returns the hydrodynamic radius averaged over all chains.  If
@@ -557,7 +556,7 @@ configurations (see section \vref{sec:stored-configs}).
 \analyzeindex{internal distances within a chain}
 \begin{essyntax}
  analyze \alt{internal_dist \asep <internal_dist>} 
- \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+ \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
 Returns the averaged internal distances within the chains.  If
 \lit{<internal_dist>} is used, the values are averaged over all stored
@@ -573,7 +572,7 @@ considered (0 = next neighbours, 1 = one monomer in between, \dots).
 \analyzeindex{bond distances}
 \begin{essyntax}
   analyze \alt{bond_dist \asep <bond_dist>} \opt{index \var{index}} 
-  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+  \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
 In contrast to \lit{analyze internal_dist}, it does not average over
 the whole chain, but rather takes the chain monomer at position
@@ -591,23 +590,28 @@ configurations (see section \vref{sec:stored-configs}).
 \analyzeindex{bond lengths}
 \begin{essyntax}
   analyze \alt{bond_l \asep <bond_l>} 
-  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+  \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
-Returns the average bond-length within a chain, averaged over all
-chains in the system; hence, it gives the same result as \var{idf(0)}
-from \lit{analyze internal_dist}. If you want to look only at specific
-chains, use the optional arguments, \ie $\var{chain\_start} =
+
+Analyses the bond lengths of the chains in the system.  Returns its average, the
+standard deviation, the maximum and the minimum.  If you want to look
+only at specific chains, use the optional arguments, \ie $\var{chain\_start} =
 2*\var{MPC}$ and $\var{n\_chains} = 1$ to only include the third
 chain's monomers. If \lit{<bond_l>} is used, the value will be
 averaged over all stored configurations (see section
 \vref{sec:stored-configs}).
+
+\minisec{Output format}
+\begin{code}
+\{ \var{mean} \var{stddev} \var{max} \var{min} \}
+\end{code}
 
 \subsubsection{Form factor}
 \analyzeindex{form factor of a chain}
 \begin{essyntax}
   analyze \alt{formfactor \asep <formfactor> } 
   \var{qmin} \var{qmax} \var{qbins}\\
-  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+  \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
 
 \todo{Check this!}
@@ -637,7 +641,7 @@ with $q \in \{\var{qmin},\dots,\var{qmax}\}$.
 \analyzeindex{radial distribution function}
 
 \begin{essyntax}
- analyze rdfchain \var{r_min} \var{r_max} \var{r_bins} 
+ analyze rdfchain \var{rmin} \var{rmax} \var{rbins} 
  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
 \end{essyntax}
 Returns three radial distribution functions (rdf) for the chains. The
@@ -645,8 +649,8 @@ first rdf is calculated for monomers belonging to different chains,
 the second rdf is for the centers of mass of the chains and the third
 one is the distribution of the closest distances between the chains
 (\ie the shortest monomer-monomer distances). The distance range is
-given by \var{r_min} and \var{r_max} and it is divided into
-\var{r_bins} equidistant bins.
+given by \var{rmin} and \var{rmax} and it is divided into
+\var{rbins} equidistant bins.
 
 \minisec{Output format}
 \begin{code}
@@ -874,10 +878,10 @@ variant \variant{3}, returning just these values as tiny tcl-list.
 
 \begin{essyntax}
   \variant{1} uwerr \var{data} \var{nrep} 
-  \var{col} \opt{\var{a_tau}} \opt{plot}
+  \var{col} \opt{\var{a\_tau}} \opt{plot}
 
   \variant{2} uwerr \var{data} \var{nrep} 
-  \var{f} \opt{\var{a_tau} \opt{\var{f_args}}} \opt{plot}
+  \var{f} \opt{\var{a\_tau} \opt{\var{f\_args}}} \opt{plot}
 \end{essyntax}
 Calculates the mean value, the error and the error of the error for an
 arbitrary numerical time series accordings to \citet{wolff04a}.
@@ -910,9 +914,9 @@ arbitrary numerical time series accordings to \citet{wolff04a}.
   columns. If \var{f} is given instead of the column, the
   corresponding derived quantity is analyzed.
 
-\item[\var{f_args}] are further arguments to \var{f}.
+\item[\var{f\_args}] are further arguments to \var{f}.
 
-\item[\var{s_tau}] is the estimate $S=\tau/tau_{\textrm{int}}$ as
+\item[\var{s\_tau}] is the estimate $S=\tau/tau_{\textrm{int}}$ as
   explained in section (3.3) of [1]. The default is 1.5 and it is
   never taken larger than $\min_{r=1}^R{N_r}/2$.
 
