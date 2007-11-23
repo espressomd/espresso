@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.4v (Ydalir)                                                                     *
+* v2.0.4w (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.4v -
+- v2.0.4w -
 -----------
 
+(w) November  22nd, 2007.
 (v) November  20th, 2007.
 (u) November  12th, 2007.
 (t) October   19th, 2007.
@@ -71,6 +72,10 @@ Changes:
     dependent).
 
 Bugfixes:
+(w) in polyer-command: old RW-system fixed, new hopefully now correct RW-system
+    implemented
+(w) per default, new RW-system is used unless OLD_RW_VERSION is
+    defined
 (v) dpd_print works now with checkpoint
 (u) removed debug-messages
 (t) LB grid size change now correctly implemented - but not extensively
