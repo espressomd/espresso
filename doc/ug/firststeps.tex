@@ -148,11 +148,23 @@ suitable parameters for an rms force error below $10^{-3}$, with a fixed mesh
 size of 32. The mesh is fixed here to speed up the tuning; for a real
 simulation, one will also tune this parameter.
 
+If we want to calculate the temperature of our system from the kinetic energy,
+we need to know the number of the degrees of freedom of the particles.
+In \es\ these are usually 3 translational plus 3 rotational degrees of freedom
+(if ROTATION is compiled into the code). You can get this number
+in the following way \footnote{Note: there also exists a predefined tcl function {\it degrees_of_freedom} which does the same.}:
+
+\begin{tclcode}
+   if { [regexp "ROTATION" [code_info]] } { 
+     set deg_free 6
+   } else { set deg_free 3 }
+\end{tclcode}
+
 Now we can integrate the system:
 \begin{tclcode}
 set integ_steps 200
 for {set i 0} { $i < 20 } { incr i} {
-  set temp [expr [analyze energy kinetic]/(1.5*$n_part)]
+  set temp [expr [analyze energy kinetic]/($deg_free/2.0)*$n_part)]
   puts "t=[setmd time] E=[analyze energy total], T=$temp"
   integrate $integ_steps 
 }

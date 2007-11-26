@@ -195,7 +195,7 @@ for {set i 0} { $i < $int_n_times } { incr i} {
 #   write observables
     set energies [analyze energy]
     puts $obs_file "{ time [setmd time] } $energies"
-    puts -nonewline "temp = [expr [lindex $energies 1 1]/(1.5*[setmd n_part])]\r"
+    puts -nonewline "temp = [expr [lindex $energies 1 1]/(([degrees_of_freedom]/2.0)*[setmd n_part])]\r"
     flush stdout
 
 #   write intermediate configuration

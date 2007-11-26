@@ -626,3 +626,15 @@ proc vmd_delete_box { start } {
     for { set i $start } { $i < [expr $start+8] } { incr i } { part $i del } 
 }
 	
+# Return the degrees of freedom of the system
+# This is important, if you calculate the temperature
+# of your system from the kinetic energy:
+#   temp = 2 * E_kin / ( dgf * N )
+proc degrees_of_freedom {} {
+ if { [regexp "ROTATION" [code_info]] } {
+   set dgf 6
+ } else {
+     set dgf 3
+ }
+ return $dgf
+}
