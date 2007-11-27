@@ -2,19 +2,24 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5a (Ydalir)                                                                     *
+* v2.0.5b (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5a -
+- v2.0.5b -
 -----------
 
+(b) November 26th, 2007.
 (a) November 23rd, 2007.
 
 New Features:
 (a) added new single-player ESPResSo game "pong"
+
+Bugfixes:
+(b) number of degrees of freedom was not considered correctly in some scripts when
+    calculating temperature from kinetic energy
 
 
 - v2.0.4w -
