@@ -45,7 +45,7 @@ EXTRA_DIST = $(tests) \
 if MPI_FAKE
 processors=1
 else
-processors="1 2 3 4 6 8"
+processors=1 2 3 4 6 8
 endif
 
 # run the testsuite
