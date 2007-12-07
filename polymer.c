@@ -525,7 +525,10 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 
 	for (cnt1=0; cnt1<max_try; cnt1++) {
 	  if(angle > -1.0) {
-
+	    if (sqrlen(c) < ROUND_ERROR_PREC) {
+	      fprintf(stderr, "WARNING: rotation axis is 0,0,0, check the angles given to the polymer command\n");
+	      c[0] = 1; c[1] = 0; c[2] = 0;
+	    }
 	    if(angle2 > -1.0 && n>2) {
 	      vec_rotate(a,angle2,c,d);
 	    } else {
