@@ -2,21 +2,24 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5d (Ydalir)                                                                     *
+* v2.0.5e (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5d -
+- v2.0.5e -
 -----------
 
+(e) December 20th, 2007.
 (d) December  3rd, 2007.
 (c) November 29th, 2007.
 (b) November 26th, 2007.
 (a) November 23rd, 2007.
 
 New Features:
+(e) added an option -tag to writepdb to add an additional REMARK
+    line
 (c) Added a flag "-append" to writepdb which allows to append instead of
     overwrite.
 (c) VMD can read the concatenated files as a trajectory.
