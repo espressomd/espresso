@@ -115,12 +115,6 @@ void init_particle(Particle *part)
   part->r.quat[3]  = 0.0;
 #endif
 
-#ifdef DIPOLES
-  part->r.dip[0]    = 0.0;
-  part->r.dip[1]    = 0.0;
-  part->r.dip[2]    = 0.0;
-  part->p.dipm      = 0.0;
-#endif
 
   /* ParticleMomentum */
   part->m.v[0]     = 0.0;
@@ -430,17 +424,6 @@ void part_print_quat(Particle *part, char *buffer, Tcl_Interp *interp)
 }
 #endif
 
-#ifdef DIPOLES
-void part_print_dip(Particle *part, char *buffer, Tcl_Interp *interp)
-{
-  Tcl_PrintDouble(interp, part->r.dip[0], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->r.dip[1], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->r.dip[2], buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-}
-#endif
 
 void part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
 {
@@ -703,14 +686,6 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   part_print_torque(&part, buffer, interp);
 #endif
 
-#ifdef DIPOLES
-  /* print information about dipoles */
-  Tcl_AppendResult(interp, " dip ", (char *)NULL);
-  part_print_dip(&part, buffer, interp);
-  Tcl_AppendResult(interp, " dipm ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.p.dipm, buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-#endif
 
 #ifdef EXCLUSIONS
   if (part.el.n > 0) {
@@ -834,12 +809,6 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       part_print_torque(&part, buffer, interp);
 #endif
 
-#ifdef DIPOLES
-    else if (ARG0_IS_S("dip"))
-      part_print_dip(&part, buffer, interp);
-    else if (ARG0_IS_S("dipm"))
-      Tcl_PrintDouble(interp, part.p.dipm, buffer);
-#endif
 
 #ifdef EXTERNAL_FORCES
     else if (ARG0_IS_S("ext_force"))
@@ -958,86 +927,6 @@ int part_parse_mass(Tcl_Interp *interp, int argc, char **argv,
 }
 #endif
 
-#ifdef DIPOLES
-int part_parse_dipm(Tcl_Interp *interp, int argc, char **argv,
-		 int part_num, int * change)
-{
-    double dipm;
-
-    *change = 1;
-
-    if (argc < 1) {
-      Tcl_AppendResult(interp, "dipm requires 1 argument", (char *) NULL);
-      return TCL_ERROR;
-    }
-
-    /* set dipole moment */
-    if (! ARG0_IS_D(dipm))
-      return TCL_ERROR;
-
-    if (set_particle_dipm(part_num, dipm) == TCL_ERROR) {
-      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-
-      return TCL_ERROR;
-    }
-
-    return TCL_OK;
-}
-
-int part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
-			 int part_num, int * change)
-{
-  double dip[3];
-  double quat[4];
-  double dipm;
-  *change = 3;
-
-  if (argc < 3) {
-    Tcl_AppendResult(interp, "dip requires 3 arguments", (char *) NULL);
-    return TCL_ERROR;
-  }
-  /* set dipole orientation */
-  if (! ARG_IS_D(0, dip[0]))
-    return TCL_ERROR;
-
-  if (! ARG_IS_D(1, dip[1]))
-    return TCL_ERROR;
-
-  if (! ARG_IS_D(2, dip[2]))
-    return TCL_ERROR;
-
-  dipm = sqrt(dip[0]*dip[0] + dip[1]*dip[1] + dip[2]*dip[2]);
-
-  if (dipm == 0) {
-     Tcl_AppendResult(interp, "cannot set dipole with zero length", (char *)NULL);
-
-    return TCL_ERROR;
-  }
-
-  convert_dip_to_quat_one(dip, quat);
-
-  if (set_particle_dip(part_num, dip) == TCL_ERROR) {
-   Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-
-    return TCL_ERROR;
-  }
-
-   if (set_particle_dipm(part_num, dipm) == TCL_ERROR) {
-     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-
-      return TCL_ERROR;
-   }
-
-  if (set_particle_quat(part_num, quat) == TCL_ERROR) {
-   Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-
-    return TCL_ERROR;
-  }
-
-  return TCL_OK;
-}
-
-#endif
 
 int part_parse_q(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
@@ -1210,9 +1099,6 @@ int part_parse_quat(Tcl_Interp *interp, int argc, char **argv,
 
   *change = 4;
 
-#ifdef DIPOLES
- //Here we should check if the dipole moment of the particle is already given
-#endif
 
   if (argc < 4) {
     Tcl_AppendResult(interp, "quaternion requires 4 arguments", (char *) NULL);
@@ -1663,15 +1549,6 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
 #endif
 
-#ifdef DIPOLES
-
-    else if (ARG0_IS_S("dip"))
-      err = part_parse_dip(interp, argc-1, argv+1, part_num, &change);
-
-    else if (ARG0_IS_S("dipm"))
-      err = part_parse_dipm(interp, argc-1, argv+1, part_num, &change);
-
-#endif
 
 #ifdef EXTERNAL_FORCES
 
@@ -1880,45 +1757,6 @@ int set_particle_mass(int part, double mass)
 }
 #endif
 
-#ifdef DIPOLES
-int set_particle_dipm(int part, double dipm)
-{
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
-  pnode = particle_node[part];
-
-  if (pnode == -1)
-    return TCL_ERROR;
-  mpi_send_dipm(pnode, part, dipm);
-  return TCL_OK;
-}
-
-int set_particle_dip(int part, double dip[3])
-{
-  int pnode;
-  double quat[4];
-
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
-  pnode = particle_node[part];
-
-  if (pnode == -1)
-    return TCL_ERROR;
-  mpi_send_dip(pnode, part, dip);
-
-  convert_dip_to_quat_one(dip, quat);
-  mpi_send_quat(pnode, part, quat);
-  return TCL_OK;
-}
-
-#endif
 
 int set_particle_q(int part, double q)
 {

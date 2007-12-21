@@ -175,13 +175,6 @@ int thermo_print(Tcl_Interp *interp)
   }
 #endif
 
-#ifdef LB
- /* lb */
-  if(thermo_switch & THERMO_LB) {
-    Tcl_PrintDouble(interp, temperature, buffer);
-    Tcl_AppendResult(interp,"{ lb ",buffer, " } ", (char *)NULL);
-  }
-#endif
 
   return (TCL_OK);
 }
@@ -197,9 +190,6 @@ int thermo_usage(Tcl_Interp *interp, int argc, char **argv)
 #endif
 #ifdef NPT
   Tcl_AppendResult(interp, "'", argv[0], " set npt_isotropic <temp> <gamma0> <gammav>' ", (char *)NULL);
-#endif
-#ifdef LB
-  Tcl_AppendResult(interp, "'", argv[0], " set lb <temperature>" , (char *)NULL);
 #endif
   return (TCL_ERROR);
 }
@@ -232,10 +222,6 @@ int thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 #ifdef NPT
   else if ( ARG1_IS_S("npt_isotropic") )
     err = thermo_parse_nptiso(interp, argc, argv);
-#endif
-#ifdef LB
-  else if ( ARG1_IS_S("lb") )
-    err = thermo_parse_lb(interp, argc-1, argv+1);
 #endif
   else {
     Tcl_AppendResult(interp, "Unknown thermostat ", argv[1], "\n", (char *)NULL);
@@ -325,30 +311,6 @@ void thermo_cool_down()
 
 int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
 {
-#ifdef LB
-  double temp;
-
-  /* get lb interaction type */
-  if (argc < 1) {
-    Tcl_AppendResult(interp, "lattice-Boltzmann needs 1 parameter: "
-		     "<temperature>",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  /* copy lattice-boltzmann parameters */
-  if (! ARG_IS_D(1, temp)) { return TCL_ERROR; }
-
-  if ( temp < 0.0 ) {
-    Tcl_AppendResult(interp, "temperature must be non-negative", (char *) NULL);
-    return TCL_ERROR;
-  }
-  temperature = temp;
-  thermo_switch = ( thermo_switch | THERMO_LB );
-  mpi_bcast_parameter(FIELD_THERMO_SWITCH);
-  mpi_bcast_parameter(FIELD_TEMPERATURE);
-  
-#endif
   
   return TCL_OK;
 }

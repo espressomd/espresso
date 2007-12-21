@@ -163,8 +163,5 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 }
 #endif
 
-#ifdef LB
-int thermo_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
-#endif
 
 #endif

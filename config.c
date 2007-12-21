@@ -31,9 +31,6 @@
 #error MODES requires the fftw
 #endif
 
-#ifdef LB
-#error LB requires the fftw
-#endif
 
 #endif
 
@@ -76,9 +73,6 @@ int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef ROTATION
   Tcl_AppendResult(interp, "{ ROTATION } ", (char *) NULL);
-#endif
-#ifdef DIPOLES
-  Tcl_AppendResult(interp, "{ DIPOLES } ", (char *) NULL);
 #endif
 #ifdef MASS
   Tcl_AppendResult(interp, "{ MASS } ", (char *) NULL);
@@ -151,9 +145,6 @@ int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef DPD
   Tcl_AppendResult(interp, "{ DPD } ", (char *) NULL);
-#endif
-#ifdef LB
-  Tcl_AppendResult(interp, "{ LB } ", (char *) NULL);
 #endif
 #ifdef INTER_DPD
   Tcl_AppendResult(interp, "{ INTER_DPD } ", (char *) NULL);

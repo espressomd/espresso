@@ -136,26 +136,6 @@ void on_integration_start()
 
   if (!check_obs_calc_initialized()) return;
 
-#ifdef LB
-  if(lattice_switch & LATTICE_LB) {
-    if (lbpar.agrid < 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
-    }
-    if (lbpar.tau < 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
-    }
-    if (lbpar.rho < 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
-    }
-    if (lbpar.viscosity < 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
-    }
-  }
-#endif
 
   /********************************************/
   /* end sanity checks                        */
@@ -282,13 +262,6 @@ void on_constraint_change()
   EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
 
-#ifdef LB
-#ifdef CONSTRAINTS
-  if(lattice_switch & LATTICE_LB) {
-    lb_init_constraints();
-  }
-#endif
-#endif
 
   recalc_forces = 1;
 }
@@ -451,39 +424,8 @@ void on_parameter_change(int field)
     break;
   }
 
-#ifdef LB
-  /* LB needs ghost velocities */
-  if (field == FIELD_LATTICE_SWITCH) {
-    on_ghost_flags_change();
-    cells_re_init(CELL_STRUCTURE_CURRENT);
-  }
-
-  if (lattice_switch & LATTICE_LB) {
-    if (field == FIELD_TEMPERATURE) {
-      lb_reinit_parameters();
-    }
-
-    if (field == FIELD_BOXL || field == FIELD_CELLGRID || field == FIELD_NNODES || field == FIELD_NODEGRID) {
-      lb_init();
-    }
-  }
-#endif
 }
 
-#ifdef LB
-void on_lb_params_change(int field) {
-
-  if (field == LBPAR_AGRID) {
-    lb_init();
-  }
-  if (field == LBPAR_DENSITY) {
-    lb_reinit_fluid();
-  }
-
-  lb_reinit_parameters();
-
-}
-#endif
 
 void on_ghost_flags_change()
 {
@@ -494,10 +436,6 @@ void on_ghost_flags_change()
   /* DPD and LB need also ghost velocities */
   if (thermo_switch & THERMO_DPD)
     ghosts_have_v = 1;
-#ifdef LB
-  if (lattice_switch & LATTICE_LB)
-    ghosts_have_v = 1;
-#endif
 #ifdef BOND_CONSTRAINT
   else if (n_rigidbonds)
     ghosts_have_v = 1;
