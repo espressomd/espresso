@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5e (Ydalir)                                                                     *
+* v2.0.5f (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5e -
+- v2.0.5f -
 -----------
 
+(f) December 21st, 2007.
 (e) December 20th, 2007.
 (d) December  3rd, 2007.
 (c) November 29th, 2007.
@@ -18,6 +19,8 @@ Current working revision.
 (a) November 23rd, 2007.
 
 New Features:
+(f) Made a new distribution 2.0.5e and created a branch DIST205E for
+    it.
 (e) added an option -tag to writepdb to add an additional REMARK
     line
 (c) Added a flag "-append" to writepdb which allows to append instead of
