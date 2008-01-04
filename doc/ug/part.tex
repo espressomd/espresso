@@ -242,19 +242,19 @@ set up to be \var{bond\_length}.
     randomly placed by a random walk with a steps size of
     \var{bond_length}.
   \item[\keyword{PSAW} (Pruned self-avoiding walk)] The position of a
-    monomer is randomly chosen in a distance of \var{bond_length} to
+    monomer is randomly chosen in a distance of \var{bond\_length} to
     the previous monomer. If the position is closer to another
     particle than \var{shield}, the attempt is repeated up to
-    \var{try_\mathrm{max}} times. Note, that this is not a real self-avoiding
-    random walk, as the particle distribution is not the same. If you
-    want a real self-avoiding walk, use the \keyword{SAW} mode.
-    However, \keyword{PSAW} is several orders of magnitude faster than
-    \keyword{SAW}, especially for long chains.
+    \var{try_\mathrm{max}} times. Note, that this is not a real
+    self-avoiding random walk, as the particle distribution is not the
+    same. If you want a real self-avoiding walk, use the \keyword{SAW}
+    mode.  However, \keyword{PSAW} is several orders of magnitude
+    faster than \keyword{SAW}, especially for long chains.
   \item[\keyword{SAW} (Self-avoiding random walk)] The positions of
     the monomers are chosen as in the plain random walk. However, if
     this results in a chain that has a monomer that is closer to
     another particle than \var{shield}, a new attempt of setting up
-    the whole chain is done, up to \var{max_try} times.
+    the whole chain is done, up to \var{try_\mathrm{max}} times.
   \end{description}
   The default for the mode is \keyword{RW}, the default for the
   \var{shield} is $1.0$, and the default for \var{try_\mathrm{max}} is

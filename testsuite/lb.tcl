@@ -195,7 +195,7 @@ for { set i 1 } { $i <= $int_times } { incr i } {
     if { $dmz > $max_dmz } { set max_dmz $dmz }
 
     # temperature of the colloid
-    set temp [expr 2.0/3.0*[analyze energy kinetic]/[setmd n_part]]
+    set temp [expr 2.0/[degrees_of_freedom]*[analyze energy kinetic]/[setmd n_part]]
     set avg_temp [expr $avg_temp+$temp]
     set var_temp [expr $var_temp+$temp*$temp]
 

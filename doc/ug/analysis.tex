@@ -878,10 +878,10 @@ variant \variant{3}, returning just these values as tiny tcl-list.
 
 \begin{essyntax}
   \variant{1} uwerr \var{data} \var{nrep} 
-  \var{col} \opt{\var{a\_tau}} \opt{plot}
+  \var{col} \opt{\var{s\_tau}} \opt{plot}
 
   \variant{2} uwerr \var{data} \var{nrep} 
-  \var{f} \opt{\var{a\_tau} \opt{\var{f\_args}}} \opt{plot}
+  \var{f} \opt{\var{s\_tau} \opt{\var{f\_args}}} \opt{plot}
 \end{essyntax}
 Calculates the mean value, the error and the error of the error for an
 arbitrary numerical time series accordings to \citet{wolff04a}.
@@ -916,9 +916,9 @@ arbitrary numerical time series accordings to \citet{wolff04a}.
 
 \item[\var{f\_args}] are further arguments to \var{f}.
 
-\item[\var{s\_tau}] is the estimate $S=\tau/tau_{\textrm{int}}$ as
-  explained in section (3.3) of [1]. The default is 1.5 and it is
-  never taken larger than $\min_{r=1}^R{N_r}/2$.
+\item[\var{s\_tau}] is the estimate $S=\tau/\tau_{\textrm{int}}$ as
+  explained in section (3.3) of \cite{wolff04a}. The default is 1.5
+  and it is never taken larger than $\min_{r=1}^R{N_r}/2$.
 
 \item[\opt{plot}] If plot is specified, you will get the plots of
   $\Gamma/\Gamma(0)$ and $\tau_{int}$ vs. $W$.  The data and gnuplot

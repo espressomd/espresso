@@ -213,7 +213,7 @@ EXTRA_DIST = $(tests) \
 	\
 	gen_fene.tcl gen_harm.tcl
 
-@MPI_FAKE_FALSE@processors = "1 2 3 4 6 8"
+@MPI_FAKE_FALSE@processors = 1 2 3 4 6 8
 @MPI_FAKE_TRUE@processors = 1
 DISTCLEANFILES = test.sh
 CLEANKEEPFILES = Makefile test.sh $(EXTRA_DIST)

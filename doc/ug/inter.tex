@@ -618,7 +618,7 @@ possible, which have to be activated in \texttt{myconfig.h}
 \item Harmonic bond angle potential (requires feature BOND_ANGLE_HARMONIC):\\
   A classical harmonic potential,
   \begin{equation}
-    V(\alpha) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
+    V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
   \end{equation}
   Unlike the two following variants, this potential has a kink at
   $\phi=\phi_0+\pi$ and accordingly a discontinuity in the force, and should
@@ -647,7 +647,7 @@ possible, which have to be activated in \texttt{myconfig.h}
 
 \begin{essyntax}
   inter \var{bondid}
-  dihedral \var{n} \var{K} \var{\phi}
+  dihedral \var{n} \var{K} \var{p}
 \end{essyntax}
 
 This creates a bond type with identificator \var{bondid}
@@ -657,10 +657,10 @@ the other bond partners $p_1$, $p_3$, $p_4$, in this order, \ie
 \lit{part $p_2$ bond bondid $p_1$ $p_3$ $p_4$}. Then, the
 dihedral potential is given by
 \begin{equation}
-  V(r) = \var{K}\left[1 + \var{\phi}\,\cos(\var{n}\var{\phi})\right],
+  V(\phi) = \var{K}\left[1 + \var{p}\,\cos(\var{n}\phi)\right],
 \end{equation}
 where \var{n} is the multiplicity of the potential (number of minimas)
-and can take integer values from 1 to 6, \var{phi} is a phase
+and can take integer values from 1 to 6, $p$ is a phase
 parameter which takes the values $\pm1$ and \var{K} is the bending
 constant of the potential. $\phi$ is the dihedral angle between the
 particles defined by the particle quadrupel $p_1$, $p_2$, $p_3$ and

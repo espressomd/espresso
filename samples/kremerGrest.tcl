@@ -28,8 +28,6 @@ puts " "
 
 puts "Program Information: \n[code_info]\n"
 
-
-
 #############################################################
 #  Parameters                                               #
 #############################################################
@@ -187,7 +185,7 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 	    integrate $warm_step; set tmp_dist [analyze mindist]
 	    if { $vmd_output=="yes" } { imd positions }
 	    puts -nonewline "    \[$i\] Step [expr ($j+1)*$warm_step]/[expr $warm_step*$warm_loop] (t=[setmd time]): "; flush stdout
-	    set tmp_Temp [expr [analyze energy kin]/$n_part/1.5]; puts -nonewline "LJ's cap = $tmp_cap, Temp = $tmp_Temp"; flush stdout
+	    set tmp_Temp [expr [analyze energy kin]/$n_part/([degrees_of_freedom]/2.0)]; puts -nonewline "LJ's cap = $tmp_cap, Temp = $tmp_Temp"; flush stdout
 	    puts $obs_file "[setmd time] [analyze mindist] [analyze re] [analyze rg] [analyze rh] $tmp_Temp"
 	    puts -nonewline ", mindist=[analyze mindist], re=[lindex [analyze re] 0], rg=[lindex [analyze rg] 0], rh=[analyze rh]...\r"; flush stdout
 	    if { $tmp_dist >= $min_dist } { break }
@@ -245,7 +243,7 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 	    puts -nonewline "    \[$i\] Step $tmp_step/[expr $int_step_i*$int_loop] (t=[setmd time]): "; flush stdout
 	    set tmp_dist [analyze mindist]; set tmp_re [analyze re]; set tmp_rg [analyze rg]; set tmp_rh [analyze rh]
 	    set ptot [eval concat [eval concat [analyze pressure]]]; set p1 [lindex $ptot 1]
-	    set tmp_Temp [expr [analyze energy kin]/$n_part/1.5]
+	    set tmp_Temp [expr [analyze energy kin]/$n_part/([degrees_of_freedom]/2.0)]
 	    puts $obs_file "[setmd time] $tmp_dist $tmp_re $tmp_rg $tmp_rh $tmp_Temp $ptot"
 	    puts -nonewline "mindist=$tmp_dist, T=$tmp_Temp"; flush stdout
 	    set tmp_conf [analyze append]; flush $obs_file

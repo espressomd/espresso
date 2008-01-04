@@ -351,7 +351,7 @@ int constraint_collision(double *p1, double *p2){
 
   memcpy(folded_pos2, p2, 3*sizeof(double));
   fold_position(folded_pos2, img);
-  
+
   for(i=0;i<n_constraints;i++){
     c=&constraints[i];
     switch(c->type){
@@ -452,7 +452,11 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	/* randomly place 2nd monomer */
 	for (cnt1=0; cnt1<max_try; cnt1++) {
 	  theta  = PI*d_random();
+#ifdef OLD_RW_VERSION
 	  phi    = 2.0*PI*d_random();
+#else
+	  phi    = acos(2.0*d_random()-1);
+#endif
 	  pos[0] = poz[0]+bond_length*sin(theta)*cos(phi);
 	  pos[1] = poz[1]+bond_length*sin(theta)*sin(phi);
 	  pos[2] = poz[2]+bond_length*cos(theta);
@@ -521,11 +525,14 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 
 	for (cnt1=0; cnt1<max_try; cnt1++) {
 	  if(angle > -1.0) {
-
+	    if (sqrlen(c) < ROUND_ERROR_PREC) {
+	      fprintf(stderr, "WARNING: rotation axis is 0,0,0, check the angles given to the polymer command\n");
+	      c[0] = 1; c[1] = 0; c[2] = 0;
+	    }
 	    if(angle2 > -1.0 && n>2) {
 	      vec_rotate(a,angle2,c,d);
 	    } else {
-	      phi = 2.0*d_random();
+	      phi = 2.0*PI*d_random();
 	      vec_rotate(a,phi,c,d);
 	    }
 
@@ -537,7 +544,11 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 
 	  } else {
 	    theta  = PI*d_random();
-	    phi    = 2.0*PI*d_random();
+#ifdef OLD_RW_VERSION
+	  phi    = 2.0*PI*d_random();
+#else
+	  phi    = acos(2.0*d_random()-1);
+#endif
 	    pos[0] = poz[0]+bond_length*sin(theta)*cos(phi);
 	    pos[1] = poz[1]+bond_length*sin(theta)*sin(phi);
 	    pos[2] = poz[2]+bond_length*cos(theta);

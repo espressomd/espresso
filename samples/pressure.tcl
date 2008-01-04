@@ -29,7 +29,6 @@ puts " "
 
 puts "Program Information: \n[code_info]\n"
 
-
 #############################################################
 #  Parameters                                               #
 #############################################################
@@ -174,7 +173,7 @@ for {set i 0} { $i < $int_n_times } { incr i} {
     puts -nonewline "    Run $i at time=[setmd time] "; flush stdout
     set ener [analyze energy]
     set pres [analyze pressure]
-    set temp [expr [lindex [lindex $ener 1] 1]/(1.5*[setmd n_part])]
+    set temp [expr [lindex [lindex $ener 1] 1]/(([degrees_of_freedom]/2.0)*[setmd n_part])]
     set ptot [expr [lindex [lindex $pres 0] 1]]
     set p_c  [expr [lindex [lindex $pres 2] 1]]
     set p_DH [expr -$temp*pow($kappa,3)/(24*[PI])]
