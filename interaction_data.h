@@ -381,7 +381,7 @@ typedef struct {
     } angle;
     /** Parameters for four body angular potential (dihedral-angle potentials). */
     struct {
-      int    mult;
+      double mult;
       double bend;
       double phase;
     } dihedral;

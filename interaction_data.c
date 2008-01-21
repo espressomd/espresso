@@ -981,7 +981,7 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
   case BONDED_IA_DIHEDRAL:  
-    sprintf(buffer, "%d", params->p.dihedral.mult);
+    sprintf(buffer, "%d", (int)(params->p.dihedral.mult));
     Tcl_AppendResult(interp, "dihedral ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, params->p.dihedral.bend, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);

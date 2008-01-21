@@ -73,6 +73,10 @@
 /* #define BOND_ANGLE_COSINE */
 /* #define BOND_ANGLE_COSSQUARE */
 
+/* activate the old dihedral form. Only uncomment this if you need
+   to run old code using the previous phase definition. */
+/* #define OLD_DIHEDRAL */
+
 /**********************************************************************/
 /*                            debugging                               */
 /**********************************************************************/
