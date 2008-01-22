@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5f (Ydalir)                                                                     *
+* v2.0.5g (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5f -
+- v2.0.5g -
 -----------
 
+(g) January  21st, 2008.
 (f) December 21st, 2007.
 (e) December 20th, 2007.
 (d) December  3rd, 2007.
@@ -27,6 +28,13 @@ New Features:
     overwrite.
 (c) VMD can read the concatenated files as a trajectory.
 (a) added new single-player ESPResSo game "pong"
+
+Changes:
+(g) the dihedral potential is now more general and allows phase
+    parameters
+(g) apart from +-1. The parameters have changed; for old scripts,
+    compile
+(g) with OLD_DIHEDRAL.
 
 Bugfixes:
 (d) testsuite runs with multiple processors again
