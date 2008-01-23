@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5g (Ydalir)                                                                     *
+* v2.0.5h (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5g -
+- v2.0.5h -
 -----------
 
+(h) January  22nd, 2008.
 (g) January  21st, 2008.
 (f) December 21st, 2007.
 (e) December 20th, 2007.
@@ -37,6 +38,8 @@ Changes:
 (g) with OLD_DIHEDRAL.
 
 Bugfixes:
+(h) fixed a bug that lead to wrong pressure calculation, when using tabulated 2
+    body bonded interaction potentials
 (d) testsuite runs with multiple processors again
 (c) added the expected END tag to the output of writepdb
 (b) number of degrees of freedom was not considered correctly in some scripts when
