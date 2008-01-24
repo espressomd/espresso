@@ -366,7 +366,7 @@ int get_lipid_orients(IntList* l_orient) {
     return -1;
   }
   
-  if ( !calc_height_grid(height_grid) ) {
+  if ( !calc_fluctuations(height_grid, 1) ) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
     return -1;
@@ -397,18 +397,22 @@ int get_lipid_orients(IntList* l_orient) {
     \li calculate height function is called
 
     \li The height function is fourier transformed using the fftw library.
+
+    Note: argument switch_fluc
+    switch_fluc == 1 for height grid
+    switch_fluc == 0 for thickness
 */
-int modes2d(fftw_complex* modes) {
+int modes2d(fftw_complex* modes, int switch_fluc) {
 #if FFTW == 3
   /* All these variables need to be static so that the fftw3 plan can
      be initialised and reused */
-  static  fftw_plan mode_analysis_plan;
+  static  fftw_plan mode_analysis_plan; // height grid
   /** Input values for the fft */
   static  double* height_grid;
   /** Output values for the fft */
   static  fftw_complex* result;
 #else 
-  static double* height_grid;
+  static  double* height_grid;
   static  rfftwnd_plan mode_analysis_plan;
 #endif
 
@@ -432,13 +436,13 @@ int modes2d(fftw_complex* modes) {
 #if FFTW == 3
     /* Make sure all memory is free and old plan is destroyed. It's ok
        to call these functions on uninitialised pointers I think */
-    fftw_free(result); 
-    fftw_free(height_grid); 
+    fftw_free(result);
+    fftw_free(height_grid);
     fftw_destroy_plan(mode_analysis_plan);
     fftw_cleanup(); 
     /* Allocate memory for input and output arrays */
     height_grid = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
-    result = malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex)); 
+    result      = malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex)); 
     mode_analysis_plan = fftw_plan_dft_r2c_2d(mode_grid_3d[xdir],mode_grid_3d[ydir],height_grid, result,FFTW_ESTIMATE);
 #else
     /* Make sure the height grid is allocated */
@@ -463,7 +467,7 @@ int modes2d(fftw_complex* modes) {
   
   zref = calc_zref( zdir );
 
-  if ( !calc_height_grid(height_grid) ) {
+  if ( !calc_fluctuations(height_grid, switch_fluc)) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
     return -1;
@@ -478,8 +482,9 @@ int modes2d(fftw_complex* modes) {
 #else
   rfftwnd_one_real_to_complex(mode_analysis_plan, height_grid, modes);
 #endif
-  STAT_TRACE(fprintf(stderr,"%d,called fftw \n",this_node));
-    
+  
+  
+  STAT_TRACE(fprintf(stderr,"%d,called fftw \n",this_node));    
     
   return 1;
     
@@ -621,7 +626,7 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
 
   
   /* Calculate the height grid which also ensures that particle config is updated */
-  if ( !calc_height_grid(tmp_height_grid) ) {
+  if ( !calc_fluctuations(tmp_height_grid, 1) ) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
     return -1;
@@ -698,13 +703,24 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
     calculating this height function, checks are made for grid cells
     that contain no lipids. In such cases a value equal to the mean of
     surrounding cells is substituted.
+
+    \li Also can calculate the thickness of a flat bilayer.
 */
 
 
 
-int calc_height_grid ( double* height_grid ) {
-  STAT_TRACE(fprintf(stderr,"%d,calculating height grid \n",this_node);)
-  int i,j, gi, gj;
+int calc_fluctuations ( double* height_grid, int switch_fluc ) {
+  if (switch_fluc == 1)
+    STAT_TRACE(fprintf(stderr,"%d,calculating height grid \n",this_node));
+  else if (switch_fluc == 0)
+    STAT_TRACE(fprintf(stderr,"%d,calculating thickness \n",this_node));
+  else{
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{097 Wrong argument in calc_fluctuations function} ");
+    return -1;
+  }
+    
+  int i, j, gi, gj;
   double grid_size[2];
   double direction[3];  
   double refdir[3] = {0,0,1};
@@ -713,6 +729,7 @@ int calc_height_grid ( double* height_grid ) {
   int* grid_parts;
   int* grid_parts_up;
   int* grid_parts_down;
+  int* number_grid_parts;
   double zreflocal, zref;
   int nup;
   int ndown;
@@ -724,28 +741,34 @@ int calc_height_grid ( double* height_grid ) {
   double meanval;
   int nonzerocnt, gapcnt;
 
+
+
+
+
+
   if ( xdir + ydir + zdir == -3 ) {
       char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt,"{092 attempt to calculate height grid with uninitialized grid} ");
+      ERROR_SPRINTF(errtxt,"{092 attempt to calculate height grid / thickness with uninitialized grid} ");
       return -1;
   }
   
 
   if ( height_grid == NULL ) {
     char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{093 you must allocate memory for the height grid first} ");
+    ERROR_SPRINTF(errtxt,"{093 you must allocate memory for the height grid / thickness first} ");
     return -1;
   }
 
 
 
-  /* Allocate memory for height grid arrays and initialize these arrays */
+  /* Allocate memory for height grid / thickness arrays and initialize these arrays */
 
   height_grid_up = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
   height_grid_down = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
   grid_parts_up = malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
   grid_parts_down = malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
   grid_parts = malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
+  number_grid_parts = malloc(0); // will be redefined later.
   for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
     for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
       height_grid[j+i*mode_grid_3d[xdir]] = 0;
@@ -756,11 +779,11 @@ int calc_height_grid ( double* height_grid ) {
       grid_parts_down[j+i*mode_grid_3d[xdir]] = 0;
     }
   }
-
+  
   /* Calculate physical size of grid mesh */
   grid_size[xdir] = box_l[xdir]/(double)mode_grid_3d[xdir];
   grid_size[ydir] = box_l[ydir]/(double)mode_grid_3d[ydir];
-
+  
   /* Update particles */
   updatePartCfg(WITHOUT_BONDS);
   //Make sure particles are sorted
@@ -769,12 +792,12 @@ int calc_height_grid ( double* height_grid ) {
     ERROR_SPRINTF(errtxt,"{094 could not sort partCfg} ");
     return -1;
   }
-
   
-
+  
+  
   /* Find the mean z position of folded coordinates*/ 
   zref = calc_zref( zdir );
-    
+  
   /* Calculate an initial height function of all particles */
   for (i = 0 ; i < n_total_particles ; i++) {
     gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
@@ -782,7 +805,7 @@ int calc_height_grid ( double* height_grid ) {
     height_grid[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir];
     grid_parts[gj + gi*mode_grid_3d[xdir]] += 1;
   }
-
+  
   /* Normalise the initial height function */
   for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
     for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
@@ -793,116 +816,130 @@ int calc_height_grid ( double* height_grid ) {
       }
     }
   }
-       
+  
   /* We now use this initial height function to calculate the
      lipid_orientation and thereby calculate populations in upper and
      lower leaflets */
-
- 
-    /* Calculate the non normalized height function based on all lipids */
-    nup = ndown = nstray = nrealstray = 0;
-    for (i = 0 ; i < n_total_particles ; i++) {
-      //      if ( (partCfg[i].p.type == 1)) {
-	gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
-	gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
-	
-	zreflocal = height_grid[gj+gi*mode_grid_3d[xdir]];
-	
-	l_orient = lipid_orientation(i,partCfg,zreflocal,direction,refdir);
-	//	printf("i: %d l_orient %d type %d %d \n", i, l_orient, partCfg[i].p.type , partCfg[i].p.mol_id );
-
-	if ( l_orient != LIPID_STRAY && l_orient != REAL_LIPID_STRAY) {
-	  if ( l_orient == LIPID_UP ) {
-	    nup++;
-	    height_grid_up[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir] - zref;
-	    grid_parts_up[gj + gi*mode_grid_3d[xdir]] += 1;
-	  } else if ( l_orient == LIPID_DOWN ) {
-	    ndown++;
-	    height_grid_down[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir] - zref;
-	    grid_parts_down[gj + gi*mode_grid_3d[xdir]] += 1;
-	  }
-	} else {
-	  if ( l_orient == REAL_LIPID_STRAY ) {
-	    nrealstray++;
-	  }
-	}
-	//      }
-      //      unfold_position(partCfg[i].r.p,partCfg[i].l.i);    
+  
+  
+  /* Calculate the non normalized height function based on all lipids */
+  nup = ndown = nstray = nrealstray = 0;
+  for (i = 0 ; i < n_total_particles ; i++) {
+    gi = floor( partCfg[i].r.p[xdir]/grid_size[xdir] );
+    gj = floor( partCfg[i].r.p[ydir]/grid_size[ydir] );
+    
+    zreflocal = height_grid[gj+gi*mode_grid_3d[xdir]];
+    
+    l_orient = lipid_orientation(i,partCfg,zreflocal,direction,refdir);
+    
+    if ( l_orient != LIPID_STRAY && l_orient != REAL_LIPID_STRAY) {
+      if ( l_orient == LIPID_UP ) {
+	nup++;
+	height_grid_up[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir] - zref;
+	grid_parts_up[gj + gi*mode_grid_3d[xdir]] += 1;
+      } else if ( l_orient == LIPID_DOWN ) {
+	ndown++;
+	height_grid_down[gj + gi*mode_grid_3d[xdir]] += partCfg[i].r.p[zdir] - zref;
+	grid_parts_down[gj + gi*mode_grid_3d[xdir]] += 1;
+      }
+    } else {
+      if ( l_orient == REAL_LIPID_STRAY ) {
+	nrealstray++;
+      }
     }
-    /*
+  }
+
+
+
+  /*
     if ( nrealstray > 0 || nstray > 0) {
     printf("Warning: there were %d stray lipid particles in height calculation \n", nrealstray);
     }
     printf(" Lipid particles up = %d , Lipid particles down = %d \n",nup, ndown); */
+  
+  STAT_TRACE(fprintf(stderr,"%d, Lipids up = %d , Lipids down = %d \n",this_node, nup, ndown));
+  
+  /* Reinitialise the height grid */
+  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+      height_grid[j+i*mode_grid_3d[xdir]] = 0.0;
+      grid_parts[j+i*mode_grid_3d[xdir]] = 0;
+    }
+  }
+  
+  /* Norm we normalize the height function according the number of
+     points in each grid cell */
+  norm = 1.0;
+  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+      
+      if ( ( grid_parts_up[j + i*mode_grid_3d[xdir]] > 0 ) && ( grid_parts_down[j + i*mode_grid_3d[xdir]] > 0 ) ) {
+	/* 
+	   This is where we distinguish between height_grid and thickness:
+	   h = .5*(h_up + h_down)
+	   t = h_up - h_down
+	*/
+	if (switch_fluc == 1)
+	  height_grid[j+i*mode_grid_3d[xdir]] = 
+	    0.5*norm*((height_grid_up[j+i*mode_grid_3d[xdir]])/(double)(grid_parts_up[j + i*mode_grid_3d[xdir]]) + 
+		      (height_grid_down[j+i*mode_grid_3d[xdir]])/(double)(grid_parts_down[j + i*mode_grid_3d[xdir]]));
+	else
+	  height_grid[j+i*mode_grid_3d[xdir]] = 
+	    norm*((height_grid_up[j+i*mode_grid_3d[xdir]])/(double)(grid_parts_up[j + i*mode_grid_3d[xdir]]) - 
+		  (height_grid_down[j+i*mode_grid_3d[xdir]])/(double)(grid_parts_down[j + i*mode_grid_3d[xdir]]));
 
-    STAT_TRACE(fprintf(stderr,"%d, Lipids up = %d , Lipids down = %d \n",this_node, nup, ndown));
+	grid_parts[j+i*mode_grid_3d[xdir]] = grid_parts_up[j + i*mode_grid_3d[xdir]] + grid_parts_down[j + i*mode_grid_3d[xdir]];
+      } else {
+	// Either upper or lower layer has no lipids
+	
+	
 
-    /* Reinitialise the height grid */
-    for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
-      for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
 	height_grid[j+i*mode_grid_3d[xdir]] = 0.0;
 	grid_parts[j+i*mode_grid_3d[xdir]] = 0;
       }
     }
-
-    /* Norm we normalize the height function according the number of
-       points in each grid cell */
-    norm = 1.0;
-    for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
-      for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
-	
-	if ( ( grid_parts_up[j + i*mode_grid_3d[xdir]] > 0 ) && ( grid_parts_down[j + i*mode_grid_3d[xdir]] > 0 ) ) {
-	  height_grid[j+i*mode_grid_3d[xdir]] = 
-	    0.5*norm*((height_grid_up[j+i*mode_grid_3d[xdir]])/(double)(grid_parts_up[j + i*mode_grid_3d[xdir]]) + 
-		      (height_grid_down[j+i*mode_grid_3d[xdir]])/(double)(grid_parts_down[j + i*mode_grid_3d[xdir]]));
-	  grid_parts[j+i*mode_grid_3d[xdir]] = grid_parts_up[j + i*mode_grid_3d[xdir]] + grid_parts_down[j + i*mode_grid_3d[xdir]];
-	} else {
-	  // Either upper or lower layer has no lipids
-	  height_grid[j+i*mode_grid_3d[xdir]] = 0.0;
-	  grid_parts[j+i*mode_grid_3d[xdir]] = 0;
-	}
-      }
-    }
-    
-
-    /* Check height grid for zero values and substitute mean of surrounding cells */
-    gapcnt = 0;
-    for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
-      for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
-	if ( grid_parts[j + i*mode_grid_3d[xdir]] ==  0) {
-	  meanval = 0.0;
-	  nonzerocnt = 0;
-	  for ( xi = (i-1) ; xi <= (i+1) ; xi++) {
-	    for ( yi = (j-1) ; yi <= (j+1) ; yi++) {
-	      if ( height_grid[yi+xi*mode_grid_3d[xdir]] != 0 ) {
-		meanval += height_grid[yi+xi*mode_grid_3d[xdir]];
-		nonzerocnt++;
-	      }
+  }
+  
+  
+  /* Check height grid for zero values and substitute mean of surrounding cells */
+  gapcnt = 0;
+  for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
+    for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
+      if ( grid_parts[j + i*mode_grid_3d[xdir]] ==  0) {
+	meanval = 0.0;
+	nonzerocnt = 0;
+	for ( xi = (i-1) ; xi <= (i+1) ; xi++) {
+	  for ( yi = (j-1) ; yi <= (j+1) ; yi++) {
+	    if ( height_grid[yi+xi*mode_grid_3d[xdir]] != 0 ) {
+	      meanval += height_grid[yi+xi*mode_grid_3d[xdir]];
+	      nonzerocnt++;
 	    }
 	  }
-	  if ( nonzerocnt == 0 ) { 
-	    char *errtxt = runtime_error(128);
-	    ERROR_SPRINTF(errtxt,"{095 hole in membrane } ");
-	    return -1;
-	  }
-	  gapcnt++;
-	}      
-      }
+	}
+	if ( nonzerocnt == 0 ) { 
+	  char *errtxt = runtime_error(128);
+	  ERROR_SPRINTF(errtxt,"{095 hole in membrane} ");
+	  return -1;
+	}
+	gapcnt++;
+      }      
     }
-    if ( gapcnt != 0 ) { 
-      fprintf(stderr,"Warning: %d, gridpoints with no particles \n",gapcnt);
-      fflush(stdout);
-    }
-    
-    free(grid_parts);
-    free(height_grid_up);
-    free(height_grid_down);
-    free(grid_parts_up);
-    free(grid_parts_down);
-    
-    return 1;
-
+  }
+  if ( gapcnt != 0 ) { 
+    fprintf(stderr,"Warning: %d, gridpoints with no particles \n",gapcnt);
+    fflush(stdout);
+  }
+  
+  free(grid_parts);
+  free(height_grid_up);
+  free(height_grid_down);
+  free(grid_parts_up);
+  free(grid_parts_down);
+  
+  return 1;
+  
 }
+
 
 #undef MODES2D_NUM_TOL
 

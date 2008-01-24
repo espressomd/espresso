@@ -64,7 +64,10 @@ extern int mode_grid_changed;
 extern double stray_cut_off;
 
 /* Exported Functions */
-int modes2d(fftw_complex* result);
+/* switch_fluc == 1 comuptes height grid
+               == 0 thickness.
+*/
+int modes2d(fftw_complex* result, int switch_fluc );
 void map_to_2dgrid();
 /** 
     This routine performs a simple check to see whether a lipid is
@@ -91,9 +94,12 @@ int orient_order(double* result, double* stored_dirs);
 int get_lipid_orients(IntList* l_orient);
 
 /**
-   Calculate the average height of lipids for each value in a grid
+   Calculate the average height of lipids or average thickness for each value in a grid
+   switch_fluc == 1: height_grid
+   switch_fluc == 0: thickness
+   The output is written in *height_grid no matter what the argument is.
 */
-int calc_height_grid ( double* height_grid );
+int calc_fluctuations ( double* height_grid, int switch_fluc );
 
 /** 
     Calculate a  vertical density profile for each of the specified beadtypes
@@ -104,6 +110,8 @@ int calc_height_grid ( double* height_grid );
  */
 int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *density_profile, int usegrid );
 int bilayer_density_profile_sphere (IntList *beadids, double rrange , DoubleList *density_profile, double radius, double center[3]);
+
+
 #endif
 
 #endif
