@@ -1331,11 +1331,12 @@ static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
 
 static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
 {
-  STAT_TRACE(fprintf(stderr,"%d,parsing modes2d \n",this_node);)
+  STAT_TRACE(fprintf(stderr,"%d,parsing modes2d height grid \n",this_node);)
     /* 'analyze modes2d' */
     char buffer[TCL_DOUBLE_SPACE];
   int i,j,change ;
-  fftw_complex* result;
+  fftw_complex* result_ht;
+  fftw_complex* result_th;
 
   change = 0;
 
@@ -1352,24 +1353,34 @@ static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   
-  result = malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex));
+  result_ht = malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex));
+  result_th = malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex));
 
-  if (!modes2d(result)) {
+  if (!modes2d(result_th, 0) || !modes2d(result_ht,1)) {
     fprintf(stderr,"%d,mode analysis failed \n",this_node);
     return TCL_ERROR;
   }
   else {    STAT_TRACE(fprintf(stderr,"%d,mode analysis done \n",this_node));}
   
 
+  /* Output is of the form :
+     ht_RE ht_IM th_RE th_IM
+  */
   Tcl_AppendResult(interp, "{ Modes } { ", (char *)NULL);
   for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
     Tcl_AppendResult(interp, " { ", (char *)NULL);
     for ( j = 0 ; j < mode_grid_3d[ydir]/2 + 1 ; j++) {
       Tcl_AppendResult(interp, " { ", (char *)NULL);
-      Tcl_PrintDouble(interp,FFTW_REAL(result[j+i*(mode_grid_3d[ydir]/2+1)]),buffer);
+      Tcl_PrintDouble(interp,FFTW_REAL(result_ht[j+i*(mode_grid_3d[ydir]/2+1)]),buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
       Tcl_AppendResult(interp, " ", (char *)NULL);
-      Tcl_PrintDouble(interp,FFTW_IMAG(result[j+i*(mode_grid_3d[ydir]/2+1)]),buffer);
+      Tcl_PrintDouble(interp,FFTW_IMAG(result_ht[j+i*(mode_grid_3d[ydir]/2+1)]),buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+      Tcl_AppendResult(interp, " ", (char *)NULL);
+      Tcl_PrintDouble(interp,FFTW_REAL(result_th[j+i*(mode_grid_3d[ydir]/2+1)]),buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+      Tcl_AppendResult(interp, " ", (char *)NULL);
+      Tcl_PrintDouble(interp,FFTW_IMAG(result_th[j+i*(mode_grid_3d[ydir]/2+1)]),buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
       Tcl_AppendResult(interp, " } ", (char *)NULL);
     }
@@ -1379,7 +1390,8 @@ static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
 
   Tcl_AppendResult(interp, " } ", (char *)NULL);
 
-  free(result);
+  free(result_ht);
+  free(result_th);
 
   return TCL_OK;
 
