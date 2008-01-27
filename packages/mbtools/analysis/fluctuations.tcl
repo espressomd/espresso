@@ -130,7 +130,7 @@ proc ::mbtools::analysis::fluctuations::analyze_fluctuations {  } {
 	}	
 	incr av_pow_i
     } else {
-	mmsg::warn [namepace current] "fluctuation analysis failed"
+	mmsg::warn [namespace current] "fluctuation analysis failed"
     }    
 }
 
