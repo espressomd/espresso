@@ -179,6 +179,11 @@ AC_DEFUN([ES_CHECK_GCC_FLAGS],[
 	# first try wether the compiler accepts -fast (Apple)
 	ES_TRY_ADD_CFLAG(-fast, accept_fast)
 
+	# on a 64bit machine, set a flag to test for
+	if test .$m = .64; then
+	   	ES_64BIT=1;
+	fi
+
 	# try CPU specific flags
 	if test .$m != .; then
 		ES_TRY_ADD_CFLAG(-m$m)
@@ -390,4 +395,14 @@ AC_DEFUN([ES_CHECK_LINK],[
 	*darwin*) LD="`pwd`/darwinlink.sh $CC" ;;
 	*) LD=$CC ;;
 	esac
+])
+
+AC_DEFUN([ES_NOTE_64BIT],[
+if test "$ES_64BIT"; then
+   AC_MSG_NOTICE([
+********************************************************************************
+* Note, that you are using a 64bit machine and ESPResSo tries to build a 64bit *
+* binary. Please make sure that you are using a 64bit version of the library!  *
+********************************************************************************])
+fi
 ])
