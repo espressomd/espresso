@@ -12,7 +12,7 @@ m4_define([ESPRESSO_TIMESTAMP],
   )])
 
 # Initialise autoconf
-AC_INIT(ESPResSo, [ESPRESSO_VERSION], [espresso@mpip-mainz.mpg.de])
+AC_INIT(ESPResSo, [ESPRESSO_VERSION], [espresso@fias.uni-frankfurt.de])
 
 AC_PREREQ(2.50)
 AC_CONFIG_SRCDIR([main.c])
