@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5h (Ydalir)                                                                     *
+* v2.0.5i (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5h -
+- v2.0.5i -
 -----------
 
+(i) January  28th, 2008.
 (h) January  22nd, 2008.
 (g) January  21st, 2008.
 (f) December 21st, 2007.
@@ -31,6 +32,7 @@ New Features:
 (a) added new single-player ESPResSo game "pong"
 
 Changes:
+(i) configure: Improved error messages.
 (g) the dihedral potential is now more general and allows phase
     parameters
 (g) apart from +-1. The parameters have changed; for old scripts,
