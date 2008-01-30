@@ -294,9 +294,9 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
 #endif
       /* since it is not clear at the moment how to handle a many body interaction here, I skip it */
     case BONDED_IA_ANGLE:
-      i++; force[0] = force[1] = force[2] = 0; break;
+      (*i)++; force[0] = force[1] = force[2] = 0; break;
     case BONDED_IA_DIHEDRAL:
-      i+=2; force[0] = force[1] = force[2] = 0; break;
+      (*i)+=2; force[0] = force[1] = force[2] = 0; break;
 
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
@@ -305,9 +305,9 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
         case TAB_BOND_LENGTH:
 	  calc_tab_bond_force(p1, p2, iaparams, dx, force); break;
         case TAB_BOND_ANGLE:
-          i++; force[0] = force[1] = force[2] = 0; break;
+          (*i)++; force[0] = force[1] = force[2] = 0; break;
         case TAB_BOND_DIHEDRAL:
-          i+=2; force[0] = force[1] = force[2] = 0; break;
+          (*i)+=2; force[0] = force[1] = force[2] = 0; break;
         default:
 	  errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt,"{081 calc_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
