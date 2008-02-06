@@ -646,31 +646,37 @@ possible, which have to be activated in \texttt{myconfig.h}
 \label{sec:dihedral}
 
 \begin{essyntax}
-  inter \var{bondid}
-  dihedral \var{n} \var{K} \var{p}
+  inter \var{bondid} dihedral \var{n} \var{K} \var{p}
 \end{essyntax}
 
 This creates a bond type with identificator \var{bondid}
-with a dihedral potential, \ie a four-body-potential. In the followin,
+with a dihedral potential, \ie a four-body-potential. In the following,
 let the particle for which the bond is created be particle $p_2$, and
 the other bond partners $p_1$, $p_3$, $p_4$, in this order, \ie
 \lit{part $p_2$ bond bondid $p_1$ $p_3$ $p_4$}. Then, the
 dihedral potential is given by
 \begin{equation}
-  V(\phi) = \var{K}\left[1 + \var{p}\,\cos(\var{n}\phi)\right],
+  V(\phi) = \var{K}\left[1 - \cos(\var{n}\phi - \var{p})\right],
 \end{equation}
 where \var{n} is the multiplicity of the potential (number of minimas)
-and can take integer values from 1 to 6, $p$ is a phase
-parameter which takes the values $\pm1$ and \var{K} is the bending
-constant of the potential. $\phi$ is the dihedral angle between the
-particles defined by the particle quadrupel $p_1$, $p_2$, $p_3$ and
-$p_4$, \ie the angle between the planes defined by the particle
-triples $p_1$, $p_2$ and $p_3$ and $p_2$, $p_3$ and $p_4$, \ie
+and can take any integer value (typically from 1 to 6), $p$ is a phase
+parameter and \var{K} is the bending constant of the potential. $\phi$
+is the dihedral angle between the particles defined by the particle
+quadrupel $p_1$, $p_2$, $p_3$ and $p_4$, \ie the angle between the
+planes defined by the particle triples $p_1$, $p_2$ and $p_3$ and
+$p_2$, $p_3$ and $p_4$:
 \begin{center}
   \includegraphics[height=8em]{figures/dihedral-angle}
 \end{center}
 Together with appropriate Lennard-Jones interactions, this potential
 can mimic a large number of atomic torsion potentials.
+
+If you enable the feature OLD_DIHEDRAL, then the old, less
+general form of the potential is used:
+\begin{equation}
+  V(\phi) = \var{K}\left[1 + \var{p}\,\cos(\var{n}\phi)\right],
+\end{equation}
+where $p$ is rather a phase factor and can only take values $p=\pm 1$.
 
 \subsection{Tabulated bond interactions}
 \index{tabulated bond interactions|mainindex}

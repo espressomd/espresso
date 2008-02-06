@@ -3,6 +3,12 @@
 # Routine for calculating the power spectrum of fluctuations for a
 # flat bilayer sheet.  Uses the "modes_2d" routine in espresso to
 # calculate the height function and perform the fft.  
+# 
+# It also calculate the thickness spectrum.
+# Basic output:
+# \# q^2 <|h(q)|^2> <|t(q)|^2>
+# where h(q) correspond to the height fluctuation,
+# and t(q) corresponds to the thickness.
 #
 #
 #
@@ -31,26 +37,21 @@
 # only the q^4 regime is used.  An example fitting gnuplot script is
 # as follows:
 #
-# boxl = Set the average tensionless boxlength of your system
-# gridsize = Set the value of mgrid you used for the analysis
 # 
-#const = (boxl/gridsize)**2
+# f(x) = a+b*x**2
 #
+# fit [0.02:0.2] f(x) 'powav.dat' u 1:($2*$1**2) via a,b
 #
-#f(x) = a+b*x**2
+# set log
 #
-#fit [0.02:0.2] f(x) 'powav.dat' u 1:($2*$1**2) via a,b
-#
-#set log
-#
-#plot 'powav.dat' u 1:2,\
+# plot 'powav.dat' u 1:2,\
 #     f(x)/x**2,\
 #     a/x**2
 #
-#print "kappa = ", 1.0/a/const
+# print "kappa = ", 1.0/a
 # 
 #
-# See the our membrane paper for more details behind this.
+# See our membrane paper for more details behind this.
 #
 #
 
@@ -87,7 +88,8 @@ proc ::mbtools::analysis::fluctuations::setup_fluctuations { args } {
     global ::mbtools::analysis::straycutoff
     variable rawmodes
     variable verbose
-    variable av_pow
+    variable av_pow_ht
+    variable av_pow_th
     set options {
 	{verbose "print out lots of stuff" }
     }
@@ -95,7 +97,8 @@ proc ::mbtools::analysis::fluctuations::setup_fluctuations { args } {
     array set params [::cmdline::getoptions args $options $usage]
 
     for { set r 0 } { $r < [expr $mgrid*($mgrid)] } { incr r } {
-	lappend av_pow 0.0
+	lappend av_pow_ht 0.0
+	lappend av_pow_th 0.0
     }
     set rawmodes "[analyze modes2d ]"    
 }
@@ -103,7 +106,8 @@ proc ::mbtools::analysis::fluctuations::setup_fluctuations { args } {
 proc ::mbtools::analysis::fluctuations::analyze_fluctuations {  } {
     variable rawmodes
     variable av_pow_i
-    variable av_pow
+    variable av_pow_ht
+    variable av_pow_th
     global ::mbtools::analysis::mgrid
     global ::mbtools::analysis::straycutoff
     variable verbose
@@ -118,13 +122,15 @@ proc ::mbtools::analysis::fluctuations::analyze_fluctuations {  } {
 	#Calculate the power spectrum for this configuration
 	set pow_tmp [arrange_modes $rawmodes $Lx $mgrid ]
 	# Add this set of results to the accumulated data
-	for { set k 0 } { $k < [llength $av_pow] } {incr k } {
-	    set tmpval "[expr [lindex $av_pow $k] + [lindex $pow_tmp $k]]"
-	    lset av_pow $k $tmpval
+	for { set k 0 } { $k < [llength $av_pow_ht] } {incr k } {
+	    set tmpval_ht "[expr [lindex $av_pow_ht $k] + [lindex [lindex $pow_tmp $k] 0]]"
+	    lset av_pow_ht $k $tmpval_ht
+	    set tmpval_th "[expr [lindex $av_pow_th $k] + [lindex [lindex $pow_tmp $k] 1]]"
+	    lset av_pow_th $k $tmpval_th
 	}	
 	incr av_pow_i
     } else {
-	mmsg::warn [namepace current] "fluctuation analysis failed"
+	mmsg::warn [namespace current] "fluctuation analysis failed"
     }    
 }
 
@@ -145,8 +151,15 @@ proc ::mbtools::analysis::fluctuations::arrange_modes { rawmodes box_l mgrid } {
 # Performs magic corrections and sorting.  Bloody painful
 #
 proc ::mbtools::analysis::fluctuations::modes_analysis_half { rawmodes box_l mgrid } {
-	
-    set norm [expr 1.0/[expr $mgrid*1.0]]
+    set boxlen [setmd box_l]
+    # Assume a square membrane in xy plane
+    set Lx [lindex $boxlen 0]
+
+    # This prefactor has the advantage of giving a
+    # physical spectrum - it does not depend on gridding.
+    # The L^2 factor of the spectrum is now incorporated.
+    set norm [expr $Lx/[expr $mgrid*$mgrid*1.0]]
+
     for { set i  0 } { $i < $mgrid } { incr i } {
 	set qi $i
 	if { $qi > [expr $mgrid/2 - 1] } { set qi [expr $i - $mgrid] }
@@ -161,11 +174,14 @@ proc ::mbtools::analysis::fluctuations::modes_analysis_half { rawmodes box_l mgr
 	    set normy [expr 1.0/$sincy]
 	    set normy [expr $normy*$normy]
 	    
-	    set re [expr [lindex [lindex $rawmodes 1 $i $j] 0]*$norm]
-	    set im [expr [lindex [lindex $rawmodes 1 $i $j] 1]*$norm]
-	    
+	    # ht: height grid; th: thickness.
+	    set ht_re [expr [lindex [lindex $rawmodes 1 $i $j] 0]*$norm]
+	    set ht_im [expr [lindex [lindex $rawmodes 1 $i $j] 1]*$norm]
+	    set th_re [expr [lindex [lindex $rawmodes 1 $i $j] 2]*$norm]
+	    set th_im [expr [lindex [lindex $rawmodes 1 $i $j] 3]*$norm]
+
 	    # Add the Deserno correction factor
-	    set pow [expr ($re*$re + $im*$im)*$normy*$normx] 
+	    set pow "[expr ($ht_re*$ht_re + $ht_im*$ht_im)*$normy*$normx] [expr ($th_re*$th_re + $th_im*$th_im)*$normy*$normx]" 
 	    
 	    lappend powspec $pow
 	}
@@ -219,17 +235,18 @@ proc ::mbtools::analysis::fluctuations::sinc { x } {
 proc ::mbtools::analysis::fluctuations::power_analysis { } {
     global ::mbtools::analysis::mgrid
     global ::mbtools::analysis::outputdir
-    variable av_pow
+    variable av_pow_ht
+    variable av_pow_th
     variable av_pow_i
     set file "$outputdir/powav.dat"
     set Lx [lindex [setmd box_l] 0]
 
     set f_powav [open $file w]
-    puts $f_powav "\# q^2 <|h(q)^2|>"
+    puts $f_powav "\# q^2 <|h(q)|^2> <|t(q)|^2>"
     set wavevectors [modes_q2 $Lx $mgrid]
     set k 0
-    foreach val $av_pow {
-	puts $f_powav "[lindex $wavevectors $k] [ expr $val/($av_pow_i*1.0) ]"
+    foreach val $av_pow_ht {
+	puts $f_powav "[lindex $wavevectors $k] [ expr $val/($av_pow_i*1.0) ] [expr [lindex $av_pow_th $k]/($av_pow_i*1.0)]"
 	incr k
     }
     close $f_powav

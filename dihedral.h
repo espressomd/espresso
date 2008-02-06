@@ -106,7 +106,9 @@ MDINLINE void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Part
 }
 
 /** calculate dihedral force between particles p1, p2 p3 and p4 
-    Written by Arijit Maitra, adapted to new force interface by Hanjo */
+    Written by Arijit Maitra, adapted to new force interface by Hanjo,
+    more general new dihedral form by Ana.
+*/
 MDINLINE int calc_dihedral_force(Particle *p2, Particle *p1, Particle *p3, Particle *p4,
 				 Bonded_ia_parameters *iaparams, double force2[3],
 				 double force1[2], double force3[2])
@@ -139,13 +141,30 @@ MDINLINE int calc_dihedral_force(Particle *p2, Particle *p1, Particle *p3, Parti
   vector_product(v12, f1, v12Xf1);
 
   /* calculate force magnitude */
-  fac =   iaparams->p.dihedral.bend * iaparams->p.dihedral.phase * iaparams->p.dihedral.mult;
-  
+#ifdef OLD_DIHEDRAL
+  fac = iaparams->p.dihedral.bend * iaparams->p.dihedral.phase * iaparams->p.dihedral.mult;
+#else
+  fac = -iaparams->p.dihedral.bend * iaparams->p.dihedral.mult;
+#endif
+
   if(fabs(sin(phi)) < TINY_SIN_VALUE) {
-    sinmphi_sinphi =  iaparams->p.dihedral.mult * cos(2.0*PI -  iaparams->p.dihedral.mult*phi)/cos(phi); 
+#ifdef OLD_DIHEDRAL
+    sinmphi_sinphi = iaparams->p.dihedral.mult * cos(2.0*PI - iaparams->p.dihedral.mult*phi)/cos(phi);
+#else
+    /*(comes from taking the first term of the MacLaurin expansion of
+      sin(n*phi - phi0) and sin(phi) and then making the division).
+      The original code had a 2PI term in the cosine (cos(2PI - nPhi))
+      but I removed it because it wasn't doing anything. AnaVV*/
+    sinmphi_sinphi = iaparams->p.dihedral.mult*
+      cos(iaparams->p.dihedral.mult*phi - iaparams->p.dihedral.phase)/cosphi;
+#endif
   }
   else {
-    sinmphi_sinphi = sin( iaparams->p.dihedral.mult*phi)/sin(phi);
+#ifdef OLD_DIHEDRAL
+    sinmphi_sinphi = sin(iaparams->p.dihedral.mult*phi)/sin(phi);
+#else
+    sinmphi_sinphi = sin(iaparams->p.dihedral.mult*phi - iaparams->p.dihedral.phase)/sin(phi);
+#endif
   }
 
   fac *= sinmphi_sinphi;
@@ -173,8 +192,11 @@ MDINLINE int dihedral_energy(Particle *p1, Particle *p2, Particle *p3, Particle 
   double fac;
 
   calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23, v23Xv34, &l_v23Xv34, &cosphi, &phi);
-  
-  fac =  iaparams->p.dihedral.phase * cos( iaparams->p.dihedral.mult*phi);
+#ifdef OLD_DIHEDRAL
+  fac = iaparams->p.dihedral.phase * cos(iaparams->p.dihedral.mult*phi);
+#else
+  fac = -cos(iaparams->p.dihedral.mult*phi -iaparams->p.dihedral.phase);
+#endif
   fac += 1.0;
   fac *=  iaparams->p.dihedral.bend;
 

@@ -2,15 +2,19 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5f (Ydalir)                                                                     *
+* v2.0.5j (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5f -
+- v2.0.5j -
 -----------
 
+(j) January  30th, 2008.
+(i) January  28th, 2008.
+(h) January  22nd, 2008.
+(g) January  21st, 2008.
 (f) December 21st, 2007.
 (e) December 20th, 2007.
 (d) December  3rd, 2007.
@@ -28,7 +32,19 @@ New Features:
 (c) VMD can read the concatenated files as a trajectory.
 (a) added new single-player ESPResSo game "pong"
 
+Changes:
+(i) configure: Improved error messages.
+(g) the dihedral potential is now more general and allows phase
+    parameters
+(g) apart from +-1. The parameters have changed; for old scripts,
+    compile
+(g) with OLD_DIHEDRAL.
+
 Bugfixes:
+(j) fixed bug in analyze pressure, when using angular or dihedral
+    bonds
+(h) fixed a bug that lead to wrong pressure calculation, when using tabulated 2
+    body bonded interaction potentials
 (d) testsuite runs with multiple processors again
 (c) added the expected END tag to the output of writepdb
 (b) number of degrees of freedom was not considered correctly in some scripts when

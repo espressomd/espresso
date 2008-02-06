@@ -30,20 +30,41 @@ AC_DEFUN([ES_CHECK_FFTW],[
 		  if test .$fftw2_found = .yes; then
 		     use_fftw=2
 		  elif test .$with_fftw = .yes; then
-		     AC_MSG_ERROR([no FFTW found])
+		       ES_NOTE_64BIT
+		       AC_MSG_FAILURE([
+********************************************************************************
+* Could not find FFTW!                                                         *
+********************************************************************************
+])
 		  fi
 		fi
 	elif test .$with_fftw = .3; then
                 use_fftw=3
 		ES_CHECK_FFTW3
 		if test .$fftw3_found != .yes; then
-			AC_MSG_ERROR([could not link against FFTW3, please specify its header and library locations in CPPFLAGS and LDFLAGS])
+		   ES_NOTE_64BIT
+		   AC_MSG_FAILURE([
+********************************************************************************
+* Could not find FFTW3!                                                        *
+* Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)   *
+* Please add the include path to CPPFLAGS                                      *
+* (e.g. configure CPPFLAGS=-I/usr/include).                                    *
+********************************************************************************
+])
 		fi
 	elif test .$with_fftw = .2; then
 		use_fftw=2
 		ES_CHECK_FFTW2
 		if test .$fftw2_found != .yes; then
-			AC_MSG_ERROR([could not link against FFTW2, please specify its header and library locations in CPPFLAGS and LDFLAGS])
+		   ES_NOTE_64BIT
+		   AC_MSG_FAILURE([
+********************************************************************************
+* Could not find FFTW2!                                                        *
+* Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)   *
+* Please add the include path to CPPFLAGS                                      *
+* (e.g. configure CPPFLAGS=-I/usr/include).                                    *
+********************************************************************************
+])
 		fi
 	elif test .$with_fftw != .no; then
 	  AC_MSG_ERROR([specified bad FFTW version ($with_fftw)])

@@ -49,7 +49,7 @@ AC_DEFUN([ES_CHECK_EFENCE],[
 ********************************************************************************\
 		       ])])
 	if test .$with_efence = .yes; then
-		AC_CHECK_LIB(efence,malloc,,AC_MSG_ERROR([could not link against the efence library]))
+		AC_CHECK_LIB(efence,malloc,,AC_MSG_FAILURE([could not link against the efence library]))
 		CPPFLAGS="$CPPFLAGS -DEFENCE"
 		LDFLAGS="$LDFLAGS -lefence"
 	fi
@@ -79,7 +79,7 @@ AC_DEFUN([ES_CHECK_TCL],[
 	dnl otherwise     use the specified version
 
 	if test .$with_tcl = .no; then
-	   AC_MSG_ERROR([Tcl is required!])
+	   AC_MSG_ERROR([Tcl is required by ESPResSo!])
 	elif test .$with_tcl = .yes; then
 		for version in $TCL_VERSION tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
 			ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [use_tcl=$version])
@@ -93,10 +93,17 @@ AC_DEFUN([ES_CHECK_TCL],[
 	if test .$use_tcl = .; then
 	   # Tcl was not found
 	   case $target_os in
-		*darwin*) AC_MSG_NOTICE([If you have Tcl installed, make sure that in one of the library paths, e.g. /usr/local/lib,
-	there is a link from lib<tclversion>.dylib to the Tcl library, which usually is
-	/Library/Frameworks/Tcl.framework/Tcl.]) ;;
-		*)	AC_MSG_ERROR([Tcl library not found!]) ;;
+		*darwin*) AC_MSG_NOTICE(
+[If you have Tcl installed, make sure that in one of the library paths, e.g. /usr/local/lib,
+there is a link from lib<tclversion>.dylib to the Tcl library, which usually is
+/Library/Frameworks/Tcl.framework/Tcl.]) ;;
+		*) ES_NOTE_64BIT
+		   AC_MSG_FAILURE([
+********************************************************************************
+* Could not link against the (static) Tcl library (libtcl*.a).                 *
+* Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)!  *
+********************************************************************************
+]) ;;
 		esac
 	fi
 	case $target_os in
@@ -104,7 +111,13 @@ AC_DEFUN([ES_CHECK_TCL],[
 	*) ;;
 	esac
 	ES_ADDPATH_CHECK_HEADER(tcl.h, [], 
-		[AC_MSG_ERROR([TCL headers not found. Please add the include path to CPPFLAGS (e.g. configure CPPFLAGS=-I/usr/include/tcl8.4).])],
+		[AC_MSG_FAILURE([
+********************************************************************************
+* Could not find the Tcl header files (tcl.h).                                 *
+* Please add the include path to CPPFLAGS                                      *
+* (e.g. configure CPPFLAGS=-I/usr/include)!                                    *
+********************************************************************************
+])],
 		$extrapaths)
 
 	if test .$use_tcl = .; then
@@ -160,7 +173,8 @@ AC_DEFUN([ES_CHECK_TK],[
 			(*darwin*) AC_MSG_ERROR([If you have Tk installed, make sure that in one of the library paths, e.g. /usr/local/lib,
 	there is a link from lib<tkversion>.dylib to the Tk library, which usually is
 	/Library/Frameworks/Tk.framework/Tk.]) ;;
-			(*)	AC_MSG_ERROR([Tk library $with_tk not found]) ;;
+			(*) ES_NOTE_64BIT
+			    AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
 			esac
 		fi
 		if test .$use_tk = .tk; then
@@ -239,4 +253,5 @@ AC_DEFUN([ES_ADDPATH_CHECK_HEADER],[
 	fi
 	AS_IF([test .$adp_found = .yes], [$2],[$3])
 ])
+
 
