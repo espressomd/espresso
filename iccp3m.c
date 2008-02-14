@@ -56,8 +56,8 @@ void resize_verlet_list_iccp3m(PairList *pl);
 MDINLINE void init_local_particle_force_iccp3m(Particle *part);
 MDINLINE void init_ghost_force_iccp3m(Particle *part);
 
-Cell *local;
-CellPList me_do_ghosts;
+Cell *local_icc;
+CellPList me_do_ghosts_icc;
 
 /* other iccp3m functions */
 int parse_normal(Tcl_Interp *interp,int normal_args, char *string);
@@ -482,8 +482,8 @@ void nsq_calculate_ia_iccp3m()
   int p, p2, npl, npg, c;
   double d[3], dist2, dist;
 
-  npl   = local->n;
-  partl = local->part;
+  npl   = local_icc->n;
+  partl = local_icc->part;
 
   /* calculate bonded interactions and non bonded node-node */
   for (p = 0; p < npl; p++) {
@@ -500,9 +500,9 @@ void nsq_calculate_ia_iccp3m()
     }
 
     /* calculate with my ghosts */
-    for (c = 0; c < me_do_ghosts.n; c++) {
-      npg   = me_do_ghosts.cell[c]->n;
-      partg = me_do_ghosts.cell[c]->part;
+    for (c = 0; c < me_do_ghosts_icc.n; c++) {
+      npg   = me_do_ghosts_icc.cell[c]->n;
+      partg = me_do_ghosts_icc.cell[c]->part;
 
       for (p2 = 0; p2 < npg; p2++) {
 	pt2 = &partg[p2];
