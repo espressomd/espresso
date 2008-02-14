@@ -35,6 +35,18 @@
  */
 void lb_init_constraints();
 
+MDINLINE void lb_copy_neg_populations(LB_FluidNode *lbfluid, int to_index ,int from_index,double factor) {
+	double weigth;
+	int i;
+#ifdef D3Q18
+	weigth = -1.;
+        for(i=0;i<18;i++)
+          lbfluid[to_index].n[i]=factor*weigth*lbfluid[from_index].n[i];
+#else
+#error Boundary conditions are only implemented for D3Q18! (#defined in lb.h)
+#endif
+}
+
 /** Apply boundary conditions to the LB fluid.
  * So far, only bounce-back boundary conditions are implemented.
  */
@@ -123,7 +135,7 @@ MDINLINE void lb_boundary_conditions() {
 
   }
 #else
-#error Boundary conditions are only implemented for D3Q18!
+#error Boundary conditions are only implemented for D3Q18! (#defined in lb.h)
 #endif
 }
 
