@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5j (Ydalir)                                                                     *
+* v2.0.5k (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5j -
+- v2.0.5k -
 -----------
 
+(k) February 14th, 2008.
 (j) January  30th, 2008.
 (i) January  28th, 2008.
 (h) January  22nd, 2008.
@@ -41,6 +42,8 @@ Changes:
 (g) with OLD_DIHEDRAL.
 
 Bugfixes:
+(k) Particles coupled to LB (D3Q18) fluid now working with
+    boundaries
 (j) fixed bug in analyze pressure, when using angular or dihedral
     bonds
 (h) fixed a bug that lead to wrong pressure calculation, when using tabulated 2
