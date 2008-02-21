@@ -1,0 +1,847 @@
+\chapter{External package: mbtools}
+\label{chap:mbtools}
+
+
+mbtools\footnote{This documentation was written by Ira R. Cooke and published on his website. It has been transcripted by Tristan Bereau.} is a set of tcl packages for setting up, analyzing and running simulations of lipid membrane systems.
+
+ mbtools comes with a basic set of tabulated forces and potentials for lipid interactions and some example scripts to help explain the syntax of the commands. If you make use of mbtools or of these potentials please acknowledge us with a citation to:
+
+    * Cooke, I. R., Kremer, K. and Deserno, M. (2005): Tunable, generic model for fluid bilayer membranes, Phys. Rev. E. 72 - 011506
+
+\section{Introduction}
+
+mbtools is located in the folder \codebox{Espresso/packages/mbtools}.
+
+One of the main features of mbtools is the ability to easily create initial lipid configurations with interesting geometries. These include flat membranes, cylinders, spheres, toroids, and randomly distributed gases. Each of these shapes is referred to as a geometry and any number of geometries can be combined in a single simulation. Once the geometry has been chosen the user specifies the molecules which should be placed in this geometry. For example one could choose sphere as a geometry and then define two different lipids and/or a protein to be placed on the sphere. Within reason (e.g. size restrictions) it should be possible to use any mixture of known molecule types on any geometry. The molecule types available at present include proteins, lipids of any length, and spherical colloids.
+
+mbtools includes several miscellaneous utility procedures for performing tasks such as warmup, setting tabulated interactions, designating molecules to be trapped and a variety of topology related sorting or data analysis functions.
+
+The analysis part of the mbtools package is designed to wrap together all the analysis for a simulation into a single simple interface. At the beginning of the simulation the user specifies which analyses should be performed by appending its name and arguments to a variable, \codebox{analysis\_flags}. After the analysis is setup one can then simply call \codebox{do\_analysis} to perform all the specified proceedures. Analysis will store a data value each time \codebox{do\_analysis} is called. Then when a call to \codebox{print\_averages} is made the average of all stored values is printed to a file and the store of values is reset to nil.
+
+\section{Installing and getting started}
+
+ Since mbtools is provided as part of the espresso molecular dynamics simulation package you will need to download and install Espresso before you can use it. Espresso can be downloaded free from  \codebox{http://www.espresso.mpg.de}.
+
+Once you have installed espresso you can find mbtools by looking inside the \codebox{packages} subdirectory. Inside the \codebox{packages/mbtools} directory you will see a directory for each of the mbtools subpackages as well as an \codebox{examples} directory. All of the examples scripts should work out of the box except those involving colloids which require you to install icover.sh (see documentation for hollowsphere molecule type). To run the simplebilayer example cd to the examples directory and then type: 
+
+\begin{code}
+  $ESPRESSO_SOURCE/$PLATFORM/Espresso scripts/main.tcl simplebilayer.tcl
+\end{code}
+
+The first part of this command is simply the full path to the appropriate espresso executable on your machine (You might have to use \codebox{Espresso_bin} when running on multiple processors). Obviously you will need to have the \codebox{\$ESPRESSO\_SOURCE} and \codebox{\$PLATFORM} environment variables set for it to work. After this executable the relative paths to two tcl scripts are given. The first of these \codebox{main.tcl} is given as an argument to espresso and is therefore interpreted first by the espresso tcl interpreter. The second tcl script \codebox{simplebilayer.tcl} is in turn passed as an argument to \codebox{main.tcl}.
+
+Why separate the tcl commands into two files ?
+
+This is really a matter of preference but if we keep all of the key commands and complex coding in a single file \codebox{main.tcl} and delegate simple parameter setting to a separate file it tends to be much easier to manage large numbers of jobs with regularly changing requirements. Regardless of your personal preferences, the important point to note is that all of the important commands are contained in \codebox{main.tcl} and you should probably start there to get an understanding for how mbtools works.
+
+Running the simplebilayer example should produce a directory called \codebox{simplebilayer} which contains the output from your simulation. To view the results cd to the simplebilayer directory and look at the contents. The directory contains many files including:
+
+\begin{itemize}
+  \item The configurations generated during warmup : \codebox{warm.$^*$.gz}
+  \item pdb files corresponding to warmup configurations : \codebox{warm.vmd$^*$.gz}
+  \item The configurations generated during the main run : \codebox{simplebilayer.$^*$.gz}
+  \item pdb files corresponding to main run configs : \codebox{simplebilayer.vmd$^*$.gz}
+  \item The most recently generated checkpoint file : \codebox{checkpoint.latest.gz}
+  \item A directory containing the second most recent checkpoint file : \codebox{checkpoint_bak}
+  \item A file containing the topology of the system : \codebox{simplebilayer.top}
+  \item The original parameter file with which you ran the simulation : \codebox{simplebilayer.tcl}
+  \item A original parameter file with which you ran the simulation : \codebox{simplebilayer.tcl}
+  \item Files containing analysis output for example : \codebox{time_vs_boxl_tmp}
+  \item Force and energy tables : \codebox{$^*$.tab}
+  \item VMD script for visualising the warmup : \codebox{warm_animation.script}
+  \item VMD script for visualising the main trajectory : \codebox{vmd_animation.script}
+\end{itemize}
+
+ To visualise your results using the vmd scripts you need to make sure that you have vmd installed properly and that you have the special vmd procedures used by the espresso team (i.e. support for the loadseries command). Then you can visualise by typing:
+
+\begin{code}
+  vmd -e vmd_animation.script
+\end{code}  
+
+\section{The \codebox{main.tcl} script}
+
+ The \codebox{main.tcl} file provided in the \codebox{examples/scripts} directory is a relatively complete script written using mbtools. It is designed to run all of the examples provided but no more. No doubt you will need to extend it for your own purposes.
+
+\subsection{Variables used by \codebox{main.tcl}}
+
+\codebox{main.tcl} expects the user to set various parameters in a \codebox{parameters.tcl} file (e.g. \codebox{simplebilayer.tcl}). Some of these parameters have defaults and generally don't need to be worried about except for specific cases. In the following list variables that have no default and therefore must be set in the parameter file are noted with an asterisk.
+
+\begin{itemize}
+  \item   \var{thermo} [\var{Langevin}] The type of thermostat to be used. Set to \var{DPD} for a dpd thermostat. Any other value gives a langevin
+  \item \var{dpd\_gamma} Required if you set the thermo to \var{DPD}
+  \item \var{dpd\_r\_cut} Required if you set the thermo to \var{DPD}
+  \item \var{warmup\_temp} [\var{\$systemtemp}] The temperature at which the warmup is performed. The default behaviour is to use the system temperature
+  \item \var{warmsteps} [100] Number of integrate steps per warmup cycle
+  \item \var{warmtimes} [20] Number of calls to integrate over which the warmup occurs
+  \item \var{free\_warmsteps} [0] Warmup steps to be used for the warmup that occurs after particles are freed of any temporary constraints.
+  \item \var{free\_warmtimes} [0] Warmup times to be used for the warmup that occurs after particles are freed of any temporary constraints.
+    \item \var{npt} [\var{off}] Whether to use the constant pressure barostat
+    \item \var{p\_ext} The pressure you want to simulate at. Required if npt is set to \var{on}
+    \item \var{piston\_mass} box mass. Required if npt is set to "on"
+    \item \var{gamma\_0} Required if npt is \var{on}. Usually set to 1 as for langevin gamma
+    \item \var{gamma\_v} Required if npt is \var{on}. Box friction
+    \item \var{use\_vmd} [\var{offline}] vmd mode
+    \item \var{mgrid} [8] The number of meshpoints per side for dividing the bilayer plane into a grid
+    \item \var{stray\_cut\_off} [1000.0] Distance of the end tail bead from the bilayer midplane beyond which a lipid is deemed to have strayed from the membrane bulk.
+    \item \var{^*systemtemp} The temperature of the simulation during the main run
+    \item \var{^*outputdir} Directory for output
+    \item \var{^*tabledir} Directory where forcetables are kept
+    \item \var{^*ident} a name for the simulation
+    \item \var{^*topofile} the name of the file where the topology is written. Usually \codebox{\$ident.top}
+    \item \var{^*tablenames} A list of forcetable names to be used
+    \item \var{^*setbox\_l} Box dimensions
+    \item \var{^*bonded\_parms} A complete list of the bonded interactions required
+    \item \var{^*nb\_interactions} A complete list of the non-bonded interactions required
+    \item \var{^*system\_specs} A list of system specifications (see documentation for the \codebox{setup_system} command in \ref{mbtools::systemg})
+    \item \var{^*moltypes} A list of molecule types (see documentation in \ref{mbtools::systemg})
+    \item \var{^*warm\_time\_step} timestep to be used during warmup integration
+    \item \var{^*main\_time\_step} timestep for the main integration run
+    \item \var{^*verlet\_skin} skin used for verlet nesting list criterion
+    \item \var{^*langevin\_gamma} langevin friction term
+    \item \var{^*int\_n\_times} number of times to do main integration
+    \item \var{^*int\_steps} number of steps in each main integration
+    \item \var{^*analysis\_write\_frequency} How often to calculate the analysis
+    \item \var{^*write\_frequency} How often to print out configurations
+    \item \var{vmdcommands} a list of additional lines of commands to be written to the \codebox{vmd_animation.script} file
+
+\end{itemize}
+
+\section{Analysis}
+
+The analysis package is designed to help organise the many possible analysis routines that can be performed during a simulation. This documentation describes the basic user interface commands and then all of the possible analysis routines. Instructions on how to add a new analysis routine are given at the end of this section.
+
+\subsection{Basic commands}
+The following commands comprise the user interface to the analysis package.
+
+At the start of a simulation all of the analysis that is to be performed is specified using the \codebox{setup\_analysis} command. Each time you want the analysis performed a call to \codebox{do\_analysis} should be made. One can then call \codebox{print\_averages} to write results to file.
+
+\begin{code} 
+  ::mbtools::analysis::setup_analysis : -outputdir.arg -suffix.arg \\
+  -iotype.arg -g.arg -str.arg
+\end{code}
+\begin{itemize}
+  \item \var{commands} [\codebox{./}] A tcl list where each element of the list is a string specifying the name and complete argument list for a particular analysis to be carried out.
+  \item \var{outputdir} [\codebox{./}] The directory where analysis output files will be created
+  \item \var{suffix} [\codebox{tmp}] Suffix that will be appended to standard file names for analysis output
+  \item \var{iotype} [\var{a}] The iotype that will be used when opening files for analysis. For an explanation of the different iotypes see the documentation for the standard tcl command open
+  \item \var{g} [8] Number of grid points per side with which to divide the bilayer for height profile analyses
+  \item \var{str} [4.0] Distance of a tail bead from bilayer midplane beyond which a lipid is deemed to be a stray lipid.
+\end{itemize}
+
+Sets up the analysis package for a simulation run or analysis run that is about to be performed. This routine needs to be called before any analysis can be performed.
+
+\begin{code}
+ ::mbtools::analysis::do_analysis :
+\end{code}
+Calls all of the \codebox{analyze} routines corresponding to commands setup in \codebox{setup\_analysis}. \codebox{do\_analysis} should be called only after \codebox{setup\_analysis} has already been called. 
+
+\begin{code}
+   ::mbtools::analysis::reset_averages  :
+\end{code}
+Calls all of the \codebox{resetav} routines corresponding to commands setup in \codebox{setup\_analysis}. These routines vary from command to command but they typically reset the storage and counter variables used for analysis results.
+\codebox{reset_averages} is typically only called internally by \codebox{print_averages}
+
+\begin{code}
+ ::mbtools::analysis::print_averages :
+\end{code}
+Calls all of the \codebox{printav} routines corresponding to commands setup in \codebox{setup_analysis}. These routines typically print results to a file buffer. After printing the \codebox{reset_averages} routine is called internally. \codebox{print_averages} should be called only after \codebox{setup_analysis} has already been called. 
+
+\subsection{Available analysis routines}
+
+\begin{code}
+   boxl  :  -verbose  : output ||  time_vs_boxl
+\end{code}
+Simply obtains the box dimensions from ESPResSo.
+
+\begin{code}
+  clusters : -alipid.arg -verbose : output || time_vs_clust, \\
+             sizehisto.[format %05d $time]
+\end{code}
+\begin{itemize}
+   \item alipid [1.29] Value for the area per lipid to be used in a making a rough calculation of the area of clusters
+\end{itemize}
+Calls the espresso command \codebox{analyze aggregation} which groups molecules in the system into aggregates. Output to \codebox{time\_vs\_clust} is: maximum cluster size, minimum cluster size, average size of clusters including those of size 2 or greater, standard deviation of clusters including those of size 2 or greater, number of clusters of size 2 or greater, total average cluster size, total cluster size standard deviation, total number of clusters, length of the interface between clusters, standard deviation of the interface length, number of clusters for which length was calculate.
+
+Additionally, at each call of \codebox{print\_averages} the complete size histogram is printed to a file with the formatted name \codebox{sizehisto.[format \%05d \$time}].
+
+\begin{code}
+   density_profile  :  -nbins.arg -hrange.arg -beadtypes.arg \\
+                     -colloidmoltypes.arg -r.arg -nogrid\\
+                     -verbose  : output ||  av_zprof
+\end{code}
+\begin{itemize}
+    \item \var{nbins} [100] Number of slices into which the height range is divided for the purpose of calculating densities
+    \item \var{hrange} [6] The maximum vertical distance from the bilayer midplane for which to calculate densities. Note that the complete vertical range is therefore 2*var{hrange}
+    \item \var{beadtypes} [0] A tcl list of the bead types for which to calculate a density profile
+    \item \var{colloidmoltypes} [] A tcl list of molecule types identifying the molecules which are colloids in the system. The default value is a null list
+    \item \var{r} [0] A tcl list of sphere radii corresponding to the radii for each colloid type in the system. If this is non-zero the density profile will be calculated in spherical shells about the colloids in the system identified via colloidmoltypes or if colloidmoltypes is not set then the system center of mass is assumed for the colloid/vesicle center
+    \item \var{nogrid} If this is set a grid mesh will not be used to refine the density profile calculation by taking into account vertical differences between mesh points
+\end{itemize}
+Calculates the number density of each of the beadtypes given in beadtypes as a function of the vertical distance from the bilayer midplane. Lipids are also sorted according to their orientation and assigned to upper or lower leaflets accordingly. Thus for a system with 3 beadtypes we would obtain 6 columns of output corresponding to 0 (lower) 1 (lower) 2 (lower) 2 (upper) 1 (upper) 0 (upper) where the number refers to the bead type and upper or lower refers to the bilayer leaflet.
+\begin{code}
+  energy : -verbose : output || time_vs_energy
+\end{code}
+Obtains the internal energies of the system from the \codebox{analyze energy} command of ESPResSo.
+\begin{code}
+  flipflop : -verbose : output || time_vs_flip
+\end{code}
+Makes a call to the \codebox{analyze get_lipid_orients} command of ESPResSo and compares this with a reference set of lipid orients obtained at the start of the simulation with \codebox{setup_analysis}. Based on this comparison the number of lipids which have flipped from their original positions is calculated
+\begin{code}
+  fluctuations : -verbose : output || powav.dat
+\end{code}
+Routine for calculating the power spectrum of height and thickness fluctuations for a flat bilayer sheet. Uses the \codebox{modes_2d} routine in ESPResSo to calculate the height and thickness functions and perform the fft. See the documentation in the file \codebox{fluctuations.tcl} for detail on what is calculated and how to obtain a stiffness value from the resulting output. Note that this routine causes a crash if it detects a large hole in the bilayer.
+\begin{code}
+  localheights : -range.arg -nbins.arg -rcatch.arg -verbose : \\
+                 output || av_localh
+\end{code}
+\begin{itemize}
+    \item \var{range} [1.0] Range of local height deviations over which to bin
+    \item \var{nbins} [100] Number of slices to divide up the height range into for the purposes of creating a profile
+    \item \var{rcatch} [1.9] The distance about a single lipid to use a starting value for finding the 6 closest neighbours
+\end{itemize}
+For each lipid we calculate its 6 nearest neighbours and then calculate the height difference between the central lipid and these neighbours. Taking these 6 values for each lipid we then create a histogram of number densities as a function of the height difference.
+\begin{code}
+  localorients : -range.arg -nbins.arg -verbose : output || av_localo
+\end{code}
+\begin{itemize}
+    \item range [1.0] Range of orientation deviations to consider
+    \item nbins [100] Number of bins to use for histogram
+\end{itemize}
+Calculates the projection of the lipid orientation vector onto the \var{xy} plane for each lipid and then bins the absolute values of these vectors.
+\begin{code}
+  orient_order : -verbose : output || time_vs_oop
+\end{code}
+Calculates the orientational order parameter \var{S} for each lipid through a call to the espresso command \codebox{analyze lipid_orient_order}.
+\begin{code}
+  stress_tensor : -verbose : output || time_vs_stress_tensor
+\end{code}
+Calculates all 9 elements of the pressure tensor for the system through a call to the espresso command \codebox{analyze stress_tensor}
+\begin{code}
+  pressure : -verbose : output || time_vs_pressure
+\end{code}
+Calculates the isotropic pressure through a call to \codebox{analyze pressure}. Results are printed as a list of the various contributions in the following order: \var{p\_inst}, \var{total}, \var{ideal}, \var{FENE}, \var{harmonic}, \var{nonbonded}. Where \var{p\_inst} is the instantaneous pressure obtained directly from the barostat.
+\begin{code}
+  stray : -verbose : output || time_vs_stray
+\end{code}
+Calculates the number of stray lipids based on a call to \codebox{analyze get_lipid_orients}.
+
+
+\subsection{Adding a new routine}
+
+To add a new analysis routine you should create a new file called  \codebox{myanalysis.tcl}  which will contain all of your code. At the top of this file you should declare a namespace for your analysis code and include all of the internal variables inside that namespace as follows;
+
+\begin{code}
+    namespace eval ::mbtools::analysis::myanalysis \{
+	variable av_myresult \\
+	variable av_myresult_i\\
+	variable f_tvsresult\\
+	variable verbose\\
+	\\
+	namespace export setup_myanalysis\\
+	namespace export analyze_myanalysis\\
+	namespace export printav_myanalysis\\
+	namespace export resetav_myanalisis\\
+    \}\\
+  \end{code}
+
+Import your new file into the analysis package by adding a line like the following to the \codebox{analysis.tcl} file.
+
+\begin{code}
+    source [file join [file dirname [info script]] myanalysis.tcl]
+\end{code}
+
+You then need to implement the following essential functions within your new namespace.
+\begin{itemize}
+    \item \codebox{::mbtools::analysis::myanalysis::setup\_myanalysis \{ args \}} 
+
+      Typically you would use this function to initialise variables and open files. 
+
+      Called by \codebox{::mbtools::analysis::setup\_analysis}. Arguments are allowed.
+    \item \codebox{::mbtools::analysis::myanalysis::printav\_myanalysis \{ void \}} 
+
+      This function should print results to a file. 
+
+      Called by \codebox{::mbtools::analysis::print\_averages}. Arguments are not allowed.
+    \item \codebox{::mbtools::analysis::myanalysis::analyze\_myanalysis \{ void \}} 
+
+      This function performs the actual analysis and should update the storage and averaging variables. 
+      Called by \codebox{::mbtools::analysis::do\_analysis}. Arguments are not allowed.
+    \item \codebox{::mbtools::analysis::myanalysis::resetav\_myanalysis \{ void \}} 
+
+      This function should update averages and reset variables accordingly depending on your requirements. 
+
+      Called by \codebox{::mbtools::analysis::reset\_averages}. Arguments are not allowed.
+\end{itemize}
+If any of these functions is not implemented the program will probably crash. 
+
+
+\section{System generation}\label{mbtools::systemg}
+
+Package for setting up lipid membrane systems in a variety of geometrical shapes.
+
+\subsection{Basic commands}
+\begin{code}
+  ::mbtools::system_generation::setup_system  :  [system_specs]\\ 
+             [iboxl] [moltypes]
+\end{code}
+\begin{itemize}
+\item \codebox{system\_specs} This is a list of structures called system specifications. Each such system specification in turn should be a list consisting of a geometry and a list detailing the number of each molecule type i.e.
+\begin{code}
+  set system\_spec \{ geometry n\_molslist \}
+\end{code}
+  The \var{geometry} should be specified as a list with two elements. The first element should be a string ``geometry'' identifying this list as a geometry. The second element is a string containing the name of a geometry type \var{mygeometry} followed by arguments to be passed to the routine \codebox{create_mygeometry}.
+  
+  The \var{n\_molslist} should be specified as a list with two elements. The first element should be a string ``n_molslist'' identifying this list as an n_molslist. The second element is a list each element of which specifies a molecule type and the number of such molecules.
+\item \var{boxl} A list containing the lengths of each of the box side lengths.
+\item \var{moltypes} A list, each element of which specifies a molecule type and type information. The exact format and requirements of this list are detailed for each molecule separately (see below for a list of molecule types and their requirements) however regardless of mol type the first two elements of the list must be a \var{moltypeid} and a string specifying the moltype respectively.
+\end{itemize}   
+
+   Sets up the system including generating topologies and placing molecules into specified geometries. Each geometry and list of molecules to be placed into that geometry are grouped into a system spec.
+
+      Example:
+
+      The following code sets out the molecule types to be used in the simulation by setting a list called \var{moltypes}. In this case two different lipid types are setup and assigned to moltypeids 0 and 1 respectively. Moltype 0 will consist of three beads per lipid, the first of which is of atomtype 0 and the second and third of which are of atomtype 1. Bonds in the lipid will be of type 0 and 1 respectively.(see the \codebox{::mbtools::system\_generation::place\_lipid\_linear} function for further details).
+\begin{code}      	   
+  set moltypes [list \{ 0 lipid \{ 0 1 1 \} \{ 0 1 \} \} \\
+                     \{ 1 lipid \{ 0 2 2 2 \} \{ 0 2 \} \} ]
+\end{code}
+      	     	
+We then construct system specs for a flat bilayer and a spherical bilayer and group these into a \var{system\_specs} list.
+
+First the spherical \var{system\_specs}
+
+\begin{code}      	   
+  set geometry \{ geometry  "sphere -shuffle -c \{ 0.0 0.0 15.0 \} " \}\\
+  set n_molslist \{ n_molslist \{  \{ 0 1000 \} \} \}\\
+  lappend spherespec \$geometry \\
+  lappend spherespec \$n_molslist\\
+\end{code}      	  
+
+The flat system_spec
+
+\begin{code}     	  
+  set geometry \{ geometry "flat -fixz" \}\\
+  set n_molslist \{ n_molslist \{  \{ 1 3000 \} \} \}\\
+  lappend bilayerspec \$geometry\\
+  lappend bilayerspec \$n_molslist\\
+\end{code}      	  
+      	
+
+Now group together the \var{system_specs} into a master list
+
+\begin{code}      	  
+  lappend system_specs \$spherespec\\
+  lappend system_specs \$bilayerspec\\
+\end{code}   	  
+
+
+Make the call to \codebox{setup_system}
+
+\begin{code}
+  ::mbtools::system_generation::setup_system \$system_specs\\
+           [setmd box_l] \$moltypes
+\end{code}
+
+
+\begin{code}
+  ::mbtools::system_generation::get_trappedmols : 
+\end{code}
+returns the internal list variable \var{trappedmols} which keeps track of all molecules that have been trapped by their center of mass. This function should be called after setup and would then typically be passed to the function \codebox{::mbtools::utils:trap_mols}.
+\begin{code}
+  ::mbtools::system_generation::get_userfixedparts : 
+\end{code}
+returns the internal list variable \var{userfixedparts} which keeps track of all particles that have been fixed in position during the setup. This is useful for later releasing particles after warmup routines have been completed.
+\begin{code}
+  ::mbtools::system_generation::get_middlebead : 
+\end{code}
+returns the internal variable \var{middlebead}.
+
+\subsection{Available geometries}
+
+\begin{code}
+  flat  :  -fixz -bondl.arg -crystal -half
+\end{code}
+\begin{itemize}
+\item \var{fixz} Fix the vertical positions of all particles. The ids of these particles are added to the list of \var{userfixedparts} which can later be obtained through a call to \codebox{::mbtools::system_generation::get_userfixedparts}.
+\item \var{crystal} Sets lipids on a grid, instead of randomly.
+\item \var{half} Creates a halfbilayer (i.e. periodic only along one direction). Useful to measure a line tension.
+\end{itemize}
+Creates a flat bilayer in the XY plane by random placement of lipids.
+\begin{code}
+  sphere : -c.arg -initarea.arg -bondl.arg -shuffle
+\end{code}
+\begin{itemize}
+\item \var{c} [\codebox{\{0.0 0.0 0.0\}}] The location of the center of the sphere relative to the center of the box
+\item \var{initarea} [1.29] An initial guess for the area per lipid. This guess is used to compute initial sphere dimensions based on the number of lipids. This initial guess is then iteratively refined until all lipids can be fit uniformly on the sphere.
+\item \var{shuffle} shuffle the topology prior to placing the lipids. This is required for a random lipid distribution because the lipids will be placed on the sphere in the order they appear in the topology
+\end{itemize}
+Creates a spherical vesicle by placing molecules in an ordered manner at uniform density on the surface of the sphere. Molecules are assumed to have a uniform cross sectional area and closely matched (though not identical) lengths. The radius of the vesicle will depend on the number of lipids and the area per lipid.
+\begin{code}
+  torus : -c.arg -initarea.arg -ratio.arg -bondl.arg -shuffle
+\end{code}
+\begin{itemize}
+\item \var{c} [\codebox{\{0.0 0.0 0.0\}}] The location of the center of the torus relative to the center of the box.
+\item \var{initarea} [1.29] An initial guess for the area per lipid. This guess is used to compute initial radii based on the number of lipids. This initial guess is then iteratively refined until all lipids can be fit uniformly on the torus.
+\item \var{ratio} [1.4142] Ratio of major toroidal radius to minor toroidal radius. Default value is for the Clifford torus.
+\item \var{shuffle} shuffle the topology prior to placing the lipids. This is required for a random lipid distribution because the lipids will be placed on the torus in the order they appear in the topology.
+\end{itemize}
+Creates a toroidal vesicle by placing molecules in an ordered manner at uniform density on the surface of the torus. Molecules are assumed to have a uniform cross sectional area and closely matched (though not identical) lengths. The two radii of the torus will depend on the number of lipids, the area per lipid and the ratio between radii.
+\begin{code}
+  cylinder : -c.arg -initarea.arg -bondl.arg -shuffle
+\end{code}
+\begin{itemize}
+\item \var{c} [{0.0 0.0 0.0}]
+\item \var{initarea} [1.29]
+\item \var{shuffle} shuffle the topology prior to placing the lipids.
+\end{itemize}
+Creates a cylinder which spans the box along one dimension by placing molecules uniformly on its surface. Works in a similar way to the sphere routine.
+\begin{code}
+  random : -exclude.arg -shuffle -bondl.arg
+\end{code}
+\begin{itemize}
+  \item \var{exclude.arg} [] an exclusion zone definition suitable for passing to 
+
+\codebox{::mbtools::}\codebox{utils::isoutside}.
+  \item \var{shuffle} shuffle the topology prior to placing the lipids.
+  \end{itemize}
+Places molecules randomly in space with a (sortof) random orientation vector. If an exclusion zone is defined no molecules will be placed such that their centers of mass are within the zone.
+\begin{code}
+  readfile : -ignore.arg -f.arg -t.arg
+\end{code}
+\begin{itemize}
+\item \var{ignore.arg} [] particle properties to be ignored during the file read.
+\item \var{f.arg} [] The file containing the configuration to be used for setup. Must be an espresso blockfile with box length, particle and bonding information.
+\item \var{t.arg} [] The topology file corresponding to the file to be read.
+\item \var{tol.arg} [0.000001] Tolerance for comparison of box dimensions.
+\end{itemize}
+Use particle positions contained in a file to initialise the locations of particles for a particular geometry. The box dimensions in the file and those set by the user are compared and an error is returned if they are not the same to within a tolerance value of \var{tol}. Even though we read from a file we also generate a topology from the \var{n_molslist} and this topology is compared with the topology that is read in to check if the number of particles are the same.
+\begin{code}
+  singlemol : -c.arg -o.arg -trapflag.arg -ctrap.arg \\
+              -trapspring.arg -bondl.arg
+\end{code}
+\begin{itemize}
+\item \var{c.arg} [ { 0.0 0.0 0.0 } ] The molecule center. Exactly what this means depends on the molecule type.
+\item \var{o.arg} [ { 0.0 0.0 1.0 } ] The orientation vector for the molecule. This is also molecule type dependent
+\item \var{trapflag.arg} [ { 0 0 0 } ] Set this optional argument to cause a molecule to be trapped by its center of mass. You should give three integers corresponding to each of the three coordinate axes. If a value of 1 is given then motion in that axis is trapped.
+\item \var{ctrap.arg} [ "" ] Set this optional argument to the central point of the trap. This works much like an optical trap in that molecules will be attracted to this point via a simple harmonic spring force
+\item \var{trapspring.arg} [ 20 ] The spring constant for the trap potential (harmonic spring).
+\end{itemize}
+Simply place a single molecule at the desired position with the desired orientation.
+
+\subsection{Adding a new geometry}
+
+To create a routine for setting up a system with a new type of geometry \var{mygeom}. Start by creating a new file  \codebox{mygeom.tcl} inside the \codebox{system\_generation} directory. The new file should declare a new namespace \var{mygeom} as a sub namespace of \codebox{::mbtools::}\codebox{system_generation} and export the proceedure \codebox{create_mygeom}. Thus your \codebox{mygeom.tcl} file should begin with the lines
+
+\begin{code}
+  namespace eval ::mbtools::system\_generation::mygeom \{\\
+    namespace export create_mygeom\\
+  \}\\
+\end{code}  
+
+Import your new file into the \codebox{system\_generation} package by adding a line like the following to the \codebox{system\_generation.tcl} file
+
+\begin{code}
+  source [file join [file dirname [info script]] mygeom.tcl]
+\end{code}
+
+
+You then need to implement the \codebox{create_mygeom} proceedure within your new namespace as follows
+\begin{code}
+  ::mbtools::system_generation::mygeom::create_mygeom { args }
+\end{code}
+
+
+
+\subsection{Available molecule types}
+
+\begin{code}
+  lipid  : typeinfo :  \{ moltypeid "lipid" particletypelist \\
+           bondtypelist \}
+\end{code}
+\begin{itemize}
+\item \var{particletypelist} A list of the particle types for each atom in the lipid. The particles are placed in the order in which they appear in this list.
+\item \var{bondtypelist} A list of two \var{bondtypeid}s. The first id is used for bonds between consecutive beads in the lipid. The second \var{bondtypeid} defines the pseudo bending potential which is a two body bond acting across beads separated by exactly one bead.
+\end{itemize}
+Places atoms in a line to create a lipid molecule.
+\begin{code}
+  hollowsphere : typeinfo : \{ moltypeid "hollowsphere" \\
+                 sphereparticlelist bondtype natomsfill \}
+\end{code}
+\begin{itemize}
+\item \var{sphereparticlelist} A list of the particle types for each atom in the hollowsphere. The atoms that make up the outer shell must be listed first followed by the atoms that make up the inner filling.
+\item \var{bondtype} The typeid for bonds linking atoms in the outer shell.
+\item \var{natomsfill} Number of filler atoms. The atom types for these will be obtained from the last \var{natomsfill} in the \var{sphereparticlelist}.
+\end{itemize}
+Creates a sphere of beads arranged such that they have an approximate spacing of \var{bondl} and such that they optimally cover the sphere. The optimal covering is obtained using the \codebox{icover} routines which are copyright R. H. Hardin, N. J. A. Sloane and W. D. Smith, 1994, 2000. Thus the routine will only work if you have installed icover and if you can successfully run it from the command line in the directory that you started your espresso job. These routines are serious overkill so if anybody can think of a nice simple algorithm for generating a covering of the sphere let us know.
+\begin{code}
+  protein : typeinfo : \{ moltypeid "protein" particletypelist\\
+            bondtypelist \}
+\end{code}
+\begin{itemize}
+          \item \var{particletypelist} A list of the particle types for each atom in the protein.
+          \item \var{bondtypelist} A list of bondtypeids.
+\end{itemize}
+Create a protein molecule.
+\begin{code}
+  spanlipid : typeinfo : \{ moltypeid "protein" particletypelist\\
+              bondtypelist \}
+\end{code}
+\begin{itemize}
+\item \var{particletypelist} A list of the particle types for each atom in the lipid. Since this is a spanning lipid the first and last elements of this list would typically be head beads.
+\item \var{bondtypelist} A list of two \var{bondtypeid}s with the same meaning as explained above for standard lipids.
+\end{itemize}
+Create a lipid which spans across the bilayer.
+
+\subsection{Adding a new molecule type}
+
+To add a new molecule type you need to define a proceedure which determines how the atoms that make up the molecule should be placed. This proc will live directly in the  \codebox{::mbtools::}\codebox{system\_generation} namespace. Examples can be found in \codebox{place.tcl}.
+
+In order to register your new molecule type to allow placement in any geometry you need to add a call to it in the function \codebox{::mbtools::}\codebox{system\_generation::}\codebox{placemol}. Make sure that all arguments to your \codebox{place_mymolecule} routine are included in this function call. 
+
+
+\section{Utils}
+
+Useful utilities routines for various types. Includes file management, basic geometry and math procedures.
+
+\subsection{Setup commands}
+\begin{code}
+  ::mbtools::utils::setup\_outputdir  :  [outputdir] -paramsfile.arg\\
+             -tabdir.arg -tabnames.arg -startf.arg -ntabs.arg
+\end{code}
+\begin{itemize}
+\item \var{outputdir} Complete path of the directory to be setup. At least the parent of the directory must exist
+\item \var{paramfile} [] Name of a file to be copied to the output directory
+\item \var{tabdir} [] Full path name of the directory where forcetables are kept
+\item \var{tabnames} [] Complete list of forcetables to be used in the simulation. These will be copied to the output directory
+\end{itemize}
+This routine is designed to setup a directory for simulation output. It copies forcetables and the parameter file to the directory after creating it if necessary.
+\begin{code}
+  ::mbtools::utils::read_startfile : [file]
+\end{code}
+\begin{itemize}
+\item \var{file} Complete path of the file to be read. Should be an espresso blockfile.
+\end{itemize}
+Read in particle configuration from an existing file or simulation snapshot
+\begin{code}
+  ::mbtools::utils::read_checkpoint : [dir]
+\end{code}
+\begin{itemize}
+\item \var{dir} Directory containing the checkpoint file which must be called \codebox{checkpoint.latest.gz}.
+\end{itemize}
+Read in a checkpoint and check for success. Warn if the checkpoint does not exist.
+\begin{code}
+  ::mbtools::utils::read_topology : [file]
+\end{code}
+\begin{itemize}
+\item \var{file} Complete path of the file that contains the topology information.
+\end{itemize}
+Read in the topology from a file and then execute the \codebox{analyze set}\codebox{ "topo_part_sync"} command of ESPResSo.
+\begin{code}
+  ::mbtools::utils::set_topology : [topo]
+\end{code}
+\begin{itemize}
+\item \var{topo} A valid topology.
+\end{itemize}
+Set the given topology and then execute the \codebox{analyze set}\codebox{ "topo_part_sync"} command of ESPResSo.
+\begin{code}
+  ::mbtools::utils::set_bonded_interactions : [bonded_parms]
+\end{code}
+\begin{itemize}
+\item \var{bonded_parms} A list of bonded interactions. Each element of this list should contain all the appropriate arguments in their correct order for a particular call to the espresso \codebox{inter} command. See the espresso \codebox{inter} command for a list of possible bonded interactions and correct syntax.
+\end{itemize}
+Set all the bonded interactions.
+\begin{code}
+  ::mbtools::utils::set_nb_interactions : [nb_parms]
+\end{code}
+\begin{itemize}
+\item \var{nb\_parms} A list of interactions. Each element of this list should contain all the appropriate arguments in their correct order for a particular call to the espresso \codebox{inter} command. See the espresso \codebox{inter} command for a list of possible non-bonded interactions and correct syntax.
+\end{itemize}
+Set all the bonded interactions.
+\begin{code}
+  ::mbtools::utils::init_random : [n_procs]
+\end{code}
+\begin{itemize}
+\item \var{n\_procs} The number of processors used in this job.
+\end{itemize}
+Initialize the random number generators on each processor based on the current time with a fixed increment to the time seed used for each proc.
+\begin{code}
+  ::mbtools::utils::initialize_vmd : [flag] [outputdir]\\
+             [ident] -extracommands.arg
+\end{code}
+\begin{itemize}
+\item \var{flag} Depending on the value of this parameter initialize vmd to one of its possible states:
+  \begin{itemize}
+  \item interactive : VMD is started and a connection to espresso established for immediate viewing of the current espresso process. With some luck this might even work sometimes! If VMD doesn't get a proper connection to espresso then it will crash.
+  \item offline : Just constructs the appropriate \codebox{psf} and \codebox{vmd_animation.script} files and writes them to the output directory so that \codebox{pdb} files generated with writepdb can be viewed with \codebox{vmd -e}\codebox{ vmd_animation.script}.
+  \item default : Any value other than those above for flag will just result in vmd not being initialized.
+  \end{itemize}
+\item \var{outputdir} The directory where vmd output will be written.
+\item \var{ident} A basename to be be given to vmd files.
+\item \var{extracommands} [] A list of strings each of which will be written to the end of the \codebox{vmd_animationscript}. Use this to give additional commands to vmd.
+\end{itemize}
+Prepare for vmd output.
+
+\subsection{Warmup commands}
+
+\begin{code}    
+  ::mbtools::utils::warmup  :  [steps] [times] -mindist.arg\\
+             -cfgs.arg -outputdir.arg -vmdflag.arg -startcap.arg \\
+             -capgoal.arg
+\end{code}
+\begin{itemize}
+\item \var{steps} number of integration steps used in each call to integrate.
+\item \var{times} number of times to call the integrate function during warmup.
+\item \var{mindist} [0] Terminate the warmup when the minimum particle distance is greater than this criterion. A value of 0 (default) results in this condition being ignored. If a condition is imposed this routine can become very very slow for large systems.
+\item \var{cfgs} [-1] Write out a configuration file every cfgs calls to integrate.
+\item \var{outputdir} [./] The directory for writing output.
+\item \var{vmdflag} [offline] If this flag is set to "offline" (default) pdb files will be generated for each configuration file generated.
+\item \var{startcap} [5] Starting value for the forcecap.
+\item \var{capgoal} [1000] For the purposes of calculating a cap increment this value is used as a goal. The final forcecap will have this value.
+\end{itemize}
+Perform a series of integration steps while increasing forcecaps from an initially small value.
+
+\subsection{Topology procs}
+
+\begin{code}
+  ::mbtools::utils::maxpartid  :  [topo]
+\end{code}
+\begin{itemize}
+\item \var{topo} A valid topology.
+\end{itemize}
+Find the maximum particle id in a given topology.
+\begin{code}
+  ::mbtools::utils::maxmoltypeid : [topo]
+\end{code}
+\begin{itemize}
+\item \var{topo} A valid topology.
+\end{itemize}
+Find the maximum molecule type id.
+\begin{code}
+  ::mbtools::utils::listnmols : [topo]
+\end{code}
+\begin{itemize}
+\item \var{topo} A valid topology.
+\end{itemize}
+Construct a list with the number of molecules of each molecule type.
+\begin{code}
+  ::mbtools::utils::minpartid : [topo]
+\end{code}
+\begin{itemize}
+\item \var{topo} A valid topology.
+\end{itemize}
+Minimum particle id for the given topology.
+\begin{code}
+  ::mbtools::utils::minmoltype : [topo]
+\end{code}
+\begin{itemize}
+          \item \var{topo} A valid topology/
+\end{itemize}
+Minimum molecule type id for this topology.
+\begin{code}
+  ::mbtools::utils::listmoltypes : [topo]
+\end{code}
+\begin{itemize}
+\item \var{topo} A valid topology.
+\end{itemize}
+Make a list of all the molecule types in a topology. Makes a check for duplication which would occur for an unsorted topology.
+\begin{code}
+  ::mbtools::utils::listmollengths : [topo]
+\end{code}
+\begin{itemize}
+\item \var{topo} A valid topology.
+\end{itemize}
+Works out the length (number of atoms) of each molecule type and returns a list of these lengths.
+
+\subsection{Math procs}
+
+\begin{code}    
+  ::mbtools::utils::dot_product  :  A B
+\end{code}
+Returns A dot B
+\begin{code}    
+  ::mbtools::utils::matrix_vec_multiply : A B
+\end{code}
+Return the product of a matrix A with a vector B
+\begin{code}    
+  ::mbtools::utils::calc_proportions : ilist
+\end{code}
+Calculate the number of times each integer occurs in the list ilist.
+\begin{code}    
+  ::mbtools::utils::average : data from to
+\end{code}
+\begin{itemize}
+          \item \var{data} A list of numbers to be averaged
+          \item \var{from} Optional starting index in data
+          \item \var{to} Optional ending index in data
+\end{itemize}
+Calculate the mean of a list of numbers starting from \var{from} going up to \var{to}.
+\begin{code}    
+  ::mbtools::utils::stdev : data from to
+\end{code}
+\begin{itemize}
+          \item \var{data} A list of numbers to find the std deviation of
+          \item \var{from} Optional starting index in data
+          \item \var{to} Optional ending index in data
+\end{itemize}
+Calculate the standard deviation of a list of numbers starting from \var{from} going up to \var{to}.
+\begin{code}    
+  ::mbtools::utils::acorr : data
+\end{code}
+\begin{itemize}
+          \item \var{data} Data for which an autocorrelation is to be calculated
+\end{itemize}
+Calculate an autocorrelation function on a set of data.
+\begin{code}    
+  ::mbtools::utils::distance : pos1 pos2
+\end{code}
+\begin{itemize}
+          \item \var{pos1} A position vector
+          \item \var{pos2} A position vector
+\end{itemize}
+Calculate the distance between two points whose position vectors are given.
+\begin{code}    
+  ::mbtools::utils::normalize : vec
+\end{code}
+\begin{itemize}
+          \item \var{vec} The vector to be normalised
+\end{itemize}
+Normalize a vector
+\begin{code}    
+  ::mbtools::utils::scalevec : vec scale
+\end{code}
+\begin{itemize}
+          \item \var{vec} The vector to be scaled
+          \item \var{scale} Scaling factor
+\end{itemize}
+Multiply all elements of a vector by a scaling factor
+\begin{code}    
+  ::mbtools::utils::uniquelist : original
+\end{code}
+\begin{itemize}
+          \item \var{original} A list possibly containing duplicate elements
+\end{itemize}
+Construct a list of all the unique elements in the original list removing all duplication.
+
+\subsection{Miscellaneous procs}
+
+\begin{code}    
+  ::mbtools::utils::trap_mols  :  molstotrap
+\end{code}
+\begin{itemize}
+          \item \var{molstotrap} A list of trap values for molecules. This list would typically be obtained by calling \codebox{::mbtools::}\codebox{get\_trappedmols} immediately after the system has been setup.
+\end{itemize}
+Set the trap value for a list of molecules.
+\begin{code}    
+  ::mbtools::utils::isoutside : [pos] [zone]
+\end{code}
+\begin{itemize}
+  \item \var{pos} The point whose status is to be determined
+  \item \var{zone} An exclusion zone. This will be a tcl list. The first element of the list must be a string with the name of the exclusion zone type and subsequent elements will be further information about the exclusion zone. Available zones are:
+  \begin{itemize}
+    \item \var{sphere} : center zone
+  \end{itemize}
+\end{itemize}
+Determines whether the point at \var{pos} is outside the exclusion zone. Returns 1 if it is and 0 if it is not.
+\begin{code}
+  ::mbtools::utils::calc_com : mol
+\end{code}
+\begin{itemize}
+          \item \var{mol} The molecule
+\end{itemize}
+Calculate the center of mass of a molecule.
+\begin{code}    
+  ::mbtools::utils::centersofmass_bymoltype : [moltypes]
+\end{code}
+\begin{itemize}
+          \item \var{moltypes} A list of molecule type ids
+\end{itemize}
+Determine the center of mass of every molecule whose type matches an item in the list moltypes. Returns a nested list where each element in the list is itself a list of centers of mass for a given moltype.
+
+\section{mmsg}
+
+mmsg is designed to provide a more controlled way of printing messages than the simple \codebox{puts} commands of Tcl. It has an ability to turn on or off messages from particular namespaces.
+
+\subsection{Basic commands}
+
+ The following commands represent the standard interface for the \codebox{mmsg} package. For consistency one should use these instead of a bare puts to standard out. \codebox{mbtools} makes extensive use of these commands.
+
+\begin{code}     
+  ::mmsg::send : [namespace] [string] \{ [newline] \}
+\end{code}
+\begin{itemize}
+          \item \var{namespace} A namespace. Typically this should be the current namespace which one can get via namespace current
+          \item \var{string} The message you want printed
+          \item \var{newline} [yes] Set this to anything other than "yes" and no carriage return will be used after the message
+\end{itemize}
+The mmsg equivalent of puts. Designed for printing of simple status or progress messages.
+\begin{code} 
+  ::mmsg::err : [namespace] [string] \{ [newline] \}
+\end{code}
+\begin{itemize}
+          \item \var{namespace} A namespace. Typically this should be the current namespace which one can get via namespace current
+          \item \var{string} The message you want printed
+          \item \var{newline} [yes] Set this to anything other than "yes" and no carriage return will be used after the message
+\end{itemize}
+Prints error messages and causes program to exit.
+\begin{code} 
+  ::mmsg::warn : [namespace] [string] \{ [newline] \}
+\end{code}
+\begin{itemize}
+          \item \var{namespace} A namespace. Typically this should be the current namespace which one can get via namespace current
+          \item \var{string} The message you want printed
+          \item \var{newline} [yes] Set this to anything other than "yes" and no carriage return will be used after the message
+\end{itemize}
+Prints warning messages.
+\begin{code} 
+  ::mmsg::debug : [namespace] [string] \{ [newline] \}
+\end{code}
+\begin{itemize}
+          \item \var{namespace} A namespace. Typically this should be the current namespace which one can get via namespace current
+          \item \var{string} The message you want printed
+          \item \var{newline} [yes] Set this to anything other than "yes" and no carriage return will be used after the message
+\end{itemize}
+Prints debug messages.
+
+\subsection{Control commands}
+
+\codebox{mmsg} does several checks before it decides to print a message. For any given message type it checks if that message type is allowed. It also checks to see if the namespace given as an argument is in the allowable namespaces list. The default behaviour is to print from the main mbtools namespaces and the global namespace
+
+\begin{code}
+  \{ :: ::mbtools::system_generation ::mbtools::utils ::mbtools::analysis \}
+\end{code}
+  
+Note that children of these namespaces must be explicitly enabled. All message types except debug are also enabled by default. The following commands allow this default behaviour to be changed.
+
+\begin{code} 
+  ::mmsg::setnamespaces : namespacelist
+\end{code}
+\begin{itemize}
+          \item \var{namespacelist} A list of all namespaces from which messages are to be printed
+\end{itemize}
+Allows control over which namespaces messages can be printed from.
+\begin{code}     
+  ::mmsg::enable : type
+\end{code}
+\begin{itemize}
+          \item \var{type} A string indicating a single message type to enable. Allowable values are "err", "debug", "send" and "warn"
+\end{itemize}
+Allows particular message types to be enabled: For example one could enable debug output with
+\begin{code}
+       mmsg::enable "debug" 
+\end{code}
+
+\begin{code}     
+  ::mmsg::disable : type
+\end{code}
+\begin{itemize}
+          \item \var{type} A string indicating a single message type to disable. Allowable values are "err", "debug", "send" and "warn"
+\end{itemize}
+Allows particular message types to be disabled: For example one could disable warning output with
+\begin{code}
+       mmsg::enable "warn" 
+\end{code}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 

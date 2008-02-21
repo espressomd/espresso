@@ -15,7 +15,8 @@ ug_TEXFILES=\
 	quickref.tex \
 	features.tex \
 	examples.tex \
-	deserno.tex
+	deserno.tex \
+        mbtools.tex
 
 
 ug_FILES=$(ug_TEXFILES) \
