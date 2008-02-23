@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5k (Ydalir)                                                                     *
+* v2.0.5l (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5k -
+- v2.0.5l -
 -----------
 
+(l) February 22nd, 2008.
 (k) February 14th, 2008.
 (j) January  30th, 2008.
 (i) January  28th, 2008.
@@ -42,6 +43,7 @@ Changes:
 (g) with OLD_DIHEDRAL.
 
 Bugfixes:
+(l) fixed some minor bugs in ESPResSo Users Guide
 (k) Particles coupled to LB (D3Q18) fluid now working with
     boundaries
 (j) fixed bug in analyze pressure, when using angular or dihedral
