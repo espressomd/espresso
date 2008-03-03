@@ -8,6 +8,7 @@ dist_scripts_DATA =\
 	convertDeserno.tcl \
 	countBonds.tcl \
 	init.tcl \
+	parallel_tempering.tcl \
 	pdb.tcl \
 	polymer.tcl \
 	pov.tcl \
