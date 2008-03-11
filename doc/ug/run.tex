@@ -204,6 +204,7 @@ A typical propagation routine accordingly looks like this
 \begin{verbatim}
 proc perform {id temp} {
   global config
+  particle delete
   foreach p [lindex $config($id) 0] { eval part $p }
   setmd time [lindex $config($id) 1]
   thermostat langevin $temp 1.0
@@ -222,6 +223,7 @@ calculated like this:
 \begin{verbatim}
 proc swap {id temp1 temp2} {
   global config
+  particle delete
   foreach p $config($id) { eval part $p }
   set epot [expr [analyze energy total] - [analyze energy kinetic]]
   return "[expr $epot/$temp1] [expr $epot/$temp2]"
