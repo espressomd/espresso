@@ -69,10 +69,6 @@ typedef struct {
   double q;
 #endif
 
-#ifdef DIPOLES
-  /** dipole moment (absolute value)*/
-  double dipm;
-#endif
 } ParticleProperties;
 
 /** Positional information on a particle. Information that is
@@ -91,10 +87,6 @@ typedef struct {
   double p_old[3];
 #endif
 
-#ifdef DIPOLES
-  /** dipol moment */
-  double dip[3];
-#endif
 
 } ParticlePosition;
 
@@ -147,13 +139,6 @@ typedef struct {
 
 } ParticleLocal;
 
-#ifdef LB
-/** Data related to the Lattice Boltzmann hydrodynamic coupling */
-typedef struct {
-  /** fluctuating part of the coupling force */
-  double f_random[3];
-} ParticleLatticeCoupling;
-#endif
 
 /** Struct holding all information for one particle. */
 typedef struct {
@@ -168,9 +153,6 @@ typedef struct {
   ///
   ParticleLocal l;
   ///
-#ifdef LB
-  ParticleLatticeCoupling lc;
-#endif
   /** bonded interactions list. The format is pretty simple:
       Just the bond type, and then the particle ids. The number of particle ids can be determined
       easily from the bonded_ia_params entry for the type. */
@@ -424,21 +406,6 @@ int set_particle_omega(int part, double omega[3]);
 int set_particle_torque(int part, double torque[3]);
 #endif
 
-#ifdef DIPOLES
-/** Call only on the master node: set particle dipole orientation.
-    @param part the particle.
-    @param dip its new dipole orientation.
-    @return TCL_OK if particle existed
-*/
-int set_particle_dip(int part, double dip[3]);
-
-/** Call only on the master node: set particle dipole moment (absolut value).
-    @param part the particle.
-    @param dipm its new dipole moment.
-    @return TCL_OK if particle existed
-*/
-int set_particle_dipm(int part, double dipm);
-#endif
 
 #ifdef EXTERNAL_FORCES
 /** Call only on the master node: set particle external forced.

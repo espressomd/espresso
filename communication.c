@@ -879,68 +879,20 @@ void mpi_send_torque_slave(int pnode, int part)
 
 void mpi_send_dip(int pnode, int part, double dip[3])
 {
-#ifdef DIPOLES
-  mpi_issue(REQ_SET_DIP, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    p->r.dip[0] = dip[0];
-    p->r.dip[1] = dip[1];
-    p->r.dip[2] = dip[2];
-  }
-  else {
-    MPI_Send(dip, 3, MPI_DOUBLE, pnode, REQ_SET_DIP, MPI_COMM_WORLD);
-  }
-
-  on_particle_change();
-#endif
 }
 
 void mpi_send_dip_slave(int pnode, int part)
 {
-#ifdef DIPOLES
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    MPI_Status status;
-    MPI_Recv(p->r.dip, 3, MPI_DOUBLE, 0, REQ_SET_DIP,
-	     MPI_COMM_WORLD, &status);
-  }
-
-  on_particle_change();
-#endif
 }
 
 /********************* REQ_SET_DIPM ********/
 
 void mpi_send_dipm(int pnode, int part, double dipm)
 {
-#ifdef DIPOLES
-  mpi_issue(REQ_SET_DIPM, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    p->p.dipm = dipm;
-  }
-  else {
-    MPI_Send(&dipm, 1, MPI_DOUBLE, pnode, REQ_SET_DIPM, MPI_COMM_WORLD);
-  }
-
-  on_particle_change();
-#endif
 }
 
 void mpi_send_dipm_slave(int pnode, int part)
 {
-#ifdef DIPOLES
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    MPI_Status status;
-    MPI_Recv(&p->p.dipm, 1, MPI_DOUBLE, 0, REQ_SET_DIPM,
-	     MPI_COMM_WORLD, &status);
-  }
-
-  on_particle_change();
-#endif
 }
 
 /********************* REQ_SET_BOND ********/
@@ -1225,20 +1177,6 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb, vo
     mpi_issue(REQ_GATHER, -1, 4);
     predict_momentum_particles(result);
     break;
-#ifdef LB
-  case 5:
-    mpi_issue(REQ_GATHER, -1, 5);
-    lb_calc_fluid_mass(result);
-    break;
-  case 6: 
-    mpi_issue(REQ_GATHER, -1, 6);
-    lb_calc_fluid_momentum(result);
-    break;
-  case 7:
-    mpi_issue(REQ_GATHER, -1, 7);
-    lb_calc_fluid_temp(result);
-    break;
-#endif
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: illegal request %d for REQ_GATHER\n", this_node, job);
     errexit();
@@ -1263,17 +1201,6 @@ void mpi_gather_stats_slave(int ana_num, int job)
   case 4:
     predict_momentum_particles(NULL);
     break;
-#ifdef LB
-  case 5:
-    lb_calc_fluid_mass(NULL);
-    break;
-  case 6:
-    lb_calc_fluid_momentum(NULL);
-    break;
-  case 7:
-    lb_calc_fluid_temp(NULL);
-    break;
-#endif
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: illegal request %d for REQ_GATHER\n", this_node, job);
     errexit();
@@ -2063,17 +1990,9 @@ void mpi_sync_topo_part_info_slave(int node,int parm ) {
 /******************* REQ_BCAST_LBPAR ********************/
 
 void mpi_bcast_lb_params(int field) {
-#ifdef LB
-  mpi_issue(REQ_BCAST_LBPAR, -1, field);
-  mpi_bcast_lb_params_slave(-1, field);
-#endif
 }
 
 void mpi_bcast_lb_params_slave(int node, int field) {
-#ifdef LB
-  MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, MPI_COMM_WORLD);
-  on_lb_params_change(field);
-#endif
 }
 
 /******************* REQ_GET_ERRS ********************/
@@ -2172,61 +2091,16 @@ void mpi_send_exclusion_slave(int part1, int part2)
 
 /************** REQ_SET_FLUID **************/
 void mpi_send_fluid(int node, int index, double rho, double *j, double *pi) {
-#ifdef LB
-  if (node==this_node) {
-    lb_set_local_fields(index, rho, j, pi);
-  } else {
-    double data[10] = { rho, j[0], j[1], j[2], pi[0], pi[1], pi[2], pi[3], pi[4], pi[5] };
-    mpi_issue(REQ_SET_FLUID, node, index);
-    MPI_Send(data, 10, MPI_DOUBLE, node, REQ_SET_FLUID, MPI_COMM_WORLD);
-  }
-#endif
 }
 
 void mpi_send_fluid_slave(int node, int index) {
-#ifdef LB
-  if (node==this_node) {
-    double data[10];
-    MPI_Status status;
-    MPI_Recv(data, 10, MPI_DOUBLE, 0, REQ_SET_FLUID, MPI_COMM_WORLD, &status);
-    lb_set_local_fields(index, data[0], &data[1], &data[4]);
-  }
-#endif
 }
 
 /************** REQ_GET_FLUID **************/
 void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi) {
-#ifdef LB
-  if (node==this_node) {
-    lb_get_local_fields(index, rho, j, pi);
-  } else {
-    double data[10];
-    mpi_issue(REQ_GET_FLUID, node, index);
-    MPI_Status status;
-    MPI_Recv(data, 10, MPI_DOUBLE, node, REQ_GET_FLUID, MPI_COMM_WORLD, &status);
-    *rho = data[0];
-    j[0] = data[1];
-    j[1] = data[2];
-    j[2] = data[3];
-    pi[0] = data[4];
-    pi[1] = data[5];
-    pi[2] = data[6];
-    pi[3] = data[7];
-    pi[4] = data[8];
-    pi[5] = data[9];
-
-  }
-#endif
 }
 
 void mpi_recv_fluid_slave(int node, int index) {
-#ifdef LB
-  if (node==this_node) {
-    double data[10];
-    lb_get_local_fields(index, &data[0], &data[1], &data[4]);
-    MPI_Send(data, 10, MPI_DOUBLE, 0, REQ_GET_FLUID, MPI_COMM_WORLD);
-  }
-#endif
 }
 
 /*********************** MAIN LOOP for slaves ****************/

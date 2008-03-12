@@ -39,11 +39,6 @@ extern double dpd_r_cut_inv;
 extern double dpd_pref1;
 extern double dpd_pref2;
 
-#ifdef TRANS_DPD 
-extern double dpd_tr_cut_inv;
-extern double dpd_pref3;
-extern double dpd_pref4;
-#endif
 
 void dpd_parse_off(Tcl_Interp *interp, int argc, char **argv);
 int thermo_parse_dpd(Tcl_Interp *interp, int argc, char **argv);
@@ -59,10 +54,6 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
 {
   extern double dpd_gamma,dpd_pref1, dpd_pref2,dpd_r_cut,dpd_r_cut_inv;
   extern int dpd_wf;
-#ifdef TRANS_DPD
-  extern double dpd_tgamma, dpd_pref3, dpd_pref4,dpd_tr_cut,dpd_tr_cut_inv;
-  extern int dpd_twf;
-#endif
   int j;
   // velocity difference between p1 and p2
   double vel12_dot_d12=0.0;
@@ -72,11 +63,6 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   double omega,omega2;// omega = w_R/dist
   double friction, noise;
   //Projection martix
-#ifdef TRANS_DPD
-  int i;
-  double P_times_dist_sqr[3][3]={{dist2,0,0},{0,dist2,0},{0,0,dist2}},noise_vec[3];
-  double f_D[3],f_R[3];
-#endif
   double tmp;
   dist_inv = 1.0/dist;
   if((dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
@@ -102,45 +88,6 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
       }
     }
   }
-#ifdef TRANS_DPD
-    //DPD2 part
-  if ((dist < dpd_tr_cut)&&(dpd_tgamma > 0.0)){
-      if ( dpd_twf == 1 )
-      {
-        omega    = dist_inv;
-      }
-      else 
-      {
-        omega    = dist_inv- dpd_tr_cut_inv;
-      }
-      omega2   = SQR(omega);
-      for (i=0;i<3;i++){
-        //noise vector
-        noise_vec[i]=d_random()-0.5;
-        // Projection Matrix
-        for (j=0;j<3;j++){
-          P_times_dist_sqr[i][j]-=d[i]*d[j];
-        }
-      }
-      for (i=0;i<3;i++){
-        //Damping force
-        f_D[i]=0;
-        //Random force
-        f_R[i]=0;
-        for (j=0;j<3;j++){
-          f_D[i]+=P_times_dist_sqr[i][j]*(p1->m.v[j] - p2->m.v[j]);
-          f_R[i]+=P_times_dist_sqr[i][j]*noise_vec[j];
-        }
-        f_D[i]*=dpd_pref3*omega2;
-        f_R[i]*=dpd_pref4*omega*dist_inv;
-      }
-      for(j=0; j<3; j++) {
-        tmp=f_R[j]-f_D[j];
-        p1->f.f[j] += tmp;
-        p2->f.f[j] -= tmp;
-      }
-  }
-#endif
 }
 #endif
 

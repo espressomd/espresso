@@ -82,16 +82,8 @@
 #endif
 
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
-#ifdef LB
-#define USE_TEMPORARY
-#define LATTICE
-//#define ALTERNATIVE_INTEGRATOR
-#endif
 
 /*Transversal DPD -> needs normal DPD*/
-#ifdef TRANS_DPD
-#define DPD
-#endif
 
 #ifdef INTER_RF
 #define ELECTROSTATICS

@@ -639,12 +639,6 @@ void calc_maximal_cutoff()
 	 }
 #endif
 
-#ifdef TRANS_DPD
-	 if (dpd_tr_cut !=0) {
-	   if(max_cut_non_bonded < dpd_tr_cut)
-	     max_cut_non_bonded = dpd_tr_cut;
-	 }
-#endif
 
 #ifdef LENNARD_JONES_GENERIC
 	 if (data->LJGEN_cut != 0) {

@@ -1455,13 +1455,6 @@ void ELC_P3M_charge_assign_both()
   int cp_cnt=0;
   /* prepare local FFT mesh */
   for(i=0; i<lm.size; i++) rs_mesh[i] = 0.0;
-#ifdef DIPOLES
-  { int j;
-    extern double *rs_mesh_dip[3];
-    for(i=0;i<3;i++)
-      for(j=0; j<lm.size; j++) rs_mesh_dip[i][j] = 0.0;
-  }
-#endif
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -1470,18 +1463,12 @@ void ELC_P3M_charge_assign_both()
     for(i = 0; i < np; i++) {
       if( p[i].p.q != 0.0 ) {
 	P3M_assign_charge(p[i].p.q, p[i].r.p,
-#ifdef DIPOLES
-			  0, pos,
-#endif
 			  cp_cnt);
 
 	if(p[i].r.p[2]<elc_params.space_layer) {
 	  double q=elc_params.di_mid_bot*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=-p[i].r.p[2];
 	  P3M_assign_charge(q, pos,
-#ifdef DIPOLES
-			    0, pos,
-#endif
 			    -1);
 	}
 	
@@ -1489,9 +1476,6 @@ void ELC_P3M_charge_assign_both()
 	  double q=elc_params.di_mid_top*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=2*elc_params.h-p[i].r.p[2];
 	  P3M_assign_charge(q, pos,
-#ifdef DIPOLES
-			    0, pos,
-#endif
 			    -1);
 	}
 
@@ -1510,13 +1494,6 @@ void ELC_P3M_charge_assign_image()
   int i,c,np;
   /* prepare local FFT mesh */
   for(i=0; i<lm.size; i++) rs_mesh[i] = 0.0;
-#ifdef DIPOLES
-  { int j;
-    extern double *rs_mesh_dip[3];
-    for(i=0;i<3;i++)
-      for(j=0; j<lm.size; j++) rs_mesh_dip[i][j] = 0.0;
-  }
-#endif
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -1529,9 +1506,6 @@ void ELC_P3M_charge_assign_image()
 	  double q=elc_params.di_mid_bot*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=-p[i].r.p[2];
 	  P3M_assign_charge(q, pos,
-#ifdef DIPOLES
-			    0, pos,
-#endif
 			    -1);
 	}
 	
@@ -1539,9 +1513,6 @@ void ELC_P3M_charge_assign_image()
 	  double q=elc_params.di_mid_top*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=2*elc_params.h-p[i].r.p[2];
 	  P3M_assign_charge(q, pos,
-#ifdef DIPOLES
-			    0, pos,
-#endif
 			    -1);
 	}
       }

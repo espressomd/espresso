@@ -214,9 +214,6 @@ int iccp3m_iteration() {
 
 void force_calc_iccp3m() {
 
-#ifdef DIPOLES
-   convert_quat_to_dip_all();
-#endif
   init_forces_iccp3m();
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
