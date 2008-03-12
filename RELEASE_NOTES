@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5m (Ydalir)                                                                     *
+* v2.0.5n (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5m -
+- v2.0.5n -
 -----------
 
+(n) March    11th, 2008.
 (m) March     3rd, 2008.
 (l) February 22nd, 2008.
 (k) February 14th, 2008.
@@ -44,6 +45,9 @@ Changes:
 (g) with OLD_DIHEDRAL.
 
 Bugfixes:
+(n) In the documentation of the parallel_tempering module, two "particle delete"
+    were missing, which cause problems when dealing with bonded
+    systems.
 (m) Added missing parallel_tempering.tcl to scripts/Makefile.am.
 (l) fixed some minor bugs in ESPResSo Users Guide
 (k) Particles coupled to LB (D3Q18) fluid now working with
