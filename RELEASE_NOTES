@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5n (Ydalir)                                                                     *
+* v2.0.5o (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5n -
+- v2.0.5o -
 -----------
 
+(o) March    12th, 2008.
 (n) March    11th, 2008.
 (m) March     3rd, 2008.
 (l) February 22nd, 2008.
@@ -27,6 +28,8 @@ Current working revision.
 (a) November 23rd, 2007.
 
 New Features:
+(o) Made a new distribution 2.0.5n and created a branch DIST205N for
+    it.
 (f) Made a new distribution 2.0.5e and created a branch DIST205E for
     it.
 (e) added an option -tag to writepdb to add an additional REMARK
