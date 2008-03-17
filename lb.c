@@ -1,4 +1,8 @@
+<<<<<<< lb.c
 /* $Id$
+=======
+/* $Id$
+>>>>>>> 2.19
  *
  * This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
  * It is therefore subject to the ESPResSo license agreement which you
@@ -733,45 +737,51 @@ MDINLINE void lb_calc_collisions() {
     for (y=1;y<=lblattice.grid[1];y++) {
       for (x=1;x<=lblattice.grid[0];x++) {
 
-	local_node = &lbfluid[index];
+#ifdef CONSTRAINTS
+	if (lbfluid[index].boundary==0) 
+	{
+#endif
+	  local_node = &lbfluid[index];
 
-	lb_calc_local_fields(local_node,1);
+	  lb_calc_local_fields(local_node,1);
 
 #ifdef ADDITIONAL_CHECKS
-	double old_rho = *(local_node->rho);
+	  double old_rho = *(local_node->rho);
 #endif
 
-	lb_update_local_pi(local_node);
+	  lb_update_local_pi(local_node);
 	
-	if (fluct) lb_add_fluct_pi(local_node);
+	  if (fluct) lb_add_fluct_pi(local_node);
 	  
-	lb_calc_local_n(local_node);
+	  lb_calc_local_n(local_node);
 	  
 #ifdef ADDITIONAL_CHECKS
-	lb_check_negative_n(local_node);
+	  lb_check_negative_n(local_node);
 #endif
 
 #ifdef ADDITIONAL_CHECKS
-	int j;
-	double *local_n = local_node->n;
-	for (j=0;j<n_veloc;j++) {
-	  if (lbmodel.coeff[j][0]*lbpar.rho+local_n[j] < 0.0) {
-	    char *errtxt;
-	    errtxt = runtime_error(128);
-	    ERROR_SPRINTF(errtxt,"{105 Unexpected negative population} ");
+	  int j;
+	  double *local_n = local_node->n;
+	  for (j=0;j<n_veloc;j++) {
+	    if (lbmodel.coeff[j][0]*lbpar.rho+local_n[j] < 0.0) {
+	      char *errtxt;
+	      errtxt = runtime_error(128);
+	      ERROR_SPRINTF(errtxt,"{105 Unexpected negative population} ");
+	    }
 	  }
-	}
 #endif
 	    
 #ifdef ADDITIONAL_CHECKS
-	double *local_rho = local_node->rho;
-	lb_calc_local_rho(local_node);
-	if (fabs(*local_rho-old_rho) > ROUND_ERROR_PREC) {
-	  char *errtxt = runtime_error(128 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE);
-	  ERROR_SPRINTF(errtxt,"{106 Mass loss/gain %le in lb_calc_collisions on site (%d,%d,%d)} ",*local_rho-old_rho,x,y,z);
+	  double *local_rho = local_node->rho;
+	  lb_calc_local_rho(local_node);
+	  if (fabs(*local_rho-old_rho) > ROUND_ERROR_PREC) {
+	    char *errtxt = runtime_error(128 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE);
+	    ERROR_SPRINTF(errtxt,"{106 Mass loss/gain %le in lb_calc_collisions on site (%d,%d,%d)} ",*local_rho-old_rho,x,y,z);
+	  }
+#endif
+#ifdef CONSTRAINTS
 	}
 #endif
-
 	++index;
       }
       index += 2;
@@ -1130,6 +1140,57 @@ MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_inde
   }
 
 }
+/** Setup of the LB populations on the boundary nodes to allow velocity interpolation close to boundary elements.
+ *  Bounce back is the only b.c. implemented right now.
+ * 
+ * @param lattice	The lattice
+ * @param node_index    The node index
+ * 
+ * Note: this only works for planar boundaries
+ */
+/* sega@fias.uni-frankfurt.de */
+MDINLINE void lb_assign_boundary_population(LB_FluidNode *lbfluid, int* node_index, double factor) {
+  int x,y,z,xx,yy,zz,flag;
+#ifdef CONSTRAINTS
+  for (x=0;x<2;x++) {
+    for (y=0;y<2;y++) {
+      for (z=0;z<2;z++) {
+	    flag=0;
+	    if(lbfluid[node_index[z*4+y*2+x]].boundary)
+	    {
+		        zz=(z+1)%2;
+			if(lbfluid[node_index[zz*4+y*2+x]].boundary==0){
+				flag++;
+				lb_copy_neg_populations(lbfluid,node_index[z*4+y*2+x],node_index[zz*4+y*2+x],factor);
+			}
+			else{
+			  yy=(y+1)%2; 
+			  if(lbfluid[node_index[z*4+yy*2+x]].boundary==0){
+				flag++;
+				lb_copy_neg_populations(lbfluid,node_index[z*4+y*2+x],node_index[z*4+yy*2+x],factor);
+			  }
+			  else{
+			    xx=(x+1)%2;
+			    if(lbfluid[node_index[z*4+y*2+xx]].boundary==0){
+				flag++;
+				lb_copy_neg_populations(lbfluid,node_index[z*4+y*2+x],node_index[z*4+y*2+xx],factor);
+			    }
+			  }
+			}
+			if(flag){
+			    if(flag>1) fprintf(stderr,"Corner node found...don't know what to do...\n");
+                            lb_calc_local_rho(&lbfluid[node_index[z*4+y*2+x]]);
+			    *lbfluid[node_index[z*4+y*2+x]].rho = -(*lbfluid[node_index[z*4+y*2+x]].rho);
+                            lb_calc_local_j(&lbfluid[node_index[z*4+y*2+x]]) ;
+			}
+			else fprintf(stderr,"Boundary node found with no fluid node around...\n");
+	    }
+      }
+    }
+  }
+#endif
+
+}
 
 /** Coupling of a particle to viscous fluid with Stokesian friction.
  * 
@@ -1156,6 +1217,10 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3]) {
   map_position_to_lattice(&lblattice,p->r.p,node_index,delta) ;
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) pos=(%.3f,%.3f,%.3f)\n",this_node,delta[0],delta[1],delta[2],delta[3],delta[4],delta[5],p->r.p[0],p->r.p[1],p->r.p[2]));
+#ifdef CONSTRAINTS
+  /* set fictious populations on the boundary nodes next to the particle*/
+   lb_assign_boundary_population(lbfluid,node_index,1.0);
+#endif
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
@@ -1218,6 +1283,10 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3]) {
       ERROR_SPRINTF(errtxt,"{108 Mass loss/gain %le in lb_viscous_momentum_exchange for particle %d} ",*local_rho-old_rho[i],p->p.identity);
     }
   }
+#endif
+#ifdef CONSTRAINTS
+  /* reset to zero fictious populations on the boundary nodes next to the particle */ 
+   lb_assign_boundary_population(lbfluid,node_index,0.0);
 #endif
 
 }

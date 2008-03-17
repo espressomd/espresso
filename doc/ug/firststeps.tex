@@ -164,7 +164,7 @@ Now we can integrate the system:
 \begin{tclcode}
 set integ_steps 200
 for {set i 0} { $i < 20 } { incr i} {
-  set temp [expr [analyze energy kinetic]/($deg_free/2.0)*$n_part)]
+  set temp [expr [analyze energy kinetic]/(($deg_free/2.0)*$n_part)]
   puts "t=[setmd time] E=[analyze energy total], T=$temp"
   integrate $integ_steps 
 }
@@ -288,8 +288,9 @@ interpreted as an integer division, which results in 0 for $\text{cnt}>1$.
 \verb|argv| is a predefined variable: it contains all the command line
 parameters. Therefore this script should be called like
 \begin{code}
-Espresso \var{script} [\var{config}... ]
+Espresso \var{n_nodes} \var{script} [\var{config}... ]
 \end{code}
+where \var{n_nodes} is the number of CPUs \es should be running on.
 
 \begin{figure}[tb]
   \centering

@@ -1595,6 +1595,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor,
       zet2_i = 2*zeta_r*zeta_i;
 
       end = complexCutoff[(int)ceil(COMPLEX_FAC*uy2*rho2)];
+      if (end > COMPLEX_STEP) end = COMPLEX_STEP;
       for (n = 0; n < end; n++) {
 	F[1] -= bon.e[n]*ztn_i;
 	F[2] += bon.e[n]*ztn_r;
