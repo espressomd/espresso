@@ -131,6 +131,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef LJCOS
   Tcl_AppendResult(interp, "{ LJCOS } ", (char *) NULL);
 #endif
+#ifdef LJCOS2
+  Tcl_AppendResult(interp, "{ LJCOS2 } ", (char *) NULL);
+#endif
 #ifdef BOND_ANGLE_HARMONIC
   Tcl_AppendResult(interp, "{ BOND_ANGLE_HARMONIC } ", (char *) NULL);
 #endif
