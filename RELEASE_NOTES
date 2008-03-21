@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5p (Ydalir)                                                                     *
+* v2.0.5q (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5p -
+- v2.0.5q -
 -----------
 
+(q) March    20th, 2008.
 (p) March    18th, 2008.
 (o) March    12th, 2008.
 (n) March    11th, 2008.
@@ -50,6 +51,7 @@ Changes:
 (g) with OLD_DIHEDRAL.
 
 Bugfixes:
+(q) LJCOS2 was missing in config.c
 (n) In the documentation of the parallel_tempering module, two "particle delete"
     were missing, which cause problems when dealing with bonded
     systems.
