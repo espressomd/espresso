@@ -397,7 +397,7 @@ void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb, i
 
 MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 {
-	int i,p_nr;
+	int i,p_nr,count=0;
 	Particle* bonded_p,*calling_p;
 	double M,tmp[3];
 	int ibox[3];
@@ -426,8 +426,26 @@ MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 			p_com[i]=calling_p->p.mass*tmp[i];
 		}
 		M=calling_p->p.mass;
-		for (p_nr=1;p_nr<calling_p->bl.n;p_nr+=2)/*bl list has entrie bond type, particle id, bond type, particle id*/
+		for (p_nr=0;p_nr<calling_p->bl.n;p_nr++)/*bl list has entrie bond type, particle id, bond type, particle id*/
 		{
+			if ( (calling_p->bl.e[p_nr]==0) || (calling_p->bl.e[p_nr]==3) || (calling_p->bl.e[p_nr]==9))
+			{
+				p_nr++;
+				bonded_p=local_particles[calling_p->bl.e[p_nr]];
+				count++;
+			}
+			#ifdef WATER_FLEX
+			else if (calling_p->bl.e[p_nr]==5)//#bend interations
+			{
+				p_nr+=3;
+				continue;
+			}
+			#endif
+			else
+			{
+				fprintf(stderr,"Unknown bond type in get_com_h2o\n");
+				exit(182);
+			}
 			bonded_p=local_particles[calling_p->bl.e[p_nr]];
 			for (i=0;i<3;i++)
 			{
@@ -437,7 +455,8 @@ MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 			unfold_position(tmp,ibox);
 			#ifdef WATER_DEBUG
 			type*=bonded_p->p.type+1;
-			if ((bonded_p->p.type+calling_p->p.type==2) && (fabs(min_distance(bonded_p->r.p,calling_p->r.p)-0.303814)>0.001))		
+			#ifndef WATER_FLEX
+			if ((bonded_p->p.type+calling_p->p.type==2) && (fabs(min_distance(bonded_p->r.p,calling_p->r.p)-0.303814)>0.001))
 			{
 				fprintf(stderr,"Dist O(%i)-H(%i) wrong(%e) (in get_com_h2o)!\n",calling_p->p.identity,bonded_p->p.identity,min_distance(bonded_p->r.p,calling_p->r.p));
 				fprintf(stderr,"bonded_Part %i %e %e %e %e %i\n",bonded_p->p.identity,bonded_p->r.p[0],bonded_p->r.p[1],bonded_p->r.p[2],bonded_p->p.mass,bonded_p->p.type);
@@ -460,15 +479,20 @@ MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 				exit(182);
 			}
 			#endif
+			#endif
 			for (i=0;i<3;i++)
 			{
 				p_com[i]+=bonded_p->p.mass*tmp[i];
 			}
 			M+=bonded_p->p.mass;
 		}
+		if (count != 3 ) {
+			fprintf(stderr,"Unknown bond type in get_com_h2o\n");
+			exit(182);
+		}
 		#ifdef WATER_DEBUG
 		if (type!=9)
-		{if ((calling_p->p.type == 0) ||(calling_p->p.type == 2) ){
+		{
 			fprintf(stderr,"Product of  part type is not  (%i) !(in get_com_h2o)! pnr=%i\n",type,calling_p->p.identity);
 			exit(182);
 		}
@@ -502,7 +526,7 @@ MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 #ifdef WATER
 MDINLINE int get_comvel_h2o(Particle *p,double v_com[3])
 {
-	int i,p_nr;
+	int i,p_nr,count=0;
 	Particle* bonded_p,*calling_p;
 	double M;
 	#ifdef WATER_DEBUG
@@ -523,9 +547,26 @@ MDINLINE int get_comvel_h2o(Particle *p,double v_com[3])
 			v_com[i]=calling_p->p.mass*calling_p->m.v[i];
 		}
 		M=calling_p->p.mass;
-		for (p_nr=1;p_nr<calling_p->bl.n;p_nr+=2)/*bl list has entrie bond type, particle id, bond type, particle id*/
+		for (p_nr=0;p_nr<calling_p->bl.n;p_nr++)/*bl list has entrie bond type, particle id, bond type, particle id*/
 		{
-			bonded_p=local_particles[calling_p->bl.e[p_nr]];
+			if ( (calling_p->bl.e[p_nr]==0) || (calling_p->bl.e[p_nr]==3) || (calling_p->bl.e[p_nr]==9))
+			{
+				p_nr++;
+				bonded_p=local_particles[calling_p->bl.e[p_nr]];
+				count++;
+			}
+			#ifdef WATER_FLEX
+			else if (calling_p->bl.e[p_nr]==5)//#bend interations
+			{
+				p_nr+=3;
+				continue;
+			}
+			#endif
+			else
+			{
+				fprintf(stderr,"Unknown bond type in get_com_h2o\n");
+				exit(182);
+			}
 			#ifdef WATER_DEBUG
 			type*=bonded_p->p.type+1;
 			#endif
@@ -534,6 +575,10 @@ MDINLINE int get_comvel_h2o(Particle *p,double v_com[3])
 				v_com[i]+=bonded_p->p.mass*bonded_p->m.v[i];
 			}
 			M+=bonded_p->p.mass;
+		}
+		if (count != 3 ) {
+			fprintf(stderr,"Unknown bond type in get_com_h2o\n");
+			exit(182);
 		}
 		#ifdef WATER_DEBUG
 		if (type!=9)
@@ -551,6 +596,7 @@ MDINLINE int get_comvel_h2o(Particle *p,double v_com[3])
 		{
 			v_com[i]/=M;
 		}
+		return 3;
 	}
 	else if ((calling_p->p.type == 4) ||(calling_p->p.type == 5) ){
 		for (i=0;i<3;i++)

@@ -51,6 +51,7 @@
 /* #define LB */
 /* #define WATER */
 /* #define WATER_DEBUG */
+/* #define WATER_FLEX */
 
 /**********************************************************************/
 /*                           interactions                             */

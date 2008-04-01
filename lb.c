@@ -1,8 +1,4 @@
-<<<<<<< lb.c
 /* $Id$
-=======
-/* $Id$
->>>>>>> 2.19
  *
  * This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
  * It is therefore subject to the ESPResSo license agreement which you
