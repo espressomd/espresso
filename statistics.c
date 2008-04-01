@@ -775,7 +775,7 @@ int h2o_com_unper_k(int knr,int pnr,double *p_com)
 	double M;
 	#ifdef WATER_DEBUG
 	double p_O[3],p_H[3];
-	#endif	
+	#endif
 	if (partCfg[pnr].p.type == 0){
 		for (i=0;i<3;i++)
 		{
@@ -975,15 +975,18 @@ void calc_h2o_rdf_av(int type, double r_min, double r_max, int r_bins, double *r
         //p1 is O-Atom
 	if(h2o_com_unper_k(k,i,p1) == 3) {
 	  //p2 is O-Atom
+	  //go to the rest
 	  if ( type == 0 ){
 	     start=i+1;
 	  }
 	  //p2 is Na or Cl !
+	  //go to all particles
 	  else if (( type == 4 )||( type == 5 )){
 	    start=0;
 	  }
 	  else {
-	    start = -1;
+	    //do notthing
+	    start = n_total_particles ;
 	  }
 	  for(j=start; j<n_total_particles; j++) {
 	        //p2 is right type and get com of p2 !
@@ -3599,8 +3602,103 @@ static int parse_and_print_pressure_h2o(Tcl_Interp *interp,int argc, char **argv
    Tcl_AppendResult(interp, buffer,(char *)NULL);
    return TCL_OK;
 }
+
+static int parse_and_print_dipole_h2o(Tcl_Interp *interp,int argc, char **argv)
+{
+   int i,j,k;
+   char buffer[TCL_DOUBLE_SPACE];
+   double dist[3],dipole[3];
+   updatePartCfg(WITHOUT_BONDS);
+   if (!sortPartCfg()) {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{059 parse_and_print_dipole_h2o: could not sort particle config, particle ids not consecutive?} ");
+      return TCL_ERROR;
+   }
+   for (i=0;i<3;i++)
+   {
+       dipole[i]=0;
+   }
+   for (i=0;i<n_total_particles;i++)
+   {
+      if (partCfg[i].p.type == 0)
+      {
+         #ifdef WATER_DEBUG
+         if (fabs(partCfg[i].p.mass-1)>0.001)
+         {
+            fprintf(stderr,"O Mass unequal 1 in parse_and_print_dipole_h2o ! pnr=%i\n",partCfg[i].p.identity);
+            exit(182);
+         }
+         #endif
+         for (j=i+1;j<i+3;j++)
+         {
+             get_mi_vector(dist,partCfg[i].r.p,partCfg[j].r.p);
+             for (k=0;k<3;k++)
+             {
+                 dipole[k]+=dist[k]*partCfg[j].p.q;
+             }
+             #ifdef WATER_DEBUG
+             if (fabs(partCfg[j].p.mass-0.0625)>0.001)
+             {
+                fprintf(stderr,"H Mass unequal 0.0625 in parse_and_print_dipole_h2o ! pnr=%i\n",partCfg[j].p.identity);
+                exit(182);
+             }
+             if (partCfg[j].p.type!=2)
+             {
+                fprintf(stderr,"H type unequal 2 in parse_and_print_dipole_h2o ! pnr=%i\n",partCfg[j].p.identity);
+                exit(182);
+             }
+             if (fabs(min_distance(partCfg[i].r.p,partCfg[j].r.p)-0.303814)>0.001)
+             {
+                fprintf(stderr,"O-H distance unequal 0.303 in parse_and_print_dipole_h2o ! pnr=%i\n",partCfg[j].p.identity);
+                exit(182);
+             }
+             #endif
+         }
+      }
+   }
+   Tcl_AppendResult(interp,"{ dipolemoment_h2o ",(char *)NULL);
+   for (k=0;k<3;k++)
+   {
+       sprintf(buffer,"%e ",dipole[k]);
+       Tcl_AppendResult(interp, buffer,(char *)NULL);
+   }
+   Tcl_AppendResult(interp,"}",(char *)NULL);
+   return TCL_OK;
+}
 #endif
 
+static int parse_and_print_dipole(Tcl_Interp *interp,int argc, char **argv)
+{
+   int i,k;
+   char buffer[TCL_DOUBLE_SPACE];
+   double dipole[3],total_q=0.0;
+   updatePartCfg(WITHOUT_BONDS);
+   if (!sortPartCfg()) {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{059 parse_and_print_dipole: could not sort particle config, particle ids not consecutive?} ");
+      return TCL_ERROR;
+   }
+   for (i=0;i<3;i++)
+   {
+       dipole[i]=0;
+   }
+   for (i=0;i<n_total_particles;i++)
+   {
+       total_q+=partCfg[i].p.q;
+       for (k=0;k<3;k++){
+            dipole[k]+=partCfg[i].r.p[k]*partCfg[i].p.q;
+       }
+   }
+   Tcl_AppendResult(interp,"{ dipolemoment_normal ",(char *)NULL);
+   for (k=0;k<3;k++)
+   {
+       sprintf(buffer,"%e ",dipole[k]);
+       Tcl_AppendResult(interp, buffer,(char *)NULL);
+   }
+   sprintf(buffer,"%e",total_q);
+   Tcl_AppendResult(interp,buffer,"}",(char *)NULL);
+   return TCL_OK;
+}
 static int parse_MSD(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze MSD [ <type_m> <n_time_steps>]' */
@@ -3703,6 +3801,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("centermass", parse_centermass);
   REGISTER_ANALYSIS("angularmomentum",parse_angularmomentum);
   REGISTER_ANALYSIS("MSD",parse_MSD);
+  REGISTER_ANALYSIS("dipmom_normal",parse_and_print_dipole);
   REGISTER_ANALYSIS("momentofinertiamatrix", parse_momentofinertiamatrix);
   REGISTER_ANALYSIS("find_principal_axis", parse_find_principal_axis);
   REGISTER_ANALYSIS("nbhood", parse_nbhood);
@@ -3759,6 +3858,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("MSD_h2o",parse_MSD_h2o);
   REGISTER_ANALYSIS("Ekin_h2o",parse_and_print_Ekin_h2o);
   REGISTER_ANALYSIS("pressure_h2o",parse_and_print_pressure_h2o);
+  REGISTER_ANALYSIS("dipmom_h2o",parse_and_print_dipole_h2o);
   REGISTER_ANALYSIS_W_ARG("rdf_h2o", parse_rdf, 3);
 #endif
   else {

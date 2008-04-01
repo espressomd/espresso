@@ -505,7 +505,7 @@ MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 		for (i=0;i<3;i++)
 		{
 			p_com[i]/=M;
-			ibox[i]=0;
+			//ibox[i]=0;
 		}
 		//fold_position(p_com,ibox);
 		return 3;
