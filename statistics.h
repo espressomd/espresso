@@ -397,7 +397,7 @@ void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb, i
 
 MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 {
-	int i,p_nr,count=0;
+	int i,p_nr,count;
 	Particle* bonded_p,*calling_p;
 	double M,tmp[3];
 	int ibox[3];
@@ -426,8 +426,10 @@ MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 			p_com[i]=calling_p->p.mass*tmp[i];
 		}
 		M=calling_p->p.mass;
+		count=1;
 		for (p_nr=0;p_nr<calling_p->bl.n;p_nr++)/*bl list has entrie bond type, particle id, bond type, particle id*/
 		{
+			//printf("%i %i\n",p->p.identity,calling_p->bl.e[p_nr]);
 			if ( (calling_p->bl.e[p_nr]==0) || (calling_p->bl.e[p_nr]==3) || (calling_p->bl.e[p_nr]==9))
 			{
 				p_nr++;
@@ -437,13 +439,13 @@ MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 			#ifdef WATER_FLEX
 			else if (calling_p->bl.e[p_nr]==5)//#bend interations
 			{
-				p_nr+=3;
+				p_nr+=2;
 				continue;
 			}
 			#endif
 			else
 			{
-				fprintf(stderr,"Unknown bond type in get_com_h2o\n");
+				fprintf(stderr,"Unknown bond type in get_com_h2o: %i\n",calling_p->bl.e[p_nr]);
 				exit(182);
 			}
 			bonded_p=local_particles[calling_p->bl.e[p_nr]];
@@ -487,7 +489,7 @@ MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 			M+=bonded_p->p.mass;
 		}
 		if (count != 3 ) {
-			fprintf(stderr,"Unknown bond type in get_com_h2o\n");
+			fprintf(stderr,"Wrong number of nb parts: %i\n",count);
 			exit(182);
 		}
 		#ifdef WATER_DEBUG
@@ -564,7 +566,7 @@ MDINLINE int get_comvel_h2o(Particle *p,double v_com[3])
 			#endif
 			else
 			{
-				fprintf(stderr,"Unknown bond type in get_com_h2o\n");
+				fprintf(stderr,"Unknown bond type in get_com_h2o: %i\n",calling_p->bl.e[p_nr]);
 				exit(182);
 			}
 			#ifdef WATER_DEBUG
@@ -577,7 +579,7 @@ MDINLINE int get_comvel_h2o(Particle *p,double v_com[3])
 			M+=bonded_p->p.mass;
 		}
 		if (count != 3 ) {
-			fprintf(stderr,"Unknown bond type in get_com_h2o\n");
+			fprintf(stderr,"Wrong number of nb parts: %i\n",count);
 			exit(182);
 		}
 		#ifdef WATER_DEBUG
