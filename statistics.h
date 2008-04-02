@@ -430,7 +430,7 @@ MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 		for (p_nr=0;p_nr<calling_p->bl.n;p_nr++)/*bl list has entrie bond type, particle id, bond type, particle id*/
 		{
 			//printf("%i %i\n",p->p.identity,calling_p->bl.e[p_nr]);
-			if ( (calling_p->bl.e[p_nr]==0) || (calling_p->bl.e[p_nr]==3) || (calling_p->bl.e[p_nr]==9))
+			if ( (calling_p->bl.e[p_nr]==0) || (calling_p->bl.e[p_nr]==3)|| (calling_p->bl.e[p_nr]==1) || (calling_p->bl.e[p_nr]==9))
 			{
 				p_nr++;
 				bonded_p=local_particles[calling_p->bl.e[p_nr]];
@@ -551,7 +551,7 @@ MDINLINE int get_comvel_h2o(Particle *p,double v_com[3])
 		M=calling_p->p.mass;
 		for (p_nr=0;p_nr<calling_p->bl.n;p_nr++)/*bl list has entrie bond type, particle id, bond type, particle id*/
 		{
-			if ( (calling_p->bl.e[p_nr]==0) || (calling_p->bl.e[p_nr]==3) || (calling_p->bl.e[p_nr]==9))
+			if ( (calling_p->bl.e[p_nr]==0) || (calling_p->bl.e[p_nr]==3) || (calling_p->bl.e[p_nr]==1) || (calling_p->bl.e[p_nr]==9))
 			{
 				p_nr++;
 				bonded_p=local_particles[calling_p->bl.e[p_nr]];

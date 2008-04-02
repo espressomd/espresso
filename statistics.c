@@ -796,6 +796,7 @@ int h2o_com_unper_k(int knr,int pnr,double *p_com)
 			{
 				p_H[i]=configs[knr][3*(pnr+p)+i];
 			}
+			#ifndef WATER_FLEX
 			if (fabs(min_distance(p_H,p_O)-0.303814)>0.001)
 			{
 				fprintf(stderr,"Dist O(%i)-H(%i) wrong(%e) (in h2o_com_unper_k)! knr=%i pnr=%i\n",pnr,p+pnr,min_distance(p_H,p_O),knr,pnr);
@@ -803,6 +804,7 @@ int h2o_com_unper_k(int knr,int pnr,double *p_com)
 				fprintf(stderr,"h2o_com %i %e %e %e %e %i\n",pnr,p_O[0],p_O[1],p_O[2],PMASS(partCfg[pnr]),partCfg[p+pnr].p.type);
 				exit(182);
 			}
+			#endif
 			#endif
 			for (i=0; i<3; i++) {
 				p_com[i]+=configs[knr][3*(pnr+p)+i]*PMASS(partCfg[p+pnr]);
@@ -859,17 +861,20 @@ int h2o_com_unper(int pnr,double *p_com)
 				fprintf(stderr,"%ith part is not type 2 (in h2o_com_unper)! pnr=%i\n",p,pnr);
 				exit(182);
 			}
+			
 			for (i=0;i<3;i++)
 			{
 				p_H[i]=partCfg[pnr+p].r.p[i];
 			}
-			if (fabs(min_distance(p_H,p_O)-0.303814)>0.001)
+                        #ifndef WATER_FLEX
+                        if (fabs(min_distance(p_H,p_O)-0.303814)>0.001)
 			{
 				fprintf(stderr,"Dist O(%i)-H(%i) wrong(%e) (in h2o_com_unper)! pnr=%i\n",pnr,p+pnr,min_distance(p_H,p_O),pnr);
 				fprintf(stderr,"h2o_com %i %e %e %e %e %i\n",p+pnr,p_H[0],p_H[1],p_H[2],PMASS(partCfg[pnr+p]),partCfg[p].p.type);
 				fprintf(stderr,"h2o_com %i %e %e %e %e %i\n",pnr,p_O[0],p_O[1],p_O[2],PMASS(partCfg[pnr]),partCfg[p+pnr].p.type);
 				exit(182);
 			}
+			#endif
 			#endif
 			for (i=0; i<3; i++) {
 				p_com[i]+=partCfg[pnr+p].r.p[i]*PMASS(partCfg[p+pnr]);
@@ -3647,11 +3652,13 @@ static int parse_and_print_dipole_h2o(Tcl_Interp *interp,int argc, char **argv)
                 fprintf(stderr,"H type unequal 2 in parse_and_print_dipole_h2o ! pnr=%i\n",partCfg[j].p.identity);
                 exit(182);
              }
+             #ifndef WATER_FLEX
              if (fabs(min_distance(partCfg[i].r.p,partCfg[j].r.p)-0.303814)>0.001)
              {
                 fprintf(stderr,"O-H distance unequal 0.303 in parse_and_print_dipole_h2o ! pnr=%i\n",partCfg[j].p.identity);
                 exit(182);
              }
+             #endif
              #endif
          }
       }

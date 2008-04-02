@@ -83,7 +83,9 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   //change for h2o
   double p1_com[3],p2_com[3],com_dist;
 
+#ifndef WATER_FLEX
   if (p1->p.mol_id==p2->p.mol_id) return;
+#endif
 
   if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
      return ;
