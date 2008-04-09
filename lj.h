@@ -182,8 +182,6 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
 #ifdef WATER
   double p1_com[3],p2_com[3],com_dist;
 
-  if (p1->p.mol_id==p2->p.mol_id) return;
-
   if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
      return;
   }
@@ -246,8 +244,6 @@ MDINLINE double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
 
 #ifdef WATER
   double p1_com[3],p2_com[3],com_dist;
-
-  if (p1->p.mol_id==p2->p.mol_id) return 0.0;
 
   if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
      return 0.0;

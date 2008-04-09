@@ -88,6 +88,12 @@
 //#define ALTERNATIVE_INTEGRATOR
 #endif
 
+/*DPD with mass needs MASS and DPD */
+#ifdef DPD_MASS
+#define MASS
+#define DPD
+#endif
+
 /*Transversal DPD -> needs normal DPD*/
 #ifdef TRANS_DPD
 #define DPD
@@ -95,6 +101,13 @@
 
 #ifdef INTER_RF
 #define ELECTROSTATICS
+#endif
+
+#ifdef WATER
+#define MASS
+#define ELECTROSTATICS
+#define LENNARD_JONES
+#define NO_INTRA_NB
 #endif
 
 /* If any bond angle potential is activated, actiavte the whole bond angle code */

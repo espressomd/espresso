@@ -78,11 +78,19 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   double f_D[3],f_R[3];
 #endif
   double tmp;
-
 #ifdef WATER
   //change for h2o
   double p1_com[3],p2_com[3],com_dist;
+#endif
+#ifdef DPD_MASS
+  double massf;
+  massf=PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
+#endif
 
+
+#ifdef WATER
+
+//for flex water also damp internal dof
 #ifndef WATER_FLEX
   if (p1->p.mol_id==p2->p.mol_id) return;
 #endif
@@ -96,19 +104,23 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
 #endif
 
   dist_inv = 1.0/dist;
+
 #ifdef WATER
   if((com_dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
 #else
   if((dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
 #endif
-    if ( dpd_wf == 1 )
+    if ( dpd_wf == 1 ) //w_R=1
     {
        omega    = dist_inv;
     }
-    else 
+    else //w_R=(1-r/r_c)
     {
     	omega    = dist_inv- dpd_r_cut_inv;
     }
+#ifdef DPD_MASS
+    omega*=sqrt(massf);
+#endif
     omega2   = SQR(omega);
     //DPD part
     if (dpd_gamma > 0.0 ){
@@ -138,6 +150,9 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
       {
         omega    = dist_inv- dpd_tr_cut_inv;
       }
+#ifdef DPD_MASS
+      omega*=sqrt(massf);
+#endif
       omega2   = SQR(omega);
       for (i=0;i<3;i++){
         //noise vector
@@ -199,6 +214,10 @@ MDINLINE void add_interdpd_pair_force(Particle *p1, Particle *p2, IA_parameters 
   double P_times_dist_sqr[3][3]={{dist2,0,0},{0,dist2,0},{0,0,dist2}},noise_vec[3];
   double f_D[3],f_R[3];
   double tmp;
+#ifdef DPD_MASS
+  double massf;
+  massf=PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
+#endif
   dist_inv = 1.0/dist;
   if((dist < ia_params->dpd_r_cut)&&(ia_params->dpd_gamma > 0.0)) {
     if ( dpd_wf == 1 )
@@ -209,6 +228,9 @@ MDINLINE void add_interdpd_pair_force(Particle *p1, Particle *p2, IA_parameters 
     {
     	omega    = dist_inv - 1.0/ia_params->dpd_r_cut;
     }
+#ifdef DPD_MASS
+    omega*=sqrt(massf);
+#endif
     omega2   = SQR(omega);
     //DPD part
        // friction force prefactor
@@ -231,6 +253,9 @@ MDINLINE void add_interdpd_pair_force(Particle *p1, Particle *p2, IA_parameters 
       {
         omega    = dist_inv- 1.0/ia_params->dpd_tr_cut;
       }
+#ifdef DPD_MASS
+      omega*=sqrt(massf);
+#endif
       omega2   = SQR(omega);
       for (i=0;i<3;i++){
         //noise vector

@@ -136,9 +136,13 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
 #ifdef WATER
   //Change
   double p1_com[3],p2_com[3],com_dist;
+#endif
 
+#ifdef NO_INTRA_NB
   if (p1->p.mol_id==p2->p.mol_id) return;
+#endif
 
+#ifdef WATER
   if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
      return;
   }
@@ -166,11 +170,14 @@ MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 {
   double  fac;
 #ifdef WATER
-  //Change H2O
   double p1_com[3],p2_com[3],com_dist;
+#endif
 
+#ifdef NO_INTRA_NB
   if (p1->p.mol_id==p2->p.mol_id) return 0.0;
+#endif
 
+#ifdef WATER
   if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
      return 0.0;
   }
@@ -288,11 +295,14 @@ MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *
   int j;
   double fac;
 #ifdef WATER
-  //Change
   double p1_com[3],p2_com[3],com_dist;
+#endif
 
+#ifdef NO_INTRA_NB
   if (p1->p.mol_id==p2->p.mol_id) return;
+#endif
 
+#ifdef WATER
   if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
      return;
   }
@@ -318,11 +328,14 @@ MDINLINE double interrf_pair_energy(Particle *p1, Particle *p2,IA_parameters *ia
 {
   double fac;
 #ifdef WATER
-  //Change H2O
   double p1_com[3],p2_com[3],com_dist;
+#endif
 
+#ifdef NO_INTRA_NB
   if (p1->p.mol_id==p2->p.mol_id) return 0.0;
+#endif
 
+#ifdef WATER
   if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
      return 0.0;
   }

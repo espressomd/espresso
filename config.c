@@ -155,6 +155,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef DPD
   Tcl_AppendResult(interp, "{ DPD } ", (char *) NULL);
 #endif
+#ifdef DPD_MASS
+  Tcl_AppendResult(interp, "{ DPD_MASS } ", (char *) NULL);
+#endif
 #ifdef LB
   Tcl_AppendResult(interp, "{ LB } ", (char *) NULL);
 #endif
@@ -163,6 +166,9 @@ int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef INTER_RF
   Tcl_AppendResult(interp, "{ INTER_RF } ", (char *) NULL);
+#endif
+#ifdef NO_INTRA_NB
+  Tcl_AppendResult(interp, "{ NO_INTRA_NB } ", (char *) NULL);
 #endif
   Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);

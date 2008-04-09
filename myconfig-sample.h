@@ -48,6 +48,7 @@
 /* #define NPT */ 
 /* #define DPD */
 /* #define TRANS_DPD */
+/* #define DPD_MASS */
 /* #define LB */
 /* #define WATER */
 /* #define WATER_DEBUG */
@@ -70,6 +71,8 @@
 /* #define SOFT_SPHERE */
 /* #define INTER_DPD */
 /* #define INTER_RF */
+
+/* #define NO_INTRA_NB */
 
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */
 /* #define BOND_ANGLE_HARMONIC */

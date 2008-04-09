@@ -142,6 +142,10 @@ MDINLINE void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3]
   double t1[3], t2[3]; /* dummies */
 #endif
 
+#ifdef NO_INTRA_NB
+  if (p1->p.mol_id==p2->p.mol_id) return;
+#endif
+
   /* lennard jones */
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist, force);
