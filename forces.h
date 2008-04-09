@@ -118,6 +118,9 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /***********************************************/
   /* non bonded pair potentials                  */
   /***********************************************/
+#ifdef NO_INTRA_NB
+  if (p1->p.mol_id==p2->p.mol_id) return;
+#endif
 
 #ifdef TABULATED
   /* tabulated */
@@ -351,6 +354,7 @@ MDINLINE void add_bonded_force(Particle *p1)
     case BONDED_IA_RIGID_BOND:
       //add_rigid_bond_pair_force(p1,p2, iaparams, force, force2);
       bond_broken = 0; 
+      force[0]=force[1]=force[2]=0.0;
       break;
 #endif
 #ifdef TABULATED
@@ -374,7 +378,8 @@ MDINLINE void add_bonded_force(Particle *p1)
 #endif
 #ifdef BOND_VIRTUAL
     case BONDED_IA_VIRTUAL_BOND:
-      bond_broken = 0; 
+      bond_broken = 0;
+      force[0]=force[1]=force[2]=0.0;
       break;
 #endif
     default :

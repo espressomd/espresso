@@ -69,6 +69,8 @@
 /* #define INTER_DPD */
 /* #define INTER_RF */
 
+/* #define NO_INTRA_NB */
+
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */
 /* #define BOND_ANGLE_HARMONIC */
 /* #define BOND_ANGLE_COSINE */

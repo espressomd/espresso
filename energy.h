@@ -73,6 +73,10 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
   double ret = 0;
 
+#ifdef NO_INTRA_NB
+  if (p1->p.mol_id==p2->p.mol_id) return;
+#endif
+
 #ifdef LENNARD_JONES
   /* lennard jones */
   ret += lj_pair_energy(p1,p2,ia_params,d,dist);
