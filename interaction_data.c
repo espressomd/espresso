@@ -912,9 +912,9 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 
   REGISTER_COULOMB("dh", inter_parse_dh);    
 
-  REGISTER_COULOMB("rf", inter_parse_rf);
+  if(ARG0_IS_S("rf")) return inter_parse_rf(interp, argc-1, argv+1,COULOMB_RF);
 
-  REGISTER_COULOMB("inter_rf", inter_parse_rf);
+  if(ARG0_IS_S("inter_rf")) return inter_parse_rf(interp, argc-1, argv+1,COULOMB_INTER_RF);
 
   REGISTER_COULOMB("mmm1d", inter_parse_mmm1d);
 
@@ -1112,8 +1112,8 @@ int printCoulombIAToResult(Tcl_Interp *interp)
 #endif
   case COULOMB_EWALD: printEWALDToResult(interp); break;
   case COULOMB_DH: printdhToResult(interp); break;
-  case COULOMB_RF: printrfToResult(interp); break;
-  case COULOMB_INTER_RF: printinterrfToResult(interp); break;
+  case COULOMB_RF: printrfToResult(interp,"rf"); break;
+  case COULOMB_INTER_RF: printrfToResult(interp,"inter_rf"); break;
   case COULOMB_MMM1D: printMMM1DToResult(interp); break;
   case COULOMB_MMM2D: printMMM2DToResult(interp); break;
   case COULOMB_MAGGS: printMaggsToResult(interp); break;

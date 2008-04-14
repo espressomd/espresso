@@ -44,11 +44,13 @@ extern Reaction_field_params rf_params;
 /************************************************************/
 /*@{*/
 
-MDINLINE int printrfToResult(Tcl_Interp *interp)
+MDINLINE int printrfToResult(Tcl_Interp *interp,char *name)
 {
   char buffer[TCL_DOUBLE_SPACE];
+  sprintf(buffer,"%s",name);
+  Tcl_AppendResult(interp, buffer, " ",(char *) NULL);
   Tcl_PrintDouble(interp, rf_params.kappa, buffer);
-  Tcl_AppendResult(interp, "rf ", buffer, " ",(char *) NULL);
+  Tcl_AppendResult(interp, buffer, " ",(char *) NULL);
   Tcl_PrintDouble(interp, rf_params.epsilon1, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, rf_params.epsilon2, buffer);
@@ -80,7 +82,7 @@ MDINLINE int rf_set_params(double kappa,double epsilon1,double epsilon2, double 
   return 1;
 }
 
-MDINLINE int inter_parse_rf(Tcl_Interp * interp, int argc, char ** argv)
+MDINLINE int inter_parse_rf(Tcl_Interp * interp, int argc, char ** argv,int method)
 {
   double kappa,epsilon1,epsilon2, r_cut;
   int i;
@@ -91,7 +93,7 @@ MDINLINE int inter_parse_rf(Tcl_Interp * interp, int argc, char ** argv)
     return TCL_ERROR;
   }
 
-  coulomb.method = COULOMB_RF;
+  coulomb.method = method;
 
   if ((! ARG_IS_D(0, kappa))      ||
       (! ARG_IS_D(1, epsilon1))   ||
@@ -175,21 +177,6 @@ MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 }
 
 /*from I. G. Tironi et al., J. Chem. Phys. 102, 5451 (1995)*/
-MDINLINE int printinterrfToResult(Tcl_Interp *interp)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-  Tcl_PrintDouble(interp, rf_params.kappa, buffer);
-  Tcl_AppendResult(interp, "inter_rf ", buffer, " ",(char *) NULL);
-  Tcl_PrintDouble(interp, rf_params.epsilon1, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, rf_params.epsilon2, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, rf_params.r_cut, buffer);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
-
-  return TCL_OK;
-}
-
 #ifdef INTER_RF
 MDINLINE int printinterrfIAToResult(Tcl_Interp *interp, int i, int j)
 {
