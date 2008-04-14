@@ -44,11 +44,13 @@ extern Reaction_field_params rf_params;
 /************************************************************/
 /*@{*/
 
-MDINLINE int printrfToResult(Tcl_Interp *interp)
+MDINLINE int printrfToResult(Tcl_Interp *interp,char *name)
 {
   char buffer[TCL_DOUBLE_SPACE];
+  sprintf(buffer,"%s",name);
+  Tcl_AppendResult(interp, buffer, " ",(char *) NULL);
   Tcl_PrintDouble(interp, rf_params.kappa, buffer);
-  Tcl_AppendResult(interp, "rf ", buffer, " ",(char *) NULL);
+  Tcl_AppendResult(interp, buffer, " ",(char *) NULL);
   Tcl_PrintDouble(interp, rf_params.epsilon1, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, rf_params.epsilon2, buffer);
@@ -80,7 +82,7 @@ MDINLINE int rf_set_params(double kappa,double epsilon1,double epsilon2, double 
   return 1;
 }
 
-MDINLINE int inter_parse_rf(Tcl_Interp * interp, int argc, char ** argv)
+MDINLINE int inter_parse_rf(Tcl_Interp * interp, int argc, char ** argv,int method)
 {
   double kappa,epsilon1,epsilon2, r_cut;
   int i;
@@ -91,7 +93,7 @@ MDINLINE int inter_parse_rf(Tcl_Interp * interp, int argc, char ** argv)
     return TCL_ERROR;
   }
 
-  coulomb.method = COULOMB_RF;
+  coulomb.method = method;
 
   if ((! ARG_IS_D(0, kappa))      ||
       (! ARG_IS_D(1, epsilon1))   ||
@@ -137,15 +139,15 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
   if (p1->p.mol_id==p2->p.mol_id) return;
 #endif
   
-  if(dist < rf_params.r_cut) {
-    fac = 1.0 / (dist*dist*dist)  +  rf_params.B / (rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
-    fac *= coulomb.prefactor * p1->p.q * p2->p.q;
+  if (dist < rf_params.r_cut) {
+     fac = 1.0 / (dist*dist*dist)  +  rf_params.B / (rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
+     fac *= coulomb.prefactor * p1->p.q * p2->p.q;
 
-    for(j=0;j<3;j++)
-       force[j] += fac * d[j];
+     for (j=0;j<3;j++)
+         force[j] += fac * d[j];
 
-    ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
-    ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
+     ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
+     ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
   }
 }
 
@@ -157,32 +159,17 @@ MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
   if (p1->p.mol_id==p2->p.mol_id) return 0.0;
 #endif
 
-  if(dist < rf_params.r_cut) {
-    fac = 1.0 / dist  -  (rf_params.B*dist*dist) / (2*rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
-    //cut off part
-    fac -= (1-rf_params.B/2)  / rf_params.r_cut;
-    fac *= coulomb.prefactor * p1->p.q * p2->p.q;
-    return fac;
+  if (dist < rf_params.r_cut) {
+     fac = 1.0 / dist  -  (rf_params.B*dist*dist) / (2*rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
+     //cut off part
+     fac -= (1-rf_params.B/2)  / rf_params.r_cut;
+     fac *= coulomb.prefactor * p1->p.q * p2->p.q;
+     return fac;
   }
   return 0.0;
 }
 
 /*from I. G. Tironi et al., J. Chem. Phys. 102, 5451 (1995)*/
-MDINLINE int printinterrfToResult(Tcl_Interp *interp)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-  Tcl_PrintDouble(interp, rf_params.kappa, buffer);
-  Tcl_AppendResult(interp, "inter_rf ", buffer, " ",(char *) NULL);
-  Tcl_PrintDouble(interp, rf_params.epsilon1, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, rf_params.epsilon2, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, rf_params.r_cut, buffer);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
-
-  return TCL_OK;
-}
-
 #ifdef INTER_RF
 MDINLINE int printinterrfIAToResult(Tcl_Interp *interp, int i, int j)
 {
