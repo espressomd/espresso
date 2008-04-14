@@ -167,32 +167,35 @@ MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
   return 0.0;
 }
 
-#ifdef INTER_RF
 /*from I. G. Tironi et al., J. Chem. Phys. 102, 5451 (1995)*/
+MDINLINE int printinterrfToResult(Tcl_Interp *interp)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+  Tcl_PrintDouble(interp, rf_params.kappa, buffer);
+  Tcl_AppendResult(interp, "inter_rf ", buffer, " ",(char *) NULL);
+  Tcl_PrintDouble(interp, rf_params.epsilon1, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, rf_params.epsilon2, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, rf_params.r_cut, buffer);
+  Tcl_AppendResult(interp, buffer, (char *) NULL);
+
+  return TCL_OK;
+}
+
+#ifdef INTER_RF
 MDINLINE int printinterrfIAToResult(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
 
-  Tcl_PrintDouble(interp, data->rf_coul_pref, buffer);
-  Tcl_AppendResult(interp, "inter_rf ", buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->rf_kappa, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->rf_epsilon1, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->rf_epsilon2, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->rf_r_cut, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-
+  sprintf(buffer,"%i",data->rf_on);
+  Tcl_AppendResult(interp, "inter_rf ", buffer, " ",(char *) NULL);
   return TCL_OK;
 }
 
-MDINLINE int interrf_set_params(int part_type_a, int part_type_b,double coul_pref,
-				      double kappa, double epsilon1, double epsilon2,
-				      double r_cut)
+MDINLINE int interrf_set_params(int part_type_a, int part_type_b,int rf_on)
 {
-  double B;
   IA_parameters *data, *data_sym;
 
   make_particle_type_exist(part_type_a);
@@ -205,15 +208,7 @@ MDINLINE int interrf_set_params(int part_type_a, int part_type_b,double coul_pre
     return TCL_ERROR;
   }
 
-  B=(2*(epsilon1-epsilon2)*(1+kappa*r_cut)-epsilon2*kappa*kappa*r_cut*r_cut)/((epsilon1+2*epsilon2)*(1+kappa*r_cut)+epsilon2*kappa*kappa*r_cut*r_cut);
-
-  /* LJ should be symmetrically */
-  data->rf_coul_pref = data_sym->rf_coul_pref = coul_pref;
-  data->rf_kappa     = data_sym->rf_kappa     = kappa;
-  data->rf_epsilon1  = data_sym->rf_epsilon1  = epsilon1;
-  data->rf_epsilon2  = data_sym->rf_epsilon2  = epsilon2;
-  data->rf_r_cut     = data_sym->rf_r_cut     = r_cut;
-  data->rf_B         = data_sym->rf_B         = B;
+  data->rf_on         = data_sym->rf_on         = rf_on;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
@@ -227,74 +222,53 @@ MDINLINE int interrf_parser(Tcl_Interp * interp,
 		       int argc, char ** argv)
 {
   /* parameters needed for RF */
-  double coul_pref,kappa,epsilon1,epsilon2,r_cut;
+  int rf_on;
   int change;
 
   /* get lennard-jones interaction type */
-  if (argc < 6) {
-    Tcl_AppendResult(interp, "inter_rf needs 5 parameters: "
-		     "<coul_pref> <kappa> <epsilon1> <epsilon2> <r_cut>",
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "inter_rf needs 1 parameter: "
+		     "<rf_on>",
 		     (char *) NULL);
     return 0;
   }
 
   /* copy lennard-jones parameters */
-  if ((! ARG_IS_D(1, coul_pref))      ||
-      (! ARG_IS_D(2, kappa))   ||
-      (! ARG_IS_D(3, epsilon1))   ||
-      (! ARG_IS_D(4, epsilon2))   ||
-      (! ARG_IS_D(5, r_cut)        )) {
-    Tcl_AppendResult(interp, "inter_rf needs 5 parameters: "
-		     "<coul_pref> <kappa> <epsilon1> <epsilon2> <r_cut>",
+  if (! ARG_IS_I(1, rf_on)) {
+    Tcl_AppendResult(interp, "<rf_on> must be int",
 		     (char *) NULL);
     return TCL_ERROR;
   }
-  change = 6;
+  change = 2;
 	
-  if (interrf_set_params(part_type_a, part_type_b,coul_pref,
-			       kappa,epsilon1,epsilon2,r_cut
-			       ) == TCL_ERROR) {
+  if (! ((rf_on==0) || (rf_on==1)) ) {
+    Tcl_AppendResult(interp, "rf_on must be 0 or 1", (char *) NULL);
+    return 0;
+  }
+  if (interrf_set_params(part_type_a, part_type_b,rf_on) == TCL_ERROR) {
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
     return 0;
   }
   return change;
 }
+
 MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
-  int j;
-  double fac;
-
-#ifdef NO_INTRA_NB
-  if (p1->p.mol_id==p2->p.mol_id) return;
-#endif
-
-  if(dist < ia_params->rf_r_cut) {
-    /*reaction field prefactor*/
-    fac = 1.0 / (dist*dist*dist)  +  ia_params->rf_B / (ia_params->rf_r_cut*ia_params->rf_r_cut*ia_params->rf_r_cut);
-    fac *= ia_params->rf_coul_pref * p1->p.q * p2->p.q;
-    for(j=0;j<3;j++)
-       force[j] += fac * d[j];
-
-    ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
-    ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
+  if (ia_params->rf_on == 1 ) {
+     add_rf_coulomb_pair_force(p1,p2,d, dist,force);
   }
+
+  ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
+  ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
 }
 
 MDINLINE double interrf_pair_energy(Particle *p1, Particle *p2,IA_parameters *ia_params, double dist)
 {
-  double fac;
-
-#ifdef NO_INTRA_NB
-  if (p1->p.mol_id==p2->p.mol_id) return 0.0;
-#endif
-
-  if(dist < ia_params->rf_r_cut) {
-    fac = 1.0 / dist  -  (ia_params->rf_B*dist*dist) / (2*ia_params->rf_r_cut*ia_params->rf_r_cut*ia_params->rf_r_cut);
-    //cut off part
-    fac -= (1-ia_params->rf_B/2)  / ia_params->rf_r_cut;
-    fac *= ia_params->rf_coul_pref * p1->p.q * p2->p.q;
-    return fac;
+  double val;
+  if (ia_params->rf_on == 1 ) {
+     val=rf_coulomb_pair_energy(p1,p2,dist);
+     return val;
   }
   return 0.0;
 }

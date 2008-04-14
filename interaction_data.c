@@ -228,12 +228,7 @@ void initialize_ia_params(IA_parameters *params) {
 #endif
 
 #ifdef INTER_RF
-  params->rf_coul_pref = 0;
-  params->rf_kappa = 0;
-  params->rf_epsilon1 = 0;
-  params->rf_epsilon2 = 0;
-  params->rf_r_cut = 0;
-  params->rf_B = 0;
+  params->rf_on = 0;
 #endif
 }
 
@@ -376,12 +371,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 #endif
 
 #ifdef INTER_RF
-  dst->rf_coul_pref = src->rf_coul_pref;
-  dst->rf_kappa     = src->rf_kappa;
-  dst->rf_epsilon1  = src->rf_epsilon1;
-  dst->rf_epsilon2  = src->rf_epsilon2;
-  dst->rf_r_cut     = src->rf_r_cut;
-  dst->rf_B         = src->rf_B;
+  dst->rf_on = src->rf_on;
 #endif
 
 }
@@ -451,7 +441,7 @@ int checkIfParticlesInteract(int i, int j) {
 #endif
 
 #ifdef INTER_RF
-  if (data->rf_r_cut != 0)
+  if (data->rf_on == 1)
     return 1;
 #endif
 
@@ -709,19 +699,13 @@ void calc_maximal_cutoff()
 	 }
 #endif
 
-#ifdef INTER_RF
-	 if (data->rf_r_cut != 0) {
-	   if(max_cut_non_bonded < data->rf_r_cut )
-	     max_cut_non_bonded = data->rf_r_cut;
-	 }
-#endif
-
 #ifdef ROTATION
 	 if (data->GB_cut != 0) {
 	   if(max_cut_non_bonded < (data->GB_cut) )
 	     max_cut_non_bonded = (data->GB_cut);
 	 }
 #endif
+
 #ifdef TABULATED
 	 if (data->TAB_maxval != 0){
 	   if(max_cut_non_bonded < (data->TAB_maxval ))
@@ -752,6 +736,7 @@ void calc_maximal_cutoff()
       max_cut_non_bonded = dh_params.r_cut;
     break;
   case COULOMB_RF:
+  case COULOMB_INTER_RF:
     if (max_cut_non_bonded < rf_params.r_cut)
       max_cut_non_bonded = rf_params.r_cut;
     break;
@@ -844,6 +829,7 @@ int coulomb_set_bjerrum(double bjerrum)
       dh_params.r_cut   = 0.0;
       dh_params.kappa   = 0.0;
     case COULOMB_RF:
+    case COULOMB_INTER_RF:
       rf_params.kappa  = 0.0;
       rf_params.epsilon1   = 0.0;
       rf_params.epsilon2   = 0.0;
@@ -927,6 +913,8 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_COULOMB("dh", inter_parse_dh);    
 
   REGISTER_COULOMB("rf", inter_parse_rf);
+
+  REGISTER_COULOMB("inter_rf", inter_parse_rf);
 
   REGISTER_COULOMB("mmm1d", inter_parse_mmm1d);
 
@@ -1098,7 +1086,7 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #endif
 
 #ifdef INTER_RF
-  if (data->rf_r_cut != 0) printinterrfIAToResult(interp,i,j);
+  if (data->rf_on == 1) printinterrfIAToResult(interp,i,j);
 #endif
   
   return (TCL_OK);
@@ -1125,6 +1113,7 @@ int printCoulombIAToResult(Tcl_Interp *interp)
   case COULOMB_EWALD: printEWALDToResult(interp); break;
   case COULOMB_DH: printdhToResult(interp); break;
   case COULOMB_RF: printrfToResult(interp); break;
+  case COULOMB_INTER_RF: printinterrfToResult(interp); break;
   case COULOMB_MMM1D: printMMM1DToResult(interp); break;
   case COULOMB_MMM2D: printMMM2DToResult(interp); break;
   case COULOMB_MAGGS: printMaggsToResult(interp); break;

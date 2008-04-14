@@ -163,6 +163,10 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
     case COULOMB_RF:
       ret = rf_coulomb_pair_energy(p1,p2,dist);
       break;
+    case COULOMB_INTER_RF:
+      //this is done above as interaction
+      ret = 0;
+      break;
     case COULOMB_MMM1D:
       ret = mmm1d_coulomb_pair_energy(p1,p2,d,dist2,dist);
       break;

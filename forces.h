@@ -175,10 +175,6 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   add_gb_pair_force(p1,p2,ia_params,d,dist,force,p1->f.torque,p2->f.torque);
 #endif
 
-#ifdef INTER_RF
-  add_interrf_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-
   /***********************************************/
   /* short range electrostatics                  */
   /***********************************************/
@@ -189,6 +185,11 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   
   if (coulomb.method == COULOMB_RF)
     add_rf_coulomb_pair_force(p1,p2,d,dist,force);
+
+#ifdef INTER_RF
+  add_interrf_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+
 #endif
 
   /*********************************************************************/

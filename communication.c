@@ -1591,6 +1591,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     MPI_Bcast(&ewald, sizeof(ewald_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
   case COULOMB_RF:
+  case COULOMB_INTER_RF:
     MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
   default:
