@@ -87,6 +87,8 @@
 #define COULOMB_ELC_P3M 8
 /** Coulomb method is Reaction-Field. */
 #define COULOMB_RF 9
+/** Coulomb method is Reaction-Field BUT as interactions */
+#define COULOMB_INTER_RF 10
 
 /*@}*/
 
@@ -308,12 +310,7 @@ typedef struct {
 #endif
 
 #ifdef INTER_RF
-  double rf_coul_pref;
-  double rf_kappa;
-  double rf_epsilon1;
-  double rf_epsilon2;
-  double rf_r_cut;
-  double rf_B;
+  int rf_on;
 #endif
 
 } IA_parameters;

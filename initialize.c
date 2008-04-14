@@ -402,6 +402,7 @@ void on_parameter_change(int field)
       cc = 1;
     break;
   case COULOMB_RF:
+  case COULOMB_INTER_RF:
     if (field == FIELD_TEMPERATURE)
       cc = 1;
     break;

@@ -775,6 +775,9 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
 	for(i=0;i<3;i++)
 	    force[i] += eforce[i];
 	break;
+      case COULOMB_INTER_RF:
+        // this is done elsewhere
+	break;
       case COULOMB_MMM1D:
 	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle MMM1D electrostatics so it is left out\n");  
       default:

@@ -254,6 +254,10 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
       for (l=0;l<3;l++)
           ret += force[l]*d[l];
       break;
+    case COULOMB_INTER_RF:
+      //this is done elsewhere
+      ret = 0;
+      break;
     case COULOMB_MMM1D:
       ret = mmm1d_coulomb_pair_energy(p1,p2,d, dist2,dist);
       break;
@@ -282,6 +286,9 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
     for(k=0;k<3;k++)
       for(l=0;l<3;l++)
 	p_tensor.coulomb[k*3 + l] += force[k]*d[l];
+  }
+  if (coulomb.method == COULOMB_INTER_RF) {
+     //this is done elsewhere
   }
 #endif
 }
