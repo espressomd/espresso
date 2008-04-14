@@ -30,6 +30,7 @@
 #include "soft_sphere.h"
 #include "ljcos.h"
 #include "ljcos2.h"
+#include "ljangle.h"
 #include "tab.h"
 #include "gb.h"
 #include "fene.h"
@@ -85,6 +86,11 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 #ifdef LENNARD_JONES_GENERIC
   /* Generic lennard jones */
   ret += ljgen_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+
+#ifdef LJ_ANGLE
+  /* Directional LJ */
+  ret += ljangle_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
 #ifdef SMOOTH_STEP

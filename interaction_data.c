@@ -28,6 +28,7 @@
 #include "elc.h"
 #include "lj.h"
 #include "ljgen.h"
+#include "ljangle.h"
 #include "steppot.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
@@ -109,6 +110,18 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJGEN_capradius =
     params->LJGEN_a1 =
     params->LJGEN_a2 = 0;
+#endif
+
+#ifdef LJ_ANGLE
+  params->LJANGLE_eps =
+    params->LJANGLE_sig =
+    params->LJANGLE_cut =
+    params->LJANGLE_bonded1type=
+    params->LJANGLE_bonded1pos = 
+    params->LJANGLE_bonded1neg = 
+    params->LJANGLE_bonded2pos = 
+    params->LJANGLE_bonded2neg = 
+    params->LJANGLE_capradius = 0;
 #endif
 
 #ifdef SMOOTH_STEP
@@ -254,6 +267,18 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJGEN_a2 = src->LJGEN_a2;
 #endif
 
+#ifdef LJ_ANGLE
+  dst->LJANGLE_eps = src->LJANGLE_eps;
+  dst->LJANGLE_sig = src->LJANGLE_sig;
+  dst->LJANGLE_cut = src->LJANGLE_cut;
+  dst->LJANGLE_bonded1type = src->LJANGLE_bonded1type;
+  dst->LJANGLE_bonded1pos = src->LJANGLE_bonded1pos;
+  dst->LJANGLE_bonded1neg = src->LJANGLE_bonded1neg;
+  dst->LJANGLE_bonded2pos = src->LJANGLE_bonded2pos;
+  dst->LJANGLE_bonded2neg = src->LJANGLE_bonded2neg;
+  dst->LJANGLE_capradius = src->LJANGLE_capradius;
+#endif
+
 #ifdef SMOOTH_STEP
   dst->SmSt_eps = src->SmSt_eps;
   dst->SmSt_sig = src->SmSt_sig;
@@ -387,6 +412,11 @@ int checkIfParticlesInteract(int i, int j) {
 
 #ifdef LENNARD_JONES_GENERIC
   if (data->LJGEN_cut != 0)
+    return 1;
+#endif
+
+#ifdef LJ_ANGLE
+  if (data->LJANGLE_cut != 0)
     return 1;
 #endif
 
@@ -640,6 +670,13 @@ void calc_maximal_cutoff()
 	 if (data->LJGEN_cut != 0) {
 	   if(max_cut_non_bonded < (data->LJGEN_cut+data->LJGEN_offset) )
 	     max_cut_non_bonded = (data->LJGEN_cut+data->LJGEN_offset);
+	 }
+#endif
+
+#ifdef LJ_ANGLE
+	 if (data->LJANGLE_cut != 0) {
+	   if(max_cut_non_bonded < (data->LJANGLE_cut) )
+	     max_cut_non_bonded = (data->LJANGLE_cut);
 	 }
 #endif
 
@@ -1045,6 +1082,9 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #ifdef LENNARD_JONES_GENERIC
   if (data->LJGEN_cut != 0) printljgenIAToResult(interp,i,j);
 #endif
+#ifdef LJ_ANGLE
+  if (data->LJANGLE_cut != 0) printljangleIAToResult(interp,i,j);
+#endif
 #ifdef SMOOTH_STEP
   if (data->SmSt_cut != 0) printSmStIAToResult(interp,i,j);
 #endif
@@ -1330,6 +1370,10 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 
 #ifdef LENNARD_JONES_GENERIC
     REGISTER_NONBONDED("lj-gen", ljgen_parser);
+#endif
+
+#ifdef LJ_ANGLE
+    REGISTER_NONBONDED("lj-angle", ljangle_parser);
 #endif
 
 #ifdef SMOOTH_STEP

@@ -68,6 +68,7 @@
 /* #define MORSE */
 /* #define LJCOS */
 /* #define LJCOS2 */
+/* #define LJ_ANGLE */
 /* #define BUCKINGHAM */
 /* #define SOFT_SPHERE */
 /* #define INTER_DPD */
