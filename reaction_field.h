@@ -132,28 +132,15 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
 {
   int j;
   double fac;
+  double com_dist;
 
-#ifdef WATER
-  //Change
-  double p1_com[3],p2_com[3],com_dist;
-#endif
-
-#ifdef NO_INTRA_NB
-  if (p1->p.mol_id==p2->p.mol_id) return;
-#endif
-
-#ifdef WATER
-  if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
-     return;
-  }
-  else{
-     com_dist=min_distance(p1_com,p2_com);
-  }
-
-  if (com_dist < rf_params.r_cut){
+#ifdef MOL_CUT
+  com_dist=get_mol_dist(p1,p2);
 #else
-  if (dist < rf_params.r_cut) {
+  com_dist=dist;
 #endif
+
+  if (com_dist < rf_params.r_cut) {
      /*reaction field prefactor*/
      fac = 1.0 / (dist*dist*dist)  +  rf_params.B / (rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
      fac *= coulomb.prefactor * p1->p.q * p2->p.q;
@@ -169,25 +156,15 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
 MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 {
   double  fac;
-#ifdef WATER
-  double p1_com[3],p2_com[3],com_dist;
-#endif
+  double com_dist;
 
-#ifdef NO_INTRA_NB
-  if (p1->p.mol_id==p2->p.mol_id) return 0.0;
-#endif
-
-#ifdef WATER
-  if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
-     return 0.0;
-  }
-  else{
-     com_dist=min_distance(p1_com,p2_com);
-  }
-  if (com_dist < rf_params.r_cut) {
+#ifdef MOL_CUT
+  com_dist=get_mol_dist(p1,p2);
 #else
-  if (dist < rf_params.r_cut) {
+  com_dist=dist;
 #endif
+
+  if (com_dist < rf_params.r_cut) {
      fac = 1.0 / dist  -  (rf_params.B*dist*dist) / (2*rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
      //cut off part
      fac -= (1-rf_params.B/2)  / rf_params.r_cut;
@@ -294,25 +271,15 @@ MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *
 {
   int j;
   double fac;
-#ifdef WATER
-  double p1_com[3],p2_com[3],com_dist;
-#endif
+  double com_dist;
 
-#ifdef NO_INTRA_NB
-  if (p1->p.mol_id==p2->p.mol_id) return;
-#endif
-
-#ifdef WATER
-  if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
-     return;
-  }
-  else{
-     com_dist=min_distance(p1_com,p2_com);
-  }
-  if (com_dist < ia_params->rf_r_cut) {
+#ifdef MOL_CUT
+  com_dist=get_mol_dist(p1,p2);
 #else
-  if (dist < ia_params->rf_r_cut) {
+  com_dist=dist;
 #endif
+
+  if (com_dist < ia_params->rf_r_cut) {
      /*reaction field prefactor*/
      fac = 1.0 / (dist*dist*dist)  +  ia_params->rf_B / (ia_params->rf_r_cut*ia_params->rf_r_cut*ia_params->rf_r_cut);
      fac *= ia_params->rf_coul_pref * p1->p.q * p2->p.q;
@@ -327,26 +294,15 @@ MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *
 MDINLINE double interrf_pair_energy(Particle *p1, Particle *p2,IA_parameters *ia_params, double dist)
 {
   double fac;
-#ifdef WATER
-  double p1_com[3],p2_com[3],com_dist;
-#endif
+  double com_dist;
 
-#ifdef NO_INTRA_NB
-  if (p1->p.mol_id==p2->p.mol_id) return 0.0;
+#ifdef MOL_CUT
+  com_dist=get_mol_dist(p1,p2);
+#else
+  com_dist=dist;
 #endif
-
-#ifdef WATER
-  if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
-     return 0.0;
-  }
-  else{
-     com_dist=min_distance(p1_com,p2_com);
-  }
 
   if (com_dist < ia_params->rf_r_cut) {
-#else
-  if (dist < ia_params->rf_r_cut) {
-#endif
      fac = 1.0 / dist  -  (ia_params->rf_B*dist*dist) / (2*ia_params->rf_r_cut*ia_params->rf_r_cut*ia_params->rf_r_cut);
      //cut off part
      fac -= (1-ia_params->rf_B/2)  / ia_params->rf_r_cut;

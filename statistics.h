@@ -526,6 +526,21 @@ MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 }
 
 #ifdef WATER
+MDINLINE double get_mol_dist(Particle *p1, Particle *p2) {
+   double p1_com[3],p2_com[3],com_dist;
+
+   if (get_com_h2o(p1,p1_com) == -1 ) {
+      fprintf(stderr,"Can not fetch com for particle %i\n",p1->p.identity);
+      exit(182);
+   }
+   if (get_com_h2o(p2,p2_com) == -1 ) {
+      fprintf(stderr,"Can not fetch com for particle %i\n",p2->p.identity);
+      exit(182);
+   }
+   com_dist=min_distance(p1_com,p2_com);
+   return com_dist;
+}
+
 MDINLINE int get_comvel_h2o(Particle *p,double v_com[3])
 {
 	int i,p_nr,count=0;

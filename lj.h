@@ -20,6 +20,8 @@
 
 #ifdef LENNARD_JONES
 
+#include "statistics.h"
+
 MDINLINE int printljIAToResult(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
@@ -179,20 +181,7 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
   int j;
   double r_off, frac2, frac6, fac=0.0;
 
-#ifdef WATER
-  double p1_com[3],p2_com[3],com_dist;
-
-  if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
-     return;
-  }
-  else{
-     com_dist=min_distance(p1_com,p2_com);
-  }
-
-  if (com_dist < ia_params->LJ_cut+ia_params->LJ_offset){
-#else
   if(dist < ia_params->LJ_cut+ia_params->LJ_offset) {
-#endif
     r_off = dist - ia_params->LJ_offset;
     /* normal case: resulting force/energy smaller than capping. */
     if(r_off > ia_params->LJ_capradius) {
@@ -242,20 +231,7 @@ MDINLINE double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
 {
   double r_off, frac2, frac6;
 
-#ifdef WATER
-  double p1_com[3],p2_com[3],com_dist;
-
-  if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
-     return 0.0;
-  }
-  else{
-     com_dist=min_distance(p1_com,p2_com);
-  }
-
-  if (com_dist < ia_params->LJ_cut+ia_params->LJ_offset){
-#else
   if(dist < ia_params->LJ_cut+ia_params->LJ_offset) {
-#endif
     r_off = dist - ia_params->LJ_offset;
     /* normal case: resulting force/energy smaller than capping. */
     if(r_off > ia_params->LJ_capradius) {

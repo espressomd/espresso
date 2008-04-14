@@ -207,9 +207,6 @@ MDINLINE void nemd_get_velocity(Particle part)
 }
 
 MDINLINE void nemd_add_velocity (Particle *part) {
-#ifdef WATER
-  Particle *p1,*p2;
-#endif
   if( !(nemd_method == NEMD_METHOD_SHEARRATE) ) {
     return;
   } else {
@@ -221,12 +218,6 @@ MDINLINE void nemd_add_velocity (Particle *part) {
     
     if(slab_num == nemddata.top_slab || slab_num == nemddata.mid_slab) {
       part->m.v[0] += slab->vel_diff;
-#ifdef WATER
-      p2=local_particles[part->p.identity + 1];
-      p3=local_particles[part->p.identity + 2];
-      p2->m.v[0] += slab->vel_diff;
-      p3->m.v[0] += slab->vel_diff;
-#endif
     }
   }
 }

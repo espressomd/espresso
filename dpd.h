@@ -19,6 +19,7 @@
 
 #include <tcl.h>
 #include "thermostat.h"
+#include "statistics.h"
 
 /** DPD Friction coefficient gamma. */
 extern double dpd_gamma;
@@ -78,38 +79,42 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   double f_D[3],f_R[3];
 #endif
   double tmp;
-#ifdef WATER
-  //change for h2o
-  double p1_com[3],p2_com[3],com_dist;
-#endif
 #ifdef DPD_MASS
   double massf;
-  massf=PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
 #endif
 
+#ifdef DPD_MASS_RED
+  massf=2*PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
+#endif
 
-#ifdef WATER
+#ifdef DPD_MASS_LIN
+  massf=0.5*(PMASS(*p1)+PMASS(*p2));
+#endif
+
+  double com_dist;
+  //double intra_fractor;
+
+#ifdef MOL_CUT
+  com_dist=get_mol_dist(p1,p2);
+#else
+  com_dist=dist;
+#endif
 
 //for flex water also damp internal dof
 #ifndef WATER_FLEX
   if (p1->p.mol_id==p2->p.mol_id) return;
 #endif
 
-  if ((get_com_h2o(p1,p1_com) == -1 ) || (get_com_h2o(p2,p2_com)==-1)){
-     return ;
+/*  if (p1->p.mol_id==p2->p.mol_id){
+     intra_fractor=100;
   }
-  else{
-     com_dist=min_distance(p1_com,p2_com);
-  }
-#endif
-
+  else
+  {
+     intra_fractor=1;
+  }*/
   dist_inv = 1.0/dist;
 
-#ifdef WATER
   if((com_dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
-#else
-  if((dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
-#endif
     if ( dpd_wf == 1 ) //w_R=1
     {
        omega    = dist_inv;
@@ -121,6 +126,7 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
 #ifdef DPD_MASS
     omega*=sqrt(massf);
 #endif
+    //omega*=intra_fractor;
     omega2   = SQR(omega);
     //DPD part
     if (dpd_gamma > 0.0 ){
@@ -137,11 +143,7 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 #ifdef TRANS_DPD
     //DPD2 part
-#ifdef WATER
   if ((com_dist < dpd_tr_cut)&&(dpd_tgamma > 0.0)){
-#else
-  if ((dist < dpd_tr_cut)&&(dpd_tgamma > 0.0)){
-#endif
       if ( dpd_twf == 1 )
       {
         omega    = dist_inv;
@@ -153,6 +155,7 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
 #ifdef DPD_MASS
       omega*=sqrt(massf);
 #endif
+      //omega*=intra_fractor;
       omega2   = SQR(omega);
       for (i=0;i<3;i++){
         //noise vector

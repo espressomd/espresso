@@ -48,7 +48,11 @@
 /* #define NPT */ 
 /* #define DPD */
 /* #define TRANS_DPD */
-/* #define DPD_MASS */
+
+/*Note: Activate ONLY ONE dpd mass  out of the following! */
+/* #define DPD_MASS_RED */
+/* #define DPD_MASS_LIN */
+
 /* #define LB */
 /* #define WATER */
 /* #define WATER_DEBUG */
@@ -73,6 +77,7 @@
 /* #define INTER_RF */
 
 /* #define NO_INTRA_NB */
+/* #define MOL_CUT */
 
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */
 /* #define BOND_ANGLE_HARMONIC */
