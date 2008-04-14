@@ -147,7 +147,6 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
 #endif
 
   if (com_dist < rf_params.r_cut) {
-     /*reaction field prefactor*/
      fac = 1.0 / (dist*dist*dist)  +  rf_params.B / (rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
      fac *= coulomb.prefactor * p1->p.q * p2->p.q;
 
@@ -165,7 +164,7 @@ MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
   double com_dist;
 
 #ifdef NO_INTRA_NB
-  if (p1->p.mol_id==p2->p.mol_id) return;
+  if (p1->p.mol_id==p2->p.mol_id) return 0.0;
 #endif
 
 #ifdef MOL_CUT
