@@ -136,6 +136,10 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
   double fac;
   double com_dist;
 
+#ifdef NO_INTRA_NB
+  if (p1->p.mol_id==p2->p.mol_id) return;
+#endif
+
 #ifdef MOL_CUT
   com_dist=get_mol_dist(p1,p2);
 #else
@@ -159,6 +163,10 @@ MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 {
   double  fac;
   double com_dist;
+
+#ifdef NO_INTRA_NB
+  if (p1->p.mol_id==p2->p.mol_id) return;
+#endif
 
 #ifdef MOL_CUT
   com_dist=get_mol_dist(p1,p2);
