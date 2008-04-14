@@ -48,7 +48,11 @@
 /* #define NPT */ 
 /* #define DPD */
 /* #define TRANS_DPD */
-/* #define DPD_MASS */
+
+/*Note: Activate ONLY ONE dpd mass  out of the following! */
+/* #define DPD_MASS_RED */
+/* #define DPD_MASS_LIN */
+
 /* #define LB */
 
 /**********************************************************************/

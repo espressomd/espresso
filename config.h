@@ -88,6 +88,10 @@
 //#define ALTERNATIVE_INTEGRATOR
 #endif
 
+#if defined(DPD_MASS_RED) || defined(DPD_MASS_LIN)
+#define DPD_MASS
+#endif
+
 /*DPD with mass needs MASS and DPD */
 #ifdef DPD_MASS
 #define MASS

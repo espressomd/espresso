@@ -79,8 +79,17 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
 #endif
   double tmp;
 #ifdef DPD_MASS
-  double massf=2*PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
+  double massf;
 #endif
+
+#ifdef DPD_MASS_RED
+  massf=2*PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
+#endif
+
+#ifdef DPD_MASS_LIN
+  massf=0.5*(PMASS(*p1)+PMASS(*p2));
+#endif
+
   dist_inv = 1.0/dist;
   if((dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
     if ( dpd_wf == 1 ) //w_R=1
