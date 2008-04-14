@@ -112,6 +112,7 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   {
      intra_fractor=1;
   }*/
+
   dist_inv = 1.0/dist;
 
   if((com_dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
