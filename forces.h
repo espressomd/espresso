@@ -40,6 +40,7 @@
 #include "tab.h"
 #include "ljcos.h"
 #include "ljcos2.h"
+#include "ljangle.h"
 #include "gb.h"
 #include "fene.h"
 #include "harmonic.h"
@@ -135,6 +136,12 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /* Generic lennard jones */
 #ifdef LENNARD_JONES_GENERIC
   add_ljgen_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+
+  /* Directional LJ */
+#ifdef LJ_ANGLE
+  /* The forces are propagated within the function */
+  add_ljangle_pair_force(p1,p2,ia_params,d,dist);
 #endif
 
 #ifdef SMOOTH_STEP

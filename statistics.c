@@ -2200,6 +2200,7 @@ static int parse_mindist(Tcl_Interp *interp, int argc, char **argv)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_OK;
 }
+
 static int parse_centermass(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze centermass [<type>]' */
@@ -3756,6 +3757,35 @@ static int parse_MSD(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
+static int parse_and_print_energy_kinetic(Tcl_Interp *interp,int argc, char **argv)
+{
+   int i,type;
+   char buffer[TCL_DOUBLE_SPACE];
+   double E_kin=0;
+
+  /* parse arguments */
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "usage: analyze energy_kinetic <type>", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  if (!ARG0_IS_I(type)) {
+     Tcl_AppendResult(interp, "usage: analyze energy_kinetic <type> where type is int", (char *)NULL);
+     return (TCL_ERROR);
+  }
+  updatePartCfg(WITHOUT_BONDS);
+  for (i=0;i<n_total_particles;i++)
+  {
+      if (partCfg[i].p.type == type )
+      {
+         E_kin+=sqrlen(partCfg[i].m.v);
+      }
+  }
+  E_kin*=0.5/time_step/time_step;
+  Tcl_PrintDouble(interp, E_kin, buffer);;
+  Tcl_AppendResult(interp, buffer,(char *)NULL);
+  return TCL_OK;
+}
+
 /****************************************************************************************
  *                                 main parser for analyze
  ****************************************************************************************/
@@ -3813,6 +3843,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("cell_gpb", parse_cell_gpb);
   REGISTER_ANALYSIS("Vkappa", parse_Vkappa);
   REGISTER_ANALYSIS("energy", parse_and_print_energy);
+  REGISTER_ANALYSIS("energy_kinetic", parse_and_print_energy_kinetic);
   REGISTER_ANALYSIS_W_ARG("pressure", parse_and_print_pressure, 0);
   REGISTER_ANALYSIS_W_ARG("stress_tensor", parse_and_print_stress_tensor, 0);
   REGISTER_ANALYSIS("local_stress_tensor", parse_local_stress_tensor);

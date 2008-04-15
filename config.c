@@ -113,6 +113,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef LENNARD_JONES_GENERIC
   Tcl_AppendResult(interp, "{ LENNARD_JONES_GENERIC } ", (char *) NULL);
 #endif
+#ifdef LJ_ANGLE
+  Tcl_AppendResult(interp, "{ LJ_ANGLE } ", (char *) NULL);
+#endif
 #ifdef SMOOTH_STEP
   Tcl_AppendResult(interp, "{ SMOOTH_STEP } ", (char *) NULL);
 #endif

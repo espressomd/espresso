@@ -162,6 +162,37 @@ between $\var{r_\mathrm{min}}$ and $\var{r_\mathrm{cut}}$ is given by
 Only the second variant allows capping the force using \lit{inter
   ljforcecap}, see section~\ref{sec:forcecap}.
 
+\subsection{Directional Lennard-Jones interaction}
+\index{Directional Lennard-Jones interaction|mainindex}
+\index{interactions!Directional Lennard-Jones|mainindex}
+\begin{essyntax}
+  inter \var{type1} \var{type2} lj-angle
+  \var{\epsilon} \var{\sigma}
+  \var{r_\mathrm{cut}} \var{b1_a} \var{b1_b}
+  \var{b2_a} \var{b2_b}
+  \begin{features}
+    \required{LJ_ANGLE}
+  \end{features}
+\end{essyntax}
+
+\begin{center}
+  \includegraphics[height=8em]{figures/hbond}
+\end{center}
+
+specifies a 12-10 Lennard-Jones interaction with angular dependence
+between particles of the types \var{type1} and
+\var{type2}. These two particles need two bonded partners oriented in a symmetric way. They define an orientation for the central particle. The purpose of using bonded partners is to avoid dealing with torques, therefore the interaction does *not* need the ROTATION feature. The angular part of the potential minimizes the system when the two central beads are oriented along the vector formed by these two particles. The shaded beads on the image are virtual particles that are formed from the orientation of the bonded partners, connected to the central beads. They are used to define angles. The potential is of the form
+\begin{equation}
+  U(r_{ik},\theta_{jik},\theta_{ikn})=\epsilon\left[5\left(\frac{\sigma}r\right)^{12}-6\left(\frac{\sigma}{r}\right)^{10}\right]\cos^2\theta_{jik}\cos^2\theta_{ikn},
+\end{equation}
+where $r_{ik}$ is the distance between the two central beads, and each angle defines the orientation between the direction of a central bead (determined from the two bonded partners) and the vector $\mathbf{r_{ik}}$.
+
+Unfortunately, the bonded partners are not seeked dynamically. One has to keep track of the relative positions of the particle IDs. This can be done by setting the parameters \var{b1_a}, \var{b1_b}, \var{b2_a}, and \var{b2_b}. Say the first bead \var{type1} has particle ID \var{n}, then one should set the simulation such as its two bonded partners have particle IDs \var{n+b1_a} and \var{n+b1_b}, respectively. On a linear chain, for example, one would typically have \var{b1_a=1} and \var{b1_b=-1} such that the central bead and its two bonded partners have position IDs \var{n}, \var{n+1}, and \var{n-1}, respectively. This is surely not optimized, but once the simulation is set correctly the algorithm is very fast. 
+
+The force can be capped using \lit{inter ljforcecap}.
+
+NOTE : contribution to the pressure is not yet implemented.
+
 \subsection{Smooth step interaction}
 \index{smooth-step interaction|mainindex}
 \index{interactions!smooth-step|mainindex}

@@ -155,6 +155,23 @@ typedef struct {
   /*@}*/
 #endif
 
+#ifdef LJ_ANGLE
+  /** \name Directional Lennard-Jones */
+  /*@{*/
+  double LJANGLE_eps;
+  double LJANGLE_sig;
+  double LJANGLE_cut;
+  /* Locate bonded partners */
+  int LJANGLE_bonded1type; 
+  int LJANGLE_bonded1pos;
+  int LJANGLE_bonded1neg;
+  int LJANGLE_bonded2pos;
+  int LJANGLE_bonded2neg;
+  /* Cap */
+  double LJANGLE_capradius;
+  /*@}*/
+#endif
+
 #ifdef SMOOTH_STEP
   /** \name smooth step potential */
   /*@{*/

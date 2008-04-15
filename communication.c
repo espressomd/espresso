@@ -36,6 +36,7 @@
 #include "buckingham.h"
 #include "tab.h"
 #include "ljcos.h"
+#include "ljangle.h"
 #include "gb.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
@@ -1772,6 +1773,9 @@ void mpi_lj_cap_forces_slave(int node, int parm)
   calc_lj_cap_radii(lj_force_cap);
 #ifdef LENNARD_JONES_GENERIC
   calc_ljgen_cap_radii(lj_force_cap);
+#endif
+#ifdef LJ_ANGLE
+  calc_ljangle_cap_radii(lj_force_cap);
 #endif
 #ifdef LJCOS2
   calc_ljcos2_cap_radii(lj_force_cap);
