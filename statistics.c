@@ -3891,7 +3891,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYZE_STORAGE("configs", parse_configs);
 #ifdef WATER
   REGISTER_ANALYSIS("MSD_h2o",parse_MSD_h2o);
-  REGISTER_ANALYSIS("Ekin_h2o",parse_and_print_Ekin_h2o);
+  REGISTER_ANALYSIS("energy_kinetic_h2o",parse_and_print_Ekin_h2o);
   REGISTER_ANALYSIS("pressure_h2o",parse_and_print_pressure_h2o);
   REGISTER_ANALYSIS("dipmom_h2o",parse_and_print_dipole_h2o);
   REGISTER_ANALYSIS_W_ARG("rdf_h2o", parse_rdf, 3);
