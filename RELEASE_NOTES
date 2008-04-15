@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5r (Ydalir)                                                                     *
+* v2.0.5s (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5r -
+- v2.0.5s -
 -----------
 
+(s) April    14th, 2008.
 (r) April     9th, 2008.
 (q) March    20th, 2008.
 (p) March    18th, 2008.
@@ -46,6 +47,9 @@ New Features:
 (a) added new single-player ESPResSo game "pong"
 
 Changes:
+(s) better implementation of interaction reactionfield
+(s) mass in dpd improved
+(s) let inter_rf use mostly functions of rf
 (i) configure: Improved error messages.
 (g) the dihedral potential is now more general and allows phase
     parameters
