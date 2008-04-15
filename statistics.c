@@ -3587,11 +3587,8 @@ static int parse_and_print_pressure_h2o(Tcl_Interp *interp,int argc, char **argv
                         dist2=sqrlen(vec12);
                         dist=sqrt(dist2);
                         calc_non_bonded_pair_force(p1,p2,vec12,dist,dist2,f_ij);
-                        #ifdef ELECTROSTATICS
-                        add_rf_coulomb_pair_force(p1,p2,vec12,dist,f_ij);
-                        #elif INTER_RF
-                        #else
-			fprintf(stderr,"parse_and_print_pressure_h2o is not possible without RF ");
+                        #ifndef INTER_RF
+			fprintf(stderr,"parse_and_print_pressure_h2o is only possible with INTER_RF ");
 			exit(182);
                         #endif
                     }
