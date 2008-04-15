@@ -166,7 +166,7 @@ target_os = @target_os@
 target_vendor = @target_vendor@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-ug_FIGURES = logo.png nacl-rdf.pdf dihedral-angle.pdf salt.png
+ug_FIGURES = logo.png nacl-rdf.pdf dihedral-angle.pdf salt.png hbond.pdf
 EXTRA_DIST = $(ug_FIGURES)
 all: all-am
 
