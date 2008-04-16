@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5s (Ydalir)                                                                     *
+* v2.0.5t (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5s -
+- v2.0.5t -
 -----------
 
+(t) April    15th, 2008.
 (s) April    14th, 2008.
 (r) April     9th, 2008.
 (q) March    20th, 2008.
@@ -32,6 +33,9 @@ Current working revision.
 (a) November 23rd, 2007.
 
 New Features:
+(t) Added new angular Lennard-Jones interaction which doesn't use torques. Feature
+    LJ_ANGLE.
+(t) added analyze energy_kinetic
 (r) added NO_INTRA_NB for no intra mol non-bonded interactions
 (r) Mass weighted dpd
 (p) dialog-based script to edit myconfig.h
