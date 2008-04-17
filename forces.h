@@ -98,6 +98,8 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
   double force[3] = { 0., 0., 0. };
+  double torque1[3] = { 0., 0., 0. };
+  double torque2[3] = { 0., 0., 0. };
   int j;
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node, p1->p.identity, p2->p.identity, dist));
@@ -119,68 +121,8 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /***********************************************/
   /* non bonded pair potentials                  */
   /***********************************************/
-#ifdef NO_INTRA_NB
-  if (p1->p.mol_id==p2->p.mol_id) return;
-#endif
 
-#ifdef TABULATED
-  /* tabulated */
-  add_tabulated_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-
-  /* lennard jones */
-#ifdef LENNARD_JONES
-  add_lj_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-
-  /* Generic lennard jones */
-#ifdef LENNARD_JONES_GENERIC
-  add_ljgen_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-
-  /* Directional LJ */
-#ifdef LJ_ANGLE
-  /* The forces are propagated within the function */
-  add_ljangle_pair_force(p1,p2,ia_params,d,dist);
-#endif
-
-#ifdef SMOOTH_STEP
-  add_SmSt_pair_force(p1,p2,ia_params,d,dist,dist2,force);
-#endif
-
-#ifdef BMHTF_NACL
-  add_BMHTF_pair_force(p1,p2,ia_params,d,dist,dist2,force);
-#endif
-
-  /* morse */
-#ifdef MORSE
-  add_morse_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-
-  /* buckingham */
-#ifdef BUCKINGHAM
-  add_buck_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-
-  /* soft-sphere */
-#ifdef SOFT_SPHERE
-  add_soft_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-
-  /* lennard jones cosine */
-#ifdef LJCOS
-  add_ljcos_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-
-  /* lennard jones cos2 */
-#ifdef LJCOS2
-  add_ljcos2_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-
-#ifdef ROTATION
-  /* Gay-Berne */
-  add_gb_pair_force(p1,p2,ia_params,d,dist,force,p1->f.torque,p2->f.torque);
-#endif
+  calc_non_bonded_pair_force_parts(p1,p2,ia_params,d,dist,dist2,force,torque1,torque2);
 
   /***********************************************/
   /* short range electrostatics                  */
@@ -192,11 +134,6 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   
   if (coulomb.method == COULOMB_RF)
     add_rf_coulomb_pair_force(p1,p2,d,dist,force);
-
-#ifdef INTER_RF
-  add_interrf_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-
 #endif
 
   /*********************************************************************/
@@ -279,6 +216,10 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   for (j = 0; j < 3; j++) { 
     p1->f.f[j] += force[j];
     p2->f.f[j] -= force[j];
+#ifdef ROTATION
+    p1->f.torque[j] += torque1[j];
+    p2->f.torque[j] += torque2[j];
+#endif
   }
 }
 
