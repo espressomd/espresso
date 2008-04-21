@@ -136,10 +136,6 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
 					 double dist, double dist2, double force[3],double torgue1[3],double torgue2[3])
 {
-#ifdef ROTATION
-  double t1[3], t2[3]; /* dummies */
-#endif
-
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id==p2->p.mol_id) return;
 #endif
@@ -186,7 +182,7 @@ MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_pa
 #endif
   /* Gay-Berne */
 #ifdef ROTATION
-  add_gb_pair_force(p1,p2,ia_params,d,dist,force,t1,t2);
+  add_gb_pair_force(p1,p2,ia_params,d,dist,force,torgue1,torgue2);
 #endif
 #ifdef INTER_RF
   add_interrf_pair_force(p1,p2,ia_params,d,dist, force);
