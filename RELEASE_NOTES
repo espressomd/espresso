@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5v (Ydalir)                                                                     *
+* v2.0.5w (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5v -
+- v2.0.5w -
 -----------
 
+(w) April    21st, 2008.
 (v) April    18th, 2008.
 (u) April    17th, 2008.
 (t) April    15th, 2008.
@@ -66,6 +67,7 @@ Changes:
 (g) with OLD_DIHEDRAL.
 
 Bugfixes:
+(w) rotation forces were dummies
 (v) Version 2.0.5u did not compile with ROTATION switched on. This has been
     fixed.
 (u) LJ_ANGLE was missing in pressure calculation
