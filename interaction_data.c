@@ -579,6 +579,9 @@ void calc_maximal_cutoff()
 {
   int i, j;
   double max_cut_tmp;
+#ifdef MOL_CUT
+  double max_cut_bonded;
+#endif
   max_cut = -1.0;
   max_cut_non_bonded = -1.0;
 
@@ -639,6 +642,10 @@ void calc_maximal_cutoff()
       break;
     }
   }
+
+#ifdef MOL_CUT
+  max_cut_bonded=max_cut;
+#endif
 
   /* non bonded */
   for (i = 0; i < n_particle_types; i++)
@@ -803,7 +810,10 @@ void calc_maximal_cutoff()
 
   /* make max_cut the maximal cutoff of both bonded and non-bonded interactions */
   if ( max_cut_non_bonded > max_cut) max_cut = max_cut_non_bonded;
-
+  
+#ifdef MOL_CUT
+  max_cut+=max_cut_bonded;
+#endif
 }
 
 int check_obs_calc_initialized()
