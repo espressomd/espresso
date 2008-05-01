@@ -185,11 +185,13 @@ between particles of the types \var{type1} and
 \begin{equation}
   U(r_{ik},\theta_{jik},\theta_{ikn})=\epsilon\left[5\left(\frac{\sigma}r\right)^{12}-6\left(\frac{\sigma}{r}\right)^{10}\right]\cos^2\theta_{jik}\cos^2\theta_{ikn},
 \end{equation}
-where $r_{ik}$ is the distance between the two central beads, and each angle defines the orientation between the direction of a central bead (determined from the two bonded partners) and the vector $\mathbf{r_{ik}}$.
+where $r_{ik}$ is the distance between the two central beads, and each angle defines the orientation between the direction of a central bead (determined from the two bonded partners) and the vector $\mathbf{r_{ik}}$. Note that the potential is turned off if one of the angle is more than $\pi/2$. This way we don't end up creating a minimum for an anti-parallel configuration.
 
 Unfortunately, the bonded partners are not seeked dynamically. One has to keep track of the relative positions of the particle IDs. This can be done by setting the parameters \var{b1_a}, \var{b1_b}, \var{b2_a}, and \var{b2_b}. Say the first bead \var{type1} has particle ID \var{n}, then one should set the simulation such as its two bonded partners have particle IDs \var{n+b1_a} and \var{n+b1_b}, respectively. On a linear chain, for example, one would typically have \var{b1_a=1} and \var{b1_b=-1} such that the central bead and its two bonded partners have position IDs \var{n}, \var{n+1}, and \var{n-1}, respectively. This is surely not optimized, but once the simulation is set correctly the algorithm is very fast. 
 
-The force can be capped using \lit{inter ljforcecap}.
+The force can be capped using \lit{inter ljangleforcecap}. It might turn out to be useful in some cases to keep this capping during the whole simulation. This is due to the very sharp angular dependence for small distance, compared to $\sigma$. Two beads might come very close to each other while having unfavorable angles such that the interaction is turned off. Then a change in the angle might suddenly turn on the interaction and the system will blow up (the potential is so steep that one would need extremely small time steps to deal with it, which is not very clever for such rare events). 
+
+For instance, when modeling hydrogen bonds (N-H...O=C), one can avoid simulating hydrogens and oxygens by using this potential. This comes down to implementing a HBond potential between N and C atoms. 
 
 NOTE : contribution to the pressure is not yet implemented.
 
