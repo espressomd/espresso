@@ -371,6 +371,9 @@ void mpi_bcast_cell_structure(int cs);
 /** Issue REQ_BCAST_NPTISO_GEOM: broadcast nptiso geometry parameter to all nodes. */
 void mpi_bcast_nptiso_geom(void);
 
+/** Issue REQ_BCAST_LJANGLEFORCECAP: initialize LJANGLE force capping. */
+void mpi_ljangle_cap_forces(double force_cap);
+
 
 /** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are
     in sync with the topology.  Note that this only makes sense if you

@@ -167,8 +167,10 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_GET_FLUID 47
 /** Action number for \ref mpi_local_stress_tensor*/
 #define REQ_GET_LOCAL_STRESS_TENSOR 48
+/** Action number for \ref mpi_ljangle_cap_forces. */
+#define REQ_BCAST_LAFC 49
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 49
+#define REQ_MAXIMUM 50
 
 /*@}*/
 
@@ -226,6 +228,7 @@ void mpi_send_dipm_slave(int node, int parm);
 void mpi_send_fluid_slave(int node, int parm);
 void mpi_recv_fluid_slave(int node, int parm);
 void mpi_local_stress_tensor_slave(int node, int parm);
+void mpi_ljangle_cap_forces_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -280,6 +283,7 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_send_fluid_slave,             /* 46: REQ_SET_FLUID */
   mpi_recv_fluid_slave,             /* 47: REQ_GET_FLUID */
   mpi_local_stress_tensor_slave,    /* 48: REQ_GET_LOCAL_STRESS_TENSOR */
+  mpi_ljangle_cap_forces_slave,     /* 49: REQ_BCAST_LAFC */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -340,6 +344,8 @@ char *names[] = {
   "SET_DIPM",       /* 45 */
   "SET_FLUID",      /* 46 */
   "GET_FLUID",      /* 47 */
+
+  "BCAST_LAFC",     /* 49 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -1774,12 +1780,26 @@ void mpi_lj_cap_forces_slave(int node, int parm)
 #ifdef LENNARD_JONES_GENERIC
   calc_ljgen_cap_radii(lj_force_cap);
 #endif
-#ifdef LJ_ANGLE
-  calc_ljangle_cap_radii(lj_force_cap);
-#endif
 #ifdef LJCOS2
   calc_ljcos2_cap_radii(lj_force_cap);
 #endif
+  on_short_range_ia_change();
+#endif
+}
+
+/*************** REQ_BCAST_LJANGLEFORCECAP ************/
+void mpi_ljangle_cap_forces(double fc)
+{
+  ljangle_force_cap = fc;
+  mpi_issue(REQ_BCAST_LAFC, 1, 0);
+  mpi_ljangle_cap_forces_slave(1, 0);
+}
+
+void mpi_ljangle_cap_forces_slave(int node, int parm)
+{
+#ifdef LJ_ANGLE
+  MPI_Bcast(&ljangle_force_cap, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  calc_ljangle_cap_radii(ljangle_force_cap);
   on_short_range_ia_change();
 #endif
 }
