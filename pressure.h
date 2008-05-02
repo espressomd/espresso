@@ -78,6 +78,7 @@ extern nptiso_struct nptiso;
 #include "p3m.h"
 #include "lj.h"
 #include "ljgen.h"
+#include "ljangle.h"
 #include "steppot.h"
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
