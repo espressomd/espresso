@@ -53,10 +53,10 @@ MDINLINE int printljangleIAToResult(Tcl_Interp *interp, int i, int j)
         @param ljangleforcecap the maximal force, 0 to disable, -1 for individual cutoff
 	    for each of the interactions.
 */
-MDINLINE int ljangleforcecap_set_params(double ljforcecap)
+MDINLINE int ljangleforcecap_set_params(double ljangleforcecap)
 {
   if (ljangle_force_cap != -1.0)
-    mpi_ljangle_cap_forces(lj_force_cap);
+    mpi_ljangle_cap_forces(ljangle_force_cap);
    
   return TCL_OK;
 }
@@ -465,7 +465,7 @@ MDINLINE void calc_ljangle_cap_radii(double force_cap)
 	while(step != 0) {
 	  frac2  = SQR(params->LJANGLE_sig/rad);
 	  frac10 = frac2*frac2*frac2*frac2*frac2;
-	  force = params->LJANGLE_eps * frac10*(5.0 * frac2 - 6.0)/rad;
+	  force = 60.0 * params->LJANGLE_eps * frac10*(frac2 - 1.0) / rad;
 	  if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
 	    step = - (step/2.0); 
 	  }
@@ -477,8 +477,8 @@ MDINLINE void calc_ljangle_cap_radii(double force_cap)
       else {
 	params->LJANGLE_capradius = 0.0; 
       }
-      FORCE_TRACE(fprintf(stderr,"%d: Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
-			  this_node,i,j,rad,force1,cnt));
+      FORCE_TRACE(fprintf(stderr,"%d: LJANGLE Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
+			  this_node,i,j,rad,force,cnt));
     }
   }
 }
