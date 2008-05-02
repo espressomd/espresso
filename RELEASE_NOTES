@@ -2,19 +2,26 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6a (Ydalir)                                                                     *
+* v2.0.6c (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6a -
+- v2.0.6c -
 -----------
 
+(c) May    2nd, 2008.
+(b) May    1st, 2008.
 (a) April 30th, 2008.
 
 New Features:
+(c) ljangle_cap_force implemented for directional LJ.
 (a) version 2.0.6
+
+Bugfixes:
+(b) ONEPART_DEBUG would not compile with LJ_ANGLE because of an undefined variable.
+    Fixed.
 
 
 ****************************************************************************************
