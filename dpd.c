@@ -340,10 +340,8 @@ int printinterdpdIAToResult(Tcl_Interp *interp, int i, int j)
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
 
-  Tcl_PrintDouble(interp, data->dpd_temp, buffer);
-  Tcl_AppendResult(interp, "inter_dpd ", buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, data->dpd_gamma, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_AppendResult(interp, "inter_dpd ", buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, data->dpd_r_cut, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   sprintf(buffer,"%i", data->dpd_wf);
@@ -363,11 +361,12 @@ int printinterdpdIAToResult(Tcl_Interp *interp, int i, int j)
 }
 
 
-int interdpd_set_params(int part_type_a, int part_type_b,double temp,
+int interdpd_set_params(int part_type_a, int part_type_b,
 				      double gamma, double r_c, int wf,
 				      double tgamma, double tr_c,
 				      int twf)
 {
+  extern double temperature;
   IA_parameters *data, *data_sym;
 
   make_particle_type_exist(part_type_a);
@@ -381,17 +380,16 @@ int interdpd_set_params(int part_type_a, int part_type_b,double temp,
   }
 
   /* inter_dpd should be symmetrically */
-  data->dpd_temp   = data_sym->dpd_temp   = temp;
   data->dpd_gamma  = data_sym->dpd_gamma  = gamma;
   data->dpd_r_cut  = data_sym->dpd_r_cut  = r_c;
   data->dpd_wf     = data_sym->dpd_wf     = wf;
   data->dpd_pref1  = data_sym->dpd_pref1  = gamma/time_step;
-  data->dpd_pref2  = data_sym->dpd_pref2  = sqrt(24.0*temp*gamma/time_step);
+  data->dpd_pref2  = data_sym->dpd_pref2  = sqrt(24.0*temperature*gamma/time_step);
   data->dpd_tgamma = data_sym->dpd_tgamma = tgamma;
   data->dpd_tr_cut = data_sym->dpd_tr_cut = tr_c;
   data->dpd_twf    = data_sym->dpd_twf    = twf;
   data->dpd_pref3  = data_sym->dpd_pref3  = tgamma/time_step;
-  data->dpd_pref4  = data_sym->dpd_pref4  = sqrt(24.0*temp*tgamma);
+  data->dpd_pref4  = data_sym->dpd_pref4  = sqrt(24.0*temperature*tgamma/time_step);
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
@@ -400,59 +398,106 @@ int interdpd_set_params(int part_type_a, int part_type_b,double temp,
   return TCL_OK;
 }
 
+int thermo_parse_interdpd(Tcl_Interp *interp, int argc, char ** argv)
+{
+  double temp;
+
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "thermostat needs 1 parameter: "
+		     "<temperature>",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* copy lattice-boltzmann parameters */
+  if (! ARG_IS_D(2, temp)) { return TCL_ERROR; }
+
+  if ( temp < 0.0 ) {
+    Tcl_AppendResult(interp, "temperature must be non-negative", (char *) NULL);
+    return TCL_ERROR;
+  }
+  temperature = temp;
+  thermo_switch = ( thermo_switch | THERMO_INTER_DPD );
+  mpi_bcast_parameter(FIELD_THERMO_SWITCH);
+  mpi_bcast_parameter(FIELD_TEMPERATURE);
+  return (TCL_OK);
+}
 
 int interdpd_parser(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv)
 {
   /* parameters needed for LJ */
-  double gamma,r_c,tgamma,tr_c,temp;
+  extern double temperature;
+  double gamma,r_c,tgamma,tr_c;
   int wf,twf;
   int change;
 
   /* get inter_dpd interaction type */
-  if (argc < 8) {
-    Tcl_AppendResult(interp, "inter_dpd needs 7 parameters: "
-		     "<temp> <gamma> <r_cut> <wf> <tgamma> <tr_cut> <twf>",
+  if (argc < 7) {
+    Tcl_AppendResult(interp, "inter_dpd needs 6 parameters: "
+		     "<gamma> <r_cut> <wf> <tgamma> <tr_cut> <twf>",
 		     (char *) NULL);
+    return 0;
+  }
+  if (temperature == -1) {
+    Tcl_AppendResult(interp, "Please set temperature first:  temperature inter_dpd temp",(char *) NULL);
     return 0;
   }
 
   /* copy lennard-jones parameters */
-  if ((! ARG_IS_D(1, temp))  ||
-      (! ARG_IS_D(2, gamma))    ||
-      (! ARG_IS_D(3, r_c))    ||
-      (! ARG_IS_I(4, wf))     ||
-      (! ARG_IS_D(5, tgamma)) ||
-      (! ARG_IS_D(6, tr_c))    ||
-      (! ARG_IS_I(7, twf))    ) {
-    Tcl_AppendResult(interp, "inter_dpd needs 7 parameters: "
-		     "<temp> <gamma> <r_cut> <wf> <tgamma> <tr_cut> <twf> ",
+  if ((! ARG_IS_D(1, gamma))  ||
+      (! ARG_IS_D(2, r_c))    ||
+      (! ARG_IS_I(3, wf))     ||
+      (! ARG_IS_D(4, tgamma)) ||
+      (! ARG_IS_D(5, tr_c))    ||
+      (! ARG_IS_I(6, twf))    ) {
+    Tcl_AppendResult(interp, "inter_dpd needs 6 parameters: "
+		     "<gamma> <r_cut> <wf> <tgamma> <tr_cut> <twf> ",
 		     (char *) NULL);
     return TCL_ERROR;
   }
-  change = 8;
+  change = 7;
 	
-  if (interdpd_set_params(part_type_a, part_type_b,temp,
+  if (interdpd_set_params(part_type_a, part_type_b,
 			       gamma,r_c,wf,tgamma,tr_c,twf) == TCL_ERROR) {
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
     return 0;
   }
+  interdpd_init();
+
   return change;
 
 }
 
 void interdpd_init(){
+   extern double temperature;
    int type_a,type_b;
    IA_parameters *data;
 
    for (type_a=0;type_a<n_particle_types;type_a++){
       for (type_b=0;type_b<n_particle_types;type_b++){
          data=get_ia_param(type_a,type_b);
-         data->dpd_pref1=data->dpd_gamma/time_step;
-         data->dpd_pref2=sqrt(24.0*data->dpd_temp*data->dpd_gamma/time_step);
-         data->dpd_pref3=data->dpd_tgamma/time_step;
-         data->dpd_pref4=sqrt(24.0*data->dpd_temp*data->dpd_tgamma/time_step);
+         if ( (data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0) ) {
+            data->dpd_pref1=data->dpd_gamma/time_step;
+            data->dpd_pref2=sqrt(24.0*temperature*data->dpd_gamma/time_step);
+            data->dpd_pref3=data->dpd_tgamma/time_step;
+            data->dpd_pref4=sqrt(24.0*temperature*data->dpd_tgamma/time_step);
+         }
+      }
+   }
+}
+
+void interdpd_parse_off(){
+   int type_a,type_b;
+   IA_parameters *data;
+   for (type_a=0;type_a<n_particle_types;type_a++){
+      for (type_b=0;type_b<n_particle_types;type_b++){
+         data=get_ia_param(type_a,type_b);
+         data->dpd_gamma  = data->dpd_r_cut  = data->dpd_wf =
+         data->dpd_pref1  = data->dpd_pref2  = data->dpd_tgamma =
+         data->dpd_tr_cut = data->dpd_twf    = data->dpd_pref3  =
+         data->dpd_pref4  = 0.0;
       }
    }
 }
@@ -465,8 +510,10 @@ void interdpd_update_params(double pref_scale)
    for (type_a=0;type_a<n_particle_types;type_a++){
       for (type_b=0;type_b<n_particle_types;type_b++){
          data=get_ia_param(type_a,type_b);
-         data->dpd_pref2*=pref_scale;
-         data->dpd_pref4*=pref_scale;
+         if ( (data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0) ) {
+            data->dpd_pref2*=pref_scale;
+            data->dpd_pref4*=pref_scale;
+         }
       }
    }
 }
