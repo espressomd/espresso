@@ -119,7 +119,7 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 #ifdef TRANS_DPD
     //DPD2 part
-  if ((com_dist < dpd_tr_cut)&&(dpd_tgamma > 0.0)){
+  if ((dist < dpd_tr_cut)&&(dpd_tgamma > 0.0)){
       if ( dpd_twf == 1 )
       {
         omega    = dist_inv;
