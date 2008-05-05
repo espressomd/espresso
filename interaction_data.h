@@ -312,7 +312,6 @@ typedef struct {
 #ifdef INTER_DPD
   /** \name DPD as interaction */
   /*@{*/
-  double dpd_temp;
   double dpd_gamma;
   double dpd_r_cut;
   int dpd_wf;
