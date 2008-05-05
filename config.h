@@ -95,7 +95,6 @@
 /*DPD with mass needs MASS and DPD */
 #ifdef DPD_MASS
 #define MASS
-#define DPD
 #endif
 
 /*Transversal DPD -> needs normal DPD*/
