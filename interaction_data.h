@@ -576,6 +576,11 @@ extern double max_cut_non_bonded;
     details (who wants to wite that?).*/
 extern double lj_force_cap;
 
+/** For the warmup you can cap the singularity of the directionnal LJ
+    potential at r=0. look into the warmup documentation for more
+    details (who wants to write that?).*/
+extern double ljangle_force_cap;
+
 /** For the warmup you can cap the singularity of the Morse
     potential at r=0. look into the warmup documentation for more
     details (who wants to wite that?).*/

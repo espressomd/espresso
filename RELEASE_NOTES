@@ -2,15 +2,41 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5t (Ydalir)                                                                     *
+* v2.0.6c (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.5t -
+- v2.0.6c -
 -----------
 
+(c) May    2nd, 2008.
+(b) May    1st, 2008.
+(a) April 30th, 2008.
+
+New Features:
+(c) ljangle_cap_force implemented for directional LJ.
+(a) version 2.0.6
+
+Bugfixes:
+(b) ONEPART_DEBUG would not compile with LJ_ANGLE because of an undefined variable.
+    Fixed.
+
+
+****************************************************************************************
+* v2.0.5w (Ydalir)                                                                     *
+****************************************************************************************
+
+version 2.0.6
+
+
+- v2.0.5w -
+-----------
+
+(w) April    21st, 2008.
+(v) April    18th, 2008.
+(u) April    17th, 2008.
 (t) April    15th, 2008.
 (s) April    14th, 2008.
 (r) April     9th, 2008.
@@ -51,6 +77,8 @@ New Features:
 (a) added new single-player ESPResSo game "pong"
 
 Changes:
+(u) forces.h and pressure.h now use ONE function to calc
+    non_bonded_forces
 (s) better implementation of interaction reactionfield
 (s) mass in dpd improved
 (s) let inter_rf use mostly functions of rf
@@ -62,6 +90,10 @@ Changes:
 (g) with OLD_DIHEDRAL.
 
 Bugfixes:
+(w) rotation forces were dummies
+(v) Version 2.0.5u did not compile with ROTATION switched on. This has been
+    fixed.
+(u) LJ_ANGLE was missing in pressure calculation
 (r) bonded forces for rigid and virtuel were maybe random
 (r) added some codeinfo
 (q) LJCOS2 was missing in config.c

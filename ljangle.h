@@ -49,6 +49,18 @@ MDINLINE int printljangleIAToResult(Tcl_Interp *interp, int i, int j)
   return TCL_OK;
 }
 
+/** set the force cap for the directional LJ interaction.
+        @param ljangleforcecap the maximal force, 0 to disable, -1 for individual cutoff
+	    for each of the interactions.
+*/
+MDINLINE int ljangleforcecap_set_params(double ljangleforcecap)
+{
+  if (ljangle_force_cap != -1.0)
+    mpi_ljangle_cap_forces(ljangle_force_cap);
+   
+  return TCL_OK;
+}
+
 MDINLINE int ljangle_set_params(int part_type_a, int part_type_b,
 			       double eps, double sig, double cut,
 			       int b1p, int b1n, int b2p, int b2n,
@@ -87,11 +99,44 @@ MDINLINE int ljangle_set_params(int part_type_a, int part_type_b,
   mpi_bcast_ia_params(part_type_a, part_type_b);
   mpi_bcast_ia_params(part_type_b, part_type_a);
 
-  if (lj_force_cap != -1.0)
-    mpi_lj_cap_forces(lj_force_cap);
+  if (ljangle_force_cap != -1.0)
+    mpi_ljangle_cap_forces(ljangle_force_cap);
     
   return TCL_OK;
 }
+
+/// parser for the forcecap
+MDINLINE int inter_parse_ljangleforcecap(Tcl_Interp * interp, int argc, char ** argv)
+{
+    char buffer[TCL_DOUBLE_SPACE];
+    if (argc == 0) {
+	if (ljangle_force_cap == -1.0)
+	    Tcl_AppendResult(interp, "ljangleforcecap individual", (char *) NULL);
+	else {
+	    Tcl_PrintDouble(interp, ljangle_force_cap, buffer);
+	    Tcl_AppendResult(interp, "ljangleforcecap ", buffer, (char *) NULL); 
+	}
+	return TCL_OK;
+    }
+    if (argc > 1) {
+	Tcl_AppendResult(interp, "inter ljangleforcecap takes at most 1 parameter",
+			 (char *) NULL);
+	return TCL_ERROR;
+    }
+    if (ARG0_IS_S("individual"))
+	ljangle_force_cap = -1.0;
+    else if (! ARG0_IS_D(ljangle_force_cap) || ljangle_force_cap < 0) {
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
+			 (char *) NULL);
+	return TCL_ERROR;
+    }
+    CHECK_VALUE(ljangleforcecap_set_params(ljangle_force_cap),
+		"If you can read this, you should change it. (Use the source Luke!)");
+    return TCL_ERROR; 
+}
+
+
 
 MDINLINE int ljangle_parser(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
@@ -304,8 +349,8 @@ MDINLINE void add_ljangle_pair_force(Particle *p1, Particle *p2, IA_parameters *
 	      }
 	      
 	      
-	      ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: LJANGLE   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
-	      ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: LJANGLE   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
+	      ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: LJANGLE   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,radprime));
+	      ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: LJANGLE   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,radprime));
 	      
 	      LJ_TRACE(fprintf(stderr,"%d: LJANGLE: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
 			       this_node,p1->p.identity,p2->p.identity,dist,rad*d[0],rad*d[1],rad*d[2]));
@@ -400,7 +445,7 @@ MDINLINE double ljangle_pair_energy(Particle *p1, Particle *p2, IA_parameters *i
 }
 
 
-/** calculate lj_capradius from lj_force_cap */
+/** calculate ljangle_capradius from ljangle_force_cap */
 MDINLINE void calc_ljangle_cap_radii(double force_cap)
 {
   int i,j,cnt=0;
@@ -420,7 +465,7 @@ MDINLINE void calc_ljangle_cap_radii(double force_cap)
 	while(step != 0) {
 	  frac2  = SQR(params->LJANGLE_sig/rad);
 	  frac10 = frac2*frac2*frac2*frac2*frac2;
-	  force = params->LJANGLE_eps * frac10*(5.0 * frac2 - 6.0)/rad;
+	  force = 60.0 * params->LJANGLE_eps * frac10*(frac2 - 1.0) / rad;
 	  if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
 	    step = - (step/2.0); 
 	  }
@@ -432,8 +477,8 @@ MDINLINE void calc_ljangle_cap_radii(double force_cap)
       else {
 	params->LJANGLE_capradius = 0.0; 
       }
-      FORCE_TRACE(fprintf(stderr,"%d: Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
-			  this_node,i,j,rad,force1,cnt));
+      FORCE_TRACE(fprintf(stderr,"%d: LJANGLE Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
+			  this_node,i,j,rad,force,cnt));
     }
   }
 }

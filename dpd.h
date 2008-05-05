@@ -100,22 +100,7 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   com_dist=dist;
 #endif
 
-//for flex water also damp internal dof
-#ifndef WATER_FLEX
-  if (p1->p.mol_id==p2->p.mol_id) return;
-#endif
-
-/*  if (p1->p.mol_id==p2->p.mol_id){
-     intra_fractor=100;
-  }
-  else
-  {
-     intra_fractor=1;
-  }*/
-
-  dist_inv = 1.0/dist;
-
-  if((com_dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
+  if((dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
     if ( dpd_wf == 1 ) //w_R=1
     {
        omega    = dist_inv;
@@ -130,16 +115,14 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
     //omega*=intra_fractor;
     omega2   = SQR(omega);
     //DPD part
-    if (dpd_gamma > 0.0 ){
-       // friction force prefactor
-      for(j=0; j<3; j++)  vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
-      friction = dpd_pref1 * omega2 * vel12_dot_d12;
-      // random force prefactor
-      noise    = dpd_pref2 * omega      * (d_random()-0.5);
-      for(j=0; j<3; j++) {
-        p1->f.f[j] += ( tmp = (noise - friction)*d[j] );
-        p2->f.f[j] -= tmp;
-      }
+    // friction force prefactor
+    for(j=0; j<3; j++)  vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
+    friction = dpd_pref1 * omega2 * vel12_dot_d12;
+    // random force prefactor
+    noise    = dpd_pref2 * omega      * (d_random()-0.5);
+    for(j=0; j<3; j++) {
+       p1->f.f[j] += ( tmp = (noise - friction)*d[j] );
+       p2->f.f[j] -= tmp;
     }
   }
 #ifdef TRANS_DPD
@@ -175,7 +158,9 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
           f_D[i]+=P_times_dist_sqr[i][j]*(p1->m.v[j] - p2->m.v[j]);
           f_R[i]+=P_times_dist_sqr[i][j]*noise_vec[j];
         }
+        //NOTE: velocity are scaled with time_step
         f_D[i]*=dpd_pref3*omega2;
+        //NOTE: noise force scales with 1/sqrt(time_step
         f_R[i]*=dpd_pref4*omega*dist_inv;
       }
       for(j=0; j<3; j++) {
@@ -191,11 +176,13 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
 #ifdef INTER_DPD
 void interdpd_heat_up();
 void interdpd_cool_down();
+void interdpd_parse_off();
 int printinterdpdIAToResult(Tcl_Interp *interp, int i, int j);
-int interdpd_set_params(int part_type_a, int part_type_b,double temp,
+int interdpd_set_params(int part_type_a, int part_type_b,
 				      double gamma, double r_c, int wf,
 				      double tgamma, double tr_c,
 				      int twf);
+int thermo_parse_interdpd(Tcl_Interp *interp, int argc, char ** argv);
 int interdpd_parser(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv);
@@ -203,7 +190,7 @@ void interdpd_init();
 void interdpd_update_params(double pref2_scale);
 
 MDINLINE void add_interdpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
-				double d[3], double dist, double dist2,double force[3])
+				double d[3], double dist, double dist2)
 {
   int j;
   // velocity difference between p1 and p2
@@ -220,8 +207,16 @@ MDINLINE void add_interdpd_pair_force(Particle *p1, Particle *p2, IA_parameters 
   double tmp;
 #ifdef DPD_MASS
   double massf;
-  massf=PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
 #endif
+
+#ifdef DPD_MASS_RED
+  massf=2*PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
+#endif
+
+#ifdef DPD_MASS_LIN
+  massf=0.5*(PMASS(*p1)+PMASS(*p2));
+#endif
+
   dist_inv = 1.0/dist;
   if((dist < ia_params->dpd_r_cut)&&(ia_params->dpd_gamma > 0.0)) {
     if ( dpd_wf == 1 )
@@ -280,7 +275,7 @@ MDINLINE void add_interdpd_pair_force(Particle *p1, Particle *p2, IA_parameters 
         }
         //NOTE: velocity are scaled with time_step
         f_D[i]*=ia_params->dpd_pref3*omega2;
-      // NOTE: noise force scales with 1/sqrt(time_step
+        //NOTE: noise force scales with 1/sqrt(time_step
         f_R[i]*=ia_params->dpd_pref4*omega*dist_inv;
       }
       for(j=0; j<3; j++) {

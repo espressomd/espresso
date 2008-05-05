@@ -39,6 +39,7 @@
 #define THERMO_DPD        2
 #define THERMO_NPT_ISO    4
 #define THERMO_LB         8
+#define THERMO_INTER_DPD  16
 
 /*@}*/
 

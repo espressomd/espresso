@@ -158,8 +158,11 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef DPD
   Tcl_AppendResult(interp, "{ DPD } ", (char *) NULL);
 #endif
-#ifdef DPD_MASS
-  Tcl_AppendResult(interp, "{ DPD_MASS } ", (char *) NULL);
+#ifdef DPD_MASS_RED
+  Tcl_AppendResult(interp, "{ DPD_MASS_RED } ", (char *) NULL);
+#endif
+#ifdef DPD_MASS_LIN
+  Tcl_AppendResult(interp, "{ DPD_MASS_LIN } ", (char *) NULL);
 #endif
 #ifdef LB
   Tcl_AppendResult(interp, "{ LB } ", (char *) NULL);

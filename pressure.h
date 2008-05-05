@@ -78,6 +78,7 @@ extern nptiso_struct nptiso;
 #include "p3m.h"
 #include "lj.h"
 #include "ljgen.h"
+#include "ljangle.h"
 #include "steppot.h"
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
@@ -133,22 +134,20 @@ int p_diff_callback(Tcl_Interp *interp, void *_data);
 */
 void pressure_calc(double *result, double *result_t, double *result_nb, double *result_t_nb, int v_comp);
 
-MDINLINE void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
-					 double dist, double dist2, double force[3])
-     /* calculates the non-bonded pair force between particles excluding electrostatics */
+MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
+					 double dist, double dist2, double force[3],double torgue1[3],double torgue2[3])
 {
-  IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-#ifdef ROTATION
-  double t1[3], t2[3]; /* dummies */
-#endif
-
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id==p2->p.mol_id) return;
 #endif
-
   /* lennard jones */
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist, force);
+#endif
+  /* Directional LJ */
+#ifdef LJ_ANGLE
+  /* The forces are propagated within the function */
+  add_ljangle_pair_force(p1,p2,ia_params,d,dist);
 #endif
   /* smooth step */
 #ifdef SMOOTH_STEP
@@ -184,7 +183,7 @@ MDINLINE void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3]
 #endif
   /* Gay-Berne */
 #ifdef ROTATION
-  add_gb_pair_force(p1,p2,ia_params,d,dist,force,t1,t2);
+  add_gb_pair_force(p1,p2,ia_params,d,dist,force,torgue1,torgue2);
 #endif
 #ifdef INTER_RF
   add_interrf_pair_force(p1,p2,ia_params,d,dist, force);
@@ -205,8 +204,10 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 #ifdef ELECTROSTATICS
   double ret;
 #endif
+  IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+  double t1[3], t2[3]; /* dummies */
 
-  calc_non_bonded_pair_force(p1, p2, d, dist, dist2,force);
+  calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
 
   *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
 

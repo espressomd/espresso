@@ -63,6 +63,7 @@ double max_cut;
 double max_cut_non_bonded;
 
 double lj_force_cap = 0.0;
+double ljangle_force_cap = 0.0;
 double morse_force_cap = 0.0;
 double tab_force_cap = 0.0;
 double buck_force_cap = 0.0;
@@ -1236,6 +1237,26 @@ int inter_print_all(Tcl_Interp *interp)
     Tcl_AppendResult(interp, "}", (char *)NULL);
   }
 
+#ifdef LJ_ANGLE
+  if(ljangle_force_cap != 0.0) {
+    char buffer[TCL_DOUBLE_SPACE];
+    
+    if (start) {
+      Tcl_AppendResult(interp, "{", (char *)NULL);
+      start = 0;
+    }
+    else
+      Tcl_AppendResult(interp, " {", (char *)NULL);
+    if (ljangle_force_cap == -1.0)
+      Tcl_AppendResult(interp, "ljangleforcecap individual");
+    else {
+      Tcl_PrintDouble(interp, ljangle_force_cap, buffer);
+      Tcl_AppendResult(interp, "ljangleforcecap ", buffer, (char *) NULL);
+    }
+    Tcl_AppendResult(interp, "}", (char *)NULL);
+  }
+#endif
+
 #ifdef MORSE
 if(morse_force_cap != 0.0) {
     char buffer[TCL_DOUBLE_SPACE];
@@ -1549,6 +1570,12 @@ int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
     return inter_parse_ljforcecap(interp, argc-1, argv+1);
 #endif
 
+#ifdef LJ_ANGLE
+  if(ARG0_IS_S("ljangleforcecap"))
+    return inter_parse_ljangleforcecap(interp, argc-1, argv+1);
+#endif
+
+  
 #ifdef MORSE
   if(ARG0_IS_S("morseforcecap"))
     return inter_parse_morseforcecap(interp, argc-1, argv+1);

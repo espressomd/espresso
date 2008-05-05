@@ -61,6 +61,9 @@ int thermo_parse_off(Tcl_Interp *interp, int argc, char **argv)
 #ifdef DPD
   dpd_parse_off(interp,argc,argv);
 #endif
+#ifdef INTER_DPD
+  interdpd_parse_off(interp,argc,argv);
+#endif
 #ifdef NPT
   /* npt isotropic thermostat */
   nptiso_gamma0 = 0;
@@ -183,6 +186,13 @@ int thermo_print(Tcl_Interp *interp)
   }
 #endif
 
+#ifdef INTER_DPD
+ /* inter_dpd */
+  if(thermo_switch & THERMO_INTER_DPD) {
+    Tcl_PrintDouble(interp, temperature, buffer);
+    Tcl_AppendResult(interp,"{ inter_dpd ",buffer, " } ", (char *)NULL);
+  }
+#endif
   return (TCL_OK);
 }
 
@@ -228,6 +238,10 @@ int thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 #ifdef DPD
   else if ( ARG1_IS_S("dpd") )
     err = thermo_parse_dpd(interp, argc, argv);
+#endif
+#ifdef INTER_DPD
+  else if ( ARG1_IS_S("inter_dpd") )
+    err = thermo_parse_interdpd(interp, argc, argv);
 #endif
 #ifdef NPT
   else if ( ARG1_IS_S("npt_isotropic") )
@@ -279,14 +293,14 @@ void thermo_init_npt_isotropic()
 void thermo_init()
 {
   if(thermo_switch == THERMO_OFF){
-#ifdef INTER_DPD
-    interdpd_init();
-#endif
     return;
   }
+#ifdef INTER_DPD
+  if(thermo_switch & THERMO_INTER_DPD)  interdpd_init();
+#endif
   if(thermo_switch & THERMO_LANGEVIN ) thermo_init_langevin();
 #ifdef DPD
-  if(thermo_switch & THERMO_DPD)       thermo_init_dpd();
+  if(thermo_switch & THERMO_DPD) thermo_init_dpd();
 #endif
 #ifdef NPT
   if(thermo_switch & THERMO_NPT_ISO)   thermo_init_npt_isotropic();
@@ -305,7 +319,7 @@ void thermo_heat_up()
   else if (thermo_switch & THERMO_DPD){dpd_heat_up();}
 #endif
 #ifdef INTER_DPD
-  interdpd_heat_up();
+  else if (thermo_switch & THERMO_INTER_DPD) {interdpd_heat_up();}
 #endif
 }
 
@@ -319,7 +333,7 @@ void thermo_cool_down()
   else if (thermo_switch & THERMO_DPD){dpd_cool_down();}
 #endif
 #ifdef INTER_DPD
-  interdpd_cool_down();
+  else if (thermo_switch & THERMO_INTER_DPD) interdpd_cool_down();
 #endif
 }
 
