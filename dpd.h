@@ -91,15 +91,6 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   massf=0.5*(PMASS(*p1)+PMASS(*p2));
 #endif
 
-  double com_dist;
-  //double intra_fractor;
-
-#ifdef MOL_CUT
-  com_dist=get_mol_dist(p1,p2);
-#else
-  com_dist=dist;
-#endif
-
   if((dist < dpd_r_cut)&&(dpd_gamma > 0.0)) {
     if ( dpd_wf == 1 ) //w_R=1
     {
@@ -112,7 +103,6 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
 #ifdef DPD_MASS
     omega*=sqrt(massf);
 #endif
-    //omega*=intra_fractor;
     omega2   = SQR(omega);
     //DPD part
     // friction force prefactor
@@ -139,7 +129,6 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
 #ifdef DPD_MASS
       omega*=sqrt(massf);
 #endif
-      //omega*=intra_fractor;
       omega2   = SQR(omega);
       for (i=0;i<3;i++){
         //noise vector
