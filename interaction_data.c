@@ -228,7 +228,6 @@ void initialize_ia_params(IA_parameters *params) {
 #endif
 
 #ifdef INTER_DPD
-  params->dpd_temp = -1;
   params->dpd_gamma = 0.0;
   params->dpd_r_cut = 0.0;
   params->dpd_wf = 0;
@@ -383,7 +382,6 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 #endif
 
 #ifdef INTER_DPD
-  dst->dpd_temp   = src->dpd_temp;
   dst->dpd_gamma  = src->dpd_gamma;
   dst->dpd_r_cut  = src-> dpd_r_cut;
   dst->dpd_wf     = src->dpd_wf;
