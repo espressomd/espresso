@@ -2,24 +2,28 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6c (Ydalir)                                                                     *
+* v2.0.6d (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6c -
+- v2.0.6d -
 -----------
 
+(d) May    5th, 2008.
 (c) May    2nd, 2008.
 (b) May    1st, 2008.
 (a) April 30th, 2008.
 
 New Features:
+(d) make temperature of inter_dpd global
 (c) ljangle_cap_force implemented for directional LJ.
 (a) version 2.0.6
 
 Bugfixes:
+(d) wrong code_info for dpd_mass
+(d) mass was missing in anaylze energy_kinetic
 (b) ONEPART_DEBUG would not compile with LJ_ANGLE because of an undefined variable.
     Fixed.
 
