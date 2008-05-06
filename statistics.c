@@ -30,6 +30,7 @@
 #include "domain_decomposition.h"
 #include "verlet.h"
 #include "lb.h"
+#include "virtual_sites.h"
 
 /** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
@@ -3235,6 +3236,10 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("energy", parse_and_print_energy);
   REGISTER_ANALYSIS("energy_kinetic", parse_and_print_energy_kinetic);
   REGISTER_ANALYSIS_W_ARG("pressure", parse_and_print_pressure, 0);
+#ifdef VIRTUAL_SITES
+  REGISTER_ANALYSIS("energy_kinetic_mol",parse_and_print_energy_kinetic_mol);
+  REGISTER_ANALYSIS("pressure_mol",  parse_and_print_pressure_mol);
+#endif
   REGISTER_ANALYSIS_W_ARG("stress_tensor", parse_and_print_stress_tensor, 0);
   REGISTER_ANALYSIS("local_stress_tensor", parse_local_stress_tensor);
   REGISTER_ANALYSIS_W_ARG("p_inst", parse_and_print_pressure, 1);
