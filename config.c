@@ -176,6 +176,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef NO_INTRA_NB
   Tcl_AppendResult(interp, "{ NO_INTRA_NB } ", (char *) NULL);
 #endif
+#ifdef VIRTUAL_SITES
+  Tcl_AppendResult(interp, "{ VIRTUAL_SITES } ", (char *) NULL);
+#endif
   Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);
 }

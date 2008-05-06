@@ -161,6 +161,10 @@ void init_particle(Particle *part)
 #ifdef EXCLUSIONS
   init_intlist(&(part->el));
 #endif
+
+#ifdef VIRTUAL_SITES
+  part->p.isVirtual      = 0;
+#endif
 }
 
 void free_particle(Particle *part) {
@@ -442,6 +446,14 @@ void part_print_dip(Particle *part, char *buffer, Tcl_Interp *interp)
 }
 #endif
 
+#ifdef VIRTUAL_SITES
+void part_print_isVirtual(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  sprintf(buffer,"%i", part->p.isVirtual);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+}
+#endif
+
 void part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale velocities ! */
@@ -712,6 +724,13 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 #endif
 
+#ifdef VIRTUAL_SITES
+  /* print information about isVirtual */
+  Tcl_AppendResult(interp, " virtual ", (char *)NULL);
+  part_print_isVirtual(&part, buffer, interp);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+#endif
+
 #ifdef EXCLUSIONS
   if (part.el.n > 0) {
     Tcl_AppendResult(interp, " exclude ", (char *)NULL);
@@ -839,6 +858,11 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       part_print_dip(&part, buffer, interp);
     else if (ARG0_IS_S("dipm"))
       Tcl_PrintDouble(interp, part.p.dipm, buffer);
+#endif
+
+#ifdef VIRTUAL_SITES
+    else if (ARG0_IS_S("virtual"))
+      part_print_isVirtual(&part, buffer, interp);
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -1037,6 +1061,33 @@ int part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
+#endif
+
+#ifdef VIRTUAL_SITES
+int part_parse_isVirtual(Tcl_Interp *interp, int argc, char **argv,
+		 int part_num, int * change)
+{
+    int isVirtual;
+
+    *change = 1;
+
+    if (argc < 1) {
+      Tcl_AppendResult(interp, "virtual requires 1 argument", (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    /* set isVirtual */
+    if (! ARG0_IS_I(isVirtual))
+      return TCL_ERROR;
+
+    if (set_particle_isVirtual(part_num, isVirtual) == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+      return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
 #endif
 
 int part_parse_q(Tcl_Interp *interp, int argc, char **argv,
@@ -1673,6 +1724,13 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
 #endif
 
+#ifdef VIRTUAL_SITES
+
+    else if (ARG0_IS_S("virtual"))
+      err = part_parse_isVirtual(interp, argc-1, argv+1, part_num, &change);
+
+#endif
+
 #ifdef EXTERNAL_FORCES
 
     else if (ARG0_IS_S("unfix"))
@@ -1918,6 +1976,24 @@ int set_particle_dip(int part, double dip[3])
   return TCL_OK;
 }
 
+#endif
+
+#ifdef VIRTUAL_SITES
+int set_particle_isVirtual(int part, int isVirtual)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_isVirtual(pnode, part, isVirtual);
+  return TCL_OK;
+}
 #endif
 
 int set_particle_q(int part, double q)

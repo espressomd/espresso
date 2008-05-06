@@ -42,6 +42,7 @@
 #include "errorhandling.h"
 #include "lattice.h"
 #include "lb.h"
+#include "virtual_sites.h"
 
 /************************************************
  * DEFINES
@@ -368,8 +369,19 @@ void integrate_vv(int n_steps)
     thermo_heat_up();
 #ifdef LB
     transfer_momentum = 0;
-#endif    
-    force_calc(); 
+#endif
+
+//VIRTUAL_SITES pos (annd vel for DPD) update for security reason !!!
+#ifdef VIRTUAL_SITES
+    update_mol_vel_pos();
+#endif
+
+    force_calc();
+
+//VIRTUAL_SITES distribute forces
+#ifdef VIRTUAL_SITES
+   distribute_mol_force();
+#endif
 
     thermo_cool_down();
 
@@ -441,12 +453,23 @@ void integrate_vv(int n_steps)
 
     cells_update_ghosts();
 
+//VIRTUAL_SITES update pos and vel (for DPD)
+#ifdef VIRTUAL_SITES
+   update_mol_vel_pos();
+#endif
+
     /* Integration Step: Step 3 of Velocity Verlet scheme:
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities v(t+0.5*dt) ) */
 #ifdef LB
     transfer_momentum = 1;
-#endif    
+#endif
+
     force_calc();
+
+//VIRTUAL_SITES distribute forces
+#ifdef VIRTUAL_SITES
+   distribute_mol_force();
+#endif
 
     /* Communication step: ghost forces */
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
@@ -462,6 +485,11 @@ void integrate_vv(int n_steps)
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
+
+//VIRTUAL_SITES update vel
+#ifdef VIRTUAL_SITES
+   update_mol_vel();
+#endif
 
 #ifdef LB
   if (lattice_switch & LATTICE_LB) lb_propagate();
@@ -625,7 +653,9 @@ void rescale_forces_propagate_vel()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-
+#ifdef VIRTUAL_SITES
+       if (ifParticleIsVirtual(&p[i])) continue;
+#endif
       /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
       p[i].f.f[0] *= scale/PMASS(p[i]);
       p[i].f.f[1] *= scale/PMASS(p[i]);
@@ -883,7 +913,10 @@ void propagate_vel_pos()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-      for(j=0; j < 3; j++){
+ #ifdef VIRTUAL_SITES
+       if (ifParticleIsVirtual(&p[i])) continue;
+#endif
+     for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
 	if (!(p[i].l.ext_flag & COORD_FIXED(j)))
 #endif

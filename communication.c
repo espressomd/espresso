@@ -169,8 +169,10 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_GET_LOCAL_STRESS_TENSOR 48
 /** Action number for \ref mpi_ljangle_cap_forces. */
 #define REQ_BCAST_LAFC 49
+/** Action number for \ref mpi_send_isVirtual. */
+#define REQ_SET_ISVI 50
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 50
+#define REQ_MAXIMUM 51
 
 /*@}*/
 
@@ -229,6 +231,7 @@ void mpi_send_fluid_slave(int node, int parm);
 void mpi_recv_fluid_slave(int node, int parm);
 void mpi_local_stress_tensor_slave(int node, int parm);
 void mpi_ljangle_cap_forces_slave(int node, int parm);
+void mpi_send_isVirtual_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -284,6 +287,7 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_recv_fluid_slave,             /* 47: REQ_GET_FLUID */
   mpi_local_stress_tensor_slave,    /* 48: REQ_GET_LOCAL_STRESS_TENSOR */
   mpi_ljangle_cap_forces_slave,     /* 49: REQ_BCAST_LAFC */
+  mpi_send_isVirtual_slave,         /* 50: REQ_SET_ISVI */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -943,6 +947,39 @@ void mpi_send_dipm_slave(int pnode, int part)
     Particle *p = local_particles[part];
     MPI_Status status;
     MPI_Recv(&p->p.dipm, 1, MPI_DOUBLE, 0, REQ_SET_DIPM,
+	     MPI_COMM_WORLD, &status);
+  }
+
+  on_particle_change();
+#endif
+}
+
+/********************* REQ_SET_ISVI ********/
+
+void mpi_send_isVirtual(int pnode, int part, int isVirtual)
+{
+#ifdef VIRTUAL_SITES
+  mpi_issue(REQ_SET_ISVI, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.isVirtual = isVirtual;
+  }
+  else {
+    MPI_Send(&isVirtual, 1, MPI_INT, pnode, REQ_SET_ISVI, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_isVirtual_slave(int pnode, int part)
+{
+#ifdef VIRTUAL_SITES
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.isVirtual, 1, MPI_INT, 0, REQ_SET_ISVI,
 	     MPI_COMM_WORLD, &status);
   }
 

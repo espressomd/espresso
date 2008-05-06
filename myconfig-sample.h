@@ -39,6 +39,7 @@
 /* #define BOND_CONSTRAINT */
 /* #define MODES */
 /* #define BOND_VIRTUAL */
+/* #define VIRTUAL_SITES */
 
 /**********************************************************************/
 /*                        integrator features                         */
@@ -125,6 +126,7 @@
 /* #define MEM_DEBUG */
 /* #define MAGGS_DEBUG */
 /* #define LB_DEBUG */
+/* #define VIRTUAL_SITES_DEBUG */
 
 /* #define ASYNC_BARRIER */
 
