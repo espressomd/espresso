@@ -21,7 +21,9 @@
 
 #ifdef ELECTROSTATICS
 
-#include "statistics.h"
+#ifdef RF_WITH_MOL_CUT
+#include "virtual_sites.h"
+#endif
 
 /** Structure to hold Reaction Field Parameters. */
 typedef struct {
@@ -134,19 +136,14 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
 {
   int j;
   double fac;
+#ifdef RF_WITH_MOL_CUT
   double com_dist;
-
-#ifdef NO_INTRA_NB
-  if (p1->p.mol_id==p2->p.mol_id) return;
-#endif
-
-#ifdef MOL_CUT
   com_dist=get_mol_dist(p1,p2);
+  if (com_dist < rf_params.r_cut)
 #else
-  com_dist=dist;
+  if (dist < rf_params.r_cut)
 #endif
-
-  if (com_dist < rf_params.r_cut) {
+  {
      fac = 1.0 / (dist*dist*dist)  +  rf_params.B / (rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
      fac *= coulomb.prefactor * p1->p.q * p2->p.q;
 
@@ -161,19 +158,14 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
 MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 {
   double  fac;
+#ifdef RF_WITH_MOL_CUT
   double com_dist;
-
-#ifdef NO_INTRA_NB
-  if (p1->p.mol_id==p2->p.mol_id) return 0.0;
-#endif
-
-#ifdef MOL_CUT
   com_dist=get_mol_dist(p1,p2);
+  if (com_dist < rf_params.r_cut)
 #else
-  com_dist=dist;
+  if (dist < rf_params.r_cut)
 #endif
-
-  if (com_dist < rf_params.r_cut) {
+  {
      fac = 1.0 / dist  -  (rf_params.B*dist*dist) / (2*rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
      //cut off part
      fac -= (1-rf_params.B/2)  / rf_params.r_cut;

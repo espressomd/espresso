@@ -179,6 +179,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef VIRTUAL_SITES
   Tcl_AppendResult(interp, "{ VIRTUAL_SITES } ", (char *) NULL);
 #endif
+#ifdef RF_WITH_MOL_CUT
+  Tcl_AppendResult(interp, "{ RF_WITH_MOL_CUT } ", (char *) NULL);
+#endif
   Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);
 }

@@ -79,7 +79,7 @@
 /* #define INTER_RF */
 
 /* #define NO_INTRA_NB */
-/* #define MOL_CUT */
+/* #define RF_WTIH_MOL_CUT */
 
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */
 /* #define BOND_ANGLE_HARMONIC */
