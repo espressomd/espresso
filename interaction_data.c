@@ -578,6 +578,7 @@ void calc_maximal_cutoff()
 {
   int i, j;
   double max_cut_tmp;
+  double max_cut_bonded=-1.0;
   max_cut = -1.0;
   max_cut_non_bonded = -1.0;
 
@@ -586,26 +587,26 @@ void calc_maximal_cutoff()
     switch (bonded_ia_params[i].type) {
     case BONDED_IA_FENE:
       max_cut_tmp = bonded_ia_params[i].p.fene.r0+bonded_ia_params[i].p.fene.drmax;
-      if(max_cut < max_cut_tmp)
-	max_cut = max_cut_tmp;
+      if(max_cut_bonded < max_cut_tmp)
+	max_cut_bonded = max_cut_tmp;
       break;
     case BONDED_IA_HARMONIC:
-      if(max_cut < bonded_ia_params[i].p.harmonic.r)
-	max_cut = bonded_ia_params[i].p.harmonic.r;
+      if(max_cut_bonded < bonded_ia_params[i].p.harmonic.r)
+	max_cut_bonded = bonded_ia_params[i].p.harmonic.r;
       break;
     case BONDED_IA_SUBT_LJ:
-      if(max_cut < bonded_ia_params[i].p.subt_lj.r)
-	max_cut = bonded_ia_params[i].p.subt_lj.r;
+      if(max_cut_bonded < bonded_ia_params[i].p.subt_lj.r)
+	max_cut_bonded = bonded_ia_params[i].p.subt_lj.r;
       break;
     case BONDED_IA_RIGID_BOND:
-      if(max_cut < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
-	max_cut = sqrt(bonded_ia_params[i].p.rigid_bond.d2);
+      if(max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
+	max_cut_bonded = sqrt(bonded_ia_params[i].p.rigid_bond.d2);
        break;
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
       if(bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
-	 max_cut < bonded_ia_params[i].p.tab.maxval)
-	max_cut = bonded_ia_params[i].p.tab.maxval;
+	 max_cut_bonded < bonded_ia_params[i].p.tab.maxval)
+	max_cut_bonded = bonded_ia_params[i].p.tab.maxval;
       break;
 #endif
     default:
@@ -626,18 +627,19 @@ void calc_maximal_cutoff()
   for (i = 0; i < n_bonded_ia; i++) {
     switch (bonded_ia_params[i].type) {
     case BONDED_IA_DIHEDRAL:
-      max_cut = max_cut_tmp;
+      max_cut_bonded = max_cut_tmp;
       break;
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
       if(bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
-	max_cut = max_cut_tmp;
+	max_cut_bonded = max_cut_tmp;
       break;
 #endif
     default:
       break;
     }
   }
+  max_cut=max_cut_bonded;
 
   /* non bonded */
   for (i = 0; i < n_particle_types; i++)
@@ -802,7 +804,9 @@ void calc_maximal_cutoff()
 
   /* make max_cut the maximal cutoff of both bonded and non-bonded interactions */
   if ( max_cut_non_bonded > max_cut) max_cut = max_cut_non_bonded;
-
+#ifdef MOL_CUT
+  if (max_cut_bonded > 0 ) max_cut += max_cut_bonded;
+#endif
 }
 
 int check_obs_calc_initialized()

@@ -88,6 +88,10 @@
 //#define ALTERNATIVE_INTEGRATOR
 #endif
 
+#ifdef RF_WITH_MOL_CUT
+#define MOL_CUT
+#endif
+
 #if defined(DPD_MASS_RED) || defined(DPD_MASS_LIN)
 #define DPD_MASS
 #endif
