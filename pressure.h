@@ -190,6 +190,12 @@ MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_pa
 #endif
 }
 
+MDINLINE void calc_non_bonded_pair_force_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
+   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+   double t1[3],t2[3];
+   calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
+}
+
 /** Calculate non bonded energies between a pair of particles.
     @param p1        pointer to particle 1.
     @param p2        pointer to particle 2.
@@ -204,10 +210,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 #ifdef ELECTROSTATICS
   double ret;
 #endif
-  IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-  double t1[3], t2[3]; /* dummies */
-
-  calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
+  calc_non_bonded_pair_force_simple(p1, p2,d, dist, dist2,force);
 
   *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
 

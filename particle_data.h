@@ -73,6 +73,11 @@ typedef struct {
   /** dipole moment (absolute value)*/
   double dipm;
 #endif
+
+#ifdef VIRTUAL_SITES
+  /** dipole moment (absolute value)*/
+  int isVirtual;
+#endif
 } ParticleProperties;
 
 /** Positional information on a particle. Information that is
@@ -438,6 +443,15 @@ int set_particle_dip(int part, double dip[3]);
     @return TCL_OK if particle existed
 */
 int set_particle_dipm(int part, double dipm);
+#endif
+
+#ifdef VIRTUAL_SITES
+/** Call only on the master node: set particle dipole moment (absolut value).
+    @param part the particle.
+    @param isVirtual its new dipole moment.
+    @return TCL_OK if particle existed
+*/
+int set_particle_isVirtual(int part,int isVirtual);
 #endif
 
 #ifdef EXTERNAL_FORCES

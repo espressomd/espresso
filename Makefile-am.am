@@ -64,6 +64,7 @@ Espresso_bin_SOURCES = \
 	maggs.c maggs.h \
 	rattle.c rattle.h \
 	molforces.c molforces.h \
+	virtual_sites.c virtual_sites.h \
 	lb.c lb.h \
 	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
