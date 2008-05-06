@@ -3777,7 +3777,7 @@ static int parse_and_print_energy_kinetic(Tcl_Interp *interp,int argc, char **ar
   {
       if (partCfg[i].p.type == type )
       {
-         E_kin+=sqrlen(partCfg[i].m.v);
+         E_kin+=PMASS(partCfg[i])*sqrlen(partCfg[i].m.v);
       }
   }
   E_kin*=0.5/time_step/time_step;
