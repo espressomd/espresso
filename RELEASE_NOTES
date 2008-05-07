@@ -2,21 +2,24 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6d (Ydalir)                                                                     *
+* v2.0.6e (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6d -
+- v2.0.6e -
 -----------
 
+(e) May    6th, 2008.
 (d) May    5th, 2008.
 (c) May    2nd, 2008.
 (b) May    1st, 2008.
 (a) April 30th, 2008.
 
 New Features:
+(e) virtual sites are now possible
+(e) allow reaction field with molecular cutoff to avoid dipoles
 (d) make temperature of inter_dpd global
 (c) ljangle_cap_force implemented for directional LJ.
 (a) version 2.0.6
