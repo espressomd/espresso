@@ -174,7 +174,8 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
     if { [has_feature "ELECTROSTATICS"] } { lappend part_write q  }
     lappend part_write v 
     lappend part_write f 
-    if { [has_feature "MASS"] } { lappend part_write mass  }	 	 
+    if { [has_feature "MASS"] } { lappend part_write mass  }
+    if { [has_feature "VIRTUAL_SITES"] } { lappend part_write virtual }
     if { [has_feature "ROTATION"] } { lappend part_write quat omega torque  }
     if { [has_feature "CONSTRAINTS"] } { lappend part_write fix  }
     if { [has_feature "EXTERNAL_FORCES"] } { lappend part_write ext_force  }
