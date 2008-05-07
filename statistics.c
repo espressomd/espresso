@@ -3096,6 +3096,39 @@ double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n
   return D;
 }
 
+static int parse_and_print_dipole(Tcl_Interp *interp,int argc, char **argv)
+{
+   int i,k;
+   char buffer[TCL_DOUBLE_SPACE];
+   double dipole[3],total_q=0.0;
+   updatePartCfg(WITHOUT_BONDS);
+   if (!sortPartCfg()) {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{059 parse_and_print_dipole: could not sort particle config, particle ids not consecutive?} ");
+      return TCL_ERROR;
+   }
+   for (i=0;i<3;i++)
+   {
+       dipole[i]=0;
+   }
+   for (i=0;i<n_total_particles;i++)
+   {
+       total_q+=partCfg[i].p.q;
+       for (k=0;k<3;k++){
+            dipole[k]+=partCfg[i].r.p[k]*partCfg[i].p.q;
+       }
+   }
+   Tcl_AppendResult(interp,"{ dipolemoment_normal ",(char *)NULL);
+   for (k=0;k<3;k++)
+   {
+       sprintf(buffer,"%e ",dipole[k]);
+       Tcl_AppendResult(interp, buffer,(char *)NULL);
+   }
+   sprintf(buffer,"%e",total_q);
+   Tcl_AppendResult(interp,buffer,"}",(char *)NULL);
+   return TCL_OK;
+}
+
 static int parse_MSD(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze MSD [ <type_m> <n_time_steps>]' */
@@ -3227,6 +3260,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("centermass", parse_centermass);
   REGISTER_ANALYSIS("angularmomentum",parse_angularmomentum);
   REGISTER_ANALYSIS("MSD",parse_MSD);
+  REGISTER_ANALYSIS("dipmom_normal",parse_and_print_dipole);
   REGISTER_ANALYSIS("momentofinertiamatrix", parse_momentofinertiamatrix);
   REGISTER_ANALYSIS("find_principal_axis", parse_find_principal_axis);
   REGISTER_ANALYSIS("nbhood", parse_nbhood);
