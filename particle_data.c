@@ -728,7 +728,6 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   /* print information about isVirtual */
   Tcl_AppendResult(interp, " virtual ", (char *)NULL);
   part_print_isVirtual(&part, buffer, interp);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
 #endif
 
 #ifdef EXCLUSIONS
