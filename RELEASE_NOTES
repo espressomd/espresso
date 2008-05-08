@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6e (Ydalir)                                                                     *
+* v2.0.6f (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6e -
+- v2.0.6f -
 -----------
 
+(f) May    7th, 2008.
 (e) May    6th, 2008.
 (d) May    5th, 2008.
 (c) May    2nd, 2008.
@@ -18,6 +19,7 @@ Current working revision.
 (a) April 30th, 2008.
 
 New Features:
+(f) added anaylze dipmon
 (e) virtual sites are now possible
 (e) allow reaction field with molecular cutoff to avoid dipoles
 (d) make temperature of inter_dpd global
@@ -25,6 +27,7 @@ New Features:
 (a) version 2.0.6
 
 Bugfixes:
+(f) isVirtual was printed double in the part command
 (d) wrong code_info for dpd_mass
 (d) mass was missing in anaylze energy_kinetic
 (b) ONEPART_DEBUG would not compile with LJ_ANGLE because of an undefined variable.
