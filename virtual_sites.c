@@ -25,9 +25,9 @@
  */
 
 /** \name Private Functions */
-void calc_mol_vel_pos(int mol_id,double r_com[3],double v_com[3]);
 void calc_mol_vel(int mol_id,double v_com[3]);
-void calc_mol_pos(int mol_id,double r_com[3]);
+void calc_mol_pos(int mol_id,double r_com[3],int box_i[3]);
+void calc_mol_pos_cfg(int mol_id,double r_com[3]);
 void put_mol_force_on_parts(Particle *p_com);
 
 Particle *get_mol_com_particle(Particle *calling_p);
@@ -37,27 +37,8 @@ int get_mol_com_id(Particle *calling_p);
 #ifdef VIRTUAL_SITES
 void update_mol_vel_pos()
 {
-  Particle *p;
-  int i, np, c, mol_id;
-  Cell *cell;
-  int j;
-  double r_com[3],v_com[3];
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for(i = 0; i < np; i++) {
-      if (ifParticleIsVirtual(&p[i])) {
-         mol_id = p[i].p.mol_id;
-         calc_mol_vel_pos(mol_id,r_com,v_com);
-         for (j=0;j<3;j++){
-            p[i].r.p[j] = r_com[j];
-            p[i].m.v[j] = v_com[j];
-         }
-      }
-    }
-  }
+   update_mol_vel();
+   update_mol_pos();
 }
 
 void update_mol_vel()
@@ -91,7 +72,7 @@ void update_mol_pos()
   Cell *cell;
   int j;
   double r_com[3];
-
+  int box_i[3];
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
@@ -99,12 +80,29 @@ void update_mol_pos()
     for(i = 0; i < np; i++) {
       if (ifParticleIsVirtual(&p[i])) {
          mol_id = p[i].p.mol_id;
-         calc_mol_pos(mol_id,r_com);
+         calc_mol_pos(mol_id,r_com,box_i);
          for (j=0;j<3;j++){
             p[i].r.p[j] = r_com[j];
+            p[i].l.i[j] = box_i[j];
          }
       }
     }
+  }
+}
+
+void update_mol_pos_cfg(){
+  Particle *p;
+  int i,j,mol_id;
+  double r_com[3];
+  for(i=0; i<n_total_particles; i++) {
+     p=&partCfg[i];
+     if (ifParticleIsVirtual(p)){
+         mol_id = p->p.mol_id;
+         calc_mol_pos_cfg(mol_id,r_com);
+         for (j=0;j<3;j++){
+            p->r.p[j] = r_com[j];
+         }
+     }
   }
 }
 
@@ -125,44 +123,6 @@ void distribute_mol_force()
       }
     }
   }
-}
-
-void calc_mol_vel_pos(int mol_id,double r_com[3],double v_com[3]){
-   int i,j;
-   double M=0;
-   Particle *p;
-#ifdef VIRTUAL_SITES_DEBUG
-   int count=0;
-#endif
-   for (i=0;i<3;i++){
-      r_com[i]=0.0;
-      v_com[i]=0.0;
-   }
-   for (i=0;i<topology[mol_id].part.n;i++){
-       p=local_particles[topology[mol_id].part.e[i]];
-       if (!ifParticleIsVirtual(p)) {
-          for (j=0;j<3;j++){
-              unfold_position(p->r.p,p->l.i);
-              r_com[j] += PMASS(*p)*p->r.p[j];
-              fold_position(p->r.p,p->l.i);
-              v_com[j] += PMASS(*p)*p->m.v[j];
-          }
-          M+=PMASS(*p);
-#ifdef VIRTUAL_SITES_DEBUG
-          count++;
-#endif
-       }
-   }
-   for (j=0;j<3;j++){
-      r_com[j] /= M;
-      v_com[j] /= M;
-   }
-#ifdef VIRTUAL_SITES_DEBUG
-   if (count!=topology[mol_id].part.n-1){
-      fprintf(stderr,"There is more than one COM in calc_mol_vel_pos! mol_id=%i\n",mol_id);
-      exit(182);
-   }
-#endif
 }
 
 void calc_mol_vel(int mol_id,double v_com[3]){
@@ -198,7 +158,50 @@ void calc_mol_vel(int mol_id,double v_com[3]){
 #endif
 }
 
-void calc_mol_pos(int mol_id,double r_com[3]){
+/* this is a local version of center of mass, because ghosts don't have image boxes*/
+void calc_mol_pos(int mol_id,double r_com[3],int box_i[3]){
+   int i,j;
+   double M=0;
+   double vec12[3];
+   Particle *p,*p_first=NULL;
+#ifdef VIRTUAL_SITES_DEBUG
+   int count=0;
+#endif
+   for (i=0;i<3;i++){
+      r_com[i]=0.0;
+   }
+   for (i=0;i<topology[mol_id].part.n;i++){
+      p=local_particles[topology[mol_id].part.e[i]];
+      if (ifParticleIsVirtual(p)) continue;
+      if (p_first==NULL){
+         p_first=p;
+      }
+      else
+      {
+         get_mi_vector(vec12,p->r.p, p_first->r.p);
+         for (j=0;j<3;j++){
+            r_com[j] += PMASS(*p)*vec12[j];
+         }
+      }
+      M+=PMASS(*p);
+#ifdef VIRTUAL_SITES_DEBUG
+      count++;
+#endif
+   }
+   for (j=0;j<3;j++){
+      r_com[j] /= M;
+      r_com[j] += p_first->r.p[j];
+      box_i[j] = p_first->l.i[j];
+   }
+#ifdef VIRTUAL_SITES_DEBUG
+   if (count!=topology[mol_id].part.n-1){
+      fprintf(stderr,"There is more than one COM in calc_mol_pos! mol_id=%i\n",mol_id);
+      exit(182);
+   }
+#endif
+}
+
+void calc_mol_pos_cfg(int mol_id,double r_com[3]){
    int i,j;
    double M=0;
    Particle *p;
@@ -209,25 +212,22 @@ void calc_mol_pos(int mol_id,double r_com[3]){
       r_com[i]=0.0;
    }
    for (i=0;i<topology[mol_id].part.n;i++){
-       p=local_particles[topology[mol_id].part.e[i]];
-       if (!ifParticleIsVirtual(p)) {
-          for (j=0;j<3;j++){
-              unfold_position(p->r.p,p->l.i);
-              r_com[j] += PMASS(*p)*p->r.p[j];
-              fold_position(p->r.p,p->l.i);
-          }
-          M+=PMASS(*p);
+      p=&partCfg[topology[mol_id].part.e[i]];
+      if (ifParticleIsVirtual(p)) continue;
+      for (j=0;j<3;j++){
+            r_com[j] += PMASS(*p)*p->r.p[j];
+      }
+      M+=PMASS(*p);
 #ifdef VIRTUAL_SITES_DEBUG
-          count++;
+      count++;
 #endif
-       }
    }
    for (j=0;j<3;j++){
       r_com[j] /= M;
    }
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
-      fprintf(stderr,"There is more than one COM in calc_mol_pos! mol_id=%i\n",mol_id);
+      fprintf(stderr,"There is more than one COM in calc_mol_pos_cfg! mol_id=%i\n",mol_id);
       exit(182);
    }
 #endif
@@ -531,9 +531,48 @@ void get_mol_dist_vector_cfg(Particle *p1,Particle *p2,double dist[3]){
 
 double get_mol_dist_cfg(Particle *p1,Particle *p2){
    double dist[3],dist2;
-   get_mol_dist_vector(p1,p2,dist);
+   get_mol_dist_vector_cfg(p1,p2,dist);
    dist2=SQR(dist[0])+SQR(dist[1])+SQR(dist[2]);
    return sqrt(dist2);
+}
+
+int parse_and_check_mol_pos(Tcl_Interp *interp,int argc, char **argv){
+   int j,count=0;
+   double dist2,dist[3];
+   char buffer[TCL_DOUBLE_SPACE];
+   Particle p;
+   updatePartCfg(WITHOUT_BONDS);
+   for(j=0; j<n_total_particles; j++){
+      if (!ifParticleIsVirtual(&partCfg[j])) continue;
+      get_particle_data(j,&p);
+      get_mi_vector(dist,partCfg[j].r.p,p.r.p);
+      dist2=SQR(dist[0])+SQR(dist[1])+SQR(dist[2]);
+      if (dist2 > 0.01){
+         if (count==0) Tcl_AppendResult(interp,"BEGIN Particle Missmatch: \n", (char *)NULL);
+         sprintf(buffer,"%i",j);
+         Tcl_AppendResult(interp,"Particle ",buffer, (char *)NULL);
+         Tcl_PrintDouble(interp,partCfg[j].r.p[0] , buffer);
+         Tcl_AppendResult(interp," partCfg x ",buffer, (char *)NULL);
+         Tcl_PrintDouble(interp,partCfg[j].r.p[1] , buffer);
+         Tcl_AppendResult(interp," y ",buffer, (char *)NULL);
+         Tcl_PrintDouble(interp,partCfg[j].r.p[2] , buffer);
+         Tcl_AppendResult(interp," z ",buffer, (char *)NULL);
+         Tcl_PrintDouble(interp,p.r.p[0] , buffer);
+         Tcl_AppendResult(interp," my_partCfg x ",buffer, (char *)NULL);
+         Tcl_PrintDouble(interp,p.r.p[1] , buffer);
+         Tcl_AppendResult(interp," y ",buffer, (char *)NULL);
+         Tcl_PrintDouble(interp,p.r.p[2] , buffer);
+         Tcl_AppendResult(interp," z ",buffer, (char *)NULL);
+         Tcl_PrintDouble(interp, sqrt(dist2), buffer);
+         Tcl_AppendResult(interp," dist ",buffer,"\n", (char *)NULL);
+         count++;
+      }
+   }
+   if (count!=0){
+      Tcl_AppendResult(interp,"END Particle Missmatch\n", (char *)NULL);
+      return(TCL_ERROR);
+   }
+   return(TCL_OK);
 }
 
 #endif

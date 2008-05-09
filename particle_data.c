@@ -30,7 +30,7 @@
 #include "cells.h"
 #include "parser.h"
 #include "rotation.h"
-
+#include "virtual_sites.h"
 
 /************************************************
  * defines
@@ -194,8 +194,11 @@ void updatePartCfg(int bonds_flag)
  
   for(j=0; j<n_total_particles; j++)
     unfold_position(partCfg[j].r.p,partCfg[j].l.i);
-
   partCfgSorted = 0;
+#ifdef VIRTUAL_SITES
+  sortPartCfg();
+  update_mol_pos_cfg();
+#endif
 }
 
 int sortPartCfg()

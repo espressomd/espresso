@@ -3273,6 +3273,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 #ifdef VIRTUAL_SITES
   REGISTER_ANALYSIS("energy_kinetic_mol",parse_and_print_energy_kinetic_mol);
   REGISTER_ANALYSIS("pressure_mol",  parse_and_print_pressure_mol);
+  REGISTER_ANALYSIS("check_mol",  parse_and_check_mol_pos);
 #endif
   REGISTER_ANALYSIS_W_ARG("stress_tensor", parse_and_print_stress_tensor, 0);
   REGISTER_ANALYSIS("local_stress_tensor", parse_local_stress_tensor);

@@ -90,6 +90,7 @@
 
 #ifdef RF_WITH_MOL_CUT
 #define MOL_CUT
+#define VIRTUAL_SITES
 #endif
 
 #if defined(DPD_MASS_RED) || defined(DPD_MASS_LIN)
