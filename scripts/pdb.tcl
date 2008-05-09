@@ -110,6 +110,8 @@ proc writepdb {args} {
     set de "pos"
     set mode "w"
     set tag ""
+    set lscale 1.0
+    set namelist ""
 
     set args [lrange $args 1 end]
     while {$args != ""} {
@@ -122,6 +124,12 @@ proc writepdb {args} {
 	    set args [lrange $args 1 end]
 	} elseif {$arg == "-tag"} {
 	    set tag [lindex $args 1]
+	    set args [lrange $args 2 end]
+	} elseif {$arg == "-lscale"} {
+	    set lscale [lindex $args 1]
+	    set args [lrange $args 2 end]
+	} elseif {$arg == "-names"} {
+	    set namelist "[lindex $args 1]"
 	    set args [lrange $args 2 end]
 	} else {
 	    error "unknown flag \"$arg\""
@@ -139,8 +147,20 @@ proc writepdb {args} {
 	set tp [part $p p t]
 	if { $tp != "na" } {
 	    set pos [part $p p $de]
-	    puts $f [format "ATOM %6d  FE  UNX F%4d    %8.3f%8.3f%8.3f  0.00  0.00      T%03d" \
-			 $cnt [expr $p % 10000] [lindex $pos 0] [lindex $pos 1] [lindex $pos 2] $tp]
+	    if { $lscale != 1.0 } {
+	       for {set i 0} {$i<3} {incr i} {
+	          lset pos $i [expr $lscale*[lindex $pos $i]]
+	       }
+	    }
+	    if { "$namelist" == "" } {
+	       set name "FE"
+	    } else {
+	       set name [lindex $namelist $tp]
+	       #names longer than 4 chars will destroy pdb
+	       set name [string range $name 0 3]
+	    }
+	    puts $f [format "ATOM %6d%4s  UNX F%4d    %8.3f%8.3f%8.3f  0.00  0.00      T%03d" \
+			 $cnt $name [expr $p % 10000] [lindex $pos 0] [lindex $pos 1] [lindex $pos 2] $tp]
 	    incr cnt
 	}
     }
