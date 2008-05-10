@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6f (Ydalir)                                                                     *
+* v2.0.6g (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6f -
+- v2.0.6g -
 -----------
 
+(g) May    9th, 2008.
 (f) May    7th, 2008.
 (e) May    6th, 2008.
 (d) May    5th, 2008.
@@ -19,6 +20,7 @@ Current working revision.
 (a) April 30th, 2008.
 
 New Features:
+(g) allows writepdb with atom names and length scale
 (f) added anaylze dipmon
 (e) virtual sites are now possible
 (e) allow reaction field with molecular cutoff to avoid dipoles
@@ -27,6 +29,7 @@ New Features:
 (a) version 2.0.6
 
 Bugfixes:
+(g) make virtual sites work with mpi
 (f) isVirtual was printed double in the part command
 (d) wrong code_info for dpd_mass
 (d) mass was missing in anaylze energy_kinetic
