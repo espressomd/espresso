@@ -526,7 +526,7 @@ MDINLINE int get_com_h2o(Particle *p,double p_com[3])
 }
 
 #ifdef WATER
-MDINLINE double get_mol_dist(Particle *p1, Particle *p2) {
+MDINLINE double get_mol_dist_h2o(Particle *p1, Particle *p2) {
    double p1_com[3],p2_com[3],com_dist;
 
    if (get_com_h2o(p1,p1_com) == -1 ) {
@@ -541,7 +541,7 @@ MDINLINE double get_mol_dist(Particle *p1, Particle *p2) {
    return com_dist;
 }
 
-MDINLINE int get_comvel_h2o(Particle *p,double v_com[3])
+/*MDINLINE int get_comvel_h2o(Particle *p,double v_com[3])
 {
 	int i,p_nr,count=0;
 	Particle* bonded_p,*calling_p;
@@ -564,7 +564,7 @@ MDINLINE int get_comvel_h2o(Particle *p,double v_com[3])
 			v_com[i]=calling_p->p.mass*calling_p->m.v[i];
 		}
 		M=calling_p->p.mass;
-		for (p_nr=0;p_nr<calling_p->bl.n;p_nr++)/*bl list has entrie bond type, particle id, bond type, particle id*/
+		for (p_nr=0;p_nr<calling_p->bl.n;p_nr++)//bl list has entrie bond type, particle id, bond type, particle id
 		{
 			if ( (calling_p->bl.e[p_nr]==0) || (calling_p->bl.e[p_nr]==3) || (calling_p->bl.e[p_nr]==1) || (calling_p->bl.e[p_nr]==9))
 			{
@@ -628,7 +628,7 @@ MDINLINE int get_comvel_h2o(Particle *p,double v_com[3])
 		exit(182);
 		return (-1);
 	}
-}
+}*/
 #endif
 
 /*@}*/
