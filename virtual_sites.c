@@ -311,6 +311,7 @@ double get_mol_dist(Particle *p1,Particle *p2){
 double calc_pressure_mol(int type1,int type2);
 double calc_energy_kinetic_mol(int type);
 void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]);
+void calc_dipole_mol(int type,double dipole[4]);
 
 Particle *get_mol_com_particle_from_molid_cfg(int mol_id);
 Particle *get_mol_com_particle_cfg(Particle *calling_p);
@@ -426,6 +427,47 @@ double calc_pressure_mol(int type1,int type2){
    return psum;
 }
 
+int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
+{
+   int k,type;
+   char buffer[TCL_DOUBLE_SPACE];
+   double dipole[4];
+   updatePartCfg(WITHOUT_BONDS);
+   if (!sortPartCfg()) {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{059 parse_and_print_dipole: could not sort particle config, particle ids not consecutive?} ");
+      return TCL_ERROR;
+   }
+   if (argc < 1) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "usage: analyze energy_kinetic <type>", (char *)NULL);
+      return (TCL_ERROR);
+   }
+
+   if (!ARG0_IS_I(type)) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "usage: analyze energy_kinetic <type>", (char *)NULL);
+      return (TCL_ERROR);
+   }
+   argc-=1; argv+=1;
+
+   if (n_molecules==0) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "No molecules defined !", (char *)NULL);
+      return (TCL_ERROR);
+   }
+   calc_dipole_mol(type,dipole);
+   Tcl_AppendResult(interp,"{ dipolemoment_mol ",(char *)NULL);
+   for (k=0;k<3;k++)
+   {
+       sprintf(buffer,"%e ",dipole[k]);
+       Tcl_AppendResult(interp, buffer,(char *)NULL);
+   }
+   sprintf(buffer,"%e",dipole[3]);
+   Tcl_AppendResult(interp,buffer,"}",(char *)NULL);
+   return TCL_OK;
+}
+
 void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]){
    int i,j;
    Particle *p1,*p2;
@@ -468,6 +510,40 @@ double calc_energy_kinetic_mol(int type){
    }
    E_kin*=0.5/time_step/time_step;
    return E_kin;
+}
+
+void calc_dipole_mol(int type,double dipole[4]){
+   int i,j,k;
+   Particle *p,*p_first;
+   double vec12[3];
+   dipole[0]=dipole[1]=dipole[2]=dipole[3]=0;
+   for (i=0;i<n_molecules;i++){
+      if (topology[i].type == type){
+         p_first=NULL;
+         for (j=0;j<topology[i].part.n;j++){
+             p=&partCfg[topology[i].part.e[j]];
+             if (ifParticleIsVirtual(p)) continue;
+             if (p_first==NULL){
+                p_first=p;
+             }
+             else
+             {
+                get_mi_vector(vec12,p->r.p, p_first->r.p);
+                for (k=0;k<3;k++){
+#ifdef ELECTROSTATICS
+                    dipole[k] += p->p.q*vec12[k];
+#else
+                   fprintf(stderr,"calc_dipole_mol is not possible without ELECTROSTATICS ");
+                   exit(182);
+#endif
+                }
+             }
+#ifdef ELECTROSTATICS
+             dipole[3]+=p->p.q;
+#endif
+         }
+      }
+   }
 }
 
 Particle *get_mol_com_particle_from_molid_cfg(int mol_id){
@@ -538,16 +614,16 @@ double get_mol_dist_cfg(Particle *p1,Particle *p2){
 
 int parse_and_check_mol_pos(Tcl_Interp *interp,int argc, char **argv){
    int j,count=0;
-   double dist2,dist[3];
+   double dist;
    char buffer[TCL_DOUBLE_SPACE];
    Particle p;
    updatePartCfg(WITHOUT_BONDS);
    for(j=0; j<n_total_particles; j++){
       if (!ifParticleIsVirtual(&partCfg[j])) continue;
       get_particle_data(j,&p);
-      get_mi_vector(dist,partCfg[j].r.p,p.r.p);
-      dist2=SQR(dist[0])+SQR(dist[1])+SQR(dist[2]);
-      if (dist2 > 0.01){
+      dist=min_distance(partCfg[j].r.p,p.r.p);
+      //dist=distance(partCfg[j].r.p,p.r.p);
+      if (dist > 0.01){
          if (count==0) Tcl_AppendResult(interp,"BEGIN Particle Missmatch: \n", (char *)NULL);
          sprintf(buffer,"%i",j);
          Tcl_AppendResult(interp,"Particle ",buffer, (char *)NULL);
@@ -563,7 +639,7 @@ int parse_and_check_mol_pos(Tcl_Interp *interp,int argc, char **argv){
          Tcl_AppendResult(interp," y ",buffer, (char *)NULL);
          Tcl_PrintDouble(interp,p.r.p[2] , buffer);
          Tcl_AppendResult(interp," z ",buffer, (char *)NULL);
-         Tcl_PrintDouble(interp, sqrt(dist2), buffer);
+         Tcl_PrintDouble(interp, dist, buffer);
          Tcl_AppendResult(interp," dist ",buffer,"\n", (char *)NULL);
          count++;
       }
