@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6g (Ydalir)                                                                     *
+* v2.0.6h (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6g -
+- v2.0.6h -
 -----------
 
+(h) May   12th, 2008.
 (g) May    9th, 2008.
 (f) May    7th, 2008.
 (e) May    6th, 2008.
@@ -20,6 +21,7 @@ Current working revision.
 (a) April 30th, 2008.
 
 New Features:
+(h) added analyze dipmom_mol
 (g) allows writepdb with atom names and length scale
 (f) added anaylze dipmon
 (e) virtual sites are now possible
