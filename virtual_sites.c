@@ -25,6 +25,9 @@
  */
 
 /** \name Private Functions */
+void update_mol_vel_particle(Particle *p);
+void update_mol_pos_particle(Particle *p);
+
 void calc_mol_vel(int mol_id,double v_com[3]);
 void calc_mol_pos(int mol_id,double r_com[3],int box_i[3]);
 void calc_mol_pos_cfg(int mol_id,double r_com[3]);
@@ -44,50 +47,72 @@ void update_mol_vel_pos()
 void update_mol_vel()
 {
   Particle *p;
-  int i, np, c, mol_id;
+  int i, np, c;
   Cell *cell;
-  int j;
-  double v_com[3];
-
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-      if (ifParticleIsVirtual(&p[i])) {
-         mol_id = p[i].p.mol_id;
-         calc_mol_vel(mol_id,v_com);
-         for (j=0;j<3;j++){
-            p[i].m.v[j] = v_com[j];
-         }
-      }
+       update_mol_vel_particle(&p[i]);
     }
   }
+  for (c = 0; c < ghost_cells.n; c++) {
+    cell = ghost_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for (i = 0; i < np; i++) {
+        update_mol_vel_particle(&p[i]);
+    }
+  }
+}
+
+void update_mol_vel_particle(Particle *p){
+   int j;
+   double v_com[3],mol_id;
+   if (ifParticleIsVirtual(p)) {
+      mol_id = p->p.mol_id;
+      calc_mol_vel(mol_id,v_com);
+      for (j=0;j<3;j++){
+         p->m.v[j] = v_com[j];
+      }
+   }
 }
 
 void update_mol_pos()
 {
   Particle *p;
-  int i, np, c, mol_id;
+  int i, np, c;
   Cell *cell;
-  int j;
-  double r_com[3];
-  int box_i[3];
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-      if (ifParticleIsVirtual(&p[i])) {
-         mol_id = p[i].p.mol_id;
-         calc_mol_pos(mol_id,r_com,box_i);
-         for (j=0;j<3;j++){
-            p[i].r.p[j] = r_com[j];
-            p[i].l.i[j] = box_i[j];
-         }
-      }
+       update_mol_pos_particle(&p[i]);
     }
   }
+  for (c = 0; c < ghost_cells.n; c++) {
+    cell = ghost_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for (i = 0; i < np; i++)
+      update_mol_pos_particle(&p[i]);
+  }
+}
+
+void update_mol_pos_particle(Particle *p){
+   int j,mol_id;
+   double r_com[3];
+   int box_i[3];
+   if (ifParticleIsVirtual(p)) {
+      mol_id = p->p.mol_id;
+      calc_mol_pos(mol_id,r_com,box_i);
+      for (j=0;j<3;j++){
+         p->r.p[j] = r_com[j];
+         p->l.i[j] = box_i[j];
+      }
+   }
 }
 
 void update_mol_pos_cfg(){
@@ -113,6 +138,18 @@ void distribute_mol_force()
   Cell *cell;
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i = 0; i < np; i++) {
+      if (ifParticleIsVirtual(&p[i])) {
+         if (sqrlen(p[i].f.f)!=0){
+            put_mol_force_on_parts(&p[i]);
+         }
+      }
+    }
+  }
+  for (c = 0; c < local_cells.n; c++) {
+    cell = ghost_cells.cell[c];
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
@@ -621,8 +658,9 @@ int parse_and_check_mol_pos(Tcl_Interp *interp,int argc, char **argv){
    for(j=0; j<n_total_particles; j++){
       if (!ifParticleIsVirtual(&partCfg[j])) continue;
       get_particle_data(j,&p);
-      dist=min_distance(partCfg[j].r.p,p.r.p);
-      //dist=distance(partCfg[j].r.p,p.r.p);
+      //dist=min_distance(partCfg[j].r.p,p.r.p);
+      unfold_position(p.r.p,p.l.i);
+      dist=distance(partCfg[j].r.p,p.r.p);
       if (dist > 0.01){
          if (count==0) Tcl_AppendResult(interp,"BEGIN Particle Missmatch: \n", (char *)NULL);
          sprintf(buffer,"%i",j);
