@@ -3113,10 +3113,12 @@ static int parse_and_print_dipole(Tcl_Interp *interp,int argc, char **argv)
    }
    for (i=0;i<n_total_particles;i++)
    {
+#ifdef ELECTROSTATICS
        total_q+=partCfg[i].p.q;
        for (k=0;k<3;k++){
             dipole[k]+=partCfg[i].r.p[k]*partCfg[i].p.q;
        }
+#endif       
    }
    Tcl_AppendResult(interp,"{ dipolemoment_normal ",(char *)NULL);
    for (k=0;k<3;k++)
