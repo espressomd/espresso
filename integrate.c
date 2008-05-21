@@ -382,6 +382,7 @@ void integrate_vv(int n_steps)
 //VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+   init_forces_ghosts();
    distribute_mol_force();
 #endif
 
@@ -471,6 +472,7 @@ void integrate_vv(int n_steps)
 //VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+   init_forces_ghosts();
    distribute_mol_force();
 #endif
 

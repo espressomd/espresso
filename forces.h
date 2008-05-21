@@ -87,6 +87,10 @@
  */
 void force_calc();
 
+/** Set forces of all ghosts to zero
+*/
+void init_forces_ghosts();
+
 /** Calculate non bonded forces between a pair of particles.
     @param p1        pointer to particle 1.
     @param p2        pointer to particle 2.

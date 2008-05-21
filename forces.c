@@ -255,5 +255,19 @@ void init_forces()
 #endif
 }
 
+void init_forces_ghosts()
+{
+  Cell *cell;
+  Particle *p;
+  int np, c, i;
+
+  for (c = 0; c < ghost_cells.n; c++) {
+    cell = ghost_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for (i = 0; i < np; i++)
+      init_ghost_force(&p[i]);
+  }
+}
 
 

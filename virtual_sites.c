@@ -276,7 +276,7 @@ void put_mol_force_on_parts(Particle *p_com){
   mol_id=p_com->p.mol_id;
    fac=topology[mol_id].part.n-1;
    for (i=0;i<3;i++){
-      force[i]=fac*p_com->f.f[i];
+      force[i]=p_com->f.f[i]/fac;
       p_com->f.f[i]=0.0;
    }
    for (i=0;i<topology[mol_id].part.n;i++){
