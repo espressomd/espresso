@@ -75,7 +75,9 @@ typedef struct {
 #endif
 
 #ifdef VIRTUAL_SITES
-  /** dipole moment (absolute value)*/
+  /** is particle virual
+      0 = real particle
+      else = virual particle */
   int isVirtual;
 #endif
 } ParticleProperties;
@@ -150,6 +152,10 @@ typedef struct {
   double ext_force[3];
 #endif
 
+#ifdef VIRTUAL_SITES
+  /** check whether a particle is a ghost or not */
+  int ghost;
+#endif
 } ParticleLocal;
 
 #ifdef LB

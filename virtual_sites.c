@@ -57,14 +57,6 @@ void update_mol_vel()
        update_mol_vel_particle(&p[i]);
     }
   }
-  for (c = 0; c < ghost_cells.n; c++) {
-    cell = ghost_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-        update_mol_vel_particle(&p[i]);
-    }
-  }
 }
 
 void update_mol_vel_particle(Particle *p){
@@ -91,13 +83,7 @@ void update_mol_pos()
     for(i = 0; i < np; i++) {
        update_mol_pos_particle(&p[i]);
     }
-  }
-  for (c = 0; c < ghost_cells.n; c++) {
-    cell = ghost_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++)
-      update_mol_pos_particle(&p[i]);
+    //only for real particles
   }
 }
 
@@ -148,7 +134,8 @@ void distribute_mol_force()
       }
     }
   }
-  for (c = 0; c < local_cells.n; c++) {
+  //this has to be done also for the ghosts
+/*  for (c = 0; c < local_cells.n; c++) {
     cell = ghost_cells.cell[c];
     p  = cell->part;
     np = cell->n;
@@ -159,7 +146,7 @@ void distribute_mol_force()
          }
       }
     }
-  }
+  }*/
 }
 
 void calc_mol_vel(int mol_id,double v_com[3]){
@@ -210,15 +197,24 @@ void calc_mol_pos(int mol_id,double r_com[3],int box_i[3]){
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
       if (ifParticleIsVirtual(p)) continue;
-      if (p_first==NULL){
+      if (! ifParticleIsGhost(p)){
          p_first=p;
+         break;
       }
-      else
-      {
-         get_mi_vector(vec12,p->r.p, p_first->r.p);
-         for (j=0;j<3;j++){
-            r_com[j] += PMASS(*p)*vec12[j];
-         }
+   }
+#ifdef VIRTUAL_SITES_DEBUG
+   if (p_first==NULL){
+      fprintf(stderr,"NO real particle found calc_mol_pos! mol_id=%i\n",mol_id);
+      exit(182);
+   }
+#endif
+   for (i=0;i<topology[mol_id].part.n;i++){
+      p=local_particles[topology[mol_id].part.e[i]];
+      if (ifParticleIsVirtual(p)) continue;
+      get_mi_vector(vec12,p->r.p, p_first->r.p);
+      //p_first is counted twice, but vec12 is zero anyway
+      for (j=0;j<3;j++){
+          r_com[j] += PMASS(*p)*vec12[j];
       }
       M+=PMASS(*p);
 #ifdef VIRTUAL_SITES_DEBUG

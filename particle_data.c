@@ -164,6 +164,7 @@ void init_particle(Particle *part)
 
 #ifdef VIRTUAL_SITES
   part->p.isVirtual      = 0;
+  part->l.ghost        = 0;
 #endif
 }
 

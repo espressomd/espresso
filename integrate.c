@@ -374,12 +374,14 @@ void integrate_vv(int n_steps)
 //VIRTUAL_SITES pos (annd vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
     update_mol_vel_pos();
+    cells_update_ghosts();
 #endif
 
     force_calc();
 
 //VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
+   ghost_communicator(&cell_structure.collect_ghost_force_comm);
    distribute_mol_force();
 #endif
 
@@ -455,6 +457,7 @@ void integrate_vv(int n_steps)
 //VIRTUAL_SITES update pos and vel (for DPD)
 #ifdef VIRTUAL_SITES
    update_mol_vel_pos();
+   cells_update_ghosts();
 #endif
 
     /* Integration Step: Step 3 of Velocity Verlet scheme:
@@ -467,6 +470,7 @@ void integrate_vv(int n_steps)
 
 //VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
+   ghost_communicator(&cell_structure.collect_ghost_force_comm);
    distribute_mol_force();
 #endif
 
@@ -487,6 +491,7 @@ void integrate_vv(int n_steps)
 
 //VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
+   cells_update_ghosts();
    update_mol_vel();
 #endif
 
