@@ -88,7 +88,7 @@
 //#define ALTERNATIVE_INTEGRATOR
 #endif
 
-#ifdef RF_WITH_MOL_CUT
+#if defined(RF_WITH_MOL_CUT) || defined(LJ_WITH_MOL_CUT)
 #define MOL_CUT
 #define VIRTUAL_SITES
 #endif

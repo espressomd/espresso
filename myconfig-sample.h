@@ -77,6 +77,7 @@
 
 /* #define NO_INTRA_NB */
 /* #define RF_WITH_MOL_CUT */
+/* #define LJ_WITH_MOL_CUT */
 
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */
 /* #define BOND_ANGLE_HARMONIC */
