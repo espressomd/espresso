@@ -148,13 +148,13 @@ void calc_mol_vel(int mol_id,double v_com[3]){
    }
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
-/*      #ifdef VIRTUAL_SITES_DEBUG
+      #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
          char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
          ERROR_SPRINTF(errtxt,"Particle does not exist in calc_mol_vel! id=%i\n",topology[mol_id].part.e[i]);
          return;
       }
-      #endif*/
+      #endif
       if (!ifParticleIsVirtual(p)) {
           for (j=0;j<3;j++){
               v_com[j] += PMASS(*p)*p->m.v[j];
@@ -170,9 +170,9 @@ void calc_mol_vel(int mol_id,double v_com[3]){
    }
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
-      //char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      //ERROR_SPRINTF(errtxt,"There is more than one COM in calc_mol_vel! mol_id=%i\n",mol_id);
-      //return;
+      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt,"There is more than one COM in calc_mol_vel! mol_id=%i\n",mol_id);
+      return;
    }
 #endif
 }
@@ -192,13 +192,13 @@ void calc_mol_pos(int mol_id,double r_com[3],int box_i[3]){
    }
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
-/*      #ifdef VIRTUAL_SITES_DEBUG
+      #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
          char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
          ERROR_SPRINTF(errtxt,"Particle does not exist in calc_mol_pos! id=%i\n",topology[mol_id].part.e[i]);
          return;
       }
-      #endif*/
+      #endif
       if (ifParticleIsVirtual(p)) continue;
       if (! ifParticleIsGhost(p)){
          p_first=p;
@@ -207,20 +207,20 @@ void calc_mol_pos(int mol_id,double r_com[3],int box_i[3]){
    }
 #ifdef VIRTUAL_SITES_DEBUG
    if (p_first==NULL){
-      //char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      //ERROR_SPRINTF(errtxt,"NO real particle found calc_mol_pos! mol_id=%i\n",mol_id);
-      //return;
+      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt,"NO real particle found calc_mol_pos! mol_id=%i\n",mol_id);
+      return;
    }
 #endif
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
-/*      #ifdef VIRTUAL_SITES_DEBUG
+      #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
          char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
          ERROR_SPRINTF(errtxt,"Particle does not exist in calc_mol_pos! id=%i\n",topology[mol_id].part.e[i]);
          return;
       }
-      #endif*/
+      #endif
       if (ifParticleIsVirtual(p)) continue;
       get_mi_vector(vec12,p->r.p, p_first->r.p);
       //p_first is counted twice, but vec12 is zero anyway
@@ -239,9 +239,9 @@ void calc_mol_pos(int mol_id,double r_com[3],int box_i[3]){
    }
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
-     //char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      //ERROR_SPRINTF(errtxt,"There is more than one COM in calc_mol_pos! mol_id=%i\n",mol_id);
-      //return;
+      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt,"There is more than one COM in calc_mol_pos! mol_id=%i\n",mol_id);
+      return;
    }
 #endif
 }
@@ -294,39 +294,28 @@ void put_mol_force_on_parts(Particle *p_com){
    M=0;
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
-/*      #ifdef VIRTUAL_SITES_DEBUG
+      #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
          char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
          ERROR_SPRINTF(errtxt,"Particle does not exist in put_mol_force_on_parts! id=%i\n",topology[mol_id].part.e[i]);
          return;
       }
-      #endif*/
-       if (ifParticleIsVirtual(p)) continue;
-      #ifdef VIRTUAL_SITES_DEBUG
-      count++;
       #endif
+       if (ifParticleIsVirtual(p)) continue;
       M+=PMASS(*p);
    }
-   #ifdef VIRTUAL_SITES_DEBUG
-/*   if (count!=topology[mol_id].part.n-1){
-      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"There is more than one COM input_mol_force_on_parts! mol_id=%i\n",mol_id);
-      return;
-   }*/
-   count=0;
-   #endif
 #else
    M=topology[mol_id].part.n-1;
 #endif
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
-      /*#ifdef VIRTUAL_SITES_DEBUG
+      #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
          char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
          ERROR_SPRINTF(errtxt,"Particle does not exist in put_mol_force_on_parts! id=%i\n",topology[mol_id].part.e[i]);
          return;
       }
-      #endif*/
+      #endif
       if (!ifParticleIsVirtual(p)) {
          for (j=0;j<3;j++){
             p->f.f[j]+=PMASS(*p)*force[j]/M;
@@ -338,8 +327,9 @@ void put_mol_force_on_parts(Particle *p_com){
    }
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
-      fprintf(stderr,"There is more than one COM input_mol_force_on_parts! mol_id=%i\n",mol_id);
-      exit(182);
+      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt,"There is more than one COM input_mol_force_on_parts! mol_id=%i\n",mol_id);
+      return;
    }
 #endif
 }
@@ -351,20 +341,21 @@ Particle *get_mol_com_particle(Particle *calling_p){
    mol_id=calling_p->p.mol_id;
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
-/*      #ifdef VIRTUAL_SITES_DEBUG
+      #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
          char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
          ERROR_SPRINTF(errtxt,"Particle does not exist in put_mol_force_on_parts! id=%i\n",topology[mol_id].part.e[i]);
-         return;
+         return NULL;
       }
-      #endif*/
+      #endif
       if (ifParticleIsVirtual(p)) {
           return p;
        }
    }
 #ifdef VIRTUAL_SITES_DEBUG
-   fprintf(stderr,"No com found in get_mol_com ! pnr=%i\n",calling_p->p.identity);
-   exit(182);
+   char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+   ERROR_SPRINTF(errtxt,"No com found in get_mol_com_particleParticle does not exist in put_mol_force_on_parts! pnr=%i\n",calling_p->p.identity);
+   return NULL;
 #endif
    return calling_p;
 }
@@ -373,20 +364,20 @@ void get_mol_dist_vector(Particle *p1,Particle *p2,double dist[3]){
    Particle *p1_com,*p2_com;
    p1_com=get_mol_com_particle(p1);
    p2_com=get_mol_com_particle(p2);
-   /*#ifdef VIRTUAL_SITES_DEBUG
+   #ifdef VIRTUAL_SITES_DEBUG
    if (p1_com==NULL){
-      //char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      //ERROR_SPRINTF(errtxt,"COM Particle not found for particle in get_mol_dist_vector id=%i\n",p1->p.identity);
-      //dist[0]=dist[1]=dist[2]=0.0;
-      //return;
+      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt,"COM Particle not found for particle in get_mol_dist_vector id=%i\n",p1->p.identity);
+      dist[0]=dist[1]=dist[2]=0.0;
+      return;
    }
    if (p2_com==NULL){
-      //char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      //ERROR_SPRINTF(errtxt,"COM Particle not found for particle in get_mol_dist_vector id=%i\n",p2->p.identity);
-      //dist[0]=dist[1]=dist[2]=0.0;
-      //return;
+      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt,"COM Particle not found for particle in get_mol_dist_vector id=%i\n",p2->p.identity);
+      dist[0]=dist[1]=dist[2]=0.0;
+      return;
    }
-   #endif*/
+   #endif
    get_mi_vector(dist,p1_com->r.p, p2_com->r.p);
    //vecsub(p1_com->r.p,p2_com->r.p,dist);
 }
@@ -665,7 +656,7 @@ void get_mol_dist_vector_from_molid_cfg(int mol_id1,int mol_id2,double dist[3]){
    Particle *p1_com,*p2_com;
    p1_com=get_mol_com_particle_from_molid_cfg(mol_id1);
    p2_com=get_mol_com_particle_from_molid_cfg(mol_id2);
-   /*#ifdef VIRTUAL_SITES_DEBUG
+   #ifdef VIRTUAL_SITES_DEBUG
    if(p1_com==NULL){
       fprintf(stderr,"No com found in get_mol_dist_vector_from_molid_cfg for mol id=%i\n",mol_id1);
       dist[0]=dist[1]=dist[2]=0.0;
@@ -674,9 +665,9 @@ void get_mol_dist_vector_from_molid_cfg(int mol_id1,int mol_id2,double dist[3]){
    if(p2_com==NULL){
       fprintf(stderr,"No com found in get_mol_dist_vector_from_molid_cfg for mol id=%i\n",mol_id2);
       dist[0]=dist[1]=dist[2]=0.0;
-      return;   if (!ifParticleIsVirtual(p2_com)){
+      return;
    }
-   #endif*/
+   #endif
    get_mi_vector(dist,p1_com->r.p, p2_com->r.p);
 }
 
