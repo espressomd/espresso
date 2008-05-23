@@ -33,7 +33,6 @@ void update_mol_vel();
 void update_mol_pos();
 void distribute_mol_force();
 
-void get_mol_dist_vector(Particle *p1,Particle *p2,double dist[3]);
 double get_mol_dist(Particle *p1,Particle *p2);
 
 MDINLINE int ifParticleIsVirtual(Particle *p){
