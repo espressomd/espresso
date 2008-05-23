@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6h (Ydalir)                                                                     *
+* v2.0.6i (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6h -
+- v2.0.6i -
 -----------
 
+(i) May   22nd, 2008.
 (h) May   12th, 2008.
 (g) May    9th, 2008.
 (f) May    7th, 2008.
@@ -21,6 +22,7 @@ Current working revision.
 (a) April 30th, 2008.
 
 New Features:
+(i) added feature LJ_WITH_MOL_CUT
 (h) added analyze dipmom_mol
 (g) allows writepdb with atom names and length scale
 (f) added anaylze dipmon
